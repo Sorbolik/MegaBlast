@@ -29,10 +29,26 @@ go version
 
 Defold si avvia come un normale programma e non richiede configurazione.
 
-## 3. Avviare il client (appena c'è il prototipo)
+## 3. Avviare il prototipo
 
 1. Apri Defold e scegli **Open From Disk…**, poi seleziona `client/game.project`.
 2. Premi **Ctrl+B** (su Mac **Cmd+B**) per avviare il gioco in una finestra sul PC.
+
+### Comandi
+
+- **Muoversi**: frecce o A/D, oppure i pulsanti `<` e `>` in basso a sinistra.
+- **Saltare**: freccia su, W o spazio, oppure il pulsante SALTA.
+- **Sparare**: tieni premuto il mouse o il dito in un punto qualsiasi della mappa. La direzione dal robot al dito è la mira, la distanza è la potenza, e i puntini mostrano la traiettoria (senza vento). Rilascia per sparare. Se rilasci sopra il robot, lo sparo viene annullato.
+- I due giocatori si alternano sullo stesso dispositivo, con 15 secondi per turno.
+- A fine partita tocca lo schermo per ricominciare con una mappa nuova.
+
+### Test della simulazione
+
+La logica di gioco in `client/sim/` è Lua puro e si prova anche senza Defold. Con un interprete Lua 5.1 o LuaJIT installato, dalla radice del repository:
+
+```bash
+lua tests/sim_test.lua
+```
 
 ## 4. Provarlo sul telefono Android
 

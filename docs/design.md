@@ -58,7 +58,7 @@ Il **server è autoritativo**: decide lui dove cade il colpo, i danni e le posiz
 
 ### Una sola simulazione, scritta una volta
 
-La logica di gioco (fisica, collisioni col terreno, armi, danni) vive in una cartella `sim/` scritta in **Lua puro**, senza API di Defold.
+La logica di gioco (fisica, collisioni col terreno, armi, danni) vive in `client/sim/`, scritta in **Lua puro** e senza API di Defold. Sta dentro il progetto Defold perché Defold può caricare solo moduli che si trovano nel progetto, e il server la legge da lì.
 
 - Il **client** Defold la usa direttamente.
 - Il **server** Go la esegue con [gopher-lua](https://github.com/yuin/gopher-lua), un interprete Lua 5.1 scritto in Go e senza dipendenze C.
@@ -139,18 +139,19 @@ Durante un turno di movimento il traffico è di pochi KB.
 ## 6. Struttura del repository
 
 ```
-client/     progetto Defold (game.project, main/, assets/)
-server/     server Go (go.mod, main.go, match/)
-sim/        simulazione condivisa in Lua puro (usata da client e server)
-docs/       design e note di sviluppo
+client/        progetto Defold (game.project, main/, input/)
+client/sim/    simulazione condivisa in Lua puro (usata da client e server)
+server/        server Go (go.mod, main.go, match/)
+tests/         test della simulazione
+docs/          design e note di sviluppo
 ```
 
 ---
 
 ## 7. Roadmap
 
-1. **Prototipo locale**: un client Defold con terreno distruttibile, un robot che cammina e salta e il missile. Hot-seat, cioè due giocatori sullo stesso telefono. Nessun server.
-2. **Simulazione condivisa**: si sposta la logica in `sim/` e la si fa girare anche nel server Go.
+1. **Prototipo locale** (fatto): un client Defold con terreno distruttibile, un robot che cammina e salta e il missile. Hot-seat, cioè due giocatori sullo stesso telefono. Nessun server.
+2. **Simulazione condivisa**: la logica in `client/sim/` gira anche nel server Go.
 3. **Online**: matchmaking 1v1, turni a tempo e il protocollo sopra.
 4. **Tutte le armi dell'MVP**, il vento e il knockback.
 5. **Rifinitura**: grafica, suoni, mappe.

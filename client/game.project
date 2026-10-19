@@ -1,0 +1,23 @@
+[project]
+title = MegaBlast
+
+[bootstrap]
+main_collection = /main/main.collectionc
+
+[input]
+game_binding = /input/game.input_bindingc
+
+[display]
+width = 1280
+height = 720
+high_dpi = 1
+
+[graphics]
+default_texture_min_filter = nearest
+default_texture_mag_filter = nearest
+
+[android]
+package = com.sorbolik.megablast
+
+[ios]
+bundle_identifier = com.sorbolik.megablast
