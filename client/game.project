@@ -1,5 +1,6 @@
 [project]
 title = MegaBlast
+dependencies#0 = https://github.com/defold/extension-websocket/archive/refs/tags/4.2.4.zip
 
 [bootstrap]
 main_collection = /main/main.collectionc
@@ -21,3 +22,6 @@ package = com.sorbolik.megablast
 
 [ios]
 bundle_identifier = com.sorbolik.megablast
+
+[megablast]
+server_url = ws://127.0.0.1:8080/ws
