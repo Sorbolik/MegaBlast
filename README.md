@@ -4,12 +4,12 @@ Repository del gioco **MegaBlast** (progetto Sorblastron).
 
 ## Stato
 
-Progetto appena avviato: qui verranno aggiunti codice, asset e documentazione del gioco.
+C'è un primo prototipo in hot-seat, con due giocatori sullo stesso dispositivo: terreno distruttibile, robot che camminano e saltano, missile con vento e turni a tempo. Per avviarlo segui [docs/setup.md](docs/setup.md).
 
-## Struttura prevista
+## Struttura
 
 - `client/` — client Defold (Lua)
-- `server/` — server Go
-- `sim/` — simulazione condivisa in Lua puro
-- `assets/` — grafica, suoni e altri asset
+- `client/sim/` — simulazione di gioco in Lua puro, condivisa con il server
+- `server/` — server Go (in arrivo)
+- `tests/` — test della simulazione
 - `docs/` — [design e architettura](docs/design.md), [setup del PC](docs/setup.md)
