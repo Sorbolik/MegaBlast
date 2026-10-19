@@ -236,15 +236,22 @@ function M:fire(angle, power)
 end
 
 -- Punti della traiettoria prevista, per la linea di mira.
-function M:preview(angle, power, count, every)
+-- pts (facoltativo) è una tabella da riusare, per non allocare a ogni frame.
+function M:preview(angle, power, count, every, pts)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power)
-	local pts = {}
+	pts = pts or {}
+	local n = 0
 	for i = 1, count * every do
 		vy = vy - M.GRAVITY * M.DT
 		x, y = x + vx * M.DT, y + vy * M.DT
-		if i % every == 0 then pts[#pts + 1] = { x = x, y = y } end
+		if i % every == 0 then
+			n = n + 1
+			local pt = pts[n] or {}
+			pt.x, pt.y = x, y
+			pts[n] = pt
+		end
 	end
 	return pts
 end
