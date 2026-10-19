@@ -9,7 +9,7 @@ local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
 
 -- Se il terreno appare capovolto, metti questo valore a true.
-local FLIP_TEXTURE = false
+local FLIP_TEXTURE = true
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 
