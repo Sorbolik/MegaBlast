@@ -111,26 +111,27 @@ Alternativa per più avanti: **Nakama** (open source, in Go) ha già account, ma
 
 ## 5. Rete e protocollo
 
-Si usano messaggi **binari** compatti su WebSocket: un byte di tipo seguito da campi a dimensione fissa.
+Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare il debug, e anche così il traffico resta di pochi KB al secondo. Quando il gioco sarà stabile li si può passare in formato binario.
 
 | Messaggio | Direzione | Contenuto |
 |---|---|---|
-| `JOIN` | C → S | versione del client |
-| `MATCH_START` | S → C | id partita, seed della mappa, chi inizia |
-| `TURN_START` | S → C | giocatore di turno, vento, scadenza |
-| `INPUT` | C → S | tick, tasti premuti (bitmask: sinistra, destra, salto) |
-| `STATE` | S → C | tick e posizione/velocità dei robot (10 al secondo durante il movimento) |
-| `FIRE` | C → S | arma, angolo, potenza |
-| `SHOT_RESULT` | S → C | traiettoria (seed), crateri, danni, posizioni finali |
-| `TURN_END` | S → C | HP aggiornati |
-| `MATCH_END` | S → C | vincitore |
+| `{"t":"wait"}` | S → C | sei in attesa di un avversario |
+| `{"t":"start","seed":…,"you":1}` | S → C | la partita parte: seed della mappa e quale robot sei |
+| `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano) |
+| `{"t":"jump"}` | C → S | salto |
+| `{"t":"fire","a":1.2,"p":0.7}` | C → S | sparo: angolo in radianti e potenza da 0 a 1 |
+| `{"t":"state",…}` | S → C | fase, turno, timer, vento, robot e missile (20 al secondo) |
+| `{"t":"ev","type":…}` | S → C | eventi: `turn`, `fire`, `explosion` (x, y, raggio), `damage`, `death`, `miss`, `over` |
+| `{"t":"left"}` | S → C | l'avversario si è disconnesso |
 
 ### Flusso di un turno
 
-1. Il server manda `TURN_START`.
-2. Il giocatore di turno si muove. Il client mostra subito il movimento (predizione) e invia `INPUT` a ogni cambio di tasto. Il server simula e invia `STATE` a entrambi, e l'avversario vede il robot muoversi interpolando tra gli `STATE`.
-3. Il giocatore spara con `FIRE`. Il server simula il colpo fino alla fine e manda `SHOT_RESULT`. Entrambi i client animano la traiettoria con la stessa simulazione e applicano il risultato del server.
-4. Il server manda `TURN_END` e passa il turno.
+1. Il server manda l'evento `turn`.
+2. Il giocatore di turno si muove e il client invia `in` a ogni cambio di tasto. Il server simula e invia `state` a entrambi, che interpolano le posizioni per avere un movimento fluido.
+3. Il giocatore spara con `fire`. Il server simula il volo del missile e lo trasmette dentro `state`. Quando il missile esplode, manda `explosion` e ogni client scava lo stesso cratere nel proprio terreno.
+4. Quando i robot sono fermi, il server passa il turno.
+
+Il terreno non viene mai inviato: ogni client lo genera dallo stesso seed e applica gli stessi crateri. Per ora il client non predice il proprio movimento e mostra quello che arriva dal server. In rete locale non si nota; su internet si potrà aggiungere la predizione.
 
 Durante un turno di movimento il traffico è di pochi KB.
 
@@ -141,7 +142,8 @@ Durante un turno di movimento il traffico è di pochi KB.
 ```
 client/        progetto Defold (game.project, main/, input/)
 client/sim/    simulazione condivisa in Lua puro (usata da client e server)
-server/        server Go (go.mod, main.go, match/)
+server/        server Go (main.go, match.go, sim.go, net.lua)
+go.mod         modulo Go (alla radice, così il server incorpora client/sim/)
 tests/         test della simulazione
 docs/          design e note di sviluppo
 ```
@@ -151,8 +153,8 @@ docs/          design e note di sviluppo
 ## 7. Roadmap
 
 1. **Prototipo locale** (fatto): un client Defold con terreno distruttibile, un robot che cammina e salta e il missile. Hot-seat, cioè due giocatori sullo stesso telefono. Nessun server.
-2. **Simulazione condivisa**: la logica in `client/sim/` gira anche nel server Go.
-3. **Online**: matchmaking 1v1, turni a tempo e il protocollo sopra.
+2. **Simulazione condivisa** (fatto): la logica in `client/sim/` gira anche nel server Go.
+3. **Online** (fatto, in rete locale): matchmaking 1v1, turni a tempo e il protocollo sopra.
 4. **Tutte le armi dell'MVP**, il vento e il knockback.
 5. **Rifinitura**: grafica, suoni, mappe.
 6. **Più avanti**: campagna contro bot, account e classifiche.

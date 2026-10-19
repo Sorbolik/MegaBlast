@@ -60,11 +60,27 @@ Ci sono due modi.
 
 Per iOS servono un Mac e un account Apple Developer, quindi lo lasciamo a più avanti.
 
-## 5. Avviare il server (appena c'è)
+## 5. Giocare online
+
+Il server gira sul tuo PC e i telefoni si collegano a lui tramite il Wi-Fi di casa.
+
+1. Dalla radice del repository avvia il server:
+
+   ```bash
+   go run ./server
+   ```
+
+   Si mette in ascolto sulla porta 8080. La prima volta Windows ti chiede se consentire l'accesso alla rete: rispondi **Consenti** per le reti private.
+
+2. Trova l'indirizzo IP del PC: in PowerShell scrivi `ipconfig` e cerca "Indirizzo IPv4", per esempio `192.168.1.20`.
+3. In Defold apri `client/game.project` e, in fondo, cambia `server_url` con l'IP del PC, per esempio `ws://192.168.1.20:8080/ws`.
+4. Crea l'APK (vedi il punto 4) e installalo su due telefoni collegati allo stesso Wi-Fi. In alternativa usa un telefono e il gioco lanciato dal PC con Ctrl+B.
+5. Su entrambi premi **ONLINE**: il primo resta in attesa e appena arriva il secondo la partita parte.
+
+La prima volta che compili, Defold scarica l'estensione WebSocket indicata in `game.project`. Se l'editor te lo chiede, usa **Project → Fetch Libraries**.
+
+### Test del server
 
 ```bash
-cd server
-go run .
+go test ./server/
 ```
-
-Il server ascolta su `ws://localhost:8080`. Per collegarti dal telefono si usa l'indirizzo IP locale del PC, per esempio `ws://192.168.1.20:8080`.

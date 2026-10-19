@@ -1,6 +1,7 @@
--- Prototipo hot-seat: due giocatori sullo stesso dispositivo.
+-- Client di MegaBlast: menu, partita locale (hot-seat) e partita online.
 -- Tutta la grafica è creata da codice con nodi GUI, senza asset esterni.
--- La logica di gioco sta in sim/ (Lua puro), qui ci sono solo disegno e input.
+-- La logica di gioco sta in sim/ (Lua puro). In locale la facciamo girare qui,
+-- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
 
@@ -9,6 +10,8 @@ local TW, TH = W / CELL, H / CELL
 
 -- Se il terreno appare capovolto, metti questo valore a true.
 local FLIP_TEXTURE = false
+
+local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 
 local ACTION_TOUCH = hash("touch")
 local ACTION_LEFT = hash("left")
@@ -21,6 +24,7 @@ local SKY = vmath.vector4(0.56, 0.78, 0.95, 1)
 local WHITE = vmath.vector4(1, 1, 1, 1)
 local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 local BUTTON = vmath.vector4(1, 1, 1, 0.25)
+local MENU_BUTTON = vmath.vector4(0.12, 0.12, 0.14, 0.75)
 
 -- Colori del terreno, già pronti come byte RGBA
 local EMPTY = string.char(0, 0, 0, 0)
@@ -60,6 +64,13 @@ local function label(x, y, text, scale)
 	return n
 end
 
+local function server_url()
+	if sys.get_config_string then
+		return sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
+	end
+	return sys.get_config("megablast.server_url", DEFAULT_SERVER)
+end
+
 -- Terreno -----------------------------------------------------------------------
 
 local function build_row(t, cy, buf)
@@ -94,7 +105,7 @@ local function redraw_rows(self, cy0, cy1)
 	gui.set_texture_data("terrain", TW, TH, "rgba", terrain_data(self))
 end
 
--- Partita -----------------------------------------------------------------------
+-- Messaggi e menu -------------------------------------------------------------
 
 local function show_message(self, text, keep)
 	gui.set_text(self.message, text)
@@ -105,8 +116,32 @@ local function show_message(self, text, keep)
 	end
 end
 
-local function new_match(self)
-	self.g = game.new(os.time())
+local function set_controls_visible(self, visible)
+	gui.set_enabled(self.btn_left, visible)
+	gui.set_enabled(self.btn_right, visible)
+	gui.set_enabled(self.btn_jump, visible)
+	gui.set_enabled(self.hud, visible)
+end
+
+local function disconnect(self)
+	if self.conn then
+		websocket.disconnect(self.conn)
+		self.conn = nil
+	end
+end
+
+local function show_menu(self)
+	disconnect(self)
+	self.mode = "menu"
+	gui.set_enabled(self.menu, true)
+	set_controls_visible(self, false)
+	show_message(self, "", true)
+end
+
+-- Partita -----------------------------------------------------------------------
+
+local function new_match(self, seed)
+	self.g = game.new(seed)
 	self.rows = {}
 	for cy = 0, TH - 1 do
 		self.rows[cy + 1] = build_row(self.g.terrain, cy, self.row_buf)
@@ -118,12 +153,14 @@ local function new_match(self)
 		gui.set_texture(self.terrain, "terrain")
 		self.terrain_texture = true
 	end
-	for i = 1, 2 do
+	self.view = {}
+	for i, rb in ipairs(self.g.robots) do
 		gui.set_enabled(self.robots[i].body, true)
-		gui.set_color(self.robots[i].body, PLAYER_COLORS[i])
+		self.view[i] = { x = rb.x, y = rb.y }
 	end
 	self.aiming = false
 	self.acc = 0
+	self.sent = {}
 end
 
 local function explosion_flash(x, y, r)
@@ -132,22 +169,111 @@ local function explosion_flash(x, y, r)
 	gui.animate(n, "scale", vmath.vector3(1.3, 1.3, 1), gui.EASING_OUTQUAD, 0.35)
 end
 
-local function handle_events(self)
-	for _, e in ipairs(self.g:pop_events()) do
-		if e.type == "explosion" then
-			-- l'erba dipende dalle 2 celle sopra, quindi ridisegniamo anche quelle
-			redraw_rows(self, e.row_min - 2, e.row_max + 2)
-			explosion_flash(e.x, e.y, e.r)
-		elseif e.type == "turn" then
+local function my_turn(self)
+	return self.mode == "local" or (self.mode == "online" and self.g.current == self.me)
+end
+
+local function handle_event(self, e)
+	if e.type == "explosion" then
+		local row_min, row_max = e.row_min, e.row_max
+		if self.mode == "online" then
+			-- online il terreno lo scaviamo noi, nello stesso punto del server
+			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
+		end
+		-- l'erba dipende dalle 2 celle sopra, quindi ridisegniamo anche quelle
+		redraw_rows(self, row_min - 2, row_max + 2)
+		explosion_flash(e.x, e.y, e.r)
+	elseif e.type == "turn" then
+		if self.mode == "online" then
+			show_message(self, e.robot == self.me and "Tocca a te!" or "Turno dell'avversario")
+		else
 			show_message(self, "Turno di " .. NAMES[e.robot])
-		elseif e.type == "death" then
-			gui.set_enabled(self.robots[e.robot].body, false)
-		elseif e.type == "over" then
-			local text = e.winner and ("Vince " .. NAMES[e.winner] .. "!") or "Pareggio!"
-			show_message(self, text .. "\nTocca per ricominciare", true)
+		end
+	elseif e.type == "death" then
+		gui.set_enabled(self.robots[e.robot].body, false)
+	elseif e.type == "over" then
+		local text
+		if self.mode == "online" then
+			text = e.winner == self.me and "Hai vinto!" or (e.winner and "Hai perso!" or "Pareggio!")
+		else
+			text = e.winner and ("Vince " .. NAMES[e.winner] .. "!") or "Pareggio!"
+		end
+		show_message(self, text .. "\nTocca per tornare al menu", true)
+		self.mode = "ended"
+	end
+end
+
+-- Online ------------------------------------------------------------------------
+
+local function send(self, msg)
+	if self.conn then
+		websocket.send(self.conn, json.encode(msg), { type = websocket.DATA_TYPE_TEXT })
+	end
+end
+
+local function apply_state(self, s)
+	local g = self.g
+	g.phase, g.current, g.timer, g.wind = s.phase, s.cur, s.timer, s.wind
+	for i, r in ipairs(s.r) do
+		local rb = g.robots[i]
+		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
+	end
+	g.projectile = s.p and { x = s.p.x, y = s.p.y } or nil
+end
+
+local function on_server_message(self, m)
+	if m.t == "wait" then
+		show_message(self, "In attesa di un avversario...", true)
+	elseif m.t == "start" then
+		new_match(self, m.seed)
+		self.g:pop_events()
+		self.me = m.you
+		self.mode = "online"
+		set_controls_visible(self, true)
+		show_message(self, "Sei " .. NAMES[m.you])
+	elseif m.t == "state" and self.g then
+		apply_state(self, m)
+	elseif m.t == "ev" then
+		handle_event(self, m)
+	elseif m.t == "left" then
+		self.mode = "ended"
+		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
+	elseif m.t == "error" then
+		self.mode = "ended"
+		show_message(self, "Errore del server\nTocca per tornare al menu", true)
+	end
+end
+
+local function on_socket(self, conn, data)
+	if data.event == websocket.EVENT_CONNECTED then
+		show_message(self, "Connesso, in attesa...", true)
+	elseif data.event == websocket.EVENT_MESSAGE then
+		local ok, m = pcall(json.decode, data.message)
+		if ok and m then on_server_message(self, m) end
+	elseif data.event == websocket.EVENT_DISCONNECTED or data.event == websocket.EVENT_ERROR then
+		self.conn = nil
+		if self.mode ~= "menu" and self.mode ~= "ended" then
+			self.mode = "ended"
+			show_message(self, "Connessione persa\nTocca per tornare al menu", true)
 		end
 	end
 end
+
+local function start_online(self)
+	gui.set_enabled(self.menu, false)
+	self.mode = "connecting"
+	show_message(self, "Connessione a\n" .. server_url(), true)
+	self.conn = websocket.connect(server_url(), { timeout = 5000 }, on_socket)
+end
+
+local function start_local(self)
+	gui.set_enabled(self.menu, false)
+	new_match(self, os.time())
+	self.mode = "local"
+	set_controls_visible(self, true)
+end
+
+-- Rendering -------------------------------------------------------------------
 
 local function current_robot(self)
 	return self.g.robots[self.g.current]
@@ -157,8 +283,54 @@ local function aim_from(self, x, y)
 	local rb = current_robot(self)
 	local dx, dy = x - rb.x, y - (rb.y + game.ROBOT_H / 2)
 	self.aim_angle = math.atan2(dy, dx)
-	self.aim_power = math.max(0.1, math.min(1, math.sqrt(dx * dx + dy * dy) / AIM_RANGE))
 	self.aim_dist = math.sqrt(dx * dx + dy * dy)
+	self.aim_power = math.max(0.1, math.min(1, self.aim_dist / AIM_RANGE))
+end
+
+local function render(self, dt)
+	local g = self.g
+	local smooth = self.mode == "local" and 1 or math.min(1, dt * 15)
+	for i, rb in ipairs(g.robots) do
+		local v, r = self.view[i], self.robots[i]
+		v.x = v.x + (rb.x - v.x) * smooth
+		v.y = v.y + (rb.y - v.y) * smooth
+		gui.set_position(r.body, vmath.vector3(v.x, v.y + game.ROBOT_H / 2, 0))
+		gui.set_position(r.eye, vmath.vector3(rb.facing * 3, 3, 0))
+		gui.set_text(r.hp, tostring(math.max(0, rb.hp)))
+	end
+
+	local p = g.projectile
+	gui.set_enabled(self.projectile, p ~= nil)
+	if p then gui.set_position(self.projectile, vmath.vector3(p.x, p.y, 0)) end
+
+	local show_aim = self.aiming and g.phase == "aim" and my_turn(self)
+	if show_aim then
+		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4)
+		for i, n in ipairs(self.dots) do
+			gui.set_enabled(n, true)
+			gui.set_position(n, vmath.vector3(pts[i].x, pts[i].y, 0))
+		end
+	else
+		for _, n in ipairs(self.dots) do gui.set_enabled(n, false) end
+	end
+
+	local wind = g.wind
+	local arrows = string.rep(wind < 0 and "<" or ">", math.ceil(math.abs(wind) / 40))
+	local secs = math.max(0, math.ceil(g.timer / 60))
+	local who = NAMES[g.current]
+	if self.mode == "online" then who = g.current == self.me and "Tu" or "Avversario" end
+	if g.phase == "aim" then
+		gui.set_text(self.hud, string.format("%s   %ds   vento %s %d", who, secs, arrows, math.abs(wind)))
+	elseif g.phase ~= "over" then
+		gui.set_text(self.hud, who)
+	end
+
+	-- freccia sopra il robot di turno
+	local cur = current_robot(self)
+	local v = self.view[g.current]
+	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
+	gui.set_position(self.arrow, vmath.vector3(v.x, v.y + game.ROBOT_H + 34, 0))
+	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
 end
 
 -- Ciclo di vita -------------------------------------------------------------
@@ -198,61 +370,60 @@ function init(self)
 	self.btn_jump = box(W - 90, 80, 130, 110, BUTTON)
 	gui.set_parent(label(0, 0, "SALTA", 1), self.btn_jump)
 
-	new_match(self)
+	self.menu = box(W / 2, H / 2, W, H, vmath.vector4(0, 0, 0, 0))
+	gui.set_parent(label(0, 170, "MEGABLAST", 3), self.menu)
+	self.btn_local = box(0, 30, 360, 90, MENU_BUTTON)
+	gui.set_parent(self.btn_local, self.menu)
+	gui.set_parent(label(0, 0, "STESSO TELEFONO", 1.2), self.btn_local)
+	self.btn_online = box(0, -90, 360, 90, MENU_BUTTON)
+	gui.set_parent(self.btn_online, self.menu)
+	gui.set_parent(label(0, 0, "ONLINE", 1.2), self.btn_online)
+
+	-- una mappa sullo sfondo del menu
+	new_match(self, os.time())
+	self.g:pop_events()
+	show_menu(self)
+end
+
+function final(self)
+	disconnect(self)
 end
 
 function update(self, dt)
-	self.acc = math.min(self.acc + dt, 0.25)
-	while self.acc >= game.DT do
-		local input = {
-			left = self.keys.left or self.touch_mode == "left",
-			right = self.keys.right or self.touch_mode == "right",
-			jump = self.jump_pressed,
-			fire = self.fire,
-		}
+	if self.mode == "local" then
+		self.acc = math.min(self.acc + dt, 0.25)
+		while self.acc >= game.DT and self.mode == "local" do
+			local input = {
+				left = self.keys.left or self.touch_mode == "left",
+				right = self.keys.right or self.touch_mode == "right",
+				jump = self.jump_pressed,
+				fire = self.fire,
+			}
+			self.jump_pressed = false
+			self.fire = nil
+			self.g:step(input)
+			for _, e in ipairs(self.g:pop_events()) do handle_event(self, e) end
+			self.acc = self.acc - game.DT
+		end
+	elseif self.mode == "online" then
+		-- mandiamo al server solo i cambiamenti, e solo quando tocca a noi
+		if my_turn(self) and self.g.phase == "aim" then
+			local l = self.keys.left or self.touch_mode == "left" or false
+			local r = self.keys.right or self.touch_mode == "right" or false
+			if l ~= self.sent.l or r ~= self.sent.r then
+				send(self, { t = "in", l = l, r = r })
+				self.sent.l, self.sent.r = l, r
+			end
+			if self.jump_pressed then send(self, { t = "jump" }) end
+			if self.fire then send(self, { t = "fire", a = self.fire.angle, p = self.fire.power }) end
+		else
+			self.sent.l, self.sent.r = false, false
+		end
 		self.jump_pressed = false
 		self.fire = nil
-		self.g:step(input)
-		handle_events(self)
-		self.acc = self.acc - game.DT
 	end
 
-	local g = self.g
-	for i, rb in ipairs(g.robots) do
-		local r = self.robots[i]
-		gui.set_position(r.body, vmath.vector3(rb.x, rb.y + game.ROBOT_H / 2, 0))
-		gui.set_position(r.eye, vmath.vector3(rb.facing * 3, 3, 0))
-		gui.set_text(r.hp, tostring(math.max(0, rb.hp)))
-	end
-	local p = g.projectile
-	gui.set_enabled(self.projectile, p ~= nil)
-	if p then gui.set_position(self.projectile, vmath.vector3(p.x, p.y, 0)) end
-
-	local show_aim = self.aiming and g.phase == "aim"
-	if show_aim then
-		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4)
-		for i, n in ipairs(self.dots) do
-			gui.set_enabled(n, true)
-			gui.set_position(n, vmath.vector3(pts[i].x, pts[i].y, 0))
-		end
-	else
-		for _, n in ipairs(self.dots) do gui.set_enabled(n, false) end
-	end
-
-	local wind = g.wind
-	local arrows = string.rep(wind < 0 and "<" or ">", math.ceil(math.abs(wind) / 40))
-	local secs = math.ceil(g.timer / 60)
-	if g.phase == "aim" then
-		gui.set_text(self.hud, string.format("%s   %ds   vento %s %d", NAMES[g.current], secs, arrows, math.abs(wind)))
-	elseif g.phase ~= "over" then
-		gui.set_text(self.hud, NAMES[g.current])
-	end
-
-	-- freccia sopra il robot di turno
-	local cur = current_robot(self)
-	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead)
-	gui.set_position(self.arrow, vmath.vector3(cur.x, cur.y + game.ROBOT_H + 34, 0))
-	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
+	render(self, dt)
 end
 
 function on_input(self, action_id, action)
@@ -264,8 +435,17 @@ function on_input(self, action_id, action)
 		if action.pressed then self.jump_pressed = true end
 	elseif action_id == ACTION_TOUCH then
 		if action.pressed then
-			if self.g.phase == "over" then
-				new_match(self)
+			if self.mode == "menu" then
+				if gui.pick_node(self.btn_local, action.x, action.y) then
+					start_local(self)
+				elseif gui.pick_node(self.btn_online, action.x, action.y) then
+					start_online(self)
+				end
+				return true
+			elseif self.mode == "ended" then
+				show_menu(self)
+				return true
+			elseif self.mode ~= "local" and self.mode ~= "online" then
 				return true
 			end
 			if gui.pick_node(self.btn_left, action.x, action.y) then
@@ -275,7 +455,7 @@ function on_input(self, action_id, action)
 			elseif gui.pick_node(self.btn_jump, action.x, action.y) then
 				self.touch_mode = "jump"
 				self.jump_pressed = true
-			else
+			elseif my_turn(self) then
 				self.touch_mode = "aim"
 				self.aiming = true
 			end
