@@ -37,10 +37,11 @@ Defold si avvia come un normale programma e non richiede configurazione.
 ### Comandi
 
 - **Muoversi**: frecce o A/D, oppure i pulsanti `<` e `>` in basso a sinistra.
-- **Saltare**: freccia su, W o spazio, oppure il pulsante SALTA.
-- **Sparare**: tieni premuto il mouse o il dito in un punto qualsiasi della mappa. La direzione dal robot al dito è la mira, la distanza è la potenza, e i puntini mostrano la traiettoria (senza vento). Rilascia per sparare. Se rilasci sopra il robot, lo sparo viene annullato.
+- **Saltare**: freccia su, W o spazio, oppure il pulsante SALTA. Senza direzione il salto va dritto in alto; in aria puoi spostarti a destra e a sinistra.
+- **Sparare**: tieni premuto il mouse o il dito in un punto qualsiasi della mappa. La direzione dal robot al dito è la mira, la distanza è la potenza, e i puntini mostrano la traiettoria. Rilascia per sparare. Se rilasci sopra il robot, lo sparo viene annullato.
+- Dopo lo sparo hai 3 secondi per muoverti e metterti al riparo.
 - I due giocatori si alternano sullo stesso dispositivo, con 15 secondi per turno.
-- A fine partita tocca lo schermo per ricominciare con una mappa nuova.
+- A fine partita tocca lo schermo per tornare al menu.
 
 ### Test della simulazione
 
@@ -77,7 +78,7 @@ Il server gira sul tuo PC e i telefoni si collegano a lui tramite il Wi-Fi di ca
 4. Crea l'APK (vedi il punto 4) e installalo su due telefoni collegati allo stesso Wi-Fi. In alternativa usa un telefono e il gioco lanciato dal PC con Ctrl+B.
 5. Su entrambi premi **ONLINE**: il primo resta in attesa e appena arriva il secondo la partita parte.
 
-La prima volta che compili, Defold scarica l'estensione WebSocket indicata in `game.project`. Se l'editor te lo chiede, usa **Project → Fetch Libraries**.
+**Prima volta**: per il gioco online serve l'estensione WebSocket indicata in `game.project`. In Defold usa **Project → Fetch Libraries** e poi Ctrl+B. Il primo avvio è più lento, perché Defold compila il motore con l'estensione sul suo build server e serve internet.
 
 ### Test del server
 

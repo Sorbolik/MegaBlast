@@ -19,9 +19,9 @@ type Sim struct {
 	g   lua.LValue
 }
 
-func NewSim(seed int64) (*Sim, error) {
+func NewSim(seed int64, mapID string) (*Sim, error) {
 	L := lua.NewState()
-	for _, name := range []string{"rng", "terrain", "game"} {
+	for _, name := range []string{"rng", "terrain", "maps", "game"} {
 		src, err := megablast.SimFS.ReadFile("client/sim/" + name + ".lua")
 		if err != nil {
 			L.Close()
@@ -46,7 +46,7 @@ func NewSim(seed int64) (*Sim, error) {
 		return nil, fmt.Errorf("net.lua non restituisce una tabella")
 	}
 	s := &Sim{L: L, net: net}
-	g, err := s.call("new", lua.LNumber(seed))
+	g, err := s.call("new", lua.LNumber(seed), lua.LString(mapID))
 	if err != nil {
 		L.Close()
 		return nil, err

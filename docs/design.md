@@ -13,8 +13,11 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Elemento | Come funziona |
 |---|---|
 | Partita | Duello online 1 contro 1 (deathmatch). In seguito arriva una campagna single player contro bot. |
-| Turni | Sono a tempo e brevi (proposta: 15 s). Il giocatore di turno può muoversi, saltare, mirare e sparare **un** colpo. Il turno finisce dopo lo sparo, allo scadere del timer o quando il robot muore. |
-| Terreno | È distruttibile: ogni esplosione scava un cratere. |
+| Turni | Sono a tempo e brevi (proposta: 15 s). Il giocatore di turno può muoversi, saltare, mirare e sparare **un** colpo. Dopo lo sparo ci sono 3 s in cui il robot può ancora muoversi per ripararsi; poi il turno passa. Il turno finisce anche allo scadere del timer o quando il robot muore. |
+| Terreno | La terra è distruttibile: ogni esplosione scava un cratere tondo. I tubi d'acciaio sono indistruttibili e fanno da base solida. |
+| Mappe | Fatte a mano, su più piani, con isole volanti. Niente vento. |
+| Movimento | Salto libero (anche dritto verso l'alto) e controllo in aria a destra e sinistra. |
+| Statistiche | Ogni robot ha velocità a terra, altezza del salto e velocità in aria. L'equipaggiamento le modificherà. Più un robot è veloce in aria, meno inerzia ha quando cambia direzione. |
 | Danni | Dipendono dalla distanza dal centro dell'esplosione. Anche l'esplosione stessa spinge il robot (knockback). Chi cade dalla mappa o nell'acqua muore. |
 | Vittoria | Vince l'ultimo robot rimasto in piedi. |
 
@@ -22,7 +25,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 
 | Arma | Comportamento |
 |---|---|
-| Missile | Traiettoria balistica con vento. Esplode al primo contatto. |
+| Missile | Traiettoria balistica. Esplode al primo contatto. |
 | Granata | Rimbalza sul terreno ed esplode dopo una miccia di 3 s. |
 | Mitragliatrice | Raffica di colpi rapidi in linea retta, con danni piccoli e crateri minuscoli. |
 | Montante | Attacco corpo a corpo che lancia in alto l'avversario se è adiacente. |
@@ -82,7 +85,8 @@ Alternative scartate:
 - Un'esplosione azzera i pixel dentro un cerchio, quindi un cratere è un'operazione di pochi microsecondi.
 - Le collisioni sono letture sulla maschera, senza motore fisico.
 - **Rendering**: la maschera viene applicata come canale alfa sopra una texture di terreno disegnata. Quando c'è un cratere si aggiorna solo il rettangolo toccato della texture (`resource.set_texture` con regione).
-- **Mappe**: ogni mappa è un PNG in bianco e nero (la maschera) più una texture decorativa. Si possono generare anche proceduralmente da un seed.
+- **Celle**: 0 vuoto, 1 terra (si scava), 2 acciaio (non si scava mai).
+- **Mappe**: sono in `client/sim/maps.lua`, disegnate con poche forme (rettangoli, cerchi, tubi). Ora ci sono "isole" (fatta a mano, a più piani, quella usata online) e "casuale" (colline generate dal seed). In futuro una mappa potrà essere anche un PNG.
 
 ### Dipendenze del client
 
@@ -116,11 +120,11 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 | Messaggio | Direzione | Contenuto |
 |---|---|---|
 | `{"t":"wait"}` | S → C | sei in attesa di un avversario |
-| `{"t":"start","seed":…,"you":1}` | S → C | la partita parte: seed della mappa e quale robot sei |
+| `{"t":"start","seed":…,"map":"isole","you":1}` | S → C | la partita parte: mappa, seed e quale robot sei |
 | `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano) |
 | `{"t":"jump"}` | C → S | salto |
 | `{"t":"fire","a":1.2,"p":0.7}` | C → S | sparo: angolo in radianti e potenza da 0 a 1 |
-| `{"t":"state",…}` | S → C | fase, turno, timer, vento, robot e missile (20 al secondo) |
+| `{"t":"state",…}` | S → C | fase, turno, timer, secondi di ritirata, robot e missile (20 al secondo) |
 | `{"t":"ev","type":…}` | S → C | eventi: `turn`, `fire`, `explosion` (x, y, raggio), `damage`, `death`, `miss`, `over` |
 | `{"t":"left"}` | S → C | l'avversario si è disconnesso |
 
@@ -155,6 +159,6 @@ docs/          design e note di sviluppo
 1. **Prototipo locale** (fatto): un client Defold con terreno distruttibile, un robot che cammina e salta e il missile. Hot-seat, cioè due giocatori sullo stesso telefono. Nessun server.
 2. **Simulazione condivisa** (fatto): la logica in `client/sim/` gira anche nel server Go.
 3. **Online** (fatto, in rete locale): matchmaking 1v1, turni a tempo e il protocollo sopra.
-4. **Tutte le armi dell'MVP**, il vento e il knockback.
+4. **Tutte le armi dell'MVP**, l'equipaggiamento con le statistiche e altre mappe fatte a mano.
 5. **Rifinitura**: grafica, suoni, mappe.
 6. **Più avanti**: campagna contro bot, account e classifiche.

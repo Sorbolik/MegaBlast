@@ -3,12 +3,13 @@
 --
 -- Uso:
 --   local game = require "sim.game"
---   local g = game.new(seed)
+--   local g = game.new(seed, "isole")
 --   g:step({ left = bool, right = bool, jump = bool, fire = { angle = rad, power = 0..1 } })
 --   for _, e in ipairs(g:pop_events()) do ... end
 
 local rng = require "sim.rng"
 local terrain = require "sim.terrain"
+local maps = require "sim.maps"
 
 local M = {}
 M.__index = M
@@ -23,11 +24,18 @@ M.GRAVITY = 600
 -- Robot (la posizione è il centro dei piedi)
 M.ROBOT_HALF_W = 6
 M.ROBOT_H = 16
-M.WALK_STEP = 1          -- pixel per tick (60 px/s)
 M.MAX_CLIMB = 6          -- gradino massimo che il robot sale da solo
-M.JUMP_VX = 110
-M.JUMP_VY = 240
 M.MAX_HP = 100
+
+-- Statistiche base del robot. L'equipaggiamento le modificherà.
+M.DEFAULT_STATS = {
+	walk_speed = 70,     -- pixel al secondo a terra
+	jump_height = 56,    -- altezza massima del salto in pixel
+	air_speed = 90,      -- velocità orizzontale massima in aria
+}
+-- Reattività in aria: l'accelerazione è air_speed^2 / AIR_REACTION, quindi
+-- più un robot è veloce, più in fretta cambia direzione (meno inerzia).
+M.AIR_REACTION = 8
 
 -- Missile
 M.MISSILE_SPEED = 750    -- velocità alla potenza massima
@@ -35,33 +43,47 @@ M.EXPLOSION_R = 30       -- raggio del cratere
 M.DAMAGE_R = 50          -- raggio entro cui si subisce danno
 M.MAX_DAMAGE = 45
 M.KNOCKBACK = 320
-M.WIND_MAX = 120
 
 -- Turni
 M.TURN_TICKS = 15 * 60
+M.RETREAT_TICKS = 3 * 60 -- dopo lo sparo ci si può ancora muovere per ripararsi
 M.SETTLE_TICKS = 30
 M.MAX_SETTLE_TICKS = 5 * 60
 
 local NO_INPUT = {}
 
-function M.new(seed)
+local function make_stats(custom)
+	local st = {}
+	for k, v in pairs(M.DEFAULT_STATS) do st[k] = v end
+	for k, v in pairs(custom or {}) do st[k] = v end
+	st.jump_vy = math.sqrt(2 * M.GRAVITY * st.jump_height)
+	st.air_accel = st.air_speed * st.air_speed / M.AIR_REACTION
+	return st
+end
+
+-- opts.stats = { [1] = { walk_speed = ... }, [2] = { ... } } per cambiare le statistiche
+function M.new(seed, map_id, opts)
+	opts = opts or {}
 	local g = setmetatable({}, M)
+	local map = maps.get(map_id)
+	g.map = map.id
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.WORLD_W / M.CELL, M.WORLD_H / M.CELL, M.CELL)
-	g.terrain:generate(seed)
+	map.build(g.terrain, seed)
 	g.robots = {}
-	local spawns = { 0.2, 0.8 }
 	for i = 1, 2 do
-		local x = spawns[i] * M.WORLD_W
+		local sp = map.spawns[i]
 		g.robots[i] = {
-			id = i, x = x, y = g.terrain:surface_y(x) or M.WORLD_H / 2,
-			vx = 0, vy = 0, grounded = false, facing = i == 1 and 1 or -1,
+			id = i, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
+			vx = 0, vy = 0, grounded = false, knocked = false, facing = i == 1 and 1 or -1,
 			hp = M.MAX_HP, dead = false,
+			stats = make_stats(opts.stats and opts.stats[i]),
 		}
 	end
 	g.events = {}
 	g.tick = 0
 	g.current = 1
+	g.retreat = 0
 	g.winner = nil
 	g:start_turn(1)
 	return g
@@ -87,7 +109,7 @@ function M:robot_collides(x, y)
 	local cy1 = math.floor((y + M.ROBOT_H - 0.01) / c)
 	for cy = cy0, cy1 do
 		for cx = cx0, cx1 do
-			if t:get(cx, cy) == 1 then return true end
+			if t:get(cx, cy) ~= 0 then return true end
 		end
 	end
 	return false
@@ -119,15 +141,18 @@ function M:update_robot(rb, input)
 		return
 	end
 
+	local st = rb.stats
+	local dir = (input.right and 1 or 0) - (input.left and 1 or 0)
+	if dir ~= 0 then rb.facing = dir end
+
 	if rb.grounded then
-		local dir = (input.right and 1 or 0) - (input.left and 1 or 0)
 		if dir ~= 0 then
-			rb.facing = dir
-			walk(self, rb, dir * M.WALK_STEP)
+			walk(self, rb, dir * st.walk_speed * M.DT)
 		end
 		if input.jump then
-			rb.vx = rb.facing * M.JUMP_VX
-			rb.vy = M.JUMP_VY
+			-- salto libero: verso l'alto, oppure nella direzione in cui si sta andando
+			rb.vx = dir * st.walk_speed
+			rb.vy = st.jump_vy
 			rb.grounded = false
 		elseif not self:robot_collides(rb.x, rb.y - 1) then
 			-- In discesa resta attaccato al terreno, altrimenti inizia a cadere
@@ -147,22 +172,32 @@ function M:update_robot(rb, input)
 	end
 
 	if not rb.grounded then
+		-- controllo in aria (non mentre si viene sbalzati da un'esplosione)
+		if not rb.knocked then
+			local dv = dir * st.air_speed - rb.vx
+			local max_dv = st.air_accel * M.DT
+			rb.vx = rb.vx + math.max(-max_dv, math.min(max_dv, dv))
+		end
 		rb.vy = rb.vy - M.GRAVITY * M.DT
 		local mx, my = rb.vx * M.DT, rb.vy * M.DT
 		local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
 		local sx, sy = mx / steps, my / steps
 		for _ = 1, steps do
 			if sx ~= 0 then
-				if self:robot_collides(rb.x + sx, rb.y) then
-					rb.vx, sx = 0, 0
-				else
+				if not self:robot_collides(rb.x + sx, rb.y) then
 					rb.x = rb.x + sx
+				elseif not self:robot_collides(rb.x + sx, rb.y + 3) then
+					-- piccolo gradino in aria: lo scavalca invece di incastrarsi
+					rb.x, rb.y = rb.x + sx, rb.y + 3
+				else
+					rb.vx, sx = 0, 0
 				end
 			end
 			if sy ~= 0 then
 				if self:robot_collides(rb.x, rb.y + sy) then
 					if sy < 0 then
 						rb.grounded = true
+						rb.knocked = false
 						rb.vx = 0
 					end
 					rb.vy, sy = 0, 0
@@ -197,7 +232,7 @@ function M:fire(angle, power)
 	self:emit({ type = "fire", robot = rb.id })
 end
 
--- Punti della traiettoria prevista (senza vento), per la linea di mira.
+-- Punti della traiettoria prevista, per la linea di mira.
 function M:preview(angle, power, count, every)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
@@ -237,6 +272,7 @@ function M:explode(x, y)
 				rb.vx = dx / d * M.KNOCKBACK * f
 				rb.vy = dy / d * M.KNOCKBACK * f + 120 * f
 				rb.grounded = false
+				rb.knocked = true
 				if rb.hp <= 0 then self:kill(rb, "damage") end
 			end
 		end
@@ -246,7 +282,6 @@ end
 function M:update_projectile()
 	local p = self.projectile
 	p.age = p.age + 1
-	p.vx = p.vx + self.wind * M.DT
 	p.vy = p.vy - M.GRAVITY * M.DT
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
@@ -279,8 +314,8 @@ function M:start_turn(player)
 	self.current = player
 	self.phase = "aim"
 	self.timer = M.TURN_TICKS
-	self.wind = math.floor(self.rng:range(-M.WIND_MAX, M.WIND_MAX))
-	self:emit({ type = "turn", robot = player, wind = self.wind })
+	self.retreat = 0
+	self:emit({ type = "turn", robot = player })
 end
 
 function M:end_turn()
@@ -304,10 +339,13 @@ function M:step(input)
 	input = input or NO_INPUT
 	self.tick = self.tick + 1
 
+	-- il robot di turno si muove mentre mira e durante la ritirata dopo lo sparo
+	local can_move = self.phase == "aim" or self.retreat > 0
 	for i, rb in ipairs(self.robots) do
-		local active = i == self.current and self.phase == "aim"
+		local active = i == self.current and can_move
 		self:update_robot(rb, active and input or NO_INPUT)
 	end
+	if self.retreat > 0 then self.retreat = self.retreat - 1 end
 
 	if self.phase == "aim" then
 		self.timer = self.timer - 1
@@ -316,6 +354,7 @@ function M:step(input)
 		elseif input.fire then
 			self:fire(input.fire.angle, input.fire.power)
 			self.phase = "flying"
+			self.retreat = M.RETREAT_TICKS
 		elseif self.timer <= 0 then
 			self.phase, self.settle = "settle", 0
 		end
@@ -330,7 +369,7 @@ function M:step(input)
 		for _, rb in ipairs(self.robots) do
 			if not rb.dead and not rb.grounded then still = false end
 		end
-		self.settle = still and self.settle + 1 or 0
+		self.settle = (still and self.retreat == 0) and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then
 			self.settle_total = 0
 			self:end_turn()
