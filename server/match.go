@@ -9,7 +9,7 @@ import (
 
 const (
 	tickRate      = 60
-	snapshotEvery = 3 // 20 stati al secondo
+	snapshotEvery = 2 // 30 stati al secondo, come SNAPSHOT_TICKS in client/sim/game.lua
 )
 
 // Messaggio da un client: {"t":"in","l":true,"r":false} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7}

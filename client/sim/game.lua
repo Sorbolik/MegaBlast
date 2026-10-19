@@ -50,6 +50,9 @@ M.RETREAT_TICKS = 3 * 60 -- dopo lo sparo ci si può ancora muovere per riparars
 M.SETTLE_TICKS = 30
 M.MAX_SETTLE_TICKS = 5 * 60
 
+-- Online il server manda uno stato ogni SNAPSHOT_TICKS tick (30 al secondo)
+M.SNAPSHOT_TICKS = 2
+
 local NO_INPUT = {}
 
 local function make_stats(custom)
