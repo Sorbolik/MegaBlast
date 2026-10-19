@@ -4,6 +4,7 @@
 -- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
+local maps = require "sim.maps"
 
 local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
@@ -76,43 +77,82 @@ end
 
 -- Terreno -----------------------------------------------------------------------
 
-local function build_row(t, cy, buf)
-	for cx = 0, TW - 1 do
-		local v = t:get(cx, cy)
-		if v == 2 then
-			if t:get(cx, cy + 1) ~= 2 or t:get(cx, cy - 1) ~= 2 then
-				buf[cx + 1] = STEEL_EDGE
-			else
-				buf[cx + 1] = STEEL[math.floor((cx + cy) / 3) % 2 + 1]
+-- Il terreno è diviso in riquadri, ognuno con la sua piccola texture: dopo
+-- un'esplosione ricalcoliamo solo le celle del cratere e rimandiamo alla GPU
+-- solo i riquadri toccati (pochi KB invece di quasi 1 MB).
+local TILE_W, TILE_H = 80, 60
+local TILES_X, TILES_Y = TW / TILE_W, TH / TILE_H
+
+-- Colore della cella (cx, cy), già pronto come byte RGBA
+local function cell_color(data, cx, cy)
+	local i = cy * TW + cx + 1
+	local v = data[i]
+	if v == 0 then return EMPTY end
+	local up = cy + 1 < TH and data[i + TW] or 0
+	if v == 2 then
+		local down = cy > 0 and data[i - TW] or 0
+		if up ~= 2 or down ~= 2 then return STEEL_EDGE end
+		return STEEL[math.floor((cx + cy) / 3) % 2 + 1]
+	end
+	local up2 = cy + 2 < TH and data[i + 2 * TW] or 0
+	if up == 0 or up2 == 0 then return GRASS end
+	return DIRT[(cx * 7 + cy * 13 + math.floor(cx / 5) * 3) % 4 + 1]
+end
+
+-- Posizione della cella dentro i pixel del suo riquadro
+local function pixel_index(cx, cy)
+	local lx, ly = cx % TILE_W, cy % TILE_H
+	if FLIP_TEXTURE then ly = TILE_H - 1 - ly end
+	return ly * TILE_W + lx + 1
+end
+
+local function upload_tile(self, tile)
+	-- un riquadro tutto cielo non si disegna: meno lavoro per la GPU
+	local empty = true
+	for _, c in ipairs(tile.px) do
+		if c ~= EMPTY then empty = false; break end
+	end
+	gui.set_enabled(tile.node, not empty)
+	if empty and tile.created then return end
+	local data = table.concat(tile.px)
+	if tile.created then
+		gui.set_texture_data(tile.id, TILE_W, TILE_H, "rgba", data)
+	else
+		assert(gui.new_texture(tile.id, TILE_W, TILE_H, "rgba", data, false))
+		gui.set_texture(tile.node, tile.id)
+		tile.created = true
+	end
+end
+
+local function draw_terrain(self)
+	local data = self.g.terrain.data
+	for _, tile in ipairs(self.tiles) do
+		local px = tile.px
+		for cy = tile.ty * TILE_H, tile.ty * TILE_H + TILE_H - 1 do
+			for cx = tile.tx * TILE_W, tile.tx * TILE_W + TILE_W - 1 do
+				px[pixel_index(cx, cy)] = cell_color(data, cx, cy)
 			end
-		elseif v == 1 then
-			if t:get(cx, cy + 1) == 0 or t:get(cx, cy + 2) == 0 then
-				buf[cx + 1] = GRASS
-			else
-				buf[cx + 1] = DIRT[(cx * 7 + cy * 13 + math.floor(cx / 5) * 3) % 4 + 1]
-			end
-		else
-			buf[cx + 1] = EMPTY
+		end
+		upload_tile(self, tile)
+	end
+end
+
+-- Ridisegna le celle nel rettangolo dato (coordinate di cella) e carica i riquadri toccati
+local function redraw_cells(self, cx0, cy0, cx1, cy1)
+	cx0, cy0 = math.max(0, cx0), math.max(0, cy0)
+	cx1, cy1 = math.min(TW - 1, cx1), math.min(TH - 1, cy1)
+	local data = self.g.terrain.data
+	for cy = cy0, cy1 do
+		local row = math.floor(cy / TILE_H) * TILES_X
+		for cx = cx0, cx1 do
+			self.tiles[row + math.floor(cx / TILE_W) + 1].px[pixel_index(cx, cy)] = cell_color(data, cx, cy)
 		end
 	end
-	return table.concat(buf)
-end
-
-local function terrain_data(self)
-	if FLIP_TEXTURE then
-		local rev = {}
-		for i = TH, 1, -1 do rev[#rev + 1] = self.rows[i] end
-		return table.concat(rev)
+	for ty = math.floor(cy0 / TILE_H), math.floor(cy1 / TILE_H) do
+		for tx = math.floor(cx0 / TILE_W), math.floor(cx1 / TILE_W) do
+			upload_tile(self, self.tiles[ty * TILES_X + tx + 1])
+		end
 	end
-	return table.concat(self.rows)
-end
-
-local function redraw_rows(self, cy0, cy1)
-	local t = self.g.terrain
-	for cy = math.max(0, cy0), math.min(TH - 1, cy1) do
-		self.rows[cy + 1] = build_row(t, cy, self.row_buf)
-	end
-	gui.set_texture_data("terrain", TW, TH, "rgba", terrain_data(self))
 end
 
 -- Messaggi e menu -------------------------------------------------------------
@@ -148,26 +188,69 @@ local function show_menu(self)
 	show_message(self, "", true)
 end
 
+-- Fluidità -------------------------------------------------------------------
+-- La simulazione avanza a passi fissi (60 al secondo in locale, uno stato ogni
+-- SNAPSHOT_TICKS online), mentre lo schermo può andare a 60, 90 o 120 Hz.
+-- Disegniamo sempre una posizione interpolata tra la posa precedente (a) e
+-- l'ultima (b), così il movimento non scatta.
+
+-- Le pose sono tabelle riusate: niente allocazioni a ogni frame, quindi
+-- niente pause del garbage collector.
+local function new_pose()
+	return { r = { { x = 0, y = 0 }, { x = 0, y = 0 } }, p = { x = 0, y = 0 }, has_p = false }
+end
+
+local function capture(pose, g)
+	for i, rb in ipairs(g.robots) do
+		local r = pose.r[i]
+		r.x, r.y, r.g = rb.x, rb.y, rb.grounded
+	end
+	pose.has_p = g.projectile ~= nil
+	if pose.has_p then pose.p.x, pose.p.y = g.projectile.x, g.projectile.y end
+end
+
+local function pose_k(self)
+	return math.max(0, math.min(1, self.pose_t / self.pose_dt))
+end
+
+-- Porta la posa a verso b della frazione k (a diventa ciò che è sullo schermo)
+local function advance_pose(a, b, k)
+	for i, rb in ipairs(b.r) do
+		local ra = a.r[i]
+		ra.x, ra.y, ra.g = ra.x + (rb.x - ra.x) * k, ra.y + (rb.y - ra.y) * k, rb.g
+	end
+	if b.has_p then
+		if not a.has_p then a.p.x, a.p.y = b.p.x, b.p.y end
+		a.p.x, a.p.y = a.p.x + (b.p.x - a.p.x) * k, a.p.y + (b.p.y - a.p.y) * k
+	end
+	a.has_p = b.has_p
+end
+
+local function reset_pose(self)
+	self.pose_a = self.pose_a or new_pose()
+	self.pose_b = self.pose_b or new_pose()
+	capture(self.pose_a, self.g)
+	capture(self.pose_b, self.g)
+	self.pose_t = 0
+end
+
 -- Partita -----------------------------------------------------------------------
 
 local function new_match(self, seed, map)
 	self.g = game.new(seed, map)
-	self.rows = {}
-	for cy = 0, TH - 1 do
-		self.rows[cy + 1] = build_row(self.g.terrain, cy, self.row_buf)
-	end
-	if self.terrain_texture then
-		gui.set_texture_data("terrain", TW, TH, "rgba", terrain_data(self))
-	else
-		assert(gui.new_texture("terrain", TW, TH, "rgba", terrain_data(self), false))
-		gui.set_texture(self.terrain, "terrain")
-		self.terrain_texture = true
+	-- se sullo schermo c'è già questa mappa intatta (es. quella del menu) non la ridisegnamo
+	local key = self.g.map .. (maps.get(self.g.map).seeded and seed or "")
+	if key ~= self.drawn_map then
+		draw_terrain(self)
+		self.drawn_map = key
 	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
 		gui.set_enabled(self.robots[i].body, true)
 		self.view[i] = { x = rb.x, y = rb.y }
 	end
+	self.pose_dt = game.DT
+	reset_pose(self)
 	self.aiming = false
 	self.acc = 0
 	self.sent = {}
@@ -190,8 +273,11 @@ local function handle_event(self, e)
 			-- online il terreno lo scaviamo noi, nello stesso punto del server
 			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
 		end
-		-- l'erba dipende dalle 2 celle sopra, quindi ridisegniamo anche quelle
-		redraw_rows(self, row_min - 2, row_max + 2)
+		-- l'erba dipende dalle 2 celle sopra e l'acciaio da quelle vicine,
+		-- quindi ridisegniamo un margine di 2 celle attorno al cratere
+		self.drawn_map = nil
+		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 2, row_min - 2,
+			math.floor((e.x + e.r) / CELL) + 2, row_max + 2)
 		explosion_flash(e.x, e.y, e.r)
 	elseif e.type == "turn" then
 		if self.mode == "online" then
@@ -229,6 +315,11 @@ local function apply_state(self, s)
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y } or nil
+	-- si riparte da dove siamo sullo schermo verso il nuovo stato
+	advance_pose(self.pose_a, self.pose_b, pose_k(self))
+	capture(self.pose_b, g)
+	self.pose_t = 0
+	self.pose_dt = game.SNAPSHOT_TICKS * game.DT
 end
 
 local function on_server_message(self, m)
@@ -303,28 +394,56 @@ local function aim_from(self, x, y)
 	self.aim_power = math.max(0.1, math.min(1, self.aim_dist / AIM_RANGE))
 end
 
+-- Un solo vettore riusato per tutte le posizioni del frame
+local POS = vmath.vector3(0, 0, 0)
+local function set_pos(node, x, y)
+	POS.x, POS.y = x, y
+	gui.set_position(node, POS)
+end
+
+local function set_hud(self, text)
+	if self.hud_text ~= text then
+		gui.set_text(self.hud, text)
+		self.hud_text = text
+	end
+end
+
 local function render(self, dt)
 	local g = self.g
-	local smooth = self.mode == "local" and 1 or math.min(1, dt * 15)
+	local k, pa, pb = pose_k(self), self.pose_a, self.pose_b
 	for i, rb in ipairs(g.robots) do
-		local v, r = self.view[i], self.robots[i]
-		v.x = v.x + (rb.x - v.x) * smooth
-		v.y = v.y + (rb.y - v.y) * smooth
-		gui.set_position(r.body, vmath.vector3(v.x, v.y + game.ROBOT_H / 2, 0))
-		gui.set_position(r.eye, vmath.vector3(rb.facing * 3, 3, 0))
-		gui.set_text(r.hp, tostring(math.max(0, rb.hp)))
+		local v, r, ra, rb2 = self.view[i], self.robots[i], pa.r[i], pb.r[i]
+		v.x = ra.x + (rb2.x - ra.x) * k
+		-- a terra il robot sale e scende i gradini del terreno a scatti di 2 pixel:
+		-- li ammorbidiamo solo nel disegno, la posizione vera non cambia
+		local ty = ra.y + (rb2.y - ra.y) * k
+		local dy = ty - v.y
+		if rb2.g and math.abs(dy) <= game.MAX_CLIMB + 2 then
+			v.y = v.y + dy * math.min(1, dt * 25)
+		else
+			v.y = ty
+		end
+		set_pos(r.body, v.x, v.y + game.ROBOT_H / 2)
+		set_pos(r.eye, rb.facing * 3, 3)
+		local hp = math.max(0, rb.hp)
+		if v.hp ~= hp then
+			gui.set_text(r.hp, tostring(hp))
+			v.hp = hp
+		end
 	end
 
-	local p = g.projectile
-	gui.set_enabled(self.projectile, p ~= nil)
-	if p then gui.set_position(self.projectile, vmath.vector3(p.x, p.y, 0)) end
+	gui.set_enabled(self.projectile, pb.has_p)
+	if pb.has_p then
+		local p0 = pa.has_p and pa.p or pb.p
+		set_pos(self.projectile, p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k)
+	end
 
 	local show_aim = self.aiming and g.phase == "aim" and my_turn(self)
 	if show_aim then
-		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4)
+		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts)
 		for i, n in ipairs(self.dots) do
 			gui.set_enabled(n, true)
-			gui.set_position(n, vmath.vector3(pts[i].x, pts[i].y, 0))
+			set_pos(n, pts[i].x, pts[i].y)
 		end
 	else
 		for _, n in ipairs(self.dots) do gui.set_enabled(n, false) end
@@ -334,18 +453,18 @@ local function render(self, dt)
 	local who = NAMES[g.current]
 	if self.mode == "online" then who = g.current == self.me and "Tu" or "Avversario" end
 	if g.phase == "aim" then
-		gui.set_text(self.hud, string.format("%s   %ds", who, secs))
+		set_hud(self, string.format("%s   %ds", who, secs))
 	elseif g.retreat > 0 then
-		gui.set_text(self.hud, string.format("%s   riparati! %ds", who, math.ceil(g.retreat / 60)))
+		set_hud(self, string.format("%s   riparati! %ds", who, math.ceil(g.retreat / 60)))
 	elseif g.phase ~= "over" then
-		gui.set_text(self.hud, who)
+		set_hud(self, who)
 	end
 
 	-- freccia sopra il robot di turno
 	local cur = current_robot(self)
 	local v = self.view[g.current]
 	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
-	gui.set_position(self.arrow, vmath.vector3(v.x, v.y + game.ROBOT_H + 34, 0))
+	set_pos(self.arrow, v.x, v.y + game.ROBOT_H + 34)
 	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
 end
 
@@ -353,11 +472,20 @@ end
 
 function init(self)
 	msg.post(".", "acquire_input_focus")
-	self.row_buf = {}
 	self.keys = {}
+	self.preview_pts = {}
 
 	box(W / 2, H / 2, W, H, SKY)
-	self.terrain = box(W / 2, H / 2, W, H, WHITE)
+	self.tiles = {}
+	for ty = 0, TILES_Y - 1 do
+		for tx = 0, TILES_X - 1 do
+			local w, h = TILE_W * CELL, TILE_H * CELL
+			self.tiles[#self.tiles + 1] = {
+				tx = tx, ty = ty, px = {}, id = "terrain" .. tx .. "_" .. ty,
+				node = box(tx * w + w / 2, ty * h + h / 2, w, h, WHITE),
+			}
+		end
+	end
 
 	self.robots = {}
 	for i = 1, 2 do
@@ -417,11 +545,15 @@ function update(self, dt)
 			}
 			self.jump_pressed = false
 			self.fire = nil
+			capture(self.pose_a, self.g)
 			self.g:step(input)
 			for _, e in ipairs(self.g:pop_events()) do handle_event(self, e) end
 			self.acc = self.acc - game.DT
+			capture(self.pose_b, self.g)
 		end
+		self.pose_t, self.pose_dt = self.acc, game.DT
 	elseif self.mode == "online" then
+		self.pose_t = self.pose_t + dt
 		-- mandiamo al server solo i cambiamenti, e solo quando tocca a noi
 		if my_turn(self) and (self.g.phase == "aim" or self.g.retreat > 0) then
 			local l = self.keys.left or self.touch_mode == "left" or false
