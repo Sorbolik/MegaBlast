@@ -109,7 +109,7 @@ end
 
 local function show_message(self, text, keep)
 	gui.set_text(self.message, text)
-	gui.cancel_animation(self.message, "color.w")
+	gui.cancel_animations(self.message, "color.w")
 	gui.set_color(self.message, WHITE)
 	if not keep then
 		gui.animate(self.message, "color.w", 0, gui.EASING_INCUBIC, 0.6, 1.2)
