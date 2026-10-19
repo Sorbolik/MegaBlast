@@ -8,6 +8,8 @@ Progetto appena avviato: qui verranno aggiunti codice, asset e documentazione de
 
 ## Struttura prevista
 
-- `src/` — codice sorgente del gioco
+- `client/` — client Defold (Lua)
+- `server/` — server Go
+- `sim/` — simulazione condivisa in Lua puro
 - `assets/` — grafica, suoni e altri asset
-- `docs/` — design del gioco e note di sviluppo
+- `docs/` — [design e architettura](docs/design.md), [setup del PC](docs/setup.md)
