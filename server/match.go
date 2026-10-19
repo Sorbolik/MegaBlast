@@ -32,15 +32,19 @@ type held struct {
 	angle, power            float64
 }
 
+// Mappa usata per le partite online (vedi client/sim/maps.lua).
+const defaultMap = "isole"
+
 // Match è una partita 1 contro 1: una goroutine che fa girare la simulazione.
 type Match struct {
 	players [2]*Player
 	in      chan playerMsg
 	seed    int64
+	mapID   string
 }
 
 func NewMatch(a, b *Player, seed int64) *Match {
-	m := &Match{players: [2]*Player{a, b}, in: make(chan playerMsg, 64), seed: seed}
+	m := &Match{players: [2]*Player{a, b}, in: make(chan playerMsg, 64), seed: seed, mapID: defaultMap}
 	a.match, a.index = m, 1
 	b.match, b.index = m, 2
 	return m
@@ -53,7 +57,7 @@ func (m *Match) broadcast(msg string) {
 }
 
 func (m *Match) Run() {
-	sim, err := NewSim(m.seed)
+	sim, err := NewSim(m.seed, m.mapID)
 	if err != nil {
 		log.Printf("errore simulazione: %v", err)
 		m.broadcast(`{"t":"error"}`)
@@ -62,7 +66,7 @@ func (m *Match) Run() {
 	defer sim.Close()
 
 	for _, p := range m.players {
-		p.Send(fmt.Sprintf(`{"t":"start","seed":%d,"you":%d}`, m.seed, p.index))
+		p.Send(fmt.Sprintf(`{"t":"start","seed":%d,"map":%q,"you":%d}`, m.seed, m.mapID, p.index))
 	}
 
 	var inputs [3]held

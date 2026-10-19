@@ -33,6 +33,9 @@ local DIRT = {
 	string.char(122, 86, 54, 255), string.char(112, 78, 48, 255),
 	string.char(130, 92, 60, 255), string.char(106, 74, 46, 255),
 }
+-- Acciaio (tubi indistruttibili): grigio a strisce
+local STEEL = { string.char(150, 156, 166, 255), string.char(118, 124, 134, 255) }
+local STEEL_EDGE = string.char(70, 74, 82, 255)
 
 local AIM_DOTS = 12
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
@@ -75,7 +78,14 @@ end
 
 local function build_row(t, cy, buf)
 	for cx = 0, TW - 1 do
-		if t:get(cx, cy) == 1 then
+		local v = t:get(cx, cy)
+		if v == 2 then
+			if t:get(cx, cy + 1) ~= 2 or t:get(cx, cy - 1) ~= 2 then
+				buf[cx + 1] = STEEL_EDGE
+			else
+				buf[cx + 1] = STEEL[math.floor((cx + cy) / 3) % 2 + 1]
+			end
+		elseif v == 1 then
 			if t:get(cx, cy + 1) == 0 or t:get(cx, cy + 2) == 0 then
 				buf[cx + 1] = GRASS
 			else
@@ -140,8 +150,8 @@ end
 
 -- Partita -----------------------------------------------------------------------
 
-local function new_match(self, seed)
-	self.g = game.new(seed)
+local function new_match(self, seed, map)
+	self.g = game.new(seed, map)
 	self.rows = {}
 	for cy = 0, TH - 1 do
 		self.rows[cy + 1] = build_row(self.g.terrain, cy, self.row_buf)
@@ -213,7 +223,7 @@ end
 
 local function apply_state(self, s)
 	local g = self.g
-	g.phase, g.current, g.timer, g.wind = s.phase, s.cur, s.timer, s.wind
+	g.phase, g.current, g.timer, g.retreat = s.phase, s.cur, s.timer, s.retreat or 0
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
@@ -225,7 +235,7 @@ local function on_server_message(self, m)
 	if m.t == "wait" then
 		show_message(self, "In attesa di un avversario...", true)
 	elseif m.t == "start" then
-		new_match(self, m.seed)
+		new_match(self, m.seed, m.map)
 		self.g:pop_events()
 		self.me = m.you
 		self.mode = "online"
@@ -320,13 +330,13 @@ local function render(self, dt)
 		for _, n in ipairs(self.dots) do gui.set_enabled(n, false) end
 	end
 
-	local wind = g.wind
-	local arrows = string.rep(wind < 0 and "<" or ">", math.ceil(math.abs(wind) / 40))
 	local secs = math.max(0, math.ceil(g.timer / 60))
 	local who = NAMES[g.current]
 	if self.mode == "online" then who = g.current == self.me and "Tu" or "Avversario" end
 	if g.phase == "aim" then
-		gui.set_text(self.hud, string.format("%s   %ds   vento %s %d", who, secs, arrows, math.abs(wind)))
+		gui.set_text(self.hud, string.format("%s   %ds", who, secs))
+	elseif g.retreat > 0 then
+		gui.set_text(self.hud, string.format("%s   riparati! %ds", who, math.ceil(g.retreat / 60)))
 	elseif g.phase ~= "over" then
 		gui.set_text(self.hud, who)
 	end
@@ -413,7 +423,7 @@ function update(self, dt)
 		end
 	elseif self.mode == "online" then
 		-- mandiamo al server solo i cambiamenti, e solo quando tocca a noi
-		if my_turn(self) and self.g.phase == "aim" then
+		if my_turn(self) and (self.g.phase == "aim" or self.g.retreat > 0) then
 			local l = self.keys.left or self.touch_mode == "left" or false
 			local r = self.keys.right or self.touch_mode == "right" or false
 			if l ~= self.sent.l or r ~= self.sent.r then

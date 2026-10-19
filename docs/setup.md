@@ -37,10 +37,11 @@ Defold si avvia come un normale programma e non richiede configurazione.
 ### Comandi
 
 - **Muoversi**: frecce o A/D, oppure i pulsanti `<` e `>` in basso a sinistra.
-- **Saltare**: freccia su, W o spazio, oppure il pulsante SALTA.
-- **Sparare**: tieni premuto il mouse o il dito in un punto qualsiasi della mappa. La direzione dal robot al dito è la mira, la distanza è la potenza, e i puntini mostrano la traiettoria (senza vento). Rilascia per sparare. Se rilasci sopra il robot, lo sparo viene annullato.
+- **Saltare**: freccia su, W o spazio, oppure il pulsante SALTA. Senza direzione il salto va dritto in alto; in aria puoi spostarti a destra e a sinistra.
+- **Sparare**: tieni premuto il mouse o il dito in un punto qualsiasi della mappa. La direzione dal robot al dito è la mira, la distanza è la potenza, e i puntini mostrano la traiettoria. Rilascia per sparare. Se rilasci sopra il robot, lo sparo viene annullato.
+- Dopo lo sparo hai 3 secondi per muoverti e metterti al riparo.
 - I due giocatori si alternano sullo stesso dispositivo, con 15 secondi per turno.
-- A fine partita tocca lo schermo per ricominciare con una mappa nuova.
+- A fine partita tocca lo schermo per tornare al menu.
 
 ### Test della simulazione
 

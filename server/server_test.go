@@ -12,7 +12,7 @@ import (
 )
 
 func TestSimFromEmbeddedLua(t *testing.T) {
-	sim, err := NewSim(42)
+	sim, err := NewSim(42, "isole")
 	if err != nil {
 		t.Fatal(err)
 	}

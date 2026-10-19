@@ -4,8 +4,8 @@ local game = require "sim.game"
 
 local N = {}
 
-function N.new(seed)
-	local g = game.new(seed)
+function N.new(seed, map)
+	local g = game.new(seed, map)
 	g:pop_events()
 	return g
 end
@@ -51,8 +51,8 @@ function N.snapshot(g)
 	end
 	local p = "null"
 	if g.projectile then p = encode({ x = g.projectile.x, y = g.projectile.y }) end
-	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"wind":%d,"r":[%s],"p":%s}',
-		g.phase, g.current, g.timer, g.wind, table.concat(robots, ","), p)
+	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"r":[%s],"p":%s}',
+		g.phase, g.current, g.timer, g.retreat, table.concat(robots, ","), p)
 end
 
 -- Eventi accumulati dall'ultimo tick, uno per riga.
