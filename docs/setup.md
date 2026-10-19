@@ -77,7 +77,7 @@ Il server gira sul tuo PC e i telefoni si collegano a lui tramite il Wi-Fi di ca
 4. Crea l'APK (vedi il punto 4) e installalo su due telefoni collegati allo stesso Wi-Fi. In alternativa usa un telefono e il gioco lanciato dal PC con Ctrl+B.
 5. Su entrambi premi **ONLINE**: il primo resta in attesa e appena arriva il secondo la partita parte.
 
-La prima volta che compili, Defold scarica l'estensione WebSocket indicata in `game.project`. Se l'editor te lo chiede, usa **Project → Fetch Libraries**.
+**Prima volta**: per il gioco online serve l'estensione WebSocket indicata in `game.project`. In Defold usa **Project → Fetch Libraries** e poi Ctrl+B. Il primo avvio è più lento, perché Defold compila il motore con l'estensione sul suo build server e serve internet.
 
 ### Test del server
 

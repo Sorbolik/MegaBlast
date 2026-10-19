@@ -261,6 +261,12 @@ end
 
 local function start_online(self)
 	gui.set_enabled(self.menu, false)
+	if not websocket then
+		-- l'estensione si scarica con Project -> Fetch Libraries
+		self.mode = "ended"
+		show_message(self, "Manca l'estensione WebSocket\nIn Defold: Project > Fetch Libraries\nTocca per tornare al menu", true)
+		return
+	end
 	self.mode = "connecting"
 	show_message(self, "Connessione a\n" .. server_url(), true)
 	self.conn = websocket.connect(server_url(), { timeout = 5000 }, on_socket)
