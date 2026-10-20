@@ -7,6 +7,7 @@
 --   local scoria = require "battaglia.scoria"
 --   local s = scoria.new(colore)          -- crea i nodi
 --   scoria.new(colore, "scoria_hd")       -- con un altro atlante (la home usa i master)
+--   scoria.new(colore, nil, k)            -- k volte più grande di SCALE
 --   scoria.update(s, dt, stato)           -- a ogni frame, nessuna allocazione
 
 local M = {}
@@ -100,13 +101,13 @@ local function glow(anim, parent, x, y, w, h, color)
 	return n
 end
 
-function M.new(color, atlas)
+function M.new(color, atlas, k)
 	ATLAS = atlas or "battaglia"
-	local s = { base = {}, color = color }
+	local s = { base = {}, color = color, scale = M.SCALE * (k or 1) }
 	s.root = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(s.root, false)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
-	gui.set_scale(s.root, vmath.vector3(M.SCALE, M.SCALE, 1))
+	gui.set_scale(s.root, vmath.vector3(s.scale, s.scale, 1))
 
 	-- ordine di disegno di scoria_rig.json
 	joint(s, "braccio_dietro")
@@ -219,7 +220,7 @@ function M.update(s, dt, st)
 
 	-- girarsi: l'immagine si specchia subito
 	s.face = st.facing
-	V.x, V.y, V.z = M.SCALE * s.face, M.SCALE, 1
+	V.x, V.y, V.z = s.scale * s.face, s.scale, 1
 	gui.set_scale(s.root, V)
 	pos(s.root, st.x, st.y)
 

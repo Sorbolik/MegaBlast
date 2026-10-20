@@ -48,8 +48,6 @@ local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector
 -- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante)
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
--- altezza della testa della Scoria disegnata, per vita e freccia
-local HEAD = 130 * scoria.SCALE
 local AIM_DOTS = 12
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
 -- riportare il dito sul robot e lasciarlo lì annulla il colpo
@@ -103,6 +101,13 @@ local function config_string(key, default)
 end
 local FISICA = config_string("megablast.fisica", "")
 if FISICA ~= "" then game.use_physics(FISICA) end
+
+-- Scorie, proiettili e casse si disegnano in proporzione al robot della
+-- simulazione: 16 pixel nel profilo megablast, 45 in quello di Blastron
+local K = game.ROBOT_H / 16
+-- altezza della testa della Scoria disegnata, per vita e freccia
+local HEAD = 130 * scoria.SCALE * K
+local VK = vmath.vector3(K, K, 1)
 
 -- Comandi sul telefono: due levette come in Blastron (HUD del tablet, portato
 -- da 1024 x 768 a 1280 x 720), la logica è in battaglia/levette.lua. La base
@@ -388,6 +393,7 @@ local function new_match(self, seed, map, opts)
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
 		scoria.set_enabled(self.robots[i].rig, true)
+		gui.set_enabled(self.robots[i].halo, true)
 		gui.set_enabled(self.robots[i].hp, true)
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, hit = 0 }
 	end
@@ -434,9 +440,9 @@ local function shock(self, x, y)
 	gui.set_enabled(n, true)
 	gui.cancel_animations(n)
 	gui.set_position(n, vmath.vector3(x, y, 0))
-	gui.set_size(n, vmath.vector3(20, 20, 0))
+	gui.set_size(n, vmath.vector3(20 * K, 20 * K, 0))
 	gui.set_color(n, BRACE)
-	gui.animate(n, "size", vmath.vector3(90, 90, 0), gui.EASING_OUTQUAD, 0.35)
+	gui.animate(n, "size", vmath.vector3(90 * K, 90 * K, 0), gui.EASING_OUTQUAD, 0.35)
 	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.35, 0, hide_node)
 end
 
@@ -484,6 +490,7 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "death" then
 		scoria.set_enabled(self.robots[e.robot].rig, false)
+		gui.set_enabled(self.robots[e.robot].halo, false)
 		gui.set_enabled(self.robots[e.robot].hp, false)
 	elseif e.type == "over" then
 		self.winner = e.winner
@@ -914,6 +921,7 @@ local function render(self, dt)
 		scoria.set_weapon(r.rig, weapon)
 		st.expression = expression(self, i, rb, v, aiming)
 		scoria.update(r.rig, dt, st)
+		set_pos(r.halo, v.x, v.y + game.ROBOT_H * 0.45)
 	end
 
 	-- Uovo di Fiamma: rotola mentre vola, sopra i secondi che mancano allo scoppio
@@ -1085,21 +1093,24 @@ function init(self)
 
 	self.robots = {}
 	for i = 1, 2 do
-		local r = { rig = scoria.new(PLAYER_COLORS[i]), st = {} }
+		-- alone del colore della squadra dietro la Scoria, perché stacchi dal terreno
+		local c = PLAYER_COLORS[i]
+		local halo = glow(0, 0, game.ROBOT_H * 2.4, vmath.vector4(c.x, c.y, c.z, 0.3))
+		local r = { rig = scoria.new(c, nil, K), st = {}, halo = halo }
 		self.robots[i] = r
 	end
 
 	-- puntini della traiettoria: piccoli bagliori bianchi
 	self.dots = {}
 	for i = 1, AIM_DOTS do
-		local n = glow(0, 0, 14 - i * 0.5, vmath.vector4(1, 1, 1, 1 - i / (AIM_DOTS + 4)))
+		local n = glow(0, 0, (14 - i * 0.5) * math.sqrt(K), vmath.vector4(1, 1, 1, 1 - i / (AIM_DOTS + 4)))
 		self.dots[i] = n
 	end
 
 	-- missile: scia, alone col colore della squadra e nocciolo bianco
 	self.trail, self.trail_pos, self.trail_i, self.trail_n = {}, {}, 0, 0
 	for i = 1, 8 do
-		self.trail[i] = glow(0, 0, 16 - i * 1.4, vmath.vector4(1, 0.6, 0.3, 0.55 - i * 0.06))
+		self.trail[i] = glow(0, 0, (16 - i * 1.4) * K, vmath.vector4(1, 0.6, 0.3, 0.55 - i * 0.06))
 		self.trail_pos[i] = { x = 0, y = 0 }
 	end
 	self.projectile = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
@@ -1108,6 +1119,7 @@ function init(self)
 	self.projectile_glow = glow(0, 0, 34, WHITE)
 	gui.set_parent(self.projectile_glow, self.projectile)
 	gui.set_parent(glow(0, 0, 12, WHITE), self.projectile)
+	gui.set_scale(self.projectile, VK)
 
 	-- globo del teletrasporto (Passo d'Ombra)
 	self.orbs = {}
@@ -1123,6 +1135,7 @@ function init(self)
 		gui.set_blend_mode(light, gui.BLEND_ADD)
 		gui.set_parent(light, root)
 		gui.set_enabled(root, false)
+		gui.set_scale(root, VK)
 		self.orbs[i] = { root = root, glow = orb_glow, light = light }
 	end
 
@@ -1142,15 +1155,17 @@ function init(self)
 	gui.play_flipbook(self.egg_light, "uovo_di_fiamma_luce")
 	gui.set_blend_mode(self.egg_light, gui.BLEND_ADD)
 	gui.set_parent(self.egg_light, self.egg_spin)
-	self.egg_label = label(0, 26, "3", 0.7)
+	self.egg_label = label(0, 26, "3", 0.7 / K)
 	gui.set_parent(self.egg_label, self.egg)
 	gui.set_enabled(self.egg, false)
+	gui.set_scale(self.egg, VK)
 
 	-- schegge dello Sciame
 	self.shard_nodes = {}
 	for i = 1, game.SHARD_COUNT do
 		local n = glow(0, 0, 26, WHITE)
 		gui.set_parent(glow(0, 0, 10, WHITE), n)
+		gui.set_scale(n, VK)
 		gui.set_enabled(n, false)
 		self.shard_nodes[i] = n
 	end
@@ -1169,6 +1184,7 @@ function init(self)
 		gui.set_blend_mode(light, gui.BLEND_ADD)
 		gui.set_parent(light, n)
 		gui.set_enabled(n, false)
+		gui.set_scale(n, VK)
 		self.crate_nodes[i] = { node = n, chute = chute, light = light, light_col = vmath.vector4(BRACE) }
 	end
 
@@ -1189,14 +1205,18 @@ function init(self)
 	end
 
 	for i = 1, 2 do
-		local hp = label(0, 0, "100", 0.7)
+		local hp = label(0, 0, "100", 0.45)
+		gui.set_font(hp, "titoli")
 		gui.set_color(hp, PLAYER_COLORS[i])
 		self.robots[i].hp = hp
 	end
 	self.arrow = box(0, 0, 4, 18, WHITE)
 
-	self.hud = label(W / 2, H - 28, "", 1)
-	self.message = label(W / 2, H / 2 + 120, "", 1.6)
+	-- scritte della battaglia col font dei titoli (Cinzel, contorno scuro)
+	self.hud = label(W / 2, H - 30, "", 0.6)
+	gui.set_font(self.hud, "titoli")
+	self.message = label(W / 2, H / 2 + 120, "", 0.9)
+	gui.set_font(self.message, "titoli")
 	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
 	gui.set_enabled(self.cancel_label, false)
 

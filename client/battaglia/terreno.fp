@@ -24,6 +24,10 @@ const mediump vec2 CELLA = vec2(1.0 / 640.0, 1.0 / 360.0);
 const mediump vec3 BRACE = vec3(1.0, 0.478, 0.102);
 const mediump vec3 BRACE_CHIARA = vec3(1.0, 0.769, 0.42);
 const mediump vec3 ROCCIA = vec3(0.23, 0.21, 0.26);
+// quello con cui si gioca stacca dallo sfondo (come in Blastron): contorno
+// scuro attorno al terreno e un filo di luce calda sul bordo di sopra
+const mediump vec3 CONTORNO = vec3(0.035, 0.03, 0.05);
+const mediump vec3 BORDO = vec3(1.0, 0.84, 0.67);
 
 // quanto terreno c'è attorno a uv, a distanza r celle (8 direzioni)
 mediump float vicino(mediump vec2 uv, mediump float r)
@@ -39,6 +43,13 @@ mediump float vicino(mediump vec2 uv, mediump float r)
     n = max(n, texture(maschera, uv + vec2(e.x, -e.y)).r);
     n = max(n, texture(maschera, uv + vec2(-e.x, e.y)).r);
     return n;
+}
+
+// quanto terreno disegnato c'è in uv (0 nei crateri)
+mediump float pieno(mediump vec2 uv)
+{
+    mediump float a = opzioni.x > 0.5 ? texture(terreno, uv).a : 1.0;
+    return a * smoothstep(0.2, 0.8, texture(maschera, uv).r);
 }
 
 void main()
@@ -70,5 +81,16 @@ void main()
     }
 
     col = col * (1.0 - ter.a) + ter.rgb;
+
+    // contorno e bordo dal disegno del terreno (liscio) per la maschera (che
+    // dice dove ci sono crateri nuovi)
+    mediump float qui = ter.a;
+    mediump vec2 d = CELLA * 1.5;
+    mediump float attorno = max(
+        max(pieno(var_uv + vec2(d.x, 0.0)), pieno(var_uv - vec2(d.x, 0.0))),
+        max(pieno(var_uv + vec2(0.0, d.y)), pieno(var_uv - vec2(0.0, d.y))));
+    col = mix(col, CONTORNO, clamp(attorno - qui, 0.0, 1.0) * 0.85);
+    col += BORDO * (clamp(qui - pieno(var_uv + vec2(0.0, CELLA.y * 1.2)), 0.0, 1.0) * 0.35);
+
     out_fragColor = vec4(col, 1.0);
 }

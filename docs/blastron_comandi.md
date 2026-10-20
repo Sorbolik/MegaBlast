@@ -14,12 +14,78 @@ progetto, fuori dal repository).
 | Dito | Cosa fa |
 |---|---|
 | **Levetta sinistra** | Spostata di lato oltre il 15% cammina. Inclinata in alto oltre 25° e spinta oltre il 25% salta, e risalta finché la tieni. |
-| **Levetta destra** | La direzione è la mira, la distanza dal centro la potenza (zona morta 20%, curva quadratica). La mira insegue il dito del 20% per frame. **Lasci e parte il colpo**; riportandola al centro si annulla. |
+| **Levetta destra** | La direzione è la mira, la distanza dal centro la potenza (si accende oltre il 20%, curva quadratica). La mira insegue il dito del 20% per frame. **Lasci e parte il colpo**; riportandola sotto il 10% si spegne e lasciando non parte niente. Il cerchio è azzurro da spenta e rosso da accesa. |
+| **Teletrasporto** | Pulsante in alto a destra della levetta destra. |
 | **Arma** | Pulsante dell'arma sull'HUD, poi la levetta destra. Per le armi corpo a corpo la potenza non conta: conta solo la direzione. |
 | **Camera** | Un dito trascina, due dita fanno lo zoom (fino a 2,2 volte). Mentre miri la camera tiene il robot nell'85% × 75% centrale dello schermo; quando cammini lo rimette al centro. |
 
-Le levette e la mira sono già nel profilo `blastron` (PR #23). La camera no:
-MegaBlast mostra sempre tutta la mappa.
+La camera non c'è: MegaBlast mostra sempre tutta la mappa.
+
+### Le levette in MegaBlast
+
+Sul telefono ci sono le due levette di Blastron, nello stesso posto (HUD del
+tablet portato a 1280 × 720):
+- movimento a (115, 117), mira a (1165, 117), corsa 94 px;
+- teletrasporto a (1208, 257).
+
+La logica è in `client/battaglia/levette.lua`, con le soglie del `Tuning`.
+Abbiamo cambiato quattro cose:
+
+1. **La levetta del movimento riportata al centro si ferma.** In Blastron, una
+   volta partito, il robot camminava finché non alzavi il dito.
+2. **Il colpo parte con la mira di 50 ms prima di staccare il pollice.** Mentre
+   il pollice si alza la punta scivola e sposta la mira: in Blastron lo
+   assorbiva solo il ritardo della mira, qui non conta proprio.
+3. **La base va dove appoggi il pollice**, dentro la sua metà dello schermo, e
+   torna al suo posto quando lo alzi. In Blastron la levetta contava già dal
+   punto in cui appoggiavi il dito, ma la base restava ferma e il disegno non
+   corrispondeva.
+4. **Tutto è a tempo, non a fotogrammi.** Il ritardo della mira (20% per
+   frame a 60 Hz) è lo stesso a 30, 60 o 120 Hz; in Blastron cambiava col
+   frame rate.
+
+Sul computer le levette non ci sono:
+- A/D o le frecce per muoversi, W/spazio per saltare;
+- mira col mouse dal robot, tasto destro per annullare;
+- T per il teletrasporto (o il pulsante in basso a destra), 1-5 per le armi.
+
+Telefono o computer si capisce dal sistema (Android, iOS, browser col touch) o
+da `[megablast] comandi = telefono / computer`. Durante la partita si cambia da
+soli: un dito sullo schermo accende le levette, un tasto le spegne.
+
+## Proporzioni
+
+L'arena di Blastron era larga 102,4 unità e il robot alto 3,612. In MegaBlast la
+mappa è larga 1280 px, quindi nel profilo `blastron` un'unità vale 12,5 px e il
+robot è alto 45 px (prima 16 px):
+- `ROBOT_H` e `ROBOT_HALF_W` (il cerchio del corpo, raggio 1,18 u) sono nel profilo;
+- tutte le misure di Blastron (velocità, salti, esplosioni) seguono, perché
+  sono scritte in unità;
+- le misure nostre (casse, schegge, ricerca del teletrasporto) crescono nella
+  stessa proporzione.
+
+Il profilo `megablast` resta col robot da 16 px.
+
+## Cosa stacca dallo sfondo
+
+Sono le regole di Blastron (`blastron_analisi/blastron_grafica.md`), applicate
+senza rigenerare immagini:
+
+- **Sfondo spento** (`strumenti/grafica/stacca.py`, scrive `sfondo_spento.png`):
+  - sfocato, con contrasto e saturazione bassi;
+  - schiarito verso la nebbia: luce 0,20 → 0,39.
+  - Lo fa lo script una volta sola: in gioco non costa niente.
+- **Terreno più deciso** (stesso script, `terreno_staccato.png`): più
+  contrastato, più saturo e un po' più scuro (luce 0,31).
+- **Contorno scuro e filo di luce sul bordo di sopra** (`battaglia/terreno.fp`):
+  - calcolati dal disegno del terreno e dalla maschera;
+  - seguono anche i crateri nuovi;
+  - costano 5 letture di texture per pixel.
+- **Scoria**:
+  - la Scoria nera sullo sfondo chiaro stacca da sola;
+  - in più ha un alone del colore della squadra.
+- **Scritte** della battaglia col font Cinzel dei titoli; levette, armi e
+  teletrasporto con le cornici del kit.
 
 ## Dove si viene colpiti
 
@@ -34,7 +100,7 @@ Ogni robot di Blastron ha due cerchi (codice in `Player`, valori dal `Tuning`):
 Il cerchio dei colpi è più largo del robot (1,05 volte la sua altezza): in Blastron
 si veniva presi facilmente anche "di striscio".
 
-In MegaBlast: `HURTBOX = "cerchio"` con `HURT_R` = 8,4 px e `HURT_FAT` = 0,4 px
+In MegaBlast: `HURTBOX = "cerchio"` con `HURT_R` = 23,6 px e `HURT_FAT` = 1,25 px
 nel profilo `blastron`. Il corpo contro il terreno resta la nostra scatola di
 celle.
 
@@ -129,7 +195,9 @@ Il profilo `megablast` non cambia: il fendente da 240° e il pugno di prima.
 | Danno della spada | 35 | 15 |
 | Spinta della spada | nessuna, il bersaglio continua come prima | il bersaglio si ferma di colpo |
 | Pugno | sempre in avanti, 0,4 s | gira con la mira, 2,1 s |
-| Bersaglio | scatola 12 × 16 px | cerchio di raggio 8,4 px a metà altezza |
+| Bersaglio | scatola 12 × 16 px | cerchio di raggio 1,888 u (23,6 px) a metà altezza |
+| Grandezza del robot | 16 px, la mappa è larga 80 robot | 45 px, la mappa è larga 28 robot come in Blastron |
+| Comandi sul telefono | pulsanti < > SALTA e mira dal robot | due levette e teletrasporto sopra quella della mira |
 
 La combo dietro → teletrasporto → davanti funziona ancora:
 - il teletrasporto non tocca il colpo in corso;

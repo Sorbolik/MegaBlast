@@ -592,26 +592,33 @@ end
 -- Cerca un punto libero vicino a (x, y) dove far comparire il robot
 -- Punti dove far comparire il robot attorno al globo, dal più vicino al più
 -- lontano (a parità di distanza prima quelli più in alto)
-local TELEPORT_SEARCH = 48
-local TELEPORT_OFFSETS = {}
-for dy = -TELEPORT_SEARCH, TELEPORT_SEARCH, 2 do
-	for dx = -TELEPORT_SEARCH, TELEPORT_SEARCH, 2 do
-		if dx * dx + dy * dy <= TELEPORT_SEARCH * TELEPORT_SEARCH then
-			TELEPORT_OFFSETS[#TELEPORT_OFFSETS + 1] = { dx, dy, dx * dx + dy * dy }
+M.TELEPORT_SEARCH = 48
+local OFFSETS = {}
+local function teleport_offsets(r)
+	local key = math.floor(r)
+	if OFFSETS[key] then return OFFSETS[key] end
+	-- passo di 2 pixel fino a 48, poi in proporzione: sempre circa 1800 punti
+	local step = math.max(2, math.floor(key / 24))
+	local list = {}
+	for dy = -key, key, step do
+		for dx = -key, key, step do
+			if dx * dx + dy * dy <= key * key then list[#list + 1] = { dx, dy, dx * dx + dy * dy } end
 		end
 	end
+	table.sort(list, function(a, b)
+		if a[3] ~= b[3] then return a[3] < b[3] end
+		if a[2] ~= b[2] then return a[2] > b[2] end
+		return a[1] < b[1]
+	end)
+	OFFSETS[key] = list
+	return list
 end
-table.sort(TELEPORT_OFFSETS, function(a, b)
-	if a[3] ~= b[3] then return a[3] < b[3] end
-	if a[2] ~= b[2] then return a[2] > b[2] end
-	return a[1] < b[1]
-end)
 
 -- Il teletrasporto avviene sempre: nel punto libero più vicino al globo e, se
 -- attorno è tutto pieno, proprio lì (il robot poi esce dal terreno verso l'alto).
 function M:teleport(rb, x, y)
 	local tx, ty = x, y
-	for _, o in ipairs(TELEPORT_OFFSETS) do
+	for _, o in ipairs(teleport_offsets(M.TELEPORT_SEARCH)) do
 		if not self:robot_collides(x + o[1], y + o[2], rb) then
 			tx, ty = x + o[1], y + o[2]
 			break
@@ -1358,15 +1365,34 @@ end
 -- Profili di fisica -------------------------------------------------------------
 -- "megablast": i valori decisi finora, quelli scritti sopra.
 -- "blastron": ricostruiti dall'APK di Blastron (docs/blastron.md). Le misure
--- là sono in unità di Farseer, qui diventano pixel in proporzione al robot:
--- il robot di Blastron è alto 3,612 unità, il nostro ROBOT_H pixel.
+-- là sono in unità di Farseer, qui diventano pixel con le proporzioni di
+-- Blastron: l'arena era larga 102,4 unità, la nostra mappa 1280 pixel, quindi
+-- un'unità è 12,5 pixel e il robot (3,612 unità) è alto 45 pixel.
 -- La vita là partiva da 2000, qui da MAX_HP: i danni sono riscalati.
-M.BLASTRON_UNIT = M.ROBOT_H / 3.612
+M.BLASTRON_UNIT = M.WORLD_W / 102.4
 
 local function blastron_profile()
 	local u = M.BLASTRON_UNIT
 	local hp = M.MAX_HP / 2000
+	-- quanto è più grande il robot rispetto al nostro di prima (16 pixel), per
+	-- le misure che Blastron non ha (casse, schegge) o che erano nostre
+	local k = 3.612 * u / M.ROBOT_H
 	return {
+		-- robot alto 3,612 u, largo quanto il cerchio del corpo (raggio 1,18 u)
+		ROBOT_H = 3.612 * u,
+		ROBOT_HALF_W = 1.18 * u,
+		MAX_CLIMB = M.MAX_CLIMB * k,
+		TELEPORT_SEARCH = M.TELEPORT_SEARCH * k,
+		ORB_R = M.ORB_R * k,
+		ORB_NUDGE = M.ORB_NUDGE * k,
+		CRATE_HALF_W = M.CRATE_HALF_W * k,
+		CRATE_H = M.CRATE_H * k,
+		CRATE_FALL = M.CRATE_FALL * k,
+		SWORD_REACH = M.SWORD_REACH * k,
+		SWORD_PIVOT_Y = M.SWORD_PIVOT_Y * k,
+		SHARD_SPEED = M.SHARD_SPEED * k,
+		SHARD_BLAST = { r = M.SHARD_BLAST.r * k, damage_r = M.SHARD_BLAST.damage_r * k,
+			damage = M.SHARD_BLAST.damage, knockback = M.SHARD_BLAST.knockback * k },
 		GRAVITY = 25 * u,
 		-- corsa 5 u/s a terra e in aria, salto alto 5,2 u
 		DEFAULT_STATS = { walk_speed = 5 * u, jump_height = 5.2 * u, air_speed = 5 * u },

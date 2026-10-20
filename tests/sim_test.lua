@@ -644,7 +644,7 @@ for _ = 1, 200 do
 	bm:step()
 	top = math.max(top, br.y)
 end
-check(math.abs((top - base) - 5.2 * U) < 1.5, string.format("blastron: salto alto 5,2 u (%.1f px)", top - base))
+check(math.abs((top - base) - 5.2 * U) < 0.35 * U, string.format("blastron: salto alto 5,2 u (%.1f px)", top - base))
 
 -- Controllo in aria istantaneo; senza direzione la velocità resta
 local ba = game.new(42, "isole")
@@ -745,25 +745,34 @@ local bf = game.new(42, "isole")
 run(bf, 120)
 local fr2 = bf.robots[1]
 local hp0 = fr2.hp
--- una colonna con almeno 300 px di cielo sopra la terra
+-- la mappa è alta 57,6 u: per avere spazio la soglia scende a 20 u
+local safe0 = game.FALL_SAFE
+game.FALL_SAFE = 20 * U
+local DROP = math.floor(28 * U)
 local fx, gy2
 for x = 60, game.WORLD_W - 60, 8 do
-	local gy = bf.terrain:ground_below(x, game.WORLD_H - 30)
-	if gy and gy + 300 < game.WORLD_H - 30 and not bf:robot_collides(x, gy + 300)
-		and bf.terrain:ground_below(x, gy + 300) == gy and math.abs(x - bf.robots[2].x) > 30 then
+	-- la terra più alta sotto il robot, largo 2 * ROBOT_HALF_W
+	local gy
+	for _, o in ipairs({ -game.ROBOT_HALF_W, 0, game.ROBOT_HALF_W }) do
+		local g = bf.terrain:ground_below(x + o, game.WORLD_H - 1)
+		if g and (not gy or g > gy) then gy = g end
+	end
+	if gy and gy + DROP < game.WORLD_H - game.ROBOT_H and not bf:robot_collides(x, gy + DROP)
+		and math.abs(x - bf.robots[2].x) > 4 * game.ROBOT_HALF_W then
 		fx, gy2 = x, gy
 		break
 	end
 end
 check(fx ~= nil, "blastron: c'è un punto da cui cadere")
-place(fr2, fx, gy2 + 300)
+place(fr2, fx, gy2 + DROP)
 for _ = 1, 400 do
 	bf:step()
 	if fr2.grounded then break end
 end
-local fall = gy2 + 300 - fr2.y
-local expect = math.floor(math.min((fall - 40 * U) * game.FALL_DAMAGE, game.FALL_DAMAGE_MAX) + 0.5)
-check(fr2.grounded and fall > 40 * U and expect > 0 and hp0 - fr2.hp == expect,
+local fall = gy2 + DROP - fr2.y
+local expect = math.floor(math.min((fall - game.FALL_SAFE) * game.FALL_DAMAGE, game.FALL_DAMAGE_MAX) + 0.5)
+game.FALL_SAFE = safe0
+check(fr2.grounded and fall > 20 * U and expect > 0 and hp0 - fr2.hp == expect,
 	string.format("blastron: cadendo da %.0f px perde %d (%d)", fall, expect, hp0 - fr2.hp))
 local bf2 = game.new(42, "isole")
 run(bf2, 120)

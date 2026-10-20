@@ -12,7 +12,7 @@ aspetta 1
 foto 01_inizio
 
 # Rosso cammina con la levetta, poi la spinge in alto e salta (e risalta)
-levetta 80 0 1.5 02_levetta_destra
+levetta 80 0 0.6 02_levetta_destra
 levetta 30 80 0.5 03_levetta_salto
 aspetta 0.2
 foto 04_in_aria
@@ -24,7 +24,7 @@ niente_evento fire 1
 
 # teletrasporto: pulsante sopra la levetta della mira, poi la levetta
 tocca 1208 257                      # TELE
-levetta_mira 40 60 0.5 06_mira_teletrasporto
+levetta_mira -30 30 0.5 06_mira_teletrasporto
 aspetta_evento orb 2
 aspetta_evento teleport 4
 aspetta 0.3

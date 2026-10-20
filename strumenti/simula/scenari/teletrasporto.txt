@@ -8,10 +8,10 @@ aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 01_hud_tempo
 tocca 1180 62                       # TELE
-mira 30 140 0.2
+mira -30 140 0.2
 aspetta_evento orb 2
 tocca 1180 62                       # TELE di nuovo, col primo globo ancora in volo
-mira 60 140 0.2
+mira -60 140 0.2
 aspetta_evento orb 2
 foto 02_due_globi_in_volo
 aspetta_evento teleport 4
