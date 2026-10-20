@@ -296,6 +296,30 @@ def comando(g, riga):
         if len(a) > 3:
             g.scatta(a[3])
         g.xdo("mouseup", 1)
+    elif c == "annulla":
+        # mira a (dx, dy) col sinistro, annulla col destro, poi lascia il sinistro
+        x, y = g.robot()
+        g.punta(x + num(0), y + num(1))
+        g.xdo("mousedown", 1)
+        g.attendi(0.1)
+        g.punta(x + num(0) + 1, y + num(1))
+        g.attendi(0.3)
+        g.xdo("mousedown", 3)
+        g.attendi(0.1)
+        g.xdo("mouseup", 3)
+        g.attendi(0.2)
+        if len(a) > 2:
+            g.scatta(a[2])
+        g.xdo("mouseup", 1)
+    elif c == "niente_evento":
+        tipo = a[0]
+        fine = time.time() + num(1, 1)
+        while time.time() < fine:
+            g.vivo()
+            g.leggi()
+            if tipo in g.eventi:
+                raise Fallito(f"evento {tipo} che non doveva succedere")
+            time.sleep(0.05)
     elif c == "aspetta_evento":
         tipo = a[0]
         def visto():

@@ -33,7 +33,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 
 ### Teletrasporto (Passo d'Ombra)
 
-Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo attivi, miri, rilasci). Lancia un globo che vola come il missile e si ferma dove tocca il terreno. Dopo 2 secondi il robot compare nel punto del globo **nello stesso stato in cui era**: chi cade continua a cadere con la stessa velocità, il fendente in corso continua e la direzione non cambia. Lanciare il globo non chiude il turno e se ne possono lanciare quanti se ne vuole, uno alla volta, quindi si può attaccare subito dopo. Combo tipica: colpo con la spada dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo. Se il globo esce dalla mappa si spegne e non succede nulla.
+Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo attivi, miri, rilasci). Lancia un globo che vola come il missile e quando tocca il terreno rimbalza e rotola. Dopo 2 secondi il robot compare nel punto del globo **nello stesso stato in cui era**: chi cade continua a cadere con la stessa velocità, il fendente in corso continua e la direzione non cambia. Lanciare il globo non chiude il turno e se ne possono lanciare quanti se ne vuole, uno alla volta, quindi si può attaccare subito dopo. Combo tipica: colpo con la spada dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo. Il teletrasporto avviene sempre: se il punto è troppo stretto per il robot si compare nel punto libero più vicino, e se il globo è uscito dalla mappa ci si finisce dietro e si cade.
 
 ### Casse
 
@@ -47,7 +47,7 @@ Dopo ogni 3 turni cade dal cielo una cassa in un punto a caso della superficie, 
 ### Controlli touch
 
 - **Movimento**: due pulsanti, sinistra e destra, più il salto.
-- **Mira**: trascini il dito dal robot. La direzione indica l'angolo, la lunghezza la potenza, e una linea tratteggiata mostra la traiettoria prevista per i primi istanti. Rilasci per sparare.
+- **Mira**: trascini il dito dal robot. Riportare il dito sul robot e lasciarlo lì annulla il colpo (al PC: tasto destro mentre si tiene il sinistro). La direzione indica l'angolo, la lunghezza la potenza, e una linea tratteggiata mostra la traiettoria prevista per i primi istanti. Rilasci per sparare.
 - **Armi**: una barra in basso al centro con le armi che hai: Lanciarune e Lama di Nucleo sempre, le armi delle casse col numero di colpi rimasti. Finiti i colpi l'arma sparisce dalla barra.
 
 ---

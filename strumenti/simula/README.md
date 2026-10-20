@@ -59,6 +59,8 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `premi TASTO` | pressione breve |
 | `trascina X1 Y1 X2 Y2 [S]` | trascina il dito |
 | `mira DX DY [S] [FOTO]` | tiene il dito a (DX, DY) dal robot di turno per S secondi (la mira), facoltativamente scatta FOTO, poi lascia: spara con l'arma scelta |
+| `annulla DX DY [FOTO]` | mira a (DX, DY) dal robot col sinistro, preme il destro (annulla), facoltativamente scatta FOTO, poi lascia il sinistro |
+| `niente_evento TIPO [S]` | fallisce se nei prossimi S secondi succede l'evento TIPO (per esempio un colpo annullato che parte lo stesso) |
 | `aspetta_evento TIPO [S]` | aspetta un evento della simulazione (`fire`, `explosion`, `swing`, `sword_hit`, `orb`, `teleport`, `grenade`, `shards`, `punch`, `punch_hit`, `crate`, `crate_pick`, `damage`, `turn`, `over`...) |
 | `aspetta_stato chiave=valore ... [S]` | aspetta uno stato, per esempio `turno=2 fase=aim` (chiavi: `modo`, `turno`, `fase`, `x`, `y`) |
 | `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3 |
