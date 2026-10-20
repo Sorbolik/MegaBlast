@@ -126,6 +126,12 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatal("il movimento del giocatore 1 non arriva al giocatore 2")
 	}
 
+	// Il globo del teletrasporto parte senza chiudere il turno
+	a.send(`{"t":"fire","a":1.4,"p":0.3,"w":"teleport"}`)
+	if orb := b.waitFor(`"orb"`); orb["robot"].(float64) != 1 {
+		t.Fatalf("globo del robot sbagliato: %v", orb)
+	}
+
 	// Il giocatore 2 non può sparare fuori turno; il giocatore 1 sì
 	b.send(`{"t":"fire","a":2.0,"p":0.5}`)
 	a.send(`{"t":"fire","a":1.0,"p":0.6}`)

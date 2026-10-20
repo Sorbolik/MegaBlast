@@ -12,13 +12,15 @@ const (
 	snapshotEvery = 2 // 30 stati al secondo, come SNAPSHOT_TICKS in client/sim/game.lua
 )
 
-// Messaggio da un client: {"t":"in","l":true,"r":false} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7}
+// Messaggio da un client: {"t":"in","l":true,"r":false} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
+// "w" è l'arma: "missile" (se manca), "sword" oppure "teleport".
 type clientMsg struct {
 	T string  `json:"t"`
 	L bool    `json:"l"`
 	R bool    `json:"r"`
 	A float64 `json:"a"`
 	P float64 `json:"p"`
+	W string  `json:"w"`
 }
 
 type playerMsg struct {
@@ -30,6 +32,7 @@ type playerMsg struct {
 type held struct {
 	left, right, jump, fire bool
 	angle, power            float64
+	weapon                  string
 }
 
 // Mappa usata per le partite online (vedi client/sim/maps.lua).
@@ -87,7 +90,7 @@ func (m *Match) Run() {
 			case "jump":
 				h.jump = true
 			case "fire":
-				h.fire, h.angle, h.power = true, pm.msg.A, pm.msg.P
+				h.fire, h.angle, h.power, h.weapon = true, pm.msg.A, pm.msg.P, pm.msg.W
 			}
 			tick--
 			continue
@@ -96,7 +99,7 @@ func (m *Match) Run() {
 
 		cur := sim.Current()
 		h := inputs[cur]
-		if err := sim.Step(Input{Left: h.left, Right: h.right, Jump: h.jump, Fire: h.fire, Angle: h.angle, Power: h.power}); err != nil {
+		if err := sim.Step(Input{Left: h.left, Right: h.right, Jump: h.jump, Fire: h.fire, Angle: h.angle, Power: h.power, Weapon: h.weapon}); err != nil {
 			log.Printf("errore step: %v", err)
 			m.broadcast(`{"t":"error"}`)
 			return
