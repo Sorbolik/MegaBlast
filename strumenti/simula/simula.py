@@ -296,6 +296,18 @@ def comando(g, riga):
         if len(a) > 3:
             g.scatta(a[3])
         g.xdo("mouseup", 1)
+    elif c == "levetta":
+        # dito sulla levetta del movimento (profilo blastron), spostato di (dx, dy)
+        # dal centro e tenuto S secondi; facoltativamente una foto prima di lasciare
+        cx, cy = 145, 80
+        g.punta(cx, cy)
+        g.xdo("mousedown", 1)
+        g.attendi(0.05)
+        g.punta(cx + num(0), cy + num(1))
+        g.attendi(num(2, 0.5))
+        if len(a) > 3:
+            g.scatta(a[3])
+        g.xdo("mouseup", 1)
     elif c == "annulla":
         # mira a (dx, dy) col sinistro, annulla col destro, poi lascia il sinistro
         x, y = g.robot()

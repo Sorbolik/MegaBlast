@@ -118,8 +118,9 @@ func TestOnlineMatch(t *testing.T) {
 	if _, ok := first["c"].([]any); !ok || r0["ag"] != 0.0 || r0["ap"] != 0.0 {
 		t.Fatalf("stato senza casse o colpi: %v", first)
 	}
+	// con la fisica di Blastron si cammina piano (22 px/s): un secondo basta
 	a.send(`{"t":"in","l":false,"r":true}`)
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	a.send(`{"t":"in","l":false,"r":false}`)
 	moved := false
 	for i := 0; i < 40 && !moved; i++ {

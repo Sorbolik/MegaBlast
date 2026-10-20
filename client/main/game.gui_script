@@ -92,6 +92,20 @@ local function config_int(key, default)
 end
 local SIMULA = config_int("megablast.simula", 0) == 1
 
+-- Profilo di fisica (sim/game.lua): "blastron" se non si dice niente.
+-- Con [megablast] fisica = megablast si torna ai valori di prima, ma solo in
+-- locale: online decide il server.
+local function config_string(key, default)
+	if sys.get_config_string then return sys.get_config_string(key, default) end
+	return sys.get_config(key, default)
+end
+local FISICA = config_string("megablast.fisica", "")
+if FISICA ~= "" then game.use_physics(FISICA) end
+
+-- Levetta del movimento (con game.MOVE_STICK): occupa la zona dei pulsanti
+-- < e >, il centro sta tra i due. Toccare < o > funziona come prima.
+local STICK_X, STICK_Y, STICK_R = 145, 80, 110
+
 local function server_url()
 	if sys.get_config_string then
 		return sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
@@ -178,6 +192,7 @@ end
 local function set_controls_visible(self, visible)
 	gui.set_enabled(self.btn_left, visible)
 	gui.set_enabled(self.btn_right, visible)
+	if not visible then gui.set_enabled(self.stick_knob, false) end
 	gui.set_enabled(self.btn_jump, visible)
 	gui.set_enabled(self.bar, visible)
 	gui.set_enabled(self.btn_tele, visible)
@@ -574,12 +589,49 @@ local function current_robot(self)
 	return self.g.robots[self.g.current]
 end
 
-local function aim_from(self, x, y)
+-- snap: la mira va subito sul dito (quando lo si appoggia). Altrimenti con
+-- game.AIM_SMOOTH < 1 la mira lo insegue (smooth_aim), come in Blastron.
+local function aim_from(self, x, y, snap)
 	local rb = current_robot(self)
 	local dx, dy = x - rb.x, y - (rb.y + game.ROBOT_H / 2)
-	self.aim_angle = math.atan2(dy, dx)
+	self.aim_target = math.atan2(dy, dx)
+	if snap or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = self.aim_target end
 	self.aim_dist = math.sqrt(dx * dx + dy * dy)
-	self.aim_power = math.max(0.1, math.min(1, self.aim_dist / AIM_RANGE))
+	self.aim_power = game.aim_power(self.aim_dist / AIM_RANGE)
+end
+
+local function smooth_aim(self, dt)
+	if not (self.aiming and self.aim_target) or game.AIM_SMOOTH >= 1 then return end
+	local d = (self.aim_target - self.aim_angle + math.pi) % (2 * math.pi) - math.pi
+	self.aim_angle = self.aim_angle + d * (1 - (1 - game.AIM_SMOOTH) ^ (dt * 60))
+end
+
+-- Comandi del movimento: tastiera, pulsanti o levetta
+local function move_left(self)
+	return self.keys.left or self.touch_mode == "left" or (self.touch_mode == "stick" and self.stick_dir < 0)
+end
+local function move_right(self)
+	return self.keys.right or self.touch_mode == "right" or (self.touch_mode == "stick" and self.stick_dir > 0)
+end
+local function jump_held(self)
+	return self.keys.jump or self.touch_mode == "jump" or (self.touch_mode == "stick" and self.stick_jump)
+end
+
+-- Il dito sulla levetta in (x, y): cammina se è di lato, salta se è in alto
+local function stick_from(self, x, y)
+	local dx, dy = (x - STICK_X) / STICK_R, (y - STICK_Y) / STICK_R
+	local mag = math.sqrt(dx * dx + dy * dy)
+	local up = mag > 0 and dy / mag or 0
+	self.stick_dir = 0
+	if mag > game.STICK_MOVE and up < math.sin(game.STICK_MOVE_ANGLE) then
+		self.stick_dir = dx < 0 and -1 or 1
+	end
+	local jump = mag > game.STICK_JUMP and up > math.sin(game.STICK_JUMP_ANGLE)
+	if jump and not self.stick_jump then self.jump_pressed = true end
+	self.stick_jump = jump
+	local k = math.min(1, mag) / math.max(mag, 1e-6)
+	gui.set_enabled(self.stick_knob, true)
+	gui.set_position(self.stick_knob, vmath.vector3(STICK_X + dx * k * STICK_R, STICK_Y + dy * k * STICK_R, 0))
 end
 
 -- Un solo vettore riusato per tutte le posizioni del frame
@@ -854,8 +906,10 @@ local function render(self, dt)
 	local show_aim = self.aiming and g.phase == "aim" and my_turn(self) and not MELEE[aim_weapon] and not cancel
 	if show_aim then
 		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts, aim_weapon)
+		-- Blastron mostra solo l'inizio del volo: una freccia lunga quanto la potenza
+		local shown = game.AIM_PREVIEW_DOTS or AIM_DOTS
 		for i, n in ipairs(self.dots) do
-			gui.set_enabled(n, true)
+			gui.set_enabled(n, i <= shown)
 			set_pos(n, pts[i].x, pts[i].y)
 		end
 	else
@@ -1014,6 +1068,9 @@ function init(self)
 	gui.set_parent(label(0, 0, "<", 2), self.btn_left)
 	self.btn_right = box(210, 80, 110, 110, BUTTON)
 	gui.set_parent(label(0, 0, ">", 2), self.btn_right)
+	self.stick_knob = box(STICK_X, STICK_Y, 56, 56, BUTTON_ON)
+	gui.set_enabled(self.stick_knob, false)
+	self.stick_dir, self.stick_jump = 0, false
 	self.btn_jump = box(W - 90, 80, 130, 110, BUTTON)
 	gui.set_parent(label(0, 0, "SALTA", 1), self.btn_jump)
 	-- barra delle armi in basso al centro e, a parte, il teletrasporto
@@ -1056,9 +1113,10 @@ function update(self, dt)
 		self.acc = math.min(self.acc + dt, 0.25)
 		while self.acc >= game.DT and self.mode == "local" do
 			local input = {
-				left = self.keys.left or self.touch_mode == "left",
-				right = self.keys.right or self.touch_mode == "right",
-				jump = self.jump_pressed,
+				left = move_left(self),
+				right = move_right(self),
+				-- con JUMP_REPEAT tenendo premuto si risalta appena si tocca terra
+				jump = self.jump_pressed or (game.JUMP_REPEAT and jump_held(self)) or false,
 				fire = self.fire,
 			}
 			self.jump_pressed = false
@@ -1074,13 +1132,19 @@ function update(self, dt)
 		self.pose_t = self.pose_t + dt
 		-- mandiamo al server solo i cambiamenti, e solo quando tocca a noi
 		if my_turn(self) and (self.g.phase == "aim" or self.g.retreat > 0) then
-			local l = self.keys.left or self.touch_mode == "left" or false
-			local r = self.keys.right or self.touch_mode == "right" or false
+			local l = move_left(self) or false
+			local r = move_right(self) or false
 			if l ~= self.sent.l or r ~= self.sent.r then
 				send(self, { t = "in", l = l, r = r })
 				self.sent.l, self.sent.r = l, r
 			end
-			if self.jump_pressed then send(self, { t = "jump" }) end
+			-- salto ripetuto: uno per ogni volta che il robot torna a terra
+			local grounded = current_robot(self).grounded
+			if self.jump_pressed or (game.JUMP_REPEAT and jump_held(self) and grounded and not self.jump_sent) then
+				send(self, { t = "jump" })
+				self.jump_sent = true
+			end
+			if not grounded then self.jump_sent = false end
 			if self.fire then
 				send(self, { t = "fire", a = self.fire.angle, p = self.fire.power, w = self.fire.weapon })
 			end
@@ -1091,6 +1155,7 @@ function update(self, dt)
 		self.fire = nil
 	end
 
+	smooth_aim(self, dt)
 	render(self, dt)
 	if self.mode == "menu" then home.update(self.home, dt) end
 
@@ -1129,6 +1194,7 @@ function on_input(self, action_id, action)
 		self.keys.right = not action.released
 	elseif action_id == ACTION_JUMP then
 		if action.pressed then self.jump_pressed = true end
+		self.keys.jump = not action.released
 	elseif action_id == ACTION_TOUCH then
 		if action.pressed then
 			if self.mode == "ended" then
@@ -1137,7 +1203,10 @@ function on_input(self, action_id, action)
 			elseif self.mode ~= "local" and self.mode ~= "online" then
 				return true
 			end
-			if gui.pick_node(self.btn_left, action.x, action.y) then
+			if game.MOVE_STICK and math.abs(action.x - STICK_X) <= STICK_R + 10
+				and math.abs(action.y - STICK_Y) <= 60 then
+				self.touch_mode = "stick"
+			elseif gui.pick_node(self.btn_left, action.x, action.y) then
 				self.touch_mode = "left"
 			elseif gui.pick_node(self.btn_right, action.x, action.y) then
 				self.touch_mode = "right"
@@ -1155,13 +1224,18 @@ function on_input(self, action_id, action)
 				self.aiming = true
 			end
 		end
-		if self.touch_mode == "aim" then aim_from(self, action.x, action.y) end
+		if self.touch_mode == "aim" then aim_from(self, action.x, action.y, action.pressed) end
+		if self.touch_mode == "stick" then stick_from(self, action.x, action.y) end
 		if action.released then
 			-- rilasciare il dito sopra il robot annulla lo sparo
 			if self.touch_mode == "aim" and self.g.phase == "aim" and self.aim_dist > CANCEL_R then
 				self.fire = { angle = self.aim_angle, power = self.aim_power,
 					weapon = self.tele_armed and "teleport" or self.weapon }
 				self.tele_armed = false
+			end
+			if self.touch_mode == "stick" then
+				self.stick_dir, self.stick_jump = 0, false
+				gui.set_enabled(self.stick_knob, false)
 			end
 			self.touch_mode = nil
 			self.aiming = false
@@ -1176,6 +1250,8 @@ function on_input(self, action_id, action)
 	elseif action_id == nil and self.touch_mode == "aim" then
 		-- movimento del mouse o del dito senza cambio di stato
 		aim_from(self, action.x, action.y)
+	elseif action_id == nil and self.touch_mode == "stick" then
+		stick_from(self, action.x, action.y)
 	end
 	return true
 end

@@ -6,6 +6,10 @@ local game = require "sim.game"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
 
+-- Quasi tutti i test sono scritti per i valori "megablast"; quelli del profilo
+-- "blastron" (il predefinito) sono in fondo.
+game.use_physics("megablast")
+
 local failures = 0
 local function check(cond, msg)
 	if cond then
@@ -620,6 +624,129 @@ local function play2(seed)
 	return table.concat(r, " ")
 end
 check(play2(5) == play2(5), "armi delle casse e casse sono deterministiche")
+
+-- Profilo "blastron" ------------------------------------------------------------
+
+game.use_physics("blastron")
+local U = game.BLASTRON_UNIT
+
+-- Movimento: corsa 5 u/s, salto alto 5,2 u
+local bm = game.new(42, "isole")
+run(bm, 120)
+local br = bm.robots[1]
+local x0 = br.x
+run(bm, 60, { right = true })
+check(math.abs((br.x - x0) - 5 * U) < 2, string.format("blastron: corsa 5 u/s (%.1f px in 1 s)", br.x - x0))
+local top, base = br.y, br.y
+bm:step({ jump = true })
+for _ = 1, 200 do
+	bm:step()
+	top = math.max(top, br.y)
+end
+check(math.abs((top - base) - 5.2 * U) < 1.5, string.format("blastron: salto alto 5,2 u (%.1f px)", top - base))
+
+-- Controllo in aria istantaneo; senza direzione la velocità resta
+local ba = game.new(42, "isole")
+run(ba, 120)
+local ar = ba.robots[1]
+ba:step({ jump = true, right = true })
+run(ba, 5, { right = true })
+check(ar.vx == ar.stats.air_speed, "blastron: in aria va subito a tutta corsa")
+ba:step({ left = true })
+check(ar.vx == -ar.stats.air_speed, "blastron: e si gira di colpo")
+ba:step()
+check(ar.vx == -ar.stats.air_speed and not ar.grounded, "blastron: senza direzione in aria la velocità resta")
+
+-- Esplosione: danno dal punto più vicino della scatola, spinta nulla nel colpo
+-- diretto, massima a metà raggio, metà danno a sé stessi
+local function blast_at(dx, owner)
+	local q = game.new(42, "isole")
+	run(q, 120)
+	local r = q.robots[2]
+	local y = sky_spot(q, 640, 60)
+	place(r, 640, y)
+	local hp = r.hp
+	q:explode(640 + game.ROBOT_HALF_W + dx, y + game.ROBOT_H / 2, owner, game.MISSILE_BLAST)
+	return r, hp - r.hp
+end
+local B = game.MISSILE_BLAST
+local d0r, d0 = blast_at(-1, 1)
+check(d0 == math.floor(B.damage + 0.5) and d0r.vx == 0 and d0r.vy == 0,
+	"blastron: colpo diretto, danno pieno e nessuna spinta")
+local half = B.damage_r / 2
+local dhr, dh = blast_at(half, 1)
+check(math.abs(dhr.vx + half * B.impulse * 0.5) < 0.01 and dhr.vy == 0,
+	string.format("blastron: a metà raggio spinta di %.0f px/s", -dhr.vx))
+check(dh == math.floor(B.damage_min + (B.damage - B.damage_min) * 0.5 + 0.5), "blastron: danno tra minimo e massimo")
+local _, ds = blast_at(-1, 2)
+check(ds == math.floor(B.damage * 0.5 + 0.5), "blastron: metà danno a sé stessi")
+
+-- Sparando il tempo del turno scende a 5 secondi
+local bt = game.new(42, "isole")
+run(bt, 30)
+bt:step({ fire = { angle = math.rad(60), power = 0.5 } })
+check(bt.retreat == game.RETREAT_TICKS, "blastron: dopo lo sparo restano 5 s")
+local bt2 = game.new(42, "isole")
+run(bt2, game.TURN_TICKS - 100)
+bt2:step({ fire = { angle = math.rad(60), power = 0.5 } })
+check(bt2.retreat < 100, "blastron: se restava meno tempo non se ne aggiunge")
+
+-- Danno da caduta oltre 40 u
+local bf = game.new(42, "isole")
+run(bf, 120)
+local fr2 = bf.robots[1]
+local hp0 = fr2.hp
+-- una colonna con almeno 300 px di cielo sopra la terra
+local fx, gy2
+for x = 60, game.WORLD_W - 60, 8 do
+	local gy = bf.terrain:ground_below(x, game.WORLD_H - 30)
+	if gy and gy + 300 < game.WORLD_H - 30 and not bf:robot_collides(x, gy + 300)
+		and bf.terrain:ground_below(x, gy + 300) == gy and math.abs(x - bf.robots[2].x) > 30 then
+		fx, gy2 = x, gy
+		break
+	end
+end
+check(fx ~= nil, "blastron: c'è un punto da cui cadere")
+place(fr2, fx, gy2 + 300)
+for _ = 1, 400 do
+	bf:step()
+	if fr2.grounded then break end
+end
+local fall = gy2 + 300 - fr2.y
+local expect = math.floor(math.min((fall - 40 * U) * game.FALL_DAMAGE, game.FALL_DAMAGE_MAX) + 0.5)
+check(fr2.grounded and fall > 40 * U and expect > 0 and hp0 - fr2.hp == expect,
+	string.format("blastron: cadendo da %.0f px perde %d (%d)", fall, expect, hp0 - fr2.hp))
+local bf2 = game.new(42, "isole")
+run(bf2, 120)
+local sr = bf2.robots[1]
+bf2:step({ jump = true })
+run(bf2, 200)
+check(sr.hp == game.MAX_HP, "blastron: un salto non fa danno")
+
+-- Potenza: zona morta 20% e curva quadratica
+check(game.aim_power(0.2) == 0.1 and game.aim_power(1) == 1 and math.abs(game.aim_power(0.6) - 0.25) < 1e-9,
+	"blastron: potenza quadratica con zona morta")
+
+-- Casse a probabilità: ne cadono, e sempre negli stessi punti con lo stesso seed
+local function crates_seen(seed)
+	local q = game.new(seed, "isole")
+	local seen = {}
+	for i = 1, 12 * (game.TURN_TICKS + 200) do
+		q:step()
+		for _, e in ipairs(q:pop_events()) do
+			if e.type == "crate" then seen[#seen + 1] = e.x end
+		end
+		if q.phase == "over" then break end
+	end
+	return table.concat(seen, " ")
+end
+local cs = crates_seen(9)
+check(cs ~= "" and cs == crates_seen(9), "blastron: le casse cadono a caso ma uguali con lo stesso seed (" .. cs .. ")")
+
+-- Una partita intera con tutte le armi è deterministica anche con questo profilo
+check(play2(5) == play2(5), "blastron: partita deterministica")
+
+game.use_physics("megablast")
 
 -- Prestazioni: un cratere e 600 tick di simulazione
 local t = os.clock()
