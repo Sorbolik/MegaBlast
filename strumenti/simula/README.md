@@ -63,7 +63,8 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `aspetta_stato chiave=valore ... [S]` | aspetta uno stato, per esempio `turno=2 fase=aim` (chiavi: `modo`, `turno`, `fase`, `x`, `y`) |
 
 Pulsanti della battaglia: arma (MISSILE/SPADA) `1190 210`, TELE `1040 80`,
-SALTA `1190 80`, `<` `80 80`, `>` `210 80`. Menu: STESSO TELEFONO `640 390`.
+SALTA `1190 80`, `<` `80 80`, `>` `210 80`. Home: GIOCA (online) `1075 102`,
+STESSO TELEFONO `1075 235`, ARMERIA (chiusa) `155 488`. Scenario della home: `scenari/home.txt`.
 
 Per guidare il robot il gioco, solo in questa build, scrive nel log righe
 `SIMULA evento ...` e `SIMULA stato ...` (impostazione `megablast.simula = 1`

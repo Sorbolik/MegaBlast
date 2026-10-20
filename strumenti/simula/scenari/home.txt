@@ -1,0 +1,20 @@
+# Home: bottone chiuso, GIOCA (online: nella build di prova manca l'estensione
+# WebSocket, quindi compare il messaggio), ritorno alla home e STESSO TELEFONO.
+
+aspetta 1.5
+foto 01_home
+tocca 155 488                       # ARMERIA (chiusa)
+aspetta 0.3
+foto 02_in_arrivo
+tocca 1075 102                      # GIOCA
+aspetta_stato modo=ended 3
+aspetta 0.5
+foto 03_online
+tocca 640 360                       # torna alla home
+aspetta_stato modo=menu 3
+aspetta 0.6
+foto 04_di_nuovo_home
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 05_partita

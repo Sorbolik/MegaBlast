@@ -6,6 +6,7 @@
 -- Uso:
 --   local scoria = require "battaglia.scoria"
 --   local s = scoria.new(colore)          -- crea i nodi
+--   scoria.new(colore, "scoria_hd")       -- con un altro atlante (la home usa i master)
 --   scoria.update(s, dt, stato)           -- a ogni frame, nessuna allocazione
 
 local M = {}
@@ -15,6 +16,7 @@ M.SCALE = 0.26
 -- Piedi nel sistema di scoria_corpo.png (origine in alto a sinistra, y in giù)
 local FX, FY = 37, 117
 
+-- atlante dei pezzi: stessi nomi delle animazioni, risoluzione a scelta
 local ATLAS = "battaglia"
 
 -- Dati di scoria_rig.json (export 128 px)
@@ -88,7 +90,8 @@ local function glow(anim, parent, x, y, w, h, color)
 	return n
 end
 
-function M.new(color)
+function M.new(color, atlas)
+	ATLAS = atlas or "battaglia"
 	local s = { base = {}, color = color }
 	s.root = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(s.root, false)

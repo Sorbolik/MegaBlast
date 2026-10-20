@@ -1,0 +1,66 @@
+images {
+  image: "/assets/menu/kit/bottone_principale.png"
+}
+images {
+  image: "/assets/menu/kit/bottone_principale_premuto.png"
+}
+images {
+  image: "/assets/menu/kit/bottone_secondario.png"
+}
+images {
+  image: "/assets/menu/kit/bottone_secondario_premuto.png"
+}
+images {
+  image: "/assets/menu/kit/divisore.png"
+}
+images {
+  image: "/assets/menu/kit/notifica.png"
+}
+images {
+  image: "/assets/menu/kit/pannello.png"
+}
+images {
+  image: "/assets/menu/kit/slot.png"
+}
+images {
+  image: "/assets/menu/kit/slot_bloccato.png"
+}
+images {
+  image: "/assets/menu/icone/icona_armatura.png"
+}
+images {
+  image: "/assets/menu/icone/icona_armi.png"
+}
+images {
+  image: "/assets/menu/icone/icona_classifica.png"
+}
+images {
+  image: "/assets/menu/icone/icona_forgia.png"
+}
+images {
+  image: "/assets/menu/icone/icona_gioca.png"
+}
+images {
+  image: "/assets/menu/icone/icona_impostazioni.png"
+}
+images {
+  image: "/assets/menu/icone/icona_inventario.png"
+}
+images {
+  image: "/assets/menu/icone/icona_lucchetto.png"
+}
+images {
+  image: "/assets/menu/icone/icona_missioni.png"
+}
+images {
+  image: "/assets/menu/icone/icona_shop.png"
+}
+images {
+  image: "/assets/menu/logo.png"
+}
+images {
+  image: "/assets/menu/logo_luce.png"
+}
+margin: 2
+extrude_borders: 2
+inner_padding: 0

@@ -22,12 +22,19 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 | `ui/icone/` | 20 icone 128 px (`icona_<nome>.png`) |
 | `ui/sfondi/` | Sfondi delle schermate: home, forgia, podio (4 gradini), campagna, caricamento |
 | `ui/` | `logo.png` e `logo_luce.png` |
+| `menu/` | Versioni per la home, fatte da `strumenti/grafica/menu.py`: kit e logo rimpiccioliti, `home_sfondo.png` largo 2048, Scoria e Lanciarune ai master (4x) in `menu/scoria/` |
+| `font/` | Cinzel Bold (licenza OFL in `OFL_Cinzel.txt`), il font dei titoli della home |
 
 ## In battaglia
 
 - `mappe/isole_cimitero/terreno.png` (superficie con sopra le ossa) e `interno_mezzo.png` (parete dei crateri a metà risoluzione) li prepara `strumenti/grafica/battaglia.py`, insieme a `fx/bagliore.png` (alone bianco per missile e mirino).
 - La mappa è una mesh con lo shader `client/battaglia/terreno.fp`: sfondo lontano, terreno ritagliato dalla maschera viva, parete e brace dove si è scavato.
 - La Scoria è montata in `client/battaglia/scoria.lua` (nodi GUI, animazione nel codice); atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
+
+## Nella home
+
+- `client/menu/home.lua` monta la home con i nodi GUI: sfondo (atlante `sfondo_home`, adattato in ZOOM così copre ogni schermo), la Scoria di `battaglia/scoria.lua` con l'atlante `scoria_hd`, bottoni del kit con 9-slice (atlante `menu`), testi con `menu/titoli.font`.
+- Mentre si vede la home la mappa della battaglia è spenta, così il telefono non la disegna sotto lo sfondo.
 
 ## Rigenerare
 

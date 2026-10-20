@@ -4,7 +4,7 @@
 
 aspetta 2
 foto 01_menu
-tocca 640 390                       # STESSO TELEFONO
+tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 02_inizio

@@ -7,6 +7,7 @@
 local game = require "sim.game"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
+local home = require "menu.home"
 
 local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
@@ -179,7 +180,9 @@ end
 local function show_menu(self)
 	disconnect(self)
 	self.mode = "menu"
-	gui.set_enabled(self.menu, true)
+	home.show(self.home)
+	-- la home copre tutto: la mappa sotto non serve disegnarla
+	msg.post("/terreno", "disable")
 	set_controls_visible(self, false)
 	show_message(self, "", true)
 end
@@ -412,8 +415,13 @@ local function on_socket(self, conn, data)
 	end
 end
 
+local function hide_menu(self)
+	home.hide(self.home)
+	msg.post("/terreno", "enable")
+end
+
 local function start_online(self)
-	gui.set_enabled(self.menu, false)
+	hide_menu(self)
 	if not websocket then
 		-- l'estensione si scarica con Project -> Fetch Libraries
 		self.mode = "ended"
@@ -426,7 +434,7 @@ local function start_online(self)
 end
 
 local function start_local(self)
-	gui.set_enabled(self.menu, false)
+	hide_menu(self)
 	new_match(self, os.time())
 	self.mode = "local"
 	set_controls_visible(self, true)
@@ -716,14 +724,8 @@ function init(self)
 	self.btn_tele = box(W - 240, 80, 130, 110, BUTTON)
 	gui.set_parent(label(0, 0, "TELE", 1), self.btn_tele)
 
-	self.menu = box(W / 2, H / 2, W, H, vmath.vector4(0, 0, 0, 0))
-	gui.set_parent(label(0, 170, "MEGABLAST", 3), self.menu)
-	self.btn_local = box(0, 30, 360, 90, MENU_BUTTON)
-	gui.set_parent(self.btn_local, self.menu)
-	gui.set_parent(label(0, 0, "STESSO TELEFONO", 1.2), self.btn_local)
-	self.btn_online = box(0, -90, 360, 90, MENU_BUTTON)
-	gui.set_parent(self.btn_online, self.menu)
-	gui.set_parent(label(0, 0, "ONLINE", 1.2), self.btn_online)
+	-- la home per ultima, così sta sopra la battaglia
+	self.home = home.new(PLAYER_COLORS[1])
 
 	-- una mappa sullo sfondo del menu
 	new_match(self, os.time())
@@ -776,6 +778,7 @@ function update(self, dt)
 	end
 
 	render(self, dt)
+	if self.mode == "menu" then home.update(self.home, dt) end
 
 	if SIMULA and self.g then
 		local rb = current_robot(self)
@@ -789,6 +792,15 @@ function update(self, dt)
 end
 
 function on_input(self, action_id, action)
+	if self.mode == "menu" then
+		local scelta = home.on_input(self.home, action_id, action)
+		if scelta == "local" then
+			start_local(self)
+		elseif scelta == "online" then
+			start_online(self)
+		end
+		return true
+	end
 	if action_id == ACTION_LEFT then
 		self.keys.left = not action.released
 	elseif action_id == ACTION_RIGHT then
@@ -797,14 +809,7 @@ function on_input(self, action_id, action)
 		if action.pressed then self.jump_pressed = true end
 	elseif action_id == ACTION_TOUCH then
 		if action.pressed then
-			if self.mode == "menu" then
-				if gui.pick_node(self.btn_local, action.x, action.y) then
-					start_local(self)
-				elseif gui.pick_node(self.btn_online, action.x, action.y) then
-					start_online(self)
-				end
-				return true
-			elseif self.mode == "ended" then
+			if self.mode == "ended" then
 				show_menu(self)
 				return true
 			elseif self.mode ~= "local" and self.mode ~= "online" then
