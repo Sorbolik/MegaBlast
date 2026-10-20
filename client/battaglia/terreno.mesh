@@ -6,3 +6,4 @@ textures: "/assets/mappe/isole_cimitero/interno_mezzo.png"
 textures: "/assets/fx/bagliore.png"
 primitive_type: PRIMITIVE_TRIANGLES
 position_stream: "position"
+normal_stream: "normal"
