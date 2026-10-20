@@ -51,6 +51,10 @@ La logica di gioco in `client/sim/` è Lua puro e si prova anche senza Defold. C
 lua tests/sim_test.lua
 ```
 
+### Simulazione automatica (Linux)
+
+Claude prova il gioco da solo, senza Defold: compila, lo avvia su uno schermo virtuale, gioca uno scenario e salva foto e video. Vedi [strumenti/simula/README.md](../strumenti/simula/README.md).
+
 ## 4. Provarlo sul telefono Android
 
 Ci sono due modi.

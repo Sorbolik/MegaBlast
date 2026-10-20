@@ -3,6 +3,10 @@ fonts {
   name: "default"
   font: "/builtins/fonts/default.font"
 }
+fonts {
+  name: "titoli"
+  font: "/menu/titoli.font"
+}
 textures {
   name: "battaglia"
   texture: "/battaglia/battaglia.atlas"
@@ -10,6 +14,18 @@ textures {
 textures {
   name: "esplosione"
   texture: "/battaglia/esplosione.tilesource"
+}
+textures {
+  name: "menu"
+  texture: "/menu/menu.atlas"
+}
+textures {
+  name: "sfondo_home"
+  texture: "/menu/sfondo_home.atlas"
+}
+textures {
+  name: "scoria_hd"
+  texture: "/menu/scoria_hd.atlas"
 }
 background_color {
   x: 0.0

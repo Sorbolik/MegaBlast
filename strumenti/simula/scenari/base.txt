@@ -1,0 +1,49 @@
+# Scenario base: menu, partita sullo stesso telefono, movimento, salto,
+# missile, Lama di Nucleo e teletrasporto. Comandi in strumenti/simula/README.md.
+# Coordinate del gioco: 1280 x 720, (0, 0) in basso a sinistra.
+
+aspetta 2
+foto 01_menu
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 02_inizio
+
+# Rosso cammina, salta e tira un missile verso Blu
+tieni destra 0.8
+foto 03_camminata
+premi salta
+aspetta 0.35
+foto 04_salto
+aspetta 1
+mira 200 140 0.6 05_mira_missile
+aspetta_evento fire 2
+aspetta 0.25
+foto 06_missile_in_volo
+aspetta_evento explosion 8
+aspetta 0.15
+foto 07_esplosione
+tieni sinistra 1                    # si ripara dopo lo sparo
+
+# Turno di Blu: Lama di Nucleo
+aspetta_stato turno=2 fase=aim 15
+aspetta 0.5
+tocca 1190 210                      # pulsante arma: MISSILE -> SPADA
+foto 08_spada_scelta
+mira -120 0 0.2
+aspetta_evento swing 2
+aspetta 0.25
+foto 09_fendente
+zoom 09_fendente_zoom
+
+# Turno di Rosso: teletrasporto (Passo d'Ombra)
+aspetta_stato turno=1 fase=aim 15
+aspetta 0.5
+tocca 1040 80                       # pulsante TELE
+mira 150 120 0.4 10_mira_teletrasporto
+aspetta_evento orb 2
+aspetta 0.3
+foto 11_globo
+aspetta_evento teleport 5
+aspetta 0.3
+foto 12_dopo_teletrasporto

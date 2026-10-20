@@ -1,0 +1,92 @@
+{
+ "bottone_principale": {
+  "w": 341,
+  "h": 105,
+  "bordo_9slice": [
+   29,
+   29,
+   29,
+   29
+  ]
+ },
+ "bottone_principale_premuto": {
+  "w": 346,
+  "h": 104,
+  "bordo_9slice": [
+   29,
+   29,
+   29,
+   29
+  ]
+ },
+ "bottone_secondario": {
+  "w": 227,
+  "h": 74,
+  "bordo_9slice": [
+   20,
+   20,
+   20,
+   20
+  ]
+ },
+ "bottone_secondario_premuto": {
+  "w": 228,
+  "h": 74,
+  "bordo_9slice": [
+   20,
+   20,
+   20,
+   20
+  ]
+ },
+ "slot": {
+  "w": 95,
+  "h": 93,
+  "bordo_9slice": [
+   26,
+   26,
+   26,
+   26
+  ]
+ },
+ "slot_bloccato": {
+  "w": 95,
+  "h": 94,
+  "bordo_9slice": [
+   26,
+   26,
+   26,
+   26
+  ]
+ },
+ "notifica": {
+  "w": 34,
+  "h": 33,
+  "bordo_9slice": [
+   9,
+   9,
+   9,
+   9
+  ]
+ },
+ "divisore": {
+  "w": 179,
+  "h": 26,
+  "bordo_9slice": [
+   7,
+   7,
+   7,
+   7
+  ]
+ },
+ "pannello": {
+  "w": 431,
+  "h": 185,
+  "bordo_9slice": [
+   52,
+   52,
+   52,
+   52
+  ]
+ }
+}
