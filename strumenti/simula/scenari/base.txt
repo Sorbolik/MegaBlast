@@ -39,7 +39,7 @@ zoom 09_fendente_zoom
 # Turno di Rosso: teletrasporto (Passo d'Ombra)
 aspetta_stato turno=1 fase=aim 15
 aspetta 0.5
-tocca 1040 80                       # pulsante TELE
+tocca 1180 62                       # pulsante TELE
 mira 150 120 0.4 10_mira_teletrasporto
 aspetta_evento orb 2
 aspetta 0.3

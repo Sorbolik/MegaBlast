@@ -296,14 +296,17 @@ def comando(g, riga):
         if len(a) > 3:
             g.scatta(a[3])
         g.xdo("mouseup", 1)
-    elif c == "levetta":
-        # dito sulla levetta del movimento (profilo blastron), spostato di (dx, dy)
-        # dal centro e tenuto S secondi; facoltativamente una foto prima di lasciare
-        cx, cy = 145, 80
+    elif c in ("levetta", "levetta_mira"):
+        # dito sulla levetta del movimento (o della mira) del telefono, spostato
+        # di (dx, dy) dal punto d'appoggio e tenuto S secondi; facoltativamente
+        # una foto prima di lasciare. Serve "imposta comandi telefono".
+        cx, cy = (115, 117) if c == "levetta" else (W - 115, 117)
         g.punta(cx, cy)
         g.xdo("mousedown", 1)
         g.attendi(0.05)
-        g.punta(cx + num(0), cy + num(1))
+        for i in range(1, 5):  # qualche passo, come un pollice vero
+            g.punta(cx + num(0) * i / 4, cy + num(1) * i / 4)
+            g.attendi(0.02)
         g.attendi(num(2, 0.5))
         if len(a) > 3:
             g.scatta(a[3])

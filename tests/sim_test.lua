@@ -804,6 +804,46 @@ for i = 1, 600 do g4:step({ right = i % 2 == 0 }) end
 for i = 1, 20 do g4.terrain:carve(100 + i * 50, 200, 30) end
 print(string.format("info 600 tick + 20 crateri in %.1f ms", (os.clock() - t) * 1000))
 
+-- Levette del telefono (client/battaglia/levette.lua)
+do
+	local levette = require "battaglia.levette"
+	local s = levette.new()
+	levette.muovi(s, 0.1, 0)
+	check(not s.moving, "levetta: al 10% di lato non cammina")
+	levette.muovi(s, 0.5, 0)
+	check(s.moving and s.dir == 1, "levetta: di lato cammina a destra")
+	local jumped = levette.muovi(s, 0.5, 0.5)
+	check(s.moving and s.jumping and jumped, "levetta: in diagonale cammina e salta")
+	check(not levette.muovi(s, 0.5, 0.55), "levetta: il salto parte una volta sola")
+	levette.muovi(s, 0.05, 0.6)
+	check(not s.moving and s.jumping, "levetta: dritta in alto salta sul posto")
+	levette.muovi(s, -0.6, -0.1)
+	check(s.moving and s.dir == -1 and not s.jumping, "levetta: in basso a sinistra cammina e non salta")
+	levette.muovi(s, -0.05, 0)
+	check(not s.moving, "levetta: tornata al centro si ferma")
+	levette.muovi(s, 0.2, -0.6)
+	check(not s.moving, "levetta: verso il basso serve il 25% di lato")
+
+	local a = levette.new()
+	levette.mira(a, 0.15, 0)
+	check(not a.active, "mira: sotto il 20% spenta")
+	levette.mira(a, 0, -0.6)
+	check(a.active and math.abs(a.angle + math.pi / 2) < 1e-6 and math.abs(a.f - 0.5) < 1e-6,
+		"mira: accesa, verso il basso, potenza 0,5 al 60%")
+	levette.mira(a, 0.15, 0)
+	check(a.active, "mira: tra il 10% e il 20% resta accesa")
+	levette.mira(a, 0.05, 0)
+	check(not a.active, "mira: sotto il 10% si spegne")
+
+	-- lo scivolamento del pollice nell'ultimo istante non conta
+	local r = levette.new()
+	for i = 0, 30 do levette.registra(r, i / 60, i < 28 and 1.0 or 2.0, 0.7, i < 30) end
+	local h = levette.al_rilascio(r, 30 / 60)
+	check(h and h.angle == 1.0 and h.active, "mira: al rilascio vale la mira di 50 ms prima")
+	levette.reset(r)
+	check(levette.al_rilascio(r, 1) == nil, "mira: dopo reset nessuna mira registrata")
+end
+
 if failures > 0 then
 	print(failures .. " test falliti")
 	os.exit(1)

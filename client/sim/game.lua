@@ -175,14 +175,6 @@ M.AIM_SMOOTH = 1
 M.AIM_PREVIEW_DOTS = false
 -- tenendo premuto il salto si risalta appena si tocca terra
 M.JUMP_REPEAT = false
--- Levetta del movimento (Blastron): cammina oltre STICK_MOVE della corsa
--- della levetta se è sotto STICK_MOVE_ANGLE, salta se sta sopra
--- STICK_JUMP_ANGLE ed è spinta oltre STICK_JUMP. false: due pulsanti.
-M.MOVE_STICK = false
-M.STICK_MOVE = 0.15
-M.STICK_MOVE_ANGLE = math.rad(60)
-M.STICK_JUMP = 0.25
-M.STICK_JUMP_ANGLE = math.rad(25)
 
 function M.aim_power(f)
 	f = math.max(0, math.min(1, f))
@@ -1435,13 +1427,12 @@ local function blastron_profile()
 		MATCH_TICKS = 5 * 60 * 60,
 		CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 },
 		-- comandi: zona morta 20%, potenza quadratica, mira che insegue il dito,
-		-- solo l'inizio della traiettoria, salto ripetuto, levetta per muoversi
+		-- solo l'inizio della traiettoria, salto ripetuto
 		AIM_DEADZONE = 0.2,
 		AIM_EXPONENT = 2,
 		AIM_SMOOTH = 0.2,
 		AIM_PREVIEW_DOTS = 4,
 		JUMP_REPEAT = true,
-		MOVE_STICK = true,
 	}
 end
 

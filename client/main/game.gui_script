@@ -8,6 +8,7 @@ local game = require "sim.game"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local home = require "menu.home"
+local levette = require "battaglia.levette"
 
 local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
@@ -19,15 +20,15 @@ local ACTION_LEFT = hash("left")
 local ACTION_RIGHT = hash("right")
 local ACTION_JUMP = hash("jump")
 local ACTION_CANCEL = hash("cancel")
+local ACTION_MULTI = hash("multitouch")
+local ACTION_TELE = hash("teleport")
+local ACTION_WEAPON = { [hash("arma1")] = 1, [hash("arma2")] = 2, [hash("arma3")] = 3, [hash("arma4")] = 4, [hash("arma5")] = 5 }
 
 local NAMES = { "Rosso", "Blu" }
 -- colori delle squadre della bibbia grafica: Cremisi e Cobalto
 local PLAYER_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1) }
 local WHITE = vmath.vector4(1, 1, 1, 1)
 local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
-local BUTTON = vmath.vector4(1, 1, 1, 0.25)
-local MENU_BUTTON = vmath.vector4(0.12, 0.12, 0.14, 0.75)
-local BUTTON_ON = vmath.vector4(0.62, 0.36, 0.95, 0.75)
 
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
 -- Lanciarune e Lama di Nucleo ci sono sempre, le altre si trovano nelle casse.
@@ -42,6 +43,7 @@ local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Sche
 local MELEE = { sword = true, punch = true }
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 62
 local SLOT_OFF = vmath.vector4(0.62, 0.62, 0.68, 0.9)
+local TELE_OFF = vmath.vector4(0.45, 0.45, 0.5, 0.5)
 local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector3(1, 1, 1)
 -- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante)
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
@@ -102,9 +104,43 @@ end
 local FISICA = config_string("megablast.fisica", "")
 if FISICA ~= "" then game.use_physics(FISICA) end
 
--- Levetta del movimento (con game.MOVE_STICK): occupa la zona dei pulsanti
--- < e >, il centro sta tra i due. Toccare < o > funziona come prima.
-local STICK_X, STICK_Y, STICK_R = 145, 80, 110
+-- Comandi sul telefono: due levette come in Blastron (HUD del tablet, portato
+-- da 1024 x 768 a 1280 x 720), la logica è in battaglia/levette.lua. La base
+-- va dove si appoggia il pollice, dentro la sua zona, e torna al suo posto
+-- quando lo si alza. Sul computer niente levette: tastiera e mouse.
+local PAD_R = 94 -- corsa della levetta
+local PAD_D = 2 * PAD_R + 28 -- disegno della base
+local KNOB_D = 112
+local MOVE_PAD = { x = 115, y = 117 }
+local AIM_PAD = { x = W - 115, y = 117 }
+-- le levette si prendono nel 40% a sinistra e a destra, sotto il 60% dell'altezza
+local PAD_ZONE_X, PAD_ZONE_Y = W * 0.4, H * 0.6
+-- teletrasporto: sul telefono in alto a destra della levetta della mira, come
+-- in Blastron; sul computer in basso a destra (o il tasto T)
+local TELE_TOUCH = vmath.vector3(W - 72, 257, 0)
+local TELE_DESK = vmath.vector3(W - 100, 62, 0)
+local TELE_D = 84
+-- anello della mira: azzurro spenta, rosso quando lasciando parte il colpo
+local AIM_IDLE = vmath.vector4(0.35, 0.85, 1, 0.45)
+local AIM_LIVE = vmath.vector4(1, 0.22, 0.16, 0.95)
+local MOVE_IDLE = vmath.vector4(1, 1, 1, 0.12)
+local MOVE_LIVE = vmath.vector4(1, 0.85, 0.55, 0.5)
+
+-- Telefono o computer: [megablast] comandi = telefono / computer per
+-- sceglierlo, altrimenti dal sistema (e dal browser, se è un telefono).
+-- Durante la partita si cambia da soli: un dito sullo schermo accende le
+-- levette, un tasto le spegne.
+local COMANDI = config_string("megablast.comandi", "")
+local function touch_device()
+	if COMANDI == "telefono" then return true end
+	if COMANDI == "computer" then return false end
+	local name = sys.get_sys_info().system_name
+	if name == "Android" or name == "iPhone OS" then return true end
+	if name == "HTML5" and html5 then
+		return html5.run("('ontouchstart' in window) || navigator.maxTouchPoints > 0") == "true"
+	end
+	return false
+end
 
 local function server_url()
 	if sys.get_config_string then
@@ -190,10 +226,9 @@ local function show_message(self, text, keep)
 end
 
 local function set_controls_visible(self, visible)
-	gui.set_enabled(self.btn_left, visible)
-	gui.set_enabled(self.btn_right, visible)
-	if not visible then gui.set_enabled(self.stick_knob, false) end
-	gui.set_enabled(self.btn_jump, visible)
+	self.controls_visible = visible
+	gui.set_enabled(self.move_pad.base, visible and self.touch_ui)
+	gui.set_enabled(self.aim_pad.base, visible and self.touch_ui)
 	gui.set_enabled(self.bar, visible)
 	gui.set_enabled(self.btn_tele, visible)
 	gui.set_enabled(self.hud, visible)
@@ -607,32 +642,124 @@ local function smooth_aim(self, dt)
 	self.aim_angle = self.aim_angle + d * (1 - (1 - game.AIM_SMOOTH) ^ (dt * 60))
 end
 
--- Comandi del movimento: tastiera, pulsanti o levetta
+-- Comandi del movimento: tastiera o levetta
 local function move_left(self)
-	return self.keys.left or self.touch_mode == "left" or (self.touch_mode == "stick" and self.stick_dir < 0)
+	return self.keys.left or (self.move_st.moving and self.move_st.dir < 0)
 end
 local function move_right(self)
-	return self.keys.right or self.touch_mode == "right" or (self.touch_mode == "stick" and self.stick_dir > 0)
+	return self.keys.right or (self.move_st.moving and self.move_st.dir > 0)
 end
 local function jump_held(self)
-	return self.keys.jump or self.touch_mode == "jump" or (self.touch_mode == "stick" and self.stick_jump)
+	return self.keys.jump or self.move_st.jumping
 end
 
--- Il dito sulla levetta in (x, y): cammina se è di lato, salta se è in alto
-local function stick_from(self, x, y)
-	local dx, dy = (x - STICK_X) / STICK_R, (y - STICK_Y) / STICK_R
+-- Levette ---------------------------------------------------------------------
+
+local PAD_POS = vmath.vector3(0, 0, 0)
+
+local function new_pad(rest, ring_color)
+	local pad = { rest = rest }
+	pad.base = stretch(gui.new_box_node(vmath.vector3(rest.x, rest.y, 0), vmath.vector3(PAD_D, PAD_D, 0)))
+	gui.set_texture(pad.base, "battaglia")
+	gui.play_flipbook(pad.base, "levetta_base")
+	pad.ring = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(PAD_D, PAD_D, 0))
+	gui.set_texture(pad.ring, "battaglia")
+	gui.play_flipbook(pad.ring, "levetta_anello")
+	gui.set_blend_mode(pad.ring, gui.BLEND_ADD)
+	gui.set_color(pad.ring, ring_color)
+	gui.set_parent(pad.ring, pad.base)
+	pad.knob = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(KNOB_D, KNOB_D, 0))
+	gui.set_texture(pad.knob, "battaglia")
+	gui.play_flipbook(pad.knob, "levetta_pomello")
+	gui.set_parent(pad.knob, pad.base)
+	return pad
+end
+
+-- Il pollice si appoggia in (x, y): la base va lì, senza uscire dallo schermo
+local function pad_press(pad, id, x, y)
+	pad.id, pad.x0, pad.y0 = id, x, y
+	local h = PAD_D / 2
+	PAD_POS.x = math.max(h, math.min(W - h, x))
+	PAD_POS.y = math.max(h, math.min(H - h, y))
+	pad.bx, pad.by = PAD_POS.x, PAD_POS.y
+	gui.set_position(pad.base, PAD_POS)
+end
+
+-- Il pollice è in (x, y): torna lo spostamento dal punto in cui si è
+-- appoggiato, in frazioni della corsa (lunghezza al massimo 1)
+local function pad_drag(pad, x, y)
+	local dx, dy = (x - pad.x0) / PAD_R, (y - pad.y0) / PAD_R
 	local mag = math.sqrt(dx * dx + dy * dy)
-	local up = mag > 0 and dy / mag or 0
-	self.stick_dir = 0
-	if mag > game.STICK_MOVE and up < math.sin(game.STICK_MOVE_ANGLE) then
-		self.stick_dir = dx < 0 and -1 or 1
+	if mag > 1 then dx, dy = dx / mag, dy / mag end
+	PAD_POS.x = pad.x0 - pad.bx + dx * PAD_R
+	PAD_POS.y = pad.y0 - pad.by + dy * PAD_R
+	gui.set_position(pad.knob, PAD_POS)
+	return dx, dy
+end
+
+local function pad_release(pad, ring_color)
+	pad.id = nil
+	PAD_POS.x, PAD_POS.y = pad.rest.x, pad.rest.y
+	gui.set_position(pad.base, PAD_POS)
+	PAD_POS.x, PAD_POS.y = 0, 0
+	gui.set_position(pad.knob, PAD_POS)
+	gui.set_color(pad.ring, ring_color)
+end
+
+local function move_pad_drag(self, x, y)
+	local nx, ny = pad_drag(self.move_pad, x, y)
+	if levette.muovi(self.move_st, nx, ny) then self.jump_pressed = true end
+	local on = self.move_st.moving or self.move_st.jumping
+	gui.set_color(self.move_pad.ring, on and MOVE_LIVE or MOVE_IDLE)
+end
+
+local function aim_pad_drag(self, x, y)
+	local st = self.aim_st
+	local was = st.active
+	levette.mira(st, pad_drag(self.aim_pad, x, y))
+	self.aim_target = st.angle
+	-- appena si accende la mira va subito sulla levetta, poi la insegue
+	if (st.active and not was) or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
+	self.aim_power = math.max(0.1, st.f ^ game.AIM_EXPONENT)
+	self.aim_dist = math.huge
+	self.aiming = st.active
+	gui.set_color(self.aim_pad.ring, st.active and AIM_LIVE or AIM_IDLE)
+end
+
+-- Il pollice si stacca dalla levetta della mira: parte il colpo se la levetta
+-- era accesa un attimo prima (levette.RILASCIO), con la mira di allora
+local function aim_pad_release(self)
+	local st = self.aim_st
+	local h = levette.al_rilascio(st, self.clock)
+	local live = h and h.active
+	if (live or st.active) and self.g.phase == "aim" and my_turn(self) then
+		self.fire = { angle = live and h.angle or self.aim_angle, power = live and h.power or self.aim_power,
+			weapon = self.tele_armed and "teleport" or self.weapon }
+		self.tele_armed = false
 	end
-	local jump = mag > game.STICK_JUMP and up > math.sin(game.STICK_JUMP_ANGLE)
-	if jump and not self.stick_jump then self.jump_pressed = true end
-	self.stick_jump = jump
-	local k = math.min(1, mag) / math.max(mag, 1e-6)
-	gui.set_enabled(self.stick_knob, true)
-	gui.set_position(self.stick_knob, vmath.vector3(STICK_X + dx * k * STICK_R, STICK_Y + dy * k * STICK_R, 0))
+	levette.reset(st)
+	self.aiming = false
+	pad_release(self.aim_pad, AIM_IDLE)
+end
+
+local function move_pad_release(self)
+	levette.reset(self.move_st)
+	pad_release(self.move_pad, MOVE_IDLE)
+end
+
+-- Levette accese (telefono) o spente (computer)
+local function set_touch_ui(self, on)
+	if self.touch_ui == on then return end
+	if self.move_pad.id then move_pad_release(self) end
+	if self.aim_pad.id then
+		levette.reset(self.aim_st)
+		self.aiming = false
+		pad_release(self.aim_pad, AIM_IDLE)
+	end
+	self.touch_ui = on
+	gui.set_position(self.btn_tele, on and TELE_TOUCH or TELE_DESK)
+	gui.set_enabled(self.tele_key, not on)
+	if self.controls_visible ~= nil then set_controls_visible(self, self.controls_visible) end
 end
 
 -- Un solo vettore riusato per tutte le posizioni del frame
@@ -896,7 +1023,13 @@ local function render(self, dt)
 	local tele_ok = g.phase == "aim" and #g.orbs < game.MAX_ORBS and my_turn(self)
 	if self.tele_armed and not tele_ok then self.tele_armed = false end
 	update_bar(self)
-	gui.set_color(self.btn_tele, self.tele_armed and BUTTON_ON or (tele_ok and BUTTON or MENU_BUTTON))
+	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
+	if self.tele_state ~= tele_state then
+		gui.set_color(self.btn_tele, tele_state == 2 and WHITE or (tele_state == 1 and SLOT_OFF or TELE_OFF))
+		gui.set_scale(self.btn_tele, tele_state == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
+		self.tele_state = tele_state
+	end
+	gui.set_color(self.tele_light, PLAYER_COLORS[g.current])
 
 	local aim_weapon = self.tele_armed and "teleport" or self.weapon
 	-- col dito sul robot il colpo è annullato: niente traiettoria, solo la scritta
@@ -1067,15 +1200,10 @@ function init(self)
 	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
 	gui.set_enabled(self.cancel_label, false)
 
-	self.btn_left = box(80, 80, 110, 110, BUTTON)
-	gui.set_parent(label(0, 0, "<", 2), self.btn_left)
-	self.btn_right = box(210, 80, 110, 110, BUTTON)
-	gui.set_parent(label(0, 0, ">", 2), self.btn_right)
-	self.stick_knob = box(STICK_X, STICK_Y, 56, 56, BUTTON_ON)
-	gui.set_enabled(self.stick_knob, false)
-	self.stick_dir, self.stick_jump = 0, false
-	self.btn_jump = box(W - 90, 80, 130, 110, BUTTON)
-	gui.set_parent(label(0, 0, "SALTA", 1), self.btn_jump)
+	-- levette del telefono
+	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE)
+	self.aim_pad = new_pad(AIM_PAD, AIM_IDLE)
+	self.move_st, self.aim_st = levette.new(), levette.new()
 	-- barra delle armi in basso al centro e, a parte, il teletrasporto
 	self.bar = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(self.bar, false)
@@ -1095,8 +1223,24 @@ function init(self)
 		gui.set_enabled(n, false)
 		self.slots[i] = { node = n, label = count, weapon = w, have = false }
 	end
-	self.btn_tele = box(W - 240, 80, 130, 110, BUTTON)
-	gui.set_parent(label(0, 0, "TELE", 1), self.btn_tele)
+	-- teletrasporto: uno slot come quelli delle armi, col globo
+	self.btn_tele = box(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D, SLOT_OFF)
+	gui.set_texture(self.btn_tele, "menu")
+	gui.play_flipbook(self.btn_tele, "slot")
+	local orb_icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(64 * 0.75, 57 * 0.75, 0))
+	gui.set_texture(orb_icon, "battaglia")
+	gui.play_flipbook(orb_icon, "passo_ombra")
+	gui.set_parent(orb_icon, self.btn_tele)
+	self.tele_light = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(64 * 0.75, 57 * 0.75, 0))
+	gui.set_texture(self.tele_light, "battaglia")
+	gui.play_flipbook(self.tele_light, "passo_ombra_luce")
+	gui.set_blend_mode(self.tele_light, gui.BLEND_ADD)
+	gui.set_parent(self.tele_light, self.btn_tele)
+	self.tele_key = label(-26, -28, "T", 0.6)
+	gui.set_parent(self.tele_key, self.btn_tele)
+	self.pointers = {}
+	set_touch_ui(self, touch_device())
+	set_controls_visible(self, false)
 
 	-- la home per ultima, così sta sopra la battaglia
 	self.home = home.new(PLAYER_COLORS[1])
@@ -1159,6 +1303,8 @@ function update(self, dt)
 	end
 
 	smooth_aim(self, dt)
+	-- per sparare con la mira di un attimo prima che il pollice si stacchi
+	if self.aim_pad.id then levette.registra(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
 	render(self, dt)
 	if self.mode == "menu" then home.update(self.home, dt) end
 
@@ -1181,6 +1327,72 @@ local function picked_slot(self, x, y)
 	return nil
 end
 
+local function toggle_tele(self)
+	-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
+	self.tele_armed = not self.tele_armed and self.g.phase == "aim" and #self.g.orbs < game.MAX_ORBS
+end
+
+-- Un dito (o il mouse) si appoggia in (x, y). id distingue le dita.
+local function pointer_down(self, id, x, y)
+	if self.mode == "ended" then
+		show_menu(self)
+		return
+	elseif self.mode ~= "local" and self.mode ~= "online" then
+		return
+	end
+	if gui.pick_node(self.btn_tele, x, y) then
+		toggle_tele(self)
+	elseif picked_slot(self, x, y) then
+		self.weapon = picked_slot(self, x, y)
+		self.tele_armed = false
+	elseif self.touch_ui then
+		if x < PAD_ZONE_X and y < PAD_ZONE_Y and not self.move_pad.id then
+			self.pointers[id] = "move"
+			pad_press(self.move_pad, id, x, y)
+			move_pad_drag(self, x, y)
+		elseif x > W - PAD_ZONE_X and y < PAD_ZONE_Y and not self.aim_pad.id and my_turn(self) then
+			self.pointers[id] = "pad_aim"
+			pad_press(self.aim_pad, id, x, y)
+			aim_pad_drag(self, x, y)
+		end
+	elseif my_turn(self) then
+		-- sul computer si mira dal robot col mouse
+		self.pointers[id] = "aim"
+		self.aiming = true
+		aim_from(self, x, y, true)
+	end
+end
+
+local function pointer_move(self, id, x, y)
+	local m = self.pointers[id]
+	if m == "move" then
+		move_pad_drag(self, x, y)
+	elseif m == "pad_aim" then
+		aim_pad_drag(self, x, y)
+	elseif m == "aim" then
+		aim_from(self, x, y)
+	end
+end
+
+local function pointer_up(self, id, x, y)
+	local m = self.pointers[id]
+	self.pointers[id] = nil
+	if m == "move" then
+		move_pad_release(self)
+	elseif m == "pad_aim" then
+		aim_pad_release(self)
+	elseif m == "aim" then
+		aim_from(self, x, y)
+		-- rilasciare il dito sopra il robot annulla lo sparo
+		if self.g.phase == "aim" and self.aim_dist > CANCEL_R then
+			self.fire = { angle = self.aim_angle, power = self.aim_power,
+				weapon = self.tele_armed and "teleport" or self.weapon }
+			self.tele_armed = false
+		end
+		self.aiming = false
+	end
+end
+
 function on_input(self, action_id, action)
 	if self.mode == "menu" then
 		local scelta = home.on_input(self.home, action_id, action)
@@ -1191,6 +1403,11 @@ function on_input(self, action_id, action)
 		end
 		return true
 	end
+	-- un tasto spegne le levette (a meno che non le abbia chieste la configurazione)
+	if action_id and action_id ~= ACTION_TOUCH and action_id ~= ACTION_MULTI and action.pressed
+		and self.touch_ui and COMANDI == "" then
+		set_touch_ui(self, false)
+	end
 	if action_id == ACTION_LEFT then
 		self.keys.left = not action.released
 	elseif action_id == ACTION_RIGHT then
@@ -1198,63 +1415,57 @@ function on_input(self, action_id, action)
 	elseif action_id == ACTION_JUMP then
 		if action.pressed then self.jump_pressed = true end
 		self.keys.jump = not action.released
-	elseif action_id == ACTION_TOUCH then
+	elseif action_id == ACTION_TELE then
+		if action.pressed then toggle_tele(self) end
+	elseif ACTION_WEAPON[action_id] then
+		-- tasti 1-5: le armi della barra, in ordine
 		if action.pressed then
-			if self.mode == "ended" then
-				show_menu(self)
-				return true
-			elseif self.mode ~= "local" and self.mode ~= "online" then
-				return true
-			end
-			if game.MOVE_STICK and math.abs(action.x - STICK_X) <= STICK_R + 10
-				and math.abs(action.y - STICK_Y) <= 60 then
-				self.touch_mode = "stick"
-			elseif gui.pick_node(self.btn_left, action.x, action.y) then
-				self.touch_mode = "left"
-			elseif gui.pick_node(self.btn_right, action.x, action.y) then
-				self.touch_mode = "right"
-			elseif gui.pick_node(self.btn_jump, action.x, action.y) then
-				self.touch_mode = "jump"
-				self.jump_pressed = true
-			elseif picked_slot(self, action.x, action.y) then
-				self.weapon = picked_slot(self, action.x, action.y)
-				self.tele_armed = false
-			elseif gui.pick_node(self.btn_tele, action.x, action.y) then
-				-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
-				self.tele_armed = not self.tele_armed and self.g.phase == "aim" and #self.g.orbs < game.MAX_ORBS
-			elseif my_turn(self) then
-				self.touch_mode = "aim"
-				self.aiming = true
+			local n = 0
+			for _, sl in ipairs(self.slots) do
+				if sl.have then
+					n = n + 1
+					if n == ACTION_WEAPON[action_id] then
+						self.weapon = sl.weapon
+						self.tele_armed = false
+					end
+				end
 			end
 		end
-		if self.touch_mode == "aim" then aim_from(self, action.x, action.y, action.pressed) end
-		if self.touch_mode == "stick" then stick_from(self, action.x, action.y) end
-		if action.released then
-			-- rilasciare il dito sopra il robot annulla lo sparo
-			if self.touch_mode == "aim" and self.g.phase == "aim" and self.aim_dist > CANCEL_R then
-				self.fire = { angle = self.aim_angle, power = self.aim_power,
-					weapon = self.tele_armed and "teleport" or self.weapon }
-				self.tele_armed = false
+	elseif action_id == ACTION_MULTI then
+		-- dita vere: da qui in poi il tocco del "mouse" (il primo dito) si ignora
+		if not self.multitouch then
+			self.multitouch = true
+			if self.pointers.mouse then pointer_up(self, "mouse", action.x, action.y) end
+			if COMANDI ~= "computer" then set_touch_ui(self, true) end
+		end
+		for _, t in ipairs(action.touch) do
+			if t.pressed then
+				pointer_down(self, t.id, t.x, t.y)
+			elseif t.released then
+				pointer_up(self, t.id, t.x, t.y)
+			else
+				pointer_move(self, t.id, t.x, t.y)
 			end
-			if self.touch_mode == "stick" then
-				self.stick_dir, self.stick_jump = 0, false
-				gui.set_enabled(self.stick_knob, false)
-			end
-			self.touch_mode = nil
-			self.aiming = false
+		end
+	elseif action_id == ACTION_TOUCH then
+		if self.multitouch then return true end
+		if action.pressed then
+			pointer_down(self, "mouse", action.x, action.y)
+		elseif action.released then
+			pointer_up(self, "mouse", action.x, action.y)
+		else
+			pointer_move(self, "mouse", action.x, action.y)
 		end
 	elseif action_id == ACTION_CANCEL then
 		-- tasto destro mentre si mira col sinistro: il colpo è annullato, e lasciando
 		-- il sinistro non parte niente (si può cambiare arma e mirare di nuovo)
-		if action.pressed and self.touch_mode == "aim" then
-			self.touch_mode = "cancelled"
+		if action.pressed and self.pointers.mouse == "aim" then
+			self.pointers.mouse = "cancelled"
 			self.aiming = false
 		end
-	elseif action_id == nil and self.touch_mode == "aim" then
-		-- movimento del mouse o del dito senza cambio di stato
-		aim_from(self, action.x, action.y)
-	elseif action_id == nil and self.touch_mode == "stick" then
-		stick_from(self, action.x, action.y)
+	elseif action_id == nil and self.pointers.mouse then
+		-- movimento del mouse senza cambio di stato
+		pointer_move(self, "mouse", action.x, action.y)
 	end
 	return true
 end
