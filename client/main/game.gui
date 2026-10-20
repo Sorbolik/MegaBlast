@@ -3,6 +3,14 @@ fonts {
   name: "default"
   font: "/builtins/fonts/default.font"
 }
+textures {
+  name: "battaglia"
+  texture: "/battaglia/battaglia.atlas"
+}
+textures {
+  name: "esplosione"
+  texture: "/battaglia/esplosione.tilesource"
+}
 background_color {
   x: 0.0
   y: 0.0

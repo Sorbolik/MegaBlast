@@ -23,6 +23,12 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 | `ui/sfondi/` | Sfondi delle schermate: home, forgia, podio (4 gradini), campagna, caricamento |
 | `ui/` | `logo.png` e `logo_luce.png` |
 
+## In battaglia
+
+- `mappe/isole_cimitero/terreno.png` (superficie con sopra le ossa) e `interno_mezzo.png` (parete dei crateri a metà risoluzione) li prepara `strumenti/grafica/battaglia.py`, insieme a `fx/bagliore.png` (alone bianco per missile e mirino).
+- La mappa è una mesh con lo shader `client/battaglia/terreno.fp`: sfondo lontano, terreno ritagliato dalla maschera viva, parete e brace dove si è scavato.
+- La Scoria è montata in `client/battaglia/scoria.lua` (nodi GUI, animazione nel codice); atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
+
 ## Rigenerare
 
 Gli script in `strumenti/grafica/` (Python 3 con Pillow, numpy, scipy) ritagliano i fogli del generatore.

@@ -1,0 +1,54 @@
+images {
+  image: "/assets/scoria/scoria_braccio_davanti.png"
+}
+images {
+  image: "/assets/scoria/scoria_braccio_dietro.png"
+}
+images {
+  image: "/assets/scoria/scoria_corna_davanti.png"
+}
+images {
+  image: "/assets/scoria/scoria_corna_dietro.png"
+}
+images {
+  image: "/assets/scoria/scoria_corpo.png"
+}
+images {
+  image: "/assets/scoria/scoria_gamba_davanti.png"
+}
+images {
+  image: "/assets/scoria/scoria_gamba_dietro.png"
+}
+images {
+  image: "/assets/scoria/scoria_nucleo_luce.png"
+}
+images {
+  image: "/assets/scoria/scoria_occhio_colpito.png"
+}
+images {
+  image: "/assets/scoria/scoria_occhio_mira.png"
+}
+images {
+  image: "/assets/scoria/scoria_occhio_neutro.png"
+}
+images {
+  image: "/assets/scoria/scoria_occhio_paura.png"
+}
+images {
+  image: "/assets/scoria/scoria_occhio_poca_vita.png"
+}
+images {
+  image: "/assets/scoria/scoria_occhio_vittoria.png"
+}
+images {
+  image: "/assets/armi/lanciarune.png"
+}
+images {
+  image: "/assets/armi/lanciarune_luce.png"
+}
+images {
+  image: "/assets/fx/bagliore.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0
