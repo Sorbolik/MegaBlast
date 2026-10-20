@@ -18,6 +18,7 @@ local ACTION_TOUCH = hash("touch")
 local ACTION_LEFT = hash("left")
 local ACTION_RIGHT = hash("right")
 local ACTION_JUMP = hash("jump")
+local ACTION_CANCEL = hash("cancel")
 
 local NAMES = { "Rosso", "Blu" }
 -- colori delle squadre della bibbia grafica: Cremisi e Cobalto
@@ -35,6 +36,8 @@ local WEAPON_LABEL = { missile = "MISSILE", sword = "SPADA" }
 local HEAD = 130 * scoria.SCALE
 local AIM_DOTS = 12
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
+-- riportare il dito sul robot e lasciarlo lì annulla il colpo
+local CANCEL_R = 28
 
 local function stretch(node)
 	gui.set_adjust_mode(node, gui.ADJUST_STRETCH)
@@ -593,7 +596,14 @@ local function render(self, dt)
 	gui.set_color(self.btn_tele, self.tele_armed and BUTTON_ON or (tele_ok and BUTTON or MENU_BUTTON))
 
 	local aim_weapon = self.tele_armed and "teleport" or self.weapon
-	local show_aim = self.aiming and g.phase == "aim" and my_turn(self) and aim_weapon ~= "sword"
+	-- col dito sul robot il colpo è annullato: niente traiettoria, solo la scritta
+	local cancel = self.aiming and g.phase == "aim" and my_turn(self) and self.aim_dist <= CANCEL_R
+	gui.set_enabled(self.cancel_label, cancel)
+	if cancel then
+		local v = self.view[g.current]
+		set_pos(self.cancel_label, v.x, v.y - 14)
+	end
+	local show_aim = self.aiming and g.phase == "aim" and my_turn(self) and aim_weapon ~= "sword" and not cancel
 	if show_aim then
 		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts)
 		for i, n in ipairs(self.dots) do
@@ -695,6 +705,8 @@ function init(self)
 
 	self.hud = label(W / 2, H - 28, "", 1)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
+	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
+	gui.set_enabled(self.cancel_label, false)
 
 	self.btn_left = box(80, 80, 110, 110, BUTTON)
 	gui.set_parent(label(0, 0, "<", 2), self.btn_left)
@@ -821,12 +833,19 @@ function on_input(self, action_id, action)
 		if self.touch_mode == "aim" then aim_from(self, action.x, action.y) end
 		if action.released then
 			-- rilasciare il dito sopra il robot annulla lo sparo
-			if self.touch_mode == "aim" and self.g.phase == "aim" and self.aim_dist > 24 then
+			if self.touch_mode == "aim" and self.g.phase == "aim" and self.aim_dist > CANCEL_R then
 				self.fire = { angle = self.aim_angle, power = self.aim_power,
 					weapon = self.tele_armed and "teleport" or self.weapon }
 				self.tele_armed = false
 			end
 			self.touch_mode = nil
+			self.aiming = false
+		end
+	elseif action_id == ACTION_CANCEL then
+		-- tasto destro mentre si mira col sinistro: il colpo è annullato, e lasciando
+		-- il sinistro non parte niente (si può cambiare arma e mirare di nuovo)
+		if action.pressed and self.touch_mode == "aim" then
+			self.touch_mode = "cancelled"
 			self.aiming = false
 		end
 	elseif action_id == nil and self.touch_mode == "aim" then
