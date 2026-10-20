@@ -1,7 +1,7 @@
 material: "/battaglia/terreno.material"
 vertices: "/battaglia/terreno.buffer"
-textures: "/assets/mappe/isole_cimitero/sfondo_spento.png"
-textures: "/assets/mappe/isole_cimitero/terreno_staccato.png"
+textures: "/assets/mappe/isole_cimitero/sfondo_lontano.png"
+textures: "/assets/mappe/isole_cimitero/terreno.png"
 textures: "/assets/mappe/isole_cimitero/interno_mezzo.png"
 textures: "/assets/fx/bagliore.png"
 primitive_type: PRIMITIVE_TRIANGLES

@@ -215,15 +215,16 @@ Il turno finisce quando scade il tempo, anche se qualcosa sta ancora volando.
 ## Come l'ho portata in MegaBlast
 
 Profilo di fisica `blastron` nella simulazione condivisa (client e server),
-vedi la PR. Le unità sono convertite con le **proporzioni dell'arena di
-Blastron**: là era larga 102,4 unità, la nostra mappa 1280 pixel, quindi 1 unità
-= **12,5 pixel** e il robot (3,61 unità) è alto 45 pixel. La vita resta 100 e
-tutti i danni sono riscalati da 2.000 a 100.
+vedi la PR. Le unità sono convertite **in altezze di robot**: 1 unità Blastron
+= 20 / 3,61 = **5,54 pixel** nostri (nel profilo `blastron` il robot è alto 20
+pixel, un po' più dei 16 del profilo `megablast`). La vita resta 100 e tutti i danni sono riscalati da 2.000 a 100.
 
-Così la mappa è larga 28 robot come in Blastron, e attraversarla a piedi
-richiede circa 20 s. All'inizio la scala andava per altezze di robot (robot da
-16 pixel, 1 unità = 4,43 pixel): le mappe erano tre volte più grandi rispetto al
-robot. Altri dettagli in [comandi e hitbox](blastron_comandi.md#proporzioni).
+Con questa scala i movimenti hanno le stesse proporzioni rispetto al robot, ma
+**le nostre mappe sono più del doppio più grandi** rispetto al robot (64
+robot di larghezza contro 28). Camminare da un lato all'altro richiede ~46 s
+invece di ~20. Se vogliamo la sensazione di Blastron anche lì, conviene
+ingrandire robot e telecamera, o fare mappe più piccole. La scala è un solo
+numero (`BLASTRON_ROBOT_H` in `client/sim/game.lua`), quindi si cambia in un attimo.
 
 ## Dove la ricostruzione è diversa da quello che avevamo deciso
 
@@ -232,7 +233,7 @@ valori di prima. Per ogni punto puoi scegliere quale tenere.
 
 | Cosa | Deciso finora (megablast) | Blastron |
 |---|---|---|
-| Velocità | corsa 70 px/s, salto 56 px, gravità 600 (robot da 16 px) | corsa 5 u/s, salto 5,2 u, gravità 25 u/s²: rispetto al robot tutto più lento e "galleggiante" |
+| Velocità | corsa 70 px/s, salto 56 px, gravità 600 | corsa 28 px/s, salto 29 px, gravità 138: tutto più lento e "galleggiante" |
 | Controllo in aria | accelerazione (air_speed²/8), niente controllo mentre si è sbalzati | istantaneo, anche da sbalzati; il robot di turno non supera mai la sua corsa |
 | Ritirata dopo lo sparo | 3 s in più | il tempo rimasto scende a 5 s (non si aggiunge niente) |
 | Turno | 15 s | 30 s (25 con più di due giocatori) |
@@ -240,7 +241,7 @@ valori di prima. Per ogni punto puoi scegliere quale tenere.
 | Danni | missile fino a 45 | missile 8–15, granata 15–28: partite molto più lunghe |
 | Danno a sé stessi | pieno | metà |
 | Spinta delle esplosioni | dal centro, più forte al centro, sempre un po' in alto | modello Blastron: massima a metà raggio, zero nel colpo diretto, niente spinta verso l'alto |
-| Danno da caduta | nessuno | oltre 500 px (40 u), fino a 45 |
+| Danno da caduta | nessuno | oltre 222 px (40 u), fino a 45 |
 | Linea di mira | tutta la traiettoria | solo una freccia corta, lunga quanto la potenza |
 | Potenza | proporzionale alla distanza del dito | zona morta 20% e curva quadratica |
 | Mira | segue il dito subito | insegue il dito (20% per frame): un attimo di ritardo |
@@ -248,10 +249,10 @@ valori di prima. Per ogni punto puoi scegliere quale tenere.
 | Salto | uno per pressione | tenendo premuto risalta appena tocca terra |
 | Teletrasporto | 2 s, illimitato | 3 s (illimitato e fino a 6 globi restano come avevi deciso) |
 | Casse | una ogni 3 turni | a ogni turno una probabilità: 90%, 50%, 30%, 10% secondo quante ce ne sono |
-| Pugno del Titano | 30 danni, lancio 480 px/s in alto e 140 avanti, sempre in avanti | 50 danni, lancio 40 u/s dritto in alto; il montante **gira con la mira** e dura 2,1 s ([comandi e hitbox](blastron_comandi.md)) |
+| Pugno del Titano | 30 danni, lancio 480 px/s in alto e 140 avanti, sempre in avanti | 50 danni, lancio 222 px/s dritto in alto; il montante **gira con la mira** e dura 2,1 s ([comandi e hitbox](blastron_comandi.md)) |
 | Lama di Nucleo | il tuo fendente da 240°, uguale per ogni mira, 35 danni subito, 1/3 di secondo | fendente di Hanzo Special **ruotato sulla mira** (mirando in basso cala dall'alto verso il basso), arco di circa 200° che prende anche dietro, 15 danni a chi tocca quando il colpo finisce (0,8 s), ferma il bersaglio ([comandi e hitbox](blastron_comandi.md)) |
-| Dove si viene colpiti | la scatola del robot (12 × 16 px) | un cerchio di raggio 1,888 u a metà altezza; le esplosioni misurano da un quadrato di 3,98 u di lato |
-| Grandezza del robot | 16 px | 45 px: la mappa è larga 28 robot come l'arena di Blastron |
+| Dove si viene colpiti | la scatola del robot (12 × 16 px) | un cerchio di raggio 10,5 px a metà altezza; le esplosioni misurano da un quadrato di 22 px di lato |
+| Grandezza del robot | 16 px | 20 px |
 | Sciame di Schegge | raffica di schegge esplosive | **non toccato** (in Blastron le mitragliatrici erano colpi istantanei e si poteva mirare mentre sparavano) |
 | Vento | niente | niente neanche in Blastron |
 

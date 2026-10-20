@@ -118,7 +118,7 @@ func TestOnlineMatch(t *testing.T) {
 	if _, ok := first["c"].([]any); !ok || r0["ag"] != 0.0 || r0["ap"] != 0.0 {
 		t.Fatalf("stato senza casse o colpi: %v", first)
 	}
-	// con la fisica di Blastron si cammina piano (22 px/s): un secondo basta
+	// con la fisica di Blastron si cammina piano (28 px/s): un secondo basta
 	a.send(`{"t":"in","l":false,"r":true}`)
 	time.Sleep(1000 * time.Millisecond)
 	a.send(`{"t":"in","l":false,"r":false}`)
@@ -133,7 +133,7 @@ func TestOnlineMatch(t *testing.T) {
 	}
 
 	// Il globo del teletrasporto parte senza chiudere il turno
-	a.send(`{"t":"fire","a":1.4,"p":0.3,"w":"teleport"}`)
+	a.send(`{"t":"fire","a":1.7,"p":0.3,"w":"teleport"}`)
 	if orb := b.waitFor(`"orb"`); orb["robot"].(float64) != 1 {
 		t.Fatalf("globo del robot sbagliato: %v", orb)
 	}

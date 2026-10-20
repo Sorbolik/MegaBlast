@@ -103,7 +103,7 @@ local FISICA = config_string("megablast.fisica", "")
 if FISICA ~= "" then game.use_physics(FISICA) end
 
 -- Scorie, proiettili e casse si disegnano in proporzione al robot della
--- simulazione: 16 pixel nel profilo megablast, 45 in quello di Blastron
+-- simulazione: 16 pixel nel profilo megablast, 20 in quello di Blastron
 local K = game.ROBOT_H / 16
 -- altezza della testa della Scoria disegnata, per vita e freccia
 local HEAD = 130 * scoria.SCALE * K
@@ -393,7 +393,6 @@ local function new_match(self, seed, map, opts)
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
 		scoria.set_enabled(self.robots[i].rig, true)
-		gui.set_enabled(self.robots[i].halo, true)
 		gui.set_enabled(self.robots[i].hp, true)
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, hit = 0 }
 	end
@@ -490,7 +489,6 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "death" then
 		scoria.set_enabled(self.robots[e.robot].rig, false)
-		gui.set_enabled(self.robots[e.robot].halo, false)
 		gui.set_enabled(self.robots[e.robot].hp, false)
 	elseif e.type == "over" then
 		self.winner = e.winner
@@ -921,7 +919,6 @@ local function render(self, dt)
 		scoria.set_weapon(r.rig, weapon)
 		st.expression = expression(self, i, rb, v, aiming)
 		scoria.update(r.rig, dt, st)
-		set_pos(r.halo, v.x, v.y + game.ROBOT_H * 0.45)
 	end
 
 	-- Uovo di Fiamma: rotola mentre vola, sopra i secondi che mancano allo scoppio
@@ -1093,17 +1090,14 @@ function init(self)
 
 	self.robots = {}
 	for i = 1, 2 do
-		-- alone del colore della squadra dietro la Scoria, perché stacchi dal terreno
-		local c = PLAYER_COLORS[i]
-		local halo = glow(0, 0, game.ROBOT_H * 2.4, vmath.vector4(c.x, c.y, c.z, 0.3))
-		local r = { rig = scoria.new(c, nil, K), st = {}, halo = halo }
+		local r = { rig = scoria.new(PLAYER_COLORS[i], nil, K), st = {} }
 		self.robots[i] = r
 	end
 
 	-- puntini della traiettoria: piccoli bagliori bianchi
 	self.dots = {}
 	for i = 1, AIM_DOTS do
-		local n = glow(0, 0, (14 - i * 0.5) * math.sqrt(K), vmath.vector4(1, 1, 1, 1 - i / (AIM_DOTS + 4)))
+		local n = glow(0, 0, 14 - i * 0.5, vmath.vector4(1, 1, 1, 1 - i / (AIM_DOTS + 4)))
 		self.dots[i] = n
 	end
 
@@ -1205,18 +1199,14 @@ function init(self)
 	end
 
 	for i = 1, 2 do
-		local hp = label(0, 0, "100", 0.45)
-		gui.set_font(hp, "titoli")
+		local hp = label(0, 0, "100", 0.7)
 		gui.set_color(hp, PLAYER_COLORS[i])
 		self.robots[i].hp = hp
 	end
 	self.arrow = box(0, 0, 4, 18, WHITE)
 
-	-- scritte della battaglia col font dei titoli (Cinzel, contorno scuro)
-	self.hud = label(W / 2, H - 30, "", 0.6)
-	gui.set_font(self.hud, "titoli")
-	self.message = label(W / 2, H / 2 + 120, "", 0.9)
-	gui.set_font(self.message, "titoli")
+	self.hud = label(W / 2, H - 28, "", 1)
+	self.message = label(W / 2, H / 2 + 120, "", 1.6)
 	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
 	gui.set_enabled(self.cancel_label, false)
 

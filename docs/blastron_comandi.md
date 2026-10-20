@@ -53,39 +53,13 @@ Telefono o computer si capisce dal sistema (Android, iOS, browser col touch) o
 da `[megablast] comandi = telefono / computer`. Durante la partita si cambia da
 soli: un dito sullo schermo accende le levette, un tasto le spegne.
 
-## Proporzioni
+## Grandezza del robot
 
-L'arena di Blastron era larga 102,4 unità e il robot alto 3,612. In MegaBlast la
-mappa è larga 1280 px, quindi nel profilo `blastron` un'unità vale 12,5 px e il
-robot è alto 45 px (prima 16 px):
-- `ROBOT_H` e `ROBOT_HALF_W` (il cerchio del corpo, raggio 1,18 u) sono nel profilo;
-- tutte le misure di Blastron (velocità, salti, esplosioni) seguono, perché
-  sono scritte in unità;
+Nel profilo `blastron` il robot è alto 20 px invece di 16 (`BLASTRON_ROBOT_H`):
+- un'unità di Blastron vale 20 / 3,612 = 5,54 px;
+- velocità, salti ed esplosioni seguono, perché sono scritte in unità;
 - le misure nostre (casse, schegge, ricerca del teletrasporto) crescono nella
   stessa proporzione.
-
-Il profilo `megablast` resta col robot da 16 px.
-
-## Cosa stacca dallo sfondo
-
-Sono le regole di Blastron (`blastron_analisi/blastron_grafica.md`), applicate
-senza rigenerare immagini:
-
-- **Sfondo spento** (`strumenti/grafica/stacca.py`, scrive `sfondo_spento.png`):
-  - sfocato, con contrasto e saturazione bassi;
-  - schiarito verso la nebbia: luce 0,20 → 0,39.
-  - Lo fa lo script una volta sola: in gioco non costa niente.
-- **Terreno più deciso** (stesso script, `terreno_staccato.png`): più
-  contrastato, più saturo e un po' più scuro (luce 0,31).
-- **Contorno scuro e filo di luce sul bordo di sopra** (`battaglia/terreno.fp`):
-  - calcolati dal disegno del terreno e dalla maschera;
-  - seguono anche i crateri nuovi;
-  - costano 5 letture di texture per pixel.
-- **Scoria**:
-  - la Scoria nera sullo sfondo chiaro stacca da sola;
-  - in più ha un alone del colore della squadra.
-- **Scritte** della battaglia col font Cinzel dei titoli; levette, armi e
-  teletrasporto con le cornici del kit.
 
 ## Dove si viene colpiti
 
@@ -100,7 +74,7 @@ Ogni robot di Blastron ha due cerchi (codice in `Player`, valori dal `Tuning`):
 Il cerchio dei colpi è più largo del robot (1,05 volte la sua altezza): in Blastron
 si veniva presi facilmente anche "di striscio".
 
-In MegaBlast: `HURTBOX = "cerchio"` con `HURT_R` = 23,6 px e `HURT_FAT` = 1,25 px
+In MegaBlast: `HURTBOX = "cerchio"` con `HURT_R` = 10,5 px e `HURT_FAT` = 0,55 px
 nel profilo `blastron`. Il corpo contro il terreno resta la nostra scatola di
 celle.
 
@@ -195,8 +169,8 @@ Il profilo `megablast` non cambia: il fendente da 240° e il pugno di prima.
 | Danno della spada | 35 | 15 |
 | Spinta della spada | nessuna, il bersaglio continua come prima | il bersaglio si ferma di colpo |
 | Pugno | sempre in avanti, 0,4 s | gira con la mira, 2,1 s |
-| Bersaglio | scatola 12 × 16 px | cerchio di raggio 1,888 u (23,6 px) a metà altezza |
-| Grandezza del robot | 16 px, la mappa è larga 80 robot | 45 px, la mappa è larga 28 robot come in Blastron |
+| Bersaglio | scatola 12 × 16 px | cerchio di raggio 1,888 u (10,5 px) a metà altezza |
+| Grandezza del robot | 16 px | 20 px |
 | Comandi sul telefono | pulsanti < > SALTA e mira dal robot | due levette e teletrasporto sopra quella della mira |
 
 La combo dietro → teletrasporto → davanti funziona ancora:

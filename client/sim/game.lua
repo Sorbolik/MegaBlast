@@ -1365,22 +1365,22 @@ end
 -- Profili di fisica -------------------------------------------------------------
 -- "megablast": i valori decisi finora, quelli scritti sopra.
 -- "blastron": ricostruiti dall'APK di Blastron (docs/blastron.md). Le misure
--- là sono in unità di Farseer, qui diventano pixel con le proporzioni di
--- Blastron: l'arena era larga 102,4 unità, la nostra mappa 1280 pixel, quindi
--- un'unità è 12,5 pixel e il robot (3,612 unità) è alto 45 pixel.
+-- là sono in unità di Farseer, qui diventano pixel in proporzione al robot:
+-- il robot di Blastron è alto 3,612 unità, il nostro BLASTRON_ROBOT_H pixel
+-- (un po' più grande dei 16 del profilo megablast).
 -- La vita là partiva da 2000, qui da MAX_HP: i danni sono riscalati.
-M.BLASTRON_UNIT = M.WORLD_W / 102.4
+M.BLASTRON_ROBOT_H = 20
+M.BLASTRON_UNIT = M.BLASTRON_ROBOT_H / 3.612
 
 local function blastron_profile()
 	local u = M.BLASTRON_UNIT
 	local hp = M.MAX_HP / 2000
-	-- quanto è più grande il robot rispetto al nostro di prima (16 pixel), per
-	-- le misure che Blastron non ha (casse, schegge) o che erano nostre
-	local k = 3.612 * u / M.ROBOT_H
+	-- quanto è più grande il robot rispetto a quello del profilo megablast,
+	-- per le nostre misure (casse, schegge, globo...)
+	local k = M.BLASTRON_ROBOT_H / M.ROBOT_H
 	return {
-		-- robot alto 3,612 u, largo quanto il cerchio del corpo (raggio 1,18 u)
-		ROBOT_H = 3.612 * u,
-		ROBOT_HALF_W = 1.18 * u,
+		ROBOT_H = M.BLASTRON_ROBOT_H,
+		ROBOT_HALF_W = M.ROBOT_HALF_W * k,
 		MAX_CLIMB = M.MAX_CLIMB * k,
 		TELEPORT_SEARCH = M.TELEPORT_SEARCH * k,
 		ORB_R = M.ORB_R * k,
