@@ -25,6 +25,16 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 local BUTTON = vmath.vector4(1, 1, 1, 0.25)
 local MENU_BUTTON = vmath.vector4(0.12, 0.12, 0.14, 0.75)
+local BUTTON_ON = vmath.vector4(0.62, 0.36, 0.95, 0.75)
+
+-- Nomi delle armi sul pulsante (provvisorio, finché non c'è la barra delle armi)
+local WEAPON_LABEL = { missile = "MISSILE", sword = "SPADA" }
+
+-- Lama di Nucleo (assets/armi/armi_rig.json): 192 x 43 px, impugnatura in (29.4, 22.5)
+local LAMA_W, LAMA_H = 192, 43
+local LAMA_GRIP = { 29.4, 22.5 }
+-- spalla della Scoria disegnata sopra i piedi (aggancio del braccio davanti nel rig)
+local SPALLA = (117 - 44.5) * scoria.SCALE
 
 -- altezza della testa della Scoria disegnata, per vita e freccia
 local HEAD = 130 * scoria.SCALE
@@ -149,6 +159,8 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.btn_left, visible)
 	gui.set_enabled(self.btn_right, visible)
 	gui.set_enabled(self.btn_jump, visible)
+	gui.set_enabled(self.btn_weapon, visible)
+	gui.set_enabled(self.btn_tele, visible)
 	gui.set_enabled(self.hud, visible)
 end
 
@@ -176,7 +188,8 @@ end
 -- Le pose sono tabelle riusate: niente allocazioni a ogni frame, quindi
 -- niente pause del garbage collector.
 local function new_pose()
-	return { r = { { x = 0, y = 0 }, { x = 0, y = 0 } }, p = { x = 0, y = 0 }, has_p = false }
+	return { r = { { x = 0, y = 0 }, { x = 0, y = 0 } }, p = { x = 0, y = 0 }, has_p = false,
+		o = { x = 0, y = 0 }, has_o = false }
 end
 
 local function capture(pose, g)
@@ -186,6 +199,8 @@ local function capture(pose, g)
 	end
 	pose.has_p = g.projectile ~= nil
 	if pose.has_p then pose.p.x, pose.p.y = g.projectile.x, g.projectile.y end
+	pose.has_o = g.orb ~= nil
+	if pose.has_o then pose.o.x, pose.o.y = g.orb.x, g.orb.y end
 end
 
 local function pose_k(self)
@@ -203,6 +218,20 @@ local function advance_pose(a, b, k)
 		a.p.x, a.p.y = a.p.x + (b.p.x - a.p.x) * k, a.p.y + (b.p.y - a.p.y) * k
 	end
 	a.has_p = b.has_p
+	if b.has_o then
+		if not a.has_o then a.o.x, a.o.y = b.o.x, b.o.y end
+		a.o.x, a.o.y = a.o.x + (b.o.x - a.o.x) * k, a.o.y + (b.o.y - a.o.y) * k
+	end
+	a.has_o = b.has_o
+end
+
+-- Dopo un teletrasporto la Scoria non deve scivolare dal vecchio punto al nuovo
+local function snap_robot(self, i)
+	local ra, rb = self.pose_a.r[i], self.pose_b.r[i]
+	local rg, v = self.g.robots[i], self.view[i]
+	ra.x, ra.y = rg.x, rg.y
+	rb.x, rb.y = rg.x, rg.y
+	v.x, v.y, v.px = rg.x, rg.y, nil
 end
 
 local function reset_pose(self)
@@ -234,6 +263,9 @@ local function new_match(self, seed, map)
 	self.pose_dt = game.DT
 	reset_pose(self)
 	self.aiming = false
+	self.weapon = "missile"
+	self.tele_armed = false
+	self.snap = {}
 	self.acc = 0
 	self.sent = {}
 end
@@ -276,7 +308,15 @@ local function handle_event(self, e)
 		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 1, row_min - 1,
 			math.floor((e.x + e.r) / CELL) + 1, row_max + 1)
 		explosion(self, e.x, e.y, e.r)
+	elseif e.type == "teleport" then
+		if self.mode == "online" then
+			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
+			self.snap[e.robot] = true
+		else
+			snap_robot(self, e.robot)
+		end
 	elseif e.type == "turn" then
+		self.tele_armed = false
 		if self.mode == "online" then
 			show_message(self, e.robot == self.me and "Tocca a te!" or "Turno dell'avversario")
 		else
@@ -312,11 +352,18 @@ local function apply_state(self, s)
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
+		rb.swing = (r.s or 0) > 0 and r.s or nil
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y } or nil
+	g.orb = s.o and { x = s.o.x, y = s.o.y } or nil
+	g.orb_used = s.ou
 	-- si riparte da dove siamo sullo schermo verso il nuovo stato
 	advance_pose(self.pose_a, self.pose_b, pose_k(self))
 	capture(self.pose_b, g)
+	for i in pairs(self.snap) do
+		snap_robot(self, i)
+		self.snap[i] = nil
+	end
 	self.pose_t = 0
 	self.pose_dt = game.SNAPSHOT_TICKS * game.DT
 end
@@ -400,6 +447,9 @@ local function set_pos(node, x, y)
 	gui.set_position(node, POS)
 end
 
+local EULER = vmath.vector3(0, 0, 0)
+local SCALE = vmath.vector3(1, 1, 1)
+
 local function set_hud(self, text)
 	if self.hud_text ~= text then
 		gui.set_text(self.hud, text)
@@ -458,6 +508,23 @@ local function render(self, dt)
 			st.aim = self.aim_angle
 			st.facing = math.cos(self.aim_angle) < 0 and -1 or 1
 		end
+
+		-- Lama di Nucleo: durante il fendente il braccio segue la lama e il Lanciarune sparisce
+		local swinging = rb.swing ~= nil and not rb.dead
+		gui.set_enabled(r.lama, swinging)
+		gui.set_enabled(r.rig.arma, not swinging)
+		if swinging then
+			-- il tick del fendente è quello della posa b: lo disegniamo tra a e b
+			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
+			local a = game.sword_angle(math.max(0, rb.swing - span + k * span))
+			set_pos(r.lama, v.x, v.y + SPALLA)
+			SCALE.x = rb.facing
+			gui.set_scale(r.lama, SCALE)
+			EULER.z = math.deg(a)
+			gui.set_euler(r.lama_rot, EULER)
+			st.aim = rb.facing > 0 and a or math.pi - a
+			st.facing = rb.facing
+		end
 		st.expression = expression(self, i, rb, v, aiming)
 		scoria.update(r.rig, dt, st)
 	end
@@ -489,7 +556,28 @@ local function render(self, dt)
 		for _, node in ipairs(self.trail) do gui.set_enabled(node, false) end
 	end
 
-	local show_aim = self.aiming and g.phase == "aim" and my_turn(self)
+	-- globo del teletrasporto: Passo d'Ombra che gira, col colore di chi l'ha lanciato
+	gui.set_enabled(self.orb, pb.has_o)
+	if pb.has_o then
+		local o0 = pa.has_o and pa.o or pb.o
+		set_pos(self.orb, o0.x + (pb.o.x - o0.x) * k, o0.y + (pb.o.y - o0.y) * k)
+		EULER.z = self.clock * 240
+		gui.set_euler(self.orb, EULER)
+		gui.set_color(self.orb_light, PLAYER_COLORS[g.current])
+		gui.set_color(self.orb_glow, PLAYER_COLORS[g.current])
+	end
+
+	-- pulsanti: arma scelta e teletrasporto (uno per turno)
+	local tele_ok = g.phase == "aim" and not g.orb_used and my_turn(self)
+	if self.tele_armed and not tele_ok then self.tele_armed = false end
+	if self.shown_weapon ~= self.weapon then
+		gui.set_text(self.weapon_label, WEAPON_LABEL[self.weapon])
+		self.shown_weapon = self.weapon
+	end
+	gui.set_color(self.btn_tele, self.tele_armed and BUTTON_ON or (tele_ok and BUTTON or MENU_BUTTON))
+
+	local aim_weapon = self.tele_armed and "teleport" or self.weapon
+	local show_aim = self.aiming and g.phase == "aim" and my_turn(self) and aim_weapon ~= "sword"
 	if show_aim then
 		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts)
 		for i, n in ipairs(self.dots) do
@@ -530,7 +618,28 @@ function init(self)
 
 	self.robots = {}
 	for i = 1, 2 do
-		self.robots[i] = { rig = scoria.new(PLAYER_COLORS[i]), st = {} }
+		local r = { rig = scoria.new(PLAYER_COLORS[i]), st = {} }
+		-- Lama di Nucleo: nodo alla spalla (specchiato con la direzione), un nodo che
+		-- ruota e l'immagine spostata così che l'impugnatura cada sul perno
+		r.lama = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+		gui.set_visible(r.lama, false)
+		r.lama_rot = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+		gui.set_visible(r.lama_rot, false)
+		gui.set_parent(r.lama_rot, r.lama)
+		local s = scoria.SCALE
+		local lx, ly = (LAMA_W / 2 - LAMA_GRIP[1]) * s, -(LAMA_H / 2 - LAMA_GRIP[2]) * s
+		local blade = gui.new_box_node(vmath.vector3(lx, ly, 0), vmath.vector3(LAMA_W * s, LAMA_H * s, 0))
+		gui.set_texture(blade, "battaglia")
+		gui.play_flipbook(blade, "lama_di_nucleo")
+		gui.set_parent(blade, r.lama_rot)
+		local light = gui.new_box_node(vmath.vector3(lx, ly, 0), vmath.vector3(LAMA_W * s, LAMA_H * s, 0))
+		gui.set_texture(light, "battaglia")
+		gui.play_flipbook(light, "lama_di_nucleo_luce")
+		gui.set_blend_mode(light, gui.BLEND_ADD)
+		gui.set_color(light, PLAYER_COLORS[i])
+		gui.set_parent(light, r.lama_rot)
+		gui.set_enabled(r.lama, false)
+		self.robots[i] = r
 	end
 
 	-- puntini della traiettoria: piccoli bagliori bianchi
@@ -552,6 +661,19 @@ function init(self)
 	self.projectile_glow = glow(0, 0, 34, WHITE)
 	gui.set_parent(self.projectile_glow, self.projectile)
 	gui.set_parent(glow(0, 0, 12, WHITE), self.projectile)
+
+	-- globo del teletrasporto (Passo d'Ombra)
+	self.orb = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.3, 57 * 0.3, 0)))
+	gui.set_texture(self.orb, "battaglia")
+	gui.play_flipbook(self.orb, "passo_ombra")
+	self.orb_glow = glow(0, 0, 40, WHITE)
+	gui.set_parent(self.orb_glow, self.orb)
+	self.orb_light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.3, 57 * 0.3, 0))
+	gui.set_texture(self.orb_light, "battaglia")
+	gui.play_flipbook(self.orb_light, "passo_ombra_luce")
+	gui.set_blend_mode(self.orb_light, gui.BLEND_ADD)
+	gui.set_parent(self.orb_light, self.orb)
+	gui.set_enabled(self.orb, false)
 
 	-- esplosioni riusate a giro
 	self.booms, self.boom_i = {}, 0
@@ -581,6 +703,12 @@ function init(self)
 	gui.set_parent(label(0, 0, ">", 2), self.btn_right)
 	self.btn_jump = box(W - 90, 80, 130, 110, BUTTON)
 	gui.set_parent(label(0, 0, "SALTA", 1), self.btn_jump)
+	-- arma (provvisorio: missile o spada) e, a parte, il teletrasporto
+	self.btn_weapon = box(W - 90, 210, 130, 90, BUTTON)
+	self.weapon_label = label(0, 0, "MISSILE", 0.8)
+	gui.set_parent(self.weapon_label, self.btn_weapon)
+	self.btn_tele = box(W - 240, 80, 130, 110, BUTTON)
+	gui.set_parent(label(0, 0, "TELE", 1), self.btn_tele)
 
 	self.menu = box(W / 2, H / 2, W, H, vmath.vector4(0, 0, 0, 0))
 	gui.set_parent(label(0, 170, "MEGABLAST", 3), self.menu)
@@ -631,7 +759,9 @@ function update(self, dt)
 				self.sent.l, self.sent.r = l, r
 			end
 			if self.jump_pressed then send(self, { t = "jump" }) end
-			if self.fire then send(self, { t = "fire", a = self.fire.angle, p = self.fire.power }) end
+			if self.fire then
+				send(self, { t = "fire", a = self.fire.angle, p = self.fire.power, w = self.fire.weapon })
+			end
 		else
 			self.sent.l, self.sent.r = false, false
 		end
@@ -671,6 +801,12 @@ function on_input(self, action_id, action)
 			elseif gui.pick_node(self.btn_jump, action.x, action.y) then
 				self.touch_mode = "jump"
 				self.jump_pressed = true
+			elseif gui.pick_node(self.btn_weapon, action.x, action.y) then
+				self.weapon = self.weapon == "missile" and "sword" or "missile"
+				self.tele_armed = false
+			elseif gui.pick_node(self.btn_tele, action.x, action.y) then
+				-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
+				self.tele_armed = not self.tele_armed and self.g.phase == "aim" and not self.g.orb_used
 			elseif my_turn(self) then
 				self.touch_mode = "aim"
 				self.aiming = true
@@ -680,7 +816,9 @@ function on_input(self, action_id, action)
 		if action.released then
 			-- rilasciare il dito sopra il robot annulla lo sparo
 			if self.touch_mode == "aim" and self.g.phase == "aim" and self.aim_dist > 24 then
-				self.fire = { angle = self.aim_angle, power = self.aim_power }
+				self.fire = { angle = self.aim_angle, power = self.aim_power,
+					weapon = self.tele_armed and "teleport" or self.weapon }
+				self.tele_armed = false
 			end
 			self.touch_mode = nil
 			self.aiming = false

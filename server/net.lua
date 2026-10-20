@@ -10,9 +10,11 @@ function N.new(seed, map)
 	return g
 end
 
-function N.step(g, left, right, jump, angle, power)
+local WEAPONS = { missile = true, sword = true, teleport = true }
+
+function N.step(g, left, right, jump, angle, power, weapon)
 	local fire = nil
-	if angle then fire = { angle = angle, power = power } end
+	if angle then fire = { angle = angle, power = power, weapon = WEAPONS[weapon] and weapon or "missile" } end
 	g:step({ left = left, right = right, jump = jump, fire = fire })
 end
 
@@ -47,12 +49,15 @@ end
 function N.snapshot(g)
 	local robots = {}
 	for i, rb in ipairs(g.robots) do
-		robots[i] = encode({ x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded })
+		-- s: tick del fendente in corso (0 se il robot non sta colpendo)
+		robots[i] = encode({ x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
+			s = rb.swing or 0 })
 	end
-	local p = "null"
+	local p, o = "null", "null"
 	if g.projectile then p = encode({ x = g.projectile.x, y = g.projectile.y }) end
-	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"r":[%s],"p":%s}',
-		g.phase, g.current, g.timer, g.retreat, table.concat(robots, ","), p)
+	if g.orb then o = encode({ x = g.orb.x, y = g.orb.y }) end
+	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"r":[%s],"p":%s,"o":%s,"ou":%s}',
+		g.phase, g.current, g.timer, g.retreat, table.concat(robots, ","), p, o, tostring(g.orb_used))
 end
 
 -- Eventi accumulati dall'ultimo tick, uno per riga.

@@ -4,7 +4,8 @@
 -- Uso:
 --   local game = require "sim.game"
 --   local g = game.new(seed, "isole")
---   g:step({ left = bool, right = bool, jump = bool, fire = { angle = rad, power = 0..1 } })
+--   g:step({ left = bool, right = bool, jump = bool,
+--            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport" } })
 --   for _, e in ipairs(g:pop_events()) do ... end
 
 local rng = require "sim.rng"
@@ -44,6 +45,21 @@ M.DAMAGE_R = 50          -- raggio entro cui si subisce danno
 M.MAX_DAMAGE = 45
 M.KNOCKBACK = 320
 
+-- Lama di Nucleo: fendente di 240° che parte da dietro la schiena (205°),
+-- passa sopra la testa e finisce davanti in basso (-35°). Colpisce dietro e davanti.
+M.SWORD_REACH = 40       -- lunghezza della lama dal perno
+M.SWORD_PIVOT_Y = 10     -- altezza del perno (la spalla) sopra i piedi
+M.SWORD_FROM = math.rad(205)
+M.SWORD_TO = math.rad(-35)
+M.SWORD_TICKS = 36       -- durata del fendente
+M.SWORD_DAMAGE = 35
+M.SWORD_KNOCKBACK = 260
+
+-- Teletrasporto (Passo d'Ombra): un globo che vola come il missile e dopo
+-- TELEPORT_TICKS sposta il robot dove si trova, senza toccare il suo stato:
+-- velocità, fendente in corso e direzione restano quelli di prima.
+M.TELEPORT_TICKS = 2 * 60
+
 -- Turni
 M.TURN_TICKS = 15 * 60
 M.RETREAT_TICKS = 3 * 60 -- dopo lo sparo ci si può ancora muovere per ripararsi
@@ -80,6 +96,7 @@ function M.new(seed, map_id, opts)
 			id = i, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
 			vx = 0, vy = 0, grounded = false, knocked = false, facing = i == 1 and 1 or -1,
 			hp = M.MAX_HP, dead = false,
+			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			stats = make_stats(opts.stats and opts.stats[i]),
 		}
 	end
@@ -235,6 +252,138 @@ function M:fire(angle, power)
 	self:emit({ type = "fire", robot = rb.id })
 end
 
+-- Teletrasporto -----------------------------------------------------------------
+
+function M:throw_orb(angle, power)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local vx, vy = launch_velocity(angle, power)
+	self.orb = { x = x, y = y, vx = vx, vy = vy, owner = rb.id, timer = M.TELEPORT_TICKS, resting = false }
+	self.orb_used = true
+	self:emit({ type = "orb", robot = rb.id })
+end
+
+-- Cerca un punto libero vicino a (x, y) dove far comparire il robot
+local TELEPORT_OFFSETS = {}
+for dy = 0, 24, 2 do
+	for _, dx in ipairs({ 0, -2, 2, -4, 4, -6, 6, -8, 8 }) do
+		TELEPORT_OFFSETS[#TELEPORT_OFFSETS + 1] = { dx, dy }
+	end
+end
+
+function M:teleport(rb, x, y)
+	for _, o in ipairs(TELEPORT_OFFSETS) do
+		local tx, ty = x + o[1], y + o[2]
+		if not self:robot_collides(tx, ty) then
+			local fx, fy = rb.x, rb.y
+			rb.x, rb.y = tx, ty
+			-- lo stato resta identico: chi cadeva continua a cadere con la stessa velocità.
+			-- Non è più appoggiato a niente, la fisica lo rimette a terra se serve.
+			rb.grounded = false
+			self:emit({ type = "teleport", robot = rb.id, from_x = fx, from_y = fy, x = tx, y = ty })
+			return true
+		end
+	end
+	self:emit({ type = "teleport_fail", robot = rb.id })
+	return false
+end
+
+function M:update_orb()
+	local o = self.orb
+	local rb = self.robots[o.owner]
+	if rb.dead then
+		self.orb = nil
+		return
+	end
+	if not o.resting then
+		-- vola come il missile; quando tocca il terreno si ferma lì
+		o.vy = o.vy - M.GRAVITY * M.DT
+		local mx, my = o.vx * M.DT, o.vy * M.DT
+		local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
+		for _ = 1, steps do
+			local nx, ny = o.x + mx / steps, o.y + my / steps
+			if self.terrain:solid(nx, ny) then
+				o.resting, o.vx, o.vy = true, 0, 0
+				break
+			end
+			o.x, o.y = nx, ny
+		end
+		if o.y < -50 or o.x < -300 or o.x > M.WORLD_W + 300 then
+			-- fuori dalla mappa: il globo si spegne invece di farti cadere nel vuoto
+			self:emit({ type = "teleport_fail", robot = rb.id })
+			self.orb = nil
+			return
+		end
+	end
+	o.timer = o.timer - 1
+	if o.timer <= 0 then
+		self.orb = nil
+		-- il globo è al centro del robot, la posizione del robot è ai piedi
+		self:teleport(rb, o.x, o.y - M.ROBOT_H / 2)
+	end
+end
+
+-- Lama di Nucleo ----------------------------------------------------------------
+
+-- Angolo della lama al tick t del fendente, per un robot rivolto a destra
+function M.sword_angle(t)
+	return M.SWORD_FROM + (M.SWORD_TO - M.SWORD_FROM) * math.min(1, t / M.SWORD_TICKS)
+end
+
+function M:swing_sword(angle)
+	local rb = self.robots[self.current]
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.swing = 0
+	rb.swing_hit = {}
+	self:emit({ type = "swing", robot = rb.id })
+end
+
+local function in_robot(r, x, y)
+	return math.abs(x - r.x) <= M.ROBOT_HALF_W and y >= r.y and y <= r.y + M.ROBOT_H
+end
+
+local SWORD_SUBSTEPS = 2
+local SWORD_SAMPLES = 10
+
+function M:update_swing(rb)
+	local t0 = rb.swing
+	rb.swing = t0 + 1
+	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
+	-- controlliamo anche gli angoli intermedi, così la lama non salta un bersaglio
+	for s = 1, SWORD_SUBSTEPS do
+		local a = M.sword_angle(t0 + s / SWORD_SUBSTEPS)
+		local cx, cy = math.cos(a) * rb.facing, math.sin(a)
+		for _, other in ipairs(self.robots) do
+			if other ~= rb and not other.dead and not rb.swing_hit[other.id] then
+				for k = 1, SWORD_SAMPLES do
+					local d = M.SWORD_REACH * k / SWORD_SAMPLES
+					if in_robot(other, px + cx * d, py + cy * d) then
+						rb.swing_hit[other.id] = true
+						self:sword_hit(rb, other)
+						break
+					end
+				end
+			end
+		end
+	end
+	if rb.swing >= M.SWORD_TICKS then
+		rb.swing, rb.swing_hit = nil, nil
+	end
+end
+
+function M:sword_hit(rb, other)
+	other.hp = other.hp - M.SWORD_DAMAGE
+	self:emit({ type = "damage", robot = other.id, amount = M.SWORD_DAMAGE })
+	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
+	local dx = other.x - rb.x
+	local dir = dx < 0 and -1 or 1
+	other.vx = dir * M.SWORD_KNOCKBACK
+	other.vy = M.SWORD_KNOCKBACK * 0.5
+	other.grounded = false
+	other.knocked = true
+	if other.hp <= 0 then self:kill(other, "damage") end
+end
+
 -- Punti della traiettoria prevista, per la linea di mira.
 -- pts (facoltativo) è una tabella da riusare, per non allocare a ogni frame.
 function M:preview(angle, power, count, every, pts)
@@ -325,6 +474,7 @@ function M:start_turn(player)
 	self.phase = "aim"
 	self.timer = M.TURN_TICKS
 	self.retreat = 0
+	self.orb_used = false
 	self:emit({ type = "turn", robot = player })
 end
 
@@ -356,28 +506,44 @@ function M:step(input)
 		self:update_robot(rb, active and input or NO_INPUT)
 	end
 	if self.retreat > 0 then self.retreat = self.retreat - 1 end
+	-- prima il teletrasporto, poi la spada: il fendente colpisce già dalla nuova posizione
+	if self.orb then self:update_orb() end
+	for _, rb in ipairs(self.robots) do
+		if rb.swing then
+			if rb.dead then rb.swing, rb.swing_hit = nil, nil else self:update_swing(rb) end
+		end
+	end
 
 	if self.phase == "aim" then
 		self.timer = self.timer - 1
+		local fire = input.fire
+		local weapon = fire and fire.weapon or "missile"
 		if self.robots[self.current].dead then
 			self.phase, self.settle = "settle", 0
-		elseif input.fire then
-			self:fire(input.fire.angle, input.fire.power)
+		elseif fire and weapon == "teleport" then
+			-- lanciare il globo non chiude il turno: si può ancora attaccare
+			if not self.orb_used then self:throw_orb(fire.angle, fire.power) end
+		elseif fire then
+			if weapon == "sword" then
+				self:swing_sword(fire.angle)
+			else
+				self:fire(fire.angle, fire.power)
+			end
 			self.phase = "flying"
 			self.retreat = M.RETREAT_TICKS
 		elseif self.timer <= 0 then
 			self.phase, self.settle = "settle", 0
 		end
 	elseif self.phase == "flying" then
-		self:update_projectile()
-		if not self.projectile then
+		if self.projectile then self:update_projectile() end
+		if not self.projectile and not self.robots[self.current].swing then
 			self.phase, self.settle, self.settle_total = "settle", 0, 0
 		end
 	elseif self.phase == "settle" then
 		self.settle_total = (self.settle_total or 0) + 1
-		local still = true
+		local still = not self.orb
 		for _, rb in ipairs(self.robots) do
-			if not rb.dead and not rb.grounded then still = false end
+			if not rb.dead and (not rb.grounded or rb.swing) then still = false end
 		end
 		self.settle = (still and self.retreat == 0) and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then

@@ -69,6 +69,7 @@ type Input struct {
 	Left, Right, Jump bool
 	Fire              bool
 	Angle, Power      float64
+	Weapon            string // "missile", "sword" o "teleport"
 }
 
 func (s *Sim) Step(in Input) error {
@@ -76,7 +77,7 @@ func (s *Sim) Step(in Input) error {
 	if in.Fire {
 		angle, power = lua.LNumber(in.Angle), lua.LNumber(in.Power)
 	}
-	_, err := s.call("step", s.g, lua.LBool(in.Left), lua.LBool(in.Right), lua.LBool(in.Jump), angle, power)
+	_, err := s.call("step", s.g, lua.LBool(in.Left), lua.LBool(in.Right), lua.LBool(in.Jump), angle, power, lua.LString(in.Weapon))
 	return err
 }
 
