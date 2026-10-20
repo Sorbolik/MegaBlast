@@ -1,0 +1,17 @@
+# Lama di Nucleo: spada bassa a riposo, carica dietro la schiena mirando,
+# fendente verso destra che resta verso destra anche se durante il colpo
+# il robot cammina e si gira a sinistra.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+tocca 1190 210                      # pulsante arma: MISSILE -> SPADA
+aspetta 0.4
+zoom 01_spada_a_riposo
+mira 120 0 0.6 02_carica_dietro
+aspetta_evento swing 2
+tieni sinistra 0.15                 # si gira durante il fendente
+zoom 03_fendente_girato
+aspetta 1
+zoom 04_dopo

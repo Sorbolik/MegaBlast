@@ -295,6 +295,18 @@ g3:explode(g3.robots[2].x, g3.robots[2].y + 8)
 run(g3, game.TURN_TICKS + 600)
 check(g3.phase == "over" and g3.winner == 1, "la partita finisce e vince il giocatore 1")
 
+-- Il fendente resta nella direzione di partenza anche se il robot si gira
+local g5 = game.new(7, "isole")
+for _ = 1, 120 do g5:step({}) end -- i robot cadono e si posano
+g5.robots[2].x, g5.robots[2].y = g5.robots[1].x + 25, g5.robots[1].y
+g5.robots[2].vx, g5.robots[2].vy = 0, 0
+g5:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
+check(g5.robots[1].swing_dir == 1, "il fendente parte verso destra")
+for _ = 1, 4 do g5:step({ left = true }) end
+check(g5.robots[1].facing == -1 and g5.robots[1].swing_dir == 1, "girarsi non cambia la direzione del fendente")
+run(g5, game.SWORD_TICKS)
+check(g5.robots[2].hp < game.MAX_HP, "il fendente colpisce a destra anche dopo essersi girato")
+
 -- Prestazioni: un cratere e 600 tick di simulazione
 local t = os.clock()
 local g4 = game.new(5, "casuale")

@@ -42,8 +42,8 @@ local ARMA_SCALE = 0.5
 -- spalla, come la portata del fendente nella simulazione.
 local LAMA_SIZE, LAMA_GRIP = { 192, 43 }, { 29.4, 22.5 }
 local LAMA_SCALE = 1.45
--- Con la spada in mano e senza mirare, la lama sta alzata davanti a sé (gradi)
-local LAMA_RIPOSO = math.rad(70)
+-- Con la spada in mano e senza mirare, la lama sta bassa davanti a sé, punta verso terra
+local LAMA_RIPOSO = math.rad(-40)
 -- di quanto avanza la spalla del braccio davanti quando si mira (px del rig)
 local SPALLA_MIRA = 26
 -- Bocca del Lanciarune, nel sistema della sua immagine (64 x 53), per il bagliore
