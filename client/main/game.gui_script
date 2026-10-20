@@ -30,12 +30,6 @@ local BUTTON_ON = vmath.vector4(0.62, 0.36, 0.95, 0.75)
 -- Nomi delle armi sul pulsante (provvisorio, finché non c'è la barra delle armi)
 local WEAPON_LABEL = { missile = "MISSILE", sword = "SPADA" }
 
--- Lama di Nucleo (assets/armi/armi_rig.json): 192 x 43 px, impugnatura in (29.4, 22.5)
-local LAMA_W, LAMA_H = 192, 43
-local LAMA_GRIP = { 29.4, 22.5 }
--- spalla della Scoria disegnata sopra i piedi (aggancio del braccio davanti nel rig)
-local SPALLA = (117 - 44.5) * scoria.SCALE
-
 -- altezza della testa della Scoria disegnata, per vita e freccia
 local HEAD = 130 * scoria.SCALE
 local AIM_DOTS = 12
@@ -448,7 +442,6 @@ local function set_pos(node, x, y)
 end
 
 local EULER = vmath.vector3(0, 0, 0)
-local SCALE = vmath.vector3(1, 1, 1)
 
 local function set_hud(self, text)
 	if self.hud_text ~= text then
@@ -509,22 +502,22 @@ local function render(self, dt)
 			st.facing = math.cos(self.aim_angle) < 0 and -1 or 1
 		end
 
-		-- Lama di Nucleo: durante il fendente il braccio segue la lama e il Lanciarune sparisce
-		local swinging = rb.swing ~= nil and not rb.dead
-		gui.set_enabled(r.lama, swinging)
-		gui.set_enabled(r.rig.arma, not swinging)
-		if swinging then
+		-- in mano l'arma equipaggiata: quella scelta da chi è di turno (online
+		-- conosciamo solo la nostra), il Lanciarune per gli altri
+		local weapon = "missile"
+		if i == g.current and my_turn(self) then
+			weapon = self.tele_armed and "teleport" or self.weapon
+		end
+		-- Lama di Nucleo: durante il fendente il braccio segue l'angolo della lama
+		if rb.swing ~= nil and not rb.dead then
+			weapon = "sword"
 			-- il tick del fendente è quello della posa b: lo disegniamo tra a e b
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
 			local a = game.sword_angle(math.max(0, rb.swing - span + k * span))
-			set_pos(r.lama, v.x, v.y + SPALLA)
-			SCALE.x = rb.facing
-			gui.set_scale(r.lama, SCALE)
-			EULER.z = math.deg(a)
-			gui.set_euler(r.lama_rot, EULER)
 			st.aim = rb.facing > 0 and a or math.pi - a
 			st.facing = rb.facing
 		end
+		scoria.set_weapon(r.rig, weapon)
 		st.expression = expression(self, i, rb, v, aiming)
 		scoria.update(r.rig, dt, st)
 	end
@@ -619,26 +612,6 @@ function init(self)
 	self.robots = {}
 	for i = 1, 2 do
 		local r = { rig = scoria.new(PLAYER_COLORS[i]), st = {} }
-		-- Lama di Nucleo: nodo alla spalla (specchiato con la direzione), un nodo che
-		-- ruota e l'immagine spostata così che l'impugnatura cada sul perno
-		r.lama = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
-		gui.set_visible(r.lama, false)
-		r.lama_rot = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-		gui.set_visible(r.lama_rot, false)
-		gui.set_parent(r.lama_rot, r.lama)
-		local s = scoria.SCALE
-		local lx, ly = (LAMA_W / 2 - LAMA_GRIP[1]) * s, -(LAMA_H / 2 - LAMA_GRIP[2]) * s
-		local blade = gui.new_box_node(vmath.vector3(lx, ly, 0), vmath.vector3(LAMA_W * s, LAMA_H * s, 0))
-		gui.set_texture(blade, "battaglia")
-		gui.play_flipbook(blade, "lama_di_nucleo")
-		gui.set_parent(blade, r.lama_rot)
-		local light = gui.new_box_node(vmath.vector3(lx, ly, 0), vmath.vector3(LAMA_W * s, LAMA_H * s, 0))
-		gui.set_texture(light, "battaglia")
-		gui.play_flipbook(light, "lama_di_nucleo_luce")
-		gui.set_blend_mode(light, gui.BLEND_ADD)
-		gui.set_color(light, PLAYER_COLORS[i])
-		gui.set_parent(light, r.lama_rot)
-		gui.set_enabled(r.lama, false)
 		self.robots[i] = r
 	end
 

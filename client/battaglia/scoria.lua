@@ -35,6 +35,13 @@ local NUCLEO_POS = { 34, 56 }
 local MANO = { 30, 31 }
 local BRACCIO_RIPOSO = math.deg(math.atan2(-(MANO[2] - 4.9), MANO[1] - 7.3))
 local ARMA_SCALE = 0.5
+-- Lama di Nucleo (armi_rig.json): 192 x 43 px, impugnatura in (29.4, 22.5).
+-- Scala dentro il gruppo dell'arma: la punta arriva a circa 40 unità dalla
+-- spalla, come la portata del fendente nella simulazione.
+local LAMA_SIZE, LAMA_GRIP = { 192, 43 }, { 29.4, 22.5 }
+local LAMA_SCALE = 1.45
+-- Con la spada in mano e senza mirare, la lama sta alzata davanti a sé (gradi)
+local LAMA_RIPOSO = math.rad(70)
 -- di quanto avanza la spalla del braccio davanti quando si mira (px del rig)
 local SPALLA_MIRA = 26
 -- Bocca del Lanciarune, nel sistema della sua immagine (64 x 53), per il bagliore
@@ -123,10 +130,31 @@ function M.new(color)
 	V.x, V.y, V.z = ARMA_SCALE, ARMA_SCALE, 1
 	gui.set_scale(s.arma, V)
 	rot(s.arma, BRACCIO_RIPOSO)
-	-- il bracciale avvolge il polso, la bocca guarda lungo il braccio
-	image("lanciarune", s.arma, 4, 0, 64, 53)
-	s.arma_luce = glow("lanciarune_luce", s.arma, 4, 0, 64, 53, color)
-	s.bocca = glow("bagliore", s.arma, 4 + ARMA_BOCCA[1] - 32, -(ARMA_BOCCA[2] - 26.5), 30, 30, soft)
+	-- un gruppo per arma, si vede solo quella equipaggiata
+	s.armi = {}
+	-- Lanciarune: il bracciale avvolge il polso, la bocca guarda lungo il braccio
+	local g = empty(s.arma, 0, 0)
+	image("lanciarune", g, 4, 0, 64, 53)
+	glow("lanciarune_luce", g, 4, 0, 64, 53, color)
+	s.bocca = glow("bagliore", g, 4 + ARMA_BOCCA[1] - 32, -(ARMA_BOCCA[2] - 26.5), 30, 30, soft)
+	s.armi.missile = g
+	-- Lama di Nucleo: l'impugnatura nel pugno, la lama prosegue il braccio
+	g = empty(s.arma, 0, 0)
+	V.x, V.y, V.z = LAMA_SCALE, LAMA_SCALE, 1
+	gui.set_scale(g, V)
+	local lw, lh = LAMA_SIZE[1], LAMA_SIZE[2]
+	local gx, gy = lw / 2 - LAMA_GRIP[1], -(lh / 2 - LAMA_GRIP[2])
+	image("lama_di_nucleo", g, gx, gy, lw, lh)
+	-- la lama è quasi tutta luce: un po' più tenue, se no copre il disegno
+	glow("lama_di_nucleo_luce", g, gx, gy, lw, lh, vmath.vector4(color.x, color.y, color.z, 0.6))
+	s.armi.sword = g
+	-- Passo d'Ombra: il globo stretto nel palmo
+	g = empty(s.arma, 0, 0)
+	image("passo_ombra", g, 10, 0, 64, 57)
+	glow("passo_ombra_luce", g, 10, 0, 64, 57, color)
+	s.armi.teleport = g
+	s.arma_scelta = nil
+	M.set_weapon(s, "missile")
 
 	s.t = math.random() * 10
 	s.walk = 0
@@ -163,10 +191,8 @@ function M.update(s, dt, st)
 	s.t = s.t + dt
 	local t = s.t
 
-	-- girarsi: la scala x passa da un lato all'altro in fretta, sembra una piroetta
-	local want = st.facing
-	s.face = s.face + (want - s.face) * math.min(1, dt * 18)
-	if math.abs(s.face - want) < 0.01 then s.face = want end
+	-- girarsi: l'immagine si specchia subito
+	s.face = st.facing
 	V.x, V.y, V.z = M.SCALE * s.face, M.SCALE, 1
 	gui.set_scale(s.root, V)
 	pos(s.root, st.x, st.y)
@@ -220,11 +246,15 @@ function M.update(s, dt, st)
 	local front = -swing
 	-- mirando, la spalla del braccio davanti scivola sul petto: così l'arma
 	-- esce davanti al corpo invece di passare sopra la faccia
-	local ak = st.aim and 1 or 0
+	local aim = st.aim
+	if not aim and s.arma_scelta == "sword" then
+		aim = s.face > 0 and LAMA_RIPOSO or math.pi - LAMA_RIPOSO
+	end
+	local ak = aim and 1 or 0
 	s.aimk = s.aimk + (ak - s.aimk) * math.min(1, dt * 14)
-	if st.aim then
+	if aim then
 		-- il braccio con il Lanciarune punta dove si mira (in spazio locale, già specchiato)
-		local a = math.deg(st.aim)
+		local a = math.deg(aim)
 		if s.face < 0 then a = 180 - a end
 		front = a - BRACCIO_RIPOSO
 		if front > 180 then front = front - 360 elseif front < -180 then front = front + 360 end
@@ -236,8 +266,15 @@ function M.update(s, dt, st)
 	local pulse = 0.82 + 0.18 * math.sin(t * 3.1)
 	V.x, V.y, V.z = pulse, pulse, 1
 	gui.set_scale(s.alone_nucleo, V)
-	gui.set_enabled(s.bocca, st.aim ~= nil)
+	gui.set_enabled(s.bocca, st.aim ~= nil and s.arma_scelta == "missile")
 	set_expression(s, st.expression or "neutro")
+end
+
+-- Arma in mano: "missile" (Lanciarune), "sword" (Lama di Nucleo), "teleport" (Passo d'Ombra)
+function M.set_weapon(s, name)
+	if s.arma_scelta == name or not s.armi[name] then return end
+	s.arma_scelta = name
+	for k, g in pairs(s.armi) do gui.set_enabled(g, k == name) end
 end
 
 -- Colpo subito: scossa del corpo e occhio "colpito" per un attimo
