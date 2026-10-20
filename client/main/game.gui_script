@@ -1,16 +1,15 @@
 -- Client di MegaBlast: menu, partita locale (hot-seat) e partita online.
--- Tutta la grafica è creata da codice con nodi GUI, senza asset esterni.
+-- La mappa è una mesh con lo shader del terreno (battaglia/terreno.*), tutto il
+-- resto (Scorie, missile, esplosioni, comandi) sono nodi GUI creati da codice.
 -- La logica di gioco sta in sim/ (Lua puro). In locale la facciamo girare qui,
 -- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
 local maps = require "sim.maps"
+local scoria = require "battaglia.scoria"
 
 local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
-
--- Se il terreno appare capovolto, metti questo valore a true.
-local FLIP_TEXTURE = true
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 
@@ -20,24 +19,15 @@ local ACTION_RIGHT = hash("right")
 local ACTION_JUMP = hash("jump")
 
 local NAMES = { "Rosso", "Blu" }
-local PLAYER_COLORS = { vmath.vector4(0.92, 0.26, 0.22, 1), vmath.vector4(0.22, 0.48, 0.96, 1) }
-local SKY = vmath.vector4(0.56, 0.78, 0.95, 1)
+-- colori delle squadre della bibbia grafica: Cremisi e Cobalto
+local PLAYER_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1) }
 local WHITE = vmath.vector4(1, 1, 1, 1)
 local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 local BUTTON = vmath.vector4(1, 1, 1, 0.25)
 local MENU_BUTTON = vmath.vector4(0.12, 0.12, 0.14, 0.75)
 
--- Colori del terreno, già pronti come byte RGBA
-local EMPTY = string.char(0, 0, 0, 0)
-local GRASS = string.char(98, 172, 62, 255)
-local DIRT = {
-	string.char(122, 86, 54, 255), string.char(112, 78, 48, 255),
-	string.char(130, 92, 60, 255), string.char(106, 74, 46, 255),
-}
--- Acciaio (tubi indistruttibili): grigio a strisce
-local STEEL = { string.char(150, 156, 166, 255), string.char(118, 124, 134, 255) }
-local STEEL_EDGE = string.char(70, 74, 82, 255)
-
+-- altezza della testa della Scoria disegnata, per vita e freccia
+local HEAD = 130 * scoria.SCALE
 local AIM_DOTS = 12
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
 
@@ -52,8 +42,12 @@ local function box(x, y, w, h, color)
 	return n
 end
 
-local function circle(x, y, d, color)
-	local n = stretch(gui.new_pie_node(vmath.vector3(x, y, 0), vmath.vector3(d, d, 0)))
+-- alone bianco in additivo (fx/bagliore.png), tinto con color
+local function glow(x, y, d, color)
+	local n = stretch(gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(d, d, 0)))
+	gui.set_texture(n, "battaglia")
+	gui.play_flipbook(n, "bagliore")
+	gui.set_blend_mode(n, gui.BLEND_ADD)
 	gui.set_color(n, color)
 	return n
 end
@@ -77,82 +71,67 @@ end
 
 -- Terreno -----------------------------------------------------------------------
 
--- Il terreno è diviso in riquadri, ognuno con la sua piccola texture: dopo
--- un'esplosione ricalcoliamo solo le celle del cratere e rimandiamo alla GPU
--- solo i riquadri toccati (pochi KB invece di quasi 1 MB).
-local TILE_W, TILE_H = 80, 60
-local TILES_X, TILES_Y = TW / TILE_W, TH / TILE_H
+-- La mesh della mappa legge la maschera di collisione da una texture 640 x 360:
+-- r = terreno adesso, g = terreno all'inizio (per riconoscere i crateri).
+-- Dopo un'esplosione rimandiamo alla GPU solo il rettangolo del cratere.
+local MASK_PATH = "/battaglia/maschera_viva.texturec"
+local RGBA = hash("rgba")
+local MASK_FORMAT = { { name = RGBA, type = buffer.VALUE_TYPE_UINT8, count = 4 } }
+-- mappe che hanno i disegni in assets/mappe (le altre usano una roccia semplice)
+local PAINTED = { isole = true }
 
--- Colore della cella (cx, cy), già pronto come byte RGBA
-local function cell_color(data, cx, cy)
-	local i = cy * TW + cx + 1
-	local v = data[i]
-	if v == 0 then return EMPTY end
-	local up = cy + 1 < TH and data[i + TW] or 0
-	if v == 2 then
-		local down = cy > 0 and data[i - TW] or 0
-		if up ~= 2 or down ~= 2 then return STEEL_EDGE end
-		return STEEL[math.floor((cx + cy) / 3) % 2 + 1]
-	end
-	local up2 = cy + 2 < TH and data[i + 2 * TW] or 0
-	if up == 0 or up2 == 0 then return GRASS end
-	return DIRT[(cx * 7 + cy * 13 + math.floor(cx / 5) * 3) % 4 + 1]
-end
+-- le costanti stanno in graphics (Defold recenti) o in resource (vecchi)
+local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
+local TEX_RGBA = graphics and graphics.TEXTURE_FORMAT_RGBA or resource.TEXTURE_FORMAT_RGBA
 
--- Posizione della cella dentro i pixel del suo riquadro
-local function pixel_index(cx, cy)
-	local lx, ly = cx % TILE_W, cy % TILE_H
-	if FLIP_TEXTURE then ly = TILE_H - 1 - ly end
-	return ly * TILE_W + lx + 1
-end
-
-local function upload_tile(self, tile)
-	-- un riquadro tutto cielo non si disegna: meno lavoro per la GPU
-	local empty = true
-	for _, c in ipairs(tile.px) do
-		if c ~= EMPTY then empty = false; break end
-	end
-	gui.set_enabled(tile.node, not empty)
-	if empty and tile.created then return end
-	local data = table.concat(tile.px)
-	if tile.created then
-		gui.set_texture_data(tile.id, TILE_W, TILE_H, "rgba", data)
-	else
-		assert(gui.new_texture(tile.id, TILE_W, TILE_H, "rgba", data, false))
-		gui.set_texture(tile.node, tile.id)
-		tile.created = true
-	end
+local function mask_params(w, h, x, y)
+	return {
+		type = TEX_2D, format = TEX_RGBA,
+		width = w, height = h, x = x, y = y,
+	}
 end
 
 local function draw_terrain(self)
 	local data = self.g.terrain.data
-	for _, tile in ipairs(self.tiles) do
-		local px = tile.px
-		for cy = tile.ty * TILE_H, tile.ty * TILE_H + TILE_H - 1 do
-			for cx = tile.tx * TILE_W, tile.tx * TILE_W + TILE_W - 1 do
-				px[pixel_index(cx, cy)] = cell_color(data, cx, cy)
-			end
-		end
-		upload_tile(self, tile)
+	local buf = buffer.create(TW * TH, MASK_FORMAT)
+	local st = buffer.get_stream(buf, RGBA)
+	-- buffer.create non azzera la memoria: scriviamo ogni cella
+	for i = 1, TW * TH do
+		local v = data[i] ~= 0 and 255 or 0
+		local j = i * 4 - 3
+		st[j], st[j + 1] = v, v
 	end
+	self.mask_stream = st
+	self.mask_buf = buf
+	if self.mask_tex then
+		resource.set_texture(self.mask_tex, mask_params(TW, TH), buf)
+	else
+		self.mask_tex = resource.create_texture(MASK_PATH, mask_params(TW, TH), buf)
+	end
+	msg.post("/terreno#script", "maschera", { path = self.mask_tex, dipinta = PAINTED[self.g.map] == true })
 end
 
--- Ridisegna le celle nel rettangolo dato (coordinate di cella) e carica i riquadri toccati
+-- Aggiorna la maschera nel rettangolo dato (coordinate di cella)
 local function redraw_cells(self, cx0, cy0, cx1, cy1)
 	cx0, cy0 = math.max(0, cx0), math.max(0, cy0)
 	cx1, cy1 = math.min(TW - 1, cx1), math.min(TH - 1, cy1)
-	local data = self.g.terrain.data
+	if cx1 < cx0 or cy1 < cy0 then return end
+	local w, h = cx1 - cx0 + 1, cy1 - cy0 + 1
+	local data, full = self.g.terrain.data, self.mask_stream
+	local buf = buffer.create(w * h, MASK_FORMAT)
+	local st = buffer.get_stream(buf, RGBA)
+	local k = 1
 	for cy = cy0, cy1 do
-		local row = math.floor(cy / TILE_H) * TILES_X
-		for cx = cx0, cx1 do
-			self.tiles[row + math.floor(cx / TILE_W) + 1].px[pixel_index(cx, cy)] = cell_color(data, cx, cy)
+		local i = cy * TW + cx0 + 1
+		for _ = 1, w do
+			local j = i * 4 - 3
+			local now = data[i] ~= 0 and 255 or 0
+			full[j] = now
+			st[k], st[k + 1] = now, full[j + 1]
+			i, k = i + 1, k + 4
 		end
 	end
-	for ty = math.floor(cy0 / TILE_H), math.floor(cy1 / TILE_H) do
-		for tx = math.floor(cx0 / TILE_W), math.floor(cx1 / TILE_W) do
-			upload_tile(self, self.tiles[ty * TILES_X + tx + 1])
-		end
-	end
+	resource.set_texture(self.mask_tex, mask_params(w, h, cx0, cy0), buf)
 end
 
 -- Messaggi e menu -------------------------------------------------------------
@@ -246,9 +225,12 @@ local function new_match(self, seed, map)
 	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
-		gui.set_enabled(self.robots[i].body, true)
-		self.view[i] = { x = rb.x, y = rb.y }
+		scoria.set_enabled(self.robots[i].rig, true)
+		gui.set_enabled(self.robots[i].hp, true)
+		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, hit = 0 }
 	end
+	self.winner = nil
+	self.trail_n = 0
 	self.pose_dt = game.DT
 	reset_pose(self)
 	self.aiming = false
@@ -256,10 +238,27 @@ local function new_match(self, seed, map)
 	self.sent = {}
 end
 
-local function explosion_flash(x, y, r)
-	local n = circle(x, y, r * 2, vmath.vector4(1, 0.7, 0.2, 0.9))
-	gui.animate(n, "color.w", 0, gui.EASING_OUTQUAD, 0.35, 0, function() gui.delete_node(n) end)
-	gui.animate(n, "scale", vmath.vector3(1.3, 1.3, 1), gui.EASING_OUTQUAD, 0.35)
+-- Esplosione: flipbook di 12 fotogrammi più un lampo di brace in additivo.
+-- I nodi sono pochi e riusati a giro, così non se ne creano durante la partita.
+local BRACE = vmath.vector4(1, 0.478, 0.102, 1)
+local function hide_node(_, node) gui.set_enabled(node, false) end
+
+local function explosion(self, x, y, r)
+	self.boom_i = self.boom_i % #self.booms + 1
+	local b = self.booms[self.boom_i]
+	local d = r * 3.6
+	gui.set_enabled(b.anim, true)
+	gui.set_position(b.anim, vmath.vector3(x, y, 0))
+	gui.set_size(b.anim, vmath.vector3(d, d, 0))
+	gui.set_euler(b.anim, vmath.vector3(0, 0, math.random(0, 359)))
+	gui.play_flipbook(b.anim, "esplosione", hide_node)
+
+	gui.set_enabled(b.flash, true)
+	gui.cancel_animations(b.flash)
+	gui.set_position(b.flash, vmath.vector3(x, y, 0))
+	gui.set_size(b.flash, vmath.vector3(r * 6, r * 6, 0))
+	gui.set_color(b.flash, BRACE)
+	gui.animate(b.flash, "color.w", 0, gui.EASING_OUTQUAD, 0.45, 0, hide_node)
 end
 
 local function my_turn(self)
@@ -273,12 +272,10 @@ local function handle_event(self, e)
 			-- online il terreno lo scaviamo noi, nello stesso punto del server
 			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
 		end
-		-- l'erba dipende dalle 2 celle sopra e l'acciaio da quelle vicine,
-		-- quindi ridisegniamo un margine di 2 celle attorno al cratere
 		self.drawn_map = nil
-		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 2, row_min - 2,
-			math.floor((e.x + e.r) / CELL) + 2, row_max + 2)
-		explosion_flash(e.x, e.y, e.r)
+		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 1, row_min - 1,
+			math.floor((e.x + e.r) / CELL) + 1, row_max + 1)
+		explosion(self, e.x, e.y, e.r)
 	elseif e.type == "turn" then
 		if self.mode == "online" then
 			show_message(self, e.robot == self.me and "Tocca a te!" or "Turno dell'avversario")
@@ -286,8 +283,10 @@ local function handle_event(self, e)
 			show_message(self, "Turno di " .. NAMES[e.robot])
 		end
 	elseif e.type == "death" then
-		gui.set_enabled(self.robots[e.robot].body, false)
+		scoria.set_enabled(self.robots[e.robot].rig, false)
+		gui.set_enabled(self.robots[e.robot].hp, false)
 	elseif e.type == "over" then
+		self.winner = e.winner
 		local text
 		if self.mode == "online" then
 			text = e.winner == self.me and "Hai vinto!" or (e.winner and "Hai perso!" or "Pareggio!")
@@ -408,7 +407,22 @@ local function set_hud(self, text)
 	end
 end
 
+-- Espressione dell'occhio della Scoria i
+local function expression(self, i, rb, v, aiming)
+	if self.winner == i then return "vittoria" end
+	if v.hit > 0 then return "colpito" end
+	if aiming then return "mira" end
+	local p = self.pose_b
+	if p.has_p and self.g.current ~= i then
+		local dx, dy = p.p.x - v.x, p.p.y - v.y
+		if dx * dx + dy * dy < 150 * 150 then return "paura" end
+	end
+	if rb.hp <= 30 then return "poca_vita" end
+	return "neutro"
+end
+
 local function render(self, dt)
+	self.clock = self.clock + dt
 	local g = self.g
 	local k, pa, pb = pose_k(self), self.pose_a, self.pose_b
 	for i, rb in ipairs(g.robots) do
@@ -423,19 +437,56 @@ local function render(self, dt)
 		else
 			v.y = ty
 		end
-		set_pos(r.body, v.x, v.y + game.ROBOT_H / 2)
-		set_pos(r.eye, rb.facing * 3, 3)
 		local hp = math.max(0, rb.hp)
 		if v.hp ~= hp then
+			if hp < v.hp then v.hit = 0.6; scoria.hit(r.rig) end
 			gui.set_text(r.hp, tostring(hp))
 			v.hp = hp
 		end
+		v.hit = math.max(0, v.hit - dt)
+		set_pos(r.hp, v.x, v.y + HEAD + 8)
+		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
+		v.px = v.x
+
+		-- chi mira si gira verso il dito e punta il braccio con l'arma
+		local aiming = self.aiming and g.phase == "aim" and i == g.current and my_turn(self)
+		local st = r.st
+		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, vx
+		st.facing = rb.facing
+		st.aim = nil
+		if aiming then
+			st.aim = self.aim_angle
+			st.facing = math.cos(self.aim_angle) < 0 and -1 or 1
+		end
+		st.expression = expression(self, i, rb, v, aiming)
+		scoria.update(r.rig, dt, st)
 	end
 
+	-- missile: bagliore col colore di chi ha sparato e una scia che si spegne
 	gui.set_enabled(self.projectile, pb.has_p)
 	if pb.has_p then
 		local p0 = pa.has_p and pa.p or pb.p
-		set_pos(self.projectile, p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k)
+		local x, y = p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k
+		set_pos(self.projectile, x, y)
+		gui.set_color(self.projectile_glow, PLAYER_COLORS[g.current])
+		local n = #self.trail
+		self.trail_i = self.trail_i % n + 1
+		local tp = self.trail_pos[self.trail_i]
+		tp.x, tp.y = x, y
+		self.trail_n = math.min(n, self.trail_n + 1)
+		for j = 1, n do
+			local node = self.trail[j]
+			if j <= self.trail_n then
+				local q = self.trail_pos[(self.trail_i - j) % n + 1]
+				gui.set_enabled(node, true)
+				set_pos(node, q.x, q.y)
+			else
+				gui.set_enabled(node, false)
+			end
+		end
+	else
+		self.trail_n = 0
+		for _, node in ipairs(self.trail) do gui.set_enabled(node, false) end
 	end
 
 	local show_aim = self.aiming and g.phase == "aim" and my_turn(self)
@@ -464,7 +515,7 @@ local function render(self, dt)
 	local cur = current_robot(self)
 	local v = self.view[g.current]
 	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
-	set_pos(self.arrow, v.x, v.y + game.ROBOT_H + 34)
+	set_pos(self.arrow, v.x, v.y + HEAD + 30 + math.sin(self.clock * 5) * 3)
 	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
 end
 
@@ -475,32 +526,49 @@ function init(self)
 	self.keys = {}
 	self.preview_pts = {}
 
-	box(W / 2, H / 2, W, H, SKY)
-	self.tiles = {}
-	for ty = 0, TILES_Y - 1 do
-		for tx = 0, TILES_X - 1 do
-			local w, h = TILE_W * CELL, TILE_H * CELL
-			self.tiles[#self.tiles + 1] = {
-				tx = tx, ty = ty, px = {}, id = "terrain" .. tx .. "_" .. ty,
-				node = box(tx * w + w / 2, ty * h + h / 2, w, h, WHITE),
-			}
-		end
-	end
+	self.clock = 0
 
 	self.robots = {}
 	for i = 1, 2 do
-		local body = box(0, 0, game.ROBOT_HALF_W * 2, game.ROBOT_H, PLAYER_COLORS[i])
-		local eye = box(3, 3, 4, 4, WHITE)
-		gui.set_parent(eye, body)
-		local hp = label(0, 20, "100", 0.7)
-		gui.set_parent(hp, body)
-		self.robots[i] = { body = body, eye = eye, hp = hp }
+		self.robots[i] = { rig = scoria.new(PLAYER_COLORS[i]), st = {} }
 	end
 
-	self.projectile = circle(0, 0, 6, DARK)
+	-- puntini della traiettoria: piccoli bagliori bianchi
 	self.dots = {}
 	for i = 1, AIM_DOTS do
-		self.dots[i] = circle(0, 0, 5, vmath.vector4(1, 1, 1, 1 - i / (AIM_DOTS + 4)))
+		local n = glow(0, 0, 14 - i * 0.5, vmath.vector4(1, 1, 1, 1 - i / (AIM_DOTS + 4)))
+		self.dots[i] = n
+	end
+
+	-- missile: scia, alone col colore della squadra e nocciolo bianco
+	self.trail, self.trail_pos, self.trail_i, self.trail_n = {}, {}, 0, 0
+	for i = 1, 8 do
+		self.trail[i] = glow(0, 0, 16 - i * 1.4, vmath.vector4(1, 0.6, 0.3, 0.55 - i * 0.06))
+		self.trail_pos[i] = { x = 0, y = 0 }
+	end
+	self.projectile = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(self.projectile, false)
+	gui.set_adjust_mode(self.projectile, gui.ADJUST_STRETCH)
+	self.projectile_glow = glow(0, 0, 34, WHITE)
+	gui.set_parent(self.projectile_glow, self.projectile)
+	gui.set_parent(glow(0, 0, 12, WHITE), self.projectile)
+
+	-- esplosioni riusate a giro
+	self.booms, self.boom_i = {}, 0
+	for i = 1, 4 do
+		local anim = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(100, 100, 0)))
+		gui.set_texture(anim, "esplosione")
+		gui.play_flipbook(anim, "esplosione")
+		gui.set_enabled(anim, false)
+		local flash = glow(0, 0, 100, BRACE)
+		gui.set_enabled(flash, false)
+		self.booms[i] = { anim = anim, flash = flash }
+	end
+
+	for i = 1, 2 do
+		local hp = label(0, 0, "100", 0.7)
+		gui.set_color(hp, PLAYER_COLORS[i])
+		self.robots[i].hp = hp
 	end
 	self.arrow = box(0, 0, 4, 18, WHITE)
 
