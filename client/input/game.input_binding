@@ -30,3 +30,7 @@ mouse_trigger {
   input: MOUSE_BUTTON_LEFT
   action: "touch"
 }
+mouse_trigger {
+  input: MOUSE_BUTTON_RIGHT
+  action: "cancel"
+}

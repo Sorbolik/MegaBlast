@@ -162,7 +162,7 @@ for _ = 1, game.TELEPORT_TICKS do
 	if tp.orb then last_orb = { x = tp.orb.x, y = tp.orb.y } end
 	tp:step()
 	for _, e in ipairs(tp:pop_events()) do
-		if e.type == "teleport" or e.type == "teleport_fail" then tp_ev = e end
+		if e.type == "teleport" then tp_ev = e end
 	end
 end
 check(tp_ev and tp_ev.type == "teleport", "dopo qualche secondo il robot si teletrasporta")
@@ -182,17 +182,56 @@ local function falling(with_orb)
 	place(r, 560, y)
 	r.vx, r.vy = 40, -250
 	if with_orb then
-		q.orb = { x = 720, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = 1, resting = true }
+		q.orb = { x = 720, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = 1 }
 	end
 	q:step()
 	return r, y
 end
 local fr, fy = falling(true)
 local nr = falling(false)
-check(fr.x == 720 and fr.y == fy, "il teletrasporto porta il robot nel punto del globo")
+check(fr.x == 720 and math.abs(fr.y - fy) < 1, "il teletrasporto porta il robot nel punto del globo")
 check(fr.vx == nr.vx and fr.vy == nr.vy and fr.vy < -250,
 	"la velocità di caduta resta la stessa dopo il teletrasporto")
 check(not fr.grounded, "il robot non viene appoggiato a terra")
+
+-- Il globo non si appiccica: tocca terra e rotola
+local rl = game.new(42, "isole")
+run(rl, 120)
+local rr = rl.robots[1]
+local gy = rr.y
+rl.orb = { x = rr.x + 30, y = gy + 40, vx = 120, vy = -100, owner = 1, timer = 60 }
+local touched_x
+for _ = 1, 40 do
+	rl:step()
+	if rl.orb and not touched_x and rl.terrain:solid(rl.orb.x, rl.orb.y - 3) then touched_x = rl.orb.x end
+end
+check(touched_x and rl.orb and rl.orb.x > touched_x + 10, "il globo rotola dopo aver toccato terra")
+check(rl.orb and not rl.terrain:solid(rl.orb.x, rl.orb.y), "il globo non entra nel terreno")
+
+-- Il teletrasporto avviene sempre, anche se il globo è in un punto impossibile
+local im = game.new(42, "isole")
+run(im, 120)
+local ir = im.robots[1]
+local tx0 = ir.x
+-- un tunnel troppo stretto per il robot, scavato nel terreno pieno sotto i suoi piedi
+for cx = math.floor((tx0 + 100) / game.CELL), math.floor((tx0 + 110) / game.CELL) do
+	im.terrain:set(cx, math.floor((ir.y - 30) / game.CELL), 0)
+end
+im.orb = { x = tx0 + 105, y = ir.y - 30, vx = 0, vy = 0, owner = 1, timer = 1 }
+local im_tp
+im:step()
+for _, e in ipairs(im:pop_events()) do if e.type == "teleport" then im_tp = e end end
+check(im_tp ~= nil, "nel punto impossibile ti teletrasporta lo stesso")
+check(im_tp and not im:robot_collides(ir.x, ir.y) and math.abs(ir.x - (tx0 + 105)) <= 48,
+	"e ti mette nel punto libero più vicino")
+
+-- Se il globo esce dalla mappa il teletrasporto ti porta lì e cadi
+local om = game.new(42, "isole")
+run(om, 120)
+om.orb = { x = -200, y = -100, vx = 0, vy = 0, owner = 1, timer = 1 }
+om:step()
+om:step()
+check(om.robots[1].dead, "un globo fuori dalla mappa ti fa cadere nel vuoto")
 
 -- Fendente: colpisce dietro la schiena e davanti
 local function sword_game()
@@ -233,7 +272,7 @@ local function combo(with_orb)
 	place(q.robots[3], 800 + 25, y)  -- davanti, nel punto d'arrivo
 	q.robots[3].vy, q.robots[3].vx = 0, 0
 	if with_orb then
-		q.orb = { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = game.SWORD_TICKS / 2, resting = true }
+		q.orb = { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = game.SWORD_TICKS / 2 }
 	end
 	q:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 	local seq = {}
@@ -252,14 +291,14 @@ check(combo(false) == "hit2", "senza globo il bersaglio lontano non viene colpit
 -- Il turno aspetta il globo e la ritirata, poi passa all'avversario
 local tw = game.new(42, "isole")
 run(tw, 120)
-tw:step({ fire = { angle = math.rad(80), power = 0.4, weapon = "teleport" } })
+tw:step({ fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } })
 run(tw, 30)
 tw:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 local tw_tp = false
 for _ = 1, 900 do
 	tw:step()
 	for _, e in ipairs(tw:pop_events()) do
-		if e.type == "teleport" or e.type == "teleport_fail" then tw_tp = tw.current == 1 end
+		if e.type == "teleport" then tw_tp = tw.current == 1 end
 	end
 	if tw.current == 2 then break end
 end

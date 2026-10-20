@@ -1,0 +1,18 @@
+# Annullare il colpo: col tasto destro mentre si mira, o riportando il dito
+# sul robot e lasciandolo lì. In nessuno dei due casi deve partire un colpo.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+annulla 120 120 01_annullato_col_destro
+niente_evento fire 1
+mira 4 4 0.4 02_dito_sul_robot
+niente_evento fire 1
+tocca 1040 80                       # TELE
+annulla 80 120
+niente_evento orb 1
+mira 60 140 0.3                     # il TELE resta attivo: ora il globo parte
+aspetta_evento orb 2
+aspetta_evento teleport 4
+zoom 03_globo_dopo_annullamento

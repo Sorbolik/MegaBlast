@@ -54,7 +54,8 @@ M.SWORD_TO = math.rad(-35)
 M.SWORD_TICKS = 20       -- durata del fendente (1/3 di secondo)
 M.SWORD_DAMAGE = 35
 
--- Teletrasporto (Passo d'Ombra): un globo che vola come il missile e dopo
+-- Teletrasporto (Passo d'Ombra): un globo che vola come il missile, rimbalza e
+-- rotola sul terreno, e dopo
 -- TELEPORT_TICKS sposta il robot dove si trova, senza toccare il suo stato:
 -- velocità, fendente in corso e direzione restano quelli di prima.
 M.TELEPORT_TICKS = 2 * 60
@@ -259,33 +260,66 @@ function M:throw_orb(angle, power)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power)
-	self.orb = { x = x, y = y, vx = vx, vy = vy, owner = rb.id, timer = M.TELEPORT_TICKS, resting = false }
+	self.orb = { x = x, y = y, vx = vx, vy = vy, owner = rb.id, timer = M.TELEPORT_TICKS }
 	self:emit({ type = "orb", robot = rb.id })
 end
 
 -- Cerca un punto libero vicino a (x, y) dove far comparire il robot
+-- Punti dove far comparire il robot attorno al globo, dal più vicino al più
+-- lontano (a parità di distanza prima quelli più in alto)
+local TELEPORT_SEARCH = 48
 local TELEPORT_OFFSETS = {}
-for dy = 0, 24, 2 do
-	for _, dx in ipairs({ 0, -2, 2, -4, 4, -6, 6, -8, 8 }) do
-		TELEPORT_OFFSETS[#TELEPORT_OFFSETS + 1] = { dx, dy }
-	end
-end
-
-function M:teleport(rb, x, y)
-	for _, o in ipairs(TELEPORT_OFFSETS) do
-		local tx, ty = x + o[1], y + o[2]
-		if not self:robot_collides(tx, ty) then
-			local fx, fy = rb.x, rb.y
-			rb.x, rb.y = tx, ty
-			-- lo stato resta identico: chi cadeva continua a cadere con la stessa velocità.
-			-- Non è più appoggiato a niente, la fisica lo rimette a terra se serve.
-			rb.grounded = false
-			self:emit({ type = "teleport", robot = rb.id, from_x = fx, from_y = fy, x = tx, y = ty })
-			return true
+for dy = -TELEPORT_SEARCH, TELEPORT_SEARCH, 2 do
+	for dx = -TELEPORT_SEARCH, TELEPORT_SEARCH, 2 do
+		if dx * dx + dy * dy <= TELEPORT_SEARCH * TELEPORT_SEARCH then
+			TELEPORT_OFFSETS[#TELEPORT_OFFSETS + 1] = { dx, dy, dx * dx + dy * dy }
 		end
 	end
-	self:emit({ type = "teleport_fail", robot = rb.id })
-	return false
+end
+table.sort(TELEPORT_OFFSETS, function(a, b)
+	if a[3] ~= b[3] then return a[3] < b[3] end
+	if a[2] ~= b[2] then return a[2] > b[2] end
+	return a[1] < b[1]
+end)
+
+-- Il teletrasporto avviene sempre: nel punto libero più vicino al globo e, se
+-- attorno è tutto pieno, proprio lì (il robot poi esce dal terreno verso l'alto).
+function M:teleport(rb, x, y)
+	local tx, ty = x, y
+	for _, o in ipairs(TELEPORT_OFFSETS) do
+		if not self:robot_collides(x + o[1], y + o[2]) then
+			tx, ty = x + o[1], y + o[2]
+			break
+		end
+	end
+	local fx, fy = rb.x, rb.y
+	rb.x, rb.y = tx, ty
+	-- lo stato resta identico: chi cadeva continua a cadere con la stessa velocità.
+	-- Non è più appoggiato a niente, la fisica lo rimette a terra se serve.
+	rb.grounded = false
+	self:emit({ type = "teleport", robot = rb.id, from_x = fx, from_y = fy, x = tx, y = ty })
+end
+
+-- Rimbalzo e rotolamento del globo
+M.ORB_BOUNCE = 0.35      -- quanta velocità resta nel rimbalzo
+M.ORB_FRICTION = 0.97    -- attrito lungo la superficie, per ogni tick a contatto
+
+-- Direzione verso fuori dal terreno attorno a (x, y): l'opposto della media
+-- delle celle piene vicine
+local function surface_normal(t, x, y)
+	local c = M.CELL
+	local cx, cy = math.floor(x / c), math.floor(y / c)
+	local nx, ny = 0, 0
+	for oy = -3, 3 do
+		for ox = -3, 3 do
+			if ox * ox + oy * oy <= 9 and t:get(cx + ox, cy + oy) ~= 0 then
+				nx, ny = nx - ox, ny - oy
+			end
+		end
+	end
+	local d = math.sqrt(nx * nx + ny * ny)
+	if d < 1e-6 then return 0, 1 end
+	return nx / d, ny / d
 end
 
 function M:update_orb()
@@ -295,25 +329,28 @@ function M:update_orb()
 		self.orb = nil
 		return
 	end
-	if not o.resting then
-		-- vola come il missile; quando tocca il terreno si ferma lì
-		o.vy = o.vy - M.GRAVITY * M.DT
-		local mx, my = o.vx * M.DT, o.vy * M.DT
-		local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
-		for _ = 1, steps do
-			local nx, ny = o.x + mx / steps, o.y + my / steps
-			if self.terrain:solid(nx, ny) then
-				o.resting, o.vx, o.vy = true, 0, 0
-				break
+	-- vola come il missile; quando tocca il terreno rimbalza e rotola.
+	-- Se esce dalla mappa continua a cadere: il teletrasporto ti porta lì lo stesso.
+	local t = self.terrain
+	o.vy = o.vy - M.GRAVITY * M.DT
+	local mx, my = o.vx * M.DT, o.vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
+	for _ = 1, steps do
+		local nx, ny = o.x + mx / steps, o.y + my / steps
+		if t:solid(nx, ny) then
+			local sx, sy = surface_normal(t, nx, ny)
+			local vn = o.vx * sx + o.vy * sy
+			if vn < 0 then
+				-- toglie la parte di velocità contro il terreno (e ne rimanda indietro
+				-- un po' se l'urto è forte), frena quella lungo la superficie
+				local e = vn < -60 and M.ORB_BOUNCE or 0
+				local tx, ty = o.vx - vn * sx, o.vy - vn * sy
+				o.vx = tx * M.ORB_FRICTION - e * vn * sx
+				o.vy = ty * M.ORB_FRICTION - e * vn * sy
 			end
-			o.x, o.y = nx, ny
+			break
 		end
-		if o.y < -50 or o.x < -300 or o.x > M.WORLD_W + 300 then
-			-- fuori dalla mappa: il globo si spegne invece di farti cadere nel vuoto
-			self:emit({ type = "teleport_fail", robot = rb.id })
-			self.orb = nil
-			return
-		end
+		o.x, o.y = nx, ny
 	end
 	o.timer = o.timer - 1
 	if o.timer <= 0 then
