@@ -21,7 +21,7 @@ type Sim struct {
 
 func NewSim(seed int64, mapID string) (*Sim, error) {
 	L := lua.NewState()
-	for _, name := range []string{"rng", "terrain", "maps", "game"} {
+	for _, name := range []string{"rng", "terrain", "mapdata", "maps", "game"} {
 		src, err := megablast.SimFS.ReadFile("client/sim/" + name + ".lua")
 		if err != nil {
 			L.Close()
