@@ -336,6 +336,7 @@ local function handle_event(self, e)
 		else
 			text = e.winner and ("Vince " .. NAMES[e.winner] .. "!") or "Pareggio!"
 		end
+		if e.reason == "time" then text = "Tempo scaduto!\n" .. text end
 		show_message(self, text .. "\nTocca per tornare al menu", true)
 		self.mode = "ended"
 	end
@@ -352,6 +353,7 @@ end
 local function apply_state(self, s)
 	local g = self.g
 	g.phase, g.current, g.timer, g.retreat = s.phase, s.cur, s.timer, s.retreat or 0
+	g.match_left = s.mt or g.match_left
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
@@ -360,7 +362,6 @@ local function apply_state(self, s)
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y } or nil
 	g.orb = s.o and { x = s.o.x, y = s.o.y } or nil
-	g.orb_used = s.ou
 	-- si riparte da dove siamo sullo schermo verso il nuovo stato
 	advance_pose(self.pose_a, self.pose_b, pose_k(self))
 	capture(self.pose_b, g)
@@ -582,8 +583,8 @@ local function render(self, dt)
 		gui.set_color(self.orb_glow, PLAYER_COLORS[g.current])
 	end
 
-	-- pulsanti: arma scelta e teletrasporto (uno per turno)
-	local tele_ok = g.phase == "aim" and not g.orb_used and my_turn(self)
+	-- pulsanti: arma scelta e teletrasporto (un globo alla volta)
+	local tele_ok = g.phase == "aim" and not g.orb and my_turn(self)
 	if self.tele_armed and not tele_ok then self.tele_armed = false end
 	if self.shown_weapon ~= self.weapon then
 		gui.set_text(self.weapon_label, WEAPON_LABEL[self.weapon])
@@ -604,14 +605,17 @@ local function render(self, dt)
 	end
 
 	local secs = math.max(0, math.ceil(g.timer / 60))
+	-- tempo rimasto della partita (3 minuti al massimo)
+	local left = math.max(0, math.ceil(g.match_left / 60))
+	local clock = string.format("%d:%02d", math.floor(left / 60), left % 60)
 	local who = NAMES[g.current]
 	if self.mode == "online" then who = g.current == self.me and "Tu" or "Avversario" end
 	if g.phase == "aim" then
-		set_hud(self, string.format("%s   %ds", who, secs))
+		set_hud(self, string.format("%s   %ds   %s", who, secs, clock))
 	elseif g.retreat > 0 then
-		set_hud(self, string.format("%s   riparati! %ds", who, math.ceil(g.retreat / 60)))
+		set_hud(self, string.format("%s   riparati! %ds   %s", who, math.ceil(g.retreat / 60), clock))
 	elseif g.phase ~= "over" then
-		set_hud(self, who)
+		set_hud(self, string.format("%s   %s", who, clock))
 	end
 
 	-- freccia sopra il robot di turno
@@ -808,7 +812,7 @@ function on_input(self, action_id, action)
 				self.tele_armed = false
 			elseif gui.pick_node(self.btn_tele, action.x, action.y) then
 				-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
-				self.tele_armed = not self.tele_armed and self.g.phase == "aim" and not self.g.orb_used
+				self.tele_armed = not self.tele_armed and self.g.phase == "aim" and not self.g.orb
 			elseif my_turn(self) then
 				self.touch_mode = "aim"
 				self.aiming = true

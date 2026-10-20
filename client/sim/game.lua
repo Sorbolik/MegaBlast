@@ -51,9 +51,8 @@ M.SWORD_REACH = 40       -- lunghezza della lama dal perno
 M.SWORD_PIVOT_Y = 10     -- altezza del perno (la spalla) sopra i piedi
 M.SWORD_FROM = math.rad(205)
 M.SWORD_TO = math.rad(-35)
-M.SWORD_TICKS = 36       -- durata del fendente
+M.SWORD_TICKS = 20       -- durata del fendente (1/3 di secondo)
 M.SWORD_DAMAGE = 35
-M.SWORD_KNOCKBACK = 260
 
 -- Teletrasporto (Passo d'Ombra): un globo che vola come il missile e dopo
 -- TELEPORT_TICKS sposta il robot dove si trova, senza toccare il suo stato:
@@ -61,6 +60,7 @@ M.SWORD_KNOCKBACK = 260
 M.TELEPORT_TICKS = 2 * 60
 
 -- Turni
+M.MATCH_TICKS = 3 * 60 * 60 -- durata massima della partita: 3 minuti
 M.TURN_TICKS = 15 * 60
 M.RETREAT_TICKS = 3 * 60 -- dopo lo sparo ci si può ancora muovere per ripararsi
 M.SETTLE_TICKS = 30
@@ -95,13 +95,14 @@ function M.new(seed, map_id, opts)
 		g.robots[i] = {
 			id = i, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
 			vx = 0, vy = 0, grounded = false, knocked = false, facing = i == 1 and 1 or -1,
-			hp = M.MAX_HP, dead = false,
+			hp = M.MAX_HP, dead = false, dealt = 0,
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			stats = make_stats(opts.stats and opts.stats[i]),
 		}
 	end
 	g.events = {}
 	g.tick = 0
+	g.match_left = M.MATCH_TICKS
 	g.current = 1
 	g.retreat = 0
 	g.winner = nil
@@ -259,7 +260,6 @@ function M:throw_orb(angle, power)
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power)
 	self.orb = { x = x, y = y, vx = vx, vy = vy, owner = rb.id, timer = M.TELEPORT_TICKS, resting = false }
-	self.orb_used = true
 	self:emit({ type = "orb", robot = rb.id })
 end
 
@@ -375,14 +375,10 @@ end
 
 function M:sword_hit(rb, other)
 	other.hp = other.hp - M.SWORD_DAMAGE
+	rb.dealt = rb.dealt + M.SWORD_DAMAGE
 	self:emit({ type = "damage", robot = other.id, amount = M.SWORD_DAMAGE })
 	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
-	local dx = other.x - rb.x
-	local dir = dx < 0 and -1 or 1
-	other.vx = dir * M.SWORD_KNOCKBACK
-	other.vy = M.SWORD_KNOCKBACK * 0.5
-	other.grounded = false
-	other.knocked = true
+	-- la spada fa solo danno: il bersaglio resta dov'è
 	if other.hp <= 0 then self:kill(other, "damage") end
 end
 
@@ -417,7 +413,8 @@ function M:hits_robot(x, y, owner, age)
 	return false
 end
 
-function M:explode(x, y)
+-- owner (facoltativo) è chi ha sparato, per contare i danni inflitti
+function M:explode(x, y, owner)
 	local cy0, cy1 = self.terrain:carve(x, y, M.EXPLOSION_R)
 	self:emit({ type = "explosion", x = x, y = y, r = M.EXPLOSION_R, row_min = cy0, row_max = cy1 })
 	for _, rb in ipairs(self.robots) do
@@ -428,6 +425,7 @@ function M:explode(x, y)
 				local f = 1 - d / M.DAMAGE_R
 				local dmg = math.floor(M.MAX_DAMAGE * f + 0.5)
 				rb.hp = rb.hp - dmg
+				if owner and owner ~= rb.id then self.robots[owner].dealt = self.robots[owner].dealt + dmg end
 				self:emit({ type = "damage", robot = rb.id, amount = dmg })
 				if d < 1 then dx, dy, d = 0, 1, 1 end
 				rb.vx = dx / d * M.KNOCKBACK * f
@@ -450,7 +448,7 @@ function M:update_projectile()
 		p.x = p.x + mx / steps
 		p.y = p.y + my / steps
 		if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then
-			self:explode(p.x, p.y)
+			self:explode(p.x, p.y, p.owner)
 			self.projectile = nil
 			return
 		end
@@ -476,8 +474,26 @@ function M:start_turn(player)
 	self.phase = "aim"
 	self.timer = M.TURN_TICKS
 	self.retreat = 0
-	self.orb_used = false
 	self:emit({ type = "turn", robot = player })
+end
+
+-- Classifica a tempo scaduto: più vita rimasta, a parità più danni inflitti.
+-- Riempie self.podium e restituisce il vincitore, o nil se i primi due sono pari in tutto.
+function M:ranking()
+	local order = {}
+	for _, rb in ipairs(self.robots) do
+		if not rb.dead then order[#order + 1] = rb end
+	end
+	table.sort(order, function(a, b)
+		if a.hp ~= b.hp then return a.hp > b.hp end
+		if a.dealt ~= b.dealt then return a.dealt > b.dealt end
+		return a.id < b.id
+	end)
+	self.podium = {}
+	for i, rb in ipairs(order) do self.podium[i] = rb.id end
+	local a, b = order[1], order[2]
+	if a and b and a.hp == b.hp and a.dealt == b.dealt then return nil end
+	return a and a.id
 end
 
 function M:end_turn()
@@ -487,6 +503,13 @@ function M:end_turn()
 			if not rb.dead then self.winner = rb.id end
 		end
 		self:emit({ type = "over", winner = self.winner })
+		return
+	end
+	if self.match_left <= 0 then
+		-- tempo scaduto: vince chi ha più vita
+		self.phase = "over"
+		self.winner = self:ranking()
+		self:emit({ type = "over", winner = self.winner, reason = "time" })
 		return
 	end
 	local nxt = self.current
@@ -500,6 +523,7 @@ function M:step(input)
 	if self.phase == "over" then return end
 	input = input or NO_INPUT
 	self.tick = self.tick + 1
+	if self.match_left > 0 then self.match_left = self.match_left - 1 end
 
 	-- il robot di turno si muove mentre mira e durante la ritirata dopo lo sparo
 	local can_move = self.phase == "aim" or self.retreat > 0
@@ -523,8 +547,9 @@ function M:step(input)
 		if self.robots[self.current].dead then
 			self.phase, self.settle = "settle", 0
 		elseif fire and weapon == "teleport" then
-			-- lanciare il globo non chiude il turno: si può ancora attaccare
-			if not self.orb_used then self:throw_orb(fire.angle, fire.power) end
+			-- lanciare il globo non chiude il turno e se ne possono lanciare quanti
+			-- se ne vuole, uno alla volta: il prossimo parte quando il primo ha finito
+			if not self.orb then self:throw_orb(fire.angle, fire.power) end
 		elseif fire then
 			if weapon == "sword" then
 				self:swing_sword(fire.angle)
@@ -533,7 +558,8 @@ function M:step(input)
 			end
 			self.phase = "flying"
 			self.retreat = M.RETREAT_TICKS
-		elseif self.timer <= 0 then
+		elseif self.timer <= 0 or self.match_left <= 0 then
+			-- turno finito, o partita finita: chi mira perde il colpo
 			self.phase, self.settle = "settle", 0
 		end
 	elseif self.phase == "flying" then

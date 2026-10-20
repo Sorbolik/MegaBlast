@@ -56,8 +56,8 @@ function N.snapshot(g)
 	local p, o = "null", "null"
 	if g.projectile then p = encode({ x = g.projectile.x, y = g.projectile.y }) end
 	if g.orb then o = encode({ x = g.orb.x, y = g.orb.y }) end
-	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"r":[%s],"p":%s,"o":%s,"ou":%s}',
-		g.phase, g.current, g.timer, g.retreat, table.concat(robots, ","), p, o, tostring(g.orb_used))
+	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"mt":%d,"r":[%s],"p":%s,"o":%s}',
+		g.phase, g.current, g.timer, g.retreat, g.match_left, table.concat(robots, ","), p, o)
 end
 
 -- Eventi accumulati dall'ultimo tick, uno per riga.
