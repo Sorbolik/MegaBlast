@@ -1,0 +1,18 @@
+image: "/assets/esplosioni/esplosione_base_12x256.png"
+tile_width: 256
+tile_height: 256
+tile_margin: 0
+tile_spacing: 0
+collision_groups: "default"
+animations {
+  id: "esplosione"
+  start_tile: 1
+  end_tile: 12
+  playback: PLAYBACK_ONCE_FORWARD
+  fps: 20
+  flip_horizontal: 0
+  flip_vertical: 0
+}
+extrude_borders: 2
+inner_padding: 0
+sprite_trim_mode: SPRITE_TRIM_MODE_OFF

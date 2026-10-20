@@ -1,0 +1,131 @@
+{
+ "note": "posizione = angolo in alto a sinistra del pezzo, nelle coordinate di scoria_corpo.png (export 128). Ordine: mantello dietro a tutto; gambali_dietro dopo gamba_dietro; corazza e maschera sopra il corpo e la luce; gambali_davanti dopo gamba_davanti. Con la maschera si nascondono le corna della Scoria. Con la maschera, l'occhio si disegna con <set>_maschera_occhio.png (stessa posizione della maschera, additivo, colore squadra) al posto di scoria_occhio_*.",
+ "corvo": {
+  "corazza": {
+   "posizione_nel_corpo": [
+    -12.2,
+    19.5
+   ]
+  },
+  "maschera": {
+   "posizione_nel_corpo": [
+    8.8,
+    -3.1
+   ]
+  },
+  "mantello": {
+   "posizione_nel_corpo": [
+    -14.2,
+    25.7
+   ]
+  },
+  "gambali_davanti": {
+   "posizione_nel_corpo": [
+    15.9,
+    85.4
+   ]
+  },
+  "gambali_dietro": {
+   "posizione_nel_corpo": [
+    36.4,
+    87.7
+   ]
+  }
+ },
+ "fornace": {
+  "corazza": {
+   "posizione_nel_corpo": [
+    -17.6,
+    20.3
+   ]
+  },
+  "maschera": {
+   "posizione_nel_corpo": [
+    2.3,
+    -2.1
+   ]
+  },
+  "mantello": {
+   "posizione_nel_corpo": [
+    -14.2,
+    25.0
+   ]
+  },
+  "gambali_davanti": {
+   "posizione_nel_corpo": [
+    15.6,
+    85.4
+   ]
+  },
+  "gambali_dietro": {
+   "posizione_nel_corpo": [
+    36.6,
+    87.9
+   ]
+  }
+ },
+ "vuoto": {
+  "corazza": {
+   "posizione_nel_corpo": [
+    -7.9,
+    27.6
+   ]
+  },
+  "maschera": {
+   "posizione_nel_corpo": [
+    2.7,
+    -3.8
+   ]
+  },
+  "mantello": {
+   "posizione_nel_corpo": [
+    -14.6,
+    25.0
+   ]
+  },
+  "gambali_davanti": {
+   "posizione_nel_corpo": [
+    15.6,
+    85.4
+   ]
+  },
+  "gambali_dietro": {
+   "posizione_nel_corpo": [
+    35.6,
+    88.1
+   ]
+  }
+ },
+ "leviatano": {
+  "corazza": {
+   "posizione_nel_corpo": [
+    -14.5,
+    21.1
+   ]
+  },
+  "maschera": {
+   "posizione_nel_corpo": [
+    8.2,
+    -3.9
+   ]
+  },
+  "mantello": {
+   "posizione_nel_corpo": [
+    -14.6,
+    25.0
+   ]
+  },
+  "gambali_davanti": {
+   "posizione_nel_corpo": [
+    15.4,
+    85.4
+   ]
+  },
+  "gambali_dietro": {
+   "posizione_nel_corpo": [
+    36.4,
+    88.8
+   ]
+  }
+ }
+}

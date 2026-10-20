@@ -1,0 +1,11 @@
+-- Rettangolo della mappa (mesh con lo shader del terreno). La GUI crea la
+-- texture della maschera e ci manda il suo percorso: qui la colleghiamo alla mesh.
+
+local MSG_MASCHERA = hash("maschera")
+
+function on_message(self, message_id, message)
+	if message_id == MSG_MASCHERA then
+		go.set("#mesh", "texture3", message.path)
+		go.set("#mesh", "opzioni", vmath.vector4(message.dipinta and 1 or 0, 0, 0, 0))
+	end
+end
