@@ -53,11 +53,13 @@ function N.snapshot(g)
 		robots[i] = encode({ x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
 			s = rb.swing or 0, sd = rb.swing_dir or 0 })
 	end
-	local p, o = "null", "null"
+	local p = "null"
 	if g.projectile then p = encode({ x = g.projectile.x, y = g.projectile.y }) end
-	if g.orb then o = encode({ x = g.orb.x, y = g.orb.y }) end
-	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"mt":%d,"r":[%s],"p":%s,"o":%s}',
-		g.phase, g.current, g.timer, g.retreat, g.match_left, table.concat(robots, ","), p, o)
+	-- o: i globi del teletrasporto in volo (i = numero del globo, per seguirlo tra uno stato e l'altro)
+	local orbs = {}
+	for i, ob in ipairs(g.orbs) do orbs[i] = encode({ i = ob.id, x = ob.x, y = ob.y }) end
+	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"mt":%d,"r":[%s],"p":%s,"o":[%s]}',
+		g.phase, g.current, g.timer, g.retreat, g.match_left, table.concat(robots, ","), p, table.concat(orbs, ","))
 end
 
 -- Eventi accumulati dall'ultimo tick, uno per riga.

@@ -152,14 +152,14 @@ run(tp, 120)
 tp:pop_events()
 local tr = tp.robots[1]
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orb ~= nil and tp.phase == "aim", "il globo parte e il turno continua")
-tp:step({ fire = { angle = math.rad(20), power = 0.5, weapon = "teleport" } })
-local ox, oy = tp.orb.x, tp.orb.y
+check(tp.orbs[1] ~= nil and tp.phase == "aim", "il globo parte e il turno continua")
 tp:step()
-check(tp.orb.x ~= ox or tp.orb.y ~= oy, "il globo vola")
+local ox, oy = tp.orbs[1].x, tp.orbs[1].y
+tp:step()
+check(tp.orbs[1].x ~= ox or tp.orbs[1].y ~= oy, "il globo vola")
 local tp_ev, last_orb
 for _ = 1, game.TELEPORT_TICKS do
-	if tp.orb then last_orb = { x = tp.orb.x, y = tp.orb.y } end
+	if tp.orbs[1] then last_orb = { x = tp.orbs[1].x, y = tp.orbs[1].y } end
 	tp:step()
 	for _, e in ipairs(tp:pop_events()) do
 		if e.type == "teleport" then tp_ev = e end
@@ -169,9 +169,39 @@ check(tp_ev and tp_ev.type == "teleport", "dopo qualche secondo il robot si tele
 check(tp_ev and math.abs(tp_ev.x - last_orb.x) <= 8 and math.abs(tp_ev.y - (last_orb.y - game.ROBOT_H / 2)) <= 24,
 	"il robot compare dove si trova il globo")
 check(tp.phase == "aim" and tp.current == 1, "dopo il teletrasporto si può ancora attaccare")
-check(tp.orb == nil, "il globo sparisce dopo il teletrasporto")
+check(tp.orbs[1] == nil, "il globo sparisce dopo il teletrasporto")
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orb ~= nil and tp.phase == "aim", "nello stesso turno si può lanciare un altro globo")
+check(tp.orbs[1] ~= nil and tp.phase == "aim", "nello stesso turno si può lanciare un altro globo")
+
+-- Più globi in volo insieme: ognuno teletrasporta allo scadere del suo tempo,
+-- e in mezzo si può sparare. Il turno passa solo quando tutti hanno finito.
+local function multi(plan)
+	local q = game.new(42, "isole")
+	run(q, 120)
+	q:pop_events()
+	local seq = {}
+	for i = 1, 900 do
+		local f = plan[i]
+		if f == "tp" then
+			q:step({ fire = { angle = math.rad(90), power = 0.15, weapon = "teleport" } })
+		elseif f == "missile" then
+			q:step({ fire = { angle = math.rad(60), power = 0.6 } })
+		else
+			q:step()
+		end
+		for _, e in ipairs(q:pop_events()) do
+			if e.type == "orb" or e.type == "teleport" or e.type == "fire" or e.type == "turn" then
+				seq[#seq + 1] = e.type
+			end
+		end
+		if q.current == 2 then break end
+	end
+	return table.concat(seq, " ")
+end
+local m1 = multi({ [1] = "tp", [20] = "tp", [40] = "missile" })
+check(m1 == "orb orb fire teleport teleport turn", "tp, tp, missile: due teletrasporti e poi il turno passa (" .. m1 .. ")")
+local m2 = multi({ [1] = "tp", [60] = "tp", [game.TELEPORT_TICKS + 10] = "missile" })
+check(m2 == "orb orb teleport fire teleport turn", "tp, tp, teletrasporto, missile, teletrasporto (" .. m2 .. ")")
 
 -- Lo stato si conserva: chi sta cadendo continua a cadere con la stessa velocità
 local function falling(with_orb)
@@ -182,7 +212,7 @@ local function falling(with_orb)
 	place(r, 560, y)
 	r.vx, r.vy = 40, -250
 	if with_orb then
-		q.orb = { x = 720, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = 1 }
+		q.orbs = { { x = 720, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = 1 } }
 	end
 	q:step()
 	return r, y
@@ -199,14 +229,14 @@ local rl = game.new(42, "isole")
 run(rl, 120)
 local rr = rl.robots[1]
 local gy = rr.y
-rl.orb = { x = rr.x + 30, y = gy + 40, vx = 120, vy = -100, owner = 1, timer = 60 }
+rl.orbs = { { x = rr.x + 30, y = gy + 40, vx = 120, vy = -100, owner = 1, timer = 60 } }
 local touched_x
 for _ = 1, 40 do
 	rl:step()
-	if rl.orb and not touched_x and rl.terrain:solid(rl.orb.x, rl.orb.y - 3) then touched_x = rl.orb.x end
+	if rl.orbs[1] and not touched_x and rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y - 3) then touched_x = rl.orbs[1].x end
 end
-check(touched_x and rl.orb and rl.orb.x > touched_x + 10, "il globo rotola dopo aver toccato terra")
-check(rl.orb and not rl.terrain:solid(rl.orb.x, rl.orb.y), "il globo non entra nel terreno")
+check(touched_x and rl.orbs[1] and rl.orbs[1].x > touched_x + 10, "il globo rotola dopo aver toccato terra")
+check(rl.orbs[1] and not rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y), "il globo non entra nel terreno")
 
 -- Il teletrasporto avviene sempre, anche se il globo è in un punto impossibile
 local im = game.new(42, "isole")
@@ -217,7 +247,7 @@ local tx0 = ir.x
 for cx = math.floor((tx0 + 100) / game.CELL), math.floor((tx0 + 110) / game.CELL) do
 	im.terrain:set(cx, math.floor((ir.y - 30) / game.CELL), 0)
 end
-im.orb = { x = tx0 + 105, y = ir.y - 30, vx = 0, vy = 0, owner = 1, timer = 1 }
+im.orbs = { { x = tx0 + 105, y = ir.y - 30, vx = 0, vy = 0, owner = 1, timer = 1 } }
 local im_tp
 im:step()
 for _, e in ipairs(im:pop_events()) do if e.type == "teleport" then im_tp = e end end
@@ -228,7 +258,7 @@ check(im_tp and not im:robot_collides(ir.x, ir.y) and math.abs(ir.x - (tx0 + 105
 -- Se il globo esce dalla mappa il teletrasporto ti porta lì e cadi
 local om = game.new(42, "isole")
 run(om, 120)
-om.orb = { x = -200, y = -100, vx = 0, vy = 0, owner = 1, timer = 1 }
+om.orbs = { { x = -200, y = -100, vx = 0, vy = 0, owner = 1, timer = 1 } }
 om:step()
 om:step()
 check(om.robots[1].dead, "un globo fuori dalla mappa ti fa cadere nel vuoto")
@@ -272,7 +302,7 @@ local function combo(with_orb)
 	place(q.robots[3], 800 + 25, y)  -- davanti, nel punto d'arrivo
 	q.robots[3].vy, q.robots[3].vx = 0, 0
 	if with_orb then
-		q.orb = { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = game.SWORD_TICKS / 2 }
+		q.orbs = { { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = game.SWORD_TICKS / 2 } }
 	end
 	q:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 	local seq = {}

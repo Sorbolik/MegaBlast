@@ -59,6 +59,7 @@ M.SWORD_DAMAGE = 35
 -- TELEPORT_TICKS sposta il robot dove si trova, senza toccare il suo stato:
 -- velocità, fendente in corso e direzione restano quelli di prima.
 M.TELEPORT_TICKS = 2 * 60
+M.MAX_ORBS = 6           -- globi in volo insieme, al massimo
 
 -- Turni
 M.MATCH_TICKS = 3 * 60 * 60 -- durata massima della partita: 3 minuti
@@ -103,6 +104,8 @@ function M.new(seed, map_id, opts)
 	end
 	g.events = {}
 	g.tick = 0
+	g.orbs = {}              -- globi del teletrasporto in volo, dal più vecchio
+	g.orb_seq = 0
 	g.match_left = M.MATCH_TICKS
 	g.current = 1
 	g.retreat = 0
@@ -260,7 +263,8 @@ function M:throw_orb(angle, power)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power)
-	self.orb = { x = x, y = y, vx = vx, vy = vy, owner = rb.id, timer = M.TELEPORT_TICKS }
+	self.orb_seq = self.orb_seq + 1
+	self.orbs[#self.orbs + 1] = { id = self.orb_seq, x = x, y = y, vx = vx, vy = vy, owner = rb.id, timer = M.TELEPORT_TICKS }
 	self:emit({ type = "orb", robot = rb.id })
 end
 
@@ -322,13 +326,10 @@ local function surface_normal(t, x, y)
 	return nx / d, ny / d
 end
 
-function M:update_orb()
-	local o = self.orb
+-- Aggiorna un globo; restituisce false quando ha finito (teletrasporto fatto)
+function M:update_orb(o)
 	local rb = self.robots[o.owner]
-	if rb.dead then
-		self.orb = nil
-		return
-	end
+	if rb.dead then return false end
 	-- vola come il missile; quando tocca il terreno rimbalza e rotola.
 	-- Se esce dalla mappa continua a cadere: il teletrasporto ti porta lì lo stesso.
 	local t = self.terrain
@@ -354,10 +355,24 @@ function M:update_orb()
 	end
 	o.timer = o.timer - 1
 	if o.timer <= 0 then
-		self.orb = nil
 		-- il globo è al centro del robot, la posizione del robot è ai piedi
 		self:teleport(rb, o.x, o.y - M.ROBOT_H / 2)
+		return false
 	end
+	return true
+end
+
+-- Tutti i globi in volo, dal più vecchio: ognuno teletrasporta allo scadere del suo tempo
+function M:update_orbs()
+	local orbs, n = self.orbs, 0
+	for i = 1, #orbs do
+		local o = orbs[i]
+		if self:update_orb(o) then
+			n = n + 1
+			orbs[n] = o
+		end
+	end
+	for i = #orbs, n + 1, -1 do orbs[i] = nil end
 end
 
 -- Lama di Nucleo ----------------------------------------------------------------
@@ -570,7 +585,7 @@ function M:step(input)
 	end
 	if self.retreat > 0 then self.retreat = self.retreat - 1 end
 	-- prima il teletrasporto, poi la spada: il fendente colpisce già dalla nuova posizione
-	if self.orb then self:update_orb() end
+	if #self.orbs > 0 then self:update_orbs() end
 	for _, rb in ipairs(self.robots) do
 		if rb.swing then
 			if rb.dead then rb.swing, rb.swing_hit = nil, nil else self:update_swing(rb) end
@@ -585,8 +600,8 @@ function M:step(input)
 			self.phase, self.settle = "settle", 0
 		elseif fire and weapon == "teleport" then
 			-- lanciare il globo non chiude il turno e se ne possono lanciare quanti
-			-- se ne vuole, uno alla volta: il prossimo parte quando il primo ha finito
-			if not self.orb then self:throw_orb(fire.angle, fire.power) end
+			-- se ne vuole, anche mentre altri sono ancora in volo
+			if #self.orbs < M.MAX_ORBS then self:throw_orb(fire.angle, fire.power) end
 		elseif fire then
 			if weapon == "sword" then
 				self:swing_sword(fire.angle)
@@ -606,7 +621,7 @@ function M:step(input)
 		end
 	elseif self.phase == "settle" then
 		self.settle_total = (self.settle_total or 0) + 1
-		local still = not self.orb
+		local still = #self.orbs == 0
 		for _, rb in ipairs(self.robots) do
 			if not rb.dead and (not rb.grounded or rb.swing) then still = false end
 		end

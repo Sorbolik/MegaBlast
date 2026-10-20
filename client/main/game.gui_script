@@ -193,8 +193,17 @@ end
 -- Le pose sono tabelle riusate: niente allocazioni a ogni frame, quindi
 -- niente pause del garbage collector.
 local function new_pose()
+	local o = {}
+	for i = 1, game.MAX_ORBS do o[i] = { id = 0, x = 0, y = 0 } end
 	return { r = { { x = 0, y = 0 }, { x = 0, y = 0 } }, p = { x = 0, y = 0 }, has_p = false,
-		o = { x = 0, y = 0 }, has_o = false }
+		o = o, no = 0 }
+end
+
+-- Il globo con quel numero nella posa, o nil
+local function find_orb(pose, id)
+	for i = 1, pose.no do
+		if pose.o[i].id == id then return pose.o[i] end
+	end
 end
 
 local function capture(pose, g)
@@ -204,13 +213,20 @@ local function capture(pose, g)
 	end
 	pose.has_p = g.projectile ~= nil
 	if pose.has_p then pose.p.x, pose.p.y = g.projectile.x, g.projectile.y end
-	pose.has_o = g.orb ~= nil
-	if pose.has_o then pose.o.x, pose.o.y = g.orb.x, g.orb.y end
+	local n = math.min(#g.orbs, game.MAX_ORBS)
+	for i = 1, n do
+		local src, dst = g.orbs[i], pose.o[i]
+		dst.id, dst.x, dst.y = src.id, src.x, src.y
+	end
+	pose.no = n
 end
 
 local function pose_k(self)
 	return math.max(0, math.min(1, self.pose_t / self.pose_dt))
 end
+
+local ORB_TMP = {}
+for i = 1, game.MAX_ORBS do ORB_TMP[i] = { id = 0, x = 0, y = 0 } end
 
 -- Porta la posa a verso b della frazione k (a diventa ciò che è sullo schermo)
 local function advance_pose(a, b, k)
@@ -223,11 +239,17 @@ local function advance_pose(a, b, k)
 		a.p.x, a.p.y = a.p.x + (b.p.x - a.p.x) * k, a.p.y + (b.p.y - a.p.y) * k
 	end
 	a.has_p = b.has_p
-	if b.has_o then
-		if not a.has_o then a.o.x, a.o.y = b.o.x, b.o.y end
-		a.o.x, a.o.y = a.o.x + (b.o.x - a.o.x) * k, a.o.y + (b.o.y - a.o.y) * k
+	-- i globi di b, ognuno partendo da dove era in a (stesso numero)
+	for i = 1, b.no do
+		local ob, s = b.o[i], ORB_TMP[i]
+		local oa = find_orb(a, ob.id) or ob
+		s.id, s.x, s.y = ob.id, oa.x + (ob.x - oa.x) * k, oa.y + (ob.y - oa.y) * k
 	end
-	a.has_o = b.has_o
+	for i = 1, b.no do
+		local s, d = ORB_TMP[i], a.o[i]
+		d.id, d.x, d.y = s.id, s.x, s.y
+	end
+	a.no = b.no
 end
 
 -- Dopo un teletrasporto la Scoria non deve scivolare dal vecchio punto al nuovo
@@ -364,7 +386,8 @@ local function apply_state(self, s)
 		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y } or nil
-	g.orb = s.o and { x = s.o.x, y = s.o.y } or nil
+	g.orbs = {}
+	for i, o in ipairs(s.o or {}) do g.orbs[i] = { id = o.i, x = o.x, y = o.y } end
 	-- si riparte da dove siamo sullo schermo verso il nuovo stato
 	advance_pose(self.pose_a, self.pose_b, pose_k(self))
 	capture(self.pose_b, g)
@@ -575,19 +598,23 @@ local function render(self, dt)
 		for _, node in ipairs(self.trail) do gui.set_enabled(node, false) end
 	end
 
-	-- globo del teletrasporto: Passo d'Ombra che gira, col colore di chi l'ha lanciato
-	gui.set_enabled(self.orb, pb.has_o)
-	if pb.has_o then
-		local o0 = pa.has_o and pa.o or pb.o
-		set_pos(self.orb, o0.x + (pb.o.x - o0.x) * k, o0.y + (pb.o.y - o0.y) * k)
-		EULER.z = self.clock * 240
-		gui.set_euler(self.orb, EULER)
-		gui.set_color(self.orb_light, PLAYER_COLORS[g.current])
-		gui.set_color(self.orb_glow, PLAYER_COLORS[g.current])
+	-- globi del teletrasporto: Passo d'Ombra che gira, col colore di chi l'ha lanciato
+	for i, node in ipairs(self.orbs) do
+		local on = i <= pb.no
+		gui.set_enabled(node.root, on)
+		if on then
+			local ob = pb.o[i]
+			local o0 = find_orb(pa, ob.id) or ob
+			set_pos(node.root, o0.x + (ob.x - o0.x) * k, o0.y + (ob.y - o0.y) * k)
+			EULER.z = self.clock * 240 + i * 50
+			gui.set_euler(node.root, EULER)
+			gui.set_color(node.light, PLAYER_COLORS[g.current])
+			gui.set_color(node.glow, PLAYER_COLORS[g.current])
+		end
 	end
 
-	-- pulsanti: arma scelta e teletrasporto (un globo alla volta)
-	local tele_ok = g.phase == "aim" and not g.orb and my_turn(self)
+	-- pulsanti: arma scelta e teletrasporto (anche con altri globi in volo)
+	local tele_ok = g.phase == "aim" and #g.orbs < game.MAX_ORBS and my_turn(self)
 	if self.tele_armed and not tele_ok then self.tele_armed = false end
 	if self.shown_weapon ~= self.weapon then
 		gui.set_text(self.weapon_label, WEAPON_LABEL[self.weapon])
@@ -672,17 +699,21 @@ function init(self)
 	gui.set_parent(glow(0, 0, 12, WHITE), self.projectile)
 
 	-- globo del teletrasporto (Passo d'Ombra)
-	self.orb = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.3, 57 * 0.3, 0)))
-	gui.set_texture(self.orb, "battaglia")
-	gui.play_flipbook(self.orb, "passo_ombra")
-	self.orb_glow = glow(0, 0, 40, WHITE)
-	gui.set_parent(self.orb_glow, self.orb)
-	self.orb_light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.3, 57 * 0.3, 0))
-	gui.set_texture(self.orb_light, "battaglia")
-	gui.play_flipbook(self.orb_light, "passo_ombra_luce")
-	gui.set_blend_mode(self.orb_light, gui.BLEND_ADD)
-	gui.set_parent(self.orb_light, self.orb)
-	gui.set_enabled(self.orb, false)
+	self.orbs = {}
+	for i = 1, game.MAX_ORBS do
+		local root = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.3, 57 * 0.3, 0)))
+		gui.set_texture(root, "battaglia")
+		gui.play_flipbook(root, "passo_ombra")
+		local orb_glow = glow(0, 0, 40, WHITE)
+		gui.set_parent(orb_glow, root)
+		local light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.3, 57 * 0.3, 0))
+		gui.set_texture(light, "battaglia")
+		gui.play_flipbook(light, "passo_ombra_luce")
+		gui.set_blend_mode(light, gui.BLEND_ADD)
+		gui.set_parent(light, root)
+		gui.set_enabled(root, false)
+		self.orbs[i] = { root = root, glow = orb_glow, light = light }
+	end
 
 	-- esplosioni riusate a giro
 	self.booms, self.boom_i = {}, 0
@@ -824,7 +855,7 @@ function on_input(self, action_id, action)
 				self.tele_armed = false
 			elseif gui.pick_node(self.btn_tele, action.x, action.y) then
 				-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
-				self.tele_armed = not self.tele_armed and self.g.phase == "aim" and not self.g.orb
+				self.tele_armed = not self.tele_armed and self.g.phase == "aim" and #self.g.orbs < game.MAX_ORBS
 			elseif my_turn(self) then
 				self.touch_mode = "aim"
 				self.aiming = true
