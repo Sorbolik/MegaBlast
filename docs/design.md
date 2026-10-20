@@ -25,15 +25,19 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 
 | Arma | Comportamento |
 |---|---|
-| Missile | Traiettoria balistica. Esplode al primo contatto. |
-| Granata | Rimbalza sul terreno ed esplode dopo una miccia di 3 s. |
-| Mitragliatrice | Raffica di colpi rapidi in linea retta, con danni piccoli e crateri minuscoli. |
-| Montante | Attacco corpo a corpo che lancia in alto l'avversario se è adiacente. |
-| Lama di Nucleo | Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. È un attacco: dopo il colpo restano i secondi per ripararsi. |
+| Lanciarune (missile) | Traiettoria balistica. Esplode al primo contatto. Sempre disponibile. |
+| Uovo di Fiamma (granata) | Rimbalza sul terreno ed esplode dopo una miccia di 3 s (i secondi si vedono sopra l'uovo). Esplosione più grande del missile: cratere 40, danno fino a 55. Si trova nelle casse. |
+| Sciame di Schegge (mitragliatrice) | Raffica di 8 schegge dritte e veloci (la potenza non conta), con danni piccoli (7 l'una) e crateri minuscoli. Si trova nelle casse. |
+| Pugno del Titano (montante) | Corpo a corpo: 30 di danno a chi è subito davanti e lo lancia in alto; anche chi colpisce si solleva un po'. Si trova nelle casse. |
+| Lama di Nucleo | Sempre disponibile. Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. È un attacco: dopo il colpo restano i secondi per ripararsi. |
 
 ### Teletrasporto (Passo d'Ombra)
 
 Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo attivi, miri, rilasci). Lancia un globo che vola come il missile e si ferma dove tocca il terreno. Dopo 2 secondi il robot compare nel punto del globo **nello stesso stato in cui era**: chi cade continua a cadere con la stessa velocità, il fendente in corso continua e la direzione non cambia. Lanciare il globo non chiude il turno e se ne possono lanciare quanti se ne vuole, uno alla volta, quindi si può attaccare subito dopo. Combo tipica: colpo con la spada dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo. Se il globo esce dalla mappa si spegne e non succede nulla.
+
+### Casse
+
+Dopo ogni 3 turni cade dal cielo una cassa in un punto a caso della superficie, lontano dai robot (al massimo 3 casse in mappa). Scende piano e si posa sul primo terreno che trova; se un'esplosione le scava sotto, ricade. Chi la tocca (anche se viene sbalzato addosso fuori dal suo turno) trova un colpo di un'arma a caso tra Uovo di Fiamma, Sciame di Schegge e Pugno del Titano; l'arma resta segreta finché non si apre. Punto e arma vengono dal generatore della partita, quindi server e client sono d'accordo.
 
 ### Cosa miglioriamo rispetto a Blastron
 
@@ -44,7 +48,7 @@ Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo a
 
 - **Movimento**: due pulsanti, sinistra e destra, più il salto.
 - **Mira**: trascini il dito dal robot. La direzione indica l'angolo, la lunghezza la potenza, e una linea tratteggiata mostra la traiettoria prevista per i primi istanti. Rilasci per sparare.
-- **Armi**: una barra in basso con le 5 armi.
+- **Armi**: una barra in basso al centro con le armi che hai: Lanciarune e Lama di Nucleo sempre, le armi delle casse col numero di colpi rimasti. Finiti i colpi l'arma sparisce dalla barra.
 
 ---
 

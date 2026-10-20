@@ -46,6 +46,9 @@ local LAMA_SCALE = 1.45
 local LAMA_RIPOSO = math.rad(-40)
 -- di quanto avanza la spalla del braccio davanti quando si mira (px del rig)
 local SPALLA_MIRA = 26
+-- Pugno del Titano e Sciame di Schegge sono disegnati in diagonale: li
+-- ruotiamo perché artigli e cristalli seguano il braccio
+local PUGNO_ROT, SCIAME_ROT = 40, -38
 -- Bocca del Lanciarune, nel sistema della sua immagine (64 x 53), per il bagliore
 local ARMA_BOCCA = { 58, 24 }
 
@@ -156,6 +159,26 @@ function M.new(color, atlas)
 	image("passo_ombra", g, 10, 0, 64, 57)
 	glow("passo_ombra_luce", g, 10, 0, 64, 57, color)
 	s.armi.teleport = g
+	-- armi delle casse, solo in battaglia (l'atlante della home non le ha).
+	-- Pugno del Titano: il guanto sulla mano, artigli in avanti
+	if ATLAS == "battaglia" then
+		g = empty(s.arma, 0, 0)
+		rot(g, PUGNO_ROT)
+		image("pugno_del_titano", g, 8, 0, 64, 60)
+		glow("pugno_del_titano_luce", g, 8, 0, 64, 60, color)
+		s.armi.punch = g
+		-- Uovo di Fiamma: stretto nel palmo
+		g = empty(s.arma, 0, 0)
+		image("uovo_di_fiamma", g, 12, 0, 56, 64)
+		glow("uovo_di_fiamma_luce", g, 12, 0, 56, 64, color)
+		s.armi.grenade = g
+		-- Sciame di Schegge: i cristalli escono dalla mano verso dove si mira
+		g = empty(s.arma, 0, 0)
+		rot(g, SCIAME_ROT)
+		image("sciame_di_schegge", g, 18, 0, 60, 64)
+		glow("sciame_di_schegge_luce", g, 18, 0, 60, 64, color)
+		s.armi.shards = g
+	end
 	s.arma_scelta = nil
 	M.set_weapon(s, "missile")
 
@@ -273,7 +296,8 @@ function M.update(s, dt, st)
 	set_expression(s, st.expression or "neutro")
 end
 
--- Arma in mano: "missile" (Lanciarune), "sword" (Lama di Nucleo), "teleport" (Passo d'Ombra)
+-- Arma in mano: "missile" (Lanciarune), "sword" (Lama di Nucleo), "teleport" (Passo d'Ombra),
+-- "punch" (Pugno del Titano), "grenade" (Uovo di Fiamma), "shards" (Sciame di Schegge)
 function M.set_weapon(s, name)
 	if s.arma_scelta == name or not s.armi[name] then return end
 	s.arma_scelta = name

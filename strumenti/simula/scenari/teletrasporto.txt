@@ -17,7 +17,7 @@ mira 60 140 0.4
 aspetta_evento orb 2
 aspetta_evento teleport 4
 zoom 05_dopo_secondo_teletrasporto
-tocca 1190 210                      # MISSILE -> SPADA
+tocca 687 62                        # barra delle armi: Lama di Nucleo
 aspetta 0.3
 mira 120 0 0.3
 aspetta_evento swing 2

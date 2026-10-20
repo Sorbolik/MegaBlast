@@ -59,6 +59,45 @@ images {
   image: "/assets/armi/passo_ombra_luce.png"
 }
 images {
+  image: "/assets/armi/pugno_del_titano.png"
+}
+images {
+  image: "/assets/armi/pugno_del_titano_luce.png"
+}
+images {
+  image: "/assets/armi/uovo_di_fiamma.png"
+}
+images {
+  image: "/assets/armi/uovo_di_fiamma_luce.png"
+}
+images {
+  image: "/assets/armi/sciame_di_schegge.png"
+}
+images {
+  image: "/assets/armi/sciame_di_schegge_luce.png"
+}
+images {
+  image: "/assets/armi/lanciarune_icona.png"
+}
+images {
+  image: "/assets/armi/lama_di_nucleo_icona.png"
+}
+images {
+  image: "/assets/armi/pugno_del_titano_icona.png"
+}
+images {
+  image: "/assets/armi/uovo_di_fiamma_icona.png"
+}
+images {
+  image: "/assets/armi/sciame_di_schegge_icona.png"
+}
+images {
+  image: "/assets/casse/cassa.png"
+}
+images {
+  image: "/assets/casse/cassa_luce.png"
+}
+images {
   image: "/assets/fx/bagliore.png"
 }
 margin: 0

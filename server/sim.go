@@ -69,7 +69,7 @@ type Input struct {
 	Left, Right, Jump bool
 	Fire              bool
 	Angle, Power      float64
-	Weapon            string // "missile", "sword" o "teleport"
+	Weapon            string // "missile", "sword", "teleport", "grenade", "shards" o "punch"
 }
 
 func (s *Sim) Step(in Input) error {

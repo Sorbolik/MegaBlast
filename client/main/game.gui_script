@@ -28,8 +28,22 @@ local BUTTON = vmath.vector4(1, 1, 1, 0.25)
 local MENU_BUTTON = vmath.vector4(0.12, 0.12, 0.14, 0.75)
 local BUTTON_ON = vmath.vector4(0.62, 0.36, 0.95, 0.75)
 
--- Nomi delle armi sul pulsante (provvisorio, finché non c'è la barra delle armi)
-local WEAPON_LABEL = { missile = "MISSILE", sword = "SPADA" }
+-- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
+-- Lanciarune e Lama di Nucleo ci sono sempre, le altre si trovano nelle casse.
+local BAR_WEAPONS = { "missile", "sword", "grenade", "shards", "punch" }
+local WEAPON_ICON = {
+	missile = "lanciarune_icona", sword = "lama_di_nucleo_icona", grenade = "uovo_di_fiamma_icona",
+	shards = "sciame_di_schegge_icona", punch = "pugno_del_titano_icona",
+}
+-- per il messaggio "Rosso trova ..." quando si apre una cassa
+local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano" }
+-- armi corpo a corpo: niente linea di mira
+local MELEE = { sword = true, punch = true }
+local SLOT, SLOT_GAP, BAR_Y = 84, 10, 62
+local SLOT_OFF = vmath.vector4(0.62, 0.62, 0.68, 0.9)
+local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector3(1, 1, 1)
+-- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante)
+local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
 -- altezza della testa della Scoria disegnata, per vita e freccia
 local HEAD = 130 * scoria.SCALE
@@ -69,8 +83,11 @@ end
 
 -- Simulazione (strumenti/simula): con megablast.simula = 1 il gioco scrive nel
 -- log gli eventi e dove sta il robot di turno, così uno script può guidarlo.
-local SIMULA = (sys.get_config_int and sys.get_config_int("megablast.simula", 0)
-	or tonumber(sys.get_config("megablast.simula", "0"))) == 1
+local function config_int(key, default)
+	if sys.get_config_int then return sys.get_config_int(key, default) end
+	return tonumber(sys.get_config(key, tostring(default))) or default
+end
+local SIMULA = config_int("megablast.simula", 0) == 1
 
 local function server_url()
 	if sys.get_config_string then
@@ -159,7 +176,7 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.btn_left, visible)
 	gui.set_enabled(self.btn_right, visible)
 	gui.set_enabled(self.btn_jump, visible)
-	gui.set_enabled(self.btn_weapon, visible)
+	gui.set_enabled(self.bar, visible)
 	gui.set_enabled(self.btn_tele, visible)
 	gui.set_enabled(self.hud, visible)
 end
@@ -190,8 +207,11 @@ end
 -- Le pose sono tabelle riusate: niente allocazioni a ogni frame, quindi
 -- niente pause del garbage collector.
 local function new_pose()
+	local sh = {}
+	for i = 1, game.SHARD_COUNT do sh[i] = { x = 0, y = 0, on = false } end
+	-- c: casse per id (in caduta si muovono, vanno interpolate anche loro)
 	return { r = { { x = 0, y = 0 }, { x = 0, y = 0 } }, p = { x = 0, y = 0 }, has_p = false,
-		o = { x = 0, y = 0 }, has_o = false }
+		o = { x = 0, y = 0 }, has_o = false, s = sh, c = {} }
 end
 
 local function capture(pose, g)
@@ -203,6 +223,23 @@ local function capture(pose, g)
 	if pose.has_p then pose.p.x, pose.p.y = g.projectile.x, g.projectile.y end
 	pose.has_o = g.orb ~= nil
 	if pose.has_o then pose.o.x, pose.o.y = g.orb.x, g.orb.y end
+	for i = 1, game.SHARD_COUNT do
+		local sh, ps = g.shards[i], pose.s[i]
+		ps.on = sh ~= nil
+		if sh then ps.x, ps.y = sh.x, sh.y end
+	end
+	for _, pc in pairs(pose.c) do pc.seen = false end
+	for _, c in ipairs(g.crates) do
+		local pc = pose.c[c.id]
+		if not pc then
+			pc = {}
+			pose.c[c.id] = pc
+		end
+		pc.x, pc.y, pc.landed, pc.seen = c.x, c.y, c.landed, true
+	end
+	for id, pc in pairs(pose.c) do
+		if not pc.seen then pose.c[id] = nil end
+	end
 end
 
 local function pose_k(self)
@@ -225,6 +262,25 @@ local function advance_pose(a, b, k)
 		a.o.x, a.o.y = a.o.x + (b.o.x - a.o.x) * k, a.o.y + (b.o.y - a.o.y) * k
 	end
 	a.has_o = b.has_o
+	for i = 1, game.SHARD_COUNT do
+		local sa, sb = a.s[i], b.s[i]
+		if sb.on then
+			if not sa.on then sa.x, sa.y = sb.x, sb.y end
+			sa.x, sa.y = sa.x + (sb.x - sa.x) * k, sa.y + (sb.y - sa.y) * k
+		end
+		sa.on = sb.on
+	end
+	for id, cb in pairs(b.c) do
+		local ca = a.c[id]
+		if not ca then
+			ca = { x = cb.x, y = cb.y }
+			a.c[id] = ca
+		end
+		ca.x, ca.y, ca.landed = ca.x + (cb.x - ca.x) * k, ca.y + (cb.y - ca.y) * k, cb.landed
+	end
+	for id in pairs(a.c) do
+		if not b.c[id] then a.c[id] = nil end
+	end
 end
 
 -- Dopo un teletrasporto la Scoria non deve scivolare dal vecchio punto al nuovo
@@ -246,8 +302,8 @@ end
 
 -- Partita -----------------------------------------------------------------------
 
-local function new_match(self, seed, map)
-	self.g = game.new(seed, map)
+local function new_match(self, seed, map, opts)
+	self.g = game.new(seed, map, opts)
 	-- se sullo schermo c'è già questa mappa intatta (es. quella del menu) non la ridisegnamo
 	local key = self.g.map .. (maps.get(self.g.map).seeded and seed or "")
 	if key ~= self.drawn_map then
@@ -268,6 +324,8 @@ local function new_match(self, seed, map)
 	self.weapon = "missile"
 	self.tele_armed = false
 	self.snap = {}
+	self.crate_tabs = {}
+	for _, n in ipairs(self.crate_nodes) do n.id = nil; gui.set_enabled(n.node, false) end
 	self.acc = 0
 	self.sent = {}
 end
@@ -295,6 +353,23 @@ local function explosion(self, x, y, r)
 	gui.animate(b.flash, "color.w", 0, gui.EASING_OUTQUAD, 0.45, 0, hide_node)
 end
 
+-- Onda d'urto del Pugno del Titano: un anello di brace che si allarga
+local function shock(self, x, y)
+	local n = self.shock
+	gui.set_enabled(n, true)
+	gui.cancel_animations(n)
+	gui.set_position(n, vmath.vector3(x, y, 0))
+	gui.set_size(n, vmath.vector3(20, 20, 0))
+	gui.set_color(n, BRACE)
+	gui.animate(n, "size", vmath.vector3(90, 90, 0), gui.EASING_OUTQUAD, 0.35)
+	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.35, 0, hide_node)
+end
+
+local function who_name(self, robot)
+	if self.mode == "online" then return robot == self.me and "Tu" or "L'avversario" end
+	return NAMES[robot]
+end
+
 local function my_turn(self)
 	return self.mode == "local" or (self.mode == "online" and self.g.current == self.me)
 end
@@ -318,6 +393,13 @@ local function handle_event(self, e)
 		else
 			snap_robot(self, e.robot)
 		end
+	elseif e.type == "crate" then
+		show_message(self, "Una cassa cade dal cielo!")
+	elseif e.type == "crate_pick" then
+		local verbo = (self.mode == "online" and e.robot == self.me) and " hai trovato " or " trova "
+		show_message(self, who_name(self, e.robot) .. verbo .. WEAPON_FOUND[e.weapon] .. "!")
+	elseif e.type == "punch_hit" then
+		shock(self, e.x, e.y)
 	elseif e.type == "turn" then
 		self.tele_armed = false
 		if self.mode == "online" then
@@ -359,9 +441,23 @@ local function apply_state(self, s)
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
 		rb.swing = (r.s or 0) > 0 and r.s or nil
 		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
+		rb.punch = (r.pu or 0) > 0 and r.pu or nil
+		rb.punch_dir = (r.pd or 0) ~= 0 and r.pd or rb.facing
+		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
 	end
-	g.projectile = s.p and { x = s.p.x, y = s.p.y } or nil
+	g.projectile = s.p and { x = s.p.x, y = s.p.y, kind = s.p.k, fuse = s.p.fu } or nil
 	g.orb = s.o and { x = s.o.x, y = s.o.y } or nil
+	for i = 1, game.SHARD_COUNT do g.shards[i] = nil end
+	for _, sh in ipairs(s.s or {}) do g.shards[sh.i] = sh end
+	-- casse: tabelle riusate per id
+	local list = g.crates
+	for i = #list, 1, -1 do list[i] = nil end
+	for i, c in ipairs(s.c or {}) do
+		local t = self.crate_tabs[c.i] or {}
+		self.crate_tabs[c.i] = t
+		t.id, t.x, t.y, t.landed = c.i, c.x, c.y, c.l
+		list[i] = t
+	end
 	-- si riparte da dove siamo sullo schermo verso il nuovo stato
 	advance_pose(self.pose_a, self.pose_b, pose_k(self))
 	capture(self.pose_b, g)
@@ -431,7 +527,17 @@ end
 
 local function start_local(self)
 	hide_menu(self)
-	new_match(self, os.time())
+	local opts = nil
+	if SIMULA then
+		-- solo per gli scenari di prova (comando "imposta" in strumenti/simula)
+		local colpi = config_int("megablast.prova_armi", 0)
+		local ogni = config_int("megablast.prova_casse", 0)
+		opts = {
+			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi } or nil,
+			crate_every = ogni > 0 and ogni or nil,
+		}
+	end
+	new_match(self, os.time(), nil, opts)
 	self.mode = "local"
 	set_controls_visible(self, true)
 end
@@ -480,6 +586,51 @@ local function expression(self, i, rb, v, aiming)
 	return "neutro"
 end
 
+-- Barra delle armi -------------------------------------------------------------
+
+-- Di chi sono le armi nella barra: online le nostre, in locale di chi è di turno
+local function bar_robot(self)
+	if self.mode == "online" then return self.g.robots[self.me] end
+	return current_robot(self)
+end
+
+local function update_bar(self)
+	local rb = bar_robot(self)
+	if not rb then return end
+	-- finiti i colpi si torna al Lanciarune
+	if not game.has_weapon(rb, self.weapon) then self.weapon = "missile" end
+	local n = 0
+	for _, sl in ipairs(self.slots) do
+		if game.has_weapon(rb, sl.weapon) then n = n + 1 end
+	end
+	local x = W / 2 - (n * SLOT + (n - 1) * SLOT_GAP) / 2 + SLOT / 2
+	for _, sl in ipairs(self.slots) do
+		local have = game.has_weapon(rb, sl.weapon)
+		if sl.have ~= have then
+			gui.set_enabled(sl.node, have)
+			sl.have = have
+		end
+		if have then
+			if sl.x ~= x then
+				set_pos(sl.node, x, BAR_Y)
+				sl.x = x
+			end
+			x = x + SLOT + SLOT_GAP
+			local count = game.FREE_WEAPONS[sl.weapon] and 0 or rb.ammo[sl.weapon]
+			if sl.count ~= count then
+				gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
+				sl.count = count
+			end
+			local on = sl.weapon == self.weapon and not self.tele_armed
+			if sl.on ~= on then
+				gui.set_color(sl.node, on and WHITE or SLOT_OFF)
+				gui.set_scale(sl.node, on and SLOT_SCALE_ON or SLOT_SCALE_OFF)
+				sl.on = on
+			end
+		end
+	end
+end
+
 local function render(self, dt)
 	self.clock = self.clock + dt
 	local g = self.g
@@ -525,9 +676,21 @@ local function render(self, dt)
 			weapon = self.tele_armed and "teleport" or self.weapon
 		end
 		-- mirando con la spada la lama va dietro la schiena, pronta per il colpo
-		-- (è l'angolo da cui parte il fendente)
+		-- (è l'angolo da cui parte il fendente); col Pugno il braccio si carica in basso
 		if aiming and weapon == "sword" then
 			st.aim = st.facing > 0 and game.SWORD_FROM or math.pi - game.SWORD_FROM
+		elseif aiming and weapon == "punch" then
+			st.aim = st.facing > 0 and PUNCH_FROM or math.pi - PUNCH_FROM
+		end
+		-- Pugno del Titano: il braccio sale dal basso fino in alto quando il colpo arriva
+		if rb.punch ~= nil and not rb.dead then
+			weapon = "punch"
+			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
+			local t = math.max(0, rb.punch - span + k * span)
+			local a = PUNCH_FROM + (PUNCH_TO - PUNCH_FROM) * math.min(1, t / game.PUNCH_HIT_TICK)
+			local dir = rb.punch_dir or rb.facing
+			st.aim = dir > 0 and a or math.pi - a
+			st.facing = dir
 		end
 		-- Lama di Nucleo: durante il fendente il braccio segue l'angolo della lama
 		if rb.swing ~= nil and not rb.dead then
@@ -545,9 +708,27 @@ local function render(self, dt)
 		scoria.update(r.rig, dt, st)
 	end
 
+	-- Uovo di Fiamma: rotola mentre vola, sopra i secondi che mancano allo scoppio
+	local egg = pb.has_p and g.projectile and g.projectile.kind == "grenade"
+	gui.set_enabled(self.egg, egg)
+	if egg then
+		local p0 = pa.has_p and pa.p or pb.p
+		local x = p0.x + (pb.p.x - p0.x) * k
+		set_pos(self.egg, x, p0.y + (pb.p.y - p0.y) * k)
+		EULER.z = -x * 4
+		gui.set_euler(self.egg_spin, EULER)
+		gui.set_color(self.egg_light, PLAYER_COLORS[g.current])
+		local secs = math.max(1, math.ceil((g.projectile.fuse or 0) / 60))
+		if self.egg_secs ~= secs then
+			gui.set_text(self.egg_label, tostring(secs))
+			self.egg_secs = secs
+		end
+	end
+
 	-- missile: bagliore col colore di chi ha sparato e una scia che si spegne
-	gui.set_enabled(self.projectile, pb.has_p)
-	if pb.has_p then
+	local missile = pb.has_p and not egg
+	gui.set_enabled(self.projectile, missile)
+	if missile then
 		local p0 = pa.has_p and pa.p or pb.p
 		local x, y = p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k
 		set_pos(self.projectile, x, y)
@@ -572,6 +753,49 @@ local function render(self, dt)
 		for _, node in ipairs(self.trail) do gui.set_enabled(node, false) end
 	end
 
+	-- Sciame di Schegge: piccoli bagliori col colore di chi spara
+	for i = 1, game.SHARD_COUNT do
+		local sb, node = pb.s[i], self.shard_nodes[i]
+		gui.set_enabled(node, sb.on)
+		if sb.on then
+			local sa = pa.s[i].on and pa.s[i] or sb
+			set_pos(node, sa.x + (sb.x - sa.x) * k, sa.y + (sb.y - sa.y) * k)
+		end
+	end
+	if self.shard_color ~= g.current then
+		for i = 1, game.SHARD_COUNT do gui.set_color(self.shard_nodes[i], PLAYER_COLORS[g.current]) end
+		self.shard_color = g.current
+	end
+
+	-- casse: cadono dondolando, la runa pulsa
+	for _, n in ipairs(self.crate_nodes) do
+		if n.id and not pb.c[n.id] then
+			n.id = nil
+			gui.set_enabled(n.node, false)
+		end
+	end
+	for id, cb in pairs(pb.c) do
+		local n
+		for _, cn in ipairs(self.crate_nodes) do
+			if cn.id == id then n = cn; break end
+		end
+		if not n then
+			for _, cn in ipairs(self.crate_nodes) do
+				if not cn.id then n = cn; n.id = id; gui.set_enabled(n.node, true); break end
+			end
+		end
+		if n then
+			local ca = pa.c[id] or cb
+			set_pos(n.node, ca.x + (cb.x - ca.x) * k, ca.y + (cb.y - ca.y) * k + game.CRATE_H / 2)
+			EULER.z = cb.landed and 0 or math.sin(self.clock * 3 + id) * 10
+			gui.set_euler(n.node, EULER)
+			gui.set_enabled(n.chute, not cb.landed)
+			n.light_col.w = 0.75 + 0.25 * math.sin(self.clock * 4 + id)
+			gui.set_color(n.light, n.light_col)
+		end
+	end
+	EULER.z = 0
+
 	-- globo del teletrasporto: Passo d'Ombra che gira, col colore di chi l'ha lanciato
 	gui.set_enabled(self.orb, pb.has_o)
 	if pb.has_o then
@@ -586,16 +810,13 @@ local function render(self, dt)
 	-- pulsanti: arma scelta e teletrasporto (un globo alla volta)
 	local tele_ok = g.phase == "aim" and not g.orb and my_turn(self)
 	if self.tele_armed and not tele_ok then self.tele_armed = false end
-	if self.shown_weapon ~= self.weapon then
-		gui.set_text(self.weapon_label, WEAPON_LABEL[self.weapon])
-		self.shown_weapon = self.weapon
-	end
+	update_bar(self)
 	gui.set_color(self.btn_tele, self.tele_armed and BUTTON_ON or (tele_ok and BUTTON or MENU_BUTTON))
 
 	local aim_weapon = self.tele_armed and "teleport" or self.weapon
-	local show_aim = self.aiming and g.phase == "aim" and my_turn(self) and aim_weapon ~= "sword"
+	local show_aim = self.aiming and g.phase == "aim" and my_turn(self) and not MELEE[aim_weapon]
 	if show_aim then
-		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts)
+		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts, aim_weapon)
 		for i, n in ipairs(self.dots) do
 			gui.set_enabled(n, true)
 			set_pos(n, pts[i].x, pts[i].y)
@@ -674,9 +895,59 @@ function init(self)
 	gui.set_parent(self.orb_light, self.orb)
 	gui.set_enabled(self.orb, false)
 
+	-- Uovo di Fiamma in volo
+	self.egg = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+	gui.set_visible(self.egg, false)
+	gui.set_parent(glow(0, 0, 36, BRACE), self.egg)
+	self.egg_spin = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(self.egg_spin, false)
+	gui.set_parent(self.egg_spin, self.egg)
+	local egg_img = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(56 * 0.3, 64 * 0.3, 0))
+	gui.set_texture(egg_img, "battaglia")
+	gui.play_flipbook(egg_img, "uovo_di_fiamma")
+	gui.set_parent(egg_img, self.egg_spin)
+	self.egg_light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(56 * 0.3, 64 * 0.3, 0))
+	gui.set_texture(self.egg_light, "battaglia")
+	gui.play_flipbook(self.egg_light, "uovo_di_fiamma_luce")
+	gui.set_blend_mode(self.egg_light, gui.BLEND_ADD)
+	gui.set_parent(self.egg_light, self.egg_spin)
+	self.egg_label = label(0, 26, "3", 0.7)
+	gui.set_parent(self.egg_label, self.egg)
+	gui.set_enabled(self.egg, false)
+
+	-- schegge dello Sciame
+	self.shard_nodes = {}
+	for i = 1, game.SHARD_COUNT do
+		local n = glow(0, 0, 26, WHITE)
+		gui.set_parent(glow(0, 0, 10, WHITE), n)
+		gui.set_enabled(n, false)
+		self.shard_nodes[i] = n
+	end
+
+	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono
+	self.crate_nodes = {}
+	for i = 1, game.CRATE_MAX do
+		local n = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.4, 56 * 0.4, 0)))
+		gui.set_texture(n, "battaglia")
+		gui.play_flipbook(n, "cassa")
+		local chute = glow(0, 20, 40, vmath.vector4(1, 0.8, 0.5, 0.45))
+		gui.set_parent(chute, n)
+		local light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.4, 56 * 0.4, 0))
+		gui.set_texture(light, "battaglia")
+		gui.play_flipbook(light, "cassa_luce")
+		gui.set_blend_mode(light, gui.BLEND_ADD)
+		gui.set_parent(light, n)
+		gui.set_enabled(n, false)
+		self.crate_nodes[i] = { node = n, chute = chute, light = light, light_col = vmath.vector4(BRACE) }
+	end
+
+	-- onda d'urto del Pugno
+	self.shock = glow(0, 0, 20, BRACE)
+	gui.set_enabled(self.shock, false)
+
 	-- esplosioni riusate a giro
 	self.booms, self.boom_i = {}, 0
-	for i = 1, 4 do
+	for i = 1, 10 do
 		local anim = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(100, 100, 0)))
 		gui.set_texture(anim, "esplosione")
 		gui.play_flipbook(anim, "esplosione")
@@ -702,10 +973,25 @@ function init(self)
 	gui.set_parent(label(0, 0, ">", 2), self.btn_right)
 	self.btn_jump = box(W - 90, 80, 130, 110, BUTTON)
 	gui.set_parent(label(0, 0, "SALTA", 1), self.btn_jump)
-	-- arma (provvisorio: missile o spada) e, a parte, il teletrasporto
-	self.btn_weapon = box(W - 90, 210, 130, 90, BUTTON)
-	self.weapon_label = label(0, 0, "MISSILE", 0.8)
-	gui.set_parent(self.weapon_label, self.btn_weapon)
+	-- barra delle armi in basso al centro e, a parte, il teletrasporto
+	self.bar = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(self.bar, false)
+	stretch(self.bar)
+	self.slots = {}
+	for i, w in ipairs(BAR_WEAPONS) do
+		local n = box(0, BAR_Y, SLOT, SLOT, SLOT_OFF)
+		gui.set_texture(n, "menu")
+		gui.play_flipbook(n, "slot")
+		gui.set_parent(n, self.bar)
+		local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
+		gui.set_texture(icon, "battaglia")
+		gui.play_flipbook(icon, WEAPON_ICON[w])
+		gui.set_parent(icon, n)
+		local count = label(22, -26, "", 0.7)
+		gui.set_parent(count, n)
+		gui.set_enabled(n, false)
+		self.slots[i] = { node = n, label = count, weapon = w, have = false }
+	end
 	self.btn_tele = box(W - 240, 80, 130, 110, BUTTON)
 	gui.set_parent(label(0, 0, "TELE", 1), self.btn_tele)
 
@@ -776,6 +1062,14 @@ function update(self, dt)
 	end
 end
 
+-- L'arma della barra sotto il dito, se c'è
+local function picked_slot(self, x, y)
+	for _, sl in ipairs(self.slots) do
+		if sl.have and gui.pick_node(sl.node, x, y) then return sl.weapon end
+	end
+	return nil
+end
+
 function on_input(self, action_id, action)
 	if self.mode == "menu" then
 		local scelta = home.on_input(self.home, action_id, action)
@@ -807,8 +1101,8 @@ function on_input(self, action_id, action)
 			elseif gui.pick_node(self.btn_jump, action.x, action.y) then
 				self.touch_mode = "jump"
 				self.jump_pressed = true
-			elseif gui.pick_node(self.btn_weapon, action.x, action.y) then
-				self.weapon = self.weapon == "missile" and "sword" or "missile"
+			elseif picked_slot(self, action.x, action.y) then
+				self.weapon = picked_slot(self, action.x, action.y)
 				self.tele_armed = false
 			elseif gui.pick_node(self.btn_tele, action.x, action.y) then
 				-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
