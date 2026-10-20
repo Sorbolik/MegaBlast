@@ -55,10 +55,12 @@ function N.snapshot(g)
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch })
 	end
-	local p, o = "null", "null"
+	local p = "null"
 	-- k: "missile" o "grenade", fu: tick prima che l'Uovo scoppi
 	if g.projectile then p = encode({ x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }) end
-	if g.orb then o = encode({ x = g.orb.x, y = g.orb.y }) end
+	-- o: i globi del teletrasporto in volo (i = numero del globo, per seguirlo tra uno stato e l'altro)
+	local orbs = {}
+	for i, ob in ipairs(g.orbs) do orbs[i] = encode({ i = ob.id, x = ob.x, y = ob.y }) end
 	-- schegge in volo col loro posto nella raffica, casse (l'arma dentro resta segreta)
 	local shards, crates = {}, {}
 	for i = 1, game.SHARD_COUNT do
@@ -68,8 +70,8 @@ function N.snapshot(g)
 	for _, c in ipairs(g.crates) do
 		crates[#crates + 1] = encode({ i = c.id, x = c.x, y = c.y, l = c.landed })
 	end
-	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"mt":%d,"r":[%s],"p":%s,"o":%s,"s":[%s],"c":[%s]}',
-		g.phase, g.current, g.timer, g.retreat, g.match_left, table.concat(robots, ","), p, o,
+	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"mt":%d,"r":[%s],"p":%s,"o":[%s],"s":[%s],"c":[%s]}',
+		g.phase, g.current, g.timer, g.retreat, g.match_left, table.concat(robots, ","), p, table.concat(orbs, ","),
 		table.concat(shards, ","), table.concat(crates, ","))
 end
 

@@ -1,4 +1,5 @@
-# Teletrasporto: più globi nello stesso turno, poi un fendente veloce.
+# Teletrasporto: due globi in volo insieme, poi un missile, poi i due
+# teletrasporti uno dopo l'altro. Alla fine un fendente veloce.
 # In alto si vede il tempo rimasto della partita (3 minuti).
 
 aspetta 2
@@ -7,21 +8,19 @@ aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 01_hud_tempo
 tocca 1040 80                       # TELE
-mira 80 120 0.4 02_mira_globo
+mira 30 140 0.2
 aspetta_evento orb 2
-foto 03_globo_in_volo
-aspetta_evento teleport 4
-zoom 04_dopo_primo_teletrasporto
-tocca 1040 80                       # TELE di nuovo, stesso turno
-mira 60 140 0.4
+tocca 1040 80                       # TELE di nuovo, col primo globo ancora in volo
+mira 60 140 0.2
 aspetta_evento orb 2
+foto 02_due_globi_in_volo
 aspetta_evento teleport 4
-zoom 05_dopo_secondo_teletrasporto
+zoom 03_primo_teletrasporto
+aspetta_evento teleport 4
+zoom 04_secondo_teletrasporto
 tocca 687 62                        # barra delle armi: Lama di Nucleo
 aspetta 0.3
 mira 120 0 0.3
 aspetta_evento swing 2
-aspetta 0.15
-zoom 06_fendente
-aspetta 0.5
-zoom 07_dopo
+aspetta 0.1
+zoom 05_fendente
