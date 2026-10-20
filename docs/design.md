@@ -19,6 +19,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Movimento | Salto libero (anche dritto verso l'alto) e controllo in aria a destra e sinistra. |
 | Statistiche | Ogni robot ha velocità a terra, altezza del salto e velocità in aria. L'equipaggiamento le modificherà. Più un robot è veloce in aria, meno inerzia ha quando cambia direzione. |
 | Danni | Dipendono dalla distanza dal centro dell'esplosione. Anche l'esplosione stessa spinge il robot (knockback). Chi cade dalla mappa o nell'acqua muore. |
+| Collisioni | I robot non si attraversano: camminando contro un altro lo si spinge piano (30% della velocità) e chi cade su un robot gli resta in testa. Il globo del teletrasporto rimbalza sui robot e, se arriva forte, li sposta di 3 px; i globi rimbalzano anche tra loro. |
 | Vittoria | Vince l'ultimo robot rimasto in piedi. La partita dura al massimo 3 minuti: allo scadere il turno in corso finisce e vince chi ha più vita (a parità, chi ha inflitto più danni; se sono pari anche lì è pareggio). |
 
 ### Armi iniziali (MVP)
@@ -29,7 +30,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Granata | Rimbalza sul terreno ed esplode dopo una miccia di 3 s. |
 | Mitragliatrice | Raffica di colpi rapidi in linea retta, con danni piccoli e crateri minuscoli. |
 | Montante | Attacco corpo a corpo che lancia in alto l'avversario se è adiacente. |
-| Lama di Nucleo | Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. È un attacco: dopo il colpo restano i secondi per ripararsi. |
+| Lama di Nucleo | Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. Il movimento non è lineare: prima uno slancio che porta la lama un po' indietro, poi accelera sempre di più fino alla fine. È un attacco: dopo il colpo restano i secondi per ripararsi. |
 
 ### Teletrasporto (Passo d'Ombra)
 
