@@ -1,0 +1,27 @@
+# Teletrasporto: più globi nello stesso turno, poi un fendente veloce.
+# In alto si vede il tempo rimasto della partita (3 minuti).
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_hud_tempo
+tocca 1040 80                       # TELE
+mira 80 120 0.4 02_mira_globo
+aspetta_evento orb 2
+foto 03_globo_in_volo
+aspetta_evento teleport 4
+zoom 04_dopo_primo_teletrasporto
+tocca 1040 80                       # TELE di nuovo, stesso turno
+mira 60 140 0.4
+aspetta_evento orb 2
+aspetta_evento teleport 4
+zoom 05_dopo_secondo_teletrasporto
+tocca 1190 210                      # MISSILE -> SPADA
+aspetta 0.3
+mira 120 0 0.3
+aspetta_evento swing 2
+aspetta 0.15
+zoom 06_fendente
+aspetta 0.5
+zoom 07_dopo

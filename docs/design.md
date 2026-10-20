@@ -19,7 +19,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Movimento | Salto libero (anche dritto verso l'alto) e controllo in aria a destra e sinistra. |
 | Statistiche | Ogni robot ha velocità a terra, altezza del salto e velocità in aria. L'equipaggiamento le modificherà. Più un robot è veloce in aria, meno inerzia ha quando cambia direzione. |
 | Danni | Dipendono dalla distanza dal centro dell'esplosione. Anche l'esplosione stessa spinge il robot (knockback). Chi cade dalla mappa o nell'acqua muore. |
-| Vittoria | Vince l'ultimo robot rimasto in piedi. |
+| Vittoria | Vince l'ultimo robot rimasto in piedi. La partita dura al massimo 3 minuti: allo scadere il turno in corso finisce e vince chi ha più vita (a parità, chi ha inflitto più danni; se sono pari anche lì è pareggio). |
 
 ### Armi iniziali (MVP)
 
@@ -29,11 +29,11 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Granata | Rimbalza sul terreno ed esplode dopo una miccia di 3 s. |
 | Mitragliatrice | Raffica di colpi rapidi in linea retta, con danni piccoli e crateri minuscoli. |
 | Montante | Attacco corpo a corpo che lancia in alto l'avversario se è adiacente. |
-| Lama di Nucleo | Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio. È un attacco: dopo il colpo restano i secondi per ripararsi. |
+| Lama di Nucleo | Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. È un attacco: dopo il colpo restano i secondi per ripararsi. |
 
 ### Teletrasporto (Passo d'Ombra)
 
-Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo attivi, miri, rilasci). Lancia un globo che vola come il missile e si ferma dove tocca il terreno. Dopo 2 secondi il robot compare nel punto del globo **nello stesso stato in cui era**: chi cade continua a cadere con la stessa velocità, il fendente in corso continua e la direzione non cambia. Lanciare il globo non chiude il turno (uno per turno), quindi si può attaccare subito dopo. Combo tipica: colpo con la spada dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo. Se il globo esce dalla mappa si spegne e non succede nulla.
+Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo attivi, miri, rilasci). Lancia un globo che vola come il missile e si ferma dove tocca il terreno. Dopo 2 secondi il robot compare nel punto del globo **nello stesso stato in cui era**: chi cade continua a cadere con la stessa velocità, il fendente in corso continua e la direzione non cambia. Lanciare il globo non chiude il turno e se ne possono lanciare quanti se ne vuole, uno alla volta, quindi si può attaccare subito dopo. Combo tipica: colpo con la spada dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo. Se il globo esce dalla mappa si spegne e non succede nulla.
 
 ### Cosa miglioriamo rispetto a Blastron
 

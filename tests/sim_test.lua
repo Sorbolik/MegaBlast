@@ -169,8 +169,9 @@ check(tp_ev and tp_ev.type == "teleport", "dopo qualche secondo il robot si tele
 check(tp_ev and math.abs(tp_ev.x - last_orb.x) <= 8 and math.abs(tp_ev.y - (last_orb.y - game.ROBOT_H / 2)) <= 24,
 	"il robot compare dove si trova il globo")
 check(tp.phase == "aim" and tp.current == 1, "dopo il teletrasporto si può ancora attaccare")
+check(tp.orb == nil, "il globo sparisce dopo il teletrasporto")
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orb == nil and tp.phase == "aim", "un solo globo per turno")
+check(tp.orb ~= nil and tp.phase == "aim", "nello stesso turno si può lanciare un altro globo")
 
 -- Lo stato si conserva: chi sta cadendo continua a cadere con la stessa velocità
 local function falling(with_orb)
@@ -306,6 +307,38 @@ for _ = 1, 4 do g5:step({ left = true }) end
 check(g5.robots[1].facing == -1 and g5.robots[1].swing_dir == 1, "girarsi non cambia la direzione del fendente")
 run(g5, game.SWORD_TICKS)
 check(g5.robots[2].hp < game.MAX_HP, "il fendente colpisce a destra anche dopo essersi girato")
+
+-- Il colpo di spada fa danno ma non fa volare l'avversario
+local g6 = game.new(7, "isole")
+for _ = 1, 120 do g6:step({}) end
+local t6 = g6.robots[2]
+t6.x, t6.y = g6.robots[1].x + 25, g6.robots[1].y
+for _ = 1, 30 do g6:step({}) end -- si posa nel nuovo punto
+local tx6, ty6 = t6.x, t6.y
+g6:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
+run(g6, game.SWORD_TICKS + 30)
+check(t6.hp < game.MAX_HP, "la spada fa danno")
+check(t6.x == tx6 and t6.y == ty6 and t6.grounded, "la spada non sposta l'avversario")
+
+-- Partita a tempo: dopo 3 minuti finisce e vince chi ha più vita
+local g7 = game.new(42, "isole")
+g7.robots[1].hp = 60
+g7.robots[2].hp = 80
+local ticks7 = 0
+while g7.phase ~= "over" and ticks7 < game.MATCH_TICKS + 2000 do
+	g7:step({})
+	ticks7 = ticks7 + 1
+end
+check(g7.phase == "over" and ticks7 >= game.MATCH_TICKS, "la partita finisce allo scadere dei 3 minuti")
+check(g7.winner == 2, "a tempo scaduto vince chi ha più vita")
+check(ticks7 < game.MATCH_TICKS + game.TURN_TICKS, "il turno in corso si chiude allo scadere")
+
+-- A parità di vita vince chi ha inflitto più danni, altrimenti pareggio
+local g8 = game.new(42, "isole")
+g8.robots[1].dealt = 10
+check(g8:ranking() == 1 and g8.podium[1] == 1 and g8.podium[2] == 2, "a parità di vita conta il danno inflitto")
+g8.robots[1].dealt = 0
+check(g8:ranking() == nil, "pari in tutto è pareggio")
 
 -- Prestazioni: un cratere e 600 tick di simulazione
 local t = os.clock()
