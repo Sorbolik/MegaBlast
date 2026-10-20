@@ -75,6 +75,23 @@ function M:capsule(x1, y1, x2, y2, r, v)
 		end)
 end
 
+-- Carica una maschera disegnata a mano: una stringa per riga dal basso, fatta di
+-- tratti "carattere + lunghezza" (. vuoto, d terra, s acciaio). Vedi sim/mapdata.lua.
+local CODES = { ["."] = 0, d = 1, s = 2 }
+
+function M:load(rows)
+	for cy = 0, math.min(#rows, self.h) - 1 do
+		local cx = 0
+		for ch, n in rows[cy + 1]:gmatch("([%.ds])(%d+)") do
+			local v = CODES[ch]
+			for _ = 1, tonumber(n) do
+				self:set(cx, cy, v)
+				cx = cx + 1
+			end
+		end
+	end
+end
+
 -- Colline casuali con qualche grotta, a partire da un seed.
 function M:generate(seed)
 	local r = rng.new(seed)

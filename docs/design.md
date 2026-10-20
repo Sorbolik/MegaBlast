@@ -86,7 +86,7 @@ Alternative scartate:
 - Le collisioni sono letture sulla maschera, senza motore fisico.
 - **Rendering**: la maschera viene applicata come canale alfa sopra una texture di terreno disegnata. Quando c'è un cratere si aggiorna solo il rettangolo toccato della texture (`resource.set_texture` con regione).
 - **Celle**: 0 vuoto, 1 terra (si scava), 2 acciaio (non si scava mai).
-- **Mappe**: sono in `client/sim/maps.lua`, disegnate con poche forme (rettangoli, cerchi, tubi). Ora ci sono "isole" (fatta a mano, a più piani, quella usata online) e "casuale" (colline generate dal seed). In futuro una mappa potrà essere anche un PNG.
+- **Mappe**: sono in `client/sim/maps.lua`. Una mappa si disegna con poche forme (rettangoli, cerchi, tubi) oppure carica una maschera disegnata da `client/sim/mapdata.lua`, generata da `maschera.png` (640×360: nero vuoto, bianco terra, rosso indistruttibile). Ora ci sono "isole" (le isole del cimitero dei Titani, dalla maschera, quella usata online) e "casuale" (colline generate dal seed).
 
 ### Dipendenze del client
 
