@@ -183,7 +183,30 @@ end
 
 -- Collisioni robot / terreno -------------------------------------------------
 
-function M:robot_collides(x, y)
+-- Collisioni tra robot: sono scatole che non si attraversano. Camminando contro
+-- un altro robot lo si spinge, ma piano (PUSH della propria velocità).
+M.PUSH = 0.3
+-- Un globo del teletrasporto che arriva addosso a un robot lo sposta di poco
+M.ORB_NUDGE = 3
+M.ORB_R = 3              -- raggio del globo, per gli urti
+
+-- Il robot (diverso da me e vivo) la cui scatola si sovrappone a quella con i piedi in (x, y)
+function M:robot_at(x, y, me)
+	for _, o in ipairs(self.robots) do
+		if o ~= me and not o.dead and math.abs(x - o.x) < 2 * M.ROBOT_HALF_W
+			and y < o.y + M.ROBOT_H and y + M.ROBOT_H > o.y then
+			return o
+		end
+	end
+end
+
+-- La scatola del robot con i piedi in (x, y) tocca il terreno o un altro robot?
+-- me è il robot stesso (per non urtare sé stesso); senza me contano tutti i robot.
+function M:robot_collides(x, y, me)
+	return self:terrain_collides(x, y) or self:robot_at(x, y, me) ~= nil
+end
+
+function M:terrain_collides(x, y)
 	local t, c = self.terrain, M.CELL
 	local cx0 = math.floor((x - M.ROBOT_HALF_W) / c)
 	local cx1 = math.floor((x + M.ROBOT_HALF_W) / c)
@@ -197,14 +220,32 @@ function M:robot_collides(x, y)
 	return false
 end
 
-local function walk(g, rb, dx)
+-- Sposta il robot di dx in orizzontale, salendo i gradini piccoli. true se ci riesce.
+local function step_x(g, rb, dx)
 	for climb = 0, M.MAX_CLIMB do
-		if not g:robot_collides(rb.x + dx, rb.y + climb) then
+		if not g:robot_collides(rb.x + dx, rb.y + climb, rb) then
 			rb.x = rb.x + dx
 			rb.y = rb.y + climb
-			return
+			return true
 		end
 	end
+	return false
+end
+
+-- rb va contro un altro robot: lo spinge di poco e lo segue
+function M:push(rb, dx)
+	local other = self:robot_at(rb.x + dx, rb.y, rb)
+	if not other then return false end
+	local p = dx * M.PUSH
+	if step_x(self, other, p) then
+		step_x(self, rb, p)
+		return true
+	end
+	return false
+end
+
+local function walk(g, rb, dx)
+	if not step_x(g, rb, dx) then g:push(rb, dx) end
 end
 
 function M:kill(rb, reason)
@@ -218,9 +259,15 @@ function M:update_robot(rb, input)
 	if rb.dead then return end
 
 	-- Se il robot è finito dentro il terreno, lo spingiamo fuori verso l'alto
-	if self:robot_collides(rb.x, rb.y) then
+	if self:terrain_collides(rb.x, rb.y) then
 		rb.y = rb.y + 1
 		return
+	end
+	-- se è incastrato in un altro robot si allontanano di un pixel alla volta
+	local stuck = self:robot_at(rb.x, rb.y, rb)
+	if stuck then
+		local away = rb.x < stuck.x and -1 or (rb.x > stuck.x and 1 or (rb.id < stuck.id and -1 or 1))
+		if not self:terrain_collides(rb.x + away, rb.y) then rb.x = rb.x + away end
 	end
 
 	local st = rb.stats
@@ -236,11 +283,11 @@ function M:update_robot(rb, input)
 			rb.vx = dir * st.walk_speed
 			rb.vy = st.jump_vy
 			rb.grounded = false
-		elseif not self:robot_collides(rb.x, rb.y - 1) then
+		elseif not self:robot_collides(rb.x, rb.y - 1, rb) then
 			-- In discesa resta attaccato al terreno, altrimenti inizia a cadere
 			local landed = false
 			for d = 1, M.MAX_CLIMB do
-				if self:robot_collides(rb.x, rb.y - d - 1) then
+				if self:robot_collides(rb.x, rb.y - d - 1, rb) then
 					rb.y = rb.y - d
 					landed = true
 					break
@@ -266,17 +313,19 @@ function M:update_robot(rb, input)
 		local sx, sy = mx / steps, my / steps
 		for _ = 1, steps do
 			if sx ~= 0 then
-				if not self:robot_collides(rb.x + sx, rb.y) then
+				if not self:robot_collides(rb.x + sx, rb.y, rb) then
 					rb.x = rb.x + sx
-				elseif not self:robot_collides(rb.x + sx, rb.y + 3) then
+				elseif not self:robot_collides(rb.x + sx, rb.y + 3, rb) then
 					-- piccolo gradino in aria: lo scavalca invece di incastrarsi
 					rb.x, rb.y = rb.x + sx, rb.y + 3
 				else
+					-- contro un robot in volo: lo sposta un pizzico e si ferma
+					self:push(rb, sx)
 					rb.vx, sx = 0, 0
 				end
 			end
 			if sy ~= 0 then
-				if self:robot_collides(rb.x, rb.y + sy) then
+				if self:robot_collides(rb.x, rb.y + sy, rb) then
 					if sy < 0 then
 						rb.grounded = true
 						rb.knocked = false
@@ -430,7 +479,8 @@ function M:throw_orb(angle, power)
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power)
 	self.orb_seq = self.orb_seq + 1
-	self.orbs[#self.orbs + 1] = { id = self.orb_seq, x = x, y = y, vx = vx, vy = vy, owner = rb.id, timer = M.TELEPORT_TICKS }
+	self.orbs[#self.orbs + 1] = { id = self.orb_seq, x = x, y = y, vx = vx, vy = vy, owner = rb.id,
+		timer = M.TELEPORT_TICKS, age = 0 }
 	self:emit({ type = "orb", robot = rb.id })
 end
 
@@ -457,7 +507,7 @@ end)
 function M:teleport(rb, x, y)
 	local tx, ty = x, y
 	for _, o in ipairs(TELEPORT_OFFSETS) do
-		if not self:robot_collides(x + o[1], y + o[2]) then
+		if not self:robot_collides(x + o[1], y + o[2], rb) then
 			tx, ty = x + o[1], y + o[2]
 			break
 		end
@@ -492,10 +542,23 @@ local function surface_normal(t, x, y)
 	return nx / d, ny / d
 end
 
+-- Il robot contro cui urta il globo in (x, y), o nil. Chi l'ha lanciato
+-- conta solo dopo un attimo, così il globo non gli rimbalza in faccia.
+function M:orb_hits_robot(o, x, y)
+	local r = M.ORB_R
+	for _, rb in ipairs(self.robots) do
+		if not rb.dead and (rb.id ~= o.owner or o.age > 20)
+			and math.abs(x - rb.x) <= M.ROBOT_HALF_W + r and y >= rb.y - r and y <= rb.y + M.ROBOT_H + r then
+			return rb
+		end
+	end
+end
+
 -- Aggiorna un globo; restituisce false quando ha finito (teletrasporto fatto)
 function M:update_orb(o)
 	local rb = self.robots[o.owner]
 	if rb.dead then return false end
+	o.age = (o.age or 0) + 1
 	-- vola come il missile; quando tocca il terreno rimbalza e rotola.
 	-- Se esce dalla mappa continua a cadere: il teletrasporto ti porta lì lo stesso.
 	local t = self.terrain
@@ -504,7 +567,25 @@ function M:update_orb(o)
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	for _ = 1, steps do
 		local nx, ny = o.x + mx / steps, o.y + my / steps
-		if t:solid(nx, ny) then
+		local hit = self:orb_hits_robot(o, nx, ny)
+		if hit then
+			-- urta un robot: rimbalza sulla sua scatola e, se arriva forte, lo sposta un briciolo
+			local sx, sy = 0, 1
+			if o.y < hit.y + M.ROBOT_H - 2 then sx, sy = o.x < hit.x and -1 or 1, 0 end
+			local vn = o.vx * sx + o.vy * sy
+			if vn < -40 then
+				local d = (o.vx < 0 and -1 or 1)
+				if sy == 0 then d = -sx end
+				step_x(self, hit, d * M.ORB_NUDGE)
+			end
+			if vn < 0 then
+				local e = vn < -60 and M.ORB_BOUNCE or 0
+				local tx, ty = o.vx - vn * sx, o.vy - vn * sy
+				o.vx = tx * M.ORB_FRICTION - e * vn * sx
+				o.vy = ty * M.ORB_FRICTION - e * vn * sy
+			end
+			break
+		elseif t:solid(nx, ny) then
 			local sx, sy = surface_normal(t, nx, ny)
 			local vn = o.vx * sx + o.vy * sy
 			if vn < 0 then
@@ -539,13 +620,46 @@ function M:update_orbs()
 		end
 	end
 	for i = #orbs, n + 1, -1 do orbs[i] = nil end
+	-- i globi si urtano anche tra loro: si separano e si scambiano la spinta
+	for i = 1, n - 1 do
+		local a = orbs[i]
+		for j = i + 1, n do
+			local b = orbs[j]
+			local dx, dy = b.x - a.x, b.y - a.y
+			local d2 = dx * dx + dy * dy
+			local min = 2 * M.ORB_R
+			if d2 < min * min then
+				local d = math.sqrt(d2)
+				if d < 1e-6 then dx, dy, d = 1, 0, 1 end
+				local ux, uy = dx / d, dy / d
+				local half = (min - d) / 2
+				a.x, a.y = a.x - ux * half, a.y - uy * half
+				b.x, b.y = b.x + ux * half, b.y + uy * half
+				local va, vb = a.vx * ux + a.vy * uy, b.vx * ux + b.vy * uy
+				if va - vb > 0 then
+					a.vx, a.vy = a.vx + (vb - va) * ux, a.vy + (vb - va) * uy
+					b.vx, b.vy = b.vx + (va - vb) * ux, b.vy + (va - vb) * uy
+				end
+			end
+		end
+	end
 end
 
 -- Lama di Nucleo ----------------------------------------------------------------
 
 -- Angolo della lama al tick t del fendente, per un robot rivolto a destra
+-- Curva del fendente: come una persona vera, prima porta la lama un po'
+-- indietro (slancio, circa 13°) e poi accelera sempre di più fino alla fine.
+-- È un "back ease-in": va sotto lo zero all'inizio e arriva a 1 con la velocità massima.
+M.SWORD_WINDUP = 1.2
+function M.sword_progress(u)
+	u = math.max(0, math.min(1, u))
+	local s = M.SWORD_WINDUP
+	return u * u * ((s + 1) * u - s)
+end
+
 function M.sword_angle(t)
-	return M.SWORD_FROM + (M.SWORD_TO - M.SWORD_FROM) * math.min(1, t / M.SWORD_TICKS)
+	return M.SWORD_FROM + (M.SWORD_TO - M.SWORD_FROM) * M.sword_progress(t / M.SWORD_TICKS)
 end
 
 function M:swing_sword(angle)
@@ -562,7 +676,8 @@ local function in_robot(r, x, y)
 	return math.abs(x - r.x) <= M.ROBOT_HALF_W and y >= r.y and y <= r.y + M.ROBOT_H
 end
 
-local SWORD_SUBSTEPS = 2
+-- alla fine la lama gira veloce: tanti passi per tick, così non salta un bersaglio
+local SWORD_SUBSTEPS = 8
 local SWORD_SAMPLES = 10
 
 function M:update_swing(rb)

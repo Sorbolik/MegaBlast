@@ -19,6 +19,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Movimento | Salto libero (anche dritto verso l'alto) e controllo in aria a destra e sinistra. |
 | Statistiche | Ogni robot ha velocità a terra, altezza del salto e velocità in aria. L'equipaggiamento le modificherà. Più un robot è veloce in aria, meno inerzia ha quando cambia direzione. |
 | Danni | Dipendono dalla distanza dal centro dell'esplosione. Anche l'esplosione stessa spinge il robot (knockback). Chi cade dalla mappa o nell'acqua muore. |
+| Collisioni | I robot non si attraversano: camminando contro un altro lo si spinge piano (30% della velocità) e chi cade su un robot gli resta in testa. Il globo del teletrasporto rimbalza sui robot e, se arriva forte, li sposta di 3 px; i globi rimbalzano anche tra loro. |
 | Vittoria | Vince l'ultimo robot rimasto in piedi. La partita dura al massimo 3 minuti: allo scadere il turno in corso finisce e vince chi ha più vita (a parità, chi ha inflitto più danni; se sono pari anche lì è pareggio). |
 
 ### Armi iniziali (MVP)
@@ -29,7 +30,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Uovo di Fiamma (granata) | Rimbalza sul terreno ed esplode dopo una miccia di 3 s (i secondi si vedono sopra l'uovo). Esplosione più grande del missile: cratere 40, danno fino a 55. Si trova nelle casse. |
 | Sciame di Schegge (mitragliatrice) | Raffica di 8 schegge dritte e veloci (la potenza non conta), con danni piccoli (7 l'una) e crateri minuscoli. Si trova nelle casse. |
 | Pugno del Titano (montante) | Corpo a corpo: 30 di danno a chi è subito davanti e lo lancia in alto; anche chi colpisce si solleva un po'. Si trova nelle casse. |
-| Lama di Nucleo | Sempre disponibile. Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. È un attacco: dopo il colpo restano i secondi per ripararsi. |
+| Lama di Nucleo | Sempre disponibile. Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. Il movimento non è lineare: prima uno slancio che porta la lama un po' indietro, poi accelera sempre di più fino alla fine. È un attacco: dopo il colpo restano i secondi per ripararsi. |
 
 ### Teletrasporto (Passo d'Ombra)
 

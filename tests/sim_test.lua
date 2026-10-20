@@ -252,7 +252,7 @@ local im_tp
 im:step()
 for _, e in ipairs(im:pop_events()) do if e.type == "teleport" then im_tp = e end end
 check(im_tp ~= nil, "nel punto impossibile ti teletrasporta lo stesso")
-check(im_tp and not im:robot_collides(ir.x, ir.y) and math.abs(ir.x - (tx0 + 105)) <= 48,
+check(im_tp and not im:robot_collides(ir.x, ir.y, ir) and math.abs(ir.x - (tx0 + 105)) <= 48,
 	"e ti mette nel punto libero più vicino")
 
 -- Se il globo esce dalla mappa il teletrasporto ti porta lì e cadi
@@ -302,7 +302,7 @@ local function combo(with_orb)
 	place(q.robots[3], 800 + 25, y)  -- davanti, nel punto d'arrivo
 	q.robots[3].vy, q.robots[3].vx = 0, 0
 	if with_orb then
-		q.orbs = { { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = game.SWORD_TICKS / 2 } }
+		q.orbs = { { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = math.floor(game.SWORD_TICKS * 0.75) } }
 	end
 	q:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 	local seq = {}
@@ -408,6 +408,62 @@ g8.robots[1].dealt = 10
 check(g8:ranking() == 1 and g8.podium[1] == 1 and g8.podium[2] == 2, "a parità di vita conta il danno inflitto")
 g8.robots[1].dealt = 0
 check(g8:ranking() == nil, "pari in tutto è pareggio")
+
+-- Il fendente non è lineare: prima torna un po' indietro, poi accelera fino alla fine
+local a0, a1 = game.sword_angle(0), game.sword_angle(game.SWORD_TICKS * 0.3)
+check(a1 > a0, "all'inizio del fendente la lama va un po' indietro")
+local function step_deg(u)
+	local t = game.SWORD_TICKS
+	return math.abs(math.deg(game.sword_angle(t * u + 1) - game.sword_angle(t * u)))
+end
+check(step_deg(0.9) > 2 * step_deg(0.55), "verso la fine il fendente è sempre più veloce")
+check(math.abs(game.sword_angle(game.SWORD_TICKS) - game.SWORD_TO) < 1e-9, "il fendente finisce davanti in basso")
+
+-- Collisioni: i robot non si attraversano, camminando si spingono un pizzico
+local cg = game.new(7, "isole")
+for _ = 1, 120 do cg:step({}) end
+local c1, c2 = cg.robots[1], cg.robots[2]
+c2.x, c2.y, c2.vx, c2.vy = c1.x + 20, c1.y + 4, 0, 0
+for _ = 1, 30 do cg:step({}) end -- il robot 2 si posa
+local c2x = c2.x
+local c1x = c1.x
+for _ = 1, 60 do cg:step({ right = true }) end
+check(c2.x > c1.x and cg:robot_at(c1.x, c1.y, c1) == nil, "i robot non si attraversano")
+check(c2.x > c2x + 2 and c2.x < c2x + 35, string.format("camminando si spinge l'altro un pizzico (%.1f px)", c2.x - c2x))
+check(c1.x < c1x + 50, "chi spinge va più piano")
+
+-- Un robot che cade su un altro gli resta sopra
+local hg = game.new(7, "isole")
+for _ = 1, 120 do hg:step({}) end
+local h1, h2 = hg.robots[1], hg.robots[2]
+h2.x, h2.y, h2.vx, h2.vy, h2.grounded = h1.x, h1.y + 60, 0, 0, false
+for _ = 1, 90 do hg:step({}) end
+check(h2.grounded and math.abs(h2.y - (h1.y + game.ROBOT_H)) < 1.01, "chi cade su un robot gli resta in testa")
+
+-- Il globo che arriva addosso a un robot lo sposta un briciolo e rimbalza
+local og = game.new(7, "isole")
+for _ = 1, 120 do og:step({}) end
+local o2 = og.robots[2]
+local o2x = o2.x
+og.orbs = { { id = 99, x = o2.x - 30, y = o2.y + 8, vx = 400, vy = 0, owner = 1, timer = 60, age = 100 } }
+local bounced = false
+for _ = 1, 10 do
+	og:step({})
+	if og.orbs[1] and og.orbs[1].vx < 0 then bounced = true end
+end
+check(o2.x > o2x and o2.x <= o2x + game.ORB_NUDGE + 0.01, string.format("il globo sposta il robot di un briciolo (%.1f px)", o2.x - o2x))
+check(bounced, "il globo rimbalza sul robot")
+
+-- I globi si urtano anche tra loro
+local bg = game.new(42, "isole")
+run(bg, 120)
+local by = 500 -- cielo libero sulla mappa isole
+bg.orbs = {
+	{ id = 1, x = 600, y = by, vx = 200, vy = 0, owner = 1, timer = 100, age = 100 },
+	{ id = 2, x = 680, y = by, vx = -200, vy = 0, owner = 1, timer = 100, age = 100 },
+}
+for _ = 1, 20 do bg:step({}) end
+check(bg.orbs[1].x < bg.orbs[2].x and bg.orbs[1].vx < 0 and bg.orbs[2].vx > 0, "due globi che si scontrano rimbalzano")
 
 -- Armi delle casse -------------------------------------------------------------
 
