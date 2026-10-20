@@ -2,7 +2,7 @@
 # Uso: python3 strumenti/grafica/menu.py [cartella grafica con i master]
 #  - kit UI e logo rimpiccioliti alla misura in cui si vedono (atlante piccolo)
 #  - sfondo della home largo 2048 px: riempie da solo una texture 2048 x 1024
-#  - Scoria e Lanciarune dai master (4x): nella home la Scoria è grande
+#  - Scoria e armi in mano dai master (4x): nella home la Scoria è grande
 import os, sys, shutil, json
 from PIL import Image
 R = os.path.join(os.path.dirname(__file__), '..', '..')
@@ -34,6 +34,7 @@ for p in ('logo', 'logo_luce'): scala(f'{UI}/{p}.png', f'{OUT}/{p}.png', w=720)
 scala(f'{UI}/sfondi/home_sfondo.png', f'{OUT}/home_sfondo.png', w=2048)
 for f in sorted(os.listdir(f'{MASTER}/scoria/master')):
 	shutil.copy(f'{MASTER}/scoria/master/{f}', f'{OUT}/scoria/{f}')
-for f in ('lanciarune', 'lanciarune_luce'):
+# le armi che la Scoria può avere in mano (battaglia/scoria.lua)
+for f in ('lanciarune', 'lanciarune_luce', 'lama_di_nucleo', 'lama_di_nucleo_luce', 'passo_ombra', 'passo_ombra_luce'):
 	shutil.copy(f'{MASTER}/armi/master/{f}.png', f'{OUT}/scoria/{f}.png')
 print('ok', OUT)

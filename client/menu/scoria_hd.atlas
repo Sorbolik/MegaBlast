@@ -1,8 +1,20 @@
 images {
+  image: "/assets/menu/scoria/lama_di_nucleo.png"
+}
+images {
+  image: "/assets/menu/scoria/lama_di_nucleo_luce.png"
+}
+images {
   image: "/assets/menu/scoria/lanciarune.png"
 }
 images {
   image: "/assets/menu/scoria/lanciarune_luce.png"
+}
+images {
+  image: "/assets/menu/scoria/passo_ombra.png"
+}
+images {
+  image: "/assets/menu/scoria/passo_ombra_luce.png"
 }
 images {
   image: "/assets/menu/scoria/scoria_braccio_davanti.png"
