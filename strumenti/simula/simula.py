@@ -84,12 +84,24 @@ def test_sim():
         raise Fallito("i test della simulazione falliscono")
 
 
-def build(out):
+def impostazioni(scenario):
+    """Righe "imposta chiave valore" dello scenario: vanno nella sezione [megablast] della build."""
+    righe = []
+    for riga in scenario.read_text().splitlines():
+        p = shlex.split(riga, comments=True)
+        if p and p[0] == "imposta":
+            if len(p) != 3 or not re.fullmatch(r"[a-z_]+", p[1]):
+                raise Fallito(f"imposta vuole una chiave e un valore: {riga.strip()}")
+            righe.append(f"{p[1]} = {p[2]}\n")
+    return "".join(righe)
+
+
+def build(out, extra=""):
     info("3. build con bob")
     # niente estensione WebSocket (si compila sul build server di Defold, che da qui
     # non si raggiunge) e log di simulazione acceso
     settings = out / "simula.ini"
-    settings.write_text("[project]\ndependencies#0 =\n\n[megablast]\nsimula = 1\n")
+    settings.write_text("[project]\ndependencies#0 =\n\n[megablast]\nsimula = 1\n" + extra)
     bundle = out / "bundle"
     shutil.rmtree(bundle, ignore_errors=True)
     cmd = [str(JAVA), "-jar", str(BOB), "--root", str(CLIENT), "--output", "build/simula/default",
@@ -237,7 +249,9 @@ def comando(g, riga):
         return
     c, a = p[0], p[1:]
     num = lambda i, d=None: float(a[i]) if len(a) > i else d
-    if c == "aspetta":
+    if c == "imposta":
+        pass  # già usata nella build
+    elif c == "aspetta":
         g.attendi(num(0))
     elif c == "foto":
         g.scatta(a[0])
@@ -378,7 +392,7 @@ def main():
                 passo()
             except Fallito as e:
                 problemi.append(str(e))
-        exe = build(out)
+        exe = build(out, "" if args.solo_build else impostazioni(args.scenario.resolve()))
         if not args.solo_build:
             gioca(exe, out, args.scenario.resolve(), not args.senza_video)
     except Fallito as e:

@@ -112,7 +112,12 @@ func TestOnlineMatch(t *testing.T) {
 
 	// Il giocatore 1 cammina: l'avversario riceve la nuova posizione
 	first := b.waitFor(`"state"`)
-	x0 := first["r"].([]any)[0].(map[string]any)["x"].(float64)
+	r0 := first["r"].([]any)[0].(map[string]any)
+	x0 := r0["x"].(float64)
+	// lo stato porta casse, schegge e colpi delle armi delle casse (all'inizio nessuno)
+	if _, ok := first["c"].([]any); !ok || r0["ag"] != 0.0 || r0["ap"] != 0.0 {
+		t.Fatalf("stato senza casse o colpi: %v", first)
+	}
 	a.send(`{"t":"in","l":false,"r":true}`)
 	time.Sleep(500 * time.Millisecond)
 	a.send(`{"t":"in","l":false,"r":false}`)
@@ -132,7 +137,9 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatalf("globo del robot sbagliato: %v", orb)
 	}
 
+	// Senza colpi l'Uovo di Fiamma non parte (resta il turno del giocatore 1).
 	// Il giocatore 2 non può sparare fuori turno; il giocatore 1 sì
+	a.send(`{"t":"fire","a":1.0,"p":0.6,"w":"grenade"}`)
 	b.send(`{"t":"fire","a":2.0,"p":0.5}`)
 	a.send(`{"t":"fire","a":1.0,"p":0.6}`)
 	ev := b.waitFor(`"fire"`)

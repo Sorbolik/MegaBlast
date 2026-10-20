@@ -465,6 +465,162 @@ bg.orbs = {
 for _ = 1, 20 do bg:step({}) end
 check(bg.orbs[1].x < bg.orbs[2].x and bg.orbs[1].vx < 0 and bg.orbs[2].vx > 0, "due globi che si scontrano rimbalzano")
 
+-- Armi delle casse -------------------------------------------------------------
+
+-- Senza colpi le armi delle casse non sparano; con un colpo sparano una volta
+local am = game.new(42, "isole")
+run(am, 120)
+am:step({ fire = { angle = math.rad(45), power = 0.6, weapon = "grenade" } })
+check(am.phase == "aim" and not am.projectile, "senza colpi l'Uovo di Fiamma non parte")
+am.robots[1].ammo.grenade = 1
+am:step({ fire = { angle = math.rad(45), power = 0.6, weapon = "grenade" } })
+check(am.projectile and am.projectile.kind == "grenade" and am.robots[1].ammo.grenade == 0,
+	"con un colpo l'Uovo parte e il colpo si consuma")
+
+-- Uovo di Fiamma: rimbalza, si posa e scoppia dopo 3 secondi, più grande del missile
+local gr = game.new(42, "isole")
+run(gr, 120)
+gr:pop_events()
+gr.robots[1].ammo.grenade = 1
+local gy0 = sky_spot(gr, 640, 60)
+place(gr.robots[1], 640, gy0)
+gr:step({ fire = { angle = math.rad(-60), power = 0.8, weapon = "grenade" } })
+local bounced, boom, boom_tick = false, nil, nil
+for i = 1, game.GRENADE_FUSE + 5 do
+	local p = gr.projectile
+	local vy0 = p and p.vy
+	gr:step()
+	if p and gr.projectile and vy0 < 0 and gr.projectile.vy > 0 then bounced = true end
+	for _, e in ipairs(gr:pop_events()) do
+		if e.type == "explosion" and not boom then boom, boom_tick = e, i end
+	end
+end
+check(bounced, "l'Uovo rimbalza sul terreno")
+check(boom and boom.r == game.GRENADE_BLAST.r and boom.r > game.EXPLOSION_R, "l'Uovo fa un'esplosione più grande del missile")
+check(boom_tick and math.abs(boom_tick - game.GRENADE_FUSE) <= 1, "l'Uovo scoppia dopo 3 secondi (" .. tostring(boom_tick) .. " tick)")
+
+-- Sciame di Schegge: una raffica di SHARD_COUNT schegge con piccoli crateri
+local sh = game.new(42, "isole")
+run(sh, 120)
+sh:pop_events()
+sh.robots[1].ammo.shards = 1
+local tx = sh.robots[2]
+sh:step({ fire = { angle = math.atan2(tx.y - sh.robots[1].y, tx.x - sh.robots[1].x), power = 1, weapon = "shards" } })
+local booms, max_flying = 0, 0
+for _ = 1, 120 do
+	sh:step()
+	local n = 0
+	for i = 1, game.SHARD_COUNT do if sh.shards[i] then n = n + 1 end end
+	max_flying = math.max(max_flying, n)
+	for _, e in ipairs(sh:pop_events()) do
+		if e.type == "explosion" then
+			booms = booms + 1
+			check(e.r == game.SHARD_BLAST.r, "le schegge fanno crateri piccoli")
+		end
+	end
+end
+check(booms == game.SHARD_COUNT, "la raffica spara " .. game.SHARD_COUNT .. " schegge (" .. booms .. ")")
+check(max_flying > 1, "più schegge in volo insieme")
+check(sh.phase ~= "flying", "finita la raffica il turno va avanti")
+
+-- Pugno del Titano: lancia in alto chi è davanti, non chi è dietro
+local function punch_game(dx)
+	local q = game.new(42, "isole")
+	run(q, 120)
+	q:pop_events()
+	local y = sky_spot(q, 640, 120)
+	place(q.robots[1], 640, y)
+	place(q.robots[2], 640 + dx, y)
+	q.robots[1].ammo.punch = 1
+	q:step({ fire = { angle = 0, power = 1, weapon = "punch" } })
+	local hit
+	for _ = 1, game.PUNCH_TICKS do
+		q:step()
+		for _, e in ipairs(q:pop_events()) do
+			if e.type == "punch_hit" then hit = { vx = q.robots[2].vx, vy = q.robots[2].vy } end
+		end
+	end
+	return q, hit
+end
+local pq, ph = punch_game(14)
+check(ph and pq.robots[2].hp == game.MAX_HP - game.PUNCH_DAMAGE, "il pugno colpisce chi è davanti")
+check(ph and ph.vy == game.PUNCH_LAUNCH and ph.vx > 0, "il pugno lancia in alto e in avanti")
+local _, ph2 = punch_game(-14)
+check(ph2 == nil, "il pugno non colpisce chi è dietro")
+
+-- Casse ---------------------------------------------------------------------------
+
+-- Una cassa cade dopo ogni 3 turni, sempre nello stesso punto con lo stesso seed
+local function crate_turns(seed)
+	local q = game.new(seed, "isole")
+	local spawned = {}
+	for _ = 1, 12000 do
+		q:step()
+		for _, e in ipairs(q:pop_events()) do
+			if e.type == "crate" then spawned[#spawned + 1] = { turn = q.turn_no, x = e.x, y = e.y } end
+		end
+		if #spawned >= 2 then break end
+	end
+	return q, spawned
+end
+local cq, cs = crate_turns(42)
+check(cs[1] and cs[1].turn == 4 and cs[2] and cs[2].turn == 7, "una cassa ogni 3 turni (turni " ..
+	tostring(cs[1] and cs[1].turn) .. ", " .. tostring(cs[2] and cs[2].turn) .. ")")
+local _, cs2 = crate_turns(42)
+check(cs2[1] and cs2[1].x == cs[1].x and cs2[2].x == cs[2].x, "stesso seed, casse negli stessi punti")
+local _, cs3 = crate_turns(7)
+check(cs3[1] and cs3[1].x ~= cs[1].x, "con un altro seed le casse cadono altrove")
+local c1, c2 = cq.crates[1], cq.crates[2]
+check(#cq.crates == 2 and c2.y > game.WORLD_H, "la cassa nuova cade dal cielo")
+check(c1.landed and math.abs(c1.y - cs[1].y) <= game.CELL, "la cassa si posa sulla superficie")
+check(c1.x >= 40 and c1.x <= game.WORLD_W - 40 and c2.x >= 40 and c2.x <= game.WORLD_W - 40, "le casse sono dentro la mappa")
+
+-- Toccare una cassa dà un colpo di un'arma delle casse
+local pk = game.new(42, "isole", { crate_every = 1 })
+run(pk, 120)
+local c = pk:spawn_crate()
+check(c ~= nil and c.y > game.WORLD_H, "la cassa parte dal cielo")
+run(pk, 600)
+check(c.landed, "la cassa atterra")
+pk:pop_events()
+local pr = pk.robots[pk.current]
+place(pr, c.x, c.y)
+pk:step()
+local got
+for _, e in ipairs(pk:pop_events()) do if e.type == "crate_pick" then got = e end end
+check(got and got.robot == pr.id and pr.ammo[got.weapon] == 1, "chi tocca la cassa trova un'arma (" ..
+	tostring(got and got.weapon) .. ")")
+check(#pk.crates == 0, "la cassa raccolta sparisce")
+
+-- Le casse scelgono tutte e tre le armi
+local seen = {}
+local mix = game.new(11, "isole")
+for _ = 1, 30 do
+	mix.crates = {}
+	local cc = mix:spawn_crate()
+	if cc then seen[cc.weapon] = true end
+end
+check(seen.grenade and seen.shards and seen.punch, "nelle casse si trovano tutte e tre le armi")
+
+-- Determinismo con le armi nuove: stesso seed e stessi input, stesso risultato
+local function play2(seed)
+	local p = game.new(seed, "isole", { ammo = { grenade = 9, shards = 9, punch = 9 }, crate_every = 1 })
+	local ws = { "grenade", "shards", "punch", "missile" }
+	local k = 0
+	for i = 1, 4000 do
+		local input = { right = math.floor(i / 50) % 2 == 0, jump = i % 83 == 0 }
+		if p.phase == "aim" and p.timer == game.TURN_TICKS - 40 then
+			k = k + 1
+			input.fire = { angle = math.rad(p.current == 1 and 40 or 140), power = 0.7, weapon = ws[k % #ws + 1] }
+		end
+		p:step(input)
+	end
+	local r = { p.robots[1].x, p.robots[1].hp, p.robots[2].x, p.robots[2].hp, solid_count(p.terrain), #p.crates }
+	for _, cr in ipairs(p.crates) do r[#r + 1] = cr.x; r[#r + 1] = cr.y end
+	return table.concat(r, " ")
+end
+check(play2(5) == play2(5), "armi delle casse e casse sono deterministiche")
+
 -- Prestazioni: un cratere e 600 tick di simulazione
 local t = os.clock()
 local g4 = game.new(5, "casuale")

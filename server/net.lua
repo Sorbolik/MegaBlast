@@ -10,7 +10,7 @@ function N.new(seed, map)
 	return g
 end
 
-local WEAPONS = { missile = true, sword = true, teleport = true }
+local WEAPONS = { missile = true, sword = true, teleport = true, grenade = true, shards = true, punch = true }
 
 function N.step(g, left, right, jump, angle, power, weapon)
 	local fire = nil
@@ -50,16 +50,29 @@ function N.snapshot(g)
 	local robots = {}
 	for i, rb in ipairs(g.robots) do
 		-- s: tick del fendente in corso (0 se il robot non sta colpendo), sd: sua direzione
+		-- pu, pd: lo stesso per il Pugno del Titano; ag, as, ap: colpi di Uovo, Schegge e Pugno
 		robots[i] = encode({ x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
-			s = rb.swing or 0, sd = rb.swing_dir or 0 })
+			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
+			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch })
 	end
 	local p = "null"
-	if g.projectile then p = encode({ x = g.projectile.x, y = g.projectile.y }) end
+	-- k: "missile" o "grenade", fu: tick prima che l'Uovo scoppi
+	if g.projectile then p = encode({ x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }) end
 	-- o: i globi del teletrasporto in volo (i = numero del globo, per seguirlo tra uno stato e l'altro)
 	local orbs = {}
 	for i, ob in ipairs(g.orbs) do orbs[i] = encode({ i = ob.id, x = ob.x, y = ob.y }) end
-	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"mt":%d,"r":[%s],"p":%s,"o":[%s]}',
-		g.phase, g.current, g.timer, g.retreat, g.match_left, table.concat(robots, ","), p, table.concat(orbs, ","))
+	-- schegge in volo col loro posto nella raffica, casse (l'arma dentro resta segreta)
+	local shards, crates = {}, {}
+	for i = 1, game.SHARD_COUNT do
+		local sh = g.shards[i]
+		if sh then shards[#shards + 1] = encode({ i = i, x = sh.x, y = sh.y }) end
+	end
+	for _, c in ipairs(g.crates) do
+		crates[#crates + 1] = encode({ i = c.id, x = c.x, y = c.y, l = c.landed })
+	end
+	return string.format('{"t":"state","phase":%q,"cur":%d,"timer":%d,"retreat":%d,"mt":%d,"r":[%s],"p":%s,"o":[%s],"s":[%s],"c":[%s]}',
+		g.phase, g.current, g.timer, g.retreat, g.match_left, table.concat(robots, ","), p, table.concat(orbs, ","),
+		table.concat(shards, ","), table.concat(crates, ","))
 end
 
 -- Eventi accumulati dall'ultimo tick, uno per riga.

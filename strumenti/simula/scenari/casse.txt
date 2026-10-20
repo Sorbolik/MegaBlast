@@ -1,0 +1,51 @@
+# Armi delle casse e casse. Per la prova ogni robot parte con 2 colpi di ogni
+# arma delle casse e cade una cassa a ogni turno (nella partita vera: 0 colpi,
+# una cassa ogni 3 turni).
+imposta prova_armi 2
+imposta prova_casse 1
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_barra_armi
+
+# Rosso: Uovo di Fiamma, rimbalza e scoppia dopo 3 secondi
+tocca 640 62                        # Uovo di Fiamma
+aspetta 0.3
+zoom 02_uovo_in_mano
+mira 160 120 0.5 03_mira_uovo
+aspetta_evento grenade 2
+aspetta 0.6
+foto 04_uovo_in_volo
+aspetta_evento explosion 5
+aspetta 0.1
+foto 05_esplosione_uovo
+
+# Blu: arriva una cassa dal cielo; Sciame di Schegge verso Rosso
+aspetta_evento crate 15
+aspetta 1.5
+foto 06_cassa_che_cade
+aspetta_stato turno=2 fase=aim 10
+tocca 734 62                        # Sciame di Schegge
+aspetta 0.3
+zoom 07_sciame_in_mano
+mira -200 40 0.4
+aspetta_evento shards 2
+aspetta 0.2
+foto 08_raffica
+aspetta_evento explosion 3
+aspetta 0.4
+foto 09_dopo_raffica
+
+# Rosso: Pugno del Titano
+aspetta_stato turno=1 fase=aim 15
+tocca 828 62                        # Pugno del Titano
+aspetta 0.3
+zoom 10_pugno_in_mano
+mira 100 0 0.2
+aspetta_evento punch 2
+aspetta 0.08
+zoom 11_montante
+aspetta 1
+foto 12_casse_a_terra

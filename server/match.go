@@ -13,7 +13,8 @@ const (
 )
 
 // Messaggio da un client: {"t":"in","l":true,"r":false} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
-// "w" è l'arma: "missile" (se manca), "sword" oppure "teleport".
+// "w" è l'arma: "missile" (se manca), "sword", "teleport" o un'arma delle casse
+// ("grenade", "shards", "punch": la simulazione la usa solo se il robot ha colpi).
 type clientMsg struct {
 	T string  `json:"t"`
 	L bool    `json:"l"`

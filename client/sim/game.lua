@@ -5,7 +5,8 @@
 --   local game = require "sim.game"
 --   local g = game.new(seed, "isole")
 --   g:step({ left = bool, right = bool, jump = bool,
---            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport" } })
+--            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport"
+--                                                     | "grenade" | "shards" | "punch" } })
 --   for _, e in ipairs(g:pop_events()) do ... end
 
 local rng = require "sim.rng"
@@ -61,6 +62,47 @@ M.SWORD_DAMAGE = 35
 M.TELEPORT_TICKS = 2 * 60
 M.MAX_ORBS = 6           -- globi in volo insieme, al massimo
 
+-- Esplosioni: raggio del cratere, raggio del danno, danno massimo, spinta
+M.MISSILE_BLAST = { r = M.EXPLOSION_R, damage_r = M.DAMAGE_R, damage = M.MAX_DAMAGE, knockback = M.KNOCKBACK }
+
+-- Uovo di Fiamma (granata): rimbalza e scoppia dopo GRENADE_FUSE tick, con
+-- un'esplosione più grande del missile
+M.GRENADE_SPEED = 600    -- velocità alla potenza massima
+M.GRENADE_FUSE = 3 * 60
+M.GRENADE_BOUNCE = 0.45  -- quanta velocità resta dopo un rimbalzo
+M.GRENADE_FRICTION = 0.7 -- attrito quando tocca terra
+M.GRENADE_BLAST = { r = 40, damage_r = 64, damage = 55, knockback = 380 }
+
+-- Sciame di Schegge (mitragliatrice): una raffica di schegge dritte e veloci,
+-- ognuna con un'esplosione piccolissima
+M.SHARD_COUNT = 8
+M.SHARD_EVERY = 4        -- tick tra una scheggia e l'altra
+M.SHARD_SPEED = 950      -- la potenza non conta: escono sempre alla stessa velocità
+M.SHARD_GRAVITY = 0.2    -- la gravità le piega appena
+M.SHARD_SPREAD = math.rad(3)
+M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 7, knockback = 90 }
+
+-- Pugno del Titano: montante corpo a corpo che lancia in alto chi è davanti
+M.PUNCH_TICKS = 24       -- durata del colpo
+M.PUNCH_HIT_TICK = 8     -- tick in cui il pugno arriva
+M.PUNCH_REACH = 24       -- quanto arriva davanti al robot
+M.PUNCH_DAMAGE = 30
+M.PUNCH_LAUNCH = 480     -- velocità verso l'alto del bersaglio
+M.PUNCH_PUSH = 140       -- e in avanti
+M.PUNCH_HOP = 220        -- chi colpisce si alza un po' col montante
+
+-- Armi: queste tre ci sono sempre, le altre si trovano nelle casse (rb.ammo)
+M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
+M.CRATE_WEAPONS = { "grenade", "shards", "punch" }
+
+-- Casse: ogni CRATE_EVERY turni ne cade una dal cielo in un punto a caso.
+-- Chi la tocca trova un colpo di un'arma a caso tra CRATE_WEAPONS.
+M.CRATE_EVERY = 3
+M.CRATE_MAX = 3          -- casse in mappa al massimo
+M.CRATE_HALF_W = 10
+M.CRATE_H = 18
+M.CRATE_FALL = 110       -- velocità massima di caduta (scende piano, col paracadute)
+
 -- Turni
 M.MATCH_TICKS = 3 * 60 * 60 -- durata massima della partita: 3 minuti
 M.TURN_TICKS = 15 * 60
@@ -82,7 +124,15 @@ local function make_stats(custom)
 	return st
 end
 
+local function make_ammo(start)
+	local a = {}
+	for _, w in ipairs(M.CRATE_WEAPONS) do a[w] = start and start[w] or 0 end
+	return a
+end
+
 -- opts.stats = { [1] = { walk_speed = ... }, [2] = { ... } } per cambiare le statistiche
+-- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
+-- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
@@ -99,6 +149,8 @@ function M.new(seed, map_id, opts)
 			vx = 0, vy = 0, grounded = false, knocked = false, facing = i == 1 and 1 or -1,
 			hp = M.MAX_HP, dead = false, dealt = 0,
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
+			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
+			ammo = make_ammo(opts.ammo),
 			stats = make_stats(opts.stats and opts.stats[i]),
 		}
 	end
@@ -110,6 +162,11 @@ function M.new(seed, map_id, opts)
 	g.current = 1
 	g.retreat = 0
 	g.winner = nil
+	g.shards = {}        -- schegge in volo, per posto nella raffica (1..SHARD_COUNT)
+	g.crates = {}
+	g.crate_id = 0
+	g.crate_every = opts.crate_every or M.CRATE_EVERY
+	g.turn_no = 0
 	g:start_turn(1)
 	return g
 end
@@ -302,8 +359,117 @@ function M:fire(angle, power)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power)
-	self.projectile = { x = x, y = y, vx = vx, vy = vy, owner = rb.id, age = 0 }
+	self.projectile = { kind = "missile", x = x, y = y, vx = vx, vy = vy, owner = rb.id, age = 0 }
 	self:emit({ type = "fire", robot = rb.id })
+end
+
+-- Uovo di Fiamma ----------------------------------------------------------------
+
+function M:throw_grenade(angle, power)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local speed = M.GRENADE_SPEED * math.max(0.1, math.min(1, power))
+	self.projectile = { kind = "grenade", x = x, y = y, vx = math.cos(angle) * speed, vy = math.sin(angle) * speed,
+		owner = rb.id, age = 0, fuse = M.GRENADE_FUSE }
+	self:emit({ type = "grenade", robot = rb.id })
+end
+
+-- Rimbalza sul terreno muovendosi un asse alla volta: semplice e stabile sulla
+-- griglia di celle. I robot non lo fermano.
+function M:update_grenade(p)
+	p.age = p.age + 1
+	p.fuse = p.fuse - 1
+	p.vy = p.vy - M.GRAVITY * M.DT
+	local mx, my = p.vx * M.DT, p.vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
+	local sx, sy = mx / steps, my / steps
+	local t = self.terrain
+	for _ = 1, steps do
+		if sx ~= 0 then
+			if t:solid(p.x + sx, p.y) then
+				p.vx, sx = -p.vx * M.GRENADE_BOUNCE, 0
+			else
+				p.x = p.x + sx
+			end
+		end
+		if sy ~= 0 then
+			if t:solid(p.x, p.y + sy) then
+				if sy < 0 then p.vx = p.vx * M.GRENADE_FRICTION end
+				p.vy = -p.vy * M.GRENADE_BOUNCE
+				-- un rimbalzo piccolo non vale: si posa
+				if math.abs(p.vy) < 40 then p.vy = 0 end
+				sy = 0
+			else
+				p.y = p.y + sy
+			end
+		end
+	end
+	if p.fuse <= 0 then
+		self:explode(p.x, p.y, p.owner, M.GRENADE_BLAST)
+		self.projectile = nil
+	elseif p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300 then
+		self:emit({ type = "miss" })
+		self.projectile = nil
+	end
+end
+
+-- Sciame di Schegge --------------------------------------------------------------
+
+function M:fire_shards(angle)
+	local rb = self.robots[self.current]
+	self.burst = { owner = rb.id, angle = angle, n = 0, wait = 0 }
+	self:emit({ type = "shards", robot = rb.id })
+end
+
+function M:update_burst()
+	local b = self.burst
+	local rb = self.robots[b.owner]
+	if rb.dead then
+		self.burst = nil
+		return
+	end
+	b.wait = b.wait - 1
+	if b.wait > 0 then return end
+	b.n = b.n + 1
+	b.wait = M.SHARD_EVERY
+	-- la mira resta quella dello sparo, le schegge escono da dove si trova il robot
+	local a = b.angle + (self.rng:next() * 2 - 1) * M.SHARD_SPREAD
+	local x, y = muzzle(rb, a)
+	self.shards[b.n] = { x = x, y = y, vx = math.cos(a) * M.SHARD_SPEED, vy = math.sin(a) * M.SHARD_SPEED,
+		owner = rb.id, age = 0 }
+	if b.n >= M.SHARD_COUNT then self.burst = nil end
+end
+
+function M:update_shards()
+	for i = 1, M.SHARD_COUNT do
+		local p = self.shards[i]
+		if p then
+			p.age = p.age + 1
+			p.vy = p.vy - M.GRAVITY * M.SHARD_GRAVITY * M.DT
+			local mx, my = p.vx * M.DT, p.vy * M.DT
+			local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
+			for _ = 1, steps do
+				p.x = p.x + mx / steps
+				p.y = p.y + my / steps
+				if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then
+					self:explode(p.x, p.y, p.owner, M.SHARD_BLAST)
+					self.shards[i] = nil
+					break
+				end
+			end
+			if self.shards[i] and (p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300) then
+				self.shards[i] = nil
+			end
+		end
+	end
+end
+
+function M:shards_flying()
+	if self.burst then return true end
+	for i = 1, M.SHARD_COUNT do
+		if self.shards[i] then return true end
+	end
+	return false
 end
 
 -- Teletrasporto -----------------------------------------------------------------
@@ -549,16 +715,149 @@ function M:sword_hit(rb, other)
 	if other.hp <= 0 then self:kill(other, "damage") end
 end
 
+-- Pugno del Titano --------------------------------------------------------------
+
+function M:start_punch(angle)
+	local rb = self.robots[self.current]
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.punch_dir = rb.facing
+	rb.punch = 0
+	self:emit({ type = "punch", robot = rb.id })
+end
+
+function M:update_punch(rb)
+	rb.punch = rb.punch + 1
+	if rb.punch == M.PUNCH_HIT_TICK then
+		local dir = rb.punch_dir
+		for _, other in ipairs(self.robots) do
+			if other ~= rb and not other.dead then
+				local dx, dy = (other.x - rb.x) * dir, other.y - rb.y
+				if dx >= -4 and dx <= M.PUNCH_REACH and dy > -M.ROBOT_H and dy < M.ROBOT_H + 8 then
+					other.hp = other.hp - M.PUNCH_DAMAGE
+					rb.dealt = rb.dealt + M.PUNCH_DAMAGE
+					self:emit({ type = "damage", robot = other.id, amount = M.PUNCH_DAMAGE })
+					self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+					other.vx, other.vy = dir * M.PUNCH_PUSH, M.PUNCH_LAUNCH
+					other.grounded, other.knocked = false, true
+					if other.hp <= 0 then self:kill(other, "damage") end
+				end
+			end
+		end
+		-- il montante solleva anche chi colpisce
+		rb.vy, rb.grounded = M.PUNCH_HOP, false
+	end
+	if rb.punch >= M.PUNCH_TICKS then
+		rb.punch, rb.punch_dir = nil, nil
+	end
+end
+
+-- Casse --------------------------------------------------------------------------
+
+function M:crate_collides(x, y)
+	local t, c = self.terrain, M.CELL
+	local cy = math.floor(y / c)
+	for cx = math.floor((x - M.CRATE_HALF_W + 1) / c), math.floor((x + M.CRATE_HALF_W - 1) / c) do
+		if t:get(cx, cy) ~= 0 then return true end
+	end
+	return false
+end
+
+-- Sceglie un punto a caso sulla superficie, lontano dai robot e dalle altre
+-- casse, e fa cadere lì una cassa dal cielo. Usa il generatore della partita,
+-- così server e client la mettono nello stesso posto.
+function M:spawn_crate()
+	if #self.crates >= M.CRATE_MAX then return nil end
+	local weapon = M.CRATE_WEAPONS[1 + math.floor(self.rng:next() * #M.CRATE_WEAPONS)]
+	for _ = 1, 40 do
+		local x = math.floor(self.rng:range(40, M.WORLD_W - 40))
+		local gy = self.terrain:ground_below(x, M.WORLD_H - 1)
+		local ok = gy ~= nil and gy < M.WORLD_H - 40 and not self:robot_collides(x, gy)
+			and not self:crate_collides(x, gy) and not self:crate_collides(x, gy + M.CRATE_H)
+		if ok then
+			for _, rb in ipairs(self.robots) do
+				if not rb.dead and math.abs(rb.x - x) < 60 then ok = false end
+			end
+			for _, c in ipairs(self.crates) do
+				if math.abs(c.x - x) < 40 then ok = false end
+			end
+		end
+		if ok then
+			self.crate_id = self.crate_id + 1
+			local c = { id = self.crate_id, x = x, y = M.WORLD_H + 20, vy = 0, landed = false, weapon = weapon }
+			self.crates[#self.crates + 1] = c
+			self:emit({ type = "crate", id = c.id, x = x, y = gy })
+			return c
+		end
+	end
+	return nil
+end
+
+function M:update_crates()
+	local i = 1
+	while i <= #self.crates do
+		local c = self.crates[i]
+		-- cade (anche dopo, se un'esplosione le scava il terreno sotto)
+		if self:crate_collides(c.x, c.y - 0.5) then
+			c.vy, c.landed = 0, true
+		else
+			c.vy = math.max(c.vy - M.GRAVITY * M.DT, -M.CRATE_FALL)
+			local my = c.vy * M.DT
+			local steps = math.max(1, math.ceil(-my / M.CELL))
+			for _ = 1, steps do
+				local ny = c.y + my / steps
+				if self:crate_collides(c.x, ny) then
+					-- appoggiata sul bordo della cella sotto
+					c.y = (math.floor(ny / M.CELL) + 1) * M.CELL
+					c.vy, c.landed = 0, true
+					break
+				end
+				c.y = ny
+			end
+		end
+		local taken = false
+		for _, rb in ipairs(self.robots) do
+			if not rb.dead and not taken
+				and math.abs(rb.x - c.x) <= M.ROBOT_HALF_W + M.CRATE_HALF_W
+				and rb.y < c.y + M.CRATE_H and rb.y + M.ROBOT_H > c.y then
+				rb.ammo[c.weapon] = rb.ammo[c.weapon] + 1
+				self:emit({ type = "crate_pick", id = c.id, robot = rb.id, weapon = c.weapon })
+				taken = true
+			end
+		end
+		if taken or c.y < -20 then
+			if not taken then self:emit({ type = "crate_lost", id = c.id }) end
+			table.remove(self.crates, i)
+		else
+			i = i + 1
+		end
+	end
+end
+
+-- Il robot può usare quest'arma? Le armi delle casse hanno colpi contati.
+function M.has_weapon(rb, weapon)
+	if M.FREE_WEAPONS[weapon] then return true end
+	return (rb.ammo[weapon] or 0) > 0
+end
+
 -- Punti della traiettoria prevista, per la linea di mira.
 -- pts (facoltativo) è una tabella da riusare, per non allocare a ogni frame.
-function M:preview(angle, power, count, every, pts)
+-- weapon (facoltativo): "grenade" e "shards" volano diversamente dal missile.
+function M:preview(angle, power, count, every, pts, weapon)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power)
+	local gravity = M.GRAVITY
+	if weapon == "grenade" then
+		local speed = M.GRENADE_SPEED * math.max(0.1, math.min(1, power))
+		vx, vy = math.cos(angle) * speed, math.sin(angle) * speed
+	elseif weapon == "shards" then
+		vx, vy = math.cos(angle) * M.SHARD_SPEED, math.sin(angle) * M.SHARD_SPEED
+		gravity = M.GRAVITY * M.SHARD_GRAVITY
+	end
 	pts = pts or {}
 	local n = 0
 	for i = 1, count * every do
-		vy = vy - M.GRAVITY * M.DT
+		vy = vy - gravity * M.DT
 		x, y = x + vx * M.DT, y + vy * M.DT
 		if i % every == 0 then
 			n = n + 1
@@ -580,23 +879,25 @@ function M:hits_robot(x, y, owner, age)
 	return false
 end
 
--- owner (facoltativo) è chi ha sparato, per contare i danni inflitti
-function M:explode(x, y, owner)
-	local cy0, cy1 = self.terrain:carve(x, y, M.EXPLOSION_R)
-	self:emit({ type = "explosion", x = x, y = y, r = M.EXPLOSION_R, row_min = cy0, row_max = cy1 })
+-- owner (facoltativo) è chi ha sparato, per contare i danni inflitti.
+-- blast (facoltativo) dice quanto è grande: MISSILE_BLAST se manca.
+function M:explode(x, y, owner, blast)
+	blast = blast or M.MISSILE_BLAST
+	local cy0, cy1 = self.terrain:carve(x, y, blast.r)
+	self:emit({ type = "explosion", x = x, y = y, r = blast.r, row_min = cy0, row_max = cy1 })
 	for _, rb in ipairs(self.robots) do
 		if not rb.dead then
 			local dx, dy = rb.x - x, (rb.y + M.ROBOT_H / 2) - y
 			local d = math.sqrt(dx * dx + dy * dy)
-			if d < M.DAMAGE_R then
-				local f = 1 - d / M.DAMAGE_R
-				local dmg = math.floor(M.MAX_DAMAGE * f + 0.5)
+			if d < blast.damage_r then
+				local f = 1 - d / blast.damage_r
+				local dmg = math.floor(blast.damage * f + 0.5)
 				rb.hp = rb.hp - dmg
 				if owner and owner ~= rb.id then self.robots[owner].dealt = self.robots[owner].dealt + dmg end
 				self:emit({ type = "damage", robot = rb.id, amount = dmg })
 				if d < 1 then dx, dy, d = 0, 1, 1 end
-				rb.vx = dx / d * M.KNOCKBACK * f
-				rb.vy = dy / d * M.KNOCKBACK * f + 120 * f
+				rb.vx = dx / d * blast.knockback * f
+				rb.vy = dy / d * blast.knockback * f + 120 * f
 				rb.grounded = false
 				rb.knocked = true
 				if rb.hp <= 0 then self:kill(rb, "damage") end
@@ -607,6 +908,7 @@ end
 
 function M:update_projectile()
 	local p = self.projectile
+	if p.kind == "grenade" then return self:update_grenade(p) end
 	p.age = p.age + 1
 	p.vy = p.vy - M.GRAVITY * M.DT
 	local mx, my = p.vx * M.DT, p.vy * M.DT
@@ -642,6 +944,9 @@ function M:start_turn(player)
 	self.timer = M.TURN_TICKS
 	self.retreat = 0
 	self:emit({ type = "turn", robot = player })
+	-- dopo ogni crate_every turni cade una cassa
+	self.turn_no = self.turn_no + 1
+	if self.turn_no > 1 and (self.turn_no - 1) % self.crate_every == 0 then self:spawn_crate() end
 end
 
 -- Classifica a tempo scaduto: più vita rimasta, a parità più danni inflitti.
@@ -705,7 +1010,13 @@ function M:step(input)
 		if rb.swing then
 			if rb.dead then rb.swing, rb.swing_hit = nil, nil else self:update_swing(rb) end
 		end
+		if rb.punch then
+			if rb.dead then rb.punch, rb.punch_dir = nil, nil else self:update_punch(rb) end
+		end
 	end
+	if self.burst then self:update_burst() end
+	self:update_shards()
+	if #self.crates > 0 then self:update_crates() end
 
 	if self.phase == "aim" then
 		self.timer = self.timer - 1
@@ -717,9 +1028,17 @@ function M:step(input)
 			-- lanciare il globo non chiude il turno e se ne possono lanciare quanti
 			-- se ne vuole, anche mentre altri sono ancora in volo
 			if #self.orbs < M.MAX_ORBS then self:throw_orb(fire.angle, fire.power) end
-		elseif fire then
+		elseif fire and M.has_weapon(self.robots[self.current], weapon) then
+			local rb = self.robots[self.current]
+			if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
 			if weapon == "sword" then
 				self:swing_sword(fire.angle)
+			elseif weapon == "punch" then
+				self:start_punch(fire.angle)
+			elseif weapon == "grenade" then
+				self:throw_grenade(fire.angle, fire.power)
+			elseif weapon == "shards" then
+				self:fire_shards(fire.angle)
 			else
 				self:fire(fire.angle, fire.power)
 			end
@@ -731,14 +1050,15 @@ function M:step(input)
 		end
 	elseif self.phase == "flying" then
 		if self.projectile then self:update_projectile() end
-		if not self.projectile and not self.robots[self.current].swing then
+		local rb = self.robots[self.current]
+		if not self.projectile and not rb.swing and not rb.punch and not self:shards_flying() then
 			self.phase, self.settle, self.settle_total = "settle", 0, 0
 		end
 	elseif self.phase == "settle" then
 		self.settle_total = (self.settle_total or 0) + 1
 		local still = #self.orbs == 0
 		for _, rb in ipairs(self.robots) do
-			if not rb.dead and (not rb.grounded or rb.swing) then still = false end
+			if not rb.dead and (not rb.grounded or rb.swing or rb.punch) then still = false end
 		end
 		self.settle = (still and self.retreat == 0) and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then

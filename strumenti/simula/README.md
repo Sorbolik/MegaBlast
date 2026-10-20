@@ -61,12 +61,17 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `mira DX DY [S] [FOTO]` | tiene il dito a (DX, DY) dal robot di turno per S secondi (la mira), facoltativamente scatta FOTO, poi lascia: spara con l'arma scelta |
 | `annulla DX DY [FOTO]` | mira a (DX, DY) dal robot col sinistro, preme il destro (annulla), facoltativamente scatta FOTO, poi lascia il sinistro |
 | `niente_evento TIPO [S]` | fallisce se nei prossimi S secondi succede l'evento TIPO (per esempio un colpo annullato che parte lo stesso) |
-| `aspetta_evento TIPO [S]` | aspetta un evento della simulazione (`fire`, `explosion`, `swing`, `sword_hit`, `orb`, `teleport`, `damage`, `turn`, `over`...) |
+| `aspetta_evento TIPO [S]` | aspetta un evento della simulazione (`fire`, `explosion`, `swing`, `sword_hit`, `orb`, `teleport`, `grenade`, `shards`, `punch`, `punch_hit`, `crate`, `crate_pick`, `damage`, `turn`, `over`...) |
 | `aspetta_stato chiave=valore ... [S]` | aspetta uno stato, per esempio `turno=2 fase=aim` (chiavi: `modo`, `turno`, `fase`, `x`, `y`) |
+| `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3 |
 
-Pulsanti della battaglia: arma (MISSILE/SPADA) `1190 210`, TELE `1040 80`,
-SALTA `1190 80`, `<` `80 80`, `>` `210 80`. Home: GIOCA (online) `1075 102`,
-STESSO TELEFONO `1075 235`, ARMERIA (chiusa) `155 488`. Scenario della home: `scenari/home.txt`.
+Pulsanti della battaglia: TELE `1040 80`, SALTA `1190 80`, `<` `80 80`, `>` `210 80`.
+La barra delle armi sta in basso al centro (`y = 62`) e mostra solo le armi che
+il robot ha, centrate: con Lanciarune e Lama di Nucleo sono a `x = 593` e `687`;
+con tutte e cinque (Lanciarune, Lama, Uovo di Fiamma, Sciame di Schegge, Pugno
+del Titano) a `452`, `546`, `640`, `734`, `828`.
+Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, ARMERIA (chiusa) `155 488`.
+Scenario della home: `scenari/home.txt`.
 
 Per guidare il robot il gioco, solo in questa build, scrive nel log righe
 `SIMULA evento ...` e `SIMULA stato ...` (impostazione `megablast.simula = 1`
