@@ -356,6 +356,7 @@ local function apply_state(self, s)
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
 		rb.swing = (r.s or 0) > 0 and r.s or nil
+		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y } or nil
 	g.orb = s.o and { x = s.o.x, y = s.o.y } or nil
@@ -522,14 +523,21 @@ local function render(self, dt)
 		if i == g.current and my_turn(self) then
 			weapon = self.tele_armed and "teleport" or self.weapon
 		end
+		-- mirando con la spada la lama va dietro la schiena, pronta per il colpo
+		-- (è l'angolo da cui parte il fendente)
+		if aiming and weapon == "sword" then
+			st.aim = st.facing > 0 and game.SWORD_FROM or math.pi - game.SWORD_FROM
+		end
 		-- Lama di Nucleo: durante il fendente il braccio segue l'angolo della lama
 		if rb.swing ~= nil and not rb.dead then
 			weapon = "sword"
 			-- il tick del fendente è quello della posa b: lo disegniamo tra a e b
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
 			local a = game.sword_angle(math.max(0, rb.swing - span + k * span))
-			st.aim = rb.facing > 0 and a or math.pi - a
-			st.facing = rb.facing
+			-- la direzione è quella di partenza: girarsi non cambia il fendente
+			local dir = rb.swing_dir or rb.facing
+			st.aim = dir > 0 and a or math.pi - a
+			st.facing = dir
 		end
 		scoria.set_weapon(r.rig, weapon)
 		st.expression = expression(self, i, rb, v, aiming)

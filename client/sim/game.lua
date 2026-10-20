@@ -333,6 +333,8 @@ end
 function M:swing_sword(angle)
 	local rb = self.robots[self.current]
 	rb.facing = math.cos(angle) < 0 and -1 or 1
+	-- il fendente resta nella direzione di partenza anche se il robot si gira
+	rb.swing_dir = rb.facing
 	rb.swing = 0
 	rb.swing_hit = {}
 	self:emit({ type = "swing", robot = rb.id })
@@ -352,7 +354,7 @@ function M:update_swing(rb)
 	-- controlliamo anche gli angoli intermedi, così la lama non salta un bersaglio
 	for s = 1, SWORD_SUBSTEPS do
 		local a = M.sword_angle(t0 + s / SWORD_SUBSTEPS)
-		local cx, cy = math.cos(a) * rb.facing, math.sin(a)
+		local cx, cy = math.cos(a) * rb.swing_dir, math.sin(a)
 		for _, other in ipairs(self.robots) do
 			if other ~= rb and not other.dead and not rb.swing_hit[other.id] then
 				for k = 1, SWORD_SAMPLES do
@@ -367,7 +369,7 @@ function M:update_swing(rb)
 		end
 	end
 	if rb.swing >= M.SWORD_TICKS then
-		rb.swing, rb.swing_hit = nil, nil
+		rb.swing, rb.swing_hit, rb.swing_dir = nil, nil, nil
 	end
 end
 
