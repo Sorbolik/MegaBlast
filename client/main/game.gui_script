@@ -72,6 +72,11 @@ local function label(x, y, text, scale)
 	return n
 end
 
+-- Simulazione (strumenti/simula): con megablast.simula = 1 il gioco scrive nel
+-- log gli eventi e dove sta il robot di turno, così uno script può guidarlo.
+local SIMULA = (sys.get_config_int and sys.get_config_int("megablast.simula", 0)
+	or tonumber(sys.get_config("megablast.simula", "0"))) == 1
+
 local function server_url()
 	if sys.get_config_string then
 		return sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
@@ -298,6 +303,7 @@ local function my_turn(self)
 end
 
 local function handle_event(self, e)
+	if SIMULA then print("SIMULA evento " .. e.type) end
 	if e.type == "explosion" then
 		local row_min, row_max = e.row_min, e.row_max
 		if self.mode == "online" then
@@ -770,6 +776,16 @@ function update(self, dt)
 	end
 
 	render(self, dt)
+
+	if SIMULA and self.g then
+		local rb = current_robot(self)
+		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d",
+			self.mode, self.g.current, self.g.phase, math.floor(rb.x), math.floor(rb.y))
+		if line ~= self.simula_line then
+			print(line)
+			self.simula_line = line
+		end
+	end
 end
 
 function on_input(self, action_id, action)
