@@ -12,6 +12,7 @@
 local rng = require "sim.rng"
 local terrain = require "sim.terrain"
 local maps = require "sim.maps"
+local mischia = require "sim.mischia"
 
 local M = {}
 M.__index = M
@@ -75,6 +76,22 @@ M.SWORD_FROM = math.rad(205)
 M.SWORD_TO = math.rad(-35)
 M.SWORD_TICKS = 20       -- durata del fendente (1/3 di secondo)
 M.SWORD_DAMAGE = 35
+-- Come si muove la lama:
+-- "arco": l'arco fisso qui sopra, uguale qualunque sia la mira.
+-- "blastron": il fendente di Blastron (sim/mischia.lua) ruotato sulla mira:
+-- mirando in basso il colpo scende dall'alto verso il basso. I danni arrivano
+-- quando si chiude la finestra del colpo, a tutti quelli toccati dalla lama.
+M.SWORD_MODEL = "arco"
+M.SWORD_STOP = false     -- il colpo ferma il bersaglio (in Blastron la spada gli azzera la velocità)
+
+-- Dove un robot può essere colpito (proiettili, globi, lame, esplosioni):
+-- "scatola": il rettangolo del robot, largo 2 * ROBOT_HALF_W e alto ROBOT_H;
+-- "cerchio": come in Blastron, un cerchio di raggio HURT_R a metà altezza.
+-- Per le esplosioni Blastron misura dal quadrato attorno al cerchio, un po'
+-- più largo (HURT_FAT).
+M.HURTBOX = "scatola"
+M.HURT_R = 8
+M.HURT_FAT = 0
 
 -- Teletrasporto (Passo d'Ombra): un globo che vola come il missile, rimbalza e
 -- rotola sul terreno, e dopo
@@ -108,7 +125,9 @@ M.SHARD_GRAVITY = 0.2    -- la gravità le piega appena
 M.SHARD_SPREAD = math.rad(3)
 M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 7, knockback = 90 }
 
--- Pugno del Titano: montante corpo a corpo che lancia in alto chi è davanti
+-- Pugno del Titano: montante corpo a corpo che lancia in alto chi è davanti.
+-- PUNCH_MODEL come SWORD_MODEL: "fisso" (qui sotto) o "blastron" (montante sulla mira).
+M.PUNCH_MODEL = "fisso"
 M.PUNCH_TICKS = 24       -- durata del colpo
 M.PUNCH_HIT_TICK = 8     -- tick in cui il pugno arriva
 M.PUNCH_REACH = 24       -- quanto arriva davanti al robot
@@ -642,8 +661,7 @@ end
 function M:orb_hits_robot(o, x, y)
 	local r = M.ORB_R
 	for _, rb in ipairs(self.robots) do
-		if not rb.dead and (rb.id ~= o.owner or o.age > M.OWNER_SAFE_TICKS)
-			and math.abs(x - rb.x) <= M.ROBOT_HALF_W + r and y >= rb.y - r and y <= rb.y + M.ROBOT_H + r then
+		if not rb.dead and (rb.id ~= o.owner or o.age > M.OWNER_SAFE_TICKS) and M.hurt_at(rb, x, y, r) then
 			return rb
 		end
 	end
@@ -759,13 +777,76 @@ function M.sword_progress(u)
 	return u * u * ((s + 1) * u - s)
 end
 
-function M.sword_angle(t)
+-- Angolo della lama al tick t per un robot rivolto a destra. Col modello
+-- "blastron" dipende dalla mira: base è l'angolo di mira (già girato a destra).
+function M.sword_angle(t, base)
+	if M.SWORD_MODEL == "blastron" then
+		return (base or 0) + math.rad(M.melee_pose(mischia.fendente, t)[7])
+	end
 	return M.SWORD_FROM + (M.SWORD_TO - M.SWORD_FROM) * M.sword_progress(t / M.SWORD_TICKS)
+end
+
+-- Angolo del pugno al tick t (modello "blastron"), come sword_angle
+function M.punch_angle(t, base)
+	return (base or 0) + math.rad(M.melee_pose(mischia.montante, t)[7])
+end
+
+-- Durata in tick di un colpo di mischia.lua
+function M.melee_ticks(colpo)
+	return math.ceil((#colpo.pose - 1) * 60 / colpo.fps)
+end
+
+-- Posa del colpo al tick t (con frazione): i valori tra due fotogrammi
+local POSA = {}
+function M.melee_pose(colpo, t)
+	local f = math.max(0, math.min(#colpo.pose - 1, t * colpo.fps / 60))
+	local i = math.floor(f)
+	local a, b = colpo.pose[i + 1], colpo.pose[math.min(#colpo.pose, i + 2)]
+	local k = f - i
+	for j = 1, 7 do POSA[j] = a[j] + (b[j] - a[j]) * k end
+	return POSA
+end
+
+-- Mira girata verso destra, tra -90° e 90°, e il lato verso cui si guarda
+local function aim_side(angle)
+	local dir = math.cos(angle) < 0 and -1 or 1
+	local a = dir > 0 and angle or math.pi - angle
+	a = (a + math.pi) % (2 * math.pi) - math.pi
+	return a, dir
+end
+M.aim_side = aim_side
+
+-- Un robot preso dal punto (x, y), con un margine pad attorno
+function M.hurt_at(r, x, y, pad)
+	pad = pad or 0
+	if M.HURTBOX == "cerchio" then
+		local dx, dy = x - r.x, y - (r.y + M.ROBOT_H / 2)
+		local rr = M.HURT_R + pad
+		return dx * dx + dy * dy <= rr * rr
+	end
+	return math.abs(x - r.x) <= M.ROBOT_HALF_W + pad and y >= r.y - pad and y <= r.y + M.ROBOT_H + pad
+end
+
+-- Un robot toccato dal segmento (x0, y0) - (x1, y1) largo 2 * pad
+local function seg_hits_robot(r, x0, y0, x1, y1, pad)
+	if M.HURTBOX == "cerchio" then
+		local cx, cy = r.x, r.y + M.ROBOT_H / 2
+		local ux, uy = x1 - x0, y1 - y0
+		local l2 = ux * ux + uy * uy
+		local k = l2 > 0 and math.max(0, math.min(1, ((cx - x0) * ux + (cy - y0) * uy) / l2)) or 0
+		local dx, dy = x0 + ux * k - cx, y0 + uy * k - cy
+		local rr = M.HURT_R + pad
+		return dx * dx + dy * dy <= rr * rr
+	end
+	for k = 0, 10 do
+		if M.hurt_at(r, x0 + (x1 - x0) * k / 10, y0 + (y1 - y0) * k / 10, pad) then return true end
+	end
+	return false
 end
 
 function M:swing_sword(angle)
 	local rb = self.robots[self.current]
-	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.swing_base, rb.facing = aim_side(angle)
 	-- il fendente resta nella direzione di partenza anche se il robot si gira
 	rb.swing_dir = rb.facing
 	rb.swing = 0
@@ -774,7 +855,7 @@ function M:swing_sword(angle)
 end
 
 local function in_robot(r, x, y)
-	return math.abs(x - r.x) <= M.ROBOT_HALF_W and y >= r.y and y <= r.y + M.ROBOT_H
+	return M.hurt_at(r, x, y, 0)
 end
 
 -- alla fine la lama gira veloce: tanti passi per tick, così non salta un bersaglio
@@ -782,6 +863,14 @@ local SWORD_SUBSTEPS = 8
 local SWORD_SAMPLES = 10
 
 function M:update_swing(rb)
+	if M.SWORD_MODEL == "blastron" then
+		if self:update_melee(rb, mischia.fendente, rb.swing, rb.swing_base, rb.swing_dir) then
+			rb.swing = rb.swing + 1
+		else
+			rb.swing, rb.swing_hit, rb.swing_dir, rb.swing_base = nil, nil, nil, nil
+		end
+		return
+	end
 	local t0 = rb.swing
 	rb.swing = t0 + 1
 	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
@@ -812,21 +901,95 @@ function M:sword_hit(rb, other)
 	rb.dealt = rb.dealt + M.SWORD_DAMAGE
 	self:emit({ type = "damage", robot = other.id, amount = M.SWORD_DAMAGE })
 	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
-	-- la spada fa solo danno: il bersaglio resta dov'è
+	-- la spada fa solo danno: il bersaglio resta dov'è (in Blastron si ferma)
+	if M.SWORD_STOP then other.vx, other.vy = 0, 0 end
 	if other.hp <= 0 then self:kill(other, "damage") end
+end
+
+-- Colpi di mischia alla Blastron ---------------------------------------------------
+
+-- Il rettangolo che colpisce al tick t, in pixel del mondo: asse e mezza larghezza
+function M.melee_blade(rb, colpo, t, base, dir)
+	local p = M.melee_pose(colpo, t)
+	local u = M.BLASTRON_UNIT
+	local c, s = math.cos(base), math.sin(base)
+	local ox, oy = p[1], p[2]
+	local x0, y0 = ox + c * p[3] - s * p[4], oy + s * p[3] + c * p[4]
+	local x1, y1 = ox + c * p[5] - s * p[6], oy + s * p[5] + c * p[6]
+	return rb.x + dir * x0 * u, rb.y + y0 * u, rb.x + dir * x1 * u, rb.y + y1 * u, colpo.mezza_larghezza * u
+end
+
+-- Avanza di un tick il colpo che al tick t è nella posa t. Chi la lama tocca
+-- mentre la finestra è aperta viene segnato; quando si chiude riceve il colpo.
+-- Restituisce false quando il colpo è finito.
+local MELEE_SUBSTEPS = 6
+function M:update_melee(rb, colpo, t, base, dir)
+	local f0, f1 = t * colpo.fps / 60, (t + 1) * colpo.fps / 60
+	local hit = rb.melee_hit or {}
+	rb.melee_hit = hit
+	if t == 0 then for k in pairs(hit) do hit[k] = nil end end
+	if f1 >= colpo.apri and f0 <= colpo.chiudi then
+		-- più passi per tick: alla fine la lama gira veloce e potrebbe saltare un bersaglio
+		for s = 1, MELEE_SUBSTEPS do
+			local ts = t + s / MELEE_SUBSTEPS
+			local f = ts * colpo.fps / 60
+			if f >= colpo.apri and f <= colpo.chiudi then
+				local x0, y0, x1, y1, w = M.melee_blade(rb, colpo, ts, base, dir)
+				for _, other in ipairs(self.robots) do
+					if other ~= rb and not other.dead and not hit[other.id]
+						and seg_hits_robot(other, x0, y0, x1, y1, w) then
+						hit[other.id] = true
+					end
+				end
+			end
+		end
+	end
+	if colpo.salto and f0 < colpo.salto and f1 >= colpo.salto then
+		rb.vy, rb.grounded = M.PUNCH_HOP, false
+	end
+	if f0 < colpo.chiudi and f1 >= colpo.chiudi then
+		for _, other in ipairs(self.robots) do
+			if hit[other.id] then
+				hit[other.id] = nil
+				if not other.dead then
+					if colpo == mischia.fendente then self:sword_hit(rb, other) else self:punch_hit(rb, other, dir) end
+				end
+			end
+		end
+	end
+	return t + 1 < M.melee_ticks(colpo)
 end
 
 -- Pugno del Titano --------------------------------------------------------------
 
 function M:start_punch(angle)
 	local rb = self.robots[self.current]
-	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.punch_base, rb.facing = aim_side(angle)
 	rb.punch_dir = rb.facing
 	rb.punch = 0
 	self:emit({ type = "punch", robot = rb.id })
 end
 
+function M:punch_hit(rb, other, dir)
+	other.hp = other.hp - M.PUNCH_DAMAGE
+	rb.dealt = rb.dealt + M.PUNCH_DAMAGE
+	self:emit({ type = "damage", robot = other.id, amount = M.PUNCH_DAMAGE })
+	self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+	other.vx, other.vy = dir * M.PUNCH_PUSH, M.PUNCH_LAUNCH
+	other.fall_top = nil
+	other.grounded, other.knocked = false, true
+	if other.hp <= 0 then self:kill(other, "damage") end
+end
+
 function M:update_punch(rb)
+	if M.PUNCH_MODEL == "blastron" then
+		if self:update_melee(rb, mischia.montante, rb.punch, rb.punch_base, rb.punch_dir) then
+			rb.punch = rb.punch + 1
+		else
+			rb.punch, rb.punch_dir, rb.punch_base = nil, nil, nil
+		end
+		return
+	end
 	rb.punch = rb.punch + 1
 	if rb.punch == M.PUNCH_HIT_TICK then
 		local dir = rb.punch_dir
@@ -834,14 +997,7 @@ function M:update_punch(rb)
 			if other ~= rb and not other.dead then
 				local dx, dy = (other.x - rb.x) * dir, other.y - rb.y
 				if dx >= -4 and dx <= M.PUNCH_REACH and dy > -M.ROBOT_H and dy < M.ROBOT_H + 8 then
-					other.hp = other.hp - M.PUNCH_DAMAGE
-					rb.dealt = rb.dealt + M.PUNCH_DAMAGE
-					self:emit({ type = "damage", robot = other.id, amount = M.PUNCH_DAMAGE })
-					self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
-					other.vx, other.vy = dir * M.PUNCH_PUSH, M.PUNCH_LAUNCH
-					other.fall_top = nil
-					other.grounded, other.knocked = false, true
-					if other.hp <= 0 then self:kill(other, "damage") end
+					self:punch_hit(rb, other, dir)
 				end
 			end
 		end
@@ -976,8 +1132,7 @@ end
 
 function M:hits_robot(x, y, owner, age)
 	for _, rb in ipairs(self.robots) do
-		if not rb.dead and (rb.id ~= owner or age > M.OWNER_SAFE_TICKS)
-			and math.abs(x - rb.x) <= M.ROBOT_HALF_W and y >= rb.y and y <= rb.y + M.ROBOT_H then
+		if not rb.dead and (rb.id ~= owner or age > M.OWNER_SAFE_TICKS) and M.hurt_at(rb, x, y, 0) then
 			return true
 		end
 	end
@@ -996,8 +1151,14 @@ function M:explode(x, y, owner, blast)
 			local dx, dy
 			if blastron then
 				-- verso il punto della scatola del robot più vicino all'esplosione
-				dx = math.max(rb.x - M.ROBOT_HALF_W, math.min(rb.x + M.ROBOT_HALF_W, x)) - x
-				dy = math.max(rb.y, math.min(rb.y + M.ROBOT_H, y)) - y
+				-- (col cerchio, il quadrato che lo contiene)
+				local hw, y0, y1 = M.ROBOT_HALF_W, rb.y, rb.y + M.ROBOT_H
+				if M.HURTBOX == "cerchio" then
+					hw = M.HURT_R + M.HURT_FAT
+					y0, y1 = rb.y + M.ROBOT_H / 2 - hw, rb.y + M.ROBOT_H / 2 + hw
+				end
+				dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
+				dy = math.max(y0, math.min(y1, y)) - y
 			else
 				dx, dy = rb.x - x, (rb.y + M.ROBOT_H / 2) - y
 			end
@@ -1245,7 +1406,21 @@ local function blastron_profile()
 		ORB_BOUNCE = 0.4,
 		ORB_FRICTION = 1,
 		ORB_DAMPING = 1.1,
-		-- Flame-Yuken: 1000 danni, lancia dritto in alto a 40 u/s, saltello di 15 u/s
+		-- dove si viene colpiti: il cerchio dei robot di Blastron, raggio 0,523 volte
+		-- l'altezza (3,612 × 0,66 × 0,5 × 0,66 × 2,4 = 1,888 u) a metà altezza;
+		-- per le esplosioni il quadrato attorno, più largo di 0,1 u per lato
+		HURTBOX = "cerchio",
+		HURT_R = 1.888 * u,
+		HURT_FAT = 0.1 * u,
+		-- Hanzo Special: fendente sulla mira (sim/mischia.lua), 300 danni, ferma il bersaglio
+		SWORD_MODEL = "blastron",
+		SWORD_TICKS = 56,
+		SWORD_DAMAGE = 300 * hp,
+		SWORD_STOP = true,
+		-- Flame-Yuken: montante sulla mira, 1000 danni, lancia dritto in alto a
+		-- 40 u/s, saltello di 15 u/s
+		PUNCH_MODEL = "blastron",
+		PUNCH_TICKS = 127,
 		PUNCH_DAMAGE = 1000 * hp,
 		PUNCH_LAUNCH = 40 * u,
 		PUNCH_PUSH = 0,

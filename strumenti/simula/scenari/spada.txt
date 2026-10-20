@@ -1,6 +1,8 @@
 # Lama di Nucleo: spada bassa a riposo, carica dietro la schiena mirando,
 # fendente verso destra che resta verso destra anche se durante il colpo
 # il robot cammina e si gira a sinistra.
+# Usa la fisica "megablast": con quella di Blastron la spada segue la mira (spada_mira.txt).
+imposta fisica megablast
 
 aspetta 2
 tocca 1075 235                      # STESSO TELEFONO

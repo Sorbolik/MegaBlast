@@ -249,8 +249,9 @@ valori di prima. Per ogni punto puoi scegliere quale tenere.
 | Salto | uno per pressione | tenendo premuto risalta appena tocca terra |
 | Teletrasporto | 2 s, illimitato | 3 s (illimitato e fino a 6 globi restano come avevi deciso) |
 | Casse | una ogni 3 turni | a ogni turno una probabilità: 90%, 50%, 30%, 10% secondo quante ce ne sono |
-| Pugno del Titano | 30 danni, lancio 480 px/s in alto e 140 avanti | 50 danni, lancio 177 px/s dritto in alto |
-| Lama di Nucleo | il tuo fendente da 240° | **non toccata** (Hanzo Special era una lama dritta da 15 danni, portata 27 px) |
+| Pugno del Titano | 30 danni, lancio 480 px/s in alto e 140 avanti, sempre in avanti | 50 danni, lancio 177 px/s dritto in alto; il montante **gira con la mira** e dura 2,1 s ([comandi e hitbox](blastron_comandi.md)) |
+| Lama di Nucleo | il tuo fendente da 240°, uguale per ogni mira, 35 danni subito, 1/3 di secondo | fendente di Hanzo Special **ruotato sulla mira** (mirando in basso cala dall'alto verso il basso), arco di circa 200° che prende anche dietro, 15 danni a chi tocca quando il colpo finisce (0,8 s), ferma il bersaglio ([comandi e hitbox](blastron_comandi.md)) |
+| Dove si viene colpiti | la scatola del robot (12 × 16 px) | un cerchio di raggio 8,4 px a metà altezza; le esplosioni misurano da un quadrato di 17,6 px di lato |
 | Sciame di Schegge | raffica di schegge esplosive | **non toccato** (in Blastron le mitragliatrici erano colpi istantanei e si poteva mirare mentre sparavano) |
 | Vento | niente | niente neanche in Blastron |
 

@@ -3,6 +3,7 @@
 package.path = "client/?.lua;" .. package.path
 
 local game = require "sim.game"
+local mischia = require "sim.mischia"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
 
@@ -666,7 +667,9 @@ local function blast_at(dx, owner)
 	local y = sky_spot(q, 640, 60)
 	place(r, 640, y)
 	local hp = r.hp
-	q:explode(640 + game.ROBOT_HALF_W + dx, y + game.ROBOT_H / 2, owner, game.MISSILE_BLAST)
+	-- il bordo destro della scatola (col cerchio, del quadrato attorno)
+	local edge = game.HURTBOX == "cerchio" and game.HURT_R + game.HURT_FAT or game.ROBOT_HALF_W
+	q:explode(640 + edge + dx, y + game.ROBOT_H / 2, owner, game.MISSILE_BLAST)
 	return r, hp - r.hp
 end
 local B = game.MISSILE_BLAST
@@ -680,6 +683,52 @@ check(math.abs(dhr.vx + half * B.impulse * 0.5) < 0.01 and dhr.vy == 0,
 check(dh == math.floor(B.damage_min + (B.damage - B.damage_min) * 0.5 + 0.5), "blastron: danno tra minimo e massimo")
 local _, ds = blast_at(-1, 2)
 check(ds == math.floor(B.damage * 0.5 + 0.5), "blastron: metà danno a sé stessi")
+
+-- Dove si viene colpiti: un cerchio a metà altezza, non la scatola
+local hb = game.new(42, "isole")
+local hr = hb.robots[2]
+local hcy = hr.y + game.ROBOT_H / 2
+check(hb:hits_robot(hr.x + game.HURT_R - 0.5, hcy, 1, 0) and not hb:hits_robot(hr.x + game.HURT_R + 0.5, hcy, 1, 0),
+	"blastron: il bersaglio è un cerchio di raggio HURT_R")
+check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "blastron: l'angolo in basso della scatola non conta")
+
+-- Mischia sulla mira: target = posizione del bersaglio rispetto ai piedi (in unità
+-- di Blastron), i robot restano fermi in aria; restituisce il tick del colpo o false
+local function melee_at(deg, tx, ty, weapon)
+	local q = game.new(42, "isole")
+	run(q, 120)
+	q:pop_events()
+	local pos = { { 0, 0 }, { tx * U, ty * U } }
+	local function hold()
+		for i, rb in ipairs(q.robots) do
+			rb.x, rb.y, rb.vx, rb.vy, rb.grounded = 640 + pos[i][1], 400 + pos[i][2], 0, 0, false
+		end
+	end
+	hold()
+	if weapon == "punch" then q.robots[1].ammo.punch = 1 end
+	q:step({ fire = { angle = math.rad(deg), power = 1, weapon = weapon or "sword" } })
+	for t = 1, 200 do
+		hold()
+		q:step()
+		for _, e in ipairs(q:pop_events()) do
+			if e.type == "sword_hit" or e.type == "punch_hit" then return t, q end
+		end
+	end
+	return false, q
+end
+local close = math.ceil(mischia.fendente.chiudi * 60 / mischia.fendente.fps)
+check(melee_at(0, 5, 0) == close, "blastron: il fendente colpisce quando si chiude la finestra (0,8 s)")
+check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "blastron: mirando dritto prende anche dietro e sopra la testa")
+check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "blastron: mirando in basso la lama scende davanti in basso")
+check(melee_at(60, 4, 5) and melee_at(-60, 0, -5) and not melee_at(60, 0, -5),
+	"blastron: il colpo gira con la mira")
+check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "blastron: mirando giù non prende chi è dietro")
+local pt, pq2 = melee_at(0, 2, 0, "punch")
+check(pt and pq2.robots[2].vy == game.PUNCH_LAUNCH and pq2.robots[2].vx == 0,
+	"blastron: il montante lancia dritto in alto")
+check(not melee_at(-60, 0, 4, "punch"), "blastron: il montante mirato in basso non prende chi è sopra")
+check(game.melee_ticks(mischia.fendente) == game.SWORD_TICKS and game.melee_ticks(mischia.montante) == game.PUNCH_TICKS,
+	"blastron: durate del fendente e del montante coerenti con le animazioni")
 
 -- Sparando il tempo del turno scende a 5 secondi
 local bt = game.new(42, "isole")

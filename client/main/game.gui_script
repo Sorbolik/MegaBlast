@@ -483,6 +483,7 @@ local function apply_state(self, s)
 		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
 		rb.punch = (r.pu or 0) > 0 and r.pu or nil
 		rb.punch_dir = (r.pd or 0) ~= 0 and r.pd or rb.facing
+		rb.swing_base, rb.punch_base = r.sb or 0, r.pb or 0
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y, kind = s.p.k, fuse = s.p.fu } or nil
@@ -755,9 +756,10 @@ local function render(self, dt)
 		end
 		-- mirando con la spada la lama va dietro la schiena, pronta per il colpo
 		-- (è l'angolo da cui parte il fendente); col Pugno il braccio si carica in basso
-		if aiming and weapon == "sword" then
+		-- col modello "blastron" invece l'arma punta dove si mira: il colpo parte da lì
+		if aiming and weapon == "sword" and game.SWORD_MODEL ~= "blastron" then
 			st.aim = st.facing > 0 and game.SWORD_FROM or math.pi - game.SWORD_FROM
-		elseif aiming and weapon == "punch" then
+		elseif aiming and weapon == "punch" and game.PUNCH_MODEL ~= "blastron" then
 			st.aim = st.facing > 0 and PUNCH_FROM or math.pi - PUNCH_FROM
 		end
 		-- Pugno del Titano: il braccio sale dal basso fino in alto quando il colpo arriva
@@ -766,6 +768,7 @@ local function render(self, dt)
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
 			local t = math.max(0, rb.punch - span + k * span)
 			local a = PUNCH_FROM + (PUNCH_TO - PUNCH_FROM) * math.min(1, t / game.PUNCH_HIT_TICK)
+			if game.PUNCH_MODEL == "blastron" then a = game.punch_angle(t, rb.punch_base) end
 			local dir = rb.punch_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
@@ -775,7 +778,7 @@ local function render(self, dt)
 			weapon = "sword"
 			-- il tick del fendente è quello della posa b: lo disegniamo tra a e b
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
-			local a = game.sword_angle(math.max(0, rb.swing - span + k * span))
+			local a = game.sword_angle(math.max(0, rb.swing - span + k * span), rb.swing_base)
 			-- la direzione è quella di partenza: girarsi non cambia il fendente
 			local dir = rb.swing_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
