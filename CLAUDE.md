@@ -19,4 +19,7 @@ Dettagli e comandi degli scenari: [strumenti/simula/README.md](strumenti/simula/
 (`strumenti/simula/controlla.py`). Se Sergio vede nell'editor un errore che la
 simulazione non ha trovato, aggiungi lì la regola.
 
+Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
+in [.claude/skills/](.claude/skills/README.md).
+
 Altri test: `luajit tests/sim_test.lua` (simulazione), `go test ./server/` (server).
