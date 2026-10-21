@@ -163,7 +163,7 @@ local MASK_PATH = "/battaglia/maschera_viva.texturec"
 local RGBA = hash("rgba")
 local MASK_FORMAT = { { name = RGBA, type = buffer.VALUE_TYPE_UINT8, count = 4 } }
 -- mappe che hanno i disegni in assets/mappe (le altre usano una roccia semplice)
-local PAINTED = { isole = true }
+local PAINTED = { forgia = true, isole = true }
 
 -- le costanti stanno in graphics (Defold recenti) o in resource (vecchi)
 local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
@@ -193,7 +193,8 @@ local function draw_terrain(self)
 	else
 		self.mask_tex = resource.create_texture(MASK_PATH, mask_params(TW, TH), buf)
 	end
-	msg.post("/terreno#script", "maschera", { path = self.mask_tex, dipinta = PAINTED[self.g.map] == true })
+	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = self.g.map,
+		dipinta = PAINTED[self.g.map] == true })
 end
 
 -- Aggiorna la maschera nel rettangolo dato (coordinate di cella)

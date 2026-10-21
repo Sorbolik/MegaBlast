@@ -20,6 +20,17 @@ local function add(id, name, def)
 	M.order[#M.order + 1] = id
 end
 
+-- Forgia dei Titani: due fortezze a specchio con torre a gradini e galleria,
+-- l'incudine in mezzo con il corno d'acciaio per ripararsi, piattaforme in alto.
+-- Forma a poligoni dritti (grafica/strumenti/mappa_forgia.py): quello che si
+-- vede è esattamente quello su cui si cammina. Travi e bordi in acciaio.
+add("forgia", "Forgia dei Titani", {
+	spawns = { { x = 320, from = 400 }, { x = 960, from = 400 } },
+	build = function(t)
+		t:load(mapdata.forgia)
+	end,
+})
+
 -- Isole del cimitero: due grandi isole con archi d'osso, isole volanti su più piani.
 -- La forma viene dalla maschera disegnata (grafica/mappe/mappa_isole_cimitero/):
 -- terra scavabile, ossa e catene indistruttibili. È simmetrica a specchio.
@@ -40,7 +51,7 @@ add("casuale", "Colline casuali", {
 	end,
 })
 
-M.DEFAULT = "isole"
+M.DEFAULT = "forgia"
 
 function M.get(id)
 	return M.maps[id] or M.maps[M.DEFAULT]
