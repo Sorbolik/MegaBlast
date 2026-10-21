@@ -51,8 +51,10 @@ function N.snapshot(g)
 	for i, rb in ipairs(g.robots) do
 		-- s: tick del fendente in corso (0 se il robot non sta colpendo), sd: sua direzione
 		-- pu, pd: lo stesso per il Pugno del Titano; ag, as, ap: colpi di Uovo, Schegge e Pugno
+		-- sb, pb: angolo di mira del fendente e del pugno (servono col modello "blastron")
 		robots[i] = encode({ x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
+			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch })
 	end
 	local p = "null"

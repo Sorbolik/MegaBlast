@@ -1,0 +1,16 @@
+# Fendente alla Blastron (profilo "blastron"): la lama punta dove si mira e
+# il colpo gira con la mira. Mirando in basso a destra la lama sale sopra la
+# testa, va dietro la schiena e cala dall'alto verso il basso. Il fendente
+# dura meno di un secondo: per vederlo bene guarda video.mp4 a 4,6-5 s.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+tocca 687 62                        # barra delle armi: Lama di Nucleo
+aspetta 0.4
+mira 80 -80 0.6 01_mira_in_basso
+zoom 02_fendente
+aspetta_evento swing 2
+aspetta 1
+zoom 03_fine

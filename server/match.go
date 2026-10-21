@@ -37,7 +37,7 @@ type held struct {
 }
 
 // Mappa usata per le partite online (vedi client/sim/maps.lua).
-const defaultMap = "isole"
+const defaultMap = "forgia"
 
 // Match è una partita 1 contro 1: una goroutine che fa girare la simulazione.
 type Match struct {

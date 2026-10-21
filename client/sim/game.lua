@@ -12,6 +12,7 @@
 local rng = require "sim.rng"
 local terrain = require "sim.terrain"
 local maps = require "sim.maps"
+local mischia = require "sim.mischia"
 
 local M = {}
 M.__index = M
@@ -38,13 +39,34 @@ M.DEFAULT_STATS = {
 -- Reattività in aria: l'accelerazione è air_speed^2 / AIR_REACTION, quindi
 -- più un robot è veloce, più in fretta cambia direzione (meno inerzia).
 M.AIR_REACTION = 8
+-- "accel": in aria si accelera fino a air_speed (e non mentre si è sbalzati).
+-- "instant" (Blastron): tenendo una direzione la velocità è subito air_speed,
+-- senza direzione resta quella che era.
+M.AIR_CONTROL = "accel"
+-- Blastron: il robot di turno non va mai di lato più veloce della sua corsa,
+-- nemmeno dopo un'esplosione
+M.CLAMP_ACTIVE_VX = false
+-- Danno da caduta: oltre FALL_SAFE pixel di caduta, FALL_DAMAGE per pixel in
+-- più fino a FALL_DAMAGE_MAX. FALL_SAFE = false: niente danno.
+M.FALL_SAFE = false
+M.FALL_DAMAGE = 0
+M.FALL_DAMAGE_MAX = 0
 
 -- Missile
 M.MISSILE_SPEED = 750    -- velocità alla potenza massima
+M.MISSILE_GRAVITY = 1    -- quanta gravità sente, rispetto ai robot
 M.EXPLOSION_R = 30       -- raggio del cratere
 M.DAMAGE_R = 50          -- raggio entro cui si subisce danno
 M.MAX_DAMAGE = 45
 M.KNOCKBACK = 320
+-- Come spinge un'esplosione:
+-- "centro": dal centro del robot, forte quanto knockback (al centro) e un po' in alto.
+-- "blastron": velocità = (punto più vicino della scatola - esplosione) * impulse * t,
+-- con t = 1 - distanza / damage_r. Massima a metà raggio, nulla nel colpo diretto.
+M.KNOCKBACK_MODEL = "centro"
+M.SELF_DAMAGE = 1        -- quanto del danno subisce chi si colpisce da solo
+-- per quanti tick dopo il lancio un proiettile non tocca chi l'ha lanciato
+M.OWNER_SAFE_TICKS = 20
 
 -- Lama di Nucleo: fendente di 240° che parte da dietro la schiena (205°),
 -- passa sopra la testa e finisce davanti in basso (-35°). Colpisce dietro e davanti.
@@ -54,12 +76,31 @@ M.SWORD_FROM = math.rad(205)
 M.SWORD_TO = math.rad(-35)
 M.SWORD_TICKS = 20       -- durata del fendente (1/3 di secondo)
 M.SWORD_DAMAGE = 35
+-- Come si muove la lama:
+-- "arco": l'arco fisso qui sopra, uguale qualunque sia la mira.
+-- "blastron": il fendente di Blastron (sim/mischia.lua) ruotato sulla mira:
+-- mirando in basso il colpo scende dall'alto verso il basso. I danni arrivano
+-- quando si chiude la finestra del colpo, a tutti quelli toccati dalla lama.
+M.SWORD_MODEL = "arco"
+M.SWORD_STOP = false     -- il colpo ferma il bersaglio (in Blastron la spada gli azzera la velocità)
+
+-- Dove un robot può essere colpito (proiettili, globi, lame, esplosioni):
+-- "scatola": il rettangolo del robot, largo 2 * ROBOT_HALF_W e alto ROBOT_H;
+-- "cerchio": come in Blastron, un cerchio di raggio HURT_R a metà altezza.
+-- Per le esplosioni Blastron misura dal quadrato attorno al cerchio, un po'
+-- più largo (HURT_FAT).
+M.HURTBOX = "scatola"
+M.HURT_R = 8
+M.HURT_FAT = 0
 
 -- Teletrasporto (Passo d'Ombra): un globo che vola come il missile, rimbalza e
 -- rotola sul terreno, e dopo
 -- TELEPORT_TICKS sposta il robot dove si trova, senza toccare il suo stato:
 -- velocità, fendente in corso e direzione restano quelli di prima.
 M.TELEPORT_TICKS = 2 * 60
+M.ORB_SPEED = M.MISSILE_SPEED
+M.ORB_GRAVITY = 1
+M.ORB_DAMPING = 0        -- frenata per secondo dopo il primo urto
 M.MAX_ORBS = 6           -- globi in volo insieme, al massimo
 
 -- Esplosioni: raggio del cratere, raggio del danno, danno massimo, spinta
@@ -71,6 +112,8 @@ M.GRENADE_SPEED = 600    -- velocità alla potenza massima
 M.GRENADE_FUSE = 3 * 60
 M.GRENADE_BOUNCE = 0.45  -- quanta velocità resta dopo un rimbalzo
 M.GRENADE_FRICTION = 0.7 -- attrito quando tocca terra
+M.GRENADE_GRAVITY = 1
+M.GRENADE_DAMPING = 0    -- frenata per secondo dopo il primo urto (come il linear damping di Box2D)
 M.GRENADE_BLAST = { r = 40, damage_r = 64, damage = 55, knockback = 380 }
 
 -- Sciame di Schegge (mitragliatrice): una raffica di schegge dritte e veloci,
@@ -82,7 +125,9 @@ M.SHARD_GRAVITY = 0.2    -- la gravità le piega appena
 M.SHARD_SPREAD = math.rad(3)
 M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 7, knockback = 90 }
 
--- Pugno del Titano: montante corpo a corpo che lancia in alto chi è davanti
+-- Pugno del Titano: montante corpo a corpo che lancia in alto chi è davanti.
+-- PUNCH_MODEL come SWORD_MODEL: "fisso" (qui sotto) o "blastron" (montante sulla mira).
+M.PUNCH_MODEL = "fisso"
 M.PUNCH_TICKS = 24       -- durata del colpo
 M.PUNCH_HIT_TICK = 8     -- tick in cui il pugno arriva
 M.PUNCH_REACH = 24       -- quanto arriva davanti al robot
@@ -102,16 +147,40 @@ M.CRATE_MAX = 3          -- casse in mappa al massimo
 M.CRATE_HALF_W = 10
 M.CRATE_H = 18
 M.CRATE_FALL = 110       -- velocità massima di caduta (scende piano, col paracadute)
+-- Blastron: a ogni turno una probabilità, secondo quante casse ci sono già
+-- ({ con 0, con 1, con 2, ... }). false: una cassa ogni CRATE_EVERY turni.
+M.CRATE_CHANCE = false
 
 -- Turni
 M.MATCH_TICKS = 3 * 60 * 60 -- durata massima della partita: 3 minuti
 M.TURN_TICKS = 15 * 60
 M.RETREAT_TICKS = 3 * 60 -- dopo lo sparo ci si può ancora muovere per ripararsi
+-- "extra": la ritirata si aggiunge al turno. "truncate" (Blastron): sparando il
+-- tempo rimasto scende a RETREAT_TICKS, se era di più.
+M.RETREAT_MODE = "extra"
 M.SETTLE_TICKS = 30
 M.MAX_SETTLE_TICKS = 5 * 60
 
 -- Online il server manda uno stato ogni SNAPSHOT_TICKS tick (30 al secondo)
 M.SNAPSHOT_TICKS = 2
+
+-- Comandi (li usa il client). La potenza del tiro viene da quanto è lontano il
+-- dito: f = distanza / portata (0..1). Sotto AIM_DEADZONE non conta, poi
+-- cresce con l'esponente AIM_EXPONENT (2: quadratica, più precisa sui tiri corti).
+M.AIM_DEADZONE = 0
+M.AIM_EXPONENT = 1
+-- quanto della differenza tra mira e dito si recupera a ogni frame (a 60 Hz); 1 = subito
+M.AIM_SMOOTH = 1
+-- punti della traiettoria mostrati mentre si mira (false: tutti)
+M.AIM_PREVIEW_DOTS = false
+-- tenendo premuto il salto si risalta appena si tocca terra
+M.JUMP_REPEAT = false
+
+function M.aim_power(f)
+	f = math.max(0, math.min(1, f))
+	if M.AIM_DEADZONE > 0 then f = math.max(0, (f - M.AIM_DEADZONE) / (1 - M.AIM_DEADZONE)) end
+	return math.max(0.1, f ^ M.AIM_EXPONENT)
+end
 
 local NO_INPUT = {}
 
@@ -166,6 +235,8 @@ function M.new(seed, map_id, opts)
 	g.crates = {}
 	g.crate_id = 0
 	g.crate_every = opts.crate_every or M.CRATE_EVERY
+	-- con crate_every esplicito si usa sempre quello (le prove ne hanno bisogno)
+	g.crate_chance = not opts.crate_every and M.CRATE_CHANCE or nil
 	g.turn_no = 0
 	g:start_turn(1)
 	return g
@@ -255,7 +326,23 @@ function M:kill(rb, reason)
 	self:emit({ type = "death", robot = rb.id, reason = reason })
 end
 
-function M:update_robot(rb, input)
+-- Danno da caduta (solo se FALL_SAFE): conta dal punto più alto da cui è
+-- iniziata la discesa, anche se ci si è arrivati per un'esplosione
+function M:land(rb)
+	local top = rb.fall_top
+	rb.fall_top = nil
+	if not (M.FALL_SAFE and top) then return end
+	local drop = top - rb.y - M.FALL_SAFE
+	if drop <= 0 then return end
+	local dmg = math.floor(math.min(drop * M.FALL_DAMAGE, M.FALL_DAMAGE_MAX) + 0.5)
+	if dmg <= 0 then return end
+	rb.hp = rb.hp - dmg
+	self:emit({ type = "damage", robot = rb.id, amount = dmg, reason = "fall" })
+	if rb.hp <= 0 then self:kill(rb, "fall_damage") end
+end
+
+-- active: è il robot di turno e può muoversi (riceve i comandi)
+function M:update_robot(rb, input, active)
 	if rb.dead then return end
 
 	-- Se il robot è finito dentro il terreno, lo spingiamo fuori verso l'alto
@@ -301,13 +388,21 @@ function M:update_robot(rb, input)
 	end
 
 	if not rb.grounded then
-		-- controllo in aria (non mentre si viene sbalzati da un'esplosione)
-		if not rb.knocked then
+		if M.AIR_CONTROL == "instant" then
+			-- Blastron: niente inerzia, anche appena sbalzati
+			if dir ~= 0 then rb.vx = dir * st.air_speed end
+			if active and M.CLAMP_ACTIVE_VX then
+				rb.vx = math.max(-st.air_speed, math.min(st.air_speed, rb.vx))
+			end
+		elseif not rb.knocked then
+			-- controllo in aria (non mentre si viene sbalzati da un'esplosione)
 			local dv = dir * st.air_speed - rb.vx
 			local max_dv = st.air_accel * M.DT
 			rb.vx = rb.vx + math.max(-max_dv, math.min(max_dv, dv))
 		end
 		rb.vy = rb.vy - M.GRAVITY * M.DT
+		if rb.vy < 0 and not rb.fall_top then rb.fall_top = rb.y end
+		local landed = false
 		local mx, my = rb.vx * M.DT, rb.vy * M.DT
 		local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
 		local sx, sy = mx / steps, my / steps
@@ -330,6 +425,7 @@ function M:update_robot(rb, input)
 						rb.grounded = true
 						rb.knocked = false
 						rb.vx = 0
+						landed = true
 					end
 					rb.vy, sy = 0, 0
 				else
@@ -337,6 +433,9 @@ function M:update_robot(rb, input)
 				end
 			end
 		end
+		if landed then self:land(rb) end
+	else
+		rb.fall_top = nil
 	end
 
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then
@@ -346,8 +445,8 @@ end
 
 -- Missile ----------------------------------------------------------------------
 
-local function launch_velocity(angle, power)
-	local speed = M.MISSILE_SPEED * math.max(0.1, math.min(1, power))
+local function launch_velocity(angle, power, max_speed)
+	local speed = max_speed * math.max(0.1, math.min(1, power))
 	return math.cos(angle) * speed, math.sin(angle) * speed
 end
 
@@ -358,7 +457,7 @@ end
 function M:fire(angle, power)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
-	local vx, vy = launch_velocity(angle, power)
+	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
 	self.projectile = { kind = "missile", x = x, y = y, vx = vx, vy = vy, owner = rb.id, age = 0 }
 	self:emit({ type = "fire", robot = rb.id })
 end
@@ -379,7 +478,11 @@ end
 function M:update_grenade(p)
 	p.age = p.age + 1
 	p.fuse = p.fuse - 1
-	p.vy = p.vy - M.GRAVITY * M.DT
+	p.vy = p.vy - M.GRAVITY * M.GRENADE_GRAVITY * M.DT
+	if p.touched and M.GRENADE_DAMPING > 0 then
+		local k = 1 / (1 + M.DT * M.GRENADE_DAMPING)
+		p.vx, p.vy = p.vx * k, p.vy * k
+	end
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	local sx, sy = mx / steps, my / steps
@@ -388,6 +491,7 @@ function M:update_grenade(p)
 		if sx ~= 0 then
 			if t:solid(p.x + sx, p.y) then
 				p.vx, sx = -p.vx * M.GRENADE_BOUNCE, 0
+				p.touched = true
 			else
 				p.x = p.x + sx
 			end
@@ -395,6 +499,7 @@ function M:update_grenade(p)
 		if sy ~= 0 then
 			if t:solid(p.x, p.y + sy) then
 				if sy < 0 then p.vx = p.vx * M.GRENADE_FRICTION end
+				p.touched = true
 				p.vy = -p.vy * M.GRENADE_BOUNCE
 				-- un rimbalzo piccolo non vale: si posa
 				if math.abs(p.vy) < 40 then p.vy = 0 end
@@ -477,7 +582,7 @@ end
 function M:throw_orb(angle, power)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
-	local vx, vy = launch_velocity(angle, power)
+	local vx, vy = launch_velocity(angle, power, M.ORB_SPEED)
 	self.orb_seq = self.orb_seq + 1
 	self.orbs[#self.orbs + 1] = { id = self.orb_seq, x = x, y = y, vx = vx, vy = vy, owner = rb.id,
 		timer = M.TELEPORT_TICKS, age = 0 }
@@ -487,26 +592,33 @@ end
 -- Cerca un punto libero vicino a (x, y) dove far comparire il robot
 -- Punti dove far comparire il robot attorno al globo, dal più vicino al più
 -- lontano (a parità di distanza prima quelli più in alto)
-local TELEPORT_SEARCH = 48
-local TELEPORT_OFFSETS = {}
-for dy = -TELEPORT_SEARCH, TELEPORT_SEARCH, 2 do
-	for dx = -TELEPORT_SEARCH, TELEPORT_SEARCH, 2 do
-		if dx * dx + dy * dy <= TELEPORT_SEARCH * TELEPORT_SEARCH then
-			TELEPORT_OFFSETS[#TELEPORT_OFFSETS + 1] = { dx, dy, dx * dx + dy * dy }
+M.TELEPORT_SEARCH = 48
+local OFFSETS = {}
+local function teleport_offsets(r)
+	local key = math.floor(r)
+	if OFFSETS[key] then return OFFSETS[key] end
+	-- passo di 2 pixel fino a 48, poi in proporzione: sempre circa 1800 punti
+	local step = math.max(2, math.floor(key / 24))
+	local list = {}
+	for dy = -key, key, step do
+		for dx = -key, key, step do
+			if dx * dx + dy * dy <= key * key then list[#list + 1] = { dx, dy, dx * dx + dy * dy } end
 		end
 	end
+	table.sort(list, function(a, b)
+		if a[3] ~= b[3] then return a[3] < b[3] end
+		if a[2] ~= b[2] then return a[2] > b[2] end
+		return a[1] < b[1]
+	end)
+	OFFSETS[key] = list
+	return list
 end
-table.sort(TELEPORT_OFFSETS, function(a, b)
-	if a[3] ~= b[3] then return a[3] < b[3] end
-	if a[2] ~= b[2] then return a[2] > b[2] end
-	return a[1] < b[1]
-end)
 
 -- Il teletrasporto avviene sempre: nel punto libero più vicino al globo e, se
 -- attorno è tutto pieno, proprio lì (il robot poi esce dal terreno verso l'alto).
 function M:teleport(rb, x, y)
 	local tx, ty = x, y
-	for _, o in ipairs(TELEPORT_OFFSETS) do
+	for _, o in ipairs(teleport_offsets(M.TELEPORT_SEARCH)) do
 		if not self:robot_collides(x + o[1], y + o[2], rb) then
 			tx, ty = x + o[1], y + o[2]
 			break
@@ -517,6 +629,7 @@ function M:teleport(rb, x, y)
 	-- lo stato resta identico: chi cadeva continua a cadere con la stessa velocità.
 	-- Non è più appoggiato a niente, la fisica lo rimette a terra se serve.
 	rb.grounded = false
+	rb.fall_top = nil
 	self:emit({ type = "teleport", robot = rb.id, from_x = fx, from_y = fy, x = tx, y = ty })
 end
 
@@ -547,8 +660,7 @@ end
 function M:orb_hits_robot(o, x, y)
 	local r = M.ORB_R
 	for _, rb in ipairs(self.robots) do
-		if not rb.dead and (rb.id ~= o.owner or o.age > 20)
-			and math.abs(x - rb.x) <= M.ROBOT_HALF_W + r and y >= rb.y - r and y <= rb.y + M.ROBOT_H + r then
+		if not rb.dead and (rb.id ~= o.owner or o.age > M.OWNER_SAFE_TICKS) and M.hurt_at(rb, x, y, r) then
 			return rb
 		end
 	end
@@ -562,7 +674,11 @@ function M:update_orb(o)
 	-- vola come il missile; quando tocca il terreno rimbalza e rotola.
 	-- Se esce dalla mappa continua a cadere: il teletrasporto ti porta lì lo stesso.
 	local t = self.terrain
-	o.vy = o.vy - M.GRAVITY * M.DT
+	o.vy = o.vy - M.GRAVITY * M.ORB_GRAVITY * M.DT
+	if o.touched and M.ORB_DAMPING > 0 then
+		local k = 1 / (1 + M.DT * M.ORB_DAMPING)
+		o.vx, o.vy = o.vx * k, o.vy * k
+	end
 	local mx, my = o.vx * M.DT, o.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	for _ = 1, steps do
@@ -584,6 +700,7 @@ function M:update_orb(o)
 				o.vx = tx * M.ORB_FRICTION - e * vn * sx
 				o.vy = ty * M.ORB_FRICTION - e * vn * sy
 			end
+			o.touched = true
 			break
 		elseif t:solid(nx, ny) then
 			local sx, sy = surface_normal(t, nx, ny)
@@ -596,6 +713,7 @@ function M:update_orb(o)
 				o.vx = tx * M.ORB_FRICTION - e * vn * sx
 				o.vy = ty * M.ORB_FRICTION - e * vn * sy
 			end
+			o.touched = true
 			break
 		end
 		o.x, o.y = nx, ny
@@ -658,13 +776,76 @@ function M.sword_progress(u)
 	return u * u * ((s + 1) * u - s)
 end
 
-function M.sword_angle(t)
+-- Angolo della lama al tick t per un robot rivolto a destra. Col modello
+-- "blastron" dipende dalla mira: base è l'angolo di mira (già girato a destra).
+function M.sword_angle(t, base)
+	if M.SWORD_MODEL == "blastron" then
+		return (base or 0) + math.rad(M.melee_pose(mischia.fendente, t)[7])
+	end
 	return M.SWORD_FROM + (M.SWORD_TO - M.SWORD_FROM) * M.sword_progress(t / M.SWORD_TICKS)
+end
+
+-- Angolo del pugno al tick t (modello "blastron"), come sword_angle
+function M.punch_angle(t, base)
+	return (base or 0) + math.rad(M.melee_pose(mischia.montante, t)[7])
+end
+
+-- Durata in tick di un colpo di mischia.lua
+function M.melee_ticks(colpo)
+	return math.ceil((#colpo.pose - 1) * 60 / colpo.fps)
+end
+
+-- Posa del colpo al tick t (con frazione): i valori tra due fotogrammi
+local POSA = {}
+function M.melee_pose(colpo, t)
+	local f = math.max(0, math.min(#colpo.pose - 1, t * colpo.fps / 60))
+	local i = math.floor(f)
+	local a, b = colpo.pose[i + 1], colpo.pose[math.min(#colpo.pose, i + 2)]
+	local k = f - i
+	for j = 1, 7 do POSA[j] = a[j] + (b[j] - a[j]) * k end
+	return POSA
+end
+
+-- Mira girata verso destra, tra -90° e 90°, e il lato verso cui si guarda
+local function aim_side(angle)
+	local dir = math.cos(angle) < 0 and -1 or 1
+	local a = dir > 0 and angle or math.pi - angle
+	a = (a + math.pi) % (2 * math.pi) - math.pi
+	return a, dir
+end
+M.aim_side = aim_side
+
+-- Un robot preso dal punto (x, y), con un margine pad attorno
+function M.hurt_at(r, x, y, pad)
+	pad = pad or 0
+	if M.HURTBOX == "cerchio" then
+		local dx, dy = x - r.x, y - (r.y + M.ROBOT_H / 2)
+		local rr = M.HURT_R + pad
+		return dx * dx + dy * dy <= rr * rr
+	end
+	return math.abs(x - r.x) <= M.ROBOT_HALF_W + pad and y >= r.y - pad and y <= r.y + M.ROBOT_H + pad
+end
+
+-- Un robot toccato dal segmento (x0, y0) - (x1, y1) largo 2 * pad
+local function seg_hits_robot(r, x0, y0, x1, y1, pad)
+	if M.HURTBOX == "cerchio" then
+		local cx, cy = r.x, r.y + M.ROBOT_H / 2
+		local ux, uy = x1 - x0, y1 - y0
+		local l2 = ux * ux + uy * uy
+		local k = l2 > 0 and math.max(0, math.min(1, ((cx - x0) * ux + (cy - y0) * uy) / l2)) or 0
+		local dx, dy = x0 + ux * k - cx, y0 + uy * k - cy
+		local rr = M.HURT_R + pad
+		return dx * dx + dy * dy <= rr * rr
+	end
+	for k = 0, 10 do
+		if M.hurt_at(r, x0 + (x1 - x0) * k / 10, y0 + (y1 - y0) * k / 10, pad) then return true end
+	end
+	return false
 end
 
 function M:swing_sword(angle)
 	local rb = self.robots[self.current]
-	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.swing_base, rb.facing = aim_side(angle)
 	-- il fendente resta nella direzione di partenza anche se il robot si gira
 	rb.swing_dir = rb.facing
 	rb.swing = 0
@@ -673,7 +854,7 @@ function M:swing_sword(angle)
 end
 
 local function in_robot(r, x, y)
-	return math.abs(x - r.x) <= M.ROBOT_HALF_W and y >= r.y and y <= r.y + M.ROBOT_H
+	return M.hurt_at(r, x, y, 0)
 end
 
 -- alla fine la lama gira veloce: tanti passi per tick, così non salta un bersaglio
@@ -681,6 +862,14 @@ local SWORD_SUBSTEPS = 8
 local SWORD_SAMPLES = 10
 
 function M:update_swing(rb)
+	if M.SWORD_MODEL == "blastron" then
+		if self:update_melee(rb, mischia.fendente, rb.swing, rb.swing_base, rb.swing_dir) then
+			rb.swing = rb.swing + 1
+		else
+			rb.swing, rb.swing_hit, rb.swing_dir, rb.swing_base = nil, nil, nil, nil
+		end
+		return
+	end
 	local t0 = rb.swing
 	rb.swing = t0 + 1
 	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
@@ -711,21 +900,95 @@ function M:sword_hit(rb, other)
 	rb.dealt = rb.dealt + M.SWORD_DAMAGE
 	self:emit({ type = "damage", robot = other.id, amount = M.SWORD_DAMAGE })
 	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
-	-- la spada fa solo danno: il bersaglio resta dov'è
+	-- la spada fa solo danno: il bersaglio resta dov'è (in Blastron si ferma)
+	if M.SWORD_STOP then other.vx, other.vy = 0, 0 end
 	if other.hp <= 0 then self:kill(other, "damage") end
+end
+
+-- Colpi di mischia alla Blastron ---------------------------------------------------
+
+-- Il rettangolo che colpisce al tick t, in pixel del mondo: asse e mezza larghezza
+function M.melee_blade(rb, colpo, t, base, dir)
+	local p = M.melee_pose(colpo, t)
+	local u = M.BLASTRON_UNIT
+	local c, s = math.cos(base), math.sin(base)
+	local ox, oy = p[1], p[2]
+	local x0, y0 = ox + c * p[3] - s * p[4], oy + s * p[3] + c * p[4]
+	local x1, y1 = ox + c * p[5] - s * p[6], oy + s * p[5] + c * p[6]
+	return rb.x + dir * x0 * u, rb.y + y0 * u, rb.x + dir * x1 * u, rb.y + y1 * u, colpo.mezza_larghezza * u
+end
+
+-- Avanza di un tick il colpo che al tick t è nella posa t. Chi la lama tocca
+-- mentre la finestra è aperta viene segnato; quando si chiude riceve il colpo.
+-- Restituisce false quando il colpo è finito.
+local MELEE_SUBSTEPS = 6
+function M:update_melee(rb, colpo, t, base, dir)
+	local f0, f1 = t * colpo.fps / 60, (t + 1) * colpo.fps / 60
+	local hit = rb.melee_hit or {}
+	rb.melee_hit = hit
+	if t == 0 then for k in pairs(hit) do hit[k] = nil end end
+	if f1 >= colpo.apri and f0 <= colpo.chiudi then
+		-- più passi per tick: alla fine la lama gira veloce e potrebbe saltare un bersaglio
+		for s = 1, MELEE_SUBSTEPS do
+			local ts = t + s / MELEE_SUBSTEPS
+			local f = ts * colpo.fps / 60
+			if f >= colpo.apri and f <= colpo.chiudi then
+				local x0, y0, x1, y1, w = M.melee_blade(rb, colpo, ts, base, dir)
+				for _, other in ipairs(self.robots) do
+					if other ~= rb and not other.dead and not hit[other.id]
+						and seg_hits_robot(other, x0, y0, x1, y1, w) then
+						hit[other.id] = true
+					end
+				end
+			end
+		end
+	end
+	if colpo.salto and f0 < colpo.salto and f1 >= colpo.salto then
+		rb.vy, rb.grounded = M.PUNCH_HOP, false
+	end
+	if f0 < colpo.chiudi and f1 >= colpo.chiudi then
+		for _, other in ipairs(self.robots) do
+			if hit[other.id] then
+				hit[other.id] = nil
+				if not other.dead then
+					if colpo == mischia.fendente then self:sword_hit(rb, other) else self:punch_hit(rb, other, dir) end
+				end
+			end
+		end
+	end
+	return t + 1 < M.melee_ticks(colpo)
 end
 
 -- Pugno del Titano --------------------------------------------------------------
 
 function M:start_punch(angle)
 	local rb = self.robots[self.current]
-	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.punch_base, rb.facing = aim_side(angle)
 	rb.punch_dir = rb.facing
 	rb.punch = 0
 	self:emit({ type = "punch", robot = rb.id })
 end
 
+function M:punch_hit(rb, other, dir)
+	other.hp = other.hp - M.PUNCH_DAMAGE
+	rb.dealt = rb.dealt + M.PUNCH_DAMAGE
+	self:emit({ type = "damage", robot = other.id, amount = M.PUNCH_DAMAGE })
+	self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+	other.vx, other.vy = dir * M.PUNCH_PUSH, M.PUNCH_LAUNCH
+	other.fall_top = nil
+	other.grounded, other.knocked = false, true
+	if other.hp <= 0 then self:kill(other, "damage") end
+end
+
 function M:update_punch(rb)
+	if M.PUNCH_MODEL == "blastron" then
+		if self:update_melee(rb, mischia.montante, rb.punch, rb.punch_base, rb.punch_dir) then
+			rb.punch = rb.punch + 1
+		else
+			rb.punch, rb.punch_dir, rb.punch_base = nil, nil, nil
+		end
+		return
+	end
 	rb.punch = rb.punch + 1
 	if rb.punch == M.PUNCH_HIT_TICK then
 		local dir = rb.punch_dir
@@ -733,13 +996,7 @@ function M:update_punch(rb)
 			if other ~= rb and not other.dead then
 				local dx, dy = (other.x - rb.x) * dir, other.y - rb.y
 				if dx >= -4 and dx <= M.PUNCH_REACH and dy > -M.ROBOT_H and dy < M.ROBOT_H + 8 then
-					other.hp = other.hp - M.PUNCH_DAMAGE
-					rb.dealt = rb.dealt + M.PUNCH_DAMAGE
-					self:emit({ type = "damage", robot = other.id, amount = M.PUNCH_DAMAGE })
-					self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
-					other.vx, other.vy = dir * M.PUNCH_PUSH, M.PUNCH_LAUNCH
-					other.grounded, other.knocked = false, true
-					if other.hp <= 0 then self:kill(other, "damage") end
+					self:punch_hit(rb, other, dir)
 				end
 			end
 		end
@@ -845,11 +1102,14 @@ end
 function M:preview(angle, power, count, every, pts, weapon)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
-	local vx, vy = launch_velocity(angle, power)
-	local gravity = M.GRAVITY
+	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
+	local gravity = M.GRAVITY * M.MISSILE_GRAVITY
 	if weapon == "grenade" then
-		local speed = M.GRENADE_SPEED * math.max(0.1, math.min(1, power))
-		vx, vy = math.cos(angle) * speed, math.sin(angle) * speed
+		vx, vy = launch_velocity(angle, power, M.GRENADE_SPEED)
+		gravity = M.GRAVITY * M.GRENADE_GRAVITY
+	elseif weapon == "teleport" then
+		vx, vy = launch_velocity(angle, power, M.ORB_SPEED)
+		gravity = M.GRAVITY * M.ORB_GRAVITY
 	elseif weapon == "shards" then
 		vx, vy = math.cos(angle) * M.SHARD_SPEED, math.sin(angle) * M.SHARD_SPEED
 		gravity = M.GRAVITY * M.SHARD_GRAVITY
@@ -871,8 +1131,7 @@ end
 
 function M:hits_robot(x, y, owner, age)
 	for _, rb in ipairs(self.robots) do
-		if not rb.dead and (rb.id ~= owner or age > 20)
-			and math.abs(x - rb.x) <= M.ROBOT_HALF_W and y >= rb.y and y <= rb.y + M.ROBOT_H then
+		if not rb.dead and (rb.id ~= owner or age > M.OWNER_SAFE_TICKS) and M.hurt_at(rb, x, y, 0) then
 			return true
 		end
 	end
@@ -885,19 +1144,43 @@ function M:explode(x, y, owner, blast)
 	blast = blast or M.MISSILE_BLAST
 	local cy0, cy1 = self.terrain:carve(x, y, blast.r)
 	self:emit({ type = "explosion", x = x, y = y, r = blast.r, row_min = cy0, row_max = cy1 })
+	local blastron = M.KNOCKBACK_MODEL == "blastron"
 	for _, rb in ipairs(self.robots) do
 		if not rb.dead then
-			local dx, dy = rb.x - x, (rb.y + M.ROBOT_H / 2) - y
+			local dx, dy
+			if blastron then
+				-- verso il punto della scatola del robot più vicino all'esplosione
+				-- (col cerchio, il quadrato che lo contiene)
+				local hw, y0, y1 = M.ROBOT_HALF_W, rb.y, rb.y + M.ROBOT_H
+				if M.HURTBOX == "cerchio" then
+					hw = M.HURT_R + M.HURT_FAT
+					y0, y1 = rb.y + M.ROBOT_H / 2 - hw, rb.y + M.ROBOT_H / 2 + hw
+				end
+				dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
+				dy = math.max(y0, math.min(y1, y)) - y
+			else
+				dx, dy = rb.x - x, (rb.y + M.ROBOT_H / 2) - y
+			end
 			local d = math.sqrt(dx * dx + dy * dy)
 			if d < blast.damage_r then
 				local f = 1 - d / blast.damage_r
-				local dmg = math.floor(blast.damage * f + 0.5)
+				local dmin = blast.damage_min or 0
+				local dmg = dmin + (blast.damage - dmin) * f
+				if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
+				dmg = math.floor(dmg + 0.5)
 				rb.hp = rb.hp - dmg
 				if owner and owner ~= rb.id then self.robots[owner].dealt = self.robots[owner].dealt + dmg end
 				self:emit({ type = "damage", robot = rb.id, amount = dmg })
-				if d < 1 then dx, dy, d = 0, 1, 1 end
-				rb.vx = dx / d * blast.knockback * f
-				rb.vy = dy / d * blast.knockback * f + 120 * f
+				if blastron then
+					-- la velocità viene sostituita; senza impulse, uno con la
+					-- stessa spinta massima del modello "centro"
+					local imp = blast.impulse or 4 * blast.knockback / blast.damage_r
+					rb.vx, rb.vy = dx * imp * f, dy * imp * f
+				else
+					if d < 1 then dx, dy, d = 0, 1, 1 end
+					rb.vx = dx / d * blast.knockback * f
+					rb.vy = dy / d * blast.knockback * f + 120 * f
+				end
 				rb.grounded = false
 				rb.knocked = true
 				if rb.hp <= 0 then self:kill(rb, "damage") end
@@ -910,7 +1193,7 @@ function M:update_projectile()
 	local p = self.projectile
 	if p.kind == "grenade" then return self:update_grenade(p) end
 	p.age = p.age + 1
-	p.vy = p.vy - M.GRAVITY * M.DT
+	p.vy = p.vy - M.GRAVITY * M.MISSILE_GRAVITY * M.DT
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	for _ = 1, steps do
@@ -946,7 +1229,14 @@ function M:start_turn(player)
 	self:emit({ type = "turn", robot = player })
 	-- dopo ogni crate_every turni cade una cassa
 	self.turn_no = self.turn_no + 1
-	if self.turn_no > 1 and (self.turn_no - 1) % self.crate_every == 0 then self:spawn_crate() end
+	if self.turn_no > 1 then
+		if self.crate_chance then
+			local chance = self.crate_chance[#self.crates + 1] or 0
+			if self.rng:next() < chance then self:spawn_crate() end
+		elseif (self.turn_no - 1) % self.crate_every == 0 then
+			self:spawn_crate()
+		end
+	end
 end
 
 -- Classifica a tempo scaduto: più vita rimasta, a parità più danni inflitti.
@@ -1001,7 +1291,7 @@ function M:step(input)
 	local can_move = self.phase == "aim" or self.retreat > 0
 	for i, rb in ipairs(self.robots) do
 		local active = i == self.current and can_move
-		self:update_robot(rb, active and input or NO_INPUT)
+		self:update_robot(rb, active and input or NO_INPUT, active)
 	end
 	if self.retreat > 0 then self.retreat = self.retreat - 1 end
 	-- prima il teletrasporto, poi la spada: il fendente colpisce già dalla nuova posizione
@@ -1043,7 +1333,11 @@ function M:step(input)
 				self:fire(fire.angle, fire.power)
 			end
 			self.phase = "flying"
-			self.retreat = M.RETREAT_TICKS
+			if M.RETREAT_MODE == "truncate" then
+				self.retreat = math.min(self.timer, M.RETREAT_TICKS)
+			else
+				self.retreat = M.RETREAT_TICKS
+			end
 		elseif self.timer <= 0 or self.match_left <= 0 then
 			-- turno finito, o partita finita: chi mira perde il colpo
 			self.phase, self.settle = "settle", 0
@@ -1067,5 +1361,122 @@ function M:step(input)
 		end
 	end
 end
+
+-- Profili di fisica -------------------------------------------------------------
+-- "megablast": i valori decisi finora, quelli scritti sopra.
+-- "blastron": ricostruiti dall'APK di Blastron (docs/blastron.md). Le misure
+-- là sono in unità di Farseer, qui diventano pixel in proporzione al robot:
+-- il robot di Blastron è alto 3,612 unità, il nostro BLASTRON_ROBOT_H pixel
+-- (un po' più grande dei 16 del profilo megablast).
+-- La vita là partiva da 2000, qui da MAX_HP: i danni sono riscalati.
+M.BLASTRON_ROBOT_H = 20
+M.BLASTRON_UNIT = M.BLASTRON_ROBOT_H / 3.612
+
+local function blastron_profile()
+	local u = M.BLASTRON_UNIT
+	local hp = M.MAX_HP / 2000
+	-- quanto è più grande il robot rispetto a quello del profilo megablast,
+	-- per le nostre misure (casse, schegge, globo...)
+	local k = M.BLASTRON_ROBOT_H / M.ROBOT_H
+	return {
+		ROBOT_H = M.BLASTRON_ROBOT_H,
+		ROBOT_HALF_W = M.ROBOT_HALF_W * k,
+		MAX_CLIMB = M.MAX_CLIMB * k,
+		TELEPORT_SEARCH = M.TELEPORT_SEARCH * k,
+		ORB_R = M.ORB_R * k,
+		ORB_NUDGE = M.ORB_NUDGE * k,
+		CRATE_HALF_W = M.CRATE_HALF_W * k,
+		CRATE_H = M.CRATE_H * k,
+		CRATE_FALL = M.CRATE_FALL * k,
+		SWORD_REACH = M.SWORD_REACH * k,
+		SWORD_PIVOT_Y = M.SWORD_PIVOT_Y * k,
+		SHARD_SPEED = M.SHARD_SPEED * k,
+		SHARD_BLAST = { r = M.SHARD_BLAST.r * k, damage_r = M.SHARD_BLAST.damage_r * k,
+			damage = M.SHARD_BLAST.damage, knockback = M.SHARD_BLAST.knockback * k },
+		GRAVITY = 25 * u,
+		-- corsa 5 u/s a terra e in aria, salto alto 5,2 u
+		DEFAULT_STATS = { walk_speed = 5 * u, jump_height = 5.2 * u, air_speed = 5 * u },
+		AIR_CONTROL = "instant",
+		CLAMP_ACTIVE_VX = true,
+		-- cadere da più di 40 u toglie 15 punti (su 2000) per unità, al massimo 900
+		FALL_SAFE = 40 * u,
+		FALL_DAMAGE = 15 * hp / u,
+		FALL_DAMAGE_MAX = 900 * hp,
+		KNOCKBACK_MODEL = "blastron",
+		SELF_DAMAGE = 0.5,
+		OWNER_SAFE_TICKS = 30,
+		-- Rocket: cratere 5 u, danno e spinta entro 9 u, 150-300 danni, impulso 10
+		MISSILE_SPEED = 75 * u,
+		MISSILE_GRAVITY = 1.1,
+		MISSILE_BLAST = { r = 5 * u, damage_r = 9 * u, damage = 300 * hp, damage_min = 150 * hp, impulse = 10 },
+		-- Grenade: rimbalzo 0,4, frenata 1/s dopo il primo urto, scoppia dopo 5 s
+		GRENADE_SPEED = 85 * u,
+		GRENADE_GRAVITY = 1.3,
+		GRENADE_FUSE = 5 * 60,
+		GRENADE_BOUNCE = 0.4,
+		GRENADE_FRICTION = 1,
+		GRENADE_DAMPING = 1,
+		GRENADE_BLAST = { r = 5.5 * u, damage_r = 10 * u, damage = 550 * hp, damage_min = 300 * hp, impulse = 15 },
+		-- Teleport Grenade: non chiude il turno, ti porta lì dopo 3 s
+		ORB_SPEED = 80 * u,
+		ORB_GRAVITY = 1.1,
+		TELEPORT_TICKS = 3 * 60,
+		ORB_BOUNCE = 0.4,
+		ORB_FRICTION = 1,
+		ORB_DAMPING = 1.1,
+		-- dove si viene colpiti: il cerchio dei robot di Blastron, raggio 0,523 volte
+		-- l'altezza (3,612 × 0,66 × 0,5 × 0,66 × 2,4 = 1,888 u) a metà altezza;
+		-- per le esplosioni il quadrato attorno, più largo di 0,1 u per lato
+		HURTBOX = "cerchio",
+		HURT_R = 1.888 * u,
+		HURT_FAT = 0.1 * u,
+		-- Hanzo Special: fendente sulla mira (sim/mischia.lua), 300 danni, ferma il bersaglio
+		SWORD_MODEL = "blastron",
+		SWORD_TICKS = 56,
+		SWORD_DAMAGE = 300 * hp,
+		SWORD_STOP = true,
+		-- Flame-Yuken: montante sulla mira, 1000 danni, lancia dritto in alto a
+		-- 40 u/s, saltello di 15 u/s
+		PUNCH_MODEL = "blastron",
+		PUNCH_TICKS = 127,
+		PUNCH_DAMAGE = 1000 * hp,
+		PUNCH_LAUNCH = 40 * u,
+		PUNCH_PUSH = 0,
+		PUNCH_HOP = 15 * u,
+		PUNCH_REACH = 3.5 * u,
+		-- turni da 30 s (25 con più di due giocatori), sparando ne restano 5,
+		-- 1 s tra un turno e l'altro, partita da 5 minuti
+		TURN_TICKS = 30 * 60,
+		RETREAT_TICKS = 5 * 60,
+		RETREAT_MODE = "truncate",
+		SETTLE_TICKS = 60,
+		MATCH_TICKS = 5 * 60 * 60,
+		CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 },
+		-- comandi: zona morta 20%, potenza quadratica, mira che insegue il dito,
+		-- solo l'inizio della traiettoria, salto ripetuto
+		AIM_DEADZONE = 0.2,
+		AIM_EXPONENT = 2,
+		AIM_SMOOTH = 0.2,
+		AIM_PREVIEW_DOTS = 4,
+		JUMP_REPEAT = true,
+	}
+end
+
+local PROFILES = { blastron = blastron_profile() }
+PROFILES.megablast = {}
+for k in pairs(PROFILES.blastron) do PROFILES.megablast[k] = M[k] end
+
+M.DEFAULT_PHYSICS = "blastron"
+
+-- Sceglie il profilo di fisica per tutte le partite che verranno create.
+-- Client e server devono usare lo stesso.
+function M.use_physics(name)
+	local prof = PROFILES[name]
+	assert(prof, "profilo di fisica sconosciuto: " .. tostring(name))
+	for k, v in pairs(prof) do M[k] = v end
+	M.PHYSICS = name
+end
+
+M.use_physics(M.DEFAULT_PHYSICS)
 
 return M

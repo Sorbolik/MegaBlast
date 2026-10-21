@@ -1,0 +1,47 @@
+# Fisica e comandi di Blastron (profilo "blastron", il predefinito) col
+# telefono: levetta sinistra per muoversi e saltare, levetta destra per
+# mirare (lasciando parte il colpo), teletrasporto sopra la levetta destra.
+# Freccia corta al posto della traiettoria, granata che rimbalza e si ferma.
+imposta prova_armi 2
+imposta comandi telefono
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_inizio
+
+# Rosso cammina con la levetta, poi la spinge in alto e salta (e risalta)
+levetta 80 0 0.6 02_levetta_destra
+levetta 30 80 0.5 03_levetta_salto
+aspetta 0.2
+foto 04_in_aria
+aspetta 2
+
+# levetta della mira riportata al centro: spenta, lasciando non parte niente
+levetta_mira 6 4 0.4 05_mira_spenta
+niente_evento fire 1
+
+# teletrasporto: pulsante sopra la levetta della mira, poi la levetta
+tocca 1208 257                      # TELE
+levetta_mira -30 30 0.5 06_mira_teletrasporto
+aspetta_evento orb 2
+aspetta_evento teleport 4
+aspetta 0.3
+foto 07_teletrasporto
+
+# Uovo di Fiamma: mira con la levetta (solo la freccia della potenza) e lancio
+tocca 640 62                        # barra delle armi: Uovo di Fiamma
+levetta_mira 45 60 0.8 08_freccia_potenza
+aspetta_evento grenade 2
+aspetta 0.8
+foto 09_granata
+aspetta_evento explosion 8
+aspetta 0.15
+foto 10_esplosione
+aspetta 0.5
+foto 11_ritirata
+
+aspetta_stato turno=2 fase=aim 15
+aspetta 0.5
+foto 12_turno_blu

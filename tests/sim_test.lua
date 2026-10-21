@@ -3,8 +3,13 @@
 package.path = "client/?.lua;" .. package.path
 
 local game = require "sim.game"
+local mischia = require "sim.mischia"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
+
+-- Quasi tutti i test sono scritti per i valori "megablast"; quelli del profilo
+-- "blastron" (il predefinito) sono in fondo.
+game.use_physics("megablast")
 
 local failures = 0
 local function check(cond, msg)
@@ -621,12 +626,232 @@ local function play2(seed)
 end
 check(play2(5) == play2(5), "armi delle casse e casse sono deterministiche")
 
+-- Profilo "blastron" ------------------------------------------------------------
+
+game.use_physics("blastron")
+local U = game.BLASTRON_UNIT
+
+-- Movimento: corsa 5 u/s, salto alto 5,2 u
+local bm = game.new(42, "isole")
+run(bm, 120)
+local br = bm.robots[1]
+local x0 = br.x
+run(bm, 60, { right = true })
+check(math.abs((br.x - x0) - 5 * U) < 2, string.format("blastron: corsa 5 u/s (%.1f px in 1 s)", br.x - x0))
+local top, base = br.y, br.y
+bm:step({ jump = true })
+for _ = 1, 200 do
+	bm:step()
+	top = math.max(top, br.y)
+end
+check(math.abs((top - base) - 5.2 * U) < 0.35 * U, string.format("blastron: salto alto 5,2 u (%.1f px)", top - base))
+
+-- Controllo in aria istantaneo; senza direzione la velocità resta
+local ba = game.new(42, "isole")
+run(ba, 120)
+local ar = ba.robots[1]
+ba:step({ jump = true, right = true })
+run(ba, 5, { right = true })
+check(ar.vx == ar.stats.air_speed, "blastron: in aria va subito a tutta corsa")
+ba:step({ left = true })
+check(ar.vx == -ar.stats.air_speed, "blastron: e si gira di colpo")
+ba:step()
+check(ar.vx == -ar.stats.air_speed and not ar.grounded, "blastron: senza direzione in aria la velocità resta")
+
+-- Esplosione: danno dal punto più vicino della scatola, spinta nulla nel colpo
+-- diretto, massima a metà raggio, metà danno a sé stessi
+local function blast_at(dx, owner)
+	local q = game.new(42, "isole")
+	run(q, 120)
+	local r = q.robots[2]
+	local y = sky_spot(q, 640, 60)
+	place(r, 640, y)
+	local hp = r.hp
+	-- il bordo destro della scatola (col cerchio, del quadrato attorno)
+	local edge = game.HURTBOX == "cerchio" and game.HURT_R + game.HURT_FAT or game.ROBOT_HALF_W
+	q:explode(640 + edge + dx, y + game.ROBOT_H / 2, owner, game.MISSILE_BLAST)
+	return r, hp - r.hp
+end
+local B = game.MISSILE_BLAST
+local d0r, d0 = blast_at(-1, 1)
+check(d0 == math.floor(B.damage + 0.5) and d0r.vx == 0 and d0r.vy == 0,
+	"blastron: colpo diretto, danno pieno e nessuna spinta")
+local half = B.damage_r / 2
+local dhr, dh = blast_at(half, 1)
+check(math.abs(dhr.vx + half * B.impulse * 0.5) < 0.01 and dhr.vy == 0,
+	string.format("blastron: a metà raggio spinta di %.0f px/s", -dhr.vx))
+check(dh == math.floor(B.damage_min + (B.damage - B.damage_min) * 0.5 + 0.5), "blastron: danno tra minimo e massimo")
+local _, ds = blast_at(-1, 2)
+check(ds == math.floor(B.damage * 0.5 + 0.5), "blastron: metà danno a sé stessi")
+
+-- Dove si viene colpiti: un cerchio a metà altezza, non la scatola
+local hb = game.new(42, "isole")
+local hr = hb.robots[2]
+local hcy = hr.y + game.ROBOT_H / 2
+check(hb:hits_robot(hr.x + game.HURT_R - 0.5, hcy, 1, 0) and not hb:hits_robot(hr.x + game.HURT_R + 0.5, hcy, 1, 0),
+	"blastron: il bersaglio è un cerchio di raggio HURT_R")
+check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "blastron: l'angolo in basso della scatola non conta")
+
+-- Mischia sulla mira: target = posizione del bersaglio rispetto ai piedi (in unità
+-- di Blastron), i robot restano fermi in aria; restituisce il tick del colpo o false
+local function melee_at(deg, tx, ty, weapon)
+	local q = game.new(42, "isole")
+	run(q, 120)
+	q:pop_events()
+	local pos = { { 0, 0 }, { tx * U, ty * U } }
+	local function hold()
+		for i, rb in ipairs(q.robots) do
+			rb.x, rb.y, rb.vx, rb.vy, rb.grounded = 640 + pos[i][1], 400 + pos[i][2], 0, 0, false
+		end
+	end
+	hold()
+	if weapon == "punch" then q.robots[1].ammo.punch = 1 end
+	q:step({ fire = { angle = math.rad(deg), power = 1, weapon = weapon or "sword" } })
+	for t = 1, 200 do
+		hold()
+		q:step()
+		for _, e in ipairs(q:pop_events()) do
+			if e.type == "sword_hit" or e.type == "punch_hit" then return t, q end
+		end
+	end
+	return false, q
+end
+local close = math.ceil(mischia.fendente.chiudi * 60 / mischia.fendente.fps)
+check(melee_at(0, 5, 0) == close, "blastron: il fendente colpisce quando si chiude la finestra (0,8 s)")
+check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "blastron: mirando dritto prende anche dietro e sopra la testa")
+check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "blastron: mirando in basso la lama scende davanti in basso")
+check(melee_at(60, 4, 5) and melee_at(-60, 0, -5) and not melee_at(60, 0, -5),
+	"blastron: il colpo gira con la mira")
+check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "blastron: mirando giù non prende chi è dietro")
+local pt, pq2 = melee_at(0, 2, 0, "punch")
+check(pt and pq2.robots[2].vy == game.PUNCH_LAUNCH and pq2.robots[2].vx == 0,
+	"blastron: il montante lancia dritto in alto")
+check(not melee_at(-60, 0, 4, "punch"), "blastron: il montante mirato in basso non prende chi è sopra")
+check(game.melee_ticks(mischia.fendente) == game.SWORD_TICKS and game.melee_ticks(mischia.montante) == game.PUNCH_TICKS,
+	"blastron: durate del fendente e del montante coerenti con le animazioni")
+
+-- Sparando il tempo del turno scende a 5 secondi
+local bt = game.new(42, "isole")
+run(bt, 30)
+bt:step({ fire = { angle = math.rad(60), power = 0.5 } })
+check(bt.retreat == game.RETREAT_TICKS, "blastron: dopo lo sparo restano 5 s")
+local bt2 = game.new(42, "isole")
+run(bt2, game.TURN_TICKS - 100)
+bt2:step({ fire = { angle = math.rad(60), power = 0.5 } })
+check(bt2.retreat < 100, "blastron: se restava meno tempo non se ne aggiunge")
+
+-- Danno da caduta oltre 40 u
+local bf = game.new(42, "isole")
+run(bf, 120)
+local fr2 = bf.robots[1]
+local hp0 = fr2.hp
+-- la mappa è alta 57,6 u: per avere spazio la soglia scende a 20 u
+local safe0 = game.FALL_SAFE
+game.FALL_SAFE = 20 * U
+local DROP = math.floor(28 * U)
+local fx, gy2
+for x = 60, game.WORLD_W - 60, 8 do
+	-- la terra più alta sotto il robot, largo 2 * ROBOT_HALF_W
+	local gy
+	for _, o in ipairs({ -game.ROBOT_HALF_W, 0, game.ROBOT_HALF_W }) do
+		local g = bf.terrain:ground_below(x + o, game.WORLD_H - 1)
+		if g and (not gy or g > gy) then gy = g end
+	end
+	if gy and gy + DROP < game.WORLD_H - game.ROBOT_H and not bf:robot_collides(x, gy + DROP)
+		and math.abs(x - bf.robots[2].x) > 4 * game.ROBOT_HALF_W then
+		fx, gy2 = x, gy
+		break
+	end
+end
+check(fx ~= nil, "blastron: c'è un punto da cui cadere")
+place(fr2, fx, gy2 + DROP)
+for _ = 1, 400 do
+	bf:step()
+	if fr2.grounded then break end
+end
+local fall = gy2 + DROP - fr2.y
+local expect = math.floor(math.min((fall - game.FALL_SAFE) * game.FALL_DAMAGE, game.FALL_DAMAGE_MAX) + 0.5)
+game.FALL_SAFE = safe0
+check(fr2.grounded and fall > 20 * U and expect > 0 and hp0 - fr2.hp == expect,
+	string.format("blastron: cadendo da %.0f px perde %d (%d)", fall, expect, hp0 - fr2.hp))
+local bf2 = game.new(42, "isole")
+run(bf2, 120)
+local sr = bf2.robots[1]
+bf2:step({ jump = true })
+run(bf2, 200)
+check(sr.hp == game.MAX_HP, "blastron: un salto non fa danno")
+
+-- Potenza: zona morta 20% e curva quadratica
+check(game.aim_power(0.2) == 0.1 and game.aim_power(1) == 1 and math.abs(game.aim_power(0.6) - 0.25) < 1e-9,
+	"blastron: potenza quadratica con zona morta")
+
+-- Casse a probabilità: ne cadono, e sempre negli stessi punti con lo stesso seed
+local function crates_seen(seed)
+	local q = game.new(seed, "isole")
+	local seen = {}
+	for i = 1, 12 * (game.TURN_TICKS + 200) do
+		q:step()
+		for _, e in ipairs(q:pop_events()) do
+			if e.type == "crate" then seen[#seen + 1] = e.x end
+		end
+		if q.phase == "over" then break end
+	end
+	return table.concat(seen, " ")
+end
+local cs = crates_seen(9)
+check(cs ~= "" and cs == crates_seen(9), "blastron: le casse cadono a caso ma uguali con lo stesso seed (" .. cs .. ")")
+
+-- Una partita intera con tutte le armi è deterministica anche con questo profilo
+check(play2(5) == play2(5), "blastron: partita deterministica")
+
+game.use_physics("megablast")
+
 -- Prestazioni: un cratere e 600 tick di simulazione
 local t = os.clock()
 local g4 = game.new(5, "casuale")
 for i = 1, 600 do g4:step({ right = i % 2 == 0 }) end
 for i = 1, 20 do g4.terrain:carve(100 + i * 50, 200, 30) end
 print(string.format("info 600 tick + 20 crateri in %.1f ms", (os.clock() - t) * 1000))
+
+-- Levette del telefono (client/battaglia/levette.lua)
+do
+	local levette = require "battaglia.levette"
+	local s = levette.new()
+	levette.muovi(s, 0.1, 0)
+	check(not s.moving, "levetta: al 10% di lato non cammina")
+	levette.muovi(s, 0.5, 0)
+	check(s.moving and s.dir == 1, "levetta: di lato cammina a destra")
+	local jumped = levette.muovi(s, 0.5, 0.5)
+	check(s.moving and s.jumping and jumped, "levetta: in diagonale cammina e salta")
+	check(not levette.muovi(s, 0.5, 0.55), "levetta: il salto parte una volta sola")
+	levette.muovi(s, 0.05, 0.6)
+	check(not s.moving and s.jumping, "levetta: dritta in alto salta sul posto")
+	levette.muovi(s, -0.6, -0.1)
+	check(s.moving and s.dir == -1 and not s.jumping, "levetta: in basso a sinistra cammina e non salta")
+	levette.muovi(s, -0.05, 0)
+	check(not s.moving, "levetta: tornata al centro si ferma")
+	levette.muovi(s, 0.2, -0.6)
+	check(not s.moving, "levetta: verso il basso serve il 25% di lato")
+
+	local a = levette.new()
+	levette.mira(a, 0.15, 0)
+	check(not a.active, "mira: sotto il 20% spenta")
+	levette.mira(a, 0, -0.6)
+	check(a.active and math.abs(a.angle + math.pi / 2) < 1e-6 and math.abs(a.f - 0.5) < 1e-6,
+		"mira: accesa, verso il basso, potenza 0,5 al 60%")
+	levette.mira(a, 0.15, 0)
+	check(a.active, "mira: tra il 10% e il 20% resta accesa")
+	levette.mira(a, 0.05, 0)
+	check(not a.active, "mira: sotto il 10% si spegne")
+
+	-- lo scivolamento del pollice nell'ultimo istante non conta
+	local r = levette.new()
+	for i = 0, 30 do levette.registra(r, i / 60, i < 28 and 1.0 or 2.0, 0.7, i < 30) end
+	local h = levette.al_rilascio(r, 30 / 60)
+	check(h and h.angle == 1.0 and h.active, "mira: al rilascio vale la mira di 50 ms prima")
+	levette.reset(r)
+	check(levette.al_rilascio(r, 1) == nil, "mira: dopo reset nessuna mira registrata")
+end
 
 if failures > 0 then
 	print(failures .. " test falliti")

@@ -26,6 +26,30 @@ key_trigger {
   input: KEY_SPACE
   action: "jump"
 }
+key_trigger {
+  input: KEY_T
+  action: "teleport"
+}
+key_trigger {
+  input: KEY_1
+  action: "arma1"
+}
+key_trigger {
+  input: KEY_2
+  action: "arma2"
+}
+key_trigger {
+  input: KEY_3
+  action: "arma3"
+}
+key_trigger {
+  input: KEY_4
+  action: "arma4"
+}
+key_trigger {
+  input: KEY_5
+  action: "arma5"
+}
 mouse_trigger {
   input: MOUSE_BUTTON_LEFT
   action: "touch"
@@ -33,4 +57,8 @@ mouse_trigger {
 mouse_trigger {
   input: MOUSE_BUTTON_RIGHT
   action: "cancel"
+}
+touch_trigger {
+  input: TOUCH_MULTI
+  action: "multitouch"
 }
