@@ -13,7 +13,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 | Cartella | Cosa c'è |
 |---|---|
-| `scoria/` | 7 pezzi del corpo (128 px di altezza), `scoria_nucleo_luce.png`, 6 occhi (`scoria_occhio_<espressione>.png`), `scoria_rig.json` con perni, agganci e ordine di disegno |
+| `personaggio/` | Il personaggio a pezzi (`pg_<pezzo>.png`, 1 px per unità del rig alto 128): testa con maschera, collo, busto, Nucleo, bacino, spallacci, braccia, avambracci, mani in tre pose (aperta, artigli, pugno), cosce, stinchi, piedi, `pg_occhio.png` (luce nel buco della maschera). Li fa `strumenti/grafica/personaggio_esporta.py` dai master in `grafica/personaggio/master/`, con lo scheletro `client/battaglia/personaggio_rig.lua` |
 | `set/` | 4 set (corvo, fornace, leviatano, vuoto) × 5 pezzi (maschera, corazza, mantello, gambali davanti/dietro). Per ogni pezzo: base (livello I), `_finiture` (ottone, livello II), `_luce` (bagliore, livello III), `_icona`. `<set>_maschera_occhio.png` sostituisce l'occhio quando si indossa la maschera; la maschera nasconde le corna. Posizioni in `set_rig.json` |
 | `armi/` | 6 armi con base, `_luce` e `_icona`. `armi_rig.json` ha il punto dell'impugnatura e gli angoli del fendente della Lama di Nucleo (da 205° dietro la schiena a -35° davanti) |
 | `esplosioni/` | `esplosione_base_12x256.png` (flipbook 12 fotogrammi da 256 px), fumo e fuoco additivo come livelli separati |
@@ -22,14 +22,15 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 | `ui/icone/` | 20 icone 128 px (`icona_<nome>.png`) |
 | `ui/sfondi/` | Sfondi delle schermate: home, forgia, podio (4 gradini), campagna, caricamento |
 | `ui/` | `logo.png` e `logo_luce.png` |
-| `menu/` | Versioni per la home, fatte da `strumenti/grafica/menu.py`: kit e logo rimpiccioliti, `home_sfondo.png` largo 2048, Scoria e Lanciarune ai master (4x) in `menu/scoria/` |
+| `menu/` | Versioni per la home, fatte da `strumenti/grafica/menu.py`: kit e logo rimpiccioliti, `home_sfondo.png` largo 2048, il personaggio a 4 px per unità in `menu/personaggio/`, le armi grandi in `menu/scoria/` |
 | `font/` | Cinzel Bold (licenza OFL in `OFL_Cinzel.txt`), il font dei titoli della home |
 
 ## In battaglia
 
 - `mappe/isole_cimitero/terreno.png` (superficie con sopra le ossa) e `interno_mezzo.png` (parete dei crateri a metà risoluzione) li prepara `strumenti/grafica/battaglia.py`, insieme a `fx/bagliore.png` (alone bianco per missile e mirino).
 - La mappa è una mesh con lo shader `client/battaglia/terreno.fp`: sfondo lontano, terreno ritagliato dalla maschera viva, parete e brace dove si è scavato.
-- La Scoria è montata in `client/battaglia/scoria.lua` (nodi GUI, animazione nel codice); atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
+- Il personaggio è montato in `client/battaglia/scoria.lua`: nodi GUI sullo scheletro di `personaggio_rig.lua`, animazioni nel codice (molle e IK a due ossa per braccia e gambe); atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
+- Per cambiare perni o posa di riposo: `strumenti/grafica/personaggio_rig.json`, anteprima con `personaggio_anteprima.py`, poi `personaggio_esporta.py`.
 
 ## Nella home
 

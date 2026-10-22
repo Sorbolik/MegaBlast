@@ -467,7 +467,12 @@ local function handle_event(self, e)
 		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 1, row_min - 1,
 			math.floor((e.x + e.r) / CELL) + 1, row_max + 1)
 		explosion(self, e.x, e.y, e.r)
+	elseif e.type == "fire" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
+		-- rinculo del Lanciarune, slancio del lancio, raffica di schegge
+		local kind = e.type == "fire" and "missile" or (e.type == "shards" and "shards" or "throw")
+		scoria.fire(self.robots[e.robot].rig, kind)
 	elseif e.type == "teleport" then
+		scoria.teleport(self.robots[e.robot].rig)
 		if self.mode == "online" then
 			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
 			self.snap[e.robot] = true
@@ -489,7 +494,8 @@ local function handle_event(self, e)
 			show_message(self, "Turno di " .. NAMES[e.robot])
 		end
 	elseif e.type == "death" then
-		scoria.set_enabled(self.robots[e.robot].rig, false)
+		-- crolla e svanisce da solo
+		scoria.die(self.robots[e.robot].rig)
 		gui.set_enabled(self.robots[e.robot].hp, false)
 	elseif e.type == "over" then
 		self.winner = e.winner

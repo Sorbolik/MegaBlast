@@ -9,6 +9,7 @@ bash strumenti/simula/prepara.sh          # una volta: Java 25, bob.jar 1.14.0, 
 python3 strumenti/simula/simula.py        # controlli, test, build e partita con lo scenario base
 python3 strumenti/simula/simula.py -s strumenti/simula/scenari/mio.txt
 python3 strumenti/simula/simula.py --solo-build    # senza avviare il gioco
+python3 strumenti/simula/simula.py --scala 2 -s strumenti/simula/scenari/personaggio.txt   # schermo 2560 x 1440, personaggio da vicino
 ```
 
 Nelle sessioni cloud `prepara.sh` parte da solo all'avvio
@@ -53,12 +54,12 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 |---|---|
 | `aspetta S` | aspetta S secondi |
 | `foto NOME` | salva `foto/NOME.png` |
-| `zoom NOME` | foto ingrandita 2x attorno al robot di turno |
+| `zoom NOME [Z]` | foto ingrandita Z volte (2 se non si dice) attorno al robot di turno |
 | `tocca X Y` | tocco breve (pulsanti, menu) |
-| `tieni TASTO S` | tiene premuto un tasto: `sinistra`, `destra`, `salta`, o un nome di xdotool |
+| `tieni TASTO S [ZOOM] [Z]` | tiene premuto un tasto: `sinistra`, `destra`, `salta`, o un nome di xdotool; facoltativamente fa lo zoom ZOOM prima di lasciarlo |
 | `premi TASTO` | pressione breve |
 | `trascina X1 Y1 X2 Y2 [S]` | trascina il dito |
-| `mira DX DY [S] [FOTO]` | tiene il dito a (DX, DY) dal robot di turno per S secondi (la mira), facoltativamente scatta FOTO, poi lascia: spara con l'arma scelta |
+| `mira DX DY [S] [FOTO] [Z]` | tiene il dito a (DX, DY) dal robot di turno per S secondi (la mira), facoltativamente scatta FOTO (con Z, uno zoom Z volte invece della foto intera), poi lascia: spara con l'arma scelta |
 | `levetta DX DY S [FOTO]` | comandi del telefono (`imposta comandi telefono`): appoggia il dito sulla levetta del movimento (`115 117`), lo sposta di (DX, DY) e lo tiene S secondi: di lato cammina, in alto salta (e risalta), facoltativamente scatta FOTO prima di lasciare |
 | `levetta_mira DX DY S [FOTO]` | come `levetta`, ma sulla levetta della mira (`1165 117`): oltre il 20% della corsa (19 px) si accende e lasciando spara; sotto il 10% si spegne |
 | `annulla DX DY [FOTO]` | mira a (DX, DY) dal robot col sinistro, preme il destro (annulla), facoltativamente scatta FOTO, poi lascia il sinistro |

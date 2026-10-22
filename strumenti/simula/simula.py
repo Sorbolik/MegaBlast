@@ -36,6 +36,8 @@ CACHE = Path(os.environ.get("MEGABLAST_CACHE", Path.home() / ".cache" / "megabla
 BOB = CACHE / "bob.jar"
 JAVA = Path("/usr/lib/jvm/java-25-openjdk-amd64/bin/java")
 W, H = 1280, 720
+# lo schermo virtuale è S volte più grande (--scala): come un telefono ad alta densità
+S = 1
 
 # Nomi comodi dei tasti (quelli di input/game.input_binding)
 TASTI = {"sinistra": "Left", "destra": "Right", "salta": "space", "su": "Up"}
@@ -77,11 +79,12 @@ def test_sim():
     if not lua:
         info("2. test della simulazione saltati: manca luajit")
         return
-    info("2. test della simulazione")
-    r = esegui([lua, "tests/sim_test.lua"], cwd=REPO)
-    sys.stdout.write(r.stdout[-2000:] + r.stderr[-2000:])
-    if r.returncode != 0:
-        raise Fallito("i test della simulazione falliscono")
+    info("2. test della simulazione e del personaggio")
+    for test in ("tests/sim_test.lua", "tests/scoria_test.lua"):
+        r = esegui([lua, test], cwd=REPO)
+        sys.stdout.write(r.stdout[-2000:] + r.stderr[-2000:])
+        if r.returncode != 0:
+            raise Fallito(f"i test di {test} falliscono")
 
 
 def impostazioni(scenario):
@@ -138,7 +141,7 @@ class Gioco:
             n += 1
         self.display = f":{n}"
         self.env = dict(os.environ, DISPLAY=self.display, LANG="C.UTF-8")
-        self.xvfb = subprocess.Popen(["Xvfb", self.display, "-screen", "0", f"{W}x{H}x24", "-nolisten", "tcp"],
+        self.xvfb = subprocess.Popen(["Xvfb", self.display, "-screen", "0", f"{W * S}x{H * S}x24", "-nolisten", "tcp"],
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for _ in range(50):
             if esegui(["xdpyinfo"], env=self.env).returncode == 0:
@@ -147,7 +150,7 @@ class Gioco:
         if video:
             self.rec = subprocess.Popen(
                 ["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-framerate", "30",
-                 "-video_size", f"{W}x{H}", "-i", self.display, "-c:v", "libx264", "-preset", "ultrafast",
+                 "-video_size", f"{W * S}x{H * S}", "-i", self.display, "-c:v", "libx264", "-preset", "ultrafast",
                  "-pix_fmt", "yuv420p", str(out / "video.mp4")],
                 stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=self.env)
         self.log = open(self.log_path, "w")
@@ -165,6 +168,9 @@ class Gioco:
         if not self.win:
             raise Fallito("la finestra del gioco non si è aperta")
         esegui(["xdotool", "windowmove", self.win, "0", "0", "windowfocus", self.win], env=self.env)
+        if S != 1:
+            # la finestra grande come lo schermo: il gioco disegna a S volte la risoluzione
+            esegui(["xdotool", "windowsize", "--sync", self.win, str(W * S), str(H * S)], env=self.env)
 
     # log ------------------------------------------------------------------------
     def leggi(self):
@@ -200,7 +206,7 @@ class Gioco:
 
     def punta(self, x, y):
         # coordinate del gioco (y verso l'alto) -> schermo (y verso il basso)
-        self.xdo("mousemove", "--sync", round(x), round(H - y))
+        self.xdo("mousemove", "--sync", round(x * S), round((H - y) * S))
 
     def robot(self):
         self.leggi()
@@ -210,11 +216,25 @@ class Gioco:
         return int(self.stato["x"]), int(self.stato["y"]) + 8
 
     def scatta(self, nome):
-        r = esegui(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", f"{W}x{H}",
+        r = esegui(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", f"{W * S}x{H * S}",
                     "-i", self.display, "-frames:v", "1", str(self.foto / f"{nome}.png")], env=self.env)
         if r.returncode != 0:
             raise Fallito(f"foto {nome} non riuscita: {r.stderr.strip()}")
         info(f"   foto {nome}.png")
+
+    def zoom(self, nome, z=2):
+        """foto ingrandita z volte attorno al robot di turno"""
+        x, y = self.robot()
+        cw, ch = round(800 / z), round(450 / z)
+        cx = min(max(x - cw / 2, 0), W - cw)
+        cy = min(max(H - y - ch * 0.62, 0), H - ch)
+        cx, cy, cw, ch = round(cx * S), round(cy * S), cw * S, ch * S
+        r = esegui(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", f"{W * S}x{H * S}",
+                    "-i", self.display, "-frames:v", "1", "-vf", f"crop={cw}:{ch}:{cx}:{cy},scale=800:450",
+                    str(self.foto / f"{nome}.png")], env=self.env)
+        if r.returncode != 0:
+            raise Fallito(f"zoom {nome} non riuscito: {r.stderr.strip()}")
+        info(f"   zoom {nome}.png")
 
     def chiudi(self):
         if self.rec:
@@ -256,16 +276,7 @@ def comando(g, riga):
     elif c == "foto":
         g.scatta(a[0])
     elif c == "zoom":
-        # foto ingrandita 2x attorno al robot di turno
-        x, y = g.robot()
-        cx = min(max(x - 200, 0), W - 400)
-        cy = min(max(H - y - 140, 0), H - 225)
-        r = esegui(["ffmpeg", "-loglevel", "error", "-y", "-f", "x11grab", "-video_size", f"{W}x{H}",
-                    "-i", g.display, "-frames:v", "1", "-vf", f"crop=400:225:{cx}:{cy},scale=800:450",
-                    str(g.foto / f"{a[0]}.png")], env=g.env)
-        if r.returncode != 0:
-            raise Fallito(f"zoom {a[0]} non riuscito: {r.stderr.strip()}")
-        info(f"   zoom {a[0]}.png")
+        g.zoom(a[0], num(1, 2))
     elif c == "tocca":
         g.punta(num(0), num(1))
         g.xdo("mousedown", 1)
@@ -276,6 +287,9 @@ def comando(g, riga):
         tasto = TASTI.get(a[0], a[0])
         g.xdo("keydown", tasto)
         g.attendi(num(1, 0.6) if c == "tieni" else 0.08)
+        if c == "tieni" and len(a) > 2:
+            # zoom prima di lasciare il tasto (per vedere il movimento)
+            g.zoom(a[2], num(3, 2))
         g.xdo("keyup", tasto)
     elif c == "trascina":
         g.punta(num(0), num(1))
@@ -293,7 +307,9 @@ def comando(g, riga):
         g.attendi(0.1)
         g.punta(x + num(0) + 1, y + num(1))  # un movimento per aggiornare la mira
         g.attendi(num(2, 0.5))
-        if len(a) > 3:
+        if len(a) > 4:
+            g.zoom(a[3], num(4))
+        elif len(a) > 3:
             g.scatta(a[3])
         g.xdo("mouseup", 1)
     elif c in ("levetta", "levetta_mira"):
@@ -395,7 +411,10 @@ def main():
     ap.add_argument("-s", "--scenario", type=Path, default=QUI / "scenari" / "base.txt")
     ap.add_argument("--solo-build", action="store_true", help="controlli, test e build, senza avviare il gioco")
     ap.add_argument("--senza-video", action="store_true")
+    ap.add_argument("--scala", type=int, default=1, help="schermo S volte più grande (foto ad alta densità)")
     args = ap.parse_args()
+    global S
+    S = args.scala
     out = REPO / "simulazione"
     out.mkdir(parents=True, exist_ok=True)
     problemi = []

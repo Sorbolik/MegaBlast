@@ -1,0 +1,51 @@
+# Il personaggio da vicino: riposo, camminata, salto, mira, spada, colpi.
+# Meglio con lo schermo grande: python3 strumenti/simula/simula.py --scala 2 -s strumenti/simula/scenari/personaggio.txt
+
+aspetta 2
+foto 01_home
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.2
+zoom 02_riposo 5
+tieni destra 0.3 03_passo_a 5
+tieni destra 0.45 04_passo_b 5
+tieni sinistra 0.5 05_passo_indietro 5
+aspetta 0.6
+premi salta
+aspetta 0.12
+zoom 06_salto_su 5
+aspetta 0.35
+zoom 07_salto_giu 5
+aspetta 1
+mira 200 60 0.6 08_mira_missile 5
+aspetta 0.05
+zoom 09_rinculo 5
+aspetta_evento explosion 20
+tieni sinistra 0.6
+
+aspetta_stato turno=2 fase=aim 15
+aspetta 0.8
+zoom 10_colpito_riposo 5
+tocca 687 62                        # Lama di Nucleo
+aspetta 0.4
+zoom 11_spada_riposo 5
+mira -120 0 0.4 12_spada_carica 5
+aspetta 0.08
+zoom 13_fendente_a 5
+aspetta 0.08
+zoom 14_fendente_b 5
+aspetta 0.5
+zoom 15_dopo_fendente 5
+
+# di nuovo Rosso: Uovo e Sciame non ci sono senza casse, il teletrasporto sì
+aspetta_stato turno=1 fase=aim 15
+aspetta 0.5
+tocca 1180 62                       # pulsante TELE
+aspetta 0.3
+zoom 16_globo_in_mano 5
+mira 90 30 0.4 17_mira_globo 5
+aspetta_evento teleport 20         # a scala 2 il gioco va più lento (render software)
+aspetta 0.05
+zoom 18_arrivo 5
+aspetta 0.6
+zoom 19_dopo_arrivo 5

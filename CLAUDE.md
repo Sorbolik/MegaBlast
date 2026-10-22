@@ -22,4 +22,5 @@ simulazione non ha trovato, aggiungi lì la regola.
 Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
 in [.claude/skills/](.claude/skills/README.md).
 
-Altri test: `luajit tests/sim_test.lua` (simulazione), `go test ./server/` (server).
+Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/scoria_test.lua` (personaggio),
+`go test ./server/` (server).
