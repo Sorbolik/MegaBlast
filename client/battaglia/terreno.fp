@@ -24,6 +24,8 @@ const mediump vec2 CELLA = vec2(1.0 / 640.0, 1.0 / 360.0);
 const mediump vec3 BRACE = vec3(1.0, 0.478, 0.102);
 const mediump vec3 BRACE_CHIARA = vec3(1.0, 0.769, 0.42);
 const mediump vec3 ROCCIA = vec3(0.23, 0.21, 0.26);
+const mediump float SFONDO_LUCE = 0.72;
+const mediump float SFONDO_COLORE = 0.8;
 
 // quanto terreno c'è attorno a uv, a distanza r celle (8 direzioni)
 mediump float vicino(mediump vec2 uv, mediump float r)
@@ -44,7 +46,10 @@ mediump float vicino(mediump vec2 uv, mediump float r)
 void main()
 {
     mediump vec2 m = texture(maschera, var_uv).rg;
+    // lo sfondo lontano un po' più scuro e spento: i personaggi e il terreno
+    // davanti si staccano meglio
     mediump vec3 col = texture(sfondo, var_uv).rgb;
+    col = mix(vec3(dot(col, vec3(0.299, 0.587, 0.114))), col, SFONDO_COLORE) * SFONDO_LUCE;
 
     mediump vec4 ter;
     if (opzioni.x > 0.5) {

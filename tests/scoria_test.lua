@@ -78,8 +78,33 @@ end
 
 passi(120)
 check(tutto_finito(), "riposo: valori finiti")
-check(math.abs(suola(s, "davanti") + 3) < 1.5 and math.abs(suola(s, "dietro") + 3) < 1.5,
+check(math.abs(suola(s, "davanti") + 2) < 0.5 and math.abs(suola(s, "dietro") + 2) < 0.5,
 	string.format("riposo: piedi a terra (%.2f, %.2f)", suola(s, "davanti"), suola(s, "dietro")))
+
+-- piedi sul terreno vero: in discesa e su una salita ogni piede tocca il
+-- terreno sotto di sé, anche se la scatola del robot poggia altrove
+local function prova_terreno(nome, solid)
+	st.terreno = { solid = function(_, x, y) return solid(x, y) end }
+	passi(120)
+	local ok, msg = true, ""
+	for _, lato in ipairs({ "davanti", "dietro" }) do
+		local fx, fy = mondo(s["caviglia_" .. lato], 0, -RIG.pezzi["caviglia_" .. lato].suola)
+		-- dal rig al mondo: la radice è in (st.x, st.y) con scala s.scale
+		local wx, wy = st.x + fx * s.scale, st.y + fy * s.scale
+		local gy = math.floor(wy)
+		while solid(wx, gy + 0.5) do gy = gy + 1 end
+		while not solid(wx, gy - 0.5) do gy = gy - 1 end
+		local d = wy - gy
+		ok = ok and math.abs(d + 2 * s.scale) < 1.2
+		msg = msg .. string.format(" %s %.2f", lato, d)
+	end
+	check(ok, "terreno " .. nome .. ": i piedi lo toccano (" .. msg .. ")")
+	st.terreno = nil
+end
+prova_terreno("più basso di 4", function(_, y) return y < -4 end)
+prova_terreno("in salita", function(x, y) return y < x * 0.5 end)
+prova_terreno("in discesa", function(x, y) return y < -x * 0.5 end)
+passi(60)
 
 -- camminata: un piede si alza, l'altro resta giù
 local alto, basso = -1e9, 1e9

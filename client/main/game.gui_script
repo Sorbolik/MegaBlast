@@ -881,6 +881,7 @@ local function render(self, dt)
 		local st = r.st
 		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, vx
 		st.facing = rb.facing
+		st.terreno = g.terrain
 		st.aim = nil
 		if aiming then
 			st.aim = self.aim_angle

@@ -27,7 +27,7 @@ local RIG = require "battaglia.personaggio_rig"
 local M = {}
 
 -- Altezza nel mondo: il rig è alto 128 unità (dai piedi alle corna), nel mondo così
-M.SCALE = 0.26
+M.SCALE = 0.39
 
 local ATLAS = "battaglia"
 local P = RIG.pezzi
@@ -116,7 +116,8 @@ local ARMI = {
 	missile = { img = "lanciarune", w = 64, h = 53, presa = { 20, 27 }, scala = 0.36, sopra = true, mano = "pugno",
 		mira = 0.9, bocca = { 58, 24 }, riposo = -10 * RAD, braccio = { -0.75, 0.66 } },
 	-- con la spada in mano e senza mirare la lama sta bassa davanti, punta verso terra
-	sword = { img = "lama_di_nucleo", w = 192, h = 43, presa = { 29.4, 22.5 }, scala = 0.42, mano = "pugno", mira = 0.92,
+	-- la punta arriva a circa 90 unità dalla spalla: nel mondo è la portata del fendente (40)
+	sword = { img = "lama_di_nucleo", w = 192, h = 43, presa = { 29.4, 22.5 }, scala = 0.31, mano = "pugno", mira = 0.92,
 		luce = 0.6, riposo = -40 * RAD },
 	teleport = { img = "passo_ombra", w = 64, h = 57, presa = { 20, 30 }, scala = 0.24, mano = "artigli", mira = 0.88,
 		braccio = { -0.9, 0.7 } },
@@ -128,7 +129,7 @@ local ARMI = {
 		mano = "artigli", mira = 0.92, battaglia = true },
 }
 -- di quanto i piedi affondano nel terreno: gli artigli toccano la superficie disegnata
-local AFFONDO = 3
+local AFFONDO = 2
 
 -- Passo: lunghezza (unità del rig) e altezza a cui si alza il piede
 local PASSO, ALZATA = 30, 7
@@ -250,6 +251,11 @@ function M.new(color, atlas, k)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
 	local soft = vmath.vector4(color.x, color.y, color.z, 0.35)
 
+	-- alone del colore della squadra dietro al corpo: stacca il personaggio
+	-- dallo sfondo scuro e dice di che squadra è
+	s.c_alone = vmath.vector4(color.x, color.y, color.z, 0.22)
+	s.alone = glow("bagliore", s.root, 0, 64, 120, 150, s.c_alone)
+
 	-- Ordine di disegno: braccio e gamba dietro, bacino, gamba davanti, busto,
 	-- testa, braccio davanti. Il bacino è la radice dello scheletro; il busto
 	-- (con braccia e testa) è figlio del bacino, ma il braccio dietro va
@@ -319,6 +325,7 @@ function M.reset(s)
 	s.last_y = nil
 	s.ground = true
 	s.aria = 0
+	s.terra_d, s.terra_t = 0, 0
 	s.blink = 2 + math.random() * 3
 	s.colpo, s.colpo_t, s.colpo_a = nil, 0, 0
 	s.morte, s.morto = nil, nil
@@ -381,8 +388,24 @@ local function posa_gamba(s, G, x, y, fa)
 	rot(s[G.j3], (fa - r2) * DEG)
 end
 
+-- Altezza del terreno sotto il punto x del rig (unità del rig, rispetto ai
+-- piedi del robot): si cerca da TERRA_SU sopra a TERRA_GIU sotto, a passi di 1
+-- pixel del mondo. 0 se lì sotto non c'è niente (il piede resta dov'è).
+local TERRA_SU, TERRA_GIU = 8, 14
+local function terra(s, st, x)
+	local wx = st.x + x * s.scale * st.facing
+	local t = st.terreno
+	for d = TERRA_SU, -TERRA_GIU, -1 do
+		if t:solid(wx, st.y + d - 0.5) then
+			return d / s.scale
+		end
+	end
+	return 0
+end
+
 -- st: x, y (piedi, mondo), facing (-1/1), grounded, moving (velocità x vista),
---     aim (angolo in radianti o nil), expression (stringa o nil)
+--     aim (angolo in radianti o nil), expression (stringa o nil),
+--     terreno (facoltativo: oggetto con solid(x, y), per appoggiare i piedi)
 function M.update(s, dt, st)
 	if s.morto then return end
 	dt = min(dt, 1 / 20)
@@ -423,7 +446,7 @@ function M.update(s, dt, st)
 	s.aria = ground and 0 or min(1, s.aria + dt * 6)
 
 	-- Posa di base: in piedi, respira --------------------------------------------
-	local by = sin(t * 2.2) * 0.6 - 1
+	local by = sin(t * 2.2) * 0.6 - 2.5
 	local bx, lean = 0, sin(t * 1.1) * 1
 	local collo, testa = sin(t * 0.7) * 2, sin(t * 0.7 + 0.4) * 3 + sin(t * 1.9) * 1.2
 	local fth, fd, fh = DAVANTI.th + sin(t * 2.2 - 0.7) * 0.04, DAVANTI.d, DAVANTI.h + sin(t * 2.2 - 1.2) * 0.1
@@ -621,8 +644,22 @@ function M.update(s, dt, st)
 	molle(s, dt)
 	local x = s.x
 
+	-- Piedi sul terreno vero: la scatola del robot è dritta, quindi su una
+	-- salita o su un bordo poggia su un angolo e il centro resta sospeso.
+	-- Ogni piede cerca il terreno sotto di sé; il bacino scende quanto serve
+	-- perché il piede più basso ci arrivi. Solo disegno, la fisica non cambia.
+	local td, tt = 0, 0
+	if st.terreno and ground and not s.morte then
+		td = terra(s, st, GAMBA_D.x + pdx)
+		tt = terra(s, st, GAMBA_T.x + ptx)
+	end
+	local kt = min(1, dt * 18)
+	s.terra_d = s.terra_d + (td - s.terra_d) * kt
+	s.terra_t = s.terra_t + (tt - s.terra_t) * kt
+	local giu = min(0, s.terra_d, s.terra_t)
+
 	-- corpo: il bacino sale e scende, il busto si piega in vita
-	local bacino_y = RIG.bacino_y + x[BY]
+	local bacino_y = RIG.bacino_y + x[BY] + giu
 	pos(s.bacino, x[BX], bacino_y)
 	scale(s.bacino, 2 - x[SQ], x[SQ])
 	rot(s.busto, x[BR])
@@ -635,8 +672,8 @@ function M.update(s, dt, st)
 	-- gambe: i piedi a terra (o dove dice il passo), nel sistema del bacino
 	local sq_y = 1 / x[SQ]
 	local gy = -(bacino_y + AFFONDO) * sq_y
-	posa_gamba(s, GAMBA_D, GAMBA_D.x + pdx - x[BX], gy + (GAMBA_D.suola + pdy) * sq_y, pda)
-	posa_gamba(s, GAMBA_T, GAMBA_T.x + ptx - x[BX], gy + (GAMBA_T.suola + pty) * sq_y, pta)
+	posa_gamba(s, GAMBA_D, GAMBA_D.x + pdx - x[BX], gy + (GAMBA_D.suola + pdy + s.terra_d) * sq_y, pda)
+	posa_gamba(s, GAMBA_T, GAMBA_T.x + ptx - x[BX], gy + (GAMBA_T.suola + pty + s.terra_t) * sq_y, pta)
 
 	-- braccio davanti: la posa delle molle, verso la mira quanto aimk.
 	-- Mirando segue l'angolo esatto senza ritardo: è quello del colpo.
@@ -669,6 +706,9 @@ function M.update(s, dt, st)
 	rot(s.spallaccio_davanti, clamp(spalla_f * DEG * 0.2, -20, 20))
 	rot(s.spallaccio_dietro, clamp(spalla_t * DEG * 0.2, -20, 20))
 
+	-- l'alone segue il corpo e respira col Nucleo
+	pos(s.alone, x[BX], 30 + bacino_y * 0.5)
+
 	-- occhio e Nucleo
 	local oc = x[OCCHIO]
 	scale(s.occhio, 0.85 + 0.15 * oc, oc)
@@ -676,6 +716,8 @@ function M.update(s, dt, st)
 	gui.set_color(s.occhio, s.c_occhio)
 	local pulse = 0.82 + 0.18 * sin(t * 3.1)
 	if e == "poca_vita" then pulse = pulse * occhio_a end
+	s.c_alone.w = 0.16 + 0.08 * pulse
+	gui.set_color(s.alone, s.c_alone)
 	scale(s.alone_nucleo, pulse, pulse)
 	s.c_nucleo.w = 0.25 + 0.35 * pulse
 	gui.set_color(s.luce_nucleo, s.c_nucleo)

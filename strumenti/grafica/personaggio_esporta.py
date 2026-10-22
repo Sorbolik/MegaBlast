@@ -23,7 +23,7 @@ OUT_B = os.path.join(RADICE, 'client/assets/personaggio/')
 OUT_H = os.path.join(RADICE, 'client/assets/menu/personaggio/')
 LUA = os.path.join(RADICE, 'client/battaglia/personaggio_rig.lua')
 ALTEZZA = 128
-PX_BATTAGLIA = 1
+PX_BATTAGLIA = 2.5
 PX_HOME = 4
 
 
@@ -34,8 +34,20 @@ def bordo(img, p=2):
     return t
 
 
+# I pezzi sono quasi neri: schiariamo le ombre e alziamo un po' il contrasto,
+# così il personaggio si stacca dallo sfondo scuro (i contorni restano neri)
+LUCE_GAMMA, LUCE_CONTRASTO = 0.78, 1.12
+
+
+def schiarisci(img):
+    a = np.array(img).astype(float) / 255
+    x = a[..., :3] ** LUCE_GAMMA
+    a[..., :3] = np.clip((x - 0.5) * LUCE_CONTRASTO + 0.5, 0, 1)
+    return Image.fromarray((a * 255 + 0.5).astype(np.uint8))
+
+
 def salva(img, nome, k):
-    """scala i pezzi master di k; restituisce la misura in unità del rig"""
+    """scala i pezzi master di k"""
     for out, px in ((OUT_B, PX_BATTAGLIA), (OUT_H, PX_HOME)):
         s = k * px
         w, h = max(2, round(img.width * s)), max(2, round(img.height * s))
@@ -60,7 +72,7 @@ def main():
     print('altezza master %.0f px, k = %.4f, bacino a %.1f unità da terra' % (terra - top, k, terra * k))
 
     M = A.MASTER
-    def img(n): return Image.open(M + n + '.png').convert('RGBA')
+    def img(n): return schiarisci(Image.open(M + n + '.png').convert('RGBA'))
 
     dati = {}
     for n, p in rig.items():

@@ -284,11 +284,11 @@
   "spalla_dietro": -4,
   "gomito_dietro": 30,
   "polso_dietro": 8,
-  "anca_davanti": 45,
-  "ginocchio_davanti": -80,
-  "caviglia_davanti": 35,
-  "anca_dietro": 25,
-  "ginocchio_dietro": -70,
-  "caviglia_dietro": 45
+  "anca_davanti": 24,
+  "ginocchio_davanti": -20,
+  "caviglia_davanti": -4,
+  "anca_dietro": -28,
+  "ginocchio_dietro": -14,
+  "caviglia_dietro": 42
  }
 }
