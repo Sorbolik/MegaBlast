@@ -497,8 +497,8 @@ function M.update(s, dt, st)
 		local q = s.aria
 		local kv = clamp(vy, -1, 1)
 		local su = max(0, kv)
-		pdx, pdy, pda = 5 * q, (6 + 10 * su) * q, -0.35 * q
-		ptx, pty, pta = -4 * q, (3 + 6 * su) * q, -0.5 * q
+		pdx, pdy, pda = -4 * q, (6 + 10 * su) * q, -0.35 * q
+		ptx, pty, pta = 5 * q, (3 + 6 * su) * q, -0.5 * q
 		by = by + 2 * q
 		lean = lean - 8 * vx + kv * 4
 		fth = fth + (-0.3 - (1 - kv) * 0.45 - fth) * q
@@ -580,7 +580,7 @@ function M.update(s, dt, st)
 		-- con la spada il corpo carica all'indietro e si butta in avanti col fendente
 		lean = lean - 12 * cos(la) * aimk
 		by = by - (1.5 + 1.5 * sin(la)) * aimk
-		pdx, ptx = pdx + 3 * aimk, ptx - 3 * aimk
+		pdx, ptx = pdx - 3 * aimk, ptx + 3 * aimk
 	else
 		lean = lean + 4 * sin(la) * aimk
 	end
@@ -614,8 +614,8 @@ function M.update(s, dt, st)
 		by = -RIG.bacino_y * 0.42 * q
 		lean = -35 * q
 		collo, testa = -15 * q, -30 * q
-		pdx, pdy, pda = 8 * q, 0, 0
-		ptx, pty, pta = -10 * q, 0, 0
+		pdx, pdy, pda = -10 * q, 0, 0
+		ptx, pty, pta = 8 * q, 0, 0
 		fth, fd, fh = -1.35, DAVANTI.lungo, -1.5
 		tth, td, th = -1.8, DIETRO.lungo, -1.6
 		occhio_a = max(0, 1 - u * 3)
