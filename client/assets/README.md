@@ -13,7 +13,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 | Cartella | Cosa c'è |
 |---|---|
-| `personaggio/` | Il personaggio a pezzi (`pg_<pezzo>.png`, 1 px per unità del rig alto 128): testa con maschera, collo, busto, Nucleo, bacino, spallacci, braccia, avambracci, mani in tre pose (aperta, artigli, pugno), cosce, stinchi, piedi, `pg_occhio.png` (luce nel buco della maschera). Li fa `strumenti/grafica/personaggio_esporta.py` dai master in `grafica/personaggio/master/`, con lo scheletro `client/battaglia/personaggio_rig.lua` |
+| `personaggio/` | Il personaggio a pezzi (`pg_<pezzo>.png`, 2,5 px per unità del rig alto 128, schiariti un po' per staccarsi dallo sfondo): testa con maschera, collo, busto, Nucleo, bacino, spallacci, braccia, avambracci, mani in tre pose (aperta, artigli, pugno), cosce, stinchi, piedi, `pg_occhio.png` (luce nel buco della maschera). Li fa `strumenti/grafica/personaggio_esporta.py` dai master in `grafica/personaggio/master/`, con lo scheletro `client/battaglia/personaggio_rig.lua` |
 | `set/` | 4 set (corvo, fornace, leviatano, vuoto) × 5 pezzi (maschera, corazza, mantello, gambali davanti/dietro). Per ogni pezzo: base (livello I), `_finiture` (ottone, livello II), `_luce` (bagliore, livello III), `_icona`. `<set>_maschera_occhio.png` sostituisce l'occhio quando si indossa la maschera; la maschera nasconde le corna. Posizioni in `set_rig.json` |
 | `armi/` | 6 armi con base, `_luce` e `_icona`. `armi_rig.json` ha il punto dell'impugnatura e gli angoli del fendente della Lama di Nucleo (da 205° dietro la schiena a -35° davanti) |
 | `esplosioni/` | `esplosione_base_12x256.png` (flipbook 12 fotogrammi da 256 px), fumo e fuoco additivo come livelli separati |
