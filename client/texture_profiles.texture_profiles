@@ -3,10 +3,6 @@ path_settings {
   profile: "Mappa"
 }
 path_settings {
-  path: "/menu/sfondo_home.atlas"
-  profile: "Mappa"
-}
-path_settings {
   path: "**"
   profile: "Default"
 }
