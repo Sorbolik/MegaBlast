@@ -5,11 +5,8 @@
 -- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
-<<<<<<< HEAD
-local ui = require "ui.ui"
-=======
 local gconfig = require "sim.config"
->>>>>>> origin/claude/project-thread-5jrplx
+local ui = require "ui.ui"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local home = require "menu.home"
@@ -38,17 +35,10 @@ local ACTION_ZOOM_IN = hash("zoom_avanti")
 local ACTION_ZOOM_OUT = hash("zoom_indietro")
 local ACTION_WEAPON = { [hash("arma1")] = 1, [hash("arma2")] = 2, [hash("arma3")] = 3, [hash("arma4")] = 4, [hash("arma5")] = 5 }
 
-<<<<<<< HEAD
-local NAMES = { "Rosso", "Blu" }
--- colori delle squadre (Cremisi e Cobalto): la palette sta solo in ui/ui.lua
-local PLAYER_COLORS = ui.C.SQUADRA
-=======
--- Squadre: Cremisi e Cobalto della bibbia grafica, poi Ambra e Giada per il
--- tutti contro tutti
-local TEAM_NAMES = { "Rosso", "Blu", "Oro", "Verde" }
-local TEAM_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1),
-	vmath.vector4(1, 0.7, 0.18, 1), vmath.vector4(0.25, 0.85, 0.5, 1) }
->>>>>>> origin/claude/project-thread-5jrplx
+-- Squadre: Cremisi e Cobalto della bibbia grafica, poi Verde e Oro per il
+-- tutti contro tutti; i colori stanno solo nella palette di ui/ui.lua
+local TEAM_NAMES = { "Rosso", "Blu", "Verde", "Oro" }
+local TEAM_COLORS = ui.C.SQUADRA
 local WHITE = vmath.vector4(1, 1, 1, 1)
 
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
@@ -663,8 +653,8 @@ local function apri_podio(self)
 	local res = self.risultati
 	local giocatori, me = {}, self.fine_online and self.me or nil
 	for i in ipairs(self.g.robots) do
-		local nome = self.fine_online and (i == self.me and "Tu" or "Avversario") or NAMES[i]
-		giocatori[i] = { nome = nome or ("Giocatore " .. i), colore = PLAYER_COLORS[i] or WHITE }
+		local nome = (self.fine_online and i == self.me) and "Tu" or self.names[i]
+		giocatori[i] = { nome = nome, colore = self.colors[i] }
 	end
 	local mio = me or 1
 	local posto, presi = #res.ranking, {}
@@ -811,10 +801,12 @@ local function start_local(self)
 			crate_every = ogni > 0 and ogni or nil,
 		}
 	end
-	-- il primo robot gioca con l'assetto attivo del profilo
-	opts = opts or {}
+	-- il primo robot gioca con l'assetto attivo del profilo (copia: MODES non si tocca)
 	local mio = profilo.assetto_attivo(self.profilo)
-	opts.stats = { assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio)) }
+	local players = {}
+	for i, p in ipairs(opts.players) do players[i] = { team = p.team } end
+	players[1].stats = assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio))
+	opts.players = players
 	new_match(self, os.time(), nil, opts)
 	self.mode = "local"
 	set_controls_visible(self, true)
@@ -1577,12 +1569,8 @@ function init(self)
 	set_controls_visible(self, false)
 
 	-- la home per ultima, così sta sopra la battaglia
-<<<<<<< HEAD
-	self.home = home.new(PLAYER_COLORS[1])
-	self.profilo = profilo.carica()
-=======
 	self.home = home.new(TEAM_COLORS[1])
->>>>>>> origin/claude/project-thread-5jrplx
+	self.profilo = profilo.carica()
 
 	-- una mappa sullo sfondo del menu
 	new_match(self, os.time())

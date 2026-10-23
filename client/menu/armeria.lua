@@ -100,13 +100,13 @@ local function scheda_set(a, parent)
 		ui.testo(slot.name, 110, y, 0.8, c.TESTO, parent)
 		for i, set in ipairs(equip.SETS) do
 			local scelto = as.gear[slot.id] == set.id
-			local x = 270 + (i - 1) * 150
+			local x = 260 + (i - 1) * 138
 			local t = equip.tier(a.prof.maestria[set.id .. "_" .. slot.id])
-			ui.scheda(a.bottoni, x, y + 8, 140, 46, set.name, "set:" .. slot.id .. ":" .. set.id, scelto, parent)
+			ui.scheda(a.bottoni, x, y + 8, 130, 46, set.name, "set:" .. slot.id .. ":" .. set.id, scelto, parent)
 			ui.testo("tier " .. ROMANI[t], x, y - 26, 0.55, scelto and c.BRACE or c.SPENTO, parent)
 		end
 		local pezzo = equip.BY_ID[as.gear[slot.id] or ""]
-		local n = ui.testo(pezzo and effetti(pezzo.pieces[slot.id]) or "nessun pezzo", 870, y, 0.6, c.SPENTO, parent)
+		local n = ui.testo(pezzo and effetti(pezzo.pieces[slot.id]) or "nessun pezzo", 770, y, 0.6, c.SPENTO, parent)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
 
@@ -133,7 +133,7 @@ local function scheda_albero(a, parent)
 	local tree = a_attivo(a).tree
 	local punti = profilo.punti(a.prof)
 	for b, ramo in ipairs(abilita.BRANCHES) do
-		local x = 180 + (b - 1) * 320
+		local x = 510 + (b - (#abilita.BRANCHES + 1) / 2) * 440
 		ui.titolo(ramo.name, x, 575, 0.7, c.TESTO, parent)
 		ui.testo(string.format("%d punti", abilita.spent(tree, ramo.id)), x, 548, 0.6, c.SPENTO, parent)
 		-- nodi per riga

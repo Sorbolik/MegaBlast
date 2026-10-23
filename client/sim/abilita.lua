@@ -22,8 +22,8 @@ local M = {}
 
 -- punti al livello massimo; in Torneo tutti hanno questi
 M.POINTS_MAX = 20
--- punti per livello del giocatore (livello 1 = 1 punto)
-M.POINTS_PER_LEVEL = 1
+-- punti per livello del giocatore (livello 1 = 2 punti, il massimo al livello 10)
+M.POINTS_PER_LEVEL = 2
 -- per prendere un nodo della riga r servono ROW_GATE * (r - 1) punti già spesi nel suo ramo
 M.ROW_GATE = 3
 

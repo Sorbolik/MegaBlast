@@ -1,6 +1,6 @@
-# Fine partita e schermate fuori dalla battaglia: Rosso (5 punti di vita) si
-# spara addosso, dopo un attimo sale il podio con riconoscimenti ed esperienza.
-# Poi armeria (set e albero di abilità), negozio ed eventi dalla home.
+# Fine partita, podio e armeria: Rosso (5 punti di vita) si spara addosso,
+# dopo un attimo sale il podio con riconoscimenti ed esperienza. Poi l'armeria
+# dalla home: set del Vuoto completo e un nodo dell'albero di abilità.
 imposta prova_vita 5
 
 aspetta 1
@@ -17,30 +17,19 @@ tocca 1065 205                      # CONTINUA
 aspetta_stato modo=menu 3
 aspetta 0.5
 
-tocca 168 216                       # ARMERIA
+tocca 168 108                       # ARMERIA
 aspetta 0.5
 foto 03_armeria_vuota
-tocca 270 548                       # maschera, corazza, mantello e gambali del Corvo
-tocca 270 456
-tocca 270 364
-tocca 270 272
+tocca 720 548                       # maschera, corazza, mantello e gambali del Vuoto
+tocca 720 456
+tocca 720 364
+tocca 720 272
 aspetta 0.3
-foto 04_armeria_corvo
+foto 04_armeria_vuoto
 tocca 630 680                       # scheda ALBERO
 aspetta 0.3
-tocca 105 490                       # Gambe di Titano
+tocca 215 490                       # Gambe di Titano
 aspetta 0.3
 foto 05_albero
 tocca 62 658                        # indietro
-aspetta_stato modo=menu 3
-
-tocca 168 76                        # NEGOZIO
-aspetta 0.5
-foto 06_negozio
-tocca 62 658
-aspetta_stato modo=menu 3
-tocca 168 146                       # EVENTI
-aspetta 0.5
-foto 07_eventi
-tocca 62 658
 aspetta_stato modo=menu 3

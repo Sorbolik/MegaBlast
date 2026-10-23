@@ -59,7 +59,7 @@ M.SETS = {
 			legs = { { stat = "walk_speed", mul = 1.03 }, { stat = "air_speed", mul = 0.98 } },
 		},
 		bonus = {
-			a = { desc = "Il teletrasporto scatta dopo 1,5 s invece di 2, vita -10%",
+			a = { desc = "Il teletrasporto scatta il 25% prima, vita -10%",
 				effects = { { stat = "teleport_ticks", mul = 0.75 }, { stat = "max_hp", mul = 0.9 } } },
 			b = { desc = "Il primo teletrasporto è gratis, vita -10%",
 				effects = { { stat = "free_teleports", add = 1 }, { stat = "max_hp", mul = 0.9 } } },
