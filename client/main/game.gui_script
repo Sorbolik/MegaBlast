@@ -10,6 +10,7 @@ local scoria = require "battaglia.scoria"
 local grigio = require "battaglia.grigio"
 local home = require "menu.home"
 local levette = require "battaglia.levette"
+local camera = require "battaglia.camera"
 
 local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
@@ -23,6 +24,9 @@ local ACTION_JUMP = hash("jump")
 local ACTION_CANCEL = hash("cancel")
 local ACTION_MULTI = hash("multitouch")
 local ACTION_TELE = hash("teleport")
+local ACTION_ZOOM = hash("zoom")
+local ACTION_ZOOM_IN = hash("zoom_avanti")
+local ACTION_ZOOM_OUT = hash("zoom_indietro")
 local ACTION_WEAPON = { [hash("arma1")] = 1, [hash("arma2")] = 2, [hash("arma3")] = 3, [hash("arma4")] = 4, [hash("arma5")] = 5 }
 
 local NAMES = { "Rosso", "Blu" }
@@ -118,6 +122,14 @@ if TAGLIA then game.use_body_scale(TAGLIA) end
 -- altezza della testa del corpo disegnato, per vita e freccia
 local HEAD = CORPO == "scoria" and 130 * scoria.SCALE * K or game.ROBOT_H
 local VK = vmath.vector3(K, K, 1)
+
+-- Camera: [megablast] zoom = 1, 2 o 3 sceglie il livello con cui si parte
+-- (vicino, medio, tutta la mappa: battaglia/camera.lua)
+local ZOOM_INIZIO = tonumber(config_string("megablast.zoom", "")) or 1
+-- dopo un'esplosione la camera resta lì un attimo prima di tornare al robot
+local CAMERA_SOSTA = 0.7
+-- pulsante dello zoom, in alto a destra
+local ZOOM_BTN = vmath.vector3(W - 70, H - 34, 0)
 
 -- Comandi sul telefono: due levette come in Blastron (HUD del tablet, portato
 -- da 1024 x 768 a 1280 x 720), la logica è in battaglia/levette.lua. La base
@@ -248,6 +260,7 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.bar, visible)
 	gui.set_enabled(self.btn_tele, visible)
 	gui.set_enabled(self.hud, visible)
+	gui.set_enabled(self.btn_zoom, visible)
 end
 
 local function disconnect(self)
@@ -419,6 +432,10 @@ local function new_match(self, seed, map, opts)
 	for _, n in ipairs(self.crate_nodes) do n.id = nil; gui.set_enabled(n.node, false) end
 	self.acc = 0
 	self.sent = {}
+	-- la camera parte già su chi tocca
+	local rb = self.g.robots[self.g.current]
+	camera.salta(self.cam, rb.x, rb.y + game.ROBOT_H / 2, camera.zoom(self.cam))
+	self.cam_sosta = 0
 end
 
 -- Esplosione: flipbook di 12 fotogrammi più un lampo di brace in additivo.
@@ -477,6 +494,7 @@ local function handle_event(self, e)
 		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 1, row_min - 1,
 			math.floor((e.x + e.r) / CELL) + 1, row_max + 1)
 		explosion(self, e.x, e.y, e.r)
+		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA, e.x, e.y
 	elseif e.type == "fire" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- rinculo del Lanciarune, slancio del lancio, raffica di schegge
 		local kind = e.type == "fire" and "missile" or (e.type == "shards" and "shards" or "throw")
@@ -496,6 +514,7 @@ local function handle_event(self, e)
 		show_message(self, who_name(self, e.robot) .. verbo .. WEAPON_FOUND[e.weapon] .. "!")
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
+		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA * 0.5, e.x, e.y
 	elseif e.type == "turn" then
 		self.tele_armed = false
 		if self.mode == "online" then
@@ -649,12 +668,16 @@ end
 
 -- snap: la mira va subito sul dito (quando lo si appoggia). Altrimenti con
 -- game.AIM_SMOOTH < 1 la mira lo insegue (smooth_aim), come in Blastron.
+-- (x, y) sono sullo schermo: la direzione si prende nel mondo, la distanza (e
+-- quindi la potenza) resta in pixel dello schermo, uguale a ogni zoom.
 local function aim_from(self, x, y, snap)
 	local rb = current_robot(self)
-	local dx, dy = x - rb.x, y - (rb.y + game.ROBOT_H / 2)
+	self.aim_sx, self.aim_sy = x, y
+	local wx, wy = camera.al_mondo(self.cam, x, y)
+	local dx, dy = wx - rb.x, wy - (rb.y + game.ROBOT_H / 2)
 	self.aim_target = math.atan2(dy, dx)
 	if snap or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = self.aim_target end
-	self.aim_dist = math.sqrt(dx * dx + dy * dy)
+	self.aim_dist = math.sqrt(dx * dx + dy * dy) * self.cam.s
 	self.aim_power = game.aim_power(self.aim_dist / AIM_RANGE)
 end
 
@@ -859,6 +882,30 @@ local function update_bar(self)
 	end
 end
 
+-- La camera sposta e ingrandisce il nodo "mondo" (tutti i nodi della battaglia)
+-- e la vista del render, dove si disegna la mesh del terreno. Scritte e freccia
+-- crescono meno del mondo, così da vicino non diventano enormi.
+local CAM_POS, CAM_SCALE, LABEL_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1), vmath.vector3(1, 1, 1)
+local function apply_camera(self)
+	local c = self.cam
+	local tx, ty = camera.spostamento(c)
+	if tx == self.cam_tx and ty == self.cam_ty and c.s == self.cam_s then return end
+	self.cam_tx, self.cam_ty, self.cam_s = tx, ty, c.s
+	CAM_POS.x, CAM_POS.y = tx, ty
+	gui.set_position(self.mondo, CAM_POS)
+	CAM_SCALE.x, CAM_SCALE.y = c.s, c.s
+	gui.set_scale(self.mondo, CAM_SCALE)
+	local view = self.cam_msg.view
+	view.m00, view.m11, view.m03, view.m13 = c.s, c.s, tx, ty
+	msg.post("@render:", "set_view_projection", self.cam_msg)
+	local l = c.s ^ -0.65
+	LABEL_SCALE.x, LABEL_SCALE.y = 0.7 * l, 0.7 * l
+	for i = 1, #self.robots do gui.set_scale(self.robots[i].hp, LABEL_SCALE) end
+	gui.set_scale(self.cancel_label, LABEL_SCALE)
+	LABEL_SCALE.x, LABEL_SCALE.y = l, l
+	gui.set_scale(self.arrow, LABEL_SCALE)
+end
+
 local function render(self, dt)
 	self.clock = self.clock + dt
 	local g = self.g
@@ -946,6 +993,7 @@ local function render(self, dt)
 		local p0 = pa.has_p and pa.p or pb.p
 		local x = p0.x + (pb.p.x - p0.x) * k
 		set_pos(self.egg, x, p0.y + (pb.p.y - p0.y) * k)
+		self.fuoco_x, self.fuoco_y = x, p0.y + (pb.p.y - p0.y) * k
 		EULER.z = -x * 4
 		gui.set_euler(self.egg_spin, EULER)
 		gui.set_color(self.egg_light, PLAYER_COLORS[g.current])
@@ -963,6 +1011,7 @@ local function render(self, dt)
 		local p0 = pa.has_p and pa.p or pb.p
 		local x, y = p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k
 		set_pos(self.projectile, x, y)
+		self.fuoco_x, self.fuoco_y = x, y
 		gui.set_color(self.projectile_glow, PLAYER_COLORS[g.current])
 		local n = #self.trail
 		self.trail_i = self.trail_i % n + 1
@@ -985,12 +1034,15 @@ local function render(self, dt)
 	end
 
 	-- Sciame di Schegge: piccoli bagliori col colore di chi spara
+	local n_shards, shard_x, shard_y = 0, 0, 0
 	for i = 1, game.SHARD_COUNT do
 		local sb, node = pb.s[i], self.shard_nodes[i]
 		gui.set_enabled(node, sb.on)
 		if sb.on then
 			local sa = pa.s[i].on and pa.s[i] or sb
-			set_pos(node, sa.x + (sb.x - sa.x) * k, sa.y + (sb.y - sa.y) * k)
+			local x, y = sa.x + (sb.x - sa.x) * k, sa.y + (sb.y - sa.y) * k
+			set_pos(node, x, y)
+			n_shards, shard_x, shard_y = n_shards + 1, shard_x + x, shard_y + y
 		end
 	end
 	if self.shard_color ~= g.current then
@@ -1093,8 +1145,29 @@ local function render(self, dt)
 	local cur = current_robot(self)
 	local v = self.view[g.current]
 	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
-	set_pos(self.arrow, v.x, v.y + HEAD + 30 + math.sin(self.clock * 5) * 3)
+	set_pos(self.arrow, v.x, v.y + HEAD + (30 + math.sin(self.clock * 5) * 3) / self.cam.s)
 	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
+
+	-- Camera: segue il colpo in volo, poi resta un attimo sull'esplosione, poi
+	-- torna su chi è di turno. Nel menu si vede tutta la mappa.
+	local c = self.cam
+	if self.mode == "menu" then
+		camera.segui(c, dt, W / 2, H / 2, 1)
+	else
+		local fx, fy, veloce = v.x, v.y + game.ROBOT_H / 2, false
+		self.cam_sosta = math.max(0, self.cam_sosta - dt)
+		if missile or egg then
+			fx, fy, veloce = self.fuoco_x, self.fuoco_y, true
+			self.cam_sosta = 0
+		elseif n_shards > 0 then
+			fx, fy, veloce = shard_x / n_shards, shard_y / n_shards, true
+			self.cam_sosta = 0
+		elseif self.cam_sosta > 0 then
+			fx, fy = self.sosta_x, self.sosta_y
+		end
+		camera.segui(c, dt, fx, fy, camera.zoom(c), veloce)
+	end
+	apply_camera(self)
 end
 
 -- Ciclo di vita -------------------------------------------------------------
@@ -1105,6 +1178,17 @@ function init(self)
 	self.preview_pts = {}
 
 	self.clock = 0
+
+	-- tutto quello che sta nel mondo è figlio di questo nodo, che la camera
+	-- sposta e ingrandisce (apply_camera)
+	self.cam = camera.new(W, H)
+	self.cam.livello = math.min(#camera.LIVELLI, math.max(1, ZOOM_INIZIO))
+	-- set_view_projection vuole anche id e projection; la proiezione resta quella
+	-- del render (stretch), che questa non cambia
+	self.cam_msg = { id = hash("camera"), view = vmath.matrix4(), projection = vmath.matrix4() }
+	self.cam_sosta = 0
+	self.mondo = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+	gui.set_visible(self.mondo, false)
 
 	self.robots = {}
 	for i = 1, 2 do
@@ -1222,11 +1306,36 @@ function init(self)
 		self.robots[i].hp = hp
 	end
 	self.arrow = box(0, 0, 4, 18, WHITE)
+	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
+	gui.set_enabled(self.cancel_label, false)
+
+	-- nel mondo, nell'ordine in cui si disegnano
+	local mondo = {}
+	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].rig.root end
+	for _, n in ipairs(self.dots) do mondo[#mondo + 1] = n end
+	for _, n in ipairs(self.trail) do mondo[#mondo + 1] = n end
+	mondo[#mondo + 1] = self.projectile
+	for _, o in ipairs(self.orbs) do mondo[#mondo + 1] = o.root end
+	mondo[#mondo + 1] = self.egg
+	for _, n in ipairs(self.shard_nodes) do mondo[#mondo + 1] = n end
+	for _, c in ipairs(self.crate_nodes) do mondo[#mondo + 1] = c.node end
+	mondo[#mondo + 1] = self.shock
+	for _, b in ipairs(self.booms) do
+		mondo[#mondo + 1] = b.anim
+		mondo[#mondo + 1] = b.flash
+	end
+	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].hp end
+	mondo[#mondo + 1] = self.arrow
+	mondo[#mondo + 1] = self.cancel_label
+	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end
 
 	self.hud = label(W / 2, H - 28, "", 1)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
-	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
-	gui.set_enabled(self.cancel_label, false)
+
+	-- zoom: vicino, medio, tutta la mappa (anche rotella e tasto Z)
+	self.btn_zoom = box(ZOOM_BTN.x, ZOOM_BTN.y, 116, 44, vmath.vector4(0.05, 0.05, 0.07, 0.55))
+	self.zoom_label = label(0, 0, camera.NOMI[self.cam.livello], 0.75)
+	gui.set_parent(self.zoom_label, self.btn_zoom)
 
 	-- levette del telefono
 	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE)
@@ -1333,6 +1442,9 @@ function update(self, dt)
 		self.fire = nil
 	end
 
+	-- mirando col mouse fermo la camera può muoversi (zoom): il punto dello
+	-- schermo è lo stesso, quello del mondo no
+	if self.pointers.mouse == "aim" and self.aim_sx then aim_from(self, self.aim_sx, self.aim_sy) end
 	smooth_aim(self, dt)
 	-- per sparare con la mira di un attimo prima che il pollice si stacchi
 	if self.aim_pad.id then levette.registra(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
@@ -1340,9 +1452,12 @@ function update(self, dt)
 	if self.mode == "menu" then home.update(self.home, dt) end
 
 	if SIMULA and self.g then
+		-- sx, sy: il centro del robot sullo schermo (dove si appoggia il mouse per mirare)
 		local rb = current_robot(self)
-		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d",
-			self.mode, self.g.current, self.g.phase, math.floor(rb.x), math.floor(rb.y))
+		local sx, sy = camera.allo_schermo(self.cam, rb.x, rb.y + game.ROBOT_H / 2)
+		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f",
+			self.mode, self.g.current, self.g.phase, math.floor(rb.x), math.floor(rb.y),
+			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s)
 		if line ~= self.simula_line then
 			print(line)
 			self.simula_line = line
@@ -1358,6 +1473,12 @@ local function picked_slot(self, x, y)
 	return nil
 end
 
+-- passo: +1 più lontano, -1 più vicino, nil il prossimo livello (il pulsante gira)
+local function change_zoom(self, passo)
+	if passo then camera.cambia(self.cam, passo) else camera.prossimo(self.cam) end
+	gui.set_text(self.zoom_label, camera.NOMI[self.cam.livello])
+end
+
 local function toggle_tele(self)
 	-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
 	self.tele_armed = not self.tele_armed and self.g.phase == "aim" and #self.g.orbs < game.MAX_ORBS
@@ -1371,7 +1492,9 @@ local function pointer_down(self, id, x, y)
 	elseif self.mode ~= "local" and self.mode ~= "online" then
 		return
 	end
-	if gui.pick_node(self.btn_tele, x, y) then
+	if gui.pick_node(self.btn_zoom, x, y) then
+		change_zoom(self)
+	elseif gui.pick_node(self.btn_tele, x, y) then
 		toggle_tele(self)
 	elseif picked_slot(self, x, y) then
 		self.weapon = picked_slot(self, x, y)
@@ -1448,6 +1571,10 @@ function on_input(self, action_id, action)
 		self.keys.jump = not action.released
 	elseif action_id == ACTION_TELE then
 		if action.pressed then toggle_tele(self) end
+	elseif action_id == ACTION_ZOOM then
+		if action.pressed then change_zoom(self) end
+	elseif action_id == ACTION_ZOOM_IN or action_id == ACTION_ZOOM_OUT then
+		if action.pressed then change_zoom(self, action_id == ACTION_ZOOM_OUT and 1 or -1) end
 	elseif ACTION_WEAPON[action_id] then
 		-- tasti 1-5: le armi della barra, in ordine
 		if action.pressed then

@@ -54,21 +54,21 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 |---|---|
 | `aspetta S` | aspetta S secondi |
 | `foto NOME` | salva `foto/NOME.png` |
-| `zoom NOME [Z]` | foto ingrandita Z volte (2 se non si dice) attorno al robot di turno |
+| `zoom NOME [Z]` | foto ingrandita Z volte (2 se non si dice) attorno al robot di turno, contando lo zoom che la camera del gioco ha già (con la camera a 2,2 uno zoom 4 ingrandisce la foto di 1,8) |
 | `tocca X Y` | tocco breve (pulsanti, menu) |
 | `tieni TASTO S [ZOOM] [Z]` | tiene premuto un tasto: `sinistra`, `destra`, `salta`, o un nome di xdotool; facoltativamente fa lo zoom ZOOM prima di lasciarlo |
 | `premi TASTO` | pressione breve |
 | `trascina X1 Y1 X2 Y2 [S]` | trascina il dito |
-| `mira DX DY [S] [FOTO] [Z]` | tiene il dito a (DX, DY) dal robot di turno per S secondi (la mira), facoltativamente scatta FOTO (con Z, uno zoom Z volte invece della foto intera), poi lascia: spara con l'arma scelta |
+| `mira DX DY [S] [FOTO] [Z]` | tiene il dito a (DX, DY) pixel dello schermo dal robot di turno (la potenza dipende dai pixel dello schermo, a ogni zoom) per S secondi (la mira), facoltativamente scatta FOTO (con Z, uno zoom Z volte invece della foto intera), poi lascia: spara con l'arma scelta |
 | `levetta DX DY S [FOTO]` | comandi del telefono (`imposta comandi telefono`): appoggia il dito sulla levetta del movimento (`115 117`), lo sposta di (DX, DY) e lo tiene S secondi: di lato cammina, in alto salta (e risalta), facoltativamente scatta FOTO prima di lasciare |
 | `levetta_mira DX DY S [FOTO]` | come `levetta`, ma sulla levetta della mira (`1165 117`): oltre il 20% della corsa (19 px) si accende e lasciando spara; sotto il 10% si spegne |
 | `annulla DX DY [FOTO]` | mira a (DX, DY) dal robot col sinistro, preme il destro (annulla), facoltativamente scatta FOTO, poi lascia il sinistro |
 | `niente_evento TIPO [S]` | fallisce se nei prossimi S secondi succede l'evento TIPO (per esempio un colpo annullato che parte lo stesso) |
 | `aspetta_evento TIPO [S]` | aspetta un evento della simulazione (`fire`, `explosion`, `swing`, `sword_hit`, `orb`, `teleport`, `grenade`, `shards`, `punch`, `punch_hit`, `crate`, `crate_pick`, `damage`, `turn`, `over`...) |
-| `aspetta_stato chiave=valore ... [S]` | aspetta uno stato, per esempio `turno=2 fase=aim` (chiavi: `modo`, `turno`, `fase`, `x`, `y`) |
-| `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3, `corpo scoria` torna al personaggio a pezzi invece della capsula grigia, `taglia K` fa il corpo K volte più grande (scenario `scenari/corpo_grigio.txt`) |
+| `aspetta_stato chiave=valore ... [S]` | aspetta uno stato, per esempio `turno=2 fase=aim` (chiavi: `modo`, `turno`, `fase`, `x`, `y` nel mondo, `sx`, `sy` il centro del robot sullo schermo, `zoom` della camera) |
+| `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3, `corpo scoria` torna al personaggio a pezzi invece della capsula grigia, `taglia K` fa il corpo K volte più grande (scenario `scenari/corpo_grigio.txt`), `zoom 3` fa partire la camera con tutta la mappa (1 vicino, 2 medio; scenario `scenari/camera.txt`) |
 
-Comandi: sul computer (il predefinito qui) tastiera e mouse, TELE `1180 62` o
+Comandi: sul computer (il predefinito qui) tastiera e mouse, zoom col pulsante `1210 686`, il tasto `z` o la rotella, TELE `1180 62` o
 il tasto `t`, armi coi tasti `1`-`5`. Con `imposta comandi telefono` ci sono le
 due levette (corsa 94 px) e TELE sta a `1208 257`.
 La barra delle armi sta in basso al centro (`y = 62`) e mostra solo le armi che

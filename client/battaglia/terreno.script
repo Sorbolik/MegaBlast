@@ -1,26 +1,35 @@
 -- Rettangolo della mappa (mesh con lo shader del terreno). La GUI crea la
 -- texture della maschera e ci manda il suo percorso: qui la colleghiamo alla mesh,
--- insieme ai disegni della mappa (sfondo, terreno, parete dei crateri).
+-- insieme ai disegni della mappa (terreno e parete dei crateri). Lo sfondo non
+-- è un disegno: lo fa lo shader, a strati che si muovono con la camera.
 
-go.property("forgia_sfondo", resource.texture("/assets/mappe/forgia/sfondo_lontano.png"))
 go.property("forgia_terreno", resource.texture("/assets/mappe/forgia/terreno.png"))
 go.property("forgia_interno", resource.texture("/assets/mappe/forgia/interno_mezzo.png"))
-go.property("isole_sfondo", resource.texture("/assets/mappe/isole_cimitero/sfondo_lontano.png"))
 go.property("isole_terreno", resource.texture("/assets/mappe/isole_cimitero/terreno.png"))
 go.property("isole_interno", resource.texture("/assets/mappe/isole_cimitero/interno_mezzo.png"))
 
 local MSG_MASCHERA = hash("maschera")
 
+function init(self)
+	-- x = 1 mappa dipinta, y = secondi (braci che salgono nello sfondo)
+	self.opzioni = vmath.vector4(0, 0, 0, 0)
+end
+
+function update(self, dt)
+	-- dopo un'ora si ricomincia, così il float dello shader resta preciso
+	self.opzioni.y = (self.opzioni.y + dt) % 3600
+	go.set("#mesh", "opzioni", self.opzioni)
+end
+
 function on_message(self, message_id, message)
 	if message_id == MSG_MASCHERA then
-		go.set("#mesh", "texture3", message.path)
+		go.set("#mesh", "texture2", message.path)
 		-- mappe senza disegni: restano quelli della mesh, lo shader non li usa
 		local mappa = message.mappa
-		if message.dipinta and self[mappa .. "_sfondo"] then
-			go.set("#mesh", "texture0", self[mappa .. "_sfondo"])
-			go.set("#mesh", "texture1", self[mappa .. "_terreno"])
-			go.set("#mesh", "texture2", self[mappa .. "_interno"])
+		if message.dipinta and self[mappa .. "_terreno"] then
+			go.set("#mesh", "texture0", self[mappa .. "_terreno"])
+			go.set("#mesh", "texture1", self[mappa .. "_interno"])
 		end
-		go.set("#mesh", "opzioni", vmath.vector4(message.dipinta and 1 or 0, 0, 0, 0))
+		self.opzioni.x = message.dipinta and 1 or 0
 	end
 end

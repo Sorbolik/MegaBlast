@@ -212,7 +212,10 @@ class Gioco:
         self.leggi()
         if "x" not in self.stato:
             raise Fallito("non so dove sia il robot: manca la riga SIMULA stato nel log")
-        # aim_from mira dal centro del robot, 8 pixel sopra i piedi
+        # dove si vede il centro del robot sullo schermo (con la camera); i
+        # giochi di prima scrivono solo x, y del mondo
+        if "sx" in self.stato:
+            return int(self.stato["sx"]), int(self.stato["sy"])
         return int(self.stato["x"]), int(self.stato["y"]) + 8
 
     def scatta(self, nome):
@@ -223,8 +226,10 @@ class Gioco:
         info(f"   foto {nome}.png")
 
     def zoom(self, nome, z=2):
-        """foto ingrandita z volte attorno al robot di turno"""
+        """foto ingrandita z volte attorno al robot di turno (contando lo zoom
+        che la camera del gioco ha già)"""
         x, y = self.robot()
+        z = max(1, z / float(self.stato.get("zoom", 1)))
         cw, ch = round(800 / z), round(450 / z)
         cx = min(max(x - cw / 2, 0), W - cw)
         cy = min(max(H - y - ch * 0.62, 0), H - ch)
