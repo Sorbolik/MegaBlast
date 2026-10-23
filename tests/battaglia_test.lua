@@ -1,5 +1,5 @@
--- Test della Scoria (battaglia/scoria.lua) con un finto gui, e della
--- camera (battaglia/camera.lua). Dalla radice del repository:
+-- Test della Scoria (battaglia/scoria.lua) e della targa con nome e vita
+-- (battaglia/targa.lua) con un finto gui, e della camera (battaglia/camera.lua). Dalla radice del repository:
 --   luajit tests/battaglia_test.lua
 package.path = "client/?.lua;" .. package.path
 
@@ -24,11 +24,18 @@ gui = {
 	set_visible = function() end, set_color = function() end, set_adjust_mode = function() end,
 	set_inherit_alpha = function() end, set_perimeter_vertices = function() end,
 	set_texture = function() end, play_flipbook = function() end,
+	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
+	set_text = function(n, text) n.text = text end,
+	set_size = function(n, v) n.size = copia(v) end,
+	get_size = function(n) return n.size end,
+	set_font = function() end, set_outline = function() end, set_pivot = function() end,
+	set_slice9 = function() end, PIVOT_W = 3,
 }
 
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
 local camera = require "battaglia.camera"
+local targa = require "battaglia.targa"
 
 local failures = 0
 local function check(cond, msg)
@@ -148,6 +155,30 @@ check(not s.root.enabled, "morte: poi il corpo sparisce")
 scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")
 check(math.abs(game.ROBOT_H - s.h) < 1e-9, "il corpo è alto quanto quello della simulazione")
+
+-- Targa ------------------------------------------------------------------------
+
+local t = targa.new(vec(1, 0.2, 0.3, 1), "Rosso")
+targa.vita(t, 100, 100)
+targa.update(t, 1 / 60, 0, 0, 1)
+local piena = t.pieno.size.x
+targa.vita(t, 60, 100)
+targa.update(t, 1 / 60, 0, 0, 1)
+check(t.numero.text == "60", "targa: il numero è la vita")
+check(math.abs(t.pieno.size.x - piena * 0.6) < 0.5, "targa: la vita scende subito")
+check(math.abs(t.scia.size.x - piena) < 0.5, "targa: il pezzo perso resta un attimo")
+for _ = 1, 120 do targa.update(t, 1 / 60, 0, 0, 1) end
+check(math.abs(t.scia.size.x - t.pieno.size.x) < 0.5, "targa: poi si consuma fino alla vita")
+targa.vita(t, 60, 100, 20)
+targa.update(t, 1 / 60, 0, 0, 1)
+check(t.scudo.enabled and math.abs(t.scudo.pos.x - t.pieno.pos.x - t.pieno.size.x) < 0.5,
+	"targa: lo scudo comincia dove finisce la vita")
+targa.vita(t, 100, 100, 50)
+targa.update(t, 1 / 60, 0, 0, 1)
+check(t.pieno.size.x + t.scudo.size.x <= piena + 0.5, "targa: vita più scudo stanno nella cornice")
+targa.vita(t, 0, 100)
+targa.update(t, 1 / 60, 0, 0, 1)
+check(not t.pieno.enabled and tutto_finito(), "targa: a zero la vita sparisce, valori finiti")
 
 -- Camera -----------------------------------------------------------------------
 
