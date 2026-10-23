@@ -1,7 +1,7 @@
 -- Podio di fine partita: i gradini salgono, sopra ogni gradino la Scoria del
 -- giocatore col colore della sua squadra, sul gradino posto, nome e punti
 -- partita (calcolati dalla sim, g:results()). Sotto, i riconoscimenti
--- (sim/riconoscimenti.lua) e cosa si è guadagnato: esperienza, livello, Scorie.
+-- (sim/riconoscimenti.lua) e cosa si è guadagnato: esperienza e livello.
 --
 -- Uso (dal gui_script):
 --   local p = podio.new(results, giocatori, me, guadagno, prof)
@@ -65,7 +65,7 @@ local function gradino(p, x, voce, i)
 	local s = scoria.new(g.colore)
 	gui.set_parent(s.root, posa)
 	scoria.set_enabled(s, true)
-	p.scorie[#p.scorie + 1] = { s = s, posa = posa,
+	p.figure[#p.figure + 1] = { s = s, posa = posa,
 		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0 } }
 end
 
@@ -100,7 +100,7 @@ local function premio(p, x, y, voce, i)
 	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, M.PREMI + i * 0.12)
 end
 
--- esperienza, livello e Scorie guadagnati da chi gioca su questo telefono
+-- esperienza e livello guadagnati da chi gioca su questo telefono
 local function guadagno(p, g, prof)
 	local c = ui.C
 	local n = ui.pannello(1065, 105, 330, 120, p.radice)
@@ -109,14 +109,13 @@ local function guadagno(p, g, prof)
 	local b = ui.barra(0, 4, 290, 12, c.BRACE, n)
 	ui.barra_valore(b, 0)
 	p.barra, p.barra_fine = b, prof.xp / profilo.xp_livello(prof.livello)
-	ui.testo(string.format("+%d Scorie  ·  %d in tutto", g.scorie, prof.scorie), 0, -30, 0.8, c.SPENTO, n)
 	if g.livello > g.livello_prima then
-		ui.testo("nuovo punto abilità!", 0, -48, 0.7, c.BRACE, n)
+		ui.testo("nuovo punto abilità!", 0, -32, 0.9, c.BRACE, n)
 	end
 end
 
 function M.new(results, giocatori, me, guadagno_mio, prof)
-	local p = { giocatori = giocatori, me = me, scorie = {}, bottoni = {}, t = 0 }
+	local p = { giocatori = giocatori, me = me, figure = {}, bottoni = {}, t = 0 }
 	-- sfondo stirato su tutto lo schermo, il resto in un gruppo che si adatta (FIT)
 	p.fondo = ui.sfondo()
 	p.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
@@ -151,7 +150,7 @@ end
 
 function M.update(p, dt)
 	p.t = p.t + dt
-	for _, s in ipairs(p.scorie) do scoria.update(s.s, dt, s.st) end
+	for _, s in ipairs(p.figure) do scoria.update(s.s, dt, s.st) end
 	if p.barra and p.t > M.PREMI then
 		ui.barra_valore(p.barra, math.min(p.barra_fine, (p.t - M.PREMI) * 0.8))
 	end

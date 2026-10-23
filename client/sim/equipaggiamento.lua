@@ -4,9 +4,10 @@
 -- Dal documento di game design: misto di sidegrade (ogni pezzo dà qualcosa e
 -- toglie qualcosa) e tier che cambiano aspetto e varianti. Il tier non rende
 -- più forti: con tutti e quattro i pezzi di un set al tier III si sceglie la
--- variante B del bonus del set invece della A.
+-- variante B del bonus del set invece della A. I tier cambieranno l'aspetto
+-- quando l'armatura si vedrà sulla Scoria.
 --
--- Effetti come in abilita.lua: { stat, add } | { stat, mul } | { stat, set }.
+-- Effetti come in abilita.lua: { stat, add } | { stat, mul }.
 
 local M = {}
 
@@ -22,61 +23,44 @@ M.SET_PIECES = 4
 -- partite giocate con un pezzo per farlo salire di tier (maestria del set)
 M.TIER_MATCHES = { 0, 10, 30 }
 
--- Pezzi: per ogni set e slot un più e un meno. Bonus: a pezzi completi.
+-- Pezzi: per ogni set e slot un più e un meno, in percentuale sulla base (le
+-- statistiche di movimento cambiano col profilo di fisica). Bonus: a pezzi completi.
+-- Ci sono solo i bonus delle meccaniche che il gioco ha già: quelli del
+-- documento per Corvo (doppio salto, niente danno da caduta), Fornace (terreno
+-- bruciante) e Leviatano (meno spinta, metà danno da caduta) arrivano con la
+-- loro meccanica.
 M.SETS = {
 	{ id = "corvo", name = "CORVO", style = "Agilità",
 		pieces = {
-			mask = { { stat = "jump_height", add = 2 }, { stat = "max_hp", add = -2 } },
-			chest = { { stat = "air_speed", add = 3 }, { stat = "max_hp", add = -3 } },
-			cloak = { { stat = "air_speed", add = 3 }, { stat = "walk_speed", add = -2 } },
-			legs = { { stat = "jump_height", add = 2 }, { stat = "walk_speed", add = -2 } },
-		},
-		bonus = {
-			a = { desc = "Doppio salto gratis, nessun danno da caduta, vita -10%",
-				effects = { { stat = "air_jumps", add = 1 }, { stat = "air_jump_cost", set = 0 },
-					{ stat = "fall_damage_mul", set = 0 }, { stat = "max_hp", mul = 0.9 } } },
-			b = { desc = "Doppio salto gratis, +5 di velocità in aria, vita -10%",
-				effects = { { stat = "air_jumps", add = 1 }, { stat = "air_jump_cost", set = 0 },
-					{ stat = "air_speed", add = 5 }, { stat = "max_hp", mul = 0.9 } } },
+			mask = { { stat = "jump_height", mul = 1.03 }, { stat = "max_hp", add = -3 } },
+			chest = { { stat = "air_speed", mul = 1.03 }, { stat = "max_hp", add = -3 } },
+			cloak = { { stat = "air_speed", mul = 1.03 }, { stat = "walk_speed", mul = 0.98 } },
+			legs = { { stat = "jump_height", mul = 1.03 }, { stat = "walk_speed", mul = 0.98 } },
 		} },
 	{ id = "fornace", name = "FORNACE", style = "Territorio",
 		pieces = {
-			mask = { { stat = "status_ticks", add = 15 }, { stat = "jump_height", add = -2 } },
-			chest = { { stat = "max_hp", add = 4 }, { stat = "air_speed", add = -3 } },
-			cloak = { { stat = "trap_radius", add = 3 }, { stat = "jump_height", add = -2 } },
-			legs = { { stat = "max_hp", add = 3 }, { stat = "walk_speed", add = -2 } },
-		},
-		bonus = {
-			a = { desc = "Le esplosioni lasciano terreno bruciante per un turno, salto più basso",
-				effects = { { stat = "burning_blasts", set = true }, { stat = "jump_height", mul = 0.9 } } },
-			b = { desc = "Gli effetti di stato durano il doppio, salto più basso",
-				effects = { { stat = "status_ticks", mul = 2 }, { stat = "jump_height", mul = 0.9 } } },
+			mask = { { stat = "max_hp", add = 3 }, { stat = "jump_height", mul = 0.98 } },
+			chest = { { stat = "max_hp", add = 4 }, { stat = "air_speed", mul = 0.97 } },
+			cloak = { { stat = "start_nucleo", add = 1 }, { stat = "jump_height", mul = 0.95 } },
+			legs = { { stat = "max_hp", add = 3 }, { stat = "walk_speed", mul = 0.98 } },
 		} },
 	{ id = "leviatano", name = "LEVIATANO", style = "Resistenza",
 		pieces = {
-			mask = { { stat = "max_hp", add = 3 }, { stat = "jump_height", add = -2 } },
-			chest = { { stat = "max_hp", add = 5 }, { stat = "walk_speed", add = -3 } },
-			cloak = { { stat = "knockback_mul", add = -0.05 }, { stat = "air_speed", add = -3 } },
-			legs = { { stat = "knockback_mul", add = -0.05 }, { stat = "walk_speed", add = -2 } },
-		},
-		bonus = {
-			a = { desc = "Spinto poco dai colpi, metà danno da caduta, cammina più lento",
-				effects = { { stat = "knockback_mul", mul = 0.7 }, { stat = "fall_damage_mul", mul = 0.5 },
-					{ stat = "walk_speed", mul = 0.9 } } },
-			b = { desc = "Vita +10%, metà danno da caduta, cammina più lento",
-				effects = { { stat = "max_hp", mul = 1.1 }, { stat = "fall_damage_mul", mul = 0.5 },
-					{ stat = "walk_speed", mul = 0.9 } } },
+			mask = { { stat = "max_hp", add = 4 }, { stat = "jump_height", mul = 0.97 } },
+			chest = { { stat = "max_hp", add = 6 }, { stat = "walk_speed", mul = 0.96 } },
+			cloak = { { stat = "max_hp", add = 4 }, { stat = "air_speed", mul = 0.97 } },
+			legs = { { stat = "max_hp", add = 4 }, { stat = "walk_speed", mul = 0.97 } },
 		} },
 	{ id = "vuoto", name = "VUOTO", style = "Inganno",
 		pieces = {
-			mask = { { stat = "teleport_ticks", add = -6 }, { stat = "max_hp", add = -2 } },
-			chest = { { stat = "walk_speed", add = 3 }, { stat = "max_hp", add = -3 } },
-			cloak = { { stat = "teleport_ticks", add = -6 }, { stat = "jump_height", add = -2 } },
-			legs = { { stat = "walk_speed", add = 3 }, { stat = "air_speed", add = -2 } },
+			mask = { { stat = "teleport_ticks", mul = 0.96 }, { stat = "max_hp", add = -3 } },
+			chest = { { stat = "walk_speed", mul = 1.03 }, { stat = "max_hp", add = -3 } },
+			cloak = { { stat = "teleport_ticks", mul = 0.96 }, { stat = "jump_height", mul = 0.98 } },
+			legs = { { stat = "walk_speed", mul = 1.03 }, { stat = "air_speed", mul = 0.98 } },
 		},
 		bonus = {
 			a = { desc = "Il teletrasporto scatta dopo 1,5 s invece di 2, vita -10%",
-				effects = { { stat = "teleport_ticks", add = -30 }, { stat = "max_hp", mul = 0.9 } } },
+				effects = { { stat = "teleport_ticks", mul = 0.75 }, { stat = "max_hp", mul = 0.9 } } },
 			b = { desc = "Il primo teletrasporto è gratis, vita -10%",
 				effects = { { stat = "free_teleports", add = 1 }, { stat = "max_hp", mul = 0.9 } } },
 		} },
@@ -117,9 +101,8 @@ function M.mods(gear, tiers, variant, mods)
 		if set then mods[#mods + 1] = set.pieces[s.id] end
 	end
 	local id, top = M.full_set(gear, tiers)
-	if id then
-		mods[#mods + 1] = M.BY_ID[id].bonus[(variant == "b" and top) and "b" or "a"].effects
-	end
+	local bonus = id and M.BY_ID[id].bonus
+	if bonus then mods[#mods + 1] = bonus[(variant == "b" and top) and "b" or "a"].effects end
 	return mods
 end
 

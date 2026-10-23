@@ -12,41 +12,21 @@ local M = {}
 
 M.LOADOUTS = 3
 
--- limiti delle statistiche dopo albero e set (nessuna somma porta oltre)
-M.MIN = {
-	walk_speed = 20, jump_height = 20, air_speed = 20, max_hp = 1,
-	teleport_ticks = 30, teleport_cost = 0, parachute_cost = 0, shield_cost = 0,
-	air_jump_cost = 0, fall_damage_mul = 0, knockback_mul = 0.2,
-}
+-- limiti delle statistiche dopo albero e set
+M.MIN = { max_hp = 1, teleport_ticks = 30, teleport_cost = 0 }
 
 function M.new()
 	return { tree = {}, gear = {}, variant = "a" }
 end
 
--- gli effetti funzionano già nella sim? (tutte le loro statistiche sono nella base)
-function M.attivo(base, effects)
-	for _, e in ipairs(effects) do
-		if base[e.stat] == nil then return false end
-	end
-	return true
-end
-
 -- Applica i gruppi di effetti (un pezzo, un grado, un bonus): prima le somme,
--- poi le moltiplicazioni, poi i valori fissi. Un gruppo conta solo se la sim
--- usa già tutte le sue statistiche: niente malus senza il suo vantaggio.
+-- poi le moltiplicazioni
 local function apply(st, mods)
-	local ok = {}
 	for _, g in ipairs(mods) do
-		if M.attivo(st, g) then ok[#ok + 1] = g end
-	end
-	for _, g in ipairs(ok) do
 		for _, e in ipairs(g) do if e.add then st[e.stat] = st[e.stat] + e.add end end
 	end
-	for _, g in ipairs(ok) do
+	for _, g in ipairs(mods) do
 		for _, e in ipairs(g) do if e.mul then st[e.stat] = st[e.stat] * e.mul end end
-	end
-	for _, g in ipairs(ok) do
-		for _, e in ipairs(g) do if e.set ~= nil then st[e.stat] = e.set end end
 	end
 	for k, v in pairs(M.MIN) do
 		if type(st[k]) == "number" and st[k] < v then st[k] = v end
@@ -64,7 +44,7 @@ function M.stats(base, a, tiers)
 	abilita.mods(a.tree or {}, mods)
 	equip.mods(a.gear or {}, tiers, a.variant, mods)
 	apply(st, mods)
-	for _, k in ipairs({ "max_hp", "teleport_ticks", "status_ticks" }) do
+	for _, k in ipairs({ "max_hp", "teleport_ticks" }) do
 		if type(st[k]) == "number" then st[k] = math.floor(st[k] + 0.5) end
 	end
 	return st

@@ -1,10 +1,10 @@
--- Profilo del giocatore sul telefono: livello, Scorie, maestria dei pezzi,
--- i 3 assetti e cosa ha comprato nel negozio. Finché il server non tiene gli
--- account si salva in locale (sys.save); la logica è Lua puro e si prova nei test.
+-- Profilo del giocatore sul telefono: livello, maestria dei pezzi e i 3
+-- assetti. Finché il server non tiene gli account si salva in locale (sys.save); la logica è Lua puro e si prova nei test.
 --
 -- Progressione (docs/game_design_competitivo.md, "Più avanti: reward e
--- progressione"): ogni partita dà esperienza (anche persa, di più sul podio) e
--- Scorie; il livello dà i punti dell'albero; giocare con un pezzo ne alza il tier.
+-- progressione"): ogni partita dà esperienza (anche persa, di più sul podio);
+-- il livello dà i punti dell'albero; giocare con un pezzo ne alza il tier.
+-- Le Scorie (materiale della Forgia) arriveranno con la Forgia.
 
 local abilita = require "sim.abilita"
 local assetto = require "sim.assetto"
@@ -13,18 +13,14 @@ local equip = require "sim.equipaggiamento"
 local M = {}
 
 M.VERSIONE = 1
--- esperienza e Scorie per posto (1°, 2°, 3°, 4°) e per ogni riconoscimento
+-- esperienza per posto (1°, 2°, 3°, 4°) e per ogni riconoscimento
 M.XP_POSTO = { 120, 80, 60, 50 }
 M.XP_RICONOSCIMENTO = 25
-M.SCORIE_POSTO = { 30, 20, 15, 10 }
 -- esperienza per passare dal livello n al n + 1: XP_BASE + XP_PASSO * (n - 1)
 M.XP_BASE, M.XP_PASSO = 100, 25
--- Scorie con cui si parte
-M.SCORIE_INIZIO = 50
 
 function M.nuovo()
-	local p = { versione = M.VERSIONE, xp = 0, livello = 1, scorie = M.SCORIE_INIZIO,
-		maestria = {}, assetti = {}, attivo = 1, comprati = {}, aspetto = nil }
+	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1 }
 	for i = 1, assetto.LOADOUTS do p.assetti[i] = assetto.new() end
 	return p
 end
@@ -53,14 +49,12 @@ function M.assetto_attivo(p)
 end
 
 -- Fine partita: posto (1..4) e riconoscimenti presi. Aggiorna il profilo e
--- restituisce cosa si è guadagnato { xp, scorie, livello_prima, livello }.
+-- restituisce cosa si è guadagnato { xp, livello_prima, livello }.
 function M.fine_partita(p, posto, riconoscimenti)
 	local g = {
 		xp = (M.XP_POSTO[posto] or M.XP_POSTO[#M.XP_POSTO]) + M.XP_RICONOSCIMENTO * #(riconoscimenti or {}),
-		scorie = M.SCORIE_POSTO[posto] or M.SCORIE_POSTO[#M.SCORIE_POSTO],
 		livello_prima = p.livello,
 	}
-	p.scorie = p.scorie + g.scorie
 	p.xp = p.xp + g.xp
 	while p.xp >= M.xp_livello(p.livello) do
 		p.xp = p.xp - M.xp_livello(p.livello)

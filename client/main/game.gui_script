@@ -11,8 +11,6 @@ local home = require "menu.home"
 local profilo = require "menu.profilo"
 local podio = require "menu.podio"
 local armeria = require "menu.armeria"
-local eventi = require "menu.eventi"
-local negozio = require "menu.negozio"
 local assetto = require "sim.assetto"
 local riconoscimenti = require "sim.riconoscimenti"
 local ui = require "ui.ui"
@@ -288,7 +286,7 @@ local function disconnect(self)
 	end
 end
 
--- Schermate fuori dalla battaglia (podio, armeria, eventi, negozio): si creano
+-- Schermate fuori dalla battaglia (podio, armeria): si creano
 -- quando si aprono e si cancellano quando si chiudono, così non pesano mentre si
 -- gioca. Ogni modulo ha new, on_input (-> "indietro" / "continua" per uscire),
 -- distruggi e, se si anima, update.
@@ -633,7 +631,7 @@ local function handle_event(self, e)
 end
 
 -- Il podio, coi risultati della partita appena finita. Chi gioca su questo
--- telefono (online il suo robot, in locale il primo) guadagna esperienza e Scorie.
+-- telefono (online il suo robot, in locale il primo) guadagna esperienza.
 local function apri_podio(self)
 	self.podio_t = nil
 	local res = self.risultati
@@ -1745,10 +1743,6 @@ function on_input(self, action_id, action)
 			start_online(self)
 		elseif scelta == "armeria" then
 			apri_schermata(self, armeria, self.profilo)
-		elseif scelta == "negozio" then
-			apri_schermata(self, negozio, self.profilo)
-		elseif scelta == "eventi" then
-			apri_schermata(self, eventi, os.time())
 		end
 		return true
 	end
