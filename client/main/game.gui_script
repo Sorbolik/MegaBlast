@@ -6,7 +6,7 @@
 
 local game = require "sim.game"
 local maps = require "sim.maps"
-local grigio = require "battaglia.grigio"
+local scoria = require "battaglia.scoria"
 local home = require "menu.home"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
@@ -405,7 +405,7 @@ local function new_match(self, seed, map, opts)
 	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
-		grigio.set_enabled(self.robots[i].rig, true)
+		scoria.set_enabled(self.robots[i].rig, true)
 		gui.set_enabled(self.robots[i].hp, true)
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp }
 	end
@@ -486,9 +486,9 @@ local function handle_event(self, e)
 	elseif e.type == "fire" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- rinculo del Lanciarune, slancio del lancio, raffica di schegge
 		local kind = e.type == "fire" and "missile" or (e.type == "shards" and "shards" or "throw")
-		grigio.fire(self.robots[e.robot].rig, kind)
+		scoria.fire(self.robots[e.robot].rig, kind)
 	elseif e.type == "teleport" then
-		grigio.teleport(self.robots[e.robot].rig)
+		scoria.teleport(self.robots[e.robot].rig)
 		if self.mode == "online" then
 			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
 			self.snap[e.robot] = true
@@ -512,7 +512,7 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "death" then
 		-- crolla e svanisce da solo
-		grigio.die(self.robots[e.robot].rig)
+		scoria.die(self.robots[e.robot].rig)
 		gui.set_enabled(self.robots[e.robot].hp, false)
 	elseif e.type == "over" then
 		local text
@@ -897,11 +897,11 @@ local function render(self, dt)
 		end
 		local hp = math.max(0, rb.hp)
 		if v.hp ~= hp then
-			if hp < v.hp then grigio.hit(r.rig) end
+			if hp < v.hp then scoria.hit(r.rig) end
 			gui.set_text(r.hp, tostring(hp))
 			v.hp = hp
 		end
-		set_pos(r.hp, v.x, v.y + game.ROBOT_H + 8)
+		set_pos(r.hp, v.x, v.y + scoria.ALTEZZA + 6)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -952,8 +952,8 @@ local function render(self, dt)
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
 		end
-		grigio.set_weapon(r.rig, weapon)
-		grigio.update(r.rig, dt, st)
+		scoria.set_weapon(r.rig, weapon)
+		scoria.update(r.rig, dt, st)
 	end
 
 	-- Uovo di Fiamma: rotola mentre vola, sopra i secondi che mancano allo scoppio
@@ -1115,7 +1115,7 @@ local function render(self, dt)
 	local cur = current_robot(self)
 	local v = self.view[g.current]
 	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
-	set_pos(self.arrow, v.x, v.y + game.ROBOT_H + (30 + math.sin(self.clock * 5) * 3) / self.cam.s)
+	set_pos(self.arrow, v.x, v.y + scoria.ALTEZZA + (30 + math.sin(self.clock * 5) * 3) / self.cam.s)
 	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
 
 	-- Camera: segue il colpo in volo, poi resta un attimo sull'esplosione, poi
@@ -1162,7 +1162,7 @@ function init(self)
 
 	self.robots = {}
 	for i = 1, 2 do
-		local r = { rig = grigio.new(PLAYER_COLORS[i]), st = {} }
+		local r = { rig = scoria.new(PLAYER_COLORS[i]), st = {} }
 		self.robots[i] = r
 	end
 

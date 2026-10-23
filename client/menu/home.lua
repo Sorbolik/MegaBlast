@@ -11,7 +11,7 @@
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "local" o nil
 
 local game = require "sim.game"
-local grigio = require "battaglia.grigio"
+local scoria = require "battaglia.scoria"
 
 local M = {}
 
@@ -35,7 +35,7 @@ local SLICE = {
 local SFONDO_W, SFONDO_H = H * 2048 / 947, H
 -- piedi del personaggio sullo sperone, rispetto al centro dello sfondo
 local CORPO_X, CORPO_Y = -225, -176
--- il corpo in grigio (alto game.ROBOT_H) alto circa 180 px
+-- la Scoria (alta game.ROBOT_H) alta circa 180 px
 local CORPO_K = 180 / game.ROBOT_H
 
 local V = vmath.vector3()
@@ -124,9 +124,9 @@ function M.new(colore)
 	h.posa = vuoto(CORPO_X, CORPO_Y, h.sfondo)
 	V.x, V.y, V.z = CORPO_K, CORPO_K, 1
 	gui.set_scale(h.posa, V)
-	h.corpo = grigio.new(colore)
+	h.corpo = scoria.new(colore)
 	gui.set_parent(h.corpo.root, h.posa)
-	grigio.set_enabled(h.corpo, true)
+	scoria.set_enabled(h.corpo, true)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0 }
 
 	-- logo in alto a sinistra, con la brace che respira
@@ -204,7 +204,7 @@ end
 function M.update(h, dt)
 	if not h.visibile then return end
 	h.t = h.t + dt
-	grigio.update(h.corpo, dt, h.st)
+	scoria.update(h.corpo, dt, h.st)
 	-- brace del logo e dell'oro di GIOCA: respiro lento
 	gui.set_color(h.logo_luce, vmath.vector4(BRACE.x, BRACE.y, BRACE.z, 0.55 + 0.35 * math.sin(h.t * 1.7)))
 	if h.avviso_t > 0 then
