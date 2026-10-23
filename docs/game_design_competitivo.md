@@ -4,6 +4,38 @@
 
 Risorsa permanente: va consultata prima di ogni decisione su gameplay, equipaggiamento e ricompense. Versione online da commentare: [Claude Doc](https://claude.ai/artifact/5seU1kJDZoCbVS1u8tRV2d). Le scelte prese vanno segnate qui.
 
+## Decisioni prese
+
+Scelte di Sergio del 23 ottobre 2026. Valgono sopra le proposte del resto del documento, che resta come archivio delle alternative.
+
+| Area | Decisione |
+| --- | --- |
+| Tempo del turno | **E, Nucleo**: i secondi rimasti quando attacchi diventano Nucleo. Tutti partono con 1 Nucleo. |
+| Teletrasporto | Ogni teletrasporto costa **1 Nucleo** (sostituisce "illimitato e gratuito"). Al primo turno se ne può fare uno solo. |
+| Munizioni | Ogni arma trovata dà **1 colpo**; se la ritrovi i colpi si sommano. Missile e spada sono infiniti. Sostituisce la ricarica della strada 4. |
+| Casse | Contenuto **nascosto** (la strada 3 è scartata). Oltre alle armi contengono **trappole e scudi**. |
+| Strategia | **2** uccisioni ambientali, **7** punteggio podio oltre le uccisioni, **9** effetti di stato. |
+| Scelta d'inizio partita | Un **ventaglio di 3 armi**, uguale per le due squadre. Ognuno ne sceglie 1 e due compagni non possono prendere la stessa. Di quell'arma hai 1 colpo (2 se le partite durano abbastanza). Fino allo scadere del timer puoi cambiare scelta o proporre uno scambio al compagno; allo scadere le scelte si confermano da sole. In partita hai missile, spada, l'arma scelta e quelle delle casse. |
+| Equipaggiamento | Misto di **sidegrade** (strada 2) e **tier che cambiano aspetto e varianti** (strada 3). |
+| Competitivo | Niente classificata permanente: una **modalità Torneo a tempo** con statistiche normalizzate. |
+| Albero di abilità | Sì, piccolo e sempre ricostruibile: proposta nella sezione qui sotto. |
+| Fine partita | **Riconoscimenti** per stile (Fulmine, Becchino, ecc. sono esempi). |
+| Eventi | Un **calendario degli eventi** invece delle stagioni: si sa in anticipo che la settimana dopo c'è il torneo, con premi a fasce (es. primi 100 skin e pezzo di equipaggiamento, dal 101 al 300 solo la skin). |
+| Negozio | Si vende l'aspetto. Qualsiasi altra cosa deve essere marginale: ci si arriva comunque giocando, comprarla fa solo prima. |
+
+Ancora aperti: zone del Titano (strada 1), turni che si accorciano (I), cosa fare mentre aspetti (J), durata della partita, e come funziona la scelta d'inizio nel tutti contro tutti.
+
+## Albero di abilità: può funzionare
+
+Sì, e si sposa bene con il Torneo: **in Torneo tutti hanno tutti i punti**, quindi la normalizzazione diventa semplicemente "livello massimo per tutti, scegli il tuo assetto". Servono quattro regole perché resti equo:
+
+1. **Meno punti che nodi.** Al livello massimo hai, per esempio, 20 punti per un albero da 40. Così anche a fine gioco devi scegliere, e l'albero resta un assetto e non una scala da completare.
+2. **Nodi che cambiano il modo di giocare, non solo i numeri.** L'idea più forte è legarlo al Nucleo: un ramo Mobilità (teletrasporto che scatta prima, salto extra a 1 Nucleo), un ramo Difesa (scudo più economico, meno danno da caduta), un ramo Arsenale (trappole più grandi, effetti di stato più lunghi). I numeri puri restano piccoli.
+3. **Divario piccolo tra un nuovo giocatore e uno al massimo** nelle partite normali, per esempio entro il 10% sulle statistiche, e avversari di livello simile nei primi livelli.
+4. **Ricostruzione gratuita fuori dalla partita**, con 3 assetti salvati (albero più equipaggiamento) da scegliere prima del ventaglio d'armi.
+
+Per non far sovrapporre le due crescite: l'equipaggiamento cambia statistiche e aspetto, l'albero cambia le abilità e come spendi il Nucleo.
+
 ## In breve
 
 La proposta: il tempo che non usi diventa **Nucleo**, una carica che spendi in mosse tattiche (non in danno puro); l'equipaggiamento cambia *come* giochi ma non *quanto sei forte*, e la crescita del giocatore sta in collezione, maestria e classifica.
