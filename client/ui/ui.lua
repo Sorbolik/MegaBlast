@@ -133,7 +133,7 @@ function M.indietro(lista, azione, parent)
 	gui.set_yanchor(n, gui.ANCHOR_TOP)
 	for i = -1, 1, 2 do
 		local s = nodo(nil, -2, i * 7, 22, 4, C.LUCE, n)
-		gui.set_rotation(s, vmath.vector3(0, 0, -i * 45))
+		gui.set_rotation(s, vmath.vector3(0, 0, i * 45))
 	end
 	return n
 end
@@ -151,9 +151,11 @@ function M.barra_valore(b, v)
 	gui.set_size(b.pieno, V)
 end
 
--- Tocco sui bottoni di una lista: premuto, rilasciato sopra (l'azione) o fuori
+-- Tocco sui bottoni di una lista: premuto, rilasciato sopra (l'azione) o fuori.
+-- Vince l'ultimo aggiunto, che è disegnato sopra (un bottone dentro un pannello)
 local function sotto(lista, x, y)
-	for _, b in ipairs(lista) do
+	for i = #lista, 1, -1 do
+		local b = lista[i]
 		if not b.spento and gui.is_enabled(b.nodo, true) and gui.pick_node(b.nodo, x, y) then return b end
 	end
 end
