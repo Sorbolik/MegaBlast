@@ -8,19 +8,31 @@ local C = {}
 
 -- Partita e turni, in secondi
 C.MATCH_SECONDS = 5 * 60     -- durata della partita
-C.TURN_SECONDS = 30          -- durata del turno (come Blastron)
+C.TURN_SECONDS = 25          -- durata del turno (Blastron con più di due giocatori)
 C.SECOND_ATTACK_SECONDS = 5  -- dopo il primo attacco, tempo per il secondo
 C.REPOSITION_SECONDS = 5     -- dopo l'ultimo attacco, tempo per riposizionarsi
 
+-- Modi di gioco: i giocatori da passare a game.new (opts.players), con la
+-- squadra di ognuno. Nel 2 contro 2 le squadre si alternano già nell'elenco.
+C.MODES = {
+	["1v1"] = { { team = 1 }, { team = 2 } },
+	["2v2"] = { { team = 1 }, { team = 2 }, { team = 1 }, { team = 2 } },
+	ffa = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } },
+}
+
 -- Nucleo: i secondi rimasti al primo attacco del turno diventano Nucleo,
 -- 1 ogni NUCLEO_SECONDS, senza superare NUCLEO_MAX.
-C.NUCLEO_SECONDS = 2
-C.NUCLEO_MAX = 10
+-- Scelta nostra: il documento proponeva 1 ogni 2 s e 10 al massimo, ma con
+-- turni da 25 s quasi tutti arriverebbero al massimo e la scelta "spendo o
+-- tengo" sparirebbe. Così chi attacca con 20 s rimasti prende 4, chi ne
+-- lascia 5 prende 1.
+C.NUCLEO_SECONDS = 5
+C.NUCLEO_MAX = 5
 -- al primo turno di ogni robot si può fare un solo teletrasporto
 C.FIRST_TURN_TELEPORTS = 1
 
 -- Statistiche di ogni robot che non sono fisica. Le modificano l'albero di
--- abilità e l'equipaggiamento (opts.stats o opts.players[i].stats in game.new);
+-- abilità e l'equipaggiamento (opts.players[i].stats in game.new);
 -- corsa, salto e velocità in aria vengono dal profilo di fisica.
 C.STATS = {
 	-- scelta nostra: 1,5 volte la vita di prima, perché con due attacchi per
