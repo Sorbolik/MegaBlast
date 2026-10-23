@@ -27,7 +27,8 @@ M.STATISTICHE = {
 	{ "teleport_ticks", "Teletrasporto", "secondi" }, { "free_teleports", "Teletrasporti gratis" },
 	{ "start_nucleo", "Nucleo iniziale" }, { "free_parachutes", "Paracadute gratis" },
 	{ "fall_damage_mul", "Danno da caduta", "percento" }, { "knockback_mul", "Spinta subita", "percento" },
-	{ "trap_radius", "Raggio trappole" },
+	{ "trap_radius", "Raggio trappole" }, { "status_turns", "Turni degli effetti" },
+	{ "burning_blasts", "Colpi brucianti", "sì" },
 }
 local ROMANI = { "I", "II", "III" }
 local NOMI_STAT = {}
@@ -42,6 +43,7 @@ end
 local function valore(v, modo)
 	if type(v) ~= "number" then return v and "sì" or "no" end
 	if modo == "secondi" then return string.format("%.1f s", v / 60) end
+	if modo == "sì" then return v > 0 and "sì" or "no" end
 	if modo == "percento" then return string.format("%d%%", math.floor(v * 100 + 0.5)) end
 	if v % 1 ~= 0 then return string.format("%.1f", v) end
 	return tostring(v)

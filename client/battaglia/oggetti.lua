@@ -1,6 +1,6 @@
 -- Oggetti tattici nella battaglia, disegnati solo con forme (niente immagini):
--- trappole e trampolini posati, punti di ancoraggio della mappa, scudo e
--- paracadute dei robot, e le icone degli oggetti nella barra.
+-- trappole e trampolini posati, punti di ancoraggio della mappa, scudo,
+-- paracadute ed effetti di stato dei robot, e le icone degli oggetti nella barra.
 --
 --   local o = oggetti.new(colori)             -- colori[squadra]
 --   oggetti.nodi(o)                            -- da mettere nel nodo "mondo"
@@ -16,6 +16,10 @@ local M = {}
 local AMBRA = vmath.vector4(1, 0.72, 0.25, 1)
 local ACCIAIO = vmath.vector4(0.55, 0.75, 0.95, 0.55)
 local BIANCO = vmath.vector4(1, 1, 1, 0.9)
+-- effetti di stato: fiamma sulla testa, anello freddo ai piedi, crepa sul petto
+local FUOCO = vmath.vector4(1, 0.45, 0.1, 0.7)
+local GELO = vmath.vector4(0.45, 0.8, 1, 0.8)
+local CREPA = vmath.vector4(1, 1, 1, 0.75)
 local MAX_ANCORE = 4
 
 local function nodo(w, h, color, parent)
@@ -62,7 +66,8 @@ local function anello(d, color, parent)
 end
 
 function M.new(colori)
-	local o = { colori = colori, posati = {}, ancore = {}, scudi = {}, paracadute = {}, col = vmath.vector4() }
+	local o = { colori = colori, posati = {}, ancore = {}, scudi = {}, paracadute = {}, fiamme = {}, geli = {}, crepe = {},
+		col = vmath.vector4(), size = vmath.vector3() }
 	local h = game.ROBOT_H
 	for i = 1, config.MAX_PLACED do
 		local root = nodo(0, 0, BIANCO)
@@ -85,6 +90,18 @@ function M.new(colori)
 		gui.set_fill_angle(p, 180)
 		gui.set_enabled(p, false)
 		o.paracadute[i] = p
+		local f = cerchio(h * 0.5, FUOCO)
+		gui.set_enabled(f, false)
+		o.fiamme[i] = f
+		local ge = anello(h * 1.4, GELO)
+		gui.set_scale(ge, vmath.vector3(1, 0.3, 1))
+		gui.set_enabled(ge, false)
+		o.geli[i] = ge
+		local c = nodo(0, 0, CREPA)
+		gui.set_euler(nodo(2, h * 0.7, CREPA, c), vmath.vector3(0, 0, 30))
+		gui.set_euler(nodo(2, h * 0.5, CREPA, c), vmath.vector3(0, 0, -40))
+		gui.set_enabled(c, false)
+		o.crepe[i] = c
 	end
 	return o
 end
@@ -96,6 +113,9 @@ function M.nodi(o)
 	for _, p in ipairs(o.posati) do list[#list + 1] = p.root end
 	for _, n in ipairs(o.scudi) do list[#list + 1] = n end
 	for _, n in ipairs(o.paracadute) do list[#list + 1] = n end
+	for _, n in ipairs(o.geli) do list[#list + 1] = n end
+	for _, n in ipairs(o.crepe) do list[#list + 1] = n end
+	for _, n in ipairs(o.fiamme) do list[#list + 1] = n end
 	return list
 end
 
@@ -146,6 +166,21 @@ function M.update(o, g, view, clock)
 		local open = rb ~= nil and not rb.dead and rb.parachute == "open"
 		gui.set_enabled(o.paracadute[i], open)
 		if open then pos(o.paracadute[i], v.x, v.y + game.ROBOT_H * 1.3) end
+		-- effetti di stato
+		local st = rb ~= nil and not rb.dead and rb.status or nil
+		local burn, slow, cracked = st and st.burn, st and st.slow, st and st.cracked
+		gui.set_enabled(o.fiamme[i], burn ~= nil)
+		if burn then
+			-- la fiamma tremola
+			local d = game.ROBOT_H * (0.32 + 0.06 * math.sin(clock * 17 + i * 2))
+			o.size.x, o.size.y = d, d * 1.3
+			gui.set_size(o.fiamme[i], o.size)
+			pos(o.fiamme[i], v.x, v.y + game.ROBOT_H * 1.05)
+		end
+		gui.set_enabled(o.geli[i], slow ~= nil)
+		if slow then pos(o.geli[i], v.x, v.y + 1) end
+		gui.set_enabled(o.crepe[i], cracked ~= nil)
+		if cracked then pos(o.crepe[i], v.x, v.y + game.ROBOT_H * 0.55) end
 	end
 end
 

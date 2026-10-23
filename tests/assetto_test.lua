@@ -111,6 +111,13 @@ a.tree = { fall = 2, anchor = 1, hp = 2, free_parachute = 1 }
 st = assetto.stats(BASE, a)
 check(st.free_parachutes == 1 and st.fall_damage_mul < 0.5, "albero: paracadute gratis e cadute più leggere")
 a.tree = {}
+a.gear = { mask = "fornace", chest = "fornace", cloak = "fornace", legs = "fornace" }
+st = assetto.stats(BASE, a)
+check(st.burning_blasts == 1 and st.status_turns == BASE.status_turns, "set Fornace completo: colpi brucianti")
+a.variant = "b"
+st = assetto.stats(BASE, a, { mask = 3, chest = 3, cloak = 3, legs = 3 })
+check(st.burning_blasts == 1 and st.status_turns == BASE.status_turns + 1, "tier III: variante B della Fornace")
+a.variant = "a"
 a.gear = { mask = "corvo", chest = "corvo", cloak = "corvo", legs = "corvo" }
 st = assetto.stats(BASE, a)
 check(st.free_teleports == 0 and st.max_hp == BASE.max_hp - 6, "set senza bonus: contano solo i pezzi")

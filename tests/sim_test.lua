@@ -592,6 +592,78 @@ do
 	check(an:knock_mul(ar) == 1, "fuori dall'ancoraggio la spinta è piena")
 end
 
+-- Effetti di stato: bruciatura, rallentamento, armatura incrinata ------------------
+do
+	local function to_turn(q, who)
+		for _ = 1, 4000 do
+			q:step()
+			if q.current == who and q.phase == "aim" then return end
+		end
+	end
+
+	-- le schegge rallentano: corsa e salto ridotti fino alla fine del proprio turno dopo
+	local q = game.new(42, "isole")
+	run(q, 30)
+	local r1, r2 = q.robots[1], q.robots[2]
+	q:explode(r2.x, r2.y + 4, 1, game.SHARD_BLAST, "shards")
+	check(r2.status.slow and r2.status.slow.turns == 1, "le schegge rallentano")
+	local x0 = r2.x
+	q.current = 2
+	run(q, 20, { right = true })
+	local slow_dx = math.abs(r2.x - x0)
+	r2.status.slow = nil
+	x0 = r2.x
+	run(q, 20, { right = true })
+	check(slow_dx < math.abs(r2.x - x0) * 0.8, "rallentato si corre più piano")
+	q.current = 1
+
+	-- armatura incrinata dal pugno: si prende più danno
+	local c = game.new(42, "isole")
+	local a, b = c.robots[1], c.robots[2]
+	c:punch_hit(a, b, 1)
+	check(b.status.cracked, "il pugno incrina l'armatura")
+	local hp = b.hp
+	c:hurt(b, 20, a)
+	check(hp - b.hp == math.floor(20 * config.STATUS.cracked.damage + 0.5), "con l'armatura incrinata il danno sale")
+
+	-- lo scudo ferma l'effetto
+	local s = game.new(42, "isole")
+	local sb = s.robots[2]
+	sb.shield = config.SHIELD.hp
+	s:punch_hit(s.robots[1], sb, 1)
+	check(not sb.status.cracked, "lo scudo ferma l'effetto di stato")
+
+	-- missile normale: niente bruciatura; col set Fornace (burning_blasts) brucia
+	local f = game.new(42, "isole", { players = { { team = 1, stats = { burning_blasts = 1 } }, { team = 2 } } })
+	run(f, 30)
+	local fa, fb = f.robots[1], f.robots[2]
+	f:explode(fb.x, fb.y + 4, 2, nil, "missile")
+	check(not fa.status.burn, "il missile senza Fornace non brucia")
+	f:explode(fb.x + 20, fb.y + 4, 1, nil, "missile")
+	check(fb.status.burn and fb.status.burn.by == 1, "col set Fornace il missile brucia")
+	-- all'inizio del turno chi brucia prende danno, e a fine turno l'effetto finisce
+	run(f, 200)
+	local before, points = fb.hp, fa.points
+	to_turn(f, 2)
+	check(fb.hp == before - config.STATUS.burn.damage and fa.points > points, "la bruciatura fa danno a inizio turno e dà punti")
+	to_turn(f, 1)
+	check(next(fb.status) == nil, "gli effetti finiscono alla fine del proprio turno")
+
+	-- status_turns di chi colpisce allunga l'effetto
+	local l = game.new(42, "isole", { players = { { team = 1, stats = { status_turns = 2 } }, { team = 2 } } })
+	run(l, 30)
+	local lb = l.robots[2]
+	l:explode(lb.x, lb.y + 4, 1, game.SHARD_BLAST, "shards")
+	to_turn(l, 2)
+	to_turn(l, 1)
+	check(lb.status.slow and lb.status.slow.turns == 1, "con status_turns 2 dura un turno in più")
+
+	-- la morte cancella gli effetti
+	l:kill(lb, "damage")
+	l:respawn(lb)
+	check(next(lb.status) == nil, "dopo il respawn niente effetti")
+end
+
 -- Determinismo: stesso seed, stessi input, stesso risultato
 local function play(seed, map)
 	local p = game.new(seed, map)

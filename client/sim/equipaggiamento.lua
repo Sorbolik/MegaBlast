@@ -26,8 +26,7 @@ M.TIER_MATCHES = { 0, 10, 30 }
 -- Pezzi: per ogni set e slot un più e un meno, in percentuale sulla base (le
 -- statistiche di movimento cambiano col profilo di fisica). Bonus: a pezzi completi.
 -- Ci sono solo i bonus delle meccaniche che il gioco ha già: quelli del
--- documento per Corvo (doppio salto) e Fornace (terreno bruciante) arrivano
--- con la loro meccanica.
+-- documento per Corvo (doppio salto) arriva con la sua meccanica.
 M.SETS = {
 	{ id = "corvo", name = "CORVO", style = "Agilità",
 		pieces = {
@@ -42,6 +41,13 @@ M.SETS = {
 			chest = { { stat = "max_hp", add = 4 }, { stat = "air_speed", mul = 0.97 } },
 			cloak = { { stat = "start_nucleo", add = 1 }, { stat = "jump_height", mul = 0.95 } },
 			legs = { { stat = "max_hp", add = 3 }, { stat = "walk_speed", mul = 0.98 } },
+		},
+		bonus = {
+			a = { desc = "Missile e Uovo bruciano chi colpiscono, salto -10%",
+				effects = { { stat = "burning_blasts", add = 1 }, { stat = "jump_height", mul = 0.9 } } },
+			b = { desc = "Missile e Uovo bruciano, gli effetti durano un turno in più, vita -10%",
+				effects = { { stat = "burning_blasts", add = 1 }, { stat = "status_turns", add = 1 },
+					{ stat = "max_hp", mul = 0.9 } } },
 		} },
 	{ id = "leviatano", name = "LEVIATANO", style = "Resistenza",
 		pieces = {

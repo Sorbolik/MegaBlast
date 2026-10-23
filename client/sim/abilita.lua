@@ -10,8 +10,8 @@
 --    nessuna statistica sale più del 10% (c'è un test);
 -- 4. ricostruzione gratuita fuori dalla partita (sim/assetto.lua tiene i 3 assetti).
 --
--- Ci sono solo i nodi delle meccaniche che il gioco ha già: salto extra,
--- scudo più economico ed effetti di stato arrivano con la loro meccanica.
+-- Ci sono solo i nodi delle meccaniche che il gioco ha già: salto extra e
+-- scudo più economico arrivano con la loro meccanica.
 --
 -- Un albero scelto è una tabella { [id del nodo] = gradi presi }.
 -- Ogni effetto è { stat = chiave, add = n } o { stat = chiave, mul = n }, per
@@ -29,11 +29,11 @@ M.ROW_GATE = 3
 M.BRANCHES = {
 	{ id = "mobility", name = "MOBILITÀ", desc = "Salto, corsa e teletrasporto" },
 	{ id = "defense", name = "DIFESA", desc = "Vita, Nucleo, cadute e spinte" },
-	{ id = "arsenal", name = "ARSENALE", desc = "Trappole" },
+	{ id = "arsenal", name = "ARSENALE", desc = "Trappole ed effetti di stato" },
 }
 
 -- Nodi: ramo, riga (1 in alto), gradi, costo di ogni grado ed effetto di ogni grado.
--- Somma dei costi di tutti i gradi: 58, quasi il triplo di POINTS_MAX.
+-- Somma dei costi di tutti i gradi: 62, più del triplo di POINTS_MAX.
 M.NODES = {
 	-- Mobilità (24)
 	{ id = "jump", branch = "mobility", row = 1, ranks = 3, cost = 2, name = "Gambe di Titano",
@@ -57,9 +57,11 @@ M.NODES = {
 		desc = "Il primo teletrasporto della partita è gratis", effects = { { stat = "free_teleports", add = 1 } } },
 	{ id = "anchor", branch = "defense", row = 3, ranks = 2, cost = 2, name = "Radici",
 		desc = "Spinta subita -5%", effects = { { stat = "knockback_mul", mul = 0.95 } } },
-	-- Arsenale (6)
+	-- Arsenale (10)
 	{ id = "trap_wide", branch = "arsenal", row = 1, ranks = 3, cost = 2, name = "Trappola larga",
 		desc = "Raggio delle trappole +3%", effects = { { stat = "trap_radius", mul = 1.03 } } },
+	{ id = "long_status", branch = "arsenal", row = 2, ranks = 1, cost = 4, name = "Brace lenta",
+		desc = "Gli effetti di stato che dai durano un turno in più", effects = { { stat = "status_turns", add = 1 } } },
 }
 
 M.BY_ID = {}
