@@ -36,10 +36,12 @@ for _, s in ipairs(M.STATISTICHE) do NOMI_STAT[s[1]] = string.lower(s[2]) end
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
--- statistiche base della sim
 local function base()
-	return game.DEFAULT_STATS
+	return game.base_stats()
 end
+
+-- gli effetti su statistiche che la sim non usa ancora si vedono, ma non contano
+local IN_ARRIVO = " (in arrivo)"
 
 local function valore(v, modo)
 	if type(v) ~= "number" then return v and "sì" or "no" end
@@ -57,7 +59,7 @@ local function effetti(lista)
 		local s = e.add and string.format("%+g", n) or string.format("x%g", n)
 		t[#t + 1] = s .. " " .. (NOMI_STAT[e.stat] or e.stat)
 	end
-	return table.concat(t, ", ")
+	return table.concat(t, ", ") .. (assetto.attivo(base(), lista) and "" or IN_ARRIVO)
 end
 
 local function a_attivo(a) return profilo.assetto_attivo(a.prof) end
@@ -128,6 +130,7 @@ local function scheda_set(a, parent)
 		local ok = v == "a" or top
 		ui.scheda(a.bottoni, -420, y, 50, 34, string.upper(v), "variante:" .. v, as.variant == v and (v == "a" or top), pan)
 		local testo = set.bonus[v].desc .. (ok and "" or "  (tutti i pezzi al tier III)")
+			.. (assetto.attivo(base(), set.bonus[v].effects) and "" or IN_ARRIVO)
 		local n = ui.testo(testo, -380, y, 0.62, ok and c.TESTO or c.SPENTO, pan)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
@@ -156,14 +159,20 @@ local function scheda_albero(a, parent)
 			for i, nodo in ipairs(lista) do
 				local nx = x + (i - (#lista + 1) / 2) * 150
 				local gradi = tree[nodo.id] or 0
-				local ok = abilita.can_add(tree, nodo.id, punti)
-				local col = gradi > 0 and c.BRACE or (ok and c.LINEA or c.PANNELLO)
-				local btn = ui.bottone(a.bottoni, nx, y, 140, 80, "", "nodo:" .. nodo.id, { colore = col }, parent)
-				ui.testo(nodo.name, 0, 18, 0.55, c.TESTO, btn)
-				ui.testo(string.format("%d / %d", gradi, nodo.ranks), 0, -6, 0.8, c.TESTO, btn)
-				ui.testo(nodo.cost == 1 and "1 punto" or (nodo.cost .. " punti"), 0, -28, 0.5, c.SPENTO, btn)
+				local ok = gradi > 0 or abilita.can_add(tree, nodo.id, punti)
+				local btn = ui.scheda(a.bottoni, nx, y, 140, 80, "", "nodo:" .. nodo.id, gradi > 0, parent)
+				local col = ok and c.TESTO or c.SPENTO
+				ui.testo(nodo.name, 0, 20, 0.9, col, btn)
+				ui.testo(string.format("%d / %d", gradi, nodo.ranks), 0, -4, 1.3, gradi > 0 and c.BRACE or col, btn)
+				local nota = assetto.attivo(base(), nodo.effects) and (nodo.cost == 1 and "1 punto" or (nodo.cost .. " punti"))
+					or "in arrivo"
+				ui.testo(nota, 0, -28, 0.8, c.SPENTO, btn)
 				if gradi > 0 and abilita.can_remove(tree, nodo.id) then
-					ui.bottone(a.bottoni, 56, 26, 26, 26, "-", "togli:" .. nodo.id, nil, btn)
+					ui.bottone(a.bottoni, 52, 22, 30, 30, "-", "togli:" .. nodo.id, nil, btn)
+					-- il tocco va al primo bottone della lista che sta sotto il dito:
+					-- il "-" va prima del nodo che lo contiene
+					local n = #a.bottoni
+					a.bottoni[n], a.bottoni[n - 1] = a.bottoni[n - 1], a.bottoni[n]
 				end
 			end
 		end

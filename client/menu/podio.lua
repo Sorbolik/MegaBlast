@@ -91,9 +91,8 @@ local function premio(p, x, y, voce, i)
 	ui.titolo(voce.award.name, 0, 24, 0.7, c.BRACE, n)
 	ui.testo(g.nome, 0, -2, 0.9, g.colore, n)
 	ui.testo(voce.award.desc, 0, -26, 0.6, c.SPENTO, n)
-	gui.set_color(n, vmath.vector4(c.PANNELLO.x, c.PANNELLO.y, c.PANNELLO.z, 0))
-	gui.set_inherit_alpha(n, false)
-	gui.animate(n, "color.w", 1, gui.EASING_OUTQUAD, 0.3, M.PREMI + i * 0.12)
+	gui.set_scale(n, vmath.vector3(0.01, 0.01, 1))
+	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, M.PREMI + i * 0.12)
 end
 
 -- esperienza, livello e Scorie guadagnati da chi gioca su questo telefono

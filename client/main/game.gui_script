@@ -787,7 +787,7 @@ local function start_local(self)
 	-- il primo robot gioca con l'assetto attivo del profilo
 	opts = opts or {}
 	local mio = profilo.assetto_attivo(self.profilo)
-	opts.stats = { assetto.stats(game.DEFAULT_STATS, mio, profilo.tier(self.profilo, mio)) }
+	opts.stats = { assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio)) }
 	new_match(self, os.time(), nil, opts)
 	self.mode = "local"
 	set_controls_visible(self, true)
