@@ -75,8 +75,9 @@ La barra delle armi sta in basso al centro (`y = 62`) e mostra solo le armi che
 il robot ha, centrate: con Lanciarune e Lama di Nucleo sono a `x = 593` e `687`;
 con tutte e cinque (Lanciarune, Lama, Uovo di Fiamma, Sciame di Schegge, Pugno
 del Titano) a `452`, `546`, `640`, `734`, `828`.
-Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`.
-Scenario della home: `scenari/home.txt`.
+Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, ARMERIA `168 216`, EVENTI `168 146`, NEGOZIO `168 76`.
+Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, Nucleo): `scenari/turno.txt`.
+Fine partita, podio e schermate di armeria, eventi e negozio: `scenari/podio.txt`.
 
 Per guidare il robot il gioco, solo in questa build, scrive nel log righe
 `SIMULA evento ...` e `SIMULA stato ...` (impostazione `megablast.simula = 1`

@@ -1,0 +1,20 @@
+# Turno con due attacchi: missile, poi la spada nei 5 s gialli, poi 5 s blu
+# di riposizionamento. Si vedono il Nucleo guadagnato e le armi che si spengono.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_inizio
+mira 150 100 0.4
+aspetta_evento fire 2
+aspetta 0.4
+foto 02_secondo_attacco             # barra gialla, Lanciarune spento, Lama scelta
+mira 60 0 0.2
+aspetta_evento swing 2
+aspetta 0.6
+foto 03_riposizionamento            # barra blu, tutte e due le armi spente
+tieni sinistra 1
+aspetta_stato turno=2 fase=aim 12
+aspetta 0.5
+foto 04_turno_blu

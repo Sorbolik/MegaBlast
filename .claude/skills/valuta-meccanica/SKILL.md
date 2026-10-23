@@ -34,7 +34,7 @@ se la meccanica esiste già. Se manca un'informazione per un filtro, scrivi
 
 ## Controlli in più, specifici di MegaBlast
 
-- **Turno**: si usa bene in 15 s compresa la mira? Lascia senso alla ritirata di 3 s?
+- **Turno**: si usa bene in 30 s compresa la mira? Lascia senso ai due attacchi (5 s) e al riposizionamento (5 s)?
 - **Online**: tutto ciò che decide l'esito sta nella simulazione e non dipende
   dal client? Servono messaggi nuovi?
 - **2v2 e 1v1v1v1**: funziona anche con quattro robot e con un compagno vicino?

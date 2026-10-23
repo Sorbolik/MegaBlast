@@ -28,13 +28,14 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 		R     []struct {
 			X, Y float64
 			HP   int  `json:"hp"`
+			MH   int  `json:"mh"`
 			G    bool `json:"g"`
 		} `json:"r"`
 	}
 	if err := json.Unmarshal([]byte(sim.Snapshot()), &st); err != nil {
 		t.Fatalf("snapshot non è JSON valido: %v\n%s", err, sim.Snapshot())
 	}
-	if st.Phase != "aim" || st.Cur != 1 || len(st.R) != 2 || !st.R[0].G || st.R[0].HP != 100 {
+	if st.Phase != "aim" || st.Cur != 1 || len(st.R) != 2 || !st.R[0].G || st.R[0].HP != st.R[0].MH || st.R[0].MH == 0 {
 		t.Fatalf("stato inatteso: %+v", st)
 	}
 	if err := sim.Step(Input{Fire: true, Angle: 1.0, Power: 0.6}); err != nil {

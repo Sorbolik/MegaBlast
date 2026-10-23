@@ -13,14 +13,15 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Elemento | Come funziona |
 |---|---|
 | Partita | Duello online 1 contro 1 (deathmatch). In seguito arriva una campagna single player contro bot. |
-| Turni | Sono a tempo e brevi (proposta: 15 s). Il giocatore di turno può muoversi, saltare, mirare e sparare **un** colpo. Dopo lo sparo ci sono 3 s in cui il robot può ancora muoversi per ripararsi; poi il turno passa. Il turno finisce anche allo scadere del timer o quando il robot muore. |
+| Turni | Durano 30 s. Il giocatore di turno può muoversi e saltare per tutto il turno e fare fino a **due attacchi**: un'arma (Lanciarune o un'arma trovata) e un colpo di spada, in ordine libero. Dopo il primo attacco ha 5 s per il secondo (barra gialla), dopo l'ultimo 5 s per riposizionarsi (barra blu), mai oltre la fine del turno. Il turno finisce anche allo scadere del timer o quando il robot muore. Tutti i numeri delle regole sono in `client/sim/config.lua`. |
+| Nucleo | Si parte con 1. Al primo attacco del turno i secondi rimasti diventano Nucleo (1 ogni 2 s, al massimo 10 in tutto). Il teletrasporto costa 1 Nucleo; al primo turno se ne fa uno solo. |
 | Terreno | La terra è distruttibile: ogni esplosione scava un cratere tondo. I tubi d'acciaio sono indistruttibili e fanno da base solida. |
 | Mappe | Fatte a mano, su più piani, con isole volanti. Niente vento. |
 | Movimento | Salto libero (anche dritto verso l'alto) e controllo in aria a destra e sinistra. |
 | Statistiche | Ogni robot ha velocità a terra, altezza del salto e velocità in aria. L'equipaggiamento le modificherà. Più un robot è veloce in aria, meno inerzia ha quando cambia direzione. |
 | Danni | Dipendono dalla distanza dal centro dell'esplosione. Anche l'esplosione stessa spinge il robot (knockback). Chi cade dalla mappa o nell'acqua muore. |
 | Collisioni | I robot non si attraversano: camminando contro un altro lo si spinge piano (30% della velocità) e chi cade su un robot gli resta in testa. Il globo del teletrasporto rimbalza sui robot e, se arriva forte, li sposta di 3 px; i globi rimbalzano anche tra loro. |
-| Vittoria | Vince l'ultimo robot rimasto in piedi. La partita dura al massimo 3 minuti: allo scadere il turno in corso finisce e vince chi ha più vita (a parità, chi ha inflitto più danni; se sono pari anche lì è pareggio). |
+| Vittoria | Vince l'ultimo robot rimasto in piedi. La partita dura al massimo 5 minuti: allo scadere il turno in corso finisce e vince chi ha più vita (a parità, chi ha inflitto più danni; se sono pari anche lì è pareggio). |
 
 ### Armi iniziali (MVP)
 
@@ -34,7 +35,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 
 ### Teletrasporto (Passo d'Ombra)
 
-Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo attivi, miri, rilasci). Lancia un globo che vola come il missile e quando tocca il terreno rimbalza e rotola. Dopo 2 secondi il robot compare nel punto del globo **nello stesso stato in cui era**: chi cade continua a cadere con la stessa velocità, il fendente in corso continua e la direzione non cambia. Lanciare il globo non chiude il turno e se ne possono lanciare quanti se ne vuole, anche mentre altri sono ancora in volo (fino a 6 insieme): ognuno ti teletrasporta allo scadere dei suoi 2 secondi, nell'ordine in cui li hai lanciati, quindi si può attaccare subito dopo. Combo tipica: colpo con la spada dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo. Il teletrasporto avviene sempre: se il punto è troppo stretto per il robot si compare nel punto libero più vicino, e se il globo è uscito dalla mappa ci si finisce dietro e si cade.
+Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo attivi, miri, rilasci). Lancia un globo che vola come il missile e quando tocca il terreno rimbalza e rotola. Dopo 2 secondi il robot compare nel punto del globo **nello stesso stato in cui era**: chi cade continua a cadere con la stessa velocità, il fendente in corso continua e la direzione non cambia. Lanciare il globo non chiude il turno e costa 1 Nucleo: se ne possono lanciare quanti il Nucleo permette, fino al colpo di spada (non nel riposizionamento), anche mentre altri sono ancora in volo (fino a 6 insieme): ognuno ti teletrasporta allo scadere dei suoi 2 secondi, nell'ordine in cui li hai lanciati, quindi si può attaccare subito dopo. Combo tipica: colpo con la spada dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo. Il teletrasporto avviene sempre: se il punto è troppo stretto per il robot si compare nel punto libero più vicino, e se il globo è uscito dalla mappa ci si finisce dietro e si cade.
 
 ### Casse
 
@@ -133,7 +134,7 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 | `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano) |
 | `{"t":"jump"}` | C → S | salto |
 | `{"t":"fire","a":1.2,"p":0.7}` | C → S | sparo: angolo in radianti e potenza da 0 a 1 |
-| `{"t":"state",…}` | S → C | fase, turno, timer, secondi di ritirata, robot e missile (20 al secondo) |
+| `{"t":"state",…}` | S → C | fase, turno, timer, tempo del secondo attacco e del riposizionamento, attacchi fatti, Nucleo, robot e missile (20 al secondo) |
 | `{"t":"ev","type":…}` | S → C | eventi: `turn`, `fire`, `explosion` (x, y, raggio), `damage`, `death`, `miss`, `over` |
 | `{"t":"left"}` | S → C | l'avversario si è disconnesso |
 
