@@ -5,10 +5,10 @@
 -- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
+local ui = require "ui.ui"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local home = require "menu.home"
-local ui = require "ui.ui"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 
@@ -30,10 +30,9 @@ local ACTION_ZOOM_OUT = hash("zoom_indietro")
 local ACTION_WEAPON = { [hash("arma1")] = 1, [hash("arma2")] = 2, [hash("arma3")] = 3, [hash("arma4")] = 4, [hash("arma5")] = 5 }
 
 local NAMES = { "Rosso", "Blu" }
--- colori delle squadre della bibbia grafica: Cremisi e Cobalto
-local PLAYER_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1) }
+-- colori delle squadre (Cremisi e Cobalto): la palette sta solo in ui/ui.lua
+local PLAYER_COLORS = ui.C.SQUADRA
 local WHITE = vmath.vector4(1, 1, 1, 1)
-local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
 -- Lanciarune e Lama di Nucleo ci sono sempre, le altre si trovano nelle casse.
@@ -79,14 +78,10 @@ local function glow(x, y, d, color)
 	return n
 end
 
+-- scritte dell'HUD col font dell'interfaccia: scala 1 = circa 16 px
+local FONT_K = 0.4
 local function label(x, y, text, scale)
-	local n = stretch(gui.new_text_node(vmath.vector3(x, y, 0), text))
-	gui.set_font(n, "default")
-	gui.set_color(n, WHITE)
-	gui.set_outline(n, DARK)
-	local s = scale or 1
-	gui.set_scale(n, vmath.vector3(s, s, 1))
-	return n
+	return stretch(ui.testo(text, x, y, (scale or 1) * FONT_K * 2))
 end
 
 -- Simulazione (strumenti/simula): con megablast.simula = 1 il gioco scrive nel
@@ -933,7 +928,7 @@ local function apply_camera(self)
 	view.m00, view.m11, view.m03, view.m13 = c.s, c.s, tx, ty
 	msg.post("@render:", "set_view_projection", self.cam_msg)
 	local l = c.s ^ -0.65
-	LABEL_SCALE.x, LABEL_SCALE.y = 0.7 * l, 0.7 * l
+	LABEL_SCALE.x, LABEL_SCALE.y = 0.7 * FONT_K * l, 0.7 * FONT_K * l
 	for i = 1, #self.robots do gui.set_scale(self.robots[i].hp, LABEL_SCALE) end
 	gui.set_scale(self.cancel_label, LABEL_SCALE)
 	LABEL_SCALE.x, LABEL_SCALE.y = l, l

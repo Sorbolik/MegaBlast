@@ -1,9 +1,5 @@
 script: "/main/game.gui_script"
 fonts {
-  name: "default"
-  font: "/builtins/fonts/default.font"
-}
-fonts {
   name: "titolo"
   font: "/ui/titolo.font"
 }
