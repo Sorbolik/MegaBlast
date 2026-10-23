@@ -301,6 +301,7 @@ function M.new(seed, map_id, opts)
 			free_parachutes = st.free_parachutes,
 			shield = nil,     -- danni che lo scudo può ancora assorbire
 			parachute = nil,  -- "armed" (pronto) o "open" (aperto)
+			status = {},      -- effetti di stato: tipo -> { turns = turni rimasti, by = chi l'ha dato }
 			turns = 0,     -- turni giocati
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
@@ -467,10 +468,12 @@ local function enemies(a, b)
 end
 
 -- Toglie amount punti di vita a rb. by è il robot che ha colpito (nil: nessuno,
--- per esempio una caduta), reason va nell'evento "damage".
+-- per esempio una caduta), reason va nell'evento "damage". Restituisce il danno
+-- arrivato alla vita (0 se lo scudo ha preso tutto).
 function M:hurt(rb, amount, by, reason)
-	if rb.dead or amount <= 0 then return end
+	if rb.dead or amount <= 0 then return 0 end
 	if by and by ~= rb then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
+	if rb.status.cracked then amount = math.floor(amount * C.STATUS.cracked.damage + 0.5) end
 	if rb.shield then
 		-- lo scudo assorbe per primo
 		local absorbed = math.min(rb.shield, amount)
@@ -478,7 +481,7 @@ function M:hurt(rb, amount, by, reason)
 		amount = amount - absorbed
 		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
 		if rb.shield <= 0 then rb.shield = nil end
-		if amount <= 0 then return end
+		if amount <= 0 then return 0 end
 	end
 	local mult = rb == self:leader() and C.SCORE.leader or 1
 	-- per i punti conta solo la vita che c'era davvero
@@ -492,6 +495,43 @@ function M:hurt(rb, amount, by, reason)
 		end
 	end
 	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage") end
+	return amount
+end
+
+-- Effetti di stato ------------------------------------------------------------------
+-- Durano fino alla fine del prossimo turno di chi li subisce (o di più, con
+-- stats.status_turns di chi li dà). Numeri in config.STATUS.
+
+function M:add_status(rb, kind, by)
+	if rb.dead then return end
+	local turns = by and by.stats.status_turns or 1
+	local s = rb.status[kind]
+	if s then
+		s.turns, s.by = math.max(s.turns, turns), by and by.id
+	else
+		rb.status[kind] = { turns = turns, by = by and by.id }
+	end
+	self:emit({ type = "status", robot = rb.id, kind = kind, turns = rb.status[kind].turns })
+end
+
+-- Il colpo di weapon ha fatto danno: l'effetto che porta, se ne porta uno
+function M:hit_status(rb, weapon, by)
+	local kind = C.WEAPON_STATUS[weapon]
+	if not kind and by and by.stats.burning_blasts > 0 and (weapon == "missile" or weapon == "grenade") then
+		kind = "burn"
+	end
+	if kind then self:add_status(rb, kind, by) end
+end
+
+-- A fine turno di rb gli effetti perdono un turno
+function M:age_status(rb)
+	for kind, s in pairs(rb.status) do
+		s.turns = s.turns - 1
+		if s.turns <= 0 then
+			rb.status[kind] = nil
+			self:emit({ type = "status_end", robot = rb.id, kind = kind })
+		end
+	end
 end
 
 -- reason: "damage" (colpi), "fell" (fuori dalla mappa), "fall_damage" (caduta
@@ -542,7 +582,7 @@ function M:respawn(rb)
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
 	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
-	rb.hp, rb.dead, rb.shield = rb.max_hp, false, nil
+	rb.hp, rb.dead, rb.shield, rb.status = rb.max_hp, false, nil, {}
 	if rb.parachute == "open" then rb.parachute = nil end
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
 end
@@ -594,6 +634,9 @@ function M:update_robot(rb, input, active)
 	end
 
 	local st = rb.stats
+	-- rallentato: corsa, velocità in aria e salto ridotti
+	local slow = rb.status.slow and C.STATUS.slow
+	local move, jump = slow and slow.move or 1, slow and slow.jump or 1
 	local dir = (input.right and 1 or 0) - (input.left and 1 or 0)
 	if dir ~= 0 then rb.facing = dir end
 
@@ -612,12 +655,12 @@ function M:update_robot(rb, input, active)
 
 	if rb.grounded then
 		if dir ~= 0 then
-			walk(self, rb, dir * st.walk_speed * M.DT)
+			walk(self, rb, dir * st.walk_speed * move * M.DT)
 		end
 		if want_jump then
 			-- salto libero: verso l'alto, oppure nella direzione in cui si sta andando
-			rb.vx = dir * st.walk_speed
-			rb.vy = st.jump_vy
+			rb.vx = dir * st.walk_speed * move
+			rb.vy = st.jump_vy * jump
 			rb.grounded = false
 			rb.rising = true
 			rb.coyote, rb.jump_buf = 0, 0
@@ -648,13 +691,14 @@ function M:update_robot(rb, input, active)
 		end
 		if M.AIR_CONTROL == "instant" then
 			-- Blastron: niente inerzia, anche appena sbalzati
-			if dir ~= 0 then rb.vx = dir * st.air_speed end
+			local air = st.air_speed * move
+			if dir ~= 0 then rb.vx = dir * air end
 			if active and M.CLAMP_ACTIVE_VX then
-				rb.vx = math.max(-st.air_speed, math.min(st.air_speed, rb.vx))
+				rb.vx = math.max(-air, math.min(air, rb.vx))
 			end
 		elseif not rb.knocked then
 			-- controllo in aria (non mentre si viene sbalzati da un'esplosione)
-			local dv = dir * st.air_speed - rb.vx
+			local dv = dir * st.air_speed * move - rb.vx
 			local max_dv = st.air_accel * M.DT
 			rb.vx = rb.vx + math.max(-max_dv, math.min(max_dv, dv))
 		end
@@ -773,7 +817,7 @@ function M:update_grenade(p)
 		end
 	end
 	if p.fuse <= 0 then
-		self:explode(p.x, p.y, p.owner, M.GRENADE_BLAST)
+		self:explode(p.x, p.y, p.owner, M.GRENADE_BLAST, "grenade")
 		self.projectile = nil
 	elseif p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300 then
 		self:emit({ type = "miss" })
@@ -820,7 +864,7 @@ function M:update_shards()
 				p.x = p.x + mx / steps
 				p.y = p.y + my / steps
 				if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then
-					self:explode(p.x, p.y, p.owner, M.SHARD_BLAST)
+					self:explode(p.x, p.y, p.owner, M.SHARD_BLAST, "shards")
 					self.shards[i] = nil
 					break
 				end
@@ -1235,7 +1279,7 @@ function M:punch_hit(rb, other, dir)
 	other.vx, other.vy = dir * M.PUNCH_PUSH * k, M.PUNCH_LAUNCH * k
 	other.fall_top = nil
 	other.grounded, other.knocked = false, true
-	self:hurt(other, M.PUNCH_DAMAGE, rb)
+	if self:hurt(other, M.PUNCH_DAMAGE, rb) > 0 then self:hit_status(other, "punch", rb) end
 end
 
 function M:update_punch(rb)
@@ -1517,7 +1561,8 @@ end
 
 -- owner (facoltativo) è chi ha sparato, per contare i danni inflitti.
 -- blast (facoltativo) dice quanto è grande: MISSILE_BLAST se manca.
-function M:explode(x, y, owner, blast)
+-- weapon (facoltativo) è l'arma, per l'effetto di stato che porta.
+function M:explode(x, y, owner, blast, weapon)
 	blast = blast or M.MISSILE_BLAST
 	local cy0, cy1 = self.terrain:carve(x, y, blast.r)
 	self:emit({ type = "explosion", x = x, y = y, r = blast.r, row_min = cy0, row_max = cy1 })
@@ -1567,7 +1612,8 @@ function M:explode(x, y, owner, blast)
 				end
 				rb.grounded = false
 				rb.knocked = true
-				self:hurt(rb, dmg, owner and self.robots[owner])
+				local by = owner and self.robots[owner]
+				if self:hurt(rb, dmg, by) > 0 and weapon and by ~= rb then self:hit_status(rb, weapon, by) end
 			end
 		end
 	end
@@ -1584,7 +1630,7 @@ function M:update_projectile()
 		p.x = p.x + mx / steps
 		p.y = p.y + my / steps
 		if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then
-			self:explode(p.x, p.y, p.owner)
+			self:explode(p.x, p.y, p.owner, nil, "missile")
 			self.projectile = nil
 			return
 		end
@@ -1615,6 +1661,9 @@ function M:start_turn(player)
 	-- le trappole posate prima di questo turno sono armate
 	for _, o in ipairs(self.placed) do o.armed = true end
 	self:emit({ type = "turn", robot = player })
+	-- chi brucia prende danno all'inizio del turno (l'uccisione va a chi l'ha bruciato)
+	local burn = rb.status.burn
+	if burn then self:hurt(rb, C.STATUS.burn.damage, burn.by and self.robots[burn.by], "burn") end
 	-- dopo ogni crate_every turni cade una cassa
 	self.turn_no = self.turn_no + 1
 	if self.turn_no > 1 then
@@ -1748,6 +1797,7 @@ function M:end_turn()
 		self:emit({ type = "over", winner = res.winner, reason = "time", results = res })
 		return
 	end
+	self:age_status(self.robots[self.current])
 	for _, rb in ipairs(self.robots) do
 		if rb.dead then self:respawn(rb) end
 	end

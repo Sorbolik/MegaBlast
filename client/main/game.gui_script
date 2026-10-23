@@ -41,6 +41,9 @@ local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
 -- Lanciarune e Lama di Nucleo ci sono sempre, le altre si trovano nelle casse.
 -- Poi gli oggetti tattici (trappola, scudo, trampolino, paracadute): toccarli li usa subito.
+-- effetti di stato: la frase quando arrivano; online lo stato dice solo se ci sono
+local STATUS_TEXT = { burn = " brucia!", slow = " è rallentato!", cracked = " ha l'armatura incrinata!" }
+local STATUS_ON = { turns = 1 }
 local BAR_WEAPONS = { "missile", "sword", "grenade", "shards", "punch", "trap", "shield", "trampoline", "parachute" }
 local WEAPON_ICON = {
 	missile = "lanciarune_icona", sword = "lama_di_nucleo_icona", grenade = "uovo_di_fiamma_icona",
@@ -605,6 +608,8 @@ local function handle_event(self, e)
 		shock(self, e.x, e.y)
 	elseif e.type == "parachute" then
 		show_message(self, "Paracadute aperto!")
+	elseif e.type == "status" then
+		show_message(self, who_name(self, e.robot) .. STATUS_TEXT[e.kind])
 	elseif e.type == "crate" then
 		show_message(self, "Una cassa cade dal cielo!")
 	elseif e.type == "crate_pick" then
@@ -683,6 +688,10 @@ local function apply_state(self, s)
 		rb.shield = (r.sh or 0) > 0 and r.sh or nil
 		rb.parachute = r.pa == 1 and "armed" or (r.pa == 2 and "open" or nil)
 		rb.free_parachutes = r.fp or 0
+		local st = r.st or 0
+		rb.status.burn = st % 2 == 1 and STATUS_ON or nil
+		rb.status.slow = st % 4 >= 2 and STATUS_ON or nil
+		rb.status.cracked = st >= 4 and STATUS_ON or nil
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y, kind = s.p.k, fuse = s.p.fu } or nil
 	g.orbs = {}
@@ -789,6 +798,12 @@ local function start_local(self)
 		}
 	end
 	new_match(self, os.time(), nil, opts)
+	if SIMULA and config_int("megablast.prova_stati", 0) > 0 then
+		-- tutti partono con i tre effetti di stato, per vederli (scenario stati.txt)
+		for _, rb in ipairs(self.g.robots) do
+			for kind in pairs(gconfig.STATUS) do rb.status[kind] = { turns = 2 } end
+		end
+	end
 	self.mode = "local"
 	set_controls_visible(self, true)
 end

@@ -73,6 +73,20 @@ C.ANCHOR_KNOCKBACK = 0.35
 -- trappole e trampolini in mappa al massimo, tutti insieme
 C.MAX_PLACED = 8
 
+-- Effetti di stato (strategia 9): durano fino alla fine del prossimo turno di
+-- chi li subisce (stats.status_turns di chi colpisce) e si vedono sul robot.
+-- Lo scudo li ferma: passano solo se il colpo arriva alla vita.
+-- Bruciatura: danno all'inizio di ogni proprio turno. Rallentamento: corsa,
+-- velocità in aria e salto ridotti. Armatura incrinata: si prende più danno.
+C.STATUS = {
+	burn = { damage = 10 },
+	slow = { move = 0.6, jump = 0.8 },
+	cracked = { damage = 1.25 },
+}
+-- Quale arma dà quale effetto (scelta nostra). La bruciatura viene dalle
+-- esplosioni di chi ha stats.burning_blasts (il set Fornace).
+C.WEAPON_STATUS = { shards = "slow", punch = "cracked" }
+
 -- Statistiche di ogni robot che non sono fisica. Le modificano l'albero di
 -- abilità e l'equipaggiamento (opts.players[i].stats in game.new);
 -- corsa, salto e velocità in aria vengono dal profilo di fisica.
@@ -88,6 +102,8 @@ C.STATS = {
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata
+	burning_blasts = 0,      -- 1: missile e Uovo bruciano chi colpiscono (set Fornace)
+	status_turns = 1,        -- per quanti turni dura un effetto di stato dato da questo robot
 }
 
 return C

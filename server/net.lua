@@ -61,11 +61,12 @@ function N.snapshot(g)
 		-- sb, pb: angolo di mira del fendente e del pugno (servono col modello "blastron")
 		-- n: Nucleo, ft: teletrasporti gratis rimasti, mh: vita massima, tu: turni giocati, pt: punti
 		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute (1 pronto, 2 aperto);
-		-- fp: paracadute gratis
+		-- fp: paracadute gratis; st: effetti di stato (1 bruciatura + 2 rallentamento + 4 armatura incrinata)
 		robots[i] = encode({ x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
 			n = rb.nucleo, ft = rb.free_teleports, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
 			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, fp = rb.free_parachutes,
 			pa = rb.parachute == "armed" and 1 or (rb.parachute == "open" and 2 or 0),
+			st = (rb.status.burn and 1 or 0) + (rb.status.slow and 2 or 0) + (rb.status.cracked and 4 or 0),
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
 			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch })
