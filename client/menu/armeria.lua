@@ -25,7 +25,9 @@ local M = {}
 M.STATISTICHE = {
 	{ "max_hp", "Vita" }, { "walk_speed", "Corsa" }, { "jump_height", "Salto" }, { "air_speed", "In aria" },
 	{ "teleport_ticks", "Teletrasporto", "secondi" }, { "free_teleports", "Teletrasporti gratis" },
-	{ "start_nucleo", "Nucleo iniziale" },
+	{ "start_nucleo", "Nucleo iniziale" }, { "free_parachutes", "Paracadute gratis" },
+	{ "fall_damage_mul", "Danno da caduta", "percento" }, { "knockback_mul", "Spinta subita", "percento" },
+	{ "trap_radius", "Raggio trappole" },
 }
 local ROMANI = { "I", "II", "III" }
 local NOMI_STAT = {}
@@ -75,7 +77,7 @@ local function statistiche(a, parent)
 			if diff then
 				local meglio = type(st[k]) ~= "number" or st[k] > b[k]
 				-- per questi meno è meglio
-				if k == "teleport_ticks" or k == "shield_cost" or k == "fall_damage_mul" or k == "knockback_mul" then
+				if k == "teleport_ticks" or k == "fall_damage_mul" or k == "knockback_mul" then
 					meglio = st[k] < b[k]
 				end
 				col = meglio and c.BRACE or c.TESTO
@@ -132,8 +134,10 @@ local function scheda_albero(a, parent)
 	local c = ui.C
 	local tree = a_attivo(a).tree
 	local punti = profilo.punti(a.prof)
+	-- colonne dei rami nello spazio a sinistra delle statistiche
+	local passo = math.min(440, 990 / #abilita.BRANCHES)
 	for b, ramo in ipairs(abilita.BRANCHES) do
-		local x = 510 + (b - (#abilita.BRANCHES + 1) / 2) * 440
+		local x = 510 + (b - (#abilita.BRANCHES + 1) / 2) * passo
 		ui.titolo(ramo.name, x, 575, 0.7, c.TESTO, parent)
 		ui.testo(string.format("%d punti", abilita.spent(tree, ramo.id)), x, 548, 0.6, c.SPENTO, parent)
 		-- nodi per riga

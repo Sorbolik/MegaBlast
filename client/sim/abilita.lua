@@ -10,9 +10,8 @@
 --    nessuna statistica sale più del 10% (c'è un test);
 -- 4. ricostruzione gratuita fuori dalla partita (sim/assetto.lua tiene i 3 assetti).
 --
--- Ci sono solo i nodi delle meccaniche che il gioco ha già: quelli di scudi,
--- paracadute, trappole ed effetti di stato (ramo Arsenale compreso) arrivano
--- con la loro meccanica.
+-- Ci sono solo i nodi delle meccaniche che il gioco ha già: salto extra,
+-- scudo più economico ed effetti di stato arrivano con la loro meccanica.
 --
 -- Un albero scelto è una tabella { [id del nodo] = gradi presi }.
 -- Ogni effetto è { stat = chiave, add = n } o { stat = chiave, mul = n }, per
@@ -29,11 +28,12 @@ M.ROW_GATE = 3
 
 M.BRANCHES = {
 	{ id = "mobility", name = "MOBILITÀ", desc = "Salto, corsa e teletrasporto" },
-	{ id = "defense", name = "DIFESA", desc = "Vita e Nucleo" },
+	{ id = "defense", name = "DIFESA", desc = "Vita, Nucleo, cadute e spinte" },
+	{ id = "arsenal", name = "ARSENALE", desc = "Trappole" },
 }
 
 -- Nodi: ramo, riga (1 in alto), gradi, costo di ogni grado ed effetto di ogni grado.
--- Somma dei costi di tutti i gradi: 40, il doppio di POINTS_MAX.
+-- Somma dei costi di tutti i gradi: 58, quasi il triplo di POINTS_MAX.
 M.NODES = {
 	-- Mobilità (24)
 	{ id = "jump", branch = "mobility", row = 1, ranks = 3, cost = 2, name = "Gambe di Titano",
@@ -44,13 +44,22 @@ M.NODES = {
 		desc = "Velocità in aria +3%", effects = { { stat = "air_speed", mul = 1.03 } } },
 	{ id = "orb_fast", branch = "mobility", row = 3, ranks = 2, cost = 3, name = "Orbe impaziente",
 		desc = "Il teletrasporto scatta il 5% prima", effects = { { stat = "teleport_ticks", mul = 0.95 } } },
-	-- Difesa (16)
+	-- Difesa (28)
 	{ id = "hp", branch = "defense", row = 1, ranks = 4, cost = 2, name = "Crosta spessa",
 		desc = "Vita +3", effects = { { stat = "max_hp", add = 3 } } },
+	{ id = "fall", branch = "defense", row = 1, ranks = 2, cost = 2, name = "Ossa di pietra",
+		desc = "Danno da caduta -5%", effects = { { stat = "fall_damage_mul", mul = 0.95 } } },
 	{ id = "start_nucleo", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Nucleo di riserva",
 		desc = "Si parte con 1 Nucleo in più", effects = { { stat = "start_nucleo", add = 1 } } },
+	{ id = "free_parachute", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Ali di riserva",
+		desc = "Il primo paracadute della partita è gratis", effects = { { stat = "free_parachutes", add = 1 } } },
 	{ id = "free_teleport", branch = "defense", row = 3, ranks = 1, cost = 4, name = "Passo leggero",
 		desc = "Il primo teletrasporto della partita è gratis", effects = { { stat = "free_teleports", add = 1 } } },
+	{ id = "anchor", branch = "defense", row = 3, ranks = 2, cost = 2, name = "Radici",
+		desc = "Spinta subita -5%", effects = { { stat = "knockback_mul", mul = 0.95 } } },
+	-- Arsenale (6)
+	{ id = "trap_wide", branch = "arsenal", row = 1, ranks = 3, cost = 2, name = "Trappola larga",
+		desc = "Raggio delle trappole +3%", effects = { { stat = "trap_radius", mul = 1.03 } } },
 }
 
 M.BY_ID = {}

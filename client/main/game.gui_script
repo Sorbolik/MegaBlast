@@ -17,6 +17,7 @@ local assetto = require "sim.assetto"
 local riconoscimenti = require "sim.riconoscimenti"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
+local oggetti = require "battaglia.oggetti"
 
 local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
@@ -43,13 +44,15 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
 -- Lanciarune e Lama di Nucleo ci sono sempre, le altre si trovano nelle casse.
-local BAR_WEAPONS = { "missile", "sword", "grenade", "shards", "punch" }
+-- Poi gli oggetti tattici (trappola, scudo, trampolino, paracadute): toccarli li usa subito.
+local BAR_WEAPONS = { "missile", "sword", "grenade", "shards", "punch", "trap", "shield", "trampoline", "parachute" }
 local WEAPON_ICON = {
 	missile = "lanciarune_icona", sword = "lama_di_nucleo_icona", grenade = "uovo_di_fiamma_icona",
 	shards = "sciame_di_schegge_icona", punch = "pugno_del_titano_icona",
 }
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
-local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano" }
+local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
+	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true }
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 62
@@ -466,6 +469,7 @@ local function new_match(self, seed, map, opts)
 		gui.set_text(self.robots[i].hp, tostring(rb.hp))
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp }
 	end
+	oggetti.mappa(self.oggetti, self.g)
 	self.trail_n = 0
 	self.pose_dt = game.DT
 	reset_pose(self)
@@ -609,6 +613,11 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "nucleo" then
 		show_message(self, string.format("%s +%d Nucleo", who_name(self, e.robot), e.amount))
+	elseif e.type == "trap" then
+		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
+		shock(self, e.x, e.y)
+	elseif e.type == "parachute" then
+		show_message(self, "Paracadute aperto!")
 	elseif e.type == "crate" then
 		show_message(self, "Una cassa cade dal cielo!")
 	elseif e.type == "crate_pick" then
@@ -715,12 +724,21 @@ local function apply_state(self, s)
 		rb.punch_dir = (r.pd or 0) ~= 0 and r.pd or rb.facing
 		rb.swing_base, rb.punch_base = r.sb or 0, r.pb or 0
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
+		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
+		rb.shield = (r.sh or 0) > 0 and r.sh or nil
+		rb.parachute = r.pa == 1 and "armed" or (r.pa == 2 and "open" or nil)
+		rb.free_parachutes = r.fp or 0
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y, kind = s.p.k, fuse = s.p.fu } or nil
 	g.orbs = {}
 	for i, o in ipairs(s.o or {}) do g.orbs[i] = { id = o.i, x = o.x, y = o.y } end
 	for i = 1, game.SHARD_COUNT do g.shards[i] = nil end
 	for _, sh in ipairs(s.s or {}) do g.shards[sh.i] = sh end
+	-- trappole e trampolini posati
+	for i = #g.placed, 1, -1 do g.placed[i] = nil end
+	for i, o in ipairs(s.pl or {}) do
+		g.placed[i] = { id = o.i, kind = o.k, x = o.x, y = o.y, armed = o.a, team = o.tm, r = o.r }
+	end
 	-- casse: tabelle riusate per id
 	local list = g.crates
 	for i = #list, 1, -1 do list[i] = nil end
@@ -810,7 +828,8 @@ local function start_local(self)
 		opts = {
 			players = opts.players,
 			hp = vita > 0 and vita or nil,
-			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi } or nil,
+			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi,
+				trap = colpi, shield = colpi, trampoline = colpi } or nil,
 			crate_every = ogni > 0 and ogni or nil,
 		}
 	end
@@ -991,6 +1010,14 @@ local function bar_robot(self)
 	return current_robot(self)
 end
 
+-- Lo slot si vede? Il paracadute c'è se si può comprare col Nucleo o è già pronto.
+local function slot_have(rb, w)
+	if w == "parachute" then
+		return rb.parachute ~= nil or rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost
+	end
+	return game.has_weapon(rb, w)
+end
+
 local function update_bar(self)
 	local rb = bar_robot(self)
 	if not rb then return end
@@ -1005,11 +1032,11 @@ local function update_bar(self)
 	local turn = rb.id == g.current and g.phase == "aim"
 	local n = 0
 	for _, sl in ipairs(self.slots) do
-		if game.has_weapon(rb, sl.weapon) then n = n + 1 end
+		if slot_have(rb, sl.weapon) then n = n + 1 end
 	end
 	local x = W / 2 - (n * SLOT + (n - 1) * SLOT_GAP) / 2 + SLOT / 2
 	for _, sl in ipairs(self.slots) do
-		local have = game.has_weapon(rb, sl.weapon)
+		local have = slot_have(rb, sl.weapon)
 		if sl.have ~= have then
 			gui.set_enabled(sl.node, have)
 			sl.have = have
@@ -1020,13 +1047,13 @@ local function update_bar(self)
 				sl.x = x
 			end
 			x = x + SLOT + SLOT_GAP
-			local count = game.FREE_WEAPONS[sl.weapon] and 0 or rb.ammo[sl.weapon]
+			local count = rb.ammo[sl.weapon] or 0
 			if sl.count ~= count then
 				gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
 				sl.count = count
 			end
 			-- 2: scelta, 1: si può usare, 0: già usata (o il turno è passato al riposizionamento)
-			local on = (sl.weapon == self.weapon and not self.tele_armed) and 2
+			local on = ((sl.weapon == self.weapon and not self.tele_armed) or (sl.weapon == "parachute" and rb.parachute)) and 2
 				or ((not turn or g:can_use(sl.weapon)) and 1 or 0)
 			if sl.on ~= on then
 				gui.set_color(sl.bordo, SLOT_BORDO[on])
@@ -1210,6 +1237,8 @@ local function render(self, dt)
 		for i = 1, game.SHARD_COUNT do gui.set_color(self.shard_nodes[i], self.colors[g.current]) end
 		self.shard_color = g.current
 	end
+
+	oggetti.update(self.oggetti, g, self.view, self.clock)
 
 	-- casse: cadono dondolando, la runa pulsa
 	for _, n in ipairs(self.crate_nodes) do
@@ -1466,6 +1495,9 @@ function init(self)
 		self.shard_nodes[i] = n
 	end
 
+	-- trappole, trampolini, ancoraggi, scudi e paracadute (battaglia/oggetti.lua)
+	self.oggetti = oggetti.new(TEAM_COLORS)
+
 	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono
 	self.crate_nodes = {}
 	for i = 1, game.CRATE_MAX do
@@ -1527,6 +1559,7 @@ function init(self)
 	mondo[#mondo + 1] = self.egg
 	for _, n in ipairs(self.shard_nodes) do mondo[#mondo + 1] = n end
 	for _, c in ipairs(self.crate_nodes) do mondo[#mondo + 1] = c.node end
+	for _, n in ipairs(oggetti.nodi(self.oggetti)) do mondo[#mondo + 1] = n end
 	mondo[#mondo + 1] = self.shock
 	-- i detriti sotto l'esplosione: ne escono mentre si spegne
 	for _, d in ipairs(self.detriti) do mondo[#mondo + 1] = d.node end
@@ -1566,10 +1599,14 @@ function init(self)
 	for i, w in ipairs(BAR_WEAPONS) do
 		local n, bordo = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar)
 		stretch(n)
-		local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
-		gui.set_texture(icon, "battaglia")
-		gui.play_flipbook(icon, WEAPON_ICON[w])
-		gui.set_parent(icon, n)
+		if WEAPON_ICON[w] then
+			local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
+			gui.set_texture(icon, "battaglia")
+			gui.play_flipbook(icon, WEAPON_ICON[w])
+			gui.set_parent(icon, n)
+		else
+			oggetti.icona(w, n)
+		end
 		local count = label(22, -26, "", 0.7)
 		gui.set_parent(count, n)
 		gui.set_enabled(n, false)
@@ -1699,6 +1736,16 @@ function update(self, dt)
 	end
 end
 
+-- Si sceglie un'arma della barra; gli oggetti invece si usano subito
+local function choose_slot(self, w)
+	if game.TOOLS[w] then
+		if my_turn(self) and self.g:can_use(w) then self.fire = { angle = 0, power = 1, weapon = w } end
+		return
+	end
+	self.weapon = w
+	self.tele_armed = false
+end
+
 -- L'arma della barra sotto il dito, se c'è
 local function picked_slot(self, x, y)
 	for _, sl in ipairs(self.slots) do
@@ -1731,8 +1778,7 @@ local function pointer_down(self, id, x, y)
 	elseif gui.pick_node(self.btn_tele, x, y) then
 		toggle_tele(self)
 	elseif picked_slot(self, x, y) then
-		self.weapon = picked_slot(self, x, y)
-		self.tele_armed = false
+		choose_slot(self, picked_slot(self, x, y))
 	elseif self.touch_ui then
 		if x < PAD_ZONE_X and y < PAD_ZONE_Y and not self.move_pad.id then
 			self.pointers[id] = "move"
@@ -1823,10 +1869,7 @@ function on_input(self, action_id, action)
 			for _, sl in ipairs(self.slots) do
 				if sl.have then
 					n = n + 1
-					if n == ACTION_WEAPON[action_id] then
-						self.weapon = sl.weapon
-						self.tele_armed = false
-					end
+					if n == ACTION_WEAPON[action_id] then choose_slot(self, sl.weapon) end
 				end
 			end
 		end

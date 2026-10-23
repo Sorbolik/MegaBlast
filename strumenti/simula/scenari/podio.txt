@@ -29,7 +29,11 @@ aspetta 0.3
 foto 04_armeria_vuoto
 tocca 630 680                       # scheda ALBERO
 aspetta 0.3
-tocca 215 490                       # Gambe di Titano
+tocca 102 490                       # Gambe di Titano
+aspetta 0.3
+tocca 432 490                       # Crosta spessa
+aspetta 0.3
+tocca 840 490                       # Trappola larga
 aspetta 0.3
 foto 05_albero
 tocca 62 658                        # indietro

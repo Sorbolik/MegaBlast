@@ -26,9 +26,8 @@ M.TIER_MATCHES = { 0, 10, 30 }
 -- Pezzi: per ogni set e slot un più e un meno, in percentuale sulla base (le
 -- statistiche di movimento cambiano col profilo di fisica). Bonus: a pezzi completi.
 -- Ci sono solo i bonus delle meccaniche che il gioco ha già: quelli del
--- documento per Corvo (doppio salto, niente danno da caduta), Fornace (terreno
--- bruciante) e Leviatano (meno spinta, metà danno da caduta) arrivano con la
--- loro meccanica.
+-- documento per Corvo (doppio salto) e Fornace (terreno bruciante) arrivano
+-- con la loro meccanica.
 M.SETS = {
 	{ id = "corvo", name = "CORVO", style = "Agilità",
 		pieces = {
@@ -48,8 +47,15 @@ M.SETS = {
 		pieces = {
 			mask = { { stat = "max_hp", add = 4 }, { stat = "jump_height", mul = 0.97 } },
 			chest = { { stat = "max_hp", add = 6 }, { stat = "walk_speed", mul = 0.96 } },
-			cloak = { { stat = "max_hp", add = 4 }, { stat = "air_speed", mul = 0.97 } },
+			cloak = { { stat = "knockback_mul", mul = 0.95 }, { stat = "air_speed", mul = 0.97 } },
 			legs = { { stat = "max_hp", add = 4 }, { stat = "walk_speed", mul = 0.97 } },
+		},
+		bonus = {
+			a = { desc = "Spinta subita -30%, metà danno da caduta, corsa -10%",
+				effects = { { stat = "knockback_mul", mul = 0.7 }, { stat = "fall_damage_mul", mul = 0.5 },
+					{ stat = "walk_speed", mul = 0.9 } } },
+			b = { desc = "Spinta subita dimezzata, salto -10%",
+				effects = { { stat = "knockback_mul", mul = 0.5 }, { stat = "jump_height", mul = 0.9 } } },
 		} },
 	{ id = "vuoto", name = "VUOTO", style = "Inganno",
 		pieces = {

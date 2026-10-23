@@ -66,7 +66,8 @@ st = assetto.stats(BASE, a)
 check(st.jump_height > BASE.jump_height, "l'albero alza il salto")
 check(BASE.jump_height == game.base_stats().jump_height, "la base non cambia")
 
--- Regola 3: con tutti i punti, in qualunque albero valido, nessuna statistica sale oltre il 10%
+-- Regola 3: con tutti i punti, in qualunque albero valido, nessuna statistica
+-- cambia più del 10% (in su o, per quelle dove meno è meglio, in giù)
 local function tutti(nodi, i, tree, out)
 	if i > #nodi then
 		if abilita.valid(tree, abilita.POINTS_MAX) then out[#out + 1] = tree end
@@ -84,11 +85,12 @@ tutti(abilita.NODES, 1, {}, alberi)
 local peggio = 0
 for _, tree in ipairs(alberi) do
 	local s2 = assetto.stats(BASE, { tree = tree, gear = {}, variant = "a" })
-	for _, k in ipairs({ "walk_speed", "jump_height", "air_speed", "max_hp" }) do
-		peggio = math.max(peggio, s2[k] / BASE[k] - 1)
+	for _, k in ipairs({ "walk_speed", "jump_height", "air_speed", "max_hp", "trap_radius",
+			"teleport_ticks", "knockback_mul", "fall_damage_mul" }) do
+		peggio = math.max(peggio, math.abs(s2[k] / BASE[k] - 1))
 	end
 end
-check(#alberi > 100 and peggio <= 0.1, string.format("%d alberi validi: al massimo +%.1f%% su una statistica", #alberi, peggio * 100))
+check(#alberi > 100 and peggio <= 0.1, string.format("%d alberi validi: al massimo %.1f%% su una statistica", #alberi, peggio * 100))
 
 -- Set: il Vuoto completo ha il bonus, la variante B solo al tier III
 a = assetto.new()
@@ -100,6 +102,15 @@ st = assetto.stats(BASE, a, { mask = 1, chest = 3, cloak = 3, legs = 3 })
 check(st.free_teleports == 0, "la variante B vuole tutti i pezzi al tier III")
 st = assetto.stats(BASE, a, { mask = 3, chest = 3, cloak = 3, legs = 3 })
 check(st.free_teleports == 1, "tier III: variante B del Vuoto")
+a.gear = { mask = "leviatano", chest = "leviatano", cloak = "leviatano", legs = "leviatano" }
+a.variant = "a"
+st = assetto.stats(BASE, a)
+check(st.knockback_mul < 0.7 and st.fall_damage_mul == 0.5 and st.walk_speed < BASE.walk_speed,
+	"set Leviatano completo: meno spinta, metà danno da caduta, più lento")
+a.tree = { fall = 2, anchor = 1, hp = 2, free_parachute = 1 }
+st = assetto.stats(BASE, a)
+check(st.free_parachutes == 1 and st.fall_damage_mul < 0.5, "albero: paracadute gratis e cadute più leggere")
+a.tree = {}
 a.gear = { mask = "corvo", chest = "corvo", cloak = "corvo", legs = "corvo" }
 st = assetto.stats(BASE, a)
 check(st.free_teleports == 0 and st.max_hp == BASE.max_hp - 6, "set senza bonus: contano solo i pezzi")
