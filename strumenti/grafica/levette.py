@@ -1,5 +1,5 @@
-# Disegna le levette della battaglia nello stile del kit (cornice di ferro
-# scuro con borchie d'oro, come slot.png), senza immagini generate:
+# Disegna le levette della battaglia nello stile dell'interfaccia (client/ui/ui.lua:
+# carbone col bordo chiaro, come la Scoria), senza immagini generate:
 #   client/assets/ui/levette/levetta_base.png    disco scuro con cornice
 #   client/assets/ui/levette/levetta_anello.png  anello bianco sfumato (additivo, si tinge dal codice)
 #   client/assets/ui/levette/levetta_pomello.png pomello
@@ -28,32 +28,21 @@ def liscio(d, w=0.75):
     return np.clip(0.5 - d / w, 0, 1)
 
 
+LUCE = np.array([1, 0.886, 0.769])      # il contorno chiaro della Scoria
+CARBONE = np.array([0.078, 0.071, 0.094])
+
+
 def base(n=256):
     x, y = griglia(n)
     r = np.hypot(x, y)
     R = n / 2 - 3
     rgba = np.zeros(r.shape + (4,))
-    # disco interno: scuro, trasparente, un po' più chiaro verso il bordo
-    k = r / R
-    rgba[..., :3] = (np.array([0.07, 0.065, 0.08]) + 0.06 * k[..., None] ** 3)
-    rgba[..., 3] = 0.42 * liscio(r - (R - 14))
-    # cornice di ferro: luce in alto a sinistra, ombra in basso a destra
-    ring = liscio(np.abs(r - (R - 7)) - 7)
-    luce = 0.5 + 0.5 * (-(x + y) / np.maximum(r, 1) * 0.7071)
-    ferro = np.array([0.20, 0.17, 0.20]) + np.array([0.20, 0.17, 0.21]) * luce[..., None]
-    filo = liscio(np.abs(r - (R - 1)) - 1.2) + liscio(np.abs(r - (R - 13)) - 1.0)
-    ferro = ferro * (1 - 0.6 * np.clip(filo, 0, 1)[..., None])
-    rgba[..., :3] = rgba[..., :3] * (1 - ring[..., None]) + ferro * ring[..., None]
-    rgba[..., 3] = np.maximum(rgba[..., 3], ring)
-    # quattro borchie d'oro sulla cornice, in diagonale come negli slot
-    for ang in (45, 135, 225, 315):
-        cx, cy = (R - 7) * np.cos(np.radians(ang)), (R - 7) * np.sin(np.radians(ang))
-        d = np.hypot(x - cx, y - cy)
-        b = liscio(d - 5.5)
-        hl = np.clip(1 - np.hypot(x - cx + 1.8, y - cy + 1.8) / 4, 0, 1)
-        oro = np.array([0.55, 0.40, 0.16]) + np.array([0.45, 0.42, 0.30]) * hl[..., None]
-        rgba[..., :3] = rgba[..., :3] * (1 - b[..., None]) + oro * b[..., None]
-        rgba[..., 3] = np.maximum(rgba[..., 3], b)
+    # disco di carbone velato e un filo chiaro sul bordo
+    rgba[..., :3] = CARBONE
+    rgba[..., 3] = 0.45 * liscio(r - (R - 2))
+    filo = liscio(np.abs(r - (R - 2)) - 1.5)
+    rgba[..., :3] = rgba[..., :3] * (1 - filo[..., None]) + LUCE * filo[..., None]
+    rgba[..., 3] = np.maximum(rgba[..., 3], 0.4 * filo)
     salva(rgba, n, "levetta_base")
 
 
@@ -68,27 +57,14 @@ def anello(n=256):
 
 
 def pomello(n=128):
+    # come una mano della Scoria: un cerchio di carbone col bordo chiaro
     x, y = griglia(n)
     r = np.hypot(x, y)
     R = n / 2 - 4
     rgba = np.zeros(r.shape + (4,))
-    # sfera scura con riflesso in alto a sinistra
-    z = np.sqrt(np.clip(1 - (r / R) ** 2, 0, 1))
-    nx, ny = x / R, y / R
-    lam = np.clip(-0.45 * nx - 0.45 * ny + 0.77 * z, 0, 1)
-    spec = np.clip(-0.45 * nx - 0.45 * ny + 0.77 * z, 0, 1) ** 24
-    col = np.array([0.10, 0.09, 0.11]) + np.array([0.22, 0.19, 0.24]) * lam[..., None] + 0.55 * spec[..., None]
-    corpo = liscio(r - R)
-    # cornice d'oro sottile
-    oro_m = liscio(np.abs(r - (R - 3)) - 2.5)
-    luce = 0.5 + 0.5 * (-(x + y) / np.maximum(r, 1) * 0.7071)
-    oro = np.array([0.45, 0.32, 0.12]) + np.array([0.5, 0.45, 0.3]) * luce[..., None]
-    col = col * (1 - oro_m[..., None]) + oro * oro_m[..., None]
-    # ombra morbida sotto
-    ombra = np.clip(1 - np.hypot(x - 3, y - 4) / (R + 3), 0, 1) ** 0.6 * 0.5
-    rgba[..., :3] = col
-    rgba[..., 3] = np.maximum(corpo, ombra * (1 - corpo))
-    rgba[..., :3] *= (corpo + (1 - corpo) * 0)[..., None]
+    bordo = liscio(np.abs(r - (R - 4)) - 4)
+    rgba[..., :3] = CARBONE * (1 - bordo[..., None]) + LUCE * bordo[..., None]
+    rgba[..., 3] = liscio(r - R)
     salva(rgba, n, "levetta_pomello")
 
 

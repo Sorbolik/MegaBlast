@@ -8,6 +8,7 @@ local game = require "sim.game"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local home = require "menu.home"
+local ui = require "ui.ui"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 
@@ -46,8 +47,8 @@ local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Sche
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true }
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 62
-local SLOT_OFF = vmath.vector4(0.62, 0.62, 0.68, 0.9)
-local TELE_OFF = vmath.vector4(0.45, 0.45, 0.5, 0.5)
+-- bordo degli slot: scelto, disponibile, non disponibile (teletrasporto)
+local SLOT_BORDO = { [0] = vmath.vector4(1, 0.886, 0.769, 0.06), ui.C.LINEA, ui.C.LUCE }
 local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector3(1, 1, 1)
 -- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante)
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
@@ -906,7 +907,7 @@ local function update_bar(self)
 			end
 			local on = sl.weapon == self.weapon and not self.tele_armed
 			if sl.on ~= on then
-				gui.set_color(sl.node, on and WHITE or SLOT_OFF)
+				gui.set_color(sl.bordo, SLOT_BORDO[on and 2 or 1])
 				gui.set_scale(sl.node, on and SLOT_SCALE_ON or SLOT_SCALE_OFF)
 				sl.on = on
 			end
@@ -1138,7 +1139,7 @@ local function render(self, dt)
 	update_bar(self)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
 	if self.tele_state ~= tele_state then
-		gui.set_color(self.btn_tele, tele_state == 2 and WHITE or (tele_state == 1 and SLOT_OFF or TELE_OFF))
+		gui.set_color(self.tele_bordo, SLOT_BORDO[tele_state])
 		gui.set_scale(self.btn_tele, tele_state == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
 		self.tele_state = tele_state
 	end
@@ -1396,10 +1397,8 @@ function init(self)
 	stretch(self.bar)
 	self.slots = {}
 	for i, w in ipairs(BAR_WEAPONS) do
-		local n = box(0, BAR_Y, SLOT, SLOT, SLOT_OFF)
-		gui.set_texture(n, "menu")
-		gui.play_flipbook(n, "slot")
-		gui.set_parent(n, self.bar)
+		local n, bordo = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar)
+		stretch(n)
 		local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
 		gui.set_texture(icon, "battaglia")
 		gui.play_flipbook(icon, WEAPON_ICON[w])
@@ -1407,12 +1406,11 @@ function init(self)
 		local count = label(22, -26, "", 0.7)
 		gui.set_parent(count, n)
 		gui.set_enabled(n, false)
-		self.slots[i] = { node = n, label = count, weapon = w, have = false }
+		self.slots[i] = { node = n, bordo = bordo, label = count, weapon = w, have = false }
 	end
 	-- teletrasporto: uno slot come quelli delle armi, col globo
-	self.btn_tele = box(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D, SLOT_OFF)
-	gui.set_texture(self.btn_tele, "menu")
-	gui.play_flipbook(self.btn_tele, "slot")
+	self.btn_tele, self.tele_bordo = ui.pannello(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D)
+	stretch(self.btn_tele)
 	local orb_icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(64 * 0.75, 57 * 0.75, 0))
 	gui.set_texture(orb_icon, "battaglia")
 	gui.play_flipbook(orb_icon, "passo_ombra")
