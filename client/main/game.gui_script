@@ -9,6 +9,8 @@ local gconfig = require "sim.config"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local home = require "menu.home"
+local scelta_armi = require "menu.scelta"
+local draft = require "sim.draft"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
@@ -52,6 +54,8 @@ local WEAPON_ICON = {
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
 local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
+-- nomi delle armi nella scelta d'inizio partita
+local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true }
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 62
@@ -428,6 +432,19 @@ end
 
 -- Partita -----------------------------------------------------------------------
 
+-- Nomi e colori: quelli della squadra, col numero se in squadra si è in due.
+-- list: i robot o i giocatori, ognuno con team.
+local function names_colors(list)
+	local size, nth, names, colors = {}, {}, {}, {}
+	for _, p in ipairs(list) do size[p.team] = (size[p.team] or 0) + 1 end
+	for i, p in ipairs(list) do
+		nth[p.team] = (nth[p.team] or 0) + 1
+		names[i] = TEAM_NAMES[p.team] .. (size[p.team] > 1 and (" " .. nth[p.team]) or "")
+		colors[i] = TEAM_COLORS[p.team]
+	end
+	return names, colors
+end
+
 local function new_match(self, seed, map, opts)
 	self.g = game.new(seed, map, opts)
 	-- se sullo schermo c'è già questa mappa intatta (es. quella del menu) non la ridisegnamo
@@ -436,16 +453,7 @@ local function new_match(self, seed, map, opts)
 		draw_terrain(self)
 		self.drawn_map = key
 	end
-	-- nomi e colori: quelli della squadra, col numero se in squadra si è in due
-	local size = {}
-	for _, rb in ipairs(self.g.robots) do size[rb.team] = (size[rb.team] or 0) + 1 end
-	self.names, self.colors = {}, {}
-	local nth = {}
-	for i, rb in ipairs(self.g.robots) do
-		nth[rb.team] = (nth[rb.team] or 0) + 1
-		self.names[i] = TEAM_NAMES[rb.team] .. (size[rb.team] > 1 and (" " .. nth[rb.team]) or "")
-		self.colors[i] = TEAM_COLORS[rb.team]
-	end
+	self.names, self.colors = names_colors(self.g.robots)
 	for i = #self.g.robots + 1, game.MAX_PLAYERS do
 		scoria.set_enabled(self.robots[i].rig, false)
 		gui.set_enabled(self.robots[i].hp, false)
@@ -780,10 +788,28 @@ local function start_online(self)
 	self.conn = websocket.connect(server_url(), { timeout = 5000 }, on_socket)
 end
 
+local start_local_match
+
+-- Si parte con la scelta delle armi (menu/scelta.lua); finita quella, la partita
 local function start_local(self)
 	hide_menu(self)
 	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono
 	local opts = { players = gconfig.MODES[config_string("megablast.giocatori", "1v1")] }
+	self.local_opts = opts
+	-- negli scenari di prova la scelta c'è solo con prova_scelta 1 (scenario scelta.txt)
+	if SIMULA and config_int("megablast.prova_scelta", 0) == 0 then
+		start_local_match(self, nil)
+		return
+	end
+	local nomi, colori = names_colors(opts.players)
+	self.mode = "scelta"
+	scelta_armi.show(self.scelta, draft.new(os.time(), opts.players), nomi, colori)
+end
+
+-- La partita sullo stesso telefono, con i giocatori usciti dalla scelta (nil: senza scelta)
+start_local_match = function(self, picked)
+	local opts = self.local_opts
+	if picked then opts = { players = picked } end
 	if SIMULA then
 		-- solo per gli scenari di prova (comando "imposta" in strumenti/simula)
 		local colpi = config_int("megablast.prova_armi", 0)
@@ -1602,6 +1628,7 @@ function init(self)
 
 	-- la home per ultima, così sta sopra la battaglia
 	self.home = home.new(TEAM_COLORS[1])
+	self.scelta = scelta_armi.new(WEAPON_ICON, WEAPON_NAME)
 
 	-- una mappa sullo sfondo del menu
 	new_match(self, os.time())
@@ -1679,6 +1706,10 @@ function update(self, dt)
 	render(self, dt_mondo)
 	muovi_detriti(self, dt_mondo)
 	if self.mode == "menu" then home.update(self.home, dt) end
+	if self.mode == "scelta" then
+		local players = scelta_armi.update(self.scelta, dt)
+		if players then start_local_match(self, players) end
+	end
 
 	if SIMULA and self.g then
 		-- sx, sy: il centro del robot sullo schermo (dove si appoggia il mouse per mirare)
@@ -1793,6 +1824,9 @@ function on_input(self, action_id, action)
 		elseif scelta == "online" then
 			start_online(self)
 		end
+		return true
+	elseif self.mode == "scelta" then
+		scelta_armi.on_input(self.scelta, action_id, action)
 		return true
 	end
 	-- un tasto spegne le levette (a meno che non le abbia chieste la configurazione)

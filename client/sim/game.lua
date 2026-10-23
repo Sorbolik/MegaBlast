@@ -231,10 +231,11 @@ local function make_ammo(start)
 	return a
 end
 
--- opts.players = { { team = 1, stats = { walk_speed = ... } }, { team = 2 }, ... }:
+-- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards" }, { team = 2 }, ... }:
 -- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
 -- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
--- mancano vengono da config.STATS e dal profilo di fisica. Senza players, due
+-- mancano vengono da config.STATS e dal profilo di fisica.
+-- pick è l'arma della scelta d'inizio partita (sim/draft.lua). Senza players, due
 -- robot in squadre diverse.
 M.MAX_PLAYERS = 4
 
@@ -308,6 +309,8 @@ function M.new(seed, map_id, opts)
 			ammo = make_ammo(opts.ammo),
 			stats = st,
 		}
+		-- l'arma presa nella scelta d'inizio partita (sim/draft.lua)
+		if p.pick then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
 	end
 	g.events = {}
 	g.tick = 0

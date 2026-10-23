@@ -664,6 +664,34 @@ do
 	check(next(lb.status) == nil, "dopo il respawn niente effetti")
 end
 
+-- Scelta d'inizio partita (sim/draft.lua) ----------------------------------------
+do
+	local draft = require "sim.draft"
+	local d = draft.new(7, config.MODES["2v2"])
+	check(#d.offer == config.DRAFT_OFFER, "il ventaglio ha " .. config.DRAFT_OFFER .. " armi")
+	local again = draft.new(7, config.MODES["2v2"])
+	check(table.concat(d.offer, ",") == table.concat(again.offer, ","), "stesso seme, stesso ventaglio")
+	local w1, w2 = d.offer[1], d.offer[2]
+	check(draft.pick(d, 1, w1), "il primo sceglie")
+	check(not draft.valid(d, 3, w1), "il compagno non può prendere la stessa arma")
+	check(draft.valid(d, 2, w1), "l'avversario sì")
+	check(not draft.pick(d, 1, "teleport"), "solo armi del ventaglio")
+	draft.pick(d, 3, w2)
+	check(draft.swap(d, 1, 3) and d.picks[1] == w2 and d.picks[3] == w1, "i compagni si scambiano le armi")
+	check(not draft.swap(d, 1, 2), "niente scambi con gli avversari")
+	local players = draft.finish(d)
+	check(players[2].pick == d.offer[1] and players[4].pick ~= players[2].pick,
+		"allo scadere chi non ha scelto prende la prima arma libera")
+	local g = game.new(7, "isole", { players = players })
+	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in partita l'arma scelta ha i suoi colpi")
+
+	-- tutti contro tutti: doppioni ammessi
+	local f = draft.new(3, config.MODES.ffa)
+	for i = 1, 4 do draft.pick(f, i, f.offer[1]) end
+	local fp = draft.finish(f)
+	check(fp[1].pick == fp[4].pick, "nel tutti contro tutti i doppioni vanno bene")
+end
+
 -- Determinismo: stesso seed, stessi input, stesso risultato
 local function play(seed, map)
 	local p = game.new(seed, map)

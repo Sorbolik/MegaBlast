@@ -73,6 +73,15 @@ C.ANCHOR_KNOCKBACK = 0.35
 -- trappole e trampolini in mappa al massimo, tutti insieme
 C.MAX_PLACED = 8
 
+-- Scelta d'inizio partita (sim/draft.lua): un ventaglio di DRAFT_OFFER armi
+-- delle casse, uguale per tutti; ognuno ne prende una e ne ha DRAFT_SHOTS
+-- colpi. Due compagni non possono prendere la stessa; nel tutti contro tutti
+-- i doppioni vanno bene. Allo scadere di DRAFT_SECONDS chi non ha scelto
+-- prende la prima arma libera del ventaglio.
+C.DRAFT_SECONDS = 15
+C.DRAFT_OFFER = 3
+C.DRAFT_SHOTS = 1
+
 -- Effetti di stato (strategia 9): durano fino alla fine del prossimo turno di
 -- chi li subisce (stats.status_turns di chi colpisce) e si vedono sul robot.
 -- Lo scudo li ferma: passano solo se il colpo arriva alla vita.
