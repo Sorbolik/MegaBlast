@@ -1,0 +1,46 @@
+# Fine partita e schermate fuori dalla battaglia: Rosso (5 punti di vita) si
+# spara addosso, dopo un attimo sale il podio con riconoscimenti ed esperienza.
+# Poi armeria (set e albero di abilità), negozio ed eventi dalla home.
+imposta prova_vita 5
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 4 150 0.4
+aspetta_evento over 8
+aspetta 1.8
+foto 01_podio_sale
+aspetta 2
+foto 02_podio
+tocca 1065 205                      # CONTINUA
+aspetta_stato modo=menu 3
+aspetta 0.5
+
+tocca 155 488                       # ARMERIA
+aspetta 0.5
+foto 03_armeria_vuota
+tocca 270 548                       # maschera, corazza, mantello e gambali del Corvo
+tocca 270 456
+tocca 270 364
+tocca 270 272
+aspetta 0.3
+foto 04_armeria_corvo
+tocca 630 680                       # scheda ALBERO
+aspetta 0.3
+tocca 105 490                       # Gambe di Titano
+aspetta 0.3
+foto 05_albero
+tocca 50 680                        # indietro
+aspetta_stato modo=menu 3
+
+tocca 79 79                         # NEGOZIO
+aspetta 0.5
+foto 06_negozio
+tocca 50 680
+aspetta_stato modo=menu 3
+tocca 403 79                        # EVENTI
+aspetta 0.5
+foto 07_eventi
+tocca 50 680
+aspetta_stato modo=menu 3

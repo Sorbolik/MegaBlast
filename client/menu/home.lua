@@ -8,7 +8,7 @@
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
 --   home.show(h) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
---   local scelta = home.on_input(h, action_id, action)   -- "online", "local" o nil
+--   local scelta = home.on_input(h, action_id, action)   -- "online", "local", "armeria", "negozio", "eventi" o nil
 
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
@@ -95,21 +95,21 @@ local function lucchetto(x, y, d, parent)
 end
 
 -- bottone del kit con icona e scritta, per la colonna di sinistra
-local function voce(h, parent, y, icona, nome)
+local function voce(h, parent, y, icona, nome, azione)
 	local n = pezzo("bottone_secondario", 0, y, 250, 74, parent)
 	immagine("menu", "icona_" .. icona, -88, 0, 58, 58, n)
-	testo(nome, 18, 0, 0.5, SPENTO, n)
-	lucchetto(100, 0, 26, n)
-	bottone(h, n, "bottone_secondario", "presto")
+	testo(nome, 18, 0, 0.5, azione and AVORIO or SPENTO, n)
+	if not azione then lucchetto(100, 0, 26, n) end
+	bottone(h, n, "bottone_secondario", azione or "presto")
 end
 
 -- casella quadrata con icona e scritta sotto, per la fila in basso
-local function casella(h, parent, x, icona, nome)
+local function casella(h, parent, x, icona, nome, azione)
 	local n = pezzo("slot", x, 0, 98, 98, parent)
 	immagine("menu", "icona_" .. icona, 0, 10, 60, 60, n)
-	testo(nome, 0, -34, 0.23, SPENTO, n)
-	lucchetto(34, 34, 22, n)
-	bottone(h, n, "slot", "presto")
+	testo(nome, 0, -34, 0.23, azione and AVORIO or SPENTO, n)
+	if not azione then lucchetto(34, 34, 22, n) end
+	bottone(h, n, "slot", azione or "presto")
 end
 
 function M.new(colore)
@@ -138,16 +138,16 @@ function M.new(colore)
 
 	-- colonna di sinistra: le schermate dell'equipaggiamento (ancora chiuse)
 	local sx = angolo(h, 30 + 125, H / 2 + 40, gui.ANCHOR_LEFT, gui.ANCHOR_NONE)
-	voce(h, sx, 88, "armatura", "ARMERIA")
+	voce(h, sx, 88, "armatura", "ARMERIA", "armeria")
 	voce(h, sx, 0, "armi", "ARMI")
 	voce(h, sx, -88, "forgia", "FORGIA")
 
 	-- fila in basso a sinistra
 	local basso = angolo(h, 30 + 49, 30 + 49, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	casella(h, basso, 0, "shop", "NEGOZIO")
+	casella(h, basso, 0, "shop", "NEGOZIO", "negozio")
 	casella(h, basso, 108, "inventario", "INVENTARIO")
 	casella(h, basso, 216, "classifica", "CLASSIFICA")
-	casella(h, basso, 324, "missioni", "MISSIONI")
+	casella(h, basso, 324, "missioni", "EVENTI", "eventi")
 
 	-- impostazioni in alto a destra
 	local alto_dx = angolo(h, W - 30 - 34, H - 30 - 34, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)

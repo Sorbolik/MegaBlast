@@ -79,8 +79,8 @@ def test_sim():
     if not lua:
         info("2. test della simulazione saltati: manca luajit")
         return
-    info("2. test della simulazione, del personaggio e della camera")
-    for test in ("tests/sim_test.lua", "tests/battaglia_test.lua"):
+    info("2. test della simulazione, di assetto e podio, del personaggio e della camera")
+    for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua"):
         r = esegui([lua, test], cwd=REPO)
         sys.stdout.write(r.stdout[-2000:] + r.stderr[-2000:])
         if r.returncode != 0:
