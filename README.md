@@ -12,5 +12,5 @@ C'è un primo prototipo in hot-seat, con due giocatori sullo stesso dispositivo:
 - `client/sim/` — simulazione di gioco in Lua puro, condivisa con il server
 - `server/` — server Go per le partite online
 - `tests/` — test della simulazione
-- `docs/` — [design e architettura](docs/design.md), [setup del PC](docs/setup.md)
+- `docs/` — [design e architettura](docs/design.md), [setup del PC](docs/setup.md), [game design competitivo](docs/game_design_competitivo.md)
 - `strumenti/simula/` — [simulazione automatica del gioco](strumenti/simula/README.md)

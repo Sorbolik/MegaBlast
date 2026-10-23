@@ -19,6 +19,10 @@ Dettagli e comandi degli scenari: [strumenti/simula/README.md](strumenti/simula/
 (`strumenti/simula/controlla.py`). Se Sergio vede nell'editor un errore che la
 simulazione non ha trovato, aggiungi lì la regola.
 
+Le scelte di game design (tempo del turno, strategia, equipaggiamento,
+ricompense) partono da [docs/game_design_competitivo.md](docs/game_design_competitivo.md):
+leggilo prima di proporre o cambiare una meccanica.
+
 Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
 in [.claude/skills/](.claude/skills/README.md).
 
