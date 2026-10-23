@@ -1,4 +1,4 @@
-import numpy as np, shutil, os
+import numpy as np, os
 from PIL import Image, ImageFilter
 from scipy import ndimage as nd
 OUT='/mnt/project-files/grafica/mappe/mappa_isole_cimitero'; os.makedirs(OUT,exist_ok=True)
@@ -24,10 +24,8 @@ save(np.clip(intr,0,255),soft(solid,8),'interno.png')
 # maschera 640x360 pure colours
 m=np.zeros((360,640,3),np.uint8); m[cell==1]=255; m[cell==2]=(255,0,0)
 Image.fromarray(m).save(f'{OUT}/maschera.png')
-# sfondo_lontano from Sergio's mist image
-bg=Image.open('/root/.claude/uploads/4897a37b-c06a-572c-833d-7abcb0dc1f2e/136c5d17-image.png').convert('RGB')
-shutil.copy('/root/.claude/uploads/4897a37b-c06a-572c-833d-7abcb0dc1f2e/136c5d17-image.png','/mnt/project-files/grafica/concept/sfondo_cimitero_nebbia_v1.png')
-bgw=bg.resize((2560,1440),Image.LANCZOS); bgw.save(f'{OUT}/sfondo_lontano.png',optimize=True)
+# anteprime su un fondo scuro: in gioco lo sfondo lo fa lo shader del terreno
+bgw=Image.new('RGB',(2560,1440),(27,26,33))
 open(f'{OUT}/colori.txt','w').write('brace #FF7A1A\nbrace_chiara #FFC46B\ninterno #1B1A21\nnebbia #6E6880\n')
 # composite preview
 comp=bgw.convert('RGBA')
