@@ -9,7 +9,7 @@ bash strumenti/simula/prepara.sh          # una volta: Java 25, bob.jar 1.14.0, 
 python3 strumenti/simula/simula.py        # controlli, test, build e partita con lo scenario base
 python3 strumenti/simula/simula.py -s strumenti/simula/scenari/mio.txt
 python3 strumenti/simula/simula.py --solo-build    # senza avviare il gioco
-python3 strumenti/simula/simula.py --scala 2 -s strumenti/simula/scenari/corpo_grigio.txt   # schermo 2560 x 1440, personaggio da vicino
+python3 strumenti/simula/simula.py --scala 2 -s strumenti/simula/scenari/scoria.txt   # schermo 2560 x 1440, personaggio da vicino
 ```
 
 Nelle sessioni cloud `prepara.sh` parte da solo all'avvio
@@ -66,7 +66,7 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `niente_evento TIPO [S]` | fallisce se nei prossimi S secondi succede l'evento TIPO (per esempio un colpo annullato che parte lo stesso) |
 | `aspetta_evento TIPO [S]` | aspetta un evento della simulazione (`fire`, `explosion`, `swing`, `sword_hit`, `orb`, `teleport`, `grenade`, `shards`, `punch`, `punch_hit`, `crate`, `crate_pick`, `damage`, `turn`, `over`...) |
 | `aspetta_stato chiave=valore ... [S]` | aspetta uno stato, per esempio `turno=2 fase=aim` (chiavi: `modo`, `turno`, `fase`, `x`, `y` nel mondo, `sx`, `sy` il centro del robot sullo schermo, `zoom` della camera) |
-| `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3, `zoom 3` fa partire la camera con tutta la mappa (1 vicino, 2 medio; scenario `scenari/camera.txt`) |
+| `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3, `prova_vita N` fa partire tutti con N punti di vita (scenario `scenari/colpi.txt`), `zoom 3` fa partire la camera con tutta la mappa (1 vicino, 2 medio; scenario `scenari/camera.txt`) |
 
 Comandi: sul computer (il predefinito qui) tastiera e mouse, zoom col pulsante `1210 686`, il tasto `z` o la rotella, TELE `1180 62` o
 il tasto `t`, armi coi tasti `1`-`5`. Con `imposta comandi telefono` ci sono le

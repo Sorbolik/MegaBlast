@@ -8,6 +8,8 @@
 --   local c = camera.new(1280, 720)
 --   camera.segui(c, dt, x, y, zoom, veloce)   -- a ogni frame
 --   local tx, ty = camera.spostamento(c)      -- schermo = mondo * c.s + t
+--   camera.scuoti(c, dx, dy, forza)           -- un colpo: scossa verso (dx, dy)
+--   local ox, oy = camera.scossa(c, dt)       -- a ogni frame, pixel da aggiungere
 
 local M = {}
 
@@ -25,7 +27,8 @@ local function limita(c)
 end
 
 function M.new(w, h)
-	local c = { w = w, h = h, x = w / 2, y = h / 2, s = 1, livello = 1 }
+	local c = { w = w, h = h, x = w / 2, y = h / 2, s = 1, livello = 1,
+		sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0 }
 	return c
 end
 
@@ -65,6 +68,34 @@ end
 -- passo +1 = più lontano, -1 = più vicino
 function M.cambia(c, passo)
 	c.livello = math.min(#M.LIVELLI, math.max(1, c.livello + passo))
+end
+
+-- Scossa dello schermo: il colpo spinge lo schermo di 'forza' pixel nella
+-- direzione (dx, dy), poi torna indietro oscillando e si smorza in fretta. Dipende
+-- dal tempo e non dai fotogrammi, quindi è uguale a 60, 90 o 120 Hz.
+local SC_OSCILLA, SC_SMORZA, SC_FINE = 32, 8, 0.6
+
+local function forza_ora(c)
+	if c.sc_t >= SC_FINE then return 0 end
+	return c.sc_f * math.exp(-c.sc_t * SC_SMORZA)
+end
+
+-- se c'è ancora una scossa più forte vince quella
+function M.scuoti(c, dx, dy, forza)
+	if forza < forza_ora(c) then return end
+	local l = math.sqrt(dx * dx + dy * dy)
+	if l < 1e-6 then dx, dy, l = 0, -1, 1 end
+	c.sc_x, c.sc_y, c.sc_f, c.sc_t = dx / l, dy / l, forza, 0
+end
+
+function M.scossa(c, dt)
+	c.sc_t = c.sc_t + dt
+	local f = forza_ora(c)
+	if f == 0 then return 0, 0 end
+	local t = c.sc_t * SC_OSCILLA
+	-- lungo la direzione del colpo, più un po' di traverso perché non sembri una molla
+	local a, b = f * math.cos(t), f * 0.3 * math.sin(t * 1.7)
+	return c.sc_x * a - c.sc_y * b, c.sc_y * a + c.sc_x * b
 end
 
 -- il pulsante gira: vicino, medio, mappa, vicino...

@@ -1,4 +1,4 @@
-# Corpo in grigio (fase 2): la capsula con l'occhio, intera e da vicino.
+# La Scoria (fase 4): il personaggio animato, intero e da vicino.
 
 aspetta 1
 tocca 1075 235                      # STESSO TELEFONO

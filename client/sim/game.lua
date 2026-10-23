@@ -75,6 +75,7 @@ M.OWNER_SAFE_TICKS = 20
 -- Lama di Nucleo: fendente di 240° che parte da dietro la schiena (205°),
 -- passa sopra la testa e finisce davanti in basso (-35°). Colpisce dietro e davanti.
 M.SWORD_REACH = 40       -- lunghezza della lama dal perno
+M.MUZZLE = 14            -- i colpi partono a questa distanza dal centro del robot
 M.SWORD_PIVOT_Y = 10     -- altezza del perno (la spalla) sopra i piedi
 M.SWORD_FROM = math.rad(205)
 M.SWORD_TO = math.rad(-35)
@@ -215,6 +216,7 @@ end
 -- opts.stats = { [1] = { walk_speed = ... }, [2] = { ... } } per cambiare le statistiche
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
+-- opts.hp = vita iniziale (MAX_HP se manca; per le prove)
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
@@ -229,7 +231,7 @@ function M.new(seed, map_id, opts)
 		g.robots[i] = {
 			id = i, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
 			vx = 0, vy = 0, grounded = false, knocked = false, facing = i == 1 and 1 or -1,
-			hp = M.MAX_HP, dead = false, dealt = 0,
+			hp = opts.hp or M.MAX_HP, dead = false, dealt = 0,
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
 			ammo = make_ammo(opts.ammo),
@@ -517,7 +519,7 @@ local function launch_velocity(angle, power, max_speed)
 end
 
 local function muzzle(rb, angle)
-	return rb.x + math.cos(angle) * 14, rb.y + M.ROBOT_H / 2 + math.sin(angle) * 14
+	return rb.x + math.cos(angle) * M.MUZZLE, rb.y + M.ROBOT_H / 2 + math.sin(angle) * M.MUZZLE
 end
 
 function M:fire(angle, power)
@@ -1433,9 +1435,10 @@ end
 -- "blastron": ricostruiti dall'APK di Blastron (docs/blastron.md). Le misure
 -- là sono in unità di Farseer, qui diventano pixel in proporzione al robot:
 -- il robot di Blastron è alto 3,612 unità, il nostro BLASTRON_ROBOT_H pixel
--- (un po' più grande dei 16 del profilo megablast).
+-- (28: 1,4 volte i 20 di prima, scelto il 23 ottobre per vedere meglio il
+-- personaggio; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
 -- La vita là partiva da 2000, qui da MAX_HP: i danni sono riscalati.
-M.BLASTRON_ROBOT_H = 20
+M.BLASTRON_ROBOT_H = 28
 M.BLASTRON_UNIT = M.BLASTRON_ROBOT_H / 3.612
 
 local function blastron_profile()
@@ -1455,6 +1458,7 @@ local function blastron_profile()
 		CRATE_H = M.CRATE_H * k,
 		CRATE_FALL = M.CRATE_FALL * k,
 		SWORD_REACH = M.SWORD_REACH * k,
+		MUZZLE = M.MUZZLE * k,
 		SWORD_PIVOT_Y = M.SWORD_PIVOT_Y * k,
 		SHARD_SPEED = M.SHARD_SPEED * k,
 		SHARD_BLAST = { r = M.SHARD_BLAST.r * k, damage_r = M.SHARD_BLAST.damage_r * k,

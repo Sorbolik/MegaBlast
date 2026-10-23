@@ -16,7 +16,7 @@ premi salta
 aspetta 0.35
 foto 04_salto
 aspetta 1
-mira 200 140 0.6 05_mira_missile
+mira 150 100 0.6 05_mira_missile
 aspetta_evento fire 2
 aspetta 0.25
 foto 06_missile_in_volo
