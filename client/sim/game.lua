@@ -238,10 +238,11 @@ local function make_ammo(start)
 	return a
 end
 
--- opts.players = { { team = 1, stats = { walk_speed = ... } }, { team = 2 }, ... }:
+-- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards" }, { team = 2 }, ... }:
 -- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
 -- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
--- mancano vengono da config.STATS e dal profilo di fisica. Senza players, due
+-- mancano vengono da config.STATS e dal profilo di fisica.
+-- pick è l'arma della scelta d'inizio partita (sim/draft.lua). Senza players, due
 -- robot in squadre diverse.
 M.MAX_PLAYERS = 4
 
@@ -279,6 +280,8 @@ end
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
 -- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
+-- opts.normalize = modalità Torneo: le statistiche di albero e equipaggiamento
+-- non contano, tutti hanno quelle di base (resta l'arma della scelta)
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
@@ -292,10 +295,11 @@ function M.new(seed, map_id, opts)
 	g.robots = {}
 	g.order = turn_order(players)
 	g.mode = match_mode(players)
+	g.normalized = opts.normalize or false
 	for k, i in ipairs(g.order) do
 		local p = players[i]
 		local sp = map.spawns[k]
-		local st = make_stats(p.stats)
+		local st = make_stats(not opts.normalize and p.stats or nil)
 		g.robots[i] = {
 			id = i, team = p.team, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
 			vx = 0, vy = 0, grounded = false, knocked = false, facing = sp.x < M.WORLD_W / 2 and 1 or -1,
@@ -315,6 +319,8 @@ function M.new(seed, map_id, opts)
 			ammo = make_ammo(opts.ammo),
 			stats = st,
 		}
+		-- l'arma presa nella scelta d'inizio partita (sim/draft.lua)
+		if p.pick then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
 	end
 	g.events = {}
 	g.tick = 0
@@ -651,13 +657,25 @@ function M:update_robot(rb, input, active)
 	rb.coyote = math.max(0, (rb.coyote or 0) - 1)
 	rb.jump_buf = math.max(0, (rb.jump_buf or 0) - 1)
 	local want_jump = input.jump
+	-- salto appena premuto (tenendolo premuto non si risalta in aria)
+	local pressed = input.jump and not rb.jump_held
+	rb.jump_held = input.jump
 	if want_jump and not rb.grounded then
 		if rb.coyote > 0 then
 			rb.grounded = true
+		elseif pressed and active and (rb.air_left or 0) > 0 and rb.nucleo >= st.air_jump_cost then
+			-- salto in aria: costa Nucleo
+			rb.air_left = rb.air_left - 1
+			rb.nucleo = rb.nucleo - st.air_jump_cost
+			rb.nucleo_spent = rb.nucleo_spent + st.air_jump_cost
+			rb.vx, rb.vy = dir * st.walk_speed * move, st.jump_vy * jump
+			rb.knocked, rb.rising, rb.fall_top = false, true, nil
+			self:emit({ type = "air_jump", robot = rb.id })
 		else
 			rb.jump_buf = M.JUMP_BUFFER_TICKS
 		end
 	end
+	if rb.grounded then rb.air_left = st.air_jumps end
 	if rb.grounded and rb.jump_buf > 0 then want_jump = true end
 
 	if rb.grounded then
@@ -1445,7 +1463,13 @@ function M:use_tool(kind)
 		self:emit({ type = "parachute_ready", robot = rb.id })
 		return
 	end
-	rb.ammo[kind] = rb.ammo[kind] - 1
+	if kind == "shield" and rb.ammo.shield == 0 then
+		-- senza scudi delle casse si paga col Nucleo
+		rb.nucleo = rb.nucleo - rb.stats.shield_cost
+		rb.nucleo_spent = rb.nucleo_spent + rb.stats.shield_cost
+	else
+		rb.ammo[kind] = rb.ammo[kind] - 1
+	end
 	if kind == "shield" then
 		rb.shield = C.SHIELD.hp
 		self:emit({ type = "shield", robot = rb.id })
@@ -1695,7 +1719,7 @@ function M:can_use(weapon)
 	if weapon == "parachute" then
 		return not rb.parachute and (rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost)
 	elseif weapon == "shield" then
-		return not rb.shield and rb.ammo.shield > 0
+		return not rb.shield and (rb.ammo.shield > 0 or rb.nucleo >= rb.stats.shield_cost)
 	elseif M.TOOLS[weapon] then
 		return rb.ammo[weapon] > 0
 	end
@@ -1792,7 +1816,7 @@ function M:results()
 	end
 	local winner = first.team
 	if second and second.place == first.place then winner = nil end
-	return { mode = self.mode, winner = winner, ranking = ranking }
+	return { mode = self.mode, normalized = self.normalized, winner = winner, ranking = ranking }
 end
 
 -- La partita finisce solo allo scadere del tempo: chi muore ricomincia.

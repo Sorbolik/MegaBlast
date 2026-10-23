@@ -14,7 +14,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 |---|---|
 | Partita | Duello online 1 contro 1 (deathmatch). In seguito arriva una campagna single player contro bot. |
 | Turni | Durano 25 s. Il giocatore di turno può muoversi e saltare per tutto il turno e fare fino a **due attacchi**: un'arma (Lanciarune o un'arma trovata) e un colpo di spada, in ordine libero. Dopo il primo attacco ha 5 s per il secondo (barra gialla), dopo l'ultimo 5 s per riposizionarsi (barra blu), mai oltre la fine del turno. Il turno finisce anche allo scadere del timer o quando il robot muore. Tutti i numeri delle regole sono in `client/sim/config.lua`. |
-| Nucleo | Si parte con 1. Al primo attacco del turno i secondi rimasti diventano Nucleo (1 ogni 5 s, al massimo 5 in tutto). Il teletrasporto costa 1 Nucleo; al primo turno se ne fa uno solo. |
+| Nucleo | Si parte con 1. Al primo attacco del turno i secondi rimasti diventano Nucleo (1 ogni 5 s, al massimo 5 in tutto). Il teletrasporto costa 1 Nucleo; al primo turno se ne fa uno solo. Il paracadute costa 1 Nucleo, lo scudo 3 se non se ne ha uno delle casse, il salto in aria (solo con l'albero o il set Corvo) 1. Nel Torneo le statistiche di albero ed equipaggiamento non contano. |
 | Terreno | La terra è distruttibile: ogni esplosione scava un cratere tondo. I tubi d'acciaio sono indistruttibili e fanno da base solida. |
 | Mappe | Fatte a mano, su più piani, con isole volanti. Niente vento. |
 | Movimento | Salto libero (anche dritto verso l'alto) e controllo in aria a destra e sinistra. |
@@ -24,6 +24,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Effetti di stato | Le Schegge rallentano (corsa, salto e velocità in aria più bassi), il Pugno incrina l'armatura (si prende il 25% di danno in più), missile e Uovo bruciano solo con il set Fornace (10 danni all'inizio di ogni proprio turno). Durano fino alla fine del prossimo turno di chi li subisce, si vedono sul robot (fiamma, anello ai piedi, crepa) e lo scudo li ferma. |
 | Vittoria | La partita dura 5 minuti e la vince la squadra con più punti (in 1 contro 1 e tutti contro tutti ogni robot è una squadra). Punti: 1 per ogni punto di vita tolto a un avversario, 50 per un'uccisione, 50 in più se è ambientale (fuori dalla mappa o caduta), -20 a chi muore, ×1,5 colpendo chi è primo. L'uccisione va a chi ha colpito per ultimo nei 10 s prima. Chi muore ricomincia a fine turno con la vita piena in un punto a caso, lontano dagli altri, e tiene Nucleo e colpi. Allo scadere il turno in corso finisce; a pari punti è pareggio. |
 | Giocatori | Da 2 a 4: 1 contro 1, 2 contro 2 (le squadre si alternano: A1, B1, A2, B2) o tutti contro tutti. Colpire il compagno fa danno ma non dà punti. |
+| Scelta d'inizio partita | Prima della partita un ventaglio di 3 armi delle casse, uguale per tutti: ognuno ne prende una e ne ha 1 colpo. Due compagni non possono prendere la stessa (possono scambiarsele); nel tutti contro tutti i doppioni vanno bene. Allo scadere dei 15 s chi non ha scelto prende la prima libera. Regole in `client/sim/draft.lua`, le gira la stanza del server prima della partita; sullo stesso telefono si sceglie a turno. |
 
 ### Armi iniziali (MVP)
 

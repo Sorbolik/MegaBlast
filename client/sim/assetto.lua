@@ -13,7 +13,7 @@ local M = {}
 M.LOADOUTS = 3
 
 -- limiti delle statistiche dopo albero e set
-M.MIN = { max_hp = 1, teleport_ticks = 30, teleport_cost = 0 }
+M.MIN = { max_hp = 1, teleport_ticks = 30, teleport_cost = 0, shield_cost = 0, air_jump_cost = 0 }
 
 function M.new()
 	return { tree = {}, gear = {}, variant = "a" }

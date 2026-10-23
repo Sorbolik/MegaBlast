@@ -120,7 +120,16 @@ check(st.burning_blasts == 1 and st.status_turns == BASE.status_turns + 1, "tier
 a.variant = "a"
 a.gear = { mask = "corvo", chest = "corvo", cloak = "corvo", legs = "corvo" }
 st = assetto.stats(BASE, a)
-check(st.free_teleports == 0 and st.max_hp == BASE.max_hp - 6, "set senza bonus: contano solo i pezzi")
+check(st.air_jumps == 1 and st.fall_damage_mul == 0 and st.air_jump_cost == BASE.air_jump_cost,
+	"set Corvo completo: doppio salto e caduta senza danno")
+a.variant = "b"
+st = assetto.stats(BASE, a, { mask = 3, chest = 3, cloak = 3, legs = 3 })
+check(st.air_jumps == 1 and st.air_jump_cost == 0, "tier III: doppio salto gratis")
+a.variant = "a"
+a.tree = { hp = 2, fall = 2, anchor = 1, start_nucleo = 1, cheap_shield = 1 }
+st = assetto.stats(BASE, a)
+check(st.shield_cost == BASE.shield_cost - 1, "albero: scudo più economico")
+a.tree = {}
 
 a.gear = { mask = "vuoto", chest = "corvo" }
 check(assetto.valid(a, 20), "assetto valido")

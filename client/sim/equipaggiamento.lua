@@ -25,8 +25,6 @@ M.TIER_MATCHES = { 0, 10, 30 }
 
 -- Pezzi: per ogni set e slot un più e un meno, in percentuale sulla base (le
 -- statistiche di movimento cambiano col profilo di fisica). Bonus: a pezzi completi.
--- Ci sono solo i bonus delle meccaniche che il gioco ha già: quelli del
--- documento per Corvo (doppio salto) arriva con la sua meccanica.
 M.SETS = {
 	{ id = "corvo", name = "CORVO", style = "Agilità",
 		pieces = {
@@ -34,6 +32,14 @@ M.SETS = {
 			chest = { { stat = "air_speed", mul = 1.03 }, { stat = "max_hp", add = -3 } },
 			cloak = { { stat = "air_speed", mul = 1.03 }, { stat = "walk_speed", mul = 0.98 } },
 			legs = { { stat = "jump_height", mul = 1.03 }, { stat = "walk_speed", mul = 0.98 } },
+		},
+		bonus = {
+			a = { desc = "Doppio salto (1 Nucleo) e caduta senza danno, vita -10%",
+				effects = { { stat = "air_jumps", add = 1 }, { stat = "fall_damage_mul", mul = 0 },
+					{ stat = "max_hp", mul = 0.9 } } },
+			b = { desc = "Doppio salto gratis, vita -10%",
+				effects = { { stat = "air_jumps", add = 1 }, { stat = "air_jump_cost", add = -1 },
+					{ stat = "max_hp", mul = 0.9 } } },
 		} },
 	{ id = "fornace", name = "FORNACE", style = "Territorio",
 		pieces = {

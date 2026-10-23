@@ -66,7 +66,7 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `niente_evento TIPO [S]` | fallisce se nei prossimi S secondi succede l'evento TIPO (per esempio un colpo annullato che parte lo stesso) |
 | `aspetta_evento TIPO [S]` | aspetta un evento della simulazione (`fire`, `explosion`, `swing`, `sword_hit`, `orb`, `teleport`, `grenade`, `shards`, `punch`, `punch_hit`, `crate`, `crate_pick`, `damage`, `turn`, `over`...) |
 | `aspetta_stato chiave=valore ... [S]` | aspetta uno stato, per esempio `turno=2 fase=aim` (chiavi: `modo`, `turno`, `fase`, `x`, `y` nel mondo, `sx`, `sy` il centro del robot sullo schermo, `zoom` della camera) |
-| `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma e oggetto delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3, `prova_vita N` fa partire tutti con N punti di vita (scenario `scenari/colpi.txt`), `prova_stati 1` fa partire tutti bruciati, rallentati e con l'armatura incrinata (scenario `scenari/stati.txt`), `prova_durata N` fa durare la partita N secondi (scenario `scenari/podio.txt`), `zoom 3` fa partire la camera con tutta la mappa (1 vicino, 2 medio; scenario `scenari/camera.txt`) |
+| `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma e oggetto delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3, `prova_vita N` fa partire tutti con N punti di vita (scenario `scenari/colpi.txt`), `prova_durata N` fa durare la partita N secondi (scenario `scenari/podio.txt`), `prova_scelta 1` fa partire lo stesso telefono con la scelta delle armi (senza, negli scenari si salta; scenario `scenari/scelta.txt`), `prova_stati 1` fa partire tutti bruciati, rallentati e con l'armatura incrinata (scenario `scenari/stati.txt`), `zoom 3` fa partire la camera con tutta la mappa (1 vicino, 2 medio; scenario `scenari/camera.txt`) |
 
 Comandi: sul computer (il predefinito qui) tastiera e mouse, zoom col pulsante `1210 686`, il tasto `z` o la rotella, TELE `1180 62` o
 il tasto `t`, armi coi tasti `1`-`5`. Con `imposta comandi telefono` ci sono le
@@ -76,7 +76,7 @@ il robot ha, centrate: con Lanciarune e Lama di Nucleo sono a `x = 593` e `687`;
 con tutte e cinque (Lanciarune, Lama, Uovo di Fiamma, Sciame di Schegge, Pugno
 del Titano) a `452`, `546`, `640`, `734`, `828`.
 Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, ARMERIA `168 108`.
-Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, Nucleo): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`. Effetti di stato: `scenari/stati.txt`.
+Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, Nucleo): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`. Effetti di stato: `scenari/stati.txt`. Scelta delle armi d'inizio partita: `scenari/scelta.txt`.
 Fine partita, podio, armeria e albero di abilità: `scenari/podio.txt`.
 
 Per guidare il robot il gioco, solo in questa build, scrive nel log righe

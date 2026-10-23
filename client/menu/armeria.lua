@@ -26,6 +26,7 @@ M.STATISTICHE = {
 	{ "max_hp", "Vita" }, { "walk_speed", "Corsa" }, { "jump_height", "Salto" }, { "air_speed", "In aria" },
 	{ "teleport_ticks", "Teletrasporto", "secondi" }, { "free_teleports", "Teletrasporti gratis" },
 	{ "start_nucleo", "Nucleo iniziale" }, { "free_parachutes", "Paracadute gratis" },
+	{ "air_jumps", "Salti in aria" }, { "air_jump_cost", "Nucleo per salto" }, { "shield_cost", "Nucleo per scudo" },
 	{ "fall_damage_mul", "Danno da caduta", "percento" }, { "knockback_mul", "Spinta subita", "percento" },
 	{ "trap_radius", "Raggio trappole" }, { "status_turns", "Turni degli effetti" },
 	{ "burning_blasts", "Colpi brucianti", "sì" },
@@ -79,7 +80,8 @@ local function statistiche(a, parent)
 			if diff then
 				local meglio = type(st[k]) ~= "number" or st[k] > b[k]
 				-- per questi meno è meglio
-				if k == "teleport_ticks" or k == "fall_damage_mul" or k == "knockback_mul" then
+				if k == "teleport_ticks" or k == "fall_damage_mul" or k == "knockback_mul"
+					or k == "air_jump_cost" or k == "shield_cost" then
 					meglio = st[k] < b[k]
 				end
 				col = meglio and c.BRACE or c.TESTO
@@ -88,7 +90,7 @@ local function statistiche(a, parent)
 			gui.set_pivot(n, gui.PIVOT_W)
 			local v = ui.testo(valore(st[k], modo), 110, y, 0.75, col, pan)
 			gui.set_pivot(v, gui.PIVOT_E)
-			y = y - 34
+			y = y - 30
 		end
 	end
 end
