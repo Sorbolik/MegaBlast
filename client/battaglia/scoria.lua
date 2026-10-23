@@ -151,7 +151,7 @@ end
 function M.new(color)
 	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
 	local s = { color = color, h = H, w = Wd, k = H / 200, armi = {}, pelle = {},
-		x = {}, v = {}, goal = {}, testa = {}, gambe = { {}, {} }, gamba_a = { 0, 0 } }
+		x = {}, v = {}, goal = {}, testa = {}, mantello = {}, gambe = { {}, {} }, gamba_a = { 0, 0 } }
 	s.root = vuoto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
@@ -167,16 +167,19 @@ function M.new(color)
 
 	-- prima tutti i bordi chiari, poi le sagome nere sopra: così i pezzi della
 	-- stessa Scoria si uniscono senza righe in mezzo
+	local n
 	for strato = 1, 2 do
 		local suff = strato == 1 and "_bordo" or ""
 		local col = strato == 1 and LUCE or INCHIOSTRO
 		for i = 1, 2 do
-			local g, n = pezzo(s, s.forma, "gamba", "gamba" .. suff, ANCHE[1][1], ANCHE[1][2], col)
+			local g
+			g, n = pezzo(s, s.forma, "gamba", "gamba" .. suff, ANCHE[1][1], ANCHE[1][2], col)
 			pos(g, gx(s, ANCHE[i][1]), gy(s, ANCHE[i][2]))
 			s.gambe[i][strato] = g
 			if strato == 2 then s.pelle[#s.pelle + 1] = n end
 		end
-		local _, n = pezzo(s, s.forma, "mantello", "mantello" .. suff, 75, 140, col)
+		-- il mantello gira e si accascia attorno all'orlo
+		s.mantello[strato], n = pezzo(s, s.forma, "mantello", "mantello" .. suff, 75, 185, col)
 		if strato == 2 then s.pelle[#s.pelle + 1] = n end
 		s.testa[strato], n = pezzo(s, s.forma, "testa", "testa" .. suff, COLLO[1], COLLO[2], col)
 		if strato == 2 then s.pelle[#s.pelle + 1] = n end
@@ -210,7 +213,18 @@ function M.reset(s)
 	s.morte, s.morto = nil, nil
 	s.alpha.w = 1
 	gui.set_color(s.root, s.alpha)
+	gui.set_color(s.occhio, s.alpha)
+	gui.set_color(s.nucleo, s.nucleo_col)
+	scale(s.nucleo, 1, 1)
+	for strato = 1, 2 do
+		scale(s.mantello[strato], 1, 1)
+		gui.set_color(s.mantello[strato], s.alpha)
+		gui.set_color(s.gambe[1][strato], s.alpha)
+		gui.set_color(s.gambe[2][strato], s.alpha)
+	end
 	for i = 1, #s.pelle do gui.set_color(s.pelle[i], INCHIOSTRO) end
+	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], true) end
+	s.face = 1
 end
 
 function M.set_enabled(s, on)
@@ -228,6 +242,40 @@ local function molle(s, dt)
 			v[i] = v[i] + (w * w * (goal[i] - x[i]) - 2 * z * w * v[i]) * h
 			x[i] = x[i] + v[i] * h
 		end
+	end
+end
+
+-- Morte: la testa salta via girando, il mantello si accascia e svanisce,
+-- l'occhio si spegne e il Nucleo scoppia in un lampo. Il terreno sotto può non
+-- esserci più (il cratere), quindi niente resta appoggiato: tutto svanisce
+local MORTE_CORPO, MORTE_TESTA = 0.5, 1.1
+local function morte(s, dt)
+	local t = s.morte + dt
+	s.morte = t
+	s.tvy = s.tvy - 9 * s.h * dt
+	s.tx, s.ty = s.tx + s.tvx * dt, s.ty + s.tvy * dt
+	s.ta = s.ta + s.tgira * dt
+	-- il corpo (gambe e mantello) svanisce prima della testa
+	C.x, C.y, C.z, C.w = 1, 1, 1, max(0, 1 - t / MORTE_CORPO)
+	for strato = 1, 2 do
+		pos(s.testa[strato], s.tx, s.ty)
+		rot(s.testa[strato], s.ta)
+		scale(s.mantello[strato], 1 + min(0.3, t), max(0.35, 1 - t * 3))
+		gui.set_color(s.mantello[strato], C)
+		gui.set_color(s.gambe[1][strato], C)
+		gui.set_color(s.gambe[2][strato], C)
+	end
+	rot(s.corpo, min(0.35, t * 2))
+	C.w = max(0, 1 - t * 2.5)
+	gui.set_color(s.occhio, C)
+	scale(s.nucleo, 1 + t * 10, 1 + t * 10)
+	s.nucleo_col.w = max(0, 1 - t * 4)
+	gui.set_color(s.nucleo, s.nucleo_col)
+	s.alpha.w = min(1, max(0, (MORTE_TESTA - t) / 0.4))
+	gui.set_color(s.root, s.alpha)
+	if s.alpha.w == 0 then
+		s.morto = true
+		gui.set_enabled(s.root, false)
 	end
 end
 
@@ -259,8 +307,10 @@ function M.update(s, dt, st)
 	dt = min(dt, 1 / 20)
 	s.t = s.t + dt
 	local face = st.facing
+	s.face = face
 	scale(s.root, face, 1)
 	pos(s.root, st.x, st.y)
+	if s.morte then return morte(s, dt) end
 
 	if s.last_y then
 		local vy = (st.y - s.last_y) / max(dt, 1e-4)
@@ -294,17 +344,6 @@ function M.update(s, dt, st)
 	if st.aim then a = face > 0 and st.aim or pi - st.aim end
 	-- la testa guarda un po' dove si mira e ondeggia nei passi
 	local testa = max(-0.25, min(0.25, sin(a) * 0.2)) + sin(s.passo * 2) * 0.05 * s.cammina
-	if s.morte then
-		s.morte = s.morte + dt
-		sq, lean, testa = 0.4, 0.9, 0.6
-		s.alpha.w = max(0, 1 - s.morte / 0.6)
-		gui.set_color(s.root, s.alpha)
-		if s.morte > 0.6 then
-			s.morto = true
-			gui.set_enabled(s.root, false)
-			return
-		end
-	end
 	s.goal[SQ], s.goal[LEAN], s.goal[TESTA] = sq, lean, testa
 	molle(s, dt)
 
@@ -359,16 +398,20 @@ function M.set_weapon(s, name)
 	if s.arma_scelta == name or not s.armi[name] then return end
 	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], false) end
 	s.arma_scelta = name
-	gui.set_enabled(s.armi[name], true)
+	-- da morto l'arma non c'è più
+	gui.set_enabled(s.armi[name], not s.morte)
 end
 
--- Colpo subito: lampo bianco, spinta indietro, schiacciata e testa all'indietro
-function M.hit(s)
+-- Colpo subito: lampo bianco, spinta e inclinazione nella direzione del colpo
+-- (dx: verso dove spinge, nel mondo; senza, da davanti), schiacciata, testa che
+-- scatta
+function M.hit(s, dx)
+	local d = (dx and dx ~= 0) and (dx > 0 and 1 or -1) * s.face or -1
 	s.flash = 1
-	s.v[SHOVE] = s.v[SHOVE] + 9
+	s.v[SHOVE] = s.v[SHOVE] - 9 * d
 	s.v[SQ] = s.v[SQ] - 4
-	s.v[LEAN] = s.v[LEAN] + 5
-	s.v[TESTA] = s.v[TESTA] + 8
+	s.v[LEAN] = s.v[LEAN] - 5 * d
+	s.v[TESTA] = s.v[TESTA] - 8 * d
 end
 
 -- Colpo sparato: rinculo dell'arma e del corpo
@@ -386,7 +429,13 @@ function M.teleport(s)
 end
 
 function M.die(s)
-	if not s.morte then s.morte = 0 end
+	if s.morte then return end
+	s.morte = 0
+	local H = s.h
+	s.tx, s.ty, s.ta = gx(s, COLLO[1]), gy(s, COLLO[2]), s.x[TESTA]
+	s.tvx, s.tvy, s.tgira = -0.8 * H, 2.6 * H, 9
+	scale(s.forma, 1, 1)
+	gui.set_enabled(s.armi[s.arma_scelta], false)
 end
 
 return M

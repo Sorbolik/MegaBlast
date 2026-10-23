@@ -133,9 +133,18 @@ scoria.teleport(s)
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "colpo e teletrasporto: valori finiti")
 
+scoria.hit(s, 30)
+scoria.hit(s, -30)
+for _ = 1, 10 do scoria.update(s, 1 / 60, st) end
+check(tutto_finito(), "colpi da destra e da sinistra: valori finiti")
+
 scoria.die(s)
-for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
-check(not s.root.enabled, "morte: il corpo sparisce")
+scoria.set_weapon(s, "sword")
+check(not s.armi.sword.enabled, "morte: l'arma sparisce, anche cambiandola")
+for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
+check(tutto_finito() and s.root.enabled, "morte: la testa vola, il corpo c'è ancora")
+for _ = 1, 120 do scoria.update(s, 1 / 60, st) end
+check(not s.root.enabled, "morte: poi il corpo sparisce")
 scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")
 check(math.abs(game.ROBOT_H - s.h) < 1e-9, "il corpo è alto quanto quello della simulazione")
@@ -167,6 +176,20 @@ check(math.abs(a.x - b.x) < 0.01 and math.abs(a.y - b.y) < 0.01,
 	string.format("a 60 e 120 Hz la camera arriva allo stesso punto (%.2f, %.2f)", a.x - b.x, a.y - b.y))
 for _ = 1, 300 do camera.segui(a, 1 / 60, 800, 420, 1.5) end
 check(math.abs(a.x - 800) < 0.5 and math.abs(a.s - 1.5) < 0.01, "la camera raggiunge il punto e lo zoom")
+
+-- la scossa: parte nella direzione del colpo, è uguale a 60 e 120 Hz e si spegne
+camera.scuoti(a, 1, 0, 20)
+camera.scuoti(b, 1, 0, 20)
+local ox = camera.scossa(a, 0)
+check(math.abs(ox - 20) < 1e-9, "scossa: lo schermo parte spinto nella direzione del colpo")
+for _ = 1, 6 do ox = camera.scossa(a, 1 / 60) end
+local ox2
+for _ = 1, 12 do ox2 = camera.scossa(b, 1 / 120) end
+check(math.abs(ox - ox2) < 1e-6, "scossa: uguale a 60 e 120 Hz")
+camera.scuoti(a, 0, 1, 5)
+check(a.sc_x == 1, "scossa: una più debole non cancella quella in corso")
+for _ = 1, 60 do ox = camera.scossa(a, 1 / 60) end
+check(ox == 0, "scossa: dopo un attimo si ferma")
 
 camera.cambia(c, 5)
 check(camera.zoom(c) == 1, "rotella indietro: si ferma su tutta la mappa")

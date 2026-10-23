@@ -216,6 +216,7 @@ end
 -- opts.stats = { [1] = { walk_speed = ... }, [2] = { ... } } per cambiare le statistiche
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
+-- opts.hp = vita iniziale (MAX_HP se manca; per le prove)
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
@@ -230,7 +231,7 @@ function M.new(seed, map_id, opts)
 		g.robots[i] = {
 			id = i, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
 			vx = 0, vy = 0, grounded = false, knocked = false, facing = i == 1 and 1 or -1,
-			hp = M.MAX_HP, dead = false, dealt = 0,
+			hp = opts.hp or M.MAX_HP, dead = false, dealt = 0,
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
 			ammo = make_ammo(opts.ammo),

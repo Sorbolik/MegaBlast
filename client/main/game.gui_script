@@ -117,6 +117,15 @@ local VK = vmath.vector3(K, K, 1)
 local ZOOM_INIZIO = tonumber(config_string("megablast.zoom", "")) or 1
 -- dopo un'esplosione la camera resta lì un attimo prima di tornare al robot
 local CAMERA_SOSTA = 0.7
+-- Game feel (fase 5 della roadmap). Quando un colpo va a segno il mondo si ferma
+-- un attimo (hit-stop, secondi con danno piccolo e grande) e lo schermo trema
+-- nella direzione del colpo, più forte quanto più è il danno (pixel per punto)
+local FERMO_MIN, FERMO_MAX = 0.05, 0.11
+local SCOSSA_BASE, SCOSSA_DANNO = 4, 0.45
+-- detriti delle esplosioni: pochi e grandi, volano e svaniscono
+local DETRITI, DETRITI_PER_COLPO, DETRITO_VITA = 15, 5, 0.9
+local PIETRA = vmath.vector4(0.16, 0.13, 0.15, 1)
+local BRACE_SCURA = vmath.vector4(0.85, 0.3, 0.08, 1)
 -- pulsante dello zoom, in alto a destra
 local ZOOM_BTN = vmath.vector3(W - 70, H - 34, 0)
 
@@ -424,7 +433,17 @@ local function new_match(self, seed, map, opts)
 	local rb = self.g.robots[self.g.current]
 	camera.salta(self.cam, rb.x, rb.y + game.ROBOT_H / 2, camera.zoom(self.cam))
 	self.cam_sosta = 0
+	self.fermo = 0
 end
+
+-- Un solo vettore riusato per tutte le posizioni del frame
+local POS = vmath.vector3(0, 0, 0)
+local function set_pos(node, x, y)
+	POS.x, POS.y = x, y
+	gui.set_position(node, POS)
+end
+
+local EULER = vmath.vector3(0, 0, 0)
 
 -- Esplosione: flipbook di 12 fotogrammi più un lampo di brace in additivo.
 -- I nodi sono pochi e riusati a giro, così non se ne creano durante la partita.
@@ -447,6 +466,51 @@ local function explosion(self, x, y, r)
 	gui.set_size(b.flash, vmath.vector3(r * 6, r * 6, 0))
 	gui.set_color(b.flash, BRACE)
 	gui.animate(b.flash, "color.w", 0, gui.EASING_OUTQUAD, 0.45, 0, hide_node)
+
+	-- detriti: pezzi di roccia e di brace lanciati verso l'alto
+	for j = 1, DETRITI_PER_COLPO do
+		self.detrito_i = self.detrito_i % #self.detriti + 1
+		local d = self.detriti[self.detrito_i]
+		local a = math.pi / 2 + (math.random() * 2 - 1) * 1.1
+		local v = r * (5 + math.random() * 5)
+		d.x, d.y, d.vx, d.vy = x, y, math.cos(a) * v, math.sin(a) * v
+		d.a, d.va, d.t = math.random() * 360, (math.random() * 2 - 1) * 720, 0
+		local lato = r * (0.16 + math.random() * 0.14)
+		gui.set_size(d.node, vmath.vector3(lato, lato, 0))
+		local c = j % 2 == 0 and BRACE_SCURA or PIETRA
+		d.col.x, d.col.y, d.col.z = c.x, c.y, c.z
+		gui.set_enabled(d.node, true)
+	end
+	-- lo schermo sobbalza anche se non colpisce nessuno; da dove viene un colpo lo
+	-- ricordiamo per spingere chi è colpito
+	camera.scuoti(self.cam, math.random() - 0.5, -1, 3 + r * 0.2)
+	self.colpo_x, self.colpo_y, self.colpo_t = x, y, self.clock
+end
+
+local function muovi_detriti(self, dt)
+	for _, d in ipairs(self.detriti) do
+		if d.t < DETRITO_VITA then
+			d.t = d.t + dt
+			d.vy = d.vy - game.GRAVITY * dt
+			d.x, d.y, d.a = d.x + d.vx * dt, d.y + d.vy * dt, d.a + d.va * dt
+			d.col.w = math.min(1, (DETRITO_VITA - d.t) / 0.3)
+			POS.x, POS.y = d.x, d.y
+			gui.set_position(d.node, POS)
+			EULER.z = d.a
+			gui.set_euler(d.node, EULER)
+			gui.set_color(d.node, d.col)
+			if d.t >= DETRITO_VITA then gui.set_enabled(d.node, false) end
+		end
+	end
+end
+
+-- Da dove arriva il colpo che ha tolto vita al robot i: l'esplosione o il pugno
+-- di un attimo fa, altrimenti chi è di turno (la spada)
+local function colpo_da(self, i)
+	if self.colpo_t and self.clock - self.colpo_t < 0.5 then return self.colpo_x, self.colpo_y end
+	local v = self.view[self.g.current]
+	if self.g.current == i then return v.x - 1, v.y end
+	return v.x, v.y + game.ROBOT_H / 2
 end
 
 -- Onda d'urto del Pugno del Titano: un anello di brace che si allarga
@@ -502,6 +566,7 @@ local function handle_event(self, e)
 		show_message(self, who_name(self, e.robot) .. verbo .. WEAPON_FOUND[e.weapon] .. "!")
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
+		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA * 0.5, e.x, e.y
 	elseif e.type == "turn" then
 		self.tele_armed = false
@@ -637,7 +702,9 @@ local function start_local(self)
 		-- solo per gli scenari di prova (comando "imposta" in strumenti/simula)
 		local colpi = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
+		local vita = config_int("megablast.prova_vita", 0)
 		opts = {
+			hp = vita > 0 and vita or nil,
 			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi } or nil,
 			crate_every = ogni > 0 and ogni or nil,
 		}
@@ -794,14 +861,6 @@ local function set_touch_ui(self, on)
 	if self.controls_visible ~= nil then set_controls_visible(self, self.controls_visible) end
 end
 
--- Un solo vettore riusato per tutte le posizioni del frame
-local POS = vmath.vector3(0, 0, 0)
-local function set_pos(node, x, y)
-	POS.x, POS.y = x, y
-	gui.set_position(node, POS)
-end
-
-local EULER = vmath.vector3(0, 0, 0)
 
 local function set_hud(self, text)
 	if self.hud_text ~= text then
@@ -862,6 +921,7 @@ local CAM_POS, CAM_SCALE, LABEL_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1,
 local function apply_camera(self)
 	local c = self.cam
 	local tx, ty = camera.spostamento(c)
+	tx, ty = tx + self.sc_ox, ty + self.sc_oy
 	if tx == self.cam_tx and ty == self.cam_ty and c.s == self.cam_s then return end
 	self.cam_tx, self.cam_ty, self.cam_s = tx, ty, c.s
 	CAM_POS.x, CAM_POS.y = tx, ty
@@ -897,7 +957,15 @@ local function render(self, dt)
 		end
 		local hp = math.max(0, rb.hp)
 		if v.hp ~= hp then
-			if hp < v.hp then scoria.hit(r.rig) end
+			if hp < v.hp then
+				-- il colpo: lampo e spinta sul bersaglio, scossa e hit-stop
+				local danno = v.hp - hp
+				local cx, cy = colpo_da(self, i)
+				local dx, dy = v.x - cx, v.y + game.ROBOT_H / 2 - cy
+				scoria.hit(r.rig, dx)
+				camera.scuoti(self.cam, dx, dy, SCOSSA_BASE + danno * SCOSSA_DANNO)
+				self.fermo = math.max(self.fermo, FERMO_MIN + (FERMO_MAX - FERMO_MIN) * math.min(1, danno / 50))
+			end
 			gui.set_text(r.hp, tostring(hp))
 			v.hp = hp
 		end
@@ -1157,6 +1225,7 @@ function init(self)
 	-- del render (stretch), che questa non cambia
 	self.cam_msg = { id = hash("camera"), view = vmath.matrix4(), projection = vmath.matrix4() }
 	self.cam_sosta = 0
+	self.fermo, self.sc_ox, self.sc_oy = 0, 0, 0
 	self.mondo = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(self.mondo, false)
 
@@ -1270,6 +1339,14 @@ function init(self)
 		self.booms[i] = { anim = anim, flash = flash }
 	end
 
+	-- detriti delle esplosioni, riusati a giro
+	self.detriti, self.detrito_i = {}, 0
+	for i = 1, DETRITI do
+		local n = box(0, 0, 1, 1, PIETRA)
+		gui.set_enabled(n, false)
+		self.detriti[i] = { node = n, x = 0, y = 0, vx = 0, vy = 0, a = 0, va = 0, t = DETRITO_VITA, col = vmath.vector4(PIETRA) }
+	end
+
 	for i = 1, 2 do
 		local hp = label(0, 0, "100", 0.7)
 		gui.set_color(hp, PLAYER_COLORS[i])
@@ -1290,6 +1367,8 @@ function init(self)
 	for _, n in ipairs(self.shard_nodes) do mondo[#mondo + 1] = n end
 	for _, c in ipairs(self.crate_nodes) do mondo[#mondo + 1] = c.node end
 	mondo[#mondo + 1] = self.shock
+	-- i detriti sotto l'esplosione: ne escono mentre si spegne
+	for _, d in ipairs(self.detriti) do mondo[#mondo + 1] = d.node end
 	for _, b in ipairs(self.booms) do
 		mondo[#mondo + 1] = b.anim
 		mondo[#mondo + 1] = b.flash
@@ -1363,8 +1442,15 @@ function final(self)
 end
 
 function update(self, dt)
+	-- hit-stop: il mondo resta fermo, lo schermo trema lo stesso
+	local dt_mondo = dt
+	if self.fermo > 0 then
+		self.fermo = self.fermo - dt
+		dt_mondo = 0
+	end
+	self.sc_ox, self.sc_oy = camera.scossa(self.cam, dt)
 	if self.mode == "local" then
-		self.acc = math.min(self.acc + dt, 0.25)
+		self.acc = math.min(self.acc + dt_mondo, 0.25)
 		while self.acc >= game.DT and self.mode == "local" do
 			local input = {
 				left = move_left(self),
@@ -1385,7 +1471,7 @@ function update(self, dt)
 		end
 		self.pose_t, self.pose_dt = self.acc, game.DT
 	elseif self.mode == "online" then
-		self.pose_t = self.pose_t + dt
+		self.pose_t = self.pose_t + dt_mondo
 		-- mandiamo al server solo i cambiamenti, e solo quando tocca a noi
 		if my_turn(self) and (self.g.phase == "aim" or self.g.retreat > 0) then
 			local l = move_left(self) or false
@@ -1418,7 +1504,8 @@ function update(self, dt)
 	smooth_aim(self, dt)
 	-- per sparare con la mira di un attimo prima che il pollice si stacchi
 	if self.aim_pad.id then levette.registra(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
-	render(self, dt)
+	render(self, dt_mondo)
+	muovi_detriti(self, dt_mondo)
 	if self.mode == "menu" then home.update(self.home, dt) end
 
 	if SIMULA and self.g then
