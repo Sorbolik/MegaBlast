@@ -21,7 +21,7 @@ gui = {
 	set_euler = function(n, v) n.euler = copia(v) end,
 	set_scale = function(n, v) n.scale = copia(v) end,
 	set_enabled = function(n, on) n.enabled = on end,
-	set_visible = function() end, set_color = function() end, set_adjust_mode = function() end,
+	set_visible = function(n, on) n.invisibile = not on end, set_color = function() end, set_adjust_mode = function() end,
 	set_inherit_alpha = function() end, set_perimeter_vertices = function() end,
 	set_texture = function() end, play_flipbook = function() end,
 	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
@@ -158,7 +158,15 @@ check(math.abs(game.ROBOT_H - s.h) < 1e-9, "il corpo è alto quanto quello della
 
 -- Targa ------------------------------------------------------------------------
 
-local t = targa.new(vec(1, 0.2, 0.3, 1), "Rosso")
+local primo = #nodi + 1
+local tt = targa.nuove({ vec(1, 0.2, 0.3, 1), vec(0.2, 0.5, 1, 1) }, { "Rosso", "Blu" })
+local primo_testo, ultima_forma = math.huge, 0
+for k = primo, #nodi do
+	if nodi[k].text then primo_testo = math.min(primo_testo, k)
+	elseif not nodi[k].invisibile then ultima_forma = k end
+end
+check(ultima_forma < primo_testo, "targhe: prima tutte le barre, poi tutti i testi (due draw call)")
+local t = tt[1]
 targa.vita(t, 100, 100)
 targa.update(t, 1 / 60, 0, 0, 1)
 local piena = t.pieno.size.x

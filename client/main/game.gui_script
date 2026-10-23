@@ -1354,7 +1354,8 @@ function init(self)
 		self.detriti[i] = { node = n, x = 0, y = 0, vx = 0, vy = 0, a = 0, va = 0, t = DETRITO_VITA, col = vmath.vector4(PIETRA) }
 	end
 
-	for i = 1, 2 do self.robots[i].targa = targa.new(PLAYER_COLORS[i], NAMES[i]) end
+	local targhe = targa.nuove(PLAYER_COLORS, NAMES)
+	for i = 1, 2 do self.robots[i].targa = targhe[i] end
 	self.arrow = box(0, 0, 4, 18, WHITE)
 	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
 	gui.set_enabled(self.cancel_label, false)
@@ -1376,7 +1377,9 @@ function init(self)
 		mondo[#mondo + 1] = b.anim
 		mondo[#mondo + 1] = b.flash
 	end
-	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].targa.root end
+	-- le targhe: prima tutte le barre, poi tutti i testi (due draw call in tutto)
+	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].targa.barre end
+	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].targa.testi end
 	mondo[#mondo + 1] = self.arrow
 	mondo[#mondo + 1] = self.cancel_label
 	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end

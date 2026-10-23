@@ -4,10 +4,16 @@
 -- resta bianco un attimo e poi si consuma; la barra sobbalza e lampeggia. Sotto
 -- il 30% la vita pulsa. Lo scudo, se c'è, è un tratto chiaro dopo la vita.
 --
---   local t = targa.new(colore, nome)
+--   local tt = targa.nuove(colori, nomi)  -- una targa per colore, tutte insieme
 --   targa.vita(t, vita, massima, scudo)   -- quando cambia (scudo può mancare)
 --   targa.update(t, dt, x, y, scala)      -- a ogni frame: x, y è il centro in basso
 --   targa.set_enabled(t, on) / targa.nome(t, nome)
+--
+-- Ogni targa ha due radici, t.barre e t.testi, che si muovono insieme. La GUI
+-- disegna i nodi nell'ordine in cui stanno: chi le mette nella scena mette prima
+-- le barre di tutte le targhe e poi tutti i testi, così bastano due draw call per
+-- tutte (forme senza immagine, poi il font). Non usiamo i layer della GUI perché
+-- disegnerebbero le targhe sopra i pulsanti e i menu.
 
 local M = {}
 
@@ -62,25 +68,38 @@ local function larghezza(n, x, w)
 	gui.set_size(n, V)
 end
 
-function M.new(colore, nome)
-	local t = { colore = vmath.vector4(colore.x, colore.y, colore.z, 1), vita_f = 1, scia_f = 1,
-		scudo_f = 0, max_f = 1, attesa = 0, colpo = 0, t = 0 }
-	t.root = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(t.root, false)
-	gui.set_adjust_mode(t.root, gui.ADJUST_STRETCH)
-	-- dentro: sobbalza attorno al centro della barra
-	t.dentro = rettangolo(t.root, 0, H / 2 + BORDO, 0, 0, FONDO)
-	gui.set_visible(t.dentro, false)
+-- un nodo radice invisibile che segue la Scoria, con dentro il nodo che sobbalza
+local function radice()
+	local r = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(r, false)
+	gui.set_adjust_mode(r, gui.ADJUST_STRETCH)
+	local d = rettangolo(r, 0, H / 2 + BORDO, 0, 0, FONDO)
+	gui.set_visible(d, false)
+	return r, d
+end
 
-	rettangolo(t.dentro, 0, 0, W + 2 * BORDO, H + 2 * BORDO, FONDO)
-	t.scia = pezzo(t, SCIA)
-	t.scudo = pezzo(t, SCUDO)
-	t.pieno = pezzo(t, colore)
-	t.nome = testo(t.dentro, 0, NOME_Y, nome or "", NOME_SCALA, colore)
-	t.numero = testo(t.dentro, W / 2 + BORDO + 3, 0, "", NUMERO_SCALA, BIANCO)
-	gui.set_pivot(t.numero, gui.PIVOT_W)
-	M.vita(t, 1, 1)
-	return t
+function M.nuove(colori, nomi)
+	local tt = {}
+	-- prima le barre di tutte le targhe
+	for i, colore in ipairs(colori) do
+		local t = { colore = vmath.vector4(colore.x, colore.y, colore.z, 1), vita_f = 1, scia_f = 1,
+			scudo_f = 0, max_f = 1, attesa = 0, colpo = 0, t = 0 }
+		t.barre, t.dentro = radice()
+		rettangolo(t.dentro, 0, 0, W + 2 * BORDO, H + 2 * BORDO, FONDO)
+		t.scia = pezzo(t, SCIA)
+		t.scudo = pezzo(t, SCUDO)
+		t.pieno = pezzo(t, colore)
+		tt[i] = t
+	end
+	-- poi i testi
+	for i, t in ipairs(tt) do
+		t.testi, t.dentro_testi = radice()
+		t.nome = testo(t.dentro_testi, 0, NOME_Y, nomi[i] or "", NOME_SCALA, t.colore)
+		t.numero = testo(t.dentro_testi, W / 2 + BORDO + 3, 0, "", NUMERO_SCALA, BIANCO)
+		gui.set_pivot(t.numero, gui.PIVOT_W)
+		M.vita(t, 1, 1)
+	end
+	return tt
 end
 
 function M.nome(t, nome)
@@ -88,7 +107,8 @@ function M.nome(t, nome)
 end
 
 function M.set_enabled(t, on)
-	gui.set_enabled(t.root, on)
+	gui.set_enabled(t.barre, on)
+	gui.set_enabled(t.testi, on)
 end
 
 -- vita e scudo in punti; la barra conta fino a massima, o a vita + scudo se di più
@@ -111,9 +131,11 @@ end
 function M.update(t, dt, x, y, scala)
 	t.t = t.t + dt
 	V.x, V.y, V.z = x, y, 0
-	gui.set_position(t.root, V)
+	gui.set_position(t.barre, V)
+	gui.set_position(t.testi, V)
 	V.x, V.y, V.z = scala, scala, 1
-	gui.set_scale(t.root, V)
+	gui.set_scale(t.barre, V)
+	gui.set_scale(t.testi, V)
 
 	-- la scia aspetta un attimo e poi si consuma fino alla vita
 	if t.attesa > 0 then
@@ -126,6 +148,7 @@ function M.update(t, dt, x, y, scala)
 	local k = 1 + 0.25 * t.colpo
 	V.x, V.y, V.z = k, k, 1
 	gui.set_scale(t.dentro, V)
+	gui.set_scale(t.dentro_testi, V)
 
 	larghezza(t.scia, 0, W * t.scia_f)
 	larghezza(t.pieno, 0, W * t.vita_f)
