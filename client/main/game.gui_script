@@ -11,6 +11,7 @@ local scoria = require "battaglia.scoria"
 local home = require "menu.home"
 local scelta_armi = require "menu.scelta"
 local draft = require "sim.draft"
+local tutorial = require "battaglia.tutorial"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
@@ -43,8 +44,9 @@ local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
 -- Lanciarune e Lama di Nucleo ci sono sempre, le altre si trovano nelle casse.
 -- Poi gli oggetti tattici (trappola, scudo, trampolino, paracadute): toccarli li usa subito.
--- effetti di stato: la frase quando arrivano; online lo stato dice solo se ci sono
-local STATUS_TEXT = { burn = " brucia!", slow = " è rallentato!", cracked = " ha l'armatura incrinata!" }
+-- effetti di stato: la frase quando arrivano (senza accenti: il font non li ha);
+-- online lo stato dice solo se ci sono
+local STATUS_TEXT = { burn = " brucia!", slow = " rallenta!", cracked = " ha l'armatura incrinata!" }
 local STATUS_ON = { turns = 1 }
 local BAR_WEAPONS = { "missile", "sword", "grenade", "shards", "punch", "trap", "shield", "trampoline", "parachute" }
 local WEAPON_ICON = {
@@ -302,6 +304,8 @@ local function show_menu(self)
 	msg.post("/terreno", "disable")
 	set_controls_visible(self, false)
 	show_message(self, "", true)
+	self.tut, self.tut_wait = nil, nil
+	gui.set_text(self.tut_label, "")
 end
 
 -- Fluidità -------------------------------------------------------------------
@@ -790,9 +794,54 @@ end
 
 local start_local_match
 
+-- Tutorial (battaglia/tutorial.lua): un passo alla volta, ognuno una partita
+-- col suo bersaglio; titolo e consiglio restano in alto.
+local function tutorial_step(self)
+	local t = self.tut
+	new_match(self, os.time(), tutorial.MAPPA, tutorial.opzioni(t))
+	tutorial.prepara(t, self.g)
+	snap_robot(self, 2)
+	self.g:pop_events()
+	local p = tutorial.passo(t)
+	gui.set_text(self.tut_label, p.titolo .. "\n" .. p.consiglio)
+	self.tut_wait = nil
+	self.mode = "local"
+	set_controls_visible(self, true)
+end
+
+-- Obiettivo del passo raggiunto: un attimo per vederlo, poi il passo dopo
+local function tutorial_update(self, dt)
+	local t = self.tut
+	if not self.tut_wait then
+		if tutorial.fatto(t, self.g) then
+			self.tut_wait = 1.5
+			show_message(self, "Fatto!")
+		end
+		return
+	end
+	self.tut_wait = self.tut_wait - dt
+	if self.tut_wait > 0 then return end
+	if tutorial.avanti(t) then
+		tutorial_step(self)
+	else
+		self.tut, self.tut_wait = nil, nil
+		gui.set_text(self.tut_label, "")
+		self.mode = "ended"
+		set_controls_visible(self, false)
+		show_message(self, "Tutorial finito!\nTocca per tornare al menu", true)
+	end
+end
+
 -- Si parte con la scelta delle armi (menu/scelta.lua); finita quella, la partita
 local function start_local(self)
 	hide_menu(self)
+	-- [megablast] tutorial = 1: STESSO TELEFONO apre il tutorial (finché la home
+	-- non ha il suo pulsante)
+	if config_int("megablast.tutorial", 0) > 0 then
+		self.tut = tutorial.new()
+		tutorial_step(self)
+		return
+	end
 	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono
 	local opts = { players = gconfig.MODES[config_string("megablast.giocatori", "1v1")] }
 	self.local_opts = opts
@@ -1571,6 +1620,9 @@ function init(self)
 	self.score_label = label(24, H - 28, "", 0.8)
 	gui.set_pivot(self.score_label, gui.PIVOT_W)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
+	self.tut_label = label(W / 2, H - 120, "", 0.8)
+	gui.set_line_break(self.tut_label, true)
+	gui.set_size(self.tut_label, vmath.vector3(900, 120, 0))
 
 	-- zoom: vicino, medio, tutta la mappa (anche rotella e tasto Z)
 	self.btn_zoom = box(ZOOM_BTN.x, ZOOM_BTN.y, 116, 44, vmath.vector4(0.05, 0.05, 0.07, 0.55))
@@ -1667,11 +1719,15 @@ function update(self, dt)
 			self.fire = nil
 			capture(self.pose_a, self.g)
 			self.g:step(input)
-			for _, e in ipairs(self.g:pop_events()) do handle_event(self, e) end
+			for _, e in ipairs(self.g:pop_events()) do
+				handle_event(self, e)
+				if self.tut then tutorial.evento(self.tut, self.g, e) end
+			end
 			self.acc = self.acc - game.DT
 			capture(self.pose_b, self.g)
 		end
 		self.pose_t, self.pose_dt = self.acc, game.DT
+		if self.tut then tutorial_update(self, dt) end
 	elseif self.mode == "online" then
 		self.pose_t = self.pose_t + dt_mondo
 		-- mandiamo al server solo i cambiamenti, e solo quando tocca a noi

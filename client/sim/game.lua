@@ -235,7 +235,8 @@ end
 -- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
 -- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
 -- mancano vengono da config.STATS e dal profilo di fisica.
--- pick è l'arma della scelta d'inizio partita (sim/draft.lua). Senza players, due
+-- pick è l'arma della scelta d'inizio partita (sim/draft.lua). dummy = true è
+-- un bersaglio che non gioca mai il suo turno (tutorial). Senza players, due
 -- robot in squadre diverse.
 M.MAX_PLAYERS = 4
 
@@ -244,12 +245,15 @@ M.MAX_PLAYERS = 4
 local function turn_order(players)
 	local teams, members = {}, {}
 	for i, p in ipairs(players) do
-		if not members[p.team] then
-			members[p.team] = {}
-			teams[#teams + 1] = p.team
+		-- i bersagli non giocano
+		if not p.dummy then
+			if not members[p.team] then
+				members[p.team] = {}
+				teams[#teams + 1] = p.team
+			end
+			local m = members[p.team]
+			m[#m + 1] = i
 		end
-		local m = members[p.team]
-		m[#m + 1] = i
 	end
 	local order = {}
 	for round = 1, #players do
@@ -289,7 +293,13 @@ function M.new(seed, map_id, opts)
 	g.order = turn_order(players)
 	g.mode = match_mode(players)
 	g.normalized = opts.normalize or false
-	for k, i in ipairs(g.order) do
+	-- i punti di partenza nell'ordine dei turni (compagni dallo stesso lato), poi i bersagli
+	local placing = {}
+	for k, i in ipairs(g.order) do placing[k] = i end
+	for i, p in ipairs(players) do
+		if p.dummy then placing[#placing + 1] = i end
+	end
+	for k, i in ipairs(placing) do
 		local p = players[i]
 		local sp = map.spawns[k]
 		local st = make_stats(not opts.normalize and p.stats or nil)
