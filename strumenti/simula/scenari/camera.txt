@@ -1,0 +1,39 @@
+# Camera vicina che segue il robot di turno e sfondo in parallasse.
+# Zoom: pulsante in alto a destra (1210 686), tasto z, rotella.
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.2
+foto 01_vicino
+tieni destra 1.2
+aspetta 0.6
+foto 02_camminata_la_camera_segue
+premi salta
+aspetta 0.3
+foto 03_salto
+aspetta 1
+mira 200 120 0.6 04_mira
+aspetta_evento fire 2
+aspetta 0.35
+foto 05_missile_seguito
+aspetta_evento explosion 8
+aspetta 0.1
+foto 06_esplosione
+aspetta 1.5
+foto 07_ritorno
+
+aspetta_stato turno=2 fase=aim 15
+aspetta 1.2
+foto 08_turno_blu
+tocca 1210 686                      # pulsante: MEDIO
+aspetta 1.2
+foto 09_medio
+premi z                             # MAPPA
+aspetta 1.2
+foto 10_mappa
+tieni sinistra 0.8
+foto 11_mappa_camminata
+premi z                             # di nuovo VICINO
+aspetta 1.2
+foto 12_vicino_di_nuovo

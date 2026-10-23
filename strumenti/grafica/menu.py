@@ -22,7 +22,7 @@ def scala(src, dst, k=None, w=None):
 	im.save(dst, optimize=True)
 	return im.size
 
-for d in ('kit', 'icone', 'scoria'): os.makedirs(f'{OUT}/{d}', exist_ok=True)
+for d in ('kit', 'icone'): os.makedirs(f'{OUT}/{d}', exist_ok=True)
 kit = json.load(open(f'{UI}/kit/kit_ui.json'))
 info = {}
 for p in KIT_PEZZI:
@@ -32,9 +32,4 @@ json.dump(info, open(f'{OUT}/kit/kit_menu.json', 'w'), indent=1)
 for i in ICONE: scala(f'{UI}/icone/icona_{i}.png', f'{OUT}/icone/icona_{i}.png', w=96)
 for p in ('logo', 'logo_luce'): scala(f'{UI}/{p}.png', f'{OUT}/{p}.png', w=720)
 scala(f'{UI}/sfondi/home_sfondo.png', f'{OUT}/home_sfondo.png', w=2048)
-for f in sorted(os.listdir(f'{MASTER}/scoria/master')):
-	shutil.copy(f'{MASTER}/scoria/master/{f}', f'{OUT}/scoria/{f}')
-# le armi che la Scoria può avere in mano (battaglia/scoria.lua)
-for f in ('lanciarune', 'lanciarune_luce', 'lama_di_nucleo', 'lama_di_nucleo_luce', 'passo_ombra', 'passo_ombra_luce'):
-	shutil.copy(f'{MASTER}/armi/master/{f}.png', f'{OUT}/scoria/{f}.png')
 print('ok', OUT)

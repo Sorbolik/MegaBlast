@@ -4,6 +4,10 @@ in highp vec4 position;
 in mediump vec2 texcoord0;
 
 out mediump vec2 var_uv;
+// punto sullo schermo in pixel del gioco (1280 x 720) e zoom della camera,
+// per lo sfondo in parallasse
+out highp vec2 var_schermo;
+out highp float var_zoom;
 
 uniform vs_uniforms
 {
@@ -14,4 +18,7 @@ void main()
 {
     var_uv = texcoord0;
     gl_Position = view_proj * vec4(position.xyz, 1.0);
+    var_schermo = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * vec2(1280.0, 720.0);
+    // proiezione 2 / 1280 per lo zoom della vista
+    var_zoom = view_proj[0][0] * 640.0;
 }

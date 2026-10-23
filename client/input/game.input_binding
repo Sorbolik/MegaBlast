@@ -62,3 +62,15 @@ touch_trigger {
   input: TOUCH_MULTI
   action: "multitouch"
 }
+key_trigger {
+  input: KEY_Z
+  action: "zoom"
+}
+mouse_trigger {
+  input: MOUSE_WHEEL_UP
+  action: "zoom_avanti"
+}
+mouse_trigger {
+  input: MOUSE_WHEEL_DOWN
+  action: "zoom_indietro"
+}

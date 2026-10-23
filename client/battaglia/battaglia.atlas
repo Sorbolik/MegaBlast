@@ -1,80 +1,14 @@
 images {
-  image: "/assets/scoria/scoria_braccio_davanti.png"
-}
-images {
-  image: "/assets/scoria/scoria_braccio_dietro.png"
-}
-images {
-  image: "/assets/scoria/scoria_corna_davanti.png"
-}
-images {
-  image: "/assets/scoria/scoria_corna_dietro.png"
-}
-images {
-  image: "/assets/scoria/scoria_corpo.png"
-}
-images {
-  image: "/assets/scoria/scoria_gamba_davanti.png"
-}
-images {
-  image: "/assets/scoria/scoria_gamba_dietro.png"
-}
-images {
-  image: "/assets/scoria/scoria_nucleo_luce.png"
-}
-images {
-  image: "/assets/scoria/scoria_occhio_colpito.png"
-}
-images {
-  image: "/assets/scoria/scoria_occhio_mira.png"
-}
-images {
-  image: "/assets/scoria/scoria_occhio_neutro.png"
-}
-images {
-  image: "/assets/scoria/scoria_occhio_paura.png"
-}
-images {
-  image: "/assets/scoria/scoria_occhio_poca_vita.png"
-}
-images {
-  image: "/assets/scoria/scoria_occhio_vittoria.png"
-}
-images {
-  image: "/assets/armi/lanciarune.png"
-}
-images {
-  image: "/assets/armi/lanciarune_luce.png"
-}
-images {
-  image: "/assets/armi/lama_di_nucleo.png"
-}
-images {
-  image: "/assets/armi/lama_di_nucleo_luce.png"
-}
-images {
   image: "/assets/armi/passo_ombra.png"
 }
 images {
   image: "/assets/armi/passo_ombra_luce.png"
 }
 images {
-  image: "/assets/armi/pugno_del_titano.png"
-}
-images {
-  image: "/assets/armi/pugno_del_titano_luce.png"
-}
-images {
   image: "/assets/armi/uovo_di_fiamma.png"
 }
 images {
   image: "/assets/armi/uovo_di_fiamma_luce.png"
-}
-images {
-  image: "/assets/armi/sciame_di_schegge.png"
-}
-images {
-  image: "/assets/armi/sciame_di_schegge_luce.png"
 }
 images {
   image: "/assets/armi/lanciarune_icona.png"

@@ -67,6 +67,7 @@ func (s *Sim) call(fn string, args ...lua.LValue) (lua.LValue, error) {
 // Input del giocatore di turno per un tick.
 type Input struct {
 	Left, Right, Jump bool
+	Hold              bool // il salto è ancora tenuto premuto
 	Fire              bool
 	Angle, Power      float64
 	Weapon            string // "missile", "sword", "teleport", "grenade", "shards" o "punch"
@@ -77,7 +78,7 @@ func (s *Sim) Step(in Input) error {
 	if in.Fire {
 		angle, power = lua.LNumber(in.Angle), lua.LNumber(in.Power)
 	}
-	_, err := s.call("step", s.g, lua.LBool(in.Left), lua.LBool(in.Right), lua.LBool(in.Jump), angle, power, lua.LString(in.Weapon))
+	_, err := s.call("step", s.g, lua.LBool(in.Left), lua.LBool(in.Right), lua.LBool(in.Jump), lua.LBool(in.Hold), angle, power, lua.LString(in.Weapon))
 	return err
 }
 

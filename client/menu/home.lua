@@ -1,16 +1,17 @@
 -- La home (menu principale), come nel concept grafica/concept/home_v1.png: sfondo
--- del cimitero dei Titani, la Scoria sullo sperone di roccia, il logo, i bottoni
+-- del cimitero dei Titani, il personaggio sullo sperone di roccia, il logo, i bottoni
 -- del kit UI. Funzionano GIOCA (partita online) e STESSO TELEFONO; gli altri
 -- bottoni sono le schermate che verranno, con il lucchetto.
 --
--- Uso (dal gui_script, che ha le texture menu, sfondo_home, scoria_hd e il font titoli):
+-- Uso (dal gui_script, che ha le texture menu, sfondo_home e il font titoli):
 --   local home = require "menu.home"
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
 --   home.show(h) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "local" o nil
 
-local scoria = require "battaglia.scoria"
+local game = require "sim.game"
+local grigio = require "battaglia.grigio"
 
 local M = {}
 
@@ -32,10 +33,10 @@ local SLICE = {
 
 -- Sfondo: 2048 x 947, sullo schermo alto quanto lo schermo e tagliato ai lati
 local SFONDO_W, SFONDO_H = H * 2048 / 947, H
--- piedi della Scoria sullo sperone, rispetto al centro dello sfondo
-local SCORIA_X, SCORIA_Y = -225, -176
--- la Scoria alta circa 340 px: il rig è alto 128 unità a scoria.SCALE
-local SCORIA_K = 340 / (128 * scoria.SCALE)
+-- piedi del personaggio sullo sperone, rispetto al centro dello sfondo
+local CORPO_X, CORPO_Y = -225, -176
+-- il corpo in grigio (alto game.ROBOT_H) alto circa 180 px
+local CORPO_K = 180 / game.ROBOT_H
 
 local V = vmath.vector3()
 
@@ -119,13 +120,13 @@ function M.new(colore)
 	gui.set_adjust_mode(h.sfondo, gui.ADJUST_ZOOM)
 	h.tops[#h.tops + 1] = h.sfondo
 
-	-- la Scoria sullo sperone (pezzi master), si muove con lo sfondo
-	h.posa = vuoto(SCORIA_X, SCORIA_Y, h.sfondo)
-	V.x, V.y, V.z = SCORIA_K, SCORIA_K, 1
+	-- il personaggio sullo sperone, si muove con lo sfondo
+	h.posa = vuoto(CORPO_X, CORPO_Y, h.sfondo)
+	V.x, V.y, V.z = CORPO_K, CORPO_K, 1
 	gui.set_scale(h.posa, V)
-	h.scoria = scoria.new(colore, "scoria_hd")
-	gui.set_parent(h.scoria.root, h.posa)
-	scoria.set_enabled(h.scoria, true)
+	h.corpo = grigio.new(colore)
+	gui.set_parent(h.corpo.root, h.posa)
+	grigio.set_enabled(h.corpo, true)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0 }
 
 	-- logo in alto a sinistra, con la brace che respira
@@ -203,7 +204,7 @@ end
 function M.update(h, dt)
 	if not h.visibile then return end
 	h.t = h.t + dt
-	scoria.update(h.scoria, dt, h.st)
+	grigio.update(h.corpo, dt, h.st)
 	-- brace del logo e dell'oro di GIOCA: respiro lento
 	gui.set_color(h.logo_luce, vmath.vector4(BRACE.x, BRACE.y, BRACE.z, 0.55 + 0.35 * math.sin(h.t * 1.7)))
 	if h.avviso_t > 0 then

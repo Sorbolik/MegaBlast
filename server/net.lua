@@ -12,10 +12,11 @@ end
 
 local WEAPONS = { missile = true, sword = true, teleport = true, grenade = true, shards = true, punch = true }
 
-function N.step(g, left, right, jump, angle, power, weapon)
+-- hold: il salto è ancora tenuto premuto (lasciandolo mentre si sale il salto è corto)
+function N.step(g, left, right, jump, hold, angle, power, weapon)
 	local fire = nil
 	if angle then fire = { angle = angle, power = power, weapon = WEAPONS[weapon] and weapon or "missile" } end
-	g:step({ left = left, right = right, jump = jump, fire = fire })
+	g:step({ left = left, right = right, jump = jump, hold = hold, fire = fire })
 end
 
 function N.current(g)

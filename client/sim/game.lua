@@ -28,6 +28,10 @@ M.GRAVITY = 600
 M.ROBOT_HALF_W = 6
 M.ROBOT_H = 16
 M.MAX_CLIMB = 6          -- gradino massimo che il robot sale da solo
+-- Forma del corpo contro il terreno: false = rettangolo; true = capsula, con
+-- sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo rotondo tocca
+-- i pendii vicino al centro invece che con lo spigolo, così non resta sospeso.
+M.ROBOT_ROUND = false
 M.MAX_HP = 100
 
 -- Statistiche base del robot. L'equipaggiamento le modificherà.
@@ -175,6 +179,15 @@ M.AIM_SMOOTH = 1
 M.AIM_PREVIEW_DOTS = false
 -- tenendo premuto il salto si risalta appena si tocca terra
 M.JUMP_REPEAT = false
+-- Salto corto (come Hollow Knight): lasciando il salto mentre si sale la
+-- velocità verso l'alto si moltiplica per JUMP_CUT. 1 = salto sempre pieno.
+-- Conta solo se l'input dice hold = false: senza hold il salto è pieno.
+M.JUMP_CUT = 1
+-- Aiuti (come Celeste): per COYOTE_TICKS dopo essere scesi da un bordo si può
+-- ancora saltare; un salto chiesto in aria fino a JUMP_BUFFER_TICKS prima di
+-- toccare terra parte appena si atterra.
+M.COYOTE_TICKS = 0
+M.JUMP_BUFFER_TICKS = 0
 
 function M.aim_power(f)
 	f = math.max(0, math.min(1, f))
@@ -277,8 +290,39 @@ function M:robot_collides(x, y, me)
 	return self:terrain_collides(x, y) or self:robot_at(x, y, me) ~= nil
 end
 
+-- Mezza larghezza della capsula all'altezza della riga di celle [a, b) (dai piedi in y)
+local function capsule_half(y, a, b)
+	local r, h = M.ROBOT_HALF_W, M.ROBOT_H
+	local low, high = y + r, y + h - r
+	-- il punto della riga più vicino al tratto dritto della capsula
+	local p = math.max(a, math.min(b, low))
+	if p < low then
+		local d = low - p
+		return d < r and math.sqrt(r * r - d * d) or nil
+	end
+	p = math.min(b, math.max(a, high))
+	if p > high then
+		local d = p - high
+		return d < r and math.sqrt(r * r - d * d) or nil
+	end
+	return r
+end
+
 function M:terrain_collides(x, y)
 	local t, c = self.terrain, M.CELL
+	if M.ROBOT_ROUND then
+		local cy0 = math.floor(y / c)
+		local cy1 = math.floor((y + M.ROBOT_H - 0.01) / c)
+		for cy = cy0, cy1 do
+			local hw = capsule_half(y, cy * c, cy * c + c)
+			if hw then
+				for cx = math.floor((x - hw) / c), math.floor((x + hw) / c) do
+					if t:get(cx, cy) ~= 0 then return true end
+				end
+			end
+		end
+		return false
+	end
 	local cx0 = math.floor((x - M.ROBOT_HALF_W) / c)
 	local cx1 = math.floor((x + M.ROBOT_HALF_W) / c)
 	local cy0 = math.floor(y / c)
@@ -361,15 +405,30 @@ function M:update_robot(rb, input, active)
 	local dir = (input.right and 1 or 0) - (input.left and 1 or 0)
 	if dir ~= 0 then rb.facing = dir end
 
+	-- aiuti al salto: il tempo concesso dopo il bordo e il salto chiesto in anticipo
+	rb.coyote = math.max(0, (rb.coyote or 0) - 1)
+	rb.jump_buf = math.max(0, (rb.jump_buf or 0) - 1)
+	local want_jump = input.jump
+	if want_jump and not rb.grounded then
+		if rb.coyote > 0 then
+			rb.grounded = true
+		else
+			rb.jump_buf = M.JUMP_BUFFER_TICKS
+		end
+	end
+	if rb.grounded and rb.jump_buf > 0 then want_jump = true end
+
 	if rb.grounded then
 		if dir ~= 0 then
 			walk(self, rb, dir * st.walk_speed * M.DT)
 		end
-		if input.jump then
+		if want_jump then
 			-- salto libero: verso l'alto, oppure nella direzione in cui si sta andando
 			rb.vx = dir * st.walk_speed
 			rb.vy = st.jump_vy
 			rb.grounded = false
+			rb.rising = true
+			rb.coyote, rb.jump_buf = 0, 0
 		elseif not self:robot_collides(rb.x, rb.y - 1, rb) then
 			-- In discesa resta attaccato al terreno, altrimenti inizia a cadere
 			local landed = false
@@ -383,11 +442,18 @@ function M:update_robot(rb, input, active)
 			if not landed then
 				rb.grounded = false
 				rb.vx, rb.vy = 0, 0
+				rb.coyote = M.COYOTE_TICKS
 			end
 		end
 	end
 
 	if not rb.grounded then
+		-- salto corto: lasciando il tasto mentre si sale si smette di salire
+		if rb.rising and (rb.knocked or rb.vy <= 0) then rb.rising = false end
+		if rb.rising and input.hold == false then
+			rb.vy = rb.vy * M.JUMP_CUT
+			rb.rising = false
+		end
 		if M.AIR_CONTROL == "instant" then
 			-- Blastron: niente inerzia, anche appena sbalzati
 			if dir ~= 0 then rb.vx = dir * st.air_speed end
@@ -1398,6 +1464,12 @@ local function blastron_profile()
 		DEFAULT_STATS = { walk_speed = 5 * u, jump_height = 5.2 * u, air_speed = 5 * u },
 		AIR_CONTROL = "instant",
 		CLAMP_ACTIVE_VX = true,
+		-- MegaBlast sopra Blastron: corpo a capsula, salto corto, coyote time e
+		-- salto in anticipo (pilastri e riferimenti, fase 2 della roadmap)
+		ROBOT_ROUND = true,
+		JUMP_CUT = 0.45,
+		COYOTE_TICKS = 6,
+		JUMP_BUFFER_TICKS = 6,
 		-- cadere da più di 40 u toglie 15 punti (su 2000) per unità, al massimo 900
 		FALL_SAFE = 40 * u,
 		FALL_DAMAGE = 15 * hp / u,
