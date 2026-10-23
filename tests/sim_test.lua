@@ -3,6 +3,7 @@
 package.path = "client/?.lua;" .. package.path
 
 local game = require "sim.game"
+local config = require "sim.config"
 local mischia = require "sim.mischia"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
@@ -108,9 +109,9 @@ check(before_steel > 0 and after_steel == before_steel, "i tubi d'acciaio restan
 run(g, 60)
 local fx = rb.x
 g:step({ fire = { angle = math.rad(60), power = 0.6 } })
-check(g.phase == "flying" and g.retreat > 0, "il missile parte e inizia la ritirata")
+check(g.phase == "aim" and g.window > 0 and g.used.weapon, "il missile parte e si apre il tempo del secondo attacco")
 run(g, 30, { left = true })
-check(rb.x < fx - 10, "durante la ritirata il robot si muove")
+check(rb.x < fx - 10, "dopo lo sparo il robot si muove")
 local exploded = false
 for _ = 1, 900 do
 	g:step()
@@ -131,7 +132,7 @@ run(g2, 120)
 local r2 = g2.robots[2]
 local t0 = solid_count(g2.terrain)
 g2:explode(r2.x, r2.y + 2)
-check(r2.hp < game.MAX_HP, "l'esplosione fa danno")
+check(r2.hp < r2.max_hp, "l'esplosione fa danno")
 check(solid_count(g2.terrain) < t0, "l'esplosione scava un cratere")
 
 -- Teletrasporto e Lama di Nucleo ---------------------------------------------
@@ -175,15 +176,29 @@ check(tp_ev and math.abs(tp_ev.x - last_orb.x) <= 8 and math.abs(tp_ev.y - (last
 	"il robot compare dove si trova il globo")
 check(tp.phase == "aim" and tp.current == 1, "dopo il teletrasporto si può ancora attaccare")
 check(tp.orbs[1] == nil, "il globo sparisce dopo il teletrasporto")
+check(tr.nucleo == config.STATS.start_nucleo - config.STATS.teleport_cost, "il teletrasporto costa Nucleo")
+tr.nucleo = 5
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orbs[1] ~= nil and tp.phase == "aim", "nello stesso turno si può lanciare un altro globo")
+check(tp.orbs[1] == nil and tr.nucleo == 5, "al primo turno si fa un solo teletrasporto")
+tr.turns = 2
+tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
+check(tp.orbs[1] ~= nil and tr.nucleo == 4, "dal secondo turno, con Nucleo, se ne lancia un altro")
+tr.nucleo = 0
+tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
+check(#tp.orbs == 1, "senza Nucleo il globo non parte")
 
 -- Più globi in volo insieme: ognuno teletrasporta allo scadere del suo tempo,
 -- e in mezzo si può sparare. Il turno passa solo quando tutti hanno finito.
+-- Un robot che può teletrasportarsi quanto vuole (per le prove)
+local function free_tp(r)
+	r.nucleo, r.turns = 99, 2
+end
+
 local function multi(plan)
 	local q = game.new(42, "isole")
 	run(q, 120)
 	q:pop_events()
+	free_tp(q.robots[1])
 	local seq = {}
 	for i = 1, 900 do
 		local f = plan[i]
@@ -287,7 +302,7 @@ place(sw.robots[1], 640, swy)
 place(sw.robots[2], 640 - 25, swy)  -- dietro (il robot 1 guarda a destra)
 place(sw.robots[3], 640 + 25, swy)  -- davanti
 sw:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
-check(sw.phase == "flying" and sw.retreat > 0, "il fendente è un attacco: parte la ritirata")
+check(sw.used.sword and sw.window > 0, "il fendente è un attacco: si apre il tempo del secondo")
 local order = {}
 for _ = 1, game.SWORD_TICKS do
 	sw:step()
@@ -296,7 +311,7 @@ for _ = 1, game.SWORD_TICKS do
 	end
 end
 check(order[1] == 2 and order[2] == 3, "la spada colpisce prima dietro e poi davanti")
-check(sw.robots[2].hp == game.MAX_HP - game.SWORD_DAMAGE and sw.robots[3].hp == game.MAX_HP - game.SWORD_DAMAGE,
+check(sw.robots[2].hp == sw.robots[2].max_hp - game.SWORD_DAMAGE and sw.robots[3].hp == sw.robots[3].max_hp - game.SWORD_DAMAGE,
 	"ogni bersaglio subisce il danno una volta sola")
 
 -- Combo: colpo dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo
@@ -340,6 +355,84 @@ end
 check(tw_tp, "il turno non passa prima che il globo abbia finito")
 check(tw.current == 2, "dopo fendente e teletrasporto il turno passa")
 
+-- Due attacchi per turno e Nucleo --------------------------------------------------
+
+local MISSILE = { fire = { angle = math.rad(60), power = 0.6 } }
+local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
+local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
+
+-- Primo attacco dopo 4 s: restano 26 s, cioè 13 Nucleo, ma non più di NUCLEO_MAX
+local at = game.new(42, "isole")
+local ar = at.robots[1]
+run(at, 4 * 60 - 1)
+at:pop_events()
+at:step(MISSILE)
+local gain = math.min(math.floor(at.timer / (60 * config.NUCLEO_SECONDS)), config.NUCLEO_MAX - config.STATS.start_nucleo)
+local nev
+for _, e in ipairs(at:pop_events()) do if e.type == "nucleo" then nev = e end end
+check(ar.nucleo == config.STATS.start_nucleo + gain and nev and nev.amount == gain,
+	"i secondi rimasti al primo attacco diventano Nucleo (" .. ar.nucleo .. ")")
+check(at.window == game.SECOND_ATTACK_TICKS, "dopo il primo attacco ci sono 5 s per il secondo")
+at:step(MISSILE)
+check(not at:can_use("missile") and at.used.weapon, "una sola arma per turno")
+local n0 = ar.nucleo
+run(at, 60)
+at:step(SWORD)
+check(at.used.sword and at.window == 0 and at.retreat == game.REPOSITION_TICKS,
+	"spada come secondo attacco: poi 5 s di riposizionamento")
+check(ar.nucleo == n0, "il secondo attacco non dà Nucleo")
+check(not at:can_use("teleport") and not at:can_use("sword"), "nel riposizionamento niente attacchi né teletrasporto")
+local turn_at
+for i = 1, 2000 do
+	at:step()
+	if at.current == 2 then turn_at = i break end
+end
+check(turn_at and turn_at >= game.REPOSITION_TICKS, "il turno passa dopo il riposizionamento")
+
+-- Se il secondo attacco non arriva, dopo 5 s si passa comunque al riposizionamento
+local aw = game.new(42, "isole")
+run(aw, 60)
+aw:step(SWORD)
+run(aw, game.SECOND_ATTACK_TICKS)
+check(aw.window == 0 and aw.retreat > 0 and not aw:can_use("missile"), "scaduti i 5 s non si attacca più")
+
+-- Ordine libero: prima la spada, poi il missile
+local ao = game.new(42, "isole")
+run(ao, 60)
+ao:step(SWORD)
+run(ao, 30)
+check(ao:can_use("missile"), "dopo la spada si può ancora sparare")
+ao:step(MISSILE)
+check(ao.used.weapon and ao.retreat > 0, "spada e missile nello stesso turno")
+
+-- Il teletrasporto si lancia fino al colpo di spada, non dopo
+local ak = game.new(42, "isole")
+run(ak, 60)
+free_tp(ak.robots[1])
+ak:step(MISSILE)
+check(ak:can_use("teleport"), "dopo il missile il teletrasporto si può ancora lanciare")
+ak:step(SWORD)
+check(not ak:can_use("teleport"), "dopo il colpo di spada no")
+
+-- Chi attacca allo scadere non ha tempo per altro
+local az = game.new(42, "isole")
+run(az, game.TURN_TICKS - 2)
+az:step(MISSILE)
+check(az.used.weapon and az.window <= 1, "attaccando allo scadere non resta tempo")
+run(az, 3)
+check(az.phase ~= "aim", "il turno chiude allo scadere anche dopo un attacco")
+
+-- I teletrasporti gratis si usano prima del Nucleo
+local fz = game.new(42, "isole", { stats = { { free_teleports = 1 } } })
+run(fz, 60)
+fz:step(TELE)
+check(#fz.orbs == 1 and fz.robots[1].free_teleports == 0 and fz.robots[1].nucleo == config.STATS.start_nucleo,
+	"il teletrasporto gratis non consuma Nucleo")
+
+-- La vita parte dal valore del config e si può cambiare per robot
+local hv = game.new(42, "isole", { stats = { { max_hp = 200 } } })
+check(hv.robots[1].hp == 200 and hv.robots[2].hp == config.STATS.max_hp, "vita dalle statistiche del robot")
+
 -- Determinismo: stesso seed, stessi input, stesso risultato
 local function play(seed, map)
 	local p = game.new(seed, map)
@@ -380,7 +473,7 @@ check(g5.robots[1].swing_dir == 1, "il fendente parte verso destra")
 for _ = 1, 4 do g5:step({ left = true }) end
 check(g5.robots[1].facing == -1 and g5.robots[1].swing_dir == 1, "girarsi non cambia la direzione del fendente")
 run(g5, game.SWORD_TICKS)
-check(g5.robots[2].hp < game.MAX_HP, "il fendente colpisce a destra anche dopo essersi girato")
+check(g5.robots[2].hp < g5.robots[2].max_hp, "il fendente colpisce a destra anche dopo essersi girato")
 
 -- Il colpo di spada fa danno ma non fa volare l'avversario
 local g6 = game.new(7, "isole")
@@ -391,10 +484,10 @@ for _ = 1, 30 do g6:step({}) end -- si posa nel nuovo punto
 local tx6, ty6 = t6.x, t6.y
 g6:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 run(g6, game.SWORD_TICKS + 30)
-check(t6.hp < game.MAX_HP, "la spada fa danno")
+check(t6.hp < t6.max_hp, "la spada fa danno")
 check(t6.x == tx6 and t6.y == ty6 and t6.grounded, "la spada non sposta l'avversario")
 
--- Partita a tempo: dopo 3 minuti finisce e vince chi ha più vita
+-- Partita a tempo: dopo 5 minuti finisce e vince chi ha più vita
 local g7 = game.new(42, "isole")
 g7.robots[1].hp = 60
 g7.robots[2].hp = 80
@@ -403,7 +496,7 @@ while g7.phase ~= "over" and ticks7 < game.MATCH_TICKS + 2000 do
 	g7:step({})
 	ticks7 = ticks7 + 1
 end
-check(g7.phase == "over" and ticks7 >= game.MATCH_TICKS, "la partita finisce allo scadere dei 3 minuti")
+check(g7.phase == "over" and ticks7 >= game.MATCH_TICKS, "la partita finisce allo scadere dei 5 minuti")
 check(g7.winner == 2, "a tempo scaduto vince chi ha più vita")
 check(ticks7 < game.MATCH_TICKS + game.TURN_TICKS, "il turno in corso si chiude allo scadere")
 
@@ -526,7 +619,7 @@ for _ = 1, 120 do
 end
 check(booms == game.SHARD_COUNT, "la raffica spara " .. game.SHARD_COUNT .. " schegge (" .. booms .. ")")
 check(max_flying > 1, "più schegge in volo insieme")
-check(sh.phase ~= "flying", "finita la raffica il turno va avanti")
+check(not sh:shards_flying(), "finita la raffica non resta niente in volo")
 
 -- Pugno del Titano: lancia in alto chi è davanti, non chi è dietro
 local function punch_game(dx)
@@ -548,7 +641,7 @@ local function punch_game(dx)
 	return q, hit
 end
 local pq, ph = punch_game(14)
-check(ph and pq.robots[2].hp == game.MAX_HP - game.PUNCH_DAMAGE, "il pugno colpisce chi è davanti")
+check(ph and pq.robots[2].hp == pq.robots[2].max_hp - game.PUNCH_DAMAGE, "il pugno colpisce chi è davanti")
 check(ph and ph.vy == game.PUNCH_LAUNCH and ph.vx > 0, "il pugno lancia in alto e in avanti")
 local _, ph2 = punch_game(-14)
 check(ph2 == nil, "il pugno non colpisce chi è dietro")
@@ -730,15 +823,6 @@ check(not melee_at(-60, 0, 4, "punch"), "blastron: il montante mirato in basso n
 check(game.melee_ticks(mischia.fendente) == game.SWORD_TICKS and game.melee_ticks(mischia.montante) == game.PUNCH_TICKS,
 	"blastron: durate del fendente e del montante coerenti con le animazioni")
 
--- Sparando il tempo del turno scende a 5 secondi
-local bt = game.new(42, "isole")
-run(bt, 30)
-bt:step({ fire = { angle = math.rad(60), power = 0.5 } })
-check(bt.retreat == game.RETREAT_TICKS, "blastron: dopo lo sparo restano 5 s")
-local bt2 = game.new(42, "isole")
-run(bt2, game.TURN_TICKS - 100)
-bt2:step({ fire = { angle = math.rad(60), power = 0.5 } })
-check(bt2.retreat < 100, "blastron: se restava meno tempo non se ne aggiunge")
 
 -- Danno da caduta oltre 40 u
 local bf = game.new(42, "isole")
@@ -779,7 +863,7 @@ run(bf2, 120)
 local sr = bf2.robots[1]
 bf2:step({ jump = true })
 run(bf2, 200)
-check(sr.hp == game.MAX_HP, "blastron: un salto non fa danno")
+check(sr.hp == sr.max_hp, "blastron: un salto non fa danno")
 
 -- Potenza: zona morta 20% e curva quadratica
 check(game.aim_power(0.2) == 0.1 and game.aim_power(1) == 1 and math.abs(game.aim_power(0.6) - 0.25) < 1e-9,

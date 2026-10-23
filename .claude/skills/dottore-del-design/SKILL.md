@@ -15,8 +15,9 @@ perché non c'era niente da controllare non è un "tutto ok".
 
 ## 1. Raccogli i dati
 
-- Numeri: `client/sim/game.lua` (vita `MAX_HP`, danni, raggi, tick, velocità,
-  `*_BLAST`, casse, durata turno/partita/ritirata). I tempi sono in tick a 60 al
+- Numeri: regole in `client/sim/config.lua` (vita, Nucleo, durata di turno,
+  secondo attacco, riposizionamento e partita, in secondi), fisica in
+  `client/sim/game.lua` (danni, raggi, tick, velocità, `*_BLAST`, casse). I tempi in game.lua sono in tick a 60 al
   secondo, le distanze in pixel.
 - Regole e intenzioni: `docs/design.md`.
 - Mappe: `client/sim/maps.lua` (spawn, acciaio, bordi).
@@ -37,7 +38,7 @@ perché non c'era niente da controllare non è un "tutto ok".
 
 **Tempo e turni**
 - Si riesce a fare quello che il gioco chiede in 15 s su touch?
-- La ritirata di 3 s basta per ripararsi, o rende ogni colpo senza rischio?
+- I 5 s di riposizionamento bastano per ripararsi, o rendono ogni colpo senza rischio?
 - La regola dei 3 minuti premia chi scappa e si nasconde?
 
 **Casse e fortuna**
@@ -73,5 +74,5 @@ fatica, e proponi prima un cambio di numero, poi un cambio di regola.
 ## 4. Dopo
 
 Chiedi a Sergio quale correzione applicare. Un cambio di numero si fa in
-`client/sim/game.lua`, con `docs/design.md` aggiornato e `tests/sim_test.lua`
+`client/sim/config.lua` (o `game.lua` se è fisica), con `docs/design.md` aggiornato e `tests/sim_test.lua`
 che passa (vedi [sviluppa-meccanica](../sviluppa-meccanica/SKILL.md)).
