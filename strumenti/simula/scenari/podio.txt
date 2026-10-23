@@ -17,7 +17,7 @@ tocca 1065 205                      # CONTINUA
 aspetta_stato modo=menu 3
 aspetta 0.5
 
-tocca 155 488                       # ARMERIA
+tocca 168 216                       # ARMERIA
 aspetta 0.5
 foto 03_armeria_vuota
 tocca 270 548                       # maschera, corazza, mantello e gambali del Corvo
@@ -31,16 +31,16 @@ aspetta 0.3
 tocca 105 490                       # Gambe di Titano
 aspetta 0.3
 foto 05_albero
-tocca 50 680                        # indietro
+tocca 62 658                        # indietro
 aspetta_stato modo=menu 3
 
-tocca 79 79                         # NEGOZIO
+tocca 168 76                        # NEGOZIO
 aspetta 0.5
 foto 06_negozio
-tocca 50 680
+tocca 62 658
 aspetta_stato modo=menu 3
-tocca 403 79                        # EVENTI
+tocca 168 146                       # EVENTI
 aspetta 0.5
 foto 07_eventi
-tocca 50 680
+tocca 62 658
 aspetta_stato modo=menu 3

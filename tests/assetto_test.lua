@@ -95,6 +95,17 @@ st = assetto.stats(BASE, best, { mask = 3, chest = 3, cloak = 3, legs = 3 })
 check(st.air_speed <= BASE.air_speed * 1.25 and st.jump_height <= BASE.jump_height * 1.25,
 	"massimo di Mobilità e Corvo: entro il 25% della base")
 
+-- Un gruppo di effetti su una statistica che la sim non ha ancora non conta,
+-- nemmeno nel suo malus
+local corta = {}
+for k, v in pairs(BASE) do corta[k] = v end
+corta.air_jumps = nil
+local corvo = assetto.new()
+corvo.gear = { mask = "corvo", chest = "corvo", cloak = "corvo", legs = "corvo" }
+st = assetto.stats(corta, corvo)
+check(st.air_jumps == nil and st.max_hp == 150 - 5, "bonus in arrivo: niente vita -10% senza il doppio salto")
+check(not assetto.attivo(corta, equip.BY_ID.corvo.bonus.a.effects), "attivo() dice che il bonus del Corvo è in arrivo")
+
 -- Tier dalla maestria
 check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(500) == 3, "tier dalle partite giocate")
 

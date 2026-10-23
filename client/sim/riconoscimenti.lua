@@ -12,12 +12,12 @@ local M = {}
 M.PER_PLAYER = 2
 
 M.LIST = {
-	{ id = "becchino", name = "BECCHINO", desc = "Più nemici buttati giù dalla mappa", stat = "env_kills", best = "max", min = 1 },
-	{ id = "fulmine", name = "FULMINE", desc = "Attacca più in fretta di tutti", stat = "avg_attack_secs", best = "min", min = 0, turns = 1 },
-	{ id = "martello", name = "MARTELLO", desc = "Più danno inflitto", stat = "damage", best = "max", min = 1 },
-	{ id = "ombra", name = "OMBRA", desc = "Più teletrasporti", stat = "teleports", best = "max", min = 2 },
-	{ id = "tesoriere", name = "TESORIERE", desc = "Più Nucleo speso", stat = "nucleo_spent", best = "max", min = 2 },
-	{ id = "predone", name = "PREDONE", desc = "Più casse aperte", stat = "crates", best = "max", min = 1 },
+	{ id = "becchino", name = "BECCHINO", desc = "Butta giù più nemici", stat = "env_kills", best = "max", min = 1 },
+	{ id = "fulmine", name = "FULMINE", desc = "Attacca prima di tutti", stat = "avg_attack_secs", best = "min", min = 0, turns = 1 },
+	{ id = "martello", name = "MARTELLO", desc = "Fa più danno", stat = "damage", best = "max", min = 1 },
+	{ id = "ombra", name = "OMBRA", desc = "Si teletrasporta di più", stat = "teleports", best = "max", min = 2 },
+	{ id = "tesoriere", name = "TESORIERE", desc = "Spende più Nucleo", stat = "nucleo_spent", best = "max", min = 2 },
+	{ id = "predone", name = "PREDONE", desc = "Apre più casse", stat = "crates", best = "max", min = 1 },
 }
 
 -- ranking: lista dei giocatori in ordine di posto. Restituisce { [robot] = { riconoscimenti } }

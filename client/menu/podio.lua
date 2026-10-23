@@ -32,6 +32,14 @@ local MODI = { ["1v1"] = "UNO CONTRO UNO", ["2v2"] = "DUE CONTRO DUE", ffa = "TU
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
+-- filo pieno nel colore del giocatore
+local function filo(x, y, w, h, colore, parent)
+	local n = gui.new_box_node(vec(x, y), vec(w, h))
+	gui.set_color(n, colore)
+	gui.set_parent(n, parent)
+	return n
+end
+
 local function gradino(p, x, voce, i)
 	local c = ui.C
 	local g = p.giocatori[voce.robot] or { nome = "?", colore = c.TESTO }
@@ -39,8 +47,7 @@ local function gradino(p, x, voce, i)
 	-- il gradino cresce dal basso: pivot in basso e scala verticale animata
 	local blocco = ui.pannello(x, M.BASE_Y, M.LARGO, h, p.radice)
 	gui.set_pivot(blocco, gui.PIVOT_S)
-	local filo = ui.pannello(0, h, M.LARGO, 4, blocco)
-	gui.set_color(filo, g.colore)
+	filo(0, h, M.LARGO, 4, g.colore, blocco)
 	ui.titolo(tostring(voce.place), 0, h - 42, 1.3, voce.place == 1 and c.BRACE or c.TESTO, blocco)
 	ui.testo(g.nome, 0, h - 82, 1, g.colore, blocco)
 	ui.testo(string.format("%d punti", voce.points or 0), 0, h - 106, 0.8, c.SPENTO, blocco)
@@ -58,7 +65,6 @@ local function gradino(p, x, voce, i)
 	local s = scoria.new(g.colore)
 	gui.set_parent(s.root, posa)
 	scoria.set_enabled(s, true)
-	scoria.set_weapon(s, nil)
 	p.scorie[#p.scorie + 1] = { s = s, posa = posa,
 		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0 } }
 end
@@ -85,12 +91,11 @@ end
 local function premio(p, x, y, voce, i)
 	local c = ui.C
 	local g = p.giocatori[voce.robot] or { nome = "?", colore = c.TESTO }
-	local n = ui.pannello(x, y, 230, 92, p.radice)
-	local filo = ui.pannello(-113, 0, 4, 92, n)
-	gui.set_color(filo, g.colore)
-	ui.titolo(voce.award.name, 0, 24, 0.7, c.BRACE, n)
+	local n = ui.pannello(x, y, 250, 92, p.radice)
+	filo(-121, 0, 4, 80, g.colore, n)
+	ui.titolo(voce.award.name, 0, 24, 0.6, c.BRACE, n)
 	ui.testo(g.nome, 0, -2, 0.9, g.colore, n)
-	ui.testo(voce.award.desc, 0, -26, 0.6, c.SPENTO, n)
+	ui.testo(voce.award.desc, 0, -26, 0.75, c.SPENTO, n)
 	gui.set_scale(n, vmath.vector3(0.01, 0.01, 1))
 	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, M.PREMI + i * 0.12)
 end
@@ -136,7 +141,7 @@ function M.new(results, giocatori, me, guadagno_mio, prof)
 	local _, lista = riconoscimenti.assign(ranking)
 	for i, voce in ipairs(lista) do
 		if i > 4 then break end
-		premio(p, 135 + ((i - 1) % 2) * 240, 155 - math.floor((i - 1) / 2) * 100, voce, i)
+		premio(p, 150 + ((i - 1) % 2) * 260, 155 - math.floor((i - 1) / 2) * 100, voce, i)
 	end
 
 	if guadagno_mio then guadagno(p, guadagno_mio, prof) end

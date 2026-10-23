@@ -126,13 +126,11 @@ function M.valid(tree, points)
 	return true
 end
 
--- aggiunge gli effetti dell'albero alla lista mods (la applica sim/assetto.lua)
+-- aggiunge alla lista mods gli effetti dell'albero, un gruppo per grado
+-- (la applica sim/assetto.lua)
 function M.mods(tree, mods)
 	for _, node in ipairs(M.NODES) do
-		local r = tree[node.id] or 0
-		for _ = 1, r do
-			for _, e in ipairs(node.effects) do mods[#mods + 1] = e end
-		end
+		for _ = 1, tree[node.id] or 0 do mods[#mods + 1] = node.effects end
 	end
 	return mods
 end

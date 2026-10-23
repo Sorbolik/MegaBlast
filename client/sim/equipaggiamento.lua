@@ -109,18 +109,16 @@ function M.full_set(gear, tiers)
 	return id, top
 end
 
--- aggiunge gli effetti dei pezzi e del bonus a mods; variant "b" solo se concessa
+-- aggiunge a mods gli effetti dei pezzi e del bonus, un gruppo per pezzo e
+-- uno per il bonus; variant "b" solo se concessa
 function M.mods(gear, tiers, variant, mods)
 	for _, s in ipairs(M.SLOTS) do
 		local set = M.BY_ID[gear[s.id] or ""]
-		if set then
-			for _, e in ipairs(set.pieces[s.id]) do mods[#mods + 1] = e end
-		end
+		if set then mods[#mods + 1] = set.pieces[s.id] end
 	end
 	local id, top = M.full_set(gear, tiers)
 	if id then
-		local bonus = M.BY_ID[id].bonus[(variant == "b" and top) and "b" or "a"]
-		for _, e in ipairs(bonus.effects) do mods[#mods + 1] = e end
+		mods[#mods + 1] = M.BY_ID[id].bonus[(variant == "b" and top) and "b" or "a"].effects
 	end
 	return mods
 end

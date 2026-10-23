@@ -157,18 +157,18 @@ local function scheda_albero(a, parent)
 		for r, lista in ipairs(righe) do
 			local y = 490 - (r - 1) * 100
 			for i, nodo in ipairs(lista) do
-				local nx = x + (i - (#lista + 1) / 2) * 150
+				local nx = x + (i - (#lista + 1) / 2) * 156
 				local gradi = tree[nodo.id] or 0
 				local ok = gradi > 0 or abilita.can_add(tree, nodo.id, punti)
-				local btn = ui.scheda(a.bottoni, nx, y, 140, 80, "", "nodo:" .. nodo.id, gradi > 0, parent)
+				local btn = ui.scheda(a.bottoni, nx, y, 150, 80, "", "nodo:" .. nodo.id, gradi > 0, parent)
 				local col = ok and c.TESTO or c.SPENTO
-				ui.testo(nodo.name, 0, 20, 0.9, col, btn)
+				ui.testo(nodo.name, 0, 22, 0.75, col, btn)
 				ui.testo(string.format("%d / %d", gradi, nodo.ranks), 0, -4, 1.3, gradi > 0 and c.BRACE or col, btn)
 				local nota = assetto.attivo(base(), nodo.effects) and (nodo.cost == 1 and "1 punto" or (nodo.cost .. " punti"))
 					or "in arrivo"
 				ui.testo(nota, 0, -28, 0.8, c.SPENTO, btn)
 				if gradi > 0 and abilita.can_remove(tree, nodo.id) then
-					ui.bottone(a.bottoni, 52, 22, 30, 30, "-", "togli:" .. nodo.id, nil, btn)
+					ui.bottone(a.bottoni, 62, -26, 26, 26, "-", "togli:" .. nodo.id, nil, btn)
 					-- il tocco va al primo bottone della lista che sta sotto il dito:
 					-- il "-" va prima del nodo che lo contiene
 					local n = #a.bottoni

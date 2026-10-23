@@ -42,7 +42,7 @@ local function costruisci(n)
 		ui.testo(o.tipo == "aspetto" and "ASPETTO" or "FA SOLO PRIMA", 0, 98, 0.55, c.SPENTO, pan)
 		local d = ui.testo(o.desc, 0, 20, 0.6, c.TESTO, pan)
 		gui.set_line_break(d, true)
-		gui.set_size(d, vmath.vector3(320, 120, 0))
+		gui.set_size(d, vmath.vector3(400, 160, 0))
 		local preso = n.prof.comprati[o.id]
 		if preso then
 			ui.testo("TUO", 0, -110, 0.9, c.BRACE, pan)

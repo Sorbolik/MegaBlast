@@ -394,13 +394,12 @@ function M.update(s, dt, st)
 	gui.set_color(s.nucleo, s.nucleo_col)
 end
 
--- name nil: a mani vuote (il podio)
 function M.set_weapon(s, name)
-	if s.arma_scelta == name or (name and not s.armi[name]) then return end
+	if s.arma_scelta == name or not s.armi[name] then return end
 	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], false) end
 	s.arma_scelta = name
 	-- da morto l'arma non c'è più
-	if name then gui.set_enabled(s.armi[name], not s.morte) end
+	gui.set_enabled(s.armi[name], not s.morte)
 end
 
 -- Colpo subito: lampo bianco, spinta e inclinazione nella direzione del colpo

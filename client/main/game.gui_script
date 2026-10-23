@@ -626,9 +626,9 @@ local function handle_event(self, e)
 		show_message(self, text, true)
 		self.fine_online = self.mode == "online"
 		self.mode = "ended"
-		-- dopo un attimo (o al primo tocco) il podio
+		-- dopo un attimo (o al primo tocco) il podio, se la sim manda i risultati
 		self.risultati = e.results
-		self.podio_t = PODIO_ATTESA
+		self.podio_t = e.results and PODIO_ATTESA
 	end
 end
 

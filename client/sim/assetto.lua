@@ -23,18 +23,30 @@ function M.new()
 	return { tree = {}, gear = {}, variant = "a" }
 end
 
--- Applica gli effetti: prima le somme, poi le moltiplicazioni, poi i valori fissi.
--- Solo sulle chiavi che la sim ha già (st): un effetto su una statistica che
--- la sim non usa ancora non conta (attivo() lo dice alle schermate).
+-- gli effetti funzionano già nella sim? (tutte le loro statistiche sono nella base)
+function M.attivo(base, effects)
+	for _, e in ipairs(effects) do
+		if base[e.stat] == nil then return false end
+	end
+	return true
+end
+
+-- Applica i gruppi di effetti (un pezzo, un grado, un bonus): prima le somme,
+-- poi le moltiplicazioni, poi i valori fissi. Un gruppo conta solo se la sim
+-- usa già tutte le sue statistiche: niente malus senza il suo vantaggio.
 local function apply(st, mods)
-	for _, e in ipairs(mods) do
-		if e.add and st[e.stat] ~= nil then st[e.stat] = st[e.stat] + e.add end
+	local ok = {}
+	for _, g in ipairs(mods) do
+		if M.attivo(st, g) then ok[#ok + 1] = g end
 	end
-	for _, e in ipairs(mods) do
-		if e.mul and st[e.stat] ~= nil then st[e.stat] = st[e.stat] * e.mul end
+	for _, g in ipairs(ok) do
+		for _, e in ipairs(g) do if e.add then st[e.stat] = st[e.stat] + e.add end end
 	end
-	for _, e in ipairs(mods) do
-		if e.set ~= nil and st[e.stat] ~= nil then st[e.stat] = e.set end
+	for _, g in ipairs(ok) do
+		for _, e in ipairs(g) do if e.mul then st[e.stat] = st[e.stat] * e.mul end end
+	end
+	for _, g in ipairs(ok) do
+		for _, e in ipairs(g) do if e.set ~= nil then st[e.stat] = e.set end end
 	end
 	for k, v in pairs(M.MIN) do
 		if type(st[k]) == "number" and st[k] < v then st[k] = v end
@@ -56,14 +68,6 @@ function M.stats(base, a, tiers)
 		if type(st[k]) == "number" then st[k] = math.floor(st[k] + 0.5) end
 	end
 	return st
-end
-
--- gli effetti funzionano già nella sim? (tutte le loro statistiche sono nella base)
-function M.attivo(base, effects)
-	for _, e in ipairs(effects) do
-		if base[e.stat] == nil then return false end
-	end
-	return true
 end
 
 -- l'assetto è giocabile con questi punti? (il server lo controlla prima della partita)
