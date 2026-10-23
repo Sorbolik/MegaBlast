@@ -1,12 +1,11 @@
 -- Client di MegaBlast: menu, partita locale (hot-seat) e partita online.
 -- La mappa è una mesh con lo shader del terreno (battaglia/terreno.*), tutto il
--- resto (Scorie, missile, esplosioni, comandi) sono nodi GUI creati da codice.
+-- resto (robot, missile, esplosioni, comandi) sono nodi GUI creati da codice.
 -- La logica di gioco sta in sim/ (Lua puro). In locale la facciamo girare qui,
 -- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
 local maps = require "sim.maps"
-local scoria = require "battaglia.scoria"
 local grigio = require "battaglia.grigio"
 local home = require "menu.home"
 local levette = require "battaglia.levette"
@@ -107,20 +106,10 @@ end
 local FISICA = config_string("megablast.fisica", "")
 if FISICA ~= "" then game.use_physics(FISICA) end
 
--- Scorie, proiettili e casse si disegnano in proporzione al robot della
+-- Proiettili e casse si disegnano in proporzione al robot della
 -- simulazione: 16 pixel nel profilo megablast, 20 in quello di Blastron
 local K = game.ROBOT_H / 16
 
--- Corpo dei robot: "grigio" (predefinito, fase 2 della roadmap: una capsula
--- grande come il corpo della simulazione) o "scoria" (il personaggio a pezzi).
--- [megablast] taglia = 1.5 fa il corpo 1,5 volte più grande, solo in locale:
--- serve a provare le taglie.
-local CORPO = config_string("megablast.corpo", "grigio")
-local corpo = CORPO == "scoria" and scoria or grigio
-local TAGLIA = tonumber(config_string("megablast.taglia", ""))
-if TAGLIA then game.use_body_scale(TAGLIA) end
--- altezza della testa del corpo disegnato, per vita e freccia
-local HEAD = CORPO == "scoria" and 130 * scoria.SCALE * K or game.ROBOT_H
 local VK = vmath.vector3(K, K, 1)
 
 -- Camera: [megablast] zoom = 1, 2 o 3 sceglie il livello con cui si parte
@@ -387,7 +376,7 @@ local function advance_pose(a, b, k)
 	end
 end
 
--- Dopo un teletrasporto la Scoria non deve scivolare dal vecchio punto al nuovo
+-- Dopo un teletrasporto il robot non deve scivolare dal vecchio punto al nuovo
 local function snap_robot(self, i)
 	local ra, rb = self.pose_a.r[i], self.pose_b.r[i]
 	local rg, v = self.g.robots[i], self.view[i]
@@ -416,11 +405,10 @@ local function new_match(self, seed, map, opts)
 	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
-		corpo.set_enabled(self.robots[i].rig, true)
+		grigio.set_enabled(self.robots[i].rig, true)
 		gui.set_enabled(self.robots[i].hp, true)
-		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, hit = 0 }
+		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp }
 	end
-	self.winner = nil
 	self.trail_n = 0
 	self.pose_dt = game.DT
 	reset_pose(self)
@@ -498,9 +486,9 @@ local function handle_event(self, e)
 	elseif e.type == "fire" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- rinculo del Lanciarune, slancio del lancio, raffica di schegge
 		local kind = e.type == "fire" and "missile" or (e.type == "shards" and "shards" or "throw")
-		corpo.fire(self.robots[e.robot].rig, kind)
+		grigio.fire(self.robots[e.robot].rig, kind)
 	elseif e.type == "teleport" then
-		corpo.teleport(self.robots[e.robot].rig)
+		grigio.teleport(self.robots[e.robot].rig)
 		if self.mode == "online" then
 			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
 			self.snap[e.robot] = true
@@ -524,10 +512,9 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "death" then
 		-- crolla e svanisce da solo
-		corpo.die(self.robots[e.robot].rig)
+		grigio.die(self.robots[e.robot].rig)
 		gui.set_enabled(self.robots[e.robot].hp, false)
 	elseif e.type == "over" then
-		self.winner = e.winner
 		local text
 		if self.mode == "online" then
 			text = e.winner == self.me and "Hai vinto!" or (e.winner and "Hai perso!" or "Pareggio!")
@@ -823,20 +810,6 @@ local function set_hud(self, text)
 	end
 end
 
--- Espressione dell'occhio della Scoria i
-local function expression(self, i, rb, v, aiming)
-	if self.winner == i then return "vittoria" end
-	if v.hit > 0 then return "colpito" end
-	if aiming then return "mira" end
-	local p = self.pose_b
-	if p.has_p and self.g.current ~= i then
-		local dx, dy = p.p.x - v.x, p.p.y - v.y
-		if dx * dx + dy * dy < 150 * 150 then return "paura" end
-	end
-	if rb.hp <= 30 then return "poca_vita" end
-	return "neutro"
-end
-
 -- Barra delle armi -------------------------------------------------------------
 
 -- Di chi sono le armi nella barra: online le nostre, in locale di chi è di turno
@@ -924,12 +897,11 @@ local function render(self, dt)
 		end
 		local hp = math.max(0, rb.hp)
 		if v.hp ~= hp then
-			if hp < v.hp then v.hit = 0.6; corpo.hit(r.rig) end
+			if hp < v.hp then grigio.hit(r.rig) end
 			gui.set_text(r.hp, tostring(hp))
 			v.hp = hp
 		end
-		v.hit = math.max(0, v.hit - dt)
-		set_pos(r.hp, v.x, v.y + HEAD + 8)
+		set_pos(r.hp, v.x, v.y + game.ROBOT_H + 8)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -938,7 +910,6 @@ local function render(self, dt)
 		local st = r.st
 		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, vx
 		st.facing = rb.facing
-		st.terreno = g.terrain
 		st.aim = nil
 		if aiming then
 			st.aim = self.aim_angle
@@ -981,9 +952,8 @@ local function render(self, dt)
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
 		end
-		corpo.set_weapon(r.rig, weapon)
-		st.expression = expression(self, i, rb, v, aiming)
-		corpo.update(r.rig, dt, st)
+		grigio.set_weapon(r.rig, weapon)
+		grigio.update(r.rig, dt, st)
 	end
 
 	-- Uovo di Fiamma: rotola mentre vola, sopra i secondi che mancano allo scoppio
@@ -1145,7 +1115,7 @@ local function render(self, dt)
 	local cur = current_robot(self)
 	local v = self.view[g.current]
 	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
-	set_pos(self.arrow, v.x, v.y + HEAD + (30 + math.sin(self.clock * 5) * 3) / self.cam.s)
+	set_pos(self.arrow, v.x, v.y + game.ROBOT_H + (30 + math.sin(self.clock * 5) * 3) / self.cam.s)
 	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
 
 	-- Camera: segue il colpo in volo, poi resta un attimo sull'esplosione, poi
@@ -1192,7 +1162,7 @@ function init(self)
 
 	self.robots = {}
 	for i = 1, 2 do
-		local r = { rig = corpo.new(PLAYER_COLORS[i], nil, K), st = {} }
+		local r = { rig = grigio.new(PLAYER_COLORS[i]), st = {} }
 		self.robots[i] = r
 	end
 

@@ -23,10 +23,6 @@ textures {
   name: "sfondo_home"
   texture: "/menu/sfondo_home.atlas"
 }
-textures {
-  name: "scoria_hd"
-  texture: "/menu/scoria_hd.atlas"
-}
 background_color {
   x: 0.0
   y: 0.0

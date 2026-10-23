@@ -1,38 +1,14 @@
 images {
-  image: "/assets/armi/lanciarune.png"
-}
-images {
-  image: "/assets/armi/lanciarune_luce.png"
-}
-images {
-  image: "/assets/armi/lama_di_nucleo.png"
-}
-images {
-  image: "/assets/armi/lama_di_nucleo_luce.png"
-}
-images {
   image: "/assets/armi/passo_ombra.png"
 }
 images {
   image: "/assets/armi/passo_ombra_luce.png"
 }
 images {
-  image: "/assets/armi/pugno_del_titano.png"
-}
-images {
-  image: "/assets/armi/pugno_del_titano_luce.png"
-}
-images {
   image: "/assets/armi/uovo_di_fiamma.png"
 }
 images {
   image: "/assets/armi/uovo_di_fiamma_luce.png"
-}
-images {
-  image: "/assets/armi/sciame_di_schegge.png"
-}
-images {
-  image: "/assets/armi/sciame_di_schegge_luce.png"
 }
 images {
   image: "/assets/armi/lanciarune_icona.png"
@@ -66,78 +42,6 @@ images {
 }
 images {
   image: "/assets/ui/levette/levetta_pomello.png"
-}
-images {
-  image: "/assets/personaggio/pg_avambraccio_davanti.png"
-}
-images {
-  image: "/assets/personaggio/pg_avambraccio_dietro.png"
-}
-images {
-  image: "/assets/personaggio/pg_bacino.png"
-}
-images {
-  image: "/assets/personaggio/pg_braccio_davanti.png"
-}
-images {
-  image: "/assets/personaggio/pg_braccio_dietro.png"
-}
-images {
-  image: "/assets/personaggio/pg_busto.png"
-}
-images {
-  image: "/assets/personaggio/pg_collo.png"
-}
-images {
-  image: "/assets/personaggio/pg_coscia_a.png"
-}
-images {
-  image: "/assets/personaggio/pg_coscia_b.png"
-}
-images {
-  image: "/assets/personaggio/pg_mano_aperta_davanti.png"
-}
-images {
-  image: "/assets/personaggio/pg_mano_aperta_dietro.png"
-}
-images {
-  image: "/assets/personaggio/pg_mano_artigli_davanti.png"
-}
-images {
-  image: "/assets/personaggio/pg_mano_artigli_dietro.png"
-}
-images {
-  image: "/assets/personaggio/pg_nucleo.png"
-}
-images {
-  image: "/assets/personaggio/pg_occhio.png"
-}
-images {
-  image: "/assets/personaggio/pg_piede.png"
-}
-images {
-  image: "/assets/personaggio/pg_piede_b.png"
-}
-images {
-  image: "/assets/personaggio/pg_pugno_davanti.png"
-}
-images {
-  image: "/assets/personaggio/pg_pugno_dietro.png"
-}
-images {
-  image: "/assets/personaggio/pg_spallaccio_davanti.png"
-}
-images {
-  image: "/assets/personaggio/pg_spallaccio_dietro.png"
-}
-images {
-  image: "/assets/personaggio/pg_stinco_a.png"
-}
-images {
-  image: "/assets/personaggio/pg_stinco_b.png"
-}
-images {
-  image: "/assets/personaggio/pg_testa_maschera.png"
 }
 margin: 0
 extrude_borders: 2

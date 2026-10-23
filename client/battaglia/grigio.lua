@@ -3,7 +3,7 @@
 -- quello che si vede è quello che colpisce e viene colpito. Serve a decidere
 -- taglia, salto e armi prima di disegnare il personaggio vero.
 --
--- Stessa interfaccia di battaglia/scoria.lua, così game.gui_script li scambia:
+-- Lo usano la battaglia (game.gui_script) e la home (menu/home.lua):
 --   local s = grigio.new(colore)
 --   grigio.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
 --   grigio.set_weapon(s, nome) / hit(s) / fire(s, tipo) / teleport(s) / die(s)
@@ -57,7 +57,8 @@ local function box(parent, x, y, w, h, color)
 end
 local function cerchio(parent, x, y, d, color)
 	local n = setup(gui.new_pie_node(vmath.vector3(x, y, 0), vmath.vector3(d, d, 0)), parent, color)
-	gui.set_perimeter_vertices(n, 24)
+	-- abbastanza lati da restare tondo anche grande, nella home
+	gui.set_perimeter_vertices(n, 32)
 	return n
 end
 local function vuoto(parent, x, y)
@@ -119,13 +120,16 @@ function M.new(color)
 
 	s.ombra = cerchio(s.root, 0, 0, Wd * 1.3, vmath.vector4(0, 0, 0, 0.35))
 	scale(s.ombra, 1, 0.22)
+	-- corpo: inclinazione e spinta; forma: schiaccia e allunga. L'arma sta sul
+	-- corpo e non sulla forma, così schiacciandosi non si storce la mira
 	s.corpo = vuoto(s.root, 0, 0)
+	s.forma = vuoto(s.corpo, 0, 0)
 	local bordo = {}
-	capsula(s.corpo, Wd + 2, H + 2, -1, BORDO, bordo)
-	capsula(s.corpo, Wd, H, 0, GRIGIO, s.pelle)
+	capsula(s.forma, Wd + 2, H + 2, -1, BORDO, bordo)
+	capsula(s.forma, Wd, H, 0, GRIGIO, s.pelle)
 
 	-- l'occhio: il colore della squadra, con la pupilla che guarda dove si mira
-	s.occhio = vuoto(s.corpo, Wd * 0.14, H * 0.66)
+	s.occhio = vuoto(s.forma, Wd * 0.14, H * 0.66)
 	cerchio(s.occhio, 0, 0, Wd * 0.66, BORDO)
 	cerchio(s.occhio, 0, 0, Wd * 0.56, color)
 	s.pupilla = cerchio(s.occhio, 0, 0, Wd * 0.22, BIANCO)
@@ -210,9 +214,11 @@ function M.update(s, dt, st)
 	molle(s, dt, sq, lean)
 
 	local q = max(0.4, s.x[SQ])
-	scale(s.corpo, 1 + (1 - q) * 0.8, q)
+	scale(s.forma, 1 + (1 - q) * 0.8, q)
 	rot(s.corpo, s.x[LEAN])
 	pos(s.corpo, -s.x[SHOVE] * s.w, 0)
+	-- la spalla sale e scende con la forma
+	pos(s.spalla, -s.w * 0.05, s.h * 0.45 * q)
 	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
 
 	-- lampo bianco del colpo
@@ -232,7 +238,8 @@ function M.update(s, dt, st)
 	a = a - s.x[LEAN]
 	rot(s.spalla, a)
 	local g = s.armi[s.arma_scelta]
-	pos(g, -s.x[KICK] * s.w * 0.6, 0)
+	-- il rinculo non porta mai la mano dietro la spalla
+	pos(g, -min(s.x[KICK] * s.w * 0.6, s.h * 0.12), 0)
 
 	-- occhio: sbatte ogni tanto e guarda dove punta l'arma
 	s.blink = s.blink - dt

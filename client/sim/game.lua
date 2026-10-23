@@ -1547,17 +1547,6 @@ function M.use_physics(name)
 	assert(prof, "profilo di fisica sconosciuto: " .. tostring(name))
 	for k, v in pairs(prof) do M[k] = v end
 	M.PHYSICS = name
-	M.BODY_SCALE = 1
-end
-
--- Solo per le prove (fase 2): corpo k volte più grande del profilo, senza
--- cambiare il resto della fisica. Va chiamata dopo use_physics.
-function M.use_body_scale(k)
-	local prof = PROFILES[M.PHYSICS]
-	for _, key in ipairs({ "ROBOT_H", "ROBOT_HALF_W", "HURT_R", "HURT_FAT" }) do
-		M[key] = prof[key] * k
-	end
-	M.BODY_SCALE = k
 end
 
 M.use_physics(M.DEFAULT_PHYSICS)

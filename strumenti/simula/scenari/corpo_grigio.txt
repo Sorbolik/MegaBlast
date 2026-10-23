@@ -1,5 +1,4 @@
 # Corpo in grigio (fase 2): la capsula con l'occhio, intera e da vicino.
-# Per provare una taglia aggiungi in cima, per esempio, "imposta taglia 1.5".
 
 aspetta 1
 tocca 1075 235                      # STESSO TELEFONO
