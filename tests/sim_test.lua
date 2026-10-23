@@ -478,6 +478,120 @@ do
 	check(game.new(42, "forgia").mode == "1v1", "senza players è un 1 contro 1")
 end
 
+-- Oggetti tattici: trappole, scudi, trampolini, paracadute, ancoraggi -------------
+do
+	-- le casse contengono anche gli oggetti
+	local mix = game.new(5, "isole")
+	local seen = {}
+	for _ = 1, 60 do
+		mix.crates = {}
+		local c = mix:spawn_crate()
+		if c then seen[c.weapon] = true end
+	end
+	check(seen.trap and seen.shield and seen.trampoline, "nelle casse ci sono trappole, scudi e trampolini")
+
+	-- gli oggetti si usano anche nel riposizionamento e non sono attacchi
+	local q = game.new(42, "isole", { ammo = { trap = 1, shield = 1 } })
+	run(q, 60)
+	local r1, r2 = q.robots[1], q.robots[2]
+	q:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
+	check(r1.shield == config.SHIELD.hp and not q.used.weapon and not q.used.sword,
+		"lo scudo si attiva e non è un attacco")
+	q:step({ fire = { angle = math.rad(60), power = 0.6 } })
+	q:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
+	check(q.retreat > 0 and q:can_use("trap"), "nel riposizionamento la trappola si può ancora posare")
+	q:step({ fire = { angle = 0, power = 1, weapon = "trap" } })
+	local trap = q.placed[1]
+	check(trap and trap.kind == "trap" and not trap.armed and r1.ammo.trap == 0, "la trappola è posata ai piedi, non ancora armata")
+
+	-- scudo: assorbe il danno e finisce all'inizio del proprio turno dopo
+	q:hurt(r1, 20, r2)
+	check(r1.hp == r1.max_hp and r1.shield == config.SHIELD.hp - 20, "lo scudo assorbe il danno")
+	check(q:knock_mul(r1) < 1, "con lo scudo si viene spinti meno")
+
+	-- al turno dopo la trappola è armata: l'avversario che ci passa sopra vola via
+	for _ = 1, 3000 do
+		q:step()
+		if q.current == 2 then break end
+	end
+	check(trap.armed and r1.shield, "al turno dopo la trappola è armata e lo scudo c'è ancora")
+	r2.x, r2.y, r2.vx, r2.vy, r2.grounded = trap.x, trap.y, 0, 0, true
+	local hp2 = r2.hp
+	q:step()
+	check(r2.vy > 0 and math.abs(r2.vx) > 0 and r2.hp == hp2 - config.TRAP.damage and #q.placed == 0,
+		"la trappola lancia l'avversario e sparisce")
+	for _ = 1, 3000 do
+		q:step()
+		if q.current == 1 then break end
+	end
+	check(r1.shield == nil, "lo scudo finisce all'inizio del proprio turno")
+
+	-- un compagno non fa scattare la trappola
+	local t2 = game.new(42, "isole", { players = config.MODES["2v2"], ammo = { trap = 1 } })
+	run(t2, 60)
+	t2:step({ fire = { angle = 0, power = 1, weapon = "trap" } })
+	local tt = t2.placed[1]
+	tt.armed = true
+	local mate = t2.robots[3]
+	mate.x, mate.y, mate.vy, mate.grounded = tt.x, tt.y, 0, true
+	t2.robots[1].x = tt.x + 60
+	t2:step()
+	check(#t2.placed == 1 and mate.vy <= 0, "il compagno non fa scattare la trappola")
+
+	-- trampolino: chi lo posa non rimbalza; chi ci cade sopra rimbalza una volta
+	local tb = game.new(42, "isole", { ammo = { trampoline = 1 } })
+	run(tb, 60)
+	local a = tb.robots[1]
+	tb:step({ fire = { angle = 0, power = 1, weapon = "trampoline" } })
+	local tramp = tb.placed[1]
+	run(tb, 5)
+	check(tramp and a.grounded, "chi posa il trampolino non rimbalza")
+	local b = tb.robots[2]
+	b.x, b.y, b.vx, b.vy, b.grounded = tramp.x + 4, tramp.y + 60, 0, 0, false
+	a.x = tramp.x - 40
+	local bounces = 0
+	for _ = 1, 400 do
+		tb:step()
+		for _, e in ipairs(tb:pop_events()) do if e.type == "bounce" then bounces = bounces + 1 end end
+	end
+	check(bounces == 1 and b.grounded, "si rimbalza una volta, poi ci si ferma sopra (" .. bounces .. ")")
+
+	-- un'esplosione porta via quello che è posato
+	tb:explode(tramp.x, tramp.y + 4)
+	check(#tb.placed == 0, "un'esplosione distrugge il trampolino")
+
+	-- paracadute: costa Nucleo, si apre cadendo e annulla il danno da caduta
+	local pc = game.new(42, "isole")
+	run(pc, 60)
+	local p = pc.robots[1]
+	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
+	check(p.parachute == "armed" and p.nucleo == config.STATS.start_nucleo - config.STATS.parachute_cost, "il paracadute costa Nucleo")
+	check(not pc:can_use("parachute"), "un paracadute alla volta")
+	local safe, dmg, max = game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX
+	game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX = 10, 1, 100
+	local y = sky_spot(pc, 640, 200)
+	place(p, 640, y + 200)
+	local opened, slowest = false, 0
+	for _ = 1, 600 do
+		pc:step()
+		for _, e in ipairs(pc:pop_events()) do if e.type == "parachute" then opened = true end end
+		slowest = math.min(slowest, p.vy)
+		if p.grounded then break end
+	end
+	game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX = safe, dmg, max
+	check(opened and slowest >= -config.PARACHUTE.open_speed - 20 and p.hp == p.max_hp and p.parachute == nil,
+		"il paracadute si apre, rallenta la caduta e si atterra senza danno")
+
+	-- punto di ancoraggio: chi ci sta sopra viene spinto molto meno
+	local an = game.new(42, "forgia")
+	local anc = maps.get("forgia").anchors[1]
+	local ar = an.robots[1]
+	ar.x, ar.y = anc.x, anc.y
+	check(an:knock_mul(ar) == config.ANCHOR_KNOCKBACK, "sull'ancoraggio la spinta si riduce")
+	ar.x = anc.x + anc.r + 10
+	check(an:knock_mul(ar) == 1, "fuori dall'ancoraggio la spinta è piena")
+end
+
 -- Determinismo: stesso seed, stessi input, stesso risultato
 local function play(seed, map)
 	local p = game.new(seed, map)

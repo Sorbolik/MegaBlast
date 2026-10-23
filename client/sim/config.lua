@@ -47,6 +47,32 @@ C.KILL_CREDIT_SECONDS = 10
 -- della superficie ad almeno questa distanza (in pixel) dagli altri robot
 C.RESPAWN_DISTANCE = 160
 
+-- Casse: cosa c'è dentro (nascosto finché non si apre), col peso: più è
+-- alto, più spesso esce. Armi da 1 colpo e oggetti tattici.
+C.CRATE_CONTENTS = {
+	{ "grenade", 2 }, { "shards", 2 }, { "punch", 2 },
+	{ "trap", 2 }, { "shield", 1 }, { "trampoline", 1 },
+}
+
+-- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
+-- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.
+-- Trappola: si posa ai piedi e si arma dal turno dopo; un avversario che ci
+-- passa sopra viene lanciato in alto e lontano (per buttarlo fuori dalla mappa).
+C.TRAP = { damage = 8, launch_vy = 220, push_vx = 160 }
+-- Trampolino: si posa ai piedi; chiunque ci passi sopra rimbalza in alto
+C.TRAMPOLINE = { half_w = 12, launch_vy = 300 }
+-- Scudo: assorbe hp danni e dimezza le spinte fino all'inizio del proprio turno dopo
+C.SHIELD = { hp = 60, knockback = 0.5 }
+-- Paracadute: si prepara nel proprio turno (costa stats.parachute_cost Nucleo)
+-- e si apre da solo cadendo più veloce di open_speed; poi si scende a
+-- fall_speed e l'atterraggio non fa danno
+C.PARACHUTE = { open_speed = 160, fall_speed = 60 }
+-- Punti di ancoraggio della mappa (sim/maps.lua): chi ci sta sopra viene
+-- spinto molto meno
+C.ANCHOR_KNOCKBACK = 0.35
+-- trappole e trampolini in mappa al massimo, tutti insieme
+C.MAX_PLACED = 8
+
 -- Statistiche di ogni robot che non sono fisica. Le modificano l'albero di
 -- abilità e l'equipaggiamento (opts.players[i].stats in game.new);
 -- corsa, salto e velocità in aria vengono dal profilo di fisica.
@@ -57,6 +83,11 @@ C.STATS = {
 	start_nucleo = 1,
 	teleport_cost = 1,
 	free_teleports = 0,      -- teletrasporti gratis per partita (albero, set Vuoto)
+	parachute_cost = 1,
+	free_parachutes = 0,     -- paracadute gratis per partita
+	knockback_mul = 1,       -- quanto si viene spinti dai colpi
+	fall_damage_mul = 1,     -- quanto fa male cadere
+	trap_radius = 12,        -- quanto è larga la trappola posata
 }
 
 return C
