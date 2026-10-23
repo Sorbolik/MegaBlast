@@ -90,8 +90,10 @@ local function arma(s, name, color)
 	local H, Wd = s.h, s.w
 	local g = vuoto(s.spalla, 0, 0)
 	if name == "missile" then
-		box(g, H * 0.42, 0, H * 0.95, H * 0.22, FERRO)
-		box(g, H * 0.86, 0, H * 0.1, H * 0.26, color)
+		-- la bocca è dove la simulazione fa partire il colpo (game.MUZZLE)
+		local L = game.MUZZLE
+		box(g, L / 2, 0, L, H * 0.22, FERRO)
+		box(g, L - H * 0.05, 0, H * 0.1, H * 0.26, color)
 	elseif name == "sword" then
 		local L = game.SWORD_REACH
 		box(g, L * 0.55, 0, L * 0.9, max(2, H * 0.1), LAMA)
