@@ -70,7 +70,7 @@ run(g, 120)
 
 -- Reattività: un robot veloce inverte la direzione in aria più in fretta di uno lento
 local function reverse_ticks(stats)
-	local q = game.new(42, "isole", { stats = { stats } })
+	local q = game.new(42, "isole", { players = { { team = 1, stats = stats }, { team = 2 } } })
 	run(q, 120)
 	local r = q.robots[1]
 	q:step({ jump = true, right = true })
@@ -84,7 +84,7 @@ local fast = reverse_ticks({ air_speed = 200 })
 check(fast < slow, string.format("il robot veloce cambia direzione prima (%d tick contro %d)", fast, slow))
 
 -- Le statistiche cambiano l'altezza del salto
-local hj = game.new(42, "isole", { stats = { { jump_height = 120 } } })
+local hj = game.new(42, "isole", { players = { { team = 1, stats = { jump_height = 120 } }, { team = 2 } } })
 run(hj, 120)
 local hy = hj.robots[1].y
 hj:step({ jump = true })
@@ -356,82 +356,130 @@ check(tw_tp, "il turno non passa prima che il globo abbia finito")
 check(tw.current == 2, "dopo fendente e teletrasporto il turno passa")
 
 -- Due attacchi per turno e Nucleo --------------------------------------------------
+do
 
-local MISSILE = { fire = { angle = math.rad(60), power = 0.6 } }
-local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
-local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
+	local MISSILE = { fire = { angle = math.rad(60), power = 0.6 } }
+	local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
+	local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
 
--- Primo attacco dopo 9 s: restano 16 s, cioè 3 Nucleo (mai oltre NUCLEO_MAX)
-local at = game.new(42, "isole")
-local ar = at.robots[1]
-run(at, 9 * 60 - 1)
-at:pop_events()
-at:step(MISSILE)
-local gain = math.min(math.floor(at.timer / (60 * config.NUCLEO_SECONDS)), config.NUCLEO_MAX - config.STATS.start_nucleo)
-local nev
-for _, e in ipairs(at:pop_events()) do if e.type == "nucleo" then nev = e end end
-check(ar.nucleo == config.STATS.start_nucleo + gain and nev and nev.amount == gain,
-	"i secondi rimasti al primo attacco diventano Nucleo (" .. ar.nucleo .. ")")
-check(at.window == game.SECOND_ATTACK_TICKS, "dopo il primo attacco ci sono 5 s per il secondo")
-at:step(MISSILE)
-check(not at:can_use("missile") and at.used.weapon, "una sola arma per turno")
-local n0 = ar.nucleo
-run(at, 60)
-at:step(SWORD)
-check(at.used.sword and at.window == 0 and at.retreat == game.REPOSITION_TICKS,
-	"spada come secondo attacco: poi 5 s di riposizionamento")
-check(ar.nucleo == n0, "il secondo attacco non dà Nucleo")
-check(not at:can_use("teleport") and not at:can_use("sword"), "nel riposizionamento niente attacchi né teletrasporto")
-local turn_at
-for i = 1, 2000 do
-	at:step()
-	if at.current == 2 then turn_at = i break end
+	-- Primo attacco dopo 9 s: restano 16 s, cioè 3 Nucleo (mai oltre NUCLEO_MAX)
+	local at = game.new(42, "isole")
+	local ar = at.robots[1]
+	run(at, 9 * 60 - 1)
+	at:pop_events()
+	at:step(MISSILE)
+	local gain = math.min(math.floor(at.timer / (60 * config.NUCLEO_SECONDS)), config.NUCLEO_MAX - config.STATS.start_nucleo)
+	local nev
+	for _, e in ipairs(at:pop_events()) do if e.type == "nucleo" then nev = e end end
+	check(ar.nucleo == config.STATS.start_nucleo + gain and nev and nev.amount == gain,
+		"i secondi rimasti al primo attacco diventano Nucleo (" .. ar.nucleo .. ")")
+	check(at.window == game.SECOND_ATTACK_TICKS, "dopo il primo attacco ci sono 5 s per il secondo")
+	at:step(MISSILE)
+	check(not at:can_use("missile") and at.used.weapon, "una sola arma per turno")
+	local n0 = ar.nucleo
+	run(at, 60)
+	at:step(SWORD)
+	check(at.used.sword and at.window == 0 and at.retreat == game.REPOSITION_TICKS,
+		"spada come secondo attacco: poi 5 s di riposizionamento")
+	check(ar.nucleo == n0, "il secondo attacco non dà Nucleo")
+	check(not at:can_use("teleport") and not at:can_use("sword"), "nel riposizionamento niente attacchi né teletrasporto")
+	local turn_at
+	for i = 1, 2000 do
+		at:step()
+		if at.current == 2 then turn_at = i break end
+	end
+	check(turn_at and turn_at >= game.REPOSITION_TICKS, "il turno passa dopo il riposizionamento")
+
+	-- Se il secondo attacco non arriva, dopo 5 s si passa comunque al riposizionamento
+	local aw = game.new(42, "isole")
+	run(aw, 60)
+	aw:step(SWORD)
+	run(aw, game.SECOND_ATTACK_TICKS)
+	check(aw.window == 0 and aw.retreat > 0 and not aw:can_use("missile"), "scaduti i 5 s non si attacca più")
+
+	-- Ordine libero: prima la spada, poi il missile
+	local ao = game.new(42, "isole")
+	run(ao, 60)
+	ao:step(SWORD)
+	run(ao, 30)
+	check(ao:can_use("missile"), "dopo la spada si può ancora sparare")
+	ao:step(MISSILE)
+	check(ao.used.weapon and ao.retreat > 0, "spada e missile nello stesso turno")
+
+	-- Il teletrasporto si lancia fino al colpo di spada, non dopo
+	local ak = game.new(42, "isole")
+	run(ak, 60)
+	free_tp(ak.robots[1])
+	ak:step(MISSILE)
+	check(ak:can_use("teleport"), "dopo il missile il teletrasporto si può ancora lanciare")
+	ak:step(SWORD)
+	check(not ak:can_use("teleport"), "dopo il colpo di spada no")
+
+	-- Chi attacca allo scadere non ha tempo per altro
+	local az = game.new(42, "isole")
+	run(az, game.TURN_TICKS - 2)
+	az:step(MISSILE)
+	check(az.used.weapon and az.window <= 1, "attaccando allo scadere non resta tempo")
+	run(az, 3)
+	check(az.phase ~= "aim", "il turno chiude allo scadere anche dopo un attacco")
+
+	-- I teletrasporti gratis si usano prima del Nucleo
+	local fz = game.new(42, "isole", { players = { { team = 1, stats = { free_teleports = 1 } }, { team = 2 } } })
+	run(fz, 60)
+	fz:step(TELE)
+	check(#fz.orbs == 1 and fz.robots[1].free_teleports == 0 and fz.robots[1].nucleo == config.STATS.start_nucleo,
+		"il teletrasporto gratis non consuma Nucleo")
+
+	-- La vita parte dal valore del config e si può cambiare per robot
+	local hv = game.new(42, "isole", { players = { { team = 1, stats = { max_hp = 200 } }, { team = 2 } } })
+	check(hv.robots[1].hp == 200 and hv.robots[2].hp == config.STATS.max_hp, "vita dalle statistiche del robot")
 end
-check(turn_at and turn_at >= game.REPOSITION_TICKS, "il turno passa dopo il riposizionamento")
 
--- Se il secondo attacco non arriva, dopo 5 s si passa comunque al riposizionamento
-local aw = game.new(42, "isole")
-run(aw, 60)
-aw:step(SWORD)
-run(aw, game.SECOND_ATTACK_TICKS)
-check(aw.window == 0 and aw.retreat > 0 and not aw:can_use("missile"), "scaduti i 5 s non si attacca più")
+-- Da 2 a 4 giocatori, con squadre -------------------------------------------------
+do
 
--- Ordine libero: prima la spada, poi il missile
-local ao = game.new(42, "isole")
-run(ao, 60)
-ao:step(SWORD)
-run(ao, 30)
-check(ao:can_use("missile"), "dopo la spada si può ancora sparare")
-ao:step(MISSILE)
-check(ao.used.weapon and ao.retreat > 0, "spada e missile nello stesso turno")
+	-- 2 contro 2: le squadre si alternano e i compagni partono dallo stesso lato
+	local four = { { team = 1 }, { team = 1 }, { team = 2 }, { team = 2 } }
+	for _, id in ipairs(maps.order) do
+		local q = game.new(42, id, { players = four })
+		run(q, 120)
+		local ok = #q.robots == 4
+		for _, r in ipairs(q.robots) do ok = ok and r.grounded and not r.dead end
+		check(ok, id .. ": quattro robot compaiono appoggiati al terreno")
+		check((q.robots[1].x < 640) == (q.robots[2].x < 640) and (q.robots[3].x < 640) == (q.robots[4].x < 640)
+			and (q.robots[1].x < 640) ~= (q.robots[3].x < 640), id .. ": i compagni partono dallo stesso lato")
+	end
 
--- Il teletrasporto si lancia fino al colpo di spada, non dopo
-local ak = game.new(42, "isole")
-run(ak, 60)
-free_tp(ak.robots[1])
-ak:step(MISSILE)
-check(ak:can_use("teleport"), "dopo il missile il teletrasporto si può ancora lanciare")
-ak:step(SWORD)
-check(not ak:can_use("teleport"), "dopo il colpo di spada no")
+	-- Gioca il turno corrente (un missile verso l'alto) e restituisce chi gioca dopo
+	local function next_turn(q)
+		local cur = q.current
+		q:step({ fire = { angle = math.rad(90), power = 0.1 } })
+		for _ = 1, 3000 do
+			q:step()
+			if q.current ~= cur or q.phase == "over" then break end
+		end
+		return q.current
+	end
 
--- Chi attacca allo scadere non ha tempo per altro
-local az = game.new(42, "isole")
-run(az, game.TURN_TICKS - 2)
-az:step(MISSILE)
-check(az.used.weapon and az.window <= 1, "attaccando allo scadere non resta tempo")
-run(az, 3)
-check(az.phase ~= "aim", "il turno chiude allo scadere anche dopo un attacco")
+	local q4 = game.new(42, "isole", { players = four })
+	check(q4.mode == "2v2" and table.concat(q4.order, " ") == "1 3 2 4",
+		"2 contro 2: turni A1, B1, A2, B2 (" .. table.concat(q4.order, " ") .. ")")
+	local seen4 = { q4.current }
+	for _ = 1, 4 do seen4[#seen4 + 1] = next_turn(q4) end
+	check(table.concat(seen4, " ") == "1 3 2 4 1", "i turni seguono l'ordine delle squadre (" .. table.concat(seen4, " ") .. ")")
+	-- chi è morto salta il turno; finisce quando resta una squadra sola
+	q4:kill(q4.robots[3])
+	check(next_turn(q4) == 2, "il robot morto salta il turno")
+	check(q4.phase ~= "over", "con un robot per squadra la partita continua")
+	q4:kill(q4.robots[4])
+	next_turn(q4)
+	check(q4.phase == "over" and q4.winner == 1, "resta una squadra sola: vince la squadra 1")
 
--- I teletrasporti gratis si usano prima del Nucleo
-local fz = game.new(42, "isole", { stats = { { free_teleports = 1 } } })
-run(fz, 60)
-fz:step(TELE)
-check(#fz.orbs == 1 and fz.robots[1].free_teleports == 0 and fz.robots[1].nucleo == config.STATS.start_nucleo,
-	"il teletrasporto gratis non consuma Nucleo")
-
--- La vita parte dal valore del config e si può cambiare per robot
-local hv = game.new(42, "isole", { stats = { { max_hp = 200 } } })
-check(hv.robots[1].hp == 200 and hv.robots[2].hp == config.STATS.max_hp, "vita dalle statistiche del robot")
+	-- Tutti contro tutti: quattro squadre da uno, turni nell'ordine di arrivo
+	local ffa = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
+	check(ffa.mode == "ffa" and table.concat(ffa.order, " ") == "1 2 3 4", "tutti contro tutti: turni 1, 2, 3, 4")
+	check(game.new(42, "forgia").mode == "1v1", "senza players è un 1 contro 1")
+end
 
 -- Determinismo: stesso seed, stessi input, stesso risultato
 local function play(seed, map)

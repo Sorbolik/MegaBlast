@@ -5,6 +5,7 @@
 -- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
+local gconfig = require "sim.config"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local home = require "menu.home"
@@ -28,9 +29,11 @@ local ACTION_ZOOM_IN = hash("zoom_avanti")
 local ACTION_ZOOM_OUT = hash("zoom_indietro")
 local ACTION_WEAPON = { [hash("arma1")] = 1, [hash("arma2")] = 2, [hash("arma3")] = 3, [hash("arma4")] = 4, [hash("arma5")] = 5 }
 
-local NAMES = { "Rosso", "Blu" }
--- colori delle squadre della bibbia grafica: Cremisi e Cobalto
-local PLAYER_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1) }
+-- Squadre: Cremisi e Cobalto della bibbia grafica, poi Ambra e Giada per il
+-- tutti contro tutti
+local TEAM_NAMES = { "Rosso", "Blu", "Oro", "Verde" }
+local TEAM_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1),
+	vmath.vector4(1, 0.7, 0.18, 1), vmath.vector4(0.25, 0.85, 0.5, 1) }
 local WHITE = vmath.vector4(1, 1, 1, 1)
 local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 
@@ -304,7 +307,9 @@ local function new_pose()
 	local sh = {}
 	for i = 1, game.SHARD_COUNT do sh[i] = { x = 0, y = 0, on = false } end
 	-- c: casse per id (in caduta si muovono, vanno interpolate anche loro)
-	return { r = { { x = 0, y = 0 }, { x = 0, y = 0 } }, p = { x = 0, y = 0 }, has_p = false,
+	local r = {}
+	for i = 1, game.MAX_PLAYERS do r[i] = { x = 0, y = 0 } end
+	return { r = r, p = { x = 0, y = 0 }, has_p = false,
 		o = o, no = 0, s = sh, c = {} }
 end
 
@@ -424,8 +429,24 @@ local function new_match(self, seed, map, opts)
 		draw_terrain(self)
 		self.drawn_map = key
 	end
+	-- nomi e colori: quelli della squadra, col numero se in squadra si è in due
+	local size = {}
+	for _, rb in ipairs(self.g.robots) do size[rb.team] = (size[rb.team] or 0) + 1 end
+	self.names, self.colors = {}, {}
+	local nth = {}
+	for i, rb in ipairs(self.g.robots) do
+		nth[rb.team] = (nth[rb.team] or 0) + 1
+		self.names[i] = TEAM_NAMES[rb.team] .. (size[rb.team] > 1 and (" " .. nth[rb.team]) or "")
+		self.colors[i] = TEAM_COLORS[rb.team]
+	end
+	for i = #self.g.robots + 1, game.MAX_PLAYERS do
+		scoria.set_enabled(self.robots[i].rig, false)
+		gui.set_enabled(self.robots[i].hp, false)
+	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
+		scoria.set_color(self.robots[i].rig, self.colors[i])
+		gui.set_color(self.robots[i].hp, self.colors[i])
 		scoria.set_enabled(self.robots[i].rig, true)
 		gui.set_enabled(self.robots[i].hp, true)
 		gui.set_text(self.robots[i].hp, tostring(rb.hp))
@@ -539,8 +560,8 @@ local function shock(self, x, y)
 end
 
 local function who_name(self, robot)
-	if self.mode == "online" then return robot == self.me and "Tu" or "L'avversario" end
-	return NAMES[robot]
+	if self.mode == "online" and robot == self.me then return "Tu" end
+	return self.names[robot]
 end
 
 local function my_turn(self)
@@ -588,7 +609,7 @@ local function handle_event(self, e)
 		if self.mode == "online" then
 			show_message(self, e.robot == self.me and "Tocca a te!" or "Turno dell'avversario")
 		else
-			show_message(self, "Turno di " .. NAMES[e.robot])
+			show_message(self, "Turno di " .. self.names[e.robot])
 		end
 	elseif e.type == "death" then
 		-- crolla e svanisce da solo
@@ -597,9 +618,10 @@ local function handle_event(self, e)
 	elseif e.type == "over" then
 		local text
 		if self.mode == "online" then
-			text = e.winner == self.me and "Hai vinto!" or (e.winner and "Hai perso!" or "Pareggio!")
+			local mine = self.g.robots[self.me].team
+			text = e.winner == mine and "Hai vinto!" or (e.winner and "Hai perso!" or "Pareggio!")
 		else
-			text = e.winner and ("Vince " .. NAMES[e.winner] .. "!") or "Pareggio!"
+			text = e.winner and ("Vince " .. TEAM_NAMES[e.winner] .. "!") or "Pareggio!"
 		end
 		if e.reason == "time" then text = "Tempo scaduto!\n" .. text end
 		show_message(self, text .. "\nTocca per tornare al menu", true)
@@ -662,12 +684,13 @@ local function on_server_message(self, m)
 	if m.t == "wait" then
 		show_message(self, "In attesa di un avversario...", true)
 	elseif m.t == "start" then
-		new_match(self, m.seed, m.map)
+		-- players: le squadre dei robot, [{"team":1},...] (senza, un 1 contro 1)
+		new_match(self, m.seed, m.map, m.players and { players = m.players })
 		self.g:pop_events()
 		self.me = m.you
 		self.mode = "online"
 		set_controls_visible(self, true)
-		show_message(self, "Sei " .. NAMES[m.you])
+		show_message(self, "Sei " .. self.names[m.you])
 	elseif m.t == "state" and self.g then
 		apply_state(self, m)
 	elseif m.t == "ev" then
@@ -716,13 +739,15 @@ end
 
 local function start_local(self)
 	hide_menu(self)
-	local opts = nil
+	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono
+	local opts = { players = gconfig.MODES[config_string("megablast.giocatori", "1v1")] }
 	if SIMULA then
 		-- solo per gli scenari di prova (comando "imposta" in strumenti/simula)
 		local colpi = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local vita = config_int("megablast.prova_vita", 0)
 		opts = {
+			players = opts.players,
 			hp = vita > 0 and vita or nil,
 			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi } or nil,
 			crate_every = ogni > 0 and ogni or nil,
@@ -1062,7 +1087,7 @@ local function render(self, dt)
 		self.fuoco_x, self.fuoco_y = x, p0.y + (pb.p.y - p0.y) * k
 		EULER.z = -x * 4
 		gui.set_euler(self.egg_spin, EULER)
-		gui.set_color(self.egg_light, PLAYER_COLORS[g.current])
+		gui.set_color(self.egg_light, self.colors[g.current])
 		local secs = math.max(1, math.ceil((g.projectile.fuse or 0) / 60))
 		if self.egg_secs ~= secs then
 			gui.set_text(self.egg_label, tostring(secs))
@@ -1078,7 +1103,7 @@ local function render(self, dt)
 		local x, y = p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k
 		set_pos(self.projectile, x, y)
 		self.fuoco_x, self.fuoco_y = x, y
-		gui.set_color(self.projectile_glow, PLAYER_COLORS[g.current])
+		gui.set_color(self.projectile_glow, self.colors[g.current])
 		local n = #self.trail
 		self.trail_i = self.trail_i % n + 1
 		local tp = self.trail_pos[self.trail_i]
@@ -1112,7 +1137,7 @@ local function render(self, dt)
 		end
 	end
 	if self.shard_color ~= g.current then
-		for i = 1, game.SHARD_COUNT do gui.set_color(self.shard_nodes[i], PLAYER_COLORS[g.current]) end
+		for i = 1, game.SHARD_COUNT do gui.set_color(self.shard_nodes[i], self.colors[g.current]) end
 		self.shard_color = g.current
 	end
 
@@ -1155,8 +1180,8 @@ local function render(self, dt)
 			set_pos(node.root, o0.x + (ob.x - o0.x) * k, o0.y + (ob.y - o0.y) * k)
 			EULER.z = self.clock * 240 + i * 50
 			gui.set_euler(node.root, EULER)
-			gui.set_color(node.light, PLAYER_COLORS[g.current])
-			gui.set_color(node.glow, PLAYER_COLORS[g.current])
+			gui.set_color(node.light, self.colors[g.current])
+			gui.set_color(node.glow, self.colors[g.current])
 		end
 	end
 
@@ -1170,7 +1195,7 @@ local function render(self, dt)
 		gui.set_scale(self.btn_tele, tele_state == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
 		self.tele_state = tele_state
 	end
-	gui.set_color(self.tele_light, PLAYER_COLORS[g.current])
+	gui.set_color(self.tele_light, self.colors[g.current])
 
 	local aim_weapon = self.tele_armed and "teleport" or self.weapon
 	-- col dito sul robot il colpo è annullato: niente traiettoria, solo la scritta
@@ -1198,7 +1223,7 @@ local function render(self, dt)
 	-- tempo rimasto della partita (3 minuti al massimo)
 	local left = math.max(0, math.ceil(g.match_left / 60))
 	local clock = string.format("%d:%02d", math.floor(left / 60), left % 60)
-	local who = NAMES[g.current]
+	local who = self.names[g.current]
 	if self.mode == "online" then who = g.current == self.me and "Tu" or "Avversario" end
 	-- la barra racconta il turno: bianca, gialla per il secondo attacco, blu per ripararsi
 	local bar_left, bar_total, bar_color = g.timer, game.TURN_TICKS, TIME_COLOR
@@ -1237,7 +1262,7 @@ local function render(self, dt)
 	local v = self.view[g.current]
 	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
 	set_pos(self.arrow, v.x, v.y + scoria.ALTEZZA + (30 + math.sin(self.clock * 5) * 3) / self.cam.s)
-	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
+	gui.set_color(self.arrow, self.colors[g.current])
 
 	-- Camera: segue il colpo in volo, poi resta un attimo sull'esplosione, poi
 	-- torna su chi è di turno. Nel menu si vede tutta la mappa.
@@ -1283,8 +1308,8 @@ function init(self)
 	gui.set_visible(self.mondo, false)
 
 	self.robots = {}
-	for i = 1, 2 do
-		local r = { rig = scoria.new(PLAYER_COLORS[i]), st = {} }
+	for i = 1, game.MAX_PLAYERS do
+		local r = { rig = scoria.new(TEAM_COLORS[i]), st = {} }
 		self.robots[i] = r
 	end
 
@@ -1400,9 +1425,9 @@ function init(self)
 		self.detriti[i] = { node = n, x = 0, y = 0, vx = 0, vy = 0, a = 0, va = 0, t = DETRITO_VITA, col = vmath.vector4(PIETRA) }
 	end
 
-	for i = 1, 2 do
+	for i = 1, game.MAX_PLAYERS do
 		local hp = label(0, 0, "100", 0.7)
-		gui.set_color(hp, PLAYER_COLORS[i])
+		gui.set_color(hp, TEAM_COLORS[i])
 		self.robots[i].hp = hp
 	end
 	self.arrow = box(0, 0, 4, 18, WHITE)
@@ -1411,7 +1436,7 @@ function init(self)
 
 	-- nel mondo, nell'ordine in cui si disegnano
 	local mondo = {}
-	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].rig.root end
+	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].rig.root end
 	for _, n in ipairs(self.dots) do mondo[#mondo + 1] = n end
 	for _, n in ipairs(self.trail) do mondo[#mondo + 1] = n end
 	mondo[#mondo + 1] = self.projectile
@@ -1426,7 +1451,7 @@ function init(self)
 		mondo[#mondo + 1] = b.anim
 		mondo[#mondo + 1] = b.flash
 	end
-	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].hp end
+	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].hp end
 	mondo[#mondo + 1] = self.arrow
 	mondo[#mondo + 1] = self.cancel_label
 	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end
@@ -1493,7 +1518,7 @@ function init(self)
 	set_controls_visible(self, false)
 
 	-- la home per ultima, così sta sopra la battaglia
-	self.home = home.new(PLAYER_COLORS[1])
+	self.home = home.new(TEAM_COLORS[1])
 
 	-- una mappa sullo sfondo del menu
 	new_match(self, os.time())

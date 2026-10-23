@@ -225,7 +225,44 @@ local function make_ammo(start)
 	return a
 end
 
--- opts.stats = { [1] = { walk_speed = ... }, [2] = { ... } } per cambiare le statistiche
+-- opts.players = { { team = 1, stats = { walk_speed = ... } }, { team = 2 }, ... }:
+-- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
+-- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
+-- mancano vengono da config.STATS e dal profilo di fisica. Senza players, due
+-- robot in squadre diverse.
+M.MAX_PLAYERS = 4
+
+-- Ordine dei turni: le squadre si alternano (nel 2 contro 2 A1, B1, A2, B2),
+-- nell'ordine in cui compaiono in players. Restituisce gli indici dei robot.
+local function turn_order(players)
+	local teams, members = {}, {}
+	for i, p in ipairs(players) do
+		if not members[p.team] then
+			members[p.team] = {}
+			teams[#teams + 1] = p.team
+		end
+		local m = members[p.team]
+		m[#m + 1] = i
+	end
+	local order = {}
+	for round = 1, #players do
+		for _, t in ipairs(teams) do
+			if members[t][round] then order[#order + 1] = members[t][round] end
+		end
+	end
+	return order
+end
+
+-- "1v1", "ffa" (tutti contro tutti: ogni squadra ha un robot) o "2v2" (squadre)
+local function match_mode(players)
+	local size = {}
+	for _, p in ipairs(players) do size[p.team] = (size[p.team] or 0) + 1 end
+	for _, n in pairs(size) do
+		if n > 1 then return "2v2" end
+	end
+	return #players == 2 and "1v1" or "ffa"
+end
+
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
 -- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
@@ -237,13 +274,18 @@ function M.new(seed, map_id, opts)
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.WORLD_W / M.CELL, M.WORLD_H / M.CELL, M.CELL)
 	map.build(g.terrain, seed)
+	local players = opts.players or C.MODES["1v1"]
+	assert(#players >= 2 and #players <= M.MAX_PLAYERS, "da 2 a " .. M.MAX_PLAYERS .. " giocatori")
 	g.robots = {}
-	for i = 1, 2 do
-		local sp = map.spawns[i]
-		local st = make_stats(opts.stats and opts.stats[i])
+	g.order = turn_order(players)
+	g.mode = match_mode(players)
+	for k, i in ipairs(g.order) do
+		local p = players[i]
+		local sp = map.spawns[k]
+		local st = make_stats(p.stats)
 		g.robots[i] = {
-			id = i, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
-			vx = 0, vy = 0, grounded = false, knocked = false, facing = i == 1 and 1 or -1,
+			id = i, team = p.team, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
+			vx = 0, vy = 0, grounded = false, knocked = false, facing = sp.x < M.WORLD_W / 2 and 1 or -1,
 			hp = opts.hp or st.max_hp, max_hp = st.max_hp, dead = false, dealt = 0,
 			nucleo = st.start_nucleo,
 			free_teleports = st.free_teleports,
@@ -270,7 +312,8 @@ function M.new(seed, map_id, opts)
 	-- con crate_every esplicito si usa sempre quello (le prove ne hanno bisogno)
 	g.crate_chance = not opts.crate_every and M.CRATE_CHANCE or nil
 	g.turn_no = 0
-	g:start_turn(1)
+	g.order_pos = 1
+	g:start_turn(g.order[1])
 	return g
 end
 
@@ -1298,12 +1341,16 @@ end
 
 -- Turni ------------------------------------------------------------------------
 
-function M:alive_count()
-	local n = 0
+-- Quante squadre hanno ancora almeno un robot vivo, e una di quelle
+function M:teams_alive()
+	local seen, n, last = {}, 0, nil
 	for _, rb in ipairs(self.robots) do
-		if not rb.dead then n = n + 1 end
+		if not rb.dead and not seen[rb.team] then
+			seen[rb.team] = true
+			n, last = n + 1, rb.team
+		end
 	end
-	return n
+	return n, last
 end
 
 function M:start_turn(player)
@@ -1390,7 +1437,8 @@ function M:attack(weapon, fire)
 end
 
 -- Classifica a tempo scaduto: più vita rimasta, a parità più danni inflitti.
--- Riempie self.podium e restituisce il vincitore, o nil se i primi due sono pari in tutto.
+-- Riempie self.podium (robot vivi) e restituisce la squadra vincitrice, o nil
+-- se i primi due di squadre diverse sono pari in tutto.
 function M:ranking()
 	local order = {}
 	for _, rb in ipairs(self.robots) do
@@ -1404,16 +1452,16 @@ function M:ranking()
 	self.podium = {}
 	for i, rb in ipairs(order) do self.podium[i] = rb.id end
 	local a, b = order[1], order[2]
-	if a and b and a.hp == b.hp and a.dealt == b.dealt then return nil end
-	return a and a.id
+	if a and b and a.team ~= b.team and a.hp == b.hp and a.dealt == b.dealt then return nil end
+	return a and a.team
 end
 
+-- winner è la squadra che vince (in 1 contro 1 e tutti contro tutti è l'id del robot)
 function M:end_turn()
-	if self:alive_count() <= 1 then
+	local teams, last = self:teams_alive()
+	if teams <= 1 then
 		self.phase = "over"
-		for _, rb in ipairs(self.robots) do
-			if not rb.dead then self.winner = rb.id end
-		end
+		self.winner = last
 		self:emit({ type = "over", winner = self.winner })
 		return
 	end
@@ -1424,11 +1472,13 @@ function M:end_turn()
 		self:emit({ type = "over", winner = self.winner, reason = "time" })
 		return
 	end
-	local nxt = self.current
-	repeat
-		nxt = nxt % #self.robots + 1
-	until not self.robots[nxt].dead
-	self:start_turn(nxt)
+	-- il prossimo vivo nell'ordine dei turni
+	local n = #self.order
+	for _ = 1, n do
+		self.order_pos = self.order_pos % n + 1
+		if not self.robots[self.order[self.order_pos]].dead then break end
+	end
+	self:start_turn(self.order[self.order_pos])
 end
 
 function M:step(input)

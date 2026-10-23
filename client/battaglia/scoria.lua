@@ -6,6 +6,7 @@
 --   local s = scoria.new(colore)
 --   scoria.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
 --   scoria.set_weapon(s, nome) / hit(s) / fire(s, tipo) / teleport(s) / die(s)
+--   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
 --
 -- Pochi pezzi: testa con le corna, mantello, due gambe e due mani staccate
 -- sull'arma (immagini di strumenti/grafica/scoria.py); occhio e Nucleo del colore
@@ -127,7 +128,7 @@ local function arma(s, name, color)
 		-- la bocca è dove la simulazione fa partire il colpo (game.MUZZLE)
 		local L = game.MUZZLE
 		box(g, L / 2, 0, L, H * 0.22, FERRO)
-		box(g, L - H * 0.05, 0, H * 0.1, H * 0.26, color)
+		s.tinte[#s.tinte + 1] = box(g, L - H * 0.05, 0, H * 0.1, H * 0.26, color)
 	elseif name == "sword" then
 		local L = game.SWORD_REACH
 		box(g, L * 0.55, 0, L * 0.9, max(2, H * 0.1), LAMA)
@@ -135,7 +136,7 @@ local function arma(s, name, color)
 	elseif name == "shards" then
 		box(g, H * 0.32, 0, H * 0.7, H * 0.3, FERRO)
 	elseif name == "teleport" then
-		cerchio(g, H * 0.45, 0, H * 0.32, color)
+		s.tinte[#s.tinte + 1] = cerchio(g, H * 0.45, 0, H * 0.32, color)
 	elseif name == "grenade" then
 		cerchio(g, H * 0.45, 0, H * 0.36, FERRO)
 	else -- punch
@@ -150,7 +151,7 @@ end
 
 function M.new(color)
 	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
-	local s = { color = color, h = H, w = Wd, k = H / 200, armi = {}, pelle = {},
+	local s = { color = color, h = H, w = Wd, k = H / 200, armi = {}, pelle = {}, tinte = {},
 		x = {}, v = {}, goal = {}, testa = {}, mantello = {}, gambe = { {}, {} }, gamba_a = { 0, 0 } }
 	s.root = vuoto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
@@ -189,7 +190,7 @@ function M.new(color)
 	-- guarda dove si mira
 	local k = s.k
 	s.occhio = vuoto(s.testa[2], (OCCHIO[1] - COLLO[1]) * k, (COLLO[2] - OCCHIO[2]) * k)
-	cerchio(s.occhio, 0, 0, OCCHIO[3] * k, s.occhio_col)
+	s.tinte[#s.tinte + 1] = cerchio(s.occhio, 0, 0, OCCHIO[3] * k, s.occhio_col)
 	s.pupilla = cerchio(s.occhio, 0, 0, OCCHIO[3] * k * 0.45,
 		vmath.vector4((1 + color.x) / 2, (1 + color.y) / 2, (1 + color.z) / 2, 1))
 	s.nucleo = cerchio(s.forma, gx(s, NUCLEO[1]), gy(s, NUCLEO[2]), NUCLEO[3] * k, s.nucleo_col)
@@ -200,6 +201,17 @@ function M.new(color)
 
 	M.reset(s)
 	return s
+end
+
+-- Ridipinge occhio, Nucleo e armi con il colore di un'altra squadra
+function M.set_color(s, color)
+	if s.color == color then return end
+	s.color = color
+	s.occhio_col.x, s.occhio_col.y, s.occhio_col.z = color.x, color.y, color.z
+	s.nucleo_col.x, s.nucleo_col.y, s.nucleo_col.z = color.x, color.y, color.z
+	for _, n in ipairs(s.tinte) do gui.set_color(n, s.occhio_col) end
+	gui.set_color(s.nucleo, s.nucleo_col)
+	gui.set_color(s.pupilla, vmath.vector4((1 + color.x) / 2, (1 + color.y) / 2, (1 + color.z) / 2, 1))
 end
 
 function M.reset(s)
