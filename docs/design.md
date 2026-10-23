@@ -13,8 +13,8 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Elemento | Come funziona |
 |---|---|
 | Partita | Duello online 1 contro 1 (deathmatch). In seguito arriva una campagna single player contro bot. |
-| Turni | Durano 30 s. Il giocatore di turno può muoversi e saltare per tutto il turno e fare fino a **due attacchi**: un'arma (Lanciarune o un'arma trovata) e un colpo di spada, in ordine libero. Dopo il primo attacco ha 5 s per il secondo (barra gialla), dopo l'ultimo 5 s per riposizionarsi (barra blu), mai oltre la fine del turno. Il turno finisce anche allo scadere del timer o quando il robot muore. Tutti i numeri delle regole sono in `client/sim/config.lua`. |
-| Nucleo | Si parte con 1. Al primo attacco del turno i secondi rimasti diventano Nucleo (1 ogni 2 s, al massimo 10 in tutto). Il teletrasporto costa 1 Nucleo; al primo turno se ne fa uno solo. |
+| Turni | Durano 25 s. Il giocatore di turno può muoversi e saltare per tutto il turno e fare fino a **due attacchi**: un'arma (Lanciarune o un'arma trovata) e un colpo di spada, in ordine libero. Dopo il primo attacco ha 5 s per il secondo (barra gialla), dopo l'ultimo 5 s per riposizionarsi (barra blu), mai oltre la fine del turno. Il turno finisce anche allo scadere del timer o quando il robot muore. Tutti i numeri delle regole sono in `client/sim/config.lua`. |
+| Nucleo | Si parte con 1. Al primo attacco del turno i secondi rimasti diventano Nucleo (1 ogni 5 s, al massimo 5 in tutto). Il teletrasporto costa 1 Nucleo; al primo turno se ne fa uno solo. |
 | Terreno | La terra è distruttibile: ogni esplosione scava un cratere tondo. I tubi d'acciaio sono indistruttibili e fanno da base solida. |
 | Mappe | Fatte a mano, su più piani, con isole volanti. Niente vento. |
 | Movimento | Salto libero (anche dritto verso l'alto) e controllo in aria a destra e sinistra. |

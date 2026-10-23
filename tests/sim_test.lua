@@ -361,10 +361,10 @@ local MISSILE = { fire = { angle = math.rad(60), power = 0.6 } }
 local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
 local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
 
--- Primo attacco dopo 4 s: restano 26 s, cioè 13 Nucleo, ma non più di NUCLEO_MAX
+-- Primo attacco dopo 9 s: restano 16 s, cioè 3 Nucleo (mai oltre NUCLEO_MAX)
 local at = game.new(42, "isole")
 local ar = at.robots[1]
-run(at, 4 * 60 - 1)
+run(at, 9 * 60 - 1)
 at:pop_events()
 at:step(MISSILE)
 local gain = math.min(math.floor(at.timer / (60 * config.NUCLEO_SECONDS)), config.NUCLEO_MAX - config.STATS.start_nucleo)
