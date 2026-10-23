@@ -467,13 +467,10 @@ do
 	local seen4 = { q4.current }
 	for _ = 1, 4 do seen4[#seen4 + 1] = next_turn(q4) end
 	check(table.concat(seen4, " ") == "1 3 2 4 1", "i turni seguono l'ordine delle squadre (" .. table.concat(seen4, " ") .. ")")
-	-- chi è morto salta il turno; finisce quando resta una squadra sola
+	-- chi muore ricomincia a fine turno e non perde il suo turno
 	q4:kill(q4.robots[3])
-	check(next_turn(q4) == 2, "il robot morto salta il turno")
-	check(q4.phase ~= "over", "con un robot per squadra la partita continua")
-	q4:kill(q4.robots[4])
-	next_turn(q4)
-	check(q4.phase == "over" and q4.winner == 1, "resta una squadra sola: vince la squadra 1")
+	check(next_turn(q4) == 3 and not q4.robots[3].dead and q4.robots[3].hp == q4.robots[3].max_hp,
+		"il robot morto ricomincia con la vita piena e gioca il suo turno")
 
 	-- Tutti contro tutti: quattro squadre da uno, turni nell'ordine di arrivo
 	local ffa = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
@@ -504,12 +501,66 @@ for _, map in ipairs(maps.order) do
 	check(same, map .. ": stesso seed e stessi input danno lo stesso risultato")
 end
 
--- Una partita finisce
-local g3 = game.new(3, "isole")
-g3.robots[2].hp = 1
-g3:explode(g3.robots[2].x, g3.robots[2].y + 8)
-run(g3, game.TURN_TICKS + 600)
-check(g3.phase == "over" and g3.winner == 1, "la partita finisce e vince il giocatore 1")
+-- Punti, uccisioni e respawn -------------------------------------------------------
+do
+	-- uccisione a colpi: punti del danno e dell'uccisione a chi colpisce, meno a chi muore
+	local g3 = game.new(3, "isole")
+	run(g3, 60)
+	local a, b = g3.robots[1], g3.robots[2]
+	b.hp = 10
+	g3:pop_events()
+	g3:explode(b.x, b.y + 8, 1)
+	local death
+	for _, e in ipairs(g3:pop_events()) do if e.type == "death" then death = e end end
+	check(b.dead and death and death.by == 1 and not death.env, "l'uccisione va a chi ha colpito")
+	check(a.kills == 1 and a.points == 10 * config.SCORE.damage + config.SCORE.kill and b.points == config.SCORE.death,
+		"punti: danno e uccisione a chi colpisce (" .. a.points .. "), " .. config.SCORE.death .. " a chi muore")
+	-- a fine turno ricomincia in un punto a caso, lontano dagli altri
+	local resp
+	for _ = 1, game.TURN_TICKS + 900 do
+		g3:step()
+		for _, e in ipairs(g3:pop_events()) do if e.type == "respawn" then resp = e end end
+		if g3.current == 2 then break end
+	end
+	check(resp and not b.dead and b.hp == b.max_hp and math.abs(b.x - a.x) >= config.RESPAWN_DISTANCE,
+		"alla morte si ricomincia con la vita piena, lontano dagli altri")
+	check(g3.phase == "aim" and g3.current == 2, "e si gioca il proprio turno")
+
+	-- uccisione ambientale: chi colpisce un robot che poi cade fuori dalla mappa
+	-- prende anche il bonus; senza colpi recenti nessuno prende niente
+	local ge = game.new(3, "isole")
+	run(ge, 60)
+	local ea, eb = ge.robots[1], ge.robots[2]
+	ge:hurt(eb, 5, ea)
+	eb.x, eb.y = -40, 300
+	ge:step()
+	check(eb.dead and ea.env_kills == 1 and eb.falls == 1, "chi butta fuori dalla mappa fa un'uccisione ambientale")
+	check(ea.points == 5 + config.SCORE.kill + config.SCORE.env_kill, "che vale più di un'uccisione a colpi (" .. ea.points .. ")")
+	local gf = game.new(3, "isole")
+	run(gf, 60)
+	gf:hurt(gf.robots[2], 5, gf.robots[1])
+	gf.tick = gf.tick + config.KILL_CREDIT_SECONDS * 60 + 1
+	gf:kill(gf.robots[2], "fell")
+	check(gf.robots[1].kills == 0, "una caduta molto dopo il colpo non conta come uccisione")
+
+	-- colpire chi è primo vale di più
+	local gl = game.new(3, "isole", { players = config.MODES.ffa })
+	gl.robots[3].points = 100
+	gl:hurt(gl.robots[3], 10, gl.robots[1])
+	gl:hurt(gl.robots[4], 10, gl.robots[2])
+	check(gl.robots[1].points == 10 * config.SCORE.leader and gl.robots[2].points == 10, "colpire il primo vale di più")
+
+	-- nel 2 contro 2 il danno al compagno non dà punti, e i punti si sommano per squadra
+	local gt = game.new(3, "isole", { players = config.MODES["2v2"] })
+	gt:hurt(gt.robots[3], 10, gt.robots[1])
+	check(gt.robots[1].points == 0, "colpire il compagno non dà punti")
+	gt.robots[2].points, gt.robots[3].points, gt.robots[4].points = 30, 20, 0
+	local res = gt:results()
+	check(res.mode == "2v2" and res.winner == 2 and res.ranking[1].robot == 2 and res.ranking[2].robot == 4
+		and res.ranking[2].place == 1 and res.ranking[3].place == 2, "risultati: classifica per punti di squadra")
+	gt.robots[3].points = 30
+	check(gt:results().winner == nil, "squadre pari: pareggio")
+end
 
 -- Il fendente resta nella direzione di partenza anche se il robot si gira
 local g5 = game.new(7, "isole")
@@ -537,23 +588,16 @@ check(t6.x == tx6 and t6.y == ty6 and t6.grounded, "la spada non sposta l'avvers
 
 -- Partita a tempo: dopo 5 minuti finisce e vince chi ha più vita
 local g7 = game.new(42, "isole")
-g7.robots[1].hp = 60
-g7.robots[2].hp = 80
+g7.robots[2].points = 10
 local ticks7 = 0
 while g7.phase ~= "over" and ticks7 < game.MATCH_TICKS + 2000 do
 	g7:step({})
 	ticks7 = ticks7 + 1
 end
 check(g7.phase == "over" and ticks7 >= game.MATCH_TICKS, "la partita finisce allo scadere dei 5 minuti")
-check(g7.winner == 2, "a tempo scaduto vince chi ha più vita")
+check(g7.winner == 2, "a tempo scaduto vince chi ha più punti")
 check(ticks7 < game.MATCH_TICKS + game.TURN_TICKS, "il turno in corso si chiude allo scadere")
 
--- A parità di vita vince chi ha inflitto più danni, altrimenti pareggio
-local g8 = game.new(42, "isole")
-g8.robots[1].dealt = 10
-check(g8:ranking() == 1 and g8.podium[1] == 1 and g8.podium[2] == 2, "a parità di vita conta il danno inflitto")
-g8.robots[1].dealt = 0
-check(g8:ranking() == nil, "pari in tutto è pareggio")
 
 -- Il fendente non è lineare: prima torna un po' indietro, poi accelera fino alla fine
 local a0, a1 = game.sword_angle(0), game.sword_angle(game.SWORD_TICKS * 0.3)

@@ -31,6 +31,22 @@ C.NUCLEO_MAX = 5
 -- al primo turno di ogni robot si può fare un solo teletrasporto
 C.FIRST_TURN_TELEPORTS = 1
 
+-- Punti partita (strategia 7 del documento): oltre alle uccisioni contano il
+-- danno, le uccisioni ambientali e i colpi a chi è primo. Vince la squadra con
+-- più punti allo scadere. Scelta nostra sui valori.
+C.SCORE = {
+	damage = 1,       -- per ogni punto di vita tolto a un avversario
+	kill = 50,        -- uccisione
+	env_kill = 50,    -- in più se è ambientale (fuori dalla mappa o caduta)
+	death = -20,      -- per chi muore
+	leader = 1.5,     -- moltiplicatore se il colpito è il primo in classifica
+}
+-- l'uccisione va a chi ha colpito per ultimo, se è stato entro questi secondi
+C.KILL_CREDIT_SECONDS = 10
+-- Alla morte si ricomincia a fine turno, con la vita piena, in un punto a caso
+-- della superficie ad almeno questa distanza (in pixel) dagli altri robot
+C.RESPAWN_DISTANCE = 160
+
 -- Statistiche di ogni robot che non sono fisica. Le modificano l'albero di
 -- abilità e l'equipaggiamento (opts.players[i].stats in game.new);
 -- corsa, salto e velocità in aria vengono dal profilo di fisica.
