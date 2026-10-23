@@ -692,6 +692,50 @@ do
 	check(fp[1].pick == fp[4].pick, "nel tutti contro tutti i doppioni vanno bene")
 end
 
+-- Salto in aria, scudo col Nucleo, Torneo -----------------------------------------
+do
+	-- salto in aria: con air_jumps, premendo di nuovo in volo, costa Nucleo
+	local q = game.new(42, "isole", { players = { { team = 1, stats = { air_jumps = 1 } }, { team = 2 } } })
+	run(q, 60)
+	local r = q.robots[1]
+	r.nucleo = 3
+	q:step({ jump = true })
+	run(q, 10, { jump = true })
+	check(r.nucleo == 3, "tenendo premuto il salto non si salta in aria")
+	run(q, 2)
+	local vy0 = r.vy
+	q:step({ jump = true })
+	check(r.vy > vy0 and r.nucleo == 3 - r.stats.air_jump_cost, "premendo di nuovo in aria si risalta e si paga il Nucleo")
+	run(q, 2)
+	q:step({ jump = true })
+	check(r.nucleo == 3 - r.stats.air_jump_cost, "un solo salto in aria con air_jumps 1")
+	local n = game.new(42, "isole")
+	run(n, 60)
+	local nr = n.robots[1]
+	nr.nucleo = 3
+	n:step({ jump = true })
+	run(n, 12)
+	n:step({ jump = true })
+	check(nr.nucleo == 3, "senza air_jumps niente salto in aria")
+
+	-- scudo: senza scudi delle casse si compra col Nucleo
+	local s = game.new(42, "isole")
+	run(s, 30)
+	local sr = s.robots[1]
+	sr.nucleo = sr.stats.shield_cost - 1
+	check(not s:can_use("shield"), "senza Nucleo abbastanza niente scudo")
+	sr.nucleo = sr.stats.shield_cost
+	s:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
+	check(sr.shield == config.SHIELD.hp and sr.nucleo == 0, "lo scudo si compra col Nucleo")
+
+	-- Torneo: le statistiche di albero e equipaggiamento non contano, l'arma scelta sì
+	local custom = { { team = 1, stats = { max_hp = 300, walk_speed = 999 }, pick = "shards" }, { team = 2 } }
+	local t = game.new(42, "isole", { players = custom, normalize = true })
+	check(t.robots[1].max_hp == config.STATS.max_hp and t.robots[1].stats.walk_speed == t.robots[2].stats.walk_speed,
+		"nel Torneo tutti hanno le statistiche di base")
+	check(t.robots[1].ammo.shards == config.DRAFT_SHOTS and t:results().normalized, "nel Torneo resta l'arma scelta")
+end
+
 -- Determinismo: stesso seed, stessi input, stesso risultato
 local function play(seed, map)
 	local p = game.new(seed, map)

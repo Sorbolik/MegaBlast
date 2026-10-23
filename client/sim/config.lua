@@ -111,6 +111,9 @@ C.STATS = {
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata
+	shield_cost = 3,         -- Nucleo per uno scudo, quando non se ne ha uno delle casse
+	air_jumps = 0,           -- salti in aria prima di toccare terra (ramo Mobilità, set Corvo)
+	air_jump_cost = 1,       -- Nucleo per ogni salto in aria
 	burning_blasts = 0,      -- 1: missile e Uovo bruciano chi colpiscono (set Fornace)
 	status_turns = 1,        -- per quanti turni dura un effetto di stato dato da questo robot
 }

@@ -1001,6 +1001,9 @@ end
 local function slot_have(rb, w)
 	if w == "parachute" then
 		return rb.parachute ~= nil or rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost
+	elseif w == "shield" then
+		-- lo scudo si compra anche col Nucleo
+		return rb.ammo.shield > 0 or rb.nucleo >= rb.stats.shield_cost
 	end
 	return game.has_weapon(rb, w)
 end
