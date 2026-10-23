@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -11,12 +13,21 @@ import (
 	"github.com/coder/websocket"
 )
 
-func TestSimFromEmbeddedLua(t *testing.T) {
-	sim, err := NewSim(42, "isole")
+func newTestSim(t testing.TB, seed int64, mapID string) *Sim {
+	e, err := newEngine()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer sim.Close()
+	t.Cleanup(e.L.Close)
+	sim, err := e.NewSim(seed, mapID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return sim
+}
+
+func TestSimFromEmbeddedLua(t *testing.T) {
+	sim := newTestSim(t, 42, "isole")
 	for i := 0; i < 120; i++ {
 		if err := sim.Step(Input{}); err != nil {
 			t.Fatal(err)
@@ -31,7 +42,7 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 			G    bool `json:"g"`
 		} `json:"r"`
 	}
-	if err := json.Unmarshal([]byte(sim.Snapshot()), &st); err != nil {
+	if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
 		t.Fatalf("snapshot non è JSON valido: %v\n%s", err, sim.Snapshot())
 	}
 	if st.Phase != "aim" || st.Cur != 1 || len(st.R) != 2 || !st.R[0].G || st.R[0].HP != 100 {
@@ -45,7 +56,7 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 		sim.Step(Input{})
 		for _, e := range sim.Events() {
 			var ev map[string]any
-			if err := json.Unmarshal([]byte(e), &ev); err != nil {
+			if err := json.Unmarshal(e, &ev); err != nil {
 				t.Fatalf("evento non è JSON valido: %v\n%s", err, e)
 			}
 			if ev["type"] == "explosion" || ev["type"] == "miss" {
@@ -58,10 +69,53 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 	}
 }
 
+// Uno stato Lua riusato deve dare la stessa partita di uno nuovo: la copia
+// della mappa in net.lua non deve cambiare niente.
+func TestEngineReuseIsDeterministic(t *testing.T) {
+	play := func(sim *Sim) []byte {
+		for i := 0; i < 300; i++ {
+			in := Input{Right: i < 100}
+			if i == 150 {
+				in = Input{Fire: true, Angle: 0.4, Power: 0.8}
+			}
+			if err := sim.Step(in); err != nil {
+				t.Fatal(err)
+			}
+			sim.Events()
+		}
+		return sim.Snapshot()
+	}
+	fresh := play(newTestSim(t, 7, "forgia"))
+	e, err := newEngine()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.L.Close()
+	for round := 0; round < 3; round++ {
+		sim, err := e.NewSim(7, "forgia")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := play(sim); !sameJSON(got, fresh) {
+			t.Fatalf("partita %d sullo stato riusato diversa:\n%s\n%s", round, got, fresh)
+		}
+	}
+}
+
+// sameJSON confronta due messaggi: l'ordine delle chiavi non conta.
+func sameJSON(a, b []byte) bool {
+	var x, y any
+	return json.Unmarshal(a, &x) == nil && json.Unmarshal(b, &y) == nil && reflect.DeepEqual(x, y)
+}
+
+// testClient legge sempre, come un client vero: chi non legge viene
+// disconnesso dal server quando la sua coda si riempie.
 type testClient struct {
 	t    *testing.T
 	conn *websocket.Conn
 	ctx  context.Context
+	msgs chan []byte // chiuso quando la connessione cade
+	err  error
 }
 
 func dial(t *testing.T, ctx context.Context, url string) *testClient {
@@ -69,22 +123,40 @@ func dial(t *testing.T, ctx context.Context, url string) *testClient {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &testClient{t: t, conn: conn, ctx: ctx}
+	c := &testClient{t: t, conn: conn, ctx: ctx, msgs: make(chan []byte, 1<<16)}
+	go func() {
+		defer close(c.msgs)
+		for {
+			_, data, err := conn.Read(ctx)
+			if err != nil {
+				c.err = err
+				return
+			}
+			c.msgs <- data
+		}
+	}()
+	return c
 }
 
 // waitFor legge messaggi finché uno contiene want.
 func (c *testClient) waitFor(want string) map[string]any {
-	for {
-		_, data, err := c.conn.Read(c.ctx)
-		if err != nil {
-			c.t.Fatalf("in attesa di %q: %v", want, err)
-		}
+	c.t.Helper()
+	for data := range c.msgs {
 		if strings.Contains(string(data), want) {
 			var m map[string]any
 			json.Unmarshal(data, &m)
 			return m
 		}
 	}
+	c.t.Fatalf("in attesa di %q: %v", want, c.err)
+	return nil
+}
+
+// closed aspetta che il server chiuda la connessione.
+func (c *testClient) closed() bool {
+	for range c.msgs {
+	}
+	return c.err != nil
 }
 
 func (c *testClient) send(msg string) {
@@ -93,17 +165,50 @@ func (c *testClient) send(msg string) {
 	}
 }
 
+func testServer(t *testing.T) string {
+	cfg := DefaultConfig()
+	cfg.ReconnectTicks = tickRate / 2 // mezzo secondo per tornare, per non far durare troppo le prove
+	srv := httptest.NewServer(NewServer(cfg).Handler())
+	t.Cleanup(srv.Close)
+	return "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
+}
+
+func TestHelloWrongVersion(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c := dial(t, ctx, url)
+	c.send(`{"t":"hello","v":1,"mode":"1v1"}`)
+	if m := c.waitFor(`"error"`); m["e"] != "version" || m["v"].(float64) != protocolVersion {
+		t.Fatalf("risposta inattesa: %v", m)
+	}
+	if !c.closed() {
+		t.Fatal("la connessione doveva chiudersi")
+	}
+}
+
+func TestResumeUnknownToken(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c := dial(t, ctx, url)
+	c.send(`{"t":"hello","v":2,"tok":"n1.inventato"}`)
+	if m := c.waitFor(`"error"`); m["e"] != "expired" || !c.closed() {
+		t.Fatalf("risposta inattesa: %v", m)
+	}
+}
+
 func TestOnlineMatch(t *testing.T) {
-	lobby := &Lobby{ready: map[*Player]chan struct{}{}}
-	srv := httptest.NewServer(httpHandler(lobby))
-	defer srv.Close()
-	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
+	url := testServer(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
+	hello := `{"t":"hello","v":2,"mode":"1v1"}`
 	a := dial(t, ctx, url)
+	a.send(hello)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
+	b.send(hello)
 	sa := a.waitFor(`"start"`)
 	sb := b.waitFor(`"start"`)
 	if sa["you"].(float64) != 1 || sb["you"].(float64) != 2 || sa["seed"] != sb["seed"] {
@@ -152,7 +257,40 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatalf("il turno non passa al giocatore 2: %v", turn)
 	}
 
-	// Se un giocatore esce, l'altro viene avvisato
-	a.conn.Close(websocket.StatusNormalClosure, "")
-	b.waitFor(`"left"`)
+	explosions := 0
+	for st := b.waitFor(`"state"`); st["cur"].(float64) != 2; st = b.waitFor(`"state"`) {
+	}
+	b.send(`{"t":"fire","a":2.2,"p":0.7}`)
+	for {
+		ev := b.waitFor(`"ev"`)
+		if ev["type"] == "explosion" {
+			explosions++
+		}
+		if ev["type"] == "turn" {
+			break
+		}
+	}
+
+	// Chi cade può tornare col gettone: riceve di nuovo la partita e gli scavi
+	a.conn.CloseNow()
+	if m := b.waitFor(`"away"`); m["robot"].(float64) != 1 {
+		t.Fatalf("away inatteso: %v", m)
+	}
+	a = dial(t, ctx, url)
+	a.send(fmt.Sprintf(`{"t":"hello","v":2,"tok":%q}`, sa["tok"]))
+	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
+		t.Fatalf("ripresa inattesa: %v", m)
+	}
+	if m := a.waitFor(`"sync"`); len(m["x"].([]any)) < explosions || explosions == 0 {
+		t.Fatalf("scavi mancanti (%d esplosioni): %v", explosions, m)
+	}
+	a.waitFor(`"state"`)
+	b.waitFor(`"back"`)
+
+	// Se non torna in tempo, l'altro viene avvisato e la partita finisce
+	a.conn.CloseNow()
+	b.waitFor(`"away"`)
+	if m := b.waitFor(`"left"`); m["robot"].(float64) != 1 {
+		t.Fatalf("left inatteso: %v", m)
+	}
 }

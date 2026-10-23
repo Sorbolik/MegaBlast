@@ -109,8 +109,9 @@ Ce n'è una sola: [extension-websocket](https://github.com/defold/extension-webs
 
 ### Struttura
 
-- **Lobby e matchmaking**: una coda in memoria. Quando ci sono due giocatori in attesa si crea una partita.
-- **Partita**: una goroutine con il proprio stato Lua (gopher-lua). Tiene il timer del turno, riceve gli input del giocatore di turno, li fa girare nella simulazione e trasmette il risultato a entrambi.
+- **Lobby e matchmaking**: una coda in memoria per modalità. Quando una coda ha abbastanza giocatori si crea una partita.
+- **Partita (stanza)**: un proprio stato Lua (gopher-lua). Le stanze girano su un worker per core che le fa avanzare tutte a ogni tick: niente lock nel ciclo di gioco.
+- Architettura, riconnessione, numeri di carico e come crescere su più server: [server.md](server.md).
 - **Persistenza**: nessuna per l'MVP, perché le partite vivono in memoria. Quando serviranno account e classifiche si aggiunge SQLite: un file, zero amministrazione.
 
 ### Dipendenze del server
@@ -128,14 +129,18 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 
 | Messaggio | Direzione | Contenuto |
 |---|---|---|
+| `{"t":"hello","v":2,"mode":"1v1"}` | C → S | primo messaggio: versione del protocollo e modalità (o `"tok"` per tornare in partita) |
+| `{"t":"error","e":"version"}` | S → C | errore: `version` (aggiorna il gioco), `expired` (partita finita), `draining` (server in spegnimento) |
 | `{"t":"wait"}` | S → C | sei in attesa di un avversario |
-| `{"t":"start","seed":…,"map":"isole","you":1}` | S → C | la partita parte: mappa, seed e quale robot sei |
+| `{"t":"start","seed":…,"map":"forgia","you":1,"tok":…,"resume":false}` | S → C | la partita parte: mappa, seed, quale robot sei e il gettone per tornare se cadi |
+| `{"t":"sync","x":[[x,y,r],…]}` | S → C | a chi torna: gli scavi fatti finora nel terreno |
 | `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano) |
 | `{"t":"jump"}` | C → S | salto |
 | `{"t":"fire","a":1.2,"p":0.7}` | C → S | sparo: angolo in radianti e potenza da 0 a 1 |
 | `{"t":"state",…}` | S → C | fase, turno, timer, secondi di ritirata, robot e missile (20 al secondo) |
 | `{"t":"ev","type":…}` | S → C | eventi: `turn`, `fire`, `explosion` (x, y, raggio), `damage`, `death`, `miss`, `over` |
-| `{"t":"left"}` | S → C | l'avversario si è disconnesso |
+| `{"t":"away","robot":2}` / `{"t":"back","robot":2}` | S → C | un giocatore ha perso la connessione / è tornato |
+| `{"t":"left","robot":2}` | S → C | non è tornato in tempo (20 s): è fuori |
 
 ### Flusso di un turno
 
@@ -155,7 +160,7 @@ Durante un turno di movimento il traffico è di pochi KB.
 ```
 client/        progetto Defold (game.project, main/, input/)
 client/sim/    simulazione condivisa in Lua puro (usata da client e server)
-server/        server Go (main.go, match.go, sim.go, net.lua)
+server/        server Go (server.go, lobby.go, room.go, sched.go, sim.go, terreno.go, net.lua)
 go.mod         modulo Go (alla radice, così il server incorpora client/sim/)
 tests/         test della simulazione
 docs/          design e note di sviluppo

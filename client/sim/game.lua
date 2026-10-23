@@ -317,24 +317,12 @@ function M:terrain_collides(x, y)
 		local cy1 = math.floor((y + M.ROBOT_H - 0.01) / c)
 		for cy = cy0, cy1 do
 			local hw = capsule_half(y, cy * c, cy * c + c)
-			if hw then
-				for cx = math.floor((x - hw) / c), math.floor((x + hw) / c) do
-					if t:get(cx, cy) ~= 0 then return true end
-				end
-			end
+			if hw and t:any_solid(math.floor((x - hw) / c), math.floor((x + hw) / c), cy, cy) then return true end
 		end
 		return false
 	end
-	local cx0 = math.floor((x - M.ROBOT_HALF_W) / c)
-	local cx1 = math.floor((x + M.ROBOT_HALF_W) / c)
-	local cy0 = math.floor(y / c)
-	local cy1 = math.floor((y + M.ROBOT_H - 0.01) / c)
-	for cy = cy0, cy1 do
-		for cx = cx0, cx1 do
-			if t:get(cx, cy) ~= 0 then return true end
-		end
-	end
-	return false
+	return t:any_solid(math.floor((x - M.ROBOT_HALF_W) / c), math.floor((x + M.ROBOT_HALF_W) / c),
+		math.floor(y / c), math.floor((y + M.ROBOT_H - 0.01) / c))
 end
 
 -- Sposta il robot di dx in orizzontale, salendo i gradini piccoli. true se ci riesce.

@@ -29,6 +29,25 @@ function M:set(cx, cy, v)
 	self.data[cy * self.w + cx + 1] = v
 end
 
+-- C'è terreno nel rettangolo di celle [cx0, cx1] x [cy0, cy1]? Come get, fuori
+-- dalla griglia è vuoto. È il controllo più usato della simulazione (le
+-- collisioni dei robot): legge data direttamente invece di chiamare get cella
+-- per cella, molto più veloce sia in LuaJIT sia sul server (gopher-lua).
+function M:any_solid(cx0, cx1, cy0, cy1)
+	local w, data = self.w, self.data
+	if cx0 < 0 then cx0 = 0 end
+	if cy0 < 0 then cy0 = 0 end
+	if cx1 > w - 1 then cx1 = w - 1 end
+	if cy1 > self.h - 1 then cy1 = self.h - 1 end
+	for cy = cy0, cy1 do
+		local row = cy * w + 1
+		for i = row + cx0, row + cx1 do
+			if data[i] ~= 0 then return true end
+		end
+	end
+	return false
+end
+
 -- C'è terreno (di qualsiasi tipo) nel punto del mondo (x, y)?
 function M:solid(x, y)
 	local c = self.cell
