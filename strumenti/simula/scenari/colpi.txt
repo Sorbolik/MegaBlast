@@ -1,6 +1,7 @@
 # Game feel dei colpi (fase 5): si parte con 5 punti di vita. Rosso spara il
 # missile dritto in alto e gli ricade addosso: hit-stop, lampo, spinta, scossa
 # dello schermo, detriti, e la morte (la testa vola via, il mantello si accascia).
+# Poi a fine turno ricomincia in un punto a caso con la vita piena.
 imposta prova_vita 5
 
 aspetta 1
@@ -18,6 +19,6 @@ aspetta 0.2
 zoom 04_morte_testa 2
 aspetta 0.35
 zoom 05_morte_mantello 2
-aspetta_evento over 5
+aspetta_evento respawn 20
 aspetta 1
-foto 06_fine
+foto 06_ricomincia

@@ -25,23 +25,31 @@ function N.over(g)
 	return g.phase == "over"
 end
 
-local function encode(t)
+-- JSON di una tabella: chiavi in ordine, le tabelle con [1] diventano liste
+-- (i risultati della partita nell'evento "over" sono annidati)
+local encode
+local function value(v)
+	if type(v) == "number" then
+		return v == math.floor(v) and string.format("%d", v) or string.format("%.2f", v)
+	elseif type(v) == "boolean" then
+		return tostring(v)
+	elseif type(v) == "table" then
+		if v[1] ~= nil then
+			local items = {}
+			for i, x in ipairs(v) do items[i] = value(x) end
+			return "[" .. table.concat(items, ",") .. "]"
+		end
+		return encode(v)
+	end
+	return string.format("%q", tostring(v))
+end
+
+encode = function(t)
 	local keys = {}
 	for k in pairs(t) do keys[#keys + 1] = k end
 	table.sort(keys)
 	local parts = {}
-	for _, k in ipairs(keys) do
-		local v = t[k]
-		local s
-		if type(v) == "number" then
-			s = v == math.floor(v) and string.format("%d", v) or string.format("%.2f", v)
-		elseif type(v) == "boolean" then
-			s = tostring(v)
-		else
-			s = string.format("%q", tostring(v))
-		end
-		parts[#parts + 1] = string.format("%q:%s", k, s)
-	end
+	for _, k in ipairs(keys) do parts[#parts + 1] = string.format("%q:%s", k, value(t[k])) end
 	return "{" .. table.concat(parts, ",") .. "}"
 end
 
@@ -51,9 +59,9 @@ function N.snapshot(g)
 		-- s: tick del fendente in corso (0 se il robot non sta colpendo), sd: sua direzione
 		-- pu, pd: lo stesso per il Pugno del Titano; ag, as, ap: colpi di Uovo, Schegge e Pugno
 		-- sb, pb: angolo di mira del fendente e del pugno (servono col modello "blastron")
-		-- n: Nucleo, ft: teletrasporti gratis rimasti, mh: vita massima, tu: turni giocati
+		-- n: Nucleo, ft: teletrasporti gratis rimasti, mh: vita massima, tu: turni giocati, pt: punti
 		robots[i] = encode({ x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
-			n = rb.nucleo, ft = rb.free_teleports, mh = rb.max_hp, tu = rb.turns,
+			n = rb.nucleo, ft = rb.free_teleports, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
 			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch })

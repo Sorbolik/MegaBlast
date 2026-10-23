@@ -19,7 +19,8 @@ local profilo = require "menu.profilo"
 
 local M = {}
 
--- gradini da sinistra a destra: 2°, 1°, 3°, 4°
+-- gradini da sinistra a destra, per posizione in classifica: 2°, 1°, 3°, 4°
+-- (nel 2 contro 2 i compagni hanno lo stesso posto: la coppia vincente sta in mezzo)
 M.ORDINE = { 2, 1, 3, 4 }
 M.ALTEZZA = { 170, 125, 95, 70 }   -- altezza di ogni posto
 M.LARGO, M.PASSO = 190, 205        -- larghezza dei gradini e distanza tra i centri
@@ -44,16 +45,19 @@ local function gradino(p, x, voce, i)
 	local c = ui.C
 	local g = p.giocatori[voce.robot] or { nome = "?", colore = c.TESTO }
 	local h = M.ALTEZZA[voce.place] or M.ALTEZZA[#M.ALTEZZA]
-	-- il gradino cresce dal basso: pivot in basso e scala verticale animata
-	local blocco = ui.pannello(x, M.BASE_Y, M.LARGO, h, p.radice)
-	gui.set_pivot(blocco, gui.PIVOT_S)
-	filo(0, h, M.LARGO, 4, g.colore, blocco)
-	ui.titolo(tostring(voce.place), 0, h - 42, 1.3, voce.place == 1 and c.BRACE or c.TESTO, blocco)
-	ui.testo(g.nome, 0, h - 82, 1, g.colore, blocco)
-	ui.testo(string.format("%d punti", voce.points or 0), 0, h - 106, 0.8, c.SPENTO, blocco)
-	gui.set_scale(blocco, vmath.vector3(1, 0.01, 1))
+	-- il gradino cresce dal basso: sta in un nodo vuoto alla base, che si allunga
+	local base = gui.new_box_node(vec(x, M.BASE_Y), vec(0, 0))
+	gui.set_visible(base, false)
+	gui.set_parent(base, p.radice)
+	local blocco = ui.pannello(0, h / 2, M.LARGO, h, base)
+	local cima = h / 2
+	filo(0, cima, M.LARGO, 4, g.colore, blocco)
+	ui.titolo(tostring(voce.place), 0, cima - 42, 1.3, voce.place == 1 and c.BRACE or c.TESTO, blocco)
+	ui.testo(g.nome, 0, cima - 82, 1, g.colore, blocco)
+	ui.testo(string.format("%d punti", voce.points or 0), 0, cima - 106, 0.8, c.SPENTO, blocco)
+	gui.set_scale(base, vmath.vector3(1, 0.01, 1))
 	local ritardo = (i - 1) * M.RITARDO
-	gui.animate(blocco, "scale.y", 1, gui.EASING_OUTBACK, M.SALITA, ritardo)
+	gui.animate(base, "scale.y", 1, gui.EASING_OUTBACK, M.SALITA, ritardo)
 
 	-- la Scoria cade sul gradino quando è salito
 	local posa = gui.new_box_node(vec(x, M.BASE_Y + h + 260), vec(0, 0))
@@ -69,21 +73,24 @@ local function gradino(p, x, voce, i)
 		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0 } }
 end
 
+-- results.winner: la squadra che vince, nil se pari
 local function titolo(p, results, primo)
 	local c = ui.C
 	local g = p.giocatori[primo.robot] or { nome = "?", colore = c.TESTO }
-	local scritta
-	if p.me then
-		scritta = primo.robot == p.me and "VITTORIA" or "SCONFITTA"
-		if results.mode == "2v2" then
-			for _, v in ipairs(results.ranking) do
-				if v.robot == p.me and v.team == primo.team then scritta = "VITTORIA" end
-			end
+	local scritta, colore = "PAREGGIO", c.TESTO
+	if results.winner and p.me then
+		local mia
+		for _, v in ipairs(results.ranking) do
+			if v.robot == p.me then mia = v.team end
 		end
-	else
-		scritta = "VINCE " .. string.upper(g.nome)
+		scritta = results.winner == mia and "VITTORIA" or "SCONFITTA"
+		colore = scritta == "VITTORIA" and c.BRACE or c.TESTO
+	elseif results.winner then
+		-- nel 2 contro 2 vince la squadra: il nome senza il numero del compagno
+		scritta = "VINCE " .. string.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome)
+		colore = g.colore
 	end
-	ui.titolo(scritta, 640, 660, 1.4, p.me and (scritta == "VITTORIA" and c.BRACE or c.TESTO) or g.colore, p.radice)
+	ui.titolo(scritta, 640, 660, 1.4, colore, p.radice)
 	ui.testo(MODI[results.mode] or "", 640, 618, 0.8, c.SPENTO, p.radice)
 end
 
@@ -125,10 +132,8 @@ function M.new(results, giocatori, me, guadagno_mio, prof)
 
 	-- gradini nell'ordine 2°, 1°, 3°, 4°, centrati per quanti sono
 	local fila = {}
-	for _, posto in ipairs(M.ORDINE) do
-		for _, v in ipairs(ranking) do
-			if v.place == posto and #fila < #ranking then fila[#fila + 1] = v end
-		end
+	for _, k in ipairs(M.ORDINE) do
+		if ranking[k] then fila[#fila + 1] = ranking[k] end
 	end
 	local x0 = 640 - (#fila - 1) * M.PASSO / 2
 	for i, v in ipairs(fila) do

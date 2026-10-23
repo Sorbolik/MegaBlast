@@ -273,6 +273,7 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.time_bar_bg, visible)
 	gui.set_enabled(self.time_bar, visible)
 	gui.set_enabled(self.nucleo_label, visible)
+	gui.set_enabled(self.score_label, visible)
 	gui.set_enabled(self.btn_zoom, visible)
 end
 
@@ -625,9 +626,21 @@ local function handle_event(self, e)
 			show_message(self, "Turno di " .. self.names[e.robot])
 		end
 	elseif e.type == "death" then
-		-- crolla e svanisce da solo
+		-- crolla e svanisce da solo; a fine turno ricomincia altrove
 		scoria.die(self.robots[e.robot].rig)
 		gui.set_enabled(self.robots[e.robot].hp, false)
+		if e.by then
+			local verbo = e.env and " butta giù " or " elimina "
+			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
+		end
+	elseif e.type == "respawn" then
+		scoria.set_enabled(self.robots[e.robot].rig, true)
+		gui.set_enabled(self.robots[e.robot].hp, true)
+		if self.mode == "online" then
+			self.snap[e.robot] = true
+		else
+			snap_robot(self, e.robot)
+		end
 	elseif e.type == "over" then
 		local text
 		if self.mode == "online" then
@@ -640,9 +653,9 @@ local function handle_event(self, e)
 		show_message(self, text, true)
 		self.fine_online = self.mode == "online"
 		self.mode = "ended"
-		-- dopo un attimo (o al primo tocco) il podio, se la sim manda i risultati
+		-- dopo un attimo (o al primo tocco) il podio coi risultati
 		self.risultati = e.results
-		self.podio_t = e.results and PODIO_ATTESA
+		self.podio_t = PODIO_ATTESA
 	end
 end
 
@@ -694,7 +707,7 @@ local function apply_state(self, s)
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
-		rb.nucleo, rb.free_teleports, rb.turns = r.n or 0, r.ft or 0, r.tu or 1
+		rb.nucleo, rb.free_teleports, rb.turns, rb.points = r.n or 0, r.ft or 0, r.tu or 1, r.pt or 0
 		rb.max_hp = r.mh or rb.max_hp
 		rb.swing = (r.s or 0) > 0 and r.s or nil
 		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
@@ -808,6 +821,9 @@ local function start_local(self)
 	players[1].stats = assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio))
 	opts.players = players
 	new_match(self, os.time(), nil, opts)
+	-- prova_durata N: la partita dura N secondi (scenari/podio.txt)
+	local durata = SIMULA and config_int("megablast.prova_durata", 0) or 0
+	if durata > 0 then self.g.match_left = durata * 60 end
 	self.mode = "local"
 	set_controls_visible(self, true)
 end
@@ -1304,6 +1320,19 @@ local function render(self, dt)
 		local blink = g.window > 0 and g:can_use("sword") and my_turn(self) and math.sin(self.clock * 12) > 0
 		gui.set_enabled(self.sword_glow, blink and self.slot_sword.have)
 	end
+	-- punti di ogni squadra, in alto a sinistra
+	local score = ""
+	for t = 1, #TEAM_NAMES do
+		local pts, any = 0, false
+		for _, rb in ipairs(g.robots) do
+			if rb.team == t then pts, any = pts + rb.points, true end
+		end
+		if any then score = score .. string.format("%s %d   ", TEAM_NAMES[t], math.floor(pts + 0.5)) end
+	end
+	if self.score_text ~= score then
+		gui.set_text(self.score_label, score)
+		self.score_text = score
+	end
 	local n = bar_robot(self)
 	local nucleo = n and n.nucleo or 0
 	if self.nucleo_n ~= nucleo then
@@ -1516,6 +1545,8 @@ function init(self)
 	self.time_bar = box(W / 2, TIME_BAR_Y, TIME_BAR_W, TIME_BAR_H, TIME_COLOR)
 	self.nucleo_label = label(W / 2 + TIME_BAR_W / 2 + 80, TIME_BAR_Y + 2, "NUCLEO 1", 0.9)
 	gui.set_color(self.nucleo_label, vmath.vector4(1, 0.75, 0.35, 1))
+	self.score_label = label(24, H - 28, "", 0.8)
+	gui.set_pivot(self.score_label, gui.PIVOT_W)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
 
 	-- zoom: vicino, medio, tutta la mappa (anche rotella e tasto Z)

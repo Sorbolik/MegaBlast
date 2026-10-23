@@ -293,7 +293,10 @@ function M.new(seed, map_id, opts)
 		g.robots[i] = {
 			id = i, team = p.team, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
 			vx = 0, vy = 0, grounded = false, knocked = false, facing = sp.x < M.WORLD_W / 2 and 1 or -1,
-			hp = opts.hp or st.max_hp, max_hp = st.max_hp, dead = false, dealt = 0,
+			hp = opts.hp or st.max_hp, max_hp = st.max_hp, dead = false,
+			-- per i punti e i risultati di fine partita
+			points = 0, damage = 0, kills = 0, env_kills = 0, deaths = 0, falls = 0,
+			attack_ticks = 0, attack_turns = 0, nucleo_gained = 0, nucleo_spent = 0, teleports = 0, crates = 0,
 			nucleo = st.start_nucleo,
 			free_teleports = st.free_teleports,
 			turns = 0,     -- turni giocati
@@ -432,11 +435,112 @@ local function walk(g, rb, dx)
 	if not step_x(g, rb, dx) then g:push(rb, dx) end
 end
 
+-- Punti partita ------------------------------------------------------------------
+-- Si guadagnano con il danno agli avversari, le uccisioni (di più quelle
+-- ambientali: caduta fuori dalla mappa o da troppo in alto) e colpendo chi è
+-- primo in classifica; morire ne toglie. Numeri in config.SCORE.
+
+function M:add_points(rb, n)
+	rb.points = rb.points + n
+end
+
+-- Chi ha più punti (solo se è uno solo e ne ha più di zero): colpirlo vale di più
+function M:leader()
+	local best, tie = nil, false
+	for _, rb in ipairs(self.robots) do
+		if not best or rb.points > best.points then
+			best, tie = rb, false
+		elseif rb.points == best.points then
+			tie = true
+		end
+	end
+	if best and not tie and best.points > 0 then return best end
+end
+
+local function enemies(a, b)
+	return a ~= b and a.team ~= b.team
+end
+
+-- Toglie amount punti di vita a rb. by è il robot che ha colpito (nil: nessuno,
+-- per esempio una caduta), reason va nell'evento "damage".
+function M:hurt(rb, amount, by, reason)
+	if rb.dead or amount <= 0 then return end
+	local mult = rb == self:leader() and C.SCORE.leader or 1
+	-- per i punti conta solo la vita che c'era davvero
+	local real = math.min(amount, rb.hp)
+	rb.hp = rb.hp - amount
+	self:emit({ type = "damage", robot = rb.id, amount = amount, reason = reason })
+	if by and by ~= rb then
+		rb.last_hit, rb.last_hit_tick = by.id, self.tick
+		if enemies(by, rb) then
+			by.damage = by.damage + real
+			self:add_points(by, real * C.SCORE.damage * mult)
+		end
+	end
+	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage") end
+end
+
+-- reason: "damage" (colpi), "fell" (fuori dalla mappa), "fall_damage" (caduta
+-- da troppo in alto). L'uccisione va all'ultimo che l'ha colpito, se è stato
+-- da poco (KILL_CREDIT_SECONDS): così buttare giù qualcuno conta.
 function M:kill(rb, reason)
 	if rb.dead then return end
+	local killer
+	if rb.last_hit and self.tick - rb.last_hit_tick <= C.KILL_CREDIT_SECONDS * 60 then
+		killer = self.robots[rb.last_hit]
+	end
+	local env = reason ~= "damage"
+	local mult = rb == self:leader() and C.SCORE.leader or 1
 	rb.dead = true
 	rb.hp = 0
-	self:emit({ type = "death", robot = rb.id, reason = reason })
+	rb.deaths = rb.deaths + 1
+	if reason == "fell" then rb.falls = rb.falls + 1 end
+	self:add_points(rb, C.SCORE.death)
+	local points = 0
+	if killer and enemies(killer, rb) then
+		killer.kills = killer.kills + 1
+		points = C.SCORE.kill * mult
+		if env then
+			killer.env_kills = killer.env_kills + 1
+			points = points + C.SCORE.env_kill * mult
+		end
+		self:add_points(killer, points)
+	end
+	rb.last_hit = nil
+	self:emit({ type = "death", robot = rb.id, reason = reason, by = killer and killer.id, env = env, points = points })
+end
+
+-- Alla morte si ricomincia con la vita piena in un punto a caso della mappa,
+-- lontano dagli altri. Nucleo e colpi delle armi restano.
+function M:respawn(rb)
+	local x, y = self:surface_spot(function(x, gy)
+		for _, o in ipairs(self.robots) do
+			if o ~= rb and not o.dead and math.abs(o.x - x) < C.RESPAWN_DISTANCE then return false end
+		end
+		return not self:robot_collides(x, gy, rb)
+	end)
+	if not x then
+		-- nessun punto lontano da tutti: il primo libero
+		x, y = self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
+	end
+	local sp = maps.get(self.map).spawns[1]
+	rb.x = x or sp.x
+	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
+	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
+	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
+	rb.hp, rb.dead = rb.max_hp, false
+	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
+end
+
+-- Un punto a caso sulla superficie della mappa (il terreno più alto sotto x)
+-- per cui ok(x, y) è vero, o nil. Usa il generatore della partita, così
+-- server e client trovano lo stesso punto.
+function M:surface_spot(ok)
+	for _ = 1, 40 do
+		local x = math.floor(self.rng:range(40, M.WORLD_W - 40))
+		local gy = self.terrain:ground_below(x, M.WORLD_H - 1)
+		if gy and gy < M.WORLD_H - 40 and ok(x, gy) then return x, gy end
+	end
 end
 
 -- Danno da caduta (solo se FALL_SAFE): conta dal punto più alto da cui è
@@ -449,9 +553,7 @@ function M:land(rb)
 	if drop <= 0 then return end
 	local dmg = math.floor(math.min(drop * M.FALL_DAMAGE, M.FALL_DAMAGE_MAX) + 0.5)
 	if dmg <= 0 then return end
-	rb.hp = rb.hp - dmg
-	self:emit({ type = "damage", robot = rb.id, amount = dmg, reason = "fall" })
-	if rb.hp <= 0 then self:kill(rb, "fall_damage") end
+	self:hurt(rb, dmg, nil, "fall")
 end
 
 -- active: è il robot di turno e può muoversi (riceve i comandi)
@@ -1031,13 +1133,10 @@ function M:update_swing(rb)
 end
 
 function M:sword_hit(rb, other)
-	other.hp = other.hp - M.SWORD_DAMAGE
-	rb.dealt = rb.dealt + M.SWORD_DAMAGE
-	self:emit({ type = "damage", robot = other.id, amount = M.SWORD_DAMAGE })
 	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
 	-- la spada fa solo danno: il bersaglio resta dov'è (in Blastron si ferma)
 	if M.SWORD_STOP then other.vx, other.vy = 0, 0 end
-	if other.hp <= 0 then self:kill(other, "damage") end
+	self:hurt(other, M.SWORD_DAMAGE, rb)
 end
 
 -- Colpi di mischia alla Blastron ---------------------------------------------------
@@ -1105,14 +1204,11 @@ function M:start_punch(angle)
 end
 
 function M:punch_hit(rb, other, dir)
-	other.hp = other.hp - M.PUNCH_DAMAGE
-	rb.dealt = rb.dealt + M.PUNCH_DAMAGE
-	self:emit({ type = "damage", robot = other.id, amount = M.PUNCH_DAMAGE })
 	self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
 	other.vx, other.vy = dir * M.PUNCH_PUSH, M.PUNCH_LAUNCH
 	other.fall_top = nil
 	other.grounded, other.knocked = false, true
-	if other.hp <= 0 then self:kill(other, "damage") end
+	self:hurt(other, M.PUNCH_DAMAGE, rb)
 end
 
 function M:update_punch(rb)
@@ -1160,28 +1256,24 @@ end
 function M:spawn_crate()
 	if #self.crates >= M.CRATE_MAX then return nil end
 	local weapon = M.CRATE_WEAPONS[1 + math.floor(self.rng:next() * #M.CRATE_WEAPONS)]
-	for _ = 1, 40 do
-		local x = math.floor(self.rng:range(40, M.WORLD_W - 40))
-		local gy = self.terrain:ground_below(x, M.WORLD_H - 1)
-		local ok = gy ~= nil and gy < M.WORLD_H - 40 and not self:robot_collides(x, gy)
-			and not self:crate_collides(x, gy) and not self:crate_collides(x, gy + M.CRATE_H)
-		if ok then
-			for _, rb in ipairs(self.robots) do
-				if not rb.dead and math.abs(rb.x - x) < 60 then ok = false end
-			end
-			for _, c in ipairs(self.crates) do
-				if math.abs(c.x - x) < 40 then ok = false end
-			end
+	local x, gy = self:surface_spot(function(x, gy)
+		if self:robot_collides(x, gy) or self:crate_collides(x, gy) or self:crate_collides(x, gy + M.CRATE_H) then
+			return false
 		end
-		if ok then
-			self.crate_id = self.crate_id + 1
-			local c = { id = self.crate_id, x = x, y = M.WORLD_H + 20, vy = 0, landed = false, weapon = weapon }
-			self.crates[#self.crates + 1] = c
-			self:emit({ type = "crate", id = c.id, x = x, y = gy })
-			return c
+		for _, rb in ipairs(self.robots) do
+			if not rb.dead and math.abs(rb.x - x) < 60 then return false end
 		end
-	end
-	return nil
+		for _, c in ipairs(self.crates) do
+			if math.abs(c.x - x) < 40 then return false end
+		end
+		return true
+	end)
+	if not x then return nil end
+	self.crate_id = self.crate_id + 1
+	local c = { id = self.crate_id, x = x, y = M.WORLD_H + 20, vy = 0, landed = false, weapon = weapon }
+	self.crates[#self.crates + 1] = c
+	self:emit({ type = "crate", id = c.id, x = x, y = gy })
+	return c
 end
 
 function M:update_crates()
@@ -1212,6 +1304,7 @@ function M:update_crates()
 				and math.abs(rb.x - c.x) <= M.ROBOT_HALF_W + M.CRATE_HALF_W
 				and rb.y < c.y + M.CRATE_H and rb.y + M.ROBOT_H > c.y then
 				rb.ammo[c.weapon] = rb.ammo[c.weapon] + 1
+				rb.crates = rb.crates + 1
 				self:emit({ type = "crate_pick", id = c.id, robot = rb.id, weapon = c.weapon })
 				taken = true
 			end
@@ -1303,9 +1396,6 @@ function M:explode(x, y, owner, blast)
 				local dmg = dmin + (blast.damage - dmin) * f
 				if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
 				dmg = math.floor(dmg + 0.5)
-				rb.hp = rb.hp - dmg
-				if owner and owner ~= rb.id then self.robots[owner].dealt = self.robots[owner].dealt + dmg end
-				self:emit({ type = "damage", robot = rb.id, amount = dmg })
 				if blastron then
 					-- la velocità viene sostituita; senza impulse, uno con la
 					-- stessa spinta massima del modello "centro"
@@ -1318,7 +1408,7 @@ function M:explode(x, y, owner, blast)
 				end
 				rb.grounded = false
 				rb.knocked = true
-				if rb.hp <= 0 then self:kill(rb, "damage") end
+				self:hurt(rb, dmg, owner and self.robots[owner])
 			end
 		end
 	end
@@ -1347,18 +1437,6 @@ function M:update_projectile()
 end
 
 -- Turni ------------------------------------------------------------------------
-
--- Quante squadre hanno ancora almeno un robot vivo, e una di quelle
-function M:teams_alive()
-	local seen, n, last = {}, 0, nil
-	for _, rb in ipairs(self.robots) do
-		if not rb.dead and not seen[rb.team] then
-			seen[rb.team] = true
-			n, last = n + 1, rb.team
-		end
-	end
-	return n, last
-end
 
 function M:start_turn(player)
 	self.current = player
@@ -1431,11 +1509,14 @@ function M:attack(weapon, fire)
 		end
 	end
 	if first then
+		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
+		rb.attack_turns = rb.attack_turns + 1
 		-- i secondi rimasti diventano Nucleo
 		local gain = math.floor(self.timer / (60 * C.NUCLEO_SECONDS))
 		gain = math.max(0, math.min(gain, C.NUCLEO_MAX - rb.nucleo))
 		if gain > 0 then
 			rb.nucleo = rb.nucleo + gain
+			rb.nucleo_gained = rb.nucleo_gained + gain
 			self:emit({ type = "nucleo", robot = rb.id, amount = gain, total = rb.nucleo })
 		end
 		self.window = math.min(self.timer, M.SECOND_ATTACK_TICKS)
@@ -1443,48 +1524,59 @@ function M:attack(weapon, fire)
 	if self.used.weapon and self.used.sword then self:start_reposition() end
 end
 
--- Classifica a tempo scaduto: più vita rimasta, a parità più danni inflitti.
--- Riempie self.podium (robot vivi) e restituisce la squadra vincitrice, o nil
--- se i primi due di squadre diverse sono pari in tutto.
-function M:ranking()
-	local order = {}
-	for _, rb in ipairs(self.robots) do
-		if not rb.dead then order[#order + 1] = rb end
-	end
-	table.sort(order, function(a, b)
-		if a.hp ~= b.hp then return a.hp > b.hp end
-		if a.dealt ~= b.dealt then return a.dealt > b.dealt end
+-- Risultati della partita, anche a metà: la classifica per punti della
+-- squadra (a parità, dei robot). place è il posto della squadra: i compagni
+-- hanno lo stesso, chi ha gli stessi punti pure.
+-- { mode, winner = squadra o nil se pari, ranking = { { robot, team, place, points, ... } } }
+function M:results()
+	local team_points = {}
+	for _, rb in ipairs(self.robots) do team_points[rb.team] = (team_points[rb.team] or 0) + rb.points end
+	local list = {}
+	for i, rb in ipairs(self.robots) do list[i] = rb end
+	table.sort(list, function(a, b)
+		local ta, tb = team_points[a.team], team_points[b.team]
+		if ta ~= tb then return ta > tb end
+		if a.team ~= b.team then return a.team < b.team end
+		if a.points ~= b.points then return a.points > b.points end
 		return a.id < b.id
 	end)
-	self.podium = {}
-	for i, rb in ipairs(order) do self.podium[i] = rb.id end
-	local a, b = order[1], order[2]
-	if a and b and a.team ~= b.team and a.hp == b.hp and a.dealt == b.dealt then return nil end
-	return a and a.team
+	local ranking, place, last_team = {}, 0, nil
+	for i, rb in ipairs(list) do
+		if rb.team ~= last_team then
+			-- squadra nuova: scende di posto solo se ha meno punti della precedente
+			if not last_team or team_points[rb.team] < team_points[last_team] then place = place + 1 end
+			last_team = rb.team
+		end
+		ranking[i] = {
+			robot = rb.id, team = rb.team, place = place, points = math.floor(rb.points + 0.5), alive = not rb.dead,
+			damage = rb.damage, kills = rb.kills, env_kills = rb.env_kills, deaths = rb.deaths, falls = rb.falls,
+			turns = rb.turns, teleports = rb.teleports, crates = rb.crates,
+			avg_attack_secs = rb.attack_turns > 0 and math.floor(rb.attack_ticks / rb.attack_turns / 6 + 0.5) / 10 or 0,
+			nucleo_gained = rb.nucleo_gained, nucleo_spent = rb.nucleo_spent,
+		}
+	end
+	local first, second = ranking[1], nil
+	for _, r in ipairs(ranking) do
+		if r.team ~= first.team then second = r break end
+	end
+	local winner = first.team
+	if second and second.place == first.place then winner = nil end
+	return { mode = self.mode, winner = winner, ranking = ranking }
 end
 
--- winner è la squadra che vince (in 1 contro 1 e tutti contro tutti è l'id del robot)
+-- La partita finisce solo allo scadere del tempo: chi muore ricomincia.
 function M:end_turn()
-	local teams, last = self:teams_alive()
-	if teams <= 1 then
-		self.phase = "over"
-		self.winner = last
-		self:emit({ type = "over", winner = self.winner })
-		return
-	end
 	if self.match_left <= 0 then
-		-- tempo scaduto: vince chi ha più vita
 		self.phase = "over"
-		self.winner = self:ranking()
-		self:emit({ type = "over", winner = self.winner, reason = "time" })
+		local res = self:results()
+		self.winner = res.winner
+		self:emit({ type = "over", winner = res.winner, reason = "time", results = res })
 		return
 	end
-	-- il prossimo vivo nell'ordine dei turni
-	local n = #self.order
-	for _ = 1, n do
-		self.order_pos = self.order_pos % n + 1
-		if not self.robots[self.order[self.order_pos]].dead then break end
+	for _, rb in ipairs(self.robots) do
+		if rb.dead then self:respawn(rb) end
 	end
+	self.order_pos = self.order_pos % #self.order + 1
 	self:start_turn(self.order[self.order_pos])
 end
 
@@ -1536,7 +1628,9 @@ function M:step(input)
 					rb.free_teleports = rb.free_teleports - 1
 				else
 					rb.nucleo = rb.nucleo - rb.stats.teleport_cost
+					rb.nucleo_spent = rb.nucleo_spent + rb.stats.teleport_cost
 				end
+				rb.teleports = rb.teleports + 1
 				self.teleports = self.teleports + 1
 				self:throw_orb(fire.angle, fire.power)
 			else

@@ -1,14 +1,15 @@
-# Fine partita, podio e armeria: Rosso (5 punti di vita) si spara addosso,
-# dopo un attimo sale il podio con riconoscimenti ed esperienza. Poi l'armeria
-# dalla home: set del Vuoto completo e un nodo dell'albero di abilità.
-imposta prova_vita 5
+# Fine partita, podio e armeria: partita da 3 secondi, Rosso spara e a fine
+# turno la partita finisce; dopo un attimo sale il podio con riconoscimenti ed
+# esperienza. Poi l'armeria dalla home: set del Vuoto completo e un nodo
+# dell'albero di abilità.
+imposta prova_durata 3
 
 aspetta 1
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 mira 4 150 0.4
-aspetta_evento over 8
+aspetta_evento over 30
 aspetta 1.8
 foto 01_podio_sale
 aspetta 2
