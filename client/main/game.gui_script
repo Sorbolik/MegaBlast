@@ -7,6 +7,7 @@
 local game = require "sim.game"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
+local grigio = require "battaglia.grigio"
 local home = require "menu.home"
 local levette = require "battaglia.levette"
 
@@ -105,8 +106,17 @@ if FISICA ~= "" then game.use_physics(FISICA) end
 -- Scorie, proiettili e casse si disegnano in proporzione al robot della
 -- simulazione: 16 pixel nel profilo megablast, 20 in quello di Blastron
 local K = game.ROBOT_H / 16
--- altezza della testa della Scoria disegnata, per vita e freccia
-local HEAD = 130 * scoria.SCALE * K
+
+-- Corpo dei robot: "grigio" (predefinito, fase 2 della roadmap: una capsula
+-- grande come il corpo della simulazione) o "scoria" (il personaggio a pezzi).
+-- [megablast] taglia = 1.5 fa il corpo 1,5 volte più grande, solo in locale:
+-- serve a provare le taglie.
+local CORPO = config_string("megablast.corpo", "grigio")
+local corpo = CORPO == "scoria" and scoria or grigio
+local TAGLIA = tonumber(config_string("megablast.taglia", ""))
+if TAGLIA then game.use_body_scale(TAGLIA) end
+-- altezza della testa del corpo disegnato, per vita e freccia
+local HEAD = CORPO == "scoria" and 130 * scoria.SCALE * K or game.ROBOT_H
 local VK = vmath.vector3(K, K, 1)
 
 -- Comandi sul telefono: due levette come in Blastron (HUD del tablet, portato
@@ -393,7 +403,7 @@ local function new_match(self, seed, map, opts)
 	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
-		scoria.set_enabled(self.robots[i].rig, true)
+		corpo.set_enabled(self.robots[i].rig, true)
 		gui.set_enabled(self.robots[i].hp, true)
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, hit = 0 }
 	end
@@ -470,9 +480,9 @@ local function handle_event(self, e)
 	elseif e.type == "fire" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- rinculo del Lanciarune, slancio del lancio, raffica di schegge
 		local kind = e.type == "fire" and "missile" or (e.type == "shards" and "shards" or "throw")
-		scoria.fire(self.robots[e.robot].rig, kind)
+		corpo.fire(self.robots[e.robot].rig, kind)
 	elseif e.type == "teleport" then
-		scoria.teleport(self.robots[e.robot].rig)
+		corpo.teleport(self.robots[e.robot].rig)
 		if self.mode == "online" then
 			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
 			self.snap[e.robot] = true
@@ -495,7 +505,7 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "death" then
 		-- crolla e svanisce da solo
-		scoria.die(self.robots[e.robot].rig)
+		corpo.die(self.robots[e.robot].rig)
 		gui.set_enabled(self.robots[e.robot].hp, false)
 	elseif e.type == "over" then
 		self.winner = e.winner
@@ -867,7 +877,7 @@ local function render(self, dt)
 		end
 		local hp = math.max(0, rb.hp)
 		if v.hp ~= hp then
-			if hp < v.hp then v.hit = 0.6; scoria.hit(r.rig) end
+			if hp < v.hp then v.hit = 0.6; corpo.hit(r.rig) end
 			gui.set_text(r.hp, tostring(hp))
 			v.hp = hp
 		end
@@ -924,9 +934,9 @@ local function render(self, dt)
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
 		end
-		scoria.set_weapon(r.rig, weapon)
+		corpo.set_weapon(r.rig, weapon)
 		st.expression = expression(self, i, rb, v, aiming)
-		scoria.update(r.rig, dt, st)
+		corpo.update(r.rig, dt, st)
 	end
 
 	-- Uovo di Fiamma: rotola mentre vola, sopra i secondi che mancano allo scoppio
@@ -1098,7 +1108,7 @@ function init(self)
 
 	self.robots = {}
 	for i = 1, 2 do
-		local r = { rig = scoria.new(PLAYER_COLORS[i], nil, K), st = {} }
+		local r = { rig = corpo.new(PLAYER_COLORS[i], nil, K), st = {} }
 		self.robots[i] = r
 	end
 
@@ -1282,6 +1292,8 @@ function update(self, dt)
 				right = move_right(self),
 				-- con JUMP_REPEAT tenendo premuto si risalta appena si tocca terra
 				jump = self.jump_pressed or (game.JUMP_REPEAT and jump_held(self)) or false,
+				-- lasciando il salto mentre si sale il salto è corto
+				hold = jump_held(self) or false,
 				fire = self.fire,
 			}
 			self.jump_pressed = false
@@ -1299,9 +1311,10 @@ function update(self, dt)
 		if my_turn(self) and (self.g.phase == "aim" or self.g.retreat > 0) then
 			local l = move_left(self) or false
 			local r = move_right(self) or false
-			if l ~= self.sent.l or r ~= self.sent.r then
-				send(self, { t = "in", l = l, r = r })
-				self.sent.l, self.sent.r = l, r
+			local j = jump_held(self) or false
+			if l ~= self.sent.l or r ~= self.sent.r or j ~= self.sent.j then
+				send(self, { t = "in", l = l, r = r, j = j })
+				self.sent.l, self.sent.r, self.sent.j = l, r, j
 			end
 			-- salto ripetuto: uno per ogni volta che il robot torna a terra
 			local grounded = current_robot(self).grounded
@@ -1314,7 +1327,7 @@ function update(self, dt)
 				send(self, { t = "fire", a = self.fire.angle, p = self.fire.power, w = self.fire.weapon })
 			end
 		else
-			self.sent.l, self.sent.r = false, false
+			self.sent.l, self.sent.r, self.sent.j = false, false, false
 		end
 		self.jump_pressed = false
 		self.fire = nil

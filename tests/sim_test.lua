@@ -804,6 +804,89 @@ check(cs ~= "" and cs == crates_seen(9), "blastron: le casse cadono a caso ma ug
 -- Una partita intera con tutte le armi è deterministica anche con questo profilo
 check(play2(5) == play2(5), "blastron: partita deterministica")
 
+-- Corpo a capsula, salto corto, coyote time e salto in anticipo -----------------
+
+-- Un mondo vuoto con il terreno pieno sotto ground(x) (pixel dal basso)
+local function shaped_world(ground)
+	local q = game.new(42, "isole")
+	local t, c = q.terrain, game.CELL
+	for i = 1, #t.data do t.data[i] = 0 end
+	for cx = 0, game.WORLD_W / c - 1 do
+		local h = ground(cx * c + c / 2)
+		for cy = 0, math.floor(h / c) - 1 do t:set(cx, cy, 1) end
+	end
+	place(q.robots[2], 60, ground(60))
+	q.robots[2].grounded = true
+	q:pop_events()
+	return q
+end
+
+-- Su un pendio a 45 gradi il fondo rotondo resta più vicino al terreno del rettangolo
+local function slope_gap(round)
+	local saved = game.ROBOT_ROUND
+	game.ROBOT_ROUND = round
+	local slope = function(x) return 100 + math.max(0, math.min(200, x - 500)) end
+	local q = shaped_world(slope)
+	local r = q.robots[1]
+	place(r, 600, 260)
+	run(q, 120)
+	game.ROBOT_ROUND = saved
+	return r.y - slope(r.x), r.grounded
+end
+local gap_box, gb = slope_gap(false)
+local gap_round, gr = slope_gap(true)
+check(gb and gr and gap_round < gap_box - 2,
+	string.format("capsula: sul pendio a 45 gradi resta più bassa del rettangolo (%.1f px contro %.1f)", gap_round, gap_box))
+check(gap_round < game.ROBOT_HALF_W * 0.6, string.format("capsula: al centro sta sopra il pendio quanto il bordo del cerchio (%.1f px)", gap_round))
+
+-- Salto corto: lasciando il tasto subito si sale molto meno
+local function jump_top(hold_ticks)
+	local q = shaped_world(function() return 100 end)
+	local r = q.robots[1]
+	place(r, 640, 100)
+	run(q, 30)
+	local base, top = r.y, r.y
+	q:step({ jump = true, hold = true })
+	for i = 1, 150 do
+		q:step({ hold = i < hold_ticks })
+		top = math.max(top, r.y)
+	end
+	return top - base
+end
+local full, short = jump_top(1000), jump_top(4)
+check(math.abs(full - 5.2 * U) < 0.35 * U, string.format("salto corto: tenendo premuto il salto è pieno (%.1f px)", full))
+check(short < full * 0.5, string.format("salto corto: lasciando subito sale meno della metà (%.1f px)", short))
+
+-- Coyote time: appena scesi dal bordo si salta ancora, poco dopo no
+local function ledge_jump(after)
+	local q = shaped_world(function(x) return x < 640 and 200 or 40 end)
+	local r = q.robots[1]
+	place(r, 600, 200)
+	run(q, 30)
+	local n = 0
+	while r.grounded and n < 200 do q:step({ right = true }); n = n + 1 end
+	run(q, after - 1)
+	q:step({ jump = true })
+	return r.vy > 0
+end
+check(ledge_jump(3), "coyote: tre tick dopo il bordo il salto parte")
+check(not ledge_jump(game.COYOTE_TICKS + 4), "coyote: più tardi in aria non si salta")
+
+-- Salto in anticipo: chiesto poco prima di atterrare parte appena si tocca terra
+local function buffered(early)
+	local q = shaped_world(function() return 100 end)
+	local r = q.robots[1]
+	place(r, 640, 160)
+	local n = 0
+	while not r.grounded and n < 300 do q:step(); n = n + 1 end
+	place(r, 640, 160)
+	for i = 1, n do q:step({ jump = i == n - early }) end
+	q:step()
+	return r.vy > 0 and not r.grounded
+end
+check(buffered(3), "salto in anticipo: chiesto 3 tick prima, parte all'atterraggio")
+check(not buffered(game.JUMP_BUFFER_TICKS + 4), "salto in anticipo: chiesto troppo presto non conta")
+
 game.use_physics("megablast")
 
 -- Prestazioni: un cratere e 600 tick di simulazione
