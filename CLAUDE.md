@@ -38,8 +38,9 @@ server senza toccare il Go.
 Su iPhone si prova la build HTML5 in Safari: `bash strumenti/web/build.sh` prepara
 `simulazione/web/`, che si pubblica come Artifact di claude.ai (pagina
 `megablast.html`, gli altri file come `files`) sempre allo stesso indirizzo:
-https://claude.ai/artifact/WeHdWjA9HzabJJpfKKhH5G . Senza WebSocket: solo
-partite sullo stesso telefono.
+https://claude.ai/artifact/WeHdWjA9HzabJJpfKKhH5G . Senza l'estensione WebSocket:
+l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla pagina
+su claude.ai le connessioni verso altri siti sono bloccate.
 
 Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
 `go test ./server/` (server).

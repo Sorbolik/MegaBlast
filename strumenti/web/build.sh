@@ -3,7 +3,7 @@
 # Prepara in simulazione/web/ la cartella da pubblicare come Artifact di claude.ai:
 # megablast.html è la pagina, il resto sono i file del motore e dell'archivio.
 # Senza estensione WebSocket (si compila sul build server di Defold, che dal cloud
-# non si raggiunge): si gioca solo sullo stesso telefono.
+# non si raggiunge): l'online passa dalla WebSocket del browser (client/main/ws_browser.lua).
 set -euo pipefail
 QUI="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$QUI/../.." && pwd)"
