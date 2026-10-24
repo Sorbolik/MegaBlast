@@ -39,7 +39,7 @@ Una regola nuova per volta, ognuna in una mini-missione di meno di un minuto, e 
 2. **Riparati**: dopo lo sparo hai 8 s (barra gialla) per spostarti al riparo.
 3. **Spada**: un bersaglio vicino, si impara il fendente.
 4. **Due attacchi**: spara, la barra diventa gialla con l'icona della spada che lampeggia, poi blu quando li hai usati tutti e due.
-5. **Nucleo e teletrasporto**: finire presto riempie la barra, il teletrasporto la consuma.
+5. **Il teletrasporto**: finire presto lascia secondi, che diventano globi del teletrasporto.
 6. **Combo**: teletrasporto ai piedi del nemico e fendente che chiude dall'altra parte.
 
 Nell'HUD le icone di arma e spada si spengono quando le usi, così si vede sempre cosa ti resta nel turno.
@@ -49,11 +49,11 @@ Nell'HUD le icone di arma e spada si spengono quando le usi, così si vede sempr
 Sì, e si sposa bene con il Torneo: **in Torneo tutti hanno tutti i punti**, quindi la normalizzazione diventa semplicemente "livello massimo per tutti, scegli il tuo assetto". Servono quattro regole perché resti equo:
 
 1. **Meno punti che nodi.** Al livello massimo hai, per esempio, 20 punti per un albero da 40. Così anche a fine gioco devi scegliere, e l'albero resta un assetto e non una scala da completare.
-2. **Nodi misti.** Statistiche da potenziare a piacere (salto, velocità) e nodi legati al Nucleo: un ramo Mobilità (teletrasporto che scatta prima, salto extra a 1 Nucleo), un ramo Difesa (scudo più economico, paracadute più economico), un ramo Arsenale (trappole più grandi, effetti di stato più lunghi).
+2. **Nodi misti.** Statistiche da potenziare a piacere (salto, velocità) e nodi di abilità: un ramo Mobilità (teletrasporto che scatta prima, un globo in più a inizio partita), un ramo Difesa (scudo più economico, paracadute più economico), un ramo Arsenale (trappole più grandi, effetti di stato più lunghi).
 3. **Una differenza che si sente, ma che si colma con la strategia.** Nelle partite normali chi è al massimo è più forte, ma trappole, cerchi di cura, trampolini, paracadute e scudi permettono a chi gioca meglio di vincere lo stesso. Nei primi livelli si incontrano avversari di livello simile.
 4. **Ricostruzione gratuita fuori dalla partita**, con 3 assetti salvati (albero più equipaggiamento) da scegliere prima del ventaglio d'armi.
 
-Per non far sovrapporre le due crescite: l'equipaggiamento dà l'aspetto e il carattere del set, l'albero il tuo assetto personale e come spendi il Nucleo.
+Per non far sovrapporre le due crescite: l'equipaggiamento dà l'aspetto e il carattere del set, l'albero il tuo assetto personale e come usi teletrasporti e oggetti.
 
 ## In breve
 
