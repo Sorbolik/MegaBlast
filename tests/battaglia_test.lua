@@ -263,7 +263,7 @@ do
 	tutorial.avanti(t)
 	g = tutorial.partita(t, 1)
 	check(not gioca(g, 2, function() return spara() end), "tutorial 2: sparare non basta")
-	check(gioca(g, 900, function() if g.retreat > 0 then return { left = true } end end), "tutorial 2: al riparo nella barra blu")
+	check(gioca(g, 900, function() if g.window > 0 then return { left = true } end end), "tutorial 2: al riparo dopo il colpo")
 
 	tutorial.avanti(t)
 	g = tutorial.partita(t, 1)

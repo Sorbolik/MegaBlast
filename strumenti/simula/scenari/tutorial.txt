@@ -14,7 +14,7 @@ foto 02_fatto
 aspetta 2                           # passo 2: riparati
 foto 03_riparati
 mira 100 100 0.4
-aspetta 6                           # 5 s di barra gialla, poi blu
+aspetta 1                           # passo fatto appena si sposta
 tieni sinistra 1.2
 aspetta 2                           # passo 3: la spada
 foto 04_spada

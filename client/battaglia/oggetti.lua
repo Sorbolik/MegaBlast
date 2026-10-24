@@ -190,6 +190,10 @@ function M.icona(tipo, parent)
 		trappola(28, parent)
 	elseif tipo == "trampoline" then
 		gui.set_scale(trampolino(22, parent), vmath.vector3(1, 2, 1))
+	elseif tipo == "sniper" then
+		-- cecchino: canna lunga e mirino tondo
+		gui.set_euler(nodo(50, 5, BIANCO, parent), vmath.vector3(0, 0, 20))
+		pos(anello(18, BIANCO, parent), -6, 10)
 	elseif tipo == "shield" then
 		anello(44, ACCIAIO, parent)
 	else -- parachute

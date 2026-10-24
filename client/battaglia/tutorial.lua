@@ -34,11 +34,11 @@ M.PASSI = {
 	},
 	{
 		titolo = "2. Riparati",
-		consiglio = "Spara. Quando la barra del tempo diventa blu hai 5 secondi: mettiti al riparo.",
+		consiglio = "Spara: dopo il colpo hai 8 secondi (la barra gialla) per spostarti. Mettiti al riparo.",
 		dx = 320,
 		obiettivo = function(st, g)
 			local rb = g.robots[GIOCATORE]
-			if g.retreat <= 0 then return false end
+			if g.window <= 0 then return false end
 			st.x0 = st.x0 or rb.x
 			return math.abs(rb.x - st.x0) >= 30
 		end,
@@ -53,7 +53,7 @@ M.PASSI = {
 	},
 	{
 		titolo = "4. Due attacchi",
-		consiglio = "Spara e poi colpisci con la spada: dopo il primo attacco la barra diventa gialla, hai 5 secondi per il secondo.",
+		consiglio = "Spara e colpisci con la spada: con la barra gialla hai ancora il secondo attacco, con quella blu li hai usati tutti e due.",
 		dx = 60,
 		obiettivo = function(_, g)
 			return g.used.weapon and g.used.sword

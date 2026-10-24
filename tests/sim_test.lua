@@ -373,29 +373,22 @@ do
 	for _, e in ipairs(at:pop_events()) do if e.type == "nucleo" then nev = e end end
 	check(ar.nucleo == config.STATS.start_nucleo + gain and nev and nev.amount == gain,
 		"i secondi rimasti al primo attacco diventano Nucleo (" .. ar.nucleo .. ")")
-	check(at.window == game.SECOND_ATTACK_TICKS, "dopo il primo attacco ci sono 5 s per il secondo")
+	check(at.window == game.AFTER_ATTACK_TICKS, "dopo il primo attacco restano 8 s")
 	at:step(MISSILE)
 	check(not at:can_use("missile") and at.used.weapon, "una sola arma per turno")
 	local n0 = ar.nucleo
-	run(at, 60)
+	run(at, game.AFTER_ATTACK_TICKS - 30)
+	check(at:can_use("sword"), "il secondo attacco si fa fino all'ultimo secondo")
 	at:step(SWORD)
-	check(at.used.sword and at.window == 0 and at.retreat == game.REPOSITION_TICKS,
-		"spada come secondo attacco: poi 5 s di riposizionamento")
+	check(at.used.sword and at.window > 0, "dopo il secondo attacco il tempo continua")
 	check(ar.nucleo == n0, "il secondo attacco non dà Nucleo")
-	check(not at:can_use("teleport") and not at:can_use("sword"), "nel riposizionamento niente attacchi né teletrasporto")
+	check(not at:can_use("teleport") and not at:can_use("sword"), "dopo i due attacchi niente attacchi né teletrasporto")
 	local turn_at
 	for i = 1, 2000 do
 		at:step()
 		if at.current == 2 then turn_at = i break end
 	end
-	check(turn_at and turn_at >= game.REPOSITION_TICKS, "il turno passa dopo il riposizionamento")
-
-	-- Se il secondo attacco non arriva, dopo 5 s si passa comunque al riposizionamento
-	local aw = game.new(42, "isole")
-	run(aw, 60)
-	aw:step(SWORD)
-	run(aw, game.SECOND_ATTACK_TICKS)
-	check(aw.window == 0 and aw.retreat > 0 and not aw:can_use("missile"), "scaduti i 5 s non si attacca più")
+	check(turn_at and turn_at >= 28, "il turno passa allo scadere degli 8 s")
 
 	-- Ordine libero: prima la spada, poi il missile
 	local ao = game.new(42, "isole")
@@ -404,7 +397,7 @@ do
 	run(ao, 30)
 	check(ao:can_use("missile"), "dopo la spada si può ancora sparare")
 	ao:step(MISSILE)
-	check(ao.used.weapon and ao.retreat > 0, "spada e missile nello stesso turno")
+	check(ao.used.weapon and ao.used.sword, "spada e missile nello stesso turno")
 
 	-- Il teletrasporto si lancia fino al colpo di spada, non dopo
 	local ak = game.new(42, "isole")
@@ -467,10 +460,19 @@ do
 	local seen4 = { q4.current }
 	for _ = 1, 4 do seen4[#seen4 + 1] = next_turn(q4) end
 	check(table.concat(seen4, " ") == "1 3 2 4 1", "i turni seguono l'ordine delle squadre (" .. table.concat(seen4, " ") .. ")")
-	-- chi muore ricomincia a fine turno e non perde il suo turno
+	-- chi muore ricomincia dopo RESPAWN_TICKS, anche a metà del turno, e non perde il suo turno
 	q4:kill(q4.robots[3])
-	check(next_turn(q4) == 3 and not q4.robots[3].dead and q4.robots[3].hp == q4.robots[3].max_hp,
-		"il robot morto ricomincia con la vita piena e gioca il suo turno")
+	run(q4, game.RESPAWN_TICKS)
+	check(not q4.robots[3].dead and q4.robots[3].hp == q4.robots[3].max_hp and q4.current == 1,
+		"il robot morto ricomincia nello stesso turno con la vita piena")
+	check(next_turn(q4) == 3, "e gioca il suo turno")
+	-- chi muore nel suo turno ricomincia e il turno continua
+	local own = game.new(42, "isole")
+	run(own, 30)
+	own:kill(own.robots[1], "fell")
+	run(own, game.RESPAWN_TICKS + 5)
+	check(own.current == 1 and own.phase == "aim" and not own.robots[1].dead and own:can_use("missile"),
+		"morto nel proprio turno: si ricomincia e il turno continua")
 
 	-- Tutti contro tutti: quattro squadre da uno, turni nell'ordine di arrivo
 	local ffa = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
@@ -499,7 +501,7 @@ do
 		"lo scudo si attiva e non è un attacco")
 	q:step({ fire = { angle = math.rad(60), power = 0.6 } })
 	q:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
-	check(q.retreat > 0 and q:can_use("trap"), "nel riposizionamento la trappola si può ancora posare")
+	check(q.window > 0 and q:can_use("trap"), "dopo i due attacchi la trappola si può ancora posare")
 	q:step({ fire = { angle = 0, power = 1, weapon = "trap" } })
 	local trap = q.placed[1]
 	check(trap and trap.kind == "trap" and not trap.armed and r1.ammo.trap == 0, "la trappola è posata ai piedi, non ancora armata")
@@ -538,23 +540,41 @@ do
 	t2:step()
 	check(#t2.placed == 1 and mate.vy <= 0, "il compagno non fa scattare la trappola")
 
-	-- trampolino: chi lo posa non rimbalza; chi ci cade sopra rimbalza una volta
+	-- trampolino: si lancia; tirato addosso a un robot cade ai suoi piedi e lo fa
+	-- rimbalzare, sempre; restandoci sopra i rimbalzi calano fino a fermarsi
 	local tb = game.new(42, "isole", { ammo = { trampoline = 1 } })
 	run(tb, 60)
-	local a = tb.robots[1]
-	tb:step({ fire = { angle = 0, power = 1, weapon = "trampoline" } })
-	local tramp = tb.placed[1]
+	local a, b = tb.robots[1], tb.robots[2]
+	b.x, b.y = a.x + 40, a.y
 	run(tb, 5)
-	check(tramp and a.grounded, "chi posa il trampolino non rimbalza")
-	local b = tb.robots[2]
-	b.x, b.y, b.vx, b.vy, b.grounded = tramp.x + 4, tramp.y + 60, 0, 0, false
-	a.x = tramp.x - 40
-	local bounces = 0
-	for _ = 1, 400 do
+	tb:step({ fire = { angle = math.rad(10), power = 0.4, weapon = "trampoline" } })
+	local tramp = tb.placed[1]
+	check(tramp and tramp.flying and a.ammo.trampoline == 0, "il trampolino si lancia")
+	local bounces, first_vy = 0, nil
+	for _ = 1, 600 do
 		tb:step()
-		for _, e in ipairs(tb:pop_events()) do if e.type == "bounce" then bounces = bounces + 1 end end
+		for _, e in ipairs(tb:pop_events()) do
+			if e.type == "bounce" and e.robot == 2 then
+				bounces = bounces + 1
+				first_vy = first_vy or b.vy
+			end
+		end
 	end
-	check(bounces == 1 and b.grounded, "si rimbalza una volta, poi ci si ferma sopra (" .. bounces .. ")")
+	check(not tramp.flying and math.abs(tramp.x - b.x) <= tramp.r + game.ROBOT_HALF_W,
+		"tirato su un robot cade ai suoi piedi")
+	check(bounces >= 2 and first_vy == config.TRAMPOLINE.launch_vy, "e lo fa rimbalzare (" .. bounces .. ")")
+	check(b.grounded and b.vy == 0, "restando sopra i rimbalzi calano e ci si ferma")
+	-- sceso e risalito, si rimbalza di nuovo alto
+	b.x = tramp.x + 60
+	run(tb, 30)
+	b.x, b.y = tramp.x, tramp.y
+	b.vy = 0
+	local again
+	for _ = 1, 5 do
+		tb:step()
+		for _, e in ipairs(tb:pop_events()) do if e.type == "bounce" then again = b.vy end end
+	end
+	check(again == config.TRAMPOLINE.launch_vy, "risalendoci si rimbalza di nuovo alto")
 
 	-- un'esplosione porta via quello che è posato
 	tb:explode(tramp.x, tramp.y + 4)
@@ -590,6 +610,62 @@ do
 	check(an:knock_mul(ar) == config.ANCHOR_KNOCKBACK, "sull'ancoraggio la spinta si riduce")
 	ar.x = anc.x + anc.r + 10
 	check(an:knock_mul(ar) == 1, "fuori dall'ancoraggio la spinta è piena")
+end
+
+-- L'Uovo rimbalza sui robot, come il globo del teletrasporto
+do
+	local q = game.new(42, "isole", { ammo = { grenade = 1 } })
+	run(q, 60)
+	local a, b = q.robots[1], q.robots[2]
+	b.x, b.y = a.x + 60, a.y
+	run(q, 5)
+	q:step({ fire = { angle = math.rad(5), power = 0.6, weapon = "grenade" } })
+	local max_x = 0
+	for _ = 1, 60 do
+		q:step()
+		if q.projectile then max_x = math.max(max_x, q.projectile.x) end
+	end
+	check(q.projectile and max_x < b.x and q.projectile.touched, "l'Uovo rimbalza sul robot invece di attraversarlo")
+end
+
+-- Cecchino: dritto e velocissimo, rimbalza, sbalza nella direzione del colpo -------
+do
+	local q = game.new(42, "isole", { ammo = { sniper = 1 } })
+	run(q, 60)
+	local a, b = q.robots[1], q.robots[2]
+	b.x, b.y = a.x + 90, a.y
+	run(q, 5)
+	local hp = b.hp
+	q:step({ fire = { angle = 0, power = 1, weapon = "sniper" } })
+	check(q.projectile and q.projectile.kind == "sniper" and a.ammo.sniper == 0, "il cecchino spara")
+	local hit
+	for _ = 1, 30 do
+		q:step()
+		for _, e in ipairs(q:pop_events()) do if e.type == "sniper_hit" then hit = e end end
+		if hit then break end
+	end
+	check(hit and hit.target == 2 and hp - b.hp == config.SNIPER.damage, "colpisce e fa danno")
+	check(b.vx > 0 and not b.grounded and b.knocked, "sbalza nella direzione del colpo")
+	local sp = math.sqrt(b.vx * b.vx + b.vy * b.vy)
+	check(sp <= config.SNIPER.push + config.SNIPER.lift + 1, "con una spinta moderata")
+
+	-- verso il terreno rimbalza (non scava), e dopo l'ultimo rimbalzo si ferma
+	local r = game.new(42, "isole", { ammo = { sniper = 1 } })
+	run(r, 60)
+	local cells = solid_count(r.terrain)
+	r:step({ fire = { angle = math.rad(-60), power = 1, weapon = "sniper" } })
+	local bounces = 0
+	for _ = 1, game.SNIPER_LIFE + 5 do
+		r:step()
+		for _, e in ipairs(r:pop_events()) do if e.type == "sniper_bounce" then bounces = bounces + 1 end end
+		if not r.projectile then break end
+	end
+	check(bounces >= 1 and bounces <= config.SNIPER.bounces, "rimbalza sul terreno, al massimo " .. config.SNIPER.bounces .. " volte (" .. bounces .. ")")
+	check(solid_count(r.terrain) == cells, "il cecchino non scava")
+
+	-- la linea di mira piega al primo rimbalzo
+	local pts = r:preview(math.rad(-60), 1, 30, 4, nil, "sniper")
+	check(#pts == 30 and pts[30].y > pts[1].y - 200, "la mira del cecchino segue il rimbalzo")
 end
 
 -- Effetti di stato: bruciatura, rallentamento, armatura incrinata ------------------
@@ -773,16 +849,15 @@ do
 	check(b.dead and death and death.by == 1 and not death.env, "l'uccisione va a chi ha colpito")
 	check(a.kills == 1 and a.points == 10 * config.SCORE.damage + config.SCORE.kill and b.points == config.SCORE.death,
 		"punti: danno e uccisione a chi colpisce (" .. a.points .. "), " .. config.SCORE.death .. " a chi muore")
-	-- a fine turno ricomincia in un punto a caso, lontano dagli altri
+	-- dopo RESPAWN_TICKS ricomincia in un punto libero a caso, nel turno di chi l'ha ucciso
 	local resp
-	for _ = 1, game.TURN_TICKS + 900 do
+	for _ = 1, game.RESPAWN_TICKS do
 		g3:step()
 		for _, e in ipairs(g3:pop_events()) do if e.type == "respawn" then resp = e end end
-		if g3.current == 2 then break end
 	end
-	check(resp and not b.dead and b.hp == b.max_hp and math.abs(b.x - a.x) >= config.RESPAWN_DISTANCE,
-		"alla morte si ricomincia con la vita piena, lontano dagli altri")
-	check(g3.phase == "aim" and g3.current == 2, "e si gioca il proprio turno")
+	check(resp and not b.dead and b.hp == b.max_hp and g3.current == 1,
+		"alla morte si ricomincia con la vita piena, nello stesso turno")
+	check(not g3:robot_collides(b.x, b.y, b), "in un punto libero")
 
 	-- uccisione ambientale: chi colpisce un robot che poi cade fuori dalla mappa
 	-- prende anche il bonus; senza colpi recenti nessuno prende niente
@@ -854,7 +929,29 @@ while g7.phase ~= "over" and ticks7 < game.MATCH_TICKS + 2000 do
 end
 check(g7.phase == "over" and ticks7 >= game.MATCH_TICKS, "la partita finisce allo scadere dei 5 minuti")
 check(g7.winner == 2, "a tempo scaduto vince chi ha più punti")
-check(ticks7 < game.MATCH_TICKS + game.TURN_TICKS, "il turno in corso si chiude allo scadere")
+check(ticks7 <= game.MATCH_TICKS + 2 * (game.TURN_TICKS + game.MAX_SETTLE_TICKS),
+	"dopo lo scadere si finisce il giro di turni")
+
+-- Supplementari: il turno in corso non si interrompe e si finisce il giro
+do
+	-- scade durante il turno del primo: si finisce il suo e si gioca quello del secondo
+	local ot = game.new(42, "isole")
+	run(ot, 60)
+	ot.match_left = 10
+	run(ot, 20)
+	check(ot.overtime and ot.phase == "aim" and ot.current == 1, "allo scadere il turno in corso continua")
+	for _ = 1, 4000 do
+		ot:step()
+		if ot.current == 2 or ot.phase == "over" then break end
+	end
+	check(ot.current == 2 and ot.phase == "aim", "supplementari: gioca anche il secondo")
+	for _ = 1, 4000 do
+		ot:step()
+		if ot.phase == "over" then break end
+	end
+	check(ot.phase == "over" and ot.current == 2, "finito il giro la partita finisce")
+	check(ot.robots[1].turns == ot.robots[2].turns, "tutti hanno giocato gli stessi turni")
+end
 
 
 -- Il fendente non è lineare: prima torna un po' indietro, poi accelera fino alla fine

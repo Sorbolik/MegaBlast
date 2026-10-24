@@ -11,7 +11,7 @@ aspetta 0.5
 foto 01_barra_armi
 
 # Rosso: Uovo di Fiamma, rimbalza e scoppia dopo 3 secondi
-tocca 640 62                        # Uovo di Fiamma
+tocca 405 62                        # Uovo di Fiamma
 aspetta 0.3
 zoom 02_uovo_in_mano
 mira 120 80 0.5 03_mira_uovo
@@ -27,7 +27,7 @@ aspetta_evento crate 15
 aspetta 1.5
 foto 06_cassa_che_cade
 aspetta_stato turno=2 fase=aim 10
-tocca 734 62                        # Sciame di Schegge
+tocca 499 62                        # Sciame di Schegge
 aspetta 0.3
 zoom 07_sciame_in_mano
 mira -200 40 0.4
@@ -40,7 +40,7 @@ foto 09_dopo_raffica
 
 # Rosso: Pugno del Titano
 aspetta_stato turno=1 fase=aim 15
-tocca 828 62                        # Pugno del Titano
+tocca 593 62                        # Pugno del Titano
 aspetta 0.3
 zoom 10_pugno_in_mano
 mira 100 0 0.2

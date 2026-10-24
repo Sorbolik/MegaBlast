@@ -4,7 +4,7 @@
 -- Pannelli e testo dell'interfaccia minimale (ui/ui.lua).
 --
 --   local scelta = require "menu.scelta"
---   local s = scelta.new(icone, nomi)              -- icone e nomi per arma, nascosta
+--   local s = scelta.new(icone, nomi)              -- icone (o forme, oggetti.icona) e nomi per arma, nascosta
 --   scelta.show(s, d, nomi_giocatori, colori)      -- d = draft.new(...)
 --   local players = scelta.update(s, dt)           -- i giocatori per game.new, quando tutti hanno scelto
 --   scelta.on_input(s, action_id, action)
@@ -12,6 +12,7 @@
 local config = require "sim.config"
 local draft = require "sim.draft"
 local ui = require "ui.ui"
+local oggetti = require "battaglia.oggetti"
 
 local M = {}
 
@@ -46,13 +47,17 @@ function M.new(icone, nomi)
 		local icona = gui.new_box_node(vec(0, 30), vec(120, 120))
 		gui.set_texture(icona, "battaglia")
 		gui.set_parent(icona, c)
+		-- le armi senza immagine (il cecchino) hanno un'icona di forme, più grande
+		local forma = nodo(0, 30, 0, 0, C.LUCE, c)
+		gui.set_scale(forma, vmath.vector3(1.8, 1.8, 1))
+		oggetti.icona("sniper", forma)
 		local nome = ui.testo("", 0, -70, 0.65, nil, c)
 		-- un segno del colore di chi l'ha presa, per ognuno
 		local segni = {}
 		for k = 1, 4 do
 			segni[k] = nodo(-45 + (k - 1) * 30, -105, 22, 8, C.LUCE, c)
 		end
-		s.carte[i] = { node = c, bordo = bordo, icona = icona, nome = nome, segni = segni }
+		s.carte[i] = { node = c, bordo = bordo, icona = icona, forma = forma, nome = nome, segni = segni }
 	end
 	gui.set_enabled(s.root, false)
 	return s
@@ -75,7 +80,9 @@ local function aggiorna(s)
 		local w = d.offer[i]
 		gui.set_enabled(c.node, w ~= nil)
 		if w then
-			gui.play_flipbook(c.icona, s.icone[w])
+			gui.set_enabled(c.icona, s.icone[w] ~= nil)
+			gui.set_enabled(c.forma, s.icone[w] == nil)
+			if s.icone[w] then gui.play_flipbook(c.icona, s.icone[w]) end
 			gui.set_text(c.nome, s.nomi[w])
 			local libera = not chi or draft.valid(d, chi, w)
 			gui.set_color(c.node, libera and C.PANNELLO or SPENTA)
