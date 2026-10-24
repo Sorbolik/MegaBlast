@@ -27,6 +27,16 @@ local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
+-- Versione del protocollo, uguale a protocolVersion in server/server.go
+local PROTOCOL = 2
+-- Se la connessione cade in partita riproviamo per un po' (il server tiene il
+-- posto per 20 secondi)
+local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
+local SERVER_ERRORS = {
+	version = "C'è una versione nuova di MegaBlast:\naggiorna il gioco",
+	expired = "La partita è finita",
+	draining = "Il server si sta aggiornando,\nriprova tra poco",
+}
 
 local ACTION_TOUCH = hash("touch")
 local ACTION_LEFT = hash("left")
@@ -786,36 +796,71 @@ end
 local function on_server_message(self, m)
 	if m.t == "wait" then
 		show_message(self, "In attesa di un avversario...", true)
+	elseif m.t == "draft" then
+		-- scelta dell'arma: per ora online non c'è la schermata, allo scadere
+		-- il server dà a ognuno la prima arma libera. Il gettone serve già
+		-- per tornare se la connessione cade adesso.
+		self.tok, self.tries = m.tok or self.tok, 0
+		show_message(self, "Avversari trovati!\nLa partita sta per cominciare...", true)
 	elseif m.t == "start" then
+		-- anche quando torniamo dopo una caduta (resume): la partita si
+		-- ricostruisce dal seed, poi arrivano gli scavi e lo stato.
 		-- players: le squadre dei robot, [{"team":1},...] (senza, un 1 contro 1)
 		new_match(self, m.seed, m.map, m.players and { players = m.players })
 		self.g:pop_events()
-		self.me = m.you
+		self.me, self.tok, self.tries = m.you, m.tok, 0
 		self.mode = "online"
 		set_controls_visible(self, true)
-		show_message(self, "Sei " .. self.names[m.you])
+		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. self.names[m.you]))
+	elseif m.t == "sync" and self.g then
+		for _, c in ipairs(m.x) do self.g.terrain:carve(c[1], c[2], c[3]) end
+		self.drawn_map = nil
+		draw_terrain(self)
 	elseif m.t == "state" and self.g then
 		apply_state(self, m)
 	elseif m.t == "ev" then
 		handle_event(self, m)
+	elseif m.t == "away" then
+		show_message(self, "L'avversario ha perso la connessione...", true)
+	elseif m.t == "back" and m.robot ~= self.me then
+		show_message(self, "L'avversario è tornato")
 	elseif m.t == "left" then
 		self.mode = "ended"
 		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
 	elseif m.t == "error" then
-		self.mode = "ended"
-		show_message(self, "Errore del server\nTocca per tornare al menu", true)
+		self.mode, self.tok = "ended", nil
+		show_message(self, (SERVER_ERRORS[m.e] or "Errore del server") .. "\nTocca per tornare al menu", true)
 	end
 end
 
-local function on_socket(self, conn, data)
+local on_socket
+
+local function connect(self)
+	self.conn = websocket.connect(server_url(), { timeout = 5000 }, on_socket)
+end
+
+on_socket = function(self, conn, data)
 	if data.event == websocket.EVENT_CONNECTED then
-		show_message(self, "Connesso, in attesa...", true)
+		-- il primo messaggio dice la versione: in coda, o di nuovo nella partita
+		if self.tok then
+			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
+		else
+			show_message(self, "Connesso, in attesa...", true)
+			send(self, { t = "hello", v = PROTOCOL, mode = "1v1" })
+		end
 	elseif data.event == websocket.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
 		if ok and m then on_server_message(self, m) end
 	elseif data.event == websocket.EVENT_DISCONNECTED or data.event == websocket.EVENT_ERROR then
 		self.conn = nil
-		if self.mode ~= "menu" and self.mode ~= "ended" then
+		if (self.mode == "online" or self.mode == "connecting") and self.tok and self.tries < RECONNECT_TRIES then
+			-- in partita: riproviamo, il server ci tiene il posto
+			self.tries = self.tries + 1
+			show_message(self, "Connessione persa\nMi riconnetto...", true)
+			timer.delay(RECONNECT_WAIT, false, function()
+				if (self.mode == "online" or self.mode == "connecting") and not self.conn then connect(self) end
+			end)
+		elseif self.mode ~= "menu" and self.mode ~= "ended" then
 			self.mode = "ended"
 			show_message(self, "Connessione persa\nTocca per tornare al menu", true)
 		end
@@ -835,9 +880,9 @@ local function start_online(self)
 		show_message(self, "Manca l'estensione WebSocket\nIn Defold: Project > Fetch Libraries\nTocca per tornare al menu", true)
 		return
 	end
-	self.mode = "connecting"
+	self.mode, self.tok, self.tries = "connecting", nil, 0
 	show_message(self, "Connessione a\n" .. server_url(), true)
-	self.conn = websocket.connect(server_url(), { timeout = 5000 }, on_socket)
+	connect(self)
 end
 
 local start_local_match
