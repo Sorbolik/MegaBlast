@@ -22,6 +22,8 @@ local tutorial = require "battaglia.tutorial"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
+-- nel browser senza estensione (build web) basta la WebSocket del browser
+local ws = websocket or (html5 and require "main.ws_browser")
 
 local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
@@ -341,7 +343,7 @@ end
 
 local function disconnect(self)
 	if self.conn then
-		websocket.disconnect(self.conn)
+		ws.disconnect(self.conn)
 		self.conn = nil
 	end
 end
@@ -813,7 +815,7 @@ end
 
 local function send(self, msg)
 	if self.conn then
-		websocket.send(self.conn, json.encode(msg), { type = websocket.DATA_TYPE_TEXT })
+		ws.send(self.conn, json.encode(msg), { type = ws.DATA_TYPE_TEXT })
 	end
 end
 
@@ -927,11 +929,11 @@ end
 local on_socket
 
 local function connect(self)
-	self.conn = websocket.connect(server_url(), { timeout = 5000 }, on_socket)
+	self.conn = ws.connect(server_url(), { timeout = 5000 }, on_socket)
 end
 
 on_socket = function(self, conn, data)
-	if data.event == websocket.EVENT_CONNECTED then
+	if data.event == ws.EVENT_CONNECTED then
 		-- il primo messaggio dice la versione: in coda, o di nuovo nella partita
 		if self.tok then
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
@@ -939,10 +941,10 @@ on_socket = function(self, conn, data)
 			show_message(self, "Connesso, in attesa...", true)
 			send(self, { t = "hello", v = PROTOCOL, mode = "1v1" })
 		end
-	elseif data.event == websocket.EVENT_MESSAGE then
+	elseif data.event == ws.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
 		if ok and m then on_server_message(self, m) end
-	elseif data.event == websocket.EVENT_DISCONNECTED or data.event == websocket.EVENT_ERROR then
+	elseif data.event == ws.EVENT_DISCONNECTED or data.event == ws.EVENT_ERROR then
 		self.conn = nil
 		if (self.mode == "online" or self.mode == "connecting") and self.tok and self.tries < RECONNECT_TRIES then
 			-- in partita: riproviamo, il server ci tiene il posto
@@ -965,7 +967,7 @@ end
 
 local function start_online(self)
 	hide_menu(self)
-	if not websocket then
+	if not ws then
 		-- l'estensione si scarica con Project -> Fetch Libraries
 		self.mode = "ended"
 		show_message(self, "Manca l'estensione WebSocket\nIn Defold: Project > Fetch Libraries\nTocca per tornare al menu", true)
@@ -1998,6 +2000,7 @@ function final(self)
 end
 
 function update(self, dt)
+	if self.conn and ws.poll then ws.poll(self) end
 	-- hit-stop: il mondo resta fermo, lo schermo trema lo stesso
 	local dt_mondo = dt
 	if self.fermo > 0 then

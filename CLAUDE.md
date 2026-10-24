@@ -33,5 +33,14 @@ cambiala anche in Go: `go test ./server/` le confronta e fallisce se
 divergono. Le funzioni nuove scritte in Lua con `get`/`set`/`t.data` vanno sul
 server senza toccare il Go.
 
+## Provare il gioco su iPhone
+
+Su iPhone si prova la build HTML5 in Safari: `bash strumenti/web/build.sh` prepara
+`simulazione/web/`, che si pubblica come Artifact di claude.ai (pagina
+`megablast.html`, gli altri file come `files`) sempre allo stesso indirizzo:
+https://claude.ai/artifact/WeHdWjA9HzabJJpfKKhH5G . Senza l'estensione WebSocket:
+l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla pagina
+su claude.ai le connessioni verso altri siti sono bloccate.
+
 Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
 `go test ./server/` (server).

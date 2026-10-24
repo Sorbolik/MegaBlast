@@ -18,6 +18,11 @@ default_texture_min_filter = linear_mipmap_linear
 default_texture_mag_filter = linear
 texture_profiles = /texture_profiles.texture_profiles
 
+[html5]
+scale_mode = stretch
+show_fullscreen_button = 0
+show_made_with_defold = 0
+
 [android]
 package = com.sorbolik.megablast
 
