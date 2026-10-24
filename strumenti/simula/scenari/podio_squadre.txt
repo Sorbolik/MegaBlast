@@ -1,4 +1,5 @@
-# Podio del 2 contro 2: partita da 3 secondi, la coppia vincente sta in mezzo
+# Podio del 2 contro 2: partita da 3 secondi, la coppia vincente sta in mezzo.
+# La partita finisce a fine giro: sparano tutti e quattro.
 imposta giocatori 2v2
 imposta prova_durata 3
 
@@ -7,6 +8,12 @@ tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 mira 120 80 0.4
+aspetta_stato turno=2 fase=aim 20
+mira -150 100 0.3
+aspetta_stato turno=3 fase=aim 20
+mira 150 100 0.3
+aspetta_stato turno=4 fase=aim 20
+mira -150 100 0.3
 aspetta_evento over 30
 aspetta 4
 foto podio_2v2
