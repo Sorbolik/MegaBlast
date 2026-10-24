@@ -1,7 +1,7 @@
 -- Scelta d'inizio partita sullo stesso telefono (le regole sono in sim/draft.lua):
 -- il ventaglio di armi, e a turno ogni giocatore tocca la sua. Le armi prese
 -- da un compagno sono spente; allo scadere del tempo si prende la prima libera.
--- Solo forme e testo disegnati da codice.
+-- Pannelli e testo dell'interfaccia minimale (ui/ui.lua).
 --
 --   local scelta = require "menu.scelta"
 --   local s = scelta.new(icone, nomi)              -- icone e nomi per arma, nascosta
@@ -11,17 +11,17 @@
 
 local config = require "sim.config"
 local draft = require "sim.draft"
+local ui = require "ui.ui"
 
 local M = {}
 
 local W, H = 1280, 720
 local CARD_W, CARD_H, CARD_GAP = 220, 260, 40
 local BAR_W = 560
-local FONDO = vmath.vector4(0.03, 0.03, 0.05, 0.86)
-local CARTA = vmath.vector4(0.12, 0.12, 0.15, 0.95)
-local SPENTA = vmath.vector4(0.12, 0.12, 0.15, 0.35)
-local BIANCO = vmath.vector4(1, 1, 1, 1)
-local SCURO = vmath.vector4(0, 0, 0, 1)
+local C = ui.C
+local VELO = vmath.vector4(C.FONDO.x, C.FONDO.y, C.FONDO.z, 0.86)
+-- carta di un'arma che non si può prendere (già presa da un compagno)
+local SPENTA = vmath.vector4(C.PANNELLO.x, C.PANNELLO.y, C.PANNELLO.z, 0.35)
 local TOUCH = hash("touch")
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
@@ -33,38 +33,26 @@ local function nodo(x, y, w, h, colore, parent)
 	return n
 end
 
-local function testo(t, x, y, scala, parent)
-	local n = gui.new_text_node(vec(x, y), t)
-	gui.set_font(n, "default")
-	gui.set_color(n, BIANCO)
-	gui.set_outline(n, SCURO)
-	gui.set_scale(n, vmath.vector3(scala, scala, 1))
-	if parent then gui.set_parent(n, parent) end
-	return n
-end
-
 function M.new(icone, nomi)
 	local s = { icone = icone, nomi = nomi, carte = {} }
-	s.root = nodo(W / 2, H / 2, W, H, FONDO)
+	s.root = nodo(W / 2, H / 2, W, H, VELO)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
-	s.titolo = testo("", 0, 220, 1.4, s.root)
-	s.sotto = testo("Di questa arma hai " .. config.DRAFT_SHOTS .. " colpo. Missile e Lama li hai sempre.", 0, 180, 0.8, s.root)
-	nodo(0, -220, BAR_W, 6, SPENTA, s.root)
-	s.barra = nodo(-BAR_W / 2, -220, BAR_W, 6, BIANCO, s.root)
-	gui.set_pivot(s.barra, gui.PIVOT_W)
+	s.titolo = ui.titolo("", 0, 220, 0.55, nil, s.root)
+	s.sotto = ui.testo("Di questa arma hai " .. config.DRAFT_SHOTS .. " colpo. Missile e Lama li hai sempre.", 0, 180, 0.65, nil, s.root)
+	s.barra = ui.barra(0, -220, BAR_W, 6, C.LUCE, s.root)
 	local x0 = -((config.DRAFT_OFFER - 1) * (CARD_W + CARD_GAP)) / 2
 	for i = 1, config.DRAFT_OFFER do
-		local c = nodo(x0 + (i - 1) * (CARD_W + CARD_GAP), 0, CARD_W, CARD_H, CARTA, s.root)
+		local c, bordo = ui.pannello(x0 + (i - 1) * (CARD_W + CARD_GAP), 0, CARD_W, CARD_H, s.root)
 		local icona = gui.new_box_node(vec(0, 30), vec(120, 120))
 		gui.set_texture(icona, "battaglia")
 		gui.set_parent(icona, c)
-		local nome = testo("", 0, -70, 0.8, c)
+		local nome = ui.testo("", 0, -70, 0.65, nil, c)
 		-- un segno del colore di chi l'ha presa, per ognuno
 		local segni = {}
 		for k = 1, 4 do
-			segni[k] = nodo(-45 + (k - 1) * 30, -105, 22, 8, BIANCO, c)
+			segni[k] = nodo(-45 + (k - 1) * 30, -105, 22, 8, C.LUCE, c)
 		end
-		s.carte[i] = { node = c, icona = icona, nome = nome, segni = segni }
+		s.carte[i] = { node = c, bordo = bordo, icona = icona, nome = nome, segni = segni }
 	end
 	gui.set_enabled(s.root, false)
 	return s
@@ -89,7 +77,9 @@ local function aggiorna(s)
 		if w then
 			gui.play_flipbook(c.icona, s.icone[w])
 			gui.set_text(c.nome, s.nomi[w])
-			gui.set_color(c.node, (not chi or draft.valid(d, chi, w)) and CARTA or SPENTA)
+			local libera = not chi or draft.valid(d, chi, w)
+			gui.set_color(c.node, libera and C.PANNELLO or SPENTA)
+			gui.set_color(c.bordo, libera and C.LUCE or C.LINEA)
 			local k = 0
 			for j = 1, #d.players do
 				if d.picks[j] == w then
@@ -132,7 +122,7 @@ function M.update(s, dt)
 		return players
 	end
 	s.tempo = s.tempo - dt
-	gui.set_size(s.barra, vec(BAR_W * math.max(0, s.tempo) / config.DRAFT_SECONDS, 6))
+	ui.barra_valore(s.barra, s.tempo / config.DRAFT_SECONDS)
 	if s.tempo <= 0 then
 		-- allo scadere la prima arma libera
 		for _, w in ipairs(s.d.offer) do

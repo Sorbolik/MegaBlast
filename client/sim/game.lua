@@ -214,10 +214,17 @@ end
 
 local NO_INPUT = {}
 
-local function make_stats(custom)
+-- Statistiche di un robot senza albero né equipaggiamento: config.STATS più
+-- quelle del profilo di fisica. Da qui parte anche sim/assetto.lua.
+function M.base_stats()
 	local st = { teleport_ticks = M.TELEPORT_TICKS }
 	for k, v in pairs(C.STATS) do st[k] = v end
 	for k, v in pairs(M.DEFAULT_STATS) do st[k] = v end
+	return st
+end
+
+local function make_stats(custom)
+	local st = M.base_stats()
 	for k, v in pairs(custom or {}) do st[k] = v end
 	st.jump_vy = math.sqrt(2 * M.GRAVITY * st.jump_height)
 	st.air_accel = st.air_speed * st.air_speed / M.AIR_REACTION

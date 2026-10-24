@@ -1,0 +1,12 @@
+# Podio del 2 contro 2: partita da 3 secondi, la coppia vincente sta in mezzo
+imposta giocatori 2v2
+imposta prova_durata 3
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 120 80 0.4
+aspetta_evento over 30
+aspetta 4
+foto podio_2v2

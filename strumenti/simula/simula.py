@@ -79,8 +79,8 @@ def test_sim():
     if not lua:
         info("2. test della simulazione saltati: manca luajit")
         return
-    info("2. test della simulazione, del personaggio e della camera")
-    for test in ("tests/sim_test.lua", "tests/battaglia_test.lua"):
+    info("2. test della simulazione, di assetto e podio, del personaggio e della camera")
+    for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua"):
         r = esegui([lua, test], cwd=REPO)
         sys.stdout.write(r.stdout[-2000:] + r.stderr[-2000:])
         if r.returncode != 0:
@@ -140,7 +140,11 @@ class Gioco:
         while Path(f"/tmp/.X{n}-lock").exists():
             n += 1
         self.display = f":{n}"
-        self.env = dict(os.environ, DISPLAY=self.display, LANG="C.UTF-8")
+        # una casa vuota a ogni prova: il profilo salvato (sys.save) riparte da zero
+        casa = out / "casa"
+        shutil.rmtree(casa, ignore_errors=True)
+        casa.mkdir(parents=True)
+        self.env = dict(os.environ, DISPLAY=self.display, LANG="C.UTF-8", HOME=str(casa))
         self.xvfb = subprocess.Popen(["Xvfb", self.display, "-screen", "0", f"{W * S}x{H * S}x24", "-nolisten", "tcp"],
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for _ in range(50):
