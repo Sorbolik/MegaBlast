@@ -7,12 +7,18 @@
 --   g:step({ left = bool, right = bool, jump = bool,
 --            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport"
 --                                                     | "grenade" | "shards" | "punch" } })
+--   g:can_use(weapon)   -- il robot di turno può usarla adesso?
+-- Regole del turno (sim/config.lua): fino a un'arma e un colpo di spada per
+-- turno, in ordine libero; dopo il primo attacco SECOND_ATTACK_SECONDS per il
+-- secondo, poi REPOSITION_SECONDS per riposizionarsi. I secondi rimasti al
+-- primo attacco diventano Nucleo, che si spende nel teletrasporto.
 --   for _, e in ipairs(g:pop_events()) do ... end
 
 local rng = require "sim.rng"
 local terrain = require "sim.terrain"
 local maps = require "sim.maps"
 local mischia = require "sim.mischia"
+local C = require "sim.config"
 
 local M = {}
 M.__index = M
@@ -32,9 +38,12 @@ M.MAX_CLIMB = 6          -- gradino massimo che il robot sale da solo
 -- sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo rotondo tocca
 -- i pendii vicino al centro invece che con lo spigolo, così non resta sospeso.
 M.ROBOT_ROUND = false
-M.MAX_HP = 100
+-- I danni delle armi sono pensati per una vita di DAMAGE_BASE punti; la vita
+-- vera dei robot è in sim/config.lua (STATS.max_hp)
+M.DAMAGE_BASE = 100
 
--- Statistiche base del robot. L'equipaggiamento le modificherà.
+-- Statistiche di movimento del robot (le altre sono in sim/config.lua, STATS).
+-- L'equipaggiamento e l'albero di abilità le modificano.
 M.DEFAULT_STATS = {
 	walk_speed = 70,     -- pixel al secondo a terra
 	jump_height = 56,    -- altezza massima del salto in pixel
@@ -144,9 +153,18 @@ M.PUNCH_HOP = 220        -- chi colpisce si alza un po' col montante
 -- Armi: queste tre ci sono sempre, le altre si trovano nelle casse (rb.ammo)
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch" }
+-- Oggetti tattici delle casse (anche loro in rb.ammo) e il paracadute, che
+-- costa Nucleo: non sono attacchi (config.lua)
+M.ITEMS = { "trap", "shield", "trampoline" }
+M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true }
+-- tutti i nomi validi di fire.weapon
+M.WEAPONS = { teleport = true }
+for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
+for _, w in ipairs(M.CRATE_WEAPONS) do M.WEAPONS[w] = true end
+for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 
 -- Casse: ogni CRATE_EVERY turni ne cade una dal cielo in un punto a caso.
--- Chi la tocca trova un colpo di un'arma a caso tra CRATE_WEAPONS.
+-- Chi la tocca trova un colpo di un'arma o un oggetto (config.CRATE_CONTENTS).
 M.CRATE_EVERY = 3
 M.CRATE_MAX = 3          -- casse in mappa al massimo
 M.CRATE_HALF_W = 10
@@ -156,13 +174,11 @@ M.CRATE_FALL = 110       -- velocità massima di caduta (scende piano, col parac
 -- ({ con 0, con 1, con 2, ... }). false: una cassa ogni CRATE_EVERY turni.
 M.CRATE_CHANCE = false
 
--- Turni
-M.MATCH_TICKS = 3 * 60 * 60 -- durata massima della partita: 3 minuti
-M.TURN_TICKS = 15 * 60
-M.RETREAT_TICKS = 3 * 60 -- dopo lo sparo ci si può ancora muovere per ripararsi
--- "extra": la ritirata si aggiunge al turno. "truncate" (Blastron): sparando il
--- tempo rimasto scende a RETREAT_TICKS, se era di più.
-M.RETREAT_MODE = "extra"
+-- Turni: le durate sono in sim/config.lua, qui in tick
+M.MATCH_TICKS = C.MATCH_SECONDS * 60
+M.TURN_TICKS = C.TURN_SECONDS * 60
+M.SECOND_ATTACK_TICKS = C.SECOND_ATTACK_SECONDS * 60
+M.REPOSITION_TICKS = C.REPOSITION_SECONDS * 60
 M.SETTLE_TICKS = 30
 M.MAX_SETTLE_TICKS = 5 * 60
 
@@ -199,7 +215,8 @@ end
 local NO_INPUT = {}
 
 local function make_stats(custom)
-	local st = {}
+	local st = { teleport_ticks = M.TELEPORT_TICKS }
+	for k, v in pairs(C.STATS) do st[k] = v end
 	for k, v in pairs(M.DEFAULT_STATS) do st[k] = v end
 	for k, v in pairs(custom or {}) do st[k] = v end
 	st.jump_vy = math.sqrt(2 * M.GRAVITY * st.jump_height)
@@ -210,13 +227,58 @@ end
 local function make_ammo(start)
 	local a = {}
 	for _, w in ipairs(M.CRATE_WEAPONS) do a[w] = start and start[w] or 0 end
+	for _, w in ipairs(M.ITEMS) do a[w] = start and start[w] or 0 end
 	return a
 end
 
--- opts.stats = { [1] = { walk_speed = ... }, [2] = { ... } } per cambiare le statistiche
+-- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards" }, { team = 2 }, ... }:
+-- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
+-- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
+-- mancano vengono da config.STATS e dal profilo di fisica.
+-- pick è l'arma della scelta d'inizio partita (sim/draft.lua). dummy = true è
+-- un bersaglio che non gioca mai il suo turno (tutorial). Senza players, due
+-- robot in squadre diverse.
+M.MAX_PLAYERS = 4
+
+-- Ordine dei turni: le squadre si alternano (nel 2 contro 2 A1, B1, A2, B2),
+-- nell'ordine in cui compaiono in players. Restituisce gli indici dei robot.
+local function turn_order(players)
+	local teams, members = {}, {}
+	for i, p in ipairs(players) do
+		-- i bersagli non giocano
+		if not p.dummy then
+			if not members[p.team] then
+				members[p.team] = {}
+				teams[#teams + 1] = p.team
+			end
+			local m = members[p.team]
+			m[#m + 1] = i
+		end
+	end
+	local order = {}
+	for round = 1, #players do
+		for _, t in ipairs(teams) do
+			if members[t][round] then order[#order + 1] = members[t][round] end
+		end
+	end
+	return order
+end
+
+-- "1v1", "ffa" (tutti contro tutti: ogni squadra ha un robot) o "2v2" (squadre)
+local function match_mode(players)
+	local size = {}
+	for _, p in ipairs(players) do size[p.team] = (size[p.team] or 0) + 1 end
+	for _, n in pairs(size) do
+		if n > 1 then return "2v2" end
+	end
+	return #players == 2 and "1v1" or "ffa"
+end
+
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
--- opts.hp = vita iniziale (MAX_HP se manca; per le prove)
+-- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
+-- opts.normalize = modalità Torneo: le statistiche di albero e equipaggiamento
+-- non contano, tutti hanno quelle di base (resta l'arma della scelta)
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
@@ -225,18 +287,43 @@ function M.new(seed, map_id, opts)
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.WORLD_W / M.CELL, M.WORLD_H / M.CELL, M.CELL)
 	map.build(g.terrain, seed)
+	local players = opts.players or C.MODES["1v1"]
+	assert(#players >= 2 and #players <= M.MAX_PLAYERS, "da 2 a " .. M.MAX_PLAYERS .. " giocatori")
 	g.robots = {}
-	for i = 1, 2 do
-		local sp = map.spawns[i]
+	g.order = turn_order(players)
+	g.mode = match_mode(players)
+	g.normalized = opts.normalize or false
+	-- i punti di partenza nell'ordine dei turni (compagni dallo stesso lato), poi i bersagli
+	local placing = {}
+	for k, i in ipairs(g.order) do placing[k] = i end
+	for i, p in ipairs(players) do
+		if p.dummy then placing[#placing + 1] = i end
+	end
+	for k, i in ipairs(placing) do
+		local p = players[i]
+		local sp = map.spawns[k]
+		local st = make_stats(not opts.normalize and p.stats or nil)
 		g.robots[i] = {
-			id = i, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
-			vx = 0, vy = 0, grounded = false, knocked = false, facing = i == 1 and 1 or -1,
-			hp = opts.hp or M.MAX_HP, dead = false, dealt = 0,
+			id = i, team = p.team, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
+			vx = 0, vy = 0, grounded = false, knocked = false, facing = sp.x < M.WORLD_W / 2 and 1 or -1,
+			hp = opts.hp or st.max_hp, max_hp = st.max_hp, dead = false,
+			-- per i punti e i risultati di fine partita
+			points = 0, damage = 0, kills = 0, env_kills = 0, deaths = 0, falls = 0,
+			attack_ticks = 0, attack_turns = 0, nucleo_gained = 0, nucleo_spent = 0, teleports = 0, crates = 0,
+			nucleo = st.start_nucleo,
+			free_teleports = st.free_teleports,
+			free_parachutes = st.free_parachutes,
+			shield = nil,     -- danni che lo scudo può ancora assorbire
+			parachute = nil,  -- "armed" (pronto) o "open" (aperto)
+			status = {},      -- effetti di stato: tipo -> { turns = turni rimasti, by = chi l'ha dato }
+			turns = 0,     -- turni giocati
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
 			ammo = make_ammo(opts.ammo),
-			stats = make_stats(opts.stats and opts.stats[i]),
+			stats = st,
 		}
+		-- l'arma presa nella scelta d'inizio partita (sim/draft.lua)
+		if p.pick then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
 	end
 	g.events = {}
 	g.tick = 0
@@ -244,16 +331,21 @@ function M.new(seed, map_id, opts)
 	g.orb_seq = 0
 	g.match_left = M.MATCH_TICKS
 	g.current = 1
-	g.retreat = 0
+	g.window = 0             -- tick rimasti per il secondo attacco del turno
+	g.retreat = 0            -- tick rimasti per riposizionarsi dopo l'ultimo attacco
 	g.winner = nil
 	g.shards = {}        -- schegge in volo, per posto nella raffica (1..SHARD_COUNT)
 	g.crates = {}
+	g.placed = {}            -- trappole e trampolini posati
+	g.placed_id = 0
+	g.anchors = map.anchors or {}
 	g.crate_id = 0
 	g.crate_every = opts.crate_every or M.CRATE_EVERY
 	-- con crate_every esplicito si usa sempre quello (le prove ne hanno bisogno)
 	g.crate_chance = not opts.crate_every and M.CRATE_CHANCE or nil
 	g.turn_no = 0
-	g:start_turn(1)
+	g.order_pos = 1
+	g:start_turn(g.order[1])
 	return g
 end
 
@@ -365,11 +457,161 @@ local function walk(g, rb, dx)
 	if not step_x(g, rb, dx) then g:push(rb, dx) end
 end
 
+-- Punti partita ------------------------------------------------------------------
+-- Si guadagnano con il danno agli avversari, le uccisioni (di più quelle
+-- ambientali: caduta fuori dalla mappa o da troppo in alto) e colpendo chi è
+-- primo in classifica; morire ne toglie. Numeri in config.SCORE.
+
+function M:add_points(rb, n)
+	rb.points = rb.points + n
+end
+
+-- Chi ha più punti (solo se è uno solo e ne ha più di zero): colpirlo vale di più
+function M:leader()
+	local best, tie = nil, false
+	for _, rb in ipairs(self.robots) do
+		if not best or rb.points > best.points then
+			best, tie = rb, false
+		elseif rb.points == best.points then
+			tie = true
+		end
+	end
+	if best and not tie and best.points > 0 then return best end
+end
+
+local function enemies(a, b)
+	return a ~= b and a.team ~= b.team
+end
+
+-- Toglie amount punti di vita a rb. by è il robot che ha colpito (nil: nessuno,
+-- per esempio una caduta), reason va nell'evento "damage". Restituisce il danno
+-- arrivato alla vita (0 se lo scudo ha preso tutto).
+function M:hurt(rb, amount, by, reason)
+	if rb.dead or amount <= 0 then return 0 end
+	if by and by ~= rb then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
+	if rb.status.cracked then amount = math.floor(amount * C.STATUS.cracked.damage + 0.5) end
+	if rb.shield then
+		-- lo scudo assorbe per primo
+		local absorbed = math.min(rb.shield, amount)
+		rb.shield = rb.shield - absorbed
+		amount = amount - absorbed
+		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
+		if rb.shield <= 0 then rb.shield = nil end
+		if amount <= 0 then return 0 end
+	end
+	local mult = rb == self:leader() and C.SCORE.leader or 1
+	-- per i punti conta solo la vita che c'era davvero
+	local real = math.min(amount, rb.hp)
+	rb.hp = rb.hp - amount
+	self:emit({ type = "damage", robot = rb.id, amount = amount, reason = reason })
+	if by and by ~= rb then
+		if enemies(by, rb) then
+			by.damage = by.damage + real
+			self:add_points(by, real * C.SCORE.damage * mult)
+		end
+	end
+	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage") end
+	return amount
+end
+
+-- Effetti di stato ------------------------------------------------------------------
+-- Durano fino alla fine del prossimo turno di chi li subisce (o di più, con
+-- stats.status_turns di chi li dà). Numeri in config.STATUS.
+
+function M:add_status(rb, kind, by)
+	if rb.dead then return end
+	local turns = by and by.stats.status_turns or 1
+	local s = rb.status[kind]
+	if s then
+		s.turns, s.by = math.max(s.turns, turns), by and by.id
+	else
+		rb.status[kind] = { turns = turns, by = by and by.id }
+	end
+	self:emit({ type = "status", robot = rb.id, kind = kind, turns = rb.status[kind].turns })
+end
+
+-- Il colpo di weapon ha fatto danno: l'effetto che porta, se ne porta uno
+function M:hit_status(rb, weapon, by)
+	local kind = C.WEAPON_STATUS[weapon]
+	if not kind and by and by.stats.burning_blasts > 0 and (weapon == "missile" or weapon == "grenade") then
+		kind = "burn"
+	end
+	if kind then self:add_status(rb, kind, by) end
+end
+
+-- A fine turno di rb gli effetti perdono un turno
+function M:age_status(rb)
+	for kind, s in pairs(rb.status) do
+		s.turns = s.turns - 1
+		if s.turns <= 0 then
+			rb.status[kind] = nil
+			self:emit({ type = "status_end", robot = rb.id, kind = kind })
+		end
+	end
+end
+
+-- reason: "damage" (colpi), "fell" (fuori dalla mappa), "fall_damage" (caduta
+-- da troppo in alto). L'uccisione va all'ultimo che l'ha colpito, se è stato
+-- da poco (KILL_CREDIT_SECONDS): così buttare giù qualcuno conta.
 function M:kill(rb, reason)
 	if rb.dead then return end
+	local killer
+	if rb.last_hit and self.tick - rb.last_hit_tick <= C.KILL_CREDIT_SECONDS * 60 then
+		killer = self.robots[rb.last_hit]
+	end
+	local env = reason ~= "damage"
+	local mult = rb == self:leader() and C.SCORE.leader or 1
 	rb.dead = true
 	rb.hp = 0
-	self:emit({ type = "death", robot = rb.id, reason = reason })
+	rb.deaths = rb.deaths + 1
+	if reason == "fell" then rb.falls = rb.falls + 1 end
+	self:add_points(rb, C.SCORE.death)
+	local points = 0
+	if killer and enemies(killer, rb) then
+		killer.kills = killer.kills + 1
+		points = C.SCORE.kill * mult
+		if env then
+			killer.env_kills = killer.env_kills + 1
+			points = points + C.SCORE.env_kill * mult
+		end
+		self:add_points(killer, points)
+	end
+	rb.last_hit = nil
+	self:emit({ type = "death", robot = rb.id, reason = reason, by = killer and killer.id, env = env, points = points })
+end
+
+-- Alla morte si ricomincia con la vita piena in un punto a caso della mappa,
+-- lontano dagli altri. Nucleo e colpi delle armi restano.
+function M:respawn(rb)
+	local x, y = self:surface_spot(function(x, gy)
+		for _, o in ipairs(self.robots) do
+			if o ~= rb and not o.dead and math.abs(o.x - x) < C.RESPAWN_DISTANCE then return false end
+		end
+		return not self:robot_collides(x, gy, rb)
+	end)
+	if not x then
+		-- nessun punto lontano da tutti: il primo libero
+		x, y = self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
+	end
+	local sp = maps.get(self.map).spawns[1]
+	rb.x = x or sp.x
+	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
+	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
+	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
+	rb.hp, rb.dead, rb.shield, rb.status = rb.max_hp, false, nil, {}
+	if rb.parachute == "open" then rb.parachute = nil end
+	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
+end
+
+-- Un punto a caso sulla superficie della mappa (il terreno più alto sotto x)
+-- per cui ok(x, y) è vero, o nil. Usa il generatore della partita, così
+-- server e client trovano lo stesso punto.
+function M:surface_spot(ok)
+	for _ = 1, 40 do
+		local x = math.floor(self.rng:range(40, M.WORLD_W - 40))
+		local gy = self.terrain:ground_below(x, M.WORLD_H - 1)
+		if gy and gy < M.WORLD_H - 40 and ok(x, gy) then return x, gy end
+	end
 end
 
 -- Danno da caduta (solo se FALL_SAFE): conta dal punto più alto da cui è
@@ -377,14 +619,18 @@ end
 function M:land(rb)
 	local top = rb.fall_top
 	rb.fall_top = nil
+	if rb.parachute == "open" then
+		-- col paracadute aperto si atterra senza danno, e il paracadute è finito
+		rb.parachute = nil
+		self:emit({ type = "parachute_land", robot = rb.id })
+		return
+	end
 	if not (M.FALL_SAFE and top) then return end
 	local drop = top - rb.y - M.FALL_SAFE
 	if drop <= 0 then return end
-	local dmg = math.floor(math.min(drop * M.FALL_DAMAGE, M.FALL_DAMAGE_MAX) + 0.5)
+	local dmg = math.floor(math.min(drop * M.FALL_DAMAGE, M.FALL_DAMAGE_MAX) * rb.stats.fall_damage_mul + 0.5)
 	if dmg <= 0 then return end
-	rb.hp = rb.hp - dmg
-	self:emit({ type = "damage", robot = rb.id, amount = dmg, reason = "fall" })
-	if rb.hp <= 0 then self:kill(rb, "fall_damage") end
+	self:hurt(rb, dmg, nil, "fall")
 end
 
 -- active: è il robot di turno e può muoversi (riceve i comandi)
@@ -404,6 +650,9 @@ function M:update_robot(rb, input, active)
 	end
 
 	local st = rb.stats
+	-- rallentato: corsa, velocità in aria e salto ridotti
+	local slow = rb.status.slow and C.STATUS.slow
+	local move, jump = slow and slow.move or 1, slow and slow.jump or 1
 	local dir = (input.right and 1 or 0) - (input.left and 1 or 0)
 	if dir ~= 0 then rb.facing = dir end
 
@@ -411,23 +660,35 @@ function M:update_robot(rb, input, active)
 	rb.coyote = math.max(0, (rb.coyote or 0) - 1)
 	rb.jump_buf = math.max(0, (rb.jump_buf or 0) - 1)
 	local want_jump = input.jump
+	-- salto appena premuto (tenendolo premuto non si risalta in aria)
+	local pressed = input.jump and not rb.jump_held
+	rb.jump_held = input.jump
 	if want_jump and not rb.grounded then
 		if rb.coyote > 0 then
 			rb.grounded = true
+		elseif pressed and active and (rb.air_left or 0) > 0 and rb.nucleo >= st.air_jump_cost then
+			-- salto in aria: costa Nucleo
+			rb.air_left = rb.air_left - 1
+			rb.nucleo = rb.nucleo - st.air_jump_cost
+			rb.nucleo_spent = rb.nucleo_spent + st.air_jump_cost
+			rb.vx, rb.vy = dir * st.walk_speed * move, st.jump_vy * jump
+			rb.knocked, rb.rising, rb.fall_top = false, true, nil
+			self:emit({ type = "air_jump", robot = rb.id })
 		else
 			rb.jump_buf = M.JUMP_BUFFER_TICKS
 		end
 	end
+	if rb.grounded then rb.air_left = st.air_jumps end
 	if rb.grounded and rb.jump_buf > 0 then want_jump = true end
 
 	if rb.grounded then
 		if dir ~= 0 then
-			walk(self, rb, dir * st.walk_speed * M.DT)
+			walk(self, rb, dir * st.walk_speed * move * M.DT)
 		end
 		if want_jump then
 			-- salto libero: verso l'alto, oppure nella direzione in cui si sta andando
-			rb.vx = dir * st.walk_speed
-			rb.vy = st.jump_vy
+			rb.vx = dir * st.walk_speed * move
+			rb.vy = st.jump_vy * jump
 			rb.grounded = false
 			rb.rising = true
 			rb.coyote, rb.jump_buf = 0, 0
@@ -458,17 +719,23 @@ function M:update_robot(rb, input, active)
 		end
 		if M.AIR_CONTROL == "instant" then
 			-- Blastron: niente inerzia, anche appena sbalzati
-			if dir ~= 0 then rb.vx = dir * st.air_speed end
+			local air = st.air_speed * move
+			if dir ~= 0 then rb.vx = dir * air end
 			if active and M.CLAMP_ACTIVE_VX then
-				rb.vx = math.max(-st.air_speed, math.min(st.air_speed, rb.vx))
+				rb.vx = math.max(-air, math.min(air, rb.vx))
 			end
 		elseif not rb.knocked then
 			-- controllo in aria (non mentre si viene sbalzati da un'esplosione)
-			local dv = dir * st.air_speed - rb.vx
+			local dv = dir * st.air_speed * move - rb.vx
 			local max_dv = st.air_accel * M.DT
 			rb.vx = rb.vx + math.max(-max_dv, math.min(max_dv, dv))
 		end
 		rb.vy = rb.vy - M.GRAVITY * M.DT
+		if rb.parachute == "armed" and rb.vy < -C.PARACHUTE.open_speed then
+			rb.parachute = "open"
+			self:emit({ type = "parachute", robot = rb.id })
+		end
+		if rb.parachute == "open" then rb.vy = math.max(rb.vy, -C.PARACHUTE.fall_speed) end
 		if rb.vy < 0 and not rb.fall_top then rb.fall_top = rb.y end
 		local landed = false
 		local mx, my = rb.vx * M.DT, rb.vy * M.DT
@@ -578,7 +845,7 @@ function M:update_grenade(p)
 		end
 	end
 	if p.fuse <= 0 then
-		self:explode(p.x, p.y, p.owner, M.GRENADE_BLAST)
+		self:explode(p.x, p.y, p.owner, M.GRENADE_BLAST, "grenade")
 		self.projectile = nil
 	elseif p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300 then
 		self:emit({ type = "miss" })
@@ -625,7 +892,7 @@ function M:update_shards()
 				p.x = p.x + mx / steps
 				p.y = p.y + my / steps
 				if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then
-					self:explode(p.x, p.y, p.owner, M.SHARD_BLAST)
+					self:explode(p.x, p.y, p.owner, M.SHARD_BLAST, "shards")
 					self.shards[i] = nil
 					break
 				end
@@ -653,7 +920,7 @@ function M:throw_orb(angle, power)
 	local vx, vy = launch_velocity(angle, power, M.ORB_SPEED)
 	self.orb_seq = self.orb_seq + 1
 	self.orbs[#self.orbs + 1] = { id = self.orb_seq, x = x, y = y, vx = vx, vy = vy, owner = rb.id,
-		timer = M.TELEPORT_TICKS, age = 0 }
+		timer = rb.stats.teleport_ticks, age = 0 }
 	self:emit({ type = "orb", robot = rb.id })
 end
 
@@ -964,13 +1231,10 @@ function M:update_swing(rb)
 end
 
 function M:sword_hit(rb, other)
-	other.hp = other.hp - M.SWORD_DAMAGE
-	rb.dealt = rb.dealt + M.SWORD_DAMAGE
-	self:emit({ type = "damage", robot = other.id, amount = M.SWORD_DAMAGE })
 	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
 	-- la spada fa solo danno: il bersaglio resta dov'è (in Blastron si ferma)
 	if M.SWORD_STOP then other.vx, other.vy = 0, 0 end
-	if other.hp <= 0 then self:kill(other, "damage") end
+	self:hurt(other, M.SWORD_DAMAGE, rb)
 end
 
 -- Colpi di mischia alla Blastron ---------------------------------------------------
@@ -1038,14 +1302,12 @@ function M:start_punch(angle)
 end
 
 function M:punch_hit(rb, other, dir)
-	other.hp = other.hp - M.PUNCH_DAMAGE
-	rb.dealt = rb.dealt + M.PUNCH_DAMAGE
-	self:emit({ type = "damage", robot = other.id, amount = M.PUNCH_DAMAGE })
 	self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
-	other.vx, other.vy = dir * M.PUNCH_PUSH, M.PUNCH_LAUNCH
+	local k = self:knock_mul(other)
+	other.vx, other.vy = dir * M.PUNCH_PUSH * k, M.PUNCH_LAUNCH * k
 	other.fall_top = nil
 	other.grounded, other.knocked = false, true
-	if other.hp <= 0 then self:kill(other, "damage") end
+	if self:hurt(other, M.PUNCH_DAMAGE, rb) > 0 then self:hit_status(other, "punch", rb) end
 end
 
 function M:update_punch(rb)
@@ -1076,15 +1338,53 @@ function M:update_punch(rb)
 	end
 end
 
--- Casse --------------------------------------------------------------------------
+-- Oggetti che cadono: casse, trappole, trampolini ---------------------------------
 
-function M:crate_collides(x, y)
+-- Il fondo largo 2 * hw di un oggetto con la base in (x, y) tocca il terreno?
+function M:object_collides(x, y, hw)
 	local t, c = self.terrain, M.CELL
 	local cy = math.floor(y / c)
-	for cx = math.floor((x - M.CRATE_HALF_W + 1) / c), math.floor((x + M.CRATE_HALF_W - 1) / c) do
+	for cx = math.floor((x - hw + 1) / c), math.floor((x + hw - 1) / c) do
 		if t:get(cx, cy) ~= 0 then return true end
 	end
 	return false
+end
+
+-- Fa cadere o.y fino al terreno (anche dopo, se un'esplosione scava sotto),
+-- al massimo a velocità max_fall. Restituisce true se è appoggiato.
+function M:fall(o, hw, max_fall)
+	if self:object_collides(o.x, o.y - 0.5, hw) then
+		o.vy = 0
+		return true
+	end
+	o.vy = math.max(o.vy - M.GRAVITY * M.DT, -max_fall)
+	local my = o.vy * M.DT
+	local steps = math.max(1, math.ceil(-my / M.CELL))
+	for _ = 1, steps do
+		local ny = o.y + my / steps
+		if self:object_collides(o.x, ny, hw) then
+			-- appoggiato sul bordo della cella sotto
+			o.y = (math.floor(ny / M.CELL) + 1) * M.CELL
+			o.vy = 0
+			return true
+		end
+		o.y = ny
+	end
+	return false
+end
+
+-- Casse --------------------------------------------------------------------------
+
+-- Cosa c'è nella cassa: a caso secondo i pesi di config.CRATE_CONTENTS
+function M:crate_content()
+	local total = 0
+	for _, c in ipairs(C.CRATE_CONTENTS) do total = total + c[2] end
+	local r = self.rng:next() * total
+	for _, c in ipairs(C.CRATE_CONTENTS) do
+		r = r - c[2]
+		if r < 0 then return c[1] end
+	end
+	return C.CRATE_CONTENTS[#C.CRATE_CONTENTS][1]
 end
 
 -- Sceglie un punto a caso sulla superficie, lontano dai robot e dalle altre
@@ -1092,59 +1392,40 @@ end
 -- così server e client la mettono nello stesso posto.
 function M:spawn_crate()
 	if #self.crates >= M.CRATE_MAX then return nil end
-	local weapon = M.CRATE_WEAPONS[1 + math.floor(self.rng:next() * #M.CRATE_WEAPONS)]
-	for _ = 1, 40 do
-		local x = math.floor(self.rng:range(40, M.WORLD_W - 40))
-		local gy = self.terrain:ground_below(x, M.WORLD_H - 1)
-		local ok = gy ~= nil and gy < M.WORLD_H - 40 and not self:robot_collides(x, gy)
-			and not self:crate_collides(x, gy) and not self:crate_collides(x, gy + M.CRATE_H)
-		if ok then
-			for _, rb in ipairs(self.robots) do
-				if not rb.dead and math.abs(rb.x - x) < 60 then ok = false end
-			end
-			for _, c in ipairs(self.crates) do
-				if math.abs(c.x - x) < 40 then ok = false end
-			end
+	local weapon = self:crate_content()
+	local hw = M.CRATE_HALF_W
+	local x, gy = self:surface_spot(function(x, gy)
+		if self:robot_collides(x, gy) or self:object_collides(x, gy, hw) or self:object_collides(x, gy + M.CRATE_H, hw) then
+			return false
 		end
-		if ok then
-			self.crate_id = self.crate_id + 1
-			local c = { id = self.crate_id, x = x, y = M.WORLD_H + 20, vy = 0, landed = false, weapon = weapon }
-			self.crates[#self.crates + 1] = c
-			self:emit({ type = "crate", id = c.id, x = x, y = gy })
-			return c
+		for _, rb in ipairs(self.robots) do
+			if not rb.dead and math.abs(rb.x - x) < 60 then return false end
 		end
-	end
-	return nil
+		for _, c in ipairs(self.crates) do
+			if math.abs(c.x - x) < 40 then return false end
+		end
+		return true
+	end)
+	if not x then return nil end
+	self.crate_id = self.crate_id + 1
+	local c = { id = self.crate_id, x = x, y = M.WORLD_H + 20, vy = 0, landed = false, weapon = weapon }
+	self.crates[#self.crates + 1] = c
+	self:emit({ type = "crate", id = c.id, x = x, y = gy })
+	return c
 end
 
 function M:update_crates()
 	local i = 1
 	while i <= #self.crates do
 		local c = self.crates[i]
-		-- cade (anche dopo, se un'esplosione le scava il terreno sotto)
-		if self:crate_collides(c.x, c.y - 0.5) then
-			c.vy, c.landed = 0, true
-		else
-			c.vy = math.max(c.vy - M.GRAVITY * M.DT, -M.CRATE_FALL)
-			local my = c.vy * M.DT
-			local steps = math.max(1, math.ceil(-my / M.CELL))
-			for _ = 1, steps do
-				local ny = c.y + my / steps
-				if self:crate_collides(c.x, ny) then
-					-- appoggiata sul bordo della cella sotto
-					c.y = (math.floor(ny / M.CELL) + 1) * M.CELL
-					c.vy, c.landed = 0, true
-					break
-				end
-				c.y = ny
-			end
-		end
+		c.landed = self:fall(c, M.CRATE_HALF_W, M.CRATE_FALL)
 		local taken = false
 		for _, rb in ipairs(self.robots) do
 			if not rb.dead and not taken
 				and math.abs(rb.x - c.x) <= M.ROBOT_HALF_W + M.CRATE_HALF_W
 				and rb.y < c.y + M.CRATE_H and rb.y + M.ROBOT_H > c.y then
 				rb.ammo[c.weapon] = rb.ammo[c.weapon] + 1
+				rb.crates = rb.crates + 1
 				self:emit({ type = "crate_pick", id = c.id, robot = rb.id, weapon = c.weapon })
 				taken = true
 			end
@@ -1154,6 +1435,112 @@ function M:update_crates()
 			table.remove(self.crates, i)
 		else
 			i = i + 1
+		end
+	end
+end
+
+-- Oggetti tattici ----------------------------------------------------------------
+
+-- Quanto viene spinto rb: meno sopra un punto di ancoraggio e con lo scudo
+function M:knock_mul(rb)
+	local k = rb.stats.knockback_mul
+	if rb.shield then k = k * C.SHIELD.knockback end
+	for _, a in ipairs(self.anchors) do
+		local dx, dy = rb.x - a.x, rb.y - a.y
+		if dx * dx + dy * dy <= a.r * a.r then return k * C.ANCHOR_KNOCKBACK end
+	end
+	return k
+end
+
+-- Il robot di turno usa un oggetto (già controllato con can_use)
+function M:use_tool(kind)
+	local rb = self.robots[self.current]
+	if kind == "parachute" then
+		if rb.free_parachutes > 0 then
+			rb.free_parachutes = rb.free_parachutes - 1
+		else
+			rb.nucleo = rb.nucleo - rb.stats.parachute_cost
+			rb.nucleo_spent = rb.nucleo_spent + rb.stats.parachute_cost
+		end
+		rb.parachute = "armed"
+		self:emit({ type = "parachute_ready", robot = rb.id })
+		return
+	end
+	if kind == "shield" and rb.ammo.shield == 0 then
+		-- senza scudi delle casse si paga col Nucleo
+		rb.nucleo = rb.nucleo - rb.stats.shield_cost
+		rb.nucleo_spent = rb.nucleo_spent + rb.stats.shield_cost
+	else
+		rb.ammo[kind] = rb.ammo[kind] - 1
+	end
+	if kind == "shield" then
+		rb.shield = C.SHIELD.hp
+		self:emit({ type = "shield", robot = rb.id })
+		return
+	end
+	-- trappola e trampolino si posano ai piedi
+	self.placed_id = self.placed_id + 1
+	local o = { id = self.placed_id, kind = kind, x = rb.x, y = rb.y, vy = 0, owner = rb.id, team = rb.team,
+		armed = false, r = kind == "trap" and rb.stats.trap_radius or C.TRAMPOLINE.half_w }
+	self.placed[#self.placed + 1] = o
+	-- chi posa il trampolino ci sta sopra: non rimbalza finché non scende
+	if kind == "trampoline" then rb.bounced_on = o.id end
+	if #self.placed > C.MAX_PLACED then
+		-- troppi: sparisce il più vecchio
+		self:emit({ type = "placed_gone", id = self.placed[1].id })
+		table.remove(self.placed, 1)
+	end
+	self:emit({ type = "place", id = o.id, kind = kind, robot = rb.id, x = o.x, y = o.y })
+end
+
+-- Il robot ha i piedi sopra l'oggetto o?
+local function on_top(rb, o)
+	return math.abs(rb.x - o.x) <= M.ROBOT_HALF_W + o.r and rb.y >= o.y - 2 and rb.y <= o.y + 6
+end
+
+function M:update_placed()
+	local i = 1
+	while i <= #self.placed do
+		local o = self.placed[i]
+		self:fall(o, o.r, M.CRATE_FALL)
+		local gone = o.y < -20
+		for _, rb in ipairs(self.robots) do
+			if not gone and not rb.dead and on_top(rb, o) and rb.vy <= 0 then
+				if o.kind == "trampoline" then
+					-- chiunque ci arrivi rimbalza, una volta: ricadendoci sopra ci si
+					-- ferma, e si rimbalza di nuovo solo dopo aver toccato altro terreno
+					if rb.bounced_on ~= o.id then
+						rb.vy, rb.grounded, rb.rising, rb.fall_top = C.TRAMPOLINE.launch_vy, false, false, nil
+						rb.bounced_on = o.id
+						self:emit({ type = "bounce", id = o.id, robot = rb.id })
+					end
+				elseif o.armed and rb.team ~= o.team then
+					-- la trappola lancia in alto e lontano dal suo centro, poi sparisce
+					local dir = rb.x > o.x and 1 or (rb.x < o.x and -1 or -rb.facing)
+					local k = self:knock_mul(rb)
+					rb.vx, rb.vy = dir * C.TRAP.push_vx * k, C.TRAP.launch_vy * k
+					rb.grounded, rb.knocked, rb.fall_top = false, true, nil
+					self:emit({ type = "trap", id = o.id, robot = rb.id, x = o.x, y = o.y })
+					self:hurt(rb, C.TRAP.damage, self.robots[o.owner])
+					gone = true
+				end
+			end
+		end
+		if gone then
+			if o.kind ~= "trap" or o.y < -20 then self:emit({ type = "placed_gone", id = o.id }) end
+			table.remove(self.placed, i)
+		else
+			i = i + 1
+		end
+	end
+	-- chi ha toccato terra fuori dal trampolino può rimbalzarci di nuovo
+	for _, rb in ipairs(self.robots) do
+		if rb.bounced_on and rb.grounded then
+			local still = false
+			for _, o in ipairs(self.placed) do
+				if o.id == rb.bounced_on and on_top(rb, o) then still = true end
+			end
+			if not still then rb.bounced_on = nil end
 		end
 	end
 end
@@ -1208,10 +1595,20 @@ end
 
 -- owner (facoltativo) è chi ha sparato, per contare i danni inflitti.
 -- blast (facoltativo) dice quanto è grande: MISSILE_BLAST se manca.
-function M:explode(x, y, owner, blast)
+-- weapon (facoltativo) è l'arma, per l'effetto di stato che porta.
+function M:explode(x, y, owner, blast, weapon)
 	blast = blast or M.MISSILE_BLAST
 	local cy0, cy1 = self.terrain:carve(x, y, blast.r)
 	self:emit({ type = "explosion", x = x, y = y, r = blast.r, row_min = cy0, row_max = cy1 })
+	-- trappole e trampolini nel cratere saltano
+	for i = #self.placed, 1, -1 do
+		local o = self.placed[i]
+		local ox, oy = o.x - x, o.y - y
+		if ox * ox + oy * oy <= (blast.r + 6) * (blast.r + 6) then
+			table.remove(self.placed, i)
+			self:emit({ type = "placed_gone", id = o.id })
+		end
+	end
 	local blastron = M.KNOCKBACK_MODEL == "blastron"
 	for _, rb in ipairs(self.robots) do
 		if not rb.dead then
@@ -1236,22 +1633,21 @@ function M:explode(x, y, owner, blast)
 				local dmg = dmin + (blast.damage - dmin) * f
 				if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
 				dmg = math.floor(dmg + 0.5)
-				rb.hp = rb.hp - dmg
-				if owner and owner ~= rb.id then self.robots[owner].dealt = self.robots[owner].dealt + dmg end
-				self:emit({ type = "damage", robot = rb.id, amount = dmg })
+				local k = self:knock_mul(rb)
 				if blastron then
 					-- la velocità viene sostituita; senza impulse, uno con la
 					-- stessa spinta massima del modello "centro"
-					local imp = blast.impulse or 4 * blast.knockback / blast.damage_r
+					local imp = (blast.impulse or 4 * blast.knockback / blast.damage_r) * k
 					rb.vx, rb.vy = dx * imp * f, dy * imp * f
 				else
 					if d < 1 then dx, dy, d = 0, 1, 1 end
-					rb.vx = dx / d * blast.knockback * f
-					rb.vy = dy / d * blast.knockback * f + 120 * f
+					rb.vx = dx / d * blast.knockback * f * k
+					rb.vy = (dy / d * blast.knockback * f + 120 * f) * k
 				end
 				rb.grounded = false
 				rb.knocked = true
-				if rb.hp <= 0 then self:kill(rb, "damage") end
+				local by = owner and self.robots[owner]
+				if self:hurt(rb, dmg, by) > 0 and weapon and by ~= rb then self:hit_status(rb, weapon, by) end
 			end
 		end
 	end
@@ -1268,7 +1664,7 @@ function M:update_projectile()
 		p.x = p.x + mx / steps
 		p.y = p.y + my / steps
 		if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then
-			self:explode(p.x, p.y, p.owner)
+			self:explode(p.x, p.y, p.owner, nil, "missile")
 			self.projectile = nil
 			return
 		end
@@ -1281,20 +1677,27 @@ end
 
 -- Turni ------------------------------------------------------------------------
 
-function M:alive_count()
-	local n = 0
-	for _, rb in ipairs(self.robots) do
-		if not rb.dead then n = n + 1 end
-	end
-	return n
-end
-
 function M:start_turn(player)
 	self.current = player
 	self.phase = "aim"
 	self.timer = M.TURN_TICKS
-	self.retreat = 0
+	self.window, self.retreat = 0, 0
+	-- attacchi già fatti nel turno: al massimo un'arma e un colpo di spada
+	self.used = { weapon = false, sword = false }
+	self.teleports = 0
+	local rb = self.robots[player]
+	rb.turns = rb.turns + 1
+	-- lo scudo dura fino all'inizio del proprio turno dopo
+	if rb.shield then
+		rb.shield = nil
+		self:emit({ type = "shield_end", robot = rb.id })
+	end
+	-- le trappole posate prima di questo turno sono armate
+	for _, o in ipairs(self.placed) do o.armed = true end
 	self:emit({ type = "turn", robot = player })
+	-- chi brucia prende danno all'inizio del turno (l'uccisione va a chi l'ha bruciato)
+	local burn = rb.status.burn
+	if burn then self:hurt(rb, C.STATUS.burn.damage, burn.by and self.robots[burn.by], "burn") end
 	-- dopo ogni crate_every turni cade una cassa
 	self.turn_no = self.turn_no + 1
 	if self.turn_no > 1 then
@@ -1307,46 +1710,133 @@ function M:start_turn(player)
 	end
 end
 
--- Classifica a tempo scaduto: più vita rimasta, a parità più danni inflitti.
--- Riempie self.podium e restituisce il vincitore, o nil se i primi due sono pari in tutto.
-function M:ranking()
-	local order = {}
-	for _, rb in ipairs(self.robots) do
-		if not rb.dead then order[#order + 1] = rb end
+-- Il robot di turno può usare weapon adesso? "teleport", "sword" o un'arma.
+-- Prima del primo attacco e nei secondi del secondo si attacca; nel
+-- riposizionamento no. Il teletrasporto costa Nucleo e si lancia fino al colpo
+-- di spada.
+function M:can_use(weapon)
+	if self.phase ~= "aim" then return false end
+	local rb = self.robots[self.current]
+	if rb.dead then return false end
+	-- gli oggetti si usano anche nel riposizionamento
+	if weapon == "parachute" then
+		return not rb.parachute and (rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost)
+	elseif weapon == "shield" then
+		return not rb.shield and (rb.ammo.shield > 0 or rb.nucleo >= rb.stats.shield_cost)
+	elseif M.TOOLS[weapon] then
+		return rb.ammo[weapon] > 0
 	end
-	table.sort(order, function(a, b)
-		if a.hp ~= b.hp then return a.hp > b.hp end
-		if a.dealt ~= b.dealt then return a.dealt > b.dealt end
-		return a.id < b.id
-	end)
-	self.podium = {}
-	for i, rb in ipairs(order) do self.podium[i] = rb.id end
-	local a, b = order[1], order[2]
-	if a and b and a.hp == b.hp and a.dealt == b.dealt then return nil end
-	return a and a.id
+	if self.retreat > 0 then return false end
+	if weapon == "teleport" then
+		return not self.used.sword and #self.orbs < M.MAX_ORBS and rb.nucleo >= M.teleport_cost(rb)
+			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS)
+	elseif weapon == "sword" then
+		return not self.used.sword
+	end
+	return not self.used.weapon and M.has_weapon(rb, weapon)
 end
 
-function M:end_turn()
-	if self:alive_count() <= 1 then
-		self.phase = "over"
-		for _, rb in ipairs(self.robots) do
-			if not rb.dead then self.winner = rb.id end
+-- Quanto Nucleo costa il prossimo teletrasporto: niente finché restano quelli gratis
+function M.teleport_cost(rb)
+	return rb.free_teleports > 0 and 0 or rb.stats.teleport_cost
+end
+
+function M:start_reposition()
+	self.window = 0
+	self.retreat = math.min(self.timer, M.REPOSITION_TICKS)
+end
+
+-- Il robot di turno attacca con weapon (già controllata con can_use)
+function M:attack(weapon, fire)
+	local rb = self.robots[self.current]
+	local first = not (self.used.weapon or self.used.sword)
+	if weapon == "sword" then
+		self.used.sword = true
+		self:swing_sword(fire.angle)
+	else
+		self.used.weapon = true
+		if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
+		if weapon == "punch" then
+			self:start_punch(fire.angle)
+		elseif weapon == "grenade" then
+			self:throw_grenade(fire.angle, fire.power)
+		elseif weapon == "shards" then
+			self:fire_shards(fire.angle)
+		else
+			self:fire(fire.angle, fire.power)
 		end
-		self:emit({ type = "over", winner = self.winner })
-		return
 	end
+	if first then
+		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
+		rb.attack_turns = rb.attack_turns + 1
+		-- i secondi rimasti diventano Nucleo
+		local gain = math.floor(self.timer / (60 * C.NUCLEO_SECONDS))
+		gain = math.max(0, math.min(gain, C.NUCLEO_MAX - rb.nucleo))
+		if gain > 0 then
+			rb.nucleo = rb.nucleo + gain
+			rb.nucleo_gained = rb.nucleo_gained + gain
+			self:emit({ type = "nucleo", robot = rb.id, amount = gain, total = rb.nucleo })
+		end
+		self.window = math.min(self.timer, M.SECOND_ATTACK_TICKS)
+	end
+	if self.used.weapon and self.used.sword then self:start_reposition() end
+end
+
+-- Risultati della partita, anche a metà: la classifica per punti della
+-- squadra (a parità, dei robot). place è il posto della squadra: i compagni
+-- hanno lo stesso, chi ha gli stessi punti pure.
+-- { mode, winner = squadra o nil se pari, ranking = { { robot, team, place, points, ... } } }
+function M:results()
+	local team_points = {}
+	for _, rb in ipairs(self.robots) do team_points[rb.team] = (team_points[rb.team] or 0) + rb.points end
+	local list = {}
+	for i, rb in ipairs(self.robots) do list[i] = rb end
+	table.sort(list, function(a, b)
+		local ta, tb = team_points[a.team], team_points[b.team]
+		if ta ~= tb then return ta > tb end
+		if a.team ~= b.team then return a.team < b.team end
+		if a.points ~= b.points then return a.points > b.points end
+		return a.id < b.id
+	end)
+	local ranking, place, last_team = {}, 0, nil
+	for i, rb in ipairs(list) do
+		if rb.team ~= last_team then
+			-- squadra nuova: scende di posto solo se ha meno punti della precedente
+			if not last_team or team_points[rb.team] < team_points[last_team] then place = place + 1 end
+			last_team = rb.team
+		end
+		ranking[i] = {
+			robot = rb.id, team = rb.team, place = place, points = math.floor(rb.points + 0.5), alive = not rb.dead,
+			damage = rb.damage, kills = rb.kills, env_kills = rb.env_kills, deaths = rb.deaths, falls = rb.falls,
+			turns = rb.turns, teleports = rb.teleports, crates = rb.crates,
+			avg_attack_secs = rb.attack_turns > 0 and math.floor(rb.attack_ticks / rb.attack_turns / 6 + 0.5) / 10 or 0,
+			nucleo_gained = rb.nucleo_gained, nucleo_spent = rb.nucleo_spent,
+		}
+	end
+	local first, second = ranking[1], nil
+	for _, r in ipairs(ranking) do
+		if r.team ~= first.team then second = r break end
+	end
+	local winner = first.team
+	if second and second.place == first.place then winner = nil end
+	return { mode = self.mode, normalized = self.normalized, winner = winner, ranking = ranking }
+end
+
+-- La partita finisce solo allo scadere del tempo: chi muore ricomincia.
+function M:end_turn()
 	if self.match_left <= 0 then
-		-- tempo scaduto: vince chi ha più vita
 		self.phase = "over"
-		self.winner = self:ranking()
-		self:emit({ type = "over", winner = self.winner, reason = "time" })
+		local res = self:results()
+		self.winner = res.winner
+		self:emit({ type = "over", winner = res.winner, reason = "time", results = res })
 		return
 	end
-	local nxt = self.current
-	repeat
-		nxt = nxt % #self.robots + 1
-	until not self.robots[nxt].dead
-	self:start_turn(nxt)
+	self:age_status(self.robots[self.current])
+	for _, rb in ipairs(self.robots) do
+		if rb.dead then self:respawn(rb) end
+	end
+	self.order_pos = self.order_pos % #self.order + 1
+	self:start_turn(self.order[self.order_pos])
 end
 
 function M:step(input)
@@ -1355,13 +1845,12 @@ function M:step(input)
 	self.tick = self.tick + 1
 	if self.match_left > 0 then self.match_left = self.match_left - 1 end
 
-	-- il robot di turno si muove mentre mira e durante la ritirata dopo lo sparo
-	local can_move = self.phase == "aim" or self.retreat > 0
+	-- il robot di turno si muove per tutto il turno, anche dopo gli attacchi
+	local can_move = self.phase == "aim"
 	for i, rb in ipairs(self.robots) do
 		local active = i == self.current and can_move
 		self:update_robot(rb, active and input or NO_INPUT, active)
 	end
-	if self.retreat > 0 then self.retreat = self.retreat - 1 end
 	-- prima il teletrasporto, poi la spada: il fendente colpisce già dalla nuova posizione
 	if #self.orbs > 0 then self:update_orbs() end
 	for _, rb in ipairs(self.robots) do
@@ -1372,59 +1861,58 @@ function M:step(input)
 			if rb.dead then rb.punch, rb.punch_dir = nil, nil else self:update_punch(rb) end
 		end
 	end
+	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
 	self:update_shards()
 	if #self.crates > 0 then self:update_crates() end
+	if #self.placed > 0 then self:update_placed() end
 
 	if self.phase == "aim" then
-		self.timer = self.timer - 1
+		self.timer = math.max(0, self.timer - 1)
+		local done = false
+		if self.window > 0 then
+			-- finito il tempo per il secondo attacco si passa al riposizionamento
+			self.window = self.window - 1
+			if self.window == 0 then self:start_reposition() end
+		elseif self.retreat > 0 then
+			self.retreat = self.retreat - 1
+			done = self.retreat == 0
+		end
 		local fire = input.fire
 		local weapon = fire and fire.weapon or "missile"
-		if self.robots[self.current].dead then
-			self.phase, self.settle = "settle", 0
-		elseif fire and weapon == "teleport" then
-			-- lanciare il globo non chiude il turno e se ne possono lanciare quanti
-			-- se ne vuole, anche mentre altri sono ancora in volo
-			if #self.orbs < M.MAX_ORBS then self:throw_orb(fire.angle, fire.power) end
-		elseif fire and M.has_weapon(self.robots[self.current], weapon) then
-			local rb = self.robots[self.current]
-			if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
-			if weapon == "sword" then
-				self:swing_sword(fire.angle)
-			elseif weapon == "punch" then
-				self:start_punch(fire.angle)
-			elseif weapon == "grenade" then
-				self:throw_grenade(fire.angle, fire.power)
-			elseif weapon == "shards" then
-				self:fire_shards(fire.angle)
+		if not done and fire and self:can_use(weapon) then
+			if M.TOOLS[weapon] then
+				self:use_tool(weapon)
+			elseif weapon == "teleport" then
+				-- il globo non è un attacco: costa Nucleo e il turno continua
+				local rb = self.robots[self.current]
+				if rb.free_teleports > 0 then
+					rb.free_teleports = rb.free_teleports - 1
+				else
+					rb.nucleo = rb.nucleo - rb.stats.teleport_cost
+					rb.nucleo_spent = rb.nucleo_spent + rb.stats.teleport_cost
+				end
+				rb.teleports = rb.teleports + 1
+				self.teleports = self.teleports + 1
+				self:throw_orb(fire.angle, fire.power)
 			else
-				self:fire(fire.angle, fire.power)
+				self:attack(weapon, fire)
 			end
-			self.phase = "flying"
-			if M.RETREAT_MODE == "truncate" then
-				self.retreat = math.min(self.timer, M.RETREAT_TICKS)
-			else
-				self.retreat = M.RETREAT_TICKS
-			end
-		elseif self.timer <= 0 or self.match_left <= 0 then
-			-- turno finito, o partita finita: chi mira perde il colpo
-			self.phase, self.settle = "settle", 0
 		end
-	elseif self.phase == "flying" then
-		if self.projectile then self:update_projectile() end
-		local rb = self.robots[self.current]
-		if not self.projectile and not rb.swing and not rb.punch and not self:shards_flying() then
+		-- turno finito, o partita finita: chi mira perde il colpo
+		if done or self.timer <= 0 or self.match_left <= 0 or self.robots[self.current].dead then
+			self.window, self.retreat = 0, 0
 			self.phase, self.settle, self.settle_total = "settle", 0, 0
 		end
 	elseif self.phase == "settle" then
-		self.settle_total = (self.settle_total or 0) + 1
-		local still = #self.orbs == 0
+		-- si aspetta che colpi, globi e robot si fermino
+		self.settle_total = self.settle_total + 1
+		local still = #self.orbs == 0 and not self.projectile and not self:shards_flying()
 		for _, rb in ipairs(self.robots) do
 			if not rb.dead and (not rb.grounded or rb.swing or rb.punch) then still = false end
 		end
-		self.settle = (still and self.retreat == 0) and self.settle + 1 or 0
+		self.settle = still and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then
-			self.settle_total = 0
 			self:end_turn()
 		end
 	end
@@ -1437,13 +1925,13 @@ end
 -- il robot di Blastron è alto 3,612 unità, il nostro BLASTRON_ROBOT_H pixel
 -- (28: 1,4 volte i 20 di prima, scelto il 23 ottobre per vedere meglio il
 -- personaggio; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
--- La vita là partiva da 2000, qui da MAX_HP: i danni sono riscalati.
+-- La vita là partiva da 2000, qui da DAMAGE_BASE: i danni sono riscalati.
 M.BLASTRON_ROBOT_H = 28
 M.BLASTRON_UNIT = M.BLASTRON_ROBOT_H / 3.612
 
 local function blastron_profile()
 	local u = M.BLASTRON_UNIT
-	local hp = M.MAX_HP / 2000
+	local hp = M.DAMAGE_BASE / 2000
 	-- quanto è più grande il robot rispetto a quello del profilo megablast,
 	-- per le nostre misure (casse, schegge, globo...)
 	local k = M.BLASTRON_ROBOT_H / M.ROBOT_H
@@ -1520,13 +2008,8 @@ local function blastron_profile()
 		PUNCH_PUSH = 0,
 		PUNCH_HOP = 15 * u,
 		PUNCH_REACH = 3.5 * u,
-		-- turni da 30 s (25 con più di due giocatori), sparando ne restano 5,
-		-- 1 s tra un turno e l'altro, partita da 5 minuti
-		TURN_TICKS = 30 * 60,
-		RETREAT_TICKS = 5 * 60,
-		RETREAT_MODE = "truncate",
+		-- 1 s tra un turno e l'altro (durate del turno e della partita in sim/config.lua)
 		SETTLE_TICKS = 60,
-		MATCH_TICKS = 5 * 60 * 60,
 		CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 },
 		-- comandi: zona morta 20%, potenza quadratica, mira che insegue il dito,
 		-- solo l'inizio della traiettoria, salto ripetuto
