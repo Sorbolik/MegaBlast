@@ -24,7 +24,7 @@ foto 08_esplosione
 aspetta_stato turno=2 fase=aim 15
 aspetta 0.6
 zoom 09_colpito 4
-tocca 687 62                        # Lama di Nucleo
+premi 2                             # Lama di Nucleo (tasto 2)
 aspetta 0.3
 mira -120 0 0.4 10_spada_carica 4
 aspetta 0.1

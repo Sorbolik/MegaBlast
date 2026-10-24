@@ -6,19 +6,21 @@ Risorsa permanente: va consultata prima di ogni decisione su gameplay, equipaggi
 
 ## Decisioni prese
 
-Scelte di Sergio del 23 ottobre 2026. Valgono sopra le proposte del resto del documento, che resta come archivio delle alternative.
+Scelte di Sergio del 23 ottobre 2026, aggiornate il 24 ottobre dopo la prima prova. Valgono sopra le proposte del resto del documento, che resta come archivio delle alternative.
 
 | Area | Decisione |
 | --- | --- |
-| Tempo del turno | **E, Nucleo**: i secondi rimasti al primo attacco diventano Nucleo. Tutti partono con 1 Nucleo. |
-| Due attacchi per turno | Fino a **un'arma e un colpo di spada** nello stesso turno, in ordine libero. Dopo il primo attacco hai **fino a 5 s per il secondo**; dopo l'ultimo attacco restano sempre **5 s di riposizionamento** (scudi, trappole). In tutto al massimo 10 s dopo il primo attacco, e mai oltre la fine del turno: chi attacca allo scadere non ha tempo per altro. La vita dei robot si alza per compensare il danno doppio. |
-| Teletrasporto | Ogni teletrasporto costa **1 Nucleo** (sostituisce "illimitato e gratuito"). Al primo turno se ne può fare uno solo. Si può lanciare fino al colpo di spada, non nel tempo di riposizionamento. La combo resta: lanci l'orbe ai piedi di un avversario, prepari il fendente, colpisci chi hai dietro e il teletrasporto ti porta a chiudere il fendente sull'altro. |
+| Tempo del turno | **E, in forma di teletrasporti** (24 ottobre 2026, dopo le prime partite: il Nucleo era ininfluente, la barra era sempre piena e non costringeva a scegliere). I secondi rimasti al primo attacco diventano **globi del teletrasporto**, uno ogni 10 s, **senza tetto**. Tutti partono con 2 globi. Il Nucleo come risorsa separata non c'è più. |
+| Due attacchi per turno | Le armi sono **primarie** e **secondarie** (regola scelta il 24 ottobre 2026, strada 1B della pagina [Arsenale primarie e secondarie](https://claude.ai/artifact/W8SfXvxVNLSZDAx4Wc8QXJ)). Le primarie **agiscono sul mondo e sugli altri**: cratere, effetto di stato, sbalzo (Lanciarune, che c'è sempre, e quelle delle casse, un colpo per cassa). Le secondarie fanno **danno secco, nessun effetto di stato, sono illimitate e ognuna sposta chi la usa a modo suo**: la Lama (sempre) colpisce a 240° attorno a te; il **Tonante** (pistola pesante) spara un colpo dritto e istantaneo entro 300 px e il rinculo ti spinge dall'altra parte (da terra ti solleva anche: spari in basso in aria per salire, verso il vuoto per tornare sulla piattaforma); il **Maglio** è un martello a due mani: in aria colpisce sotto i piedi e, se trova un robot o il terreno, ti fa rimbalzare in alto (pogo), a terra è un colpo corto davanti; l'**Affondo** è uno scatto nella direzione della mira che passa oltre i robot colpendoli una volta ciascuno. Ogni turno **una primaria e una secondaria**, in ordine libero, mai due della stessa categoria: vicino o lontano non conta. Nella barra i due gruppi sono separati, hanno il nome sopra e un colore fisso (**brace** le primarie, **acciaio** le secondarie), anche nella scelta d'inizio partita; usata un'arma, tutto il suo gruppo si spegne. Dopo il primo attacco restano **8 s** (4 per il secondo attacco più 4 per ripararsi, uniti): in tutti e 8 si può fare il secondo attacco e tutto il resto. Mai oltre la fine del turno. La barra del tempo è gialla finché il secondo attacco c'è, blu quando li hai usati tutti e due, e lampeggia negli ultimi 2 s. La vita dei robot si alza per compensare il danno doppio. |
+| Morte e fine partita | Chi muore ricompare dopo 1,5 s **nello stesso turno**, sia nel turno dell'avversario (che può colpirlo ancora) sia nel proprio (il turno non passa). Allo scadere dei 5 minuti si finisce il giro di turni. |
+| Teletrasporto | Ogni lancio consuma **un globo** (quelli d'inizio e quelli guadagnati attaccando presto). Al primo turno se ne può fare uno solo. Si può lanciare fino all'attacco con la secondaria. La combo resta: lanci l'orbe ai piedi di un avversario, prepari il fendente, colpisci chi hai dietro e il teletrasporto ti porta a chiudere il fendente sull'altro. |
 | Trappole | Si possono piazzare in qualsiasi momento del turno. |
-| Munizioni | Ogni arma trovata dà **1 colpo**; se la ritrovi i colpi si sommano. Missile e spada sono infiniti. Sostituisce la ricarica della strada 4. |
-| Casse | Contenuto **nascosto** (la strada 3 è scartata). Oltre alle armi contengono **trappole e scudi**. |
-| Strumenti tattici | Per colmare con la strategia il divario di livello: **trappole** per far cadere gli avversari dalla mappa, **punti di ancoraggio** sulla mappa dove è difficile essere sbalzati (conta dove finisci il turno), **trampolini** da usare per riposizionarti o da piazzare vicino a te per rendere difficile avvicinarsi, **paracadute** che annulla il danno da caduta per 1 Nucleo (niente mezzi Nuclei; più avanti forse cose da 2), **scudi** da usare al momento giusto. |
+| Munizioni | Ogni arma trovata dà **1 colpo**; se la ritrovi i colpi si sommano. Missile e spada sono infiniti, e così tutte le secondarie. Sostituisce la ricarica della strada 4. |
+| Casse | Contenuto **nascosto** (la strada 3 è scartata). Oltre alle armi contengono **trappole e scudi**. Una cassa **ogni 2 turni** (dal turno 2), al massimo 4 in mappa (24 ottobre 2026: con una ogni 3 in una partita a quattro ne cadevano tre in tutto, e si restava con Lanciarune e Lama). |
+| Strumenti tattici | Per colmare con la strategia il divario di livello: **trappole** per far cadere gli avversari dalla mappa; **cerchi di cura** che compaiono durante la partita in punti a caso (chi finisce un turno dentro si cura, poi il cerchio sparisce: ci porti il compagno, ne spingi via il nemico; sostituiscono i punti di ancoraggio); **trampolini** che si lanciano come l'Uovo, per riposizionarti o sotto i piedi di un avversario; **paracadute** (uno a partita): in aria un tocco lo apre e un altro lo chiude, scendi piano, ti muovi un po' più veloce in orizzontale e non prendi danno da caduta (è un modo per spostarsi); **scudi** che si trovano solo nelle casse e si usano quando si vuole; il **Rampino** (oggetto sempre nella barra) una volta per turno. |
+| Effetti chiari | Quando un effetto colpisce, sopra il robot sale la scritta (RALLENTATO!, ARMATURA INCRINATA!, SBALZATO!); sotto la vita restano gli effetti con i turni che mancano; nella scelta d'inizio partita ogni arma ha una riga che spiega il suo effetto. |
 | Strategia | **2** uccisioni ambientali, **7** punteggio podio oltre le uccisioni, **9** effetti di stato. |
-| Scelta d'inizio partita | Un **ventaglio di 3 armi**, uguale per le due squadre. Ognuno ne sceglie 1 e due compagni non possono prendere la stessa. Di quell'arma hai 1 colpo (2 se le partite durano abbastanza). Fino allo scadere del timer puoi cambiare scelta o proporre uno scambio al compagno; allo scadere le scelte si confermano da sole. In partita hai missile, spada, l'arma scelta e quelle delle casse. Nel **tutti contro tutti** scelgono tutti nello stesso momento e i doppioni sono ammessi. |
+| Scelta d'inizio partita | **Due ventagli di 3 armi**, uguali per le due squadre: le primarie delle casse e le secondarie (Tonante, Maglio, Affondo). Ognuno sceglie **una primaria e una secondaria**; due compagni non possono prendere la stessa. Della primaria hai **2 colpi** (24 ottobre 2026: con 3 turni a testa uno solo si consumava al primo turno utile), la secondaria è illimitata. Fino allo scadere del timer puoi cambiare scelta o proporre uno scambio al compagno (primaria e secondaria insieme); allo scadere le scelte si confermano da sole. In partita hai Lanciarune, Lama, le due armi scelte e quelle delle casse. Nel **tutti contro tutti** scelgono tutti nello stesso momento e i doppioni sono ammessi. |
 | Durata della partita | **5 minuti**. Più avanti si valuta se accorciare il turno. |
 | Equipaggiamento | Misto di **sidegrade** (strada 2) e **tier che cambiano aspetto e varianti** (strada 3). |
 | Competitivo | Niente classificata permanente: una **modalità Torneo a tempo** con statistiche normalizzate. |
@@ -27,17 +29,17 @@ Scelte di Sergio del 23 ottobre 2026. Valgono sopra le proposte del resto del do
 | Eventi | Un **calendario degli eventi** invece delle stagioni: si sa in anticipo che la settimana dopo c'è il torneo, con premi a fasce (es. primi 100 skin e pezzo di equipaggiamento, dal 101 al 300 solo la skin). |
 | Negozio | Si vende l'aspetto. Qualsiasi altra cosa deve essere marginale: ci si arriva comunque giocando, comprarla fa solo prima. |
 
-Ancora aperti: zone del Titano (strada 1), turni che si accorciano (I), cosa fare mentre aspetti (J). Il Nucleo si conta al primo attacco.
+Ancora aperti: zone del Titano (strada 1), turni che si accorciano (I), cosa fare mentre aspetti (J). I teletrasporti si contano al primo attacco.
 
 ## Insegnare il turno: tutorial a passi
 
 Una regola nuova per volta, ognuna in una mini-missione di meno di un minuto, e un HUD che racconta il turno da solo:
 
 1. **Muoviti e spara**: solo missile, turno normale.
-2. **Riparati**: dopo lo sparo la barra del tempo diventa blu, "riposizionati".
+2. **Riparati**: dopo lo sparo hai 8 s (barra gialla) per spostarti al riparo.
 3. **Spada**: un bersaglio vicino, si impara il fendente.
-4. **Due attacchi**: spara, la barra diventa gialla per 5 s con l'icona della spada che lampeggia, poi blu.
-5. **Nucleo e teletrasporto**: finire presto riempie la barra, il teletrasporto la consuma.
+4. **Due attacchi**: spara, la barra diventa gialla con l'icona della spada che lampeggia, poi blu quando li hai usati tutti e due.
+5. **Il teletrasporto**: finire presto lascia secondi, che diventano globi del teletrasporto.
 6. **Combo**: teletrasporto ai piedi del nemico e fendente che chiude dall'altra parte.
 
 Nell'HUD le icone di arma e spada si spengono quando le usi, così si vede sempre cosa ti resta nel turno.
@@ -47,11 +49,11 @@ Nell'HUD le icone di arma e spada si spengono quando le usi, così si vede sempr
 Sì, e si sposa bene con il Torneo: **in Torneo tutti hanno tutti i punti**, quindi la normalizzazione diventa semplicemente "livello massimo per tutti, scegli il tuo assetto". Servono quattro regole perché resti equo:
 
 1. **Meno punti che nodi.** Al livello massimo hai, per esempio, 20 punti per un albero da 40. Così anche a fine gioco devi scegliere, e l'albero resta un assetto e non una scala da completare.
-2. **Nodi misti.** Statistiche da potenziare a piacere (salto, velocità) e nodi legati al Nucleo: un ramo Mobilità (teletrasporto che scatta prima, salto extra a 1 Nucleo), un ramo Difesa (scudo più economico, paracadute più economico), un ramo Arsenale (trappole più grandi, effetti di stato più lunghi).
-3. **Una differenza che si sente, ma che si colma con la strategia.** Nelle partite normali chi è al massimo è più forte, ma trappole, punti di ancoraggio, trampolini, paracadute e scudi permettono a chi gioca meglio di vincere lo stesso. Nei primi livelli si incontrano avversari di livello simile.
+2. **Nodi misti.** Statistiche da potenziare a piacere (salto, velocità) e nodi di abilità: un ramo Mobilità (teletrasporto che scatta prima, un globo in più a inizio partita), un ramo Difesa (scudo più economico, paracadute più economico), un ramo Arsenale (trappole più grandi, effetti di stato più lunghi).
+3. **Una differenza che si sente, ma che si colma con la strategia.** Nelle partite normali chi è al massimo è più forte, ma trappole, cerchi di cura, trampolini, paracadute e scudi permettono a chi gioca meglio di vincere lo stesso. Nei primi livelli si incontrano avversari di livello simile.
 4. **Ricostruzione gratuita fuori dalla partita**, con 3 assetti salvati (albero più equipaggiamento) da scegliere prima del ventaglio d'armi.
 
-Per non far sovrapporre le due crescite: l'equipaggiamento dà l'aspetto e il carattere del set, l'albero il tuo assetto personale e come spendi il Nucleo.
+Per non far sovrapporre le due crescite: l'equipaggiamento dà l'aspetto e il carattere del set, l'albero il tuo assetto personale e come usi teletrasporti e oggetti.
 
 ## In breve
 

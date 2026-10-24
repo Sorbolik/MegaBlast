@@ -1,6 +1,7 @@
-# Scelta d'inizio partita in 2 contro 2 sullo stesso telefono: tre carte
-# (x = 380, 640, 900; y = 360), si sceglie a turno. Il compagno di Rosso 1 trova
-# spenta l'arma già presa; Blu 2 non sceglie e allo scadere prende la prima libera.
+# Scelta d'inizio partita in 2 contro 2 sullo stesso telefono: due file di tre
+# carte, le primarie (x = 380, 640, 900; y = 455) e le secondarie (y = 225); si
+# sceglie a turno, una per fila. Il compagno di Rosso 1 trova spente le armi già
+# prese; Blu 2 non sceglie e allo scadere prende le prime libere.
 imposta prova_scelta 1
 imposta giocatori 2v2
 
@@ -8,15 +9,21 @@ aspetta 1
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=scelta 5
 aspetta 0.5
-foto 01_ventaglio
-tocca 380 360                       # Rosso 1
+foto 01_ventagli
+tocca 380 455                       # Rosso 1: primaria
 aspetta 0.3
-tocca 640 360                       # Blu 1
+tocca 380 225                       # Rosso 1: secondaria
+aspetta 0.3
+tocca 640 455                       # Blu 1: primaria
+aspetta 0.3
+tocca 640 225                       # Blu 1: secondaria
 aspetta 0.3
 foto 02_compagno
-tocca 380 360                       # Rosso 2: spenta, non succede niente
+tocca 380 455                       # Rosso 2: spenta, non succede niente
 aspetta 0.3
-tocca 900 360                       # Rosso 2
+tocca 900 455                       # Rosso 2: primaria
+aspetta 0.3
+tocca 640 225                       # Rosso 2: la secondaria di Blu 1 (avversario) si puo' prendere
 aspetta 0.3
 foto 03_ultimo
 aspetta_stato modo=local turno=1 fase=aim 20

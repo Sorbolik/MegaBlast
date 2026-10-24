@@ -1,0 +1,24 @@
+# Maglio: martello a due mani scelto all'inizio (prova_secondaria mallet, barra:
+# Lanciarune 432, Lama 546, Maglio 660, Rampino 754, Paracadute 848). In aria colpisce sotto i piedi e, se
+# trova il terreno o un robot, chi colpisce rimbalza in alto (pogo).
+imposta prova_secondaria mallet
+imposta zoom 2
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+premi 3                             # Maglio
+aspetta 0.4
+zoom 01_maglio_in_mano
+premi salta
+aspetta 0.25
+mira 0 -90 0.1                      # in aria, verso il basso: colpisce il terreno e rimbalza
+aspetta_evento mallet 2
+aspetta_evento mallet_hit 2
+aspetta 0.05
+zoom 02_colpo_sotto_i_piedi
+aspetta 0.3
+foto 03_rimbalzo
+aspetta 1.5
+foto 04_dopo                        # la Lama resta spenta: due secondarie nel turno no

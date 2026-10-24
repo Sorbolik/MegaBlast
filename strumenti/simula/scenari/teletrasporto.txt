@@ -1,12 +1,21 @@
-# Teletrasporto: due globi in volo insieme, poi un missile, poi i due
-# teletrasporti uno dopo l'altro. Alla fine un fendente veloce.
-# In alto si vede il tempo rimasto della partita (3 minuti).
+# Teletrasporto: al primo turno se ne lancia uno solo, quindi Rosso spara un
+# missile (guadagna globi), Blu spara, e al secondo turno di Rosso due globi in volo
+# insieme, i due teletrasporti uno dopo l'altro e un fendente veloce.
+# In alto si vede il tempo rimasto della partita.
 
 aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 01_hud_tempo
+mira 150 100 0.4                    # missile: i secondi rimasti diventano teletrasporti
+aspetta_evento fire 2
+aspetta_stato turno=2 fase=aim 15
+aspetta 1
+mira -150 100 0.4
+aspetta_evento fire 2
+aspetta_stato turno=1 fase=aim 15
+aspetta 0.5
 tocca 1180 62                       # TELE
 mira 30 140 0.2
 aspetta_evento orb 2
@@ -18,7 +27,7 @@ aspetta_evento teleport 4
 zoom 03_primo_teletrasporto
 aspetta_evento teleport 4
 zoom 04_secondo_teletrasporto
-tocca 687 62                        # barra delle armi: Lama di Nucleo
+premi 2                             # Lama di Nucleo (tasto 2)
 aspetta 0.3
 mira 120 0 0.3
 aspetta_evento swing 2

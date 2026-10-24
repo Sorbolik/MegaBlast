@@ -1,5 +1,6 @@
-# Turno con due attacchi: missile, poi la spada nei 5 s gialli, poi 5 s blu
-# di riposizionamento. Si vedono il Nucleo guadagnato e le armi che si spengono.
+# Turno con due attacchi: missile, poi la spada negli 8 s dopo il primo colpo
+# (barra gialla finché c'è il secondo attacco, blu dopo). Si vedono i teletrasporti
+# guadagnati e le armi che si spengono.
 
 aspetta 2
 tocca 1075 235                      # STESSO TELEFONO

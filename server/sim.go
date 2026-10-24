@@ -132,7 +132,7 @@ type Input struct {
 	Hold              bool // il salto è ancora tenuto premuto
 	Fire              bool
 	Angle, Power      float64
-	Weapon            string // "missile", "sword", "teleport", "grenade", "shards" o "punch"
+	Weapon            string // "missile", "sword", "teleport", le secondarie ("eagle", "mallet", "lunge"), quelle delle casse o un oggetto
 }
 
 func (s *Sim) Step(in Input) error {

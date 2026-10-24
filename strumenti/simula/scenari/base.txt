@@ -28,7 +28,7 @@ tieni sinistra 1                    # si ripara dopo lo sparo
 # Turno di Blu: Lama di Nucleo
 aspetta_stato turno=2 fase=aim 15
 aspetta 0.5
-tocca 687 62                        # barra delle armi: Lama di Nucleo
+premi 2                             # Lama di Nucleo (tasto 2: la seconda arma della barra)
 foto 08_spada_scelta
 mira -120 0 0.2
 aspetta_evento swing 2

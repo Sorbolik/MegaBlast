@@ -7,7 +7,7 @@ aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
-tocca 687 62                        # barra delle armi: Lama di Nucleo
+premi 2                             # Lama di Nucleo (tasto 2: la seconda arma della barra)
 aspetta 0.4
 mira 80 -80 0.6 01_mira_in_basso
 zoom 02_fendente

@@ -1,0 +1,23 @@
+# Cecchino: il proiettile parte veloce, frena e cala a poco a poco, rimbalza
+# sul terreno come una palla (sempre più basso e lento) schiacciandosi come
+# una gelatina e sbalza chi colpisce nella direzione in cui andava. Con
+# prova_armi 1 la barra ha undici slot: Cecchino a 526 (y = 62).
+imposta prova_armi 1
+imposta zoom 2
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+tocca 526 62                        # Cecchino
+aspetta 0.3
+mira 150 60 0.5 01_mira_cecchino    # in alto a sinistra: rimbalza sotto la piattaforma
+aspetta_evento sniper 2
+aspetta 0.3
+foto 02_colpo
+aspetta_evento sniper_bounce 4
+aspetta 0.08
+foto 03_rimbalzo_goffo
+aspetta 2.5
+aspetta 0.5
+foto 04_dopo_i_rimbalzi

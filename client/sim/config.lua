@@ -7,10 +7,15 @@
 local C = {}
 
 -- Partita e turni, in secondi
-C.MATCH_SECONDS = 5 * 60     -- durata della partita
+-- durata della partita; allo scadere si finisce il giro di turni in corso
+-- (supplementari): tutti hanno giocato lo stesso numero di turni
+C.MATCH_SECONDS = 5 * 60
 C.TURN_SECONDS = 25          -- durata del turno (Blastron con più di due giocatori)
-C.SECOND_ATTACK_SECONDS = 5  -- dopo il primo attacco, tempo per il secondo
-C.REPOSITION_SECONDS = 5     -- dopo l'ultimo attacco, tempo per riposizionarsi
+-- Dopo il primo attacco restano AFTER_ATTACK_SECONDS (mai oltre la fine del
+-- turno): in tutti si può fare il secondo attacco, riposizionarsi, usare oggetti.
+-- Sergio: 4 s "per il secondo attacco" + 4 di riposizionamento, ma in tutti e 8
+-- si può attaccare, così non si perde il secondo colpo senza capire perché.
+C.AFTER_ATTACK_SECONDS = 8
 
 -- Modi di gioco: i giocatori da passare a game.new (opts.players), con la
 -- squadra di ognuno. Nel 2 contro 2 le squadre si alternano già nell'elenco.
@@ -20,14 +25,13 @@ C.MODES = {
 	ffa = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } },
 }
 
--- Nucleo: i secondi rimasti al primo attacco del turno diventano Nucleo,
--- 1 ogni NUCLEO_SECONDS, senza superare NUCLEO_MAX.
--- Scelta nostra: il documento proponeva 1 ogni 2 s e 10 al massimo, ma con
--- turni da 25 s quasi tutti arriverebbero al massimo e la scelta "spendo o
--- tengo" sparirebbe. Così chi attacca con 20 s rimasti prende 4, chi ne
--- lascia 5 prende 1.
-C.NUCLEO_SECONDS = 5
-C.NUCLEO_MAX = 5
+-- Teletrasporti: i secondi rimasti al primo attacco del turno diventano
+-- globi del teletrasporto, uno ogni TELEPORT_SECONDS, senza tetto (Sergio,
+-- 24 ottobre 2026: il Nucleo è tolto, il tempo risparmiato dà teletrasporti).
+-- Scelta nostra sui 10 s: chi attacca entro 5 s ne guadagna 2, entro 15 s
+-- uno, dopo niente; con 1 ogni 5 s se ne accumulavano più di quanti se ne
+-- lanciano.
+C.TELEPORT_SECONDS = 10
 -- al primo turno di ogni robot si può fare un solo teletrasporto
 C.FIRST_TURN_TELEPORTS = 1
 
@@ -43,44 +47,101 @@ C.SCORE = {
 }
 -- l'uccisione va a chi ha colpito per ultimo, se è stato entro questi secondi
 C.KILL_CREDIT_SECONDS = 10
--- Alla morte si ricomincia a fine turno, con la vita piena, in un punto a caso
--- della superficie ad almeno questa distanza (in pixel) dagli altri robot
-C.RESPAWN_DISTANCE = 160
+-- Alla morte si ricomincia dopo RESPAWN_SECONDS, anche a metà del turno (di
+-- chi ti ha colpito o del tuo: il turno non passa), con la vita piena in un
+-- punto a caso della superficie, libero. Anche vicino a un avversario: con un
+-- po' di fortuna ti colpisce ancora.
+C.RESPAWN_SECONDS = 1.5
 
 -- Casse: cosa c'è dentro (nascosto finché non si apre), col peso: più è
 -- alto, più spesso esce. Armi da 1 colpo e oggetti tattici.
 C.CRATE_CONTENTS = {
-	{ "grenade", 2 }, { "shards", 2 }, { "punch", 2 },
+	{ "grenade", 2 }, { "shards", 2 }, { "punch", 2 }, { "sniper", 2 },
 	{ "trap", 2 }, { "shield", 1 }, { "trampoline", 1 },
 }
+
+-- Cecchino (arma delle casse): un colpo che parte veloce (velocità in
+-- sim/game.lua) e frena (ogni secondo gli resta drag della velocità), mentre
+-- la gravità cresce a poco a poco fino a drop volte quella dei robot in
+-- drop_ramp secondi: all'inizio va quasi dritto, poi cala sempre di più, così
+-- da lontano è difficile mirare (Sergio, 24 ottobre 2026: "inizia veloce e
+-- poi scende a poco a poco"). Sul terreno rimbalza come una palla, sempre più
+-- basso e più lento (bounce_normal contro la superficie, bounce_tangent
+-- lungo), al massimo bounces volte o finché va più piano di min_speed; non
+-- scava. Chi è colpito prende damage e viene sbalzato nella direzione del
+-- colpo a push pixel al secondo (più lift verso l'alto, per staccarlo da
+-- terra). Con un trampolino sotto i piedi vola via.
+C.SNIPER = { damage = 25, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
+	bounces = 6, bounce_normal = 0.5, bounce_tangent = 0.85, min_speed = 40 }
+
+-- Secondarie (scelta di Sergio del 24 ottobre 2026): danno secco, nessun
+-- effetto di stato, illimitate; ognuna sposta chi la usa a modo suo. La Lama
+-- è in sim/game.lua (SWORD_*); Tonante, Maglio e Affondo si scelgono una a
+-- testa all'inizio della partita. Distanze in pixel, velocità in pixel al secondo.
+-- Tonante (pistola pesante): colpo dritto e istantaneo fino a range, si ferma
+-- al primo robot o terreno. Il rinculo spinge chi spara dalla parte opposta
+-- alla mira a recoil; da terra lo solleva anche di lift, così si riposiziona
+-- (spara in basso in aria per salire, verso il vuoto per tornare sulla piattaforma).
+C.EAGLE = { damage = 25, range = 300, recoil = 300, lift = 120 }
+-- Maglio: martello a due mani. In aria colpisce sotto i piedi (reach pixel
+-- in giù, width in più ai lati): se trova un robot o il terreno, chi colpisce
+-- rimbalza in alto a bounce (pogo), così risale o passa sopra il nemico. A
+-- terra è un colpo corto davanti (reach). Il colpo arriva al tick hit_tick e
+-- dura ticks.
+C.MALLET = { damage = 30, reach = 22, width = 6, bounce = 320, ticks = 14, hit_tick = 4 }
+-- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, uno a
+-- turno, si usa in qualsiasi momento del turno e non fa danno): colpo
+-- dritto e istantaneo fino a range, due usi.
+-- Su un robot: viene tirato con la fune verso la mano di chi tira, dritto
+-- lungo la fune, senza gravità, a speed, per reel pixel al massimo (la fune
+-- si riavvolge di tanto), poi viene mollato e cade dov'è. Il terreno o un
+-- robot in mezzo lo fermano prima. Da lontano quindi si ferma a metà strada:
+-- se sotto c'è il vuoto, ci cade; da sotto lo sollevi fino a te e lo molli in
+-- aria. Chi tira si può muovere nel frattempo: la fune segue la mano.
+-- Sul terreno: è chi tira che sale lungo la fune a climb_speed fino al punto
+-- colpito e si mette in piedi sopra la piattaforma, se la sua cima è entro
+-- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade).
+C.HOOK = { range = 220, reel = 110, speed = 300, climb_speed = 420, climb = 64 }
+-- Affondo: scatto nella direzione della mira a speed per ticks tick, passando
+-- attraverso i robot (danno una volta a ognuno); il terreno lo ferma. Alla
+-- fine resta keep della velocità: oltre un bordo si vola.
+C.LUNGE = { damage = 30, speed = 520, ticks = 12, keep = 0.35 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.
 -- Trappola: si posa ai piedi e si arma dal turno dopo; un avversario che ci
 -- passa sopra viene lanciato in alto e lontano (per buttarlo fuori dalla mappa).
 C.TRAP = { damage = 8, launch_vy = 220, push_vx = 160 }
--- Trampolino: si posa ai piedi; chiunque ci passi sopra rimbalza in alto
-C.TRAMPOLINE = { half_w = 12, launch_vy = 300 }
+-- Trampolino: si lancia come l'Uovo e resta dove cade (se cade su un robot, ai
+-- suoi piedi). Chiunque ci arrivi sopra rimbalza in alto, sempre; restando sopra
+-- ogni rimbalzo è più basso (decay) finché sotto min_vy ci si ferma.
+C.TRAMPOLINE = { half_w = 12, launch_vy = 300, decay = 0.6, min_vy = 80 }
 -- Scudo: assorbe hp danni e dimezza le spinte fino all'inizio del proprio turno dopo
 C.SHIELD = { hp = 60, knockback = 0.5 }
--- Paracadute: si prepara nel proprio turno (costa stats.parachute_cost Nucleo)
--- e si apre da solo cadendo più veloce di open_speed; poi si scende a
--- fall_speed e l'atterraggio non fa danno
-C.PARACHUTE = { open_speed = 160, fall_speed = 60 }
--- Punti di ancoraggio della mappa (sim/maps.lua): chi ci sta sopra viene
--- spinto molto meno
-C.ANCHOR_KNOCKBACK = 0.35
+-- Paracadute: nel proprio turno, in aria, un tocco lo apre (se ne hanno
+-- stats.parachutes a partita) e un altro lo chiude. Aperto si scende al
+-- massimo a fall_speed, ci si muove in orizzontale air_mul volte più veloci
+-- (anche appena sbalzati) e l'atterraggio non fa danno
+C.PARACHUTE = { fall_speed = 60, air_mul = 1.15 }
+-- Cerchi di cura: all'inizio di un turno ogni every turni ne compare uno in un
+-- punto a caso della superficie (al massimo max insieme). A fine turno, di
+-- chiunque, ogni robot coi piedi dentro (raggio r) riprende hp di vita e, se
+-- ha curato qualcuno, il cerchio sparisce
+C.HEAL = { every = 2, max = 2, hp = 40, r = 26 }
 -- trappole e trampolini in mappa al massimo, tutti insieme
 C.MAX_PLACED = 8
 
--- Scelta d'inizio partita (sim/draft.lua): un ventaglio di DRAFT_OFFER armi
--- delle casse, uguale per tutti; ognuno ne prende una e ne ha DRAFT_SHOTS
--- colpi. Due compagni non possono prendere la stessa; nel tutti contro tutti
--- i doppioni vanno bene. Allo scadere di DRAFT_SECONDS chi non ha scelto
--- prende la prima arma libera del ventaglio.
+-- Scelta d'inizio partita (sim/draft.lua): due ventagli uguali per tutti, uno
+-- di DRAFT_OFFER primarie delle casse e uno delle secondarie (game.DRAFT_SECONDARIES).
+-- Ognuno prende una primaria (ne ha DRAFT_SHOTS colpi) e una secondaria
+-- (illimitata). Due compagni non possono prendere la stessa; nel tutti contro
+-- tutti i doppioni vanno bene. Allo scadere di DRAFT_SECONDS chi non ha scelto
+-- prende la prima arma libera di ogni ventaglio.
+-- Sergio (24 ottobre 2026): 2 colpi, con 3 turni a testa uno solo si consuma
+-- al primo turno utile.
 C.DRAFT_SECONDS = 15
 C.DRAFT_OFFER = 3
-C.DRAFT_SHOTS = 1
+C.DRAFT_SHOTS = 2
 
 -- Effetti di stato (strategia 9): durano fino alla fine del prossimo turno di
 -- chi li subisce (stats.status_turns di chi colpisce) e si vedono sul robot.
@@ -103,17 +164,12 @@ C.STATS = {
 	-- scelta nostra: 1,5 volte la vita di prima, perché con due attacchi per
 	-- turno il danno può raddoppiare (il documento dice "la vita si alza")
 	max_hp = 150,
-	start_nucleo = 1,
-	teleport_cost = 1,
-	free_teleports = 0,      -- teletrasporti gratis per partita (albero, set Vuoto)
-	parachute_cost = 1,
-	free_parachutes = 0,     -- paracadute gratis per partita
+	teleports = 2,           -- globi del teletrasporto all'inizio (Sergio: 2); se ne guadagnano attaccando presto
+	parachutes = 1,          -- paracadute per partita (Sergio, 24 ottobre 2026: uno)
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata
-	shield_cost = 3,         -- Nucleo per uno scudo, quando non se ne ha uno delle casse
 	air_jumps = 0,           -- salti in aria prima di toccare terra (ramo Mobilità, set Corvo)
-	air_jump_cost = 1,       -- Nucleo per ogni salto in aria
 	burning_blasts = 0,      -- 1: missile e Uovo bruciano chi colpiscono (set Fornace)
 	status_turns = 1,        -- per quanti turni dura un effetto di stato dato da questo robot
 }
