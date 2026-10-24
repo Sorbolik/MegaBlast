@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	lua "github.com/yuin/gopher-lua"
 )
 
 func newTestSim(t testing.TB, seed int64, mapID string) *Sim {
@@ -19,7 +20,7 @@ func newTestSim(t testing.TB, seed int64, mapID string) *Sim {
 		t.Fatal(err)
 	}
 	t.Cleanup(e.L.Close)
-	sim, err := e.NewSim(seed, mapID)
+	sim, err := e.NewSim(seed, mapID, lua.LNil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,13 +40,14 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 		R     []struct {
 			X, Y float64
 			HP   int  `json:"hp"`
+			MH   int  `json:"mh"`
 			G    bool `json:"g"`
 		} `json:"r"`
 	}
 	if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
 		t.Fatalf("snapshot non è JSON valido: %v\n%s", err, sim.Snapshot())
 	}
-	if st.Phase != "aim" || st.Cur != 1 || len(st.R) != 2 || !st.R[0].G || st.R[0].HP != 100 {
+	if st.Phase != "aim" || st.Cur != 1 || len(st.R) != 2 || !st.R[0].G || st.R[0].HP != st.R[0].MH || st.R[0].MH == 0 {
 		t.Fatalf("stato inatteso: %+v", st)
 	}
 	if err := sim.Step(Input{Fire: true, Angle: 1.0, Power: 0.6}); err != nil {
@@ -92,7 +94,7 @@ func TestEngineReuseIsDeterministic(t *testing.T) {
 	}
 	defer e.L.Close()
 	for round := 0; round < 3; round++ {
-		sim, err := e.NewSim(7, "forgia")
+		sim, err := e.NewSim(7, "forgia", lua.LNil, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -168,9 +170,26 @@ func (c *testClient) send(msg string) {
 func testServer(t *testing.T) string {
 	cfg := DefaultConfig()
 	cfg.ReconnectTicks = tickRate / 2 // mezzo secondo per tornare, per non far durare troppo le prove
+	cfg.DraftTicks = tickRate         // e un secondo per scegliere l'arma
 	srv := httptest.NewServer(NewServer(cfg).Handler())
 	t.Cleanup(srv.Close)
 	return "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
+}
+
+// I giocatori di ogni coda sono quelli di config.MODES
+func TestModesMatchConfig(t *testing.T) {
+	e, err := newEngine()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.L.Close()
+	for name, m := range modes {
+		v, err := e.call("mode_players", lua.LString(m.Sim))
+		list, ok := v.(*lua.LTable)
+		if err != nil || !ok || list.Len() != m.Players {
+			t.Fatalf("modalità %s: %d giocatori, config.MODES[%q] dice %v", name, m.Players, m.Sim, v)
+		}
+	}
 }
 
 func TestHelloWrongVersion(t *testing.T) {
@@ -200,7 +219,7 @@ func TestResumeUnknownToken(t *testing.T) {
 
 func TestOnlineMatch(t *testing.T) {
 	url := testServer(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	hello := `{"t":"hello","v":2,"mode":"1v1"}`
@@ -209,6 +228,20 @@ func TestOnlineMatch(t *testing.T) {
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
 	b.send(hello)
+
+	// Prima la scelta dell'arma: il giocatore 1 prende lo Sciame, il 2 non
+	// sceglie e allo scadere riceve la prima arma libera
+	d := a.waitFor(`"draft"`)
+	if len(d["offer"].([]any)) != 3 || len(d["players"].([]any)) != 2 || d["tok"] == "" {
+		t.Fatalf("scelta inattesa: %v", d)
+	}
+	a.send(`{"t":"pick","w":"shards"}`)
+	if d := b.waitFor(`"draft"`); d["you"].(float64) != 2 {
+		t.Fatalf("scelta inattesa: %v", d)
+	}
+	if d := b.waitFor(`"draft"`); d["p"].([]any)[0] != "shards" {
+		t.Fatalf("la scelta del giocatore 1 non arriva al 2: %v", d)
+	}
 	sa := a.waitFor(`"start"`)
 	sb := b.waitFor(`"start"`)
 	if sa["you"].(float64) != 1 || sb["you"].(float64) != 2 || sa["seed"] != sb["seed"] {
@@ -219,9 +252,11 @@ func TestOnlineMatch(t *testing.T) {
 	first := b.waitFor(`"state"`)
 	r0 := first["r"].([]any)[0].(map[string]any)
 	x0 := r0["x"].(float64)
-	// lo stato porta casse, schegge e colpi delle armi delle casse (all'inizio nessuno)
-	if _, ok := first["c"].([]any); !ok || r0["ag"] != 0.0 || r0["ap"] != 0.0 {
-		t.Fatalf("stato senza casse o colpi: %v", first)
+	// lo stato porta casse, schegge e colpi: il giocatore 1 ha un colpo dello Sciame
+	r1 := first["r"].([]any)[1].(map[string]any)
+	if _, ok := first["c"].([]any); !ok || r0["as"] != 1.0 || r0["ag"] != 0.0 || r0["ap"] != 0.0 ||
+		r1["ag"].(float64)+r1["as"].(float64)+r1["ap"].(float64) != 1 {
+		t.Fatalf("stato senza casse o colpi scelti: %v", first)
 	}
 	// con la fisica di Blastron si cammina piano (28 px/s): un secondo basta
 	a.send(`{"t":"in","l":false,"r":true}`)
@@ -292,5 +327,47 @@ func TestOnlineMatch(t *testing.T) {
 	b.waitFor(`"away"`)
 	if m := b.waitFor(`"left"`); m["robot"].(float64) != 1 {
 		t.Fatalf("left inatteso: %v", m)
+	}
+}
+
+// 2 contro 2: i compagni si scambiano l'arma se lo chiedono tutti e due
+func TestTeamDraftSwap(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	var c [4]*testClient
+	for i := range c {
+		c[i] = dial(t, ctx, url)
+		c[i].send(`{"t":"hello","v":2,"mode":"2v2"}`)
+	}
+	you := map[float64]*testClient{}
+	for _, x := range c {
+		d := x.waitFor(`"draft"`)
+		you[d["you"].(float64)] = x
+	}
+	p1, p3 := you[1], you[3]
+	p1.send(`{"t":"pick","w":"shards"}`)
+	for p3.waitFor(`"draft"`)["p"].([]any)[0] != "shards" {
+	}
+	p3.send(`{"t":"pick","w":"shards"}`) // stessa arma del compagno: non vale
+	p3.send(`{"t":"pick","w":"punch"}`)
+	p1.send(`{"t":"swap","to":3}`)
+	if m := p3.waitFor(`"swap"`); m["from"].(float64) != 1 {
+		t.Fatalf("proposta inattesa: %v", m)
+	}
+	p3.send(`{"t":"swap","to":1}`)
+	for {
+		p := p1.waitFor(`"draft"`)["p"].([]any)
+		if p[0] == "punch" && p[2] == "shards" {
+			break
+		}
+	}
+	st := p1.waitFor(`"start"`)
+	teams := []float64{}
+	for _, p := range st["players"].([]any) {
+		teams = append(teams, p.(map[string]any)["team"].(float64))
+	}
+	if !reflect.DeepEqual(teams, []float64{1, 2, 1, 2}) || st["mode"] != "2v2" {
+		t.Fatalf("start inatteso: %v", st)
 	}
 }

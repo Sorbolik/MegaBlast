@@ -5,11 +5,16 @@
 -- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
+local gconfig = require "sim.config"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local home = require "menu.home"
+local scelta_armi = require "menu.scelta"
+local draft = require "sim.draft"
+local tutorial = require "battaglia.tutorial"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
+local oggetti = require "battaglia.oggetti"
 
 local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
 local TW, TH = W / CELL, H / CELL
@@ -38,29 +43,48 @@ local ACTION_ZOOM_IN = hash("zoom_avanti")
 local ACTION_ZOOM_OUT = hash("zoom_indietro")
 local ACTION_WEAPON = { [hash("arma1")] = 1, [hash("arma2")] = 2, [hash("arma3")] = 3, [hash("arma4")] = 4, [hash("arma5")] = 5 }
 
-local NAMES = { "Rosso", "Blu" }
--- colori delle squadre della bibbia grafica: Cremisi e Cobalto
-local PLAYER_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1) }
+-- Squadre: Cremisi e Cobalto della bibbia grafica, poi Ambra e Giada per il
+-- tutti contro tutti
+local TEAM_NAMES = { "Rosso", "Blu", "Oro", "Verde" }
+local TEAM_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1),
+	vmath.vector4(1, 0.7, 0.18, 1), vmath.vector4(0.25, 0.85, 0.5, 1) }
 local WHITE = vmath.vector4(1, 1, 1, 1)
 local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
 -- Lanciarune e Lama di Nucleo ci sono sempre, le altre si trovano nelle casse.
-local BAR_WEAPONS = { "missile", "sword", "grenade", "shards", "punch" }
+-- Poi gli oggetti tattici (trappola, scudo, trampolino, paracadute): toccarli li usa subito.
+-- effetti di stato: la frase quando arrivano (senza accenti: il font non li ha);
+-- online lo stato dice solo se ci sono
+local STATUS_TEXT = { burn = " brucia!", slow = " rallenta!", cracked = " ha l'armatura incrinata!" }
+local STATUS_ON = { turns = 1 }
+local BAR_WEAPONS = { "missile", "sword", "grenade", "shards", "punch", "trap", "shield", "trampoline", "parachute" }
 local WEAPON_ICON = {
 	missile = "lanciarune_icona", sword = "lama_di_nucleo_icona", grenade = "uovo_di_fiamma_icona",
 	shards = "sciame_di_schegge_icona", punch = "pugno_del_titano_icona",
 }
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
-local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano" }
+local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
+	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
+-- nomi delle armi nella scelta d'inizio partita
+local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true }
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 62
 local SLOT_OFF = vmath.vector4(0.62, 0.62, 0.68, 0.9)
+-- arma già usata in questo turno (si spegne: si vede cosa resta)
+local SLOT_USED = vmath.vector4(0.3, 0.3, 0.34, 0.45)
 local TELE_OFF = vmath.vector4(0.45, 0.45, 0.5, 0.5)
 local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector3(1, 1, 1)
 -- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante)
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
+
+-- Barra del tempo del turno sotto la scritta in alto: bianca, gialla nei
+-- secondi del secondo attacco, blu nel riposizionamento
+local TIME_BAR_W, TIME_BAR_H, TIME_BAR_Y = 360, 8, H - 52
+local TIME_COLOR = vmath.vector4(0.92, 0.9, 0.86, 0.9)
+local SECOND_COLOR = vmath.vector4(1, 0.8, 0.2, 1)
+local REPOSITION_COLOR = vmath.vector4(0.3, 0.6, 1, 1)
 
 local AIM_DOTS = 12
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
@@ -268,6 +292,10 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.bar, visible)
 	gui.set_enabled(self.btn_tele, visible)
 	gui.set_enabled(self.hud, visible)
+	gui.set_enabled(self.time_bar_bg, visible)
+	gui.set_enabled(self.time_bar, visible)
+	gui.set_enabled(self.nucleo_label, visible)
+	gui.set_enabled(self.score_label, visible)
 	gui.set_enabled(self.btn_zoom, visible)
 end
 
@@ -286,6 +314,8 @@ local function show_menu(self)
 	msg.post("/terreno", "disable")
 	set_controls_visible(self, false)
 	show_message(self, "", true)
+	self.tut, self.tut_wait = nil, nil
+	gui.set_text(self.tut_label, "")
 end
 
 -- Fluidità -------------------------------------------------------------------
@@ -302,7 +332,9 @@ local function new_pose()
 	local sh = {}
 	for i = 1, game.SHARD_COUNT do sh[i] = { x = 0, y = 0, on = false } end
 	-- c: casse per id (in caduta si muovono, vanno interpolate anche loro)
-	return { r = { { x = 0, y = 0 }, { x = 0, y = 0 } }, p = { x = 0, y = 0 }, has_p = false,
+	local r = {}
+	for i = 1, game.MAX_PLAYERS do r[i] = { x = 0, y = 0 } end
+	return { r = r, p = { x = 0, y = 0 }, has_p = false,
 		o = o, no = 0, s = sh, c = {} }
 end
 
@@ -414,6 +446,19 @@ end
 
 -- Partita -----------------------------------------------------------------------
 
+-- Nomi e colori: quelli della squadra, col numero se in squadra si è in due.
+-- list: i robot o i giocatori, ognuno con team.
+local function names_colors(list)
+	local size, nth, names, colors = {}, {}, {}, {}
+	for _, p in ipairs(list) do size[p.team] = (size[p.team] or 0) + 1 end
+	for i, p in ipairs(list) do
+		nth[p.team] = (nth[p.team] or 0) + 1
+		names[i] = TEAM_NAMES[p.team] .. (size[p.team] > 1 and (" " .. nth[p.team]) or "")
+		colors[i] = TEAM_COLORS[p.team]
+	end
+	return names, colors
+end
+
 local function new_match(self, seed, map, opts)
 	self.g = game.new(seed, map, opts)
 	-- se sullo schermo c'è già questa mappa intatta (es. quella del menu) non la ridisegnamo
@@ -422,12 +467,21 @@ local function new_match(self, seed, map, opts)
 		draw_terrain(self)
 		self.drawn_map = key
 	end
+	self.names, self.colors = names_colors(self.g.robots)
+	for i = #self.g.robots + 1, game.MAX_PLAYERS do
+		scoria.set_enabled(self.robots[i].rig, false)
+		gui.set_enabled(self.robots[i].hp, false)
+	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
+		scoria.set_color(self.robots[i].rig, self.colors[i])
+		gui.set_color(self.robots[i].hp, self.colors[i])
 		scoria.set_enabled(self.robots[i].rig, true)
 		gui.set_enabled(self.robots[i].hp, true)
+		gui.set_text(self.robots[i].hp, tostring(rb.hp))
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp }
 	end
+	oggetti.mappa(self.oggetti, self.g)
 	self.trail_n = 0
 	self.pose_dt = game.DT
 	reset_pose(self)
@@ -536,8 +590,8 @@ local function shock(self, x, y)
 end
 
 local function who_name(self, robot)
-	if self.mode == "online" then return robot == self.me and "Tu" or "L'avversario" end
-	return NAMES[robot]
+	if self.mode == "online" and robot == self.me then return "Tu" end
+	return self.names[robot]
 end
 
 local function my_turn(self)
@@ -569,6 +623,15 @@ local function handle_event(self, e)
 		else
 			snap_robot(self, e.robot)
 		end
+	elseif e.type == "nucleo" then
+		show_message(self, string.format("%s +%d Nucleo", who_name(self, e.robot), e.amount))
+	elseif e.type == "trap" then
+		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
+		shock(self, e.x, e.y)
+	elseif e.type == "parachute" then
+		show_message(self, "Paracadute aperto!")
+	elseif e.type == "status" then
+		show_message(self, who_name(self, e.robot) .. STATUS_TEXT[e.kind])
 	elseif e.type == "crate" then
 		show_message(self, "Una cassa cade dal cielo!")
 	elseif e.type == "crate_pick" then
@@ -583,20 +646,36 @@ local function handle_event(self, e)
 		if self.mode == "online" then
 			show_message(self, e.robot == self.me and "Tocca a te!" or "Turno dell'avversario")
 		else
-			show_message(self, "Turno di " .. NAMES[e.robot])
+			show_message(self, "Turno di " .. self.names[e.robot])
 		end
 	elseif e.type == "death" then
-		-- crolla e svanisce da solo
+		-- crolla e svanisce da solo; a fine turno ricomincia altrove
 		scoria.die(self.robots[e.robot].rig)
 		gui.set_enabled(self.robots[e.robot].hp, false)
+		if e.by then
+			local verbo = e.env and " butta giù " or " elimina "
+			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
+		end
+	elseif e.type == "respawn" then
+		scoria.set_enabled(self.robots[e.robot].rig, true)
+		gui.set_enabled(self.robots[e.robot].hp, true)
+		if self.mode == "online" then
+			self.snap[e.robot] = true
+		else
+			snap_robot(self, e.robot)
+		end
 	elseif e.type == "over" then
 		local text
 		if self.mode == "online" then
-			text = e.winner == self.me and "Hai vinto!" or (e.winner and "Hai perso!" or "Pareggio!")
+			local mine = self.g.robots[self.me].team
+			text = e.winner == mine and "Hai vinto!" or (e.winner and "Hai perso!" or "Pareggio!")
 		else
-			text = e.winner and ("Vince " .. NAMES[e.winner] .. "!") or "Pareggio!"
+			text = e.winner and ("Vince " .. TEAM_NAMES[e.winner] .. "!") or "Pareggio!"
 		end
-		if e.reason == "time" then text = "Tempo scaduto!\n" .. text end
+		-- classifica per punti (la schermata del podio la sostituirà)
+		for _, r in ipairs(e.results and e.results.ranking or {}) do
+			text = text .. string.format("\n%d. %s  %d", r.place, self.names[r.robot], r.points)
+		end
 		show_message(self, text .. "\nTocca per tornare al menu", true)
 		self.mode = "ended"
 	end
@@ -613,22 +692,39 @@ end
 local function apply_state(self, s)
 	local g = self.g
 	g.phase, g.current, g.timer, g.retreat = s.phase, s.cur, s.timer, s.retreat or 0
+	g.window, g.teleports = s.win or 0, s.tp or 0
+	g.used.weapon, g.used.sword = (s.u or 0) % 2 == 1, (s.u or 0) >= 2
 	g.match_left = s.mt or g.match_left
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
+		rb.nucleo, rb.free_teleports, rb.turns, rb.points = r.n or 0, r.ft or 0, r.tu or 1, r.pt or 0
+		rb.max_hp = r.mh or rb.max_hp
 		rb.swing = (r.s or 0) > 0 and r.s or nil
 		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
 		rb.punch = (r.pu or 0) > 0 and r.pu or nil
 		rb.punch_dir = (r.pd or 0) ~= 0 and r.pd or rb.facing
 		rb.swing_base, rb.punch_base = r.sb or 0, r.pb or 0
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
+		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
+		rb.shield = (r.sh or 0) > 0 and r.sh or nil
+		rb.parachute = r.pa == 1 and "armed" or (r.pa == 2 and "open" or nil)
+		rb.free_parachutes = r.fp or 0
+		local st = r.st or 0
+		rb.status.burn = st % 2 == 1 and STATUS_ON or nil
+		rb.status.slow = st % 4 >= 2 and STATUS_ON or nil
+		rb.status.cracked = st >= 4 and STATUS_ON or nil
 	end
 	g.projectile = s.p and { x = s.p.x, y = s.p.y, kind = s.p.k, fuse = s.p.fu } or nil
 	g.orbs = {}
 	for i, o in ipairs(s.o or {}) do g.orbs[i] = { id = o.i, x = o.x, y = o.y } end
 	for i = 1, game.SHARD_COUNT do g.shards[i] = nil end
 	for _, sh in ipairs(s.s or {}) do g.shards[sh.i] = sh end
+	-- trappole e trampolini posati
+	for i = #g.placed, 1, -1 do g.placed[i] = nil end
+	for i, o in ipairs(s.pl or {}) do
+		g.placed[i] = { id = o.i, kind = o.k, x = o.x, y = o.y, armed = o.a, team = o.tm, r = o.r }
+	end
 	-- casse: tabelle riusate per id
 	local list = g.crates
 	for i = #list, 1, -1 do list[i] = nil end
@@ -652,15 +748,22 @@ end
 local function on_server_message(self, m)
 	if m.t == "wait" then
 		show_message(self, "In attesa di un avversario...", true)
+	elseif m.t == "draft" then
+		-- scelta dell'arma: per ora online non c'è la schermata, allo scadere
+		-- il server dà a ognuno la prima arma libera. Il gettone serve già
+		-- per tornare se la connessione cade adesso.
+		self.tok, self.tries = m.tok or self.tok, 0
+		show_message(self, "Avversari trovati!\nLa partita sta per cominciare...", true)
 	elseif m.t == "start" then
 		-- anche quando torniamo dopo una caduta (resume): la partita si
-		-- ricostruisce dal seed, poi arrivano gli scavi e lo stato
-		new_match(self, m.seed, m.map)
+		-- ricostruisce dal seed, poi arrivano gli scavi e lo stato.
+		-- players: le squadre dei robot, [{"team":1},...] (senza, un 1 contro 1)
+		new_match(self, m.seed, m.map, m.players and { players = m.players })
 		self.g:pop_events()
 		self.me, self.tok, self.tries = m.you, m.tok, 0
 		self.mode = "online"
 		set_controls_visible(self, true)
-		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. NAMES[m.you]))
+		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. self.names[m.you]))
 	elseif m.t == "sync" and self.g then
 		for _, c in ipairs(m.x) do self.g.terrain:carve(c[1], c[2], c[3]) end
 		self.drawn_map = nil
@@ -702,12 +805,12 @@ on_socket = function(self, conn, data)
 		if ok and m then on_server_message(self, m) end
 	elseif data.event == websocket.EVENT_DISCONNECTED or data.event == websocket.EVENT_ERROR then
 		self.conn = nil
-		if self.mode == "online" and self.tok and self.tries < RECONNECT_TRIES then
+		if (self.mode == "online" or self.mode == "connecting") and self.tok and self.tries < RECONNECT_TRIES then
 			-- in partita: riproviamo, il server ci tiene il posto
 			self.tries = self.tries + 1
 			show_message(self, "Connessione persa\nMi riconnetto...", true)
 			timer.delay(RECONNECT_WAIT, false, function()
-				if self.mode == "online" and not self.conn then connect(self) end
+				if (self.mode == "online" or self.mode == "connecting") and not self.conn then connect(self) end
 			end)
 		elseif self.mode ~= "menu" and self.mode ~= "ended" then
 			self.mode = "ended"
@@ -734,21 +837,93 @@ local function start_online(self)
 	connect(self)
 end
 
+local start_local_match
+
+-- Tutorial (battaglia/tutorial.lua): un passo alla volta, ognuno una partita
+-- col suo bersaglio; titolo e consiglio restano in alto.
+local function tutorial_step(self)
+	local t = self.tut
+	new_match(self, os.time(), tutorial.MAPPA, tutorial.opzioni(t))
+	tutorial.prepara(t, self.g)
+	snap_robot(self, 2)
+	self.g:pop_events()
+	local p = tutorial.passo(t)
+	gui.set_text(self.tut_label, p.titolo .. "\n" .. p.consiglio)
+	self.tut_wait = nil
+	self.mode = "local"
+	set_controls_visible(self, true)
+end
+
+-- Obiettivo del passo raggiunto: un attimo per vederlo, poi il passo dopo
+local function tutorial_update(self, dt)
+	local t = self.tut
+	if not self.tut_wait then
+		if tutorial.fatto(t, self.g) then
+			self.tut_wait = 1.5
+			show_message(self, "Fatto!")
+		end
+		return
+	end
+	self.tut_wait = self.tut_wait - dt
+	if self.tut_wait > 0 then return end
+	if tutorial.avanti(t) then
+		tutorial_step(self)
+	else
+		self.tut, self.tut_wait = nil, nil
+		gui.set_text(self.tut_label, "")
+		self.mode = "ended"
+		set_controls_visible(self, false)
+		show_message(self, "Tutorial finito!\nTocca per tornare al menu", true)
+	end
+end
+
+-- Si parte con la scelta delle armi (menu/scelta.lua); finita quella, la partita
 local function start_local(self)
 	hide_menu(self)
-	local opts = nil
+	-- [megablast] tutorial = 1: STESSO TELEFONO apre il tutorial (finché la home
+	-- non ha il suo pulsante)
+	if config_int("megablast.tutorial", 0) > 0 then
+		self.tut = tutorial.new()
+		tutorial_step(self)
+		return
+	end
+	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono
+	local opts = { players = gconfig.MODES[config_string("megablast.giocatori", "1v1")] }
+	self.local_opts = opts
+	-- negli scenari di prova la scelta c'è solo con prova_scelta 1 (scenario scelta.txt)
+	if SIMULA and config_int("megablast.prova_scelta", 0) == 0 then
+		start_local_match(self, nil)
+		return
+	end
+	local nomi, colori = names_colors(opts.players)
+	self.mode = "scelta"
+	scelta_armi.show(self.scelta, draft.new(os.time(), opts.players), nomi, colori)
+end
+
+-- La partita sullo stesso telefono, con i giocatori usciti dalla scelta (nil: senza scelta)
+start_local_match = function(self, picked)
+	local opts = self.local_opts
+	if picked then opts = { players = picked } end
 	if SIMULA then
 		-- solo per gli scenari di prova (comando "imposta" in strumenti/simula)
 		local colpi = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local vita = config_int("megablast.prova_vita", 0)
 		opts = {
+			players = opts.players,
 			hp = vita > 0 and vita or nil,
-			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi } or nil,
+			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi,
+				trap = colpi, shield = colpi, trampoline = colpi } or nil,
 			crate_every = ogni > 0 and ogni or nil,
 		}
 	end
 	new_match(self, os.time(), nil, opts)
+	if SIMULA and config_int("megablast.prova_stati", 0) > 0 then
+		-- tutti partono con i tre effetti di stato, per vederli (scenario stati.txt)
+		for _, rb in ipairs(self.g.robots) do
+			for kind in pairs(gconfig.STATUS) do rb.status[kind] = { turns = 2 } end
+		end
+	end
 	self.mode = "local"
 	set_controls_visible(self, true)
 end
@@ -870,7 +1045,7 @@ local function aim_pad_release(self)
 	local st = self.aim_st
 	local h = levette.al_rilascio(st, self.clock)
 	local live = h and h.active
-	if (live or st.active) and self.g.phase == "aim" and my_turn(self) then
+	if (live or st.active) and self.g:can_use(self.tele_armed and "teleport" or self.weapon) and my_turn(self) then
 		self.fire = { angle = live and h.angle or self.aim_angle, power = live and h.power or self.aim_power,
 			weapon = self.tele_armed and "teleport" or self.weapon }
 		self.tele_armed = false
@@ -916,18 +1091,36 @@ local function bar_robot(self)
 	return current_robot(self)
 end
 
+-- Lo slot si vede? Il paracadute c'è se si può comprare col Nucleo o è già pronto.
+local function slot_have(rb, w)
+	if w == "parachute" then
+		return rb.parachute ~= nil or rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost
+	elseif w == "shield" then
+		-- lo scudo si compra anche col Nucleo
+		return rb.ammo.shield > 0 or rb.nucleo >= rb.stats.shield_cost
+	end
+	return game.has_weapon(rb, w)
+end
+
 local function update_bar(self)
 	local rb = bar_robot(self)
 	if not rb then return end
+	local g = self.g
 	-- finiti i colpi si torna al Lanciarune
 	if not game.has_weapon(rb, self.weapon) then self.weapon = "missile" end
+	-- dopo il primo attacco si passa da soli all'altro (arma o spada)
+	if g.window > 0 and rb.id == g.current and not g:can_use(self.weapon) then
+		local other = self.weapon == "sword" and "missile" or "sword"
+		if g:can_use(other) then self.weapon = other end
+	end
+	local turn = rb.id == g.current and g.phase == "aim"
 	local n = 0
 	for _, sl in ipairs(self.slots) do
-		if game.has_weapon(rb, sl.weapon) then n = n + 1 end
+		if slot_have(rb, sl.weapon) then n = n + 1 end
 	end
 	local x = W / 2 - (n * SLOT + (n - 1) * SLOT_GAP) / 2 + SLOT / 2
 	for _, sl in ipairs(self.slots) do
-		local have = game.has_weapon(rb, sl.weapon)
+		local have = slot_have(rb, sl.weapon)
 		if sl.have ~= have then
 			gui.set_enabled(sl.node, have)
 			sl.have = have
@@ -938,15 +1131,17 @@ local function update_bar(self)
 				sl.x = x
 			end
 			x = x + SLOT + SLOT_GAP
-			local count = game.FREE_WEAPONS[sl.weapon] and 0 or rb.ammo[sl.weapon]
+			local count = rb.ammo[sl.weapon] or 0
 			if sl.count ~= count then
 				gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
 				sl.count = count
 			end
-			local on = sl.weapon == self.weapon and not self.tele_armed
+			-- 2: scelta, 1: si può usare, 0: già usata (o il turno è passato al riposizionamento)
+			local on = ((sl.weapon == self.weapon and not self.tele_armed) or (sl.weapon == "parachute" and rb.parachute)) and 2
+				or ((not turn or g:can_use(sl.weapon)) and 1 or 0)
 			if sl.on ~= on then
-				gui.set_color(sl.node, on and WHITE or SLOT_OFF)
-				gui.set_scale(sl.node, on and SLOT_SCALE_ON or SLOT_SCALE_OFF)
+				gui.set_color(sl.node, on == 2 and WHITE or (on == 1 and SLOT_OFF or SLOT_USED))
+				gui.set_scale(sl.node, on == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
 				sl.on = on
 			end
 		end
@@ -1073,7 +1268,7 @@ local function render(self, dt)
 		self.fuoco_x, self.fuoco_y = x, p0.y + (pb.p.y - p0.y) * k
 		EULER.z = -x * 4
 		gui.set_euler(self.egg_spin, EULER)
-		gui.set_color(self.egg_light, PLAYER_COLORS[g.current])
+		gui.set_color(self.egg_light, self.colors[g.current])
 		local secs = math.max(1, math.ceil((g.projectile.fuse or 0) / 60))
 		if self.egg_secs ~= secs then
 			gui.set_text(self.egg_label, tostring(secs))
@@ -1089,7 +1284,7 @@ local function render(self, dt)
 		local x, y = p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k
 		set_pos(self.projectile, x, y)
 		self.fuoco_x, self.fuoco_y = x, y
-		gui.set_color(self.projectile_glow, PLAYER_COLORS[g.current])
+		gui.set_color(self.projectile_glow, self.colors[g.current])
 		local n = #self.trail
 		self.trail_i = self.trail_i % n + 1
 		local tp = self.trail_pos[self.trail_i]
@@ -1123,9 +1318,11 @@ local function render(self, dt)
 		end
 	end
 	if self.shard_color ~= g.current then
-		for i = 1, game.SHARD_COUNT do gui.set_color(self.shard_nodes[i], PLAYER_COLORS[g.current]) end
+		for i = 1, game.SHARD_COUNT do gui.set_color(self.shard_nodes[i], self.colors[g.current]) end
 		self.shard_color = g.current
 	end
+
+	oggetti.update(self.oggetti, g, self.view, self.clock)
 
 	-- casse: cadono dondolando, la runa pulsa
 	for _, n in ipairs(self.crate_nodes) do
@@ -1166,13 +1363,13 @@ local function render(self, dt)
 			set_pos(node.root, o0.x + (ob.x - o0.x) * k, o0.y + (ob.y - o0.y) * k)
 			EULER.z = self.clock * 240 + i * 50
 			gui.set_euler(node.root, EULER)
-			gui.set_color(node.light, PLAYER_COLORS[g.current])
-			gui.set_color(node.glow, PLAYER_COLORS[g.current])
+			gui.set_color(node.light, self.colors[g.current])
+			gui.set_color(node.glow, self.colors[g.current])
 		end
 	end
 
 	-- pulsanti: arma scelta e teletrasporto (anche con altri globi in volo)
-	local tele_ok = g.phase == "aim" and #g.orbs < game.MAX_ORBS and my_turn(self)
+	local tele_ok = g:can_use("teleport") and my_turn(self)
 	if self.tele_armed and not tele_ok then self.tele_armed = false end
 	update_bar(self)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
@@ -1181,17 +1378,18 @@ local function render(self, dt)
 		gui.set_scale(self.btn_tele, tele_state == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
 		self.tele_state = tele_state
 	end
-	gui.set_color(self.tele_light, PLAYER_COLORS[g.current])
+	gui.set_color(self.tele_light, self.colors[g.current])
 
 	local aim_weapon = self.tele_armed and "teleport" or self.weapon
 	-- col dito sul robot il colpo è annullato: niente traiettoria, solo la scritta
-	local cancel = self.aiming and g.phase == "aim" and my_turn(self) and self.aim_dist <= CANCEL_R
+	local can_aim = g:can_use(aim_weapon) and my_turn(self)
+	local cancel = self.aiming and can_aim and self.aim_dist <= CANCEL_R
 	gui.set_enabled(self.cancel_label, cancel)
 	if cancel then
 		local v = self.view[g.current]
 		set_pos(self.cancel_label, v.x, v.y - 14)
 	end
-	local show_aim = self.aiming and g.phase == "aim" and my_turn(self) and not MELEE[aim_weapon] and not cancel
+	local show_aim = self.aiming and can_aim and not MELEE[aim_weapon] and not cancel
 	if show_aim then
 		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts, aim_weapon)
 		-- Blastron mostra solo l'inizio del volo: una freccia lunga quanto la potenza
@@ -1208,14 +1406,51 @@ local function render(self, dt)
 	-- tempo rimasto della partita (3 minuti al massimo)
 	local left = math.max(0, math.ceil(g.match_left / 60))
 	local clock = string.format("%d:%02d", math.floor(left / 60), left % 60)
-	local who = NAMES[g.current]
+	local who = self.names[g.current]
 	if self.mode == "online" then who = g.current == self.me and "Tu" or "Avversario" end
-	if g.phase == "aim" then
-		set_hud(self, string.format("%s   %ds   %s", who, secs, clock))
+	-- la barra racconta il turno: bianca, gialla per il secondo attacco, blu per ripararsi
+	local bar_left, bar_total, bar_color = g.timer, game.TURN_TICKS, TIME_COLOR
+	if g.phase ~= "aim" then
+		set_hud(self, g.phase ~= "over" and string.format("%s   %s", who, clock) or "")
+		bar_left = 0
+	elseif g.window > 0 then
+		set_hud(self, string.format("%s   secondo attacco! %ds   %s", who, math.ceil(g.window / 60), clock))
+		bar_left, bar_total, bar_color = g.window, game.SECOND_ATTACK_TICKS, SECOND_COLOR
 	elseif g.retreat > 0 then
 		set_hud(self, string.format("%s   riparati! %ds   %s", who, math.ceil(g.retreat / 60), clock))
-	elseif g.phase ~= "over" then
-		set_hud(self, string.format("%s   %s", who, clock))
+		bar_left, bar_total, bar_color = g.retreat, game.REPOSITION_TICKS, REPOSITION_COLOR
+	else
+		set_hud(self, string.format("%s   %ds   %s", who, secs, clock))
+	end
+	local bar_w = math.floor(TIME_BAR_W * bar_left / bar_total + 0.5)
+	if self.time_bar_w ~= bar_w or self.time_bar_c ~= bar_color then
+		gui.set_size(self.time_bar, vmath.vector3(bar_w, TIME_BAR_H, 0))
+		gui.set_color(self.time_bar, bar_color)
+		self.time_bar_w, self.time_bar_c = bar_w, bar_color
+	end
+	-- nell'attesa del secondo attacco la spada lampeggia, se è lei che resta
+	if self.slot_sword then
+		local blink = g.window > 0 and g:can_use("sword") and my_turn(self) and math.sin(self.clock * 12) > 0
+		gui.set_enabled(self.sword_glow, blink and self.slot_sword.have)
+	end
+	-- punti di ogni squadra, in alto a sinistra
+	local score = ""
+	for t = 1, #TEAM_NAMES do
+		local pts, any = 0, false
+		for _, rb in ipairs(g.robots) do
+			if rb.team == t then pts, any = pts + rb.points, true end
+		end
+		if any then score = score .. string.format("%s %d   ", TEAM_NAMES[t], math.floor(pts + 0.5)) end
+	end
+	if self.score_text ~= score then
+		gui.set_text(self.score_label, score)
+		self.score_text = score
+	end
+	local n = bar_robot(self)
+	local nucleo = n and n.nucleo or 0
+	if self.nucleo_n ~= nucleo then
+		gui.set_text(self.nucleo_label, "NUCLEO " .. nucleo)
+		self.nucleo_n = nucleo
 	end
 
 	-- freccia sopra il robot di turno
@@ -1223,7 +1458,7 @@ local function render(self, dt)
 	local v = self.view[g.current]
 	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
 	set_pos(self.arrow, v.x, v.y + scoria.ALTEZZA + (30 + math.sin(self.clock * 5) * 3) / self.cam.s)
-	gui.set_color(self.arrow, PLAYER_COLORS[g.current])
+	gui.set_color(self.arrow, self.colors[g.current])
 
 	-- Camera: segue il colpo in volo, poi resta un attimo sull'esplosione, poi
 	-- torna su chi è di turno. Nel menu si vede tutta la mappa.
@@ -1269,8 +1504,8 @@ function init(self)
 	gui.set_visible(self.mondo, false)
 
 	self.robots = {}
-	for i = 1, 2 do
-		local r = { rig = scoria.new(PLAYER_COLORS[i]), st = {} }
+	for i = 1, game.MAX_PLAYERS do
+		local r = { rig = scoria.new(TEAM_COLORS[i]), st = {} }
 		self.robots[i] = r
 	end
 
@@ -1344,6 +1579,9 @@ function init(self)
 		self.shard_nodes[i] = n
 	end
 
+	-- trappole, trampolini, ancoraggi, scudi e paracadute (battaglia/oggetti.lua)
+	self.oggetti = oggetti.new(TEAM_COLORS)
+
 	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono
 	self.crate_nodes = {}
 	for i = 1, game.CRATE_MAX do
@@ -1386,9 +1624,9 @@ function init(self)
 		self.detriti[i] = { node = n, x = 0, y = 0, vx = 0, vy = 0, a = 0, va = 0, t = DETRITO_VITA, col = vmath.vector4(PIETRA) }
 	end
 
-	for i = 1, 2 do
+	for i = 1, game.MAX_PLAYERS do
 		local hp = label(0, 0, "100", 0.7)
-		gui.set_color(hp, PLAYER_COLORS[i])
+		gui.set_color(hp, TEAM_COLORS[i])
 		self.robots[i].hp = hp
 	end
 	self.arrow = box(0, 0, 4, 18, WHITE)
@@ -1397,7 +1635,7 @@ function init(self)
 
 	-- nel mondo, nell'ordine in cui si disegnano
 	local mondo = {}
-	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].rig.root end
+	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].rig.root end
 	for _, n in ipairs(self.dots) do mondo[#mondo + 1] = n end
 	for _, n in ipairs(self.trail) do mondo[#mondo + 1] = n end
 	mondo[#mondo + 1] = self.projectile
@@ -1405,6 +1643,7 @@ function init(self)
 	mondo[#mondo + 1] = self.egg
 	for _, n in ipairs(self.shard_nodes) do mondo[#mondo + 1] = n end
 	for _, c in ipairs(self.crate_nodes) do mondo[#mondo + 1] = c.node end
+	for _, n in ipairs(oggetti.nodi(self.oggetti)) do mondo[#mondo + 1] = n end
 	mondo[#mondo + 1] = self.shock
 	-- i detriti sotto l'esplosione: ne escono mentre si spegne
 	for _, d in ipairs(self.detriti) do mondo[#mondo + 1] = d.node end
@@ -1412,13 +1651,23 @@ function init(self)
 		mondo[#mondo + 1] = b.anim
 		mondo[#mondo + 1] = b.flash
 	end
-	for i = 1, 2 do mondo[#mondo + 1] = self.robots[i].hp end
+	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].hp end
 	mondo[#mondo + 1] = self.arrow
 	mondo[#mondo + 1] = self.cancel_label
 	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end
 
 	self.hud = label(W / 2, H - 28, "", 1)
+	-- barra del tempo del turno (si accorcia verso il centro) e Nucleo accanto
+	self.time_bar_bg = box(W / 2, TIME_BAR_Y, TIME_BAR_W + 4, TIME_BAR_H + 4, vmath.vector4(0.05, 0.05, 0.07, 0.6))
+	self.time_bar = box(W / 2, TIME_BAR_Y, TIME_BAR_W, TIME_BAR_H, TIME_COLOR)
+	self.nucleo_label = label(W / 2 + TIME_BAR_W / 2 + 80, TIME_BAR_Y + 2, "NUCLEO 1", 0.9)
+	gui.set_color(self.nucleo_label, vmath.vector4(1, 0.75, 0.35, 1))
+	self.score_label = label(24, H - 28, "", 0.8)
+	gui.set_pivot(self.score_label, gui.PIVOT_W)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
+	self.tut_label = label(W / 2, H - 120, "", 0.8)
+	gui.set_line_break(self.tut_label, true)
+	gui.set_size(self.tut_label, vmath.vector3(900, 120, 0))
 
 	-- zoom: vicino, medio, tutta la mappa (anche rotella e tasto Z)
 	self.btn_zoom = box(ZOOM_BTN.x, ZOOM_BTN.y, 116, 44, vmath.vector4(0.05, 0.05, 0.07, 0.55))
@@ -1439,14 +1688,24 @@ function init(self)
 		gui.set_texture(n, "menu")
 		gui.play_flipbook(n, "slot")
 		gui.set_parent(n, self.bar)
-		local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
-		gui.set_texture(icon, "battaglia")
-		gui.play_flipbook(icon, WEAPON_ICON[w])
-		gui.set_parent(icon, n)
+		if WEAPON_ICON[w] then
+			local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
+			gui.set_texture(icon, "battaglia")
+			gui.play_flipbook(icon, WEAPON_ICON[w])
+			gui.set_parent(icon, n)
+		else
+			oggetti.icona(w, n)
+		end
 		local count = label(22, -26, "", 0.7)
 		gui.set_parent(count, n)
 		gui.set_enabled(n, false)
 		self.slots[i] = { node = n, label = count, weapon = w, have = false }
+		if w == "sword" then
+			self.slot_sword = self.slots[i]
+			self.sword_glow = glow(0, 0, SLOT * 1.6, SECOND_COLOR)
+			gui.set_parent(self.sword_glow, n)
+			gui.set_enabled(self.sword_glow, false)
+		end
 	end
 	-- teletrasporto: uno slot come quelli delle armi, col globo
 	self.btn_tele = box(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D, SLOT_OFF)
@@ -1468,7 +1727,8 @@ function init(self)
 	set_controls_visible(self, false)
 
 	-- la home per ultima, così sta sopra la battaglia
-	self.home = home.new(PLAYER_COLORS[1])
+	self.home = home.new(TEAM_COLORS[1])
+	self.scelta = scelta_armi.new(WEAPON_ICON, WEAPON_NAME)
 
 	-- una mappa sullo sfondo del menu
 	new_match(self, os.time())
@@ -1504,11 +1764,15 @@ function update(self, dt)
 			self.fire = nil
 			capture(self.pose_a, self.g)
 			self.g:step(input)
-			for _, e in ipairs(self.g:pop_events()) do handle_event(self, e) end
+			for _, e in ipairs(self.g:pop_events()) do
+				handle_event(self, e)
+				if self.tut then tutorial.evento(self.tut, self.g, e) end
+			end
 			self.acc = self.acc - game.DT
 			capture(self.pose_b, self.g)
 		end
 		self.pose_t, self.pose_dt = self.acc, game.DT
+		if self.tut then tutorial_update(self, dt) end
 	elseif self.mode == "online" then
 		self.pose_t = self.pose_t + dt_mondo
 		-- mandiamo al server solo i cambiamenti, e solo quando tocca a noi
@@ -1546,6 +1810,10 @@ function update(self, dt)
 	render(self, dt_mondo)
 	muovi_detriti(self, dt_mondo)
 	if self.mode == "menu" then home.update(self.home, dt) end
+	if self.mode == "scelta" then
+		local players = scelta_armi.update(self.scelta, dt)
+		if players then start_local_match(self, players) end
+	end
 
 	if SIMULA and self.g then
 		-- sx, sy: il centro del robot sullo schermo (dove si appoggia il mouse per mirare)
@@ -1559,6 +1827,16 @@ function update(self, dt)
 			self.simula_line = line
 		end
 	end
+end
+
+-- Si sceglie un'arma della barra; gli oggetti invece si usano subito
+local function choose_slot(self, w)
+	if game.TOOLS[w] then
+		if my_turn(self) and self.g:can_use(w) then self.fire = { angle = 0, power = 1, weapon = w } end
+		return
+	end
+	self.weapon = w
+	self.tele_armed = false
 end
 
 -- L'arma della barra sotto il dito, se c'è
@@ -1577,7 +1855,7 @@ end
 
 local function toggle_tele(self)
 	-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
-	self.tele_armed = not self.tele_armed and self.g.phase == "aim" and #self.g.orbs < game.MAX_ORBS
+	self.tele_armed = not self.tele_armed and self.g:can_use("teleport")
 end
 
 -- Un dito (o il mouse) si appoggia in (x, y). id distingue le dita.
@@ -1593,8 +1871,7 @@ local function pointer_down(self, id, x, y)
 	elseif gui.pick_node(self.btn_tele, x, y) then
 		toggle_tele(self)
 	elseif picked_slot(self, x, y) then
-		self.weapon = picked_slot(self, x, y)
-		self.tele_armed = false
+		choose_slot(self, picked_slot(self, x, y))
 	elseif self.touch_ui then
 		if x < PAD_ZONE_X and y < PAD_ZONE_Y and not self.move_pad.id then
 			self.pointers[id] = "move"
@@ -1634,7 +1911,7 @@ local function pointer_up(self, id, x, y)
 	elseif m == "aim" then
 		aim_from(self, x, y)
 		-- rilasciare il dito sopra il robot annulla lo sparo
-		if self.g.phase == "aim" and self.aim_dist > CANCEL_R then
+		if self.g:can_use(self.tele_armed and "teleport" or self.weapon) and self.aim_dist > CANCEL_R then
 			self.fire = { angle = self.aim_angle, power = self.aim_power,
 				weapon = self.tele_armed and "teleport" or self.weapon }
 			self.tele_armed = false
@@ -1651,6 +1928,9 @@ function on_input(self, action_id, action)
 		elseif scelta == "online" then
 			start_online(self)
 		end
+		return true
+	elseif self.mode == "scelta" then
+		scelta_armi.on_input(self.scelta, action_id, action)
 		return true
 	end
 	-- un tasto spegne le levette (a meno che non le abbia chieste la configurazione)
@@ -1678,10 +1958,7 @@ function on_input(self, action_id, action)
 			for _, sl in ipairs(self.slots) do
 				if sl.have then
 					n = n + 1
-					if n == ACTION_WEAPON[action_id] then
-						self.weapon = sl.weapon
-						self.tele_armed = false
-					end
+					if n == ACTION_WEAPON[action_id] then choose_slot(self, sl.weapon) end
 				end
 			end
 		end

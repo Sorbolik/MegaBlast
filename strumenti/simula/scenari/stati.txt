@@ -1,0 +1,17 @@
+# Effetti di stato: con prova_stati 1 tutti partono bruciati, rallentati e con
+# l'armatura incrinata (fiamma sulla testa, anello ai piedi, crepa sul petto).
+# A inizio turno la bruciatura fa danno; finito il secondo turno di ognuno gli
+# effetti spariscono.
+imposta prova_stati 1
+imposta zoom 1
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+zoom 01_effetti 3
+tieni destra 1                      # rallentato: corre piano
+zoom 02_rallentato 3
+aspetta_stato turno=2 fase=aim 40
+aspetta 0.5
+foto 03_turno_blu

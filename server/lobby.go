@@ -6,16 +6,23 @@ import (
 	"time"
 )
 
-// Mode è una modalità di gioco: quanti giocatori servono per una partita.
+// Mode è una coda di gioco: quanti giocatori servono per una partita, quale
+// modo della simulazione usare (config.MODES, che dice le squadre) e se le
+// statistiche sono normalizzate (Torneo: albero ed equipaggiamento non contano).
 type Mode struct {
-	Name    string
-	Players int
+	Name      string
+	Players   int
+	Sim       string
+	Normalize bool
 }
 
-// Per ora la simulazione ha 2 robot. 2v2 e tutti contro tutti arrivano con
-// la simulazione a 4 giocatori.
+// I numeri di giocatori devono essere quelli di config.MODES (lo controlla
+// TestModesMatchConfig).
 var modes = map[string]Mode{
-	"1v1": {"1v1", 2},
+	"1v1":    {"1v1", 2, "1v1", false},
+	"2v2":    {"2v2", 4, "2v2", false},
+	"ffa":    {"ffa", 4, "ffa", false},
+	"torneo": {"torneo", 2, "1v1", true},
 }
 
 // Mappa usata per le partite online (vedi client/sim/maps.lua).

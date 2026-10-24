@@ -116,8 +116,10 @@ type Sim struct {
 	g lua.LValue
 }
 
-func (e *Engine) NewSim(seed int64, mapID string) (*Sim, error) {
-	g, err := e.call("new", lua.LNumber(seed), lua.LString(mapID))
+// NewSim crea la partita. players è la lista di opts.players (squadre e armi
+// scelte, da N.draft_finish), LNil per un 1 contro 1; normalize è il Torneo.
+func (e *Engine) NewSim(seed int64, mapID string, players lua.LValue, normalize bool) (*Sim, error) {
+	g, err := e.call("new", lua.LNumber(seed), lua.LString(mapID), players, lua.LBool(normalize))
 	if err != nil {
 		return nil, err
 	}

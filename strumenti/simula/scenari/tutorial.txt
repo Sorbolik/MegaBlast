@@ -1,0 +1,25 @@
+# Tutorial: i primi tre passi. Con imposta tutorial 1 STESSO TELEFONO apre il
+# tutorial. Barra con tre slot: Lanciarune 546, Lama 640, Paracadute 734 (y = 62).
+imposta tutorial 1
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_muoviti_e_spara
+tieni destra 1.2
+mira 100 100 0.4                    # missile a 45 gradi
+aspetta 0.5
+foto 02_fatto
+aspetta 2                           # passo 2: riparati
+foto 03_riparati
+mira 100 100 0.4
+aspetta 6                           # 5 s di barra gialla, poi blu
+tieni sinistra 1.2
+aspetta 2                           # passo 3: la spada
+foto 04_spada
+tocca 640 62                        # Lama di Nucleo (barra da 3: c'è il paracadute)
+mira 60 0 0.3
+aspetta_evento sword_hit 3
+aspetta 0.3
+foto 05_spada_fatto

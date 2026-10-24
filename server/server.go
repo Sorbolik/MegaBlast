@@ -24,6 +24,7 @@ type Config struct {
 	Node           string // nome del nodo, entra nei gettoni: un bilanciatore può mandare chi torna al nodo giusto
 	Workers        int
 	ReconnectTicks int // quanto si aspetta chi è caduto prima di toglierlo dalla partita
+	DraftTicks     int // se > 0 sostituisce config.DRAFT_SECONDS (per le prove)
 	PingEvery      time.Duration
 }
 

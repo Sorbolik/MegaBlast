@@ -20,20 +20,23 @@ import (
 // Prova di carico: N partite in contemporanea con giocatori finti collegati
 // via WebSocket, che camminano, saltano e sparano a caso.
 //
-//	go test ./server/ -run Carico -v -carico 500 -durata 20s
+//	go test ./server/ -run Carico -v -carico 500 -durata 20s [-modo ffa]
 //
 // I client girano nello stesso processo e rubano CPU al server: i numeri
 // sono quindi peggiori di quelli di un server da solo.
 var (
 	caricoStanze = flag.Int("carico", 0, "partite contemporanee della prova di carico (0 = salta)")
 	caricoDurata = flag.Duration("durata", 15*time.Second, "durata della prova di carico")
+	caricoModo   = flag.String("modo", "1v1", "modalità delle partite della prova di carico")
 )
 
 func TestCarico(t *testing.T) {
 	if *caricoStanze == 0 {
 		t.Skip("prova di carico: -carico N")
 	}
-	srv := NewServer(DefaultConfig())
+	cfg := DefaultConfig()
+	cfg.DraftTicks = 1 // la scelta dell'arma non conta per il carico
+	srv := NewServer(cfg)
 	hs := httptest.NewServer(srv.Handler())
 	defer hs.Close()
 	url := "ws" + strings.TrimPrefix(hs.URL, "http") + "/ws"
@@ -47,7 +50,7 @@ func TestCarico(t *testing.T) {
 	start := time.Now()
 	var wg sync.WaitGroup
 	stop := make(chan struct{})
-	for i := 0; i < *caricoStanze*2; i++ {
+	for i := 0; i < *caricoStanze*modes[*caricoModo].Players; i++ {
 		wg.Add(1)
 		go func(seed int64) {
 			defer wg.Done()
@@ -102,7 +105,7 @@ func bot(ctx context.Context, url string, seed int64, stop chan struct{}) {
 		return
 	}
 	defer conn.CloseNow()
-	conn.Write(ctx, websocket.MessageText, []byte(`{"t":"hello","v":2,"mode":"1v1"}`))
+	conn.Write(ctx, websocket.MessageText, fmt.Appendf(nil, `{"t":"hello","v":2,"mode":%q}`, *caricoModo))
 	go func() {
 		for {
 			if _, _, err := conn.Read(ctx); err != nil {

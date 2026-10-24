@@ -53,7 +53,7 @@ quando finisce. Niente "circa" o "un po'".
 
 ### Numeri
 | Costante | Valore | Perché |
-Le costanti vivono in `client/sim/game.lua` (`M.NOME`, in tick a 60 al secondo
+Le regole della partita vivono in `client/sim/config.lua` (in secondi), la fisica in `client/sim/game.lua` (`M.NOME`, in tick a 60 al secondo
 e pixel). Riusa quelle che esistono, nomina quelle nuove.
 
 ### Casi limite

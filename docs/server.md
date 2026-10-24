@@ -39,6 +39,23 @@ connessione (goroutine) ──hello──► Lobby (una coda per modalità)
   con la riconnessione, che gli rimanda tutto. Perdere un messaggio invece gli
   lascerebbe un terreno sbagliato.
 
+## Code e scelta dell'arma
+
+Le code sono `1v1`, `2v2`, `ffa` (tutti contro tutti) e `torneo` (1 contro 1
+con le statistiche normalizzate: albero ed equipaggiamento non contano). I
+giocatori e le squadre di ogni modo vengono da `config.MODES` della
+simulazione.
+
+Quando una coda è piena la stanza apre la scelta dell'arma (`sim/draft.lua`):
+ognuno riceve `{"t":"draft","offer":[…],"p":[…],"you":1,"tok":…,"players":[{"team":1},…],"left":900}`
+e manda `{"t":"pick","w":"shards"}` (si può cambiare). Nel 2 contro 2 due
+compagni si scambiano le scelte se tutti e due mandano `{"t":"swap","to":N}`;
+chi riceve la proposta vede `{"t":"swap","from":N}`. A ogni cambio tutti
+ricevono il `draft` aggiornato. Allo scadere di `config.DRAFT_SECONDS` chi
+non ha scelto prende la prima arma libera e parte la partita (`start`, con
+`players`). Il client online per ora non ha la schermata della scelta: aspetta
+e riceve l'arma data dal server.
+
 ## Protocollo
 
 Il primo messaggio del client è `{"t":"hello","v":2,"mode":"1v1"}`. Se la
@@ -53,10 +70,11 @@ modo che un client vecchio non capirebbe. Gli altri messaggi sono in
 Con `start` il client riceve un gettone. Se la connessione cade (sui telefoni
 succede, per questo il server manda anche un ping ogni 10 s), gli altri
 ricevono `away`, i tasti tenuti premuti si lasciano e la partita va avanti: se
-era il suo turno, il tempo scorre. Il client riprova da solo per circa 18 s con
+era il suo turno, il tempo scorre. Si può tornare anche durante la scelta
+dell'arma (il gettone arriva già col primo `draft`). Il client riprova da solo per circa 18 s con
 `{"t":"hello","v":2,"tok":…}`; il server gli rimanda `start` con
 `"resume":true`, gli scavi del terreno (`sync`) e lo stato. Dopo 20 s senza
-tornare il giocatore è fuori (`left`) e, se resta un solo giocatore, la
+tornare il giocatore è fuori (`left`) e, se resta una sola squadra, la
 partita si chiude.
 
 ## Numeri
@@ -75,8 +93,16 @@ Xeon a 2,8 GHz.
 | CPU per partita e tick | 560–670 µs | 230 µs |
 | 100 partite insieme | worker pieni, 10–15% dei tick in ritardo | 34% dei worker, 0,5% in ritardo |
 
-Un core regge circa **65–70 partite** contemporanee: un server da 4 core circa
-250 partite 1v1, cioè 500 giocatori. Il collo di bottiglia ora è la
+Con le regole competitive (Nucleo, due attacchi, oggetti tattici, effetti di
+stato, partite che finiscono solo a tempo):
+
+| Modo | CPU per partita e tick | Partite per core | Giocatori per core |
+| --- | --- | --- | --- |
+| 1v1 | 220 µs | circa 75 | circa 150 |
+| Tutti contro tutti (4) | 320 µs | circa 50 | circa 200 |
+
+Un server da 4 core regge circa 300 partite 1v1 o 200 partite a 4, cioè
+600–800 giocatori. Il collo di bottiglia ora è la
 simulazione stessa in gopher-lua (lettura delle costanti del modulo e
 chiamate di funzione): metà del tempo del tick va lì.
 

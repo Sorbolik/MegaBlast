@@ -3,6 +3,8 @@
 -- server in Go (server/luajson.go), molto più in fretta di string.format qui.
 local game = require "sim.game"
 local maps = require "sim.maps"
+local config = require "sim.config"
+local draft = require "sim.draft"
 
 local N = {}
 
@@ -21,19 +23,19 @@ for id, def in pairs(maps.maps) do
 	end
 end
 
-function N.new(seed, map)
-	local g = game.new(seed, map)
+-- players: come opts.players di game.new (squadre e scelte del draft);
+-- normalize: modalità Torneo
+function N.new(seed, map, players, normalize)
+	local g = game.new(seed, map, { players = players, normalize = normalize })
 	g:pop_events()
 	g.carves = {} -- scavi del terreno, per chi si riconnette
 	return g
 end
 
-local WEAPONS = { missile = true, sword = true, teleport = true, grenade = true, shards = true, punch = true }
-
 -- hold: il salto è ancora tenuto premuto (lasciandolo mentre si sale il salto è corto)
 function N.step(g, left, right, jump, hold, angle, power, weapon)
 	local fire = nil
-	if angle then fire = { angle = angle, power = power, weapon = WEAPONS[weapon] and weapon or "missile" } end
+	if angle then fire = { angle = angle, power = power, weapon = game.WEAPONS[weapon] and weapon or "missile" } end
 	g:step({ left = left, right = right, jump = jump, hold = hold, fire = fire })
 end
 
@@ -51,7 +53,14 @@ function N.snapshot(g)
 		-- s: tick del fendente in corso (0 se il robot non sta colpendo), sd: sua direzione
 		-- pu, pd: lo stesso per il Pugno del Titano; ag, as, ap: colpi di Uovo, Schegge e Pugno
 		-- sb, pb: angolo di mira del fendente e del pugno (servono col modello "blastron")
+		-- n: Nucleo, ft: teletrasporti gratis rimasti, mh: vita massima, tu: turni giocati, pt: punti
+		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute (1 pronto, 2 aperto);
+		-- fp: paracadute gratis; st: effetti di stato (1 bruciatura + 2 rallentamento + 4 armatura incrinata)
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
+			n = rb.nucleo, ft = rb.free_teleports, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
+			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, fp = rb.free_parachutes,
+			pa = rb.parachute == "armed" and 1 or (rb.parachute == "open" and 2 or 0),
+			st = (rb.status.burn and 1 or 0) + (rb.status.slow and 2 or 0) + (rb.status.cracked and 4 or 0),
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
 			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch }
@@ -70,8 +79,15 @@ function N.snapshot(g)
 	for _, c in ipairs(g.crates) do
 		crates[#crates + 1] = { i = c.id, x = c.x, y = c.y, l = c.landed }
 	end
-	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, retreat = g.retreat, mt = g.match_left,
-		r = robots, p = p, o = orbs, s = shards, c = crates }
+	-- pl: trappole e trampolini posati (k: tipo, a: armata, tm: squadra, r: mezza larghezza)
+	local placed = {}
+	for i, o in ipairs(g.placed) do
+		placed[i] = { i = o.id, k = o.kind, x = o.x, y = o.y, a = o.armed, tm = o.team, r = o.r }
+	end
+	-- win: tick rimasti per il secondo attacco; u: attacchi fatti (1 arma, 2 spada); tp: teletrasporti del turno
+	local used = (g.used.weapon and 1 or 0) + (g.used.sword and 2 or 0)
+	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window, retreat = g.retreat,
+		u = used, tp = g.teleports, mt = g.match_left, r = robots, p = p, o = orbs, s = shards, c = crates, pl = placed }
 end
 
 -- Eventi dall'ultimo tick (una lista, vuota se non ne sono successi)
@@ -87,6 +103,39 @@ end
 -- Gli scavi fatti finora: chi si riconnette li rifà sul suo terreno
 function N.sync(g)
 	return { t = "sync", x = g.carves }
+end
+
+-- Scelta d'inizio partita (sim/draft.lua), prima di N.new --------------------
+
+function N.mode_players(mode)
+	return config.MODES[mode]
+end
+
+function N.draft_seconds()
+	return config.DRAFT_SECONDS
+end
+
+function N.draft_new(seed, players)
+	return draft.new(seed, players)
+end
+
+function N.draft_pick(d, i, weapon)
+	return draft.pick(d, i, weapon)
+end
+
+function N.draft_swap(d, i, j)
+	return draft.swap(d, i, j)
+end
+
+function N.draft_finish(d)
+	return draft.finish(d)
+end
+
+-- Il ventaglio e le scelte fatte finora (p[i] = arma del robot i, o "")
+function N.draft_state(d)
+	local picks = {}
+	for i = 1, #d.players do picks[i] = d.picks[i] or "" end
+	return { t = "draft", offer = d.offer, p = picks }
 end
 
 return N
