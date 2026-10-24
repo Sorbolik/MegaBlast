@@ -1,6 +1,6 @@
 # La targa sopra la Scoria: nome e barra della vita. Rosso si spara addosso:
 # la vita scende subito, il pezzo perso resta chiaro un attimo e poi si consuma.
-# Si parte con 30 punti di vita su 100: la barra è bassa e pulsa. Poi i tre zoom.
+# Si parte con 30 punti di vita su 150: la barra è bassa e pulsa. Poi i tre zoom.
 imposta prova_vita 30
 
 aspetta 1

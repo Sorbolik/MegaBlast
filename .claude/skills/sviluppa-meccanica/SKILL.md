@@ -17,7 +17,9 @@ server autoritativo e i telefoni restano d'accordo.
   `ipairs` o liste ordinate.
 - Passo fisso a 60 tick al secondo: durate in tick (`M.X_TICKS = 2 * 60`),
   velocità in pixel al secondo moltiplicate per `M.DT`.
-- Costanti in testa a `game.lua` come `M.NOME = valore -- commento`.
+- Numeri da bilanciare (regole, costi, durate, statistiche per robot) in
+  `client/sim/config.lua`; costanti di fisica in testa a `game.lua` come
+  `M.NOME = valore -- commento`.
 - Ciò che il client deve mostrare esce come evento (`self:emit{ type = ... }`)
   o dallo stato, mai calcolato a parte nel client.
 

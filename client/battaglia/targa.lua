@@ -1,19 +1,21 @@
 -- La targa sopra la Scoria in battaglia: il nome e una barra della vita sottile,
--- solo forme semplici disegnate dal codice (nessuna immagine), nel colore della
--- squadra. Il danno si vede in due tempi: la vita scende subito, il pezzo perso
+-- solo forme semplici disegnate dal codice (nessuna immagine) con la palette e il
+-- font dell'interfaccia (ui/ui.lua), nel colore della squadra. Il danno si vede in due tempi: la vita scende subito, il pezzo perso
 -- resta bianco un attimo e poi si consuma; la barra sobbalza e lampeggia. Sotto
 -- il 30% la vita pulsa. Lo scudo, se c'è, è un tratto chiaro dopo la vita.
 --
 --   local tt = targa.nuove(colori, nomi)  -- una targa per colore, tutte insieme
 --   targa.vita(t, vita, massima, scudo)   -- quando cambia (scudo può mancare)
 --   targa.update(t, dt, x, y, scala)      -- a ogni frame: x, y è il centro in basso
---   targa.set_enabled(t, on) / targa.nome(t, nome)
+--   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --
 -- Ogni targa ha due radici, t.barre e t.testi, che si muovono insieme. La GUI
 -- disegna i nodi nell'ordine in cui stanno: chi le mette nella scena mette prima
 -- le barre di tutte le targhe e poi tutti i testi, così bastano due draw call per
 -- tutte (forme senza immagine, poi il font). Non usiamo i layer della GUI perché
 -- disegnerebbero le targhe sopra i pulsanti e i menu.
+
+local ui = require "ui.ui"
 
 local M = {}
 
@@ -23,13 +25,12 @@ local max = math.max
 local W, H = 44, 4          -- la barra
 local BORDO = 1             -- il fondo scuro attorno
 local NOME_Y = 10           -- centro del nome sopra la barra
-local NOME_SCALA, NUMERO_SCALA = 0.62, 0.5
+-- scala del font "titolo" (scala 1 = circa 40 px)
+local NOME_SCALA, NUMERO_SCALA = 0.25, 0.2
 
-local FONDO = vmath.vector4(0.03, 0.03, 0.04, 0.7)
-local SCURO = vmath.vector4(0.03, 0.03, 0.04, 1)
-local SCIA = vmath.vector4(1, 1, 1, 0.9)
+local FONDO = ui.C.OMBRA
+local SCIA = ui.C.LUCE
 local SCUDO = vmath.vector4(0.75, 0.86, 1, 1)
-local BIANCO = vmath.vector4(1, 1, 1, 1)
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(1, 1, 1, 1)
@@ -46,9 +47,9 @@ local function testo(parent, x, y, s, scala, colore)
 	local n = gui.new_text_node(vmath.vector3(x, y, 0), s)
 	gui.set_parent(n, parent)
 	gui.set_inherit_alpha(n, true)
-	gui.set_font(n, "default")
+	gui.set_font(n, "titolo")
 	gui.set_color(n, colore)
-	gui.set_outline(n, SCURO)
+	gui.set_outline(n, ui.C.OMBRA)
 	gui.set_scale(n, vmath.vector3(scala, scala, 1))
 	return n
 end
@@ -95,7 +96,7 @@ function M.nuove(colori, nomi)
 	for i, t in ipairs(tt) do
 		t.testi, t.dentro_testi = radice()
 		t.nome = testo(t.dentro_testi, 0, NOME_Y, nomi[i] or "", NOME_SCALA, t.colore)
-		t.numero = testo(t.dentro_testi, W / 2 + BORDO + 3, 0, "", NUMERO_SCALA, BIANCO)
+		t.numero = testo(t.dentro_testi, W / 2 + BORDO + 3, 0, "", NUMERO_SCALA, ui.C.TESTO)
 		gui.set_pivot(t.numero, gui.PIVOT_W)
 		M.vita(t, 1, 1)
 	end
@@ -104,6 +105,12 @@ end
 
 function M.nome(t, nome)
 	gui.set_text(t.nome, nome)
+end
+
+-- il colore della squadra (cambia da una partita all'altra)
+function M.colore(t, colore)
+	t.colore.x, t.colore.y, t.colore.z = colore.x, colore.y, colore.z
+	gui.set_color(t.nome, t.colore)
 end
 
 function M.set_enabled(t, on)

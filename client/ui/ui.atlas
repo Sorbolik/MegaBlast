@@ -1,0 +1,12 @@
+images {
+  image: "/assets/ui/forma.png"
+}
+images {
+  image: "/assets/ui/bordo.png"
+}
+images {
+  image: "/assets/ui/alone.png"
+}
+margin: 2
+extrude_borders: 2
+inner_padding: 0

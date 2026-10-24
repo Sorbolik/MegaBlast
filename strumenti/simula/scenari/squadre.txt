@@ -1,0 +1,24 @@
+# 2 contro 2 sullo stesso telefono: quattro Scorie, i compagni dallo stesso
+# lato, le squadre che si alternano (Rosso 1, Blu 1, Rosso 2, Blu 2).
+
+imposta giocatori 2v2
+imposta zoom 3
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_quattro_robot
+mira 150 100 0.3
+aspetta_stato turno=2 fase=aim 20
+aspetta 0.5
+foto 02_turno_blu_1
+mira -150 100 0.3
+aspetta_stato turno=3 fase=aim 20
+aspetta 0.5
+foto 03_turno_rosso_2
+mira 150 100 0.3
+aspetta_stato turno=4 fase=aim 20
+aspetta 0.5
+foto 04_turno_blu_2
+
+# tutti contro tutti in un'altra build: imposta giocatori ffa
