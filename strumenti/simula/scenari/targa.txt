@@ -1,0 +1,25 @@
+# La targa sopra la Scoria: nome e barra della vita. Rosso si spara addosso:
+# la vita scende subito, il pezzo perso resta chiaro un attimo e poi si consuma.
+# Si parte con 30 punti di vita su 150: la barra è bassa e pulsa. Poi i tre zoom.
+imposta prova_vita 30
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+zoom 01_targa 3
+foto 02_scena
+mira 4 150 0.4
+aspetta_evento explosion 8
+aspetta 0.15
+zoom 03_colpo_scia 3
+aspetta 1.2
+zoom 04_scia_consumata 3
+aspetta_stato turno=2 fase=aim 15
+aspetta 0.5
+tocca 1210 686                      # zoom: medio
+aspetta 0.8
+foto 05_zoom_medio
+tocca 1210 686                      # zoom: tutta la mappa
+aspetta 0.8
+foto 06_zoom_mappa

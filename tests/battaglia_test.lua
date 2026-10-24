@@ -1,5 +1,5 @@
--- Test della Scoria (battaglia/scoria.lua) con un finto gui, e della
--- camera (battaglia/camera.lua). Dalla radice del repository:
+-- Test della Scoria (battaglia/scoria.lua) e della targa con nome e vita
+-- (battaglia/targa.lua) con un finto gui, e della camera (battaglia/camera.lua). Dalla radice del repository:
 --   luajit tests/battaglia_test.lua
 package.path = "client/?.lua;" .. package.path
 
@@ -21,14 +21,21 @@ gui = {
 	set_euler = function(n, v) n.euler = copia(v) end,
 	set_scale = function(n, v) n.scale = copia(v) end,
 	set_enabled = function(n, on) n.enabled = on end,
-	set_visible = function() end, set_color = function() end, set_adjust_mode = function() end,
+	set_visible = function(n, on) n.invisibile = not on end, set_color = function() end, set_adjust_mode = function() end,
 	set_inherit_alpha = function() end, set_perimeter_vertices = function() end,
 	set_texture = function() end, play_flipbook = function() end,
+	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
+	set_text = function(n, text) n.text = text end,
+	set_size = function(n, v) n.size = copia(v) end,
+	get_size = function(n) return n.size end,
+	set_font = function() end, set_outline = function() end, set_pivot = function() end,
+	set_slice9 = function() end, PIVOT_W = 3,
 }
 
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
 local camera = require "battaglia.camera"
+local targa = require "battaglia.targa"
 
 local failures = 0
 local function check(cond, msg)
@@ -149,6 +156,38 @@ scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")
 check(math.abs(game.ROBOT_H - s.h) < 1e-9, "il corpo è alto quanto quello della simulazione")
 
+-- Targa ------------------------------------------------------------------------
+
+local primo = #nodi + 1
+local tt = targa.nuove({ vec(1, 0.2, 0.3, 1), vec(0.2, 0.5, 1, 1) }, { "Rosso", "Blu" })
+local primo_testo, ultima_forma = math.huge, 0
+for k = primo, #nodi do
+	if nodi[k].text then primo_testo = math.min(primo_testo, k)
+	elseif not nodi[k].invisibile then ultima_forma = k end
+end
+check(ultima_forma < primo_testo, "targhe: prima tutte le barre, poi tutti i testi (due draw call)")
+local t = tt[1]
+targa.vita(t, 100, 100)
+targa.update(t, 1 / 60, 0, 0, 1)
+local piena = t.pieno.size.x
+targa.vita(t, 60, 100)
+targa.update(t, 1 / 60, 0, 0, 1)
+check(t.numero.text == "60", "targa: il numero è la vita")
+check(math.abs(t.pieno.size.x - piena * 0.6) < 0.5, "targa: la vita scende subito")
+check(math.abs(t.scia.size.x - piena) < 0.5, "targa: il pezzo perso resta un attimo")
+for _ = 1, 120 do targa.update(t, 1 / 60, 0, 0, 1) end
+check(math.abs(t.scia.size.x - t.pieno.size.x) < 0.5, "targa: poi si consuma fino alla vita")
+targa.vita(t, 60, 100, 20)
+targa.update(t, 1 / 60, 0, 0, 1)
+check(t.scudo.enabled and math.abs(t.scudo.pos.x - t.pieno.pos.x - t.pieno.size.x) < 0.5,
+	"targa: lo scudo comincia dove finisce la vita")
+targa.vita(t, 100, 100, 50)
+targa.update(t, 1 / 60, 0, 0, 1)
+check(t.pieno.size.x + t.scudo.size.x <= piena + 0.5, "targa: vita più scudo stanno nella cornice")
+targa.vita(t, 0, 100)
+targa.update(t, 1 / 60, 0, 0, 1)
+check(not t.pieno.enabled and tutto_finito(), "targa: a zero la vita sparisce, valori finiti")
+
 -- Camera -----------------------------------------------------------------------
 
 local c = camera.new(1280, 720)
@@ -197,6 +236,64 @@ camera.cambia(c, -5)
 check(camera.zoom(c) == camera.LIVELLI[1], "rotella avanti: si ferma sul più vicino")
 camera.prossimo(c); camera.prossimo(c); camera.prossimo(c)
 check(c.livello == 1, "il pulsante gira: vicino, medio, mappa, vicino")
+
+-- Tutorial a passi (battaglia/tutorial.lua) ------------------------------------------
+do
+	local tutorial = require "battaglia.tutorial"
+	local t = tutorial.new()
+	-- gioca input(tick) per al massimo n tick, passando gli eventi al tutorial
+	local function gioca(g, n, input)
+		for k = 1, n do
+			g:step(input and input(k) or nil)
+			for _, e in ipairs(g:pop_events()) do tutorial.evento(t, g, e) end
+			if tutorial.fatto(t, g) then return true end
+		end
+		return false
+	end
+	local function spara(w, a) return { fire = { angle = a or math.rad(45), power = 0.7, weapon = w or "missile" } } end
+
+	local g = tutorial.partita(t, 1)
+	check(#g.order == 1 and g.robots[2] and math.abs(g.robots[2].x - g.robots[1].x) > 200,
+		"tutorial: il bersaglio c'è ma non gioca")
+	check(gioca(g, 600, function(k)
+		if k <= 60 then return { right = true } end
+		if k == 70 then return spara() end
+	end), "tutorial 1: muoversi e sparare")
+
+	tutorial.avanti(t)
+	g = tutorial.partita(t, 1)
+	check(not gioca(g, 2, function() return spara() end), "tutorial 2: sparare non basta")
+	check(gioca(g, 900, function() if g.retreat > 0 then return { left = true } end end), "tutorial 2: al riparo nella barra blu")
+
+	tutorial.avanti(t)
+	g = tutorial.partita(t, 1)
+	check(math.abs(g.robots[2].x - g.robots[1].x) < 40, "tutorial 3: il bersaglio è vicino")
+	check(gioca(g, 120, function(k) if k == 5 then return spara("sword", 0) end end), "tutorial 3: colpo di spada")
+
+	tutorial.avanti(t)
+	g = tutorial.partita(t, 1)
+	check(gioca(g, 300, function(k)
+		if k == 5 then return spara() end
+		if k == 30 then return spara("sword", 0) end
+	end), "tutorial 4: due attacchi nello stesso turno")
+
+	tutorial.avanti(t)
+	g = tutorial.partita(t, 1)
+	check(g.robots[1].nucleo == 0, "tutorial 5: si parte senza Nucleo")
+	check(gioca(g, 600, function(k)
+		if k == 5 then return spara() end
+		if k == 20 then return spara("teleport", math.rad(80)) end
+	end), "tutorial 5: Nucleo guadagnato e speso nel teletrasporto")
+
+	tutorial.avanti(t)
+	g = tutorial.partita(t, 1)
+	tutorial.evento(t, g, { type = "sword_hit", robot = 1, target = 2 })
+	check(not tutorial.fatto(t, g), "tutorial 6: il fendente da solo non è la combo")
+	tutorial.evento(t, g, { type = "teleport", robot = 1 })
+	tutorial.evento(t, g, { type = "sword_hit", robot = 1, target = 2 })
+	check(tutorial.fatto(t, g), "tutorial 6: teletrasporto e fendente")
+	check(not tutorial.avanti(t), "tutorial: sei passi")
+end
 
 if failures > 0 then
 	print(failures .. " test falliti")
