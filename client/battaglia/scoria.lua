@@ -115,6 +115,7 @@ local ARMI = {
 	punch = { riposo = -0.9 },
 	eagle = { riposo = -0.6 },
 	hook = { riposo = -0.4 },
+	mallet = { riposo = -1.6, due_mani = true },
 	lunge = { riposo = -1.4, due_mani = true },
 }
 
@@ -151,6 +152,12 @@ local function arma(s, name, color)
 		-- Rampino: una canna sottile con l'uncino aperto in punta
 		box(g, H * 0.45, 0, H * 0.7, max(2, H * 0.08), FERRO)
 		box(g, H * 0.8, H * 0.08, max(2, H * 0.08), H * 0.2, LAMA)
+	elseif name == "mallet" then
+		-- Maglio: manico lungo con la testa pesante in punta
+		local L = H * 1.1
+		box(g, L * 0.5, 0, L, max(2, H * 0.08), FERRO)
+		box(g, L, 0, H * 0.22, H * 0.4, FERRO)
+		box(g, L + H * 0.06, 0, H * 0.06, H * 0.4, LAMA)
 	elseif name == "lunge" then
 		-- Affondo: lancia lunga e sottile, con la punta chiara
 		local L = config.LUNGE.speed * config.LUNGE.ticks / 60 * 0.4

@@ -209,6 +209,12 @@ function M.icona(tipo, parent)
 		gui.set_fill_angle(u, 240)
 		gui.set_euler(u, vmath.vector3(0, 0, 120))
 		pos(u, 16, 12)
+	elseif tipo == "mallet" then
+		-- Maglio: manico lungo e testa pesante
+		gui.set_euler(nodo(46, 4, BIANCO, parent), vmath.vector3(0, 0, 60))
+		local testa = nodo(12, 24, BIANCO, parent)
+		gui.set_euler(testa, vmath.vector3(0, 0, 60))
+		pos(testa, 12, 20)
 	elseif tipo == "lunge" then
 		-- Affondo: lancia lunga e sottile con la punta
 		gui.set_euler(nodo(54, 4, BIANCO, parent), vmath.vector3(0, 0, 30))

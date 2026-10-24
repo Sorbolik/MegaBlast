@@ -68,8 +68,8 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- sotto la sua vita, coi turni che mancano (senza accenti: il font non li ha)
 local STATUS_TEXT = { burn = "BRUCIA!", slow = "RALLENTATO!", cracked = "ARMATURA INCRINATA!" }
 local STATUS_NAME = { { "burn", "BRUCIA" }, { "slow", "LENTO" }, { "cracked", "INCRINATO" } }
-local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "hook", "lunge",
-	"trap", "shield", "trampoline", "parachute" }
+local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge",
+	"trap", "shield", "trampoline", "hook", "parachute" }
 -- (il main chunk è al limite dei 200 locali di Lua: nome e colore insieme)
 local BAR_GROUPS = { { "PRIMARIE", ui.C.BRACE }, { "SECONDARIE", ui.C.ACCIAIO }, { "OGGETTI", ui.C.LINEA } }
 local function bar_group(w)
@@ -85,14 +85,14 @@ local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Sche
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- nomi delle armi nella scelta d'inizio partita
 local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
-	sniper = "Cecchino", eagle = "Tonante", hook = "Rampino", lunge = "Affondo" }
+	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo" }
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
-	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Lento, poi cala; rimbalza 3 volte e sbalza dove andava",
-	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", hook = "Aggancia l'avversario e lo tira dritto verso di te per un tratto, poi lo molla",
+	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
+	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "In aria colpisce sotto di te e rimbalzi in alto; a terra colpisce davanti",
 	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce" }
 -- armi corpo a corpo: niente linea di mira
-local MELEE = { sword = true, punch = true }
+local MELEE = { sword = true, punch = true, mallet = true }
 local SLOT, SLOT_GAP, GROUP_GAP, BAR_Y = 84, 10, 30, 62
 -- bordo degli slot: non disponibile (già usata, o teletrasporto), disponibile
 -- (il colore del gruppo), scelto
@@ -103,7 +103,8 @@ local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector
 -- Rimbalzo del cecchino: quanto si schiaccia, quanto presto si calma e quanto tremola
 local BOING_AMP, BOING_DAMP, BOING_FREQ = 0.7, 4, 26
 local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1)
--- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante)
+-- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante);
+-- il Maglio fa il contrario, dall'alto cala sotto i piedi
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
 -- Barra del tempo del turno sotto la scritta in alto: bianca, gialla negli
@@ -690,8 +691,9 @@ local function handle_event(self, e)
 		gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), e.type == "hook" and 1.5 * K or 2.5 * K, 0))
 		gui.set_euler(n, vmath.vector3(0, 0, math.deg(math.atan2(dy, dx))))
 		gui.set_color(n, e.type == "hook" and ui.C.ACCIAIO or WHITE)
-		-- la fune del Rampino resta tesa finché tira (rope, aggiornata a ogni frame)
-		self.rope = e.type == "hook" and e.target or nil
+		-- la fune del Rampino resta tesa finché tira (rope, aggiornata a ogni frame):
+		-- al robot agganciato, o a chi tira se si è agganciato al terreno
+		self.rope = e.type == "hook" and (e.target or e.anchor and e.robot) or nil
 		if not self.rope then gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.25, 0, hide_node) end
 		if e.target then
 			-- il colpo arriva dalla canna: la spinta del colpito va da lì
@@ -700,6 +702,11 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "lunge" then
 		scoria.lunge(self.robots[e.robot].rig)
+	elseif e.type == "mallet" then
+		scoria.fire(self.robots[e.robot].rig, "throw")
+	elseif e.type == "mallet_hit" then
+		shock(self, e.x, e.y)
+		if e.target then self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y + game.ROBOT_H, self.clock end
 	elseif e.type == "lunge_hit" then
 		shock(self, e.x, e.y)
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
@@ -830,7 +837,8 @@ local function apply_state(self, s)
 		rb.ammo.sniper = r.ac or 0
 		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
-		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or nil
+		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
+		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
 		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
 		rb.shield = (r.sh or 0) > 0 and r.sh or nil
 		rb.parachute = r.pa or false
@@ -1039,7 +1047,7 @@ start_local_match = function(self, picked)
 		local colpi = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local vita = config_int("megablast.prova_vita", 0)
-		-- prova_secondaria = eagle | hook | lunge: tutti hanno quella secondaria
+		-- prova_secondaria = eagle | mallet | lunge: tutti hanno quella secondaria
 		local secondaria = config_string("megablast.prova_secondaria", "")
 		opts = {
 			players = opts.players,
@@ -1240,6 +1248,8 @@ end
 local function slot_have(rb, w)
 	if w == "parachute" then
 		return rb.parachute or rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost
+	elseif w == "hook" then
+		return rb.nucleo >= rb.stats.hook_cost
 	end
 	return game.has_weapon(rb, w)
 end
@@ -1248,8 +1258,8 @@ local function update_bar(self)
 	local rb = bar_robot(self)
 	if not rb then return end
 	local g = self.g
-	-- finiti i colpi si torna al Lanciarune
-	if not game.has_weapon(rb, self.weapon) then self.weapon = "missile" end
+	-- finiti i colpi (o il Nucleo per il Rampino) si torna al Lanciarune
+	if not slot_have(rb, self.weapon) then self.weapon = "missile" end
 	-- dopo il primo attacco si passa da soli all'altro (arma o spada)
 	if g.window > 0 and rb.id == g.current and not g:can_use(self.weapon) then
 		local other = game.SECONDARY[self.weapon] and "missile" or "sword"
@@ -1431,6 +1441,21 @@ local function render(self, dt)
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
 		end
+		-- Maglio: mirando sta alto dietro la testa; nel colpo cala davanti (a
+		-- terra) o sotto i piedi (in aria), in hit_tick tick
+		if aiming and weapon == "mallet" then
+			st.aim = st.facing > 0 and PUNCH_TO or math.pi - PUNCH_TO
+		end
+		if rb.mallet ~= nil and not rb.dead then
+			weapon = "mallet"
+			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
+			local t = math.max(0, rb.mallet - span + k * span)
+			local to = rb.grounded and -0.3 or -math.pi / 2
+			local a = PUNCH_TO + (to - PUNCH_TO) * math.min(1, t / gconfig.MALLET.hit_tick)
+			local dir = rb.mallet_dir or rb.facing
+			st.aim = dir > 0 and a or math.pi - a
+			st.facing = dir
+		end
 		-- Affondo: la lancia punta nella direzione dello scatto
 		if rb.lunge ~= nil and not rb.dead then
 			weapon = "lunge"
@@ -1459,10 +1484,14 @@ local function render(self, dt)
 		local rb = g.robots[self.rope]
 		local n = self.tracer
 		if rb.hooked and not rb.dead then
-			local by, tv = self.view[rb.hooked.by], self.view[self.rope]
-			local x0, y0 = by.x + g.robots[rb.hooked.by].facing * game.MUZZLE * 0.5, by.y + game.SWORD_PIVOT_Y
-			local dx, dy = tv.x - x0, (tv.y + game.ROBOT_H / 2) - y0
-			set_pos(n, (x0 + tv.x) / 2, (y0 + tv.y + game.ROBOT_H / 2) / 2)
+			-- dalla mano di chi tira al centro dell'appeso, o dalla mano
+			-- dell'appeso al punto del terreno
+			local hand = self.view[rb.hooked.by or self.rope]
+			local x0, y0 = hand.x + g.robots[rb.hooked.by or self.rope].facing * game.MUZZLE * 0.5, hand.y + game.SWORD_PIVOT_Y
+			local x1, y1 = rb.hooked.x, rb.hooked.y
+			if rb.hooked.by then x1, y1 = self.view[self.rope].x, self.view[self.rope].y + game.ROBOT_H / 2 end
+			local dx, dy = x1 - x0, y1 - y0
+			set_pos(n, (x0 + x1) / 2, (y0 + y1) / 2)
 			gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), 1.5 * K, 0))
 			EULER.z = math.deg(math.atan2(dy, dx))
 			gui.set_euler(n, EULER)

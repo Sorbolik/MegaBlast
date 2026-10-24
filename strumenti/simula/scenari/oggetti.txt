@@ -1,8 +1,8 @@
 # Oggetti tattici delle casse: trappola, scudo, trampolino e paracadute, e i
-# nomi dei gruppi sopra la barra. Con prova_armi 1 la barra ha dieci slot:
-# primarie Lanciarune 197, Uovo 291, Schegge 385, Pugno 479, Cecchino 573;
-# secondaria Lama 687; oggetti Trappola 801, Scudo 895, Trampolino 989,
-# Paracadute 1083 (y = 62). Usato un oggetto, la barra si ricentra.
+# nomi dei gruppi sopra la barra. Con prova_armi 1 la barra ha undici slot:
+# primarie Lanciarune 150, Uovo 244, Schegge 338, Pugno 432, Cecchino 526;
+# secondaria Lama 640; oggetti Trappola 754, Scudo 848, Trampolino 942,
+# Rampino 1036, Paracadute 1130 (y = 62). Usato un oggetto, la barra si ricentra.
 # Scudo e paracadute costano Nucleo: prima un missile per guadagnarlo.
 imposta prova_armi 1
 imposta zoom 2
@@ -15,12 +15,12 @@ foto 01_barra_oggetti
 mira -150 100 0.3                   # missile: i secondi rimasti diventano Nucleo
 aspetta_evento fire 2
 aspetta 0.5
-tocca 801 62                        # Trappola, ai piedi
+tocca 754 62                        # Trappola, ai piedi
 aspetta 0.3
 tieni destra 0.6
-tocca 848 62                        # Scudo (barra da 9: Scudo a 848)
+tocca 801 62                        # Scudo (barra da 10: Scudo a 801)
 aspetta 0.3
-tocca 895 62                        # Trampolino (barra da 8: Trampolino a 895)
+tocca 848 62                        # Trampolino (barra da 9: Trampolino a 848)
 aspetta 0.3
 mira -30 20 0.3 02_mira_trampolino  # un lancio corto a sinistra
 aspetta_evento place 3
@@ -29,7 +29,7 @@ foto 03_scudo_trappola_trampolino
 tieni sinistra 0.8                  # ci va sopra: rimbalza
 aspetta_evento bounce 3
 aspetta 0.3
-tocca 942 62                        # Paracadute in aria (barra da 7: Paracadute a 942)
+tocca 989 62                        # Paracadute in aria (barra da 8: Paracadute a 989)
 aspetta_evento parachute 1
 aspetta 0.3
 foto 04_paracadute

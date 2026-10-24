@@ -61,31 +61,48 @@ C.CRATE_CONTENTS = {
 	{ "trap", 2 }, { "shield", 1 }, { "trampoline", 1 },
 }
 
--- Cecchino (arma delle casse): un colpo lento (velocità in sim/game.lua) che va
--- dritto per drop_after secondi e poi cala, con drop volte la gravità, così da
--- lontano è difficile mirare. Rimbalza sul terreno fino a bounces volte,
--- tenendo bounce_keep della velocità, e non scava. Chi è colpito prende damage
--- e viene sbalzato nella direzione del colpo a push pixel al secondo (più lift
--- verso l'alto, per staccarlo da terra). Con un trampolino sotto i piedi vola via.
-C.SNIPER = { damage = 25, push = 280, lift = 80, bounces = 3, drop_after = 0.6, drop = 0.35, bounce_keep = 0.8 }
+-- Cecchino (arma delle casse): un colpo che parte veloce (velocità in
+-- sim/game.lua) e frena (ogni secondo gli resta drag della velocità), mentre
+-- la gravità cresce a poco a poco fino a drop volte quella dei robot in
+-- drop_ramp secondi: all'inizio va quasi dritto, poi cala sempre di più, così
+-- da lontano è difficile mirare (Sergio, 24 ottobre 2026: "inizia veloce e
+-- poi scende a poco a poco"). Sul terreno rimbalza come una palla, sempre più
+-- basso e più lento (bounce_normal contro la superficie, bounce_tangent
+-- lungo), al massimo bounces volte o finché va più piano di min_speed; non
+-- scava. Chi è colpito prende damage e viene sbalzato nella direzione del
+-- colpo a push pixel al secondo (più lift verso l'alto, per staccarlo da
+-- terra). Con un trampolino sotto i piedi vola via.
+C.SNIPER = { damage = 25, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
+	bounces = 6, bounce_normal = 0.5, bounce_tangent = 0.85, min_speed = 40 }
 
 -- Secondarie (scelta di Sergio del 24 ottobre 2026): danno secco, nessun
--- effetto di stato, illimitate; ognuna sposta chi la usa (o il bersaglio) a
--- modo suo. La Lama è in sim/game.lua (SWORD_*); queste tre si scelgono una a
+-- effetto di stato, illimitate; ognuna sposta chi la usa a modo suo. La Lama
+-- è in sim/game.lua (SWORD_*); Tonante, Maglio e Affondo si scelgono una a
 -- testa all'inizio della partita. Distanze in pixel, velocità in pixel al secondo.
 -- Tonante (pistola pesante): colpo dritto e istantaneo fino a range, si ferma
 -- al primo robot o terreno. Il rinculo spinge chi spara dalla parte opposta
 -- alla mira a recoil; da terra lo solleva anche di lift, così si riposiziona
 -- (spara in basso in aria per salire, verso il vuoto per tornare sulla piattaforma).
 C.EAGLE = { damage = 25, range = 300, recoil = 300, lift = 120 }
--- Rampino: colpo dritto e istantaneo fino a range. Il robot agganciato viene
--- tirato con la fune verso la mano di chi spara: dritto lungo la fune, senza
--- gravità, a speed, per reel pixel al massimo (la fune si riavvolge di
--- tanto), poi viene mollato e cade dov'è. Il terreno o un robot in mezzo lo
--- fermano prima. Da lontano quindi si ferma a metà strada: se sotto c'è il
--- vuoto, ci cade; da sotto lo sollevi fino a te e lo molli in aria; da sopra
--- lo tiri giù. Chi tira si può muovere nel frattempo: la fune segue la mano.
-C.HOOK = { damage = 10, range = 220, reel = 110, speed = 300 }
+-- Maglio: martello a due mani. In aria colpisce sotto i piedi (reach pixel
+-- in giù, width in più ai lati): se trova un robot o il terreno, chi colpisce
+-- rimbalza in alto a bounce (pogo), così risale o passa sopra il nemico. A
+-- terra è un colpo corto davanti (reach). Il colpo arriva al tick hit_tick e
+-- dura ticks.
+C.MALLET = { damage = 30, reach = 22, width = 6, bounce = 320, ticks = 14, hit_tick = 4 }
+-- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, costa
+-- stats.hook_cost Nucleo, si usa in qualsiasi momento del turno e non fa
+-- danno): colpo dritto e istantaneo fino a range, due usi.
+-- Su un robot: viene tirato con la fune verso la mano di chi tira, dritto
+-- lungo la fune, senza gravità, a speed, per reel pixel al massimo (la fune
+-- si riavvolge di tanto), poi viene mollato e cade dov'è. Il terreno o un
+-- robot in mezzo lo fermano prima. Da lontano quindi si ferma a metà strada:
+-- se sotto c'è il vuoto, ci cade; da sotto lo sollevi fino a te e lo molli in
+-- aria. Chi tira si può muovere nel frattempo: la fune segue la mano.
+-- Sul terreno: è chi tira che sale lungo la fune a climb_speed fino al punto
+-- colpito e si mette in piedi sopra la piattaforma, se la sua cima è entro
+-- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade).
+C.HOOK = { range = 220, reel = 110, speed = 300, climb_speed = 420, climb = 64 }
 -- Affondo: scatto nella direzione della mira a speed per ticks tick, passando
 -- attraverso i robot (danno una volta a ognuno); il terreno lo ferma. Alla
 -- fine resta keep della velocità: oltre un bordo si vola.
@@ -148,11 +165,12 @@ C.STATS = {
 	-- scelta nostra: 1,5 volte la vita di prima, perché con due attacchi per
 	-- turno il danno può raddoppiare (il documento dice "la vita si alza")
 	max_hp = 150,
-	start_nucleo = 1,
+	start_nucleo = 2,        -- Sergio (24 ottobre 2026): da 1 a 2
 	teleport_cost = 1,
 	free_teleports = 0,      -- teletrasporti gratis per partita (albero, set Vuoto)
 	parachute_cost = 1,
 	free_parachutes = 0,     -- paracadute gratis per partita
+	hook_cost = 1,           -- Nucleo per un lancio del Rampino
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata
