@@ -140,9 +140,9 @@ M.SHARD_SPREAD = math.rad(3)
 M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 7, knockback = 90 }
 
 -- Cecchino: velocità del colpo (la potenza non conta) e quanto vive al massimo;
--- danno, spinta e rimbalzi in config.SNIPER
-M.SNIPER_SPEED = 1400
-M.SNIPER_LIFE = 3 * 60
+-- danno, spinta, caduta e rimbalzi in config.SNIPER
+M.SNIPER_SPEED = 420
+M.SNIPER_LIFE = 6 * 60
 
 -- Pugno del Titano: montante corpo a corpo che lancia in alto chi è davanti.
 -- PUNCH_MODEL come SWORD_MODEL: "fisso" (qui sotto) o "blastron" (montante sulla mira).
@@ -1124,9 +1124,16 @@ local function reflect(t, x, y, vx, vy)
 	return vx, vy
 end
 
--- Dritto, senza gravità: rimbalza sul terreno fino a config.SNIPER.bounces volte
+-- Dritto per drop_after secondi, poi cala; rimbalza sul terreno fino a
+-- config.SNIPER.bounces volte, ogni volta un po' più lento
+local function sniper_drop(vy, age)
+	if age > C.SNIPER.drop_after * 60 then vy = vy - M.GRAVITY * C.SNIPER.drop * M.DT end
+	return vy
+end
+
 function M:update_sniper(p)
 	p.age = p.age + 1
+	p.vy = sniper_drop(p.vy, p.age)
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	local t = self.terrain
@@ -1145,6 +1152,7 @@ function M:update_sniper(p)
 			end
 			p.bounces = p.bounces + 1
 			p.vx, p.vy = reflect(t, nx, ny, p.vx, p.vy)
+			p.vx, p.vy = p.vx * C.SNIPER.bounce_keep, p.vy * C.SNIPER.bounce_keep
 			self:emit({ type = "sniper_bounce", x = p.x, y = p.y })
 			break
 		end
@@ -1169,13 +1177,16 @@ function M:sniper_hit(p, rb)
 	if self:hurt(rb, C.SNIPER.damage, by) > 0 and by ~= rb then self:hit_status(rb, "sniper", by) end
 end
 
--- Linea di mira del cecchino: dritta fino al primo rimbalzo e un pezzo dopo
+-- Linea di mira del cecchino: solo il tratto dritto, poi un pezzo della
+-- caduta (com'è il colpo vero, tick per tick); un rimbalzo la chiude subito
 function M:sniper_preview(x, y, angle, count, pts)
 	pts = pts or {}
-	local vx, vy = math.cos(angle) * 4, math.sin(angle) * 4
+	local vx, vy = math.cos(angle) * M.SNIPER_SPEED, math.sin(angle) * M.SNIPER_SPEED
 	local t, n, after = self.terrain, 0, nil
-	for i = 1, 600 do
-		local nx, ny = x + vx, y + vy
+	local straight = C.SNIPER.drop_after * 60
+	for i = 1, math.floor(straight * 1.4) do
+		vy = sniper_drop(vy, i)
+		local nx, ny = x + vx * M.DT, y + vy * M.DT
 		if t:solid(nx, ny) then
 			if after then break end
 			vx, vy = reflect(t, nx, ny, vx, vy)
@@ -1184,10 +1195,10 @@ function M:sniper_preview(x, y, angle, count, pts)
 			x, y = nx, ny
 			if after then
 				after = after + 1
-				if after > 15 then break end
+				if after > 4 then break end
 			end
-			-- un punto ogni 6 passi (24 pixel)
-			if i % 6 == 0 and n < count then
+			-- i punti spaziati lungo il tratto mostrato
+			if i % math.max(1, math.floor(straight * 1.4 / count)) == 0 and n < count then
 				n = n + 1
 				local pt = pts[n] or {}
 				pt.x, pt.y = x, y

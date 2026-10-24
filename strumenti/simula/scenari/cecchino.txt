@@ -1,5 +1,6 @@
-# Cecchino: il proiettile rimbalza 3 volte sul terreno e sbalza chi colpisce
-# nella direzione in cui andava. Con prova_armi 1 la barra ha dieci slot:
+# Cecchino: il proiettile è lento, va dritto e poi cala, rimbalza 3 volte sul
+# terreno schiacciandosi come una gelatina e sbalza chi colpisce nella
+# direzione in cui andava. Con prova_armi 1 la barra ha dieci slot:
 # Cecchino a 573 (y = 62).
 imposta prova_armi 1
 imposta zoom 2
@@ -10,10 +11,13 @@ aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 tocca 573 62                        # Cecchino
 aspetta 0.3
-mira -150 60 0.5 01_mira_cecchino   # la mira mostra il primo rimbalzo
+mira 150 60 0.5 01_mira_cecchino    # in alto a sinistra: rimbalza sotto la piattaforma
 aspetta_evento sniper 2
-aspetta 0.05
+aspetta 0.3
 foto 02_colpo
-aspetta 1.5
+aspetta_evento sniper_bounce 4
+aspetta 0.08
+foto 03_rimbalzo_goffo
+aspetta 2.5
 aspetta 0.5
-foto 03_dopo_i_rimbalzi
+foto 04_dopo_i_rimbalzi
