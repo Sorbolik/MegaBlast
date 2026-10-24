@@ -26,7 +26,7 @@ const (
 //
 // "j" dice se il salto è ancora tenuto premuto: lasciandolo mentre si sale il salto è corto.
 // "w" è l'arma: "missile" (se manca), "sword", "teleport" o un'arma delle casse
-// ("grenade", "shards", "punch": la simulazione la usa solo se il robot ha colpi).
+// ("grenade", "shards", "punch", "sniper": la simulazione la usa solo se il robot ha colpi).
 type clientMsg struct {
 	T    string  `json:"t"`
 	L    bool    `json:"l"`

@@ -229,17 +229,18 @@ func TestOnlineMatch(t *testing.T) {
 	b := dial(t, ctx, url)
 	b.send(hello)
 
-	// Prima la scelta dell'arma: il giocatore 1 prende lo Sciame, il 2 non
-	// sceglie e allo scadere riceve la prima arma libera
+	// Prima la scelta dell'arma: il giocatore 1 prende la prima del ventaglio,
+	// il 2 non sceglie e allo scadere riceve la prima arma libera
 	d := a.waitFor(`"draft"`)
 	if len(d["offer"].([]any)) != 3 || len(d["players"].([]any)) != 2 || d["tok"] == "" {
 		t.Fatalf("scelta inattesa: %v", d)
 	}
-	a.send(`{"t":"pick","w":"shards"}`)
+	w := d["offer"].([]any)[0].(string)
+	a.send(`{"t":"pick","w":"` + w + `"}`)
 	if d := b.waitFor(`"draft"`); d["you"].(float64) != 2 {
 		t.Fatalf("scelta inattesa: %v", d)
 	}
-	if d := b.waitFor(`"draft"`); d["p"].([]any)[0] != "shards" {
+	if d := b.waitFor(`"draft"`); d["p"].([]any)[0] != w {
 		t.Fatalf("la scelta del giocatore 1 non arriva al 2: %v", d)
 	}
 	sa := a.waitFor(`"start"`)
@@ -252,10 +253,16 @@ func TestOnlineMatch(t *testing.T) {
 	first := b.waitFor(`"state"`)
 	r0 := first["r"].([]any)[0].(map[string]any)
 	x0 := r0["x"].(float64)
-	// lo stato porta casse, schegge e colpi: il giocatore 1 ha un colpo dello Sciame
+	// lo stato porta casse, schegge e colpi: il giocatore 1 ha un colpo dell'arma scelta
 	r1 := first["r"].([]any)[1].(map[string]any)
-	if _, ok := first["c"].([]any); !ok || r0["as"] != 1.0 || r0["ag"] != 0.0 || r0["ap"] != 0.0 ||
-		r1["ag"].(float64)+r1["as"].(float64)+r1["ap"].(float64) != 1 {
+	colpi := func(r map[string]any) (n float64) {
+		for _, k := range []string{"ag", "as", "ap", "ac"} {
+			n += r[k].(float64)
+		}
+		return
+	}
+	key := map[string]string{"grenade": "ag", "shards": "as", "punch": "ap", "sniper": "ac"}[w]
+	if _, ok := first["c"].([]any); !ok || r0[key] != 1.0 || colpi(r0) != 1 || colpi(r1) != 1 {
 		t.Fatalf("stato senza casse o colpi scelti: %v", first)
 	}
 	// con la fisica di Blastron si cammina piano (28 px/s): un secondo basta
@@ -341,16 +348,19 @@ func TestTeamDraftSwap(t *testing.T) {
 		c[i].send(`{"t":"hello","v":2,"mode":"2v2"}`)
 	}
 	you := map[float64]*testClient{}
+	var offer []any
 	for _, x := range c {
 		d := x.waitFor(`"draft"`)
 		you[d["you"].(float64)] = x
+		offer = d["offer"].([]any)
 	}
 	p1, p3 := you[1], you[3]
-	p1.send(`{"t":"pick","w":"shards"}`)
-	for p3.waitFor(`"draft"`)["p"].([]any)[0] != "shards" {
+	w1, w3 := offer[0].(string), offer[1].(string)
+	p1.send(`{"t":"pick","w":"` + w1 + `"}`)
+	for p3.waitFor(`"draft"`)["p"].([]any)[0] != w1 {
 	}
-	p3.send(`{"t":"pick","w":"shards"}`) // stessa arma del compagno: non vale
-	p3.send(`{"t":"pick","w":"punch"}`)
+	p3.send(`{"t":"pick","w":"` + w1 + `"}`) // stessa arma del compagno: non vale
+	p3.send(`{"t":"pick","w":"` + w3 + `"}`)
 	p1.send(`{"t":"swap","to":3}`)
 	if m := p3.waitFor(`"swap"`); m["from"].(float64) != 1 {
 		t.Fatalf("proposta inattesa: %v", m)
@@ -358,7 +368,7 @@ func TestTeamDraftSwap(t *testing.T) {
 	p3.send(`{"t":"swap","to":1}`)
 	for {
 		p := p1.waitFor(`"draft"`)["p"].([]any)
-		if p[0] == "punch" && p[2] == "shards" {
+		if p[0] == w3 && p[2] == w1 {
 			break
 		}
 	}

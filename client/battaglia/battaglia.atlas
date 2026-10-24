@@ -1,10 +1,4 @@
 images {
-  image: "/assets/armi/passo_ombra.png"
-}
-images {
-  image: "/assets/armi/passo_ombra_luce.png"
-}
-images {
   image: "/assets/armi/uovo_di_fiamma.png"
 }
 images {

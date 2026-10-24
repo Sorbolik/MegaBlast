@@ -7,10 +7,15 @@
 local C = {}
 
 -- Partita e turni, in secondi
-C.MATCH_SECONDS = 5 * 60     -- durata della partita
+-- durata della partita; allo scadere si finisce il giro di turni in corso
+-- (supplementari): tutti hanno giocato lo stesso numero di turni
+C.MATCH_SECONDS = 5 * 60
 C.TURN_SECONDS = 25          -- durata del turno (Blastron con più di due giocatori)
-C.SECOND_ATTACK_SECONDS = 5  -- dopo il primo attacco, tempo per il secondo
-C.REPOSITION_SECONDS = 5     -- dopo l'ultimo attacco, tempo per riposizionarsi
+-- Dopo il primo attacco restano AFTER_ATTACK_SECONDS (mai oltre la fine del
+-- turno): in tutti si può fare il secondo attacco, riposizionarsi, usare oggetti.
+-- Sergio: 4 s "per il secondo attacco" + 4 di riposizionamento, ma in tutti e 8
+-- si può attaccare, così non si perde il secondo colpo senza capire perché.
+C.AFTER_ATTACK_SECONDS = 8
 
 -- Modi di gioco: i giocatori da passare a game.new (opts.players), con la
 -- squadra di ognuno. Nel 2 contro 2 le squadre si alternano già nell'elenco.
@@ -43,33 +48,46 @@ C.SCORE = {
 }
 -- l'uccisione va a chi ha colpito per ultimo, se è stato entro questi secondi
 C.KILL_CREDIT_SECONDS = 10
--- Alla morte si ricomincia a fine turno, con la vita piena, in un punto a caso
--- della superficie ad almeno questa distanza (in pixel) dagli altri robot
-C.RESPAWN_DISTANCE = 160
+-- Alla morte si ricomincia dopo RESPAWN_SECONDS, anche a metà del turno (di
+-- chi ti ha colpito o del tuo: il turno non passa), con la vita piena in un
+-- punto a caso della superficie, libero. Anche vicino a un avversario: con un
+-- po' di fortuna ti colpisce ancora.
+C.RESPAWN_SECONDS = 1.5
 
 -- Casse: cosa c'è dentro (nascosto finché non si apre), col peso: più è
 -- alto, più spesso esce. Armi da 1 colpo e oggetti tattici.
 C.CRATE_CONTENTS = {
-	{ "grenade", 2 }, { "shards", 2 }, { "punch", 2 },
+	{ "grenade", 2 }, { "shards", 2 }, { "punch", 2 }, { "sniper", 2 },
 	{ "trap", 2 }, { "shield", 1 }, { "trampoline", 1 },
 }
+
+-- Cecchino (arma delle casse): un colpo dritto e velocissimo che rimbalza sul
+-- terreno fino a bounces volte e non scava. Chi è colpito prende damage e viene
+-- sbalzato nella direzione del colpo a push pixel al secondo (più lift verso
+-- l'alto, per staccarlo da terra). Con un trampolino sotto i piedi vola via.
+C.SNIPER = { damage = 25, push = 280, lift = 80, bounces = 3 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.
 -- Trappola: si posa ai piedi e si arma dal turno dopo; un avversario che ci
 -- passa sopra viene lanciato in alto e lontano (per buttarlo fuori dalla mappa).
 C.TRAP = { damage = 8, launch_vy = 220, push_vx = 160 }
--- Trampolino: si posa ai piedi; chiunque ci passi sopra rimbalza in alto
-C.TRAMPOLINE = { half_w = 12, launch_vy = 300 }
+-- Trampolino: si lancia come l'Uovo e resta dove cade (se cade su un robot, ai
+-- suoi piedi). Chiunque ci arrivi sopra rimbalza in alto, sempre; restando sopra
+-- ogni rimbalzo è più basso (decay) finché sotto min_vy ci si ferma.
+C.TRAMPOLINE = { half_w = 12, launch_vy = 300, decay = 0.6, min_vy = 80 }
 -- Scudo: assorbe hp danni e dimezza le spinte fino all'inizio del proprio turno dopo
 C.SHIELD = { hp = 60, knockback = 0.5 }
--- Paracadute: si prepara nel proprio turno (costa stats.parachute_cost Nucleo)
--- e si apre da solo cadendo più veloce di open_speed; poi si scende a
--- fall_speed e l'atterraggio non fa danno
-C.PARACHUTE = { open_speed = 160, fall_speed = 60 }
--- Punti di ancoraggio della mappa (sim/maps.lua): chi ci sta sopra viene
--- spinto molto meno
-C.ANCHOR_KNOCKBACK = 0.35
+-- Paracadute: nel proprio turno, in aria, un tocco lo apre (costa
+-- stats.parachute_cost Nucleo) e un altro lo chiude. Aperto si scende al
+-- massimo a fall_speed, ci si muove in orizzontale air_mul volte più veloci
+-- (anche appena sbalzati) e l'atterraggio non fa danno
+C.PARACHUTE = { fall_speed = 60, air_mul = 1.15 }
+-- Cerchi di cura: all'inizio di un turno ogni every turni ne compare uno in un
+-- punto a caso della superficie (al massimo max insieme). A fine turno, di
+-- chiunque, ogni robot coi piedi dentro (raggio r) riprende hp di vita e, se
+-- ha curato qualcuno, il cerchio sparisce
+C.HEAL = { every = 2, max = 2, hp = 40, r = 26 }
 -- trappole e trampolini in mappa al massimo, tutti insieme
 C.MAX_PLACED = 8
 
@@ -111,7 +129,7 @@ C.STATS = {
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata
-	shield_cost = 3,         -- Nucleo per uno scudo, quando non se ne ha uno delle casse
+	shield_cost = 1,         -- Nucleo per usare uno scudo trovato nelle casse
 	air_jumps = 0,           -- salti in aria prima di toccare terra (ramo Mobilità, set Corvo)
 	air_jump_cost = 1,       -- Nucleo per ogni salto in aria
 	burning_blasts = 0,      -- 1: missile e Uovo bruciano chi colpiscono (set Fornace)

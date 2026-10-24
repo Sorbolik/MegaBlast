@@ -1,7 +1,9 @@
-# Oggetti tattici delle casse: trappola, scudo, paracadute e trampolino.
-# Con prova_armi 1 la barra ha nove slot: Lanciarune 264, Lama 358, Uovo 452,
-# Schegge 546, Pugno 640, Trappola 734, Scudo 828, Trampolino 922,
-# Paracadute 1016 (y = 62). Usato un oggetto, la barra si ricentra.
+# Oggetti tattici delle casse: trappola, scudo, trampolino e paracadute, e i
+# nomi dei gruppi sopra la barra. Con prova_armi 1 la barra ha dieci slot:
+# primarie Lanciarune 197, Uovo 291, Schegge 385, Pugno 479, Cecchino 573;
+# secondaria Lama 687; oggetti Trappola 801, Scudo 895, Trampolino 989,
+# Paracadute 1083 (y = 62). Usato un oggetto, la barra si ricentra.
+# Scudo e paracadute costano Nucleo: prima un missile per guadagnarlo.
 imposta prova_armi 1
 imposta zoom 2
 
@@ -10,21 +12,29 @@ tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 01_barra_oggetti
-tocca 734 62                        # Trappola, ai piedi
-aspetta 0.3
-tieni destra 0.8
-tocca 781 62                        # Scudo (barra da 8: Scudo a 781)
-aspetta 0.3
-tocca 922 62                        # Paracadute (barra da 7: Paracadute a 922)
-aspetta 0.3
-tocca 828 62                        # Trampolino (barra da 7: Trampolino a 828)
+mira -150 100 0.3                   # missile: i secondi rimasti diventano Nucleo
+aspetta_evento fire 2
 aspetta 0.5
-foto 02_scudo_trappola_trampolino
-tieni destra 1                      # scende dal trampolino
-tieni sinistra 1.2                  # e ci torna sopra: rimbalza
+tocca 801 62                        # Trappola, ai piedi
+aspetta 0.3
+tieni destra 0.6
+tocca 848 62                        # Scudo (barra da 9: Scudo a 848)
+aspetta 0.3
+tocca 895 62                        # Trampolino (barra da 8: Trampolino a 895)
+aspetta 0.3
+mira -30 20 0.3 02_mira_trampolino  # un lancio corto a sinistra
+aspetta_evento place 3
+aspetta 0.3
+foto 03_scudo_trappola_trampolino
+tieni sinistra 0.8                  # ci va sopra: rimbalza
 aspetta_evento bounce 3
 aspetta 0.3
-foto 03_rimbalzo
+tocca 942 62                        # Paracadute in aria (barra da 7: Paracadute a 942)
+aspetta_evento parachute 1
+aspetta 0.3
+foto 04_paracadute
+tieni destra 0.8                    # col paracadute ci si sposta
+foto 05_paracadute_spostato
 aspetta_stato turno=2 fase=aim 40
 aspetta 1
-foto 04_trappola_armata
+foto 06_trappola_armata

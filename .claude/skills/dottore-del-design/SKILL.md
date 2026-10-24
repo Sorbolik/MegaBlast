@@ -16,7 +16,7 @@ perché non c'era niente da controllare non è un "tutto ok".
 ## 1. Raccogli i dati
 
 - Numeri: regole in `client/sim/config.lua` (vita, Nucleo, durata di turno,
-  secondo attacco, riposizionamento e partita, in secondi), fisica in
+  tempo dopo il primo attacco e partita, in secondi), fisica in
   `client/sim/game.lua` (danni, raggi, tick, velocità, `*_BLAST`, casse). I tempi in game.lua sono in tick a 60 al
   secondo, le distanze in pixel.
 - Regole e intenzioni: `docs/design.md`.
@@ -38,7 +38,7 @@ perché non c'era niente da controllare non è un "tutto ok".
 
 **Tempo e turni**
 - Si riesce a fare quello che il gioco chiede in 15 s su touch?
-- I 5 s di riposizionamento bastano per ripararsi, o rendono ogni colpo senza rischio?
+- Gli 8 s dopo il primo attacco bastano per ripararsi, o rendono ogni colpo senza rischio?
 - La regola dei 3 minuti premia chi scappa e si nasconde?
 
 **Casse e fortuna**
