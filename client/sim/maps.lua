@@ -46,7 +46,7 @@ add("isole", "Isole del cimitero", {
 
 -- Casuale: colline generate dal seed, con un tubo di fondazione.
 add("casuale", "Colline casuali", {
-	seeded = true, -- il terreno cambia con il seed (niente punti di ancoraggio)
+	seeded = true, -- il terreno cambia con il seed
 	spawns = { { x = 256, from = 720 }, { x = 1024, from = 720 }, { x = 520, from = 720 }, { x = 760, from = 720 } },
 	build = function(t, seed)
 		t:generate(seed)

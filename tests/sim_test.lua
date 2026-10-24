@@ -480,7 +480,7 @@ do
 	check(game.new(42, "forgia").mode == "1v1", "senza players è un 1 contro 1")
 end
 
--- Oggetti tattici: trappole, scudi, trampolini, paracadute, ancoraggi -------------
+-- Oggetti tattici: trappole, scudi, trampolini, paracadute, cerchi di cura -------------
 do
 	-- le casse contengono anche gli oggetti
 	local mix = game.new(5, "isole")

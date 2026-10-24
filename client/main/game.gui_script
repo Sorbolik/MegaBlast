@@ -1707,7 +1707,7 @@ function init(self)
 		self.shard_nodes[i] = n
 	end
 
-	-- trappole, trampolini, ancoraggi, scudi e paracadute (battaglia/oggetti.lua)
+	-- trappole, trampolini, cerchi di cura, scudi e paracadute (battaglia/oggetti.lua)
 	self.oggetti = oggetti.new(TEAM_COLORS)
 
 	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono
