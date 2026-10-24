@@ -15,7 +15,7 @@ perché non c'era niente da controllare non è un "tutto ok".
 
 ## 1. Raccogli i dati
 
-- Numeri: regole in `client/sim/config.lua` (vita, Nucleo, durata di turno,
+- Numeri: regole in `client/sim/config.lua` (vita, teletrasporti, durata di turno,
   tempo dopo il primo attacco e partita, in secondi), fisica in
   `client/sim/game.lua` (danni, raggi, tick, velocità, `*_BLAST`, casse). I tempi in game.lua sono in tick a 60 al
   secondo, le distanze in pixel.

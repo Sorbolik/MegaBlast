@@ -176,22 +176,22 @@ check(tp_ev and math.abs(tp_ev.x - last_orb.x) <= 8 and math.abs(tp_ev.y - (last
 	"il robot compare dove si trova il globo")
 check(tp.phase == "aim" and tp.current == 1, "dopo il teletrasporto si può ancora attaccare")
 check(tp.orbs[1] == nil, "il globo sparisce dopo il teletrasporto")
-check(tr.nucleo == config.STATS.start_nucleo - config.STATS.teleport_cost, "il teletrasporto costa Nucleo")
-tr.nucleo = 5
+check(tr.teleports_left == config.STATS.teleports - 1, "il teletrasporto consuma un globo")
+tr.teleports_left = 5
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orbs[1] == nil and tr.nucleo == 5, "al primo turno si fa un solo teletrasporto")
+check(tp.orbs[1] == nil and tr.teleports_left == 5, "al primo turno si fa un solo teletrasporto")
 tr.turns = 2
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orbs[1] ~= nil and tr.nucleo == 4, "dal secondo turno, con Nucleo, se ne lancia un altro")
-tr.nucleo = 0
+check(tp.orbs[1] ~= nil and tr.teleports_left == 4, "dal secondo turno, con globi in mano, se ne lancia un altro")
+tr.teleports_left = 0
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(#tp.orbs == 1, "senza Nucleo il globo non parte")
+check(#tp.orbs == 1, "senza globi il teletrasporto non parte")
 
 -- Più globi in volo insieme: ognuno teletrasporta allo scadere del suo tempo,
 -- e in mezzo si può sparare. Il turno passa solo quando tutti hanno finito.
 -- Un robot che può teletrasportarsi quanto vuole (per le prove)
 local function free_tp(r)
-	r.nucleo, r.turns = 99, 2
+	r.teleports_left, r.turns = 99, 2
 end
 
 local function multi(plan)
@@ -355,33 +355,33 @@ end
 check(tw_tp, "il turno non passa prima che il globo abbia finito")
 check(tw.current == 2, "dopo fendente e teletrasporto il turno passa")
 
--- Due attacchi per turno e Nucleo --------------------------------------------------
+-- Due attacchi per turno e teletrasporti --------------------------------------------------
 do
 
 	local MISSILE = { fire = { angle = math.rad(60), power = 0.6 } }
 	local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
 	local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
 
-	-- Primo attacco dopo 9 s: restano 16 s, cioè 3 Nucleo (mai oltre NUCLEO_MAX)
+	-- Primo attacco dopo 9 s: restano 16 s, cioè un teletrasporto (uno ogni TELEPORT_SECONDS)
 	local at = game.new(42, "isole")
 	local ar = at.robots[1]
 	run(at, 9 * 60 - 1)
 	at:pop_events()
 	at:step(MISSILE)
-	local gain = math.min(math.floor(at.timer / (60 * config.NUCLEO_SECONDS)), config.NUCLEO_MAX - config.STATS.start_nucleo)
+	local gain = math.floor(at.timer / (60 * config.TELEPORT_SECONDS))
 	local nev
-	for _, e in ipairs(at:pop_events()) do if e.type == "nucleo" then nev = e end end
-	check(ar.nucleo == config.STATS.start_nucleo + gain and nev and nev.amount == gain,
-		"i secondi rimasti al primo attacco diventano Nucleo (" .. ar.nucleo .. ")")
+	for _, e in ipairs(at:pop_events()) do if e.type == "teleports" then nev = e end end
+	check(gain >= 1 and ar.teleports_left == config.STATS.teleports + gain and nev and nev.amount == gain,
+		"i secondi rimasti al primo attacco diventano teletrasporti (" .. ar.teleports_left .. ")")
 	check(at.window == game.AFTER_ATTACK_TICKS, "dopo il primo attacco restano 8 s")
 	at:step(MISSILE)
 	check(not at:can_use("missile") and at.used.primary, "una sola arma per turno")
-	local n0 = ar.nucleo
+	local n0 = ar.teleports_left
 	run(at, game.AFTER_ATTACK_TICKS - 30)
 	check(at:can_use("sword"), "il secondo attacco si fa fino all'ultimo secondo")
 	at:step(SWORD)
 	check(at.used.secondary and at.window > 0, "dopo il secondo attacco il tempo continua")
-	check(ar.nucleo == n0, "il secondo attacco non dà Nucleo")
+	check(ar.teleports_left == n0, "il secondo attacco non dà teletrasporti")
 	check(not at:can_use("teleport") and not at:can_use("sword"), "dopo i due attacchi niente attacchi né teletrasporto")
 	local turn_at
 	for i = 1, 2000 do
@@ -416,12 +416,12 @@ do
 	run(az, 3)
 	check(az.phase ~= "aim", "il turno chiude allo scadere anche dopo un attacco")
 
-	-- I teletrasporti gratis si usano prima del Nucleo
-	local fz = game.new(42, "isole", { players = { { team = 1, stats = { free_teleports = 1 } }, { team = 2 } } })
+	-- Nessun tetto: i globi si accumulano
+	local fz = game.new(42, "isole", { players = { { team = 1, stats = { teleports = 5 } }, { team = 2 } } })
 	run(fz, 60)
-	fz:step(TELE)
-	check(#fz.orbs == 1 and fz.robots[1].free_teleports == 0 and fz.robots[1].nucleo == config.STATS.start_nucleo,
-		"il teletrasporto gratis non consuma Nucleo")
+	fz:step(MISSILE)
+	check(fz.robots[1].teleports_left == 5 + math.floor(fz.timer / (60 * config.TELEPORT_SECONDS))
+		and fz.robots[1].teleports_left > 5, "i teletrasporti si accumulano senza tetto")
 
 	-- La vita parte dal valore del config e si può cambiare per robot
 	local hv = game.new(42, "isole", { players = { { team = 1, stats = { max_hp = 200 } }, { team = 2 } } })
@@ -580,7 +580,7 @@ do
 	tb:explode(tramp.x, tramp.y + 4)
 	check(#tb.placed == 0, "un'esplosione distrugge il trampolino")
 
-	-- paracadute: in aria un tocco lo apre (costa Nucleo), rallenta la caduta,
+	-- paracadute: in aria un tocco lo apre (uno a partita), rallenta la caduta,
 	-- dà più controllo in orizzontale e annulla il danno da caduta
 	local pc = game.new(42, "isole")
 	run(pc, 60)
@@ -592,7 +592,7 @@ do
 	place(p, 640, y + 200)
 	pc:step()
 	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
-	check(p.parachute and p.nucleo == config.STATS.start_nucleo - config.STATS.parachute_cost, "il paracadute in aria si apre e costa Nucleo")
+	check(p.parachute and p.parachutes_left == config.STATS.parachutes - 1, "il paracadute in aria si apre e ne consuma uno")
 	check(pc:can_use("parachute"), "aperto si può richiudere")
 	local slowest, fastest = 0, 0
 	for _ = 1, 600 do
@@ -604,13 +604,15 @@ do
 	check(slowest >= -config.PARACHUTE.fall_speed - 1 and p.hp == p.max_hp and not p.parachute,
 		"col paracadute si scende piano e si atterra senza danno")
 	check(fastest > p.stats.air_speed, "col paracadute in orizzontale si va un po' più veloci")
-	-- richiuderlo è gratis e non restituisce il Nucleo
-	p.nucleo = 3
+	-- richiuderlo non lo restituisce
+	p.parachutes_left = 3
 	place(p, 640, y + 200)
 	pc:step()
 	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
 	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
-	check(not p.parachute and p.nucleo == 3 - config.STATS.parachute_cost, "un altro tocco lo chiude")
+	check(not p.parachute and p.parachutes_left == 2, "un altro tocco lo chiude")
+	p.parachutes_left = 0
+	check(not pc:can_use("parachute"), "finiti i paracadute della partita non si apre più")
 	game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX = safe, dmg, max
 
 	-- cerchio di cura: a fine turno chi ha i piedi dentro si cura e il cerchio
@@ -758,7 +760,7 @@ do
 	local pts = t:preview(0, 1, 12, 4, nil, "eagle")
 	check(#pts == 12 and math.abs(pts[12].x - pts[1].x) <= config.EAGLE.range, "la linea di mira è dritta e non supera la portata")
 
-	-- Rampino: oggetto a Nucleo, non un attacco; riavvolge il bersaglio dritto
+	-- Rampino: oggetto, uno a turno, non un attacco; riavvolge il bersaglio dritto
 	-- verso la mano, per reel pixel, poi lo molla
 	local h = game.new(42, "isole")
 	run(h, 60)
@@ -767,13 +769,12 @@ do
 	place(ha, 560, sy)
 	place(hb, 740, sy)
 	hp = hb.hp
-	local nucleo = ha.nucleo
-	check(h:can_use("hook") and nucleo >= ha.stats.hook_cost, "il Rampino si usa col Nucleo")
+	check(h:can_use("hook"), "il Rampino si usa senza colpi")
 	h:step({ fire = { angle = 0, power = 1, weapon = "hook" } })
 	for _, e in ipairs(h:pop_events()) do if e.type == "hook" then ev = e end end
 	check(ev and ev.target == 2 and hb.hp == hp, "il Rampino aggancia senza fare danno")
-	check(ha.nucleo == nucleo - ha.stats.hook_cost and not h.used.primary and not h.used.secondary and h.window == 0,
-		"costa Nucleo e non conta come attacco")
+	check(h.used.hook and not h:can_use("hook") and not h.used.primary and not h.used.secondary and h.window == 0,
+		"uno a turno e non conta come attacco")
 	check(hb.hooked and hb.hooked.by == 1 and ha.vx == 0, "il bersaglio resta appeso alla fune, chi tira no")
 	local y_start = hb.y
 	run(h, 10)
@@ -1025,43 +1026,41 @@ do
 	check(fp[1].pick == fp[4].pick, "nel tutti contro tutti i doppioni vanno bene")
 end
 
--- Salto in aria, scudo col Nucleo, Torneo -----------------------------------------
+-- Salto in aria, scudo, Torneo ----------------------------------------------------
 do
-	-- salto in aria: con air_jumps, premendo di nuovo in volo, costa Nucleo
+	-- salto in aria: con air_jumps, premendo di nuovo in volo, gratis
 	local q = game.new(42, "isole", { players = { { team = 1, stats = { air_jumps = 1 } }, { team = 2 } } })
 	run(q, 60)
 	local r = q.robots[1]
-	r.nucleo = 3
 	q:step({ jump = true })
 	run(q, 10, { jump = true })
-	check(r.nucleo == 3, "tenendo premuto il salto non si salta in aria")
+	check(r.air_left == 1, "tenendo premuto il salto non si salta in aria")
 	run(q, 2)
 	local vy0 = r.vy
 	q:step({ jump = true })
-	check(r.vy > vy0 and r.nucleo == 3 - r.stats.air_jump_cost, "premendo di nuovo in aria si risalta e si paga il Nucleo")
+	check(r.vy > vy0 and r.air_left == 0, "premendo di nuovo in aria si risalta")
 	run(q, 2)
+	vy0 = r.vy
 	q:step({ jump = true })
-	check(r.nucleo == 3 - r.stats.air_jump_cost, "un solo salto in aria con air_jumps 1")
+	check(r.vy < vy0, "un solo salto in aria con air_jumps 1")
 	local n = game.new(42, "isole")
 	run(n, 60)
 	local nr = n.robots[1]
-	nr.nucleo = 3
 	n:step({ jump = true })
 	run(n, 12)
+	vy0 = nr.vy
 	n:step({ jump = true })
-	check(nr.nucleo == 3, "senza air_jumps niente salto in aria")
+	check(nr.vy < vy0, "senza air_jumps niente salto in aria")
 
-	-- scudo: si trova solo nelle casse, e usarlo costa Nucleo
+	-- scudo: si trova solo nelle casse e si usa quando si vuole
 	local s = game.new(42, "isole")
 	run(s, 30)
 	local sr = s.robots[1]
-	sr.nucleo = 5
-	check(not s:can_use("shield"), "senza scudi delle casse niente scudo, anche col Nucleo")
-	sr.ammo.shield, sr.nucleo = 1, sr.stats.shield_cost - 1
-	check(not s:can_use("shield"), "senza Nucleo abbastanza niente scudo")
-	sr.nucleo = sr.stats.shield_cost
+	check(not s:can_use("shield"), "senza scudi delle casse niente scudo")
+	sr.ammo.shield = 1
+	check(s:can_use("shield"), "con uno scudo in tasca si usa subito")
 	s:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
-	check(sr.shield == config.SHIELD.hp and sr.nucleo == 0 and sr.ammo.shield == 0, "lo scudo delle casse costa Nucleo")
+	check(sr.shield == config.SHIELD.hp and sr.ammo.shield == 0, "lo scudo delle casse si consuma")
 
 	-- Torneo: le statistiche di albero e equipaggiamento non contano, l'arma scelta sì
 	local custom = { { team = 1, stats = { max_hp = 300, walk_speed = 999 }, pick = "shards" }, { team = 2 } }

@@ -98,7 +98,7 @@ Xeon a 2,8 GHz.
 | CPU per partita e tick | 560–670 µs | 230 µs |
 | 100 partite insieme | worker pieni, 10–15% dei tick in ritardo | 34% dei worker, 0,5% in ritardo |
 
-Con le regole competitive (Nucleo, due attacchi, oggetti tattici, effetti di
+Con le regole competitive (teletrasporti, due attacchi, oggetti tattici, effetti di
 stato, partite che finiscono solo a tempo):
 
 | Modo | CPU per partita e tick | Partite per core | Giocatori per core |

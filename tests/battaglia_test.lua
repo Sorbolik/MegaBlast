@@ -279,11 +279,11 @@ do
 
 	tutorial.avanti(t)
 	g = tutorial.partita(t, 1)
-	check(g.robots[1].nucleo == 0, "tutorial 5: si parte senza Nucleo")
+	check(g.robots[1].teleports_left == 0, "tutorial 5: si parte senza teletrasporti")
 	check(gioca(g, 600, function(k)
 		if k == 5 then return spara() end
 		if k == 20 then return spara("teleport", math.rad(80)) end
-	end), "tutorial 5: Nucleo guadagnato e speso nel teletrasporto")
+	end), "tutorial 5: globo guadagnato e lanciato")
 
 	tutorial.avanti(t)
 	g = tutorial.partita(t, 1)

@@ -16,7 +16,6 @@ M.LIST = {
 	{ id = "fulmine", name = "FULMINE", desc = "Attacca prima di tutti", stat = "avg_attack_secs", best = "min", min = 0, turns = 1 },
 	{ id = "martello", name = "MARTELLO", desc = "Fa più danno", stat = "damage", best = "max", min = 1 },
 	{ id = "ombra", name = "OMBRA", desc = "Si teletrasporta di più", stat = "teleports", best = "max", min = 2 },
-	{ id = "tesoriere", name = "TESORIERE", desc = "Spende più Nucleo", stat = "nucleo_spent", best = "max", min = 2 },
 	{ id = "predone", name = "PREDONE", desc = "Apre più casse", stat = "crates", best = "max", min = 1 },
 }
 
