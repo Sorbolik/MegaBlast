@@ -56,7 +56,7 @@ M.PASSI = {
 		consiglio = "Spara e colpisci con la spada: con la barra gialla hai ancora il secondo attacco, con quella blu li hai usati tutti e due.",
 		dx = 60,
 		obiettivo = function(_, g)
-			return g.used.weapon and g.used.sword
+			return g.used.primary and g.used.secondary
 		end,
 	},
 	{

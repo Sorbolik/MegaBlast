@@ -4,7 +4,7 @@
 -- Pannelli e testo dell'interfaccia minimale (ui/ui.lua).
 --
 --   local scelta = require "menu.scelta"
---   local s = scelta.new(icone, nomi)              -- icone (o forme, oggetti.icona) e nomi per arma, nascosta
+--   local s = scelta.new(icone, nomi, effetti)     -- icone (o forme, oggetti.icona), nomi e una riga sull'effetto per arma, nascosta
 --   scelta.show(s, d, nomi_giocatori, colori)      -- d = draft.new(...)
 --   local players = scelta.update(s, dt)           -- i giocatori per game.new, quando tutti hanno scelto
 --   scelta.on_input(s, action_id, action)
@@ -34,8 +34,8 @@ local function nodo(x, y, w, h, colore, parent)
 	return n
 end
 
-function M.new(icone, nomi)
-	local s = { icone = icone, nomi = nomi, carte = {} }
+function M.new(icone, nomi, effetti)
+	local s = { icone = icone, nomi = nomi, effetti = effetti, carte = {} }
 	s.root = nodo(W / 2, H / 2, W, H, VELO)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
 	s.titolo = ui.titolo("", 0, 220, 0.55, nil, s.root)
@@ -51,13 +51,18 @@ function M.new(icone, nomi)
 		local forma = nodo(0, 30, 0, 0, C.LUCE, c)
 		gui.set_scale(forma, vmath.vector3(1.8, 1.8, 1))
 		oggetti.icona("sniper", forma)
-		local nome = ui.testo("", 0, -70, 0.65, nil, c)
+		local nome = ui.testo("", 0, -58, 0.65, nil, c)
+		-- l'effetto dell'arma in una riga (due se serve)
+		local effetto = ui.testo("", 0, -88, 0.55, C.SPENTO, c)
+		gui.set_line_break(effetto, true)
+		-- larghezza della carta meno i margini, nella scala del testo (0,55 x 0,5)
+		gui.set_size(effetto, vmath.vector3((CARD_W - 24) / 0.275, 100, 0))
 		-- un segno del colore di chi l'ha presa, per ognuno
 		local segni = {}
 		for k = 1, 4 do
-			segni[k] = nodo(-45 + (k - 1) * 30, -105, 22, 8, C.LUCE, c)
+			segni[k] = nodo(-45 + (k - 1) * 30, -118, 22, 8, C.LUCE, c)
 		end
-		s.carte[i] = { node = c, bordo = bordo, icona = icona, forma = forma, nome = nome, segni = segni }
+		s.carte[i] = { node = c, bordo = bordo, icona = icona, forma = forma, nome = nome, effetto = effetto, segni = segni }
 	end
 	gui.set_enabled(s.root, false)
 	return s
@@ -84,6 +89,7 @@ local function aggiorna(s)
 			gui.set_enabled(c.forma, s.icone[w] == nil)
 			if s.icone[w] then gui.play_flipbook(c.icona, s.icone[w]) end
 			gui.set_text(c.nome, s.nomi[w])
+			gui.set_text(c.effetto, s.effetti[w] or "")
 			local libera = not chi or draft.valid(d, chi, w)
 			gui.set_color(c.node, libera and C.PANNELLO or SPENTA)
 			gui.set_color(c.bordo, libera and C.LUCE or C.LINEA)

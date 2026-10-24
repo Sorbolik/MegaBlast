@@ -8,6 +8,8 @@
 --   targa.vita(t, vita, massima, scudo)   -- quando cambia (scudo può mancare)
 --   targa.update(t, dt, x, y, scala)      -- a ogni frame: x, y è il centro in basso
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
+--   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
+--   targa.annuncio(t, testo)              -- una scritta che sale sopra il nome e svanisce
 --
 -- Ogni targa ha due radici, t.barre e t.testi, che si muovono insieme. La GUI
 -- disegna i nodi nell'ordine in cui stanno: chi le mette nella scena mette prima
@@ -26,7 +28,8 @@ local W, H = 44, 4          -- la barra
 local BORDO = 1             -- il fondo scuro attorno
 local NOME_Y = 10           -- centro del nome sopra la barra
 -- scala del font "titolo" (scala 1 = circa 40 px)
-local NOME_SCALA, NUMERO_SCALA = 0.25, 0.2
+local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
+local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
 
 local FONDO = ui.C.OMBRA
 local SCIA = ui.C.LUCE
@@ -84,7 +87,7 @@ function M.nuove(colori, nomi)
 	-- prima le barre di tutte le targhe
 	for i, colore in ipairs(colori) do
 		local t = { colore = vmath.vector4(colore.x, colore.y, colore.z, 1), vita_f = 1, scia_f = 1,
-			scudo_f = 0, max_f = 1, attesa = 0, colpo = 0, t = 0 }
+			scudo_f = 0, max_f = 1, attesa = 0, colpo = 0, t = 0, annuncio_t = 0 }
 		t.barre, t.dentro = radice()
 		rettangolo(t.dentro, 0, 0, W + 2 * BORDO, H + 2 * BORDO, FONDO)
 		t.scia = pezzo(t, SCIA)
@@ -98,6 +101,9 @@ function M.nuove(colori, nomi)
 		t.nome = testo(t.dentro_testi, 0, NOME_Y, nomi[i] or "", NOME_SCALA, t.colore)
 		t.numero = testo(t.dentro_testi, W / 2 + BORDO + 3, 0, "", NUMERO_SCALA, ui.C.TESTO)
 		gui.set_pivot(t.numero, gui.PIVOT_W)
+		t.stato = testo(t.dentro_testi, 0, STATO_Y, "", STATO_SCALA, ui.C.TESTO)
+		t.annuncio = testo(t.dentro_testi, 0, ANNUNCIO_Y, "", ANNUNCIO_SCALA, ui.C.LUCE)
+		gui.set_enabled(t.annuncio, false)
 		M.vita(t, 1, 1)
 	end
 	return tt
@@ -111,6 +117,16 @@ end
 function M.colore(t, colore)
 	t.colore.x, t.colore.y, t.colore.z = colore.x, colore.y, colore.z
 	gui.set_color(t.nome, t.colore)
+end
+
+function M.stato(t, s)
+	gui.set_text(t.stato, s)
+end
+
+function M.annuncio(t, s)
+	gui.set_text(t.annuncio, s)
+	gui.set_enabled(t.annuncio, true)
+	t.annuncio_t = ANNUNCIO_T
 end
 
 function M.set_enabled(t, on)
@@ -156,6 +172,17 @@ function M.update(t, dt, x, y, scala)
 	V.x, V.y, V.z = k, k, 1
 	gui.set_scale(t.dentro, V)
 	gui.set_scale(t.dentro_testi, V)
+
+	-- l'annuncio sale e svanisce
+	if t.annuncio_t > 0 then
+		t.annuncio_t = t.annuncio_t - dt
+		local f = 1 - max(0, t.annuncio_t) / ANNUNCIO_T
+		V.x, V.y, V.z = 0, ANNUNCIO_Y + ANNUNCIO_SALE * f, 0
+		gui.set_position(t.annuncio, V)
+		C.x, C.y, C.z, C.w = ui.C.LUCE.x, ui.C.LUCE.y, ui.C.LUCE.z, math.min(1, 3 * (1 - f))
+		gui.set_color(t.annuncio, C)
+		if t.annuncio_t <= 0 then gui.set_enabled(t.annuncio, false) end
+	end
 
 	larghezza(t.scia, 0, W * t.scia_f)
 	larghezza(t.pieno, 0, W * t.vita_f)

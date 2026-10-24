@@ -155,7 +155,10 @@ M.PUNCH_LAUNCH = 480     -- velocità verso l'alto del bersaglio
 M.PUNCH_PUSH = 140       -- e in avanti
 M.PUNCH_HOP = 220        -- chi colpisce si alza un po' col montante
 
--- Armi: queste tre ci sono sempre, le altre si trovano nelle casse (rb.ammo)
+-- Armi: queste tre ci sono sempre, le altre si trovano nelle casse (rb.ammo).
+-- Ogni turno un'arma primaria (con un effetto: Lanciarune e quelle delle casse)
+-- e una secondaria (danno secco: la Lama), in ordine libero.
+M.SECONDARY = { sword = true }
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
 -- Oggetti tattici delle casse (anche loro in rb.ammo) e il paracadute, che
@@ -328,7 +331,7 @@ function M.new(seed, map_id, opts)
 			free_teleports = st.free_teleports,
 			free_parachutes = st.free_parachutes,
 			shield = nil,     -- danni che lo scudo può ancora assorbire
-			parachute = nil,  -- "armed" (pronto) o "open" (aperto)
+			parachute = false, -- aperto
 			status = {},      -- effetti di stato: tipo -> { turns = turni rimasti, by = chi l'ha dato }
 			turns = 0,     -- turni giocati
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
@@ -352,7 +355,8 @@ function M.new(seed, map_id, opts)
 	g.crates = {}
 	g.placed = {}            -- trappole e trampolini posati
 	g.placed_id = 0
-	g.anchors = map.anchors or {}
+	g.heals = {}             -- cerchi di cura { id, x, y }
+	g.heal_id = 0
 	g.crate_id = 0
 	g.crate_every = opts.crate_every or M.CRATE_EVERY
 	-- con crate_every esplicito si usa sempre quello (le prove ne hanno bisogno)
@@ -594,7 +598,7 @@ function M:respawn(rb)
 	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
 	rb.hp, rb.dead, rb.shield, rb.status, rb.respawn_in = rb.max_hp, false, nil, {}, nil
-	if rb.parachute == "open" then rb.parachute = nil end
+	rb.parachute = false
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
 end
 
@@ -614,9 +618,9 @@ end
 function M:land(rb)
 	local top = rb.fall_top
 	rb.fall_top = nil
-	if rb.parachute == "open" then
+	if rb.parachute then
 		-- col paracadute aperto si atterra senza danno, e il paracadute è finito
-		rb.parachute = nil
+		rb.parachute = false
 		self:emit({ type = "parachute_land", robot = rb.id })
 		return
 	end
@@ -712,25 +716,24 @@ function M:update_robot(rb, input, active)
 			rb.vy = rb.vy * M.JUMP_CUT
 			rb.rising = false
 		end
+		-- col paracadute ci si muove un po' più veloci, anche appena sbalzati
+		local chute = rb.parachute and C.PARACHUTE.air_mul or 1
+		if rb.parachute and active then rb.knocked = false end
 		if M.AIR_CONTROL == "instant" then
 			-- Blastron: niente inerzia, anche appena sbalzati
-			local air = st.air_speed * move
+			local air = st.air_speed * move * chute
 			if dir ~= 0 then rb.vx = dir * air end
 			if active and M.CLAMP_ACTIVE_VX then
 				rb.vx = math.max(-air, math.min(air, rb.vx))
 			end
 		elseif not rb.knocked then
 			-- controllo in aria (non mentre si viene sbalzati da un'esplosione)
-			local dv = dir * st.air_speed * move - rb.vx
+			local dv = dir * st.air_speed * move * chute - rb.vx
 			local max_dv = st.air_accel * M.DT
 			rb.vx = rb.vx + math.max(-max_dv, math.min(max_dv, dv))
 		end
 		rb.vy = rb.vy - M.GRAVITY * M.DT
-		if rb.parachute == "armed" and rb.vy < -C.PARACHUTE.open_speed then
-			rb.parachute = "open"
-			self:emit({ type = "parachute", robot = rb.id })
-		end
-		if rb.parachute == "open" then rb.vy = math.max(rb.vy, -C.PARACHUTE.fall_speed) end
+		if rb.parachute then rb.vy = math.max(rb.vy, -C.PARACHUTE.fall_speed) end
 		if rb.vy < 0 and not rb.fall_top then rb.fall_top = rb.y end
 		local landed = false
 		local mx, my = rb.vx * M.DT, rb.vy * M.DT
@@ -1544,15 +1547,56 @@ end
 
 -- Oggetti tattici ----------------------------------------------------------------
 
--- Quanto viene spinto rb: meno sopra un punto di ancoraggio e con lo scudo
+-- Quanto viene spinto rb: meno con lo scudo
 function M:knock_mul(rb)
 	local k = rb.stats.knockback_mul
 	if rb.shield then k = k * C.SHIELD.knockback end
-	for _, a in ipairs(self.anchors) do
-		local dx, dy = rb.x - a.x, rb.y - a.y
-		if dx * dx + dy * dy <= a.r * a.r then return k * C.ANCHOR_KNOCKBACK end
-	end
 	return k
+end
+
+-- Cerchi di cura (config.HEAL) ------------------------------------------------
+
+-- Un cerchio in un punto a caso della superficie, lontano dagli altri cerchi
+-- (anche sotto un robot: va curato lui, o spinto via)
+function M:spawn_heal()
+	if #self.heals >= C.HEAL.max then return nil end
+	local x, gy = self:surface_spot(function(x)
+		for _, h in ipairs(self.heals) do
+			if math.abs(h.x - x) < 4 * C.HEAL.r then return false end
+		end
+		return true
+	end)
+	if not x then return nil end
+	self.heal_id = self.heal_id + 1
+	local h = { id = self.heal_id, x = x, y = gy }
+	self.heals[#self.heals + 1] = h
+	self:emit({ type = "heal_spawn", id = h.id, x = x, y = gy })
+	return h
+end
+
+-- A fine turno: chi ha i piedi in un cerchio si cura, e il cerchio che ha
+-- curato qualcuno sparisce
+function M:apply_heals()
+	local r2 = C.HEAL.r * C.HEAL.r
+	local i = 1
+	while i <= #self.heals do
+		local h, used = self.heals[i], false
+		for _, rb in ipairs(self.robots) do
+			local dx, dy = rb.x - h.x, rb.y - h.y
+			if not rb.dead and dx * dx + dy * dy <= r2 and rb.hp < rb.max_hp then
+				local amount = math.min(C.HEAL.hp, rb.max_hp - rb.hp)
+				rb.hp = rb.hp + amount
+				used = true
+				self:emit({ type = "heal", id = h.id, robot = rb.id, amount = amount })
+			end
+		end
+		if used then
+			table.remove(self.heals, i)
+			self:emit({ type = "heal_gone", id = h.id })
+		else
+			i = i + 1
+		end
+	end
 end
 
 -- Il robot di turno usa un oggetto (già controllato con can_use)
@@ -1560,23 +1604,28 @@ end
 function M:use_tool(kind, fire)
 	local rb = self.robots[self.current]
 	if kind == "parachute" then
+		-- aperto si chiude (gratis), chiuso si apre
+		if rb.parachute then
+			rb.parachute = false
+			self:emit({ type = "parachute_close", robot = rb.id })
+			return
+		end
 		if rb.free_parachutes > 0 then
 			rb.free_parachutes = rb.free_parachutes - 1
 		else
 			rb.nucleo = rb.nucleo - rb.stats.parachute_cost
 			rb.nucleo_spent = rb.nucleo_spent + rb.stats.parachute_cost
 		end
-		rb.parachute = "armed"
-		self:emit({ type = "parachute_ready", robot = rb.id })
+		rb.parachute = true
+		self:emit({ type = "parachute", robot = rb.id })
 		return
 	end
-	if kind == "shield" and rb.ammo.shield == 0 then
-		-- senza scudi delle casse si paga col Nucleo
+	if kind == "shield" then
+		-- lo scudo delle casse si usa pagando il Nucleo
 		rb.nucleo = rb.nucleo - rb.stats.shield_cost
 		rb.nucleo_spent = rb.nucleo_spent + rb.stats.shield_cost
-	else
-		rb.ammo[kind] = rb.ammo[kind] - 1
 	end
+	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
 		rb.shield = C.SHIELD.hp
 		self:emit({ type = "shield", robot = rb.id })
@@ -1827,7 +1876,7 @@ function M:start_turn(player)
 	self.timer = M.TURN_TICKS
 	self.window = 0
 	-- attacchi già fatti nel turno: al massimo un'arma e un colpo di spada
-	self.used = { weapon = false, sword = false }
+	self.used = { primary = false, secondary = false }
 	self.teleports = 0
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
@@ -1852,6 +1901,7 @@ function M:start_turn(player)
 			self:spawn_crate()
 		end
 	end
+	if self.turn_no % C.HEAL.every == 0 then self:spawn_heal() end
 end
 
 -- Il robot di turno può usare weapon adesso? "teleport", "sword", un'arma o un
@@ -1862,19 +1912,21 @@ function M:can_use(weapon)
 	local rb = self.robots[self.current]
 	if rb.dead then return false end
 	if weapon == "parachute" then
-		return not rb.parachute and (rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost)
+		-- solo in aria
+		if rb.grounded then return false end
+		return rb.parachute or rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost
 	elseif weapon == "shield" then
-		return not rb.shield and (rb.ammo.shield > 0 or rb.nucleo >= rb.stats.shield_cost)
+		return not rb.shield and rb.ammo.shield > 0 and rb.nucleo >= rb.stats.shield_cost
 	elseif M.TOOLS[weapon] then
 		return rb.ammo[weapon] > 0
 	end
 	if weapon == "teleport" then
-		return not self.used.sword and #self.orbs < M.MAX_ORBS and rb.nucleo >= M.teleport_cost(rb)
+		return not self.used.secondary and #self.orbs < M.MAX_ORBS and rb.nucleo >= M.teleport_cost(rb)
 			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS)
-	elseif weapon == "sword" then
-		return not self.used.sword
+	elseif M.SECONDARY[weapon] then
+		return not self.used.secondary and M.has_weapon(rb, weapon)
 	end
-	return not self.used.weapon and M.has_weapon(rb, weapon)
+	return not self.used.primary and M.has_weapon(rb, weapon)
 end
 
 -- Quanto Nucleo costa il prossimo teletrasporto: niente finché restano quelli gratis
@@ -1885,13 +1937,12 @@ end
 -- Il robot di turno attacca con weapon (già controllata con can_use)
 function M:attack(weapon, fire)
 	local rb = self.robots[self.current]
-	local first = not (self.used.weapon or self.used.sword)
+	local first = not (self.used.primary or self.used.secondary)
+	if M.SECONDARY[weapon] then self.used.secondary = true else self.used.primary = true end
+	if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
 	if weapon == "sword" then
-		self.used.sword = true
 		self:swing_sword(fire.angle)
 	else
-		self.used.weapon = true
-		if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
 		if weapon == "punch" then
 			self:start_punch(fire.angle)
 		elseif weapon == "grenade" then
@@ -1962,6 +2013,7 @@ end
 -- La partita finisce solo allo scadere del tempo, e solo a fine giro: chi ha
 -- cominciato per primo non gioca un turno in più degli altri.
 function M:end_turn()
+	self:apply_heals()
 	self:age_status(self.robots[self.current])
 	local next_pos = self.order_pos % #self.order + 1
 	if self.match_left <= 0 and next_pos == 1 then

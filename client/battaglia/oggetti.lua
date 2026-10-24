@@ -1,10 +1,9 @@
 -- Oggetti tattici nella battaglia, disegnati solo con forme (niente immagini):
--- trappole e trampolini posati, punti di ancoraggio della mappa, scudo,
+-- trappole e trampolini posati, cerchi di cura, scudo,
 -- paracadute ed effetti di stato dei robot, e le icone degli oggetti nella barra.
 --
 --   local o = oggetti.new(colori)             -- colori[squadra]
 --   oggetti.nodi(o)                            -- da mettere nel nodo "mondo"
---   oggetti.mappa(o, g)                        -- a ogni partita nuova
 --   oggetti.update(o, g, view, clock)          -- a ogni frame, nessuna allocazione
 --   oggetti.icona(tipo, parent)                -- forma per lo slot della barra
 
@@ -20,7 +19,8 @@ local BIANCO = vmath.vector4(1, 1, 1, 0.9)
 local FUOCO = vmath.vector4(1, 0.45, 0.1, 0.7)
 local GELO = vmath.vector4(0.45, 0.8, 1, 0.8)
 local CREPA = vmath.vector4(1, 1, 1, 0.75)
-local MAX_ANCORE = 4
+-- cerchio di cura: anello a terra e una croce che galleggia sopra
+local CURA = vmath.vector4(0.45, 1, 0.6, 0.85)
 
 local function nodo(w, h, color, parent)
 	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(w, h, 0))
@@ -66,7 +66,7 @@ local function anello(d, color, parent)
 end
 
 function M.new(colori)
-	local o = { colori = colori, posati = {}, ancore = {}, scudi = {}, paracadute = {}, fiamme = {}, geli = {}, crepe = {},
+	local o = { colori = colori, posati = {}, cure = {}, scudi = {}, paracadute = {}, fiamme = {}, geli = {}, crepe = {},
 		col = vmath.vector4(), size = vmath.vector3() }
 	local h = game.ROBOT_H
 	for i = 1, config.MAX_PLACED do
@@ -77,10 +77,16 @@ function M.new(colori)
 		gui.set_enabled(root, false)
 		o.posati[i] = { root = root, trap = t, tramp = b, id = nil }
 	end
-	for i = 1, MAX_ANCORE do
-		local n = anello(60, ACCIAIO)
-		gui.set_enabled(n, false)
-		o.ancore[i] = n
+	local r = config.HEAL.r
+	for i = 1, config.HEAL.max do
+		local root = nodo(0, 0, CURA)
+		gui.set_visible(root, false)
+		local a = anello(r * 2, CURA, root)
+		gui.set_scale(a, vmath.vector3(1, 0.3, 1))
+		local croce = nodo(4, 14, CURA, root)
+		nodo(14, 4, CURA, croce)
+		gui.set_enabled(root, false)
+		o.cure[i] = { root = root, croce = croce }
 	end
 	for i = 1, game.MAX_PLAYERS do
 		local s = anello(h * 1.9, BIANCO)
@@ -109,7 +115,7 @@ end
 -- I nodi da mettere nel mondo, nell'ordine in cui si disegnano
 function M.nodi(o)
 	local list = {}
-	for _, n in ipairs(o.ancore) do list[#list + 1] = n end
+	for _, c in ipairs(o.cure) do list[#list + 1] = c.root end
 	for _, p in ipairs(o.posati) do list[#list + 1] = p.root end
 	for _, n in ipairs(o.scudi) do list[#list + 1] = n end
 	for _, n in ipairs(o.paracadute) do list[#list + 1] = n end
@@ -119,21 +125,17 @@ function M.nodi(o)
 	return list
 end
 
--- Punti di ancoraggio della mappa: un anello schiacciato sul terreno
-function M.mappa(o, g)
-	for i, n in ipairs(o.ancore) do
-		local a = g.anchors[i]
-		gui.set_enabled(n, a ~= nil)
-		if a then
-			pos(n, a.x, a.y)
-			gui.set_size(n, vmath.vector3(a.r * 2, a.r * 2, 0))
-			gui.set_inner_radius(n, a.r * 0.85)
-			gui.set_scale(n, vmath.vector3(1, 0.25, 1))
-		end
-	end
-end
 
 function M.update(o, g, view, clock)
+	-- cerchi di cura: la croce sale e scende piano
+	for i, c in ipairs(o.cure) do
+		local h = g.heals[i]
+		gui.set_enabled(c.root, h ~= nil)
+		if h then
+			pos(c.root, h.x, h.y)
+			pos(c.croce, 0, 16 + 3 * math.sin(clock * 3 + i))
+		end
+	end
 	-- trappole (del colore della squadra, lampeggiano quando sono armate) e trampolini
 	for i, p in ipairs(o.posati) do
 		local it = g.placed[i]
@@ -163,7 +165,7 @@ function M.update(o, g, view, clock)
 			gui.set_color(o.scudi[i], o.col)
 			pos(o.scudi[i], v.x, v.y + game.ROBOT_H / 2)
 		end
-		local open = rb ~= nil and not rb.dead and rb.parachute == "open"
+		local open = rb ~= nil and not rb.dead and rb.parachute
 		gui.set_enabled(o.paracadute[i], open)
 		if open then pos(o.paracadute[i], v.x, v.y + game.ROBOT_H * 1.3) end
 		-- effetti di stato

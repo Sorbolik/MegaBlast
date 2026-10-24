@@ -1,5 +1,5 @@
 # Tutorial: i primi tre passi. Con imposta tutorial 1 STESSO TELEFONO apre il
-# tutorial. Barra con tre slot: Lanciarune 546, Lama 640, Paracadute 734 (y = 62).
+# tutorial. Barra con tre slot: Lanciarune 526, Lama 640, Paracadute 754 (y = 62).
 imposta tutorial 1
 
 aspetta 1

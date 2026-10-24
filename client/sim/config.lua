@@ -78,13 +78,16 @@ C.TRAP = { damage = 8, launch_vy = 220, push_vx = 160 }
 C.TRAMPOLINE = { half_w = 12, launch_vy = 300, decay = 0.6, min_vy = 80 }
 -- Scudo: assorbe hp danni e dimezza le spinte fino all'inizio del proprio turno dopo
 C.SHIELD = { hp = 60, knockback = 0.5 }
--- Paracadute: si prepara nel proprio turno (costa stats.parachute_cost Nucleo)
--- e si apre da solo cadendo più veloce di open_speed; poi si scende a
--- fall_speed e l'atterraggio non fa danno
-C.PARACHUTE = { open_speed = 160, fall_speed = 60 }
--- Punti di ancoraggio della mappa (sim/maps.lua): chi ci sta sopra viene
--- spinto molto meno
-C.ANCHOR_KNOCKBACK = 0.35
+-- Paracadute: nel proprio turno, in aria, un tocco lo apre (costa
+-- stats.parachute_cost Nucleo) e un altro lo chiude. Aperto si scende al
+-- massimo a fall_speed, ci si muove in orizzontale air_mul volte più veloci
+-- (anche appena sbalzati) e l'atterraggio non fa danno
+C.PARACHUTE = { fall_speed = 60, air_mul = 1.15 }
+-- Cerchi di cura: all'inizio di un turno ogni every turni ne compare uno in un
+-- punto a caso della superficie (al massimo max insieme). A fine turno, di
+-- chiunque, ogni robot coi piedi dentro (raggio r) riprende hp di vita e, se
+-- ha curato qualcuno, il cerchio sparisce
+C.HEAL = { every = 2, max = 2, hp = 40, r = 26 }
 -- trappole e trampolini in mappa al massimo, tutti insieme
 C.MAX_PLACED = 8
 
@@ -126,7 +129,7 @@ C.STATS = {
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata
-	shield_cost = 3,         -- Nucleo per uno scudo, quando non se ne ha uno delle casse
+	shield_cost = 1,         -- Nucleo per usare uno scudo trovato nelle casse
 	air_jumps = 0,           -- salti in aria prima di toccare terra (ramo Mobilità, set Corvo)
 	air_jump_cost = 1,       -- Nucleo per ogni salto in aria
 	burning_blasts = 0,      -- 1: missile e Uovo bruciano chi colpiscono (set Fornace)

@@ -6,17 +6,19 @@ Risorsa permanente: va consultata prima di ogni decisione su gameplay, equipaggi
 
 ## Decisioni prese
 
-Scelte di Sergio del 23 ottobre 2026. Valgono sopra le proposte del resto del documento, che resta come archivio delle alternative.
+Scelte di Sergio del 23 ottobre 2026, aggiornate il 24 ottobre dopo la prima prova. Valgono sopra le proposte del resto del documento, che resta come archivio delle alternative.
 
 | Area | Decisione |
 | --- | --- |
 | Tempo del turno | **E, Nucleo**: i secondi rimasti al primo attacco diventano Nucleo. Tutti partono con 1 Nucleo. |
-| Due attacchi per turno | Fino a **un'arma e un colpo di spada** nello stesso turno, in ordine libero. Dopo il primo attacco hai **fino a 5 s per il secondo**; dopo l'ultimo attacco restano sempre **5 s di riposizionamento** (scudi, trappole). In tutto al massimo 10 s dopo il primo attacco, e mai oltre la fine del turno: chi attacca allo scadere non ha tempo per altro. La vita dei robot si alza per compensare il danno doppio. |
-| Teletrasporto | Ogni teletrasporto costa **1 Nucleo** (sostituisce "illimitato e gratuito"). Al primo turno se ne può fare uno solo. Si può lanciare fino al colpo di spada, non nel tempo di riposizionamento. La combo resta: lanci l'orbe ai piedi di un avversario, prepari il fendente, colpisci chi hai dietro e il teletrasporto ti porta a chiudere il fendente sull'altro. |
+| Due attacchi per turno | Le armi sono **primarie** (con un effetto in più: Lanciarune, che c'è sempre, e quelle delle casse) e **secondarie** (danno secco: la Lama, che c'è sempre; più avanti forse altre, con una loro particolarità). Ogni turno **una primaria e una secondaria**, in ordine libero, mai due della stessa categoria: vicino o lontano non conta. Nella barra i due gruppi sono separati e hanno il nome sopra. Dopo il primo attacco restano **8 s** (4 per il secondo attacco più 4 per ripararsi, uniti): in tutti e 8 si può fare il secondo attacco e tutto il resto. Mai oltre la fine del turno. La barra del tempo è gialla finché il secondo attacco c'è, blu quando li hai usati tutti e due, e lampeggia negli ultimi 2 s. La vita dei robot si alza per compensare il danno doppio. |
+| Morte e fine partita | Chi muore ricompare dopo 1,5 s **nello stesso turno**, sia nel turno dell'avversario (che può colpirlo ancora) sia nel proprio (il turno non passa). Allo scadere dei 5 minuti si finisce il giro di turni. |
+| Teletrasporto | Ogni teletrasporto costa **1 Nucleo** (sostituisce "illimitato e gratuito"). Al primo turno se ne può fare uno solo. Si può lanciare fino all'attacco con la secondaria. La combo resta: lanci l'orbe ai piedi di un avversario, prepari il fendente, colpisci chi hai dietro e il teletrasporto ti porta a chiudere il fendente sull'altro. |
 | Trappole | Si possono piazzare in qualsiasi momento del turno. |
 | Munizioni | Ogni arma trovata dà **1 colpo**; se la ritrovi i colpi si sommano. Missile e spada sono infiniti. Sostituisce la ricarica della strada 4. |
 | Casse | Contenuto **nascosto** (la strada 3 è scartata). Oltre alle armi contengono **trappole e scudi**. |
-| Strumenti tattici | Per colmare con la strategia il divario di livello: **trappole** per far cadere gli avversari dalla mappa, **punti di ancoraggio** sulla mappa dove è difficile essere sbalzati (conta dove finisci il turno), **trampolini** da usare per riposizionarti o da piazzare vicino a te per rendere difficile avvicinarsi, **paracadute** che annulla il danno da caduta per 1 Nucleo (niente mezzi Nuclei; più avanti forse cose da 2), **scudi** da usare al momento giusto. |
+| Strumenti tattici | Per colmare con la strategia il divario di livello: **trappole** per far cadere gli avversari dalla mappa; **cerchi di cura** che compaiono durante la partita in punti a caso (chi finisce un turno dentro si cura, poi il cerchio sparisce: ci porti il compagno, ne spingi via il nemico; sostituiscono i punti di ancoraggio); **trampolini** che si lanciano come l'Uovo, per riposizionarti o sotto i piedi di un avversario; **paracadute**: in aria un tocco lo apre per 1 Nucleo e un altro lo chiude, scendi piano, ti muovi un po' più veloce in orizzontale e non prendi danno da caduta (è un modo per spostarsi); **scudi** che si trovano solo nelle casse e costano 1 Nucleo quando li usi. |
+| Effetti chiari | Quando un effetto colpisce, sopra il robot sale la scritta (RALLENTATO!, ARMATURA INCRINATA!, SBALZATO!); sotto la vita restano gli effetti con i turni che mancano; nella scelta d'inizio partita ogni arma ha una riga che spiega il suo effetto. |
 | Strategia | **2** uccisioni ambientali, **7** punteggio podio oltre le uccisioni, **9** effetti di stato. |
 | Scelta d'inizio partita | Un **ventaglio di 3 armi**, uguale per le due squadre. Ognuno ne sceglie 1 e due compagni non possono prendere la stessa. Di quell'arma hai 1 colpo (2 se le partite durano abbastanza). Fino allo scadere del timer puoi cambiare scelta o proporre uno scambio al compagno; allo scadere le scelte si confermano da sole. In partita hai missile, spada, l'arma scelta e quelle delle casse. Nel **tutti contro tutti** scelgono tutti nello stesso momento e i doppioni sono ammessi. |
 | Durata della partita | **5 minuti**. Più avanti si valuta se accorciare il turno. |
@@ -34,9 +36,9 @@ Ancora aperti: zone del Titano (strada 1), turni che si accorciano (I), cosa far
 Una regola nuova per volta, ognuna in una mini-missione di meno di un minuto, e un HUD che racconta il turno da solo:
 
 1. **Muoviti e spara**: solo missile, turno normale.
-2. **Riparati**: dopo lo sparo la barra del tempo diventa blu, "riposizionati".
+2. **Riparati**: dopo lo sparo hai 8 s (barra gialla) per spostarti al riparo.
 3. **Spada**: un bersaglio vicino, si impara il fendente.
-4. **Due attacchi**: spara, la barra diventa gialla per 5 s con l'icona della spada che lampeggia, poi blu.
+4. **Due attacchi**: spara, la barra diventa gialla con l'icona della spada che lampeggia, poi blu quando li hai usati tutti e due.
 5. **Nucleo e teletrasporto**: finire presto riempie la barra, il teletrasporto la consuma.
 6. **Combo**: teletrasporto ai piedi del nemico e fendente che chiude dall'altra parte.
 
@@ -48,7 +50,7 @@ Sì, e si sposa bene con il Torneo: **in Torneo tutti hanno tutti i punti**, qui
 
 1. **Meno punti che nodi.** Al livello massimo hai, per esempio, 20 punti per un albero da 40. Così anche a fine gioco devi scegliere, e l'albero resta un assetto e non una scala da completare.
 2. **Nodi misti.** Statistiche da potenziare a piacere (salto, velocità) e nodi legati al Nucleo: un ramo Mobilità (teletrasporto che scatta prima, salto extra a 1 Nucleo), un ramo Difesa (scudo più economico, paracadute più economico), un ramo Arsenale (trappole più grandi, effetti di stato più lunghi).
-3. **Una differenza che si sente, ma che si colma con la strategia.** Nelle partite normali chi è al massimo è più forte, ma trappole, punti di ancoraggio, trampolini, paracadute e scudi permettono a chi gioca meglio di vincere lo stesso. Nei primi livelli si incontrano avversari di livello simile.
+3. **Una differenza che si sente, ma che si colma con la strategia.** Nelle partite normali chi è al massimo è più forte, ma trappole, cerchi di cura, trampolini, paracadute e scudi permettono a chi gioca meglio di vincere lo stesso. Nei primi livelli si incontrano avversari di livello simile.
 4. **Ricostruzione gratuita fuori dalla partita**, con 3 assetti salvati (albero più equipaggiamento) da scegliere prima del ventaglio d'armi.
 
 Per non far sovrapporre le due crescite: l'equipaggiamento dà l'aspetto e il carattere del set, l'albero il tuo assetto personale e come spendi il Nucleo.

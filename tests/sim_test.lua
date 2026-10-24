@@ -109,7 +109,7 @@ check(before_steel > 0 and after_steel == before_steel, "i tubi d'acciaio restan
 run(g, 60)
 local fx = rb.x
 g:step({ fire = { angle = math.rad(60), power = 0.6 } })
-check(g.phase == "aim" and g.window > 0 and g.used.weapon, "il missile parte e si apre il tempo del secondo attacco")
+check(g.phase == "aim" and g.window > 0 and g.used.primary, "il missile parte e si apre il tempo del secondo attacco")
 run(g, 30, { left = true })
 check(rb.x < fx - 10, "dopo lo sparo il robot si muove")
 local exploded = false
@@ -302,7 +302,7 @@ place(sw.robots[1], 640, swy)
 place(sw.robots[2], 640 - 25, swy)  -- dietro (il robot 1 guarda a destra)
 place(sw.robots[3], 640 + 25, swy)  -- davanti
 sw:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
-check(sw.used.sword and sw.window > 0, "il fendente è un attacco: si apre il tempo del secondo")
+check(sw.used.secondary and sw.window > 0, "il fendente è un attacco: si apre il tempo del secondo")
 local order = {}
 for _ = 1, game.SWORD_TICKS do
 	sw:step()
@@ -375,12 +375,12 @@ do
 		"i secondi rimasti al primo attacco diventano Nucleo (" .. ar.nucleo .. ")")
 	check(at.window == game.AFTER_ATTACK_TICKS, "dopo il primo attacco restano 8 s")
 	at:step(MISSILE)
-	check(not at:can_use("missile") and at.used.weapon, "una sola arma per turno")
+	check(not at:can_use("missile") and at.used.primary, "una sola arma per turno")
 	local n0 = ar.nucleo
 	run(at, game.AFTER_ATTACK_TICKS - 30)
 	check(at:can_use("sword"), "il secondo attacco si fa fino all'ultimo secondo")
 	at:step(SWORD)
-	check(at.used.sword and at.window > 0, "dopo il secondo attacco il tempo continua")
+	check(at.used.secondary and at.window > 0, "dopo il secondo attacco il tempo continua")
 	check(ar.nucleo == n0, "il secondo attacco non dà Nucleo")
 	check(not at:can_use("teleport") and not at:can_use("sword"), "dopo i due attacchi niente attacchi né teletrasporto")
 	local turn_at
@@ -397,7 +397,7 @@ do
 	run(ao, 30)
 	check(ao:can_use("missile"), "dopo la spada si può ancora sparare")
 	ao:step(MISSILE)
-	check(ao.used.weapon and ao.used.sword, "spada e missile nello stesso turno")
+	check(ao.used.primary and ao.used.secondary, "spada e missile nello stesso turno")
 
 	-- Il teletrasporto si lancia fino al colpo di spada, non dopo
 	local ak = game.new(42, "isole")
@@ -412,7 +412,7 @@ do
 	local az = game.new(42, "isole")
 	run(az, game.TURN_TICKS - 2)
 	az:step(MISSILE)
-	check(az.used.weapon and az.window <= 1, "attaccando allo scadere non resta tempo")
+	check(az.used.primary and az.window <= 1, "attaccando allo scadere non resta tempo")
 	run(az, 3)
 	check(az.phase ~= "aim", "il turno chiude allo scadere anche dopo un attacco")
 
@@ -497,7 +497,7 @@ do
 	run(q, 60)
 	local r1, r2 = q.robots[1], q.robots[2]
 	q:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
-	check(r1.shield == config.SHIELD.hp and not q.used.weapon and not q.used.sword,
+	check(r1.shield == config.SHIELD.hp and not q.used.primary and not q.used.secondary,
 		"lo scudo si attiva e non è un attacco")
 	q:step({ fire = { angle = math.rad(60), power = 0.6 } })
 	q:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
@@ -580,36 +580,61 @@ do
 	tb:explode(tramp.x, tramp.y + 4)
 	check(#tb.placed == 0, "un'esplosione distrugge il trampolino")
 
-	-- paracadute: costa Nucleo, si apre cadendo e annulla il danno da caduta
+	-- paracadute: in aria un tocco lo apre (costa Nucleo), rallenta la caduta,
+	-- dà più controllo in orizzontale e annulla il danno da caduta
 	local pc = game.new(42, "isole")
 	run(pc, 60)
 	local p = pc.robots[1]
-	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
-	check(p.parachute == "armed" and p.nucleo == config.STATS.start_nucleo - config.STATS.parachute_cost, "il paracadute costa Nucleo")
-	check(not pc:can_use("parachute"), "un paracadute alla volta")
+	check(not pc:can_use("parachute"), "a terra il paracadute non si apre")
 	local safe, dmg, max = game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX
 	game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX = 10, 1, 100
 	local y = sky_spot(pc, 640, 200)
 	place(p, 640, y + 200)
-	local opened, slowest = false, 0
+	pc:step()
+	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
+	check(p.parachute and p.nucleo == config.STATS.start_nucleo - config.STATS.parachute_cost, "il paracadute in aria si apre e costa Nucleo")
+	check(pc:can_use("parachute"), "aperto si può richiudere")
+	local slowest, fastest = 0, 0
 	for _ = 1, 600 do
-		pc:step()
-		for _, e in ipairs(pc:pop_events()) do if e.type == "parachute" then opened = true end end
+		pc:step({ right = true })
 		slowest = math.min(slowest, p.vy)
+		fastest = math.max(fastest, p.vx)
 		if p.grounded then break end
 	end
+	check(slowest >= -config.PARACHUTE.fall_speed - 1 and p.hp == p.max_hp and not p.parachute,
+		"col paracadute si scende piano e si atterra senza danno")
+	check(fastest > p.stats.air_speed, "col paracadute in orizzontale si va un po' più veloci")
+	-- richiuderlo è gratis e non restituisce il Nucleo
+	p.nucleo = 3
+	place(p, 640, y + 200)
+	pc:step()
+	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
+	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
+	check(not p.parachute and p.nucleo == 3 - config.STATS.parachute_cost, "un altro tocco lo chiude")
 	game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX = safe, dmg, max
-	check(opened and slowest >= -config.PARACHUTE.open_speed - 20 and p.hp == p.max_hp and p.parachute == nil,
-		"il paracadute si apre, rallenta la caduta e si atterra senza danno")
 
-	-- punto di ancoraggio: chi ci sta sopra viene spinto molto meno
-	local an = game.new(42, "forgia")
-	local anc = maps.get("forgia").anchors[1]
-	local ar = an.robots[1]
-	ar.x, ar.y = anc.x, anc.y
-	check(an:knock_mul(ar) == config.ANCHOR_KNOCKBACK, "sull'ancoraggio la spinta si riduce")
-	ar.x = anc.x + anc.r + 10
-	check(an:knock_mul(ar) == 1, "fuori dall'ancoraggio la spinta è piena")
+	-- cerchio di cura: a fine turno chi ha i piedi dentro si cura e il cerchio
+	-- sparisce (a inizio turno ne può comparire un altro)
+	local hg = game.new(42, "forgia")
+	run(hg, 60)
+	local function has_heal(id)
+		for _, x in ipairs(hg.heals) do if x.id == id then return true end end
+		return false
+	end
+	local h = hg:spawn_heal()
+	local ha, hb = hg.robots[1], hg.robots[2]
+	ha.x, ha.y, ha.hp = h.x, h.y, 50
+	hg:end_turn()
+	check(ha.hp == 50 + config.HEAL.hp and not has_heal(h.id), "a fine turno nel cerchio ci si cura e il cerchio sparisce")
+	hg.heals = {}
+	local h2 = hg:spawn_heal()
+	hb.x, hb.y, hb.hp = h2.x, h2.y, hb.max_hp
+	hg:end_turn()
+	check(has_heal(h2.id), "con la vita piena il cerchio resta")
+	hb.hp = 10
+	hb.x = h2.x + config.HEAL.r + 10
+	hg:end_turn()
+	check(hb.hp == 10 and has_heal(h2.id), "fuori dal cerchio niente cura")
 end
 
 -- L'Uovo rimbalza sui robot, come il globo del teletrasporto
@@ -794,15 +819,17 @@ do
 	n:step({ jump = true })
 	check(nr.nucleo == 3, "senza air_jumps niente salto in aria")
 
-	-- scudo: senza scudi delle casse si compra col Nucleo
+	-- scudo: si trova solo nelle casse, e usarlo costa Nucleo
 	local s = game.new(42, "isole")
 	run(s, 30)
 	local sr = s.robots[1]
-	sr.nucleo = sr.stats.shield_cost - 1
+	sr.nucleo = 5
+	check(not s:can_use("shield"), "senza scudi delle casse niente scudo, anche col Nucleo")
+	sr.ammo.shield, sr.nucleo = 1, sr.stats.shield_cost - 1
 	check(not s:can_use("shield"), "senza Nucleo abbastanza niente scudo")
 	sr.nucleo = sr.stats.shield_cost
 	s:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
-	check(sr.shield == config.SHIELD.hp and sr.nucleo == 0, "lo scudo si compra col Nucleo")
+	check(sr.shield == config.SHIELD.hp and sr.nucleo == 0 and sr.ammo.shield == 0, "lo scudo delle casse costa Nucleo")
 
 	-- Torneo: le statistiche di albero e equipaggiamento non contano, l'arma scelta sì
 	local custom = { { team = 1, stats = { max_hp = 300, walk_speed = 999 }, pick = "shards" }, { team = 2 } }

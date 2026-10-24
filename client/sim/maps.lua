@@ -3,8 +3,6 @@
 -- spawns: quattro punti, uno per robot nell'ordine dei turni. 1 e 3 a
 -- sinistra, 2 e 4 a destra, così nel 2 contro 2 i compagni partono dallo
 -- stesso lato. from è l'altezza da cui si cerca il terreno sotto.
--- anchors: punti di ancoraggio { x, y, r } (piedi entro r da x, y): chi ci sta
--- sopra viene spinto molto meno (config.ANCHOR_KNOCKBACK).
 --
 -- Per aggiungere una mappa: scrivi una funzione build(t, seed) qui sotto e
 -- aggiungila a M.maps. Coordinate del mondo: 1280 x 720, y verso l'alto.
@@ -31,8 +29,6 @@ end
 -- vede è esattamente quello su cui si cammina. Travi e bordi in acciaio.
 add("forgia", "Forgia dei Titani", {
 	spawns = { { x = 320, from = 400 }, { x = 960, from = 400 }, { x = 120, from = 720 }, { x = 1160, from = 720 } },
-	-- l'incudine in mezzo e le due piattaforme a metà altezza
-	anchors = { { x = 640, y = 390, r = 40 }, { x = 320, y = 516, r = 30 }, { x = 960, y = 516, r = 30 } },
 	build = function(t)
 		t:load(mapdata.forgia)
 	end,
@@ -43,7 +39,6 @@ add("forgia", "Forgia dei Titani", {
 -- terra scavabile, ossa e catene indistruttibili. È simmetrica a specchio.
 add("isole", "Isole del cimitero", {
 	spawns = { { x = 420, from = 260 }, { x = 860, from = 260 }, { x = 160, from = 720 }, { x = 1120, from = 720 } },
-	anchors = { { x = 640, y = 296, r = 40 }, { x = 320, y = 458, r = 30 }, { x = 960, y = 458, r = 30 } },
 	build = function(t)
 		t:load(mapdata.cimitero)
 	end,

@@ -54,13 +54,14 @@ function N.snapshot(g)
 		-- pu, pd: lo stesso per il Pugno del Titano; ag, as, ap, ac: colpi di Uovo, Schegge, Pugno e Cecchino
 		-- sb, pb: angolo di mira del fendente e del pugno (servono col modello "blastron")
 		-- n: Nucleo, ft: teletrasporti gratis rimasti, mh: vita massima, tu: turni giocati, pt: punti
-		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute (1 pronto, 2 aperto);
-		-- fp: paracadute gratis; st: effetti di stato (1 bruciatura + 2 rallentamento + 4 armatura incrinata)
+		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute aperto;
+		-- fp: paracadute gratis; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
 			n = rb.nucleo, ft = rb.free_teleports, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
 			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, fp = rb.free_parachutes,
-			pa = rb.parachute == "armed" and 1 or (rb.parachute == "open" and 2 or 0),
-			st = (rb.status.burn and 1 or 0) + (rb.status.slow and 2 or 0) + (rb.status.cracked and 4 or 0),
+			pa = rb.parachute,
+			st = (rb.status.burn and rb.status.burn.turns or 0) + 10 * (rb.status.slow and rb.status.slow.turns or 0)
+				+ 100 * (rb.status.cracked and rb.status.cracked.turns or 0),
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
 			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch, ac = rb.ammo.sniper }
@@ -84,12 +85,15 @@ function N.snapshot(g)
 	for i, o in ipairs(g.placed) do
 		placed[i] = { i = o.id, k = o.kind, x = o.x, y = o.y, a = o.armed, tm = o.team, r = o.r, v = o.flying or false }
 	end
-	-- win: tick rimasti dopo il primo attacco; u: attacchi fatti (1 arma, 2 spada); tp: teletrasporti
+	-- hl: cerchi di cura
+	local heals = {}
+	for i, h in ipairs(g.heals) do heals[i] = { i = h.id, x = h.x, y = h.y } end
+	-- win: tick rimasti dopo il primo attacco; u: attacchi fatti (1 primaria, 2 secondaria); tp: teletrasporti
 	-- del turno; ot: supplementari (tempo scaduto, si finisce il giro)
-	local used = (g.used.weapon and 1 or 0) + (g.used.sword and 2 or 0)
+	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, tp = g.teleports, mt = g.match_left, ot = g.overtime, r = robots, p = p, o = orbs, s = shards,
-		c = crates, pl = placed }
+		c = crates, pl = placed, hl = heals }
 end
 
 -- Eventi dall'ultimo tick (una lista, vuota se non ne sono successi)
