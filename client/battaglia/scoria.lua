@@ -5,7 +5,7 @@
 -- Lo usano la battaglia (game.gui_script) e la home (menu/home.lua):
 --   local s = scoria.new(colore)
 --   scoria.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
---   scoria.set_weapon(s, nome) / hit(s) / fire(s, tipo) / teleport(s) / die(s)
+--   scoria.set_weapon(s, nome) / hit(s) / fire(s, tipo) / lunge(s) / teleport(s) / die(s)
 --   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
 --
 -- Pochi pezzi: testa con le corna, mantello, due gambe e due mani staccate
@@ -19,6 +19,7 @@
 -- fanno i passi in base alla strada fatta, occhio che sbatte e Nucleo che respira.
 
 local game = require "sim.game"
+local config = require "sim.config"
 local PEZZI = require "battaglia.scoria_pezzi"
 
 local M = {}
@@ -112,6 +113,10 @@ local ARMI = {
 	grenade = { riposo = -0.5 },
 	shards = { riposo = -0.3, due_mani = true },
 	punch = { riposo = -0.9 },
+	eagle = { riposo = -0.6 },
+	hook = { riposo = -0.4 },
+	mallet = { riposo = -1.6, due_mani = true },
+	lunge = { riposo = -1.4, due_mani = true },
 }
 
 -- una mano staccata: un cerchio nero col bordo chiaro
@@ -139,6 +144,25 @@ local function arma(s, name, color)
 		s.tinte[#s.tinte + 1] = cerchio(g, H * 0.45, 0, H * 0.32, color)
 	elseif name == "grenade" then
 		cerchio(g, H * 0.45, 0, H * 0.36, FERRO)
+	elseif name == "eagle" then
+		-- Tonante: canna corta e grossa, il calcio in giù dietro la mano
+		box(g, H * 0.5, H * 0.04, H * 0.6, H * 0.16, FERRO)
+		box(g, H * 0.22, -H * 0.1, H * 0.1, H * 0.22, FERRO)
+	elseif name == "hook" then
+		-- Rampino: una canna sottile con l'uncino aperto in punta
+		box(g, H * 0.45, 0, H * 0.7, max(2, H * 0.08), FERRO)
+		box(g, H * 0.8, H * 0.08, max(2, H * 0.08), H * 0.2, LAMA)
+	elseif name == "mallet" then
+		-- Maglio: manico lungo con la testa pesante in punta
+		local L = H * 1.1
+		box(g, L * 0.5, 0, L, max(2, H * 0.08), FERRO)
+		box(g, L, 0, H * 0.22, H * 0.4, FERRO)
+		box(g, L + H * 0.06, 0, H * 0.06, H * 0.4, LAMA)
+	elseif name == "lunge" then
+		-- Affondo: lancia lunga e sottile, con la punta chiara
+		local L = config.LUNGE.speed * config.LUNGE.ticks / 60 * 0.4
+		box(g, L * 0.5, 0, L, max(2, H * 0.07), FERRO)
+		box(g, L, 0, H * 0.18, max(2, H * 0.12), LAMA)
 	else -- punch
 		cerchio(g, H * 0.45, 0, s.w * 0.8, FERRO)
 	end
@@ -433,6 +457,13 @@ function M.fire(s, kind)
 	s.v[LEAN] = s.v[LEAN] + 3 * k
 	s.v[SQ] = s.v[SQ] - 1.5 * k
 	s.v[TESTA] = s.v[TESTA] + 3 * k
+end
+
+-- Scatto dell'Affondo: si allunga in avanti e si piega
+function M.lunge(s)
+	s.v[SQ] = s.v[SQ] + 6
+	s.v[LEAN] = s.v[LEAN] + 8
+	s.v[TESTA] = s.v[TESTA] + 4
 end
 
 -- Arrivo col teletrasporto: compare schiacciato e si allunga con un rimbalzo

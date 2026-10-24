@@ -141,7 +141,7 @@ M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 7, knockback = 90 }
 
 -- Cecchino: velocità del colpo (la potenza non conta) e quanto vive al massimo;
 -- danno, spinta, caduta e rimbalzi in config.SNIPER
-M.SNIPER_SPEED = 420
+M.SNIPER_SPEED = 480
 M.SNIPER_LIFE = 6 * 60
 
 -- Pugno del Titano: montante corpo a corpo che lancia in alto chi è davanti.
@@ -155,18 +155,26 @@ M.PUNCH_LAUNCH = 480     -- velocità verso l'alto del bersaglio
 M.PUNCH_PUSH = 140       -- e in avanti
 M.PUNCH_HOP = 220        -- chi colpisce si alza un po' col montante
 
--- Armi: queste tre ci sono sempre, le altre si trovano nelle casse (rb.ammo).
--- Ogni turno un'arma primaria (con un effetto: Lanciarune e quelle delle casse)
--- e una secondaria (danno secco: la Lama), in ordine libero.
-M.SECONDARY = { sword = true }
-M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
+-- Armi, in due categorie (scelta di Sergio del 24 ottobre 2026). Ogni turno una
+-- primaria e una secondaria, in ordine libero, mai due della stessa categoria.
+-- Primarie: agiscono sul mondo e sugli altri (cratere, effetto di stato,
+-- sbalzo). Il Lanciarune c'è sempre; le altre danno un colpo per cassa (rb.ammo).
+-- Secondarie: danno secco, nessun effetto, illimitate; ognuna sposta chi la usa
+-- a modo suo (la Lama gira attorno, il Tonante spinge indietro, il Maglio fa
+-- rimbalzare in alto, l'Affondo passa oltre). La Lama c'è sempre; una delle
+-- altre si sceglie all'inizio della partita (rb.secondary, sim/draft.lua).
+M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true }
+M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge" }
+-- armi che non consumano colpi
+M.FREE_WEAPONS = { missile = true, teleport = true }
+for w in pairs(M.SECONDARY) do M.FREE_WEAPONS[w] = true end
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
--- Oggetti tattici delle casse (anche loro in rb.ammo) e il paracadute, che
--- costa Nucleo: non sono attacchi (config.lua)
+-- Oggetti tattici delle casse (anche loro in rb.ammo) e quelli che costano
+-- Nucleo (paracadute, Rampino): non sono attacchi (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
-M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true }
+M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true }
 -- oggetti che si lanciano mirando (gli altri si usano col tocco)
-M.THROWN = { trampoline = true }
+M.THROWN = { trampoline = true, hook = true }
 -- tutti i nomi validi di fire.weapon
 M.WEAPONS = { teleport = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
@@ -175,6 +183,7 @@ for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 
 -- Casse: ogni CRATE_EVERY turni ne cade una dal cielo in un punto a caso.
 -- Chi la tocca trova un colpo di un'arma o un oggetto (config.CRATE_CONTENTS).
+-- Sergio (24 ottobre 2026): provata una ogni 2 turni, è tornato a questa.
 M.CRATE_EVERY = 3
 M.CRATE_MAX = 3          -- casse in mappa al massimo
 M.CRATE_HALF_W = 10
@@ -248,7 +257,7 @@ local function make_ammo(start)
 	return a
 end
 
--- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards" }, { team = 2 }, ... }:
+-- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards", secondary = "eagle" }, { team = 2 }, ... }:
 -- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
 -- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
 -- mancano vengono da config.STATS e dal profilo di fisica.
@@ -336,10 +345,15 @@ function M.new(seed, map_id, opts)
 			turns = 0,     -- turni giocati
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
+			lunge = nil,   -- tick rimasti dell'Affondo in corso, nil se fermo
+			mallet = nil,  -- tick del colpo di Maglio in corso, nil se fermo
+			hooked = nil,  -- appeso alla fune del Rampino: { by = chi tira, left = fune da riavvolgere }
 			ammo = make_ammo(opts.ammo),
+			-- la secondaria scelta all'inizio della partita, oltre alla Lama (sim/draft.lua)
+			secondary = p.secondary or opts.secondary,
 			stats = st,
 		}
-		-- l'arma presa nella scelta d'inizio partita (sim/draft.lua)
+		-- la primaria presa nella scelta d'inizio partita (sim/draft.lua)
 		if p.pick then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
 	end
 	g.events = {}
@@ -597,6 +611,7 @@ function M:respawn(rb)
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
 	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
+	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet = nil, nil, nil, nil
 	rb.hp, rb.dead, rb.shield, rb.status, rb.respawn_in = rb.max_hp, false, nil, {}, nil
 	rb.parachute = false
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
@@ -635,6 +650,9 @@ end
 -- active: è il robot di turno e può muoversi (riceve i comandi)
 function M:update_robot(rb, input, active)
 	if rb.dead then return end
+	-- durante l'Affondo lo scatto comanda il movimento; appeso al Rampino, la fune
+	if rb.lunge then return self:update_lunge(rb) end
+	if rb.hooked then return self:update_hooked(rb) end
 
 	-- Se il robot è finito dentro il terreno, lo spingiamo fuori verso l'alto
 	if self:terrain_collides(rb.x, rb.y) then
@@ -1116,24 +1134,32 @@ function M:fire_sniper(angle)
 	self:emit({ type = "sniper", robot = rb.id })
 end
 
--- Riflette (vx, vy) sulla superficie del terreno in (x, y)
-local function reflect(t, x, y, vx, vy)
+-- Rimbalzo come una palla sulla superficie del terreno in (x, y): la parte
+-- della velocità contro la superficie si ribalta e si smorza (bounce_normal),
+-- quella lungo la superficie frena un po' (bounce_tangent): ogni rimbalzo è
+-- più basso e più lento
+local function bounce(t, x, y, vx, vy)
 	local nx, ny = surface_normal(t, x, y)
 	local d = vx * nx + vy * ny
-	if d < 0 then vx, vy = vx - 2 * d * nx, vy - 2 * d * ny end
-	return vx, vy
+	local tx, ty = vx - d * nx, vy - d * ny
+	local s = C.SNIPER
+	d = math.abs(d) * s.bounce_normal
+	return tx * s.bounce_tangent + nx * d, ty * s.bounce_tangent + ny * d
 end
 
--- Dritto per drop_after secondi, poi cala; rimbalza sul terreno fino a
--- config.SNIPER.bounces volte, ogni volta un po' più lento
-local function sniper_drop(vy, age)
-	if age > C.SNIPER.drop_after * 60 then vy = vy - M.GRAVITY * C.SNIPER.drop * M.DT end
-	return vy
+-- Un tick di volo: parte veloce e frena (drag), la gravità cresce a poco a
+-- poco fino a drop volte quella dei robot in drop_ramp secondi, così
+-- all'inizio va quasi dritto e poi cala sempre di più
+local function sniper_step(vx, vy, age)
+	local s = C.SNIPER
+	local g = M.GRAVITY * s.drop * math.min(1, age / (s.drop_ramp * 60))
+	local k = s.drag ^ M.DT
+	return vx * k, (vy - g * M.DT) * k
 end
 
 function M:update_sniper(p)
 	p.age = p.age + 1
-	p.vy = sniper_drop(p.vy, p.age)
+	p.vx, p.vy = sniper_step(p.vx, p.vy, p.age)
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	local t = self.terrain
@@ -1145,14 +1171,14 @@ function M:update_sniper(p)
 			self.projectile = nil
 			return
 		elseif t:solid(nx, ny) then
-			if p.bounces >= C.SNIPER.bounces then
+			p.bounces = p.bounces + 1
+			p.vx, p.vy = bounce(t, nx, ny, p.vx, p.vy)
+			-- troppi rimbalzi o quasi fermo: si spegne lì
+			if p.bounces > C.SNIPER.bounces or p.vx * p.vx + p.vy * p.vy < C.SNIPER.min_speed ^ 2 then
 				self:emit({ type = "sniper_end", x = p.x, y = p.y })
 				self.projectile = nil
 				return
 			end
-			p.bounces = p.bounces + 1
-			p.vx, p.vy = reflect(t, nx, ny, p.vx, p.vy)
-			p.vx, p.vy = p.vx * C.SNIPER.bounce_keep, p.vy * C.SNIPER.bounce_keep
 			self:emit({ type = "sniper_bounce", x = p.x, y = p.y })
 			break
 		end
@@ -1177,19 +1203,20 @@ function M:sniper_hit(p, rb)
 	if self:hurt(rb, C.SNIPER.damage, by) > 0 and by ~= rb then self:hit_status(rb, "sniper", by) end
 end
 
--- Linea di mira del cecchino: solo il tratto dritto, poi un pezzo della
--- caduta (com'è il colpo vero, tick per tick); un rimbalzo la chiude subito
+-- Linea di mira del cecchino: il primo secondo di volo (com'è il colpo vero,
+-- tick per tick); un rimbalzo la chiude subito
+M.SNIPER_PREVIEW_TICKS = 60
 function M:sniper_preview(x, y, angle, count, pts)
 	pts = pts or {}
 	local vx, vy = math.cos(angle) * M.SNIPER_SPEED, math.sin(angle) * M.SNIPER_SPEED
 	local t, n, after = self.terrain, 0, nil
-	local straight = C.SNIPER.drop_after * 60
-	for i = 1, math.floor(straight * 1.4) do
-		vy = sniper_drop(vy, i)
+	local shown = M.SNIPER_PREVIEW_TICKS
+	for i = 1, shown do
+		vx, vy = sniper_step(vx, vy, i)
 		local nx, ny = x + vx * M.DT, y + vy * M.DT
 		if t:solid(nx, ny) then
 			if after then break end
-			vx, vy = reflect(t, nx, ny, vx, vy)
+			vx, vy = bounce(t, nx, ny, vx, vy)
 			after = 0
 		else
 			x, y = nx, ny
@@ -1198,7 +1225,7 @@ function M:sniper_preview(x, y, angle, count, pts)
 				if after > 4 then break end
 			end
 			-- i punti spaziati lungo il tratto mostrato
-			if i % math.max(1, math.floor(straight * 1.4 / count)) == 0 and n < count then
+			if i % math.max(1, math.floor(shown / count)) == 0 and n < count then
 				n = n + 1
 				local pt = pts[n] or {}
 				pt.x, pt.y = x, y
@@ -1213,6 +1240,240 @@ function M:sniper_preview(x, y, angle, count, pts)
 		pts[i] = pt
 	end
 	return pts
+end
+
+-- Colpi dritti: Tonante e Rampino (config.EAGLE, config.HOOK) --------------------
+-- Istantanei: niente proiettile da seguire, un raggio sulle celle del terreno
+-- come la linea di mira.
+
+-- Il raggio da (x, y) nella direzione angle, lungo al massimo range: dove si
+-- ferma e il robot che incontra (nil se si ferma sul terreno o a fine corsa).
+-- Chi spara (me) non si colpisce.
+function M:ray(x, y, angle, range, me)
+	local dx, dy = math.cos(angle) * M.CELL, math.sin(angle) * M.CELL
+	local t = self.terrain
+	for _ = 1, math.ceil(range / M.CELL) do
+		local nx, ny = x + dx, y + dy
+		if t:solid(nx, ny) then return x, y, nil end
+		x, y = nx, ny
+		for _, rb in ipairs(self.robots) do
+			if rb ~= me and not rb.dead and M.hurt_at(rb, x, y, 0) then return x, y, rb end
+		end
+	end
+	return x, y, nil
+end
+
+-- Linea di mira dei colpi dritti: count punti fino al terreno o a fine corsa
+function M:ray_preview(x, y, angle, range, count, pts)
+	pts = pts or {}
+	local ex, ey = self:ray(x, y, angle, range, self.robots[self.current])
+	for i = 1, count do
+		local pt = pts[i] or {}
+		pt.x, pt.y = x + (ex - x) * i / count, y + (ey - y) * i / count
+		pts[i] = pt
+	end
+	return pts
+end
+
+-- Tonante: danno secco a chi è sulla linea; il rinculo spinge chi spara
+-- dalla parte opposta (da terra anche un po' in alto), così si riposiziona
+function M:fire_eagle(angle)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local ex, ey, hit = self:ray(x, y, angle, C.EAGLE.range, rb)
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	local s = C.EAGLE
+	rb.vx, rb.vy = -math.cos(angle) * s.recoil, -math.sin(angle) * s.recoil
+	if rb.grounded then rb.vy = math.max(rb.vy, s.lift) end
+	rb.grounded, rb.knocked, rb.fall_top = false, true, nil
+	self:emit({ type = "eagle", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id })
+	if hit then self:hurt(hit, s.damage, rb) end
+end
+
+local HOOK_LAND_DX = { 0, -8, 8, -16, 16 }
+
+-- Rampino (oggetto a Nucleo, config.HOOK): colpo dritto. Su un robot, quello
+-- resta appeso alla fune (rb.hooked.by) e viene riavvolto verso la mano di chi
+-- tira per config.HOOK.reel pixel, senza danno. Sul terreno è chi tira che
+-- resta appeso (rb.hooked.x, y = il punto colpito) e sale lungo la fune fin
+-- lì, per poi mettersi in piedi sopra la piattaforma colpita.
+function M:fire_hook(angle)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local ex, ey, hit = self:ray(x, y, angle, C.HOOK.range, rb)
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	local dx, dy = math.cos(angle) * M.CELL, math.sin(angle) * M.CELL
+	local anchor = not hit and self.terrain:solid(ex + dx, ey + dy)
+	self:emit({ type = "hook", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id, anchor = anchor })
+	if hit then
+		hit.hooked = { by = rb.id, left = C.HOOK.reel }
+		hit.vx, hit.vy = 0, 0
+		hit.grounded, hit.knocked, hit.fall_top = false, true, nil
+	elseif anchor then
+		-- la fune si aggancia dentro la cella piena, così si sa da dove salire
+		rb.hooked = { x = ex + dx, y = ey + dy, left = C.HOOK.range }
+		rb.vx, rb.vy = 0, 0
+		rb.grounded, rb.knocked, rb.fall_top = false, false, nil
+	end
+end
+
+-- Dove sta la mano di chi tira (la fune parte da lì)
+function M.hook_hand(by)
+	return by.x + by.facing * M.MUZZLE * 0.5, by.y + M.SWORD_PIVOT_Y
+end
+
+-- Un tick di fune, al posto della fisica normale del robot: va dritto verso
+-- la mano di chi tira (che intanto può muoversi) o verso il punto agganciato
+-- del terreno, finché la fune non è riavvolta tutta o qualcosa lo ferma. Chi
+-- era tirato cade dov'è; chi è salito su una piattaforma ci si mette sopra.
+function M:update_hooked(rb)
+	local h = rb.hooked
+	local by = h.by and self.robots[h.by]
+	local hx, hy
+	if by then hx, hy = M.hook_hand(by) else hx, hy = h.x, h.y end
+	local cx, cy = rb.x, rb.y + M.ROBOT_H / 2
+	local dx, dy = hx - cx, hy - cy
+	local dist = math.sqrt(dx * dx + dy * dy)
+	local step = math.min((by and C.HOOK.speed or C.HOOK.climb_speed) * M.DT, h.left, dist)
+	local stopped = (by and by.dead) or dist < 1
+	if not stopped then
+		local ux, uy = dx / dist, dy / dist
+		local n = math.max(1, math.ceil(step))
+		for _ = 1, n do
+			local nx, ny = rb.x + ux * step / n, rb.y + uy * step / n
+			if self:robot_collides(nx, ny, rb) then
+				stopped = true
+				break
+			end
+			rb.x, rb.y = nx, ny
+		end
+		h.left = h.left - step
+	end
+	if stopped or h.left <= 0.5 then
+		rb.hooked = nil
+		-- arrivato al terreno (la capsula lo ferma a un passo dal punto): sopra
+		if not by and dist < M.ROBOT_H then self:hook_land(rb, h.x, h.y) end
+		self:emit({ type = "hook_end", robot = rb.id })
+	end
+	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
+end
+
+-- Mette il robot in piedi sopra la piattaforma colpita dal Rampino: dalla
+-- cella agganciata sale nella colonna fino alla prima cella vuota (al massimo
+-- config.HOOK.climb pixel), spostandosi di poco ai lati se lì non ci sta. Se
+-- la cima è troppo in alto (il fianco di un muro), resta dov'è e cade.
+function M:hook_land(rb, ax, ay)
+	local t, c = self.terrain, M.CELL
+	local cx, cy = math.floor(ax / c), math.floor(ay / c)
+	for i = 1, math.ceil(C.HOOK.climb / c) do
+		if t:get(cx, cy + i) == 0 then
+			local y = (cy + i) * c
+			for _, ox in ipairs(HOOK_LAND_DX) do
+				local x = cx * c + c / 2 + ox
+				if not self:robot_collides(x, y, rb) then
+					rb.x, rb.y, rb.vx, rb.vy = x, y, 0, 0
+					return
+				end
+			end
+			return
+		end
+	end
+end
+
+-- Maglio (config.MALLET) -----------------------------------------------------------
+-- Martello a due mani: in aria colpisce sotto i piedi e, se trova qualcosa,
+-- fa rimbalzare in alto chi colpisce (pogo); a terra colpisce davanti.
+
+function M:start_mallet(angle)
+	local rb = self.robots[self.current]
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.mallet = 0
+	rb.mallet_dir = rb.facing
+	self:emit({ type = "mallet", robot = rb.id })
+end
+
+-- Il rettangolo del colpo: sotto i piedi in aria, davanti a terra
+local function mallet_zone(rb)
+	local s = C.MALLET
+	if rb.grounded then
+		local x0 = rb.x + rb.mallet_dir * M.ROBOT_HALF_W
+		local x1 = x0 + rb.mallet_dir * s.reach
+		return math.min(x0, x1), rb.y, math.max(x0, x1), rb.y + M.ROBOT_H
+	end
+	return rb.x - M.ROBOT_HALF_W - s.width, rb.y - s.reach, rb.x + M.ROBOT_HALF_W + s.width, rb.y
+end
+
+local function box_hits_robot(r, x0, y0, x1, y1)
+	return r.x + M.ROBOT_HALF_W >= x0 and r.x - M.ROBOT_HALF_W <= x1 and r.y + M.ROBOT_H >= y0 and r.y <= y1
+end
+
+function M:update_mallet(rb)
+	rb.mallet = rb.mallet + 1
+	if rb.mallet == C.MALLET.hit_tick then
+		local x0, y0, x1, y1 = mallet_zone(rb)
+		local hit = false
+		for _, other in ipairs(self.robots) do
+			if other ~= rb and not other.dead and box_hits_robot(other, x0, y0, x1, y1) then
+				hit = true
+				self:emit({ type = "mallet_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+				self:hurt(other, C.MALLET.damage, rb)
+			end
+		end
+		local c = M.CELL
+		if not rb.grounded and self.terrain:any_solid(math.floor(x0 / c), math.floor(x1 / c), math.floor(y0 / c), math.floor(y1 / c)) then
+			hit = true
+			self:emit({ type = "mallet_hit", robot = rb.id, x = rb.x, y = rb.y - C.MALLET.reach / 2 })
+		end
+		-- in aria, colpito qualcosa, si rimbalza in alto
+		if hit and not rb.grounded then
+			rb.vy, rb.knocked, rb.fall_top = C.MALLET.bounce, false, nil
+		end
+	end
+	if rb.mallet >= C.MALLET.ticks then rb.mallet, rb.mallet_dir = nil, nil end
+end
+
+-- Affondo (config.LUNGE) -----------------------------------------------------------
+-- Scatto nella direzione della mira che passa attraverso i robot, colpendoli
+-- una volta ciascuno; il terreno lo ferma.
+
+function M:start_lunge(angle)
+	local rb = self.robots[self.current]
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.lunge = C.LUNGE.ticks
+	rb.lunge_vx, rb.lunge_vy = math.cos(angle) * C.LUNGE.speed, math.sin(angle) * C.LUNGE.speed
+	rb.lunge_hit = {}
+	rb.grounded, rb.knocked = false, false
+	self:emit({ type = "lunge", robot = rb.id, angle = angle })
+end
+
+-- Un tick di scatto: al posto della fisica normale del robot (update_robot)
+function M:update_lunge(rb)
+	local mx, my = rb.lunge_vx * M.DT, rb.lunge_vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
+	local stopped = false
+	for _ = 1, steps do
+		local nx, ny = rb.x + mx / steps, rb.y + my / steps
+		if self:terrain_collides(nx, ny) then
+			stopped = true
+			break
+		end
+		rb.x, rb.y = nx, ny
+		local other = self:robot_at(rb.x, rb.y, rb)
+		if other and not rb.lunge_hit[other.id] then
+			rb.lunge_hit[other.id] = true
+			self:emit({ type = "lunge_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+			self:hurt(other, C.LUNGE.damage, rb)
+		end
+	end
+	rb.lunge = rb.lunge - 1
+	if stopped or rb.lunge <= 0 then
+		-- lo slancio che resta: oltre un bordo si vola, contro il terreno ci si ferma
+		local keep = stopped and 0 or C.LUNGE.keep
+		rb.vx, rb.vy = rb.lunge_vx * keep, rb.lunge_vy * keep
+		rb.lunge, rb.lunge_hit, rb.lunge_vx, rb.lunge_vy = nil, nil, nil, nil
+		rb.fall_top = nil
+	end
+	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
 -- Lama di Nucleo ----------------------------------------------------------------
@@ -1631,6 +1892,13 @@ function M:use_tool(kind, fire)
 		self:emit({ type = "parachute", robot = rb.id })
 		return
 	end
+	if kind == "hook" then
+		-- il Rampino costa Nucleo a ogni lancio
+		rb.nucleo = rb.nucleo - rb.stats.hook_cost
+		rb.nucleo_spent = rb.nucleo_spent + rb.stats.hook_cost
+		self:fire_hook(fire.angle)
+		return
+	end
 	if kind == "shield" then
 		-- lo scudo delle casse si usa pagando il Nucleo
 		rb.nucleo = rb.nucleo - rb.stats.shield_cost
@@ -1748,6 +2016,7 @@ end
 
 -- Il robot può usare quest'arma? Le armi delle casse hanno colpi contati.
 function M.has_weapon(rb, weapon)
+	if M.SECONDARY[weapon] then return weapon == "sword" or weapon == rb.secondary end
 	if M.FREE_WEAPONS[weapon] then return true end
 	return (rb.ammo[weapon] or 0) > 0
 end
@@ -1771,6 +2040,11 @@ function M:preview(angle, power, count, every, pts, weapon)
 		gravity = M.GRAVITY * M.SHARD_GRAVITY
 	elseif weapon == "sniper" then
 		return self:sniper_preview(x, y, angle, count, pts)
+	elseif weapon == "eagle" or weapon == "hook" then
+		return self:ray_preview(x, y, angle, (weapon == "eagle" and C.EAGLE or C.HOOK).range, count, pts)
+	elseif weapon == "lunge" then
+		-- lo scatto: dal centro del robot, lungo quanto l'Affondo
+		return self:ray_preview(rb.x, rb.y + M.ROBOT_H / 2, angle, C.LUNGE.speed * C.LUNGE.ticks / 60, count, pts)
 	end
 	pts = pts or {}
 	local n = 0
@@ -1926,6 +2200,8 @@ function M:can_use(weapon)
 		-- solo in aria
 		if rb.grounded then return false end
 		return rb.parachute or rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost
+	elseif weapon == "hook" then
+		return rb.nucleo >= rb.stats.hook_cost
 	elseif weapon == "shield" then
 		return not rb.shield and rb.ammo.shield > 0 and rb.nucleo >= rb.stats.shield_cost
 	elseif M.TOOLS[weapon] then
@@ -1953,6 +2229,12 @@ function M:attack(weapon, fire)
 	if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
 	if weapon == "sword" then
 		self:swing_sword(fire.angle)
+	elseif weapon == "eagle" then
+		self:fire_eagle(fire.angle)
+	elseif weapon == "mallet" then
+		self:start_mallet(fire.angle)
+	elseif weapon == "lunge" then
+		self:start_lunge(fire.angle)
 	else
 		if weapon == "punch" then
 			self:start_punch(fire.angle)
@@ -2072,6 +2354,10 @@ function M:step(input)
 		if rb.punch then
 			if rb.dead then rb.punch, rb.punch_dir = nil, nil else self:update_punch(rb) end
 		end
+		if rb.mallet then
+			if rb.dead then rb.mallet, rb.mallet_dir = nil, nil else self:update_mallet(rb) end
+		end
+		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked = nil, nil, nil end
 	end
 	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
@@ -2121,7 +2407,7 @@ function M:step(input)
 			if o.flying then still = false end
 		end
 		for _, rb in ipairs(self.robots) do
-			if not rb.dead and (not rb.grounded or rb.swing or rb.punch) then still = false end
+			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.hooked or rb.mallet) then still = false end
 		end
 		self.settle = still and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then

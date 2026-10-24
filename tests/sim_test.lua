@@ -676,36 +676,232 @@ do
 	local sp = math.sqrt(b.vx * b.vx + b.vy * b.vy)
 	check(sp <= config.SNIPER.push + config.SNIPER.lift + 1, "con una spinta moderata")
 
-	-- dritto per drop_after secondi, poi cala
+	-- parte veloce e quasi dritto, poi frena e cala sempre di più
 	local d = game.new(42, "isole", { ammo = { sniper = 1 } })
 	run(d, 60)
 	local da = d.robots[1]
 	d.robots[2].x = -1000
-	place(da, 200, sky_spot(d, 500, 300))
+	local dy = sky_spot(d, 500, 300)
+	place(da, 200, dy)
+	d.terrain:rect(0, dy - 200, 1280, 260, 0)  -- cielo libero davanti
 	d:step({ fire = { angle = 0, power = 1, weapon = "sniper" } })
 	local p = d.projectile
-	run(d, math.floor(config.SNIPER.drop_after * 60) - 2)
-	check(d.projectile == p and p.vy == 0, "all'inizio va dritto")
-	run(d, 20)
-	check(d.projectile == p and p.vy < 0, "poi cala")
+	run(d, 10)
+	check(d.projectile == p and p.vy > -40 and p.vx > game.SNIPER_SPEED * 0.9, "all'inizio va quasi dritto e veloce")
+	local vy10 = p.vy
+	run(d, 30)
+	check(d.projectile == p and p.vy < vy10 - 100 and p.vx < game.SNIPER_SPEED * 0.85, "poi cala sempre di più e frena")
 
 	-- verso il terreno rimbalza (non scava), e dopo l'ultimo rimbalzo si ferma
 	local r = game.new(42, "isole", { ammo = { sniper = 1 } })
 	run(r, 60)
 	local cells = solid_count(r.terrain)
 	r:step({ fire = { angle = math.rad(-60), power = 1, weapon = "sniper" } })
-	local bounces = 0
+	local bounces, speeds = 0, {}
 	for _ = 1, game.SNIPER_LIFE + 5 do
 		r:step()
-		for _, e in ipairs(r:pop_events()) do if e.type == "sniper_bounce" then bounces = bounces + 1 end end
+		for _, e in ipairs(r:pop_events()) do
+			if e.type == "sniper_bounce" then
+				bounces = bounces + 1
+				local pr = r.projectile
+				speeds[bounces] = math.sqrt(pr.vx * pr.vx + pr.vy * pr.vy)
+			end
+		end
 		if not r.projectile then break end
 	end
 	check(bounces >= 1 and bounces <= config.SNIPER.bounces, "rimbalza sul terreno, al massimo " .. config.SNIPER.bounces .. " volte (" .. bounces .. ")")
+	local slower = true
+	for i = 2, bounces do if speeds[i] >= speeds[i - 1] then slower = false end end
+	check(slower, "come una palla: a ogni rimbalzo è più lento")
 	check(solid_count(r.terrain) == cells, "il cecchino non scava")
 
 	-- la linea di mira piega al primo rimbalzo
 	local pts = r:preview(math.rad(-60), 1, 30, 4, nil, "sniper")
 	check(#pts == 30 and pts[30].y > pts[1].y - 200, "la mira del cecchino segue il rimbalzo")
+end
+
+-- Secondarie da lontano e Affondo: Tonante, Rampino, Affondo --------------------
+do
+	-- Tonante: colpo dritto e istantaneo, danno secco senza effetti, rinculo su chi spara
+	local q = game.new(42, "isole", { secondary = "eagle" })
+	run(q, 60)
+	local a, b = q.robots[1], q.robots[2]
+	local sy = sky_spot(q, 640, 80)
+	place(a, 600, sy)
+	place(b, 700, sy)
+	local hp = b.hp
+	q:step({ fire = { angle = 0, power = 1, weapon = "eagle" } })
+	local ev
+	for _, e in ipairs(q:pop_events()) do if e.type == "eagle" then ev = e end end
+	check(ev and ev.target == 2 and hp - b.hp == config.EAGLE.damage, "il Tonante colpisce subito e fa danno secco")
+	check(next(b.status) == nil and b.vx == 0, "senza effetti di stato e senza spingere il bersaglio")
+	check(a.vx < 0 and a.knocked and not a.grounded, "il rinculo spinge chi spara dalla parte opposta")
+	check(not q.projectile, "senza proiettile in volo")
+
+	-- da terra il rinculo solleva: si cambia posto
+	local d = game.new(42, "isole", { secondary = "eagle" })
+	run(d, 60)
+	local da = d.robots[1]
+	local x0 = da.x
+	d:step({ fire = { angle = math.pi, power = 1, weapon = "eagle" } })
+	check(da.vy >= config.EAGLE.lift, "da terra il rinculo solleva")
+	run(d, 20)
+	check(da.x > x0 + 40 and not da.grounded, "e si vola dalla parte opposta alla mira")
+
+	-- il terreno ferma il colpo, entro la portata
+	local t = game.new(42, "isole", { secondary = "eagle" })
+	run(t, 60)
+	t.robots[2].x = -1000
+	t:step({ fire = { angle = math.rad(-90), power = 1, weapon = "eagle" } })
+	for _, e in ipairs(t:pop_events()) do if e.type == "eagle" then ev = e end end
+	check(ev and ev.target == nil and ev.y0 - ev.y1 < 40, "il terreno ferma il colpo")
+	local pts = t:preview(0, 1, 12, 4, nil, "eagle")
+	check(#pts == 12 and math.abs(pts[12].x - pts[1].x) <= config.EAGLE.range, "la linea di mira è dritta e non supera la portata")
+
+	-- Rampino: oggetto a Nucleo, non un attacco; riavvolge il bersaglio dritto
+	-- verso la mano, per reel pixel, poi lo molla
+	local h = game.new(42, "isole")
+	run(h, 60)
+	local ha, hb = h.robots[1], h.robots[2]
+	sy = sky_spot(h, 640, 120)
+	place(ha, 560, sy)
+	place(hb, 740, sy)
+	hp = hb.hp
+	local nucleo = ha.nucleo
+	check(h:can_use("hook") and nucleo >= ha.stats.hook_cost, "il Rampino si usa col Nucleo")
+	h:step({ fire = { angle = 0, power = 1, weapon = "hook" } })
+	for _, e in ipairs(h:pop_events()) do if e.type == "hook" then ev = e end end
+	check(ev and ev.target == 2 and hb.hp == hp, "il Rampino aggancia senza fare danno")
+	check(ha.nucleo == nucleo - ha.stats.hook_cost and not h.used.primary and not h.used.secondary and h.window == 0,
+		"costa Nucleo e non conta come attacco")
+	check(hb.hooked and hb.hooked.by == 1 and ha.vx == 0, "il bersaglio resta appeso alla fune, chi tira no")
+	local y_start = hb.y
+	run(h, 10)
+	check(hb.x < 740 - 40 and math.abs(hb.y - y_start) < 2 and hb.hooked, "viene tirato dritto, senza cadere")
+	local ended
+	for _ = 1, 30 do
+		h:step()
+		for _, e in ipairs(h:pop_events()) do if e.type == "hook_end" then ended = true end end
+		if not hb.hooked then break end
+	end
+	check(ended and not hb.hooked and math.abs((740 - hb.x) - config.HOOK.reel) < 2, "dopo reel pixel di fune viene mollato")
+	run(h, 5)
+	check(hb.y < y_start and hb.vx == 0, "e cade dritto dov'è")
+	-- tirato da sotto sale fino a chi tira; un robot vicino ferma la fune
+	local u = game.new(42, "isole")
+	run(u, 60)
+	local ua, ub = u.robots[1], u.robots[2]
+	sy = sky_spot(u, 640, 120)
+	place(ua, 640, sy)
+	place(ub, 640 + 30, sy - 60)
+	u:step({ fire = { angle = math.atan2(-60 + game.ROBOT_H / 2, 30), power = 1, weapon = "hook" } })
+	check(ub.hooked, "aggancia anche in diagonale")
+	for _ = 1, 40 do
+		u:step()
+		if not ub.hooked then break end
+	end
+	check(not ub.hooked and ub.y > sy - 60 + 20 and math.abs(ub.x - ua.x) < 2 * game.ROBOT_HALF_W + 2,
+		"da sotto lo tira su fino a chi spara e lo ferma addosso")
+	-- sul terreno è chi tira che sale lungo la fune e si mette sopra la
+	-- piattaforma colpita: da sotto una piattaforma si finisce in piedi sopra
+	local m = game.new(42, "isole")
+	run(m, 60)
+	local ma, mb = m.robots[1], m.robots[2]
+	mb.x = -1000
+	-- una colonna di cielo libero con dentro una piattaforma a sé, vuoto sotto e sopra
+	m.terrain:rect(560, 100, 160, 500, 0)
+	m.terrain:rect(600, 300, 80, 16, 1)
+	place(ma, 640, 240)
+	local y0 = ma.y
+	m:step({ fire = { angle = math.rad(90), power = 1, weapon = "hook" } })
+	for _, e in ipairs(m:pop_events()) do if e.type == "hook" then ev = e end end
+	check(ev and ev.anchor and not ev.target and ma.hooked and ma.hooked.x == 640, "sul terreno la fune si aggancia e chi tira resta appeso")
+	for _ = 1, 40 do
+		m:step()
+		if not ma.hooked then break end
+	end
+	run(m, 5)
+	check(not ma.hooked and math.abs(ma.y - 316) < 4 and math.abs(ma.x - 640) < 10 and ma.grounded,
+		"sale lungo la fune e si mette in piedi sopra la piattaforma")
+	-- sparando nel vuoto non succede niente
+	place(ma, 640, 340)
+	m:step({ fire = { angle = math.rad(90), power = 1, weapon = "hook" } })
+	check(not ma.hooked and ma.vx == 0, "nel vuoto il Rampino non aggancia niente")
+
+	-- Maglio: in aria colpisce sotto i piedi e fa rimbalzare in alto; a terra davanti
+	local g1 = game.new(42, "isole", { secondary = "mallet" })
+	run(g1, 60)
+	local ga, gb = g1.robots[1], g1.robots[2]
+	sy = sky_spot(g1, 640, 120)
+	place(ga, 640, sy)
+	place(gb, 640, sy - game.ROBOT_H - config.MALLET.reach + 4)
+	hp = gb.hp
+	g1:step({ fire = { angle = math.rad(-90), power = 1, weapon = "mallet" } })
+	check(ga.mallet == 0, "il Maglio parte")
+	local mh
+	for _ = 1, config.MALLET.hit_tick do
+		g1:step()
+		for _, e in ipairs(g1:pop_events()) do if e.type == "mallet_hit" then mh = e end end
+	end
+	check(mh and mh.target == 2 and hp - gb.hp == config.MALLET.damage and next(gb.status) == nil, "in aria colpisce il robot sotto, danno secco")
+	check(ga.vy >= config.MALLET.bounce - 20 and gb.vx == 0, "e chi colpisce rimbalza in alto, il colpito non viene spinto")
+	run(g1, config.MALLET.ticks)
+	check(ga.mallet == nil, "il colpo finisce")
+	-- sul terreno rimbalza lo stesso; a vuoto no
+	local g2 = game.new(42, "isole", { secondary = "mallet" })
+	run(g2, 60)
+	local g2a = g2.robots[1]
+	g2.robots[2].x = -1000
+	local gy = g2a.y
+	place(g2a, g2a.x, gy + config.MALLET.reach - 4)
+	g2:step({ fire = { angle = math.rad(-90), power = 1, weapon = "mallet" } })
+	run(g2, config.MALLET.hit_tick)
+	check(g2a.vy > 0, "sul terreno sotto i piedi rimbalza in alto (pogo)")
+	local g3 = game.new(42, "isole", { secondary = "mallet" })
+	run(g3, 60)
+	local g3a = g3.robots[1]
+	g3.robots[2].x = -1000
+	place(g3a, g3a.x, sky_spot(g3, g3a.x, 40))
+	g3:step({ fire = { angle = math.rad(-90), power = 1, weapon = "mallet" } })
+	run(g3, config.MALLET.hit_tick)
+	check(g3a.vy < 0, "a vuoto in aria non rimbalza")
+	-- a terra colpisce davanti e non si muove
+	local g4 = game.new(42, "isole", { secondary = "mallet" })
+	run(g4, 60)
+	local g4a, g4b = g4.robots[1], g4.robots[2]
+	place(g4b, g4a.x + 2 * game.ROBOT_HALF_W + config.MALLET.reach - 4, g4a.y)
+	g4b.grounded = true
+	hp = g4b.hp
+	g4:step({ fire = { angle = 0, power = 1, weapon = "mallet" } })
+	run(g4, config.MALLET.hit_tick)
+	check(hp - g4b.hp == config.MALLET.damage and g4a.grounded, "a terra colpisce davanti e resta a terra")
+	check(not g4:can_use("sword") and g4:can_use("missile"), "Maglio e Lama sono tutte e due secondarie")
+
+	-- Affondo: scatto che attraversa il robot davanti e lo colpisce una volta
+	local l = game.new(42, "isole", { secondary = "lunge" })
+	run(l, 60)
+	local la, lb = l.robots[1], l.robots[2]
+	sy = sky_spot(l, 640, 120)
+	place(la, 600, sy)
+	place(lb, 640, sy)
+	hp = lb.hp
+	local x1 = la.x
+	l:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
+	check(la.lunge == config.LUNGE.ticks and la.lunge_vx > 0, "l'Affondo parte")
+	run(l, config.LUNGE.ticks)
+	check(la.lunge == nil and la.x > lb.x + 10, "e passa oltre il robot davanti")
+	check(hp - lb.hp == config.LUNGE.damage and next(lb.status) == nil, "colpendolo una volta, senza effetti")
+	check(la.vx > 0 and la.vx < config.LUNGE.speed, "alla fine resta un po' di slancio")
+	-- il terreno lo ferma
+	local w = game.new(42, "isole", { secondary = "lunge" })
+	run(w, 60)
+	local wa = w.robots[1]
+	local y1 = wa.y
+	w:step({ fire = { angle = math.rad(-90), power = 1, weapon = "lunge" } })
+	run(w, 2)
+	check(wa.lunge == nil and wa.y >= y1 - 2, "il terreno ferma l'Affondo")
+	-- Affondo e Lama sono tutte e due secondarie: una per turno
+	check(not w:can_use("sword") and w:can_use("missile"), "dopo l'Affondo niente Lama nello stesso turno")
 end
 
 -- Effetti di stato: bruciatura, rallentamento, armatura incrinata ------------------
@@ -800,6 +996,27 @@ do
 		"allo scadere chi non ha scelto prende la prima arma libera")
 	local g = game.new(7, "isole", { players = players })
 	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in partita l'arma scelta ha i suoi colpi")
+
+	-- il secondo ventaglio: le secondarie, una a testa, illimitate
+	check(#d.offer2 == #game.DRAFT_SECONDARIES and game.SECONDARY[d.offer2[1]], "il ventaglio delle secondarie")
+	local e = draft.new(9, config.MODES["2v2"])
+	local s1, s2 = e.offer2[1], e.offer2[2]
+	check(not draft.done(e, 1) and draft.pick(e, 1, s1) and not draft.done(e, 1), "la secondaria da sola non basta")
+	check(draft.pick(e, 1, e.offer[1]) and draft.done(e, 1), "primaria e secondaria: ha finito")
+	check(not draft.valid(e, 3, s1) and draft.valid(e, 2, s1), "anche la secondaria del compagno non si prende")
+	draft.pick(e, 3, s2)
+	draft.pick(e, 3, e.offer[2])
+	check(draft.swap(e, 1, 3) and e.picks2[1] == s2 and e.picks[1] == e.offer[2], "lo scambio porta primaria e secondaria")
+	local ep = draft.finish(e)
+	check(ep[2].secondary == e.offer2[1] and ep[4].secondary ~= ep[2].secondary, "allo scadere la prima secondaria libera")
+	local eg = game.new(9, "isole", { players = ep })
+	local r1 = eg.robots[1]
+	check(r1.secondary == s2 and game.has_weapon(r1, s2) and game.has_weapon(r1, "sword") and not game.has_weapon(r1, s1),
+		"in partita hai la Lama e la secondaria scelta, non le altre")
+	check(game.FREE_WEAPONS[s2] and eg:can_use(s2) and eg:can_use("sword"), "le secondarie non consumano colpi")
+	eg:step({ fire = { angle = 0, power = 1, weapon = s2 } })
+	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword") and eg:can_use("missile"),
+		"usata la secondaria scelta, la Lama non si usa più nel turno")
 
 	-- tutti contro tutti: doppioni ammessi
 	local f = draft.new(3, config.MODES.ffa)

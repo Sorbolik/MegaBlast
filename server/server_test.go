@@ -229,19 +229,25 @@ func TestOnlineMatch(t *testing.T) {
 	b := dial(t, ctx, url)
 	b.send(hello)
 
-	// Prima la scelta dell'arma: il giocatore 1 prende la prima del ventaglio,
-	// il 2 non sceglie e allo scadere riceve la prima arma libera
+	// Prima la scelta delle armi: il giocatore 1 prende la prima primaria e la
+	// seconda secondaria dei ventagli, il 2 non sceglie e allo scadere riceve
+	// le prime libere
 	d := a.waitFor(`"draft"`)
-	if len(d["offer"].([]any)) != 3 || len(d["players"].([]any)) != 2 || d["tok"] == "" {
+	if len(d["offer"].([]any)) != 3 || len(d["offer2"].([]any)) != 3 || len(d["players"].([]any)) != 2 || d["tok"] == "" {
 		t.Fatalf("scelta inattesa: %v", d)
 	}
 	w := d["offer"].([]any)[0].(string)
+	w2 := d["offer2"].([]any)[1].(string)
 	a.send(`{"t":"pick","w":"` + w + `"}`)
 	if d := b.waitFor(`"draft"`); d["you"].(float64) != 2 {
 		t.Fatalf("scelta inattesa: %v", d)
 	}
 	if d := b.waitFor(`"draft"`); d["p"].([]any)[0] != w {
 		t.Fatalf("la scelta del giocatore 1 non arriva al 2: %v", d)
+	}
+	a.send(`{"t":"pick","w":"` + w2 + `"}`)
+	if d := b.waitFor(`"draft"`); d["p2"].([]any)[0] != w2 {
+		t.Fatalf("la secondaria del giocatore 1 non arriva al 2: %v", d)
 	}
 	sa := a.waitFor(`"start"`)
 	sb := b.waitFor(`"start"`)
@@ -253,7 +259,8 @@ func TestOnlineMatch(t *testing.T) {
 	first := b.waitFor(`"state"`)
 	r0 := first["r"].([]any)[0].(map[string]any)
 	x0 := r0["x"].(float64)
-	// lo stato porta casse, schegge e colpi: il giocatore 1 ha un colpo dell'arma scelta
+	// lo stato porta casse, schegge e colpi: il giocatore 1 ha i colpi
+	// (config.DRAFT_SHOTS, 2) della primaria scelta e la sua secondaria
 	r1 := first["r"].([]any)[1].(map[string]any)
 	colpi := func(r map[string]any) (n float64) {
 		for _, k := range []string{"ag", "as", "ap", "ac"} {
@@ -262,8 +269,11 @@ func TestOnlineMatch(t *testing.T) {
 		return
 	}
 	key := map[string]string{"grenade": "ag", "shards": "as", "punch": "ap", "sniper": "ac"}[w]
-	if _, ok := first["c"].([]any); !ok || r0[key] != 1.0 || colpi(r0) != 1 || colpi(r1) != 1 {
+	if _, ok := first["c"].([]any); !ok || r0[key] != 2.0 || colpi(r0) != 2 || colpi(r1) != 2 {
 		t.Fatalf("stato senza casse o colpi scelti: %v", first)
+	}
+	if r0["sw"] != w2 || r1["sw"] != d["offer2"].([]any)[0].(string) {
+		t.Fatalf("secondarie scelte sbagliate: %v %v", r0["sw"], r1["sw"])
 	}
 	// con la fisica di Blastron si cammina piano (28 px/s): un secondo basta
 	a.send(`{"t":"in","l":false,"r":true}`)

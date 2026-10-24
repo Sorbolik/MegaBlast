@@ -19,14 +19,16 @@ const (
 //
 //	{"t":"hello","v":2,"mode":"1v1"}   primo messaggio: versione del protocollo e modalità
 //	{"t":"hello","v":2,"tok":"..."}    oppure: torno nella partita da cui sono caduto
-//	{"t":"pick","w":"shards"}           scelta d'inizio partita (si può cambiare fino allo scadere)
+//	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria e una secondaria
+//	                                    (l'arma dice la categoria; si può cambiare fino allo scadere)
 //	{"t":"swap","to":3}                 propone lo scambio delle scelte al compagno 3 (se lui
 //	                                    lo propone a sua volta, lo scambio si fa)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
 //
 // "j" dice se il salto è ancora tenuto premuto: lasciandolo mentre si sale il salto è corto.
-// "w" è l'arma: "missile" (se manca), "sword", "teleport" o un'arma delle casse
-// ("grenade", "shards", "punch", "sniper": la simulazione la usa solo se il robot ha colpi).
+// "w" è l'arma: "missile" (se manca), "sword", "teleport", una secondaria scelta
+// all'inizio ("eagle", "mallet", "lunge") o un'arma delle casse ("grenade",
+// "shards", "punch", "sniper": la simulazione la usa solo se il robot ha colpi).
 type clientMsg struct {
 	T    string  `json:"t"`
 	L    bool    `json:"l"`

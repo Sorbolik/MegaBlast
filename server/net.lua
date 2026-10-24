@@ -56,6 +56,8 @@ function N.snapshot(g)
 		-- n: Nucleo, ft: teletrasporti gratis rimasti, mh: vita massima, tu: turni giocati, pt: punti
 		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute aperto;
 		-- fp: paracadute gratis; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)
+		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna); lu: tick rimasti dell'Affondo;
+		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy); ml: tick del colpo di Maglio
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
 			n = rb.nucleo, ft = rb.free_teleports, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
 			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, fp = rb.free_parachutes,
@@ -64,7 +66,9 @@ function N.snapshot(g)
 				+ 100 * (rb.status.cracked and rb.status.cracked.turns or 0),
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
 			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
-			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch, ac = rb.ammo.sniper }
+			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch, ac = rb.ammo.sniper,
+			sw = rb.secondary or "", lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
+			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0 }
 	end
 	-- k: "missile", "grenade" o "sniper", fu: tick prima che l'Uovo scoppi
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
@@ -137,11 +141,15 @@ function N.draft_finish(d)
 	return draft.finish(d)
 end
 
--- Il ventaglio e le scelte fatte finora (p[i] = arma del robot i, o "")
+-- I due ventagli (offer: primarie, offer2: secondarie) e le scelte fatte
+-- finora (p[i], p2[i] = armi del robot i, o "")
 function N.draft_state(d)
-	local picks = {}
-	for i = 1, #d.players do picks[i] = d.picks[i] or "" end
-	return { t = "draft", offer = d.offer, p = picks }
+	local picks, picks2 = {}, {}
+	for i = 1, #d.players do
+		picks[i] = d.picks[i] or ""
+		picks2[i] = d.picks2[i] or ""
+	end
+	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = picks, p2 = picks2 }
 end
 
 return N

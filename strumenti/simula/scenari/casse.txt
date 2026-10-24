@@ -1,6 +1,7 @@
 # Armi delle casse e casse. Per la prova ogni robot parte con 2 colpi di ogni
 # arma delle casse e cade una cassa a ogni turno (nella partita vera: 0 colpi,
-# una cassa ogni 3 turni).
+# una cassa ogni 3 turni). Con il Rampino e il paracadute la barra ha undici
+# slot: Lanciarune 150, Uovo 244, Schegge 338, Pugno 432, Cecchino 526 (y = 62).
 imposta prova_armi 2
 imposta prova_casse 1
 
@@ -11,7 +12,7 @@ aspetta 0.5
 foto 01_barra_armi
 
 # Rosso: Uovo di Fiamma, rimbalza e scoppia dopo 3 secondi
-tocca 291 62                        # Uovo di Fiamma
+tocca 244 62                        # Uovo di Fiamma
 aspetta 0.3
 zoom 02_uovo_in_mano
 mira 120 80 0.5 03_mira_uovo
@@ -27,7 +28,7 @@ aspetta_evento crate 15
 aspetta 1.5
 foto 06_cassa_che_cade
 aspetta_stato turno=2 fase=aim 10
-tocca 385 62                        # Sciame di Schegge
+tocca 338 62                        # Sciame di Schegge
 aspetta 0.3
 zoom 07_sciame_in_mano
 mira -200 40 0.4
@@ -40,7 +41,7 @@ foto 09_dopo_raffica
 
 # Rosso: Pugno del Titano
 aspetta_stato turno=1 fase=aim 15
-tocca 479 62                        # Pugno del Titano
+tocca 432 62                        # Pugno del Titano
 aspetta 0.3
 zoom 10_pugno_in_mano
 mira 100 0 0.2

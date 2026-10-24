@@ -50,6 +50,22 @@ key_trigger {
   input: KEY_5
   action: "arma5"
 }
+key_trigger {
+  input: KEY_6
+  action: "arma6"
+}
+key_trigger {
+  input: KEY_7
+  action: "arma7"
+}
+key_trigger {
+  input: KEY_8
+  action: "arma8"
+}
+key_trigger {
+  input: KEY_9
+  action: "arma9"
+}
 mouse_trigger {
   input: MOUSE_BUTTON_LEFT
   action: "touch"
