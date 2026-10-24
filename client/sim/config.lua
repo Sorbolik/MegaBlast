@@ -69,6 +69,25 @@ C.CRATE_CONTENTS = {
 -- verso l'alto, per staccarlo da terra). Con un trampolino sotto i piedi vola via.
 C.SNIPER = { damage = 25, push = 280, lift = 80, bounces = 3, drop_after = 0.6, drop = 0.35, bounce_keep = 0.8 }
 
+-- Secondarie (scelta di Sergio del 24 ottobre 2026): danno secco, nessun
+-- effetto di stato, illimitate; ognuna sposta chi la usa (o il bersaglio) a
+-- modo suo. La Lama è in sim/game.lua (SWORD_*); queste tre si scelgono una a
+-- testa all'inizio della partita. Distanze in pixel, velocità in pixel al secondo.
+-- Tonante (pistola pesante): colpo dritto e istantaneo fino a range, si ferma
+-- al primo robot o terreno. Il rinculo spinge chi spara dalla parte opposta
+-- alla mira a recoil; da terra lo solleva anche di lift, così si riposiziona
+-- (spara in basso in aria per salire, verso il vuoto per tornare sulla piattaforma).
+C.EAGLE = { damage = 25, range = 300, recoil = 300, lift = 120 }
+-- Rampino: colpo dritto e istantaneo fino a range; il robot agganciato viene
+-- tirato verso chi spara a pull, sollevato di lift: vola per circa
+-- pull * 2 * lift / gravità pixel (120 con la gravità base), quindi da vicino
+-- ti passa oltre, da lontano cade a metà strada. Sul terreno non fa niente.
+C.HOOK = { damage = 10, range = 220, pull = 320, lift = 110 }
+-- Affondo: scatto nella direzione della mira a speed per ticks tick, passando
+-- attraverso i robot (danno una volta a ognuno); il terreno lo ferma. Alla
+-- fine resta keep della velocità: oltre un bordo si vola.
+C.LUNGE = { damage = 30, speed = 520, ticks = 12, keep = 0.35 }
+
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.
 -- Trappola: si posa ai piedi e si arma dal turno dopo; un avversario che ci
@@ -93,14 +112,17 @@ C.HEAL = { every = 2, max = 2, hp = 40, r = 26 }
 -- trappole e trampolini in mappa al massimo, tutti insieme
 C.MAX_PLACED = 8
 
--- Scelta d'inizio partita (sim/draft.lua): un ventaglio di DRAFT_OFFER armi
--- delle casse, uguale per tutti; ognuno ne prende una e ne ha DRAFT_SHOTS
--- colpi. Due compagni non possono prendere la stessa; nel tutti contro tutti
--- i doppioni vanno bene. Allo scadere di DRAFT_SECONDS chi non ha scelto
--- prende la prima arma libera del ventaglio.
+-- Scelta d'inizio partita (sim/draft.lua): due ventagli uguali per tutti, uno
+-- di DRAFT_OFFER primarie delle casse e uno delle secondarie (game.DRAFT_SECONDARIES).
+-- Ognuno prende una primaria (ne ha DRAFT_SHOTS colpi) e una secondaria
+-- (illimitata). Due compagni non possono prendere la stessa; nel tutti contro
+-- tutti i doppioni vanno bene. Allo scadere di DRAFT_SECONDS chi non ha scelto
+-- prende la prima arma libera di ogni ventaglio.
+-- Sergio (24 ottobre 2026): 2 colpi, con 3 turni a testa uno solo si consuma
+-- al primo turno utile.
 C.DRAFT_SECONDS = 15
 C.DRAFT_OFFER = 3
-C.DRAFT_SHOTS = 1
+C.DRAFT_SHOTS = 2
 
 -- Effetti di stato (strategia 9): durano fino alla fine del prossimo turno di
 -- chi li subisce (stats.status_turns di chi colpisce) e si vedono sul robot.

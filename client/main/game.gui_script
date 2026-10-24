@@ -48,7 +48,8 @@ local ACTION_TELE = hash("teleport")
 local ACTION_ZOOM = hash("zoom")
 local ACTION_ZOOM_IN = hash("zoom_avanti")
 local ACTION_ZOOM_OUT = hash("zoom_indietro")
-local ACTION_WEAPON = { [hash("arma1")] = 1, [hash("arma2")] = 2, [hash("arma3")] = 3, [hash("arma4")] = 4, [hash("arma5")] = 5 }
+local ACTION_WEAPON = {}
+for i = 1, 9 do ACTION_WEAPON[hash("arma" .. i)] = i end
 
 -- Squadre: Cremisi e Cobalto della bibbia grafica, poi Verde e Oro per il
 -- tutti contro tutti. La palette sta solo in ui/ui.lua
@@ -57,15 +58,20 @@ local TEAM_COLORS = ui.C.SQUADRA
 local WHITE = vmath.vector4(1, 1, 1, 1)
 
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
--- Tre gruppi, ognuno col suo nome sopra: le armi primarie (Lanciarune sempre,
--- le altre dalle casse), la secondaria (la Lama, sempre) e gli oggetti tattici
--- (trappola, scudo, trampolino, paracadute): toccarli li usa subito.
+-- Tre gruppi, ognuno col suo nome sopra e il suo colore (brace le primarie,
+-- acciaio le secondarie): le primarie (Lanciarune sempre, le altre dalle
+-- casse), le secondarie (la Lama sempre, più quella scelta all'inizio) e gli
+-- oggetti tattici (trappola, scudo, trampolino, paracadute): toccarli li usa
+-- subito. Usata un'arma, tutto il suo gruppo si spegne: il prossimo colpo è
+-- dell'altro colore.
 -- effetti di stato: la scritta che sale sul robot quando arrivano e il nome
 -- sotto la sua vita, coi turni che mancano (senza accenti: il font non li ha)
 local STATUS_TEXT = { burn = "BRUCIA!", slow = "RALLENTATO!", cracked = "ARMATURA INCRINATA!" }
 local STATUS_NAME = { { "burn", "BRUCIA" }, { "slow", "LENTO" }, { "cracked", "INCRINATO" } }
-local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "trap", "shield", "trampoline", "parachute" }
-local BAR_GROUPS = { "PRIMARIE", "SECONDARIA", "OGGETTI" }
+local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "hook", "lunge",
+	"trap", "shield", "trampoline", "parachute" }
+-- (il main chunk è al limite dei 200 locali di Lua: nome e colore insieme)
+local BAR_GROUPS = { { "PRIMARIE", ui.C.BRACE }, { "SECONDARIE", ui.C.ACCIAIO }, { "OGGETTI", ui.C.LINEA } }
 local function bar_group(w)
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
 end
@@ -79,14 +85,17 @@ local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Sche
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- nomi delle armi nella scelta d'inizio partita
 local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
-	sniper = "Cecchino" }
+	sniper = "Cecchino", eagle = "Tonante", hook = "Rampino", lunge = "Affondo" }
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
-	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Lento, poi cala; rimbalza 3 volte e sbalza dove andava" }
+	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Lento, poi cala; rimbalza 3 volte e sbalza dove andava",
+	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", hook = "Colpo dritto: tira l'avversario verso di te, poco danno",
+	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true }
 local SLOT, SLOT_GAP, GROUP_GAP, BAR_Y = 84, 10, 30, 62
--- bordo degli slot: non disponibile (già usata, o teletrasporto), disponibile, scelto
+-- bordo degli slot: non disponibile (già usata, o teletrasporto), disponibile
+-- (il colore del gruppo), scelto
 local SLOT_BORDO = { [0] = vmath.vector4(1, 0.886, 0.769, 0.06), ui.C.LINEA, ui.C.LUCE }
 -- icona di un'arma già usata in questo turno (si spegne: si vede cosa resta)
 local ICON_USED = vmath.vector4(1, 1, 1, 0.3)
@@ -670,6 +679,28 @@ local function handle_event(self, e)
 	elseif e.type == "trap" then
 		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
 		shock(self, e.x, e.y)
+	elseif e.type == "eagle" or e.type == "hook" then
+		-- colpo dritto: la traccia (bianca, o acciaio per la fune del Rampino)
+		-- dalla canna al punto colpito, che sfuma in un quarto di secondo
+		scoria.fire(self.robots[e.robot].rig, e.type == "eagle" and "missile" or "shards")
+		local n, dx, dy = self.tracer, e.x1 - e.x0, e.y1 - e.y0
+		gui.set_enabled(n, true)
+		gui.cancel_animations(n)
+		gui.set_position(n, vmath.vector3((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2, 0))
+		gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), e.type == "hook" and 1.5 * K or 2.5 * K, 0))
+		gui.set_euler(n, vmath.vector3(0, 0, math.deg(math.atan2(dy, dx))))
+		gui.set_color(n, e.type == "hook" and ui.C.ACCIAIO or WHITE)
+		gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.25, 0, hide_node)
+		if e.target then
+			-- il colpo arriva dalla canna: la spinta del colpito va da lì
+			self.colpo_x, self.colpo_y, self.colpo_t = e.x0, e.y0, self.clock
+			if e.type == "hook" then targa.annuncio(self.robots[e.target].targa, "AGGANCIATO!") end
+		end
+	elseif e.type == "lunge" then
+		scoria.lunge(self.robots[e.robot].rig)
+	elseif e.type == "lunge_hit" then
+		shock(self, e.x, e.y)
+		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
 	elseif e.type == "sniper_bounce" then
 		-- il colpo del cecchino rimbalza goffo: si schiaccia e tremola
 		self.boing = self.clock
@@ -795,6 +826,8 @@ local function apply_state(self, s)
 		rb.swing_base, rb.punch_base = r.sb or 0, r.pb or 0
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
 		rb.ammo.sniper = r.ac or 0
+		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
+		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
 		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
 		rb.shield = (r.sh or 0) > 0 and r.sh or nil
 		rb.parachute = r.pa or false
@@ -1003,9 +1036,12 @@ start_local_match = function(self, picked)
 		local colpi = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local vita = config_int("megablast.prova_vita", 0)
+		-- prova_secondaria = eagle | hook | lunge: tutti hanno quella secondaria
+		local secondaria = config_string("megablast.prova_secondaria", "")
 		opts = {
 			players = opts.players,
 			hp = vita > 0 and vita or nil,
+			secondary = game.SECONDARY[secondaria] and secondaria or nil,
 			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi, sniper = colpi,
 				trap = colpi, shield = colpi, trampoline = colpi } or nil,
 			crate_every = ogni > 0 and ogni or nil,
@@ -1248,24 +1284,30 @@ local function update_bar(self)
 				gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
 				sl.count = count
 			end
-			-- 2: scelta, 1: si può usare, 0: già usata
+			-- 2: scelta, 1: si può usare (bordo del colore del gruppo), 0: già usata
 			local on = ((sl.weapon == self.weapon and not self.tele_armed) or (sl.weapon == "parachute" and rb.parachute)) and 2
 				or ((not turn or g:can_use(sl.weapon)) and 1 or 0)
 			if sl.on ~= on then
-				gui.set_color(sl.bordo, SLOT_BORDO[on])
+				gui.set_color(sl.bordo, on == 1 and BAR_GROUPS[sl.group][2] or SLOT_BORDO[on])
 				if sl.icon then gui.set_color(sl.icon, on == 0 and ICON_USED or WHITE) end
 				gui.set_scale(sl.node, on == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
 				sl.on = on
 			end
 		end
 	end
-	-- il nome di ogni gruppo sopra i suoi slot
+	-- il nome di ogni gruppo sopra i suoi slot, col suo colore; spento quando
+	-- in questo turno l'attacco di quel gruppo è già stato fatto
+	local used = { turn and g.used.primary, turn and g.used.secondary, false }
 	for i, n in ipairs(self.bar_groups) do
 		local gx = from[i] and (from[i] + to[i]) / 2 or false
 		if self.bar_group_x[i] ~= gx then
 			gui.set_enabled(n, gx ~= false)
 			if gx then set_pos(n, gx, BAR_Y + SLOT / 2 + 12) end
 			self.bar_group_x[i] = gx
+		end
+		if self.bar_group_used[i] ~= used[i] then
+			gui.set_color(n, used[i] and ui.C.SPENTO or BAR_GROUPS[i][2])
+			self.bar_group_used[i] = used[i]
 		end
 	end
 end
@@ -1385,6 +1427,14 @@ local function render(self, dt)
 			local dir = rb.punch_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
+		end
+		-- Affondo: la lancia punta nella direzione dello scatto
+		if rb.lunge ~= nil and not rb.dead then
+			weapon = "lunge"
+			if rb.lunge_vx then
+				st.aim = math.atan2(rb.lunge_vy, rb.lunge_vx)
+				st.facing = rb.lunge_vx < 0 and -1 or 1
+			end
 		end
 		-- Lama di Nucleo: durante il fendente il braccio segue l'angolo della lama
 		if rb.swing ~= nil and not rb.dead then
@@ -1586,10 +1636,10 @@ local function render(self, dt)
 		gui.set_color(self.time_bar, bar_color)
 		self.time_bar_w, self.time_bar_c = bar_w, bar_color
 	end
-	-- nell'attesa del secondo attacco la spada lampeggia, se è lei che resta
-	if self.slot_sword then
-		local blink = g.window > 0 and g:can_use("sword") and my_turn(self) and math.sin(self.clock * 12) > 0
-		gui.set_enabled(self.sword_glow, blink and self.slot_sword.have)
+	-- nell'attesa del secondo attacco le secondarie lampeggiano, se sono loro che restano
+	local blink = g.window > 0 and my_turn(self) and math.sin(self.clock * 12) > 0
+	for _, sl in ipairs(self.slots) do
+		if sl.glow then gui.set_enabled(sl.glow, blink and sl.have and g:can_use(sl.weapon)) end
 	end
 	-- punti di ogni squadra, in alto a sinistra
 	local score = ""
@@ -1754,6 +1804,9 @@ function init(self)
 	-- onda d'urto del Pugno
 	self.shock = glow(0, 0, 20, BRACE)
 	gui.set_enabled(self.shock, false)
+	-- traccia dei colpi dritti (Tonante, Rampino)
+	self.tracer = box(0, 0, 1, 1, WHITE)
+	gui.set_enabled(self.tracer, false)
 
 	-- esplosioni riusate a giro
 	self.booms, self.boom_i = {}, 0
@@ -1793,6 +1846,7 @@ function init(self)
 	for _, c in ipairs(self.crate_nodes) do mondo[#mondo + 1] = c.node end
 	for _, n in ipairs(oggetti.nodi(self.oggetti)) do mondo[#mondo + 1] = n end
 	mondo[#mondo + 1] = self.shock
+	mondo[#mondo + 1] = self.tracer
 	-- i detriti sotto l'esplosione: ne escono mentre si spegne
 	for _, d in ipairs(self.detriti) do mondo[#mondo + 1] = d.node end
 	for _, b in ipairs(self.booms) do
@@ -1849,17 +1903,18 @@ function init(self)
 		gui.set_parent(count, n)
 		gui.set_enabled(n, false)
 		self.slots[i] = { node = n, bordo = bordo, icon = icon, label = count, weapon = w, have = false, group = bar_group(w) }
-		if w == "sword" then
-			self.slot_sword = self.slots[i]
-			self.sword_glow = glow(0, 0, SLOT * 1.6, SECOND_COLOR)
-			gui.set_parent(self.sword_glow, n)
-			gui.set_enabled(self.sword_glow, false)
+		-- le secondarie lampeggiano nell'attesa del secondo attacco, se restano loro
+		if game.SECONDARY[w] then
+			local gl = glow(0, 0, SLOT * 1.6, SECOND_COLOR)
+			gui.set_parent(gl, n)
+			gui.set_enabled(gl, false)
+			self.slots[i].glow = gl
 		end
 	end
-	self.bar_groups, self.bar_group_x = {}, {}
-	for i, nome in ipairs(BAR_GROUPS) do
-		self.bar_groups[i] = label(0, 0, nome, 0.5)
-		gui.set_color(self.bar_groups[i], ui.C.SPENTO)
+	self.bar_groups, self.bar_group_x, self.bar_group_used = {}, {}, {}
+	for i, gr in ipairs(BAR_GROUPS) do
+		self.bar_groups[i] = label(0, 0, gr[1], 0.5)
+		gui.set_color(self.bar_groups[i], gr[2])
 		gui.set_parent(self.bar_groups[i], self.bar)
 		gui.set_enabled(self.bar_groups[i], false)
 	end

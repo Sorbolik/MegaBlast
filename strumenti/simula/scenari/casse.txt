@@ -1,6 +1,6 @@
 # Armi delle casse e casse. Per la prova ogni robot parte con 2 colpi di ogni
 # arma delle casse e cade una cassa a ogni turno (nella partita vera: 0 colpi,
-# una cassa ogni 3 turni).
+# una cassa ogni 2 turni).
 imposta prova_armi 2
 imposta prova_casse 1
 

@@ -155,11 +155,19 @@ M.PUNCH_LAUNCH = 480     -- velocità verso l'alto del bersaglio
 M.PUNCH_PUSH = 140       -- e in avanti
 M.PUNCH_HOP = 220        -- chi colpisce si alza un po' col montante
 
--- Armi: queste tre ci sono sempre, le altre si trovano nelle casse (rb.ammo).
--- Ogni turno un'arma primaria (con un effetto: Lanciarune e quelle delle casse)
--- e una secondaria (danno secco: la Lama), in ordine libero.
-M.SECONDARY = { sword = true }
-M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
+-- Armi, in due categorie (scelta di Sergio del 24 ottobre 2026). Ogni turno una
+-- primaria e una secondaria, in ordine libero, mai due della stessa categoria.
+-- Primarie: agiscono sul mondo e sugli altri (cratere, effetto di stato,
+-- sbalzo). Il Lanciarune c'è sempre; le altre danno un colpo per cassa (rb.ammo).
+-- Secondarie: danno secco, nessun effetto, illimitate; ognuna sposta chi la usa
+-- a modo suo (la Lama gira attorno, il Tonante spinge indietro, il Rampino tira
+-- a sé il bersaglio, l'Affondo passa oltre). La Lama c'è sempre; una delle
+-- altre si sceglie all'inizio della partita (rb.secondary, sim/draft.lua).
+M.SECONDARY = { sword = true, eagle = true, hook = true, lunge = true }
+M.DRAFT_SECONDARIES = { "eagle", "hook", "lunge" }
+-- armi che non consumano colpi
+M.FREE_WEAPONS = { missile = true, teleport = true }
+for w in pairs(M.SECONDARY) do M.FREE_WEAPONS[w] = true end
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
 -- Oggetti tattici delle casse (anche loro in rb.ammo) e il paracadute, che
 -- costa Nucleo: non sono attacchi (config.lua)
@@ -173,10 +181,12 @@ for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
 for _, w in ipairs(M.CRATE_WEAPONS) do M.WEAPONS[w] = true end
 for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 
--- Casse: ogni CRATE_EVERY turni ne cade una dal cielo in un punto a caso.
--- Chi la tocca trova un colpo di un'arma o un oggetto (config.CRATE_CONTENTS).
-M.CRATE_EVERY = 3
-M.CRATE_MAX = 3          -- casse in mappa al massimo
+-- Casse: ogni CRATE_EVERY turni (dal turno CRATE_EVERY) ne cade una dal cielo
+-- in un punto a caso. Chi la tocca trova un colpo di un'arma o un oggetto
+-- (config.CRATE_CONTENTS). Sergio (24 ottobre 2026): ogni 2 turni, al massimo
+-- 4, perché con una ogni 3 in una partita a quattro se ne vedevano tre in tutto.
+M.CRATE_EVERY = 2
+M.CRATE_MAX = 4          -- casse in mappa al massimo
 M.CRATE_HALF_W = 10
 M.CRATE_H = 18
 M.CRATE_FALL = 110       -- velocità massima di caduta (scende piano, col paracadute)
@@ -248,7 +258,7 @@ local function make_ammo(start)
 	return a
 end
 
--- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards" }, { team = 2 }, ... }:
+-- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards", secondary = "eagle" }, { team = 2 }, ... }:
 -- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
 -- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
 -- mancano vengono da config.STATS e dal profilo di fisica.
@@ -336,10 +346,13 @@ function M.new(seed, map_id, opts)
 			turns = 0,     -- turni giocati
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
+			lunge = nil,   -- tick rimasti dell'Affondo in corso, nil se fermo
 			ammo = make_ammo(opts.ammo),
+			-- la secondaria scelta all'inizio della partita, oltre alla Lama (sim/draft.lua)
+			secondary = p.secondary or opts.secondary,
 			stats = st,
 		}
-		-- l'arma presa nella scelta d'inizio partita (sim/draft.lua)
+		-- la primaria presa nella scelta d'inizio partita (sim/draft.lua)
 		if p.pick then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
 	end
 	g.events = {}
@@ -597,6 +610,7 @@ function M:respawn(rb)
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
 	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
+	rb.lunge, rb.lunge_hit = nil, nil
 	rb.hp, rb.dead, rb.shield, rb.status, rb.respawn_in = rb.max_hp, false, nil, {}, nil
 	rb.parachute = false
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
@@ -635,6 +649,8 @@ end
 -- active: è il robot di turno e può muoversi (riceve i comandi)
 function M:update_robot(rb, input, active)
 	if rb.dead then return end
+	-- durante l'Affondo lo scatto comanda il movimento
+	if rb.lunge then return self:update_lunge(rb) end
 
 	-- Se il robot è finito dentro il terreno, lo spingiamo fuori verso l'alto
 	if self:terrain_collides(rb.x, rb.y) then
@@ -1215,6 +1231,116 @@ function M:sniper_preview(x, y, angle, count, pts)
 	return pts
 end
 
+-- Secondarie da lontano: Tonante e Rampino (config.EAGLE, config.HOOK) --------------
+-- Colpi dritti e istantanei: niente proiettile da seguire, un raggio sulle
+-- celle del terreno come la linea di mira.
+
+-- Il raggio da (x, y) nella direzione angle, lungo al massimo range: dove si
+-- ferma e il robot che incontra (nil se si ferma sul terreno o a fine corsa).
+-- Chi spara (me) non si colpisce.
+function M:ray(x, y, angle, range, me)
+	local dx, dy = math.cos(angle) * M.CELL, math.sin(angle) * M.CELL
+	local t = self.terrain
+	for _ = 1, math.ceil(range / M.CELL) do
+		local nx, ny = x + dx, y + dy
+		if t:solid(nx, ny) then return x, y, nil end
+		x, y = nx, ny
+		for _, rb in ipairs(self.robots) do
+			if rb ~= me and not rb.dead and M.hurt_at(rb, x, y, 0) then return x, y, rb end
+		end
+	end
+	return x, y, nil
+end
+
+-- Linea di mira dei colpi dritti: count punti fino al terreno o a fine corsa
+function M:ray_preview(x, y, angle, range, count, pts)
+	pts = pts or {}
+	local ex, ey = self:ray(x, y, angle, range, self.robots[self.current])
+	for i = 1, count do
+		local pt = pts[i] or {}
+		pt.x, pt.y = x + (ex - x) * i / count, y + (ey - y) * i / count
+		pts[i] = pt
+	end
+	return pts
+end
+
+-- Tonante: danno secco a chi è sulla linea; il rinculo spinge chi spara
+-- dalla parte opposta (da terra anche un po' in alto), così si riposiziona
+function M:fire_eagle(angle)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local ex, ey, hit = self:ray(x, y, angle, C.EAGLE.range, rb)
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	local s = C.EAGLE
+	rb.vx, rb.vy = -math.cos(angle) * s.recoil, -math.sin(angle) * s.recoil
+	if rb.grounded then rb.vy = math.max(rb.vy, s.lift) end
+	rb.grounded, rb.knocked, rb.fall_top = false, true, nil
+	self:emit({ type = "eagle", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id })
+	if hit then self:hurt(hit, s.damage, rb) end
+end
+
+-- Rampino: il robot agganciato viene tirato verso chi spara, sollevato un
+-- po': vola verso di lui e, da vicino, oltre. Sul terreno non fa niente.
+function M:fire_hook(angle)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local ex, ey, hit = self:ray(x, y, angle, C.HOOK.range, rb)
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	self:emit({ type = "hook", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id })
+	if not hit then return end
+	local s = C.HOOK
+	local dx = rb.x - hit.x
+	local k = self:knock_mul(hit)
+	hit.vx = (dx < 0 and -1 or 1) * s.pull * k
+	hit.vy = s.lift * k
+	hit.grounded, hit.knocked, hit.fall_top = false, true, nil
+	self:hurt(hit, s.damage, rb)
+end
+
+-- Affondo (config.LUNGE) -----------------------------------------------------------
+-- Scatto nella direzione della mira che passa attraverso i robot, colpendoli
+-- una volta ciascuno; il terreno lo ferma.
+
+function M:start_lunge(angle)
+	local rb = self.robots[self.current]
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.lunge = C.LUNGE.ticks
+	rb.lunge_vx, rb.lunge_vy = math.cos(angle) * C.LUNGE.speed, math.sin(angle) * C.LUNGE.speed
+	rb.lunge_hit = {}
+	rb.grounded, rb.knocked = false, false
+	self:emit({ type = "lunge", robot = rb.id, angle = angle })
+end
+
+-- Un tick di scatto: al posto della fisica normale del robot (update_robot)
+function M:update_lunge(rb)
+	local mx, my = rb.lunge_vx * M.DT, rb.lunge_vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
+	local stopped = false
+	for _ = 1, steps do
+		local nx, ny = rb.x + mx / steps, rb.y + my / steps
+		if self:terrain_collides(nx, ny) then
+			stopped = true
+			break
+		end
+		rb.x, rb.y = nx, ny
+		local other = self:robot_at(rb.x, rb.y, rb)
+		if other and not rb.lunge_hit[other.id] then
+			rb.lunge_hit[other.id] = true
+			self:emit({ type = "lunge_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+			self:hurt(other, C.LUNGE.damage, rb)
+		end
+	end
+	rb.lunge = rb.lunge - 1
+	if stopped or rb.lunge <= 0 then
+		-- lo slancio che resta: oltre un bordo si vola, contro il terreno ci si ferma
+		local keep = stopped and 0 or C.LUNGE.keep
+		rb.vx, rb.vy = rb.lunge_vx * keep, rb.lunge_vy * keep
+		rb.lunge, rb.lunge_hit, rb.lunge_vx, rb.lunge_vy = nil, nil, nil, nil
+		rb.fall_top = nil
+	end
+	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
+end
+
 -- Lama di Nucleo ----------------------------------------------------------------
 
 -- Angolo della lama al tick t del fendente, per un robot rivolto a destra
@@ -1748,6 +1874,7 @@ end
 
 -- Il robot può usare quest'arma? Le armi delle casse hanno colpi contati.
 function M.has_weapon(rb, weapon)
+	if M.SECONDARY[weapon] then return weapon == "sword" or weapon == rb.secondary end
 	if M.FREE_WEAPONS[weapon] then return true end
 	return (rb.ammo[weapon] or 0) > 0
 end
@@ -1771,6 +1898,11 @@ function M:preview(angle, power, count, every, pts, weapon)
 		gravity = M.GRAVITY * M.SHARD_GRAVITY
 	elseif weapon == "sniper" then
 		return self:sniper_preview(x, y, angle, count, pts)
+	elseif weapon == "eagle" or weapon == "hook" then
+		return self:ray_preview(x, y, angle, (weapon == "eagle" and C.EAGLE or C.HOOK).range, count, pts)
+	elseif weapon == "lunge" then
+		-- lo scatto: dal centro del robot, lungo quanto l'Affondo
+		return self:ray_preview(rb.x, rb.y + M.ROBOT_H / 2, angle, C.LUNGE.speed * C.LUNGE.ticks / 60, count, pts)
 	end
 	pts = pts or {}
 	local n = 0
@@ -1908,7 +2040,7 @@ function M:start_turn(player)
 		if self.crate_chance then
 			local chance = self.crate_chance[#self.crates + 1] or 0
 			if self.rng:next() < chance then self:spawn_crate() end
-		elseif (self.turn_no - 1) % self.crate_every == 0 then
+		elseif self.turn_no % self.crate_every == 0 then
 			self:spawn_crate()
 		end
 	end
@@ -1953,6 +2085,12 @@ function M:attack(weapon, fire)
 	if not M.FREE_WEAPONS[weapon] then rb.ammo[weapon] = rb.ammo[weapon] - 1 end
 	if weapon == "sword" then
 		self:swing_sword(fire.angle)
+	elseif weapon == "eagle" then
+		self:fire_eagle(fire.angle)
+	elseif weapon == "hook" then
+		self:fire_hook(fire.angle)
+	elseif weapon == "lunge" then
+		self:start_lunge(fire.angle)
 	else
 		if weapon == "punch" then
 			self:start_punch(fire.angle)
@@ -2072,6 +2210,7 @@ function M:step(input)
 		if rb.punch then
 			if rb.dead then rb.punch, rb.punch_dir = nil, nil else self:update_punch(rb) end
 		end
+		if rb.lunge and rb.dead then rb.lunge, rb.lunge_hit = nil, nil end
 	end
 	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
@@ -2121,7 +2260,7 @@ function M:step(input)
 			if o.flying then still = false end
 		end
 		for _, rb in ipairs(self.robots) do
-			if not rb.dead and (not rb.grounded or rb.swing or rb.punch) then still = false end
+			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge) then still = false end
 		end
 		self.settle = still and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then

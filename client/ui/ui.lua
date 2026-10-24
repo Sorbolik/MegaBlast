@@ -24,7 +24,8 @@ M.C = {
 	LUCE = c(1, 0.886, 0.769),            -- il contorno chiaro della Scoria
 	TESTO = c(0.95, 0.91, 0.85),
 	SPENTO = c(0.55, 0.52, 0.52),
-	BRACE = c(1, 0.42, 0.16),             -- accento quando non c'è una squadra
+	BRACE = c(1, 0.42, 0.16),             -- accento quando non c'è una squadra; colore delle armi primarie
+	ACCIAIO = c(0.62, 0.77, 0.88),        -- colore delle armi secondarie (danno secco, ti muovono)
 	OMBRA = c(0, 0, 0, 0.6),
 	SQUADRA = { c(1, 0.231, 0.306), c(0.239, 0.482, 1), c(0.18, 0.75, 0.44), c(0.96, 0.77, 0.09) },
 }

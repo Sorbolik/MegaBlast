@@ -196,6 +196,25 @@ function M.icona(tipo, parent)
 		-- cecchino: canna lunga e mirino tondo
 		gui.set_euler(nodo(50, 5, BIANCO, parent), vmath.vector3(0, 0, 20))
 		pos(anello(18, BIANCO, parent), -6, 10)
+	elseif tipo == "eagle" then
+		-- Tonante: canna corta e grossa, impugnatura in giù
+		pos(nodo(40, 10, BIANCO, parent), 4, 6)
+		local m = nodo(9, 20, BIANCO, parent)
+		gui.set_euler(m, vmath.vector3(0, 0, 15))
+		pos(m, -10, -6)
+	elseif tipo == "hook" then
+		-- Rampino: la fune e l'uncino aperto in punta
+		gui.set_euler(nodo(44, 3, BIANCO, parent), vmath.vector3(0, 0, 30))
+		local u = anello(20, BIANCO, parent)
+		gui.set_fill_angle(u, 240)
+		gui.set_euler(u, vmath.vector3(0, 0, 120))
+		pos(u, 16, 12)
+	elseif tipo == "lunge" then
+		-- Affondo: lancia lunga e sottile con la punta
+		gui.set_euler(nodo(54, 4, BIANCO, parent), vmath.vector3(0, 0, 30))
+		local punta = nodo(10, 10, BIANCO, parent)
+		gui.set_euler(punta, vmath.vector3(0, 0, 75))
+		pos(punta, 22, 13)
 	elseif tipo == "shield" then
 		anello(44, ACCIAIO, parent)
 	else -- parachute

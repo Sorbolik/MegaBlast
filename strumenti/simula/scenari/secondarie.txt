@@ -1,0 +1,23 @@
+# Secondarie: la barra con i due gruppi colorati (brace e acciaio) e il Tonante,
+# la pistola pesante scelta all'inizio: colpo dritto e istantaneo con la traccia,
+# il rinculo spinge chi spara dalla parte opposta (da terra lo solleva). Con
+# prova_secondaria eagle la barra ha tre slot: Lanciarune 536, Lama 650, Tonante 744.
+imposta prova_secondaria eagle
+imposta zoom 2
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_barra_gruppi
+premi 3                             # Tonante
+aspetta 0.4
+zoom 02_tonante_in_mano
+mira 120 120 0.5 03_mira_dritta      # in alto a destra: il rinculo spinge in basso a sinistra
+aspetta_evento eagle 2
+aspetta 0.05
+foto 04_colpo_e_rinculo
+aspetta 0.4
+zoom 05_in_volo
+aspetta 1.5
+foto 06_dopo_il_rinculo             # la Lama resta spenta: due secondarie nel turno no

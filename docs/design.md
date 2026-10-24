@@ -13,7 +13,7 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Elemento | Come funziona |
 |---|---|
 | Partita | Duello online 1 contro 1 (deathmatch). In seguito arriva una campagna single player contro bot. |
-| Turni | Durano 25 s. Il giocatore di turno può muoversi e saltare per tutto il turno e fare fino a **due attacchi**: un'arma primaria (Lanciarune o un'arma trovata, con un effetto) e una secondaria (la Lama, danno secco), in ordine libero; mai due della stessa categoria. Dopo il primo attacco restano 8 s, mai oltre la fine del turno: in tutti e 8 si può fare il secondo attacco, muoversi e usare il resto. La barra è gialla finché il secondo attacco c'è, blu quando li hai usati tutti e due, e lampeggia negli ultimi 2 s. Il turno finisce solo allo scadere di questi 8 s o del timer: chi muore nel proprio turno ricompare e continua. Tutti i numeri delle regole sono in `client/sim/config.lua`. |
+| Turni | Durano 25 s. Il giocatore di turno può muoversi e saltare per tutto il turno e fare fino a **due attacchi**: un'arma primaria (Lanciarune o un'arma trovata: agiscono sul mondo e sugli altri, con un effetto) e una secondaria (la Lama o quella scelta all'inizio: danno secco, illimitate, ognuna ti sposta a modo suo), in ordine libero; mai due della stessa categoria. Dopo il primo attacco restano 8 s, mai oltre la fine del turno: in tutti e 8 si può fare il secondo attacco, muoversi e usare il resto. La barra è gialla finché il secondo attacco c'è, blu quando li hai usati tutti e due, e lampeggia negli ultimi 2 s. Il turno finisce solo allo scadere di questi 8 s o del timer: chi muore nel proprio turno ricompare e continua. Tutti i numeri delle regole sono in `client/sim/config.lua`. |
 | Nucleo | Si parte con 1. Al primo attacco del turno i secondi rimasti diventano Nucleo (1 ogni 5 s, al massimo 5 in tutto). Il teletrasporto costa 1 Nucleo; al primo turno se ne fa uno solo. Il paracadute costa 1 Nucleo, lo scudo (solo dalle casse) 1, il salto in aria (solo con l'albero o il set Corvo) 1. Nel Torneo le statistiche di albero ed equipaggiamento non contano. |
 | Terreno | La terra è distruttibile: ogni esplosione scava un cratere tondo. I tubi d'acciaio sono indistruttibili e fanno da base solida. |
 | Mappe | Fatte a mano, su più piani, con isole volanti. Niente vento. |
@@ -39,7 +39,10 @@ La regola che guida ogni scelta è il **minimalismo**: app piccola, avvio quasi 
 | Pugno del Titano (montante) | Corpo a corpo: 30 di danno a chi è subito davanti e lo lancia in alto; anche chi colpisce si solleva un po'. Si trova nelle casse. |
 | Cecchino | Proiettile lento (più lento del missile) che va dritto per 0,6 s e poi cala piano, così da lontano è difficile mirare. Rimbalza 3 volte sul terreno, ogni volta più lento, e a ogni rimbalzo si schiaccia e tremola come una gelatina (la mira mostra solo il tratto dritto e l'inizio della caduta). Chi viene colpito prende 25 di danno ed è sbalzato nella direzione in cui andava il proiettile (280 più una spinta in alto di 80): trampolino sotto i piedi e cecchino per mandarlo via. Si trova nelle casse. |
 | Trampolino (oggetto) | Si lancia come l'Uovo e si posa dove tocca terra, o ai piedi del robot che colpisce. Chi ci cade sopra rimbalza sempre, con salti che calano (60% a ogni rimbalzo) finché non scende. Si trova nelle casse. |
-| Lama di Nucleo | Sempre disponibile. Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. Il movimento non è lineare: prima uno slancio che porta la lama un po' indietro, poi accelera sempre di più fino alla fine. È un attacco: dopo il colpo restano i secondi per ripararsi. |
+| Lama di Nucleo | Secondaria, sempre disponibile. Spadone corpo a corpo: fendente di 240° che parte da dietro la schiena, passa sopra la testa e finisce davanti. Colpisce sia dietro sia davanti (40 unità), una volta per bersaglio, in 1/3 di secondo. Fa solo danno: non spinge via l'avversario. Il movimento non è lineare: prima uno slancio che porta la lama un po' indietro, poi accelera sempre di più fino alla fine. È un attacco: dopo il colpo restano i secondi per ripararsi. |
+| Tonante | Secondaria, si sceglie all'inizio. Pistola pesante: colpo dritto e istantaneo (nessun proiettile, una traccia che sfuma) fino a 300 px, si ferma al primo robot o terreno; 25 di danno, niente effetti. Il rinculo spinge chi spara dalla parte opposta alla mira a 300 px/s e da terra lo solleva (120): si spara anche per spostarsi. |
+| Rampino | Secondaria, si sceglie all'inizio. Colpo dritto e istantaneo fino a 220 px: il robot agganciato prende 10 di danno e viene tirato verso chi spara (320 px/s, sollevato di 110): da vicino ti passa oltre, da lontano cade a metà strada. Sul terreno non fa niente. Arma tecnica per le uccisioni ambientali. |
+| Affondo | Secondaria, si sceglie all'inizio. Scatto nella direzione della mira (520 px/s per 12 tick, circa 100 px) che passa attraverso i robot colpendoli una volta ciascuno (30); il terreno lo ferma. Alla fine resta il 35% della velocità: oltre un bordo si vola. |
 
 ### Teletrasporto (Passo d'Ombra)
 
@@ -47,7 +50,7 @@ Non è un'arma della barra: ha un pulsante a parte, ma si usa come un'arma (lo a
 
 ### Casse
 
-Dopo ogni 3 turni cade dal cielo una cassa in un punto a caso della superficie, lontano dai robot (al massimo 3 casse in mappa). Scende piano e si posa sul primo terreno che trova; se un'esplosione le scava sotto, ricade. Chi la tocca (anche se viene sbalzato addosso fuori dal suo turno) trova un colpo di un'arma a caso tra Uovo di Fiamma, Sciame di Schegge e Pugno del Titano; l'arma resta segreta finché non si apre. Punto e arma vengono dal generatore della partita, quindi server e client sono d'accordo.
+Ogni 2 turni (dal turno 2) cade dal cielo una cassa in un punto a caso della superficie, lontano dai robot (al massimo 4 casse in mappa). Scende piano e si posa sul primo terreno che trova; se un'esplosione le scava sotto, ricade. Chi la tocca (anche se viene sbalzato addosso fuori dal suo turno) trova un colpo di un'arma a caso tra Uovo di Fiamma, Sciame di Schegge, Pugno del Titano e Cecchino, o un oggetto tattico; il contenuto resta segreto finché non si apre. Punto e arma vengono dal generatore della partita, quindi server e client sono d'accordo.
 
 ### Cosa miglioriamo rispetto a Blastron
 
@@ -58,7 +61,7 @@ Dopo ogni 3 turni cade dal cielo una cassa in un punto a caso della superficie, 
 
 - **Movimento**: due pulsanti, sinistra e destra, più il salto.
 - **Mira**: trascini il dito dal robot. Riportare il dito sul robot e lasciarlo lì annulla il colpo (al PC: tasto destro mentre si tiene il sinistro). La direzione indica l'angolo, la lunghezza la potenza, e una linea tratteggiata mostra la traiettoria prevista per i primi istanti. Rilasci per sparare.
-- **Armi**: una barra in basso al centro con le armi che hai: Lanciarune e Lama di Nucleo sempre, le armi delle casse col numero di colpi rimasti. Finiti i colpi l'arma sparisce dalla barra.
+- **Armi**: una barra in basso al centro con le armi che hai, in tre gruppi col nome sopra: primarie (color brace: Lanciarune sempre, le armi delle casse col numero di colpi rimasti), secondarie (color acciaio: Lama di Nucleo sempre, più quella scelta all'inizio) e oggetti. Finiti i colpi l'arma sparisce dalla barra; usata un'arma, il suo gruppo si spegne per il resto del turno.
 
 ---
 
@@ -141,8 +144,8 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 | `{"t":"hello","v":2,"mode":"1v1"}` | C → S | primo messaggio: versione del protocollo e modalità (o `"tok"` per tornare in partita) |
 | `{"t":"error","e":"version"}` | S → C | errore: `version` (aggiorna il gioco), `expired` (partita finita), `draining` (server in spegnimento) |
 | `{"t":"wait"}` | S → C | sei in attesa di un avversario |
-| `{"t":"draft","offer":[…],"p":[…],"you":1,"tok":…,"players":[…]}` | S → C | scelta dell'arma d'inizio partita (vedi [server.md](server.md)) |
-| `{"t":"pick","w":"shards"}` / `{"t":"swap","to":3}` | C → S | scelgo l'arma / propongo lo scambio al compagno |
+| `{"t":"draft","offer":[…],"offer2":[…],"p":[…],"p2":[…],"you":1,"tok":…,"players":[…]}` | S → C | scelta delle armi d'inizio partita: primarie e secondarie (vedi [server.md](server.md)) |
+| `{"t":"pick","w":"shards"}` / `{"t":"swap","to":3}` | C → S | scelgo un'arma (primaria o secondaria, lo dice l'arma) / propongo lo scambio al compagno |
 | `{"t":"start","seed":…,"map":"forgia","you":1,"tok":…,"resume":false,"players":[{"team":1},…]}` | S → C | la partita parte: mappa, seed, quale robot sei, le squadre e il gettone per tornare se cadi |
 | `{"t":"sync","x":[[x,y,r],…]}` | S → C | a chi torna: gli scavi fatti finora nel terreno |
 | `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano) |

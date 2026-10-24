@@ -708,6 +708,90 @@ do
 	check(#pts == 30 and pts[30].y > pts[1].y - 200, "la mira del cecchino segue il rimbalzo")
 end
 
+-- Secondarie da lontano e Affondo: Tonante, Rampino, Affondo --------------------
+do
+	-- Tonante: colpo dritto e istantaneo, danno secco senza effetti, rinculo su chi spara
+	local q = game.new(42, "isole", { secondary = "eagle" })
+	run(q, 60)
+	local a, b = q.robots[1], q.robots[2]
+	local sy = sky_spot(q, 640, 80)
+	place(a, 600, sy)
+	place(b, 700, sy)
+	local hp = b.hp
+	q:step({ fire = { angle = 0, power = 1, weapon = "eagle" } })
+	local ev
+	for _, e in ipairs(q:pop_events()) do if e.type == "eagle" then ev = e end end
+	check(ev and ev.target == 2 and hp - b.hp == config.EAGLE.damage, "il Tonante colpisce subito e fa danno secco")
+	check(next(b.status) == nil and b.vx == 0, "senza effetti di stato e senza spingere il bersaglio")
+	check(a.vx < 0 and a.knocked and not a.grounded, "il rinculo spinge chi spara dalla parte opposta")
+	check(not q.projectile, "senza proiettile in volo")
+
+	-- da terra il rinculo solleva: si cambia posto
+	local d = game.new(42, "isole", { secondary = "eagle" })
+	run(d, 60)
+	local da = d.robots[1]
+	local x0 = da.x
+	d:step({ fire = { angle = math.pi, power = 1, weapon = "eagle" } })
+	check(da.vy >= config.EAGLE.lift, "da terra il rinculo solleva")
+	run(d, 20)
+	check(da.x > x0 + 40 and not da.grounded, "e si vola dalla parte opposta alla mira")
+
+	-- il terreno ferma il colpo, entro la portata
+	local t = game.new(42, "isole", { secondary = "eagle" })
+	run(t, 60)
+	t.robots[2].x = -1000
+	t:step({ fire = { angle = math.rad(-90), power = 1, weapon = "eagle" } })
+	for _, e in ipairs(t:pop_events()) do if e.type == "eagle" then ev = e end end
+	check(ev and ev.target == nil and ev.y0 - ev.y1 < 40, "il terreno ferma il colpo")
+	local pts = t:preview(0, 1, 12, 4, nil, "eagle")
+	check(#pts == 12 and math.abs(pts[12].x - pts[1].x) <= config.EAGLE.range, "la linea di mira è dritta e non supera la portata")
+
+	-- Rampino: tira il bersaglio verso chi spara, poco danno
+	local h = game.new(42, "isole", { secondary = "hook" })
+	run(h, 60)
+	local ha, hb = h.robots[1], h.robots[2]
+	sy = sky_spot(h, 640, 80)
+	place(ha, 600, sy)
+	place(hb, 700, sy)
+	hp = hb.hp
+	h:step({ fire = { angle = 0, power = 1, weapon = "hook" } })
+	for _, e in ipairs(h:pop_events()) do if e.type == "hook" then ev = e end end
+	check(ev and ev.target == 2 and hp - hb.hp == config.HOOK.damage, "il Rampino aggancia e fa poco danno")
+	check(hb.vx < 0 and hb.vy > 0 and hb.knocked, "e tira il bersaglio verso chi spara")
+	check(ha.vx == 0, "chi spara resta dov'è")
+	local m = game.new(42, "isole", { secondary = "hook" })
+	run(m, 60)
+	m.robots[2].x = -1000
+	m:step({ fire = { angle = math.rad(-90), power = 1, weapon = "hook" } })
+	check(m.robots[1].vx == 0 and m.robots[1].vy == 0, "sul terreno il Rampino non fa niente")
+
+	-- Affondo: scatto che attraversa il robot davanti e lo colpisce una volta
+	local l = game.new(42, "isole", { secondary = "lunge" })
+	run(l, 60)
+	local la, lb = l.robots[1], l.robots[2]
+	sy = sky_spot(l, 640, 120)
+	place(la, 600, sy)
+	place(lb, 640, sy)
+	hp = lb.hp
+	local x1 = la.x
+	l:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
+	check(la.lunge == config.LUNGE.ticks and la.lunge_vx > 0, "l'Affondo parte")
+	run(l, config.LUNGE.ticks)
+	check(la.lunge == nil and la.x > lb.x + 10, "e passa oltre il robot davanti")
+	check(hp - lb.hp == config.LUNGE.damage and next(lb.status) == nil, "colpendolo una volta, senza effetti")
+	check(la.vx > 0 and la.vx < config.LUNGE.speed, "alla fine resta un po' di slancio")
+	-- il terreno lo ferma
+	local w = game.new(42, "isole", { secondary = "lunge" })
+	run(w, 60)
+	local wa = w.robots[1]
+	local y1 = wa.y
+	w:step({ fire = { angle = math.rad(-90), power = 1, weapon = "lunge" } })
+	run(w, 2)
+	check(wa.lunge == nil and wa.y >= y1 - 2, "il terreno ferma l'Affondo")
+	-- Affondo e Lama sono tutte e due secondarie: una per turno
+	check(not w:can_use("sword") and w:can_use("missile"), "dopo l'Affondo niente Lama nello stesso turno")
+end
+
 -- Effetti di stato: bruciatura, rallentamento, armatura incrinata ------------------
 do
 	local function to_turn(q, who)
@@ -800,6 +884,27 @@ do
 		"allo scadere chi non ha scelto prende la prima arma libera")
 	local g = game.new(7, "isole", { players = players })
 	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in partita l'arma scelta ha i suoi colpi")
+
+	-- il secondo ventaglio: le secondarie, una a testa, illimitate
+	check(#d.offer2 == #game.DRAFT_SECONDARIES and game.SECONDARY[d.offer2[1]], "il ventaglio delle secondarie")
+	local e = draft.new(9, config.MODES["2v2"])
+	local s1, s2 = e.offer2[1], e.offer2[2]
+	check(not draft.done(e, 1) and draft.pick(e, 1, s1) and not draft.done(e, 1), "la secondaria da sola non basta")
+	check(draft.pick(e, 1, e.offer[1]) and draft.done(e, 1), "primaria e secondaria: ha finito")
+	check(not draft.valid(e, 3, s1) and draft.valid(e, 2, s1), "anche la secondaria del compagno non si prende")
+	draft.pick(e, 3, s2)
+	draft.pick(e, 3, e.offer[2])
+	check(draft.swap(e, 1, 3) and e.picks2[1] == s2 and e.picks[1] == e.offer[2], "lo scambio porta primaria e secondaria")
+	local ep = draft.finish(e)
+	check(ep[2].secondary == e.offer2[1] and ep[4].secondary ~= ep[2].secondary, "allo scadere la prima secondaria libera")
+	local eg = game.new(9, "isole", { players = ep })
+	local r1 = eg.robots[1]
+	check(r1.secondary == s2 and game.has_weapon(r1, s2) and game.has_weapon(r1, "sword") and not game.has_weapon(r1, s1),
+		"in partita hai la Lama e la secondaria scelta, non le altre")
+	check(game.FREE_WEAPONS[s2] and eg:can_use(s2) and eg:can_use("sword"), "le secondarie non consumano colpi")
+	eg:step({ fire = { angle = 0, power = 1, weapon = s2 } })
+	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword") and eg:can_use("missile"),
+		"usata la secondaria scelta, la Lama non si usa più nel turno")
 
 	-- tutti contro tutti: doppioni ammessi
 	local f = draft.new(3, config.MODES.ffa)
@@ -1137,7 +1242,7 @@ check(ph2 == nil, "il pugno non colpisce chi è dietro")
 
 -- Casse ---------------------------------------------------------------------------
 
--- Una cassa cade dopo ogni 3 turni, sempre nello stesso punto con lo stesso seed
+-- Una cassa cade ogni 2 turni (dal turno 2), sempre nello stesso punto con lo stesso seed
 local function crate_turns(seed)
 	local q = game.new(seed, "isole")
 	local spawned = {}
@@ -1151,7 +1256,7 @@ local function crate_turns(seed)
 	return q, spawned
 end
 local cq, cs = crate_turns(42)
-check(cs[1] and cs[1].turn == 4 and cs[2] and cs[2].turn == 7, "una cassa ogni 3 turni (turni " ..
+check(cs[1] and cs[1].turn == 2 and cs[2] and cs[2].turn == 4, "una cassa ogni 2 turni (turni " ..
 	tostring(cs[1] and cs[1].turn) .. ", " .. tostring(cs[2] and cs[2].turn) .. ")")
 local _, cs2 = crate_turns(42)
 check(cs2[1] and cs2[1].x == cs[1].x and cs2[2].x == cs[2].x, "stesso seed, casse negli stessi punti")

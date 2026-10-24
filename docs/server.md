@@ -46,15 +46,18 @@ con le statistiche normalizzate: albero ed equipaggiamento non contano). I
 giocatori e le squadre di ogni modo vengono da `config.MODES` della
 simulazione.
 
-Quando una coda è piena la stanza apre la scelta dell'arma (`sim/draft.lua`):
-ognuno riceve `{"t":"draft","offer":[…],"p":[…],"you":1,"tok":…,"players":[{"team":1},…],"left":900}`
-e manda `{"t":"pick","w":"shards"}` (si può cambiare). Nel 2 contro 2 due
-compagni si scambiano le scelte se tutti e due mandano `{"t":"swap","to":N}`;
-chi riceve la proposta vede `{"t":"swap","from":N}`. A ogni cambio tutti
-ricevono il `draft` aggiornato. Allo scadere di `config.DRAFT_SECONDS` chi
-non ha scelto prende la prima arma libera e parte la partita (`start`, con
-`players`). Il client online per ora non ha la schermata della scelta: aspetta
-e riceve l'arma data dal server.
+Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
+ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":[…],"p2":[…],"you":1,"tok":…,"players":[{"team":1},…],"left":900}`
+(`offer` le primarie, `offer2` le secondarie, `p` e `p2` le scelte fatte) e
+manda `{"t":"pick","w":"shards"}` per ognuna delle due (l'arma dice la
+categoria; si può cambiare). Nel 2 contro 2 due compagni si scambiano le
+scelte, primaria e secondaria insieme, se tutti e due mandano
+`{"t":"swap","to":N}`; chi riceve la proposta vede `{"t":"swap","from":N}`. A
+ogni cambio tutti ricevono il `draft` aggiornato. Allo scadere di
+`config.DRAFT_SECONDS` chi non ha scelto prende la prima arma libera di ogni
+ventaglio e parte la partita (`start`, con `players`). Nello stato ogni robot
+porta la sua secondaria in `sw`. Il client online per ora non ha la schermata
+della scelta: aspetta e riceve le armi date dal server.
 
 ## Protocollo
 
