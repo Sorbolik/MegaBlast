@@ -99,17 +99,17 @@ st = assetto.stats(BASE, a)
 check(st.teleport_ticks < BASE.teleport_ticks * 0.75 and st.max_hp < BASE.max_hp, "set Vuoto completo: teletrasporto più rapido, meno vita")
 a.variant = "b"
 st = assetto.stats(BASE, a, { mask = 1, chest = 3, cloak = 3, legs = 3 })
-check(st.free_teleports == 0, "la variante B vuole tutti i pezzi al tier III")
+check(st.teleports == BASE.teleports, "la variante B vuole tutti i pezzi al tier III")
 st = assetto.stats(BASE, a, { mask = 3, chest = 3, cloak = 3, legs = 3 })
-check(st.free_teleports == 1, "tier III: variante B del Vuoto")
+check(st.teleports == BASE.teleports + 1, "tier III: variante B del Vuoto, un teletrasporto in più")
 a.gear = { mask = "leviatano", chest = "leviatano", cloak = "leviatano", legs = "leviatano" }
 a.variant = "a"
 st = assetto.stats(BASE, a)
 check(st.knockback_mul < 0.7 and st.fall_damage_mul == 0.5 and st.walk_speed < BASE.walk_speed,
 	"set Leviatano completo: meno spinta, metà danno da caduta, più lento")
-a.tree = { fall = 2, anchor = 1, hp = 2, free_parachute = 1 }
+a.tree = { fall = 2, anchor = 1, hp = 2, parachute = 1 }
 st = assetto.stats(BASE, a)
-check(st.free_parachutes == 1 and st.fall_damage_mul < 0.5, "albero: paracadute gratis e cadute più leggere")
+check(st.parachutes == BASE.parachutes + 1 and st.fall_damage_mul < 0.5, "albero: un paracadute in più e cadute più leggere")
 a.tree = {}
 a.gear = { mask = "fornace", chest = "fornace", cloak = "fornace", legs = "fornace" }
 st = assetto.stats(BASE, a)
@@ -120,15 +120,14 @@ check(st.burning_blasts == 1 and st.status_turns == BASE.status_turns + 1, "tier
 a.variant = "a"
 a.gear = { mask = "corvo", chest = "corvo", cloak = "corvo", legs = "corvo" }
 st = assetto.stats(BASE, a)
-check(st.air_jumps == 1 and st.fall_damage_mul == 0 and st.air_jump_cost == BASE.air_jump_cost,
-	"set Corvo completo: doppio salto e caduta senza danno")
+check(st.air_jumps == 1 and st.fall_damage_mul == 0, "set Corvo completo: doppio salto e caduta senza danno")
 a.variant = "b"
 st = assetto.stats(BASE, a, { mask = 3, chest = 3, cloak = 3, legs = 3 })
-check(st.air_jumps == 1 and st.air_jump_cost == 0, "tier III: doppio salto gratis")
+check(st.air_jumps == 2, "tier III: due salti in aria")
 a.variant = "a"
-a.tree = { hp = 2, fall = 2, anchor = 1, start_nucleo = 1, cheap_shield = 1 }
+a.tree = { hp = 2, fall = 2, anchor = 1, teleport = 1 }
 st = assetto.stats(BASE, a)
-check(st.shield_cost == BASE.shield_cost - 1, "albero: scudo più economico")
+check(st.teleports == BASE.teleports + 1, "albero: un teletrasporto in più")
 a.tree = {}
 
 a.gear = { mask = "vuoto", chest = "corvo" }
@@ -141,9 +140,9 @@ check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(500) == 3, "tier
 
 -- Riconoscimenti
 local ranking = {
-	{ robot = 2, place = 1, damage = 120, env_kills = 0, avg_attack_secs = 9, turns = 3, teleports = 1, nucleo_spent = 1, crates = 0 },
-	{ robot = 1, place = 2, damage = 90, env_kills = 2, avg_attack_secs = 4, turns = 3, teleports = 3, nucleo_spent = 3, crates = 1 },
-	{ robot = 3, place = 3, damage = 10, env_kills = 0, avg_attack_secs = 2, turns = 0, teleports = 0, nucleo_spent = 0, crates = 0 },
+	{ robot = 2, place = 1, damage = 120, env_kills = 0, avg_attack_secs = 9, turns = 3, teleports = 1, crates = 0 },
+	{ robot = 1, place = 2, damage = 90, env_kills = 2, avg_attack_secs = 4, turns = 3, teleports = 3, crates = 1 },
+	{ robot = 3, place = 3, damage = 10, env_kills = 0, avg_attack_secs = 2, turns = 0, teleports = 0, crates = 0 },
 }
 local by, list = riconoscimenti.assign(ranking)
 check(by[1] and by[1][1].id == "becchino", "Becchino a chi butta giù più nemici")

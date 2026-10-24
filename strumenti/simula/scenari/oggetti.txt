@@ -3,7 +3,7 @@
 # primarie Lanciarune 150, Uovo 244, Schegge 338, Pugno 432, Cecchino 526;
 # secondaria Lama 640; oggetti Trappola 754, Scudo 848, Trampolino 942,
 # Rampino 1036, Paracadute 1130 (y = 62). Usato un oggetto, la barra si ricentra.
-# Scudo e paracadute costano Nucleo: prima un missile per guadagnarlo.
+# Scudo e paracadute non costano niente: il missile prima serve solo a vedere i globi guadagnati.
 imposta prova_armi 1
 imposta zoom 2
 
@@ -12,7 +12,7 @@ tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 01_barra_oggetti
-mira -150 100 0.3                   # missile: i secondi rimasti diventano Nucleo
+mira -150 100 0.3                   # missile: i secondi rimasti diventano teletrasporti
 aspetta_evento fire 2
 aspetta 0.5
 tocca 754 62                        # Trappola, ai piedi

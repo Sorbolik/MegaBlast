@@ -34,18 +34,17 @@ M.SETS = {
 			legs = { { stat = "jump_height", mul = 1.03 }, { stat = "walk_speed", mul = 0.98 } },
 		},
 		bonus = {
-			a = { desc = "Doppio salto (1 Nucleo) e caduta senza danno, vita -10%",
+			a = { desc = "Doppio salto e caduta senza danno, vita -10%",
 				effects = { { stat = "air_jumps", add = 1 }, { stat = "fall_damage_mul", mul = 0 },
 					{ stat = "max_hp", mul = 0.9 } } },
-			b = { desc = "Doppio salto gratis, vita -10%",
-				effects = { { stat = "air_jumps", add = 1 }, { stat = "air_jump_cost", add = -1 },
-					{ stat = "max_hp", mul = 0.9 } } },
+			b = { desc = "Due salti in aria, vita -10%",
+				effects = { { stat = "air_jumps", add = 2 }, { stat = "max_hp", mul = 0.9 } } },
 		} },
 	{ id = "fornace", name = "FORNACE", style = "Territorio",
 		pieces = {
 			mask = { { stat = "max_hp", add = 3 }, { stat = "jump_height", mul = 0.98 } },
 			chest = { { stat = "max_hp", add = 4 }, { stat = "air_speed", mul = 0.97 } },
-			cloak = { { stat = "start_nucleo", add = 1 }, { stat = "jump_height", mul = 0.95 } },
+			cloak = { { stat = "teleports", add = 1 }, { stat = "jump_height", mul = 0.95 } },
 			legs = { { stat = "max_hp", add = 3 }, { stat = "walk_speed", mul = 0.98 } },
 		},
 		bonus = {
@@ -79,8 +78,8 @@ M.SETS = {
 		bonus = {
 			a = { desc = "Il teletrasporto scatta il 25% prima, vita -10%",
 				effects = { { stat = "teleport_ticks", mul = 0.75 }, { stat = "max_hp", mul = 0.9 } } },
-			b = { desc = "Il primo teletrasporto è gratis, vita -10%",
-				effects = { { stat = "free_teleports", add = 1 }, { stat = "max_hp", mul = 0.9 } } },
+			b = { desc = "Un teletrasporto in più, vita -10%",
+				effects = { { stat = "teleports", add = 1 }, { stat = "max_hp", mul = 0.9 } } },
 		} },
 }
 

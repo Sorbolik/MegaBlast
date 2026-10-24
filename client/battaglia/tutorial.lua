@@ -60,20 +60,20 @@ M.PASSI = {
 		end,
 	},
 	{
-		titolo = "5. Nucleo e teletrasporto",
-		consiglio = "Spara subito: i secondi rimasti diventano Nucleo. Poi spendilo per lanciare il teletrasporto (T).",
+		titolo = "5. Il teletrasporto",
+		consiglio = "Spara subito: i secondi rimasti diventano teletrasporti. Poi lancia il globo (T).",
 		dx = 320,
-		stats = { start_nucleo = 0 },
+		stats = { teleports = 0 },
 		obiettivo = function(st, _, e)
-			if e and e.type == "nucleo" and e.robot == GIOCATORE then st.nucleo = true end
-			return st.nucleo and e ~= nil and e.type == "teleport" and e.robot == GIOCATORE
+			if e and e.type == "teleports" and e.robot == GIOCATORE then st.globo = true end
+			return st.globo and e ~= nil and e.type == "teleport" and e.robot == GIOCATORE
 		end,
 	},
 	{
 		titolo = "6. La combo",
 		consiglio = "Lancia il teletrasporto oltre il bersaglio e chiudi col fendente appena arrivi.",
 		dx = 200,
-		stats = { start_nucleo = 2 },
+		stats = { teleports = 2 },
 		obiettivo = function(st, g, e)
 			if not e then return false end
 			if e.type == "teleport" and e.robot == GIOCATORE then st.arrivo = g.tick end

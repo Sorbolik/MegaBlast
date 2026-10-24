@@ -1,5 +1,5 @@
 # Teletrasporto: al primo turno se ne lancia uno solo, quindi Rosso spara un
-# missile (Nucleo), Blu spara, e al secondo turno di Rosso due globi in volo
+# missile (guadagna globi), Blu spara, e al secondo turno di Rosso due globi in volo
 # insieme, i due teletrasporti uno dopo l'altro e un fendente veloce.
 # In alto si vede il tempo rimasto della partita.
 
@@ -8,7 +8,7 @@ tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 01_hud_tempo
-mira 150 100 0.4                    # missile: i secondi rimasti diventano Nucleo
+mira 150 100 0.4                    # missile: i secondi rimasti diventano teletrasporti
 aspetta_evento fire 2
 aspetta_stato turno=2 fase=aim 15
 aspetta 1

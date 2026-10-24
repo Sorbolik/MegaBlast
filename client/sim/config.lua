@@ -25,14 +25,13 @@ C.MODES = {
 	ffa = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } },
 }
 
--- Nucleo: i secondi rimasti al primo attacco del turno diventano Nucleo,
--- 1 ogni NUCLEO_SECONDS, senza superare NUCLEO_MAX.
--- Scelta nostra: il documento proponeva 1 ogni 2 s e 10 al massimo, ma con
--- turni da 25 s quasi tutti arriverebbero al massimo e la scelta "spendo o
--- tengo" sparirebbe. Così chi attacca con 20 s rimasti prende 4, chi ne
--- lascia 5 prende 1.
-C.NUCLEO_SECONDS = 5
-C.NUCLEO_MAX = 5
+-- Teletrasporti: i secondi rimasti al primo attacco del turno diventano
+-- globi del teletrasporto, uno ogni TELEPORT_SECONDS, senza tetto (Sergio,
+-- 24 ottobre 2026: il Nucleo è tolto, il tempo risparmiato dà teletrasporti).
+-- Scelta nostra sui 10 s: chi attacca entro 5 s ne guadagna 2, entro 15 s
+-- uno, dopo niente; con 1 ogni 5 s se ne accumulavano più di quanti se ne
+-- lanciano.
+C.TELEPORT_SECONDS = 10
 -- al primo turno di ogni robot si può fare un solo teletrasporto
 C.FIRST_TURN_TELEPORTS = 1
 
@@ -90,9 +89,9 @@ C.EAGLE = { damage = 25, range = 300, recoil = 300, lift = 120 }
 -- terra è un colpo corto davanti (reach). Il colpo arriva al tick hit_tick e
 -- dura ticks.
 C.MALLET = { damage = 30, reach = 22, width = 6, bounce = 320, ticks = 14, hit_tick = 4 }
--- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, costa
--- stats.hook_cost Nucleo, si usa in qualsiasi momento del turno e non fa
--- danno): colpo dritto e istantaneo fino a range, due usi.
+-- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, uno a
+-- turno, si usa in qualsiasi momento del turno e non fa danno): colpo
+-- dritto e istantaneo fino a range, due usi.
 -- Su un robot: viene tirato con la fune verso la mano di chi tira, dritto
 -- lungo la fune, senza gravità, a speed, per reel pixel al massimo (la fune
 -- si riavvolge di tanto), poi viene mollato e cade dov'è. Il terreno o un
@@ -119,8 +118,8 @@ C.TRAP = { damage = 8, launch_vy = 220, push_vx = 160 }
 C.TRAMPOLINE = { half_w = 12, launch_vy = 300, decay = 0.6, min_vy = 80 }
 -- Scudo: assorbe hp danni e dimezza le spinte fino all'inizio del proprio turno dopo
 C.SHIELD = { hp = 60, knockback = 0.5 }
--- Paracadute: nel proprio turno, in aria, un tocco lo apre (costa
--- stats.parachute_cost Nucleo) e un altro lo chiude. Aperto si scende al
+-- Paracadute: nel proprio turno, in aria, un tocco lo apre (se ne hanno
+-- stats.parachutes a partita) e un altro lo chiude. Aperto si scende al
 -- massimo a fall_speed, ci si muove in orizzontale air_mul volte più veloci
 -- (anche appena sbalzati) e l'atterraggio non fa danno
 C.PARACHUTE = { fall_speed = 60, air_mul = 1.15 }
@@ -165,18 +164,12 @@ C.STATS = {
 	-- scelta nostra: 1,5 volte la vita di prima, perché con due attacchi per
 	-- turno il danno può raddoppiare (il documento dice "la vita si alza")
 	max_hp = 150,
-	start_nucleo = 2,        -- Sergio (24 ottobre 2026): da 1 a 2
-	teleport_cost = 1,
-	free_teleports = 0,      -- teletrasporti gratis per partita (albero, set Vuoto)
-	parachute_cost = 1,
-	free_parachutes = 0,     -- paracadute gratis per partita
-	hook_cost = 1,           -- Nucleo per un lancio del Rampino
+	teleports = 2,           -- globi del teletrasporto all'inizio (Sergio: 2); se ne guadagnano attaccando presto
+	parachutes = 1,          -- paracadute per partita (Sergio, 24 ottobre 2026: uno)
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata
-	shield_cost = 1,         -- Nucleo per usare uno scudo trovato nelle casse
 	air_jumps = 0,           -- salti in aria prima di toccare terra (ramo Mobilità, set Corvo)
-	air_jump_cost = 1,       -- Nucleo per ogni salto in aria
 	burning_blasts = 0,      -- 1: missile e Uovo bruciano chi colpiscono (set Fornace)
 	status_turns = 1,        -- per quanti turni dura un effetto di stato dato da questo robot
 }

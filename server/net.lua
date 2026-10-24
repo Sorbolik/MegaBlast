@@ -53,14 +53,14 @@ function N.snapshot(g)
 		-- s: tick del fendente in corso (0 se il robot non sta colpendo), sd: sua direzione
 		-- pu, pd: lo stesso per il Pugno del Titano; ag, as, ap, ac: colpi di Uovo, Schegge, Pugno e Cecchino
 		-- sb, pb: angolo di mira del fendente e del pugno (servono col modello "blastron")
-		-- n: Nucleo, ft: teletrasporti gratis rimasti, mh: vita massima, tu: turni giocati, pt: punti
+		-- tl: teletrasporti in mano, mh: vita massima, tu: turni giocati, pt: punti
 		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute aperto;
-		-- fp: paracadute gratis; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)
+		-- pl: paracadute rimasti; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)
 		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna); lu: tick rimasti dell'Affondo;
 		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy); ml: tick del colpo di Maglio
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
-			n = rb.nucleo, ft = rb.free_teleports, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
-			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, fp = rb.free_parachutes,
+			tl = rb.teleports_left, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
+			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, pl = rb.parachutes_left,
 			pa = rb.parachute,
 			st = (rb.status.burn and rb.status.burn.turns or 0) + 10 * (rb.status.slow and rb.status.slow.turns or 0)
 				+ 100 * (rb.status.cracked and rb.status.cracked.turns or 0),
@@ -94,7 +94,7 @@ function N.snapshot(g)
 	for i, h in ipairs(g.heals) do heals[i] = { i = h.id, x = h.x, y = h.y } end
 	-- win: tick rimasti dopo il primo attacco; u: attacchi fatti (1 primaria, 2 secondaria); tp: teletrasporti
 	-- del turno; ot: supplementari (tempo scaduto, si finisce il giro)
-	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0)
+	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.hook and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, tp = g.teleports, mt = g.match_left, ot = g.overtime, r = robots, p = p, o = orbs, s = shards,
 		c = crates, pl = placed, hl = heals }

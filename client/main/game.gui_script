@@ -334,7 +334,7 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.hud, visible)
 	gui.set_enabled(self.time_bar_bg, visible)
 	gui.set_enabled(self.time_bar, visible)
-	gui.set_enabled(self.nucleo_label, visible)
+	gui.set_enabled(self.tele_label, visible)
 	gui.set_enabled(self.score_label, visible)
 	gui.set_enabled(self.btn_zoom, visible)
 end
@@ -675,8 +675,8 @@ local function handle_event(self, e)
 		else
 			snap_robot(self, e.robot)
 		end
-	elseif e.type == "nucleo" then
-		show_message(self, string.format("%s +%d Nucleo", who_name(self, e.robot), e.amount))
+	elseif e.type == "teleports" then
+		show_message(self, string.format("%s +%d teletrasport%s", who_name(self, e.robot), e.amount, e.amount == 1 and "o" or "i"))
 	elseif e.type == "trap" then
 		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
 		shock(self, e.x, e.y)
@@ -821,12 +821,13 @@ local function apply_state(self, s)
 	local g = self.g
 	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
 	g.window, g.teleports, g.overtime = s.win or 0, s.tp or 0, s.ot or false
-	g.used.primary, g.used.secondary = (s.u or 0) % 2 == 1, (s.u or 0) >= 2
+	local u = s.u or 0
+	g.used.primary, g.used.secondary, g.used.hook = u % 2 == 1, u % 4 >= 2, u >= 4
 	g.match_left = s.mt or g.match_left
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
-		rb.nucleo, rb.free_teleports, rb.turns, rb.points = r.n or 0, r.ft or 0, r.tu or 1, r.pt or 0
+		rb.teleports_left, rb.turns, rb.points = r.tl or 0, r.tu or 1, r.pt or 0
 		rb.max_hp = r.mh or rb.max_hp
 		rb.swing = (r.s or 0) > 0 and r.s or nil
 		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
@@ -842,7 +843,7 @@ local function apply_state(self, s)
 		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
 		rb.shield = (r.sh or 0) > 0 and r.sh or nil
 		rb.parachute = r.pa or false
-		rb.free_parachutes = r.fp or 0
+		rb.parachutes_left = r.pl or 0
 		-- turni rimasti: bruciatura, rallentamento x 10, armatura incrinata x 100
 		local st = r.st or 0
 		for k, kind in ipairs({ "burn", "slow", "cracked" }) do
@@ -1244,12 +1245,12 @@ local function bar_robot(self)
 	return current_robot(self)
 end
 
--- Lo slot si vede? Il paracadute c'è se si può pagare col Nucleo o è già aperto.
+-- Lo slot si vede? Il paracadute finché ne restano o è già aperto; il Rampino sempre.
 local function slot_have(rb, w)
 	if w == "parachute" then
-		return rb.parachute or rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost
+		return rb.parachute or rb.parachutes_left > 0
 	elseif w == "hook" then
-		return rb.nucleo >= rb.stats.hook_cost
+		return true
 	end
 	return game.has_weapon(rb, w)
 end
@@ -1258,8 +1259,8 @@ local function update_bar(self)
 	local rb = bar_robot(self)
 	if not rb then return end
 	local g = self.g
-	-- finiti i colpi (o il Nucleo per il Rampino) si torna al Lanciarune
-	if not slot_have(rb, self.weapon) then self.weapon = "missile" end
+	-- finiti i colpi (o lanciato il Rampino del turno) si torna al Lanciarune
+	if not slot_have(rb, self.weapon) or (self.weapon == "hook" and g.used.hook) then self.weapon = "missile" end
 	-- dopo il primo attacco si passa da soli all'altro (arma o spada)
 	if g.window > 0 and rb.id == g.current and not g:can_use(self.weapon) then
 		local other = game.SECONDARY[self.weapon] and "missile" or "sword"
@@ -1705,10 +1706,10 @@ local function render(self, dt)
 		self.score_text = score
 	end
 	local n = bar_robot(self)
-	local nucleo = n and n.nucleo or 0
-	if self.nucleo_n ~= nucleo then
-		gui.set_text(self.nucleo_label, "NUCLEO " .. nucleo)
-		self.nucleo_n = nucleo
+	local tele = n and n.teleports_left or 0
+	if self.tele_n ~= tele then
+		gui.set_text(self.tele_label, "TELETRASPORTI " .. tele)
+		self.tele_n = tele
 	end
 
 	-- freccia sopra il robot di turno
@@ -1911,11 +1912,11 @@ function init(self)
 	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end
 
 	self.hud = label(W / 2, H - 28, "", 1)
-	-- barra del tempo del turno (si accorcia verso il centro) e Nucleo accanto
+	-- barra del tempo del turno (si accorcia verso il centro) e teletrasporti in mano accanto
 	self.time_bar_bg = box(W / 2, TIME_BAR_Y, TIME_BAR_W + 4, TIME_BAR_H + 4, vmath.vector4(0.05, 0.05, 0.07, 0.6))
 	self.time_bar = box(W / 2, TIME_BAR_Y, TIME_BAR_W, TIME_BAR_H, TIME_COLOR)
-	self.nucleo_label = label(W / 2 + TIME_BAR_W / 2 + 80, TIME_BAR_Y + 2, "NUCLEO 1", 0.9)
-	gui.set_color(self.nucleo_label, vmath.vector4(1, 0.75, 0.35, 1))
+	self.tele_label = label(W / 2 + TIME_BAR_W / 2 + 110, TIME_BAR_Y + 2, "TELETRASPORTI 2", 0.9)
+	gui.set_color(self.tele_label, vmath.vector4(1, 0.75, 0.35, 1))
 	self.score_label = label(24, H - 28, "", 0.8)
 	gui.set_pivot(self.score_label, gui.PIVOT_W)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)

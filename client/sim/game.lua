@@ -11,7 +11,7 @@
 -- Regole del turno (sim/config.lua): fino a un'arma e un colpo di spada per
 -- turno, in ordine libero; dopo il primo attacco restano AFTER_ATTACK_SECONDS,
 -- in cui si può fare il secondo e riposizionarsi. I secondi rimasti al primo
--- attacco diventano Nucleo, che si spende nel teletrasporto.
+-- attacco diventano globi del teletrasporto (rb.teleports_left).
 --   for _, e in ipairs(g:pop_events()) do ... end
 
 local rng = require "sim.rng"
@@ -169,8 +169,8 @@ M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge" }
 M.FREE_WEAPONS = { missile = true, teleport = true }
 for w in pairs(M.SECONDARY) do M.FREE_WEAPONS[w] = true end
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
--- Oggetti tattici delle casse (anche loro in rb.ammo) e quelli che costano
--- Nucleo (paracadute, Rampino): non sono attacchi (config.lua)
+-- Oggetti tattici delle casse (anche loro in rb.ammo), il paracadute (uno a
+-- partita) e il Rampino (uno a turno): non sono attacchi (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
 M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true }
 -- oggetti che si lanciano mirando (gli altri si usano col tocco)
@@ -335,10 +335,9 @@ function M.new(seed, map_id, opts)
 			hp = opts.hp or st.max_hp, max_hp = st.max_hp, dead = false,
 			-- per i punti e i risultati di fine partita
 			points = 0, damage = 0, kills = 0, env_kills = 0, deaths = 0, falls = 0,
-			attack_ticks = 0, attack_turns = 0, nucleo_gained = 0, nucleo_spent = 0, teleports = 0, crates = 0,
-			nucleo = st.start_nucleo,
-			free_teleports = st.free_teleports,
-			free_parachutes = st.free_parachutes,
+			attack_ticks = 0, attack_turns = 0, teleports = 0, crates = 0,
+			teleports_left = st.teleports,   -- globi del teletrasporto in mano
+			parachutes_left = st.parachutes, -- paracadute rimasti per la partita
 			shield = nil,     -- danni che lo scudo può ancora assorbire
 			parachute = false, -- aperto
 			status = {},      -- effetti di stato: tipo -> { turns = turni rimasti, by = chi l'ha dato }
@@ -603,7 +602,7 @@ function M:kill(rb, reason)
 end
 
 -- Alla morte si ricomincia con la vita piena in un punto libero a caso della
--- mappa. Nucleo e colpi delle armi restano.
+-- mappa. Teletrasporti e colpi delle armi restano.
 function M:respawn(rb)
 	local x, y = self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
 	local sp = maps.get(self.map).spawns[1]
@@ -683,11 +682,9 @@ function M:update_robot(rb, input, active)
 	if want_jump and not rb.grounded then
 		if rb.coyote > 0 then
 			rb.grounded = true
-		elseif pressed and active and (rb.air_left or 0) > 0 and rb.nucleo >= st.air_jump_cost then
-			-- salto in aria: costa Nucleo
+		elseif pressed and active and (rb.air_left or 0) > 0 then
+			-- salto in aria (stats.air_jumps per ogni volo)
 			rb.air_left = rb.air_left - 1
-			rb.nucleo = rb.nucleo - st.air_jump_cost
-			rb.nucleo_spent = rb.nucleo_spent + st.air_jump_cost
 			rb.vx, rb.vy = dir * st.walk_speed * move, st.jump_vy * jump
 			rb.knocked, rb.rising, rb.fall_top = false, true, nil
 			self:emit({ type = "air_jump", robot = rb.id })
@@ -1292,7 +1289,7 @@ end
 
 local HOOK_LAND_DX = { 0, -8, 8, -16, 16 }
 
--- Rampino (oggetto a Nucleo, config.HOOK): colpo dritto. Su un robot, quello
+-- Rampino (oggetto, uno a turno, config.HOOK): colpo dritto. Su un robot, quello
 -- resta appeso alla fune (rb.hooked.by) e viene riavvolto verso la mano di chi
 -- tira per config.HOOK.reel pixel, senza danno. Sul terreno è chi tira che
 -- resta appeso (rb.hooked.x, y = il punto colpito) e sale lungo la fune fin
@@ -1882,27 +1879,16 @@ function M:use_tool(kind, fire)
 			self:emit({ type = "parachute_close", robot = rb.id })
 			return
 		end
-		if rb.free_parachutes > 0 then
-			rb.free_parachutes = rb.free_parachutes - 1
-		else
-			rb.nucleo = rb.nucleo - rb.stats.parachute_cost
-			rb.nucleo_spent = rb.nucleo_spent + rb.stats.parachute_cost
-		end
+		rb.parachutes_left = rb.parachutes_left - 1
 		rb.parachute = true
 		self:emit({ type = "parachute", robot = rb.id })
 		return
 	end
 	if kind == "hook" then
-		-- il Rampino costa Nucleo a ogni lancio
-		rb.nucleo = rb.nucleo - rb.stats.hook_cost
-		rb.nucleo_spent = rb.nucleo_spent + rb.stats.hook_cost
+		-- un Rampino per turno
+		self.used.hook = true
 		self:fire_hook(fire.angle)
 		return
-	end
-	if kind == "shield" then
-		-- lo scudo delle casse si usa pagando il Nucleo
-		rb.nucleo = rb.nucleo - rb.stats.shield_cost
-		rb.nucleo_spent = rb.nucleo_spent + rb.stats.shield_cost
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
@@ -2160,8 +2146,8 @@ function M:start_turn(player)
 	self.phase = "aim"
 	self.timer = M.TURN_TICKS
 	self.window = 0
-	-- attacchi già fatti nel turno: al massimo un'arma e un colpo di spada
-	self.used = { primary = false, secondary = false }
+	-- attacchi già fatti nel turno (al massimo un'arma e un colpo di spada) e il Rampino, uno a turno
+	self.used = { primary = false, secondary = false, hook = false }
 	self.teleports = 0
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
@@ -2191,7 +2177,7 @@ end
 
 -- Il robot di turno può usare weapon adesso? "teleport", "sword", un'arma o un
 -- oggetto. Un'arma e un colpo di spada per turno, fino all'ultimo tick. Il
--- teletrasporto costa Nucleo e si lancia fino al colpo di spada.
+-- teletrasporto consuma un globo (rb.teleports_left) e si lancia fino al colpo di spada.
 function M:can_use(weapon)
 	if self.phase ~= "aim" then return false end
 	local rb = self.robots[self.current]
@@ -2199,26 +2185,21 @@ function M:can_use(weapon)
 	if weapon == "parachute" then
 		-- solo in aria
 		if rb.grounded then return false end
-		return rb.parachute or rb.free_parachutes > 0 or rb.nucleo >= rb.stats.parachute_cost
+		return rb.parachute or rb.parachutes_left > 0
 	elseif weapon == "hook" then
-		return rb.nucleo >= rb.stats.hook_cost
+		return not self.used.hook
 	elseif weapon == "shield" then
-		return not rb.shield and rb.ammo.shield > 0 and rb.nucleo >= rb.stats.shield_cost
+		return not rb.shield and rb.ammo.shield > 0
 	elseif M.TOOLS[weapon] then
 		return rb.ammo[weapon] > 0
 	end
 	if weapon == "teleport" then
-		return not self.used.secondary and #self.orbs < M.MAX_ORBS and rb.nucleo >= M.teleport_cost(rb)
+		return not self.used.secondary and #self.orbs < M.MAX_ORBS and rb.teleports_left > 0
 			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS)
 	elseif M.SECONDARY[weapon] then
 		return not self.used.secondary and M.has_weapon(rb, weapon)
 	end
 	return not self.used.primary and M.has_weapon(rb, weapon)
-end
-
--- Quanto Nucleo costa il prossimo teletrasporto: niente finché restano quelli gratis
-function M.teleport_cost(rb)
-	return rb.free_teleports > 0 and 0 or rb.stats.teleport_cost
 end
 
 -- Il robot di turno attacca con weapon (già controllata con can_use)
@@ -2251,13 +2232,11 @@ function M:attack(weapon, fire)
 	if first then
 		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
 		rb.attack_turns = rb.attack_turns + 1
-		-- i secondi rimasti diventano Nucleo
-		local gain = math.floor(self.timer / (60 * C.NUCLEO_SECONDS))
-		gain = math.max(0, math.min(gain, C.NUCLEO_MAX - rb.nucleo))
+		-- i secondi rimasti diventano globi del teletrasporto
+		local gain = math.floor(self.timer / (60 * C.TELEPORT_SECONDS))
 		if gain > 0 then
-			rb.nucleo = rb.nucleo + gain
-			rb.nucleo_gained = rb.nucleo_gained + gain
-			self:emit({ type = "nucleo", robot = rb.id, amount = gain, total = rb.nucleo })
+			rb.teleports_left = rb.teleports_left + gain
+			self:emit({ type = "teleports", robot = rb.id, amount = gain, total = rb.teleports_left })
 		end
 		self.window = math.min(self.timer, M.AFTER_ATTACK_TICKS)
 	end
@@ -2291,7 +2270,6 @@ function M:results()
 			damage = rb.damage, kills = rb.kills, env_kills = rb.env_kills, deaths = rb.deaths, falls = rb.falls,
 			turns = rb.turns, teleports = rb.teleports, crates = rb.crates,
 			avg_attack_secs = rb.attack_turns > 0 and math.floor(rb.attack_ticks / rb.attack_turns / 6 + 0.5) / 10 or 0,
-			nucleo_gained = rb.nucleo_gained, nucleo_spent = rb.nucleo_spent,
 		}
 	end
 	local first, second = ranking[1], nil
@@ -2378,14 +2356,9 @@ function M:step(input)
 			if M.TOOLS[weapon] then
 				self:use_tool(weapon, fire)
 			elseif weapon == "teleport" then
-				-- il globo non è un attacco: costa Nucleo e il turno continua
+				-- il globo non è un attacco: consuma un teletrasporto e il turno continua
 				local rb = self.robots[self.current]
-				if rb.free_teleports > 0 then
-					rb.free_teleports = rb.free_teleports - 1
-				else
-					rb.nucleo = rb.nucleo - rb.stats.teleport_cost
-					rb.nucleo_spent = rb.nucleo_spent + rb.stats.teleport_cost
-				end
+				rb.teleports_left = rb.teleports_left - 1
 				rb.teleports = rb.teleports + 1
 				self.teleports = self.teleports + 1
 				self:throw_orb(fire.angle, fire.power)

@@ -73,12 +73,12 @@ il tasto `t`, armi coi tasti `1`-`9`. Con `imposta comandi telefono` ci sono le
 due levette (corsa 94 px) e TELE sta a `1208 257`.
 La barra delle armi sta in basso al centro (`y = 62`) e mostra solo le armi che
 il robot ha, centrate, in tre gruppi (primarie color brace, secondarie color
-acciaio, oggetti; Rampino e paracadute ci sono finché c'è Nucleo, cioè dall'inizio):
+acciaio, oggetti; Rampino sempre, paracadute finché ne resta uno):
 Lanciarune `479`, Lama di Nucleo `593`, Rampino `707`, Paracadute `801`; con
 una secondaria scelta (`prova_secondaria`) `432`, `546`, `660`, `754`, `848`.
 Con `prova_armi` le posizioni sono nei commenti di `scenari/oggetti.txt`.
 Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, ARMERIA `168 108`.
-Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, Nucleo): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`. Effetti di stato: `scenari/stati.txt`. Scelta delle armi d'inizio partita (primaria e secondaria): `scenari/scelta.txt`. Secondarie e Tonante: `scenari/secondarie.txt`; Maglio: `scenari/maglio.txt`; Rampino (oggetto a Nucleo, sale sulla piattaforma colpita): `scenari/rampino.txt`; Cecchino: `scenari/cecchino.txt`.
+Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, teletrasporti guadagnati): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`. Effetti di stato: `scenari/stati.txt`. Scelta delle armi d'inizio partita (primaria e secondaria): `scenari/scelta.txt`. Secondarie e Tonante: `scenari/secondarie.txt`; Maglio: `scenari/maglio.txt`; Rampino (oggetto, uno a turno, sale sulla piattaforma colpita): `scenari/rampino.txt`; Cecchino: `scenari/cecchino.txt`.
 Fine partita, podio, armeria e albero di abilità: `scenari/podio.txt`.
 
 Per guidare il robot il gioco, solo in questa build, scrive nel log righe

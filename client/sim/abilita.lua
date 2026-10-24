@@ -5,7 +5,7 @@
 -- Le quattro regole del documento:
 -- 1. meno punti che nodi: al livello massimo POINTS_MAX punti per un albero che
 --    ne costa il doppio, così anche a fine gioco si sceglie;
--- 2. nodi misti: statistiche (salto, velocità, vita) e nodi del Nucleo;
+-- 2. nodi misti: statistiche (salto, velocità, vita) e riserve (teletrasporti, paracadute);
 -- 3. differenza che si sente ma si colma con la strategia: con tutti i punti
 --    nessuna statistica sale più del 10% (c'è un test);
 -- 4. ricostruzione gratuita fuori dalla partita (sim/assetto.lua tiene i 3 assetti).
@@ -26,12 +26,12 @@ M.ROW_GATE = 3
 
 M.BRANCHES = {
 	{ id = "mobility", name = "MOBILITÀ", desc = "Salto, corsa e teletrasporto" },
-	{ id = "defense", name = "DIFESA", desc = "Vita, Nucleo, cadute e spinte" },
+	{ id = "defense", name = "DIFESA", desc = "Vita, riserve, cadute e spinte" },
 	{ id = "arsenal", name = "ARSENALE", desc = "Trappole ed effetti di stato" },
 }
 
 -- Nodi: ramo, riga (1 in alto), gradi, costo di ogni grado ed effetto di ogni grado.
--- Somma dei costi di tutti i gradi: 70, più del triplo di POINTS_MAX.
+-- Somma dei costi di tutti i gradi: 62, più del triplo di POINTS_MAX.
 M.NODES = {
 	-- Mobilità (28)
 	{ id = "jump", branch = "mobility", row = 1, ranks = 3, cost = 2, name = "Gambe di Titano",
@@ -43,22 +43,18 @@ M.NODES = {
 	{ id = "orb_fast", branch = "mobility", row = 3, ranks = 2, cost = 3, name = "Orbe impaziente",
 		desc = "Il teletrasporto scatta il 5% prima", effects = { { stat = "teleport_ticks", mul = 0.95 } } },
 	{ id = "air_jump", branch = "mobility", row = 3, ranks = 1, cost = 4, name = "Balzo nel vuoto",
-		desc = "Un salto in aria, per 1 Nucleo", effects = { { stat = "air_jumps", add = 1 } } },
-	-- Difesa (32)
+		desc = "Un salto in aria", effects = { { stat = "air_jumps", add = 1 } } },
+	-- Difesa (24)
 	{ id = "hp", branch = "defense", row = 1, ranks = 4, cost = 2, name = "Crosta spessa",
 		desc = "Vita +3", effects = { { stat = "max_hp", add = 3 } } },
 	{ id = "fall", branch = "defense", row = 1, ranks = 2, cost = 2, name = "Ossa di pietra",
 		desc = "Danno da caduta -5%", effects = { { stat = "fall_damage_mul", mul = 0.95 } } },
-	{ id = "start_nucleo", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Nucleo di riserva",
-		desc = "Si parte con 1 Nucleo in più", effects = { { stat = "start_nucleo", add = 1 } } },
-	{ id = "free_parachute", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Ali di riserva",
-		desc = "Il primo paracadute della partita è gratis", effects = { { stat = "free_parachutes", add = 1 } } },
-	{ id = "free_teleport", branch = "defense", row = 3, ranks = 1, cost = 4, name = "Passo leggero",
-		desc = "Il primo teletrasporto della partita è gratis", effects = { { stat = "free_teleports", add = 1 } } },
+	{ id = "teleport", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Globo di riserva",
+		desc = "Si parte con un teletrasporto in più", effects = { { stat = "teleports", add = 1 } } },
+	{ id = "parachute", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Ali di riserva",
+		desc = "Un paracadute in più per partita", effects = { { stat = "parachutes", add = 1 } } },
 	{ id = "anchor", branch = "defense", row = 3, ranks = 2, cost = 2, name = "Radici",
 		desc = "Spinta subita -5%", effects = { { stat = "knockback_mul", mul = 0.95 } } },
-	{ id = "cheap_shield", branch = "defense", row = 4, ranks = 1, cost = 4, name = "Guscio",
-		desc = "Lo scudo costa 1 Nucleo in meno", effects = { { stat = "shield_cost", add = -1 } } },
 	-- Arsenale (10)
 	{ id = "trap_wide", branch = "arsenal", row = 1, ranks = 3, cost = 2, name = "Trappola larga",
 		desc = "Raggio delle trappole +3%", effects = { { stat = "trap_radius", mul = 1.03 } } },

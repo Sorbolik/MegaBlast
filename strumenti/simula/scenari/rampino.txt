@@ -1,4 +1,4 @@
-# Rampino: oggetto a Nucleo (si parte con 2), sempre nella barra con il
+# Rampino: oggetto, uno a turno, sempre nella barra con il
 # paracadute: Lanciarune 479, Lama 593, Rampino 707, Paracadute 801. Sparato al terreno, chi tira sale lungo la fune
 # e si mette in piedi sopra la piattaforma colpita; su un robot, lo tira a sé.
 imposta zoom 2
@@ -18,4 +18,4 @@ aspetta_evento hook_end 2
 aspetta 0.05
 zoom 04_arrivato
 aspetta 1
-foto 05_sopra_la_piattaforma        # in piedi sopra, un Nucleo in meno, attacchi ancora tutti e due
+foto 05_sopra_la_piattaforma        # in piedi sopra, Rampino spento per il turno, attacchi ancora tutti e due
