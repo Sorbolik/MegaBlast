@@ -11,6 +11,11 @@ local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local targa = require "battaglia.targa"
 local home = require "menu.home"
+local profilo = require "menu.profilo"
+local podio = require "menu.podio"
+local armeria = require "menu.armeria"
+local assetto = require "sim.assetto"
+local riconoscimenti = require "sim.riconoscimenti"
 local scelta_armi = require "menu.scelta"
 local draft = require "sim.draft"
 local tutorial = require "battaglia.tutorial"
@@ -137,6 +142,8 @@ local VK = vmath.vector3(K, K, 1)
 local ZOOM_INIZIO = tonumber(config_string("megablast.zoom", "")) or 1
 -- dopo un'esplosione la camera resta lì un attimo prima di tornare al robot
 local CAMERA_SOSTA = 0.7
+-- secondi tra la fine della partita e il podio
+local PODIO_ATTESA = 1.5
 -- Game feel (fase 5 della roadmap). Quando un colpo va a segno il mondo si ferma
 -- un attimo (hit-stop, secondi con danno piccolo e grande) e lo schermo trema
 -- nella direzione del colpo, più forte quanto più è il danno (pixel per punto)
@@ -292,7 +299,20 @@ local function disconnect(self)
 	end
 end
 
+-- Schermate fuori dalla battaglia (podio, armeria): si creano
+-- quando si aprono e si cancellano quando si chiudono, così non pesano mentre si
+-- gioca. Ogni modulo ha new, on_input (-> "indietro" / "continua" per uscire),
+-- distruggi e, se si anima, update.
+local function chiudi_schermata(self)
+	if self.schermata then
+		self.schermata.mod.distruggi(self.schermata.obj)
+		self.schermata = nil
+	end
+end
+
 local function show_menu(self)
+	chiudi_schermata(self)
+	self.podio_t = nil
 	disconnect(self)
 	self.mode = "menu"
 	home.show(self.home)
@@ -658,13 +678,45 @@ local function handle_event(self, e)
 		else
 			text = e.winner and ("Vince " .. TEAM_NAMES[e.winner] .. "!") or "Pareggio!"
 		end
-		-- classifica per punti (la schermata del podio la sostituirà)
-		for _, r in ipairs(e.results and e.results.ranking or {}) do
-			text = text .. string.format("\n%d. %s  %d", r.place, self.names[r.robot], r.points)
-		end
-		show_message(self, text .. "\nTocca per tornare al menu", true)
+		if e.reason == "time" then text = "Tempo scaduto!\n" .. text end
+		show_message(self, text, true)
+		self.fine_online = self.mode == "online"
 		self.mode = "ended"
+		-- dopo un attimo (o al primo tocco) il podio coi risultati
+		self.risultati = e.results
+		self.podio_t = PODIO_ATTESA
 	end
+end
+
+-- Il podio, coi risultati della partita appena finita. Chi gioca su questo
+-- telefono (online il suo robot, in locale il primo) guadagna esperienza.
+local function apri_podio(self)
+	self.podio_t = nil
+	local res = self.risultati
+	local giocatori, me = {}, self.fine_online and self.me or nil
+	for i in ipairs(self.g.robots) do
+		local nome = (self.fine_online and i == self.me) and "Tu" or self.names[i]
+		giocatori[i] = { nome = nome, colore = self.colors[i] }
+	end
+	local mio = me or 1
+	local posto, presi = #res.ranking, {}
+	for _, v in ipairs(res.ranking) do
+		if v.robot == mio then posto = v.place end
+	end
+	local per_robot = riconoscimenti.assign(res.ranking)
+	presi = per_robot[mio] or presi
+	local guadagno = profilo.fine_partita(self.profilo, posto, presi)
+	profilo.salva(self.profilo)
+	show_message(self, "", true)
+	set_controls_visible(self, false)
+	self.mode = "schermata"
+	self.schermata = { mod = podio, obj = podio.new(res, giocatori, me, guadagno, self.profilo) }
+end
+
+local function apri_schermata(self, mod, ...)
+	home.hide(self.home)
+	self.mode = "schermata"
+	self.schermata = { mod = mod, obj = mod.new(...) }
 end
 
 -- Online ------------------------------------------------------------------------
@@ -868,7 +920,19 @@ start_local_match = function(self, picked)
 			crate_every = ogni > 0 and ogni or nil,
 		}
 	end
+	-- il primo robot gioca con l'assetto attivo del profilo (copia: MODES non si tocca)
+	local mio = profilo.assetto_attivo(self.profilo)
+	local players = {}
+	for i, p in ipairs(opts.players) do
+		players[i] = {}
+		for k, v in pairs(p) do players[i][k] = v end
+	end
+	players[1].stats = assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio))
+	opts.players = players
 	new_match(self, os.time(), nil, opts)
+	-- prova_durata N: la partita dura N secondi (scenari/podio.txt)
+	local durata = SIMULA and config_int("megablast.prova_durata", 0) or 0
+	if durata > 0 then self.g.match_left = durata * 60 end
 	if SIMULA and config_int("megablast.prova_stati", 0) > 0 then
 		-- tutti partono con i tre effetti di stato, per vederli (scenario stati.txt)
 		for _, rb in ipairs(self.g.robots) do
@@ -1682,6 +1746,7 @@ function init(self)
 
 	-- la home per ultima, così sta sopra la battaglia
 	self.home = home.new(TEAM_COLORS[1])
+	self.profilo = profilo.carica()
 	self.scelta = scelta_armi.new(WEAPON_ICON, WEAPON_NAME)
 
 	-- una mappa sullo sfondo del menu
@@ -1764,6 +1829,11 @@ function update(self, dt)
 	render(self, dt_mondo)
 	muovi_detriti(self, dt_mondo)
 	if self.mode == "menu" then home.update(self.home, dt) end
+	if self.podio_t then
+		self.podio_t = self.podio_t - dt
+		if self.podio_t <= 0 then apri_podio(self) end
+	end
+	if self.schermata and self.schermata.mod.update then self.schermata.mod.update(self.schermata.obj, dt) end
 	if self.mode == "scelta" then
 		local players = scelta_armi.update(self.scelta, dt)
 		if players then start_local_match(self, players) end
@@ -1815,7 +1885,7 @@ end
 -- Un dito (o il mouse) si appoggia in (x, y). id distingue le dita.
 local function pointer_down(self, id, x, y)
 	if self.mode == "ended" then
-		show_menu(self)
+		if self.podio_t then apri_podio(self) else show_menu(self) end
 		return
 	elseif self.mode ~= "local" and self.mode ~= "online" then
 		return
@@ -1875,12 +1945,19 @@ local function pointer_up(self, id, x, y)
 end
 
 function on_input(self, action_id, action)
+	if self.mode == "schermata" then
+		local fine = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
+		if fine then show_menu(self) end
+		return true
+	end
 	if self.mode == "menu" then
 		local scelta = home.on_input(self.home, action_id, action)
 		if scelta == "local" then
 			start_local(self)
 		elseif scelta == "online" then
 			start_online(self)
+		elseif scelta == "armeria" then
+			apri_schermata(self, armeria, self.profilo)
 		end
 		return true
 	elseif self.mode == "scelta" then
