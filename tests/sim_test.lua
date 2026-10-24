@@ -746,19 +746,45 @@ do
 	local pts = t:preview(0, 1, 12, 4, nil, "eagle")
 	check(#pts == 12 and math.abs(pts[12].x - pts[1].x) <= config.EAGLE.range, "la linea di mira è dritta e non supera la portata")
 
-	-- Rampino: tira il bersaglio verso chi spara, poco danno
+	-- Rampino: riavvolge il bersaglio dritto verso la mano, per reel pixel, poi lo molla
 	local h = game.new(42, "isole", { secondary = "hook" })
 	run(h, 60)
 	local ha, hb = h.robots[1], h.robots[2]
-	sy = sky_spot(h, 640, 80)
-	place(ha, 600, sy)
-	place(hb, 700, sy)
+	sy = sky_spot(h, 640, 120)
+	place(ha, 560, sy)
+	place(hb, 740, sy)
 	hp = hb.hp
 	h:step({ fire = { angle = 0, power = 1, weapon = "hook" } })
 	for _, e in ipairs(h:pop_events()) do if e.type == "hook" then ev = e end end
 	check(ev and ev.target == 2 and hp - hb.hp == config.HOOK.damage, "il Rampino aggancia e fa poco danno")
-	check(hb.vx < 0 and hb.vy > 0 and hb.knocked, "e tira il bersaglio verso chi spara")
-	check(ha.vx == 0, "chi spara resta dov'è")
+	check(hb.hooked and hb.hooked.by == 1 and ha.vx == 0, "il bersaglio resta appeso alla fune, chi tira no")
+	local y_start = hb.y
+	run(h, 10)
+	check(hb.x < 740 - 40 and math.abs(hb.y - y_start) < 2 and hb.hooked, "viene tirato dritto, senza cadere")
+	local ended
+	for _ = 1, 30 do
+		h:step()
+		for _, e in ipairs(h:pop_events()) do if e.type == "hook_end" then ended = true end end
+		if not hb.hooked then break end
+	end
+	check(ended and not hb.hooked and math.abs((740 - hb.x) - config.HOOK.reel) < 2, "dopo reel pixel di fune viene mollato")
+	run(h, 5)
+	check(hb.y < y_start and hb.vx == 0, "e cade dritto dov'è")
+	-- tirato da sotto sale fino a chi tira; un robot vicino ferma la fune
+	local u = game.new(42, "isole", { secondary = "hook" })
+	run(u, 60)
+	local ua, ub = u.robots[1], u.robots[2]
+	sy = sky_spot(u, 640, 120)
+	place(ua, 640, sy)
+	place(ub, 640 + 30, sy - 60)
+	u:step({ fire = { angle = math.atan2(-60 + game.ROBOT_H / 2, 30), power = 1, weapon = "hook" } })
+	check(ub.hooked, "aggancia anche in diagonale")
+	for _ = 1, 40 do
+		u:step()
+		if not ub.hooked then break end
+	end
+	check(not ub.hooked and ub.y > sy - 60 + 20 and math.abs(ub.x - ua.x) < 2 * game.ROBOT_HALF_W + 2,
+		"da sotto lo tira su fino a chi spara e lo ferma addosso")
 	local m = game.new(42, "isole", { secondary = "hook" })
 	run(m, 60)
 	m.robots[2].x = -1000

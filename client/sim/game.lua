@@ -347,6 +347,7 @@ function M.new(seed, map_id, opts)
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
 			lunge = nil,   -- tick rimasti dell'Affondo in corso, nil se fermo
+			hooked = nil,  -- appeso alla fune del Rampino: { by = chi tira, left = fune da riavvolgere }
 			ammo = make_ammo(opts.ammo),
 			-- la secondaria scelta all'inizio della partita, oltre alla Lama (sim/draft.lua)
 			secondary = p.secondary or opts.secondary,
@@ -610,7 +611,7 @@ function M:respawn(rb)
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
 	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
-	rb.lunge, rb.lunge_hit = nil, nil
+	rb.lunge, rb.lunge_hit, rb.hooked = nil, nil, nil
 	rb.hp, rb.dead, rb.shield, rb.status, rb.respawn_in = rb.max_hp, false, nil, {}, nil
 	rb.parachute = false
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
@@ -649,8 +650,9 @@ end
 -- active: è il robot di turno e può muoversi (riceve i comandi)
 function M:update_robot(rb, input, active)
 	if rb.dead then return end
-	-- durante l'Affondo lo scatto comanda il movimento
+	-- durante l'Affondo lo scatto comanda il movimento; appeso al Rampino, la fune
 	if rb.lunge then return self:update_lunge(rb) end
+	if rb.hooked then return self:update_hooked(rb) end
 
 	-- Se il robot è finito dentro il terreno, lo spingiamo fuori verso l'alto
 	if self:terrain_collides(rb.x, rb.y) then
@@ -1279,8 +1281,9 @@ function M:fire_eagle(angle)
 	if hit then self:hurt(hit, s.damage, rb) end
 end
 
--- Rampino: il robot agganciato viene tirato verso chi spara, sollevato un
--- po': vola verso di lui e, da vicino, oltre. Sul terreno non fa niente.
+-- Rampino: il robot agganciato resta attaccato alla fune (rb.hooked) e viene
+-- riavvolto verso la mano di chi spara, dritto, per config.HOOK.reel pixel.
+-- Sul terreno non fa niente.
 function M:fire_hook(angle)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
@@ -1288,13 +1291,47 @@ function M:fire_hook(angle)
 	rb.facing = math.cos(angle) < 0 and -1 or 1
 	self:emit({ type = "hook", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id })
 	if not hit then return end
-	local s = C.HOOK
-	local dx = rb.x - hit.x
-	local k = self:knock_mul(hit)
-	hit.vx = (dx < 0 and -1 or 1) * s.pull * k
-	hit.vy = s.lift * k
+	hit.hooked = { by = rb.id, left = C.HOOK.reel }
+	hit.vx, hit.vy = 0, 0
 	hit.grounded, hit.knocked, hit.fall_top = false, true, nil
-	self:hurt(hit, s.damage, rb)
+	self:hurt(hit, C.HOOK.damage, rb)
+end
+
+-- Dove sta la mano di chi tira (la fune parte da lì)
+function M.hook_hand(by)
+	return by.x + by.facing * M.MUZZLE * 0.5, by.y + M.SWORD_PIVOT_Y
+end
+
+-- Un tick di fune, al posto della fisica normale del robot: va dritto verso
+-- la mano di chi tira (che intanto può muoversi), finché la fune non è
+-- riavvolta tutta o qualcosa lo ferma; poi cade dov'è
+function M:update_hooked(rb)
+	local h = rb.hooked
+	local by = self.robots[h.by]
+	local hx, hy = M.hook_hand(by)
+	local cx, cy = rb.x, rb.y + M.ROBOT_H / 2
+	local dx, dy = hx - cx, hy - cy
+	local dist = math.sqrt(dx * dx + dy * dy)
+	local step = math.min(C.HOOK.speed * M.DT, h.left, dist)
+	local stopped = by.dead or dist < 1
+	if not stopped then
+		local ux, uy = dx / dist, dy / dist
+		local n = math.max(1, math.ceil(step))
+		for _ = 1, n do
+			local nx, ny = rb.x + ux * step / n, rb.y + uy * step / n
+			if self:robot_collides(nx, ny, rb) then
+				stopped = true
+				break
+			end
+			rb.x, rb.y = nx, ny
+		end
+		h.left = h.left - step
+	end
+	if stopped or h.left <= 0.5 then
+		rb.hooked = nil
+		self:emit({ type = "hook_end", robot = rb.id })
+	end
+	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
 -- Affondo (config.LUNGE) -----------------------------------------------------------
@@ -2210,7 +2247,7 @@ function M:step(input)
 		if rb.punch then
 			if rb.dead then rb.punch, rb.punch_dir = nil, nil else self:update_punch(rb) end
 		end
-		if rb.lunge and rb.dead then rb.lunge, rb.lunge_hit = nil, nil end
+		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked = nil, nil, nil end
 	end
 	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
@@ -2260,7 +2297,7 @@ function M:step(input)
 			if o.flying then still = false end
 		end
 		for _, rb in ipairs(self.robots) do
-			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge) then still = false end
+			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.hooked) then still = false end
 		end
 		self.settle = still and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then

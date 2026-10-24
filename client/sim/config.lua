@@ -78,11 +78,14 @@ C.SNIPER = { damage = 25, push = 280, lift = 80, bounces = 3, drop_after = 0.6, 
 -- alla mira a recoil; da terra lo solleva anche di lift, così si riposiziona
 -- (spara in basso in aria per salire, verso il vuoto per tornare sulla piattaforma).
 C.EAGLE = { damage = 25, range = 300, recoil = 300, lift = 120 }
--- Rampino: colpo dritto e istantaneo fino a range; il robot agganciato viene
--- tirato verso chi spara a pull, sollevato di lift: vola per circa
--- pull * 2 * lift / gravità pixel (120 con la gravità base), quindi da vicino
--- ti passa oltre, da lontano cade a metà strada. Sul terreno non fa niente.
-C.HOOK = { damage = 10, range = 220, pull = 320, lift = 110 }
+-- Rampino: colpo dritto e istantaneo fino a range. Il robot agganciato viene
+-- tirato con la fune verso la mano di chi spara: dritto lungo la fune, senza
+-- gravità, a speed, per reel pixel al massimo (la fune si riavvolge di
+-- tanto), poi viene mollato e cade dov'è. Il terreno o un robot in mezzo lo
+-- fermano prima. Da lontano quindi si ferma a metà strada: se sotto c'è il
+-- vuoto, ci cade; da sotto lo sollevi fino a te e lo molli in aria; da sopra
+-- lo tiri giù. Chi tira si può muovere nel frattempo: la fune segue la mano.
+C.HOOK = { damage = 10, range = 220, reel = 110, speed = 300 }
 -- Affondo: scatto nella direzione della mira a speed per ticks tick, passando
 -- attraverso i robot (danno una volta a ognuno); il terreno lo ferma. Alla
 -- fine resta keep della velocità: oltre un bordo si vola.

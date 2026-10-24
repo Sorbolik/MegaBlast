@@ -89,7 +89,7 @@ local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", 
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Lento, poi cala; rimbalza 3 volte e sbalza dove andava",
-	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", hook = "Colpo dritto: tira l'avversario verso di te, poco danno",
+	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", hook = "Aggancia l'avversario e lo tira dritto verso di te per un tratto, poi lo molla",
 	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true }
@@ -690,7 +690,9 @@ local function handle_event(self, e)
 		gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), e.type == "hook" and 1.5 * K or 2.5 * K, 0))
 		gui.set_euler(n, vmath.vector3(0, 0, math.deg(math.atan2(dy, dx))))
 		gui.set_color(n, e.type == "hook" and ui.C.ACCIAIO or WHITE)
-		gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.25, 0, hide_node)
+		-- la fune del Rampino resta tesa finché tira (rope, aggiornata a ogni frame)
+		self.rope = e.type == "hook" and e.target or nil
+		if not self.rope then gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.25, 0, hide_node) end
 		if e.target then
 			-- il colpo arriva dalla canna: la spinta del colpito va da lì
 			self.colpo_x, self.colpo_y, self.colpo_t = e.x0, e.y0, self.clock
@@ -828,6 +830,7 @@ local function apply_state(self, s)
 		rb.ammo.sniper = r.ac or 0
 		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
+		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or nil
 		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
 		rb.shield = (r.sh or 0) > 0 and r.sh or nil
 		rb.parachute = r.pa or false
@@ -1449,6 +1452,24 @@ local function render(self, dt)
 		end
 		scoria.set_weapon(r.rig, weapon)
 		scoria.update(r.rig, dt, st)
+	end
+
+	-- la fune del Rampino: dalla mano di chi tira al robot appeso; mollato, sfuma
+	if self.rope then
+		local rb = g.robots[self.rope]
+		local n = self.tracer
+		if rb.hooked and not rb.dead then
+			local by, tv = self.view[rb.hooked.by], self.view[self.rope]
+			local x0, y0 = by.x + g.robots[rb.hooked.by].facing * game.MUZZLE * 0.5, by.y + game.SWORD_PIVOT_Y
+			local dx, dy = tv.x - x0, (tv.y + game.ROBOT_H / 2) - y0
+			set_pos(n, (x0 + tv.x) / 2, (y0 + tv.y + game.ROBOT_H / 2) / 2)
+			gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), 1.5 * K, 0))
+			EULER.z = math.deg(math.atan2(dy, dx))
+			gui.set_euler(n, EULER)
+		else
+			self.rope = nil
+			gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.25, 0, hide_node)
+		end
 	end
 
 	-- Uovo di Fiamma: rotola mentre vola, sopra i secondi che mancano allo scoppio
