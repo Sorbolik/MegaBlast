@@ -7,7 +7,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 - PNG RGBA, alfa non premoltiplicato.
 - I file `*_luce.png` sono bianchi su trasparente: si disegnano in **additivo** sopra il pezzo base e si **tingono nel codice** con il colore della squadra.
-- Le scritte non sono mai nelle immagini, tranne il logo: le mette il gioco con i font.
+- Le scritte non sono mai nelle immagini: le mette il gioco con i font.
 
 ## Cartelle
 
@@ -17,12 +17,8 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 | `scoria/` | I pezzi della Scoria: testa, mantello e gamba, ognuno con la copia `_bordo` per il contorno chiaro |
 | `esplosioni/` | `esplosione_base_12x256.png` (flipbook 12 fotogrammi da 256 px), fumo e fuoco additivo come livelli separati |
 | `mappe/isole_cimitero/` | `maschera.png` 640×360 (nero vuoto, bianco terra, rosso indistruttibile; è la stessa di `client/sim/mapdata.lua`), `superficie.png`, `ossa.png`, `interno.png` (parete dei crateri), `colori.txt` (brace dei crateri). Immagini a 1920×1080, allineate alla maschera |
-| `ui/kit/` | Bottoni, pannelli, carte, slot, barre, schede, badge. `kit_ui.json` ha i bordi 9-slice di ogni pezzo |
-| `ui/icone/` | 20 icone 128 px (`icona_<nome>.png`) |
-| `ui/sfondi/` | Sfondi delle schermate: home, forgia, podio (4 gradini), campagna, caricamento |
-| `ui/` | `logo.png` e `logo_luce.png` |
-| `menu/` | Versioni per la home, fatte da `strumenti/grafica/menu.py`: kit e logo rimpiccioliti, `home_sfondo.png` largo 2048 |
-| `font/` | Cinzel Bold (licenza OFL in `OFL_Cinzel.txt`), il font dei titoli della home |
+| `ui/` | Le tre forme bianche dell'interfaccia (`forma`, `bordo` 9-slice e `alone`), fatte da `strumenti/grafica/ui.py` e colorate da `client/ui/ui.lua`; `levette/` le levette del telefono (`strumenti/grafica/levette.py`) |
+| `font/` | Cinzel Bold (licenza OFL in `OFL_Cinzel.txt`), il font dell'interfaccia (`client/ui/titolo.font`) |
 
 ## In battaglia
 
@@ -30,10 +26,10 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 - La mappa è una mesh con lo shader `client/battaglia/terreno.fp`: sfondo fatto dallo shader (cielo, file di colline e guglie in parallasse, braci), terreno ritagliato dalla maschera viva, parete e brace dove si è scavato.
 - Il personaggio è la Scoria di `client/battaglia/scoria.lua` (fase 4 della roadmap): testa, mantello e gambe in `scoria/` (sagome bianche più la copia allargata `_bordo`, colorate dal codice) fatti da `strumenti/grafica/scoria.py`, che scrive anche `client/battaglia/scoria_pezzi.lua`; mani, occhio, Nucleo e armi sono nodi GUI. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
 
-## Nella home
+## Interfaccia
 
-- `client/menu/home.lua` monta la home con i nodi GUI: sfondo (atlante `sfondo_home`, adattato in ZOOM così copre ogni schermo), la Scoria di `battaglia/scoria.lua`, bottoni del kit con 9-slice (atlante `menu`), testi con `menu/titoli.font`.
-- Mentre si vede la home la mappa della battaglia è spenta, così il telefono non la disegna sotto lo sfondo.
+- Niente immagini dipinte: `client/ui/ui.lua` disegna pannelli, bottoni, schede, barre e il bagliore del Nucleo con le tre forme di `ui/` (atlante `client/ui/ui.atlas`) e i colori della sua palette. I pezzi si aggiungono lì quando una schermata ne ha bisogno.
+- `client/menu/home.lua` monta la home: fondo scuro, la Scoria di `battaglia/scoria.lua` col bagliore del Nucleo, il nome e i bottoni delle partite. Mentre si vede la home la mappa della battaglia è spenta.
 
 ## Rigenerare
 

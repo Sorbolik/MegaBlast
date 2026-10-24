@@ -5,6 +5,7 @@
 -- online la fa girare il server e noi disegniamo lo stato che ci manda.
 
 local game = require "sim.game"
+local ui = require "ui.ui"
 local gconfig = require "sim.config"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
@@ -33,13 +34,11 @@ local ACTION_ZOOM_IN = hash("zoom_avanti")
 local ACTION_ZOOM_OUT = hash("zoom_indietro")
 local ACTION_WEAPON = { [hash("arma1")] = 1, [hash("arma2")] = 2, [hash("arma3")] = 3, [hash("arma4")] = 4, [hash("arma5")] = 5 }
 
--- Squadre: Cremisi e Cobalto della bibbia grafica, poi Ambra e Giada per il
--- tutti contro tutti
-local TEAM_NAMES = { "Rosso", "Blu", "Oro", "Verde" }
-local TEAM_COLORS = { vmath.vector4(1, 0.231, 0.306, 1), vmath.vector4(0.239, 0.482, 1, 1),
-	vmath.vector4(1, 0.7, 0.18, 1), vmath.vector4(0.25, 0.85, 0.5, 1) }
+-- Squadre: Cremisi e Cobalto della bibbia grafica, poi Verde e Oro per il
+-- tutti contro tutti. La palette sta solo in ui/ui.lua
+local TEAM_NAMES = { "Rosso", "Blu", "Verde", "Oro" }
+local TEAM_COLORS = ui.C.SQUADRA
 local WHITE = vmath.vector4(1, 1, 1, 1)
-local DARK = vmath.vector4(0.12, 0.12, 0.14, 1)
 
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
 -- Lanciarune e Lama di Nucleo ci sono sempre, le altre si trovano nelle casse.
@@ -61,10 +60,10 @@ local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", 
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true }
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 62
-local SLOT_OFF = vmath.vector4(0.62, 0.62, 0.68, 0.9)
--- arma già usata in questo turno (si spegne: si vede cosa resta)
-local SLOT_USED = vmath.vector4(0.3, 0.3, 0.34, 0.45)
-local TELE_OFF = vmath.vector4(0.45, 0.45, 0.5, 0.5)
+-- bordo degli slot: non disponibile (già usata, o teletrasporto), disponibile, scelto
+local SLOT_BORDO = { [0] = vmath.vector4(1, 0.886, 0.769, 0.06), ui.C.LINEA, ui.C.LUCE }
+-- icona di un'arma già usata in questo turno (si spegne: si vede cosa resta)
+local ICON_USED = vmath.vector4(1, 1, 1, 0.3)
 local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector3(1, 1, 1)
 -- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante)
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
@@ -102,14 +101,10 @@ local function glow(x, y, d, color)
 	return n
 end
 
+-- scritte dell'HUD col font dell'interfaccia: scala 1 = circa 16 px
+local FONT_K = 0.4
 local function label(x, y, text, scale)
-	local n = stretch(gui.new_text_node(vmath.vector3(x, y, 0), text))
-	gui.set_font(n, "default")
-	gui.set_color(n, WHITE)
-	gui.set_outline(n, DARK)
-	local s = scale or 1
-	gui.set_scale(n, vmath.vector3(s, s, 1))
-	return n
+	return stretch(ui.testo(text, x, y, (scale or 1) * FONT_K * 2))
 end
 
 -- Simulazione (strumenti/simula): con megablast.simula = 1 il gioco scrive nel
@@ -1095,7 +1090,8 @@ local function update_bar(self)
 			local on = ((sl.weapon == self.weapon and not self.tele_armed) or (sl.weapon == "parachute" and rb.parachute)) and 2
 				or ((not turn or g:can_use(sl.weapon)) and 1 or 0)
 			if sl.on ~= on then
-				gui.set_color(sl.node, on == 2 and WHITE or (on == 1 and SLOT_OFF or SLOT_USED))
+				gui.set_color(sl.bordo, SLOT_BORDO[on])
+				if sl.icon then gui.set_color(sl.icon, on == 0 and ICON_USED or WHITE) end
 				gui.set_scale(sl.node, on == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
 				sl.on = on
 			end
@@ -1121,7 +1117,7 @@ local function apply_camera(self)
 	view.m00, view.m11, view.m03, view.m13 = c.s, c.s, tx, ty
 	msg.post("@render:", "set_view_projection", self.cam_msg)
 	local l = c.s ^ -0.65
-	LABEL_SCALE.x, LABEL_SCALE.y = 0.7 * l, 0.7 * l
+	LABEL_SCALE.x, LABEL_SCALE.y = 0.7 * FONT_K * l, 0.7 * FONT_K * l
 	for i = 1, #self.robots do gui.set_scale(self.robots[i].hp, LABEL_SCALE) end
 	gui.set_scale(self.cancel_label, LABEL_SCALE)
 	LABEL_SCALE.x, LABEL_SCALE.y = l, l
@@ -1329,7 +1325,7 @@ local function render(self, dt)
 	update_bar(self)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
 	if self.tele_state ~= tele_state then
-		gui.set_color(self.btn_tele, tele_state == 2 and WHITE or (tele_state == 1 and SLOT_OFF or TELE_OFF))
+		gui.set_color(self.tele_bordo, SLOT_BORDO[tele_state])
 		gui.set_scale(self.btn_tele, tele_state == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
 		self.tele_state = tele_state
 	end
@@ -1639,12 +1635,11 @@ function init(self)
 	stretch(self.bar)
 	self.slots = {}
 	for i, w in ipairs(BAR_WEAPONS) do
-		local n = box(0, BAR_Y, SLOT, SLOT, SLOT_OFF)
-		gui.set_texture(n, "menu")
-		gui.play_flipbook(n, "slot")
-		gui.set_parent(n, self.bar)
+		local n, bordo = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar)
+		stretch(n)
+		local icon -- gli oggetti hanno un'icona di forme (oggetti.icona), che resta accesa
 		if WEAPON_ICON[w] then
-			local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
+			icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
 			gui.set_texture(icon, "battaglia")
 			gui.play_flipbook(icon, WEAPON_ICON[w])
 			gui.set_parent(icon, n)
@@ -1654,7 +1649,7 @@ function init(self)
 		local count = label(22, -26, "", 0.7)
 		gui.set_parent(count, n)
 		gui.set_enabled(n, false)
-		self.slots[i] = { node = n, label = count, weapon = w, have = false }
+		self.slots[i] = { node = n, bordo = bordo, icon = icon, label = count, weapon = w, have = false }
 		if w == "sword" then
 			self.slot_sword = self.slots[i]
 			self.sword_glow = glow(0, 0, SLOT * 1.6, SECOND_COLOR)
@@ -1663,9 +1658,8 @@ function init(self)
 		end
 	end
 	-- teletrasporto: uno slot come quelli delle armi, col globo
-	self.btn_tele = box(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D, SLOT_OFF)
-	gui.set_texture(self.btn_tele, "menu")
-	gui.play_flipbook(self.btn_tele, "slot")
+	self.btn_tele, self.tele_bordo = ui.pannello(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D)
+	stretch(self.btn_tele)
 	local orb_icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(64 * 0.75, 57 * 0.75, 0))
 	gui.set_texture(orb_icon, "battaglia")
 	gui.play_flipbook(orb_icon, "passo_ombra")

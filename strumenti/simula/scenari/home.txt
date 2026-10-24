@@ -1,11 +1,8 @@
-# Home: bottone chiuso, GIOCA (online: nella build di prova manca l'estensione
+# Home: GIOCA (online: nella build di prova manca l'estensione
 # WebSocket, quindi compare il messaggio), ritorno alla home e STESSO TELEFONO.
 
 aspetta 1.5
 foto 01_home
-tocca 155 488                       # ARMERIA (chiusa)
-aspetta 0.3
-foto 02_in_arrivo
 tocca 1075 102                      # GIOCA
 aspetta_stato modo=ended 3
 aspetta 0.5

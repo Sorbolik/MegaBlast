@@ -75,7 +75,7 @@ La barra delle armi sta in basso al centro (`y = 62`) e mostra solo le armi che
 il robot ha, centrate: con Lanciarune e Lama di Nucleo sono a `x = 593` e `687`;
 con tutte e cinque (Lanciarune, Lama, Uovo di Fiamma, Sciame di Schegge, Pugno
 del Titano) a `452`, `546`, `640`, `734`, `828`.
-Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, ARMERIA (chiusa) `155 488`.
+Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`.
 Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, Nucleo): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`. Effetti di stato: `scenari/stati.txt`. Scelta delle armi d'inizio partita: `scenari/scelta.txt`.
 
 Per guidare il robot il gioco, solo in questa build, scrive nel log righe
