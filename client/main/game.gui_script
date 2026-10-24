@@ -351,7 +351,9 @@ end
 -- Schermate fuori dalla battaglia (podio, armeria): si creano
 -- quando si aprono e si cancellano quando si chiudono, così non pesano mentre si
 -- gioca. Ogni modulo ha new, on_input (-> "indietro" / "continua" per uscire),
--- distruggi e, se si anima, update.
+-- distruggi e, se si anima, update. I nodi vivi tutti insieme: circa 650 della
+-- battaglia, più il podio del 2 contro 2 (circa 275) o l'armeria (fino a 330):
+-- per questo max_nodes di game.gui è 2048 e non 1024.
 local function chiudi_schermata(self)
 	if self.schermata then
 		self.schermata.mod.distruggi(self.schermata.obj)
@@ -801,14 +803,15 @@ local function apri_podio(self)
 	profilo.salva(self.profilo)
 	show_message(self, "", true)
 	set_controls_visible(self, false)
-	self.mode = "schermata"
+	-- prima la schermata, poi il modo: se new si rompe non resta un modo senza schermata
 	self.schermata = { mod = podio, obj = podio.new(res, giocatori, me, guadagno, self.profilo) }
+	self.mode = "schermata"
 end
 
 local function apri_schermata(self, mod, ...)
 	home.hide(self.home)
-	self.mode = "schermata"
 	self.schermata = { mod = mod, obj = mod.new(...) }
+	self.mode = "schermata"
 end
 
 -- Online ------------------------------------------------------------------------
