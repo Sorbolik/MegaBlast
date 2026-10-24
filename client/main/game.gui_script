@@ -82,7 +82,7 @@ local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", 
 	sniper = "Cecchino" }
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
-	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Rimbalza 3 volte e sbalza dove andava" }
+	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Lento, poi cala; rimbalza 3 volte e sbalza dove andava" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true }
 local SLOT, SLOT_GAP, GROUP_GAP, BAR_Y = 84, 10, 30, 62
@@ -91,6 +91,9 @@ local SLOT_BORDO = { [0] = vmath.vector4(1, 0.886, 0.769, 0.06), ui.C.LINEA, ui.
 -- icona di un'arma già usata in questo turno (si spegne: si vede cosa resta)
 local ICON_USED = vmath.vector4(1, 1, 1, 0.3)
 local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector3(1, 1, 1)
+-- Rimbalzo del cecchino: quanto si schiaccia, quanto presto si calma e quanto tremola
+local BOING_AMP, BOING_DAMP, BOING_FREQ = 0.7, 4, 26
+local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1)
 -- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante)
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
@@ -667,6 +670,9 @@ local function handle_event(self, e)
 	elseif e.type == "trap" then
 		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
 		shock(self, e.x, e.y)
+	elseif e.type == "sniper_bounce" then
+		-- il colpo del cecchino rimbalza goffo: si schiaccia e tremola
+		self.boing = self.clock
 	elseif e.type == "sniper_hit" then
 		shock(self, e.x, e.y)
 		targa.annuncio(self.robots[e.target].targa, "SBALZATO!")
@@ -1422,6 +1428,23 @@ local function render(self, dt)
 		set_pos(self.projectile, x, y)
 		self.fuoco_x, self.fuoco_y = x, y
 		gui.set_color(self.projectile_glow, self.colors[g.current])
+		if g.projectile and g.projectile.kind == "sniper" then
+			-- cecchino: allungato nel verso in cui va; a ogni rimbalzo si
+			-- schiaccia e tremola come una gelatina, poi torna com'era
+			local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
+			if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
+			local t = self.clock - (self.boing or -10)
+			local w = BOING_AMP * math.exp(-t * BOING_DAMP) * math.cos(t * BOING_FREQ)
+			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (1.25 - w), VK.y * (0.85 + w)
+			gui.set_euler(self.projectile, SNIPER_EULER)
+			gui.set_scale(self.projectile, SNIPER_SCALE)
+			self.sniper_shape = true
+		elseif self.sniper_shape then
+			SNIPER_EULER.z = 0
+			gui.set_euler(self.projectile, SNIPER_EULER)
+			gui.set_scale(self.projectile, VK)
+			self.sniper_shape = false
+		end
 		local n = #self.trail
 		self.trail_i = self.trail_i % n + 1
 		local tp = self.trail_pos[self.trail_i]

@@ -653,18 +653,20 @@ do
 	check(q.projectile and max_x < b.x and q.projectile.touched, "l'Uovo rimbalza sul robot invece di attraversarlo")
 end
 
--- Cecchino: dritto e velocissimo, rimbalza, sbalza nella direzione del colpo -------
+-- Cecchino: lento, dritto e poi cala, rimbalza, sbalza nella direzione del colpo ---
 do
 	local q = game.new(42, "isole", { ammo = { sniper = 1 } })
 	run(q, 60)
 	local a, b = q.robots[1], q.robots[2]
-	b.x, b.y = a.x + 90, a.y
-	run(q, 5)
+	-- in cielo, così il terreno non si mette in mezzo
+	local sy = sky_spot(q, 640, 80)
+	place(a, 600, sy)
+	place(b, 650, sy)
 	local hp = b.hp
 	q:step({ fire = { angle = 0, power = 1, weapon = "sniper" } })
 	check(q.projectile and q.projectile.kind == "sniper" and a.ammo.sniper == 0, "il cecchino spara")
 	local hit
-	for _ = 1, 30 do
+	for _ = 1, 60 do
 		q:step()
 		for _, e in ipairs(q:pop_events()) do if e.type == "sniper_hit" then hit = e end end
 		if hit then break end
@@ -673,6 +675,19 @@ do
 	check(b.vx > 0 and not b.grounded and b.knocked, "sbalza nella direzione del colpo")
 	local sp = math.sqrt(b.vx * b.vx + b.vy * b.vy)
 	check(sp <= config.SNIPER.push + config.SNIPER.lift + 1, "con una spinta moderata")
+
+	-- dritto per drop_after secondi, poi cala
+	local d = game.new(42, "isole", { ammo = { sniper = 1 } })
+	run(d, 60)
+	local da = d.robots[1]
+	d.robots[2].x = -1000
+	place(da, 200, sky_spot(d, 500, 300))
+	d:step({ fire = { angle = 0, power = 1, weapon = "sniper" } })
+	local p = d.projectile
+	run(d, math.floor(config.SNIPER.drop_after * 60) - 2)
+	check(d.projectile == p and p.vy == 0, "all'inizio va dritto")
+	run(d, 20)
+	check(d.projectile == p and p.vy < 0, "poi cala")
 
 	-- verso il terreno rimbalza (non scava), e dopo l'ultimo rimbalzo si ferma
 	local r = game.new(42, "isole", { ammo = { sniper = 1 } })

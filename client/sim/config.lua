@@ -61,11 +61,13 @@ C.CRATE_CONTENTS = {
 	{ "trap", 2 }, { "shield", 1 }, { "trampoline", 1 },
 }
 
--- Cecchino (arma delle casse): un colpo dritto e velocissimo che rimbalza sul
--- terreno fino a bounces volte e non scava. Chi è colpito prende damage e viene
--- sbalzato nella direzione del colpo a push pixel al secondo (più lift verso
--- l'alto, per staccarlo da terra). Con un trampolino sotto i piedi vola via.
-C.SNIPER = { damage = 25, push = 280, lift = 80, bounces = 3 }
+-- Cecchino (arma delle casse): un colpo lento (velocità in sim/game.lua) che va
+-- dritto per drop_after secondi e poi cala, con drop volte la gravità, così da
+-- lontano è difficile mirare. Rimbalza sul terreno fino a bounces volte,
+-- tenendo bounce_keep della velocità, e non scava. Chi è colpito prende damage
+-- e viene sbalzato nella direzione del colpo a push pixel al secondo (più lift
+-- verso l'alto, per staccarlo da terra). Con un trampolino sotto i piedi vola via.
+C.SNIPER = { damage = 25, push = 280, lift = 80, bounces = 3, drop_after = 0.6, drop = 0.35, bounce_keep = 0.8 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.
