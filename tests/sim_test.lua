@@ -1593,7 +1593,7 @@ check(cs ~= "" and cs == crates_seen(9), "blastron: le casse cadono a caso ma ug
 -- Una partita intera con tutte le armi è deterministica anche con questo profilo
 check(play2(5) == play2(5), "blastron: partita deterministica")
 
--- Corpo a capsula, salto corto, coyote time e salto in anticipo -----------------
+-- Piedi stretti, salto corto, coyote time e salto in anticipo -------------------
 
 -- Un mondo vuoto con il terreno pieno sotto ground(x) (pixel dal basso)
 local function shaped_world(ground)
@@ -1610,23 +1610,34 @@ local function shaped_world(ground)
 	return q
 end
 
--- Su un pendio a 45 gradi il fondo rotondo resta più vicino al terreno del rettangolo
-local function slope_gap(round)
-	local saved = game.ROBOT_ROUND
-	game.ROBOT_ROUND = round
+-- Su un pendio a 45 gradi i piedi stretti restano sul terreno, il rettangolo largo no
+local function slope_gap(foot)
+	local saved = game.FOOT_HALF_W
+	game.FOOT_HALF_W = foot
 	local slope = function(x) return 100 + math.max(0, math.min(200, x - 500)) end
 	local q = shaped_world(slope)
 	local r = q.robots[1]
 	place(r, 600, 260)
 	run(q, 120)
-	game.ROBOT_ROUND = saved
+	game.FOOT_HALF_W = saved
 	return r.y - slope(r.x), r.grounded
 end
-local gap_box, gb = slope_gap(false)
-local gap_round, gr = slope_gap(true)
-check(gb and gr and gap_round < gap_box - 2,
-	string.format("capsula: sul pendio a 45 gradi resta più bassa del rettangolo (%.1f px contro %.1f)", gap_round, gap_box))
-check(gap_round < game.ROBOT_HALF_W * 0.6, string.format("capsula: al centro sta sopra il pendio quanto il bordo del cerchio (%.1f px)", gap_round))
+local gap_box, gb = slope_gap(game.ROBOT_HALF_W)
+local gap_feet, gf = slope_gap(game.FOOT_HALF_W)
+check(gb and gf and gap_feet < gap_box - 4,
+	string.format("piedi: sul pendio a 45 gradi restano più bassi del rettangolo (%.1f px contro %.1f)", gap_feet, gap_box))
+check(gap_feet <= game.FOOT_HALF_W + game.CELL, string.format("piedi: al centro stanno sopra il pendio al massimo quanto i piedi (%.1f px)", gap_feet))
+
+-- Al bordo di un burrone si resta in piedi finché i piedi toccano lo spigolo, poi si cade
+do
+	local q = shaped_world(function(x) return x < 640 and 200 or 40 end)
+	local r = q.robots[1]
+	place(r, 600, 200)
+	run(q, 30)
+	while r.grounded and r.x < 700 do q:step({ right = true }) end
+	check(r.x - 640 <= game.FOOT_HALF_W + game.CELL and r.y > 195,
+		string.format("piedi: dal bordo si cade appena i piedi lo lasciano (%.1f px oltre, a %.1f di quota)", r.x - 640, r.y))
+end
 
 -- Salto corto: lasciando il tasto subito si sale molto meno
 local function jump_top(hold_ticks)

@@ -34,10 +34,13 @@ M.GRAVITY = 600
 M.ROBOT_HALF_W = 6
 M.ROBOT_H = 16
 M.MAX_CLIMB = 6          -- gradino massimo che il robot sale da solo
--- Forma del corpo contro il terreno: false = rettangolo; true = capsula, con
--- sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo rotondo tocca
--- i pendii vicino al centro invece che con lo spigolo, così non resta sospeso.
-M.ROBOT_ROUND = false
+-- Contro il terreno il robot è due rettangoli: i piedi, larghi 2 * FOOT_HALF_W
+-- e alti quanto il robot, e il corpo, largo come il robot ma sopra i gradini
+-- che si salgono da soli (da MAX_CLIMB in su). Solo i piedi decidono dove si
+-- sta in piedi: sui pendii e sui bordi i piedi disegnati restano sul terreno
+-- invece di restare sospesi sullo spigolo del corpo. Con FOOT_HALF_W uguale a
+-- ROBOT_HALF_W i due rettangoli sono un rettangolo solo.
+M.FOOT_HALF_W = 6
 -- I danni delle armi sono pensati per una vita di DAMAGE_BASE punti; la vita
 -- vera dei robot è in sim/config.lua (STATS.max_hp)
 M.DAMAGE_BASE = 100
@@ -416,37 +419,21 @@ function M:robot_collides(x, y, me)
 	return self:terrain_collides(x, y) or self:robot_at(x, y, me) ~= nil
 end
 
--- Mezza larghezza della capsula all'altezza della riga di celle [a, b) (dai piedi in y)
-local function capsule_half(y, a, b)
-	local r, h = M.ROBOT_HALF_W, M.ROBOT_H
-	local low, high = y + r, y + h - r
-	-- il punto della riga più vicino al tratto dritto della capsula
-	local p = math.max(a, math.min(b, low))
-	if p < low then
-		local d = low - p
-		return d < r and math.sqrt(r * r - d * d) or nil
-	end
-	p = math.min(b, math.max(a, high))
-	if p > high then
-		local d = p - high
-		return d < r and math.sqrt(r * r - d * d) or nil
-	end
-	return r
-end
-
 function M:terrain_collides(x, y)
 	local t, c = self.terrain, M.CELL
-	if M.ROBOT_ROUND then
-		local cy0 = math.floor(y / c)
-		local cy1 = math.floor((y + M.ROBOT_H - 0.01) / c)
-		for cy = cy0, cy1 do
-			local hw = capsule_half(y, cy * c, cy * c + c)
-			if hw and t:any_solid(math.floor((x - hw) / c), math.floor((x + hw) / c), cy, cy) then return true end
-		end
-		return false
+	local top = math.floor((y + M.ROBOT_H - 0.01) / c)
+	if t:any_solid(math.floor((x - M.FOOT_HALF_W) / c), math.floor((x + M.FOOT_HALF_W) / c), math.floor(y / c), top) then
+		return true
 	end
-	return t:any_solid(math.floor((x - M.ROBOT_HALF_W) / c), math.floor((x + M.ROBOT_HALF_W) / c),
-		math.floor(y / c), math.floor((y + M.ROBOT_H - 0.01) / c))
+	return M.FOOT_HALF_W < M.ROBOT_HALF_W and t:any_solid(math.floor((x - M.ROBOT_HALF_W) / c),
+		math.floor((x + M.ROBOT_HALF_W) / c), math.floor((y + M.MAX_CLIMB) / c), top)
+end
+
+-- Il robot con i piedi in (x, y) poggia sui piedi (terreno sotto i piedi o un altro robot)?
+function M:robot_stands(x, y, me)
+	local c = M.CELL
+	return self.terrain:any_solid(math.floor((x - M.FOOT_HALF_W) / c), math.floor((x + M.FOOT_HALF_W) / c),
+		math.floor(y / c), math.floor(y / c)) or self:robot_at(x, y, me) ~= nil
 end
 
 -- Sposta il robot di dx in orizzontale, salendo i gradini piccoli. true se ci riesce.
@@ -709,10 +696,13 @@ function M:update_robot(rb, input, active)
 		elseif not self:robot_collides(rb.x, rb.y - 1, rb) then
 			-- In discesa resta attaccato al terreno, altrimenti inizia a cadere
 			local landed = false
+			-- (contano solo i piedi: il corpo appoggiato a uno spigolo non regge)
 			for d = 1, M.MAX_CLIMB do
 				if self:robot_collides(rb.x, rb.y - d - 1, rb) then
-					rb.y = rb.y - d
-					landed = true
+					if self:robot_stands(rb.x, rb.y - d - 1, rb) then
+						rb.y = rb.y - d
+						landed = true
+					end
 					break
 				end
 			end
@@ -768,7 +758,15 @@ function M:update_robot(rb, input, active)
 				end
 			end
 			if sy ~= 0 then
-				if self:robot_collides(rb.x, rb.y + sy, rb) then
+				local away = 0
+				if sy < 0 and self:robot_collides(rb.x, rb.y + sy, rb) and not self:robot_stands(rb.x, rb.y + sy, rb) then
+					-- il corpo tocca uno spigolo ma sotto i piedi non c'è niente: scivola via
+					away = not self:robot_collides(rb.x + 1, rb.y + sy, rb) and 1
+						or (not self:robot_collides(rb.x - 1, rb.y + sy, rb) and -1 or 0)
+				end
+				if away ~= 0 then
+					rb.x, rb.y = rb.x + away, rb.y + sy
+				elseif self:robot_collides(rb.x, rb.y + sy, rb) then
 					if sy < 0 then
 						rb.grounded = true
 						rb.knocked = false
@@ -2429,9 +2427,9 @@ local function blastron_profile()
 		DEFAULT_STATS = { walk_speed = 5 * u, jump_height = 5.2 * u, air_speed = 5 * u },
 		AIR_CONTROL = "instant",
 		CLAMP_ACTIVE_VX = true,
-		-- MegaBlast sopra Blastron: corpo a capsula, salto corto, coyote time e
-		-- salto in anticipo (pilastri e riferimenti, fase 2 della roadmap)
-		ROBOT_ROUND = true,
+		-- MegaBlast sopra Blastron: piedi stretti come quelli disegnati (un terzo
+		-- del corpo), salto corto, coyote time e salto in anticipo
+		FOOT_HALF_W = 2 * k,
 		JUMP_CUT = 0.45,
 		COYOTE_TICKS = 6,
 		JUMP_BUFFER_TICKS = 6,
