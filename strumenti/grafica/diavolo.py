@@ -1,6 +1,6 @@
-# Prepara i pezzi del diavoletto di Gabriella per il gioco:
+# Prepara il braccio del diavoletto di Gabriella per il gioco:
 #   client/assets/diavolo/<pezzo>.png    il pezzo ritagliato, a RES pixel per unità
-#   client/battaglia/scoria_pezzi.lua    centro e misura di ogni pezzo, e i perni
+#   client/battaglia/scoria_pezzi.lua    centro e misura del pezzo, e i perni
 # I pezzi d'origine sono i nove PNG 1024 x 1024 della cartella di Gabriella
 # (disegni/2026-10-25_pezzi/1024/): stessa tela, già sovrapposti come livelli,
 # sfondo trasparente.
@@ -22,20 +22,14 @@ MARGINE = 2   # pixel trasparenti attorno a ogni pezzo
 PIEDI, CIMA, CENTRO = 941, 240, 595
 S = 200 / (PIEDI - CIMA)
 
-PEZZI = ["coda", "ali", "braccio_dietro", "gamba_dietro", "gamba_davanti",
-         "corpo", "testa", "fiamma", "braccio_davanti"]
+# del personaggio a pezzi resta il braccio davanti, che tiene l'arma e gira con
+# la mira sopra i fotogrammi (strumenti/grafica/fotogrammi.py)
+PEZZI = ["braccio_davanti"]
 
 # i perni, in pixel della tela 1024: dove ogni pezzo gira
 PERNI = {
-    "collo": (598, 520),
-    "spalla": (530, 545),       # braccio davanti
-    "mano": (522, 725),         # dove il braccio davanti tiene l'arma
-    "spalla_dietro": (692, 612),
-    "anca_davanti": (560, 740),
-    "anca_dietro": (668, 745),
-    "coda": (500, 750),
-    "ali": (560, 560),
-    "fiamma": (605, 160),
+    "spalla": (530, 545),
+    "mano": (522, 725),         # dove il braccio tiene l'arma
 }
 
 

@@ -1,0 +1,88 @@
+-- Fatto da strumenti/grafica/fotogrammi.py, non modificare a mano.
+-- Per ogni azione i fotogrammi del diavoletto: immagine, misura (w, h) e
+-- centro (x, y) dell'immagine e fiammella (fx, fy) dal punto d'appoggio
+-- (ai piedi, al centro del corpo), in unità del disegno con y verso l'alto.
+return {
+	spalla = { -17.9, 113.3 },
+	riposo = {
+		{ img = "riposo_1", w = 145.0, h = 246.0, x = -20.6, y = 121.1, fx = 8.2, fy = 212.6 },
+		{ img = "riposo_2", w = 146.0, h = 238.0, x = -21.3, y = 116.8, fx = 7.3, fy = 204.5 },
+		{ img = "riposo_3", w = 145.0, h = 246.0, x = -20.9, y = 120.9, fx = 7.4, fy = 210.7 },
+		{ img = "riposo_4", w = 145.0, h = 246.0, x = -20.8, y = 121.1, fx = 6.4, fy = 213.5 },
+	},
+	camminata = {
+		{ img = "camminata_1", w = 150.0, h = 236.0, x = -15.4, y = 116.0, fx = 9.7, fy = 200.5 },
+		{ img = "camminata_2", w = 149.0, h = 235.0, x = -16.8, y = 115.7, fx = 9.9, fy = 200.3 },
+		{ img = "camminata_3", w = 154.0, h = 235.0, x = -16.4, y = 115.7, fx = 10.6, fy = 198.0 },
+		{ img = "camminata_4", w = 155.0, h = 233.0, x = -16.4, y = 114.4, fx = 7.5, fy = 196.4 },
+		{ img = "camminata_5", w = 155.0, h = 234.0, x = -15.9, y = 115.2, fx = 8.4, fy = 198.5 },
+		{ img = "camminata_6", w = 154.0, h = 233.0, x = -17.4, y = 114.4, fx = 8.6, fy = 196.0 },
+	},
+	corsa = {
+		{ img = "corsa_1", w = 158.0, h = 216.0, x = -16.6, y = 106.2, fx = 22.8, fy = 183.2 },
+		{ img = "corsa_2", w = 156.0, h = 210.0, x = -21.9, y = 103.1, fx = 19.2, fy = 178.0 },
+		{ img = "corsa_3", w = 167.0, h = 217.0, x = -15.9, y = 106.7, fx = 27.0, fy = 184.1 },
+		{ img = "corsa_4", w = 161.0, h = 216.0, x = -11.7, y = 106.2, fx = 29.4, fy = 182.7 },
+		{ img = "corsa_5", w = 158.0, h = 209.0, x = -17.0, y = 102.4, fx = 24.0, fy = 175.1 },
+		{ img = "corsa_6", w = 164.0, h = 218.0, x = -18.9, y = 106.5, fx = 23.6, fy = 184.5 },
+	},
+	salto = {
+		{ img = "salto_1", w = 139.0, h = 165.0, x = -4.8, y = 80.5, fx = 25.6, fy = 131.7 },
+		{ img = "salto_2", w = 131.0, h = 207.0, x = -3.2, y = 101.0, fx = 24.1, fy = 172.4 },
+		{ img = "salto_3", w = 130.0, h = 197.0, x = -12.3, y = 96.3, fx = 11.7, fy = 162.0 },
+		{ img = "salto_4", w = 137.0, h = 207.0, x = -13.1, y = 101.6, fx = 13.5, fy = 173.6 },
+		{ img = "salto_5", w = 144.0, h = 163.0, x = -10.0, y = 79.5, fx = 18.4, fy = 129.6 },
+	},
+	mira = {
+		{ img = "mira_1", w = 155.0, h = 231.0, x = -13.2, y = 113.6, fx = 17.8, fy = 194.6 },
+		{ img = "mira_2", w = 160.0, h = 229.0, x = -13.3, y = 112.5, fx = 20.5, fy = 191.8 },
+		{ img = "mira_3", w = 199.0, h = 225.0, x = -13.5, y = 110.4, fx = -61.1, fy = 187.2 },
+		{ img = "mira_4", w = 162.0, h = 231.0, x = -12.6, y = 113.3, fx = 22.5, fy = 193.7 },
+	},
+	fendente = {
+		{ img = "fendente_1", w = 160.0, h = 225.0, x = -27.8, y = 110.5, fx = -26.2, fy = 186.6 },
+		{ img = "fendente_2", w = 145.0, h = 240.0, x = -23.4, y = 118.2, fx = -36.4, fy = 203.5 },
+		{ img = "fendente_3", w = 134.0, h = 250.0, x = -21.1, y = 122.8, fx = -21.7, fy = 212.7 },
+		{ img = "fendente_4", w = 164.0, h = 216.0, x = -0.9, y = 106.0, fx = 40.3, fy = 178.9 },
+		{ img = "fendente_5", w = 155.0, h = 225.0, x = -5.3, y = 110.3, fx = 26.6, fy = 186.1 },
+	},
+	lancio = {
+		{ img = "lancio_1", w = 182.0, h = 234.0, x = -25.5, y = 115.0, fx = -28.3, fy = 199.3 },
+		{ img = "lancio_2", w = 159.0, h = 236.0, x = -2.4, y = 116.2, fx = 12.9, fy = 201.5 },
+		{ img = "lancio_3", w = 193.0, h = 232.0, x = 14.4, y = 114.1, fx = 33.1, fy = 197.2 },
+		{ img = "lancio_4", w = 140.0, h = 238.0, x = -17.9, y = 117.0, fx = 5.3, fy = 203.4 },
+	},
+	colpito = {
+		{ img = "colpito_1", w = 164.0, h = 212.0, x = -29.5, y = 104.1, fx = -42.9, fy = 177.7 },
+		{ img = "colpito_2", w = 204.0, h = 209.0, x = -34.7, y = 102.4, fx = -87.7, fy = 177.3 },
+		{ img = "colpito_3", w = 172.0, h = 206.0, x = 1.1, y = 100.8, fx = 47.4, fy = 172.6 },
+		{ img = "colpito_4", w = 145.0, h = 216.0, x = -18.0, y = 106.1, fx = 8.4, fy = 184.0 },
+	},
+	sconfitta = {
+		{ img = "sconfitta_1", w = 142.0, h = 244.0, x = -18.7, y = 119.9, fx = 13.9, fy = 168.5 },
+		{ img = "sconfitta_2", w = 184.0, h = 223.0, x = -17.6, y = 109.6, fx = -40.4, fy = 180.5 },
+		{ img = "sconfitta_3", w = 199.0, h = 193.0, x = -24.3, y = 94.3, fx = -68.2, fy = 157.8 },
+		{ img = "sconfitta_4", w = 177.0, h = 187.0, x = -7.6, y = 91.4 },
+		{ img = "sconfitta_5", w = 246.0, h = 143.0, x = -50.6, y = 69.7 },
+	},
+	teletrasporto = {
+		{ img = "teletrasporto_1", w = 152.0, h = 237.0, x = -15.5, y = 116.1, fx = 22.0, fy = 196.4 },
+		{ img = "teletrasporto_2", w = 102.0, h = 191.0, x = -4.3, y = 92.9, fx = 11.6, fy = 157.3 },
+		{ img = "teletrasporto_3", w = 40.0, h = 63.0, x = -0.1, y = 27.6, fx = -0.3, fy = 28.7 },
+		{ img = "teletrasporto_4", w = 103.0, h = 191.0, x = -9.0, y = 92.9, fx = 7.1, fy = 157.6 },
+		{ img = "teletrasporto_5", w = 143.0, h = 237.0, x = -21.3, y = 116.1, fx = 7.6, fy = 200.9 },
+	},
+	vittoria = {
+		{ img = "vittoria_1", w = 150.0, h = 189.0, x = -13.2, y = 92.4, fx = 19.8, fy = 153.3 },
+		{ img = "vittoria_2", w = 169.0, h = 257.0, x = -9.9, y = 126.4, fx = 2.9, fy = 215.3 },
+		{ img = "vittoria_3", w = 168.0, h = 252.0, x = -2.9, y = 123.6, fx = 11.1, fy = 207.8 },
+		{ img = "vittoria_4", w = 148.0, h = 189.0, x = -13.6, y = 92.6, fx = 18.0, fy = 154.2 },
+		{ img = "vittoria_5", w = 137.0, h = 223.0, x = -19.7, y = 109.5, fx = 1.8, fy = 189.7 },
+	},
+	paracadute = {
+		{ img = "paracadute_1", w = 169.0, h = 246.0, x = -20.5, y = 121.1, fx = 2.9, fy = 209.6 },
+		{ img = "paracadute_2", w = 157.0, h = 249.0, x = -17.1, y = 122.5, fx = -0.0, fy = 213.7 },
+		{ img = "paracadute_3", w = 154.0, h = 247.0, x = -11.8, y = 121.7, fx = 2.9, fy = 212.6 },
+		{ img = "paracadute_4", w = 157.0, h = 249.0, x = -16.4, y = 122.5, fx = 0.6, fy = 213.8 },
+	},
+}

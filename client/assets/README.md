@@ -24,7 +24,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 - `mappe/isole_cimitero/terreno.png` (superficie con sopra le ossa) e `interno_mezzo.png` (parete dei crateri a metà risoluzione) li prepara `strumenti/grafica/battaglia.py`, insieme a `fx/bagliore.png` (alone bianco per missile e mirino).
 - La mappa è una mesh con lo shader `client/battaglia/terreno.fp`: sfondo fatto dallo shader (cielo, file di colline e guglie in parallasse, braci), terreno ritagliato dalla maschera viva, parete e brace dove si è scavato.
-- Il personaggio (ramo di prova della designer) è il diavoletto di Gabriella, montato da `client/battaglia/scoria.lua`: nove pezzi disegnati in `diavolo/` (coda, ali, braccia, gambe, corpo, testa, fiammella) preparati da `strumenti/grafica/diavolo.py`, che scrive anche `client/battaglia/scoria_pezzi.lua` con misure e perni; l'alone della squadra attorno alla fiammella e le armi sono nodi GUI. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
+- Il personaggio (ramo di prova della designer) è il diavoletto di Gabriella, animato a fotogrammi da `client/battaglia/scoria.lua`: i fotogrammi `diavolo/<azione>_<n>.png` li ritaglia dai fogli di ChatGPT `strumenti/grafica/fotogrammi.py`, che scrive anche `client/battaglia/diavolo_fotogrammi.lua` (misure, punto d'appoggio, fiammella); il braccio davanti `diavolo/braccio_davanti.png`, che tiene l'arma e gira con la mira, lo prepara `strumenti/grafica/diavolo.py` (`client/battaglia/scoria_pezzi.lua`). Alone della squadra e armi sono nodi GUI. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
 
 ## Interfaccia
 
