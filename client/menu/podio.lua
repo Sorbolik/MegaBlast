@@ -66,11 +66,12 @@ local function gradino(p, x, voce, i)
 	local k = M.SCORIA_H / game.ROBOT_H
 	gui.set_scale(posa, vmath.vector3(k, k, 1))
 	gui.animate(posa, "position.y", M.BASE_Y + h, gui.EASING_INQUAD, 0.3, ritardo + M.SALITA * 0.7)
-	local s = scoria.new(g.colore)
+	local s = scoria.new(g.colore, g.chi)
 	gui.set_parent(s.root, posa)
 	scoria.set_enabled(s, true)
 	p.figure[#p.figure + 1] = { s = s, posa = posa,
-		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0 } }
+		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0,
+			festa = voce.place == 1 } }
 end
 
 -- results.winner: la squadra che vince, nil se pari

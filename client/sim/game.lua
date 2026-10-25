@@ -186,8 +186,8 @@ for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 -- Sergio (24 ottobre 2026): provata una ogni 2 turni, è tornato a questa.
 M.CRATE_EVERY = 3
 M.CRATE_MAX = 3          -- casse in mappa al massimo
-M.CRATE_HALF_W = 10
-M.CRATE_H = 18
+M.CRATE_HALF_W = 7     -- come il baule disegnato (17 di alto), che poggia dove poggia questo
+M.CRATE_H = 15
 M.CRATE_FALL = 110       -- velocità massima di caduta (scende piano, col paracadute)
 -- Blastron: a ogni turno una probabilità, secondo quante casse ci sono già
 -- ({ con 0, con 1, con 2, ... }). false: una cassa ogni CRATE_EVERY turni.
