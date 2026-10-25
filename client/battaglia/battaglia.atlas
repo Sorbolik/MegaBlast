@@ -149,6 +149,18 @@ images {
   image: "/assets/diavolo/corsa_12.png"
 }
 images {
+  image: "/assets/diavolo/corsa_13.png"
+}
+images {
+  image: "/assets/diavolo/corsa_14.png"
+}
+images {
+  image: "/assets/diavolo/corsa_15.png"
+}
+images {
+  image: "/assets/diavolo/corsa_16.png"
+}
+images {
   image: "/assets/diavolo/corsa_armata_1.png"
 }
 images {
