@@ -3,8 +3,7 @@
 #   client/assets/diavolo/<azione>_<n>.png     un fotogramma, a RES pixel per unità
 #   client/battaglia/diavolo_fotogrammi.lua    misure, punto d'appoggio e fiammella
 # I fogli stanno in gabriella/disegni/2026-10-25_animazioni/fogli/<azione>.png:
-# fondo magenta, fotogrammi separati da spazio vuoto, in una riga (la camminata
-# in due, come la corsa). ChatGPT disegna ogni foglio a una scala sua: la testa, che è la parte
+# fondo magenta, fotogrammi separati da spazio vuoto, in una o più righe uguali. ChatGPT disegna ogni foglio a una scala sua: la testa, che è la parte
 # che cambia meno da una posa all'altra, riporta tutti alla misura della base.
 # Unità del disegno come i pezzi: dalla cima della testa ai piedi sono 200.
 # python3 strumenti/grafica/fotogrammi.py [cartella dei fogli]
@@ -105,12 +104,12 @@ def fotogrammi(p, righe):
             dentro = g[1].start - 20 <= x <= g[1].stop + 20
             return (0 if dentro else 1e6) + abs(x - (g[1].start + g[1].stop) / 2) + 0.1 * abs(y - (g[0].start + g[0].stop) / 2)
         lab[l == i + 1] = min(range(len(grandi)), key=dist) + 1
-    meta = m.shape[0] / 2
+    # le righe dividono il foglio in fasce uguali; dentro una riga, da sinistra
+    alta = m.shape[0] / righe
 
     def ordine(k):
         g = objs[grandi[k - 1]]
-        riga = int((g[0].start + g[0].stop) / 2 > meta) if righe == 2 else 0
-        return riga, g[1].start
+        return int((g[0].start + g[0].stop) / 2 // alta), g[1].start
     for k in sorted(range(1, len(grandi) + 1), key=ordine):
         mm = lab == k
         ys, xs = np.nonzero(mm & (al > 0.02))
