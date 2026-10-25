@@ -21,7 +21,7 @@ LUA = os.path.join(QUI, "..", "..", "client", "battaglia", "diavoletto.lua")
 # fotogramma, dalla fiammella ai piedi, è alto ALTO
 ALTO = 256
 # ogni pixel vero diventa PIXEL x PIXEL nella texture: rimpicciolendo resta netto
-PIXEL = 2
+PIXEL = 4
 # la spalla davanti nel primo fotogramma, dall'appoggio (unità, y in su): lì gira l'arma
 SPALLA = (-12, 112)
 

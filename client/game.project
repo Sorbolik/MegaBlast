@@ -14,7 +14,7 @@ height = 720
 high_dpi = 1
 
 [graphics]
-default_texture_min_filter = linear_mipmap_linear
+default_texture_min_filter = linear_mipmap_nearest
 default_texture_mag_filter = linear
 texture_profiles = /texture_profiles.texture_profiles
 
