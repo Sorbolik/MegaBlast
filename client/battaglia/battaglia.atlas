@@ -38,6 +38,33 @@ images {
   image: "/assets/ui/levette/levetta_pomello.png"
 }
 images {
+  image: "/assets/diavolo_pezzi/coda.png"
+}
+images {
+  image: "/assets/diavolo_pezzi/ala.png"
+}
+images {
+  image: "/assets/diavolo_pezzi/corpo.png"
+}
+images {
+  image: "/assets/diavolo_pezzi/scarpa_sx.png"
+}
+images {
+  image: "/assets/diavolo_pezzi/scarpa_dx.png"
+}
+images {
+  image: "/assets/diavolo_pezzi/testa.png"
+}
+images {
+  image: "/assets/diavolo_pezzi/fiammella.png"
+}
+images {
+  image: "/assets/diavolo_pezzi/pugno_sx.png"
+}
+images {
+  image: "/assets/diavolo_pezzi/pugno_dx.png"
+}
+images {
   image: "/assets/diavolo/braccio_davanti.png"
 }
 images {
