@@ -38,22 +38,31 @@ images {
   image: "/assets/ui/levette/levetta_pomello.png"
 }
 images {
-  image: "/assets/scoria/testa.png"
+  image: "/assets/diavolo/testa.png"
 }
 images {
-  image: "/assets/scoria/testa_bordo.png"
+  image: "/assets/diavolo/fiamma.png"
 }
 images {
-  image: "/assets/scoria/mantello.png"
+  image: "/assets/diavolo/corpo.png"
 }
 images {
-  image: "/assets/scoria/mantello_bordo.png"
+  image: "/assets/diavolo/ali.png"
 }
 images {
-  image: "/assets/scoria/gamba.png"
+  image: "/assets/diavolo/coda.png"
 }
 images {
-  image: "/assets/scoria/gamba_bordo.png"
+  image: "/assets/diavolo/braccio_davanti.png"
+}
+images {
+  image: "/assets/diavolo/braccio_dietro.png"
+}
+images {
+  image: "/assets/diavolo/gamba_davanti.png"
+}
+images {
+  image: "/assets/diavolo/gamba_dietro.png"
 }
 margin: 0
 extrude_borders: 2

@@ -1,4 +1,4 @@
--- Test della Scoria (battaglia/scoria.lua) e della targa con nome e vita
+-- Test del personaggio (battaglia/scoria.lua) e della targa con nome e vita
 -- (battaglia/targa.lua) con un finto gui, e della camera (battaglia/camera.lua). Dalla radice del repository:
 --   luajit tests/battaglia_test.lua
 package.path = "client/?.lua;" .. package.path
@@ -23,7 +23,7 @@ gui = {
 	set_enabled = function(n, on) n.enabled = on end,
 	set_visible = function(n, on) n.invisibile = not on end, set_color = function() end, set_adjust_mode = function() end,
 	set_inherit_alpha = function() end, set_perimeter_vertices = function() end,
-	set_texture = function() end, play_flipbook = function() end,
+	set_texture = function() end, play_flipbook = function() end, set_blend_mode = function() end, BLEND_ADD = 1,
 	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
 	set_text = function(n, text) n.text = text end,
 	set_size = function(n, v) n.size = copia(v) end,
