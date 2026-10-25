@@ -36,6 +36,17 @@ AZIONI = {
     "teletrasporto": (3, 133), "vittoria": (3, 138), "paracadute": (1, 230),
 }
 
+# l'ordine in cui si mostrano i fotogrammi dei cicli (numeri del foglio, da 1):
+# ChatGPT non disegna veri intermedi in fila, ma pose simili sparse; questo è
+# il giro che passa sempre al fotogramma più somigliante (gambe soprattutto),
+# così il ciclo non scatta. Senza, l'ordine del foglio
+ORDINE = {
+    "riposo": [1, 10, 11, 7, 9, 12, 5, 6, 8, 4, 2, 3],
+    "camminata": [1, 12, 10, 4, 11, 3, 6, 8, 5, 2, 7, 9],
+    "corsa": [1, 2, 6, 11, 3, 9, 5, 12, 4, 7, 8, 10],
+    "corsa_armata": [1, 9, 12, 5, 10, 4, 2, 3, 7, 6, 11, 8],
+}
+
 
 def chiave(p):
     a = np.asarray(Image.open(p).convert("RGB")).astype(float)
@@ -132,7 +143,9 @@ def main():
     for azione, (nrighe, larga, *allarga) in AZIONI.items():
         k = testa_base / larga * S * RES   # pixel del foglio -> pixel del gioco
         righe.append("\t%s = {" % azione)
-        for i, (rgb, a) in enumerate(fotogrammi(os.path.join(FOGLI, azione + ".png"), nrighe, *allarga)):
+        fr = list(fotogrammi(os.path.join(FOGLI, azione + ".png"), nrighe, *allarga))
+        fr = [fr[j - 1] for j in ORDINE[azione]] if azione in ORDINE else fr
+        for i, (rgb, a) in enumerate(fr):
             m = a > 0.5
             ax, ay = appoggio(rgb, m)
             f = fiammella(rgb, m)
