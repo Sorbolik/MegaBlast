@@ -11,7 +11,7 @@
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "local", "armeria" o nil
 
 local game = require "sim.game"
-local scoria = require "battaglia.scoria"
+local personaggio = require "battaglia.personaggio"
 local ui = require "ui.ui"
 
 local M = {}
@@ -56,9 +56,9 @@ function M.new(colore)
 	local corpo = vuoto(0, 0, h.posa)
 	V.x, V.y, V.z = CORPO_K, CORPO_K, 1
 	gui.set_scale(corpo, V)
-	h.corpo = scoria.new(colore)
+	h.corpo = personaggio.new(colore)
 	gui.set_parent(h.corpo.root, corpo)
-	scoria.set_enabled(h.corpo, true)
+	personaggio.set_enabled(h.corpo, true)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0 }
 
 	-- il nome in alto a sinistra
@@ -105,7 +105,7 @@ end
 function M.update(h, dt)
 	if not h.visibile then return end
 	h.t = h.t + dt
-	scoria.update(h.corpo, dt, h.st)
+	personaggio.update(h.corpo, dt, h.st)
 	local c = h.colore
 	gui.set_color(h.luce, vmath.vector4(c.x, c.y, c.z, 0.22 + 0.08 * math.sin(h.t * 1.7)))
 end

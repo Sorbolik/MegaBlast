@@ -12,7 +12,7 @@
 --   podio.distruggi(p)
 
 local ui = require "ui.ui"
-local scoria = require "battaglia.scoria"
+local personaggio = require "battaglia.personaggio"
 local game = require "sim.game"
 local riconoscimenti = require "sim.riconoscimenti"
 local profilo = require "menu.profilo"
@@ -66,9 +66,9 @@ local function gradino(p, x, voce, i)
 	local k = M.SCORIA_H / game.ROBOT_H
 	gui.set_scale(posa, vmath.vector3(k, k, 1))
 	gui.animate(posa, "position.y", M.BASE_Y + h, gui.EASING_INQUAD, 0.3, ritardo + M.SALITA * 0.7)
-	local s = scoria.new(g.colore)
+	local s = personaggio.new(g.colore)
 	gui.set_parent(s.root, posa)
-	scoria.set_enabled(s, true)
+	personaggio.set_enabled(s, true)
 	p.figure[#p.figure + 1] = { s = s, posa = posa,
 		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0 } }
 end
@@ -155,7 +155,7 @@ end
 
 function M.update(p, dt)
 	p.t = p.t + dt
-	for _, s in ipairs(p.figure) do scoria.update(s.s, dt, s.st) end
+	for _, s in ipairs(p.figure) do personaggio.update(s.s, dt, s.st) end
 	if p.barra and p.t > M.PREMI then
 		ui.barra_valore(p.barra, math.min(p.barra_fine, (p.t - M.PREMI) * 0.8))
 	end

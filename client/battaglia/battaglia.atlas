@@ -38,22 +38,13 @@ images {
   image: "/assets/ui/levette/levetta_pomello.png"
 }
 images {
-  image: "/assets/scoria/testa.png"
+  image: "/assets/diavolo/braccio.png"
 }
 images {
-  image: "/assets/scoria/testa_bordo.png"
+  image: "/assets/diavolo/braccio_dietro.png"
 }
 images {
-  image: "/assets/scoria/mantello.png"
-}
-images {
-  image: "/assets/scoria/mantello_bordo.png"
-}
-images {
-  image: "/assets/scoria/gamba.png"
-}
-images {
-  image: "/assets/scoria/gamba_bordo.png"
+  image: "/assets/diavolo/guardia_1.png"
 }
 margin: 0
 extrude_borders: 2

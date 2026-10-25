@@ -16,7 +16,7 @@ local M = {}
 
 local function c(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 
--- Palette: dal personaggio (scoria.lua) e dalla bibbia grafica
+-- Palette: dal personaggio (personaggio.lua) e dalla bibbia grafica
 M.C = {
 	FONDO = c(0.051, 0.047, 0.063),       -- quasi nero, il buio del cimitero
 	PANNELLO = c(0.078, 0.071, 0.094),    -- il carbone della Scoria
