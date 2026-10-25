@@ -2,6 +2,57 @@ images {
   image: "/assets/personaggi/diavoletto.png"
 }
 images {
+  image: "/assets/personaggi/diavoletto_riposo_1.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_10.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_2.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_3.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_30.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_31.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_32.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_33.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_34.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_35.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_36.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_4.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_5.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_6.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_7.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_8.png"
+}
+images {
+  image: "/assets/personaggi/diavoletto_riposo_9.png"
+}
+images {
   image: "/assets/personaggi/brace.png"
 }
 images {

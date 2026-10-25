@@ -302,14 +302,26 @@ local function copia(s, azione, i, f)
 	pos(s.luce, (P.fx + (f.x - R.x) * 0.6) * k, P.fy * a * k)
 end
 
--- Mostra il fotogramma i dell'azione: immagine, misura, posto e fiammella
-local function mostra(s, azione, i)
-	local lista = FOTO[azione]
+-- i fotogrammi propri del personaggio per l'azione (nil: copia il diavoletto)
+local function propri(s, azione)
+	return s.pg and s.pg.foto and s.pg.foto[azione]
+end
+
+-- Mostra il fotogramma i (su n, di solito quelli del diavoletto) dell'azione:
+-- immagine, misura, posto e fiammella
+local function mostra(s, azione, i, n)
+	local lista = propri(s, azione)
+	if lista then
+		i = 1 + floor((i - 1) * #lista / (n or #FOTO[azione]))
+	else
+		lista = FOTO[azione]
+	end
 	local f = lista[max(1, min(#lista, i))]
 	if s.foto == f then return end
 	s.foto = f
-	if s.pg then return copia(s, azione, i, f) end
+	if s.pg and not propri(s, azione) then return copia(s, azione, i, f) end
 	local k = s.k
+	if s.pg then rot(s.figura, 0) end
 	gui.play_flipbook(s.figura, f.img)
 	V.x, V.y, V.z = f.w * k, f.h * k, 0
 	gui.set_size(s.figura, V)
@@ -418,7 +430,10 @@ function M.update(s, dt, st)
 	elseif st.festa then
 		mostra(s, "vittoria", 1 + floor(s.t * 10) % #FOTO.vittoria)
 	else
-		mostra(s, "riposo", 1 + floor(s.t * 8) % #FOTO.riposo)
+		-- i fogli di Ludo sono a 12 fotogrammi al secondo
+		local P = propri(s, "riposo")
+		local n = P and #P or #FOTO.riposo
+		mostra(s, "riposo", 1 + floor(s.t * (P and 12 or 8)) % n, n)
 	end
 	gui.set_visible(s.braccio_img, braccio and not s.pg)
 	gui.set_enabled(s.armi[s.arma_scelta], braccio)
