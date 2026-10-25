@@ -3,8 +3,9 @@
 #   client/assets/diavolo/<azione>_<n>.png     un fotogramma, a RES pixel per unità
 #   client/battaglia/diavolo_fotogrammi.lua    misure, punto d'appoggio e fiammella
 # I fogli stanno in gabriella/disegni/2026-10-25_animazioni/fogli/<azione>.png:
-# fondo magenta, fotogrammi separati da spazio vuoto, in una o più righe uguali. ChatGPT disegna ogni foglio a una scala sua: la testa, che è la parte
-# che cambia meno da una posa all'altra, riporta tutti alla misura della base.
+# fondo magenta, fotogrammi separati da spazio vuoto, in una o più righe uguali.
+# ChatGPT disegna ogni foglio a una scala sua: la testa, che è la parte che
+# cambia meno da una posa all'altra, riporta tutti alla misura della base.
 # Unità del disegno come i pezzi: dalla cima della testa ai piedi sono 200.
 # python3 strumenti/grafica/fotogrammi.py [cartella dei fogli]
 import os
