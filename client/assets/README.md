@@ -24,7 +24,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 - `mappe/isole_cimitero/terreno.png` (superficie con sopra le ossa) e `interno_mezzo.png` (parete dei crateri a metà risoluzione) li prepara `strumenti/grafica/battaglia.py`, insieme a `fx/bagliore.png` (alone bianco per missile e mirino).
 - La mappa è una mesh con lo shader `client/battaglia/terreno.fp`: sfondo fatto dallo shader (cielo, file di colline e guglie in parallasse, braci), terreno ritagliato dalla maschera viva, parete e brace dove si è scavato.
-- Il personaggio è la Scoria di `client/battaglia/scoria.lua` (fase 4 della roadmap): testa, mantello e gambe in `scoria/` (sagome bianche più la copia allargata `_bordo`, colorate dal codice) fatti da `strumenti/grafica/scoria.py`, che scrive anche `client/battaglia/scoria_pezzi.lua`; mani, occhio, Nucleo e armi sono nodi GUI. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
+- Il personaggio è il diavoletto di Gabriella in pixel art (`client/battaglia/scoria.lua`): i fotogrammi in `diavoletto/` li ritaglia dai fogli di Ludo `strumenti/grafica/diavoletto.py`, che scrive anche `client/battaglia/diavoletto.lua`; armi e alone della squadra sono nodi GUI. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
 
 ## Interfaccia
 
