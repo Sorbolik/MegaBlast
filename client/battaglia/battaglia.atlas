@@ -1,4 +1,13 @@
 images {
+  image: "/assets/personaggi/brace.png"
+}
+images {
+  image: "/assets/personaggi/ombra.png"
+}
+images {
+  image: "/assets/personaggi/zolfo.png"
+}
+images {
   image: "/assets/armi/uovo_di_fiamma.png"
 }
 images {

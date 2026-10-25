@@ -790,7 +790,7 @@ local function apri_podio(self)
 	local giocatori, me = {}, self.fine_online and self.me or nil
 	for i in ipairs(self.g.robots) do
 		local nome = (self.fine_online and i == self.me) and "Tu" or self.names[i]
-		giocatori[i] = { nome = nome, colore = self.colors[i] }
+		giocatori[i] = { nome = nome, colore = self.colors[i], chi = i }
 	end
 	local mio = me or 1
 	local posto, presi = #res.ranking, {}
@@ -1771,7 +1771,7 @@ function init(self)
 
 	self.robots = {}
 	for i = 1, game.MAX_PLAYERS do
-		local r = { rig = scoria.new(TEAM_COLORS[i]), st = {} }
+		local r = { rig = scoria.new(TEAM_COLORS[i], i), st = {} }
 		self.robots[i] = r
 	end
 

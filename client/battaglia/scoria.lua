@@ -17,6 +17,10 @@
 -- alla spalla con la mira, insieme all'arma. Il colore della squadra è l'alone
 -- attorno alla fiammella.
 --
+-- Prova: i giocatori 2, 3 e 4 sono Brace, Ombra e Zolfo, interi come li ha
+-- disegnati Gabriella. Hanno un'immagine sola, che copia i movimenti dei
+-- fotogrammi del diavoletto: si abbassa, si allunga e si sposta come lui.
+--
 -- I fotogrammi non si deformano: niente schiaccia e allunga né inclinazione,
 -- il movimento è tutto nei disegni. Sopra restano solo la spinta e il lampo rosso
 -- quando si viene colpiti e il rinculo dell'arma.
@@ -25,6 +29,7 @@ local game = require "sim.game"
 local config = require "sim.config"
 local PEZZI = require "battaglia.scoria_pezzi"
 local FOTO = require "battaglia.diavolo_fotogrammi"
+local PERSONAGGI = require "battaglia.personaggi"
 
 local M = {}
 
@@ -75,6 +80,9 @@ local AZIONI = {
 local SALTO_ARIA = 11
 local V_SALTO = math.sqrt(2 * game.GRAVITY * game.base_stats().jump_height)
 local MORTE_FOTO, MORTE_VIA, MORTE_FINE = 1.0, 1.3, 1.7
+
+-- chi è il giocatore i (1 il diavoletto a fotogrammi)
+local CHI = { nil, PERSONAGGI.brace, PERSONAGGI.ombra, PERSONAGGI.zolfo }
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(0, 0, 0, 1)
@@ -180,10 +188,11 @@ local function arma(s, name, color)
 	s.armi[name] = g
 end
 
-function M.new(color)
+-- i: il numero del giocatore, sceglie il personaggio (senza: il diavoletto)
+function M.new(color, i)
 	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
 	local s = { color = color, h = H, w = Wd, k = H / 200, armi = {}, tinte = {},
-		x = {}, v = {}, goal = {} }
+		x = {}, v = {}, goal = {}, pg = i and CHI[i] }
 	local k = s.k
 	s.root = vuoto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
@@ -195,7 +204,7 @@ function M.new(color)
 	scale(s.ombra, 1, 0.22)
 	-- corpo: la spinta quando si viene colpiti
 	s.corpo = vuoto(s.root, 0, 0)
-	s.figura = immagine(s.corpo, "riposo_1")
+	s.figura = immagine(s.corpo, s.pg and s.pg.img or "riposo_1")
 	-- l'alone della squadra attorno alla fiammella
 	s.luce = immagine(s.corpo, "bagliore")
 	gui.set_size(s.luce, vmath.vector3(60 * k, 60 * k, 0))
@@ -269,12 +278,36 @@ local function molle(s, dt)
 	end
 end
 
+-- Un personaggio intero copia il fotogramma f del diavoletto: alto quanto lui
+-- (accucciato, allungato, rimpicciolito), spostato come lui e, a terra
+-- sconfitto, girato sulla schiena
+local function copia(s, azione, i, f)
+	local P, k = s.pg, s.k
+	local a = max(0.55, min(1.2, (f.y + f.h / 2) / (R.y + R.h / 2)))
+	if azione == "teletrasporto" then a = (f.y + f.h / 2) / (R.y + R.h / 2) end
+	local l = azione == "teletrasporto" and a or 1 + (1 - a) * 0.5
+	V.x, V.y, V.z = P.w * k * l, P.h * k * a, 0
+	gui.set_size(s.figura, V)
+	pos(s.figura, (P.x + (f.x - R.x) * 0.6) * k, P.y * a * k)
+	local r = 0
+	if azione == "sconfitta" then
+		r = 1.45 * (i - 1) / (#FOTO.sconfitta - 1)
+	elseif azione == "corsa" or azione == "corsa_armata" then
+		r = -0.1
+	elseif azione == "colpito" then
+		r = 0.15
+	end
+	rot(s.figura, r)
+	pos(s.luce, (P.fx + (f.x - R.x) * 0.6) * k, P.fy * a * k)
+end
+
 -- Mostra il fotogramma i dell'azione: immagine, misura, posto e fiammella
 local function mostra(s, azione, i)
 	local lista = FOTO[azione]
 	local f = lista[max(1, min(#lista, i))]
 	if s.foto == f then return end
 	s.foto = f
+	if s.pg then return copia(s, azione, i, f) end
 	local k = s.k
 	gui.play_flipbook(s.figura, f.img)
 	V.x, V.y, V.z = f.w * k, f.h * k, 0
@@ -386,7 +419,7 @@ function M.update(s, dt, st)
 	else
 		mostra(s, "riposo", 1 + floor(s.t * 8) % #FOTO.riposo)
 	end
-	gui.set_visible(s.braccio_img, braccio)
+	gui.set_visible(s.braccio_img, braccio and not s.pg)
 	gui.set_enabled(s.armi[s.arma_scelta], braccio)
 
 	-- l'alone respira
