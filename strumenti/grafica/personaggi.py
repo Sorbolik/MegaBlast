@@ -39,7 +39,7 @@ LUDO = "/mnt/project-files/gabriella/disegni/2026-10-25_pixel/ludo"
 # resta il respiro calmo 30-36 e 1-10 (36 -> 1 è il giro di Ludo), avanti e
 # indietro: così non c'è un punto in cui scatta
 FOGLI = {
-    "diavoletto": {"riposo": ("diavoletto_riposo.png", RIPOSO_CALMO)},
+    "diavoletto": {"riposo": ("diavoletto_riposo_v1.png", RIPOSO_CALMO)},
 }
 # ogni pixel vero diventa PIXEL x PIXEL nella texture: rimpicciolendo resta netto
 PIXEL = 4
