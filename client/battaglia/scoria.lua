@@ -24,9 +24,13 @@ local FOTO = require "battaglia.diavoletto"
 
 local M = {}
 
+-- pixel di mondo in più per il disegno, dai piedi alla fiammella (Sergio, 25
+-- ottobre 2026); la sagoma per i colpi resta quella di sim/game.lua
+local GRANDE = 10
 -- altezza del personaggio in cima alla fiammella, per mettere sopra vita e freccia
 local R = FOTO.riposo[1]
-M.ALTEZZA = game.ROBOT_H * (R.y + R.h / 2) / 200
+local function alto() return game.ROBOT_H * (R.y + R.h / 2) / 200 end
+M.ALTEZZA = alto() + GRANDE
 
 local sin, cos, min, max, abs, pi, floor = math.sin, math.cos, math.min, math.max, math.abs, math.pi, math.floor
 local DEG = 180 / pi
@@ -178,7 +182,7 @@ end
 
 function M.new(color)
 	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
-	local s = { color = color, h = H, w = Wd, k = H / 200, armi = {}, tinte = {},
+	local s = { color = color, h = H, w = Wd, k = H / 200 * (1 + GRANDE / alto()), armi = {}, tinte = {},
 		x = {}, v = {}, goal = {} }
 	local k = s.k
 	s.root = vuoto(nil, 0, 0)
