@@ -17,9 +17,9 @@
 -- alla spalla con la mira, insieme all'arma. Il colore della squadra è l'alone
 -- attorno alla fiammella.
 --
--- Sopra i fotogrammi restano le molle: schiaccia e allunga (atterraggio, stacco,
--- teletrasporto), inclinazione nella corsa, spinta e lampo rosso quando si viene
--- colpiti, rinculo dell'arma.
+-- I fotogrammi non si deformano: niente schiaccia e allunga né inclinazione,
+-- il movimento è tutto nei disegni. Sopra restano solo la spinta e il lampo rosso
+-- quando si viene colpiti e il rinculo dell'arma.
 
 local game = require "sim.game"
 local config = require "sim.config"
@@ -43,9 +43,9 @@ local FERRO = vmath.vector4(0.3, 0.29, 0.34, 1)
 local LAMA = vmath.vector4(0.86, 0.88, 0.95, 1)
 
 -- molle: posizione, velocità, rigidità, smorzamento
-local SQ, LEAN, SHOVE, KICK = 1, 2, 3, 4
-local W_MOLLA = { 16, 10, 12, 18 }
-local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45 }
+local SHOVE, KICK = 1, 2
+local W_MOLLA = { 12, 18 }
+local Z_MOLLA = { 0.5, 0.45 }
 
 -- il braccio davanti va dalla spalla alla mano: la mano è sull'impugnatura,
 -- a PRESA dalla spalla lungo l'arma; BRACCIO è l'angolo del braccio nel disegno
@@ -188,13 +188,11 @@ function M.new(color)
 
 	s.ombra = cerchio(s.root, 0, 0, Wd * 1.3, OMBRA)
 	scale(s.ombra, 1, 0.22)
-	-- corpo: inclinazione e spinta; forma: schiaccia e allunga. Il braccio con
-	-- l'arma sta sul corpo e non sulla forma, così schiacciandosi non si storce la mira
+	-- corpo: la spinta quando si viene colpiti
 	s.corpo = vuoto(s.root, 0, 0)
-	s.forma = vuoto(s.corpo, 0, 0)
-	s.figura = immagine(s.forma, "riposo_1")
+	s.figura = immagine(s.corpo, "riposo_1")
 	-- l'alone della squadra attorno alla fiammella
-	s.luce = immagine(s.forma, "bagliore")
+	s.luce = immagine(s.corpo, "bagliore")
 	gui.set_size(s.luce, vmath.vector3(60 * k, 60 * k, 0))
 	gui.set_blend_mode(s.luce, gui.BLEND_ADD)
 	gui.set_color(s.luce, s.luce_col)
@@ -232,7 +230,6 @@ end
 
 function M.reset(s)
 	for i = 1, #W_MOLLA do s.x[i], s.v[i], s.goal[i] = 0, 0, 0 end
-	s.x[SQ] = 1
 	s.t = math.random() * 10
 	s.vy, s.last_x, s.last_y, s.ground = 0, nil, nil, true
 	s.passo, s.cammina, s.in_moto = 0, 0, 0
@@ -338,28 +335,12 @@ function M.update(s, dt, st)
 	s.cammina = s.cammina + ((corre and 1 or 0) - s.cammina) * min(1, dt * 10)
 	s.in_moto = corre and s.in_moto + dt or 0
 
-	-- atterraggio e stacco: schiaccia e allunga
-	if ground and not s.ground and s.vy < -40 then
-		s.v[SQ] = s.v[SQ] - min(7, -s.vy / 40)
-		azione(s, "atterraggio")
-	elseif not ground and s.ground and s.vy > 20 then
-		s.v[SQ] = s.v[SQ] + 4
-	end
+	-- atterraggio: il fotogramma accucciato del salto
+	if ground and not s.ground and s.vy < -40 then azione(s, "atterraggio") end
 	s.ground = ground
 
-	local sq = 1 + 0.015 * sin(s.t * 2.4)
-	if not ground then sq = 1 + min(0.12, abs(s.vy) / 1200) end
-	-- si piega un po' in avanti correndo
-	local avanti = st.moving * face
-	s.goal[SQ], s.goal[LEAN] = sq, -0.08 * max(-1, min(1, avanti / 70))
 	molle(s, dt)
-
-	local q = max(0.4, s.x[SQ])
-	scale(s.forma, 1 + (1 - q) * 0.8, q)
-	rot(s.corpo, s.x[LEAN])
 	pos(s.corpo, -s.x[SHOVE] * s.w, 0)
-	pos(s.spalla, SPALLA[1] * s.k, SPALLA[2] * s.k * q)
-	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
 
 	-- l'arma gira attorno alla spalla verso la mira; dopo lo sparo resta dov'era
 	if st.aim then s.mira = face > 0 and st.aim or pi - st.aim end
@@ -415,8 +396,7 @@ function M.update(s, dt, st)
 		gui.set_color(s.braccio_img, C)
 	end
 
-	-- la spalla è dentro il corpo, che è inclinato: togliamo l'inclinazione
-	local a = (st.aim and s.mira or (braccio and s.mira or ARMI[s.arma_scelta].riposo)) - s.x[LEAN]
+	local a = st.aim and s.mira or (braccio and s.mira or ARMI[s.arma_scelta].riposo)
 	rot(s.spalla, a)
 	-- il rinculo porta indietro arma e braccio, mai oltre la spalla
 	local r = -min(s.x[KICK] * s.w * 0.6, PRESA * s.k * 0.8)
@@ -439,8 +419,6 @@ function M.hit(s, dx)
 	s.flash = 1
 	azione(s, "colpito")
 	s.v[SHOVE] = s.v[SHOVE] - 9 * d
-	s.v[SQ] = s.v[SQ] - 3
-	s.v[LEAN] = s.v[LEAN] - 3 * d
 end
 
 -- Colpo sparato: rinculo dell'arma e del corpo; un lancio ha i suoi fotogrammi
@@ -448,26 +426,21 @@ function M.fire(s, kind)
 	local k = kind == "shards" and 0.5 or 1
 	azione(s, kind == "throw" and "lancio" or "rinculo")
 	s.v[KICK] = s.v[KICK] + 14 * k
-	s.v[LEAN] = s.v[LEAN] + 2 * k
-	s.v[SQ] = s.v[SQ] - 1.5 * k
 end
 
--- Scatto dell'Affondo: si allunga in avanti e si piega
+-- Scatto dell'Affondo: il corpo parte un attimo prima, in avanti
 function M.lunge(s)
-	s.v[SQ] = s.v[SQ] + 6
-	s.v[LEAN] = s.v[LEAN] + 6
+	s.v[SHOVE] = s.v[SHOVE] - 6
 end
 
--- Arrivo col teletrasporto: ricompare dalla fiammella, schiacciato, e si allunga
+-- Arrivo col teletrasporto: ricompare dalla fiammella
 function M.teleport(s)
 	azione(s, "teletrasporto")
-	s.x[SQ], s.v[SQ] = 0.7, 3
 end
 
 function M.die(s)
 	if s.morte then return end
 	s.morte = 0
-	scale(s.forma, 1, 1)
 	gui.set_visible(s.braccio_img, false)
 	gui.set_enabled(s.armi[s.arma_scelta], false)
 end

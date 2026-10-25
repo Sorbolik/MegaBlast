@@ -1610,7 +1610,7 @@ local function render(self, dt)
 		end
 		if n then
 			local ca = pa.c[id] or cb
-			set_pos(n.node, ca.x + (cb.x - ca.x) * k, ca.y + (cb.y - ca.y) * k + game.CRATE_H / 2)
+			set_pos(n.node, ca.x + (cb.x - ca.x) * k, ca.y + (cb.y - ca.y) * k + 11)  -- i piedi del baule a terra
 			EULER.z = cb.landed and 0 or math.sin(self.clock * 3 + id) * 10
 			gui.set_euler(n.node, EULER)
 			gui.set_enabled(n.chute, not cb.landed)
@@ -1840,15 +1840,18 @@ function init(self)
 	-- trappole, trampolini, cerchi di cura, scudi e paracadute (battaglia/oggetti.lua)
 	self.oggetti = oggetti.new(TEAM_COLORS)
 
-	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono
+	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono:
+	-- il baule di Gabriella (strumenti/grafica/baule.py, 200 x 230 pixel), alto 22
+	-- unità del mondo
+	local cassa = vmath.vector3(22 * 200 / 230, 22, 0)
 	self.crate_nodes = {}
 	for i = 1, game.CRATE_MAX do
-		local n = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.4, 56 * 0.4, 0)))
+		local n = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), cassa))
 		gui.set_texture(n, "battaglia")
 		gui.play_flipbook(n, "cassa")
 		local chute = glow(0, 20, 40, vmath.vector4(1, 0.8, 0.5, 0.45))
 		gui.set_parent(chute, n)
-		local light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.4, 56 * 0.4, 0))
+		local light = gui.new_box_node(vmath.vector3(0, 0, 0), cassa)
 		gui.set_texture(light, "battaglia")
 		gui.play_flipbook(light, "cassa_luce")
 		gui.set_blend_mode(light, gui.BLEND_ADD)
