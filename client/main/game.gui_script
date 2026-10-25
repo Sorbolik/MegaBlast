@@ -8,7 +8,7 @@ local game = require "sim.game"
 local ui = require "ui.ui"
 local gconfig = require "sim.config"
 local maps = require "sim.maps"
-local personaggio = require "battaglia.personaggio"
+local scoria = require "battaglia.scoria"
 local targa = require "battaglia.targa"
 local home = require "menu.home"
 local profilo = require "menu.profilo"
@@ -526,13 +526,13 @@ local function new_match(self, seed, map, opts)
 	end
 	self.names, self.colors = names_colors(self.g.robots)
 	for i = #self.g.robots + 1, game.MAX_PLAYERS do
-		personaggio.set_enabled(self.robots[i].rig, false)
+		scoria.set_enabled(self.robots[i].rig, false)
 		targa.set_enabled(self.robots[i].targa, false)
 	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
-		personaggio.set_color(self.robots[i].rig, self.colors[i])
-		personaggio.set_enabled(self.robots[i].rig, true)
+		scoria.set_color(self.robots[i].rig, self.colors[i])
+		scoria.set_enabled(self.robots[i].rig, true)
 		targa.colore(self.robots[i].targa, self.colors[i])
 		targa.set_enabled(self.robots[i].targa, true)
 		targa.vita(self.robots[i].targa, rb.hp, rb.max_hp, rb.shield)
@@ -670,9 +670,9 @@ local function handle_event(self, e)
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- rinculo del Lanciarune (e del cecchino), slancio del lancio, raffica di schegge
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
-		personaggio.fire(self.robots[e.robot].rig, kind)
+		scoria.fire(self.robots[e.robot].rig, kind)
 	elseif e.type == "teleport" then
-		personaggio.teleport(self.robots[e.robot].rig)
+		scoria.teleport(self.robots[e.robot].rig)
 		if self.mode == "online" then
 			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
 			self.snap[e.robot] = true
@@ -687,7 +687,7 @@ local function handle_event(self, e)
 	elseif e.type == "eagle" or e.type == "hook" then
 		-- colpo dritto: la traccia (bianca, o acciaio per la fune del Rampino)
 		-- dalla canna al punto colpito, che sfuma in un quarto di secondo
-		personaggio.fire(self.robots[e.robot].rig, e.type == "eagle" and "missile" or "shards")
+		scoria.fire(self.robots[e.robot].rig, e.type == "eagle" and "missile" or "shards")
 		local n, dx, dy = self.tracer, e.x1 - e.x0, e.y1 - e.y0
 		gui.set_enabled(n, true)
 		gui.cancel_animations(n)
@@ -705,9 +705,9 @@ local function handle_event(self, e)
 			if e.type == "hook" then targa.annuncio(self.robots[e.target].targa, "AGGANCIATO!") end
 		end
 	elseif e.type == "lunge" then
-		personaggio.lunge(self.robots[e.robot].rig)
+		scoria.lunge(self.robots[e.robot].rig)
 	elseif e.type == "mallet" then
-		personaggio.fire(self.robots[e.robot].rig, "throw")
+		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "mallet_hit" then
 		shock(self, e.x, e.y)
 		if e.target then self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y + game.ROBOT_H, self.clock end
@@ -750,14 +750,14 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "death" then
 		-- crolla e svanisce da solo; dopo 1,5 s ricompare altrove, nello stesso turno
-		personaggio.die(self.robots[e.robot].rig)
+		scoria.die(self.robots[e.robot].rig)
 		targa.set_enabled(self.robots[e.robot].targa, false)
 		if e.by then
 			local verbo = e.env and " butta giù " or " elimina "
 			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
 		end
 	elseif e.type == "respawn" then
-		personaggio.set_enabled(self.robots[e.robot].rig, true)
+		scoria.set_enabled(self.robots[e.robot].rig, true)
 		targa.set_enabled(self.robots[e.robot].targa, true)
 		if self.mode == "online" then
 			self.snap[e.robot] = true
@@ -1378,7 +1378,7 @@ local function render(self, dt)
 				local danno = v.hp - hp
 				local cx, cy = colpo_da(self, i)
 				local dx, dy = v.x - cx, v.y + game.ROBOT_H / 2 - cy
-				personaggio.hit(r.rig, dx)
+				scoria.hit(r.rig, dx)
 				camera.scuoti(self.cam, dx, dy, SCOSSA_BASE + danno * SCOSSA_DANNO)
 				self.fermo = math.max(self.fermo, FERMO_MIN + (FERMO_MAX - FERMO_MIN) * math.min(1, danno / 50))
 			end
@@ -1407,7 +1407,7 @@ local function render(self, dt)
 			targa.stato(r.targa, testo)
 			v.stato = codice
 		end
-		targa.update(r.targa, dt, v.x, v.y + personaggio.ALTEZZA + 3, self.cam.s ^ -0.65)
+		targa.update(r.targa, dt, v.x, v.y + scoria.ALTEZZA + 3, self.cam.s ^ -0.65)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -1417,9 +1417,6 @@ local function render(self, dt)
 		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, vx
 		st.facing = rb.facing
 		st.aim = nil
-		st.suolo = g.terrain:ground_below(v.x, v.y + 1)
-		st.paracadute = rb.parachute
-		st.fendente = nil
 		if aiming then
 			st.aim = self.aim_angle
 			st.facing = math.cos(self.aim_angle) < 0 and -1 or 1
@@ -1461,7 +1458,6 @@ local function render(self, dt)
 			local t = math.max(0, rb.mallet - span + k * span)
 			local to = rb.grounded and -0.3 or -math.pi / 2
 			local a = PUNCH_TO + (to - PUNCH_TO) * math.min(1, t / gconfig.MALLET.hit_tick)
-			st.fendente = math.min(1, t / gconfig.MALLET.ticks)
 			local dir = rb.mallet_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
@@ -1480,14 +1476,13 @@ local function render(self, dt)
 			-- il tick del fendente è quello della posa b: lo disegniamo tra a e b
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
 			local a = game.sword_angle(math.max(0, rb.swing - span + k * span), rb.swing_base)
-			st.fendente = math.min(1, math.max(0, rb.swing - span + k * span) / game.SWORD_TICKS)
 			-- la direzione è quella di partenza: girarsi non cambia il fendente
 			local dir = rb.swing_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
 		end
-		personaggio.set_weapon(r.rig, weapon)
-		personaggio.update(r.rig, dt, st)
+		scoria.set_weapon(r.rig, weapon)
+		scoria.update(r.rig, dt, st)
 	end
 
 	-- la fune del Rampino: dalla mano di chi tira al robot appeso; mollato, sfuma
@@ -1726,7 +1721,7 @@ local function render(self, dt)
 	local cur = current_robot(self)
 	local v = self.view[g.current]
 	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
-	set_pos(self.arrow, v.x, v.y + personaggio.ALTEZZA + (58 + math.sin(self.clock * 5) * 3) / self.cam.s)
+	set_pos(self.arrow, v.x, v.y + scoria.ALTEZZA + (58 + math.sin(self.clock * 5) * 3) / self.cam.s)
 	gui.set_color(self.arrow, self.colors[g.current])
 
 	-- Camera: segue il colpo in volo, poi resta un attimo sull'esplosione, poi
@@ -1774,7 +1769,7 @@ function init(self)
 
 	self.robots = {}
 	for i = 1, game.MAX_PLAYERS do
-		local r = { rig = personaggio.new(TEAM_COLORS[i]), st = {} }
+		local r = { rig = scoria.new(TEAM_COLORS[i]), st = {} }
 		self.robots[i] = r
 	end
 

@@ -1,4 +1,4 @@
--- Test del personaggio (battaglia/personaggio.lua) e della targa con nome e vita
+-- Test della Scoria (battaglia/scoria.lua) e della targa con nome e vita
 -- (battaglia/targa.lua) con un finto gui, e della camera (battaglia/camera.lua). Dalla radice del repository:
 --   luajit tests/battaglia_test.lua
 package.path = "client/?.lua;" .. package.path
@@ -33,7 +33,7 @@ gui = {
 }
 
 local game = require "sim.game"
-local personaggio = require "battaglia.personaggio"
+local scoria = require "battaglia.scoria"
 local camera = require "battaglia.camera"
 local targa = require "battaglia.targa"
 
@@ -71,24 +71,30 @@ end
 
 local function angolo(a) return (a + math.pi) % (2 * math.pi) - math.pi end
 
--- Personaggio --------------------------------------------------------------
+-- Scoria -------------------------------------------------------------------
 
-local s = personaggio.new(vec(1, 0.2, 0.3, 1))
+local s = scoria.new(vec(1, 0.2, 0.3, 1))
 local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0 }
-for _ = 1, 60 do personaggio.update(s, 1 / 60, st) end
+for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "a riposo: valori finiti")
 
--- la mano è lo zero dell'arma, nel pugno del braccio davanti
-local function mano(name) return s.armi[name] end
+-- la mano è l'ultimo nodo dell'arma
+local function mano(name)
+	local m
+	for _, n in ipairs(nodi) do
+		if n.parent == s.armi[name] then m = n end
+	end
+	return m
+end
 
 -- l'arma gira attorno alla spalla e la mano la segue: dalla spalla, la mano
 -- sta nella direzione della mira, girati a destra o a sinistra
 for _, name in ipairs({ "missile", "sword" }) do
-	personaggio.set_weapon(s, name)
+	scoria.set_weapon(s, name)
 	for _, a in ipairs({ 0.4, -0.8, 2.3, math.pi - 0.2 }) do
 		st.aim = a
 		st.facing = math.cos(a) < 0 and -1 or 1
-		for _ = 1, 30 do personaggio.update(s, 1 / 60, st) end
+		for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 		local sx, sy = mondo(s.spalla, 0, 0)
 		local mx, my = mondo(mano(name), 0, 0)
 		local d = angolo(math.atan2(my - sy, mx - sx) - a)
@@ -97,15 +103,15 @@ for _, name in ipairs({ "missile", "sword" }) do
 end
 
 -- il rinculo sposta arma e mano lungo l'asse, senza staccarle dalla mira
-personaggio.set_weapon(s, "missile")
+scoria.set_weapon(s, "missile")
 st.aim, st.facing = 0.6, 1
-for _ = 1, 30 do personaggio.update(s, 1 / 60, st) end
+for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 local sx, sy = mondo(s.spalla, 0, 0)
 local mx0, my0 = mondo(mano("missile"), 0, 0)
-personaggio.fire(s, "missile")
+scoria.fire(s, "missile")
 local indietro = false
 for _ = 1, 4 do
-	personaggio.update(s, 1 / 60, st)
+	scoria.update(s, 1 / 60, st)
 	local mx, my = mondo(mano("missile"), 0, 0)
 	if (mx - sx) ^ 2 + (my - sy) ^ 2 < (mx0 - sx) ^ 2 + (my0 - sy) ^ 2 - 0.5 then indietro = true end
 end
@@ -114,64 +120,39 @@ sx, sy = mondo(s.spalla, 0, 0)
 local mx, my = mondo(mano("missile"), 0, 0)
 check(math.abs(angolo(math.atan2(my - sy, mx - sx) - 0.6)) < 0.02, "rinculo: la mano resta sull'asse dell'arma")
 
--- armi a due mani: il braccio dietro dalla sua spalla arriva alla seconda presa,
--- sull'asse dell'arma; con quelle a una mano resta nascosto
-for _, name in ipairs({ "missile", "sword", "mallet" }) do
-	personaggio.set_weapon(s, name)
-	st.aim, st.facing = 0.3, 1
-	for _ = 1, 30 do personaggio.update(s, 1 / 60, st) end
-	local D = require "battaglia.diavolo"
-	local fx, fy = mondo(s.spalla_dietro, D.braccio.presa * game.ROBOT_H / D.altezza, 0)
-	local ax, ay = mondo(s.spalla, 0, 0)
-	local d = math.abs((fx - ax) * math.sin(0.3) - (fy - ay) * math.cos(0.3))
-	check(s.spalla_dietro.enabled and d < 0.05, string.format("%s: la mano dietro è sull'arma (a %.2f dall'asse)", name, d))
-end
-personaggio.set_weapon(s, "eagle")
-personaggio.update(s, 1 / 60, st)
-check(not s.spalla_dietro.enabled, "Tonante: il braccio dietro resta nascosto")
-
--- a terra il disegno scende sul terreno sotto il centro, al massimo un gradino
-st.aim, st.y, st.suolo = nil, 50, 47
-for _ = 1, 60 do personaggio.update(s, 1 / 60, st) end
-check(math.abs(s.root.pos.y - 47) < 0.01, "piedi: il disegno poggia sul terreno sotto il centro")
-st.suolo = 50 - game.MAX_CLIMB - 1
-for _ = 1, 60 do personaggio.update(s, 1 / 60, st) end
-check(math.abs(s.root.pos.y - 50) < 0.01, "piedi: più giù di un gradino resta dov'è")
-st.suolo = nil
-
 st.aim = nil
 for _, name in ipairs({ "missile", "sword", "teleport", "grenade", "shards", "punch" }) do
-	personaggio.set_weapon(s, name)
-	for _ = 1, 10 do personaggio.update(s, 1 / 60, st) end
+	scoria.set_weapon(s, name)
+	for _ = 1, 10 do scoria.update(s, 1 / 60, st) end
 end
 check(tutto_finito(), "tutte le armi a riposo: valori finiti")
 
--- salto e atterraggio
+-- salto e atterraggio: schiaccia e allunga senza esplodere
 st.grounded = false
-for i = 1, 30 do st.y = 50 + i * 3; personaggio.update(s, 1 / 60, st) end
-for i = 1, 30 do st.y = 140 - i * 3; personaggio.update(s, 1 / 60, st) end
+for i = 1, 30 do st.y = 50 + i * 3; scoria.update(s, 1 / 60, st) end
+for i = 1, 30 do st.y = 140 - i * 3; scoria.update(s, 1 / 60, st) end
 st.grounded = true
-for _ = 1, 30 do personaggio.update(s, 1 / 120, st) end
+for _ = 1, 30 do scoria.update(s, 1 / 120, st) end
 check(tutto_finito(), "salto e atterraggio (anche a 120 Hz): valori finiti")
 
-personaggio.hit(s)
-personaggio.teleport(s)
-for _ = 1, 30 do personaggio.update(s, 1 / 60, st) end
+scoria.hit(s)
+scoria.teleport(s)
+for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "colpo e teletrasporto: valori finiti")
 
-personaggio.hit(s, 30)
-personaggio.hit(s, -30)
-for _ = 1, 10 do personaggio.update(s, 1 / 60, st) end
+scoria.hit(s, 30)
+scoria.hit(s, -30)
+for _ = 1, 10 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "colpi da destra e da sinistra: valori finiti")
 
-personaggio.die(s)
-personaggio.set_weapon(s, "sword")
+scoria.die(s)
+scoria.set_weapon(s, "sword")
 check(not s.armi.sword.enabled, "morte: l'arma sparisce, anche cambiandola")
-for _ = 1, 30 do personaggio.update(s, 1 / 60, st) end
-check(tutto_finito() and s.root.enabled, "morte: il corpo c'è ancora")
-for _ = 1, 120 do personaggio.update(s, 1 / 60, st) end
+for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
+check(tutto_finito() and s.root.enabled, "morte: la testa vola, il corpo c'è ancora")
+for _ = 1, 120 do scoria.update(s, 1 / 60, st) end
 check(not s.root.enabled, "morte: poi il corpo sparisce")
-personaggio.set_enabled(s, true)
+scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")
 check(math.abs(game.ROBOT_H - s.h) < 1e-9, "il corpo è alto quanto quello della simulazione")
 
