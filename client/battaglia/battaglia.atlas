@@ -95,6 +95,24 @@ images {
   image: "/assets/diavolo/camminata_6.png"
 }
 images {
+  image: "/assets/diavolo/camminata_7.png"
+}
+images {
+  image: "/assets/diavolo/camminata_8.png"
+}
+images {
+  image: "/assets/diavolo/camminata_9.png"
+}
+images {
+  image: "/assets/diavolo/camminata_10.png"
+}
+images {
+  image: "/assets/diavolo/camminata_11.png"
+}
+images {
+  image: "/assets/diavolo/camminata_12.png"
+}
+images {
   image: "/assets/diavolo/corsa_1.png"
 }
 images {
@@ -111,6 +129,24 @@ images {
 }
 images {
   image: "/assets/diavolo/corsa_6.png"
+}
+images {
+  image: "/assets/diavolo/corsa_7.png"
+}
+images {
+  image: "/assets/diavolo/corsa_8.png"
+}
+images {
+  image: "/assets/diavolo/corsa_9.png"
+}
+images {
+  image: "/assets/diavolo/corsa_10.png"
+}
+images {
+  image: "/assets/diavolo/corsa_11.png"
+}
+images {
+  image: "/assets/diavolo/corsa_12.png"
 }
 images {
   image: "/assets/diavolo/corsa_armata_1.png"
@@ -176,6 +212,30 @@ images {
   image: "/assets/diavolo/mira_4.png"
 }
 images {
+  image: "/assets/diavolo/mira_5.png"
+}
+images {
+  image: "/assets/diavolo/mira_6.png"
+}
+images {
+  image: "/assets/diavolo/mira_7.png"
+}
+images {
+  image: "/assets/diavolo/mira_8.png"
+}
+images {
+  image: "/assets/diavolo/mira_9.png"
+}
+images {
+  image: "/assets/diavolo/mira_10.png"
+}
+images {
+  image: "/assets/diavolo/mira_11.png"
+}
+images {
+  image: "/assets/diavolo/mira_12.png"
+}
+images {
   image: "/assets/diavolo/fendente_1.png"
 }
 images {
@@ -201,6 +261,30 @@ images {
 }
 images {
   image: "/assets/diavolo/lancio_4.png"
+}
+images {
+  image: "/assets/diavolo/lancio_5.png"
+}
+images {
+  image: "/assets/diavolo/lancio_6.png"
+}
+images {
+  image: "/assets/diavolo/lancio_7.png"
+}
+images {
+  image: "/assets/diavolo/lancio_8.png"
+}
+images {
+  image: "/assets/diavolo/lancio_9.png"
+}
+images {
+  image: "/assets/diavolo/lancio_10.png"
+}
+images {
+  image: "/assets/diavolo/lancio_11.png"
+}
+images {
+  image: "/assets/diavolo/lancio_12.png"
 }
 images {
   image: "/assets/diavolo/colpito_1.png"
@@ -245,6 +329,27 @@ images {
   image: "/assets/diavolo/teletrasporto_5.png"
 }
 images {
+  image: "/assets/diavolo/teletrasporto_6.png"
+}
+images {
+  image: "/assets/diavolo/teletrasporto_7.png"
+}
+images {
+  image: "/assets/diavolo/teletrasporto_8.png"
+}
+images {
+  image: "/assets/diavolo/teletrasporto_9.png"
+}
+images {
+  image: "/assets/diavolo/teletrasporto_10.png"
+}
+images {
+  image: "/assets/diavolo/teletrasporto_11.png"
+}
+images {
+  image: "/assets/diavolo/teletrasporto_12.png"
+}
+images {
   image: "/assets/diavolo/vittoria_1.png"
 }
 images {
@@ -258,6 +363,27 @@ images {
 }
 images {
   image: "/assets/diavolo/vittoria_5.png"
+}
+images {
+  image: "/assets/diavolo/vittoria_6.png"
+}
+images {
+  image: "/assets/diavolo/vittoria_7.png"
+}
+images {
+  image: "/assets/diavolo/vittoria_8.png"
+}
+images {
+  image: "/assets/diavolo/vittoria_9.png"
+}
+images {
+  image: "/assets/diavolo/vittoria_10.png"
+}
+images {
+  image: "/assets/diavolo/vittoria_11.png"
+}
+images {
+  image: "/assets/diavolo/vittoria_12.png"
 }
 images {
   image: "/assets/diavolo/paracadute_1.png"

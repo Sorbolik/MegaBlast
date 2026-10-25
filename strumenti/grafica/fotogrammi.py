@@ -25,14 +25,15 @@ MARGINE = 2   # pixel trasparenti attorno a ogni fotogramma
 # nella base (tela 1024): piedi a y 941, cima della testa a y 240
 S = 200 / (941 - 240)
 
-# azione: (righe del foglio, larghezza della testa in pixel del foglio).
+# azione: (righe del foglio, larghezza della testa in pixel del foglio[, quanto
+# allargare le figure per tenerne insieme i pezzi: meno se le righe sono strette]).
 # La testa si misura come la corsa orizzontale più lunga nella parte alta della
 # figura (testa più visiera); nei fotogrammi con le braccia alzate la misura le
 # comprende, quindi il valore è quello delle pose senza braccia vicino alla testa
 AZIONI = {
-    "riposo": (3, 133), "camminata": (2, 180), "corsa": (2, 213), "corsa_armata": (3, 132), "salto": (1, 229), "mira": (1, 238),
-    "fendente": (1, 222), "lancio": (1, 232), "colpito": (1, 246), "sconfitta": (1, 176),
-    "teletrasporto": (1, 229), "vittoria": (1, 205), "paracadute": (1, 230),
+    "riposo": (3, 133), "camminata": (3, 131, 4), "corsa": (3, 132), "corsa_armata": (3, 132), "salto": (1, 229), "mira": (3, 145),
+    "fendente": (1, 222), "lancio": (3, 129), "colpito": (1, 246), "sconfitta": (1, 176),
+    "teletrasporto": (3, 133), "vittoria": (3, 138), "paracadute": (1, 230),
 }
 
 
@@ -82,10 +83,10 @@ def fiammella(rgb, m):
     return xs[alto].mean(), ys[alto].mean()
 
 
-def fotogrammi(p, righe):
+def fotogrammi(p, righe, allarga=8):
     rgb, al = chiave(p)
     m = al > 0.5
-    l, n = nd.label(nd.binary_dilation(m, iterations=8))
+    l, n = nd.label(nd.binary_dilation(m, iterations=allarga))
     objs = nd.find_objects(l)
     sz = nd.sum(m, l, range(1, n + 1))
     grandi = [i for i in range(n) if sz[i] > 3000]
@@ -128,10 +129,10 @@ def main():
     bx, by = appoggio(brgb, bm)
     righe = []
     area = 0
-    for azione, (nrighe, larga) in AZIONI.items():
+    for azione, (nrighe, larga, *allarga) in AZIONI.items():
         k = testa_base / larga * S * RES   # pixel del foglio -> pixel del gioco
         righe.append("\t%s = {" % azione)
-        for i, (rgb, a) in enumerate(fotogrammi(os.path.join(FOGLI, azione + ".png"), nrighe)):
+        for i, (rgb, a) in enumerate(fotogrammi(os.path.join(FOGLI, azione + ".png"), nrighe, *allarga)):
             m = a > 0.5
             ax, ay = appoggio(rgb, m)
             f = fiammella(rgb, m)

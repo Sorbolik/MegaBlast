@@ -62,10 +62,11 @@ local CORSA_DOPO = 0.35
 -- quanto durano le azioni (secondi) e da che fotogrammi passano
 local AZIONI = {
 	colpito = { "colpito", 0.4, 1, 4 },
-	lancio = { "lancio", 0.35, 1, 4 },
+	lancio = { "lancio", 0.45, 1, 12 },
 	-- il teletrasporto arriva quando il robot è già nel punto nuovo: ricompare
-	teletrasporto = { "teletrasporto", 0.3, 3, 5 },
-	rinculo = { "mira", 0.3, 3, 4 },
+	-- dalla fiammella (fotogramma 6)
+	teletrasporto = { "teletrasporto", 0.4, 6, 12 },
+	rinculo = { "mira", 0.35, 8, 12 },
 	atterraggio = { "salto", 0.12, 5, 5 },
 }
 local MORTE_FOTO, MORTE_VIA, MORTE_FINE = 1.0, 1.3, 1.7
@@ -381,8 +382,9 @@ function M.update(s, dt, st)
 			-- corre mirando: le gambe corrono, il braccio con l'arma segue il dito
 			mostra(s, "corsa_armata", 1 + floor(s.passo * #FOTO.corsa_armata) % #FOTO.corsa_armata)
 		else
-			-- mirando respira tra le due pose ferme
-			mostra(s, "mira", sin(s.t * 3) > 0.6 and 2 or 1)
+			-- mirando respira avanti e indietro tra le pose ferme (1-7)
+			local i = floor(s.t * 6) % 12
+			mostra(s, "mira", 1 + (i < 7 and i or 12 - i))
 		end
 	elseif st.paracadute then
 		mostra(s, "paracadute", 1 + floor(s.t * 5) % #FOTO.paracadute)
@@ -393,7 +395,7 @@ function M.update(s, dt, st)
 		local nome = s.in_moto > CORSA_DOPO and "corsa" or "camminata"
 		mostra(s, nome, 1 + floor(s.passo * #FOTO[nome]) % #FOTO[nome])
 	elseif st.festa then
-		mostra(s, "vittoria", 1 + floor(s.t * 6) % #FOTO.vittoria)
+		mostra(s, "vittoria", 1 + floor(s.t * 10) % #FOTO.vittoria)
 	else
 		mostra(s, "riposo", 1 + floor(s.t * 8) % #FOTO.riposo)
 	end
