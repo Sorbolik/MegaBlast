@@ -161,6 +161,9 @@ images {
   image: "/assets/diavolo/corsa_16.png"
 }
 images {
+  image: "/assets/diavolo/corsa_17.png"
+}
+images {
   image: "/assets/diavolo/corsa_armata_1.png"
 }
 images {
@@ -225,6 +228,39 @@ images {
 }
 images {
   image: "/assets/diavolo/salto_5.png"
+}
+images {
+  image: "/assets/diavolo/salto_6.png"
+}
+images {
+  image: "/assets/diavolo/salto_7.png"
+}
+images {
+  image: "/assets/diavolo/salto_8.png"
+}
+images {
+  image: "/assets/diavolo/salto_9.png"
+}
+images {
+  image: "/assets/diavolo/salto_10.png"
+}
+images {
+  image: "/assets/diavolo/salto_11.png"
+}
+images {
+  image: "/assets/diavolo/salto_12.png"
+}
+images {
+  image: "/assets/diavolo/salto_13.png"
+}
+images {
+  image: "/assets/diavolo/salto_14.png"
+}
+images {
+  image: "/assets/diavolo/salto_15.png"
+}
+images {
+  image: "/assets/diavolo/salto_16.png"
 }
 images {
   image: "/assets/diavolo/mira_1.png"

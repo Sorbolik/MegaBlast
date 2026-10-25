@@ -67,8 +67,13 @@ local AZIONI = {
 	-- dalla fiammella (fotogramma 6)
 	teletrasporto = { "teletrasporto", 0.4, 6, 12 },
 	rinculo = { "mira", 0.35, 8, 12 },
-	atterraggio = { "salto", 0.12, 5, 5 },
+	-- dopo il salto: dall'atterraggio (12) a in piedi (16)
+	atterraggio = { "salto", 0.3, 12, 16 },
 }
+-- in aria il salto va per velocità: dallo stacco (1) alla caduta (11), a
+-- metà quando è in cima; V_SALTO è la velocità con cui si stacca da terra
+local SALTO_ARIA = 11
+local V_SALTO = math.sqrt(2 * game.GRAVITY * game.base_stats().jump_height)
 local MORTE_FOTO, MORTE_VIA, MORTE_FINE = 1.0, 1.3, 1.7
 
 local V = vmath.vector3(0, 0, 0)
@@ -370,7 +375,8 @@ function M.update(s, dt, st)
 	elseif st.paracadute then
 		mostra(s, "paracadute", 1 + floor(s.t * 5) % #FOTO.paracadute)
 	elseif not ground then
-		mostra(s, "salto", s.vy > 40 and 2 or (s.vy < -40 and 4 or 3))
+		local p = max(0, min(1, (V_SALTO - s.vy) / (2 * V_SALTO)))
+		mostra(s, "salto", 1 + floor(p * (SALTO_ARIA - 1) + 0.5))
 	elseif s.cammina > 0.5 then
 		-- i primi passi camminando, poi di corsa
 		local nome = s.in_moto > CORSA_DOPO and "corsa" or "camminata"

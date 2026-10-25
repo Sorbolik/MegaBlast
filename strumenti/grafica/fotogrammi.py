@@ -31,7 +31,7 @@ S = 200 / (941 - 240)
 # figura (testa più visiera); nei fotogrammi con le braccia alzate la misura le
 # comprende, quindi il valore è quello delle pose senza braccia vicino alla testa
 AZIONI = {
-    "riposo": (3, 133), "camminata": (3, 131, 4), "corsa": (4, 300), "corsa_armata": (5, 258, 14), "salto": (2, 213, 14), "mira": (3, 145),
+    "riposo": (3, 133), "camminata": (3, 131, 4), "corsa": (5, 258, 14), "corsa_armata": (5, 258, 14), "salto": (4, 194, 14), "mira": (3, 145),
     "fendente": (1, 222), "lancio": (3, 129), "colpito": (1, 246), "sconfitta": (1, 176),
     "teletrasporto": (3, 133), "vittoria": (3, 138), "paracadute": (1, 230),
 }
