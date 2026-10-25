@@ -156,11 +156,16 @@ local function arma(p, name, color)
 	p.armi[name] = g
 end
 
+-- un braccio sul suo perno (la spalla), girato in modo che il pugno stia
+-- sull'asse x del perno, a PRESA: anche un braccio disegnato piegato
+local BX = (D.braccio.x * math.cos(D.braccio.angolo) + D.braccio.y * math.sin(D.braccio.angolo)) * K
+local BY = (D.braccio.y * math.cos(D.braccio.angolo) - D.braccio.x * math.sin(D.braccio.angolo)) * K
 local function braccio(parent, nome)
 	local b = D.braccio
 	local n = immagine(parent, nome)
-	pos(n, b.x * K, b.y * K)
+	pos(n, BX, BY)
 	size(n, b.w * K, b.h * K)
+	rot(n, -b.angolo)
 	return n
 end
 
@@ -334,7 +339,7 @@ function M.update(p, dt, st)
 	-- il rinculo porta indietro arma e braccio lungo l'arma
 	local r = p.rinculo * p.h * 0.15
 	pos(p.armi[p.arma_scelta], PRESA - r, 0)
-	pos(p.braccio, D.braccio.x * K - r, D.braccio.y * K)
+	pos(p.braccio, BX - r, BY)
 
 	-- braccio dietro: solo con le armi a due mani, dalla sua spalla alla seconda presa
 	local due = w.presa2 ~= nil and not p.morte

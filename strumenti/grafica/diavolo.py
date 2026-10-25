@@ -176,10 +176,13 @@ def main():
     scuro = br.copy()
     scuro[..., :3] *= SCURO
     salva(scuro, "braccio_dietro")
+    # la presa dalla spalla: distanza e angolo (y in su); il gioco gira il
+    # braccio di -angolo, così il pugno sta sull'asse dell'arma anche se è piegato
     S = BRACCIO_SCALA
     px, py = BRACCIO_SPALLA[0] * S, BRACCIO_SPALLA[1] * S
+    gx, gy = BRACCIO_PRESA[0] * S, BRACCIO_PRESA[1] * S
     righe.append(f"\tbraccio = {{ w = {n(w)}, h = {n(h)}, x = {n(cx - px)}, y = {n(py - cy)}, "
-                 f"presa = {n((BRACCIO_PRESA[0] - BRACCIO_SPALLA[0]) * S)} }},")
+                 f"presa = {n(np.hypot(gx - px, gy - py))}, angolo = {np.arctan2(py - gy, gx - px):.4f} }},")
 
     immagini = ["braccio", "braccio_dietro"]
     righe.append("\tanimazioni = {")
