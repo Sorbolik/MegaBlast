@@ -395,7 +395,7 @@ function M.update(s, dt, st)
 	elseif st.festa then
 		mostra(s, "vittoria", 1 + floor(s.t * 6) % #FOTO.vittoria)
 	else
-		mostra(s, "riposo", 1 + floor(s.t * 3) % #FOTO.riposo)
+		mostra(s, "riposo", 1 + floor(s.t * 8) % #FOTO.riposo)
 	end
 	gui.set_visible(s.braccio_img, braccio)
 	gui.set_enabled(s.armi[s.arma_scelta], braccio)
