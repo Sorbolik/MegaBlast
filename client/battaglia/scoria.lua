@@ -11,8 +11,8 @@
 -- stato: x, y, facing, grounded, moving, aim (se mira), paracadute, festa (podio)
 --
 -- I fotogrammi (strumenti/grafica/fotogrammi.py) sono uno per posa: riposo,
--- camminata, corsa, salto, mira, fendente, lancio, colpito, sconfitta, teletrasporto,
--- paracadute e vittoria. Nelle pose con l'arma il braccio davanti non è
+-- camminata, corsa, corsa armata, salto, mira, fendente, lancio, colpito,
+-- sconfitta, teletrasporto, paracadute e vittoria. Nelle pose con l'arma il braccio davanti non è
 -- disegnato: lo aggiunge il codice (strumenti/grafica/diavolo.py) e gira attorno
 -- alla spalla con la mira, insieme all'arma. Il colore della squadra è l'alone
 -- attorno alla fiammella.
@@ -377,6 +377,9 @@ function M.update(s, dt, st)
 		braccio = true
 		if s.arma_scelta == "sword" then
 			mostra(s, "fendente", fendente(s.mira))
+		elseif s.cammina > 0.5 then
+			-- corre mirando: le gambe corrono, il braccio con l'arma segue il dito
+			mostra(s, "corsa_armata", 1 + floor(s.passo * #FOTO.corsa_armata) % #FOTO.corsa_armata)
 		else
 			-- mirando respira tra le due pose ferme
 			mostra(s, "mira", sin(s.t * 3) > 0.6 and 2 or 1)

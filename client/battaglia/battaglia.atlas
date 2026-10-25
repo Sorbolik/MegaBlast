@@ -89,6 +89,42 @@ images {
   image: "/assets/diavolo/corsa_6.png"
 }
 images {
+  image: "/assets/diavolo/corsa_armata_1.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_2.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_3.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_4.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_5.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_6.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_7.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_8.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_9.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_10.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_11.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_12.png"
+}
+images {
   image: "/assets/diavolo/salto_1.png"
 }
 images {
