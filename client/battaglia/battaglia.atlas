@@ -197,6 +197,21 @@ images {
   image: "/assets/diavolo/corsa_armata_12.png"
 }
 images {
+  image: "/assets/diavolo/corsa_armata_13.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_14.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_15.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_16.png"
+}
+images {
+  image: "/assets/diavolo/corsa_armata_17.png"
+}
+images {
   image: "/assets/diavolo/salto_1.png"
 }
 images {
