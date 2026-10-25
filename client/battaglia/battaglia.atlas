@@ -1,4 +1,7 @@
 images {
+  image: "/assets/personaggi/diavoletto.png"
+}
+images {
   image: "/assets/personaggi/brace.png"
 }
 images {

@@ -1,7 +1,8 @@
 -- Generato da strumenti/grafica/personaggi.py: non modificare a mano.
 -- Misura e centro (unità, dall'appoggio, y in su) dei personaggi interi.
 return {
-	brace = { img = "brace", w = 147, h = 241, x = -11.4, y = 118.4, fx = 68.4, fy = 210.6 },
-	ombra = { img = "ombra", w = 165, h = 251, x = -16.2, y = 123.7, fx = 52.6, fy = 220.8 },
-	zolfo = { img = "zolfo", w = 142, h = 253, x = -9.4, y = 124.6, fx = 89.8, fy = 222.7 },
+	diavoletto = { img = "diavoletto", w = 155.1, h = 255.8, x = -13.2, y = 127.9, fx = 21.9, fy = 217.6 },
+	brace = { img = "brace", w = 153.7, h = 254.8, x = -16.0, y = 127.4, fx = 15.4, fy = 221.2 },
+	ombra = { img = "ombra", w = 166.5, h = 246.9, x = -18.3, y = 123.4, fx = 29.6, fy = 215.3 },
+	zolfo = { img = "zolfo", w = 151.7, h = 260.0, x = -12.0, y = 130.0, fx = 24.8, fy = 232.5 },
 }

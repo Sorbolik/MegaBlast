@@ -81,8 +81,9 @@ local SALTO_ARIA = 11
 local V_SALTO = math.sqrt(2 * game.GRAVITY * game.base_stats().jump_height)
 local MORTE_FOTO, MORTE_VIA, MORTE_FINE = 1.0, 1.3, 1.7
 
--- chi è il giocatore i (1 il diavoletto a fotogrammi)
-local CHI = { nil, PERSONAGGI.brace, PERSONAGGI.ombra, PERSONAGGI.zolfo }
+-- chi è il giocatore i: i quattro diavoletti in pixel, che copiano i movimenti
+-- dei fotogrammi del diavoletto dipinto
+local CHI = { PERSONAGGI.diavoletto, PERSONAGGI.brace, PERSONAGGI.ombra, PERSONAGGI.zolfo }
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(0, 0, 0, 1)
@@ -188,7 +189,7 @@ local function arma(s, name, color)
 	s.armi[name] = g
 end
 
--- i: il numero del giocatore, sceglie il personaggio (senza: il diavoletto)
+-- i: il numero del giocatore, sceglie il personaggio (senza: il diavoletto dipinto)
 function M.new(color, i)
 	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
 	local s = { color = color, h = H, w = Wd, k = H / 200, armi = {}, tinte = {},
