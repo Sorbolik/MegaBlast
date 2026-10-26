@@ -673,7 +673,6 @@ local function handle_event(self, e)
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
 		scoria.fire(self.robots[e.robot].rig, kind)
 	elseif e.type == "teleport" then
-		scoria.teleport(self.robots[e.robot].rig)
 		if self.mode == "online" then
 			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
 			self.snap[e.robot] = true

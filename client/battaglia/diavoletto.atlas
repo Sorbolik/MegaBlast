@@ -251,33 +251,6 @@ images {
   image: "/assets/diavoletto/coda_16.png"
 }
 images {
-  image: "/assets/diavoletto/teletrasporto_1.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_2.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_3.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_4.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_5.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_6.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_7.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_8.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_9.png"
-}
-images {
   image: "/assets/diavoletto/sconfitta_1.png"
 }
 images {
@@ -576,42 +549,6 @@ images {
 }
 images {
   image: "/assets/diavoletto/vittoria_36.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_1.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_2.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_3.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_4.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_5.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_6.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_7.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_8.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_9.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_10.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_11.png"
-}
-images {
-  image: "/assets/diavoletto/paracadute_12.png"
 }
 images {
   image: "/assets/diavoletto/mira_aria_1.png"

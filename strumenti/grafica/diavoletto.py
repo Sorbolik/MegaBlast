@@ -42,9 +42,7 @@ ALTEZZA = 150
 # Le animazioni: base, fotogrammi da usare (da 0, come nei nomi di Ludo), ogni
 # quanti prenderne uno, fotogrammi al secondo di Ludo e se si ripete. "giro"
 # cerca da solo il pezzo che si ripete meglio (la corsa). "foglio" prende i
-# fotogrammi dal foglio di un'altra animazione; "effetti" tiene anche i pezzi
-# piccoli staccati (nel teletrasporto il diavoletto è più piccolo della
-# scintilla). Un foglio che non c'è si salta: il gioco usa l'attesa. Nei salti Ludo alza il corpo nel fotogramma
+# fotogrammi dal foglio di un'altra animazione. Un foglio che non c'è si salta: il gioco usa l'attesa. Nei salti Ludo alza il corpo nel fotogramma
 # anche se gli si chiede di no: "ferma_spalla" (tutti i fotogrammi) e
 # "ferma_cima" (quelli da..a, in aria, solo in altezza) tengono la spalla o la
 # cima della testa dove stanno nel primo, così in aria il corpo non sale sopra
@@ -57,14 +55,12 @@ AZIONI = {
     "naso": dict(base="A", da=2, a=33, passo=2, giro=False),
     "sbadiglio": dict(base="A", da=6, a=33, passo=2, giro=False),
     "coda": dict(base="A", da=3, a=33, passo=2, giro=False),
-    "teletrasporto": dict(base="A", da=18, a=35, passo=2, giro=False, effetti=True),
     "sconfitta": dict(base="A", da=4, a=28, passo=2, giro=False),
     "corsa": dict(base="A", cerca=(5, 30, 8, 18), giro=True),
     "corsa_mira": dict(base="B", cerca=(5, 30, 8, 18), giro=True),
     "salto": dict(base="A", da=10, a=27, passo=1, giro=False, ferma_cima=(11, 19)),
     "colpito": dict(base="A", da=10, a=24, passo=2, giro=False),
     "vittoria": dict(base="A", da=0, a=35, passo=1, giro=True),
-    "paracadute": dict(base="A", cerca=(6, 30, 10, 20), giro=True),
     "mira_aria": dict(base="B", da=7, a=21, passo=1, giro=False, ferma_spalla=True),
     "fiammella": dict(base=None, da=0, a=35, passo=2, giro=True),
 }
@@ -241,7 +237,7 @@ def main():
         fogli = sorted(glob.glob(os.path.join(SORGENTE, "fogli", cfg.get("foglio", nome), "*.png")))
         if not fogli:
             continue
-        fot = [apri(f, cfg["base"] is not None and not cfg.get("effetti")) for f in fogli]
+        fot = [apri(f, cfg["base"] is not None) for f in fogli]
         # il disegno che tocca il bordo del fotogramma è tagliato (di solito la coda)
         tagliati = [i for i, f in enumerate(fot)
                     if max(f[:, :2, 3].max(), f[:, -2:, 3].max(), f[:2, :, 3].max(), f[-2:, :, 3].max()) > 0.15]
@@ -276,9 +272,6 @@ def main():
         fx, fy = piedi(fot[0][..., 3])
         _, cf, _ = cima(fot[0])
         k = (oy - cb) / (fy - cf)      # dal foglio alla base
-        # la cima della testa del primo fotogramma, per quelli senza pelle
-        px, py, _ = cima(fot[0])
-        px, py = gioco(ox + (px - fx) * k, oy + (py - fy) * k, ox, oy)
         for j, i in enumerate(scelti, 1):
             f = fot[i]
             nm = f"{nome}_{j}"
@@ -297,10 +290,8 @@ def main():
             x, y = b(cx, cy)
             riga = f"\t\t\t{{ img = \"{nm}\", x = {n(x)}, y = {n(y)}, w = {w}, h = {h}"
             if cfg["base"] == "A":
-                if pelle(f):
-                    px, py, _ = cima(f)
-                    px, py = b(px, py)
-                # senza pelle (il teletrasporto quando è un puntino) resta la cima di prima
+                px, py, _ = cima(f)
+                px, py = b(px, py)
                 riga += f", tx = {n(px)}, ty = {n(py)}"
             else:
                 px, py, _ = cima(f, 0.08)

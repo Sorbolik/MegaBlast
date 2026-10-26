@@ -136,9 +136,8 @@ for _ = 1, 30 do scoria.update(s, 1 / 120, st) end
 check(tutto_finito(), "salto e atterraggio (anche a 120 Hz): valori finiti")
 
 scoria.hit(s)
-scoria.teleport(s)
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
-check(tutto_finito(), "colpo e teletrasporto: valori finiti")
+check(tutto_finito(), "colpo: valori finiti")
 
 -- l'attesa: fermo, e prima o poi una scenetta a caso che finisce
 st.turno = false
@@ -151,13 +150,6 @@ end
 check(next(scenette) ~= nil, "attesa: in 30 secondi almeno una scenetta")
 check(tutto_finito(), "attesa e scenette: valori finiti")
 st.turno = true
-
--- teletrasporto durante il fendente: vince la mira, la spada continua
-scoria.teleport(s)
-st.aim = 0.3
-scoria.update(s, 1 / 60, st)
-check(s.img:match("^mira") ~= nil and s.tele == nil, "teletrasporto mirando: si vede la mira, non la ricomparsa")
-st.aim = nil
 
 scoria.hit(s, 30)
 scoria.hit(s, -30)
