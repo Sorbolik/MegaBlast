@@ -1,64 +1,49 @@
-# Cassa delle armi (Reliquiario): disegnata da codice finché non c'è un'immagine
-# fatta con la bibbia. Pietra nera da Scoria, bordi e angoli d'ottone, una runa
-# sul davanti che brilla (cassa_luce.png, bianca: il gioco la tinge di brace).
-# Uso: python3 strumenti/grafica/cassa.py  ->  client/assets/casse/
+# Cassa delle armi: il baule aperto con i denti disegnato da Gabriella (ChatGPT,
+# già scontornato). Toglie il bordo chiaro da adesivo attorno al disegno (il
+# contorno scuro resta) e lo riduce a ALTO pixel, quanto serve sullo schermo.
+#   client/assets/casse/cassa.png        il baule
+#   client/assets/casse/cassa_luce.png   serratura e punte dei denti, bianche:
+#                                        il gioco le tinge di brace e le fa pulsare
+# Uso: python3 strumenti/grafica/cassa.py [baule_aperto.png]
+import sys
+from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
-from pathlib import Path
 
-S = 4                      # si disegna 4 volte più grande e poi si riduce
-W, H = 64, 56
-out = Path(__file__).resolve().parents[2] / "client/assets/casse"
-out.mkdir(parents=True, exist_ok=True)
+SORGENTE = sys.argv[1] if len(sys.argv) > 1 else "/mnt/project-files/gabriella/disegni/2026-10-24_chatgpt/scontornati/baule_aperto.png"
+OUT = Path(__file__).resolve().parents[2] / "client/assets/casse"
+# in gioco è alta 22,4 unità: alla camera vicina (2,2) su un telefono sono ~80
+# pixel veri, 96 lascia margine senza pesare
+ALTO = 96
 
-base = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
-d = ImageDraw.Draw(base)
-def r(x0, y0, x1, y1, fill, rad=0):
-    d.rounded_rectangle([x0 * S, y0 * S, x1 * S, y1 * S], rad * S, fill=fill)
+a = np.asarray(Image.open(SORGENTE).convert("RGBA")).astype(float)
+rgb, al = a[..., :3], a[..., 3]
+# bordo da adesivo: pixel chiari (o i resti rosa dello sfondo) collegati al
+# trasparente di fuori; il contorno scuro del disegno li ferma
+chiaro = (rgb.min(axis=2) > 60) | ((rgb[..., 0] > 200) & (rgb[..., 2] > 200))
+fuori = (al < 128) | chiaro
+m = Image.fromarray(np.pad(fuori, 1, constant_values=True).astype("uint8") * 255).copy()
+ImageDraw.floodfill(m, (0, 0), 128)
+al[np.asarray(m)[1:-1, 1:-1] == 128] = 0
+# un pixel di sfumatura sul contorno, così riducendo non resta un alone chiaro
+dentro = np.asarray(Image.fromarray((al > 0).astype("uint8") * 255).filter(ImageFilter.MinFilter(3))) > 0
+al = np.where(dentro, al, np.minimum(al, 128))
+a[..., 3] = al
+im = Image.fromarray(a.astype("uint8"))
+im = im.crop(im.getchannel("A").getbbox())
+im = im.convert("RGBa").resize((round(im.width * ALTO / im.height), ALTO), Image.LANCZOS).convert("RGBA")
+# il colore sotto i pixel trasparenti è quello del contorno: la GPU filtrando
+# non tira dentro il rosa dello sfondo
+p = np.asarray(im).copy()
+p[p[..., 3] == 0, :3] = (40, 12, 8)
+im = Image.fromarray(p)
+im.save(OUT / "cassa.png", optimize=True)
 
-PIETRA, PIETRA2 = (30, 27, 33, 255), (44, 39, 47, 255)
-OTTONE, OTTONE_SCURO, OTTONE_LUCE = (176, 130, 62, 255), (110, 76, 34, 255), (226, 186, 112, 255)
-# corpo e coperchio
-r(4, 18, 60, 54, OTTONE_SCURO, 4)
-r(6, 20, 58, 52, PIETRA, 3)
-r(2, 8, 62, 22, OTTONE_SCURO, 4)
-r(4, 10, 60, 20, PIETRA2, 3)
-# venature della pietra
-rng = np.random.default_rng(3)
-for _ in range(14):
-    x, y = rng.uniform(8, 56), rng.uniform(22, 50)
-    d.line([x * S, y * S, (x + rng.uniform(-5, 5)) * S, (y + rng.uniform(2, 6)) * S], fill=(18, 16, 20, 255), width=S)
-# fasce e angoli d'ottone
-for x in (10, 50):
-    r(x, 8, x + 4, 54, OTTONE)
-    r(x + 1, 8, x + 2, 54, OTTONE_LUCE)
-r(2, 20, 62, 23, OTTONE)
-for x0, y0 in ((2, 8), (54, 8), (4, 46), (52, 46)):
-    r(x0, y0, x0 + 8, y0 + 8, OTTONE, 2)
-    r(x0 + 2, y0 + 2, x0 + 4, y0 + 4, OTTONE_LUCE, 1)
-# serratura
-r(27, 17, 37, 27, OTTONE, 2)
-r(30, 20, 34, 25, (20, 16, 18, 255), 1)
-
-# runa: un rombo con una croce, la luce sta in un livello a parte
-luce = Image.new("L", (W * S, H * S), 0)
-dl = ImageDraw.Draw(luce)
-cx, cy = 32 * S, 40 * S
-rombo = [(cx, cy - 9 * S), (cx + 8 * S, cy), (cx, cy + 9 * S), (cx - 8 * S, cy)]
-dl.polygon(rombo, outline=255, width=2 * S)
-dl.line([cx, cy - 5 * S, cx, cy + 5 * S], fill=255, width=2 * S)
-dl.line([cx - 4 * S, cy, cx + 4 * S, cy], fill=255, width=2 * S)
-dl.line([28 * S, 22 * S, 36 * S, 22 * S], fill=200, width=S)   # fessura del coperchio
-d.polygon(rombo, outline=(60, 40, 30, 255), width=2 * S)       # incisione sotto la luce
-alone = luce.filter(ImageFilter.GaussianBlur(3 * S))
-luce = Image.fromarray(np.clip(np.asarray(luce, float) + np.asarray(alone, float) * 1.4, 0, 255).astype(np.uint8))
-# l'alone resta dentro la cassa
-luce = Image.fromarray((np.asarray(luce, float) * (np.asarray(base.split()[3], float) / 255)).astype(np.uint8))
-
-base = base.resize((W, H), Image.LANCZOS)
-luce = luce.resize((W, H), Image.LANCZOS)
-bianco = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+# serratura e punte dei denti: il giallo, allargato e sfumato come un alone
+p = np.asarray(im).astype(float)
+oro = ((p[..., 0] > 200) & (p[..., 1] > 140) & (p[..., 2] < 90) & (p[..., 3] > 128)).astype("uint8") * 255
+luce = Image.fromarray(oro).filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.GaussianBlur(1.5))
+bianco = Image.new("RGBA", im.size, (255, 255, 255, 0))
 bianco.putalpha(luce)
-base.save(out / "cassa.png")
-bianco.save(out / "cassa_luce.png")
-print("scritte", out / "cassa.png", out / "cassa_luce.png")
+bianco.save(OUT / "cassa_luce.png", optimize=True)
+print("scritte", OUT / "cassa.png", OUT / "cassa_luce.png", im.size)

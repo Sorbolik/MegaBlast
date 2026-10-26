@@ -1,0 +1,15 @@
+# La cassa (il baule di Gabriella): mentre cade col paracadute e a terra,
+# con la camera su tutta la mappa e poi vicina.
+imposta prova_casse 1
+imposta zoom 3
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+mira 100 80 0.3                     # Rosso spara: tocca a Blu e cade una cassa
+aspetta_evento crate 15
+aspetta 2
+foto 01_cassa_che_cade
+aspetta 7
+foto 02_cassa_a_terra

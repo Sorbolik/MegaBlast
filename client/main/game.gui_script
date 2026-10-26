@@ -1590,7 +1590,7 @@ local function render(self, dt)
 
 	oggetti.update(self.oggetti, g, self.view, self.clock)
 
-	-- casse: cadono dondolando, la runa pulsa
+	-- casse: cadono dondolando, serratura e denti pulsano
 	for _, n in ipairs(self.crate_nodes) do
 		if n.id and not pb.c[n.id] then
 			n.id = nil
@@ -1609,7 +1609,7 @@ local function render(self, dt)
 		end
 		if n then
 			local ca = pa.c[id] or cb
-			set_pos(n.node, ca.x + (cb.x - ca.x) * k, ca.y + (cb.y - ca.y) * k + game.CRATE_H / 2)
+			set_pos(n.node, ca.x + (cb.x - ca.x) * k, ca.y + (cb.y - ca.y) * k + n.dy)
 			EULER.z = cb.landed and 0 or math.sin(self.clock * 3 + id) * 10
 			gui.set_euler(n.node, EULER)
 			gui.set_enabled(n.chute, not cb.landed)
@@ -1839,22 +1839,26 @@ function init(self)
 	-- trappole, trampolini, cerchi di cura, scudi e paracadute (battaglia/oggetti.lua)
 	self.oggetti = oggetti.new(TEAM_COLORS)
 
-	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono
+	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono:
+	-- il baule di Gabriella (strumenti/grafica/cassa.py, 83 x 96 pixel), alto
+	-- quanto la cassa di prima e largo quanto il disegno
+	local cassa = vmath.vector3(22.4 * 83 / 96, 22.4, 0)
 	self.crate_nodes = {}
 	for i = 1, game.CRATE_MAX do
-		local n = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.4, 56 * 0.4, 0)))
+		local n = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), cassa))
 		gui.set_texture(n, "battaglia")
 		gui.play_flipbook(n, "cassa")
 		local chute = glow(0, 20, 40, vmath.vector4(1, 0.8, 0.5, 0.45))
 		gui.set_parent(chute, n)
-		local light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(64 * 0.4, 56 * 0.4, 0))
+		local light = gui.new_box_node(vmath.vector3(0, 0, 0), cassa)
 		gui.set_texture(light, "battaglia")
 		gui.play_flipbook(light, "cassa_luce")
 		gui.set_blend_mode(light, gui.BLEND_ADD)
 		gui.set_parent(light, n)
 		gui.set_enabled(n, false)
 		gui.set_scale(n, VK)
-		self.crate_nodes[i] = { node = n, chute = chute, light = light, light_col = vmath.vector4(BRACE) }
+		-- dy: dal centro ai piedi, che poggiano a terra
+		self.crate_nodes[i] = { node = n, dy = cassa.y * K / 2, chute = chute, light = light, light_col = vmath.vector4(BRACE) }
 	end
 
 	-- onda d'urto del Pugno
