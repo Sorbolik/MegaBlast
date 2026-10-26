@@ -44,7 +44,7 @@ func TestSimPicksMapFromSeed(t *testing.T) {
 }
 
 func TestSimFromEmbeddedLua(t *testing.T) {
-	sim := newTestSim(t, 42, "isole")
+	sim := newTestSim(t, 42, "crogiolo")
 	for i := 0; i < 120; i++ {
 		if err := sim.Step(Input{}); err != nil {
 			t.Fatal(err)

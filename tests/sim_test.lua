@@ -11,8 +11,7 @@ local terrain = require "sim.terrain"
 -- Quasi tutti i test sono scritti per i valori "megablast"; quelli del profilo
 -- "blastron" (il predefinito) sono in fondo.
 game.use_physics("megablast")
--- Le prove si fanno sulla forgia: sulle isole, con le mappe 1,5 volte più grandi
--- (game.CELL 3), il robot piccolo di questo profilo parte in una conca.
+-- Le prove si fanno sulla forgia (alcune sul crogiolo).
 
 local failures = 0
 local function check(cond, msg)
@@ -1276,7 +1275,7 @@ check(bounced, "il globo rimbalza sul robot")
 -- I globi si urtano anche tra loro
 local bg = game.new(42, "forgia")
 run(bg, 120)
-local by = 500 -- cielo libero sulla mappa isole
+local by = 500 -- cielo libero sulla forgia
 bg.orbs = {
 	{ id = 1, x = 600, y = by, vx = 200, vy = 0, owner = 1, timer = 100, age = 100 },
 	{ id = 2, x = 680, y = by, vx = -200, vy = 0, owner = 1, timer = 100, age = 100 },
@@ -1371,7 +1370,7 @@ check(ph2 == nil, "il pugno non colpisce chi è dietro")
 
 -- Una cassa cade dopo ogni 3 turni, sempre nello stesso punto con lo stesso seed
 local function crate_turns(seed)
-	local q = game.new(seed, "isole")
+	local q = game.new(seed, "crogiolo")
 	local spawned = {}
 	for _ = 1, 12000 do
 		q:step()
@@ -1423,7 +1422,7 @@ check(seen.grenade and seen.shards and seen.punch, "nelle casse si trovano tutte
 
 -- Determinismo con le armi nuove: stesso seed e stessi input, stesso risultato
 local function play2(seed)
-	local p = game.new(seed, "isole", { ammo = { grenade = 9, shards = 9, punch = 9 }, crate_every = 1 })
+	local p = game.new(seed, "crogiolo", { ammo = { grenade = 9, shards = 9, punch = 9 }, crate_every = 1 })
 	local ws = { "grenade", "shards", "punch", "missile" }
 	local k = 0
 	for i = 1, 4000 do
@@ -1595,7 +1594,7 @@ check(game.aim_power(0.2) == 0.1 and game.aim_power(1) == 1 and math.abs(game.ai
 
 -- Casse a probabilità: ne cadono, e sempre negli stessi punti con lo stesso seed
 local function crates_seen(seed)
-	local q = game.new(seed, "isole")
+	local q = game.new(seed, "crogiolo")
 	local seen = {}
 	for i = 1, 12 * (game.TURN_TICKS + 200) do
 		q:step()

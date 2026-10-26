@@ -3,7 +3,6 @@
 import numpy as np
 from PIL import Image
 MAPPE = [
-    ('cimitero', 'grafica/mappe/mappa_isole_cimitero/maschera.png'),
     ('forgia', 'grafica/mappe/mappa_forgia/maschera.png'),
     ('crogiolo', 'grafica/mappe/mappa_crogiolo/maschera.png'),
 ]

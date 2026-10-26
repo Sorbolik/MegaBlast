@@ -45,15 +45,6 @@ add("crogiolo", "Il Crogiolo", {
 	end,
 })
 
--- Isole del cimitero: la prima mappa di prova, rimasta solo per i test della
--- simulazione (tests/sim_test.lua). Non ha disegni e non esce nelle partite.
-add("isole", "Isole del cimitero", {
-	spawns = { { x = 630, from = 390 }, { x = 1290, from = 390 }, { x = 240, from = 1080 }, { x = 1680, from = 1080 } },
-	build = function(t)
-		t:load(mapdata.cimitero)
-	end,
-})
-
 -- Casuale: colline generate dal seed, con un tubo di fondazione.
 add("casuale", "Colline casuali", {
 	seeded = true, -- il terreno cambia con il seed
