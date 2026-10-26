@@ -1270,7 +1270,7 @@ do
 
 	-- chi si butta giù nel proprio turno: l'uccisione va a chi gli ha fatto più
 	-- danno in questa vita (senza bonus ambientale) e lui perde di più
-	local gs = game.new(3, "isole", { players = config.MODES.ffa })
+	local gs = game.new(3, "forgia", { players = config.MODES.ffa })
 	run(gs, 60)
 	local s1, s2, s3 = gs.robots[1], gs.robots[2], gs.robots[3]
 	gs:hurt(s1, 30, s2)
@@ -1289,13 +1289,13 @@ do
 	check(not s1.dead and gs.current == 1 and gs.phase == "aim" and next(s1.life_damage) == nil,
 		"poi ricomincia nel suo turno, e il danno della vita prima non conta più")
 	-- nel proprio turno, colpito da poco da un avversario: vale la regola normale
-	local gr = game.new(3, "isole")
+	local gr = game.new(3, "forgia")
 	run(gr, 60)
 	gr:hurt(gr.robots[1], 5, gr.robots[2])
 	gr:kill(gr.robots[1], "fell")
 	check(gr.robots[2].env_kills == 1 and gr.robots[1].points == config.SCORE.death, "colpito da poco: uccisione ambientale normale")
 	-- nel proprio turno senza danni da nessuno: niente punti agli altri, ma la penalità sì
-	local gn = game.new(3, "isole")
+	local gn = game.new(3, "forgia")
 	run(gn, 60)
 	gn:kill(gn.robots[1], "fell")
 	check(gn.robots[2].kills == 0 and gn.robots[1].points == config.SCORE.death + config.SCORE.self_death,
