@@ -140,6 +140,18 @@ scoria.teleport(s)
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "colpo e teletrasporto: valori finiti")
 
+-- l'attesa: fermo, e prima o poi una scenetta a caso che finisce
+st.turno = false
+local scenette = {}
+for _ = 1, 60 * 30 do
+	scoria.update(s, 1 / 60, st)
+	local nome = s.img:match("^(%a+)_")
+	if nome ~= "attesa" then scenette[nome] = true end
+end
+check(next(scenette) ~= nil, "attesa: in 30 secondi almeno una scenetta")
+check(tutto_finito(), "attesa e scenette: valori finiti")
+st.turno = true
+
 scoria.hit(s, 30)
 scoria.hit(s, -30)
 for _ = 1, 10 do scoria.update(s, 1 / 60, st) end
@@ -150,7 +162,7 @@ scoria.set_weapon(s, "sword")
 check(not s.armi.sword.enabled, "morte: l'arma sparisce, anche cambiandola")
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito() and s.root.enabled, "morte: il corpo cade e c'è ancora")
-for _ = 1, 120 do scoria.update(s, 1 / 60, st) end
+for _ = 1, 200 do scoria.update(s, 1 / 60, st) end
 check(not s.root.enabled, "morte: poi il corpo sparisce")
 scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")

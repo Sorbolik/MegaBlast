@@ -11,12 +11,14 @@
 -- stato: x, y, facing, grounded, moving, aim (nil se non mira), turno (è di turno),
 -- paracadute (appeso al paracadute aperto), vittoria (festeggia sul podio)
 --
--- Un'animazione per stato, scelta in ordine: sconfitta, mira (mirando o colpendo,
--- vince su tutto il resto: in aria con le gambe raccolte, correndo con la corsa
--- in mira), colpito, paracadute (appeso, aperto), aria (salto, con il fotogramma
+-- Un'animazione per stato, scelta in ordine: sconfitta (gira la testa, cade e si
+-- addormenta, poi svanisce), teletrasporto (ricompare dalla scintilla), mira
+-- (mirando o colpendo vince sul resto: in aria con le gambe raccolte, correndo
+-- con la corsa in mira), colpito, paracadute (appeso, aperto), aria (salto, con il fotogramma
 -- scelto dalla velocità in su o in giù), atterraggio, corsa (con la strada fatta;
 -- chi è di turno corre con l'arma in mano), vittoria (il primo sul podio), mira
--- (chi è di turno, fermo) e attesa (gli altri).
+-- (chi è di turno, fermo) e attesa (gli altri: fermo, con ogni tanto una
+-- scenetta a caso).
 -- Nella mira il foglio non ha testa né braccia: il gioco ci mette la testa, che
 -- guarda dove si mira, e pugni e arma, che girano attorno alla spalla. Nelle
 -- altre animazioni il diavoletto ha le sue braccia e l'arma non si vede.
@@ -57,11 +59,15 @@ local PASSO = 1.1
 -- ultimi ARRIVO l'atterraggio
 local ARIA, ARRIVO = 10, 8
 -- quanto durano le azioni a tempo (secondi)
-local DURATA = { colpito = 0.6, atterra = 0.3, teletrasporto = 0.25 }
+local DURATA = { colpito = 0.6, atterra = 0.3, teletrasporto = 0.6 }
 -- la testa guarda dove si mira, fino a questo angolo (radianti) in su e in giù
 local TESTA_SU, TESTA_GIU = 0.45, 0.3
--- da sconfitto cade all'indietro e svanisce in questo tempo
-local MORTE = 0.9
+-- da sconfitto, finita l'animazione (si addormenta), svanisce in questo tempo
+local SVANISCE = 0.6
+-- nell'attesa, ogni tanto una scenetta a caso: fra una e l'altra da DA a DA + A
+-- secondi (math.random: solo grafica, la simulazione ha il suo generatore)
+local SCENETTE = { "naso", "sbadiglio", "coda" }
+local PAUSA_DA, PAUSA_A = 3, 6
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(0, 0, 0, 1)
@@ -239,12 +245,11 @@ function M.reset(s)
 	s.passo, s.vy, s.last_x, s.last_y, s.ground = 0, 0, nil, nil, true
 	s.flash, s.spinta, s.rinculo, s.fuoco_k = 0, 0, 0, 1
 	s.morte, s.morto, s.tele = nil, nil, nil
+	s.scenetta, s.pausa = nil, PAUSA_DA + PAUSA_A * math.random()
 	s.img, s.fuoco_img, s.mira = nil, nil, nil
 	s.alpha.w = 1
 	gui.set_color(s.root, s.alpha)
 	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], true) end
-	rot(s.corpo, 0)
-	scale(s.corpo, 1, 1)
 	lampo(s, 0)
 	s.face = 1
 end
@@ -284,6 +289,24 @@ local function mostra(s, nome, i)
 	return f
 end
 
+-- L'attesa: fermo, e ogni tanto una scenetta a caso
+local function attesa(s, dt)
+	if s.scenetta then
+		local an = A[s.scenetta]
+		local i = 1 + floor(s.scenetta_t * an.fps)
+		s.scenetta_t = s.scenetta_t + dt
+		if i <= #an then return mostra(s, s.scenetta, i) end
+		s.scenetta, s.pausa = nil, PAUSA_DA + PAUSA_A * math.random()
+	end
+	s.pausa = s.pausa - dt
+	if s.pausa <= 0 then
+		local nome = SCENETTE[math.random(#SCENETTE)]
+		if A[nome] then s.scenetta, s.scenetta_t = nome, 0 end
+		s.pausa = PAUSA_DA + PAUSA_A * math.random()
+	end
+	return mostra(s, "attesa", 1)
+end
+
 function M.update(s, dt, st)
 	if s.morto then return end
 	dt = min(dt, 1 / 20)
@@ -311,17 +334,21 @@ function M.update(s, dt, st)
 	local f
 	if s.morte then
 		s.morte = s.morte + dt
-		local u = s.morte / MORTE
-		f = mostra(s, "colpito", 5)
-		-- cade all'indietro e svanisce
-		rot(s.corpo, min(1.2, u * 2.2))
-		s.alpha.w = max(0, 1 - max(0, u - 0.4) / 0.6)
+		local an = A.sconfitta
+		f = mostra(s, "sconfitta", a_tempo(an, s.morte))
+		-- finita l'animazione svanisce
+		s.alpha.w = max(0, 1 - max(0, s.morte - #an / an.fps) / SVANISCE)
 		gui.set_color(s.root, s.alpha)
 		if s.alpha.w == 0 then
 			s.morto = true
 			gui.set_enabled(s.root, false)
 			return
 		end
+	elseif s.tele then
+		-- arrivo col teletrasporto: ricompare dalla scintilla
+		s.tele = s.tele + dt
+		f = mostra(s, "teletrasporto", a_parte(1, #A.teletrasporto, s.tele / DURATA.teletrasporto))
+		if s.tele >= DURATA.teletrasporto then s.tele = nil end
 	elseif st.aim and not ground and A.mira_aria then
 		-- mirando (o colpendo) vince la mira, anche in aria (col suo foglio di
 		-- gambe raccolte), correndo o colpiti
@@ -348,7 +375,7 @@ function M.update(s, dt, st)
 	elseif st.turno then
 		f = mostra(s, "mira", a_tempo(A.mira, s.t))
 	else
-		f = mostra(s, "attesa", a_tempo(A.attesa, s.t))
+		f = attesa(s, dt)
 	end
 	if s.azione then s.azione_t = s.azione_t + dt end
 
@@ -388,10 +415,12 @@ function M.update(s, dt, st)
 	local goal = st.turno and FUOCO_TURNO or FUOCO_ATTESA
 	s.fuoco_k = s.fuoco_k + (goal - s.fuoco_k) * min(1, dt * 8)
 	pos(s.fuoco, (fx + ff.x) * K, (fy + FUOCO_SU) * K)
-	scale(s.fuoco, s.fuoco_k, s.fuoco_k)
+	-- nel teletrasporto la fiammella cresce col diavoletto
+	local q = s.tele and min(1, s.tele / DURATA.teletrasporto) or 1
+	scale(s.fuoco, s.fuoco_k * q, s.fuoco_k * q)
 	rot(s.fuoco, ta * 0.5)
 	local l = st.turno and 1 or LUCE_ATTESA
-	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, s.morte and max(0, 1 - s.morte * 4) or 1
+	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, s.morte and max(0, 1 - s.morte * 4) or q
 	gui.set_color(s.fuoco, C)
 
 	-- lampo rosso del colpo
@@ -403,13 +432,6 @@ function M.update(s, dt, st)
 	s.spinta = s.spinta * max(0, 1 - dt * 10)
 	s.rinculo = s.rinculo * max(0, 1 - dt * 14)
 	if not s.morte then pos(s.corpo, -s.spinta * s.w, 0) end
-	-- dopo il teletrasporto ricompare crescendo
-	if s.tele then
-		s.tele = s.tele + dt
-		local q = min(1, s.tele / DURATA.teletrasporto)
-		scale(s.corpo, 0.4 + 0.6 * q, 0.4 + 0.6 * q)
-		if q == 1 then s.tele = nil end
-	end
 end
 
 function M.set_weapon(s, name)
@@ -439,19 +461,17 @@ function M.lunge(s)
 	s.spinta = -0.5
 end
 
--- Arrivo col teletrasporto: ricompare crescendo
+-- Arrivo col teletrasporto: ricompare dalla scintilla
 function M.teleport(s)
 	s.tele = 0
-	scale(s.corpo, 0.4, 0.4)
 end
 
--- Sconfitta: l'arma cade, il corpo cade all'indietro e svanisce
+-- Sconfitta: l'arma cade, gira la testa, cade e si addormenta, poi svanisce
 function M.die(s)
 	if s.morte then return end
 	s.morte = 0
 	s.flash = 0
 	lampo(s, 0)
-	scale(s.corpo, 1, 1)
 	s.tele = nil
 	-- la prossima mostra() spegne testa e arma: la sconfitta non è la mira
 	s.mira = nil

@@ -59,55 +59,208 @@ images {
   image: "/assets/diavoletto/attesa_1.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_2.png"
+  image: "/assets/diavoletto/naso_1.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_3.png"
+  image: "/assets/diavoletto/naso_2.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_4.png"
+  image: "/assets/diavoletto/naso_3.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_5.png"
+  image: "/assets/diavoletto/naso_4.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_6.png"
+  image: "/assets/diavoletto/naso_5.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_7.png"
+  image: "/assets/diavoletto/naso_6.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_8.png"
+  image: "/assets/diavoletto/naso_7.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_9.png"
+  image: "/assets/diavoletto/naso_8.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_10.png"
+  image: "/assets/diavoletto/naso_9.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_11.png"
+  image: "/assets/diavoletto/naso_10.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_12.png"
+  image: "/assets/diavoletto/naso_11.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_13.png"
+  image: "/assets/diavoletto/naso_12.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_14.png"
+  image: "/assets/diavoletto/naso_13.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_15.png"
+  image: "/assets/diavoletto/naso_14.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_16.png"
+  image: "/assets/diavoletto/naso_15.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_17.png"
+  image: "/assets/diavoletto/naso_16.png"
 }
 images {
-  image: "/assets/diavoletto/attesa_18.png"
+  image: "/assets/diavoletto/sbadiglio_1.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_2.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_3.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_4.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_5.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_6.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_7.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_8.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_9.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_10.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_11.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_12.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_13.png"
+}
+images {
+  image: "/assets/diavoletto/sbadiglio_14.png"
+}
+images {
+  image: "/assets/diavoletto/coda_1.png"
+}
+images {
+  image: "/assets/diavoletto/coda_2.png"
+}
+images {
+  image: "/assets/diavoletto/coda_3.png"
+}
+images {
+  image: "/assets/diavoletto/coda_4.png"
+}
+images {
+  image: "/assets/diavoletto/coda_5.png"
+}
+images {
+  image: "/assets/diavoletto/coda_6.png"
+}
+images {
+  image: "/assets/diavoletto/coda_7.png"
+}
+images {
+  image: "/assets/diavoletto/coda_8.png"
+}
+images {
+  image: "/assets/diavoletto/coda_9.png"
+}
+images {
+  image: "/assets/diavoletto/coda_10.png"
+}
+images {
+  image: "/assets/diavoletto/coda_11.png"
+}
+images {
+  image: "/assets/diavoletto/coda_12.png"
+}
+images {
+  image: "/assets/diavoletto/coda_13.png"
+}
+images {
+  image: "/assets/diavoletto/coda_14.png"
+}
+images {
+  image: "/assets/diavoletto/coda_15.png"
+}
+images {
+  image: "/assets/diavoletto/coda_16.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_1.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_2.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_3.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_4.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_5.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_6.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_7.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_8.png"
+}
+images {
+  image: "/assets/diavoletto/teletrasporto_9.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_1.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_2.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_3.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_4.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_5.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_6.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_7.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_8.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_9.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_10.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_11.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_12.png"
+}
+images {
+  image: "/assets/diavoletto/sconfitta_13.png"
 }
 images {
   image: "/assets/diavoletto/corsa_1.png"
