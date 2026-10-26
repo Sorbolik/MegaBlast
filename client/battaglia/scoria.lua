@@ -48,6 +48,8 @@ local BIANCO = vmath.vector4(1, 1, 1, 1)
 -- quanto è bianco il lampo del colpo al massimo (1 tutto bianco)
 local LAMPO = 0.85
 
+-- le tre forme della fiammella, alternate a scatti
+local FIAMME = { P.fiammella_1, P.fiammella_2, P.fiammella_3 }
 -- la fiammella: quanto è grande su chi è di turno e sugli altri, con la luce
 local FUOCO_TURNO, FUOCO_ATTESA, LUCE_ATTESA = 1.25, 0.8, 0.6
 -- altezza del diavoletto in cima alla fiammella, per mettere sopra vita e freccia
@@ -380,9 +382,9 @@ local function fiammella(s, dt, turno)
 	s.fuoco_t = s.fuoco_t + dt
 	if s.fuoco_t > 0.09 then
 		s.fuoco_t = 0
-		local n = s.fuoco_n % 3 + 1
+		local n = s.fuoco_n % #FIAMME + 1
 		s.fuoco_n = n
-		local p = P["fiammella_" .. n]
+		local p = FIAMME[n]
 		gui.play_flipbook(s.fuoco, p.img)
 		gui.play_flipbook(s.fuoco_tinta, p.tinta)
 	end
