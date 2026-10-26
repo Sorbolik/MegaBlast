@@ -26,5 +26,9 @@ background_color {
   w: 0.0
 }
 material: "/builtins/materials/gui.material"
+materials {
+  name: "lampo"
+  material: "/battaglia/lampo.material"
+}
 adjust_reference: ADJUST_REFERENCE_PARENT
 max_nodes: 2048

@@ -41,7 +41,8 @@ local DEG = 180 / pi
 local INCHIOSTRO = vmath.vector4(0.078, 0.071, 0.094, 1)
 local OMBRA = vmath.vector4(0, 0, 0, 0.35)
 local BIANCO = vmath.vector4(1, 1, 1, 1)
-local LAMPO = vmath.vector4(1, 0.35, 0.35, 1)
+-- quanto è bianco il lampo del colpo al massimo (1 tutto bianco)
+local LAMPO = 0.85
 local PELLE = vmath.vector4(0.76, 0.72, 0.64, 1)
 local FERRO = vmath.vector4(0.3, 0.29, 0.34, 1)
 local LAMA = vmath.vector4(0.86, 0.88, 0.95, 1)
@@ -208,8 +209,10 @@ function M.new(color)
 	-- testa della mira sul suo collo, pugni e arma sulla spalla, la fiammella
 	s.corpo = vuoto(s.root, 0, 0)
 	s.figura = immagine(s.corpo, A.attesa[1].img)
+	gui.set_material(s.figura, "lampo")
 	s.collo = vuoto(s.corpo, 0, 0)
 	s.testa = immagine(s.collo, T.img)
+	gui.set_material(s.testa, "lampo")
 	size(s.testa, T.w * K, T.h * K)
 	pos(s.testa, T.x * K, T.y * K)
 	s.spalla = vuoto(s.corpo, 0, 0)
@@ -232,9 +235,10 @@ function M.set_color(s, color)
 	for _, n in ipairs(s.tinte) do gui.set_color(n, C) end
 end
 
--- il lampo del colpo: corpo e testa tinti di rosso, a scendere
+-- il lampo del colpo: corpo e testa bianchi, a scendere. Lo fa il materiale
+-- lampo (battaglia/lampo.fp): il verde del colore dice quanto è bianco
 local function lampo(s, q)
-	C.x, C.y, C.z, C.w = 1, 1 + (LAMPO.y - 1) * q, 1 + (LAMPO.z - 1) * q, 1
+	C.x, C.y, C.z, C.w = 1, 1 - LAMPO * q, 1, 1
 	gui.set_color(s.figura, C)
 	gui.set_color(s.testa, C)
 end
@@ -423,7 +427,7 @@ function M.update(s, dt, st)
 	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, s.morte and max(0, 1 - s.morte * 4) or q
 	gui.set_color(s.fuoco, C)
 
-	-- lampo rosso del colpo
+	-- lampo bianco del colpo
 	if s.flash > 0 then
 		s.flash = max(0, s.flash - dt * 6)
 		lampo(s, min(1, s.flash * 1.5))
@@ -442,7 +446,7 @@ function M.set_weapon(s, name)
 	gui.set_enabled(s.armi[name], not s.morte)
 end
 
--- Colpo subito: lampo rosso, i fotogrammi del colpo e una spinta nella direzione
+-- Colpo subito: lampo bianco, i fotogrammi del colpo e una spinta nella direzione
 -- del colpo (dx: verso dove spinge, nel mondo; senza, da davanti)
 function M.hit(s, dx)
 	local d = (dx and dx ~= 0) and (dx > 0 and 1 or -1) * s.face or -1
