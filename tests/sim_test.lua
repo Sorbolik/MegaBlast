@@ -1268,6 +1268,39 @@ do
 	gf:kill(gf.robots[2], "fell")
 	check(gf.robots[1].kills == 0, "una caduta molto dopo il colpo non conta come uccisione")
 
+	-- chi si butta giù nel proprio turno: l'uccisione va a chi gli ha fatto più
+	-- danno in questa vita (senza bonus ambientale) e lui perde di più
+	local gs = game.new(3, "forgia", { players = config.MODES.ffa })
+	run(gs, 60)
+	local s1, s2, s3 = gs.robots[1], gs.robots[2], gs.robots[3]
+	gs:hurt(s1, 30, s2)
+	gs:hurt(s1, 10, s3)
+	gs.tick = gs.tick + config.KILL_CREDIT_SECONDS * 60 + 1
+	gs:pop_events()
+	s1.x, s1.y = -40, 300
+	gs:step()
+	local sd
+	for _, e in ipairs(gs:pop_events()) do if e.type == "death" then sd = e end end
+	check(s1.dead and sd and sd.own and sd.by == 2 and not sd.env, "chi si butta giù regala l'uccisione a chi gli ha fatto più danno")
+	check(s2.kills == 1 and s2.env_kills == 0 and s2.points == 30 + config.SCORE.kill and s3.points == 10,
+		"che prende i punti di un'uccisione (" .. s2.points .. ")")
+	check(s1.points == config.SCORE.death + config.SCORE.self_death, "e chi si butta giù perde di più (" .. s1.points .. ")")
+	run(gs, game.RESPAWN_TICKS + 5)
+	check(not s1.dead and gs.current == 1 and gs.phase == "aim" and next(s1.life_damage) == nil,
+		"poi ricomincia nel suo turno, e il danno della vita prima non conta più")
+	-- nel proprio turno, colpito da poco da un avversario: vale la regola normale
+	local gr = game.new(3, "forgia")
+	run(gr, 60)
+	gr:hurt(gr.robots[1], 5, gr.robots[2])
+	gr:kill(gr.robots[1], "fell")
+	check(gr.robots[2].env_kills == 1 and gr.robots[1].points == config.SCORE.death, "colpito da poco: uccisione ambientale normale")
+	-- nel proprio turno senza danni da nessuno: niente punti agli altri, ma la penalità sì
+	local gn = game.new(3, "forgia")
+	run(gn, 60)
+	gn:kill(gn.robots[1], "fell")
+	check(gn.robots[2].kills == 0 and gn.robots[1].points == config.SCORE.death + config.SCORE.self_death,
+		"morto da solo senza danni: solo la penalità")
+
 	-- colpire chi è primo vale di più
 	local gl = game.new(3, "forgia", { players = config.MODES.ffa })
 	gl.robots[3].points = 100

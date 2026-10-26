@@ -759,7 +759,13 @@ local function handle_event(self, e)
 		-- crolla e svanisce da solo; dopo 1,5 s ricompare altrove, nello stesso turno
 		scoria.die(self.robots[e.robot].rig)
 		targa.set_enabled(self.robots[e.robot].targa, false)
-		if e.by then
+		if e.own then
+			-- morto da solo nel proprio turno: l'uccisione va a chi gli ha fatto più danno
+			local chi = (self.mode == "online" and e.robot == self.me) and "Muori da solo" or self.names[e.robot] .. " muore da solo"
+			local pena = gconfig.SCORE.death + gconfig.SCORE.self_death
+			show_message(self, e.by and string.format("%s! %d, +%d a %s", chi, pena, e.points, who_name(self, e.by))
+				or string.format("%s! %d", chi, pena))
+		elseif e.by then
 			local verbo = e.env and " butta giù " or " elimina "
 			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
 		end

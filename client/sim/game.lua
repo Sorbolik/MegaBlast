@@ -348,6 +348,7 @@ function M.new(seed, map_id, opts)
 			shield = nil,     -- danni che lo scudo può ancora assorbire
 			parachute = false, -- aperto
 			status = {},      -- effetti di stato: tipo -> { turns = turni rimasti, by = chi l'ha dato }
+			life_damage = {}, -- danno preso da ogni avversario in questa vita: id -> punti di vita
 			turns = 0,     -- turni giocati
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
@@ -534,6 +535,7 @@ function M:hurt(rb, amount, by, reason)
 	if by and by ~= rb then
 		if enemies(by, rb) then
 			by.damage = by.damage + real
+			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
 			self:add_points(by, real * C.SCORE.damage * mult)
 		end
 	end
@@ -586,13 +588,26 @@ function M:kill(rb, reason)
 	if rb.last_hit and self.tick - rb.last_hit_tick <= C.KILL_CREDIT_SECONDS * 60 then
 		killer = self.robots[rb.last_hit]
 	end
-	local env = reason ~= "damage"
+	-- morto nel proprio turno senza un colpo recente di un avversario: l'uccisione
+	-- va a chi gli ha fatto più danno in questa vita (a pari danno a chi l'ha
+	-- colpito per ultimo), e lui perde di più
+	local own = rb.id == self.current and self.phase ~= "over" and not (killer and enemies(killer, rb))
+	if own then
+		killer = nil
+		local best = 0
+		for _, o in ipairs(self.robots) do
+			local dmg = rb.life_damage[o.id] or 0
+			if dmg > best or (dmg > 0 and dmg == best and o.id == rb.last_hit) then killer, best = o, dmg end
+		end
+	end
+	-- chi si butta giù da solo non regala il bonus ambientale
+	local env = reason ~= "damage" and not own
 	local mult = rb == self:leader() and C.SCORE.leader or 1
 	rb.dead = true
 	rb.hp = 0
 	rb.deaths = rb.deaths + 1
 	if reason == "fell" then rb.falls = rb.falls + 1 end
-	self:add_points(rb, C.SCORE.death)
+	self:add_points(rb, C.SCORE.death + (own and C.SCORE.self_death or 0))
 	local points = 0
 	if killer and enemies(killer, rb) then
 		killer.kills = killer.kills + 1
@@ -605,7 +620,7 @@ function M:kill(rb, reason)
 	end
 	rb.last_hit = nil
 	rb.respawn_in = M.RESPAWN_TICKS
-	self:emit({ type = "death", robot = rb.id, reason = reason, by = killer and killer.id, env = env, points = points })
+	self:emit({ type = "death", robot = rb.id, reason = reason, by = killer and killer.id, env = env, points = points, own = own })
 end
 
 -- Alla morte si ricomincia con la vita piena in un punto libero a caso della
@@ -619,7 +634,7 @@ function M:respawn(rb)
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
 	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet, rb.mallet_stop = nil, nil, nil, nil, nil
 	rb.hp, rb.dead, rb.shield, rb.status, rb.respawn_in = rb.max_hp, false, nil, {}, nil
-	rb.parachute = false
+	rb.parachute, rb.life_damage = false, {}
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
 end
 
