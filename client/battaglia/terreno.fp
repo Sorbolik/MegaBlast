@@ -31,6 +31,7 @@ const mediump vec3 BRACE = vec3(1.0, 0.478, 0.102);
 const mediump vec3 BRACE_CHIARA = vec3(1.0, 0.769, 0.42);
 const mediump vec3 ROCCIA = vec3(0.23, 0.21, 0.26);
 
+// lo sfondo è misurato su una mappa di 1280 x 720 (var_zoom è già riportato lì)
 const highp vec2 MONDO = vec2(1280.0, 720.0);
 const highp vec2 CENTRO = vec2(640.0, 360.0);
 const mediump vec3 CIELO_ALTO = vec3(0.03, 0.035, 0.07);

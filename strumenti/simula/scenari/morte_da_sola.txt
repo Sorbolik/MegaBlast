@@ -1,0 +1,17 @@
+# Morire da soli nel proprio turno: con poca vita il Rosso si spara ai piedi.
+# Nessuno gli aveva fatto danno, quindi niente punti agli altri ma -50 per lui
+# (scritta "... muore da solo! -50"); poi ricompare e il turno continua.
+
+imposta prova_vita 5
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 0 -30 0.3
+aspetta_evento explosion 3
+aspetta 0.3
+foto 01_morto_da_solo               # scritta e -50 nel punteggio
+aspetta_evento respawn 3
+aspetta 0.5
+foto 02_ricompare                   # stesso turno, vita piena
+aspetta_stato turno=1 fase=aim 2

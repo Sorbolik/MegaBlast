@@ -116,10 +116,15 @@ type Sim struct {
 	g lua.LValue
 }
 
-// NewSim crea la partita. players è la lista di opts.players (squadre e armi
-// scelte, da N.draft_finish), LNil per un 1 contro 1; normalize è il Torneo.
+// NewSim crea la partita; mapID "" la fa scegliere al seed (maps.pick). players
+// è la lista di opts.players (squadre e armi scelte, da N.draft_finish), LNil
+// per un 1 contro 1; normalize è il Torneo.
 func (e *Engine) NewSim(seed int64, mapID string, players lua.LValue, normalize bool) (*Sim, error) {
-	g, err := e.call("new", lua.LNumber(seed), lua.LString(mapID), players, lua.LBool(normalize))
+	m := lua.LValue(lua.LNil)
+	if mapID != "" {
+		m = lua.LString(mapID)
+	}
+	g, err := e.call("new", lua.LNumber(seed), m, players, lua.LBool(normalize))
 	if err != nil {
 		return nil, err
 	}
@@ -133,6 +138,11 @@ type Input struct {
 	Fire              bool
 	Angle, Power      float64
 	Weapon            string // "missile", "sword", "teleport", le secondarie ("eagle", "mallet", "lunge"), quelle delle casse o un oggetto
+}
+
+// Map è la mappa della partita.
+func (s *Sim) Map() string {
+	return s.g.(*lua.LTable).RawGetString("map").String()
 }
 
 func (s *Sim) Step(in Input) error {

@@ -1,0 +1,20 @@
+# Affondo: scatto nella direzione della mira (prova_secondaria lunge, tasto 3).
+# Sale i gradini piccoli e scivola lungo il terreno invece di fermarsi; colpisce
+# chi tocca col corpo o con la lancia (lunga config.LUNGE.reach).
+imposta prova_secondaria lunge
+imposta zoom 1
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+premi 3                             # Affondo
+aspetta 0.4
+zoom 01_lancia_in_mano
+foto 02_prima
+mira -150 0 0.1                     # verso la scala a sinistra
+aspetta_evento lunge 2
+aspetta 0.15
+foto 03_scatto
+aspetta 0.5
+foto 04_dopo

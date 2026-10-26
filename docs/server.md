@@ -57,7 +57,7 @@ ogni cambio tutti ricevono il `draft` aggiornato. Allo scadere di
 `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma libera di ogni
 ventaglio e parte la partita (`start`, con `players`). Nello stato ogni robot
 porta la sua secondaria in `sw` (e `lu`, `ml`: tick di Affondo e Maglio in
-corso; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
+corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
 `hx`, `hy`). Il client online per ora non ha la schermata
 della scelta: aspetta e riceve le armi date dal server.
 

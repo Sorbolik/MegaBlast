@@ -1,0 +1,129 @@
+images {
+  image: "/assets/armi/missile.png"
+}
+images {
+  image: "/assets/armi/missile_tinta.png"
+}
+images {
+  image: "/assets/armi/missile_icona.png"
+}
+images {
+  image: "/assets/armi/sniper.png"
+}
+images {
+  image: "/assets/armi/sniper_tinta.png"
+}
+images {
+  image: "/assets/armi/sniper_icona.png"
+}
+images {
+  image: "/assets/armi/grenade.png"
+}
+images {
+  image: "/assets/armi/grenade_tinta.png"
+}
+images {
+  image: "/assets/armi/grenade_icona.png"
+}
+images {
+  image: "/assets/armi/shards.png"
+}
+images {
+  image: "/assets/armi/shards_tinta.png"
+}
+images {
+  image: "/assets/armi/shards_icona.png"
+}
+images {
+  image: "/assets/armi/punch.png"
+}
+images {
+  image: "/assets/armi/punch_tinta.png"
+}
+images {
+  image: "/assets/armi/punch_icona.png"
+}
+images {
+  image: "/assets/armi/sword.png"
+}
+images {
+  image: "/assets/armi/sword_tinta.png"
+}
+images {
+  image: "/assets/armi/sword_icona.png"
+}
+images {
+  image: "/assets/armi/teleport.png"
+}
+images {
+  image: "/assets/armi/teleport_tinta.png"
+}
+images {
+  image: "/assets/armi/eagle.png"
+}
+images {
+  image: "/assets/armi/eagle_tinta.png"
+}
+images {
+  image: "/assets/armi/eagle_icona.png"
+}
+images {
+  image: "/assets/armi/hook.png"
+}
+images {
+  image: "/assets/armi/hook_tinta.png"
+}
+images {
+  image: "/assets/armi/hook_icona.png"
+}
+images {
+  image: "/assets/armi/mallet.png"
+}
+images {
+  image: "/assets/armi/mallet_tinta.png"
+}
+images {
+  image: "/assets/armi/mallet_icona.png"
+}
+images {
+  image: "/assets/armi/lunge.png"
+}
+images {
+  image: "/assets/armi/lunge_tinta.png"
+}
+images {
+  image: "/assets/armi/lunge_icona.png"
+}
+images {
+  image: "/assets/armi/razzo.png"
+}
+images {
+  image: "/assets/armi/razzo_tinta.png"
+}
+images {
+  image: "/assets/armi/palla.png"
+}
+images {
+  image: "/assets/armi/palla_tinta.png"
+}
+images {
+  image: "/assets/armi/uovo.png"
+}
+images {
+  image: "/assets/armi/uovo_tinta.png"
+}
+images {
+  image: "/assets/armi/scheggia.png"
+}
+images {
+  image: "/assets/armi/scheggia_tinta.png"
+}
+images {
+  image: "/assets/armi/globo.png"
+}
+images {
+  image: "/assets/armi/globo_tinta.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

@@ -5,8 +5,8 @@
 
 go.property("forgia_terreno", resource.texture("/assets/mappe/forgia/terreno.png"))
 go.property("forgia_interno", resource.texture("/assets/mappe/forgia/interno_mezzo.png"))
-go.property("isole_terreno", resource.texture("/assets/mappe/isole_cimitero/terreno.png"))
-go.property("isole_interno", resource.texture("/assets/mappe/isole_cimitero/interno_mezzo.png"))
+go.property("crogiolo_terreno", resource.texture("/assets/mappe/crogiolo/terreno.png"))
+go.property("crogiolo_interno", resource.texture("/assets/mappe/crogiolo/interno_mezzo.png"))
 
 local MSG_MASCHERA = hash("maschera")
 

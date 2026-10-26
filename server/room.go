@@ -80,7 +80,7 @@ type Room struct {
 	srv   *Server
 	mode  Mode
 	seed  int64
-	mapID string
+	mapID string // la sceglie la simulazione dal seed (maps.pick) quando parte
 	seats []*seat
 	in    chan roomMsg
 	eng   *Engine
@@ -95,7 +95,7 @@ type Room struct {
 
 // newRoom prepara la partita fuori dai worker e apre la scelta delle armi.
 func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, error) {
-	r := &Room{srv: srv, mode: mode, seed: seed, mapID: defaultMap, in: make(chan roomMsg, 64*len(players))}
+	r := &Room{srv: srv, mode: mode, seed: seed, in: make(chan roomMsg, 64*len(players))}
 	eng, err := newEngine()
 	if err != nil {
 		return nil, err
@@ -193,9 +193,10 @@ func (r *Room) startMatch() error {
 		return err
 	}
 	r.draft = nil
-	if r.sim, err = r.eng.NewSim(r.seed, r.mapID, players, r.mode.Normalize); err != nil {
+	if r.sim, err = r.eng.NewSim(r.seed, "", players, r.mode.Normalize); err != nil {
 		return err
 	}
+	r.mapID = r.sim.Map()
 	for i := range r.seats {
 		r.sendStart(i, false)
 	}
