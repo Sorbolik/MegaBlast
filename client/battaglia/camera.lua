@@ -1,11 +1,11 @@
 -- Camera della battaglia: guarda un punto del mondo con uno zoom, e lo insegue
 -- con una molla esponenziale (uguale a 60, 90 o 120 Hz). Non esce mai dalla
--- mappa: con lo zoom 1 si vede tutta.
+-- mappa: con lo zoom schermo / mappa (M.tutta) si vede tutta.
 --
 -- Lua puro: game.gui_script la applica al nodo "mondo" della GUI e alla vista
 -- del render (terreno). Da schermo a mondo: x = (sx - tx) / s.
 --
---   local c = camera.new(1280, 720)
+--   local c = camera.new(1280, 720, 1920, 1080)   -- schermo, mappa
 --   camera.segui(c, dt, x, y, zoom, veloce)   -- a ogni frame
 --   local tx, ty = camera.spostamento(c)      -- schermo = mondo * c.s + t
 --   camera.scuoti(c, dx, dy, forza)           -- un colpo: scossa verso (dx, dy)
@@ -14,7 +14,8 @@
 local M = {}
 
 -- livelli di zoom che si scelgono col pulsante, la rotella o il tasto Z
-M.LIVELLI = { 2.2, 1.5, 1 }
+-- (MAPPA è 1280 / 1920: tutta la mappa sullo schermo)
+M.LIVELLI = { 2.2, 1, 2 / 3 }
 M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
 
 -- quanto in fretta la camera raggiunge il punto (1/s): più alto = più rigida
@@ -22,14 +23,20 @@ local SEGUI, SEGUI_VELOCE, ZOOM = 5, 9, 6
 
 local function limita(c)
 	local hw, hh = c.w / (2 * c.s), c.h / (2 * c.s)
-	c.x = math.min(math.max(c.x, hw), c.w - hw)
-	c.y = math.min(math.max(c.y, hh), c.h - hh)
+	c.x = math.min(math.max(c.x, hw), c.mw - hw)
+	c.y = math.min(math.max(c.y, hh), c.mh - hh)
 end
 
-function M.new(w, h)
-	local c = { w = w, h = h, x = w / 2, y = h / 2, s = 1, livello = 1,
+-- w, h: lo schermo; mw, mh: la mappa
+function M.new(w, h, mw, mh)
+	local c = { w = w, h = h, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1, livello = 1,
 		sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0 }
 	return c
+end
+
+-- lo zoom con cui si vede tutta la mappa
+function M.tutta(c)
+	return math.max(c.w / c.mw, c.h / c.mh)
 end
 
 -- Va subito sul punto, senza inseguirlo (inizio partita, menu)

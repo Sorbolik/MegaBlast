@@ -23,7 +23,7 @@ gui = {
 	set_enabled = function(n, on) n.enabled = on end,
 	set_visible = function(n, on) n.invisibile = not on end, set_color = function() end, set_adjust_mode = function() end,
 	set_inherit_alpha = function() end, set_perimeter_vertices = function() end,
-	set_texture = function() end, play_flipbook = function() end,
+	set_texture = function() end, play_flipbook = function() end, set_material = function() end,
 	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
 	set_text = function(n, text) n.text = text end,
 	set_size = function(n, v) n.size = copia(v) end,
@@ -74,7 +74,7 @@ local function angolo(a) return (a + math.pi) % (2 * math.pi) - math.pi end
 -- Scoria -------------------------------------------------------------------
 
 local s = scoria.new(vec(1, 0.2, 0.3, 1))
-local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0 }
+local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
 for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "a riposo: valori finiti")
 
@@ -127,7 +127,7 @@ for _, name in ipairs({ "missile", "sword", "teleport", "grenade", "shards", "pu
 end
 check(tutto_finito(), "tutte le armi a riposo: valori finiti")
 
--- salto e atterraggio: schiaccia e allunga senza esplodere
+-- salto e atterraggio: i fotogrammi del salto senza esplodere
 st.grounded = false
 for i = 1, 30 do st.y = 50 + i * 3; scoria.update(s, 1 / 60, st) end
 for i = 1, 30 do st.y = 140 - i * 3; scoria.update(s, 1 / 60, st) end
@@ -136,9 +136,20 @@ for _ = 1, 30 do scoria.update(s, 1 / 120, st) end
 check(tutto_finito(), "salto e atterraggio (anche a 120 Hz): valori finiti")
 
 scoria.hit(s)
-scoria.teleport(s)
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
-check(tutto_finito(), "colpo e teletrasporto: valori finiti")
+check(tutto_finito(), "colpo: valori finiti")
+
+-- l'attesa: fermo, e prima o poi una scenetta a caso che finisce
+st.turno = false
+local scenette = {}
+for _ = 1, 60 * 30 do
+	scoria.update(s, 1 / 60, st)
+	local nome = s.img:match("^(%a+)_")
+	if nome ~= "attesa" then scenette[nome] = true end
+end
+check(next(scenette) ~= nil, "attesa: in 30 secondi almeno una scenetta")
+check(tutto_finito(), "attesa e scenette: valori finiti")
+st.turno = true
 
 scoria.hit(s, 30)
 scoria.hit(s, -30)
@@ -149,8 +160,8 @@ scoria.die(s)
 scoria.set_weapon(s, "sword")
 check(not s.armi.sword.enabled, "morte: l'arma sparisce, anche cambiandola")
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
-check(tutto_finito() and s.root.enabled, "morte: la testa vola, il corpo c'è ancora")
-for _ = 1, 120 do scoria.update(s, 1 / 60, st) end
+check(tutto_finito() and s.root.enabled, "morte: il corpo cade e c'è ancora")
+for _ = 1, 200 do scoria.update(s, 1 / 60, st) end
 check(not s.root.enabled, "morte: poi il corpo sparisce")
 scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")
@@ -190,9 +201,10 @@ check(not t.pieno.enabled and tutto_finito(), "targa: a zero la vita sparisce, v
 
 -- Camera -----------------------------------------------------------------------
 
-local c = camera.new(1280, 720)
-camera.salta(c, 100, 100, 1)
-check(c.x == 640 and c.y == 360, "zoom 1: si vede tutta la mappa, la camera non si sposta")
+local c = camera.new(1280, 720, 1920, 1080)
+camera.salta(c, 100, 100, camera.tutta(c))
+check(c.x == 960 and c.y == 540, "zoom mappa: si vede tutta la mappa, la camera non si sposta")
+check(camera.tutta(c) == camera.LIVELLI[#camera.LIVELLI], "l'ultimo livello di zoom mostra tutta la mappa")
 
 camera.salta(c, 640, 360, 2.2)
 local px, py = camera.allo_schermo(c, 700, 400)
@@ -206,7 +218,7 @@ px, py = camera.allo_schermo(c, 0, 0)
 check(math.abs(px) < 1e-9 and math.abs(py) < 1e-9, "nell'angolo la camera non esce dalla mappa")
 
 -- l'inseguimento non dipende dalla frequenza dello schermo
-local a, b = camera.new(1280, 720), camera.new(1280, 720)
+local a, b = camera.new(1280, 720, 1920, 1080), camera.new(1280, 720, 1920, 1080)
 camera.salta(a, 400, 300, 2.2)
 camera.salta(b, 400, 300, 2.2)
 for _ = 1, 30 do camera.segui(a, 1 / 60, 800, 420, 2.2) end
@@ -231,7 +243,7 @@ for _ = 1, 60 do ox = camera.scossa(a, 1 / 60) end
 check(ox == 0, "scossa: dopo un attimo si ferma")
 
 camera.cambia(c, 5)
-check(camera.zoom(c) == 1, "rotella indietro: si ferma su tutta la mappa")
+check(camera.zoom(c) == camera.tutta(c), "rotella indietro: si ferma su tutta la mappa")
 camera.cambia(c, -5)
 check(camera.zoom(c) == camera.LIVELLI[1], "rotella avanti: si ferma sul più vicino")
 camera.prossimo(c); camera.prossimo(c); camera.prossimo(c)
