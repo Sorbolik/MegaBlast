@@ -1,25 +1,4 @@
 images {
-  image: "/assets/armi/uovo_di_fiamma.png"
-}
-images {
-  image: "/assets/armi/uovo_di_fiamma_luce.png"
-}
-images {
-  image: "/assets/armi/lanciarune_icona.png"
-}
-images {
-  image: "/assets/armi/lama_di_nucleo_icona.png"
-}
-images {
-  image: "/assets/armi/pugno_del_titano_icona.png"
-}
-images {
-  image: "/assets/armi/uovo_di_fiamma_icona.png"
-}
-images {
-  image: "/assets/armi/sciame_di_schegge_icona.png"
-}
-images {
   image: "/assets/casse/cassa.png"
 }
 images {

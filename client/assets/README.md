@@ -13,7 +13,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 | Cartella | Cosa c'è |
 |---|---|
-| `armi/` | Le icone delle armi della barra (`_icona`) e l'Uovo di Fiamma in volo (il globo del teletrasporto è disegnato dal codice), con le loro `_luce`. Le armi intere sono in `grafica/armi/` dei file del progetto |
+| `armi/` | Le armi del diavoletto, disegnate a vettori da `strumenti/grafica/armi.py` (stile del diavoletto: contorno nero spesso, colori pieni): ogni arma in mano (`<arma>.png`, punta a destra), la sua icona della barra (`_icona`), i colpi in volo (`razzo`, `palla`, `uovo`, `scheggia`, `globo`) e per tutti le parti col colore della squadra (`_tinta`, bianche e grigie, tinte nel codice in modo normale, non additivo). Lo script scrive anche `client/battaglia/armi.atlas` (compresso) e `armi.lua` con misure e pugni in unità del mondo |
 | `diavoletto/` | Il diavoletto a fotogrammi, dai fogli di Ludo.ai (`<animazione>_<n>.png`) e la testa da sola che gira con la mira (`testa.png`): li fa `strumenti/grafica/diavoletto.py`, che scrive anche `client/battaglia/diavoletto.atlas` e `diavoletto.lua` |
 | `esplosioni/` | `esplosione_base_12x256.png` (flipbook 12 fotogrammi da 256 px), fumo e fuoco additivo come livelli separati |
 | `mappe/isole_cimitero/` | `maschera.png` 640×360 (nero vuoto, bianco terra, rosso indistruttibile; è la stessa di `client/sim/mapdata.lua`), `superficie.png`, `ossa.png`, `interno.png` (parete dei crateri), `colori.txt` (brace dei crateri). Immagini a 1920×1080, allineate alla maschera |

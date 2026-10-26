@@ -26,8 +26,8 @@
 -- gioca è più grande e accesa, sugli altri piccola e più scura.
 
 local game = require "sim.game"
-local config = require "sim.config"
 local D = require "battaglia.diavoletto"
+local DA = require("battaglia.armi").armi
 
 local M = {}
 
@@ -44,8 +44,6 @@ local BIANCO = vmath.vector4(1, 1, 1, 1)
 -- quanto è bianco il lampo del colpo al massimo (1 tutto bianco)
 local LAMPO = 0.85
 local PELLE = vmath.vector4(0.76, 0.72, 0.64, 1)
-local FERRO = vmath.vector4(0.3, 0.29, 0.34, 1)
-local LAMA = vmath.vector4(0.86, 0.88, 0.95, 1)
 
 -- la fiammella: quanto sta sopra la cima della testa (pixel delle immagini) e
 -- quanto è grande su chi è di turno e sugli altri, con la luce
@@ -123,18 +121,11 @@ local function fotogramma(n, f)
 	pos(n, f.x * K, f.y * K)
 end
 
--- Le armi in mano, attorno alla spalla: angolo di riposo (radianti, verso avanti)
+-- Le armi in mano, attorno alla spalla: angolo di riposo (radianti, verso avanti).
+-- Le immagini, i pugni e le misure sono in battaglia/armi.lua (strumenti/grafica/armi.py)
 local ARMI = {
-	missile = { riposo = -0.35, due_mani = true },
-	sword = { riposo = -1.9 },
-	teleport = { riposo = -0.5 },
-	grenade = { riposo = -0.5 },
-	shards = { riposo = -0.3, due_mani = true },
-	punch = { riposo = -0.9 },
-	eagle = { riposo = -0.6 },
-	hook = { riposo = -0.4 },
-	mallet = { riposo = -1.6, due_mani = true },
-	lunge = { riposo = -1.4, due_mani = true },
+	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
+	punch = -0.9, eagle = -0.6, hook = -0.4, mallet = -1.6, lunge = -1.4,
 }
 -- la mano sull'impugnatura, davanti alla spalla lungo l'arma (unità su 200)
 local PRESA = 20
@@ -146,51 +137,25 @@ local function mano(g, k, x, y)
 	cerchio(g, x, y, d, PELLE)
 end
 
--- le armi e le mani sono grandi come il mondo, non come il corpo (game.CORPO)
+-- un'immagine dell'atlante delle armi, misure in unità del mondo
+local function figura_arma(parent, img, x, y, w, h)
+	local n = box(parent, x, y, w, h)
+	gui.set_texture(n, "armi")
+	gui.play_flipbook(n, img)
+	return n
+end
+
+-- le armi e le mani sono grandi come il mondo, non come il corpo (game.CORPO):
+-- l'immagine, sopra le parti col colore della squadra, poi i pugni
 local function arma(s, name, color)
-	local H = s.h / game.CORPO
-	local k = H / 200
+	local k = s.h / game.CORPO / 200
+	local a = DA[name]
 	local g = vuoto(s.spalla, 0, 0)
-	if name == "missile" then
-		-- la bocca è dove la simulazione fa partire il colpo (game.MUZZLE)
-		local L = game.MUZZLE
-		box(g, L / 2, 0, L, H * 0.22, FERRO)
-		s.tinte[#s.tinte + 1] = box(g, L - H * 0.05, 0, H * 0.1, H * 0.26, color)
-	elseif name == "sword" then
-		local L = game.SWORD_REACH
-		box(g, L * 0.55, 0, L * 0.9, max(2, H * 0.1), LAMA)
-		box(g, L * 0.08, 0, H * 0.08, H * 0.3, FERRO)
-	elseif name == "shards" then
-		box(g, H * 0.32, 0, H * 0.7, H * 0.3, FERRO)
-	elseif name == "teleport" then
-		s.tinte[#s.tinte + 1] = cerchio(g, H * 0.45, 0, H * 0.32, color)
-	elseif name == "grenade" then
-		cerchio(g, H * 0.45, 0, H * 0.36, FERRO)
-	elseif name == "eagle" then
-		-- Tonante: canna corta e grossa, il calcio in giù dietro la mano
-		box(g, H * 0.5, H * 0.04, H * 0.6, H * 0.16, FERRO)
-		box(g, H * 0.22, -H * 0.1, H * 0.1, H * 0.22, FERRO)
-	elseif name == "hook" then
-		-- Rampino: una canna sottile con l'uncino aperto in punta
-		box(g, H * 0.45, 0, H * 0.7, max(2, H * 0.08), FERRO)
-		box(g, H * 0.8, H * 0.08, max(2, H * 0.08), H * 0.2, LAMA)
-	elseif name == "mallet" then
-		-- Maglio: manico lungo con la testa pesante in punta
-		local L = H * 1.1
-		box(g, L * 0.5, 0, L, max(2, H * 0.08), FERRO)
-		box(g, L, 0, H * 0.22, H * 0.4, FERRO)
-		box(g, L + H * 0.06, 0, H * 0.06, H * 0.4, LAMA)
-	elseif name == "lunge" then
-		-- Affondo: lancia lunga e sottile, con la punta chiara
-		local L = config.LUNGE.speed * config.LUNGE.ticks / 60 * 0.4
-		box(g, L * 0.5, 0, L, max(2, H * 0.07), FERRO)
-		box(g, L, 0, H * 0.18, max(2, H * 0.12), LAMA)
-	else -- punch
-		cerchio(g, H * 0.45, 0, s.w / game.CORPO * 0.8, FERRO)
+	figura_arma(g, a.img, a.x, a.y, a.w, a.h)
+	if a.tinta then
+		s.tinte[#s.tinte + 1] = setup(figura_arma(g, a.tinta, a.x, a.y, a.w, a.h), nil, color)
 	end
-	-- le mani: la seconda sotto la canna, l'ultima sull'impugnatura (asse dell'arma)
-	if ARMI[name].due_mani then mano(g, k, 58 * k, -14 * k) end
-	mano(g, k, PRESA * k, 0)
+	for _, m in ipairs(a.mani) do mano(g, k, m[1], m[2]) end
 	gui.set_enabled(g, false)
 	s.armi[name] = g
 end
@@ -385,7 +350,7 @@ function M.update(s, dt, st)
 
 	-- l'arma verso la mira, altrimenti a riposo; la testa guarda nella stessa
 	-- direzione, un po' meno
-	local a = ARMI[s.arma_scelta].riposo
+	local a = ARMI[s.arma_scelta]
 	if st.aim then a = face > 0 and st.aim or pi - st.aim end
 	if a > pi then a = a - 2 * pi end
 	local ta = 0

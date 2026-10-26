@@ -87,8 +87,20 @@ local function mano(name)
 	return m
 end
 
+-- dove deve stare la mano sull'impugnatura (battaglia/armi.lua), vista dalla
+-- spalla, mirando ad a girati verso facing
+local DA = require("battaglia.armi").armi
+local function verso_mano(name, a, facing)
+	local m = DA[name].mani[#DA[name].mani]
+	local al = facing > 0 and a or math.pi - a
+	local x = m[1] * math.cos(al) - m[2] * math.sin(al)
+	local y = m[1] * math.sin(al) + m[2] * math.cos(al)
+	return math.atan2(y, x * facing)
+end
+
 -- l'arma gira attorno alla spalla e la mano la segue: dalla spalla, la mano
--- sta nella direzione della mira, girati a destra o a sinistra
+-- sta dov'è l'impugnatura con l'arma nella direzione della mira, girati a
+-- destra o a sinistra
 for _, name in ipairs({ "missile", "sword" }) do
 	scoria.set_weapon(s, name)
 	for _, a in ipairs({ 0.4, -0.8, 2.3, math.pi - 0.2 }) do
@@ -97,7 +109,7 @@ for _, name in ipairs({ "missile", "sword" }) do
 		for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 		local sx, sy = mondo(s.spalla, 0, 0)
 		local mx, my = mondo(mano(name), 0, 0)
-		local d = angolo(math.atan2(my - sy, mx - sx) - a)
+		local d = angolo(math.atan2(my - sy, mx - sx) - verso_mano(name, a, st.facing))
 		check(math.abs(d) < 0.02, string.format("%s mirando a %.1f: la mano è nella direzione della mira (scarto %.3f)", name, a, d))
 	end
 end
@@ -109,19 +121,19 @@ for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 local sx, sy = mondo(s.spalla, 0, 0)
 local mx0, my0 = mondo(mano("missile"), 0, 0)
 scoria.fire(s, "missile")
-local indietro = false
+local indietro, rx, ry = false, nil, nil
 for _ = 1, 4 do
 	scoria.update(s, 1 / 60, st)
 	local mx, my = mondo(mano("missile"), 0, 0)
+	rx, ry = rx or mx, ry or my
 	if (mx - sx) ^ 2 + (my - sy) ^ 2 < (mx0 - sx) ^ 2 + (my0 - sy) ^ 2 - 0.5 then indietro = true end
 end
 check(indietro, "rinculo: la mano torna indietro verso la spalla")
-sx, sy = mondo(s.spalla, 0, 0)
-local mx, my = mondo(mano("missile"), 0, 0)
-check(math.abs(angolo(math.atan2(my - sy, mx - sx) - 0.6)) < 0.02, "rinculo: la mano resta sull'asse dell'arma")
+check(math.abs(angolo(math.atan2(my0 - ry, mx0 - rx) - 0.6)) < 0.02, "rinculo: la mano si sposta lungo l'asse dell'arma")
 
 st.aim = nil
-for _, name in ipairs({ "missile", "sword", "teleport", "grenade", "shards", "punch" }) do
+for name in pairs(DA) do
+	check(s.armi[name] ~= nil, name .. ": c'è il disegno in mano")
 	scoria.set_weapon(s, name)
 	for _ = 1, 10 do scoria.update(s, 1 / 60, st) end
 end
