@@ -10,8 +10,9 @@
 #
 # Scrive in /mnt/project-files/grafica/mappe/mappa_crogiolo/:
 #   maschera.png      640 x 360 celle: bianco terra, rosso acciaio (indistruttibile)
-#   gioco/            terreno.png 1920x1080 (alfa), interno_mezzo.png 960x540,
-#                     maschera.png: da copiare in client/assets/mappe/crogiolo/
+#   gioco/            terreno.png 1920x1080 (alfa) e interno_mezzo.png 960x540,
+#                     da copiare in client/assets/mappe/crogiolo/; poi
+#                     strumenti/grafica/mappa_in_lua.py riscrive sim/mapdata.lua
 #   anteprima.png     il disegno con i diavoletti (39 x 29 px) sui punti di partenza
 # python3 strumenti/grafica/mappa_crogiolo.py
 import os
@@ -171,7 +172,6 @@ if __name__ == '__main__':
     os.makedirs(OUT + 'gioco/', exist_ok=True)
     cells = raster(2).resize((W // 2, H // 2), Image.NEAREST)  # il colore al centro di ogni cella
     cells.save(OUT + 'maschera.png')
-    cells.save(OUT + 'gioco/maschera.png')
     ter = disegna()
     ter.save(OUT + 'gioco/terreno.png', optimize=True)
     cr = tile(carica('4_cratere.png'), S_CRATERE, 960, 540)
