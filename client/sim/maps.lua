@@ -5,7 +5,7 @@
 -- stesso lato. from è l'altezza da cui si cerca il terreno sotto.
 --
 -- Per aggiungere una mappa: scrivi una funzione build(t, seed) qui sotto e
--- aggiungila a M.maps. Coordinate del mondo: 1280 x 720, y verso l'alto.
+-- aggiungila a M.maps. Coordinate del mondo: 1920 x 1080, y verso l'alto.
 
 local terrain = require "sim.terrain"
 local mapdata = require "sim.mapdata"
@@ -28,7 +28,7 @@ end
 -- Forma a poligoni dritti (grafica/strumenti/mappa_forgia.py): quello che si
 -- vede è esattamente quello su cui si cammina. Travi e bordi in acciaio.
 add("forgia", "Forgia dei Titani", {
-	spawns = { { x = 320, from = 400 }, { x = 960, from = 400 }, { x = 120, from = 720 }, { x = 1160, from = 720 } },
+	spawns = { { x = 480, from = 600 }, { x = 1440, from = 600 }, { x = 180, from = 1080 }, { x = 1740, from = 1080 } },
 	build = function(t)
 		t:load(mapdata.forgia)
 	end,
@@ -38,7 +38,7 @@ add("forgia", "Forgia dei Titani", {
 -- La forma viene dalla maschera disegnata (grafica/mappe/mappa_isole_cimitero/):
 -- terra scavabile, ossa e catene indistruttibili. È simmetrica a specchio.
 add("isole", "Isole del cimitero", {
-	spawns = { { x = 420, from = 260 }, { x = 860, from = 260 }, { x = 160, from = 720 }, { x = 1120, from = 720 } },
+	spawns = { { x = 630, from = 390 }, { x = 1290, from = 390 }, { x = 240, from = 1080 }, { x = 1680, from = 1080 } },
 	build = function(t)
 		t:load(mapdata.cimitero)
 	end,
@@ -47,10 +47,10 @@ add("isole", "Isole del cimitero", {
 -- Casuale: colline generate dal seed, con un tubo di fondazione.
 add("casuale", "Colline casuali", {
 	seeded = true, -- il terreno cambia con il seed
-	spawns = { { x = 256, from = 720 }, { x = 1024, from = 720 }, { x = 520, from = 720 }, { x = 760, from = 720 } },
+	spawns = { { x = 384, from = 1080 }, { x = 1536, from = 1080 }, { x = 780, from = 1080 }, { x = 1140, from = 1080 } },
 	build = function(t, seed)
 		t:generate(seed)
-		t:capsule(0, 24, 1280, 24, 12, STEEL)
+		t:capsule(0, 36, 1920, 36, 18, STEEL)
 	end,
 })
 

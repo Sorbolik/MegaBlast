@@ -25,8 +25,9 @@ local oggetti = require "battaglia.oggetti"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
-local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
-local TW, TH = W / CELL, H / CELL
+-- W, H: lo schermo del gioco; la mappa è game.WORLD_W x game.WORLD_H
+local W, H, CELL = 1280, 720, game.CELL
+local TW, TH = game.WORLD_W / CELL, game.WORLD_H / CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
@@ -1733,7 +1734,7 @@ local function render(self, dt)
 	-- torna su chi è di turno. Nel menu si vede tutta la mappa.
 	local c = self.cam
 	if self.mode == "menu" then
-		camera.segui(c, dt, W / 2, H / 2, 1)
+		camera.segui(c, dt, game.WORLD_W / 2, game.WORLD_H / 2, camera.tutta(c))
 	else
 		local fx, fy, veloce = v.x, v.y + game.ROBOT_H / 2, false
 		self.cam_sosta = math.max(0, self.cam_sosta - dt)
@@ -1762,7 +1763,7 @@ function init(self)
 
 	-- tutto quello che sta nel mondo è figlio di questo nodo, che la camera
 	-- sposta e ingrandisce (apply_camera)
-	self.cam = camera.new(W, H)
+	self.cam = camera.new(W, H, game.WORLD_W, game.WORLD_H)
 	self.cam.livello = math.min(#camera.LIVELLI, math.max(1, ZOOM_INIZIO))
 	-- set_view_projection vuole anche id e projection; la proiezione resta quella
 	-- del render (stretch), che questa non cambia

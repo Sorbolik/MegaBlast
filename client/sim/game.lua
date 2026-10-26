@@ -23,10 +23,13 @@ local C = require "sim.config"
 local M = {}
 M.__index = M
 
--- Mondo
-M.WORLD_W = 1280
-M.WORLD_H = 720
-M.CELL = 2
+-- Mondo: 640 x 360 celle (le maschere delle mappe). CELL 3 dal 26 ottobre, era 2:
+-- la mappa era piccola per il diavoletto (ci si attraversava in fretta e nei
+-- buchi in mezzo non passava). 3 e non un valore con la virgola, così le celle
+-- restano intere e la mappa coincide pixel per pixel con le immagini 1920 x 1080.
+M.CELL = 3
+M.WORLD_W = 640 * M.CELL
+M.WORLD_H = 360 * M.CELL
 M.DT = 1 / 60
 M.GRAVITY = 600
 
