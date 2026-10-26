@@ -86,9 +86,10 @@ C.SNIPER = { damage = 25, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp
 -- testa all'inizio della partita. Distanze in pixel, velocità in pixel al secondo.
 -- Tonante (pistola pesante): colpo dritto e istantaneo fino a range, si ferma
 -- al primo robot o terreno. Il rinculo spinge chi spara dalla parte opposta
--- alla mira a recoil; da terra lo solleva anche di lift, così si riposiziona
--- (spara in basso in aria per salire, verso il vuoto per tornare sulla piattaforma).
-C.EAGLE = { damage = 25, range = 300, recoil = 300, lift = 120 }
+-- alla mira, dritto, a recoil per recoil_ticks: la stessa spinta in tutte le
+-- direzioni (Sergio, 26 ottobre 2026), senza gravità né controllo in aria,
+-- e scivola lungo il terreno che incontra. Poi si cade da fermi.
+C.EAGLE = { damage = 25, range = 600, recoil = 300, recoil_ticks = 22 }
 -- Maglio: martello a due mani che gira attorno alla spalla come la Lama, da
 -- from (alto dietro la testa) a to (sotto i piedi) in ticks tick, lungo reach
 -- dalla spalla. Colpisce ogni robot che tocca lungo l'arco; la testa si ferma
@@ -135,8 +136,9 @@ C.SHIELD = { hp = 60, knockback = 0.5 }
 -- Paracadute: nel proprio turno, in aria, un tocco lo apre (se ne hanno
 -- stats.parachutes a partita) e un altro lo chiude. Aperto si scende al
 -- massimo a fall_speed, ci si muove in orizzontale air_mul volte più veloci
--- (anche appena sbalzati) e l'atterraggio non fa danno
-C.PARACHUTE = { fall_speed = 60, air_mul = 1.15 }
+-- (anche appena sbalzati) e l'atterraggio non fa danno. Veloce
+-- perché è una risorsa da una volta a partita (Sergio, 26 ottobre 2026)
+C.PARACHUTE = { fall_speed = 60, air_mul = 1.5 }
 -- Cerchi di cura: all'inizio di un turno ogni every turni ne compare uno in un
 -- punto a caso della superficie (al massimo max insieme). A fine turno, di
 -- chiunque, ogni robot coi piedi dentro (raggio r) riprende hp di vita e, se
