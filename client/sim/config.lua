@@ -113,9 +113,11 @@ C.LUNGE = { damage = 30, speed = 520, ticks = 12, keep = 0.35 }
 -- passa sopra viene lanciato in alto e lontano (per buttarlo fuori dalla mappa).
 C.TRAP = { damage = 8, launch_vy = 220, push_vx = 160 }
 -- Trampolino: si lancia come l'Uovo e resta dove cade (se cade su un robot, ai
--- suoi piedi). Chiunque ci arrivi sopra rimbalza in alto, sempre; restando sopra
--- ogni rimbalzo è più basso (decay) finché sotto min_vy ci si ferma.
-C.TRAMPOLINE = { half_w = 12, launch_vy = 300, decay = 0.6, min_vy = 80 }
+-- suoi piedi). Qualsiasi cosa ci cada sopra rimbalza in alto: robot, colpi,
+-- Uova, globi, casse e oggetti (la tavola è top pixel sopra la base). Restando
+-- sopra ogni rimbalzo è più basso (decay) finché sotto min_vy ci si ferma (i
+-- colpi allora toccano il terreno sotto, e il missile scoppia).
+C.TRAMPOLINE = { half_w = 18, top = 7, launch_vy = 300, decay = 0.6, min_vy = 80 }
 -- Scudo: assorbe hp danni e dimezza le spinte fino all'inizio del proprio turno dopo
 C.SHIELD = { hp = 60, knockback = 0.5 }
 -- Paracadute: nel proprio turno, in aria, un tocco lo apre (se ne hanno

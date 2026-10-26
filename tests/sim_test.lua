@@ -576,6 +576,54 @@ do
 	end
 	check(again == config.TRAMPOLINE.launch_vy, "risalendoci si rimbalza di nuovo alto")
 
+	-- sul trampolino rimbalza tutto: missile, Uovo, schegge, Cecchino, globo, cassa.
+	-- Ogni corpo cade dritto sulla tavola e deve risalire alla velocità del rimbalzo.
+	local top = tramp.y + config.TRAMPOLINE.top
+	b.x = tramp.x + 80
+	run(tb, 30)
+	local function falls_on(body, advance)
+		body.x, body.y, body.vx, body.vy = tramp.x + tramp.r - 1, top + 3, 0, -200
+		for _ = 1, 3 do
+			advance()
+			if body.vy > 0 then return body.vy end
+		end
+	end
+	local bodies = {
+		missile = { kind = "missile", owner = 1, age = 100 },
+		grenade = { kind = "grenade", owner = 1, age = 100, fuse = 600 },
+		sniper = { kind = "sniper", owner = 1, age = 100, bounces = 0 },
+	}
+	for kind, body in pairs(bodies) do
+		tb.projectile = body
+		local vy = falls_on(body, function() tb:update_projectile() end)
+		check(tb.projectile == body and vy == config.TRAMPOLINE.launch_vy, "sul trampolino rimbalza: " .. kind)
+	end
+	tb.projectile = nil
+	local shard = { owner = 1, age = 100 }
+	tb.shards[1] = shard
+	check(falls_on(shard, function() tb:update_shards() end) == config.TRAMPOLINE.launch_vy and tb.shards[1] == shard,
+		"sul trampolino rimbalza: scheggia")
+	tb.shards[1] = nil
+	local orb = { id = 99, owner = 1, age = 100, timer = 600 }
+	check(falls_on(orb, function() tb:update_orb(orb) end) == config.TRAMPOLINE.launch_vy,
+		"sul trampolino rimbalza: globo")
+	local crate = { id = 99, weapon = "grenade", landed = false }
+	check(falls_on(crate, function() tb:fall(crate, game.CRATE_HALF_W, game.CRATE_FALL) end)
+		== config.TRAMPOLINE.launch_vy, "sul trampolino rimbalza: cassa")
+	-- l'Uovo lasciato sopra rimbalza sempre meno e poi si posa
+	local egg = { kind = "grenade", owner = 1, age = 100, fuse = 100000, x = tramp.x, y = top + 20, vx = 0, vy = 0 }
+	tb.projectile = egg
+	tb:pop_events()
+	local egg_bounces = 0
+	for _ = 1, 900 do
+		tb:update_projectile()
+		for _, e in ipairs(tb:pop_events()) do
+			if e.type == "bounce" and not e.robot then egg_bounces = egg_bounces + 1 end
+		end
+	end
+	check(egg_bounces == 3 and egg.vy == 0 and egg.y < top, "l'Uovo rimbalza sempre più basso e si posa (" .. egg_bounces .. ")")
+	tb.projectile = nil
+
 	-- un'esplosione porta via quello che è posato
 	tb:explode(tramp.x, tramp.y + 4)
 	check(#tb.placed == 0, "un'esplosione distrugge il trampolino")
