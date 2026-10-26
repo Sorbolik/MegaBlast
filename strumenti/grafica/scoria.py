@@ -31,7 +31,7 @@ PEZZI = {
     "busto": dict(scala=0.1125, perno=(832, 950), dove=(69, 155.7)),
     # la gamba di ChatGPT è un tubo lungo e stretto: la allarghiamo e la accorciamo come
     # i pantaloni larghi del diavoletto intero
-    "gamba": dict(scala=(0.095, 0.0505), perno=(535, 360), dove=(0, 0)),
+    "gamba": dict(scala=(0.068, 0.0505), perno=(535, 360), dove=(0, 0)),
     "fiammella": dict(scala=0.054, perno=(630, 974), dove=(72, 13)),
 }
 # la linea della coda nel busto sorgente, dalla radice alla punta

@@ -55,7 +55,7 @@ local COLLO = { PEZZI.testa.px, PEZZI.testa.py }
 local BACINO = { PEZZI.busto.px, PEZZI.busto.py }
 local FIAMMA = { PEZZI.fiammella.px, PEZZI.fiammella.py }
 -- prima la gamba di dietro, più scura, poi quella davanti
-local ANCHE = { { 82, 155 }, { 58, 155 } }
+local ANCHE = { { 86, 155 }, { 56, 155 } }
 local DIETRO = vmath.vector4(0.72, 0.68, 0.7, 1)
 local SPALLA = { 62, 114 }
 -- la mano sull'impugnatura, davanti alla spalla lungo l'arma
