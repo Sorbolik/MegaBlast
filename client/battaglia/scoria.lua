@@ -10,7 +10,8 @@
 --   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
 -- stato: x, y, facing, grounded, moving, aim (nil se non mira), turno (è di turno)
 --
--- Un'animazione per stato, scelta in ordine: sconfitta, colpito, aria (salto, con
+-- Un'animazione per stato, scelta in ordine: sconfitta, mira (mirando o colpendo,
+-- vince su tutto il resto), colpito, aria (salto, con
 -- il fotogramma scelto dalla velocità in su o in giù), atterraggio, corsa (con la
 -- strada fatta), mira (chi è di turno, fermo) e attesa (gli altri).
 -- Nella mira il foglio non ha testa né braccia: il gioco ci mette la testa, che
@@ -314,6 +315,9 @@ function M.update(s, dt, st)
 			gui.set_enabled(s.root, false)
 			return
 		end
+	elseif st.aim then
+		-- mirando (o colpendo) vince la mira, anche in aria, correndo o colpiti
+		f = mostra(s, "mira", a_tempo(A.mira, s.t))
 	elseif s.azione == "colpito" and s.azione_t < DURATA.colpito then
 		f = mostra(s, "colpito", a_parte(1, #A.colpito, s.azione_t / DURATA.colpito))
 	elseif not ground then
