@@ -59,7 +59,7 @@ function M.new(colore)
 	h.corpo = scoria.new(colore)
 	gui.set_parent(h.corpo.root, corpo)
 	scoria.set_enabled(h.corpo, true)
-	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0 }
+	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true }
 
 	-- il nome in alto a sinistra
 	local alto_sx = angolo(h, 48, H - 56, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)

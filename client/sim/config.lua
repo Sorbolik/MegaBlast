@@ -83,12 +83,14 @@ C.SNIPER = { damage = 25, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp
 -- alla mira a recoil; da terra lo solleva anche di lift, così si riposiziona
 -- (spara in basso in aria per salire, verso il vuoto per tornare sulla piattaforma).
 C.EAGLE = { damage = 25, range = 300, recoil = 300, lift = 120 }
--- Maglio: martello a due mani. In aria colpisce sotto i piedi (reach pixel
--- in giù, width in più ai lati): se trova un robot o il terreno, chi colpisce
--- rimbalza in alto a bounce (pogo), così risale o passa sopra il nemico. A
--- terra è un colpo corto davanti (reach). Il colpo arriva al tick hit_tick e
--- dura ticks.
-C.MALLET = { damage = 30, reach = 22, width = 6, bounce = 320, ticks = 14, hit_tick = 4 }
+-- Maglio: martello a due mani che gira attorno alla spalla come la Lama, da
+-- from (alto dietro la testa) a to (sotto i piedi) in ticks tick, lungo reach
+-- dalla spalla. Colpisce ogni robot che tocca lungo l'arco; la testa si ferma
+-- sul terreno. Se il colpo parte in aria e la testa sbatte su un robot o sul
+-- terreno mentre cala (dalla spalla in giù), chi colpisce rimbalza in alto a
+-- bounce (pogo), anche se nel frattempo è atterrato.
+-- Finito (o fermato) l'arco, il martello resta giù hold tick.
+C.MALLET = { damage = 30, reach = 44, from = math.rad(115), to = math.rad(-100), ticks = 12, hold = 12, bounce = 320 }
 -- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, uno a
 -- turno, si usa in qualsiasi momento del turno e non fa danno): colpo
 -- dritto e istantaneo fino a range, due usi.
@@ -103,9 +105,13 @@ C.MALLET = { damage = 30, reach = 22, width = 6, bounce = 320, ticks = 14, hit_t
 -- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade).
 C.HOOK = { range = 220, reel = 110, speed = 300, climb_speed = 420, climb = 64 }
 -- Affondo: scatto nella direzione della mira a speed per ticks tick, passando
--- attraverso i robot (danno una volta a ognuno); il terreno lo ferma. Alla
--- fine resta keep della velocità: oltre un bordo si vola.
-C.LUNGE = { damage = 30, speed = 520, ticks = 12, keep = 0.35 }
+-- attraverso i robot (danno una volta a ognuno). Colpisce chi tocca col corpo
+-- o con la lancia, lunga reach dal centro del corpo. Gradini e gobbe fino a
+-- climb pixel li sale senza fermarsi; contro un ostacolo più alto scivola
+-- lungo il terreno (resta solo la parte di scatto che passa) e si ferma solo
+-- se non passa per niente. Alla fine resta keep della velocità: oltre un
+-- bordo si vola.
+C.LUNGE = { damage = 30, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb = 16 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.

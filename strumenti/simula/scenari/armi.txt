@@ -1,0 +1,61 @@
+# Le skin delle armi (strumenti/grafica/armi.py): ogni arma in mano mirando
+# (mira annullata), le icone della barra, poi i colpi in volo: uovo, schegge,
+# palla del Cecchino, globo del teletrasporto. Con prova_armi 1 e
+# prova_secondaria mallet i tasti sono: 1 Lanciarune, 2 Uovo, 3 Schegge,
+# 4 Pugno, 5 Cecchino, 6 Lama, 7 Maglio; il Rampino si tocca nella barra.
+# Per il Tonante e l'Affondo: imposta prova_secondaria eagle (o lunge).
+imposta prova_armi 1
+imposta prova_secondaria mallet
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_barra
+premi 1
+annulla 120 60 02_lanciarune
+premi 2
+annulla 120 60 03_uovo
+premi 3
+annulla 120 60 04_schegge
+premi 4
+annulla 120 60 05_pugno
+premi 5
+annulla 120 60 06_cecchino
+premi 6
+annulla 120 60 07_lama
+premi 7
+annulla 120 60 08_maglio
+tocca 1083 62                       # Rampino
+annulla 120 60 09_rampino
+premi t
+annulla 120 60 10_globo_in_mano
+premi t
+premi 2
+mira 140 140 0.3                    # Uovo
+aspetta 0.5
+foto 11_uovo_in_volo
+aspetta_stato turno=2 fase=aim 30
+aspetta 0.5
+premi 3
+mira 140 40 0.3                     # Schegge
+aspetta 0.12
+foto 12_schegge_in_volo
+aspetta_stato turno=1 fase=aim 30
+aspetta 0.5
+premi 5
+mira 140 140 0.3                    # Cecchino
+aspetta 0.4
+foto 13_palla_in_volo
+aspetta_stato turno=2 fase=aim 30
+aspetta 0.5
+premi 1
+mira 140 140 0.3                    # Lanciarune
+aspetta 0.3
+foto 14_razzo_in_volo
+aspetta_stato turno=1 fase=aim 30
+aspetta 0.5
+premi t
+mira 140 140 0.3                    # globo del teletrasporto
+aspetta 0.3
+foto 15_globo_in_volo

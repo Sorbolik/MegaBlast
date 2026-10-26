@@ -1,0 +1,20 @@
+# La corsa di chi è di turno (con l'arma in mano, foglio della corsa in mira) e
+# il salto (braccia giù), salendo, in cima e scendendo.
+imposta zoom 1
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+tieni destra 0.5 01_corsa_turno 3
+tieni destra 0.35 02_corsa_turno 3
+aspetta 0.5
+premi salta
+aspetta 0.08
+zoom 03_salto_su 3
+aspetta 0.2
+zoom 04_salto_cima 3
+aspetta 0.2
+zoom 05_salto_giu 3
+aspetta 1
+zoom 06_fermo 3
