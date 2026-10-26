@@ -1,8 +1,10 @@
 # Maglio: martello a due mani scelto all'inizio (prova_secondaria mallet, barra:
-# Lanciarune 432, Lama 546, Maglio 660, Rampino 754, Paracadute 848). In aria colpisce sotto i piedi e, se
-# trova il terreno o un robot, chi colpisce rimbalza in alto (pogo).
+# Lanciarune 432, Lama 546, Maglio 660, Rampino 754, Paracadute 848). Gira
+# attorno alla spalla come la Lama: parte alto dietro la testa, cala davanti e
+# finisce sotto i piedi; la testa si ferma dove sbatte. In aria, se sbatte
+# mentre cala, chi colpisce rimbalza in alto (pogo) e la targa dice RIMBALZO!
 imposta prova_secondaria mallet
-imposta zoom 2
+imposta zoom 1
 
 aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
@@ -11,14 +13,22 @@ aspetta 0.5
 premi 3                             # Maglio
 aspetta 0.4
 zoom 01_maglio_in_mano
-premi salta
-aspetta 0.25
-mira 0 -90 0.1                      # in aria, verso il basso: colpisce il terreno e rimbalza
-aspetta_evento mallet 2
+# in aria, scendendo dal salto: l'arco cala sotto i piedi, sbatte sul terreno
+# e si rimbalza (le foto del colpo si vedono meglio nel video: è veloce)
+tieni salta 0.75                    # tenuto: lasciato presto il salto si accorcia
+aspetta 0.1
+mira 0 -120 0.05 02_mira_alto_dietro 2
 aspetta_evento mallet_hit 2
-aspetta 0.05
-zoom 02_colpo_sotto_i_piedi
+zoom 03_aria_sbatte
+aspetta 0.15
+zoom 04_rimbalzo
+# turno 2, a terra: l'arco cala davanti e la testa si ferma sul terreno
+aspetta_stato turno=2 fase=aim 40
+aspetta 0.5
+premi 3
 aspetta 0.3
-foto 03_rimbalzo
-aspetta 1.5
-foto 04_dopo                        # la Lama resta spenta: due secondarie nel turno no
+mira 120 0 0.1
+aspetta_evento mallet_hit 2
+zoom 05_terra_sbatte
+aspetta 0.6
+zoom 06_terra_dopo
