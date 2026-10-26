@@ -146,6 +146,45 @@ images {
   image: "/assets/diavoletto/corsa_12.png"
 }
 images {
+  image: "/assets/diavoletto/corsa_mira_1.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_2.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_3.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_4.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_5.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_6.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_7.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_8.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_9.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_10.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_11.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_12.png"
+}
+images {
+  image: "/assets/diavoletto/corsa_mira_13.png"
+}
+images {
   image: "/assets/diavoletto/salto_1.png"
 }
 images {
@@ -197,6 +236,9 @@ images {
   image: "/assets/diavoletto/salto_17.png"
 }
 images {
+  image: "/assets/diavoletto/salto_18.png"
+}
+images {
   image: "/assets/diavoletto/colpito_1.png"
 }
 images {
@@ -240,6 +282,51 @@ images {
 }
 images {
   image: "/assets/diavoletto/colpito_15.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_1.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_2.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_3.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_4.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_5.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_6.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_7.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_8.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_9.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_10.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_11.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_12.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_13.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_14.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_15.png"
 }
 images {
   image: "/assets/diavoletto/fiammella_1.png"
@@ -294,45 +381,6 @@ images {
 }
 images {
   image: "/assets/diavoletto/fiammella_18.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_1.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_2.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_3.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_4.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_5.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_6.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_7.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_8.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_9.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_10.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_11.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_12.png"
-}
-images {
-  image: "/assets/diavoletto/mira_aria_13.png"
 }
 margin: 0
 extrude_borders: 2

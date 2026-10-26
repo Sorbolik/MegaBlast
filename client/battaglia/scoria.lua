@@ -11,9 +11,10 @@
 -- stato: x, y, facing, grounded, moving, aim (nil se non mira), turno (è di turno)
 --
 -- Un'animazione per stato, scelta in ordine: sconfitta, mira (mirando o colpendo,
--- vince su tutto il resto), colpito, aria (salto, con
--- il fotogramma scelto dalla velocità in su o in giù), atterraggio, corsa (con la
--- strada fatta), mira (chi è di turno, fermo) e attesa (gli altri).
+-- vince su tutto il resto: in aria con le gambe raccolte, correndo con la corsa
+-- in mira), colpito, aria (salto, con il fotogramma scelto dalla velocità in su o
+-- in giù), atterraggio, corsa (con la strada fatta; chi è di turno corre con
+-- l'arma in mano), mira (chi è di turno, fermo) e attesa (gli altri).
 -- Nella mira il foglio non ha testa né braccia: il gioco ci mette la testa, che
 -- guarda dove si mira, e pugni e arma, che girano attorno alla spalla. Nelle
 -- altre animazioni il diavoletto ha le sue braccia e l'arma non si vede.
@@ -52,9 +53,9 @@ M.ALTEZZA = (D.altezza + FUOCO_SU + A.fiammella[1].h * FUOCO_TURNO) * K
 local PASSO = 1.1
 -- il salto: i primi fotogrammi sono in aria (dallo stacco alla caduta), gli
 -- ultimi ARRIVO l'atterraggio
-local ARIA, ARRIVO = 13, 4
+local ARIA, ARRIVO = 10, 8
 -- quanto durano le azioni a tempo (secondi)
-local DURATA = { colpito = 0.6, atterra = 0.22, teletrasporto = 0.25 }
+local DURATA = { colpito = 0.6, atterra = 0.3, teletrasporto = 0.25 }
 -- la testa guarda dove si mira, fino a questo angolo (radianti) in su e in giù
 local TESTA_SU, TESTA_GIU = 0.45, 0.3
 -- da sconfitto cade all'indietro e svanisce in questo tempo
@@ -300,6 +301,10 @@ function M.update(s, dt, st)
 	if ground and not s.ground and not s.morte then s.azione, s.azione_t = "atterra", 0 end
 	s.ground = ground
 
+	-- la corsa va con la strada fatta (non con i teletrasporti)
+	local corre = ground and st.moving ~= 0 and dx < s.h
+	if corre then s.passo = (s.passo + dx / (PASSO * s.h)) % 1 end
+
 	-- il fotogramma: il primo stato che vale, in ordine
 	local f
 	if s.morte then
@@ -316,9 +321,11 @@ function M.update(s, dt, st)
 			return
 		end
 	elseif st.aim and not ground and A.mira_aria then
-		-- mirando (o colpendo) vince la mira, anche in aria (col busto della mira
-		-- sulle gambe del salto), correndo o colpiti
+		-- mirando (o colpendo) vince la mira, anche in aria (col suo foglio di
+		-- gambe raccolte), correndo o colpiti
 		f = mostra(s, "mira_aria", a_parte(1, #A.mira_aria, 0.5 - s.vy / (2 * V_SALTO)))
+	elseif st.aim and corre and A.corsa_mira then
+		f = mostra(s, "corsa_mira", a_parte(1, #A.corsa_mira, s.passo))
 	elseif st.aim then
 		f = mostra(s, "mira", a_tempo(A.mira, s.t))
 	elseif s.azione == "colpito" and s.azione_t < DURATA.colpito then
@@ -328,10 +335,10 @@ function M.update(s, dt, st)
 		f = mostra(s, "salto", a_parte(1, ARIA, 0.5 - s.vy / (2 * V_SALTO)))
 	elseif s.azione == "atterra" and s.azione_t < DURATA.atterra then
 		f = mostra(s, "salto", a_parte(ARIA + 1, ARIA + ARRIVO, s.azione_t / DURATA.atterra))
-	elseif st.moving ~= 0 and dx < s.h then
-		-- la corsa va con la strada fatta (non con i teletrasporti)
-		s.passo = (s.passo + dx / (PASSO * s.h)) % 1
-		f = mostra(s, "corsa", a_parte(1, #A.corsa, s.passo))
+	elseif corre then
+		-- sul proprio turno si corre con l'arma in mano (senza mirare)
+		local nome = st.turno and A.corsa_mira and "corsa_mira" or "corsa"
+		f = mostra(s, nome, a_parte(1, #A[nome], s.passo))
 	elseif st.turno then
 		f = mostra(s, "mira", a_tempo(A.mira, s.t))
 	else

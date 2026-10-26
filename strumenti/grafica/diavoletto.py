@@ -42,19 +42,22 @@ ALTEZZA = 150
 # Le animazioni: base, fotogrammi da usare (da 0, come nei nomi di Ludo), ogni
 # quanti prenderne uno, fotogrammi al secondo di Ludo e se si ripete. "giro"
 # cerca da solo il pezzo che si ripete meglio (la corsa). Un foglio che non c'è
-# si salta: il gioco usa l'attesa.
+# si salta: il gioco usa l'attesa. Nei salti Ludo alza il corpo nel fotogramma
+# anche se gli si chiede di no: "ferma_spalla" (tutti i fotogrammi) e
+# "ferma_cima" (quelli da..a, in aria, solo in altezza) tengono la spalla o la
+# cima della testa dove stanno nel primo, così in aria il corpo non sale sopra la sua capsula e
+# passando a terra o alla mira busto e testa non saltano.
 AZIONI = {
     "mira": dict(base="B", da=0, a=35, passo=2, giro=True),
     "attesa": dict(base="A", da=0, a=35, passo=2, giro=True),
     "corsa": dict(base="A", cerca=(5, 30, 8, 18), giro=True),
-    "salto": dict(base="A", da=8, a=24, passo=1, giro=False),
+    "corsa_mira": dict(base="B", cerca=(5, 30, 8, 18), giro=True),
+    "salto": dict(base="A", da=10, a=27, passo=1, giro=False, ferma_cima=(11, 19)),
     "colpito": dict(base="A", da=10, a=24, passo=1, giro=False),
+    "mira_aria": dict(base="B", da=7, a=21, passo=1, giro=False, ferma_spalla=True),
     "fiammella": dict(base=None, da=0, a=35, passo=2, giro=True),
 }
 FPS = 12   # Ludo: 36 fotogrammi in 3 s
-# La mira in aria non ha un foglio: si monta il busto della mira sulle gambe
-# raccolte del salto (gli stessi fotogrammi in aria del salto, da..a)
-MIRA_ARIA = dict(da=8, a=20)
 
 
 def apri(path, corpo=True):
@@ -89,11 +92,13 @@ def pelle(a):
     return sorted(out, reverse=True)
 
 
-def cima(a):
+def cima(a, soglia=0.15):
     """La cima della pelle: il pezzo grande più in alto (la testa sopra gli
-    occhiali, o il collo se la testa non c'è). Ritorna (x al centro, y in cima)."""
+    occhiali, o il collo se la testa non c'è; il collo nei salti di Ludo a volte
+    è piccolo, per questo senza testa basta una soglia più bassa). Ritorna
+    (x al centro, y in cima)."""
     pz = pelle(a)
-    grandi = [p for p in pz if p[0] > pz[0][0] * 0.15]
+    grandi = [p for p in pz if p[0] > pz[0][0] * soglia]
     p = min(grandi, key=lambda p: p[1])
     return (p[3] + p[4]) / 2, float(p[1]), p
 
@@ -174,65 +179,6 @@ def ricolora(a, lut):
     return out
 
 
-def cintura(a):
-    """La cintura: il pezzo grigio scuro largo più in basso (con la fibbia, se
-    è staccata). Ritorna il centro e il bordo sinistro."""
-    r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
-    mx = np.maximum(np.maximum(r, g), b)
-    mn = np.minimum(np.minimum(r, g), b)
-    m = (al > 0.5) & (mx - mn < 0.1) & (mx > 0.15) & (mx < 0.55)
-    lab, _ = nd.label(m)
-    c = []
-    for i, o in enumerate(nd.find_objects(lab)):
-        h, w = o[0].stop - o[0].start, o[1].stop - o[1].start
-        if w >= 1.2 * h and (lab[o] == i + 1).sum() > a.shape[0] * 0.4:
-            c.append((o[0].start, o[0].stop, o[1].start, o[1].stop))
-    giu = max(c, key=lambda t: t[0] + t[1])
-    u = [t for t in c if t[0] < giu[1] and t[1] > giu[0]]
-    y0, y1 = min(t[0] for t in u), max(t[1] for t in u)
-    x0, x1 = min(t[2] for t in u), max(t[3] for t in u)
-    return (x0 + x1) / 2, (y0 + y1) / 2, x0
-
-
-def gambe(a, cy, r):
-    """Le gambe sotto la cintura: il pezzo grande che resta togliendo le cose
-    sottili (la coda)."""
-    m = a[..., 3] > 0.5
-    m[:int(cy)] = False
-    m = nd.binary_opening(m, structure=np.ones((r, r)))
-    lab, n = nd.label(m)
-    if n > 1:
-        m = lab == 1 + int(np.argmax(nd.sum(m, lab, range(1, n + 1))))
-    return m
-
-
-def tela(f, k, fx, fy, ox, oy, shape):
-    """Il fotogramma f nella tela della base: scala k, piedi da (fx, fy) a (ox, oy)."""
-    pm = np.dstack([f[..., :3] * f[..., 3:], f[..., 3:]])
-    im = Image.fromarray((pm * 255).round().astype(np.uint8), "RGBA")
-    t = im.transform((shape[1], shape[0]), Image.AFFINE, (1 / k, 0, fx - ox / k, 0, 1 / k, fy - oy / k),
-                     resample=Image.BICUBIC)
-    b = np.asarray(t).astype(np.float32) / 255
-    al = b[..., 3:]
-    return np.dstack([np.where(al > 0, b[..., :3] / np.maximum(al, 1e-6), 0), al])
-
-
-def mira_in_aria(busto, salto):
-    """Il busto della mira (senza quello che ha sotto la cintura, dal dietro dei
-    pantaloni in avanti) con sotto, sopra di lui, le gambe del salto spostate sotto
-    la sua cintura. Tutti e due nella tela della base."""
-    bx, by, bx0 = cintura(busto)
-    sx, sy, _ = cintura(salto)
-    g = gambe(salto, sy, int(0.04 * salto.shape[0]))
-    sopra = np.roll(np.roll(salto * g[..., None], int(round(by - sy)), 0), int(round(bx - sx)), 1)
-    sotto = busto.copy()
-    sotto[int(by):, int(bx0 - 0.10 * busto.shape[1]):, 3] = 0
-    a = sopra[..., 3:]
-    al = a + sotto[..., 3:] * (1 - a)
-    rgb = (sopra[..., :3] * a + sotto[..., :3] * sotto[..., 3:] * (1 - a)) / np.maximum(al, 1e-6)
-    return np.dstack([np.where(al > 0, rgb, 0), al])
-
-
 def main():
     os.makedirs(OUT, exist_ok=True)
     for f in glob.glob(os.path.join(OUT, "*.png")):
@@ -280,7 +226,6 @@ def main():
                  f"tx = {n((tx - nx) * S)}, ty = {n((ny - ty) * S)} }},")
 
     righe.append("\tanimazioni = {")
-    fogli_base = {}
     for nome, cfg in AZIONI.items():
         fogli = sorted(glob.glob(os.path.join(SORGENTE, "fogli", nome, "*.png")))
         if not fogli:
@@ -320,14 +265,21 @@ def main():
         fx, fy = piedi(fot[0][..., 3])
         _, cf, _ = cima(fot[0])
         k = (oy - cb) / (fy - cf)      # dal foglio alla base
-        fogli_base[nome] = (fot, k, fx, fy, ox, oy, scelti)
         for j, i in enumerate(scelti, 1):
             f = fot[i]
             nm = f"{nome}_{j}"
             cx, cy, w, h = salva(f, S * k, nm)
             # dal foglio alla base: stesso punto fra i piedi
+            gx, gy = fx, fy
+            if cfg.get("ferma_spalla"):
+                (qx, qy), (q0x, q0y) = spalla(f), spalla(fot[0])
+                gx, gy = fx + qx - q0x, fy + qy - q0y
+            elif cfg.get("ferma_cima") and cfg["ferma_cima"][0] <= i <= cfg["ferma_cima"][1]:
+                # solo in altezza: di lato Ludo sposta il corpo poco a poco
+                gy = fy + cima(f)[1] - cima(fot[0])[1]
+
             def b(x, y):
-                return gioco(ox + (x - fx) * k, oy + (y - fy) * k, ox, oy)
+                return gioco(ox + (x - gx) * k, oy + (y - gy) * k, ox, oy)
             x, y = b(cx, cy)
             riga = f"\t\t\t{{ img = \"{nm}\", x = {n(x)}, y = {n(y)}, w = {w}, h = {h}"
             if cfg["base"] == "A":
@@ -335,32 +287,12 @@ def main():
                 px, py = b(px, py)
                 riga += f", tx = {n(px)}, ty = {n(py)}"
             else:
-                px, py, _ = cima(f)
+                px, py, _ = cima(f, 0.08)
                 qx, qy = spalla(f)
                 px, py = b(px, py)
                 qx, qy = b(qx, qy)
                 riga += f", cx = {n(px)}, cy = {n(py)}, sx = {n(qx)}, sy = {n(qy)}"
             righe.append(riga + " },")
-            immagini.append(nm)
-        righe.append("\t\t},")
-    if "mira" in fogli_base and "salto" in fogli_base:
-        mfot, mk, mfx, mfy, mox, moy, mscelti = fogli_base["mira"]
-        sfot, sk, sfx, sfy, sox, soy, _ = fogli_base["salto"]
-        B = basi["B"]
-        righe.append(f"\t\tmira_aria = {{ fps = {FPS}, giro = false,")
-        for j, i in enumerate(range(MIRA_ARIA["da"], MIRA_ARIA["a"] + 1), 1):
-            m = mfot[mscelti[0]]
-            c = mira_in_aria(tela(m, mk, mfx, mfy, mox, moy, B.shape),
-                             tela(sfot[i], sk, sfx, sfy, sox, soy, B.shape))
-            nm = f"mira_aria_{j}"
-            cx, cy, w, h = salva(c, S, nm)
-            x, y = gioco(cx, cy, bx, by)
-            px, py, _ = cima(c)
-            qx, qy = spalla(c)
-            px, py = gioco(px, py, bx, by)
-            qx, qy = gioco(qx, qy, bx, by)
-            righe.append(f"\t\t\t{{ img = \"{nm}\", x = {n(x)}, y = {n(y)}, w = {w}, h = {h}, "
-                         f"cx = {n(px)}, cy = {n(py)}, sx = {n(qx)}, sy = {n(qy)} }},")
             immagini.append(nm)
         righe.append("\t\t},")
     righe += ["\t},", "}", ""]
