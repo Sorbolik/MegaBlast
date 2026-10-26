@@ -1,5 +1,5 @@
 # Il Crogiolo in 2 contro 2: tutta la mappa con i quattro punti di partenza,
-# poi Rosso scende dal ponte nel crogiolo e tira un missile nella conca.
+# poi un missile di Rosso e la camera vicina.
 
 imposta prova_mappa crogiolo
 imposta giocatori 2v2
@@ -12,14 +12,11 @@ aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1.2
 foto 02_mappa_intera
 
-# Rosso dall'altopiano sul ponte d'acciaio e giù nella conca
-tieni destra 6
-foto 03_nel_crogiolo
-mira 120 -40 0.5 04_mira
+mira 120 -40 0.5 03_mira
 aspetta_evento fire 2
 aspetta_evento explosion 8
 aspetta 0.2
-foto 05_cratere_nella_conca
+foto 04_cratere
 premi z                             # VICINO
 aspetta 1.2
-foto 06_vicino
+foto 05_vicino
