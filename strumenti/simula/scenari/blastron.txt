@@ -32,7 +32,7 @@ foto 07_teletrasporto
 
 # Uovo di Fiamma: mira con la levetta (solo la freccia della potenza) e lancio
 premi 2                             # Uovo di Fiamma (tasto 2: a sinistra la levetta prende il tocco)
-levetta_mira 45 60 0.8 08_freccia_potenza
+levetta_mira -45 60 0.8 08_freccia_potenza
 aspetta_evento grenade 2
 aspetta 0.8
 foto 09_granata

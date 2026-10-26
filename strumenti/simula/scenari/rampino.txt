@@ -10,7 +10,7 @@ aspetta 0.5
 tocca 707 62                        # Rampino (barra: Lanciarune 479, Lama 593, Rampino 707, Paracadute 801)
 aspetta 0.4
 zoom 01_rampino_in_mano
-mira 0 120 0.1 02_mira              # dritto in alto, verso la piattaforma sopra: la linea di mira dritta fino al terreno
+mira -150 50 0.1 02_mira            # in alto a sinistra, verso un gradino della scala: la linea di mira dritta fino al terreno
 aspetta_evento hook 2
 aspetta 0.08
 zoom 03_fune_tesa
