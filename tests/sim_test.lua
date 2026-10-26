@@ -382,7 +382,7 @@ do
 	at:step(SWORD)
 	check(at.used.secondary and at.window > 0, "dopo il secondo attacco il tempo continua")
 	check(ar.teleports_left == n0, "il secondo attacco non dà teletrasporti")
-	check(not at:can_use("teleport") and not at:can_use("sword"), "dopo i due attacchi niente attacchi né teletrasporto")
+	check(not at:can_use("missile") and not at:can_use("sword"), "dopo i due attacchi niente più attacchi")
 	local turn_at
 	for i = 1, 2000 do
 		at:step()
@@ -399,14 +399,20 @@ do
 	ao:step(MISSILE)
 	check(ao.used.primary and ao.used.secondary, "spada e missile nello stesso turno")
 
-	-- Il teletrasporto si lancia fino al colpo di spada, non dopo
-	local ak = game.new(42, "isole")
-	run(ak, 60)
-	free_tp(ak.robots[1])
-	ak:step(MISSILE)
-	check(ak:can_use("teleport"), "dopo il missile il teletrasporto si può ancora lanciare")
-	ak:step(SWORD)
-	check(not ak:can_use("teleport"), "dopo il colpo di spada no")
+	-- Il teletrasporto non si spegne mai sparando: dopo la secondaria, dopo la
+	-- primaria e dopo tutte e due si lancia ancora, come gli oggetti
+	for _, order in ipairs({ { "sword" }, { "missile" }, { "sword", "missile" }, { "missile", "sword" } }) do
+		local q = game.new(42, "isole")
+		run(q, 120)
+		free_tp(q.robots[1])
+		for _, w in ipairs(order) do
+			q:step({ fire = { angle = math.rad(60), power = 0.6, weapon = w } })
+		end
+		local label = table.concat(order, "+")
+		check(q.phase == "aim" and q:can_use("teleport"), "teletrasporto usabile dopo " .. label)
+		q:step({ fire = { angle = math.rad(90), power = 0.15, weapon = "teleport" } })
+		check(#q.orbs == 1, "il globo parte dopo " .. label)
+	end
 
 	-- Chi attacca allo scadere non ha tempo per altro
 	local az = game.new(42, "isole")
@@ -737,18 +743,37 @@ do
 	for _, e in ipairs(q:pop_events()) do if e.type == "eagle" then ev = e end end
 	check(ev and ev.target == 2 and hp - b.hp == config.EAGLE.damage, "il Tonante colpisce subito e fa danno secco")
 	check(next(b.status) == nil and b.vx == 0, "senza effetti di stato e senza spingere il bersaglio")
-	check(a.vx < 0 and a.knocked and not a.grounded, "il rinculo spinge chi spara dalla parte opposta")
+	check(a.recoil and a.recoil_vx < 0 and a.recoil_vy == 0 and not a.grounded, "il rinculo spinge chi spara dalla parte opposta")
 	check(not q.projectile, "senza proiettile in volo")
 
-	-- da terra il rinculo solleva: si cambia posto
-	local d = game.new(42, "isole", { secondary = "eagle" })
-	run(d, 60)
-	local da = d.robots[1]
-	local x0 = da.x
-	d:step({ fire = { angle = math.pi, power = 1, weapon = "eagle" } })
-	check(da.vy >= config.EAGLE.lift, "da terra il rinculo solleva")
-	run(d, 20)
-	check(da.x > x0 + 40 and not da.grounded, "e si vola dalla parte opposta alla mira")
+	-- il rinculo è lo stesso in tutte le direzioni: in cielo sposta della
+	-- stessa distanza a destra, a sinistra, in alto e in diagonale
+	local push = config.EAGLE.recoil * config.EAGLE.recoil_ticks / 60
+	for _, deg in ipairs({ 0, 180, 90, -90, 45, -45, -135 }) do
+		local d = game.new(42, "isole", { secondary = "eagle" })
+		run(d, 60)
+		local da = d.robots[1]
+		d.robots[2].x = -1000
+		-- un buco di 150 px di raggio nel terreno, per avere spazio da tutte le parti
+		d.terrain:carve(640, 400, 150)
+		place(da, 640, 400 - game.ROBOT_H / 2)
+		local x0, y0 = da.x, da.y
+		d:step({ fire = { angle = math.rad(deg), power = 1, weapon = "eagle" } })
+		run(d, config.EAGLE.recoil_ticks)
+		local dist = math.sqrt((da.x - x0) ^ 2 + (da.y - y0) ^ 2)
+		check(math.abs(dist - push) <= 2 and not da.recoil and da.vx == 0 and da.vy == 0,
+			"rinculo di " .. math.floor(push) .. " px sparando a " .. deg .. " gradi (" .. math.floor(dist) .. ")")
+	end
+
+	-- da terra, sparando in orizzontale, si scivola sul terreno della stessa distanza
+	local g2 = game.new(42, "isole", { secondary = "eagle" })
+	run(g2, 60)
+	local ga = g2.robots[1]
+	g2.robots[2].x = -1000
+	local gx = ga.x
+	g2:step({ fire = { angle = math.pi, power = 1, weapon = "eagle" } })
+	run(g2, config.EAGLE.recoil_ticks)
+	check(ga.x - gx > push * 0.8, "da terra il rinculo in orizzontale sposta quanto in aria (" .. math.floor(ga.x - gx) .. ")")
 
 	-- il terreno ferma il colpo, entro la portata
 	local t = game.new(42, "isole", { secondary = "eagle" })

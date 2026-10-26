@@ -345,6 +345,7 @@ function M.new(seed, map_id, opts)
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
 			lunge = nil,   -- tick rimasti dell'Affondo in corso, nil se fermo
+			recoil = nil,  -- tick rimasti del rinculo del Tonante, nil se fermo
 			mallet = nil,  -- tick del colpo di Maglio in corso, nil se fermo
 			hooked = nil,  -- appeso alla fune del Rampino: { by = chi tira, left = fune da riavvolgere }
 			ammo = make_ammo(opts.ammo),
@@ -610,7 +611,7 @@ function M:respawn(rb)
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
 	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
-	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet = nil, nil, nil, nil
+	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet, rb.recoil = nil, nil, nil, nil, nil
 	rb.hp, rb.dead, rb.shield, rb.status, rb.respawn_in = rb.max_hp, false, nil, {}, nil
 	rb.parachute = false
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
@@ -649,8 +650,10 @@ end
 -- active: è il robot di turno e può muoversi (riceve i comandi)
 function M:update_robot(rb, input, active)
 	if rb.dead then return end
-	-- durante l'Affondo lo scatto comanda il movimento; appeso al Rampino, la fune
+	-- durante l'Affondo lo scatto comanda il movimento, nel rinculo del Tonante
+	-- la spinta; appeso al Rampino, la fune
 	if rb.lunge then return self:update_lunge(rb) end
+	if rb.recoil then return self:update_recoil(rb) end
 	if rb.hooked then return self:update_hooked(rb) end
 
 	-- Se il robot è finito dentro il terreno, lo spingiamo fuori verso l'alto
@@ -1280,11 +1283,39 @@ function M:fire_eagle(angle)
 	local ex, ey, hit = self:ray(x, y, angle, C.EAGLE.range, rb)
 	rb.facing = math.cos(angle) < 0 and -1 or 1
 	local s = C.EAGLE
-	rb.vx, rb.vy = -math.cos(angle) * s.recoil, -math.sin(angle) * s.recoil
-	if rb.grounded then rb.vy = math.max(rb.vy, s.lift) end
-	rb.grounded, rb.knocked, rb.fall_top = false, true, nil
+	rb.recoil = s.recoil_ticks
+	rb.recoil_vx, rb.recoil_vy = -math.cos(angle) * s.recoil, -math.sin(angle) * s.recoil
+	rb.grounded, rb.knocked, rb.fall_top = false, false, nil
 	self:emit({ type = "eagle", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id })
 	if hit then self:hurt(hit, s.damage, rb) end
+end
+
+-- Un tick di rinculo del Tonante, al posto della fisica normale del robot:
+-- velocità fissa, niente gravità; contro il terreno o un robot scivola
+-- sull'asse libero (in orizzontale sale i gradini come camminando), e se sono
+-- bloccati tutti e due si ferma.
+function M:update_recoil(rb)
+	local mx, my = rb.recoil_vx * M.DT, rb.recoil_vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
+	local sx, sy = mx / steps, my / steps
+	for _ = 1, steps do
+		if not self:robot_collides(rb.x + sx, rb.y + sy, rb) then
+			rb.x, rb.y = rb.x + sx, rb.y + sy
+		elseif sx ~= 0 and step_x(self, rb, sx) then
+			-- scivola in orizzontale, salendo i gradini piccoli come camminando
+		elseif sy ~= 0 and not self:robot_collides(rb.x, rb.y + sy, rb) then
+			rb.y = rb.y + sy
+		else
+			rb.recoil = 1
+			break
+		end
+	end
+	rb.recoil = rb.recoil - 1
+	if rb.recoil <= 0 then
+		rb.vx, rb.vy = 0, 0
+		rb.recoil, rb.recoil_vx, rb.recoil_vy = nil, nil, nil
+	end
+	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
 local HOOK_LAND_DX = { 0, -8, 8, -16, 16 }
@@ -2177,7 +2208,8 @@ end
 
 -- Il robot di turno può usare weapon adesso? "teleport", "sword", un'arma o un
 -- oggetto. Un'arma e un colpo di spada per turno, fino all'ultimo tick. Il
--- teletrasporto consuma un globo (rb.teleports_left) e si lancia fino al colpo di spada.
+-- teletrasporto consuma un globo (rb.teleports_left) e, come gli oggetti, si
+-- lancia in qualsiasi momento del turno.
 function M:can_use(weapon)
 	if self.phase ~= "aim" then return false end
 	local rb = self.robots[self.current]
@@ -2194,7 +2226,7 @@ function M:can_use(weapon)
 		return rb.ammo[weapon] > 0
 	end
 	if weapon == "teleport" then
-		return not self.used.secondary and #self.orbs < M.MAX_ORBS and rb.teleports_left > 0
+		return #self.orbs < M.MAX_ORBS and rb.teleports_left > 0
 			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS)
 	elseif M.SECONDARY[weapon] then
 		return not self.used.secondary and M.has_weapon(rb, weapon)
@@ -2335,7 +2367,7 @@ function M:step(input)
 		if rb.mallet then
 			if rb.dead then rb.mallet, rb.mallet_dir = nil, nil else self:update_mallet(rb) end
 		end
-		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked = nil, nil, nil end
+		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked, rb.recoil = nil, nil, nil, nil end
 	end
 	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
@@ -2380,7 +2412,7 @@ function M:step(input)
 			if o.flying then still = false end
 		end
 		for _, rb in ipairs(self.robots) do
-			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.hooked or rb.mallet) then still = false end
+			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.mallet) then still = false end
 		end
 		self.settle = still and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then

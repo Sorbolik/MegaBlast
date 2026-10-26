@@ -80,9 +80,10 @@ C.SNIPER = { damage = 25, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp
 -- testa all'inizio della partita. Distanze in pixel, velocità in pixel al secondo.
 -- Tonante (pistola pesante): colpo dritto e istantaneo fino a range, si ferma
 -- al primo robot o terreno. Il rinculo spinge chi spara dalla parte opposta
--- alla mira a recoil; da terra lo solleva anche di lift, così si riposiziona
--- (spara in basso in aria per salire, verso il vuoto per tornare sulla piattaforma).
-C.EAGLE = { damage = 25, range = 300, recoil = 300, lift = 120 }
+-- alla mira, dritto, a recoil per recoil_ticks: la stessa spinta in tutte le
+-- direzioni (Sergio, 26 ottobre 2026), senza gravità né controllo in aria,
+-- e scivola lungo il terreno che incontra. Poi si cade da fermi.
+C.EAGLE = { damage = 25, range = 600, recoil = 300, recoil_ticks = 22 }
 -- Maglio: martello a due mani. In aria colpisce sotto i piedi (reach pixel
 -- in giù, width in più ai lati): se trova un robot o il terreno, chi colpisce
 -- rimbalza in alto a bounce (pogo), così risale o passa sopra il nemico. A

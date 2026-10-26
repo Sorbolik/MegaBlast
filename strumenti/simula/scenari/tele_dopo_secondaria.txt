@@ -1,0 +1,19 @@
+# Il teletrasporto non si spegne mai sparando: Rosso attacca prima con la
+# secondaria (Lama), poi lancia il globo; il TELE resta acceso anche dopo.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+premi 2                             # Lama (tasto 2)
+aspetta 0.3
+mira 60 0 0.2
+aspetta_evento swing 2
+aspetta 0.5
+foto 01_dopo_secondaria             # TELE ancora acceso, barra gialla
+tocca 1180 62                       # TELE
+mira 60 140 0.2
+aspetta_evento orb 2
+foto 02_globo_dopo_secondaria
+aspetta_evento teleport 4
+zoom 03_teletrasporto
