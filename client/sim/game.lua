@@ -2394,10 +2394,15 @@ end
 -- "blastron": ricostruiti dall'APK di Blastron (docs/blastron.md). Le misure
 -- là sono in unità di Farseer, qui diventano pixel in proporzione al robot:
 -- il robot di Blastron è alto 3,612 unità, il nostro BLASTRON_ROBOT_H pixel
--- (56: il doppio dei 28 del 23 ottobre, scelto il 26 ottobre perché il diavoletto
--- dipinto si legga; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
+-- (28: 1,4 volte i 20 di prima, scelto il 23 ottobre per vedere meglio il
+-- personaggio; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
 -- La vita là partiva da 2000, qui da DAMAGE_BASE: i danni sono riscalati.
-M.BLASTRON_ROBOT_H = 56
+M.BLASTRON_ROBOT_H = 28
+-- Il corpo del personaggio (altezza, larghezza e cerchio dove viene colpito) è
+-- BLASTRON_CORPO volte quello di Blastron; tutto il resto (salti, armi, casse,
+-- esplosioni) resta sulla misura di Blastron. 1,4 scelto il 26 ottobre perché il
+-- diavoletto dipinto si legga.
+M.BLASTRON_CORPO = 1.4
 M.BLASTRON_UNIT = M.BLASTRON_ROBOT_H / 3.612
 
 local function blastron_profile()
@@ -2406,9 +2411,10 @@ local function blastron_profile()
 	-- quanto è più grande il robot rispetto a quello del profilo megablast,
 	-- per le nostre misure (casse, schegge, globo...)
 	local k = M.BLASTRON_ROBOT_H / M.ROBOT_H
+	local corpo = M.BLASTRON_CORPO
 	return {
-		ROBOT_H = M.BLASTRON_ROBOT_H,
-		ROBOT_HALF_W = M.ROBOT_HALF_W * k,
+		ROBOT_H = M.BLASTRON_ROBOT_H * corpo,
+		ROBOT_HALF_W = M.ROBOT_HALF_W * k * corpo,
 		MAX_CLIMB = M.MAX_CLIMB * k,
 		TELEPORT_SEARCH = M.TELEPORT_SEARCH * k,
 		ORB_R = M.ORB_R * k,
@@ -2465,7 +2471,7 @@ local function blastron_profile()
 		-- l'altezza (3,612 × 0,66 × 0,5 × 0,66 × 2,4 = 1,888 u) a metà altezza;
 		-- per le esplosioni il quadrato attorno, più largo di 0,1 u per lato
 		HURTBOX = "cerchio",
-		HURT_R = 1.888 * u,
+		HURT_R = 1.888 * u * corpo,
 		HURT_FAT = 0.1 * u,
 		-- Hanzo Special: fendente sulla mira (sim/mischia.lua), 300 danni, ferma il bersaglio
 		SWORD_MODEL = "blastron",

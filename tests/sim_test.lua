@@ -1518,13 +1518,16 @@ local close = math.ceil(mischia.fendente.chiudi * 60 / mischia.fendente.fps)
 check(melee_at(0, 5, 0) == close, "blastron: il fendente colpisce quando si chiude la finestra (0,8 s)")
 check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "blastron: mirando dritto prende anche dietro e sopra la testa")
 check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "blastron: mirando in basso la lama scende davanti in basso")
-check(melee_at(60, 4, 5) and melee_at(-60, 0, -5) and not melee_at(60, 0, -5),
+-- i bersagli da non prendere stanno più lontani quanto il corpo è più grande di
+-- quello di Blastron (BLASTRON_CORPO)
+local C = game.BLASTRON_CORPO
+check(melee_at(60, 4, 5) and melee_at(-60, 0, -5) and not melee_at(60, 0, -5 - 7.5 * (C - 1)),
 	"blastron: il colpo gira con la mira")
 check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "blastron: mirando giù non prende chi è dietro")
 local pt, pq2 = melee_at(0, 2, 0, "punch")
 check(pt and pq2.robots[2].vy == game.PUNCH_LAUNCH and pq2.robots[2].vx == 0,
 	"blastron: il montante lancia dritto in alto")
-check(not melee_at(-60, 0, 4, "punch"), "blastron: il montante mirato in basso non prende chi è sopra")
+check(not melee_at(-60, 0, 4 + 7.5 * (C - 1), "punch"), "blastron: il montante mirato in basso non prende chi è sopra")
 check(game.melee_ticks(mischia.fendente) == game.SWORD_TICKS and game.melee_ticks(mischia.montante) == game.PUNCH_TICKS,
 	"blastron: durate del fendente e del montante coerenti con le animazioni")
 
