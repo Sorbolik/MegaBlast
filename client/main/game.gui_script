@@ -78,10 +78,11 @@ local BAR_GROUPS = { { "PRIMARIE", ui.C.BRACE }, { "SECONDARIE", ui.C.ACCIAIO },
 local function bar_group(w)
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
 end
-local WEAPON_ICON = {
-	missile = "lanciarune_icona", sword = "lama_di_nucleo_icona", grenade = "uovo_di_fiamma_icona",
-	shards = "sciame_di_schegge_icona", punch = "pugno_del_titano_icona",
-}
+-- icone della barra e della scelta (atlante armi, strumenti/grafica/armi.py)
+local WEAPON_ICON = {}
+for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "hook" }) do
+	WEAPON_ICON[w] = w .. "_icona"
+end
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
 local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
 	sniper = "il Cecchino",
@@ -146,17 +147,19 @@ end
 
 -- scritte dell'HUD col font dell'interfaccia: scala 1 = circa 16 px
 local FONT_K = 0.4
--- Globo del teletrasporto: un disco di carbone col contorno chiaro (come la
--- Scoria) e il cuore acceso, del colore di chi lo lancia. Restituisce disco e cuore.
-local function orb_shape(d)
-	local root = stretch(gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d, d, 0)))
-	gui.set_color(root, ui.C.LUCE)
-	local body = gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d * 0.78, d * 0.78, 0))
-	gui.set_color(body, ui.C.PANNELLO)
-	gui.set_parent(body, root)
-	local core = gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d * 0.46, d * 0.46, 0))
-	gui.set_parent(core, root)
-	return root, core
+-- Un colpo in volo (o il globo del pulsante) dall'atlante delle armi, grande sc
+-- volte le sue misure del mondo (battaglia/armi.lua): l'immagine e sopra le
+-- parti col colore di chi spara. Restituisce il nodo e le parti da tingere.
+local function colpo(nome, sc)
+	local a = require("battaglia.armi").colpi[nome]
+	local img = stretch(gui.new_box_node(vmath.vector3(a.x * sc, a.y * sc, 0), vmath.vector3(a.w * sc, a.h * sc, 0)))
+	gui.set_texture(img, "armi")
+	gui.play_flipbook(img, a.img)
+	local tinta = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(a.w * sc, a.h * sc, 0))
+	gui.set_texture(tinta, "armi")
+	gui.play_flipbook(tinta, a.tinta)
+	gui.set_parent(tinta, img)
+	return img, tinta
 end
 
 local function label(x, y, text, scale)
@@ -1543,20 +1546,24 @@ local function render(self, dt)
 		set_pos(self.projectile, x, y)
 		self.fuoco_x, self.fuoco_y = x, y
 		gui.set_color(self.projectile_glow, self.colors[g.current])
-		if g.projectile and g.projectile.kind == "sniper" then
+		gui.set_color(self.razzo_tinta, self.colors[g.current])
+		gui.set_color(self.palla_tinta, self.colors[g.current])
+		-- razzo e palla puntano nel verso in cui vanno
+		local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
+		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
+		gui.set_euler(self.projectile, SNIPER_EULER)
+		local sniper = g.projectile and g.projectile.kind == "sniper"
+		gui.set_enabled(self.razzo, not sniper)
+		gui.set_enabled(self.palla, sniper)
+		if sniper then
 			-- cecchino: allungato nel verso in cui va; a ogni rimbalzo si
 			-- schiaccia e tremola come una gelatina, poi torna com'era
-			local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
-			if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
 			local t = self.clock - (self.boing or -10)
 			local w = BOING_AMP * math.exp(-t * BOING_DAMP) * math.cos(t * BOING_FREQ)
 			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (1.25 - w), VK.y * (0.85 + w)
-			gui.set_euler(self.projectile, SNIPER_EULER)
 			gui.set_scale(self.projectile, SNIPER_SCALE)
 			self.sniper_shape = true
 		elseif self.sniper_shape then
-			SNIPER_EULER.z = 0
-			gui.set_euler(self.projectile, SNIPER_EULER)
 			gui.set_scale(self.projectile, VK)
 			self.sniper_shape = false
 		end
@@ -1589,11 +1596,19 @@ local function render(self, dt)
 			local sa = pa.s[i].on and pa.s[i] or sb
 			local x, y = sa.x + (sb.x - sa.x) * k, sa.y + (sb.y - sa.y) * k
 			set_pos(node, x, y)
+			-- la scheggia punta nel verso in cui va
+			if sb.x ~= sa.x or sb.y ~= sa.y then
+				EULER.z = math.deg(math.atan2(sb.y - sa.y, sb.x - sa.x))
+				gui.set_euler(node, EULER)
+			end
 			n_shards, shard_x, shard_y = n_shards + 1, shard_x + x, shard_y + y
 		end
 	end
 	if self.shard_color ~= g.current then
-		for i = 1, game.SHARD_COUNT do gui.set_color(self.shard_nodes[i], self.colors[g.current]) end
+		for i = 1, game.SHARD_COUNT do
+			gui.set_color(self.shard_nodes[i], self.colors[g.current])
+			gui.set_color(self.shard_tints[i], self.colors[g.current])
+		end
 		self.shard_color = g.current
 	end
 
@@ -1800,15 +1815,21 @@ function init(self)
 	gui.set_adjust_mode(self.projectile, gui.ADJUST_STRETCH)
 	self.projectile_glow = glow(0, 0, 34, WHITE)
 	gui.set_parent(self.projectile_glow, self.projectile)
-	gui.set_parent(glow(0, 0, 12, WHITE), self.projectile)
+	self.razzo, self.razzo_tinta = colpo("razzo", 1 / K)
+	gui.set_parent(self.razzo, self.projectile)
+	self.palla, self.palla_tinta = colpo("palla", 1 / K)
+	gui.set_parent(self.palla, self.projectile)
 	gui.set_scale(self.projectile, VK)
 
 	-- globo del teletrasporto: piccolo e tondo
 	self.orbs = {}
 	for i = 1, game.MAX_ORBS do
-		local root, light = orb_shape(11)
+		local root = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+		gui.set_visible(root, false)
 		local orb_glow = glow(0, 0, 30, WHITE)
 		gui.set_parent(orb_glow, root)
+		local img, light = colpo("globo", 1 / K)
+		gui.set_parent(img, root)
 		gui.set_enabled(root, false)
 		gui.set_scale(root, VK)
 		self.orbs[i] = { root = root, glow = orb_glow, light = light }
@@ -1821,25 +1842,21 @@ function init(self)
 	self.egg_spin = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(self.egg_spin, false)
 	gui.set_parent(self.egg_spin, self.egg)
-	local egg_img = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(56 * 0.3, 64 * 0.3, 0))
-	gui.set_texture(egg_img, "battaglia")
-	gui.play_flipbook(egg_img, "uovo_di_fiamma")
+	local egg_img
+	egg_img, self.egg_light = colpo("uovo", 1 / K)
 	gui.set_parent(egg_img, self.egg_spin)
-	self.egg_light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(56 * 0.3, 64 * 0.3, 0))
-	gui.set_texture(self.egg_light, "battaglia")
-	gui.play_flipbook(self.egg_light, "uovo_di_fiamma_luce")
-	gui.set_blend_mode(self.egg_light, gui.BLEND_ADD)
-	gui.set_parent(self.egg_light, self.egg_spin)
 	self.egg_label = label(0, 26, "3", 0.7 / K)
 	gui.set_parent(self.egg_label, self.egg)
 	gui.set_enabled(self.egg, false)
 	gui.set_scale(self.egg, VK)
 
 	-- schegge dello Sciame
-	self.shard_nodes = {}
+	self.shard_nodes, self.shard_tints = {}, {}
 	for i = 1, game.SHARD_COUNT do
-		local n = glow(0, 0, 26, WHITE)
-		gui.set_parent(glow(0, 0, 10, WHITE), n)
+		local n = glow(0, 0, 22, WHITE)
+		local img, tinta = colpo("scheggia", 1 / K)
+		gui.set_parent(img, n)
+		self.shard_tints[i] = tinta
 		gui.set_scale(n, VK)
 		gui.set_enabled(n, false)
 		self.shard_nodes[i] = n
@@ -1958,7 +1975,7 @@ function init(self)
 		local icon -- gli oggetti hanno un'icona di forme (oggetti.icona), che resta accesa
 		if WEAPON_ICON[w] then
 			icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
-			gui.set_texture(icon, "battaglia")
+			gui.set_texture(icon, "armi")
 			gui.play_flipbook(icon, WEAPON_ICON[w])
 			gui.set_parent(icon, n)
 		else
@@ -1987,8 +2004,7 @@ function init(self)
 	self.btn_tele, self.tele_bordo = ui.pannello(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D)
 	stretch(self.btn_tele)
 	local orb_icon
-	orb_icon, self.tele_light = orb_shape(34)
-	gui.set_position(orb_icon, vmath.vector3(0, 2, 0))
+	orb_icon, self.tele_light = colpo("globo", 3.6)
 	gui.set_parent(orb_icon, self.btn_tele)
 	self.tele_key = label(-26, -28, "T", 0.6)
 	gui.set_parent(self.tele_key, self.btn_tele)

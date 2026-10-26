@@ -7,6 +7,10 @@ path_settings {
   profile: "Compressa"
 }
 path_settings {
+  path: "/battaglia/armi.atlas"
+  profile: "Compressa"
+}
+path_settings {
   path: "**"
   profile: "Default"
 }
