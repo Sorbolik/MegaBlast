@@ -1088,7 +1088,7 @@ start_local_match = function(self, picked)
 	local vicino = SIMULA and config_int("megablast.prova_vicino", 0) or 0
 	if vicino ~= 0 then
 		local a, b = self.g.robots[1], self.g.robots[2]
-		local y = self.g.terrain:ground_below(a.x + vicino, a.y + 60)
+		local y = self.g.terrain:ground_below(a.x + vicino, a.y + 3 * game.ROBOT_H)
 		if y then b.x, b.y, b.grounded = a.x + vicino, y, true end
 	end
 	self.mode = "local"

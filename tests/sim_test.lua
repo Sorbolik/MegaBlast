@@ -1715,7 +1715,7 @@ check(hook_drag(function(x) return 100 + math.floor(x / 24) % 2 * 4 end, 500, 68
 -- sulle mappe vere: nemici a terra a 120 pixel, in tanti punti diversi
 for _, id in ipairs(maps.order) do
 	local pulled, tries = 0, 0
-	for x0 = 100, 1200, 37 do
+	for x0 = 100, game.WORLD_W - 220, 37 do
 		local q = game.new(42, id)
 		run(q, 60)
 		local a, b = q.robots[1], q.robots[2]
