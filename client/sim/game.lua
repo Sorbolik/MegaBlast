@@ -3,7 +3,7 @@
 --
 -- Uso:
 --   local game = require "sim.game"
---   local g = game.new(seed, "isole")
+--   local g = game.new(seed, "forgia")   -- senza mappa la sceglie il seed
 --   g:step({ left = bool, right = bool, jump = bool,
 --            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport"
 --                                                     | "grenade" | "shards" | "punch" } })
@@ -314,7 +314,8 @@ end
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
-	local map = maps.get(map_id)
+	-- senza mappa la sceglie il seed (maps.ROTATION)
+	local map = maps.get(map_id or maps.pick(seed))
 	g.map = map.id
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.WORLD_W / M.CELL, M.WORLD_H / M.CELL, M.CELL)

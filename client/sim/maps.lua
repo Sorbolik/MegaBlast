@@ -34,13 +34,14 @@ add("forgia", "Forgia dei Titani", {
 	end,
 })
 
--- Isole del cimitero: due grandi isole con archi d'osso, isole volanti su più piani.
--- La forma viene dalla maschera disegnata (grafica/mappe/mappa_isole_cimitero/):
--- terra scavabile, ossa e catene indistruttibili. È simmetrica a specchio.
-add("isole", "Isole del cimitero", {
-	spawns = { { x = 630, from = 390 }, { x = 1290, from = 390 }, { x = 240, from = 1080 }, { x = 1680, from = 1080 } },
+-- Il Crogiolo: altopiani ai lati con una grotta sotto, ponti d'acciaio fino al
+-- crogiolo in mezzo (una conca a 45° dove rotolano le granate), sotto una galleria
+-- che attraversa il fondo, mestoli sospesi e una trave in cima.
+-- Forma e disegno: strumenti/grafica/mappa_crogiolo.py.
+add("crogiolo", "Il Crogiolo", {
+	spawns = { { x = 195, from = 1080 }, { x = 1725, from = 1080 }, { x = 630, from = 300 }, { x = 1290, from = 300 } },
 	build = function(t)
-		t:load(mapdata.cimitero)
+		t:load(mapdata.crogiolo)
 	end,
 })
 
@@ -55,6 +56,14 @@ add("casuale", "Colline casuali", {
 })
 
 M.DEFAULT = "forgia"
+
+-- Le mappe delle partite vere: se non si chiede una mappa, la sceglie il seed
+-- della partita, così server e client (che hanno lo stesso seed) giocano sulla stessa.
+M.ROTATION = { "forgia", "crogiolo" }
+
+function M.pick(seed)
+	return M.ROTATION[math.floor(seed) % #M.ROTATION + 1]
+end
 
 function M.get(id)
 	return M.maps[id] or M.maps[M.DEFAULT]
