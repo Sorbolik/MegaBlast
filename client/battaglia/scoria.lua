@@ -8,13 +8,15 @@
 --   scoria.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
 --   scoria.set_weapon(s, nome) / hit(s) / fire(s, tipo) / lunge(s) / teleport(s) / die(s)
 --   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
--- stato: x, y, facing, grounded, moving, aim (nil se non mira), turno (è di turno)
+-- stato: x, y, facing, grounded, moving, aim (nil se non mira), turno (è di turno),
+-- paracadute (appeso al paracadute aperto), vittoria (festeggia sul podio)
 --
 -- Un'animazione per stato, scelta in ordine: sconfitta, mira (mirando o colpendo,
 -- vince su tutto il resto: in aria con le gambe raccolte, correndo con la corsa
--- in mira), colpito, aria (salto, con il fotogramma scelto dalla velocità in su o
--- in giù), atterraggio, corsa (con la strada fatta; chi è di turno corre con
--- l'arma in mano), mira (chi è di turno, fermo) e attesa (gli altri).
+-- in mira), colpito, paracadute (appeso, aperto), aria (salto, con il fotogramma
+-- scelto dalla velocità in su o in giù), atterraggio, corsa (con la strada fatta;
+-- chi è di turno corre con l'arma in mano), vittoria (il primo sul podio), mira
+-- (chi è di turno, fermo) e attesa (gli altri).
 -- Nella mira il foglio non ha testa né braccia: il gioco ci mette la testa, che
 -- guarda dove si mira, e pugni e arma, che girano attorno alla spalla. Nelle
 -- altre animazioni il diavoletto ha le sue braccia e l'arma non si vede.
@@ -330,6 +332,8 @@ function M.update(s, dt, st)
 		f = mostra(s, "mira", a_tempo(A.mira, s.t))
 	elseif s.azione == "colpito" and s.azione_t < DURATA.colpito then
 		f = mostra(s, "colpito", a_parte(1, #A.colpito, s.azione_t / DURATA.colpito))
+	elseif st.paracadute and not ground and A.paracadute then
+		f = mostra(s, "paracadute", a_tempo(A.paracadute, s.t))
 	elseif not ground then
 		-- dallo stacco (velocità piena in su) alla caduta (piena in giù)
 		f = mostra(s, "salto", a_parte(1, ARIA, 0.5 - s.vy / (2 * V_SALTO)))
@@ -339,6 +343,8 @@ function M.update(s, dt, st)
 		-- sul proprio turno si corre con l'arma in mano (senza mirare)
 		local nome = st.turno and A.corsa_mira and "corsa_mira" or "corsa"
 		f = mostra(s, nome, a_parte(1, #A[nome], s.passo))
+	elseif st.vittoria and A.vittoria then
+		f = mostra(s, "vittoria", a_tempo(A.vittoria, s.t))
 	elseif st.turno then
 		f = mostra(s, "mira", a_tempo(A.mira, s.t))
 	else
