@@ -27,6 +27,22 @@ func newTestSim(t testing.TB, seed int64, mapID string) *Sim {
 	return sim
 }
 
+// Senza mappa la sceglie il seed fra quelle delle partite (maps.ROTATION):
+// lo stesso seed dà sempre la stessa, e le escono tutte.
+func TestSimPicksMapFromSeed(t *testing.T) {
+	seen := map[string]bool{}
+	for seed := int64(1); seed <= 4; seed++ {
+		m := newTestSim(t, seed, "").Map()
+		if m != newTestSim(t, seed, "").Map() {
+			t.Fatalf("seed %d: mappa diversa a parità di seed", seed)
+		}
+		seen[m] = true
+	}
+	if !seen["forgia"] || !seen["crogiolo"] {
+		t.Fatalf("mappe uscite: %v", seen)
+	}
+}
+
 func TestSimFromEmbeddedLua(t *testing.T) {
 	sim := newTestSim(t, 42, "isole")
 	for i := 0; i < 120; i++ {

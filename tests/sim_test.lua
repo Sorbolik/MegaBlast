@@ -42,6 +42,19 @@ for _, id in ipairs(maps.order) do
 	check(not m.robots[1].dead and not m.robots[2].dead, id .. ": nessun robot muore all'avvio")
 end
 
+-- Partite vere: senza mappa la sceglie il seed, fra quelle di maps.ROTATION
+do
+	local seen = {}
+	for seed = 1, 4 do
+		local id = game.new(seed).map
+		check(id == game.new(seed).map, "stesso seed, stessa mappa")
+		seen[id] = true
+	end
+	for _, id in ipairs(maps.ROTATION) do
+		check(maps.maps[id] and seen[id], id .. ": esce nelle partite")
+	end
+end
+
 local g = game.new(42, "forgia")
 run(g, 120)
 

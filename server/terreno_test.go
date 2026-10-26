@@ -78,7 +78,7 @@ func TestGoTerrainMatchesLua(t *testing.T) {
 	}
 	defer goE.L.Close()
 	luaE := luaTerrainEngine(t)
-	for _, m := range []string{"forgia", "isole", "casuale"} {
+	for _, m := range []string{"forgia", "crogiolo", "isole", "casuale"} {
 		for seed := 1; seed <= 3; seed++ {
 			a, b := runTerrainOps(t, goE, m, seed), runTerrainOps(t, luaE, m, seed)
 			if a != b {
@@ -99,7 +99,7 @@ func TestGoTerrainSameMatch(t *testing.T) {
 	luaE := luaTerrainEngine(t)
 	explosions := 0
 	for k := 0; k < 12; k++ {
-		m, seed := []string{"forgia", "isole"}[k%2], int64(11+k)
+		m, seed := []string{"forgia", "crogiolo", "isole"}[k%3], int64(11+k)
 		a, err := goE.NewSim(seed, m, lua.LNil, false)
 		if err != nil {
 			t.Fatal(err)

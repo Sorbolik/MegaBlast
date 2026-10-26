@@ -181,6 +181,10 @@ end
 local FISICA = config_string("megablast.fisica", "")
 if FISICA ~= "" then game.use_physics(FISICA) end
 
+-- Nelle partite vere la mappa la sceglie il seed (sim/maps.lua). Negli scenari di
+-- prova è fissa, così le foto si ripetono: forgia, o [megablast] prova_mappa.
+local MAPPA = SIMULA and config_string("megablast.prova_mappa", "forgia") or nil
+
 -- Proiettili e casse si disegnano in proporzione al robot della simulazione
 -- senza l'ingrandimento del corpo: 16 pixel nel profilo megablast, 28 in quello
 -- di Blastron
@@ -261,7 +265,7 @@ local MASK_PATH = "/battaglia/maschera_viva.texturec"
 local RGBA = hash("rgba")
 local MASK_FORMAT = { { name = RGBA, type = buffer.VALUE_TYPE_UINT8, count = 4 } }
 -- mappe che hanno i disegni in assets/mappe (le altre usano una roccia semplice)
-local PAINTED = { forgia = true, isole = true }
+local PAINTED = { forgia = true, crogiolo = true }
 
 -- le costanti stanno in graphics (Defold recenti) o in resource (vecchi)
 local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
@@ -1074,7 +1078,7 @@ start_local_match = function(self, picked)
 	end
 	players[1].stats = assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio))
 	opts.players = players
-	new_match(self, os.time(), nil, opts)
+	new_match(self, os.time(), MAPPA, opts)
 	-- prova_durata N: la partita dura N secondi (scenari/podio.txt)
 	local durata = SIMULA and config_int("megablast.prova_durata", 0) or 0
 	if durata > 0 then self.g.match_left = durata * 60 end
@@ -1999,7 +2003,7 @@ function init(self)
 	self.scelta = scelta_armi.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT)
 
 	-- una mappa sullo sfondo del menu
-	new_match(self, os.time())
+	new_match(self, os.time(), MAPPA)
 	self.g:pop_events()
 	show_menu(self)
 end
