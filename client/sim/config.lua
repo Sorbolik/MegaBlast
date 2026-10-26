@@ -43,10 +43,16 @@ C.SCORE = {
 	kill = 50,        -- uccisione
 	env_kill = 50,    -- in più se è ambientale (fuori dalla mappa o caduta)
 	death = -20,      -- per chi muore
+	self_death = -30, -- in più per chi muore nel proprio turno senza colpa di un avversario
 	leader = 1.5,     -- moltiplicatore se il colpito è il primo in classifica
 }
 -- l'uccisione va a chi ha colpito per ultimo, se è stato entro questi secondi
 C.KILL_CREDIT_SECONDS = 10
+-- Chi muore nel proprio turno senza un colpo recente di un avversario (si butta
+-- giù, si colpisce da solo) non toglie i punti agli altri: l'uccisione va
+-- all'avversario che gli ha fatto più danno in questa vita, e lui perde
+-- death + self_death (Sergio, 26 ottobre 2026: "deve essere punitivo e
+-- bilanciato"). Il turno continua lo stesso (correzione di Sergio del 24).
 -- Alla morte si ricomincia dopo RESPAWN_SECONDS, anche a metà del turno (di
 -- chi ti ha colpito o del tuo: il turno non passa), con la vita piena in un
 -- punto a caso della superficie, libero. Anche vicino a un avversario: con un
