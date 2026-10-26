@@ -27,12 +27,12 @@ BORDO = 2.5   # spessore del contorno chiaro, in unità del disegno
 # Le scale vengono dalle proporzioni del diavoletto intero di Gabriella
 # (gabriella/disegni/2026-10-25_nuovi_diavoletti/originale_senza_braccia.png).
 PEZZI = {
-    "testa": dict(scala=0.101, perno=(615, 1115), dove=(69, 83)),
-    "busto": dict(scala=0.1125, perno=(832, 950), dove=(69, 141.7)),
-    # la gamba di ChatGPT è un tubo lungo e stretto: la allarghiamo come i pantaloni
-    # larghi del diavoletto intero
-    "gamba": dict(scala=(0.095, 0.066), perno=(535, 360), dove=(0, 0)),
-    "fiammella": dict(scala=0.054, perno=(630, 974), dove=(72, -1)),
+    "testa": dict(scala=0.101, perno=(615, 1115), dove=(69, 97)),
+    "busto": dict(scala=0.1125, perno=(832, 950), dove=(69, 155.7)),
+    # la gamba di ChatGPT è un tubo lungo e stretto: la allarghiamo e la accorciamo come
+    # i pantaloni larghi del diavoletto intero
+    "gamba": dict(scala=(0.095, 0.0505), perno=(535, 360), dove=(0, 0)),
+    "fiammella": dict(scala=0.054, perno=(630, 974), dove=(72, 13)),
 }
 # la linea della coda nel busto sorgente, dalla radice alla punta
 CODA = [(625, 890), (540, 930), (470, 935), (380, 905), (320, 840), (290, 750),

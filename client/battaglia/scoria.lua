@@ -54,8 +54,10 @@ local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25, 0.4 }
 local COLLO = { PEZZI.testa.px, PEZZI.testa.py }
 local BACINO = { PEZZI.busto.px, PEZZI.busto.py }
 local FIAMMA = { PEZZI.fiammella.px, PEZZI.fiammella.py }
-local ANCHE = { { 58, 136.5 }, { 82, 136.5 } }
-local SPALLA = { 62, 100 }
+-- prima la gamba di dietro, più scura, poi quella davanti
+local ANCHE = { { 82, 155 }, { 58, 155 } }
+local DIETRO = vmath.vector4(0.72, 0.68, 0.7, 1)
+local SPALLA = { 62, 114 }
 -- la mano sull'impugnatura, davanti alla spalla lungo l'arma
 local PRESA = 20
 -- un passo: la strada che fa il corpo mentre una gamba fa un'oscillazione intera
@@ -215,7 +217,9 @@ function M.new(color)
 			s.coda[i][strato] = padre
 		end
 		for i = 1, 2 do
-			s.gambe[i][strato] = pezzo(s, s.forma, PEZZI.gamba, "gamba", strato, 0, 0, 0, 0)
+			local n
+			s.gambe[i][strato], n = pezzo(s, s.forma, PEZZI.gamba, "gamba", strato, 0, 0, 0, 0)
+			if i == 1 and strato == 2 then gui.set_color(n, DIETRO) end
 		end
 		s.busto[strato] = pezzo(s, s.forma, PEZZI.busto, "busto", strato, BACINO[1], BACINO[2], 75, 200)
 		s.testa[strato] = pezzo(s, s.forma, PEZZI.testa, "testa", strato, COLLO[1], COLLO[2], 75, 200)
@@ -359,7 +363,7 @@ end
 local function coda(s, dt)
 	local base = s.x[CODA]
 	for i = 1, #s.coda_a do
-		local a = (base + sin(s.t * 2.6 - i * 0.8) * 0.1) * (0.6 + 0.15 * i)
+		local a = (base + sin(s.t * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i)
 		s.coda_a[i] = s.coda_a[i] + (a - s.coda_a[i]) * min(1, dt * (18 - 2.5 * i))
 		for strato = 1, 3 do rot(s.coda[i][strato], s.coda_a[i]) end
 	end
@@ -406,10 +410,10 @@ function M.update(s, dt, st)
 	if ground and not s.ground and s.vy < -40 then
 		s.v[SQ] = s.v[SQ] - min(7, -s.vy / 40)
 		s.v[TESTA] = s.v[TESTA] - min(4, -s.vy / 80)
-		s.v[CODA] = s.v[CODA] - min(6, -s.vy / 50)
+		s.v[CODA] = s.v[CODA] - min(3, -s.vy / 100)
 	elseif not ground and s.ground and s.vy > 20 then
 		s.v[SQ] = s.v[SQ] + 4
-		s.v[CODA] = s.v[CODA] + 4
+		s.v[CODA] = s.v[CODA] + 2
 	end
 	s.ground = ground
 
@@ -423,10 +427,11 @@ function M.update(s, dt, st)
 	if st.aim then a = face > 0 and st.aim or pi - st.aim end
 	-- la testa guarda un po' dove si mira e ondeggia nei passi
 	local testa = max(-0.25, min(0.25, sin(a) * 0.2)) + sin(s.passo * 2) * 0.05 * s.cammina
-	-- la coda resta indietro correndo (si alza) e in aria segue la velocità
-	local cd = 0.35 * max(-1, min(1, avanti / 70))
-	if not ground then cd = cd + max(-0.4, min(0.4, -s.vy / 500)) end
-	s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = sq, lean, testa, -cd
+	-- correndo la coda si allontana dal corpo, verso dietro, e torna quando ci si
+	-- ferma; in aria segue la velocità
+	local cd = 0.2 * max(-1, min(1, avanti / 70))
+	if not ground then cd = cd + max(-0.2, min(0.2, s.vy / 900)) end
+	s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = sq, lean, testa, cd
 	s.goal[FUOCO] = st.turno and FUOCO_TURNO or FUOCO_ATTESA
 	molle(s, dt)
 
@@ -482,7 +487,7 @@ function M.hit(s, dx)
 	s.v[SQ] = s.v[SQ] - 4
 	s.v[LEAN] = s.v[LEAN] - 5 * d
 	s.v[TESTA] = s.v[TESTA] - 8 * d
-	s.v[CODA] = s.v[CODA] + 8 * d
+	s.v[CODA] = s.v[CODA] + 4 * d
 end
 
 -- Colpo sparato: rinculo dell'arma e del corpo
@@ -492,7 +497,7 @@ function M.fire(s, kind)
 	s.v[LEAN] = s.v[LEAN] + 3 * k
 	s.v[SQ] = s.v[SQ] - 1.5 * k
 	s.v[TESTA] = s.v[TESTA] + 3 * k
-	s.v[CODA] = s.v[CODA] - 3 * k
+	s.v[CODA] = s.v[CODA] - 1.5 * k
 end
 
 -- Scatto dell'Affondo: si allunga in avanti e si piega
@@ -500,7 +505,7 @@ function M.lunge(s)
 	s.v[SQ] = s.v[SQ] + 6
 	s.v[LEAN] = s.v[LEAN] + 8
 	s.v[TESTA] = s.v[TESTA] + 4
-	s.v[CODA] = s.v[CODA] - 6
+	s.v[CODA] = s.v[CODA] - 3
 end
 
 -- Arrivo col teletrasporto: compare schiacciato e si allunga con un rimbalzo
