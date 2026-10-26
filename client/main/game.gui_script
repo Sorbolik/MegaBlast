@@ -1415,7 +1415,10 @@ local function render(self, dt)
 		-- chi mira si gira verso il dito e punta il braccio con l'arma
 		local aiming = self.aiming and g.phase == "aim" and i == g.current and my_turn(self)
 		local st = r.st
-		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, vx
+		-- corre solo chi si muove da sé: solo chi è di turno ha i comandi, e non
+		-- quando lo sbalzano o lo tira il Rampino. Chi viene spinto resta in attesa
+		local da_se = i == g.current and not rb.knocked and not rb.hooked
+		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, da_se and vx or 0
 		st.facing = rb.facing
 		st.turno = i == g.current
 		st.paracadute = rb.parachute and not rb.dead
