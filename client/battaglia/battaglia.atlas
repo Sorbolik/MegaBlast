@@ -8,6 +8,15 @@ images {
   image: "/assets/fx/bagliore.png"
 }
 images {
+  image: "/assets/fx/cura_anello.png"
+}
+images {
+  image: "/assets/fx/cura_cuore.png"
+}
+images {
+  image: "/assets/fx/cura_scintilla.png"
+}
+images {
   image: "/assets/ui/levette/levetta_base.png"
 }
 images {

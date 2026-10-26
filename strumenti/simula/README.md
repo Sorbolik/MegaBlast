@@ -9,7 +9,7 @@ bash strumenti/simula/prepara.sh          # una volta: Java 25, bob.jar 1.14.0, 
 python3 strumenti/simula/simula.py        # controlli, test, build e partita con lo scenario base
 python3 strumenti/simula/simula.py -s strumenti/simula/scenari/mio.txt
 python3 strumenti/simula/simula.py --solo-build    # senza avviare il gioco
-python3 strumenti/simula/simula.py --scala 2 -s strumenti/simula/scenari/scoria.txt   # schermo 2560 x 1440, personaggio da vicino
+python3 strumenti/simula/simula.py --scala 2 -s strumenti/simula/scenari/diavoletto.txt   # schermo 2560 x 1440, personaggio da vicino
 ```
 
 Nelle sessioni cloud `prepara.sh` parte da solo all'avvio

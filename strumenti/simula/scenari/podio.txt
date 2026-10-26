@@ -1,5 +1,5 @@
-# Fine partita, podio e armeria: partita da 3 secondi, Rosso e Blu sparano e a
-# fine giro la partita finisce; dopo un attimo sale il podio con riconoscimenti ed
+# Fine partita, podio e armeria: partita da 3 secondi, Rosso e Blu sparano (un
+# colpo a testa: il turno finisce col tempo) e a fine giro la partita finisce; dopo un attimo sale il podio con riconoscimenti ed
 # esperienza. Poi l'armeria dalla home: set del Vuoto completo e un nodo
 # dell'albero di abilità.
 imposta prova_durata 3
@@ -8,10 +8,11 @@ aspetta 1
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
-mira 4 150 0.4
-aspetta_stato turno=2 fase=aim 20
-mira -4 150 0.4
-aspetta_evento over 30
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
 aspetta 1.8
 foto 01_podio_sale
 aspetta 2
@@ -49,9 +50,10 @@ aspetta_stato modo=menu 3
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
-mira 4 150 0.4
-aspetta_stato turno=2 fase=aim 20
-mira -4 150 0.4
-aspetta_evento over 30
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
 aspetta 4
 foto 06_secondo_podio

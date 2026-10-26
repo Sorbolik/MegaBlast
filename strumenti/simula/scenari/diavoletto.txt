@@ -1,0 +1,42 @@
+# Il diavoletto a pezzi (battaglia/scoria.lua): fermo di turno, corsa, salto,
+# paracadute (barra da 4: Paracadute a 801), mira in su, rinculo, la Lama in giù,
+# poi l'altro di turno (chi aspetta fa le scenette) e il cerchio di cura, che
+# compare al turno 2. Da vicino: --scala 2.
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+zoom 01_fermo 4
+tieni destra 0.5 02_corsa 4
+aspetta 0.3
+tieni sinistra 0.3
+premi salta
+aspetta 0.15
+zoom 03_salto_sale 4
+aspetta 0.35
+zoom 04_salto_scende 4
+aspetta 1
+tieni salta 0.35                    # salto alto, e in aria il paracadute
+aspetta 0.05
+tocca 801 62
+aspetta_evento parachute 2
+aspetta 0.25
+zoom 05_paracadute 4
+tieni destra 0.5 06_paracadute_spostato 4
+aspetta 2.5
+mira 200 160 0.6 07_mira_su 4
+aspetta 0.04
+zoom 08_rinculo 4
+aspetta_evento explosion 20
+aspetta 0.5
+premi 2                             # la Lama: il secondo attacco, in giù
+mira 150 -60 0.4 09_spada_giu 4
+aspetta_evento swing 5
+aspetta_stato turno=2 fase=aim 40
+aspetta 1
+zoom 10_altro_di_turno 4
+aspetta 5
+foto 11_scena
+aspetta 4
+foto 12_scena_dopo
