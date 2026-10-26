@@ -92,7 +92,7 @@ local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", 
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
-	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "In aria colpisce sotto di te e rimbalzi in alto; a terra colpisce davanti",
+	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dalla testa ai piedi; in aria, se colpisce mentre cala, rimbalzi in alto",
 	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true, mallet = true }
@@ -710,8 +710,11 @@ local function handle_event(self, e)
 	elseif e.type == "mallet" then
 		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "mallet_hit" then
+		-- l'onda dove ha sbattuto il martello; se chi colpisce rimbalza lo dice la sua targa
 		shock(self, e.x, e.y)
-		if e.target then self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y + game.ROBOT_H, self.clock end
+		local by = self.g.robots[e.robot]
+		if e.target then self.colpo_x, self.colpo_y, self.colpo_t = by.x, by.y + game.SWORD_PIVOT_Y, self.clock end
+		if e.bounce then targa.annuncio(self.robots[e.robot].targa, "RIMBALZO!") end
 	elseif e.type == "lunge_hit" then
 		shock(self, e.x, e.y)
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
@@ -846,6 +849,8 @@ local function apply_state(self, s)
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
 		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
 		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
+		rb.mallet_stop = (r.ms or 0) > 0 and r.ms or nil
+		rb.mallet_dir = (r.md or 0) ~= 0 and r.md or nil
 		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
 		rb.shield = (r.sh or 0) > 0 and r.sh or nil
 		rb.parachute = r.pa or false
@@ -1453,17 +1458,15 @@ local function render(self, dt)
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
 		end
-		-- Maglio: mirando sta alto dietro la testa; nel colpo cala davanti (a
-		-- terra) o sotto i piedi (in aria), in hit_tick tick
+		-- Maglio: mirando sta alto dietro la testa (dove parte l'arco); nel colpo
+		-- gira attorno alla spalla come la Lama e si ferma dove ha sbattuto
 		if aiming and weapon == "mallet" then
-			st.aim = st.facing > 0 and PUNCH_TO or math.pi - PUNCH_TO
+			st.aim = st.facing > 0 and gconfig.MALLET.from or math.pi - gconfig.MALLET.from
 		end
 		if rb.mallet ~= nil and not rb.dead then
 			weapon = "mallet"
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
-			local t = math.max(0, rb.mallet - span + k * span)
-			local to = rb.grounded and -0.3 or -math.pi / 2
-			local a = PUNCH_TO + (to - PUNCH_TO) * math.min(1, t / gconfig.MALLET.hit_tick)
+			local a = game.mallet_angle(math.max(0, rb.mallet - span + k * span), rb.mallet_stop)
 			local dir = rb.mallet_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
