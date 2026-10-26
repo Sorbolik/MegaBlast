@@ -2394,10 +2394,10 @@ end
 -- "blastron": ricostruiti dall'APK di Blastron (docs/blastron.md). Le misure
 -- là sono in unità di Farseer, qui diventano pixel in proporzione al robot:
 -- il robot di Blastron è alto 3,612 unità, il nostro BLASTRON_ROBOT_H pixel
--- (28: 1,4 volte i 20 di prima, scelto il 23 ottobre per vedere meglio il
--- personaggio; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
+-- (56: il doppio dei 28 del 23 ottobre, scelto il 26 ottobre perché il diavoletto
+-- dipinto si legga; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
 -- La vita là partiva da 2000, qui da DAMAGE_BASE: i danni sono riscalati.
-M.BLASTRON_ROBOT_H = 28
+M.BLASTRON_ROBOT_H = 56
 M.BLASTRON_UNIT = M.BLASTRON_ROBOT_H / 3.612
 
 local function blastron_profile()

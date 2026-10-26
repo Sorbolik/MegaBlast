@@ -13,9 +13,8 @@
 
 local M = {}
 
--- livelli di zoom che si scelgono col pulsante, la rotella o il tasto Z. Il più
--- vicino fa il personaggio alto un decimo dello schermo, così il disegno si legge
-M.LIVELLI = { 4.4, 2.2, 1 }
+-- livelli di zoom che si scelgono col pulsante, la rotella o il tasto Z
+M.LIVELLI = { 3, 1.8, 1 }
 M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
 
 -- quanto in fretta la camera raggiunge il punto (1/s): più alto = più rigida
