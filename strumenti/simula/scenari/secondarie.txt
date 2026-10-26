@@ -1,6 +1,6 @@
 # Secondarie: la barra con i due gruppi colorati (brace e acciaio) e il Tonante,
 # la pistola pesante scelta all'inizio: colpo dritto e istantaneo con la traccia,
-# il rinculo spinge chi spara dalla parte opposta (da terra lo solleva). Con
+# il rinculo spinge chi spara dalla parte opposta, uguale in tutte le direzioni. Con
 # prova_secondaria eagle la barra ha cinque slot: Lanciarune 432, Lama 546,
 # Tonante 660, Rampino 754, Paracadute 848.
 imposta prova_secondaria eagle
@@ -14,7 +14,7 @@ foto 01_barra_gruppi
 premi 3                             # Tonante
 aspetta 0.4
 zoom 02_tonante_in_mano
-mira 120 120 0.5 03_mira_dritta      # in alto a destra: il rinculo spinge in basso a sinistra
+mira 150 0 0.5 03_mira_dritta        # a destra, in orizzontale: il rinculo spinge a sinistra di 110 px
 aspetta_evento eagle 2
 aspetta 0.05
 foto 04_colpo_e_rinculo

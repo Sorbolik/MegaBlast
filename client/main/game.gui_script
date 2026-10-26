@@ -25,8 +25,9 @@ local oggetti = require "battaglia.oggetti"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
-local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
-local TW, TH = W / CELL, H / CELL
+-- W, H: lo schermo del gioco; la mappa è game.WORLD_W x game.WORLD_H
+local W, H, CELL = 1280, 720, game.CELL
+local TW, TH = game.WORLD_W / CELL, game.WORLD_H / CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
@@ -77,10 +78,11 @@ local BAR_GROUPS = { { "PRIMARIE", ui.C.BRACE }, { "SECONDARIE", ui.C.ACCIAIO },
 local function bar_group(w)
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
 end
-local WEAPON_ICON = {
-	missile = "lanciarune_icona", sword = "lama_di_nucleo_icona", grenade = "uovo_di_fiamma_icona",
-	shards = "sciame_di_schegge_icona", punch = "pugno_del_titano_icona",
-}
+-- icone della barra e della scelta (atlante armi, strumenti/grafica/armi.py)
+local WEAPON_ICON = {}
+for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "hook" }) do
+	WEAPON_ICON[w] = w .. "_icona"
+end
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
 local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
 	sniper = "il Cecchino",
@@ -91,7 +93,7 @@ local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", 
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
-	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "In aria colpisce sotto di te e rimbalzi in alto; a terra colpisce davanti",
+	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dalla testa ai piedi; in aria, se colpisce mentre cala, rimbalzi in alto",
 	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true, mallet = true }
@@ -145,17 +147,19 @@ end
 
 -- scritte dell'HUD col font dell'interfaccia: scala 1 = circa 16 px
 local FONT_K = 0.4
--- Globo del teletrasporto: un disco di carbone col contorno chiaro (come la
--- Scoria) e il cuore acceso, del colore di chi lo lancia. Restituisce disco e cuore.
-local function orb_shape(d)
-	local root = stretch(gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d, d, 0)))
-	gui.set_color(root, ui.C.LUCE)
-	local body = gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d * 0.78, d * 0.78, 0))
-	gui.set_color(body, ui.C.PANNELLO)
-	gui.set_parent(body, root)
-	local core = gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d * 0.46, d * 0.46, 0))
-	gui.set_parent(core, root)
-	return root, core
+-- Un colpo in volo (o il globo del pulsante) dall'atlante delle armi, grande sc
+-- volte le sue misure del mondo (battaglia/armi.lua): l'immagine e sopra le
+-- parti col colore di chi spara. Restituisce il nodo e le parti da tingere.
+local function colpo(nome, sc)
+	local a = require("battaglia.armi").colpi[nome]
+	local img = stretch(gui.new_box_node(vmath.vector3(a.x * sc, a.y * sc, 0), vmath.vector3(a.w * sc, a.h * sc, 0)))
+	gui.set_texture(img, "armi")
+	gui.play_flipbook(img, a.img)
+	local tinta = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(a.w * sc, a.h * sc, 0))
+	gui.set_texture(tinta, "armi")
+	gui.play_flipbook(tinta, a.tinta)
+	gui.set_parent(tinta, img)
+	return img, tinta
 end
 
 local function label(x, y, text, scale)
@@ -180,9 +184,10 @@ end
 local FISICA = config_string("megablast.fisica", "")
 if FISICA ~= "" then game.use_physics(FISICA) end
 
--- Proiettili e casse si disegnano in proporzione al robot della
--- simulazione: 16 pixel nel profilo megablast, 20 in quello di Blastron
-local K = game.ROBOT_H / 16
+-- Proiettili e casse si disegnano in proporzione al robot della simulazione
+-- senza l'ingrandimento del corpo: 16 pixel nel profilo megablast, 28 in quello
+-- di Blastron
+local K = game.ROBOT_H / game.CORPO / 16
 
 local VK = vmath.vector3(K, K, 1)
 
@@ -259,7 +264,7 @@ local MASK_PATH = "/battaglia/maschera_viva.texturec"
 local RGBA = hash("rgba")
 local MASK_FORMAT = { { name = RGBA, type = buffer.VALUE_TYPE_UINT8, count = 4 } }
 -- mappe che hanno i disegni in assets/mappe (le altre usano una roccia semplice)
-local PAINTED = { forgia = true, isole = true }
+local PAINTED = { forgia = true, crogiolo = true }
 
 -- le costanti stanno in graphics (Defold recenti) o in resource (vecchi)
 local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
@@ -672,7 +677,6 @@ local function handle_event(self, e)
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
 		scoria.fire(self.robots[e.robot].rig, kind)
 	elseif e.type == "teleport" then
-		scoria.teleport(self.robots[e.robot].rig)
 		if self.mode == "online" then
 			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
 			self.snap[e.robot] = true
@@ -709,8 +713,11 @@ local function handle_event(self, e)
 	elseif e.type == "mallet" then
 		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "mallet_hit" then
+		-- l'onda dove ha sbattuto il martello; se chi colpisce rimbalza lo dice la sua targa
 		shock(self, e.x, e.y)
-		if e.target then self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y + game.ROBOT_H, self.clock end
+		local by = self.g.robots[e.robot]
+		if e.target then self.colpo_x, self.colpo_y, self.colpo_t = by.x, by.y + game.SWORD_PIVOT_Y, self.clock end
+		if e.bounce then targa.annuncio(self.robots[e.robot].targa, "RIMBALZO!") end
 	elseif e.type == "lunge_hit" then
 		shock(self, e.x, e.y)
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
@@ -752,7 +759,13 @@ local function handle_event(self, e)
 		-- crolla e svanisce da solo; dopo 1,5 s ricompare altrove, nello stesso turno
 		scoria.die(self.robots[e.robot].rig)
 		targa.set_enabled(self.robots[e.robot].targa, false)
-		if e.by then
+		if e.own then
+			-- morto da solo nel proprio turno: l'uccisione va a chi gli ha fatto più danno
+			local chi = (self.mode == "online" and e.robot == self.me) and "Muori da solo" or self.names[e.robot] .. " muore da solo"
+			local pena = gconfig.SCORE.death + gconfig.SCORE.self_death
+			show_message(self, e.by and string.format("%s! %d, +%d a %s", chi, pena, e.points, who_name(self, e.by))
+				or string.format("%s! %d", chi, pena))
+		elseif e.by then
 			local verbo = e.env and " butta giù " or " elimina "
 			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
 		end
@@ -845,6 +858,8 @@ local function apply_state(self, s)
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
 		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
 		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
+		rb.mallet_stop = (r.ms or 0) > 0 and r.ms or nil
+		rb.mallet_dir = (r.md or 0) ~= 0 and r.md or nil
 		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
 		rb.shield = (r.sh or 0) > 0 and r.sh or nil
 		rb.parachute = r.pa or false
@@ -1073,7 +1088,7 @@ start_local_match = function(self, picked)
 	end
 	players[1].stats = assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio))
 	opts.players = players
-	new_match(self, os.time(), nil, opts)
+	new_match(self, os.time(), self.mappa, opts)
 	-- prova_durata N: la partita dura N secondi (scenari/podio.txt)
 	local durata = SIMULA and config_int("megablast.prova_durata", 0) or 0
 	if durata > 0 then self.g.match_left = durata * 60 end
@@ -1422,8 +1437,13 @@ local function render(self, dt)
 		-- chi mira si gira verso il dito e punta il braccio con l'arma
 		local aiming = self.aiming and g.phase == "aim" and i == g.current and my_turn(self)
 		local st = r.st
-		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, vx
+		-- corre solo chi si muove da sé: solo chi è di turno ha i comandi, e non
+		-- quando lo sbalzano o lo tira il Rampino. Chi viene spinto resta in attesa
+		local da_se = i == g.current and not rb.knocked and not rb.hooked
+		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, da_se and vx or 0
 		st.facing = rb.facing
+		st.turno = i == g.current
+		st.paracadute = rb.parachute and not rb.dead
 		st.aim = nil
 		if aiming then
 			st.aim = self.aim_angle
@@ -1455,17 +1475,15 @@ local function render(self, dt)
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
 		end
-		-- Maglio: mirando sta alto dietro la testa; nel colpo cala davanti (a
-		-- terra) o sotto i piedi (in aria), in hit_tick tick
+		-- Maglio: mirando sta alto dietro la testa (dove parte l'arco); nel colpo
+		-- gira attorno alla spalla come la Lama e si ferma dove ha sbattuto
 		if aiming and weapon == "mallet" then
-			st.aim = st.facing > 0 and PUNCH_TO or math.pi - PUNCH_TO
+			st.aim = st.facing > 0 and gconfig.MALLET.from or math.pi - gconfig.MALLET.from
 		end
 		if rb.mallet ~= nil and not rb.dead then
 			weapon = "mallet"
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
-			local t = math.max(0, rb.mallet - span + k * span)
-			local to = rb.grounded and -0.3 or -math.pi / 2
-			local a = PUNCH_TO + (to - PUNCH_TO) * math.min(1, t / gconfig.MALLET.hit_tick)
+			local a = game.mallet_angle(math.max(0, rb.mallet - span + k * span), rb.mallet_stop)
 			local dir = rb.mallet_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
@@ -1542,20 +1560,24 @@ local function render(self, dt)
 		set_pos(self.projectile, x, y)
 		self.fuoco_x, self.fuoco_y = x, y
 		gui.set_color(self.projectile_glow, self.colors[g.current])
-		if g.projectile and g.projectile.kind == "sniper" then
+		gui.set_color(self.razzo_tinta, self.colors[g.current])
+		gui.set_color(self.palla_tinta, self.colors[g.current])
+		-- razzo e palla puntano nel verso in cui vanno
+		local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
+		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
+		gui.set_euler(self.projectile, SNIPER_EULER)
+		local sniper = g.projectile and g.projectile.kind == "sniper"
+		gui.set_enabled(self.razzo, not sniper)
+		gui.set_enabled(self.palla, sniper)
+		if sniper then
 			-- cecchino: allungato nel verso in cui va; a ogni rimbalzo si
 			-- schiaccia e tremola come una gelatina, poi torna com'era
-			local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
-			if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
 			local t = self.clock - (self.boing or -10)
 			local w = BOING_AMP * math.exp(-t * BOING_DAMP) * math.cos(t * BOING_FREQ)
 			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (1.25 - w), VK.y * (0.85 + w)
-			gui.set_euler(self.projectile, SNIPER_EULER)
 			gui.set_scale(self.projectile, SNIPER_SCALE)
 			self.sniper_shape = true
 		elseif self.sniper_shape then
-			SNIPER_EULER.z = 0
-			gui.set_euler(self.projectile, SNIPER_EULER)
 			gui.set_scale(self.projectile, VK)
 			self.sniper_shape = false
 		end
@@ -1588,11 +1610,19 @@ local function render(self, dt)
 			local sa = pa.s[i].on and pa.s[i] or sb
 			local x, y = sa.x + (sb.x - sa.x) * k, sa.y + (sb.y - sa.y) * k
 			set_pos(node, x, y)
+			-- la scheggia punta nel verso in cui va
+			if sb.x ~= sa.x or sb.y ~= sa.y then
+				EULER.z = math.deg(math.atan2(sb.y - sa.y, sb.x - sa.x))
+				gui.set_euler(node, EULER)
+			end
 			n_shards, shard_x, shard_y = n_shards + 1, shard_x + x, shard_y + y
 		end
 	end
 	if self.shard_color ~= g.current then
-		for i = 1, game.SHARD_COUNT do gui.set_color(self.shard_nodes[i], self.colors[g.current]) end
+		for i = 1, game.SHARD_COUNT do
+			gui.set_color(self.shard_nodes[i], self.colors[g.current])
+			gui.set_color(self.shard_tints[i], self.colors[g.current])
+		end
 		self.shard_color = g.current
 	end
 
@@ -1736,7 +1766,7 @@ local function render(self, dt)
 	-- torna su chi è di turno. Nel menu si vede tutta la mappa.
 	local c = self.cam
 	if self.mode == "menu" then
-		camera.segui(c, dt, W / 2, H / 2, 1)
+		camera.segui(c, dt, game.WORLD_W / 2, game.WORLD_H / 2, camera.tutta(c))
 	else
 		local fx, fy, veloce = v.x, v.y + game.ROBOT_H / 2, false
 		self.cam_sosta = math.max(0, self.cam_sosta - dt)
@@ -1765,7 +1795,7 @@ function init(self)
 
 	-- tutto quello che sta nel mondo è figlio di questo nodo, che la camera
 	-- sposta e ingrandisce (apply_camera)
-	self.cam = camera.new(W, H)
+	self.cam = camera.new(W, H, game.WORLD_W, game.WORLD_H)
 	self.cam.livello = math.min(#camera.LIVELLI, math.max(1, ZOOM_INIZIO))
 	-- set_view_projection vuole anche id e projection; la proiezione resta quella
 	-- del render (stretch), che questa non cambia
@@ -1799,15 +1829,21 @@ function init(self)
 	gui.set_adjust_mode(self.projectile, gui.ADJUST_STRETCH)
 	self.projectile_glow = glow(0, 0, 34, WHITE)
 	gui.set_parent(self.projectile_glow, self.projectile)
-	gui.set_parent(glow(0, 0, 12, WHITE), self.projectile)
+	self.razzo, self.razzo_tinta = colpo("razzo", 1 / K)
+	gui.set_parent(self.razzo, self.projectile)
+	self.palla, self.palla_tinta = colpo("palla", 1 / K)
+	gui.set_parent(self.palla, self.projectile)
 	gui.set_scale(self.projectile, VK)
 
 	-- globo del teletrasporto: piccolo e tondo
 	self.orbs = {}
 	for i = 1, game.MAX_ORBS do
-		local root, light = orb_shape(11)
+		local root = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+		gui.set_visible(root, false)
 		local orb_glow = glow(0, 0, 30, WHITE)
 		gui.set_parent(orb_glow, root)
+		local img, light = colpo("globo", 1 / K)
+		gui.set_parent(img, root)
 		gui.set_enabled(root, false)
 		gui.set_scale(root, VK)
 		self.orbs[i] = { root = root, glow = orb_glow, light = light }
@@ -1820,25 +1856,21 @@ function init(self)
 	self.egg_spin = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(self.egg_spin, false)
 	gui.set_parent(self.egg_spin, self.egg)
-	local egg_img = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(56 * 0.3, 64 * 0.3, 0))
-	gui.set_texture(egg_img, "battaglia")
-	gui.play_flipbook(egg_img, "uovo_di_fiamma")
+	local egg_img
+	egg_img, self.egg_light = colpo("uovo", 1 / K)
 	gui.set_parent(egg_img, self.egg_spin)
-	self.egg_light = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(56 * 0.3, 64 * 0.3, 0))
-	gui.set_texture(self.egg_light, "battaglia")
-	gui.play_flipbook(self.egg_light, "uovo_di_fiamma_luce")
-	gui.set_blend_mode(self.egg_light, gui.BLEND_ADD)
-	gui.set_parent(self.egg_light, self.egg_spin)
 	self.egg_label = label(0, 26, "3", 0.7 / K)
 	gui.set_parent(self.egg_label, self.egg)
 	gui.set_enabled(self.egg, false)
 	gui.set_scale(self.egg, VK)
 
 	-- schegge dello Sciame
-	self.shard_nodes = {}
+	self.shard_nodes, self.shard_tints = {}, {}
 	for i = 1, game.SHARD_COUNT do
-		local n = glow(0, 0, 26, WHITE)
-		gui.set_parent(glow(0, 0, 10, WHITE), n)
+		local n = glow(0, 0, 22, WHITE)
+		local img, tinta = colpo("scheggia", 1 / K)
+		gui.set_parent(img, n)
+		self.shard_tints[i] = tinta
 		gui.set_scale(n, VK)
 		gui.set_enabled(n, false)
 		self.shard_nodes[i] = n
@@ -1957,7 +1989,7 @@ function init(self)
 		local icon -- gli oggetti hanno un'icona di forme (oggetti.icona), che resta accesa
 		if WEAPON_ICON[w] then
 			icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
-			gui.set_texture(icon, "battaglia")
+			gui.set_texture(icon, "armi")
 			gui.play_flipbook(icon, WEAPON_ICON[w])
 			gui.set_parent(icon, n)
 		else
@@ -1986,8 +2018,7 @@ function init(self)
 	self.btn_tele, self.tele_bordo = ui.pannello(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D)
 	stretch(self.btn_tele)
 	local orb_icon
-	orb_icon, self.tele_light = orb_shape(34)
-	gui.set_position(orb_icon, vmath.vector3(0, 2, 0))
+	orb_icon, self.tele_light = colpo("globo", 3.6)
 	gui.set_parent(orb_icon, self.btn_tele)
 	self.tele_key = label(-26, -28, "T", 0.6)
 	gui.set_parent(self.tele_key, self.btn_tele)
@@ -2000,8 +2031,11 @@ function init(self)
 	self.profilo = profilo.carica()
 	self.scelta = scelta_armi.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT)
 
+	-- Nelle partite vere la mappa la sceglie il seed (sim/maps.lua). Negli scenari di
+	-- prova è fissa, così le foto si ripetono: forgia, o [megablast] prova_mappa.
+	self.mappa = SIMULA and config_string("megablast.prova_mappa", "forgia") or nil
 	-- una mappa sullo sfondo del menu
-	new_match(self, os.time())
+	new_match(self, os.time(), self.mappa)
 	self.g:pop_events()
 	show_menu(self)
 end

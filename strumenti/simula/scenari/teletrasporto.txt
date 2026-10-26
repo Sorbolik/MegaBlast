@@ -25,6 +25,8 @@ aspetta_evento orb 2
 foto 02_due_globi_in_volo
 aspetta_evento teleport 4
 zoom 03_primo_teletrasporto
+aspetta 0.25
+zoom 03_ricompare
 aspetta_evento teleport 4
 zoom 04_secondo_teletrasporto
 premi 2                             # Lama di Nucleo (tasto 2)

@@ -5,7 +5,7 @@
 -- Pannelli e testo dell'interfaccia minimale (ui/ui.lua).
 --
 --   local scelta = require "menu.scelta"
---   local s = scelta.new(icone, nomi, effetti)     -- icone (o forme, oggetti.icona), nomi e una riga sull'effetto per arma, nascosta
+--   local s = scelta.new(icone, nomi, effetti)     -- icone (atlante armi), nomi e una riga sull'effetto per arma, nascosta
 --   scelta.show(s, d, nomi_giocatori, colori)      -- d = draft.new(...)
 --   local players = scelta.update(s, dt)           -- i giocatori per game.new, quando tutti hanno scelto
 --   scelta.on_input(s, action_id, action)
@@ -13,7 +13,6 @@
 local config = require "sim.config"
 local draft = require "sim.draft"
 local ui = require "ui.ui"
-local oggetti = require "battaglia.oggetti"
 
 local M = {}
 
@@ -55,11 +54,8 @@ function M.new(icone, nomi, effetti)
 		for i = 1, config.DRAFT_OFFER do
 			local c, bordo = ui.pannello(x0 + (i - 1) * (CARD_W + CARD_GAP), ROW_Y[fila], CARD_W, CARD_H, s.root)
 			local icona = gui.new_box_node(vec(0, 36), vec(96, 96))
-			gui.set_texture(icona, "battaglia")
+			gui.set_texture(icona, "armi")
 			gui.set_parent(icona, c)
-			-- le armi senza immagine (cecchino e secondarie) hanno un'icona di forme, più grande
-			local forma = nodo(0, 36, 0, 0, C.LUCE, c)
-			gui.set_scale(forma, vmath.vector3(1.5, 1.5, 1))
 			local nome = ui.testo("", 0, -30, 0.65, nil, c)
 			-- l'effetto dell'arma in una riga (due se serve)
 			local effetto = ui.testo("", 0, -58, 0.5, C.SPENTO, c)
@@ -71,7 +67,7 @@ function M.new(icone, nomi, effetti)
 			for k = 1, 4 do
 				segni[k] = nodo(-45 + (k - 1) * 30, -88, 22, 8, C.LUCE, c)
 			end
-			s.carte[fila][i] = { node = c, bordo = bordo, icona = icona, forma = forma, nome = nome, effetto = effetto,
+			s.carte[fila][i] = { node = c, bordo = bordo, icona = icona, nome = nome, effetto = effetto,
 				segni = segni, fila = fila }
 		end
 	end
@@ -99,18 +95,7 @@ local function aggiorna(s)
 			local w = offer[i]
 			gui.set_enabled(c.node, w ~= nil)
 			if w then
-				gui.set_enabled(c.icona, s.icone[w] ~= nil)
-				gui.set_enabled(c.forma, s.icone[w] == nil)
-				if s.icone[w] then
-					gui.play_flipbook(c.icona, s.icone[w])
-				elseif c.forma_di ~= w then
-					-- la forma si disegna una volta per arma
-					gui.delete_node(c.forma)
-					c.forma = nodo(0, 36, 0, 0, C.LUCE, c.node)
-					gui.set_scale(c.forma, vmath.vector3(1.5, 1.5, 1))
-					oggetti.icona(w, c.forma)
-					c.forma_di = w
-				end
+				gui.play_flipbook(c.icona, s.icone[w])
 				gui.set_text(c.nome, s.nomi[w])
 				gui.set_text(c.effetto, s.effetti[w] or "")
 				local libera = not chi or draft.valid(d, chi, w)

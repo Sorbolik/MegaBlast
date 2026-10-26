@@ -8,6 +8,14 @@ textures {
   texture: "/battaglia/battaglia.atlas"
 }
 textures {
+  name: "armi"
+  texture: "/battaglia/armi.atlas"
+}
+textures {
+  name: "diavoletto"
+  texture: "/battaglia/diavoletto.atlas"
+}
+textures {
   name: "esplosione"
   texture: "/battaglia/esplosione.tilesource"
 }
@@ -22,5 +30,9 @@ background_color {
   w: 0.0
 }
 material: "/builtins/materials/gui.material"
+materials {
+  name: "lampo"
+  material: "/battaglia/lampo.material"
+}
 adjust_reference: ADJUST_REFERENCE_PARENT
 max_nodes: 2048

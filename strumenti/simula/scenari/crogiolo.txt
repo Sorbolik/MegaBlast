@@ -1,0 +1,22 @@
+# Il Crogiolo in 2 contro 2: tutta la mappa con i quattro punti di partenza,
+# poi un missile di Rosso e la camera vicina.
+
+imposta prova_mappa crogiolo
+imposta giocatori 2v2
+imposta zoom 3
+
+aspetta 2
+foto 01_menu
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.2
+foto 02_mappa_intera
+
+mira 120 -40 0.5 03_mira
+aspetta_evento fire 2
+aspetta_evento explosion 8
+aspetta 0.2
+foto 04_cratere
+premi z                             # VICINO
+aspetta 1.2
+foto 05_vicino
