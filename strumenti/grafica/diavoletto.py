@@ -286,6 +286,11 @@ def main():
         if not fogli:
             continue
         fot = [apri(f, cfg["base"] is not None) for f in fogli]
+        # il disegno che tocca il bordo del fotogramma è tagliato (di solito la coda)
+        tagliati = [i for i, f in enumerate(fot)
+                    if max(f[:, :2, 3].max(), f[:, -2:, 3].max(), f[:2, :, 3].max(), f[-2:, :, 3].max()) > 0.15]
+        if tagliati:
+            print(f"ATTENZIONE {nome}: {len(tagliati)} fotogrammi toccano il bordo (tagliati): {tagliati}")
         if cfg.get("cerca"):
             da, a = giro_migliore(fot, *cfg["cerca"])
             passo = 1
