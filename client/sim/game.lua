@@ -848,6 +848,7 @@ function M:update_grenade(p)
 			self:bounce_on_robot(p, hit, M.GRENADE_BOUNCE, M.GRENADE_FRICTION)
 			break
 		end
+		if self:spring(p, p.y + sy, M.GRENADE_R) then break end
 		if sx ~= 0 then
 			if t:solid(p.x + sx, p.y) then
 				p.vx, sx = -p.vx * M.GRENADE_BOUNCE, 0
@@ -914,6 +915,7 @@ function M:update_shards()
 			local mx, my = p.vx * M.DT, p.vy * M.DT
 			local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 			for _ = 1, steps do
+				if self:spring(p, p.y + my / steps, 0) then break end
 				p.x = p.x + mx / steps
 				p.y = p.y + my / steps
 				if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then
@@ -1067,6 +1069,8 @@ function M:update_orb(o)
 		if hit then
 			self:bounce_on_robot(o, hit, M.ORB_BOUNCE, M.ORB_FRICTION)
 			break
+		elseif self:spring(o, ny, M.ORB_R) then
+			break
 		elseif t:solid(nx, ny) then
 			local sx, sy = surface_normal(t, nx, ny)
 			local vn = o.vx * sx + o.vy * sy
@@ -1174,6 +1178,8 @@ function M:update_sniper(p)
 			self:sniper_hit(p, hit)
 			self.projectile = nil
 			return
+		elseif self:spring(p, ny, 0) then
+			break
 		elseif t:solid(nx, ny) then
 			p.bounces = p.bounces + 1
 			p.vx, p.vy = bounce(t, nx, ny, p.vx, p.vy)
@@ -1791,7 +1797,14 @@ function M:fall(o, hw, max_fall)
 	local steps = math.max(1, math.ceil(-my / M.CELL))
 	for _ = 1, steps do
 		local ny = o.y + my / steps
+		if self:spring(o, ny, hw) then return false end
 		if self:object_collides(o.x, ny, hw) then
+			-- risalendo dal trampolino si ripassa da dove si è scesi: qui
+			-- c'è solo un cratere richiuso, ci si ferma
+			if my > 0 then
+				o.vy = 0
+				return false
+			end
 			-- appoggiato sul bordo della cella sotto
 			o.y = (math.floor(ny / M.CELL) + 1) * M.CELL
 			o.vy = 0
@@ -1986,6 +1999,8 @@ function M:fly_placed(o)
 		if hit then
 			o.x, o.y, o.flying = hit.x, hit.y, false
 			break
+		elseif self:spring(o, ny, M.GRENADE_R) then
+			break
 		elseif self.terrain:solid(nx, ny) then
 			o.flying = false
 			break
@@ -1998,15 +2013,42 @@ function M:fly_placed(o)
 	end
 end
 
--- Rimbalzo sul trampolino: sempre, ma restandoci sopra ogni volta più basso
-function M:bounce(rb, o)
+-- Velocità del rimbalzo di b (robot o corpo) sul trampolino o: sempre, ma
+-- restandoci sopra ogni volta più bassa. nil se i rimbalzi sono finiti.
+local function spring_vy(b, o)
 	local tr = C.TRAMPOLINE
-	local chain = rb.bounced_on == o.id and (rb.bounces or 0) or 0
+	local chain = b.bounced_on == o.id and (b.bounces or 0) or 0
 	local vy = tr.launch_vy * tr.decay ^ chain
-	if vy < tr.min_vy then return end
+	if vy < tr.min_vy then return nil end
+	b.bounced_on, b.bounces = o.id, chain + 1
+	return vy
+end
+
+-- Rimbalzo di un robot sul trampolino
+function M:bounce(rb, o)
+	local vy = spring_vy(rb, o)
+	if not vy then return end
 	rb.vy, rb.grounded, rb.rising, rb.knocked, rb.fall_top = vy, false, false, false, nil
-	rb.bounced_on, rb.bounces = o.id, chain + 1
 	self:emit({ type = "bounce", id = o.id, robot = rb.id })
+end
+
+-- Un corpo largo 2 * r (colpo, Uovo, globo, cassa, oggetto) che scendendo
+-- verso ny passa la tavola di un trampolino ci rimbalza: torna sulla tavola e
+-- riparte in alto. Restituisce true se è rimbalzato.
+function M:spring(b, ny, r)
+	if b.vy >= 0 then return false end
+	local top = C.TRAMPOLINE.top
+	for _, o in ipairs(self.placed) do
+		if o.kind == "trampoline" and o ~= b and not o.flying and b.y >= o.y + top and ny < o.y + top
+			and math.abs(b.x - o.x) <= o.r + r then
+			local vy = spring_vy(b, o)
+			if not vy then return false end
+			b.y, b.vy = o.y + top, vy
+			self:emit({ type = "bounce", id = o.id, x = b.x, y = b.y })
+			return true
+		end
+	end
+	return false
 end
 
 function M:update_placed()
@@ -2179,6 +2221,7 @@ function M:update_projectile()
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	for _ = 1, steps do
+		if self:spring(p, p.y + my / steps, 0) then break end
 		p.x = p.x + mx / steps
 		p.y = p.y + my / steps
 		if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then

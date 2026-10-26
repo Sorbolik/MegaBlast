@@ -132,7 +132,12 @@ check(indietro, "rinculo: la mano torna indietro verso la spalla")
 check(math.abs(angolo(math.atan2(my0 - ry, mx0 - rx) - 0.6)) < 0.02, "rinculo: la mano si sposta lungo l'asse dell'arma")
 
 st.aim = nil
-for name in pairs(DA) do
+-- in ordine fisso: pairs cambia ordine da un'esecuzione all'altra e, se
+-- l'ultima fosse la Lama, il controllo della morte qui sotto non la cambierebbe
+local nomi = {}
+for name in pairs(DA) do nomi[#nomi + 1] = name end
+table.sort(nomi)
+for _, name in ipairs(nomi) do
 	check(s.armi[name] ~= nil, name .. ": c'è il disegno in mano")
 	scoria.set_weapon(s, name)
 	for _ = 1, 10 do scoria.update(s, 1 / 60, st) end
