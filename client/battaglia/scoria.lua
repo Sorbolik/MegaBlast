@@ -115,8 +115,8 @@ local ARMI = {
 	punch = { riposo = -0.9 },
 	eagle = { riposo = -0.6 },
 	hook = { riposo = -0.4 },
-	mallet = { riposo = -1.6, due_mani = true },
-	lunge = { riposo = -1.4, due_mani = true },
+	mallet = { riposo = 2, due_mani = true },  -- in spalla: lungo com'è, in giù entrerebbe nel terreno
+	lunge = { riposo = 1.3, due_mani = true },  -- dritta in su: in giù entrerebbe nel terreno
 }
 
 -- una mano staccata: un cerchio nero col bordo chiaro
@@ -153,14 +153,17 @@ local function arma(s, name, color)
 		box(g, H * 0.45, 0, H * 0.7, max(2, H * 0.08), FERRO)
 		box(g, H * 0.8, H * 0.08, max(2, H * 0.08), H * 0.2, LAMA)
 	elseif name == "mallet" then
-		-- Maglio: manico lungo con la testa pesante in punta
-		local L = H * 1.1
-		box(g, L * 0.5, 0, L, max(2, H * 0.08), FERRO)
-		box(g, L, 0, H * 0.22, H * 0.4, FERRO)
-		box(g, L + H * 0.06, 0, H * 0.06, H * 0.4, LAMA)
+		-- Maglio: manico lungo con la testa pesante di traverso in punta, che
+		-- finisce dove la simulazione guarda se ha sbattuto (config.MALLET.reach);
+		-- la faccia chiara è quella che batte calando
+		local L, T = config.MALLET.reach, H * 0.3
+		box(g, (L - T) * 0.5, 0, L - T, max(2, H * 0.08), FERRO)
+		box(g, L - T * 0.5, 0, T, H * 0.44, FERRO)
+		box(g, L - T * 0.5, -H * 0.2, T, H * 0.06, LAMA)
 	elseif name == "lunge" then
-		-- Affondo: lancia lunga e sottile, con la punta chiara
-		local L = config.LUNGE.speed * config.LUNGE.ticks / 60 * 0.4
+		-- Affondo: lancia lunga e sottile, con la punta chiara dove colpisce
+		-- (config.LUNGE.reach)
+		local L = config.LUNGE.reach
 		box(g, L * 0.5, 0, L, max(2, H * 0.07), FERRO)
 		box(g, L, 0, H * 0.18, max(2, H * 0.12), LAMA)
 	else -- punch

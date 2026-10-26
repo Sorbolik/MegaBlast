@@ -829,53 +829,87 @@ do
 	m:step({ fire = { angle = math.rad(90), power = 1, weapon = "hook" } })
 	check(not ma.hooked and ma.vx == 0, "nel vuoto il Rampino non aggancia niente")
 
-	-- Maglio: in aria colpisce sotto i piedi e fa rimbalzare in alto; a terra davanti
+	-- Maglio: arco attorno alla spalla come la Lama, da sopra la testa (dietro)
+	-- fino sotto i piedi; colpisce tutto lungo l'arco, la testa si ferma sul
+	-- terreno; in aria, se sbatte mentre cala, chi colpisce rimbalza in alto.
+	-- sky(g): svuota una colonna di cielo e rende un punto in mezzo
+	local function sky(g)
+		g.terrain:rect(540, 200, 200, 300, 0)
+		return 640, 350
+	end
+	-- mallet(g, angolo): tutto il colpo; rende gli urti e la vy di chi colpisce
+	-- subito dopo ogni urto
+	local function mallet(g, angle)
+		local rb = g.robots[g.current]
+		g:step({ fire = { angle = angle, power = 1, weapon = "mallet" } })
+		local hits = {}
+		for _ = 1, config.MALLET.ticks + config.MALLET.hold + 2 do
+			for _, e in ipairs(g:pop_events()) do
+				if e.type == "mallet_hit" then e.vy = rb.vy; hits[#hits + 1] = e end
+			end
+			if not rb.mallet then break end
+			g:step()
+		end
+		return hits, rb
+	end
+	-- in aria: il robot sotto i piedi è colpito mentre il martello cala, e si rimbalza
 	local g1 = game.new(42, "isole", { secondary = "mallet" })
 	run(g1, 60)
 	local ga, gb = g1.robots[1], g1.robots[2]
-	sy = sky_spot(g1, 640, 120)
-	place(ga, 640, sy)
-	place(gb, 640, sy - game.ROBOT_H - config.MALLET.reach + 4)
+	local sx
+	sx, sy = sky(g1)
+	place(ga, sx, sy)
+	place(gb, sx, sy - game.ROBOT_H - 6)
 	hp = gb.hp
-	g1:step({ fire = { angle = math.rad(-90), power = 1, weapon = "mallet" } })
-	check(ga.mallet == 0, "il Maglio parte")
-	local mh
-	for _ = 1, config.MALLET.hit_tick do
-		g1:step()
-		for _, e in ipairs(g1:pop_events()) do if e.type == "mallet_hit" then mh = e end end
-	end
-	check(mh and mh.target == 2 and hp - gb.hp == config.MALLET.damage and next(gb.status) == nil, "in aria colpisce il robot sotto, danno secco")
-	check(ga.vy >= config.MALLET.bounce - 20 and gb.vx == 0, "e chi colpisce rimbalza in alto, il colpito non viene spinto")
-	run(g1, config.MALLET.ticks)
+	local hits = mallet(g1, math.rad(-90))
+	check(#hits == 1 and hits[1].target == 2 and hits[1].bounce and hp - gb.hp == config.MALLET.damage
+		and next(gb.status) == nil, "in aria colpisce il robot sotto, danno secco, e rimbalza")
+	check(hits[1].vy >= config.MALLET.bounce - 20 and gb.vx == 0, "chi colpisce va in alto, il colpito non viene spinto")
 	check(ga.mallet == nil, "il colpo finisce")
-	-- sul terreno rimbalza lo stesso; a vuoto no
+	-- come la Lama prende tutto quello che c'è sull'arco: anche chi sta dietro in
+	-- alto, dove il martello parte; lì però non si rimbalza (non sta calando)
+	local g5 = game.new(42, "isole", { secondary = "mallet" })
+	run(g5, 60)
+	local g5a, g5b = g5.robots[1], g5.robots[2]
+	sx, sy = sky(g5)
+	place(g5a, sx, sy)
+	place(g5b, sx - 20, sy + 35)
+	hp = g5b.hp
+	hits = mallet(g5, 0)
+	check(#hits == 1 and hits[1].target == 2 and not hits[1].bounce and hp - g5b.hp == config.MALLET.damage and g5a.vy < 0,
+		"colpisce anche dietro in alto, all'inizio dell'arco, senza rimbalzo")
+	-- sul terreno sotto i piedi la testa si ferma e si rimbalza (pogo)
 	local g2 = game.new(42, "isole", { secondary = "mallet" })
 	run(g2, 60)
 	local g2a = g2.robots[1]
 	g2.robots[2].x = -1000
-	local gy = g2a.y
-	place(g2a, g2a.x, gy + config.MALLET.reach - 4)
+	place(g2a, g2a.x, g2a.y + 20)
 	g2:step({ fire = { angle = math.rad(-90), power = 1, weapon = "mallet" } })
-	run(g2, config.MALLET.hit_tick)
-	check(g2a.vy > 0, "sul terreno sotto i piedi rimbalza in alto (pogo)")
+	local stop
+	for _ = 1, config.MALLET.ticks do
+		g2:step()
+		if g2a.mallet_stop and not stop then stop = g2a.mallet_stop; check(g2a.vy >= config.MALLET.bounce - 20, "sul terreno sotto i piedi rimbalza in alto (pogo)") end
+	end
+	check(stop and stop < config.MALLET.ticks and game.mallet_angle(config.MALLET.ticks, stop) == game.mallet_angle(stop),
+		"la testa si ferma dove sbatte e resta lì")
+	-- a vuoto in aria non rimbalza
 	local g3 = game.new(42, "isole", { secondary = "mallet" })
 	run(g3, 60)
 	local g3a = g3.robots[1]
 	g3.robots[2].x = -1000
-	place(g3a, g3a.x, sky_spot(g3, g3a.x, 40))
-	g3:step({ fire = { angle = math.rad(-90), power = 1, weapon = "mallet" } })
-	run(g3, config.MALLET.hit_tick)
-	check(g3a.vy < 0, "a vuoto in aria non rimbalza")
-	-- a terra colpisce davanti e non si muove
+	place(g3a, sky(g3))
+	hits = mallet(g3, math.rad(-90))
+	check(#hits == 0 and g3a.vy < 0, "a vuoto in aria non rimbalza")
+	-- a terra colpisce davanti, la testa sbatte sul terreno e non si rimbalza
 	local g4 = game.new(42, "isole", { secondary = "mallet" })
 	run(g4, 60)
 	local g4a, g4b = g4.robots[1], g4.robots[2]
-	place(g4b, g4a.x + 2 * game.ROBOT_HALF_W + config.MALLET.reach - 4, g4a.y)
+	place(g4b, g4a.x + 2 * game.ROBOT_HALF_W + 16, g4a.y)
 	g4b.grounded = true
 	hp = g4b.hp
-	g4:step({ fire = { angle = 0, power = 1, weapon = "mallet" } })
-	run(g4, config.MALLET.hit_tick)
-	check(hp - g4b.hp == config.MALLET.damage and g4a.grounded, "a terra colpisce davanti e resta a terra")
+	hits = mallet(g4, 0)
+	check(hp - g4b.hp == config.MALLET.damage and g4a.grounded and #hits == 2 and not hits[1].bounce and not hits[2].bounce,
+		"a terra colpisce davanti, sbatte sul terreno e resta a terra")
 	check(not g4:can_use("sword") and g4:can_use("missile"), "Maglio e Lama sono tutte e due secondarie")
 
 	-- Affondo: scatto che attraversa il robot davanti e lo colpisce una volta
@@ -901,6 +935,43 @@ do
 	w:step({ fire = { angle = math.rad(-90), power = 1, weapon = "lunge" } })
 	run(w, 2)
 	check(wa.lunge == nil and wa.y >= y1 - 2, "il terreno ferma l'Affondo")
+	-- gradini e gobbe piccoli non lo fermano: li sale e va avanti
+	local v = game.new(42, "isole", { secondary = "lunge" })
+	run(v, 60)
+	local va, vb = v.robots[1], v.robots[2]
+	v.terrain:rect(300, 200, 680, 300, 0)
+	v.terrain:rect(300, 200, 680, 20, 1)
+	v.terrain:rect(500, 220, 10, 12, 1)
+	place(va, 440, 220)
+	vb.x = -1000
+	v:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
+	run(v, config.LUNGE.ticks)
+	check(va.x > 440 + 0.9 * config.LUNGE.speed * config.LUNGE.ticks / 60, "sale la gobba e fa tutto lo scatto")
+	-- un muro alto lo ferma
+	local wl = game.new(42, "isole", { secondary = "lunge" })
+	run(wl, 60)
+	local wla = wl.robots[1]
+	wl.robots[2].x = -1000
+	wl.terrain:rect(300, 200, 680, 300, 0)
+	wl.terrain:rect(300, 200, 680, 20, 1)
+	wl.terrain:rect(500, 220, 10, 100, 1)
+	place(wla, 440, 220)
+	wl:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
+	run(wl, config.LUNGE.ticks)
+	check(wla.x < 500 and wla.x > 480, "contro un muro alto si ferma")
+	-- la lancia colpisce anche chi resta oltre la fine dello scatto
+	local q = game.new(42, "isole", { secondary = "lunge" })
+	run(q, 60)
+	local qa, qb = q.robots[1], q.robots[2]
+	q.terrain:rect(300, 200, 680, 300, 0)
+	q.terrain:rect(300, 200, 680, 20, 1)
+	place(qa, 400, 220)
+	local fin = 400 + config.LUNGE.speed * config.LUNGE.ticks / 60
+	place(qb, fin + 2 * game.ROBOT_HALF_W + 12, 220)
+	hp = qb.hp
+	q:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
+	run(q, config.LUNGE.ticks)
+	check(hp - qb.hp == config.LUNGE.damage, "la lancia prende chi sta poco oltre la fine dello scatto")
 	-- Affondo e Lama sono tutte e due secondarie: una per turno
 	check(not w:can_use("sword") and w:can_use("missile"), "dopo l'Affondo niente Lama nello stesso turno")
 end
