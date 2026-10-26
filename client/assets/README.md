@@ -14,7 +14,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 | Cartella | Cosa c'è |
 |---|---|
 | `armi/` | Le icone delle armi della barra (`_icona`) e l'Uovo di Fiamma in volo (il globo del teletrasporto è disegnato dal codice), con le loro `_luce`. Le armi intere sono in `grafica/armi/` dei file del progetto |
-| `scoria/` | I pezzi del diavoletto: testa, busto con l'ala, gamba, coda in 5 segmenti e fiammella, ognuno con la sagoma bianca `_sagoma` (lampo del colpo) e la copia allargata `_bordo` (contorno chiaro) |
+| `scoria/` | I pezzi del diavoletto: testa, busto con l'ala, gamba, coda in 5 segmenti e fiammella, ognuno con la sagoma bianca `_sagoma` (lampo del colpo) e la copia allargata `_bordo` (contorno scuro) |
 | `esplosioni/` | `esplosione_base_12x256.png` (flipbook 12 fotogrammi da 256 px), fumo e fuoco additivo come livelli separati |
 | `mappe/isole_cimitero/` | `maschera.png` 640×360 (nero vuoto, bianco terra, rosso indistruttibile; è la stessa di `client/sim/mapdata.lua`), `superficie.png`, `ossa.png`, `interno.png` (parete dei crateri), `colori.txt` (brace dei crateri). Immagini a 1920×1080, allineate alla maschera |
 | `ui/` | Le tre forme bianche dell'interfaccia (`forma`, `bordo` 9-slice e `alone`), fatte da `strumenti/grafica/ui.py` e colorate da `client/ui/ui.lua`; `levette/` le levette del telefono (`strumenti/grafica/levette.py`) |

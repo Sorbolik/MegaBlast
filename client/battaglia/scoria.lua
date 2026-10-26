@@ -12,9 +12,9 @@
 -- Pezzi disegnati (immagini a colori di strumenti/grafica/scoria.py): testa con
 -- occhiali, busto con l'ala, due gambe uguali, la coda in segmenti e la fiammella
 -- sopra la testa. Mani e armi sono nodi GUI. Ogni pezzo ha tre copie in tre strati:
--- il contorno chiaro dietro a tutto (così il diavoletto si stacca dallo sfondo
--- scuro come un pezzo unico), il colore, e la sagoma bianca del lampo del colpo,
--- accesa solo quando serve.
+-- il contorno scuro dietro a tutto (spesso come quello delle mani, così anche
+-- piccolo in battaglia il diavoletto resta netto, come un pezzo unico), il colore,
+-- e la sagoma bianca del lampo del colpo, accesa solo quando serve.
 --
 -- La fiammella dice la squadra (ha il suo colore) e il turno: su chi gioca è più
 -- grande e accesa, sugli altri piccola e più scura.
@@ -38,7 +38,6 @@ local sin, cos, min, max, abs, pi = math.sin, math.cos, math.min, math.max, math
 local DEG = 180 / pi
 
 local INCHIOSTRO = vmath.vector4(0.078, 0.071, 0.094, 1)
-local LUCE = vmath.vector4(1, 0.886, 0.769, 0.6)
 local OMBRA = vmath.vector4(0, 0, 0, 0.35)
 local BIANCO = vmath.vector4(1, 1, 1, 1)
 local PELLE = vmath.vector4(0.78, 0.68, 0.6, 1)
@@ -106,8 +105,8 @@ end
 local function gx(s, x) return (x - 75) * s.k end
 local function gy(s, y) return (200 - y) * s.k end
 
--- i tre strati di ogni pezzo: contorno, colore, lampo
-local STRATI = { { "_bordo", LUCE }, { "", BIANCO }, { "_sagoma", BIANCO } }
+-- i tre strati di ogni pezzo: contorno scuro, colore, lampo
+local STRATI = { { "_bordo", INCHIOSTRO }, { "", BIANCO }, { "_sagoma", BIANCO } }
 
 -- un pezzo disegnato, in uno strato: un giunto nel punto (x, y) del disegno
 -- (relativo al giunto genitore, rx, ry), attorno a cui gira, e sotto l'immagine

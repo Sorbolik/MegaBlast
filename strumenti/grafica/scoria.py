@@ -3,7 +3,7 @@
 # e li mette in scala sulle unità del disegno:
 #   client/assets/scoria/<pezzo>.png          il pezzo a colori
 #   client/assets/scoria/<pezzo>_sagoma.png   la sua sagoma bianca, per il lampo del colpo
-#   client/assets/scoria/<pezzo>_bordo.png    la sagoma allargata, per il contorno chiaro
+#   client/assets/scoria/<pezzo>_bordo.png    la sagoma allargata, per il contorno scuro
 #   client/battaglia/scoria_pezzi.lua         centro, misura e perno di ogni pezzo
 # Unità del disegno: il corpo che colpisce va da x 0 a 150 e da y 0 a 200 (y verso
 # il basso, piedi a 200). Le tre immagini di un pezzo hanno la stessa tela.
@@ -12,7 +12,7 @@
 # python3 strumenti/grafica/scoria.py
 import os
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 from scipy import ndimage as nd
 
 QUI = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +20,7 @@ SRC = os.path.join(QUI, "diavoletto")
 OUT = os.path.join(QUI, "..", "..", "client", "assets", "scoria")
 LUA = os.path.join(QUI, "..", "..", "client", "battaglia", "scoria_pezzi.lua")
 RES = 2.5   # pixel dell'immagine per unità del disegno
-BORDO = 2.5   # spessore del contorno chiaro, in unità del disegno
+BORDO = 5     # spessore del contorno scuro, in unità del disegno
 
 # Ogni pezzo: scala (unità per pixel dell'immagine sorgente, una o x e y) e perno, cioè il
 # punto dell'immagine sorgente attorno a cui gira e dove va nel disegno.
@@ -111,6 +111,9 @@ def esporta(nome, im, scala, perno, dove):
     pm = crop.copy()
     pm[..., :3] *= pm[..., 3:4] / 255
     pic = Image.fromarray(pm.clip(0, 255).astype(np.uint8), "RGBA").resize((W, H), Image.LANCZOS)
+    # un po' di nitidezza: in battaglia il pezzo è molto più piccolo dell'immagine
+    # e la scheda video lo ammorbidisce ancora riducendolo
+    pic = pic.filter(ImageFilter.UnsharpMask(radius=2, percent=70, threshold=2))
     p = np.asarray(pic).astype(np.float32)
     al = p[..., 3:4]
     p[..., :3] = np.where(al > 0, p[..., :3] * 255 / np.maximum(al, 1), 0)
@@ -119,7 +122,7 @@ def esporta(nome, im, scala, perno, dove):
     bianco = Image.new("L", (W, H), 255)
     Image.merge("RGBA", (bianco,) * 3 + (Image.fromarray(alfa.astype(np.uint8)),)).save(
         os.path.join(OUT, nome + "_sagoma.png"), optimize=True)
-    # il bordo: la sagoma allargata di BORDO unità
+    # il contorno: la sagoma allargata di BORDO unità
     dist = nd.distance_transform_edt(alfa < 128)
     largo = np.clip((BORDO * RES + 0.5 - dist) * 255, 0, 255)
     Image.merge("RGBA", (bianco,) * 3 + (Image.fromarray(largo.astype(np.uint8)),)).save(
