@@ -38,24 +38,6 @@ images {
   image: "/assets/diavoletto/mira_12.png"
 }
 images {
-  image: "/assets/diavoletto/mira_13.png"
-}
-images {
-  image: "/assets/diavoletto/mira_14.png"
-}
-images {
-  image: "/assets/diavoletto/mira_15.png"
-}
-images {
-  image: "/assets/diavoletto/mira_16.png"
-}
-images {
-  image: "/assets/diavoletto/mira_17.png"
-}
-images {
-  image: "/assets/diavoletto/mira_18.png"
-}
-images {
   image: "/assets/diavoletto/attesa_1.png"
 }
 images {
@@ -414,27 +396,6 @@ images {
 }
 images {
   image: "/assets/diavoletto/colpito_8.png"
-}
-images {
-  image: "/assets/diavoletto/colpito_9.png"
-}
-images {
-  image: "/assets/diavoletto/colpito_10.png"
-}
-images {
-  image: "/assets/diavoletto/colpito_11.png"
-}
-images {
-  image: "/assets/diavoletto/colpito_12.png"
-}
-images {
-  image: "/assets/diavoletto/colpito_13.png"
-}
-images {
-  image: "/assets/diavoletto/colpito_14.png"
-}
-images {
-  image: "/assets/diavoletto/colpito_15.png"
 }
 images {
   image: "/assets/diavoletto/vittoria_1.png"
