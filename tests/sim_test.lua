@@ -1676,6 +1676,72 @@ end
 check(buffered(3), "salto in anticipo: chiesto 3 tick prima, parte all'atterraggio")
 check(not buffered(game.JUMP_BUFFER_TICKS + 4), "salto in anticipo: chiesto troppo presto non conta")
 
+-- Rampino su un robot a terra: il pavimento sotto il bersaglio non ferma la
+-- fune, né in piano (anche con un pixel di dislivello verso il basso) né su
+-- un pendio, in salita o in discesa. Prima 9 volte su 10 si fermava subito.
+local function hook_drag(ground, xa, xb)
+	local q = shaped_world(ground)
+	local a, b = q.robots[1], q.robots[2]
+	place(a, xa, ground(xa))
+	place(b, xb, ground(xb))
+	for _ = 1, 30 do q:step() end
+	local bx, by = b.x, b.y
+	local ang = math.atan2(b.y + game.ROBOT_H / 2 - (a.y + game.SWORD_PIVOT_Y), b.x - a.x)
+	q:step({ fire = { angle = ang, power = 1, weapon = "hook" } })
+	if not b.hooked then return 0 end
+	for _ = 1, 40 do
+		q:step()
+		if not b.hooked then break end
+	end
+	return math.sqrt((bx - b.x) ^ 2 + (by - b.y) ^ 2)
+end
+local reel = config.HOOK.reel
+check(hook_drag(function() return 100 end, 500, 650) > reel - 4, "Rampino in piano: il nemico a terra viene trascinato")
+check(hook_drag(function(x) return x < 560 and 100 - game.CELL or 100 end, 500, 650) > reel - 4,
+	"Rampino in piano, chi tira una cella più in basso: trascinato lo stesso")
+check(hook_drag(function(x) return 100 + (x - 500) * 0.4 end, 500, 650) > reel - 4,
+	"Rampino in salita (il nemico più in alto): trascinato giù")
+check(hook_drag(function(x) return 200 - (x - 500) * 0.4 end, 500, 650) > reel - 4,
+	"Rampino in discesa (il nemico più in basso): trascinato su")
+check(hook_drag(function(x) return 100 + math.floor(x / 24) % 2 * 4 end, 500, 650) > reel - 4,
+	"Rampino su un pavimento a gradini: trascinato lo stesso")
+-- vicino a chi tira lo si porta fin addosso
+local near = hook_drag(function() return 100 end, 500, 580)
+check(near > 80 - 2 * game.ROBOT_HALF_W - 4, "Rampino da vicino: tirato fin addosso a chi tira")
+-- un muro in mezzo (più alto di un gradino) lo ferma ancora
+-- sulle mappe vere: nemici a terra a 120 pixel, in tanti punti diversi
+for _, id in ipairs(maps.order) do
+	local pulled, tries = 0, 0
+	for x0 = 100, 1200, 37 do
+		local q = game.new(42, id)
+		run(q, 60)
+		local a, b = q.robots[1], q.robots[2]
+		local ya = q.terrain:ground_below(x0, game.WORLD_H - 1)
+		local yb = q.terrain:ground_below(x0 + 120, game.WORLD_H - 1)
+		if ya and yb and math.abs(ya - yb) < 30 then
+			place(a, x0, ya)
+			place(b, x0 + 120, yb)
+			run(q, 30)
+			if a.grounded and b.grounded and not a.dead and not b.dead then
+				local bx, by = b.x, b.y
+				q:step({ fire = { angle = math.atan2(b.y + game.ROBOT_H / 2 - (a.y + game.SWORD_PIVOT_Y), b.x - a.x),
+					power = 1, weapon = "hook" } })
+				if b.hooked then
+					tries = tries + 1
+					for _ = 1, 40 do
+						q:step()
+						if not b.hooked then break end
+					end
+					if math.sqrt((bx - b.x) ^ 2 + (by - b.y) ^ 2) > 80 then pulled = pulled + 1 end
+				end
+			end
+		end
+	end
+	check(tries > 0 and pulled == tries, id .. ": il Rampino trascina il nemico a terra ogni volta (" .. pulled .. "/" .. tries .. ")")
+end
+check(hook_drag(function(x) return (x > 560 and x < 572) and 100 + game.ROBOT_H or 100 end, 500, 650) < reel / 2,
+	"Rampino: un muro alto ferma il nemico")
+
 game.use_physics("megablast")
 
 -- Prestazioni: un cratere e 600 tick di simulazione

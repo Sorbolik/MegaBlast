@@ -1083,6 +1083,14 @@ start_local_match = function(self, picked)
 			for kind in pairs(gconfig.STATUS) do rb.status[kind] = { turns = 2 } end
 		end
 	end
+	-- prova_vicino N: il secondo robot parte N pixel a destra del primo (a sinistra se N < 0), a terra,
+	-- a tiro di Rampino (scenario rampino_nemico.txt)
+	local vicino = SIMULA and config_int("megablast.prova_vicino", 0) or 0
+	if vicino ~= 0 then
+		local a, b = self.g.robots[1], self.g.robots[2]
+		local y = self.g.terrain:ground_below(a.x + vicino, a.y + 60)
+		if y then b.x, b.y, b.grounded = a.x + vicino, y, true end
+	end
 	self.mode = "local"
 	set_controls_visible(self, true)
 end

@@ -1339,8 +1339,13 @@ function M:update_hooked(rb)
 		for _ = 1, n do
 			local nx, ny = rb.x + ux * step / n, rb.y + uy * step / n
 			if self:robot_collides(nx, ny, rb) then
-				stopped = true
-				break
+				-- tirato da un robot: il terreno sotto non lo ferma, scivola
+				-- sopra gradini e pendii come camminando (hook_slide)
+				nx, ny = self:hook_slide(rb, nx, ny, by)
+				if not nx then
+					stopped = true
+					break
+				end
 			end
 			rb.x, rb.y = nx, ny
 		end
@@ -1353,6 +1358,20 @@ function M:update_hooked(rb)
 		self:emit({ type = "hook_end", robot = rb.id })
 	end
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
+end
+
+-- Il robot tirato dalla fune urta il terreno in (nx, ny): invece di fermarsi
+-- lo si alza di poco (fino a MAX_CLIMB, come un gradino) o, se la fune tira
+-- verso il basso, lo si tiene alla sua altezza, così il pavimento, un pendio o
+-- un dislivello di un pixel non bloccano la presa. Restituisce dove va, o nil
+-- se lo ferma un muro o un robot (chi tira: è arrivato). Solo per chi è tirato
+-- (by): chi sale lungo la fune sul terreno si ferma alla piattaforma.
+function M:hook_slide(rb, nx, ny, by)
+	if not by or self:robot_at(nx, ny, rb) then return nil end
+	local y = math.max(ny, rb.y)
+	for climb = 0, M.MAX_CLIMB do
+		if not self:robot_collides(nx, y + climb, rb) then return nx, y + climb end
+	end
 end
 
 -- Mette il robot in piedi sopra la piattaforma colpita dal Rampino: dalla
