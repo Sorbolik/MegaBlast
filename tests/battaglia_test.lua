@@ -74,7 +74,7 @@ local function angolo(a) return (a + math.pi) % (2 * math.pi) - math.pi end
 -- Scoria -------------------------------------------------------------------
 
 local s = scoria.new(vec(1, 0.2, 0.3, 1))
-local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0 }
+local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
 for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "a riposo: valori finiti")
 
@@ -127,7 +127,7 @@ for _, name in ipairs({ "missile", "sword", "teleport", "grenade", "shards", "pu
 end
 check(tutto_finito(), "tutte le armi a riposo: valori finiti")
 
--- salto e atterraggio: schiaccia e allunga senza esplodere
+-- salto e atterraggio: i fotogrammi del salto senza esplodere
 st.grounded = false
 for i = 1, 30 do st.y = 50 + i * 3; scoria.update(s, 1 / 60, st) end
 for i = 1, 30 do st.y = 140 - i * 3; scoria.update(s, 1 / 60, st) end
@@ -149,7 +149,7 @@ scoria.die(s)
 scoria.set_weapon(s, "sword")
 check(not s.armi.sword.enabled, "morte: l'arma sparisce, anche cambiandola")
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
-check(tutto_finito() and s.root.enabled, "morte: la testa vola, il corpo c'è ancora")
+check(tutto_finito() and s.root.enabled, "morte: il corpo cade e c'è ancora")
 for _ = 1, 120 do scoria.update(s, 1 / 60, st) end
 check(not s.root.enabled, "morte: poi il corpo sparisce")
 scoria.set_enabled(s, true)

@@ -24,7 +24,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 - `mappe/isole_cimitero/terreno.png` (superficie con sopra le ossa) e `interno_mezzo.png` (parete dei crateri a metà risoluzione) li prepara `strumenti/grafica/battaglia.py`, insieme a `fx/bagliore.png` (alone bianco per missile e mirino).
 - La mappa è una mesh con lo shader `client/battaglia/terreno.fp`: sfondo fatto dallo shader (cielo, file di colline e guglie in parallasse, braci), terreno ritagliato dalla maschera viva, parete e brace dove si è scavato.
-- Il personaggio è il diavoletto di `client/battaglia/scoria.lua`: i pezzi a colori in `scoria/`, ritagliati da `strumenti/grafica/scoria.py` dalle immagini di ChatGPT in `strumenti/grafica/diavoletto/` (lo script scrive anche `client/battaglia/scoria_pezzi.lua`); mani e armi sono nodi GUI, la fiammella è tinta dal codice col colore della squadra. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
+- Il personaggio è il diavoletto di `client/battaglia/scoria.lua`, a fotogrammi: i fogli di Ludo.ai e le basi di ChatGPT (sorgenti in `/mnt/project-files/animazioni_ludo/diavoletto_2026-10-26/`) diventano le immagini in `diavoletto/`, l'atlante `client/battaglia/diavoletto.atlas` e `client/battaglia/diavoletto.lua` con `strumenti/grafica/diavoletto.py`. Nella mira testa, pugni e arma li mette il codice; la fiammella è tinta col colore della squadra. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
 
 ## Interfaccia
 

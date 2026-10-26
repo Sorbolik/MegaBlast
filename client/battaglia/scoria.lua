@@ -1,6 +1,7 @@
--- Il diavoletto: il personaggio della battaglia, della home e del podio, grande
--- come il corpo della simulazione (ROBOT_H x 2 ROBOT_HALF_W), così quello che si
--- vede è quello che colpisce e viene colpito (corna, coda e fiammella escono).
+-- Il diavoletto: il personaggio della battaglia, della home e del podio, a
+-- fotogrammi (fogli di Ludo.ai, strumenti/grafica/diavoletto.py ->
+-- battaglia/diavoletto.lua). Dai piedi alla cima della testa è alto come il corpo
+-- della simulazione (ROBOT_H); corna, coda e fiammella escono.
 --
 -- Lo usano la battaglia (game.gui_script), la home (menu/home.lua) e il podio:
 --   local s = scoria.new(colore)
@@ -9,60 +10,54 @@
 --   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
 -- stato: x, y, facing, grounded, moving, aim (nil se non mira), turno (è di turno)
 --
--- Pezzi disegnati (immagini a colori di strumenti/grafica/scoria.py): testa con
--- occhiali, busto con l'ala, due gambe uguali, la coda in segmenti e la fiammella
--- sopra la testa. Mani e armi sono nodi GUI. Ogni pezzo ha tre copie in tre strati:
--- il contorno scuro dietro a tutto (spesso come quello delle mani, così anche
--- piccolo in battaglia il diavoletto resta netto, come un pezzo unico), il colore,
--- e la sagoma bianca del lampo del colpo, accesa solo quando serve.
---
--- La fiammella dice la squadra (ha il suo colore) e il turno: su chi gioca è più
--- grande e accesa, sugli altri piccola e più scura.
---
--- Le animazioni sono molle: schiaccia e allunga (atterraggio, stacco,
--- teletrasporto), inclinazione nella corsa, spinta e lampo bianco quando si viene
--- colpiti, rinculo dell'arma, testa che ondeggia e guarda dove si mira, gambe che
--- fanno i passi in base alla strada fatta, coda che ondeggia e frusta, fiammella
--- che trema.
+-- Un'animazione per stato, scelta in ordine: sconfitta, colpito, aria (salto, con
+-- il fotogramma scelto dalla velocità in su o in giù), atterraggio, corsa (con la
+-- strada fatta), mira (chi è di turno, fermo) e attesa (gli altri).
+-- Nella mira il foglio non ha testa né braccia: il gioco ci mette la testa, che
+-- guarda dove si mira, e pugni e arma, che girano attorno alla spalla. Nelle
+-- altre animazioni il diavoletto ha le sue braccia e l'arma non si vede.
+-- La fiammella sopra la testa ha il colore della squadra e dice il turno: su chi
+-- gioca è più grande e accesa, sugli altri piccola e più scura.
 
 local game = require "sim.game"
 local config = require "sim.config"
-local PEZZI = require "battaglia.scoria_pezzi"
+local D = require "battaglia.diavoletto"
 
 local M = {}
 
--- altezza del diavoletto in cima alla fiammella, per mettere sopra vita e freccia
-M.ALTEZZA = game.ROBOT_H * (200 - (PEZZI.fiammella.y - PEZZI.fiammella.h / 2)) / 200
+local A = D.animazioni
+local T = D.testa
+local K = game.ROBOT_H / D.altezza   -- unità del mondo per pixel delle immagini
 
-local sin, cos, min, max, abs, pi = math.sin, math.cos, math.min, math.max, math.abs, math.pi
+local sin, min, max, abs, pi, floor, sqrt = math.sin, math.min, math.max, math.abs, math.pi, math.floor, math.sqrt
 local DEG = 180 / pi
 
 local INCHIOSTRO = vmath.vector4(0.078, 0.071, 0.094, 1)
 local OMBRA = vmath.vector4(0, 0, 0, 0.35)
 local BIANCO = vmath.vector4(1, 1, 1, 1)
-local PELLE = vmath.vector4(0.78, 0.68, 0.6, 1)
+local LAMPO = vmath.vector4(1, 0.35, 0.35, 1)
+local PELLE = vmath.vector4(0.85, 0.78, 0.7, 1)
 local FERRO = vmath.vector4(0.3, 0.29, 0.34, 1)
 local LAMA = vmath.vector4(0.86, 0.88, 0.95, 1)
 
--- molle: posizione, velocità, rigidità, smorzamento
-local SQ, LEAN, SHOVE, KICK, TESTA, CODA, FUOCO = 1, 2, 3, 4, 5, 6, 7
-local W_MOLLA = { 16, 10, 12, 18, 11, 7, 6 }
-local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25, 0.4 }
+-- la fiammella: quanto sta sopra la cima della testa (pixel delle immagini) e
+-- quanto è grande su chi è di turno e sugli altri, con la luce
+local FUOCO_SU = 10
+local FUOCO_TURNO, FUOCO_ATTESA, LUCE_ATTESA = 1.25, 0.8, 0.6
+-- altezza del diavoletto in cima alla fiammella, per mettere sopra vita e freccia
+M.ALTEZZA = (D.altezza + FUOCO_SU + A.fiammella[1].h * FUOCO_TURNO) * K
 
--- punti del disegno (unità della pagina dei pezzi, y verso il basso)
-local COLLO = { PEZZI.testa.px, PEZZI.testa.py }
-local BACINO = { PEZZI.busto.px, PEZZI.busto.py }
-local FIAMMA = { PEZZI.fiammella.px, PEZZI.fiammella.py }
--- prima la gamba di dietro, più scura, poi quella davanti
-local ANCHE = { { 86, 155 }, { 56, 155 } }
-local DIETRO = vmath.vector4(0.72, 0.68, 0.7, 1)
-local SPALLA = { 62, 114 }
--- la mano sull'impugnatura, davanti alla spalla lungo l'arma
-local PRESA = 20
--- un passo: la strada che fa il corpo mentre una gamba fa un'oscillazione intera
-local PASSO = 0.9
--- la fiammella di chi è di turno e degli altri: grandezza e luce
-local FUOCO_TURNO, FUOCO_ATTESA, LUCE_ATTESA = 1.35, 0.85, 0.6
+-- un giro della corsa: la strada che fa il corpo, in altezze del personaggio
+local PASSO = 1.1
+-- il salto: i primi fotogrammi sono in aria (dallo stacco alla caduta), gli
+-- ultimi ARRIVO l'atterraggio
+local ARIA, ARRIVO = 13, 4
+-- quanto durano le azioni a tempo (secondi)
+local DURATA = { colpito = 0.6, atterra = 0.22, teletrasporto = 0.25 }
+-- la testa guarda dove si mira, fino a questo angolo (radianti) in su e in giù
+local TESTA_SU, TESTA_GIU = 0.45, 0.3
+-- da sconfitto cade all'indietro e svanisce in questo tempo
+local MORTE = 0.9
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(0, 0, 0, 1)
@@ -77,6 +72,10 @@ end
 local function scale(node, x, y)
 	V.x, V.y, V.z = x, y, 1
 	gui.set_scale(node, V)
+end
+local function size(node, w, h)
+	V.x, V.y, V.z = w, h, 0
+	gui.set_size(node, V)
 end
 
 local function setup(n, parent, color)
@@ -100,23 +99,17 @@ local function vuoto(parent, x, y)
 	gui.set_visible(n, false)
 	return n
 end
-
--- dal disegno al gioco: origine ai piedi, y verso l'alto, k unità per punto
-local function gx(s, x) return (x - 75) * s.k end
-local function gy(s, y) return (200 - y) * s.k end
-
--- i tre strati di ogni pezzo: contorno scuro, colore, lampo
-local STRATI = { { "_bordo", INCHIOSTRO }, { "", BIANCO }, { "_sagoma", BIANCO } }
-
--- un pezzo disegnato, in uno strato: un giunto nel punto (x, y) del disegno
--- (relativo al giunto genitore, rx, ry), attorno a cui gira, e sotto l'immagine
-local function pezzo(s, parent, p, nome, strato, x, y, rx, ry)
-	local g = vuoto(parent, (x - rx) * s.k, (ry - y) * s.k)
-	local n = box(g, (p.x - x) * s.k, (y - p.y) * s.k, p.w * s.k, p.h * s.k, STRATI[strato][2])
-	gui.set_texture(n, "battaglia")
-	gui.play_flipbook(n, nome .. STRATI[strato][1])
-	if strato == 3 then s.lampi[#s.lampi + 1] = n end
-	return g, n
+local function immagine(parent, nome)
+	local n = box(parent, 0, 0, 0, 0)
+	gui.set_texture(n, "diavoletto")
+	gui.play_flipbook(n, nome)
+	return n
+end
+-- un fotogramma f (di diavoletto.lua) sul nodo n
+local function fotogramma(n, f)
+	gui.play_flipbook(n, f.img)
+	size(n, f.w * K, f.h * K)
+	pos(n, f.x * K, f.y * K)
 end
 
 -- Le armi in mano, attorno alla spalla: angolo di riposo (radianti, verso avanti)
@@ -132,6 +125,8 @@ local ARMI = {
 	mallet = { riposo = -1.6, due_mani = true },
 	lunge = { riposo = -1.4, due_mani = true },
 }
+-- la mano sull'impugnatura, davanti alla spalla lungo l'arma (unità su 200)
+local PRESA = 20
 
 -- una mano staccata: un pugno color pelle col contorno scuro
 local function mano(g, k, x, y)
@@ -191,48 +186,27 @@ end
 
 function M.new(color)
 	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
-	local s = { color = color, h = H, w = Wd, k = H / 200, armi = {}, tinte = {}, lampi = {},
-		x = {}, v = {}, goal = {}, testa = {}, busto = {}, fiammella = {}, fuoco = {},
-		gambe = { {}, {} }, gamba_a = { 0, 0 }, coda = {}, coda_a = {} }
-	for i = 1, #PEZZI.coda do s.coda[i], s.coda_a[i] = {}, 0 end
+	local s = { color = color, h = H, w = Wd, armi = {}, tinte = {} }
 	s.root = vuoto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
 	s.fuoco_col = vmath.vector4(color.x, color.y, color.z, 1)
-	s.lampo_col = vmath.vector4(1, 1, 1, 0)
 
 	s.ombra = cerchio(s.root, 0, 0, Wd * 1.3, OMBRA)
 	scale(s.ombra, 1, 0.22)
-	-- corpo: inclinazione e spinta; forma: schiaccia e allunga. L'arma sta sul
-	-- corpo e non sulla forma, così schiacciandosi non si storce la mira
+	-- corpo: la spinta del colpo; dentro, in ordine di disegno, il fotogramma, la
+	-- testa della mira sul suo collo, pugni e arma sulla spalla, la fiammella
 	s.corpo = vuoto(s.root, 0, 0)
-	s.forma = vuoto(s.corpo, 0, 0)
-
-	-- strato per strato: prima tutti i contorni, poi i colori, poi i lampi; dentro
-	-- uno strato dal fondo: coda, gambe, busto, testa, fiammella
-	for strato = 1, 3 do
-		local padre, px, py = s.forma, 75, 200
-		for i, p in ipairs(PEZZI.coda) do
-			padre = pezzo(s, padre, p, "coda" .. i, strato, p.px, p.py, px, py)
-			px, py = p.px, p.py
-			s.coda[i][strato] = padre
-		end
-		for i = 1, 2 do
-			local n
-			s.gambe[i][strato], n = pezzo(s, s.forma, PEZZI.gamba, "gamba", strato, 0, 0, 0, 0)
-			if i == 1 and strato == 2 then gui.set_color(n, DIETRO) end
-		end
-		s.busto[strato] = pezzo(s, s.forma, PEZZI.busto, "busto", strato, BACINO[1], BACINO[2], 75, 200)
-		s.testa[strato] = pezzo(s, s.forma, PEZZI.testa, "testa", strato, COLLO[1], COLLO[2], 75, 200)
-		local g, n = pezzo(s, s.testa[strato], PEZZI.fiammella, "fiammella", strato,
-			FIAMMA[1], FIAMMA[2], COLLO[1], COLLO[2])
-		s.fiammella[strato] = g
-		if strato == 2 then s.fuoco_n = n end
-	end
-	gui.set_color(s.fuoco_n, s.fuoco_col)
-
-	s.spalla = vuoto(s.corpo, gx(s, SPALLA[1]), gy(s, SPALLA[2]))
+	s.figura = immagine(s.corpo, A.attesa[1].img)
+	s.collo = vuoto(s.corpo, 0, 0)
+	s.testa = immagine(s.collo, T.img)
+	size(s.testa, T.w * K, T.h * K)
+	pos(s.testa, T.x * K, T.y * K)
+	s.spalla = vuoto(s.corpo, 0, 0)
 	for name in pairs(ARMI) do arma(s, name, color) end
+	s.fuoco = immagine(s.corpo, A.fiammella[1].img)
+	gui.set_pivot(s.fuoco, gui.PIVOT_S)
+	gui.set_color(s.fuoco, s.fuoco_col)
 	M.set_weapon(s, "missile")
 
 	M.reset(s)
@@ -248,37 +222,26 @@ function M.set_color(s, color)
 	for _, n in ipairs(s.tinte) do gui.set_color(n, C) end
 end
 
--- il lampo bianco: le sagome si accendono sopra i colori
-local function lampo(s, a)
-	s.lampo_col.w = a
-	for i = 1, #s.lampi do
-		gui.set_color(s.lampi[i], s.lampo_col)
-		gui.set_enabled(s.lampi[i], a > 0)
-	end
+-- il lampo del colpo: corpo e testa tinti di rosso, a scendere
+local function lampo(s, q)
+	C.x, C.y, C.z, C.w = 1, 1 + (LAMPO.y - 1) * q, 1 + (LAMPO.z - 1) * q, 1
+	gui.set_color(s.figura, C)
+	gui.set_color(s.testa, C)
 end
 
 function M.reset(s)
-	for i = 1, #W_MOLLA do s.x[i], s.v[i], s.goal[i] = 0, 0, 0 end
-	s.x[SQ], s.x[FUOCO] = 1, 1
 	s.t = math.random() * 10
-	s.vy, s.last_x, s.last_y, s.ground = 0, nil, nil, true
-	s.passo, s.cammina = 0, 0
-	s.gamba_a[1], s.gamba_a[2] = 0, 0
-	for i = 1, #s.coda_a do s.coda_a[i] = 0 end
-	s.flash = 0
-	s.morte, s.morto = nil, nil
+	s.azione, s.azione_t = nil, 0
+	s.passo, s.vy, s.last_x, s.last_y, s.ground = 0, 0, nil, nil, true
+	s.flash, s.spinta, s.rinculo, s.fuoco_k = 0, 0, 0, 1
+	s.morte, s.morto, s.tele = nil, nil, nil
+	s.img, s.fuoco_img, s.mira = nil, nil, nil
 	s.alpha.w = 1
 	gui.set_color(s.root, s.alpha)
-	for strato = 1, 3 do
-		scale(s.busto[strato], 1, 1)
-		gui.set_color(s.busto[strato], s.alpha)
-		gui.set_color(s.coda[1][strato], s.alpha)
-		gui.set_color(s.gambe[1][strato], s.alpha)
-		gui.set_color(s.gambe[2][strato], s.alpha)
-		gui.set_color(s.fiammella[strato], s.alpha)
-	end
-	lampo(s, 0)
 	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], true) end
+	rot(s.corpo, 0)
+	scale(s.corpo, 1, 1)
+	lampo(s, 0)
 	s.face = 1
 end
 
@@ -287,101 +250,34 @@ function M.set_enabled(s, on)
 	gui.set_enabled(s.root, on)
 end
 
-local function molle(s, dt)
-	local x, v, goal = s.x, s.v, s.goal
-	local n = max(1, math.ceil(dt * 120))
-	local h = dt / n
-	for _ = 1, n do
-		for i = 1, #W_MOLLA do
-			local w, z = W_MOLLA[i], Z_MOLLA[i]
-			v[i] = v[i] + (w * w * (goal[i] - x[i]) - 2 * z * w * v[i]) * h
-			x[i] = x[i] + v[i] * h
-		end
-	end
+-- fotogramma di un'animazione a tempo dopo t secondi
+local function a_tempo(anim, t)
+	local i = floor(t * anim.fps)
+	return anim.giro and 1 + i % #anim or 1 + min(i, #anim - 1)
+end
+-- fotogramma i (da 1) di un pezzo dell'animazione, da da a a, portato da 0 a 1
+local function a_parte(da, a, u)
+	return da + floor(max(0, min(0.999, u)) * (a - da + 1))
 end
 
--- Morte: la testa salta via girando, busto, coda e gambe si accasciano e
--- svaniscono, la fiammella si gonfia e si spegne. Il terreno sotto può non
--- esserci più (il cratere), quindi niente resta appoggiato: tutto svanisce
-local MORTE_CORPO, MORTE_TESTA = 0.5, 1.1
-local function morte(s, dt)
-	local t = s.morte + dt
-	s.morte = t
-	s.tvy = s.tvy - 9 * s.h * dt
-	s.tx, s.ty = s.tx + s.tvx * dt, s.ty + s.tvy * dt
-	s.ta = s.ta + s.tgira * dt
-	-- il corpo svanisce prima della testa
-	C.x, C.y, C.z, C.w = 1, 1, 1, max(0, 1 - t / MORTE_CORPO)
-	local f = 1 + t * 4
-	for strato = 1, 3 do
-		pos(s.testa[strato], s.tx, s.ty)
-		rot(s.testa[strato], s.ta)
-		scale(s.busto[strato], 1 + min(0.3, t), max(0.35, 1 - t * 3))
-		gui.set_color(s.busto[strato], C)
-		gui.set_color(s.coda[1][strato], C)
-		gui.set_color(s.gambe[1][strato], C)
-		gui.set_color(s.gambe[2][strato], C)
-		scale(s.fiammella[strato], f, f)
-	end
-	rot(s.corpo, min(0.35, t * 2))
-	C.w = max(0, 1 - t * 4)
-	for strato = 1, 3 do gui.set_color(s.fiammella[strato], C) end
-	s.alpha.w = min(1, max(0, (MORTE_TESTA - t) / 0.4))
-	gui.set_color(s.root, s.alpha)
-	if s.alpha.w == 0 then
-		s.morto = true
-		gui.set_enabled(s.root, false)
-	end
-end
+-- la velocità con cui si stacca da terra saltando, per il salto in aria
+local V_SALTO = sqrt(2 * game.GRAVITY * game.base_stats().jump_height)
 
--- le gambe: oscillano attorno all'anca camminando, in aria restano indietro
--- salendo e vanno avanti scendendo, per l'atterraggio
-local function gambe(s, dt, ground)
-	local segui = min(1, dt * 16)
-	for i = 1, 2 do
-		local fase = s.passo + (i - 1) * pi
-		local a
-		if ground then
-			a = sin(fase) * 0.6 * s.cammina
-		else
-			a = (s.vy > 0 and -0.35 or 0.3) + (i == 1 and -0.12 or 0.12)
-		end
-		s.gamba_a[i] = s.gamba_a[i] + (a - s.gamba_a[i]) * segui
-		-- il piede si alza mentre torna avanti
-		local su = ground and max(0, cos(fase)) * s.cammina * 8 * s.k or 0
-		local g = s.gambe[i]
-		for strato = 1, 3 do
-			pos(g[strato], gx(s, ANCHE[i][1]), gy(s, ANCHE[i][2]) + su)
-			rot(g[strato], s.gamba_a[i])
-		end
+-- Mostra il fotogramma i dell'animazione nome; nella mira accende testa e arma
+local function mostra(s, nome, i)
+	local anim = A[nome] or A.attesa
+	local f = anim[max(1, min(#anim, i))]
+	if s.img ~= f.img then
+		fotogramma(s.figura, f)
+		s.img = f.img
 	end
-end
-
--- la coda: un'onda che parte dalla schiena e arriva alla punta, più la molla CODA
--- (resta indietro correndo, frusta saltando e quando arriva un colpo). Ogni
--- segmento insegue il suo angolo un po' più piano del precedente: così il moto
--- arriva alla punta in ritardo
-local function coda(s, dt)
-	local base = s.x[CODA]
-	for i = 1, #s.coda_a do
-		local a = (base + sin(s.t * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i)
-		s.coda_a[i] = s.coda_a[i] + (a - s.coda_a[i]) * min(1, dt * (18 - 2.5 * i))
-		for strato = 1, 3 do rot(s.coda[i][strato], s.coda_a[i]) end
+	local mira = f.cx ~= nil
+	if s.mira ~= mira then
+		s.mira = mira
+		gui.set_enabled(s.collo, mira)
+		gui.set_enabled(s.spalla, mira)
 	end
-end
-
--- la fiammella trema (due onde che non si ripetono mai uguali) e su chi è di
--- turno si gonfia e si accende
-local function fiammella(s, turno)
-	local f = s.x[FUOCO]
-	local tr = sin(s.t * 11) * 0.06 + sin(s.t * 17.3) * 0.04
-	for strato = 1, 3 do
-		scale(s.fiammella[strato], f * (1 - tr * 0.5), f * (1 + tr))
-		rot(s.fiammella[strato], sin(s.t * 6.7) * 0.06 - s.x[TESTA] * 0.5)
-	end
-	local l = turno and 1 or LUCE_ATTESA
-	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, 1
-	gui.set_color(s.fuoco_n, C)
+	return f
 end
 
 function M.update(s, dt, st)
@@ -392,7 +288,6 @@ function M.update(s, dt, st)
 	s.face = face
 	scale(s.root, face, 1)
 	pos(s.root, st.x, st.y)
-	if s.morte then return morte(s, dt) end
 
 	if s.last_y then
 		local vy = (st.y - s.last_y) / max(dt, 1e-4)
@@ -401,73 +296,100 @@ function M.update(s, dt, st)
 	local dx = s.last_x and abs(st.x - s.last_x) or 0
 	s.last_x, s.last_y = st.x, st.y
 	local ground = st.grounded
-
-	-- passi: contano la strada fatta a terra (non i teletrasporti)
-	local corre = ground and st.moving ~= 0 and dx < s.h
-	if corre then s.passo = (s.passo + dx / (PASSO * s.h) * 2 * pi) % (2 * pi) end
-	s.cammina = s.cammina + ((corre and 1 or 0) - s.cammina) * min(1, dt * 10)
-
-	-- atterraggio e stacco: schiaccia e allunga, la testa fa un cenno, la coda frusta
-	if ground and not s.ground and s.vy < -40 then
-		s.v[SQ] = s.v[SQ] - min(7, -s.vy / 40)
-		s.v[TESTA] = s.v[TESTA] - min(4, -s.vy / 80)
-		s.v[CODA] = s.v[CODA] - min(3, -s.vy / 100)
-	elseif not ground and s.ground and s.vy > 20 then
-		s.v[SQ] = s.v[SQ] + 4
-		s.v[CODA] = s.v[CODA] + 2
-	end
+	if ground and not s.ground and not s.morte then s.azione, s.azione_t = "atterra", 0 end
 	s.ground = ground
 
-	local sq = 1 + 0.025 * sin(s.t * 2.4)
-	if not ground then sq = 1 + min(0.2, abs(s.vy) / 900) end
-	-- si piega in avanti correndo
-	local avanti = st.moving * face
-	local lean = -0.22 * max(-1, min(1, avanti / 70))
-	-- l'arma gira attorno alla spalla: verso la mira, altrimenti a riposo
+	-- il fotogramma: il primo stato che vale, in ordine
+	local f
+	if s.morte then
+		s.morte = s.morte + dt
+		local u = s.morte / MORTE
+		f = mostra(s, "colpito", 5)
+		-- cade all'indietro e svanisce
+		rot(s.corpo, min(1.2, u * 2.2))
+		s.alpha.w = max(0, 1 - max(0, u - 0.4) / 0.6)
+		gui.set_color(s.root, s.alpha)
+		if s.alpha.w == 0 then
+			s.morto = true
+			gui.set_enabled(s.root, false)
+			return
+		end
+	elseif s.azione == "colpito" and s.azione_t < DURATA.colpito then
+		f = mostra(s, "colpito", a_parte(1, #A.colpito, s.azione_t / DURATA.colpito))
+	elseif not ground then
+		-- dallo stacco (velocità piena in su) alla caduta (piena in giù)
+		f = mostra(s, "salto", a_parte(1, ARIA, 0.5 - s.vy / (2 * V_SALTO)))
+	elseif s.azione == "atterra" and s.azione_t < DURATA.atterra then
+		f = mostra(s, "salto", a_parte(ARIA + 1, ARIA + ARRIVO, s.azione_t / DURATA.atterra))
+	elseif st.moving ~= 0 and dx < s.h then
+		-- la corsa va con la strada fatta (non con i teletrasporti)
+		s.passo = (s.passo + dx / (PASSO * s.h)) % 1
+		f = mostra(s, "corsa", a_parte(1, #A.corsa, s.passo))
+	elseif st.turno then
+		f = mostra(s, "mira", a_tempo(A.mira, s.t))
+	else
+		f = mostra(s, "attesa", a_tempo(A.attesa, s.t))
+	end
+	if s.azione then s.azione_t = s.azione_t + dt end
+
+	-- l'arma verso la mira, altrimenti a riposo; la testa guarda nella stessa
+	-- direzione, un po' meno
 	local a = ARMI[s.arma_scelta].riposo
 	if st.aim then a = face > 0 and st.aim or pi - st.aim end
-	-- la testa guarda un po' dove si mira e ondeggia nei passi
-	local testa = max(-0.25, min(0.25, sin(a) * 0.2)) + sin(s.passo * 2) * 0.05 * s.cammina
-	-- correndo la coda si allontana dal corpo, verso dietro, e torna quando ci si
-	-- ferma; in aria segue la velocità
-	local cd = 0.2 * max(-1, min(1, avanti / 70))
-	if not ground then cd = cd + max(-0.2, min(0.2, s.vy / 900)) end
-	s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = sq, lean, testa, cd
-	s.goal[FUOCO] = st.turno and FUOCO_TURNO or FUOCO_ATTESA
-	molle(s, dt)
-
-	local q = max(0.4, s.x[SQ])
-	-- la testa non si schiaccia (i dettagli del disegno si vedrebbero storti):
-	-- scende e sale con il busto
-	scale(s.forma, 1 + (1 - q) * 0.8, q)
-	rot(s.corpo, s.x[LEAN])
-	pos(s.corpo, -s.x[SHOVE] * s.w, 0)
-	-- la spalla sale e scende con la forma
-	pos(s.spalla, gx(s, SPALLA[1]), gy(s, SPALLA[2]) * q)
-	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
-	gambe(s, dt, ground)
-	coda(s, dt)
-	-- la testa sobbalza a ogni passo
-	local hy = gy(s, COLLO[2]) + abs(sin(s.passo)) * 4 * s.k * s.cammina
-	for strato = 1, 3 do
-		pos(s.testa[strato], gx(s, COLLO[1]), hy)
-		rot(s.testa[strato], s.x[TESTA])
-		scale(s.testa[strato], 1 / (1 + (1 - q) * 0.8), 1 / q)
+	if a > pi then a = a - 2 * pi end
+	local ta = 0
+	if s.mira then
+		ta = st.aim and max(-TESTA_GIU, min(TESTA_SU, a * 0.5)) or 0
+		pos(s.collo, f.cx * K, f.cy * K)
+		rot(s.collo, ta)
+		pos(s.spalla, f.sx * K, f.sy * K)
+		rot(s.spalla, a)
+		-- il rinculo non porta mai la mano dietro la spalla
+		pos(s.armi[s.arma_scelta], -min(s.rinculo * s.w * 0.6, PRESA * s.h / 200 / game.CORPO * 0.8), 0)
 	end
-	fiammella(s, st.turno)
 
-	-- lampo bianco del colpo
+	-- la fiammella: sulla cima della testa (quella del foglio o quella della mira,
+	-- che gira), trema con i suoi fotogrammi e su chi è di turno si gonfia
+	local fx, fy
+	if s.mira then
+		local c, sn = math.cos(ta), sin(ta)
+		fx = f.cx + T.tx * c - T.ty * sn
+		fy = f.cy + T.tx * sn + T.ty * c
+	else
+		fx, fy = f.tx, f.ty
+	end
+	local fa = A.fiammella
+	local ff = fa[a_tempo(fa, s.t)]
+	if s.fuoco_img ~= ff.img then
+		gui.play_flipbook(s.fuoco, ff.img)
+		size(s.fuoco, ff.w * K, ff.h * K)
+		s.fuoco_img = ff.img
+	end
+	local goal = st.turno and FUOCO_TURNO or FUOCO_ATTESA
+	s.fuoco_k = s.fuoco_k + (goal - s.fuoco_k) * min(1, dt * 8)
+	pos(s.fuoco, (fx + ff.x) * K, (fy + FUOCO_SU) * K)
+	scale(s.fuoco, s.fuoco_k, s.fuoco_k)
+	rot(s.fuoco, ta * 0.5)
+	local l = st.turno and 1 or LUCE_ATTESA
+	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, s.morte and max(0, 1 - s.morte * 4) or 1
+	gui.set_color(s.fuoco, C)
+
+	-- lampo rosso del colpo
 	if s.flash > 0 then
 		s.flash = max(0, s.flash - dt * 6)
 		lampo(s, min(1, s.flash * 1.5))
 	end
-
-	-- la spalla è dentro il corpo, che è inclinato: togliamo l'inclinazione
-	a = a - s.x[LEAN]
-	rot(s.spalla, a)
-	local g = s.armi[s.arma_scelta]
-	-- il rinculo non porta mai la mano dietro la spalla
-	pos(g, -min(s.x[KICK] * s.w * 0.6, PRESA * s.k / game.CORPO * 0.8), 0)
+	-- spinta del colpo e rinculo dell'arma: tornano a zero in fretta
+	s.spinta = s.spinta * max(0, 1 - dt * 10)
+	s.rinculo = s.rinculo * max(0, 1 - dt * 14)
+	if not s.morte then pos(s.corpo, -s.spinta * s.w, 0) end
+	-- dopo il teletrasporto ricompare crescendo
+	if s.tele then
+		s.tele = s.tele + dt
+		local q = min(1, s.tele / DURATA.teletrasporto)
+		scale(s.corpo, 0.4 + 0.6 * q, 0.4 + 0.6 * q)
+		if q == 1 then s.tele = nil end
+	end
 end
 
 function M.set_weapon(s, name)
@@ -478,53 +400,41 @@ function M.set_weapon(s, name)
 	gui.set_enabled(s.armi[name], not s.morte)
 end
 
--- Colpo subito: lampo bianco, spinta e inclinazione nella direzione del colpo
--- (dx: verso dove spinge, nel mondo; senza, da davanti), schiacciata, testa che
--- scatta, coda che frusta
+-- Colpo subito: lampo rosso, i fotogrammi del colpo e una spinta nella direzione
+-- del colpo (dx: verso dove spinge, nel mondo; senza, da davanti)
 function M.hit(s, dx)
 	local d = (dx and dx ~= 0) and (dx > 0 and 1 or -1) * s.face or -1
 	s.flash = 1
-	s.v[SHOVE] = s.v[SHOVE] - 9 * d
-	s.v[SQ] = s.v[SQ] - 4
-	s.v[LEAN] = s.v[LEAN] - 5 * d
-	s.v[TESTA] = s.v[TESTA] - 8 * d
-	s.v[CODA] = s.v[CODA] + 4 * d
+	s.spinta = 0.6 * d
+	s.azione, s.azione_t = "colpito", 0
 end
 
--- Colpo sparato: rinculo dell'arma e del corpo
+-- Colpo sparato: rinculo dell'arma
 function M.fire(s, kind)
-	local k = kind == "shards" and 0.5 or 1
-	s.v[KICK] = s.v[KICK] + 14 * k
-	s.v[LEAN] = s.v[LEAN] + 3 * k
-	s.v[SQ] = s.v[SQ] - 1.5 * k
-	s.v[TESTA] = s.v[TESTA] + 3 * k
-	s.v[CODA] = s.v[CODA] - 1.5 * k
+	s.rinculo = kind == "shards" and 0.5 or 1
 end
 
--- Scatto dell'Affondo: si allunga in avanti e si piega
+-- Scatto dell'Affondo: il corpo parte un attimo prima, in avanti
 function M.lunge(s)
-	s.v[SQ] = s.v[SQ] + 6
-	s.v[LEAN] = s.v[LEAN] + 8
-	s.v[TESTA] = s.v[TESTA] + 4
-	s.v[CODA] = s.v[CODA] - 3
+	s.spinta = -0.5
 end
 
--- Arrivo col teletrasporto: compare schiacciato e si allunga con un rimbalzo
+-- Arrivo col teletrasporto: ricompare crescendo
 function M.teleport(s)
-	s.x[SQ], s.v[SQ] = 0.5, 4
-	s.v[FUOCO] = s.v[FUOCO] + 6
+	s.tele = 0
+	scale(s.corpo, 0.4, 0.4)
 end
 
+-- Sconfitta: l'arma cade, il corpo cade all'indietro e svanisce
 function M.die(s)
 	if s.morte then return end
 	s.morte = 0
-	local H = s.h
-	s.tx, s.ty, s.ta = gx(s, COLLO[1]), gy(s, COLLO[2]), s.x[TESTA]
-	s.tvx, s.tvy, s.tgira = -0.8 * H, 2.6 * H, 9
-	scale(s.forma, 1, 1)
-	for strato = 1, 3 do scale(s.testa[strato], 1, 1) end
+	s.flash = 0
 	lampo(s, 0)
-	gui.set_enabled(s.armi[s.arma_scelta], false)
+	scale(s.corpo, 1, 1)
+	s.tele = nil
+	-- la prossima mostra() spegne testa e arma: la sconfitta non è la mira
+	s.mira = nil
 end
 
 return M

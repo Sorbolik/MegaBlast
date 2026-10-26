@@ -8,6 +8,10 @@ textures {
   texture: "/battaglia/battaglia.atlas"
 }
 textures {
+  name: "diavoletto"
+  texture: "/battaglia/diavoletto.atlas"
+}
+textures {
   name: "esplosione"
   texture: "/battaglia/esplosione.tilesource"
 }
