@@ -14,7 +14,7 @@
 local M = {}
 
 -- livelli di zoom che si scelgono col pulsante, la rotella o il tasto Z
-M.LIVELLI = { 3, 1.8, 1 }
+M.LIVELLI = { 2.2, 1.5, 1 }
 M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
 
 -- quanto in fretta la camera raggiunge il punto (1/s): più alto = più rigida

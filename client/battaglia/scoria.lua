@@ -134,14 +134,16 @@ local ARMI = {
 }
 
 -- una mano staccata: un pugno color pelle col contorno scuro
-local function mano(s, g, x, y)
-	local d = 20 * s.k
-	cerchio(g, x, y, d + 2 * 3 * s.k, INCHIOSTRO)
+local function mano(g, k, x, y)
+	local d = 20 * k
+	cerchio(g, x, y, d + 2 * 3 * k, INCHIOSTRO)
 	cerchio(g, x, y, d, PELLE)
 end
 
+-- le armi e le mani sono grandi come il mondo, non come il corpo (game.CORPO)
 local function arma(s, name, color)
-	local H, k = s.h, s.k
+	local H = s.h / game.CORPO
+	local k = H / 200
 	local g = vuoto(s.spalla, 0, 0)
 	if name == "missile" then
 		-- la bocca è dove la simulazione fa partire il colpo (game.MUZZLE)
@@ -178,11 +180,11 @@ local function arma(s, name, color)
 		box(g, L * 0.5, 0, L, max(2, H * 0.07), FERRO)
 		box(g, L, 0, H * 0.18, max(2, H * 0.12), LAMA)
 	else -- punch
-		cerchio(g, H * 0.45, 0, s.w * 0.8, FERRO)
+		cerchio(g, H * 0.45, 0, s.w / game.CORPO * 0.8, FERRO)
 	end
 	-- le mani: la seconda sotto la canna, l'ultima sull'impugnatura (asse dell'arma)
-	if ARMI[name].due_mani then mano(s, g, 58 * k, -14 * k) end
-	mano(s, g, PRESA * k, 0)
+	if ARMI[name].due_mani then mano(g, k, 58 * k, -14 * k) end
+	mano(g, k, PRESA * k, 0)
 	gui.set_enabled(g, false)
 	s.armi[name] = g
 end
@@ -465,7 +467,7 @@ function M.update(s, dt, st)
 	rot(s.spalla, a)
 	local g = s.armi[s.arma_scelta]
 	-- il rinculo non porta mai la mano dietro la spalla
-	pos(g, -min(s.x[KICK] * s.w * 0.6, PRESA * s.k * 0.8), 0)
+	pos(g, -min(s.x[KICK] * s.w * 0.6, PRESA * s.k / game.CORPO * 0.8), 0)
 end
 
 function M.set_weapon(s, name)

@@ -33,6 +33,9 @@ M.GRAVITY = 600
 -- Robot (la posizione è il centro dei piedi)
 M.ROBOT_HALF_W = 6
 M.ROBOT_H = 16
+-- quante volte il corpo è più grande della misura su cui è fatto il resto del mondo
+-- (proiettili, casse, armi in mano si disegnano su ROBOT_H / CORPO)
+M.CORPO = 1
 M.MAX_CLIMB = 6          -- gradino massimo che il robot sale da solo
 -- Forma del corpo contro il terreno: false = rettangolo; true = capsula, con
 -- sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo rotondo tocca
@@ -2415,6 +2418,7 @@ local function blastron_profile()
 	return {
 		ROBOT_H = M.BLASTRON_ROBOT_H * corpo,
 		ROBOT_HALF_W = M.ROBOT_HALF_W * k * corpo,
+		CORPO = corpo,
 		MAX_CLIMB = M.MAX_CLIMB * k,
 		TELEPORT_SEARCH = M.TELEPORT_SEARCH * k,
 		ORB_R = M.ORB_R * k,

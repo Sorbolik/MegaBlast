@@ -180,9 +180,10 @@ end
 local FISICA = config_string("megablast.fisica", "")
 if FISICA ~= "" then game.use_physics(FISICA) end
 
--- Proiettili e casse si disegnano in proporzione al robot della
--- simulazione: 16 pixel nel profilo megablast, 20 in quello di Blastron
-local K = game.ROBOT_H / 16
+-- Proiettili e casse si disegnano in proporzione al robot della simulazione
+-- senza l'ingrandimento del corpo: 16 pixel nel profilo megablast, 28 in quello
+-- di Blastron
+local K = game.ROBOT_H / game.CORPO / 16
 
 local VK = vmath.vector3(K, K, 1)
 
