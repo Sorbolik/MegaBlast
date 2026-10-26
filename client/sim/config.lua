@@ -122,8 +122,9 @@ C.SHIELD = { hp = 60, knockback = 0.5 }
 -- Paracadute: nel proprio turno, in aria, un tocco lo apre (se ne hanno
 -- stats.parachutes a partita) e un altro lo chiude. Aperto si scende al
 -- massimo a fall_speed, ci si muove in orizzontale air_mul volte più veloci
--- (anche appena sbalzati) e l'atterraggio non fa danno
-C.PARACHUTE = { fall_speed = 60, air_mul = 1.15 }
+-- (anche appena sbalzati) e l'atterraggio non fa danno. Veloce
+-- perché è una risorsa da una volta a partita (Sergio, 26 ottobre 2026)
+C.PARACHUTE = { fall_speed = 60, air_mul = 1.5 }
 -- Cerchi di cura: all'inizio di un turno ogni every turni ne compare uno in un
 -- punto a caso della superficie (al massimo max insieme). A fine turno, di
 -- chiunque, ogni robot coi piedi dentro (raggio r) riprende hp di vita e, se
