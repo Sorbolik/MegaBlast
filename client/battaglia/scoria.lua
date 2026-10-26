@@ -6,19 +6,19 @@
 -- Lo usano la battaglia (game.gui_script), la home (menu/home.lua) e il podio:
 --   local s = scoria.new(colore)
 --   scoria.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
---   scoria.set_weapon(s, nome) / hit(s) / fire(s, tipo) / lunge(s) / teleport(s) / die(s)
+--   scoria.set_weapon(s, nome) / hit(s) / fire(s, tipo) / lunge(s) / die(s)
 --   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
 -- stato: x, y, facing, grounded, moving, aim (nil se non mira), turno (è di turno),
 -- paracadute (appeso al paracadute aperto), vittoria (festeggia sul podio)
 --
 -- Un'animazione per stato, scelta in ordine: sconfitta (gira la testa, cade e si
--- addormenta, poi svanisce), teletrasporto (ricompare dalla scintilla), mira
--- (mirando o colpendo vince sul resto: in aria con le gambe raccolte, correndo
--- con la corsa in mira), colpito, paracadute (appeso, aperto), aria (salto, con il fotogramma
--- scelto dalla velocità in su o in giù), atterraggio, corsa (con la strada fatta;
--- chi è di turno corre con l'arma in mano), vittoria (il primo sul podio), mira
--- (chi è di turno, fermo) e attesa (gli altri: fermo, con ogni tanto una
--- scenetta a caso).
+-- addormenta, poi svanisce), mira (mirando o colpendo vince sul resto: in aria
+-- con le gambe raccolte, correndo con la corsa in mira), colpito, paracadute
+-- (appeso, aperto; finché non c'è il suo foglio è l'aria), aria (salto, con il
+-- fotogramma scelto dalla velocità in su o in giù), atterraggio, corsa (con la
+-- strada fatta; chi è di turno corre con l'arma in mano), vittoria (il primo sul
+-- podio), mira (chi è di turno, fermo) e attesa (gli altri: fermo, con ogni
+-- tanto una scenetta a caso).
 -- Nella mira il foglio non ha testa né braccia: il gioco ci mette la testa, che
 -- guarda dove si mira, e pugni e arma, che girano attorno alla spalla. Nelle
 -- altre animazioni il diavoletto ha le sue braccia e l'arma non si vede.
@@ -58,7 +58,7 @@ local PASSO = 1.1
 -- ultimi ARRIVO l'atterraggio
 local ARIA, ARRIVO = 10, 8
 -- quanto durano le azioni a tempo (secondi)
-local DURATA = { colpito = 0.6, atterra = 0.3, teletrasporto = 0.6 }
+local DURATA = { colpito = 0.6, atterra = 0.3 }
 -- la testa guarda dove si mira, fino a questo angolo (radianti) in su e in giù
 local TESTA_SU, TESTA_GIU = 0.45, 0.3
 -- da sconfitto, finita l'animazione (si addormenta), svanisce in questo tempo
@@ -125,7 +125,9 @@ end
 -- Le immagini, i pugni e le misure sono in battaglia/armi.lua (strumenti/grafica/armi.py)
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
-	punch = -0.9, eagle = -0.6, hook = -0.4, mallet = -1.6, lunge = -1.4,
+	punch = -0.9, eagle = -0.6, hook = -0.4,
+	mallet = 2,  -- in spalla: lungo com'è, in giù entrerebbe nel terreno
+	lunge = 1.3,  -- dritta in su: in giù entrerebbe nel terreno
 }
 -- la mano sull'impugnatura, davanti alla spalla lungo l'arma (unità su 200)
 local PRESA = 20
@@ -213,7 +215,7 @@ function M.reset(s)
 	s.azione, s.azione_t = nil, 0
 	s.passo, s.vy, s.last_x, s.last_y, s.ground = 0, 0, nil, nil, true
 	s.flash, s.spinta, s.rinculo, s.fuoco_k = 0, 0, 0, 1
-	s.morte, s.morto, s.tele = nil, nil, nil
+	s.morte, s.morto = nil, nil
 	s.scenetta, s.pausa = nil, PAUSA_DA + PAUSA_A * math.random()
 	s.img, s.fuoco_img, s.mira = nil, nil, nil
 	s.alpha.w = 1
@@ -313,11 +315,6 @@ function M.update(s, dt, st)
 			gui.set_enabled(s.root, false)
 			return
 		end
-	elseif s.tele then
-		-- arrivo col teletrasporto: ricompare dalla scintilla
-		s.tele = s.tele + dt
-		f = mostra(s, "teletrasporto", a_parte(1, #A.teletrasporto, s.tele / DURATA.teletrasporto))
-		if s.tele >= DURATA.teletrasporto then s.tele = nil end
 	elseif st.aim and not ground and A.mira_aria then
 		-- mirando (o colpendo) vince la mira, anche in aria (col suo foglio di
 		-- gambe raccolte), correndo o colpiti
@@ -384,12 +381,10 @@ function M.update(s, dt, st)
 	local goal = st.turno and FUOCO_TURNO or FUOCO_ATTESA
 	s.fuoco_k = s.fuoco_k + (goal - s.fuoco_k) * min(1, dt * 8)
 	pos(s.fuoco, (fx + ff.x) * K, (fy + FUOCO_SU) * K)
-	-- nel teletrasporto la fiammella cresce col diavoletto
-	local q = s.tele and min(1, s.tele / DURATA.teletrasporto) or 1
-	scale(s.fuoco, s.fuoco_k * q, s.fuoco_k * q)
+	scale(s.fuoco, s.fuoco_k, s.fuoco_k)
 	rot(s.fuoco, ta * 0.5)
 	local l = st.turno and 1 or LUCE_ATTESA
-	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, s.morte and max(0, 1 - s.morte * 4) or q
+	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, s.morte and max(0, 1 - s.morte * 4) or 1
 	gui.set_color(s.fuoco, C)
 
 	-- lampo bianco del colpo
@@ -430,10 +425,6 @@ function M.lunge(s)
 	s.spinta = -0.5
 end
 
--- Arrivo col teletrasporto: ricompare dalla scintilla
-function M.teleport(s)
-	s.tele = 0
-end
 
 -- Sconfitta: l'arma cade, gira la testa, cade e si addormenta, poi svanisce
 function M.die(s)
@@ -441,7 +432,6 @@ function M.die(s)
 	s.morte = 0
 	s.flash = 0
 	lampo(s, 0)
-	s.tele = nil
 	-- la prossima mostra() spegne testa e arma: la sconfitta non è la mira
 	s.mira = nil
 end

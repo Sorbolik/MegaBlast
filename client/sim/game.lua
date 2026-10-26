@@ -3,7 +3,7 @@
 --
 -- Uso:
 --   local game = require "sim.game"
---   local g = game.new(seed, "isole")
+--   local g = game.new(seed, "forgia")   -- senza mappa la sceglie il seed
 --   g:step({ left = bool, right = bool, jump = bool,
 --            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport"
 --                                                     | "grenade" | "shards" | "punch" } })
@@ -23,10 +23,13 @@ local C = require "sim.config"
 local M = {}
 M.__index = M
 
--- Mondo
-M.WORLD_W = 1280
-M.WORLD_H = 720
-M.CELL = 2
+-- Mondo: 640 x 360 celle (le maschere delle mappe). CELL 3 dal 26 ottobre, era 2:
+-- la mappa era piccola per il diavoletto (ci si attraversava in fretta e nei
+-- buchi in mezzo non passava). 3 e non un valore con la virgola, così le celle
+-- restano intere e la mappa coincide pixel per pixel con le immagini 1920 x 1080.
+M.CELL = 3
+M.WORLD_W = 640 * M.CELL
+M.WORLD_H = 360 * M.CELL
 M.DT = 1 / 60
 M.GRAVITY = 600
 
@@ -311,7 +314,8 @@ end
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
-	local map = maps.get(map_id)
+	-- senza mappa la sceglie il seed (maps.ROTATION)
+	local map = maps.get(map_id or maps.pick(seed))
 	g.map = map.id
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.WORLD_W / M.CELL, M.WORLD_H / M.CELL, M.CELL)
@@ -613,7 +617,7 @@ function M:respawn(rb)
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
 	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
-	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet = nil, nil, nil, nil
+	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet, rb.mallet_stop = nil, nil, nil, nil, nil
 	rb.hp, rb.dead, rb.shield, rb.status, rb.respawn_in = rb.max_hp, false, nil, {}, nil
 	rb.parachute = false
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
@@ -1381,99 +1385,61 @@ function M:hook_land(rb, ax, ay)
 end
 
 -- Maglio (config.MALLET) -----------------------------------------------------------
--- Martello a due mani: in aria colpisce sotto i piedi e, se trova qualcosa,
--- fa rimbalzare in alto chi colpisce (pogo); a terra colpisce davanti.
+-- Martello a due mani che gira attorno alla spalla come la Lama: parte alto
+-- dietro la testa, cala davanti e finisce sotto i piedi. Colpisce una volta
+-- ogni robot che tocca lungo l'arco; la testa si ferma sul terreno. Se il
+-- colpo è partito in aria e la testa sbatte su un robot o sul terreno mentre
+-- cala (dalla spalla in giù), chi colpisce rimbalza in alto (pogo), una volta
+-- per colpo, anche se intanto è atterrato.
 
 function M:start_mallet(angle)
 	local rb = self.robots[self.current]
 	rb.facing = math.cos(angle) < 0 and -1 or 1
 	rb.mallet = 0
 	rb.mallet_dir = rb.facing
+	rb.mallet_hit, rb.mallet_stop, rb.mallet_bounced = {}, nil, false
+	rb.mallet_air = not rb.grounded
 	self:emit({ type = "mallet", robot = rb.id })
 end
 
--- Il rettangolo del colpo: sotto i piedi in aria, davanti a terra
-local function mallet_zone(rb)
+-- Angolo del martello al tick t, per un robot rivolto a destra: la stessa
+-- curva della Lama (slancio indietro, poi sempre più veloce); fermato sul
+-- terreno al tick stop resta lì.
+function M.mallet_angle(t, stop)
 	local s = C.MALLET
-	if rb.grounded then
-		local x0 = rb.x + rb.mallet_dir * M.ROBOT_HALF_W
-		local x1 = x0 + rb.mallet_dir * s.reach
-		return math.min(x0, x1), rb.y, math.max(x0, x1), rb.y + M.ROBOT_H
-	end
-	return rb.x - M.ROBOT_HALF_W - s.width, rb.y - s.reach, rb.x + M.ROBOT_HALF_W + s.width, rb.y
+	if stop then t = math.min(t, stop) end
+	return s.from + (s.to - s.from) * M.sword_progress(t / s.ticks)
 end
 
-local function box_hits_robot(r, x0, y0, x1, y1)
-	return r.x + M.ROBOT_HALF_W >= x0 and r.x - M.ROBOT_HALF_W <= x1 and r.y + M.ROBOT_H >= y0 and r.y <= y1
+-- Partito in aria, un colpo che arriva mentre il martello cala fa rimbalzare in alto
+function M:mallet_bounce(rb, t)
+	if not rb.mallet_air or rb.mallet_bounced or M.mallet_angle(t) > 0 then return false end
+	rb.mallet_bounced = true
+	rb.vy, rb.grounded, rb.knocked, rb.fall_top = C.MALLET.bounce, false, false, nil
+	return true
+end
+
+function M:mallet_hit(rb, other, t)
+	local bounce = self:mallet_bounce(rb, t)
+	self:emit({ type = "mallet_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2, bounce = bounce })
+	self:hurt(other, C.MALLET.damage, rb)
 end
 
 function M:update_mallet(rb)
-	rb.mallet = rb.mallet + 1
-	if rb.mallet == C.MALLET.hit_tick then
-		local x0, y0, x1, y1 = mallet_zone(rb)
-		local hit = false
-		for _, other in ipairs(self.robots) do
-			if other ~= rb and not other.dead and box_hits_robot(other, x0, y0, x1, y1) then
-				hit = true
-				self:emit({ type = "mallet_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
-				self:hurt(other, C.MALLET.damage, rb)
-			end
-		end
-		local c = M.CELL
-		if not rb.grounded and self.terrain:any_solid(math.floor(x0 / c), math.floor(x1 / c), math.floor(y0 / c), math.floor(y1 / c)) then
-			hit = true
-			self:emit({ type = "mallet_hit", robot = rb.id, x = rb.x, y = rb.y - C.MALLET.reach / 2 })
-		end
-		-- in aria, colpito qualcosa, si rimbalza in alto
-		if hit and not rb.grounded then
-			rb.vy, rb.knocked, rb.fall_top = C.MALLET.bounce, false, nil
+	local s = C.MALLET
+	local t0 = rb.mallet
+	rb.mallet = t0 + 1
+	if not rb.mallet_stop and t0 < s.ticks then
+		local t, x, y = self:sweep_arc(rb, t0, M.mallet_angle, s.reach, rb.mallet_dir, rb.mallet_hit, M.mallet_hit, true)
+		if t then
+			rb.mallet_stop = t
+			local bounce = self:mallet_bounce(rb, t)
+			self:emit({ type = "mallet_hit", robot = rb.id, x = x, y = y, bounce = bounce })
 		end
 	end
-	if rb.mallet >= C.MALLET.ticks then rb.mallet, rb.mallet_dir = nil, nil end
-end
-
--- Affondo (config.LUNGE) -----------------------------------------------------------
--- Scatto nella direzione della mira che passa attraverso i robot, colpendoli
--- una volta ciascuno; il terreno lo ferma.
-
-function M:start_lunge(angle)
-	local rb = self.robots[self.current]
-	rb.facing = math.cos(angle) < 0 and -1 or 1
-	rb.lunge = C.LUNGE.ticks
-	rb.lunge_vx, rb.lunge_vy = math.cos(angle) * C.LUNGE.speed, math.sin(angle) * C.LUNGE.speed
-	rb.lunge_hit = {}
-	rb.grounded, rb.knocked = false, false
-	self:emit({ type = "lunge", robot = rb.id, angle = angle })
-end
-
--- Un tick di scatto: al posto della fisica normale del robot (update_robot)
-function M:update_lunge(rb)
-	local mx, my = rb.lunge_vx * M.DT, rb.lunge_vy * M.DT
-	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
-	local stopped = false
-	for _ = 1, steps do
-		local nx, ny = rb.x + mx / steps, rb.y + my / steps
-		if self:terrain_collides(nx, ny) then
-			stopped = true
-			break
-		end
-		rb.x, rb.y = nx, ny
-		local other = self:robot_at(rb.x, rb.y, rb)
-		if other and not rb.lunge_hit[other.id] then
-			rb.lunge_hit[other.id] = true
-			self:emit({ type = "lunge_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
-			self:hurt(other, C.LUNGE.damage, rb)
-		end
+	if rb.mallet >= s.ticks + s.hold then
+		rb.mallet, rb.mallet_dir, rb.mallet_hit, rb.mallet_stop, rb.mallet_bounced, rb.mallet_air = nil, nil, nil, nil, nil, nil
 	end
-	rb.lunge = rb.lunge - 1
-	if stopped or rb.lunge <= 0 then
-		-- lo slancio che resta: oltre un bordo si vola, contro il terreno ci si ferma
-		local keep = stopped and 0 or C.LUNGE.keep
-		rb.vx, rb.vy = rb.lunge_vx * keep, rb.lunge_vy * keep
-		rb.lunge, rb.lunge_hit, rb.lunge_vx, rb.lunge_vy = nil, nil, nil, nil
-		rb.fall_top = nil
-	end
-	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
 -- Lama di Nucleo ----------------------------------------------------------------
@@ -1570,9 +1536,43 @@ local function in_robot(r, x, y)
 	return M.hurt_at(r, x, y, 0)
 end
 
--- alla fine la lama gira veloce: tanti passi per tick, così non salta un bersaglio
-local SWORD_SUBSTEPS = 8
-local SWORD_SAMPLES = 10
+-- alla fine l'arma gira veloce: tanti passi per tick, così non salta un bersaglio
+local ARC_SUBSTEPS = 8
+local ARC_SAMPLES = 10
+-- dove si guarda se la testa del Maglio tocca il terreno: di traverso all'arma
+local HEAD_SIDE = { 0, -5, 5 }
+
+-- Un tick di un'arma lunga reach che gira attorno alla spalla di rb (Lama,
+-- Maglio), da t0 a t0 + 1: angle(t) è il suo angolo per un robot rivolto a
+-- destra, dir il lato del colpo. Ogni robot toccato lungo l'arma viene colpito
+-- una volta (hit(self, rb, other, t), segnato in done). Con stop la punta si
+-- ferma sul terreno: rende il tick (con la frazione) e il punto dell'urto.
+function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, stop)
+	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
+	for s = 1, ARC_SUBSTEPS do
+		local t = t0 + s / ARC_SUBSTEPS
+		local a = angle(t)
+		local cx, cy = math.cos(a) * dir, math.sin(a)
+		for _, other in ipairs(self.robots) do
+			if other ~= rb and not other.dead and not done[other.id] then
+				for k = 1, ARC_SAMPLES do
+					local d = reach * k / ARC_SAMPLES
+					if in_robot(other, px + cx * d, py + cy * d) then
+						done[other.id] = true
+						hit(self, rb, other, t)
+						break
+					end
+				end
+			end
+		end
+		if stop then
+			local hx, hy = px + cx * reach, py + cy * reach
+			for _, w in ipairs(HEAD_SIDE) do
+				if self.terrain:solid(hx - cy * w, hy + cx * w) then return t, hx, hy end
+			end
+		end
+	end
+end
 
 function M:update_swing(rb)
 	if M.SWORD_MODEL == "blastron" then
@@ -1585,24 +1585,7 @@ function M:update_swing(rb)
 	end
 	local t0 = rb.swing
 	rb.swing = t0 + 1
-	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
-	-- controlliamo anche gli angoli intermedi, così la lama non salta un bersaglio
-	for s = 1, SWORD_SUBSTEPS do
-		local a = M.sword_angle(t0 + s / SWORD_SUBSTEPS)
-		local cx, cy = math.cos(a) * rb.swing_dir, math.sin(a)
-		for _, other in ipairs(self.robots) do
-			if other ~= rb and not other.dead and not rb.swing_hit[other.id] then
-				for k = 1, SWORD_SAMPLES do
-					local d = M.SWORD_REACH * k / SWORD_SAMPLES
-					if in_robot(other, px + cx * d, py + cy * d) then
-						rb.swing_hit[other.id] = true
-						self:sword_hit(rb, other)
-						break
-					end
-				end
-			end
-		end
-	end
+	self:sweep_arc(rb, t0, M.sword_angle, M.SWORD_REACH, rb.swing_dir, rb.swing_hit, M.sword_hit)
 	if rb.swing >= M.SWORD_TICKS then
 		rb.swing, rb.swing_hit, rb.swing_dir = nil, nil, nil
 	end
@@ -1613,6 +1596,74 @@ function M:sword_hit(rb, other)
 	-- la spada fa solo danno: il bersaglio resta dov'è (in Blastron si ferma)
 	if M.SWORD_STOP then other.vx, other.vy = 0, 0 end
 	self:hurt(other, M.SWORD_DAMAGE, rb)
+end
+
+-- Affondo (config.LUNGE) -----------------------------------------------------------
+-- Scatto nella direzione della mira che passa attraverso i robot, colpendoli
+-- una volta ciascuno col corpo o con la lancia; sale i gradini piccoli e
+-- scivola lungo il terreno, si ferma solo quando non passa per niente.
+
+function M:start_lunge(angle)
+	local rb = self.robots[self.current]
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.lunge = C.LUNGE.ticks
+	rb.lunge_vx, rb.lunge_vy = math.cos(angle) * C.LUNGE.speed, math.sin(angle) * C.LUNGE.speed
+	rb.lunge_hit = {}
+	rb.grounded, rb.knocked = false, false
+	self:emit({ type = "lunge", robot = rb.id, angle = angle })
+end
+
+-- Dove va un passo di scatto da (x, y) di (dx, dy): dritto, o salendo un
+-- gradino fino a climb, o solo la parte orizzontale o verticale che passa.
+-- nil se non passa niente.
+function M:lunge_step(rb, dx, dy)
+	local x, y = rb.x + dx, rb.y + dy
+	if not self:terrain_collides(x, y) then return x, y end
+	if math.abs(dx) <= 0.05 then
+		return nil
+	end
+	for d = 1, C.LUNGE.climb do
+		if not self:terrain_collides(x, y + d) then return x, y + d end
+	end
+	if not self:terrain_collides(x, rb.y) then return x, rb.y end
+	if math.abs(dy) > 0.05 and not self:terrain_collides(rb.x, y) then return rb.x, y end
+end
+
+-- Un tick di scatto: al posto della fisica normale del robot (update_robot)
+function M:update_lunge(rb)
+	local mx, my = rb.lunge_vx * M.DT, rb.lunge_vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
+	local len = math.sqrt(rb.lunge_vx ^ 2 + rb.lunge_vy ^ 2)
+	local ux, uy = rb.lunge_vx / len, rb.lunge_vy / len
+	local stopped = false
+	for _ = 1, steps do
+		local nx, ny = self:lunge_step(rb, mx / steps, my / steps)
+		if not nx then
+			stopped = true
+			break
+		end
+		rb.x, rb.y = nx, ny
+		-- colpito chi tocca col corpo o con la lancia
+		local cx, cy = rb.x, rb.y + M.ROBOT_H / 2
+		for _, other in ipairs(self.robots) do
+			if other ~= rb and not other.dead and not rb.lunge_hit[other.id]
+				and (self:robot_at(rb.x, rb.y, rb) == other
+					or seg_hits_robot(other, cx, cy, cx + ux * C.LUNGE.reach, cy + uy * C.LUNGE.reach, 2)) then
+				rb.lunge_hit[other.id] = true
+				self:emit({ type = "lunge_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+				self:hurt(other, C.LUNGE.damage, rb)
+			end
+		end
+	end
+	rb.lunge = rb.lunge - 1
+	if stopped or rb.lunge <= 0 then
+		-- lo slancio che resta: oltre un bordo si vola, contro il terreno ci si ferma
+		local keep = stopped and 0 or C.LUNGE.keep
+		rb.vx, rb.vy = rb.lunge_vx * keep, rb.lunge_vy * keep
+		rb.lunge, rb.lunge_hit, rb.lunge_vx, rb.lunge_vy = nil, nil, nil, nil
+		rb.fall_top = nil
+	end
+	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
 -- Colpi di mischia alla Blastron ---------------------------------------------------
@@ -2336,7 +2387,7 @@ function M:step(input)
 			if rb.dead then rb.punch, rb.punch_dir = nil, nil else self:update_punch(rb) end
 		end
 		if rb.mallet then
-			if rb.dead then rb.mallet, rb.mallet_dir = nil, nil else self:update_mallet(rb) end
+			if rb.dead then rb.mallet, rb.mallet_dir, rb.mallet_stop = nil, nil, nil else self:update_mallet(rb) end
 		end
 		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked = nil, nil, nil end
 	end

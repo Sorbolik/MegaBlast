@@ -148,9 +148,8 @@ for _ = 1, 30 do scoria.update(s, 1 / 120, st) end
 check(tutto_finito(), "salto e atterraggio (anche a 120 Hz): valori finiti")
 
 scoria.hit(s)
-scoria.teleport(s)
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
-check(tutto_finito(), "colpo e teletrasporto: valori finiti")
+check(tutto_finito(), "colpo: valori finiti")
 
 -- l'attesa: fermo, e prima o poi una scenetta a caso che finisce
 st.turno = false
@@ -214,9 +213,10 @@ check(not t.pieno.enabled and tutto_finito(), "targa: a zero la vita sparisce, v
 
 -- Camera -----------------------------------------------------------------------
 
-local c = camera.new(1280, 720)
-camera.salta(c, 100, 100, 1)
-check(c.x == 640 and c.y == 360, "zoom 1: si vede tutta la mappa, la camera non si sposta")
+local c = camera.new(1280, 720, 1920, 1080)
+camera.salta(c, 100, 100, camera.tutta(c))
+check(c.x == 960 and c.y == 540, "zoom mappa: si vede tutta la mappa, la camera non si sposta")
+check(camera.tutta(c) == camera.LIVELLI[#camera.LIVELLI], "l'ultimo livello di zoom mostra tutta la mappa")
 
 camera.salta(c, 640, 360, 2.2)
 local px, py = camera.allo_schermo(c, 700, 400)
@@ -230,7 +230,7 @@ px, py = camera.allo_schermo(c, 0, 0)
 check(math.abs(px) < 1e-9 and math.abs(py) < 1e-9, "nell'angolo la camera non esce dalla mappa")
 
 -- l'inseguimento non dipende dalla frequenza dello schermo
-local a, b = camera.new(1280, 720), camera.new(1280, 720)
+local a, b = camera.new(1280, 720, 1920, 1080), camera.new(1280, 720, 1920, 1080)
 camera.salta(a, 400, 300, 2.2)
 camera.salta(b, 400, 300, 2.2)
 for _ = 1, 30 do camera.segui(a, 1 / 60, 800, 420, 2.2) end
@@ -255,7 +255,7 @@ for _ = 1, 60 do ox = camera.scossa(a, 1 / 60) end
 check(ox == 0, "scossa: dopo un attimo si ferma")
 
 camera.cambia(c, 5)
-check(camera.zoom(c) == 1, "rotella indietro: si ferma su tutta la mappa")
+check(camera.zoom(c) == camera.tutta(c), "rotella indietro: si ferma su tutta la mappa")
 camera.cambia(c, -5)
 check(camera.zoom(c) == camera.LIVELLI[1], "rotella avanti: si ferma sul più vicino")
 camera.prossimo(c); camera.prossimo(c); camera.prossimo(c)

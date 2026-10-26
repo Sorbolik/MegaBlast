@@ -25,9 +25,6 @@ var modes = map[string]Mode{
 	"torneo": {"torneo", 2, "1v1", true},
 }
 
-// Mappa usata per le partite online (vedi client/sim/maps.lua).
-const defaultMap = "forgia"
-
 // Lobby tiene una coda per modalità. Il lock serve solo quando qualcuno entra
 // o esce dalla coda, mai durante le partite.
 type Lobby struct {

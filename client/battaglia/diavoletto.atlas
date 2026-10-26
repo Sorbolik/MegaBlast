@@ -38,6 +38,78 @@ images {
   image: "/assets/diavoletto/mira_12.png"
 }
 images {
+  image: "/assets/diavoletto/mira_13.png"
+}
+images {
+  image: "/assets/diavoletto/mira_14.png"
+}
+images {
+  image: "/assets/diavoletto/mira_15.png"
+}
+images {
+  image: "/assets/diavoletto/mira_16.png"
+}
+images {
+  image: "/assets/diavoletto/mira_17.png"
+}
+images {
+  image: "/assets/diavoletto/mira_18.png"
+}
+images {
+  image: "/assets/diavoletto/mira_19.png"
+}
+images {
+  image: "/assets/diavoletto/mira_20.png"
+}
+images {
+  image: "/assets/diavoletto/mira_21.png"
+}
+images {
+  image: "/assets/diavoletto/mira_22.png"
+}
+images {
+  image: "/assets/diavoletto/mira_23.png"
+}
+images {
+  image: "/assets/diavoletto/mira_24.png"
+}
+images {
+  image: "/assets/diavoletto/mira_25.png"
+}
+images {
+  image: "/assets/diavoletto/mira_26.png"
+}
+images {
+  image: "/assets/diavoletto/mira_27.png"
+}
+images {
+  image: "/assets/diavoletto/mira_28.png"
+}
+images {
+  image: "/assets/diavoletto/mira_29.png"
+}
+images {
+  image: "/assets/diavoletto/mira_30.png"
+}
+images {
+  image: "/assets/diavoletto/mira_31.png"
+}
+images {
+  image: "/assets/diavoletto/mira_32.png"
+}
+images {
+  image: "/assets/diavoletto/mira_33.png"
+}
+images {
+  image: "/assets/diavoletto/mira_34.png"
+}
+images {
+  image: "/assets/diavoletto/mira_35.png"
+}
+images {
+  image: "/assets/diavoletto/mira_36.png"
+}
+images {
   image: "/assets/diavoletto/attesa_1.png"
 }
 images {
@@ -177,33 +249,6 @@ images {
 }
 images {
   image: "/assets/diavoletto/coda_16.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_1.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_2.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_3.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_4.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_5.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_6.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_7.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_8.png"
-}
-images {
-  image: "/assets/diavoletto/teletrasporto_9.png"
 }
 images {
   image: "/assets/diavoletto/sconfitta_1.png"
@@ -452,40 +497,58 @@ images {
   image: "/assets/diavoletto/vittoria_18.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_1.png"
+  image: "/assets/diavoletto/vittoria_19.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_2.png"
+  image: "/assets/diavoletto/vittoria_20.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_3.png"
+  image: "/assets/diavoletto/vittoria_21.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_4.png"
+  image: "/assets/diavoletto/vittoria_22.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_5.png"
+  image: "/assets/diavoletto/vittoria_23.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_6.png"
+  image: "/assets/diavoletto/vittoria_24.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_7.png"
+  image: "/assets/diavoletto/vittoria_25.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_8.png"
+  image: "/assets/diavoletto/vittoria_26.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_9.png"
+  image: "/assets/diavoletto/vittoria_27.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_10.png"
+  image: "/assets/diavoletto/vittoria_28.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_11.png"
+  image: "/assets/diavoletto/vittoria_29.png"
 }
 images {
-  image: "/assets/diavoletto/paracadute_12.png"
+  image: "/assets/diavoletto/vittoria_30.png"
+}
+images {
+  image: "/assets/diavoletto/vittoria_31.png"
+}
+images {
+  image: "/assets/diavoletto/vittoria_32.png"
+}
+images {
+  image: "/assets/diavoletto/vittoria_33.png"
+}
+images {
+  image: "/assets/diavoletto/vittoria_34.png"
+}
+images {
+  image: "/assets/diavoletto/vittoria_35.png"
+}
+images {
+  image: "/assets/diavoletto/vittoria_36.png"
 }
 images {
   image: "/assets/diavoletto/mira_aria_1.png"
