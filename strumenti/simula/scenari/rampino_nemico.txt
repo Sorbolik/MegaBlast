@@ -1,0 +1,23 @@
+# Rampino su un nemico a terra: lo trascina verso la mano di chi tira anche se
+# è appoggiato al pavimento (prima 9 volte su 10 il terreno sotto lo fermava).
+# Il secondo robot parte 150 pixel a sinistra, in cima ai gradini: viene
+# tirato giù per i gradini fin addosso a chi tira.
+imposta zoom 2
+imposta prova_vicino -150
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+zoom 01_nemico_vicino
+tocca 707 62                        # Rampino (barra: Lanciarune 479, Lama 593, Rampino 707, Paracadute 801)
+aspetta 0.4
+mira -200 90 0.1 02_mira 2          # verso il nemico, a sinistra e in alto
+aspetta_evento hook 2
+aspetta 0.15
+zoom 03_tirato
+aspetta_evento hook_end 2
+aspetta 0.05
+zoom 04_mollato
+aspetta 1
+zoom 05_vicino_a_chi_tira
