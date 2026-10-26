@@ -19,7 +19,12 @@ return {
 		braccio = { img = "braccio", tinta = nil, x = 2.0, y = -24.0, w = 40, h = 72 },
 		braccio_dietro = { img = "braccio_dietro", tinta = nil, x = 2.0, y = -24.0, w = 40, h = 72 },
 		pugno = { img = "pugno", tinta = nil, x = 0.0, y = 0.0, w = 32, h = 32 },
-		braccio_tubo = { img = "braccio_tubo", tinta = nil, x = 24.0, y = 0.0, w = 76, h = 28 },
+		omero_bordo = { img = "omero_bordo", tinta = nil, x = 12.0, y = 0.0, w = 58, h = 34 },
+		avambraccio_bordo = { img = "avambraccio_bordo", tinta = nil, x = 13.0, y = 0.0, w = 60, h = 34 },
+		omero = { img = "omero", tinta = nil, x = 12.0, y = 0.0, w = 42, h = 18 },
+		avambraccio = { img = "avambraccio", tinta = nil, x = 13.0, y = 0.0, w = 44, h = 18 },
+		omero_dietro = { img = "omero_dietro", tinta = nil, x = 12.0, y = 0.0, w = 42, h = 18 },
+		avambraccio_dietro = { img = "avambraccio_dietro", tinta = nil, x = 13.0, y = 0.0, w = 44, h = 18 },
 		ala = { img = "ala", tinta = nil, x = -20.0, y = 4.0, w = 60, h = 56 },
 		fiammella_1 = { img = "fiammella_1", tinta = "fiammella_1_tinta", x = 0.0, y = 24.0, w = 48, h = 64 },
 		fiammella_2 = { img = "fiammella_2", tinta = "fiammella_2_tinta", x = 0.0, y = 24.0, w = 48, h = 64 },
@@ -46,6 +51,7 @@ return {
 		coda = { -10, 70 },
 		cima = { 0, 82 },
 	},
+	braccio = { 24, 26 },  -- braccio e avambraccio sull'arma
 	coda = { 26, 26, 26, 26, 24 },  -- lunghezza dei segmenti
 	coda_riposo = { 3.491, 2.793, 2.094, 1.571, 1.134 },  -- angoli a riposo
 	paracadute_y = 262,  -- il perno del paracadute, dai piedi

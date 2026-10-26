@@ -29,7 +29,22 @@ images {
   image: "/assets/diavoletto/pugno.png"
 }
 images {
-  image: "/assets/diavoletto/braccio_tubo.png"
+  image: "/assets/diavoletto/omero_bordo.png"
+}
+images {
+  image: "/assets/diavoletto/avambraccio_bordo.png"
+}
+images {
+  image: "/assets/diavoletto/omero.png"
+}
+images {
+  image: "/assets/diavoletto/avambraccio.png"
+}
+images {
+  image: "/assets/diavoletto/omero_dietro.png"
+}
+images {
+  image: "/assets/diavoletto/avambraccio_dietro.png"
 }
 images {
   image: "/assets/diavoletto/ala.png"

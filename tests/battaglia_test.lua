@@ -80,7 +80,7 @@ check(tutto_finito(), "a riposo: valori finiti")
 
 -- il pugno davanti, sull'impugnatura: lo mette l'avambraccio della mira
 local function mano(name)
-	return s.avambraccio_a.pugno
+	return s.pugno_presa
 end
 
 -- dove deve stare la mano sull'impugnatura (battaglia/armi.lua), vista dalla

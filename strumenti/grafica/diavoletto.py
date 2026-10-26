@@ -169,11 +169,24 @@ def pugno(d):
     return (-16, -16, 16, 16)
 
 
-def braccio_tubo(d):
-    # l'avambraccio della mira: un tubo che il gioco allunga (slice 9) dalla
-    # spalla al pugno
-    d.rect(0, -6, 48, 12, "pelle", r=6)
-    return (-14, -14, 62, 14)
+# le braccia sull'arma: braccio (spalla-gomito) e avambraccio (gomito-pugno),
+# lunghezze e raggi; il gioco li piega col gomito verso le mani dell'arma
+BRACCIO = ((24, 7), (26, 6.5))
+
+
+def osso(d, i, bordo, dietro=False):
+    # un osso delle braccia sull'arma, un tubo tondo dal perno (la spalla o il
+    # gomito) lungo +x; come la coda, in due versioni (bordo e colore) così
+    # braccio e avambraccio si fondono in un braccio solo senza giunture
+    L, r = BRACCIO[i]
+    b = BORDO_D if bordo else 0
+    r = r + b
+    col = "nero" if bordo else ("pelle_dietro" if dietro else "pelle")
+    d.path(f"M0,{r} L{L},{r} A{r},{r} 0 0 0 {L},{-r} L0,{-r} A{r},{r} 0 0 0 0,{r} Z", col, contorno=False)
+    if not bordo:
+        d.riga(f"M{L * 0.3},{-1.5} L{L * 0.7},{-1.5}", COL[col][0], RIGA_D)
+    r = math.ceil(r) + 2
+    return (-r, -r, L + r, r)
 
 
 def ala(d):
@@ -254,7 +267,12 @@ PEZZI = {
     "braccio": braccio,
     "braccio_dietro": lambda d: braccio(d, True),
     "pugno": pugno,
-    "braccio_tubo": braccio_tubo,
+    "omero_bordo": lambda d: osso(d, 0, True),
+    "avambraccio_bordo": lambda d: osso(d, 1, True),
+    "omero": lambda d: osso(d, 0, False),
+    "avambraccio": lambda d: osso(d, 1, False),
+    "omero_dietro": lambda d: osso(d, 0, False, True),
+    "avambraccio_dietro": lambda d: osso(d, 1, False, True),
     "ala": ala,
     "fiammella_1": lambda d: fiammella(d, 0),
     "fiammella_2": lambda d: fiammella(d, 1),
@@ -306,6 +324,7 @@ def main():
     for nome, (x, y) in PUNTI.items():
         lua.append(f"\t\t{nome} = {{ {x}, {y} }},")
     lua.append("\t},")
+    lua.append("\tbraccio = { " + ", ".join(str(L) for L, _ in BRACCIO) + " },  -- braccio e avambraccio sull'arma")
     lua.append("\tcoda = { " + ", ".join(str(L) for L, _, _ in CODA) + " },  -- lunghezza dei segmenti")
     lua.append("\tcoda_riposo = { " + ", ".join(f"{math.radians(a):.3f}" for a in CODA_RIPOSO) + " },  -- angoli a riposo")
     lua.append(f"\tparacadute_y = {PARACADUTE_Y},  -- il perno del paracadute, dai piedi")
