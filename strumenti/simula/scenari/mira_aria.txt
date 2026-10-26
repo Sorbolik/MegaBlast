@@ -1,0 +1,20 @@
+# La mira in aria: il busto della mira sulle gambe raccolte del salto, salendo e
+# scendendo, poi la mira a terra.
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+premi salta
+aspetta 0.05
+mira 200 -80 0.15 01_mira_salendo 4
+aspetta_stato turno=1 fase=aim 10
+aspetta 1
+premi salta
+aspetta 0.05
+mira 200 80 0.45 02_mira_scendendo 4
+aspetta_stato turno=1 fase=aim 10
+aspetta 1
+mira 200 80 0.4 03_mira_a_terra 4
+aspetta 1
+foto 04_fine

@@ -5,7 +5,7 @@
 -- e la spalla (sx, sy, lì girano pugni e arma).
 return {
 	altezza = 150,  -- dai piedi alla cima della testa
-	testa = { img = "testa", w = 70, h = 88, x = 0.9, y = 33.0, tx = 2.8, ty = 54.7 },
+	testa = { img = "testa", w = 67, h = 83, x = 0.1, y = 33.9, tx = 2.8, ty = 54.7 },
 	animazioni = {
 		mira = { fps = 6, giro = true,
 			{ img = "mira_1", x = -8.1, y = 60.5, w = 106, h = 122, cx = 10.3, cy = 95.3, sx = 1.2, sy = 79.8 },
@@ -116,6 +116,21 @@ return {
 			{ img = "fiammella_16", x = 0.1, y = 26.7, w = 22, h = 54 },
 			{ img = "fiammella_17", x = 0.0, y = 26.9, w = 22, h = 54 },
 			{ img = "fiammella_18", x = 0.0, y = 26.4, w = 23, h = 53 },
+		},
+		mira_aria = { fps = 12, giro = false,
+			{ img = "mira_aria_1", x = -15.0, y = 56.9, w = 92, h = 129, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_2", x = -13.7, y = 57.7, w = 95, h = 128, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_3", x = -13.0, y = 58.6, w = 96, h = 126, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_4", x = -12.0, y = 60.2, w = 98, h = 123, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_5", x = -11.0, y = 61.5, w = 100, h = 120, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_6", x = -10.7, y = 62.2, w = 101, h = 119, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_7", x = -10.2, y = 63.3, w = 102, h = 116, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_8", x = -10.1, y = 63.7, w = 102, h = 116, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_9", x = -10.1, y = 63.5, w = 102, h = 116, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_10", x = -10.4, y = 62.4, w = 102, h = 118, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_11", x = -11.0, y = 60.5, w = 100, h = 122, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_12", x = -10.9, y = 59.0, w = 101, h = 125, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
+			{ img = "mira_aria_13", x = -9.8, y = 59.0, w = 103, h = 125, cx = 10.2, cy = 95.3, sx = 1.1, sy = 79.8 },
 		},
 	},
 }

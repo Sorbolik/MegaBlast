@@ -52,6 +52,9 @@ AZIONI = {
     "fiammella": dict(base=None, da=0, a=35, passo=2, giro=True),
 }
 FPS = 12   # Ludo: 36 fotogrammi in 3 s
+# La mira in aria non ha un foglio: si monta il busto della mira sulle gambe
+# raccolte del salto (gli stessi fotogrammi in aria del salto, da..a)
+MIRA_ARIA = dict(da=8, a=20)
 
 
 def apri(path, corpo=True):
@@ -151,6 +154,85 @@ def giro_migliore(fot, da, a, corto, lungo):
     return best[1], best[2] - 1
 
 
+def colori_di_ludo(sorgente, ludo):
+    """Ludo schiarisce un po' i colori della sua base. Per ogni canale, la tabella
+    che porta i colori della base (ChatGPT) a quelli dello stesso disegno rifatto
+    da Ludo (il suo primo fotogramma): si confrontano i due istogrammi."""
+    lut = []
+    for c in range(3):
+        a = sorgente[..., c][sorgente[..., 3] > 0.9]
+        b = ludo[..., c][ludo[..., 3] > 0.9]
+        q = np.linspace(0, 1, 257)
+        lut.append((np.quantile(a, q), np.quantile(b, q)))
+    return lut
+
+
+def ricolora(a, lut):
+    out = a.copy()
+    for c, (x, y) in enumerate(lut):
+        out[..., c] = np.interp(a[..., c], x, y)
+    return out
+
+
+def cintura(a):
+    """La cintura: il pezzo grigio scuro largo più in basso (con la fibbia, se
+    è staccata). Ritorna il centro e il bordo sinistro."""
+    r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
+    mx = np.maximum(np.maximum(r, g), b)
+    mn = np.minimum(np.minimum(r, g), b)
+    m = (al > 0.5) & (mx - mn < 0.1) & (mx > 0.15) & (mx < 0.55)
+    lab, _ = nd.label(m)
+    c = []
+    for i, o in enumerate(nd.find_objects(lab)):
+        h, w = o[0].stop - o[0].start, o[1].stop - o[1].start
+        if w >= 1.2 * h and (lab[o] == i + 1).sum() > a.shape[0] * 0.4:
+            c.append((o[0].start, o[0].stop, o[1].start, o[1].stop))
+    giu = max(c, key=lambda t: t[0] + t[1])
+    u = [t for t in c if t[0] < giu[1] and t[1] > giu[0]]
+    y0, y1 = min(t[0] for t in u), max(t[1] for t in u)
+    x0, x1 = min(t[2] for t in u), max(t[3] for t in u)
+    return (x0 + x1) / 2, (y0 + y1) / 2, x0
+
+
+def gambe(a, cy, r):
+    """Le gambe sotto la cintura: il pezzo grande che resta togliendo le cose
+    sottili (la coda)."""
+    m = a[..., 3] > 0.5
+    m[:int(cy)] = False
+    m = nd.binary_opening(m, structure=np.ones((r, r)))
+    lab, n = nd.label(m)
+    if n > 1:
+        m = lab == 1 + int(np.argmax(nd.sum(m, lab, range(1, n + 1))))
+    return m
+
+
+def tela(f, k, fx, fy, ox, oy, shape):
+    """Il fotogramma f nella tela della base: scala k, piedi da (fx, fy) a (ox, oy)."""
+    pm = np.dstack([f[..., :3] * f[..., 3:], f[..., 3:]])
+    im = Image.fromarray((pm * 255).round().astype(np.uint8), "RGBA")
+    t = im.transform((shape[1], shape[0]), Image.AFFINE, (1 / k, 0, fx - ox / k, 0, 1 / k, fy - oy / k),
+                     resample=Image.BICUBIC)
+    b = np.asarray(t).astype(np.float32) / 255
+    al = b[..., 3:]
+    return np.dstack([np.where(al > 0, b[..., :3] / np.maximum(al, 1e-6), 0), al])
+
+
+def mira_in_aria(busto, salto):
+    """Il busto della mira (senza quello che ha sotto la cintura, dal dietro dei
+    pantaloni in avanti) con sotto, sopra di lui, le gambe del salto spostate sotto
+    la sua cintura. Tutti e due nella tela della base."""
+    bx, by, bx0 = cintura(busto)
+    sx, sy, _ = cintura(salto)
+    g = gambe(salto, sy, int(0.04 * salto.shape[0]))
+    sopra = np.roll(np.roll(salto * g[..., None], int(round(by - sy)), 0), int(round(bx - sx)), 1)
+    sotto = busto.copy()
+    sotto[int(by):, int(bx0 - 0.10 * busto.shape[1]):, 3] = 0
+    a = sopra[..., 3:]
+    al = a + sotto[..., 3:] * (1 - a)
+    rgb = (sopra[..., :3] * a + sotto[..., :3] * sotto[..., 3:] * (1 - a)) / np.maximum(al, 1e-6)
+    return np.dstack([np.where(al > 0, rgb, 0), al])
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for f in glob.glob(os.path.join(OUT, "*.png")):
@@ -180,6 +262,11 @@ def main():
     # la testa da sola: della misura della testa della base A, con il perno sul
     # collo; la cima della testa (per la fiammella) rispetto al perno
     d = apri(os.path.join(SORGENTE, "basi_chatgpt", "D_testa.png"))
+    # la testa staccata ha i colori di ChatGPT: le diamo quelli di Ludo, come il
+    # corpo della mira su cui sta
+    attesa = sorted(glob.glob(os.path.join(SORGENTE, "fogli", "attesa", "*.png")))
+    if attesa:
+        d = ricolora(d, colori_di_ludo(basi["A"], apri(attesa[0])))
     dtx, dty, testa_d = cima(d)
     sd = (testa_a[4] - testa_a[3]) / (testa_d[4] - testa_d[3])   # dalla D alla A
     cx, cy, w, h = salva(d, S * sd, "testa")
@@ -193,6 +280,7 @@ def main():
                  f"tx = {n((tx - nx) * S)}, ty = {n((ny - ty) * S)} }},")
 
     righe.append("\tanimazioni = {")
+    fogli_base = {}
     for nome, cfg in AZIONI.items():
         fogli = sorted(glob.glob(os.path.join(SORGENTE, "fogli", nome, "*.png")))
         if not fogli:
@@ -227,6 +315,7 @@ def main():
         fx, fy = piedi(fot[0][..., 3])
         _, cf, _ = cima(fot[0])
         k = (oy - cb) / (fy - cf)      # dal foglio alla base
+        fogli_base[nome] = (fot, k, fx, fy, ox, oy, scelti)
         for j, i in enumerate(scelti, 1):
             f = fot[i]
             nm = f"{nome}_{j}"
@@ -247,6 +336,26 @@ def main():
                 qx, qy = b(qx, qy)
                 riga += f", cx = {n(px)}, cy = {n(py)}, sx = {n(qx)}, sy = {n(qy)}"
             righe.append(riga + " },")
+            immagini.append(nm)
+        righe.append("\t\t},")
+    if "mira" in fogli_base and "salto" in fogli_base:
+        mfot, mk, mfx, mfy, mox, moy, mscelti = fogli_base["mira"]
+        sfot, sk, sfx, sfy, sox, soy, _ = fogli_base["salto"]
+        B = basi["B"]
+        righe.append(f"\t\tmira_aria = {{ fps = {FPS}, giro = false,")
+        for j, i in enumerate(range(MIRA_ARIA["da"], MIRA_ARIA["a"] + 1), 1):
+            m = mfot[mscelti[0]]
+            c = mira_in_aria(tela(m, mk, mfx, mfy, mox, moy, B.shape),
+                             tela(sfot[i], sk, sfx, sfy, sox, soy, B.shape))
+            nm = f"mira_aria_{j}"
+            cx, cy, w, h = salva(c, S, nm)
+            x, y = gioco(cx, cy, bx, by)
+            px, py, _ = cima(c)
+            qx, qy = spalla(c)
+            px, py = gioco(px, py, bx, by)
+            qx, qy = gioco(qx, qy, bx, by)
+            righe.append(f"\t\t\t{{ img = \"{nm}\", x = {n(x)}, y = {n(y)}, w = {w}, h = {h}, "
+                         f"cx = {n(px)}, cy = {n(py)}, sx = {n(qx)}, sy = {n(qy)} }},")
             immagini.append(nm)
         righe.append("\t\t},")
     righe += ["\t},", "}", ""]

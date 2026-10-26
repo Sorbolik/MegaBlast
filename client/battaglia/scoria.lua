@@ -37,7 +37,7 @@ local INCHIOSTRO = vmath.vector4(0.078, 0.071, 0.094, 1)
 local OMBRA = vmath.vector4(0, 0, 0, 0.35)
 local BIANCO = vmath.vector4(1, 1, 1, 1)
 local LAMPO = vmath.vector4(1, 0.35, 0.35, 1)
-local PELLE = vmath.vector4(0.85, 0.78, 0.7, 1)
+local PELLE = vmath.vector4(0.76, 0.72, 0.64, 1)
 local FERRO = vmath.vector4(0.3, 0.29, 0.34, 1)
 local LAMA = vmath.vector4(0.86, 0.88, 0.95, 1)
 
@@ -129,7 +129,7 @@ local ARMI = {
 -- la mano sull'impugnatura, davanti alla spalla lungo l'arma (unità su 200)
 local PRESA = 20
 
--- una mano staccata: un pugno color pelle col contorno scuro
+-- una mano staccata: un pugno color pelle (quella dei fogli di Ludo) col contorno scuro
 local function mano(g, k, x, y)
 	local d = 20 * k
 	cerchio(g, x, y, d + 2 * 3 * k, INCHIOSTRO)
@@ -315,8 +315,11 @@ function M.update(s, dt, st)
 			gui.set_enabled(s.root, false)
 			return
 		end
+	elseif st.aim and not ground and A.mira_aria then
+		-- mirando (o colpendo) vince la mira, anche in aria (col busto della mira
+		-- sulle gambe del salto), correndo o colpiti
+		f = mostra(s, "mira_aria", a_parte(1, #A.mira_aria, 0.5 - s.vy / (2 * V_SALTO)))
 	elseif st.aim then
-		-- mirando (o colpendo) vince la mira, anche in aria, correndo o colpiti
 		f = mostra(s, "mira", a_tempo(A.mira, s.t))
 	elseif s.azione == "colpito" and s.azione_t < DURATA.colpito then
 		f = mostra(s, "colpito", a_parte(1, #A.colpito, s.azione_t / DURATA.colpito))

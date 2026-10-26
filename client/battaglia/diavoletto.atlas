@@ -295,6 +295,45 @@ images {
 images {
   image: "/assets/diavoletto/fiammella_18.png"
 }
+images {
+  image: "/assets/diavoletto/mira_aria_1.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_2.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_3.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_4.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_5.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_6.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_7.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_8.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_9.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_10.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_11.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_12.png"
+}
+images {
+  image: "/assets/diavoletto/mira_aria_13.png"
+}
 margin: 0
 extrude_borders: 2
 inner_padding: 0
