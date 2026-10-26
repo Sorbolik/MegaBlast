@@ -14,7 +14,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 | Cartella | Cosa c'è |
 |---|---|
 | `armi/` | Le icone delle armi della barra (`_icona`) e l'Uovo di Fiamma in volo (il globo del teletrasporto è disegnato dal codice), con le loro `_luce`. Le armi intere sono in `grafica/armi/` dei file del progetto |
-| `scoria/` | I pezzi della Scoria: testa, mantello e gamba, ognuno con la copia `_bordo` per il contorno chiaro |
+| `scoria/` | I pezzi del diavoletto: testa, busto con l'ala, gamba, coda in 5 segmenti e fiammella, ognuno con la sagoma bianca `_sagoma` (lampo del colpo) e la copia allargata `_bordo` (contorno chiaro) |
 | `esplosioni/` | `esplosione_base_12x256.png` (flipbook 12 fotogrammi da 256 px), fumo e fuoco additivo come livelli separati |
 | `mappe/isole_cimitero/` | `maschera.png` 640×360 (nero vuoto, bianco terra, rosso indistruttibile; è la stessa di `client/sim/mapdata.lua`), `superficie.png`, `ossa.png`, `interno.png` (parete dei crateri), `colori.txt` (brace dei crateri). Immagini a 1920×1080, allineate alla maschera |
 | `ui/` | Le tre forme bianche dell'interfaccia (`forma`, `bordo` 9-slice e `alone`), fatte da `strumenti/grafica/ui.py` e colorate da `client/ui/ui.lua`; `levette/` le levette del telefono (`strumenti/grafica/levette.py`) |
@@ -24,7 +24,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 - `mappe/isole_cimitero/terreno.png` (superficie con sopra le ossa) e `interno_mezzo.png` (parete dei crateri a metà risoluzione) li prepara `strumenti/grafica/battaglia.py`, insieme a `fx/bagliore.png` (alone bianco per missile e mirino).
 - La mappa è una mesh con lo shader `client/battaglia/terreno.fp`: sfondo fatto dallo shader (cielo, file di colline e guglie in parallasse, braci), terreno ritagliato dalla maschera viva, parete e brace dove si è scavato.
-- Il personaggio è la Scoria di `client/battaglia/scoria.lua` (fase 4 della roadmap): testa, mantello e gambe in `scoria/` (sagome bianche più la copia allargata `_bordo`, colorate dal codice) fatti da `strumenti/grafica/scoria.py`, che scrive anche `client/battaglia/scoria_pezzi.lua`; mani, occhio, Nucleo e armi sono nodi GUI. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
+- Il personaggio è il diavoletto di `client/battaglia/scoria.lua`: i pezzi a colori in `scoria/`, ritagliati da `strumenti/grafica/scoria.py` dalle immagini di ChatGPT in `strumenti/grafica/diavoletto/` (lo script scrive anche `client/battaglia/scoria_pezzi.lua`); mani e armi sono nodi GUI, la fiammella è tinta dal codice col colore della squadra. Atlante `client/battaglia/battaglia.atlas`, esplosione `client/battaglia/esplosione.tilesource`.
 
 ## Interfaccia
 
