@@ -1,0 +1,19 @@
+# Il fendente durante il teletrasporto: si lancia il globo, si parte col
+# fendente e il globo arriva a metà: ricomparendo la spada continua il suo giro.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+tocca 1180 62                       # TELE
+mira 50 90 0.15
+aspetta_evento orb 2
+premi 2                             # Lama di Nucleo (tasto 2)
+mira 120 0 0.05
+aspetta_evento swing 2
+aspetta_evento teleport 4
+zoom 01_ricompare 3
+aspetta 0.05
+zoom 02_continua 3
+aspetta 0.05
+zoom 03_continua 3

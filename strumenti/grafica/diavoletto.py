@@ -52,7 +52,7 @@ ALTEZZA = 150
 # L'attesa è un fotogramma fermo: ogni tanto, a caso, il gioco fa una delle
 # scenette (naso, sbadiglio, coda).
 AZIONI = {
-    "mira": dict(base="B", da=0, a=35, passo=3, giro=True),
+    "mira": dict(base="B", da=0, a=35, passo=1, giro=True),
     "attesa": dict(base="A", foglio="naso", da=0, a=0, passo=1, giro=True),
     "naso": dict(base="A", da=2, a=33, passo=2, giro=False),
     "sbadiglio": dict(base="A", da=6, a=33, passo=2, giro=False),
@@ -63,7 +63,7 @@ AZIONI = {
     "corsa_mira": dict(base="B", cerca=(5, 30, 8, 18), giro=True),
     "salto": dict(base="A", da=10, a=27, passo=1, giro=False, ferma_cima=(11, 19)),
     "colpito": dict(base="A", da=10, a=24, passo=2, giro=False),
-    "vittoria": dict(base="A", da=0, a=35, passo=2, giro=True),
+    "vittoria": dict(base="A", da=0, a=35, passo=1, giro=True),
     "paracadute": dict(base="A", cerca=(6, 30, 10, 20), giro=True),
     "mira_aria": dict(base="B", da=7, a=21, passo=1, giro=False, ferma_spalla=True),
     "fiammella": dict(base=None, da=0, a=35, passo=2, giro=True),

@@ -152,6 +152,13 @@ check(next(scenette) ~= nil, "attesa: in 30 secondi almeno una scenetta")
 check(tutto_finito(), "attesa e scenette: valori finiti")
 st.turno = true
 
+-- teletrasporto durante il fendente: vince la mira, la spada continua
+scoria.teleport(s)
+st.aim = 0.3
+scoria.update(s, 1 / 60, st)
+check(s.img:match("^mira") ~= nil and s.tele == nil, "teletrasporto mirando: si vede la mira, non la ricomparsa")
+st.aim = nil
+
 scoria.hit(s, 30)
 scoria.hit(s, -30)
 for _ = 1, 10 do scoria.update(s, 1 / 60, st) end

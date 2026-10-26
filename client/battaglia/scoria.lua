@@ -12,9 +12,9 @@
 -- paracadute (appeso al paracadute aperto), vittoria (festeggia sul podio)
 --
 -- Un'animazione per stato, scelta in ordine: sconfitta (gira la testa, cade e si
--- addormenta, poi svanisce), teletrasporto (ricompare dalla scintilla), mira
--- (mirando o colpendo vince sul resto: in aria con le gambe raccolte, correndo
--- con la corsa in mira), colpito, paracadute (appeso, aperto), aria (salto, con il fotogramma
+-- addormenta, poi svanisce), mira (mirando o colpendo vince sul resto: in aria
+-- con le gambe raccolte, correndo con la corsa in mira), teletrasporto
+-- (ricompare dalla scintilla), colpito, paracadute (appeso, aperto), aria (salto, con il fotogramma
 -- scelto dalla velocità in su o in giù), atterraggio, corsa (con la strada fatta;
 -- chi è di turno corre con l'arma in mano), vittoria (il primo sul podio), mira
 -- (chi è di turno, fermo) e attesa (gli altri: fermo, con ogni tanto una
@@ -348,11 +348,6 @@ function M.update(s, dt, st)
 			gui.set_enabled(s.root, false)
 			return
 		end
-	elseif s.tele then
-		-- arrivo col teletrasporto: ricompare dalla scintilla
-		s.tele = s.tele + dt
-		f = mostra(s, "teletrasporto", a_parte(1, #A.teletrasporto, s.tele / DURATA.teletrasporto))
-		if s.tele >= DURATA.teletrasporto then s.tele = nil end
 	elseif st.aim and not ground and A.mira_aria then
 		-- mirando (o colpendo) vince la mira, anche in aria (col suo foglio di
 		-- gambe raccolte), correndo o colpiti
@@ -361,6 +356,10 @@ function M.update(s, dt, st)
 		f = mostra(s, "corsa_mira", a_parte(1, #A.corsa_mira, s.passo))
 	elseif st.aim then
 		f = mostra(s, "mira", a_tempo(A.mira, s.t))
+	elseif s.tele then
+		-- arrivo col teletrasporto: ricompare dalla scintilla. Mirando o
+		-- colpendo vince la mira: il fendente continua da dove era
+		f = mostra(s, "teletrasporto", a_parte(1, #A.teletrasporto, s.tele / DURATA.teletrasporto))
 	elseif s.azione == "colpito" and s.azione_t < DURATA.colpito then
 		f = mostra(s, "colpito", a_parte(1, #A.colpito, s.azione_t / DURATA.colpito))
 	elseif st.paracadute and not ground and A.paracadute then
@@ -382,6 +381,10 @@ function M.update(s, dt, st)
 		f = attesa(s, dt)
 	end
 	if s.azione then s.azione_t = s.azione_t + dt end
+	if s.tele then
+		s.tele = s.tele + dt
+		if s.tele >= DURATA.teletrasporto or st.aim then s.tele = nil end
+	end
 
 	-- l'arma verso la mira, altrimenti a riposo; la testa guarda nella stessa
 	-- direzione, un po' meno
