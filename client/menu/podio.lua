@@ -70,7 +70,8 @@ local function gradino(p, x, voce, i)
 	gui.set_parent(s.root, posa)
 	scoria.set_enabled(s, true)
 	p.figure[#p.figure + 1] = { s = s, posa = posa,
-		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0 } }
+		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0, turno = true,
+			vittoria = voce.place == 1 } }
 end
 
 -- results.winner: la squadra che vince, nil se pari

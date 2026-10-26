@@ -25,8 +25,9 @@ local oggetti = require "battaglia.oggetti"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
-local W, H, CELL = game.WORLD_W, game.WORLD_H, game.CELL
-local TW, TH = W / CELL, H / CELL
+-- W, H: lo schermo del gioco; la mappa è game.WORLD_W x game.WORLD_H
+local W, H, CELL = 1280, 720, game.CELL
+local TW, TH = game.WORLD_W / CELL, game.WORLD_H / CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
@@ -180,9 +181,10 @@ end
 local FISICA = config_string("megablast.fisica", "")
 if FISICA ~= "" then game.use_physics(FISICA) end
 
--- Proiettili e casse si disegnano in proporzione al robot della
--- simulazione: 16 pixel nel profilo megablast, 20 in quello di Blastron
-local K = game.ROBOT_H / 16
+-- Proiettili e casse si disegnano in proporzione al robot della simulazione
+-- senza l'ingrandimento del corpo: 16 pixel nel profilo megablast, 28 in quello
+-- di Blastron
+local K = game.ROBOT_H / game.CORPO / 16
 
 local VK = vmath.vector3(K, K, 1)
 
@@ -672,7 +674,6 @@ local function handle_event(self, e)
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
 		scoria.fire(self.robots[e.robot].rig, kind)
 	elseif e.type == "teleport" then
-		scoria.teleport(self.robots[e.robot].rig)
 		if self.mode == "online" then
 			-- lo stato col robot nella nuova posizione arriva subito dopo l'evento
 			self.snap[e.robot] = true
@@ -1414,8 +1415,13 @@ local function render(self, dt)
 		-- chi mira si gira verso il dito e punta il braccio con l'arma
 		local aiming = self.aiming and g.phase == "aim" and i == g.current and my_turn(self)
 		local st = r.st
-		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, vx
+		-- corre solo chi si muove da sé: solo chi è di turno ha i comandi, e non
+		-- quando lo sbalzano o lo tira il Rampino. Chi viene spinto resta in attesa
+		local da_se = i == g.current and not rb.knocked and not rb.hooked
+		st.x, st.y, st.grounded, st.moving = v.x, v.y, rb2.g, da_se and vx or 0
 		st.facing = rb.facing
+		st.turno = i == g.current
+		st.paracadute = rb.parachute and not rb.dead
 		st.aim = nil
 		if aiming then
 			st.aim = self.aim_angle
@@ -1728,7 +1734,7 @@ local function render(self, dt)
 	-- torna su chi è di turno. Nel menu si vede tutta la mappa.
 	local c = self.cam
 	if self.mode == "menu" then
-		camera.segui(c, dt, W / 2, H / 2, 1)
+		camera.segui(c, dt, game.WORLD_W / 2, game.WORLD_H / 2, camera.tutta(c))
 	else
 		local fx, fy, veloce = v.x, v.y + game.ROBOT_H / 2, false
 		self.cam_sosta = math.max(0, self.cam_sosta - dt)
@@ -1757,7 +1763,7 @@ function init(self)
 
 	-- tutto quello che sta nel mondo è figlio di questo nodo, che la camera
 	-- sposta e ingrandisce (apply_camera)
-	self.cam = camera.new(W, H)
+	self.cam = camera.new(W, H, game.WORLD_W, game.WORLD_H)
 	self.cam.livello = math.min(#camera.LIVELLI, math.max(1, ZOOM_INIZIO))
 	-- set_view_projection vuole anche id e projection; la proiezione resta quella
 	-- del render (stretch), che questa non cambia

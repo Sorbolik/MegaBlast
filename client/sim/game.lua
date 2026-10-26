@@ -23,16 +23,22 @@ local C = require "sim.config"
 local M = {}
 M.__index = M
 
--- Mondo
-M.WORLD_W = 1280
-M.WORLD_H = 720
-M.CELL = 2
+-- Mondo: 640 x 360 celle (le maschere delle mappe). CELL 3 dal 26 ottobre, era 2:
+-- la mappa era piccola per il diavoletto (ci si attraversava in fretta e nei
+-- buchi in mezzo non passava). 3 e non un valore con la virgola, così le celle
+-- restano intere e la mappa coincide pixel per pixel con le immagini 1920 x 1080.
+M.CELL = 3
+M.WORLD_W = 640 * M.CELL
+M.WORLD_H = 360 * M.CELL
 M.DT = 1 / 60
 M.GRAVITY = 600
 
 -- Robot (la posizione è il centro dei piedi)
 M.ROBOT_HALF_W = 6
 M.ROBOT_H = 16
+-- quante volte il corpo è più grande della misura su cui è fatto il resto del mondo
+-- (proiettili, casse, armi in mano si disegnano su ROBOT_H / CORPO)
+M.CORPO = 1
 M.MAX_CLIMB = 6          -- gradino massimo che il robot sale da solo
 -- Forma del corpo contro il terreno: false = rettangolo; true = capsula, con
 -- sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo rotondo tocca
@@ -2398,6 +2404,11 @@ end
 -- personaggio; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
 -- La vita là partiva da 2000, qui da DAMAGE_BASE: i danni sono riscalati.
 M.BLASTRON_ROBOT_H = 28
+-- Il corpo del personaggio (altezza, larghezza e cerchio dove viene colpito) è
+-- BLASTRON_CORPO volte quello di Blastron; tutto il resto (salti, armi, casse,
+-- esplosioni) resta sulla misura di Blastron. 1,4 scelto il 26 ottobre perché il
+-- diavoletto dipinto si legga.
+M.BLASTRON_CORPO = 1.4
 M.BLASTRON_UNIT = M.BLASTRON_ROBOT_H / 3.612
 
 local function blastron_profile()
@@ -2406,9 +2417,11 @@ local function blastron_profile()
 	-- quanto è più grande il robot rispetto a quello del profilo megablast,
 	-- per le nostre misure (casse, schegge, globo...)
 	local k = M.BLASTRON_ROBOT_H / M.ROBOT_H
+	local corpo = M.BLASTRON_CORPO
 	return {
-		ROBOT_H = M.BLASTRON_ROBOT_H,
-		ROBOT_HALF_W = M.ROBOT_HALF_W * k,
+		ROBOT_H = M.BLASTRON_ROBOT_H * corpo,
+		ROBOT_HALF_W = M.ROBOT_HALF_W * k * corpo,
+		CORPO = corpo,
 		MAX_CLIMB = M.MAX_CLIMB * k,
 		TELEPORT_SEARCH = M.TELEPORT_SEARCH * k,
 		ORB_R = M.ORB_R * k,
@@ -2465,7 +2478,7 @@ local function blastron_profile()
 		-- l'altezza (3,612 × 0,66 × 0,5 × 0,66 × 2,4 = 1,888 u) a metà altezza;
 		-- per le esplosioni il quadrato attorno, più largo di 0,1 u per lato
 		HURTBOX = "cerchio",
-		HURT_R = 1.888 * u,
+		HURT_R = 1.888 * u * corpo,
 		HURT_FAT = 0.1 * u,
 		-- Hanzo Special: fendente sulla mira (sim/mischia.lua), 300 danni, ferma il bersaglio
 		SWORD_MODEL = "blastron",

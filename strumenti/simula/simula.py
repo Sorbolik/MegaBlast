@@ -109,7 +109,7 @@ def build(out, extra=""):
     shutil.rmtree(bundle, ignore_errors=True)
     cmd = [str(JAVA), "-jar", str(BOB), "--root", str(CLIENT), "--output", "build/simula/default",
            "--settings", str(settings), "--platform", "x86_64-linux", "--architectures", "x86_64-linux",
-           "--variant", "debug", "--archive", "--bundle-output", str(bundle), "build", "bundle"]
+           "--variant", "debug", "--archive", "--texture-compression", "true", "--bundle-output", str(bundle), "build", "bundle"]
     r = esegui(cmd)
     righe = [l for l in (r.stdout + r.stderr).splitlines()
              if not l.startswith(("Picked up JAVA_TOOL", " ")) and " INFO " not in l]
