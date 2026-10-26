@@ -761,11 +761,13 @@ do
 	check(#pts == 12 and math.abs(pts[12].x - pts[1].x) <= config.EAGLE.range, "la linea di mira è dritta e non supera la portata")
 
 	-- Rampino: oggetto, uno a turno, non un attacco; riavvolge il bersaglio dritto
-	-- verso la mano, per reel pixel, poi lo molla
+	-- verso la mano, fin addosso a chi tira, poi lo molla
 	local h = game.new(42, "isole")
 	run(h, 60)
 	local ha, hb = h.robots[1], h.robots[2]
 	sy = sky_spot(h, 640, 120)
+	-- cielo libero tutto attorno: la fune va fino a chi tira
+	h.terrain:rect(500, sy - 60, 300, 140, 0)
 	place(ha, 560, sy)
 	place(hb, 740, sy)
 	hp = hb.hp
@@ -777,15 +779,20 @@ do
 		"uno a turno e non conta come attacco")
 	check(hb.hooked and hb.hooked.by == 1 and ha.vx == 0, "il bersaglio resta appeso alla fune, chi tira no")
 	local y_start = hb.y
-	run(h, 10)
+	-- chi tira resta fermo lì (in cielo cadrebbe e la fune lo inseguirebbe)
+	for _ = 1, 10 do
+		ha.y, ha.vy = sy, 0
+		h:step()
+	end
 	check(hb.x < 740 - 40 and math.abs(hb.y - y_start) < 2 and hb.hooked, "viene tirato dritto, senza cadere")
 	local ended
-	for _ = 1, 30 do
+	for _ = 1, 60 do
+		ha.y, ha.vy = sy, 0
 		h:step()
 		for _, e in ipairs(h:pop_events()) do if e.type == "hook_end" then ended = true end end
 		if not hb.hooked then break end
 	end
-	check(ended and not hb.hooked and math.abs((740 - hb.x) - config.HOOK.reel) < 2, "dopo reel pixel di fune viene mollato")
+	check(ended and not hb.hooked and math.abs(hb.x - ha.x) < 2 * game.ROBOT_HALF_W + 2, "arriva fin addosso a chi tira e viene mollato")
 	run(h, 5)
 	check(hb.y < y_start and hb.vx == 0, "e cade dritto dov'è")
 	-- tirato da sotto sale fino a chi tira; un robot vicino ferma la fune
@@ -1677,38 +1684,34 @@ check(buffered(3), "salto in anticipo: chiesto 3 tick prima, parte all'atterragg
 check(not buffered(game.JUMP_BUFFER_TICKS + 4), "salto in anticipo: chiesto troppo presto non conta")
 
 -- Rampino su un robot a terra: il pavimento sotto il bersaglio non ferma la
--- fune, né in piano (anche con un pixel di dislivello verso il basso) né su
--- un pendio, in salita o in discesa. Prima 9 volte su 10 si fermava subito.
+-- fune, né in piano (anche con chi tira una cella più in basso) né su un
+-- pendio, in salita o in discesa: arriva fin addosso a chi tira. Prima 9
+-- volte su 10 si fermava subito. hook_drag dà la distanza finale tra i due.
 local function hook_drag(ground, xa, xb)
 	local q = shaped_world(ground)
 	local a, b = q.robots[1], q.robots[2]
 	place(a, xa, ground(xa))
 	place(b, xb, ground(xb))
 	for _ = 1, 30 do q:step() end
-	local bx, by = b.x, b.y
 	local ang = math.atan2(b.y + game.ROBOT_H / 2 - (a.y + game.SWORD_PIVOT_Y), b.x - a.x)
 	q:step({ fire = { angle = ang, power = 1, weapon = "hook" } })
-	if not b.hooked then return 0 end
-	for _ = 1, 40 do
+	if not b.hooked then return math.huge end
+	for _ = 1, 60 do
 		q:step()
 		if not b.hooked then break end
 	end
-	return math.sqrt((bx - b.x) ^ 2 + (by - b.y) ^ 2)
+	return math.abs(b.x - a.x)
 end
-local reel = config.HOOK.reel
-check(hook_drag(function() return 100 end, 500, 650) > reel - 4, "Rampino in piano: il nemico a terra viene trascinato")
-check(hook_drag(function(x) return x < 560 and 100 - game.CELL or 100 end, 500, 650) > reel - 4,
+local close = 2 * game.ROBOT_HALF_W + 4
+check(hook_drag(function() return 100 end, 500, 680) < close, "Rampino in piano: il nemico a terra viene trascinato fin addosso")
+check(hook_drag(function(x) return x < 560 and 100 - game.CELL or 100 end, 500, 680) < close,
 	"Rampino in piano, chi tira una cella più in basso: trascinato lo stesso")
-check(hook_drag(function(x) return 100 + (x - 500) * 0.4 end, 500, 650) > reel - 4,
+check(hook_drag(function(x) return 100 + (x - 500) * 0.4 end, 500, 680) < close,
 	"Rampino in salita (il nemico più in alto): trascinato giù")
-check(hook_drag(function(x) return 200 - (x - 500) * 0.4 end, 500, 650) > reel - 4,
+check(hook_drag(function(x) return 200 - (x - 500) * 0.4 end, 500, 680) < close,
 	"Rampino in discesa (il nemico più in basso): trascinato su")
-check(hook_drag(function(x) return 100 + math.floor(x / 24) % 2 * 4 end, 500, 650) > reel - 4,
+check(hook_drag(function(x) return 100 + math.floor(x / 24) % 2 * 4 end, 500, 680) < close,
 	"Rampino su un pavimento a gradini: trascinato lo stesso")
--- vicino a chi tira lo si porta fin addosso
-local near = hook_drag(function() return 100 end, 500, 580)
-check(near > 80 - 2 * game.ROBOT_HALF_W - 4, "Rampino da vicino: tirato fin addosso a chi tira")
--- un muro in mezzo (più alto di un gradino) lo ferma ancora
 -- sulle mappe vere: nemici a terra a 120 pixel, in tanti punti diversi
 for _, id in ipairs(maps.order) do
 	local pulled, tries = 0, 0
@@ -1739,7 +1742,7 @@ for _, id in ipairs(maps.order) do
 	end
 	check(tries > 0 and pulled == tries, id .. ": il Rampino trascina il nemico a terra ogni volta (" .. pulled .. "/" .. tries .. ")")
 end
-check(hook_drag(function(x) return (x > 560 and x < 572) and 100 + game.ROBOT_H or 100 end, 500, 650) < reel / 2,
+check(hook_drag(function(x) return (x > 560 and x < 572) and 100 + game.ROBOT_H or 100 end, 500, 650) > 650 - 560,
 	"Rampino: un muro alto ferma il nemico")
 
 game.use_physics("megablast")

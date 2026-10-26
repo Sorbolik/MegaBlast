@@ -1,7 +1,7 @@
 # Rampino su un nemico a terra: lo trascina verso la mano di chi tira anche se
 # è appoggiato al pavimento (prima 9 volte su 10 il terreno sotto lo fermava).
 # Il secondo robot parte 100 pixel a sinistra, in cima ai gradini: viene
-# tirato giù per i gradini verso chi tira.
+# tirato giù per i gradini fin addosso a chi tira.
 imposta zoom 2
 imposta prova_vicino -100
 

@@ -93,15 +93,16 @@ C.MALLET = { damage = 30, reach = 22, width = 6, bounce = 320, ticks = 14, hit_t
 -- turno, si usa in qualsiasi momento del turno e non fa danno): colpo
 -- dritto e istantaneo fino a range, due usi.
 -- Su un robot: viene tirato con la fune verso la mano di chi tira, dritto
--- lungo la fune, senza gravità, a speed, per reel pixel al massimo (la fune
--- si riavvolge di tanto), poi viene mollato e cade dov'è. Il terreno o un
--- robot in mezzo lo fermano prima. Da lontano quindi si ferma a metà strada:
--- se sotto c'è il vuoto, ci cade; da sotto lo sollevi fino a te e lo molli in
--- aria. Chi tira si può muovere nel frattempo: la fune segue la mano.
+-- lungo la fune, senza gravità, a speed, per reel pixel al massimo, poi viene
+-- mollato e cade dov'è. reel è tutta la portata (Sergio 26 ottobre 2026: "ce
+-- lo dobbiamo tirare per bene"): arriva fin addosso a chi tira, che lo ferma.
+-- Il pavimento sotto non lo ferma (scivola e sale i gradini, game.hook_slide);
+-- un muro alto o un altro robot in mezzo sì. Da sotto lo sollevi fino a te.
+-- Chi tira si può muovere nel frattempo: la fune segue la mano.
 -- Sul terreno: è chi tira che sale lungo la fune a climb_speed fino al punto
 -- colpito e si mette in piedi sopra la piattaforma, se la sua cima è entro
 -- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade).
-C.HOOK = { range = 220, reel = 110, speed = 300, climb_speed = 420, climb = 64 }
+C.HOOK = { range = 220, reel = 220, speed = 300, climb_speed = 420, climb = 64 }
 -- Affondo: scatto nella direzione della mira a speed per ticks tick, passando
 -- attraverso i robot (danno una volta a ognuno); il terreno lo ferma. Alla
 -- fine resta keep della velocità: oltre un bordo si vola.

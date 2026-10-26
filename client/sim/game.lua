@@ -1291,7 +1291,7 @@ local HOOK_LAND_DX = { 0, -8, 8, -16, 16 }
 
 -- Rampino (oggetto, uno a turno, config.HOOK): colpo dritto. Su un robot, quello
 -- resta appeso alla fune (rb.hooked.by) e viene riavvolto verso la mano di chi
--- tira per config.HOOK.reel pixel, senza danno. Sul terreno è chi tira che
+-- tira fin addosso (config.HOOK.reel pixel al massimo), senza danno. Sul terreno è chi tira che
 -- resta appeso (rb.hooked.x, y = il punto colpito) e sale lungo la fune fin
 -- lì, per poi mettersi in piedi sopra la piattaforma colpita.
 function M:fire_hook(angle)
