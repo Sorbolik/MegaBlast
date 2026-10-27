@@ -33,6 +33,19 @@ cambiala anche in Go: `go test ./server/` le confronta e fallisce se
 divergono. Le funzioni nuove scritte in Lua con `get`/`set`/`t.data` vanno sul
 server senza toccare il Go.
 
+## Animazioni del diavoletto
+
+Le pose del diavoletto (fermo, corsa, aria, paracadute, colpito, vittoria,
+sconfitta, scenette) sono clip in `client/battaglia/animazioni.lua`, campionate da
+`client/battaglia/pose.lua` sotto le molle e la mira di `scoria.lua`. Si fanno con
+l'editor `strumenti/animazioni/editor.html`: `python3 strumenti/animazioni/prepara.py`
+scrive `simulazione/animazioni/editor.html` (pezzi e animazioni dentro), che si
+apre nel browser e si pubblica come Artifact sempre allo stesso indirizzo:
+https://claude.ai/artifact/YJeMenvfJLGmto89yAbKJ5 . Se cambiano i pezzi o le animazioni,
+ripubblicalo. "Manda a Claude" nell'editor salva il file nel database
+dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
+`client/battaglia/animazioni.lua`.
+
 ## Provare il gioco su iPhone
 
 Su iPhone si prova la build HTML5 in Safari: `bash strumenti/web/build.sh` prepara

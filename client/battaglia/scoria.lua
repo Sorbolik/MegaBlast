@@ -21,20 +21,27 @@
 -- mira vince su tutto tranne la sconfitta: anche in aria, correndo o colpiti.
 --
 -- Il movimento è fatto di molle (schiaccia e allunga, inclinazione, spinta del
--- colpo, rinculo, testa, coda, fiammella) e di pose per stato, scelte in
--- ordine: sconfitta (cade all'indietro e svanisce), colpito (lampo bianco,
--- faccia colpita, braccia all'aria), paracadute (appeso alle cinghie, gambe
--- unite che dondolano), aria (gambe raccolte salendo, avanti scendendo, l'ala
--- sbatte), corsa (passi con la strada fatta, braccia opposte), vittoria (salta
--- con le braccia in alto), fermo (respira; chi non è di turno fa ogni tanto una
--- scenetta a caso: si gratta la testa, sbadiglia, guarda la coda). Spinto o
--- trascinato senza comandi non corre: resta fermo.
+-- colpo, rinculo, testa, coda, fiammella) e di pose per stato, che sono clip a
+-- fotogrammi chiave (battaglia/animazioni.lua, fatte con l'editor
+-- strumenti/animazioni/editor.html; le campiona battaglia/pose.lua) e danno le
+-- mete alle molle e agli arti. Gli stati, in ordine: sconfitta (cade
+-- all'indietro e svanisce), colpito (lampo bianco, faccia colpita, braccia
+-- all'aria), paracadute (appeso alle cinghie, gambe unite che dondolano), aria
+-- (l'ala sbatte, gambe raccolte salendo e avanti scendendo: le clip sale e
+-- scende pesate con la velocità), corsa (guidata dalla strada fatta, sfuma nel
+-- fermo), vittoria (salta con le braccia in alto), fermo (respira; chi non è di
+-- turno fa ogni tanto una scenetta a caso: naso, sbadiglio, guarda_coda). Quello
+-- che dipende dal gioco resta nel codice: inclinazione e coda con la velocità,
+-- il dondolo del paracadute, la mira, le braccia sull'arma. Spinto o trascinato
+-- senza comandi non corre: resta fermo.
 -- La fiammella ha il colore della squadra ed è l'indicatore di chi gioca: su chi
 -- è di turno è grande e accesa, sugli altri piccola e più scura.
 
 local game = require "sim.game"
 local D = require "battaglia.diavoletto"
 local DA = require("battaglia.armi").armi
+local pose = require "battaglia.pose"
+local A = require "battaglia.animazioni"
 
 local M = {}
 
@@ -70,12 +77,10 @@ end
 -- un passo: la strada che fa il corpo mentre una gamba fa un'oscillazione
 -- intera, in altezze del personaggio
 local PASSO = 0.9
--- quanto durano le azioni a tempo (secondi)
-local DURATA = { colpito = 0.45 }
 -- la testa guarda dove si mira, fino a questo angolo (radianti) in su e in giù
 local TESTA_SU, TESTA_GIU = 0.45, 0.3
--- la sconfitta: cade in questo tempo, poi svanisce
-local CADE, SVANISCE = 0.5, 0.6
+-- la sconfitta: dopo la caduta (la clip) svanisce in questo tempo
+local CADE, SVANISCE = A.sconfitta.durata, 0.6
 -- fermo, chi non è di turno fa ogni tanto una scenetta a caso: fra una e l'altra
 -- da PAUSA_DA a PAUSA_DA + PAUSA_A secondi (math.random: solo grafica, la
 -- simulazione ha il suo generatore)
@@ -197,8 +202,9 @@ function M.new(color)
 	local k = H / D.altezza
 	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, tinte_arma = {}, lampi = {},
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
-		-- gli angoli (in radianti) e le mete delle braccia e delle gambe che pendono
-		braccia = { 0, 0 }, gambe = { 0, 0 }, meta_braccia = { 0, 0 }, meta_gambe = { 0, 0 }, alza = { 0, 0 } }
+		-- la posa delle clip di questo frame e gli angoli (radianti) delle
+		-- braccia e delle gambe che pendono, che la inseguono
+		posa = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
 	s.root = giunto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
@@ -298,7 +304,7 @@ function M.reset(s)
 	s.azione, s.azione_t = nil, 0
 	s.vy, s.vx, s.last_x, s.last_y, s.ground = 0, 0, nil, nil, true
 	s.passo, s.cammina, s.dondolo = 0, 0, 0
-	for i = 1, 2 do s.braccia[i], s.gambe[i], s.alza[i] = 0, 0, 0 end
+	for i = 1, 2 do s.braccia[i], s.gambe[i] = 0, 0 end
 	for i = 1, #D.coda do s.coda_a[i] = D.coda_riposo[i] - (i > 1 and D.coda_riposo[i - 1] or 0) end
 	s.flash, s.fuoco_n, s.fuoco_t = 0, 1, 0
 	s.morte, s.morto = nil, nil
@@ -333,44 +339,22 @@ local function molle(s, dt)
 	end
 end
 
--- Le scenette dell'attesa: ognuna dura un po' e dice, a u da 0 a 1, cosa fanno
--- testa, braccia e coda. Il braccio davanti alzato di pi va alla testa.
-local SCENETTE = {
-	-- si gratta la testa, guardando in su
-	naso = { durata = 2.2, posa = function(s, u)
-		local su = min(1, u * 4) * min(1, (1 - u) * 4)
-		s.meta_braccia[1] = -(2.9 + sin(u * 40) * 0.12) * su
-		s.posa_testa = 0.25 * su
-	end },
-	-- sbadiglia: testa all'indietro, bocca aperta, le braccia si stirano
-	sbadiglio = { durata = 2.4, posa = function(s, u)
-		local su = min(1, u * 3) * min(1, (1 - u) * 3)
-		s.posa_testa = 0.35 * su
-		s.meta_braccia[1], s.meta_braccia[2] = -0.7 * su, 0.7 * su
-		s.posa_sq = 1 + 0.04 * su
-		if u > 0.25 and u < 0.8 then s.posa_viso = "testa_colpita" end
-	end },
-	-- si gira a guardare la coda, che si agita
-	coda = { durata = 2.0, posa = function(s, u)
-		local su = min(1, u * 4) * min(1, (1 - u) * 4)
-		s.posa_testa = 0.5 * su
-		s.posa_coda = sin(u * 30) * 0.3 * su
-	end },
-}
-local NOMI_SCENETTE = { "naso", "sbadiglio", "coda" }
+-- Le scenette dell'attesa: clip che non girano, una a caso ogni tanto
+local SCENETTE = { "naso", "sbadiglio", "guarda_coda" }
 
 local function attesa(s, dt)
 	if s.scenetta then
-		local sc = SCENETTE[s.scenetta]
+		local sc = A[s.scenetta]
 		s.scenetta_t = s.scenetta_t + dt
-		if s.scenetta_t < sc.durata then return sc.posa(s, s.scenetta_t / sc.durata) end
+		if s.scenetta_t < sc.durata then return pose.aggiungi(s.posa, sc, s.scenetta_t, 1) end
 		s.scenetta, s.pausa = nil, PAUSA_DA + PAUSA_A * math.random()
 	end
 	s.pausa = s.pausa - dt
 	if s.pausa <= 0 then
-		s.scenetta, s.scenetta_t = NOMI_SCENETTE[math.random(#NOMI_SCENETTE)], 0
+		s.scenetta, s.scenetta_t = SCENETTE[math.random(#SCENETTE)], 0
 		s.n_scenette = s.n_scenette + 1
 	end
+	pose.aggiungi(s.posa, A.fermo, s.t, 1)
 end
 
 -- la coda: un'onda che parte dalla schiena e arriva alla punta, più la molla CODA
@@ -493,19 +477,13 @@ local function braccia_arma(s, a, q, ox)
 	end
 end
 
--- Sconfitta: l'arma cade, cade all'indietro con la faccia a X, la fiammella
--- si spegne, poi svanisce. Il terreno sotto può non esserci più (il cratere),
+-- Sconfitta: l'arma cade, cade all'indietro con la faccia a X (la clip
+-- sconfitta), la fiammella si spegne, poi svanisce. Il terreno sotto può non esserci più (il cratere),
 -- quindi niente resta appoggiato: tutto svanisce
 local function morte(s, dt)
 	local t = s.morte + dt
 	s.morte = t
-	local u = min(1, t / CADE)
-	u = u * u * (3 - 2 * u)
-	rot(s.corpo, u * 1.45)
-	s.meta_gambe[1], s.meta_gambe[2] = 0.5 * u, 0.3 * u
-	s.meta_braccia[1], s.meta_braccia[2] = 0.4 * u, -0.6 * u
-	s.goal[FUOCO] = 0
-	s.goal[TESTA] = -0.3 * u
+	pose.aggiungi(s.posa, A.sconfitta, t, 1)
 	s.alpha.w = max(0, 1 - max(0, t - CADE - 0.3) / SVANISCE)
 	gui.set_color(s.root, s.alpha)
 	if s.alpha.w == 0 then
@@ -560,80 +538,61 @@ function M.update(s, dt, st)
 	local in_mano = (st.turno or st.aim ~= nil) and not s.morte and not st.vittoria and not para
 	local mira = st.aim ~= nil and not s.morte and not para
 
-	-- le mete di questo frame: a riposo, poi la posa dello stato le cambia
-	local mb, mg = s.meta_braccia, s.meta_gambe
-	mb[1], mb[2], mg[1], mg[2] = -0.12, 0.12, 0, 0
-	s.alza[1], s.alza[2] = 0, 0
+	-- la posa dello stato, dalle clip; sopra, quello che dipende dal gioco:
+	-- l'inclinazione e la coda con la velocità, la mira
+	local po = s.posa
+	pose.azzera(po)
 	local avanti = st.moving * face
 	local lean = -0.22 * max(-1, min(1, avanti / 70)) * s.cammina
-	local sq = 1 + 0.025 * sin(s.t * 2.4)
-	-- la testa ondeggia nei passi; mirando guarda dove si mira
-	local testa = sin(s.passo * 2) * 0.05 * s.cammina
-	if mira then testa = max(-TESTA_GIU, min(TESTA_SU, a * 0.5)) end
+	local sq = 0
 	-- correndo la coda si allontana dal corpo, verso dietro, e torna quando ci si
 	-- ferma; in aria segue la velocità
 	local cd = 0.2 * max(-1, min(1, avanti / 70)) * s.cammina
 	if not ground then cd = cd + max(-0.2, min(0.2, s.vy / 900)) end
-	local ala = sin(s.t * 1.3) * 0.05
-	local hop = 0
-	local viso = "testa"
 	gui.set_enabled(s.para, para)
 
 	if s.morte then
 		morte(s, dt)
-		viso = "testa_ko"
-	elseif s.azione == "colpito" and s.azione_t < DURATA.colpito then
+	elseif s.azione == "colpito" and s.azione_t < A.colpito.durata then
 		-- colpito: faccia colpita, braccia all'aria (se non tengono l'arma)
-		viso = "testa_colpita"
-		mb[1], mb[2] = -2.4, 2.4
+		pose.aggiungi(po, A.colpito, s.azione_t, 1)
 	elseif para then
-		-- appeso alle cinghie: gambe unite che dondolano, il paracadute inclinato
-		-- contro la velocità, l'ala che sbatte piano
+		-- appeso alle cinghie; il paracadute e il corpo dondolano contro la velocità
 		s.dondolo = s.dondolo + (-max(-0.35, min(0.35, s.vx / 400)) - s.dondolo) * min(1, dt * 4)
-		mb[1], mb[2] = 3.35, 2.93
-		mg[1], mg[2] = 0.2 + sin(s.t * 3) * 0.08, 0.1 + sin(s.t * 3) * 0.08
+		pose.aggiungi(po, A.paracadute, s.t, 1)
 		rot(s.para, s.dondolo * 0.6)
-		ala = sin(s.t * 5) * 0.3
 		lean = s.dondolo * 0.5
-		sq = 1
 	elseif not ground then
-		-- in aria: salendo gambe raccolte e braccia indietro, scendendo gambe
-		-- avanti per atterrare; l'ala sbatte
+		-- in aria: salendo la posa sale, scendendo la scende, e si allunga con la velocità
 		local su = max(-1, min(1, s.vy / V_SALTO))
-		mg[1], mg[2] = 0.45 * max(0, su) + 0.25 * max(0, -su), -0.3 * max(0, su) + 0.1 * max(0, -su)
-		mb[1], mb[2] = -1.0, -0.6
-		ala = sin(s.t * 14) * 0.45 - 0.2
-		sq = 1 + min(0.2, abs(s.vy) / 900)
+		pose.aggiungi(po, A.aria, s.t, 1)
+		pose.aggiungi(po, A.sale, 0, su)
+		pose.aggiungi(po, A.scende, 0, -su)
+		sq = min(0.2, abs(s.vy) / 900)
 	elseif corre or s.cammina > 0.05 then
-		-- la corsa: gambe e braccia opposte, il piede si alza quando torna avanti
+		-- la corsa: un giro della clip a ogni passo, sfuma nel fermo
 		local c = s.cammina
-		mg[1], mg[2] = sin(s.passo) * 0.6 * c, -sin(s.passo) * 0.6 * c
-		s.alza[1], s.alza[2] = max(0, cos(s.passo)) * c, max(0, -cos(s.passo)) * c
-		mb[1], mb[2] = -sin(s.passo) * 0.7 * c - 0.1, sin(s.passo) * 0.7 * c + 0.1
+		pose.aggiungi(po, A.fermo, s.t, 1 - c)
+		pose.aggiungi(po, A.corsa, s.passo / (2 * pi) * A.corsa.durata, c)
 	elseif st.vittoria then
-		-- festeggia: salta sul posto con le braccia in alto
-		local u = (s.t * 1.6) % 1
-		hop = sin(u * pi) * 12
-		mb[1], mb[2] = 3.0 + sin(s.t * 9) * 0.3, 3.3 - sin(s.t * 9) * 0.3
-		mg[1], mg[2] = 0.15 * hop / 12, -0.15 * hop / 12
-		testa = sin(s.t * 3) * 0.1
-		viso = "testa_felice"
+		pose.aggiungi(po, A.vittoria, s.t, 1)
 	elseif not st.turno and not mira then
 		-- fermo, non di turno: ogni tanto una scenetta
-		s.posa_testa, s.posa_sq, s.posa_coda, s.posa_viso = nil, nil, nil, nil
 		attesa(s, dt)
-		testa = s.posa_testa or testa
-		sq = s.posa_sq or sq
-		cd = s.posa_coda or cd
-		viso = s.posa_viso or viso
+	else
+		pose.aggiungi(po, A.fermo, s.t, 1)
 	end
+	-- mirando la testa guarda dove si mira
+	local testa = po.testa
+	if mira then testa = max(-TESTA_GIU, min(TESTA_SU, a * 0.5)) end
 	if not s.morte then
-		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = sq, lean, testa, cd
+		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = po.schiaccia + sq, lean, testa, cd + po.coda
 		s.goal[FUOCO] = st.turno and FUOCO_TURNO or FUOCO_ATTESA
 	else
-		s.goal[SQ], s.goal[LEAN], s.goal[CODA] = 1, 0, 0
+		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = 1, 0, testa, 0
+		s.goal[FUOCO] = 0
 	end
-	faccia(s, viso)
+	faccia(s, po.viso or "testa")
 	molle(s, dt)
 
 	local q = max(0.4, s.x[SQ])
@@ -641,27 +600,26 @@ function M.update(s, dt, st)
 	-- la testa non si schiaccia (i dettagli del disegno si vedrebbero storti):
 	-- scende e sale con il busto
 	scale(s.forma, lx, q)
-	if not s.morte then rot(s.corpo, s.x[LEAN]) end
-	pos(s.corpo, -s.x[SHOVE] * s.w, hop * s.k)
+	rot(s.corpo, s.x[LEAN] + po.corpo)
+	pos(s.corpo, -s.x[SHOVE] * s.w, po.salto * s.k)
 	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
 
-	-- braccia e gambe inseguono le mete; le gambe si alzano nei passi
+	-- braccia e gambe inseguono la posa (così si passa piano da uno stato
+	-- all'altro); le gambe si alzano nei passi
 	local segui = min(1, dt * 16)
-	for i = 1, 2 do
-		s.braccia[i] = s.braccia[i] + (mb[i] - s.braccia[i]) * segui
-		s.gambe[i] = s.gambe[i] + (mg[i] - s.gambe[i]) * segui
-	end
+	s.braccia[1] = s.braccia[1] + (po.braccio_a - s.braccia[1]) * segui
+	s.braccia[2] = s.braccia[2] + (po.braccio_d - s.braccia[2]) * segui
+	s.gambe[1] = s.gambe[1] + (po.gamba_a - s.gambe[1]) * segui
+	s.gambe[2] = s.gambe[2] + (po.gamba_d - s.gambe[2]) * segui
 	rot(s.braccio_a, s.braccia[1])
 	rot(s.braccio_d, s.braccia[2])
 	rot(s.gamba_a, s.gambe[1])
 	rot(s.gamba_d, s.gambe[2])
-	pos(s.gamba_a, PT.anche[1] * s.k, (PT.anche[2] + s.alza[1] * 8) * s.k)
-	pos(s.gamba_d, -PT.anche[1] * s.k, (PT.anche[2] + s.alza[2] * 8) * s.k)
-	rot(s.ala, ala)
+	pos(s.gamba_a, PT.anche[1] * s.k, (PT.anche[2] + po.alza_a) * s.k)
+	pos(s.gamba_d, -PT.anche[1] * s.k, (PT.anche[2] + po.alza_d) * s.k)
+	rot(s.ala, po.ala)
 	coda(s, dt)
-	-- la testa sobbalza a ogni passo
-	local hy = (PT.collo[2] + abs(sin(s.passo)) * 4 * s.cammina) * s.k
-	pos(s.collo, PT.collo[1] * s.k, hy)
+	pos(s.collo, PT.collo[1] * s.k, (PT.collo[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[TESTA])
 	scale(s.collo, 1 / lx, 1 / q)
 	fiammella(s, dt, st.turno)

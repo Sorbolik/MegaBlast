@@ -175,6 +175,47 @@ scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")
 check(math.abs(game.ROBOT_H - s.h) < 1e-9, "il corpo è alto quanto quello della simulazione")
 
+-- Pose (battaglia/pose.lua) e clip (battaglia/animazioni.lua) ------------------
+
+local pose = require "battaglia.pose"
+local A = require "battaglia.animazioni"
+local function vicino(a, b) return math.abs(a - b) < 1e-6 end
+local clip = { durata = 1, ciclo = true, tracce = { testa = { 0, 0, 0, 0.5, 1, 1, 0.75, 2, 2 } },
+	viso = { 0.2, "testa_felice", 0.6, "testa_ko" } }
+local tr = clip.tracce.testa
+check(vicino(pose.valore(tr, 0, 1, true), 0) and vicino(pose.valore(tr, 0.5, 1, true), 1),
+	"pose: sulle chiavi il valore della chiave")
+check(vicino(pose.valore(tr, 0.625, 1, true), 1.5), "pose: curva dritta a metà")
+check(vicino(pose.valore(tr, 0.9, 1, true), 2), "pose: curva a scatto tiene il valore")
+local p = pose.nuova()
+pose.aggiungi(p, clip, 3.5, 0.5)
+check(vicino(p.testa, 0.5) and vicino(p.schiaccia, 1) and vicino(p.braccio_a, 0),
+	"pose: in ciclo il tempo gira, il peso scala, i canali assenti restano neutri")
+check(p.viso == "testa_felice", "pose: la faccia a scatti")
+pose.azzera(p)
+pose.aggiungi(p, clip, 0.1, 1)
+check(p.viso == "testa_ko", "pose: prima della prima faccia, in ciclo, l'ultima")
+local fine = { durata = 1, ciclo = false, tracce = { corpo = { 0, 0, 0, 1, 2, 0 } } }
+check(vicino(pose.valore(fine.tracce.corpo, 0.5, 1, false), 1) and vicino(pose.valore(fine.tracce.corpo, 1, 1, false), 2),
+	"pose: una clip che non gira parte e arriva piano e si ferma alla fine")
+local nomi = {}
+for _, c in ipairs(pose.CANALI) do nomi[c] = true end
+local buone = true
+for nome, c in pairs(A) do
+	if not (c.durata > 0) then buone = false; print("     " .. nome .. ": durata") end
+	for canale, tr in pairs(c.tracce) do
+		if not nomi[canale] or #tr % 3 ~= 0 or #tr == 0 then buone = false; print("     " .. nome .. "." .. canale) end
+		for k = 1, #tr - 3, 3 do
+			if tr[k + 3] < tr[k] or tr[k] < 0 or tr[k + 3] > c.durata then buone = false; print("     " .. nome .. "." .. canale .. ": tempi") end
+		end
+	end
+end
+check(buone, "animazioni: canali noti, chiavi in ordine dentro la durata")
+for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
+	"sconfitta", "naso", "sbadiglio", "guarda_coda" }) do
+	check(A[nome] ~= nil, "animazioni: c'è la clip " .. nome)
+end
+
 -- Targa ------------------------------------------------------------------------
 
 local primo = #nodi + 1
