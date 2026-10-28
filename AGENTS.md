@@ -22,7 +22,7 @@ Sergio ti dice solo quale scheda eseguire (es. "esegui WB-001").
    di generazione immagini, usando **esattamente** il prompt scritto e le immagini di
    riferimento indicate. Non cambiare, accorciare o "migliorare" i prompt: se un prompt non
    si può eseguire, scrivi perché nella consegna e passa al successivo.
-4. Sfondo trasparente: se lo strumento non lo dà diretto, genera su verde pieno (#00FF00) e
+4. Sfondo trasparente (salvo che la scheda chieda altro): se lo strumento non lo dà diretto, genera su verde pieno (#00FF00) e
    togli il verde, senza lasciare un alone verde attorno al contorno nero.
 5. Salva ogni immagine in `art/WB-xxx/<nome>.png` (il nome è nella tabella) e accanto
    `<nome>.txt` con il prompt usato e i riferimenti. Se la scheda chiede più varianti:
