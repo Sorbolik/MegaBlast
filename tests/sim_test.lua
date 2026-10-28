@@ -1667,7 +1667,7 @@ local function blast_at(dx, owner)
 	local hp = r.hp
 	-- il bordo destro della scatola (col cerchio, del quadrato attorno)
 	local edge = game.HURTBOX == "cerchio" and game.HURT_R + game.HURT_FAT or game.ROBOT_HALF_W
-	q:explode(640 + edge + dx, y + game.ROBOT_H / 2, owner, game.MISSILE_BLAST)
+	q:explode(640 + edge + dx, y + game.HURT_Y, owner, game.MISSILE_BLAST)
 	return r, hp - r.hp
 end
 local B = game.MISSILE_BLAST
@@ -1685,10 +1685,18 @@ check(ds == math.floor(B.damage * 0.5 + 0.5), "blastron: metà danno a sé stess
 -- Dove si viene colpiti: un cerchio a metà altezza, non la scatola
 local hb = game.new(42, "forgia")
 local hr = hb.robots[2]
-local hcy = hr.y + game.ROBOT_H / 2
+local hcy = hr.y + game.HURT_Y
 check(hb:hits_robot(hr.x + game.HURT_R - 0.5, hcy, 1, 0) and not hb:hits_robot(hr.x + game.HURT_R + 0.5, hcy, 1, 0),
 	"blastron: il bersaglio è un cerchio di raggio HURT_R")
 check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "blastron: l'angolo in basso della scatola non conta")
+
+-- Capsula per camminare e cerchio dei colpi vengono da sim/corpo.lua (l'editor
+-- delle animazioni li cambia); il disegno resta della sua misura
+local corpo = require "sim.corpo"
+check(game.ROBOT_H == corpo.cammina.alto and game.ROBOT_HALF_W * 2 == corpo.cammina.largo
+	and game.HURT_R == corpo.colpi.raggio and game.HURT_Y == corpo.colpi.centro,
+	"blastron: capsula e cerchio dei colpi da sim/corpo.lua")
+check(game.DISEGNO_H == game.BLASTRON_ROBOT_H * game.BLASTRON_CORPO, "blastron: il disegno non dipende da sim/corpo.lua")
 
 -- Mischia sulla mira: target = posizione del bersaglio rispetto ai piedi (in unità
 -- di Blastron), i robot restano fermi in aria; restituisce il tick del colpo o false

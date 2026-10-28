@@ -17,9 +17,9 @@ local ui = require "ui.ui"
 local M = {}
 
 local W, H = 1280, 720
--- la Scoria (alta game.ROBOT_H) alta circa 220 px, piedi qui
+-- la Scoria (alta game.DISEGNO_H) alta circa 220 px, piedi qui
 local CORPO_X, CORPO_Y = 400, 200
-local CORPO_K = 220 / game.ROBOT_H
+local CORPO_K = 220 / game.DISEGNO_H
 
 local V = vmath.vector3()
 

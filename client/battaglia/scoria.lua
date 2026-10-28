@@ -2,7 +2,7 @@
 -- di pezzi disegnati a vettori (strumenti/grafica/diavoletto.py ->
 -- battaglia/diavoletto.lua) e animati qui nel codice: niente fotogrammi, così
 -- il movimento è fluido a qualsiasi frequenza e l'atlante pesa poco. Dai piedi
--- alla cima della testa è alto come il corpo della simulazione (ROBOT_H);
+-- alla cima della testa è alto come il corpo della simulazione (DISEGNO_H);
 -- corna, coda e fiammella escono.
 --
 -- Lo usano la battaglia (game.gui_script), la home (menu/home.lua) e il podio:
@@ -74,8 +74,8 @@ local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25, 0.4 }
 
 -- altezza del diavoletto dai piedi alla cima della fiammella com'è ora (grande
 -- su chi è di turno), per mettere sopra la targa
-local CIMA_FIAMMA = (PT.collo[2] + PT.cima[2]) * game.ROBOT_H / D.altezza
-local FIAMMA_H = P.fiammella_1.h * 0.8 * game.ROBOT_H / D.altezza
+local CIMA_FIAMMA = (PT.collo[2] + PT.cima[2]) * game.DISEGNO_H / D.altezza
+local FIAMMA_H = P.fiammella_1.h * 0.8 * game.DISEGNO_H / D.altezza
 function M.altezza(s)
 	return CIMA_FIAMMA + FIAMMA_H * s.x[FUOCO]
 end
@@ -255,7 +255,9 @@ local function braccio_arma(s, parent, pugno_parent, k, dietro)
 end
 
 function M.new(color, look)
-	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
+	local H = game.DISEGNO_H
+	-- largo tre quarti dell'altezza, come la capsula di partenza (sim/corpo.lua)
+	local Wd = H * 0.75
 	local k = H / D.altezza
 	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, tinte_arma = {}, lampi = {},
 		teste = {}, teste_t = {}, facce = {},

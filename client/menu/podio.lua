@@ -63,7 +63,7 @@ local function gradino(p, x, voce, i)
 	local posa = gui.new_box_node(vec(x, M.BASE_Y + h + 260), vec(0, 0))
 	gui.set_visible(posa, false)
 	gui.set_parent(posa, p.radice)
-	local k = M.SCORIA_H / game.ROBOT_H
+	local k = M.SCORIA_H / game.DISEGNO_H
 	gui.set_scale(posa, vmath.vector3(k, k, 1))
 	gui.animate(posa, "position.y", M.BASE_Y + h, gui.EASING_INQUAD, 0.3, ritardo + M.SALITA * 0.7)
 	local s = scoria.new(g.colore)

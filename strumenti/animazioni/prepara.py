@@ -4,8 +4,8 @@
 Mette dentro strumenti/animazioni/editor.html i pezzi veri del diavoletto
 (client/assets/diavoletto/*.png), i perni (client/battaglia/diavoletto.lua), le
 pelli disegnate sullo stampino (client/battaglia/pelli.lua), le
-animazioni di adesso (client/battaglia/animazioni.lua), la misura del corpo
-(client/sim/game.lua) e i colori delle squadre (client/ui/ui.lua), e scrive
+animazioni di adesso (client/battaglia/animazioni.lua), l'altezza del disegno
+(client/sim/game.lua), le hitbox (client/sim/corpo.lua) e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
 salvano direttamente in client/battaglia/animazioni.lua) e si pubblica com'è
 come Artifact di claude.ai.
@@ -39,7 +39,9 @@ def main():
         dati = (REPO / "client/assets/pelli" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     game = leggi("client/sim/game.lua")
-    corpo = {k: float(re.search(r"M\.%s = ([0-9.]+)" % k, game).group(1)) for k in ("ROBOT_H", "ROBOT_HALF_W")}
+    # il disegno è alto game.DISEGNO_H nel profilo blastron, quello del gioco
+    assert 'M.DEFAULT_PHYSICS = "blastron"' in game, "l'editor misura il diavoletto sul profilo blastron"
+    misura = {k: float(re.search(r"M\.%s = ([0-9.]+)" % k, game).group(1)) for k in ("BLASTRON_ROBOT_H", "BLASTRON_CORPO")}
     squadre = re.search(r"SQUADRA = \{(.*)\}", leggi("client/ui/ui.lua")).group(1)
     colori = [[float(x) for x in c.split(",")] for c in re.findall(r"c\(([^)]*)\)", squadre)]
     dati = {
@@ -47,7 +49,8 @@ def main():
         "animazioni": leggi("client/battaglia/animazioni.lua"),
         "pelli": pelli,
         "immagini": immagini,
-        "corpo": corpo,
+        "disegno_h": misura["BLASTRON_ROBOT_H"] * misura["BLASTRON_CORPO"],
+        "corpo": leggi("client/sim/corpo.lua"),
         "squadre": colori,
     }
     testo = json.dumps(dati, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")

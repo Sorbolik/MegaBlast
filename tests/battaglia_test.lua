@@ -173,7 +173,7 @@ for _ = 1, 200 do scoria.update(s, 1 / 60, st) end
 check(not s.root.enabled, "morte: poi il corpo sparisce")
 scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")
-check(math.abs(game.ROBOT_H - s.h) < 1e-9, "il corpo è alto quanto quello della simulazione")
+check(math.abs(game.DISEGNO_H - s.h) < 1e-9, "il corpo è alto quanto il disegno (DISEGNO_H)")
 
 -- Pose (battaglia/pose.lua) e clip (battaglia/animazioni.lua) ------------------
 

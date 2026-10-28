@@ -13,17 +13,17 @@
 /* banco di lavoro: palco grande al centro, clip a sinistra, canali a destra, linea del tempo sotto */
 :root {
 	--fondo: #eef0f4; --pannello: #ffffff; --riga: #dfe3ea; --testo: #1b1e26; --tenue: #687082;
-	--brace: #e5532d; --brace-tenue: #fbe3dc; --chiave: #1b1e26; --palco: #f7f8fb; --suolo: #e6dccb; --suolo-riga: #8a7350; --hitbox: #1d8a5a;
+	--brace: #e5532d; --brace-tenue: #fbe3dc; --chiave: #1b1e26; --palco: #f7f8fb; --suolo: #e6dccb; --suolo-riga: #8a7350; --hitbox: #1d8a5a; --colpi: #8a3fd1;
 	--f-titolo: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
 	--f-testo: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
 	--f-numeri: "JetBrains Mono", Consolas, ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
 	--fondo: #15171d; --pannello: #1d2028; --riga: #2c303b; --testo: #e8eaf0; --tenue: #9097a8;
-	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --suolo: #2e2a24; --suolo-riga: #b39566; --hitbox: #4fd39a; color-scheme: dark } }
+	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --suolo: #2e2a24; --suolo-riga: #b39566; --hitbox: #4fd39a; --colpi: #c39bff; color-scheme: dark } }
 :root[data-theme="dark"] {
 	--fondo: #15171d; --pannello: #1d2028; --riga: #2c303b; --testo: #e8eaf0; --tenue: #9097a8;
-	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --suolo: #2e2a24; --suolo-riga: #b39566; --hitbox: #4fd39a; color-scheme: dark }
+	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --suolo: #2e2a24; --suolo-riga: #b39566; --hitbox: #4fd39a; --colpi: #c39bff; color-scheme: dark }
 * { box-sizing: border-box }
 html, body { height: 100% }
 body { background: var(--fondo); color: var(--testo); font: 14px/1.4 var(--f-testo); margin: 0;
@@ -56,6 +56,8 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 #canali { grid-area: canali; padding: 12px; display: flex; flex-direction: column; gap: 4px; align-self: start }
 .canale { display: grid; grid-template-columns: 22px 1fr 64px; grid-template-rows: auto auto; column-gap: 6px; align-items: center; padding: 3px 4px; border-radius: 6px; cursor: pointer }
 .canale[hidden] { display: none }
+.barra input.hb { width: 64px }
+#hb-stato { color: var(--tenue); min-width: 11em }
 .canale.scelto { background: var(--brace-tenue) }
 .canale .nome { grid-column: 2 / 4; font-size: 13px }
 .canale input[type=range] { grid-column: 2; width: 100%; accent-color: var(--brace) }
@@ -111,7 +113,6 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label>velocità <select id="velocita"><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
 			<label><input type="checkbox" id="molle" checked> molle del gioco</label>
 			<label><input type="checkbox" id="turno"> di turno</label>
-			<label title="Il corpo della simulazione: colpi e terreno toccano questo rettangolo"><input type="checkbox" id="hitbox" checked> hitbox</label>
 			<label>squadra <select id="squadra"><option value="0">Rosso</option><option value="1">Blu</option><option value="2">Verde</option><option value="3">Oro</option></select></label>
 			<span id="pelli" title="I pezzi disegnati sullo stampino (strumenti/stampino)"></span>
 		</div>
@@ -124,11 +125,23 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="copia-posa" title="Copia la posa (Ctrl+C)">Copia posa</button>
 			<button id="incolla-posa" title="Incolla la posa qui (Ctrl+V)">Incolla posa</button>
 		</div>
+		<div class="barra" title="Le hitbox sono fisica (client/sim/corpo.lua): cambiano il gioco per tutti, anche online, non il disegno">
+			<label style="color: var(--hitbox)"><input type="checkbox" id="vedi-cammina" checked> camminare</label>
+			<label>largo <input type="number" class="hb" id="hb-largo" step="0.1" min="4"></label>
+			<label>alto <input type="number" class="hb" id="hb-alto" step="0.1" min="4"></label>
+			<label style="color: var(--colpi)"><input type="checkbox" id="vedi-colpi" checked> colpi</label>
+			<label>raggio <input type="number" class="hb" id="hb-raggio" step="0.1" min="2"></label>
+			<label>centro <input type="number" class="hb" id="hb-centro" step="0.1" min="0"></label>
+			<span id="hb-stato"></span>
+			<span class="spazio"></span>
+			<button id="hb-gioco" title="Le hitbox di adesso del gioco">Come nel gioco</button>
+			<button id="hb-salva" title="Salva corpo.lua (va in client/sim/)">Salva corpo.lua</button>
+		</div>
 	</section>
 	<aside id="canali" class="box"></aside>
 	<section id="tempo-box" class="box">
 		<canvas id="tempo"></canvas>
-		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") il corpo, la testa e i piedi salgono e scendono. Ogni modifica mette una chiave al tempo dove sei. Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
+		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Ogni modifica mette una chiave al tempo dove sei. Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
 	</section>
 </div>
 <div id="messaggio" role="status"></div>
@@ -190,8 +203,23 @@ function leggiLua(src) {
 const DATI = JSON.parse(document.getElementById("dati").textContent);
 const D = leggiLua(DATI.diavoletto);
 const P = D.pezzi, PT = D.punti;
-const K = DATI.corpo.ROBOT_H / D.altezza; // unità del mondo per unità del disegno
-const LARGO = 2 * DATI.corpo.ROBOT_HALF_W / K;
+// il disegno è alto DISEGNO_H pixel del mondo (sim/game.lua), qualunque siano le hitbox
+const K = DATI.disegno_h / D.altezza; // pixel del mondo per unità del disegno
+const LARGO = D.altezza * 0.75; // largo come in battaglia/scoria.lua, per l'ombra
+
+// Le hitbox (sim/corpo.lua), in pixel del mondo dai piedi: la capsula per
+// camminare e il cerchio dei colpi
+const CORPO_GIOCO = leggiLua(DATI.corpo);
+let hb = JSON.parse(JSON.stringify(CORPO_GIOCO));
+// corpo.lua com'è, coi numeri nuovi (i commenti restano)
+function corpoInLua(c) {
+	const n = (v) => String(Math.round(v * 100) / 100);
+	return DATI.corpo
+		.replace(/cammina = \{[^}]*\}/, `cammina = { largo = ${n(c.cammina.largo)}, alto = ${n(c.cammina.alto)} }`)
+		.replace(/colpi = \{[^}]*\}/, `colpi = { raggio = ${n(c.colpi.raggio)}, centro = ${n(c.colpi.centro)} }`);
+}
+const CORPO_DEL_GIOCO = corpoInLua(CORPO_GIOCO);
+let corpoSalvato = CORPO_DEL_GIOCO;
 
 // Le pelli (battaglia/pelli.lua), come le veste battaglia/scoria.lua: per posto i
 // pezzi dal basso, il primo al posto di quello di base, poi quelli sopra. Una
@@ -530,6 +558,7 @@ function inversa(m) {
 const palco = $("palco");
 const g = palco.getContext("2d");
 let schermo = [1, 0, 0, -1, 0, 0];
+let maniglie = []; // le maniglie delle hitbox, in pixel del canvas: {id, px, py, cursore}
 let colpibili = []; // i pezzi disegnati, per sceglierli col mouse: {img, m, canale, giunto}, in pixel del canvas
 let ultimoFrame = 0;
 
@@ -638,16 +667,38 @@ function disegna(dt) {
 	m = giunto(forma, PT.spalle[0] + po.braccio_a_x, PT.spalle[1] + po.braccio_a_y, braccia[0]);
 	veste(m, "braccio", "braccio_a", punto(m, 0, 0), col);
 
-	// l'hitbox: il corpo della simulazione (sim/game.lua), largo 2 * ROBOT_HALF_W e
-	// alto ROBOT_H dal centro dei piedi; colpi e terreno toccano questo, non il disegno
-	if ($("hitbox").checked) {
+	// le hitbox (sim/corpo.lua) dal centro dei piedi: terreno e colpi toccano
+	// queste, non il disegno
+	maniglie = [];
+	const dpr = window.devicePixelRatio || 1;
+	const forma_hb = (vedi, colore, traccia, etichetta, lista) => {
+		if (!$(vedi).checked) return;
+		const cl = css.getPropertyValue(colore);
 		g.setTransform(...radice);
 		g.setLineDash([6 / s, 4 / s]);
 		g.lineWidth = 2 / s;
-		g.strokeStyle = css.getPropertyValue("--hitbox");
-		g.strokeRect(-LARGO / 2, 0, LARGO, DATI.corpo.ROBOT_H / K);
+		g.strokeStyle = cl;
+		g.beginPath(); traccia(); g.stroke();
 		g.setLineDash([]);
-	}
+		g.setTransform(1, 0, 0, 1, 0, 0);
+		g.fillStyle = cl;
+		for (const [id, x, y, cursore] of lista) {
+			const [px, py] = punto(radice, x, y);
+			maniglie.push({ id, px, py, cursore });
+			const h = (presa && presa.maniglia === id ? 6 : 4.5) * dpr;
+			g.fillRect(px - h, py - h, 2 * h, 2 * h);
+		}
+		const [ex, ey] = punto(radice, etichetta[0], etichetta[1]);
+		g.font = `${12 * dpr}px ${css.getPropertyValue("--f-testo")}`;
+		g.fillText(etichetta[2], ex + 8 * dpr, ey);
+	};
+	const r = hb.cammina.largo / 2 / K, a = hb.cammina.alto / K;
+	forma_hb("vedi-cammina", "--hitbox", () => {
+		g.arc(0, a - r, r, 0, Math.PI); g.arc(0, r, r, Math.PI, 2 * Math.PI); g.closePath();
+	}, [r, a * 0.2, "camminare"], [["largo", r, a / 2, "ew-resize"], ["alto", 0, a, "ns-resize"]]);
+	const cr = hb.colpi.raggio / K, cc = hb.colpi.centro / K;
+	forma_hb("vedi-colpi", "--colpi", () => { g.arc(0, cc, cr, 0, 2 * Math.PI); },
+		[cr * 0.7, cc + cr * 0.75, "colpi"], [["raggio", -cr, cc, "ew-resize"], ["centro", 0, cc, "ns-resize"]]);
 
 	// il canale scelto: il suo giunto
 	const sc = colpibili.find((x) => x.canale === canale);
@@ -690,8 +741,31 @@ function pixel(e) {
 	const r = palco.getBoundingClientRect(), dpr = palco.width / r.width;
 	return [(e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr];
 }
+// la maniglia di una hitbox sotto il punto (pixel del canvas)
+function manigliaSotto(px, py) {
+	const d = 10 * (window.devicePixelRatio || 1);
+	return maniglie.find((m) => Math.abs(m.px - px) < d && Math.abs(m.py - py) < d);
+}
+// cambia le hitbox: i numeri restano sensati (la capsula almeno alta quanto larga)
+function cambiaCorpo(id, v) {
+	const c = hb, t = Math.round(v * 10) / 10;
+	if (!(t >= 0)) return;
+	if (id === "largo") c.cammina.largo = Math.max(4, Math.min(c.cammina.alto, t));
+	else if (id === "alto") c.cammina.alto = Math.max(c.cammina.largo, Math.min(150, t));
+	else if (id === "raggio") c.colpi.raggio = Math.max(2, Math.min(80, t));
+	else if (id === "centro") c.colpi.centro = Math.max(0, Math.min(150, t));
+	try { localStorage.setItem("megablast-corpo", corpoInLua(hb)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
+	aggiorna();
+}
 palco.addEventListener("pointerdown", (e) => {
 	const [px, py] = pixel(e);
+	const mg = manigliaSotto(px, py);
+	if (mg) {
+		presa = { maniglia: mg.id };
+		palco.setPointerCapture(e.pointerId);
+		aggiorna();
+		return;
+	}
 	const x = pezzoSotto(px, py);
 	if (!x) return;
 	fermaPlay();
@@ -708,7 +782,15 @@ palco.addEventListener("pointerdown", (e) => {
 });
 palco.addEventListener("pointermove", (e) => {
 	const [px, py] = pixel(e);
-	if (!presa) { palco.style.cursor = pezzoSotto(px, py) ? "grab" : "default"; return; }
+	if (!presa) { const mg = manigliaSotto(px, py); palco.style.cursor = mg ? mg.cursore : pezzoSotto(px, py) ? "grab" : "default"; return; }
+	if (presa.maniglia) {
+		// dal canvas alle unità del disegno (piedi in 0, 0) e poi ai pixel del mondo
+		const [u, v] = punto(inversa(schermo), px, py);
+		const id = presa.maniglia;
+		cambiaCorpo(id, id === "largo" ? 2 * Math.abs(u) * K : id === "alto" || id === "centro" ? v * K
+			: Math.hypot(u, v - hb.colpi.centro / K) * K);
+		return;
+	}
 	let v;
 	if (presa.muovi) {
 		v = presa.v0 - (py - presa.py) / schermo[0];
@@ -721,7 +803,13 @@ palco.addEventListener("pointermove", (e) => {
 	metti(presa.id, Math.round(v * 1000) / 1000);
 	dopo();
 });
-const lascia = () => { if (presa) { presa = null; palco.style.cursor = "grab"; memorizza(); } };
+const lascia = () => {
+	if (!presa) return;
+	const mg = presa.maniglia;
+	presa = null;
+	palco.style.cursor = "grab";
+	if (mg) aggiorna(); else memorizza();
+};
 palco.addEventListener("pointerup", lascia);
 palco.addEventListener("pointercancel", lascia);
 
@@ -928,6 +1016,10 @@ function aggiorna() {
 	$("guida").innerHTML = `<b>${nome.replace("_", " ")}</b> · ${(INFO[nome] && INFO[nome].guida) || "Clip che il gioco non usa ancora."}`;
 	if (document.activeElement !== $("durata")) $("durata").value = c.durata.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
 	$("ciclo").checked = c.ciclo;
+	const nums = { largo: hb.cammina.largo, alto: hb.cammina.alto, raggio: hb.colpi.raggio, centro: hb.colpi.centro };
+	for (const id in nums) if (document.activeElement !== $("hb-" + id)) $("hb-" + id).value = nums[id];
+	const cl = corpoInLua(hb);
+	$("hb-stato").textContent = cl === CORPO_DEL_GIOCO ? "come nel gioco" : cl === corpoSalvato ? "salvate" : "cambiate, da salvare";
 	const t = dentro(c, tempo);
 	for (const ch of CANALI) {
 		const v = valoreProprio(c, ch.id, tempo);
@@ -993,7 +1085,14 @@ $("inizio").onclick = () => { fermaPlay(); tempo = 0; aggiorna(); };
 const fotogramma = (d) => { fermaPlay(); const c = clip(); tempo = Math.max(0, Math.min(c.durata, Math.round((dentro(c, tempo) + d / 30) * 30) / 30)); orologio += d / 30; aggiorna(); };
 $("indietro").onclick = () => fotogramma(-1);
 $("avanti").onclick = () => fotogramma(1);
-["molle", "turno", "squadra", "hitbox"].forEach((id) => { $(id).onchange = () => aggiorna(); });
+["molle", "turno", "squadra", "vedi-cammina", "vedi-colpi"].forEach((id) => { $(id).onchange = () => aggiorna(); });
+["largo", "alto", "raggio", "centro"].forEach((id) => { $("hb-" + id).onchange = () => cambiaCorpo(id, parseFloat($("hb-" + id).value)); });
+$("hb-gioco").onclick = () => {
+	hb = JSON.parse(JSON.stringify(CORPO_GIOCO));
+	try { localStorage.removeItem("megablast-corpo"); } catch (e) { /* niente memoria del browser */ }
+	aggiorna();
+	messaggio("Hitbox come nel gioco.");
+};
 $("sposta").onclick = () => { modoSposta = !modoSposta; $("sposta").textContent = modoSposta ? "Trascina: sposta" : "Trascina: ruota"; $("sposta").classList.toggle("acceso", modoSposta); };
 
 $("durata").onchange = () => {
@@ -1053,43 +1152,51 @@ document.addEventListener("keydown", (e) => {
 
 // ---------------------------------------------------------------------------
 // Aprire e salvare
-let fileScelto = null;
 let claudeDl = null, claudeDb = null;
-async function salva() {
-	const testo = clipInLua(clips);
-	// Chrome e Edge sul PC: si sceglie una volta client/battaglia/animazioni.lua e poi si salva lì
+// Salva il testo come file nomeFile (da mettere in cartella); f.file tiene il
+// file scelto sul PC. Restituisce true se è salvato.
+async function scrivi(testo, nomeFile, cartella, f) {
+	// Chrome e Edge sul PC: si sceglie una volta il file nel gioco e poi si salva lì
 	if (window.showSaveFilePicker && !claudeDl) {
 		try {
-			if (!fileScelto) fileScelto = await window.showSaveFilePicker({ suggestedName: "animazioni.lua", types: [{ description: "Animazioni Lua", accept: { "text/plain": [".lua"] } }] });
-			const w = await fileScelto.createWritable();
+			if (!f.file) f.file = await window.showSaveFilePicker({ suggestedName: nomeFile, types: [{ description: "Lua", accept: { "text/plain": [".lua"] } }] });
+			const w = await f.file.createWritable();
 			await w.write(testo); await w.close();
-			salvato = testo; aggiorna();
-			messaggio("Salvato in " + fileScelto.name + ".");
-			return;
+			messaggio("Salvato in " + f.file.name + ".");
+			return true;
 		} catch (e) {
-			if (e && e.name === "AbortError") return;
-			fileScelto = null;
+			if (e && e.name === "AbortError") return false;
+			f.file = null;
 		}
 	}
 	if (claudeDl) {
 		try {
-			await claudeDl.save({ filename: "animazioni.lua.txt", data: testo });
-			salvato = testo; aggiorna();
-			messaggio("Scaricato: rinominalo animazioni.lua e mettilo in client/battaglia/.");
+			await claudeDl.save({ filename: nomeFile + ".txt", data: testo });
+			messaggio(`Scaricato: rinominalo ${nomeFile} e mettilo in ${cartella}.`);
+			return true;
 		} catch (e) {
 			if (e && e.code !== "declined") messaggio("Qui non si può scaricare: usa Manda a Claude o Copia il testo.");
 		}
-		return;
+		return false;
 	}
 	const a = document.createElement("a");
 	a.href = URL.createObjectURL(new Blob([testo], { type: "text/plain" }));
-	a.download = "animazioni.lua";
+	a.download = nomeFile;
 	a.click();
 	setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-	salvato = testo; aggiorna();
-	messaggio("Scaricato animazioni.lua: mettilo in client/battaglia/.");
+	messaggio(`Scaricato ${nomeFile}: mettilo in ${cartella}.`);
+	return true;
+}
+const fileAnimazioni = {}, fileCorpo = {};
+async function salva() {
+	const testo = clipInLua(clips);
+	if (await scrivi(testo, "animazioni.lua", "client/battaglia/", fileAnimazioni)) { salvato = testo; aggiorna(); }
 }
 $("salva").onclick = salva;
+$("hb-salva").onclick = async () => {
+	const testo = corpoInLua(hb);
+	if (await scrivi(testo, "corpo.lua", "client/sim/", fileCorpo)) { corpoSalvato = testo; aggiorna(); }
+};
 $("copia").onclick = async () => {
 	const testo = clipInLua(clips);
 	try { await navigator.clipboard.writeText(testo); messaggio("Copiato: incollalo in client/battaglia/animazioni.lua o in chat."); }
@@ -1117,8 +1224,12 @@ $("file").onchange = async () => {
 };
 $("claude").onclick = async () => {
 	try {
-		await claudeDb.doc("animazioni/ultima").set({ lua: clipInLua(clips), quando: new Date().toISOString() });
-		messaggio("Mandate: di' a Claude di prendere le animazioni dall'editor.");
+		const quando = new Date().toISOString();
+		await claudeDb.doc("animazioni/ultima").set({ lua: clipInLua(clips), quando });
+		// le hitbox solo se cambiate: sono fisica, cambiano il gioco per tutti
+		const cl = corpoInLua(hb);
+		if (cl !== CORPO_DEL_GIOCO) { await claudeDb.doc("corpo/ultima").set({ lua: cl, quando }); corpoSalvato = cl; aggiorna(); }
+		messaggio(cl !== CORPO_DEL_GIOCO ? "Mandate animazioni e hitbox: di' a Claude di prenderle dall'editor." : "Mandate: di' a Claude di prendere le animazioni dall'editor.");
 	} catch (e) { messaggio("Non sono riuscito a mandarle: " + ((e && e.message) || "errore") + ". Usa Copia il testo."); }
 };
 $("ripristina").onclick = () => {
@@ -1140,6 +1251,14 @@ try {
 		$("avviso").classList.add("si");
 	}
 } catch (e) { /* niente memoria del browser */ }
+// le hitbox cambiate e non ancora nel gioco
+try {
+	const bozza = localStorage.getItem("megablast-corpo");
+	if (bozza && bozza !== CORPO_DEL_GIOCO) {
+		const c = leggiLua(bozza);
+		if (c.cammina && c.colpi) hb = c;
+	}
+} catch (e) { /* niente memoria del browser o bozza rotta */ }
 // una scelta per categoria, solo per quelle che hanno pelli
 for (const c of [...PL.sostituisce, ...PL.sopra]) {
 	const nomi = Object.keys(PL.pelli).filter((n) => PL.pelli[n].categoria === c).sort();

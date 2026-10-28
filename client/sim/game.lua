@@ -19,6 +19,7 @@ local terrain = require "sim.terrain"
 local maps = require "sim.maps"
 local mischia = require "sim.mischia"
 local C = require "sim.config"
+local CORPO = require "sim.corpo"
 
 local M = {}
 M.__index = M
@@ -36,8 +37,12 @@ M.GRAVITY = 600
 -- Robot (la posizione è il centro dei piedi)
 M.ROBOT_HALF_W = 6
 M.ROBOT_H = 16
+-- l'altezza del diavoletto disegnato, dai piedi alla cima della testa: il
+-- disegno non cambia se cambiano la capsula per camminare o il cerchio dei colpi
+-- (sim/corpo.lua). Da qui partono anche i colpi (MUZZLE) e il rampino.
+M.DISEGNO_H = 16
 -- quante volte il corpo è più grande della misura su cui è fatto il resto del mondo
--- (proiettili, casse, armi in mano si disegnano su ROBOT_H / CORPO)
+-- (proiettili, casse, armi in mano si disegnano su DISEGNO_H / CORPO)
 M.CORPO = 1
 M.MAX_CLIMB = 6          -- gradino massimo che il robot sale da solo
 -- Forma del corpo contro il terreno: false = rettangolo; true = capsula, con
@@ -106,11 +111,12 @@ M.SWORD_STOP = false     -- il colpo ferma il bersaglio (in Blastron la spada gl
 
 -- Dove un robot può essere colpito (proiettili, globi, lame, esplosioni):
 -- "scatola": il rettangolo del robot, largo 2 * ROBOT_HALF_W e alto ROBOT_H;
--- "cerchio": come in Blastron, un cerchio di raggio HURT_R a metà altezza.
+-- "cerchio": come in Blastron, un cerchio di raggio HURT_R alto HURT_Y dai piedi.
 -- Per le esplosioni Blastron misura dal quadrato attorno al cerchio, un po'
 -- più largo (HURT_FAT).
 M.HURTBOX = "scatola"
 M.HURT_R = 8
+M.HURT_Y = 8
 M.HURT_FAT = 0
 
 -- Teletrasporto (Passo d'Ombra): un globo che vola come il missile, rimbalza e
@@ -824,7 +830,7 @@ local function launch_velocity(angle, power, max_speed)
 end
 
 local function muzzle(rb, angle)
-	return rb.x + math.cos(angle) * M.MUZZLE, rb.y + M.ROBOT_H / 2 + math.sin(angle) * M.MUZZLE
+	return rb.x + math.cos(angle) * M.MUZZLE, rb.y + M.DISEGNO_H / 2 + math.sin(angle) * M.MUZZLE
 end
 
 function M:fire(angle, power)
@@ -1492,7 +1498,7 @@ end
 
 function M:mallet_hit(rb, other, t)
 	local bounce = self:mallet_bounce(rb, t)
-	self:emit({ type = "mallet_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2, bounce = bounce })
+	self:emit({ type = "mallet_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.HURT_Y, bounce = bounce })
 	self:hurt(other, C.MALLET.damage, rb)
 end
 
@@ -1569,7 +1575,7 @@ M.aim_side = aim_side
 function M.hurt_at(r, x, y, pad)
 	pad = pad or 0
 	if M.HURTBOX == "cerchio" then
-		local dx, dy = x - r.x, y - (r.y + M.ROBOT_H / 2)
+		local dx, dy = x - r.x, y - (r.y + M.HURT_Y)
 		local rr = M.HURT_R + pad
 		return dx * dx + dy * dy <= rr * rr
 	end
@@ -1579,7 +1585,7 @@ end
 -- Un robot toccato dal segmento (x0, y0) - (x1, y1) largo 2 * pad
 local function seg_hits_robot(r, x0, y0, x1, y1, pad)
 	if M.HURTBOX == "cerchio" then
-		local cx, cy = r.x, r.y + M.ROBOT_H / 2
+		local cx, cy = r.x, r.y + M.HURT_Y
 		local ux, uy = x1 - x0, y1 - y0
 		local l2 = ux * ux + uy * uy
 		local k = l2 > 0 and math.max(0, math.min(1, ((cx - x0) * ux + (cy - y0) * uy) / l2)) or 0
@@ -1715,13 +1721,13 @@ function M:update_lunge(rb)
 		end
 		rb.x, rb.y = nx, ny
 		-- colpito chi tocca col corpo o con la lancia
-		local cx, cy = rb.x, rb.y + M.ROBOT_H / 2
+		local cx, cy = rb.x, rb.y + M.DISEGNO_H / 2
 		for _, other in ipairs(self.robots) do
 			if other ~= rb and not other.dead and not rb.lunge_hit[other.id]
 				and (self:robot_at(rb.x, rb.y, rb) == other
 					or seg_hits_robot(other, cx, cy, cx + ux * C.LUNGE.reach, cy + uy * C.LUNGE.reach, 2)) then
 				rb.lunge_hit[other.id] = true
-				self:emit({ type = "lunge_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+				self:emit({ type = "lunge_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.HURT_Y })
 				self:hurt(other, C.LUNGE.damage, rb)
 			end
 		end
@@ -1802,7 +1808,7 @@ function M:start_punch(angle)
 end
 
 function M:punch_hit(rb, other, dir)
-	self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.ROBOT_H / 2 })
+	self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.HURT_Y })
 	local k = self:knock_mul(other)
 	other.vx, other.vy = dir * M.PUNCH_PUSH * k, M.PUNCH_LAUNCH * k
 	other.fall_top = nil
@@ -2191,7 +2197,7 @@ function M:preview(angle, power, count, every, pts, weapon)
 		return self:ray_preview(x, y, angle, (weapon == "eagle" and C.EAGLE or C.HOOK).range, count, pts)
 	elseif weapon == "lunge" then
 		-- lo scatto: dal centro del robot, lungo quanto l'Affondo
-		return self:ray_preview(rb.x, rb.y + M.ROBOT_H / 2, angle, C.LUNGE.speed * C.LUNGE.ticks / 60, count, pts)
+		return self:ray_preview(rb.x, rb.y + M.DISEGNO_H / 2, angle, C.LUNGE.speed * C.LUNGE.ticks / 60, count, pts)
 	end
 	pts = pts or {}
 	local n = 0
@@ -2243,12 +2249,12 @@ function M:explode(x, y, owner, blast, weapon)
 				local hw, y0, y1 = M.ROBOT_HALF_W, rb.y, rb.y + M.ROBOT_H
 				if M.HURTBOX == "cerchio" then
 					hw = M.HURT_R + M.HURT_FAT
-					y0, y1 = rb.y + M.ROBOT_H / 2 - hw, rb.y + M.ROBOT_H / 2 + hw
+					y0, y1 = rb.y + M.HURT_Y - hw, rb.y + M.HURT_Y + hw
 				end
 				dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
 				dy = math.max(y0, math.min(y1, y)) - y
 			else
-				dx, dy = rb.x - x, (rb.y + M.ROBOT_H / 2) - y
+				dx, dy = rb.x - x, (rb.y + M.HURT_Y) - y
 			end
 			local d = math.sqrt(dx * dx + dy * dy)
 			if d < blast.damage_r then
@@ -2561,8 +2567,9 @@ end
 -- personaggio; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
 -- La vita là partiva da 2000, qui da DAMAGE_BASE: i danni sono riscalati.
 M.BLASTRON_ROBOT_H = 28
--- Il corpo del personaggio (altezza, larghezza e cerchio dove viene colpito) è
--- BLASTRON_CORPO volte quello di Blastron; tutto il resto (salti, armi, casse,
+-- Il diavoletto disegnato è BLASTRON_CORPO volte il robot di Blastron (la
+-- capsula per camminare e il cerchio dei colpi, partiti dalla stessa misura,
+-- sono in sim/corpo.lua); tutto il resto (salti, armi, casse,
 -- esplosioni) resta sulla misura di Blastron. 1,4 scelto il 26 ottobre perché il
 -- diavoletto dipinto si legga.
 M.BLASTRON_CORPO = 1.4
@@ -2576,8 +2583,12 @@ local function blastron_profile()
 	local k = M.BLASTRON_ROBOT_H / M.ROBOT_H
 	local corpo = M.BLASTRON_CORPO
 	return {
-		ROBOT_H = M.BLASTRON_ROBOT_H * corpo,
-		ROBOT_HALF_W = M.ROBOT_HALF_W * k * corpo,
+		-- capsula per camminare e cerchio dei colpi: sim/corpo.lua (editor delle
+		-- animazioni); all'inizio erano BLASTRON_ROBOT_H * corpo di altezza,
+		-- ROBOT_HALF_W * k * corpo di mezza larghezza e il cerchio qui sotto
+		ROBOT_H = CORPO.cammina.alto,
+		ROBOT_HALF_W = CORPO.cammina.largo / 2,
+		DISEGNO_H = M.BLASTRON_ROBOT_H * corpo,
 		CORPO = corpo,
 		MAX_CLIMB = M.MAX_CLIMB * k,
 		TELEPORT_SEARCH = M.TELEPORT_SEARCH * k,
@@ -2632,10 +2643,12 @@ local function blastron_profile()
 		ORB_FRICTION = 1,
 		ORB_DAMPING = 1.1,
 		-- dove si viene colpiti: il cerchio dei robot di Blastron, raggio 0,523 volte
-		-- l'altezza (3,612 × 0,66 × 0,5 × 0,66 × 2,4 = 1,888 u) a metà altezza;
-		-- per le esplosioni il quadrato attorno, più largo di 0,1 u per lato
+		-- l'altezza (3,612 × 0,66 × 0,5 × 0,66 × 2,4 = 1,888 u, per BLASTRON_CORPO)
+		-- a metà altezza, ora in sim/corpo.lua; per le esplosioni il quadrato
+		-- attorno, più largo di 0,1 u per lato
 		HURTBOX = "cerchio",
-		HURT_R = 1.888 * u * corpo,
+		HURT_R = CORPO.colpi.raggio,
+		HURT_Y = CORPO.colpi.centro,
 		HURT_FAT = 0.1 * u,
 		-- Hanzo Special: fendente sulla mira (sim/mischia.lua), 300 danni, ferma il bersaglio
 		SWORD_MODEL = "blastron",
