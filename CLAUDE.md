@@ -51,6 +51,11 @@ camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
 perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`). "Manda a
 Claude" li mette nei documenti `corpo/ultima` e `perni/ultima` (campo `lua`).
 
+L'editor è anche su Cloudflare Pages (progetto `megablast-editor`, lo pubblica
+`.github/workflows/editor.yml` a ogni push che lo cambia, se ci sono i segreti).
+Da lì "Manda a Claude" scrive i file nel ramo `editor-ultima` di GitHub
+(`strumenti/animazioni/cloudflare/functions/api/manda.js`): si prendono da lì.
+
 ## Pezzi nuovi del diavoletto (pelli)
 
 Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo

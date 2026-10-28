@@ -1315,15 +1315,30 @@ $("file").onchange = async () => {
 	} catch (e) { messaggio("Non riesco a leggere " + f.name + ": " + e.message); }
 	$("file").value = "";
 };
+// "Manda a Claude": su claude.ai nel database della pagina (documenti
+// animazioni/ultima, corpo/ultima, perni/ultima); su Cloudflare
+// (strumenti/animazioni/cloudflare) nel ramo editor-ultima di GitHub, con la
+// chiave che si scrive la prima volta
+async function manda(nome, lua, quando) {
+	if (claudeDb) { await claudeDb.doc(nome + "/ultima").set({ lua, quando }); return; }
+	let chiave = null;
+	try { chiave = localStorage.getItem("megablast-chiave"); } catch (e) { /* niente memoria del browser */ }
+	if (!chiave) chiave = prompt("La chiave per mandare a Claude:");
+	if (!chiave) throw new Error("senza chiave");
+	const r = await fetch("api/manda", { method: "POST", headers: { "Content-Type": "application/json", "X-Chiave": chiave }, body: JSON.stringify({ file: nome, lua }) });
+	if (r.status === 403) { try { localStorage.removeItem("megablast-chiave"); } catch (e) { /* niente */ } throw new Error("chiave sbagliata"); }
+	if (!r.ok) throw new Error(await r.text());
+	try { localStorage.setItem("megablast-chiave", chiave); } catch (e) { /* niente memoria del browser */ }
+}
 $("claude").onclick = async () => {
 	try {
 		const quando = new Date().toISOString();
-		await claudeDb.doc("animazioni/ultima").set({ lua: clipInLua(clips), quando });
+		await manda("animazioni", clipInLua(clips), quando);
 		// le hitbox solo se cambiate: sono fisica, cambiano il gioco per tutti
 		const cl = corpoInLua(hb);
-		if (cl !== CORPO_DEL_GIOCO) { await claudeDb.doc("corpo/ultima").set({ lua: cl, quando }); corpoSalvato = cl; }
+		if (cl !== CORPO_DEL_GIOCO) { await manda("corpo", cl, quando); corpoSalvato = cl; }
 		const pl = perniInLua(pn);
-		if (pl !== PERNI_DEL_GIOCO) { await claudeDb.doc("perni/ultima").set({ lua: pl, quando }); perniSalvati = pl; }
+		if (pl !== PERNI_DEL_GIOCO) { await manda("perni", pl, quando); perniSalvati = pl; }
 		aggiorna();
 		const anche = [cl !== CORPO_DEL_GIOCO && "hitbox", pl !== PERNI_DEL_GIOCO && "perni"].filter(Boolean);
 		messaggio("Mandate le animazioni" + (anche.length ? " con " + anche.join(" e ") : "") + ": di' a Claude di prenderle dall'editor.");
@@ -1380,5 +1395,8 @@ window.addEventListener("resize", () => aggiorna());
 if (window.claude && window.claude.use) {
 	window.claude.use("downloads").then((d) => { claudeDl = d; }).catch(() => {});
 	window.claude.use("db").then((d) => { if (d) { claudeDb = d; $("claude").hidden = false; } }).catch(() => {});
+} else if (location.protocol === "https:") {
+	// pubblicato su Cloudflare: il pulsante c'è se c'è la funzione che manda
+	fetch("api/manda").then((r) => { if (r.ok) $("claude").hidden = false; }).catch(() => {});
 }
 </script>

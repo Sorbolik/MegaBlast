@@ -1,0 +1,51 @@
+# Pubblica l'editor delle animazioni su Cloudflare Pages (progetto
+# megablast-editor) a ogni push che lo cambia. Segreti del repository:
+#   CLOUDFLARE_API_TOKEN  (permesso Cloudflare Pages: Edit)
+#   CLOUDFLARE_ACCOUNT_ID
+#   EDITOR_CHIAVE         (la chiave di "Manda a Claude")
+#   EDITOR_GITHUB_TOKEN   (fine-grained, Contents in scrittura su MegaBlast)
+name: Editor animazioni
+on:
+  push:
+    branches: [main, claude/project-thread-j6rc0y]
+    paths:
+      - "strumenti/animazioni/**"
+      - "client/battaglia/animazioni.lua"
+      - "client/battaglia/diavoletto.lua"
+      - "client/battaglia/pelli.lua"
+      - "client/battaglia/perni.lua"
+      - "client/assets/diavoletto/**"
+      - "client/assets/pelli/**"
+      - "client/sim/corpo.lua"
+      - "client/sim/game.lua"
+      - "client/ui/ui.lua"
+      - ".github/workflows/editor.yml"
+  workflow_dispatch:
+concurrency: editor
+jobs:
+  pubblica:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      # finché i segreti non ci sono non fa niente (e non si colora di rosso)
+      - uses: actions/checkout@v4
+        if: env.CLOUDFLARE_API_TOKEN != ''
+      - name: Prepara la pagina
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: |
+          python3 strumenti/animazioni/prepara.py
+          mkdir -p strumenti/animazioni/cloudflare/dist
+          cp simulazione/animazioni/editor.html strumenti/animazioni/cloudflare/dist/index.html
+      - name: Pubblica
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: strumenti/animazioni/cloudflare
+        env:
+          CHIAVE: ${{ secrets.EDITOR_CHIAVE }}
+          TOKEN_GITHUB: ${{ secrets.EDITOR_GITHUB_TOKEN }}
+        run: |
+          npx --yes wrangler@3.114.0 pages project create megablast-editor --production-branch main || true
+          printf '%s' "$CHIAVE" | npx --yes wrangler@3.114.0 pages secret put EDITOR_CHIAVE --project-name megablast-editor
+          printf '%s' "$TOKEN_GITHUB" | npx --yes wrangler@3.114.0 pages secret put GITHUB_TOKEN --project-name megablast-editor
+          npx --yes wrangler@3.114.0 pages deploy dist --project-name megablast-editor --branch main
