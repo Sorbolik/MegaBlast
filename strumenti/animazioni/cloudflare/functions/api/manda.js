@@ -1,8 +1,8 @@
 // "Manda a Claude" dell'editor delle animazioni pubblicato su Cloudflare Pages:
 // POST /api/manda { file, lua } con l'intestazione X-Chiave (= EDITOR_CHIAVE)
 // scrive il file nel ramo editor-ultima di GitHub, da dove Claude lo prende.
-// Segreti del progetto Pages: EDITOR_CHIAVE e GITHUB_TOKEN (contents in
-// scrittura su Sorbolik/MegaBlast), messi da .github/workflows/editor.yml.
+// Variabili cifrate del progetto Pages: EDITOR_CHIAVE e GITHUB_TOKEN (token
+// fine-grained con Contents in scrittura solo su Sorbolik/MegaBlast).
 const REPO = "Sorbolik/MegaBlast";
 const RAMO = "editor-ultima";
 const FILE = {
