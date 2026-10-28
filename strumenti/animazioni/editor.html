@@ -149,7 +149,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 	<aside id="canali" class="box"></aside>
 	<section id="tempo-box" class="box">
 		<canvas id="tempo"></canvas>
-		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" sposti il punto attorno a cui gira (la crocetta), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
+		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
 	</section>
 </div>
 <div id="messaggio" role="status"></div>
@@ -793,6 +793,16 @@ function pixel(e) {
 	const r = palco.getBoundingClientRect(), dpr = palco.width / r.width;
 	return [(e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr];
 }
+// il perno preso va nel punto (pixel del canvas): lo spostamento nella forma
+// del corpo, dove stanno i giunti
+function spostaPerno(px, py) {
+	const inv = inversa(formaOra);
+	const [a0, b0] = punto(inv, presa.px, presa.py), [a1, b1] = punto(inv, px, py);
+	const t = (v) => Math.round(v * 10) / 10;
+	pn[presa.perno] = [t(presa.d0[0] + a1 - a0), t(presa.d0[1] + b1 - b0)];
+	try { localStorage.setItem("megablast-perni", perniInLua(pn)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
+	aggiorna();
+}
 // la maniglia di una hitbox sotto il punto (pixel del canvas)
 function manigliaSotto(px, py) {
 	const d = 10 * (window.devicePixelRatio || 1);
@@ -825,10 +835,11 @@ palco.addEventListener("pointerdown", (e) => {
 		const posto = PERNABILI[x.canale];
 		if (!posto) { messaggio("Questo pezzo non ha un perno da spostare: testa, braccia, gambe e ala sì."); return; }
 		canale = x.canale; chiaveScelta = null;
-		presa = { perno: posto, px, py, d0: sposto(posto).slice() };
+		// il perno salta dove si clicca e poi segue il mouse
+		presa = { perno: posto, px: x.giunto[0], py: x.giunto[1], d0: sposto(posto).slice() };
 		palco.setPointerCapture(e.pointerId);
 		palco.style.cursor = "grabbing";
-		aggiorna();
+		spostaPerno(px, py);
 		return;
 	}
 	const muovi = (e.shiftKey || modo === "sposta") && SPOSTABILI[x.canale];
@@ -845,16 +856,7 @@ palco.addEventListener("pointerdown", (e) => {
 palco.addEventListener("pointermove", (e) => {
 	const [px, py] = pixel(e);
 	if (!presa) { const mg = manigliaSotto(px, py); palco.style.cursor = mg ? mg.cursore : pezzoSotto(px, py) ? "grab" : "default"; return; }
-	if (presa.perno) {
-		// lo spostamento del mouse nella forma del corpo, dove stanno i giunti
-		const inv = inversa(formaOra);
-		const [a0, b0] = punto(inv, presa.px, presa.py), [a1, b1] = punto(inv, px, py);
-		const t = (v) => Math.round(v * 10) / 10;
-		pn[presa.perno] = [t(presa.d0[0] + a1 - a0), t(presa.d0[1] + b1 - b0)];
-		try { localStorage.setItem("megablast-perni", perniInLua(pn)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
-		aggiorna();
-		return;
-	}
+	if (presa.perno) { spostaPerno(px, py); return; }
 	if (presa.maniglia) {
 		// dal canvas alle unità del disegno (piedi in 0, 0) e poi ai pixel del mondo
 		const [u, v] = punto(inversa(schermo), px, py);
