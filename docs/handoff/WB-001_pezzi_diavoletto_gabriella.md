@@ -1,6 +1,6 @@
 # WB-001 · Pezzi del diavoletto di Gabriella sullo stampino
 
-- **Stato:** APPROVATA
+- **Stato:** PROPOSTA (in attesa dello stampino definitivo: coda a segmenti, gomito, colore della squadra)
 - **Data:** 2026-10-28
 - **Ramo della scheda:** `claude/project-thread-gdvhtm` · **Ramo delle immagini:** `design/WB-001`
 
@@ -59,6 +59,10 @@ Style: clean 2D cartoon game art, flat colours with one simple soft shade (darke
 
 Approvata da Claude, 2026-10-28: scelta reversibile (sono solo immagini da generare, il
 gioco non cambia finché non le integro). Sergio può ribaltarla.
+
+Rimessa in PROPOSTA da Claude, 2026-10-28: lo stampino sta cambiando (coda a segmenti,
+gomito, colore della squadra). Si riapprova con i riferimenti e il prompt aggiornati, per
+non spendere i limiti del Plus su un foglio vecchio.
 
 ## Consegna di Codex
 
