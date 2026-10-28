@@ -1,0 +1,21 @@
+Image 1 is the character: a small devil drawn by our artist. Copy HIM exactly: his proportions, his head shape, horns, black wraparound visor with glowing eyes, eyebrows, smile, skin colour, red tank top, black belt with buckle and hanging strap, baggy red trousers, brown shoes, dark grey bat wing, red tail with three-pronged trident tip, his thick black outline and his painted shading and texture. Image 1 is the only reference for how everything looks.
+
+Image 2 is a layout sheet: 14 grey placeholder parts on a flat magenta (#FF00FF) background, in three rows. Use image 2 ONLY to know where each part goes on the sheet, roughly how big it is and where it attaches. Do NOT copy the grey parts' shapes, proportions, flat style or simple faces. Image 3 shows how the grey parts attach to each other.
+
+Make a parts sheet of the devil of image 1, cut apart like a paper puppet: same canvas as image 2, same flat magenta #FF00FF background, each part placed over its grey placeholder, about the same size, and nothing else on the sheet (no grey placeholders left, no labels, no text, no shadows on the background, no flame). Every part is drawn as it looks in image 1 (3/4 view facing right), closed on all sides with the thick black outline, with no cut or missing edges.
+
+The parts, left to right:
+Row 1, four heads of the devil of image 1, facing right as in image 1, each with a short neck stub at the bottom: head 1 exactly as in image 1 (small smile); head 2 hit (eyes wide, small round open mouth); head 3 happy (big wide grin); head 4 knocked out (eyes as two short flat lines behind the visor, wavy mouth). Only the expression changes.
+Row 2: the torso alone (red tank top with the belt, buckle and hanging strap, no head, no arms, no legs, no wing), with round closed shoulders and a closed bottom edge; the wing alone, as in image 1; the whole tail alone in one piece, as in image 1 with its trident tip, bent to follow the curve of the grey tail, one smooth continuous tube with no breaks, seams or joints.
+Row 3: the near arm and the far arm, each hanging straight down from a round shoulder with the hand of image 1 at the bottom; the near leg and the far leg, each a baggy red trouser leg with its brown shoe, round and closed at the top; the upper arm and the forearm, two short pieces of the arm of image 1 with fully rounded, filled ends so they can overlap at the elbow without a visible joint; one closed fist.
+
+Do not use any bright green anywhere.
+
+Riferimenti allegati, in ordine:
+art/WB-001/riferimenti/R1_diavoletto_gabriella.png
+art/WB-001/riferimenti/R2_stampino_ai.png
+art/WB-001/riferimenti/R3_manichino.png
+
+Scheda: main, commit 0b78aee. Prompt usato senza modifiche.
+Tre tentativi con questa versione del prompt; selezionato il tentativo 1.
+Immagine originale del generatore, senza ritocchi o ricampionamento.
