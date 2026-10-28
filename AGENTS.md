@@ -7,17 +7,17 @@ che Sergio ti indica in `docs/handoff/`.
 
 | Chi | Ruolo | Di cosa si occupa |
 |---|---|---|
-| Sergio | direttore del gioco | ogni decisione finale (gameplay, stile, architettura); prova il gioco dal vivo |
+| Sergio | direttore del gioco | l'ultima parola su ogni cosa (gameplay, stile, architettura); prova il gioco dal vivo |
 | ChatGPT / Codex | grafica e contenuti | immagini (pezzi del personaggio, armi, casse, mappe, icone), concept, testi, proposte di design; rivede quello che Claude ha integrato |
-| Claude | ingegneria | codice Lua (Defold) e Go, strumenti, integrazione nel gioco delle immagini e dei testi che arrivano da ChatGPT, simulazione e foto di verifica |
+| Claude | coordinatore e ingegneria | coordina il lavoro: scrive le schede per ChatGPT, approva le scelte ragionevoli e reversibili, rivede le consegne, tiene coerenti documenti e decisioni; scrive il codice Lua (Defold) e Go, integra nel gioco le immagini e i testi di ChatGPT, gira la simulazione e fa le foto di verifica |
 
 Claude e ChatGPT non si parlano direttamente: tutto passa dalle schede in
-`docs/handoff/` (vedi il [README](docs/handoff/README.md)). Sergio dice a ognuno quale
-scheda leggere.
+`docs/handoff/` (vedi il [README](docs/handoff/README.md)) e dai commit. Sergio ti dice
+quale scheda leggere; le schede per te di solito le scrive Claude.
 
 ## Fonti, in ordine di precedenza
 
-1. Le decisioni di Sergio: [DECISIONI.md](DECISIONI.md).
+1. Le decisioni: [DECISIONI.md](DECISIONI.md) (quelle di Sergio valgono sopra quelle di Claude).
 2. Il gioco reale, cioè com'è oggi il codice sul ramo `main`.
 3. I documenti: [docs/design.md](docs/design.md) (cos'è il gioco),
    [docs/game_design_competitivo.md](docs/game_design_competitivo.md) (scelte di game design),
@@ -25,7 +25,7 @@ scheda leggere.
 4. Le conversazioni con le IA.
 
 Se due fonti si contraddicono o manca un'informazione, non inventare: scrivi la domanda
-nella scheda, alla voce "Domande aperte per Sergio".
+nella scheda, alla voce "Domande aperte" (risponde Claude, o Sergio se la scelta è sua).
 
 ## Dove puoi scrivere
 
@@ -53,6 +53,8 @@ progetto, `CLAUDE.md`, `DECISIONI.md`, `AGENTS.md` e i documenti in `docs/` fuor
 
 ## Approvazioni
 
-- Solo Sergio porta una scheda ad APPROVATA o VERIFICATA.
+- Una scheda diventa APPROVATA con il sì di Sergio, oppure di Claude quando la scelta è
+  ragionevole e reversibile (lo scrive nella scheda e Sergio può ribaltarla).
+- VERIFICATA solo dopo che Sergio l'ha provata nel gioco.
 - Una scheda in PROPOSTA non si esegue.
 - Nella consegna scrivi sempre cosa hai controllato davvero e cosa no.

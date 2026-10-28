@@ -1,7 +1,8 @@
 # Decisioni prese
 
-Una riga per decisione, con data e motivo. Le scrive Sergio, o Claude quando Sergio lo
-chiede; mai un'IA da sola. Le più recenti in fondo.
+Una riga per decisione, con data e motivo. Le scrivono Sergio o Claude (il coordinatore);
+ChatGPT mai. Quelle prese da Claude in autonomia hanno "(Claude)" e Sergio può ribaltarle.
+Le più recenti in fondo.
 
 - 2026-10-19 · Remake per telefono di Blastron (Kabam 2013): a turni, multigiocatore dal vivo, 2-4 giocatori (1v1, 2v2, tutti contro tutti) con podio finale.
 - 2026-10-19 · Client Defold (Lua), server Go autoritativo, terreno distruttibile a celle: il più leggero e veloce da caricare.
@@ -14,4 +15,4 @@ chiede; mai un'IA da sola. Le più recenti in fondo.
 - 2026-10-26 · Mappe ingrandite 1,5 volte: mondo 1920×1080.
 - 2026-10-26 · Il diavoletto è fatto a pezzi animati nel codice, non a fogli di fotogrammi (pesanti, deriva delle IA, nessuna reazione ai colpi).
 - 2026-10-26 · I difetti visivi che si vedono (coda tagliata, giunture, salti di colore) non si accettano mai: si correggono o si rigenera.
-- 2026-10-28 · Claude e ChatGPT lavorano insieme tramite le schede in `docs/handoff/` e i commit sui rami `design/...` (regole in `AGENTS.md`).
+- 2026-10-28 · Claude e ChatGPT lavorano insieme tramite le schede in `docs/handoff/` e i commit sui rami `design/...` (regole in `AGENTS.md`); Claude resta il coordinatore.

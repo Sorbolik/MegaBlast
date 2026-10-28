@@ -29,13 +29,13 @@ Misure, formato, pose, colori, numeri: tutto quello che serve per farla in un co
 
 File e cartelle precise.
 
-## Domande aperte per Sergio
+## Domande aperte
 
 ---
 
-## Decisione di Sergio
+## Decisione
 
-(approvata / da cambiare / scartata, con la data)
+(approvata / da cambiare / scartata, chi decide e la data: Claude per le scelte reversibili, Sergio per le altre)
 
 ## Consegna di ChatGPT
 

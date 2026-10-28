@@ -54,6 +54,7 @@ solo con le schede in [docs/handoff/](docs/handoff/README.md) e i commit di Chat
 Quando Sergio dice di leggere una scheda: `git fetch origin` e cerca la scheda anche sui rami
 `design/...` e `codex/...`; controllala sul codice vero e presenta il piano prima di scrivere codice; poi
 integra, gira la simulazione, metti le foto in `docs/handoff/img/` e scrivi il "Resoconto di
-Claude" sotto (cosa hai verificato e cosa no), senza cancellare niente. `DECISIONI.md` si
-cambia solo su ordine di Sergio. Se una richiesta di ChatGPT non si può fare, scrivilo nella
+Claude" sotto (cosa hai verificato e cosa no), senza cancellare niente. Claude resta il
+coordinatore: scrive le schede per ChatGPT, approva quelle ragionevoli e reversibili (lo scrive
+nella scheda) e lascia a Sergio le altre; in `DECISIONI.md` le decisioni sue portano "(Claude)". Se una richiesta di ChatGPT non si può fare, scrivilo nella
 scheda e non cambiarla di nascosto.
