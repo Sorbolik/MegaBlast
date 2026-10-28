@@ -78,13 +78,9 @@ local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = t
 for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "a riposo: valori finiti")
 
--- la mano è l'ultimo nodo dell'arma
+-- il pugno davanti, sull'impugnatura: lo mette l'avambraccio della mira
 local function mano(name)
-	local m
-	for _, n in ipairs(nodi) do
-		if n.parent == s.armi[name] then m = n end
-	end
-	return m
+	return s.pugno_presa
 end
 
 -- dove deve stare la mano sull'impugnatura (battaglia/armi.lua), vista dalla
@@ -158,13 +154,8 @@ check(tutto_finito(), "colpo: valori finiti")
 
 -- l'attesa: fermo, e prima o poi una scenetta a caso che finisce
 st.turno = false
-local scenette = {}
-for _ = 1, 60 * 30 do
-	scoria.update(s, 1 / 60, st)
-	local nome = s.img:match("^(%a+)_")
-	if nome ~= "attesa" then scenette[nome] = true end
-end
-check(next(scenette) ~= nil, "attesa: in 30 secondi almeno una scenetta")
+for _ = 1, 60 * 30 do scoria.update(s, 1 / 60, st) end
+check(s.n_scenette > 0, "attesa: in 30 secondi almeno una scenetta")
 check(tutto_finito(), "attesa e scenette: valori finiti")
 st.turno = true
 

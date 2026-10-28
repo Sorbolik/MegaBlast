@@ -1,6 +1,8 @@
--- Oggetti tattici nella battaglia, disegnati solo con forme (niente immagini):
--- trappole e trampolini posati, cerchi di cura, scudo,
--- paracadute ed effetti di stato dei robot, e le icone degli oggetti nella barra.
+-- Oggetti tattici nella battaglia: trappole e trampolini posati, cerchi di
+-- cura, scudo ed effetti di stato dei robot, e le icone degli oggetti nella
+-- barra. Il cerchio di cura è disegnato a vettori (strumenti/grafica/cura.py,
+-- atlante battaglia); il resto sono forme. Il paracadute aperto lo disegna il
+-- diavoletto (battaglia/scoria.lua).
 --
 --   local o = oggetti.new(colori)             -- colori[squadra]
 --   oggetti.nodi(o)                            -- da mettere nel nodo "mondo"
@@ -15,12 +17,15 @@ local M = {}
 local AMBRA = vmath.vector4(1, 0.72, 0.25, 1)
 local ACCIAIO = vmath.vector4(0.55, 0.75, 0.95, 0.55)
 local BIANCO = vmath.vector4(1, 1, 1, 0.9)
+local OPACO = vmath.vector4(1, 1, 1, 1)
 -- effetti di stato: fiamma sulla testa, anello freddo ai piedi, crepa sul petto
 local FUOCO = vmath.vector4(1, 0.45, 0.1, 0.7)
 local GELO = vmath.vector4(0.45, 0.8, 1, 0.8)
 local CREPA = vmath.vector4(1, 1, 1, 0.75)
--- cerchio di cura: anello a terra e una croce che galleggia sopra
-local CURA = vmath.vector4(0.45, 1, 0.6, 0.85)
+-- cerchio di cura: un anello di pietra a terra con le rune accese (cura.py, 6
+-- pixel per unità), un cuore che galleggia sopra e scintille che salgono
+local CURA_PX = 6
+local SCINTILLE = 3
 
 local function nodo(w, h, color, parent)
 	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(w, h, 0))
@@ -58,7 +63,15 @@ local function trampolino(hw, parent)
 	return n
 end
 
--- Scudo: un anello; paracadute: una cupola (mezzo cerchio)
+-- un'immagine dell'atlante della battaglia, grande come nel mondo
+local function immagine(nome, w, h, parent)
+	local n = nodo(w, h, OPACO, parent)
+	gui.set_texture(n, "battaglia")
+	gui.play_flipbook(n, nome)
+	return n
+end
+
+-- Scudo: un anello
 local function anello(d, color, parent)
 	local n = cerchio(d, color, parent)
 	gui.set_inner_radius(n, d * 0.42)
@@ -66,8 +79,8 @@ local function anello(d, color, parent)
 end
 
 function M.new(colori)
-	local o = { colori = colori, posati = {}, cure = {}, scudi = {}, paracadute = {}, fiamme = {}, geli = {}, crepe = {},
-		col = vmath.vector4(), size = vmath.vector3() }
+	local o = { colori = colori, posati = {}, cure = {}, scudi = {}, fiamme = {}, geli = {}, crepe = {},
+		col = vmath.vector4(), size = vmath.vector3(), rot = vmath.vector3() }
 	local h = game.ROBOT_H
 	for i = 1, config.MAX_PLACED do
 		local root = nodo(0, 0, BIANCO)
@@ -77,25 +90,20 @@ function M.new(colori)
 		gui.set_enabled(root, false)
 		o.posati[i] = { root = root, trap = t, tramp = b, id = nil }
 	end
-	local r = config.HEAL.r
 	for i = 1, config.HEAL.max do
-		local root = nodo(0, 0, CURA)
+		local root = nodo(0, 0, OPACO)
 		gui.set_visible(root, false)
-		local a = anello(r * 2, CURA, root)
-		gui.set_scale(a, vmath.vector3(1, 0.3, 1))
-		local croce = nodo(4, 14, CURA, root)
-		nodo(14, 4, CURA, croce)
+		local a = immagine("cura_anello", 336 / CURA_PX, 124 / CURA_PX, root)
+		local scintille = {}
+		for j = 1, SCINTILLE do scintille[j] = immagine("cura_scintilla", 8, 8, root) end
+		local cuore = immagine("cura_cuore", 20, 21, root)
 		gui.set_enabled(root, false)
-		o.cure[i] = { root = root, croce = croce }
+		o.cure[i] = { root = root, anello = a, cuore = cuore, scintille = scintille }
 	end
 	for i = 1, game.MAX_PLAYERS do
 		local s = anello(h * 1.9, BIANCO)
 		gui.set_enabled(s, false)
 		o.scudi[i] = s
-		local p = cerchio(h * 1.6, BIANCO)
-		gui.set_fill_angle(p, 180)
-		gui.set_enabled(p, false)
-		o.paracadute[i] = p
 		local f = cerchio(h * 0.5, FUOCO)
 		gui.set_enabled(f, false)
 		o.fiamme[i] = f
@@ -118,7 +126,6 @@ function M.nodi(o)
 	for _, c in ipairs(o.cure) do list[#list + 1] = c.root end
 	for _, p in ipairs(o.posati) do list[#list + 1] = p.root end
 	for _, n in ipairs(o.scudi) do list[#list + 1] = n end
-	for _, n in ipairs(o.paracadute) do list[#list + 1] = n end
 	for _, n in ipairs(o.geli) do list[#list + 1] = n end
 	for _, n in ipairs(o.crepe) do list[#list + 1] = n end
 	for _, n in ipairs(o.fiamme) do list[#list + 1] = n end
@@ -127,13 +134,29 @@ end
 
 
 function M.update(o, g, view, clock)
-	-- cerchi di cura: la croce sale e scende piano
+	-- cerchi di cura: l'anello pulsa, il cuore galleggia e dondola, le
+	-- scintille salgono dall'anello e svaniscono
 	for i, c in ipairs(o.cure) do
 		local h = g.heals[i]
 		gui.set_enabled(c.root, h ~= nil)
 		if h then
 			pos(c.root, h.x, h.y)
-			pos(c.croce, 0, 16 + 3 * math.sin(clock * 3 + i))
+			local p = 1 + 0.04 * math.sin(clock * 2.5 + i)
+			o.size.x, o.size.y = p, p
+			o.size.z = 1
+			gui.set_scale(c.anello, o.size)
+			pos(c.cuore, 0, 18 + 3 * math.sin(clock * 2.2 + i))
+			o.rot.z = 8 * math.sin(clock * 1.7 + i)
+			gui.set_euler(c.cuore, o.rot)
+			for j, sc in ipairs(c.scintille) do
+				local u = (clock * 0.45 + j / SCINTILLE + i * 0.37) % 1
+				local a = math.sin(u * math.pi)
+				pos(sc, math.sin(j * 2.1 + i) * 16 + math.sin(clock * 2 + j) * 2, 2 + u * 30)
+				o.col.x, o.col.y, o.col.z, o.col.w = 1, 1, 1, a
+				gui.set_color(sc, o.col)
+				o.size.x, o.size.y = 0.5 + 0.6 * a, 0.5 + 0.6 * a
+				gui.set_scale(sc, o.size)
+			end
 		end
 	end
 	-- trappole (del colore della squadra, lampeggiano quando sono armate) e trampolini
@@ -154,7 +177,7 @@ function M.update(o, g, view, clock)
 			end
 		end
 	end
-	-- scudo attorno al robot, paracadute aperto sopra la testa
+	-- scudo attorno al robot
 	for i = 1, game.MAX_PLAYERS do
 		local rb, v = g.robots[i], view[i]
 		local shield = rb ~= nil and not rb.dead and rb.shield ~= nil
@@ -165,9 +188,6 @@ function M.update(o, g, view, clock)
 			gui.set_color(o.scudi[i], o.col)
 			pos(o.scudi[i], v.x, v.y + game.ROBOT_H / 2)
 		end
-		local open = rb ~= nil and not rb.dead and rb.parachute
-		gui.set_enabled(o.paracadute[i], open)
-		if open then pos(o.paracadute[i], v.x, v.y + game.ROBOT_H * 1.3) end
 		-- effetti di stato
 		local st = rb ~= nil and not rb.dead and rb.status or nil
 		local burn, slow, cracked = st and st.burn, st and st.slow, st and st.cracked

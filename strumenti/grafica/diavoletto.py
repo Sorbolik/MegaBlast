@@ -1,317 +1,386 @@
-# Il diavoletto a fotogrammi, dai fogli di Ludo.ai e dalle basi di ChatGPT
-# (guida e sorgenti: /mnt/project-files/animazioni_ludo/diavoletto_2026-10-26/):
-#   basi_chatgpt/A_con_braccia.png               il diavoletto fermo, con le braccia
-#   basi_chatgpt/B_senza_braccia_senza_testa.png lo stesso, senza braccia né testa
-#   basi_chatgpt/D_testa.png                     la testa da sola
-#   fogli/<animazione>/frame_NNN.png             i fotogrammi di Ludo (Download all frames)
+# Il diavoletto a pezzi, disegnato a vettori (SVG) come le armi (vettori.py):
+# contorno nero spesso, colori pieni con una sfumatura semplice. Il gioco monta
+# i pezzi e li anima nel codice (client/battaglia/scoria.lua): niente fogli di
+# fotogrammi, l'atlante è piccolo e il movimento è fluido a qualsiasi frequenza.
 # Scrive:
-#   client/assets/diavoletto/<animazione>_<n>.png, testa.png
+#   client/assets/diavoletto/<pezzo>.png        un pezzo (guarda a destra)
+#   client/assets/diavoletto/<pezzo>_tinta.png  le parti col colore della
+#                                               squadra (bianche e grigie, tinte nel codice)
 #   client/battaglia/diavoletto.atlas
-#   client/battaglia/diavoletto.lua   misure e punti in pixel delle immagini del
-#                                     gioco, origine fra i piedi e y verso l'alto
+#   client/battaglia/diavoletto.lua             misure di ogni pezzo rispetto al suo
+#                                               perno e i punti dove si attaccano
+#   simulazione/foto/diavoletto_anteprima.png   il diavoletto montato, per guardarlo
 #
-# Ogni foglio parte dalla sua base (First Frame di Ludo): il primo fotogramma si
-# allinea alla base con la stessa misura e i piedi nello stesso punto, poi tutti i
-# fotogrammi del foglio si spostano insieme (la camera di Ludo è ferma).
-# Misura: dai piedi alla cima della testa (la pelle sopra gli occhiali, corna
-# escluse) il diavoletto è alto ALTEZZA pixel; nella base B, senza testa, al posto
-# della testa c'è la cima del collo, che sta dove nella base A comincia la testa.
-# Per ogni fotogramma si cercano sulla pelle la cima della testa (lì il gioco mette
-# la fiammella) oppure, senza testa, il collo (lì mette la testa, che gira con la
-# mira) e la spalla (lì girano pugni e arma).
+# Unità del disegno: il diavoletto fermo è alto ALTEZZA (200) dai piedi (y 0)
+# alla cima della testa (corna, coda e fiammella escono), x 0 in mezzo ai piedi,
+# guarda a destra, y verso l'alto. Ogni pezzo è disegnato attorno al suo perno
+# (il punto in cui gira) e i PUNTI dicono dove va il perno nel diavoletto fermo.
+# Il gioco lo scala in modo che ALTEZZA sia ROBOT_H, il corpo della simulazione.
+# Il contorno è spesso come quello delle armi sullo schermo.
 #
-# python3 strumenti/grafica/diavoletto.py [cartella dei sorgenti]
+# python3 strumenti/grafica/diavoletto.py   (serve cairosvg: pip install cairosvg)
+import math
 import os
 import sys
-import glob
-import numpy as np
-from PIL import Image, ImageFilter
-from scipy import ndimage as nd
+from PIL import Image
 
 QUI = os.path.dirname(os.path.abspath(__file__))
-RADICE = os.path.join(QUI, "..", "..", "client")
-OUT = os.path.join(RADICE, "assets", "diavoletto")
-LUA = os.path.join(RADICE, "battaglia", "diavoletto.lua")
-ATLAS = os.path.join(RADICE, "battaglia", "diavoletto.atlas")
-SORGENTE = sys.argv[1] if len(sys.argv) > 1 else "/mnt/project-files/animazioni_ludo/diavoletto_2026-10-26"
+sys.path.insert(0, QUI)
+RADICE = os.path.join(QUI, "..", "..")
+OUT = os.path.join(RADICE, "client", "assets", "diavoletto")
+LUA = os.path.join(RADICE, "client", "battaglia", "diavoletto.lua")
+ATLAS = os.path.join(RADICE, "client", "battaglia", "diavoletto.atlas")
+ANTEPRIMA = os.path.join(RADICE, "simulazione", "foto", "diavoletto_anteprima.png")
 
-# pixel dai piedi alla cima della testa nelle immagini del gioco: a zoom vicino su
-# un telefono il diavoletto è alto più o meno così in pixel veri
-ALTEZZA = 150
+from vettori import BORDO, RIGA, INK, COL, Disegno, rendi, gradienti  # noqa: E402
 
-# Le animazioni: base, fotogrammi da usare (da 0, come nei nomi di Ludo), ogni
-# quanti prenderne uno, fotogrammi al secondo di Ludo e se si ripete. "giro"
-# cerca da solo il pezzo che si ripete meglio (la corsa). "foglio" prende i
-# fotogrammi dal foglio di un'altra animazione. Un foglio che non c'è si salta: il gioco usa l'attesa. Nei salti Ludo alza il corpo nel fotogramma
-# anche se gli si chiede di no: "ferma_spalla" (tutti i fotogrammi) e
-# "ferma_cima" (quelli da..a, in aria, solo in altezza) tengono la spalla o la
-# cima della testa dove stanno nel primo, così in aria il corpo non sale sopra
-# la sua capsula e passando a terra o alla mira busto e testa non saltano.
-# L'attesa è un fotogramma fermo: ogni tanto, a caso, il gioco fa una delle
-# scenette (naso, sbadiglio, coda).
-AZIONI = {
-    "mira": dict(base="B", da=0, a=35, passo=1, giro=True),
-    "attesa": dict(base="A", foglio="naso", da=0, a=0, passo=1, giro=True),
-    "naso": dict(base="A", da=2, a=33, passo=2, giro=False),
-    "sbadiglio": dict(base="A", da=6, a=33, passo=2, giro=False),
-    "coda": dict(base="A", da=3, a=33, passo=2, giro=False),
-    "sconfitta": dict(base="A", da=4, a=28, passo=2, giro=False),
-    "corsa": dict(base="A", cerca=(5, 30, 8, 18), giro=True),
-    "corsa_mira": dict(base="B", cerca=(5, 30, 8, 18), giro=True),
-    "salto": dict(base="A", da=10, a=27, passo=1, giro=False, ferma_cima=(11, 19)),
-    "colpito": dict(base="A", da=10, a=24, passo=2, giro=False),
-    "vittoria": dict(base="A", da=0, a=35, passo=1, giro=True),
-    "mira_aria": dict(base="B", da=7, a=21, passo=1, giro=False, ferma_spalla=True),
-    "fiammella": dict(base=None, da=0, a=35, passo=2, giro=True),
+ALTEZZA = 200
+# il corpo nel mondo (sim/game.lua: BLASTRON_ROBOT_H * BLASTRON_CORPO), per
+# dare al contorno lo stesso spessore delle armi sullo schermo
+CORPO_MONDO = 28 * 1.4
+U = ALTEZZA / CORPO_MONDO          # unità del disegno per unità del mondo
+BORDO_D = round(BORDO * U, 1)      # 7.7
+RIGA_D = round(RIGA * U, 1)
+# pixel per unità del disegno: come le armi (6 px per unità del mondo)
+PX = round(6 / U, 2)               # 1.18
+
+# i colori del diavoletto (scuro, base, chiaro), oltre a quelli delle armi
+COL = dict(COL)
+COL.update({
+    "pelle": ("#a58f70", "#cdb896", "#eadcc0"),
+    "pelle_dietro": ("#8a7658", "#a9967a", "#c4b398"),   # braccio e gamba di dietro, in ombra
+    "corno": ("#4f1e12", "#8a3a26", "#b8613f"),
+    "canotta": ("#a52c10", "#e4461c", "#ff7a4a"),
+    "braghe": ("#b03a16", "#e8602a", "#ff9a5c"),
+    "braghe_dietro": ("#8e2e10", "#c04c20", "#d87a44"),
+    "scarpa_dietro": ("#2a160c", "#50301c", "#78482c"),
+    "scarpa": ("#3a2012", "#6a3b24", "#9a5f3c"),
+    "ala": ("#1c1b22", "#36353f", "#5a5966"),
+    "coda": ("#d8401c", "#d8401c", "#d8401c"),   # piatto: i segmenti si fondono
+    "nero": (INK, INK, INK),
+    "cinta": ("#2a2a2e", "#46464d", "#6b6b74"),
+    "occhio": ("#f2d98a", "#fff3cc", "#ffffff"),
+    "fiamma": ("#8a8a8a", "#d2d2d2", "#ffffff"),   # tinta col colore della squadra
+    "bocca": ("#3a1a16", "#5a2a24", "#7a3a30"),
+})
+
+# Dove vanno i perni dei pezzi nel diavoletto fermo (dal centro dei piedi).
+PUNTI = {
+    "collo": (0, 122),        # la testa gira qui
+    "bacino": (0, 76),        # il busto
+    "anche": (12, 76),        # le gambe: davanti a +x, dietro a -x
+    "spalle": (32, 110),      # le braccia: davanti a +x, dietro a -x
+    "spalla_arma": (8, 108),  # pugni e arma girano qui
+    "ala": (-16, 116),
+    "coda": (-10, 70),
+    "cima": (0, 82),          # la cima della testa, dal collo: lì va la fiammella
 }
-FPS = 12   # Ludo: 36 fotogrammi in 3 s
+# la coda: segmenti dalla radice alla punta, lunghezza e larghezza all'inizio
+# e alla fine; la punta ha il tridente. Angoli di riposo (gradi) per l'anteprima.
+CODA = [(26, 11, 9.5), (26, 9.5, 8), (26, 8, 7), (26, 7, 6), (24, 6, 5)]
+CODA_RIPOSO = (200, 160, 120, 90, 65)
+# il perno del paracadute (dove convergono le funi), dai piedi: sopra la fiammella
+PARACADUTE_Y = 262
 
 
-def apri(path, corpo=True):
-    """RGBA in float 0..1; un fondo magenta diventa trasparente. Nel corpo restano
-    solo i pezzi grandi: via scintille ed effetti staccati."""
-    a = np.asarray(Image.open(path).convert("RGBA")).astype(np.float32) / 255
-    rgb, al = a[..., :3], a[..., 3]
-    if al.min() > 0.99:
-        r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
-        al = 1 - np.clip((np.minimum(r, b) - g - 0.35) / 0.3, 0, 1)
-        spill = np.clip(np.minimum(r, b) - g, 0, None) * (al < 0.99)
-        rgb = np.stack([r - spill, g, b - spill], -1)
-    # via i puntini staccati (rumore del generatore)
-    lab, n = nd.label(al > 0.1)
-    if n > 1:
-        sz = nd.sum(al > 0.1, lab, range(1, n + 1))
-        al = al * np.isin(lab, 1 + np.nonzero(sz > sz.max() * (0.03 if corpo else 0.002))[0])
-    return np.dstack([np.clip(rgb, 0, 1), al])
+def D():
+    return Disegno(bordo=BORDO_D, col=COL)
 
 
-def pelle(a):
-    """Pezzi di pelle (testa, collo, braccia, spalle): bbox (y0, y1, x0, x1) e area,
-    dal più grande."""
-    r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
-    m = (r > 0.55) & (g > 0.48) & (b > 0.4) & (r - b > 0.04) & (r - b < 0.25) & (r - g < 0.15) & (al > 0.5)
-    lab, n = nd.label(m)
-    if n == 0:
-        return []
-    sz = nd.sum(m, lab, range(1, n + 1))
-    objs = nd.find_objects(lab)
-    out = [(int(sz[i]), objs[i][0].start, objs[i][0].stop, objs[i][1].start, objs[i][1].stop) for i in range(n)]
-    return sorted(out, reverse=True)
+# ---------------------------------------------------------------------------
+# I pezzi, attorno al loro perno (0, 0). Ognuno torna la scatola
+# (x0, y0, x1, y1) che lo contiene col contorno.
 
 
-def cima(a, soglia=0.15):
-    """La cima della pelle: il pezzo grande più in alto (la testa sopra gli
-    occhiali, o il collo se la testa non c'è; il collo nei salti di Ludo a volte
-    è piccolo, per questo senza testa basta una soglia più bassa). Ritorna
-    (x al centro, y in cima)."""
-    pz = pelle(a)
-    grandi = [p for p in pz if p[0] > pz[0][0] * soglia]
-    p = min(grandi, key=lambda p: p[1])
-    return (p[3] + p[4]) / 2, float(p[1]), p
+def testa(d, faccia="normale"):
+    cx, cy, r = 3, 40, 43
+    # collo (sotto la testa) e corna, che spuntano da dietro, curve in fuori
+    d.rect(-9, -12, 18, 22, "pelle", r=4)
+    d.path("M-24,74 Q-50,86 -42,124 Q-32,100 -6,84 Z", "corno")
+    d.path("M26,76 Q52,88 46,126 Q38,102 10,86 Z", "corno")
+    d.riga("M-42,104 Q-42,110 -41,116", COL["corno"][0], RIGA_D)
+    d.riga("M46,106 Q46,112 45,118", COL["corno"][0], RIGA_D)
+    d.cerchio(cx, cy, r, "pelle")
+    # sopracciglia
+    d.riga("M-14,58 Q-4,64 6,58", COL["pelle"][0], RIGA_D * 1.3)
+    d.riga("M20,59 Q30,64 38,58", COL["pelle"][0], RIGA_D * 1.3)
+    # occhiali: una visiera nera che sporge davanti, con gli occhi accesi
+    d.path("M-38,42 Q-40,30 -26,28 L46,24 Q56,24 56,34 Q56,48 46,50 L-26,54 Q-38,54 -38,42 Z", "ferro")
+    if faccia == "ko":
+        # occhi chiusi: due righe
+        d.riga("M-12,38 L0,36 M20,36 L34,34", COL["occhio"][0], RIGA_D * 1.6)
+    else:
+        w, h = (9, 20) if faccia == "colpito" else (7, 16)
+        d.ellisse(-6, 39, w / 2, h / 2, "occhio", contorno=False, rot=-6)
+        d.ellisse(27, 37, w / 2, h / 2, "occhio", contorno=False, rot=-6)
+    # bocca
+    if faccia == "colpito":
+        d.ellisse(24, 12, 6, 8, "bocca", contorno=False)
+    elif faccia == "felice":
+        d.path("M10,16 Q24,-2 38,14 Q24,10 10,16 Z", "bocca", contorno=False)
+    elif faccia == "ko":
+        d.riga("M12,12 Q18,8 24,12 Q30,16 36,12", COL["bocca"][1], RIGA_D * 1.4)
+    else:
+        d.riga("M16,14 Q26,8 36,15", COL["bocca"][1], RIGA_D * 1.4)
+    return (-58, -14, 66, 134)
 
 
-def spalla(a):
-    """Il centro del pezzo di pelle più grande (nella base B è la spalla tonda)."""
-    p = pelle(a)[0]
-    return (p[3] + p[4]) / 2, (p[1] + p[2]) / 2
+def busto(d):
+    # la canotta rossa con le spalle di pelle che sporgono, la cintura con la
+    # fibbia e la linguetta che pende; perno nel bacino
+    d.cerchio(-24, 38, 9, "pelle")
+    d.cerchio(24, 38, 9, "pelle")
+    d.path("M-26,44 Q-28,20 -24,-2 L24,-2 Q28,20 26,44 Q20,50 14,46 Q6,36 -4,40 Q-14,48 -26,44 Z", "canotta")
+    d.riga("M-18,22 Q-20,12 -16,4", COL["canotta"][0], RIGA_D)
+    d.riga("M10,24 Q12,14 14,6", COL["canotta"][2], RIGA_D)
+    d.rect(-27, -8, 54, 12, "cinta", r=3)
+    d.rect(8, -26, 7, 20, "cinta", r=2)
+    d.rect(4, -10, 12, 16, "ottone", r=2)
+    d.riga("M7,-4 L13,-4", COL["ottone"][0], RIGA_D)
+    return (-42, -36, 42, 58)
 
 
-def piedi(al):
-    """Punto fra i piedi: il centro dei pixel pieni nella fascia più bassa."""
-    ys, xs = np.nonzero(al > 0.5)
-    fondo = ys.max()
-    band = ys > fondo - 0.03 * (fondo - ys.min())
-    return xs[band].mean(), float(fondo)
+def gamba(d, dietro=False):
+    # un pantalone largo con il risvolto e la scarpa marrone, perno nell'anca;
+    # quella di dietro è in ombra
+    b, sc = ("braghe_dietro", "scarpa_dietro") if dietro else ("braghe", "scarpa")
+    d.path("M-12,4 L12,4 L14,-32 Q11,-54 10,-58 L-10,-58 Q-13,-54 -14,-32 Z", b)
+    d.rect(-11, -62, 22, 9, b, r=2)
+    d.riga("M-8,-16 Q-6,-32 -7,-46", COL[b][0], RIGA_D)
+    d.path("M-13,-60 Q-16,-74 -4,-74 L16,-74 Q24,-74 22,-66 Q20,-60 10,-60 Z", sc)
+    d.riga("M-8,-70 L18,-70", COL[sc][0], RIGA_D)
+    return (-26, -84, 34, 14)
 
 
-def scala(a, s):
-    h, w = a.shape[:2]
-    pm = np.dstack([a[..., :3] * a[..., 3:], a[..., 3:]])
-    img = Image.fromarray((pm * 255).round().astype(np.uint8), "RGBA").resize(
-        (max(1, round(w * s)), max(1, round(h * s))), Image.LANCZOS)
-    # un po' di nitidezza: la riduzione ammorbidisce i contorni
-    img = img.filter(ImageFilter.UnsharpMask(radius=1, percent=60, threshold=2))
-    b = np.asarray(img).astype(np.float32) / 255
-    al = b[..., 3:]
-    return np.dstack([np.clip(np.where(al > 0, b[..., :3] / np.maximum(al, 1e-6), 0), 0, 1), al])
+def braccio(d, dietro=False):
+    # il braccio che pende, un po' piegato, col pugno; perno nella spalla
+    p = "pelle_dietro" if dietro else "pelle"
+    d.path("M-7,2 L7,2 Q9,-16 10,-32 Q10,-40 3,-40 Q-5,-40 -5,-32 Q-6,-16 -7,2 Z", p)
+    d.riga("M1,-12 Q2,-22 2,-30", COL[p][0], RIGA_D)
+    d.cerchio(3, -42, 7.5, p)
+    d.riga("M-2,-39 L8,-39", COL[p][0], RIGA_D)
+    return (-18, -60, 22, 12)
 
 
-def salva(a, s, nome):
-    """Ritaglia, riduce di s e salva; ritorna il centro (pixel della sorgente) e la
-    misura (pixel del gioco)."""
-    ys, xs = np.nonzero(a[..., 3] > 0.02)
-    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
-    c = scala(a[y0:y1, x0:x1], s)
-    Image.fromarray((c * 255).round().astype(np.uint8), "RGBA").save(os.path.join(OUT, nome + ".png"), optimize=True)
-    return (x0 + x1) / 2, (y0 + y1) / 2, c.shape[1], c.shape[0]
+def pugno(d):
+    # il pugno da solo, per le braccia della mira (grande come i pugni di prima)
+    d.cerchio(0, 0, 7.2, "pelle")
+    d.riga("M-4,2.5 L5,2.5", COL["pelle"][0], RIGA_D)
+    return (-16, -16, 16, 16)
 
 
-def maschera(a, k=4):
-    return a[::k, ::k, 3] > 0.5
+# le braccia sull'arma: braccio (spalla-gomito) e avambraccio (gomito-pugno),
+# lunghezze e raggi; il gioco li piega col gomito verso le mani dell'arma
+BRACCIO = ((24, 7), (26, 6.5))
 
 
-def n(v):
-    return f"{v:.1f}"
+def osso(d, i, bordo, dietro=False):
+    # un osso delle braccia sull'arma, un tubo tondo dal perno (la spalla o il
+    # gomito) lungo +x; come la coda, in due versioni (bordo e colore) così
+    # braccio e avambraccio si fondono in un braccio solo senza giunture
+    L, r = BRACCIO[i]
+    b = BORDO_D if bordo else 0
+    r = r + b
+    col = "nero" if bordo else ("pelle_dietro" if dietro else "pelle")
+    d.path(f"M0,{r} L{L},{r} A{r},{r} 0 0 0 {L},{-r} L0,{-r} A{r},{r} 0 0 0 0,{r} Z", col, contorno=False)
+    if not bordo:
+        d.riga(f"M{L * 0.3},{-1.5} L{L * 0.7},{-1.5}", COL[col][0], RIGA_D)
+    r = math.ceil(r) + 2
+    return (-r, -r, L + r, r)
 
 
-def giro_migliore(fot, da, a, corto, lungo):
-    """Il pezzo che si ripete meglio: i, j con il fotogramma j più simile all'i."""
-    m = [maschera(f).astype(np.float32) for f in fot]
-    best = None
-    for i in range(da, a):
-        for j in range(i + corto, min(i + lungo, a) + 1):
-            d = np.abs(m[i] - m[j]).mean()
-            if best is None or d < best[0]:
-                best = (d, i, j)
-    return best[1], best[2] - 1
+def ala(d):
+    # l'ala da pipistrello, perno dove si attacca alla schiena, aperta all'indietro
+    d.path("M0,4 L-4,7 L-31,21 Q-38,22 -39,20 Q-32,13 -38,4 Q-31,-1 -29,-13 Q-20,-7 -8,-10 Q-1,-4 0,-4 Z", "ala")
+    d.riga("M-4,6 L-35,15 M-4,4 L-35,0 M-4,1 L-27,-10", COL["ala"][0], RIGA_D * 1.2)
+    return (-50, -24, 10, 32)
 
 
-def colori_di_ludo(sorgente, ludo):
-    """Ludo schiarisce un po' i colori della sua base. Per ogni canale, la tabella
-    che porta i colori della base (ChatGPT) a quelli dello stesso disegno rifatto
-    da Ludo (il suo primo fotogramma): si confrontano i due istogrammi."""
-    lut = []
-    for c in range(3):
-        a = sorgente[..., c][sorgente[..., 3] > 0.9]
-        b = ludo[..., c][ludo[..., 3] > 0.9]
-        q = np.linspace(0, 1, 257)
-        lut.append((np.quantile(a, q), np.quantile(b, q)))
-    return lut
+def segmento_coda(i, d, bordo):
+    # un segmento della coda, un tubo che si assottiglia; in due versioni, il
+    # bordo (più largo) e il colore, così il gioco disegna prima tutti i bordi e
+    # poi tutti i colori e i segmenti si fondono in una coda sola
+    L, w0, w1 = CODA[i]
+    r0, r1 = w0 / 2, w1 / 2
+    b = BORDO_D if bordo else 0
+    r0, r1 = r0 + b, r1 + b
+    col = "nero" if bordo else "coda"
+    d.path(f"M0,{r0} L{L},{r1} A{r1},{r1} 0 0 0 {L},{-r1} L0,{-r0} A{r0},{r0} 0 0 0 0,{r0} Z",
+           col, contorno=False)
+    if i == len(CODA) - 1:
+        # la punta a tridente: una lancia in mezzo e due rebbi ricurvi
+        p = L
+        d.path(f"M{p - 2 - b},{0} L{p + 4},{5 + b} L{p + 20 + b},{0} L{p + 4},{-5 - b} Z", col, contorno=False)
+        d.path(f"M{p - 4 - b},{2} Q{p - 6 - b},{10 + b} {p + 4 + b},{14 + b} Q{p + 2},{8} {p + 4},{3} Z", col,
+               contorno=False)
+        d.path(f"M{p - 4 - b},{-2} Q{p - 6 - b},{-10 - b} {p + 4 + b},{-14 - b} Q{p + 2},{-8} {p + 4},{-3} Z",
+               col, contorno=False)
+    return (-12, -28, L + 32, 28)
 
 
-def ricolora(a, lut):
-    out = a.copy()
-    for c, (x, y) in enumerate(lut):
-        out[..., c] = np.interp(a[..., c], x, y)
-    return out
+def fiammella(d, n):
+    # tre fiammelle diverse, bianche e grigie: il gioco le tinge col colore della
+    # squadra e le alterna; perno alla base
+    forme = [
+        "M-14,0 Q-16,22 -6,30 Q-2,36 0,46 Q4,34 10,28 Q18,18 12,0 Z",
+        "M-13,0 Q-18,18 -10,26 Q-12,38 -4,44 Q2,34 8,32 Q16,22 13,0 Z",
+        "M-14,0 Q-14,20 -8,24 Q-6,32 2,40 Q12,30 8,26 Q18,14 13,0 Z",
+    ]
+    cuori = [
+        "M-6,2 Q-7,14 -2,20 Q0,26 2,26 Q6,20 5,12 Q4,6 4,2 Z",
+        "M-6,2 Q-8,12 -3,18 Q-2,24 1,24 Q5,18 5,10 Q5,4 4,2 Z",
+        "M-6,2 Q-7,12 -2,18 Q2,22 3,22 Q6,14 5,8 Q5,4 4,2 Z",
+    ]
+    d.path(forme[n], "fiamma", tinta=True)
+    d.path(cuori[n], "bianco", tinta=True, contorno=False)
+    return (-24, -8, 24, 56)
+
+
+def paracadute(d):
+    # la calotta a spicchi (quelli chiari sono del colore della squadra), le
+    # funi che convergono sopra la fiammella (il perno) e le due cinghie che
+    # scendono alle spalle, dietro la testa
+    sx, sy = PUNTI["spalle"][0], PUNTI["spalle"][1] - PARACADUTE_Y
+    d.riga(f"M{sx},{sy} L0,0 L{-sx},{sy}", INK, 3.2)
+    for x in (-82, -44, 0, 44, 82):
+        d.riga(f"M0,0 L{x},92", INK, 2.6)
+    # la calotta: un arco con l'orlo a festoni
+    d.path("M-88,92 Q-90,150 0,152 Q90,150 88,92 Q78,84 66,92 Q55,84 44,92 Q33,84 22,92 Q11,84 0,92 "
+           "Q-11,84 -22,92 Q-33,84 -44,92 Q-55,84 -66,92 Q-78,84 -88,92 Z", "osso")
+    # gli spicchi tinti
+    d.path("M-66,92 Q-70,128 -44,146 Q-30,120 -44,92 Q-55,84 -66,92 Z", "fiamma", tinta=True, contorno=False)
+    d.path("M-22,92 Q-28,128 0,150 Q28,128 22,92 Q11,84 0,92 Q-11,84 -22,92 Z", "fiamma", tinta=True, contorno=False)
+    d.path("M44,92 Q30,120 44,146 Q70,128 66,92 Q55,84 44,92 Z", "fiamma", tinta=True, contorno=False)
+    d.riga("M-66,92 Q-70,128 -44,146 M-44,92 Q-30,120 -44,146 M-22,92 Q-28,128 0,150 "
+           "M22,92 Q28,128 0,150 M44,92 Q30,120 44,146 M66,92 Q70,128 44,146", INK, RIGA_D)
+    return (-100, sy - 8, 100, 164)
+
+
+PEZZI = {
+    "testa": lambda d: testa(d),
+    "testa_colpita": lambda d: testa(d, "colpito"),
+    "testa_felice": lambda d: testa(d, "felice"),
+    "testa_ko": lambda d: testa(d, "ko"),
+    "busto": busto,
+    "gamba": gamba,
+    "gamba_dietro": lambda d: gamba(d, True),
+    "braccio": braccio,
+    "braccio_dietro": lambda d: braccio(d, True),
+    "pugno": pugno,
+    "omero_bordo": lambda d: osso(d, 0, True),
+    "avambraccio_bordo": lambda d: osso(d, 1, True),
+    "omero": lambda d: osso(d, 0, False),
+    "avambraccio": lambda d: osso(d, 1, False),
+    "omero_dietro": lambda d: osso(d, 0, False, True),
+    "avambraccio_dietro": lambda d: osso(d, 1, False, True),
+    "ala": ala,
+    "fiammella_1": lambda d: fiammella(d, 0),
+    "fiammella_2": lambda d: fiammella(d, 1),
+    "fiammella_3": lambda d: fiammella(d, 2),
+    "paracadute": paracadute,
+}
+for i in range(len(CODA)):
+    PEZZI[f"coda_{i + 1}"] = (lambda i: lambda d: segmento_coda(i, d, False))(i)
+    PEZZI[f"coda_{i + 1}_bordo"] = (lambda i: lambda d: segmento_coda(i, d, True))(i)
+
+
+def esporta(nome, fn, immagini):
+    d = D()
+    x0, y0, x1, y1 = fn(d)
+    w, h = round((x1 - x0) * PX), round((y1 - y0) * PX)
+    rendi(d.svg((x0, y0, x1, y1), PX), w, h).save(os.path.join(OUT, nome + ".png"), optimize=True)
+    immagini.append(nome)
+    tinta = any(t for _, _, t, _ in d.forme)
+    if tinta:
+        rendi(d.svg((x0, y0, x1, y1), PX, tinta=True), w, h).save(os.path.join(OUT, nome + "_tinta.png"),
+                                                                  optimize=True)
+        immagini.append(nome + "_tinta")
+    return dict(d=d, tinta=tinta, x=(x0 + x1) / 2, y=(y0 + y1) / 2, w=x1 - x0, h=y1 - y0)
 
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for f in glob.glob(os.path.join(OUT, "*.png")):
-        os.remove(f)
-
-    basi = {"A": apri(os.path.join(SORGENTE, "basi_chatgpt", "A_con_braccia.png")),
-            "B": apri(os.path.join(SORGENTE, "basi_chatgpt", "B_senza_braccia_senza_testa.png"))}
-    # la base A dà la misura: dai piedi alla cima della testa
-    ax, ay = piedi(basi["A"][..., 3])
-    tx, ty, testa_a = cima(basi["A"])
-    S = ALTEZZA / (ay - ty)          # pixel del gioco per pixel delle basi
-    bx, by = piedi(basi["B"][..., 3])
-
-    def gioco(x, y, ox, oy):
-        """Da pixel delle basi (y in giù, piedi in ox, oy) al gioco."""
-        return (x - ox) * S, (oy - y) * S
-
-    righe = ["-- Fatto da strumenti/grafica/diavoletto.py, non modificare a mano.",
-             "-- Il diavoletto in pixel delle immagini: origine fra i piedi, y verso l'alto.",
-             "-- Per ogni fotogramma: immagine, centro (x, y) e misura (w, h); poi o la cima",
-             "-- della testa (tx, ty, lì va la fiammella) o il collo (cx, cy, lì va la testa)",
-             "-- e la spalla (sx, sy, lì girano pugni e arma).",
-             "return {",
-             f"\taltezza = {ALTEZZA},  -- dai piedi alla cima della testa"]
-    immagini = []
-
-    # la testa da sola: della misura della testa della base A, con il perno sul
-    # collo; la cima della testa (per la fiammella) rispetto al perno
-    d = apri(os.path.join(SORGENTE, "basi_chatgpt", "D_testa.png"))
-    # la testa staccata ha i colori di ChatGPT: le diamo quelli di Ludo, come il
-    # corpo della mira su cui sta
-    ferma = sorted(glob.glob(os.path.join(SORGENTE, "fogli", AZIONI["attesa"]["foglio"], "*.png")))
-    if ferma:
-        d = ricolora(d, colori_di_ludo(basi["A"], apri(ferma[0])))
-    dtx, dty, testa_d = cima(d)
-    sd = (testa_a[4] - testa_a[3]) / (testa_d[4] - testa_d[3])   # dalla D alla A
-    cx, cy, w, h = salva(d, S * sd, "testa")
-    immagini.append("testa")
-    # nella A il collo è sotto la testa, dove nella B comincia il collo
-    nx, ny, _ = cima(basi["B"])
-    # centro dell'immagine della testa nella A: allineata con la cima della testa
-    hx, hy = tx + (cx - dtx) * sd, ty + (cy - dty) * sd
-    righe.append(f"\ttesta = {{ img = \"testa\", w = {w}, h = {h}, "
-                 f"x = {n((hx - nx) * S)}, y = {n((ny - hy) * S)}, "
-                 f"tx = {n((tx - nx) * S)}, ty = {n((ny - ty) * S)} }},")
-
-    righe.append("\tanimazioni = {")
-    for nome, cfg in AZIONI.items():
-        fogli = sorted(glob.glob(os.path.join(SORGENTE, "fogli", cfg.get("foglio", nome), "*.png")))
-        if not fogli:
-            continue
-        fot = [apri(f, cfg["base"] is not None) for f in fogli]
-        # il disegno che tocca il bordo del fotogramma è tagliato (di solito la coda)
-        tagliati = [i for i, f in enumerate(fot)
-                    if max(f[:, :2, 3].max(), f[:, -2:, 3].max(), f[:2, :, 3].max(), f[-2:, :, 3].max()) > 0.15]
-        if tagliati:
-            print(f"ATTENZIONE {nome}: {len(tagliati)} fotogrammi toccano il bordo (tagliati): {tagliati}")
-        if cfg.get("cerca"):
-            da, a = giro_migliore(fot, *cfg["cerca"])
-            passo = 1
-        else:
-            da, a, passo = cfg["da"], min(cfg["a"], len(fot) - 1), cfg["passo"]
-        scelti = list(range(da, a + 1, passo))
-        righe.append(f"\t\t{nome} = {{ fps = {FPS / passo:.0f}, giro = {str(cfg['giro']).lower()},")
-
-        if cfg["base"] is None:
-            # la fiammella: tutta nella sua misura, centrata in basso
-            f0 = fot[0]
-            ys, xs = np.nonzero(f0[..., 3] > 0.5)
-            s = 0.34 * ALTEZZA / np.ptp(ys)
-            px, py = (xs.min() + xs.max()) / 2, ys.max()
-            for k, i in enumerate(scelti, 1):
-                nm = f"{nome}_{k}"
-                cx, cy, w, h = salva(fot[i], s, nm)
-                righe.append(f"\t\t\t{{ img = \"{nm}\", x = {n((cx - px) * s)}, y = {n((py - cy) * s)}, w = {w}, h = {h} }},")
-                immagini.append(nm)
-            righe.append("\t\t},")
-            continue
-
-        # allinea il foglio alla sua base con il primo fotogramma
-        base = basi[cfg["base"]]
-        ox, oy = (ax, ay) if cfg["base"] == "A" else (bx, by)
-        _, cb, _ = cima(base)
-        fx, fy = piedi(fot[0][..., 3])
-        _, cf, _ = cima(fot[0])
-        k = (oy - cb) / (fy - cf)      # dal foglio alla base
-        for j, i in enumerate(scelti, 1):
-            f = fot[i]
-            nm = f"{nome}_{j}"
-            cx, cy, w, h = salva(f, S * k, nm)
-            # dal foglio alla base: stesso punto fra i piedi
-            gx, gy = fx, fy
-            if cfg.get("ferma_spalla"):
-                (qx, qy), (q0x, q0y) = spalla(f), spalla(fot[0])
-                gx, gy = fx + qx - q0x, fy + qy - q0y
-            elif cfg.get("ferma_cima") and cfg["ferma_cima"][0] <= i <= cfg["ferma_cima"][1]:
-                # solo in altezza: di lato Ludo sposta il corpo poco a poco
-                gy = fy + cima(f)[1] - cima(fot[0])[1]
-
-            def b(x, y):
-                return gioco(ox + (x - gx) * k, oy + (y - gy) * k, ox, oy)
-            x, y = b(cx, cy)
-            riga = f"\t\t\t{{ img = \"{nm}\", x = {n(x)}, y = {n(y)}, w = {w}, h = {h}"
-            if cfg["base"] == "A":
-                px, py, _ = cima(f)
-                px, py = b(px, py)
-                riga += f", tx = {n(px)}, ty = {n(py)}"
-            else:
-                px, py, _ = cima(f, 0.08)
-                qx, qy = spalla(f)
-                px, py = b(px, py)
-                qx, qy = b(qx, qy)
-                riga += f", cx = {n(px)}, cy = {n(py)}, sx = {n(qx)}, sy = {n(qy)}"
-            righe.append(riga + " },")
-            immagini.append(nm)
-        righe.append("\t\t},")
-    righe += ["\t},", "}", ""]
+    for f in os.listdir(OUT):
+        if f.endswith(".png"):
+            os.remove(os.path.join(OUT, f))
+    immagini, pezzi = [], {}
+    for nome, fn in PEZZI.items():
+        pezzi[nome] = esporta(nome, fn, immagini)
+    lua = ["-- Fatto da strumenti/grafica/diavoletto.py, non modificare a mano.",
+           "-- Il diavoletto a pezzi, in unità del disegno (ALTEZZA dai piedi alla cima",
+           "-- della testa, y verso l'alto, guarda a destra). Per ogni pezzo: immagine",
+           "-- (tinta: la parte col colore della squadra), centro (x, y) rispetto al suo",
+           "-- perno e misura (w, h). I punti dicono dove vanno i perni, dal centro dei",
+           "-- piedi (la cima dal collo).",
+           "return {", f"\taltezza = {ALTEZZA},", f"\tpx = {PX},  -- pixel delle immagini per unità",
+           f"\tbordo = {BORDO_D},  -- spessore del contorno",
+           "\tpezzi = {"]
+    for nome, p in pezzi.items():
+        t = f'"{nome}_tinta"' if p["tinta"] else "nil"
+        lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {p["x"]:.1f}, y = {p["y"]:.1f}, '
+                   f'w = {p["w"]}, h = {p["h"]} }},')
+    lua.append("\t},")
+    lua.append("\tpunti = {")
+    for nome, (x, y) in PUNTI.items():
+        lua.append(f"\t\t{nome} = {{ {x}, {y} }},")
+    lua.append("\t},")
+    lua.append("\tbraccio = { " + ", ".join(str(L) for L, _ in BRACCIO) + " },  -- braccio e avambraccio sull'arma")
+    lua.append("\tcoda = { " + ", ".join(str(L) for L, _, _ in CODA) + " },  -- lunghezza dei segmenti")
+    lua.append("\tcoda_riposo = { " + ", ".join(f"{math.radians(a):.3f}" for a in CODA_RIPOSO) + " },  -- angoli a riposo")
+    lua.append(f"\tparacadute_y = {PARACADUTE_Y},  -- il perno del paracadute, dai piedi")
+    lua.append("}")
     with open(LUA, "w") as f:
-        f.write("\n".join(righe))
-
+        f.write("\n".join(lua) + "\n")
     with open(ATLAS, "w") as f:
-        for nm in immagini:
-            f.write(f'images {{\n  image: "/assets/diavoletto/{nm}.png"\n}}\n')
+        for n in immagini:
+            f.write(f'images {{\n  image: "/assets/diavoletto/{n}.png"\n}}\n')
         f.write("margin: 0\nextrude_borders: 2\ninner_padding: 0\n")
-    tot = sum(np.prod(Image.open(os.path.join(OUT, nm + ".png")).size) for nm in immagini)
-    print(f"{len(immagini)} immagini, {tot * 4 / 1e6:.1f} MB in memoria")
+    anteprima(pezzi)
+
+
+def anteprima(pezzi):
+    """Il diavoletto fermo montato come lo monta il gioco (stesso ordine dei
+    pezzi) in un solo SVG; a destra, col paracadute. Le parti tinte prendono il
+    rosso di una squadra."""
+    squadra = ("#8c1e22", "#e6484d", "#ff8a8e")
+    W, H, K = 320, 440, 2.2
+    gruppi = []
+
+    def metti(nome, x, y, ang=0, ox=0):
+        tr = f"translate({x + ox},{y}) rotate({math.degrees(ang):.1f})"
+        gruppi.append(pezzi[nome]["d"].gruppo(False, tr))
+
+    for ox in (0, W):
+        para = ox > 0
+        if para:
+            metti("paracadute", 0, PARACADUTE_Y, ox=ox)
+        x, y = PUNTI["coda"]
+        for suff in ("_bordo", ""):
+            x, y = PUNTI["coda"]
+            for i, a in enumerate(CODA_RIPOSO):
+                a = math.radians(a)
+                metti(f"coda_{i + 1}{suff}", x, y, a, ox=ox)
+                x, y = x + CODA[i][0] * math.cos(a), y + CODA[i][0] * math.sin(a)
+        metti("ala", *PUNTI["ala"], ox=ox)
+        sx, sy = PUNTI["spalle"]
+        metti("braccio_dietro", -sx, sy, math.radians(168) if para else 0.15, ox=ox)
+        ax, ay = PUNTI["anche"]
+        metti("gamba_dietro", -ax, ay, 0.12 if para else 0, ox=ox)
+        metti("gamba", ax, ay, 0.12 if para else 0, ox=ox)
+        metti("busto", *PUNTI["bacino"], ox=ox)
+        metti("braccio", sx, sy, math.radians(192) if para else -0.15, ox=ox)
+        metti("testa", *PUNTI["collo"], ox=ox)
+        cx, cy = PUNTI["collo"]
+        metti("fiammella_1", cx + PUNTI["cima"][0], cy + PUNTI["cima"][1], ox=ox)
+    col = dict(COL)
+    col["fiamma"] = squadra
+    col["bianco"] = ("#ff8a8e", "#ffc0c2", "#ffffff")
+    tr = f"scale({K},{-K}) translate({W / 2},{-H + 10})"
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W * 2 * K:.0f}" height="{H * K:.0f}">'
+           f'<rect width="100%" height="100%" fill="#7a8a80"/><defs>{gradienti(col)}</defs>'
+           f'<g transform="{tr}">{"".join(gruppi)}</g></svg>')
+    os.makedirs(os.path.dirname(ANTEPRIMA), exist_ok=True)
+    rendi(svg, round(W * 2 * K), round(H * K)).save(ANTEPRIMA)
 
 
 if __name__ == "__main__":

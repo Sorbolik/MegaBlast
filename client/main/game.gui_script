@@ -1374,8 +1374,6 @@ local function apply_camera(self)
 	local l = c.s ^ -0.65
 	LABEL_SCALE.x, LABEL_SCALE.y = 0.7 * FONT_K * l, 0.7 * FONT_K * l
 	gui.set_scale(self.cancel_label, LABEL_SCALE)
-	LABEL_SCALE.x, LABEL_SCALE.y = l, l
-	gui.set_scale(self.arrow, LABEL_SCALE)
 end
 
 local function render(self, dt)
@@ -1430,7 +1428,7 @@ local function render(self, dt)
 			targa.stato(r.targa, testo)
 			v.stato = codice
 		end
-		targa.update(r.targa, dt, v.x, v.y + scoria.ALTEZZA + 3, self.cam.s ^ -0.65)
+		targa.update(r.targa, dt, v.x, v.y + scoria.altezza(r.rig) + 3, self.cam.s ^ -0.65)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -1755,15 +1753,9 @@ local function render(self, dt)
 		self.tele_n = tele
 	end
 
-	-- freccia sopra il robot di turno
-	local cur = current_robot(self)
-	local v = self.view[g.current]
-	gui.set_enabled(self.arrow, g.phase == "aim" and not cur.dead and (self.mode == "local" or self.mode == "online"))
-	set_pos(self.arrow, v.x, v.y + scoria.ALTEZZA + (58 + math.sin(self.clock * 5) * 3) / self.cam.s)
-	gui.set_color(self.arrow, self.colors[g.current])
-
 	-- Camera: segue il colpo in volo, poi resta un attimo sull'esplosione, poi
 	-- torna su chi è di turno. Nel menu si vede tutta la mappa.
+	local v = self.view[g.current]
 	local c = self.cam
 	if self.mode == "menu" then
 		camera.segui(c, dt, game.WORLD_W / 2, game.WORLD_H / 2, camera.tutta(c))
@@ -1876,7 +1868,7 @@ function init(self)
 		self.shard_nodes[i] = n
 	end
 
-	-- trappole, trampolini, cerchi di cura, scudi e paracadute (battaglia/oggetti.lua)
+	-- trappole, trampolini, cerchi di cura e scudi (battaglia/oggetti.lua)
 	self.oggetti = oggetti.new(TEAM_COLORS)
 
 	-- casse (ne servono al massimo CRATE_MAX), con un bagliore sopra mentre cadono:
@@ -1930,7 +1922,6 @@ function init(self)
 
 	local targhe = targa.nuove(TEAM_COLORS, TEAM_NAMES)
 	for i = 1, game.MAX_PLAYERS do self.robots[i].targa = targhe[i] end
-	self.arrow = box(0, 0, 4, 18, WHITE)
 	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
 	gui.set_enabled(self.cancel_label, false)
 
@@ -1956,7 +1947,6 @@ function init(self)
 	-- le targhe: prima tutte le barre, poi tutti i testi (due draw call in tutto)
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.barre end
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.testi end
-	mondo[#mondo + 1] = self.arrow
 	mondo[#mondo + 1] = self.cancel_label
 	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end
 
