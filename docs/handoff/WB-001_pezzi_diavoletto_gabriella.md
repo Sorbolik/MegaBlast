@@ -101,6 +101,45 @@ per scegliere: canottiera rossa come nel disegno, oppure del colore della squadr
 
 ## Consegna di Codex
 
+Eseguita sulla scheda APPROVATA di `main`, commit `0b78aee`, sul ramo
+`design/WB-001`. Prompt copiati integralmente e riferimenti allegati nell'ordine R1,
+R2, R3 della versione aggiornata.
+
+File consegnati:
+
+- `art/WB-001/foglio_rosso.png` e `foglio_rosso.txt`;
+- `art/WB-001/foglio_squadra.png` e `foglio_squadra.txt`.
+
+Entrambi i PNG sono 1536×1024 (3:2, minimo richiesto), originali del generatore,
+senza ritocchi. I TXT riportano il prompt esatto e i riferimenti.
+Tre tentativi per ciascun prompt aggiornato: selezionato il primo per il rosso
+(estremità delle gambe meglio chiuse) e il terzo per la squadra (estremità dei
+pezzi del braccio meglio arrotondate). Le generazioni della scheda precedente,
+superata durante il lavoro, non sono incluse nella consegna.
+
+Controlli eseguiti: ispezione visiva di tutti e sei i tentativi della scheda
+aggiornata; 14 pezzi separati, quattro espressioni rivolte a destra, stile dipinto,
+contorni scuri spessi, nessuna scritta o fiammella, ala singola, pugno separato,
+coda continua con punta a tre punte e senza interruzioni visibili. Non vedo
+verde acceso fuori dalla canottiera della squadra né nel foglio rosso.
+Verificate anche dimensioni e valori RGB dello sfondo.
+
+**Esito: consegna da rivedere, criteri non tutti soddisfatti dopo il limite di tre
+tentativi.** Lo sfondo appare magenta ma non è uniformemente #FF00FF: il colore
+più frequente nel rosso è (249, 4, 249), nella squadra è (252, 3, 250). Non dichiaro superato il criterio
+dello sfondo pieno. Le estremità di omero/avambraccio del rosso mostrano facce
+circolari e sono inclinate; nella squadra i due pezzi sono quasi verticali invece
+che orizzontali. Nella squadra le sommità delle gambe sono piatte con una faccia
+ovale visibile, non completamente arrotondate. Le proporzioni, le posizioni e le
+forme non coincidono esattamente tra i due fogli: non sono semplici ricolorazioni
+dello stesso foglio. La fedeltà a Gabriella è stata controllata visivamente, non è
+una copia pixel per pixel. Serve revisione di Claude prima dell'integrazione.
+
+Non eseguiti taglio, allineamento sullo scheletro, animazioni, build o simulazione:
+questa scheda consegna immagini; nessun file del gioco è stato modificato.
+La coda intera segue la richiesta esplicita della scheda per il taglio successivo;
+la decisione sulla coda a segmenti riguarda il montaggio nel gioco.
+
 ## Resoconto di Claude
 
 Taglio previsto, dal ramo della PR #55:
