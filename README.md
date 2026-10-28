@@ -14,4 +14,4 @@ C'è un primo prototipo in hot-seat, con due giocatori sullo stesso dispositivo:
 - `tests/` — test della simulazione
 - `docs/` — [design e architettura](docs/design.md), [setup del PC](docs/setup.md), [game design competitivo](docs/game_design_competitivo.md)
 - `strumenti/simula/` — [simulazione automatica del gioco](strumenti/simula/README.md)
-- `docs/handoff/`, `art/` — [schede di lavoro tra Claude e ChatGPT](docs/handoff/README.md) e immagini di ChatGPT; regole in [AGENTS.md](AGENTS.md), decisioni in [DECISIONI.md](DECISIONI.md)
+- `docs/handoff/`, `art/` — [schede con i prompt per Codex](docs/handoff/README.md) e immagini generate; regole di Codex in [AGENTS.md](AGENTS.md), decisioni in [DECISIONI.md](DECISIONI.md)

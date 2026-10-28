@@ -1,29 +1,28 @@
 # Schede di lavoro
 
-Claude e ChatGPT si passano il lavoro solo da qui. Una scheda per attività, numerata
-(`WB-001_<argomento>.md`, `WB-002_...`), copiata da [MODELLO.md](MODELLO.md).
-Le foto di verifica di Claude vanno in `img/`, le immagini di ChatGPT in `art/WB-xxx/`.
+Claude scrive qui i prompt delle immagini, Codex (ChatGPT) le genera: nessun copia e incolla
+di prompt. Una scheda per attività, numerata (`WB-001_<argomento>.md`, `WB-002_...`),
+copiata da [MODELLO.md](MODELLO.md). Le regole di Codex sono in [AGENTS.md](../../AGENTS.md).
 
 ## Il ciclo
 
-1. **Nasce la scheda**, di solito da Claude che coordina (a volte da ChatGPT o Sergio):
-   obiettivo, riferimenti, requisiti, cosa non toccare, criteri di accettazione, consegne,
-   domande aperte.
-2. **PROPOSTA**: finché resta così nessuno la esegue.
-3. **Si decide** nella sezione "Decisione": Claude approva da solo le scelte ragionevoli e
-   reversibili (e lo scrive), le altre le decide Sergio; sempre con la data.
-4. **Chi la riceve la esegue**:
-   - ChatGPT fa le immagini sul suo ramo `design/...` e scrive la "Consegna di ChatGPT";
-   - Claude controlla la scheda sul codice vero, la integra nel gioco, gira la simulazione
-     e scrive il "Resoconto di Claude" (file cambiati, cosa ha verificato, cosa no, foto).
-   Stato IMPLEMENTATA.
-5. **L'altro rivede** nella sezione "Revisione" e segnala le differenze dalla richiesta.
-6. **Sergio prova nel gioco**: solo allora VERIFICATA. Claude aggiorna `DECISIONI.md` se serve.
+1. **Claude scrive la scheda**: obiettivo, riferimenti, e la tabella "Immagini da generare"
+   con il prompt completo di ogni immagine, i riferimenti da allegare e il nome del file.
+   Stato PROPOSTA.
+2. **Si decide**: Claude approva da solo le schede ragionevoli e reversibili (e lo scrive),
+   le altre le decide Sergio. Stato APPROVATA. Claude fa il commit e il push della scheda.
+3. **Codex genera**: Sergio gli dice "esegui WB-xxx". Codex genera tutto in `art/WB-xxx/`,
+   scrive la consegna, fa il commit sul ramo `design/WB-xxx` e il push. Stato GENERATA.
+4. **Claude rivede e integra**: guarda le immagini, scarta quelle con difetti (e se serve
+   aggiunge una scheda nuova coi prompt corretti), taglia e integra quelle buone, gira la
+   simulazione, scrive il "Resoconto di Claude" con le foto in `img/`. Stato IMPLEMENTATA.
+5. **Sergio prova nel gioco**: solo allora VERIFICATA.
 
-Nella scheda non si cancella niente: ognuno aggiunge la sua parte sotto. Se una richiesta
-non si può fare, lo si scrive lì e la scheda torna a chi decide.
+Nella scheda non si cancella niente: ognuno aggiunge la sua parte sotto.
 
-## Passaggi densi
+## Le chat da cancellare
 
-Ogni messaggio in più costa tempo e token. Una scheda deve bastare da sola: numeri, misure,
-nomi dei file, riferimenti alle immagini, formato della consegna, tutto in un colpo.
+Con Codex le immagini non passano dalle chat di ChatGPT, quindi non restano chat aperte da
+ripulire. Le sessioni di Codex stanno solo sul PC (`%USERPROFILE%\.codex\sessions`) e le
+immagini generate in `%USERPROFILE%\.codex\generated_images`: dopo il push si possono
+cancellare tutte e due.

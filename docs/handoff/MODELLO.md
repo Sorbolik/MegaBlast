@@ -1,46 +1,46 @@
 # WB-xxx · Titolo
 
-- **Stato:** PROPOSTA (poi APPROVATA, IMPLEMENTATA, VERIFICATA, oppure SCARTATA)
-- **Da:** ChatGPT / Claude / Sergio · **Per:** ChatGPT / Claude
+- **Stato:** PROPOSTA (poi APPROVATA, GENERATA, IMPLEMENTATA, VERIFICATA, oppure SCARTATA)
 - **Data:** AAAA-MM-GG
-- **Ramo:** `design/...` o `codex/...` (per ChatGPT) o `claude/...` (per Claude)
+- **Ramo della scheda:** `claude/...` · **Ramo delle immagini:** `design/WB-xxx`
 
 ## Obiettivo
 
-Cosa si vuole ottenere e perché, in due o tre righe.
+Cosa serve e perché, in due o tre righe.
 
-## Riferimenti
+## Riferimenti da allegare
 
-Immagini (percorsi in `art/` o nei file del progetto), documenti, righe di `DECISIONI.md`.
+| Codice | File | Cos'è |
+|---|---|---|
+| R1 | `percorso/nel/repo.png` | ... |
 
-## Requisiti
+## Immagini da generare
 
-Misure, formato, pose, colori, numeri: tutto quello che serve per farla in un colpo.
+Ogni prompt è completo e va usato così com'è.
 
-## Cosa non va toccato
+| Nome file | Riferimenti | Misura | Varianti |
+|---|---|---|---|
+| `nome` | R1 | 1024×1024 | 1 |
 
-## Indicazioni per l'esecuzione (facoltative)
+### `nome`
+
+```
+prompt completo
+```
 
 ## Criteri di accettazione
 
+- [ ] sfondo trasparente pulito, contorno nero puro e spesso, nessuna scritta
 - [ ] ...
-
-## Consegne attese
-
-File e cartelle precise.
-
-## Domande aperte
 
 ---
 
 ## Decisione
 
-(approvata / da cambiare / scartata, chi decide e la data: Claude per le scelte reversibili, Sergio per le altre)
+(approvata / da cambiare / scartata, chi decide e la data)
 
-## Consegna di ChatGPT
+## Consegna di Codex
 
 ## Resoconto di Claude
 
-File cambiati, cosa è stato verificato (simulazione, foto in `docs/handoff/img/`), cosa **non** è stato verificato, limiti.
-
-## Revisione
+Immagini usate e scartate (e perché), file cambiati, cosa è stato verificato (simulazione, foto in `docs/handoff/img/`), cosa **non** è stato verificato.

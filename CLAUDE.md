@@ -46,15 +46,13 @@ Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_t
 `go test ./server/` (server).
 
 
-## Lavorare con ChatGPT
+## Immagini con ChatGPT (Codex)
 
-ChatGPT (anche come Codex) fa immagini e contenuti, Claude li integra: si passano il lavoro
-solo con le schede in [docs/handoff/](docs/handoff/README.md) e i commit di ChatGPT sui rami
-`design/...` o `codex/...` (regole sue in [AGENTS.md](AGENTS.md), decisioni in [DECISIONI.md](DECISIONI.md)).
-Quando Sergio dice di leggere una scheda: `git fetch origin` e cerca la scheda anche sui rami
-`design/...` e `codex/...`; controllala sul codice vero e presenta il piano prima di scrivere codice; poi
-integra, gira la simulazione, metti le foto in `docs/handoff/img/` e scrivi il "Resoconto di
-Claude" sotto (cosa hai verificato e cosa no), senza cancellare niente. Claude resta il
-coordinatore: scrive le schede per ChatGPT, approva quelle ragionevoli e reversibili (lo scrive
-nella scheda) e lascia a Sergio le altre; in `DECISIONI.md` le decisioni sue portano "(Claude)". Se una richiesta di ChatGPT non si può fare, scrivilo nella
-scheda e non cambiarla di nascosto.
+Le immagini le genera Codex (ChatGPT) sul PC di Sergio, dai prompt che scrive Claude: niente
+copia e incolla. Claude scrive una scheda in [docs/handoff/](docs/handoff/README.md) dal
+[modello](docs/handoff/MODELLO.md), con ogni prompt completo, i riferimenti e i nomi dei file;
+la approva se è reversibile (altrimenti chiede a Sergio), fa commit e push. Codex la esegue
+seguendo [AGENTS.md](AGENTS.md) e fa il push sul ramo `design/WB-xxx`. Poi Claude fa
+`git fetch origin`, guarda ogni immagine in `art/WB-xxx/`, scarta quelle con difetti visibili,
+integra le buone, gira la simulazione e scrive il "Resoconto di Claude". Le decisioni prese da
+Claude in autonomia vanno in [DECISIONI.md](DECISIONI.md) con "(Claude)".
