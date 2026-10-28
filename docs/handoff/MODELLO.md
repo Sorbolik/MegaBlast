@@ -3,7 +3,7 @@
 - **Stato:** PROPOSTA (poi APPROVATA, IMPLEMENTATA, VERIFICATA, oppure SCARTATA)
 - **Da:** ChatGPT / Claude / Sergio · **Per:** ChatGPT / Claude
 - **Data:** AAAA-MM-GG
-- **Ramo:** `design/...` (per ChatGPT) o `claude/...` (per Claude)
+- **Ramo:** `design/...` o `codex/...` (per ChatGPT) o `claude/...` (per Claude)
 
 ## Obiettivo
 

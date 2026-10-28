@@ -29,8 +29,8 @@ nella scheda, alla voce "Domande aperte per Sergio".
 
 ## Dove puoi scrivere
 
-- Solo su un ramo tuo, `design/<argomento>` (es. `design/pezzi-diavoletto`), mai su `main`
-  né sui rami `claude/...`. L'unione la fanno Sergio o Claude.
+- Solo su un ramo tuo, `design/<argomento>` (es. `design/pezzi-diavoletto`; va bene anche il
+  `codex/...` che Codex crea da sé), mai su `main` né sui rami `claude/...`. L'unione la fanno Sergio o Claude.
 - Puoi creare o modificare solo:
   - `art/` (immagini, concept, prompt usati), una cartella per scheda: `art/WB-xxx/`;
   - le tue schede in `docs/handoff/`, aggiungendo sotto, senza cancellare la parte degli altri.
