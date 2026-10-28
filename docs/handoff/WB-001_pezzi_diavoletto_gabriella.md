@@ -6,18 +6,19 @@
 
 ## Obiettivo
 
-Rimettere nel gioco il diavoletto dipinto di Gabriella, ma con il contorno nero puro e
-spesso, come pelle `personaggio` dello stampino (regole in `strumenti/stampino/README.md`
-della PR #55): tutti i pezzi ridisegnati nelle caselle del manichino, così si montano sullo
-scheletro e si muovono con le animazioni che ci sono già.
+Rimettere nel gioco il diavoletto di Gabriella **così com'è disegnato** (R1: forme,
+proporzioni, faccia, colori, stile dipinto e contorno nero), smontato nei pezzi dello
+stampino (regole in `strumenti/stampino/README.md` della PR #55), così si monta sullo
+scheletro e si muove con le animazioni che ci sono già. Lo stampino dice solo **dove** va
+ogni pezzo e quanto è grande, non com'è fatto.
 
 ## Riferimenti da allegare
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-001/riferimenti/R1_stampino_ai.png` | lo stampino definitivo: 14 caselle col manichino grigio su magenta (3072×2048) |
-| R2 | `art/WB-001/riferimenti/R2_manichino.png` | il manichino montato: come stanno insieme i pezzi |
-| R3 | `art/WB-001/riferimenti/R3_diavoletto_gabriella.png` | il diavoletto di Gabriella: colori, vestiti, faccia |
+| R1 | `art/WB-001/riferimenti/R1_diavoletto_gabriella.png` | il diavoletto di Gabriella col contorno nero: è **il** modello, da copiare |
+| R2 | `art/WB-001/riferimenti/R2_stampino_ai.png` | lo stampino: dove sta ogni pezzo sul foglio (3072×2048) |
+| R3 | `art/WB-001/riferimenti/R3_manichino.png` | come si attaccano i pezzi fra loro |
 
 ## Immagini da generare
 
@@ -30,46 +31,55 @@ Sono due fogli: uguali, tranne la canottiera, che nel secondo è del colore dell
 | `foglio_squadra` | R1, R2, R3 | come sopra | 1 |
 
 Eccezione alla regola dello sfondo trasparente di `AGENTS.md`: qui lo sfondo resta **magenta
-pieno #FF00FF**, come R1, perché lo strumento di taglio lo usa. Il verde #00FF00 qui non è
+pieno #FF00FF**, come R2, perché lo strumento di taglio lo usa. Il verde #00FF00 qui non è
 uno sfondo: nel secondo foglio segna la canottiera da tingere, e non va tolto.
+
+Attenzione: il risultato deve sembrare **tagliato dal disegno di R1**, non dal manichino
+grigio. Se i pezzi vengono semplificati, piatti o con le forme del manichino, è un difetto:
+rigenera.
 
 ### `foglio_rosso`
 
 ```
-Image 1 is a parts template sheet for a 2D cut-out game character: 14 grey mannequin parts on a flat magenta (#FF00FF) background, in three rows. Image 2 shows the same grey parts assembled into the full character, so you can see how they fit together. Image 3 is the character to recreate: a small devil.
+Image 1 is the character: a small devil drawn by our artist. Copy HIM exactly: his proportions, his head shape, horns, black wraparound visor with glowing eyes, eyebrows, smile, skin colour, red tank top, black belt with buckle and hanging strap, baggy red trousers, brown shoes, dark grey bat wing, red tail with three-pronged trident tip, his thick black outline and his painted shading and texture. Image 1 is the only reference for how everything looks.
 
-Redraw image 1 exactly: same canvas, same flat magenta #FF00FF background, the same 14 parts in the same positions, the same sizes, the same angles and the same silhouettes as the grey parts, but painted as the devil of image 3. Each part stays separate and in its own place; do not add, merge, move, resize or rotate any part, and do not add anything else to the sheet (no labels, no text, no shadows on the background, no flame).
+Image 2 is a layout sheet: 14 grey placeholder parts on a flat magenta (#FF00FF) background, in three rows. Use image 2 ONLY to know where each part goes on the sheet, roughly how big it is and where it attaches. Do NOT copy the grey parts' shapes, proportions, flat style or simple faces. Image 3 shows how the grey parts attach to each other.
+
+Make a parts sheet of the devil of image 1, cut apart like a paper puppet: same canvas as image 2, same flat magenta #FF00FF background, each part placed over its grey placeholder, about the same size, and nothing else on the sheet (no grey placeholders left, no labels, no text, no shadows on the background, no flame). Every part is drawn as it looks in image 1 (3/4 view facing right), closed on all sides with the thick black outline, with no cut or missing edges.
 
 The parts, left to right:
-Row 1, four heads, all facing right like the grey ones: round beige-grey head with two curved dark brown horns, black wraparound visor across the eyes with two glowing white-yellow eyes, small dark eyebrows, short neck stub at the bottom like the grey one. Head 1: small closed smile. Head 2 (hit): eyes wide, small round open mouth. Head 3 (happy): big wide grin. Head 4 (knocked out): eyes as two short flat lines, wavy mouth.
-Row 2: the torso with a red sleeveless tank top, black belt with a silver square buckle and the black strap hanging down, exactly the grey torso shape with round shoulders; one dark grey bat wing with the same shape and angle as the grey wing; the whole tail in one piece, dark red-brown, at rest, with exactly the same curve and thickness as the grey tail, ending in a three-pronged trident tip. The tail must be one smooth continuous tube with no breaks, seams or joints along it.
-Row 3: two hanging arms (beige-grey skin, closed fist at the bottom), two legs (baggy red trousers ending in a dark brown shoe, same shape as the grey legs), the upper arm and the forearm (two short beige-grey capsules with fully rounded, filled ends, so they can overlap at the elbow without a visible joint), and one round closed fist.
+Row 1, four heads of the devil of image 1, facing right as in image 1, each with a short neck stub at the bottom: head 1 exactly as in image 1 (small smile); head 2 hit (eyes wide, small round open mouth); head 3 happy (big wide grin); head 4 knocked out (eyes as two short flat lines behind the visor, wavy mouth). Only the expression changes.
+Row 2: the torso alone (red tank top with the belt, buckle and hanging strap, no head, no arms, no legs, no wing), with round closed shoulders and a closed bottom edge; the wing alone, as in image 1; the whole tail alone in one piece, as in image 1 with its trident tip, bent to follow the curve of the grey tail, one smooth continuous tube with no breaks, seams or joints.
+Row 3: the near arm and the far arm, each hanging straight down from a round shoulder with the hand of image 1 at the bottom; the near leg and the far leg, each a baggy red trouser leg with its brown shoe, round and closed at the top; the upper arm and the forearm, two short pieces of the arm of image 1 with fully rounded, filled ends so they can overlap at the elbow without a visible joint; one closed fist.
 
-Style: clean 2D cartoon game art, flat colours with one simple soft shade (darker below, lighter above), THICK PURE BLACK outline around the outside of every part, as thick as the grey outline of image 1, and no outline lines drawn across the inside of a part. No paper texture, no grain, no hatching, no brush strokes, no white or light rim outside the black outline, no brown outline. Do not use any bright green anywhere. Keep the colours, clothes and face of image 3, but the shapes and positions of image 1.
+Do not use any bright green anywhere.
 ```
 
 ### `foglio_squadra`
 
 ```
-Image 1 is a parts template sheet for a 2D cut-out game character: 14 grey mannequin parts on a flat magenta (#FF00FF) background, in three rows. Image 2 shows the same grey parts assembled into the full character, so you can see how they fit together. Image 3 is the character to recreate: a small devil.
+Image 1 is the character: a small devil drawn by our artist. Copy HIM exactly: his proportions, his head shape, horns, black wraparound visor with glowing eyes, eyebrows, smile, skin colour, black belt with buckle and hanging strap, baggy red trousers, brown shoes, dark grey bat wing, red tail with three-pronged trident tip, his thick black outline and his painted shading and texture. The only change: his tank top is painted in pure bright green #00FF00, shaded only with darker tones of the same pure green. Image 1 is the only reference for how everything looks.
 
-Redraw image 1 exactly: same canvas, same flat magenta #FF00FF background, the same 14 parts in the same positions, the same sizes, the same angles and the same silhouettes as the grey parts, but painted as the devil of image 3. Each part stays separate and in its own place; do not add, merge, move, resize or rotate any part, and do not add anything else to the sheet (no labels, no text, no shadows on the background, no flame).
+Image 2 is a layout sheet: 14 grey placeholder parts on a flat magenta (#FF00FF) background, in three rows. Use image 2 ONLY to know where each part goes on the sheet, roughly how big it is and where it attaches. Do NOT copy the grey parts' shapes, proportions, flat style or simple faces. Image 3 shows how the grey parts attach to each other.
+
+Make a parts sheet of the devil of image 1, cut apart like a paper puppet: same canvas as image 2, same flat magenta #FF00FF background, each part placed over its grey placeholder, about the same size, and nothing else on the sheet (no grey placeholders left, no labels, no text, no shadows on the background, no flame). Every part is drawn as it looks in image 1 (3/4 view facing right), closed on all sides with the thick black outline, with no cut or missing edges.
 
 The parts, left to right:
-Row 1, four heads, all facing right like the grey ones: round beige-grey head with two curved dark brown horns, black wraparound visor across the eyes with two glowing white-yellow eyes, small dark eyebrows, short neck stub at the bottom like the grey one. Head 1: small closed smile. Head 2 (hit): eyes wide, small round open mouth. Head 3 (happy): big wide grin. Head 4 (knocked out): eyes as two short flat lines, wavy mouth.
-Row 2: the torso with a sleeveless tank top painted in pure bright green #00FF00 (with its soft shading in darker shades of the same pure green), black belt with a silver square buckle and the black strap hanging down, exactly the grey torso shape with round shoulders; one dark grey bat wing with the same shape and angle as the grey wing; the whole tail in one piece, dark red-brown, at rest, with exactly the same curve and thickness as the grey tail, ending in a three-pronged trident tip. The tail must be one smooth continuous tube with no breaks, seams or joints along it.
-Row 3: two hanging arms (beige-grey skin, closed fist at the bottom), two legs (baggy red trousers ending in a dark brown shoe, same shape as the grey legs), the upper arm and the forearm (two short beige-grey capsules with fully rounded, filled ends, so they can overlap at the elbow without a visible joint), and one round closed fist.
+Row 1, four heads of the devil of image 1, facing right as in image 1, each with a short neck stub at the bottom: head 1 exactly as in image 1 (small smile); head 2 hit (eyes wide, small round open mouth); head 3 happy (big wide grin); head 4 knocked out (eyes as two short flat lines behind the visor, wavy mouth). Only the expression changes.
+Row 2: the torso alone (bright green #00FF00 tank top with the black belt, buckle and hanging strap, no head, no arms, no legs, no wing), with round closed shoulders and a closed bottom edge; the wing alone, as in image 1; the whole tail alone in one piece, as in image 1 with its trident tip, bent to follow the curve of the grey tail, one smooth continuous tube with no breaks, seams or joints.
+Row 3: the near arm and the far arm, each hanging straight down from a round shoulder with the hand of image 1 at the bottom; the near leg and the far leg, each a baggy red trouser leg with its brown shoe, round and closed at the top; the upper arm and the forearm, two short pieces of the arm of image 1 with fully rounded, filled ends so they can overlap at the elbow without a visible joint; one closed fist.
 
-Style: clean 2D cartoon game art, flat colours with one simple soft shade (darker below, lighter above), THICK PURE BLACK outline around the outside of every part, as thick as the grey outline of image 1, and no outline lines drawn across the inside of a part. No paper texture, no grain, no hatching, no brush strokes, no white or light rim outside the black outline, no brown outline. The bright green #00FF00 is used ONLY for the tank top, nowhere else. Keep the colours, clothes and face of image 3 (except the green tank top), but the shapes and positions of image 1.
+The bright green #00FF00 is used ONLY for the tank top, nowhere else.
 ```
 
 ## Criteri di accettazione
 
-- [ ] 14 pezzi, uno per casella, nelle stesse posizioni di R1; nient'altro sul foglio
+- [ ] ogni pezzo sembra tagliato dal disegno di R1 (forme, faccia, colori, stile dipinto), non dal manichino
+- [ ] 14 pezzi, uno per casella, sopra i posti di R2; nient'altro sul foglio, nessun manichino grigio rimasto
 - [ ] sfondo magenta pieno, senza aloni o ombre
-- [ ] contorno nero puro e spesso su ogni pezzo, nessun bordo chiaro fuori dal nero
+- [ ] contorno nero spesso e chiuso su ogni pezzo
 - [ ] quattro teste con le quattro espressioni, tutte rivolte a destra
-- [ ] coda intera, continua, senza giunture, con la punta a tridente; ala singola; pugno tondo
+- [ ] coda intera, continua, senza giunture, con la punta a tridente; ala singola; pugno chiuso
 - [ ] omero e avambraccio con le estremità tonde e piene
 - [ ] verde acceso solo sulla canottiera del `foglio_squadra`, da nessun'altra parte
 - [ ] nessuna scritta
@@ -82,10 +92,12 @@ Approvata da Claude, 2026-10-28: scelta reversibile (sono solo immagini da gener
 gioco non cambia finché non le integro). Sergio può ribaltarla.
 
 Rimessa in PROPOSTA da Claude, 2026-10-28: lo stampino stava cambiando. Riapprovata da Claude
-lo stesso giorno con lo stampino definitivo (commit eb4e24b della PR #55): coda intera
-divisa da `taglia.py`, gomito e coda tondi e pieni, verde acceso per il colore della squadra.
-Due fogli per scegliere: canottiera rossa come nel disegno di Gabriella, oppure del colore
-della squadra (la fiammella resta comunque del colore della squadra).
+lo stesso giorno con lo stampino definitivo (commit eb4e24b della PR #55).
+
+Riscritta da Claude, 2026-10-28 10:10, su richiesta di Sergio: il primo giro di Codex copiava
+le forme del manichino (il diavoletto a vettori). Ora il modello è il disegno di Gabriella
+col contorno nero (R1, mandato da Sergio) e lo stampino serve solo per le posizioni. Due fogli
+per scegliere: canottiera rossa come nel disegno, oppure del colore della squadra.
 
 ## Consegna di Codex
 
