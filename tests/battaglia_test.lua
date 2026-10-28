@@ -216,6 +216,23 @@ for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute"
 	check(A[nome] ~= nil, "animazioni: c'è la clip " .. nome)
 end
 
+-- gli spostamenti avanti e indietro e su e giù dei pezzi
+do
+	local A2 = require "battaglia.animazioni"
+	local vecchia = A2.fermo
+	A2.fermo = { durata = 1, ciclo = true, tracce = { testa_x = { 0, 10, 0 }, braccio_d_y = { 0, -8, 0 }, coda_x = { 0, 5, 0 } } }
+	local v = scoria.new(vec(1, 0.2, 0.3, 1))
+	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0 }
+	for _ = 1, 5 do scoria.update(v, 1 / 60, st2) end
+	local D = require "battaglia.diavoletto"
+	local k = v.k
+	check(math.abs(v.collo.pos.x - (D.punti.collo[1] + 10) * k) < 1e-6
+		and math.abs(v.braccio_d.pos.y - (D.punti.spalle[2] - 8) * k) < 1e-6
+		and math.abs(v.coda[1][2].pos.x - (D.punti.coda[1] + 5) * k) < 1e-6,
+		"pose: testa, braccio e coda si spostano coi canali x e y")
+	A2.fermo = vecchia
+end
+
 -- Pelli (battaglia/pelli.lua) ---------------------------------------------------
 
 -- pelli finte: una testa nuova senza facce col colore della squadra, un elmo

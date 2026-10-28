@@ -17,7 +17,10 @@ local M = {}
 -- i canali e il loro valore neutro; angoli in radianti, misure in unità del
 -- disegno (battaglia/diavoletto.lua, 200 dai piedi alla testa)
 M.CANALI = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "braccio_d",
-	"gamba_a", "gamba_d", "alza_a", "alza_d", "ala", "coda" }
+	"gamba_a", "gamba_d", "alza_a", "alza_d", "ala", "coda",
+	-- gli spostamenti avanti e indietro (x, verso dove guarda) e su e giù (y)
+	"corpo_x", "testa_x", "braccio_a_x", "braccio_a_y", "braccio_d_x", "braccio_d_y",
+	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y" }
 M.NEUTRO = { schiaccia = 1 }
 for _, c in ipairs(M.CANALI) do M.NEUTRO[c] = M.NEUTRO[c] or 0 end
 

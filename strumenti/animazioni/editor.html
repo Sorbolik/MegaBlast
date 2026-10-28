@@ -13,17 +13,17 @@
 /* banco di lavoro: palco grande al centro, clip a sinistra, canali a destra, linea del tempo sotto */
 :root {
 	--fondo: #eef0f4; --pannello: #ffffff; --riga: #dfe3ea; --testo: #1b1e26; --tenue: #687082;
-	--brace: #e5532d; --brace-tenue: #fbe3dc; --chiave: #1b1e26; --palco: #f7f8fb; --terra: #c7ccd6;
+	--brace: #e5532d; --brace-tenue: #fbe3dc; --chiave: #1b1e26; --palco: #f7f8fb; --suolo: #e6dccb; --suolo-riga: #8a7350; --hitbox: #1d8a5a;
 	--f-titolo: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
 	--f-testo: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
 	--f-numeri: "JetBrains Mono", Consolas, ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
 	--fondo: #15171d; --pannello: #1d2028; --riga: #2c303b; --testo: #e8eaf0; --tenue: #9097a8;
-	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --terra: #3a3f4c; color-scheme: dark } }
+	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --suolo: #2e2a24; --suolo-riga: #b39566; --hitbox: #4fd39a; color-scheme: dark } }
 :root[data-theme="dark"] {
 	--fondo: #15171d; --pannello: #1d2028; --riga: #2c303b; --testo: #e8eaf0; --tenue: #9097a8;
-	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --terra: #3a3f4c; color-scheme: dark }
+	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --suolo: #2e2a24; --suolo-riga: #b39566; --hitbox: #4fd39a; color-scheme: dark }
 * { box-sizing: border-box }
 html, body { height: 100% }
 body { background: var(--fondo); color: var(--testo); font: 14px/1.4 var(--f-testo); margin: 0;
@@ -55,6 +55,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 #guida b { color: var(--testo) }
 #canali { grid-area: canali; padding: 12px; display: flex; flex-direction: column; gap: 4px; align-self: start }
 .canale { display: grid; grid-template-columns: 22px 1fr 64px; grid-template-rows: auto auto; column-gap: 6px; align-items: center; padding: 3px 4px; border-radius: 6px; cursor: pointer }
+.canale[hidden] { display: none }
 .canale.scelto { background: var(--brace-tenue) }
 .canale .nome { grid-column: 2 / 4; font-size: 13px }
 .canale input[type=range] { grid-column: 2; width: 100%; accent-color: var(--brace) }
@@ -110,6 +111,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label>velocità <select id="velocita"><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
 			<label><input type="checkbox" id="molle" checked> molle del gioco</label>
 			<label><input type="checkbox" id="turno"> di turno</label>
+			<label title="Il corpo della simulazione: colpi e terreno toccano questo rettangolo"><input type="checkbox" id="hitbox" checked> hitbox</label>
 			<label>squadra <select id="squadra"><option value="0">Rosso</option><option value="1">Blu</option><option value="2">Verde</option><option value="3">Oro</option></select></label>
 			<span id="pelli" title="I pezzi disegnati sullo stampino (strumenti/stampino)"></span>
 		</div>
@@ -230,7 +232,23 @@ const CANALI = [
 	{ id: "alza_d", nome: "Piede dietro, alza", tipo: "len" },
 	{ id: "ala", nome: "Ala", tipo: "ang" },
 	{ id: "coda", nome: "Coda", tipo: "ang" },
+	// gli spostamenti in tutte le direzioni (Trascina: sposta): nella linea del
+	// tempo e fra i canali compaiono quando hanno chiavi o sono scelti
+	{ id: "corpo_x", nome: "Corpo, avanti e indietro", tipo: "len", extra: true },
+	{ id: "testa_x", nome: "Testa, avanti e indietro", tipo: "len", extra: true },
+	{ id: "braccio_a_x", nome: "Braccio davanti, avanti e indietro", tipo: "len", extra: true },
+	{ id: "braccio_a_y", nome: "Braccio davanti, su e giù", tipo: "len", extra: true },
+	{ id: "braccio_d_x", nome: "Braccio dietro, avanti e indietro", tipo: "len", extra: true },
+	{ id: "braccio_d_y", nome: "Braccio dietro, su e giù", tipo: "len", extra: true },
+	{ id: "gamba_a_x", nome: "Piede davanti, avanti e indietro", tipo: "len", extra: true },
+	{ id: "gamba_d_x", nome: "Piede dietro, avanti e indietro", tipo: "len", extra: true },
+	{ id: "ala_x", nome: "Ala, avanti e indietro", tipo: "len", extra: true },
+	{ id: "ala_y", nome: "Ala, su e giù", tipo: "len", extra: true },
+	{ id: "coda_x", nome: "Coda, avanti e indietro", tipo: "len", extra: true },
+	{ id: "coda_y", nome: "Coda, su e giù", tipo: "len", extra: true },
 ];
+// un canale si vede se è di quelli di sempre, ha chiavi in questa clip o è scelto
+function visibile(ch) { const k = clip().tracce[ch.id]; return !ch.extra || ch.id === canale || !!(k && k.length); }
 const NEUTRO = { schiaccia: 1 };
 CANALI.forEach((c) => { if (NEUTRO[c.id] === undefined) NEUTRO[c.id] = 0; });
 const LIMITI = { ang: [-180, 180, 1], len: [-60, 60, 0.5], scala: [0.4, 1.6, 0.01] };
@@ -567,7 +585,10 @@ function disegna(dt) {
 	g.lineWidth = 1 / s;
 	g.strokeStyle = css.getPropertyValue("--riga");
 	for (let y = 50; y < 600; y += 50) { g.beginPath(); g.moveTo(-1000, y); g.lineTo(1000, y); g.stroke(); }
-	g.strokeStyle = css.getPropertyValue("--terra");
+	// il pavimento: dove poggiano i piedi nel gioco (la posizione del robot)
+	g.fillStyle = css.getPropertyValue("--suolo");
+	g.fillRect(-1000, -200, 2000, 200);
+	g.strokeStyle = css.getPropertyValue("--suolo-riga");
 	g.lineWidth = 3 / s;
 	g.beginPath(); g.moveTo(-1000, 0); g.lineTo(1000, 0); g.stroke();
 
@@ -580,14 +601,15 @@ function disegna(dt) {
 	g.beginPath(); g.ellipse(0, 0, LARGO * 1.3 / 2 * (1 + (1 - q) * 0.5), LARGO * 1.3 / 2 * 0.22, 0, 0, 2 * Math.PI); g.fill();
 	// il paracadute, dietro a tutto
 	if (nome === "paracadute") disegnaPezzo(sposta(radice, 0, D.paracadute_y), P.paracadute, null, null, null, col);
-	const corpo = ruota(sposta(radice, 0, po.salto), po.corpo + (molle ? sim.x.corpoLean : 0));
+	const corpo = ruota(sposta(radice, po.corpo_x, po.salto), po.corpo + (molle ? sim.x.corpoLean : 0));
 	const forma = scala(corpo, lx, q);
 	const gCorpo = punto(corpo, 0, 0);
 	// la coda: prima i bordi, poi i colori
 	const ang = angoliCoda(codaBase, dt || 0, molle);
-	const gCoda = punto(forma, PT.coda[0], PT.coda[1]);
+	const cx = PT.coda[0] + po.coda_x, cy = PT.coda[1] + po.coda_y;
+	const gCoda = punto(forma, cx, cy);
 	for (let strato = 0; strato < 2; strato++) {
-		let m = sposta(forma, PT.coda[0], PT.coda[1]);
+		let m = sposta(forma, cx, cy);
 		for (let i = 0; i < formaCoda.l.length; i++) {
 			if (i > 0) m = sposta(m, formaCoda.l[i - 1], 0);
 			m = ruota(m, ang[i]);
@@ -595,26 +617,37 @@ function disegna(dt) {
 		}
 	}
 	const giunto = (m, x, y, a) => ruota(sposta(m, x, y), a);
-	let m = giunto(forma, PT.ala[0], PT.ala[1], po.ala);
+	let m = giunto(forma, PT.ala[0] + po.ala_x, PT.ala[1] + po.ala_y, po.ala);
 	veste(m, "ala", "ala", punto(m, 0, 0), col);
-	m = giunto(forma, -PT.spalle[0], PT.spalle[1], braccia[1]);
+	m = giunto(forma, -PT.spalle[0] + po.braccio_d_x, PT.spalle[1] + po.braccio_d_y, braccia[1]);
 	veste(m, "braccio_dietro", "braccio_d", punto(m, 0, 0), col);
-	m = giunto(forma, -PT.anche[0], PT.anche[1] + po.alza_d, gambe[1]);
+	m = giunto(forma, -PT.anche[0] + po.gamba_d_x, PT.anche[1] + po.alza_d, gambe[1]);
 	veste(m, "gamba_dietro", "gamba_d", punto(m, 0, 0), col);
-	m = giunto(forma, PT.anche[0], PT.anche[1] + po.alza_a, gambe[0]);
+	m = giunto(forma, PT.anche[0] + po.gamba_a_x, PT.anche[1] + po.alza_a, gambe[0]);
 	veste(m, "gamba", "gamba_a", punto(m, 0, 0), col);
 	veste(sposta(forma, PT.bacino[0], PT.bacino[1]), "busto", "corpo", gCorpo, col);
-	const collo = scala(giunto(forma, PT.collo[0], PT.collo[1] + po.testa_y, testa), 1 / lx, 1 / q);
+	const collo = scala(giunto(forma, PT.collo[0] + po.testa_x, PT.collo[1] + po.testa_y, testa), 1 / lx, 1 / q);
 	veste(collo, po.viso || "testa", "testa", punto(collo, 0, 0), col);
 	// la fiammella: tre forme a scatti, trema; grande su chi è di turno
 	const f = turno ? 2.2 : 0.8;
 	const tr = Math.sin(orologio * 11) * 0.06 + Math.sin(orologio * 17.3) * 0.04;
 	const cima = ruota(scala(sposta(collo, PT.cima[0], PT.cima[1]), f * (1 - tr * 0.5), f * (1 + tr)), Math.sin(orologio * 6.7) * 0.06);
-	const fp = P["fiammella_" + (Math.floor(orologio / 0.09) % 3 + 1)];
+	const fp = P["fiammella_" + ((Math.floor(orologio / 0.09) % 3 + 3) % 3 + 1)];
 	const luce = turno ? 1 : 0.6;
 	disegnaPezzo(cima, fp, null, "testa", punto(collo, 0, 0), col.map((x) => x * luce));
-	m = giunto(forma, PT.spalle[0], PT.spalle[1], braccia[0]);
+	m = giunto(forma, PT.spalle[0] + po.braccio_a_x, PT.spalle[1] + po.braccio_a_y, braccia[0]);
 	veste(m, "braccio", "braccio_a", punto(m, 0, 0), col);
+
+	// l'hitbox: il corpo della simulazione (sim/game.lua), largo 2 * ROBOT_HALF_W e
+	// alto ROBOT_H dal centro dei piedi; colpi e terreno toccano questo, non il disegno
+	if ($("hitbox").checked) {
+		g.setTransform(...radice);
+		g.setLineDash([6 / s, 4 / s]);
+		g.lineWidth = 2 / s;
+		g.strokeStyle = css.getPropertyValue("--hitbox");
+		g.strokeRect(-LARGO / 2, 0, LARGO, DATI.corpo.ROBOT_H / K);
+		g.setLineDash([]);
+	}
 
 	// il canale scelto: il suo giunto
 	const sc = colpibili.find((x) => x.canale === canale);
@@ -646,7 +679,12 @@ function pezzoSotto(px, py) {
 }
 
 // trascinare un pezzo: ruota il suo canale attorno al giunto, o lo sposta
-const SPOSTABILI = { corpo: "salto", testa: "testa_y", gamba_a: "alza_a", gamba_d: "alza_d" };
+// i canali [avanti e indietro, su e giù] di ogni pezzo
+const SPOSTABILI = {
+	corpo: ["corpo_x", "salto"], testa: ["testa_x", "testa_y"], braccio_a: ["braccio_a_x", "braccio_a_y"],
+	braccio_d: ["braccio_d_x", "braccio_d_y"], gamba_a: ["gamba_a_x", "alza_a"], gamba_d: ["gamba_d_x", "alza_d"],
+	ala: ["ala_x", "ala_y"], coda: ["coda_x", "coda_y"],
+};
 let presa = null;
 function pixel(e) {
 	const r = palco.getBoundingClientRect(), dpr = palco.width / r.width;
@@ -658,11 +696,12 @@ palco.addEventListener("pointerdown", (e) => {
 	if (!x) return;
 	fermaPlay();
 	const muovi = (e.shiftKey || modoSposta) && SPOSTABILI[x.canale];
-	const id = muovi ? SPOSTABILI[x.canale] : x.canale;
+	const id = muovi ? muovi[1] : x.canale;
 	canale = id; chiaveScelta = null;
 	const [gx, gy] = x.giunto;
 	prima();
 	presa = { id, muovi, gx, gy, px, py, v0: valoreProprio(clip(), id, tempo), a0: Math.atan2(-(py - gy), px - gx) };
+	if (muovi) presa.x0 = valoreProprio(clip(), muovi[0], tempo);
 	palco.setPointerCapture(e.pointerId);
 	palco.style.cursor = "grabbing";
 	aggiorna();
@@ -671,8 +710,10 @@ palco.addEventListener("pointermove", (e) => {
 	const [px, py] = pixel(e);
 	if (!presa) { palco.style.cursor = pezzoSotto(px, py) ? "grab" : "default"; return; }
 	let v;
-	if (presa.muovi) v = presa.v0 - (py - presa.py) / schermo[0];
-	else {
+	if (presa.muovi) {
+		v = presa.v0 - (py - presa.py) / schermo[0];
+		metti(presa.muovi[0], Math.round((presa.x0 + (px - presa.px) / schermo[0]) * 1000) / 1000);
+	} else {
 		let d = Math.atan2(-(py - presa.gy), px - presa.gx) - presa.a0;
 		d = Math.atan2(Math.sin(d), Math.cos(d));
 		v = presa.v0 + d;
@@ -689,7 +730,8 @@ palco.addEventListener("pointercancel", lascia);
 const tl = $("tempo");
 const tg = tl.getContext("2d");
 const RIGA = 22, RIGHELLO = 24, ETICHETTE = 150;
-const RIGHE = CANALI.map((c) => c.id).concat(["viso"]);
+let RIGHE = [];
+const righe = () => (RIGHE = CANALI.filter(visibile).map((c) => c.id).concat(["viso"]));
 let tlPresa = null;
 function tlMisure() {
 	const r = tl.getBoundingClientRect();
@@ -698,6 +740,7 @@ function tlMisure() {
 const tlX = (t, M) => M.x0 + (t / clip().durata) * (M.x1 - M.x0);
 const tlT = (x, M) => Math.max(0, Math.min(clip().durata, ((x - M.x0) / (M.x1 - M.x0)) * clip().durata));
 function disegnaTempo() {
+	righe();
 	const h = RIGHELLO + RIGHE.length * RIGA + 6;
 	const dpr = window.devicePixelRatio || 1;
 	const r = tl.getBoundingClientRect();
@@ -893,6 +936,7 @@ function aggiorna() {
 		if (document.activeElement !== r) r.value = mostra;
 		if (document.activeElement !== n) n.value = Math.round(mostra * 100) / 100;
 		const riga = document.querySelector(`.canale[data-canale="${ch.id}"]`);
+		riga.hidden = !visibile(ch);
 		riga.classList.toggle("scelto", ch.id === canale);
 		const kb = riga.querySelector(".k");
 		const ha = !!chiaveA(c.tracce[ch.id], t);
@@ -949,7 +993,7 @@ $("inizio").onclick = () => { fermaPlay(); tempo = 0; aggiorna(); };
 const fotogramma = (d) => { fermaPlay(); const c = clip(); tempo = Math.max(0, Math.min(c.durata, Math.round((dentro(c, tempo) + d / 30) * 30) / 30)); orologio += d / 30; aggiorna(); };
 $("indietro").onclick = () => fotogramma(-1);
 $("avanti").onclick = () => fotogramma(1);
-["molle", "turno", "squadra"].forEach((id) => { $(id).onchange = () => aggiorna(); });
+["molle", "turno", "squadra", "hitbox"].forEach((id) => { $(id).onchange = () => aggiorna(); });
 $("sposta").onclick = () => { modoSposta = !modoSposta; $("sposta").textContent = modoSposta ? "Trascina: sposta" : "Trascina: ruota"; $("sposta").classList.toggle("acceso", modoSposta); };
 
 $("durata").onchange = () => {
