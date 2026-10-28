@@ -26,3 +26,11 @@ Con Codex le immagini non passano dalle chat di ChatGPT, quindi non restano chat
 ripulire. Le sessioni di Codex stanno solo sul PC (`%USERPROFILE%\.codex\sessions`) e le
 immagini generate in `%USERPROFILE%\.codex\generated_images`: dopo il push si possono
 cancellare tutte e due.
+
+## Fogli sullo stampino
+
+Per i pezzi del personaggio (`strumenti/stampino/`, taglio con `taglia.py --allinea`): un
+pezzo per casella, nell'ordine dello stampino, staccati fra loro, sfondo magenta; la coda
+intera con la radice più spessa della punta; il verde #00FF00 solo per il colore della
+squadra. Il disegno di riferimento va allegato per primo e il prompt deve dire che lo
+stampino serve solo per posizioni e misure, altrimenti Codex copia le forme del manichino.

@@ -1,6 +1,6 @@
 # WB-001 · Pezzi del diavoletto di Gabriella sullo stampino
 
-- **Stato:** APPROVATA
+- **Stato:** IMPLEMENTATA
 - **Data:** 2026-10-28
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-001`
 
@@ -142,6 +142,22 @@ la decisione sulla coda a segmenti riguarda il montaggio nel gioco.
 
 ## Resoconto di Claude
 
-Taglio previsto, dal ramo della PR #55:
-`python3 strumenti/stampino/taglia.py art/WB-001/foglio_rosso.png --nome gabriella --categoria personaggio --allinea`
-(e `foglio_squadra.png` con `--nome gabriella_squadra`), poi prova nell'editor e nella simulazione.
+2026-10-28. Fogli guardati: tutti e due usabili, il diavoletto è quello di Gabriella (forme,
+faccia, stile dipinto, contorno nero), quattro espressioni, coda continua col tridente.
+Lo sfondo non è #FF00FF esatto (~250,3,250): il taglio lo accetta lo stesso.
+
+- Taglio: `strumenti/stampino/taglia.py --categoria personaggio --allinea`, pelli `gabriella`
+  e `gabriella_squadra`, sul ramo della PR #55 (commit 06b998a). Il primo taglio montava male
+  (braccio fin sulla bocca, coda minuscola o staccata, ala spostata, busto piccolo): il thread
+  dell'editor ha rifatto `--allinea` per i pezzi che sostituiscono (ogni pezzo alla casella
+  più vicina, scala sull'area del manichino, perno nello stesso punto relativo, coda seguita
+  dalla radice alla punta e divisa in 5).
+- Verificato: montato nell'editor delle animazioni (https://claude.ai/artifact/YJeMenvfJLGmto89yAbKJ5),
+  foto in `/mnt/project-files/WB-001/montato_rosso.png` e `montato_squadra_blu.png`; la
+  canottiera del foglio squadra prende il colore della squadra.
+- Non verificato: simulazione del gioco e telefono (le pelli sono sul ramo della PR #55, non
+  ancora su main). Nel foglio rosso la coda resta quasi tutta dietro il corpo, si vede solo
+  il tridente: più piccola che nel foglio squadra.
+
+Per le prossime schede sullo stampino: un pezzo per casella, nell'ordine dello stampino,
+staccati fra loro; la coda con la radice più spessa della punta.
