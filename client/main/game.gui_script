@@ -187,7 +187,7 @@ if FISICA ~= "" then game.use_physics(FISICA) end
 -- Proiettili e casse si disegnano in proporzione al robot della simulazione
 -- senza l'ingrandimento del corpo: 16 pixel nel profilo megablast, 28 in quello
 -- di Blastron
-local K = game.ROBOT_H / game.CORPO / 16
+local K = game.DISEGNO_H / game.CORPO / 16
 
 local VK = vmath.vector3(K, K, 1)
 
@@ -556,7 +556,7 @@ local function new_match(self, seed, map, opts)
 	self.sent = {}
 	-- la camera parte già su chi tocca
 	local rb = self.g.robots[self.g.current]
-	camera.salta(self.cam, rb.x, rb.y + game.ROBOT_H / 2, camera.zoom(self.cam))
+	camera.salta(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
 	self.cam_sosta = 0
 	self.fermo = 0
 end
@@ -635,7 +635,7 @@ local function colpo_da(self, i)
 	if self.colpo_t and self.clock - self.colpo_t < 0.5 then return self.colpo_x, self.colpo_y end
 	local v = self.view[self.g.current]
 	if self.g.current == i then return v.x - 1, v.y end
-	return v.x, v.y + game.ROBOT_H / 2
+	return v.x, v.y + game.DISEGNO_H / 2
 end
 
 -- Onda d'urto del Pugno del Titano: un anello di brace che si allarga
@@ -1124,7 +1124,7 @@ local function aim_from(self, x, y, snap)
 	local rb = current_robot(self)
 	self.aim_sx, self.aim_sy = x, y
 	local wx, wy = camera.al_mondo(self.cam, x, y)
-	local dx, dy = wx - rb.x, wy - (rb.y + game.ROBOT_H / 2)
+	local dx, dy = wx - rb.x, wy - (rb.y + game.DISEGNO_H / 2)
 	self.aim_target = math.atan2(dy, dx)
 	if snap or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = self.aim_target end
 	self.aim_dist = math.sqrt(dx * dx + dy * dy) * self.cam.s
@@ -1398,7 +1398,7 @@ local function render(self, dt)
 				-- il colpo: lampo e spinta sul bersaglio, scossa e hit-stop
 				local danno = v.hp - hp
 				local cx, cy = colpo_da(self, i)
-				local dx, dy = v.x - cx, v.y + game.ROBOT_H / 2 - cy
+				local dx, dy = v.x - cx, v.y + game.DISEGNO_H / 2 - cy
 				scoria.hit(r.rig, dx)
 				camera.scuoti(self.cam, dx, dy, SCOSSA_BASE + danno * SCOSSA_DANNO)
 				self.fermo = math.max(self.fermo, FERMO_MIN + (FERMO_MAX - FERMO_MIN) * math.min(1, danno / 50))
@@ -1519,7 +1519,7 @@ local function render(self, dt)
 			local hand = self.view[rb.hooked.by or self.rope]
 			local x0, y0 = hand.x + g.robots[rb.hooked.by or self.rope].facing * game.MUZZLE * 0.5, hand.y + game.SWORD_PIVOT_Y
 			local x1, y1 = rb.hooked.x, rb.hooked.y
-			if rb.hooked.by then x1, y1 = self.view[self.rope].x, self.view[self.rope].y + game.ROBOT_H / 2 end
+			if rb.hooked.by then x1, y1 = self.view[self.rope].x, self.view[self.rope].y + game.DISEGNO_H / 2 end
 			local dx, dy = x1 - x0, y1 - y0
 			set_pos(n, (x0 + x1) / 2, (y0 + y1) / 2)
 			gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), 1.5 * K, 0))
@@ -1760,7 +1760,7 @@ local function render(self, dt)
 	if self.mode == "menu" then
 		camera.segui(c, dt, game.WORLD_W / 2, game.WORLD_H / 2, camera.tutta(c))
 	else
-		local fx, fy, veloce = v.x, v.y + game.ROBOT_H / 2, false
+		local fx, fy, veloce = v.x, v.y + game.DISEGNO_H / 2, false
 		self.cam_sosta = math.max(0, self.cam_sosta - dt)
 		if missile or egg then
 			fx, fy, veloce = self.fuoco_x, self.fuoco_y, true
@@ -1797,9 +1797,13 @@ function init(self)
 	self.mondo = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(self.mondo, false)
 
+	-- prova_pelli elmo_x,corazza_y: tutti con quelle pelli addosso (battaglia/pelli.lua),
+	-- finché non c'è l'armeria che le sceglie
+	local look = {}
+	for nome in config_string("megablast.prova_pelli", ""):gmatch("[%w_]+") do look[#look + 1] = nome end
 	self.robots = {}
 	for i = 1, game.MAX_PLAYERS do
-		local r = { rig = scoria.new(TEAM_COLORS[i]), st = {} }
+		local r = { rig = scoria.new(TEAM_COLORS[i], look), st = {} }
 		self.robots[i] = r
 	end
 
@@ -2122,7 +2126,7 @@ function update(self, dt)
 	if SIMULA and self.g then
 		-- sx, sy: il centro del robot sullo schermo (dove si appoggia il mouse per mirare)
 		local rb = current_robot(self)
-		local sx, sy = camera.allo_schermo(self.cam, rb.x, rb.y + game.ROBOT_H / 2)
+		local sx, sy = camera.allo_schermo(self.cam, rb.x, rb.y + game.DISEGNO_H / 2)
 		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f",
 			self.mode, self.g.current, self.g.phase, math.floor(rb.x), math.floor(rb.y),
 			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s)

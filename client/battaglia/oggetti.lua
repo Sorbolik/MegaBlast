@@ -81,7 +81,7 @@ end
 function M.new(colori)
 	local o = { colori = colori, posati = {}, cure = {}, scudi = {}, fiamme = {}, geli = {}, crepe = {},
 		col = vmath.vector4(), size = vmath.vector3(), rot = vmath.vector3() }
-	local h = game.ROBOT_H
+	local h = game.DISEGNO_H
 	for i = 1, config.MAX_PLACED do
 		local root = nodo(0, 0, BIANCO)
 		local t = trappola(config.STATS.trap_radius, root)
@@ -186,7 +186,7 @@ function M.update(o, g, view, clock)
 			local c = o.colori[rb.team]
 			o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 0.35 + 0.25 * rb.shield / config.SHIELD.hp
 			gui.set_color(o.scudi[i], o.col)
-			pos(o.scudi[i], v.x, v.y + game.ROBOT_H / 2)
+			pos(o.scudi[i], v.x, v.y + game.DISEGNO_H / 2)
 		end
 		-- effetti di stato
 		local st = rb ~= nil and not rb.dead and rb.status or nil
@@ -194,15 +194,15 @@ function M.update(o, g, view, clock)
 		gui.set_enabled(o.fiamme[i], burn ~= nil)
 		if burn then
 			-- la fiamma tremola
-			local d = game.ROBOT_H * (0.32 + 0.06 * math.sin(clock * 17 + i * 2))
+			local d = game.DISEGNO_H * (0.32 + 0.06 * math.sin(clock * 17 + i * 2))
 			o.size.x, o.size.y = d, d * 1.3
 			gui.set_size(o.fiamme[i], o.size)
-			pos(o.fiamme[i], v.x, v.y + game.ROBOT_H * 1.05)
+			pos(o.fiamme[i], v.x, v.y + game.DISEGNO_H * 1.05)
 		end
 		gui.set_enabled(o.geli[i], slow ~= nil)
 		if slow then pos(o.geli[i], v.x, v.y + 1) end
 		gui.set_enabled(o.crepe[i], cracked ~= nil)
-		if cracked then pos(o.crepe[i], v.x, v.y + game.ROBOT_H * 0.55) end
+		if cracked then pos(o.crepe[i], v.x, v.y + game.DISEGNO_H * 0.55) end
 	end
 end
 

@@ -1,0 +1,253 @@
+{
+ "nome": "gabriella_squadra",
+ "categoria": "personaggio",
+ "coda": [
+  17.6,
+  25.2,
+  28.1,
+  31.4,
+  25.7
+ ],
+ "coda_riposo": [
+  3.757,
+  3.277,
+  2.298,
+  1.191,
+  2.099
+ ],
+ "pezzi": {
+  "testa": {
+   "img": "gabriella_squadra_testa",
+   "x": 6.3,
+   "y": 54.1,
+   "w": 121.7,
+   "h": 145.7,
+   "modo": "sostituisce"
+  },
+  "testa_colpita": {
+   "img": "gabriella_squadra_testa_colpita",
+   "x": 6.2,
+   "y": 54.2,
+   "w": 119.7,
+   "h": 146.0,
+   "modo": "sostituisce"
+  },
+  "testa_felice": {
+   "img": "gabriella_squadra_testa_felice",
+   "x": 6.3,
+   "y": 54.3,
+   "w": 121.7,
+   "h": 146.3,
+   "modo": "sostituisce"
+  },
+  "testa_ko": {
+   "img": "gabriella_squadra_testa_ko",
+   "x": 6.3,
+   "y": 54.6,
+   "w": 120.3,
+   "h": 146.9,
+   "modo": "sostituisce"
+  },
+  "coda_1_bordo": {
+   "img": "gabriella_squadra_coda_1_bordo",
+   "x": 10.8,
+   "y": 0.7,
+   "w": 27.7,
+   "h": 15.7,
+   "modo": "sostituisce"
+  },
+  "coda_1": {
+   "img": "gabriella_squadra_coda_1",
+   "x": 13.0,
+   "y": 0.1,
+   "w": 23.1,
+   "h": 8.3,
+   "modo": "sostituisce"
+  },
+  "coda_2_bordo": {
+   "img": "gabriella_squadra_coda_2_bordo",
+   "x": 12.0,
+   "y": 0.9,
+   "w": 38.6,
+   "h": 17.1,
+   "modo": "sostituisce"
+  },
+  "coda_2": {
+   "img": "gabriella_squadra_coda_2",
+   "x": 12.0,
+   "y": 0.1,
+   "w": 38.6,
+   "h": 10.0,
+   "modo": "sostituisce"
+  },
+  "coda_3_bordo": {
+   "img": "gabriella_squadra_coda_3_bordo",
+   "x": 11.8,
+   "y": 1.9,
+   "w": 44.9,
+   "h": 21.7,
+   "modo": "sostituisce"
+  },
+  "coda_3": {
+   "img": "gabriella_squadra_coda_3",
+   "x": 13.9,
+   "y": 1.5,
+   "w": 40.0,
+   "h": 14.0,
+   "modo": "sostituisce"
+  },
+  "coda_4_bordo": {
+   "img": "gabriella_squadra_coda_4_bordo",
+   "x": 14.0,
+   "y": 1.0,
+   "w": 46.3,
+   "h": 15.4,
+   "modo": "sostituisce"
+  },
+  "coda_4": {
+   "img": "gabriella_squadra_coda_4",
+   "x": 15.4,
+   "y": -0.2,
+   "w": 43.4,
+   "h": 9.1,
+   "modo": "sostituisce"
+  },
+  "coda_5_bordo": {
+   "img": "gabriella_squadra_coda_5_bordo",
+   "x": 24.1,
+   "y": 3.8,
+   "w": 62.6,
+   "h": 46.0,
+   "modo": "sostituisce"
+  },
+  "coda_5": {
+   "img": "gabriella_squadra_coda_5",
+   "x": 21.4,
+   "y": 3.2,
+   "w": 52.6,
+   "h": 32.3,
+   "modo": "sostituisce"
+  },
+  "busto": {
+   "img": "gabriella_squadra_busto",
+   "x": 0.0,
+   "y": 12.2,
+   "w": 71.1,
+   "h": 101.4,
+   "modo": "sostituisce",
+   "tinta": "gabriella_squadra_busto_tinta"
+  },
+  "ala": {
+   "img": "gabriella_squadra_ala",
+   "x": -17.4,
+   "y": 4.8,
+   "w": 48.6,
+   "h": 55.7,
+   "modo": "sostituisce"
+  },
+  "gamba": {
+   "img": "gabriella_squadra_gamba",
+   "x": 4.4,
+   "y": -33.1,
+   "w": 54.6,
+   "h": 88.3,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "gabriella_squadra_gamba_dietro",
+   "x": 4.6,
+   "y": -31.6,
+   "w": 57.4,
+   "h": 84.3,
+   "modo": "sostituisce"
+  },
+  "braccio": {
+   "img": "gabriella_squadra_braccio",
+   "x": 1.8,
+   "y": -24.7,
+   "w": 31.4,
+   "h": 69.7,
+   "modo": "sostituisce"
+  },
+  "braccio_dietro": {
+   "img": "gabriella_squadra_braccio_dietro",
+   "x": 1.8,
+   "y": -24.7,
+   "w": 31.4,
+   "h": 69.7,
+   "modo": "sostituisce"
+  },
+  "omero_bordo": {
+   "img": "gabriella_squadra_omero_bordo",
+   "x": 7.1,
+   "y": 0.0,
+   "w": 31.7,
+   "h": 49.7,
+   "modo": "sostituisce"
+  },
+  "omero": {
+   "img": "gabriella_squadra_omero",
+   "x": 7.1,
+   "y": 0.0,
+   "w": 16.3,
+   "h": 34.3,
+   "modo": "sostituisce"
+  },
+  "avambraccio_bordo": {
+   "img": "gabriella_squadra_avambraccio_bordo",
+   "x": 7.5,
+   "y": 0.0,
+   "w": 31.1,
+   "h": 49.4,
+   "modo": "sostituisce"
+  },
+  "avambraccio": {
+   "img": "gabriella_squadra_avambraccio",
+   "x": 7.5,
+   "y": 0.0,
+   "w": 15.7,
+   "h": 34.0,
+   "modo": "sostituisce"
+  },
+  "pugno": {
+   "img": "gabriella_squadra_pugno",
+   "x": 0.0,
+   "y": 0.0,
+   "w": 29.4,
+   "h": 30.0,
+   "modo": "sostituisce"
+  },
+  "omero_dietro": {
+   "img": "gabriella_squadra_omero_dietro",
+   "x": 7.1,
+   "y": 0.0,
+   "w": 16.3,
+   "h": 34.3,
+   "modo": "sostituisce"
+  },
+  "avambraccio_dietro": {
+   "img": "gabriella_squadra_avambraccio_dietro",
+   "x": 7.5,
+   "y": 0.0,
+   "w": 15.7,
+   "h": 34.0,
+   "modo": "sostituisce"
+  },
+  "omero_dietro_bordo": {
+   "img": "gabriella_squadra_omero_dietro_bordo",
+   "x": 7.1,
+   "y": 0.0,
+   "w": 31.7,
+   "h": 49.7,
+   "modo": "sostituisce"
+  },
+  "avambraccio_dietro_bordo": {
+   "img": "gabriella_squadra_avambraccio_dietro_bordo",
+   "x": 7.5,
+   "y": 0.0,
+   "w": 31.1,
+   "h": 49.4,
+   "modo": "sostituisce"
+  }
+ }
+}

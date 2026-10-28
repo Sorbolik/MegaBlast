@@ -2,11 +2,11 @@
 -- di pezzi disegnati a vettori (strumenti/grafica/diavoletto.py ->
 -- battaglia/diavoletto.lua) e animati qui nel codice: niente fotogrammi, così
 -- il movimento è fluido a qualsiasi frequenza e l'atlante pesa poco. Dai piedi
--- alla cima della testa è alto come il corpo della simulazione (ROBOT_H);
+-- alla cima della testa è alto come il corpo della simulazione (DISEGNO_H);
 -- corna, coda e fiammella escono.
 --
 -- Lo usano la battaglia (game.gui_script), la home (menu/home.lua) e il podio:
---   local s = scoria.new(colore)
+--   local s = scoria.new(colore, look)  -- look: le pelli addosso (battaglia/pelli.lua)
 --   scoria.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
 --   scoria.set_weapon(s, nome) / hit(s, dx) / fire(s, tipo) / lunge(s) / die(s)
 --   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
@@ -21,24 +21,58 @@
 -- mira vince su tutto tranne la sconfitta: anche in aria, correndo o colpiti.
 --
 -- Il movimento è fatto di molle (schiaccia e allunga, inclinazione, spinta del
--- colpo, rinculo, testa, coda, fiammella) e di pose per stato, scelte in
--- ordine: sconfitta (cade all'indietro e svanisce), colpito (lampo bianco,
--- faccia colpita, braccia all'aria), paracadute (appeso alle cinghie, gambe
--- unite che dondolano), aria (gambe raccolte salendo, avanti scendendo, l'ala
--- sbatte), corsa (passi con la strada fatta, braccia opposte), vittoria (salta
--- con le braccia in alto), fermo (respira; chi non è di turno fa ogni tanto una
--- scenetta a caso: si gratta la testa, sbadiglia, guarda la coda). Spinto o
--- trascinato senza comandi non corre: resta fermo.
+-- colpo, rinculo, testa, coda, fiammella) e di pose per stato, che sono clip a
+-- fotogrammi chiave (battaglia/animazioni.lua, fatte con l'editor
+-- strumenti/animazioni/editor.html; le campiona battaglia/pose.lua) e danno le
+-- mete alle molle e agli arti. Gli stati, in ordine: sconfitta (cade
+-- all'indietro e svanisce), colpito (lampo bianco, faccia colpita, braccia
+-- all'aria), paracadute (appeso alle cinghie, gambe unite che dondolano), aria
+-- (l'ala sbatte, gambe raccolte salendo e avanti scendendo: le clip sale e
+-- scende pesate con la velocità), corsa (guidata dalla strada fatta, sfuma nel
+-- fermo), vittoria (salta con le braccia in alto), fermo (respira; chi non è di
+-- turno fa ogni tanto una scenetta a caso: naso, sbadiglio, guarda_coda). Quello
+-- che dipende dal gioco resta nel codice: inclinazione e coda con la velocità,
+-- il dondolo del paracadute, la mira, le braccia sull'arma. Spinto o trascinato
+-- senza comandi non corre: resta fermo.
+-- Le pelli (battaglia/pelli.lua, disegnate sullo stampino: strumenti/stampino)
+-- cambiano i pezzi o ci vanno sopra, negli stessi giunti: si muovono con le
+-- stesse animazioni. Una testa nuova senza le sue facce le fa tutte; coda e
+-- braccia sull'arma nuove hanno bordo e colore a parte come quelle di base; le
+-- parti col colore della squadra hanno il loro strato, come la fiammella.
+-- I perni di testa, braccia, gambe e ala si spostano dall'editor delle
+-- animazioni (battaglia/perni.lua): cambia il punto in cui il pezzo gira, non
+-- dove sta da fermo.
 -- La fiammella ha il colore della squadra ed è l'indicatore di chi gioca: su chi
 -- è di turno è grande e accesa, sugli altri piccola e più scura.
 
 local game = require "sim.game"
 local D = require "battaglia.diavoletto"
 local DA = require("battaglia.armi").armi
+local pose = require "battaglia.pose"
+local A = require "battaglia.animazioni"
+local PELLI = require "battaglia.pelli"
+local PERNI = require "battaglia.perni"
 
 local M = {}
 
 local P, PT = D.pezzi, D.punti
+
+-- dove gira ogni posto nel corpo fermo: il punto dello scheletro più il perno
+-- spostato (battaglia/perni.lua); i pezzi del posto si spostano al contrario
+local FERMO = { 0, 0 }
+local function sposto(posto) return PERNI[posto] or FERMO end
+local function perno(posto, x, y)
+	local d = sposto(posto)
+	return { x + d[1], y + d[2] }
+end
+local J = {
+	testa = perno("testa", PT.collo[1], PT.collo[2]),
+	braccio = perno("braccio", PT.spalle[1], PT.spalle[2]),
+	braccio_dietro = perno("braccio_dietro", -PT.spalle[1], PT.spalle[2]),
+	gamba = perno("gamba", PT.anche[1], PT.anche[2]),
+	gamba_dietro = perno("gamba_dietro", -PT.anche[1], PT.anche[2]),
+	ala = perno("ala", PT.ala[1], PT.ala[2]),
+}
 
 local sin, cos, min, max, abs, pi, sqrt = math.sin, math.cos, math.min, math.max, math.abs, math.pi, math.sqrt
 local atan2, acos = math.atan2, math.acos
@@ -61,8 +95,8 @@ local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25, 0.4 }
 
 -- altezza del diavoletto dai piedi alla cima della fiammella com'è ora (grande
 -- su chi è di turno), per mettere sopra la targa
-local CIMA_FIAMMA = (PT.collo[2] + PT.cima[2]) * game.ROBOT_H / D.altezza
-local FIAMMA_H = P.fiammella_1.h * 0.8 * game.ROBOT_H / D.altezza
+local CIMA_FIAMMA = (PT.collo[2] + PT.cima[2]) * game.DISEGNO_H / D.altezza
+local FIAMMA_H = P.fiammella_1.h * 0.8 * game.DISEGNO_H / D.altezza
 function M.altezza(s)
 	return CIMA_FIAMMA + FIAMMA_H * s.x[FUOCO]
 end
@@ -70,12 +104,10 @@ end
 -- un passo: la strada che fa il corpo mentre una gamba fa un'oscillazione
 -- intera, in altezze del personaggio
 local PASSO = 0.9
--- quanto durano le azioni a tempo (secondi)
-local DURATA = { colpito = 0.45 }
 -- la testa guarda dove si mira, fino a questo angolo (radianti) in su e in giù
 local TESTA_SU, TESTA_GIU = 0.45, 0.3
--- la sconfitta: cade in questo tempo, poi svanisce
-local CADE, SVANISCE = 0.5, 0.6
+-- la sconfitta: dopo la caduta (la clip) svanisce in questo tempo
+local CADE, SVANISCE = A.sconfitta.durata, 0.6
 -- fermo, chi non è di turno fa ogni tanto una scenetta a caso: fra una e l'altra
 -- da PAUSA_DA a PAUSA_DA + PAUSA_A secondi (math.random: solo grafica, la
 -- simulazione ha il suo generatore)
@@ -125,21 +157,75 @@ local function giunto(parent, x, y)
 	return n
 end
 -- un pezzo disegnato (p di diavoletto.lua), k unità del mondo per unità del
--- disegno, nel giunto parent; col lampo del colpo se non è tinto
-local function pezzo(s, parent, p, k)
-	local n = box(parent, p.x * k, p.y * k, p.w * k, p.h * k)
+-- disegno, nel giunto parent spostato al contrario del perno d; col lampo del
+-- colpo se non è tinto (o se lampo)
+local function pezzo(s, parent, p, k, lampo, d)
+	d = d or FERMO
+	local x, y = (p.x - d[1]) * k, (p.y - d[2]) * k
+	local n = box(parent, x, y, p.w * k, p.h * k)
 	gui.set_texture(n, "diavoletto")
 	gui.play_flipbook(n, p.img)
 	if p.tinta then
-		local t = box(parent, p.x * k, p.y * k, p.w * k, p.h * k)
+		local t = box(parent, x, y, p.w * k, p.h * k)
 		gui.set_texture(t, "diavoletto")
 		gui.play_flipbook(t, p.tinta)
 		s.tinte[#s.tinte + 1] = t
-	else
+	end
+	if lampo or not p.tinta then
 		gui.set_material(n, "lampo")
 		s.lampi[#s.lampi + 1] = n
 	end
 	return n
+end
+
+-- le facce: una testa nuova senza le sue facce fa anche quelle
+local FACCE = { "testa", "testa_colpita", "testa_felice", "testa_ko" }
+
+-- i bordi delle braccia sull'arma di dietro: quelli di base sono gli stessi davanti e dietro
+local BASE = { omero_dietro_bordo = "omero_bordo", avambraccio_dietro_bordo = "avambraccio_bordo" }
+
+-- I pezzi di ogni posto con addosso le pelli di look (nomi di battaglia/pelli.lua,
+-- una per categoria): per posto, i pezzi dal basso. Il primo è quello di base o
+-- quello che lo sostituisce, poi quelli sopra, nell'ordine delle categorie. Torna
+-- anche la coda: lunghezze dei segmenti e angoli a riposo, di base o della pelle
+-- che l'ha cambiata.
+local function vesti(look)
+	local per = {}
+	for i = 1, #(look or {}) do
+		local pelle = PELLI.pelli[look[i]]
+		assert(pelle, "pelle sconosciuta: " .. tostring(look[i]))
+		per[pelle.categoria] = pelle
+	end
+	local V = {}
+	local function strati(posto)
+		V[posto] = V[posto] or { P[BASE[posto] or posto] or false }
+		return V[posto]
+	end
+	local function metti(posto, p)
+		local l = strati(posto)
+		if p.modo == "sostituisce" then l[1] = p else l[#l + 1] = p end
+	end
+	local coda = { l = D.coda, riposo = D.coda_riposo }
+	for _, categorie in ipairs({ PELLI.sostituisce, PELLI.sopra }) do
+		for _, c in ipairs(categorie) do
+			local pz = per[c] and per[c].pezzi
+			if per[c] and per[c].coda then coda = { l = per[c].coda, riposo = per[c].coda_riposo } end
+			if pz then
+				for posto, p in pairs(pz) do metti(posto, p) end
+				for i = 2, #FACCE do
+					if pz.testa and not pz[FACCE[i]] then metti(FACCE[i], pz.testa) end
+				end
+			end
+		end
+	end
+	return strati, coda
+end
+
+-- i pezzi di un posto (vesti) nel giunto parent
+local function veste(s, parent, posto, k)
+	for _, p in ipairs(s.strati(posto)) do
+		if p then pezzo(s, parent, p, k, true, sposto(posto)) end
+	end
 end
 
 -- Le armi in mano, attorno alla spalla: angolo di riposo (radianti, verso avanti).
@@ -180,25 +266,30 @@ end
 -- gomito (piega) verso la mano sull'arma
 local function braccio_arma(s, parent, pugno_parent, k, dietro)
 	local b = { ossa = {} }
-	local nomi = { "omero_bordo", "avambraccio_bordo", dietro and "omero_dietro" or "omero",
-		dietro and "avambraccio_dietro" or "avambraccio" }
+	local d = dietro and "_dietro" or ""
+	local nomi = { "omero" .. d .. "_bordo", "avambraccio" .. d .. "_bordo", "omero" .. d, "avambraccio" .. d }
 	for i = 1, 4 do
 		local g = giunto(parent, 0, 0)
-		pezzo(s, g, P[nomi[i]], k)
+		veste(s, g, nomi[i], k)
 		b.ossa[i] = g
 	end
 	b.pugno = giunto(pugno_parent, 0, 0)
-	pezzo(s, b.pugno, P.pugno, k)
+	veste(s, b.pugno, "pugno", k)
 	return b
 end
 
-function M.new(color)
-	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
+function M.new(color, look)
+	local H = game.DISEGNO_H
+	-- largo tre quarti dell'altezza, come la capsula di partenza (sim/corpo.lua)
+	local Wd = H * 0.75
 	local k = H / D.altezza
 	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, tinte_arma = {}, lampi = {},
+		teste = {}, teste_t = {}, facce = {},
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
-		-- gli angoli (in radianti) e le mete delle braccia e delle gambe che pendono
-		braccia = { 0, 0 }, gambe = { 0, 0 }, meta_braccia = { 0, 0 }, meta_gambe = { 0, 0 }, alza = { 0, 0 } }
+		-- la posa delle clip di questo frame e gli angoli (radianti) delle
+		-- braccia e delle gambe che pendono, che la inseguono
+		posa = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
+	s.strati, s.forma_coda = vesti(look)
 	s.root = giunto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
@@ -221,24 +312,24 @@ function M.new(color)
 	-- fiammella, il braccio davanti
 	for strato = 1, 2 do
 		local padre, x, y = s.forma, PT.coda[1] * k, PT.coda[2] * k
-		for i = 1, #D.coda do
+		for i = 1, #s.forma_coda.l do
 			padre = giunto(padre, x, y)
-			pezzo(s, padre, P["coda_" .. i .. (strato == 1 and "_bordo" or "")], k)
+			veste(s, padre, "coda_" .. i .. (strato == 1 and "_bordo" or ""), k)
 			s.coda[i] = s.coda[i] or {}
 			s.coda[i][strato] = padre
-			x, y = D.coda[i] * k, 0
+			x, y = s.forma_coda.l[i] * k, 0
 		end
 	end
-	s.ala = giunto(s.forma, PT.ala[1] * k, PT.ala[2] * k)
-	pezzo(s, s.ala, P.ala, k)
-	s.braccio_d = giunto(s.forma, -PT.spalle[1] * k, PT.spalle[2] * k)
-	pezzo(s, s.braccio_d, P.braccio_dietro, k)
-	s.gamba_d = giunto(s.forma, -PT.anche[1] * k, PT.anche[2] * k)
-	pezzo(s, s.gamba_d, P.gamba_dietro, k)
-	s.gamba_a = giunto(s.forma, PT.anche[1] * k, PT.anche[2] * k)
-	pezzo(s, s.gamba_a, P.gamba, k)
+	s.ala = giunto(s.forma, J.ala[1] * k, J.ala[2] * k)
+	veste(s, s.ala, "ala", k)
+	s.braccio_d = giunto(s.forma, J.braccio_dietro[1] * k, J.braccio_dietro[2] * k)
+	veste(s, s.braccio_d, "braccio_dietro", k)
+	s.gamba_d = giunto(s.forma, J.gamba_dietro[1] * k, J.gamba_dietro[2] * k)
+	veste(s, s.gamba_d, "gamba_dietro", k)
+	s.gamba_a = giunto(s.forma, J.gamba[1] * k, J.gamba[2] * k)
+	veste(s, s.gamba_a, "gamba", k)
 	s.busto = giunto(s.forma, PT.bacino[1] * k, PT.bacino[2] * k)
-	pezzo(s, s.busto, P.busto, k)
+	veste(s, s.busto, "busto", k)
 	-- l'arma gira attorno alla spalla, sul corpo (non sulla forma: schiacciandosi
 	-- non si storce la mira); sopra, i pugni e il braccio davanti
 	s.spalla = giunto(s.corpo, PT.spalla_arma[1] * k, PT.spalla_arma[2] * k)
@@ -246,13 +337,25 @@ function M.new(color)
 	-- testa: sta sulla forma, in un giunto che toglie la schiacciata
 	s.arma_dietro = giunto(s.forma, 0, 0)
 	s.mano_d = braccio_arma(s, s.arma_dietro, s.corpo, k, true)
-	s.collo = giunto(s.forma, PT.collo[1] * k, PT.collo[2] * k)
-	s.testa = pezzo(s, s.collo, P.testa, k)
-	s.cima = giunto(s.collo, PT.cima[1] * k, PT.cima[2] * k)
+	s.collo = giunto(s.forma, J.testa[1] * k, J.testa[2] * k)
+	-- la testa: tanti pezzi quanti ne ha la faccia con più strati, ognuno col suo
+	-- strato del colore della squadra; li cambia faccia()
+	local strati = 0
+	for _, f in ipairs(FACCE) do
+		s.facce[f] = s.strati(f)
+		strati = max(strati, #s.facce[f])
+	end
+	for i = 1, strati do
+		s.teste[i] = pezzo(s, s.collo, s.facce.testa[i] or s.facce.testa[1], k, true, sposto("testa"))
+		s.teste_t[i] = box(s.collo, 0, 0, 0, 0)
+		gui.set_texture(s.teste_t[i], "diavoletto")
+		s.tinte[#s.tinte + 1] = s.teste_t[i]
+	end
+	s.cima = giunto(s.collo, (PT.cima[1] - sposto("testa")[1]) * k, (PT.cima[2] - sposto("testa")[2]) * k)
 	s.fuoco = pezzo(s, s.cima, P.fiammella_1, k)
 	s.fuoco_tinta = s.tinte[#s.tinte]
-	s.braccio_a = giunto(s.forma, PT.spalle[1] * k, PT.spalle[2] * k)
-	pezzo(s, s.braccio_a, P.braccio, k)
+	s.braccio_a = giunto(s.forma, J.braccio[1] * k, J.braccio[2] * k)
+	veste(s, s.braccio_a, "braccio", k)
 
 	for name in pairs(ARMI) do arma(s, name, color) end
 	-- i giunti dei pugni sono già sul corpo (prima dell'arma, dopo la forma):
@@ -287,7 +390,22 @@ end
 local function faccia(s, nome)
 	if s.faccia ~= nome then
 		s.faccia = nome
-		gui.play_flipbook(s.testa, P[nome].img)
+		local f, k, d = s.facce[nome], s.k, sposto("testa")
+		for i = 1, #s.teste do
+			local n, t, p = s.teste[i], s.teste_t[i], f[i]
+			gui.set_enabled(n, p ~= nil)
+			gui.set_enabled(t, p ~= nil and p.tinta ~= nil)
+			if p then
+				gui.play_flipbook(n, p.img)
+				pos(n, (p.x - d[1]) * k, (p.y - d[2]) * k)
+				size(n, p.w * k, p.h * k)
+				if p.tinta then
+					gui.play_flipbook(t, p.tinta)
+					pos(t, (p.x - d[1]) * k, (p.y - d[2]) * k)
+					size(t, p.w * k, p.h * k)
+				end
+			end
+		end
 	end
 end
 
@@ -298,8 +416,9 @@ function M.reset(s)
 	s.azione, s.azione_t = nil, 0
 	s.vy, s.vx, s.last_x, s.last_y, s.ground = 0, 0, nil, nil, true
 	s.passo, s.cammina, s.dondolo = 0, 0, 0
-	for i = 1, 2 do s.braccia[i], s.gambe[i], s.alza[i] = 0, 0, 0 end
-	for i = 1, #D.coda do s.coda_a[i] = D.coda_riposo[i] - (i > 1 and D.coda_riposo[i - 1] or 0) end
+	for i = 1, 2 do s.braccia[i], s.gambe[i] = 0, 0 end
+	local riposo = s.forma_coda.riposo
+	for i = 1, #riposo do s.coda_a[i] = riposo[i] - (i > 1 and riposo[i - 1] or 0) end
 	s.flash, s.fuoco_n, s.fuoco_t = 0, 1, 0
 	s.morte, s.morto = nil, nil
 	s.scenetta, s.scenetta_t, s.n_scenette = nil, 0, 0
@@ -333,44 +452,22 @@ local function molle(s, dt)
 	end
 end
 
--- Le scenette dell'attesa: ognuna dura un po' e dice, a u da 0 a 1, cosa fanno
--- testa, braccia e coda. Il braccio davanti alzato di pi va alla testa.
-local SCENETTE = {
-	-- si gratta la testa, guardando in su
-	naso = { durata = 2.2, posa = function(s, u)
-		local su = min(1, u * 4) * min(1, (1 - u) * 4)
-		s.meta_braccia[1] = -(2.9 + sin(u * 40) * 0.12) * su
-		s.posa_testa = 0.25 * su
-	end },
-	-- sbadiglia: testa all'indietro, bocca aperta, le braccia si stirano
-	sbadiglio = { durata = 2.4, posa = function(s, u)
-		local su = min(1, u * 3) * min(1, (1 - u) * 3)
-		s.posa_testa = 0.35 * su
-		s.meta_braccia[1], s.meta_braccia[2] = -0.7 * su, 0.7 * su
-		s.posa_sq = 1 + 0.04 * su
-		if u > 0.25 and u < 0.8 then s.posa_viso = "testa_colpita" end
-	end },
-	-- si gira a guardare la coda, che si agita
-	coda = { durata = 2.0, posa = function(s, u)
-		local su = min(1, u * 4) * min(1, (1 - u) * 4)
-		s.posa_testa = 0.5 * su
-		s.posa_coda = sin(u * 30) * 0.3 * su
-	end },
-}
-local NOMI_SCENETTE = { "naso", "sbadiglio", "coda" }
+-- Le scenette dell'attesa: clip che non girano, una a caso ogni tanto
+local SCENETTE = { "naso", "sbadiglio", "guarda_coda" }
 
 local function attesa(s, dt)
 	if s.scenetta then
-		local sc = SCENETTE[s.scenetta]
+		local sc = A[s.scenetta]
 		s.scenetta_t = s.scenetta_t + dt
-		if s.scenetta_t < sc.durata then return sc.posa(s, s.scenetta_t / sc.durata) end
+		if s.scenetta_t < sc.durata then return pose.aggiungi(s.posa, sc, s.scenetta_t, 1) end
 		s.scenetta, s.pausa = nil, PAUSA_DA + PAUSA_A * math.random()
 	end
 	s.pausa = s.pausa - dt
 	if s.pausa <= 0 then
-		s.scenetta, s.scenetta_t = NOMI_SCENETTE[math.random(#NOMI_SCENETTE)], 0
+		s.scenetta, s.scenetta_t = SCENETTE[math.random(#SCENETTE)], 0
 		s.n_scenette = s.n_scenette + 1
 	end
+	pose.aggiungi(s.posa, A.fermo, s.t, 1)
 end
 
 -- la coda: un'onda che parte dalla schiena e arriva alla punta, più la molla CODA
@@ -378,11 +475,11 @@ end
 -- segmento insegue il suo angolo un po' più piano del precedente: così il moto
 -- arriva alla punta in ritardo
 local function coda(s, dt)
-	local base = s.x[CODA]
+	local base, r = s.x[CODA], s.forma_coda.riposo
 	local prima = 0
 	for i = 1, #s.coda_a do
-		local riposo = D.coda_riposo[i] - prima
-		prima = D.coda_riposo[i]
+		local riposo = r[i] - prima
+		prima = r[i]
 		local a = riposo + (base + sin(s.t * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i)
 		s.coda_a[i] = s.coda_a[i] + (a - s.coda_a[i]) * min(1, dt * (18 - 2.5 * i))
 		rot(s.coda[i][1], s.coda_a[i])
@@ -493,19 +590,13 @@ local function braccia_arma(s, a, q, ox)
 	end
 end
 
--- Sconfitta: l'arma cade, cade all'indietro con la faccia a X, la fiammella
--- si spegne, poi svanisce. Il terreno sotto può non esserci più (il cratere),
+-- Sconfitta: l'arma cade, cade all'indietro con la faccia a X (la clip
+-- sconfitta), la fiammella si spegne, poi svanisce. Il terreno sotto può non esserci più (il cratere),
 -- quindi niente resta appoggiato: tutto svanisce
 local function morte(s, dt)
 	local t = s.morte + dt
 	s.morte = t
-	local u = min(1, t / CADE)
-	u = u * u * (3 - 2 * u)
-	rot(s.corpo, u * 1.45)
-	s.meta_gambe[1], s.meta_gambe[2] = 0.5 * u, 0.3 * u
-	s.meta_braccia[1], s.meta_braccia[2] = 0.4 * u, -0.6 * u
-	s.goal[FUOCO] = 0
-	s.goal[TESTA] = -0.3 * u
+	pose.aggiungi(s.posa, A.sconfitta, t, 1)
 	s.alpha.w = max(0, 1 - max(0, t - CADE - 0.3) / SVANISCE)
 	gui.set_color(s.root, s.alpha)
 	if s.alpha.w == 0 then
@@ -560,80 +651,61 @@ function M.update(s, dt, st)
 	local in_mano = (st.turno or st.aim ~= nil) and not s.morte and not st.vittoria and not para
 	local mira = st.aim ~= nil and not s.morte and not para
 
-	-- le mete di questo frame: a riposo, poi la posa dello stato le cambia
-	local mb, mg = s.meta_braccia, s.meta_gambe
-	mb[1], mb[2], mg[1], mg[2] = -0.12, 0.12, 0, 0
-	s.alza[1], s.alza[2] = 0, 0
+	-- la posa dello stato, dalle clip; sopra, quello che dipende dal gioco:
+	-- l'inclinazione e la coda con la velocità, la mira
+	local po = s.posa
+	pose.azzera(po)
 	local avanti = st.moving * face
 	local lean = -0.22 * max(-1, min(1, avanti / 70)) * s.cammina
-	local sq = 1 + 0.025 * sin(s.t * 2.4)
-	-- la testa ondeggia nei passi; mirando guarda dove si mira
-	local testa = sin(s.passo * 2) * 0.05 * s.cammina
-	if mira then testa = max(-TESTA_GIU, min(TESTA_SU, a * 0.5)) end
+	local sq = 0
 	-- correndo la coda si allontana dal corpo, verso dietro, e torna quando ci si
 	-- ferma; in aria segue la velocità
 	local cd = 0.2 * max(-1, min(1, avanti / 70)) * s.cammina
 	if not ground then cd = cd + max(-0.2, min(0.2, s.vy / 900)) end
-	local ala = sin(s.t * 1.3) * 0.05
-	local hop = 0
-	local viso = "testa"
 	gui.set_enabled(s.para, para)
 
 	if s.morte then
 		morte(s, dt)
-		viso = "testa_ko"
-	elseif s.azione == "colpito" and s.azione_t < DURATA.colpito then
+	elseif s.azione == "colpito" and s.azione_t < A.colpito.durata then
 		-- colpito: faccia colpita, braccia all'aria (se non tengono l'arma)
-		viso = "testa_colpita"
-		mb[1], mb[2] = -2.4, 2.4
+		pose.aggiungi(po, A.colpito, s.azione_t, 1)
 	elseif para then
-		-- appeso alle cinghie: gambe unite che dondolano, il paracadute inclinato
-		-- contro la velocità, l'ala che sbatte piano
+		-- appeso alle cinghie; il paracadute e il corpo dondolano contro la velocità
 		s.dondolo = s.dondolo + (-max(-0.35, min(0.35, s.vx / 400)) - s.dondolo) * min(1, dt * 4)
-		mb[1], mb[2] = 3.35, 2.93
-		mg[1], mg[2] = 0.2 + sin(s.t * 3) * 0.08, 0.1 + sin(s.t * 3) * 0.08
+		pose.aggiungi(po, A.paracadute, s.t, 1)
 		rot(s.para, s.dondolo * 0.6)
-		ala = sin(s.t * 5) * 0.3
 		lean = s.dondolo * 0.5
-		sq = 1
 	elseif not ground then
-		-- in aria: salendo gambe raccolte e braccia indietro, scendendo gambe
-		-- avanti per atterrare; l'ala sbatte
+		-- in aria: salendo la posa sale, scendendo la scende, e si allunga con la velocità
 		local su = max(-1, min(1, s.vy / V_SALTO))
-		mg[1], mg[2] = 0.45 * max(0, su) + 0.25 * max(0, -su), -0.3 * max(0, su) + 0.1 * max(0, -su)
-		mb[1], mb[2] = -1.0, -0.6
-		ala = sin(s.t * 14) * 0.45 - 0.2
-		sq = 1 + min(0.2, abs(s.vy) / 900)
+		pose.aggiungi(po, A.aria, s.t, 1)
+		pose.aggiungi(po, A.sale, 0, su)
+		pose.aggiungi(po, A.scende, 0, -su)
+		sq = min(0.2, abs(s.vy) / 900)
 	elseif corre or s.cammina > 0.05 then
-		-- la corsa: gambe e braccia opposte, il piede si alza quando torna avanti
+		-- la corsa: un giro della clip a ogni passo, sfuma nel fermo
 		local c = s.cammina
-		mg[1], mg[2] = sin(s.passo) * 0.6 * c, -sin(s.passo) * 0.6 * c
-		s.alza[1], s.alza[2] = max(0, cos(s.passo)) * c, max(0, -cos(s.passo)) * c
-		mb[1], mb[2] = -sin(s.passo) * 0.7 * c - 0.1, sin(s.passo) * 0.7 * c + 0.1
+		pose.aggiungi(po, A.fermo, s.t, 1 - c)
+		pose.aggiungi(po, A.corsa, s.passo / (2 * pi) * A.corsa.durata, c)
 	elseif st.vittoria then
-		-- festeggia: salta sul posto con le braccia in alto
-		local u = (s.t * 1.6) % 1
-		hop = sin(u * pi) * 12
-		mb[1], mb[2] = 3.0 + sin(s.t * 9) * 0.3, 3.3 - sin(s.t * 9) * 0.3
-		mg[1], mg[2] = 0.15 * hop / 12, -0.15 * hop / 12
-		testa = sin(s.t * 3) * 0.1
-		viso = "testa_felice"
+		pose.aggiungi(po, A.vittoria, s.t, 1)
 	elseif not st.turno and not mira then
 		-- fermo, non di turno: ogni tanto una scenetta
-		s.posa_testa, s.posa_sq, s.posa_coda, s.posa_viso = nil, nil, nil, nil
 		attesa(s, dt)
-		testa = s.posa_testa or testa
-		sq = s.posa_sq or sq
-		cd = s.posa_coda or cd
-		viso = s.posa_viso or viso
+	else
+		pose.aggiungi(po, A.fermo, s.t, 1)
 	end
+	-- mirando la testa guarda dove si mira
+	local testa = po.testa
+	if mira then testa = max(-TESTA_GIU, min(TESTA_SU, a * 0.5)) end
 	if not s.morte then
-		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = sq, lean, testa, cd
+		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = po.schiaccia + sq, lean, testa, cd + po.coda
 		s.goal[FUOCO] = st.turno and FUOCO_TURNO or FUOCO_ATTESA
 	else
-		s.goal[SQ], s.goal[LEAN], s.goal[CODA] = 1, 0, 0
+		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = 1, 0, testa, 0
+		s.goal[FUOCO] = 0
 	end
-	faccia(s, viso)
+	faccia(s, po.viso or "testa")
 	molle(s, dt)
 
 	local q = max(0.4, s.x[SQ])
@@ -641,27 +713,31 @@ function M.update(s, dt, st)
 	-- la testa non si schiaccia (i dettagli del disegno si vedrebbero storti):
 	-- scende e sale con il busto
 	scale(s.forma, lx, q)
-	if not s.morte then rot(s.corpo, s.x[LEAN]) end
-	pos(s.corpo, -s.x[SHOVE] * s.w, hop * s.k)
+	rot(s.corpo, s.x[LEAN] + po.corpo)
+	pos(s.corpo, -s.x[SHOVE] * s.w + po.corpo_x * s.k, po.salto * s.k)
 	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
 
-	-- braccia e gambe inseguono le mete; le gambe si alzano nei passi
+	-- braccia e gambe inseguono la posa (così si passa piano da uno stato
+	-- all'altro); le gambe si alzano nei passi
 	local segui = min(1, dt * 16)
-	for i = 1, 2 do
-		s.braccia[i] = s.braccia[i] + (mb[i] - s.braccia[i]) * segui
-		s.gambe[i] = s.gambe[i] + (mg[i] - s.gambe[i]) * segui
-	end
+	s.braccia[1] = s.braccia[1] + (po.braccio_a - s.braccia[1]) * segui
+	s.braccia[2] = s.braccia[2] + (po.braccio_d - s.braccia[2]) * segui
+	s.gambe[1] = s.gambe[1] + (po.gamba_a - s.gambe[1]) * segui
+	s.gambe[2] = s.gambe[2] + (po.gamba_d - s.gambe[2]) * segui
 	rot(s.braccio_a, s.braccia[1])
 	rot(s.braccio_d, s.braccia[2])
 	rot(s.gamba_a, s.gambe[1])
 	rot(s.gamba_d, s.gambe[2])
-	pos(s.gamba_a, PT.anche[1] * s.k, (PT.anche[2] + s.alza[1] * 8) * s.k)
-	pos(s.gamba_d, -PT.anche[1] * s.k, (PT.anche[2] + s.alza[2] * 8) * s.k)
-	rot(s.ala, ala)
+	pos(s.gamba_a, (J.gamba[1] + po.gamba_a_x) * s.k, (J.gamba[2] + po.alza_a) * s.k)
+	pos(s.gamba_d, (J.gamba_dietro[1] + po.gamba_d_x) * s.k, (J.gamba_dietro[2] + po.alza_d) * s.k)
+	pos(s.braccio_a, (J.braccio[1] + po.braccio_a_x) * s.k, (J.braccio[2] + po.braccio_a_y) * s.k)
+	pos(s.braccio_d, (J.braccio_dietro[1] + po.braccio_d_x) * s.k, (J.braccio_dietro[2] + po.braccio_d_y) * s.k)
+	pos(s.ala, (J.ala[1] + po.ala_x) * s.k, (J.ala[2] + po.ala_y) * s.k)
+	rot(s.ala, po.ala)
+	pos(s.coda[1][1], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
+	pos(s.coda[1][2], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
 	coda(s, dt)
-	-- la testa sobbalza a ogni passo
-	local hy = (PT.collo[2] + abs(sin(s.passo)) * 4 * s.cammina) * s.k
-	pos(s.collo, PT.collo[1] * s.k, hy)
+	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[TESTA])
 	scale(s.collo, 1 / lx, 1 / q)
 	fiammella(s, dt, st.turno)

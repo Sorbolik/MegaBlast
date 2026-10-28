@@ -1,0 +1,10 @@
+// Il Worker dell'editor delle animazioni: la pagina in dist/ (costruisci.sh) e
+// "Manda a Claude" in worker.js. Cloudflare lo costruisce dal repository
+// collegato (Path strumenti/animazioni/cloudflare, build sh costruisci.sh,
+// deploy npx wrangler deploy).
+{
+	"name": "megablast",
+	"main": "worker.js",
+	"compatibility_date": "2026-10-01",
+	"assets": { "directory": "dist", "binding": "ASSETS" }
+}

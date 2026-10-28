@@ -33,6 +33,36 @@ cambiala anche in Go: `go test ./server/` le confronta e fallisce se
 divergono. Le funzioni nuove scritte in Lua con `get`/`set`/`t.data` vanno sul
 server senza toccare il Go.
 
+## Animazioni del diavoletto
+
+Le pose del diavoletto (fermo, corsa, aria, paracadute, colpito, vittoria,
+sconfitta, scenette) sono clip in `client/battaglia/animazioni.lua`, campionate da
+`client/battaglia/pose.lua` sotto le molle e la mira di `scoria.lua`. Si fanno con
+l'editor `strumenti/animazioni/editor.html`: `python3 strumenti/animazioni/prepara.py`
+scrive `simulazione/animazioni/editor.html` (pezzi e animazioni dentro), che si
+apre nel browser e si pubblica come Artifact sempre allo stesso indirizzo:
+https://claude.ai/artifact/YJeMenvfJLGmto89yAbKJ5 . Se cambiano i pezzi o le animazioni,
+ripubblicalo. "Manda a Claude" nell'editor salva il file nel database
+dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
+`client/battaglia/animazioni.lua`.
+
+Dallo stesso editor si cambiano le hitbox (`client/sim/corpo.lua`: la capsula per
+camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
+perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`). "Manda a
+Claude" li mette nei documenti `corpo/ultima` e `perni/ultima` (campo `lua`).
+
+L'editor è anche su Cloudflare (Worker `megablast`, repository collegato: a ogni
+push su main lo ricostruisce con `strumenti/animazioni/cloudflare/costruisci.sh`
+e `wrangler.jsonc`). Da lì "Manda a Claude" (`worker.js`) scrive i file nel ramo
+`editor-ultima` di GitHub: si prendono da lì.
+
+## Pezzi nuovi del diavoletto (pelli)
+
+Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo
+stampino e si tagliano con `strumenti/stampino/taglia.py`: regole e comandi in
+[strumenti/stampino/README.md](strumenti/stampino/README.md). Il gioco li monta
+con `scoria.new(colore, look)` (`client/battaglia/pelli.lua`, generato).
+
 ## Provare il gioco su iPhone
 
 Su iPhone si prova la build HTML5 in Safari: `bash strumenti/web/build.sh` prepara

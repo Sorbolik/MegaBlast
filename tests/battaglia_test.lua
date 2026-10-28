@@ -23,7 +23,7 @@ gui = {
 	set_enabled = function(n, on) n.enabled = on end,
 	set_visible = function(n, on) n.invisibile = not on end, set_color = function() end, set_adjust_mode = function() end,
 	set_inherit_alpha = function() end, set_perimeter_vertices = function() end,
-	set_texture = function() end, play_flipbook = function() end, set_material = function() end,
+	set_texture = function() end, play_flipbook = function(n, img) n.img = img end, set_material = function() end,
 	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
 	set_text = function(n, text) n.text = text end,
 	set_size = function(n, v) n.size = copia(v) end,
@@ -173,7 +173,142 @@ for _ = 1, 200 do scoria.update(s, 1 / 60, st) end
 check(not s.root.enabled, "morte: poi il corpo sparisce")
 scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "nuova partita: il corpo torna")
-check(math.abs(game.ROBOT_H - s.h) < 1e-9, "il corpo è alto quanto quello della simulazione")
+check(math.abs(game.DISEGNO_H - s.h) < 1e-9, "il corpo è alto quanto il disegno (DISEGNO_H)")
+
+-- Pose (battaglia/pose.lua) e clip (battaglia/animazioni.lua) ------------------
+
+local pose = require "battaglia.pose"
+local A = require "battaglia.animazioni"
+local function vicino(a, b) return math.abs(a - b) < 1e-6 end
+local clip = { durata = 1, ciclo = true, tracce = { testa = { 0, 0, 0, 0.5, 1, 1, 0.75, 2, 2 } },
+	viso = { 0.2, "testa_felice", 0.6, "testa_ko" } }
+local tr = clip.tracce.testa
+check(vicino(pose.valore(tr, 0, 1, true), 0) and vicino(pose.valore(tr, 0.5, 1, true), 1),
+	"pose: sulle chiavi il valore della chiave")
+check(vicino(pose.valore(tr, 0.625, 1, true), 1.5), "pose: curva dritta a metà")
+check(vicino(pose.valore(tr, 0.9, 1, true), 2), "pose: curva a scatto tiene il valore")
+local p = pose.nuova()
+pose.aggiungi(p, clip, 3.5, 0.5)
+check(vicino(p.testa, 0.5) and vicino(p.schiaccia, 1) and vicino(p.braccio_a, 0),
+	"pose: in ciclo il tempo gira, il peso scala, i canali assenti restano neutri")
+check(p.viso == "testa_felice", "pose: la faccia a scatti")
+pose.azzera(p)
+pose.aggiungi(p, clip, 0.1, 1)
+check(p.viso == "testa_ko", "pose: prima della prima faccia, in ciclo, l'ultima")
+local fine = { durata = 1, ciclo = false, tracce = { corpo = { 0, 0, 0, 1, 2, 0 } } }
+check(vicino(pose.valore(fine.tracce.corpo, 0.5, 1, false), 1) and vicino(pose.valore(fine.tracce.corpo, 1, 1, false), 2),
+	"pose: una clip che non gira parte e arriva piano e si ferma alla fine")
+local nomi = {}
+for _, c in ipairs(pose.CANALI) do nomi[c] = true end
+local buone = true
+for nome, c in pairs(A) do
+	if not (c.durata > 0) then buone = false; print("     " .. nome .. ": durata") end
+	for canale, tr in pairs(c.tracce) do
+		if not nomi[canale] or #tr % 3 ~= 0 or #tr == 0 then buone = false; print("     " .. nome .. "." .. canale) end
+		for k = 1, #tr - 3, 3 do
+			if tr[k + 3] < tr[k] or tr[k] < 0 or tr[k + 3] > c.durata then buone = false; print("     " .. nome .. "." .. canale .. ": tempi") end
+		end
+	end
+end
+check(buone, "animazioni: canali noti, chiavi in ordine dentro la durata")
+for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
+	"sconfitta", "naso", "sbadiglio", "guarda_coda" }) do
+	check(A[nome] ~= nil, "animazioni: c'è la clip " .. nome)
+end
+
+-- gli spostamenti avanti e indietro e su e giù dei pezzi
+do
+	local A2 = require "battaglia.animazioni"
+	local vecchia = A2.fermo
+	A2.fermo = { durata = 1, ciclo = true, tracce = { testa_x = { 0, 10, 0 }, braccio_d_y = { 0, -8, 0 }, coda_x = { 0, 5, 0 } } }
+	local v = scoria.new(vec(1, 0.2, 0.3, 1))
+	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0 }
+	for _ = 1, 5 do scoria.update(v, 1 / 60, st2) end
+	local D = require "battaglia.diavoletto"
+	local k = v.k
+	check(math.abs(v.collo.pos.x - (D.punti.collo[1] + 10) * k) < 1e-6
+		and math.abs(v.braccio_d.pos.y - (D.punti.spalle[2] - 8) * k) < 1e-6
+		and math.abs(v.coda[1][2].pos.x - (D.punti.coda[1] + 5) * k) < 1e-6,
+		"pose: testa, braccio e coda si spostano coi canali x e y")
+	A2.fermo = vecchia
+end
+
+-- i perni spostati dall'editor (battaglia/perni.lua): il giunto si sposta, i
+-- pezzi al contrario, così da fermi restano dove sono
+do
+	local D = require "battaglia.diavoletto"
+	package.loaded["battaglia.perni"] = { braccio = { 3, -2 }, testa = { 1, 4 } }
+	package.loaded["battaglia.scoria"] = nil
+	local sc2 = require "battaglia.scoria"
+	local v = sc2.new(vec(1, 0.2, 0.3, 1))
+	sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0 })
+	local k = v.k
+	local braccio, testa
+	for _, n in ipairs(nodi) do
+		if n.parent == v.braccio_a and n.img == "braccio" then braccio = n end
+		if n.parent == v.collo and n.img == "testa" then testa = n end
+	end
+	check(braccio and math.abs(braccio.pos.x - (D.pezzi.braccio.x - 3) * k) < 1e-6
+		and math.abs(braccio.pos.y - (D.pezzi.braccio.y + 2) * k) < 1e-6
+		and math.abs(v.braccio_a.pos.x - (D.punti.spalle[1] + 3) * k) < 1e-6,
+		"perni: il braccio gira attorno al perno spostato e da fermo resta dov'era")
+	check(testa and math.abs(testa.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6
+		and math.abs(v.cima.pos.y - (D.punti.cima[2] - 4) * k) < 1e-6,
+		"perni: la testa e la fiammella restano dov'erano")
+	package.loaded["battaglia.perni"] = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
+-- Pelli (battaglia/pelli.lua) ---------------------------------------------------
+
+-- pelli finte: una testa nuova senza facce col colore della squadra, un elmo
+-- sopra, una coda a segmenti, un braccio sull'arma nuovo (bordo e colore a parte)
+local PELLI = require "battaglia.pelli"
+local function pz(img, modo, tinta) return { img = img, tinta = tinta, x = 1, y = 2, w = 30, h = 40, modo = modo } end
+PELLI.pelli.prova_testa = { categoria = "testa", pezzi = { testa = pz("t", "sostituisce", "t_tinta") } }
+PELLI.pelli.prova_elmo = { categoria = "elmo", pezzi = { testa = pz("e", "sopra"), busto = pz("eb", "sopra") } }
+local coda = {}
+for i = 1, 5 do
+	coda["coda_" .. i] = pz("c" .. i, "sostituisce")
+	coda["coda_" .. i .. "_bordo"] = pz("cb" .. i, "sostituisce")
+end
+PELLI.pelli.prova_coda = { categoria = "coda", pezzi = coda }
+PELLI.pelli.prova_corpo = { categoria = "corpo", pezzi = { omero = pz("o", "sostituisce"),
+	omero_bordo = pz("ob", "sostituisce"), omero_dietro = pz("od", "sostituisce"),
+	omero_dietro_bordo = pz("odb", "sostituisce") } }
+local function immagini(da)
+	local l = {}
+	for i = da, #nodi do
+		local n = nodi[i]
+		if n.img then l[n.img] = (l[n.img] or 0) + 1 end
+	end
+	return l
+end
+check(immagini(1).omero_bordo and immagini(1).coda_1, "pelli: senza, il diavoletto di base")
+local primo = #nodi + 1
+local v = scoria.new(vec(1, 0.2, 0.3, 1), { "prova_elmo", "prova_testa", "prova_coda", "prova_corpo" })
+local im = immagini(primo)
+check(im.t == 1 and im.e == 1 and im.eb == 1 and not im.testa, "pelli: la testa sostituita, l'elmo sopra")
+check(im.c1 == 1 and im.cb5 == 1 and not im.coda_1 and not im.coda_5_bordo
+	and v.coda[1][1] ~= v.coda[1][2], "pelli: la coda nuova a segmenti, bordi e colori")
+check(im.o == 1 and im.ob == 1 and im.od == 1 and im.odb == 1 and not im.omero_bordo and im.avambraccio_bordo == 2,
+	"pelli: il braccio sull'arma nuovo, col suo bordo")
+check(v.teste[2].parent == v.collo and v.teste[1].img == "t" and v.teste[2].img == "e", "pelli: l'elmo sta sulla testa")
+check(v.teste_t[1].enabled and v.teste_t[1].img == "t_tinta" and not v.teste_t[2].enabled,
+	"pelli: il colore della squadra sulla testa nuova, sotto l'elmo")
+st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
+for _ = 1, 30 do scoria.update(v, 1 / 60, st) end
+scoria.hit(v, 1)
+for _ = 1, 10 do scoria.update(v, 1 / 60, st) end
+check(v.faccia == "testa_colpita" and v.teste[1].img == "t" and v.teste[2].enabled and v.teste[2].img == "e",
+	"pelli: colpito, la testa nuova fa anche la faccia colpita, l'elmo resta")
+scoria.die(v)
+for _ = 1, 60 do scoria.update(v, 1 / 60, st) end
+check(tutto_finito(), "pelli: animato, valori finiti")
+for nome in pairs(PELLI.pelli) do
+	if nome:sub(1, 6) == "prova_" then PELLI.pelli[nome] = nil end
+end
 
 -- Targa ------------------------------------------------------------------------
 
