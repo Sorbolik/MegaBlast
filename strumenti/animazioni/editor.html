@@ -120,6 +120,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label>durata <input type="number" id="durata" step="0.05" min="0.05" style="width: 76px"> s</label>
 			<label title="Cambiando la durata le chiavi si stirano con lei"><input type="checkbox" id="stira" checked> stira le chiavi</label>
 			<label><input type="checkbox" id="ciclo"> in ciclo</label>
+			<label title="Cambiando un pezzo nel primo fotogramma, le altre chiavi di quel pezzo si spostano della stessa quantità: il movimento resta uguale"><input type="checkbox" id="insieme" checked> dal primo fotogramma sposta tutta la clip</label>
 			<span class="spazio"></span>
 			<button id="sposta" title="Trascinando: ruota, sposta (anche Maiusc) o sposta il perno">Trascina: ruota</button>
 			<button id="copia-posa" title="Copia la posa (Ctrl+C)">Copia posa</button>
@@ -148,7 +149,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 	<aside id="canali" class="box"></aside>
 	<section id="tempo-box" class="box">
 		<canvas id="tempo"></canvas>
-		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" sposti il punto attorno a cui gira (la crocetta), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Ogni modifica mette una chiave al tempo dove sei. Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
+		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" sposti il punto attorno a cui gira (la crocetta), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
 	</section>
 </div>
 <div id="messaggio" role="status"></div>
@@ -480,9 +481,15 @@ function valoreProprio(c, id, t) {
 	return k && k.length ? valore(k, dentro(c, t), c.durata, c.ciclo) : NEUTRO[id];
 }
 // mette (o cambia) la chiave del canale al tempo di adesso
-function metti(id, v) {
+// relativo: un cambio fatto dall'utente; nel primo fotogramma (con "sposta tutta
+// la clip") le altre chiavi del canale si spostano della stessa quantità
+function metti(id, v, relativo) {
 	const c = clip();
 	const t = dentro(c, tempo);
+	if (relativo && t < 0.5 / FPS && $("insieme").checked && c.tracce[id]) {
+		const d = v - valoreProprio(c, id, tempo);
+		for (const x of c.tracce[id]) if (x.t >= 0.5 / FPS) x.v = Math.round((x.v + d) * 1000) / 1000;
+	}
 	const k = c.tracce[id] || (c.tracce[id] = []);
 	let x = chiaveA(k, t);
 	if (x) x.v = v; else { x = { t: Math.round(t * 1000) / 1000, v, c: 0 }; k.push(x); ordina(k); }
@@ -859,13 +866,13 @@ palco.addEventListener("pointermove", (e) => {
 	let v;
 	if (presa.muovi) {
 		v = presa.v0 - (py - presa.py) / schermo[0];
-		metti(presa.muovi[0], Math.round((presa.x0 + (px - presa.px) / schermo[0]) * 1000) / 1000);
+		metti(presa.muovi[0], Math.round((presa.x0 + (px - presa.px) / schermo[0]) * 1000) / 1000, true);
 	} else {
 		let d = Math.atan2(-(py - presa.gy), px - presa.gx) - presa.a0;
 		d = Math.atan2(Math.sin(d), Math.cos(d));
 		v = presa.v0 + d;
 	}
-	metti(presa.id, Math.round(v * 1000) / 1000);
+	metti(presa.id, Math.round(v * 1000) / 1000, true);
 	dopo();
 });
 const lascia = () => {
@@ -1043,7 +1050,7 @@ function costruisciCanali() {
 		r.className = "canale"; r.dataset.canale = ch.id;
 		r.innerHTML = `<button class="k" title="Chiave qui (K)">◇</button><span class="nome">${ch.nome}</span><input type="range" min="${lo}" max="${hi}" step="${st}" id="r-${ch.id}" aria-label="${ch.nome}"><input type="number" step="${st}" id="n-${ch.id}" aria-label="${ch.nome}, valore">`;
 		const verso = (v) => (ch.tipo === "ang" ? (v * Math.PI) / 180 : v);
-		const leggi = (inp) => { const v = parseFloat(inp.value); if (!isNaN(v)) { metti(ch.id, Math.round(verso(v) * 1000) / 1000); dopo(); } };
+		const leggi = (inp) => { const v = parseFloat(inp.value); if (!isNaN(v)) { metti(ch.id, Math.round(verso(v) * 1000) / 1000, true); dopo(); } };
 		const rng = r.querySelector("input[type=range]"), nm = r.querySelector("input[type=number]");
 		rng.addEventListener("pointerdown", () => prima());
 		rng.addEventListener("keydown", () => prima());
