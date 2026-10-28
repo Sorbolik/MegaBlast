@@ -1213,10 +1213,12 @@ $("incolla-posa").onclick = () => {
 	const c = clip();
 	for (const ch of CANALI) {
 		const v = posaCopiata[ch.id];
-		if (c.tracce[ch.id] || Math.abs(v - NEUTRO[ch.id]) > 1e-6) metti(ch.id, Math.round(v * 1000) / 1000);
+		if (c.tracce[ch.id] || Math.abs(v - NEUTRO[ch.id]) > 1e-6) metti(ch.id, Math.round(v * 1000) / 1000, true);
 	}
 	dopo();
-	messaggio("Posa incollata a " + dentro(c, tempo).toFixed(2) + " s.");
+	messaggio(dentro(c, tempo) < 0.5 / FPS && $("insieme").checked
+		? "Posa incollata nel primo fotogramma: il resto della clip si è spostato con lei."
+		: "Posa incollata a " + dentro(c, tempo).toFixed(2) + " s.");
 };
 
 $("annulla").onclick = () => { if (indietro.length) { avanti.push(JSON.stringify(clips)); ripristinaStato(indietro.pop()); } };
