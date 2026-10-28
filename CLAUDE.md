@@ -44,3 +44,11 @@ su claude.ai le connessioni verso altri siti sono bloccate.
 
 Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
 `go test ./server/` (server).
+
+## Chiedere immagini a ChatGPT
+
+`python3 strumenti/grafica/chatgpt.py immagine "..." [--rif stampino.png]` chiama
+l'API di OpenAI (immagini con sfondo trasparente) e salva in `/mnt/project-files/chatgpt/`
+con un `.txt` accanto (prompt e impostazioni). `... testo "..."` fa una domanda di testo.
+Serve `OPENAI_API_KEY` nell'ambiente e `api.openai.com` tra i domini permessi; `--prova`
+mostra la richiesta senza spendere.
