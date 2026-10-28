@@ -2,7 +2,7 @@
 
 - **Stato:** PROPOSTA (poi APPROVATA, GENERATA, IMPLEMENTATA, VERIFICATA, oppure SCARTATA)
 - **Data:** AAAA-MM-GG
-- **Ramo della scheda:** `claude/...` · **Ramo delle immagini:** `design/WB-xxx`
+- **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-xxx`
 
 ## Obiettivo
 

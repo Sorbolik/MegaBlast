@@ -2,7 +2,7 @@
 
 - **Stato:** APPROVATA
 - **Data:** 2026-10-28
-- **Ramo della scheda:** `claude/project-thread-gdvhtm` · **Ramo delle immagini:** `design/WB-001`
+- **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-001`
 
 ## Obiettivo
 

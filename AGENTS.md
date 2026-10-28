@@ -14,9 +14,8 @@ Sergio ti dice solo quale scheda eseguire (es. "esegui WB-001").
 
 ## Come esegui una scheda
 
-1. Prendi la scheda dal ramo che ti indica Sergio (se non la trovi su `main`,
-   `git fetch origin` e cercala sui rami `claude/...`). Eseguila solo se lo stato è
-   APPROVATA.
+1. Aggiorna `main` (`git checkout main` e `git pull`) e prendi lì la scheda; se Sergio
+   ti indica un altro ramo, usa quello. Eseguila solo se lo stato è APPROVATA.
 2. Crea il ramo `design/WB-xxx` dal ramo della scheda.
 3. Per ogni riga della tabella "Immagini da generare" genera l'immagine con il tuo strumento
    di generazione immagini, usando **esattamente** il prompt scritto e le immagini di
