@@ -103,6 +103,183 @@ images {
 images {
   image: "/assets/diavoletto/coda_5_bordo.png"
 }
+images {
+  image: "/assets/pelli/gabriella_ala.png"
+}
+images {
+  image: "/assets/pelli/gabriella_avambraccio.png"
+}
+images {
+  image: "/assets/pelli/gabriella_avambraccio_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_avambraccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/gabriella_avambraccio_dietro_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_braccio.png"
+}
+images {
+  image: "/assets/pelli/gabriella_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/gabriella_busto.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_1.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_2.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_3.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_4.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_5.png"
+}
+images {
+  image: "/assets/pelli/gabriella_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_gamba.png"
+}
+images {
+  image: "/assets/pelli/gabriella_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/gabriella_omero.png"
+}
+images {
+  image: "/assets/pelli/gabriella_omero_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_omero_dietro.png"
+}
+images {
+  image: "/assets/pelli/gabriella_omero_dietro_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_pugno.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_ala.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_avambraccio.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_avambraccio_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_avambraccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_avambraccio_dietro_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_braccio.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_busto.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_busto_tinta.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_1.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_2.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_3.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_4.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_5.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_gamba.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_omero.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_omero_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_omero_dietro.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_omero_dietro_bordo.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_pugno.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_testa.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_testa_colpita.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_testa_felice.png"
+}
+images {
+  image: "/assets/pelli/gabriella_squadra_testa_ko.png"
+}
+images {
+  image: "/assets/pelli/gabriella_testa.png"
+}
+images {
+  image: "/assets/pelli/gabriella_testa_colpita.png"
+}
+images {
+  image: "/assets/pelli/gabriella_testa_felice.png"
+}
+images {
+  image: "/assets/pelli/gabriella_testa_ko.png"
+}
 margin: 0
 extrude_borders: 2
 inner_padding: 0

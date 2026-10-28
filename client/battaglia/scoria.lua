@@ -162,7 +162,9 @@ local BASE = { omero_dietro_bordo = "omero_bordo", avambraccio_dietro_bordo = "a
 
 -- I pezzi di ogni posto con addosso le pelli di look (nomi di battaglia/pelli.lua,
 -- una per categoria): per posto, i pezzi dal basso. Il primo è quello di base o
--- quello che lo sostituisce, poi quelli sopra, nell'ordine delle categorie.
+-- quello che lo sostituisce, poi quelli sopra, nell'ordine delle categorie. Torna
+-- anche la coda: lunghezze dei segmenti e angoli a riposo, di base o della pelle
+-- che l'ha cambiata.
 local function vesti(look)
 	local per = {}
 	for i = 1, #(look or {}) do
@@ -179,9 +181,11 @@ local function vesti(look)
 		local l = strati(posto)
 		if p.modo == "sostituisce" then l[1] = p else l[#l + 1] = p end
 	end
+	local coda = { l = D.coda, riposo = D.coda_riposo }
 	for _, categorie in ipairs({ PELLI.sostituisce, PELLI.sopra }) do
 		for _, c in ipairs(categorie) do
 			local pz = per[c] and per[c].pezzi
+			if per[c] and per[c].coda then coda = { l = per[c].coda, riposo = per[c].coda_riposo } end
 			if pz then
 				for posto, p in pairs(pz) do metti(posto, p) end
 				for i = 2, #FACCE do
@@ -190,7 +194,7 @@ local function vesti(look)
 			end
 		end
 	end
-	return strati
+	return strati, coda
 end
 
 -- i pezzi di un posto (vesti) nel giunto parent
@@ -254,11 +258,12 @@ function M.new(color, look)
 	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
 	local k = H / D.altezza
 	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, tinte_arma = {}, lampi = {},
-		strati = vesti(look), teste = {}, teste_t = {}, facce = {},
+		teste = {}, teste_t = {}, facce = {},
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- la posa delle clip di questo frame e gli angoli (radianti) delle
 		-- braccia e delle gambe che pendono, che la inseguono
 		posa = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
+	s.strati, s.forma_coda = vesti(look)
 	s.root = giunto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
@@ -281,12 +286,12 @@ function M.new(color, look)
 	-- fiammella, il braccio davanti
 	for strato = 1, 2 do
 		local padre, x, y = s.forma, PT.coda[1] * k, PT.coda[2] * k
-		for i = 1, #D.coda do
+		for i = 1, #s.forma_coda.l do
 			padre = giunto(padre, x, y)
 			veste(s, padre, "coda_" .. i .. (strato == 1 and "_bordo" or ""), k)
 			s.coda[i] = s.coda[i] or {}
 			s.coda[i][strato] = padre
-			x, y = D.coda[i] * k, 0
+			x, y = s.forma_coda.l[i] * k, 0
 		end
 	end
 	s.ala = giunto(s.forma, PT.ala[1] * k, PT.ala[2] * k)
@@ -386,7 +391,8 @@ function M.reset(s)
 	s.vy, s.vx, s.last_x, s.last_y, s.ground = 0, 0, nil, nil, true
 	s.passo, s.cammina, s.dondolo = 0, 0, 0
 	for i = 1, 2 do s.braccia[i], s.gambe[i] = 0, 0 end
-	for i = 1, #D.coda do s.coda_a[i] = D.coda_riposo[i] - (i > 1 and D.coda_riposo[i - 1] or 0) end
+	local riposo = s.forma_coda.riposo
+	for i = 1, #riposo do s.coda_a[i] = riposo[i] - (i > 1 and riposo[i - 1] or 0) end
 	s.flash, s.fuoco_n, s.fuoco_t = 0, 1, 0
 	s.morte, s.morto = nil, nil
 	s.scenetta, s.scenetta_t, s.n_scenette = nil, 0, 0
@@ -443,11 +449,11 @@ end
 -- segmento insegue il suo angolo un po' più piano del precedente: così il moto
 -- arriva alla punta in ritardo
 local function coda(s, dt)
-	local base = s.x[CODA]
+	local base, r = s.x[CODA], s.forma_coda.riposo
 	local prima = 0
 	for i = 1, #s.coda_a do
-		local riposo = D.coda_riposo[i] - prima
-		prima = D.coda_riposo[i]
+		local riposo = r[i] - prima
+		prima = r[i]
 		local a = riposo + (base + sin(s.t * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i)
 		s.coda_a[i] = s.coda_a[i] + (a - s.coda_a[i]) * min(1, dt * (18 - 2.5 * i))
 		rot(s.coda[i][1], s.coda_a[i])

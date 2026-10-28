@@ -198,12 +198,16 @@ const PL = leggiLua(DATI.pelli);
 const FACCE = Object.keys(P).filter((n) => n.startsWith("testa")).sort((a, b) => (a === "testa" ? -1 : b === "testa" ? 1 : a < b ? -1 : 1));
 const addosso = {}; // categoria -> nome della pelle
 let vestito = {};
+let formaCoda = { l: D.coda, riposo: D.coda_riposo }; // lunghezze e angoli a riposo, come vesti() di scoria.lua
 function vesti() {
 	vestito = {};
+	formaCoda = { l: D.coda, riposo: D.coda_riposo };
 	const strati = (posto) => (vestito[posto] = vestito[posto] || [P[posto] || null]);
 	const metti = (posto, p) => { const l = strati(posto); if (p.modo === "sostituisce") l[0] = p; else l.push(p); };
 	for (const c of [...PL.sostituisce, ...PL.sopra]) {
-		const pz = addosso[c] && PL.pelli[addosso[c]].pezzi;
+		const pl = addosso[c] && PL.pelli[addosso[c]];
+		if (pl && pl.coda) formaCoda = { l: pl.coda, riposo: pl.coda_riposo };
+		const pz = pl && pl.pezzi;
 		if (!pz) continue;
 		for (const posto in pz) metti(posto, pz[posto]);
 		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, pz.testa);
@@ -471,9 +475,10 @@ function simPasso(po, dt) {
 function angoliCoda(base, dt, lento) {
 	const a = [];
 	let prima = 0;
-	for (let i = 1; i <= D.coda.length; i++) {
-		const riposo = D.coda_riposo[i - 1] - prima;
-		prima = D.coda_riposo[i - 1];
+	const r = formaCoda.riposo;
+	for (let i = 1; i <= r.length; i++) {
+		const riposo = r[i - 1] - prima;
+		prima = r[i - 1];
 		a.push(riposo + (base + Math.sin(orologio * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i));
 	}
 	if (lento && sim.coda) for (let i = 0; i < a.length; i++) sim.coda[i] += (a[i] - sim.coda[i]) * Math.min(1, dt * (18 - 2.5 * (i + 1)));
@@ -583,8 +588,8 @@ function disegna(dt) {
 	const gCoda = punto(forma, PT.coda[0], PT.coda[1]);
 	for (let strato = 0; strato < 2; strato++) {
 		let m = sposta(forma, PT.coda[0], PT.coda[1]);
-		for (let i = 0; i < D.coda.length; i++) {
-			if (i > 0) m = sposta(m, D.coda[i - 1], 0);
+		for (let i = 0; i < formaCoda.l.length; i++) {
+			if (i > 0) m = sposta(m, formaCoda.l[i - 1], 0);
 			m = ruota(m, ang[i]);
 			veste(m, "coda_" + (i + 1) + (strato === 0 ? "_bordo" : ""), "coda", gCoda, col);
 		}

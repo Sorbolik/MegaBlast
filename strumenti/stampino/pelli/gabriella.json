@@ -1,0 +1,252 @@
+{
+ "nome": "gabriella",
+ "categoria": "personaggio",
+ "coda": [
+  19.4,
+  30.0,
+  30.4,
+  23.2,
+  25.1
+ ],
+ "coda_riposo": [
+  3.607,
+  3.008,
+  1.405,
+  0.679,
+  1.963
+ ],
+ "pezzi": {
+  "testa": {
+   "img": "gabriella_testa",
+   "x": 6.4,
+   "y": 53.5,
+   "w": 122.9,
+   "h": 144.0,
+   "modo": "sostituisce"
+  },
+  "testa_colpita": {
+   "img": "gabriella_testa_colpita",
+   "x": 6.3,
+   "y": 53.5,
+   "w": 121.4,
+   "h": 144.0,
+   "modo": "sostituisce"
+  },
+  "testa_felice": {
+   "img": "gabriella_testa_felice",
+   "x": 6.3,
+   "y": 53.5,
+   "w": 120.3,
+   "h": 144.0,
+   "modo": "sostituisce"
+  },
+  "testa_ko": {
+   "img": "gabriella_testa_ko",
+   "x": 6.3,
+   "y": 53.5,
+   "w": 120.6,
+   "h": 144.0,
+   "modo": "sostituisce"
+  },
+  "coda_1_bordo": {
+   "img": "gabriella_coda_1_bordo",
+   "x": 11.1,
+   "y": 0.8,
+   "w": 29.1,
+   "h": 15.4,
+   "modo": "sostituisce"
+  },
+  "coda_1": {
+   "img": "gabriella_coda_1",
+   "x": 13.4,
+   "y": 0.5,
+   "w": 24.6,
+   "h": 7.4,
+   "modo": "sostituisce"
+  },
+  "coda_2_bordo": {
+   "img": "gabriella_coda_2_bordo",
+   "x": 14.1,
+   "y": 0.7,
+   "w": 41.1,
+   "h": 18.0,
+   "modo": "sostituisce"
+  },
+  "coda_2": {
+   "img": "gabriella_coda_2",
+   "x": 13.6,
+   "y": 0.3,
+   "w": 40.0,
+   "h": 10.3,
+   "modo": "sostituisce"
+  },
+  "coda_3_bordo": {
+   "img": "gabriella_coda_3_bordo",
+   "x": 13.4,
+   "y": 3.2,
+   "w": 43.1,
+   "h": 19.7,
+   "modo": "sostituisce"
+  },
+  "coda_3": {
+   "img": "gabriella_coda_3",
+   "x": 15.2,
+   "y": 1.9,
+   "w": 36.0,
+   "h": 13.7,
+   "modo": "sostituisce"
+  },
+  "coda_4_bordo": {
+   "img": "gabriella_coda_4_bordo",
+   "x": 11.9,
+   "y": -1.5,
+   "w": 32.9,
+   "h": 13.1,
+   "modo": "sostituisce"
+  },
+  "coda_4": {
+   "img": "gabriella_coda_4",
+   "x": 11.6,
+   "y": -0.2,
+   "w": 32.3,
+   "h": 6.6,
+   "modo": "sostituisce"
+  },
+  "coda_5_bordo": {
+   "img": "gabriella_coda_5_bordo",
+   "x": 24.1,
+   "y": 5.2,
+   "w": 58.9,
+   "h": 38.9,
+   "modo": "sostituisce"
+  },
+  "coda_5": {
+   "img": "gabriella_coda_5",
+   "x": 20.8,
+   "y": 4.5,
+   "w": 49.4,
+   "h": 24.3,
+   "modo": "sostituisce"
+  },
+  "ala": {
+   "img": "gabriella_ala",
+   "x": -18.8,
+   "y": 4.4,
+   "w": 52.6,
+   "h": 51.1,
+   "modo": "sostituisce"
+  },
+  "busto": {
+   "img": "gabriella_busto",
+   "x": 0.0,
+   "y": 12.5,
+   "w": 69.7,
+   "h": 103.4,
+   "modo": "sostituisce"
+  },
+  "gamba": {
+   "img": "gabriella_gamba",
+   "x": 4.3,
+   "y": -33.9,
+   "w": 53.4,
+   "h": 90.6,
+   "modo": "sostituisce"
+  },
+  "gamba_dietro": {
+   "img": "gabriella_gamba_dietro",
+   "x": 4.6,
+   "y": -31.1,
+   "w": 58.0,
+   "h": 83.1,
+   "modo": "sostituisce"
+  },
+  "braccio": {
+   "img": "gabriella_braccio",
+   "x": 1.8,
+   "y": -24.6,
+   "w": 31.7,
+   "h": 69.4,
+   "modo": "sostituisce"
+  },
+  "braccio_dietro": {
+   "img": "gabriella_braccio_dietro",
+   "x": 1.8,
+   "y": -24.6,
+   "w": 31.7,
+   "h": 69.4,
+   "modo": "sostituisce"
+  },
+  "omero_bordo": {
+   "img": "gabriella_omero_bordo",
+   "x": 7.6,
+   "y": 0.0,
+   "w": 33.7,
+   "h": 46.6,
+   "modo": "sostituisce"
+  },
+  "omero": {
+   "img": "gabriella_omero",
+   "x": 7.6,
+   "y": 0.0,
+   "w": 18.3,
+   "h": 31.1,
+   "modo": "sostituisce"
+  },
+  "avambraccio_bordo": {
+   "img": "gabriella_avambraccio_bordo",
+   "x": 8.6,
+   "y": 0.0,
+   "w": 35.7,
+   "h": 42.9,
+   "modo": "sostituisce"
+  },
+  "avambraccio": {
+   "img": "gabriella_avambraccio",
+   "x": 8.6,
+   "y": 0.0,
+   "w": 20.3,
+   "h": 27.4,
+   "modo": "sostituisce"
+  },
+  "pugno": {
+   "img": "gabriella_pugno",
+   "x": 0.0,
+   "y": 0.0,
+   "w": 28.6,
+   "h": 30.9,
+   "modo": "sostituisce"
+  },
+  "omero_dietro": {
+   "img": "gabriella_omero_dietro",
+   "x": 7.6,
+   "y": 0.0,
+   "w": 18.3,
+   "h": 31.1,
+   "modo": "sostituisce"
+  },
+  "avambraccio_dietro": {
+   "img": "gabriella_avambraccio_dietro",
+   "x": 8.6,
+   "y": 0.0,
+   "w": 20.3,
+   "h": 27.4,
+   "modo": "sostituisce"
+  },
+  "omero_dietro_bordo": {
+   "img": "gabriella_omero_dietro_bordo",
+   "x": 7.6,
+   "y": 0.0,
+   "w": 33.7,
+   "h": 46.6,
+   "modo": "sostituisce"
+  },
+  "avambraccio_dietro_bordo": {
+   "img": "gabriella_avambraccio_dietro_bordo",
+   "x": 8.6,
+   "y": 0.0,
+   "w": 35.7,
+   "h": 42.9,
+   "modo": "sostituisce"
+  }
+ }
+}

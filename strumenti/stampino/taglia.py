@@ -129,78 +129,221 @@ def lontani(mask, r):
     return (c < 0.5) & (mask > 0)
 
 
+def senza_contorno(al, scala):
+    """La maschera al senza il contorno: ristretta dello spessore del contorno del
+    manichino, o meno se il pezzo è più sottile (col contorno più sottile)."""
+    r = BORDO * scala
+    dentro = lontani(al.astype(np.float32), r)
+    while dentro.sum() < 0.15 * al.sum() and r > 2:
+        r *= 0.75
+        dentro = lontani(al.astype(np.float32), r)
+    return dentro
+
+
 def colore(pz, scala):
     """Lo strato del colore di un pezzo in catena: senza il contorno."""
     al = pz[..., 3] > 128
-    via = ~lontani(al.astype(np.float32), BORDO * scala)
+    via = ~senza_contorno(al, scala)
     c = pz.copy()
     c[via, 3] = 0
     return c
 
 
-def giunti_coda():
-    """I giunti della coda a riposo (unità, dalla radice) e gli angoli (radianti)."""
-    import math
-    xy, ang = [(0.0, 0.0)], []
-    for (L, _, _), a in zip(ST.DV.CODA, ST.DV.CODA_RIPOSO):
-        a = math.radians(a)
-        x, y = xy[-1]
-        ang.append(a)
-        xy.append((x + L * math.cos(a), y + L * math.sin(a)))
-    return xy, ang
+def macchie(al, passo=4):
+    """Le macchie del disegno (pezzi staccati) sul foglio: per ognuna la maschera
+    a piena misura. Si cercano su una griglia passo volte più rada, allargata di
+    una cella, così un pezzo con una riga sottile staccata resta intero."""
+    from collections import deque
+    h, w = al.shape
+    g = al[:h - h % passo, :w - w % passo].reshape(h // passo, passo, w // passo, passo).max(axis=(1, 3))
+    gg = g.copy()
+    gg[1:] |= g[:-1]
+    gg[:-1] |= g[1:]
+    gg[:, 1:] |= g[:, :-1]
+    gg[:, :-1] |= g[:, 1:]
+    H, W = gg.shape
+    lab = np.zeros((H, W), np.int32)
+    n = 0
+    for y0, x0 in zip(*np.nonzero(gg)):
+        if lab[y0, x0]:
+            continue
+        n += 1
+        lab[y0, x0] = n
+        coda = deque([(y0, x0)])
+        while coda:
+            y, x = coda.popleft()
+            for yy, xx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+                if 0 <= yy < H and 0 <= xx < W and gg[yy, xx] and not lab[yy, xx]:
+                    lab[yy, xx] = n
+                    coda.append((yy, xx))
+    grande = np.zeros((h, w), np.int32)
+    grande[:H * passo, :W * passo] = np.repeat(np.repeat(lab, passo, 0), passo, 1)
+    return [(grande == i) & al for i in range(1, n + 1)]
 
 
-def dividi_coda(pz, perno, scala):
-    """La coda disegnata intera a riposo, divisa nei segmenti della coda di base:
-    ogni pixel va al segmento più vicino e ogni segmento si prende anche un disco
-    attorno ai suoi due giunti (grande quanto è spessa la coda lì), così piegata
-    resta tonda. Torna per segmento il pezzo nel suo verso (lungo +x dal giunto)
-    e il perno, in pixel del pezzo."""
+def trova(a, F):
+    """I pezzi di un foglio che non rispetta le caselle (ChatGPT): ogni macchia va
+    al posto con la casella più vicina. Torna per posto il pezzo ritagliato."""
+    al = a[..., 3] > 128
+    minimo = 0.0004 * al.size
+    posti = {}
+    for m in macchie(al):
+        if m.sum() < minimo:
+            continue
+        ys, xs = np.nonzero(m)
+        cx, cy = xs.mean(), ys.mean()
+        posto = min(F["posti"], key=lambda p: (cx - sum(F["posti"][p]["casella"][0::2]) / 2) ** 2 +
+                    (cy - sum(F["posti"][p]["casella"][1::2]) / 2) ** 2)
+        posti[posto] = posti[posto] | m if posto in posti else m
+    out = {}
+    for posto, m in posti.items():
+        ys, xs = np.nonzero(m)
+        y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+        pz = a[y0:y1, x0:x1].copy()
+        pz[~m[y0:y1, x0:x1], 3] = 0
+        out[posto] = pz
+    return out
+
+
+def scatola(al):
+    ys, xs = np.nonzero(al)
+    return xs.min(), ys.min(), xs.max() + 1, ys.max() + 1
+
+
+def monta(pz, posto, F, s=None):
+    """Un pezzo libero sullo scheletro: scalato (s, o quanto serve per avere l'area
+    della scatola del manichino) e col perno nello stesso punto della sua scatola
+    in cui il manichino ha il suo. Torna il pezzo, il perno e la scala."""
+    c = F["posti"][posto]
+    m = manichino(posto)
+    mx0, my0, mx1, my1 = scatola(m[..., 3] > 128)
+    px, py = c["perno"][0] - c["casella"][0], c["perno"][1] - c["casella"][1]
+    dx0, dy0, dx1, dy1 = scatola(pz[..., 3] > 128)
+    pz = pz[dy0:dy1, dx0:dx1]
+    if s is None:
+        s = ((mx1 - mx0) * (my1 - my0) / ((dx1 - dx0) * (dy1 - dy0))) ** 0.5
+    w, h = max(1, round((dx1 - dx0) * s)), max(1, round((dy1 - dy0) * s))
+    im = Image.fromarray(np.clip(pz, 0, 255).astype(np.uint8), "RGBA").resize((w, h), Image.LANCZOS)
+    fx, fy = (px - mx0) / (mx1 - mx0), (py - my0) / (my1 - my0)
+    return np.asarray(im).astype(np.float32), (fx * w, fy * h), s
+
+
+def geodetica(m, da):
+    """La distanza dentro la maschera m (passi di griglia) da un punto."""
+    from collections import deque
+    d = np.full(m.shape, -1, np.int32)
+    d[da] = 0
+    coda = deque([da])
+    H, W = m.shape
+    while coda:
+        y, x = coda.popleft()
+        for yy, xx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+            if 0 <= yy < H and 0 <= xx < W and m[yy, xx] and d[yy, xx] < 0:
+                d[yy, xx] = d[y, x] + 1
+                coda.append((yy, xx))
+    return d
+
+
+def dividi_coda(pz, scala, passo=3):
+    """La coda disegnata (in qualunque posa e misura) nei segmenti della coda di
+    base. Segue la coda dalla radice alla punta (la distanza dentro il disegno: la
+    radice è il capo più spesso, dall'altro c'è il tridente), la taglia in cinque
+    parti in proporzione ai segmenti di base (il tridente tutto nell'ultima: inizia
+    dove la coda si allarga) e rimette ogni parte nel suo verso, lungo +x dal suo
+    giunto. Lunghezze e angoli dei segmenti (la posa a riposo com'è disegnata)
+    vanno nella pelle: il gioco la monta così e la muove con gli stessi
+    angoli in più della coda di base, senza piegarla in un'altra posa. Ogni segmento si
+    prende anche un disco attorno ai suoi due giunti, grande quanto è spessa la
+    coda lì, così piegata resta tonda. Il colore senza contorno si toglie dalla
+    coda intera (non dal segmento: ai tagli non c'è contorno). Torna per segmento
+    il pezzo, il suo colore e il perno, e lunghezze e angoli dei segmenti."""
     import math
-    xy, ang = giunti_coda()
-    h, w = pz.shape[:2]
     al = pz[..., 3] > 128
-    ys, xs = np.mgrid[0:h, 0:w]
-    # in unità, y in su, dalla radice
-    ux, uy = (xs - perno[0]) / scala, (perno[1] - ys) / scala
-    n = len(ang)
-    dist = np.empty((n, h, w), np.float32)
-    for i in range(n):
-        (x0, y0), (x1, y1) = xy[i], xy[i + 1]
-        dx, dy = x1 - x0, y1 - y0
-        t = ((ux - x0) * dx + (uy - y0) * dy) / (dx * dx + dy * dy)
-        t = np.clip(t, 0, None if i == n - 1 else 1)   # l'ultimo fino alla punta
-        dist[i] = np.hypot(ux - (x0 + t * dx), uy - (y0 + t * dy))
-    vicino = np.argmin(dist, axis=0)
-    # lo spessore della coda a ogni giunto: la distanza dal fuori
+    h, w = al.shape
+    g = al[:h - h % passo, :w - w % passo].reshape(h // passo, passo, w // passo, passo).any(axis=(1, 3))
+    ys, xs = np.nonzero(g)
+    d0 = geodetica(g, (ys[0], xs[0]))
+    a_ = np.unravel_index(np.argmax(d0), g.shape)
+    da = geodetica(g, a_)
+    b_ = np.unravel_index(np.argmax(da), g.shape)
+    db = geodetica(g, b_)
+    L = da.max()
+    fy, fx = np.nonzero(~g)
+
+    def spessore(dd):
+        sel = (dd >= 0.03 * L) & (dd <= 0.08 * L)
+        if not sel.any() or not len(fx):
+            return 0
+        y, x = np.nonzero(sel)
+        return float(np.min(np.hypot(fx - x.mean(), fy - y.mean())))
+    # la radice è il capo più spesso (dall'altro ci sono le punte del tridente)
+    d = da if spessore(da) > spessore(db) else db
+    # a piena misura: ogni pixel prende la distanza della sua cella (in pixel)
+    D = np.full((h, w), -1.0, np.float32)
+    D[:g.shape[0] * passo, :g.shape[1] * passo] = np.repeat(np.repeat(d, passo, 0), passo, 1) * passo
+    D[~al] = -1
+    lung = [Ls for Ls, _, _ in ST.DV.CODA]
+    cum = np.cumsum([0] + lung)
+    Dmax = D.max()
+    # dove inizia il tridente: dopo metà coda, dove la coda diventa larga il
+    # doppio di com'è a metà (senza tridente, dove finirebbe quella di base)
+    quanti = np.bincount(d[d >= 0].ravel(), minlength=int(L) + 1).astype(np.float32)
+    quanti = np.convolve(quanti, np.ones(5) / 5, mode="same")
+    tipico = np.median(quanti[int(0.2 * L):int(0.7 * L)])
+    larghi = [t for t in range(int(0.5 * L), int(L)) if quanti[t] > 1.8 * tipico]
+    forca = (larghi[0] if larghi else L * cum[-1] / (cum[-1] + 20)) * passo
+    confini = [c / cum[-1] * forca for c in cum]   # dove stanno i giunti lungo la coda
+    yy, xx = np.mgrid[0:h, 0:w]
+
+    def punto(t, fascia):
+        sel = (D >= t - fascia) & (D <= t + fascia)
+        if not sel.any():
+            sel = D >= 0
+        return xx[sel].mean(), yy[sel].mean()
+
+    fascia = max(2 * passo, 0.02 * Dmax)
+    J = [punto(max(t, fascia), fascia) for t in confini]
+    J[0] = punto(fascia, fascia)
+    corde = sum(math.hypot(J[i + 1][0] - J[i][0], J[i + 1][1] - J[i][1]) for i in range(len(lung)))
+    k = scala * sum(lung) / max(corde, 1)        # pixel dello stampino per pixel del disegno
     fy, fx = np.nonzero(~al)
-    fu, fv = (fx - perno[0]) / scala, (perno[1] - fy) / scala
-    raggio = [float(np.min(np.hypot(fu - x, fv - y))) if len(fu) else 0 for x, y in xy]
-    out = []
-    for i in range(n):
-        dentro = (vicino == i)
+    raggio = [float(np.min(np.hypot(fx - x, fy - y))) if len(fx) else 0 for x, y in J]
+    interno = senza_contorno(al, scala / k)
+    out, lunghezze, angoli = [], [], []
+    for i in range(len(lung)):
+        lunghezze.append(round(math.hypot(J[i + 1][0] - J[i][0], J[i + 1][1] - J[i][1]) * k / scala, 1))
+        angoli.append(math.atan2(-(J[i + 1][1] - J[i][1]), J[i + 1][0] - J[i][0]))
+        dentro = (D >= confini[i]) & (D >= 0)
+        if i < len(lung) - 1:
+            dentro &= D < confini[i + 1]
         for j in (i, i + 1):
-            dentro |= np.hypot(ux - xy[j][0], uy - xy[j][1]) <= raggio[j]
-        seg = pz.copy()
-        seg[~(dentro & al), 3] = 0
-        seg[~dentro, 3] = 0
-        # nel verso del segmento: pixel (c, r) del pezzo -> pixel del foglio
-        yy, xx = np.nonzero(seg[..., 3] > 8)
-        if not len(xx):
+            dentro |= np.hypot(xx - J[j][0], yy - J[j][1]) <= raggio[j]
+        dentro &= al
+        if not dentro.any():
             out.append(None)
             continue
-        a, (jx, jy) = ang[i], xy[i]
-        ca, sa = math.cos(a), math.sin(a)
-        u = ((xx - perno[0]) / scala - jx) * ca + ((perno[1] - yy) / scala - jy) * sa
-        v = -((xx - perno[0]) / scala - jx) * sa + ((perno[1] - yy) / scala - jy) * ca
+        (jx, jy), (kx, ky) = J[i], J[i + 1]
+        n = math.hypot(kx - jx, ky - jy) or 1
+        ex, ey = (kx - jx) / n, (ky - jy) / n
+        sy, sx = np.nonzero(dentro)
+        u = (k / scala) * ((sx - jx) * ex + (sy - jy) * ey)
+        v = (k / scala) * ((sx - jx) * ey - (sy - jy) * ex)
         u0, u1, v0, v1 = u.min() - 2, u.max() + 2, v.min() - 2, v.max() + 2
-        W, H = int(math.ceil((u1 - u0) * scala)), int(math.ceil((v1 - v0) * scala))
-        X0 = perno[0] + scala * (jx + ca * u0 - sa * v1)
-        Y0 = perno[1] - scala * (jy + sa * u0 + ca * v1)
-        im = Image.fromarray(np.clip(seg, 0, 255).astype(np.uint8), "RGBA")
-        im = im.transform((W, H), Image.AFFINE, (ca, sa, X0, -sa, ca, Y0), Image.BICUBIC)
-        out.append((np.asarray(im).astype(np.float32), (-u0 * scala, v1 * scala)))
-    return out
+        Wd, Hd = int(math.ceil((u1 - u0) * scala)), int(math.ceil((v1 - v0) * scala))
+        X0 = jx + (scala / k) * (u0 * ex + v1 * ey)
+        Y0 = jy + (scala / k) * (u0 * ey - v1 * ex)
+        strati = []
+        for m in (dentro, dentro & interno):
+            seg = pz.copy()
+            seg[~m, 3] = 0
+            im = Image.fromarray(np.clip(seg, 0, 255).astype(np.uint8), "RGBA")
+            im = im.transform((Wd, Hd), Image.AFFINE, (ex / k, -ey / k, X0, ey / k, ex / k, Y0), Image.BICUBIC)
+            strati.append(np.asarray(im).astype(np.float32))
+        out.append((strati[0], strati[1], (-u0 * scala, v1 * scala)))
+    # angoli senza salti di un giro, il primo vicino a quello di base
+    angoli = np.unwrap(angoli)
+    angoli += 2 * math.pi * round((math.radians(ST.DV.CODA_RIPOSO[0]) - angoli[0]) / (2 * math.pi))
+    return out, lunghezze, [round(float(a), 3) for a in angoli]
 
 
 def tinta(pz):
@@ -238,26 +381,38 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi):
     os.makedirs(ASSETS, exist_ok=True)
     for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")):
         os.remove(f)
-    pezzi = {}
-    for posto, c in F["posti"].items():
-        x0, y0, x1, y1 = c["casella"]
-        pz = a[y0:y1, x0:x1].copy()
-        base = manichino(posto)
-        if sopra:
-            # via quello che è ancora il manichino: resta solo il disegno nuovo
-            uguale = (np.abs(pz[..., :3] - base[..., :3]).max(axis=2) < 24) & (base[..., 3] > 200)
-            pz[uguale, 3] = 0
-        if (pz[..., 3] > 128).sum() < 0.004 * pz.shape[0] * pz.shape[1]:
-            continue
-        if allinea_pezzi:
-            pz = allinea(pz, base)
-        perno = (c["perno"][0] - x0, c["perno"][1] - y0)
-        if posto == "coda":
-            for i, seg in enumerate(dividi_coda(pz, perno, F["scala"])):
-                if seg:
-                    metti(pezzi, seg[0], nome, f"coda_{i + 1}", seg[1], F["scala"], px, sopra)
-        else:
+    pezzi, forma = {}, {}
+    if allinea_pezzi and not sopra:
+        # ChatGPT: pezzi liberi, ognuno montato sullo scheletro; le facce con la scala della testa
+        liberi = trova(a, F)
+        s_testa = None
+        for posto in sorted(liberi, key=lambda p: p != "testa"):
+            pz = liberi[posto]
+            if posto == "coda":
+                forma = metti_coda(pezzi, pz, nome, F["scala"], px, sopra)
+                continue
+            faccia = posto.startswith("testa")
+            pz, perno, s = monta(pz, posto, F, s_testa if faccia else None)
+            if posto == "testa":
+                s_testa = s
             metti(pezzi, pz, nome, posto, perno, F["scala"], px, sopra)
+    else:
+        for posto, c in F["posti"].items():
+            x0, y0, x1, y1 = c["casella"]
+            pz = a[y0:y1, x0:x1].copy()
+            base = manichino(posto)
+            if sopra:
+                # via quello che è ancora il manichino: resta solo il disegno nuovo
+                uguale = (np.abs(pz[..., :3] - base[..., :3]).max(axis=2) < 24) & (base[..., 3] > 200)
+                pz[uguale, 3] = 0
+            if (pz[..., 3] > 128).sum() < 0.004 * pz.shape[0] * pz.shape[1]:
+                continue
+            if allinea_pezzi:
+                pz = allinea(pz, base)
+            if posto == "coda":
+                forma = metti_coda(pezzi, pz, nome, F["scala"], px, sopra)
+            else:
+                metti(pezzi, pz, nome, posto, (c["perno"][0] - x0, c["perno"][1] - y0), F["scala"], px, sopra)
     if not pezzi:
         sys.exit("nessun pezzo disegnato nello stampino")
     # le versioni di dietro, se mancano: più scure (il colore della squadra no)
@@ -277,19 +432,34 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi):
     modo = "sopra" if sopra else "sostituisce"
     os.makedirs(JSON, exist_ok=True)
     with open(os.path.join(JSON, nome + ".json"), "w") as f:
-        json.dump({"nome": nome, "categoria": categoria, "pezzi": pezzi}, f, indent=1, ensure_ascii=False)
+        json.dump({"nome": nome, "categoria": categoria, **forma, "pezzi": pezzi}, f, indent=1, ensure_ascii=False)
         f.write("\n")
     print(f"{nome} ({categoria}, {modo}): {', '.join(sorted(pezzi))}")
 
 
-def metti(pezzi, pz, nome, posto, perno, scala, px, sopra):
+def metti_coda(pezzi, pz, nome, scala, px, sopra):
+    if sopra:
+        sys.exit("la coda si cambia solo intera (categoria coda o personaggio), non sopra")
+    segmenti, lunghezze, angoli = dividi_coda(pz, scala)
+    for i, seg in enumerate(segmenti):
+        if seg:
+            metti(pezzi, seg[0], nome, f"coda_{i + 1}", seg[2], scala, px, sopra, seg[1])
+    return {"coda": lunghezze, "coda_riposo": angoli}
+
+
+def metti(pezzi, pz, nome, posto, perno, scala, px, sopra, col=None):
     """Il pezzo di un posto, col suo strato del colore della squadra; quelli in
     catena che sostituiscono la base anche col bordo a parte."""
     pz, t = tinta(pz)
     modo = "sopra" if sopra else "sostituisce"
     strati = [(posto, pz)]
     if posto in CATENA and not sopra:
-        strati = [(posto + "_bordo", pz), (posto, colore(pz, scala))]
+        if col is None:
+            col = colore(pz, scala)
+        else:
+            col = col.copy()
+            col[..., :3] = pz[..., :3]   # col ha il verde: prende i colori già tolti a pz
+        strati = [(posto + "_bordo", pz), (posto, col)]
     for p, im in strati:
         pezzi[p] = salva(im, nome, p, perno[0], perno[1], scala, px)
         pezzi[p]["modo"] = modo
@@ -337,13 +507,15 @@ def rifai():
            "-- Le pelli: i pezzi nuovi del diavoletto disegnati sullo stampino. Ogni pezzo",
            "-- va in un posto dello scheletro (come i pezzi di battaglia/diavoletto.lua:",
            "-- immagine, centro rispetto al perno, misura) e sostituisce il pezzo di base",
-           "-- o si disegna sopra. Una pelle per categoria; quelle sopra in ordine.",
+           "-- o si disegna sopra. Una pelle per categoria; quelle sopra in ordine. Una",
+           "-- coda nuova ha le sue lunghezze e i suoi angoli a riposo (radianti).",
            "return {",
            "\tsostituisce = { " + ", ".join(f'"{c}"' for c in SOSTITUISCE) + " },",
            "\tsopra = { " + ", ".join(f'"{c}"' for c in SOPRA) + " },",
            "\tpelli = {"]
     for p in pelli:
-        lua.append(f'\t\t{p["nome"]} = {{ categoria = "{p["categoria"]}", pezzi = {{')
+        forma = "".join(f'{k} = {{ {", ".join(str(v) for v in p[k])} }}, ' for k in ("coda", "coda_riposo") if k in p)
+        lua.append(f'\t\t{p["nome"]} = {{ categoria = "{p["categoria"]}", {forma}pezzi = {{')
         for posto in sorted(p["pezzi"]):
             z = p["pezzi"][posto]
             t = f'"{z["tinta"]}"' if z.get("tinta") else "nil"

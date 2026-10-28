@@ -34,10 +34,13 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
   espressione). Un elmo disegnato sulla `testa` sta su tutte le facce.
 - **I pezzi di dietro** (`braccio_dietro`, `gamba_dietro`, e dietro sull'arma)
   se mancano li fa `taglia.py` da quelli davanti, più scuri.
-- **La coda si disegna intera**, a riposo, sopra il manichino: `taglia.py` la
-  divide nei cinque segmenti della coda di base (ogni pixel al segmento più
-  vicino, più un disco attorno a ogni giunto grande quanto è spessa la coda lì),
-  così ondeggia a segmenti come quella di base.
+- **La coda si disegna intera**, nella posa che si vuole a riposo, con la
+  radice (il capo più spesso) verso il corpo e il tridente in fondo: `taglia.py`
+  la segue dalla radice alla punta e la divide in cinque segmenti in proporzione
+  a quelli di base (il tridente tutto nell'ultimo), più un disco attorno a ogni
+  giunto grande quanto è spessa la coda lì. La pelle si tiene lunghezze e angoli
+  disegnati: a riposo la coda è com'è disegnata e ondeggia a segmenti come
+  quella di base.
 - **Giunti senza giunture.** I pezzi in catena (i segmenti della coda, braccio e
   avambraccio sull'arma) diventano due strati come quelli di base: il bordo (il
   pezzo intero) e il colore (lo stesso senza il contorno). Il gioco disegna prima
@@ -65,8 +68,13 @@ insieme i pezzi).
   Per i pezzi che vanno sopra il manichino non serve ricopiarlo.
 - **ChatGPT:** gli si dà `stampino_ai.png` e `manichino.png` e si chiede di
   ridisegnare i pezzi nelle stesse caselle, sullo stesso magenta. ChatGPT non
-  rispetta mai le caselle al pixel: si taglia con `--allinea`, e conviene usare
-  le categorie che sostituiscono (pezzo intero), non quelle sopra.
+  rispetta mai le caselle: si taglia con `--allinea`. Per le categorie che
+  sostituiscono, ogni pezzo staccato va al posto con la casella più vicina, si
+  scala fino all'area del manichino (le facce con la scala della testa) e prende
+  il perno nello stesso punto della sua scatola in cui il manichino ha il suo:
+  basta che i pezzi siano nell'ordine dello stampino, uno per casella, staccati
+  fra loro. Per quelle sopra ogni casella si sposta e si scala poco, finché
+  combacia col manichino: meglio Procreate.
 
 ```bash
 python3 strumenti/stampino/taglia.py elmo.png --nome elmo_corna --categoria elmo
