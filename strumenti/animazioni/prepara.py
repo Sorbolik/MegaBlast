@@ -5,7 +5,8 @@ Mette dentro strumenti/animazioni/editor.html i pezzi veri del diavoletto
 (client/assets/diavoletto/*.png), i perni (client/battaglia/diavoletto.lua), le
 pelli disegnate sullo stampino (client/battaglia/pelli.lua), le
 animazioni di adesso (client/battaglia/animazioni.lua), l'altezza del disegno
-(client/sim/game.lua), le hitbox (client/sim/corpo.lua) e i colori delle squadre (client/ui/ui.lua), e scrive
+(client/sim/game.lua), le hitbox (client/sim/corpo.lua), i perni spostati
+(client/battaglia/perni.lua) e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
 salvano direttamente in client/battaglia/animazioni.lua) e si pubblica com'è
 come Artifact di claude.ai.
@@ -48,6 +49,7 @@ def main():
         "diavoletto": diavoletto,
         "animazioni": leggi("client/battaglia/animazioni.lua"),
         "pelli": pelli,
+        "perni": leggi("client/battaglia/perni.lua"),
         "immagini": immagini,
         "disegno_h": misura["BLASTRON_ROBOT_H"] * misura["BLASTRON_CORPO"],
         "corpo": leggi("client/sim/corpo.lua"),

@@ -57,7 +57,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 .canale { display: grid; grid-template-columns: 22px 1fr 64px; grid-template-rows: auto auto; column-gap: 6px; align-items: center; padding: 3px 4px; border-radius: 6px; cursor: pointer }
 .canale[hidden] { display: none }
 .barra input.hb { width: 64px }
-#hb-stato { color: var(--tenue); min-width: 11em }
+#hb-stato, #pn-stato { color: var(--tenue); min-width: 11em }
 .canale.scelto { background: var(--brace-tenue) }
 .canale .nome { grid-column: 2 / 4; font-size: 13px }
 .canale input[type=range] { grid-column: 2; width: 100%; accent-color: var(--brace) }
@@ -121,7 +121,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label title="Cambiando la durata le chiavi si stirano con lei"><input type="checkbox" id="stira" checked> stira le chiavi</label>
 			<label><input type="checkbox" id="ciclo"> in ciclo</label>
 			<span class="spazio"></span>
-			<button id="sposta" title="Trascinando: ruota o sposta (anche Maiusc)">Trascina: ruota</button>
+			<button id="sposta" title="Trascinando: ruota, sposta (anche Maiusc) o sposta il perno">Trascina: ruota</button>
 			<button id="copia-posa" title="Copia la posa (Ctrl+C)">Copia posa</button>
 			<button id="incolla-posa" title="Incolla la posa qui (Ctrl+V)">Incolla posa</button>
 		</div>
@@ -137,11 +137,18 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="hb-gioco" title="Le hitbox di adesso del gioco">Come nel gioco</button>
 			<button id="hb-salva" title="Salva corpo.lua (va in client/sim/)">Salva corpo.lua</button>
 		</div>
+		<div class="barra" title="Il punto attorno a cui gira il pezzo: con Trascina: perno lo sposti, il pezzo da fermo resta dov'è">
+			<label>perni di testa, braccia, gambe e ala</label>
+			<span id="pn-stato"></span>
+			<span class="spazio"></span>
+			<button id="pn-gioco" title="I perni di adesso del gioco">Come nel gioco</button>
+			<button id="pn-salva" title="Salva perni.lua (va in client/battaglia/)">Salva perni.lua</button>
+		</div>
 	</section>
 	<aside id="canali" class="box"></aside>
 	<section id="tempo-box" class="box">
 		<canvas id="tempo"></canvas>
-		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Ogni modifica mette una chiave al tempo dove sei. Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
+		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" sposti il punto attorno a cui gira (la crocetta), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Ogni modifica mette una chiave al tempo dove sei. Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
 	</section>
 </div>
 <div id="messaggio" role="status"></div>
@@ -220,6 +227,27 @@ function corpoInLua(c) {
 }
 const CORPO_DEL_GIOCO = corpoInLua(CORPO_GIOCO);
 let corpoSalvato = CORPO_DEL_GIOCO;
+
+// I perni spostati (battaglia/perni.lua), come li usa battaglia/scoria.lua: per
+// posto, di quanto si sposta il giunto; i pezzi del posto al contrario
+const POSTI_PERNO = ["testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala"];
+const PERNABILI = { testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro", ala: "ala" };
+const PERNI_GIOCO = Object.assign({}, leggiLua(DATI.perni));
+let pn = JSON.parse(JSON.stringify(PERNI_GIOCO));
+const sposto = (posto) => pn[posto] || [0, 0];
+function J(posto) {
+	const b = { testa: PT.collo, braccio: PT.spalle, braccio_dietro: [-PT.spalle[0], PT.spalle[1]], gamba: PT.anche,
+		gamba_dietro: [-PT.anche[0], PT.anche[1]], ala: PT.ala }[posto];
+	const d = sposto(posto);
+	return [b[0] + d[0], b[1] + d[1]];
+}
+function perniInLua(p) {
+	const n = (v) => String(Math.round(v * 10) / 10);
+	const righe = POSTI_PERNO.filter((k) => p[k] && (p[k][0] || p[k][1])).map((k) => `\t${k} = { ${n(p[k][0])}, ${n(p[k][1])} },\n`);
+	return DATI.perni.replace(/return \{[\s\S]*$/, "return {\n" + righe.join("") + "}\n");
+}
+const PERNI_DEL_GIOCO = perniInLua(PERNI_GIOCO);
+let perniSalvati = PERNI_DEL_GIOCO;
 
 // Le pelli (battaglia/pelli.lua), come le veste battaglia/scoria.lua: per posto i
 // pezzi dal basso, il primo al posto di quello di base, poi quelli sopra. Una
@@ -414,7 +442,7 @@ const DEL_GIOCO = clipInLua(clips);
 let nome = "fermo";
 let tempo = 0; // tempo dentro la clip
 let orologio = 0; // tempo che passa (coda, fiammella, molle)
-let suona = false, canale = "braccio_a", chiaveScelta = null, modoSposta = false;
+let suona = false, canale = "braccio_a", chiaveScelta = null, modo = "ruota"; // trascinando: ruota, sposta o perno
 let posaCopiata = null;
 const indietro = [], avanti = [];
 const $ = (id) => document.getElementById(id);
@@ -558,6 +586,7 @@ function inversa(m) {
 const palco = $("palco");
 const g = palco.getContext("2d");
 let schermo = [1, 0, 0, -1, 0, 0];
+let formaOra = [1, 0, 0, 1, 0, 0]; // la forma del corpo, dove stanno i giunti
 let maniglie = []; // le maniglie delle hitbox, in pixel del canvas: {id, px, py, cursore}
 let colpibili = []; // i pezzi disegnati, per sceglierli col mouse: {img, m, canale, giunto}, in pixel del canvas
 let ultimoFrame = 0;
@@ -632,6 +661,7 @@ function disegna(dt) {
 	if (nome === "paracadute") disegnaPezzo(sposta(radice, 0, D.paracadute_y), P.paracadute, null, null, null, col);
 	const corpo = ruota(sposta(radice, po.corpo_x, po.salto), po.corpo + (molle ? sim.x.corpoLean : 0));
 	const forma = scala(corpo, lx, q);
+	formaOra = forma;
 	const gCorpo = punto(corpo, 0, 0);
 	// la coda: prima i bordi, poi i colori
 	const ang = angoliCoda(codaBase, dt || 0, molle);
@@ -646,26 +676,28 @@ function disegna(dt) {
 		}
 	}
 	const giunto = (m, x, y, a) => ruota(sposta(m, x, y), a);
-	let m = giunto(forma, PT.ala[0] + po.ala_x, PT.ala[1] + po.ala_y, po.ala);
-	veste(m, "ala", "ala", punto(m, 0, 0), col);
-	m = giunto(forma, -PT.spalle[0] + po.braccio_d_x, PT.spalle[1] + po.braccio_d_y, braccia[1]);
-	veste(m, "braccio_dietro", "braccio_d", punto(m, 0, 0), col);
-	m = giunto(forma, -PT.anche[0] + po.gamba_d_x, PT.anche[1] + po.alza_d, gambe[1]);
-	veste(m, "gamba_dietro", "gamba_d", punto(m, 0, 0), col);
-	m = giunto(forma, PT.anche[0] + po.gamba_a_x, PT.anche[1] + po.alza_a, gambe[0]);
-	veste(m, "gamba", "gamba_a", punto(m, 0, 0), col);
+	// i pezzi di un posto col perno spostato: al contrario del giunto
+	const vestePerno = (m, posto, can, nomePosto) => { const d = sposto(posto); veste(sposta(m, -d[0], -d[1]), nomePosto || posto, can, punto(m, 0, 0), col); };
+	let m = giunto(forma, J("ala")[0] + po.ala_x, J("ala")[1] + po.ala_y, po.ala);
+	vestePerno(m, "ala", "ala");
+	m = giunto(forma, J("braccio_dietro")[0] + po.braccio_d_x, J("braccio_dietro")[1] + po.braccio_d_y, braccia[1]);
+	vestePerno(m, "braccio_dietro", "braccio_d");
+	m = giunto(forma, J("gamba_dietro")[0] + po.gamba_d_x, J("gamba_dietro")[1] + po.alza_d, gambe[1]);
+	vestePerno(m, "gamba_dietro", "gamba_d");
+	m = giunto(forma, J("gamba")[0] + po.gamba_a_x, J("gamba")[1] + po.alza_a, gambe[0]);
+	vestePerno(m, "gamba", "gamba_a");
 	veste(sposta(forma, PT.bacino[0], PT.bacino[1]), "busto", "corpo", gCorpo, col);
-	const collo = scala(giunto(forma, PT.collo[0] + po.testa_x, PT.collo[1] + po.testa_y, testa), 1 / lx, 1 / q);
-	veste(collo, po.viso || "testa", "testa", punto(collo, 0, 0), col);
+	const collo = scala(giunto(forma, J("testa")[0] + po.testa_x, J("testa")[1] + po.testa_y, testa), 1 / lx, 1 / q);
+	vestePerno(collo, "testa", "testa", po.viso || "testa");
 	// la fiammella: tre forme a scatti, trema; grande su chi è di turno
 	const f = turno ? 2.2 : 0.8;
 	const tr = Math.sin(orologio * 11) * 0.06 + Math.sin(orologio * 17.3) * 0.04;
-	const cima = ruota(scala(sposta(collo, PT.cima[0], PT.cima[1]), f * (1 - tr * 0.5), f * (1 + tr)), Math.sin(orologio * 6.7) * 0.06);
+	const cima = ruota(scala(sposta(collo, PT.cima[0] - sposto("testa")[0], PT.cima[1] - sposto("testa")[1]), f * (1 - tr * 0.5), f * (1 + tr)), Math.sin(orologio * 6.7) * 0.06);
 	const fp = P["fiammella_" + ((Math.floor(orologio / 0.09) % 3 + 3) % 3 + 1)];
 	const luce = turno ? 1 : 0.6;
 	disegnaPezzo(cima, fp, null, "testa", punto(collo, 0, 0), col.map((x) => x * luce));
-	m = giunto(forma, PT.spalle[0] + po.braccio_a_x, PT.spalle[1] + po.braccio_a_y, braccia[0]);
-	veste(m, "braccio", "braccio_a", punto(m, 0, 0), col);
+	m = giunto(forma, J("braccio")[0] + po.braccio_a_x, J("braccio")[1] + po.braccio_a_y, braccia[0]);
+	vestePerno(m, "braccio", "braccio_a");
 
 	// le hitbox (sim/corpo.lua) dal centro dei piedi: terreno e colpi toccano
 	// queste, non il disegno
@@ -700,6 +732,19 @@ function disegna(dt) {
 	forma_hb("vedi-colpi", "--colpi", () => { g.arc(0, cc, cr, 0, 2 * Math.PI); },
 		[cr * 0.7, cc + cr * 0.75, "colpi"], [["raggio", -cr, cc, "ew-resize"], ["centro", 0, cc, "ns-resize"]]);
 
+	// spostando i perni: una crocetta su ognuno
+	if (modo === "perno") {
+		g.setTransform(1, 0, 0, 1, 0, 0);
+		g.strokeStyle = css.getPropertyValue("--brace");
+		g.lineWidth = 2 * dpr;
+		const visti = new Set();
+		for (const x of colpibili) {
+			if (!PERNABILI[x.canale] || visti.has(x.canale)) continue;
+			visti.add(x.canale);
+			const [cx, cy] = x.giunto, l = 6 * dpr;
+			g.beginPath(); g.moveTo(cx - l, cy); g.lineTo(cx + l, cy); g.moveTo(cx, cy - l); g.lineTo(cx, cy + l); g.stroke();
+		}
+	}
 	// il canale scelto: il suo giunto
 	const sc = colpibili.find((x) => x.canale === canale);
 	if (sc) {
@@ -769,7 +814,17 @@ palco.addEventListener("pointerdown", (e) => {
 	const x = pezzoSotto(px, py);
 	if (!x) return;
 	fermaPlay();
-	const muovi = (e.shiftKey || modoSposta) && SPOSTABILI[x.canale];
+	if (modo === "perno") {
+		const posto = PERNABILI[x.canale];
+		if (!posto) { messaggio("Questo pezzo non ha un perno da spostare: testa, braccia, gambe e ala sì."); return; }
+		canale = x.canale; chiaveScelta = null;
+		presa = { perno: posto, px, py, d0: sposto(posto).slice() };
+		palco.setPointerCapture(e.pointerId);
+		palco.style.cursor = "grabbing";
+		aggiorna();
+		return;
+	}
+	const muovi = (e.shiftKey || modo === "sposta") && SPOSTABILI[x.canale];
 	const id = muovi ? muovi[1] : x.canale;
 	canale = id; chiaveScelta = null;
 	const [gx, gy] = x.giunto;
@@ -783,6 +838,16 @@ palco.addEventListener("pointerdown", (e) => {
 palco.addEventListener("pointermove", (e) => {
 	const [px, py] = pixel(e);
 	if (!presa) { const mg = manigliaSotto(px, py); palco.style.cursor = mg ? mg.cursore : pezzoSotto(px, py) ? "grab" : "default"; return; }
+	if (presa.perno) {
+		// lo spostamento del mouse nella forma del corpo, dove stanno i giunti
+		const inv = inversa(formaOra);
+		const [a0, b0] = punto(inv, presa.px, presa.py), [a1, b1] = punto(inv, px, py);
+		const t = (v) => Math.round(v * 10) / 10;
+		pn[presa.perno] = [t(presa.d0[0] + a1 - a0), t(presa.d0[1] + b1 - b0)];
+		try { localStorage.setItem("megablast-perni", perniInLua(pn)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
+		aggiorna();
+		return;
+	}
 	if (presa.maniglia) {
 		// dal canvas alle unità del disegno (piedi in 0, 0) e poi ai pixel del mondo
 		const [u, v] = punto(inversa(schermo), px, py);
@@ -805,10 +870,10 @@ palco.addEventListener("pointermove", (e) => {
 });
 const lascia = () => {
 	if (!presa) return;
-	const mg = presa.maniglia;
+	const solo = presa.maniglia || presa.perno;
 	presa = null;
 	palco.style.cursor = "grab";
-	if (mg) aggiorna(); else memorizza();
+	if (solo) aggiorna(); else memorizza();
 };
 palco.addEventListener("pointerup", lascia);
 palco.addEventListener("pointercancel", lascia);
@@ -1019,6 +1084,8 @@ function aggiorna() {
 	const nums = { largo: hb.cammina.largo, alto: hb.cammina.alto, raggio: hb.colpi.raggio, centro: hb.colpi.centro };
 	for (const id in nums) if (document.activeElement !== $("hb-" + id)) $("hb-" + id).value = nums[id];
 	const cl = corpoInLua(hb);
+	const pl = perniInLua(pn);
+	$("pn-stato").textContent = pl === PERNI_DEL_GIOCO ? "come nel gioco" : pl === perniSalvati ? "salvati" : "spostati, da salvare";
 	$("hb-stato").textContent = cl === CORPO_DEL_GIOCO ? "come nel gioco" : cl === corpoSalvato ? "salvate" : "cambiate, da salvare";
 	const t = dentro(c, tempo);
 	for (const ch of CANALI) {
@@ -1093,7 +1160,18 @@ $("hb-gioco").onclick = () => {
 	aggiorna();
 	messaggio("Hitbox come nel gioco.");
 };
-$("sposta").onclick = () => { modoSposta = !modoSposta; $("sposta").textContent = modoSposta ? "Trascina: sposta" : "Trascina: ruota"; $("sposta").classList.toggle("acceso", modoSposta); };
+$("sposta").onclick = () => {
+	modo = { ruota: "sposta", sposta: "perno", perno: "ruota" }[modo];
+	$("sposta").textContent = "Trascina: " + modo;
+	$("sposta").classList.toggle("acceso", modo !== "ruota");
+	aggiorna();
+};
+$("pn-gioco").onclick = () => {
+	pn = JSON.parse(JSON.stringify(PERNI_GIOCO));
+	try { localStorage.removeItem("megablast-perni"); } catch (e) { /* niente memoria del browser */ }
+	aggiorna();
+	messaggio("Perni come nel gioco.");
+};
 
 $("durata").onchange = () => {
 	const c = clip(), d = parseFloat($("durata").value);
@@ -1187,12 +1265,16 @@ async function scrivi(testo, nomeFile, cartella, f) {
 	messaggio(`Scaricato ${nomeFile}: mettilo in ${cartella}.`);
 	return true;
 }
-const fileAnimazioni = {}, fileCorpo = {};
+const fileAnimazioni = {}, fileCorpo = {}, filePerni = {};
 async function salva() {
 	const testo = clipInLua(clips);
 	if (await scrivi(testo, "animazioni.lua", "client/battaglia/", fileAnimazioni)) { salvato = testo; aggiorna(); }
 }
 $("salva").onclick = salva;
+$("pn-salva").onclick = async () => {
+	const testo = perniInLua(pn);
+	if (await scrivi(testo, "perni.lua", "client/battaglia/", filePerni)) { perniSalvati = testo; aggiorna(); }
+};
 $("hb-salva").onclick = async () => {
 	const testo = corpoInLua(hb);
 	if (await scrivi(testo, "corpo.lua", "client/sim/", fileCorpo)) { corpoSalvato = testo; aggiorna(); }
@@ -1228,8 +1310,12 @@ $("claude").onclick = async () => {
 		await claudeDb.doc("animazioni/ultima").set({ lua: clipInLua(clips), quando });
 		// le hitbox solo se cambiate: sono fisica, cambiano il gioco per tutti
 		const cl = corpoInLua(hb);
-		if (cl !== CORPO_DEL_GIOCO) { await claudeDb.doc("corpo/ultima").set({ lua: cl, quando }); corpoSalvato = cl; aggiorna(); }
-		messaggio(cl !== CORPO_DEL_GIOCO ? "Mandate animazioni e hitbox: di' a Claude di prenderle dall'editor." : "Mandate: di' a Claude di prendere le animazioni dall'editor.");
+		if (cl !== CORPO_DEL_GIOCO) { await claudeDb.doc("corpo/ultima").set({ lua: cl, quando }); corpoSalvato = cl; }
+		const pl = perniInLua(pn);
+		if (pl !== PERNI_DEL_GIOCO) { await claudeDb.doc("perni/ultima").set({ lua: pl, quando }); perniSalvati = pl; }
+		aggiorna();
+		const anche = [cl !== CORPO_DEL_GIOCO && "hitbox", pl !== PERNI_DEL_GIOCO && "perni"].filter(Boolean);
+		messaggio("Mandate le animazioni" + (anche.length ? " con " + anche.join(" e ") : "") + ": di' a Claude di prenderle dall'editor.");
 	} catch (e) { messaggio("Non sono riuscito a mandarle: " + ((e && e.message) || "errore") + ". Usa Copia il testo."); }
 };
 $("ripristina").onclick = () => {
@@ -1258,6 +1344,10 @@ try {
 		const c = leggiLua(bozza);
 		if (c.cammina && c.colpi) hb = c;
 	}
+} catch (e) { /* niente memoria del browser o bozza rotta */ }
+try {
+	const bozza = localStorage.getItem("megablast-perni");
+	if (bozza && bozza !== PERNI_DEL_GIOCO) pn = leggiLua(bozza);
 } catch (e) { /* niente memoria del browser o bozza rotta */ }
 // una scelta per categoria, solo per quelle che hanno pelli
 for (const c of [...PL.sostituisce, ...PL.sopra]) {

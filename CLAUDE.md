@@ -46,6 +46,11 @@ ripubblicalo. "Manda a Claude" nell'editor salva il file nel database
 dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
 `client/battaglia/animazioni.lua`.
 
+Dallo stesso editor si cambiano le hitbox (`client/sim/corpo.lua`: la capsula per
+camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
+perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`). "Manda a
+Claude" li mette nei documenti `corpo/ultima` e `perni/ultima` (campo `lua`).
+
 ## Pezzi nuovi del diavoletto (pelli)
 
 Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo

@@ -39,6 +39,9 @@
 -- stesse animazioni. Una testa nuova senza le sue facce le fa tutte; coda e
 -- braccia sull'arma nuove hanno bordo e colore a parte come quelle di base; le
 -- parti col colore della squadra hanno il loro strato, come la fiammella.
+-- I perni di testa, braccia, gambe e ala si spostano dall'editor delle
+-- animazioni (battaglia/perni.lua): cambia il punto in cui il pezzo gira, non
+-- dove sta da fermo.
 -- La fiammella ha il colore della squadra ed è l'indicatore di chi gioca: su chi
 -- è di turno è grande e accesa, sugli altri piccola e più scura.
 
@@ -48,10 +51,28 @@ local DA = require("battaglia.armi").armi
 local pose = require "battaglia.pose"
 local A = require "battaglia.animazioni"
 local PELLI = require "battaglia.pelli"
+local PERNI = require "battaglia.perni"
 
 local M = {}
 
 local P, PT = D.pezzi, D.punti
+
+-- dove gira ogni posto nel corpo fermo: il punto dello scheletro più il perno
+-- spostato (battaglia/perni.lua); i pezzi del posto si spostano al contrario
+local FERMO = { 0, 0 }
+local function sposto(posto) return PERNI[posto] or FERMO end
+local function perno(posto, x, y)
+	local d = sposto(posto)
+	return { x + d[1], y + d[2] }
+end
+local J = {
+	testa = perno("testa", PT.collo[1], PT.collo[2]),
+	braccio = perno("braccio", PT.spalle[1], PT.spalle[2]),
+	braccio_dietro = perno("braccio_dietro", -PT.spalle[1], PT.spalle[2]),
+	gamba = perno("gamba", PT.anche[1], PT.anche[2]),
+	gamba_dietro = perno("gamba_dietro", -PT.anche[1], PT.anche[2]),
+	ala = perno("ala", PT.ala[1], PT.ala[2]),
+}
 
 local sin, cos, min, max, abs, pi, sqrt = math.sin, math.cos, math.min, math.max, math.abs, math.pi, math.sqrt
 local atan2, acos = math.atan2, math.acos
@@ -136,13 +157,16 @@ local function giunto(parent, x, y)
 	return n
 end
 -- un pezzo disegnato (p di diavoletto.lua), k unità del mondo per unità del
--- disegno, nel giunto parent; col lampo del colpo se non è tinto (o se lampo)
-local function pezzo(s, parent, p, k, lampo)
-	local n = box(parent, p.x * k, p.y * k, p.w * k, p.h * k)
+-- disegno, nel giunto parent spostato al contrario del perno d; col lampo del
+-- colpo se non è tinto (o se lampo)
+local function pezzo(s, parent, p, k, lampo, d)
+	d = d or FERMO
+	local x, y = (p.x - d[1]) * k, (p.y - d[2]) * k
+	local n = box(parent, x, y, p.w * k, p.h * k)
 	gui.set_texture(n, "diavoletto")
 	gui.play_flipbook(n, p.img)
 	if p.tinta then
-		local t = box(parent, p.x * k, p.y * k, p.w * k, p.h * k)
+		local t = box(parent, x, y, p.w * k, p.h * k)
 		gui.set_texture(t, "diavoletto")
 		gui.play_flipbook(t, p.tinta)
 		s.tinte[#s.tinte + 1] = t
@@ -200,7 +224,7 @@ end
 -- i pezzi di un posto (vesti) nel giunto parent
 local function veste(s, parent, posto, k)
 	for _, p in ipairs(s.strati(posto)) do
-		if p then pezzo(s, parent, p, k, true) end
+		if p then pezzo(s, parent, p, k, true, sposto(posto)) end
 	end
 end
 
@@ -296,13 +320,13 @@ function M.new(color, look)
 			x, y = s.forma_coda.l[i] * k, 0
 		end
 	end
-	s.ala = giunto(s.forma, PT.ala[1] * k, PT.ala[2] * k)
+	s.ala = giunto(s.forma, J.ala[1] * k, J.ala[2] * k)
 	veste(s, s.ala, "ala", k)
-	s.braccio_d = giunto(s.forma, -PT.spalle[1] * k, PT.spalle[2] * k)
+	s.braccio_d = giunto(s.forma, J.braccio_dietro[1] * k, J.braccio_dietro[2] * k)
 	veste(s, s.braccio_d, "braccio_dietro", k)
-	s.gamba_d = giunto(s.forma, -PT.anche[1] * k, PT.anche[2] * k)
+	s.gamba_d = giunto(s.forma, J.gamba_dietro[1] * k, J.gamba_dietro[2] * k)
 	veste(s, s.gamba_d, "gamba_dietro", k)
-	s.gamba_a = giunto(s.forma, PT.anche[1] * k, PT.anche[2] * k)
+	s.gamba_a = giunto(s.forma, J.gamba[1] * k, J.gamba[2] * k)
 	veste(s, s.gamba_a, "gamba", k)
 	s.busto = giunto(s.forma, PT.bacino[1] * k, PT.bacino[2] * k)
 	veste(s, s.busto, "busto", k)
@@ -313,7 +337,7 @@ function M.new(color, look)
 	-- testa: sta sulla forma, in un giunto che toglie la schiacciata
 	s.arma_dietro = giunto(s.forma, 0, 0)
 	s.mano_d = braccio_arma(s, s.arma_dietro, s.corpo, k, true)
-	s.collo = giunto(s.forma, PT.collo[1] * k, PT.collo[2] * k)
+	s.collo = giunto(s.forma, J.testa[1] * k, J.testa[2] * k)
 	-- la testa: tanti pezzi quanti ne ha la faccia con più strati, ognuno col suo
 	-- strato del colore della squadra; li cambia faccia()
 	local strati = 0
@@ -322,15 +346,15 @@ function M.new(color, look)
 		strati = max(strati, #s.facce[f])
 	end
 	for i = 1, strati do
-		s.teste[i] = pezzo(s, s.collo, s.facce.testa[i] or s.facce.testa[1], k, true)
+		s.teste[i] = pezzo(s, s.collo, s.facce.testa[i] or s.facce.testa[1], k, true, sposto("testa"))
 		s.teste_t[i] = box(s.collo, 0, 0, 0, 0)
 		gui.set_texture(s.teste_t[i], "diavoletto")
 		s.tinte[#s.tinte + 1] = s.teste_t[i]
 	end
-	s.cima = giunto(s.collo, PT.cima[1] * k, PT.cima[2] * k)
+	s.cima = giunto(s.collo, (PT.cima[1] - sposto("testa")[1]) * k, (PT.cima[2] - sposto("testa")[2]) * k)
 	s.fuoco = pezzo(s, s.cima, P.fiammella_1, k)
 	s.fuoco_tinta = s.tinte[#s.tinte]
-	s.braccio_a = giunto(s.forma, PT.spalle[1] * k, PT.spalle[2] * k)
+	s.braccio_a = giunto(s.forma, J.braccio[1] * k, J.braccio[2] * k)
 	veste(s, s.braccio_a, "braccio", k)
 
 	for name in pairs(ARMI) do arma(s, name, color) end
@@ -366,18 +390,18 @@ end
 local function faccia(s, nome)
 	if s.faccia ~= nome then
 		s.faccia = nome
-		local f, k = s.facce[nome], s.k
+		local f, k, d = s.facce[nome], s.k, sposto("testa")
 		for i = 1, #s.teste do
 			local n, t, p = s.teste[i], s.teste_t[i], f[i]
 			gui.set_enabled(n, p ~= nil)
 			gui.set_enabled(t, p ~= nil and p.tinta ~= nil)
 			if p then
 				gui.play_flipbook(n, p.img)
-				pos(n, p.x * k, p.y * k)
+				pos(n, (p.x - d[1]) * k, (p.y - d[2]) * k)
 				size(n, p.w * k, p.h * k)
 				if p.tinta then
 					gui.play_flipbook(t, p.tinta)
-					pos(t, p.x * k, p.y * k)
+					pos(t, (p.x - d[1]) * k, (p.y - d[2]) * k)
 					size(t, p.w * k, p.h * k)
 				end
 			end
@@ -704,16 +728,16 @@ function M.update(s, dt, st)
 	rot(s.braccio_d, s.braccia[2])
 	rot(s.gamba_a, s.gambe[1])
 	rot(s.gamba_d, s.gambe[2])
-	pos(s.gamba_a, (PT.anche[1] + po.gamba_a_x) * s.k, (PT.anche[2] + po.alza_a) * s.k)
-	pos(s.gamba_d, (-PT.anche[1] + po.gamba_d_x) * s.k, (PT.anche[2] + po.alza_d) * s.k)
-	pos(s.braccio_a, (PT.spalle[1] + po.braccio_a_x) * s.k, (PT.spalle[2] + po.braccio_a_y) * s.k)
-	pos(s.braccio_d, (-PT.spalle[1] + po.braccio_d_x) * s.k, (PT.spalle[2] + po.braccio_d_y) * s.k)
-	pos(s.ala, (PT.ala[1] + po.ala_x) * s.k, (PT.ala[2] + po.ala_y) * s.k)
+	pos(s.gamba_a, (J.gamba[1] + po.gamba_a_x) * s.k, (J.gamba[2] + po.alza_a) * s.k)
+	pos(s.gamba_d, (J.gamba_dietro[1] + po.gamba_d_x) * s.k, (J.gamba_dietro[2] + po.alza_d) * s.k)
+	pos(s.braccio_a, (J.braccio[1] + po.braccio_a_x) * s.k, (J.braccio[2] + po.braccio_a_y) * s.k)
+	pos(s.braccio_d, (J.braccio_dietro[1] + po.braccio_d_x) * s.k, (J.braccio_dietro[2] + po.braccio_d_y) * s.k)
+	pos(s.ala, (J.ala[1] + po.ala_x) * s.k, (J.ala[2] + po.ala_y) * s.k)
 	rot(s.ala, po.ala)
 	pos(s.coda[1][1], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
 	pos(s.coda[1][2], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
 	coda(s, dt)
-	pos(s.collo, (PT.collo[1] + po.testa_x) * s.k, (PT.collo[2] + po.testa_y) * s.k)
+	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[TESTA])
 	scale(s.collo, 1 / lx, 1 / q)
 	fiammella(s, dt, st.turno)

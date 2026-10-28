@@ -233,6 +233,33 @@ do
 	A2.fermo = vecchia
 end
 
+-- i perni spostati dall'editor (battaglia/perni.lua): il giunto si sposta, i
+-- pezzi al contrario, così da fermi restano dove sono
+do
+	local D = require "battaglia.diavoletto"
+	package.loaded["battaglia.perni"] = { braccio = { 3, -2 }, testa = { 1, 4 } }
+	package.loaded["battaglia.scoria"] = nil
+	local sc2 = require "battaglia.scoria"
+	local v = sc2.new(vec(1, 0.2, 0.3, 1))
+	sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0 })
+	local k = v.k
+	local braccio, testa
+	for _, n in ipairs(nodi) do
+		if n.parent == v.braccio_a and n.img == "braccio" then braccio = n end
+		if n.parent == v.collo and n.img == "testa" then testa = n end
+	end
+	check(braccio and math.abs(braccio.pos.x - (D.pezzi.braccio.x - 3) * k) < 1e-6
+		and math.abs(braccio.pos.y - (D.pezzi.braccio.y + 2) * k) < 1e-6
+		and math.abs(v.braccio_a.pos.x - (D.punti.spalle[1] + 3) * k) < 1e-6,
+		"perni: il braccio gira attorno al perno spostato e da fermo resta dov'era")
+	check(testa and math.abs(testa.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6
+		and math.abs(v.cima.pos.y - (D.punti.cima[2] - 4) * k) < 1e-6,
+		"perni: la testa e la fiammella restano dov'erano")
+	package.loaded["battaglia.perni"] = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
 -- Pelli (battaglia/pelli.lua) ---------------------------------------------------
 
 -- pelli finte: una testa nuova senza facce col colore della squadra, un elmo
