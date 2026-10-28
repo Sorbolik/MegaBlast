@@ -218,15 +218,21 @@ end
 
 -- Pelli (battaglia/pelli.lua) ---------------------------------------------------
 
--- pelli finte: una testa nuova senza facce, un elmo sopra, una coda intera, un
--- braccio sull'arma nuovo
+-- pelli finte: una testa nuova senza facce col colore della squadra, un elmo
+-- sopra, una coda a segmenti, un braccio sull'arma nuovo (bordo e colore a parte)
 local PELLI = require "battaglia.pelli"
-local function pz(img, modo) return { img = img, x = 1, y = 2, w = 30, h = 40, modo = modo } end
-PELLI.pelli.prova_testa = { categoria = "testa", pezzi = { testa = pz("t", "sostituisce") } }
+local function pz(img, modo, tinta) return { img = img, tinta = tinta, x = 1, y = 2, w = 30, h = 40, modo = modo } end
+PELLI.pelli.prova_testa = { categoria = "testa", pezzi = { testa = pz("t", "sostituisce", "t_tinta") } }
 PELLI.pelli.prova_elmo = { categoria = "elmo", pezzi = { testa = pz("e", "sopra"), busto = pz("eb", "sopra") } }
-PELLI.pelli.prova_coda = { categoria = "coda", pezzi = { coda = pz("c", "sostituisce") } }
+local coda = {}
+for i = 1, 5 do
+	coda["coda_" .. i] = pz("c" .. i, "sostituisce")
+	coda["coda_" .. i .. "_bordo"] = pz("cb" .. i, "sostituisce")
+end
+PELLI.pelli.prova_coda = { categoria = "coda", pezzi = coda }
 PELLI.pelli.prova_corpo = { categoria = "corpo", pezzi = { omero = pz("o", "sostituisce"),
-	omero_dietro = pz("od", "sostituisce") } }
+	omero_bordo = pz("ob", "sostituisce"), omero_dietro = pz("od", "sostituisce"),
+	omero_dietro_bordo = pz("odb", "sostituisce") } }
 local function immagini(da)
 	local l = {}
 	for i = da, #nodi do
@@ -240,10 +246,13 @@ local primo = #nodi + 1
 local v = scoria.new(vec(1, 0.2, 0.3, 1), { "prova_elmo", "prova_testa", "prova_coda", "prova_corpo" })
 local im = immagini(primo)
 check(im.t == 1 and im.e == 1 and im.eb == 1 and not im.testa, "pelli: la testa sostituita, l'elmo sopra")
-check(im.c == 1 and not im.coda_1 and not im.coda_1_bordo, "pelli: la coda intera al posto dei segmenti")
-check(im.o == 1 and im.od == 1 and not im.omero_bordo and im.avambraccio_bordo == 2,
-	"pelli: il braccio sull'arma nuovo, senza bordo a parte")
+check(im.c1 == 1 and im.cb5 == 1 and not im.coda_1 and not im.coda_5_bordo
+	and v.coda[1][1] ~= v.coda[1][2], "pelli: la coda nuova a segmenti, bordi e colori")
+check(im.o == 1 and im.ob == 1 and im.od == 1 and im.odb == 1 and not im.omero_bordo and im.avambraccio_bordo == 2,
+	"pelli: il braccio sull'arma nuovo, col suo bordo")
 check(v.teste[2].parent == v.collo and v.teste[1].img == "t" and v.teste[2].img == "e", "pelli: l'elmo sta sulla testa")
+check(v.teste_t[1].enabled and v.teste_t[1].img == "t_tinta" and not v.teste_t[2].enabled,
+	"pelli: il colore della squadra sulla testa nuova, sotto l'elmo")
 st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
 for _ = 1, 30 do scoria.update(v, 1 / 60, st) end
 scoria.hit(v, 1)

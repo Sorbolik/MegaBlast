@@ -34,14 +34,20 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
   espressione). Un elmo disegnato sulla `testa` sta su tutte le facce.
 - **I pezzi di dietro** (`braccio_dietro`, `gamba_dietro`, e dietro sull'arma)
   se mancano li fa `taglia.py` da quelli davanti, più scuri.
-- **La coda nuova è un pezzo solo**, disegnata come il manichino: gira col
-  primo segmento (non ondeggia a segmenti come quella di base).
-- **Il braccio sull'arma nuovo** (`omero`, `avambraccio`) non ha il bordo a parte
-  come quello di base: al gomito si può vedere la giuntura. Meglio disegnare il
-  gomito tondo.
+- **La coda si disegna intera**, a riposo, sopra il manichino: `taglia.py` la
+  divide nei cinque segmenti della coda di base (ogni pixel al segmento più
+  vicino, più un disco attorno a ogni giunto grande quanto è spessa la coda lì),
+  così ondeggia a segmenti come quella di base.
+- **Giunti senza giunture.** I pezzi in catena (i segmenti della coda, braccio e
+  avambraccio sull'arma) diventano due strati come quelli di base: il bordo (il
+  pezzo intero) e il colore (lo stesso senza il contorno). Il gioco disegna prima
+  tutti i bordi e poi tutti i colori, quindi piegati non mostrano la riga al
+  gomito o fra i segmenti. Sullo stampino i cerchi verdi tratteggiati segnano
+  questi giunti: lì il disegno deve restare tondo e pieno.
+- **Il colore della squadra:** le parti dipinte di **verde acceso** (`#00ff00`,
+  con le sue ombre) diventano del colore della squadra, come la fiammella. Il
+  verde acceso non va usato per altro.
 - **Il contorno** nero, spesso come quello del manichino.
-- Il colore della squadra resta sulla fiammella, sul paracadute e sulle armi:
-  le pelli non si tingono.
 
 ## Come si fa
 
@@ -49,8 +55,8 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
 python3 strumenti/stampino/stampino.py      # rifà lo stampino (serve cairosvg)
 ```
 
-Scrive in `simulazione/stampino/`: `stampino.png` (caselle, perni e nomi, per
-disegnare in Procreate), `stampino_ai.png` (il manichino su magenta, da dare a
+Scrive in `simulazione/stampino/`: `stampino.png` (caselle, perni, giunti, nomi
+e le regole in breve, per disegnare in Procreate), `stampino_ai.png` (il manichino su magenta, da dare a
 ChatGPT), `manichino.png` (il manichino montato, per far capire come stanno
 insieme i pezzi).
 
@@ -69,7 +75,8 @@ python3 strumenti/stampino/taglia.py --togli elmo_corna
 ```
 
 `taglia.py` ritaglia ogni casella cambiata, toglie il manichino (per quelle
-sopra), allinea se serve e scrive `client/assets/pelli/<nome>_<posto>.png`,
+sopra), allinea se serve, divide la coda, separa bordo e colore dei pezzi in
+catena e il colore della squadra, e scrive `client/assets/pelli/<nome>_<posto>.png`,
 `strumenti/stampino/pelli/<nome>.json`, `client/battaglia/pelli.lua` e l'atlante
 del diavoletto, che contiene base e pelli insieme (si disegna in una volta).
 

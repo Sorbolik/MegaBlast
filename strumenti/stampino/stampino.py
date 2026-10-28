@@ -3,7 +3,8 @@
 
 Ogni posto dello scheletro (testa e facce, busto, braccia, gambe, ala, coda,
 braccio e avambraccio sull'arma, pugno) ha una casella fissa con dentro il pezzo
-del diavoletto di base in grigio (il manichino) e il perno nel punto in cui gira.
+del diavoletto di base in grigio (il manichino) e il perno nel punto in cui gira;
+i cerchi tratteggiati sono i giunti dove i pezzi si piegano (gomito, coda).
 Chi disegna un pezzo nuovo (una corazza, una testa, una maglia, delle ali) lo
 disegna sopra il manichino, nella sua casella: taglia.py lo ritaglia, lo allinea
 e lo mette nel gioco, dove si muove con le stesse animazioni.
@@ -78,9 +79,16 @@ def pezzo(nome):
     """I gruppi SVG del pezzo di base attorno al suo perno e la sua scatola."""
     if nome == "coda":
         return gruppi_coda()
+    gruppi = []
+    # braccio e avambraccio sull'arma: il gioco mette il bordo in un pezzo a parte
+    if nome + "_bordo" in DV.PEZZI:
+        d = DV.D()
+        box = DV.PEZZI[nome + "_bordo"](d)
+        gruppi.append(d.gruppo(False, ""))
     d = DV.D()
-    box = DV.PEZZI[nome](d)
-    return [d.gruppo(False, "")], box
+    b = DV.PEZZI[nome](d)
+    box = b if not gruppi else box
+    return gruppi + [d.gruppo(False, "")], box
 
 
 def disegna(gruppi, box, scala):
@@ -134,11 +142,15 @@ def main():
             caselle[n] = {"casella": [bx, by, bx + im.width, by + im.height], "perno": [round(px, 1), round(py, 1)]}
             dg.rectangle([bx, by, bx + im.width, by + im.height], outline=(70, 110, 200, 255), width=3)
             dg.text((bx + 6, by - TITOLO + 6), NOMI[n], fill=(30, 34, 44, 255), font=font(30))
+            # i giunti da tenere tondi: lì i pezzi si piegano uno sull'altro
+            for gx, gy, gr in giunti(n):
+                cerchio(dg, px + gx * S, py - gy * S, gr * S)
             r = 14
             dg.line([px - r, py, px + r, py], fill=(225, 40, 40, 255), width=4)
             dg.line([px, py - r, px, py + r], fill=(225, 40, 40, 255), width=4)
             x += larga + gap
         y += alta + spazio
+    legenda(dg, guida)
     guida.convert("RGB").save(os.path.join(OUT, "stampino.png"), optimize=True)
     ai.convert("RGB").save(os.path.join(OUT, "stampino_ai.png"), optimize=True)
     with open(FOGLIO, "w") as f:
@@ -146,6 +158,46 @@ def main():
         f.write("\n")
     manichino()
     print("OK:", os.path.relpath(OUT, RADICE), "e", os.path.relpath(FOGLIO, RADICE))
+
+
+def giunti(nome):
+    """I giunti dentro un posto (unità, dal perno) e il raggio del bordo lì: dove
+    il pezzo si piega su quello dopo (gomito, segmenti della coda)."""
+    if nome == "omero":
+        L, r = DV.BRACCIO[0]
+        return [(L, 0, r + DV.BORDO_D)]
+    if nome == "avambraccio":
+        return [(0, 0, DV.BRACCIO[1][1] + DV.BORDO_D)]
+    if nome == "coda":
+        out, x, y = [], 0.0, 0.0
+        for (L, w0, w1), a in zip(DV.CODA, DV.CODA_RIPOSO):
+            a = math.radians(a)
+            x, y = x + L * math.cos(a), y + L * math.sin(a)
+            out.append((x, y, w1 / 2 + DV.BORDO_D))
+        return out[:-1]
+    return []
+
+
+def cerchio(dg, x, y, r, n=24):
+    """Un cerchio tratteggiato."""
+    for i in range(0, n, 2):
+        dg.arc([x - r, y - r, x + r, y + r], 360 * i / n, 360 * (i + 1) / n, fill=(40, 150, 90, 255), width=4)
+
+
+def legenda(dg, guida):
+    """Le regole in breve, a destra della coda."""
+    x, y = 2700, 830
+    dg.rectangle([x, y, x + 60, y + 60], fill=(0, 255, 0, 255), outline=(0, 0, 0, 255), width=4)
+    righe = ["verde acceso:", "colore della", "squadra"]
+    for i, t in enumerate(righe):
+        dg.text((x + 76, y + 2 + i * 30), t, fill=(30, 34, 44, 255), font=font(24))
+    y += 130
+    cerchio(dg, x + 30, y + 30, 28)
+    for i, t in enumerate(["giunto: tienilo", "tondo, ci si", "piega sopra"]):
+        dg.text((x + 76, y + 2 + i * 30), t, fill=(30, 34, 44, 255), font=font(24))
+    y += 130
+    for i, t in enumerate(["contorno nero", "spesso come", "il manichino"]):
+        dg.text((x, y + i * 30), t, fill=(30, 34, 44, 255), font=font(24))
 
 
 def manichino():

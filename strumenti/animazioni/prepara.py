@@ -35,7 +35,7 @@ def main():
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le pelli dello stampino (strumenti/stampino/taglia.py), coi loro pezzi
     pelli = leggi("client/battaglia/pelli.lua")
-    for n in sorted(set(re.findall(r'img = "([a-z0-9_]+)"', pelli))):
+    for n in sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', pelli))):
         dati = (REPO / "client/assets/pelli" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     game = leggi("client/sim/game.lua")

@@ -192,8 +192,8 @@ const K = DATI.corpo.ROBOT_H / D.altezza; // unità del mondo per unità del dis
 const LARGO = 2 * DATI.corpo.ROBOT_HALF_W / K;
 
 // Le pelli (battaglia/pelli.lua), come le veste battaglia/scoria.lua: per posto i
-// pezzi dal basso, il primo al posto di quello di base (null: la coda a
-// segmenti), poi quelli sopra. Una testa nuova senza le sue facce fa anche quelle.
+// pezzi dal basso, il primo al posto di quello di base, poi quelli sopra. Una
+// testa nuova senza le sue facce fa anche quelle.
 const PL = leggiLua(DATI.pelli);
 const FACCE = Object.keys(P).filter((n) => n.startsWith("testa")).sort((a, b) => (a === "testa" ? -1 : b === "testa" ? 1 : a < b ? -1 : 1));
 const addosso = {}; // categoria -> nome della pelle
@@ -581,17 +581,14 @@ function disegna(dt) {
 	// la coda: prima i bordi, poi i colori
 	const ang = angoliCoda(codaBase, dt || 0, molle);
 	const gCoda = punto(forma, PT.coda[0], PT.coda[1]);
-	const coda = strati("coda");
-	for (let strato = 0; strato < 2 && !coda[0]; strato++) {
+	for (let strato = 0; strato < 2; strato++) {
 		let m = sposta(forma, PT.coda[0], PT.coda[1]);
 		for (let i = 0; i < D.coda.length; i++) {
 			if (i > 0) m = sposta(m, D.coda[i - 1], 0);
 			m = ruota(m, ang[i]);
-			disegnaPezzo(m, P["coda_" + (i + 1) + (strato === 0 ? "_bordo" : "")], null, "coda", gCoda, col);
+			veste(m, "coda_" + (i + 1) + (strato === 0 ? "_bordo" : ""), "coda", gCoda, col);
 		}
 	}
-	// la coda delle pelli è disegnata intera a riposo: gira col primo segmento
-	veste(ruota(ruota(sposta(forma, PT.coda[0], PT.coda[1]), ang[0]), -D.coda_riposo[0]), "coda", "coda", gCoda, col);
 	const giunto = (m, x, y, a) => ruota(sposta(m, x, y), a);
 	let m = giunto(forma, PT.ala[0], PT.ala[1], po.ala);
 	veste(m, "ala", "ala", punto(m, 0, 0), col);

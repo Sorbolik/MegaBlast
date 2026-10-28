@@ -42,8 +42,21 @@ SOPRA = ["pantaloni", "maglia", "corazza", "guanti", "elmo"]
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
 DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba",
-          "omero_dietro": "omero", "avambraccio_dietro": "avambraccio"}
+          "omero_dietro": "omero", "avambraccio_dietro": "avambraccio",
+          "omero_dietro_bordo": "omero_bordo", "avambraccio_dietro_bordo": "avambraccio_bordo"}
 SCURO = 0.78
+# I pezzi in catena (braccio e avambraccio sull'arma, i segmenti della coda): come
+# quelli di base, in due strati. Il bordo è il pezzo intero, il colore lo stesso
+# senza il contorno: il gioco disegna prima i bordi e poi i colori, così al gomito
+# e fra i segmenti non si vede la giuntura anche piegati.
+CATENA = ["omero", "avambraccio", "omero_dietro", "avambraccio_dietro"] + \
+    [f"coda_{i + 1}" for i in range(len(ST.DV.CODA))]
+# lo spessore del contorno (unità del disegno), quanto si toglie al colore
+BORDO = ST.DV.BORDO_D
+# il colore della squadra: le parti dipinte di verde acceso (#00ff00) diventano
+# del colore della squadra, con le loro ombre
+TINTA_H = (85, 155)     # tinta (gradi) del verde chiave
+TINTA_S = 0.55          # saturazione minima
 
 
 def fondo_via(im):
@@ -100,6 +113,115 @@ def allinea(pezzo, base):
     return risultato
 
 
+def lontani(mask, r):
+    """Dove la sagoma mask (0/1) è più lontana di r pixel dal fuori: la sagoma
+    ristretta di r, con un disco (convoluzione con la FFT)."""
+    r = max(1, int(round(r)))
+    h, w = mask.shape
+    H, W = h + 2 * r + 2, w + 2 * r + 2
+    fuori = np.ones((H, W), np.float32)
+    fuori[r + 1:r + 1 + h, r + 1:r + 1 + w] = 1 - mask
+    yy, xx = np.mgrid[-r:r + 1, -r:r + 1]
+    disco = np.zeros((H, W), np.float32)
+    disco[:2 * r + 1, :2 * r + 1] = (xx * xx + yy * yy <= r * r)
+    c = np.real(np.fft.ifft2(np.fft.fft2(fuori) * np.fft.fft2(disco)))
+    c = np.roll(np.roll(c, -r, 0), -r, 1)[r + 1:r + 1 + h, r + 1:r + 1 + w]
+    return (c < 0.5) & (mask > 0)
+
+
+def colore(pz, scala):
+    """Lo strato del colore di un pezzo in catena: senza il contorno."""
+    al = pz[..., 3] > 128
+    via = ~lontani(al.astype(np.float32), BORDO * scala)
+    c = pz.copy()
+    c[via, 3] = 0
+    return c
+
+
+def giunti_coda():
+    """I giunti della coda a riposo (unità, dalla radice) e gli angoli (radianti)."""
+    import math
+    xy, ang = [(0.0, 0.0)], []
+    for (L, _, _), a in zip(ST.DV.CODA, ST.DV.CODA_RIPOSO):
+        a = math.radians(a)
+        x, y = xy[-1]
+        ang.append(a)
+        xy.append((x + L * math.cos(a), y + L * math.sin(a)))
+    return xy, ang
+
+
+def dividi_coda(pz, perno, scala):
+    """La coda disegnata intera a riposo, divisa nei segmenti della coda di base:
+    ogni pixel va al segmento più vicino e ogni segmento si prende anche un disco
+    attorno ai suoi due giunti (grande quanto è spessa la coda lì), così piegata
+    resta tonda. Torna per segmento il pezzo nel suo verso (lungo +x dal giunto)
+    e il perno, in pixel del pezzo."""
+    import math
+    xy, ang = giunti_coda()
+    h, w = pz.shape[:2]
+    al = pz[..., 3] > 128
+    ys, xs = np.mgrid[0:h, 0:w]
+    # in unità, y in su, dalla radice
+    ux, uy = (xs - perno[0]) / scala, (perno[1] - ys) / scala
+    n = len(ang)
+    dist = np.empty((n, h, w), np.float32)
+    for i in range(n):
+        (x0, y0), (x1, y1) = xy[i], xy[i + 1]
+        dx, dy = x1 - x0, y1 - y0
+        t = ((ux - x0) * dx + (uy - y0) * dy) / (dx * dx + dy * dy)
+        t = np.clip(t, 0, None if i == n - 1 else 1)   # l'ultimo fino alla punta
+        dist[i] = np.hypot(ux - (x0 + t * dx), uy - (y0 + t * dy))
+    vicino = np.argmin(dist, axis=0)
+    # lo spessore della coda a ogni giunto: la distanza dal fuori
+    fy, fx = np.nonzero(~al)
+    fu, fv = (fx - perno[0]) / scala, (perno[1] - fy) / scala
+    raggio = [float(np.min(np.hypot(fu - x, fv - y))) if len(fu) else 0 for x, y in xy]
+    out = []
+    for i in range(n):
+        dentro = (vicino == i)
+        for j in (i, i + 1):
+            dentro |= np.hypot(ux - xy[j][0], uy - xy[j][1]) <= raggio[j]
+        seg = pz.copy()
+        seg[~(dentro & al), 3] = 0
+        seg[~dentro, 3] = 0
+        # nel verso del segmento: pixel (c, r) del pezzo -> pixel del foglio
+        yy, xx = np.nonzero(seg[..., 3] > 8)
+        if not len(xx):
+            out.append(None)
+            continue
+        a, (jx, jy) = ang[i], xy[i]
+        ca, sa = math.cos(a), math.sin(a)
+        u = ((xx - perno[0]) / scala - jx) * ca + ((perno[1] - yy) / scala - jy) * sa
+        v = -((xx - perno[0]) / scala - jx) * sa + ((perno[1] - yy) / scala - jy) * ca
+        u0, u1, v0, v1 = u.min() - 2, u.max() + 2, v.min() - 2, v.max() + 2
+        W, H = int(math.ceil((u1 - u0) * scala)), int(math.ceil((v1 - v0) * scala))
+        X0 = perno[0] + scala * (jx + ca * u0 - sa * v1)
+        Y0 = perno[1] - scala * (jy + sa * u0 + ca * v1)
+        im = Image.fromarray(np.clip(seg, 0, 255).astype(np.uint8), "RGBA")
+        im = im.transform((W, H), Image.AFFINE, (ca, sa, X0, -sa, ca, Y0), Image.BICUBIC)
+        out.append((np.asarray(im).astype(np.float32), (-u0 * scala, v1 * scala)))
+    return out
+
+
+def tinta(pz):
+    """Le parti verde acceso (il colore della squadra) in uno strato a parte, in
+    grigi: il gioco lo colora con la squadra. Torna (pezzo, strato) o (pezzo, None)."""
+    rgb = pz[..., :3] / 255
+    mx, mn = rgb.max(axis=2), rgb.min(axis=2)
+    s = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-6), 0)
+    g = (rgb[..., 1] >= mx - 1e-6)
+    hue = np.where(g, 120 + 60 * (rgb[..., 2] - rgb[..., 0]) / np.maximum(mx - mn, 1e-6), 0)
+    chiave = g & (s >= TINTA_S) & (hue >= TINTA_H[0]) & (hue <= TINTA_H[1]) & (mx > 0.2) & (pz[..., 3] > 8)
+    if chiave.sum() < 20:
+        return pz, None
+    t = np.zeros_like(pz)
+    t[..., :3] = (mx * 255)[..., None]
+    t[..., 3] = np.where(chiave, pz[..., 3], 0)
+    pz = pz.copy()
+    pz[chiave, :3] = (mx[chiave] * 255 * 0.5)[..., None]
+    return pz, t
+
+
 def taglia(foglio, nome, categoria, sopra, allinea_pezzi):
     with open(ST.FOGLIO) as f:
         F = json.load(f)
@@ -129,10 +251,16 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi):
             continue
         if allinea_pezzi:
             pz = allinea(pz, base)
-        pezzi[posto] = salva(pz, nome, posto, c["perno"][0] - x0, c["perno"][1] - y0, F["scala"], px)
+        perno = (c["perno"][0] - x0, c["perno"][1] - y0)
+        if posto == "coda":
+            for i, seg in enumerate(dividi_coda(pz, perno, F["scala"])):
+                if seg:
+                    metti(pezzi, seg[0], nome, f"coda_{i + 1}", seg[1], F["scala"], px, sopra)
+        else:
+            metti(pezzi, pz, nome, posto, perno, F["scala"], px, sopra)
     if not pezzi:
         sys.exit("nessun pezzo disegnato nello stampino")
-    # le versioni di dietro, se mancano
+    # le versioni di dietro, se mancano: più scure (il colore della squadra no)
     for dietro, davanti in DIETRO.items():
         if davanti in pezzi and dietro not in pezzi:
             p = dict(pezzi[davanti])
@@ -141,10 +269,12 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi):
             img = Image.merge("RGBA", [ch.point(lambda v: round(v * SCURO)) for ch in (r, g, b)] + [al])
             p["img"] = f"{nome}_{dietro}"
             img.save(os.path.join(ASSETS, p["img"] + ".png"), optimize=True)
+            if p.get("tinta"):
+                t = Image.open(os.path.join(ASSETS, p["tinta"] + ".png"))
+                p["tinta"] = f"{nome}_{dietro}_tinta"
+                t.save(os.path.join(ASSETS, p["tinta"] + ".png"), optimize=True)
             pezzi[dietro] = p
     modo = "sopra" if sopra else "sostituisce"
-    for p in pezzi.values():
-        p["modo"] = modo
     os.makedirs(JSON, exist_ok=True)
     with open(os.path.join(JSON, nome + ".json"), "w") as f:
         json.dump({"nome": nome, "categoria": categoria, "pezzi": pezzi}, f, indent=1, ensure_ascii=False)
@@ -152,10 +282,28 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi):
     print(f"{nome} ({categoria}, {modo}): {', '.join(sorted(pezzi))}")
 
 
-def salva(pz, nome, posto, px0, py0, scala, px):
+def metti(pezzi, pz, nome, posto, perno, scala, px, sopra):
+    """Il pezzo di un posto, col suo strato del colore della squadra; quelli in
+    catena che sostituiscono la base anche col bordo a parte."""
+    pz, t = tinta(pz)
+    modo = "sopra" if sopra else "sostituisce"
+    strati = [(posto, pz)]
+    if posto in CATENA and not sopra:
+        strati = [(posto + "_bordo", pz), (posto, colore(pz, scala))]
+    for p, im in strati:
+        pezzi[p] = salva(im, nome, p, perno[0], perno[1], scala, px)
+        pezzi[p]["modo"] = modo
+        if t is not None:
+            st = t.copy()
+            st[im[..., 3] <= 8, 3] = 0
+            pezzi[p]["tinta"] = salva(st, nome, p + "_tinta", perno[0], perno[1], scala, px, scatola=im)["img"]
+
+
+def salva(pz, nome, posto, px0, py0, scala, px, scatola=None):
     """Il pezzo ritagliato alla sua sagoma, rimpicciolito ai pixel del gioco; torna
     centro e misura rispetto al perno, in unità del disegno."""
-    al = pz[..., 3]
+    # scatola: il pezzo di cui questo è lo strato del colore, con la stessa misura
+    al = (pz if scatola is None else scatola)[..., 3]
     ys, xs = np.nonzero(al > 8)
     x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
     img = Image.fromarray(np.clip(pz[y0:y1, x0:x1], 0, 255).astype(np.uint8), "RGBA")
@@ -198,8 +346,9 @@ def rifai():
         lua.append(f'\t\t{p["nome"]} = {{ categoria = "{p["categoria"]}", pezzi = {{')
         for posto in sorted(p["pezzi"]):
             z = p["pezzi"][posto]
-            lua.append(f'\t\t\t{posto} = {{ img = "{z["img"]}", x = {z["x"]}, y = {z["y"]}, w = {z["w"]}, '
-                       f'h = {z["h"]}, modo = "{z["modo"]}" }},')
+            t = f'"{z["tinta"]}"' if z.get("tinta") else "nil"
+            lua.append(f'\t\t\t{posto} = {{ img = "{z["img"]}", tinta = {t}, x = {z["x"]}, y = {z["y"]}, '
+                       f'w = {z["w"]}, h = {z["h"]}, modo = "{z["modo"]}" }},')
         lua.append("\t\t} },")
     lua += ["\t},", "}"]
     with open(LUA, "w") as f:
