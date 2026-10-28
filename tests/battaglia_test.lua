@@ -23,7 +23,7 @@ gui = {
 	set_enabled = function(n, on) n.enabled = on end,
 	set_visible = function(n, on) n.invisibile = not on end, set_color = function() end, set_adjust_mode = function() end,
 	set_inherit_alpha = function() end, set_perimeter_vertices = function() end,
-	set_texture = function() end, play_flipbook = function() end, set_material = function() end,
+	set_texture = function() end, play_flipbook = function(n, img) n.img = img end, set_material = function() end,
 	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
 	set_text = function(n, text) n.text = text end,
 	set_size = function(n, v) n.size = copia(v) end,
@@ -214,6 +214,47 @@ check(buone, "animazioni: canali noti, chiavi in ordine dentro la durata")
 for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
 	"sconfitta", "naso", "sbadiglio", "guarda_coda" }) do
 	check(A[nome] ~= nil, "animazioni: c'è la clip " .. nome)
+end
+
+-- Pelli (battaglia/pelli.lua) ---------------------------------------------------
+
+-- pelli finte: una testa nuova senza facce, un elmo sopra, una coda intera, un
+-- braccio sull'arma nuovo
+local PELLI = require "battaglia.pelli"
+local function pz(img, modo) return { img = img, x = 1, y = 2, w = 30, h = 40, modo = modo } end
+PELLI.pelli.prova_testa = { categoria = "testa", pezzi = { testa = pz("t", "sostituisce") } }
+PELLI.pelli.prova_elmo = { categoria = "elmo", pezzi = { testa = pz("e", "sopra"), busto = pz("eb", "sopra") } }
+PELLI.pelli.prova_coda = { categoria = "coda", pezzi = { coda = pz("c", "sostituisce") } }
+PELLI.pelli.prova_corpo = { categoria = "corpo", pezzi = { omero = pz("o", "sostituisce"),
+	omero_dietro = pz("od", "sostituisce") } }
+local function immagini(da)
+	local l = {}
+	for i = da, #nodi do
+		local n = nodi[i]
+		if n.img then l[n.img] = (l[n.img] or 0) + 1 end
+	end
+	return l
+end
+check(immagini(1).omero_bordo and immagini(1).coda_1, "pelli: senza, il diavoletto di base")
+local primo = #nodi + 1
+local v = scoria.new(vec(1, 0.2, 0.3, 1), { "prova_elmo", "prova_testa", "prova_coda", "prova_corpo" })
+local im = immagini(primo)
+check(im.t == 1 and im.e == 1 and im.eb == 1 and not im.testa, "pelli: la testa sostituita, l'elmo sopra")
+check(im.c == 1 and not im.coda_1 and not im.coda_1_bordo, "pelli: la coda intera al posto dei segmenti")
+check(im.o == 1 and im.od == 1 and not im.omero_bordo and im.avambraccio_bordo == 2,
+	"pelli: il braccio sull'arma nuovo, senza bordo a parte")
+check(v.teste[2].parent == v.collo and v.teste[1].img == "t" and v.teste[2].img == "e", "pelli: l'elmo sta sulla testa")
+st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
+for _ = 1, 30 do scoria.update(v, 1 / 60, st) end
+scoria.hit(v, 1)
+for _ = 1, 10 do scoria.update(v, 1 / 60, st) end
+check(v.faccia == "testa_colpita" and v.teste[1].img == "t" and v.teste[2].enabled and v.teste[2].img == "e",
+	"pelli: colpito, la testa nuova fa anche la faccia colpita, l'elmo resta")
+scoria.die(v)
+for _ = 1, 60 do scoria.update(v, 1 / 60, st) end
+check(tutto_finito(), "pelli: animato, valori finiti")
+for nome in pairs(PELLI.pelli) do
+	if nome:sub(1, 6) == "prova_" then PELLI.pelli[nome] = nil end
 end
 
 -- Targa ------------------------------------------------------------------------

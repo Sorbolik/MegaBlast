@@ -111,6 +111,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label><input type="checkbox" id="molle" checked> molle del gioco</label>
 			<label><input type="checkbox" id="turno"> di turno</label>
 			<label>squadra <select id="squadra"><option value="0">Rosso</option><option value="1">Blu</option><option value="2">Verde</option><option value="3">Oro</option></select></label>
+			<span id="pelli" title="I pezzi disegnati sullo stampino (strumenti/stampino)"></span>
 		</div>
 		<div class="barra">
 			<label>durata <input type="number" id="durata" step="0.05" min="0.05" style="width: 76px"> s</label>
@@ -190,6 +191,26 @@ const P = D.pezzi, PT = D.punti;
 const K = DATI.corpo.ROBOT_H / D.altezza; // unità del mondo per unità del disegno
 const LARGO = 2 * DATI.corpo.ROBOT_HALF_W / K;
 
+// Le pelli (battaglia/pelli.lua), come le veste battaglia/scoria.lua: per posto i
+// pezzi dal basso, il primo al posto di quello di base (null: la coda a
+// segmenti), poi quelli sopra. Una testa nuova senza le sue facce fa anche quelle.
+const PL = leggiLua(DATI.pelli);
+const FACCE = Object.keys(P).filter((n) => n.startsWith("testa")).sort((a, b) => (a === "testa" ? -1 : b === "testa" ? 1 : a < b ? -1 : 1));
+const addosso = {}; // categoria -> nome della pelle
+let vestito = {};
+function vesti() {
+	vestito = {};
+	const strati = (posto) => (vestito[posto] = vestito[posto] || [P[posto] || null]);
+	const metti = (posto, p) => { const l = strati(posto); if (p.modo === "sostituisce") l[0] = p; else l.push(p); };
+	for (const c of [...PL.sostituisce, ...PL.sopra]) {
+		const pz = addosso[c] && PL.pelli[addosso[c]].pezzi;
+		if (!pz) continue;
+		for (const posto in pz) metti(posto, pz[posto]);
+		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, pz.testa);
+	}
+}
+function strati(posto) { return vestito[posto] || [P[posto] || null]; }
+
 // i canali, come battaglia/pose.lua: angoli in radianti, misure in unità del disegno
 const CANALI = [
 	{ id: "corpo", nome: "Corpo, inclina", tipo: "ang" },
@@ -209,7 +230,6 @@ const CANALI = [
 const NEUTRO = { schiaccia: 1 };
 CANALI.forEach((c) => { if (NEUTRO[c.id] === undefined) NEUTRO[c.id] = 0; });
 const LIMITI = { ang: [-180, 180, 1], len: [-60, 60, 0.5], scala: [0.4, 1.6, 0.01] };
-const FACCE = Object.keys(P).filter((n) => n.startsWith("testa")).sort((a, b) => (a === "testa" ? -1 : b === "testa" ? 1 : a < b ? -1 : 1));
 
 // le clip del gioco, in quest'ordine, con come le usa (battaglia/scoria.lua)
 const CLIP = [
@@ -514,6 +534,11 @@ function disegnaPezzo(m, p, nomeImg, can, giunto, col) {
 	if (can) colpibili.push({ img: nomeImg || p.img, p, m: mm, canale: can, giunto });
 }
 
+// i pezzi di un posto con le pelli addosso
+function veste(m, posto, can, giunto, col) {
+	for (const p of strati(posto)) if (p) disegnaPezzo(m, p, null, can, giunto, col);
+}
+
 function disegna(dt) {
 	if (pronte < nomiImg.length) return;
 	const s = vista();
@@ -556,7 +581,8 @@ function disegna(dt) {
 	// la coda: prima i bordi, poi i colori
 	const ang = angoliCoda(codaBase, dt || 0, molle);
 	const gCoda = punto(forma, PT.coda[0], PT.coda[1]);
-	for (let strato = 0; strato < 2; strato++) {
+	const coda = strati("coda");
+	for (let strato = 0; strato < 2 && !coda[0]; strato++) {
 		let m = sposta(forma, PT.coda[0], PT.coda[1]);
 		for (let i = 0; i < D.coda.length; i++) {
 			if (i > 0) m = sposta(m, D.coda[i - 1], 0);
@@ -564,19 +590,20 @@ function disegna(dt) {
 			disegnaPezzo(m, P["coda_" + (i + 1) + (strato === 0 ? "_bordo" : "")], null, "coda", gCoda, col);
 		}
 	}
+	// la coda delle pelli è disegnata intera a riposo: gira col primo segmento
+	veste(ruota(ruota(sposta(forma, PT.coda[0], PT.coda[1]), ang[0]), -D.coda_riposo[0]), "coda", "coda", gCoda, col);
 	const giunto = (m, x, y, a) => ruota(sposta(m, x, y), a);
 	let m = giunto(forma, PT.ala[0], PT.ala[1], po.ala);
-	disegnaPezzo(m, P.ala, null, "ala", punto(m, 0, 0), col);
+	veste(m, "ala", "ala", punto(m, 0, 0), col);
 	m = giunto(forma, -PT.spalle[0], PT.spalle[1], braccia[1]);
-	disegnaPezzo(m, P.braccio_dietro, null, "braccio_d", punto(m, 0, 0), col);
+	veste(m, "braccio_dietro", "braccio_d", punto(m, 0, 0), col);
 	m = giunto(forma, -PT.anche[0], PT.anche[1] + po.alza_d, gambe[1]);
-	disegnaPezzo(m, P.gamba_dietro, null, "gamba_d", punto(m, 0, 0), col);
+	veste(m, "gamba_dietro", "gamba_d", punto(m, 0, 0), col);
 	m = giunto(forma, PT.anche[0], PT.anche[1] + po.alza_a, gambe[0]);
-	disegnaPezzo(m, P.gamba, null, "gamba_a", punto(m, 0, 0), col);
-	disegnaPezzo(sposta(forma, PT.bacino[0], PT.bacino[1]), P.busto, null, "corpo", gCorpo, col);
+	veste(m, "gamba", "gamba_a", punto(m, 0, 0), col);
+	veste(sposta(forma, PT.bacino[0], PT.bacino[1]), "busto", "corpo", gCorpo, col);
 	const collo = scala(giunto(forma, PT.collo[0], PT.collo[1] + po.testa_y, testa), 1 / lx, 1 / q);
-	const faccia = po.viso || "testa";
-	disegnaPezzo(collo, P[faccia], P[faccia].img, "testa", punto(collo, 0, 0), col);
+	veste(collo, po.viso || "testa", "testa", punto(collo, 0, 0), col);
 	// la fiammella: tre forme a scatti, trema; grande su chi è di turno
 	const f = turno ? 2.2 : 0.8;
 	const tr = Math.sin(orologio * 11) * 0.06 + Math.sin(orologio * 17.3) * 0.04;
@@ -585,7 +612,7 @@ function disegna(dt) {
 	const luce = turno ? 1 : 0.6;
 	disegnaPezzo(cima, fp, null, "testa", punto(collo, 0, 0), col.map((x) => x * luce));
 	m = giunto(forma, PT.spalle[0], PT.spalle[1], braccia[0]);
-	disegnaPezzo(m, P.braccio, null, "braccio_a", punto(m, 0, 0), col);
+	veste(m, "braccio", "braccio_a", punto(m, 0, 0), col);
 
 	// il canale scelto: il suo giunto
 	const sc = colpibili.find((x) => x.canale === canale);
@@ -1067,6 +1094,18 @@ try {
 		$("avviso").classList.add("si");
 	}
 } catch (e) { /* niente memoria del browser */ }
+// una scelta per categoria, solo per quelle che hanno pelli
+for (const c of [...PL.sostituisce, ...PL.sopra]) {
+	const nomi = Object.keys(PL.pelli).filter((n) => PL.pelli[n].categoria === c).sort();
+	if (!nomi.length) continue;
+	const l = document.createElement("label");
+	l.textContent = c + " ";
+	const sel = document.createElement("select");
+	for (const n of ["", ...nomi]) sel.add(new Option(n || "—", n));
+	sel.onchange = () => { if (sel.value) addosso[c] = sel.value; else delete addosso[c]; vesti(); aggiorna(); };
+	l.appendChild(sel);
+	$("pelli").appendChild(l);
+}
 costruisciClip();
 costruisciCanali();
 aggiorna();

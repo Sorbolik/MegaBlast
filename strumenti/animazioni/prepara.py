@@ -3,6 +3,7 @@
 
 Mette dentro strumenti/animazioni/editor.html i pezzi veri del diavoletto
 (client/assets/diavoletto/*.png), i perni (client/battaglia/diavoletto.lua), le
+pelli disegnate sullo stampino (client/battaglia/pelli.lua), le
 animazioni di adesso (client/battaglia/animazioni.lua), la misura del corpo
 (client/sim/game.lua) e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
@@ -32,6 +33,11 @@ def main():
     for n in nomi:
         dati = (REPO / "client/assets/diavoletto" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
+    # le pelli dello stampino (strumenti/stampino/taglia.py), coi loro pezzi
+    pelli = leggi("client/battaglia/pelli.lua")
+    for n in sorted(set(re.findall(r'img = "([a-z0-9_]+)"', pelli))):
+        dati = (REPO / "client/assets/pelli" / (n + ".png")).read_bytes()
+        immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     game = leggi("client/sim/game.lua")
     corpo = {k: float(re.search(r"M\.%s = ([0-9.]+)" % k, game).group(1)) for k in ("ROBOT_H", "ROBOT_HALF_W")}
     squadre = re.search(r"SQUADRA = \{(.*)\}", leggi("client/ui/ui.lua")).group(1)
@@ -39,6 +45,7 @@ def main():
     dati = {
         "diavoletto": diavoletto,
         "animazioni": leggi("client/battaglia/animazioni.lua"),
+        "pelli": pelli,
         "immagini": immagini,
         "corpo": corpo,
         "squadre": colori,

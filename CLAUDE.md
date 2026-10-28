@@ -46,6 +46,13 @@ ripubblicalo. "Manda a Claude" nell'editor salva il file nel database
 dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
 `client/battaglia/animazioni.lua`.
 
+## Pezzi nuovi del diavoletto (pelli)
+
+Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo
+stampino e si tagliano con `strumenti/stampino/taglia.py`: regole e comandi in
+[strumenti/stampino/README.md](strumenti/stampino/README.md). Il gioco li monta
+con `scoria.new(colore, look)` (`client/battaglia/pelli.lua`, generato).
+
 ## Provare il gioco su iPhone
 
 Su iPhone si prova la build HTML5 in Safari: `bash strumenti/web/build.sh` prepara

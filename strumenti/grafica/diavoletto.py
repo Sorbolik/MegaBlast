@@ -21,6 +21,7 @@
 # python3 strumenti/grafica/diavoletto.py   (serve cairosvg: pip install cairosvg)
 import math
 import os
+import re
 import sys
 from PIL import Image
 
@@ -331,11 +332,26 @@ def main():
     lua.append("}")
     with open(LUA, "w") as f:
         f.write("\n".join(lua) + "\n")
-    with open(ATLAS, "w") as f:
-        for n in immagini:
-            f.write(f'images {{\n  image: "/assets/diavoletto/{n}.png"\n}}\n')
-        f.write("margin: 0\nextrude_borders: 2\ninner_padding: 0\n")
+    scrivi_atlante(immagini)
     anteprima(pezzi)
+
+
+def scrivi_atlante(immagini=None):
+    """L'atlante del diavoletto: i pezzi di base (immagini; se manca, quelli che
+    ci sono già) e le pelli dello stampino (client/assets/pelli, le taglia
+    strumenti/stampino/taglia.py). Tutto in un atlante solo, così il diavoletto
+    si disegna in una volta anche vestito."""
+    if immagini is None:
+        with open(ATLAS) as f:
+            immagini = re.findall(r'"/assets/diavoletto/([a-z0-9_]+)\.png"', f.read())
+    pelli = os.path.join(RADICE, "client", "assets", "pelli")
+    righe = [f"/assets/diavoletto/{n}.png" for n in immagini]
+    if os.path.isdir(pelli):
+        righe += [f"/assets/pelli/{n}" for n in sorted(os.listdir(pelli)) if n.endswith(".png")]
+    with open(ATLAS, "w") as f:
+        for r in righe:
+            f.write(f'images {{\n  image: "{r}"\n}}\n')
+        f.write("margin: 0\nextrude_borders: 2\ninner_padding: 0\n")
 
 
 def anteprima(pezzi):

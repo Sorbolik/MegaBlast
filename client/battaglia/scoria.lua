@@ -6,7 +6,7 @@
 -- corna, coda e fiammella escono.
 --
 -- Lo usano la battaglia (game.gui_script), la home (menu/home.lua) e il podio:
---   local s = scoria.new(colore)
+--   local s = scoria.new(colore, look)  -- look: le pelli addosso (battaglia/pelli.lua)
 --   scoria.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
 --   scoria.set_weapon(s, nome) / hit(s, dx) / fire(s, tipo) / lunge(s) / die(s)
 --   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
@@ -34,6 +34,11 @@
 -- che dipende dal gioco resta nel codice: inclinazione e coda con la velocità,
 -- il dondolo del paracadute, la mira, le braccia sull'arma. Spinto o trascinato
 -- senza comandi non corre: resta fermo.
+-- Le pelli (battaglia/pelli.lua, disegnate sullo stampino: strumenti/stampino)
+-- cambiano i pezzi o ci vanno sopra, negli stessi giunti: si muovono con le
+-- stesse animazioni. Una testa nuova senza le sue facce le fa tutte; una coda
+-- nuova è un pezzo solo, che gira col primo segmento; un braccio nuovo
+-- sull'arma non ha il bordo a parte (si vede la giuntura al gomito).
 -- La fiammella ha il colore della squadra ed è l'indicatore di chi gioca: su chi
 -- è di turno è grande e accesa, sugli altri piccola e più scura.
 
@@ -42,6 +47,7 @@ local D = require "battaglia.diavoletto"
 local DA = require("battaglia.armi").armi
 local pose = require "battaglia.pose"
 local A = require "battaglia.animazioni"
+local PELLI = require "battaglia.pelli"
 
 local M = {}
 
@@ -147,6 +153,55 @@ local function pezzo(s, parent, p, k)
 	return n
 end
 
+-- le facce: una testa nuova senza le sue facce fa anche quelle
+local FACCE = { "testa", "testa_colpita", "testa_felice", "testa_ko" }
+
+-- I pezzi di ogni posto con addosso le pelli di look (nomi di battaglia/pelli.lua,
+-- una per categoria): per posto, i pezzi dal basso. Il primo è quello di base o
+-- quello che lo sostituisce (per la coda di base false: è a segmenti), poi
+-- quelli sopra, nell'ordine delle categorie.
+local function vesti(look)
+	local per = {}
+	for i = 1, #(look or {}) do
+		local pelle = PELLI.pelli[look[i]]
+		assert(pelle, "pelle sconosciuta: " .. tostring(look[i]))
+		per[pelle.categoria] = pelle
+	end
+	local V = {}
+	local function strati(posto)
+		V[posto] = V[posto] or { P[posto] or false }
+		return V[posto]
+	end
+	local function metti(posto, p)
+		local l = strati(posto)
+		if p.modo == "sostituisce" then l[1] = p else l[#l + 1] = p end
+	end
+	for _, categorie in ipairs({ PELLI.sostituisce, PELLI.sopra }) do
+		for _, c in ipairs(categorie) do
+			local pz = per[c] and per[c].pezzi
+			if pz then
+				for posto, p in pairs(pz) do metti(posto, p) end
+				for i = 2, #FACCE do
+					if pz.testa and not pz[FACCE[i]] then metti(FACCE[i], pz.testa) end
+				end
+			end
+		end
+	end
+	return strati
+end
+
+-- i pezzi di un posto (vesti) nel giunto parent; torna il primo
+local function veste(s, parent, posto, k)
+	local primo
+	for _, p in ipairs(s.strati(posto)) do
+		if p then
+			local n = pezzo(s, parent, p, k)
+			primo = primo or n
+		end
+	end
+	return primo
+end
+
 -- Le armi in mano, attorno alla spalla: angolo di riposo (radianti, verso avanti).
 -- Le immagini, i pugni e le misure sono in battaglia/armi.lua (strumenti/grafica/armi.py)
 local ARMI = {
@@ -189,18 +244,24 @@ local function braccio_arma(s, parent, pugno_parent, k, dietro)
 		dietro and "avambraccio_dietro" or "avambraccio" }
 	for i = 1, 4 do
 		local g = giunto(parent, 0, 0)
-		pezzo(s, g, P[nomi[i]], k)
+		if i > 2 then
+			veste(s, g, nomi[i], k)
+		elseif s.strati(nomi[i + 2])[1] == P[nomi[i + 2]] then
+			-- il bordo a parte solo per il braccio di base
+			pezzo(s, g, P[nomi[i]], k)
+		end
 		b.ossa[i] = g
 	end
 	b.pugno = giunto(pugno_parent, 0, 0)
-	pezzo(s, b.pugno, P.pugno, k)
+	veste(s, b.pugno, "pugno", k)
 	return b
 end
 
-function M.new(color)
+function M.new(color, look)
 	local H, Wd = game.ROBOT_H, 2 * game.ROBOT_HALF_W
 	local k = H / D.altezza
 	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, tinte_arma = {}, lampi = {},
+		strati = vesti(look), teste = {}, facce = {},
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- la posa delle clip di questo frame e gli angoli (radianti) delle
 		-- braccia e delle gambe che pendono, che la inseguono
@@ -225,26 +286,33 @@ function M.new(color)
 	-- segmenti si fondono in una coda sola), l'ala, il braccio di dietro (quello
 	-- che pende o l'avambraccio della mira), le gambe, il busto, la testa con la
 	-- fiammella, il braccio davanti
+	local coda = s.strati("coda")
 	for strato = 1, 2 do
 		local padre, x, y = s.forma, PT.coda[1] * k, PT.coda[2] * k
 		for i = 1, #D.coda do
 			padre = giunto(padre, x, y)
-			pezzo(s, padre, P["coda_" .. i .. (strato == 1 and "_bordo" or "")], k)
+			if not coda[1] then pezzo(s, padre, P["coda_" .. i .. (strato == 1 and "_bordo" or "")], k) end
 			s.coda[i] = s.coda[i] or {}
 			s.coda[i][strato] = padre
 			x, y = D.coda[i] * k, 0
 		end
 	end
+	-- la coda delle pelli è disegnata intera a riposo: gira col primo segmento
+	if #coda > 1 or coda[1] then
+		local g = giunto(s.coda[1][2], 0, 0)
+		rot(g, -D.coda_riposo[1])
+		veste(s, g, "coda", k)
+	end
 	s.ala = giunto(s.forma, PT.ala[1] * k, PT.ala[2] * k)
-	pezzo(s, s.ala, P.ala, k)
+	veste(s, s.ala, "ala", k)
 	s.braccio_d = giunto(s.forma, -PT.spalle[1] * k, PT.spalle[2] * k)
-	pezzo(s, s.braccio_d, P.braccio_dietro, k)
+	veste(s, s.braccio_d, "braccio_dietro", k)
 	s.gamba_d = giunto(s.forma, -PT.anche[1] * k, PT.anche[2] * k)
-	pezzo(s, s.gamba_d, P.gamba_dietro, k)
+	veste(s, s.gamba_d, "gamba_dietro", k)
 	s.gamba_a = giunto(s.forma, PT.anche[1] * k, PT.anche[2] * k)
-	pezzo(s, s.gamba_a, P.gamba, k)
+	veste(s, s.gamba_a, "gamba", k)
 	s.busto = giunto(s.forma, PT.bacino[1] * k, PT.bacino[2] * k)
-	pezzo(s, s.busto, P.busto, k)
+	veste(s, s.busto, "busto", k)
 	-- l'arma gira attorno alla spalla, sul corpo (non sulla forma: schiacciandosi
 	-- non si storce la mira); sopra, i pugni e il braccio davanti
 	s.spalla = giunto(s.corpo, PT.spalla_arma[1] * k, PT.spalla_arma[2] * k)
@@ -253,12 +321,18 @@ function M.new(color)
 	s.arma_dietro = giunto(s.forma, 0, 0)
 	s.mano_d = braccio_arma(s, s.arma_dietro, s.corpo, k, true)
 	s.collo = giunto(s.forma, PT.collo[1] * k, PT.collo[2] * k)
-	s.testa = pezzo(s, s.collo, P.testa, k)
+	-- la testa: tanti pezzi quanti ne ha la faccia con più strati, cambiati da faccia()
+	local strati = 0
+	for _, f in ipairs(FACCE) do
+		s.facce[f] = s.strati(f)
+		strati = max(strati, #s.facce[f])
+	end
+	for i = 1, strati do s.teste[i] = pezzo(s, s.collo, s.facce.testa[i] or s.facce.testa[1], k) end
 	s.cima = giunto(s.collo, PT.cima[1] * k, PT.cima[2] * k)
 	s.fuoco = pezzo(s, s.cima, P.fiammella_1, k)
 	s.fuoco_tinta = s.tinte[#s.tinte]
 	s.braccio_a = giunto(s.forma, PT.spalle[1] * k, PT.spalle[2] * k)
-	pezzo(s, s.braccio_a, P.braccio, k)
+	veste(s, s.braccio_a, "braccio", k)
 
 	for name in pairs(ARMI) do arma(s, name, color) end
 	-- i giunti dei pugni sono già sul corpo (prima dell'arma, dopo la forma):
@@ -293,7 +367,16 @@ end
 local function faccia(s, nome)
 	if s.faccia ~= nome then
 		s.faccia = nome
-		gui.play_flipbook(s.testa, P[nome].img)
+		local f, k = s.facce[nome], s.k
+		for i = 1, #s.teste do
+			local n, p = s.teste[i], f[i]
+			gui.set_enabled(n, p ~= nil)
+			if p then
+				gui.play_flipbook(n, p.img)
+				pos(n, p.x * k, p.y * k)
+				size(n, p.w * k, p.h * k)
+			end
+		end
 	end
 end
 
