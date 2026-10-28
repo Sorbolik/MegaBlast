@@ -1,7 +1,8 @@
-// "Manda a Claude" dell'editor delle animazioni pubblicato su Cloudflare Pages:
-// POST /api/manda { file, lua } con l'intestazione X-Chiave (= EDITOR_CHIAVE)
-// scrive il file nel ramo editor-ultima di GitHub, da dove Claude lo prende.
-// Variabili cifrate del progetto Pages: EDITOR_CHIAVE e GITHUB_TOKEN (token
+// L'editor delle animazioni su Cloudflare (Worker "megablast", wrangler.jsonc):
+// la pagina è in dist/ (costruisci.sh); POST /api/manda { file, lua } con
+// l'intestazione X-Chiave (= EDITOR_CHIAVE) è "Manda a Claude": scrive il file
+// nel ramo editor-ultima di GitHub, da dove Claude lo prende.
+// Variabili cifrate del Worker: EDITOR_CHIAVE e GITHUB_TOKEN (token
 // fine-grained con Contents in scrittura solo su Sorbolik/MegaBlast).
 const REPO = "Sorbolik/MegaBlast";
 const RAMO = "editor-ultima";
@@ -11,10 +12,6 @@ const FILE = {
 	perni: "client/battaglia/perni.lua",
 };
 
-// la pagina chiede se c'è: allora mostra il pulsante
-export function onRequestGet() {
-	return new Response("ok");
-}
 
 function base64(testo) {
 	const b = new TextEncoder().encode(testo);
@@ -23,7 +20,17 @@ function base64(testo) {
 	return btoa(s);
 }
 
-export async function onRequestPost({ request, env }) {
+export default {
+	async fetch(request, env) {
+		if (new URL(request.url).pathname !== "/api/manda") return env.ASSETS.fetch(request);
+		// la pagina chiede se c'è: allora mostra il pulsante
+		if (request.method === "GET") return new Response("ok");
+		if (request.method !== "POST") return new Response("no", { status: 405 });
+		return manda(request, env);
+	},
+};
+
+async function manda(request, env) {
 	if (!env.EDITOR_CHIAVE || request.headers.get("X-Chiave") !== env.EDITOR_CHIAVE) {
 		return new Response("chiave sbagliata", { status: 403 });
 	}

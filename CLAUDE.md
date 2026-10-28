@@ -51,10 +51,10 @@ camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
 perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`). "Manda a
 Claude" li mette nei documenti `corpo/ultima` e `perni/ultima` (campo `lua`).
 
-L'editor è anche su Cloudflare Pages: il repository è collegato a Cloudflare, che
-a ogni push lo ricostruisce con `strumenti/animazioni/cloudflare/costruisci.sh`.
-Da lì "Manda a Claude" scrive i file nel ramo `editor-ultima` di GitHub
-(`strumenti/animazioni/cloudflare/functions/api/manda.js`): si prendono da lì.
+L'editor è anche su Cloudflare (Worker `megablast`, repository collegato: a ogni
+push su main lo ricostruisce con `strumenti/animazioni/cloudflare/costruisci.sh`
+e `wrangler.jsonc`). Da lì "Manda a Claude" (`worker.js`) scrive i file nel ramo
+`editor-ultima` di GitHub: si prendono da lì.
 
 ## Pezzi nuovi del diavoletto (pelli)
 
