@@ -15,8 +15,9 @@ python3 strumenti/arena/arena.py --video 1                         # video del p
 python3 strumenti/arena/arena.py --partite 10000 --cartella simulazione/arena/base   # prove tenute separate
 python3 strumenti/arena/arena.py --partite 1000 --pesi popolazione.lua   # bot con pesi diversi
 python3 strumenti/arena/arena.py --partite 300 --pesi due.lua --assegna turno   # due individui sempre alla pari
-python3 strumenti/arena/evolvi.py --partite 1500                   # bot con rete neurale che evolvono, senza fine
+python3 strumenti/arena/evolvi.py                                  # generazioni del bot del gioco, per stili, senza fine
 python3 strumenti/arena/impara.py                                  # bot con rete neurale che imparano a gradiente, senza fine
+python3 strumenti/arena/trovate.py simulazione/arena/evolvi        # video e pagina delle trovate dei bot
 ```
 
 `variante.lua` restituisce una tabella come `config.SCORE` (`return { damage = 1, kill = 60, ... }`):
@@ -33,16 +34,29 @@ serve a separare l'effetto di una regola da quello del bot che cambia stile. Con
 `rete` (`{ strati = {...}, w = {...} }`, `client/sim/rete.lua`) giudica le mosse
 una rete neurale.
 
-`evolvi.py` fa imparare il gioco ai bot da soli: reti neurali che partono da
-pesi a caso e si evolvono generazione dopo generazione (le migliori restano, le
-altre si rifanno mutando e incrociando le migliori). In ogni generazione giocano
-anche il bot di oggi (riferimento fisso) e alcuni campioni passati; ogni 5
-generazioni il campione fa l'esame contro il bot di oggi sulle stesse partite.
-Con la rete evolve anche la soglia del teletrasporto. Più partite per generazione
-(`--partite`) vuol dire meno caso nella scelta delle migliori. Salva a ogni generazione: si ferma con Ctrl+C e riparte da dove era (`--nuova`
-ricomincia). Esce `simulazione/arena/reti/`: `evoluzione.md`, `storia.json`
-(tutte le generazioni: bravura, armi, morti, mosse preferite), `campioni.json`
-(la rete migliore di ogni generazione, da mettere in `players[i].pesi`).
+`evolvi.py` fa evolvere i numeri del bot del gioco (`bot.PESI`: quanto teme di
+perdere vita o di morire, quando prova il globo, quanto gli piace buttare nel
+vuoto, uccidere, fare danno). Il bot resta quello del gioco, quindi un campione
+si mette nel gioco così com'è (`migliore.json`). Parte dai numeri di adesso
+(letti dal gioco con luajit) e da bot a caso; ogni generazione gioca col bot di
+oggi e con alcuni stili dell'archivio, i migliori restano, gli altri nascono
+mutando e incrociando i migliori e gli stili. Gli stili (`archivio.json`): per
+ogni modo di giocare (quanto butta nel vuoto per quanto si sposta) resta il bot
+più bravo, così le strategie strane non si perdono. Ogni `--esame` generazioni il
+campione gioca contro il bot di oggi sulle stesse partite, a turno. Se per
+`--stallo` esami non migliora cambia da solo (più mutazione, metà popolazione a
+caso, tutti gli stili come avversari e più partite) e lo scrive nel rapporto.
+Quando cambiano le regole si rifà con `--nuova`. Salva a ogni generazione: si
+ferma con Ctrl+C e riparte da dove era. Esce `simulazione/arena/evolvi/`:
+`evoluzione.md`, `storia.json`, `archivio.json`, `migliore.json` e
+`trovate.jsonl` (i turni rari che fanno tanti punti, con ricetta e pesi).
+
+`trovate.py` sceglie le trovate (i turni che fanno tanti punti con una
+combinazione di mosse che quasi nessuno fa: punti per rarità, tutte diverse)
+dalle partite di una cartella dell'arena o da `trovate.jsonl` di `evolvi.py`, ne
+fa i video col simulatore e scrive `galleria/galleria.html`, da pubblicare come
+Artifact con i video accanto. I video vanno fatti con lo stesso codice che ha
+giocato le partite.
 
 `impara.py` fa imparare la rete a gradiente (numpy, niente PyTorch): a ogni giro
 gioca (la rete di adesso con un po' di esplorazione, le reti dei giri passati e

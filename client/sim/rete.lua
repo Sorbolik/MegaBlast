@@ -1,6 +1,6 @@
 -- Rete neurale piccola per il bot (sim/bot.lua): un percettrone a strati che
 -- dalle caratteristiche di una posizione dà quanto vale. I pesi non si
--- allenano qui: li fa evolvere l'arena (strumenti/arena/evolvi_rete.py).
+-- allenano qui: li allena strumenti/arena/impara.py.
 -- Solo somme, prodotti e max (ReLU): niente exp o tanh, che LuaJIT e
 -- gopher-lua potrebbero calcolare con un'ultima cifra diversa, così il bot
 -- resta identico sul telefono e sul server.
