@@ -581,7 +581,7 @@ function M:hurt(rb, amount, by, reason)
 		if foe then
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
-			self:add_points(by, real * score.damage * mult, "damage", rb)
+			self:add_points(by, real * 100 / rb.stats.max_hp * score.damage * mult, "damage", rb)
 		end
 	end
 	-- se era il primo prima del colpo, la Corona resta anche se il colpo fa primo chi uccide
@@ -2715,7 +2715,7 @@ function M:attack(weapon, fire)
 		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
 		rb.attack_turns = rb.attack_turns + 1
 		-- i secondi rimasti diventano globi del teletrasporto
-		local gain = math.floor(self.timer / (60 * C.TELEPORT_SECONDS))
+		local gain = rb.stats.time_orbs > 0 and math.floor(self.timer / (60 * C.TELEPORT_SECONDS)) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
 			self:emit({ type = "teleports", robot = rb.id, amount = gain, total = rb.teleports_left })
@@ -2948,7 +2948,7 @@ local function blastron_profile()
 		SHARD_SPEED = M.SHARD_SPEED * k,
 		SNIPER_SPEED = M.SNIPER_SPEED * k,
 		SHARD_BLAST = { r = M.SHARD_BLAST.r * k, damage_r = M.SHARD_BLAST.damage_r * k,
-			damage = M.SHARD_BLAST.damage, knockback = M.SHARD_BLAST.knockback * k },
+			damage = 11, knockback = M.SHARD_BLAST.knockback * k },
 		GRAVITY = 25 * u,
 		-- corsa 5 u/s a terra e in aria, salto alto 5,2 u
 		DEFAULT_STATS = { walk_speed = 5 * u, jump_height = 5.2 * u, air_speed = 5 * u },
@@ -2960,17 +2960,20 @@ local function blastron_profile()
 		JUMP_CUT = 0.45,
 		COYOTE_TICKS = 6,
 		JUMP_BUFFER_TICKS = 6,
-		-- cadere da più di 40 u toglie 15 punti (su 2000) per unità, al massimo 900
+		-- cadere da più di 40 u toglie 15 punti (su 2000) per unità, al massimo 900;
+		-- da noi 25 e 1500: i danni sono 5/3 di Blastron (Sergio, 29 ottobre 2026:
+		-- "ci vogliono 5 turni per ammazzare qualcuno", tutto deve togliere di più)
 		FALL_SAFE = 40 * u,
-		FALL_DAMAGE = 15 * hp / u,
-		FALL_DAMAGE_MAX = 900 * hp,
+		FALL_DAMAGE = 25 * hp / u,
+		FALL_DAMAGE_MAX = 1500 * hp,
 		KNOCKBACK_MODEL = "blastron",
 		SELF_DAMAGE = 0.5,
 		OWNER_SAFE_TICKS = 30,
 		-- Rocket: cratere 5 u, danno e spinta entro 9 u, 150-300 danni, impulso 10
+		-- (da noi 250-500, 5/3)
 		MISSILE_SPEED = 75 * u,
 		MISSILE_GRAVITY = 1.1,
-		MISSILE_BLAST = { r = 5 * u, damage_r = 9 * u, damage = 300 * hp, damage_min = 150 * hp, impulse = 10 },
+		MISSILE_BLAST = { r = 5 * u, damage_r = 9 * u, damage = 500 * hp, damage_min = 250 * hp, impulse = 10 },
 		-- Grenade: rimbalzo 0,4, frenata 1/s dopo il primo urto, scoppia dopo 5 s
 		GRENADE_SPEED = 85 * u,
 		GRENADE_GRAVITY = 1.3,
@@ -2978,8 +2981,10 @@ local function blastron_profile()
 		GRENADE_BOUNCE = 0.4,
 		GRENADE_FRICTION = 1,
 		GRENADE_DAMPING = 1,
-		-- danno al centro 57 invece di 27,5 (arena dei bot, 29 ottobre 2026: l'Uovo era l'arma più debole)
-		GRENADE_BLAST = { r = 5.5 * u, damage_r = 10 * u, damage = 1140 * hp, damage_min = 300 * hp, impulse = 15 },
+		-- danno al centro 57 invece di 27,5 (arena dei bot, 29 ottobre 2026: l'Uovo era l'arma più debole),
+		-- poi 80 e 25 ai bordi: 5/3 come tutti, ma il centro sotto la vita intera
+		-- (Sergio, 29 ottobre 2026: "non ti dico che si deve oneshottare")
+		GRENADE_BLAST = { r = 5.5 * u, damage_r = 10 * u, damage = 1600 * hp, damage_min = 500 * hp, impulse = 15 },
 		-- Teleport Grenade: non chiude il turno, ti porta lì dopo 3 s
 		ORB_SPEED = 80 * u,
 		ORB_GRAVITY = 1.1,
@@ -2995,16 +3000,16 @@ local function blastron_profile()
 		HURT_R = CORPO.colpi.raggio,
 		HURT_Y = CORPO.colpi.centro,
 		HURT_FAT = 0.1 * u,
-		-- Hanzo Special: fendente sulla mira (sim/mischia.lua), 300 danni, ferma il bersaglio
+		-- Hanzo Special: fendente sulla mira (sim/mischia.lua), 300 danni (da noi 500), ferma il bersaglio
 		SWORD_MODEL = "blastron",
 		SWORD_TICKS = 56,
-		SWORD_DAMAGE = 300 * hp,
+		SWORD_DAMAGE = 500 * hp,
 		SWORD_STOP = true,
 		-- Flame-Yuken: montante sulla mira, 1000 danni, lancia dritto in alto a
 		-- 40 u/s, saltello di 15 u/s
 		PUNCH_MODEL = "blastron",
 		PUNCH_TICKS = 127,
-		PUNCH_DAMAGE = 560 * hp,   -- 28 invece di 50 (arena dei bot, 29 ottobre 2026: vinceva troppo)
+		PUNCH_DAMAGE = 940 * hp,   -- 28 invece di 50 (arena dei bot, 29 ottobre 2026: vinceva troppo), poi 47 (5/3)
 		PUNCH_LAUNCH = 40 * u,
 		PUNCH_PUSH = 0,
 		PUNCH_HOP = 15 * u,

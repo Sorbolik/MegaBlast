@@ -60,7 +60,7 @@ check(not abilita.valid({ jump = 4 }, 20), "un albero con troppi gradi non è va
 local a = assetto.new()
 a.tree = { hp = 2 }
 local st = assetto.stats(BASE, a)
-check(st.max_hp == BASE.max_hp + 6, "l'albero alza la vita")
+check(st.max_hp == BASE.max_hp + 4, "l'albero alza la vita")
 a.tree = { jump = 3 }
 st = assetto.stats(BASE, a)
 check(st.jump_height > BASE.jump_height, "l'albero alza il salto")

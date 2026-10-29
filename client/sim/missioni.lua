@@ -10,9 +10,12 @@
 --   missioni.prepara(r, g)                          -- subito dopo, una volta
 --   missioni.evento(r, g, e, bots)                  -- per ogni evento della simulazione (bots: di replay.partita)
 --   local esito = missioni.tick(r, g)               -- a ogni tick: nil, "fatta" o "fallita"
+--   missioni.tocca(r)                               -- il giocatore ha toccato i comandi (lezioni: parte il tempo)
+--   missioni.vede(r.l, arma)                        -- quell'arma (o "teleport", "parachute") si vede nell'HUD?
 --   local testo, chi = missioni.riga(r)             -- il suggerimento da mostrare sopra il robot chi (o nil)
 --   local testo = missioni.obiettivo(r)             -- l'obiettivo che resta, sempre in vista (o nil)
---   missioni.stelle(r)                              -- 1..3 quando è fatta
+--   missioni.stelle(r)                              -- { true, false, true }: ogni stella col suo criterio
+--   missioni.quante(stelle)                         -- quante sono accese
 --   missioni.criteri(l)                             -- cosa serve per ogni stella: { "FATTA", "IN 2 TURNI", ... }
 --   missioni.dopo(id)                               -- la missione che viene dopo nel capitolo (nil dopo l'ultima)
 --
@@ -22,6 +25,9 @@
 --     d'acciaio: i crateri non rompono il rompicapo) e spawns (prima il giocatore)
 --   giocatori: opts.players di game.new (team, bot = livello, carattere, dummy, pick,
 --     secondary, tool, stats); nome: come si chiama quel robot (i custodi)
+--   vedi = { "missile", "eagle", ... }: le lezioni mostrano solo quello che serve
+--     ("primarie", "secondarie": tutte quelle che hai; "teleport": il tasto e i globi
+--     dal tempo; "parachute"): il resto non c'è nemmeno
 --   regole: altre opts di game.new; secondi: durata della partita; globi: con
 --     quanti teletrasporti parte il giocatore; vita, punti = { [robot] = n } all'inizio;
 --     rigenera = { robot, ... }: a ogni turno tornano con la vita piena
@@ -85,6 +91,8 @@ for _, cap in ipairs(campagna.CAPITOLI) do
 		assert(not PER_ID[l.id], "missione doppia: " .. l.id)
 		PER_ID[l.id] = l
 		l.capitolo = cap.id
+		-- nelle lezioni il tempo aspetta che tocchi i comandi (capitolo.aspetta)
+		l.aspetta = cap.aspetta
 		DOPO[l.id] = cap.missioni[i + 1] and cap.missioni[i + 1].id
 		if l.arena then
 			l.mappa = "missione_" .. l.id
@@ -101,6 +109,22 @@ end
 
 function M.dopo(id)
 	return DOPO[id]
+end
+
+-- Quello che la missione fa vedere nell'HUD (l.vedi; senza, tutto)
+local function categoria(w)
+	if game.SECONDARY[w] then return "secondarie" end
+	if game.TOOLS[w] or w == "teleport" then return nil end
+	return "primarie"
+end
+
+function M.vede(l, w)
+	if not l.vedi then return true end
+	local c = categoria(w)
+	for _, v in ipairs(l.vedi) do
+		if v == w or v == c then return true end
+	end
+	return false
 end
 
 -- Lo stato di una missione in corso
@@ -130,10 +154,14 @@ function M.partita(r, seed, picks, aiuto)
 		end
 		players[i] = q
 	end
-	if l.globi then
+	if l.globi or l.vedi then
 		local st = {}
 		for k, v in pairs(players[GIOCATORE].stats or {}) do st[k] = v end
-		st.teleports = l.globi
+		st.teleports = l.globi or st.teleports
+		-- quello che la lezione non mostra non c'è: niente globi (nemmeno dal
+		-- tempo), niente paracadute
+		if not M.vede(l, "teleport") then st.teleports, st.time_orbs = 0, 0 end
+		if not M.vede(l, "parachute") then st.parachutes = 0 end
 		players[GIOCATORE].stats = st
 	end
 	local opts = { players = players }
@@ -148,8 +176,9 @@ end
 function M.prepara(r, g)
 	local l, st = r.l, r.st
 	if l.secondi then g.match_left = l.secondi * 60 end
+	-- la vita della missione è anche quella piena: rigenera torna lì, non a 150
 	for i, v in pairs(l.vita or {}) do
-		g.robots[i].hp, g.robots[i].max_hp = v, math.max(v, g.robots[i].max_hp)
+		g.robots[i].hp, g.robots[i].max_hp = v, v
 	end
 	if r.aiuto then
 		for i, p in ipairs(l.giocatori) do
@@ -163,6 +192,7 @@ function M.prepara(r, g)
 	if g.current == GIOCATORE then st.turni = 1 else st.turni_bot = 1 end
 	r.coda = {}
 	r.riga = nil
+	if l.aspetta then r.attesa, r.fermo = true, { timer = g.timer, window = g.window, match = g.match_left } end
 	-- lo scopo finché non si fa la prima cosa
 	if l.scopo then
 		r.coda[1] = { testo = l.scopo, fino = function(_, g2) return g2.used.primary or g2.used.secondary or g2.used.tool end }
@@ -317,18 +347,33 @@ function M.evento(r, g, e, bots)
 	end
 	controlla(r, g, e)
 	if r.esito then return end
+	-- lezioni: a ogni tuo turno e quando rinasci l'obiettivo si riscrive e il
+	-- tempo aspetta che tocchi i comandi, così c'è il tempo di leggere
+	if l.aspetta and e.robot == GIOCATORE and (e.type == "turn" or e.type == "respawn") then
+		r.attesa, r.fermo = true, { timer = g.timer, window = g.window, match = g.match_left }
+		local testo = l.scopo
+		local i, p = prossimo(l, st)
+		if i and i > 1 then testo = p.testo end
+		-- (se il turno non ha già la sua riga da dire)
+		if testo and not r.riga then mostra(r, { testo = testo }) end
+	end
 	local f = l.fallisce or {}
 	if (f.muori and e.type == "death" and e.robot == GIOCATORE) or (e.type == "over" and not l.guidata) then
 		r.esito = "fallita"
 	end
 end
 
+-- Il giocatore ha toccato i comandi: il tempo riparte
+function M.tocca(r)
+	r.attesa, r.fermo = false, nil
+end
+
 function M.tick(r, g)
 	local l, st = r.l, r.st
-	-- primo turno della partita guidata: il cronometro aspetta il primo colpo
-	if l.guidata and st.turni == 1 and g.current == GIOCATORE and g.phase == "aim"
-		and not g.used.primary and not g.used.secondary then
-		g.timer = game.TURN_TICKS
+	-- lezioni: finché non tocchi i comandi il tempo del turno e della partita è fermo
+	if r.attesa and g.current == GIOCATORE then
+		local f = r.fermo
+		g.timer, g.window, g.match_left = f.timer, f.window, f.match
 	end
 	controlla(r, g, nil)
 	-- a terra o no prima degli eventi del prossimo tick (il Tonante stacca da terra)
@@ -340,7 +385,7 @@ function M.tick(r, g)
 		local _, p = prossimo(l, st)
 		if rb.grounded and rb.parachutes_left == 0 and p and p.raggiungi then r.esito = "fallita" end
 	end
-	if r.riga_t then
+	if r.riga_t and not r.attesa then
 		r.riga_t = r.riga_t - 1
 		if r.riga_t <= 0 then r.riga, r.riga_t = nil, nil end
 	end
@@ -382,19 +427,25 @@ end
 -- Stelle: una per averla fatta, poi i turni e il bonus (o due soglie di
 -- turni). Nella partita guidata: finita, vinta, vinta con 100 punti di distacco.
 function M.stelle(r)
-	if r.esito ~= "fatta" then return 0 end
+	if r.esito ~= "fatta" then return { false, false, false } end
 	local l, st = r.l, r.st
 	if l.guidata then
-		if not st.vinta then return 1 end
-		return st.distacco >= 100 and 3 or 2
+		return { true, st.vinta == true, st.vinta == true and st.distacco >= 100 }
 	end
 	local s = l.stelle
 	if s.bonus then
-		return 1 + (st.turni <= s.turni and 1 or 0) + (bonus(s.bonus, st) and 1 or 0)
+		-- il bonus vale da solo: si può avere la terza senza la seconda
+		return { true, st.turni <= s.turni, bonus(s.bonus, st) }
 	end
-	if st.turni <= s[2] then return 3 end
-	if st.turni <= s[1] then return 2 end
-	return 1
+	return { true, st.turni <= s[1], st.turni <= s[2] }
+end
+
+function M.quante(stelle)
+	local n = 0
+	for i = 1, 3 do
+		if stelle[i] then n = n + 1 end
+	end
+	return n
 end
 
 return M

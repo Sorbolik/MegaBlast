@@ -1,5 +1,5 @@
 # Partita guidata: un giocatore nuovo tocca GIOCA e si trova contro il bot del
-# tutorial. Il cronometro aspetta il primo colpo, le righe compaiono sopra il
+# tutorial. Il cronometro aspetta che tocchi i comandi, le righe compaiono sopra il
 # diavoletto (e sopra il bot nei suoi turni), il bot fa vedere i due attacchi.
 imposta prova_nuovo 1
 
