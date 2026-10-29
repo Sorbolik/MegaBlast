@@ -152,6 +152,27 @@ function M.barra_valore(b, v)
 	gui.set_size(b.pieno, V)
 end
 
+-- La Corona del primo in classifica: una fascia e tre punte a rombo, col bordo
+-- scuro. Restituisce la radice (invisibile), centrata sulla fascia; misure in
+-- unità della GUI a scala 1 (larga 18).
+M.ORO = c(1, 0.8, 0.25)
+local BIANCO = c(1, 1, 1)
+local PEZZI_CORONA = { { 0, 0, 16, 5, 0 }, { -6, 4, 5, 5, 45 }, { 0, 6, 5, 5, 45 }, { 6, 4, 5, 5, 45 } }
+
+function M.corona(x, y, colore, parent)
+	local r = nodo(nil, x, y, 0, 0, BIANCO, parent)
+	gui.set_visible(r, false)
+	for passata = 1, 2 do
+		local b = passata == 1 and 2 or 0
+		for _, p in ipairs(PEZZI_CORONA) do
+			local n = nodo(nil, p[1], p[2], p[3] + b, p[4] + b, passata == 1 and C.FONDO or colore or M.ORO, r)
+			gui.set_inherit_alpha(n, true)
+			gui.set_euler(n, vmath.vector3(0, 0, p[5]))
+		end
+	end
+	return r
+end
+
 -- Tocco sui bottoni di una lista: premuto, rilasciato sopra (l'azione) o fuori.
 -- Vince l'ultimo aggiunto, che è disegnato sopra (un bottone dentro un pannello)
 local function sotto(lista, x, y)

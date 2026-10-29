@@ -22,12 +22,13 @@ local tutorial = require "battaglia.tutorial"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
+local punteggio = require "battaglia.punteggio"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
 -- W, H: lo schermo del gioco; la mappa è game.WORLD_W x game.WORLD_H
-local W, H, CELL = 1280, 720, game.CELL
-local TW, TH = game.WORLD_W / CELL, game.WORLD_H / CELL
+local W, H = 1280, 720
+local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
@@ -342,7 +343,7 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.time_bar_bg, visible)
 	gui.set_enabled(self.time_bar, visible)
 	gui.set_enabled(self.tele_label, visible)
-	gui.set_enabled(self.score_label, visible)
+	punteggio.set_enabled(self.punti, visible)
 	gui.set_enabled(self.btn_zoom, visible)
 end
 
@@ -543,6 +544,9 @@ local function new_match(self, seed, map, opts)
 		targa.vita(self.robots[i].targa, rb.hp, rb.max_hp, rb.shield)
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, scudo = rb.shield }
 	end
+	local targhe = {}
+	for i = 1, game.MAX_PLAYERS do targhe[i] = self.robots[i].targa end
+	punteggio.partita(self.punti, self.g, TEAM_NAMES, targhe)
 	self.trail_n = 0
 	self.pose_dt = game.DT
 	reset_pose(self)
@@ -668,8 +672,8 @@ local function handle_event(self, e)
 			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
 		end
 		self.drawn_map = nil
-		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 1, row_min - 1,
-			math.floor((e.x + e.r) / CELL) + 1, row_max + 1)
+		redraw_cells(self, math.floor((e.x - e.r) / game.CELL) - 1, row_min - 1,
+			math.floor((e.x + e.r) / game.CELL) + 1, row_max + 1)
 		explosion(self, e.x, e.y, e.r)
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA, e.x, e.y
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
@@ -747,7 +751,15 @@ local function handle_event(self, e)
 		shock(self, e.x, e.y)
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA * 0.5, e.x, e.y
+	elseif e.type == "points" then
+		-- il numero nasce sul colpito (sul robot stesso se perde punti o para)
+		local da = (e.amount < 0 or e.reason == "parry" or not e.other) and e.robot or e.other
+		local v, s = self.view[da], self.cam_s or 1
+		if v then
+			punteggio.punti(self.punti, e, v.x * s + (self.cam_tx or 0), (v.y + scoria.altezza(self.robots[da].rig)) * s + (self.cam_ty or 0))
+		end
 	elseif e.type == "turn" then
+		punteggio.turno(self.punti, self.g)
 		-- ogni turno ricomincia dal Lanciarune, non dall'arma del turno prima
 		self.tele_armed, self.weapon = false, "missile"
 		if self.mode == "online" then
@@ -1733,19 +1745,7 @@ local function render(self, dt)
 	for _, sl in ipairs(self.slots) do
 		if sl.glow then gui.set_enabled(sl.glow, blink and sl.have and g:can_use(sl.weapon)) end
 	end
-	-- punti di ogni squadra, in alto a sinistra
-	local score = ""
-	for t = 1, #TEAM_NAMES do
-		local pts, any = 0, false
-		for _, rb in ipairs(g.robots) do
-			if rb.team == t then pts, any = pts + rb.points, true end
-		end
-		if any then score = score .. string.format("%s %d   ", TEAM_NAMES[t], math.floor(pts + 0.5)) end
-	end
-	if self.score_text ~= score then
-		gui.set_text(self.score_label, score)
-		self.score_text = score
-	end
+	punteggio.update(self.punti, dt, g, self.mode == "online" and self.me or g.current)
 	local n = bar_robot(self)
 	local tele = n and n.teleports_left or 0
 	if self.tele_n ~= tele then
@@ -1960,8 +1960,8 @@ function init(self)
 	self.time_bar = box(W / 2, TIME_BAR_Y, TIME_BAR_W, TIME_BAR_H, TIME_COLOR)
 	self.tele_label = label(W / 2 + TIME_BAR_W / 2 + 110, TIME_BAR_Y + 2, "TELETRASPORTI 2", 0.9)
 	gui.set_color(self.tele_label, vmath.vector4(1, 0.75, 0.35, 1))
-	self.score_label = label(24, H - 28, "", 0.8)
-	gui.set_pivot(self.score_label, gui.PIVOT_W)
+	-- i punti in alto a sinistra; il ticchettio è il suono "punto" dell'oggetto game
+	self.punti = punteggio.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
 	self.tut_label = label(W / 2, H - 120, "", 0.8)
 	gui.set_line_break(self.tut_label, true)

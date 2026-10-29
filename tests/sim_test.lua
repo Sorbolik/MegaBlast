@@ -1349,6 +1349,16 @@ do
 	local hp3 = gc.robots[3].max_hp
 	check(gc.robots[1].kills == 1 and gc.robots[1].points == (hp3 + config.SCORE.kill) * config.SCORE.leader + config.SCORE.crown,
 		"abbattere il primo vale anche la Corona (" .. gc.robots[1].points .. ")")
+	-- ogni punto è anche un evento "points" (il numero che vola nell'interfaccia)
+	local somma, motivi = { 0, 0, 0, 0 }, {}
+	for _, e in ipairs(gc:pop_events()) do
+		if e.type == "points" then
+			somma[e.robot] = somma[e.robot] + e.amount
+			motivi[e.reason] = e.other
+		end
+	end
+	check(somma[1] == gc.robots[1].points and somma[3] == config.SCORE.death and motivi.damage == 3
+		and motivi.kill == 3 and motivi.death == 1, "gli eventi points sommano i punti, col motivo e l'altro robot")
 
 	-- Rampino e trampolino: chi sposta un nemico senza danno prende l'uccisione se cade
 	local gk = game.new(3, "forgia")

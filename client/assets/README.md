@@ -18,6 +18,7 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 | `esplosioni/` | `esplosione_base_12x256.png` (flipbook 12 fotogrammi da 256 px), fumo e fuoco additivo come livelli separati |
 | `mappe/forgia/`, `mappe/crogiolo/` | Per ogni mappa `terreno.png` 1920×1080 con l'alfa (allineato alla maschera di 640×360 celle di `client/sim/mapdata.lua`: una cella, 3 px) e `interno_mezzo.png` (parete dei crateri a metà risoluzione) |
 | `ui/` | Le tre forme bianche dell'interfaccia (`forma`, `bordo` 9-slice e `alone`), fatte da `strumenti/grafica/ui.py` e colorate da `client/ui/ui.lua`; `levette/` le levette del telefono (`strumenti/grafica/levette.py`) |
+| `suoni/` | `punto.wav`, il tic dei punti che salgono nel gettone (fatto da `strumenti/suoni/punto.py`; il gioco lo suona sempre più acuto) |
 | `font/` | Cinzel Bold (licenza OFL in `OFL_Cinzel.txt`), il font dell'interfaccia (`client/ui/titolo.font`) |
 
 ## In battaglia

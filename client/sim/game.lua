@@ -498,8 +498,12 @@ end
 -- ambientali: caduta fuori dalla mappa o da troppo in alto) e colpendo chi è
 -- primo in classifica; morire ne toglie. Numeri in config.SCORE.
 
-function M:add_points(rb, n)
+-- reason dice da dove vengono (damage, kill, death, trap, parry), other è
+-- l'altro robot (il colpito; per death chi ha ucciso). L'evento "points" serve
+-- all'interfaccia (il numero che vola nella classifica) e all'arena dei bot.
+function M:add_points(rb, n, reason, other)
 	rb.points = rb.points + n
+	self:emit({ type = "points", robot = rb.id, amount = n, reason = reason, other = other and other.id })
 end
 
 -- Chi ha più punti (solo se è uno solo e ne ha più di zero): colpirlo vale di più
@@ -544,7 +548,7 @@ function M:hurt(rb, amount, by, reason)
 			local p = math.min(C.SCORE.parry_max - rb.parried, absorbed * C.SCORE.parry)
 			if p > 0 then
 				rb.parried = rb.parried + p
-				self:add_points(rb, p)
+				self:add_points(rb, p, "parry", by)
 			end
 		end
 		if rb.shield <= 0 then rb.shield = nil end
@@ -559,7 +563,7 @@ function M:hurt(rb, amount, by, reason)
 		if foe then
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
-			self:add_points(by, real * C.SCORE.damage * mult)
+			self:add_points(by, real * C.SCORE.damage * mult, "damage", rb)
 		end
 	end
 	-- se era il primo prima del colpo, la Corona resta anche se il colpo fa primo chi uccide
@@ -633,7 +637,7 @@ function M:kill(rb, reason, was_leader)
 	rb.hp = 0
 	rb.deaths = rb.deaths + 1
 	if reason == "fell" then rb.falls = rb.falls + 1 end
-	self:add_points(rb, C.SCORE.death + (own and C.SCORE.self_death or 0))
+	self:add_points(rb, C.SCORE.death + (own and C.SCORE.self_death or 0), "death", killer)
 	local points = 0
 	if killer and enemies(killer, rb) then
 		killer.kills = killer.kills + 1
@@ -644,7 +648,7 @@ function M:kill(rb, reason, was_leader)
 		end
 		-- Corona: chi abbatte il primo in classifica prende in più crown
 		if mult > 1 then points = points + C.SCORE.crown end
-		self:add_points(killer, points)
+		self:add_points(killer, points, "kill", rb)
 	end
 	rb.last_hit = nil
 	rb.respawn_in = M.RESPAWN_TICKS
@@ -2170,7 +2174,7 @@ function M:update_placed()
 					self:emit({ type = "trap", id = o.id, robot = rb.id, x = o.x, y = o.y })
 					local owner = self.robots[o.owner]
 					if self:hurt(rb, C.TRAP.damage, owner) > 0 and owner and enemies(owner, rb) then
-						self:add_points(owner, C.SCORE.trap)
+						self:add_points(owner, C.SCORE.trap, "trap", rb)
 					end
 					gone = true
 				end
