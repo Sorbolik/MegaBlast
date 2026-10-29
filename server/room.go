@@ -25,6 +25,8 @@ const (
 //	{"t":"swap","to":3}                 propone lo scambio delle scelte al compagno 3 (se lui
 //	                                    lo propone a sua volta, lo scambio si fa); "to":0 ritira la proposta
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
+//	{"t":"leave"}                       esco dalla partita (rotellina in partita): non torno, gli
+//	                                    altri lo sanno subito (vale anche durante la scelta)
 //
 // "j" dice se il salto è ancora tenuto premuto: lasciandolo mentre si sale il salto è corto.
 // "w" è l'arma: "missile" (se manca), "sword", "teleport", una secondaria scelta
@@ -300,6 +302,10 @@ func (r *Room) handle(m roomMsg) {
 		if s.p == nil {
 			return
 		}
+		if m.msg.T == "leave" {
+			r.leave(m.slot)
+			return
+		}
 		if r.sim == nil {
 			r.handleDraft(m)
 			return
@@ -375,6 +381,18 @@ func (r *Room) checkAway() bool {
 		}
 	}
 	return len(teams) >= 2
+}
+
+// leave: il giocatore del posto slot esce di sua scelta. Come chi non torna in
+// tempo, ma subito: il posto non si tiene e gli altri ricevono "left". La
+// partita continua (checkAway) se restano almeno due squadre.
+func (r *Room) leave(slot int) {
+	s := r.seats[slot]
+	s.p.room.Store(nil)
+	s.p.Close()
+	s.p, s.gone, s.in = nil, true, held{}
+	r.srv.sessions.Delete(s.tok)
+	r.broadcast(fmt.Appendf(nil, `{"t":"left","robot":%d}`, slot+1))
 }
 
 // close chiude la partita e le connessioni (dopo aver mandato gli ultimi messaggi).

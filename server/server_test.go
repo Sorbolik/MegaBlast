@@ -446,3 +446,38 @@ func TestDraftToolFromHello(t *testing.T) {
 		t.Fatalf("attrezzo mancante nello start: %v", st["players"])
 	}
 }
+
+// Chi esce dalla rotellina in partita non torna: gli altri lo sanno subito e
+// la partita continua finché restano due squadre
+func TestLeave(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	var c [4]*testClient
+	for i := range c {
+		c[i] = dial(t, ctx, url)
+		c[i].send(`{"t":"hello","v":2,"mode":"ffa"}`)
+	}
+	you := map[float64]*testClient{}
+	for _, x := range c {
+		you[x.waitFor(`"start"`)["you"].(float64)] = x
+	}
+	p1, p2, p3, p4 := you[1], you[2], you[3], you[4]
+	p1.send(`{"t":"leave"}`)
+	if !p1.closed() {
+		t.Fatal("chi esce deve essere disconnesso")
+	}
+	for _, c := range []*testClient{p2, p3, p4} {
+		if m := c.waitFor(`"left"`); m["robot"].(float64) != 1 {
+			t.Fatalf("left inatteso: %v", m)
+		}
+	}
+	// tre squadre: si continua
+	p4.waitFor(`"state"`)
+	p2.send(`{"t":"leave"}`)
+	p3.send(`{"t":"leave"}`)
+	// resta una squadra sola: la partita si chiude
+	if !p4.closed() {
+		t.Fatal("con una squadra sola la partita deve chiudersi")
+	}
+}

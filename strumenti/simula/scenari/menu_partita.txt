@@ -1,0 +1,34 @@
+# La rotellina in partita (in alto a sinistra, 62 658): si apre ESCI DALLA
+# PARTITA accanto (236 658), un tocco altrove la richiude senza fare altro;
+# sullo stesso telefono intanto la partita e' ferma (il tempo non scende).
+# ESCI torna alla home; da una partita contro i bot, all'allenamento.
+
+aspetta 1.5
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+tocca 62 658                        # rotellina
+aspetta 2
+foto 01_aperta                      # il tempo e' fermo
+tocca 640 400                       # altrove: si chiude
+aspetta 0.5
+foto 02_chiusa
+premi Escape                        # Esc la riapre
+aspetta 0.5
+foto 03_esc
+tocca 236 658                       # ESCI DALLA PARTITA
+aspetta_stato modo=menu 3
+aspetta 0.5
+foto 04_home
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 760 560                       # scheda CONTRO I BOT
+aspetta 0.5
+tocca 640 120                       # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+tocca 62 658
+aspetta 0.3
+tocca 236 658                       # ESCI: si torna all'allenamento
+aspetta 1
+foto 05_allenamento

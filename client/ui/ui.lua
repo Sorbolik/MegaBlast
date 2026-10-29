@@ -1,7 +1,7 @@
 -- Interfaccia minimale di MegaBlast, nello stile della Scoria: forme piatte color
 -- carbone col bordo chiaro (come il contorno del personaggio) e il bagliore del
 -- Nucleo, nel colore della squadra, su quello che conta. Niente immagini dipinte:
--- tre forme bianche (assets/ui/, strumenti/grafica/ui.py) colorate da qui.
+-- poche forme bianche (assets/ui/, strumenti/grafica/ui.py) colorate da qui.
 -- I pezzi si aggiungono solo quando una schermata ne ha bisogno.
 --
 -- Il .gui che lo usa deve avere la texture "ui" (/ui/ui.atlas) e il font
@@ -33,6 +33,8 @@ M.C = {
 local C = M.C
 
 local BORDO_9 = vmath.vector4(16, 16, 16, 16)
+-- le forme che si allungano in 9-slice (le altre si scalano intere)
+local NOVE = { forma = true, bordo = true }
 local V = vmath.vector3()
 local PREMUTO, NORMALE = vmath.vector3(0.96, 0.96, 1), vmath.vector3(1, 1, 1)
 
@@ -43,7 +45,7 @@ local function nodo(tex, x, y, w, h, colore, parent)
 	if tex then
 		gui.set_texture(n, "ui")
 		gui.play_flipbook(n, tex)
-		if tex ~= "alone" then gui.set_slice9(n, BORDO_9) end
+		if NOVE[tex] then gui.set_slice9(n, BORDO_9) end
 	end
 	gui.set_color(n, colore)
 	if parent then gui.set_parent(n, parent) end
@@ -138,6 +140,20 @@ function M.indietro(lista, azione, parent)
 		gui.set_rotation(s, vmath.vector3(0, 0, i * 45))
 	end
 	return n
+end
+
+-- Impostazioni in partita: lo stesso quadrato con la rotellina, in alto a sinistra
+function M.impostazioni(lista, azione, parent)
+	local n = M.bottone(lista, 30 + 32, 720 - 30 - 32, 64, 64, "", azione, nil, parent)
+	gui.set_xanchor(n, gui.ANCHOR_LEFT)
+	gui.set_yanchor(n, gui.ANCHOR_TOP)
+	nodo("ingranaggio", 0, 0, 34, 34, C.LUCE, n)
+	return n
+end
+
+-- Stella delle lezioni e della campagna: d è il lato
+function M.stella(x, y, d, colore, parent)
+	return nodo("stella", x, y, d, d, colore, parent)
 end
 
 -- Disco e anello (nodi a torta): levette, pulsanti tondi, cronometro. d è il

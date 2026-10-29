@@ -66,6 +66,14 @@ key_trigger {
   input: KEY_9
   action: "arma9"
 }
+key_trigger {
+  input: KEY_ESC
+  action: "menu_partita"
+}
+key_trigger {
+  input: KEY_BACK
+  action: "menu_partita"
+}
 mouse_trigger {
   input: MOUSE_BUTTON_LEFT
   action: "touch"

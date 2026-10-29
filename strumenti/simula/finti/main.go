@@ -64,6 +64,7 @@ func gioca(url, modo string, propone bool) error {
 			Offer2 []string `json:"offer2"`
 			Sw     []int    `json:"sw"`
 			Cur    int      `json:"cur"`
+			Robot  int      `json:"robot"`
 			Phase  string   `json:"phase"`
 			Robots []struct {
 				Tu int `json:"tu"`
@@ -100,6 +101,9 @@ func gioca(url, modo string, propone bool) error {
 			} else if m.Sw[compagno-1] == you && m.Sw[you-1] != compagno {
 				manda(fmt.Sprintf(`{"t":"swap","to":%d}`, compagno))
 			}
+		case "left":
+			// nel log del server (scenari/esci_online.txt): chi è uscito lo sappiamo subito
+			log.Printf("finto %d: il giocatore %d è uscito", you, m.Robot)
 		case "state":
 			if m.Cur == you && m.Phase == "aim" && len(m.Robots) >= you && m.Robots[you-1].Tu != sparato {
 				sparato = m.Robots[you-1].Tu
