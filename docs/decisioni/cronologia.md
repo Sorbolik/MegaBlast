@@ -55,3 +55,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Mantice più debole: spinge meno (400 invece di 520, meno in su, meno al bordo del raggio); spingeva fuori troppo facilmente. | #91 |
 | 29 ott | Rampino sul terreno: ti porta sopra la piattaforma anche agganciandola da sotto in diagonale (soglie più larghe). | #91 |
 | 29 ott | Mira a lancetta di base (tacche che si accendono con la potenza); il mirino si sceglie dalla rotellina in partita (MIRA) e resta salvato. | questa PR |
+| 29 ott | Armi da vicino: niente lancetta, una punta nella direzione del colpo e un anello ai piedi di chi verrebbe colpito. | questa PR |

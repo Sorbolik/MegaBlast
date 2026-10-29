@@ -16,12 +16,19 @@
 -- - solo nelle lezioni dell'Addestramento, come aiuto, la traiettoria intera:
 --   puntini chiari col bordino scuro alla stessa distanza sullo schermo (il
 --   Bastione: il bordo del blocco).
+-- Le armi da vicino (M.MISCHIA: Lama, Pugno, Maglio, Affondo, Mantice) non
+-- hanno potenza: niente lancetta, mirino né cartellino ma "bersaglio acceso,
+-- minimale" (Sergio, proposte https://claude.ai/artifact/AfpFkoHGuUdS2eiZmsrpcF):
+-- una punta piccola nella direzione del colpo e, ai piedi di chi verrebbe
+-- colpito, un anello schiacciato del colore della squadra.
 --
 --   local m = mira.nuova()                         -- m.nodi (puntini e mirino) e m.cartello: da mettere nel mondo
 --   mira.mirino(m, x, y, angolo, s, potenza, colore)  -- x, y: la bocca dell'arma nel mondo, s lo zoom
 --   mira.lancetta(m, x, y, angolo, s, potenza, colore) -- uguale, l'altro modo
 --   mira.cartellino(m, x, y, s, gradi, potenza, colore)  -- x, y: dove sta il fondo, nel mondo
 --   mira.traiettoria(m, pts, n, s, sagoma)         -- pts[1..n] nel mondo; sagoma: puntini sui punti
+--   mira.punta(m, x, y, angolo, s, colore)         -- armi da vicino: x, y la bocca dell'arma
+--   mira.bersagli(m, pos, n, s, colore)            -- anelli ai piedi di pos[1..n] = { x, y }
 --   mira.via(m) / mira.traiettoria_via(m)          -- spegne tutto / solo la traiettoria
 --   mira.gradi(angolo), mira.tacca(potenza)        -- i numeri (senza nodi, per i test)
 --   mira.posa(pts, n, passo, max, sagoma, out)     -- dove vanno i puntini (senza nodi)
@@ -51,6 +58,12 @@ local LANC_DA, LANC_L, TACCHE, TACCA_H, TACCA_STACCO, FINE_H = 6, 100, 10, 4, 2.
 -- impostazioni (docs/impostazioni.md)
 M.TACCA = 0.05
 M.VIBRA_TACCHE = false
+-- armi da vicino: la punta (quanto sta oltre la bocca, lunghezza e spessore dei
+-- due tratti) e l'anello ai piedi (largo, alto, spessore), al massimo ANELLI
+M.MISCHIA = { sword = true, punch = true, mallet = true, lunge = true, bellows = true }
+local PUNTA_D, PUNTA_L, PUNTA_H = 26, 12, 4
+local ANELLO_W, ANELLO_H, ANELLO_S = 56, 18, 4
+M.ANELLI = 3
 
 local LUCE, OMBRA = ui.C.LUCE, vmath.vector4(0, 0, 0, 0.55)
 local TRACCIA_C = vmath.vector4(LUCE.x, LUCE.y, LUCE.z, 0.35)
@@ -188,6 +201,36 @@ function M.nuova()
 	sbarra(LANC_DA + LANC_L + 2, 2, FINE_H, LUCE)
 	m.nodi[#m.nodi + 1] = m.lanc
 
+	-- la punta delle armi da vicino: due tratti a ">" che si toccano nella punta
+	m.punta, m.punta_luci = radice(), {}
+	for _, c in ipairs({ OMBRA, LUCE }) do
+		local ombra = c == OMBRA and 2 or 0
+		for _, a in ipairs({ 40, -40 }) do
+			local n = figlio(gui.new_box_node(V, vmath.vector3(PUNTA_L + ombra, PUNTA_H + ombra, 0)), m.punta)
+			gui.set_pivot(n, gui.PIVOT_E)
+			gui.set_color(n, c)
+			gui.set_adjust_mode(n, gui.ADJUST_FIT)
+			E.z = a
+			gui.set_euler(n, E)
+			if c == LUCE then m.punta_luci[#m.punta_luci + 1] = n end
+		end
+	end
+	m.nodi[#m.nodi + 1] = m.punta
+	-- gli anelli ai piedi di chi verrebbe colpito: ombra e colore
+	m.anelli, m.anelli_c = {}, {}
+	for i = 1, M.ANELLI do
+		local r = radice()
+		local ombra = figlio(ui.disco(0, 0, 1, OMBRA), r)
+		gui.set_size(ombra, vmath.vector3(ANELLO_W + 4, ANELLO_H + 4, 0))
+		gui.set_inner_radius(ombra, ANELLO_W / 2 - ANELLO_S - 2)
+		local c = figlio(ui.disco(0, 0, 1, LUCE), r)
+		gui.set_size(c, vmath.vector3(ANELLO_W, ANELLO_H, 0))
+		gui.set_inner_radius(c, ANELLO_W / 2 - ANELLO_S)
+		for _, n in ipairs({ ombra, c }) do gui.set_adjust_mode(n, gui.ADJUST_FIT) end
+		m.anelli[i], m.anelli_c[i] = r, c
+		m.nodi[#m.nodi + 1] = r
+	end
+
 	-- il cartellino: carbone col bordo chiaro, gradi a sinistra, potenza a destra
 	local c = {}
 	c.radice = radice()
@@ -242,6 +285,7 @@ function M.mirino(m, x, y, angolo, s, potenza, colore)
 	gui.set_color(m.pieno, colore)
 	gui.set_enabled(m.mir, true)
 	gui.set_enabled(m.lanc, false)
+	gui.set_enabled(m.punta, false)
 	-- la linea parte dalla bocca e si ferma dove comincia l'anello
 	E.z = deg(angolo)
 	for i, n in ipairs(m.linee) do
@@ -263,7 +307,32 @@ function M.lancetta(m, x, y, angolo, s, potenza, colore)
 	for i, n in ipairs(m.tacche) do gui.set_color(n, i <= piene and colore or TRACCIA_C) end
 	gui.set_enabled(m.lanc, true)
 	gui.set_enabled(m.mir, false)
+	gui.set_enabled(m.punta, false)
 	for _, n in ipairs(m.linee) do gui.set_enabled(n, false) end
+end
+
+function M.punta(m, x, y, angolo, s, colore)
+	local d = PUNTA_D / s
+	sposta(m.punta, x + cos(angolo) * d, y + sin(angolo) * d, 1 / s)
+	E.z = deg(angolo)
+	gui.set_euler(m.punta, E)
+	for _, n in ipairs(m.punta_luci) do gui.set_color(n, colore) end
+	gui.set_enabled(m.punta, true)
+	gui.set_enabled(m.lanc, false)
+	gui.set_enabled(m.mir, false)
+	for _, n in ipairs(m.linee) do gui.set_enabled(n, false) end
+	gui.set_enabled(m.c.radice, false)
+end
+
+function M.bersagli(m, pos, n, s, colore)
+	for i = 1, M.ANELLI do
+		local on = i <= n
+		gui.set_enabled(m.anelli[i], on)
+		if on then
+			sposta(m.anelli[i], pos[i].x, pos[i].y, 1 / s)
+			gui.set_color(m.anelli_c[i], colore)
+		end
+	end
 end
 
 function M.cartellino(m, x, y, s, gradi, potenza, colore)
@@ -296,8 +365,10 @@ function M.via(m)
 	M.traiettoria_via(m)
 	gui.set_enabled(m.mir, false)
 	gui.set_enabled(m.lanc, false)
+	gui.set_enabled(m.punta, false)
 	for _, n in ipairs(m.linee) do gui.set_enabled(n, false) end
 	gui.set_enabled(m.c.radice, false)
+	M.bersagli(m, nil, 0)
 end
 
 return M
