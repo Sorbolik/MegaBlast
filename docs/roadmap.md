@@ -31,7 +31,7 @@ passano da Sergio.
 | 6 | Bot | Bot euristico in Lua puro dentro `client/sim/` (gira su server e telefono), a livelli; riempie le code dopo 15 s, è l'avversario del tutorial e della campagna. In parallelo il **Laboratorio bot**: esperimenti di apprendimento automatico (reti neurali) con bot che si affrontano in migliaia di partite simulate, per trovare strategie rotte e bilanciare. Nel gioco resta l'euristico; i bot addestrati possono diventare livelli "assurdi" dell'Allenamento. |
 | 7 | Campagna | Allenamento contro bot (livello a scelta, anche i bot addestrati) appena c'è il bot; poi campagna a missioni come dati (mappa, bot, regole, obiettivo, 3 stelle, premio) con la progressione a sblocco di meccaniche del punto 5. |
 | 8 | Impostazioni | Una schermata: audio, comandi (mancino, levette, mira), schermo (limite fotogrammi, effetti ridotti), lingua, account (codice, collega, cancella), notifiche, info. Niente qualità grafica a livelli né rimappatura dei tasti. |
-| 9 | Progressione | XP, livello, mastery, inventario e loadout calcolati e salvati dal server. Profilo pubblico leggero. Rating nascosto solo per il matchmaking. Niente classifica permanente: le classifiche sono quelle dei tornei e tra amici. |
+| 9 | Progressione | XP, livello, mastery, inventario e loadout calcolati e salvati dal server. Profilo pubblico leggero. Rating nascosto solo per il matchmaking. Niente classifica permanente: le classifiche sono quelle dei tornei e tra amici. In più la sezione **Statistiche, obiettivi e badge** (sotto). |
 | 10 | Negozio | Estetica + valuta morbida guadagnata giocando + pacchetti a pagamento (IAP ufficiale Defold, ricevute verificate dal server); Pass dell'evento quando le skin si producono in meno di un giorno. In più i **tornei a iscrizione** (sotto). Niente pubblicità, niente casse a pagamento. |
 | 11 | Amici | Codice amico, lista con stato, **lobby private** dove 4 amici giocano tra loro (FFA o 2v2) e **2v2 premade** in coda. Link di invito. Chat solo con emote o frasi predefinite. Clan più avanti, se i numeri li riempiono. |
 | 12 | Replay e spettatori | Replay delle ultime 10 partite dal profilo (seed + input). **Spettatore dal vivo senza ritardo**: l'amico vede quello che vedi tu; se vogliono lo streammano. |
@@ -84,6 +84,22 @@ piazzamento nelle proprie 10 partite della finestra. Per riprovare serve la
 moneta dura, che si compra o si guadagna negli eventi e in gioco. Il torneo
 normale resta sempre gratuito.
 
+### Statistiche, obiettivi e badge
+
+Una sezione Statistiche nel profilo con statistiche di ogni tipo, contate dal
+server a fine partita: partite, vittorie per modalità, uccisioni e uccisioni
+ambientali, danni fatti e subiti per arma, colpi a segno e precisione, distanza
+del colpo più lungo, teletrasporti usati e guadagnati, trappole scattate,
+secondi risparmiati nei turni, cadute, cure, piazzamenti nei tornei, serie di
+vittorie. Ogni statistica ha **obiettivi a soglie esponenziali** (per esempio
+10, 100, 1.000, 10.000) che danno un **badge** di livello crescente, sempre più
+difficile da prendere. Il badge scelto (o i tre più alti) si vede a colpo
+d'occhio accanto al nome in lobby, nel draft e in partita, e nel podio. Tutto
+codice-disegnato nello stile Sagoma: forma e colore del badge dicono statistica
+e livello. Le statistiche si contano dalla fase 1 (così nulla va perso); la
+schermata, gli obiettivi e i badge arrivano in fase 3 insieme all'inventario.
+Gli obiettivi sono dati sul server: Sergio può aggiungerne dal pannello.
+
 ### Laboratorio bot
 
 Fuori dal gioco: migliaia di partite simulate tra bot con semi diversi, prima
@@ -112,7 +128,8 @@ senza bug e senza scatti; Sergio approva l'aspetto. Lavoro L, 0 €.
 VPS, dominio, TLS, SQLite, Litestream, deploy a script; account ospite;
 progressione sul server con migrazione del salvataggio locale; versione minima
 dal server; telemetria e crash con la prima versione dell'interfaccia dei dati;
-impostazioni account e info; testi IT/EN; build web servita dal server.
+impostazioni account e info; testi IT/EN; build web servita dal server;
+conteggio delle statistiche a fine partita.
 **Uscita**: due telefoni su reti mobili diverse giocano; chiudendo e riaprendo
 l'app il livello è lo stesso; l'interfaccia dei dati mostra attivi e crash.
 Lavoro L, 5–8 €/mese + dominio.
@@ -134,7 +151,8 @@ Modello eventi, schermata Eventi, Doppia XP; pannello (calendario, eventi,
 premi, messaggi, stato, editor delle animazioni come micro-frontend); Torneo con
 classifica e fasce di premi; inventario e schermata ricompensa; Sfide e
 Modificatori; posta in gioco e notifiche locali; premi codice-disegnati
-(cornici, titoli, scie); Torneo della community in versione manuale.
+(cornici, titoli, scie); sezione Statistiche con obiettivi e badge visibili in
+lobby, draft, partita e podio; Torneo della community in versione manuale.
 **Uscita**: un torneo di prova di una settimana tra amici, programmato dal
 pannello, si chiude e consegna i premi senza che nessuno tocchi il server.
 Lavoro XL, 0 €.
