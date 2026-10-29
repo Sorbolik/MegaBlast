@@ -26,11 +26,11 @@ local M = {}
 local sqrt, atan2, floor, max, deg = math.sqrt, math.atan2, math.floor, math.max, math.deg
 
 -- misure in pixel dello schermo (GUI a 1280 x 720)
-M.PASSO = 15          -- tra un puntino e l'altro
+M.PASSO = 10          -- tra un puntino e l'altro
 M.PUNTI = 40          -- puntini al massimo (con la freccia lunga si allargano)
-local DOT, DOT_BORDO = 7, 10
+local DOT, DOT_BORDO = 4, 6
 -- raggi della punta: dentro, bordo chiaro, ombra
-local PUNTA, PUNTA_LUCE, PUNTA_OMBRA = 15, 19, 22
+local PUNTA, PUNTA_LUCE, PUNTA_OMBRA = 9, 12, 14
 -- la potenza fa una micro-vibrazione a ogni tacca
 M.TACCA = 0.05
 -- armi in cui la potenza conta (le altre vanno dritte o a distanza fissa)
@@ -187,7 +187,7 @@ function M.freccia(m, pts, n, s, colore, sagoma)
 		if punta then
 			-- la punta un passo oltre l'ultimo punto; ombra e bordo un poco più
 			-- avanti, così il bordo gira attorno al vertice
-			local avanti = (8 + (3 - i) * 3) / s
+			local avanti = (5 + (3 - i) * 2) / s
 			sposta(t, ax + math.cos(dir) * avanti, ay + math.sin(dir) * avanti, scala)
 			gui.set_euler(t, E)
 		end
