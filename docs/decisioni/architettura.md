@@ -27,6 +27,7 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 | 29 ott | **Bot con rete neurale che imparano da soli** (Sergio: "vorrei che si evolvessero, che imparassero il gioco da soli"): la rete (`client/sim/rete.lua`, solo somme, prodotti e ReLU, uguale su LuaJIT e gopher-lua) giudica ogni mossa che il bot prova guardando 20 caratteristiche della posizione che ne esce; il bot resta quello che preme i tasti, quindi non bara. `strumenti/arena/evolvi.py` le fa evolvere da pesi a caso, senza fine, col bot euristico come riferimento fisso, campioni passati come avversari ed esami ogni 5 generazioni. Tutti i bot, finiti gli attacchi, si riparano (a piedi o col Rampino) (Claude). | PR del bot |
 | 29 ott | **Apprendimento a gradiente** (Sergio: "perché non metti in piedi anche l'apprendimento a gradiente... facciamo partire una bella larga scala sul mio computer"): `strumenti/arena/impara.py` fa imparare alla rete quanto rende una posizione (da ogni fine turno a fine partita), giro dopo giro sulle partite che gioca, con numpy; corsa lunga sul PC di Sergio. Rete e strumenti restano fuori dal gioco, che usa il bot euristico. | PR del bot |
 | 29 ott | Roadmap: VPS europeo + SQLite + Litestream + Caddy; account ospite; pannello servito dal Go; GitHub Actions per i test; deploy a script; build anche browser dal nostro server. | docs/roadmap.md |
+| 29 ott | **APK su Telegram in automatico**: GitHub Actions costruisce l'APK a ogni push su main (con l'online, firmato con la chiave di Sergio dai segreti del repository) e il bot @ultrablastbot lo manda a Sergio (Claude). | .github/workflows/apk.yml, docs/setup.md |
 
 ## Scartate
 
@@ -51,6 +52,10 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 - Tetto di lavoro del bot a tempo (millisecondi): non deterministico, client e
   server sceglierebbero mosse diverse; si conta il lavoro — 29 ott.
 - Kubernetes, piattaforme gestite, cloud gratuito (29 ott).
+- APK costruito nella sessione cloud: il build server di Defold non si
+  raggiunge, quindi niente online, e la chiave è diversa da quella del PC.
+  APK costruito e mandato dal PC col controllo remoto: va acceso il PC e il
+  token di Telegram finirebbe nelle istruzioni della sessione (Claude) — 29 ott.
 
 ## Aperte
 
