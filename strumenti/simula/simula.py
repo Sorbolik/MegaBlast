@@ -104,7 +104,7 @@ def build(out, extra=""):
     # niente estensione WebSocket (si compila sul build server di Defold, che da qui
     # non si raggiunge) e log di simulazione acceso
     settings = out / "simula.ini"
-    settings.write_text("[project]\ndependencies#0 =\n\n[megablast]\nsimula = 1\n" + extra)
+    settings.write_text("[project]\ndependencies#0 =\n\n[native_extension]\napp_manifest =\n\n[megablast]\nsimula = 1\n" + extra)
     bundle = out / "bundle"
     shutil.rmtree(bundle, ignore_errors=True)
     cmd = [str(JAVA), "-jar", str(BOB), "--root", str(CLIENT), "--output", "build/simula/default",
