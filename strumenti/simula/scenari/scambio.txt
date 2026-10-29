@@ -10,7 +10,9 @@ aspetta 0.5
 foto 01_prima_dell_attacco          # niente pulsante
 mira 150 100 0.3
 aspetta_evento fire 2
-foto 02_pulsante_scambio
+foto 02_annuncio_senza_pulsante     # attaccando subito il pulsante aspetta che sparisca TURNO DI
+aspetta 1
+foto 03_pulsante_scambio
 trascina 640 195 641 195 2          # tenuto premuto: scambia
 aspetta_evento swap 1
-foto 03_dopo_lo_scambio
+foto 04_dopo_lo_scambio

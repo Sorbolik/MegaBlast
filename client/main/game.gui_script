@@ -366,6 +366,8 @@ local function annuncia_turno(self, robot)
 	if not self.annuncio_aspetta then
 		gui.animate(self.annuncio, "color.w", 0, gui.EASING_INCUBIC, 0.6, 1.4)
 	end
+	-- quando è sparito (il pulsante del baratto sta lì sopra e aspetta)
+	self.annuncio_fine = self.clock + 2
 end
 
 -- La rotellina aperta o chiusa: RIPROVA (non online) ed ESCI DALLA PARTITA
@@ -2171,7 +2173,10 @@ local function render(self, dt)
 	self.crono.tacche_on = g.robots[g.current].stats.time_orbs > 0
 	hud.cronometro_update(self.crono, dt, fase, rimasti, totale, self.colors[g.current], g.phase ~= "over" and clock or "")
 	-- scambio del secondo attacco con un teletrasporto: si tiene premuto
-	if hud.scambio_update(self.scambio, dt, self.tele_vede and my_turn(self) and g:can_use("swap"), self.crono) then
+	-- (dopo che l'annuncio del turno è sparito: starebbero uno sopra l'altro)
+	local scambio_vede = self.tele_vede and my_turn(self) and g:can_use("swap")
+		and not self.annuncio_aspetta and self.clock >= (self.annuncio_fine or 0)
+	if hud.scambio_update(self.scambio, dt, scambio_vede, self.crono) then
 		self.fire = { angle = 0, power = 0, weapon = "swap" }
 	end
 	-- nell'attesa del secondo attacco le secondarie lampeggiano, se sono loro che restano
