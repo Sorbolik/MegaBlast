@@ -2,9 +2,9 @@
 """Lo stampino: il foglio su cui si disegnano i pezzi nuovi del diavoletto.
 
 Ogni posto dello scheletro (testa e facce, busto, braccia, gambe, ala, coda,
-braccio e avambraccio sull'arma, pugno) ha una casella fissa con dentro il pezzo
-del diavoletto di base in grigio (il manichino) e il perno nel punto in cui gira;
-i cerchi tratteggiati sono i giunti dove i pezzi si piegano (gomito, coda).
+pugno) ha una casella fissa con dentro il pezzo del diavoletto di base in grigio
+(il manichino) e il perno nel punto in cui gira; i cerchi tratteggiati sono i
+giunti dove si piega la coda.
 Chi disegna un pezzo nuovo (una corazza, una testa, una maglia, delle ali) lo
 disegna sopra il manichino, nella sua casella: taglia.py lo ritaglia, lo allinea
 e lo mette nel gioco, dove si muove con le stesse animazioni.
@@ -42,18 +42,18 @@ TITOLO = 44      # spazio per il nome sopra la casella
 MAGENTA = (255, 0, 255, 255)
 
 # I posti, in righe. Ogni posto ha il pezzo (o la coda montata) del diavoletto di
-# base. Le versioni di dietro (braccio, gamba, braccio e avambraccio sull'arma)
-# taglia.py le fa da quelle davanti, più scure, se non si disegnano.
+# base. Le versioni di dietro (braccio, gamba) taglia.py le fa da quelle
+# davanti, più scure, se non si disegnano.
 RIGHE = [
     ["testa", "testa_colpita", "testa_felice", "testa_ko"],
     ["busto", "ala", "coda"],
-    ["braccio", "braccio_dietro", "gamba", "gamba_dietro", "omero", "avambraccio", "pugno"],
+    ["braccio", "braccio_dietro", "gamba", "gamba_dietro", "pugno"],
 ]
 NOMI = {
     "testa": "testa", "testa_colpita": "testa colpita", "testa_felice": "testa felice", "testa_ko": "testa KO",
     "busto": "busto", "ala": "ala", "coda": "coda",
     "braccio": "braccio", "braccio_dietro": "braccio dietro", "gamba": "gamba", "gamba_dietro": "gamba dietro",
-    "omero": "braccio (arma)", "avambraccio": "avambraccio (arma)", "pugno": "pugno",
+    "pugno": "pugno",
 }
 
 
@@ -79,16 +79,9 @@ def pezzo(nome):
     """I gruppi SVG del pezzo di base attorno al suo perno e la sua scatola."""
     if nome == "coda":
         return gruppi_coda()
-    gruppi = []
-    # braccio e avambraccio sull'arma: il gioco mette il bordo in un pezzo a parte
-    if nome + "_bordo" in DV.PEZZI:
-        d = DV.D()
-        box = DV.PEZZI[nome + "_bordo"](d)
-        gruppi.append(d.gruppo(False, ""))
     d = DV.D()
-    b = DV.PEZZI[nome](d)
-    box = b if not gruppi else box
-    return gruppi + [d.gruppo(False, "")], box
+    box = DV.PEZZI[nome](d)
+    return [d.gruppo(False, "")], box
 
 
 def disegna(gruppi, box, scala):
@@ -162,12 +155,7 @@ def main():
 
 def giunti(nome):
     """I giunti dentro un posto (unità, dal perno) e il raggio del bordo lì: dove
-    il pezzo si piega su quello dopo (gomito, segmenti della coda)."""
-    if nome == "omero":
-        L, r = DV.BRACCIO[0]
-        return [(L, 0, r + DV.BORDO_D)]
-    if nome == "avambraccio":
-        return [(0, 0, DV.BRACCIO[1][1] + DV.BORDO_D)]
+    il pezzo si piega su quello dopo (i segmenti della coda)."""
     if nome == "coda":
         out, x, y = [], 0.0, 0.0
         for (L, w0, w1), a in zip(DV.CODA, DV.CODA_RIPOSO):

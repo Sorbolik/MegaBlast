@@ -47,11 +47,10 @@ def main():
     for n in sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', in_mano))):
         dati = (REPO / "client/assets/armi" / (n + ".png")).read_bytes()
         immagini["armi/" + n] = "data:image/png;base64," + base64.b64encode(dati).decode()
-    # gli angoli a riposo delle armi e quanto si stirano le braccia (battaglia/scoria.lua)
+    # gli angoli a riposo delle armi nella mano (battaglia/scoria.lua)
     scoria = leggi("client/battaglia/scoria.lua")
     blocco = re.search(r"local ARMI = \{(.*?)\n\}", scoria, re.S).group(1)
     riposo = {n: float(v) for n, v in re.findall(r"(\w+) = (-?[0-9.]+)", blocco)}
-    stira = [float(x) for x in re.search(r"local STIRA_CANNA, STIRA_PRESA = ([0-9.]+), ([0-9.]+)", scoria).groups()]
     game = leggi("client/sim/game.lua")
     # il disegno è alto game.DISEGNO_H nel profilo blastron, quello del gioco
     assert 'M.DEFAULT_PHYSICS = "blastron"' in game, "l'editor misura il diavoletto sul profilo blastron"
@@ -66,7 +65,6 @@ def main():
         "armi": armi,
         "impugnature": leggi("client/battaglia/impugnature.lua"),
         "armi_riposo": riposo,
-        "stira": stira,
         "immagini": immagini,
         "disegno_h": misura["BLASTRON_ROBOT_H"] * misura["BLASTRON_CORPO"],
         "corpo": leggi("client/sim/corpo.lua"),

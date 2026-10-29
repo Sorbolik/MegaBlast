@@ -29,24 +29,6 @@ images {
   image: "/assets/diavoletto/pugno.png"
 }
 images {
-  image: "/assets/diavoletto/omero_bordo.png"
-}
-images {
-  image: "/assets/diavoletto/avambraccio_bordo.png"
-}
-images {
-  image: "/assets/diavoletto/omero.png"
-}
-images {
-  image: "/assets/diavoletto/avambraccio.png"
-}
-images {
-  image: "/assets/diavoletto/omero_dietro.png"
-}
-images {
-  image: "/assets/diavoletto/avambraccio_dietro.png"
-}
-images {
   image: "/assets/diavoletto/ala.png"
 }
 images {
@@ -95,18 +77,6 @@ images {
   image: "/assets/pelli/gabriella_ala.png"
 }
 images {
-  image: "/assets/pelli/gabriella_avambraccio.png"
-}
-images {
-  image: "/assets/pelli/gabriella_avambraccio_bordo.png"
-}
-images {
-  image: "/assets/pelli/gabriella_avambraccio_dietro.png"
-}
-images {
-  image: "/assets/pelli/gabriella_avambraccio_dietro_bordo.png"
-}
-images {
   image: "/assets/pelli/gabriella_braccio.png"
 }
 images {
@@ -152,34 +122,10 @@ images {
   image: "/assets/pelli/gabriella_gamba_dietro.png"
 }
 images {
-  image: "/assets/pelli/gabriella_omero.png"
-}
-images {
-  image: "/assets/pelli/gabriella_omero_bordo.png"
-}
-images {
-  image: "/assets/pelli/gabriella_omero_dietro.png"
-}
-images {
-  image: "/assets/pelli/gabriella_omero_dietro_bordo.png"
-}
-images {
   image: "/assets/pelli/gabriella_pugno.png"
 }
 images {
   image: "/assets/pelli/gabriella_squadra_ala.png"
-}
-images {
-  image: "/assets/pelli/gabriella_squadra_avambraccio.png"
-}
-images {
-  image: "/assets/pelli/gabriella_squadra_avambraccio_bordo.png"
-}
-images {
-  image: "/assets/pelli/gabriella_squadra_avambraccio_dietro.png"
-}
-images {
-  image: "/assets/pelli/gabriella_squadra_avambraccio_dietro_bordo.png"
 }
 images {
   image: "/assets/pelli/gabriella_squadra_braccio.png"
@@ -228,18 +174,6 @@ images {
 }
 images {
   image: "/assets/pelli/gabriella_squadra_gamba_dietro.png"
-}
-images {
-  image: "/assets/pelli/gabriella_squadra_omero.png"
-}
-images {
-  image: "/assets/pelli/gabriella_squadra_omero_bordo.png"
-}
-images {
-  image: "/assets/pelli/gabriella_squadra_omero_dietro.png"
-}
-images {
-  image: "/assets/pelli/gabriella_squadra_omero_dietro_bordo.png"
 }
 images {
   image: "/assets/pelli/gabriella_squadra_pugno.png"

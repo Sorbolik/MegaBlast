@@ -30,6 +30,16 @@ decidi o scarti qualcosa, aggiorna quel file e `cronologia.md` nella stessa PR.
 Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
 in [.claude/skills/](.claude/skills/README.md).
 
+## Server sempre in pari con main (Sergio, 29 ott)
+
+Il server deve essere **sempre** in pari con quello che va su `main`: ogni PR che
+cambia regole, simulazione (`client/sim/`) o protocollo aggiorna anche il server
+**nella stessa PR**. La simulazione il server la incorpora da sola, ma non basta:
+controlla ogni volta la lista in [docs/server.md](docs/server.md#server-in-pari-con-main)
+(campi nuovi in `server/net.lua`, messaggi in `server/room.go`, dati che il client
+manda solo in locale, test in `server/server_test.go`) e prova l'online nel
+simulatore (`strumenti/simula/scenari/scelta_online.txt`, server vero e giocatori finti).
+
 Il server usa un terreno suo in Go (`server/terreno.go`) per le funzioni di
 `client/sim/terrain.lua` che toccano le celle: `new`, `get`, `set`, `solid`,
 `any_solid`, `carve`, `ground_below`, `surface_y`. Se ne cambi una in Lua,
@@ -53,7 +63,7 @@ dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
 Dallo stesso editor si cambiano le hitbox (`client/sim/corpo.lua`: la capsula per
 camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
 perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`) e le
-impugnature, cioè dove vanno i pugni su ogni arma (`client/battaglia/impugnature.lua`).
+impugnature, cioè il punto dove la mano tiene ogni arma (`client/battaglia/impugnature.lua`).
 "Manda a Claude" li mette nei documenti `corpo/ultima`, `perni/ultima` e
 `impugnature/ultima` (campo `lua`). Una clip con l'arma può avere la versione di
 una sola arma (`fermo_arma_mallet`): il gioco la preferisce a quella di tutte.

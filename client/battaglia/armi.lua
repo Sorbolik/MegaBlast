@@ -1,7 +1,7 @@
 -- Fatto da strumenti/grafica/armi.py, non modificare a mano.
--- Le armi in unità del mondo: origine nella spalla (i colpi nel centro),
+-- Le armi in unità del mondo (i colpi dal centro),
 -- x avanti e y in su. Per ogni arma: immagine (tinta: le parti col colore
--- della squadra), centro (x, y) e misura (w, h). Dove vanno i pugni:
+-- della squadra), centro (x, y) e misura (w, h). Dove le tiene la mano:
 -- battaglia/impugnature.lua.
 return {
 	armi = {

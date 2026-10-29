@@ -177,6 +177,8 @@ local function config_int(key, default)
 	return tonumber(sys.get_config(key, tostring(default))) or default
 end
 local SIMULA = config_int("megablast.simula", 0) == 1
+-- nel simulatore (build senza estensione) l'online passa da LuaSocket
+if not ws and SIMULA then ws = require "main.ws_socket" end
 
 -- Profilo di fisica (sim/game.lua): "blastron" se non si dice niente.
 -- Con [megablast] fisica = megablast si torna ai valori di prima, ma solo in
@@ -894,6 +896,10 @@ local function apply_state(self, s)
 		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
 		rb.tool = r.at or rb.tool
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
+		-- la lancia dell'Affondo punta lungo lo scatto (la: il suo angolo)
+		rb.lunge_vx = rb.lunge and math.cos(r.la or 0) or nil
+		rb.lunge_vy = rb.lunge and math.sin(r.la or 0) or nil
+		rb.knocked = r.kn or false
 		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
 		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
 		rb.mallet_stop = (r.ms or 0) > 0 and r.ms or nil
@@ -946,15 +952,19 @@ local function on_server_message(self, m)
 	if m.t == "wait" then
 		show_message(self, "In attesa di un avversario...", true)
 	elseif m.t == "draft" then
-		-- scelta dell'arma: per ora online non c'è la schermata, allo scadere
-		-- il server dà a ognuno la prima arma libera. Il gettone serve già
-		-- per tornare se la connessione cade adesso.
+		-- scelta delle armi (menu/scelta.lua): arriva a ogni cambio, nostro o
+		-- degli altri. Il gettone serve già per tornare se la connessione cade adesso.
 		self.tok, self.tries = m.tok or self.tok, 0
-		show_message(self, "Avversari trovati!\nLa partita sta per cominciare...", true)
+		if self.mode ~= "scelta_online" then show_message(self, "", true) end
+		self.mode = "scelta_online"
+		local nomi, colori = names_colors(m.players)
+		scelta_armi.online(self.scelta, m, nomi, colori, function(msg) send(self, msg) end)
 	elseif m.t == "start" then
+		scelta_armi.hide(self.scelta)
 		-- anche quando torniamo dopo una caduta (resume): la partita si
 		-- ricostruisce dal seed, poi arrivano gli scavi e lo stato.
-		-- players: le squadre dei robot, [{"team":1},...] (senza, un 1 contro 1)
+		-- players: le squadre dei robot e le loro scelte del draft,
+		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
 		new_match(self, m.seed, m.map, m.players and { players = m.players })
 		self.g:pop_events()
 		self.me, self.tok, self.tries = m.you, m.tok, 0
@@ -976,9 +986,11 @@ local function on_server_message(self, m)
 	elseif m.t == "back" and m.robot ~= self.me then
 		show_message(self, "L'avversario è tornato")
 	elseif m.t == "left" then
+		scelta_armi.hide(self.scelta)
 		self.mode = "ended"
 		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
 	elseif m.t == "error" then
+		scelta_armi.hide(self.scelta)
 		self.mode, self.tok = "ended", nil
 		show_message(self, (SERVER_ERRORS[m.e] or "Errore del server") .. "\nTocca per tornare al menu", true)
 	end
@@ -997,21 +1009,26 @@ on_socket = function(self, conn, data)
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
 		else
 			show_message(self, "Connesso, in attesa...", true)
-			send(self, { t = "hello", v = PROTOCOL, mode = "1v1" })
+			-- la coda: [megablast] giocatori (1v1, 2v2, ffa) come sullo stesso telefono;
+			-- l'attrezzo dell'assetto parte già scelto nel draft
+			send(self, { t = "hello", v = PROTOCOL, mode = config_string("megablast.giocatori", "1v1"),
+				tool = profilo.assetto_attivo(self.profilo).tool })
 		end
 	elseif data.event == ws.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
 		if ok and m then on_server_message(self, m) end
 	elseif data.event == ws.EVENT_DISCONNECTED or data.event == ws.EVENT_ERROR then
 		self.conn = nil
-		if (self.mode == "online" or self.mode == "connecting") and self.tok and self.tries < RECONNECT_TRIES then
+		local in_gioco = self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online"
+		if in_gioco and self.tok and self.tries < RECONNECT_TRIES then
 			-- in partita: riproviamo, il server ci tiene il posto
 			self.tries = self.tries + 1
 			show_message(self, "Connessione persa\nMi riconnetto...", true)
 			timer.delay(RECONNECT_WAIT, false, function()
-				if (self.mode == "online" or self.mode == "connecting") and not self.conn then connect(self) end
+				if (self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online") and not self.conn then connect(self) end
 			end)
 		elseif self.mode ~= "menu" and self.mode ~= "ended" then
+			scelta_armi.hide(self.scelta)
 			self.mode = "ended"
 			show_message(self, "Connessione persa\nTocca per tornare al menu", true)
 		end
@@ -1086,7 +1103,7 @@ local function start_local(self)
 		tutorial_step(self)
 		return
 	end
-	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono
+	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono (e coda online)
 	local opts = { players = gconfig.MODES[config_string("megablast.giocatori", "1v1")] }
 	self.local_opts = opts
 	-- negli scenari di prova la scelta c'è solo con prova_scelta 1 (scenario scelta.txt)
@@ -2170,6 +2187,8 @@ function update(self, dt)
 	if self.mode == "scelta" then
 		local players = scelta_armi.update(self.scelta, dt)
 		if players then start_local_match(self, players) end
+	elseif self.mode == "scelta_online" then
+		scelta_armi.update(self.scelta, dt)
 	end
 
 	if SIMULA and self.g then
@@ -2309,7 +2328,7 @@ function on_input(self, action_id, action)
 			apri_schermata(self, armeria, self.profilo)
 		end
 		return true
-	elseif self.mode == "scelta" then
+	elseif self.mode == "scelta" or self.mode == "scelta_online" then
 		scelta_armi.on_input(self.scelta, action_id, action)
 		return true
 	end

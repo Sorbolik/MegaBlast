@@ -46,21 +46,53 @@ con le statistiche normalizzate: albero ed equipaggiamento non contano). I
 giocatori e le squadre di ogni modo vengono da `config.MODES` della
 simulazione.
 
-Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
-ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"you":1,"tok":…,"players":[{"team":1},…],"left":900}`
+Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`),
+con l'attrezzo dell'assetto di ognuno già scelto (arriva col `hello`, `"tool"`):
+ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"pr":[…],"sw":[…],"you":1,"tok":…,"players":[{"team":1},…],"left":900}`
 (`offer` le primarie, `offer2` le secondarie, `offer3` gli attrezzi `hook` e
-`wall`; `p`, `p2` e `p3` le scelte fatte, l'attrezzo già proposto) e
+`wall`; `p`, `p2` e `p3` le scelte fatte; `pr[i]` vero se l'attrezzo del robot
+i è solo quello proposto dall'assetto; `sw[i]` il compagno a cui il robot i
+propone lo scambio, 0 nessuno; `left` i tick rimasti) e
 manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la
 categoria; si può cambiare). Nel 2 contro 2 due compagni si scambiano le
 scelte, tutte insieme, se tutti e due mandano
-`{"t":"swap","to":N}`; chi riceve la proposta vede `{"t":"swap","from":N}`. A
+`{"t":"swap","to":N}`; `{"t":"swap","to":0}` ritira la proposta. A
 ogni cambio tutti ricevono il `draft` aggiornato. Allo scadere di
 `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma libera di ogni
-ventaglio e parte la partita (`start`, con `players`). Nello stato ogni robot
+ventaglio e parte la partita (`start`, con `players`: squadra e scelte di
+ognuno, `[{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},…]`, così
+il client crea la sua copia della partita con le stesse armi). Il client la
+mostra con la schermata dello stesso telefono (`client/menu/scelta.lua`). Nello stato ogni robot
 porta la sua secondaria in `sw`, l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
-`hx`, `hy`). Il client online per ora non ha la schermata
-della scelta: aspetta e riceve le armi date dal server.
+`hx`, `hy`; `kn`: sbalzato da un colpo; `la`: direzione dello scatto
+dell'Affondo).
+
+## Server in pari con main
+
+Regola permanente di Sergio (29 ottobre): il server è sempre in pari con
+`main`. Ogni PR che cambia regole, simulazione o protocollo aggiorna anche il
+server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
+`client/sim/`), ma ogni volta si controlla:
+
+1. **Stato** (`net.lua`, `N.snapshot`): ogni campo di robot o partita nuovo che
+   il client legge (`apply_state` in `client/main/game.gui_script`, HUD,
+   personaggio) va nello stato; altrimenti online resta fermo al valore
+   iniziale. Lo stesso per gli eventi che cambiano il terreno (`N.events`,
+   `N.sync`).
+2. **Messaggi** (`room.go`, `server.go`): un comando nuovo del giocatore (arma,
+   attrezzo, oggetto) passa da `fire.w` o da un messaggio nuovo; il server lo
+   deve accettare.
+3. **Dati del client**: quello che il client passa a `game.new` o a
+   `draft.new` solo in locale (assetto, profilo) online deve arrivare col
+   `hello` o restare fuori consapevolmente (oggi: le statistiche
+   dell'equipaggiamento, che arriveranno con la progressione sul server,
+   fase 1 della roadmap).
+4. **Prove**: un test in `server/server_test.go` per il comportamento nuovo e
+   l'online nel simulatore (`strumenti/simula/scenari/scelta_online.txt`:
+   server vero e giocatori finti).
+5. **Versione**: se un client vecchio non capirebbe i messaggi nuovi, si alza
+   `protocolVersion` (e `PROTOCOL` nel client).
 
 ## Protocollo
 

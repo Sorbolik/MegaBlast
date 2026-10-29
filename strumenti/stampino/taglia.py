@@ -44,16 +44,13 @@ SOSTITUISCE = ["personaggio", "testa", "corpo", "ali", "coda"]
 SOPRA = ["pantaloni", "maglia", "corazza", "guanti", "elmo"]
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
-DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba",
-          "omero_dietro": "omero", "avambraccio_dietro": "avambraccio",
-          "omero_dietro_bordo": "omero_bordo", "avambraccio_dietro_bordo": "avambraccio_bordo"}
+DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba"}
 SCURO = 0.78
-# I pezzi in catena (braccio e avambraccio sull'arma, i segmenti della coda): come
+# I pezzi in catena (i segmenti della coda): come
 # quelli di base, in due strati. Il bordo è il pezzo intero, il colore lo stesso
-# senza il contorno: il gioco disegna prima i bordi e poi i colori, così al gomito
-# e fra i segmenti non si vede la giuntura anche piegati.
-CATENA = ["omero", "avambraccio", "omero_dietro", "avambraccio_dietro"] + \
-    [f"coda_{i + 1}" for i in range(len(ST.DV.CODA))]
+# senza il contorno: il gioco disegna prima i bordi e poi i colori, così fra i
+# segmenti non si vede la giuntura anche piegati.
+CATENA = [f"coda_{i + 1}" for i in range(len(ST.DV.CODA))]
 # lo spessore del contorno (unità del disegno), quanto si toglie al colore
 BORDO = ST.DV.BORDO_D
 # il colore della squadra: le parti dipinte di verde acceso (#00ff00) diventano
