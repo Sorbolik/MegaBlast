@@ -15,6 +15,12 @@ singole se serve) per controllare che quello che hai cambiato si veda davvero.
 Per provare una funzione nuova scrivi uno scenario in `strumenti/simula/scenari/`.
 Dettagli e comandi degli scenari: [strumenti/simula/README.md](strumenti/simula/README.md).
 
+Niente si deve mai deformare (Sergio, 29 ott): ogni nodo GUI è `gui.ADJUST_FIT`, mai
+`ADJUST_STRETCH` (lo controlla `controlla.py`). Il gioco è disegnato a 1280 x 720 al
+centro; su 20:9 o 4:3 lo schermo vero va da `schermo.x0` a `x1` e da `y0` a `y1`
+(`client/ui/schermo.lua`), e quello che sta su un bordo si attacca lì. Se tocchi
+l'HUD o i menu prova anche `--schermo 1600x720` e `--schermo 960x720` (scenario `schermo.txt`).
+
 `simula.py` ripete anche i controlli che fa l'editor di Defold ma `bob.jar` no
 (`strumenti/simula/controlla.py`). Se Sergio vede nell'editor un errore che la
 simulazione non ha trovato, aggiungi lì la regola.

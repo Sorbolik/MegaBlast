@@ -83,7 +83,7 @@ end
 local function radice()
 	local r = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(r, false)
-	gui.set_adjust_mode(r, gui.ADJUST_STRETCH)
+	gui.set_adjust_mode(r, gui.ADJUST_FIT)
 	local d = rettangolo(r, 0, H / 2 + BORDO, 0, 0, FONDO)
 	gui.set_visible(d, false)
 	return r, d

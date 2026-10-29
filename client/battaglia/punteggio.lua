@@ -30,7 +30,7 @@ local M = {}
 local max, min, floor, abs = math.max, math.min, math.floor, math.abs
 
 local SQUADRE = 4
-local Y, MEZZO = 720 - 28, 640        -- centro della fila, centrata sullo schermo
+local Y, MEZZO = 720 - 28, 640        -- centro della fila, centrata sullo schermo (M.cima)
 local GET_W, GET_H, GET_GAP = 104, 30, 6
 local STRISCIA, BORDO_MIO = 6, 3
 -- due squadre: due gettoni dei punti e la fune in mezzo
@@ -48,7 +48,7 @@ local C = vmath.vector4(1, 1, 1, 1)
 
 local function radice(x, y)
 	local r = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(0, 0, 0))
-	gui.set_adjust_mode(r, gui.ADJUST_STRETCH)
+	gui.set_adjust_mode(r, gui.ADJUST_FIT)
 	gui.set_visible(r, false)
 	return r
 end
@@ -144,12 +144,22 @@ function M.nuovo(colori, tick)
 	-- i numeri che volano, sopra a tutto il resto
 	for i = 1, NUMERI do
 		local n = { nodo = ui.testo("", 0, 0, VOLO_SCALA, ui.C.TESTO), colore = vmath.vector4(1, 1, 1, 1) }
-		gui.set_adjust_mode(n.nodo, gui.ADJUST_STRETCH)
+		gui.set_adjust_mode(n.nodo, gui.ADJUST_FIT)
 		gui.set_enabled(n.nodo, false)
 		p.numeri[i] = n
 	end
 	M.set_enabled(p, false)
 	return p
+end
+
+-- La cima vera dello schermo (ui/schermo.lua: più in alto di 720 su un tablet)
+function M.cima(p, y1)
+	Y = y1 - 28
+	posizione(p.fune, MEZZO, Y)
+	posizione(p.riga, MEZZO, Y - GET_H / 2 - 34)
+	for _, gt in ipairs(p.gettoni) do
+		if gt.x then posizione(gt.radice, gt.x, Y) end
+	end
 end
 
 function M.set_enabled(p, on)

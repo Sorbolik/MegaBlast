@@ -23,7 +23,9 @@ uniform mediump sampler2D maschera;
 
 uniform fs_uniforms
 {
-    mediump vec4 opzioni; // x = 1 mappa dipinta, 0 mappa senza disegno; y = secondi
+    // x = 1 mappa dipinta, 0 mappa senza disegno; y = secondi; zw = quanto lo
+    // schermo è più largo e più alto di 16:9 (ui/schermo.lua: kx, ky)
+    mediump vec4 opzioni;
 };
 
 const mediump vec2 CELLA = vec2(1.0 / 640.0, 1.0 / 360.0);
@@ -56,9 +58,20 @@ highp float rumore(highp float x)
 
 // Dove si vede il punto di una fila lontana: con la camera si sposta di
 // "quanto" (0 = ferma, 1 = come la mappa), e anche lo zoom la ingrandisce meno
+// var_schermo e var_zoom sono stirati su 1280 x 720: qui tornano senza deformazioni
+highp vec2 schermo()
+{
+    return CENTRO + (var_schermo - CENTRO) * opzioni.zw;
+}
+
+highp float zoom()
+{
+    return var_zoom * opzioni.z;
+}
+
 highp vec2 fila(highp vec2 camera, highp float quanto)
 {
-    return CENTRO + (camera - CENTRO) * quanto + (var_schermo - CENTRO) * pow(var_zoom, -quanto);
+    return CENTRO + (camera - CENTRO) * quanto + (schermo() - CENTRO) * pow(zoom(), -quanto);
 }
 
 // Profilo di una fila (0..~1.8): colline morbide e ogni tanto una guglia stretta
@@ -80,7 +93,7 @@ mediump vec3 aggiungi_fila(mediump vec3 col, highp vec2 camera, highp float quan
 {
     highp vec2 q = fila(camera, quanto);
     highp float h = base + alto * profilo(q.x, scala, seme);
-    highp float bordo = 1.2 * pow(var_zoom, -quanto);
+    highp float bordo = 1.2 * pow(zoom(), -quanto);
     col = mix(col, colore, clamp((h - q.y) / bordo + 0.5, 0.0, 1.0));
     return mix(col, ORIZZONTE, smoothstep(base + alto * 0.3, base - 90.0, q.y) * 0.3);
 }
@@ -101,7 +114,7 @@ mediump float braci(highp vec2 camera, highp float t)
 mediump vec3 sfondo()
 {
     // il punto del mondo al centro dello schermo
-    highp vec2 camera = var_uv * MONDO - (var_schermo - CENTRO) / var_zoom;
+    highp vec2 camera = var_uv * MONDO - (schermo() - CENTRO) / zoom();
     highp vec2 q = fila(camera, 0.04);
     mediump vec3 col = mix(ORIZZONTE, CIELO_ALTO, smoothstep(140.0, 700.0, q.y));
     col += BAGLIORE * exp(-max(q.y, 0.0) / 110.0) * 0.5;
@@ -132,6 +145,15 @@ mediump float vicino(mediump vec2 uv, mediump float r)
 
 void main()
 {
+    // sotto la mappa (la camera ci scende perché l'HUD non copra il terreno):
+    // il baratro, sempre più buio, con il bagliore della brace appena sotto il bordo
+    if (var_uv.y < 0.0) {
+        highp float giu = -var_uv.y * 1080.0;
+        mediump vec3 col = sfondo() * (1.0 - smoothstep(0.0, 160.0, giu) * 0.75);
+        col += BRACE * exp(-giu / 45.0) * 0.18;
+        out_fragColor = vec4(col, 1.0);
+        return;
+    }
     mediump vec2 m = texture(maschera, var_uv).rg;
     mediump vec4 ter;
     if (opzioni.x > 0.5) {

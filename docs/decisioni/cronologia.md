@@ -30,3 +30,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Animazioni rifatte da Sergio nell'editor su main; Gabriella personaggio di tutti. | #69 |
 | 29 ott | APK su Telegram: bot @ultrablastbot, GitHub Actions costruisce e manda l'APK a ogni push su main. | questa PR |
 | 29 ott | Il tocco che annulla la mira sul telefono vale solo sulla metà destra (a sinistra si cammina). | questa PR |
+| 29 ott | Niente si deforma: GUI tutta FIT su ogni proporzione dello schermo, comandi attaccati ai bordi veri; la camera scende sotto la mappa così l'HUD non copre il terreno. | questa PR |

@@ -22,6 +22,7 @@ local config = require "sim.config"
 local draft = require "sim.draft"
 local game = require "sim.game"
 local ui = require "ui.ui"
+local schermo = require "ui.schermo"
 
 local M = {}
 
@@ -51,8 +52,8 @@ end
 
 function M.new(icone, nomi, effetti)
 	local s = { icone = icone, nomi = nomi, effetti = effetti, carte = {} }
-	s.root = nodo(W / 2, H / 2, W, H, VELO)
-	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
+	s.root = nodo(W / 2, H / 2, W * schermo.PIENO, H * schermo.PIENO, VELO)
+	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
 	s.titolo = ui.titolo("", 0, 312, 0.55, nil, s.root)
 	s.sotto = ui.testo("Della primaria hai " .. config.DRAFT_SHOTS .. " colpi, la secondaria non finisce mai, l'attrezzo una volta per turno. Lanciarune e Lama li hai sempre.",
 		0, 274, 0.6, nil, s.root)
