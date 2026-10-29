@@ -23,10 +23,19 @@ M.CANALI = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "br
 	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y",
 	-- l'arma in mano quando non si mira: quanto gira in più attorno alla spalla
 	"arma",
-	-- i pezzi che si vedono (1) o no (0): le braccia (che pendono o sull'arma),
-	-- le manine staccate in fondo alle braccia che pendono, l'ala, la coda
-	"mostra_braccio_a", "mostra_braccio_d", "manina_a", "manina_d", "mostra_ala", "mostra_coda" }
-M.NEUTRO = { schiaccia = 1, mostra_braccio_a = 1, mostra_braccio_d = 1, mostra_ala = 1, mostra_coda = 1 }
+	-- le manine staccate: pezzi liberi sul corpo, da fermi dove finiscono le
+	-- braccia che pendono; girano e si spostano
+	"manina_a", "manina_d", "manina_a_x", "manina_a_y", "manina_d_x", "manina_d_y",
+	-- i pezzi che si vedono (1) o no (0): li mette e li toglie il secchio
+	-- dell'editor (le braccia che pendono o sull'arma)
+	"mostra_testa", "mostra_busto", "mostra_braccio_a", "mostra_braccio_d", "mostra_gamba_a", "mostra_gamba_d",
+	"mostra_ala", "mostra_coda", "mostra_manina_a", "mostra_manina_d",
+	-- la fiammella (la sua clip, fiammella): spostamento, rotazione, larghezza e altezza
+	"fiamma_x", "fiamma_y", "fiamma_gira", "fiamma_largo", "fiamma_alto" }
+M.NEUTRO = { schiaccia = 1, fiamma_largo = 1, fiamma_alto = 1 }
+for _, c in ipairs(M.CANALI) do
+	if c:find("^mostra_") and c ~= "mostra_manina_a" and c ~= "mostra_manina_d" then M.NEUTRO[c] = 1 end
+end
 for _, c in ipairs(M.CANALI) do M.NEUTRO[c] = M.NEUTRO[c] or 0 end
 
 local floor = math.floor

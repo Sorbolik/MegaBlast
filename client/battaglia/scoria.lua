@@ -42,8 +42,8 @@
 -- I perni di testa, braccia, gambe, ala e spalla dell'arma si spostano
 -- dall'editor delle animazioni (battaglia/perni.lua): cambia il punto in cui il
 -- pezzo gira, non dove sta da fermo.
--- Le clip dicono anche quali pezzi si vedono (braccia, manine staccate, ala,
--- coda). Con l'arma in mano le clip sono quelle _arma (fermo_arma, corsa_arma,
+-- Le clip dicono anche quali pezzi si vedono (testa, busto, braccia, gambe,
+-- ala, coda e le manine staccate, pezzi liberi che le clip spostano e girano). Con l'arma in mano le clip sono quelle _arma (fermo_arma, corsa_arma,
 -- aria_arma, sale_arma, scende_arma) e mirando da fermo la clip mira; se una
 -- manca si usa quella senza arma. Chi non è di turno alterna a caso il fermo
 -- (con le scenette) e il fermo con l'arma in mano.
@@ -80,6 +80,8 @@ local J = {
 	-- la spalla dell'arma: l'arma gira (mirando) attorno a questo punto
 	arma = perno("arma", PT.spalla_arma[1], PT.spalla_arma[2]),
 }
+-- dove sta la fiammella nel collo (la testa sposta i suoi pezzi, non la fiammella)
+local CIMA = { PT.cima[1] - sposto("testa")[1], PT.cima[2] - sposto("testa")[2] }
 
 local sin, cos, min, max, abs, pi, sqrt = math.sin, math.cos, math.min, math.max, math.abs, math.pi, math.sqrt
 local atan2, acos = math.atan2, math.acos
@@ -238,16 +240,26 @@ local function veste(s, parent, posto, k)
 	end
 end
 
--- un braccio che pende nel giunto g (posto braccio o braccio_dietro): il
--- braccio e la manina staccata (il pugno) dove finisce, ognuno nel suo giunto
--- così le clip li mostrano e li tolgono uno a uno
+-- un braccio che pende nel giunto g (posto braccio o braccio_dietro), in un
+-- giunto suo così le clip lo mostrano e lo tolgono
 local function braccio_pende(s, g, posto, k)
 	local img = giunto(g, 0, 0)
 	veste(s, img, posto, k)
-	local b, pu, d = s.strati(posto)[1] or P[posto], P.pugno, sposto(posto)
-	local manina = giunto(g, (b.x - d[1]) * k, (b.y - b.h / 2 + pu.h * 0.4 - d[2]) * k)
-	veste(s, manina, "pugno", k)
-	return img, manina
+	return img
+end
+
+-- Le manine staccate (il pugno): pezzi liberi sulla forma; da ferme stanno
+-- dove finiscono le braccia che pendono (unità del disegno), le clip le girano
+-- e le spostano
+local function mano_ferma(posto, x)
+	local b, pu = P[posto], P.pugno
+	return { x + b.x, PT.spalle[2] + b.y - b.h / 2 + pu.h * 0.4 }
+end
+local MANO_A, MANO_D = mano_ferma("braccio", PT.spalle[1]), mano_ferma("braccio_dietro", -PT.spalle[1])
+local function manina(s, punto, k)
+	local g = giunto(s.forma, punto[1] * k, punto[2] * k)
+	veste(s, g, "pugno", k)
+	return g
 end
 
 -- mostra o nasconde un nodo, solo quando cambia
@@ -318,7 +330,7 @@ function M.new(color, look)
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- la posa delle clip di questo frame e gli angoli (radianti) delle
 		-- braccia e delle gambe che pendono, che la inseguono
-		posa = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
+		posa = pose.nuova(), posa_fiamma = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
 	s.strati, s.forma_coda = vesti(look)
 	s.root = giunto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
@@ -353,7 +365,8 @@ function M.new(color, look)
 	s.ala = giunto(s.forma, J.ala[1] * k, J.ala[2] * k)
 	veste(s, s.ala, "ala", k)
 	s.braccio_d = giunto(s.forma, J.braccio_dietro[1] * k, J.braccio_dietro[2] * k)
-	s.braccio_d_img, s.manina_d = braccio_pende(s, s.braccio_d, "braccio_dietro", k)
+	s.braccio_d_img = braccio_pende(s, s.braccio_d, "braccio_dietro", k)
+	s.manina_d = manina(s, MANO_D, k)
 	s.gamba_d = giunto(s.forma, J.gamba_dietro[1] * k, J.gamba_dietro[2] * k)
 	veste(s, s.gamba_d, "gamba_dietro", k)
 	s.gamba_a = giunto(s.forma, J.gamba[1] * k, J.gamba[2] * k)
@@ -368,6 +381,8 @@ function M.new(color, look)
 	s.arma_dietro = giunto(s.forma, 0, 0)
 	s.mano_d = braccio_arma(s, s.arma_dietro, s.corpo, k, true)
 	s.collo = giunto(s.forma, J.testa[1] * k, J.testa[2] * k)
+	-- la testa in un giunto suo (le clip la tolgono), la fiammella no
+	s.testa = giunto(s.collo, 0, 0)
 	-- la testa: tanti pezzi quanti ne ha la faccia con più strati, ognuno col suo
 	-- strato del colore della squadra; li cambia faccia()
 	local strati = 0
@@ -376,16 +391,17 @@ function M.new(color, look)
 		strati = max(strati, #s.facce[f])
 	end
 	for i = 1, strati do
-		s.teste[i] = pezzo(s, s.collo, s.facce.testa[i] or s.facce.testa[1], k, true, sposto("testa"))
-		s.teste_t[i] = box(s.collo, 0, 0, 0, 0)
+		s.teste[i] = pezzo(s, s.testa, s.facce.testa[i] or s.facce.testa[1], k, true, sposto("testa"))
+		s.teste_t[i] = box(s.testa, 0, 0, 0, 0)
 		gui.set_texture(s.teste_t[i], "diavoletto")
 		s.tinte[#s.tinte + 1] = s.teste_t[i]
 	end
-	s.cima = giunto(s.collo, (PT.cima[1] - sposto("testa")[1]) * k, (PT.cima[2] - sposto("testa")[2]) * k)
+	s.cima = giunto(s.collo, CIMA[1] * k, CIMA[2] * k)
 	s.fuoco = pezzo(s, s.cima, P.fiammella_1, k)
 	s.fuoco_tinta = s.tinte[#s.tinte]
 	s.braccio_a = giunto(s.forma, J.braccio[1] * k, J.braccio[2] * k)
-	s.braccio_a_img, s.manina_a = braccio_pende(s, s.braccio_a, "braccio", k)
+	s.braccio_a_img = braccio_pende(s, s.braccio_a, "braccio", k)
+	s.manina_a = manina(s, MANO_A, k)
 
 	for name in pairs(ARMI) do arma(s, name, color) end
 	-- i giunti dei pugni sono già sul corpo (prima dell'arma, dopo la forma):
@@ -529,8 +545,9 @@ local function coda(s, dt)
 	end
 end
 
--- la fiammella: cambia forma a scatti (tre disegni), trema e su chi è di turno
--- si gonfia e si accende
+-- la fiammella: cambia forma a scatti (tre disegni), si muove con la sua clip
+-- (fiammella: trema, ondeggia) e su chi è di turno si gonfia e si accende. È di
+-- tutti, sopra qualunque testa: non è un pezzo delle pelli
 local function fiammella(s, dt, turno)
 	s.fuoco_t = s.fuoco_t + dt
 	if s.fuoco_t > 0.09 then
@@ -541,10 +558,12 @@ local function fiammella(s, dt, turno)
 		gui.play_flipbook(s.fuoco, p.img)
 		gui.play_flipbook(s.fuoco_tinta, p.tinta)
 	end
-	local f = s.x[FUOCO]
-	local tr = sin(s.t * 11) * 0.06 + sin(s.t * 17.3) * 0.04
-	scale(s.cima, f * (1 - tr * 0.5), f * (1 + tr))
-	rot(s.cima, sin(s.t * 6.7) * 0.06)
+	local po, f = s.posa_fiamma, s.x[FUOCO]
+	pose.azzera(po)
+	if A.fiammella then pose.aggiungi(po, A.fiammella, s.t, 1) end
+	pos(s.cima, (CIMA[1] + po.fiamma_x) * s.k, (CIMA[2] + po.fiamma_y) * s.k)
+	scale(s.cima, f * po.fiamma_largo, f * po.fiamma_alto)
+	rot(s.cima, po.fiamma_gira)
 	local l = turno and 1 or LUCE_ATTESA
 	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, 1
 	gui.set_color(s.fuoco_tinta, C)
@@ -776,6 +795,10 @@ function M.update(s, dt, st)
 	pos(s.braccio_a, (J.braccio[1] + po.braccio_a_x) * s.k, (J.braccio[2] + po.braccio_a_y) * s.k)
 	pos(s.braccio_d, (J.braccio_dietro[1] + po.braccio_d_x) * s.k, (J.braccio_dietro[2] + po.braccio_d_y) * s.k)
 	pos(s.ala, (J.ala[1] + po.ala_x) * s.k, (J.ala[2] + po.ala_y) * s.k)
+	pos(s.manina_a, (MANO_A[1] + po.manina_a_x) * s.k, (MANO_A[2] + po.manina_a_y) * s.k)
+	pos(s.manina_d, (MANO_D[1] + po.manina_d_x) * s.k, (MANO_D[2] + po.manina_d_y) * s.k)
+	rot(s.manina_a, po.manina_a)
+	rot(s.manina_d, po.manina_d)
 	rot(s.ala, po.ala)
 	pos(s.coda[1][1], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
 	pos(s.coda[1][2], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
@@ -811,19 +834,24 @@ function M.update(s, dt, st)
 		due = braccia_arma(s, aa, q, ox, oy)
 	end
 	-- i pezzi che la clip mostra o toglie: le braccia sull'arma (i pugni restano
-	-- sull'arma), quelle che pendono con le loro manine, l'ala, la coda
+	-- sull'arma), quelle che pendono, le manine, la testa, il busto, le gambe,
+	-- l'ala, la coda
 	local ba, bd = po.mostra_braccio_a > 0.5, po.mostra_braccio_d > 0.5
 	vedi(s, s.braccio_a, not in_mano)
 	vedi(s, s.braccio_a_img, ba)
-	vedi(s, s.manina_a, po.manina_a > 0.5)
+	vedi(s, s.manina_a, po.mostra_manina_a > 0.5)
 	for i = 1, 4 do vedi(s, s.mano_a.ossa[i], in_mano and ba) end
 	if not in_mano then vedi(s, s.mano_a.pugno, false) end
 	vedi(s, s.braccio_d, not due)
 	vedi(s, s.braccio_d_img, bd)
-	vedi(s, s.manina_d, po.manina_d > 0.5)
+	vedi(s, s.manina_d, po.mostra_manina_d > 0.5)
 	vedi(s, s.arma_dietro, due and bd)
 	vedi(s, s.mano_d.pugno, due)
 	vedi(s, s.ala, po.mostra_ala > 0.5)
+	vedi(s, s.testa, po.mostra_testa > 0.5)
+	vedi(s, s.busto, po.mostra_busto > 0.5)
+	vedi(s, s.gamba_a, po.mostra_gamba_a > 0.5)
+	vedi(s, s.gamba_d, po.mostra_gamba_d > 0.5)
 	vedi(s, s.coda[1][1], po.mostra_coda > 0.5)
 	vedi(s, s.coda[1][2], po.mostra_coda > 0.5)
 end
