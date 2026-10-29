@@ -387,11 +387,11 @@ local GIRONE_1 = {
 	{
 		id = "il_codardo",
 		titolo = "Il codardo",
-		scopo = "Colpisce e scappa col globo: inseguilo col tuo",
+		scopo = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo col tuo",
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = "normale", carattere = "codardo", nome = "Il codardo" } },
-		turni = 7,
-		stelle = { turni = 5, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		turni = 8,
+		stelle = { turni = 6, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il codardo" } },
 	},
 	{
@@ -401,7 +401,8 @@ local GIRONE_1 = {
 		mappa = "forgia",
 		giocatori = {
 			{ team = 1 },
-			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro" },
+			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
+				battute = "fabbro" },
 		},
 		vita = { [2] = 180 },
 		turni = 10,

@@ -10,6 +10,7 @@ local gconfig = require "sim.config"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local targa = require "battaglia.targa"
+local battute = require "battaglia.battute"
 local home = require "menu.home"
 local profilo = require "menu.profilo"
 local assetto = require "sim.assetto"
@@ -572,6 +573,8 @@ end
 -- La partita parte dalla sua ricetta (sim/replay.lua): i bot sono i
 -- giocatori con bot = livello, e i tasti di chi gioca ci finiscono dentro
 local function new_match(self, seed, map, opts)
+	-- chi parla lo dice la missione (start_missione), dopo
+	self.parlano = nil
 	self.ricetta = replay.nuova(seed, map, opts)
 	self.g, self.bots = replay.partita(self.ricetta)
 	-- se sullo schermo c'è già questa mappa intatta (es. quella del menu) non la ridisegnamo
@@ -716,6 +719,13 @@ end
 
 local function handle_event(self, e)
 	if SIMULA then print("SIMULA evento " .. e.type) end
+	-- i personaggi della campagna parlano (battaglia/battute.lua); quelle di
+	-- tutti i giorni non coprono una battuta appena detta
+	if self.parlano then
+		local i, s, forte = battute.evento(self.parlano, e, self.g.current)
+		local t = i and self.robots[i].targa
+		if s and (forte or t.battuta_t <= 0.8) then targa.battuta(t, s) end
+	end
 	if e.type == "explosion" then
 		local row_min, row_max = e.row_min, e.row_max
 		if self.mode == "online" then
@@ -1240,9 +1250,13 @@ local function start_missione(self, id, picks)
 	end
 	new_match(self, missioni.partita(r, os.time(), picks, profilo.aiuto(self.profilo, id)))
 	missioni.prepara(r, self.g)
-	-- i custodi e gli avversari col loro nome
+	-- i custodi e gli avversari col loro nome, e chi parla
 	for i, p in ipairs(r.l.giocatori) do
 		if p.nome then self.names[i] = p.nome end
+		if p.bot and (p.battute or p.carattere) then
+			self.parlano = self.parlano or battute.nuove()
+			self.parlano.chi[i] = p.battute or p.carattere
+		end
 	end
 	draw_terrain(self)
 	reset_pose(self)

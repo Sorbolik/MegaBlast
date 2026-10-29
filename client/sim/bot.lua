@@ -9,7 +9,7 @@
 --   local input = bot.input(b, g)           -- a ogni tick, prima di g:step(input)
 --   bot.scegli(d, i, seed)                  -- primaria e secondaria nella scelta (sim/draft.lua)
 --   b.piano = { due_attacchi = true }       -- (facoltativo, per il turno che viene) primaria e secondaria
---   b.piano = { attacca_entro = 4, poi = "teletrasporto" }  -- attacca entro 4 s, poi si teletrasporta al riparo
+--   b.piano = { attacca_entro = 4, poi = "teletrasporto" }  -- attacca una volta entro 4 s, poi si teletrasporta al riparo
 --
 -- Come pensa: prova le mosse su copie della partita (bot.mondo), con la
 -- stessa fisica del gioco (game:advance) ma senza crateri, così sa cosa
@@ -61,14 +61,17 @@ M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletra
 -- Caratteri: come gioca un bot, oltre al livello (quanto è bravo). Sono solo
 -- pesi diversi da M.PESI, quindi il bot non bara: preme sempre i tasti di un
 -- giocatore. Li usano la campagna (sim/campagna.lua, players[i].carattere) e i
--- custodi dei gironi. codardo: tiene alla vita e scappa col globo; testa_calda:
+-- custodi dei gironi. codardo: a ogni turno attacca subito (così guadagna i
+-- globi) e poi scappa col globo nella tana peggiore, coperta e dove nessuno lo
+-- vede (tana: quanto conta; piano: il piano di ogni turno); testa_calda:
 -- va addosso anche a costo di morire; cecchino: tira da dove sta e cammina
 -- poco; spingitore: cerca il vuoto (l'uccisione ambientale vale il triplo).
 local spinta = {}
 for k, v in pairs(C.SCORE) do spinta[k] = v end
 spinta.env_kill = C.SCORE.env_kill * 3
 M.CARATTERI = {
-	codardo = { vita_mia = 2, morte = 120, teletrasporto = 45 },
+	codardo = { vita_mia = 2, morte = 120, teletrasporto = 45, tana = 12,
+		piano = { attacca_entro = 4, poi = "teletrasporto" } },
 	testa_calda = { vita_mia = 0.15, morte = 15, strada = 0.004 },
 	cecchino = { strada = 0.05, teletrasporto = 5 },
 	spingitore = { punteggio = spinta },
@@ -641,8 +644,10 @@ local function pensa(b, g)
 	b.scelta = mosse[1]
 
 	-- se a piedi non c'è niente di buono, il teletrasporto verso un posto migliore
+	-- (non col piano poi = "teletrasporto": il globo serve per scappare)
 	local best = mosse[1] and mosse[1].punti or -math.huge
-	if liv.teletrasporto and best < b.pesi.teletrasporto and g:can_use("teleport") and resta > 6 * 60 then
+	local scappa = piano and piano.poi == "teletrasporto"
+	if liv.teletrasporto and not scappa and best < b.pesi.teletrasporto and g:can_use("teleport") and resta > 6 * 60 then
 		local migliore
 		for a = 20, 160, 20 do
 			for _, p in ipairs({ 0.45, 0.7, 0.95 }) do
@@ -699,21 +704,41 @@ end
 -- sicuro dal turno degli altri (a piedi o col Rampino su un appiglio). Con la
 -- rete decide lei dove; senza, lontano dai nemici, fuori dalla loro linea di
 -- tiro e lontano dal vuoto.
+-- C'è roccia sopra la testa (fino a 150 px)? Lì i colpi a parabola non arrivano
+local function coperto(t, x, y)
+	for k = 30, 150, 30 do
+		if t:solid(x, y + k) then return 1 end
+	end
+	return 0
+end
+
 local function riparo(b, g, w)
 	if b.pesi.rete then return valore(b, g, w) end
 	local x = caratteristiche(b, g, w, CAR)
 	if x[7] == 1 then return -1000 end
-	return x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50
+	local s = x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50
+	-- la tana del codardo: coperto e che nessuno vede
+	local tana = b.pesi.tana
+	if tana then
+		local c = w.robots[b.id]
+		s = s + tana * (2 * coperto(w.terrain, c.x, c.y + game.DISEGNO_H) - x[16])
+	end
+	return s
 end
+
+-- le potenze dei lanci del globo per scappare
+local LANCI, LANCI_TANA = { 0.45, 0.7, 0.95 }, { 0.3, 0.45, 0.6, 0.75, 0.9, 1 }
 
 local function ripara(b, g)
 	local me = g.robots[b.id]
 	local resta = g.window > 0 and g.window or g.timer
 	-- piano poi = "teletrasporto": al riparo col globo invece che a piedi
+	-- (chi cerca la tana prova più lanci, per trovare anche i buchi stretti)
 	if b.piano and b.piano.poi == "teletrasporto" and g:can_use("teleport") then
 		local migliore
-		for a = 20, 160, 20 do
-			for _, p in ipairs({ 0.45, 0.7, 0.95 }) do
+		local passo = b.pesi.tana and 10 or 20
+		for a = passo, 180 - passo, passo do
+			for _, p in ipairs(b.pesi.tana and LANCI_TANA or LANCI) do
 				local posto = posto_teletrasporto(b, g, math.rad(a), p)
 				if posto then
 					local w = M.mondo(g)
@@ -772,10 +797,14 @@ end
 function M.new(id, livello, seed, pesi, carattere)
 	local liv = M.LIVELLI[livello] or M.LIVELLI.normale
 	local p = copia(M.PESI)
-	for k, v in pairs(carattere and assert(M.CARATTERI[carattere], "carattere sconosciuto: " .. carattere) or {}) do p[k] = v end
+	local car = carattere and assert(M.CARATTERI[carattere], "carattere sconosciuto: " .. carattere) or {}
+	for k, v in pairs(car) do
+		if k ~= "piano" then p[k] = v end
+	end
 	for k, v in pairs(pesi or {}) do p[k] = v end
+	-- piano_suo: il piano del carattere, per i turni che non ne hanno un altro
 	return { id = id, livello = livello, liv = liv, pesi = p, rng = generatore((seed or 1) * 7919 + id), lavoro = 0,
-		attacchi = 0 }
+		attacchi = 0, piano_suo = car.piano }
 end
 
 -- Rumore tra -1 e 1, più spesso vicino a 0
@@ -832,6 +861,7 @@ function M.input(b, g)
 	end
 	if b.turno ~= g.turn_no then
 		b.turno, b.riparato, b.inizio = g.turn_no, false, g.tick
+		b.piano = b.piano or b.piano_suo
 		local piano = b.piano
 		ripensa(b, (piano and piano.attacca_entro) and math.min(b.liv.reazione, 20) or b.liv.reazione)
 	end
@@ -889,7 +919,9 @@ function M.input(b, g)
 			if b.liv.oggetti and rb.ammo.shield > 0 and g:can_use("shield") and g.used.primary and g.used.secondary then
 				return { fire = { weapon = "shield", angle = 0, power = 0 } }
 			end
-			if b.riparato or (g.used.primary and g.used.secondary and not g:can_use("teleport")) then
+			-- col piano poi = "teletrasporto" basta un attacco: poi si scappa
+			local scappa = b.piano and b.piano.poi == "teletrasporto" and (g.used.primary or g.used.secondary)
+			if b.riparato or scappa or (g.used.primary and g.used.secondary and not g:can_use("teleport")) then
 				basta(b)
 			else
 				ripensa(b, math.floor(b.liv.reazione / 2))

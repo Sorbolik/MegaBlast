@@ -27,7 +27,8 @@
 --   mappa (una mappa del gioco) oppure arena = { { x, y, w, h }, ... } (rettangoli
 --     d'acciaio: i crateri non rompono il rompicapo) e spawns (prima il giocatore)
 --   giocatori: opts.players di game.new (team, bot = livello, carattere, dummy, pick,
---     secondary, tool, stats); nome: come si chiama quel robot (i custodi)
+--     secondary, tool, stats); nome: come si chiama quel robot (i custodi);
+--     battute: chi parla per lui (battaglia/battute.lua; senza, il suo carattere)
 --   vedi = { "missile", "eagle", ... }: le lezioni mostrano solo quello che serve
 --     ("primarie", "secondarie": tutte quelle che hai; "teleport": il tasto e i globi
 --     dal tempo; "parachute"): il resto non c'è nemmeno
@@ -174,7 +175,7 @@ function M.partita(r, seed, picks, aiuto)
 	for i, p in ipairs(l.giocatori) do
 		local q = {}
 		for k, v in pairs(p) do
-			if k ~= "nome" then q[k] = v end
+			if k ~= "nome" and k ~= "battute" then q[k] = v end
 		end
 		if aiuto and q.bot then q.bot = PIU_FACILE[q.bot] end
 		if picks and picks[i] then
