@@ -1643,6 +1643,9 @@ local function aim_pad_drag(self, x, y)
 	self.aim_dist = math.huge
 	self.aiming = st.active
 	pad_colore(self.aim_pad, st.active and AIM_LIVE or AIM_IDLE)
+	-- il pollice è uscito dalla zona morta: da qui lasciando parte il colpo
+	-- (l'anello diventa rosso e il telefono fa una micro-vibrazione)
+	if st.active and not was then vibra_tocco() end
 end
 
 -- Il pollice si stacca dalla levetta della mira: parte il colpo se la levetta
@@ -2195,7 +2198,7 @@ local function render(self, dt)
 		mira.cartellino(self.mira, v.x, v.y + scoria.altezza(self.robots[g.current].rig) + 3
 			+ targa.SOPRA * self.cam.s ^ -0.65 + 4 / self.cam.s, self.cam.s,
 			mira.gradi(self.aim_angle), con, self.colors[g.current])
-		local tacca = con and mira.tacca(con)
+		local tacca = mira.VIBRA_TACCHE and con and mira.tacca(con)
 		if tacca and self.tacca and tacca ~= self.tacca then vibra_tocco() end
 		self.tacca = tacca
 	else

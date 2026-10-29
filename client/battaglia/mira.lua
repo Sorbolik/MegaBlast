@@ -31,8 +31,11 @@ M.PUNTI = 40          -- puntini al massimo (con la freccia lunga si allargano)
 local DOT, DOT_BORDO = 4, 6
 -- raggi della punta: dentro, bordo chiaro, ombra
 local PUNTA, PUNTA_LUCE, PUNTA_OMBRA = 9, 12, 14
--- la potenza fa una micro-vibrazione a ogni tacca
+-- la potenza può fare una micro-vibrazione a ogni tacca: spenta di base (Sergio,
+-- 29 ott: vibra solo quando il colpo diventa sganciabile), si accenderà dalle
+-- impostazioni (docs/impostazioni.md)
 M.TACCA = 0.05
+M.VIBRA_TACCHE = false
 -- armi in cui la potenza conta (le altre vanno dritte o a distanza fissa)
 M.POTENZA = { missile = true, grenade = true, trampoline = true, teleport = true, wall = true }
 
