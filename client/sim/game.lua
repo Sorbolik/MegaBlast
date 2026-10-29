@@ -578,7 +578,7 @@ function M:hurt(rb, amount, by, reason)
 		if foe then
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
-			self:add_points(by, real * 100 / rb.max_hp * score.damage * mult, "damage", rb)
+			self:add_points(by, real * 100 / rb.stats.max_hp * score.damage * mult, "damage", rb)
 		end
 	end
 	-- se era il primo prima del colpo, la Corona resta anche se il colpo fa primo chi uccide
@@ -2646,7 +2646,7 @@ function M:attack(weapon, fire)
 		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
 		rb.attack_turns = rb.attack_turns + 1
 		-- i secondi rimasti diventano globi del teletrasporto
-		local gain = math.floor(self.timer / (60 * C.TELEPORT_SECONDS))
+		local gain = rb.stats.time_orbs > 0 and math.floor(self.timer / (60 * C.TELEPORT_SECONDS)) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
 			self:emit({ type = "teleports", robot = rb.id, amount = gain, total = rb.teleports_left })

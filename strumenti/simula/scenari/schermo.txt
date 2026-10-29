@@ -12,6 +12,11 @@ tocca_bordo 205 235 basso destra    # STESSO TELEFONO (attaccato all'angolo)
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1.5
 foto 02_partita
+tocca_bordo 62 62 alto sinistra     # rotellina: RIPROVA ed ESCI accanto, attaccati al bordo
+aspetta 0.5
+foto 02_rotellina
+tocca 640 400                       # altrove: si chiude
+aspetta 0.5
 levetta 60 0 0.6
 aspetta 0.5
 levetta_mira -40 40 0.4 03_mira

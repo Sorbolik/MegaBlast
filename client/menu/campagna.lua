@@ -5,7 +5,7 @@
 -- chiuso, dice quante ne mancano. Stile in ui/ui.lua.
 --
 --   local campagna = require "menu.campagna"
---   local c = campagna.new(scelta, stelle)  -- scelta = { capitolo } (l'ultimo aperto); stelle = id -> 0..3
+--   local c = campagna.new(scelta, stelle)  -- scelta = { capitolo } (l'ultimo aperto); stelle = id -> { true, false, true }
 --   local fine = campagna.on_input(c, action_id, action)
 --     -- "indietro", { missione = id } per giocarla, o nil
 --   campagna.distruggi(c)
@@ -23,7 +23,7 @@ local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 local function totale(stelle)
 	local n = 0
-	for _, v in pairs(stelle) do n = n + v end
+	for _, v in pairs(stelle) do n = n + missioni.quante(v) end
 	return n
 end
 
@@ -31,9 +31,10 @@ local function aperto(c, cap)
 	return totale(c.stelle) >= cap.serve
 end
 
-local function stelline(n, x, y, parent)
+-- ogni stella accesa per il suo criterio: anche la prima e la terza sì e la seconda no
+local function stelline(prese, x, y, parent)
 	for i = 1, 3 do
-		ui.stella(x + (i - 2) * 28, y, 26, i <= n and ui.ORO or ui.C.LINEA, parent)
+		ui.stella(x + (i - 2) * 28, y, 26, prese[i] and ui.ORO or ui.C.LINEA, parent)
 	end
 end
 
@@ -42,14 +43,17 @@ local function carte(c, cap)
 		local col, riga = (i - 1) % COLONNE, math.floor((i - 1) / COLONNE)
 		local x, y = 640 + (col - 1) * (CARTA_W + 24), 440 - riga * PASSO_Y
 		local n = ui.bottone(c.bottoni, x, y, CARTA_W, CARTA_H, "", "missione:" .. l.id, nil, c.radice)
-		local prese = c.stelle[l.id] or 0
+		local prese = c.stelle[l.id] or {}
 		ui.testo(string.upper(l.titolo), 0, 26, 0.8, ui.C.TESTO, n)
 		stelline(prese, 0, -2, n)
-		-- cosa serve per tutte e tre: i turni e il bonus, o i turni della terza
-		if prese < 3 then
-			local cr = missioni.criteri(l)
-			ui.testo(l.stelle and l.stelle.bonus and (cr[2] .. "  -  " .. cr[3]) or cr[3], 0, -32, 0.55, ui.C.SPENTO, n)
+		-- cosa manca: i criteri delle stelle spente (della terza basta quella:
+		-- nelle lezioni a turni chi la prende prende anche la seconda)
+		local cr, manca = missioni.criteri(l), {}
+		local bonus = l.stelle and l.stelle.bonus
+		for i = 2, 3 do
+			if not prese[i] and (bonus or i == 3) then manca[#manca + 1] = cr[i] end
 		end
+		if #manca > 0 then ui.testo(table.concat(manca, "  -  "), 0, -32, 0.55, ui.C.SPENTO, n) end
 	end
 end
 

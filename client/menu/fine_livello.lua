@@ -1,14 +1,15 @@
 -- Fine di un livello: una missione della campagna o una lezione (sim/missioni.lua). Una schermata, niente popup: il
--- nome del livello, le tre stelle che si accendono una dopo l'altra (col tic
+-- nome del livello, le stelle prese che si accendono una dopo l'altra (col tic
 -- che sale di tono, come i punti in partita) e sotto ognuna cosa serve per
 -- prenderla, così si capisce come fare meglio. Sotto: RIPROVA e AVANTI (il
 -- livello dopo, o la lista se era l'ultimo); la freccia torna alla lista.
 --
 --   local fine_livello = require "menu.fine_livello"
---   local f = fine_livello.new({ titolo = "Il Rampino", stelle = 2,
+--   local f = fine_livello.new({ titolo = "Il Rampino", stelle = { true, true, false },
 --     criteri = { "FATTA", "IN 2 TURNI", "IN 1 TURNO" }, turni = 2, record = 3, avanti = true }, suono)
---     stelle: quelle prese; criteri: cosa serve per ognuna (missioni.criteri);
---     turni: quanti ne sono serviti; record: le stelle migliori di prima;
+--     stelle: quali ha preso (ognuna col suo criterio); criteri: cosa serve per
+--     ognuna (missioni.criteri); turni: quanti ne sono serviti; record: quante
+--     stelle aveva già la missione;
 --     avanti: c'è un livello dopo; suono(v): il tic, v = velocità (tono)
 --   fine_livello.update(f, dt)
 --   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro" o nil
@@ -27,7 +28,8 @@ local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function turni(n) return n .. (n == 1 and " turno" or " turni") end
 
 function M.new(o, suono)
-	local f = { bottoni = {}, t = 0, suono = suono, stelle = {}, accese = 0, n = o.stelle }
+	local f = { bottoni = {}, t = 0, suono = suono, accese = 0, prese = {} }
+	local n = 0
 	f.fondo = ui.sfondo()
 	f.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(f.radice, false)
@@ -43,16 +45,17 @@ function M.new(o, suono)
 		-- sotto, la stella spenta; sopra, quella d'oro che si accende col suo alone
 		ui.stella(x, y, lato, c.LINEA, f.radice)
 		local s = { lato = lato }
-		if i <= o.stelle then
+		if o.stelle[i] then
+			n = n + 1
+			f.prese[n] = s
 			s.alone = ui.alone(x, y, lato * 2.2, vmath.vector4(1, 0.8, 0.25, 0), f.radice)
 			s.nodo = ui.stella(x, y, lato, ui.ORO, f.radice)
 			gui.set_scale(s.nodo, vec(0, 0))
 		end
-		f.stelle[i] = s
-		ui.testo(criteri[i], x, M.Y - 100, 0.75, i <= o.stelle and c.TESTO or c.SPENTO, f.radice)
+		ui.testo(criteri[i], x, M.Y - 100, 0.75, o.stelle[i] and c.TESTO or c.SPENTO, f.radice)
 	end
 	local sotto = "Fatta in " .. turni(o.turni)
-	if o.record and o.record > o.stelle then
+	if o.record and o.record > n then
 		sotto = sotto .. "  -  il tuo record: " .. o.record .. (o.record == 1 and " stella" or " stelle")
 	end
 	ui.testo(sotto, 640, 232, 0.8, c.SPENTO, f.radice)
@@ -67,9 +70,9 @@ end
 function M.update(f, dt)
 	f.t = f.t + dt
 	local i = f.accese + 1
-	if i > f.n or f.t < M.PRIMA + (i - 1) * M.RITMO then return end
+	if i > #f.prese or f.t < M.PRIMA + (i - 1) * M.RITMO then return end
 	f.accese = i
-	local s = f.stelle[i]
+	local s = f.prese[i]
 	gui.animate(s.nodo, "scale", vec(1, 1), gui.EASING_OUTBACK, M.COLPO)
 	gui.animate(s.alone, "color.w", 0.7, gui.EASING_OUTQUAD, M.COLPO * 0.5, 0, function()
 		gui.animate(s.alone, "color.w", 0.3, gui.EASING_INOUTQUAD, 0.5)

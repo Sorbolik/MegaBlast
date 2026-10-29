@@ -41,8 +41,9 @@ C.FIRST_TURN_TELEPORTS = 1
 -- (variante A senza sbalzo e senza doppietta): Corona sul primo, trappola,
 -- parata dello scudo; Rampino e trampolino danno l'uccisione a chi li ha usati.
 -- Il danno vale per la parte di vita tolta, non per i punti di vita: una vita
--- intera vale 100 * damage, anche a chi ha più vita dai pezzi o dalla missione
--- (Sergio, 29 ottobre 2026: "disaccoppiare i punti dai danni").
+-- intera vale 100 * damage, anche a chi ha più vita dai pezzi o dall'albero
+-- (Sergio, 29 ottobre 2026: "disaccoppiare i punti dai danni"). Conta la vita
+-- delle statistiche: la vita data da una missione non cambia i punti del danno.
 C.SCORE = {
 	damage = 1,       -- per ogni centesimo della vita intera tolto a un avversario
 	kill = 50,        -- uccisione
@@ -202,6 +203,7 @@ C.STATS = {
 	max_hp = 100,
 	teleports = 2,           -- globi del teletrasporto all'inizio (Sergio: 2); se ne guadagnano attaccando presto
 	parachutes = 1,          -- paracadute per partita (Sergio, 24 ottobre 2026: uno)
+	time_orbs = 1,           -- 1: i secondi avanzati diventano globi; 0 no (le lezioni che non parlano di globi)
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata

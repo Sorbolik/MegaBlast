@@ -47,6 +47,6 @@ aspetta_stato modo=local turno=1 fase=aim 5
 tocca 62 658                        # la rotellina: ESCI DALLA PARTITA accanto, la missione e' ferma
 aspetta 0.5
 foto 08_rotellina
-tocca 236 658                       # ESCI: di nuovo la campagna
+tocca 408 658                       # ESCI: di nuovo la campagna
 aspetta 1
 foto 09_uscito
