@@ -8,7 +8,7 @@
 name: APK su Telegram
 on:
   push:
-    branches: [main, claude/project-thread-geus7n]
+    branches: [main]
     paths: ['client/**', '.github/workflows/apk.yml']
   workflow_dispatch:
 concurrency:
