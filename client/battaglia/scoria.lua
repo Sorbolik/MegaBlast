@@ -16,9 +16,9 @@
 -- Pezzi: testa (con occhiali e corna, in quattro facce), busto, due gambe, due
 -- braccia (un pezzo solo per braccio, col pugno), l'ala, la coda in segmenti,
 -- le manine staccate, la fiammella e il paracadute. Chi è di turno (o mira)
--- tiene l'arma nella mano del braccio davanti; mirando quel braccio punta dove
--- si mira e l'arma lo prolunga, la testa guarda lì. Mirando (o colpendo) la
--- mira vince su tutto tranne la sconfitta: anche in aria, correndo o colpiti.
+-- tiene l'arma: gira attorno al suo perno (mirando punta dove si mira, la
+-- testa guarda lì) e chi la impugna la segue. Mirando (o colpendo) la mira
+-- vince su tutto tranne la sconfitta: anche in aria, correndo o colpiti.
 --
 -- Il movimento è fatto di molle (schiaccia e allunga, inclinazione, spinta del
 -- colpo, rinculo, testa, coda, fiammella) e di pose per stato, che sono clip a
@@ -47,9 +47,12 @@
 -- girano). Con l'arma in mano le clip sono quelle _arma (fermo_arma, corsa_arma,
 -- aria_arma, sale_arma, scende_arma) e mirando da fermo la clip mira; un'arma
 -- può averne di sue (fermo_arma_mallet, mira_mallet); se una manca si usa
--- quella _arma, poi quella senza arma. Il punto dove la mano tiene l'arma lo
--- dice battaglia/impugnature.lua (anche questo dall'editor). Chi non è di turno alterna a caso il fermo
--- (con le scenette) e il fermo con l'arma in mano.
+-- quella _arma, poi quella senza arma. Presa, perno e spalla di ogni arma li
+-- dice battaglia/impugnature.lua (anche questo dall'editor). La clip col peso
+-- più grande sceglie chi impugna l'arma (impugna: un braccio, che gira verso
+-- la presa, o una manina, che ci sta sopra; di base il braccio davanti) e
+-- l'ordine dei pezzi, cosa sta davanti a cosa (livelli). Chi non è di turno
+-- alterna a caso il fermo (con le scenette) e il fermo con l'arma in mano.
 -- La fiammella ha il colore della squadra ed è l'indicatore di chi gioca: su chi
 -- è di turno è grande e accesa, sugli altri piccola e più scura.
 
@@ -86,6 +89,7 @@ local J = {
 local CIMA = { PT.cima[1] - sposto("testa")[1], PT.cima[2] - sposto("testa")[2] }
 
 local sin, cos, min, max, abs, pi, sqrt = math.sin, math.cos, math.min, math.max, math.abs, math.pi, math.sqrt
+local atan2 = math.atan2 or math.atan
 local DEG = 180 / pi
 
 local OMBRA = vmath.vector4(0, 0, 0, 0.35)
@@ -245,6 +249,14 @@ local function mano_ferma(posto, x)
 	return { x + b.x, PT.spalle[2] + b.y - b.h / 2 + pu.h * 0.4 }
 end
 local MANO_A, MANO_D = mano_ferma("braccio", PT.spalle[1]), mano_ferma("braccio_dietro", -PT.spalle[1])
+-- la mano del braccio che pende vista dalla spalla, per girarlo verso la presa
+local VERSO_A = atan2(MANO_A[2] - J.braccio[2], MANO_A[1] - J.braccio[1])
+local VERSO_D = atan2(MANO_D[2] - J.braccio_dietro[2], MANO_D[1] - J.braccio_dietro[1])
+
+-- I livelli: i pezzi dal fondo, cosa sta davanti a cosa. Una clip può avere
+-- il suo ordine (livelli), sennò questo
+local LIVELLI = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma",
+	"braccio_a", "manina_a" }
 local function manina(s, punto, k)
 	local g = giunto(s.forma, punto[1] * k, punto[2] * k)
 	veste(s, g, "pugno", k)
@@ -259,10 +271,9 @@ local function vedi(s, n, on)
 	end
 end
 
--- Le armi nella mano del braccio davanti: angolo (radianti) rispetto al braccio
--- che pende, 0 verso avanti. Le immagini e le misure sono in battaglia/armi.lua
--- (strumenti/grafica/armi.py), il punto dove la mano le tiene in
--- battaglia/impugnature.lua
+-- Le armi in mano: angolo a riposo (radianti) attorno al perno, 0 verso
+-- avanti. Le immagini e le misure sono in battaglia/armi.lua
+-- (strumenti/grafica/armi.py), presa, perno e spalla in battaglia/impugnature.lua
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
 	punch = -0.9, eagle = -0.6, hook = -0.4, wall = -0.2,
@@ -273,6 +284,41 @@ local ARMI = {
 local PRESA = 20
 
 -- un'immagine dell'atlante delle armi, misure in unità del mondo
+-- l'arma: in mano a chi è di turno o mira (e a chi aspetta, ogni tanto), col
+-- perno sulla spalla dell'arma (battaglia/impugnature.lua, più la clip) e
+-- girata di s.arma_a; il rinculo la spinge indietro lungo il suo asse. Torna
+-- dov'è la presa nella forma (unità del disegno), per chi la impugna
+local ARMA0 = { presa = FERMO, perno = FERMO, spalla = PT.spalle }
+local function arma_in_mano(s, po, in_mano, lx, q)
+	if not in_mano then return 0, 0 end
+	local g = PRESE[s.arma_scelta] or ARMA0
+	local ax, ay = g.spalla[1] + po.arma_x, g.spalla[2] + po.arma_y
+	pos(s.presa, ax * s.k, ay * s.k)
+	scale(s.presa, 1 / lx, 1 / q)
+	rot(s.giro, s.arma_a)
+	local ox = -min(s.x[KICK] * s.w * 0.6, PRESA * s.h / 200 / game.CORPO * 0.8)
+	pos(s.armi[s.arma_scelta], ox - g.perno[1], -g.perno[2])
+	local dx, dy = g.presa[1] - g.perno[1] + ox, g.presa[2] - g.perno[2]
+	local c, sn = cos(s.arma_a), sin(s.arma_a)
+	return ax + (dx * c - dy * sn) / s.k / lx, ay + (dx * sn + dy * c) / s.k / q
+end
+
+-- mette i pezzi nell'ordine della clip (dal fondo), solo quando cambia; quelli
+-- che la clip non nomina vanno sopra, nell'ordine di sempre
+local function livelli(s, l)
+	if s.livelli == l then return end
+	s.livelli = l
+	local fatti = {}
+	local function su(nome)
+		local nodi = s.nodi_livello[nome]
+		if fatti[nome] or not nodi then return end
+		fatti[nome] = true
+		for i = 1, #nodi do gui.move_above(nodi[i], nil) end
+	end
+	for i = 1, #l do su(l[i]) end
+	for i = 1, #LIVELLI do su(LIVELLI[i]) end
+end
+
 local function figura_arma(parent, img, x, y, w, h)
 	local n = box(parent, x, y, w, h)
 	gui.set_texture(n, "armi")
@@ -364,15 +410,20 @@ function M.new(color, look)
 	s.cima = giunto(s.collo, CIMA[1] * k, CIMA[2] * k)
 	s.fuoco = pezzo(s, s.cima, P.fiammella, k)
 	s.fuoco_tinta = s.tinte[#s.tinte]
-	-- l'arma nella mano del braccio davanti: sopra il corpo e la testa, sotto il
-	-- braccio (la mano la copre). La presa sta nella mano e toglie la schiacciata
-	-- della forma, il giro dentro gira l'arma (girata e poi schiacciata si storcerebbe)
+	-- l'arma: sopra il corpo e la testa, sotto il braccio davanti. La presa sta
+	-- sulla spalla dell'arma e toglie la schiacciata della forma, il giro dentro
+	-- gira l'arma attorno al perno (girata e poi schiacciata si storcerebbe)
 	s.presa = giunto(s.forma, 0, 0)
 	s.giro = giunto(s.presa, 0, 0)
 	for name in pairs(ARMI) do arma(s, name, color) end
 	s.braccio_a = giunto(s.forma, J.braccio[1] * k, J.braccio[2] * k)
 	veste(s, s.braccio_a, "braccio", k)
 	s.manina_a = manina(s, MANO_A, k)
+	-- i nodi di ogni livello, nell'ordine in cui sono stati fatti (LIVELLI)
+	s.nodi_livello = { coda = { s.coda[1][1], s.coda[1][2] }, ala = { s.ala }, braccio_d = { s.braccio_d },
+		manina_d = { s.manina_d }, gamba_d = { s.gamba_d }, gamba_a = { s.gamba_a }, busto = { s.busto },
+		testa = { s.collo }, arma = { s.presa }, braccio_a = { s.braccio_a }, manina_a = { s.manina_a } }
+	s.livelli = LIVELLI
 	M.set_weapon(s, "missile")
 
 	M.set_color(s, color, true)
@@ -668,15 +719,22 @@ function M.update(s, dt, st)
 	-- all'altro); le gambe si alzano nei passi
 	local segui = min(1, dt * 16)
 	s.braccia[1] = s.braccia[1] + (po.braccio_a - s.braccia[1]) * segui
-	-- l'arma nella mano: girata rispetto al braccio (a riposo e con la clip);
-	-- mirando il braccio punta dove si mira e l'arma lo prolunga
+	s.braccia[2] = s.braccia[2] + (po.braccio_d - s.braccia[2]) * segui
+	-- l'arma gira attorno al suo perno: mirando dove si mira, sennò a riposo
+	-- più la clip
 	if in_mano and mira then
-		s.braccia[1] = a + pi / 2 - s.x[LEAN] - po.corpo
-		s.arma_a = -pi / 2
+		s.arma_a = a - s.x[LEAN] - po.corpo
 	else
 		s.arma_a = s.arma_a + (ARMI[s.arma_scelta] + po.arma - s.arma_a) * segui
 	end
-	s.braccia[2] = s.braccia[2] + (po.braccio_d - s.braccia[2]) * segui
+	local chi = in_mano and po.mostra_arma > 0.5 and (po.clip and po.clip.impugna or "braccio_a")
+	local hx, hy = arma_in_mano(s, po, in_mano, lx, q)
+	-- chi la impugna la segue: il braccio gira verso la presa, la manina ci sta sopra
+	if chi == "braccio_a" then
+		s.braccia[1] = atan2(hy - J.braccio[2] - po.braccio_a_y, hx - J.braccio[1] - po.braccio_a_x) - VERSO_A
+	elseif chi == "braccio_d" then
+		s.braccia[2] = atan2(hy - J.braccio_dietro[2] - po.braccio_d_y, hx - J.braccio_dietro[1] - po.braccio_d_x) - VERSO_D
+	end
 	s.gambe[1] = s.gambe[1] + (po.gamba_a - s.gambe[1]) * segui
 	s.gambe[2] = s.gambe[2] + (po.gamba_d - s.gambe[2]) * segui
 	rot(s.braccio_a, s.braccia[1])
@@ -688,10 +746,20 @@ function M.update(s, dt, st)
 	pos(s.braccio_a, (J.braccio[1] + po.braccio_a_x) * s.k, (J.braccio[2] + po.braccio_a_y) * s.k)
 	pos(s.braccio_d, (J.braccio_dietro[1] + po.braccio_d_x) * s.k, (J.braccio_dietro[2] + po.braccio_d_y) * s.k)
 	pos(s.ala, (J.ala[1] + po.ala_x) * s.k, (J.ala[2] + po.ala_y) * s.k)
-	pos(s.manina_a, (MANO_A[1] + po.manina_a_x) * s.k, (MANO_A[2] + po.manina_a_y) * s.k)
-	pos(s.manina_d, (MANO_D[1] + po.manina_d_x) * s.k, (MANO_D[2] + po.manina_d_y) * s.k)
-	rot(s.manina_a, po.manina_a)
-	rot(s.manina_d, po.manina_d)
+	if chi == "manina_a" then
+		pos(s.manina_a, hx * s.k, hy * s.k)
+		rot(s.manina_a, s.arma_a + po.manina_a)
+	else
+		pos(s.manina_a, (MANO_A[1] + po.manina_a_x) * s.k, (MANO_A[2] + po.manina_a_y) * s.k)
+		rot(s.manina_a, po.manina_a)
+	end
+	if chi == "manina_d" then
+		pos(s.manina_d, hx * s.k, hy * s.k)
+		rot(s.manina_d, s.arma_a + po.manina_d)
+	else
+		pos(s.manina_d, (MANO_D[1] + po.manina_d_x) * s.k, (MANO_D[2] + po.manina_d_y) * s.k)
+		rot(s.manina_d, po.manina_d)
+	end
 	rot(s.ala, po.ala)
 	pos(s.coda[1][1], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
 	pos(s.coda[1][2], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
@@ -707,22 +775,8 @@ function M.update(s, dt, st)
 		lampo(s, min(1, s.flash * 1.5))
 	end
 
-	-- l'arma: in mano a chi è di turno o mira (e a chi aspetta, ogni tanto),
-	-- nella mano del braccio davanti col punto della presa
-	-- (battaglia/impugnature.lua) sul pugno; il rinculo la spinge indietro
 	vedi(s, s.presa, in_mano and po.mostra_arma > 0.5)
-	if in_mano then
-		local b = s.braccia[1]
-		local c, sn = cos(b), sin(b)
-		local jx, jy = J.braccio[1] + po.braccio_a_x, J.braccio[2] + po.braccio_a_y
-		local rx, ry = MANO_A[1] - J.braccio[1], MANO_A[2] - J.braccio[2]
-		pos(s.presa, (jx + rx * c - ry * sn) * s.k, (jy + rx * sn + ry * c) * s.k)
-		scale(s.presa, 1 / lx, 1 / q)
-		rot(s.giro, b + s.arma_a)
-		local g = PRESE[s.arma_scelta] or FERMO
-		local ox = -min(s.x[KICK] * s.w * 0.6, PRESA * s.h / 200 / game.CORPO * 0.8)
-		pos(s.armi[s.arma_scelta], ox - g[1], -g[2])
-	end
+	livelli(s, po.clip and po.clip.livelli or LIVELLI)
 	-- i pezzi che la clip mostra o toglie: le braccia, le manine, la testa, il
 	-- busto, le gambe, l'ala, la coda
 	vedi(s, s.braccio_a, po.mostra_braccio_a > 0.5)

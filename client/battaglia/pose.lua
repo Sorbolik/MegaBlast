@@ -3,7 +3,8 @@
 -- campionati a un tempo qualsiasi, così il movimento è fluido a ogni frequenza.
 --
 -- Una clip: { durata = secondi, ciclo = true se ricomincia, tracce = { canale =
--- { t, v, curva, t, v, curva, ... } }, viso = { t, "faccia", ... } }. La curva
+-- { t, v, curva, t, v, curva, ... } }, viso = { t, "faccia", ... },
+-- livelli = { pezzi dal fondo }, impugna = "chi tiene l'arma" }. La curva
 -- dice come si va dalla chiave alla successiva: 0 liscia, 1 dritta, 2 a scatto.
 -- I canali che una clip non ha restano neutri.
 --
@@ -11,6 +12,7 @@
 -- salto che sale o scende): ognuna aggiunge peso * (valore - neutro).
 --   local posa = pose.nuova()
 --   pose.azzera(posa); pose.aggiungi(posa, clip, t, peso)   -- nessuna allocazione
+-- posa.clip è la clip col peso più grande: da lei i livelli e chi impugna l'arma.
 
 local M = {}
 
@@ -21,8 +23,9 @@ M.CANALI = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "br
 	-- gli spostamenti avanti e indietro (x, verso dove guarda) e su e giù (y)
 	"corpo_x", "testa_x", "braccio_a_x", "braccio_a_y", "braccio_d_x", "braccio_d_y",
 	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y",
-	-- l'arma in mano quando non si mira: quanto gira in più nella mano
-	"arma",
+	-- l'arma in mano: quanto gira in più attorno al suo perno quando non si
+	-- mira, e lo spostamento del perno
+	"arma", "arma_x", "arma_y",
 	-- le manine staccate: pezzi liberi sul corpo, da fermi dove finiscono le
 	-- braccia che pendono; girano e si spostano
 	"manina_a", "manina_d", "manina_a_x", "manina_a_y", "manina_d_x", "manina_d_y",
@@ -49,6 +52,7 @@ end
 function M.azzera(p)
 	for c, v in pairs(M.NEUTRO) do p[c] = v end
 	p.viso, p.peso_viso = nil, 0
+	p.clip, p.peso_clip = nil, 0
 end
 
 -- il tempo dentro la clip: in ciclo gira, altrimenti si ferma alla fine
@@ -122,6 +126,7 @@ function M.aggiungi(p, clip, t, peso)
 	for c, tr in pairs(clip.tracce) do
 		p[c] = p[c] + peso * (M.valore(tr, t, d, ciclo) - M.NEUTRO[c])
 	end
+	if peso > p.peso_clip then p.clip, p.peso_clip = clip, peso end
 	local viso = clip.viso
 	if viso and peso > p.peso_viso then
 		-- la faccia va a scatti: l'ultima chiave non dopo t (prima della prima,
