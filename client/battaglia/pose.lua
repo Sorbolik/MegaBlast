@@ -21,17 +21,15 @@ M.CANALI = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "br
 	-- gli spostamenti avanti e indietro (x, verso dove guarda) e su e giù (y)
 	"corpo_x", "testa_x", "braccio_a_x", "braccio_a_y", "braccio_d_x", "braccio_d_y",
 	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y",
-	-- l'arma in mano quando non si mira: quanto gira in più attorno alla spalla;
-	-- braccia libere (1): l'arma sta nella mano del braccio davanti e le braccia
-	-- le muove la clip, invece di piegarsi da sole sull'arma
-	"arma", "arma_libera",
+	-- l'arma in mano quando non si mira: quanto gira in più nella mano
+	"arma",
 	-- le manine staccate: pezzi liberi sul corpo, da fermi dove finiscono le
 	-- braccia che pendono; girano e si spostano
 	"manina_a", "manina_d", "manina_a_x", "manina_a_y", "manina_d_x", "manina_d_y",
 	-- i pezzi che si vedono (1) o no (0): li mette e li toglie il secchio
-	-- dell'editor (le braccia che pendono o sull'arma)
+	-- dell'editor
 	"mostra_testa", "mostra_busto", "mostra_braccio_a", "mostra_braccio_d", "mostra_gamba_a", "mostra_gamba_d",
-	"mostra_ala", "mostra_coda", "mostra_manina_a", "mostra_manina_d",
+	"mostra_ala", "mostra_coda", "mostra_manina_a", "mostra_manina_d", "mostra_arma",
 	-- la fiammella (la sua clip, fiammella): spostamento, rotazione, larghezza e altezza
 	"fiamma_x", "fiamma_y", "fiamma_gira", "fiamma_largo", "fiamma_alto" }
 M.NEUTRO = { schiaccia = 1, fiamma_largo = 1, fiamma_alto = 1 }
