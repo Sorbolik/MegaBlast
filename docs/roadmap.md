@@ -43,6 +43,7 @@ passano da Sergio.
 | 18 | Store | Android prima, iOS un mese dopo (IPA da Windows, caricamento da GitHub Actions macOS, niente Mac), **e anche browser** servito dal nostro server. |
 | 19 | Contenuti | 6 mappe alla pubblicazione; armi nuove solo come modificatori di evento; skin = pezzi sullo **stampino**. L'editor delle animazioni avrà un connettore per modificare i pezzi di riferimento dello stampino e aggiungere o togliere pezzi a un'animazione, a un personaggio nuovo, a un'arma o a una skin d'arma. |
 | 20 | Sviluppo | GitHub Actions per i test (Go, Lua, simulatore), deploy del server con uno script, ambiente di prova sulla stessa macchina. |
+| 21 | Interfaccia | Tutta la UI, in partita e nei menu, con il suo carattere: minimale, tranquilla, essenziale (sotto). |
 
 Fuori per sempre, salvo ripensamento di Sergio: chat testuale, pubblicità,
 classifica permanente, backend esterni (Nakama, Firebase, Supabase), editor di
@@ -100,6 +101,35 @@ e livello. Le statistiche si contano dalla fase 1 (così nulla va perso); la
 schermata, gli obiettivi e i badge arrivano in fase 3 insieme all'inventario.
 Gli obiettivi sono dati sul server: Sergio può aggiungerne dal pannello.
 
+### Interfaccia: tranquilla ed essenziale
+
+Tutta l'interfaccia del gioco, in partita e nei menu, ha un carattere suo: il
+minimalismo dello stile Sagoma (`client/ui/ui.lua`, forme disegnate in codice,
+un solo font, i colori solo in `ui.C`, niente asset dipinti per la UI). Regole
+che valgono per ogni schermata nuova:
+
+- **Niente popup da cliccare**: nessuna finestra che interrompe, nessun "ok"
+  da premere per andare avanti. Un premio o un avviso arriva nella posta in
+  gioco o come riga discreta che scompare da sola; il podio e le ricompense
+  degli eventi sono schermate, non popup.
+- **Niente notifiche invadenti**: nessun badge rosso che lampeggia, nessun
+  conteggio sulle voci del menu, niente notifiche di sistema per marketing.
+  Un solo punto luminoso sulla posta quando c'è qualcosa di nuovo.
+- **Una cosa per schermata**: ogni schermata ha un compito e lo mostra senza
+  scorrere, con una gerarchia chiara; le voci che non servono ancora non
+  esistono.
+- **In partita solo quello che serve al turno**: armi, teletrasporti, timer e
+  vita; effetti di stato come segni sul robot e scritte che salgono, mai
+  pannelli. Suggerimenti solo nelle partite contro bot.
+- **Transizioni brevi** (sotto i 200 ms) e mai bloccanti; effetti ridotti
+  disponibili nelle impostazioni.
+- **Ogni schermata nuova passa dal simulatore** (foto nel riepilogo) e da
+  Sergio prima del merge, come per il resto del client.
+
+Le schermate da fare, nell'ordine delle fasi: draft online (0), profilo e
+impostazioni (1), Eventi, ricompensa, Statistiche con badge, posta (3), store e
+negozio (4), campagna, amici e lobby private, spettatore (2 e 5).
+
 ### Laboratorio bot
 
 Fuori dal gioco: migliaia di partite simulate tra bot con semi diversi, prima
@@ -109,6 +139,8 @@ Sergio; i risultati entrano nel bilanciamento e, se buoni, come livelli estremi
 dell'Allenamento.
 
 ## Fasi
+
+In ogni fase le schermate nuove seguono le regole dell'area 21.
 
 Ogni fase ha un criterio d'uscita verificabile. Niente di una fase successiva
 entra nel codice prima che la precedente sia chiusa, salvo preparazioni a costo
