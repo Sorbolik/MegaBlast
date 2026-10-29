@@ -26,7 +26,7 @@ local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 local function stelle(n, x, y, parent)
 	for i = 1, 3 do
-		ui.disco(x + (i - 2) * 22, y, 14, i <= n and ui.ORO or ui.C.LINEA, parent)
+		ui.stella(x + (i - 2) * 28, y, 26, i <= n and ui.ORO or ui.C.LINEA, parent)
 	end
 end
 

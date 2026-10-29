@@ -2093,6 +2093,28 @@ do
 	check(levette.al_rilascio(r, 1) == nil, "mira: dopo reset nessuna mira registrata")
 end
 
+do
+	-- chi esce online sparisce: niente punti, niente rinascita, il turno passa
+	local g = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
+	g:pop_events()
+	local punti = g.robots[2].points
+	g:remove(1)
+	local ev = g:pop_events()
+	local tipi = {}
+	for _, e in ipairs(ev) do tipi[#tipi + 1] = e.type end
+	check(g.robots[1].gone and g.robots[1].dead and g.current == 2, "esce chi è di turno: il turno passa al 2")
+	check(table.concat(g.order, " ") == "2 3 4" and table.concat(tipi, " "):find("gone") and not table.concat(tipi, " "):find("death"),
+		"esce: fuori dall'ordine, evento gone e nessuna morte")
+	check(g.robots[2].points == punti, "esce: nessun punto a nessuno")
+	g:remove(3)
+	g:end_turn()
+	check(g.current == 4, "dopo il 2 tocca al 4 (il 3 è uscito)")
+	g:end_turn()
+	check(g.current == 2, "e poi di nuovo al 2")
+	for _ = 1, game.RESPAWN_TICKS + 5 do g:step({}) end
+	check(g.robots[1].dead and g.robots[3].dead, "chi è uscito non rinasce")
+end
+
 if failures > 0 then
 	print(failures .. " test falliti")
 	os.exit(1)

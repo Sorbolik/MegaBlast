@@ -61,7 +61,12 @@ ogni cambio tutti ricevono il `draft` aggiornato. Allo scadere di
 `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma libera di ogni
 ventaglio e parte la partita (`start`, con `players`: squadra e scelte di
 ognuno, `[{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},…]`, così
-il client crea la sua copia della partita con le stesse armi). Il client la
+il client crea la sua copia della partita con le stesse armi). Chi esce dalla
+rotellina in partita manda `{"t":"leave"}`: il server lo toglie subito (come chi
+non torna in tempo, senza aspettare), chiude la sua connessione e manda `left`
+agli altri; il suo robot sparisce dalla partita (`game:remove`: evento `gone`,
+`gn` nello stato, non rinasce e non ha più turni) e si continua finché restano
+almeno due squadre. Il client la
 mostra con la schermata dello stesso telefono (`client/menu/scelta.lua`). Nello stato ogni robot
 porta la sua secondaria in `sw`, l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto

@@ -7,6 +7,12 @@ images {
 images {
   image: "/assets/ui/alone.png"
 }
+images {
+  image: "/assets/ui/stella.png"
+}
+images {
+  image: "/assets/ui/ingranaggio.png"
+}
 margin: 2
 extrude_borders: 2
 inner_padding: 0

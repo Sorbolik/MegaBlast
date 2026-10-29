@@ -1,0 +1,19 @@
+# Uscire da una partita online, tutti contro tutti, contro un server vero e tre
+# giocatori finti: la rotellina, ESCI DALLA PARTITA, si torna alla home e il
+# server lo dice subito agli altri ("left" nel log del server, la partita dei
+# tre continua).
+imposta server_url ws://127.0.0.1:8090/ws
+imposta giocatori ffa
+
+aspetta 1
+server ffa 3
+tocca 1075 102                      # GIOCA
+aspetta_stato modo=online 30
+aspetta 2
+tocca 62 658                        # rotellina: online la partita non si ferma
+aspetta 0.5
+foto 01_rotellina
+tocca 236 658                       # ESCI DALLA PARTITA
+aspetta_stato modo=menu 3
+aspetta 1
+foto 02_home

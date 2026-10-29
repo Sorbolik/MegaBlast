@@ -2,6 +2,8 @@
 # fare), la lezione del Rampino: sotto la piattaforma, aggancio al bordo, su,
 # e la Lama sul bersaglio. Barra: Lanciarune 506, Lama 770, Rampino 1084 (tondo).
 # Carte delle lezioni: x 256 / 640 / 1024, y 410 / 298 / 186.
+# Fatta, la fine del livello: le stelle una alla volta, RIPROVA 460 110,
+# AVANTI 820 110, la freccia per le lezioni 62 658.
 
 aspetta 1.5
 tocca 1075 323                      # ALLENAMENTO
@@ -24,6 +26,18 @@ mira 80 0 0.3
 aspetta_evento sword_hit 3
 aspetta 0.6
 foto 04_fatta
-tocca 640 360                       # si torna alle lezioni
+aspetta 1.6
+foto 05_fine_livello                # le stelle si accendono
 aspetta 1
-foto 05_stelle
+foto 06_stelle_accese
+tocca 62 658                        # la freccia: si torna alle lezioni
+aspetta 1
+foto 07_lezioni
+tocca 1024 298                      # di nuovo il Rampino
+aspetta_stato modo=local turno=1 fase=aim 5
+tocca 62 658                        # la rotellina: ESCI DALLA PARTITA accanto, la lezione e' ferma
+aspetta 0.5
+foto 08_rotellina
+tocca 236 658                       # ESCI: di nuovo le lezioni
+aspetta 1
+foto 09_uscito

@@ -13,6 +13,7 @@
 --   local esito = lezioni.tick(r, g)              -- a ogni tick: nil, "fatta" o "fallita"
 --   local testo, chi = lezioni.riga(r)            -- il suggerimento da mostrare sopra il robot chi (o nil)
 --   lezioni.stelle(r)                             -- 1..3 quando è fatta
+--   lezioni.dopo(id)                              -- la lezione che viene dopo (nil dopo l'ultima)
 
 local game = require "sim.game"
 local maps = require "sim.maps"
@@ -313,6 +314,12 @@ function M.trova(id)
 end
 
 -- Lo stato di una lezione in corso
+function M.dopo(id)
+	for i, l in ipairs(M.LISTA) do
+		if l.id == id then return M.LISTA[i + 1] and M.LISTA[i + 1].id end
+	end
+end
+
 function M.nuova(id)
 	local l = assert(PER_ID[id], "lezione sconosciuta: " .. tostring(id))
 	return { l = l, st = { turni = 0, turni_bot = 0 }, viste = {}, riga = nil, esito = nil }

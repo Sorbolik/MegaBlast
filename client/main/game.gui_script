@@ -20,7 +20,7 @@ local replay = require "sim.replay"
 -- le schermate fuori dalla battaglia, in una tabella sola: il gui_script è
 -- vicino al limite di 200 variabili locali di Lua
 local menu = { podio = require "menu.podio", armeria = require "menu.armeria", scelta = require "menu.scelta",
-	allenamento = require "menu.allenamento" }
+	allenamento = require "menu.allenamento", fine_livello = require "menu.fine_livello" }
 local lezioni = require "sim.lezioni"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
@@ -52,7 +52,7 @@ local SERVER_ERRORS = {
 local ACTION = {
 	TOUCH = hash("touch"), LEFT = hash("left"), RIGHT = hash("right"), JUMP = hash("jump"),
 	CANCEL = hash("cancel"), MULTI = hash("multitouch"), TELE = hash("teleport"), ZOOM = hash("zoom"),
-	ZOOM_IN = hash("zoom_avanti"), ZOOM_OUT = hash("zoom_indietro"),
+	ZOOM_IN = hash("zoom_avanti"), ZOOM_OUT = hash("zoom_indietro"), MENU = hash("menu_partita"),
 	-- tasti 1-9: le armi della barra
 	WEAPON = {},
 }
@@ -204,7 +204,7 @@ local VK = vmath.vector3(K, K, 1)
 local ZOOM_INIZIO = tonumber(config_string("megablast.zoom", "")) or 1
 -- dopo un'esplosione la camera resta lì un attimo prima di tornare al robot
 local CAMERA_SOSTA = 0.7
--- secondi tra la fine della partita e il podio
+-- secondi tra la fine della partita e il podio (e tra la fine di una lezione e le stelle)
 local PODIO_ATTESA = 1.5
 -- Game feel (fase 5 della roadmap). Quando un colpo va a segno il mondo si ferma
 -- un attimo (hit-stop, secondi con danno piccolo e grande) e lo schermo trema
@@ -355,6 +355,9 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.scelto_glow, false)
 	punteggio.set_enabled(self.punti, visible)
 	gui.set_enabled(self.btn_zoom, visible)
+	gui.set_enabled(self.btn_menu, visible)
+	self.menu_aperto = false
+	gui.set_enabled(self.btn_esci, false)
 end
 
 local function disconnect(self)
@@ -387,8 +390,7 @@ local function show_menu(self)
 	msg.post("/terreno", "disable")
 	set_controls_visible(self, false)
 	show_message(self, "", true)
-	self.lezione, self.lezione_attesa = nil, nil
-	gui.set_enabled(self.btn_esci, false)
+	self.lezione, self.lezione_attesa, self.fine_t = nil, nil, nil
 	for _, r in ipairs(self.robots) do targa.riga(r.targa, "") end
 end
 
@@ -822,6 +824,10 @@ local function handle_event(self, e)
 			local verbo = e.env and " butta giù " or " elimina "
 			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
 		end
+	elseif e.type == "gone" then
+		-- è uscito dalla partita: sparisce e non torna
+		scoria.set_enabled(self.robots[e.robot].rig, false)
+		targa.set_enabled(self.robots[e.robot].targa, false)
 	elseif e.type == "respawn" then
 		scoria.set_enabled(self.robots[e.robot].rig, true)
 		targa.set_enabled(self.robots[e.robot].targa, true)
@@ -900,6 +906,12 @@ local function apply_state(self, s)
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
 		rb.teleports_left, rb.turns, rb.points = r.tl or 0, r.tu or 1, r.pt or 0
 		rb.max_hp = r.mh or rb.max_hp
+		if r.gn and not rb.gone then
+			-- chi torna dopo una caduta non ha visto uscire nessuno: il robot sparisce qui
+			rb.gone = true
+			scoria.set_enabled(self.robots[i].rig, false)
+			targa.set_enabled(self.robots[i].targa, false)
+		end
 		rb.swing = (r.s or 0) > 0 and r.s or nil
 		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
 		rb.punch = (r.pu or 0) > 0 and r.pu or nil
@@ -972,6 +984,8 @@ local function on_server_message(self, m)
 		if self.mode ~= "scelta_online" then show_message(self, "", true) end
 		self.mode = "scelta_online"
 		local nomi, colori = names_colors(m.players)
+		self.squadre_online = {}
+		for i, p in ipairs(m.players) do self.squadre_online[i] = p.team end
 		menu.scelta.online(self.scelta, m, nomi, colori, function(msg) send(self, msg) end)
 	elseif m.t == "start" then
 		menu.scelta.hide(self.scelta)
@@ -981,6 +995,8 @@ local function on_server_message(self, m)
 		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
 		new_match(self, m.seed, m.map, m.players and { players = m.players })
 		self.g:pop_events()
+		self.squadre_online = {}
+		for i, rb in ipairs(self.g.robots) do self.squadre_online[i] = rb.team end
 		self.me, self.tok, self.tries = m.you, m.tok, 0
 		self.mode = "online"
 		set_controls_visible(self, true)
@@ -1000,6 +1016,16 @@ local function on_server_message(self, m)
 	elseif m.t == "back" and m.robot ~= self.me then
 		show_message(self, "L'avversario è tornato")
 	elseif m.t == "left" then
+		-- chi esce non torna; il server va avanti finché restano due squadre
+		self.usciti[m.robot] = true
+		local restano, viste = 0, {}
+		for i, team in ipairs(self.squadre_online or {}) do
+			if not self.usciti[i] and not viste[team] then viste[team], restano = true, restano + 1 end
+		end
+		if restano >= 2 then
+			show_message(self, (self.mode == "online" and self.names[m.robot] or "Un giocatore") .. " è uscito")
+			return
+		end
 		menu.scelta.hide(self.scelta)
 		self.mode = "ended"
 		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
@@ -1017,6 +1043,8 @@ local function connect(self)
 end
 
 on_socket = function(self, conn, data)
+	-- gli ultimi eventi di una connessione lasciata (ESCI DALLA PARTITA) non contano
+	if conn ~= self.conn then return end
 	if data.event == ws.EVENT_CONNECTED then
 		-- il primo messaggio dice la versione: in coda, o di nuovo nella partita
 		if self.tok then
@@ -1063,6 +1091,7 @@ local function start_online(self)
 		return
 	end
 	self.mode, self.tok, self.tries = "connecting", nil, 0
+	self.usciti, self.squadre_online = {}, nil
 	show_message(self, "Connessione a\n" .. server_url(), true)
 	connect(self)
 end
@@ -1073,6 +1102,7 @@ local start_local_match
 -- contro: { modo, livello } per giocare contro i bot (menu/allenamento.lua)
 local function start_local(self, contro)
 	hide_menu(self)
+	self.contro_attivo = contro ~= nil
 	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono (e coda online)
 	local modo = contro and contro.modo or config_string("megablast.giocatori", "1v1")
 	local opts = { players = {} }
@@ -1184,7 +1214,6 @@ local function start_lezione(self, id, picks)
 	self.lezione, self.lezione_attesa = r, nil
 	self.mode = "local"
 	set_controls_visible(self, true)
-	gui.set_enabled(self.btn_esci, true)
 end
 
 -- A ogni frame: la riga sopra il diavoletto; fatta, le stelle; fallita, si
@@ -1200,17 +1229,45 @@ local function lezione_update(self, dt)
 	end
 	if r.esito == "fatta" and not r.salvata then
 		r.salvata = true
+		local record = self.profilo.lezioni[r.l.id] or 0
 		profilo.lezione(self.profilo, r.l.id, lezioni.stelle(r))
 		profilo.salva(self.profilo)
 		if not r.l.guidata then
-			local n = lezioni.stelle(r)
-			show_message(self, "Fatta! " .. n .. (n == 1 and " stella" or " stelle") .. " su 3\nTocca per continuare", true)
+			-- un attimo per vedere il colpo, poi (o al primo tocco) le stelle
+			show_message(self, "Fatta!", true)
 			self.mode = "ended"
 			set_controls_visible(self, false)
+			self.fine_t, self.fine_record = PODIO_ATTESA, record
 		end
 	elseif r.esito == "fallita" then
 		show_message(self, "Riprova")
 		self.lezione_attesa = 1.5
+	end
+end
+
+-- La schermata di fine livello (menu/fine_livello.lua) della lezione appena fatta
+local function apri_fine_livello(self)
+	local r = self.lezione
+	self.fine_t, self.lezione = nil, nil
+	self.lezione_finita = r.l.id
+	show_message(self, "", true)
+	for _, rb in ipairs(self.robots) do targa.riga(rb.targa, "") end
+	apri_schermata(self, menu.fine_livello, {
+		titolo = r.l.titolo, stelle = lezioni.stelle(r), soglie = r.l.stelle, turni = r.st.turni,
+		record = self.fine_record, avanti = lezioni.dopo(r.l.id) ~= nil,
+	}, function(v) sound.play("#punto", { speed = v }) end)
+end
+
+-- RIPROVA, AVANTI (la lezione dopo; dopo l'ultima, le lezioni) o la freccia (le lezioni)
+local function dopo_fine_livello(self, fine)
+	local id = self.lezione_finita
+	local dopo = fine == "riprova" and id or (fine == "avanti" and lezioni.dopo(id))
+	chiudi_schermata(self)
+	if dopo then
+		start_lezione(self, dopo)
+	else
+		show_menu(self)
+		apri_schermata(self, menu.allenamento, self.contro_bot, self.profilo.lezioni)
 	end
 end
 
@@ -2145,8 +2202,14 @@ function init(self)
 	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game
 	self.punti = punteggio.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
-	-- per uscire da una lezione (solo lì: le partite finiscono da sole)
-	self.btn_esci = ui.indietro({}, "esci")
+	-- la rotellina in alto a sinistra, in ogni partita: apre accanto a sé ESCI
+	-- DALLA PARTITA, che si chiude toccando altrove (niente finestre sopra il
+	-- gioco). Sullo stesso telefono intanto la partita è ferma
+	self.btn_menu = ui.impostazioni({}, "menu")
+	self.btn_esci = ui.bottone({}, 30 + 64 + 12 + 130, H - 30 - 32, 260, 64, "ESCI DALLA PARTITA", "esci")
+	gui.set_xanchor(self.btn_esci, gui.ANCHOR_LEFT)
+	gui.set_yanchor(self.btn_esci, gui.ANCHOR_TOP)
+	gui.set_enabled(self.btn_menu, false)
 	gui.set_enabled(self.btn_esci, false)
 
 	-- zoom: vicino, medio, tutta la mappa (anche rotella e tasto Z)
@@ -2236,7 +2299,7 @@ function update(self, dt)
 		dt_mondo = 0
 	end
 	self.sc_ox, self.sc_oy = camera.scossa(self.cam, dt)
-	if self.mode == "local" then
+	if self.mode == "local" and not self.menu_aperto then
 		self.acc = math.min(self.acc + dt_mondo, 0.25)
 		while self.acc >= game.DT and self.mode == "local" do
 			local input = {
@@ -2304,6 +2367,9 @@ function update(self, dt)
 	if self.podio_t then
 		self.podio_t = self.podio_t - dt
 		if self.podio_t <= 0 then apri_podio(self) end
+	elseif self.fine_t then
+		self.fine_t = self.fine_t - dt
+		if self.fine_t <= 0 then apri_fine_livello(self) end
 	end
 	if self.schermata and self.schermata.mod.update then self.schermata.mod.update(self.schermata.obj, dt) end
 	if self.mode == "scelta" then
@@ -2370,6 +2436,23 @@ local function cancel_pad_aim(self)
 	show_message(self, "Mira annullata")
 end
 
+-- ESCI DALLA PARTITA: online il server lo sa subito (il posto non si tiene, gli
+-- altri lo vedono uscire), poi si torna da dove si era partiti: le lezioni,
+-- l'allenamento contro i bot o la home
+local function esci_partita(self)
+	local allenamento = self.lezione or (self.mode == "local" and self.contro_attivo)
+	if self.mode == "online" and self.conn then
+		-- la connessione la chiude il server, dopo aver letto il messaggio
+		-- (chiudendola subito qui potrebbe non partire); se non lo fa, tra un attimo noi
+		local conn = self.conn
+		send(self, { t = "leave" })
+		self.conn, self.tok = nil, nil
+		timer.delay(2, false, function() ws.disconnect(conn) end)
+	end
+	show_menu(self)
+	if allenamento then apri_schermata(self, menu.allenamento, self.contro_bot, self.profilo.lezioni) end
+end
+
 -- Un dito (o il mouse) si appoggia in (x, y). id distingue le dita.
 -- x, y arrivano stirati su 1280 x 720 (come li vuole gui.pick_node): per
 -- tutto il resto si riportano alle coordinate del gioco (ui/schermo.lua)
@@ -2378,15 +2461,27 @@ local function pointer_down(self, id, px, py)
 	if self.mode == "ended" then
 		if self.podio_t then
 			apri_podio(self)
-		elseif self.lezione then
-			-- finita una lezione si torna alle lezioni
-			show_menu(self)
-			apri_schermata(self, menu.allenamento, self.contro_bot, self.profilo.lezioni)
+		elseif self.fine_t then
+			apri_fine_livello(self)
 		else
 			show_menu(self)
 		end
 		return
 	elseif self.mode ~= "local" and self.mode ~= "online" then
+		return
+	end
+	-- la rotellina: aperta, un tocco su ESCI esce, altrove la richiude e basta
+	if self.menu_aperto then
+		local esci = gui.pick_node(self.btn_esci, px, py)
+		self.menu_aperto = false
+		gui.set_enabled(self.btn_esci, false)
+		self.pointers[id] = "cancelled"
+		if esci then esci_partita(self) end
+		return
+	elseif gui.pick_node(self.btn_menu, px, py) then
+		self.menu_aperto = true
+		gui.set_enabled(self.btn_esci, true)
+		self.pointers[id] = "cancelled"
 		return
 	end
 	-- sul telefono riportare la levetta a zero è scomodo: mentre si mira, un
@@ -2397,10 +2492,7 @@ local function pointer_down(self, id, px, py)
 		self.pointers[id] = "cancelled"
 		return
 	end
-	if self.lezione and gui.pick_node(self.btn_esci, px, py) then
-		show_menu(self)
-		apri_schermata(self, menu.allenamento, self.contro_bot, self.profilo.lezioni)
-	elseif gui.pick_node(self.btn_zoom, px, py) then
+	if gui.pick_node(self.btn_zoom, px, py) then
 		change_zoom(self)
 	elseif gui.pick_node(self.btn_tele.nodo, px, py) then
 		toggle_tele(self)
@@ -2459,7 +2551,9 @@ end
 function on_input(self, action_id, action)
 	if self.mode == "schermata" then
 		local fine = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
-		if type(fine) == "table" and fine.lezione then
+		if fine and self.schermata.mod == menu.fine_livello then
+			dopo_fine_livello(self, fine)
+		elseif type(fine) == "table" and fine.lezione then
 			chiudi_schermata(self)
 			start_lezione(self, fine.lezione)
 		elseif type(fine) == "table" then
@@ -2493,8 +2587,8 @@ function on_input(self, action_id, action)
 		return true
 	end
 	-- un tasto spegne le levette (a meno che non le abbia chieste la configurazione)
-	if action_id and action_id ~= ACTION.TOUCH and action_id ~= ACTION.MULTI and action.pressed
-		and self.touch_ui and COMANDI == "" then
+	if action_id and action_id ~= ACTION.TOUCH and action_id ~= ACTION.MULTI and action_id ~= ACTION.MENU
+		and action.pressed and self.touch_ui and COMANDI == "" then
 		set_touch_ui(self, false)
 	end
 	if action_id == ACTION.LEFT then
@@ -2508,6 +2602,12 @@ function on_input(self, action_id, action)
 		if action.pressed then toggle_tele(self) end
 	elseif action_id == ACTION.ZOOM then
 		if action.pressed then change_zoom(self) end
+	elseif action_id == ACTION.MENU then
+		-- Esc (o indietro sul telefono): apre e chiude la rotellina
+		if action.pressed and self.controls_visible and (self.mode == "local" or self.mode == "online") then
+			self.menu_aperto = not self.menu_aperto
+			gui.set_enabled(self.btn_esci, self.menu_aperto)
+		end
 	elseif action_id == ACTION.ZOOM_IN or action_id == ACTION.ZOOM_OUT then
 		if action.pressed then change_zoom(self, action_id == ACTION.ZOOM_OUT and 1 or -1) end
 	elseif ACTION.WEAPON[action_id] then

@@ -30,6 +30,8 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Tutorial: la prima partita guidata contro il bot, righe sopra il diavoletto, 8 lezioni da 3 stelle; CONTRO I BOT diventa ALLENAMENTO (lezioni e bot); rompicapo del giorno e fantasmi in roadmap (Eventi). | #66 |
 | 29 ott | Animazioni rifatte da Sergio nell'editor su main; Gabriella personaggio di tutti. | #69 |
 | 29 ott | APK su Telegram: bot @ultrablastbot, GitHub Actions costruisce e manda l'APK a ogni push su main. | questa PR |
+| 29 ott | Il tocco che annulla la mira sul telefono vale solo sulla metà destra (a sinistra si cammina). | questa PR |
+| 29 ott | Schermata di fine livello con le stelle (lezioni, pronta per la campagna); rotellina in ogni partita con ESCI DALLA PARTITA (anche online: messaggio `leave` al server). | questa PR |
 | 29 ott | Il tocco che annulla la mira sul telefono vale solo sulla metà destra (a sinistra si cammina). | #71 |
 | 29 ott | Motore Android snello (manifest dell'app senza fisica, Vulkan, registratore, profiler, particellari) e UI senza mipmap. | questa PR |
 | 29 ott | Camera quando si spara: finché chi spara può muoversi inquadra lui e il colpo, allontanandosi quanto basta; a turno finito segue il colpo come prima. | #73 |
