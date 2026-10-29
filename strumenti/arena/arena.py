@@ -44,7 +44,7 @@ def gioca(args):
         blocchi.append((da, q))
         da += q
     extra = []
-    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "komi", "giro_finale", "serpente", "rotazione", "ritocchi", "set"):
+    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set"):
         v = getattr(args, chiave, None)
         if v:
             extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else v]
@@ -252,10 +252,6 @@ def main():
     ap.add_argument("--pesi", help="file Lua con una lista di pesi del bot (bot.PESI), uno a caso per robot")
     ap.add_argument("--ritocchi", help="file Lua: function(config, game) che cambia i numeri delle armi (prova)")
     ap.add_argument("--set", help="misto: ogni robot un set completo a caso (o nessuno)")
-    ap.add_argument("--serpente", help="si: a ogni giro l'ordine dei turni si rovescia (prova)")
-    ap.add_argument("--rotazione", help="si: a ogni giro apre il secondo del giro prima (prova)")
-    ap.add_argument("--komi", help="punti di partenza di chi apre (prova)")
-    ap.add_argument("--giro_finale", help="si: un giro in più dopo il tempo, chi è avanti gioca per primo (prova)")
     ap.add_argument("--luajit")
     ap.add_argument("--rapporto", help="solo il rapporto da un partite.jsonl già fatto")
     ap.add_argument("--video", type=int, help="il video dell'highlight N")

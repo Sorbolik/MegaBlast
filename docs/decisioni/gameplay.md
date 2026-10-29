@@ -29,9 +29,11 @@ delle regole in [../design.md](../design.md); le varianti valutate in
 | 26 ott | **Teletrasporto sempre usabile** nel turno, mai disattivato dagli attacchi (restano i limiti: globi in mano, 6 in volo, 1 al primo turno). | PR #47 |
 | 26 ott | Scala del mondo: `game.CELL` 2 → 3, mondo 1920×1080 (mappe ×1,5). | PR #44 |
 | 28 ott | **Hitbox separate** nella sim: capsula per camminare + cerchio dei colpi, modificabili dall'editor (`client/sim/corpo.lua`); dimensione del disegno svincolata (`game.DISEGNO_H`). | PR #55 |
+| 29 ott | **Rinascita su punti d'acciaio**, a caso tra quelli liberi a più di 300 px dai nemici e lontani dalle trappole (Sergio: "sempre su parti fisse della mappa, ma sempre randomici"). I punti si trovano da soli sulle superfici d'acciaio di ogni mappa; senza acciaio, un punto libero a caso come prima. Le posizioni d'inizio partita restano quelle della mappa (Claude). **Ordine dei turni** lasciato com'è (Sergio): chi apre deve imparare a mettersi al riparo. | PR del bot |
 
 ## Scartate
 
+- Rimedi al vantaggio di chi gioca per secondo nell'1v1 (29 ott, arena dei bot): komi, giro finale, serpente, rotazione. Il serpente e la rotazione portavano chi apre dal 37% al 49%, ma Sergio: i bot non sanno ancora mettersi al riparo, quindi il dato è falsato; ordine com'è.
 - Nucleo come risorsa (23–24 ott): l'entrata superava la spesa, barra sempre
   piena, comprava movimento già gratis. Pagina di analisi:
   https://claude.ai/artifact/MkARkaLVum37MLH41grVPV

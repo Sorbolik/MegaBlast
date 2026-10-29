@@ -149,7 +149,7 @@ M.SHARD_EVERY = 4        -- tick tra una scheggia e l'altra
 M.SHARD_SPEED = 950      -- la potenza non conta: escono sempre alla stessa velocità
 M.SHARD_GRAVITY = 0.2    -- la gravità le piega appena
 M.SHARD_SPREAD = math.rad(3)
-M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 7, knockback = 90 }
+M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 6.5, knockback = 90 }
 
 -- Cecchino: velocità del colpo (la potenza non conta) e quanto vive al massimo;
 -- danno, spinta, caduta e rimbalzi in config.SNIPER
@@ -327,6 +327,7 @@ function M.new(seed, map_id, opts)
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.WORLD_W / M.CELL, M.WORLD_H / M.CELL, M.CELL)
 	map.build(g.terrain, seed)
+	g.spawn_spots = M.find_spawn_spots(g.terrain)
 	local players = opts.players or C.MODES["1v1"]
 	assert(#players >= 2 and #players <= M.MAX_PLAYERS, "da 2 a " .. M.MAX_PLAYERS .. " giocatori")
 	g.robots = {}
@@ -393,14 +394,6 @@ function M.new(seed, map_id, opts)
 	g.crate_chance = not opts.crate_every and M.CRATE_CHANCE or nil
 	g.turn_no = 0
 	g.order_pos = 1
-	-- prove dell'arena (strumenti/arena) per il vantaggio di chi gioca per
-	-- secondo: komi = punti di partenza di chi apre; giro_finale = dopo il tempo
-	-- un giro in più, con chi è avanti che gioca per primo; serpente = a ogni
-	-- giro l'ordine si rovescia (A B, B A, A B...); rotazione = a ogni giro apre
-	-- il secondo del giro prima (A B C D, B C D A...)
-	if opts.komi then g.robots[g.order[1]].points = opts.komi end
-	g.giro_finale = opts.giro_finale
-	g.serpente, g.rotazione = opts.serpente, opts.rotazione
 	g:start_turn(g.order[1])
 	return g
 end
@@ -583,7 +576,7 @@ end
 -- Il colpo di weapon ha fatto danno: l'effetto che porta, se ne porta uno
 function M:hit_status(rb, weapon, by)
 	local kind = C.WEAPON_STATUS[weapon]
-	if not kind and by and by.stats.burning_blasts > 0 and (weapon == "missile" or weapon == "grenade") then
+	if not kind and by and by.stats.burning_blasts > 0 and weapon == "grenade" then
 		kind = "burn"
 	end
 	if kind then self:add_status(rb, kind, by) end
@@ -645,10 +638,69 @@ function M:kill(rb, reason)
 	self:emit({ type = "death", robot = rb.id, reason = reason, by = killer and killer.id, env = env, points = points, own = own })
 end
 
--- Alla morte si ricomincia con la vita piena in un punto libero a caso della
--- mappa. Teletrasporti e colpi delle armi restano.
+-- Punti di rinascita: sopra l'acciaio, che non si distrugge, così sotto i
+-- piedi c'è sempre terreno (Sergio, 29 ottobre 2026: "sempre su parti fisse
+-- della mappa, ma sempre randomici"). Ogni SPAWN_PASSO px lungo le superfici
+-- d'acciaio con lo spazio per il robot sopra; nil se la mappa non ne ha.
+M.SPAWN_PASSO = 24
+-- distanza minima dai nemici vivi e dalle trappole per rinascere in un punto
+M.SPAWN_LONTANO = 300
+M.SPAWN_TRAPPOLA = 48
+
+function M.find_spawn_spots(t)
+	local head = math.ceil(M.ROBOT_H / t.cell)
+	local half = math.ceil(M.ROBOT_HALF_W / t.cell)
+	local out = {}
+	for x = 30, M.WORLD_W - 30, M.SPAWN_PASSO do
+		local cx = math.floor(x / t.cell)
+		for cy = 0, t.h - 2 do
+			if t:get(cx, cy) == terrain.STEEL and t:get(cx, cy + 1) == 0
+				and not t:any_solid(cx - half, cx + half, cy + 1, cy + head) then
+				out[#out + 1] = { x = x, y = (cy + 1) * t.cell }
+			end
+		end
+	end
+	return #out > 0 and out or nil
+end
+
+-- Il punto di rinascita di rb: a caso tra quelli liberi, lontani dai nemici
+-- vivi (SPAWN_LONTANO) e dalle trappole; se non ce n'è nessuno, il più
+-- lontano dai nemici. Senza punti d'acciaio, un punto libero a caso.
+function M:spawn_spot(rb)
+	local spots = self.spawn_spots
+	if not spots then
+		return self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
+	end
+	local ok, best, best_d = {}, nil, -1
+	for _, s in ipairs(spots) do
+		if not self:robot_collides(s.x, s.y, rb) then
+			local d = math.huge
+			for _, o in ipairs(self.robots) do
+				if o ~= rb and not o.dead and o.team ~= rb.team then
+					local dx, dy = o.x - s.x, o.y - s.y
+					d = math.min(d, math.sqrt(dx * dx + dy * dy))
+				end
+			end
+			local trappola = false
+			for _, o in ipairs(self.placed) do
+				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAPPOLA and math.abs(o.y - s.y) < M.SPAWN_TRAPPOLA then
+					trappola = true
+				end
+			end
+			if not trappola then
+				if d >= M.SPAWN_LONTANO then ok[#ok + 1] = s end
+				if d > best_d then best, best_d = s, d end
+			end
+		end
+	end
+	local s = #ok > 0 and ok[1 + math.floor(self.rng:next() * #ok)] or best
+	if s then return s.x, s.y end
+end
+
+-- Alla morte si ricomincia con la vita piena in un punto di rinascita
+-- (spawn_spot). Teletrasporti e colpi delle armi restano.
 function M:respawn(rb)
-	local x, y = self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
+	local x, y = self:spawn_spot(rb)
 	local sp = maps.get(self.map).spawns[1]
 	rb.x = x or sp.x
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
@@ -2508,33 +2560,12 @@ function M:end_turn()
 	self:apply_heals()
 	self:age_status(self.robots[self.current])
 	local next_pos = self.order_pos % #self.order + 1
-	if self.match_left <= 0 and next_pos == 1 and self.giro_finale and not self.finale then
-		self.finale = true
-		local pos, order = {}, {}
-		for k, id in ipairs(self.order) do pos[id], order[k] = k, id end
-		table.sort(order, function(a, b)
-			local pa, pb = self.robots[a].points, self.robots[b].points
-			if pa ~= pb then return pa > pb end
-			return pos[a] < pos[b]
-		end)
-		self.order = order
-	elseif self.match_left <= 0 and next_pos == 1 then
+	if self.match_left <= 0 and next_pos == 1 then
 		self.phase = "over"
 		local res = self:results()
 		self.winner = res.winner
 		self:emit({ type = "over", winner = res.winner, reason = "time", results = res })
 		return
-	end
-	if next_pos == 1 and self.serpente and not self.finale then
-		local order = {}
-		for k = #self.order, 1, -1 do order[#order + 1] = self.order[k] end
-		self.order = order
-	end
-	if next_pos == 1 and self.rotazione and not self.finale then
-		local order = {}
-		for k = 2, #self.order do order[#order + 1] = self.order[k] end
-		order[#order + 1] = self.order[1]
-		self.order = order
 	end
 	self.order_pos = next_pos
 	self:start_turn(self.order[self.order_pos])
@@ -2713,7 +2744,8 @@ local function blastron_profile()
 		GRENADE_BOUNCE = 0.4,
 		GRENADE_FRICTION = 1,
 		GRENADE_DAMPING = 1,
-		GRENADE_BLAST = { r = 5.5 * u, damage_r = 10 * u, damage = 550 * hp, damage_min = 300 * hp, impulse = 15 },
+		-- danno al centro 57 invece di 27,5 (arena dei bot, 29 ottobre 2026: l'Uovo era l'arma più debole)
+		GRENADE_BLAST = { r = 5.5 * u, damage_r = 10 * u, damage = 1140 * hp, damage_min = 300 * hp, impulse = 15 },
 		-- Teleport Grenade: non chiude il turno, ti porta lì dopo 3 s
 		ORB_SPEED = 80 * u,
 		ORB_GRAVITY = 1.1,
@@ -2738,7 +2770,7 @@ local function blastron_profile()
 		-- 40 u/s, saltello di 15 u/s
 		PUNCH_MODEL = "blastron",
 		PUNCH_TICKS = 127,
-		PUNCH_DAMAGE = 1000 * hp,
+		PUNCH_DAMAGE = 560 * hp,   -- 28 invece di 50 (arena dei bot, 29 ottobre 2026: vinceva troppo)
 		PUNCH_LAUNCH = 40 * u,
 		PUNCH_PUSH = 0,
 		PUNCH_HOP = 15 * u,

@@ -19,6 +19,7 @@ futuro in [../roadmap.md](../roadmap.md) (aree 9, 10).
 | 24 ott | Col Nucleo rimosso: nodi "Globo di riserva" (+1 teletrasporto) e "Ali di riserva" (+1 paracadute); Guscio e Passo leggero tolti; Vuoto B e Fornace +1 globo; Corvo B = 2 salti in aria; riconoscimento Tesoriere tolto. | PR #39 |
 | 24 ott | Colori delle squadre solo da `ui.C.SQUADRA`, ordine Rosso, Blu, Verde, Oro. | PR #33 |
 | 29 ott | Progressione **sul server** (XP, livello, mastery, inventario, loadout), rating nascosto solo per il matchmaking, profilo pubblico leggero. **Statistiche di ogni tipo** con obiettivi a soglie esponenziali e **badge** visibili accanto al nome. Negozio: estetica + valuta morbida + pacchetti; tornei a iscrizione con moneta dura; pass dell'evento più avanti. | docs/roadmap.md |
+| 29 ott | **Set liberi e progressione a poco a poco** (Sergio): i pezzi si potranno mischiare (non più solo 4 set fissi, i pezzi nuovi si fanno con l'editor); all'inizio non si regala un set completo, si parte senza niente e si comprano i pezzi. Il gioco è da late game ma con progressione: il divario lo colmano matchmaking, livello fisso nei tornei e il fatto che in qualche mese si completa l'equipaggiamento; escono sempre pezzi nuovi per far girare il meta. | thread del bot |
 
 ## Scartate
 

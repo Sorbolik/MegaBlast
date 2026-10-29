@@ -48,9 +48,9 @@ M.SETS = {
 			legs = { { stat = "max_hp", add = 3 }, { stat = "walk_speed", mul = 0.98 } },
 		},
 		bonus = {
-			a = { desc = "Missile e Uovo bruciano chi colpiscono, salto -10%",
+			a = { desc = "L'Uovo brucia chi colpisce, salto -10%",
 				effects = { { stat = "burning_blasts", add = 1 }, { stat = "jump_height", mul = 0.9 } } },
-			b = { desc = "Missile e Uovo bruciano, gli effetti durano un turno in più, vita -10%",
+			b = { desc = "L'Uovo brucia, gli effetti durano un turno in più, vita -10%",
 				effects = { { stat = "burning_blasts", add = 1 }, { stat = "status_turns", add = 1 },
 					{ stat = "max_hp", mul = 0.9 } } },
 		} },
