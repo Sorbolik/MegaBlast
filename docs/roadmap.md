@@ -33,7 +33,7 @@ passano da Sergio.
 | 8 | Impostazioni | Una schermata: audio, comandi (mancino, levette, mira), schermo (limite fotogrammi, effetti ridotti), lingua, account (codice, collega, cancella), notifiche, info. Niente qualità grafica a livelli né rimappatura dei tasti. |
 | 9 | Progressione | XP, livello, mastery, inventario e loadout calcolati e salvati dal server. Profilo pubblico leggero. Rating nascosto solo per il matchmaking. Niente classifica permanente: le classifiche sono quelle dei tornei e tra amici. In più la sezione **Statistiche, obiettivi e badge** (sotto). |
 | 10 | Negozio | Estetica + valuta morbida guadagnata giocando + pacchetti a pagamento (IAP ufficiale Defold, ricevute verificate dal server); Pass dell'evento quando le skin si producono in meno di un giorno. In più i **tornei a iscrizione** (sotto). Niente pubblicità, niente casse a pagamento. |
-| 11 | Amici | Codice amico, lista con stato, **lobby private** dove 4 amici giocano tra loro (FFA o 2v2) e **2v2 premade** in coda. Link di invito. Chat solo con emote o frasi predefinite. Clan più avanti, se i numeri li riempiono. |
+| 11 | Amici | Codice amico, lista con stato, **lobby private** dove 4 amici giocano tra loro (FFA o 2v2) e **2v2 premade** in coda. Link di invito. Chat solo con emote o frasi predefinite. Più avanti i **clan e le guerre tra clan** (fase 6): stemma e nome, classifica di clan, guerre a finestra in cui i punti dei membri si sommano e il clan vincitore prende premi a fasce, come un torneo a squadre grandi. |
 | 12 | Replay e spettatori | Replay delle ultime 10 partite dal profilo (seed + input). **Spettatore dal vivo senza ritardo**: l'amico vede quello che vedi tu; se vogliono lo streammano. |
 | 13 | Notifiche | Posta in gioco + notifiche locali programmate dal calendario. Push vere solo più avanti, per inviti e premi. |
 | 14 | Anti-cheat | Solo difese sul server: progressione calcolata dal server, partite offline verificate rigiocando gli input, limiti di velocità, ricevute verificate, versione minima, ban dal pannello. Nessun SDK di protezione. Ogni thread sviluppa già con questo in mente. |
@@ -209,7 +209,8 @@ incassi che coprono il server. Lavoro XL.
 ### 6. Crescere
 
 Dai numeri dell'interfaccia dei dati: Pass dell'evento, push per inviti e premi,
-tornei a tabellone, clan, secondo nodo o regione, altre lingue, sound designer.
+tornei a tabellone, clan e guerre tra clan, secondo nodo o regione, altre
+lingue, sound designer.
 
 ## Come si aggiorna
 
