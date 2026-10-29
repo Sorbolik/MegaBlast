@@ -131,8 +131,10 @@ C.MALLET = { damage = 57, reach = 44, from = math.rad(115), to = math.rad(-100),
 -- Chi tira si può muovere nel frattempo: la fune segue la mano.
 -- Sul terreno: è chi tira che sale lungo la fune a climb_speed fino al punto
 -- colpito e si mette in piedi sopra la piattaforma, se la sua cima è entro
--- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade).
-C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 64 }
+-- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade). Se
+-- la salita si ferma contro il terreno (da sotto, in diagonale) basta essere
+-- entro grab pixel dal punto (dal centro del robot) per salire lo stesso.
+C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 96, grab = 80 }
 -- Bastione (attrezzo, uno a turno al posto del Rampino; scelto da Sergio il 29
 -- ottobre): posa un blocco di terreno vero w x h pixel nel punto mirato, a
 -- range pixel al massimo (la potenza della mira); se si mira più su o più giù
