@@ -131,8 +131,10 @@ C.MALLET = { damage = 57, reach = 44, from = math.rad(115), to = math.rad(-100),
 -- Chi tira si può muovere nel frattempo: la fune segue la mano.
 -- Sul terreno: è chi tira che sale lungo la fune a climb_speed fino al punto
 -- colpito e si mette in piedi sopra la piattaforma, se la sua cima è entro
--- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade).
-C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 64 }
+-- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade). Se
+-- la salita si ferma contro il terreno (da sotto, in diagonale) basta essere
+-- entro grab pixel dal punto (dal centro del robot) per salire lo stesso.
+C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 96, grab = 80 }
 -- Bastione (attrezzo, uno a turno al posto del Rampino; scelto da Sergio il 29
 -- ottobre): posa un blocco di terreno vero w x h pixel nel punto mirato, a
 -- range pixel al massimo (la potenza della mira); se si mira più su o più giù
@@ -155,7 +157,7 @@ C.LUNGE = { damage = 45, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb
 -- più è lontano (al bordo del ventaglio far della spinta). Chi soffia non si
 -- muove. Lo scudo dimezza la spinta come per i colpi. Danno sulla scala della
 -- vita 100 (#79): 10, un decimo
-C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 520, lift = 160, far = 0.6 }
+C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 400, lift = 100, far = 0.35 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.

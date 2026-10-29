@@ -975,6 +975,34 @@ do
 	run(m, 5)
 	check(not ma.hooked and math.abs(ma.y - 316) < 4 and math.abs(ma.x - 640) < 10 and ma.grounded,
 		"sale lungo la fune e si mette in piedi sopra la piattaforma")
+	-- da sotto in diagonale la salita sbatte sul fondo della piattaforma prima
+	-- di arrivare al punto: entro config.HOOK.grab sale sopra lo stesso
+	local dg = game.new(42, "forgia")
+	run(dg, 60)
+	local da = dg.robots[1]
+	dg.robots[2].x = -1000
+	dg.terrain:rect(500, 200, 900, 900, 0)
+	dg.terrain:rect(900, 500, 200, 30, 1)
+	place(da, 850, 420)
+	ev = hook(dg, math.atan2(499 - 420 - game.DISEGNO_H / 2, 1000 - 850), function() da.vy = 0 end)
+	for _ = 1, 60 do
+		dg:step()
+		if not da.hooked then break end
+	end
+	run(dg, 20)
+	check(ev and ev.anchor and da.grounded and math.abs(da.y - 530) < 4,
+		"da sotto in diagonale sale sopra la piattaforma")
+	-- il fianco di un muro alto (cima oltre config.HOOK.climb) no: resta lì e cade
+	dg.terrain:rect(1200, 200, 60, 400, 1)
+	place(da, 1100, 300)
+	dg.used.tool = false
+	ev = hook(dg, 0, function() da.vy = 0 end)
+	for _ = 1, 60 do
+		dg:step()
+		if not da.hooked then break end
+	end
+	run(dg, 10)
+	check(ev and ev.anchor and da.y < 590, "sul fianco di un muro alto non sale in cima")
 	-- sparando nel vuoto non succede niente
 	place(ma, 640, 340)
 	m.used.tool = false
