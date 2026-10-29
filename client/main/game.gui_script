@@ -2104,6 +2104,8 @@ local function render(self, dt)
 			fase, rimasti, totale = "turno", g.timer / 60, game.TURN_TICKS / 60
 		end
 	end
+	-- le tacche dei globi solo se il tempo avanzato dà globi (non in tutte le lezioni)
+	self.crono.tacche_on = g.robots[g.current].stats.time_orbs > 0
 	hud.cronometro_update(self.crono, dt, fase, rimasti, totale, self.colors[g.current], g.phase ~= "over" and clock or "")
 	-- nell'attesa del secondo attacco le secondarie lampeggiano, se sono loro che restano
 	local blink = g.window > 0 and my_turn(self) and math.sin(self.clock * 12) > 0
@@ -2380,7 +2382,7 @@ function init(self)
 
 	-- il cronometro ad anello in basso al centro, col tempo della partita sopra
 	self.crono = hud.cronometro(W / 2, MISURE.ring_y)
-	hud.cronometro_tacche(self.crono, gconfig.TELEPORT_SOGLIE, gconfig.TURN_SECONDS)
+	hud.cronometro_tacche(self.crono)
 	-- l'inquadratura di chi spara e del colpo resta sopra l'anello e il tempo della partita
 	camera.margini(self.cam, 120, 90, MISURE.ring_y + hud.FUORI + 40)
 	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game

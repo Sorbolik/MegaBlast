@@ -5,7 +5,7 @@
 --
 --   local c = hud.cronometro(x, y)
 --   hud.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
---   hud.cronometro_tacche(c, soglie, totale) -- tacche viola dei globi: soglie in secondi dall'inizio del turno
+--   hud.cronometro_tacche(c)   -- tacche viola dei globi (config.TELEPORT_SOGLIE) sull'anello del turno
 --   hud.globi_nodi(c)      -- dopo i pulsanti, così i globi ci volano sopra
 --   hud.globi(c, n, pos, lento, arrivo) -- i secondi risparmiati volano come globi su pos
 --     (il teletrasporto); arrivo(i) quando il globo i tocca il pulsante
@@ -18,6 +18,7 @@
 --   hud.cartellino_su(k, x, y, "LAMA") / hud.cartellino_via(k)
 
 local ui = require "ui.ui"
+local config = require "sim.config"
 
 local M = {}
 
@@ -146,9 +147,10 @@ function M.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
 		c.sec, c.num_s = sec, sec
 	end
 	-- le tacche dei globi si vedono nel turno finché la punta dell'arco non le passa
+	-- (c.tacche_on = false: il tempo avanzato non dà globi)
 	if c.tacche then
 		for _, t in ipairs(c.tacche) do
-			local on = fase == "turno" and totale - rimasti <= t.sec
+			local on = c.tacche_on ~= false and fase == "turno" and totale - rimasti <= t.sec
 			if t.on ~= on then gui.set_enabled(t.nodo, on); t.on = on end
 		end
 	end
@@ -167,7 +169,8 @@ end
 -- Le tacche dei globi: dove sarà la punta dell'arco a ogni soglia, una
 -- lineetta viola sull'anello e fuori tanti pallini quanti globi dà attaccare
 -- prima (la prima soglia ne dà tanti quante sono le soglie, l'ultima uno)
-function M.cronometro_tacche(c, soglie, totale)
+function M.cronometro_tacche(c)
+	local soglie, totale = config.TELEPORT_SOGLIE, config.TURN_SECONDS
 	c.tacche = {}
 	for i, sec in ipairs(soglie) do
 		local a = math.rad(90 + 360 * sec / totale)
