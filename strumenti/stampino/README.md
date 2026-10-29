@@ -80,6 +80,7 @@ insieme i pezzi).
 python3 strumenti/stampino/taglia.py elmo.png --nome elmo_corna --categoria elmo
 python3 strumenti/stampino/taglia.py chatgpt.png --nome testa_drago --categoria testa --allinea
 python3 strumenti/stampino/taglia.py --togli elmo_corna
+python3 strumenti/stampino/taglia.py --ritocchi ritocchi.json   # i ritocchi fatti nell'editor delle animazioni
 ```
 
 `taglia.py` ritaglia ogni casella cambiata, toglie il manichino (per quelle

@@ -20,6 +20,7 @@
 #
 # python3 strumenti/grafica/armi.py   (serve cairosvg: pip install cairosvg)
 import os
+import re
 import sys
 from PIL import Image
 
@@ -29,6 +30,7 @@ RADICE = os.path.join(QUI, "..", "..")
 OUT = os.path.join(RADICE, "client", "assets", "armi")
 LUA = os.path.join(RADICE, "client", "battaglia", "armi.lua")
 ATLAS = os.path.join(RADICE, "client", "battaglia", "armi.atlas")
+PRESE = os.path.join(RADICE, "client", "battaglia", "impugnature.lua")
 ANTEPRIMA = os.path.join(RADICE, "simulazione", "foto", "armi_anteprima.png")
 
 # pixel delle immagini per unità del mondo: a zoom vicino su un telefono
@@ -47,8 +49,9 @@ H = 28  # altezza del corpo nel mondo, senza BLASTRON_CORPO
 from vettori import BORDO, RIGA, INK, COL, Disegno, rendi  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# Le armi. Origine nella spalla, x verso dove si mira, y in su; "mani" dove
-# vanno i pugni (l'ultima è quella sull'impugnatura, sull'asse dell'arma).
+# Le armi. Origine nella spalla, x verso dove si mira, y in su. Dove vanno i
+# pugni non è qui: lo dice client/battaglia/impugnature.lua, fatto nell'editor
+# delle animazioni (l'anteprima lo legge per disegnarli).
 
 
 def lanciarune(d):
@@ -65,7 +68,7 @@ def lanciarune(d):
     d.poli([(1.0, -2.8), (3.6, -2.8), (2.6, -6.2), (0.6, -6.0)], "cuoio")            # impugnatura
     d.riga("M-2.8,-0.55 L-1.8,0.55 M-0.6,-0.55 L0.4,0.55 M1.6,-0.55 L2.6,0.55", INK, 0.28)
     d.riga(f"M-7,2 L{L - 3.5},2", COL["rosso"][2], 0.5)
-    return dict(mani=[(8.6, -1.6), (2.4, -4.0)], box=(-11.5, -8, L + 2.5, 6.5))
+    return dict(box=(-11.5, -8, L + 2.5, 6.5))
 
 
 def cecchino(d):
@@ -81,7 +84,7 @@ def cecchino(d):
     d.poli([(3.6, -1.5), (5.2, -1.5), (4.6, -4.2), (3.2, -4.0)], "legno")           # impugnatura
     d.riga("M-6.2,-0.8 L-1,-0.6", COL["legno"][0], 0.35)
     d.riga(f"M10,0.5 L{L - 1.6},0.5", COL["acciaio"][2], 0.35)
-    return dict(mani=[(12.0, -1.6), (4.3, -2.6)], box=(-9.5, -6.5, L + 2, 6.5))
+    return dict(box=(-9.5, -6.5, L + 2, 6.5))
 
 
 def uovo(d, cx=0.0, cy=0.0):
@@ -99,7 +102,7 @@ def uovo(d, cx=0.0, cy=0.0):
 
 def uovo_in_mano(d):
     uovo(d, 4.4, 1.6)
-    return dict(mani=[(2.8, 0.0)], box=(-0.5, -4.5, 9.5, 11))
+    return dict(box=(-0.5, -4.5, 9.5, 11))
 
 
 def sciame(d):
@@ -114,7 +117,7 @@ def sciame(d):
     d.rect(6.2, -2.3, 1.4, 4.6, "ottone", r=0.4)
     d.poli([(2.2, -1.9), (4.0, -1.9), (3.4, -4.8), (1.8, -4.6)], "cuoio")
     d.riga("M8.5,1.2 L17,3.6", COL["ottone"][2], 0.5)
-    return dict(mani=[(10.4, -2.4), (2.9, -3.4)], box=(-9.5, -7.5, 20.5, 7.5))
+    return dict(box=(-9.5, -7.5, 20.5, 7.5))
 
 
 def pugno(d):
@@ -126,7 +129,7 @@ def pugno(d):
     d.riga("M8.6,1.35 L10.8,1.35 M8.6,-1.35 L10.8,-1.35", COL["ottone"][0], 0.4)
     d.riga("M3,-4.0 Q5.5,-2.5 8,-4.0", COL["rosso"][0], 0.45)
     d.riga("M3.6,3.4 L7.6,3.4", COL["rosso"][2], 0.6)
-    return dict(mani=[], box=(-3.5, -7, 13.5, 7))
+    return dict(box=(-3.5, -7, 13.5, 7))
 
 
 def lama(d):
@@ -144,7 +147,7 @@ def lama(d):
     d.riga(f"M{g + 2},0.9 L{L - 5},0.9", COL["acciaio"][2], 0.55)
     d.riga(f"M{g + 2},-0.2 L{L - 6},-0.2", COL["acciaio"][0], 0.3)
     d.riga("M-0.6,-1 L0.6,1 M1.2,-1 L2.4,1 M3,-1 L4.2,1", COL["cuoio"][0], 0.3)
-    return dict(mani=[(2.0, 0.0)], box=(-5, -7, L + 2.5, 7))
+    return dict(box=(-5, -7, L + 2.5, 7))
 
 
 def globo(d, cx=0.0, cy=0.0, r=4.2):
@@ -159,7 +162,7 @@ def globo(d, cx=0.0, cy=0.0, r=4.2):
 
 def globo_in_mano(d):
     globo(d, 4.8, 1.2, 4.2)
-    return dict(mani=[(2.8, -0.6)], box=(-0.5, -4.5, 10.5, 7))
+    return dict(box=(-0.5, -4.5, 10.5, 7))
 
 
 def tonante(d):
@@ -174,7 +177,7 @@ def tonante(d):
     d.riga("M3.9,0.1 L6.5,0.1 M3.9,1.0 L6.5,1.0", COL["ottone"][0], 0.3)
     d.riga("M7,1.9 L16.4,1.9", COL["acciaio"][2], 0.45)
     d.riga("M2.8,-1.6 Q3.6,-3.0 2.6,-3.2", INK, 0.35)
-    return dict(mani=[(1.6, -1.2)], box=(-4, -8.5, 20.5, 6.5))
+    return dict(box=(-4, -8.5, 20.5, 6.5))
 
 
 def rampino(d):
@@ -191,18 +194,18 @@ def rampino(d):
     d.poli([(19.8, -0.6), (22.4, 0), (19.8, 0.6)], "acciaio")
     d.rect(7.5, -0.6, 3.8, 1.2, "bianco", r=0.6, tinta=True)
     d.riga("M-2,0.7 L12,0.7", COL["ferro"][2], 0.4)
-    return dict(mani=[(9.0, -1.8), (5.3, -2.6)], box=(-5, -7.5, 25, 7.5))
+    return dict(box=(-5, -7.5, 25, 7.5))
 
 
 def bastione(d):
     # Bastione: il concio che si posa, pietra scura cerchiata d'ottone come i
-    # blocchi in mappa (terreno.fp), retto davanti con le due mani
+    # blocchi in mappa (terreno.fp), retto davanti con le due mani (impugnature.lua)
     d.rect(1.0, -3.4, 11.0, 6.8, "pietra", r=0.8)
     d.rect(0.6, 2.0, 11.8, 1.8, "ottone", r=0.5)                                     # bordo sopra
     d.rect(0.6, -3.8, 11.8, 1.6, "ottone", r=0.5)                                    # bordo sotto
     d.riga("M1.4,-0.2 L11.6,-0.2 M4.6,-2.2 L4.6,-0.2 M8.4,-0.2 L8.4,2.0", COL["pietra"][0], 0.45)
     d.cerchio(6.5, 0.9, 0.8, "bianco", tinta=True)
-    return dict(mani=[(9.5, -3.4), (3.5, -3.4)], box=(-1, -6, 14, 6))
+    return dict(box=(-1, -6, 14, 6))
 
 
 def maglio(d):
@@ -222,7 +225,7 @@ def maglio(d):
     d.riga("M5,-1 L5.8,1 M6.6,-1 L7.4,1 M8.2,-1 L9,1", COL["cuoio"][0], 0.3)
     d.riga(f"M{R - T + 1},{A / 2 - 1} L{R - 1},{A / 2 - 1}", COL["pietra"][2], 0.5)
     d.riga(f"M{R - T + 2.2},-1.8 L{R - T + 3.6},-0.6 L{R - T + 3},0.8", COL["pietra"][0], 0.35)
-    return dict(mani=[(12.0, 0.0), (6.5, 0.0)], box=(-6, -A / 2 - 3, R + 2.5, A / 2 + 2.5))
+    return dict(box=(-6, -A / 2 - 3, R + 2.5, A / 2 + 2.5))
 
 
 def affondo(d):
@@ -237,7 +240,7 @@ def affondo(d):
     d.path(f"M{R - 6.4},-3.2 Q{R - 3},-3.4 {R - 1.2},-5.2 Q{R - 3.4},-5.4 {R - 6.4},-4.8 Z", "rosso")
     d.cerchio(R - 9.6, 0, 0.75, "bianco", tinta=True, contorno=False)
     d.riga(f"M-6,0.45 L{R - 9},0.45", COL["legno"][2], 0.35)
-    return dict(mani=[(9.0, 0.0), (2.0, 0.0)], box=(-9.5, -7.5, R + 2.5, 7.5))
+    return dict(box=(-9.5, -7.5, R + 2.5, 7.5))
 
 
 # I colpi in volo: origine nel centro, x nel verso in cui vanno
@@ -349,10 +352,11 @@ def main():
     lua = ["-- Fatto da strumenti/grafica/armi.py, non modificare a mano.",
            "-- Le armi in unità del mondo: origine nella spalla (i colpi nel centro),",
            "-- x avanti e y in su. Per ogni arma: immagine (tinta: le parti col colore",
-           "-- della squadra), centro (x, y) e misura (w, h) e dove vanno i pugni",
-           "-- (l'ultimo è sull'impugnatura).",
+           "-- della squadra), centro (x, y) e misura (w, h). Dove vanno i pugni:",
+           "-- battaglia/impugnature.lua.",
            "return {", "\tarmi = {"]
     foglio = []
+    prese = impugnature()
     for nome, (fn, rot) in ARMI.items():
         d = Disegno()
         info = fn(d)
@@ -360,11 +364,10 @@ def main():
         base, tinta, w, h = esporta(nome, d, box, immagini)
         ic = icona(nome, d, box, rot, immagini) if rot is not None else None
         cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
-        mani = ", ".join(f"{{ {x}, {y} }}" for x, y in info["mani"])
         t = f'"{nome}_tinta"' if tinta else "nil"
         lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {cx:.2f}, y = {cy:.2f}, '
-                   f'w = {box[2] - box[0]:.2f}, h = {box[3] - box[1]:.2f}, mani = {{ {mani} }} }},')
-        foglio.append((nome, base, tinta, ic, box, info["mani"]))
+                   f'w = {box[2] - box[0]:.2f}, h = {box[3] - box[1]:.2f} }},')
+        foglio.append((nome, base, tinta, ic, box, prese.get(nome, [])))
     lua.append("\t},")
     lua.append("\tcolpi = {")
     colpi = []
@@ -388,6 +391,15 @@ def main():
             f.write(f'images {{\n  image: "/assets/armi/{n}.png"\n}}\n')
         f.write("margin: 0\nextrude_borders: 2\ninner_padding: 0\n")
     anteprima(foglio, colpi)
+
+
+def impugnature():
+    # battaglia/impugnature.lua: nome = { { x, y }, ... }
+    prese = {}
+    with open(PRESE) as f:
+        for nome, punti in re.findall(r"^\s*(\w+)\s*=\s*\{(.*)\},?\s*$", f.read(), re.M):
+            prese[nome] = [(float(x), float(y)) for x, y in re.findall(r"\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}", punti)]
+    return prese
 
 
 def tingi(im, rgb):

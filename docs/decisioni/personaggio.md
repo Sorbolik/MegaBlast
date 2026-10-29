@@ -68,6 +68,14 @@ Cloudflare dal main.
 | 28 ott | Editor nostro + stampino per le skin; hitbox e perni modificabili; **il diavoletto di Gabriella torna come skin "personaggio"** con contorno nero spesso. | PR #55 |
 | 28 ott | Dimensione del disegno svincolata dalla fisica (`game.DISEGNO_H`). | PR #55 |
 | 29 ott | L'editor entra nel pannello di Sergio come micro-frontend e avrà un connettore per i pezzi dello stampino (aggiungere/togliere pezzi a animazioni, personaggi, armi, skin). | docs/roadmap.md |
+| 29 ott | Arma in mano **il più possibile** (Sergio): clip a parte con l'arma (`fermo_arma`, `corsa_arma`, `aria_arma`, `sale_arma`, `scende_arma`, `mira`), partite come copie di quelle senza; se una manca si usa quella senza. Chi non è di turno alterna a caso fermo (con scenette) e fermo con l'arma, ogni 4–12 s (Claude: tempi e niente scenette con l'arma in mano). | PR #61 |
+| 29 ott | **Secchio dei pezzi** (Sergio: "tutto separato e tutto piazzabile", niente caselle): nell'editor tutti i pezzi (testa, busto, braccia, manine, gambe, ala, coda) stanno in un secchio; trascinati sul palco vanno in scena dove li lasci, dal palco al secchio escono, a chiave nella clip (canali `mostra_*`). Le manine (il pezzo `pugno`) sono pezzi liberi sul corpo, che le clip spostano e girano; da ferme stanno dove finiscono le braccia. Con l'arma in mano il pugno resta sull'arma anche senza braccio. | PR #61 |
+| 29 ott | La spalla dell'arma (dove l'arma gira mirando) è segnata nell'editor ed è un perno come gli altri (`arma` in perni.lua): da mirare dritto l'arma resta dov'era. Il canale `arma` gira l'arma quando non si mira. | PR #61 |
+| 29 ott | La fiammella non è un pezzo del personaggio: ce l'hanno tutti, qualunque testa indossino. Ha **la sua clip** (`fiammella`: gira, larga, alta, spostamento) che il gioco suona sempre sopra le altre; le tre forme a scatti e la grandezza su chi è di turno restano nel codice. Nelle altre clip dell'editor è spenta di default (casella "fiammella"). | PR #61 |
+| 29 ott | Editor, sezione Strumenti: pezzo o personaggio nuovo da un'immagine (va a Claude, che scrive la scheda per Codex: niente prompt da copiare) e ritocco dei pezzi dello stampino (sposta e ingrandisci; `taglia.py --ritocchi` li rimette nelle pelli). Lo zoom del palco non dipende più dai canali aperti. | PR #61 |
+| 29 ott | Impugnature per arma fatte nell'editor: si trascinano i punti delle mani (canna e impugnatura) sull'arma e si sceglie quante mani (nessuna, una, due); file unico `client/battaglia/impugnature.lua` letto dal gioco, dall'editor e dall'anteprima delle armi (via le `mani` da `armi.py`). Una clip con l'arma può avere una versione solo per un'arma (`fermo_arma_mallet`, `mira_mallet`): il gioco la preferisce, se manca usa quella di tutte. Sergio d'accordo sulla proposta di Claude: impugnatura una volta per arma, varianti solo dove servono. | PR #62 |
+| 29 ott | Fiammella ufficiale: il disegno mandato da Sergio dall'editor (bianco e grigio col contorno nero, fiamma grande con goccia e scintilla), in `art/fiammella/fiammella.png`. Un disegno solo al posto delle tre forme a vettori alternate a scatti: si muove con la clip `fiammella`, il gioco tinge bianco e grigio col colore della squadra e la ingrandisce su chi è di turno. Usata così com'era, senza scheda per Codex (Claude). | PR #62 |
+| 29 ott | Braccia libere con l'arma (canale `arma_libera`, casella nell'editor): l'arma sta nella mano del braccio davanti con l'impugnatura sul pugno, e le braccia le anima la clip come senza arma; spento, le braccia si piegano da sole sull'arma. Mirando le braccia vanno sempre da sole (la mira le comanda). Maglio e Spada hanno le loro clip con l'arma (`*_mallet`, `*_sword`, partite come copie), le altre armi usano quelle di tutte (del lanciamissili). Richiesta di Sergio: scegliere gli arti con l'arma in mano e il perno dell'arma (in braccia libere è l'impugnatura). | PR #62 |
 
 ## Scartate, con il motivo
 
@@ -85,6 +93,13 @@ Cloudflare dal main.
 | Strato di contorno unico sull'immagine intera | Contorno cotto per pezzo; solo la coda usa una catena di bordi separata. |
 | Corpo ×2 (`ROBOT_H` 56) | Scalava tutto il mondo; Sergio l'ha ribaltato lo stesso giorno. |
 | Cambiare motore per avere editor migliori (Godot, Unity) | Vedi architettura.md: si resta su Defold. |
+| Ruotare i pezzi nel ritocco dello stampino (29 ott) | I pezzi non hanno un angolo: servirebbe ridisegnare l'immagine; per ora si spostano e si ingrandiscono. |
+| Strumento che scrive da solo i prompt per ChatGPT nell'editor (29 ott) | La regola è che i prompt li scrive Claude nelle schede per Codex: l'editor manda immagine e note, niente testo da copiare. |
+| Fiammella dentro le pelli o ridisegnata per ogni testa (29 ott) | È l'indicatore di chi gioca, uguale per tutti: resta un pezzo del gioco sopra la testa. |
+| Impugnature diverse per ogni fotogramma di ogni clip e di ogni arma (29 ott) | Proposta di Sergio, scartata insieme: lavoro moltiplicato per ogni arma nuova (se ne usciranno spesso) e le mani scivolerebbero sull'arma; si fa una volta per arma, e se un'arma deve muoversi diversa ha la sua versione della clip. |
+| Impugnature scritte nel codice delle armi (`armi.py`) (29 ott) | Si cambiavano solo a mano rigenerando le armi; ora le fa l'editor in un file solo. |
+| Tre forme della fiammella alternate a scatti (29 ott) | Con il disegno di Sergio la fiamma è una sola e la anima la clip; lo scatto fra tre forme diverse non serve più. |
+| Caselle per mostrare e togliere i pezzi, manine fisse in fondo alle braccia (29 ott) | Sergio: non va bene, i pezzi stanno in punti fissi; vuole vedere tutto separato e piazzabile. Sostituite dal secchio e dalle manine libere. |
 
 ## Aperte
 
@@ -92,4 +107,4 @@ Cloudflare dal main.
   non ancora arrivate.
 - Quanto può spingersi il vettoriale: tutto ciò che è piatto con gradienti
   semplici, niente texture pittoriche (risposta data, 26 ott).
-- Arma in mano dentro l'editor: non ancora.
+- Ritocchi dei pezzi di base (non delle pelli): ora solo le pelli.
