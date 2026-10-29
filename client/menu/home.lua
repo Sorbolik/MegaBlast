@@ -56,7 +56,7 @@ function M.new(colore)
 	local corpo = vuoto(0, 0, h.posa)
 	V.x, V.y, V.z = CORPO_K, CORPO_K, 1
 	gui.set_scale(corpo, V)
-	h.corpo = scoria.new(colore)
+	h.corpo = scoria.new(colore, scoria.PERSONAGGIO)
 	gui.set_parent(h.corpo.root, corpo)
 	scoria.set_enabled(h.corpo, true)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true }
