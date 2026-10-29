@@ -2339,8 +2339,9 @@ local function pointer_down(self, id, x, y)
 		return
 	end
 	-- sul telefono riportare la levetta a zero è scomodo: mentre si mira, un
-	-- tocco in qualsiasi punto dello schermo annulla la mira (e non fa altro)
-	if self.aim_pad.id and self.aiming then
+	-- tocco sulla metà destra dello schermo annulla la mira (e non fa altro);
+	-- la metà sinistra resta alla mano che cammina
+	if self.aim_pad.id and self.aiming and x >= W / 2 then
 		cancel_pad_aim(self)
 		self.pointers[id] = "cancelled"
 		return
