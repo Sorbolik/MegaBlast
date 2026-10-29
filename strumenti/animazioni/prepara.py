@@ -7,7 +7,8 @@ pelli disegnate sullo stampino (client/battaglia/pelli.lua), le
 animazioni di adesso (client/battaglia/animazioni.lua), l'altezza del disegno
 (client/sim/game.lua), le hitbox (client/sim/corpo.lua), i perni spostati
 (client/battaglia/perni.lua), le armi in mano (client/battaglia/armi.lua, immagini
-in client/assets/armi) e i colori delle squadre (client/ui/ui.lua), e scrive
+in client/assets/armi) con le loro impugnature (client/battaglia/impugnature.lua)
+e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
 salvano direttamente in client/battaglia/animazioni.lua) e si pubblica com'è
 come Artifact di claude.ai.
@@ -63,6 +64,7 @@ def main():
         "pelli": pelli,
         "perni": leggi("client/battaglia/perni.lua"),
         "armi": armi,
+        "impugnature": leggi("client/battaglia/impugnature.lua"),
         "armi_riposo": riposo,
         "stira": stira,
         "immagini": immagini,

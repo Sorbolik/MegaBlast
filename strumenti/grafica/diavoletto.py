@@ -219,22 +219,45 @@ def segmento_coda(i, d, bordo):
     return (-12, -28, L + 32, 28)
 
 
-def fiammella(d, n):
-    # tre fiammelle diverse, bianche e grigie: il gioco le tinge col colore della
-    # squadra e le alterna; perno alla base
-    forme = [
-        "M-14,0 Q-16,22 -6,30 Q-2,36 0,46 Q4,34 10,28 Q18,18 12,0 Z",
-        "M-13,0 Q-18,18 -10,26 Q-12,38 -4,44 Q2,34 8,32 Q16,22 13,0 Z",
-        "M-14,0 Q-14,20 -8,24 Q-6,32 2,40 Q12,30 8,26 Q18,14 13,0 Z",
-    ]
-    cuori = [
-        "M-6,2 Q-7,14 -2,20 Q0,26 2,26 Q6,20 5,12 Q4,6 4,2 Z",
-        "M-6,2 Q-8,12 -3,18 Q-2,24 1,24 Q5,18 5,10 Q5,4 4,2 Z",
-        "M-6,2 Q-7,12 -2,18 Q2,22 3,22 Q6,14 5,8 Q5,4 4,2 Z",
-    ]
-    d.path(forme[n], "fiamma", tinta=True)
-    d.path(cuori[n], "bianco", tinta=True, contorno=False)
-    return (-24, -8, 24, 56)
+# La fiammella: un disegno solo (art/fiammella/fiammella.png, bianco e grigio
+# col contorno nero, da un'immagine di Sergio), non a vettori. Il gioco tinge il
+# bianco e il grigio col colore della squadra e la anima con la sua clip.
+# Perno alla base: la punta della fiamma grande sta sopra la testa.
+FIAMMA = os.path.join(RADICE, "art", "fiammella", "fiammella.png")
+FIAMMA_H = 76      # altezza in unità del disegno
+FIAMMA_SOTTO = 8   # quanto scende sotto il perno
+
+
+class Immagine:
+    """Un pezzo disegnato a mano: l'immagine e lo strato da tingere, con lo
+    stesso gruppo SVG dei pezzi a vettori per l'anteprima."""
+
+    def __init__(self, base, tinta, box):
+        self.base, self.tinta, self.box = base, tinta, box
+
+    def gruppo(self, tinta=False, transform=""):
+        import base64
+        import io
+        x0, y0, x1, y1 = self.box
+        b = io.BytesIO()
+        (self.tinta if tinta else self.base).save(b, "PNG")
+        dati = base64.b64encode(b.getvalue()).decode()
+        return (f'<g transform="{transform}"><image href="data:image/png;base64,{dati}" x="{x0}" y="{-y1}" '
+                f'width="{x1 - x0}" height="{y1 - y0}" transform="scale(1,-1)"/></g>')
+
+
+def fiammella_immagine():
+    im = Image.open(FIAMMA).convert("RGBA")
+    h = FIAMMA_H
+    w = round(h * im.width / im.height, 1)
+    box = (-w / 2, -FIAMMA_SOTTO, w / 2, h - FIAMMA_SOTTO)
+    im = im.resize((round(w * PX), round(h * PX)), Image.LANCZOS)
+    # lo strato da tingere: il bianco e il grigio dentro il contorno, in grigio
+    lum = im.convert("L")
+    dentro = lum.point(lambda v: max(0, min(255, (v - 64) * 255 // 51)))
+    from PIL import ImageChops
+    tinta = Image.merge("RGBA", (lum, lum, lum, ImageChops.multiply(dentro, im.getchannel("A"))))
+    return Immagine(im, tinta, box)
 
 
 def paracadute(d):
@@ -275,9 +298,6 @@ PEZZI = {
     "omero_dietro": lambda d: osso(d, 0, False, True),
     "avambraccio_dietro": lambda d: osso(d, 1, False, True),
     "ala": ala,
-    "fiammella_1": lambda d: fiammella(d, 0),
-    "fiammella_2": lambda d: fiammella(d, 1),
-    "fiammella_3": lambda d: fiammella(d, 2),
     "paracadute": paracadute,
 }
 for i in range(len(CODA)):
@@ -299,6 +319,14 @@ def esporta(nome, fn, immagini):
     return dict(d=d, tinta=tinta, x=(x0 + x1) / 2, y=(y0 + y1) / 2, w=x1 - x0, h=y1 - y0)
 
 
+def esporta_immagine(nome, im, immagini):
+    im.base.save(os.path.join(OUT, nome + ".png"), optimize=True)
+    im.tinta.save(os.path.join(OUT, nome + "_tinta.png"), optimize=True)
+    immagini += [nome, nome + "_tinta"]
+    x0, y0, x1, y1 = im.box
+    return dict(d=im, tinta=True, x=(x0 + x1) / 2, y=(y0 + y1) / 2, w=x1 - x0, h=y1 - y0)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for f in os.listdir(OUT):
@@ -307,6 +335,7 @@ def main():
     immagini, pezzi = [], {}
     for nome, fn in PEZZI.items():
         pezzi[nome] = esporta(nome, fn, immagini)
+    pezzi["fiammella"] = esporta_immagine("fiammella", fiammella_immagine(), immagini)
     lua = ["-- Fatto da strumenti/grafica/diavoletto.py, non modificare a mano.",
            "-- Il diavoletto a pezzi, in unità del disegno (ALTEZZA dai piedi alla cima",
            "-- della testa, y verso l'alto, guarda a destra). Per ogni pezzo: immagine",
@@ -387,7 +416,7 @@ def anteprima(pezzi):
         metti("braccio", sx, sy, math.radians(192) if para else -0.15, ox=ox)
         metti("testa", *PUNTI["collo"], ox=ox)
         cx, cy = PUNTI["collo"]
-        metti("fiammella_1", cx + PUNTI["cima"][0], cy + PUNTI["cima"][1], ox=ox)
+        metti("fiammella", cx + PUNTI["cima"][0], cy + PUNTI["cima"][1], ox=ox)
     col = dict(COL)
     col["fiamma"] = squadra
     col["bianco"] = ("#ff8a8e", "#ffc0c2", "#ffffff")

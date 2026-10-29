@@ -50,24 +50,6 @@ images {
   image: "/assets/diavoletto/ala.png"
 }
 images {
-  image: "/assets/diavoletto/fiammella_1.png"
-}
-images {
-  image: "/assets/diavoletto/fiammella_1_tinta.png"
-}
-images {
-  image: "/assets/diavoletto/fiammella_2.png"
-}
-images {
-  image: "/assets/diavoletto/fiammella_2_tinta.png"
-}
-images {
-  image: "/assets/diavoletto/fiammella_3.png"
-}
-images {
-  image: "/assets/diavoletto/fiammella_3_tinta.png"
-}
-images {
   image: "/assets/diavoletto/paracadute.png"
 }
 images {
@@ -102,6 +84,12 @@ images {
 }
 images {
   image: "/assets/diavoletto/coda_5_bordo.png"
+}
+images {
+  image: "/assets/diavoletto/fiammella.png"
+}
+images {
+  image: "/assets/diavoletto/fiammella_tinta.png"
 }
 images {
   image: "/assets/pelli/gabriella_ala.png"

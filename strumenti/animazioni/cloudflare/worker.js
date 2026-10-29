@@ -12,6 +12,7 @@ const FILE = {
 	animazioni: "client/battaglia/animazioni.lua",
 	corpo: "client/sim/corpo.lua",
 	perni: "client/battaglia/perni.lua",
+	impugnature: "client/battaglia/impugnature.lua",
 	ritocchi: "strumenti/stampino/ritocchi.json",
 };
 
