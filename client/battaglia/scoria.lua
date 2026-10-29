@@ -815,10 +815,27 @@ function M.update(s, dt, st)
 	end
 
 	-- l'arma: in mano a chi è di turno o mira (e a chi aspetta, ogni tanto); le
-	-- braccia vanno sull'arma
+	-- braccia vanno sull'arma. Con le braccia libere (fuori dalla mira) l'arma
+	-- sta nella mano del braccio davanti, l'impugnatura sul pugno
 	local due = false
+	local libera = in_mano and not mira and po.arma_libera > 0.5
 	vedi(s, s.spalla, in_mano)
-	if in_mano then
+	if libera then
+		local b = s.braccia[1]
+		local c, sn = cos(b), sin(b)
+		local jx, jy = J.braccio[1] + po.braccio_a_x, J.braccio[2] + po.braccio_a_y
+		local rx, ry = MANO_A[1] - J.braccio[1], MANO_A[2] - J.braccio[2]
+		local hx, hy = (jx + rx * c - ry * sn) * s.k * lx, (jy + rx * sn + ry * c) * s.k * q
+		pos(s.spalla, hx, hy)
+		rot(s.spalla, a + b + po.arma)
+		local mani = PRESE[s.arma_scelta] or {}
+		local g = mani[#mani]
+		local ox = -min(s.x[KICK] * s.w * 0.6, PRESA * s.h / 200 / game.CORPO * 0.8)
+		pos(s.armi[s.arma_scelta], ox - (g and g[1] or 0), -(g and g[2] or 0))
+		pos(s.mano_a.pugno, hx, hy)
+		rot(s.mano_a.pugno, b)
+		s.pugno_presa = s.mano_a.pugno
+	elseif in_mano then
 		-- la spalla sale e scende con la forma; la spalla è dentro il corpo,
 		-- che è inclinato: l'inclinazione non cambia la mira
 		pos(s.spalla, J.arma[1] * s.k * lx, J.arma[2] * s.k * q)
@@ -831,17 +848,19 @@ function M.update(s, dt, st)
 		local ox = -min(s.x[KICK] * s.w * 0.6, PRESA * s.h / 200 / game.CORPO * 0.8) - d[1] * s.k
 		local oy = -d[2] * s.k
 		pos(s.armi[s.arma_scelta], ox, oy)
+		rot(s.mano_a.pugno, 0)
 		due = braccia_arma(s, aa, q, ox, oy)
 	end
 	-- i pezzi che la clip mostra o toglie: le braccia sull'arma (i pugni restano
 	-- sull'arma), quelle che pendono, le manine, la testa, il busto, le gambe,
 	-- l'ala, la coda
 	local ba, bd = po.mostra_braccio_a > 0.5, po.mostra_braccio_d > 0.5
-	vedi(s, s.braccio_a, not in_mano)
+	local ik = in_mano and not libera
+	vedi(s, s.braccio_a, not ik)
 	vedi(s, s.braccio_a_img, ba)
 	vedi(s, s.manina_a, po.mostra_manina_a > 0.5)
-	for i = 1, 4 do vedi(s, s.mano_a.ossa[i], in_mano and ba) end
-	if not in_mano then vedi(s, s.mano_a.pugno, false) end
+	for i = 1, 4 do vedi(s, s.mano_a.ossa[i], ik and ba) end
+	if not in_mano then vedi(s, s.mano_a.pugno, false) elseif libera then vedi(s, s.mano_a.pugno, ba) end
 	vedi(s, s.braccio_d, not due)
 	vedi(s, s.braccio_d_img, bd)
 	vedi(s, s.manina_d, po.mostra_manina_d > 0.5)

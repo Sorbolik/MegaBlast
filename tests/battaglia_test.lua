@@ -350,6 +350,24 @@ do
 	A2.fermo_arma_mallet = nil
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
+	-- braccia libere: l'arma va nella mano del braccio davanti che pende,
+	-- l'impugnatura sul pugno; niente braccia piegate sull'arma
+	A2.fermo_arma_sword = { durata = 1, ciclo = true, tracce = { arma_libera = { 0, 1, 2 }, braccio_a = { 0, -0.8, 2 } } }
+	package.loaded["battaglia.scoria"] = nil
+	local sc3 = require "battaglia.scoria"
+	local v = sc3.new(vec(1, 0.2, 0.3, 1))
+	sc3.set_weapon(v, "sword")
+	for _ = 1, 60 do sc3.update(v, 1 / 60, st2) end
+	check(v.braccio_a.enabled and v.braccio_a_img.enabled and not v.mano_a.ossa[1].enabled and v.mano_a.pugno.enabled,
+		"braccia libere: il braccio che pende tiene l'arma, niente braccia piegate")
+	check(math.abs(v.spalla.pos.x - v.mano_a.pugno.pos.x) < 1e-6 and math.abs(v.spalla.pos.y - v.mano_a.pugno.pos.y) < 1e-6
+		and math.abs(math.rad(v.mano_a.pugno.euler.z) - v.braccia[1]) < 1e-6,
+		"braccia libere: l'arma è nel pugno e gira col braccio")
+	sc3.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true, aim = 0.3 })
+	check(v.mano_a.ossa[1].enabled and not v.braccio_a.enabled, "braccia libere: mirando le braccia tornano sull'arma")
+	A2.fermo_arma_sword = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
 	local PR = require "battaglia.impugnature"
 	for nome in pairs(require("battaglia.armi").armi) do
 		check(PR[nome] ~= nil and #PR[nome] <= 2, nome .. ": ha le sue impugnature (al più due mani)")
