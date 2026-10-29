@@ -1209,7 +1209,7 @@ local function start_missione(self, id, picks)
 		menu.scelta.show(self.scelta, d, nomi, colori)
 		return
 	end
-	new_match(self, missioni.partita(r, os.time(), picks))
+	new_match(self, missioni.partita(r, os.time(), picks, profilo.aiuto(self.profilo, id)))
 	missioni.prepara(r, self.g)
 	-- i custodi e gli avversari col loro nome
 	for i, p in ipairs(r.l.giocatori) do
@@ -1254,6 +1254,8 @@ local function missione_update(self, dt)
 			self.fine_t, self.fine_record = PODIO_ATTESA, record
 		end
 	elseif r.esito == "fallita" then
+		profilo.fallita(self.profilo, r.l.id)
+		profilo.salva(self.profilo)
 		show_message(self, "Riprova")
 		self.missione_attesa = 1.5
 	end

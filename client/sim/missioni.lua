@@ -5,7 +5,8 @@
 -- area 3). Lua puro: il gui_script mostra la riga, l'obiettivo e le stelle.
 --
 --   local r = missioni.nuova("rampino")
---   local seed, mappa, opts = missioni.partita(r)   -- per game.new (o replay.nuova)
+--   local seed, mappa, opts = missioni.partita(r, seed, picks, aiuto)  -- per game.new (o replay.nuova);
+--                                                   aiuto: dopo tante perse, avversari più morbidi
 --   missioni.prepara(r, g)                          -- subito dopo, una volta
 --   missioni.evento(r, g, e, bots)                  -- per ogni evento della simulazione (bots: di replay.partita)
 --   local esito = missioni.tick(r, g)               -- a ogni tick: nil, "fatta" o "fallita"
@@ -110,14 +111,20 @@ end
 
 -- seme, mappa e opzioni di game.new. picks: i giocatori usciti dal draft
 -- (menu/scelta.lua), per le missioni che lo fanno fare
-function M.partita(r, seed, picks)
+-- l'aiuto silenzioso: i bot scendono di un livello e partono con meno vita
+local PIU_FACILE = { difficile = "normale", normale = "facile", facile = "facile" }
+local AIUTO_VITA = 0.75
+
+function M.partita(r, seed, picks, aiuto)
 	local l = r.l
 	local players = {}
+	r.aiuto = aiuto
 	for i, p in ipairs(l.giocatori) do
 		local q = {}
 		for k, v in pairs(p) do
 			if k ~= "nome" then q[k] = v end
 		end
+		if aiuto and q.bot then q.bot = PIU_FACILE[q.bot] end
 		if picks and picks[i] then
 			q.pick, q.secondary, q.tool = picks[i].pick, picks[i].secondary, picks[i].tool or q.tool
 		end
@@ -143,6 +150,13 @@ function M.prepara(r, g)
 	if l.secondi then g.match_left = l.secondi * 60 end
 	for i, v in pairs(l.vita or {}) do
 		g.robots[i].hp, g.robots[i].max_hp = v, math.max(v, g.robots[i].max_hp)
+	end
+	if r.aiuto then
+		for i, p in ipairs(l.giocatori) do
+			-- anche la vita piena: la barra resta piena, non si vede
+			local rb = g.robots[i]
+			if p.bot then rb.hp = math.floor(rb.hp * AIUTO_VITA); rb.max_hp = rb.hp end
+		end
 	end
 	for i, v in pairs(l.punti or {}) do g.robots[i].points = v end
 	g:pop_events()

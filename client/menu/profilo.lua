@@ -20,7 +20,7 @@ M.XP_RICONOSCIMENTO = 25
 M.XP_BASE, M.XP_PASSO = 100, 25
 
 function M.nuovo()
-	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1, stelle = {} }
+	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1, stelle = {}, fallite = {} }
 	for i = 1, assetto.LOADOUTS do p.assetti[i] = assetto.new() end
 	return p
 end
@@ -76,6 +76,18 @@ end
 -- Missioni della campagna e lezioni (sim/campagna.lua): le stelle migliori di ognuna, 0..3
 function M.missione(p, id, stelle)
 	p.stelle[id] = math.max(p.stelle[id] or 0, stelle)
+	p.fallite[id] = nil
+end
+
+-- Una missione persa: dalla terza di fila gli avversari si danno una calmata
+-- (sim/missioni.lua, aiuto), senza dirlo
+M.AIUTO_DOPO = 3
+function M.fallita(p, id)
+	p.fallite[id] = (p.fallite[id] or 0) + 1
+end
+
+function M.aiuto(p, id)
+	return (p.fallite[id] or 0) >= M.AIUTO_DOPO
 end
 
 -- Tutte le stelle prese (aprono i capitoli della campagna)
@@ -102,6 +114,7 @@ function M.carica()
 	-- i profili salvati prima della campagna tenevano le stelle delle lezioni in p.lezioni
 	p.stelle = p.stelle or p.lezioni or {}
 	p.lezioni = nil
+	p.fallite = p.fallite or {}
 	return p
 end
 

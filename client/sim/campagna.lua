@@ -269,7 +269,7 @@ local GIRONE_1 = {
 		titolo = "Giù dal bordo",
 		scopo = "I bersagli non si feriscono: buttali giù dai loro scogli",
 		-- la tua piattaforma e tre scogli stretti sopra il vuoto
-		arena = { { 760, 300, 400, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 700, 70, 24 } },
+		arena = { { 760, 300, 400, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 620, 70, 24 } },
 		spawns = { { x = 960, from = 600 }, { x = 455, from = 600 }, { x = 1465, from = 600 }, { x = 960, from = 1000 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 2, dummy = true }, { team = 2, dummy = true } },
 		vita = { [2] = 999, [3] = 999, [4] = 999 },
@@ -300,7 +300,7 @@ local GIRONE_1 = {
 		},
 		vita = { [2] = 180 },
 		turni = 10,
-		stelle = { turni = 7, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
+		stelle = { turni = 8, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il Fabbro" } },
 	},
 }

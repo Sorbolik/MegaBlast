@@ -313,5 +313,21 @@ do
 	check(ticks < 60 * 60 * 5, "guidata: dura meno di 5 minuti (" .. math.floor(ticks / 60) .. " s)")
 end
 
+-- L'aiuto dopo tante perse: il Fabbro scende di livello e parte con meno vita,
+-- ma con la barra piena (non si vede)
+do
+	local function fabbro(aiuto)
+		local r = missioni.nuova("il_fabbro")
+		local seed, mappa, opts = missioni.partita(r, 7, nil, aiuto)
+		local g = game.new(seed, mappa, opts)
+		missioni.prepara(r, g)
+		return opts.players[2].bot, g.robots[2]
+	end
+	local liv, rb = fabbro(false)
+	local liv_aiuto, rb_aiuto = fabbro(true)
+	check(liv == "normale" and liv_aiuto == "facile", "aiuto: il bot scende di un livello")
+	check(rb_aiuto.hp < rb.hp and rb_aiuto.hp == rb_aiuto.max_hp, "aiuto: meno vita, barra piena")
+end
+
 print(failures == 0 and "\ntutti i test passati" or ("\n" .. failures .. " test falliti"))
 os.exit(failures == 0 and 0 or 1)
