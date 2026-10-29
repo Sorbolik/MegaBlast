@@ -46,7 +46,7 @@ M.NODES = {
 		desc = "Un salto in aria", effects = { { stat = "air_jumps", add = 1 } } },
 	-- Difesa (24)
 	{ id = "hp", branch = "defense", row = 1, ranks = 4, cost = 2, name = "Crosta spessa",
-		desc = "Vita +3", effects = { { stat = "max_hp", add = 3 } } },
+		desc = "Vita +2", effects = { { stat = "max_hp", add = 2 } } },
 	{ id = "fall", branch = "defense", row = 1, ranks = 2, cost = 2, name = "Ossa di pietra",
 		desc = "Danno da caduta -5%", effects = { { stat = "fall_damage_mul", mul = 0.95 } } },
 	{ id = "teleport", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Globo di riserva",

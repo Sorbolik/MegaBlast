@@ -24,7 +24,7 @@ local max, min, ceil = math.max, math.min, math.ceil
 
 -- i nomi del cartellino
 M.NOMI = { missile = "LANCIARUNE", grenade = "UOVO DI FIAMMA", shards = "SCIAME DI SCHEGGE", punch = "PUGNO DEL TITANO",
-	sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", hook = "RAMPINO",
+	sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", bellows = "MANTICE", hook = "RAMPINO",
 	wall = "BASTIONE", teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO" }
 
 -- I colori delle fasi del turno, quelli della barra di prima
@@ -46,6 +46,9 @@ local BINARIO = vmath.vector4(1, 1, 1, 0.1)
 local NUMERO, PAROLA, OROLOGIO = 2.4, 0.6, 1.0   -- scale di ui.testo
 local GLOBI, GLOBO_VOLO, GLOBO_DOPO = 6, 0.55, 0.09
 M.GLOBI = GLOBI   -- globi che volano insieme, al massimo
+-- velocità del "pling" di ogni globo che arriva al teletrasporto: sale di una
+-- terza maggiore, poi di una quinta e un'ottava (do, mi, sol, do...)
+M.GLOBO_TONI = { 1, 1.26, 1.5, 2, 2.52, 3 }
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(1, 1, 1, 1)

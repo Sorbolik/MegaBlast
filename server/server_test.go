@@ -124,6 +124,46 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 	}
 }
 
+// L'uncino del Rampino vola: nello stato c'è finché è in volo (gs, gx, gy), così
+// online il client disegna il filo che si allunga; poi arriva l'evento "hook".
+func TestHookShotInSnapshot(t *testing.T) {
+	sim := newTestSim(t, 42, "forgia")
+	for i := 0; i < 60; i++ {
+		sim.Step(Input{})
+	}
+	sim.Events()
+	if err := sim.Step(Input{Fire: true, Angle: 1.3, Power: 1, Weapon: "hook"}); err != nil {
+		t.Fatal(err)
+	}
+	var st struct {
+		R []struct {
+			GS bool    `json:"gs"`
+			GX float64 `json:"gx"`
+			GY float64 `json:"gy"`
+		} `json:"r"`
+	}
+	flying, ended := 0, false
+	for i := 0; i < 60 && !ended; i++ {
+		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
+			t.Fatal(err)
+		}
+		if st.R[0].GS && st.R[0].GY != 0 {
+			flying++
+		}
+		sim.Step(Input{})
+		for _, e := range sim.Events() {
+			var ev map[string]any
+			json.Unmarshal(e, &ev)
+			if ev["type"] == "hook" {
+				ended = true
+			}
+		}
+	}
+	if flying < 2 || !ended {
+		t.Fatalf("l'uncino non vola (stati in volo %d, finito %v)", flying, ended)
+	}
+}
+
 // Uno stato Lua riusato deve dare la stessa partita di uno nuovo: la copia
 // della mappa in net.lua non deve cambiare niente.
 func TestEngineReuseIsDeterministic(t *testing.T) {

@@ -1,0 +1,20 @@
+# Mantice (secondaria): il soffio della forgia spinge via chi hai davanti, con
+# poco danno e nessun effetto di stato. Con prova_secondaria bellows la barra ha
+# Lanciarune, Lama, Mantice; il secondo robot parte 60 pixel a destra.
+imposta prova_secondaria bellows
+imposta prova_vicino 60
+imposta zoom 2
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+premi 3                             # Mantice
+aspetta 0.4
+zoom 01_mantice_in_mano
+mira 150 30 0.4 02_mira             # a destra, un po' in su
+aspetta_evento bellows 2
+aspetta 0.06
+zoom 03_soffio
+aspetta 0.5
+foto 04_soffiato_via

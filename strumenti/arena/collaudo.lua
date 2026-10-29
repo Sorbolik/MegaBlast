@@ -52,7 +52,7 @@ local function gioca(l, livello, seme, senza)
 			if e.type == "turn" and e.robot == missioni.GIOCATORE then bots[1].piano = c.piano end
 		end
 		local esito = missioni.tick(r, g)
-		if esito then return esito, r.st.turni, missioni.stelle(r) end
+		if esito then return esito, r.st.turni, missioni.quante(missioni.stelle(r)) end
 	end
 	return "tetto", r.st.turni, 0
 end

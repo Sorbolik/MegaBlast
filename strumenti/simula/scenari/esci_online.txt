@@ -13,7 +13,7 @@ aspetta 2
 tocca 62 658                        # rotellina: online la partita non si ferma
 aspetta 0.5
 foto 01_rotellina
-tocca 236 658                       # ESCI DALLA PARTITA
+tocca 408 658                       # ESCI DALLA PARTITA
 aspetta_stato modo=menu 3
 aspetta 1
 foto 02_home
