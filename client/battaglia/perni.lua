@@ -3,4 +3,9 @@
 -- gira rispetto allo scheletro (battaglia/diavoletto.lua). I pezzi del posto, di
 -- base e delle pelli, si spostano al contrario: fermi restano dove sono.
 return {
+	braccio = { 7.6, 2 },
+	braccio_dietro = { -3.9, 1.4 },
+	gamba = { 4.3, -1.5 },
+	gamba_dietro = { -1.8, -1.5 },
+	ala = { -0.9, -7.7 },
 }
