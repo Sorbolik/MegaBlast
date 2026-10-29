@@ -1,11 +1,18 @@
-# Una lezione (imposta prova_missione tonante): nell'HUD solo quello che serve
-# (Lanciarune e Tonante, niente teletrasporto né paracadute), lo scopo sopra il
-# diavoletto e il tempo fermo finché non si toccano i comandi; poi si cammina e
-# il tempo parte.
+# Una lezione guidata (imposta prova_missione tonante): nell'HUD solo quello che
+# serve (Lanciarune e Tonante, niente teletrasporto né paracadute), lo scopo
+# sopra il diavoletto e il tempo fermo finché non si toccano i comandi. Poi la
+# riga mette in luce il Tonante e il tempo aspetta che lo scegli; poi il salto
+# (sul computer pulsa il tasto SPAZIO) e solo saltando il tempo parte.
 imposta prova_missione tonante
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 3
 foto 01_tempo_fermo                  # dopo 3 s il cronometro è ancora pieno
-tieni destra 0.5
+tieni destra 0.3                     # letto lo scopo: il suggerimento
 aspetta 2
-foto 02_tempo_partito
+foto 02_tonante_in_luce              # anello sul Tonante, tempo ancora fermo
+premi 2                              # il Tonante (seconda arma della barra)
+aspetta 2
+foto 03_salta                        # SPAZIO che pulsa, tempo ancora fermo
+premi space
+aspetta 1.5
+foto 04_tempo_partito

@@ -12,6 +12,8 @@
 --   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
 --   targa.annuncio(t, testo)              -- una scritta che sale sopra il nome e svanisce
 --   targa.riga(t, testo)                  -- il suggerimento delle missioni, sopra tutto ("" = niente)
+--   targa.battuta(t, testo)               -- quello che dice il personaggio: una nuvoletta che
+--                                          -- resta un paio di secondi e svanisce
 --   targa.posto(t, testo, corona)         -- il posto in classifica a sinistra della barra
 --                                          -- ("" = niente) e la Corona sopra il nome
 --
@@ -46,6 +48,10 @@ local RIGA_Y, RIGA_SCALA, RIGA_W = CORONA_Y + 30, 0.55, 1800
 -- e non sale fin sotto i punti e l'obiettivo in cima (battaglia/punteggio.lua):
 -- col robot in alto scende, sopra il robot
 local RIGA_CIMA = 130
+-- la nuvoletta delle battute: sopra la Corona, grande BATTUTA_SCALA sullo
+-- schermo a ogni zoom, col fondo scuro attorno (BATTUTA_BORDO px)
+local BATTUTA_Y, BATTUTA_SCALA, BATTUTA_BORDO, BATTUTA_T = CORONA_Y + 14, 0.42, 8, 2.6
+local NUVOLA = vmath.vector4(0.06, 0.05, 0.08, 0.82)
 
 local FONDO = ui.C.OMBRA
 local SCIA = ui.C.LUCE
@@ -112,6 +118,11 @@ function M.nuove(colori, nomi)
 		t.corona = ui.corona(0, CORONA_Y, nil, t.dentro)
 		gui.set_scale(t.corona, vmath.vector3(CORONA_SCALA, CORONA_SCALA, 1))
 		gui.set_enabled(t.corona, false)
+		-- il fondo della nuvoletta, con le forme (fuori dal nodo che sobbalza)
+		t.nuvola = rettangolo(t.barre, 0, BATTUTA_Y, 0, 0, NUVOLA)
+		gui.set_pivot(t.nuvola, gui.PIVOT_S)
+		gui.set_enabled(t.nuvola, false)
+		t.battuta_t = 0
 		tt[i] = t
 	end
 	-- poi i testi
@@ -130,6 +141,9 @@ function M.nuove(colori, nomi)
 		gui.set_line_break(t.riga, true)
 		gui.set_size(t.riga, vmath.vector3(RIGA_W, 0, 0))
 		t.riga_testo, t.riga_h = "", 0
+		t.battuta = testo(t.testi, 0, BATTUTA_Y, "", BATTUTA_SCALA, ui.C.TESTO)
+		gui.set_pivot(t.battuta, gui.PIVOT_S)
+		gui.set_enabled(t.battuta, false)
 		M.vita(t, 1, 1)
 	end
 	return tt
@@ -160,6 +174,16 @@ function M.riga(t, s)
 	gui.set_text(t.riga, s)
 	local font = gui.get_font_resource(gui.get_font(t.riga))
 	t.riga_h = s == "" and 0 or resource.get_text_metrics(font, s, { width = RIGA_W, line_break = true }).height
+end
+
+function M.battuta(t, s)
+	gui.set_text(t.battuta, s)
+	local font = gui.get_font_resource(gui.get_font(t.battuta))
+	local m = resource.get_text_metrics(font, s)
+	t.battuta_w, t.battuta_h = m.width, m.height
+	t.battuta_t = BATTUTA_T
+	gui.set_enabled(t.battuta, true)
+	gui.set_enabled(t.nuvola, true)
 end
 
 function M.annuncio(t, s)
@@ -206,6 +230,28 @@ function M.update(t, dt, x, y, scala, cam)
 		local _, tetto = camera.al_mondo(cam, 0, schermo.y1 - RIGA_CIMA - t.riga_h * RIGA_SCALA)
 		V.x, V.y = 0, math.min(RIGA_Y, (tetto - y) / scala)
 		gui.set_position(t.riga, V)
+	end
+
+	-- la nuvoletta: grande uguale sullo schermo, svanisce nell'ultimo mezzo secondo
+	if t.battuta_t > 0 then
+		t.battuta_t = t.battuta_t - dt
+		local zoom = scala * (cam and cam.s or 1)
+		local k, bordo = BATTUTA_SCALA / zoom, BATTUTA_BORDO / zoom
+		V.x, V.y, V.z = k, k, 1
+		gui.set_scale(t.battuta, V)
+		V.x, V.y, V.z = t.battuta_w * k + 2 * bordo, t.battuta_h * k + 2 * bordo, 0
+		gui.set_size(t.nuvola, V)
+		V.x, V.y = 0, BATTUTA_Y + bordo
+		gui.set_position(t.battuta, V)
+		local a = math.min(1, t.battuta_t * 2)
+		C.x, C.y, C.z, C.w = ui.C.TESTO.x, ui.C.TESTO.y, ui.C.TESTO.z, a
+		gui.set_color(t.battuta, C)
+		C.x, C.y, C.z, C.w = NUVOLA.x, NUVOLA.y, NUVOLA.z, NUVOLA.w * a
+		gui.set_color(t.nuvola, C)
+		if t.battuta_t <= 0 then
+			gui.set_enabled(t.battuta, false)
+			gui.set_enabled(t.nuvola, false)
+		end
 	end
 
 	-- la scia aspetta un attimo e poi si consuma fino alla vita
