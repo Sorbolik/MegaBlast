@@ -83,11 +83,11 @@ local function mano(name)
 	return s.pugno_presa
 end
 
--- dove deve stare la mano sull'impugnatura (battaglia/armi.lua), vista dalla
--- spalla, mirando ad a girati verso facing
-local DA = require("battaglia.armi").armi
+-- dove deve stare la mano sull'impugnatura (battaglia/impugnature.lua), vista
+-- dalla spalla, mirando ad a girati verso facing
+local PRESE = require "battaglia.impugnature"
 local function verso_mano(name, a, facing)
-	local m = DA[name].mani[#DA[name].mani]
+	local m = PRESE[name][#PRESE[name]]
 	local al = facing > 0 and a or math.pi - a
 	local x = m[1] * math.cos(al) - m[2] * math.sin(al)
 	local y = m[1] * math.sin(al) + m[2] * math.cos(al)
@@ -131,7 +131,7 @@ st.aim = nil
 -- in ordine fisso: pairs cambia ordine da un'esecuzione all'altra e, se
 -- l'ultima fosse la Lama, il controllo della morte qui sotto non la cambierebbe
 local nomi = {}
-for name in pairs(DA) do nomi[#nomi + 1] = name end
+for name in pairs(require("battaglia.armi").armi) do nomi[#nomi + 1] = name end
 table.sort(nomi)
 for _, name in ipairs(nomi) do
 	check(s.armi[name] ~= nil, name .. ": c'è il disegno in mano")
@@ -328,6 +328,32 @@ do
 	A2.fermo, A2.fermo_arma = vecchie.fermo, vecchie.fermo_arma
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
+end
+
+-- le clip solo per un'arma (fermo_arma_mallet) e le impugnature di ogni arma
+do
+	local A2 = require "battaglia.animazioni"
+	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
+	local function gira(nome)
+		package.loaded["battaglia.scoria"] = nil
+		local sc2 = require "battaglia.scoria"
+		local v = sc2.new(vec(1, 0.2, 0.3, 1))
+		sc2.set_weapon(v, nome)
+		for _ = 1, 3 do sc2.update(v, 1 / 60, st2) end
+		return math.rad(v.spalla.euler.z)
+	end
+	local maglio0, missile0 = gira("mallet"), gira("missile")
+	A2.fermo_arma_mallet = { durata = 1, ciclo = true, tracce = { arma = { 0, 1, 2 } } }
+	local maglio, missile = gira("mallet"), gira("missile")
+	check(maglio - maglio0 > 0.8 and math.abs(missile - missile0) < 0.05,
+		"clip dell'arma: il Maglio usa fermo_arma_mallet, le altre fermo_arma")
+	A2.fermo_arma_mallet = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+	local PR = require "battaglia.impugnature"
+	for nome in pairs(require("battaglia.armi").armi) do
+		check(PR[nome] ~= nil and #PR[nome] <= 2, nome .. ": ha le sue impugnature (al più due mani)")
+	end
 end
 
 -- Pelli (battaglia/pelli.lua) ---------------------------------------------------

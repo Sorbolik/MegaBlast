@@ -44,8 +44,10 @@
 -- pezzo gira, non dove sta da fermo.
 -- Le clip dicono anche quali pezzi si vedono (testa, busto, braccia, gambe,
 -- ala, coda e le manine staccate, pezzi liberi che le clip spostano e girano). Con l'arma in mano le clip sono quelle _arma (fermo_arma, corsa_arma,
--- aria_arma, sale_arma, scende_arma) e mirando da fermo la clip mira; se una
--- manca si usa quella senza arma. Chi non è di turno alterna a caso il fermo
+-- aria_arma, sale_arma, scende_arma) e mirando da fermo la clip mira; un'arma
+-- può averne di sue (fermo_arma_mallet, mira_mallet); se una manca si usa
+-- quella _arma, poi quella senza arma. Dove vanno i pugni sull'arma lo dice
+-- battaglia/impugnature.lua (anche questo dall'editor). Chi non è di turno alterna a caso il fermo
 -- (con le scenette) e il fermo con l'arma in mano.
 -- La fiammella ha il colore della squadra ed è l'indicatore di chi gioca: su chi
 -- è di turno è grande e accesa, sugli altri piccola e più scura.
@@ -57,6 +59,7 @@ local pose = require "battaglia.pose"
 local A = require "battaglia.animazioni"
 local PELLI = require "battaglia.pelli"
 local PERNI = require "battaglia.perni"
+local PRESE = require "battaglia.impugnature"
 
 local M = {}
 
@@ -501,10 +504,16 @@ end
 -- Le scenette dell'attesa: clip che non girano, una a caso ogni tanto
 local SCENETTE = { "naso", "sbadiglio", "guarda_coda" }
 
--- le clip con l'arma in mano; dove manca, quella senza
-local function con_arma(nome) return A[nome .. "_arma"] or A[nome] end
-local ARMATE = { fermo = con_arma("fermo"), corsa = con_arma("corsa"), aria = con_arma("aria"),
-	sale = con_arma("sale"), scende = con_arma("scende") }
+-- le clip con l'arma in mano, per ogni arma: prima quella solo per lei
+-- (fermo_arma_mallet, mira_mallet), poi quella _arma, poi quella senza arma
+local ARMATE = {}
+for name in pairs(DA) do
+	local function con(nome)
+		return A[nome .. "_arma_" .. name] or A[nome .. "_arma"] or A[nome]
+	end
+	ARMATE[name] = { fermo = con("fermo"), corsa = con("corsa"), aria = con("aria"),
+		sale = con("sale"), scende = con("scende"), mira = A["mira_" .. name] or A.mira }
+end
 
 -- chi non è di turno prende e posa l'arma a caso (mai a metà di una scenetta);
 -- con l'arma in mano niente scenette
@@ -513,7 +522,7 @@ local function attesa(s, dt)
 	if s.arma_t <= 0 and not s.scenetta then
 		s.con_arma, s.arma_t = not s.con_arma, ARMA_DA + ARMA_A * math.random()
 	end
-	if s.con_arma then return pose.aggiungi(s.posa, ARMATE.fermo, s.t, 1) end
+	if s.con_arma then return pose.aggiungi(s.posa, ARMATE[s.arma_scelta].fermo, s.t, 1) end
 	if s.scenetta then
 		local sc = A[s.scenetta]
 		s.scenetta_t = s.scenetta_t + dt
@@ -613,7 +622,7 @@ local function a_portata(s, sx, sy, hx, hy, c, sn, stira)
 	return spx + hx * c - hy * sn, spy + hx * sn + hy * c
 end
 
--- Le braccia sull'arma, piegate dalle spalle alle mani (battaglia/armi.lua):
+-- Le braccia sull'arma, piegate dalle spalle alle mani (battaglia/impugnature.lua):
 -- con due mani quella davanti va sulla canna (la prima) e quella di dietro
 -- sull'impugnatura (l'ultima); con una mano sola la tiene il braccio davanti e
 -- quello di dietro pende; senza mani (il Pugno è un guanto) il braccio davanti
@@ -621,13 +630,13 @@ end
 -- ox, oy: dove sta l'arma nel giunto della spalla (il rinculo e il perno
 -- spostato). Torna se le mani sono due
 local function braccia_arma(s, a, q, ox, oy)
-	local arma = DA[s.arma_scelta]
+	local mani = PRESE[s.arma_scelta] or {}
 	local c, sn = cos(a), sin(a)
 	local lx = (1 + (1 - q) * 0.8)
 	s.spx, s.spy = J.arma[1] * s.k * lx, J.arma[2] * s.k * q
-	local n = #arma.mani
+	local n = #mani
 	local sx, sy = PT.spalle[1] * s.k * lx, PT.spalle[2] * s.k * q
-	local m = arma.mani[1]
+	local m = mani[1]
 	local px, py
 	if m then
 		px, py = a_portata(s, sx, sy, m[1] + ox, m[2] + oy, c, sn, n >= 2 and STIRA_CANNA or STIRA_PRESA)
@@ -639,7 +648,7 @@ local function braccia_arma(s, a, q, ox, oy)
 	s.pugno_presa = s.mano_a.pugno
 	local due = n >= 2
 	if due then
-		m = arma.mani[n]
+		m = mani[n]
 		px, py = a_portata(s, -sx, sy, m[1] + ox, m[2] + oy, c, sn, STIRA_PRESA)
 		scale(s.arma_dietro, 1 / lx, 1 / q)
 		piega(s, s.mano_d, -sx, sy, px, py)
@@ -709,9 +718,11 @@ function M.update(s, dt, st)
 	if st.turno or st.aim ~= nil then s.con_arma = false end
 	local in_mano = (st.turno or st.aim ~= nil or s.con_arma) and not s.morte and not st.vittoria and not para
 	local mira = st.aim ~= nil and not s.morte and not para
-	-- le clip: con l'arma in mano quelle _arma, mirando da fermo mira
-	local clip = in_mano and ARMATE or A
-	local fermo = mira and A.mira or clip.fermo
+	-- le clip: con l'arma in mano quelle _arma, mirando da fermo mira (quelle
+	-- dell'arma se ci sono)
+	local armate = ARMATE[s.arma_scelta]
+	local clip = in_mano and armate or A
+	local fermo = mira and armate.mira or clip.fermo
 
 	-- la posa dello stato, dalle clip; sopra, quello che dipende dal gioco:
 	-- l'inclinazione e la coda con la velocità, la mira

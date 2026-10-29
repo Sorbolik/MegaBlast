@@ -52,8 +52,11 @@ dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
 
 Dallo stesso editor si cambiano le hitbox (`client/sim/corpo.lua`: la capsula per
 camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
-perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`). "Manda a
-Claude" li mette nei documenti `corpo/ultima` e `perni/ultima` (campo `lua`).
+perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`) e le
+impugnature, cioè dove vanno i pugni su ogni arma (`client/battaglia/impugnature.lua`).
+"Manda a Claude" li mette nei documenti `corpo/ultima`, `perni/ultima` e
+`impugnature/ultima` (campo `lua`). Una clip con l'arma può avere la versione di
+una sola arma (`fermo_arma_mallet`): il gioco la preferisce a quella di tutte.
 
 Nella sezione Strumenti dell'editor Sergio manda anche: le richieste di pezzi o
 personaggi nuovi (immagine e note; su claude.ai documento `richieste/<nome>` con
