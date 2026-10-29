@@ -46,6 +46,7 @@ codice. Regole della roadmap: [../roadmap.md](../roadmap.md) area 21.
   diavoletto diventa minuscolo anche per i colpi corti); **rallentatore o replay**
   (allunga i turni e online il tempo lo conta il server).
 - Suono dei globi (29 ott): **effetto CC0 scaricato** (Kenney, freesound) scartato per ora: da qui la rete verso quei siti non è garantita, va controllata la licenza di ognuno e lo stile andrà deciso con l'audio base (roadmap 17), che può sostituirlo; **suono generato con Ludo.ai** scartato: crediti scarsi; **wav** come il punto scartato: l'ogg pesa un terzo (5 kB contro 18 kB). Feedback scartati come troppo per un primo passo: scia di particelle dietro i globi, scritta "+1" che sale dal pulsante, vibrazione del telefono, il pulsante che si gonfia tutto (la sua grandezza la usa già lo stato "in mano").
+- Tacche dei globi (29 ott), scartate: **numeri "2" e "1"** accanto alle tacche (a quella grandezza si confondono coi secondi grandi dentro l'anello); **tratti dell'arco colorati** di viola fino alle soglie (l'arco ha già i colori delle fasi, bianco, giallo e blu); **scritta sotto l'anello** "2 GLOBI ancora 4 s" (un testo in più da leggere durante la mira).
 - Pulsanti MISSILE/SPADA separati: sostituiti dalla barra (20 ott).
 - Impostazioni grafiche a livelli e rimappatura dei tasti (29 ott).
 - Chat testuale: solo emote o frasi predefinite (29 ott).
