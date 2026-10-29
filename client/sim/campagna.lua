@@ -8,7 +8,8 @@
 --
 -- Coordinate del mondo (1920 x 1080, y in alto). Le arene sono d'acciaio, così
 -- i crateri non rompono il rompicapo. I numeri dei gironi (vita, turni, stelle)
--- li controlla il collaudo coi bot: strumenti/arena/collaudo.lua.
+-- li controlla il collaudo coi bot (strumenti/arena/collaudo.lua): la seconda
+-- stella è alla mediana dei turni del bot normale che gioca al posto tuo.
 
 local M = {}
 
@@ -226,8 +227,8 @@ local GIRONE_1 = {
 		scopo = "Abbatti il bot: un'arma a sinistra e una a destra del cronometro",
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
-		turni = 5,
-		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		turni = 7,
+		stelle = { turni = 5, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot" } },
 	},
 	{
@@ -240,7 +241,7 @@ local GIRONE_1 = {
 		globi = 0,
 		vita = { [2] = 40 },
 		turni = 6,
-		stelle = { turni = 3, bonus = { conta = "teletrasporti", al_massimo = 1, testo = "CON UN SOLO GLOBO" } },
+		stelle = { turni = 2, bonus = { conta = "teletrasporti", al_massimo = 1, testo = "CON UN SOLO GLOBO" } },
 		obiettivo = {
 			{ usa = "globi", testo = "Attacca presto: guadagna un globo" },
 			{ abbatti = 2, con = "sword", testo = "Finisci il cecchino con la Lama" },
@@ -260,7 +261,7 @@ local GIRONE_1 = {
 		-- il bot che la prova fa sempre i due attacchi
 		collaudo = { piano = { due_attacchi = true } },
 		turni = 6,
-		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		stelle = { turni = 1, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot in un turno solo" } },
 	},
 	{
@@ -284,8 +285,8 @@ local GIRONE_1 = {
 		scopo = "Colpisce e scappa col globo: inseguilo col tuo",
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = "normale", carattere = "codardo", nome = "Il codardo" } },
-		turni = 5,
-		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		turni = 7,
+		stelle = { turni = 5, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il codardo" } },
 	},
 	{
@@ -298,8 +299,8 @@ local GIRONE_1 = {
 			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro" },
 		},
 		vita = { [2] = 180 },
-		turni = 8,
-		stelle = { turni = 5, bonus = { conta = "vuoto", almeno = 1, testo = "CON UN'UCCISIONE NEL VUOTO" } },
+		turni = 10,
+		stelle = { turni = 7, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il Fabbro" } },
 	},
 }

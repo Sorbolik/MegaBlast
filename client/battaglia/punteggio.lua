@@ -16,6 +16,7 @@
 --   punteggio.punti(p, e, x, y)              -- evento "points": x, y sullo schermo dove nasce
 --   punteggio.turno(p, g)                    -- evento "turn"
 --   punteggio.update(p, dt, g, mio)          -- ogni frame; mio: il robot di chi guarda
+--   punteggio.obiettivo(p, testo)            -- nelle missioni: cosa resta da fare, fisso sotto i punti (nil = niente)
 --   punteggio.set_enabled(p, on)
 --
 -- I numeri in volo restano fuori dai gettoni finché non arrivano: il gettone
@@ -140,6 +141,10 @@ function M.nuovo(colori, tick)
 	p.riga = radice(MEZZO, Y - GET_H / 2 - 34)
 	p.riga_testo = ui.testo("", 0, 0, PICCOLA, ui.C.LUCE, p.riga)
 	p.riga_t = 0
+	-- l'obiettivo della missione, sotto la riga del turno
+	p.obiettivo = radice(MEZZO, Y - GET_H / 2 - 64)
+	p.obiettivo_testo = ui.testo("", 0, 0, SCRITTA, ui.ORO, p.obiettivo)
+	p.obiettivo_on = false
 
 	-- i numeri che volano, sopra a tutto il resto
 	for i = 1, NUMERI do
@@ -157,9 +162,17 @@ function M.cima(p, y1)
 	Y = y1 - 28
 	posizione(p.fune, MEZZO, Y)
 	posizione(p.riga, MEZZO, Y - GET_H / 2 - 34)
+	posizione(p.obiettivo, MEZZO, Y - GET_H / 2 - 64)
 	for _, gt in ipairs(p.gettoni) do
 		if gt.x then posizione(gt.radice, gt.x, Y) end
 	end
+end
+
+function M.obiettivo(p, testo)
+	p.obiettivo_on = testo ~= nil
+	if testo and testo ~= p.obiettivo_scritto then gui.set_text(p.obiettivo_testo, testo) end
+	p.obiettivo_scritto = testo
+	gui.set_enabled(p.obiettivo, p.on and p.obiettivo_on)
 end
 
 function M.set_enabled(p, on)
@@ -168,6 +181,7 @@ function M.set_enabled(p, on)
 	gui.set_enabled(p.fune, on and p.fune_on or false)
 	gui.set_enabled(p.distacco, on)
 	gui.set_enabled(p.riga, on and p.riga_t > 0)
+	gui.set_enabled(p.obiettivo, on and p.obiettivo_on)
 	if not on then
 		for _, n in ipairs(p.numeri) do n.attivo = false; gui.set_enabled(n.nodo, false) end
 	end

@@ -59,6 +59,7 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `tocca X Y` | tocco breve (pulsanti, menu), in pixel dello schermo |
 | `tocca_centro X Y` | tocco in pixel del gioco a 16:9, che su ogni schermo stanno al centro (`ui/schermo.lua`): uguale a `tocca` a 1280 x 720, giusto anche con `--schermo` |
 | `tocca_bordo DX DY alto\|basso sinistra\|destra` | tocco a DX, DY pixel del gioco da quell'angolo dello schermo: per quello che è attaccato ai bordi (levette, zoom, bottoni della home) |
+| `cammina destra X [S]` | tiene premuto `destra` (o `sinistra`) finché il robot di turno passa X nel mondo: non dipende da quanto va veloce il gioco nel simulatore |
 | `tieni TASTO S [ZOOM] [Z]` | tiene premuto un tasto: `sinistra`, `destra`, `salta`, o un nome di xdotool; facoltativamente fa lo zoom ZOOM prima di lasciarlo |
 | `premi TASTO` | pressione breve |
 | `trascina X1 Y1 X2 Y2 [S]` | trascina il dito |

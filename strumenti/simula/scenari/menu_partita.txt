@@ -22,9 +22,7 @@ aspetta 0.5
 foto 04_home
 tocca 1075 323                      # ALLENAMENTO
 aspetta 1
-tocca 760 560                       # scheda CONTRO I BOT
-aspetta 0.5
-tocca 640 120                       # GIOCA
+tocca 640 140                       # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 tocca 62 658
