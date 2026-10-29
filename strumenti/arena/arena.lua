@@ -111,8 +111,14 @@ local function partita(k)
 	local players = draft.finish(d)
 	for k, p in ipairs(players) do
 		p.bot = opt.livello == "misto" and bot.ORDINE[1 + math.floor(r0:next() * #bot.ORDINE)] or opt.livello
-		if POPOLAZIONE then
-			p.individuo = 1 + math.floor(r0:next() * #POPOLAZIONE)
+	end
+	-- i pesi con un generatore a parte: livelli e armi restano quelli delle
+	-- stesse partite senza --pesi, così si confrontano a coppie
+	if POPOLAZIONE then
+		local r1 = rng.new((seme * 16807 + 12345) % 2147483647)
+		for _ = 1, 4 do r1:next() end
+		for _, p in ipairs(players) do
+			p.individuo = 1 + math.floor(r1:next() * #POPOLAZIONE)
 			p.pesi = POPOLAZIONE[p.individuo]
 		end
 	end
