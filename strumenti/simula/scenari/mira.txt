@@ -1,7 +1,8 @@
-# La mira (battaglia/mira.lua): puntini uguali alla stessa distanza con la punta
-# del colore della squadra, e sopra la testa il cartellino coi gradi e la
-# potenza; tutti e due grandi uguali sullo schermo a ogni zoom. Quando il colpo
-# diventa sganciabile una micro-vibrazione (qui l'evento "vibra"). Con la Lama solo i gradi.
+# La mira (battaglia/mira.lua): solo angolo e potenza, uguale per tutte le armi.
+# Un mirino a distanza fissa nella direzione della mira, che si riempie con la
+# potenza, e sopra la testa il cartellino coi gradi e la potenza; tutti e due
+# grandi uguali sullo schermo a ogni zoom. Nessuna traiettoria. Quando il colpo
+# diventa sganciabile una micro-vibrazione (qui l'evento "vibra").
 imposta prova_armi 2
 imposta comandi telefono
 
@@ -16,17 +17,17 @@ aspetta_evento vibra 2
 aspetta_evento fire 2
 aspetta 0.5
 
-# Lama: niente freccia, solo i gradi
+# Lama: lo stesso mirino
 levetta_mira 60 -20 0.6 02_lama
 aspetta_stato turno=2 fase=aim 15
 aspetta 1.5
 
-# Blu: camera lontana (tutta la mappa), l'Uovo di Fiamma: freccia e cartellino grandi uguali
+# Blu: camera lontana (tutta la mappa), l'Uovo di Fiamma a mezza potenza
 tocca_bordo 70 34 alto destra       # zoom
 aspetta 0.5
 tocca_bordo 70 34 alto destra
 aspetta 1
 tocca 446 66                        # Uovo di Fiamma
 aspetta 0.3
-levetta_mira -50 60 0.8 03_uovo_lontano
+levetta_mira -45 40 0.8 03_uovo_lontano
 aspetta 1
