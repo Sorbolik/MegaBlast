@@ -2909,10 +2909,10 @@ function on_input(self, action_id, action)
 			start_local(self)
 		elseif scelta == "online" and profilo.nuovo_giocatore(self.profilo)
 			and (not SIMULA or config_int("megablast.prova_nuovo", 0) > 0) then
-			-- la prima volta GIOCA porta alla partita guidata, finché non la si
-			-- finisce (negli scenari solo con prova_nuovo 1: scenari/guidata.txt)
+			-- chi è nuovo GIOCA lo porta alle basi dell'Addestramento, finché non
+			-- le finisce (negli scenari solo con prova_nuovo 1: scenari/nuovo.txt)
 			self.ritorno = "home"
-			start_missione(self, "guidata")
+			start_missione(self, profilo.prima_lezione(self.profilo))
 		elseif scelta == "online" then
 			start_online(self)
 		elseif scelta == "armeria" then

@@ -1,10 +1,8 @@
-# Partita guidata: un giocatore nuovo tocca GIOCA e si trova contro il bot del
-# tutorial. Il cronometro aspetta che tocchi i comandi, le righe compaiono sopra il
+# Partita guidata, l'esame dell'Addestramento (imposta prova_missione guidata):
+# contro il bot del tutorial. Il cronometro aspetta che tocchi i comandi, le righe compaiono sopra il
 # diavoletto (e sopra il bot nei suoi turni), il bot fa vedere i due attacchi.
-imposta prova_nuovo 1
+imposta prova_missione guidata
 
-aspetta 1.5
-tocca 1075 102                      # GIOCA: la prima volta porta alla partita guidata
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 4
 foto 01_cronometro_fermo            # lo scopo sopra il diavoletto, l'anello pieno anche dopo 4 s

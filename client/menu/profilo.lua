@@ -105,9 +105,20 @@ function M.stelle_totali(p)
 	return n
 end
 
--- Chi non ha mai finito la prima partita guidata: GIOCA lo porta lì
+-- Le basi dell'Addestramento (sim/campagna.lua): chi non le ha finite tutte
+-- è un giocatore nuovo, e GIOCA lo porta alla prima che manca (Claude, 29 ott:
+-- prima la Prima partita, che ora è l'esame finale del capitolo)
+local BASI = { "cammina", "salta", "spara" }
+
+function M.prima_lezione(p)
+	for _, id in ipairs(BASI) do
+		if not (p.stelle[id] and p.stelle[id][1]) then return id end
+	end
+	return nil
+end
+
 function M.nuovo_giocatore(p)
-	return not (p.stelle.guidata and p.stelle.guidata[1])
+	return M.prima_lezione(p) ~= nil
 end
 
 -- Salvataggio --------------------------------------------------------------------
