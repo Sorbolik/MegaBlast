@@ -24,7 +24,7 @@ gui = {
 	set_scale = function(n, v) n.scale = copia(v) end,
 	set_enabled = function(n, on) n.enabled = on end,
 	set_visible = function(n, on) n.invisibile = not on end, set_color = function() end, set_adjust_mode = function() end,
-	set_inherit_alpha = function() end, set_perimeter_vertices = function() end,
+	set_inherit_alpha = function() end, set_perimeter_vertices = function() end, set_fill_angle = function() end,
 	set_texture = function() end, play_flipbook = function(n, img) n.img = img end, set_material = function() end,
 	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
 	set_text = function(n, text) n.text = text end,
@@ -32,6 +32,7 @@ gui = {
 	get_size = function(n) return n.size end,
 	set_font = function() end, set_outline = function() end, set_pivot = function() end, set_line_break = function() end,
 	set_slice9 = function() end, PIVOT_W = 3,
+	set_outer_bounds = function() end, PIEBOUNDS_ELLIPSE = 1, ADJUST_FIT = 0,
 	-- l'ordine fra i fratelli: move_above(n, nil) lo porta sopra a tutti
 	move_above = function(n) ordine = ordine + 1; n.ordine = ordine end,
 }
@@ -598,6 +599,29 @@ camera.cambia(c, -5)
 check(camera.zoom(c) == camera.LIVELLI[1], "rotella avanti: si ferma sul più vicino")
 camera.prossimo(c); camera.prossimo(c); camera.prossimo(c)
 check(c.livello == 1, "il pulsante gira: vicino, medio, mappa, vicino")
+
+-- La mira (battaglia/mira.lua): gradi uguali a destra e a sinistra, tacche
+-- della potenza, puntini alla stessa distanza e punta sull'ultimo punto
+local mira = require "battaglia.mira"
+check(mira.gradi(math.rad(40)) == 40 and mira.gradi(math.rad(140)) == 40, "mira: 40° a destra e a sinistra")
+check(mira.gradi(math.rad(-30)) == -30 and mira.gradi(math.rad(-150)) == -30, "mira: in basso i gradi sono negativi")
+check(mira.gradi(math.rad(90)) == 90, "mira: dritto in alto 90°")
+check(mira.tacca(0.94) == 18 and mira.tacca(0.95) == 19 and mira.tacca(1) == 20, "mira: una tacca ogni 5%")
+local linea = {}
+for i = 1, 4 do linea[i] = { x = 40 * i, y = 0 } end
+local out = {}
+local k, ax, ay, dir = mira.posa(linea, 4, 15, 40, false, out)
+check(k == 10 and out[1].x == 7.5 and math.abs(out[2].x - out[1].x - 15) < 1e-9, "mira: un puntino ogni 15 dalla bocca")
+check(ax == 160 and ay == 0 and dir == 0 and out[k].x <= 160 - 15, "mira: la punta sull'ultimo punto, i puntini prima")
+k = mira.posa(linea, 4, 1, 40, false, out)
+check(k <= 40 and k >= 38, "mira: non più di 40 puntini, si allargano")
+check(mira.posa(linea, 4, 15, 40, true, out) == 4 and out[3].x == 120, "mira: il Bastione ha i puntini sui punti")
+local m = mira.nuova()
+check(#m.nodi == 2 * mira.PUNTI + 3 and m.cartello, "mira: puntini, punta e cartellino")
+mira.cartellino(m, 0, 0, 2, 40, nil, vec(1, 0, 0, 1))
+check(m.c.testo == "40°" and m.c.con == false, "mira: senza potenza solo i gradi")
+mira.cartellino(m, 0, 0, 2, 40, 0.94, vec(1, 0, 0, 1))
+check(m.c.p == 94 and m.c.radice.scale.x == 0.5, "mira: la potenza in percento, grande uguale a ogni zoom")
 
 if failures > 0 then
 	print(failures .. " test falliti")
