@@ -1,0 +1,12 @@
+# La fine del I girone (imposta prova_missione battaglia_forgia): una partita
+# completa 2 contro 2, tu e il Compagno contro il Fabbro e il cecchino, che
+# parlano.
+imposta prova_missione battaglia_forgia
+aspetta_stato modo=local fase=aim 8
+aspetta 1.5
+foto 01_inizio
+tocca_bordo 70 34 alto destra        # zoom: medio
+aspetta 0.5
+tocca_bordo 70 34 alto destra        # zoom: mappa
+aspetta 6
+foto 02_mappa

@@ -6,12 +6,14 @@
 --
 --   local tt = targa.nuove(colori, nomi)  -- una targa per colore, tutte insieme
 --   targa.vita(t, vita, massima, scudo)   -- quando cambia (scudo può mancare)
---   targa.update(t, dt, x, y, scala, cam) -- a ogni frame: x, y è il centro in basso (nel
+--   targa.update(t, dt, x, y, scala, cam, su) -- a ogni frame: x, y è il centro in basso (nel
 --                                          mondo); cam (battaglia/camera.lua) per la riga
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
 --   targa.annuncio(t, testo)              -- una scritta che sale sopra il nome e svanisce
 --   targa.riga(t, testo)                  -- il suggerimento delle missioni, sopra tutto ("" = niente)
+--   targa.battuta(t, testo)               -- quello che dice il personaggio: una nuvoletta che
+--                                          -- resta un paio di secondi e svanisce
 --   targa.posto(t, testo, corona)         -- il posto in classifica a sinistra della barra
 --                                          -- ("" = niente) e la Corona sopra il nome
 --
@@ -36,9 +38,11 @@ local NOME_Y = 10           -- centro del nome sopra la barra
 -- scala del font "titolo" (scala 1 = circa 40 px)
 local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
 local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
-local CORONA_Y, CORONA_SCALA = NOME_Y + 10, 0.5
+-- la Corona del primo sopra il nome: grande come nei punti in alto (ui.corona è
+-- alta 13 a scala 1, 3,5 sotto il centro della fascia)
+local CORONA_Y, CORONA_SCALA = NOME_Y + 13, 1.6
 -- dove finisce la targa in alto (Corona compresa): sopra ci sta il cartellino della mira
-M.SOPRA = CORONA_Y + 6
+M.SOPRA = CORONA_Y + 17
 -- la riga delle missioni: sopra la Corona e gli annunci che salgono, a capo
 -- oltre RIGA_W; grande RIGA_SCALA sullo schermo a ogni zoom (circa 22 px: con la
 -- camera lontana non si rimpicciolisce come il resto della targa)
@@ -46,6 +50,10 @@ local RIGA_Y, RIGA_SCALA, RIGA_W = CORONA_Y + 30, 0.55, 1800
 -- e non sale fin sotto i punti e l'obiettivo in cima (battaglia/punteggio.lua):
 -- col robot in alto scende, sopra il robot
 local RIGA_CIMA = 130
+-- la nuvoletta delle battute: sopra la Corona, grande BATTUTA_SCALA sullo
+-- schermo a ogni zoom, col fondo scuro attorno (BATTUTA_BORDO px)
+local BATTUTA_Y, BATTUTA_SCALA, BATTUTA_BORDO, BATTUTA_T = CORONA_Y + 14, 0.42, 8, 2.6
+local NUVOLA = vmath.vector4(0.06, 0.05, 0.08, 0.82)
 
 local FONDO = ui.C.OMBRA
 local SCIA = ui.C.LUCE
@@ -112,6 +120,11 @@ function M.nuove(colori, nomi)
 		t.corona = ui.corona(0, CORONA_Y, nil, t.dentro)
 		gui.set_scale(t.corona, vmath.vector3(CORONA_SCALA, CORONA_SCALA, 1))
 		gui.set_enabled(t.corona, false)
+		-- il fondo della nuvoletta, con le forme (fuori dal nodo che sobbalza)
+		t.nuvola = rettangolo(t.barre, 0, BATTUTA_Y, 0, 0, NUVOLA)
+		gui.set_pivot(t.nuvola, gui.PIVOT_S)
+		gui.set_enabled(t.nuvola, false)
+		t.battuta_t = 0
 		tt[i] = t
 	end
 	-- poi i testi
@@ -130,6 +143,9 @@ function M.nuove(colori, nomi)
 		gui.set_line_break(t.riga, true)
 		gui.set_size(t.riga, vmath.vector3(RIGA_W, 0, 0))
 		t.riga_testo, t.riga_h = "", 0
+		t.battuta = testo(t.testi, 0, BATTUTA_Y, "", BATTUTA_SCALA, ui.C.TESTO)
+		gui.set_pivot(t.battuta, gui.PIVOT_S)
+		gui.set_enabled(t.battuta, false)
 		M.vita(t, 1, 1)
 	end
 	return tt
@@ -162,6 +178,16 @@ function M.riga(t, s)
 	t.riga_h = s == "" and 0 or resource.get_text_metrics(font, s, { width = RIGA_W, line_break = true }).height
 end
 
+function M.battuta(t, s)
+	gui.set_text(t.battuta, s)
+	local font = gui.get_font_resource(gui.get_font(t.battuta))
+	local m = resource.get_text_metrics(font, s)
+	t.battuta_w, t.battuta_h = m.width, m.height
+	t.battuta_t = BATTUTA_T
+	gui.set_enabled(t.battuta, true)
+	gui.set_enabled(t.nuvola, true)
+end
+
 function M.annuncio(t, s)
 	gui.set_text(t.annuncio, s)
 	gui.set_enabled(t.annuncio, true)
@@ -190,7 +216,7 @@ function M.vita(t, vita, massima, scudo)
 	gui.set_text(t.numero, tostring(math.floor(vita + 0.5)))
 end
 
-function M.update(t, dt, x, y, scala, cam)
+function M.update(t, dt, x, y, scala, cam, su)
 	t.t = t.t + dt
 	V.x, V.y, V.z = x, y, 0
 	gui.set_position(t.barre, V)
@@ -204,8 +230,31 @@ function M.update(t, dt, x, y, scala, cam)
 		V.x, V.y = k, k
 		gui.set_scale(t.riga, V)
 		local _, tetto = camera.al_mondo(cam, 0, schermo.y1 - RIGA_CIMA - t.riga_h * RIGA_SCALA)
-		V.x, V.y = 0, math.min(RIGA_Y, (tetto - y) / scala)
+		-- su: pixel dello schermo in più sopra la targa (il cartellino della mira)
+		V.x, V.y = 0, math.min(RIGA_Y + (su or 0) / (scala * cam.s), (tetto - y) / scala)
 		gui.set_position(t.riga, V)
+	end
+
+	-- la nuvoletta: grande uguale sullo schermo, svanisce nell'ultimo mezzo secondo
+	if t.battuta_t > 0 then
+		t.battuta_t = t.battuta_t - dt
+		local zoom = scala * (cam and cam.s or 1)
+		local k, bordo = BATTUTA_SCALA / zoom, BATTUTA_BORDO / zoom
+		V.x, V.y, V.z = k, k, 1
+		gui.set_scale(t.battuta, V)
+		V.x, V.y, V.z = t.battuta_w * k + 2 * bordo, t.battuta_h * k + 2 * bordo, 0
+		gui.set_size(t.nuvola, V)
+		V.x, V.y = 0, BATTUTA_Y + bordo
+		gui.set_position(t.battuta, V)
+		local a = math.min(1, t.battuta_t * 2)
+		C.x, C.y, C.z, C.w = ui.C.TESTO.x, ui.C.TESTO.y, ui.C.TESTO.z, a
+		gui.set_color(t.battuta, C)
+		C.x, C.y, C.z, C.w = NUVOLA.x, NUVOLA.y, NUVOLA.z, NUVOLA.w * a
+		gui.set_color(t.nuvola, C)
+		if t.battuta_t <= 0 then
+			gui.set_enabled(t.battuta, false)
+			gui.set_enabled(t.nuvola, false)
+		end
 	end
 
 	-- la scia aspetta un attimo e poi si consuma fino alla vita

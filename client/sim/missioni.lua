@@ -10,7 +10,9 @@
 --   missioni.prepara(r, g)                          -- subito dopo, una volta
 --   missioni.evento(r, g, e, bots)                  -- per ogni evento della simulazione (bots: di replay.partita)
 --   local esito = missioni.tick(r, g)               -- a ogni tick: nil, "fatta" o "fallita"
---   missioni.tocca(r)                               -- il giocatore ha toccato i comandi (lezioni: parte il tempo)
+--   missioni.tocca(r, cosa)                         -- il giocatore ha toccato i comandi (lezioni: parte il tempo; r nil: niente);
+--                                                   cosa: l'arma scelta, "salta", "mira", "annulla" o nil
+--   local cosa = missioni.evidenzia(r)              -- il comando da mettere in luce (o nil)
 --   missioni.vede(r.l, arma)                        -- quell'arma (o "teleport", "parachute") si vede nell'HUD?
 --   local testo, chi = missioni.riga(r)             -- il suggerimento da mostrare sopra il robot chi (o nil)
 --   local testo = missioni.obiettivo(r)             -- l'obiettivo che resta, sempre in vista (o nil)
@@ -20,11 +22,13 @@
 --   missioni.dopo(id)                               -- la missione che viene dopo nel capitolo (nil dopo l'ultima)
 --
 -- Una missione (campi, tutti dati salvo dove si dice):
---   id, titolo, scopo (la prima riga, finché non si fa la prima cosa)
+--   id, titolo, scopo (la prima riga, finché non si fa la prima cosa), evidenzia
+--     (il comando che lo scopo mette in luce, come nelle righe sotto)
 --   mappa (una mappa del gioco) oppure arena = { { x, y, w, h }, ... } (rettangoli
 --     d'acciaio: i crateri non rompono il rompicapo) e spawns (prima il giocatore)
 --   giocatori: opts.players di game.new (team, bot = livello, carattere, dummy, pick,
---     secondary, tool, stats); nome: come si chiama quel robot (i custodi)
+--     secondary, tool, stats); nome: come si chiama quel robot (i custodi);
+--     battute: chi parla per lui (battaglia/battute.lua; senza, il suo carattere)
 --   vedi = { "missile", "eagle", ... }: le lezioni mostrano solo quello che serve
 --     ("primarie", "secondarie": tutte quelle che hai; "teleport": il tasto e i globi
 --     dal tempo; "parachute"): il resto non c'è nemmeno
@@ -35,18 +39,27 @@
 --   fallisce = { muori = true, esaurito = "paracadute" } (e sempre se la partita finisce prima)
 --   turni: oltre questi turni del giocatore si ricomincia
 --   stelle = { 3, 2 } (turni per la seconda e la terza) oppure
---     { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } }
+--     { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } } oppure
+--     { bonus = { ... }, bonus2 = { ... } } (due bonus, senza turni: le partite vere)
 --   collaudo = { carattere, piano, senza }: come la prova strumenti/arena/collaudo.lua
---   righe = { { testo, quando, fino, su = "bot" } }: quando e fino sono
---     { evento = "crate_pick" }, { passo = 2 } (fatto il passo 2), { turno = 2 }
---     oppure funzioni(st, g, e) per i casi che i dati non dicono (la partita guidata)
+--   righe = { { testo, quando, fino, su = "bot", evidenzia, ferma, subito } }: quando
+--     e fino sono { evento = "crate_pick" }, { passo = 2 } (fatto il passo 2),
+--     { turno = 2 }, { tocca = "mira" } (il giocatore ha toccato quello, in questo
+--     turno) oppure funzioni(st, g, e) per i casi che i dati non dicono (la partita
+--     guidata). evidenzia: il comando che la riga suggerisce ("primaria",
+--     "secondaria", un'arma, "teleport", "cammina", "salta", "mira", "annulla"): l'HUD lo mette in
+--     luce e, nelle lezioni, il tempo resta fermo finché non lo tocchi (ferma =
+--     false: solo la luce, per le righe che arrivano in aria). Nei gironi la luce
+--     c'è ma il gioco non si ferma mai. subito: la riga prende il posto di quella
+--     che c'è (la mira è già cominciata)
 --
 -- I passi dell'obiettivo (testo: come si legge nella riga dell'obiettivo):
 --   { usa = "globi" | "rampino" | "bastione" | "rimbalzo" | "rinculo" | "paracadute" }
 --   { raggiungi = { x = 1200, y = 150 } }   in piedi sopra quella quota, oltre quella x
 --   { colpisci = 2, con = "sword" | "primaria" | "secondaria" | un'arma }
 --   { abbatti = 2 | "nemico", come = "vuoto", con = arma, volte = 3 }
--- Altri verbi (vinci, sopravvivi, proteggi...) entrano con le missioni che li usano.
+--   { vinci = true }                        la partita finisce e la tua squadra ha vinto
+-- Altri verbi (sopravvivi, proteggi...) entrano con le missioni che li usano.
 -- I conteggi per i bonus delle stelle: morti, teletrasporti, vuoto (uccisioni
 -- ambientali tue), abbattuti, danni (presi da te).
 
@@ -118,6 +131,23 @@ local function categoria(w)
 	return "primarie"
 end
 
+-- Il comando toccato (cosa) è quello che la riga suggerisce (att)?
+local function combacia(att, cosa)
+	if att == cosa then return true end
+	if not cosa or not game.WEAPONS[cosa] then return false end
+	if att == "secondaria" then return game.SECONDARY[cosa] == true end
+	if att == "primaria" then return not game.SECONDARY[cosa] and not game.TOOLS[cosa] end
+	return false
+end
+
+-- In questo turno il giocatore ha già toccato quel comando (o uno della categoria)?
+local function toccato(st, att)
+	for cosa in pairs(st.toccati) do
+		if combacia(att, cosa) then return true end
+	end
+	return false
+end
+
 function M.vede(l, w)
 	if not l.vedi then return true end
 	local c = categoria(w)
@@ -130,7 +160,8 @@ end
 -- Lo stato di una missione in corso
 function M.nuova(id)
 	local l = assert(PER_ID[id], "missione sconosciuta: " .. tostring(id))
-	return { l = l, st = { turni = 0, turni_bot = 0, passi = {}, volte = {}, conta = {} }, viste = {}, riga = nil, esito = nil }
+	return { l = l, st = { turni = 0, turni_bot = 0, passi = {}, volte = {}, conta = {}, toccati = {} },
+		viste = {}, riga = nil, esito = nil }
 end
 
 -- seme, mappa e opzioni di game.new. picks: i giocatori usciti dal draft
@@ -146,7 +177,7 @@ function M.partita(r, seed, picks, aiuto)
 	for i, p in ipairs(l.giocatori) do
 		local q = {}
 		for k, v in pairs(p) do
-			if k ~= "nome" then q[k] = v end
+			if k ~= "nome" and k ~= "battute" then q[k] = v end
 		end
 		if aiuto and q.bot then q.bot = PIU_FACILE[q.bot] end
 		if picks and picks[i] then
@@ -194,8 +225,10 @@ function M.prepara(r, g)
 	r.riga = nil
 	if l.aspetta then r.attesa, r.fermo = true, { timer = g.timer, window = g.window, match = g.match_left } end
 	-- lo scopo finché non si fa la prima cosa
+	-- (nelle lezioni lascia il posto ai suggerimenti appena tocchi i comandi)
 	if l.scopo then
-		r.coda[1] = { testo = l.scopo, fino = function(_, g2) return g2.used.primary or g2.used.secondary or g2.used.tool end }
+		r.coda[1] = { testo = l.scopo, cede = l.aspetta, evidenzia = l.evidenzia,
+			fino = function(_, g2) return g2.used.primary or g2.used.secondary or g2.used.tool end }
 	end
 end
 
@@ -231,6 +264,8 @@ local function passo_fatto(p, i, st, g, e)
 	elseif p.colpisci then
 		return e ~= nil and e.type == "damage" and e.amount > 0 and bersaglio(g, p.colpisci, e.robot)
 			and arma_ok(p.con, st.arma)
+	elseif p.vinci then
+		return e ~= nil and e.type == "over" and e.winner == g.robots[GIOCATORE].team
 	elseif p.abbatti then
 		if e and e.type == "death" and e.by == GIOCATORE and bersaglio(g, p.abbatti, e.robot)
 			and (p.come ~= "vuoto" or e.env) and arma_ok(p.con, st.arma) then
@@ -276,6 +311,8 @@ local function quando(q, st, g, e)
 		return st.passi[q.passo] == true
 	elseif q.turno then
 		return st.turni == q.turno
+	elseif q.tocca then
+		return toccato(st, q.tocca)
 	end
 	return false
 end
@@ -283,10 +320,24 @@ end
 -- Una riga alla volta: quella nuova aspetta che l'altra sia fatta o scaduta
 -- (o che cominci un altro turno).
 -- Senza "fino" resta RIGA_SECONDI, con "fino" al massimo il doppio.
+-- Una riga che evidenzia un comando, nelle lezioni, ferma il tempo finché non
+-- lo tocchi (se non lo hai già toccato in questo turno).
 local function mostra(r, riga)
-	r.riga, r.riga_fino = riga.testo, riga.fino
+	r.riga, r.riga_fino, r.riga_cede = riga.testo, riga.fino, riga.cede
 	r.riga_su = riga.su == "bot" and 2 or GIOCATORE
 	r.riga_t = (riga.fino and 2 or 1) * RIGA_SECONDI * 60
+	r.luce = riga.evidenzia
+	r.attende = nil
+	local e = riga.evidenzia
+	if e and r.l.aspetta and riga.ferma ~= false and not toccato(r.st, e) then
+		r.attesa, r.attende = true, e
+	end
+end
+
+-- La riga se ne va: se aspettava un comando, il tempo riparte
+local function togli(r)
+	if r.attende then r.attesa, r.attende, r.fermo = false, nil, nil end
+	r.riga, r.riga_t, r.luce, r.riga_cede = nil, nil, nil, nil
 end
 
 -- e = nil: il controllo a ogni tick
@@ -297,15 +348,22 @@ local function controlla(r, g, e)
 		r.esito = "fatta"
 		return
 	end
-	if r.riga and r.riga_fino and quando(r.riga_fino, st, g, e) then r.riga = nil end
+	if r.riga and r.riga_fino and quando(r.riga_fino, st, g, e) then togli(r) end
 	-- un turno nuovo: le righe del turno prima non servono più
-	if e and e.type == "turn" then r.riga, r.coda = nil, {} end
+	if e and e.type == "turn" then togli(r); r.coda = {} end
 	for i, riga in ipairs(l.righe or {}) do
 		if not r.viste[i] and quando(riga.quando, st, g, e) then
 			r.viste[i] = true
-			r.coda[#r.coda + 1] = riga
+			if riga.subito then
+				togli(r)
+				table.insert(r.coda, 1, riga)
+			else
+				r.coda[#r.coda + 1] = riga
+			end
 		end
 	end
+	-- lo scopo di una lezione, letto (hai toccato i comandi), lascia il posto
+	if r.riga and r.riga_cede and not r.attesa and #r.coda > 0 then togli(r) end
 	if not r.riga and #r.coda > 0 then mostra(r, table.remove(r.coda, 1)) end
 end
 
@@ -318,6 +376,7 @@ function M.evento(r, g, e, bots)
 	if ATTACCHI[e.type] and e.robot == GIOCATORE then st.arma = ATTACCHI[e.type] end
 	if e.type == "turn" then
 		if e.robot == GIOCATORE then st.turni = st.turni + 1 else st.turni_bot = st.turni_bot + 1 end
+		st.toccati = {}
 		-- il bot di turno fa vedere quello che il giocatore farà dopo (sim/bot.lua, b.piano)
 		local b = bots and bots[e.robot]
 		if b then b.piano = l.piani and l.piani[st.turni_bot] or nil end
@@ -355,7 +414,7 @@ function M.evento(r, g, e, bots)
 		local i, p = prossimo(l, st)
 		if i and i > 1 then testo = p.testo end
 		-- (se il turno non ha già la sua riga da dire)
-		if testo and not r.riga then mostra(r, { testo = testo }) end
+		if testo and not r.riga then mostra(r, { testo = testo, cede = true }) end
 	end
 	local f = l.fallisce or {}
 	if (f.muori and e.type == "death" and e.robot == GIOCATORE) or (e.type == "over" and not l.guidata) then
@@ -363,15 +422,30 @@ function M.evento(r, g, e, bots)
 	end
 end
 
--- Il giocatore ha toccato i comandi: il tempo riparte
-function M.tocca(r)
+-- Il giocatore ha toccato i comandi (cosa: l'arma scelta, "salta", "mira",
+-- "annulla" o nil): il tempo riparte, ma se la riga aspetta un comando solo
+-- quando tocchi quello
+function M.tocca(r, cosa)
+	if not r then return end
+	if cosa then r.st.toccati[cosa] = true end
+	if r.attende then
+		if not combacia(r.attende, cosa) then return end
+		-- fatto: la luce si spegne, la riga resta finché serve
+		r.attende, r.luce = nil, nil
+	end
 	r.attesa, r.fermo = false, nil
+end
+
+-- Il comando da mettere in luce, finché la sua riga è in vista
+function M.evidenzia(r)
+	return r.riga and r.luce or nil
 end
 
 function M.tick(r, g)
 	local l, st = r.l, r.st
 	-- lezioni: finché non tocchi i comandi il tempo del turno e della partita è fermo
 	if r.attesa and g.current == GIOCATORE then
+		r.fermo = r.fermo or { timer = g.timer, window = g.window, match = g.match_left }
 		local f = r.fermo
 		g.timer, g.window, g.match_left = f.timer, f.window, f.match
 	end
@@ -387,7 +461,7 @@ function M.tick(r, g)
 	end
 	if r.riga_t and not r.attesa then
 		r.riga_t = r.riga_t - 1
-		if r.riga_t <= 0 then r.riga, r.riga_t = nil, nil end
+		if r.riga_t <= 0 then togli(r) end
 	end
 	return r.esito
 end
@@ -414,6 +488,7 @@ end
 function M.criteri(l)
 	if l.guidata then return { "FINITA", "VINTA", "CON 100 PUNTI DI VANTAGGIO" } end
 	local s = l.stelle
+	if s.bonus2 then return { "FATTA", s.bonus.testo, s.bonus2.testo } end
 	if s.bonus then return { "FATTA", turni(s.turni), s.bonus.testo } end
 	return { "FATTA", turni(s[1]), turni(s[2]) }
 end
@@ -433,6 +508,7 @@ function M.stelle(r)
 		return { true, st.vinta == true, st.vinta == true and st.distacco >= 100 }
 	end
 	local s = l.stelle
+	if s.bonus2 then return { true, bonus(s.bonus, st), bonus(s.bonus2, st) } end
 	if s.bonus then
 		-- il bonus vale da solo: si può avere la terza senza la seconda
 		return { true, st.turni <= s.turni, bonus(s.bonus, st) }

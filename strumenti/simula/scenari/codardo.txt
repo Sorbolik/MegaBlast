@@ -1,0 +1,19 @@
+# Il codardo (imposta prova_missione il_codardo): a ogni turno attacca subito,
+# poi scappa col globo nella tana peggiore (coperta, dove nessuno lo vede) e
+# parla: la nuvoletta sopra la testa quando colpisce, scappa, lo colpiscono.
+imposta prova_missione il_codardo
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 0.5
+mira 120 60 0.4                      # un colpo qualsiasi: tocca a lui
+aspetta_stato turno=2 fase=aim 40
+aspetta 1
+foto 01_turno_codardo
+aspetta_evento teleport 30
+aspetta 0.4
+foto 02_scappa                       # la battuta della fuga
+aspetta 1.5
+tocca_bordo 70 34 alto destra        # zoom: medio
+aspetta 0.5
+tocca_bordo 70 34 alto destra        # zoom: mappa
+aspetta 1.2
+foto 03_tana                         # dove si è nascosto

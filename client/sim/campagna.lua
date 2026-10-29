@@ -16,49 +16,55 @@ local M = {}
 local GIOCATORE = 1
 
 local ADDESTRAMENTO = {
+	-- le basi, una cosa per lezione: camminare, saltare, sparare (Sergio, 29 ott)
 	{
-		id = "guidata",
-		titolo = "Prima partita",
-		scopo = "Trascina dal diavoletto per mirare, lascia per sparare",
-		guidata = true,
-		mappa = "forgia",
-		giocatori = {
-			{ team = 1, pick = "grenade", secondary = "mallet", tool = "hook" },
-			{ team = 2, bot = "tutorial", pick = "grenade", secondary = "mallet", tool = "hook" },
-		},
-		-- partita corta: 3 minuti
-		secondi = 180,
-		-- il bot fa vedere nel suo turno quello che il giocatore farà nel turno dopo
-		piani = { { due_attacchi = true }, { attacca_entro = 4, poi = "teletrasporto" } },
-		obiettivo = function(st) return st.finita end,
+		id = "cammina",
+		titolo = "Camminare",
+		scopo = "Cammina fino al bersaglio: {cammina}",
+		evidenzia = "cammina",
+		arena = { { 240, 0, 1440, 150 } },
+		-- il bersaglio vicino, che si veda già con la camera da vicino
+		spawns = { { x = 760, from = 600 }, { x = 1120, from = 600 } },
+		giocatori = { { team = 1 }, { team = 2, dummy = true } },
+		-- niente armi né tasti: solo le levette
+		vedi = {},
+		turni = 3, stelle = { 2, 1 },
+		obiettivo = { { raggiungi = { x = 1020, y = 150 }, testo = "Raggiungi il bersaglio" } },
+	},
+	{
+		id = "salta",
+		titolo = "Saltare",
+		scopo = "Il gradino è troppo alto per camminarci sopra: {salta}",
+		evidenzia = "salta",
+		-- un gradino più alto di quello che si sale camminando, più basso del salto
+		arena = { { 240, 0, 1440, 150 }, { 1000, 150, 680, 30 } },
+		spawns = { { x = 640, from = 600 }, { x = 1400, from = 600 } },
+		giocatori = { { team = 1 }, { team = 2, dummy = true } },
+		vedi = {},
+		turni = 3, stelle = { 2, 1 },
+		obiettivo = { { raggiungi = { x = 1000, y = 180 }, testo = "Salta sul gradino" } },
 		righe = {
-			{ testo = "Hai 8 secondi: mettiti al riparo. Per saltare {salta}",
-				quando = function(st, g) return st.turni == 1 and g.current == GIOCATORE and g.window > 0 end },
-			{ testo = "Il bot fa due attacchi: una primaria e una secondaria", su = "bot",
-				quando = function(st, g) return st.turni_bot == 1 and g.current ~= GIOCATORE end },
-			{ testo = "Due attacchi a turno: un'arma a sinistra e una a destra del cronometro",
-				quando = function(st, g) return st.turni == 2 and g.current == GIOCATORE end,
-				fino = function(_, g) return g.used.primary and g.used.secondary end },
-			{ testo = "Ha attaccato subito: i secondi che avanzano diventano globi", su = "bot",
-				quando = function(st, _, e) return st.turni_bot == 2 and e and e.type == "teleports" and e.robot ~= GIOCATORE end },
-			{ testo = "Attacca presto: prima delle tacche viola sull'anello guadagni globi",
-				quando = function(st, g) return st.turni == 3 and g.current == GIOCATORE end,
-				fino = function(_, g) return g.used.primary or g.used.secondary end },
-			{ testo = "Lancia un globo col tasto viola: arrivi dove cade",
-				quando = function(st, _, e) return st.turni == 3 and e and e.type == "teleports" and e.robot == GIOCATORE end,
-				fino = { evento = "teleport" } },
-			{ testo = "Passaci sopra per prenderla: dentro c'è un'arma o un oggetto",
-				quando = { evento = "crate" }, fino = { evento = "crate_pick" } },
-			{ testo = "Tocca in aria per il paracadute: uno a partita",
-				quando = function(_, g)
-					local rb = g.robots[GIOCATORE]
-					return g.current == GIOCATORE and not rb.grounded and rb.vy < -220 and rb.parachutes_left > 0
-				end,
-				fino = { evento = "parachute" } },
-			{ testo = "Sei primo: chi ti colpisce prende i punti per 1,5",
-				quando = function(_, g) return g:leader() == g.robots[GIOCATORE] end },
-			{ testo = "Si rinasce subito, e il turno continua",
-				quando = function(_, _, e) return e and e.type == "death" and e.robot == GIOCATORE end },
+			{ testo = "Cammina verso il gradino e salta quando ci sei vicino", quando = { tocca = "salta" },
+				fino = { passo = 1 } },
+		},
+	},
+	{
+		id = "spara",
+		titolo = "Sparare",
+		scopo = "Colpisci il bersaglio col Lanciarune: {mira}",
+		evidenzia = "mira",
+		arena = { { 240, 0, 1440, 150 } },
+		spawns = { { x = 700, from = 600 }, { x = 1000, from = 600 } },
+		giocatori = { { team = 1 }, { team = 2, dummy = true } },
+		vedi = { "missile" },
+		turni = 3, stelle = { 2, 1 },
+		obiettivo = { { colpisci = 2, con = "missile", testo = "Colpisci il bersaglio" } },
+		righe = {
+			-- mentre mira: come si annulla (il tempo aspetta che lo provi)
+			{ testo = "Più tiri lontano, più forte parte. Se cambi idea, {annulla}", evidenzia = "annulla",
+				subito = true, quando = { tocca = "mira" },
+				fino = function(st, g) return st.toccati.annulla or g.used.primary end },
+			{ testo = "Ora mira di nuovo e lascia: il colpo parte", quando = { tocca = "annulla" } },
 		},
 	},
 	{
@@ -78,6 +84,10 @@ local ADDESTRAMENTO = {
 			{ colpisci = 2, con = "secondaria", testo = "Colpisci con la secondaria scelta" },
 		},
 		righe = {
+			{ testo = "Prima la primaria che hai scelto, a sinistra del cronometro: toccala", evidenzia = "primaria",
+				quando = { turno = 1 }, fino = { tocca = "primaria" } },
+			{ testo = "Ora la secondaria, a destra del cronometro: toccala", evidenzia = "secondaria",
+				quando = { passo = 1 }, fino = { tocca = "secondaria" } },
 			{ testo = "Lanciarune e Lama ci sono sempre. La primaria scelta ha 2 colpi, la secondaria non finisce",
 				quando = { turno = 2 } },
 		},
@@ -100,7 +110,7 @@ local ADDESTRAMENTO = {
 			{ colpisci = 3, con = "sword", testo = "Colpisci il bersaglio con la Lama" },
 		},
 		righe = {
-			{ testo = "Tocca il tasto viola, mira l'isola e lascia: arrivi dove cade il globo",
+			{ testo = "Tocca il tasto viola, mira l'isola e lascia: arrivi dove cade il globo", evidenzia = "teleport",
 				quando = { evento = "teleports" }, fino = { evento = "teleport" } },
 			{ testo = "Ora la Lama: è la tua secondaria di sempre", quando = { passo = 2 } },
 		},
@@ -124,6 +134,11 @@ local ADDESTRAMENTO = {
 			{ colpisci = 2, testo = "Colpisci il bersaglio" },
 		},
 		righe = {
+			{ testo = "Il Tonante è la tua secondaria: toccalo", evidenzia = "eagle",
+				quando = { turno = 1 }, fino = { tocca = "eagle" } },
+			{ testo = "Ora salta: {salta}", evidenzia = "salta", quando = { tocca = "eagle" }, fino = { tocca = "salta" } },
+			{ testo = "In aria mira verso il basso e lascia: il rinculo ti porta su",
+				quando = { tocca = "salta" }, fino = { passo = 1 } },
 			{ testo = "Il rinculo ti spinge sempre dall'altra parte del colpo: verso il vuoto per tornare su",
 				quando = { passo = 2 } },
 		},
@@ -147,6 +162,10 @@ local ADDESTRAMENTO = {
 		-- uno a partita: se lo hai già usato e non sei arrivato, si ricomincia
 		fallisce = { muori = true, esaurito = "paracadute" },
 		righe = {
+			{ testo = "Cammina fino al bordo e salta: {salta}", evidenzia = "salta",
+				quando = { turno = 1 }, fino = { tocca = "salta" } },
+			{ testo = "In aria tocca il paracadute, fra gli OGGETTI", evidenzia = "parachute", ferma = false,
+				quando = { tocca = "salta" }, fino = { evento = "parachute" } },
 			{ testo = "Tocca di nuovo per chiuderlo. È uno solo a partita", quando = { evento = "parachute" } },
 		},
 	},
@@ -168,6 +187,8 @@ local ADDESTRAMENTO = {
 			{ colpisci = 2, con = "sword", testo = "Colpisci il bersaglio con la Lama" },
 		},
 		righe = {
+			{ testo = "Il Rampino è a destra: toccalo, poi mira il bordo e lascia", evidenzia = "hook",
+				quando = { turno = 1 }, fino = { tocca = "hook" } },
 			{ testo = "Su un nemico invece lo tiri da te: buttalo giù e sono 50 punti in più", quando = { passo = 2 } },
 		},
 	},
@@ -188,6 +209,8 @@ local ADDESTRAMENTO = {
 			{ colpisci = 2, con = "sword", testo = "Colpisci il bersaglio con la Lama" },
 		},
 		righe = {
+			{ testo = "Il Bastione è a destra: toccalo, poi mira dove posarlo e lascia", evidenzia = "wall",
+				quando = { turno = 1 }, fino = { tocca = "wall" } },
 			{ testo = "Uno a turno, al massimo due in mappa. Ora la Lama", quando = { passo = 2 } },
 		},
 	},
@@ -208,6 +231,11 @@ local ADDESTRAMENTO = {
 			{ colpisci = 2, testo = "Colpisci il bersaglio" },
 		},
 		righe = {
+			{ testo = "Il Maglio è la tua secondaria: toccalo", evidenzia = "mallet",
+				quando = { turno = 1 }, fino = { tocca = "mallet" } },
+			{ testo = "Ora salta: {salta}", evidenzia = "salta", quando = { tocca = "mallet" }, fino = { tocca = "salta" } },
+			{ testo = "In aria colpisci il terreno sotto di te: rimbalzi in alto",
+				quando = { tocca = "salta" }, fino = { passo = 1 } },
 			{ testo = "Ogni secondaria ti sposta: il Tonante spinge indietro, l'Affondo passa oltre", quando = { passo = 2 } },
 		},
 	},
@@ -232,6 +260,57 @@ local ADDESTRAMENTO = {
 			{ testo = "Danno = punti. Abbattere vale 50, buttare nel vuoto altri 50", quando = { evento = "points" } },
 		},
 	},
+	-- l'esame del capitolo: una prima vera partita, corta, che mette in pratica
+	-- tutto (Sergio, 29 ott: l'ultima dell'Addestramento, non la prima)
+	{
+		id = "guidata",
+		titolo = "Prima partita",
+		scopo = "Trascina dal diavoletto per mirare, lascia per sparare",
+		guidata = true,
+		mappa = "forgia",
+		giocatori = {
+			{ team = 1, pick = "grenade", secondary = "mallet", tool = "hook" },
+			{ team = 2, bot = "tutorial", pick = "grenade", secondary = "mallet", tool = "hook" },
+		},
+		-- partita corta: 3 minuti
+		secondi = 180,
+		-- il bot fa vedere nel suo turno quello che il giocatore farà nel turno dopo
+		piani = { { due_attacchi = true }, { attacca_entro = 4, poi = "teletrasporto" } },
+		obiettivo = function(st) return st.finita end,
+		righe = {
+			{ testo = "Hai 8 secondi: mettiti al riparo. Per saltare {salta}", evidenzia = "salta",
+				quando = function(st, g) return st.turni == 1 and g.current == GIOCATORE and g.window > 0 end },
+			{ testo = "Il bot fa due attacchi: una primaria e una secondaria", su = "bot",
+				quando = function(st, g) return st.turni_bot == 1 and g.current ~= GIOCATORE end },
+			{ testo = "Due attacchi a turno. Prima la primaria, a sinistra del cronometro: toccala",
+				evidenzia = "primaria",
+				quando = function(st, g) return st.turni == 2 and g.current == GIOCATORE end,
+				fino = function(_, g) return g.used.primary end },
+			{ testo = "Ora la secondaria, a destra del cronometro: toccala e colpisci", evidenzia = "secondaria",
+				quando = function(st, g) return st.turni == 2 and g.current == GIOCATORE and g.used.primary end,
+				fino = function(_, g) return g.used.secondary end },
+			{ testo = "Ha attaccato subito: i secondi che avanzano diventano globi", su = "bot",
+				quando = function(st, _, e) return st.turni_bot == 2 and e and e.type == "teleports" and e.robot ~= GIOCATORE end },
+			{ testo = "Attacca presto: prima delle tacche viola sull'anello guadagni globi",
+				quando = function(st, g) return st.turni == 3 and g.current == GIOCATORE end,
+				fino = function(_, g) return g.used.primary or g.used.secondary end },
+			{ testo = "Lancia un globo col tasto viola: arrivi dove cade", evidenzia = "teleport",
+				quando = function(st, _, e) return st.turni == 3 and e and e.type == "teleports" and e.robot == GIOCATORE end,
+				fino = { evento = "teleport" } },
+			{ testo = "Passaci sopra per prenderla: dentro c'è un'arma o un oggetto",
+				quando = { evento = "crate" }, fino = { evento = "crate_pick" } },
+			{ testo = "Tocca in aria per il paracadute: uno a partita", evidenzia = "parachute", ferma = false,
+				quando = function(_, g)
+					local rb = g.robots[GIOCATORE]
+					return g.current == GIOCATORE and not rb.grounded and rb.vy < -220 and rb.parachutes_left > 0
+				end,
+				fino = { evento = "parachute" } },
+			{ testo = "Sei primo: chi ti colpisce prende i punti per 1,5",
+				quando = function(_, g) return g:leader() == g.robots[GIOCATORE] end },
+			{ testo = "Si rinasce subito, e il turno continua",
+				quando = function(_, _, e) return e and e.type == "death" and e.robot == GIOCATORE end },
+		},
+	},
 }
 
 -- I girone: la Forgia. Due attacchi, globi dal tempo risparmiato, la spinta
@@ -246,6 +325,14 @@ local GIRONE_1 = {
 		turni = 7,
 		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot" } },
+		-- nei gironi i consigli mettono in luce il comando ma il gioco non si ferma
+		righe = {
+			{ testo = "Prima la primaria, a sinistra del cronometro", evidenzia = "primaria",
+				quando = { turno = 2 }, fino = function(_, g) return g.used.primary end },
+			{ testo = "Poi la secondaria, a destra", evidenzia = "secondaria",
+				quando = function(st, g) return st.turni == 2 and g.current == GIOCATORE and g.used.primary end,
+				fino = function(_, g) return g.used.secondary end },
+		},
 	},
 	{
 		id = "fuori_portata",
@@ -261,6 +348,10 @@ local GIRONE_1 = {
 		obiettivo = {
 			{ usa = "globi", testo = "Attacca presto: guadagna un globo" },
 			{ abbatti = 2, con = "sword", testo = "Finisci il cecchino con la Lama" },
+		},
+		righe = {
+			{ testo = "Ora il tasto viola: il globo ti porta dove cade", evidenzia = "teleport",
+				quando = { evento = "teleports" }, fino = { evento = "teleport" } },
 		},
 		-- senza teletrasporto non ci si arriva
 		collaudo = { senza = { teletrasporto = false } },
@@ -303,7 +394,7 @@ local GIRONE_1 = {
 	{
 		id = "il_codardo",
 		titolo = "Il codardo",
-		scopo = "Colpisce e scappa col globo: inseguilo col tuo",
+		scopo = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo col tuo",
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = "normale", carattere = "codardo", nome = "Il codardo" } },
 		turni = 7,
@@ -317,12 +408,32 @@ local GIRONE_1 = {
 		mappa = "forgia",
 		giocatori = {
 			{ team = 1 },
-			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro" },
+			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
+				battute = "fabbro" },
 		},
 		vita = { [2] = 240 },
 		turni = 10,
 		stelle = { turni = 8, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il Fabbro" } },
+	},
+	-- la fine del girone: una partita completa 2 contro 2, con un bot al tuo
+	-- fianco, che mette insieme tutto quello del girone
+	{
+		id = "battaglia_forgia",
+		titolo = "Battaglia della Forgia",
+		scopo = "Una partita vera, 2 contro 2: tu e il tuo compagno contro il Fabbro e il cecchino",
+		mappa = "forgia",
+		giocatori = {
+			{ team = 1 },
+			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
+				battute = "fabbro" },
+			{ team = 1, bot = "normale", nome = "Compagno" },
+			{ team = 2, bot = "facile", carattere = "cecchino" },
+		},
+		-- niente limite di turni: si gioca fino alla fine del tempo
+		stelle = { bonus = { conta = "abbattuti", almeno = 3, testo = "ABBATTINE 3" },
+			bonus2 = { conta = "morti", al_massimo = 1, testo = "AL MASSIMO UNA MORTE" } },
+		obiettivo = { { vinci = true, testo = "Vinci la partita con il tuo compagno" } },
 	},
 }
 

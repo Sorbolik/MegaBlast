@@ -3,7 +3,7 @@
 # 860 560) è chiuso finché non si hanno 8 stelle. La lezione del Rampino: sotto
 # la piattaforma, aggancio al bordo, su, e la Lama sul bersaglio; in alto al
 # centro l'obiettivo coi passi. Barra: Lanciarune 506, Lama 770, Rampino 1084 (tondo).
-# Carte: x 256 / 640 / 1024, y 440 / 324 / 208.
+# Carte: x 256 / 640 / 1024, y 440 / 324 / 208 / 92 (Camminare, Saltare, Sparare in alto, la Prima partita in fondo; il Rampino 640 208).
 # Fatta, la fine del livello: le stelle una alla volta, RIPROVA 460 110,
 # AVANTI 820 110, la freccia per la campagna 62 658.
 
@@ -17,7 +17,7 @@ aspetta 0.5
 foto 01b_girone_chiuso
 tocca 420 560                       # di nuovo l'Addestramento
 aspetta 0.5
-tocca 1024 324                      # Il Rampino
+tocca 640 208                       # Il Rampino
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.8
 foto 02_scopo
@@ -42,7 +42,7 @@ foto 06_stelle_accese
 tocca 62 658                        # la freccia: si torna alla campagna
 aspetta 1
 foto 07_campagna
-tocca 1024 324                      # di nuovo il Rampino
+tocca 640 208                       # di nuovo il Rampino
 aspetta_stato modo=local turno=1 fase=aim 5
 tocca 62 658                        # la rotellina: ESCI DALLA PARTITA accanto, la missione e' ferma
 aspetta 0.5
