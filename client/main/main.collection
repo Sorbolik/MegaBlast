@@ -14,6 +14,10 @@ embedded_instances {
   "  id: \"globo\"\n"
   "  component: \"/battaglia/globo.sound\"\n"
   "}\n"
+  "components {\n"
+  "  id: \"strappo\"\n"
+  "  component: \"/battaglia/strappo.sound\"\n"
+  "}\n"
   ""
   position {
     x: 0.0

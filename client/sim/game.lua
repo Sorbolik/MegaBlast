@@ -1664,7 +1664,9 @@ function M:update_hooked(rb)
 		rb.hooked = nil
 		-- arrivato al terreno (la capsula lo ferma a un passo dal punto): sopra
 		if not by and dist < M.ROBOT_H then self:hook_land(rb, h.x, h.y) end
-		self:emit({ type = "hook_end", robot = rb.id })
+		-- snap: la fune tirata da un robot è finita prima di arrivare, il
+		-- tirato resta lì (sopra il vuoto cade): nel disegno si spezza
+		self:emit({ type = "hook_end", robot = rb.id, by = h.by, snap = by and not stopped or nil })
 	end
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
