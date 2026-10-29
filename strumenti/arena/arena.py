@@ -44,7 +44,7 @@ def gioca(args):
         blocchi.append((da, q))
         da += q
     extra = []
-    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna"):
+    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna", "impara"):
         v = getattr(args, chiave, None)
         if v:
             extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else v]
@@ -256,6 +256,7 @@ def main():
     ap.add_argument("--mappa")
     ap.add_argument("--punteggio", help="file Lua con una tabella come config.SCORE")
     ap.add_argument("--pesi", help="file Lua con una lista di pesi del bot (bot.PESI), uno a caso per robot")
+    ap.add_argument("--impara", help="1: scrive anche gli esempi per impara.py")
     ap.add_argument("--assegna", help="turno: con --pesi gli individui a turno invece che a caso")
     ap.add_argument("--ritocchi", help="file Lua: function(config, game) che cambia i numeri delle armi (prova)")
     ap.add_argument("--set", help="misto: ogni robot un set completo a caso (o nessuno)")

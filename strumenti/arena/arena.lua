@@ -9,6 +9,9 @@
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
 --          [--set misto]               -- ogni robot un set completo a caso (o nessuno), variante a o b
 --          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI, anche con la rete): ogni robot ne prende uno a caso
+--          [--impara 1]                -- scrive anche gli esempi per impara.py: a ogni fine turno le
+--                                         caratteristiche della posizione (bot.caratteristiche) e quanto
+--                                         ha guadagnato la sua squadra sulle altre da lì a fine partita
 --          [--assegna turno]           -- con --pesi: invece che a caso, a turno (il robot i prende il numero
 --                                         i + partita), così due individui si incontrano sempre alla pari
 --
@@ -158,6 +161,27 @@ local function partita(k)
 	for k = 1, #g.robots do stats[k] = { uso = {}, danno = {}, uccisioni = {} } end
 	local turni, turno = {}, nil
 	local punti = {}
+	-- esempi per impara.py: dall'inizio di un turno alla fine, la posizione
+	-- che ne è uscita; a fine partita, quanto ha reso
+	local esempi, inizio = opt.impara and {} or nil, nil
+	local function margine(team)
+		local mio, altri = 0, {}
+		for _, rb in ipairs(g.robots) do
+			if rb.team == team then mio = mio + rb.points else altri[rb.team] = (altri[rb.team] or 0) + rb.points end
+		end
+		local primo = 0
+		for _, t in ipairs({ 1, 2, 3, 4 }) do
+			if altri[t] then primo = math.max(primo, altri[t]) end
+		end
+		return mio - primo
+	end
+	local function fine_turno()
+		if inizio then
+			local x = bot.caratteristiche({ id = inizio.chi }, inizio.ref, g, {})
+			for j = 1, #x do x[j] = math.floor(x[j] * 10000 + 0.5) / 10000 end
+			esempi[#esempi + 1] = { c = inizio.chi, x = x, m = inizio.m }
+		end
+	end
 	local function chiudi_turno()
 		if turno then
 			turno.firma = table.concat(turno.mosse, ">") .. (turno.uccisioni > 0 and "+kill" or "")
@@ -184,6 +208,10 @@ local function partita(k)
 					motivo = e.reason, arma = w or "altro", cat = categoria(w) }
 			elseif e.type == "turn" then
 				chiudi_turno()
+				if esempi then
+					fine_turno()
+					inizio = { chi = e.robot, ref = bot.mondo(g), m = margine(g.robots[e.robot].team) }
+				end
 				turno = { t = g.tick, chi = e.robot, mosse = {}, danno = 0, uccisioni = 0, ambientali = 0 }
 			elseif e.type == "damage" and turno then
 				local vittima = g.robots[e.robot]
@@ -206,6 +234,13 @@ local function partita(k)
 		end
 	end
 	chiudi_turno()
+	if esempi then
+		fine_turno()
+		for _, x in ipairs(esempi) do
+			x.y = (margine(g.robots[x.c].team) - x.m) / 100
+			x.m = nil
+		end
+	end
 	local res = g:results()
 	local robot = {}
 	for k, rb in ipairs(g.robots) do
@@ -225,7 +260,7 @@ local function partita(k)
 		for _, p in ipairs(r.opzioni.players) do p.pesi = nil end
 	end
 	return { numero = k, ricetta = r, modo = modo, mappa = mappa, vincitore = res.winner or 0, tick = g.tick, robot = robot,
-		turni = turni, punti = punti, ritocchi = opt.ritocchi, pesi = opt.pesi }
+		turni = turni, punti = punti, ritocchi = opt.ritocchi, pesi = opt.pesi, esempi = esempi }
 end
 
 local out = opt.uscita and assert(io.open(opt.uscita, "w")) or io.stdout

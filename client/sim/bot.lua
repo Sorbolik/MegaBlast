@@ -48,7 +48,8 @@ M.ORDINE = { "facile", "normale", "difficile" }
 -- (players[i].pesi, solo i campi che cambiano). rete (se c'è): una rete
 -- neurale (sim/rete.lua) che giudica le mosse al posto di questi pesi, dalle
 -- caratteristiche della posizione dopo la mossa (M.caratteristiche); la fanno
--- evolvere da zero strumenti/arena/evolvi_rete.py.
+-- evolvere strumenti/arena/evolvi.py o imparare strumenti/arena/impara.py;
+-- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore.
 M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 20 }
 -- mosse provate fino in fondo (fino a quando tutto è fermo) tra le migliori
 local FINALISTE = 4
@@ -614,8 +615,11 @@ local function pensa(b, g)
 	end
 
 	-- a volte (livelli bassi) una mossa meno buona, ma non una che fa male a sé
-	-- o al compagno (punti sotto zero quando la migliore non lo è)
-	if liv.sbaglia > 0 and #mosse > 1 and b.rng:next() < liv.sbaglia then
+	-- o al compagno (punti sotto zero quando la migliore non lo è). esplora:
+	-- lo stesso per i bot che imparano (strumenti/arena/impara.py), che così
+	-- vedono anche mosse che non sceglierebbero
+	local sbaglia = b.pesi.esplora or liv.sbaglia
+	if sbaglia > 0 and #mosse > 1 and b.rng:next() < sbaglia then
 		local m = mosse[1 + math.floor(b.rng:next() * math.min(3, #mosse))]
 		if m.punti >= math.min(0, mosse[1].punti) then b.scelta = m end
 	end

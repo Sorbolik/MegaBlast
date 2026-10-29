@@ -23,6 +23,7 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 | 29 ott | **Ricette e impronte** (`client/sim/replay.lua`): seme, mappa, giocatori (livello dei bot), tasti dei giocatori veri solo quando cambiano, impronta dello stato (`game:impronta`) ogni 10 s e alla fine. Rigiocando devono tornare tutte: base per replay, validazione delle partite e video degli highlight. Sergio: "deve essere possibile ricostruire in maniera deterministica una partita, e validata". | PR del bot |
 | 29 ott | **Arena dei bot** (`strumenti/arena/`): partite senza grafica, un processo luajit per core (~12.000 partite all'ora su 4 core), rapporto per il bilanciamento, highlight per rarità e spettacolo, video rigiocati nel simulatore. Le serie lunghe girano sul PC di Sergio. | PR del bot |
 | 29 ott | **Bot con rete neurale che imparano da soli** (Sergio: "vorrei che si evolvessero, che imparassero il gioco da soli"): la rete (`client/sim/rete.lua`, solo somme, prodotti e ReLU, uguale su LuaJIT e gopher-lua) giudica ogni mossa che il bot prova guardando 20 caratteristiche della posizione che ne esce; il bot resta quello che preme i tasti, quindi non bara. `strumenti/arena/evolvi.py` le fa evolvere da pesi a caso, senza fine, col bot euristico come riferimento fisso, campioni passati come avversari ed esami ogni 5 generazioni. Tutti i bot, finiti gli attacchi, si riparano (a piedi o col Rampino) (Claude). | PR del bot |
+| 29 ott | **Apprendimento a gradiente** (Sergio: "perché non metti in piedi anche l'apprendimento a gradiente... facciamo partire una bella larga scala sul mio computer"): `strumenti/arena/impara.py` fa imparare alla rete quanto rende una posizione (da ogni fine turno a fine partita), giro dopo giro sulle partite che gioca, con numpy; corsa lunga sul PC di Sergio. Rete e strumenti restano fuori dal gioco, che usa il bot euristico. | PR del bot |
 | 29 ott | Roadmap: VPS europeo + SQLite + Litestream + Caddy; account ospite; pannello servito dal Go; GitHub Actions per i test; deploy a script; build anche browser dal nostro server. | docs/roadmap.md |
 
 ## Scartate
@@ -42,9 +43,9 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
   di behavior tree/GOAP (pesano più del bot) — 29 ott.
 - Rete neurale che preme i tasti tick per tick (dalla grafica o dallo stato
   all'input): impara troppo lentamente per le partite che possiamo giocare e
-  sul telefono costerebbe a ogni tick. Apprendimento a gradiente (PyTorch, RL)
-  per ora: l'evoluzione non chiede librerie né derivate, gira con luajit su
-  tutti i core e la rete esce già in Lua (Claude) — 29 ott.
+  sul telefono costerebbe a ogni tick (Claude) — 29 ott.
+- PyTorch per l'apprendimento a gradiente: installazione pesante e GPU inutile
+  per una rete di un migliaio di pesi; basta numpy (Claude) — 29 ott.
 - Tetto di lavoro del bot a tempo (millisecondi): non deterministico, client e
   server sceglierebbero mosse diverse; si conta il lavoro — 29 ott.
 - Kubernetes, piattaforme gestite, cloud gratuito (29 ott).

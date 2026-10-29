@@ -16,6 +16,7 @@ python3 strumenti/arena/arena.py --partite 10000 --cartella simulazione/arena/ba
 python3 strumenti/arena/arena.py --partite 1000 --pesi popolazione.lua   # bot con pesi diversi
 python3 strumenti/arena/arena.py --partite 300 --pesi due.lua --assegna turno   # due individui sempre alla pari
 python3 strumenti/arena/evolvi.py --partite 1500                   # bot con rete neurale che evolvono, senza fine
+python3 strumenti/arena/impara.py                                  # bot con rete neurale che imparano a gradiente, senza fine
 ```
 
 `variante.lua` restituisce una tabella come `config.SCORE` (`return { damage = 1, kill = 60, ... }`):
@@ -42,6 +43,14 @@ Con la rete evolve anche la soglia del teletrasporto. Più partite per generazio
 ricomincia). Esce `simulazione/arena/reti/`: `evoluzione.md`, `storia.json`
 (tutte le generazioni: bravura, armi, morti, mosse preferite), `campioni.json`
 (la rete migliore di ogni generazione, da mettere in `players[i].pesi`).
+
+`impara.py` fa imparare la rete a gradiente (numpy, niente PyTorch): a ogni giro
+gioca (la rete di adesso con un po' di esplorazione, le reti dei giri passati e
+il bot di oggi), raccoglie da ogni fine turno le caratteristiche della posizione
+e quanto ha reso fino a fine partita (`arena.py --impara 1`), e la rete impara a
+prevederlo. Poi l'esame contro il bot di oggi, come `evolvi.py`. Esce
+`simulazione/arena/impara/`. Serve `pip install numpy`. Né la rete né questi
+strumenti finiscono nel gioco: il gioco usa il bot euristico.
 
 Serve luajit (sul PC di Windows: `luajit.exe` nel PATH, o `--luajit C:\percorso\luajit.exe`).
 Il video usa il simulatore (`strumenti/simula`), quindi solo su Linux.
