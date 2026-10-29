@@ -216,4 +216,12 @@ lingue, sound designer.
 
 Chi cambia una decisione la segna qui con la data e chi l'ha presa; chi propone
 una cosa nuova la mette prima nella fase giusta. La pagina della proposta resta
-come storia delle varianti scartate.
+come storia delle varianti scartate. La storia completa, area per area, è in
+[decisioni/](decisioni/README.md).
+
+Questa roadmap è una base, non un recinto (Sergio, 29 ottobre): ogni proposta
+nuova deve essere la più ricca possibile, non trascurare strade e andare anche
+oltre quello che è fissato qui, se ne vale la pena. Per questo le chat si
+sfidano a vicenda: prima di arrivare a Sergio, una proposta passa da un'altra
+chat che la critica e la arricchisce (regola in
+[decisioni/regole.md](decisioni/regole.md)).
