@@ -54,3 +54,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Corse delle reti fermate; il bot del gioco prende le loro lezioni: si teletrasporta molto di più e si ripara col globo. | #90 |
 | 29 ott | Mantice più debole: spinge meno (400 invece di 520, meno in su, meno al bordo del raggio); spingeva fuori troppo facilmente. | #91 |
 | 29 ott | Rampino sul terreno: ti porta sopra la piattaforma anche agganciandola da sotto in diagonale (soglie più larghe). | #91 |
+| 29 ott | Primi passi: Camminare, Saltare e Sparare in un percorso solo, senza tempo né turni (bandierina, gradino, cassa col Lanciarune e la sua scheda, bersaglio; se manchi ritenti subito); stelle a tiri a vuoto; l'interfaccia delle lezioni si scopre a poco a poco; niente cerchi di cura nelle lezioni; Armi e draft prima della Prima partita. | questa PR |

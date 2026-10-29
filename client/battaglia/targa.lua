@@ -45,8 +45,9 @@ local CORONA_Y, CORONA_SCALA = NOME_Y + 13, 1.6
 M.SOPRA = CORONA_Y + 17
 -- la riga delle missioni: sopra la Corona e gli annunci che salgono, a capo
 -- oltre RIGA_W; grande RIGA_SCALA sullo schermo a ogni zoom (circa 22 px: con la
--- camera lontana non si rimpicciolisce come il resto della targa)
-local RIGA_Y, RIGA_SCALA, RIGA_W = CORONA_Y + 30, 0.55, 1800
+-- camera lontana non si rimpicciolisce come il resto della targa). Non esce
+-- dai lati dello schermo: col robot vicino a un bordo si sposta verso il centro
+local RIGA_Y, RIGA_SCALA, RIGA_W, RIGA_LATO = CORONA_Y + 30, 0.55, 1640, 16
 -- e non sale fin sotto i punti e l'obiettivo in cima (battaglia/punteggio.lua):
 -- col robot in alto scende, sopra il robot
 local RIGA_CIMA = 130
@@ -175,7 +176,8 @@ function M.riga(t, s)
 	t.riga_testo = s
 	gui.set_text(t.riga, s)
 	local font = gui.get_font_resource(gui.get_font(t.riga))
-	t.riga_h = s == "" and 0 or resource.get_text_metrics(font, s, { width = RIGA_W, line_break = true }).height
+	local m = s ~= "" and resource.get_text_metrics(font, s, { width = RIGA_W, line_break = true })
+	t.riga_h, t.riga_w = m and m.height or 0, m and m.width or 0
 end
 
 function M.battuta(t, s)
@@ -231,7 +233,12 @@ function M.update(t, dt, x, y, scala, cam, su)
 		gui.set_scale(t.riga, V)
 		local _, tetto = camera.al_mondo(cam, 0, schermo.y1 - RIGA_CIMA - t.riga_h * RIGA_SCALA)
 		-- su: pixel dello schermo in più sopra la targa (il cartellino della mira)
-		V.x, V.y = 0, math.min(RIGA_Y + (su or 0) / (scala * cam.s), (tetto - y) / scala)
+		local sx = camera.allo_schermo(cam, x, y)
+		local mezzo = (t.riga_w or 0) * RIGA_SCALA / 2 + RIGA_LATO
+		local cx = math.max(schermo.x0 + mezzo, math.min(schermo.x1 - mezzo, sx))
+		if schermo.x1 - schermo.x0 < 2 * mezzo then cx = (schermo.x0 + schermo.x1) / 2 end
+		V.x = (camera.al_mondo(cam, cx, 0) - x) / scala
+		V.y = math.min(RIGA_Y + (su or 0) / (scala * cam.s), (tetto - y) / scala)
 		gui.set_position(t.riga, V)
 	end
 

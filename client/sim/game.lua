@@ -316,6 +316,7 @@ end
 
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
+-- opts.heals = false: niente cerchi di cura (le lezioni)
 -- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
 -- opts.score = punti partita diversi da config.SCORE, solo i campi che cambiano (l'arena prova le varianti)
 -- opts.normalize = modalità Torneo: le statistiche di albero e equipaggiamento
@@ -400,6 +401,7 @@ function M.new(seed, map_id, opts)
 	g.wall_id = 0
 	g.wall_cells = {}        -- cella (indice in terrain.data) -> Bastione che l'ha riempita
 	g.heals = {}             -- cerchi di cura { id, x, y }
+	g.heals_on = opts.heals ~= false
 	g.heal_id = 0
 	g.crate_id = 0
 	g.crate_every = opts.crate_every or M.CRATE_EVERY
@@ -2196,12 +2198,14 @@ end
 
 -- Sceglie un punto a caso sulla superficie, lontano dai robot e dalle altre
 -- casse, e fa cadere lì una cassa dal cielo. Usa il generatore della partita,
--- così server e client la mettono nello stesso posto.
-function M:spawn_crate()
+-- così server e client la mettono nello stesso posto. weapon e x: quella
+-- cassa proprio lì (le lezioni, sim/missioni.lua cassa)
+function M:spawn_crate(weapon, x)
 	if #self.crates >= M.CRATE_MAX then return nil end
-	local weapon = self:crate_content()
+	weapon = weapon or self:crate_content()
 	local hw = M.CRATE_HALF_W
-	local x, gy = self:surface_spot(function(x, gy)
+	-- lontano dai robot e dalle altre casse
+	local function libero(x, gy)
 		if self:robot_collides(x, gy) or self:object_collides(x, gy, hw) or self:object_collides(x, gy + M.CRATE_H, hw) then
 			return false
 		end
@@ -2212,7 +2216,13 @@ function M:spawn_crate()
 			if math.abs(c.x - x) < 40 then return false end
 		end
 		return true
-	end)
+	end
+	local gy
+	if x then
+		gy = self.terrain:ground_below(x, M.WORLD_H - 1)
+	else
+		x, gy = self:surface_spot(libero)
+	end
 	if not x then return nil end
 	self.crate_id = self.crate_id + 1
 	local c = { id = self.crate_id, x = x, y = M.WORLD_H + 20, vy = 0, landed = false, weapon = weapon }
@@ -2231,7 +2241,8 @@ function M:update_crates()
 			if not rb.dead and not taken
 				and math.abs(rb.x - c.x) <= M.ROBOT_HALF_W + M.CRATE_HALF_W
 				and rb.y < c.y + M.CRATE_H and rb.y + M.ROBOT_H > c.y then
-				rb.ammo[c.weapon] = rb.ammo[c.weapon] + 1
+				-- il Lanciarune non ha colpi contati: la cassa lo dà a chi non ce l'ha (rb.disarmed)
+				if M.FREE_WEAPONS[c.weapon] then rb.disarmed = nil else rb.ammo[c.weapon] = rb.ammo[c.weapon] + 1 end
 				rb.crates = rb.crates + 1
 				self:emit({ type = "crate_pick", id = c.id, robot = rb.id, weapon = c.weapon })
 				taken = true
@@ -2467,7 +2478,9 @@ function M:update_placed()
 end
 
 -- Il robot può usare quest'arma? Le armi delle casse hanno colpi contati.
+-- rb.disarmed: nessuna, finché non trova il Lanciarune in una cassa (la prima lezione)
 function M.has_weapon(rb, weapon)
+	if rb.disarmed then return false end
 	if M.SECONDARY[weapon] then return weapon == "sword" or weapon == rb.secondary end
 	if M.FREE_WEAPONS[weapon] then return true end
 	return (rb.ammo[weapon] or 0) > 0
@@ -2656,7 +2669,7 @@ function M:start_turn(player)
 			self:spawn_crate()
 		end
 	end
-	if self.turn_no % C.HEAL.every == 0 then self:spawn_heal() end
+	if self.heals_on and self.turn_no % C.HEAL.every == 0 then self:spawn_heal() end
 end
 
 -- Il robot di turno può usare weapon adesso? "teleport", "sword", un'arma o un
