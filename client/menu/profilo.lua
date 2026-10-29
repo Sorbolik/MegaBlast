@@ -73,9 +73,13 @@ function M.fine_partita(p, posto, riconoscimenti)
 	return g
 end
 
--- Missioni della campagna e lezioni (sim/campagna.lua): le stelle migliori di ognuna, 0..3
+-- Missioni della campagna e lezioni (sim/campagna.lua): per ognuna le tre
+-- stelle { true, false, true }, ognuna presa una volta resta (anche in
+-- partite diverse)
 function M.missione(p, id, stelle)
-	p.stelle[id] = math.max(p.stelle[id] or 0, stelle)
+	local prese = p.stelle[id] or { false, false, false }
+	for i = 1, 3 do prese[i] = prese[i] or stelle[i] == true end
+	p.stelle[id] = prese
 	p.fallite[id] = nil
 end
 
@@ -93,13 +97,17 @@ end
 -- Tutte le stelle prese (aprono i capitoli della campagna)
 function M.stelle_totali(p)
 	local n = 0
-	for _, v in pairs(p.stelle) do n = n + v end
+	for _, v in pairs(p.stelle) do
+		for i = 1, 3 do
+			if v[i] then n = n + 1 end
+		end
+	end
 	return n
 end
 
 -- Chi non ha mai finito la prima partita guidata: GIOCA lo porta lì
 function M.nuovo_giocatore(p)
-	return (p.stelle.guidata or 0) == 0
+	return not (p.stelle.guidata and p.stelle.guidata[1])
 end
 
 -- Salvataggio --------------------------------------------------------------------
@@ -114,6 +122,10 @@ function M.carica()
 	-- i profili salvati prima della campagna tenevano le stelle delle lezioni in p.lezioni
 	p.stelle = p.stelle or p.lezioni or {}
 	p.lezioni = nil
+	-- prima le stelle erano un numero: le prime n
+	for id, v in pairs(p.stelle) do
+		if type(v) == "number" then p.stelle[id] = { v >= 1, v >= 2, v >= 3 } end
+	end
 	p.fallite = p.fallite or {}
 	return p
 end

@@ -195,6 +195,7 @@ C.STATS = {
 	max_hp = 150,
 	teleports = 2,           -- globi del teletrasporto all'inizio (Sergio: 2); se ne guadagnano attaccando presto
 	parachutes = 1,          -- paracadute per partita (Sergio, 24 ottobre 2026: uno)
+	time_orbs = 1,           -- 1: i secondi avanzati diventano globi; 0 no (le lezioni che non parlano di globi)
 	knockback_mul = 1,       -- quanto si viene spinti dai colpi
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata

@@ -62,6 +62,8 @@ local function gioca(id, copione, picks, limite)
 	for _ = 1, limite or 60 * 120 do
 		local input = primo and FERMO or co(c)
 		primo = false
+		-- un tasto qualsiasi: nelle lezioni il tempo parte da qui
+		if next(input) then missioni.tocca(r) end
 		g:step(input)
 		for _, e in ipairs(g:pop_events()) do missioni.evento(r, g, e) end
 		local esito = missioni.tick(r, g)
@@ -119,7 +121,7 @@ local ok, r, a, p = cerca("armi", function(c, a, p)
 	c.usa("mallet", 0)
 end, SCELTA, { 0.2, 1.2, 0.1 }, potenze(0.4, 1, 0.1))
 check(ok, "armi: si finisce con la primaria e la secondaria scelte")
-if ok then check(missioni.stelle(r) == 3, "armi: in due turni sono tre stelle") end
+if ok then check(missioni.quante(missioni.stelle(r)) == 3, "armi: in due turni sono tre stelle") end
 -- Solo Lanciarune e Lama non bastano mai
 local esito = gioca("armi", function(c)
 	for _ = 1, 4 do
@@ -276,7 +278,7 @@ ok = cerca("corona", function(c, a, p)
 end, nil, { 0, 1, 0.1 }, potenze(0.3, 1, 0.1))
 check(ok, "corona: si abbatte chi è primo")
 
--- La partita guidata: il cronometro del primo turno aspetta il primo colpo, il
+-- La partita guidata: il cronometro aspetta che si tocchino i comandi, il
 -- bot del tutorial fa vedere i due attacchi e poi il teletrasporto nei suoi
 -- primi turni, la partita dura 3 minuti. Il giocatore spara un missile per turno.
 do
@@ -296,6 +298,7 @@ do
 				fermo = g.timer
 			else
 				input = { fire = { weapon = "missile", angle = 0.6, power = 0.8 } }
+				missioni.tocca(r)
 			end
 		end
 		g:step(replay.input(ric, g, bots, input))
@@ -305,12 +308,51 @@ do
 		end
 		esito = missioni.tick(r, g)
 	end
-	check(fermo == game.TURN_TICKS, "guidata: al primo turno il cronometro aspetta il primo colpo")
+	check(fermo == game.TURN_TICKS, "guidata: al primo turno il cronometro aspetta che si tocchino i comandi")
 	check(visti["1swing"] or visti["1mallet"] or visti["1eagle"] or visti["1lunge"],
 		"guidata: al suo primo turno il bot usa anche la secondaria")
 	check(visti["2teleports"] and visti["2teleport"], "guidata: al suo secondo turno il bot guadagna globi e si teletrasporta")
 	check(esito == "fatta" and g.phase == "over", "guidata: la partita corta finisce")
 	check(ticks < 60 * 60 * 5, "guidata: dura meno di 5 minuti (" .. math.floor(ticks / 60) .. " s)")
+end
+
+-- Due mani: sbagliato il primo turno il bot torna alla sua vita della
+-- missione (28), non a 150: si può ancora finire
+do
+	local r = missioni.nuova("due_mani")
+	local seed, mappa, opts = missioni.partita(r, 3)
+	local g = game.new(seed, mappa, opts)
+	missioni.prepara(r, g)
+	local rb = g.robots[2]
+	rb.hp = 10
+	missioni.evento(r, g, { type = "turn", robot = 2 })
+	check(rb.hp == 28 and rb.max_hp == 28, "due_mani: il bot si rimette a 28, non a 150")
+end
+-- e chi rinasce rinasce con la vita della missione (Fuori portata: 40)
+for _, l in ipairs(campagna.CAPITOLI[2].missioni) do
+	if l.vita then
+		local r = missioni.nuova(l.id)
+		local seed, mappa, opts = missioni.partita(r, 3)
+		local g = game.new(seed, mappa, opts)
+		missioni.prepara(r, g)
+		for i, v in pairs(l.vita) do
+			check(g.robots[i].max_hp == v, l.id .. ": la vita piena (e della rinascita) è quella della missione")
+		end
+	end
+end
+
+-- Ogni stella col suo criterio: in 6 turni senza morire sono la prima e la
+-- terza, non la seconda (e nel profilo ogni stella presa resta)
+do
+	local r = missioni.nuova("primo_sangue")
+	r.esito, r.st.turni = "fatta", 6
+	local s = missioni.stelle(r)
+	check(s[1] and not s[2] and s[3], "stelle: il bonus senza i turni accende la terza e non la seconda")
+	local profilo = require "menu.profilo"
+	local p = profilo.nuovo()
+	profilo.missione(p, "primo_sangue", s)
+	profilo.missione(p, "primo_sangue", { true, true, false })
+	check(profilo.stelle_totali(p) == 3, "stelle: nel profilo ognuna presa resta")
 end
 
 -- L'aiuto dopo tante perse: il Fabbro scende di livello e parte con meno vita,

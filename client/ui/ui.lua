@@ -29,6 +29,7 @@ M.C = {
 	BRACE = c(1, 0.42, 0.16),             -- accento quando non c'è una squadra; colore delle armi primarie
 	ACCIAIO = c(0.62, 0.77, 0.88),        -- colore delle armi secondarie (danno secco, ti muovono)
 	VIOLA = c(0.77, 0.61, 1),             -- il movimento: teletrasporto e attrezzo (Rampino, Bastione)
+	MENTA = c(0.36, 0.86, 0.72),          -- gli oggetti che si consumano: paracadute, trappola, scudo, trampolino
 	OMBRA = c(0, 0, 0, 0.6),
 	SQUADRA = { c(1, 0.231, 0.306), c(0.239, 0.482, 1), c(0.18, 0.75, 0.44), c(0.96, 0.77, 0.09) },
 }

@@ -32,7 +32,7 @@ local ADDESTRAMENTO = {
 		piani = { { due_attacchi = true }, { attacca_entro = 4, poi = "teletrasporto" } },
 		obiettivo = function(st) return st.finita end,
 		righe = {
-			{ testo = "Hai 8 secondi: mettiti al riparo",
+			{ testo = "Hai 8 secondi: mettiti al riparo. Per saltare {salta}",
 				quando = function(st, g) return st.turni == 1 and g.current == GIOCATORE and g.window > 0 end },
 			{ testo = "Il bot fa due attacchi: una primaria e una secondaria", su = "bot",
 				quando = function(st, g) return st.turni_bot == 1 and g.current ~= GIOCATORE end },
@@ -69,6 +69,8 @@ local ADDESTRAMENTO = {
 		arena = { { 240, 0, 1440, 150 } },
 		spawns = { { x = 760, from = 600 }, { x = 1080, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "primarie", "secondarie" },
 		turni = 4, stelle = { 3, 2 },
 		in_ordine = false,
 		obiettivo = {
@@ -88,6 +90,8 @@ local ADDESTRAMENTO = {
 		arena = { { 300, 0, 600, 150 }, { 1200, 100, 320, 50 } },
 		spawns = { { x = 600, from = 600 }, { x = 800, from = 600 }, { x = 1380, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 2, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "missile", "sword", "teleport" },
 		globi = 0,
 		turni = 3, stelle = { 2, 1 },
 		obiettivo = {
@@ -104,12 +108,14 @@ local ADDESTRAMENTO = {
 	{
 		id = "tonante",
 		titolo = "Il Tonante",
-		scopo = "Salta e spara col Tonante verso il basso: il rinculo ti porta sul pilastro",
+		scopo = "Salta ({salta}) e in aria spara col Tonante verso il basso: il rinculo ti porta sul pilastro",
 		-- il pilastro è più basso di quello del Maglio (il rinculo porta su 110 px),
 		-- ma più alto del salto
 		arena = { { 300, 0, 1300, 150 }, { 1000, 150, 160, 110 } },
 		spawns = { { x = 840, from = 600 }, { x = 1120, from = 1000 } },
 		giocatori = { { team = 1, secondary = "eagle", tool = "wall" }, { team = 2, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "missile", "eagle" },
 		globi = 0,
 		turni = 3, stelle = { 2, 1 },
 		obiettivo = {
@@ -125,10 +131,12 @@ local ADDESTRAMENTO = {
 	{
 		id = "paracadute",
 		titolo = "Il paracadute",
-		scopo = "Salta dalla torre e apri il paracadute in aria: arriva al bersaglio",
+		scopo = "Salta dalla torre ({salta}) e apri il paracadute in aria: arriva al bersaglio",
 		arena = { { 300, 0, 120, 560 }, { 760, 0, 640, 150 } },
 		spawns = { { x = 360, from = 1000 }, { x = 1100, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "missile", "parachute" },
 		globi = 0,
 		turni = 2, stelle = { 2, 1 },
 		obiettivo = {
@@ -150,6 +158,8 @@ local ADDESTRAMENTO = {
 		arena = { { 300, 0, 1300, 150 }, { 1000, 300, 320, 30 } },
 		spawns = { { x = 760, from = 290 }, { x = 1220, from = 1000 } },
 		giocatori = { { team = 1, tool = "hook" }, { team = 2, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "hook", "sword" },
 		globi = 0,
 		turni = 2, stelle = { 2, 1 },
 		obiettivo = {
@@ -168,6 +178,8 @@ local ADDESTRAMENTO = {
 		arena = { { 300, 0, 1300, 150 }, { 1060, 150, 540, 72 } },
 		spawns = { { x = 760, from = 600 }, { x = 1300, from = 600 } },
 		giocatori = { { team = 1, tool = "wall" }, { team = 2, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "wall", "sword" },
 		globi = 0,
 		turni = 3, stelle = { 2, 1 },
 		obiettivo = {
@@ -182,10 +194,12 @@ local ADDESTRAMENTO = {
 	{
 		id = "maglio",
 		titolo = "Il Maglio",
-		scopo = "Salta e colpisci il terreno col Maglio: rimbalzi in alto fino al bersaglio",
+		scopo = "Salta ({salta}) e colpisci il terreno col Maglio: rimbalzi in alto fino al bersaglio",
 		arena = { { 300, 0, 1300, 150 }, { 1000, 150, 160, 200 } },
 		spawns = { { x = 840, from = 600 }, { x = 1120, from = 1000 } },
 		giocatori = { { team = 1, secondary = "mallet", tool = "wall" }, { team = 2, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "missile", "mallet" },
 		globi = 0,
 		turni = 3, stelle = { 2, 1 },
 		obiettivo = {
@@ -204,6 +218,8 @@ local ADDESTRAMENTO = {
 		arena = { { 240, 0, 1440, 150 } },
 		spawns = { { x = 900, from = 600 }, { x = 560, from = 600 }, { x = 1320, from = 600 }, { x = 1120, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 3, dummy = true }, { team = 4, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "missile", "sword" },
 		-- il terzo bersaglio è primo in classifica: ha la Corona. Sono già
 		-- feriti, così un turno basta
 		punti = { [2] = 60, [3] = 40, [4] = 200 },
@@ -307,7 +323,7 @@ local GIRONE_1 = {
 
 -- serve: le stelle (di tutti i capitoli) per aprire il capitolo
 M.CAPITOLI = {
-	{ id = "addestramento", titolo = "Addestramento", serve = 0, missioni = ADDESTRAMENTO },
+	{ id = "addestramento", titolo = "Addestramento", serve = 0, missioni = ADDESTRAMENTO, aspetta = true },
 	{ id = "girone_1", titolo = "I girone: la Forgia", serve = 8, missioni = GIRONE_1 },
 }
 

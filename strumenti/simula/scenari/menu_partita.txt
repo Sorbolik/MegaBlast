@@ -1,7 +1,8 @@
 # La rotellina in partita (in alto a sinistra, 62 658): si apre ESCI DALLA
-# PARTITA accanto (236 658), un tocco altrove la richiude senza fare altro;
+# PARTITA accanto (408 658; RIPROVA 186 658), un tocco altrove la richiude senza fare altro;
 # sullo stesso telefono intanto la partita e' ferma (il tempo non scende).
 # ESCI torna alla home; da una partita contro i bot, all'allenamento.
+# RIPROVA ricomincia la stessa partita (online non c'e').
 
 aspetta 1.5
 tocca 1075 235                      # STESSO TELEFONO
@@ -16,7 +17,7 @@ foto 02_chiusa
 premi Escape                        # Esc la riapre
 aspetta 0.5
 foto 03_esc
-tocca 236 658                       # ESCI DALLA PARTITA
+tocca 408 658                       # ESCI DALLA PARTITA
 aspetta_stato modo=menu 3
 aspetta 0.5
 foto 04_home
@@ -27,6 +28,13 @@ aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 tocca 62 658
 aspetta 0.3
-tocca 236 658                       # ESCI: si torna all'allenamento
+foto 05_riprova_esci                # RIPROVA prima di ESCI
+tocca 186 658                       # RIPROVA: la partita ricomincia
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.3
+foto 06_ricominciata                # IL TUO TURNO
+tocca 62 658
+aspetta 0.3
+tocca 408 658                       # ESCI: si torna all'allenamento
 aspetta 1
-foto 05_allenamento
+foto 07_allenamento
