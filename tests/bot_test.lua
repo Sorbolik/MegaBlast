@@ -74,7 +74,7 @@ do
 		return r5, g5:impronta()
 	end
 	local _, h0 = impronte(nil)
-	local r5, h1 = impronte({ teletrasporto = 200, strada = 0.1 })
+	local r5, h1 = impronte({ globo_riparo = 1000, strada = 0.1 })
 	check(h0 ~= h1, "pesi: un bot con altri pesi gioca un'altra partita")
 	check(replay.verifica(r5), "pesi: la ricetta con i pesi rigioca la stessa partita")
 
