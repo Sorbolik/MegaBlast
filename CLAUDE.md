@@ -21,7 +21,8 @@ simulazione non ha trovato, aggiungi lì la regola.
 
 Le scelte di game design (tempo del turno, strategia, equipaggiamento,
 ricompense) partono da [docs/game_design_competitivo.md](docs/game_design_competitivo.md):
-leggilo prima di proporre o cambiare una meccanica.
+leggilo prima di proporre o cambiare una meccanica. Cosa si fa e in che ordine è
+fissato in [docs/roadmap.md](docs/roadmap.md): consultalo prima di proporre lavoro nuovo.
 
 Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
 in [.claude/skills/](.claude/skills/README.md).
