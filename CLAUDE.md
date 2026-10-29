@@ -30,6 +30,16 @@ decidi o scarti qualcosa, aggiorna quel file e `cronologia.md` nella stessa PR.
 Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
 in [.claude/skills/](.claude/skills/README.md).
 
+## Server sempre in pari con main (Sergio, 29 ott)
+
+Il server deve essere **sempre** in pari con quello che va su `main`: ogni PR che
+cambia regole, simulazione (`client/sim/`) o protocollo aggiorna anche il server
+**nella stessa PR**. La simulazione il server la incorpora da sola, ma non basta:
+controlla ogni volta la lista in [docs/server.md](docs/server.md#server-in-pari-con-main)
+(campi nuovi in `server/net.lua`, messaggi in `server/room.go`, dati che il client
+manda solo in locale, test in `server/server_test.go`) e prova l'online nel
+simulatore (`strumenti/simula/scenari/scelta_online.txt`, server vero e giocatori finti).
+
 Il server usa un terreno suo in Go (`server/terreno.go`) per le funzioni di
 `client/sim/terrain.lua` che toccano le celle: `new`, `get`, `set`, `solid`,
 `any_solid`, `carve`, `ground_below`, `surface_y`. Se ne cambi una in Lua,

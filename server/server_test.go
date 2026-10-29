@@ -388,8 +388,7 @@ func TestTeamDraftSwap(t *testing.T) {
 	p3.send(`{"t":"pick","w":"` + w1 + `"}`) // stessa arma del compagno: non vale
 	p3.send(`{"t":"pick","w":"` + w3 + `"}`)
 	p1.send(`{"t":"swap","to":3}`)
-	if m := p3.waitFor(`"swap"`); m["from"].(float64) != 1 {
-		t.Fatalf("proposta inattesa: %v", m)
+	for p3.waitFor(`"draft"`)["sw"].([]any)[0] != 3.0 {
 	}
 	p3.send(`{"t":"swap","to":1}`)
 	for {
@@ -405,5 +404,45 @@ func TestTeamDraftSwap(t *testing.T) {
 	}
 	if !reflect.DeepEqual(teams, []float64{1, 2, 1, 2}) || st["mode"] != "2v2" {
 		t.Fatalf("start inatteso: %v", st)
+	}
+	// start porta anche le scelte: il client crea la partita con le stesse armi
+	pl := st["players"].([]any)
+	if pl[0].(map[string]any)["pick"] != w3 || pl[2].(map[string]any)["pick"] != w1 {
+		t.Fatalf("scelte mancanti nello start: %v", pl)
+	}
+}
+
+// L'attrezzo dell'assetto arriva col hello ed è già scelto nel draft; fra
+// compagni chi sceglie davvero vince sul solo proposto
+func TestDraftToolFromHello(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	var c [4]*testClient
+	for i := range c {
+		c[i] = dial(t, ctx, url)
+		c[i].send(`{"t":"hello","v":2,"mode":"2v2","tool":"wall"}`)
+	}
+	you := map[float64]*testClient{}
+	var d map[string]any
+	for _, x := range c {
+		d = x.waitFor(`"draft"`)
+		you[d["you"].(float64)] = x
+	}
+	// 1 e 2 (squadre diverse) col Bastione; 3, compagno di 1, passa al Rampino
+	p3 := d["p3"].([]any)
+	if p3[0] != "wall" || p3[1] != "wall" || p3[2] != "hook" || d["pr"].([]any)[0] != true {
+		t.Fatalf("attrezzi del draft inattesi: %v %v", p3, d["pr"])
+	}
+	you[3].send(`{"t":"pick","w":"wall"}`)
+	for {
+		d := you[1].waitFor(`"draft"`)
+		if p3 := d["p3"].([]any); p3[2] == "wall" && p3[0] == "hook" {
+			break
+		}
+	}
+	st := you[1].waitFor(`"start"`)
+	if st["players"].([]any)[2].(map[string]any)["tool"] != "wall" {
+		t.Fatalf("attrezzo mancante nello start: %v", st["players"])
 	}
 }

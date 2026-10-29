@@ -57,7 +57,8 @@ function N.snapshot(g)
 		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute aperto;
 		-- pl: paracadute rimasti; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)
 		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna); at: l'attrezzo
-		-- ("hook" Rampino o "wall" Bastione); lu: tick rimasti dell'Affondo;
+		-- ("hook" Rampino o "wall" Bastione); lu: tick rimasti dell'Affondo, la: angolo del suo scatto;
+		-- kn: sbalzato da un colpo (non corre da sé);
 		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy); ml: tick del colpo di Maglio,
 		-- ms: tick (con frazione) in cui la sua testa si è fermata sul terreno (0 se gira ancora), md: suo lato
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
@@ -71,7 +72,8 @@ function N.snapshot(g)
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch, ac = rb.ammo.sniper,
 			sw = rb.secondary or "", at = rb.tool, lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
 			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0,
-			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0 }
+			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, kn = rb.knocked,
+			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0 }
 	end
 	-- k: "missile", "grenade" o "sniper", fu: tick prima che l'Uovo scoppi
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
@@ -130,7 +132,12 @@ function N.draft_seconds()
 	return config.DRAFT_SECONDS
 end
 
-function N.draft_new(seed, players)
+-- tools[i]: l'attrezzo dell'assetto del giocatore i (dal suo hello, "" se non lo dice)
+function N.draft_new(seed, mode, tools)
+	local players = {}
+	for i, p in ipairs(config.MODES[mode]) do
+		players[i] = { team = p.team, tool = tools[i] ~= "" and tools[i] or nil }
+	end
 	return draft.new(seed, players)
 end
 
@@ -146,16 +153,28 @@ function N.draft_finish(d)
 	return draft.finish(d)
 end
 
--- I tre ventagli (offer: primarie, offer2: secondarie, offer3: attrezzi) e le
--- scelte fatte finora (p[i], p2[i], p3[i] = scelte del robot i, o "")
+-- I tre ventagli (offer: primarie, offer2: secondarie, offer3: attrezzi), le
+-- scelte fatte finora (p[i], p2[i], p3[i] = scelte del robot i, o ""), pr[i]:
+-- l'attrezzo del robot i è solo proposto dall'assetto
 function N.draft_state(d)
-	local picks, picks2, picks3 = {}, {}, {}
+	local picks, picks2, picks3, pr = {}, {}, {}, {}
 	for i = 1, #d.players do
 		picks[i] = d.picks[i] or ""
 		picks2[i] = d.picks2[i] or ""
 		picks3[i] = d.picks3[i] or ""
+		pr[i] = d.proposto[i] or false
 	end
-	return { t = "draft", offer = d.offer, offer2 = d.offer2, offer3 = d.offer3, p = picks, p2 = picks2, p3 = picks3 }
+	return { t = "draft", offer = d.offer, offer2 = d.offer2, offer3 = d.offer3, p = picks, p2 = picks2, p3 = picks3, pr = pr }
+end
+
+-- I giocatori della partita per il messaggio start: squadra e scelte del draft,
+-- così il client crea la sua copia della partita con le stesse armi
+function N.start_players(players)
+	local out = {}
+	for i, p in ipairs(players) do
+		out[i] = { team = p.team, pick = p.pick, secondary = p.secondary, tool = p.tool }
+	end
+	return out
 end
 
 return N
