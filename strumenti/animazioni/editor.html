@@ -487,7 +487,7 @@ const CLIP = [
 		["mira", "Fermo mentre mira: l'arma va dove si mira (prova col cursore <b>mira</b>), la testa la segue. Correndo o in aria mirando si usano corsa arma e aria arma."],
 	]],
 	["Fiammella", [
-		["fiammella", "La fiammella di tutti, sopra qualunque testa: gira sempre, sopra ogni altra clip (qui la vedi sul <b>fermo</b>). Trascinala per girarla, con Maiusc per spostarla. Le tre forme che si alternano e la grandezza su chi è di turno le fa il gioco.", "fermo"],
+		["fiammella", "La fiammella di tutti, sopra qualunque testa: gira sempre, sopra ogni altra clip (qui la vedi sul <b>fermo</b>). Trascinala per girarla, con Maiusc per spostarla. Il colore della squadra e la grandezza su chi è di turno li fa il gioco.", "fermo"],
 	]],
 ];
 const INFO = {};
@@ -975,14 +975,14 @@ function disegna(dt) {
 	if (vede("mostra_testa")) vestePerno(collo, "testa", "testa", po.viso || "testa");
 	// la fiammella: non è un pezzo del personaggio (ce l'hanno tutti, qualunque
 	// testa indossino) e ha la sua clip, che gira sopra tutte le altre; si vede
-	// nella sua clip o se la chiedi. Tre forme a scatti; grande su chi è di turno
+	// nella sua clip o se la chiedi. Grande su chi è di turno
 	if ($("fiammella").checked || nome === "fiammella") {
 		const pf = nome === "fiammella" ? po : posaNeutra();
 		if (nome !== "fiammella" && clips.fiammella) campiona(clips.fiammella, orologio, pf, 1);
 		const f = turno ? 2.2 : 0.8;
 		const cima = ruota(scala(sposta(collo, PT.cima[0] - sposto("testa")[0] + pf.fiamma_x, PT.cima[1] - sposto("testa")[1] + pf.fiamma_y),
 			f * pf.fiamma_largo, f * pf.fiamma_alto), pf.fiamma_gira);
-		const fp = P["fiammella_" + ((Math.floor(orologio / 0.09) % 3 + 3) % 3 + 1)];
+		const fp = P.fiammella;
 		const luce = turno ? 1 : 0.6;
 		disegnaPezzo(cima, fp, null, nome === "fiammella" ? "fiamma_gira" : null, punto(cima, 0, 0), col.map((x) => x * luce));
 	}

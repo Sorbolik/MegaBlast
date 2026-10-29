@@ -74,6 +74,7 @@ Cloudflare dal main.
 | 29 ott | La fiammella non è un pezzo del personaggio: ce l'hanno tutti, qualunque testa indossino. Ha **la sua clip** (`fiammella`: gira, larga, alta, spostamento) che il gioco suona sempre sopra le altre; le tre forme a scatti e la grandezza su chi è di turno restano nel codice. Nelle altre clip dell'editor è spenta di default (casella "fiammella"). | PR #61 |
 | 29 ott | Editor, sezione Strumenti: pezzo o personaggio nuovo da un'immagine (va a Claude, che scrive la scheda per Codex: niente prompt da copiare) e ritocco dei pezzi dello stampino (sposta e ingrandisci; `taglia.py --ritocchi` li rimette nelle pelli). Lo zoom del palco non dipende più dai canali aperti. | PR #61 |
 | 29 ott | Impugnature per arma fatte nell'editor: si trascinano i punti delle mani (canna e impugnatura) sull'arma e si sceglie quante mani (nessuna, una, due); file unico `client/battaglia/impugnature.lua` letto dal gioco, dall'editor e dall'anteprima delle armi (via le `mani` da `armi.py`). Una clip con l'arma può avere una versione solo per un'arma (`fermo_arma_mallet`, `mira_mallet`): il gioco la preferisce, se manca usa quella di tutte. Sergio d'accordo sulla proposta di Claude: impugnatura una volta per arma, varianti solo dove servono. | PR #62 |
+| 29 ott | Fiammella ufficiale: il disegno mandato da Sergio dall'editor (bianco e grigio col contorno nero, fiamma grande con goccia e scintilla), in `art/fiammella/fiammella.png`. Un disegno solo al posto delle tre forme a vettori alternate a scatti: si muove con la clip `fiammella`, il gioco tinge bianco e grigio col colore della squadra e la ingrandisce su chi è di turno. Usata così com'era, senza scheda per Codex (Claude). | PR #62 |
 
 ## Scartate, con il motivo
 
@@ -96,6 +97,7 @@ Cloudflare dal main.
 | Fiammella dentro le pelli o ridisegnata per ogni testa (29 ott) | È l'indicatore di chi gioca, uguale per tutti: resta un pezzo del gioco sopra la testa. |
 | Impugnature diverse per ogni fotogramma di ogni clip e di ogni arma (29 ott) | Proposta di Sergio, scartata insieme: lavoro moltiplicato per ogni arma nuova (se ne usciranno spesso) e le mani scivolerebbero sull'arma; si fa una volta per arma, e se un'arma deve muoversi diversa ha la sua versione della clip. |
 | Impugnature scritte nel codice delle armi (`armi.py`) (29 ott) | Si cambiavano solo a mano rigenerando le armi; ora le fa l'editor in un file solo. |
+| Tre forme della fiammella alternate a scatti (29 ott) | Con il disegno di Sergio la fiamma è una sola e la anima la clip; lo scatto fra tre forme diverse non serve più. |
 | Caselle per mostrare e togliere i pezzi, manine fisse in fondo alle braccia (29 ott) | Sergio: non va bene, i pezzi stanno in punti fissi; vuole vedere tutto separato e piazzabile. Sostituite dal secchio e dalle manine libere. |
 
 ## Aperte

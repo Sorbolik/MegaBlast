@@ -95,8 +95,6 @@ local BIANCO = vmath.vector4(1, 1, 1, 1)
 -- quanto è bianco il lampo del colpo al massimo (1 tutto bianco)
 local LAMPO = 0.85
 
--- le tre forme della fiammella, alternate a scatti
-local FIAMME = { P.fiammella_1, P.fiammella_2, P.fiammella_3 }
 -- la fiammella: quanto è grande su chi è di turno e sugli altri, con la luce
 local FUOCO_TURNO, FUOCO_ATTESA, LUCE_ATTESA = 2.2, 0.8, 0.6
 
@@ -108,7 +106,7 @@ local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25, 0.4 }
 -- altezza del diavoletto dai piedi alla cima della fiammella com'è ora (grande
 -- su chi è di turno), per mettere sopra la targa
 local CIMA_FIAMMA = (PT.collo[2] + PT.cima[2]) * game.DISEGNO_H / D.altezza
-local FIAMMA_H = P.fiammella_1.h * 0.8 * game.DISEGNO_H / D.altezza
+local FIAMMA_H = P.fiammella.h * 0.8 * game.DISEGNO_H / D.altezza
 function M.altezza(s)
 	return CIMA_FIAMMA + FIAMMA_H * s.x[FUOCO]
 end
@@ -400,7 +398,7 @@ function M.new(color, look)
 		s.tinte[#s.tinte + 1] = s.teste_t[i]
 	end
 	s.cima = giunto(s.collo, CIMA[1] * k, CIMA[2] * k)
-	s.fuoco = pezzo(s, s.cima, P.fiammella_1, k)
+	s.fuoco = pezzo(s, s.cima, P.fiammella, k)
 	s.fuoco_tinta = s.tinte[#s.tinte]
 	s.braccio_a = giunto(s.forma, J.braccio[1] * k, J.braccio[2] * k)
 	s.braccio_a_img = braccio_pende(s, s.braccio_a, "braccio", k)
@@ -468,7 +466,7 @@ function M.reset(s)
 	for i = 1, 2 do s.braccia[i], s.gambe[i] = 0, 0 end
 	local riposo = s.forma_coda.riposo
 	for i = 1, #riposo do s.coda_a[i] = riposo[i] - (i > 1 and riposo[i - 1] or 0) end
-	s.flash, s.fuoco_n, s.fuoco_t = 0, 1, 0
+	s.flash = 0
 	s.morte, s.morto = nil, nil
 	s.scenetta, s.scenetta_t, s.n_scenette = nil, 0, 0
 	s.pausa = PAUSA_DA + PAUSA_A * math.random()
@@ -554,19 +552,10 @@ local function coda(s, dt)
 	end
 end
 
--- la fiammella: cambia forma a scatti (tre disegni), si muove con la sua clip
--- (fiammella: trema, ondeggia) e su chi è di turno si gonfia e si accende. È di
--- tutti, sopra qualunque testa: non è un pezzo delle pelli
-local function fiammella(s, dt, turno)
-	s.fuoco_t = s.fuoco_t + dt
-	if s.fuoco_t > 0.09 then
-		s.fuoco_t = 0
-		local n = s.fuoco_n % #FIAMME + 1
-		s.fuoco_n = n
-		local p = FIAMME[n]
-		gui.play_flipbook(s.fuoco, p.img)
-		gui.play_flipbook(s.fuoco_tinta, p.tinta)
-	end
+-- la fiammella: un disegno solo, che si muove con la sua clip (fiammella:
+-- trema, ondeggia) e su chi è di turno si gonfia e si accende. È di tutti,
+-- sopra qualunque testa: non è un pezzo delle pelli
+local function fiammella(s, turno)
 	local po, f = s.posa_fiamma, s.x[FUOCO]
 	pose.azzera(po)
 	if A.fiammella then pose.aggiungi(po, A.fiammella, s.t, 1) end
@@ -817,7 +806,7 @@ function M.update(s, dt, st)
 	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[TESTA])
 	scale(s.collo, 1 / lx, 1 / q)
-	fiammella(s, dt, st.turno)
+	fiammella(s, st.turno)
 
 	-- lampo bianco del colpo
 	if s.flash > 0 then

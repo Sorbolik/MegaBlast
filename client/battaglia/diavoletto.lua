@@ -26,9 +26,6 @@ return {
 		omero_dietro = { img = "omero_dietro", tinta = nil, x = 12.0, y = 0.0, w = 42, h = 18 },
 		avambraccio_dietro = { img = "avambraccio_dietro", tinta = nil, x = 13.0, y = 0.0, w = 44, h = 18 },
 		ala = { img = "ala", tinta = nil, x = -20.0, y = 4.0, w = 60, h = 56 },
-		fiammella_1 = { img = "fiammella_1", tinta = "fiammella_1_tinta", x = 0.0, y = 24.0, w = 48, h = 64 },
-		fiammella_2 = { img = "fiammella_2", tinta = "fiammella_2_tinta", x = 0.0, y = 24.0, w = 48, h = 64 },
-		fiammella_3 = { img = "fiammella_3", tinta = "fiammella_3_tinta", x = 0.0, y = 24.0, w = 48, h = 64 },
 		paracadute = { img = "paracadute", tinta = "paracadute_tinta", x = 0.0, y = 2.0, w = 200, h = 324 },
 		coda_1 = { img = "coda_1", tinta = nil, x = 23.0, y = 0.0, w = 70, h = 56 },
 		coda_1_bordo = { img = "coda_1_bordo", tinta = nil, x = 23.0, y = 0.0, w = 70, h = 56 },
@@ -40,6 +37,7 @@ return {
 		coda_4_bordo = { img = "coda_4_bordo", tinta = nil, x = 23.0, y = 0.0, w = 70, h = 56 },
 		coda_5 = { img = "coda_5", tinta = nil, x = 22.0, y = 0.0, w = 68, h = 56 },
 		coda_5_bordo = { img = "coda_5_bordo", tinta = nil, x = 22.0, y = 0.0, w = 68, h = 56 },
+		fiammella = { img = "fiammella", tinta = "fiammella_tinta", x = 0.0, y = 30.0, w = 36.2, h = 76 },
 	},
 	punti = {
 		collo = { 0, 122 },
