@@ -105,6 +105,8 @@ def lua_val(v):
         return "{ " + ", ".join(f"{k} = {lua_val(x)}" for k, x in v.items()) + " }"
     if isinstance(v, list):
         return "{ " + ", ".join(lua_val(x) for x in v) + " }"
+    if isinstance(v, bool):
+        return "true" if v else "false"
     return repr(v)
 
 

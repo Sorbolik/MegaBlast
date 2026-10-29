@@ -130,9 +130,10 @@ local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1
 -- il Maglio fa il contrario, dall'alto cala sotto i piedi
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
--- punti della traiettoria chiesti alla simulazione, uno ogni 4 tick (la
--- freccia ne mostra game.AIM_PREVIEW_DOTS; il Bastione tutti, sul suo bordo)
+-- punti del bordo del Bastione e della traiettoria intera (uno ogni 4 tick),
+-- che si vedono solo nelle lezioni dell'Addestramento
 local AIM_DOTS = 12
+local AIUTO_PUNTI = 45
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
 -- riportare il dito sul robot e lasciarlo lì annulla il colpo
 local CANCEL_R = 28
@@ -882,6 +883,17 @@ local function handle_event(self, e)
 		if e.target then
 			self.colpo_x, self.colpo_y, self.colpo_t = e.x0, e.y0, self.clock
 			targa.annuncio(self.robots[e.target].targa, "AGGANCIATO!")
+		end
+	elseif e.type == "hook_end" and e.snap then
+		-- la fune è finita prima di arrivare: si spezza con uno schiocco e
+		-- cade col suo uncino, il nemico resta lì (sopra il vuoto cade)
+		sound.play("#strappo")
+		targa.annuncio(self.robots[e.robot].targa, "STRAPPO!")
+		if self.rope == e.robot then
+			self.rope = nil
+			local x0, y0 = RM.fune_mano(self, e.by)
+			local v = self.view[e.robot]
+			RM.fune.cade(self.fune, x0, y0, v.x, v.y + game.DISEGNO_H / 2)
 		end
 	elseif e.type == "bellows" then
 		-- il soffio: il mantice si schiaccia e un ventaglio d'aria parte dal beccuccio
@@ -1643,6 +1655,9 @@ local function aim_pad_drag(self, x, y)
 	self.aim_dist = math.huge
 	self.aiming = st.active
 	pad_colore(self.aim_pad, st.active and AIM_LIVE or AIM_IDLE)
+	-- il pollice è uscito dalla zona morta: da qui lasciando parte il colpo
+	-- (l'anello diventa rosso e il telefono fa una micro-vibrazione)
+	if st.active and not was then vibra_tocco() end
 end
 
 -- Il pollice si stacca dalla levetta della mira: parte il colpo se la levetta
@@ -1877,7 +1892,9 @@ local function render(self, dt)
 			targa.stato(r.targa, testo)
 			v.stato = codice
 		end
-		targa.update(r.targa, dt, v.x, v.y + scoria.altezza(r.rig) + 3, self.cam.s ^ -0.65, self.cam)
+		-- chi mira ha sopra il cartellino della mira: la riga delle missioni sale
+		targa.update(r.targa, dt, v.x, v.y + scoria.altezza(r.rig) + 3, self.cam.s ^ -0.65, self.cam,
+			self.aiming and i == g.current and mira.CARTELLINO_H or 0)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -2177,29 +2194,36 @@ local function render(self, dt)
 		local v = self.view[g.current]
 		set_pos(self.cancel_label, v.x, v.y - 14)
 	end
-	local show_aim = self.aiming and can_aim and not MELEE[aim_weapon] and not cancel
-	if show_aim then
-		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts, aim_weapon)
-		-- Blastron mostra solo l'inizio del volo: una freccia lunga quanto la potenza
-		-- (il Bastione mostra tutta la sagoma del blocco)
-		local wall = aim_weapon == "wall"
-		local shown = not wall and game.AIM_PREVIEW_DOTS or AIM_DOTS
-		mira.freccia(self.mira, pts, shown, self.cam.s, self.colors[g.current], wall)
-	else
-		mira.freccia_via(self.mira)
-	end
-	-- sopra la testa i gradi e la potenza; a ogni tacca di potenza una micro-vibrazione
+	-- la mira dice solo angolo e potenza, uguale per tutte le armi: il mirino e,
+	-- sopra la testa, i gradi e la potenza (battaglia/mira.lua)
 	if self.aiming and can_aim and not cancel then
-		local v = self.view[g.current]
-		local con = mira.POTENZA[aim_weapon] and self.aim_power or nil
+		local v, s = self.view[g.current], self.cam.s
+		local cy = v.y + game.DISEGNO_H / 2
+		mira.mirino(self.mira, v.x + math.cos(self.aim_angle) * game.MUZZLE,
+			cy + math.sin(self.aim_angle) * game.MUZZLE, self.aim_angle, s, self.aim_power, self.colors[g.current])
 		mira.cartellino(self.mira, v.x, v.y + scoria.altezza(self.robots[g.current].rig) + 3
-			+ targa.SOPRA * self.cam.s ^ -0.65 + 4 / self.cam.s, self.cam.s,
-			mira.gradi(self.aim_angle), con, self.colors[g.current])
-		local tacca = con and mira.tacca(con)
+			+ targa.SOPRA * s ^ -0.65 + 4 / s, s, mira.gradi(self.aim_angle), self.aim_power, self.colors[g.current])
+		-- a ogni tacca di potenza una micro-vibrazione, se accesa
+		local tacca = mira.VIBRA_TACCHE and mira.tacca(self.aim_power)
 		if tacca and self.tacca and tacca ~= self.tacca then vibra_tocco() end
 		self.tacca = tacca
+		-- nelle lezioni dell'Addestramento, come aiuto, tutta la traiettoria fino
+		-- al terreno (il Bastione: il bordo del blocco)
+		if self.missione and self.missione.l.capitolo == "addestramento" and not MELEE[aim_weapon] then
+			local wall = aim_weapon == "wall"
+			local n = wall and AIM_DOTS or AIUTO_PUNTI
+			local pts = g:preview(self.aim_angle, self.aim_power, n, 4, self.preview_pts, aim_weapon)
+			if not wall then
+				for k = 1, n do
+					if g.terrain:solid(pts[k].x, pts[k].y) then n = k break end
+				end
+			end
+			mira.traiettoria(self.mira, pts, n, s, wall)
+		else
+			mira.traiettoria_via(self.mira)
+		end
 	else
-		mira.cartellino_via(self.mira)
+		mira.via(self.mira)
 		self.tacca = nil
 	end
 
@@ -2350,7 +2374,7 @@ function init(self)
 		self.robots[i] = r
 	end
 
-	-- la mira: la freccia e il cartellino coi gradi (battaglia/mira.lua)
+	-- la mira: il mirino, il cartellino coi gradi, l'aiuto delle lezioni (battaglia/mira.lua)
 	self.mira = mira.nuova()
 
 	-- missile: scia, alone col colore della squadra e nocciolo bianco

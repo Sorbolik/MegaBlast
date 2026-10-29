@@ -6,7 +6,7 @@
 --
 --   local tt = targa.nuove(colori, nomi)  -- una targa per colore, tutte insieme
 --   targa.vita(t, vita, massima, scudo)   -- quando cambia (scudo può mancare)
---   targa.update(t, dt, x, y, scala, cam) -- a ogni frame: x, y è il centro in basso (nel
+--   targa.update(t, dt, x, y, scala, cam, su) -- a ogni frame: x, y è il centro in basso (nel
 --                                          mondo); cam (battaglia/camera.lua) per la riga
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
@@ -38,9 +38,11 @@ local NOME_Y = 10           -- centro del nome sopra la barra
 -- scala del font "titolo" (scala 1 = circa 40 px)
 local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
 local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
-local CORONA_Y, CORONA_SCALA = NOME_Y + 10, 0.5
+-- la Corona del primo sopra il nome: grande come nei punti in alto (ui.corona è
+-- alta 13 a scala 1, 3,5 sotto il centro della fascia)
+local CORONA_Y, CORONA_SCALA = NOME_Y + 13, 1.6
 -- dove finisce la targa in alto (Corona compresa): sopra ci sta il cartellino della mira
-M.SOPRA = CORONA_Y + 6
+M.SOPRA = CORONA_Y + 17
 -- la riga delle missioni: sopra la Corona e gli annunci che salgono, a capo
 -- oltre RIGA_W; grande RIGA_SCALA sullo schermo a ogni zoom (circa 22 px: con la
 -- camera lontana non si rimpicciolisce come il resto della targa)
@@ -214,7 +216,7 @@ function M.vita(t, vita, massima, scudo)
 	gui.set_text(t.numero, tostring(math.floor(vita + 0.5)))
 end
 
-function M.update(t, dt, x, y, scala, cam)
+function M.update(t, dt, x, y, scala, cam, su)
 	t.t = t.t + dt
 	V.x, V.y, V.z = x, y, 0
 	gui.set_position(t.barre, V)
@@ -228,7 +230,8 @@ function M.update(t, dt, x, y, scala, cam)
 		V.x, V.y = k, k
 		gui.set_scale(t.riga, V)
 		local _, tetto = camera.al_mondo(cam, 0, schermo.y1 - RIGA_CIMA - t.riga_h * RIGA_SCALA)
-		V.x, V.y = 0, math.min(RIGA_Y, (tetto - y) / scala)
+		-- su: pixel dello schermo in più sopra la targa (il cartellino della mira)
+		V.x, V.y = 0, math.min(RIGA_Y + (su or 0) / (scala * cam.s), (tetto - y) / scala)
 		gui.set_position(t.riga, V)
 	end
 

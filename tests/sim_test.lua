@@ -934,10 +934,10 @@ do
 	for _ = 1, 60 do
 		ha.y, ha.vy = sy, 0
 		h:step()
-		for _, e in ipairs(h:pop_events()) do if e.type == "hook_end" then ended = true end end
+		for _, e in ipairs(h:pop_events()) do if e.type == "hook_end" then ended = e end end
 		if not hb.hooked then break end
 	end
-	check(ended and not hb.hooked and math.abs(hb.x - ha.x) < 2 * game.ROBOT_HALF_W + 2, "arriva fin addosso a chi tira e viene mollato")
+	check(ended and not ended.snap and not hb.hooked and math.abs(hb.x - ha.x) < 2 * game.ROBOT_HALF_W + 2, "arriva fin addosso a chi tira e viene mollato")
 	run(h, 5)
 	check(hb.y < y_start and hb.vx == 0, "e cade dritto dov'è")
 	-- tirato da sotto sale fino a chi tira; un robot vicino ferma la fune
@@ -975,6 +975,34 @@ do
 	run(m, 5)
 	check(not ma.hooked and math.abs(ma.y - 316) < 4 and math.abs(ma.x - 640) < 10 and ma.grounded,
 		"sale lungo la fune e si mette in piedi sopra la piattaforma")
+	-- da sotto in diagonale la salita sbatte sul fondo della piattaforma prima
+	-- di arrivare al punto: entro config.HOOK.grab sale sopra lo stesso
+	local dg = game.new(42, "forgia")
+	run(dg, 60)
+	local da = dg.robots[1]
+	dg.robots[2].x = -1000
+	dg.terrain:rect(500, 200, 900, 900, 0)
+	dg.terrain:rect(900, 500, 200, 30, 1)
+	place(da, 850, 420)
+	ev = hook(dg, math.atan2(499 - 420 - game.DISEGNO_H / 2, 1000 - 850), function() da.vy = 0 end)
+	for _ = 1, 60 do
+		dg:step()
+		if not da.hooked then break end
+	end
+	run(dg, 20)
+	check(ev and ev.anchor and da.grounded and math.abs(da.y - 530) < 4,
+		"da sotto in diagonale sale sopra la piattaforma")
+	-- il fianco di un muro alto (cima oltre config.HOOK.climb) no: resta lì e cade
+	dg.terrain:rect(1200, 200, 60, 400, 1)
+	place(da, 1100, 300)
+	dg.used.tool = false
+	ev = hook(dg, 0, function() da.vy = 0 end)
+	for _ = 1, 60 do
+		dg:step()
+		if not da.hooked then break end
+	end
+	run(dg, 10)
+	check(ev and ev.anchor and da.y < 590, "sul fianco di un muro alto non sale in cima")
 	-- sparando nel vuoto non succede niente
 	place(ma, 640, 340)
 	m.used.tool = false
@@ -996,6 +1024,23 @@ do
 	far.used.tool = false
 	ev = hook(far, 0, function() fa.y, fa.vy = 400, 0 end)
 	check(ev and ev.anchor, "a fine gittata aggancia ancora il terreno")
+	-- un nemico lontano: la fune finisce prima di arrivare e lo molla a mezz'aria (snap)
+	far = game.new(42, "forgia")
+	run(far, 60)
+	fa, fb = far.robots[1], far.robots[2]
+	far.terrain:rect(400, 100, 900, 900, 0)
+	place(fa, 500, 400)
+	place(fb, 500 + config.HOOK.range - 30, 400)
+	ev = hook(far, 0, function() fa.y, fa.vy, fb.y, fb.vy = 400, 0, 400, 0 end)
+	local fine
+	for _ = 1, 120 do
+		fa.y, fa.vy = 400, 0
+		far:step()
+		for _, e in ipairs(far:pop_events()) do if e.type == "hook_end" then fine = e end end
+		if fine then break end
+	end
+	check(ev and ev.target == 2 and fine and fine.snap and fb.x - fa.x > 100,
+		"da lontano la fune finisce a metà strada e si spezza (snap)")
 
 	-- Mantice (secondaria): soffia via chi ha davanti, poco danno, mai effetti
 	local function bellows(dist, angle, setup)

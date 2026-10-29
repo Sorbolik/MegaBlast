@@ -227,8 +227,6 @@ M.AIM_DEADZONE = 0
 M.AIM_EXPONENT = 1
 -- quanto della differenza tra mira e dito si recupera a ogni frame (a 60 Hz); 1 = subito
 M.AIM_SMOOTH = 1
--- punti della traiettoria mostrati mentre si mira (false: tutti)
-M.AIM_PREVIEW_DOTS = false
 -- tenendo premuto il salto si risalta appena si tocca terra
 M.JUMP_REPEAT = false
 -- Salto corto (come Hollow Knight): lasciando il salto mentre si sale la
@@ -1664,9 +1662,15 @@ function M:update_hooked(rb)
 	end
 	if stopped or h.left <= 0.5 then
 		rb.hooked = nil
-		-- arrivato al terreno (la capsula lo ferma a un passo dal punto): sopra
-		if not by and dist < M.ROBOT_H then self:hook_land(rb, h.x, h.y) end
-		self:emit({ type = "hook_end", robot = rb.id })
+		-- arrivato al terreno (la capsula lo ferma a un passo dal punto, o
+		-- contro il fondo della piattaforma salendo in diagonale): sopra
+		if not by then
+			local ex, ey = h.x - rb.x, h.y - rb.y - M.ROBOT_H / 2
+			if ex * ex + ey * ey < C.HOOK.grab * C.HOOK.grab then self:hook_land(rb, h.x, h.y) end
+		end
+		-- snap: la fune tirata da un robot è finita prima di arrivare, il
+		-- tirato resta lì (sopra il vuoto cade): nel disegno si spezza
+		self:emit({ type = "hook_end", robot = rb.id, by = h.by, snap = by and not stopped or nil })
 	end
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
@@ -3046,11 +3050,10 @@ local function blastron_profile()
 		SETTLE_TICKS = 60,
 		CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 },
 		-- comandi: zona morta 20%, potenza quadratica, mira che insegue il dito,
-		-- solo l'inizio della traiettoria, salto ripetuto
+		-- salto ripetuto
 		AIM_DEADZONE = 0.2,
 		AIM_EXPONENT = 2,
 		AIM_SMOOTH = 0.2,
-		AIM_PREVIEW_DOTS = 4,
 		JUMP_REPEAT = true,
 	}
 end
