@@ -232,7 +232,7 @@ end
 -- Le immagini, i pugni e le misure sono in battaglia/armi.lua (strumenti/grafica/armi.py)
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
-	punch = -0.9, eagle = -0.6, hook = -0.4,
+	punch = -0.9, eagle = -0.6, hook = -0.4, wall = -0.2,
 	mallet = 2,  -- in spalla: lungo com'è, in giù entrerebbe nel terreno
 	lunge = 1.3,  -- dritta in su: in giù entrerebbe nel terreno
 }

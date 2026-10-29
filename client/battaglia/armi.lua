@@ -14,6 +14,7 @@ return {
 		teleport = { img = "teleport", tinta = "teleport_tinta", x = 5.00, y = 1.25, w = 11.00, h = 11.50, mani = { { 2.8, -0.6 } } },
 		eagle = { img = "eagle", tinta = "eagle_tinta", x = 8.25, y = -1.00, w = 24.50, h = 15.00, mani = { { 1.6, -1.2 } } },
 		hook = { img = "hook", tinta = "hook_tinta", x = 10.00, y = 0.00, w = 30.00, h = 15.00, mani = { { 9.0, -1.8 }, { 5.3, -2.6 } } },
+		wall = { img = "wall", tinta = "wall_tinta", x = 6.50, y = 0.00, w = 15.00, h = 12.00, mani = { { 9.5, -3.4 }, { 3.5, -3.4 } } },
 		mallet = { img = "mallet", tinta = "mallet_tinta", x = 20.25, y = -0.25, w = 52.50, h = 17.82, mani = { { 12.0, 0.0 }, { 6.5, 0.0 } } },
 		lunge = { img = "lunge", tinta = "lunge_tinta", x = 16.50, y = 0.00, w = 52.00, h = 15.00, mani = { { 9.0, 0.0 }, { 2.0, 0.0 } } },
 	},

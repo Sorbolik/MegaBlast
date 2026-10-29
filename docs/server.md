@@ -47,16 +47,17 @@ giocatori e le squadre di ogni modo vengono da `config.MODES` della
 simulazione.
 
 Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
-ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":[…],"p2":[…],"you":1,"tok":…,"players":[{"team":1},…],"left":900}`
-(`offer` le primarie, `offer2` le secondarie, `p` e `p2` le scelte fatte) e
-manda `{"t":"pick","w":"shards"}` per ognuna delle due (l'arma dice la
+ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"you":1,"tok":…,"players":[{"team":1},…],"left":900}`
+(`offer` le primarie, `offer2` le secondarie, `offer3` gli attrezzi `hook` e
+`wall`; `p`, `p2` e `p3` le scelte fatte, l'attrezzo già proposto) e
+manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la
 categoria; si può cambiare). Nel 2 contro 2 due compagni si scambiano le
-scelte, primaria e secondaria insieme, se tutti e due mandano
+scelte, tutte insieme, se tutti e due mandano
 `{"t":"swap","to":N}`; chi riceve la proposta vede `{"t":"swap","from":N}`. A
 ogni cambio tutti ricevono il `draft` aggiornato. Allo scadere di
 `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma libera di ogni
 ventaglio e parte la partita (`start`, con `players`). Nello stato ogni robot
-porta la sua secondaria in `sw` (e `lu`, `ml`: tick di Affondo e Maglio in
+porta la sua secondaria in `sw`, l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
 `hx`, `hy`). Il client online per ora non ha la schermata
 della scelta: aspetta e riceve le armi date dal server.
@@ -78,7 +79,7 @@ ricevono `away`, i tasti tenuti premuti si lasciano e la partita va avanti: se
 era il suo turno, il tempo scorre. Si può tornare anche durante la scelta
 dell'arma (il gettone arriva già col primo `draft`). Il client riprova da solo per circa 18 s con
 `{"t":"hello","v":2,"tok":…}`; il server gli rimanda `start` con
-`"resume":true`, gli scavi del terreno (`sync`) e lo stato. Dopo 20 s senza
+`"resume":true`, gli scavi del terreno e i Bastioni posati o crollati, in ordine (`sync`) e lo stato. Dopo 20 s senza
 tornare il giocatore è fuori (`left`) e, se resta una sola squadra, la
 partita si chiude.
 

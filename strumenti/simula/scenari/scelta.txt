@@ -1,7 +1,9 @@
-# Scelta d'inizio partita in 2 contro 2 sullo stesso telefono: due file di tre
-# carte, le primarie (x = 380, 640, 900; y = 455) e le secondarie (y = 225); si
-# sceglie a turno, una per fila. Il compagno di Rosso 1 trova spente le armi già
-# prese; Blu 2 non sceglie e allo scadere prende le prime libere.
+# Scelta d'inizio partita in 2 contro 2 sullo stesso telefono: tre file, le
+# primarie (x = 380, 640, 900; y = 525), le secondarie (y = 350) e gli attrezzi
+# (Rampino x = 510, Bastione x = 770; y = 175), già scelti: Rampino a Rosso 1
+# (il suo assetto), Bastione al compagno. Si sceglie a turno, una per fila.
+# Rosso 1 prende il Bastione e il compagno passa al Rampino; il compagno trova
+# spente le armi già prese; Blu 2 non sceglie e allo scadere prende le prime libere.
 imposta prova_scelta 1
 imposta giocatori 2v2
 
@@ -10,20 +12,23 @@ tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 01_ventagli
-tocca 380 455                       # Rosso 1: primaria
+tocca 380 525                       # Rosso 1: primaria
 aspetta 0.3
-tocca 380 225                       # Rosso 1: secondaria
+tocca 770 175                       # Rosso 1: il Bastione (prima dell'ultima fila: poi tocca a Blu 1)
 aspetta 0.3
-tocca 640 455                       # Blu 1: primaria
+foto 01b_rosso_1
+tocca 380 350                       # Rosso 1: secondaria
 aspetta 0.3
-tocca 640 225                       # Blu 1: secondaria
+tocca 640 525                       # Blu 1: primaria
+aspetta 0.3
+tocca 640 350                       # Blu 1: secondaria
 aspetta 0.3
 foto 02_compagno
-tocca 380 455                       # Rosso 2: spenta, non succede niente
+tocca 380 525                       # Rosso 2: spenta, non succede niente
 aspetta 0.3
-tocca 900 455                       # Rosso 2: primaria
+tocca 900 525                       # Rosso 2: primaria
 aspetta 0.3
-tocca 640 225                       # Rosso 2: la secondaria di Blu 1 (avversario) si puo' prendere
+tocca 640 350                       # Rosso 2: la secondaria di Blu 1 (avversario) si puo' prendere
 aspetta 0.3
 foto 03_ultimo
 aspetta_stato modo=local turno=1 fase=aim 20
