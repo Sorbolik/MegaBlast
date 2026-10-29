@@ -63,7 +63,9 @@ dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
 Dallo stesso editor si cambiano le hitbox (`client/sim/corpo.lua`: la capsula per
 camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
 perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`) e le
-impugnature, cioè il punto dove la mano tiene ogni arma (`client/battaglia/impugnature.lua`).
+impugnature di ogni arma: presa (dove la tiene chi la impugna), perno (dove gira) e spalla
+(dove sta il perno nel corpo) in `client/battaglia/impugnature.lua`. Ogni clip sceglie chi
+impugna l'arma (`impugna`) e l'ordine dei pezzi davanti e dietro (`livelli`).
 "Manda a Claude" li mette nei documenti `corpo/ultima`, `perni/ultima` e
 `impugnature/ultima` (campo `lua`). Una clip con l'arma può avere la versione di
 una sola arma (`fermo_arma_mallet`): il gioco la preferisce a quella di tutte.
