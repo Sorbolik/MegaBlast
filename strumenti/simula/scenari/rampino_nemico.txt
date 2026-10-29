@@ -10,7 +10,7 @@ tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 zoom 01_nemico_vicino
-tocca 707 62                        # Rampino (barra: Lanciarune 479, Lama 593, Rampino 707, Paracadute 801)
+tocca 1084 62                       # Rampino (tondo accanto al TELE)
 aspetta 0.4
 mira -200 90 0.1 02_mira 2          # verso il nemico, a sinistra e in alto
 aspetta_evento hook 2

@@ -25,12 +25,14 @@ local tutorial = require "battaglia.tutorial"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
+local punteggio = require "battaglia.punteggio"
+local hud = require "battaglia.hud"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
 -- W, H: lo schermo del gioco; la mappa è game.WORLD_W x game.WORLD_H
-local W, H, CELL = 1280, 720, game.CELL
-local TW, TH = game.WORLD_W / CELL, game.WORLD_H / CELL
+local W, H = 1280, 720
+local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
@@ -61,26 +63,30 @@ local TEAM_COLORS = ui.C.SQUADRA
 local WHITE = vmath.vector4(1, 1, 1, 1)
 
 -- Barra delle armi, in quest'ordine: si vedono solo quelle che il robot ha.
--- Tre gruppi, ognuno col suo nome sopra e il suo colore (brace le primarie,
--- acciaio le secondarie): le primarie (Lanciarune sempre, le altre dalle
--- casse), le secondarie (la Lama sempre, più quella scelta all'inizio) e gli
--- oggetti tattici (trappola, scudo, trampolino, paracadute): toccarli li usa
--- subito. Usata un'arma, tutto il suo gruppo si spegne: il prossimo colpo è
--- dell'altro colore.
+-- Attorno al cronometro in basso al centro (docs/decisioni/interfaccia.md): a
+-- sinistra le primarie (Lanciarune sempre, accanto all'anello, le altre dalle
+-- casse) col bordo brace, a destra le secondarie (la Lama sempre, più quella
+-- scelta all'inizio) col bordo acciaio e sopra di loro gli oggetti tondi
+-- (trappola, scudo, trampolino, paracadute: toccarli li usa subito). L'attrezzo
+-- (Rampino o Bastione) è tondo e viola accanto al teletrasporto: a destra, dove
+-- c'è la mano che mira, perché la sinistra muove. Usata un'arma, tutto il suo
+-- gruppo si spegne: il prossimo colpo è dell'altro colore.
 -- effetti di stato: la scritta che sale sul robot quando arrivano e il nome
 -- sotto la sua vita, coi turni che mancano (senza accenti: il font non li ha)
 local STATUS_TEXT = { burn = "BRUCIA!", slow = "RALLENTATO!", cracked = "ARMATURA INCRINATA!" }
 local STATUS_NAME = { { "burn", "BRUCIA" }, { "slow", "LENTO" }, { "cracked", "INCRINATO" } }
 local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge",
-	"trap", "shield", "trampoline", "hook", "parachute" }
--- (il main chunk è al limite dei 200 locali di Lua: nome e colore insieme)
-local BAR_GROUPS = { { "PRIMARIE", ui.C.BRACE }, { "SECONDARIE", ui.C.ACCIAIO }, { "OGGETTI", ui.C.LINEA } }
+	"trap", "shield", "trampoline", "hook", "wall", "parachute" }
+-- colore del bordo dei quattro gruppi: primarie, secondarie, oggetti, attrezzo
+local BAR_COLORI = { ui.C.BRACE, ui.C.ACCIAIO, vmath.vector4(1, 0.886, 0.769, 0.6), ui.C.VIOLA }
 local function bar_group(w)
+	if w == "hook" or w == "wall" then return 4 end
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
 end
 -- icone della barra e della scelta (atlante armi, strumenti/grafica/armi.py)
 local WEAPON_ICON = {}
-for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "hook" }) do
+for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "hook", "wall",
+	"trap", "shield", "trampoline", "parachute" }) do
 	WEAPON_ICON[w] = w .. "_icona"
 end
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
@@ -89,35 +95,33 @@ local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Sche
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- nomi delle armi nella scelta d'inizio partita
 local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
-	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo" }
+	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", hook = "Rampino", wall = "Bastione" }
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
 	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dalla testa ai piedi; in aria, se colpisce mentre cala, rimbalzi in alto",
-	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce" }
+	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
+	hook = "Tira a te il nemico, o ti porta sulla piattaforma colpita",
+	wall = "Posa un blocco di terreno dove miri: riparo, ponte o gradino" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true, mallet = true }
-local SLOT, SLOT_GAP, GROUP_GAP, BAR_Y = 84, 10, 30, 62
+local SLOT, SLOT_GAP, BAR_Y = 84, 10, 64
+-- sul telefono gli slot sono più piccoli (stretti con cinque primarie, così non
+-- arrivano sulla levetta); gli oggetti tondi; dal bordo dell'anello al primo
+-- slot; quanto sale quello in mano
+local MISURE = { slot_tel = 72, slot_stretto = 62, gap_tel = 8, oggetto = 56, dal_ring = 30, alza = 10, ring_y = 70 }
 -- bordo degli slot: non disponibile (già usata, o teletrasporto), disponibile
 -- (il colore del gruppo), scelto
 local SLOT_BORDO = { [0] = vmath.vector4(1, 0.886, 0.769, 0.06), ui.C.LINEA, ui.C.LUCE }
 -- icona di un'arma già usata in questo turno (si spegne: si vede cosa resta)
 local ICON_USED = vmath.vector4(1, 1, 1, 0.3)
-local SLOT_SCALE_ON, SLOT_SCALE_OFF = vmath.vector3(1.12, 1.12, 1), vmath.vector3(1, 1, 1)
+local SLOT_SCALA, SCELTO = vmath.vector3(1, 1, 1), 1.12
 -- Rimbalzo del cecchino: quanto si schiaccia, quanto presto si calma e quanto tremola
 local BOING_AMP, BOING_DAMP, BOING_FREQ = 0.7, 4, 26
 local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1)
 -- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante);
 -- il Maglio fa il contrario, dall'alto cala sotto i piedi
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
-
--- Barra del tempo del turno sotto la scritta in alto: bianca, gialla negli
--- 8 secondi dopo il primo attacco finché resta il secondo, blu quando li hai
--- usati tutti e due; negli ultimi 2 secondi lampeggia
-local TIME_BAR_W, TIME_BAR_H, TIME_BAR_Y = 360, 8, H - 52
-local TIME_COLOR = vmath.vector4(0.92, 0.9, 0.86, 0.9)
-local SECOND_COLOR = vmath.vector4(1, 0.8, 0.2, 1)
-local DONE_COLOR = vmath.vector4(0.3, 0.6, 1, 1)
 
 local AIM_DOTS = 12
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
@@ -173,6 +177,8 @@ local function config_int(key, default)
 	return tonumber(sys.get_config(key, tostring(default))) or default
 end
 local SIMULA = config_int("megablast.simula", 0) == 1
+-- nel simulatore (build senza estensione) l'online passa da LuaSocket
+if not ws and SIMULA then ws = require "main.ws_socket" end
 
 -- Profilo di fisica (sim/game.lua): "blastron" se non si dice niente.
 -- Con [megablast] fisica = megablast si torna ai valori di prima, ma solo in
@@ -227,10 +233,12 @@ local TELE_TOUCH = vmath.vector3(W - 72, 257, 0)
 local TELE_DESK = vmath.vector3(W - 100, 62, 0)
 local TELE_D = 84
 -- anello della mira: azzurro spenta, rosso quando lasciando parte il colpo
-local AIM_IDLE = vmath.vector4(0.35, 0.85, 1, 0.45)
+local AIM_IDLE = vmath.vector4(0.35, 0.85, 1, 0.35)
 local AIM_LIVE = vmath.vector4(1, 0.22, 0.16, 0.95)
-local MOVE_IDLE = vmath.vector4(1, 1, 1, 0.12)
-local MOVE_LIVE = vmath.vector4(1, 0.85, 0.55, 0.5)
+local MOVE_IDLE = vmath.vector4(1, 1, 1, 0.16)
+local MOVE_LIVE = vmath.vector4(1, 0.85, 0.55, 0.6)
+-- riempimento della base e del pomello
+local PAD_FONDO = { vmath.vector4(1, 1, 1, 0.05), vmath.vector4(1, 1, 1, 0.08) }
 
 -- Telefono o computer: [megablast] comandi = telefono / computer per
 -- sceglierlo, altrimenti dal sistema (e dal browser, se è un telefono).
@@ -337,12 +345,11 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.move_pad.base, visible and self.touch_ui)
 	gui.set_enabled(self.aim_pad.base, visible and self.touch_ui)
 	gui.set_enabled(self.bar, visible)
-	gui.set_enabled(self.btn_tele, visible)
-	gui.set_enabled(self.hud, visible)
-	gui.set_enabled(self.time_bar_bg, visible)
-	gui.set_enabled(self.time_bar, visible)
-	gui.set_enabled(self.tele_label, visible)
-	gui.set_enabled(self.score_label, visible)
+	gui.set_enabled(self.btn_tele.nodo, visible)
+	hud.cronometro_on(self.crono, visible)
+	if not visible then hud.cartellino_via(self.cartellino) end
+	gui.set_enabled(self.scelto_glow, false)
+	punteggio.set_enabled(self.punti, visible)
 	gui.set_enabled(self.btn_zoom, visible)
 end
 
@@ -547,6 +554,9 @@ local function new_match(self, seed, map, opts)
 		targa.vita(self.robots[i].targa, rb.hp, rb.max_hp, rb.shield)
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, scudo = rb.shield }
 	end
+	local targhe = {}
+	for i = 1, game.MAX_PLAYERS do targhe[i] = self.robots[i].targa end
+	punteggio.partita(self.punti, self.g, TEAM_NAMES, targhe)
 	self.trail_n = 0
 	self.pose_dt = game.DT
 	reset_pose(self)
@@ -672,10 +682,29 @@ local function handle_event(self, e)
 			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
 		end
 		self.drawn_map = nil
-		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 1, row_min - 1,
-			math.floor((e.x + e.r) / CELL) + 1, row_max + 1)
+		redraw_cells(self, math.floor((e.x - e.r) / game.CELL) - 1, row_min - 1,
+			math.floor((e.x + e.r) / game.CELL) + 1, row_max + 1)
 		explosion(self, e.x, e.y, e.r)
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA, e.x, e.y
+	elseif e.type == "wall" then
+		-- Bastione posato (v = 1) o crollato (v = 0): online lo rifacciamo noi
+		if self.mode == "online" then game.wall_cells(self.g.terrain, e.x, e.y, e.w, e.h, e.m, e.v) end
+		self.drawn_map = nil
+		redraw_cells(self, e.x - 1, e.y - 1, e.x + e.w, e.y + e.h)
+		-- polvere chiara: sale un poco se si posa, cade se crolla
+		local cx, cy = (e.x + e.w / 2) * game.CELL, (e.y + e.h / 2) * game.CELL
+		for j = 1, DETRITI_PER_COLPO do
+			self.detrito_i = self.detrito_i % #self.detriti + 1
+			local d = self.detriti[self.detrito_i]
+			d.x = cx + (math.random() - 0.5) * e.w * game.CELL
+			d.y = cy + (math.random() - 0.5) * e.h * game.CELL
+			d.vx, d.vy = (math.random() - 0.5) * 60, e.v == 1 and 40 + math.random() * 40 or -math.random() * 30
+			d.a, d.va, d.t = math.random() * 360, (math.random() * 2 - 1) * 360, 0
+			local lato = 2 + math.random() * 3
+			gui.set_size(d.node, vmath.vector3(lato, lato, 0))
+			d.col.x, d.col.y, d.col.z = 0.75, 0.68, 0.6
+			gui.set_enabled(d.node, true)
+		end
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- rinculo del Lanciarune (e del cecchino), slancio del lancio, raffica di schegge
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
@@ -689,6 +718,8 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "teleports" then
 		show_message(self, string.format("%s +%d teletrasport%s", who_name(self, e.robot), e.amount, e.amount == 1 and "o" or "i"))
+		-- sullo schermo di chi li guadagna volano dall'anello al pulsante del teletrasporto
+		if self.mode ~= "online" or e.robot == self.me then hud.globi(self.crono, e.amount, gui.get_position(self.btn_tele.nodo)) end
 	elseif e.type == "trap" then
 		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
 		shock(self, e.x, e.y)
@@ -751,7 +782,15 @@ local function handle_event(self, e)
 		shock(self, e.x, e.y)
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA * 0.5, e.x, e.y
+	elseif e.type == "points" then
+		-- il numero nasce sul colpito (sul robot stesso se perde punti o para)
+		local da = (e.amount < 0 or e.reason == "parry" or not e.other) and e.robot or e.other
+		local v, s = self.view[da], self.cam_s or 1
+		if v then
+			punteggio.punti(self.punti, e, v.x * s + (self.cam_tx or 0), (v.y + scoria.altezza(self.robots[da].rig)) * s + (self.cam_ty or 0))
+		end
 	elseif e.type == "turn" then
+		punteggio.turno(self.punti, self.g)
 		-- ogni turno ricomincia dal Lanciarune, non dall'arma del turno prima
 		self.tele_armed, self.weapon = false, "missile"
 		if self.mode == "online" then
@@ -844,7 +883,7 @@ local function apply_state(self, s)
 	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
 	g.window, g.teleports, g.overtime = s.win or 0, s.tp or 0, s.ot or false
 	local u = s.u or 0
-	g.used.primary, g.used.secondary, g.used.hook = u % 2 == 1, u % 4 >= 2, u >= 4
+	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
 	g.match_left = s.mt or g.match_left
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
@@ -859,7 +898,12 @@ local function apply_state(self, s)
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
 		rb.ammo.sniper = r.ac or 0
 		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
+		rb.tool = r.at or rb.tool
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
+		-- la lancia dell'Affondo punta lungo lo scatto (la: il suo angolo)
+		rb.lunge_vx = rb.lunge and math.cos(r.la or 0) or nil
+		rb.lunge_vy = rb.lunge and math.sin(r.la or 0) or nil
+		rb.knocked = r.kn or false
 		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
 		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
 		rb.mallet_stop = (r.ms or 0) > 0 and r.ms or nil
@@ -912,15 +956,19 @@ local function on_server_message(self, m)
 	if m.t == "wait" then
 		show_message(self, "In attesa di un avversario...", true)
 	elseif m.t == "draft" then
-		-- scelta dell'arma: per ora online non c'è la schermata, allo scadere
-		-- il server dà a ognuno la prima arma libera. Il gettone serve già
-		-- per tornare se la connessione cade adesso.
+		-- scelta delle armi (menu/scelta.lua): arriva a ogni cambio, nostro o
+		-- degli altri. Il gettone serve già per tornare se la connessione cade adesso.
 		self.tok, self.tries = m.tok or self.tok, 0
-		show_message(self, "Avversari trovati!\nLa partita sta per cominciare...", true)
+		if self.mode ~= "scelta_online" then show_message(self, "", true) end
+		self.mode = "scelta_online"
+		local nomi, colori = names_colors(m.players)
+		menu.scelta.online(self.scelta, m, nomi, colori, function(msg) send(self, msg) end)
 	elseif m.t == "start" then
+		menu.scelta.hide(self.scelta)
 		-- anche quando torniamo dopo una caduta (resume): la partita si
 		-- ricostruisce dal seed, poi arrivano gli scavi e lo stato.
-		-- players: le squadre dei robot, [{"team":1},...] (senza, un 1 contro 1)
+		-- players: le squadre dei robot e le loro scelte del draft,
+		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
 		new_match(self, m.seed, m.map, m.players and { players = m.players })
 		self.g:pop_events()
 		self.me, self.tok, self.tries = m.you, m.tok, 0
@@ -928,7 +976,9 @@ local function on_server_message(self, m)
 		set_controls_visible(self, true)
 		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. self.names[m.you]))
 	elseif m.t == "sync" and self.g then
-		for _, c in ipairs(m.x) do self.g.terrain:carve(c[1], c[2], c[3]) end
+		for _, c in ipairs(m.x) do
+			if c.m then game.wall_cells(self.g.terrain, c.x, c.y, c.w, c.h, c.m, c.v) else self.g.terrain:carve(c[1], c[2], c[3]) end
+		end
 		self.drawn_map = nil
 		draw_terrain(self)
 	elseif m.t == "state" and self.g then
@@ -940,9 +990,11 @@ local function on_server_message(self, m)
 	elseif m.t == "back" and m.robot ~= self.me then
 		show_message(self, "L'avversario è tornato")
 	elseif m.t == "left" then
+		menu.scelta.hide(self.scelta)
 		self.mode = "ended"
 		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
 	elseif m.t == "error" then
+		menu.scelta.hide(self.scelta)
 		self.mode, self.tok = "ended", nil
 		show_message(self, (SERVER_ERRORS[m.e] or "Errore del server") .. "\nTocca per tornare al menu", true)
 	end
@@ -961,21 +1013,26 @@ on_socket = function(self, conn, data)
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
 		else
 			show_message(self, "Connesso, in attesa...", true)
-			send(self, { t = "hello", v = PROTOCOL, mode = "1v1" })
+			-- la coda: [megablast] giocatori (1v1, 2v2, ffa) come sullo stesso telefono;
+			-- l'attrezzo dell'assetto parte già scelto nel draft
+			send(self, { t = "hello", v = PROTOCOL, mode = config_string("megablast.giocatori", "1v1"),
+				tool = profilo.assetto_attivo(self.profilo).tool })
 		end
 	elseif data.event == ws.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
 		if ok and m then on_server_message(self, m) end
 	elseif data.event == ws.EVENT_DISCONNECTED or data.event == ws.EVENT_ERROR then
 		self.conn = nil
-		if (self.mode == "online" or self.mode == "connecting") and self.tok and self.tries < RECONNECT_TRIES then
+		local in_gioco = self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online"
+		if in_gioco and self.tok and self.tries < RECONNECT_TRIES then
 			-- in partita: riproviamo, il server ci tiene il posto
 			self.tries = self.tries + 1
 			show_message(self, "Connessione persa\nMi riconnetto...", true)
 			timer.delay(RECONNECT_WAIT, false, function()
-				if (self.mode == "online" or self.mode == "connecting") and not self.conn then connect(self) end
+				if (self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online") and not self.conn then connect(self) end
 			end)
 		elseif self.mode ~= "menu" and self.mode ~= "ended" then
+			menu.scelta.hide(self.scelta)
 			self.mode = "ended"
 			show_message(self, "Connessione persa\nTocca per tornare al menu", true)
 		end
@@ -1051,7 +1108,7 @@ local function start_local(self, contro)
 		tutorial_step(self)
 		return
 	end
-	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono
+	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono (e coda online)
 	local modo = contro and contro.modo or config_string("megablast.giocatori", "1v1")
 	local opts = { players = {} }
 	for i, p in ipairs(gconfig.MODES[modo]) do
@@ -1067,7 +1124,11 @@ local function start_local(self, contro)
 	local nomi, colori = names_colors(opts.players)
 	self.mode = "scelta"
 	local seed = os.time()
-	local d = draft.new(seed, opts.players)
+	-- il primo giocatore parte con l'attrezzo del suo assetto già scelto
+	local scelti = {}
+	for i, p in ipairs(opts.players) do scelti[i] = { team = p.team } end
+	scelti[1].tool = profilo.assetto_attivo(self.profilo).tool
+	local d = draft.new(seed, scelti)
 	-- i bot scelgono subito: nella scelta resta solo chi gioca
 	for i, p in ipairs(opts.players) do
 		if p.bot then bot.scegli(d, i, seed) end
@@ -1106,6 +1167,11 @@ start_local_match = function(self, picked)
 		for k, v in pairs(p) do players[i][k] = v end
 	end
 	players[1].stats = assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio))
+	-- prova_attrezzo wall: tutti col Bastione al posto del Rampino (scenario bastione.txt)
+	local attrezzo = SIMULA and config_string("megablast.prova_attrezzo", "") or ""
+	if attrezzo ~= "" then
+		for _, p in ipairs(players) do p.tool = attrezzo end
+	end
 	opts.players = players
 	new_match(self, os.time(), self.mappa, opts)
 	-- prova_durata N: la partita dura N secondi (scenari/podio.txt)
@@ -1201,22 +1267,20 @@ end
 
 local PAD_POS = vmath.vector3(0, 0, 0)
 
+-- Levetta come nelle proposte: disco appena velato col bordo e pomello uguale;
+-- il bordo di tutti e due prende il colore dello stato (pad_colore)
 local function new_pad(rest, ring_color)
 	local pad = { rest = rest }
-	pad.base = stretch(gui.new_box_node(vmath.vector3(rest.x, rest.y, 0), vmath.vector3(PAD_D, PAD_D, 0)))
-	gui.set_texture(pad.base, "battaglia")
-	gui.play_flipbook(pad.base, "levetta_base")
-	pad.ring = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(PAD_D, PAD_D, 0))
-	gui.set_texture(pad.ring, "battaglia")
-	gui.play_flipbook(pad.ring, "levetta_anello")
-	gui.set_blend_mode(pad.ring, gui.BLEND_ADD)
-	gui.set_color(pad.ring, ring_color)
-	gui.set_parent(pad.ring, pad.base)
-	pad.knob = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(KNOB_D, KNOB_D, 0))
-	gui.set_texture(pad.knob, "battaglia")
-	gui.play_flipbook(pad.knob, "levetta_pomello")
-	gui.set_parent(pad.knob, pad.base)
+	pad.base = stretch(ui.disco(rest.x, rest.y, PAD_D, PAD_FONDO[1]))
+	pad.ring = stretch(ui.anello(0, 0, PAD_D, 3, ring_color, pad.base))
+	pad.knob = stretch(ui.disco(0, 0, KNOB_D, PAD_FONDO[2], pad.base))
+	pad.knob_ring = stretch(ui.anello(0, 0, KNOB_D, 3, ring_color, pad.knob))
 	return pad
+end
+
+local function pad_colore(pad, c)
+	gui.set_color(pad.ring, c)
+	gui.set_color(pad.knob_ring, c)
 end
 
 -- Il pollice si appoggia in (x, y): la base va lì, senza uscire dallo schermo
@@ -1247,14 +1311,14 @@ local function pad_release(pad, ring_color)
 	gui.set_position(pad.base, PAD_POS)
 	PAD_POS.x, PAD_POS.y = 0, 0
 	gui.set_position(pad.knob, PAD_POS)
-	gui.set_color(pad.ring, ring_color)
+	pad_colore(pad, ring_color)
 end
 
 local function move_pad_drag(self, x, y)
 	local nx, ny = pad_drag(self.move_pad, x, y)
 	if levette.muovi(self.move_st, nx, ny) then self.jump_pressed = true end
 	local on = self.move_st.moving or self.move_st.jumping
-	gui.set_color(self.move_pad.ring, on and MOVE_LIVE or MOVE_IDLE)
+	pad_colore(self.move_pad, on and MOVE_LIVE or MOVE_IDLE)
 end
 
 local function aim_pad_drag(self, x, y)
@@ -1267,7 +1331,7 @@ local function aim_pad_drag(self, x, y)
 	self.aim_power = math.max(0.1, st.f ^ game.AIM_EXPONENT)
 	self.aim_dist = math.huge
 	self.aiming = st.active
-	gui.set_color(self.aim_pad.ring, st.active and AIM_LIVE or AIM_IDLE)
+	pad_colore(self.aim_pad, st.active and AIM_LIVE or AIM_IDLE)
 end
 
 -- Il pollice si stacca dalla levetta della mira: parte il colpo se la levetta
@@ -1301,17 +1365,10 @@ local function set_touch_ui(self, on)
 		pad_release(self.aim_pad, AIM_IDLE)
 	end
 	self.touch_ui = on
-	gui.set_position(self.btn_tele, on and TELE_TOUCH or TELE_DESK)
+	gui.set_position(self.btn_tele.nodo, on and TELE_TOUCH or TELE_DESK)
+	self.tele_state = nil
 	gui.set_enabled(self.tele_key, not on)
 	if self.controls_visible ~= nil then set_controls_visible(self, self.controls_visible) end
-end
-
-
-local function set_hud(self, text)
-	if self.hud_text ~= text then
-		gui.set_text(self.hud, text)
-		self.hud_text = text
-	end
 end
 
 -- Barra delle armi -------------------------------------------------------------
@@ -1324,12 +1381,13 @@ local function bar_robot(self)
 	return current_robot(self)
 end
 
--- Lo slot si vede? Il paracadute finché ne restano o è già aperto; il Rampino sempre.
+-- Lo slot si vede? Il paracadute finché ne restano o è già aperto; l'attrezzo
+-- (Rampino o Bastione) sempre.
 local function slot_have(rb, w)
 	if w == "parachute" then
 		return rb.parachute or rb.parachutes_left > 0
-	elseif w == "hook" then
-		return true
+	elseif w == "hook" or w == "wall" then
+		return rb.tool == w
 	end
 	return game.has_weapon(rb, w)
 end
@@ -1339,23 +1397,27 @@ local function update_bar(self)
 	if not rb then return end
 	local g = self.g
 	-- finiti i colpi (o lanciato il Rampino del turno) si torna al Lanciarune
-	if not slot_have(rb, self.weapon) or (self.weapon == "hook" and g.used.hook) then self.weapon = "missile" end
+	if not slot_have(rb, self.weapon) or ((self.weapon == "hook" or self.weapon == "wall") and g.used.tool) then self.weapon = "missile" end
 	-- dopo il primo attacco si passa da soli all'altro (arma o spada)
 	if g.window > 0 and rb.id == g.current and not g:can_use(self.weapon) then
 		local other = game.SECONDARY[self.weapon] and "missile" or "sword"
 		if g:can_use(other) then self.weapon = other end
 	end
 	local turn = rb.id == g.current and g.phase == "aim"
-	-- larghezza della barra: gli slot visibili, con più spazio tra un gruppo e l'altro
-	local width, last = -SLOT_GAP, nil
+	local tel = self.touch_ui
+	-- sul telefono con cinque primarie quel lato si stringe
+	local n1 = 0
 	for _, sl in ipairs(self.slots) do
-		if slot_have(rb, sl.weapon) then
-			width = width + SLOT + (last and last ~= sl.group and GROUP_GAP or SLOT_GAP)
-			last = sl.group
-		end
+		if sl.group == 1 and slot_have(rb, sl.weapon) then n1 = n1 + 1 end
 	end
-	local x, from, to = W / 2 - width / 2 + SLOT / 2, {}, {}
-	last = nil
+	local s2 = tel and MISURE.slot_tel or SLOT
+	local s1 = (tel and n1 >= 5) and MISURE.slot_stretto or s2
+	local gap = tel and MISURE.gap_tel or SLOT_GAP
+	-- dal centro al primo slot, uguale a destra e a sinistra dell'anello
+	local da = hud.FUORI + MISURE.dal_ring
+	local tele = tel and TELE_TOUCH or TELE_DESK
+	local ogg_y = BAR_Y + s2 / 2 + 14 + MISURE.oggetto / 2
+	local quanti, scelto, ogg_top = { 0, 0, 0, 0 }, nil, nil
 	for _, sl in ipairs(self.slots) do
 		local have = slot_have(rb, sl.weapon)
 		if sl.have ~= have then
@@ -1363,46 +1425,55 @@ local function update_bar(self)
 			sl.have = have
 		end
 		if have then
-			if last and last ~= sl.group then x = x + GROUP_GAP - SLOT_GAP end
-			last = sl.group
-			from[sl.group] = from[sl.group] or x
-			to[sl.group] = x
-			if sl.x ~= x then
-				set_pos(sl.node, x, BAR_Y)
-				sl.x = x
+			local gr = sl.group
+			local k = quanti[gr]
+			quanti[gr] = k + 1
+			local x, y, d = W / 2, BAR_Y, s2
+			if gr == 1 then
+				d = s1
+				x = W / 2 - da - d / 2 - k * (d + gap)
+			elseif gr == 2 then
+				x = W / 2 + da + d / 2 + k * (d + gap)
+			elseif gr == 3 then
+				d = MISURE.oggetto
+				x, y = W / 2 + da + d / 2 + k * (d + 10), ogg_y
+				ogg_top = ogg_y + d / 2
+			else
+				d = TELE_D
+				x, y = tele.x - TELE_D - 12, tele.y
 			end
-			x = x + SLOT + SLOT_GAP
-			local count = rb.ammo[sl.weapon] or 0
+			local count = sl.weapon == "parachute" and rb.parachutes_left or rb.ammo[sl.weapon] or 0
 			if sl.count ~= count then
-				gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
+				if sl.tondo then
+					hud.tondo_numero(sl.tondo, count > 0 and tostring(count) or "")
+				else
+					gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
+				end
 				sl.count = count
 			end
-			-- 2: scelta, 1: si può usare (bordo del colore del gruppo), 0: già usata
+			-- 2: in mano (si alza), 1: si può usare (bordo del colore del gruppo), 0: già usata
 			local on = ((sl.weapon == self.weapon and not self.tele_armed) or (sl.weapon == "parachute" and rb.parachute)) and 2
 				or ((not turn or g:can_use(sl.weapon)) and 1 or 0)
-			if sl.on ~= on then
-				gui.set_color(sl.bordo, on == 1 and BAR_GROUPS[sl.group][2] or SLOT_BORDO[on])
+			if on == 2 then
+				y = y + MISURE.alza
+				scelto = sl
+			end
+			sl.d = d
+			if sl.x ~= x or sl.y ~= y then
+				set_pos(sl.node, x, y)
+				sl.x, sl.y = x, y
+			end
+			local sc = (gr <= 2 and d / SLOT or 1) * (on == 2 and SCELTO or 1)
+			if sl.on ~= on or sl.sc ~= sc then
+				gui.set_color(sl.bordo, on == 2 and ui.C.LUCE or (on == 1 and BAR_COLORI[gr] or SLOT_BORDO[0]))
 				if sl.icon then gui.set_color(sl.icon, on == 0 and ICON_USED or WHITE) end
-				gui.set_scale(sl.node, on == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
-				sl.on = on
+				SLOT_SCALA.x, SLOT_SCALA.y = sc, sc
+				gui.set_scale(sl.node, SLOT_SCALA)
+				sl.on, sl.sc = on, sc
 			end
 		end
 	end
-	-- il nome di ogni gruppo sopra i suoi slot, col suo colore; spento quando
-	-- in questo turno l'attacco di quel gruppo è già stato fatto
-	local used = { turn and g.used.primary, turn and g.used.secondary, false }
-	for i, n in ipairs(self.bar_groups) do
-		local gx = from[i] and (from[i] + to[i]) / 2 or false
-		if self.bar_group_x[i] ~= gx then
-			gui.set_enabled(n, gx ~= false)
-			if gx then set_pos(n, gx, BAR_Y + SLOT / 2 + 12) end
-			self.bar_group_x[i] = gx
-		end
-		if self.bar_group_used[i] ~= used[i] then
-			gui.set_color(n, used[i] and ui.C.SPENTO or BAR_GROUPS[i][2])
-			self.bar_group_used[i] = used[i]
-		end
-	end
+	return scelto, ogg_top
 end
 
 -- La camera sposta e ingrandisce il nodo "mondo" (tutti i nodi della battaglia)
@@ -1722,14 +1793,38 @@ local function render(self, dt)
 	-- pulsanti: arma scelta e teletrasporto (anche con altri globi in volo)
 	local tele_ok = g:can_use("teleport") and my_turn(self)
 	if self.tele_armed and not tele_ok then self.tele_armed = false end
-	update_bar(self)
+	local scelto, ogg_top = update_bar(self)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
+	local bt = self.btn_tele
 	if self.tele_state ~= tele_state then
-		gui.set_color(self.tele_bordo, SLOT_BORDO[tele_state])
-		gui.set_scale(self.btn_tele, tele_state == 2 and SLOT_SCALE_ON or SLOT_SCALE_OFF)
+		gui.set_color(bt.bordo, tele_state == 2 and ui.C.LUCE or (tele_state == 1 and ui.C.VIOLA or SLOT_BORDO[0]))
+		gui.set_color(bt.icona, tele_state == 0 and ICON_USED or WHITE)
+		local sc = tele_state == 2 and SCELTO or 1
+		SLOT_SCALA.x, SLOT_SCALA.y = sc, sc
+		gui.set_scale(bt.nodo, SLOT_SCALA)
+		local p = self.touch_ui and TELE_TOUCH or TELE_DESK
+		set_pos(bt.nodo, p.x, p.y + (tele_state == 2 and MISURE.alza or 0))
 		self.tele_state = tele_state
 	end
-	gui.set_color(self.tele_light, self.colors[g.current])
+	-- quello che hai in mano: il cartellino col nome sopra e l'alone del tuo colore
+	local mano, mx, my, md = nil, 0, 0, 0
+	if self.tele_armed then
+		local p = self.touch_ui and TELE_TOUCH or TELE_DESK
+		mano, mx, my, md = "teleport", p.x, p.y + MISURE.alza, TELE_D
+	elseif scelto then
+		mano, mx, my, md = scelto.weapon, scelto.x, scelto.y, scelto.d
+	end
+	if mano and self.controls_visible then
+		local ky = my + md * SCELTO / 2 + 22
+		if scelto and not self.tele_armed and scelto.group == 2 and ogg_top then ky = math.max(ky, ogg_top + 22) end
+		hud.cartellino_su(self.cartellino, mx, ky, hud.NOMI[mano] or "")
+		set_pos(self.scelto_glow, mx, my)
+		gui.set_color(self.scelto_glow, self.colors[g.current])
+		gui.set_enabled(self.scelto_glow, true)
+	else
+		hud.cartellino_via(self.cartellino)
+		gui.set_enabled(self.scelto_glow, false)
+	end
 
 	local aim_weapon = self.tele_armed and "teleport" or self.weapon
 	-- col dito sul robot il colpo è annullato: niente traiettoria, solo la scritta
@@ -1744,7 +1839,8 @@ local function render(self, dt)
 	if show_aim then
 		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts, aim_weapon)
 		-- Blastron mostra solo l'inizio del volo: una freccia lunga quanto la potenza
-		local shown = game.AIM_PREVIEW_DOTS or AIM_DOTS
+		-- (il Bastione mostra tutta la sagoma del blocco)
+		local shown = aim_weapon ~= "wall" and game.AIM_PREVIEW_DOTS or AIM_DOTS
 		for i, n in ipairs(self.dots) do
 			gui.set_enabled(n, i <= shown)
 			set_pos(n, pts[i].x, pts[i].y)
@@ -1753,54 +1849,30 @@ local function render(self, dt)
 		for _, n in ipairs(self.dots) do gui.set_enabled(n, false) end
 	end
 
-	local secs = math.max(0, math.ceil(g.timer / 60))
-	-- tempo rimasto della partita; a zero si finisce il giro di turni
+	-- tempo rimasto della partita, sopra l'anello; a zero si finisce il giro di turni
 	local left = math.max(0, math.ceil(g.match_left / 60))
 	local clock = g.overtime and "SUPPLEMENTARI" or string.format("%d:%02d", math.floor(left / 60), left % 60)
-	local who = self.names[g.current]
-	if self.mode == "online" then who = g.current == self.me and "Tu" or "Avversario" end
-	-- la barra racconta il turno: bianca, gialla finché c'è il secondo attacco, blu dopo
-	local bar_left, bar_total, bar_color = g.timer, game.TURN_TICKS, TIME_COLOR
-	if g.phase ~= "aim" then
-		set_hud(self, g.phase ~= "over" and string.format("%s   %s", who, clock) or "")
-		bar_left = 0
-	elseif g.window > 0 then
-		local second = not (g.used.primary and g.used.secondary)
-		set_hud(self, string.format(second and "%s   secondo attacco! %ds   %s" or "%s   riparati! %ds   %s",
-			who, math.ceil(g.window / 60), clock))
-		bar_left, bar_total, bar_color = g.window, game.AFTER_ATTACK_TICKS, second and SECOND_COLOR or DONE_COLOR
-		if g.window <= 120 and math.sin(self.clock * 16) < 0 then bar_left = 0 end
-	else
-		set_hud(self, string.format("%s   %ds   %s", who, secs, clock))
+	-- l'anello racconta il turno: bianco, giallo finché c'è il secondo attacco, blu dopo
+	local fase, rimasti, totale = nil, 0, 1
+	if g.phase == "aim" then
+		if g.window > 0 then
+			fase = (g.used.primary and g.used.secondary) and "riparati" or "secondo"
+			rimasti, totale = g.window / 60, game.AFTER_ATTACK_TICKS / 60
+		else
+			fase, rimasti, totale = "turno", g.timer / 60, game.TURN_TICKS / 60
+		end
 	end
-	local bar_w = math.floor(TIME_BAR_W * bar_left / bar_total + 0.5)
-	if self.time_bar_w ~= bar_w or self.time_bar_c ~= bar_color then
-		gui.set_size(self.time_bar, vmath.vector3(bar_w, TIME_BAR_H, 0))
-		gui.set_color(self.time_bar, bar_color)
-		self.time_bar_w, self.time_bar_c = bar_w, bar_color
-	end
+	hud.cronometro_update(self.crono, dt, fase, rimasti, totale, self.colors[g.current], g.phase ~= "over" and clock or "")
 	-- nell'attesa del secondo attacco le secondarie lampeggiano, se sono loro che restano
 	local blink = g.window > 0 and my_turn(self) and math.sin(self.clock * 12) > 0
 	for _, sl in ipairs(self.slots) do
 		if sl.glow then gui.set_enabled(sl.glow, blink and sl.have and g:can_use(sl.weapon)) end
 	end
-	-- punti di ogni squadra, in alto a sinistra
-	local score = ""
-	for t = 1, #TEAM_NAMES do
-		local pts, any = 0, false
-		for _, rb in ipairs(g.robots) do
-			if rb.team == t then pts, any = pts + rb.points, true end
-		end
-		if any then score = score .. string.format("%s %d   ", TEAM_NAMES[t], math.floor(pts + 0.5)) end
-	end
-	if self.score_text ~= score then
-		gui.set_text(self.score_label, score)
-		self.score_text = score
-	end
+	punteggio.update(self.punti, dt, g, self.mode == "online" and self.me or g.current)
 	local n = bar_robot(self)
 	local tele = n and n.teleports_left or 0
 	if self.tele_n ~= tele then
-		gui.set_text(self.tele_label, "TELETRASPORTI " .. tele)
+		hud.tondo_numero(self.btn_tele, tostring(tele))
 		self.tele_n = tele
 	end
 
@@ -2008,14 +2080,10 @@ function init(self)
 	mondo[#mondo + 1] = self.cancel_label
 	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end
 
-	self.hud = label(W / 2, H - 28, "", 1)
-	-- barra del tempo del turno (si accorcia verso il centro) e teletrasporti in mano accanto
-	self.time_bar_bg = box(W / 2, TIME_BAR_Y, TIME_BAR_W + 4, TIME_BAR_H + 4, vmath.vector4(0.05, 0.05, 0.07, 0.6))
-	self.time_bar = box(W / 2, TIME_BAR_Y, TIME_BAR_W, TIME_BAR_H, TIME_COLOR)
-	self.tele_label = label(W / 2 + TIME_BAR_W / 2 + 110, TIME_BAR_Y + 2, "TELETRASPORTI 2", 0.9)
-	gui.set_color(self.tele_label, vmath.vector4(1, 0.75, 0.35, 1))
-	self.score_label = label(24, H - 28, "", 0.8)
-	gui.set_pivot(self.score_label, gui.PIVOT_W)
+	-- il cronometro ad anello in basso al centro, col tempo della partita sopra
+	self.crono = hud.cronometro(W / 2, MISURE.ring_y)
+	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game
+	self.punti = punteggio.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
 	self.tut_label = label(W / 2, H - 120, "", 0.8)
 	gui.set_line_break(self.tut_label, true)
@@ -2030,50 +2098,48 @@ function init(self)
 	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE)
 	self.aim_pad = new_pad(AIM_PAD, AIM_IDLE)
 	self.move_st, self.aim_st = levette.new(), levette.new()
-	-- barra delle armi in basso al centro e, a parte, il teletrasporto
+	-- barra delle armi attorno al cronometro e, a parte, il teletrasporto
 	self.bar = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(self.bar, false)
 	stretch(self.bar)
+	-- l'alone del tuo colore dietro quello che hai in mano
+	self.scelto_glow = glow(0, 0, SLOT * 1.7, WHITE)
+	gui.set_parent(self.scelto_glow, self.bar)
 	self.slots = {}
 	for i, w in ipairs(BAR_WEAPONS) do
-		local n, bordo = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar)
-		stretch(n)
-		local icon -- gli oggetti hanno un'icona di forme (oggetti.icona), che resta accesa
-		if WEAPON_ICON[w] then
-			icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
+		local gr = bar_group(w)
+		local sl = { weapon = w, have = false, group = gr }
+		if gr >= 3 then
+			-- oggetti e attrezzo: tondi, col numerino
+			sl.tondo = hud.tondo(0, BAR_Y, gr == 3 and MISURE.oggetto or TELE_D, w, BAR_COLORI[gr], self.bar)
+			sl.node, sl.bordo, sl.icon = sl.tondo.nodo, sl.tondo.bordo, sl.tondo.icona
+		else
+			local n, bordo = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar)
+			stretch(n)
+			local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
 			gui.set_texture(icon, "armi")
 			gui.play_flipbook(icon, WEAPON_ICON[w])
 			gui.set_parent(icon, n)
-		else
-			oggetti.icona(w, n)
+			local count = label(22, -26, "", 0.7)
+			gui.set_parent(count, n)
+			sl.node, sl.bordo, sl.icon, sl.label = n, bordo, icon, count
 		end
-		local count = label(22, -26, "", 0.7)
-		gui.set_parent(count, n)
-		gui.set_enabled(n, false)
-		self.slots[i] = { node = n, bordo = bordo, icon = icon, label = count, weapon = w, have = false, group = bar_group(w) }
+		gui.set_enabled(sl.node, false)
+		self.slots[i] = sl
 		-- le secondarie lampeggiano nell'attesa del secondo attacco, se restano loro
 		if game.SECONDARY[w] then
-			local gl = glow(0, 0, SLOT * 1.6, SECOND_COLOR)
-			gui.set_parent(gl, n)
+			local gl = glow(0, 0, SLOT * 1.6, hud.GIALLO)
+			gui.set_parent(gl, sl.node)
 			gui.set_enabled(gl, false)
-			self.slots[i].glow = gl
+			sl.glow = gl
 		end
 	end
-	self.bar_groups, self.bar_group_x, self.bar_group_used = {}, {}, {}
-	for i, gr in ipairs(BAR_GROUPS) do
-		self.bar_groups[i] = label(0, 0, gr[1], 0.5)
-		gui.set_color(self.bar_groups[i], gr[2])
-		gui.set_parent(self.bar_groups[i], self.bar)
-		gui.set_enabled(self.bar_groups[i], false)
-	end
-	-- teletrasporto: uno slot come quelli delle armi, col globo
-	self.btn_tele, self.tele_bordo = ui.pannello(TELE_DESK.x, TELE_DESK.y, TELE_D, TELE_D)
-	stretch(self.btn_tele)
-	local orb_icon
-	orb_icon, self.tele_light = colpo("globo", 3.6)
-	gui.set_parent(orb_icon, self.btn_tele)
-	self.tele_key = label(-26, -28, "T", 0.6)
-	gui.set_parent(self.tele_key, self.btn_tele)
+	-- teletrasporto: tondo e viola come l'attrezzo, coi teletrasporti rimasti
+	self.btn_tele = hud.tondo(TELE_DESK.x, TELE_DESK.y, TELE_D, "teleport", ui.C.VIOLA)
+	self.tele_key = label(-28, -30, "T", 0.6)
+	gui.set_parent(self.tele_key, self.btn_tele.nodo)
+	self.cartellino = hud.cartellino()
+	hud.globi_nodi(self.crono)
 	self.pointers = {}
 	set_touch_ui(self, touch_device())
 	set_controls_visible(self, false)
@@ -2179,6 +2245,8 @@ function update(self, dt)
 	if self.mode == "scelta" then
 		local players = menu.scelta.update(self.scelta, dt)
 		if players then start_local_match(self, players) end
+	elseif self.mode == "scelta_online" then
+		menu.scelta.update(self.scelta, dt)
 	end
 
 	if SIMULA and self.g then
@@ -2224,6 +2292,15 @@ local function toggle_tele(self)
 	self.tele_armed = not self.tele_armed and self.g:can_use("teleport")
 end
 
+-- Annulla la mira della levetta: torna a riposo e lasciandola non parte niente
+local function cancel_pad_aim(self)
+	self.pointers[self.aim_pad.id] = "cancelled"
+	levette.reset(self.aim_st)
+	self.aiming = false
+	pad_release(self.aim_pad, AIM_IDLE)
+	show_message(self, "Mira annullata")
+end
+
 -- Un dito (o il mouse) si appoggia in (x, y). id distingue le dita.
 local function pointer_down(self, id, x, y)
 	if self.mode == "ended" then
@@ -2232,9 +2309,16 @@ local function pointer_down(self, id, x, y)
 	elseif self.mode ~= "local" and self.mode ~= "online" then
 		return
 	end
+	-- sul telefono riportare la levetta a zero è scomodo: mentre si mira, un
+	-- tocco in qualsiasi punto dello schermo annulla la mira (e non fa altro)
+	if self.aim_pad.id and self.aiming then
+		cancel_pad_aim(self)
+		self.pointers[id] = "cancelled"
+		return
+	end
 	if gui.pick_node(self.btn_zoom, x, y) then
 		change_zoom(self)
-	elseif gui.pick_node(self.btn_tele, x, y) then
+	elseif gui.pick_node(self.btn_tele.nodo, x, y) then
 		toggle_tele(self)
 	elseif picked_slot(self, x, y) then
 		choose_slot(self, picked_slot(self, x, y))
@@ -2311,7 +2395,7 @@ function on_input(self, action_id, action)
 			apri_schermata(self, menu.allenamento, self.contro_bot)
 		end
 		return true
-	elseif self.mode == "scelta" then
+	elseif self.mode == "scelta" or self.mode == "scelta_online" then
 		menu.scelta.on_input(self.scelta, action_id, action)
 		return true
 	end
@@ -2375,6 +2459,9 @@ function on_input(self, action_id, action)
 		if action.pressed and self.pointers.mouse == "aim" then
 			self.pointers.mouse = "cancelled"
 			self.aiming = false
+		elseif action.pressed and self.pointers.mouse == "pad_aim" and self.aiming then
+			-- (anche sulla levetta, se c'è un mouse: è come il tocco col secondo dito)
+			cancel_pad_aim(self)
 		end
 	elseif action_id == nil and self.pointers.mouse then
 		-- movimento del mouse senza cambio di stato

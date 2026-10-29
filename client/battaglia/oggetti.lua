@@ -7,7 +7,6 @@
 --   local o = oggetti.new(colori)             -- colori[squadra]
 --   oggetti.nodi(o)                            -- da mettere nel nodo "mondo"
 --   oggetti.update(o, g, view, clock)          -- a ogni frame, nessuna allocazione
---   oggetti.icona(tipo, parent)                -- forma per lo slot della barra
 
 local game = require "sim.game"
 local config = require "sim.config"
@@ -15,7 +14,6 @@ local config = require "sim.config"
 local M = {}
 
 local AMBRA = vmath.vector4(1, 0.72, 0.25, 1)
-local ACCIAIO = vmath.vector4(0.55, 0.75, 0.95, 0.55)
 local BIANCO = vmath.vector4(1, 1, 1, 0.9)
 local OPACO = vmath.vector4(1, 1, 1, 1)
 -- effetti di stato: fiamma sulla testa, anello freddo ai piedi, crepa sul petto
@@ -203,21 +201,6 @@ function M.update(o, g, view, clock)
 		if slow then pos(o.geli[i], v.x, v.y + 1) end
 		gui.set_enabled(o.crepe[i], cracked ~= nil)
 		if cracked then pos(o.crepe[i], v.x, v.y + game.DISEGNO_H * 0.55) end
-	end
-end
-
--- Forma dell'oggetto per lo slot della barra (le armi hanno la loro icona)
-function M.icona(tipo, parent)
-	if tipo == "trap" then
-		trappola(28, parent)
-	elseif tipo == "trampoline" then
-		gui.set_scale(trampolino(22, parent), vmath.vector3(1, 2, 1))
-	elseif tipo == "shield" then
-		anello(44, ACCIAIO, parent)
-	else -- parachute
-		local n = cerchio(44, BIANCO, parent)
-		gui.set_fill_angle(n, 180)
-		pos(n, 0, -6)
 	end
 end
 

@@ -149,9 +149,9 @@ zero. Lavoro: S 1–2 giorni, M 3–5, L 1–2 settimane, XL più settimane.
 ### 0. Chiudere la partita (in corso)
 
 Fatto dal 26 ottobre: batch di merge, diavoletto vettoriale, editor delle
-animazioni e stampino, skin armi, mappa Crogiolo con scelta casuale. Resta:
-schermata del draft online nel client, vita dei robot e bilanciamento, audio di
-base, tutorial raggiungibile dalla home, mappe 4–6.
+animazioni e stampino, skin armi, mappa Crogiolo con scelta casuale, punti in
+partita, Bastione, draft online. Resta: scelta della coda online nella home, vita
+dei robot e bilanciamento, audio di base, tutorial raggiungibile dalla home, mappe 4–6.
 **Uscita**: 4 telefoni sullo stesso Wi-Fi giocano 1v1, 2v2 e FFA fino al podio
 senza bug e senza scatti; Sergio approva l'aspetto. Lavoro L, 0 €.
 

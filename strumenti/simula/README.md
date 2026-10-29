@@ -28,7 +28,7 @@ Nelle sessioni cloud `prepara.sh` parte da solo all'avvio
 2. **Test della simulazione** (`tests/sim_test.lua` con luajit).
 3. **Build con bob** 1.14.0 per Linux, variante debug. L'estensione WebSocket
    viene tolta solo in questa build (si compila sul build server di Defold, che
-   dal cloud non si raggiunge), quindi il gioco online non si prova.
+   dal cloud non si raggiunge), e al suo posto il client usa una WebSocket su LuaSocket (`client/main/ws_socket.lua`): l'online si prova contro il server vero col comando `server`.
 4. **Partita** su Xvfb con mouse e tastiera finti (xdotool). Fallisce se nel log
    del motore compare un `ERROR:` (errori Lua compresi), se il gioco si chiude da
    solo o se un `aspetta_*` scade. Gli errori dell'audio si ignorano: nel
@@ -62,27 +62,30 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `mira DX DY [S] [FOTO] [Z]` | tiene il dito a (DX, DY) pixel dello schermo dal robot di turno (la potenza dipende dai pixel dello schermo, a ogni zoom) per S secondi (la mira), facoltativamente scatta FOTO (con Z, uno zoom Z volte invece della foto intera), poi lascia: spara con l'arma scelta |
 | `levetta DX DY S [FOTO]` | comandi del telefono (`imposta comandi telefono`): appoggia il dito sulla levetta del movimento (`115 117`), lo sposta di (DX, DY) e lo tiene S secondi: di lato cammina, in alto salta (e risalta), facoltativamente scatta FOTO prima di lasciare |
 | `levetta_mira DX DY S [FOTO]` | come `levetta`, ma sulla levetta della mira (`1165 117`): oltre il 20% della corsa (19 px) si accende e lasciando spara; sotto il 10% si spegne |
+| `levetta_annulla DX DY [FOTO]` | mira con la levetta del telefono e la annulla col tasto destro (fa quello che fa un secondo dito sullo schermo), facoltativamente scatta FOTO, poi lascia: non deve partire niente |
 | `annulla DX DY [FOTO]` | mira a (DX, DY) dal robot col sinistro, preme il destro (annulla), facoltativamente scatta FOTO, poi lascia il sinistro |
 | `niente_evento TIPO [S]` | fallisce se nei prossimi S secondi succede l'evento TIPO (per esempio un colpo annullato che parte lo stesso) |
 | `aspetta_evento TIPO [S]` | aspetta un evento della simulazione (`fire`, `explosion`, `swing`, `sword_hit`, `orb`, `teleport`, `grenade`, `shards`, `punch`, `punch_hit`, `sniper`, `sniper_bounce`, `sniper_hit`, `eagle`, `hook`, `hook_end`, `mallet`, `mallet_hit`, `lunge`, `lunge_hit`, `place`, `bounce`, `respawn`, `overtime`, `crate`, `crate_pick`, `damage`, `turn`, `over`...) |
+| `server MODO N [propone]` | avvia il server vero (`go build ./server`, porta 8090) e N giocatori finti (`strumenti/simula/finti`) che entrano nella coda MODO 3 s dopo: il gioco, se tocca GIOCA prima, è il robot 1. I finti prendono l'ultima carta di primarie e secondarie, accettano lo scambio che un compagno propone (con `propone` lo propongono loro) e in partita sparano un colpo a turno. Serve `imposta server_url ws://127.0.0.1:8090/ws` e, per la coda, `imposta giocatori MODO`. Nella build del simulatore l'online passa da LuaSocket (`client/main/ws_socket.lua`); il log del server è `simulazione/server.txt` (scenario `scenari/scelta_online.txt`) |
 | `aspetta_stato chiave=valore ... [S]` | aspetta uno stato, per esempio `turno=2 fase=aim` (chiavi: `modo`, `turno`, `fase`, `x`, `y` nel mondo, `sx`, `sy` il centro del robot sullo schermo, `zoom` della camera) |
 | `imposta CHIAVE VALORE` | impostazione `[megablast]` della build, letta prima di compilare. Solo per le prove: `prova_armi N` dà N colpi di ogni arma e oggetto delle casse a tutti, `prova_casse N` fa cadere una cassa ogni N turni invece di 3, `prova_secondaria eagle` (o `mallet`, `lunge`) dà a tutti quella secondaria oltre alla Lama (scenario `scenari/secondarie.txt`), `prova_vita N` fa partire tutti con N punti di vita (scenario `scenari/colpi.txt`), `prova_durata N` fa durare la partita N secondi (scenario `scenari/podio.txt`), `prova_scelta 1` fa partire lo stesso telefono con la scelta delle armi (senza, negli scenari si salta; scenario `scenari/scelta.txt`), `tutorial 1` fa aprire il tutorial a STESSO TELEFONO (scenario `scenari/tutorial.txt`; vale anche fuori dagli scenari finché la home non ha il pulsante), `prova_stati 1` fa partire tutti bruciati, rallentati e con l'armatura incrinata (scenario `scenari/stati.txt`), `prova_vicino N` mette il secondo robot N pixel a destra del primo (a sinistra se negativo), a terra (scenario `scenari/rampino_nemico.txt`), `zoom 3` fa partire la camera con tutta la mappa (1 vicino, 2 medio; scenario `scenari/camera.txt`), `prova_mappa crogiolo` gioca sul Crogiolo (negli scenari la mappa è fissa, forgia se non si dice; scenario `scenari/crogiolo.txt`) |
 
 Comandi: sul computer (il predefinito qui) tastiera e mouse, zoom col pulsante `1210 686`, il tasto `z` o la rotella, TELE `1180 62` o
 il tasto `t`, armi coi tasti `1`-`9`. Con `imposta comandi telefono` ci sono le
 due levette (corsa 94 px) e TELE sta a `1208 257`.
-La barra delle armi sta in basso al centro (`y = 62`) e mostra solo le armi che
-il robot ha, centrate, in tre gruppi (primarie color brace, secondarie color
-acciaio, oggetti; Rampino sempre, paracadute finché ne resta uno):
-Lanciarune `479`, Lama di Nucleo `593`, Rampino `707`, Paracadute `801`; con
-una secondaria scelta (`prova_secondaria`) `432`, `546`, `660`, `754`, `848`.
+Attorno al cronometro in basso al centro (sul computer): primarie a sinistra
+(`y = 62`, Lanciarune `506`, poi `412`, `318`, `224`, `130`), secondarie a
+destra (Lama `774`, quella scelta `868`), oggetti tondi sopra le secondarie
+(`y = 148`: `760`, `826`, `892`, `958`, scorrono quando uno finisce), Rampino o
+Bastione tondo accanto al TELE (`1084 62`; sul telefono `1112 257`). Quello
+in mano sale di 10 punti.
 Con `prova_armi` le posizioni sono nei commenti di `scenari/oggetti.txt`.
 Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, CONTRO I BOT `1075 323`, ARMERIA `168 108`.
 Contro i bot (scelta di modo e livello, poi il bot che gioca il suo turno): `scenari/bot.txt`.
 `imposta ricetta FILE` (e `imposta ricetta_da TICK`) rigioca la ricetta di una partita
 (`client/sim/replay.lua`, dall'arena dei bot) e la mostra da quel tick: è come
 `strumenti/arena/arena.py --video N` fa i video degli highlight.
-Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, teletrasporti guadagnati): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`; su un trampolino rimbalza tutto (l'Uovo): `scenari/trampolino.txt`. Effetti di stato: `scenari/stati.txt`. Scelta delle armi d'inizio partita (primaria e secondaria): `scenari/scelta.txt`. Secondarie e Tonante: `scenari/secondarie.txt`; Maglio: `scenari/maglio.txt`; Affondo: `scenari/affondo.txt`; Rampino (oggetto, uno a turno, sale sulla piattaforma colpita): `scenari/rampino.txt`; Rampino che trascina un nemico a terra: `scenari/rampino_nemico.txt`; Cecchino: `scenari/cecchino.txt`. Le skin di tutte le armi in mano e dei colpi in volo: `scenari/armi.txt`.
+Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, teletrasporti guadagnati): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`; su un trampolino rimbalza tutto (l'Uovo): `scenari/trampolino.txt`. Effetti di stato: `scenari/stati.txt`. Scelta delle armi d'inizio partita (primaria, secondaria e attrezzo): `scenari/scelta.txt`; online, 2 contro 2 con lo scambio col compagno: `scenari/scelta_online.txt`. Secondarie e Tonante: `scenari/secondarie.txt`; Maglio: `scenari/maglio.txt`; Affondo: `scenari/affondo.txt`; Rampino (oggetto, uno a turno, sale sulla piattaforma colpita): `scenari/rampino.txt`; Rampino che trascina un nemico a terra: `scenari/rampino_nemico.txt`; Cecchino: `scenari/cecchino.txt`. Le skin di tutte le armi in mano e dei colpi in volo: `scenari/armi.txt`.
 Fine partita, podio, armeria e albero di abilità: `scenari/podio.txt`.
 
 Per guidare il robot il gioco, solo in questa build, scrive nel log righe

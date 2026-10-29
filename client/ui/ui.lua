@@ -26,6 +26,7 @@ M.C = {
 	SPENTO = c(0.55, 0.52, 0.52),
 	BRACE = c(1, 0.42, 0.16),             -- accento quando non c'è una squadra; colore delle armi primarie
 	ACCIAIO = c(0.62, 0.77, 0.88),        -- colore delle armi secondarie (danno secco, ti muovono)
+	VIOLA = c(0.77, 0.61, 1),             -- il movimento: teletrasporto e attrezzo (Rampino, Bastione)
 	OMBRA = c(0, 0, 0, 0.6),
 	SQUADRA = { c(1, 0.231, 0.306), c(0.239, 0.482, 1), c(0.18, 0.75, 0.44), c(0.96, 0.77, 0.09) },
 }
@@ -139,6 +140,23 @@ function M.indietro(lista, azione, parent)
 	return n
 end
 
+-- Disco e anello (nodi a torta): levette, pulsanti tondi, cronometro. d è il
+-- diametro, spessore quello dell'anello verso l'interno
+function M.disco(x, y, d, colore, parent)
+	local n = gui.new_pie_node(vec(x, y), vec(d, d))
+	gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
+	gui.set_perimeter_vertices(n, 64)
+	gui.set_color(n, colore)
+	if parent then gui.set_parent(n, parent) end
+	return n
+end
+
+function M.anello(x, y, d, spessore, colore, parent)
+	local n = M.disco(x, y, d, colore, parent)
+	gui.set_inner_radius(n, d / 2 - spessore)
+	return n
+end
+
 -- Barra di avanzamento (vita, esperienza): binario scuro e riempimento colorato
 function M.barra(x, y, w, h, colore, parent)
 	local n = nodo(nil, x, y, w, h, C.OMBRA, parent)
@@ -150,6 +168,27 @@ end
 function M.barra_valore(b, v)
 	V.x, V.y, V.z = b.w * math.max(0, math.min(1, v)), b.h, 0
 	gui.set_size(b.pieno, V)
+end
+
+-- La Corona del primo in classifica: una fascia e tre punte a rombo, col bordo
+-- scuro. Restituisce la radice (invisibile), centrata sulla fascia; misure in
+-- unità della GUI a scala 1 (larga 18).
+M.ORO = c(1, 0.8, 0.25)
+local BIANCO = c(1, 1, 1)
+local PEZZI_CORONA = { { 0, 0, 16, 5, 0 }, { -6, 4, 5, 5, 45 }, { 0, 6, 5, 5, 45 }, { 6, 4, 5, 5, 45 } }
+
+function M.corona(x, y, colore, parent)
+	local r = nodo(nil, x, y, 0, 0, BIANCO, parent)
+	gui.set_visible(r, false)
+	for passata = 1, 2 do
+		local b = passata == 1 and 2 or 0
+		for _, p in ipairs(PEZZI_CORONA) do
+			local n = nodo(nil, p[1], p[2], p[3] + b, p[4] + b, passata == 1 and C.FONDO or colore or M.ORO, r)
+			gui.set_inherit_alpha(n, true)
+			gui.set_euler(n, vmath.vector3(0, 0, p[5]))
+		end
+	end
+	return r
 end
 
 -- Tocco sui bottoni di una lista: premuto, rilasciato sopra (l'azione) o fuori.

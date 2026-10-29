@@ -77,6 +77,15 @@ images {
   image: "/assets/armi/hook_icona.png"
 }
 images {
+  image: "/assets/armi/wall.png"
+}
+images {
+  image: "/assets/armi/wall_tinta.png"
+}
+images {
+  image: "/assets/armi/wall_icona.png"
+}
+images {
   image: "/assets/armi/mallet.png"
 }
 images {
@@ -93,6 +102,21 @@ images {
 }
 images {
   image: "/assets/armi/lunge_icona.png"
+}
+images {
+  image: "/assets/armi/teleport_icona.png"
+}
+images {
+  image: "/assets/armi/trap_icona.png"
+}
+images {
+  image: "/assets/armi/shield_icona.png"
+}
+images {
+  image: "/assets/armi/trampoline_icona.png"
+}
+images {
+  image: "/assets/armi/parachute_icona.png"
 }
 images {
   image: "/assets/armi/razzo.png"

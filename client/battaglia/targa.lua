@@ -10,6 +10,8 @@
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
 --   targa.annuncio(t, testo)              -- una scritta che sale sopra il nome e svanisce
+--   targa.posto(t, testo, corona)         -- il posto in classifica a sinistra della barra
+--                                          -- ("" = niente) e la Corona sopra il nome
 --
 -- Ogni targa ha due radici, t.barre e t.testi, che si muovono insieme. La GUI
 -- disegna i nodi nell'ordine in cui stanno: chi le mette nella scena mette prima
@@ -30,6 +32,7 @@ local NOME_Y = 10           -- centro del nome sopra la barra
 -- scala del font "titolo" (scala 1 = circa 40 px)
 local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
 local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
+local CORONA_Y, CORONA_SCALA = NOME_Y + 10, 0.5
 
 local FONDO = ui.C.OMBRA
 local SCIA = ui.C.LUCE
@@ -93,6 +96,9 @@ function M.nuove(colori, nomi)
 		t.scia = pezzo(t, SCIA)
 		t.scudo = pezzo(t, SCUDO)
 		t.pieno = pezzo(t, colore)
+		t.corona = ui.corona(0, CORONA_Y, nil, t.dentro)
+		gui.set_scale(t.corona, vmath.vector3(CORONA_SCALA, CORONA_SCALA, 1))
+		gui.set_enabled(t.corona, false)
 		tt[i] = t
 	end
 	-- poi i testi
@@ -101,6 +107,8 @@ function M.nuove(colori, nomi)
 		t.nome = testo(t.dentro_testi, 0, NOME_Y, nomi[i] or "", NOME_SCALA, t.colore)
 		t.numero = testo(t.dentro_testi, W / 2 + BORDO + 3, 0, "", NUMERO_SCALA, ui.C.TESTO)
 		gui.set_pivot(t.numero, gui.PIVOT_W)
+		t.posto = testo(t.dentro_testi, -W / 2 - BORDO - 3, 0, "", NUMERO_SCALA, ui.C.TESTO)
+		gui.set_pivot(t.posto, gui.PIVOT_E)
 		t.stato = testo(t.dentro_testi, 0, STATO_Y, "", STATO_SCALA, ui.C.TESTO)
 		t.annuncio = testo(t.dentro_testi, 0, ANNUNCIO_Y, "", ANNUNCIO_SCALA, ui.C.LUCE)
 		gui.set_enabled(t.annuncio, false)
@@ -121,6 +129,11 @@ end
 
 function M.stato(t, s)
 	gui.set_text(t.stato, s)
+end
+
+function M.posto(t, s, corona)
+	gui.set_text(t.posto, s)
+	gui.set_enabled(t.corona, corona)
 end
 
 function M.annuncio(t, s)

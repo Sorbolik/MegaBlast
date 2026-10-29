@@ -1,0 +1,39 @@
+# L'HUD della battaglia sul telefono (docs/decisioni/interfaccia.md, 29 ottobre):
+# punti in alto al centro, cronometro ad anello in basso al centro col tempo
+# della partita sopra, primarie a sinistra, secondarie a destra con gli oggetti
+# tondi sopra, Rampino e teletrasporto tondi sopra la levetta della mira.
+# L'anello è bianco nel turno, giallo finché resta il secondo attacco, blu dopo;
+# al primo attacco i secondi risparmiati volano come globi sul teletrasporto.
+# Mentre si mira, un tocco ovunque annulla la mira (qui il tasto destro, che fa
+# la stessa cosa: il simulatore ha un dito solo).
+imposta giocatori ffa
+imposta prova_armi 1
+imposta prova_secondaria eagle
+imposta comandi telefono
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.5
+foto 01_telefono
+
+levetta_annulla -40 40 02_mira_annullata
+niente_evento fire 1
+
+levetta_mira -40 40 0.4             # Lanciarune: primo attacco
+aspetta_evento fire 2
+aspetta 0.3
+foto 03a_globi                      # i secondi risparmiati volano sul teletrasporto
+aspetta_evento explosion 6
+aspetta 0.6
+foto 03_secondo_attacco
+aspetta 3.6
+foto 04_secondo_quasi_finito
+premi 6                             # Lama
+levetta_mira 40 0 0.3
+aspetta_evento swing 2
+aspetta 0.4
+foto 05_riparati
+aspetta_stato turno=2 fase=aim 15
+aspetta 1
+foto 06_turno_blu

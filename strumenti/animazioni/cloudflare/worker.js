@@ -1,7 +1,9 @@
 // L'editor delle animazioni su Cloudflare (Worker "megablast", wrangler.jsonc):
 // la pagina è in dist/ (costruisci.sh); POST /api/manda { file, lua } con
 // l'intestazione X-Chiave (= EDITOR_CHIAVE) è "Manda a Claude": scrive il file
-// nel ramo editor-ultima di GitHub, da dove Claude lo prende.
+// nel ramo editor-ultima di GitHub, da dove Claude lo prende. Una richiesta degli
+// strumenti ({ file: "richiesta", nome, lua: il testo, immagine: PNG in base64})
+// va in richieste/<nome>.json e richieste/<nome>.png.
 // Variabili cifrate del Worker: EDITOR_CHIAVE e GITHUB_TOKEN (token
 // fine-grained con Contents in scrittura solo su Sorbolik/MegaBlast).
 const REPO = "Sorbolik/MegaBlast";
@@ -10,6 +12,8 @@ const FILE = {
 	animazioni: "client/battaglia/animazioni.lua",
 	corpo: "client/sim/corpo.lua",
 	perni: "client/battaglia/perni.lua",
+	impugnature: "client/battaglia/impugnature.lua",
+	ritocchi: "strumenti/stampino/ritocchi.json",
 };
 
 
@@ -34,10 +38,19 @@ async function manda(request, env) {
 	if (!env.EDITOR_CHIAVE || request.headers.get("X-Chiave") !== env.EDITOR_CHIAVE) {
 		return new Response("chiave sbagliata", { status: 403 });
 	}
-	let file, lua;
-	try { ({ file, lua } = await request.json()); } catch (e) { return new Response("richiesta rotta", { status: 400 }); }
-	const percorso = FILE[file];
-	if (!percorso || typeof lua !== "string" || lua.length > 2000000) return new Response("file sconosciuto", { status: 400 });
+	let file, lua, nome, immagine;
+	try { ({ file, lua, nome, immagine } = await request.json()); } catch (e) { return new Response("richiesta rotta", { status: 400 }); }
+	// i file da scrivere: percorso -> contenuto in base64
+	const scritti = {};
+	if (file === "richiesta") {
+		if (!/^[a-z][a-z0-9_]{0,39}$/.test(nome || "") || typeof immagine !== "string" || immagine.length > 12000000
+			|| !/^[A-Za-z0-9+/=]+$/.test(immagine) || typeof lua !== "string" || lua.length > 100000) return new Response("richiesta sbagliata", { status: 400 });
+		scritti[`richieste/${nome}.json`] = base64(lua);
+		scritti[`richieste/${nome}.png`] = immagine;
+	} else {
+		if (!FILE[file] || typeof lua !== "string" || lua.length > 2000000) return new Response("file sconosciuto", { status: 400 });
+		scritti[FILE[file]] = base64(lua);
+	}
 	const api = (p, init = {}) => fetch(`https://api.github.com/repos/${REPO}${p}`, {
 		...init,
 		headers: {
@@ -54,12 +67,14 @@ async function manda(request, env) {
 		r = await api("/git/refs", { method: "POST", body: JSON.stringify({ ref: `refs/heads/${RAMO}`, sha: main.object.sha }) });
 		if (!r.ok) return new Response("GitHub: " + await r.text(), { status: 502 });
 	}
-	r = await api(`/contents/${percorso}?ref=${RAMO}`);
-	const sha = r.ok ? (await r.json()).sha : undefined;
-	r = await api(`/contents/${percorso}`, {
-		method: "PUT",
-		body: JSON.stringify({ message: `Editor: ${file} di Sergio`, content: base64(lua), branch: RAMO, sha }),
-	});
-	if (!r.ok) return new Response("GitHub: " + await r.text(), { status: 502 });
+	for (const [percorso, contenuto] of Object.entries(scritti)) {
+		r = await api(`/contents/${percorso}?ref=${RAMO}`);
+		const sha = r.ok ? (await r.json()).sha : undefined;
+		r = await api(`/contents/${percorso}`, {
+			method: "PUT",
+			body: JSON.stringify({ message: `Editor: ${file} di Sergio`, content: contenuto, branch: RAMO, sha }),
+		});
+		if (!r.ok) return new Response("GitHub: " + await r.text(), { status: 502 });
+	}
 	return new Response("ok");
 }

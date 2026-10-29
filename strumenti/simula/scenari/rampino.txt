@@ -7,7 +7,7 @@ aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
-tocca 707 62                        # Rampino (barra: Lanciarune 479, Lama 593, Rampino 707, Paracadute 801)
+tocca 1084 62                       # Rampino (tondo accanto al TELE)
 aspetta 0.4
 zoom 01_rampino_in_mano
 mira -150 50 0.1 02_mira            # in alto a sinistra, verso un gradino della scala: la linea di mira dritta fino al terreno

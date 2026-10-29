@@ -19,10 +19,11 @@ const (
 //
 //	{"t":"hello","v":2,"mode":"1v1"}   primo messaggio: versione del protocollo e modalità
 //	{"t":"hello","v":2,"tok":"..."}    oppure: torno nella partita da cui sono caduto
-//	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria e una secondaria
-//	                                    (l'arma dice la categoria; si può cambiare fino allo scadere)
+//	{"t":"hello","v":2,"mode":"2v2","tool":"wall"}   tool: l'attrezzo dell'assetto, già scelto nel draft
+//	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria, una secondaria e un
+//	                                    attrezzo (l'arma dice la categoria; si cambia fino allo scadere)
 //	{"t":"swap","to":3}                 propone lo scambio delle scelte al compagno 3 (se lui
-//	                                    lo propone a sua volta, lo scambio si fa)
+//	                                    lo propone a sua volta, lo scambio si fa); "to":0 ritira la proposta
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
 //
 // "j" dice se il salto è ancora tenuto premuto: lasciandolo mentre si sale il salto è corto.
@@ -40,6 +41,7 @@ type clientMsg struct {
 	V    int     `json:"v"`
 	Mode string  `json:"mode"`
 	Tok  string  `json:"tok"`
+	Tool string  `json:"tool"`
 	To   int     `json:"to"`
 }
 
@@ -90,7 +92,7 @@ type Room struct {
 
 	draft     lua.LValue // stato di sim/draft.lua finché si sceglie
 	draftLeft int        // tick alla fine della scelta
-	players   []byte     // squadre in JSON: [{"team":1},...]
+	players   []byte     // squadre in JSON, [{"team":1},...]; da start anche le scelte del draft
 }
 
 // newRoom prepara la partita fuori dai worker e apre la scelta delle armi.
@@ -103,7 +105,11 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	r.eng = eng
 	list, err := eng.call("mode_players", lua.LString(mode.Sim))
 	if err == nil {
-		r.draft, err = eng.call("draft_new", lua.LNumber(seed), list)
+		tools := eng.L.NewTable()
+		for _, p := range players {
+			tools.Append(lua.LString(p.tool))
+		}
+		r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), tools)
 	}
 	var secs lua.LValue
 	if err == nil {
@@ -167,15 +173,21 @@ func (r *Room) sendStart(slot int, resume bool) {
 		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players))
 }
 
-// sendDraft manda a un giocatore la scelta delle armi: ventaglio, scelte
-// fatte (p), tick rimasti, e chi è (you, tok, players: serve anche per
-// tornare se cade adesso).
+// sendDraft manda a un giocatore la scelta delle armi: ventagli, scelte
+// fatte (p, p2, p3), proposte di scambio (sw[i]: il compagno a cui il robot i
+// propone lo scambio, 0 nessuno), tick rimasti, e chi è (you, tok, players:
+// serve anche per tornare se cade adesso).
 func (r *Room) sendDraft(slot int) {
 	st, err := r.eng.call("draft_state", r.draft)
 	if err != nil {
 		return
 	}
 	t := st.(*lua.LTable)
+	sw := r.eng.L.NewTable()
+	for _, s := range r.seats {
+		sw.Append(lua.LNumber(s.swap + 1))
+	}
+	t.RawSetString("sw", sw)
 	t.RawSetString("left", lua.LNumber(r.draftLeft))
 	t.RawSetString("you", lua.LNumber(slot+1))
 	t.RawSetString("tok", lua.LString(r.seats[slot].tok))
@@ -196,6 +208,11 @@ func (r *Room) startMatch() error {
 	if r.sim, err = r.eng.NewSim(r.seed, "", players, r.mode.Normalize); err != nil {
 		return err
 	}
+	list, err := r.eng.call("start_players", players)
+	if err != nil {
+		return err
+	}
+	r.players = appendJSON(nil, list)
 	r.mapID = r.sim.Map()
 	for i := range r.seats {
 		r.sendStart(i, false)
@@ -309,6 +326,11 @@ func (r *Room) handleDraft(m roomMsg) {
 		changed = v == lua.LTrue
 	case "swap":
 		to := m.msg.To - 1
+		if to == -1 {
+			changed = r.seats[m.slot].swap != -1
+			r.seats[m.slot].swap = -1
+			break
+		}
 		if to < 0 || to >= len(r.seats) || to == m.slot || r.seats[to].team != r.seats[m.slot].team {
 			return
 		}
@@ -316,11 +338,10 @@ func (r *Room) handleDraft(m roomMsg) {
 			// l'altro l'aveva già proposto: lo scambio si fa
 			r.eng.call("draft_swap", r.draft, lua.LNumber(m.slot+1), lua.LNumber(to+1))
 			r.seats[to].swap, r.seats[m.slot].swap = -1, -1
-			changed = true
 		} else {
 			r.seats[m.slot].swap = to
-			r.send(to, fmt.Appendf(nil, `{"t":"swap","from":%d}`, m.slot+1))
 		}
+		changed = true
 	}
 	if changed {
 		for i := range r.seats {

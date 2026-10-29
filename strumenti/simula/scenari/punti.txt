@@ -1,0 +1,25 @@
+# Punti in partita (1 contro 1): Rosso colpisce Blu con la Lama. Il numero nasce
+# sopra Blu, vola nel gettone di Rosso e la fune si sposta verso Rosso; sopra
+# la testa compaiono il posto e la Corona, a fine turno la riga del bilancio.
+imposta zoom 2
+imposta prova_vicino 50
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_pari
+premi 2                             # Lama di Nucleo
+aspetta 0.4
+mira 120 0 0.6
+aspetta_evento points 3
+aspetta 0.1
+foto 02_nasce
+aspetta 0.55
+foto 03_vola
+aspetta 0.8
+foto 04_arrivato
+zoom 05_posto_e_corona
+aspetta_evento turn 30
+aspetta 0.3
+foto 06_bilancio_del_turno

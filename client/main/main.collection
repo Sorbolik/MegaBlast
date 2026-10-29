@@ -6,6 +6,10 @@ embedded_instances {
   "  id: \"gui\"\n"
   "  component: \"/main/game.gui\"\n"
   "}\n"
+  "components {\n"
+  "  id: \"punto\"\n"
+  "  component: \"/battaglia/punto.sound\"\n"
+  "}\n"
   ""
   position {
     x: 0.0

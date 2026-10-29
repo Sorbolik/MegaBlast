@@ -78,60 +78,54 @@ local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = t
 for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "a riposo: valori finiti")
 
--- il pugno davanti, sull'impugnatura: lo mette l'avambraccio della mira
-local function mano(name)
-	return s.pugno_presa
+-- l'arma nella mano del braccio davanti: la presa (battaglia/impugnature.lua)
+-- sta nella mano, che è dove finisce il braccio che pende
+local PRESE = require "battaglia.impugnature"
+local D0 = require "battaglia.diavoletto"
+local function mano_braccio(v)
+	local b, pu = D0.pezzi.braccio, D0.pezzi.pugno
+	return mondo(v.braccio_a, b.x * v.k, (b.y - b.h / 2 + pu.h * 0.4) * v.k)
+end
+-- la direzione dell'arma nel mondo
+local function verso_arma(v, name)
+	local x0, y0 = mondo(v.armi[name], 0, 0)
+	local x1, y1 = mondo(v.armi[name], 1, 0)
+	return math.atan2(y1 - y0, x1 - x0)
 end
 
--- dove deve stare la mano sull'impugnatura (battaglia/armi.lua), vista dalla
--- spalla, mirando ad a girati verso facing
-local DA = require("battaglia.armi").armi
-local function verso_mano(name, a, facing)
-	local m = DA[name].mani[#DA[name].mani]
-	local al = facing > 0 and a or math.pi - a
-	local x = m[1] * math.cos(al) - m[2] * math.sin(al)
-	local y = m[1] * math.sin(al) + m[2] * math.cos(al)
-	return math.atan2(y, x * facing)
-end
-
--- l'arma gira attorno alla spalla e la mano la segue: dalla spalla, la mano
--- sta dov'è l'impugnatura con l'arma nella direzione della mira, girati a
--- destra o a sinistra
-for _, name in ipairs({ "missile", "sword" }) do
+-- mirando il braccio davanti punta dove si mira e l'arma lo prolunga: l'arma
+-- va nella direzione della mira, la presa nella mano, girati a destra o a sinistra
+for _, name in ipairs({ "missile", "sword", "mallet" }) do
 	scoria.set_weapon(s, name)
 	for _, a in ipairs({ 0.4, -0.8, 2.3, math.pi - 0.2 }) do
 		st.aim = a
 		st.facing = math.cos(a) < 0 and -1 or 1
 		for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
-		local sx, sy = mondo(s.spalla, 0, 0)
-		local mx, my = mondo(mano(name), 0, 0)
-		local d = angolo(math.atan2(my - sy, mx - sx) - verso_mano(name, a, st.facing))
-		check(math.abs(d) < 0.02, string.format("%s mirando a %.1f: la mano è nella direzione della mira (scarto %.3f)", name, a, d))
+		local d = angolo(verso_arma(s, name) - a)
+		check(math.abs(d) < 0.02, string.format("%s mirando a %.1f: l'arma punta dove si mira (scarto %.3f)", name, a, d))
+		local g = PRESE[name]
+		local gx, gy = mondo(s.armi[name], g[1], g[2])
+		local hx, hy = mano_braccio(s)
+		check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5, string.format("%s mirando a %.1f: la presa è nella mano", name, a))
 	end
 end
 
--- il rinculo sposta arma e mano lungo l'asse, senza staccarle dalla mira
+-- il rinculo sposta l'arma indietro lungo il suo asse, senza staccarla dalla mira
 scoria.set_weapon(s, "missile")
 st.aim, st.facing = 0.6, 1
 for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
-local sx, sy = mondo(s.spalla, 0, 0)
-local mx0, my0 = mondo(mano("missile"), 0, 0)
+local mx0, my0 = mondo(s.armi.missile, 0, 0)
 scoria.fire(s, "missile")
-local indietro, rx, ry = false, nil, nil
-for _ = 1, 4 do
-	scoria.update(s, 1 / 60, st)
-	local mx, my = mondo(mano("missile"), 0, 0)
-	rx, ry = rx or mx, ry or my
-	if (mx - sx) ^ 2 + (my - sy) ^ 2 < (mx0 - sx) ^ 2 + (my0 - sy) ^ 2 - 0.5 then indietro = true end
-end
-check(indietro, "rinculo: la mano torna indietro verso la spalla")
-check(math.abs(angolo(math.atan2(my0 - ry, mx0 - rx) - 0.6)) < 0.02, "rinculo: la mano si sposta lungo l'asse dell'arma")
+scoria.update(s, 1 / 60, st)
+local mx, my = mondo(s.armi.missile, 0, 0)
+check((mx - mx0) ^ 2 + (my - my0) ^ 2 > 0.25, "rinculo: l'arma torna indietro")
+check(math.abs(angolo(math.atan2(my0 - my, mx0 - mx) - 0.6)) < 0.02, "rinculo: l'arma si sposta lungo il suo asse")
 
 st.aim = nil
 -- in ordine fisso: pairs cambia ordine da un'esecuzione all'altra e, se
 -- l'ultima fosse la Lama, il controllo della morte qui sotto non la cambierebbe
 local nomi = {}
-for name in pairs(DA) do nomi[#nomi + 1] = name end
+for name in pairs(require("battaglia.armi").armi) do nomi[#nomi + 1] = name end
 table.sort(nomi)
 for _, name in ipairs(nomi) do
 	check(s.armi[name] ~= nil, name .. ": c'è il disegno in mano")
@@ -212,7 +206,8 @@ for nome, c in pairs(A) do
 end
 check(buone, "animazioni: canali noti, chiavi in ordine dentro la durata")
 for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
-	"sconfitta", "naso", "sbadiglio", "guarda_coda" }) do
+	"sconfitta", "naso", "sbadiglio", "guarda_coda", "fermo_arma", "corsa_arma", "aria_arma", "sale_arma",
+	"scende_arma", "mira", "fiammella" }) do
 	check(A[nome] ~= nil, "animazioni: c'è la clip " .. nome)
 end
 
@@ -246,7 +241,7 @@ do
 	local braccio, testa
 	for _, n in ipairs(nodi) do
 		if n.parent == v.braccio_a and n.img == "braccio" then braccio = n end
-		if n.parent == v.collo and n.img == "testa" then testa = n end
+		if n.parent == v.testa and n.img == "testa" then testa = n end
 	end
 	check(braccio and math.abs(braccio.pos.x - (D.pezzi.braccio.x - 3) * k) < 1e-6
 		and math.abs(braccio.pos.y - (D.pezzi.braccio.y + 2) * k) < 1e-6
@@ -260,10 +255,109 @@ do
 	scoria = require "battaglia.scoria"
 end
 
+-- il perno del braccio davanti spostato: l'arma resta nella mano
+do
+	package.loaded["battaglia.perni"] = { braccio = { 3, -2 } }
+	package.loaded["battaglia.scoria"] = nil
+	local sc2 = require "battaglia.scoria"
+	local v = sc2.new(vec(1, 0.2, 0.3, 1))
+	sc2.set_weapon(v, "missile")
+	for _ = 1, 30 do sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true, aim = 0.3 }) end
+	local g = PRESE.missile
+	local gx, gy = mondo(v.armi.missile, g[1], g[2])
+	local px, py = mondo(v.braccio_a, 0, 0)
+	local b, pu = D0.pezzi.braccio, D0.pezzi.pugno
+	local hx, hy = mondo(v.braccio_a, (b.x - 3) * v.k, (b.y + 2 - b.h / 2 + pu.h * 0.4) * v.k)
+	check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5 and px ~= gx, "perni: col perno del braccio spostato l'arma resta nella mano")
+	package.loaded["battaglia.perni"] = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
+-- i pezzi che le clip mostrano e tolgono, e le clip con l'arma in mano
+do
+	local A2 = require "battaglia.animazioni"
+	local vecchie = { fermo = A2.fermo, fermo_arma = A2.fermo_arma }
+	A2.fermo = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, mostra_manina_a = { 0, 1, 2 },
+		manina_a_x = { 0, 7, 2 }, manina_a = { 0, 0.5, 2 }, mostra_ala = { 0, 0, 2 }, mostra_coda = { 0, 0, 2 },
+		mostra_testa = { 0, 0, 2 }, mostra_gamba_d = { 0, 0, 2 } } }
+	A2.fermo_arma = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, arma = { 0, 0.5, 2 } } }
+	package.loaded["battaglia.scoria"] = nil
+	local sc2 = require "battaglia.scoria"
+	local v = sc2.new(vec(1, 0.2, 0.3, 1))
+	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = false }
+	v.arma_t = 100
+	for _ = 1, 3 do sc2.update(v, 1 / 60, st2) end
+	check(not v.braccio_a.enabled and v.manina_a.enabled
+		and v.braccio_d.enabled and not v.manina_d.enabled and not v.ala.enabled
+		and not v.coda[1][1].enabled and not v.coda[1][2].enabled and not v.testa.enabled and v.collo.enabled
+		and not v.gamba_d.enabled and v.gamba_a.enabled and v.busto.enabled,
+		"pezzi: la clip toglie braccio, testa (non la fiammella), gamba, ala e coda e mette la manina")
+	local D = require "battaglia.diavoletto"
+	local mx = (D.punti.spalle[1] + D.pezzi.braccio.x + 7) * v.k
+	check(math.abs(v.manina_a.pos.x - mx) < 1e-6 and math.abs(math.rad(v.manina_a.euler.z) - 0.5) < 1e-6,
+		"pezzi: la manina è libera, la clip la sposta e la gira")
+	st2.turno = true
+	for _ = 1, 30 do sc2.update(v, 1 / 60, st2) end
+	check(v.ala.enabled and v.coda[1][1].enabled and not v.braccio_a.enabled and v.presa.enabled,
+		"pezzi: di turno la clip con l'arma, l'arma senza braccio")
+	check(math.abs(math.rad(v.giro.euler.z) - v.braccia[1] - (-0.35 + 0.5)) < 0.05,
+		"clip con l'arma: il canale arma gira l'arma nella mano")
+	-- chi aspetta prende e posa l'arma a caso
+	st2.turno = false
+	v.arma_t = 1
+	local presa, posata = false, false
+	for _ = 1, 60 * 40 do
+		sc2.update(v, 1 / 60, st2)
+		if v.presa.enabled then presa = true elseif presa then posata = true end
+	end
+	check(presa and posata, "attesa: chi non è di turno prende e posa l'arma")
+	A2.fermo, A2.fermo_arma = vecchie.fermo, vecchie.fermo_arma
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
+-- le clip solo per un'arma (fermo_arma_mallet) e le impugnature di ogni arma
+do
+	local A2 = require "battaglia.animazioni"
+	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
+	local function gira(nome)
+		package.loaded["battaglia.scoria"] = nil
+		local sc2 = require "battaglia.scoria"
+		local v = sc2.new(vec(1, 0.2, 0.3, 1))
+		sc2.set_weapon(v, nome)
+		for _ = 1, 30 do sc2.update(v, 1 / 60, st2) end
+		return math.rad(v.giro.euler.z)
+	end
+	local maglio0, missile0 = gira("mallet"), gira("missile")
+	A2.fermo_arma_mallet = { durata = 1, ciclo = true, tracce = { arma = { 0, 1, 2 } } }
+	local maglio, missile = gira("mallet"), gira("missile")
+	check(maglio - maglio0 > 0.8 and math.abs(missile - missile0) < 0.05,
+		"clip dell'arma: il Maglio usa fermo_arma_mallet, le altre fermo_arma")
+	A2.fermo_arma_mallet = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+	-- l'arma è un pezzo come gli altri: la clip la toglie (mostra_arma)
+	A2.fermo_arma_sword = { durata = 1, ciclo = true, tracce = { mostra_arma = { 0, 0, 2 } } }
+	package.loaded["battaglia.scoria"] = nil
+	local sc3 = require "battaglia.scoria"
+	local v = sc3.new(vec(1, 0.2, 0.3, 1))
+	sc3.set_weapon(v, "sword")
+	for _ = 1, 3 do sc3.update(v, 1 / 60, st2) end
+	check(not v.presa.enabled and v.braccio_a.enabled, "pezzi: la clip toglie l'arma, il braccio resta")
+	A2.fermo_arma_sword = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+	local PR = require "battaglia.impugnature"
+	for nome in pairs(require("battaglia.armi").armi) do
+		check(PR[nome] ~= nil and #PR[nome] == 2, nome .. ": ha la sua presa (un punto)")
+	end
+end
+
 -- Pelli (battaglia/pelli.lua) ---------------------------------------------------
 
 -- pelli finte: una testa nuova senza facce col colore della squadra, un elmo
--- sopra, una coda a segmenti, un braccio sull'arma nuovo (bordo e colore a parte)
+-- sopra, una coda a segmenti, braccia nuove
 local PELLI = require "battaglia.pelli"
 local function pz(img, modo, tinta) return { img = img, tinta = tinta, x = 1, y = 2, w = 30, h = 40, modo = modo } end
 PELLI.pelli.prova_testa = { categoria = "testa", pezzi = { testa = pz("t", "sostituisce", "t_tinta") } }
@@ -274,9 +368,8 @@ for i = 1, 5 do
 	coda["coda_" .. i .. "_bordo"] = pz("cb" .. i, "sostituisce")
 end
 PELLI.pelli.prova_coda = { categoria = "coda", pezzi = coda }
-PELLI.pelli.prova_corpo = { categoria = "corpo", pezzi = { omero = pz("o", "sostituisce"),
-	omero_bordo = pz("ob", "sostituisce"), omero_dietro = pz("od", "sostituisce"),
-	omero_dietro_bordo = pz("odb", "sostituisce") } }
+PELLI.pelli.prova_corpo = { categoria = "corpo", pezzi = { braccio = pz("br", "sostituisce"),
+	braccio_dietro = pz("bd", "sostituisce") } }
 local function immagini(da)
 	local l = {}
 	for i = da, #nodi do
@@ -285,16 +378,15 @@ local function immagini(da)
 	end
 	return l
 end
-check(immagini(1).omero_bordo and immagini(1).coda_1, "pelli: senza, il diavoletto di base")
+check(immagini(1).braccio and immagini(1).coda_1, "pelli: senza, il diavoletto di base")
 local primo = #nodi + 1
 local v = scoria.new(vec(1, 0.2, 0.3, 1), { "prova_elmo", "prova_testa", "prova_coda", "prova_corpo" })
 local im = immagini(primo)
 check(im.t == 1 and im.e == 1 and im.eb == 1 and not im.testa, "pelli: la testa sostituita, l'elmo sopra")
 check(im.c1 == 1 and im.cb5 == 1 and not im.coda_1 and not im.coda_5_bordo
 	and v.coda[1][1] ~= v.coda[1][2], "pelli: la coda nuova a segmenti, bordi e colori")
-check(im.o == 1 and im.ob == 1 and im.od == 1 and im.odb == 1 and not im.omero_bordo and im.avambraccio_bordo == 2,
-	"pelli: il braccio sull'arma nuovo, col suo bordo")
-check(v.teste[2].parent == v.collo and v.teste[1].img == "t" and v.teste[2].img == "e", "pelli: l'elmo sta sulla testa")
+check(im.br == 1 and im.bd == 1 and not im.braccio and not im.braccio_dietro, "pelli: le braccia nuove, una per lato")
+check(v.teste[2].parent == v.testa and v.teste[1].img == "t" and v.teste[2].img == "e", "pelli: l'elmo sta sulla testa")
 check(v.teste_t[1].enabled and v.teste_t[1].img == "t_tinta" and not v.teste_t[2].enabled,
 	"pelli: il colore della squadra sulla testa nuova, sotto l'elmo")
 st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }

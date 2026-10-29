@@ -16,15 +16,6 @@ images {
 images {
   image: "/assets/fx/cura_scintilla.png"
 }
-images {
-  image: "/assets/ui/levette/levetta_base.png"
-}
-images {
-  image: "/assets/ui/levette/levetta_anello.png"
-}
-images {
-  image: "/assets/ui/levette/levetta_pomello.png"
-}
 margin: 0
 extrude_borders: 2
 inner_padding: 0

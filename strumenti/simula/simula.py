@@ -136,6 +136,7 @@ class Gioco:
         self.eventi = []        # eventi SIMULA non ancora consumati da aspetta_evento
         self.stato = {}
         self.proc = self.xvfb = self.rec = None
+        self.server = []        # server e giocatori finti del comando "server"
         n = 99
         while Path(f"/tmp/.X{n}-lock").exists():
             n += 1
@@ -251,7 +252,7 @@ class Gioco:
                 self.rec.communicate(b"q", timeout=10)
             except subprocess.TimeoutExpired:
                 self.rec.kill()
-        for p in (self.proc, self.xvfb):
+        for p in (self.proc, self.xvfb, *self.server):
             if p and p.poll() is None:
                 p.send_signal(signal.SIGTERM)
                 try:
@@ -272,6 +273,29 @@ def aspetta_che(g, cond, timeout, cosa):
     raise Fallito(f"dopo {timeout:g} s non è successo: {cosa} (ultimo stato: {g.stato})")
 
 
+PORTA_SERVER = 8090
+
+
+def avvia_server(g, modo, n, propone):
+    """Il server vero e N giocatori finti (strumenti/simula/finti) nella coda modo.
+    Lo scenario deve dire al gioco dove sta: imposta server_url ws://127.0.0.1:8090/ws"""
+    if g.server:
+        raise Fallito("il server è già partito")
+    bin = g.out / "bin"
+    for nome, pacchetto in (("server", "./server"), ("finti", "./strumenti/simula/finti")):
+        r = esegui(["go", "build", "-o", str(bin / nome), pacchetto], cwd=REPO)
+        if r.returncode != 0:
+            print(r.stdout + r.stderr)
+            raise Fallito(f"go build {pacchetto} fallito")
+    log = open(g.out / "server.txt", "w")
+    g.server.append(subprocess.Popen([str(bin / "server"), "-addr", f"127.0.0.1:{PORTA_SERVER}"],
+                                     stdout=log, stderr=subprocess.STDOUT))
+    url = f"ws://127.0.0.1:{PORTA_SERVER}/ws"
+    # i finti entrano dopo un attimo: il giocatore vero, che entra subito, è il robot 1
+    argomenti = ["-url", url, "-modo", modo, "-n", str(n), "-attesa", "3s"] + (["-propone"] if propone else [])
+    g.server.append(subprocess.Popen([str(bin / "finti"), *argomenti], stdout=log, stderr=subprocess.STDOUT))
+
+
 def comando(g, riga):
     p = shlex.split(riga, comments=True)
     if not p:
@@ -282,6 +306,8 @@ def comando(g, riga):
         pass  # già usata nella build
     elif c == "aspetta":
         g.attendi(num(0))
+    elif c == "server":
+        avvia_server(g, a[0], int(num(1, 1)), len(a) > 2 and a[2] == "propone")
     elif c == "foto":
         g.scatta(a[0])
     elif c == "zoom":
@@ -335,6 +361,24 @@ def comando(g, riga):
         g.attendi(num(2, 0.5))
         if len(a) > 3:
             g.scatta(a[3])
+        g.xdo("mouseup", 1)
+    elif c == "levetta_annulla":
+        # mira con la levetta del telefono a (dx, dy) e la annulla col tasto destro
+        # (fa quello che fa un secondo dito), facoltativamente una foto, poi lascia
+        cx, cy = W - 115, 117
+        g.punta(cx, cy)
+        g.xdo("mousedown", 1)
+        g.attendi(0.05)
+        for i in range(1, 5):
+            g.punta(cx + num(0) * i / 4, cy + num(1) * i / 4)
+            g.attendi(0.02)
+        g.attendi(0.3)
+        g.xdo("mousedown", 3)
+        g.attendi(0.1)
+        g.xdo("mouseup", 3)
+        g.attendi(0.2)
+        if len(a) > 2:
+            g.scatta(a[2])
         g.xdo("mouseup", 1)
     elif c == "annulla":
         # mira a (dx, dy) col sinistro, annulla col destro, poi lascia il sinistro

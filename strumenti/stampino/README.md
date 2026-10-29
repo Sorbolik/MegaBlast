@@ -18,7 +18,7 @@ il collo.
 |---|---|
 | 1 | `testa`, `testa_colpita`, `testa_felice`, `testa_ko` |
 | 2 | `busto`, `ala`, `coda` (intera, a riposo) |
-| 3 | `braccio`, `braccio_dietro`, `gamba`, `gamba_dietro`, `omero` e `avambraccio` (il braccio sull'arma), `pugno` |
+| 3 | `braccio`, `braccio_dietro`, `gamba`, `gamba_dietro`, `pugno` |
 
 Caselle e perni in pixel del foglio (3072 x 2048, 3,5 pixel per unità del
 disegno; il diavoletto è alto 200 unità): `foglio.json`.
@@ -32,8 +32,7 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
 - **Si disegnano solo le caselle che cambiano.** Le vuote restano come sono.
 - **Le facce:** una testa nuova senza le altre facce le fa tutte (non cambia
   espressione). Un elmo disegnato sulla `testa` sta su tutte le facce.
-- **I pezzi di dietro** (`braccio_dietro`, `gamba_dietro`, e dietro sull'arma)
-  se mancano li fa `taglia.py` da quelli davanti, più scuri.
+- **I pezzi di dietro** (`braccio_dietro`, `gamba_dietro`) se mancano li fa `taglia.py` da quelli davanti, più scuri.
 - **La coda si disegna intera**, nella posa che si vuole a riposo, con la
   radice (il capo più spesso) verso il corpo e il tridente in fondo: `taglia.py`
   la segue dalla radice alla punta e la divide in cinque segmenti in proporzione
@@ -41,11 +40,10 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
   giunto grande quanto è spessa la coda lì. La pelle si tiene lunghezze e angoli
   disegnati: a riposo la coda è com'è disegnata e ondeggia a segmenti come
   quella di base.
-- **Giunti senza giunture.** I pezzi in catena (i segmenti della coda, braccio e
-  avambraccio sull'arma) diventano due strati come quelli di base: il bordo (il
-  pezzo intero) e il colore (lo stesso senza il contorno). Il gioco disegna prima
-  tutti i bordi e poi tutti i colori, quindi piegati non mostrano la riga al
-  gomito o fra i segmenti. Sullo stampino i cerchi verdi tratteggiati segnano
+- **Giunti senza giunture.** I segmenti della coda diventano due strati come
+  quelli di base: il bordo (il pezzo intero) e il colore (lo stesso senza il
+  contorno). Il gioco disegna prima tutti i bordi e poi tutti i colori, quindi
+  piegati non mostrano la riga fra i segmenti. Sullo stampino i cerchi verdi tratteggiati segnano
   questi giunti: lì il disegno deve restare tondo e pieno.
 - **Il colore della squadra:** le parti dipinte di **verde acceso** (`#00ff00`,
   con le sue ombre) diventano del colore della squadra, come la fiammella. Il
@@ -80,6 +78,7 @@ insieme i pezzi).
 python3 strumenti/stampino/taglia.py elmo.png --nome elmo_corna --categoria elmo
 python3 strumenti/stampino/taglia.py chatgpt.png --nome testa_drago --categoria testa --allinea
 python3 strumenti/stampino/taglia.py --togli elmo_corna
+python3 strumenti/stampino/taglia.py --ritocchi ritocchi.json   # i ritocchi fatti nell'editor delle animazioni
 ```
 
 `taglia.py` ritaglia ogni casella cambiata, toglie il manichino (per quelle
