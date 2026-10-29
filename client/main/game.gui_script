@@ -884,6 +884,17 @@ local function handle_event(self, e)
 			self.colpo_x, self.colpo_y, self.colpo_t = e.x0, e.y0, self.clock
 			targa.annuncio(self.robots[e.target].targa, "AGGANCIATO!")
 		end
+	elseif e.type == "hook_end" and e.snap then
+		-- la fune è finita prima di arrivare: si spezza con uno schiocco e
+		-- cade col suo uncino, il nemico resta lì (sopra il vuoto cade)
+		sound.play("#strappo")
+		targa.annuncio(self.robots[e.robot].targa, "STRAPPO!")
+		if self.rope == e.robot then
+			self.rope = nil
+			local x0, y0 = RM.fune_mano(self, e.by)
+			local v = self.view[e.robot]
+			RM.fune.cade(self.fune, x0, y0, v.x, v.y + game.DISEGNO_H / 2)
+		end
 	elseif e.type == "bellows" then
 		-- il soffio: il mantice si schiaccia e un ventaglio d'aria parte dal beccuccio
 		scoria.fire(self.robots[e.robot].rig, "missile")

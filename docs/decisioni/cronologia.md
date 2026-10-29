@@ -48,3 +48,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Il codardo attacca a ogni turno e scappa col globo nelle tane; i bot con un carattere e i custodi parlano in nuvoletta. | #86 |
 | 29 ott | Pallini della mira più piccoli (Sergio): metà grandezza, uno ogni 10 px. Di base il telefono vibra solo quando il colpo diventa sganciabile (la vibrazione a ogni 5% di potenza diventa un'impostazione). Nasce [docs/impostazioni.md](../impostazioni.md): ogni impostazione nominata da Sergio va lì subito. | questa PR |
 | 29 ott | Mira: solo angolo e potenza, uguale per tutte le armi: mirino che si riempie con la potenza e cartellino coi gradi; niente traiettoria, se non come aiuto nelle lezioni dell'Addestramento. | questa PR |
+| 29 ott | Rampino: quando la fune finisce a metà strada si spezza con uno schiocco, "STRAPPO!" e il filo cade. | #88 |
