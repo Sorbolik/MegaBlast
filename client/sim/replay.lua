@@ -42,7 +42,7 @@ function M.partita(r)
 	local g = game.new(r.seme, r.mappa, copia(r.opzioni))
 	local bots = {}
 	for i, p in ipairs(r.opzioni.players or {}) do
-		if p.bot then bots[i] = bot.new(i, p.bot, r.seme) end
+		if p.bot then bots[i] = bot.new(i, p.bot, r.seme, p.pesi) end
 	end
 	r.ultimo = nil
 	return g, bots

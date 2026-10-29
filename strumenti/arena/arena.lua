@@ -5,6 +5,7 @@
 --   luajit strumenti/arena/arena.lua [--partite N] [--da SEME] [--modo 1v1|2v2|ffa|tutti]
 --          [--livello facile|normale|difficile|misto] [--mappa forgia|crogiolo] [--uscita file.jsonl]
 --          [--punteggio variante.lua]   -- una tabella come config.SCORE (opts.score), per provare varianti
+--          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI): ogni robot ne prende uno a caso
 --
 -- Per ogni partita scrive una riga JSON: la ricetta (sim/replay.lua, basta a
 -- rigiocarla identica), l'esito, i numeri di ogni robot (armi scelte, punti,
@@ -83,6 +84,7 @@ local USO = {
 }
 local MODI = { "1v1", "2v2", "ffa" }
 local PUNTEGGIO = opt.punteggio and dofile(opt.punteggio) or nil
+local POPOLAZIONE = opt.pesi and dofile(opt.pesi) or nil
 
 -- primaria, secondaria o oggetto (il teletrasporto è un oggetto)
 local PRIMARIE = { missile = true }
@@ -109,6 +111,10 @@ local function partita(k)
 	local players = draft.finish(d)
 	for k, p in ipairs(players) do
 		p.bot = opt.livello == "misto" and bot.ORDINE[1 + math.floor(r0:next() * #bot.ORDINE)] or opt.livello
+		if POPOLAZIONE then
+			p.individuo = 1 + math.floor(r0:next() * #POPOLAZIONE)
+			p.pesi = POPOLAZIONE[p.individuo]
+		end
 	end
 	local r = replay.nuova(seme, mappa, { players = players, score = PUNTEGGIO })
 	local g, bots = replay.partita(r)
@@ -175,7 +181,7 @@ local function partita(k)
 		for _, x in ipairs(res.ranking) do
 			if x.robot == k then place = x.place end
 		end
-		robot[k] = { squadra = rb.team, livello = pl.bot, primaria = pl.pick, secondaria = pl.secondary,
+		robot[k] = { squadra = rb.team, livello = pl.bot, individuo = pl.individuo, primaria = pl.pick, secondaria = pl.secondary,
 			posto = place, punti = rb.points, danno = rb.damage, uccisioni = rb.kills, ambientali = rb.env_kills,
 			morti = rb.deaths, cadute = rb.falls, teletrasporti = rb.teleports, casse = rb.crates,
 			uso = s.uso, danno_arma = s.danno, uccisioni_arma = s.uccisioni }

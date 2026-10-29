@@ -5,7 +5,7 @@
 -- server per riempire le code.
 --
 --   local bot = require "sim.bot"
---   local b = bot.new(id, "normale", seed)   -- id del robot, livello, seme
+--   local b = bot.new(id, "normale", seed, pesi)   -- id del robot, livello, seme, pesi (facoltativi, vedi M.PESI)
 --   local input = bot.input(b, g)           -- a ogni tick, prima di g:step(input)
 --   bot.scegli(d, i, seed)                  -- primaria e secondaria nella scelta (sim/draft.lua)
 --
@@ -37,13 +37,15 @@ M.LIVELLI = {
 }
 M.ORDINE = { "facile", "normale", "difficile" }
 
--- Come vale il risultato di una mossa, oltre ai punti partita: vita persa da
--- sé e dai compagni (per punto), la propria morte (in più del punteggio)
-local PESO_VITA_MIA, PESO_VITA_COMPAGNO, PESO_MORTE = 0.6, 1, 60
--- quanto costa un tick di strada (a parità di colpo, quello più vicino)
-local PESO_STRADA = 0.01
--- sotto questo punteggio dalla strada a piedi prova il teletrasporto
-local SOGLIA_TELETRASPORTO = 20
+-- I pesi del bot: come vale il risultato di una mossa oltre ai punti partita.
+-- vita_mia, vita_compagno: per punto di vita perso; morte: in più del
+-- punteggio, se muore lui o un compagno; strada: quanto costa un tick di strada
+-- (a parità di colpo, quello più vicino); teletrasporto: sotto questo punteggio
+-- dalla strada a piedi prova il teletrasporto; punteggio (se c'è): i punti
+-- con cui il bot giudica le mosse, al posto di quelli della partita. L'arena li fa evolvere
+-- (strumenti/arena/evolvi.py) e una partita può darne altri a ogni bot
+-- (players[i].pesi, solo i campi che cambiano).
+M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 20 }
 -- mosse provate fino in fondo (fino a quando tutto è fermo) tra le migliori
 local FINALISTE = 4
 local POTENZE = { 1, 0.75, 0.55, 0.88, 0.42 }
@@ -164,8 +166,8 @@ local function valore(b, g, w)
 			local dp = c.points - r.points
 			local persa = c.dead and r.hp or math.max(0, r.hp - c.hp)
 			if c.team == me.team then
-				s = s + dp - persa * (i == b.id and PESO_VITA_MIA or PESO_VITA_COMPAGNO)
-				if c.dead then s = s - PESO_MORTE end
+				s = s + dp - persa * (i == b.id and b.pesi.vita_mia or b.pesi.vita_compagno)
+				if c.dead then s = s - b.pesi.morte end
 			else
 				s = s - dp
 			end
@@ -206,6 +208,7 @@ end
 -- tutto è fermo). Restituisce il punteggio.
 local function prova(b, g, posto, arma, angolo, potenza, fino)
 	local w = M.mondo(g)
+	w.score = b.pesi.punteggio or g.score
 	lavora(b, 20)
 	local c = in_posto(w, b.id, posto)
 	local fire = { weapon = arma, angle = angolo, power = potenza }
@@ -231,6 +234,7 @@ end
 -- lista (dritto verso di lui, a tutta potenza): quanto vale tutto insieme
 local function prova_rampino(b, g, posto, angolo, chi, lista)
 	local w = M.mondo(g)
+	w.score = b.pesi.punteggio or g.score
 	lavora(b, 20)
 	local c = in_posto(w, b.id, posto)
 	w:use_tool("hook", { weapon = "hook", angle = angolo, power = 1 })
@@ -312,7 +316,7 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 	local bersagli = nemici(g, me, x, y)
 	local function aggiungi(arma, a, p, fino)
 		local s = prova(b, g, posto, arma, a, p, fino)
-		mosse[#mosse + 1] = { posto = posto, arma = arma, angolo = a, potenza = p, punti = s - (posto.n or 0) * PESO_STRADA,
+		mosse[#mosse + 1] = { posto = posto, arma = arma, angolo = a, potenza = p, punti = s - (posto.n or 0) * b.pesi.strada,
 			k = #mosse + 1 }
 	end
 	for k, o in ipairs(bersagli) do
@@ -485,7 +489,7 @@ local function pensa(b, g)
 	for i = 1, math.min(FINALISTE, #mosse) do
 		local m = mosse[i]
 		if m.arma ~= "hook" then
-			m.punti = prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto") - (m.posto.n or 0) * PESO_STRADA
+			m.punti = prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto") - (m.posto.n or 0) * b.pesi.strada
 		end
 	end
 	table.sort(mosse, prima)
@@ -493,7 +497,7 @@ local function pensa(b, g)
 
 	-- se a piedi non c'è niente di buono, il teletrasporto verso un posto migliore
 	local best = mosse[1] and mosse[1].punti or -math.huge
-	if liv.teletrasporto and best < SOGLIA_TELETRASPORTO and g:can_use("teleport") and resta > 6 * 60 then
+	if liv.teletrasporto and best < b.pesi.teletrasporto and g:can_use("teleport") and resta > 6 * 60 then
 		local migliore
 		for a = 20, 160, 20 do
 			for _, p in ipairs({ 0.45, 0.7, 0.95 }) do
@@ -534,9 +538,11 @@ local function generatore(seme)
 	return r
 end
 
-function M.new(id, livello, seed)
+function M.new(id, livello, seed, pesi)
 	local liv = M.LIVELLI[livello] or M.LIVELLI.normale
-	return { id = id, livello = livello, liv = liv, rng = generatore((seed or 1) * 7919 + id), lavoro = 0 }
+	local p = copia(M.PESI)
+	for k, v in pairs(pesi or {}) do p[k] = v end
+	return { id = id, livello = livello, liv = liv, pesi = p, rng = generatore((seed or 1) * 7919 + id), lavoro = 0 }
 end
 
 -- Rumore tra -1 e 1, più spesso vicino a 0

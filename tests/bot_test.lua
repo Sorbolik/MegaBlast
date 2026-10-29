@@ -59,7 +59,24 @@ for _, modo in ipairs({ "2v2", "ffa" }) do
 	local danno = 0
 	for _, rb in ipairs(g2.robots) do danno = danno + rb.damage end
 	check(g2.phase == "over" and danno > 50, modo .. ": la partita tra bot finisce con dei danni")
-	-- nel 2 contro 2 i compagni non si colpiscono apposta: niente uccisioni tra compagni
+end
+
+-- Pesi diversi per un bot (players[i].pesi): stanno nella ricetta, che rigioca la stessa partita
+do
+	local function impronte(pesi)
+		local players = { { team = 1, bot = "normale", pesi = pesi }, { team = 2, bot = "normale" } }
+		local r5 = replay.nuova(6, "forgia", { players = players })
+		local g5, bots = replay.partita(r5)
+		while g5.tick < 2400 do
+			g5:step(replay.input(r5, g5, bots))
+			replay.dopo(r5, g5)
+		end
+		return r5, g5:impronta()
+	end
+	local _, h0 = impronte(nil)
+	local r5, h1 = impronte({ teletrasporto = 200, strada = 0.1 })
+	check(h0 ~= h1, "pesi: un bot con altri pesi gioca un'altra partita")
+	check(replay.verifica(r5), "pesi: la ricetta con i pesi rigioca la stessa partita")
 end
 
 -- Un giocatore vero e un bot: i tasti del giocatore finiscono nella ricetta e la rigiocano

@@ -44,10 +44,10 @@ def gioca(args):
         blocchi.append((da, q))
         da += q
     extra = []
-    for chiave in ("modo", "livello", "mappa", "punteggio"):
-        v = getattr(args, chiave)
+    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi"):
+        v = getattr(args, chiave, None)
         if v:
-            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave == "punteggio" else v]
+            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi") else v]
     t0 = time.time()
     processi = []
     for k, (da, q) in enumerate(blocchi):
@@ -246,6 +246,7 @@ def main():
     ap.add_argument("--livello", help="facile, normale, difficile o misto")
     ap.add_argument("--mappa")
     ap.add_argument("--punteggio", help="file Lua con una tabella come config.SCORE")
+    ap.add_argument("--pesi", help="file Lua con una lista di pesi del bot (bot.PESI), uno a caso per robot")
     ap.add_argument("--luajit")
     ap.add_argument("--rapporto", help="solo il rapporto da un partite.jsonl già fatto")
     ap.add_argument("--video", type=int, help="il video dell'highlight N")
