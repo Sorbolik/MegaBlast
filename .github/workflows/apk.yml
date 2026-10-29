@@ -10,6 +10,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read  # novita.py legge la sezione "Per Telegram" delle PR
 concurrency:
   group: apk
   cancel-in-progress: true
@@ -48,7 +51,10 @@ jobs:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
           PRIMA: ${{ github.event.before }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          bash strumenti/apk/novita.sh "$PRIMA" | tee "$RUNNER_TEMP/novita.txt"
+          python3 strumenti/apk/novita.py "$PRIMA" | tee "$RUNNER_TEMP/novita.txt"
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendDocument" \
-            -F "chat_id=$CHAT" -F "caption=<$RUNNER_TEMP/novita.txt" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
+            -F "chat_id=$CHAT" -F "caption=MegaBlast $(git log -1 --format=%h)" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
+          curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
+            -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/novita.txt"
