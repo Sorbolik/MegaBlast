@@ -51,3 +51,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Rampino: quando la fune finisce a metà strada si spezza con uno schiocco, "STRAPPO!" e il filo cade. | #88 |
 | 29 ott | Mira più chiara: puntini uguali con la punta del colore della squadra, cartellino con gradi e potenza sopra la testa, grandi uguali a ogni zoom; micro-vibrazione a ogni 5% di potenza. | questa PR |
 | 29 ott | Corona del primo più grande, sopra il personaggio e sul gettone dei punti. | #89 |
+| 29 ott | Corse delle reti fermate; il bot del gioco prende le loro lezioni: si teletrasporta molto di più e si ripara col globo. | #90 |

@@ -48,7 +48,10 @@ M.ORDINE = { "facile", "normale", "difficile" }
 -- vita_mia, vita_compagno: per punto di vita perso; morte: in più del
 -- punteggio, se muore lui o un compagno; strada: quanto costa un tick di strada
 -- (a parità di colpo, quello più vicino); teletrasporto: sotto questo punteggio
--- dalla strada a piedi prova il teletrasporto; punteggio (se c'è): i punti
+-- dalla strada a piedi prova il teletrasporto (100 dal 29 ottobre: la rete che
+-- impara si teletrasportava molto più del bot e vinceva, e con 100 il bot batte
+-- quello di prima nel 72% delle partite); globo_riparo: il riparo col globo
+-- vince su quello a piedi se vale almeno tanto di più; punteggio (se c'è): i punti
 -- con cui il bot giudica le mosse, al posto di quelli della partita. L'arena li fa evolvere
 -- (strumenti/arena/evolvi.py) e una partita può darne altri a ogni bot
 -- (players[i].pesi, solo i campi che cambiano). rete (se c'è): una rete
@@ -56,7 +59,7 @@ M.ORDINE = { "facile", "normale", "difficile" }
 -- caratteristiche della posizione dopo la mossa (M.caratteristiche); la fanno
 -- evolvere strumenti/arena/evolvi.py o imparare strumenti/arena/impara.py;
 -- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore.
-M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 20 }
+M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 100, globo_riparo = 3 }
 
 -- Caratteri: come gioca un bot, oltre al livello (quanto è bravo). Sono solo
 -- pesi diversi da M.PESI, quindi il bot non bara: preme sempre i tasti di un
@@ -70,10 +73,10 @@ local spinta = {}
 for k, v in pairs(C.SCORE) do spinta[k] = v end
 spinta.env_kill = C.SCORE.env_kill * 3
 M.CARATTERI = {
-	codardo = { vita_mia = 2, morte = 120, teletrasporto = 45, tana = 12,
+	codardo = { vita_mia = 2, morte = 120, teletrasporto = 225, tana = 12,
 		piano = { attacca_entro = 4, poi = "teletrasporto" } },
 	testa_calda = { vita_mia = 0.15, morte = 15, strada = 0.004 },
-	cecchino = { strada = 0.05, teletrasporto = 5 },
+	cecchino = { strada = 0.05, teletrasporto = 25 },
 	spingitore = { punteggio = spinta },
 }
 -- mosse provate fino in fondo (fino a quando tutto è fermo) tra le migliori
@@ -740,9 +743,13 @@ local LANCI, LANCI_TANA = { 0.45, 0.7, 0.95 }, { 0.3, 0.45, 0.6, 0.75, 0.9, 1 }
 local function ripara(b, g)
 	local me = g.robots[b.id]
 	local resta = g.window > 0 and g.window or g.timer
-	-- piano poi = "teletrasporto": al riparo col globo invece che a piedi
+	-- piano poi = "teletrasporto": al riparo col globo invece che a piedi;
+	-- altrimenti il globo si confronta con i posti a piedi e col Rampino e
+	-- vince se è meglio di almeno pesi.globo_riparo
 	-- (chi cerca la tana prova più lanci, per trovare anche i buchi stretti)
-	if b.piano and b.piano.poi == "teletrasporto" and g:can_use("teleport") then
+	local col_globo = b.piano and b.piano.poi == "teletrasporto"
+	local globo
+	if (col_globo or b.liv.teletrasporto) and g:can_use("teleport") then
 		local migliore
 		local passo = b.pesi.tana and 10 or 20
 		for a = passo, 180 - passo, passo do
@@ -758,10 +765,11 @@ local function ripara(b, g)
 				end
 			end
 		end
-		if migliore then
+		if migliore and col_globo then
 			b.scelta = migliore
 			return
 		end
+		globo = migliore
 	end
 	local posti = posti_a_piedi(b, g, math.min(b.liv.cammino, resta - 30))
 	local migliore
@@ -788,6 +796,7 @@ local function ripara(b, g)
 			end
 		end
 	end
+	if globo and globo.punti > migliore.punti + b.pesi.globo_riparo then migliore = globo end
 	b.scelta = migliore
 end
 
