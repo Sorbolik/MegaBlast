@@ -20,8 +20,13 @@ M.CANALI = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "br
 	"gamba_a", "gamba_d", "alza_a", "alza_d", "ala", "coda",
 	-- gli spostamenti avanti e indietro (x, verso dove guarda) e su e giù (y)
 	"corpo_x", "testa_x", "braccio_a_x", "braccio_a_y", "braccio_d_x", "braccio_d_y",
-	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y" }
-M.NEUTRO = { schiaccia = 1 }
+	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y",
+	-- l'arma in mano quando non si mira: quanto gira in più attorno alla spalla
+	"arma",
+	-- i pezzi che si vedono (1) o no (0): le braccia (che pendono o sull'arma),
+	-- le manine staccate in fondo alle braccia che pendono, l'ala, la coda
+	"mostra_braccio_a", "mostra_braccio_d", "manina_a", "manina_d", "mostra_ala", "mostra_coda" }
+M.NEUTRO = { schiaccia = 1, mostra_braccio_a = 1, mostra_braccio_d = 1, mostra_ala = 1, mostra_coda = 1 }
 for _, c in ipairs(M.CANALI) do M.NEUTRO[c] = M.NEUTRO[c] or 0 end
 
 local floor = math.floor
