@@ -25,13 +25,14 @@ C.MODES = {
 	ffa = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } },
 }
 
--- Teletrasporti: i secondi rimasti al primo attacco del turno diventano
--- globi del teletrasporto, uno ogni TELEPORT_SECONDS, senza tetto (Sergio,
--- 24 ottobre 2026: il Nucleo è tolto, il tempo risparmiato dà teletrasporti).
--- Scelta nostra sui 10 s: chi attacca entro 5 s ne guadagna 2, entro 15 s
--- uno, dopo niente; con 1 ogni 5 s se ne accumulavano più di quanti se ne
--- lanciano.
-C.TELEPORT_SECONDS = 10
+-- Teletrasporti: attaccare presto dà globi del teletrasporto (Sergio, 24
+-- ottobre 2026: il Nucleo è tolto, il tempo risparmiato dà teletrasporti).
+-- Un globo per ogni soglia non ancora passata al primo attacco del turno,
+-- in secondi dall'inizio del turno: entro 9 s due globi, entro 17 s uno,
+-- dopo niente; mai tre (Sergio, 29 ottobre: prenderne due era frustrante,
+-- il primo un poco più largo di prima e il secondo molto più largo; i
+-- numeri sono nostri, prima erano 5 e 15 s). Il cronometro le mostra come tacche.
+C.TELEPORT_SOGLIE = { 9, 17 }
 -- al primo turno di ogni robot si lancia un solo globo di partenza (quelli
 -- guadagnati nel turno si lanciano sempre)
 C.FIRST_TURN_TELEPORTS = 1

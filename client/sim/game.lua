@@ -2684,6 +2684,15 @@ function M:can_use(weapon)
 	return not self.used.primary and M.has_weapon(rb, weapon)
 end
 
+-- Quanti globi del teletrasporto dà il primo attacco dopo ticks di turno
+function M.globi_per(ticks)
+	local n = 0
+	for _, s in ipairs(C.TELEPORT_SOGLIE) do
+		if ticks <= s * 60 then n = n + 1 end
+	end
+	return n
+end
+
 -- Il robot di turno attacca con weapon (già controllata con can_use)
 function M:attack(weapon, fire)
 	local rb = self.robots[self.current]
@@ -2716,8 +2725,8 @@ function M:attack(weapon, fire)
 	if first then
 		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
 		rb.attack_turns = rb.attack_turns + 1
-		-- i secondi rimasti diventano globi del teletrasporto
-		local gain = rb.stats.time_orbs > 0 and math.floor(self.timer / (60 * C.TELEPORT_SECONDS)) or 0
+		-- attaccare presto dà globi del teletrasporto, uno per soglia non passata
+		local gain = rb.stats.time_orbs > 0 and M.globi_per(M.TURN_TICKS - self.timer) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
 			self.teleports_earned = self.teleports_earned + gain

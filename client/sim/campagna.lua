@@ -41,7 +41,7 @@ local ADDESTRAMENTO = {
 				fino = function(_, g) return g.used.primary and g.used.secondary end },
 			{ testo = "Ha attaccato subito: i secondi che avanzano diventano globi", su = "bot",
 				quando = function(st, _, e) return st.turni_bot == 2 and e and e.type == "teleports" and e.robot ~= GIOCATORE end },
-			{ testo = "Attacca presto: ogni 10 secondi che avanzano, un globo",
+			{ testo = "Attacca presto: prima delle tacche viola sull'anello guadagni globi",
 				quando = function(st, g) return st.turni == 3 and g.current == GIOCATORE end,
 				fino = function(_, g) return g.used.primary or g.used.secondary end },
 			{ testo = "Lancia un globo col tasto viola: arrivi dove cade",
@@ -85,7 +85,7 @@ local ADDESTRAMENTO = {
 	{
 		id = "globi",
 		titolo = "Tempo e globi",
-		scopo = "Attacca entro 5 secondi: guadagni globi. Poi teletrasportati sull'isola",
+		scopo = "Attacca prima delle tacche viola: guadagni globi. Poi teletrasportati sull'isola",
 		-- la tua terra, il vuoto, e l'isola del secondo bersaglio
 		arena = { { 300, 0, 600, 150 }, { 1200, 100, 320, 50 } },
 		spawns = { { x = 600, from = 600 }, { x = 800, from = 600 }, { x = 1380, from = 600 } },

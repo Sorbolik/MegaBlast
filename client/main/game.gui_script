@@ -2380,6 +2380,7 @@ function init(self)
 
 	-- il cronometro ad anello in basso al centro, col tempo della partita sopra
 	self.crono = hud.cronometro(W / 2, MISURE.ring_y)
+	hud.cronometro_tacche(self.crono, gconfig.TELEPORT_SOGLIE, gconfig.TURN_SECONDS)
 	-- l'inquadratura di chi spara e del colpo resta sopra l'anello e il tempo della partita
 	camera.margini(self.cam, 120, 90, MISURE.ring_y + hud.FUORI + 40)
 	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game

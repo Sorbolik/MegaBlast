@@ -5,6 +5,7 @@
 --
 --   local c = hud.cronometro(x, y)
 --   hud.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
+--   hud.cronometro_tacche(c, soglie, totale) -- tacche viola dei globi: soglie in secondi dall'inizio del turno
 --   hud.globi_nodi(c)      -- dopo i pulsanti, così i globi ci volano sopra
 --   hud.globi(c, n, pos, lento, arrivo) -- i secondi risparmiati volano come globi su pos
 --     (il teletrasporto); arrivo(i) quando il globo i tocca il pulsante
@@ -44,6 +45,7 @@ M.FUORI = M.RAGGIO + M.SPESSORE * 0.55 + 2
 local FONDO = vmath.vector4(0.04, 0.035, 0.05, 0.72)
 local BINARIO = vmath.vector4(1, 1, 1, 0.1)
 local NUMERO, PAROLA, OROLOGIO = 2.4, 0.6, 1.0   -- scale di ui.testo
+local TACCA = vmath.vector4(0.04, 0.035, 0.05, 1)
 local GLOBI, GLOBO_VOLO, GLOBO_DOPO = 6, 0.55, 0.09
 M.GLOBI = GLOBI   -- globi che volano insieme, al massimo
 -- velocità del "pling" di ogni globo che arriva al teletrasporto: sale di una
@@ -143,6 +145,13 @@ function M.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
 		end
 		c.sec, c.num_s = sec, sec
 	end
+	-- le tacche dei globi si vedono nel turno finché la punta dell'arco non le passa
+	if c.tacche then
+		for _, t in ipairs(c.tacche) do
+			local on = fase == "turno" and totale - rimasti <= t.sec
+			if t.on ~= on then gui.set_enabled(t.nodo, on); t.on = on end
+		end
+	end
 	c.battito = max(0, c.battito - dt * 4)
 	scala(c.radice, 1 + c.amp * c.battito * c.battito)
 	c.onda = max(0, c.onda - dt * 2.2)
@@ -152,6 +161,36 @@ function M.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
 		local col = f and f.colore or M.BIANCO
 		C.x, C.y, C.z, C.w = col.x, col.y, col.z, c.onda * 0.8
 		gui.set_color(c.onda_n, C)
+	end
+end
+
+-- Le tacche dei globi: dove sarà la punta dell'arco a ogni soglia, una
+-- lineetta viola sull'anello e fuori tanti pallini quanti globi dà attaccare
+-- prima (la prima soglia ne dà tanti quante sono le soglie, l'ultima uno)
+function M.cronometro_tacche(c, soglie, totale)
+	c.tacche = {}
+	for i, sec in ipairs(soglie) do
+		local a = math.rad(90 + 360 * sec / totale)
+		local cs, sn = math.cos(a), math.sin(a)
+		local t = { sec = sec, on = true }
+		t.nodo = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+		gui.set_parent(t.nodo, c.radice)
+		gui.set_visible(t.nodo, false)
+		-- una tacca scura nell'anello con dentro la lineetta viola
+		for _, s in ipairs({ { 8, M.SPESSORE + 2, TACCA }, { 3, M.SPESSORE + 12, ui.C.VIOLA } }) do
+			local riga = fit(gui.new_box_node(vmath.vector3(cs * M.RAGGIO, sn * M.RAGGIO, 0), vmath.vector3(s[1], s[2], 0)))
+			gui.set_color(riga, s[3])
+			gui.set_euler(riga, vmath.vector3(0, 0, math.deg(a) - 90))
+			gui.set_parent(riga, t.nodo)
+		end
+		local n, r = #soglie - i + 1, M.FUORI + 9
+		for j = 1, n do
+			local o = (j - (n + 1) / 2) * 12
+			local x, y = cs * r - sn * o, sn * r + cs * o
+			fit(ui.disco(x, y, 15, TACCA, t.nodo))
+			fit(ui.disco(x, y, 11, ui.C.VIOLA, t.nodo))
+		end
+		c.tacche[i] = t
 	end
 end
 

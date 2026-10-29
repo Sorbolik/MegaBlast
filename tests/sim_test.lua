@@ -390,13 +390,17 @@ do
 	local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
 	local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
 
-	-- Primo attacco dopo 9 s: restano 16 s, cioè un teletrasporto (uno ogni TELEPORT_SECONDS)
+	-- Soglie dei globi: entro 9 s due, entro 17 s uno, dopo niente, mai tre
+	check(game.globi_per(0) == 2 and game.globi_per(9 * 60) == 2 and game.globi_per(9 * 60 + 1) == 1
+		and game.globi_per(17 * 60) == 1 and game.globi_per(17 * 60 + 1) == 0, "soglie dei globi 9 s e 17 s")
+
+	-- Primo attacco dopo 12 s: un teletrasporto
 	local at = game.new(42, "forgia")
 	local ar = at.robots[1]
-	run(at, 9 * 60 - 1)
+	run(at, 12 * 60 - 1)
 	at:pop_events()
 	at:step(MISSILE)
-	local gain = math.floor(at.timer / (60 * config.TELEPORT_SECONDS))
+	local gain = 1
 	local nev
 	for _, e in ipairs(at:pop_events()) do if e.type == "teleports" then nev = e end end
 	check(gain >= 1 and ar.teleports_left == config.STATS.teleports + gain and nev and nev.amount == gain,
@@ -471,8 +475,7 @@ do
 	local fz = game.new(42, "forgia", { players = { { team = 1, stats = { teleports = 5 } }, { team = 2 } } })
 	run(fz, 60)
 	fz:step(MISSILE)
-	check(fz.robots[1].teleports_left == 5 + math.floor(fz.timer / (60 * config.TELEPORT_SECONDS))
-		and fz.robots[1].teleports_left > 5, "i teletrasporti si accumulano senza tetto")
+	check(fz.robots[1].teleports_left == 7, "i teletrasporti si accumulano senza tetto")
 
 	-- La vita parte dal valore del config e si può cambiare per robot
 	local hv = game.new(42, "forgia", { players = { { team = 1, stats = { max_hp = 200 } }, { team = 2 } } })
