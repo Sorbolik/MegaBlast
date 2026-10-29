@@ -7,8 +7,10 @@ package.path = "client/?.lua;" .. package.path
 local function vec(x, y, z, w) return { x = x or 0, y = y or 0, z = z or 0, w = w } end
 vmath = { vector3 = vec, vector4 = vec }
 local nodi = {}
+ordine = 0
 local function nuovo(p, s)
-	local n = { pos = vec(p.x, p.y), euler = vec(), scale = vec(1, 1, 1), size = s, enabled = true }
+	ordine = ordine + 1
+	local n = { pos = vec(p.x, p.y), euler = vec(), scale = vec(1, 1, 1), size = s, enabled = true, ordine = ordine }
 	nodi[#nodi + 1] = n
 	return n
 end
@@ -30,6 +32,8 @@ gui = {
 	get_size = function(n) return n.size end,
 	set_font = function() end, set_outline = function() end, set_pivot = function() end,
 	set_slice9 = function() end, PIVOT_W = 3,
+	-- l'ordine fra i fratelli: move_above(n, nil) lo porta sopra a tutti
+	move_above = function(n) ordine = ordine + 1; n.ordine = ordine end,
 }
 
 local game = require "sim.game"
@@ -104,7 +108,7 @@ for _, name in ipairs({ "missile", "sword", "mallet" }) do
 		local d = angolo(verso_arma(s, name) - a)
 		check(math.abs(d) < 0.02, string.format("%s mirando a %.1f: l'arma punta dove si mira (scarto %.3f)", name, a, d))
 		local g = PRESE[name]
-		local gx, gy = mondo(s.armi[name], g[1], g[2])
+		local gx, gy = mondo(s.armi[name], g.presa[1], g.presa[2])
 		local hx, hy = mano_braccio(s)
 		check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5, string.format("%s mirando a %.1f: la presa è nella mano", name, a))
 	end
@@ -264,7 +268,7 @@ do
 	sc2.set_weapon(v, "missile")
 	for _ = 1, 30 do sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true, aim = 0.3 }) end
 	local g = PRESE.missile
-	local gx, gy = mondo(v.armi.missile, g[1], g[2])
+	local gx, gy = mondo(v.armi.missile, g.presa[1], g.presa[2])
 	local px, py = mondo(v.braccio_a, 0, 0)
 	local b, pu = D0.pezzi.braccio, D0.pezzi.pugno
 	local hx, hy = mondo(v.braccio_a, (b.x - 3) * v.k, (b.y + 2 - b.h / 2 + pu.h * 0.4) * v.k)
@@ -301,8 +305,8 @@ do
 	for _ = 1, 30 do sc2.update(v, 1 / 60, st2) end
 	check(v.ala.enabled and v.coda[1][1].enabled and not v.braccio_a.enabled and v.presa.enabled,
 		"pezzi: di turno la clip con l'arma, l'arma senza braccio")
-	check(math.abs(math.rad(v.giro.euler.z) - v.braccia[1] - (-0.35 + 0.5)) < 0.05,
-		"clip con l'arma: il canale arma gira l'arma nella mano")
+	check(math.abs(math.rad(v.giro.euler.z) - (-0.35 + 0.5)) < 0.05,
+		"clip con l'arma: il canale arma gira l'arma attorno al perno")
 	-- chi aspetta prende e posa l'arma a caso
 	st2.turno = false
 	v.arma_t = 1
@@ -350,8 +354,56 @@ do
 	scoria = require "battaglia.scoria"
 	local PR = require "battaglia.impugnature"
 	for nome in pairs(require("battaglia.armi").armi) do
-		check(PR[nome] ~= nil and #PR[nome] == 2, nome .. ": ha la sua presa (un punto)")
+		local g = PR[nome]
+		check(g ~= nil and #g.presa == 2 and #g.perno == 2 and #g.spalla == 2, nome .. ": ha presa, perno e spalla")
 	end
+
+	-- chi impugna l'arma lo sceglie la clip; l'arma gira attorno al perno, che
+	-- sta sulla spalla dell'arma (più arma_x e arma_y della clip)
+	local function prova(tracce, impugna, livelli)
+		A2.fermo_arma_sword = { durata = 1, ciclo = true, tracce = tracce, impugna = impugna, livelli = livelli }
+		package.loaded["battaglia.scoria"] = nil
+		local sc = require "battaglia.scoria"
+		local v = sc.new(vec(1, 0.2, 0.3, 1))
+		sc.set_weapon(v, "sword")
+		for _ = 1, 60 do sc.update(v, 1 / 60, st2) end
+		v.x[1], v.x[2] = 1, 0
+		sc.update(v, 0, st2)
+		return v
+	end
+	local g = PR.sword
+	local function vicini(ax, ay, bx, by) return math.abs(ax - bx) < 0.3 and math.abs(ay - by) < 0.3 end
+	local function perno(v) return mondo(v.armi.sword, g.perno[1], g.perno[2]) end
+	local v1 = prova({ arma = { 0, 0.3, 2 } }, "manina_d")
+	local mx, my = mondo(v1.manina_d, 0, 0)
+	check(vicini(mx, my, mondo(v1.armi.sword, g.presa[1], g.presa[2])), "impugna manina dietro: la manina sta sulla presa")
+	local v2 = prova({ arma = { 0, 1.2, 2 } }, "manina_d")
+	local p1x, p1y = perno(v1)
+	local p2x, p2y = perno(v2)
+	check(vicini(p1x, p1y, p2x, p2y), "perno: girando l'arma il perno resta fermo")
+	local sx, sy = mondo(v2.forma, g.spalla[1] * v2.k, g.spalla[2] * v2.k)
+	check(vicini(p2x, p2y, sx, sy), "perno: sta sulla spalla dell'arma")
+	local v3 = prova({ arma_x = { 0, 10, 2 } }, "manina_d")
+	local p3x, p3y = perno(v3)
+	sx, sy = mondo(v3.forma, (g.spalla[1] + 10) * v3.k, g.spalla[2] * v3.k)
+	check(vicini(p3x, p3y, sx, sy), "perno: arma_x lo sposta")
+	-- il braccio dietro gira verso la presa (ci arriva se la presa è lontana dalla
+	-- sua spalla quanto è lungo il braccio)
+	local v4 = prova({}, "braccio_d")
+	local b, pu = D0.pezzi.braccio_dietro, D0.pezzi.pugno
+	local jx, jy = mondo(v4.braccio_d, 0, 0)
+	local hx, hy = mondo(v4.braccio_d, b.x * v4.k, (b.y - b.h / 2 + pu.h * 0.4) * v4.k)
+	local gx, gy = mondo(v4.armi.sword, g.presa[1], g.presa[2])
+	check(math.abs(angolo(math.atan2(hy - jy, hx - jx) - math.atan2(gy - jy, gx - jx))) < 0.01,
+		"impugna braccio dietro: il braccio punta verso la presa")
+	-- i livelli della clip: il braccio davanti sotto il busto, l'arma in fondo
+	local v5 = prova({}, nil, { "arma", "coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "braccio_a",
+		"busto", "testa", "manina_a" })
+	check(v5.presa.ordine < v5.coda[1][1].ordine and v5.braccio_a.ordine < v5.busto.ordine
+		and v5.busto.ordine < v5.collo.ordine, "livelli: la clip sceglie cosa sta davanti")
+	A2.fermo_arma_sword = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
 end
 
 -- Pelli (battaglia/pelli.lua) ---------------------------------------------------

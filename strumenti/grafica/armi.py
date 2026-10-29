@@ -467,10 +467,10 @@ def main():
 
 
 def impugnature():
-    # battaglia/impugnature.lua: nome = { x, y }
+    # battaglia/impugnature.lua: nome = { presa = { x, y }, ... }, la presa
     with open(PRESE) as f:
         return {n: [(float(x), float(y))] for n, x, y in
-                re.findall(r"^\s*(\w+)\s*=\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\},?\s*$", f.read(), re.M)}
+                re.findall(r"^\s*(\w+)\s*=\s*\{\s*presa\s*=\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}", f.read(), re.M)}
 
 
 def tingi(im, rgb):
