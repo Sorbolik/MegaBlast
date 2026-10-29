@@ -14,7 +14,7 @@ JAVA=/usr/lib/jvm/java-25-openjdk-amd64/bin/java
 OUT="$REPO/simulazione/web"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-printf "[project]\ndependencies#0 =\n" > "$TMP/web.ini"
+printf "[project]\ndependencies#0 =\n\n[native_extension]\napp_manifest =\n" > "$TMP/web.ini"
 "$JAVA" -jar "$CACHE/bob.jar" --root "$REPO/client" --output build/web/default --settings "$TMP/web.ini" \
 	--platform wasm-web --architectures wasm-web --variant release --archive --texture-compression true \
 	--bundle-output "$TMP/bundle" build bundle > "$TMP/build.txt" 2>&1 || { tail -40 "$TMP/build.txt"; exit 1; }
