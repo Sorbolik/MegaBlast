@@ -166,6 +166,20 @@ local function place(rb, x, y)
 	rb.x, rb.y, rb.vx, rb.vy, rb.grounded, rb.knocked = x, y, 0, 0, false, false
 end
 
+-- Spara il Rampino e aspetta l'uncino, che vola (config.HOOK.shot_speed):
+-- restituisce l'evento "hook" (senza target né anchor se va a vuoto). ogni() gira a ogni tick
+-- di volo (per tenere fermo chi tira)
+local function hook(g, angle, ogni)
+	local rb = g.robots[g.current]
+	g:step({ fire = { angle = angle, power = 1, weapon = "hook" } })
+	for _ = 1, 60 do
+		for _, e in ipairs(g:pop_events()) do if e.type == "hook" then return e end end
+		if not rb.hook_shot then return nil end
+		if ogni then ogni() end
+		g:step()
+	end
+end
+
 -- Lanciare il globo non chiude il turno; dopo 2 secondi il robot è dove si trova il globo
 local tp = game.new(42, "forgia")
 run(tp, 120)
@@ -862,8 +876,7 @@ do
 	place(hb, 740, sy)
 	hp = hb.hp
 	check(h:can_use("hook"), "il Rampino si usa senza colpi")
-	h:step({ fire = { angle = 0, power = 1, weapon = "hook" } })
-	for _, e in ipairs(h:pop_events()) do if e.type == "hook" then ev = e end end
+	ev = hook(h, 0, function() ha.y, ha.vy, hb.y, hb.vy = sy, 0, sy, 0 end)
 	check(ev and ev.target == 2 and hb.hp == hp, "il Rampino aggancia senza fare danno")
 	check(h.used.tool and not h:can_use("hook") and not h.used.primary and not h.used.secondary and h.window == 0,
 		"uno a turno e non conta come attacco")
@@ -892,7 +905,7 @@ do
 	sy = sky_spot(u, 640, 120)
 	place(ua, 640, sy)
 	place(ub, 640 + 30, sy - 60)
-	u:step({ fire = { angle = math.atan2(-60 + game.ROBOT_H / 2, 30), power = 1, weapon = "hook" } })
+	hook(u, math.atan2(-60 + game.ROBOT_H / 2, 30))
 	check(ub.hooked, "aggancia anche in diagonale")
 	for _ = 1, 40 do
 		u:step()
@@ -907,12 +920,11 @@ do
 	local ma, mb = m.robots[1], m.robots[2]
 	mb.x = -1000
 	-- una colonna di cielo libero con dentro una piattaforma a sé, vuoto sotto e sopra
-	m.terrain:rect(560, 100, 160, 500, 0)
+	m.terrain:rect(560, 100, 160, 900, 0)
 	m.terrain:rect(600, 300, 80, 16, 1)
 	place(ma, 640, 240)
 	local y0 = ma.y
-	m:step({ fire = { angle = math.rad(90), power = 1, weapon = "hook" } })
-	for _, e in ipairs(m:pop_events()) do if e.type == "hook" then ev = e end end
+	ev = hook(m, math.rad(90))
 	check(ev and ev.anchor and not ev.target and ma.hooked and ma.hooked.x == 640, "sul terreno la fune si aggancia e chi tira resta appeso")
 	for _ = 1, 40 do
 		m:step()
@@ -923,8 +935,63 @@ do
 		"sale lungo la fune e si mette in piedi sopra la piattaforma")
 	-- sparando nel vuoto non succede niente
 	place(ma, 640, 340)
-	m:step({ fire = { angle = math.rad(90), power = 1, weapon = "hook" } })
-	check(not ma.hooked and ma.vx == 0, "nel vuoto il Rampino non aggancia niente")
+	m.used.tool = false
+	ev = hook(m, math.rad(90))
+	check(ev and not ev.anchor and not ev.target and not ma.hooked and ma.vx == 0, "nel vuoto il Rampino non aggancia niente")
+	-- l'uncino vola: alla fine della gittata ci mette più di un tick, e arriva fin là
+	local far = game.new(42, "forgia")
+	run(far, 60)
+	local fa, fb = far.robots[1], far.robots[2]
+	fb.x = -1000
+	far.terrain:rect(400, 100, 900, 900, 0)
+	place(fa, 500, 400)
+	local ticks = 0
+	ev = hook(far, 0, function() ticks = ticks + 1; fa.y, fa.vy = 400, 0 end)
+	check(ev and not ev.anchor and not ev.target and ticks >= math.floor(config.HOOK.range / config.HOOK.shot_speed * 60) - 3,
+		"l'uncino vola per tutta la gittata e se non prende niente si perde")
+	far.terrain:rect(500 + config.HOOK.range - 20, 380, 40, 60, 1)
+	place(fa, 500, 400)
+	far.used.tool = false
+	ev = hook(far, 0, function() fa.y, fa.vy = 400, 0 end)
+	check(ev and ev.anchor, "a fine gittata aggancia ancora il terreno")
+
+	-- Mantice (secondaria): soffia via chi ha davanti, poco danno, mai effetti
+	local function bellows(dist, angle, setup)
+		local q = game.new(42, "forgia", { secondary = "bellows" })
+		run(q, 60)
+		local a, b = q.robots[1], q.robots[2]
+		local gy = 100
+		q.terrain:rect(300, gy, 800, 400, 0)
+		q.terrain:rect(300, gy - 20, 800, 20, 1)
+		place(a, 600, gy)
+		place(b, 600 + dist, gy)
+		if setup then setup(q, a, b) end
+		run(q, 20)
+		local hp, x0 = b.hp, b.x
+		q:step({ fire = { angle = angle or 0, power = 1, weapon = "bellows" } })
+		local vx, vy = b.vx, b.vy
+		return q, a, b, hp, x0, vx, vy
+	end
+	local q, a, b, hp, x0, vx, vy = bellows(60)
+	check(hp - b.hp == config.BELLOWS.damage and vx > 300 and vy > 0 and b.knocked, "il Mantice spinge lontano chi ha davanti")
+	check(next(b.status) == nil and q.used.secondary and not q.used.primary, "è una secondaria e non lascia effetti")
+	check(a.vx == 0 and a.x == 600, "chi soffia resta dov'è")
+	run(q, 30)
+	check(b.x > x0 + 60, "il bersaglio vola via")
+	local _, _, _, _, _, vfar = bellows(config.BELLOWS.range - 25)
+	check(vfar > 0 and vfar < vx, "più è lontano, meno spinge")
+	local _, _, b2, hp2 = bellows(config.BELLOWS.range + 30)
+	check(b2.hp == hp2 and not b2.knocked, "oltre la portata non arriva")
+	local _, _, b3, hp3 = bellows(60, math.pi)
+	check(b3.hp == hp3, "dietro le spalle non arriva")
+	local _, _, b4, hp4 = bellows(90, 0, function(q2) q2.terrain:rect(640, 100, 9, 60, 1) end)
+	check(b4.hp == hp4, "il terreno in mezzo ripara")
+	-- regola delle categorie: nessuna secondaria lascia effetti di stato
+	local rq = game.new(42, "forgia")
+	for w in pairs(game.SECONDARY) do
+		rq:hit_status(rq.robots[2], w, rq.robots[1])
+		check(next(rq.robots[2].status) == nil, "la secondaria " .. w .. " non lascia effetti")
+	end
 
 	-- Maglio: arco attorno alla spalla come la Lama, da sopra la testa (dietro)
 	-- fino sotto i piedi; colpisce tutto lungo l'arco, la testa si ferma sul
@@ -1170,7 +1237,8 @@ do
 	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in partita l'arma scelta ha i suoi colpi")
 
 	-- il secondo ventaglio: le secondarie, una a testa, illimitate
-	check(#d.offer2 == #game.DRAFT_SECONDARIES and game.SECONDARY[d.offer2[1]], "il ventaglio delle secondarie")
+	check(#d.offer2 == math.min(config.DRAFT_OFFER, #game.DRAFT_SECONDARIES) and game.SECONDARY[d.offer2[1]],
+		"il ventaglio delle secondarie")
 	local e = draft.new(9, config.MODES["2v2"])
 	local s1, s2 = e.offer2[1], e.offer2[2]
 	check(not draft.done(e, 1) and draft.pick(e, 1, s1) and not draft.done(e, 1), "la secondaria da sola non basta")
@@ -1993,7 +2061,7 @@ local function hook_drag(ground, xa, xb)
 	place(b, xb, ground(xb))
 	for _ = 1, 30 do q:step() end
 	local ang = math.atan2(b.y + game.ROBOT_H / 2 - (a.y + game.SWORD_PIVOT_Y), b.x - a.x)
-	q:step({ fire = { angle = ang, power = 1, weapon = "hook" } })
+	hook(q, ang)
 	if not b.hooked then return math.huge end
 	for _ = 1, 60 do
 		q:step()
@@ -2026,8 +2094,7 @@ for _, id in ipairs(maps.order) do
 			run(q, 30)
 			if a.grounded and b.grounded and not a.dead and not b.dead then
 				local bx, by = b.x, b.y
-				q:step({ fire = { angle = math.atan2(b.y + game.ROBOT_H / 2 - (a.y + game.SWORD_PIVOT_Y), b.x - a.x),
-					power = 1, weapon = "hook" } })
+				hook(q, math.atan2(b.y + game.ROBOT_H / 2 - (a.y + game.SWORD_PIVOT_Y), b.x - a.x))
 				if b.hooked then
 					tries = tries + 1
 					for _ = 1, 40 do

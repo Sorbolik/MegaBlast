@@ -271,7 +271,12 @@ local GIRONE_1 = {
 		-- la tua piattaforma e tre scogli stretti sopra il vuoto
 		arena = { { 760, 300, 400, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 620, 70, 24 } },
 		spawns = { { x = 960, from = 600 }, { x = 455, from = 600 }, { x = 1465, from = 600 }, { x = 960, from = 1000 } },
-		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 2, dummy = true }, { team = 2, dummy = true } },
+		-- tutto quello che spinge (Sergio, 29 ottobre 2026): il Cecchino, il Mantice
+		-- e il Rampino, che dal bordo arriva agli scogli e li molla sopra il vuoto
+		giocatori = {
+			{ team = 1, pick = "sniper", secondary = "bellows", tool = "hook" },
+			{ team = 2, dummy = true }, { team = 2, dummy = true }, { team = 2, dummy = true },
+		},
 		vita = { [2] = 999, [3] = 999, [4] = 999 },
 		turni = 5,
 		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA CADERE" } },

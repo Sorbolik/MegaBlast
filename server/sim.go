@@ -137,7 +137,7 @@ type Input struct {
 	Hold              bool // il salto è ancora tenuto premuto
 	Fire              bool
 	Angle, Power      float64
-	Weapon            string // "missile", "sword", "teleport", le secondarie ("eagle", "mallet", "lunge"), quelle delle casse o un oggetto
+	Weapon            string // "missile", "sword", "teleport", le secondarie ("eagle", "mallet", "lunge", "bellows"), quelle delle casse o un oggetto
 }
 
 // Map è la mappa della partita.

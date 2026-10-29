@@ -22,6 +22,9 @@ https://claude.ai/artifact/W8SfXvxVNLSZDAx4Wc8QXJ
 | 26 ott | Cassa = baule aperto con i denti di Gabriella (bozza, PR #49). | PR #49 |
 | 29 ott | **Attrezzo del turno**: accanto al Rampino entra il **Bastione** (posa un blocco di terreno vero, 48×12 px, entro 160 px; max 2 a testa, il terzo fa crollare il più vecchio). L'attrezzo si **sceglie nel draft** in un terzo ventaglio, preselezionato dall'assetto; compagni diversi, doppioni ammessi nel tutti contro tutti. Fatto in #60; scelte di Claude: in piedi se si mira oltre 45°, distanza = potenza × 160; le celle addosso a un robot restano vuote; crollando tornano vuote solo le sue celle ancora piene; il blocco si vede come le piattaforme (conci di pietra, cima d'ottone, `terreno.fp`); l'attrezzo dell'assetto è solo "proposto": se un compagno sceglie lo stesso, chi lo aveva proposto passa all'altro; nell'armeria si sceglie in fondo alla scheda SET. | #60 |
 | 29 ott | **Ritocchi dall'arena dei bot** (Sergio: "ok applicali"): Affondo 30 → 27, Pugno 50 → 28, Maglio 30 → 34, Uovo 27,5 → 57 al centro, Cecchino 25 → 30, Schegge 7 → 6,5, Tonante 25 → 23. Nel tutti contro tutti le armi passano da 19–30% a 22–28% di vittorie, con i punti di oggi e con la variante A. **Fornace**: brucia solo con l'Uovo (col set completo vinceva il 69% nell'1v1, ora 52%). Proposte: https://claude.ai/artifact/BwaY8mNMU9ZRkgNEWCCu4v | PR del bot |
+| 29 ott | **Nuova regola delle categorie** (Sergio): le **primarie** fanno danno e sono le sole che lasciano **effetti di stato**; le **secondarie** fanno di tutto (spostano te, spostano l'avversario) ma **mai effetti di stato**. Rilette le armi: nessuna secondaria lasciava effetti, quindi nessuna cambia; ora la regola è nel codice (`game:hit_status` ignora le secondarie, con test). Nessuna secondaria spostava l'avversario: nasce il **Mantice** (soffio della forgia, scelta di Claude): ventaglio istantaneo di ±35° lungo 170 px, 8 di danno, spinta 520 px/s lungo la mira + 160 in su, 60% al bordo; nel draft 3 secondarie su 4. | questa PR |
+| 29 ott | **Rampino più lungo** (Sergio: dopo le mappe ×1,5 non bastava): gittata 220 → 400; l'uncino ora **vola** (1500 px/s, nello stato online `gs`/`gx`/`gy`) col filo che si allunga, in punta un uncino a quattro punte; se manca, uncino e filo cadono, si appoggiano sul terreno e si dissolvono. Scelta di Claude: il tiro resta 220 (da vicino arriva addosso come prima, da lontano molla il nemico a metà strada, sopra il vuoto cade: così "Giù dal bordo" si fa col Rampino senza cambiare la mappa). | questa PR |
+| 29 ott | **Giù dal bordo** (Sergio): oltre al Rampino si hanno il Cecchino (2 colpi) e il Mantice. | questa PR |
 
 ## Scartate
 
@@ -36,8 +39,22 @@ https://claude.ai/artifact/W8SfXvxVNLSZDAx4Wc8QXJ
   ricolorate (26 ott, PR #51).
 - Rinculo del Tonante solo verso il basso: era un effetto collaterale del
   profilo fisico (clamp della velocità orizzontale).
+- Secondaria che sposta il nemico (29 ott, scartate da Claude a favore del
+  Mantice): **Onda** (spinta tonda attorno a sé: già scartata come attrezzo,
+  e spinge anche i compagni dietro), **Frusta** (tira il nemico verso di
+  sé: doppione del Rampino), **Ariete** (spallata a contatto: doppione del
+  Pugno e dell'Affondo), **Calamita** (attira e respinge a scelta: due
+  comandi in una secondaria, difficile da leggere sul telefono).
+- Rampino che tira sempre fino a chi tira anche da 400 px (29 ott): in "Giù
+  dal bordo" porterebbe il bersaglio sulla tua piattaforma invece di
+  buttarlo giù; con tiro 220 da vicino non cambia niente.
+- Fune disegnata solo nel client con l'aggancio istantaneo (29 ott): il
+  bersaglio partirebbe prima che l'uncino arrivi.
 
 ## Aperte
+
+- Effetti di stato anche per le primarie che non ne hanno (Lanciarune, Uovo senza Fornace, Cecchino): Sergio ha nominato "sanguinante", che oggi non esiste. Proposta: il Cecchino lascia sanguinante. Da decidere dopo i danni nuovi del thread "Rendere le uccisioni più rapide".
+- Il bot non sa ancora risolvere "Giù dal bordo" (normale e difficile 0% nel collaudo, anche prima di questa PR).
 
 - Pesi degli oggetti tattici nelle casse (vedi gameplay.md).
 - Cassa di Gabriella (PR #49) da mergiare o no.

@@ -167,16 +167,18 @@ M.PUNCH_LAUNCH = 480     -- velocità verso l'alto del bersaglio
 M.PUNCH_PUSH = 140       -- e in avanti
 M.PUNCH_HOP = 220        -- chi colpisce si alza un po' col montante
 
--- Armi, in due categorie (scelta di Sergio del 24 ottobre 2026). Ogni turno una
--- primaria e una secondaria, in ordine libero, mai due della stessa categoria.
--- Primarie: agiscono sul mondo e sugli altri (cratere, effetto di stato,
--- sbalzo). Il Lanciarune c'è sempre; le altre danno un colpo per cassa (rb.ammo).
--- Secondarie: danno secco, nessun effetto, illimitate; ognuna sposta chi la usa
--- a modo suo (la Lama gira attorno, il Tonante spinge indietro, il Maglio fa
--- rimbalzare in alto, l'Affondo passa oltre). La Lama c'è sempre; una delle
--- altre si sceglie all'inizio della partita (rb.secondary, sim/draft.lua).
-M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true }
-M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge" }
+-- Armi, in due categorie (Sergio, 24 ottobre 2026; regola rifatta il 29). Ogni
+-- turno una primaria e una secondaria, in ordine libero, mai due della stessa
+-- categoria. Primarie: fanno danno e sono le sole che lasciano effetti di stato
+-- (config.WEAPON_STATUS); il Lanciarune c'è sempre, le altre danno un colpo per
+-- cassa (rb.ammo). Secondarie: illimitate, fanno di tutto (spostano chi le usa
+-- o chi colpiscono) ma mai effetti di stato: la Lama colpisce e basta, il
+-- Tonante spinge indietro chi spara, il Maglio lo fa rimbalzare in alto,
+-- l'Affondo lo porta oltre, il Mantice soffia via chi ha davanti. La Lama c'è
+-- sempre; una delle altre si sceglie all'inizio della partita (rb.secondary,
+-- sim/draft.lua).
+M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true }
+M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows" }
 -- armi che non consumano colpi
 M.FREE_WEAPONS = { missile = true, teleport = true }
 for w in pairs(M.SECONDARY) do M.FREE_WEAPONS[w] = true end
@@ -373,6 +375,7 @@ function M.new(seed, map_id, opts)
 			recoil = nil,  -- tick rimasti del rinculo del Tonante, nil se fermo
 			mallet = nil,  -- tick del colpo di Maglio in corso, nil se fermo
 			hooked = nil,  -- appeso alla fune del Rampino: { by = chi tira, left = fune da riavvolgere }
+			hook_shot = nil, -- il suo uncino in volo: { x, y, angle, left = celle che restano }
 			tool = p.tool or opts.tool or "hook", -- l'attrezzo del turno: "hook" (Rampino) o "wall" (Bastione)
 			walls = {},    -- i suoi Bastioni in mappa, dal più vecchio
 			ammo = make_ammo(opts.ammo),
@@ -604,6 +607,8 @@ end
 
 -- Il colpo di weapon ha fatto danno: l'effetto che porta, se ne porta uno
 function M:hit_status(rb, weapon, by)
+	-- le secondarie non lasciano mai effetti (la regola delle categorie)
+	if M.SECONDARY[weapon] then return end
 	local kind = C.WEAPON_STATUS[weapon]
 	if not kind and by and by.stats.burning_blasts > 0 and weapon == "grenade" then
 		kind = "burn"
@@ -740,6 +745,7 @@ function M:respawn(rb)
 	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
 	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet, rb.mallet_stop, rb.recoil = nil, nil, nil, nil, nil, nil
+	rb.hook_shot = nil
 	rb.hp, rb.dead, rb.shield, rb.status, rb.respawn_in = rb.max_hp, false, nil, {}, nil
 	rb.parachute, rb.life_damage = false, {}
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
@@ -1476,19 +1482,35 @@ end
 
 local HOOK_LAND_DX = { 0, -8, 8, -16, 16 }
 
--- Rampino (oggetto, uno a turno, config.HOOK): colpo dritto. Su un robot, quello
--- resta appeso alla fune (rb.hooked.by) e viene riavvolto verso la mano di chi
--- tira fin addosso (config.HOOK.reel pixel al massimo), senza danno. Sul terreno è chi tira che
+-- Rampino (oggetto, uno a turno, config.HOOK): l'uncino vola dritto dalla
+-- canna (rb.hook_shot) a shot_speed fino a range. Su un robot, quello resta
+-- appeso alla fune (rb.hooked.by) e viene riavvolto verso la mano di chi tira
+-- (config.HOOK.reel pixel al massimo), senza danno. Sul terreno è chi tira che
 -- resta appeso (rb.hooked.x, y = il punto colpito) e sale lungo la fune fin
--- lì, per poi mettersi in piedi sopra la piattaforma colpita.
+-- lì, per poi mettersi in piedi sopra la piattaforma colpita. A fine corsa
+-- senza niente: mancato (evento "hook" senza target né anchor).
 function M:fire_hook(angle)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
-	local ex, ey, hit = self:ray(x, y, angle, C.HOOK.range, rb)
 	rb.facing = math.cos(angle) < 0 and -1 or 1
-	local dx, dy = math.cos(angle) * M.CELL, math.sin(angle) * M.CELL
+	-- left: celle che restano da percorrere, come il raggio istantaneo
+	rb.hook_shot = { x = x, y = y, x0 = x, y0 = y, angle = angle, left = math.ceil(C.HOOK.range / M.CELL) }
+	self:emit({ type = "hook_shot", robot = rb.id, x0 = x, y0 = y, angle = angle })
+end
+
+-- Un tick dell'uncino in volo: avanza come il raggio (M.ray) e si ferma sul
+-- primo robot o sul terreno, o a fine corsa
+function M:update_hook_shot(rb)
+	local h = rb.hook_shot
+	local n = math.min(math.ceil(C.HOOK.shot_speed * M.DT / M.CELL), h.left)
+	local ex, ey, hit = self:ray(h.x, h.y, h.angle, n * M.CELL, rb)
+	h.left = h.left - n
+	local dx, dy = math.cos(h.angle) * M.CELL, math.sin(h.angle) * M.CELL
 	local anchor = not hit and self.terrain:solid(ex + dx, ey + dy)
-	self:emit({ type = "hook", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id, anchor = anchor })
+	h.x, h.y = ex, ey
+	if not hit and not anchor and h.left > 0 then return end
+	rb.hook_shot = nil
+	self:emit({ type = "hook", robot = rb.id, x0 = h.x0, y0 = h.y0, x1 = ex, y1 = ey, target = hit and hit.id, anchor = anchor })
 	if hit then
 		hit.hooked = { by = rb.id, left = C.HOOK.reel }
 		-- chi tira prende l'uccisione se il nemico cade (KILL_CREDIT_SECONDS)
@@ -1681,6 +1703,50 @@ function M:hook_land(rb, ax, ay)
 				end
 			end
 			return
+		end
+	end
+end
+
+-- Mantice (config.BELLOWS) --------------------------------------------------------
+-- Il soffio della forgia: istantaneo, un ventaglio davanti a chi soffia.
+-- Colpisce ogni robot col centro entro range e entro cone dalla mira, se tra i
+-- due non c'è terreno (gli altri robot non riparano), e lo spinge lungo la mira:
+-- forte da vicino, far volte meno al bordo. Chi soffia resta dov'è.
+
+-- c'è terreno tra (x0, y0) e (x1, y1)?
+function M:terrain_between(x0, y0, x1, y1)
+	local dx, dy = x1 - x0, y1 - y0
+	local n = math.ceil(math.sqrt(dx * dx + dy * dy) / M.CELL)
+	for i = 1, n do
+		if self.terrain:solid(x0 + dx * i / n, y0 + dy * i / n) then return true end
+	end
+	return false
+end
+
+function M:fire_bellows(angle)
+	local rb = self.robots[self.current]
+	local s = C.BELLOWS
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	local cx, cy = rb.x, rb.y + M.DISEGNO_H / 2
+	local ux, uy = math.cos(angle), math.sin(angle)
+	local x, y = muzzle(rb, angle)
+	self:emit({ type = "bellows", robot = rb.id, x = x, y = y, angle = angle })
+	for _, o in ipairs(self.robots) do
+		if o ~= rb and not o.dead then
+			local ox, oy = o.x, o.y + M.HURT_Y
+			local dx, dy = ox - cx, oy - cy
+			local d = math.sqrt(dx * dx + dy * dy)
+			-- dentro il ventaglio: l'angolo dalla mira entro cone (coseno, senza acos)
+			if d <= s.range and dx * ux + dy * uy >= d * math.cos(s.cone) and not self:terrain_between(cx, cy, ox, oy) then
+				local f = (1 - (1 - s.far) * d / s.range) * self:knock_mul(o)
+				o.vx, o.vy = ux * s.push * f, (uy * s.push + s.lift) * f
+				o.hooked = nil
+				o.grounded, o.knocked, o.fall_top = false, true, nil
+				self:emit({ type = "bellows_hit", robot = rb.id, target = o.id, x = ox, y = oy })
+				-- chi soffia prende l'uccisione se il nemico cade (anche con lo scudo che para tutto)
+				self:credit(o, rb)
+				self:hurt(o, s.damage, rb)
+			end
 		end
 	end
 end
@@ -2424,8 +2490,9 @@ function M:preview(angle, power, count, every, pts, weapon)
 		return self:sniper_preview(x, y, angle, count, pts)
 	elseif weapon == "wall" then
 		return self:wall_preview(angle, power, count, pts)
-	elseif weapon == "eagle" or weapon == "hook" then
-		return self:ray_preview(x, y, angle, (weapon == "eagle" and C.EAGLE or C.HOOK).range, count, pts)
+	elseif weapon == "eagle" or weapon == "hook" or weapon == "bellows" then
+		local range = (weapon == "eagle" and C.EAGLE or weapon == "hook" and C.HOOK or C.BELLOWS).range
+		return self:ray_preview(x, y, angle, range, count, pts)
 	elseif weapon == "lunge" then
 		-- lo scatto: dal centro del robot, lungo quanto l'Affondo
 		return self:ray_preview(rb.x, rb.y + M.DISEGNO_H / 2, angle, C.LUNGE.speed * C.LUNGE.ticks / 60, count, pts)
@@ -2629,6 +2696,8 @@ function M:attack(weapon, fire)
 		self:start_mallet(fire.angle)
 	elseif weapon == "lunge" then
 		self:start_lunge(fire.angle)
+	elseif weapon == "bellows" then
+		self:fire_bellows(fire.angle)
 	else
 		if weapon == "punch" then
 			self:start_punch(fire.angle)
@@ -2755,7 +2824,8 @@ function M:advance(input, can_move)
 		if rb.mallet then
 			if rb.dead then rb.mallet, rb.mallet_dir, rb.mallet_stop = nil, nil, nil else self:update_mallet(rb) end
 		end
-		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked, rb.recoil = nil, nil, nil, nil end
+		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked, rb.recoil, rb.hook_shot = nil, nil, nil, nil, nil end
+		if rb.hook_shot then self:update_hook_shot(rb) end
 	end
 	if self.projectile then self:update_projectile() end
 	if self.burst then self:update_burst() end
@@ -2823,7 +2893,7 @@ function M:step(input)
 			if o.flying then still = false end
 		end
 		for _, rb in ipairs(self.robots) do
-			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.mallet) then still = false end
+			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet) then still = false end
 		end
 		self.settle = still and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then

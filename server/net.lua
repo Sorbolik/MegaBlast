@@ -64,7 +64,8 @@ function N.snapshot(g)
 		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna); at: l'attrezzo
 		-- ("hook" Rampino o "wall" Bastione); lu: tick rimasti dell'Affondo, la: angolo del suo scatto;
 		-- kn: sbalzato da un colpo (non corre da sé);
-		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy); ml: tick del colpo di Maglio,
+		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy);
+		-- gs: il suo uncino del Rampino è in volo, in gx, gy; ml: tick del colpo di Maglio,
 		-- ms: tick (con frazione) in cui la sua testa si è fermata sul terreno (0 se gira ancora), md: suo lato;
 		-- gn: è uscito dalla partita (sparito, non torna)
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
@@ -78,6 +79,7 @@ function N.snapshot(g)
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch, ac = rb.ammo.sniper,
 			sw = rb.secondary or "", at = rb.tool, lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
 			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0,
+			gs = rb.hook_shot ~= nil, gx = rb.hook_shot and rb.hook_shot.x or 0, gy = rb.hook_shot and rb.hook_shot.y or 0,
 			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, kn = rb.knocked,
 			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, gn = rb.gone or false }
 	end
