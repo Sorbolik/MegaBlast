@@ -34,7 +34,7 @@ Ancora aperti: zone del Titano (strada 1), turni che si accorciano (I), cosa far
 
 ## Insegnare il turno: la prima partita
 
-Niente passi prima di giocare: **la prima partita insegna**. È una partita vera contro un bot che sbaglia un colpo su due; nel primo turno il tempo è fermo finché non attacchi, e una riga alla volta sopra il diavoletto spiega quello che serve in quel momento (due attacchi, i globi dai secondi avanzati, la cassa, il paracadute, la Corona, la rinascita), mentre l'elemento dell'HUD di cui si parla pulsa. Le altre meccaniche sono **lezioni da 3 stelle** nell'Allenamento, ognuna risolvibile solo con la meccanica che insegna. Dati e controlli: `client/sim/lezioni.lua`, `tests/lezioni_test.lua`.
+Niente passi prima di giocare: **la prima partita insegna**. È una partita vera contro un bot che sbaglia un colpo su due; nel primo turno il tempo è fermo finché non attacchi, e una riga alla volta sopra il diavoletto spiega quello che serve in quel momento (due attacchi, i globi dai secondi avanzati, la cassa, il paracadute, la Corona, la rinascita), mentre l'elemento dell'HUD di cui si parla pulsa. Le altre meccaniche sono **lezioni da 3 stelle** nell'Addestramento, il primo capitolo della CAMPAGNA, ognuna risolvibile solo con la meccanica che insegna. Poi i gironi: missioni contro bot con un carattere (il codardo, il Fabbro custode del girone) che chiedono le meccaniche imparate. Dati e controlli: `client/sim/campagna.lua` (le missioni), `client/sim/missioni.lua` (il motore), `tests/campagna_test.lua`, `strumenti/arena/collaudo.lua`.
 
 ## Albero di abilità: può funzionare
 

@@ -1,0 +1,8 @@
+# Missione "Giù dal bordo" (I girone): la piattaforma e i tre scogli d'acciaio,
+# con l'aspetto delle piattaforme costruite; l'obiettivo in alto.
+imposta prova_missione giu_dal_bordo
+imposta zoom 3
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.5
+foto 01_scogli

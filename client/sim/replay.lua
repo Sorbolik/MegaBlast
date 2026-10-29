@@ -7,7 +7,7 @@
 -- Serve all'arena dei bot (strumenti/arena), ai replay e ai controlli del server.
 --
 --   local replay = require "sim.replay"
---   local r = replay.nuova(seme, mappa, opts)    -- opts come game.new; players[i].bot = "normale" per un bot
+--   local r = replay.nuova(seme, mappa, opts)    -- opts come game.new; players[i].bot = "normale" per un bot (e carattere, pesi)
 --   local g, bots = replay.partita(r)
 --   ogni tick:
 --     local input = replay.input(r, g, bots, input_del_giocatore)
@@ -42,7 +42,7 @@ function M.partita(r)
 	local g = game.new(r.seme, r.mappa, copia(r.opzioni))
 	local bots = {}
 	for i, p in ipairs(r.opzioni.players or {}) do
-		if p.bot then bots[i] = bot.new(i, p.bot, r.seme, p.pesi) end
+		if p.bot then bots[i] = bot.new(i, p.bot, r.seme, p.pesi, p.carattere) end
 	end
 	r.ultimo = nil
 	return g, bots

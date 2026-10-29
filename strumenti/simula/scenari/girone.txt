@@ -1,0 +1,15 @@
+# Una missione del I girone contro un bot vero: il Fabbro, il custode, col suo
+# nome sopra la testa e l'obiettivo in alto. Il giocatore spara, poi il Fabbro
+# gioca il suo turno (testa calda: viene addosso col Maglio).
+imposta prova_missione il_fabbro
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+foto 01_fabbro
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 20
+aspetta 2.5
+foto 02_turno_del_fabbro
+aspetta_stato turno=1 fase=aim 40
+aspetta 0.5
+foto 03_di_nuovo_a_te

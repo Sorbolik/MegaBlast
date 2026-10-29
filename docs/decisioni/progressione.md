@@ -20,6 +20,7 @@ futuro in [../roadmap.md](../roadmap.md) (aree 9, 10).
 | 24 ott | Colori delle squadre solo da `ui.C.SQUADRA`, ordine Rosso, Blu, Verde, Oro. | PR #33 |
 | 29 ott | Progressione **sul server** (XP, livello, mastery, inventario, loadout), rating nascosto solo per il matchmaking, profilo pubblico leggero. **Statistiche di ogni tipo** con obiettivi a soglie esponenziali e **badge** visibili accanto al nome. Negozio: estetica + valuta morbida + pacchetti; tornei a iscrizione con moneta dura; pass dell'evento più avanti. | docs/roadmap.md |
 | 29 ott | **Set liberi e progressione a poco a poco** (Sergio): i pezzi si potranno mischiare (non più solo 4 set fissi, i pezzi nuovi si fanno con l'editor); all'inizio non si regala un set completo, si parte senza niente e si comprano i pezzi. Il gioco è da late game ma con progressione: il divario lo colmano matchmaking, livello fisso nei tornei e il fatto che in qualche mese si completa l'equipaggiamento; escono sempre pezzi nuovi per far girare il meta. | thread del bot |
+| 29 ott | **Campagna** (proposta https://claude.ai/artifact/DaLXhFApbxLpa1reyPtenC, Sergio: "applica tutto"): bottone CAMPAGNA in home con i capitoli in schede; **Capitolo 0 Addestramento** = le 8 lezioni (la lezione delle casse diventa **Il Tonante**: col rinculo sul pilastro, le casse cadono a caso e non fanno un rompicapo); poi **I girone: la Forgia**, che si apre con 8 stelle: Primo sangue, Fuori portata (si arriva solo col globo), Due mani (primaria e secondaria nello stesso turno), Giù dal bordo (tre bersagli da buttare nel vuoto), Il codardo, e il custode **Il Fabbro** (180 di vita e il Maglio). Bot con un **carattere** (codardo, testa calda, cecchino, spingitore: pesi diversi del bot, `bot.CARATTERI`). In missione **equipaggiamento fisso** uguale per tutti (niente assetto del profilo). **Stelle**: fatta, entro N turni, bonus della missione (senza morire, un solo globo, buttalo nel vuoto); sulla carta si legge cosa serve. **Aiuto silenzioso**: dalla terza missione persa di fila i bot scendono di un livello e partono con 3/4 della vita, senza dirlo. Missioni come dati (`client/sim/campagna.lua`, motore `client/sim/missioni.lua`) con pochi verbi (usa, raggiungi, colpisci, abbatti), così un giorno le manda il server. Il I girone è anticipato alla fase 2 (roadmap). Scelte di Claude: soglie delle stelle alla mediana dei turni del bot normale nel collaudo (`strumenti/arena/collaudo.lua`); arene d'acciaio a conci; il profilo vecchio tiene le stelle delle lezioni. | questa PR |
 
 ## Scartate
 
@@ -29,9 +30,22 @@ futuro in [../roadmap.md](../roadmap.md) (aree 9, 10).
   decisione del 23 ott; il rating resta nascosto.
 - Pubblicità con premio, app a pagamento, casse a pagamento con contenuto
   casuale (29 ott).
+- Campagna (29 ott): storia con dialoghi e scene (contro "niente popup", costosa;
+  basta una riga per missione); mappa del mondo a rami (più interfaccia, scelte
+  senza senso all'inizio); missioni generate a caso (non garantiscono che serva
+  la meccanica: il caso va nel rompicapo del giorno); equipaggiamento del
+  giocatore in campagna (impossibile da tarare, sembra pay-to-win); sbloccare
+  armi online con la campagna (il draft è uguale per tutti); energia o vite,
+  saltare missioni pagando; bot che barano (i custodi sono più forti solo con
+  regole che si vedono); stelle solo a turni (monotone); difficoltà a occhio
+  (la misura il collaudo); obiettivi solo come funzioni Lua (non arrivano dal
+  server: restano per la partita guidata).
 
 ## Aperte
 
 - Nome della valuta morbida ("Scorie"? il nome viene dalla vecchia direzione
   artistica).
+- Premi delle stelle della campagna e gironi dopo il primo (fase 5).
+- Giù dal bordo: il bot del collaudo non la vince mai (i test provano che ogni
+  bersaglio cade con un colpo): da guardare come la gioca Sergio.
 - Sconto del negozio e prezzi: da provare con sola valuta morbida in fase 4.

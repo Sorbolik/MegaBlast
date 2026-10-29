@@ -20,7 +20,7 @@ M.XP_RICONOSCIMENTO = 25
 M.XP_BASE, M.XP_PASSO = 100, 25
 
 function M.nuovo()
-	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1, lezioni = {} }
+	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1, stelle = {}, fallite = {} }
 	for i = 1, assetto.LOADOUTS do p.assetti[i] = assetto.new() end
 	return p
 end
@@ -73,14 +73,33 @@ function M.fine_partita(p, posto, riconoscimenti)
 	return g
 end
 
--- Lezioni (sim/lezioni.lua): le stelle migliori di ognuna, 0..3
-function M.lezione(p, id, stelle)
-	p.lezioni[id] = math.max(p.lezioni[id] or 0, stelle)
+-- Missioni della campagna e lezioni (sim/campagna.lua): le stelle migliori di ognuna, 0..3
+function M.missione(p, id, stelle)
+	p.stelle[id] = math.max(p.stelle[id] or 0, stelle)
+	p.fallite[id] = nil
+end
+
+-- Una missione persa: dalla terza di fila gli avversari si danno una calmata
+-- (sim/missioni.lua, aiuto), senza dirlo
+M.AIUTO_DOPO = 3
+function M.fallita(p, id)
+	p.fallite[id] = (p.fallite[id] or 0) + 1
+end
+
+function M.aiuto(p, id)
+	return (p.fallite[id] or 0) >= M.AIUTO_DOPO
+end
+
+-- Tutte le stelle prese (aprono i capitoli della campagna)
+function M.stelle_totali(p)
+	local n = 0
+	for _, v in pairs(p.stelle) do n = n + v end
+	return n
 end
 
 -- Chi non ha mai finito la prima partita guidata: GIOCA lo porta lì
 function M.nuovo_giocatore(p)
-	return (p.lezioni.guidata or 0) == 0
+	return (p.stelle.guidata or 0) == 0
 end
 
 -- Salvataggio --------------------------------------------------------------------
@@ -92,8 +111,10 @@ end
 function M.carica()
 	local ok, p = pcall(sys.load, file())
 	if not ok or type(p) ~= "table" or p.versione ~= M.VERSIONE then return M.nuovo() end
-	-- i profili salvati prima delle lezioni
-	p.lezioni = p.lezioni or {}
+	-- i profili salvati prima della campagna tenevano le stelle delle lezioni in p.lezioni
+	p.stelle = p.stelle or p.lezioni or {}
+	p.lezioni = nil
+	p.fallite = p.fallite or {}
 	return p
 end
 

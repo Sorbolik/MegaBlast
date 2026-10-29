@@ -27,9 +27,9 @@ passano da Sergio.
 | 2 | Server | Un VPS europeo (~5 €/mese), SQLite, Litestream per il backup continuo, Caddy per il TLS. Il server serve anche la build web e il pannello. Secondo nodo e PostgreSQL solo quando i numeri lo chiedono. |
 | 3 | Eventi | Eventi come dati sul server, letti dal client. Tipi nell'ordine: Doppia XP, Torneo (classifica = migliori 10 risultati nella finestra, premi a fasce), Sfida, Modificatore. In più il **Torneo della community** (sotto), il **rompicapo del giorno** (una lezione come dati con mappa, posizioni e obiettivo, uguale per tutti, si confrontano turni e stelle) e i **fantasmi** (si rigioca una lezione o un rompicapo contro il replay di un amico o del migliore), entrambi preparati dalla sezione Eventi del pannello. |
 | 4 | Pannello | Pagina web servita dal server Go su `/admin`, chiave + TOTP. L'**editor delle animazioni** vi entra come micro-frontend (resta un progetto con vita propria, raggiungibile dal pannello con lo stesso accesso). |
-| 5 | Tutorial | La prima partita insegna: GIOCA porta a una partita guidata contro un bot (che sbaglia apposta) finché non la finisci una volta; righe brevi vicino al diavoletto e l'HUD che pulsa; poi 8 lezioni da 3 stelle nell'**Allenamento** (niente pulsante tutorial in home: ALLENAMENTO tiene lezioni e partite libere contro i bot). Deve far capire divertendo: due attacchi per turno, teletrasporti in proporzione al tempo risparmiato, trappole quando si vuole, rampino uno a turno, paracadute uno a partita. Quello che non entra nel tutorial lo insegna la **campagna**, con missioni che matematicamente non si finiscono senza usare la meccanica richiesta. |
+| 5 | Tutorial | La prima partita insegna: GIOCA porta a una partita guidata contro un bot (che sbaglia apposta) finché non la finisci una volta; righe brevi vicino al diavoletto e l'HUD che pulsa; poi 8 lezioni da 3 stelle nell'**Addestramento**, il primo capitolo della CAMPAGNA (ALLENAMENTO tiene solo le partite libere contro i bot; deciso il 29 ott). Deve far capire divertendo: due attacchi per turno, teletrasporti in proporzione al tempo risparmiato, trappole quando si vuole, rampino uno a turno, paracadute uno a partita. Quello che non entra nel tutorial lo insegna la **campagna**, con missioni che matematicamente non si finiscono senza usare la meccanica richiesta. |
 | 6 | Bot | Bot euristico in Lua puro dentro `client/sim/` (gira su server e telefono), a livelli; riempie le code dopo 15 s, è l'avversario del tutorial e della campagna. In parallelo il **Laboratorio bot**: esperimenti di apprendimento automatico (reti neurali) con bot che si affrontano in migliaia di partite simulate, per trovare strategie rotte e bilanciare. Nel gioco resta l'euristico; i bot addestrati possono diventare livelli "assurdi" dell'Allenamento. |
-| 7 | Campagna | Allenamento contro bot (livello a scelta, anche i bot addestrati) appena c'è il bot; poi campagna a missioni come dati (mappa, bot, regole, obiettivo, 3 stelle, premio) con la progressione a sblocco di meccaniche del punto 5. |
+| 7 | Campagna | Allenamento contro bot (livello a scelta, anche i bot addestrati) appena c'è il bot; poi campagna a missioni come dati (mappa, bot, regole, obiettivo, 3 stelle, premio) con la progressione a sblocco di meccaniche del punto 5. Capitoli a **gironi** (Capitolo 0 l'Addestramento, poi I girone: la Forgia), ognuno con un **custode** finale: bot con un carattere e regole sue. In missione l'equipaggiamento è fisso e uguale per tutti; stelle: fatta, entro N turni, bonus della missione. Il I girone arriva già in fase 2 (29 ott); premi e altri gironi in fase 5. |
 | 8 | Impostazioni | Una schermata: audio, comandi (mancino, levette, mira), schermo (limite fotogrammi, effetti ridotti), lingua, account (codice, collega, cancella), notifiche, info. Niente qualità grafica a livelli né rimappatura dei tasti. |
 | 9 | Progressione | XP, livello, mastery, inventario e loadout calcolati e salvati dal server. Profilo pubblico leggero. Rating nascosto solo per il matchmaking. Niente classifica permanente: le classifiche sono quelle dei tornei e tra amici. In più la sezione **Statistiche, obiettivi e badge** (sotto). |
 | 10 | Negozio | Estetica + valuta morbida guadagnata giocando + pacchetti a pagamento (IAP ufficiale Defold, ricevute verificate dal server); Pass dell'evento quando le skin si producono in meno di un giorno. In più i **tornei a iscrizione** (sotto). Niente pubblicità, niente casse a pagamento. |
@@ -169,7 +169,7 @@ Lavoro L, 5–8 €/mese + dominio.
 ### 2. Primi minuti e code piene
 
 Bot euristico a livelli (thread già aperto); tutorial corto + partita guidata +
-lezioni; riempimento delle code con bot; Allenamento; lobby private tra amici e
+lezioni nell'Addestramento e **I girone della campagna** (anticipato il 29 ott: i bot con carattere ci sono già); riempimento delle code con bot; Allenamento; lobby private tra amici e
 2v2 premade (anticipate qui: servono anche per provare il gioco); impostazioni
 comandi, schermo, audio; rating nascosto; replay delle ultime partite.
 **Uscita**: 5 persone nuove giocano 3 partite senza spiegazioni; nessuna attesa
@@ -200,7 +200,7 @@ giorni misurata; crash sotto l'1% delle sessioni. Lavoro L, 25 $ + 99 $/anno.
 ### 5. Vivere di eventi
 
 Acquisti reali, ricevute verificate, vetrina a rotazione; tornei a iscrizione
-con moneta dura; campagna a missioni con stelle e sblocco di meccaniche;
+con moneta dura; altri gironi della campagna e premi delle stelle;
 spettatore dal vivo nelle lobby private; link di invito; ricetta rapida per le
 skin sullo stampino e prime skin; Torneo della community con voto in gioco.
 **Uscita**: tre eventi diversi in un mese senza nuova build; primo mese con

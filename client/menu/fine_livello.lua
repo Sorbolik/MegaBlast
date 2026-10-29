@@ -1,16 +1,15 @@
--- Fine di un livello (una lezione; domani una missione della campagna, che ha
--- lo stesso formato: docs/roadmap.md, area 7). Una schermata, niente popup: il
+-- Fine di un livello: una missione della campagna o una lezione (sim/missioni.lua). Una schermata, niente popup: il
 -- nome del livello, le tre stelle che si accendono una dopo l'altra (col tic
 -- che sale di tono, come i punti in partita) e sotto ognuna cosa serve per
 -- prenderla, così si capisce come fare meglio. Sotto: RIPROVA e AVANTI (il
 -- livello dopo, o la lista se era l'ultimo); la freccia torna alla lista.
 --
 --   local fine_livello = require "menu.fine_livello"
---   local f = fine_livello.new({ tipo = "LEZIONE", titolo = "Il Rampino", stelle = 2,
---     soglie = { 2, 1 }, turni = 2, record = 3, avanti = true }, suono)
---     stelle: quelle prese; soglie: turni per la seconda e la terza (come in
---     sim/lezioni.lua); turni: quanti ne sono serviti; record: le stelle migliori
---     di prima; avanti: c'è un livello dopo; suono(v): il tic, v = velocità (tono)
+--   local f = fine_livello.new({ titolo = "Il Rampino", stelle = 2,
+--     criteri = { "FATTA", "IN 2 TURNI", "IN 1 TURNO" }, turni = 2, record = 3, avanti = true }, suono)
+--     stelle: quelle prese; criteri: cosa serve per ognuna (missioni.criteri);
+--     turni: quanti ne sono serviti; record: le stelle migliori di prima;
+--     avanti: c'è un livello dopo; suono(v): il tic, v = velocità (tono)
 --   fine_livello.update(f, dt)
 --   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro" o nil
 --   fine_livello.distruggi(f)
@@ -34,9 +33,9 @@ function M.new(o, suono)
 	gui.set_visible(f.radice, false)
 	local c = ui.C
 	ui.indietro(f.bottoni, "indietro", f.radice)
-	ui.testo((o.tipo or "LEZIONE") .. " FATTA", 640, 640, 0.8, c.SPENTO, f.radice)
+	ui.testo("MISSIONE FATTA", 640, 640, 0.8, c.SPENTO, f.radice)
 	ui.titolo(string.upper(o.titolo), 640, 585, 1, c.LUCE, f.radice)
-	local criteri = { "FATTA", "IN " .. string.upper(turni(o.soglie[1])), "IN " .. string.upper(turni(o.soglie[2])) }
+	local criteri = o.criteri
 	for i = 1, 3 do
 		local grande = i == 2 and 1.2 or 1
 		local x, y = 640 + (i - 2) * M.PASSO, M.Y + (i == 2 and 18 or 0)
@@ -58,7 +57,7 @@ function M.new(o, suono)
 	end
 	ui.testo(sotto, 640, 232, 0.8, c.SPENTO, f.radice)
 	ui.bottone(f.bottoni, 640 - 180, 110, 300, 96, "RIPROVA", "riprova", nil, f.radice)
-	ui.bottone(f.bottoni, 640 + 180, 110, 300, 96, o.avanti and "AVANTI" or "LEZIONI", "avanti",
+	ui.bottone(f.bottoni, 640 + 180, 110, 300, 96, o.avanti and "AVANTI" or "CAMPAGNA", "avanti",
 		{ principale = true }, f.radice)
 	return f
 end

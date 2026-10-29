@@ -6,11 +6,12 @@
 --
 --   local tt = targa.nuove(colori, nomi)  -- una targa per colore, tutte insieme
 --   targa.vita(t, vita, massima, scudo)   -- quando cambia (scudo può mancare)
---   targa.update(t, dt, x, y, scala)      -- a ogni frame: x, y è il centro in basso
+--   targa.update(t, dt, x, y, scala, cam) -- a ogni frame: x, y è il centro in basso (nel
+--                                          mondo); cam (battaglia/camera.lua) per la riga
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
 --   targa.annuncio(t, testo)              -- una scritta che sale sopra il nome e svanisce
---   targa.riga(t, testo)                  -- il suggerimento delle lezioni, sopra tutto ("" = niente)
+--   targa.riga(t, testo)                  -- il suggerimento delle missioni, sopra tutto ("" = niente)
 --   targa.posto(t, testo, corona)         -- il posto in classifica a sinistra della barra
 --                                          -- ("" = niente) e la Corona sopra il nome
 --
@@ -21,6 +22,8 @@
 -- disegnerebbero le targhe sopra i pulsanti e i menu.
 
 local ui = require "ui.ui"
+local schermo = require "ui.schermo"
+local camera = require "battaglia.camera"
 
 local M = {}
 
@@ -34,9 +37,13 @@ local NOME_Y = 10           -- centro del nome sopra la barra
 local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
 local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
 local CORONA_Y, CORONA_SCALA = NOME_Y + 10, 0.5
--- la riga delle lezioni: sopra la Corona e gli annunci che salgono, a capo
--- oltre RIGA_W (a scala 1)
-local RIGA_Y, RIGA_SCALA, RIGA_W = CORONA_Y + 30, 0.3, 760
+-- la riga delle missioni: sopra la Corona e gli annunci che salgono, a capo
+-- oltre RIGA_W; grande RIGA_SCALA sullo schermo a ogni zoom (circa 22 px: con la
+-- camera lontana non si rimpicciolisce come il resto della targa)
+local RIGA_Y, RIGA_SCALA, RIGA_W = CORONA_Y + 30, 0.55, 1800
+-- e non sale fin sotto i punti e l'obiettivo in cima (battaglia/punteggio.lua):
+-- col robot in alto scende, sopra il robot
+local RIGA_CIMA = 130
 
 local FONDO = ui.C.OMBRA
 local SCIA = ui.C.LUCE
@@ -120,7 +127,7 @@ function M.nuove(colori, nomi)
 		gui.set_pivot(t.riga, gui.PIVOT_S)
 		gui.set_line_break(t.riga, true)
 		gui.set_size(t.riga, vmath.vector3(RIGA_W, 0, 0))
-		t.riga_testo = ""
+		t.riga_testo, t.riga_h = "", 0
 		M.vita(t, 1, 1)
 	end
 	return tt
@@ -149,6 +156,8 @@ function M.riga(t, s)
 	if t.riga_testo == s then return end
 	t.riga_testo = s
 	gui.set_text(t.riga, s)
+	local font = gui.get_font_resource(gui.get_font(t.riga))
+	t.riga_h = s == "" and 0 or resource.get_text_metrics(font, s, { width = RIGA_W, line_break = true }).height
 end
 
 function M.annuncio(t, s)
@@ -179,7 +188,7 @@ function M.vita(t, vita, massima, scudo)
 	gui.set_text(t.numero, tostring(math.floor(vita + 0.5)))
 end
 
-function M.update(t, dt, x, y, scala)
+function M.update(t, dt, x, y, scala, cam)
 	t.t = t.t + dt
 	V.x, V.y, V.z = x, y, 0
 	gui.set_position(t.barre, V)
@@ -187,6 +196,15 @@ function M.update(t, dt, x, y, scala)
 	V.x, V.y, V.z = scala, scala, 1
 	gui.set_scale(t.barre, V)
 	gui.set_scale(t.testi, V)
+	if cam then
+		-- la scala del mondo è cam.s: la riga resta grande uguale sullo schermo
+		local k = RIGA_SCALA / (scala * cam.s)
+		V.x, V.y = k, k
+		gui.set_scale(t.riga, V)
+		local _, tetto = camera.al_mondo(cam, 0, schermo.y1 - RIGA_CIMA - t.riga_h * RIGA_SCALA)
+		V.x, V.y = 0, math.min(RIGA_Y, (tetto - y) / scala)
+		gui.set_position(t.riga, V)
+	end
 
 	-- la scia aspetta un attimo e poi si consuma fino alla vita
 	if t.attesa > 0 then

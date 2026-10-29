@@ -80,7 +80,7 @@ def test_sim():
         info("2. test della simulazione saltati: manca luajit")
         return
     info("2. test della simulazione, di assetto e podio, del personaggio e della camera")
-    for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua", "tests/bot_test.lua", "tests/lezioni_test.lua"):
+    for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua", "tests/bot_test.lua", "tests/campagna_test.lua"):
         r = esegui([lua, test], cwd=REPO)
         sys.stdout.write(r.stdout[-2000:] + r.stderr[-2000:])
         if r.returncode != 0:
@@ -338,6 +338,16 @@ def comando(g, riga):
             # zoom prima di lasciare il tasto (per vedere il movimento)
             g.zoom(a[2], num(3, 2))
         g.xdo("keyup", tasto)
+    elif c == "cammina":
+        # tiene premuto destra o sinistra finché il robot di turno passa X nel
+        # mondo (non dipende da quanto va veloce il gioco nel simulatore)
+        tasto, x = TASTI[a[0]], num(1)
+        oltre = (lambda v: v >= x) if a[0] == "destra" else (lambda v: v <= x)
+        g.xdo("keydown", tasto)
+        try:
+            aspetta_che(g, lambda: "x" in g.stato and oltre(float(g.stato["x"])), num(2, 10), f"robot a x {x:g}")
+        finally:
+            g.xdo("keyup", tasto)
     elif c == "trascina":
         g.punta(num(0), num(1))
         g.xdo("mousedown", 1)
