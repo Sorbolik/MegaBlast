@@ -395,9 +395,11 @@ function M.new(seed, map_id, opts)
 	g.order_pos = 1
 	-- prove dell'arena (strumenti/arena) per il vantaggio di chi gioca per
 	-- secondo: komi = punti di partenza di chi apre; giro_finale = dopo il tempo
-	-- un giro in più, con chi è avanti che gioca per primo
+	-- un giro in più, con chi è avanti che gioca per primo; serpente = a ogni
+	-- giro l'ordine si rovescia (A B, B A, A B...)
 	if opts.komi then g.robots[g.order[1]].points = opts.komi end
 	g.giro_finale = opts.giro_finale
+	g.serpente = opts.serpente
 	g:start_turn(g.order[1])
 	return g
 end
@@ -2521,6 +2523,11 @@ function M:end_turn()
 		self.winner = res.winner
 		self:emit({ type = "over", winner = res.winner, reason = "time", results = res })
 		return
+	end
+	if next_pos == 1 and self.serpente and not self.finale then
+		local order = {}
+		for k = #self.order, 1, -1 do order[#order + 1] = self.order[k] end
+		self.order = order
 	end
 	self.order_pos = next_pos
 	self:start_turn(self.order[self.order_pos])

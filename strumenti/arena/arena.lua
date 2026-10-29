@@ -8,7 +8,7 @@
 --          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
 --          [--set misto]               -- ogni robot un set completo a caso (o nessuno), variante a o b
---          [--komi N] [--giro_finale si]   -- prove per il vantaggio di chi gioca per secondo (game.new)
+--          [--komi N] [--giro_finale si] [--serpente si]   -- prove per il vantaggio di chi gioca per secondo (game.new)
 --          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI): ogni robot ne prende uno a caso
 --
 -- Per ogni partita scrive una riga JSON: la ricetta (sim/replay.lua, basta a
@@ -145,7 +145,7 @@ local function partita(k)
 		end
 	end
 	local r = replay.nuova(seme, mappa, { players = players, score = PUNTEGGIO, komi = tonumber(opt.komi),
-		giro_finale = opt.giro_finale == "si" or nil })
+		giro_finale = opt.giro_finale == "si" or nil, serpente = opt.serpente == "si" or nil })
 	local g, bots = replay.partita(r)
 
 	local ultima = {}       -- l'ultima arma usata da ogni robot
