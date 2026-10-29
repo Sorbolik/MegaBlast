@@ -506,8 +506,11 @@ check(not t.pieno.enabled and tutto_finito(), "targa: a zero la vita sparisce, v
 -- Camera -----------------------------------------------------------------------
 
 local c = camera.new(1280, 720, 1920, 1080)
-camera.salta(c, 100, 100, camera.tutta(c))
+camera.salta(c, 960, 540, camera.tutta(c))
 check(c.x == 960 and c.y == 540, "zoom mappa: si vede tutta la mappa, la camera non si sposta")
+camera.salta(c, 100, 100, camera.tutta(c))
+local _, fondo = camera.allo_schermo(c, 960, 0)
+check(c.x == 960 and math.abs(fondo - camera.SOTTO) < 1e-9, "zoom mappa: in basso il fondo della mappa resta sopra l'HUD")
 check(camera.tutta(c) == camera.LIVELLI[#camera.LIVELLI], "l'ultimo livello di zoom mostra tutta la mappa")
 
 camera.salta(c, 640, 360, 2.2)
@@ -519,7 +522,24 @@ check(px == 640 and py == 360, "il punto seguito sta al centro dello schermo")
 
 camera.salta(c, 0, 0, 2.2)
 px, py = camera.allo_schermo(c, 0, 0)
-check(math.abs(px) < 1e-9 and math.abs(py) < 1e-9, "nell'angolo la camera non esce dalla mappa")
+check(math.abs(px) < 1e-9 and math.abs(py - camera.SOTTO) < 1e-9,
+	"nell'angolo la camera non esce dai lati, e il fondo della mappa resta sopra l'HUD")
+camera.salta(c, 1920, 1080, 2.2)
+px, py = camera.allo_schermo(c, 1920, 1080)
+check(math.abs(px - 1280) < 1e-9 and math.abs(py - 720) < 1e-9, "in alto a destra la camera non esce dalla mappa")
+
+-- telefono 20:9 (ui/schermo.lua): lo schermo vero va da x = -160 a 1440
+local l = camera.new(1280, 720, 1920, 1080)
+camera.vista(l, -160, 0, 1440, 720)
+camera.salta(l, 1000, 500, 1)
+px, py = camera.allo_schermo(l, 1000, 500)
+check(px == 640 and py == 360, "schermo largo: il punto seguito sta al centro")
+check(math.abs(camera.tutta(l) - 1600 / 1920) < 1e-9, "schermo largo: la mappa intera è larga quanto lo schermo")
+camera.cambia(l, 5)
+check(camera.zoom(l) == camera.tutta(l), "schermo largo: il livello MAPPA non mostra il vuoto ai lati")
+camera.salta(l, 0, 540, camera.zoom(l))
+px = camera.allo_schermo(l, 0, 540)
+check(math.abs(px + 160) < 1e-9, "schermo largo: il bordo sinistro della mappa sul bordo vero dello schermo")
 
 -- l'inseguimento non dipende dalla frequenza dello schermo
 local a, b = camera.new(1280, 720, 1920, 1080), camera.new(1280, 720, 1920, 1080)

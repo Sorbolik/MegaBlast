@@ -1,0 +1,24 @@
+# Proporzioni: niente si deforma su nessuno schermo (ui/schermo.lua). Da girare
+# anche con --schermo 1600x720 (telefono 20:9) e --schermo 960x720 (tablet 4:3):
+# anello del cronometro e pulsanti tondi restano tondi, levette e pulsanti
+# attaccati ai bordi veri, il fondo della mappa sopra l'HUD. I tocchi sono in
+# pixel del gioco al centro dello schermo, uguali su ogni proporzione.
+imposta giocatori ffa
+imposta comandi telefono
+
+aspetta 2
+foto 01_home
+tocca_bordo 205 235 basso destra    # STESSO TELEFONO (attaccato all'angolo)
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.5
+foto 02_partita
+levetta 60 0 0.6
+aspetta 0.5
+levetta_mira -40 40 0.4 03_mira
+aspetta_evento explosion 6
+aspetta 2
+tocca_bordo 70 34 alto destra       # zoom: medio
+aspetta 1.2
+tocca_bordo 70 34 alto destra       # zoom: mappa
+aspetta 1.5
+foto 04_mappa

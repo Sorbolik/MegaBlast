@@ -9,10 +9,12 @@ go.property("crogiolo_terreno", resource.texture("/assets/mappe/crogiolo/terreno
 go.property("crogiolo_interno", resource.texture("/assets/mappe/crogiolo/interno_mezzo.png"))
 
 local MSG_MASCHERA = hash("maschera")
+local MSG_SCHERMO = hash("schermo")
 
 function init(self)
-	-- x = 1 mappa dipinta, y = secondi (braci che salgono nello sfondo)
-	self.opzioni = vmath.vector4(0, 0, 0, 0)
+	-- x = 1 mappa dipinta, y = secondi (braci che salgono nello sfondo),
+	-- zw = proporzioni dello schermo (ui/schermo.lua: kx, ky)
+	self.opzioni = vmath.vector4(0, 0, 1, 1)
 end
 
 function update(self, dt)
@@ -31,5 +33,7 @@ function on_message(self, message_id, message)
 			go.set("#mesh", "texture1", self[mappa .. "_interno"])
 		end
 		self.opzioni.x = message.dipinta and 1 or 0
+	elseif message_id == MSG_SCHERMO then
+		self.opzioni.z, self.opzioni.w = message.kx, message.ky
 	end
 end

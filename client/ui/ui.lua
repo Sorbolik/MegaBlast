@@ -12,6 +12,8 @@
 --   ui.bottone(lista, x, y, w, h, "GIOCA", "online", { principale = true }, parent)
 --   local azione = ui.tocco(lista, action_id, action)  -- in on_input: l'azione o nil
 
+local schermo = require "ui.schermo"
+
 local M = {}
 
 local function c(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
@@ -79,10 +81,10 @@ function M.alone(x, y, d, colore, parent)
 	return n
 end
 
--- Fondo pieno a tutto schermo
+-- Fondo pieno a tutto schermo, su ogni proporzione (ui/schermo.lua)
 function M.sfondo(parent)
-	local n = nodo(nil, 640, 360, 1280, 720, C.FONDO, parent)
-	gui.set_adjust_mode(n, gui.ADJUST_STRETCH)
+	local n = nodo(nil, 640, 360, 1280 * schermo.PIENO, 720 * schermo.PIENO, C.FONDO, parent)
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	return n
 end
 

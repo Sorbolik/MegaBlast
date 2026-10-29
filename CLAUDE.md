@@ -15,6 +15,12 @@ singole se serve) per controllare che quello che hai cambiato si veda davvero.
 Per provare una funzione nuova scrivi uno scenario in `strumenti/simula/scenari/`.
 Dettagli e comandi degli scenari: [strumenti/simula/README.md](strumenti/simula/README.md).
 
+Niente si deve mai deformare (Sergio, 29 ott): ogni nodo GUI è `gui.ADJUST_FIT`, mai
+`ADJUST_STRETCH` (lo controlla `controlla.py`). Il gioco è disegnato a 1280 x 720 al
+centro; su 20:9 o 4:3 lo schermo vero va da `schermo.x0` a `x1` e da `y0` a `y1`
+(`client/ui/schermo.lua`), e quello che sta su un bordo si attacca lì. Se tocchi
+l'HUD o i menu prova anche `--schermo 1600x720` e `--schermo 960x720` (scenario `schermo.txt`).
+
 `simula.py` ripete anche i controlli che fa l'editor di Defold ma `bob.jar` no
 (`strumenti/simula/controlla.py`). Se Sergio vede nell'editor un errore che la
 simulazione non ha trovato, aggiungi lì la regola.
@@ -101,6 +107,16 @@ su claude.ai le connessioni verso altri siti sono bloccate.
 
 Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
 `luajit tests/bot_test.lua` (bot e ricette), `luajit tests/lezioni_test.lua` (lezioni e partita guidata), `go test ./server/` (server).
+
+## Sezione "Per Telegram" in ogni PR (Sergio, 29 ott)
+
+A ogni push su main GitHub Actions manda a Sergio l'APK su Telegram con un
+messaggio sulle novità (`strumenti/apk/novita.py`). Per ogni PR il messaggio
+prende la sezione `## Per Telegram` del corpo: **scrivila sempre**, 2-4 righe in
+italiano semplice per una persona, non per un programmatore: cosa cambia nel
+gioco, cosa si vede, cosa provare sul telefono. Niente nomi di file o funzioni.
+Se la PR non tocca il gioco, dillo in una riga (per esempio "Solo strumenti:
+nel gioco non cambia niente").
 
 ## Bot e arena
 

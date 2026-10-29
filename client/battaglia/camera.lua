@@ -1,11 +1,13 @@
 -- Camera della battaglia: guarda un punto del mondo con uno zoom, e lo insegue
--- con una molla esponenziale (uguale a 60, 90 o 120 Hz). Non esce mai dalla
--- mappa: con lo zoom schermo / mappa (M.tutta) si vede tutta.
+-- con una molla esponenziale (uguale a 60, 90 o 120 Hz). Non esce mai dai lati
+-- e dalla cima della mappa; sotto scende di SOTTO pixel dello schermo, così il
+-- fondo della mappa resta sopra l'HUD (sotto c'è il baratro, terreno.fp).
 --
 -- Lua puro: game.gui_script la applica al nodo "mondo" della GUI e alla vista
 -- del render (terreno). Da schermo a mondo: x = (sx - tx) / s.
 --
 --   local c = camera.new(1280, 720, 1920, 1080)   -- schermo, mappa
+--   camera.vista(c, x0, y0, x1, y1)           -- lo schermo vero (ui/schermo.lua)
 --   camera.segui(c, dt, x, y, zoom, veloce)   -- a ogni frame
 --   camera.inquadra(c, dt, ax, ay, bx, by, zoom)  -- oppure: due punti insieme
 --   local tx, ty = camera.spostamento(c)      -- schermo = mondo * c.s + t
@@ -23,18 +25,27 @@ M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
 local SEGUI, SEGUI_VELOCE, ZOOM = 5, 9, 6
 -- allontanarsi è più svelto di avvicinarsi, perché il colpo non scappi dallo schermo
 local ZOOM_FUORI = 12
+-- pixel dello schermo sotto la mappa: l'altezza della barra dell'HUD
+M.SOTTO = 120
 
 local function limita(c)
-	local hw, hh = c.w / (2 * c.s), c.h / (2 * c.s)
+	local hw = c.w / (2 * c.s)
 	c.x = math.min(math.max(c.x, hw), c.mw - hw)
-	c.y = math.min(math.max(c.y, hh), c.mh - hh)
+	c.y = math.min(math.max(c.y, (c.h / 2 - M.SOTTO) / c.s), c.mh - c.h / (2 * c.s))
 end
 
 -- w, h: lo schermo; mw, mh: la mappa
 function M.new(w, h, mw, mh)
-	local c = { w = w, h = h, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1, livello = 1,
+	local c = { w = w, h = h, cx = w / 2, cy = h / 2, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1, livello = 1,
 		sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, mx = 120, msu = 90, mgiu = 170 }
 	return c
+end
+
+-- Lo schermo vero in coordinate del gioco: più largo di w su un telefono 20:9,
+-- più alto su un tablet 4:3 (ui/schermo.lua)
+function M.vista(c, x0, y0, x1, y1)
+	c.w, c.h, c.cx, c.cy = x1 - x0, y1 - y0, (x0 + x1) / 2, (y0 + y1) / 2
+	limita(c)
 end
 
 -- pixel dello schermo che l'inquadratura di due punti lascia liberi ai bordi
@@ -43,7 +54,7 @@ function M.margini(c, x, su, giu)
 	c.mx, c.msu, c.mgiu = x, su, giu
 end
 
--- lo zoom con cui si vede tutta la mappa
+-- lo zoom con cui si vede tutta la mappa (larga quanto lo schermo)
 function M.tutta(c)
 	return math.max(c.w / c.mw, c.h / c.mh)
 end
@@ -94,7 +105,7 @@ function M.inquadra(c, dt, ax, ay, bx, by, s)
 end
 
 function M.spostamento(c)
-	return c.w / 2 - c.x * c.s, c.h / 2 - c.y * c.s
+	return c.cx - c.x * c.s, c.cy - c.y * c.s
 end
 
 function M.al_mondo(c, sx, sy)
@@ -107,8 +118,10 @@ function M.allo_schermo(c, x, y)
 	return x * c.s + tx, y * c.s + ty
 end
 
+-- mai così lontano da vedere fuori dai lati della mappa (su uno schermo largo
+-- il livello MAPPA diventa M.tutta)
 function M.zoom(c)
-	return M.LIVELLI[c.livello]
+	return math.max(M.LIVELLI[c.livello], M.tutta(c))
 end
 
 -- passo +1 = più lontano, -1 = più vicino

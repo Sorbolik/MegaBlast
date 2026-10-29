@@ -5,6 +5,9 @@ bob compila anche file che l'editor segna come errore, quindi un problema può
 passare la build automatica e comparire solo quando Sergio apre il progetto.
 Qui ripetiamo quei controlli. Ogni regola cita da dove viene nell'editor.
 
+In più una regola del gioco: niente nodi GUI stirati (ADJUST_STRETCH), che su
+uno schermo non 16:9 diventano ovali (ui/schermo.lua).
+
 Uso: python3 strumenti/simula/controlla.py [cartella del client]
 Esce con 1 se trova errori.
 """
@@ -76,6 +79,18 @@ def controlla_riferimenti(root, f, errori):
         errori.append(f"{nome}: il file {p} non esiste")
 
 
+STIRATO = re.compile(r"ADJUST_STRETCH|ADJUST_MODE_STRETCH")
+
+
+def controlla_proporzioni(root, f, errori):
+    # Sergio, 29 ott: niente deve mai diventare ovale. Tutto FIT (ui/schermo.lua).
+    nome = "/" + f.relative_to(root).as_posix()
+    for i, riga in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        if STIRATO.search(riga) and not riga.lstrip().startswith("--"):
+            errori.append(f"{nome}:{i}: nodo stirato (ADJUST_STRETCH) che si deforma sugli schermi "
+                          f"non 16:9: usa gui.ADJUST_FIT e i bordi di ui/schermo.lua")
+
+
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else Path(__file__).resolve().parents[2] / "client")
     errori = []
@@ -86,6 +101,8 @@ def main():
             controlla_riferimenti(root, f, errori)
         if f.suffix == ".mesh":
             controlla_mesh(root, f, errori)
+        if f.suffix in (".lua", ".gui_script", ".gui", ".script"):
+            controlla_proporzioni(root, f, errori)
     for e in errori:
         print("ERRORE EDITOR:", e)
     if errori:

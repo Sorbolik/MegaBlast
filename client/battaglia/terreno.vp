@@ -4,8 +4,8 @@ in highp vec4 position;
 in mediump vec2 texcoord0;
 
 out mediump vec2 var_uv;
-// punto sullo schermo in pixel del gioco (1280 x 720) e zoom della camera,
-// per lo sfondo in parallasse
+// punto sullo schermo in pixel del gioco (1280 x 720, stirati: terreno.fp li
+// riporta alle proporzioni vere) e zoom della camera, per lo sfondo in parallasse
 out highp vec2 var_schermo;
 out highp float var_zoom;
 
