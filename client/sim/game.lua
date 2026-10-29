@@ -227,8 +227,6 @@ M.AIM_DEADZONE = 0
 M.AIM_EXPONENT = 1
 -- quanto della differenza tra mira e dito si recupera a ogni frame (a 60 Hz); 1 = subito
 M.AIM_SMOOTH = 1
--- punti della traiettoria mostrati mentre si mira (false: tutti)
-M.AIM_PREVIEW_DOTS = false
 -- tenendo premuto il salto si risalta appena si tocca terra
 M.JUMP_REPEAT = false
 -- Salto corto (come Hollow Knight): lasciando il salto mentre si sale la
@@ -3046,11 +3044,10 @@ local function blastron_profile()
 		SETTLE_TICKS = 60,
 		CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 },
 		-- comandi: zona morta 20%, potenza quadratica, mira che insegue il dito,
-		-- solo l'inizio della traiettoria, salto ripetuto
+		-- salto ripetuto
 		AIM_DEADZONE = 0.2,
 		AIM_EXPONENT = 2,
 		AIM_SMOOTH = 0.2,
-		AIM_PREVIEW_DOTS = 4,
 		JUMP_REPEAT = true,
 	}
 end

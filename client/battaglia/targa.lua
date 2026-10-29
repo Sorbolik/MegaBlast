@@ -6,7 +6,7 @@
 --
 --   local tt = targa.nuove(colori, nomi)  -- una targa per colore, tutte insieme
 --   targa.vita(t, vita, massima, scudo)   -- quando cambia (scudo può mancare)
---   targa.update(t, dt, x, y, scala, cam) -- a ogni frame: x, y è il centro in basso (nel
+--   targa.update(t, dt, x, y, scala, cam, su) -- a ogni frame: x, y è il centro in basso (nel
 --                                          mondo); cam (battaglia/camera.lua) per la riga
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
@@ -214,7 +214,7 @@ function M.vita(t, vita, massima, scudo)
 	gui.set_text(t.numero, tostring(math.floor(vita + 0.5)))
 end
 
-function M.update(t, dt, x, y, scala, cam)
+function M.update(t, dt, x, y, scala, cam, su)
 	t.t = t.t + dt
 	V.x, V.y, V.z = x, y, 0
 	gui.set_position(t.barre, V)
@@ -228,7 +228,8 @@ function M.update(t, dt, x, y, scala, cam)
 		V.x, V.y = k, k
 		gui.set_scale(t.riga, V)
 		local _, tetto = camera.al_mondo(cam, 0, schermo.y1 - RIGA_CIMA - t.riga_h * RIGA_SCALA)
-		V.x, V.y = 0, math.min(RIGA_Y, (tetto - y) / scala)
+		-- su: pixel dello schermo in più sopra la targa (il cartellino della mira)
+		V.x, V.y = 0, math.min(RIGA_Y + (su or 0) / (scala * cam.s), (tetto - y) / scala)
 		gui.set_position(t.riga, V)
 	end
 
