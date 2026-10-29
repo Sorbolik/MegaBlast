@@ -137,6 +137,14 @@ Ogni partita ha la sua ricetta (`client/sim/replay.lua`) con le impronte dello
 stato: rigiocandola devono tornare tutte. L'arena (`strumenti/arena/`, vedi il
 README) fa giocare i bot tra loro su tutti i core e scrive il rapporto per il
 bilanciamento e gli highlight.
+`strumenti/arena/evolvi.py` fa evolvere i numeri del bot per stili (sul PC di Sergio, di
+notte; da rifare con `--nuova` quando cambiano le regole) e `strumenti/arena/trovate.py` fa la
+pagina coi video delle trovate dei bot (i turni rari che fanno tanti punti).
+
+Stelle della campagna: a ogni PR che tocca `client/sim/` il controllo "Stelle della campagna"
+(`.github/workflows/stelle.yml`) rigioca le missioni coi bot (`collaudo.lua --vita 0.5,1,2`)
+e mette sulla PR un avviso per ogni stella da guardare. Se ce ne sono di nuovi, ritara le
+soglie in `client/sim/campagna.lua` nella stessa PR o di' nella PR perché no.
 
 
 ## Immagini con ChatGPT (Codex)

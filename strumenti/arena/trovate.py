@@ -149,32 +149,35 @@ def pagina(trovate, titolo, sotto):
             f'<p>{html.escape(t.get("chi_nome") or "")}{" · " if t.get("chi_nome") else ""}'
             f'<b>{t["punti"]:.0f} punti</b> in un turno · una volta ogni {su:.0f} turni · '
             f'{html.escape(t["modo"])}, {html.escape(t["mappa"])}</p></div></article>')
-    return f"""<!doctype html>
-<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(titolo)}</title>
+    # la pagina per l'Artifact: senza doctype, html, head e body (li mette la pubblicazione)
+    return f"""<title>{html.escape(titolo)}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:wght@400;700&display=swap">
 <style>
-:root{{--sfondo:#f6f3ee;--carta:#fff;--testo:#1d1b19;--piano:#6b645c;--accento:#c2410c;--bordo:#e4ddd3}}
-@media (prefers-color-scheme:dark){{:root:not([data-theme="light"]){{--sfondo:#151312;--carta:#1f1c1a;--testo:#f2ede6;--piano:#a59d93;--accento:#fb923c;--bordo:#2e2a27}}}}
-:root[data-theme="dark"]{{--sfondo:#151312;--carta:#1f1c1a;--testo:#f2ede6;--piano:#a59d93;--accento:#fb923c;--bordo:#2e2a27}}
+/* griglia di clip come una bacheca di replay; il giallo della Corona come unico accento */
+:root{{--sfondo:#eef0f6;--carta:#ffffff;--testo:#1b1e2b;--piano:#5a6074;--accento:#b7791f;--bordo:#d9dce8;
+ --titolo:"Lilita One","Arial Rounded MT Bold",system-ui,sans-serif;--corpo:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif}}
+@media (prefers-color-scheme:dark){{:root:not([data-theme="light"]){{--sfondo:#12141d;--carta:#1c1f2c;--testo:#eef0f7;--piano:#a3a9bf;--accento:#f2c14e;--bordo:#2b2f40;color-scheme:dark}}}}
+:root[data-theme="dark"]{{--sfondo:#12141d;--carta:#1c1f2c;--testo:#eef0f7;--piano:#a3a9bf;--accento:#f2c14e;--bordo:#2b2f40;color-scheme:dark}}
 *{{box-sizing:border-box}}
-body{{margin:0;background:var(--sfondo);color:var(--testo);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}}
-main{{max-width:1180px;margin:0 auto;padding:28px 16px 48px}}
-h1{{font-size:28px;margin:0 0 6px}}
-.sotto{{color:var(--piano);margin:0 0 24px;max-width:70ch}}
-.griglia{{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}}
-article{{background:var(--carta);border:1px solid var(--bordo);border-radius:12px;overflow:hidden}}
-video,.vuoto{{display:block;width:100%;aspect-ratio:16/9;background:#000;color:#999;object-fit:cover}}
+body{{background:var(--sfondo);color:var(--testo);font:16px/1.45 var(--corpo)}}
+main{{max-width:1180px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));
+ padding-right:max(16px,env(safe-area-inset-right,0px))}}
+h1{{font:400 34px/1.1 var(--titolo);margin:0 0 8px;letter-spacing:.01em;text-wrap:balance}}
+.sotto{{color:var(--piano);margin:0 0 24px;max-width:68ch}}
+.griglia{{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:18px}}
+article{{background:var(--carta);border:1px solid var(--bordo);border-radius:10px;overflow:hidden;min-width:0}}
+video,.vuoto{{display:block;width:100%;max-width:100%;aspect-ratio:16/9;background:#000;color:#999;object-fit:cover}}
 .vuoto{{display:grid;place-items:center}}
-.testo{{padding:12px 14px 14px;position:relative}}
-.n{{position:absolute;top:-16px;right:12px;background:var(--accento);color:#fff;font-weight:700;border-radius:999px;
- min-width:30px;height:30px;display:grid;place-items:center;font-size:14px}}
-h2{{font-size:17px;margin:0 0 4px;padding-right:36px}}
-p{{margin:0;color:var(--piano);font-size:14px}}
+.testo{{padding:12px 14px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline}}
+.n{{font:400 22px/1 var(--titolo);color:var(--accento);font-variant-numeric:tabular-nums}}
+h2{{font-size:17px;margin:0;text-wrap:balance}}
+p{{grid-column:2;margin:0;color:var(--piano);font-size:14px}}
 p b{{color:var(--testo)}}
-@media (max-width:420px){{.griglia{{grid-template-columns:1fr}}}}
-</style></head><body><main>
+</style>
+<main>
 <h1>{html.escape(titolo)}</h1><p class="sotto">{html.escape(sotto)}</p>
-<div class="griglia">{"".join(schede)}</div></main></body></html>
+<div class="griglia">{"".join(schede)}</div></main>
 """
 
 
@@ -214,7 +217,7 @@ def main():
     uscita = cartella / "galleria"
     uscita.mkdir(exist_ok=True)
     for k, t in enumerate(trovate, 1):
-        print(f"{k}. {t['descrizione']} ({t['punti']:.0f} punti, {t['volte']} volte su {t['totale']} turni)")
+        print(f"{k}. {t['descrizione']} ({t['punti']:.0f} punti, {t['volte']} su {t['totale']} turni)")
         if not args.senza_video:
             t["video"] = video(t, uscita, k)
     (uscita / "trovate.json").write_text(json.dumps(trovate, indent=1, ensure_ascii=False), encoding="utf-8")

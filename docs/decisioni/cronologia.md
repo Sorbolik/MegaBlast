@@ -54,3 +54,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Corse delle reti fermate; il bot del gioco prende le loro lezioni: si teletrasporta molto di più e si ripara col globo. | #90 |
 | 29 ott | Mantice più debole: spinge meno (400 invece di 520, meno in su, meno al bordo del raggio); spingeva fuori troppo facilmente. | #91 |
 | 29 ott | Rampino sul terreno: ti porta sopra la piattaforma anche agganciandola da sotto in diagonale (soglie più larghe). | #91 |
+| 29 ott | Nuove generazioni dei bot: evolvono i numeri del bot del gioco, un campione per stile, scelte da sole quando non migliorano; pagina coi video delle trovate dei bot. | questa PR |
+| 29 ott | Stelle della campagna tarate coi bot: quote di seconda e terza stella, missioni da guardare, previsione se cambia la vita degli avversari; controllo su ogni PR che cambia le regole. | questa PR |
