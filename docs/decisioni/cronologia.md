@@ -25,6 +25,7 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Notte di arena (circa 34.000 partite): pesi del bot che evolvono, prove di punteggio e di ordine dei turni, documento delle proposte. Sergio applica i ritocchi delle armi e la Fornace, lascia l'ordine dei turni, vuole la rinascita su punti fissi, set mischiabili senza set iniziale e bot con rete neurale. | PR del bot |
 | 29 ott | Bot con rete neurale che evolvono da zero (evolvi.py, senza fine, con esami contro il bot euristico); tutti i bot si riparano dopo gli attacchi. | PR del bot |
 | 29 ott | Apprendimento a gradiente dei bot (impara.py) e corsa lunga sul PC di Sergio. | PR del bot |
+| 29 ott | Gradiente fermo sotto il bot euristico: seconda versione con TD(λ), rete più grande e esame più lungo. | PR del bot 2 |
 | 29 ott | Editor: pannello Livelli per clip, chi impugna l'arma (braccio o manina), perno dell'arma separato dalla presa, Alt per spostare i perni. | #67 |
 | 29 ott | Tutorial: la prima partita guidata contro il bot, righe sopra il diavoletto, 8 lezioni da 3 stelle; CONTRO I BOT diventa ALLENAMENTO (lezioni e bot); rompicapo del giorno e fantasmi in roadmap (Eventi). | #66 |
 | 29 ott | Animazioni rifatte da Sergio nell'editor su main; Gabriella personaggio di tutti. | #69 |

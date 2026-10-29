@@ -48,7 +48,9 @@ ricomincia). Esce `simulazione/arena/reti/`: `evoluzione.md`, `storia.json`
 gioca (la rete di adesso con un po' di esplorazione, le reti dei giri passati e
 il bot di oggi), raccoglie da ogni fine turno le caratteristiche della posizione
 e quanto ha reso fino a fine partita (`arena.py --impara 1`), e la rete impara a
-prevederlo. Poi l'esame contro il bot di oggi, come `evolvi.py`. Esce
+prevederlo: non l'esito vero ma il ritorno a passi TD(λ) (`--lambda`, 1 per
+l'esito vero), che ha molto meno rumore. Poi l'esame contro il bot di oggi, come
+`evolvi.py`; la rete con l'esame migliore resta in `migliore.json`. Esce
 `simulazione/arena/impara/`. Serve `pip install numpy`. Né la rete né questi
 strumenti finiscono nel gioco: il gioco usa il bot euristico.
 
