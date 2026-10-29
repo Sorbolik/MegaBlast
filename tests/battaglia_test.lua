@@ -552,6 +552,32 @@ check(math.abs(a.x - b.x) < 0.01 and math.abs(a.y - b.y) < 0.01,
 for _ = 1, 300 do camera.segui(a, 1 / 60, 800, 420, 1.5) end
 check(math.abs(a.x - 800) < 0.5 and math.abs(a.s - 1.5) < 0.01, "la camera raggiunge il punto e lo zoom")
 
+-- inquadratura di chi spara e del colpo: da vicino tutti e due restano sullo
+-- schermo (sopra l'HUD) mentre il colpo vola via, e quando sono vicini lo zoom non cambia
+local function dentro(cam, x, y)
+	local sx, sy = camera.allo_schermo(cam, x, y)
+	return sx >= 0 and sx <= cam.w and sy >= 150 and sy <= cam.h
+end
+local q = camera.new(1280, 720, 1920, 1080)
+camera.salta(q, 300, 400, 2.2)
+local tutti_dentro = true
+for i = 1, 90 do
+	camera.inquadra(q, 1 / 60, 300, 400, 300 + i * 16, 400 + i * 5, 2.2)
+	tutti_dentro = tutti_dentro and dentro(q, 300, 400) and dentro(q, 300 + i * 16, 400 + i * 5)
+end
+check(tutti_dentro, "inquadratura: chi spara e il colpo restano sempre sullo schermo")
+check(q.s < 2.2 and q.s >= camera.tutta(q), "inquadratura: si allontana, ma non oltre tutta la mappa")
+for _ = 1, 600 do camera.inquadra(q, 1 / 60, 300, 400, 330, 410, 2.2) end
+check(math.abs(q.s - 2.2) < 0.01, "inquadratura: con il colpo vicino torna allo zoom scelto")
+local q2 = camera.new(1280, 720, 1920, 1080)
+camera.salta(q2, 300, 400, 2.2)
+for _ = 1, 60 do camera.inquadra(q2, 1 / 60, 300, 400, 1700, 900, 2.2) end
+local q3 = camera.new(1280, 720, 1920, 1080)
+camera.salta(q3, 300, 400, 2.2)
+for _ = 1, 120 do camera.inquadra(q3, 1 / 120, 300, 400, 1700, 900, 2.2) end
+check(math.abs(q2.s - q3.s) < 0.01 and math.abs(q2.x - q3.x) < 0.5,
+	"inquadratura: uguale a 60 e 120 Hz")
+
 -- la scossa: parte nella direzione del colpo, è uguale a 60 e 120 Hz e si spegne
 camera.scuoti(a, 1, 0, 20)
 camera.scuoti(b, 1, 0, 20)

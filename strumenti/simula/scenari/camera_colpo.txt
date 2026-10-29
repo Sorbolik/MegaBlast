@@ -1,0 +1,22 @@
+# Camera da vicino quando si spara: finché chi spara può ancora giocare (gli 8 s
+# dopo il primo attacco) la camera tiene dentro lui e il colpo, allontanandosi
+# quanto basta; poi torna vicina. Quando il turno è finito segue il colpo come prima.
+
+aspetta 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.2
+foto 01_vicino
+mira 260 160 0.6
+aspetta_evento fire 2
+aspetta 0.3
+foto 02_colpo_partito
+aspetta 0.5
+foto 03_colpo_in_volo
+aspetta_evento explosion 8
+aspetta 0.1
+foto 04_esplosione
+tieni destra 0.8
+foto 05_camminata_dopo_il_colpo
+aspetta 1.5
+foto 06_di_nuovo_vicino

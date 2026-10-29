@@ -11,6 +11,10 @@ path_settings {
   profile: "Compressa"
 }
 path_settings {
+  path: "/ui/**"
+  profile: "Interfaccia"
+}
+path_settings {
   path: "**"
   profile: "Default"
 }
@@ -52,6 +56,20 @@ profiles {
       compression_type: COMPRESSION_TYPE_BASIS_UASTC
     }
     mipmaps: true
+    max_texture_size: 0
+    premultiply_alpha: true
+  }
+}
+profiles {
+  name: "Interfaccia"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGBA
+      compression_level: NORMAL
+      compression_type: COMPRESSION_TYPE_DEFAULT
+    }
+    mipmaps: false
     max_texture_size: 0
     premultiply_alpha: true
   }

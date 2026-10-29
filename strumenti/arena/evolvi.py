@@ -110,8 +110,8 @@ def lua_val(v):
 
 def scrivi_pesi(cartella, individui):
     """pesi.lua per l'arena e pesi.json per i video (arena.py li rimette nelle ricette)."""
-    (cartella / "pesi.lua").write_text("return {\n" + "".join(f"\t{lua_val(p)},\n" for p in individui) + "}\n")
-    (cartella / "pesi.json").write_text(json.dumps(individui))
+    (cartella / "pesi.lua").write_text("return {\n" + "".join(f"\t{lua_val(p)},\n" for p in individui) + "}\n", encoding="utf-8")
+    (cartella / "pesi.json").write_text(json.dumps(individui), encoding="utf-8")
     return cartella / "pesi.lua"
 
 
@@ -230,7 +230,7 @@ def main():
     radice.mkdir(parents=True, exist_ok=True)
     file_stato = radice / "stato.json"
     if file_stato.exists():
-        stato = json.loads(file_stato.read_text())
+        stato = json.loads(file_stato.read_text(encoding="utf-8"))
         print(f"riprendo dalla generazione {stato['gen'] + 1}")
     else:
         strati = [CARATTERISTICHE] + [int(x) for x in args.strati.split(",")] + [1]
@@ -305,12 +305,12 @@ def main():
         for f in cartella.glob("parte_*.jsonl"):
             f.unlink()
         # salva tutto a ogni generazione: si può fermare quando si vuole
-        file_stato.write_text(json.dumps(stato))
+        file_stato.write_text(json.dumps(stato), encoding="utf-8")
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
-                                                        "esami": stato["esami"]}, indent=1, ensure_ascii=False))
+                                                        "esami": stato["esami"]}, indent=1, ensure_ascii=False), encoding="utf-8")
         (radice / "campioni.json").write_text(json.dumps(
-            [pesi_rete(strati, c["ind"]) | {"gen": c["gen"]} for c in stato["campioni"]]))
-        (radice / "evoluzione.md").write_text(rapporto(stato, args))
+            [pesi_rete(strati, c["ind"]) | {"gen": c["gen"]} for c in stato["campioni"]]), encoding="utf-8")
+        (radice / "evoluzione.md").write_text(rapporto(stato, args), encoding="utf-8")
 
 
 def rapporto(stato, args):

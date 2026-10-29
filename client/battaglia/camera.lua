@@ -9,6 +9,7 @@
 --   local c = camera.new(1280, 720, 1920, 1080)   -- schermo, mappa
 --   camera.vista(c, x0, y0, x1, y1)           -- lo schermo vero (ui/schermo.lua)
 --   camera.segui(c, dt, x, y, zoom, veloce)   -- a ogni frame
+--   camera.inquadra(c, dt, ax, ay, bx, by, zoom)  -- oppure: due punti insieme
 --   local tx, ty = camera.spostamento(c)      -- schermo = mondo * c.s + t
 --   camera.scuoti(c, dx, dy, forza)           -- un colpo: scossa verso (dx, dy)
 --   local ox, oy = camera.scossa(c, dt)       -- a ogni frame, pixel da aggiungere
@@ -22,6 +23,8 @@ M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
 
 -- quanto in fretta la camera raggiunge il punto (1/s): più alto = più rigida
 local SEGUI, SEGUI_VELOCE, ZOOM = 5, 9, 6
+-- allontanarsi è più svelto di avvicinarsi, perché il colpo non scappi dallo schermo
+local ZOOM_FUORI = 12
 -- pixel dello schermo sotto la mappa: l'altezza della barra dell'HUD
 M.SOTTO = 120
 
@@ -34,7 +37,7 @@ end
 -- w, h: lo schermo; mw, mh: la mappa
 function M.new(w, h, mw, mh)
 	local c = { w = w, h = h, cx = w / 2, cy = h / 2, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1, livello = 1,
-		sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0 }
+		sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, mx = 120, msu = 90, mgiu = 170 }
 	return c
 end
 
@@ -45,8 +48,13 @@ function M.vista(c, x0, y0, x1, y1)
 	limita(c)
 end
 
--- lo zoom con cui si vede tutta la mappa (larga quanto lo schermo, il fondo
--- sopra l'HUD)
+-- pixel dello schermo che l'inquadratura di due punti lascia liberi ai bordi
+-- (ai lati, sopra, sotto): li dà chi disegna l'HUD, che sta sopra e sotto
+function M.margini(c, x, su, giu)
+	c.mx, c.msu, c.mgiu = x, su, giu
+end
+
+-- lo zoom con cui si vede tutta la mappa (larga quanto lo schermo)
 function M.tutta(c)
 	return math.max(c.w / c.mw, c.h / c.mh)
 end
@@ -57,13 +65,43 @@ function M.salta(c, x, y, s)
 	limita(c)
 end
 
--- veloce: per i colpi in volo, che altrimenti scappano dallo schermo
-function M.segui(c, dt, x, y, s, veloce)
-	c.s = c.s + (s - c.s) * (1 - math.exp(-dt * ZOOM))
-	local k = 1 - math.exp(-dt * (veloce and SEGUI_VELOCE or SEGUI))
+-- zoom e segui: rigidezza delle due molle (1/s)
+local function verso(c, dt, x, y, s, zoom, segui)
+	c.s = c.s + (s - c.s) * (1 - math.exp(-dt * zoom))
+	local k = 1 - math.exp(-dt * segui)
 	c.x = c.x + (x - c.x) * k
 	c.y = c.y + (y - c.y) * k
 	limita(c)
+end
+
+-- veloce: per i colpi in volo, che altrimenti scappano dallo schermo
+function M.segui(c, dt, x, y, s, veloce)
+	verso(c, dt, x, y, s, ZOOM, veloce and SEGUI_VELOCE or SEGUI)
+end
+
+-- Tiene dentro due punti (chi ha sparato e il suo colpo): resta allo zoom s se
+-- ci stanno, altrimenti si allontana quanto basta (al massimo tutta la mappa).
+-- Il centro sta nella parte di schermo libera dall'HUD.
+function M.inquadra(c, dt, ax, ay, bx, by, s)
+	local x0, x1 = math.max(0, math.min(ax, bx)), math.min(c.mw, math.max(ax, bx))
+	local y0, y1 = math.max(0, math.min(ay, by)), math.min(c.mh, math.max(ay, by))
+	local serve = math.min((c.w - 2 * c.mx) / math.max(1, x1 - x0),
+		(c.h - c.msu - c.mgiu) / math.max(1, y1 - y0))
+	s = math.max(M.tutta(c), math.min(s, serve))
+	verso(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (c.mgiu - c.msu) / (2 * c.s), s,
+		s < c.s and ZOOM_FUORI or ZOOM, SEGUI_VELOCE)
+	-- le molle arrivano in ritardo: se un punto sta per uscire si allontana subito
+	local m = c.s
+	for i = 1, 2 do
+		local dx, dy = math.abs((i == 1 and x0 or x1) - c.x), (i == 1 and y0 or y1) - c.y
+		if dx > 0 then m = math.min(m, (c.w / 2 - c.mx) / dx) end
+		if dy > 0 then m = math.min(m, (c.h / 2 - c.msu) / dy) end
+		if dy < 0 then m = math.min(m, (c.h / 2 - c.mgiu) / -dy) end
+	end
+	if m < c.s then
+		c.s = math.max(M.tutta(c), m)
+		limita(c)
+	end
 end
 
 function M.spostamento(c)

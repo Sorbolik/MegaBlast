@@ -1899,14 +1899,17 @@ local function render(self, dt)
 		self.tele_n = tele
 	end
 
-	-- Camera: segue il colpo in volo, poi resta un attimo sull'esplosione, poi
-	-- torna su chi è di turno. Nel menu si vede tutta la mappa.
+	-- Camera: segue chi è di turno. Quando spara, finché può ancora muoversi
+	-- (fase "aim": il secondo attacco e il riparo) tiene dentro lui e il colpo, e
+	-- dopo lui e l'esplosione per un attimo, allontanandosi quanto basta; a turno
+	-- finito segue il colpo e basta. Nel menu si vede tutta la mappa.
 	local v = self.view[g.current]
 	local c = self.cam
 	if self.mode == "menu" then
 		camera.segui(c, dt, game.WORLD_W / 2, game.WORLD_H / 2, camera.tutta(c))
 	else
-		local fx, fy, veloce = v.x, v.y + game.DISEGNO_H / 2, false
+		local rx, ry = v.x, v.y + game.DISEGNO_H / 2
+		local fx, fy, veloce = nil, nil, false
 		self.cam_sosta = math.max(0, self.cam_sosta - dt)
 		if missile or egg then
 			fx, fy, veloce = self.fuoco_x, self.fuoco_y, true
@@ -1917,7 +1920,13 @@ local function render(self, dt)
 		elseif self.cam_sosta > 0 then
 			fx, fy = self.sosta_x, self.sosta_y
 		end
-		camera.segui(c, dt, fx, fy, camera.zoom(c), veloce)
+		if not fx then
+			camera.segui(c, dt, rx, ry, camera.zoom(c))
+		elseif g.phase == "aim" then
+			camera.inquadra(c, dt, rx, ry, fx, fy, camera.zoom(c))
+		else
+			camera.segui(c, dt, fx, fy, camera.zoom(c), veloce)
+		end
 	end
 	apply_camera(self)
 end
@@ -2131,6 +2140,8 @@ function init(self)
 
 	-- il cronometro ad anello in basso al centro, col tempo della partita sopra
 	self.crono = hud.cronometro(W / 2, MISURE.ring_y)
+	-- l'inquadratura di chi spara e del colpo resta sopra l'anello e il tempo della partita
+	camera.margini(self.cam, 120, 90, MISURE.ring_y + hud.FUORI + 40)
 	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game
 	self.punti = punteggio.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)

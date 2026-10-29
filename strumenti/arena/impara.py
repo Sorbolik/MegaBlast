@@ -17,10 +17,15 @@ Un giro:
      posizione (bot.caratteristiche, le stesse che la rete guarda quando
      sceglie) e quanto la sua squadra ha guadagnato sulle altre da lì a fine
      partita (arena.lua --impara);
-  3. la rete impara a gradiente (numpy, Adam) sugli esempi degli ultimi giri,
+  3. l'obiettivo di ogni esempio è il ritorno a passi (TD(λ), --lambda): quanto
+     la squadra guadagna fino al turno dopo dello stesso robot più quanto la
+     rete prevede da lì, mescolato con l'esito vero. Molto meno rumore
+     dell'esito a fine partita, che dipende da tutti i turni che vengono dopo;
+  4. la rete impara a gradiente (numpy, Adam) sugli esempi degli ultimi giri,
      partendo da dove era;
-  4. esame: la rete nuova, senza esplorazione, contro il bot di oggi sempre
-     sulle stesse partite (come evolvi.py).
+  5. esame: la rete nuova, senza esplorazione, contro il bot di oggi sempre
+     sulle stesse partite (come evolvi.py). La rete con l'esame migliore resta
+     in migliore.json.
 Il giro 0 parte da una rete a caso: nessuna idea del gioco.
 
 Risultati in simulazione/arena/impara/ (o --cartella): stato.json e rete_N.json
@@ -112,39 +117,59 @@ def per_lua(rete, strati, mu, sigma):
 
 def salva_rete(file, rete, mu, sigma):
     file.write_text(json.dumps({"strati": [[w.tolist(), b.tolist()] for w, b in rete],
-                                "mu": mu.tolist(), "sigma": sigma.tolist()}))
+                                "mu": mu.tolist(), "sigma": sigma.tolist()}), encoding="utf-8")
 
 
 def leggi_rete(file):
-    d = json.loads(file.read_text())
+    d = json.loads(file.read_text(encoding="utf-8"))
     return [(np.array(w), np.array(b)) for w, b in d["strati"]], np.array(d["mu"]), np.array(d["sigma"])
 
 
 # Il giro ------------------------------------------------------------------------------
 
 def esempi(partite):
-    xs, ys = [], []
-    for m in partite:
+    """x, y (esito vero) e per il ritorno a passi: la catena di ogni robot
+    (partita e robot) e il margine della squadra a inizio turno."""
+    xs, ys, catene, ms = [], [], [], []
+    for k, m in enumerate(partite):
         for e in m.get("esempi") or []:
             xs.append(e["x"])
             ys.append(e["y"])
-    return np.array(xs, dtype=np.float64).reshape(-1, CARATTERISTICHE), np.array(ys, dtype=np.float64)
+            catene.append(k * 8 + e["c"])
+            ms.append(e["m"])
+    return (np.array(xs, dtype=np.float64).reshape(-1, CARATTERISTICHE), np.array(ys, dtype=np.float64),
+            np.array(catene, dtype=np.int64), np.array(ms, dtype=np.float64))
+
+
+def ritorni(rete, xn, y, catene, ms, lam):
+    """TD(λ) all'indietro lungo la catena di ogni robot: dopo l'ultimo turno
+    l'esito vero, prima (m' - m) + (1 - λ) V(x') + λ G'. Con λ = 1 è l'esito vero."""
+    if lam >= 1:
+        return y
+    v = avanti(rete, xn)[-1][:, 0]
+    g = y.copy()
+    ordine = np.argsort(catene, kind="stable")  # ogni catena di fila, i turni in ordine
+    for a, b in zip(ordine[-2::-1], ordine[:0:-1]):
+        if catene[a] == catene[b]:
+            g[a] = ms[b] - ms[a] + (1 - lam) * v[b] + lam * g[b]
+    return g
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--giri", type=int, default=0, help="fino a questo giro (0: senza fine)")
     ap.add_argument("--partite", type=int, default=3000, help="partite per giro")
-    ap.add_argument("--strati", default="32,16", help="neuroni degli strati nascosti")
+    ap.add_argument("--strati", default="64,32", help="neuroni degli strati nascosti")
     ap.add_argument("--copie", type=int, default=4, help="quante volte la rete di adesso sta nella popolazione")
     ap.add_argument("--passate", type=int, default=3, help="reti dei giri passati che giocano come avversari")
-    ap.add_argument("--memoria", type=int, default=3, help="su quanti giri di esempi impara")
+    ap.add_argument("--memoria", type=int, default=5, help="su quanti giri di esempi impara")
+    ap.add_argument("--lambda", dest="lam", type=float, default=0.7, help="TD(λ): 1 impara dall'esito vero")
     ap.add_argument("--esplora", type=float, default=0.15)
     ap.add_argument("--epoche", type=int, default=6)
     ap.add_argument("--lotto", type=int, default=256)
     ap.add_argument("--lr", type=float, default=0.001)
     ap.add_argument("--l2", type=float, default=1e-5)
-    ap.add_argument("--esame-partite", type=int, default=240)
+    ap.add_argument("--esame-partite", type=int, default=480)
     ap.add_argument("--livello", default="difficile")
     ap.add_argument("--modo", default="tutti")
     ap.add_argument("--mappa")
@@ -161,7 +186,7 @@ def main():
     radice.mkdir(parents=True, exist_ok=True)
     file_stato = radice / "stato.json"
     if file_stato.exists():
-        stato = json.loads(file_stato.read_text())
+        stato = json.loads(file_stato.read_text(encoding="utf-8"))
         print(f"riprendo dal giro {stato['giro'] + 1}")
     else:
         strati = [CARATTERISTICHE] + [int(x) for x in args.strati.split(",")] + [1]
@@ -193,9 +218,10 @@ def main():
                                 livello=args.livello, mappa=args.mappa, punteggio=args.punteggio,
                                 pesi=str(file_pesi), ritocchi=None, set=None, assegna=None, impara="1", luajit=None)
         partite = arena.leggi(arena.gioca(ns))
-        x, y = esempi(partite)
-        np.save(cartella / "x.npy", x)
-        np.save(cartella / "y.npy", y)
+        x, y, catene, ms = esempi(partite)
+        catene += giro * 10 ** 9  # catene diverse fra i giri
+        for nome, a in (("x", x), ("y", y), ("catene", catene), ("m", ms)):
+            np.save(cartella / f"{nome}.npy", a)
         b = evolvi.misura(partite, len(individui))
         # come ha giocato la rete di adesso (tutte le sue copie insieme) e il bot di oggi
         tot = {"alto": 0.0, "volte": 0}
@@ -207,15 +233,17 @@ def main():
         (cartella / "partite.jsonl").unlink(missing_ok=True)
 
         # impara sugli esempi degli ultimi giri
-        xs, ys = [], []
-        for k in range(max(0, giro - args.memoria + 1), giro + 1):
-            xs.append(np.load(radice / f"giro_{k}" / "x.npy"))
-            ys.append(np.load(radice / f"giro_{k}" / "y.npy"))
-        X, Y = np.concatenate(xs), np.concatenate(ys)
+        giri = range(max(0, giro - args.memoria + 1), giro + 1)
+        X, Y, CAT, M = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy") for k in giri])
+                        for nome in ("x", "y", "catene", "m"))
         if giro == 0:
-            mu, sigma = X.mean(0), X.std(0) + 1e-6
+            # una caratteristica quasi sempre uguale (le morti dei compagni) non deve
+            # diventare un peso enorme quando cambia
+            mu, sigma = X.mean(0), np.maximum(X.std(0), 0.1)
         Xn = (X - mu) / sigma
-        studio = impara(rete, Xn, Y, args, rng)
+        # al giro 0 la rete è a caso: impara dall'esito vero
+        G = ritorni(rete, Xn, Y, CAT, M, 1 if giro == 0 else args.lam)
+        studio = impara(rete, Xn, G, args, rng)
         salva_rete(radice / f"rete_{giro}.json", rete, mu, sigma)
         nuova_lua = per_lua(rete, strati, mu, sigma)
         voce = {"giro": giro, "partite": len(partite), "esempi": len(y), "esempi_studiati": len(X),
@@ -223,33 +251,36 @@ def main():
                 "rete": evolvi.comportamento(b[2]), **studio}
         e = evolvi.esame(radice, giro, nuova_lua, args)
         e["giro"] = giro
+        if not stato["esami"] or e["vince"] > max(v["vince"] for v in stato["esami"]):
+            (radice / "migliore.json").write_text(json.dumps(nuova_lua | {"giro": giro}), encoding="utf-8")
         stato["esami"].append(e)
         stato["storia"].append(voce)
         stato["giro"] = giro
         print(f"giro {giro}: {len(y)} esempi nuovi, impara su {len(X)} (varianza spiegata {studio['spiegata']:.2f}); "
               f"esame: la rete arriva più in alto del bot di oggi nel {100 * e['vince']:.0f}% delle partite")
 
-        file_stato.write_text(json.dumps(stato))
+        file_stato.write_text(json.dumps(stato), encoding="utf-8")
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
-                                                        "esami": stato["esami"]}, indent=1, ensure_ascii=False))
+                                                        "esami": stato["esami"]}, indent=1, ensure_ascii=False), encoding="utf-8")
         campioni = []
         for k in range(giro + 1):
             r, m_, s_ = leggi_rete(radice / f"rete_{k}.json")
             campioni.append(per_lua(r, strati, m_, s_) | {"giro": k})
-        (radice / "campioni.json").write_text(json.dumps(campioni))
-        (radice / "evoluzione.md").write_text(rapporto(stato, args))
+        (radice / "campioni.json").write_text(json.dumps(campioni), encoding="utf-8")
+        (radice / "evoluzione.md").write_text(rapporto(stato, args), encoding="utf-8")
         # gli esempi vecchi non servono più
         vecchio = radice / f"giro_{giro - args.memoria}"
-        for f in ("x.npy", "y.npy"):
+        for f in ("x.npy", "y.npy", "catene.npy", "m.npy"):
             (vecchio / f).unlink(missing_ok=True)
 
 
 def rapporto(stato, args):
     out = ["# Bot che imparano a gradiente\n",
            f"Rete {stato['strati']} ({evolvi.quanti(stato['strati'])} pesi), {args.partite} partite per giro, "
-           f"livello {args.livello}, modo {args.modo}.\n",
+           f"livello {args.livello}, modo {args.modo}, TD(λ) {args.lam}, memoria {args.memoria} giri.\n",
            "Esame: in quante delle stesse partite la rete del giro arriva più in alto del bot di oggi. "
-           "Varianza spiegata: quanto la rete prevede l'esito (0 niente, 1 tutto) su esempi che non ha studiato.\n",
+           "Varianza spiegata: quanto la rete prevede il suo obiettivo (0 niente, 1 tutto) su esempi che non ha studiato. "
+           "La rete con l'esame migliore è in migliore.json.\n",
            "| giro | esame | varianza spiegata | esempi | morti (rete / oggi) | danno (rete / oggi) | teletrasporti (rete / oggi) |",
            "|---|---|---|---|---|---|---|"]
     for v, e in zip(stato["storia"], stato["esami"]):
