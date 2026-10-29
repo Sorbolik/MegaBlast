@@ -1,0 +1,14 @@
+# Sparare (telefono): il dito spinge la levetta di destra verso il bersaglio;
+# mirando, la riga dice come si annulla e il dito tocca la metà destra.
+imposta comandi telefono
+imposta prova_missione spara
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.2
+foto 01_mira                         # il dito sulla levetta di destra
+levetta_annulla 50 40 02_annulla     # mirando: l'annulla in luce, poi lo fa
+aspetta 1
+foto 03_mira_di_nuovo
+levetta_mira 60 30 1
+aspetta_evento explosion 6
+aspetta 1
+foto 04_colpito

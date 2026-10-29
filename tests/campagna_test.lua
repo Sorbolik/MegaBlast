@@ -28,6 +28,19 @@ local SINISTRA = { left = true }
 -- Gioca la lezione col copione: copione(c) chiama c.tieni(input, tick o
 -- condizione), c.usa(arma, angolo, potenza), c.turno() (aspetta il prossimo
 -- turno del giocatore). Restituisce l'esito, la lezione e la partita.
+-- Il giocatore dei test tocca quello che la lezione mette in luce (il tempo
+-- è fermo finché non lo fa) e, prima di usare un'arma, la sceglie
+local function obbedisci(r, input)
+	local a = r.attende
+	if a then missioni.tocca(r, a == "primaria" and "missile" or a == "secondaria" and "sword" or a) end
+	if input and input.fire then
+		missioni.tocca(r, input.fire.weapon)
+		missioni.tocca(r, "mira")
+	end
+	if input and input.jump then missioni.tocca(r, "salta") end
+	if input and (input.left or input.right) then missioni.tocca(r, "cammina") end
+end
+
 local function gioca(id, copione, picks, limite)
 	local r = missioni.nuova(id)
 	local seed, mappa, opts = missioni.partita(r, 3, picks)
@@ -63,6 +76,7 @@ local function gioca(id, copione, picks, limite)
 		local input = primo and FERMO or co(c)
 		primo = false
 		-- un tasto qualsiasi: nelle lezioni il tempo parte da qui
+		obbedisci(r, input)
 		if next(input) then missioni.tocca(r) end
 		g:step(input)
 		for _, e in ipairs(g:pop_events()) do missioni.evento(r, g, e) end
@@ -112,6 +126,22 @@ for _, l in ipairs(cap.missioni) do
 end
 end
 
+-- Le basi, una cosa per lezione
+check(gioca("cammina", function(c) c.tieni(DESTRA, fino_x(1030)) end) == "fatta", "cammina: camminando si arriva")
+check(gioca("salta", function(c)
+	for _ = 1, 3 do
+		c.tieni(DESTRA, 60 * 6)
+		c.turno()
+	end
+end) ~= "fatta", "salta: camminando soltanto il gradino non si sale")
+check(gioca("salta", function(c)
+	c.tieni(DESTRA, fino_x(975))
+	c.tieni({ right = true, jump = true }, 40)
+	c.tieni(DESTRA, 120)
+end) == "fatta", "salta: saltando si sale")
+check((cerca("spara", function(c, a, p) c.usa("missile", a, p) end, nil, { 0.1, 1.3, 0.05 }, potenze(0.3, 1, 0.1))),
+	"spara: col Lanciarune si colpisce")
+
 -- Armi e draft: granata (primaria scelta) da lontano, poi Maglio da vicino
 local SCELTA = { { pick = "grenade", secondary = "mallet", tool = "hook" } }
 local ok, r, a, p = cerca("armi", function(c, a, p)
@@ -159,7 +189,7 @@ check(esito ~= "fatta", "globi: senza globi non si arriva")
 
 -- Il Tonante: salto, colpo in basso a mezz'aria, il rinculo porta sul pilastro, poi il missile (il Tonante è già la secondaria del turno)
 ok = cerca("tonante", function(c, a, p)
-	c.tieni(DESTRA, fino_x(940))
+	c.tieni(DESTRA, fino_x(975))
 	c.tieni({ jump = true, right = true }, 30)
 	c.usa("eagle", -math.pi / 2 - 0.2)
 	c.tieni(DESTRA, function(g) return g.robots[1].grounded end)
@@ -301,6 +331,7 @@ do
 				missioni.tocca(r)
 			end
 		end
+		if not (r.st.turni == 1 and ticks < 1800) then obbedisci(r, input) end
 		g:step(replay.input(ric, g, bots, input))
 		for _, e in ipairs(g:pop_events()) do
 			missioni.evento(r, g, e, bots)

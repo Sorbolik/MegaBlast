@@ -1,0 +1,17 @@
+# Le lezioni guidate sul telefono: il dito che spinge in su la levetta di
+# sinistra per saltare (Tonante), e nella prima partita, mentre si mira, il
+# dito che tocca la metà destra per annullare. Il tempo aspetta il comando.
+imposta comandi telefono
+imposta prova_missione tonante
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2
+foto 01_scopo
+levetta 30 0 0.2                     # letto lo scopo: il suggerimento
+aspetta 1.5
+foto 02_tonante_in_luce
+tocca 768 65                         # il Tonante, a destra del cronometro
+aspetta 1.2
+foto 03_dito_salta                   # il dito sale sulla levetta, tempo fermo
+levetta 0 80 0.4                     # salta: il tempo parte
+aspetta 1.5
+foto 04_tempo_partito
