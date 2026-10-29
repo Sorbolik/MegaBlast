@@ -80,7 +80,7 @@ def test_sim():
         info("2. test della simulazione saltati: manca luajit")
         return
     info("2. test della simulazione, di assetto e podio, del personaggio e della camera")
-    for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua", "tests/bot_test.lua"):
+    for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua", "tests/bot_test.lua", "tests/lezioni_test.lua"):
         r = esegui([lua, test], cwd=REPO)
         sys.stdout.write(r.stdout[-2000:] + r.stderr[-2000:])
         if r.returncode != 0:
@@ -104,7 +104,7 @@ def build(out, extra=""):
     # niente estensione WebSocket (si compila sul build server di Defold, che da qui
     # non si raggiunge) e log di simulazione acceso
     settings = out / "simula.ini"
-    settings.write_text("[project]\ndependencies#0 =\n\n[megablast]\nsimula = 1\n" + extra)
+    settings.write_text("[project]\ndependencies#0 =\n\n[native_extension]\napp_manifest =\n\n[megablast]\nsimula = 1\n" + extra)
     bundle = out / "bundle"
     shutil.rmtree(bundle, ignore_errors=True)
     cmd = [str(JAVA), "-jar", str(BOB), "--root", str(CLIENT), "--output", "build/simula/default",

@@ -10,6 +10,7 @@
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
 --   targa.annuncio(t, testo)              -- una scritta che sale sopra il nome e svanisce
+--   targa.riga(t, testo)                  -- il suggerimento delle lezioni, sopra tutto ("" = niente)
 --   targa.posto(t, testo, corona)         -- il posto in classifica a sinistra della barra
 --                                          -- ("" = niente) e la Corona sopra il nome
 --
@@ -33,6 +34,9 @@ local NOME_Y = 10           -- centro del nome sopra la barra
 local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
 local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
 local CORONA_Y, CORONA_SCALA = NOME_Y + 10, 0.5
+-- la riga delle lezioni: sopra la Corona e gli annunci che salgono, a capo
+-- oltre RIGA_W (a scala 1)
+local RIGA_Y, RIGA_SCALA, RIGA_W = CORONA_Y + 30, 0.3, 760
 
 local FONDO = ui.C.OMBRA
 local SCIA = ui.C.LUCE
@@ -112,6 +116,11 @@ function M.nuove(colori, nomi)
 		t.stato = testo(t.dentro_testi, 0, STATO_Y, "", STATO_SCALA, ui.C.TESTO)
 		t.annuncio = testo(t.dentro_testi, 0, ANNUNCIO_Y, "", ANNUNCIO_SCALA, ui.C.LUCE)
 		gui.set_enabled(t.annuncio, false)
+		t.riga = testo(t.testi, 0, RIGA_Y, "", RIGA_SCALA, ui.C.LUCE)
+		gui.set_pivot(t.riga, gui.PIVOT_S)
+		gui.set_line_break(t.riga, true)
+		gui.set_size(t.riga, vmath.vector3(RIGA_W, 0, 0))
+		t.riga_testo = ""
 		M.vita(t, 1, 1)
 	end
 	return tt
@@ -134,6 +143,12 @@ end
 function M.posto(t, s, corona)
 	gui.set_text(t.posto, s)
 	gui.set_enabled(t.corona, corona)
+end
+
+function M.riga(t, s)
+	if t.riga_testo == s then return end
+	t.riga_testo = s
+	gui.set_text(t.riga, s)
 end
 
 function M.annuncio(t, s)

@@ -65,6 +65,13 @@ function M.pick(seed)
 	return M.ROTATION[math.floor(seed) % #M.ROTATION + 1]
 end
 
+-- Mappe fuori rotazione e fuori da M.order (le lezioni, sim/lezioni.lua):
+-- si giocano solo chiedendole per nome.
+function M.registra(id, def)
+	def.id, def.name = id, def.name or id
+	M.maps[id] = def
+end
+
 function M.get(id)
 	return M.maps[id] or M.maps[M.DEFAULT]
 end

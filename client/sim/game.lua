@@ -276,7 +276,7 @@ end
 -- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
 -- mancano vengono da config.STATS e dal profilo di fisica.
 -- pick è l'arma della scelta d'inizio partita (sim/draft.lua). dummy = true è
--- un bersaglio che non gioca mai il suo turno (tutorial). Senza players, due
+-- un bersaglio che non gioca mai il suo turno (lezioni). Senza players, due
 -- robot in squadre diverse.
 M.MAX_PLAYERS = 4
 

@@ -67,6 +67,9 @@ local PRESE = require "battaglia.impugnature"
 
 local M = {}
 
+-- il personaggio di tutti (le pelli addosso), finché non c'è l'armeria che lo sceglie
+M.PERSONAGGIO = { "gabriella" }
+
 local P, PT = D.pezzi, D.punti
 
 -- dove gira ogni posto nel corpo fermo: il punto dello scheletro più il perno

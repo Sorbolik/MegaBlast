@@ -1,0 +1,22 @@
+# Motore Android solo con quello che MegaBlast usa (scelte come nell'editor di
+# Defold 1.14, editor/src/clj/editor/app_manifest.clj). Tolti: fisica 2D e 3D
+# (collisioni e terreno sono nella nostra sim), registratore video, profiler,
+# particellari, tilemap, image.load, live update, Vulkan (resta OpenGL ES).
+# Restano grafica, suono (wav e ogg), GUI, font, input, mesh, Basis (texture compresse).
+platforms:
+  armv7-android:
+    context:
+      excludeLibs: [physics, LinearMath, BulletDynamics, BulletCollision, script_bullet3d, box2d_defold, script_box2d_defold, record, vpx, profile, profilerext, profiler_remotery, gamesys_particle, particle, liveupdate, image, graphics_vulkan, dmglfw_vulkan]
+      excludeSymbols: [ScriptBullet3DExt, ScriptBox2DExt, ProfilerBasic, ProfilerRemotery, ProfilerJS, ResourceTypeParticleFX, ComponentTypeParticleFX, ScriptLibParticleFX, ResourceTypeTileMap, ComponentTypeTileMap, ScriptLibTileMap, ScriptImageExt, GraphicsAdapterVulkan]
+      symbols: [GraphicsAdapterOpenGLES]
+      libs: [physics_null, record_null, profile_null, profilerext_null, particle_null, liveupdate_null, image_null, graphics_opengles, dmglfw]
+      dynamicLibs: [EGL, GLESv1_CM, GLESv2]
+      excludeDynamicLibs: [vulkan]
+  arm64-android:
+    context:
+      excludeLibs: [physics, LinearMath, BulletDynamics, BulletCollision, script_bullet3d, box2d_defold, script_box2d_defold, record, vpx, profile, profilerext, profiler_remotery, gamesys_particle, particle, liveupdate, image, graphics_vulkan, dmglfw_vulkan]
+      excludeSymbols: [ScriptBullet3DExt, ScriptBox2DExt, ProfilerBasic, ProfilerRemotery, ProfilerJS, ResourceTypeParticleFX, ComponentTypeParticleFX, ScriptLibParticleFX, ResourceTypeTileMap, ComponentTypeTileMap, ScriptLibTileMap, ScriptImageExt, GraphicsAdapterVulkan]
+      symbols: [GraphicsAdapterOpenGLES]
+      libs: [physics_null, record_null, profile_null, profilerext_null, particle_null, liveupdate_null, image_null, graphics_opengles, dmglfw]
+      dynamicLibs: [EGL, GLESv1_CM, GLESv2]
+      excludeDynamicLibs: [vulkan]

@@ -28,6 +28,8 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 | 29 ott | **Apprendimento a gradiente** (Sergio: "perché non metti in piedi anche l'apprendimento a gradiente... facciamo partire una bella larga scala sul mio computer"): `strumenti/arena/impara.py` fa imparare alla rete quanto rende una posizione (da ogni fine turno a fine partita), giro dopo giro sulle partite che gioca, con numpy; corsa lunga sul PC di Sergio. Rete e strumenti restano fuori dal gioco, che usa il bot euristico. | PR del bot |
 | 29 ott | **Gradiente, seconda corsa** (Claude): la prima corsa sul PC sale dal 28% al 42-47% all'esame contro il bot euristico e lì si ferma (oscilla 35-47%). L'obiettivo diventa il ritorno a passi TD(λ = 0,7) invece dell'esito a fine partita (troppo rumoroso: varianza spiegata ferma a 0,26), rete 64-32 (3457 pesi), memoria di 5 giri, esame su 480 partite, normalizzazione con deviazione minima 0,1 (le morti dei compagni davano pesi da -5000) e la rete migliore tenuta in `migliore.json`. Riparte da zero con il punteggio di main. | PR del bot 2 |
 | 29 ott | Roadmap: VPS europeo + SQLite + Litestream + Caddy; account ospite; pannello servito dal Go; GitHub Actions per i test; deploy a script; build anche browser dal nostro server. | docs/roadmap.md |
+| 29 ott | **APK su Telegram in automatico**: GitHub Actions costruisce l'APK a ogni push su main (con l'online, firmato con la chiave di Sergio dai segreti del repository) e il bot @ultrablastbot lo manda a Sergio (Claude). | .github/workflows/apk.yml, docs/setup.md |
+| 29 ott | **Motore Android snello** (Sergio: "ottimizzare senza rinunciare a qualità"): `client/megablast.appmanifest` toglie fisica 2D/3D, Vulkan (resta OpenGL ES), registratore, profiler, particellari, tilemap, image.load e live update; la UI (`/ui/**`) senza mipmap. Grafica e suoni identici (Claude). | client/megablast.appmanifest |
 
 ## Scartate
 
@@ -52,6 +54,14 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 - Tetto di lavoro del bot a tempo (millisecondi): non deterministico, client e
   server sceglierebbero mosse diverse; si conta il lavoro — 29 ott.
 - Kubernetes, piattaforme gestite, cloud gratuito (29 ott).
+- APK costruito nella sessione cloud: il build server di Defold non si
+  raggiunge, quindi niente online, e la chiave è diversa da quella del PC.
+  APK costruito e mandato dal PC col controllo remoto: va acceso il PC e il
+  token di Telegram finirebbe nelle istruzioni della sessione (Claude) — 29 ott.
+- Texture delle mappe compresse per la GPU (ASTC/ETC2): 4 volte meno memoria
+  ma rischio di sbavature visibili sul terreno dipinto; restano RGBA. Togliere
+  il suono wav o ogg: wav lo usa il punto, ogg servirà per l'audio base
+  (Claude) — 29 ott.
 
 ## Aperte
 

@@ -30,7 +30,7 @@ gui = {
 	set_text = function(n, text) n.text = text end,
 	set_size = function(n, v) n.size = copia(v) end,
 	get_size = function(n) return n.size end,
-	set_font = function() end, set_outline = function() end, set_pivot = function() end,
+	set_font = function() end, set_outline = function() end, set_pivot = function() end, set_line_break = function() end,
 	set_slice9 = function() end, PIVOT_W = 3,
 	-- l'ordine fra i fratelli: move_above(n, nil) lo porta sopra a tutti
 	move_above = function(n) ordine = ordine + 1; n.ordine = ordine end,
@@ -82,13 +82,26 @@ local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = t
 for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
 check(tutto_finito(), "a riposo: valori finiti")
 
--- l'arma nella mano del braccio davanti: la presa (battaglia/impugnature.lua)
--- sta nella mano, che è dove finisce il braccio che pende
+-- presa, perno e spalla di ogni arma (battaglia/impugnature.lua)
 local PRESE = require "battaglia.impugnature"
 local D0 = require "battaglia.diavoletto"
-local function mano_braccio(v)
-	local b, pu = D0.pezzi.braccio, D0.pezzi.pugno
-	return mondo(v.braccio_a, b.x * v.k, (b.y - b.h / 2 + pu.h * 0.4) * v.k)
+-- chi impugna l'arma (lo dice la clip) la tiene: la manina sta sulla presa, il
+-- braccio punta verso la presa (ci arriva solo se la presa è lontana dalla
+-- spalla quanto è lungo il braccio, e le clip possono spostare la spalla)
+local function tiene(v, name)
+	local g = PRESE[name]
+	local gx, gy = mondo(v.armi[name], g.presa[1], g.presa[2])
+	local chi = v.posa.clip and v.posa.clip.impugna or "braccio_a"
+	if chi:find("^manina") then
+		local mx, my = mondo(v[chi], 0, 0)
+		return math.abs(gx - mx) < 0.5 and math.abs(gy - my) < 0.5, chi
+	elseif chi:find("^braccio") then
+		local pz = D0.pezzi[chi == "braccio_a" and "braccio" or "braccio_dietro"]
+		local jx, jy = mondo(v[chi], 0, 0)
+		local hx, hy = mondo(v[chi], pz.x * v.k, (pz.y - pz.h / 2 + D0.pezzi.pugno.h * 0.4) * v.k)
+		return math.abs(angolo(math.atan2(hy - jy, hx - jx) - math.atan2(gy - jy, gx - jx))) < 0.02, chi
+	end
+	return true, chi
 end
 -- la direzione dell'arma nel mondo
 local function verso_arma(v, name)
@@ -107,10 +120,8 @@ for _, name in ipairs({ "missile", "sword", "mallet" }) do
 		for _ = 1, 30 do scoria.update(s, 1 / 60, st) end
 		local d = angolo(verso_arma(s, name) - a)
 		check(math.abs(d) < 0.02, string.format("%s mirando a %.1f: l'arma punta dove si mira (scarto %.3f)", name, a, d))
-		local g = PRESE[name]
-		local gx, gy = mondo(s.armi[name], g.presa[1], g.presa[2])
-		local hx, hy = mano_braccio(s)
-		check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5, string.format("%s mirando a %.1f: la presa è nella mano", name, a))
+		local ok, chi = tiene(s, name)
+		check(ok, string.format("%s mirando a %.1f: %s tiene la presa", name, a, chi))
 	end
 end
 
@@ -249,18 +260,22 @@ do
 	end
 	check(braccio and math.abs(braccio.pos.x - (D.pezzi.braccio.x - 3) * k) < 1e-6
 		and math.abs(braccio.pos.y - (D.pezzi.braccio.y + 2) * k) < 1e-6
-		and math.abs(v.braccio_a.pos.x - (D.punti.spalle[1] + 3) * k) < 1e-6,
+		and math.abs(v.braccio_a.pos.x - (D.punti.spalle[1] + 3 + v.posa.braccio_a_x) * k) < 1e-6,
 		"perni: il braccio gira attorno al perno spostato e da fermo resta dov'era")
 	check(testa and math.abs(testa.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6
-		and math.abs(v.cima.pos.y - (D.punti.cima[2] - 4) * k) < 1e-6,
+		and math.abs(v.cima.pos.y - (D.punti.cima[2] - 4 + v.posa_fiamma.fiamma_y) * k) < 1e-6,
 		"perni: la testa e la fiammella restano dov'erano")
 	package.loaded["battaglia.perni"] = nil
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
 end
 
--- il perno del braccio davanti spostato: l'arma resta nella mano
+-- il perno del braccio davanti spostato: l'arma resta nella mano (con una
+-- mira che non sposta niente e il braccio davanti che impugna)
 do
+	local A2 = require "battaglia.animazioni"
+	local vecchia = A2.mira_missile
+	A2.mira_missile = { durata = 1, ciclo = true, tracce = {} }
 	package.loaded["battaglia.perni"] = { braccio = { 3, -2 } }
 	package.loaded["battaglia.scoria"] = nil
 	local sc2 = require "battaglia.scoria"
@@ -273,6 +288,7 @@ do
 	local b, pu = D0.pezzi.braccio, D0.pezzi.pugno
 	local hx, hy = mondo(v.braccio_a, (b.x - 3) * v.k, (b.y + 2 - b.h / 2 + pu.h * 0.4) * v.k)
 	check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5 and px ~= gx, "perni: col perno del braccio spostato l'arma resta nella mano")
+	A2.mira_missile = vecchia
 	package.loaded["battaglia.perni"] = nil
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
@@ -281,7 +297,8 @@ end
 -- i pezzi che le clip mostrano e tolgono, e le clip con l'arma in mano
 do
 	local A2 = require "battaglia.animazioni"
-	local vecchie = { fermo = A2.fermo, fermo_arma = A2.fermo_arma }
+	local vecchie = { fermo = A2.fermo, fermo_arma = A2.fermo_arma, fermo_arma_missile = A2.fermo_arma_missile }
+	A2.fermo_arma_missile = nil
 	A2.fermo = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, mostra_manina_a = { 0, 1, 2 },
 		manina_a_x = { 0, 7, 2 }, manina_a = { 0, 0.5, 2 }, mostra_ala = { 0, 0, 2 }, mostra_coda = { 0, 0, 2 },
 		mostra_testa = { 0, 0, 2 }, mostra_gamba_d = { 0, 0, 2 } } }
@@ -316,7 +333,7 @@ do
 		if v.presa.enabled then presa = true elseif presa then posata = true end
 	end
 	check(presa and posata, "attesa: chi non è di turno prende e posa l'arma")
-	A2.fermo, A2.fermo_arma = vecchie.fermo, vecchie.fermo_arma
+	A2.fermo, A2.fermo_arma, A2.fermo_arma_missile = vecchie.fermo, vecchie.fermo_arma, vecchie.fermo_arma_missile
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
 end
@@ -535,64 +552,6 @@ camera.cambia(c, -5)
 check(camera.zoom(c) == camera.LIVELLI[1], "rotella avanti: si ferma sul più vicino")
 camera.prossimo(c); camera.prossimo(c); camera.prossimo(c)
 check(c.livello == 1, "il pulsante gira: vicino, medio, mappa, vicino")
-
--- Tutorial a passi (battaglia/tutorial.lua) ------------------------------------------
-do
-	local tutorial = require "battaglia.tutorial"
-	local t = tutorial.new()
-	-- gioca input(tick) per al massimo n tick, passando gli eventi al tutorial
-	local function gioca(g, n, input)
-		for k = 1, n do
-			g:step(input and input(k) or nil)
-			for _, e in ipairs(g:pop_events()) do tutorial.evento(t, g, e) end
-			if tutorial.fatto(t, g) then return true end
-		end
-		return false
-	end
-	local function spara(w, a) return { fire = { angle = a or math.rad(45), power = 0.7, weapon = w or "missile" } } end
-
-	local g = tutorial.partita(t, 1)
-	check(#g.order == 1 and g.robots[2] and math.abs(g.robots[2].x - g.robots[1].x) > 200,
-		"tutorial: il bersaglio c'è ma non gioca")
-	check(gioca(g, 600, function(k)
-		if k <= 60 then return { right = true } end
-		if k == 70 then return spara() end
-	end), "tutorial 1: muoversi e sparare")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	check(not gioca(g, 2, function() return spara() end), "tutorial 2: sparare non basta")
-	check(gioca(g, 900, function() if g.window > 0 then return { left = true } end end), "tutorial 2: al riparo dopo il colpo")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	check(math.abs(g.robots[2].x - g.robots[1].x) < 40, "tutorial 3: il bersaglio è vicino")
-	check(gioca(g, 120, function(k) if k == 5 then return spara("sword", 0) end end), "tutorial 3: colpo di spada")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	check(gioca(g, 300, function(k)
-		if k == 5 then return spara() end
-		if k == 30 then return spara("sword", 0) end
-	end), "tutorial 4: due attacchi nello stesso turno")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	check(g.robots[1].teleports_left == 0, "tutorial 5: si parte senza teletrasporti")
-	check(gioca(g, 600, function(k)
-		if k == 5 then return spara() end
-		if k == 20 then return spara("teleport", math.rad(80)) end
-	end), "tutorial 5: globo guadagnato e lanciato")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	tutorial.evento(t, g, { type = "sword_hit", robot = 1, target = 2 })
-	check(not tutorial.fatto(t, g), "tutorial 6: il fendente da solo non è la combo")
-	tutorial.evento(t, g, { type = "teleport", robot = 1 })
-	tutorial.evento(t, g, { type = "sword_hit", robot = 1, target = 2 })
-	check(tutorial.fatto(t, g), "tutorial 6: teletrasporto e fendente")
-	check(not tutorial.avanti(t), "tutorial: sei passi")
-end
 
 if failures > 0 then
 	print(failures .. " test falliti")

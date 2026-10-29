@@ -1,0 +1,51 @@
+# APK Android firmato con la chiave di Sergio, mandato su Telegram a ogni push su
+# main (o a mano da Actions → "APK su Telegram" → Run workflow).
+# Qui l'estensione WebSocket si compila sul build server di Defold, quindi l'online c'è.
+# Solo arm64 (tutti i telefoni da 2017 in poi): con anche armv7 l'APK pesa 70 MB e Telegram
+# ne accetta al massimo 50.
+# Segreti: ANDROID_KEYSTORE (keystore in base64), ANDROID_KEYSTORE_PASS,
+# TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID. Variabile facoltativa: SERVER_URL.
+name: APK su Telegram
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: apk
+  cancel-in-progress: true
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Costruisci l'APK
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          SERVER_URL: ${{ vars.SERVER_URL }}
+        run: |
+          curl -fsSL --retry 4 -o "$RUNNER_TEMP/bob.jar" https://github.com/defold/defold/releases/download/1.14.0/bob.jar
+          echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/chiave.keystore"
+          printf '%s' "$KEYSTORE_PASS" > "$RUNNER_TEMP/chiave.pass"
+          : > "$RUNNER_TEMP/apk.ini"
+          [ -n "$SERVER_URL" ] && printf '[megablast]\nserver_url = %s\n' "$SERVER_URL" > "$RUNNER_TEMP/apk.ini"
+          java -jar "$RUNNER_TEMP/bob.jar" --root client --settings "$RUNNER_TEMP/apk.ini" \
+            --platform arm64-android --architectures arm64-android --strip-executable \
+            --bundle-format apk --variant release --archive --texture-compression true \
+            --keystore "$RUNNER_TEMP/chiave.keystore" --keystore-pass "$RUNNER_TEMP/chiave.pass" \
+            --bundle-output "$RUNNER_TEMP/bundle" resolve build bundle
+          find "$RUNNER_TEMP/bundle" -name '*.apk' -exec mv {} "$RUNNER_TEMP/MegaBlast.apk" \;
+          ls -l "$RUNNER_TEMP/MegaBlast.apk"
+      - name: Manda su Telegram
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          testo="MegaBlast $(git log -1 --format='%h %s' | cut -c1-200)"
+          curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendDocument" \
+            -F "chat_id=$CHAT" -F "caption=$testo" -F "document=@$RUNNER_TEMP/MegaBlast.apk"

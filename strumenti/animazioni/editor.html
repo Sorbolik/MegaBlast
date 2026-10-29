@@ -2176,7 +2176,11 @@ for (const c of [...PL.sostituisce, ...PL.sopra]) {
 	sel.onchange = () => { if (sel.value) addosso[c] = sel.value; else delete addosso[c]; vesti(); pezziRitocco(); costruisciSecchio(); aggiorna(); };
 	l.appendChild(sel);
 	$("pelli").appendChild(l);
+	// si parte col personaggio di tutti nel gioco (scoria.PERSONAGGIO)
+	const gioco = DATI.personaggio.find((n) => nomi.includes(n));
+	if (gioco) { sel.value = gioco; addosso[c] = gioco; }
 }
+vesti();
 try {
 	const bozza = localStorage.getItem("megablast-ritocchi");
 	if (bozza) { ritocchi = JSON.parse(bozza); vesti(); }
