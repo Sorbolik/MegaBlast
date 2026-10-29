@@ -5,6 +5,7 @@
 --
 --   local c = hud.cronometro(x, y)
 --   hud.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
+--   hud.cronometro_tacche(c)   -- tacche viola dei globi (config.TELEPORT_SOGLIE) sull'anello del turno
 --   hud.globi_nodi(c)      -- dopo i pulsanti, così i globi ci volano sopra
 --   hud.globi(c, n, pos, lento, arrivo) -- i secondi risparmiati volano come globi su pos
 --     (il teletrasporto); arrivo(i) quando il globo i tocca il pulsante
@@ -13,10 +14,14 @@
 --     "riparati" (blu, attacchi finiti) o nil (nessun turno da contare)
 --   local t = hud.tondo(x, y, d, icona, colore, parent)   -- icona: "<icona>_icona" dell'atlante armi
 --   hud.tondo_numero(t, "2")
+--   local s = hud.scambio()     -- il pulsante che scambia il secondo attacco con un teletrasporto
+--   if hud.scambio_update(s, dt, visibile, c) then ... end   -- true: tenuto premuto fino in fondo
+--   hud.scambio_premi(s, px, py) / hud.scambio_lascia(s)
 --   local k = hud.cartellino()
 --   hud.cartellino_su(k, x, y, "LAMA") / hud.cartellino_via(k)
 
 local ui = require "ui.ui"
+local config = require "sim.config"
 
 local M = {}
 
@@ -44,6 +49,7 @@ M.FUORI = M.RAGGIO + M.SPESSORE * 0.55 + 2
 local FONDO = vmath.vector4(0.04, 0.035, 0.05, 0.72)
 local BINARIO = vmath.vector4(1, 1, 1, 0.1)
 local NUMERO, PAROLA, OROLOGIO = 2.4, 0.6, 1.0   -- scale di ui.testo
+local TACCA = vmath.vector4(0.04, 0.035, 0.05, 1)
 local GLOBI, GLOBO_VOLO, GLOBO_DOPO = 6, 0.55, 0.09
 M.GLOBI = GLOBI   -- globi che volano insieme, al massimo
 -- velocità del "pling" di ogni globo che arriva al teletrasporto: sale di una
@@ -143,6 +149,14 @@ function M.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
 		end
 		c.sec, c.num_s = sec, sec
 	end
+	-- le tacche dei globi si vedono nel turno finché la punta dell'arco non le passa
+	-- (c.tacche_on = false: il tempo avanzato non dà globi)
+	if c.tacche then
+		for _, t in ipairs(c.tacche) do
+			local on = c.tacche_on ~= false and fase == "turno" and totale - rimasti <= t.sec
+			if t.on ~= on then gui.set_enabled(t.nodo, on); t.on = on end
+		end
+	end
 	c.battito = max(0, c.battito - dt * 4)
 	scala(c.radice, 1 + c.amp * c.battito * c.battito)
 	c.onda = max(0, c.onda - dt * 2.2)
@@ -152,6 +166,33 @@ function M.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
 		local col = f and f.colore or M.BIANCO
 		C.x, C.y, C.z, C.w = col.x, col.y, col.z, c.onda * 0.8
 		gui.set_color(c.onda_n, C)
+	end
+end
+
+-- Le tacche dei globi: dove sarà la punta dell'arco a ogni soglia, una
+-- lineetta viola sull'anello e fuori un pallino viola, il globo che si perde
+-- passandola (Sergio: un pallino solo per tacca, due sembravano altro)
+function M.cronometro_tacche(c)
+	local soglie, totale = config.TELEPORT_SOGLIE, config.TURN_SECONDS
+	c.tacche = {}
+	for i, sec in ipairs(soglie) do
+		local a = math.rad(90 + 360 * sec / totale)
+		local cs, sn = math.cos(a), math.sin(a)
+		local t = { sec = sec, on = true }
+		t.nodo = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+		gui.set_parent(t.nodo, c.radice)
+		gui.set_visible(t.nodo, false)
+		-- una tacca scura nell'anello con dentro la lineetta viola
+		for _, s in ipairs({ { 8, M.SPESSORE + 2, TACCA }, { 3, M.SPESSORE + 12, ui.C.VIOLA } }) do
+			local riga = fit(gui.new_box_node(vmath.vector3(cs * M.RAGGIO, sn * M.RAGGIO, 0), vmath.vector3(s[1], s[2], 0)))
+			gui.set_color(riga, s[3])
+			gui.set_euler(riga, vmath.vector3(0, 0, math.deg(a) - 90))
+			gui.set_parent(riga, t.nodo)
+		end
+		local r = M.FUORI + 9
+		fit(ui.disco(cs * r, sn * r, 15, TACCA, t.nodo))
+		fit(ui.disco(cs * r, sn * r, 11, ui.C.VIOLA, t.nodo))
+		c.tacche[i] = t
 	end
 end
 
@@ -280,6 +321,62 @@ end
 
 function M.cartellino_via(k)
 	if k.on then gui.set_enabled(k.nodo, false); k.on = false end
+end
+
+-- Scambio del secondo attacco con un teletrasporto (Sergio, 29 ottobre: "non
+-- deve essere una cosa che uno può fare per sbaglio"): dopo il primo attacco
+-- compare sopra il cronometro un pulsante piccolo con le due frecce che si
+-- inseguono e la scritta accanto; scatta solo tenendolo premuto SCAMBIO_TEMPO
+-- secondi, mentre un anello chiaro si riempie. Lasciando prima non succede niente.
+local SCAMBIO_TEMPO, SCAMBIO_D = 0.8, 54
+
+function M.scambio()
+	local s = { t = nil, on = true }
+	s.radice = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+	gui.set_visible(s.radice, false)
+	s.tondo = M.tondo(0, 0, SCAMBIO_D, "scambio", ui.C.VIOLA, s.radice)
+	s.carica = fit(ui.anello(0, 0, SCAMBIO_D + 12, 5, ui.C.LUCE, s.radice))
+	gui.set_euler(s.carica, vmath.vector3(0, 0, 90))
+	local x = SCAMBIO_D / 2 + 10
+	for i, r in ipairs({ { "BARATTA IL SECONDO ATTACCO", 9, ui.C.TESTO }, { "CON UN TELETRASPORTO", -7, ui.C.TESTO },
+		{ "TIENI PREMUTO", -22, ui.C.VIOLA } }) do
+		local n = fit(ui.testo(r[1], x, r[2], 0.5, r[3], s.radice))
+		gui.set_pivot(n, gui.PIVOT_W)
+	end
+	M.scambio_update(s, 0, false)
+	return s
+end
+
+-- c: il cronometro, il pulsante sta sopra il tempo della partita
+function M.scambio_update(s, dt, visibile, c)
+	if s.on ~= visibile then
+		s.on = visibile
+		gui.set_enabled(s.radice, visibile)
+		if not visibile then s.t = nil end
+	end
+	if not visibile then return false end
+	gui.set_position(s.radice, vmath.vector3(c.x, c.y + M.FUORI + 36 + SCAMBIO_D / 2, 0))
+	if s.t then s.t = s.t + dt end
+	local k = s.t and min(1, s.t / SCAMBIO_TEMPO) or 0
+	gui.set_enabled(s.carica, k > 0)
+	gui.set_fill_angle(s.carica, -360 * k)
+	scala(s.tondo.nodo, 1 + 0.12 * k)
+	if k >= 1 then
+		s.t = nil
+		return true
+	end
+	return false
+end
+
+-- un dito sul pulsante: comincia a caricare (true se l'ha preso)
+function M.scambio_premi(s, px, py)
+	if not s.on or not gui.pick_node(s.tondo.nodo, px, py) then return false end
+	s.t = 0
+	return true
+end
+
+function M.scambio_lascia(s)
+	s.t = nil
 end
 
 return M

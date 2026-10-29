@@ -1,0 +1,15 @@
+# Tacche dei globi sul cronometro: a inizio turno due tacche viola (entro 9 s
+# due globi, entro 17 s uno); passata la prima resta l'altra, dopo l'attacco
+# non ce ne sono più.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_due_tacche
+aspetta 10
+foto 02_una_tacca
+mira 150 100 0.3
+aspetta_evento fire 2
+aspetta 1.5
+foto 03_dopo_attacco

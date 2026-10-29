@@ -366,6 +366,8 @@ local function annuncia_turno(self, robot)
 	if not self.annuncio_aspetta then
 		gui.animate(self.annuncio, "color.w", 0, gui.EASING_INCUBIC, 0.6, 1.4)
 	end
+	-- quando è sparito (il pulsante del baratto sta lì sopra e aspetta)
+	self.annuncio_fine = self.clock + 2
 end
 
 -- La rotellina aperta o chiusa: RIPROVA (non online) ed ESCI DALLA PARTITA
@@ -818,24 +820,33 @@ local function handle_event(self, e)
 		else
 			snap_robot(self, e.robot)
 		end
-	elseif e.type == "teleports" then
-		show_message(self, string.format("%s +%d teletrasport%s", who_name(self, e.robot), e.amount, e.amount == 1 and "o" or "i"))
-		-- sullo schermo di chi li guadagna volano dall'anello al pulsante del teletrasporto
-		if self.mode ~= "online" or e.robot == self.me then
-			-- nei primi turni della partita guidata i globi volano piano, da guardare
-			local r = self.missione
-			local lento = r and r.l.guidata and r.st.turni <= 3 and 2.5 or nil
-			-- se sono globi nostri il numerino aspetta che arrivino: ognuno lo fa
-			-- salire con un lampo e un "pling" un poco più acuto del precedente
-			-- (globi ripartiti prima di arrivare non contano più: si riparte da qui)
-			local mio = bar_robot(self) == self.g.robots[e.robot]
-			if mio then self.globi_attesa = math.min(e.amount, hud.GLOBI) end
-			hud.globi(self.crono, e.amount, gui.get_position(self.btn_tele.nodo), lento, mio and function(i)
-				self.globi_attesa = math.max(0, self.globi_attesa - 1)
-				hud.tondo_lampo(self.btn_tele)
-				sound.play("#globo", { speed = hud.GLOBO_TONI[math.min(i, #hud.GLOBO_TONI)] })
-			end)
+	elseif e.type == "teleports" or e.type == "swap" then
+		-- lo scambio del secondo attacco dà un globo, che vola come quelli del tempo
+		e.amount = e.amount or 1
+		show_message(self, e.type == "swap" and who_name(self, e.robot) .. " scambia il secondo attacco: +1 teletrasporto"
+			or string.format("%s +%d teletrasport%s", who_name(self, e.robot), e.amount, e.amount == 1 and "o" or "i"))
+		-- volano dall'anello: i nostri al pulsante del teletrasporto, quelli di un
+		-- avversario su di lui (Sergio), senza suono
+		-- nei primi turni della partita guidata i globi volano piano, da guardare
+		local r = self.missione
+		local lento = r and r.l.guidata and r.st.turni <= 3 and 2.5 or nil
+		-- se sono globi nostri il numerino aspetta che arrivino: ognuno lo fa
+		-- salire con un lampo e un "pling" un poco più acuto del precedente
+		-- (globi ripartiti prima di arrivare non contano più: si riparte da qui)
+		local mio = bar_robot(self) == self.g.robots[e.robot]
+		local dove = gui.get_position(self.btn_tele.nodo)
+		if mio then
+			self.globi_attesa = math.min(e.amount, hud.GLOBI)
+		else
+			local v = self.view[e.robot]
+			local x, y = camera.allo_schermo(self.cam, v.x, v.y + game.DISEGNO_H / 2)
+			dove = vmath.vector3(x, y, 0)
 		end
+		hud.globi(self.crono, e.amount, dove, lento, mio and function(i)
+			self.globi_attesa = math.max(0, self.globi_attesa - 1)
+			hud.tondo_lampo(self.btn_tele)
+			sound.play("#globo", { speed = hud.GLOBO_TONI[math.min(i, #hud.GLOBO_TONI)] })
+		end)
 	elseif e.type == "trap" then
 		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
 		shock(self, e.x, e.y)
@@ -2205,7 +2216,16 @@ local function render(self, dt)
 			fase, rimasti, totale = "turno", g.timer / 60, game.TURN_TICKS / 60
 		end
 	end
+	-- le tacche dei globi solo se il tempo avanzato dà globi (non in tutte le lezioni)
+	self.crono.tacche_on = g.robots[g.current].stats.time_orbs > 0
 	hud.cronometro_update(self.crono, dt, fase, rimasti, totale, self.colors[g.current], g.phase ~= "over" and clock or "")
+	-- scambio del secondo attacco con un teletrasporto: si tiene premuto
+	-- (dopo che l'annuncio del turno è sparito: starebbero uno sopra l'altro)
+	local scambio_vede = self.tele_vede and my_turn(self) and g:can_use("swap")
+		and not self.annuncio_aspetta and self.clock >= (self.annuncio_fine or 0)
+	if hud.scambio_update(self.scambio, dt, scambio_vede, self.crono) then
+		self.fire = { angle = 0, power = 0, weapon = "swap" }
+	end
 	-- nell'attesa del secondo attacco le secondarie lampeggiano, se sono loro che restano
 	local blink = g.window > 0 and my_turn(self) and math.sin(self.clock * 12) > 0
 	for _, sl in ipairs(self.slots) do
@@ -2478,6 +2498,7 @@ function init(self)
 
 	-- il cronometro ad anello in basso al centro, col tempo della partita sopra
 	self.crono = hud.cronometro(W / 2, MISURE.ring_y)
+	hud.cronometro_tacche(self.crono)
 	-- l'inquadratura di chi spara e del colpo resta sopra l'anello e il tempo della partita
 	camera.margini(self.cam, 120, 90, MISURE.ring_y + hud.FUORI + 40)
 	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game
@@ -2551,6 +2572,7 @@ function init(self)
 	self.tele_key = label(-28, -30, "T", 0.6)
 	gui.set_parent(self.tele_key, self.btn_tele.nodo)
 	self.cartellino = hud.cartellino()
+	self.scambio = hud.scambio()
 	hud.globi_nodi(self.crono)
 	self.pointers = {}
 	set_touch_ui(self, touch_device())
@@ -2819,7 +2841,9 @@ local function pointer_down(self, id, px, py)
 		self.pointers[id] = "cancelled"
 		return
 	end
-	if gui.pick_node(self.btn_zoom, px, py) then
+	if hud.scambio_premi(self.scambio, px, py) then
+		self.pointers[id] = "scambio"
+	elseif gui.pick_node(self.btn_zoom, px, py) then
 		change_zoom(self)
 	elseif gui.pick_node(self.btn_tele.nodo, px, py) then
 		toggle_tele(self)
@@ -2865,6 +2889,8 @@ local function pointer_up(self, id, x, y)
 		move_pad_release(self)
 	elseif m == "pad_aim" then
 		aim_pad_release(self)
+	elseif m == "scambio" then
+		hud.scambio_lascia(self.scambio)
 	elseif m == "aim" then
 		aim_from(self, x, y)
 		-- rilasciare il dito sopra il robot annulla lo sparo
