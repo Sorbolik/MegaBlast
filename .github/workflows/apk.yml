@@ -1,5 +1,5 @@
 # APK Android firmato con la chiave di Sergio, mandato su Telegram a ogni push su
-# main che tocca il client (o a mano da Actions → "APK su Telegram" → Run workflow).
+# main (o a mano da Actions → "APK su Telegram" → Run workflow).
 # Qui l'estensione WebSocket si compila sul build server di Defold, quindi l'online c'è.
 # Solo arm64 (tutti i telefoni da 2017 in poi): con anche armv7 l'APK pesa 70 MB e Telegram
 # ne accetta al massimo 50.
@@ -9,7 +9,6 @@ name: APK su Telegram
 on:
   push:
     branches: [main]
-    paths: ['client/**', '.github/workflows/apk.yml']
   workflow_dispatch:
 concurrency:
   group: apk
