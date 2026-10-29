@@ -117,11 +117,11 @@ def per_lua(rete, strati, mu, sigma):
 
 def salva_rete(file, rete, mu, sigma):
     file.write_text(json.dumps({"strati": [[w.tolist(), b.tolist()] for w, b in rete],
-                                "mu": mu.tolist(), "sigma": sigma.tolist()}))
+                                "mu": mu.tolist(), "sigma": sigma.tolist()}), encoding="utf-8")
 
 
 def leggi_rete(file):
-    d = json.loads(file.read_text())
+    d = json.loads(file.read_text(encoding="utf-8"))
     return [(np.array(w), np.array(b)) for w, b in d["strati"]], np.array(d["mu"]), np.array(d["sigma"])
 
 
@@ -186,7 +186,7 @@ def main():
     radice.mkdir(parents=True, exist_ok=True)
     file_stato = radice / "stato.json"
     if file_stato.exists():
-        stato = json.loads(file_stato.read_text())
+        stato = json.loads(file_stato.read_text(encoding="utf-8"))
         print(f"riprendo dal giro {stato['giro'] + 1}")
     else:
         strati = [CARATTERISTICHE] + [int(x) for x in args.strati.split(",")] + [1]
@@ -252,22 +252,22 @@ def main():
         e = evolvi.esame(radice, giro, nuova_lua, args)
         e["giro"] = giro
         if not stato["esami"] or e["vince"] > max(v["vince"] for v in stato["esami"]):
-            (radice / "migliore.json").write_text(json.dumps(nuova_lua | {"giro": giro}))
+            (radice / "migliore.json").write_text(json.dumps(nuova_lua | {"giro": giro}), encoding="utf-8")
         stato["esami"].append(e)
         stato["storia"].append(voce)
         stato["giro"] = giro
         print(f"giro {giro}: {len(y)} esempi nuovi, impara su {len(X)} (varianza spiegata {studio['spiegata']:.2f}); "
               f"esame: la rete arriva più in alto del bot di oggi nel {100 * e['vince']:.0f}% delle partite")
 
-        file_stato.write_text(json.dumps(stato))
+        file_stato.write_text(json.dumps(stato), encoding="utf-8")
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
-                                                        "esami": stato["esami"]}, indent=1, ensure_ascii=False))
+                                                        "esami": stato["esami"]}, indent=1, ensure_ascii=False), encoding="utf-8")
         campioni = []
         for k in range(giro + 1):
             r, m_, s_ = leggi_rete(radice / f"rete_{k}.json")
             campioni.append(per_lua(r, strati, m_, s_) | {"giro": k})
-        (radice / "campioni.json").write_text(json.dumps(campioni))
-        (radice / "evoluzione.md").write_text(rapporto(stato, args))
+        (radice / "campioni.json").write_text(json.dumps(campioni), encoding="utf-8")
+        (radice / "evoluzione.md").write_text(rapporto(stato, args), encoding="utf-8")
         # gli esempi vecchi non servono più
         vecchio = radice / f"giro_{giro - args.memoria}"
         for f in ("x.npy", "y.npy", "catene.npy", "m.npy"):

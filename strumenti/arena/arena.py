@@ -55,12 +55,12 @@ def gioca(args):
         cmd = [luajit, "strumenti/arena/arena.lua", "--partite", str(q), "--da", str(da), "--uscita", str(parte)] + extra
         processi.append((subprocess.Popen(cmd, cwd=REPO, stderr=subprocess.PIPE, text=True), parte))
     tutte = USCITA / "partite.jsonl"
-    with tutte.open("w") as out:
+    with tutte.open("w", encoding="utf-8") as out:
         for pr, parte in processi:
             _, err = pr.communicate()
             if pr.returncode != 0:
                 sys.exit(f"arena.lua fallita:\n{err}")
-            out.write(parte.read_text())
+            out.write(parte.read_text(encoding="utf-8"))
             parte.unlink()
     dt = time.time() - t0
     print(f"{n} partite in {dt:.0f} s con {p} processi ({n / dt * 3600:.0f} all'ora)")
@@ -70,7 +70,7 @@ def gioca(args):
 # Rapporto ------------------------------------------------------------------------
 
 def leggi(file):
-    with open(file) as f:
+    with open(file, encoding="utf-8") as f:
         return [json.loads(r) for r in f if r.strip()]
 
 
@@ -222,22 +222,22 @@ def highlight(partite, quanti=10):
 def video(n, file):
     """Il video dell'highlight n (da 1): il simulatore rigioca la ricetta dal
     turno dell'highlight (megablast.ricetta) e registra lo schermo."""
-    hs = json.loads((USCITA / "highlight.json").read_text())
+    hs = json.loads((USCITA / "highlight.json").read_text(encoding="utf-8"))
     h = hs[n - 1]
     p = leggi(file)[h["partita"]]
     if p.get("pesi"):
         # i pesi (anche le reti) non stanno nella ricetta: si rimettono dal .json della popolazione
-        pop = json.loads(Path(p["pesi"]).with_suffix(".json").read_text())
+        pop = json.loads(Path(p["pesi"]).with_suffix(".json").read_text(encoding="utf-8"))
         for pl in p["ricetta"]["opzioni"]["players"]:
             if pl.get("individuo"):
                 pl["pesi"] = pop[pl["individuo"] - 1]
     ricetta = USCITA / f"ricetta_{n}.json"
-    ricetta.write_text(json.dumps(p["ricetta"]))
+    ricetta.write_text(json.dumps(p["ricetta"]), encoding="utf-8")
     scenario = USCITA / f"highlight_{n}.txt"
     scenario.write_text(
         f"# highlight {n}: {h['firma']} ({h['modo']}, {h['mappa']}, seme {h['seme']}, tick {h['tick']})\n"
         f"imposta ricetta {ricetta}\nimposta ricetta_da {max(0, h['tick'] - 60)}\nimposta zoom 1\n"
-        "aspetta_stato modo=local 20\naspetta 1\nfoto inizio\naspetta 26\nfoto fine\n")
+        "aspetta_stato modo=local 20\naspetta 1\nfoto inizio\naspetta 26\nfoto fine\n", encoding="utf-8")
     r = subprocess.run([sys.executable, str(REPO / "strumenti/simula/simula.py"), "-s", str(scenario)], cwd=REPO)
     if r.returncode != 0:
         sys.exit("la simulazione del video è fallita")
@@ -274,9 +274,9 @@ def main():
     file = Path(args.rapporto) if args.rapporto else gioca(args)
     partite = leggi(file)
     USCITA.mkdir(parents=True, exist_ok=True)
-    (USCITA / "rapporto.md").write_text(rapporto(partite))
+    (USCITA / "rapporto.md").write_text(rapporto(partite), encoding="utf-8")
     hs = highlight(partite)
-    (USCITA / "highlight.json").write_text(json.dumps(hs, indent=1, ensure_ascii=False))
+    (USCITA / "highlight.json").write_text(json.dumps(hs, indent=1, ensure_ascii=False), encoding="utf-8")
     print(f"rapporto: {USCITA / 'rapporto.md'}")
     for k, h in enumerate(hs, 1):
         print(f"highlight {k}: {h['firma']} ({h['punteggio']}, visto {h['volte']} volte) seme {h['seme']} tick {h['tick']}")
