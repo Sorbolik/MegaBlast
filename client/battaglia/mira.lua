@@ -4,7 +4,8 @@
 -- grande uguale sullo schermo a ogni zoom, come l'interfaccia:
 -- - il mirino: un anellino a distanza fissa dalla bocca dell'arma, nella
 --   direzione in cui si mira, che si riempie del colore della squadra con la
---   potenza (da sopra, in senso orario);
+--   potenza (da sopra, in senso orario), unito alla bocca da una linea
+--   sottilissima che fa vedere l'inclinazione (Sergio);
 -- - il cartellino sopra la testa: i gradi (0° orizzontale verso dove si guarda,
 --   90° in alto, negativi in basso, uguali a destra e a sinistra) e la potenza in
 --   percento con una barretta del colore della squadra;
@@ -35,6 +36,8 @@ local DOT, DOT_BORDO = 4, 6
 -- dell'anello e del riempimento, il puntino in mezzo
 M.MIRINO_D = 50
 local MIRINO, TRACCIA, PIENO, CENTRO = 30, 3, 5, 5
+-- la linea dalla bocca al mirino: spessore della linea chiara e della sua ombra
+local LINEA, LINEA_OMBRA = 1.5, 3.5
 -- la potenza può fare una micro-vibrazione a ogni tacca: spenta di base (Sergio,
 -- 29 ott: vibra solo quando il colpo diventa sganciabile), si accenderà dalle
 -- impostazioni (docs/impostazioni.md)
@@ -43,6 +46,7 @@ M.VIBRA_TACCHE = false
 
 local LUCE, OMBRA = ui.C.LUCE, vmath.vector4(0, 0, 0, 0.55)
 local TRACCIA_C = vmath.vector4(LUCE.x, LUCE.y, LUCE.z, 0.35)
+local LINEA_C, LINEA_OMBRA_C = vmath.vector4(LUCE.x, LUCE.y, LUCE.z, 0.7), vmath.vector4(0, 0, 0, 0.35)
 local V, S = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1)
 local E = vmath.vector3(0, 0, 0)
 
@@ -136,7 +140,18 @@ function M.nuova()
 		m.nodi[#m.nodi + 1] = m.luci[i]
 	end
 
-	-- il mirino: ombra, anello chiaro, riempimento, puntino in mezzo
+	-- la linea dalla bocca al mirino (con la sua ombra), poi il mirino: ombra,
+	-- anello chiaro, riempimento, puntino in mezzo
+	m.linee = {}
+	for i, c in ipairs({ LINEA_OMBRA_C, LINEA_C }) do
+		local n = gui.new_box_node(V, V)
+		gui.set_color(n, c)
+		gui.set_pivot(n, gui.PIVOT_W)
+		gui.set_adjust_mode(n, gui.ADJUST_FIT)
+		gui.set_enabled(n, false)
+		m.linee[i] = n
+		m.nodi[#m.nodi + 1] = n
+	end
 	m.mir = radice()
 	figlio(disco(MIRINO + 6, OMBRA), m.mir)
 	local traccia = figlio(disco(MIRINO, TRACCIA_C), m.mir)
@@ -199,6 +214,16 @@ function M.mirino(m, x, y, angolo, s, potenza, colore)
 	gui.set_euler(m.pieno, E)
 	gui.set_color(m.pieno, colore)
 	gui.set_enabled(m.mir, true)
+	-- la linea parte dalla bocca e si ferma dove comincia l'anello
+	E.z = deg(angolo)
+	for i, n in ipairs(m.linee) do
+		V.x, V.y, V.z = x, y, 0
+		gui.set_position(n, V)
+		V.x, V.y = (M.MIRINO_D - MIRINO / 2 - 1) / s, (i == 1 and LINEA_OMBRA or LINEA) / s
+		gui.set_size(n, V)
+		gui.set_euler(n, E)
+		gui.set_enabled(n, true)
+	end
 end
 
 function M.cartellino(m, x, y, s, gradi, potenza, colore)
@@ -230,6 +255,7 @@ end
 function M.via(m)
 	M.traiettoria_via(m)
 	gui.set_enabled(m.mir, false)
+	for _, n in ipairs(m.linee) do gui.set_enabled(n, false) end
 	gui.set_enabled(m.c.radice, false)
 end
 
