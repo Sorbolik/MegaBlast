@@ -617,15 +617,18 @@ k = mira.posa(linea, 4, 1, 40, false, out)
 check(k <= 40 and k >= 38, "mira: non più di 40 puntini, si allargano")
 check(mira.posa(linea, 4, 15, 40, true, out) == 4 and out[3].x == 120, "mira: il Bastione ha i puntini sui punti")
 local m = mira.nuova()
-check(#m.nodi == 2 * mira.PUNTI + 3 and m.cartello, "mira: puntini, linea, mirino e cartellino")
+check(#m.nodi == 2 * mira.PUNTI + 4 and m.cartello, "mira: puntini, linea, mirino, lancetta e cartellino")
 mira.cartellino(m, 0, 0, 2, 40, 0.94, vec(1, 0, 0, 1))
 check(m.c.testo == "40°" and m.c.p == 94 and m.c.radice.scale.x == 0.5, "mira: gradi e potenza, grandi uguali a ogni zoom")
 mira.mirino(m, 100, 50, 0, 2, 0.5, vec(1, 0, 0, 1))
 check(m.mir.enabled and m.mir.scale.x == 0.5 and math.abs(m.mir.pos.x - (100 + mira.MIRINO_D / 2)) < 1e-9 and m.mir.pos.y == 50,
 	"mira: il mirino a distanza fissa sullo schermo nella direzione della mira")
 check(m.linee[2].enabled and m.linee[2].pos.x == 100 and m.linee[2].size.x < mira.MIRINO_D / 2, "mira: la linea dalla bocca fino al mirino")
+mira.lancetta(m, 100, 50, math.rad(30), 2, 0.5, vec(1, 0, 0, 1))
+check(m.lanc.enabled and not m.mir.enabled and not m.linee[2].enabled and math.abs(m.lanc.euler.z - 30) < 1e-6 and m.lanc.scale.x == 0.5,
+	"mira: la lancetta girata come la mira prende il posto del mirino")
 mira.via(m)
-check(not m.mir.enabled and not m.c.radice.enabled and not m.linee[2].enabled, "mira: via spegne linea, mirino e cartellino")
+check(not m.lanc.enabled and not m.mir.enabled and not m.c.radice.enabled and not m.linee[2].enabled, "mira: via spegne linea, mirino e cartellino")
 
 if failures > 0 then
 	print(failures .. " test falliti")

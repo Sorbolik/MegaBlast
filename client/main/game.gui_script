@@ -371,11 +371,14 @@ local function annuncia_turno(self, robot)
 	self.annuncio_fine = self.clock + 2
 end
 
--- La rotellina aperta o chiusa: RIPROVA (non online) ed ESCI DALLA PARTITA
+-- La rotellina aperta o chiusa: RIPROVA (non online), ESCI DALLA PARTITA e,
+-- sotto, la prima impostazione: la mira a lancetta o a mirino
 local function apri_rotellina(self, aperta)
 	self.menu_aperto = aperta
 	gui.set_enabled(self.btn_riprova, aperta and self.mode ~= "online")
 	gui.set_enabled(self.btn_esci, aperta)
+	gui.set_enabled(self.btn_mira, aperta)
+	gui.set_text(self.btn_mira_testo, "MIRA: " .. string.upper(profilo.impostazione(self.profilo, "mira")))
 end
 
 local function set_controls_visible(self, visible)
@@ -2199,7 +2202,8 @@ local function render(self, dt)
 	if self.aiming and can_aim and not cancel then
 		local v, s = self.view[g.current], self.cam.s
 		local cy = v.y + game.DISEGNO_H / 2
-		mira.mirino(self.mira, v.x + math.cos(self.aim_angle) * game.MUZZLE,
+		-- lancetta o mirino, come dice l'impostazione "mira" (dalla rotellina)
+		mira[profilo.impostazione(self.profilo, "mira")](self.mira, v.x + math.cos(self.aim_angle) * game.MUZZLE,
 			cy + math.sin(self.aim_angle) * game.MUZZLE, self.aim_angle, s, self.aim_power, self.colors[g.current])
 		mira.cartellino(self.mira, v.x, v.y + scoria.altezza(self.robots[g.current].rig) + 3
 			+ targa.SOPRA * s ^ -0.65 + 4 / s, s, mira.gradi(self.aim_angle), self.aim_power, self.colors[g.current])
@@ -2533,11 +2537,17 @@ function init(self)
 	-- la rotellina in alto a sinistra, in ogni partita: apre accanto a sé
 	-- RIPROVA (non online) ed ESCI DALLA PARTITA, che si chiudono toccando
 	-- altrove (niente finestre sopra il gioco). Sullo stesso telefono intanto la
-	-- partita è ferma. I due pulsanti sono figli della rotellina: l'ancora al
-	-- bordo allarga le distanze sugli schermi larghi, così restano vicini
+	-- partita è ferma. Sotto, MIRA: LANCETTA / MIRINO cambia il modo della mira
+	-- (la prima impostazione, nel profilo). I pulsanti sono figli della
+	-- rotellina: l'ancora al bordo allarga le distanze sugli schermi larghi,
+	-- così restano vicini
 	self.btn_menu = ui.impostazioni({}, "menu")
 	self.btn_riprova = ui.bottone({}, 32 + 12 + 80, 0, 160, 64, "RIPROVA", "riprova", nil, self.btn_menu)
 	self.btn_esci = ui.bottone({}, 32 + 12 + 160 + 12 + 130, 0, 260, 64, "ESCI DALLA PARTITA", "esci", nil, self.btn_menu)
+	local mira_btn = {}
+	self.btn_mira = ui.bottone(mira_btn, 32 + 12 + 130, -76, 260, 64, "MIRA", "mira", nil, self.btn_menu)
+	self.btn_mira_testo = mira_btn[1].testo
+	gui.set_enabled(self.btn_mira, false)
 	gui.set_enabled(self.btn_riprova, false)
 	gui.set_enabled(self.btn_esci, false)
 	gui.set_enabled(self.btn_menu, false)
@@ -2842,8 +2852,15 @@ local function pointer_down(self, id, px, py)
 	if self.menu_aperto then
 		local esci = gui.pick_node(self.btn_esci, px, py)
 		local riprova = self.mode ~= "online" and gui.pick_node(self.btn_riprova, px, py)
-		apri_rotellina(self, false)
 		self.pointers[id] = "cancelled"
+		-- MIRA cambia modo e la rotellina resta aperta, così si vede il nuovo
+		if gui.pick_node(self.btn_mira, px, py) then
+			profilo.imposta(self.profilo, "mira", profilo.impostazione(self.profilo, "mira") == "lancetta" and "mirino" or "lancetta")
+			profilo.salva(self.profilo)
+			apri_rotellina(self, true)
+			return
+		end
+		apri_rotellina(self, false)
 		if esci then
 			esci_partita(self)
 		elseif riprova then

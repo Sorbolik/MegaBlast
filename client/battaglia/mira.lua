@@ -1,7 +1,11 @@
 -- La mira della battaglia (Sergio, 29 ottobre 2026): solo angolo e potenza, mai
 -- la traiettoria, uguale per tutte le armi (proposte disegnate in
--- https://claude.ai/artifact/NSsa8ht7XJfyJ6ZrgdxTSd, scelto il mirino). Tutto
--- grande uguale sullo schermo a ogni zoom, come l'interfaccia:
+-- https://claude.ai/artifact/NSsa8ht7XJfyJ6ZrgdxTSd). Due modi, si sceglie
+-- dalla rotellina (impostazione "mira" del profilo): la lancetta, di base
+-- perché chi comincia la capisce subito, e il mirino. Tutto grande uguale sullo
+-- schermo a ogni zoom, come l'interfaccia:
+-- - la lancetta: dritta dalla bocca dell'arma, lunga sempre uguale, a 10 tacche
+--   che si riempiono del colore della squadra con la potenza;
 -- - il mirino: un anellino a distanza fissa dalla bocca dell'arma, nella
 --   direzione in cui si mira, che si riempie del colore della squadra con la
 --   potenza (da sopra, in senso orario), unito alla bocca da una linea
@@ -15,6 +19,7 @@
 --
 --   local m = mira.nuova()                         -- m.nodi (puntini e mirino) e m.cartello: da mettere nel mondo
 --   mira.mirino(m, x, y, angolo, s, potenza, colore)  -- x, y: la bocca dell'arma nel mondo, s lo zoom
+--   mira.lancetta(m, x, y, angolo, s, potenza, colore) -- uguale, l'altro modo
 --   mira.cartellino(m, x, y, s, gradi, potenza, colore)  -- x, y: dove sta il fondo, nel mondo
 --   mira.traiettoria(m, pts, n, s, sagoma)         -- pts[1..n] nel mondo; sagoma: puntini sui punti
 --   mira.via(m) / mira.traiettoria_via(m)          -- spegne tutto / solo la traiettoria
@@ -38,6 +43,9 @@ M.MIRINO_D = 50
 local MIRINO, TRACCIA, PIENO, CENTRO = 30, 3, 5, 5
 -- la linea dalla bocca al mirino: spessore della linea chiara e della sua ombra
 local LINEA, LINEA_OMBRA = 1.5, 3.5
+-- la lancetta: dove comincia dopo la bocca, quanto è lunga, le tacche, il loro
+-- spessore e lo stacco fra l'una e l'altra, la tacca di fine corsa
+local LANC_DA, LANC_L, TACCHE, TACCA_H, TACCA_STACCO, FINE_H = 6, 100, 10, 4, 2.5, 14
 -- la potenza può fare una micro-vibrazione a ogni tacca: spenta di base (Sergio,
 -- 29 ott: vibra solo quando il colpo diventa sganciabile), si accenderà dalle
 -- impostazioni (docs/impostazioni.md)
@@ -161,6 +169,25 @@ function M.nuova()
 	figlio(disco(CENTRO, LUCE), m.mir)
 	m.nodi[#m.nodi + 1] = m.mir
 
+	-- la lancetta: girata come la mira, con l'ombra sotto, le tacche e la fine corsa
+	m.lanc = radice()
+	local function sbarra(x, w, h, colore)
+		local n = figlio(gui.new_box_node(vmath.vector3(x, 0, 0), vmath.vector3(w, h, 0)), m.lanc)
+		gui.set_pivot(n, gui.PIVOT_W)
+		gui.set_color(n, colore)
+		gui.set_adjust_mode(n, gui.ADJUST_FIT)
+		return n
+	end
+	sbarra(LANC_DA - 1.5, LANC_L + 3, TACCA_H + 3, OMBRA)
+	sbarra(LANC_DA + LANC_L + 1, 4, FINE_H + 3, OMBRA)
+	m.tacche = {}
+	local passo = LANC_L / TACCHE
+	for i = 1, TACCHE do
+		m.tacche[i] = sbarra(LANC_DA + (i - 1) * passo + TACCA_STACCO / 2, passo - TACCA_STACCO, TACCA_H, TRACCIA_C)
+	end
+	sbarra(LANC_DA + LANC_L + 2, 2, FINE_H, LUCE)
+	m.nodi[#m.nodi + 1] = m.lanc
+
 	-- il cartellino: carbone col bordo chiaro, gradi a sinistra, potenza a destra
 	local c = {}
 	c.radice = radice()
@@ -214,6 +241,7 @@ function M.mirino(m, x, y, angolo, s, potenza, colore)
 	gui.set_euler(m.pieno, E)
 	gui.set_color(m.pieno, colore)
 	gui.set_enabled(m.mir, true)
+	gui.set_enabled(m.lanc, false)
 	-- la linea parte dalla bocca e si ferma dove comincia l'anello
 	E.z = deg(angolo)
 	for i, n in ipairs(m.linee) do
@@ -224,6 +252,18 @@ function M.mirino(m, x, y, angolo, s, potenza, colore)
 		gui.set_euler(n, E)
 		gui.set_enabled(n, true)
 	end
+end
+
+function M.lancetta(m, x, y, angolo, s, potenza, colore)
+	sposta(m.lanc, x, y, 1 / s)
+	E.z = deg(angolo)
+	gui.set_euler(m.lanc, E)
+	-- piene le tacche fino alla potenza (la prima si accende subito)
+	local piene = math.max(1, math.floor(potenza * TACCHE + 0.5))
+	for i, n in ipairs(m.tacche) do gui.set_color(n, i <= piene and colore or TRACCIA_C) end
+	gui.set_enabled(m.lanc, true)
+	gui.set_enabled(m.mir, false)
+	for _, n in ipairs(m.linee) do gui.set_enabled(n, false) end
 end
 
 function M.cartellino(m, x, y, s, gradi, potenza, colore)
@@ -255,6 +295,7 @@ end
 function M.via(m)
 	M.traiettoria_via(m)
 	gui.set_enabled(m.mir, false)
+	gui.set_enabled(m.lanc, false)
 	for _, n in ipairs(m.linee) do gui.set_enabled(n, false) end
 	gui.set_enabled(m.c.radice, false)
 end
