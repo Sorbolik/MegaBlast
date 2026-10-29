@@ -26,6 +26,9 @@ show_made_with_defold = 0
 [android]
 package = com.sorbolik.megablast
 
+[native_extension]
+app_manifest = /megablast.appmanifest
+
 [ios]
 bundle_identifier = com.sorbolik.megablast
 
