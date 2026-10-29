@@ -362,6 +362,24 @@ def comando(g, riga):
         if len(a) > 3:
             g.scatta(a[3])
         g.xdo("mouseup", 1)
+    elif c == "levetta_annulla":
+        # mira con la levetta del telefono a (dx, dy) e la annulla col tasto destro
+        # (fa quello che fa un secondo dito), facoltativamente una foto, poi lascia
+        cx, cy = W - 115, 117
+        g.punta(cx, cy)
+        g.xdo("mousedown", 1)
+        g.attendi(0.05)
+        for i in range(1, 5):
+            g.punta(cx + num(0) * i / 4, cy + num(1) * i / 4)
+            g.attendi(0.02)
+        g.attendi(0.3)
+        g.xdo("mousedown", 3)
+        g.attendi(0.1)
+        g.xdo("mouseup", 3)
+        g.attendi(0.2)
+        if len(a) > 2:
+            g.scatta(a[2])
+        g.xdo("mouseup", 1)
     elif c == "annulla":
         # mira a (dx, dy) col sinistro, annulla col destro, poi lascia il sinistro
         x, y = g.robot()

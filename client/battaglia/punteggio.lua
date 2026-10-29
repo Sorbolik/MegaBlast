@@ -1,5 +1,5 @@
 -- I punti della partita sullo schermo (docs/decisioni/interfaccia.md, 29 ottobre):
--- in alto a sinistra la classifica, che si capisce senza leggere.
+-- in alto al centro la classifica, che si capisce senza leggere.
 --
 -- - Tutti contro tutti: un gettone per squadra in ordine di posto, che scivolano
 --   quando la classifica cambia; il tuo ha il bordo spesso, il primo la Corona.
@@ -30,7 +30,7 @@ local M = {}
 local max, min, floor, abs = math.max, math.min, math.floor, math.abs
 
 local SQUADRE = 4
-local Y, X0 = 720 - 28, 12            -- centro della fila e bordo sinistro
+local Y, MEZZO = 720 - 28, 640        -- centro della fila, centrata sullo schermo
 local GET_W, GET_H, GET_GAP = 104, 30, 6
 local STRISCIA, BORDO_MIO = 6, 3
 -- due squadre: due gettoni dei punti e la fune in mezzo
@@ -125,7 +125,7 @@ function M.nuovo(colori, tick)
 	for t = 1, SQUADRE do p.gettoni[t] = gettone(colori[t]) end
 
 	-- la fune
-	p.fune = radice(X0 + VAL_W + FUNE_GAP + FUNE_W / 2, Y)
+	p.fune = radice(MEZZO, Y)
 	box(p.fune, 0, 0, FUNE_W + 4, FUNE_H + 4, ui.C.OMBRA)
 	p.fune_a = box(p.fune, -FUNE_W / 2, 0, FUNE_W / 2, FUNE_H, colori[1])
 	gui.set_pivot(p.fune_a, gui.PIVOT_W)
@@ -137,9 +137,8 @@ function M.nuovo(colori, tick)
 	-- distacco sotto il tuo gettone, bilancio del turno sotto la fila
 	p.distacco = radice(0, Y - GET_H / 2 - 12)
 	p.distacco_testo = ui.testo("", 0, 0, PICCOLA, ui.C.TESTO, p.distacco)
-	p.riga = radice(X0, Y - GET_H / 2 - 34)
+	p.riga = radice(MEZZO, Y - GET_H / 2 - 34)
 	p.riga_testo = ui.testo("", 0, 0, PICCOLA, ui.C.LUCE, p.riga)
-	gui.set_pivot(p.riga_testo, gui.PIVOT_W)
 	p.riga_t = 0
 
 	-- i numeri che volano, sopra a tutto il resto
@@ -180,6 +179,9 @@ function M.partita(p, g, nomi, targhe)
 	end
 	table.sort(p.lista)
 	p.fune_on = #p.lista == 2
+	-- bordo sinistro della fila, così è centrata
+	local n = #p.lista
+	p.x0 = MEZZO - (p.fune_on and (2 * VAL_W + 2 * FUNE_GAP + FUNE_W) or (n * GET_W + (n - 1) * GET_GAP)) / 2
 	for _, n in ipairs(p.numeri) do n.attivo = false; gui.set_enabled(n.nodo, false) end
 	for i, t in ipairs(p.lista) do
 		local gt = p.gettoni[t]
@@ -190,10 +192,10 @@ function M.partita(p, g, nomi, targhe)
 		if p.fune_on then
 			-- i due capi della fune
 			forma(gt, VAL_W, i == 2)
-			gt.x = i == 1 and X0 + VAL_W / 2 or X0 + VAL_W + 2 * FUNE_GAP + FUNE_W + VAL_W / 2
+			gt.x = i == 1 and p.x0 + VAL_W / 2 or p.x0 + VAL_W + 2 * FUNE_GAP + FUNE_W + VAL_W / 2
 		else
 			forma(gt, GET_W, false)
-			gt.x = X0 + GET_W / 2 + (i - 1) * (GET_W + GET_GAP)
+			gt.x = p.x0 + GET_W / 2 + (i - 1) * (GET_W + GET_GAP)
 		end
 		gt.tx = gt.x
 		posizione(gt.radice, gt.x, Y)
@@ -347,7 +349,7 @@ function M.update(p, dt, g, mio)
 			if v[a] ~= v[b] then return v[a] > v[b] end
 			return a < b
 		end)
-		for i, t in ipairs(ordine) do p.gettoni[t].tx = X0 + GET_W / 2 + (i - 1) * (GET_W + GET_GAP) end
+		for i, t in ipairs(ordine) do p.gettoni[t].tx = p.x0 + GET_W / 2 + (i - 1) * (GET_W + GET_GAP) end
 	end
 
 	local tick = false

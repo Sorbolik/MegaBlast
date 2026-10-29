@@ -8,21 +8,21 @@ aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
-tocca 707 62                        # Bastione (al posto del Rampino nella barra)
+tocca 1084 62                       # Bastione (l'attrezzo, tondo accanto al TELE)
 aspetta 0.4
 mira 150 0 0.4 01_mira 2
 aspetta_evento wall 2
 aspetta 0.3
 zoom 02_posato
 aspetta_stato turno=2 fase=aim 30
-tocca 707 62
+tocca 1084 62
 aspetta 0.4
 mira 0 150 0.4
 aspetta_evento wall 2
 aspetta 0.3
 zoom 03_in_piedi
 aspetta_stato turno=1 fase=aim 30
-tocca 707 62
+tocca 1084 62
 aspetta 0.4
 mira -150 40 0.4
 aspetta_evento wall 2
@@ -30,7 +30,7 @@ aspetta 0.2
 zoom 04_secondo
 aspetta_stato turno=2 fase=aim 30
 aspetta_stato turno=1 fase=aim 30
-tocca 707 62
+tocca 1084 62
 aspetta 0.4
 mira 60 -60 0.4
 aspetta_evento wall 2

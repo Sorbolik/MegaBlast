@@ -9,7 +9,7 @@ aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
-tocca 526 62                        # Cecchino
+tocca 130 62                        # Cecchino (la quinta primaria, a sinistra)
 aspetta 0.3
 mira 150 60 0.5 01_mira_cecchino    # in alto a sinistra: rimbalza sotto la piattaforma
 aspetta_evento sniper 2

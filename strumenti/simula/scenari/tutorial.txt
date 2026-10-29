@@ -18,7 +18,7 @@ aspetta 1                           # passo fatto appena si sposta
 tieni sinistra 1.2
 aspetta 2                           # passo 3: la spada
 foto 04_spada
-tocca 593 62                        # Lama di Nucleo (barra da 4: ci sono Rampino e paracadute)
+tocca 774 62                        # Lama di Nucleo (la prima secondaria, a destra del cronometro)
 mira 60 0 0.3
 aspetta_evento sword_hit 3
 aspetta 0.3

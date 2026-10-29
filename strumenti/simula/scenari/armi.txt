@@ -26,7 +26,7 @@ premi 6
 annulla 120 60 07_lama
 premi 7
 annulla 120 60 08_maglio
-tocca 1083 62                       # Rampino
+tocca 1084 62                       # Rampino
 annulla 120 60 09_rampino
 premi t
 annulla 120 60 10_globo_in_mano

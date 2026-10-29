@@ -9,14 +9,14 @@ aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
-tocca 942 62                        # Trampolino
+tocca 892 148                       # Trampolino (il terzo oggetto, sopra le secondarie)
 aspetta 0.3
 mira -60 60 0.3                     # un lancio corto a sinistra
 aspetta_evento place 3
 aspetta 0.3
 foto 01_trampolino_largo
 zoom 02_trampolino_largo_vicino 2
-tocca 291 62                        # Uovo
+tocca 412 62                        # Uovo
 aspetta 0.3
 mira -60 60 0.3                     # stessa mira: cade sul trampolino
 aspetta_evento bounce 3
