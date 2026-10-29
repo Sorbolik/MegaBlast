@@ -207,7 +207,7 @@ local ADDESTRAMENTO = {
 		-- il terzo bersaglio è primo in classifica: ha la Corona. Sono già
 		-- feriti, così un turno basta
 		punti = { [2] = 60, [3] = 40, [4] = 200 },
-		vita = { [2] = 30, [3] = 30, [4] = 30 },
+		vita = { [2] = 50, [3] = 50, [4] = 50 },
 		turni = 4, stelle = { 3, 2 },
 		obiettivo = {
 			{ abbatti = 4, testo = "Abbatti chi ha la Corona" },
@@ -228,7 +228,7 @@ local GIRONE_1 = {
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
 		turni = 7,
-		stelle = { turni = 5, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot" } },
 	},
 	{
@@ -239,7 +239,7 @@ local GIRONE_1 = {
 		spawns = { { x = 500, from = 600 }, { x = 1520, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, bot = "facile", carattere = "cecchino" } },
 		globi = 0,
-		vita = { [2] = 40 },
+		vita = { [2] = 55 },
 		turni = 6,
 		stelle = { turni = 2, bonus = { conta = "teletrasporti", al_massimo = 1, testo = "CON UN SOLO GLOBO" } },
 		obiettivo = {
@@ -256,7 +256,7 @@ local GIRONE_1 = {
 		arena = { { 240, 0, 1440, 150 } },
 		spawns = { { x = 760, from = 600 }, { x = 1160, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
-		vita = { [2] = 28 },
+		vita = { [2] = 46 },
 		rigenera = { 2 },
 		-- il bot che la prova fa sempre i due attacchi
 		collaudo = { piano = { due_attacchi = true } },
@@ -286,7 +286,7 @@ local GIRONE_1 = {
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = "normale", carattere = "codardo", nome = "Il codardo" } },
 		turni = 7,
-		stelle = { turni = 5, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il codardo" } },
 	},
 	{
@@ -298,7 +298,7 @@ local GIRONE_1 = {
 			{ team = 1 },
 			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro" },
 		},
-		vita = { [2] = 180 },
+		vita = { [2] = 240 },
 		turni = 10,
 		stelle = { turni = 8, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il Fabbro" } },

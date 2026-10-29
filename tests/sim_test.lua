@@ -1127,6 +1127,7 @@ do
 	check(fb.status.burn and fb.status.burn.by == 1, "col set Fornace l'Uovo brucia")
 	-- all'inizio del turno chi brucia prende danno, e a fine turno l'effetto finisce
 	run(f, 200)
+	fb.hp = 50 -- i tre scoppi qui sopra l'hanno quasi finito: la bruciatura lo ucciderebbe
 	local before, points = fb.hp, fa.points
 	to_turn(f, 2)
 	check(fb.hp == before - config.STATUS.burn.damage and fa.points > points, "la bruciatura fa danno a inizio turno e dà punti")

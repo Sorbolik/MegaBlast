@@ -16,7 +16,7 @@ delle regole in [../design.md](../design.md); le varianti valutate in
 | 22–23 ott | Partita **semi-competitiva e tattica**: premiare chi usa meno dei 25 s; strategie scelte: uccisioni ambientali, punti del podio oltre le uccisioni, effetti di stato. Non scelte: zone della mappa, turni che si accorciano, cose da fare mentre si aspetta. | game_design_competitivo.md (PR #28) |
 | 23 ott | **Due attacchi per turno** (una primaria + una secondaria, ordine libero). Dopo il primo attacco una finestra (8 s dal 24 ott, mai oltre il timer) per il secondo e per muoversi; barra gialla finché resta il secondo, blu dopo, lampeggia negli ultimi 2 s. | PR #31, #36 |
 | 23 ott | Partita di **5 minuti**, vince la squadra con più punti. Punti (Claude): 1 per punto vita tolto, 50 uccisione, +50 ambientale, −20 a chi muore, ×1,5 colpendo il primo; uccisione a chi ha colpito per ultimo nei 10 s; fuoco amico fa danno ma non dà punti. Allo scadere si finisce il giro di turni ("Supplementari"). | PR #31, #36 |
-| 23 ott | Vita dei robot 150 (×1,5, Claude; da alzare ancora secondo Sergio). Turno 25 s. | PR #31 |
+| 23 ott | Vita dei robot 150 (×1,5, Claude; da alzare ancora secondo Sergio). Turno 25 s. Il 29 ott la vita scende a 100 (vedi sotto). | PR #31 |
 | 24 ott | **Respawn 1,5 s dopo la morte nello stesso turno**, vita piena, punto libero a caso; chi muore nel proprio turno continua. (Sostituisce il respawn a fine turno del 23 ott.) | PR #36 |
 | 24 ott | **Nucleo rimosso** ("non pesava sulle scelte"): i secondi risparmiati al primo attacco diventano **globi di teletrasporto** (1 ogni 10 s, senza tetto; Claude: +2 entro 5 s, +1 entro 15 s); si parte con 2; al primo turno un solo lancio. Rampino una volta per turno, paracadute una volta per partita, scudo libero. | PR #39 |
 | 24 ott | Paracadute: un tocco in aria lo apre, un altro lo chiude; discesa lenta, niente danno da caduta, +15% (poi +50%, PR #47) di controllo orizzontale. Scudo solo dalle casse: assorbe 60 e dimezza le spinte fino al proprio turno dopo. | PR #36, #47 |
@@ -31,9 +31,11 @@ delle regole in [../design.md](../design.md); le varianti valutate in
 | 28 ott | **Hitbox separate** nella sim: capsula per camminare + cerchio dei colpi, modificabili dall'editor (`client/sim/corpo.lua`); dimensione del disegno svincolata (`game.DISEGNO_H`). | PR #55 |
 | 29 ott | **Rinascita su punti d'acciaio**, a caso tra quelli liberi a più di 300 px dai nemici e lontani dalle trappole (Sergio: "sempre su parti fisse della mappa, ma sempre randomici"). I punti si trovano da soli sulle superfici d'acciaio di ogni mappa; senza acciaio, un punto libero a caso come prima. Le posizioni d'inizio partita restano quelle della mappa (Claude). **Ordine dei turni** lasciato com'è (Sergio): chi apre deve imparare a mettersi al riparo. | PR del bot |
 | 29 ott | **Punti in partita, variante A senza sbalzo né doppietta** (Sergio): danno 1 per punto vita, uccisione 50, ambientale +50, morte −20 come prima; **Corona** visibile sul primo (×1,5 e +25 a chi lo abbatte, anche se il colpo che lo uccide fa primo chi colpisce); trappola che scatta +10 a chi l'ha posata; **parata** dello scudo 0,5 per punto fermato, max 30 per scudo (lo scudo dura un ciclo di turni, fino al proprio turno dopo); **Rampino e trampolino danno l'uccisione**. Variante B "Taglie" come evento "Caccia alla taglia". Pagina: https://claude.ai/artifact/Dh7MqD37ozQCJMKUZrmb4n | PR in corso |
+| 29 ott | **Si muore molto prima** (Sergio: "ci vogliono 5 turni per ammazzare qualcuno, tutto deve togliere di più in percentuale", ma niente colpi che uccidono da soli). Valori (Claude, provati con 1200 + 3×800 partite di bot): vita **100** (era 150) e danni delle armi a 5/3, cioè ogni colpo toglie 2,5 volte la parte di vita di prima: Lanciarune 25 (12,5 ai bordi), Lama 25, Tonante 38, Maglio 57, Affondo 45, Pugno 47, Cecchino 50, Schegge 11, Uovo 80 al centro (non 95: sotto la vita intera) e 25 ai bordi, trappola 13, bruciatura 17, caduta fino a 75. Scudo 40, cure 27, vita di pezzi e albero a 2/3: la stessa parte di vita di prima. Nel 1v1 una vita dura 2 turni nemici (erano 4), in uno solo il 14% delle volte; morti ogni 10 turni da 2,0 a 3,9. **Punti staccati dai punti vita**: il danno vale per la percentuale di vita tolta (una vita intera = 100 punti, anche a chi ha più vita); con la vita a 100 resta "danno = punti". Le uccisioni passano dal 27% al 37% dei punti. Missioni ritarate col collaudo: Fuori portata 55 e il Fabbro 240 durano come prima, Due mani 46 e Corona 50 in proporzione; Primo sangue e Il codardo ora finiscono prima, seconda stella da 5 a 3 turni. Da guardare: nel 1v1 chi apre vince il 27% tra i bot (era 36%). | PR in corso |
 
 ## Scartate
 
+- Danni ×2 (una vita dura 3 turni nemici nel 1v1: ancora lenta) e ×3 (il 23% delle vite nel 1v1 finisce in un turno solo: troppo vicino al colpo che uccide), 29 ott, Claude. Alzare solo le armi lasciando la vita a 150: stesso effetto, ma i numeri del danno non sono più percentuali e i punti non sono più "danno = punti". Togliere del tutto i punti del danno (solo uccisioni): già scartato nella proposta dei punti, toglie il premio alla mira.
 - **Punti di sbalzo** per le primarie (29 ott, Sergio): rischiano di rendere le uccisioni ambientali ancora più forti.
 - **Doppietta** (+10 se primaria e secondaria colpiscono lo stesso nemico, 29 ott, Sergio): renderebbe scontato attaccare lo stesso nemico con due colpi; le scelte del turno devono restare aperte.
 - Variante C "Gettoni" (punti fissi per colpo): toglie il premio alla mira (29 ott).
@@ -56,8 +58,6 @@ delle regole in [../design.md](../design.md); le varianti valutate in
 
 ## Aperte
 
-- Vita dei robot: Sergio ha detto di alzarla ancora (23 ott), valore da
-  decidere col bilanciamento della fase 0.
 - Pesi degli oggetti nelle casse (trappola, scudo, trampolino sembravano rari):
   proposto di alzarli, nessuna decisione (24 ott).
 - Durata del turno: 25 s, "forse si accorcia dopo" (23 ott).

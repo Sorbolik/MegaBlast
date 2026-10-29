@@ -37,3 +37,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Camera quando si spara: finché chi spara può muoversi inquadra lui e il colpo, allontanandosi quanto basta; a turno finito segue il colpo come prima. | #73 |
 | 29 ott | Niente si deforma: GUI tutta FIT su ogni proporzione dello schermo, comandi attaccati ai bordi veri; la camera scende sotto la mappa così l'HUD non copre il terreno. | #74 |
 | 29 ott | Campagna: Addestramento (le lezioni, il Tonante al posto delle casse) e I girone: la Forgia con il custode; bot con carattere; stelle con bonus; aiuto silenzioso; ALLENAMENTO solo contro i bot; collaudo delle missioni coi bot. | questa PR |
+| 29 ott | Si muore molto prima: vita 100, danni a 5/3, punti per la percentuale di vita tolta; missioni ritarate. | PR in corso |
