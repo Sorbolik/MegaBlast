@@ -104,10 +104,10 @@ function N.snapshot(g)
 	local heals = {}
 	for i, h in ipairs(g.heals) do heals[i] = { i = h.id, x = h.x, y = h.y } end
 	-- win: tick rimasti dopo il primo attacco; u: attacchi fatti (1 primaria, 2 secondaria); tp: teletrasporti
-	-- del turno; ot: supplementari (tempo scaduto, si finisce il giro)
+	-- del turno; te: globi guadagnati nel turno; ot: supplementari (tempo scaduto, si finisce il giro)
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
-		u = used, tp = g.teleports, mt = g.match_left, ot = g.overtime, r = robots, p = p, o = orbs, s = shards,
+		u = used, tp = g.teleports, te = g.teleports_earned, mt = g.match_left, ot = g.overtime, r = robots, p = p, o = orbs, s = shards,
 		c = crates, pl = placed, hl = heals }
 end
 
