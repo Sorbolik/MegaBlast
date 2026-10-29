@@ -23,6 +23,7 @@ local menu = { podio = require "menu.podio", armeria = require "menu.armeria", s
 	allenamento = require "menu.allenamento", fine_livello = require "menu.fine_livello", campagna = require "menu.campagna" }
 local missioni = require "sim.missioni"
 local levette = require "battaglia.levette"
+local mira = require "battaglia.mira"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
 local punteggio = require "battaglia.punteggio"
@@ -129,6 +130,8 @@ local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1
 -- il Maglio fa il contrario, dall'alto cala sotto i piedi
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
+-- punti della traiettoria chiesti alla simulazione, uno ogni 4 tick (la
+-- freccia ne mostra game.AIM_PREVIEW_DOTS; il Bastione tutti, sul suo bordo)
 local AIM_DOTS = 12
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
 -- riportare il dito sul robot e lasciarlo lì annulla il colpo
@@ -1479,19 +1482,42 @@ end
 local PAD_POS = vmath.vector3(0, 0, 0)
 
 -- Levetta come nelle proposte: disco appena velato col bordo e pomello uguale;
--- il bordo di tutti e due prende il colore dello stato (pad_colore)
-local function new_pad(rest, ring_color)
+-- il bordo di tutti e due prende il colore dello stato (pad_colore).
+-- salto: sul bordo le tacche dell'arco in cui la levetta fa saltare (da
+-- levette.JUMP_START_ANGLE sopra l'orizzontale, da tutte e due le parti), più
+-- lunghe ai due estremi; si accendono mentre si salta
+local function new_pad(rest, ring_color, salto)
 	local pad = { rest = rest }
 	pad.base = fit(ui.disco(rest.x, rest.y, PAD_D, PAD_FONDO[1]))
 	pad.ring = fit(ui.anello(0, 0, PAD_D, 3, ring_color, pad.base))
+	if salto then
+		pad.tacche, pad.tacca_spenta, pad.tacca_accesa = {}, vmath.vector4(1, 1, 1, 0.4), vmath.vector4(1, 0.85, 0.55, 1)
+		local a0, n = math.deg(levette.JUMP_START_ANGLE), 9
+		for i = 0, n - 1 do
+			local a = a0 + (180 - 2 * a0) * i / (n - 1)
+			local lungo = (i == 0 or i == n - 1) and 16 or 9
+			local r = PAD_D / 2 - 4 - lungo / 2
+			local t = fit(gui.new_box_node(vmath.vector3(r * math.cos(math.rad(a)), r * math.sin(math.rad(a)), 0),
+				vmath.vector3(lungo, (i == 0 or i == n - 1) and 3 or 2, 0)))
+			gui.set_euler(t, vmath.vector3(0, 0, a))
+			gui.set_color(t, pad.tacca_spenta)
+			gui.set_parent(t, pad.base)
+			pad.tacche[#pad.tacche + 1] = t
+		end
+	end
 	pad.knob = fit(ui.disco(0, 0, KNOB_D, PAD_FONDO[2], pad.base))
 	pad.knob_ring = fit(ui.anello(0, 0, KNOB_D, 3, ring_color, pad.knob))
 	return pad
 end
 
-local function pad_colore(pad, c)
+-- salto: le tacche del salto accese (solo la levetta del movimento le ha)
+local function pad_colore(pad, c, salto)
 	gui.set_color(pad.ring, c)
 	gui.set_color(pad.knob_ring, c)
+	if pad.tacche and pad.salto ~= (salto or false) then
+		pad.salto = salto or false
+		for _, t in ipairs(pad.tacche) do gui.set_color(t, salto and pad.tacca_accesa or pad.tacca_spenta) end
+	end
 end
 
 -- Il pollice si appoggia in (x, y): la base va lì, senza uscire dallo schermo
@@ -1525,11 +1551,27 @@ local function pad_release(pad, ring_color)
 	pad_colore(pad, ring_color)
 end
 
+-- Micro-vibrazione: client/vibra sul telefono Android, nel browser dove c'è
+-- navigator.vibrate
+local function vibra_tocco()
+	if vibra then
+		vibra.tocco()
+	elseif html5 then
+		html5.run("navigator.vibrate && navigator.vibrate(12)")
+	elseif SIMULA then
+		print("SIMULA evento vibra")
+	end
+end
+
 local function move_pad_drag(self, x, y)
 	local nx, ny = pad_drag(self.move_pad, x, y)
-	if levette.muovi(self.move_st, nx, ny) then self.jump_pressed = true end
+	if levette.muovi(self.move_st, nx, ny) then
+		self.jump_pressed = true
+		-- il pollice è appena entrato nell'arco del salto: una micro-vibrazione
+		vibra_tocco()
+	end
 	local on = self.move_st.moving or self.move_st.jumping
-	pad_colore(self.move_pad, on and MOVE_LIVE or MOVE_IDLE)
+	pad_colore(self.move_pad, on and MOVE_LIVE or MOVE_IDLE, self.move_st.jumping)
 end
 
 local function aim_pad_drag(self, x, y)
@@ -2082,13 +2124,25 @@ local function render(self, dt)
 		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts, aim_weapon)
 		-- Blastron mostra solo l'inizio del volo: una freccia lunga quanto la potenza
 		-- (il Bastione mostra tutta la sagoma del blocco)
-		local shown = aim_weapon ~= "wall" and game.AIM_PREVIEW_DOTS or AIM_DOTS
-		for i, n in ipairs(self.dots) do
-			gui.set_enabled(n, i <= shown)
-			set_pos(n, pts[i].x, pts[i].y)
-		end
+		local wall = aim_weapon == "wall"
+		local shown = not wall and game.AIM_PREVIEW_DOTS or AIM_DOTS
+		mira.freccia(self.mira, pts, shown, self.cam.s, self.colors[g.current], wall)
 	else
-		for _, n in ipairs(self.dots) do gui.set_enabled(n, false) end
+		mira.freccia_via(self.mira)
+	end
+	-- sopra la testa i gradi e la potenza; a ogni tacca di potenza una micro-vibrazione
+	if self.aiming and can_aim and not cancel then
+		local v = self.view[g.current]
+		local con = mira.POTENZA[aim_weapon] and self.aim_power or nil
+		mira.cartellino(self.mira, v.x, v.y + scoria.altezza(self.robots[g.current].rig) + 3
+			+ targa.SOPRA * self.cam.s ^ -0.65 + 4 / self.cam.s, self.cam.s,
+			mira.gradi(self.aim_angle), con, self.colors[g.current])
+		local tacca = con and mira.tacca(con)
+		if tacca and self.tacca and tacca ~= self.tacca then vibra_tocco() end
+		self.tacca = tacca
+	else
+		mira.cartellino_via(self.mira)
+		self.tacca = nil
 	end
 
 	-- tempo rimasto della partita, sopra l'anello; a zero si finisce il giro di turni
@@ -2231,12 +2285,8 @@ function init(self)
 		self.robots[i] = r
 	end
 
-	-- puntini della traiettoria: piccoli bagliori bianchi
-	self.dots = {}
-	for i = 1, AIM_DOTS do
-		local n = glow(0, 0, 14 - i * 0.5, vmath.vector4(1, 1, 1, 1 - i / (AIM_DOTS + 4)))
-		self.dots[i] = n
-	end
+	-- la mira: la freccia e il cartellino coi gradi (battaglia/mira.lua)
+	self.mira = mira.nuova()
 
 	-- missile: scia, alone col colore della squadra e nocciolo bianco
 	self.trail, self.trail_pos, self.trail_i, self.trail_n = {}, {}, 0, 0
@@ -2357,7 +2407,7 @@ function init(self)
 	-- nel mondo, nell'ordine in cui si disegnano
 	local mondo = {}
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].rig.root end
-	for _, n in ipairs(self.dots) do mondo[#mondo + 1] = n end
+	for _, n in ipairs(self.mira.nodi) do mondo[#mondo + 1] = n end
 	for _, n in ipairs(self.trail) do mondo[#mondo + 1] = n end
 	mondo[#mondo + 1] = self.projectile
 	for _, o in ipairs(self.orbs) do mondo[#mondo + 1] = o.root end
@@ -2377,6 +2427,7 @@ function init(self)
 	-- le targhe: prima tutte le barre, poi tutti i testi (due draw call in tutto)
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.barre end
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.testi end
+	mondo[#mondo + 1] = self.mira.cartello
 	mondo[#mondo + 1] = self.cancel_label
 	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end
 
@@ -2408,7 +2459,7 @@ function init(self)
 	gui.set_parent(self.zoom_label, self.btn_zoom)
 
 	-- levette del telefono
-	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE)
+	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE, true)
 	self.aim_pad = new_pad(AIM_PAD, AIM_IDLE)
 	self.move_st, self.aim_st = levette.new(), levette.new()
 	-- barra delle armi attorno al cronometro e, a parte, il teletrasporto
