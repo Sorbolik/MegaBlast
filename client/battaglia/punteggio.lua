@@ -31,13 +31,18 @@ local M = {}
 local max, min, floor, abs = math.max, math.min, math.floor, math.abs
 
 local SQUADRE = 4
-local Y, MEZZO = 720 - 28, 640        -- centro della fila, centrata sullo schermo (M.cima)
+-- centro della fila, centrata sullo schermo (M.cima); abbastanza in basso da
+-- lasciare sopra il posto alla Corona
+local CIMA = 38
+local Y, MEZZO = 720 - CIMA, 640
 local GET_W, GET_H, GET_GAP = 104, 30, 6
 local STRISCIA, BORDO_MIO = 6, 3
 -- due squadre: due gettoni dei punti e la fune in mezzo
 local VAL_W, FUNE_W, FUNE_H, FUNE_GAP = 60, 250, 12, 8
 local MORBIDO = 60                    -- coi primi punti la fune si sposta poco
 local SCRITTA, PICCOLA = 0.8, 0.6     -- scale di ui.testo
+local CORONA_SCALA = 1.4              -- larga circa 25 px (ui.corona)
+local CORONA_Y = GET_H / 2 + 4
 local VOLO_SCALA, ARRIVO_SCALA = 1.7, 0.8
 local NASCE_T, VOLO_T, SALE = 0.5, 0.45, 24
 local TURNO_T, TURNO_SVANISCE = 2.4, 0.8
@@ -96,8 +101,9 @@ local function gettone(colore)
 	gt.striscia = box(gt.dentro, -GET_W / 2 + STRISCIA / 2, 0, STRISCIA, GET_H, colore)
 	gt.posto = ui.testo("", -GET_W / 2 + STRISCIA + 6, 0, SCRITTA, colore, gt.dentro)
 	gui.set_pivot(gt.posto, gui.PIVOT_W)
-	gt.corona = ui.corona(-GET_W / 2 + STRISCIA + 44, 1, nil, gt.dentro)
-	scala(gt.corona, 0.8)
+	-- la Corona del primo: grande, appoggiata sul bordo in alto del gettone
+	gt.corona = ui.corona(0, CORONA_Y, nil, gt.dentro)
+	scala(gt.corona, CORONA_SCALA)
 	gt.valore = ui.testo("0", GET_W / 2 - 8, 0, SCRITTA, ui.C.TESTO, gt.dentro)
 	gui.set_pivot(gt.valore, gui.PIVOT_E)
 	return gt
@@ -112,12 +118,10 @@ local function forma(gt, w, destra)
 	if w == GET_W then
 		posizione(gt.valore, w / 2 - 8, 0)
 		gui.set_pivot(gt.valore, gui.PIVOT_E)
-		posizione(gt.corona, -w / 2 + STRISCIA + 44, 1)
 	else
-		-- capo della fune: il numero al centro, la Corona appoggiata sopra
+		-- capo della fune: il numero al centro
 		posizione(gt.valore, (destra and -1 or 1) * STRISCIA / 2, 0)
 		gui.set_pivot(gt.valore, gui.PIVOT_CENTER)
-		posizione(gt.corona, 0, GET_H / 2 + 3)
 	end
 end
 
@@ -159,7 +163,7 @@ end
 
 -- La cima vera dello schermo (ui/schermo.lua: più in alto di 720 su un tablet)
 function M.cima(p, y1)
-	Y = y1 - 28
+	Y = y1 - CIMA
 	posizione(p.fune, MEZZO, Y)
 	posizione(p.riga, MEZZO, Y - GET_H / 2 - 34)
 	posizione(p.obiettivo, MEZZO, Y - GET_H / 2 - 64)

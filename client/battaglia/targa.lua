@@ -36,9 +36,11 @@ local NOME_Y = 10           -- centro del nome sopra la barra
 -- scala del font "titolo" (scala 1 = circa 40 px)
 local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
 local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
-local CORONA_Y, CORONA_SCALA = NOME_Y + 10, 0.5
+-- la Corona del primo sopra il nome: grande come nei punti in alto (ui.corona è
+-- alta 13 a scala 1, 3,5 sotto il centro della fascia)
+local CORONA_Y, CORONA_SCALA = NOME_Y + 13, 1.6
 -- dove finisce la targa in alto (Corona compresa): sopra ci sta il cartellino della mira
-M.SOPRA = CORONA_Y + 6
+M.SOPRA = CORONA_Y + 17
 -- la riga delle missioni: sopra la Corona e gli annunci che salgono, a capo
 -- oltre RIGA_W; grande RIGA_SCALA sullo schermo a ogni zoom (circa 22 px: con la
 -- camera lontana non si rimpicciolisce come il resto della targa)

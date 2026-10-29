@@ -43,3 +43,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Nuova regola delle categorie (primarie: danno ed effetti di stato; secondarie: tutto ma mai effetti), secondaria nuova Mantice che spinge il nemico, Rampino a 400 px con l'uncino che vola, cade e si dissolve; Cecchino e Mantice in "Giù dal bordo". | questa PR |
 | 29 ott | Salto dal telefono: tacche dell'arco del salto sulla levetta e micro-vibrazione quando ci si entra (estensione `client/vibra`); build di prova dell'APK sulle PR. | #83 |
 | 29 ott | Mira più chiara: puntini uguali con la punta del colore della squadra, cartellino con gradi e potenza sopra la testa, grandi uguali a ogni zoom; micro-vibrazione a ogni 5% di potenza. | questa PR |
+| 29 ott | Corona del primo più grande, sopra il personaggio e sul gettone dei punti. | questa PR |
