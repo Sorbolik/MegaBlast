@@ -346,6 +346,30 @@ local function show_message(self, text, keep)
 	end
 end
 
+-- A ogni inizio turno, grande sotto il robot: IL TUO TURNO a chi gioca (online
+-- chi è sul telefono, contro i bot e nelle missioni il primo robot), TURNO DI:
+-- NOME agli altri (e sullo stesso telefono, dove giocate tutti). Nelle lezioni
+-- resta finché non tocchi i comandi (sim/missioni.lua, attesa), poi svanisce.
+local function annuncia_turno(self, robot)
+	local mio = (self.mode == "online" and robot == self.me)
+		or (self.mode == "local" and (next(self.bots) or self.missione) and robot == 1)
+	gui.set_text(self.annuncio, mio and "IL TUO TURNO" or ("TURNO DI: " .. string.upper(self.names[robot])))
+	gui.cancel_animations(self.annuncio, "color")
+	local c = self.colors[robot]
+	gui.set_color(self.annuncio, vmath.vector4(c.x, c.y, c.z, 1))
+	self.annuncio_aspetta = mio and self.missione ~= nil and self.missione.attesa
+	if not self.annuncio_aspetta then
+		gui.animate(self.annuncio, "color.w", 0, gui.EASING_INCUBIC, 0.6, 1.4)
+	end
+end
+
+-- La rotellina aperta o chiusa: RIPROVA (non online) ed ESCI DALLA PARTITA
+local function apri_rotellina(self, aperta)
+	self.menu_aperto = aperta
+	gui.set_enabled(self.btn_riprova, aperta and self.mode ~= "online")
+	gui.set_enabled(self.btn_esci, aperta)
+end
+
 local function set_controls_visible(self, visible)
 	self.controls_visible = visible
 	gui.set_enabled(self.move_pad.base, visible and self.touch_ui)
@@ -354,13 +378,17 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.btn_tele.nodo, visible)
 	self.tele_vede = visible
 	hud.cronometro_on(self.crono, visible)
-	if not visible then hud.cartellino_via(self.cartellino) end
+	if not visible then
+		hud.cartellino_via(self.cartellino)
+		gui.cancel_animations(self.annuncio, "color.w")
+		gui.set_color(self.annuncio, vmath.vector4(1, 1, 1, 0))
+		self.annuncio_aspetta = false
+	end
 	gui.set_enabled(self.scelto_glow, false)
 	punteggio.set_enabled(self.punti, visible)
 	gui.set_enabled(self.btn_zoom, visible)
 	gui.set_enabled(self.btn_menu, visible)
-	self.menu_aperto = false
-	gui.set_enabled(self.btn_esci, false)
+	apri_rotellina(self, false)
 end
 
 local function disconnect(self)
@@ -809,11 +837,7 @@ local function handle_event(self, e)
 		punteggio.turno(self.punti, self.g)
 		-- ogni turno ricomincia dal Lanciarune, non dall'arma del turno prima
 		self.tele_armed, self.weapon = false, "missile"
-		if self.mode == "online" then
-			show_message(self, e.robot == self.me and "Tocca a te!" or "Turno dell'avversario")
-		else
-			show_message(self, "Turno di " .. self.names[e.robot])
-		end
+		annuncia_turno(self, e.robot)
 	elseif e.type == "death" then
 		-- crolla e svanisce da solo; dopo 1,5 s ricompare altrove, nello stesso turno
 		scoria.die(self.robots[e.robot].rig)
@@ -1223,6 +1247,8 @@ local function start_missione(self, id, picks)
 	self.missione, self.missione_attesa = r, nil
 	self.mode = "local"
 	set_controls_visible(self, true)
+	-- il primo turno l'ha già preso missioni.prepara
+	annuncia_turno(self, self.g.current)
 end
 
 -- La campagna, sul capitolo dell'ultima missione
@@ -1243,6 +1269,11 @@ local function missione_update(self, dt)
 	end
 	for i, rb in ipairs(self.robots) do targa.riga(rb.targa, i == chi and testo or "") end
 	punteggio.obiettivo(self.punti, missioni.obiettivo(r))
+	-- toccati i comandi, IL TUO TURNO svanisce
+	if self.annuncio_aspetta and not r.attesa then
+		self.annuncio_aspetta = false
+		gui.animate(self.annuncio, "color.w", 0, gui.EASING_INCUBIC, 0.4)
+	end
 	if self.missione_attesa then
 		self.missione_attesa = self.missione_attesa - dt
 		if self.missione_attesa <= 0 then start_missione(self, r.l.id) end
@@ -2252,15 +2283,19 @@ function init(self)
 	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game
 	self.punti = punteggio.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
-	-- la rotellina in alto a sinistra, in ogni partita: apre accanto a sé ESCI
-	-- DALLA PARTITA, che si chiude toccando altrove (niente finestre sopra il
-	-- gioco). Sullo stesso telefono intanto la partita è ferma
+	self.annuncio = label(W / 2, H / 2 - 150, "", 2.2)
+	gui.set_color(self.annuncio, vmath.vector4(1, 1, 1, 0))
+	-- la rotellina in alto a sinistra, in ogni partita: apre accanto a sé
+	-- RIPROVA (non online) ed ESCI DALLA PARTITA, che si chiudono toccando
+	-- altrove (niente finestre sopra il gioco). Sullo stesso telefono intanto la
+	-- partita è ferma. I due pulsanti sono figli della rotellina: l'ancora al
+	-- bordo allarga le distanze sugli schermi larghi, così restano vicini
 	self.btn_menu = ui.impostazioni({}, "menu")
-	self.btn_esci = ui.bottone({}, 30 + 64 + 12 + 130, H - 30 - 32, 260, 64, "ESCI DALLA PARTITA", "esci")
-	gui.set_xanchor(self.btn_esci, gui.ANCHOR_LEFT)
-	gui.set_yanchor(self.btn_esci, gui.ANCHOR_TOP)
-	gui.set_enabled(self.btn_menu, false)
+	self.btn_riprova = ui.bottone({}, 32 + 12 + 80, 0, 160, 64, "RIPROVA", "riprova", nil, self.btn_menu)
+	self.btn_esci = ui.bottone({}, 32 + 12 + 160 + 12 + 130, 0, 260, 64, "ESCI DALLA PARTITA", "esci", nil, self.btn_menu)
+	gui.set_enabled(self.btn_riprova, false)
 	gui.set_enabled(self.btn_esci, false)
+	gui.set_enabled(self.btn_menu, false)
 
 	-- zoom: vicino, medio, tutta la mappa (anche rotella e tasto Z)
 	self.btn_zoom = box(ZOOM_BTN.x, ZOOM_BTN.y, 116, 44, vmath.vector4(0.05, 0.05, 0.07, 0.55))
@@ -2503,6 +2538,16 @@ end
 -- ESCI DALLA PARTITA: online il server lo sa subito (il posto non si tiene, gli
 -- altri lo vedono uscire), poi si torna da dove si era partiti: la campagna,
 -- l'allenamento contro i bot o la home
+-- RIPROVA: la stessa missione da capo, o una partita nuova uguale (stessi bot,
+-- stesso modo); la scelta delle armi, dove c'è, si rifà
+local function riprova_partita(self)
+	if self.missione then
+		start_missione(self, self.missione.l.id)
+	else
+		start_local(self, self.ritorno == "allenamento" and self.contro_bot or nil)
+	end
+end
+
 -- ESCI DALLA PARTITA: si torna al menù da cui si era partiti (self.ritorno:
 -- "campagna", "allenamento" o "home")
 local function esci_partita(self)
@@ -2545,14 +2590,17 @@ local function pointer_down(self, id, px, py)
 	-- la rotellina: aperta, un tocco su ESCI esce, altrove la richiude e basta
 	if self.menu_aperto then
 		local esci = gui.pick_node(self.btn_esci, px, py)
-		self.menu_aperto = false
-		gui.set_enabled(self.btn_esci, false)
+		local riprova = self.mode ~= "online" and gui.pick_node(self.btn_riprova, px, py)
+		apri_rotellina(self, false)
 		self.pointers[id] = "cancelled"
-		if esci then esci_partita(self) end
+		if esci then
+			esci_partita(self)
+		elseif riprova then
+			riprova_partita(self)
+		end
 		return
 	elseif gui.pick_node(self.btn_menu, px, py) then
-		self.menu_aperto = true
-		gui.set_enabled(self.btn_esci, true)
+		apri_rotellina(self, true)
 		self.pointers[id] = "cancelled"
 		return
 	end
@@ -2693,8 +2741,7 @@ function on_input(self, action_id, action)
 	elseif action_id == ACTION.MENU then
 		-- Esc (o indietro sul telefono): apre e chiude la rotellina
 		if action.pressed and self.controls_visible and (self.mode == "local" or self.mode == "online") then
-			self.menu_aperto = not self.menu_aperto
-			gui.set_enabled(self.btn_esci, self.menu_aperto)
+			apri_rotellina(self, not self.menu_aperto)
 		end
 	elseif action_id == ACTION.ZOOM_IN or action_id == ACTION.ZOOM_OUT then
 		if action.pressed then change_zoom(self, action_id == ACTION.ZOOM_OUT and 1 or -1) end
