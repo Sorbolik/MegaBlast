@@ -30,6 +30,7 @@ const mediump vec2 CELLA = vec2(1.0 / 640.0, 1.0 / 360.0);
 const mediump vec3 BRACE = vec3(1.0, 0.478, 0.102);
 const mediump vec3 BRACE_CHIARA = vec3(1.0, 0.769, 0.42);
 const mediump vec3 ROCCIA = vec3(0.23, 0.21, 0.26);
+const mediump vec3 OTTONE = vec3(0.86, 0.64, 0.32);
 
 // lo sfondo è misurato su una mappa di 1280 x 720 (var_zoom è già riportato lì)
 const highp vec2 MONDO = vec2(1280.0, 720.0);
@@ -140,6 +141,27 @@ void main()
         mediump float sopra = texture(maschera, var_uv + vec2(0.0, CELLA.y * 2.0)).r;
         mediump vec3 c = mix(ROCCIA * 1.9, ROCCIA, sopra);
         ter = vec4(c, 1.0) * smoothstep(0.35, 0.65, m.r);
+    }
+
+    // costruito = adesso c'è terreno dove all'inizio non c'era (il Bastione):
+    // conci di pietra col bordo scuro e la cima d'ottone, come le piattaforme
+    mediump float costruito = clamp(m.r - m.g, 0.0, 1.0);
+    if (costruito > 0.0) {
+        mediump float pieno = min(
+            min(texture(maschera, var_uv + vec2(CELLA.x, 0.0)).r, texture(maschera, var_uv - vec2(CELLA.x, 0.0)).r),
+            min(texture(maschera, var_uv + vec2(0.0, CELLA.y)).r, texture(maschera, var_uv - vec2(0.0, CELLA.y)).r));
+        // i conci: file alte 2 celle, giunti ogni 8 celle sfalsati di 4
+        highp vec2 q = var_uv * vec2(640.0, 360.0);
+        highp float fila = floor(q.y * 0.5);
+        mediump float giunto = max(step(fract(q.y * 0.5), 0.12),
+            step(fract((q.x + mod(fila, 2.0) * 4.0) * 0.125), 0.045));
+        mediump vec3 pietra = ROCCIA * (1.6 + 0.3 * caso(fila * 7.0 + floor((q.x + mod(fila, 2.0) * 4.0) * 0.125)));
+        pietra = mix(pietra, ROCCIA * 0.7, giunto);
+        // bordo scuro tutto attorno, d'ottone sopra (come le cime delle piattaforme)
+        mediump float cima = 1.0 - texture(maschera, var_uv + vec2(0.0, CELLA.y)).r;
+        mediump vec3 c = mix(pietra, ROCCIA * 0.5, smoothstep(0.1, 0.65, 1.0 - pieno));
+        c = mix(c, OTTONE, smoothstep(0.3, 0.8, cima));
+        ter = mix(ter, vec4(c, 1.0), costruito);
     }
 
     // scavato = c'era terreno all'inizio e adesso non c'è più

@@ -182,11 +182,13 @@ M.FREE_WEAPONS = { missile = true, teleport = true }
 for w in pairs(M.SECONDARY) do M.FREE_WEAPONS[w] = true end
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
 -- Oggetti tattici delle casse (anche loro in rb.ammo), il paracadute (uno a
--- partita) e il Rampino (uno a turno): non sono attacchi (config.lua)
+-- partita) e l'attrezzo (uno a turno: Rampino o Bastione, rb.tool, scelto
+-- all'inizio della partita): non sono attacchi (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
-M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true }
+M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true, wall = true }
+M.DRAFT_TOOLS = { "hook", "wall" }
 -- oggetti che si lanciano mirando (gli altri si usano col tocco)
-M.THROWN = { trampoline = true, hook = true }
+M.THROWN = { trampoline = true, hook = true, wall = true }
 -- tutti i nomi validi di fire.weapon
 M.WEAPONS = { teleport = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
@@ -354,6 +356,7 @@ function M.new(seed, map_id, opts)
 			shield = nil,     -- danni che lo scudo può ancora assorbire
 			parachute = false, -- aperto
 			status = {},      -- effetti di stato: tipo -> { turns = turni rimasti, by = chi l'ha dato }
+			parried = 0,      -- punti di parata presi con lo scudo di adesso (config.SCORE.parry_max)
 			life_damage = {}, -- danno preso da ogni avversario in questa vita: id -> punti di vita
 			turns = 0,     -- turni giocati
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
@@ -362,6 +365,8 @@ function M.new(seed, map_id, opts)
 			recoil = nil,  -- tick rimasti del rinculo del Tonante, nil se fermo
 			mallet = nil,  -- tick del colpo di Maglio in corso, nil se fermo
 			hooked = nil,  -- appeso alla fune del Rampino: { by = chi tira, left = fune da riavvolgere }
+			tool = p.tool or opts.tool or "hook", -- l'attrezzo del turno: "hook" (Rampino) o "wall" (Bastione)
+			walls = {},    -- i suoi Bastioni in mappa, dal più vecchio
 			ammo = make_ammo(opts.ammo),
 			-- la secondaria scelta all'inizio della partita, oltre alla Lama (sim/draft.lua)
 			secondary = p.secondary or opts.secondary,
@@ -383,6 +388,8 @@ function M.new(seed, map_id, opts)
 	g.crates = {}
 	g.placed = {}            -- trappole e trampolini posati
 	g.placed_id = 0
+	g.wall_id = 0
+	g.wall_cells = {}        -- cella (indice in terrain.data) -> Bastione che l'ha riempita
 	g.heals = {}             -- cerchi di cura { id, x, y }
 	g.heal_id = 0
 	g.crate_id = 0
@@ -497,8 +504,12 @@ end
 -- ambientali: caduta fuori dalla mappa o da troppo in alto) e colpendo chi è
 -- primo in classifica; morire ne toglie. Numeri in config.SCORE.
 
-function M:add_points(rb, n)
+-- reason dice da dove vengono (damage, kill, death, trap, parry), other è
+-- l'altro robot (il colpito; per death chi ha ucciso). L'evento "points" serve
+-- all'interfaccia (il numero che vola nella classifica) e all'arena dei bot.
+function M:add_points(rb, n, reason, other)
 	rb.points = rb.points + n
+	self:emit({ type = "points", robot = rb.id, amount = n, reason = reason, other = other and other.id })
 end
 
 -- Chi ha più punti (solo se è uno solo e ne ha più di zero): colpirlo vale di più
@@ -518,11 +529,18 @@ local function enemies(a, b)
 	return a ~= b and a.team ~= b.team
 end
 
+-- by ha spostato rb senza danno (Rampino, trampolino): conta come ultimo
+-- colpo, così se rb muore entro KILL_CREDIT_SECONDS l'uccisione è di by
+function M:credit(rb, by)
+	if by and enemies(by, rb) then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
+end
+
 -- Toglie amount punti di vita a rb. by è il robot che ha colpito (nil: nessuno,
 -- per esempio una caduta), reason va nell'evento "damage". Restituisce il danno
 -- arrivato alla vita (0 se lo scudo ha preso tutto).
 function M:hurt(rb, amount, by, reason)
 	if rb.dead or amount <= 0 then return 0 end
+	local foe = by and enemies(by, rb)
 	if by and by ~= rb then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
 	if rb.status.cracked then amount = math.floor(amount * C.STATUS.cracked.damage + 0.5) end
 	if rb.shield then
@@ -531,6 +549,14 @@ function M:hurt(rb, amount, by, reason)
 		rb.shield = rb.shield - absorbed
 		amount = amount - absorbed
 		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
+		-- parata: chi porta lo scudo prende punti per il danno nemico che ferma
+		if foe then
+			local p = math.min(C.SCORE.parry_max - rb.parried, absorbed * C.SCORE.parry)
+			if p > 0 then
+				rb.parried = rb.parried + p
+				self:add_points(rb, p, "parry", by)
+			end
+		end
 		if rb.shield <= 0 then rb.shield = nil end
 		if amount <= 0 then return 0 end
 	end
@@ -540,13 +566,14 @@ function M:hurt(rb, amount, by, reason)
 	rb.hp = rb.hp - amount
 	self:emit({ type = "damage", robot = rb.id, amount = amount, reason = reason })
 	if by and by ~= rb then
-		if enemies(by, rb) then
+		if foe then
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
-			self:add_points(by, real * C.SCORE.damage * mult)
+			self:add_points(by, real * C.SCORE.damage * mult, "damage", rb)
 		end
 	end
-	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage") end
+	-- se era il primo prima del colpo, la Corona resta anche se il colpo fa primo chi uccide
+	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage", mult > 1) end
 	return amount
 end
 
@@ -588,8 +615,9 @@ end
 
 -- reason: "damage" (colpi), "fell" (fuori dalla mappa), "fall_damage" (caduta
 -- da troppo in alto). L'uccisione va all'ultimo che l'ha colpito, se è stato
--- da poco (KILL_CREDIT_SECONDS): così buttare giù qualcuno conta.
-function M:kill(rb, reason)
+-- da poco (KILL_CREDIT_SECONDS): così buttare giù qualcuno conta. was_leader:
+-- se era il primo prima del colpo che lo uccide (nil: si guarda adesso).
+function M:kill(rb, reason, was_leader)
 	if rb.dead then return end
 	local killer
 	if rb.last_hit and self.tick - rb.last_hit_tick <= C.KILL_CREDIT_SECONDS * 60 then
@@ -609,12 +637,13 @@ function M:kill(rb, reason)
 	end
 	-- chi si butta giù da solo non regala il bonus ambientale
 	local env = reason ~= "damage" and not own
-	local mult = rb == self:leader() and C.SCORE.leader or 1
+	if was_leader == nil then was_leader = rb == self:leader() end
+	local mult = was_leader and C.SCORE.leader or 1
 	rb.dead = true
 	rb.hp = 0
 	rb.deaths = rb.deaths + 1
 	if reason == "fell" then rb.falls = rb.falls + 1 end
-	self:add_points(rb, C.SCORE.death + (own and C.SCORE.self_death or 0))
+	self:add_points(rb, C.SCORE.death + (own and C.SCORE.self_death or 0), "death", killer)
 	local points = 0
 	if killer and enemies(killer, rb) then
 		killer.kills = killer.kills + 1
@@ -623,7 +652,9 @@ function M:kill(rb, reason)
 			killer.env_kills = killer.env_kills + 1
 			points = points + C.SCORE.env_kill * mult
 		end
-		self:add_points(killer, points)
+		-- Corona: chi abbatte il primo in classifica prende in più crown
+		if mult > 1 then points = points + C.SCORE.crown end
+		self:add_points(killer, points, "kill", rb)
 	end
 	rb.last_hit = nil
 	rb.respawn_in = M.RESPAWN_TICKS
@@ -1369,6 +1400,8 @@ function M:fire_hook(angle)
 	self:emit({ type = "hook", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id, anchor = anchor })
 	if hit then
 		hit.hooked = { by = rb.id, left = C.HOOK.reel }
+		-- chi tira prende l'uccisione se il nemico cade (KILL_CREDIT_SECONDS)
+		self:credit(hit, rb)
 		hit.vx, hit.vy = 0, 0
 		hit.grounded, hit.knocked, hit.fall_top = false, true, nil
 	elseif anchor then
@@ -1377,6 +1410,106 @@ function M:fire_hook(angle)
 		rb.vx, rb.vy = 0, 0
 		rb.grounded, rb.knocked, rb.fall_top = false, false, nil
 	end
+end
+
+-- Bastione (attrezzo, config.WALL): il rettangolo di celle dove va il blocco,
+-- mirando con angle e power. Restituisce cx0, cy0, larghezza e altezza in celle.
+function M:wall_rect(angle, power)
+	local rb = self.robots[self.current]
+	local d = C.WALL.range * math.max(0, math.min(1, power))
+	local x, y = rb.x + math.cos(angle) * d, rb.y + M.DISEGNO_H / 2 + math.sin(angle) * d
+	local w, h = C.WALL.w, C.WALL.h
+	if math.abs(math.sin(angle)) > math.sqrt(0.5) then w, h = h, w end
+	local cw, ch = math.floor(w / M.CELL + 0.5), math.floor(h / M.CELL + 0.5)
+	return math.floor(x / M.CELL - cw / 2 + 0.5), math.floor(y / M.CELL - ch / 2 + 0.5), cw, ch
+end
+
+-- La sagoma del blocco per la mira: count punti lungo il bordo
+function M:wall_preview(angle, power, count, pts)
+	pts = pts or {}
+	local cx0, cy0, cw, ch = self:wall_rect(angle, power)
+	local x0, y0, w, h = cx0 * M.CELL, cy0 * M.CELL, cw * M.CELL, ch * M.CELL
+	local per = 2 * (w + h)
+	for i = 1, count do
+		local t = (i - 1) / count * per
+		local pt = pts[i] or {}
+		if t < w then pt.x, pt.y = x0 + t, y0
+		elseif t < w + h then pt.x, pt.y = x0 + w, y0 + t - w
+		elseif t < 2 * w + h then pt.x, pt.y = x0 + w - (t - w - h), y0 + h
+		else pt.x, pt.y = x0, y0 + h - (t - 2 * w - h) end
+		pts[i] = pt
+	end
+	return pts
+end
+
+-- Mette (v = 1) o toglie (v = 0) le celle di un Bastione: il rettangolo cx0, cy0,
+-- cw, ch e mask, una stringa di "0" e "1" riga per riga dal basso (1: la cella
+-- cambia). Serve anche al client online, che rifà sul suo terreno quello che
+-- dice l'evento "wall" del server.
+function M.wall_cells(terrain, cx0, cy0, cw, ch, mask, v)
+	local k = 0
+	for cy = cy0, cy0 + ch - 1 do
+		for cx = cx0, cx0 + cw - 1 do
+			k = k + 1
+			if mask:byte(k) == 49 then terrain:set(cx, cy, v) end
+		end
+	end
+end
+
+-- Bastione: riempie le celle vuote del rettangolo mirato, tranne quelle addosso a
+-- un robot. Il blocco di troppo (oltre config.WALL.max) crolla.
+function M:fire_wall(angle, power)
+	local rb = self.robots[self.current]
+	local cx0, cy0, cw, ch = self:wall_rect(angle, power)
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	local cell, tw = M.CELL, self.terrain.w
+	self.wall_id = self.wall_id + 1
+	local wall = { id = self.wall_id, x = cx0, y = cy0, w = cw, h = ch }
+	local mask, any = {}, false
+	for cy = cy0, cy0 + ch - 1 do
+		for cx = cx0, cx0 + cw - 1 do
+			local free = cx >= 0 and cy >= 0 and cx < tw and cy < self.terrain.h and self.terrain:get(cx, cy) == 0
+			if free then
+				-- non dentro un robot (la sua capsula, con un pixel di margine)
+				for _, o in ipairs(self.robots) do
+					if not o.dead and (cx + 1) * cell > o.x - M.ROBOT_HALF_W - 1 and cx * cell < o.x + M.ROBOT_HALF_W + 1
+						and (cy + 1) * cell > o.y - 1 and cy * cell < o.y + M.ROBOT_H + 1 then
+						free = false
+						break
+					end
+				end
+			end
+			mask[#mask + 1] = free and "1" or "0"
+			if free then
+				any = true
+				self.wall_cells[cy * tw + cx + 1] = wall.id
+			end
+		end
+	end
+	wall.mask = table.concat(mask)
+	if not any then return end
+	M.wall_cells(self.terrain, cx0, cy0, cw, ch, wall.mask, 1)
+	self:emit({ type = "wall", robot = rb.id, x = cx0, y = cy0, w = cw, h = ch, m = wall.mask, v = 1 })
+	rb.walls[#rb.walls + 1] = wall
+	if #rb.walls > C.WALL.max then self:crumble_wall(rb, table.remove(rb.walls, 1)) end
+end
+
+-- Un Bastione crolla: tornano vuote le sue celle ancora piene (quelle scavate nel
+-- frattempo, o riempite da un altro Bastione, restano come sono)
+function M:crumble_wall(rb, wall)
+	local tw, mask, k = self.terrain.w, {}, 0
+	for cy = wall.y, wall.y + wall.h - 1 do
+		for cx = wall.x, wall.x + wall.w - 1 do
+			k = k + 1
+			local i = cy * tw + cx + 1
+			local mine = wall.mask:byte(k) == 49 and self.wall_cells[i] == wall.id and self.terrain:get(cx, cy) ~= 0
+			if wall.mask:byte(k) == 49 and self.wall_cells[i] == wall.id then self.wall_cells[i] = nil end
+			mask[k] = mine and "1" or "0"
+		end
+	end
+	local m = table.concat(mask)
+	M.wall_cells(self.terrain, wall.x, wall.y, wall.w, wall.h, m, 0)
+	self:emit({ type = "wall", robot = rb.id, x = wall.x, y = wall.y, w = wall.w, h = wall.h, m = m, v = 0 })
 end
 
 -- Dove sta la mano di chi tira (la fune parte da lì)
@@ -2022,15 +2155,15 @@ function M:use_tool(kind, fire)
 		self:emit({ type = "parachute", robot = rb.id })
 		return
 	end
-	if kind == "hook" then
-		-- un Rampino per turno
-		self.used.hook = true
-		self:fire_hook(fire.angle)
+	if kind == "hook" or kind == "wall" then
+		-- un attrezzo per turno
+		self.used.tool = true
+		if kind == "hook" then self:fire_hook(fire.angle) else self:fire_wall(fire.angle, fire.power) end
 		return
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
-		rb.shield = C.SHIELD.hp
+		rb.shield, rb.parried = C.SHIELD.hp, 0
 		self:emit({ type = "shield", robot = rb.id })
 		return
 	end
@@ -2100,6 +2233,8 @@ function M:bounce(rb, o)
 	local vy = spring_vy(rb, o)
 	if not vy then return end
 	rb.vy, rb.grounded, rb.rising, rb.knocked, rb.fall_top = vy, false, false, false, nil
+	-- il trampolino di un avversario ti lancia: se cadi l'uccisione è sua
+	self:credit(rb, self.robots[o.owner])
 	self:emit({ type = "bounce", id = o.id, robot = rb.id })
 end
 
@@ -2143,7 +2278,10 @@ function M:update_placed()
 					rb.vx, rb.vy = dir * C.TRAP.push_vx * k, C.TRAP.launch_vy * k
 					rb.grounded, rb.knocked, rb.fall_top = false, true, nil
 					self:emit({ type = "trap", id = o.id, robot = rb.id, x = o.x, y = o.y })
-					self:hurt(rb, C.TRAP.damage, self.robots[o.owner])
+					local owner = self.robots[o.owner]
+					if self:hurt(rb, C.TRAP.damage, owner) > 0 and owner and enemies(owner, rb) then
+						self:add_points(owner, C.SCORE.trap, "trap", rb)
+					end
 					gone = true
 				end
 			end
@@ -2193,6 +2331,8 @@ function M:preview(angle, power, count, every, pts, weapon)
 		gravity = M.GRAVITY * M.SHARD_GRAVITY
 	elseif weapon == "sniper" then
 		return self:sniper_preview(x, y, angle, count, pts)
+	elseif weapon == "wall" then
+		return self:wall_preview(angle, power, count, pts)
 	elseif weapon == "eagle" or weapon == "hook" then
 		return self:ray_preview(x, y, angle, (weapon == "eagle" and C.EAGLE or C.HOOK).range, count, pts)
 	elseif weapon == "lunge" then
@@ -2314,8 +2454,8 @@ function M:start_turn(player)
 	self.phase = "aim"
 	self.timer = M.TURN_TICKS
 	self.window = 0
-	-- attacchi già fatti nel turno (al massimo un'arma e un colpo di spada) e il Rampino, uno a turno
-	self.used = { primary = false, secondary = false, hook = false }
+	-- attacchi già fatti nel turno (al massimo un'arma e un colpo di spada) e l'attrezzo, uno a turno
+	self.used = { primary = false, secondary = false, tool = false }
 	self.teleports = 0
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
@@ -2355,8 +2495,8 @@ function M:can_use(weapon)
 		-- solo in aria
 		if rb.grounded then return false end
 		return rb.parachute or rb.parachutes_left > 0
-	elseif weapon == "hook" then
-		return not self.used.hook
+	elseif weapon == "hook" or weapon == "wall" then
+		return rb.tool == weapon and not self.used.tool
 	elseif weapon == "shield" then
 		return not rb.shield and rb.ammo.shield > 0
 	elseif M.TOOLS[weapon] then

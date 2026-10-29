@@ -543,6 +543,7 @@ do
 	q:step()
 	check(r2.vy > 0 and math.abs(r2.vx) > 0 and r2.hp == hp2 - config.TRAP.damage and #q.placed == 0,
 		"la trappola lancia l'avversario e sparisce")
+	check(r2.last_hit == 1, "e chi l'ha posata prende l'uccisione se cade")
 	for _ = 1, 3000 do
 		q:step()
 		if q.current == 1 then break end
@@ -864,7 +865,7 @@ do
 	h:step({ fire = { angle = 0, power = 1, weapon = "hook" } })
 	for _, e in ipairs(h:pop_events()) do if e.type == "hook" then ev = e end end
 	check(ev and ev.target == 2 and hb.hp == hp, "il Rampino aggancia senza fare danno")
-	check(h.used.hook and not h:can_use("hook") and not h.used.primary and not h.used.secondary and h.window == 0,
+	check(h.used.tool and not h:can_use("hook") and not h.used.primary and not h.used.secondary and h.window == 0,
 		"uno a turno e non conta come attacco")
 	check(hb.hooked and hb.hooked.by == 1 and ha.vx == 0, "il bersaglio resta appeso alla fune, chi tira no")
 	local y_start = hb.y
@@ -1191,6 +1192,61 @@ do
 	for i = 1, 4 do draft.pick(f, i, f.offer[1]) end
 	local fp = draft.finish(f)
 	check(fp[1].pick == fp[4].pick, "nel tutti contro tutti i doppioni vanno bene")
+
+	-- il terzo ventaglio: l'attrezzo, già scelto quello dell'assetto, compagni diversi
+	local t = draft.new(5, { { team = 1, tool = "wall" }, { team = 2 }, { team = 1, tool = "wall" }, { team = 2, tool = "wall" } })
+	check(#t.offer3 == #game.DRAFT_TOOLS and t.picks3[1] == "wall" and t.picks3[2] == "hook" and t.picks3[4] == "wall",
+		"l'attrezzo parte già scelto, quello dell'assetto (Rampino senza)")
+	check(t.picks3[3] == "hook", "il compagno con lo stesso attrezzo nell'assetto ha l'altro")
+	check(draft.pick(t, 3, "wall") and t.picks3[1] == "hook", "se lo sceglie lui, il compagno che lo aveva solo proposto passa all'altro")
+	check(draft.pick(t, 1, "hook") and not draft.valid(t, 1, "wall"), "scelto davvero, il compagno non lo può prendere")
+	check(draft.swap(t, 1, 3) and t.picks3[1] == "wall" and t.picks3[3] == "hook", "lo scambio porta anche l'attrezzo")
+	local tp = draft.finish(t)
+	local tg = game.new(5, "forgia", { players = tp })
+	check(tp[1].tool == "wall" and tg.robots[1].tool == "wall" and tg.robots[3].tool == "hook", "in partita l'attrezzo scelto")
+	check(tg:can_use("wall") and not tg:can_use("hook"), "si usa solo il proprio attrezzo")
+end
+
+-- Bastione (attrezzo, config.WALL) ------------------------------------------------
+do
+	local b = game.new(42, "forgia", { tool = "wall" })
+	run(b, 60)
+	local ba, bb = b.robots[1], b.robots[2]
+	local sy = sky_spot(b, 640, 160)
+	b.terrain:rect(400, sy - 80, 480, 200, 0)
+	place(ba, 560, sy)
+	place(bb, 760, sy)
+	b:pop_events()
+	local prima = solid_count(b.terrain)
+	check(b:can_use("wall") and not b:can_use("hook"), "col Bastione il Rampino non c'è")
+	b:step({ fire = { angle = 0, power = 0.5, weapon = "wall" } })
+	local ev
+	for _, e in ipairs(b:pop_events()) do if e.type == "wall" then ev = e end end
+	local celle = (config.WALL.w / game.CELL) * (config.WALL.h / game.CELL)
+	check(ev and ev.v == 1 and solid_count(b.terrain) - prima == celle and ev.w * ev.h == celle and ev.w > ev.h,
+		"posa un blocco orizzontale di terreno vero (" .. (solid_count(b.terrain) - prima) .. " celle)")
+	check(b.used.tool and not b:can_use("wall") and not b.used.primary and b.window == 0, "uno a turno e non conta come attacco")
+	local cx = math.floor((ba.x + config.WALL.range * 0.5) / game.CELL)
+	check(b.terrain:get(cx, math.floor((ba.y + game.DISEGNO_H / 2) / game.CELL)) ~= 0, "dove si mira, a potenza per portata")
+	-- in piedi se si mira in alto; addosso a un robot non si posa
+	b.used.tool = false
+	b:step({ fire = { angle = math.pi / 2, power = 0, weapon = "wall" } })
+	local su
+	for _, e in ipairs(b:pop_events()) do if e.type == "wall" then su = e end end
+	check(su and su.h > su.w and su.m:find("0", 1, true) ~= nil, "mirando in alto il blocco è in piedi, senza le celle del robot")
+	check(not b:terrain_collides(ba.x, ba.y), "chi posa non resta dentro il blocco")
+	-- il terzo fa crollare il più vecchio
+	b.used.tool = false
+	local vecchio = ev
+	b:step({ fire = { angle = math.pi, power = 0.6, weapon = "wall" } })
+	local crollo
+	for _, e in ipairs(b:pop_events()) do if e.type == "wall" and e.v == 0 then crollo = e end end
+	check(crollo and crollo.x == vecchio.x and crollo.y == vecchio.y and #ba.walls == config.WALL.max
+		and b.terrain:get(vecchio.x + 1, vecchio.y + 1) == 0, "al terzo Bastione crolla il più vecchio")
+	-- le celle che servono al client online: wall_cells rifà lo stesso
+	local t2 = require("sim.terrain").new(b.terrain.w, b.terrain.h, game.CELL)
+	game.wall_cells(t2, ev.x, ev.y, ev.w, ev.h, ev.m, 1)
+	check(t2:get(ev.x, ev.y) == 1 and t2:get(ev.x + ev.w, ev.y) == 0, "wall_cells rifà il blocco dell'evento")
 end
 
 -- Salto in aria, scudo, Torneo ----------------------------------------------------
@@ -1340,6 +1396,42 @@ do
 	gl:hurt(gl.robots[3], 10, gl.robots[1])
 	gl:hurt(gl.robots[4], 10, gl.robots[2])
 	check(gl.robots[1].points == 10 * config.SCORE.leader and gl.robots[2].points == 10, "colpire il primo vale di più")
+
+	-- Corona: chi abbatte il primo in classifica prende crown in più
+	local gc = game.new(3, "forgia", { players = config.MODES.ffa })
+	gc.robots[3].points = 100
+	gc:hurt(gc.robots[3], gc.robots[3].hp, gc.robots[1])
+	local hp3 = gc.robots[3].max_hp
+	check(gc.robots[1].kills == 1 and gc.robots[1].points == (hp3 + config.SCORE.kill) * config.SCORE.leader + config.SCORE.crown,
+		"abbattere il primo vale anche la Corona (" .. gc.robots[1].points .. ")")
+	-- ogni punto è anche un evento "points" (il numero che vola nell'interfaccia)
+	local somma, motivi = { 0, 0, 0, 0 }, {}
+	for _, e in ipairs(gc:pop_events()) do
+		if e.type == "points" then
+			somma[e.robot] = somma[e.robot] + e.amount
+			motivi[e.reason] = e.other
+		end
+	end
+	check(somma[1] == gc.robots[1].points and somma[3] == config.SCORE.death and motivi.damage == 3
+		and motivi.kill == 3 and motivi.death == 1, "gli eventi points sommano i punti, col motivo e l'altro robot")
+
+	-- Rampino e trampolino: chi sposta un nemico senza danno prende l'uccisione se cade
+	local gk = game.new(3, "forgia")
+	run(gk, 60)
+	gk:credit(gk.robots[2], gk.robots[1])
+	gk:kill(gk.robots[2], "fell")
+	check(gk.robots[1].kills == 1 and gk.robots[1].env_kills == 1
+		and gk.robots[1].points == config.SCORE.kill + config.SCORE.env_kill, "chi tira giu col Rampino prende l'uccisione ambientale")
+
+	-- parata: lo scudo dà punti a chi lo porta per il danno nemico che ferma, fino a parry_max
+	local gp = game.new(3, "forgia", { ammo = { shield = 1 } })
+	run(gp, 60)
+	local p1, p2 = gp.robots[1], gp.robots[2]
+	gp:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
+	gp:hurt(p1, 20, p2)
+	check(p1.points == 20 * config.SCORE.parry, "la parata da punti a chi porta lo scudo (" .. p1.points .. ")")
+	gp:hurt(p1, 100, p2)
+	check(p1.points == config.SCORE.parry_max, "ma al massimo parry_max per scudo (" .. p1.points .. ")")
 
 	-- nel 2 contro 2 il danno al compagno non dà punti, e i punti si sommano per squadra
 	local gt = game.new(3, "forgia", { players = config.MODES["2v2"] })

@@ -22,12 +22,13 @@ local tutorial = require "battaglia.tutorial"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
+local punteggio = require "battaglia.punteggio"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
 -- W, H: lo schermo del gioco; la mappa è game.WORLD_W x game.WORLD_H
-local W, H, CELL = 1280, 720, game.CELL
-local TW, TH = game.WORLD_W / CELL, game.WORLD_H / CELL
+local W, H = 1280, 720
+local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
@@ -72,7 +73,7 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 local STATUS_TEXT = { burn = "BRUCIA!", slow = "RALLENTATO!", cracked = "ARMATURA INCRINATA!" }
 local STATUS_NAME = { { "burn", "BRUCIA" }, { "slow", "LENTO" }, { "cracked", "INCRINATO" } }
 local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge",
-	"trap", "shield", "trampoline", "hook", "parachute" }
+	"trap", "shield", "trampoline", "hook", "wall", "parachute" }
 -- (il main chunk è al limite dei 200 locali di Lua: nome e colore insieme)
 local BAR_GROUPS = { { "PRIMARIE", ui.C.BRACE }, { "SECONDARIE", ui.C.ACCIAIO }, { "OGGETTI", ui.C.LINEA } }
 local function bar_group(w)
@@ -80,7 +81,7 @@ local function bar_group(w)
 end
 -- icone della barra e della scelta (atlante armi, strumenti/grafica/armi.py)
 local WEAPON_ICON = {}
-for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "hook" }) do
+for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "hook", "wall" }) do
 	WEAPON_ICON[w] = w .. "_icona"
 end
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
@@ -89,12 +90,14 @@ local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Sche
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- nomi delle armi nella scelta d'inizio partita
 local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
-	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo" }
+	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", hook = "Rampino", wall = "Bastione" }
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
 	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dalla testa ai piedi; in aria, se colpisce mentre cala, rimbalzi in alto",
-	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce" }
+	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
+	hook = "Tira a te il nemico, o ti porta sulla piattaforma colpita",
+	wall = "Posa un blocco di terreno dove miri: riparo, ponte o gradino" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true, mallet = true }
 local SLOT, SLOT_GAP, GROUP_GAP, BAR_Y = 84, 10, 30, 62
@@ -342,7 +345,7 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.time_bar_bg, visible)
 	gui.set_enabled(self.time_bar, visible)
 	gui.set_enabled(self.tele_label, visible)
-	gui.set_enabled(self.score_label, visible)
+	punteggio.set_enabled(self.punti, visible)
 	gui.set_enabled(self.btn_zoom, visible)
 end
 
@@ -543,6 +546,9 @@ local function new_match(self, seed, map, opts)
 		targa.vita(self.robots[i].targa, rb.hp, rb.max_hp, rb.shield)
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, scudo = rb.shield }
 	end
+	local targhe = {}
+	for i = 1, game.MAX_PLAYERS do targhe[i] = self.robots[i].targa end
+	punteggio.partita(self.punti, self.g, TEAM_NAMES, targhe)
 	self.trail_n = 0
 	self.pose_dt = game.DT
 	reset_pose(self)
@@ -668,10 +674,29 @@ local function handle_event(self, e)
 			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
 		end
 		self.drawn_map = nil
-		redraw_cells(self, math.floor((e.x - e.r) / CELL) - 1, row_min - 1,
-			math.floor((e.x + e.r) / CELL) + 1, row_max + 1)
+		redraw_cells(self, math.floor((e.x - e.r) / game.CELL) - 1, row_min - 1,
+			math.floor((e.x + e.r) / game.CELL) + 1, row_max + 1)
 		explosion(self, e.x, e.y, e.r)
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA, e.x, e.y
+	elseif e.type == "wall" then
+		-- Bastione posato (v = 1) o crollato (v = 0): online lo rifacciamo noi
+		if self.mode == "online" then game.wall_cells(self.g.terrain, e.x, e.y, e.w, e.h, e.m, e.v) end
+		self.drawn_map = nil
+		redraw_cells(self, e.x - 1, e.y - 1, e.x + e.w, e.y + e.h)
+		-- polvere chiara: sale un poco se si posa, cade se crolla
+		local cx, cy = (e.x + e.w / 2) * game.CELL, (e.y + e.h / 2) * game.CELL
+		for j = 1, DETRITI_PER_COLPO do
+			self.detrito_i = self.detrito_i % #self.detriti + 1
+			local d = self.detriti[self.detrito_i]
+			d.x = cx + (math.random() - 0.5) * e.w * game.CELL
+			d.y = cy + (math.random() - 0.5) * e.h * game.CELL
+			d.vx, d.vy = (math.random() - 0.5) * 60, e.v == 1 and 40 + math.random() * 40 or -math.random() * 30
+			d.a, d.va, d.t = math.random() * 360, (math.random() * 2 - 1) * 360, 0
+			local lato = 2 + math.random() * 3
+			gui.set_size(d.node, vmath.vector3(lato, lato, 0))
+			d.col.x, d.col.y, d.col.z = 0.75, 0.68, 0.6
+			gui.set_enabled(d.node, true)
+		end
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- rinculo del Lanciarune (e del cecchino), slancio del lancio, raffica di schegge
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
@@ -747,7 +772,15 @@ local function handle_event(self, e)
 		shock(self, e.x, e.y)
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA * 0.5, e.x, e.y
+	elseif e.type == "points" then
+		-- il numero nasce sul colpito (sul robot stesso se perde punti o para)
+		local da = (e.amount < 0 or e.reason == "parry" or not e.other) and e.robot or e.other
+		local v, s = self.view[da], self.cam_s or 1
+		if v then
+			punteggio.punti(self.punti, e, v.x * s + (self.cam_tx or 0), (v.y + scoria.altezza(self.robots[da].rig)) * s + (self.cam_ty or 0))
+		end
 	elseif e.type == "turn" then
+		punteggio.turno(self.punti, self.g)
 		-- ogni turno ricomincia dal Lanciarune, non dall'arma del turno prima
 		self.tele_armed, self.weapon = false, "missile"
 		if self.mode == "online" then
@@ -840,7 +873,7 @@ local function apply_state(self, s)
 	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
 	g.window, g.teleports, g.overtime = s.win or 0, s.tp or 0, s.ot or false
 	local u = s.u or 0
-	g.used.primary, g.used.secondary, g.used.hook = u % 2 == 1, u % 4 >= 2, u >= 4
+	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
 	g.match_left = s.mt or g.match_left
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
@@ -855,6 +888,7 @@ local function apply_state(self, s)
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
 		rb.ammo.sniper = r.ac or 0
 		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
+		rb.tool = r.at or rb.tool
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
 		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
 		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
@@ -924,7 +958,9 @@ local function on_server_message(self, m)
 		set_controls_visible(self, true)
 		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. self.names[m.you]))
 	elseif m.t == "sync" and self.g then
-		for _, c in ipairs(m.x) do self.g.terrain:carve(c[1], c[2], c[3]) end
+		for _, c in ipairs(m.x) do
+			if c.m then game.wall_cells(self.g.terrain, c.x, c.y, c.w, c.h, c.m, c.v) else self.g.terrain:carve(c[1], c[2], c[3]) end
+		end
 		self.drawn_map = nil
 		draw_terrain(self)
 	elseif m.t == "state" and self.g then
@@ -1056,7 +1092,11 @@ local function start_local(self)
 	end
 	local nomi, colori = names_colors(opts.players)
 	self.mode = "scelta"
-	scelta_armi.show(self.scelta, draft.new(os.time(), opts.players), nomi, colori)
+	-- il primo giocatore parte con l'attrezzo del suo assetto già scelto
+	local scelti = {}
+	for i, p in ipairs(opts.players) do scelti[i] = { team = p.team } end
+	scelti[1].tool = profilo.assetto_attivo(self.profilo).tool
+	scelta_armi.show(self.scelta, draft.new(os.time(), scelti), nomi, colori)
 end
 
 -- La partita sullo stesso telefono, con i giocatori usciti dalla scelta (nil: senza scelta)
@@ -1087,6 +1127,11 @@ start_local_match = function(self, picked)
 		for k, v in pairs(p) do players[i][k] = v end
 	end
 	players[1].stats = assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio))
+	-- prova_attrezzo wall: tutti col Bastione al posto del Rampino (scenario bastione.txt)
+	local attrezzo = SIMULA and config_string("megablast.prova_attrezzo", "") or ""
+	if attrezzo ~= "" then
+		for _, p in ipairs(players) do p.tool = attrezzo end
+	end
 	opts.players = players
 	new_match(self, os.time(), self.mappa, opts)
 	-- prova_durata N: la partita dura N secondi (scenari/podio.txt)
@@ -1273,12 +1318,13 @@ local function bar_robot(self)
 	return current_robot(self)
 end
 
--- Lo slot si vede? Il paracadute finché ne restano o è già aperto; il Rampino sempre.
+-- Lo slot si vede? Il paracadute finché ne restano o è già aperto; l'attrezzo
+-- (Rampino o Bastione) sempre.
 local function slot_have(rb, w)
 	if w == "parachute" then
 		return rb.parachute or rb.parachutes_left > 0
-	elseif w == "hook" then
-		return true
+	elseif w == "hook" or w == "wall" then
+		return rb.tool == w
 	end
 	return game.has_weapon(rb, w)
 end
@@ -1288,7 +1334,7 @@ local function update_bar(self)
 	if not rb then return end
 	local g = self.g
 	-- finiti i colpi (o lanciato il Rampino del turno) si torna al Lanciarune
-	if not slot_have(rb, self.weapon) or (self.weapon == "hook" and g.used.hook) then self.weapon = "missile" end
+	if not slot_have(rb, self.weapon) or ((self.weapon == "hook" or self.weapon == "wall") and g.used.tool) then self.weapon = "missile" end
 	-- dopo il primo attacco si passa da soli all'altro (arma o spada)
 	if g.window > 0 and rb.id == g.current and not g:can_use(self.weapon) then
 		local other = game.SECONDARY[self.weapon] and "missile" or "sword"
@@ -1693,7 +1739,8 @@ local function render(self, dt)
 	if show_aim then
 		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts, aim_weapon)
 		-- Blastron mostra solo l'inizio del volo: una freccia lunga quanto la potenza
-		local shown = game.AIM_PREVIEW_DOTS or AIM_DOTS
+		-- (il Bastione mostra tutta la sagoma del blocco)
+		local shown = aim_weapon ~= "wall" and game.AIM_PREVIEW_DOTS or AIM_DOTS
 		for i, n in ipairs(self.dots) do
 			gui.set_enabled(n, i <= shown)
 			set_pos(n, pts[i].x, pts[i].y)
@@ -1733,19 +1780,7 @@ local function render(self, dt)
 	for _, sl in ipairs(self.slots) do
 		if sl.glow then gui.set_enabled(sl.glow, blink and sl.have and g:can_use(sl.weapon)) end
 	end
-	-- punti di ogni squadra, in alto a sinistra
-	local score = ""
-	for t = 1, #TEAM_NAMES do
-		local pts, any = 0, false
-		for _, rb in ipairs(g.robots) do
-			if rb.team == t then pts, any = pts + rb.points, true end
-		end
-		if any then score = score .. string.format("%s %d   ", TEAM_NAMES[t], math.floor(pts + 0.5)) end
-	end
-	if self.score_text ~= score then
-		gui.set_text(self.score_label, score)
-		self.score_text = score
-	end
+	punteggio.update(self.punti, dt, g, self.mode == "online" and self.me or g.current)
 	local n = bar_robot(self)
 	local tele = n and n.teleports_left or 0
 	if self.tele_n ~= tele then
@@ -1960,8 +1995,8 @@ function init(self)
 	self.time_bar = box(W / 2, TIME_BAR_Y, TIME_BAR_W, TIME_BAR_H, TIME_COLOR)
 	self.tele_label = label(W / 2 + TIME_BAR_W / 2 + 110, TIME_BAR_Y + 2, "TELETRASPORTI 2", 0.9)
 	gui.set_color(self.tele_label, vmath.vector4(1, 0.75, 0.35, 1))
-	self.score_label = label(24, H - 28, "", 0.8)
-	gui.set_pivot(self.score_label, gui.PIVOT_W)
+	-- i punti in alto a sinistra; il ticchettio è il suono "punto" dell'oggetto game
+	self.punti = punteggio.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
 	self.tut_label = label(W / 2, H - 120, "", 0.8)
 	gui.set_line_break(self.tut_label, true)

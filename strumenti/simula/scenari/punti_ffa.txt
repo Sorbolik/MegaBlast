@@ -1,0 +1,23 @@
+# Punti in partita, tutti contro tutti: quattro gettoni in fila per posto, il
+# tuo (chi è di turno) col bordo spesso, distacco sotto. Rosso colpisce Blu,
+# vicino, con la Lama: il gettone di Rosso passa primo e prende la Corona.
+imposta giocatori ffa
+imposta zoom 2
+imposta prova_vicino 50
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_quattro_pari
+premi 2                             # Lama di Nucleo
+aspetta 0.4
+mira 120 0 0.6
+aspetta_evento points 3
+aspetta 0.3
+foto 02_numero
+aspetta 1.6
+foto 03_classifica
+aspetta_evento turn 30
+aspetta 0.3
+foto 04_turno_dopo
