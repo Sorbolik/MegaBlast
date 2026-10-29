@@ -8,6 +8,7 @@
 
 #if defined(DM_PLATFORM_ANDROID)
 #include <dmsdk/dlib/android.h>
+#include <dmsdk/graphics/graphics_native.h>
 
 static int Tocco(lua_State* L)
 {
@@ -20,7 +21,7 @@ static int Tocco(lua_State* L)
     {
         jmethodID tocco = env->GetStaticMethodID(cls, "tocco", "(Landroid/app/Activity;)V");
         if (tocco)
-            env->CallStaticVoidMethod(cls, tocco, dmAndroid::GetActivity()->clazz);
+            env->CallStaticVoidMethod(cls, tocco, dmGraphics::GetNativeAndroidActivity());
         env->DeleteLocalRef(cls);
     }
     if (env->ExceptionCheck())
