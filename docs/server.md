@@ -70,7 +70,7 @@ almeno due squadre. Il client la
 mostra con la schermata dello stesso telefono (`client/menu/scelta.lua`). Nello stato ogni robot
 porta la sua secondaria in `sw`, l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
-`hx`, `hy`; `kn`: sbalzato da un colpo; `la`: direzione dello scatto
+`hx`, `hy`; `gs`: il suo uncino del Rampino è in volo, in `gx`, `gy`; `kn`: sbalzato da un colpo; `la`: direzione dello scatto
 dell'Affondo).
 
 ## Server in pari con main

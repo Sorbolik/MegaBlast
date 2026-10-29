@@ -95,6 +95,7 @@ local function clona(rb)
 	for k, s in pairs(rb.status) do st[k] = copia(s) end
 	c.status = st
 	if rb.hooked then c.hooked = copia(rb.hooked) end
+	if rb.hook_shot then c.hook_shot = copia(rb.hook_shot) end
 	return c
 end
 
@@ -137,7 +138,7 @@ local function quieto(w)
 		if w.shards[i] then return false end
 	end
 	for _, rb in ipairs(w.robots) do
-		if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.mallet) then
+		if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet) then
 			return false
 		end
 	end
@@ -480,6 +481,12 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 				if dist < C.LUNGE.speed * C.LUNGE.ticks / 60 + C.LUNGE.reach then
 					aggiungi(arma, dritto, 1, "tutto")
 					aggiungi(arma, dritto + (dx < 0 and -0.15 or 0.15), 1, "tutto")
+				end
+			elseif arma == "bellows" then
+				-- il soffio: dritto o un po' in su, per staccarlo da terra verso il vuoto
+				if dist < C.BELLOWS.range then
+					aggiungi(arma, dritto, 1, "tutto")
+					aggiungi(arma, dritto + (dx < 0 and -0.35 or 0.35), 1, "tutto")
 				end
 			elseif arma == "mallet" then
 				if math.abs(dx) < C.MALLET.reach + 30 and math.abs(dy) < C.MALLET.reach + 30 then

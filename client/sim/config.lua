@@ -90,10 +90,14 @@ C.CRATE_CONTENTS = {
 C.SNIPER = { damage = 50, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
 	bounces = 6, bounce_normal = 0.5, bounce_tangent = 0.85, min_speed = 40 }
 
--- Secondarie (scelta di Sergio del 24 ottobre 2026): danno secco, nessun
--- effetto di stato, illimitate; ognuna sposta chi la usa a modo suo. La Lama
--- è in sim/game.lua (SWORD_*); Tonante, Maglio e Affondo si scelgono una a
--- testa all'inizio della partita. Distanze in pixel, velocità in pixel al secondo.
+-- Le due categorie (Sergio, 29 ottobre 2026, al posto della regola del 24):
+-- le PRIMARIE fanno danno e sono le sole che lasciano effetti di stato
+-- (C.STATUS: rallentato, armatura incrinata, bruciatura); le SECONDARIE
+-- possono fare di tutto (spostare te, spostare l'avversario, danno secco)
+-- ma non lasciano mai effetti di stato. Le secondarie sono illimitate. La
+-- Lama è in sim/game.lua (SWORD_*); Tonante, Maglio, Affondo e Mantice si
+-- scelgono una a testa all'inizio della partita. Distanze in pixel, velocità
+-- in pixel al secondo.
 -- Tonante (pistola pesante): colpo dritto e istantaneo fino a range, si ferma
 -- al primo robot o terreno. Il rinculo spinge chi spara dalla parte opposta
 -- alla mira, dritto, a recoil per recoil_ticks: la stessa spinta in tutte le
@@ -109,19 +113,24 @@ C.EAGLE = { damage = 38, range = 600, recoil = 300, recoil_ticks = 22 }
 -- Finito (o fermato) l'arco, il martello resta giù hold tick.
 C.MALLET = { damage = 57, reach = 44, from = math.rad(115), to = math.rad(-100), ticks = 12, hold = 12, bounce = 320 }
 -- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, uno a
--- turno, si usa in qualsiasi momento del turno e non fa danno): colpo
--- dritto e istantaneo fino a range, due usi.
+-- turno, si usa in qualsiasi momento del turno e non fa danno): l'uncino parte
+-- dalla canna e vola dritto a shot_speed, senza gravità, fino a range (Sergio,
+-- 29 ottobre 2026: con le mappe 1,5 volte più grandi 220 non bastava; 400 arriva
+-- dal bordo della piattaforma agli scogli di "Giù dal bordo"). Se non prende
+-- niente cade col filo (solo nel disegno).
 -- Su un robot: viene tirato con la fune verso la mano di chi tira, dritto
 -- lungo la fune, senza gravità, a speed, per reel pixel al massimo, poi viene
--- mollato e cade dov'è. reel è tutta la portata (Sergio 26 ottobre 2026: "ce
--- lo dobbiamo tirare per bene"): arriva fin addosso a chi tira, che lo ferma.
+-- mollato e cade dov'è. Da vicino arriva fin addosso a chi tira (Sergio 26
+-- ottobre 2026: "ce lo dobbiamo tirare per bene"); da più lontano di reel resta
+-- a metà strada: sopra il vuoto cade giù (scelta nostra, così "Giù dal bordo"
+-- si fa col Rampino).
 -- Il pavimento sotto non lo ferma (scivola e sale i gradini, game.hook_slide);
 -- un muro alto o un altro robot in mezzo sì. Da sotto lo sollevi fino a te.
 -- Chi tira si può muovere nel frattempo: la fune segue la mano.
 -- Sul terreno: è chi tira che sale lungo la fune a climb_speed fino al punto
 -- colpito e si mette in piedi sopra la piattaforma, se la sua cima è entro
 -- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade).
-C.HOOK = { range = 220, reel = 220, speed = 300, climb_speed = 420, climb = 64 }
+C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 64 }
 -- Bastione (attrezzo, uno a turno al posto del Rampino; scelto da Sergio il 29
 -- ottobre): posa un blocco di terreno vero w x h pixel nel punto mirato, a
 -- range pixel al massimo (la potenza della mira); se si mira più su o più giù
@@ -136,6 +145,15 @@ C.WALL = { w = 48, h = 12, range = 160, max = 2 }
 -- se non passa per niente. Alla fine resta keep della velocità: oltre un
 -- bordo si vola.
 C.LUNGE = { damage = 45, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb = 16 }
+-- Mantice (Sergio, 29 ottobre 2026: "una secondaria che sposta il nemico"): il
+-- soffio della forgia. Istantaneo, a forma di ventaglio: colpisce ogni robot
+-- (non chi soffia) col centro entro range pixel e entro cone radianti dalla
+-- mira, se il terreno non è in mezzo. Fa poco danno e lo spinge lontano lungo
+-- la mira a push (più lift verso l'alto, per staccarlo da terra), meno quanto
+-- più è lontano (al bordo del ventaglio far della spinta). Chi soffia non si
+-- muove. Lo scudo dimezza la spinta come per i colpi. Danno sulla scala della
+-- vita 100 (#79): 10, un decimo
+C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 520, lift = 160, far = 0.6 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.

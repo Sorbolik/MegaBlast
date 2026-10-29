@@ -93,7 +93,7 @@ end
 -- Gli eventi che dicono che un robot ha usato un'arma o un oggetto
 local USO = {
 	fire = "missile", grenade = "grenade", shards = "shards", sniper = "sniper", punch = "punch",
-	swing = "sword", eagle = "eagle", mallet = "mallet", lunge = "lunge", hook = "hook",
+	swing = "sword", eagle = "eagle", mallet = "mallet", lunge = "lunge", bellows = "bellows", hook = "hook",
 	orb = "teleport", parachute = "parachute", shield = "shield",
 }
 local MODI = { "1v1", "2v2", "ffa" }
