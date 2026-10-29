@@ -1,0 +1,29 @@
+# Lezioni: dalla home ALLENAMENTO (si apre sulle lezioni finché ce n'è una da
+# fare), la lezione del Rampino: sotto la piattaforma, aggancio al bordo, su,
+# e la Lama sul bersaglio. Barra: Lanciarune 506, Lama 770, Rampino 1084 (tondo).
+# Carte delle lezioni: x 256 / 640 / 1024, y 410 / 298 / 186.
+
+aspetta 1.5
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+foto 01_lezioni
+tocca 1024 298                      # Il Rampino
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.8
+foto 02_scopo
+tieni destra 5.2
+tocca 1084 62                       # Rampino
+aspetta 0.3
+mira 70 100 0.3 03a_mira
+aspetta_evento hook_end 3
+aspetta 0.6
+foto 03_sopra
+tieni destra 6
+tocca 770 62                        # Lama
+mira 80 0 0.3
+aspetta_evento sword_hit 3
+aspetta 0.6
+foto 04_fatta
+tocca 640 360                       # si torna alle lezioni
+aspetta 1
+foto 05_stelle

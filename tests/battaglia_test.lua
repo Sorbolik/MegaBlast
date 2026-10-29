@@ -30,7 +30,7 @@ gui = {
 	set_text = function(n, text) n.text = text end,
 	set_size = function(n, v) n.size = copia(v) end,
 	get_size = function(n) return n.size end,
-	set_font = function() end, set_outline = function() end, set_pivot = function() end,
+	set_font = function() end, set_outline = function() end, set_pivot = function() end, set_line_break = function() end,
 	set_slice9 = function() end, PIVOT_W = 3,
 	-- l'ordine fra i fratelli: move_above(n, nil) lo porta sopra a tutti
 	move_above = function(n) ordine = ordine + 1; n.ordine = ordine end,
@@ -552,64 +552,6 @@ camera.cambia(c, -5)
 check(camera.zoom(c) == camera.LIVELLI[1], "rotella avanti: si ferma sul più vicino")
 camera.prossimo(c); camera.prossimo(c); camera.prossimo(c)
 check(c.livello == 1, "il pulsante gira: vicino, medio, mappa, vicino")
-
--- Tutorial a passi (battaglia/tutorial.lua) ------------------------------------------
-do
-	local tutorial = require "battaglia.tutorial"
-	local t = tutorial.new()
-	-- gioca input(tick) per al massimo n tick, passando gli eventi al tutorial
-	local function gioca(g, n, input)
-		for k = 1, n do
-			g:step(input and input(k) or nil)
-			for _, e in ipairs(g:pop_events()) do tutorial.evento(t, g, e) end
-			if tutorial.fatto(t, g) then return true end
-		end
-		return false
-	end
-	local function spara(w, a) return { fire = { angle = a or math.rad(45), power = 0.7, weapon = w or "missile" } } end
-
-	local g = tutorial.partita(t, 1)
-	check(#g.order == 1 and g.robots[2] and math.abs(g.robots[2].x - g.robots[1].x) > 200,
-		"tutorial: il bersaglio c'è ma non gioca")
-	check(gioca(g, 600, function(k)
-		if k <= 60 then return { right = true } end
-		if k == 70 then return spara() end
-	end), "tutorial 1: muoversi e sparare")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	check(not gioca(g, 2, function() return spara() end), "tutorial 2: sparare non basta")
-	check(gioca(g, 900, function() if g.window > 0 then return { left = true } end end), "tutorial 2: al riparo dopo il colpo")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	check(math.abs(g.robots[2].x - g.robots[1].x) < 40, "tutorial 3: il bersaglio è vicino")
-	check(gioca(g, 120, function(k) if k == 5 then return spara("sword", 0) end end), "tutorial 3: colpo di spada")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	check(gioca(g, 300, function(k)
-		if k == 5 then return spara() end
-		if k == 30 then return spara("sword", 0) end
-	end), "tutorial 4: due attacchi nello stesso turno")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	check(g.robots[1].teleports_left == 0, "tutorial 5: si parte senza teletrasporti")
-	check(gioca(g, 600, function(k)
-		if k == 5 then return spara() end
-		if k == 20 then return spara("teleport", math.rad(80)) end
-	end), "tutorial 5: globo guadagnato e lanciato")
-
-	tutorial.avanti(t)
-	g = tutorial.partita(t, 1)
-	tutorial.evento(t, g, { type = "sword_hit", robot = 1, target = 2 })
-	check(not tutorial.fatto(t, g), "tutorial 6: il fendente da solo non è la combo")
-	tutorial.evento(t, g, { type = "teleport", robot = 1 })
-	tutorial.evento(t, g, { type = "sword_hit", robot = 1, target = 2 })
-	check(tutorial.fatto(t, g), "tutorial 6: teletrasporto e fendente")
-	check(not tutorial.avanti(t), "tutorial: sei passi")
-end
 
 if failures > 0 then
 	print(failures .. " test falliti")

@@ -21,7 +21,7 @@ local replay = require "sim.replay"
 -- vicino al limite di 200 variabili locali di Lua
 local menu = { podio = require "menu.podio", armeria = require "menu.armeria", scelta = require "menu.scelta",
 	allenamento = require "menu.allenamento" }
-local tutorial = require "battaglia.tutorial"
+local lezioni = require "sim.lezioni"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
@@ -383,8 +383,9 @@ local function show_menu(self)
 	msg.post("/terreno", "disable")
 	set_controls_visible(self, false)
 	show_message(self, "", true)
-	self.tut, self.tut_wait = nil, nil
-	gui.set_text(self.tut_label, "")
+	self.lezione, self.lezione_attesa = nil, nil
+	gui.set_enabled(self.btn_esci, false)
+	for _, r in ipairs(self.robots) do targa.riga(r.targa, "") end
 end
 
 -- Fluidità -------------------------------------------------------------------
@@ -719,7 +720,12 @@ local function handle_event(self, e)
 	elseif e.type == "teleports" then
 		show_message(self, string.format("%s +%d teletrasport%s", who_name(self, e.robot), e.amount, e.amount == 1 and "o" or "i"))
 		-- sullo schermo di chi li guadagna volano dall'anello al pulsante del teletrasporto
-		if self.mode ~= "online" or e.robot == self.me then hud.globi(self.crono, e.amount, gui.get_position(self.btn_tele.nodo)) end
+		if self.mode ~= "online" or e.robot == self.me then
+			-- nei primi turni della partita guidata i globi volano piano, da guardare
+			local r = self.lezione
+			local lento = r and r.l.guidata and r.st.turni <= 3 and 2.5 or nil
+			hud.globi(self.crono, e.amount, gui.get_position(self.btn_tele.nodo), lento)
+		end
 	elseif e.type == "trap" then
 		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
 		shock(self, e.x, e.y)
@@ -1059,55 +1065,10 @@ end
 
 local start_local_match
 
--- Tutorial (battaglia/tutorial.lua): un passo alla volta, ognuno una partita
--- col suo bersaglio; titolo e consiglio restano in alto.
-local function tutorial_step(self)
-	local t = self.tut
-	new_match(self, os.time(), tutorial.MAPPA, tutorial.opzioni(t))
-	tutorial.prepara(t, self.g)
-	snap_robot(self, 2)
-	self.g:pop_events()
-	local p = tutorial.passo(t)
-	gui.set_text(self.tut_label, p.titolo .. "\n" .. p.consiglio)
-	self.tut_wait = nil
-	self.mode = "local"
-	set_controls_visible(self, true)
-end
-
--- Obiettivo del passo raggiunto: un attimo per vederlo, poi il passo dopo
-local function tutorial_update(self, dt)
-	local t = self.tut
-	if not self.tut_wait then
-		if tutorial.fatto(t, self.g) then
-			self.tut_wait = 1.5
-			show_message(self, "Fatto!")
-		end
-		return
-	end
-	self.tut_wait = self.tut_wait - dt
-	if self.tut_wait > 0 then return end
-	if tutorial.avanti(t) then
-		tutorial_step(self)
-	else
-		self.tut, self.tut_wait = nil, nil
-		gui.set_text(self.tut_label, "")
-		self.mode = "ended"
-		set_controls_visible(self, false)
-		show_message(self, "Tutorial finito!\nTocca per tornare al menu", true)
-	end
-end
-
 -- Si parte con la scelta delle armi (menu/scelta.lua); finita quella, la partita.
 -- contro: { modo, livello } per giocare contro i bot (menu/allenamento.lua)
 local function start_local(self, contro)
 	hide_menu(self)
-	-- [megablast] tutorial = 1: STESSO TELEFONO apre il tutorial (finché la home
-	-- non ha il suo pulsante)
-	if config_int("megablast.tutorial", 0) > 0 then
-		self.tut = tutorial.new()
-		tutorial_step(self)
-		return
-	end
 	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono (e coda online)
 	local modo = contro and contro.modo or config_string("megablast.giocatori", "1v1")
 	local opts = { players = {} }
@@ -1193,6 +1154,60 @@ start_local_match = function(self, picked)
 	end
 	self.mode = "local"
 	set_controls_visible(self, true)
+end
+
+-- Lezioni e partita guidata (sim/lezioni.lua, schermata ALLENAMENTO). picks:
+-- i giocatori usciti dalla scelta, per le lezioni che la fanno fare
+local function start_lezione(self, id, picks)
+	local r = lezioni.nuova(id)
+	hide_menu(self)
+	if r.l.draft and not picks then
+		self.lezione = r
+		local players = r.l.giocatori
+		local nomi, colori = names_colors(players)
+		local d = draft.new(os.time(), players)
+		for i, p in ipairs(players) do
+			if p.dummy then bot.scegli(d, i, 1) end
+		end
+		self.mode = "scelta"
+		menu.scelta.show(self.scelta, d, nomi, colori)
+		return
+	end
+	new_match(self, lezioni.partita(r, os.time(), picks))
+	lezioni.prepara(r, self.g)
+	draw_terrain(self)
+	reset_pose(self)
+	self.lezione, self.lezione_attesa = r, nil
+	self.mode = "local"
+	set_controls_visible(self, true)
+	gui.set_enabled(self.btn_esci, true)
+end
+
+-- A ogni frame: la riga sopra il diavoletto; fatta, le stelle; fallita, si
+-- ricomincia dopo un attimo. La partita guidata finisce col podio.
+local function lezione_update(self, dt)
+	local r = self.lezione
+	local testo, chi = lezioni.riga(r)
+	for i, rb in ipairs(self.robots) do targa.riga(rb.targa, i == chi and testo or "") end
+	if self.lezione_attesa then
+		self.lezione_attesa = self.lezione_attesa - dt
+		if self.lezione_attesa <= 0 then start_lezione(self, r.l.id) end
+		return
+	end
+	if r.esito == "fatta" and not r.salvata then
+		r.salvata = true
+		profilo.lezione(self.profilo, r.l.id, lezioni.stelle(r))
+		profilo.salva(self.profilo)
+		if not r.l.guidata then
+			local n = lezioni.stelle(r)
+			show_message(self, "Fatta! " .. n .. (n == 1 and " stella" or " stelle") .. " su 3\nTocca per continuare", true)
+			self.mode = "ended"
+			set_controls_visible(self, false)
+		end
+	elseif r.esito == "fallita" then
+		show_message(self, "Riprova")
+		self.lezione_attesa = 1.5
+	end
 end
 
 -- Solo negli scenari: [megablast] ricetta = file JSON di una ricetta
@@ -2086,9 +2101,9 @@ function init(self)
 	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game
 	self.punti = punteggio.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
-	self.tut_label = label(W / 2, H - 120, "", 0.8)
-	gui.set_line_break(self.tut_label, true)
-	gui.set_size(self.tut_label, vmath.vector3(900, 120, 0))
+	-- per uscire da una lezione (solo lì: le partite finiscono da sole)
+	self.btn_esci = ui.indietro({}, "esci")
+	gui.set_enabled(self.btn_esci, false)
 
 	-- zoom: vicino, medio, tutta la mappa (anche rotella e tasto Z)
 	self.btn_zoom = box(ZOOM_BTN.x, ZOOM_BTN.y, 116, 44, vmath.vector4(0.05, 0.05, 0.07, 0.55))
@@ -2194,13 +2209,14 @@ function update(self, dt)
 			replay.dopo(self.ricetta, self.g)
 			for _, e in ipairs(self.g:pop_events()) do
 				handle_event(self, e)
-				if self.tut then tutorial.evento(self.tut, self.g, e) end
+				if self.lezione then lezioni.evento(self.lezione, self.g, e, self.bots) end
 			end
+			if self.lezione then lezioni.tick(self.lezione, self.g) end
 			self.acc = self.acc - game.DT
 			capture(self.pose_b, self.g)
 		end
 		self.pose_t, self.pose_dt = self.acc, game.DT
-		if self.tut then tutorial_update(self, dt) end
+		if self.lezione then lezione_update(self, dt) end
 	elseif self.mode == "online" then
 		self.pose_t = self.pose_t + dt_mondo
 		-- mandiamo al server solo i cambiamenti, e solo quando tocca a noi
@@ -2245,7 +2261,11 @@ function update(self, dt)
 	if self.schermata and self.schermata.mod.update then self.schermata.mod.update(self.schermata.obj, dt) end
 	if self.mode == "scelta" then
 		local players = menu.scelta.update(self.scelta, dt)
-		if players then start_local_match(self, players) end
+		if players and self.lezione then
+			start_lezione(self, self.lezione.l.id, players)
+		elseif players then
+			start_local_match(self, players)
+		end
 	elseif self.mode == "scelta_online" then
 		menu.scelta.update(self.scelta, dt)
 	end
@@ -2305,7 +2325,15 @@ end
 -- Un dito (o il mouse) si appoggia in (x, y). id distingue le dita.
 local function pointer_down(self, id, x, y)
 	if self.mode == "ended" then
-		if self.podio_t then apri_podio(self) else show_menu(self) end
+		if self.podio_t then
+			apri_podio(self)
+		elseif self.lezione then
+			-- finita una lezione si torna alle lezioni
+			show_menu(self)
+			apri_schermata(self, menu.allenamento, self.contro_bot, self.profilo.lezioni)
+		else
+			show_menu(self)
+		end
 		return
 	elseif self.mode ~= "local" and self.mode ~= "online" then
 		return
@@ -2317,7 +2345,10 @@ local function pointer_down(self, id, x, y)
 		self.pointers[id] = "cancelled"
 		return
 	end
-	if gui.pick_node(self.btn_zoom, x, y) then
+	if self.lezione and gui.pick_node(self.btn_esci, x, y) then
+		show_menu(self)
+		apri_schermata(self, menu.allenamento, self.contro_bot, self.profilo.lezioni)
+	elseif gui.pick_node(self.btn_zoom, x, y) then
 		change_zoom(self)
 	elseif gui.pick_node(self.btn_tele.nodo, x, y) then
 		toggle_tele(self)
@@ -2374,9 +2405,11 @@ end
 function on_input(self, action_id, action)
 	if self.mode == "schermata" then
 		local fine = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
-		if type(fine) == "table" then
-			-- GIOCA nell'allenamento: la scelta resta per la prossima volta
-			self.contro_bot = fine
+		if type(fine) == "table" and fine.lezione then
+			chiudi_schermata(self)
+			start_lezione(self, fine.lezione)
+		elseif type(fine) == "table" then
+			-- GIOCA nell'allenamento contro i bot (la scelta resta per la prossima volta)
 			chiudi_schermata(self)
 			start_local(self, fine)
 		elseif fine then
@@ -2388,12 +2421,17 @@ function on_input(self, action_id, action)
 		local scelta = home.on_input(self.home, action_id, action)
 		if scelta == "local" then
 			start_local(self)
+		elseif scelta == "online" and profilo.nuovo_giocatore(self.profilo)
+			and (not SIMULA or config_int("megablast.prova_nuovo", 0) > 0) then
+			-- la prima volta GIOCA porta alla partita guidata, finché non la si
+			-- finisce (negli scenari solo con prova_nuovo 1: scenari/guidata.txt)
+			start_lezione(self, "guidata")
 		elseif scelta == "online" then
 			start_online(self)
 		elseif scelta == "armeria" then
 			apri_schermata(self, menu.armeria, self.profilo)
-		elseif scelta == "bot" then
-			apri_schermata(self, menu.allenamento, self.contro_bot)
+		elseif scelta == "allenamento" then
+			apri_schermata(self, menu.allenamento, self.contro_bot, self.profilo.lezioni)
 		end
 		return true
 	elseif self.mode == "scelta" or self.mode == "scelta_online" then
