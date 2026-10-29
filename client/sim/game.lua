@@ -2627,7 +2627,8 @@ function M:start_turn(player)
 	self.window = 0
 	-- attacchi già fatti nel turno (al massimo un'arma e un colpo di spada) e l'attrezzo, uno a turno
 	self.used = { primary = false, secondary = false, tool = false }
-	self.teleports = 0
+	-- teletrasporti lanciati e globi guadagnati nel turno (per il limite del primo turno)
+	self.teleports, self.teleports_earned = 0, 0
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
 	-- lo scudo dura fino all'inizio del proprio turno dopo
@@ -2657,7 +2658,8 @@ end
 -- Il robot di turno può usare weapon adesso? "teleport", "sword", un'arma o un
 -- oggetto. Un'arma e un colpo di spada per turno, fino all'ultimo tick. Il
 -- teletrasporto consuma un globo (rb.teleports_left) e, come gli oggetti, si
--- lancia in qualsiasi momento del turno.
+-- lancia in qualsiasi momento del turno. Al primo turno se ne lancia uno solo
+-- dei globi di partenza, ma quelli guadagnati nel turno si usano sempre.
 function M:can_use(weapon)
 	if self.phase ~= "aim" then return false end
 	local rb = self.robots[self.current]
@@ -2675,7 +2677,7 @@ function M:can_use(weapon)
 	end
 	if weapon == "teleport" then
 		return #self.orbs < M.MAX_ORBS and rb.teleports_left > 0
-			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS)
+			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS + self.teleports_earned)
 	elseif M.SECONDARY[weapon] then
 		return not self.used.secondary and M.has_weapon(rb, weapon)
 	end
@@ -2718,6 +2720,7 @@ function M:attack(weapon, fire)
 		local gain = rb.stats.time_orbs > 0 and math.floor(self.timer / (60 * C.TELEPORT_SECONDS)) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
+			self.teleports_earned = self.teleports_earned + gain
 			self:emit({ type = "teleports", robot = rb.id, amount = gain, total = rb.teleports_left })
 		end
 		self.window = math.min(self.timer, M.AFTER_ATTACK_TICKS)

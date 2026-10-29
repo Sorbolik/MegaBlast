@@ -612,6 +612,7 @@ local function new_match(self, seed, map, opts)
 	self.aiming = false
 	self.weapon = "missile"
 	self.tele_armed = false
+	self.globi_attesa = 0   -- globi nostri ancora in volo verso il teletrasporto
 	self.snap = {}
 	self.crate_tabs = {}
 	for _, n in ipairs(self.crate_nodes) do n.id = nil; gui.set_enabled(n.node, false) end
@@ -722,6 +723,14 @@ local function my_turn(self)
 	return (self.mode == "local" and not self.bots[self.g.current]) or (self.mode == "online" and self.g.current == self.me)
 end
 
+-- Di chi sono le armi nella barra: online le nostre, in locale di chi è di turno
+local function bar_robot(self)
+	if self.mode == "online" then return self.g.robots[self.me] end
+	-- contro i bot, sempre le armi del giocatore
+	if next(self.bots) then return self.g.robots[1] end
+	return self.g.robots[self.g.current]
+end
+
 -- Rampino e Mantice nel disegno, in una tabella sola: il file è vicino ai 200
 -- local che Lua permette
 local RM = { fune = require "battaglia.fune", SOFFI = 5 }
@@ -803,7 +812,16 @@ local function handle_event(self, e)
 			-- nei primi turni della partita guidata i globi volano piano, da guardare
 			local r = self.missione
 			local lento = r and r.l.guidata and r.st.turni <= 3 and 2.5 or nil
-			hud.globi(self.crono, e.amount, gui.get_position(self.btn_tele.nodo), lento)
+			-- se sono globi nostri il numerino aspetta che arrivino: ognuno lo fa
+			-- salire con un lampo e un "pling" un poco più acuto del precedente
+			-- (globi ripartiti prima di arrivare non contano più: si riparte da qui)
+			local mio = bar_robot(self) == self.g.robots[e.robot]
+			if mio then self.globi_attesa = math.min(e.amount, hud.GLOBI) end
+			hud.globi(self.crono, e.amount, gui.get_position(self.btn_tele.nodo), lento, mio and function(i)
+				self.globi_attesa = math.max(0, self.globi_attesa - 1)
+				hud.tondo_lampo(self.btn_tele)
+				sound.play("#globo", { speed = hud.GLOBO_TONI[math.min(i, #hud.GLOBO_TONI)] })
+			end)
 		end
 	elseif e.type == "trap" then
 		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
@@ -987,6 +1005,7 @@ local function apply_state(self, s)
 	local g = self.g
 	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
 	g.window, g.teleports, g.overtime = s.win or 0, s.tp or 0, s.ot or false
+	g.teleports_earned = s.te or 0
 	local u = s.u or 0
 	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
 	g.match_left = s.mt or g.match_left
@@ -1565,14 +1584,6 @@ end
 
 -- Barra delle armi -------------------------------------------------------------
 
--- Di chi sono le armi nella barra: online le nostre, in locale di chi è di turno
-local function bar_robot(self)
-	if self.mode == "online" then return self.g.robots[self.me] end
-	-- contro i bot, sempre le armi del giocatore
-	if next(self.bots) then return self.g.robots[1] end
-	return current_robot(self)
-end
-
 -- Lo slot si vede? Il paracadute finché ne restano o è già aperto; l'attrezzo
 -- (Rampino o Bastione) sempre. Nelle lezioni solo quello che la lezione usa
 -- (l: la missione, sim/missioni.lua vedi).
@@ -2101,7 +2112,7 @@ local function render(self, dt)
 	end
 	punteggio.update(self.punti, dt, g, self.mode == "online" and self.me or g.current)
 	local n = bar_robot(self)
-	local tele = n and n.teleports_left or 0
+	local tele = n and math.max(0, n.teleports_left - self.globi_attesa) or 0
 	if self.tele_n ~= tele then
 		hud.tondo_numero(self.btn_tele, tostring(tele))
 		self.tele_n = tele
@@ -2188,6 +2199,7 @@ function init(self)
 	-- l'ultimo capitolo aperto della campagna (menu/campagna.lua)
 	self.campagna_scelta = {}
 	self.bots = {}
+	self.globi_attesa = 0
 	msg.post(".", "acquire_input_focus")
 	self.keys = {}
 	self.preview_pts = {}

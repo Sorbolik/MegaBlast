@@ -113,6 +113,7 @@ function M.mondo(g)
 	local w = setmetatable({}, game)
 	w.terrain, w.map, w.tick, w.mode, w.normalized = g.terrain, g.map, g.tick, g.mode, g.normalized
 	w.current, w.phase, w.timer, w.window, w.teleports = g.current, g.phase, g.timer, g.window, g.teleports
+	w.teleports_earned = g.teleports_earned
 	w.match_left, w.overtime, w.order, w.order_pos, w.turn_no = g.match_left, g.overtime, g.order, g.order_pos, g.turn_no
 	w.orb_seq, w.placed_id, w.heals, w.score = g.orb_seq, g.placed_id, g.heals, g.score
 	w.rng = rng.new(g.rng.state)

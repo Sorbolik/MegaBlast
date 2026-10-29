@@ -32,7 +32,8 @@ C.MODES = {
 -- uno, dopo niente; con 1 ogni 5 s se ne accumulavano più di quanti se ne
 -- lanciano.
 C.TELEPORT_SECONDS = 10
--- al primo turno di ogni robot si può fare un solo teletrasporto
+-- al primo turno di ogni robot si lancia un solo globo di partenza (quelli
+-- guadagnati nel turno si lanciano sempre)
 C.FIRST_TURN_TELEPORTS = 1
 
 -- Punti partita (strategia 7 del documento): oltre alle uccisioni contano il

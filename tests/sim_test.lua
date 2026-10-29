@@ -450,6 +450,23 @@ do
 	run(az, 3)
 	check(az.phase ~= "aim", "il turno chiude allo scadere anche dopo un attacco")
 
+	-- Al primo turno: lanciato il globo di partenza, quelli guadagnati attaccando
+	-- si usano lo stesso (Sergio: un teletrasporto guadagnato nel turno si usa sempre)
+	local ft = game.new(42, "forgia")
+	local fr = ft.robots[1]
+	run(ft, 30)
+	ft:step(TELE)
+	check(not ft:can_use("teleport"), "al primo turno un solo globo di partenza")
+	ft:step(MISSILE)
+	local earned = ft.teleports_earned
+	check(earned == 2, "attaccando subito si guadagnano due globi (" .. earned .. ")")
+	for k = 1, earned do
+		check(ft:can_use("teleport"), "globo guadagnato " .. k .. " usabile al primo turno")
+		ft:step(TELE)
+	end
+	check(#ft.orbs == 1 + earned, "partono tutti i globi guadagnati")
+	check(fr.teleports_left > 0 and not ft:can_use("teleport"), "i globi di partenza restano per i turni dopo")
+
 	-- Nessun tetto: i globi si accumulano
 	local fz = game.new(42, "forgia", { players = { { team = 1, stats = { teleports = 5 } }, { team = 2 } } })
 	run(fz, 60)

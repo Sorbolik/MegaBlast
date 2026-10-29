@@ -87,6 +87,43 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 	}
 }
 
+// Al primo turno, lanciato il globo di partenza, i globi guadagnati attaccando
+// si lanciano lo stesso anche sul server, e lo stato li porta al client (te).
+func TestEarnedTeleportsFirstTurn(t *testing.T) {
+	sim := newTestSim(t, 42, "forgia")
+	orbs := func() int {
+		var st struct {
+			O []json.RawMessage `json:"o"`
+		}
+		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
+			t.Fatal(err)
+		}
+		return len(st.O)
+	}
+	tele := Input{Fire: true, Angle: 1.5, Power: 0.2, Weapon: "teleport"}
+	steps := []Input{{}, tele, tele, {Fire: true, Angle: 1.0, Power: 0.6}}
+	for _, in := range steps {
+		if err := sim.Step(in); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n := orbs(); n != 1 {
+		t.Fatalf("al primo turno un solo globo di partenza: %d in volo", n)
+	}
+	var st struct {
+		TE int `json:"te"`
+	}
+	json.Unmarshal(sim.Snapshot(), &st)
+	if st.TE != 2 {
+		t.Fatalf("attaccando subito si guadagnano due globi, stato te=%d", st.TE)
+	}
+	sim.Step(tele)
+	sim.Step(tele)
+	if n := orbs(); n != 3 {
+		t.Fatalf("i due globi guadagnati devono partire: %d in volo", n)
+	}
+}
+
 // L'uncino del Rampino vola: nello stato c'è finché è in volo (gs, gx, gy), così
 // online il client disegna il filo che si allunga; poi arriva l'evento "hook".
 func TestHookShotInSnapshot(t *testing.T) {

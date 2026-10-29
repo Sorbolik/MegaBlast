@@ -6,7 +6,9 @@
 --   local c = hud.cronometro(x, y)
 --   hud.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
 --   hud.globi_nodi(c)      -- dopo i pulsanti, così i globi ci volano sopra
---   hud.globi(c, n, pos, lento) -- i secondi risparmiati volano come globi su pos (il teletrasporto)
+--   hud.globi(c, n, pos, lento, arrivo) -- i secondi risparmiati volano come globi su pos
+--     (il teletrasporto); arrivo(i) quando il globo i tocca il pulsante
+--   hud.tondo_lampo(t)     -- il pulsante si accende: un anello che si allarga e il numero che salta
 --     fase: "turno" (bianco), "secondo" (giallo, resta il secondo attacco),
 --     "riparati" (blu, attacchi finiti) o nil (nessun turno da contare)
 --   local t = hud.tondo(x, y, d, icona, colore, parent)   -- icona: "<icona>_icona" dell'atlante armi
@@ -43,6 +45,10 @@ local FONDO = vmath.vector4(0.04, 0.035, 0.05, 0.72)
 local BINARIO = vmath.vector4(1, 1, 1, 0.1)
 local NUMERO, PAROLA, OROLOGIO = 2.4, 0.6, 1.0   -- scale di ui.testo
 local GLOBI, GLOBO_VOLO, GLOBO_DOPO = 6, 0.55, 0.09
+M.GLOBI = GLOBI   -- globi che volano insieme, al massimo
+-- velocità del "pling" di ogni globo che arriva al teletrasporto: sale di una
+-- terza maggiore, poi di una quinta e un'ottava (do, mi, sol, do...)
+M.GLOBO_TONI = { 1, 1.26, 1.5, 2, 2.52, 3 }
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(1, 1, 1, 1)
@@ -150,31 +156,45 @@ function M.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
 end
 
 -- Quando attacchi, i secondi rimasti diventano teletrasporti: n globi si
--- staccano dalla punta dell'arco e volano uno dopo l'altro sul pulsante
-local function spegni(_, nodo) gui.set_enabled(nodo, false) end
+-- staccano dalla punta dell'arco, si gonfiano e volano in curva uno dopo
+-- l'altro sul pulsante (di lato prima, poi giù o su nel pulsante)
+local GLOBO_POP = 0.16
+local ALONE = vmath.vector4(ui.C.VIOLA.x, ui.C.VIOLA.y, ui.C.VIOLA.z, 0.35)
 
 -- i nodi dei globi, da creare dopo i pulsanti così volano sopra
 function M.globi_nodi(c)
 	c.globi = {}
 	for i = 1, GLOBI do
-		local g = fit(ui.disco(c.x, c.y, 20, ui.C.VIOLA))
-		fit(ui.disco(0, 0, 8, ui.C.LUCE, g))
+		local g = fit(ui.disco(c.x, c.y, 26, ui.C.VIOLA))
+		fit(ui.disco(0, 0, 42, ALONE, g))
+		fit(ui.disco(0, 0, 11, ui.C.LUCE, g))
 		gui.set_enabled(g, false)
 		c.globi[i] = g
 	end
 end
 
 -- lento: quante volte più piano (la partita guidata li fa guardare)
-function M.globi(c, n, pos, lento)
+function M.globi(c, n, pos, lento, arrivo)
 	lento = lento or 1
 	local a0 = math.rad(90 - 360 * c.k)
 	for i = 1, min(n, GLOBI) do
 		local g = c.globi[i]
 		local a = a0 + math.rad(10 * (i - 1))
-		gui.cancel_animations(g, "position")
+		local dopo = (i - 1) * GLOBO_DOPO * lento
+		gui.cancel_animations(g, "position.x")
+		gui.cancel_animations(g, "position.y")
+		gui.cancel_animations(g, "scale")
 		gui.set_position(g, vmath.vector3(c.x + math.cos(a) * M.RAGGIO, c.y + math.sin(a) * M.RAGGIO, 0))
+		scala(g, 0.2)
 		gui.set_enabled(g, true)
-		gui.animate(g, "position", pos, gui.EASING_INQUAD, GLOBO_VOLO * lento, (i - 1) * GLOBO_DOPO * lento, spegni)
+		gui.animate(g, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, GLOBO_POP * lento, dopo)
+		-- in curva: di lato si parte veloci, in alto o in basso si arriva veloci
+		local volo, parte = GLOBO_VOLO * lento, dopo + GLOBO_POP * lento
+		gui.animate(g, "position.x", pos.x, gui.EASING_OUTSINE, volo, parte)
+		gui.animate(g, "position.y", pos.y, gui.EASING_INQUAD, volo, parte, function()
+			gui.set_enabled(g, false)
+			if arrivo then arrivo(i) end
+		end)
 	end
 end
 
@@ -200,6 +220,27 @@ function M.tondo_numero(t, testo)
 	end
 	gui.set_enabled(t.num, testo ~= "")
 	gui.set_text(t.num_t, testo)
+end
+
+-- Il pulsante si accende (un globo è arrivato): un anello chiaro si allarga
+-- e svanisce, il numerino salta
+function M.tondo_lampo(t)
+	if not t.lampo then
+		t.lampo = fit(ui.anello(0, 0, t.d, 5, ui.C.LUCE, t.nodo))
+		gui.set_enabled(t.lampo, false)
+	end
+	gui.cancel_animations(t.lampo, "scale")
+	gui.cancel_animations(t.lampo, "color.w")
+	scala(t.lampo, 1)
+	gui.set_color(t.lampo, ui.C.LUCE)
+	gui.set_enabled(t.lampo, true)
+	gui.animate(t.lampo, "scale", vmath.vector3(1.6, 1.6, 1), gui.EASING_OUTQUAD, 0.4)
+	gui.animate(t.lampo, "color.w", 0, gui.EASING_OUTQUAD, 0.4, 0, function() gui.set_enabled(t.lampo, false) end)
+	if t.num then
+		gui.cancel_animations(t.num, "scale")
+		scala(t.num, 1)
+		gui.animate(t.num, "scale", vmath.vector3(1.5, 1.5, 1), gui.EASING_OUTQUAD, 0.12, 0, nil, gui.PLAYBACK_ONCE_PINGPONG)
+	end
 end
 
 -- Il cartellino chiaro col nome, con la punta verso il basso

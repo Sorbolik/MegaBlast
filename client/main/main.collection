@@ -10,6 +10,10 @@ embedded_instances {
   "  id: \"punto\"\n"
   "  component: \"/battaglia/punto.sound\"\n"
   "}\n"
+  "components {\n"
+  "  id: \"globo\"\n"
+  "  component: \"/battaglia/globo.sound\"\n"
+  "}\n"
   ""
   position {
     x: 0.0
