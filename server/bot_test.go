@@ -8,10 +8,19 @@ import (
 )
 
 // Una partita tra bot (sim/bot.lua) con la sua ricetta (sim/replay.lua):
-// restituisce le impronte dello stato, separate da virgole.
+// restituisce le impronte dello stato, separate da virgole. Il secondo bot
+// gioca con una rete neurale (sim/rete.lua) di pesi fissi.
 const botMatchLua = `
 local replay = require "sim.replay"
-local players = { { team = 1, bot = "normale" }, { team = 2, bot = "difficile" } }
+local bot, rete = require "sim.bot", require "sim.rete"
+local strati = { bot.CARATTERISTICHE, 8, 1 }
+local w, x = {}, 11
+for i = 1, rete.quanti(strati) do
+	x = (x * 1103515245 + 12345) % 2147483648
+	w[i] = x / 2147483648 * 2 - 1
+end
+local players = { { team = 1, bot = "normale" }, { team = 2, bot = "difficile" },
+	{ team = 3, bot = "difficile", pesi = { rete = { strati = strati, w = w } } } }
 local r = replay.nuova(7, "forgia", { players = players })
 local g, bots = replay.partita(r)
 while g.tick < 3600 and g.phase ~= "over" do

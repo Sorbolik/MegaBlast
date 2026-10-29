@@ -8,7 +8,13 @@
 --          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
 --          [--set misto]               -- ogni robot un set completo a caso (o nessuno), variante a o b
---          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI): ogni robot ne prende uno a caso
+--          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI, anche con la rete): ogni robot ne prende uno a caso
+--          [--assegna turno]           -- con --pesi: invece che a caso, a turno (il robot i prende il numero
+--                                         i + partita), così due individui si incontrano sempre alla pari
+--
+-- Con --pesi la ricetta non contiene i pesi (le reti sono grandi): ogni
+-- giocatore ha il suo numero (individuo) e la riga il file dei pesi; arena.py
+-- li rimette per il video, dal .json accanto al .lua.
 --
 -- Per ogni partita scrive una riga JSON: la ricetta (sim/replay.lua, basta a
 -- rigiocarla identica), l'esito, i numeri di ogni robot (armi scelte, punti,
@@ -123,8 +129,9 @@ local function partita(k)
 	if POPOLAZIONE then
 		local r1 = rng.new((seme * 16807 + 12345) % 2147483647)
 		for _ = 1, 4 do r1:next() end
-		for _, p in ipairs(players) do
-			p.individuo = 1 + math.floor(r1:next() * #POPOLAZIONE)
+		for i, p in ipairs(players) do
+			p.individuo = opt.assegna == "turno" and 1 + (i + k) % #POPOLAZIONE
+				or 1 + math.floor(r1:next() * #POPOLAZIONE)
 			p.pesi = POPOLAZIONE[p.individuo]
 		end
 	end
@@ -214,8 +221,11 @@ local function partita(k)
 			uso = s.uso, danno_arma = s.danno, uccisioni_arma = s.uccisioni }
 	end
 	r.ultimo = nil
+	if POPOLAZIONE then
+		for _, p in ipairs(r.opzioni.players) do p.pesi = nil end
+	end
 	return { numero = k, ricetta = r, modo = modo, mappa = mappa, vincitore = res.winner or 0, tick = g.tick, robot = robot,
-		turni = turni, punti = punti, ritocchi = opt.ritocchi }
+		turni = turni, punti = punti, ritocchi = opt.ritocchi, pesi = opt.pesi }
 end
 
 local out = opt.uscita and assert(io.open(opt.uscita, "w")) or io.stdout

@@ -1,166 +1,316 @@
 #!/usr/bin/env python3
-"""Evoluzione dei pesi del bot (client/sim/bot.lua, bot.PESI): il primo passo
-dell'apprendimento. Una popolazione di pesi gioca nell'arena (arena.py, tutti
-i core); i migliori restano, gli altri si rifanno mutando i migliori. Il
-numero 1 è sempre il bot di oggi, come riferimento. Le strategie che vincono
-dicono cosa conviene con queste regole: quelle che vincono troppo sono da
-correggere nel gioco, non nel bot.
+"""Bot che imparano da soli: reti neurali (client/sim/rete.lua) che evolvono
+giocando nell'arena (arena.py, tutti i core). Partono da zero (pesi a caso,
+nessuna regola nostra): ogni generazione gioca, le reti che arrivano più in
+alto in classifica restano, le altre si rifanno mutando e incrociando le
+migliori. La rete giudica ogni mossa che il bot prova (dove andare, cosa
+sparare, dove ripararsi) guardando la posizione che ne esce (bot.caratteristiche).
 
-    python3 strumenti/arena/evolvi.py --generazioni 8 --popolazione 12 --partite 400
-    python3 strumenti/arena/evolvi.py --punteggio variante.lua   # con un altro punteggio
+    python3 strumenti/arena/evolvi.py                   # senza fine (Ctrl+C), riprende da dove era
+    python3 strumenti/arena/evolvi.py --generazioni 40  # fino alla generazione 40
+    python3 strumenti/arena/evolvi.py --nuova           # ricomincia da zero
 
-Ogni generazione usa semi nuovi (niente pesi buoni solo per quelle partite).
-Risultati in simulazione/arena/evolvi/ (o --cartella): una cartella per
-generazione con le sue partite e evoluzione.md, con i pesi migliori e come
-giocano rispetto al bot di oggi.
+In ogni generazione giocano insieme:
+  #1            il bot di oggi (euristico, bot.PESI): il riferimento fisso
+  #2..          i campioni delle generazioni passate (fermi, come avversari,
+                così le reti non dimenticano come si batte chi già battevano)
+  gli altri     le reti che evolvono
+Ogni generazione usa semi nuovi (niente reti brave solo in quelle partite).
+Ogni --esame generazioni il campione gioca contro il bot di oggi sempre sulle
+stesse partite (a turno, alla pari): è la misura dei progressi.
+
+Risultati in simulazione/arena/reti/ (o --cartella): stato.json (per
+riprendere), storia.json (tutte le generazioni), evoluzione.md, campioni.json
+(la rete migliore di ogni generazione) e una cartella per generazione.
 """
 
 import argparse
 import json
 import math
 import random
+import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
 import arena
 
-# I pesi che evolvono, con il valore di oggi (bot.PESI) e i limiti
-PESI = {
-    "vita_mia": (0.6, 0.0, 5.0),
-    "vita_compagno": (1.0, 0.0, 5.0),
-    "morte": (60.0, 0.0, 300.0),
-    "strada": (0.01, 0.0, 0.2),
-    "teletrasporto": (20.0, -20.0, 150.0),
-}
+CARATTERISTICHE = 20  # bot.CARATTERISTICHE
 
 
-def muta(p, rng, forza):
-    """Una copia di p con ogni peso spostato a caso (in proporzione, così i
-    pesi piccoli e quelli grandi si muovono allo stesso modo)."""
-    q = {}
-    for k, (base, lo, hi) in PESI.items():
-        v = p[k] * math.exp(rng.gauss(0, forza)) + rng.gauss(0, forza) * 0.05 * (hi - lo)
-        q[k] = round(min(hi, max(lo, v)), 4)
-    return q
+def quanti(strati):
+    return sum(strati[k] * (strati[k - 1] + 1) for k in range(1, len(strati)))
 
 
-def lua(popolazione):
-    righe = ["return {"]
-    for p in popolazione:
-        campi = ", ".join(f"{k} = {v!r}" for k, v in p.items())
-        righe.append(f"\t{{ {campi} }},")
-    righe.append("}")
-    return "\n".join(righe) + "\n"
+def nuova_rete(strati, rng):
+    """Pesi a caso (He: varianza 2/ingressi), scarti a zero: nessuna idea del gioco."""
+    w = []
+    for k in range(1, len(strati)):
+        nin, nout = strati[k - 1], strati[k]
+        s = math.sqrt(2 / nin)
+        for _ in range(nout):
+            w += [round(rng.gauss(0, s), 5) for _ in range(nin)]
+        w += [0.0] * nout
+    return w
 
 
-def bravura(partite, n):
-    """Per ogni individuo (da 1): quanto è arrivato in alto (1 primo, 0 ultimo),
-    vittorie, punti medi, quante volte ha giocato e le armi che usa."""
-    s = defaultdict(lambda: {"alto": 0.0, "vinte": 0, "punti": 0, "volte": 0, "uso": Counter()})
+def muta(w, rng, forza):
+    """Ogni peso si sposta un poco; uno su cinquanta ricomincia da capo."""
+    out = []
+    for x in w:
+        if rng.random() < 0.02:
+            x = rng.gauss(0, 0.5)
+        else:
+            x += rng.gauss(0, forza)
+        out.append(round(x, 5))
+    return out
+
+
+def incrocia(a, b, strati, rng):
+    """Figlio di due reti: ogni neurone (i suoi pesi d'ingresso e lo scarto)
+    viene tutto da uno dei due genitori, così non si spezzano le idee."""
+    out, p = [], 0
+    for k in range(1, len(strati)):
+        nin, nout = strati[k - 1], strati[k]
+        da = [rng.random() < 0.5 for _ in range(nout)]
+        for o in range(nout):
+            src = a if da[o] else b
+            out += src[p:p + nin]
+            p += nin
+        for o in range(nout):
+            out.append((a if da[o] else b)[p])
+            p += 1
+    return out
+
+
+def lua_val(v):
+    if isinstance(v, dict):
+        return "{ " + ", ".join(f"{k} = {lua_val(x)}" for k, x in v.items()) + " }"
+    if isinstance(v, list):
+        return "{ " + ", ".join(lua_val(x) for x in v) + " }"
+    return repr(v)
+
+
+def scrivi_pesi(cartella, individui):
+    """pesi.lua per l'arena e pesi.json per i video (arena.py li rimette nelle ricette)."""
+    (cartella / "pesi.lua").write_text("return {\n" + "".join(f"\t{lua_val(p)},\n" for p in individui) + "}\n")
+    (cartella / "pesi.json").write_text(json.dumps(individui))
+    return cartella / "pesi.lua"
+
+
+def pesi_rete(strati, w):
+    return {"rete": {"strati": strati, "w": w}}
+
+
+def misura(partite, n):
+    """Per ogni individuo (da 1): bravura (1 primo, 0 ultimo), vittorie, punti,
+    danno, uccisioni, morti, cadute, teletrasporti a partita, armi usate e le
+    firme dei turni (la sequenza di mosse)."""
+    s = defaultdict(lambda: {"alto": 0.0, "vinte": 0, "volte": 0, "punti": 0, "danno": 0, "uccisioni": 0,
+                             "ambientali": 0, "morti": 0, "cadute": 0, "teletrasporti": 0,
+                             "uso": Counter(), "firme": Counter()})
     for m in partite:
         posti = [r["posto"] for r in m["robot"] if r.get("posto")]
         ultimo = max(posti) if posti else 1
-        for r in m["robot"]:
+        chi = {}
+        for k, r in enumerate(m["robot"], 1):
             i = r.get("individuo")
             if not i:
                 continue
+            chi[k] = i
             x = s[i]
             x["volte"] += 1
             x["alto"] += (ultimo - r["posto"]) / (ultimo - 1) if ultimo > 1 else 0.5
             x["vinte"] += r["posto"] == 1
-            x["punti"] += r["punti"]
+            for c in ("punti", "danno", "uccisioni", "ambientali", "morti", "cadute", "teletrasporti"):
+                x[c] += r.get(c) or 0
             x["uso"].update(r["uso"])
+        for t in m.get("turni", []):
+            i = chi.get(t["chi"])
+            if i and t["firma"]:
+                s[i]["firme"][t["firma"]] += 1
     out = {}
     for i in range(1, n + 1):
         x = s[i]
         v = max(1, x["volte"])
-        out[i] = {"alto": x["alto"] / v, "vinte": x["vinte"] / v, "punti": x["punti"] / v, "volte": x["volte"],
-                  "uso": x["uso"]}
+        out[i] = {k: (x[k] / v if k not in ("volte", "uso", "firme") else x[k]) for k in x}
     return out
 
 
 def quote(uso):
     tot = sum(uso.values()) or 1
-    return {k: v / tot for k, v in uso.items()}
+    return {k: round(v / tot, 4) for k, v in sorted(uso.items())}
+
+
+def comportamento(b):
+    """Come gioca un individuo, per la storia: numeri a partita, armi, firme."""
+    return {"bravura": round(b["alto"], 4), "vinte": round(b["vinte"], 4), "partite": b["volte"],
+            "punti": round(b["punti"], 1), "danno": round(b["danno"], 1), "uccisioni": round(b["uccisioni"], 2),
+            "ambientali": round(b["ambientali"], 2), "morti": round(b["morti"], 2), "cadute": round(b["cadute"], 2),
+            "teletrasporti": round(b["teletrasporti"], 2), "armi": quote(b["uso"]),
+            "firme": b["firme"].most_common(6)}
+
+
+def gioca(cartella, file_pesi, partite, da, args, assegna=None):
+    arena.USCITA = cartella
+    ns = argparse.Namespace(partite=partite, da=da, processi=args.processi or arena.os.cpu_count() or 1,
+                            modo=args.modo, livello=args.livello, mappa=args.mappa, punteggio=args.punteggio,
+                            pesi=str(file_pesi), ritocchi=None, set=None, assegna=assegna, luajit=None)
+    return arena.leggi(arena.gioca(ns))
+
+
+def esame(radice, gen, campione, args):
+    """Il campione contro il bot di oggi, sempre sulle stesse partite, a turno:
+    in quante arriva più in alto lui."""
+    cartella = radice / f"esame_{gen}"
+    cartella.mkdir(parents=True, exist_ok=True)
+    file_pesi = scrivi_pesi(cartella, [{}, campione])
+    partite = gioca(cartella, file_pesi, args.esame_partite, 10 ** 8, args, assegna="turno")
+    meglio = pari = 0
+    for m in partite:
+        migliore = {}
+        for r in m["robot"]:
+            i = r.get("individuo")
+            if i:
+                migliore[i] = min(migliore.get(i, 99), r["posto"])
+        if 1 in migliore and 2 in migliore:
+            if migliore[2] < migliore[1]:
+                meglio += 1
+            elif migliore[2] == migliore[1]:
+                pari += 1
+    b = misura(partite, 2)
+    (cartella / "partite.jsonl").unlink(missing_ok=True)
+    return {"vince": round((meglio + pari / 2) / max(1, len(partite)), 4), "partite": len(partite),
+            "rete": comportamento(b[2]), "oggi": comportamento(b[1])}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--generazioni", type=int, default=8)
-    ap.add_argument("--popolazione", type=int, default=12)
-    ap.add_argument("--partite", type=int, default=400, help="partite per generazione")
+    ap.add_argument("--generazioni", type=int, default=0, help="fino a questa generazione (0: senza fine)")
+    ap.add_argument("--popolazione", type=int, default=24, help="reti che evolvono")
+    ap.add_argument("--campioni", type=int, default=3, help="campioni passati che giocano come avversari")
+    ap.add_argument("--partite", type=int, default=480, help="partite per generazione")
+    ap.add_argument("--strati", default="16,8", help="neuroni degli strati nascosti")
+    ap.add_argument("--forza", type=float, default=0.08, help="quanto mutano i pesi")
+    ap.add_argument("--esame", type=int, default=5, help="ogni quante generazioni l'esame contro il bot di oggi")
+    ap.add_argument("--esame-partite", type=int, default=240)
+    ap.add_argument("--tieni", type=int, default=10, help="tiene le partite di una generazione ogni tante (per i video)")
     ap.add_argument("--livello", default="difficile")
     ap.add_argument("--modo", default="tutti")
     ap.add_argument("--mappa")
     ap.add_argument("--punteggio")
     ap.add_argument("--processi", type=int, default=None)
-    ap.add_argument("--forza", type=float, default=0.35, help="quanto mutano i pesi")
     ap.add_argument("--seme", type=int, default=1)
-    ap.add_argument("--cartella", default=str(arena.REPO / "simulazione" / "arena" / "evolvi"))
+    ap.add_argument("--nuova", action="store_true", help="ricomincia da zero (cancella la cartella)")
+    ap.add_argument("--cartella", default=str(arena.REPO / "simulazione" / "arena" / "reti"))
     args = ap.parse_args()
 
-    rng = random.Random(args.seme)
-    base = {k: v[0] for k, v in PESI.items()}
-    pop = [base] + [muta(base, rng, args.forza) for _ in range(args.popolazione - 1)]
     radice = Path(args.cartella).resolve()
+    if args.nuova and radice.exists():
+        shutil.rmtree(radice)
     radice.mkdir(parents=True, exist_ok=True)
-    storia = []
-    for gen in range(1, args.generazioni + 1):
+    file_stato = radice / "stato.json"
+    if file_stato.exists():
+        stato = json.loads(file_stato.read_text())
+        print(f"riprendo dalla generazione {stato['gen'] + 1}")
+    else:
+        strati = [CARATTERISTICHE] + [int(x) for x in args.strati.split(",")] + [1]
+        rng = random.Random(args.seme)
+        stato = {"gen": 0, "strati": strati, "pop": [nuova_rete(strati, rng) for _ in range(args.popolazione)],
+                 "campioni": [], "storia": [], "esami": []}
+    strati = stato["strati"]
+    print(f"rete {strati}: {quanti(strati)} pesi, {len(stato['pop'])} reti")
+
+    while not args.generazioni or stato["gen"] < args.generazioni:
+        gen = stato["gen"] + 1
+        rng = random.Random(args.seme * 1000003 + gen)
+        pop = stato["pop"]
+        # gli avversari fissi: il bot di oggi e alcuni campioni passati (l'ultimo e altri a caso)
+        passati = stato["campioni"]
+        scelti = []
+        if passati:
+            scelti.append(passati[-1])
+            altri = passati[:-1]
+            rng.shuffle(altri)
+            scelti += altri[: args.campioni - 1]
+        individui = [{}] + [pesi_rete(strati, c["w"]) for c in scelti] + [pesi_rete(strati, w) for w in pop]
+        primo = 2 + len(scelti)  # numero della prima rete che evolve
         cartella = radice / f"generazione_{gen}"
         cartella.mkdir(parents=True, exist_ok=True)
-        file_pesi = cartella / "pesi.lua"
-        file_pesi.write_text(lua(pop))
-        arena.USCITA = cartella
-        ns = argparse.Namespace(partite=args.partite, da=1 + (gen - 1) * args.partite + 1000000 * args.seme,
-                                processi=args.processi or arena.os.cpu_count() or 1, modo=args.modo,
-                                livello=args.livello, mappa=args.mappa, punteggio=args.punteggio,
-                                pesi=str(file_pesi), luajit=None)
-        partite = arena.leggi(arena.gioca(ns))
-        b = bravura(partite, len(pop))
-        ordine = sorted(range(1, len(pop) + 1), key=lambda i: (-b[i]["alto"], i))
-        storia.append({"gen": gen, "pop": pop, "b": b, "ordine": ordine})
+        file_pesi = scrivi_pesi(cartella, individui)
+        partite = gioca(cartella, file_pesi, args.partite, 1 + gen * 100000 + args.seme * 10 ** 9, args)
+        b = misura(partite, len(individui))
+
+        ordine = sorted(range(primo, len(individui) + 1), key=lambda i: (-b[i]["alto"], i))
         migliore = ordine[0]
-        print(f"generazione {gen}: migliore #{migliore} {b[migliore]['alto']:.3f}, "
-              f"bot di oggi {b[1]['alto']:.3f}  {pop[migliore - 1]}")
-        # i migliori restano (e il bot di oggi, come riferimento), gli altri si rifanno
-        tenuti = [pop[i - 1] for i in ordine[: max(2, len(pop) // 3)]]
-        nuovi = [base] + [p for p in tenuti if p != base]
+        campione = {"gen": gen, "w": pop[migliore - primo]}
+        stato["campioni"].append(campione)
+        voce = {"gen": gen, "campione": comportamento(b[migliore]), "oggi": comportamento(b[1]),
+                "media_reti": round(sum(b[i]["alto"] for i in ordine) / len(ordine), 4),
+                "peggiore": round(b[ordine[-1]]["alto"], 4),
+                "avversari": {f"gen {c['gen']}": round(b[2 + k]["alto"], 4) for k, c in enumerate(scelti)}}
+        stato["storia"].append(voce)
+        print(f"generazione {gen}: campione {b[migliore]['alto']:.3f}, media reti {voce['media_reti']:.3f}, "
+              f"bot di oggi {b[1]['alto']:.3f} ({len(partite)} partite)")
+
+        # la generazione dopo: i migliori restano, gli altri figli dei migliori
+        tenuti = [pop[i - primo] for i in ordine[: max(2, len(pop) // 4)]]
+        genitori = [pop[i - primo] for i in ordine[: max(2, len(pop) // 2)]]
+
+        def torneo():
+            return min(rng.sample(range(len(genitori)), min(3, len(genitori))))
+
+        nuovi = list(tenuti)
         while len(nuovi) < len(pop):
-            nuovi.append(muta(rng.choice(tenuti), rng, args.forza))
-        pop = nuovi
+            a = genitori[torneo()]
+            if rng.random() < 0.25:
+                a = incrocia(a, genitori[torneo()], strati, rng)
+            nuovi.append(muta(a, rng, args.forza))
+        stato["pop"] = nuovi
+        stato["gen"] = gen
 
-    (radice / "evoluzione.md").write_text(rapporto(storia, args))
-    (radice / "storia.json").write_text(json.dumps(
-        [{"gen": s["gen"], "pop": s["pop"], "ordine": s["ordine"],
-          "bravura": {i: {k: v for k, v in x.items() if k != "uso"} for i, x in s["b"].items()}} for s in storia],
-        indent=1))
-    print(f"rapporto: {radice / 'evoluzione.md'}")
+        if args.esame and gen % args.esame == 0:
+            e = esame(radice, gen, pesi_rete(strati, campione["w"]), args)
+            e["gen"] = gen
+            stato["esami"].append(e)
+            print(f"  esame: il campione della generazione {gen} arriva più in alto del bot di oggi "
+                  f"nel {100 * e['vince']:.0f}% delle partite")
+
+        if gen % args.tieni != 0:
+            (cartella / "partite.jsonl").unlink(missing_ok=True)
+        for f in cartella.glob("parte_*.jsonl"):
+            f.unlink()
+        # salva tutto a ogni generazione: si può fermare quando si vuole
+        file_stato.write_text(json.dumps(stato))
+        (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
+                                                        "esami": stato["esami"]}, indent=1, ensure_ascii=False))
+        (radice / "campioni.json").write_text(json.dumps(
+            [pesi_rete(strati, c["w"]) | {"gen": c["gen"]} for c in stato["campioni"]]))
+        (radice / "evoluzione.md").write_text(rapporto(stato, args))
 
 
-def rapporto(storia, args):
-    out = ["# Evoluzione dei pesi del bot\n",
-           f"{args.generazioni} generazioni da {args.popolazione} pesi, {args.partite} partite l'una, "
-           f"livello {args.livello}, modo {args.modo}"
-           + (f", punteggio {args.punteggio}" if args.punteggio else "") + ".\n",
-           "Bravura: quanto in alto arriva in classifica, da 0 (ultimo) a 1 (primo). Il #1 è sempre il bot di oggi.\n",
-           "| gen | migliore | bravura | bot di oggi | " + " | ".join(PESI) + " |",
-           "|---|---|---|---|" + "---|" * len(PESI)]
-    for s in storia:
-        i = s["ordine"][0]
-        p = s["pop"][i - 1]
-        out.append(f"| {s['gen']} | #{i} | {s['b'][i]['alto']:.3f} | {s['b'][1]['alto']:.3f} | "
-                   + " | ".join(f"{p[k]:g}" for k in PESI) + " |")
-    # come gioca il migliore dell'ultima generazione rispetto al bot di oggi
-    s = storia[-1]
-    i = s["ordine"][0]
-    qm, qo = quote(s["b"][i]["uso"]), quote(s["b"][1]["uso"])
-    out += ["\n## Come gioca il migliore rispetto al bot di oggi (ultima generazione)\n",
-            f"Vittorie {100 * s['b'][i]['vinte']:.0f}% contro {100 * s['b'][1]['vinte']:.0f}%, "
-            f"punti medi {s['b'][i]['punti']:.0f} contro {s['b'][1]['punti']:.0f}.\n",
-            "| arma | quota del migliore | quota del bot di oggi | differenza |", "|---|---|---|---|"]
-    for k in sorted(set(qm) | set(qo), key=lambda k: -abs(qm.get(k, 0) - qo.get(k, 0))):
-        out.append(f"| {k} | {100 * qm.get(k, 0):.1f}% | {100 * qo.get(k, 0):.1f}% | "
-                   f"{100 * (qm.get(k, 0) - qo.get(k, 0)):+.1f} |")
+def rapporto(stato, args):
+    st = stato["storia"]
+    out = ["# Bot che imparano da soli: le generazioni\n",
+           f"Rete {stato['strati']} ({quanti(stato['strati'])} pesi), {len(stato['pop'])} reti per generazione, "
+           f"{args.partite} partite l'una, livello {args.livello}, modo {args.modo}.\n",
+           "Bravura: quanto in alto arriva in classifica, da 0 (ultimo) a 1 (primo), nelle partite della "
+           "generazione (con il bot di oggi e i campioni passati).\n",
+           "| gen | campione | media reti | bot di oggi | morti | cadute | danno | armi principali |",
+           "|---|---|---|---|---|---|---|---|"]
+    for v in st:
+        c = v["campione"]
+        armi = ", ".join(f"{k} {100 * q:.0f}%" for k, q in sorted(c["armi"].items(), key=lambda x: -x[1])[:3])
+        out.append(f"| {v['gen']} | {c['bravura']:.3f} | {v['media_reti']:.3f} | {v['oggi']['bravura']:.3f} | "
+                   f"{c['morti']:.2f} | {c['cadute']:.2f} | {c['danno']:.0f} | {armi} |")
+    if stato["esami"]:
+        out += ["\n## Esami: il campione contro il bot di oggi, sempre sulle stesse partite\n",
+                "| gen | più in alto del bot di oggi | morti (rete / oggi) | danno (rete / oggi) |", "|---|---|---|---|"]
+        for e in stato["esami"]:
+            out.append(f"| {e['gen']} | {100 * e['vince']:.0f}% | {e['rete']['morti']:.2f} / {e['oggi']['morti']:.2f} | "
+                       f"{e['rete']['danno']:.0f} / {e['oggi']['danno']:.0f} |")
+    if st:
+        c = st[-1]["campione"]
+        out += ["\n## Le mosse preferite dell'ultimo campione\n"] + [f"- {f}: {n}" for f, n in c["firme"]]
     return "\n".join(out) + "\n"
 
 

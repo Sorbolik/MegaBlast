@@ -14,7 +14,8 @@ python3 strumenti/arena/arena.py --rapporto simulazione/arena/partite.jsonl   # 
 python3 strumenti/arena/arena.py --video 1                         # video del primo highlight
 python3 strumenti/arena/arena.py --partite 10000 --cartella simulazione/arena/base   # prove tenute separate
 python3 strumenti/arena/arena.py --partite 1000 --pesi popolazione.lua   # bot con pesi diversi
-python3 strumenti/arena/evolvi.py --generazioni 8 --popolazione 12 --partite 400   # evoluzione dei pesi
+python3 strumenti/arena/arena.py --partite 300 --pesi due.lua --assegna turno   # due individui sempre alla pari
+python3 strumenti/arena/evolvi.py                                  # bot con rete neurale che evolvono, senza fine
 ```
 
 `variante.lua` restituisce una tabella come `config.SCORE` (`return { damage = 1, kill = 60, ... }`):
@@ -22,17 +23,24 @@ finisce nelle opzioni della partita (`opts.score`) e nella ricetta.
 
 `popolazione.lua` restituisce una lista di pesi del bot (`bot.PESI`, solo i
 campi che cambiano, per esempio `return { {}, { morte = 10 }, { punteggio = { damage = 1, kill = 80, ... } } }`):
-ogni robot ne prende uno a caso, che va nella ricetta (`players[i].pesi`) e nella riga
-della partita (`individuo`). Con `punteggio` il bot giudica le mosse con altri punti
-da quelli della partita: serve a separare l'effetto di una regola da quello del bot
-che cambia stile.
+ogni robot ne prende uno a caso (con `--assegna turno` a turno: il robot i prende
+il numero i + partita), e il suo numero va nella riga della partita (`individuo`).
+I pesi non vanno nella ricetta (una rete sono centinaia di numeri): la riga ha il
+file dei pesi e per il video `arena.py` li rimette dal `.json` accanto al `.lua`.
+Con `punteggio` il bot giudica le mosse con altri punti da quelli della partita:
+serve a separare l'effetto di una regola da quello del bot che cambia stile. Con
+`rete` (`{ strati = {...}, w = {...} }`, `client/sim/rete.lua`) giudica le mosse
+una rete neurale.
 
-`evolvi.py` è il primo passo dell'apprendimento: una popolazione di pesi gioca,
-i migliori restano e gli altri si rifanno mutandoli; il primo è sempre il bot di
-oggi, per confronto. Ogni generazione usa semi nuovi. Esce
-`simulazione/arena/evolvi/evoluzione.md` (pesi migliori generazione per
-generazione e come gioca il migliore rispetto al bot di oggi). Le quote delle
-armi dipendono anche dalla scelta d'inizio partita, che è a caso.
+`evolvi.py` fa imparare il gioco ai bot da soli: reti neurali che partono da
+pesi a caso e si evolvono generazione dopo generazione (le migliori restano, le
+altre si rifanno mutando e incrociando le migliori). In ogni generazione giocano
+anche il bot di oggi (riferimento fisso) e alcuni campioni passati; ogni 5
+generazioni il campione fa l'esame contro il bot di oggi sulle stesse partite.
+Salva a ogni generazione: si ferma con Ctrl+C e riparte da dove era (`--nuova`
+ricomincia). Esce `simulazione/arena/reti/`: `evoluzione.md`, `storia.json`
+(tutte le generazioni: bravura, armi, morti, mosse preferite), `campioni.json`
+(la rete migliore di ogni generazione, da mettere in `players[i].pesi`).
 
 Serve luajit (sul PC di Windows: `luajit.exe` nel PATH, o `--luajit C:\percorso\luajit.exe`).
 Il video usa il simulatore (`strumenti/simula`), quindi solo su Linux.

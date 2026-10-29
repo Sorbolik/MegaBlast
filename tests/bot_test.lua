@@ -77,6 +77,26 @@ do
 	local r5, h1 = impronte({ teletrasporto = 200, strada = 0.1 })
 	check(h0 ~= h1, "pesi: un bot con altri pesi gioca un'altra partita")
 	check(replay.verifica(r5), "pesi: la ricetta con i pesi rigioca la stessa partita")
+
+	-- una rete neurale a caso al posto dei pesi: gioca, e la ricetta rigioca uguale
+	local rete = require "sim.rete"
+	local strati = { bot.CARATTERISTICHE, 6, 1 }
+	local w, x = {}, 7
+	for i = 1, rete.quanti(strati) do
+		x = (x * 1103515245 + 12345) % 2147483648
+		w[i] = x / 2147483648 * 2 - 1
+	end
+	local r6, h2 = impronte({ rete = { strati = strati, w = w } })
+	check(h2 ~= h0, "rete: un bot con la rete gioca un'altra partita")
+	check(replay.verifica(r6), "rete: la ricetta con la rete rigioca la stessa partita")
+end
+
+-- La rete: conti a mano su una rete piccola (ReLU nel mezzo, uscita lineare)
+do
+	local rete = require "sim.rete"
+	local r = { strati = { 2, 2, 1 }, w = { 1, -1, 0.5, 0.5, 0, -1, 2, 3, 0.25 } }
+	-- nascosti: relu(1*3 - 1*1 + 0) = 2, relu(0.5*3 + 0.5*1 - 1) = 1; uscita 2*2 + 3*1 + 0.25
+	check(rete.quanti(r.strati) == 9 and rete.valuta(r, { 3, 1 }) == 7.25, "rete: i conti tornano")
 end
 
 -- Un giocatore vero e un bot: i tasti del giocatore finiscono nella ricetta e la rigiocano

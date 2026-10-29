@@ -44,7 +44,7 @@ def gioca(args):
         blocchi.append((da, q))
         da += q
     extra = []
-    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set"):
+    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna"):
         v = getattr(args, chiave, None)
         if v:
             extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else v]
@@ -225,6 +225,12 @@ def video(n, file):
     hs = json.loads((USCITA / "highlight.json").read_text())
     h = hs[n - 1]
     p = leggi(file)[h["partita"]]
+    if p.get("pesi"):
+        # i pesi (anche le reti) non stanno nella ricetta: si rimettono dal .json della popolazione
+        pop = json.loads(Path(p["pesi"]).with_suffix(".json").read_text())
+        for pl in p["ricetta"]["opzioni"]["players"]:
+            if pl.get("individuo"):
+                pl["pesi"] = pop[pl["individuo"] - 1]
     ricetta = USCITA / f"ricetta_{n}.json"
     ricetta.write_text(json.dumps(p["ricetta"]))
     scenario = USCITA / f"highlight_{n}.txt"
@@ -250,6 +256,7 @@ def main():
     ap.add_argument("--mappa")
     ap.add_argument("--punteggio", help="file Lua con una tabella come config.SCORE")
     ap.add_argument("--pesi", help="file Lua con una lista di pesi del bot (bot.PESI), uno a caso per robot")
+    ap.add_argument("--assegna", help="turno: con --pesi gli individui a turno invece che a caso")
     ap.add_argument("--ritocchi", help="file Lua: function(config, game) che cambia i numeri delle armi (prova)")
     ap.add_argument("--set", help="misto: ogni robot un set completo a caso (o nessuno)")
     ap.add_argument("--luajit")

@@ -19,6 +19,7 @@
 local game = require "sim.game"
 local C = require "sim.config"
 local rng = require "sim.rng"
+local rete = require "sim.rete"
 
 local M = {}
 
@@ -44,7 +45,10 @@ M.ORDINE = { "facile", "normale", "difficile" }
 -- dalla strada a piedi prova il teletrasporto; punteggio (se c'è): i punti
 -- con cui il bot giudica le mosse, al posto di quelli della partita. L'arena li fa evolvere
 -- (strumenti/arena/evolvi.py) e una partita può darne altri a ogni bot
--- (players[i].pesi, solo i campi che cambiano).
+-- (players[i].pesi, solo i campi che cambiano). rete (se c'è): una rete
+-- neurale (sim/rete.lua) che giudica le mosse al posto di questi pesi, dalle
+-- caratteristiche della posizione dopo la mossa (M.caratteristiche); la fanno
+-- evolvere da zero strumenti/arena/evolvi_rete.py.
 M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 20 }
 -- mosse provate fino in fondo (fino a quando tutto è fermo) tra le migliori
 local FINALISTE = 4
@@ -156,8 +160,98 @@ local function in_volo(b, w, max)
 	return max
 end
 
+-- Il terreno tra due punti è libero? (a passi di 9 px: basta per sapere se
+-- un nemico ha la linea di tiro, e costa poco)
+local function libero(t, x0, y0, x1, y1)
+	local dx, dy = x1 - x0, y1 - y0
+	local n = math.floor(math.sqrt(dx * dx + dy * dy) / 9)
+	for i = 1, n - 1 do
+		if t:solid(x0 + dx * i / n, y0 + dy * i / n) then return false end
+	end
+	return true
+end
+
+-- Quanto è vicino il vuoto: dei punti a lato (fino a 96 px) quanti non hanno
+-- terra sotto entro 60 px, da 0 a 1
+local LATI = { -96, -64, -36, -12, 12, 36, 64, 96 }
+local function bordo(t, x, y)
+	local n = 0
+	for _, d in ipairs(LATI) do
+		local gb = t:ground_below(x + d, y + 4)
+		if not gb or y - gb > 60 then n = n + 1 end
+	end
+	return n / #LATI
+end
+
+-- Le caratteristiche della copia w (dopo una mossa) rispetto alla partita
+-- vera g, per il robot del bot: quello che la rete guarda. Numeri vicini a
+-- -1..1 (punti e vita a centinaia, distanze a migliaia di pixel).
+M.CARATTERISTICHE = 20
+local function caratteristiche(b, g, w, x)
+	local me = g.robots[b.id]
+	local c = w.robots[b.id]
+	for i = 1, M.CARATTERISTICHE do x[i] = 0 end
+	local squadre = {}
+	for i, o in ipairs(w.robots) do
+		local r = g.robots[i]
+		local dp = o.points - r.points
+		local persa = r.dead and 0 or (o.dead and r.hp or math.max(0, r.hp - o.hp))
+		squadre[o.team] = (squadre[o.team] or 0) + o.points
+		if i == b.id then
+			x[1] = dp / 100
+			x[4] = persa / 100
+			x[7] = (o.dead and not r.dead) and 1 or 0
+		elseif o.team == me.team then
+			x[2] = x[2] + dp / 100
+			x[5] = x[5] + persa / 100
+			x[8] = x[8] + ((o.dead and not r.dead) and 1 or 0)
+		else
+			x[3] = x[3] + dp / 100
+			x[6] = x[6] + persa / 100
+			x[9] = x[9] + ((o.dead and not r.dead) and 1 or 0)
+		end
+	end
+	-- la posizione dopo la mossa
+	x[10] = c.dead and 0 or c.hp / 100
+	local t = w.terrain
+	local cy = c.y + game.DISEGNO_H / 2
+	local vicino, somma, n, sopra, a_tiro, vedono = math.huge, 0, 0, 0, 0, 0
+	for _, o in ipairs(w.robots) do
+		if not o.dead and o.team ~= me.team then
+			local dx, dy = o.x - c.x, o.y - c.y
+			local d = math.sqrt(dx * dx + dy * dy)
+			vicino = math.min(vicino, d)
+			somma, n, sopra = somma + d, n + 1, sopra + dy
+			if d < 200 then a_tiro = a_tiro + 1 end
+			if d < 900 and libero(t, c.x, cy, o.x, o.y + game.DISEGNO_H / 2) then vedono = vedono + 1 end
+		end
+	end
+	if n > 0 then
+		x[11] = math.min(vicino, 1500) / 1000
+		x[12] = somma / n / 1000
+		x[13] = sopra / n / 500
+	end
+	x[14] = c.dead and 1 or bordo(t, c.x, c.y)
+	x[15] = a_tiro
+	x[16] = vedono
+	x[17] = math.min(c.x, game.WORLD_W - c.x) / 1000
+	x[18] = c.y / game.WORLD_H
+	-- lo scarto dalla squadra avversaria più avanti
+	local primo = -math.huge
+	for _, team in ipairs({ 1, 2, 3, 4 }) do
+		if team ~= me.team and squadre[team] then primo = math.max(primo, squadre[team]) end
+	end
+	x[19] = primo > -math.huge and ((squadre[me.team] or 0) - primo) / 100 or 0
+	x[20] = g.match_left / game.MATCH_TICKS
+	return x
+end
+M.caratteristiche = caratteristiche
+
+local CAR = {}
+
 -- Quanto vale la copia w rispetto alla partita vera g, per il robot del bot
 local function valore(b, g, w)
+	if b.pesi.rete then return rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR)) * 100 end
 	local me = g.robots[b.id]
 	local s = 0
 	for i, c in ipairs(w.robots) do
@@ -220,7 +314,7 @@ local function prova(b, g, posto, arma, angolo, potenza, fino)
 		fino_a_quieto(b, w, fino == "volo" and 90 or 5 * 60)
 	end
 	local s = valore(b, g, w)
-	if s == 0 then
+	if s == 0 and not b.pesi.rete then
 		-- niente colpito: conta dove è scoppiato
 		for _, e in ipairs(w.events) do
 			if e.type == "explosion" then px, py = e.x, e.y end
@@ -527,6 +621,48 @@ local function pensa(b, g)
 	end
 end
 
+-- Il riparo: finiti gli attacchi, il tempo che resta si usa per mettersi al
+-- sicuro dal turno degli altri (a piedi o col Rampino su un appiglio). Con la
+-- rete decide lei dove; senza, lontano dai nemici, fuori dalla loro linea di
+-- tiro e lontano dal vuoto.
+local function riparo(b, g, w)
+	if b.pesi.rete then return valore(b, g, w) end
+	local x = caratteristiche(b, g, w, CAR)
+	if x[7] == 1 then return -1000 end
+	return x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50
+end
+
+local function ripara(b, g)
+	local me = g.robots[b.id]
+	local resta = g.window > 0 and g.window or g.timer
+	local posti = posti_a_piedi(b, g, math.min(b.liv.cammino, resta - 30))
+	local migliore
+	for _, posto in ipairs(posti) do
+		local w = M.mondo(g)
+		in_posto(w, b.id, posto)
+		lavora(b, 20)
+		local s = riparo(b, g, w) - (posto.n or 0) * b.pesi.strada
+		if not migliore or s > migliore.punti then migliore = { posto = posto, punti = s } end
+	end
+	if b.liv.rampino and g:can_use("hook") and resta > 3 * 60 then
+		for gradi = 15, 165, 25 do
+			local a = math.rad(gradi)
+			local w = M.mondo(g)
+			lavora(b, 20)
+			w:use_tool("hook", { weapon = "hook", angle = a, power = 1 })
+			fino_a_quieto(b, w, 3 * 60)
+			local c = w.robots[b.id]
+			if not c.dead and c.grounded and math.abs(c.x - me.x) + math.abs(c.y - me.y) > 40 then
+				local s = riparo(b, g, w)
+				if s > migliore.punti then
+					migliore = { posto = posti[1], arma = "hook", angolo = a, potenza = 1, punti = s }
+				end
+			end
+		end
+	end
+	b.scelta = migliore
+end
+
 -- Il turno ----------------------------------------------------------------------------
 
 -- Generatore del bot: semi vicini (stesso seme della partita, robot diversi)
@@ -550,10 +686,21 @@ local function rumore(b)
 	return b.rng:next() + b.rng:next() - 1
 end
 
--- Ricomincia a pensare (dopo aver aspettato attesa tick)
-local function ripensa(b, attesa)
+-- Ricomincia a pensare (dopo aver aspettato attesa tick); come: pensa
+-- (l'attacco) o ripara
+local function ripensa(b, attesa, come)
 	b.stato, b.attesa, b.scelta, b.passo = "pensa", attesa, nil, 0
-	b.co = coroutine.create(pensa)
+	b.co = coroutine.create(come or pensa)
+end
+
+-- Niente più da attaccare: una volta per turno si cerca riparo, poi si sta fermi
+local function basta(b)
+	if b.riparato then
+		b.stato = "fine"
+	else
+		b.riparato = true
+		ripensa(b, 5, ripara)
+	end
 end
 
 -- In aria sopra il vuoto, nel proprio turno: il paracadute (e verso la terra
@@ -587,7 +734,7 @@ function M.input(b, g)
 		return FERMO
 	end
 	if b.turno ~= g.turn_no then
-		b.turno = g.turn_no
+		b.turno, b.riparato = g.turn_no, false
 		ripensa(b, b.liv.reazione)
 	end
 	local salva = salvataggio(b, g, rb)
@@ -604,7 +751,7 @@ function M.input(b, g)
 		end
 		if b.attesa > 0 then return FERMO end
 		if not b.scelta then
-			b.stato = "fine"
+			basta(b)
 			return FERMO
 		end
 		b.stato, b.passo = "vai", 0
@@ -617,6 +764,11 @@ function M.input(b, g)
 		if strada and b.passo <= s.posto.n then
 			local d = strada.dirs[b.passo]
 			return { left = d < 0, right = d > 0, jump = strada.salti[b.passo], hold = true }
+		end
+		-- solo strada (il riparo): arrivato
+		if not s.arma then
+			b.stato = "fine"
+			return FERMO
 		end
 		-- arrivato: il colpo, con l'errore del livello
 		if not g:can_use(s.arma) then
@@ -636,8 +788,8 @@ function M.input(b, g)
 			if b.liv.oggetti and rb.ammo.shield > 0 and g:can_use("shield") and g.used.primary and g.used.secondary then
 				return { fire = { weapon = "shield", angle = 0, power = 0 } }
 			end
-			if g.used.primary and g.used.secondary and not g:can_use("teleport") then
-				b.stato = "fine"
+			if b.riparato or (g.used.primary and g.used.secondary and not g:can_use("teleport")) then
+				basta(b)
 			else
 				ripensa(b, math.floor(b.liv.reazione / 2))
 			end
