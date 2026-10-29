@@ -8,6 +8,8 @@
 --   local b = bot.new(id, "normale", seed, pesi)   -- id del robot, livello, seme, pesi (facoltativi, vedi M.PESI)
 --   local input = bot.input(b, g)           -- a ogni tick, prima di g:step(input)
 --   bot.scegli(d, i, seed)                  -- primaria e secondaria nella scelta (sim/draft.lua)
+--   b.piano = { due_attacchi = true }       -- (facoltativo, per il turno che viene) primaria e secondaria
+--   b.piano = { attacca_entro = 4, poi = "teletrasporto" }  -- attacca entro 4 s, poi si teletrasporta al riparo
 --
 -- Come pensa: prova le mosse su copie della partita (bot.mondo), con la
 -- stessa fisica del gioco (game:advance) ma senza crateri, così sa cosa
@@ -27,8 +29,12 @@ local M = {}
 -- (radianti, frazione); sbaglia: probabilità di scegliere una mossa peggiore
 -- della migliore; cammino: tick di strada provati per lato; potenze: quante
 -- potenze prova per i colpi a parabola; teletrasporto, rampino, oggetti: se li
--- usa; lavoro: tick di simulazione provati per tick di gioco.
+-- usa; lavoro: tick di simulazione provati per tick di gioco; manca: un
+-- attacco su due sbaglia apposta (mira provata sulla copia perché non prenda).
+-- tutorial: il bot "maestro" della partita guidata, che si deve battere.
 M.LIVELLI = {
+	tutorial = { reazione = 90, mira = 0.02, potenza = 0.02, sbaglia = 0, cammino = 200, potenze = 2,
+		teletrasporto = false, rampino = false, oggetti = false, lavoro = 400, manca = true },
 	facile = { reazione = 80, mira = 0.09, potenza = 0.08, sbaglia = 0.4, cammino = 150, potenze = 2,
 		teletrasporto = false, rampino = false, oggetti = false, lavoro = 400 },
 	normale = { reazione = 45, mira = 0.035, potenza = 0.03, sbaglia = 0.15, cammino = 300, potenze = 3,
@@ -543,6 +549,28 @@ local function posto_teletrasporto(b, g, a, p)
 	return { x = c.x, y = c.y, facing = c.facing, n = t, strada = { dirs = {}, salti = {} }, globo = { a, p } }
 end
 
+-- Un angolo vicino a quello della mossa m con cui il colpo non fa male a
+-- nessuno (provato sulla copia), per il livello che sbaglia apposta
+local function angolo_che_manca(b, g, m)
+	for _, d in ipairs({ 0.3, -0.3, 0.5, -0.5, 0.8, -0.8 }) do
+		local w = M.mondo(g)
+		lavora(b, 20)
+		in_posto(w, b.id, m.posto)
+		w:attack(m.arma, { weapon = m.arma, angle = m.angolo + d, power = m.potenza })
+		fino_a_quieto(b, w, 5 * 60)
+		local nessuno = true
+		for i, c in ipairs(w.robots) do
+			local r = g.robots[i]
+			if not r.dead and (c.dead or c.hp < r.hp) then
+				nessuno = false
+				break
+			end
+		end
+		if nessuno then return m.angolo + d end
+	end
+	return m.angolo + 0.8
+end
+
 -- Il pensiero: sceglie la mossa del momento. Mette in b.scelta la migliore
 -- trovata finora, così se il tempo stringe si usa quella.
 local function pensa(b, g)
@@ -552,7 +580,13 @@ local function pensa(b, g)
 	local resta = g.window > 0 and g.window or g.timer
 	local lista = armi(g, me)
 	local mosse = {}
-	local posti = posti_a_piedi(b, g, math.min(liv.cammino, resta - 90))
+	local cammino = math.min(liv.cammino, resta - 90)
+	local piano = b.piano
+	if piano and piano.attacca_entro and not (g.used.primary or g.used.secondary) then
+		-- il primo attacco entro attacca_entro secondi dall'inizio del turno
+		cammino = math.min(cammino, piano.attacca_entro * 60 - (g.tick - b.inizio) - 40)
+	end
+	local posti = posti_a_piedi(b, g, cammino)
 	for _, posto in ipairs(posti) do
 		if #lista > 0 then mosse_dal_posto(b, g, posto, lista, mosse) end
 	end
@@ -623,6 +657,26 @@ local function pensa(b, g)
 		local m = mosse[1 + math.floor(b.rng:next() * math.min(3, #mosse))]
 		if m.punti >= math.min(0, mosse[1].punti) then b.scelta = m end
 	end
+
+	-- piano due_attacchi: se l'arma che resta non arriva al nemico da nessun
+	-- posto, ci si avvicina più che si può e la si usa lo stesso
+	if not b.scelta and piano and piano.due_attacchi and #lista > 0 then
+		local o = nemici(g, me, me.x, me.y)[1]
+		if o then
+			local vicino = posti[1]
+			for _, p in ipairs(posti) do
+				if math.abs(p.x - o.x) < math.abs(vicino.x - o.x) then vicino = p end
+			end
+			local a = math.atan2(o.y + game.HURT_Y - (vicino.y + game.DISEGNO_H / 2), o.x - vicino.x)
+			b.scelta = { posto = vicino, arma = lista[#lista], angolo = a, potenza = 1, punti = 0 }
+		end
+	end
+
+	-- livello manca: un attacco su due (il primo, il terzo...) non deve prendere
+	local m = b.scelta
+	if liv.manca and m and not game.TOOLS[m.arma] and b.attacchi % 2 == 0 then
+		m.angolo = angolo_che_manca(b, g, m)
+	end
 end
 
 -- Il riparo: finiti gli attacchi, il tempo che resta si usa per mettersi al
@@ -639,6 +693,27 @@ end
 local function ripara(b, g)
 	local me = g.robots[b.id]
 	local resta = g.window > 0 and g.window or g.timer
+	-- piano poi = "teletrasporto": al riparo col globo invece che a piedi
+	if b.piano and b.piano.poi == "teletrasporto" and g:can_use("teleport") then
+		local migliore
+		for a = 20, 160, 20 do
+			for _, p in ipairs({ 0.45, 0.7, 0.95 }) do
+				local posto = posto_teletrasporto(b, g, math.rad(a), p)
+				if posto then
+					local w = M.mondo(g)
+					in_posto(w, b.id, posto)
+					local s = riparo(b, g, w)
+					if not migliore or s > migliore.punti then
+						migliore = { posto = { x = me.x, y = me.y, n = 0 }, arma = "teleport", angolo = math.rad(a), potenza = p, punti = s }
+					end
+				end
+			end
+		end
+		if migliore then
+			b.scelta = migliore
+			return
+		end
+	end
 	local posti = posti_a_piedi(b, g, math.min(b.liv.cammino, resta - 30))
 	local migliore
 	for _, posto in ipairs(posti) do
@@ -682,7 +757,8 @@ function M.new(id, livello, seed, pesi)
 	local liv = M.LIVELLI[livello] or M.LIVELLI.normale
 	local p = copia(M.PESI)
 	for k, v in pairs(pesi or {}) do p[k] = v end
-	return { id = id, livello = livello, liv = liv, pesi = p, rng = generatore((seed or 1) * 7919 + id), lavoro = 0 }
+	return { id = id, livello = livello, liv = liv, pesi = p, rng = generatore((seed or 1) * 7919 + id), lavoro = 0,
+		attacchi = 0 }
 end
 
 -- Rumore tra -1 e 1, più spesso vicino a 0
@@ -738,8 +814,9 @@ function M.input(b, g)
 		return FERMO
 	end
 	if b.turno ~= g.turn_no then
-		b.turno, b.riparato = g.turn_no, false
-		ripensa(b, b.liv.reazione)
+		b.turno, b.riparato, b.inizio = g.turn_no, false, g.tick
+		local piano = b.piano
+		ripensa(b, (piano and piano.attacca_entro) and math.min(b.liv.reazione, 20) or b.liv.reazione)
 	end
 	local salva = salvataggio(b, g, rb)
 	if salva then return salva end
@@ -751,7 +828,9 @@ function M.input(b, g)
 			local ok, err = coroutine.resume(b.co, b, g)
 			if not ok then error(err) end
 			-- il tempo stringe: si usa la mossa migliore trovata finora
-			if coroutine.status(b.co) ~= "dead" and (g.window > 0 and g.window or g.timer) > 45 then return FERMO end
+			local entro = b.piano and b.piano.attacca_entro and not (g.used.primary or g.used.secondary)
+				and g.tick - b.inizio >= b.piano.attacca_entro * 60 - 30
+			if coroutine.status(b.co) ~= "dead" and (g.window > 0 and g.window or g.timer) > 45 and not entro then return FERMO end
 		end
 		if b.attesa > 0 then return FERMO end
 		if not b.scelta then
@@ -781,6 +860,7 @@ function M.input(b, g)
 		end
 		local a = s.angolo + rumore(b) * b.liv.mira
 		local p = math.max(0.1, math.min(1, s.potenza + rumore(b) * b.liv.potenza))
+		if not game.TOOLS[s.arma] and s.arma ~= "teleport" then b.attacchi = b.attacchi + 1 end
 		b.stato, b.attesa = "aspetta", 0
 		return { fire = { weapon = s.arma, angle = a, power = p } }
 	end

@@ -91,6 +91,48 @@ do
 	check(replay.verifica(r6), "rete: la ricetta con la rete rigioca la stessa partita")
 end
 
+-- Il bot del tutorial e il piano del turno imposto da fuori (partita guidata)
+do
+	-- gioca il turno del robot 2 (bot) fino alla fine; restituisce gli eventi del turno
+	local function turno_del_bot(livello, piano, seme)
+		local g = game.new(seme or 3, "forgia", { players = { { team = 1 }, { team = 2 } } })
+		local b = bot.new(2, livello, seme or 3)
+		while g.current ~= 2 do g:step({ fire = g.phase == "aim" and { weapon = "missile", angle = 1.4, power = 0.2 } or nil }) end
+		g:pop_events()
+		b.piano = piano
+		local ev, inizio = {}, g.tick
+		local turno = g.turn_no
+		while g.turn_no == turno and g.tick - inizio < 40 * 60 do
+			g:step(bot.input(b, g))
+			for _, e in ipairs(g:pop_events()) do ev[#ev + 1] = { e = e, t = g.tick - inizio } end
+		end
+		return ev, g
+	end
+	local ATTACCHI = { fire = true, grenade = true, shards = true, swing = true, sniper = true, eagle = true,
+		mallet = true, lunge = true, punch = true }
+	-- tutorial: il primo attacco non prende nessuno (il danno prima del secondo)
+	local danni, n = 0, 0
+	for _, x in ipairs(turno_del_bot("tutorial")) do
+		if ATTACCHI[x.e.type] then n = n + 1 end
+		if n == 1 and x.e.type == "damage" and x.e.robot == 1 then danni = danni + x.e.amount end
+	end
+	check(n >= 1 and danni == 0, "tutorial: il primo attacco del bot sbaglia apposta")
+	-- attacca_entro 4 e poi teletrasporto
+	local quando, globo = nil, false
+	for _, x in ipairs(turno_del_bot("normale", { attacca_entro = 4, poi = "teletrasporto" })) do
+		if not quando and ATTACCHI[x.e.type] then quando = x.t end
+		if quando and x.e.type == "orb" then globo = true end
+	end
+	check(quando and quando <= 4 * 60, "piano: attacca entro 4 secondi (" .. tostring(quando) .. " tick)")
+	check(globo, "piano: poi lancia il teletrasporto")
+	-- due attacchi: primaria e secondaria nello stesso turno
+	n = 0
+	for _, x in ipairs(turno_del_bot("normale", { due_attacchi = true })) do
+		if ATTACCHI[x.e.type] then n = n + 1 end
+	end
+	check(n >= 2, "piano: due attacchi nello stesso turno (" .. n .. ")")
+end
+
 -- La rete: conti a mano su una rete piccola (ReLU nel mezzo, uscita lineare)
 do
 	local rete = require "sim.rete"
