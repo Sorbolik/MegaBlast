@@ -238,7 +238,7 @@ local function partita(k)
 		fine_turno()
 		for _, x in ipairs(esempi) do
 			x.y = (margine(g.robots[x.c].team) - x.m) / 100
-			x.m = nil
+			x.m = x.m / 100 -- per impara.py (il ritorno a passi, TD)
 		end
 	end
 	local res = g:results()
