@@ -21,6 +21,11 @@ centro; su 20:9 o 4:3 lo schermo vero va da `schermo.x0` a `x1` e da `y0` a `y1`
 (`client/ui/schermo.lua`), e quello che sta su un bordo si attacca lì. Se tocchi
 l'HUD o i menu prova anche `--schermo 1600x720` e `--schermo 960x720` (scenario `schermo.txt`).
 
+Le estensioni native del client (cartelle con `ext.manifest`, per ora `client/vibra`:
+la micro-vibrazione) si compilano solo sul build server di Defold: simulazione e build
+web nel cloud compilano una copia del client senza (`strumenti/simula/senza_estensioni.py`),
+e la build di prova dell'APK su ogni PR (`.github/workflows/build-pr.yml`) dice se compilano.
+
 `simula.py` ripete anche i controlli che fa l'editor di Defold ma `bob.jar` no
 (`strumenti/simula/controlla.py`). Se Sergio vede nell'editor un errore che la
 simulazione non ha trovato, aggiungi lì la regola.

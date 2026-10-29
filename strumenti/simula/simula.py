@@ -29,6 +29,8 @@ import sys
 import time
 from pathlib import Path
 
+import senza_estensioni
+
 QUI = Path(__file__).resolve().parent
 REPO = QUI.parents[1]
 CLIENT = REPO / "client"
@@ -101,13 +103,15 @@ def impostazioni(scenario):
 
 def build(out, extra=""):
     info("3. build con bob")
-    # niente estensione WebSocket (si compila sul build server di Defold, che da qui
-    # non si raggiunge) e log di simulazione acceso
+    # niente estensione WebSocket né estensioni native del client (si compilano sul
+    # build server di Defold, che da qui non si raggiunge: si compila una copia del
+    # client senza, senza_estensioni.py) e log di simulazione acceso
     settings = out / "simula.ini"
     settings.write_text("[project]\ndependencies#0 =\n\n[native_extension]\napp_manifest =\n\n[megablast]\nsimula = 1\n" + extra)
     bundle = out / "bundle"
     shutil.rmtree(bundle, ignore_errors=True)
-    cmd = [str(JAVA), "-jar", str(BOB), "--root", str(CLIENT), "--output", "build/simula/default",
+    radice = senza_estensioni.copia(out / "client")
+    cmd = [str(JAVA), "-jar", str(BOB), "--root", str(radice), "--output", "build/simula/default",
            "--settings", str(settings), "--platform", "x86_64-linux", "--architectures", "x86_64-linux",
            "--variant", "debug", "--archive", "--texture-compression", "true", "--bundle-output", str(bundle), "build", "bundle"]
     r = esegui(cmd)

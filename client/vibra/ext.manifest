@@ -1,0 +1,5 @@
+# Micro-vibrazione sul telefono (Android): vibra.tocco(). Sugli altri sistemi il
+# modulo non c'è e il gioco va avanti senza (game.gui_script controlla "if vibra").
+# Si compila sul build server di Defold (APK su Telegram, editor sul PC di Sergio);
+# la simulazione e la build web nel cloud lo lasciano fuori (strumenti/simula/senza_estensioni.py).
+name: "Vibra"
