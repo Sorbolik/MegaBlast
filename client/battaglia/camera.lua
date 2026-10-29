@@ -7,6 +7,7 @@
 --
 --   local c = camera.new(1280, 720, 1920, 1080)   -- schermo, mappa
 --   camera.segui(c, dt, x, y, zoom, veloce)   -- a ogni frame
+--   camera.inquadra(c, dt, ax, ay, bx, by, zoom)  -- oppure: due punti insieme
 --   local tx, ty = camera.spostamento(c)      -- schermo = mondo * c.s + t
 --   camera.scuoti(c, dx, dy, forza)           -- un colpo: scossa verso (dx, dy)
 --   local ox, oy = camera.scossa(c, dt)       -- a ogni frame, pixel da aggiungere
@@ -20,6 +21,11 @@ M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
 
 -- quanto in fretta la camera raggiunge il punto (1/s): più alto = più rigida
 local SEGUI, SEGUI_VELOCE, ZOOM = 5, 9, 6
+-- allontanarsi è più svelto di avvicinarsi, perché il colpo non scappi dallo schermo
+local ZOOM_FUORI = 12
+-- pixel dello schermo che l'inquadratura di due punti lascia liberi ai bordi:
+-- sotto di più, perché c'è l'HUD
+local MARGINE_X, MARGINE_SU, MARGINE_GIU = 120, 90, 170
 
 local function limita(c)
 	local hw, hh = c.w / (2 * c.s), c.h / (2 * c.s)
@@ -45,13 +51,43 @@ function M.salta(c, x, y, s)
 	limita(c)
 end
 
--- veloce: per i colpi in volo, che altrimenti scappano dallo schermo
-function M.segui(c, dt, x, y, s, veloce)
-	c.s = c.s + (s - c.s) * (1 - math.exp(-dt * ZOOM))
-	local k = 1 - math.exp(-dt * (veloce and SEGUI_VELOCE or SEGUI))
+-- zoom e segui: rigidezza delle due molle (1/s)
+local function verso(c, dt, x, y, s, zoom, segui)
+	c.s = c.s + (s - c.s) * (1 - math.exp(-dt * zoom))
+	local k = 1 - math.exp(-dt * segui)
 	c.x = c.x + (x - c.x) * k
 	c.y = c.y + (y - c.y) * k
 	limita(c)
+end
+
+-- veloce: per i colpi in volo, che altrimenti scappano dallo schermo
+function M.segui(c, dt, x, y, s, veloce)
+	verso(c, dt, x, y, s, ZOOM, veloce and SEGUI_VELOCE or SEGUI)
+end
+
+-- Tiene dentro due punti (chi ha sparato e il suo colpo): resta allo zoom s se
+-- ci stanno, altrimenti si allontana quanto basta (al massimo tutta la mappa).
+-- Il centro sta nella parte di schermo libera dall'HUD.
+function M.inquadra(c, dt, ax, ay, bx, by, s)
+	local x0, x1 = math.max(0, math.min(ax, bx)), math.min(c.mw, math.max(ax, bx))
+	local y0, y1 = math.max(0, math.min(ay, by)), math.min(c.mh, math.max(ay, by))
+	local serve = math.min((c.w - 2 * MARGINE_X) / math.max(1, x1 - x0),
+		(c.h - MARGINE_SU - MARGINE_GIU) / math.max(1, y1 - y0))
+	s = math.max(M.tutta(c), math.min(s, serve))
+	verso(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (MARGINE_GIU - MARGINE_SU) / (2 * c.s), s,
+		s < c.s and ZOOM_FUORI or ZOOM, SEGUI_VELOCE)
+	-- le molle arrivano in ritardo: se un punto sta per uscire si allontana subito
+	local m = c.s
+	for i = 1, 2 do
+		local dx, dy = math.abs((i == 1 and x0 or x1) - c.x), (i == 1 and y0 or y1) - c.y
+		if dx > 0 then m = math.min(m, (c.w / 2 - MARGINE_X) / dx) end
+		if dy > 0 then m = math.min(m, (c.h / 2 - MARGINE_SU) / dy) end
+		if dy < 0 then m = math.min(m, (c.h / 2 - MARGINE_GIU) / -dy) end
+	end
+	if m < c.s then
+		c.s = math.max(M.tutta(c), m)
+		limita(c)
+	end
 end
 
 function M.spostamento(c)
