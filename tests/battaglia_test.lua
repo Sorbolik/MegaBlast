@@ -212,7 +212,8 @@ for nome, c in pairs(A) do
 end
 check(buone, "animazioni: canali noti, chiavi in ordine dentro la durata")
 for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
-	"sconfitta", "naso", "sbadiglio", "guarda_coda" }) do
+	"sconfitta", "naso", "sbadiglio", "guarda_coda", "fermo_arma", "corsa_arma", "aria_arma", "sale_arma",
+	"scende_arma", "mira", "fiammella" }) do
 	check(A[nome] ~= nil, "animazioni: c'è la clip " .. nome)
 end
 
@@ -245,8 +246,8 @@ do
 	local k = v.k
 	local braccio, testa
 	for _, n in ipairs(nodi) do
-		if n.parent == v.braccio_a and n.img == "braccio" then braccio = n end
-		if n.parent == v.collo and n.img == "testa" then testa = n end
+		if n.parent == v.braccio_a_img and n.img == "braccio" then braccio = n end
+		if n.parent == v.testa and n.img == "testa" then testa = n end
 	end
 	check(braccio and math.abs(braccio.pos.x - (D.pezzi.braccio.x - 3) * k) < 1e-6
 		and math.abs(braccio.pos.y - (D.pezzi.braccio.y + 2) * k) < 1e-6
@@ -256,6 +257,75 @@ do
 		and math.abs(v.cima.pos.y - (D.punti.cima[2] - 4) * k) < 1e-6,
 		"perni: la testa e la fiammella restano dov'erano")
 	package.loaded["battaglia.perni"] = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
+-- la spalla dell'arma spostata: l'arma gira attorno al punto nuovo e mirando
+-- dritto resta dov'era
+do
+	local DA2 = require("battaglia.armi").armi
+	local function punta(sc)
+		local v = sc.new(vec(1, 0.2, 0.3, 1))
+		sc.set_weapon(v, "missile")
+		local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true, aim = 0 }
+		for _ = 1, 3 do sc.update(v, 1 / 60, st2) end
+		v.x[1], v.x[2] = 1, 0
+		sc.update(v, 0, st2)
+		return v, mondo(v.armi.missile, DA2.missile.x, DA2.missile.y)
+	end
+	local _, x0, y0 = punta(scoria)
+	package.loaded["battaglia.perni"] = { arma = { 6, -5 } }
+	package.loaded["battaglia.scoria"] = nil
+	local sc2 = require "battaglia.scoria"
+	local v, x1, y1 = punta(sc2)
+	local D = require "battaglia.diavoletto"
+	check(math.abs(v.spalla.pos.x - (D.punti.spalla_arma[1] + 6) * v.k) < 1e-6,
+		"perni: la spalla dell'arma si sposta")
+	check(math.abs(x1 - x0) < 0.3 and math.abs(y1 - y0) < 0.3, "perni: l'arma mirando dritto resta dov'era")
+	package.loaded["battaglia.perni"] = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
+-- i pezzi che le clip mostrano e tolgono, e le clip con l'arma in mano
+do
+	local A2 = require "battaglia.animazioni"
+	local vecchie = { fermo = A2.fermo, fermo_arma = A2.fermo_arma }
+	A2.fermo = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, mostra_manina_a = { 0, 1, 2 },
+		manina_a_x = { 0, 7, 2 }, manina_a = { 0, 0.5, 2 }, mostra_ala = { 0, 0, 2 }, mostra_coda = { 0, 0, 2 },
+		mostra_testa = { 0, 0, 2 }, mostra_gamba_d = { 0, 0, 2 } } }
+	A2.fermo_arma = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, arma = { 0, 0.5, 2 } } }
+	package.loaded["battaglia.scoria"] = nil
+	local sc2 = require "battaglia.scoria"
+	local v = sc2.new(vec(1, 0.2, 0.3, 1))
+	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = false }
+	v.arma_t = 100
+	for _ = 1, 3 do sc2.update(v, 1 / 60, st2) end
+	check(v.braccio_a.enabled and not v.braccio_a_img.enabled and v.manina_a.enabled
+		and v.braccio_d_img.enabled and not v.manina_d.enabled and not v.ala.enabled
+		and not v.coda[1][1].enabled and not v.coda[1][2].enabled and not v.testa.enabled and v.collo.enabled
+		and not v.gamba_d.enabled and v.gamba_a.enabled and v.busto.enabled,
+		"pezzi: la clip toglie braccio, testa (non la fiammella), gamba, ala e coda e mette la manina")
+	local D = require "battaglia.diavoletto"
+	local mx = (D.punti.spalle[1] + D.pezzi.braccio.x + 7) * v.k
+	check(math.abs(v.manina_a.pos.x - mx) < 1e-6 and math.abs(math.rad(v.manina_a.euler.z) - 0.5) < 1e-6,
+		"pezzi: la manina è libera, la clip la sposta e la gira")
+	st2.turno = true
+	for _ = 1, 3 do sc2.update(v, 1 / 60, st2) end
+	check(v.ala.enabled and v.coda[1][1].enabled and not v.braccio_a.enabled and not v.mano_a.ossa[1].enabled
+		and v.mano_a.pugno.enabled, "pezzi: di turno la clip con l'arma, il pugno sull'arma senza braccio")
+	check(math.abs(math.rad(v.spalla.euler.z) - (-0.35 + 0.5)) < 0.05, "clip con l'arma: il canale arma gira l'arma a riposo")
+	-- chi aspetta prende e posa l'arma a caso
+	st2.turno = false
+	v.arma_t = 1
+	local presa, posata = false, false
+	for _ = 1, 60 * 40 do
+		sc2.update(v, 1 / 60, st2)
+		if v.spalla.enabled then presa = true elseif presa then posata = true end
+	end
+	check(presa and posata, "attesa: chi non è di turno prende e posa l'arma")
+	A2.fermo, A2.fermo_arma = vecchie.fermo, vecchie.fermo_arma
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
 end
@@ -294,7 +364,7 @@ check(im.c1 == 1 and im.cb5 == 1 and not im.coda_1 and not im.coda_5_bordo
 	and v.coda[1][1] ~= v.coda[1][2], "pelli: la coda nuova a segmenti, bordi e colori")
 check(im.o == 1 and im.ob == 1 and im.od == 1 and im.odb == 1 and not im.omero_bordo and im.avambraccio_bordo == 2,
 	"pelli: il braccio sull'arma nuovo, col suo bordo")
-check(v.teste[2].parent == v.collo and v.teste[1].img == "t" and v.teste[2].img == "e", "pelli: l'elmo sta sulla testa")
+check(v.teste[2].parent == v.testa and v.teste[1].img == "t" and v.teste[2].img == "e", "pelli: l'elmo sta sulla testa")
 check(v.teste_t[1].enabled and v.teste_t[1].img == "t_tinta" and not v.teste_t[2].enabled,
 	"pelli: il colore della squadra sulla testa nuova, sotto l'elmo")
 st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }

@@ -10,11 +10,14 @@ caselle: un PNG trasparente (il livello di Procreate) o un'immagine su magenta
   python3 strumenti/stampino/taglia.py FOGLIO.png --nome elmo_corna --categoria elmo [--allinea]
   python3 strumenti/stampino/taglia.py --rifai        # solo pelli.lua e pelli.atlas
   python3 strumenti/stampino/taglia.py --togli NOME   # toglie una pelle
+  python3 strumenti/stampino/taglia.py --ritocchi strumenti/stampino/ritocchi.json
 
 Scrive client/assets/pelli/<nome>_<posto>.png, strumenti/stampino/pelli/<nome>.json
 (com'è fatta la pelle), e rifà client/battaglia/pelli.lua da tutte le pelli e
 l'atlante del diavoletto, che le contiene insieme ai pezzi di base. --allinea sposta e scala ogni pezzo finché combacia col manichino: per
-i disegni di ChatGPT, che non rispetta mai al pixel le caselle.
+i disegni di ChatGPT, che non rispetta mai al pixel le caselle. --ritocchi mette
+nelle pelli i pezzi spostati e ingranditi con gli strumenti dell'editor delle
+animazioni (una lista di { pelle, posto, x, y, w, h }).
 """
 import argparse
 import glob
@@ -529,6 +532,23 @@ def rifai():
     print("OK:", len(pelli), "pelli in", os.path.relpath(LUA, RADICE))
 
 
+def ritocca(file):
+    """I ritocchi dell'editor delle animazioni: centro e misura nuovi dei pezzi."""
+    with open(file) as f:
+        ritocchi = json.load(f)
+    for r in ritocchi:
+        percorso = os.path.join(JSON, r["pelle"] + ".json")
+        with open(percorso) as f:
+            pelle = json.load(f)
+        pz = pelle["pezzi"][r["posto"]]
+        for k in ("x", "y", "w", "h"):
+            pz[k] = round(float(r[k]), 1)
+        with open(percorso, "w") as f:
+            json.dump(pelle, f, indent=1, ensure_ascii=False)
+            f.write("\n")
+    print("OK:", len(ritocchi), "pezzi ritoccati")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("foglio", nargs="?")
@@ -539,8 +559,11 @@ def main():
     ap.add_argument("--allinea", action="store_true", help="allinea ogni pezzo al manichino (disegni di ChatGPT)")
     ap.add_argument("--rifai", action="store_true")
     ap.add_argument("--togli")
+    ap.add_argument("--ritocchi", help="i ritocchi dell'editor delle animazioni (ritocchi.json)")
     a = ap.parse_args()
-    if a.togli:
+    if a.ritocchi:
+        ritocca(a.ritocchi)
+    elif a.togli:
         for f in glob.glob(os.path.join(ASSETS, a.togli + "_*.png")) + [os.path.join(JSON, a.togli + ".json")]:
             if os.path.exists(f):
                 os.remove(f)
