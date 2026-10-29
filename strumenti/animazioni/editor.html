@@ -145,17 +145,15 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label title="La fiammella col colore della squadra: ce l'hanno tutti sopra la testa, qualunque cosa indossino, e la anima il gioco a parte"><input type="checkbox" id="fiammella"> fiammella</label>
 			<span id="pelli" title="I pezzi disegnati sullo stampino (strumenti/stampino)"></span>
 		</div>
-		<div class="barra" id="barra-arma" hidden title="L'arma in mano, come nel gioco: le braccia si piegano da sole dalle spalle ai pugni sull'arma">
+		<div class="barra" id="barra-arma" hidden title="L'arma in mano, come nel gioco: sta nella mano del braccio davanti, le braccia le animi tu">
 			<label>arma <select id="arma"></select></label>
 			<label id="mira-l">mira <input type="range" id="mira" min="-90" max="90" step="1" value="0" style="width: 140px"> <span class="num" id="mira-n">0°</span></label>
-			<label title="Spento: le braccia si piegano da sole sull'arma. Acceso: l'arma sta nella mano del braccio davanti (l'impugnatura sul pugno) e le braccia le animi tu, come senza arma. Nella mira le braccia vanno sempre da sole."><input type="checkbox" id="libera"> braccia libere</label>
 			<button id="variante" title="Una clip solo per quest'arma: il gioco la usa al posto di quella di tutte (es. fermo_arma_mallet)">Clip solo per quest'arma</button>
-			<span style="color: var(--tenue)">La crocetta arancione è la <b>spalla dell'arma</b>: l'arma gira lì mirando (con "Trascina: perno" la sposti).</span>
+			<span style="color: var(--tenue)">L'arma è un pezzo come gli altri: la togli e la rimetti dal secchio, "Arma, gira" la gira nella mano. Mirando il braccio davanti punta dove si mira.</span>
 		</div>
-		<div class="barra" id="barra-prese" hidden title="Dove vanno i pugni su ogni arma (client/battaglia/impugnature.lua): vale per tutte le clip con quell'arma">
+		<div class="barra" id="barra-prese" hidden title="Dove la mano tiene ogni arma (client/battaglia/impugnature.lua): vale per tutte le clip con quell'arma">
 			<label style="color: var(--presa)"><input type="checkbox" id="vedi-prese" checked> impugnature</label>
-			<label>mani <select id="prese-n"><option value="0">nessuna</option><option value="1">una</option><option value="2">due</option></select></label>
-			<span style="color: var(--tenue)">Trascina i cerchi blu sull'arma: <b>canna</b> (mano davanti) e <b>impugnatura</b> (mano dietro).</span>
+			<span style="color: var(--tenue)">Trascina il cerchio blu sull'arma: è la <b>presa</b>, dove la tiene la mano del braccio davanti, e l'arma gira lì.</span>
 			<span id="pr-stato"></span>
 			<span class="spazio"></span>
 			<button id="pr-gioco" title="Le impugnature di adesso del gioco">Come nel gioco</button>
@@ -184,7 +182,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="hb-salva" title="Salva corpo.lua (va in client/sim/)">Salva corpo.lua</button>
 		</div>
 		<div class="barra" title="Il punto attorno a cui gira il pezzo: con Trascina: perno lo sposti, il pezzo da fermo resta dov'è">
-			<label>perni di testa, braccia, gambe, ala e spalla dell'arma</label>
+			<label>perni di testa, braccia, gambe e ala</label>
 			<span id="pn-stato"></span>
 			<span class="spazio"></span>
 			<button id="pn-gioco" title="I perni di adesso del gioco">Come nel gioco</button>
@@ -317,14 +315,14 @@ let corpoSalvato = CORPO_DEL_GIOCO;
 
 // I perni spostati (battaglia/perni.lua), come li usa battaglia/scoria.lua: per
 // posto, di quanto si sposta il giunto; i pezzi del posto al contrario
-const POSTI_PERNO = ["testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala", "arma"];
-const PERNABILI = { testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro", ala: "ala", arma: "arma" };
+const POSTI_PERNO = ["testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala"];
+const PERNABILI = { testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro", ala: "ala" };
 const PERNI_GIOCO = Object.assign({}, leggiLua(DATI.perni));
 let pn = JSON.parse(JSON.stringify(PERNI_GIOCO));
 const sposto = (posto) => pn[posto] || [0, 0];
 function J(posto) {
 	const b = { testa: PT.collo, braccio: PT.spalle, braccio_dietro: [-PT.spalle[0], PT.spalle[1]], gamba: PT.anche,
-		gamba_dietro: [-PT.anche[0], PT.anche[1]], ala: PT.ala, arma: PT.spalla_arma }[posto];
+		gamba_dietro: [-PT.anche[0], PT.anche[1]], ala: PT.ala }[posto];
 	const d = sposto(posto);
 	return [b[0] + d[0], b[1] + d[1]];
 }
@@ -355,7 +353,7 @@ let formaCoda = { l: D.coda, riposo: D.coda_riposo }; // lunghezze e angoli a ri
 function vesti() {
 	vestito = {};
 	formaCoda = { l: D.coda, riposo: D.coda_riposo };
-	const strati = (posto) => (vestito[posto] = vestito[posto] || [P[BASE[posto] || posto] || null]);
+	const strati = (posto) => (vestito[posto] = vestito[posto] || [P[posto] || null]);
 	const metti = (posto, p) => { const l = strati(posto); if (p.modo === "sostituisce") l[0] = p; else l.push(p); };
 	for (const c of [...PL.sostituisce, ...PL.sopra]) {
 		const pl = addosso[c] && PL.pelli[addosso[c]];
@@ -366,9 +364,7 @@ function vesti() {
 		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, ritoccato(addosso[c], "testa", pz.testa));
 	}
 }
-// i bordi delle braccia sull'arma di dietro: quelli di base sono gli stessi davanti e dietro
-const BASE = { omero_dietro_bordo: "omero_bordo", avambraccio_dietro_bordo: "avambraccio_bordo" };
-function strati(posto) { return vestito[posto] || [P[BASE[posto] || posto] || null]; }
+function strati(posto) { return vestito[posto] || [P[posto] || null]; }
 
 // i canali, come battaglia/pose.lua: angoli in radianti, misure in unità del disegno
 const CANALI = [
@@ -399,11 +395,8 @@ const CANALI = [
 	{ id: "ala_y", nome: "Ala, su e giù", tipo: "len", extra: true },
 	{ id: "coda_x", nome: "Coda, avanti e indietro", tipo: "len", extra: true },
 	{ id: "coda_y", nome: "Coda, su e giù", tipo: "len", extra: true },
-	// l'arma in mano (clip con l'arma): quanto gira in più attorno alla spalla, se non si mira
+	// l'arma in mano (clip con l'arma): quanto gira in più nella mano, se non si mira
 	{ id: "arma", nome: "Arma, gira", tipo: "ang", arma: true },
-	// braccia libere (1): l'arma segue la mano del braccio davanti invece di
-	// avere le braccia piegate da sole; a scatto, dalla barra dell'arma
-	{ id: "arma_libera", nome: "Braccia libere", tipo: "vis" },
 	// i pezzi che si vedono: si mettono e si tolgono a scatto
 	// le manine staccate: pezzi liberi sul corpo, da ferme dove finiscono le braccia
 	{ id: "manina_a", nome: "Manina davanti, gira", tipo: "ang", extra: true },
@@ -423,6 +416,7 @@ const CANALI = [
 	{ id: "mostra_coda", nome: "In scena: coda", tipo: "vis" },
 	{ id: "mostra_manina_a", nome: "In scena: manina davanti", tipo: "vis" },
 	{ id: "mostra_manina_d", nome: "In scena: manina dietro", tipo: "vis" },
+	{ id: "mostra_arma", nome: "In scena: arma", tipo: "vis", arma: true },
 	// la fiammella, nella sua clip
 	{ id: "fiamma_gira", nome: "Fiammella, gira", tipo: "ang", fiamma: true },
 	{ id: "fiamma_largo", nome: "Fiammella, larga", tipo: "scala", fiamma: true },
@@ -456,7 +450,7 @@ function visibile(ch, pannello) {
 const TIPO = {};
 CANALI.forEach((c) => { TIPO[c.id] = c.tipo; });
 const NEUTRO = { schiaccia: 1, fiamma_largo: 1, fiamma_alto: 1 };
-CANALI.forEach((c) => { if (c.tipo === "vis") NEUTRO[c.id] = /manina|arma_libera/.test(c.id) ? 0 : 1; });
+CANALI.forEach((c) => { if (c.tipo === "vis") NEUTRO[c.id] = /manina/.test(c.id) ? 0 : 1; });
 CANALI.forEach((c) => { if (NEUTRO[c.id] === undefined) NEUTRO[c.id] = 0; });
 const LIMITI = { ang: [-180, 180, 1], len: [-60, 60, 0.5], scala: [0.4, 1.6, 0.01], vis: [0, 1, 1] };
 
@@ -483,7 +477,7 @@ const CLIP = [
 		["guarda_coda", "Si gira a guardarsi la coda. Una volta, ogni tanto: parte e finisce come il <b>fermo</b>."],
 	]],
 	["Con l'arma (lanciamissili e le armi senza clip loro)", [
-		["fermo_arma", "Fermo con l'arma in mano: chi è di turno, e chi aspetta quando prende l'arma (a caso, alternato al <b>fermo</b> con le scenette). Le braccia sull'arma si piegano da sole (il braccio dietro pende se l'arma è a una mano), oppure con <b>braccia libere</b> l'arma sta nella mano del braccio davanti e le braccia le muovi tu. \"Arma, gira\" la gira. Maglio e Spada hanno le loro (\"con mallet\", \"con sword\")."],
+		["fermo_arma", "Fermo con l'arma in mano: chi è di turno, e chi aspetta quando prende l'arma (a caso, alternato al <b>fermo</b> con le scenette). L'arma sta nella mano del braccio davanti (la <b>presa</b>, il cerchio blu) e le braccia le muovi tu; \"Arma, gira\" la gira nella mano. Maglio e Spada hanno le loro (\"con mallet\", \"con sword\")."],
 		["corsa_arma", "La corsa con l'arma in mano, come la <b>corsa</b>: un giro a ogni passo."],
 		["aria_arma", "In aria con l'arma in mano, in ciclo; sopra si somma <b>sale arma</b> o <b>scende arma</b>."],
 		["sale_arma", "Si somma ad <b>aria arma</b> salendo. Qui la vedi sopra aria arma.", "aria_arma"],
@@ -750,22 +744,31 @@ function posaOra() {
 }
 
 // ---------------------------------------------------------------------------
-// Le armi in mano (battaglia/armi.lua, in pixel del mondo dalla spalla
-// dell'arma) e le braccia piegate su di loro, come battaglia/scoria.lua
+// Le armi in mano (battaglia/armi.lua, in pixel del mondo), nella mano del
+// braccio davanti come battaglia/scoria.lua
 const DA = leggiLua(DATI.armi).armi;
 // le manine staccate da ferme: dove finiscono le braccia che pendono (battaglia/scoria.lua)
 const manoFerma = (posto, x) => [x + P[posto].x, PT.spalle[1] + P[posto].y - P[posto].h / 2 + P.pugno.h * 0.4];
 const MANO = { a: manoFerma("braccio", PT.spalle[0]), d: manoFerma("braccio_dietro", -PT.spalle[0]) };
+// di quanto è girata l'arma rispetto al braccio che pende, 0 verso avanti
 const RIPOSO = DATI.armi_riposo;
-// Le impugnature (battaglia/impugnature.lua): per arma dove vanno i pugni, in
-// pixel del mondo dalla spalla dell'arma; con due mani la prima è sulla canna e
-// l'ultima sull'impugnatura
+// Le impugnature (battaglia/impugnature.lua): per arma il punto dove la tiene
+// la mano, in pixel del mondo dall'origine dell'arma. Le bozze vecchie, con
+// due punti, tengono l'ultimo (l'impugnatura)
 const PRESE_GIOCO = leggiLua(DATI.impugnature);
-const copiaPrese = (p) => { const o = {}; for (const n of Object.keys(DA)) o[n] = (Array.isArray(p[n]) ? p[n] : []).map((m) => m.slice()); return o; };
+const copiaPrese = (p) => {
+	const o = {};
+	for (const n of Object.keys(DA)) {
+		let m = Array.isArray(p[n]) ? p[n] : [0, 0];
+		if (Array.isArray(m[0])) m = m[m.length - 1] || [0, 0];
+		o[n] = [+m[0] || 0, +m[1] || 0];
+	}
+	return o;
+};
 let pr = copiaPrese(PRESE_GIOCO);
 function preseInLua(p) {
 	const n = (v) => String(Math.round(v * 10) / 10);
-	const righe = Object.keys(DA).map((k) => `\t${k} = {${p[k].length ? " " + p[k].map((m) => `{ ${n(m[0])}, ${n(m[1])} }`).join(", ") + " " : ""}},\n`);
+	const righe = Object.keys(DA).map((k) => `\t${k} = { ${n(p[k][0])}, ${n(p[k][1])} },\n`);
 	return DATI.impugnature.replace(/return \{[\s\S]*$/, "return {\n" + righe.join("") + "}\n");
 }
 const PRESE_DEL_GIOCO = preseInLua(pr);
@@ -774,31 +777,7 @@ function cambiaPrese() {
 	try { localStorage.setItem("megablast-impugnature", preseInLua(pr)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
 	aggiorna();
 }
-const [STIRA_CANNA, STIRA_PRESA] = DATI.stira;
 let miraAng = 0; // la mira nella clip mira, radianti verso avanti
-// un braccio piegato dalla spalla (sx, sy) al pugno (px, py) nel corpo: il gomito
-// dal lato destro della direzione spalla-pugno; se non ci arriva si allunga
-function piega(sx, sy, px, py) {
-	let l1 = D.braccio[0], l2 = D.braccio[1];
-	const dx = px - sx, dy = py - sy;
-	const d = Math.max(1e-6, Math.hypot(dx, dy));
-	const f = Math.max(1, d / (l1 + l2));
-	l1 *= f; l2 *= f;
-	const c = (d * d + l1 * l1 - l2 * l2) / (2 * d * l1);
-	const ang = Math.atan2(dy, dx) - Math.acos(Math.max(-1, Math.min(1, c)));
-	const ex = sx + l1 * Math.cos(ang), ey = sy + l1 * Math.sin(ang);
-	return { sx, sy, ang, ex, ey, ang2: Math.atan2(py - ey, px - ex), f, px, py };
-}
-// la mano (hx, hy dalla spalla dell'arma, girati con la mira) a portata del
-// braccio dalla spalla (sx, sy): scivola lungo l'arma verso la spalla dell'arma
-function aPortata(sp, sx, sy, hx, hy, c, sn, stira) {
-	const r = (D.braccio[0] + D.braccio[1]) * stira;
-	const qx = sp[0] - hy * sn - sx, qy = sp[1] + hy * c - sy;
-	const lungo = qx * c + qy * sn;
-	const disc = lungo * lungo - (qx * qx + qy * qy) + r * r;
-	if (disc > 0) hx = Math.max(0, Math.min(hx, -lungo + Math.sqrt(disc)));
-	return [sp[0] + hx * c - hy * sn, sp[1] + hx * sn + hy * c];
-}
 
 // ---------------------------------------------------------------------------
 // Matrici 2D (a b c d e f, come il canvas), y verso l'alto nel disegno
@@ -864,7 +843,7 @@ function disegna(dt) {
 	// mirando la testa guarda dove si mira, come nel gioco
 	const testa = tipoClip(nome) === "mira" ? Math.max(-0.3, Math.min(0.45, miraAng * 0.5)) : molle ? sim.x.testa : po.testa;
 	const codaBase = molle ? sim.x.coda : po.coda;
-	const braccia = molle ? sim.braccia : [po.braccio_a, po.braccio_d];
+	const braccia = molle ? sim.braccia.slice() : [po.braccio_a, po.braccio_d];
 	const gambe = molle ? sim.gambe : [po.gamba_a, po.gamba_d];
 	const col = DATI.squadre[+$("squadra").value];
 	const turno = $("turno").checked;
@@ -927,53 +906,23 @@ function disegna(dt) {
 		posti["manina_" + l] = punto(m, 0, 0);
 		if (vede("mostra_manina_" + l)) veste(m, "pugno", "manina_" + l, posti["manina_" + l], col);
 	};
-	// l'arma in mano (clip con l'arma): gira attorno alla spalla dell'arma, nel
-	// corpo; le braccia vanno dalle spalle ai pugni sull'arma
+	// l'arma in mano (clip con l'arma): nella mano del braccio davanti, col punto
+	// della presa sul pugno; mirando il braccio punta dove si mira e l'arma lo
+	// prolunga, come battaglia/scoria.lua
 	const nomeArma = $("arma").value, arma = DA[nomeArma];
-	const sp = [J("arma")[0] * lx, J("arma")[1] * q];
-	let gSpalla = punto(corpo, sp[0], sp[1]);
-	let mani = null;
-	// braccia libere (fuori dalla mira): l'arma sta nella mano del braccio
-	// davanti, con l'impugnatura sul pugno; le braccia le muove la clip
-	const libera = conArma(nome) && tipoClip(nome) !== "mira" && po.arma_libera > 0.5;
-	if (libera) {
-		const l = pr[nomeArma], gr = l.length ? l[l.length - 1] : [0, 0];
+	let mano = null;
+	if (conArma(nome)) {
+		let aArma = RIPOSO[nomeArma] + po.arma;
+		if (tipoClip(nome) === "mira") { braccia[0] = miraAng + Math.PI / 2 - lean - po.corpo; aArma = -Math.PI / 2; }
 		const jx = J("braccio")[0] + po.braccio_a_x, jy = J("braccio")[1] + po.braccio_a_y;
 		const rx = MANO.a[0] - J("braccio")[0], ry = MANO.a[1] - J("braccio")[1];
 		const c = Math.cos(braccia[0]), sn = Math.sin(braccia[0]);
-		const hx = (jx + rx * c - ry * sn) * lx, hy = (jy + rx * sn + ry * c) * q;
-		gSpalla = punto(corpo, hx, hy);
-		mani = { libera: true, mano: [hx, hy], a: RIPOSO[nomeArma] + braccia[0] + po.arma, ox: -gr[0] / K, oy: -gr[1] / K, pugno: true };
-	} else if (conArma(nome)) {
-		const a = (tipoClip(nome) === "mira" ? miraAng : RIPOSO[nomeArma] + po.arma) - lean;
-		const c = Math.cos(a), sn = Math.sin(a), d = sposto("arma");
-		const ox = -d[0], oy = -d[1];
-		const sx = PT.spalle[0] * lx, sy = PT.spalle[1] * q;
-		const l = pr[nomeArma], n = l.length, m1 = l[0];
-		const pa = m1 ? aPortata(sp, sx, sy, m1[0] / K + ox, m1[1] / K + oy, c, sn, n >= 2 ? STIRA_CANNA : STIRA_PRESA)
-			: [sp[0] + ox * c - oy * sn, sp[1] + ox * sn + oy * c];
-		mani = { a, ox, oy, pugno: !!m1, davanti: piega(sx, sy, pa[0], pa[1]) };
-		if (n >= 2) {
-			const mz = l[n - 1];
-			const pd = aPortata(sp, -sx, sy, mz[0] / K + ox, mz[1] / K + oy, c, sn, STIRA_PRESA);
-			mani.dietro = piega(-sx, sy, pd[0], pd[1]);
-		}
+		mano = { x: jx + rx * c - ry * sn, y: jy + rx * sn + ry * c, a: braccia[0] + aArma };
 	}
-	// braccio e avambraccio sull'arma: prima i bordi, poi i colori (si fondono al gomito)
-	const ossa = (b, dietro) => {
-		const d = dietro ? "_dietro" : "";
-		const omero = scala(ruota(sposta(corpo, b.sx, b.sy), b.ang), b.f, 1);
-		const avambraccio = scala(ruota(sposta(corpo, b.ex, b.ey), b.ang2), b.f, 1);
-		veste(omero, "omero" + d + "_bordo", "arma", gSpalla, col);
-		veste(avambraccio, "avambraccio" + d + "_bordo", "arma", gSpalla, col);
-		veste(omero, "omero" + d, "arma", gSpalla, col);
-		veste(avambraccio, "avambraccio" + d, "arma", gSpalla, col);
-	};
 	let m = giunto(forma, J("ala")[0] + po.ala_x, J("ala")[1] + po.ala_y, po.ala);
 	posti.ala = punto(m, 0, 0);
 	if (vede("mostra_ala")) vestePerno(m, "ala", "ala");
-	// il braccio dietro pende, se l'arma non è a due mani
-	if (!(mani && mani.dietro)) pende("braccio_dietro", "braccio_d", J("braccio_dietro")[0] + po.braccio_d_x, J("braccio_dietro")[1] + po.braccio_d_y, braccia[1], vede("mostra_braccio_d"));
+	pende("braccio_dietro", "braccio_d", J("braccio_dietro")[0] + po.braccio_d_x, J("braccio_dietro")[1] + po.braccio_d_y, braccia[1], vede("mostra_braccio_d"));
 	manina("d");
 	m = giunto(forma, J("gamba_dietro")[0] + po.gamba_d_x, J("gamba_dietro")[1] + po.alza_d, gambe[1]);
 	posti.gamba_d = punto(m, 0, 0);
@@ -983,8 +932,6 @@ function disegna(dt) {
 	if (vede("mostra_gamba_a")) vestePerno(m, "gamba", "gamba_a");
 	posti.corpo = gCorpo;
 	if (vede("mostra_busto")) veste(sposta(forma, PT.bacino[0], PT.bacino[1]), "busto", "corpo", gCorpo, col);
-	// il braccio dietro sull'impugnatura passa davanti al petto, sotto la testa
-	if (mani && mani.dietro && vede("mostra_braccio_d")) ossa(mani.dietro, true);
 	const collo = scala(giunto(forma, J("testa")[0] + po.testa_x, J("testa")[1] + po.testa_y, testa), 1 / lx, 1 / q);
 	posti.testa = punto(collo, 0, 0);
 	if (vede("mostra_testa")) vestePerno(collo, "testa", "testa", po.viso || "testa");
@@ -1001,23 +948,18 @@ function disegna(dt) {
 		const luce = turno ? 1 : 0.6;
 		disegnaPezzo(cima, fp, null, nome === "fiammella" ? "fiamma_gira" : null, punto(cima, 0, 0), col.map((x) => x * luce));
 	}
-	if (!mani || mani.libera) pende("braccio", "braccio_a", J("braccio")[0] + po.braccio_a_x, J("braccio")[1] + po.braccio_a_y, braccia[0], vede("mostra_braccio_a"));
-	manina("a");
-	if (mani) {
-		// l'arma (pixel del mondo) sopra il corpo, poi il braccio davanti e i pugni
-		const spalla = ruota(sposta(corpo, ...(mani.libera ? mani.mano : sp)), mani.a);
+	if (mano && vede("mostra_arma")) {
+		// l'arma (pixel del mondo) sopra il corpo e sotto il braccio davanti: la
+		// presa sul pugno, la schiacciata della forma tolta
+		const gr = pr[nomeArma];
 		const pz = { x: arma.x / K, y: arma.y / K, w: arma.w / K, h: arma.h / K, tinta: arma.tinta && "armi/" + arma.tinta };
-		armaOra = sposta(spalla, mani.ox, mani.oy);
-		disegnaPezzo(armaOra, pz, "armi/" + arma.img, "arma", gSpalla, col);
-		if (mani.libera) {
-			// il pugno sopra l'impugnatura, girato col braccio
-			if (vede("mostra_braccio_a")) veste(ruota(sposta(corpo, ...mani.mano), braccia[0]), "pugno", "braccio_a", posti.braccio_a, col);
-		} else {
-			if (vede("mostra_braccio_a")) ossa(mani.davanti, false);
-			if (mani.dietro) veste(sposta(corpo, mani.dietro.px, mani.dietro.py), "pugno", "arma", gSpalla, col);
-			if (mani.pugno) veste(sposta(corpo, mani.davanti.px, mani.davanti.py), "pugno", "arma", gSpalla, col);
-		}
-	}
+		const presaM = ruota(scala(sposta(forma, mano.x, mano.y), 1 / lx, 1 / q), mano.a);
+		posti.arma = punto(presaM, 0, 0);
+		armaOra = presa && presa.arma ? presa.arma : sposta(presaM, -gr[0] / K, -gr[1] / K);
+		disegnaPezzo(armaOra, pz, "armi/" + arma.img, "arma", posti.arma, col);
+	} else if (mano) posti.arma = punto(scala(sposta(forma, mano.x, mano.y), 1 / lx, 1 / q), 0, 0);
+	pende("braccio", "braccio_a", J("braccio")[0] + po.braccio_a_x, J("braccio")[1] + po.braccio_a_y, braccia[0], vede("mostra_braccio_a"));
+	manina("a");
 
 	// l'immagine di un pezzo nuovo (strumenti), mezza trasparente, alta quanto il diavoletto
 	const nu = nuovo.img;
@@ -1063,32 +1005,18 @@ function disegna(dt) {
 	forma_hb("vedi-colpi", "--colpi", () => { g.arc(0, cc, cr, 0, 2 * Math.PI); },
 		[cr * 0.7, cc + cr * 0.75, "colpi"], [["raggio", -cr, cc, "ew-resize"], ["centro", 0, cc, "ns-resize"]]);
 
-	// le impugnature: dove vanno i pugni sull'arma, cerchi da trascinare (il
-	// pugno può restare indietro se il braccio non ci arriva, come nel gioco)
-	if (mani && $("vedi-prese").checked) {
-		const l = pr[nomeArma], cl = css.getPropertyValue("--presa");
+	// la presa: dove la mano tiene l'arma, un cerchio da trascinare sull'arma
+	if (mano && vede("mostra_arma") && $("vedi-prese").checked) {
+		const gr = pr[nomeArma], cl = css.getPropertyValue("--presa"), [px, py] = punto(armaOra, gr[0] / K, gr[1] / K);
+		maniglie.push({ id: "presa", px, py, cursore: "move" });
 		g.setTransform(1, 0, 0, 1, 0, 0);
 		g.font = `600 ${12 * dpr}px ${css.getPropertyValue("--f-testo")}`;
-		l.forEach((m, i) => {
-			const [px, py] = punto(armaOra, m[0] / K, m[1] / K), id = "presa" + i;
-			maniglie.push({ id, px, py, cursore: "move" });
-			g.strokeStyle = g.fillStyle = cl;
-			g.lineWidth = 2.5 * dpr;
-			g.beginPath(); g.arc(px, py, (presa && presa.maniglia === id ? 8 : 6) * dpr, 0, 2 * Math.PI); g.stroke();
-			const scritta = l.length === 2 ? (i ? "impugnatura" : "canna") : "mano", sx = px + 10 * dpr, sy = py + (i ? 18 : -12) * dpr;
-			g.lineWidth = 3 * dpr; g.strokeStyle = css.getPropertyValue("--palco");
-			g.strokeText(scritta, sx, sy); g.fillText(scritta, sx, sy);
-		});
-	}
-	// la spalla dell'arma: l'arma gira lì mirando (una x, i perni sono croci)
-	if (mani) {
-		const [x, y] = gSpalla, l = 6 * dpr;
-		g.setTransform(1, 0, 0, 1, 0, 0);
-		g.strokeStyle = g.fillStyle = css.getPropertyValue("--brace");
-		g.lineWidth = 2 * dpr;
-		g.beginPath(); g.moveTo(x - l, y - l); g.lineTo(x + l, y + l); g.moveTo(x + l, y - l); g.lineTo(x - l, y + l); g.stroke();
-		g.font = `600 ${12 * dpr}px ${css.getPropertyValue("--f-testo")}`;
-		g.fillText(mani.libera ? "presa" : "spalla dell'arma", x - 40 * dpr, y - 12 * dpr);
+		g.strokeStyle = g.fillStyle = cl;
+		g.lineWidth = 2.5 * dpr;
+		g.beginPath(); g.arc(px, py, (presa && presa.maniglia === "presa" ? 8 : 6) * dpr, 0, 2 * Math.PI); g.stroke();
+		const sx = px + 10 * dpr, sy = py - 12 * dpr;
+		g.lineWidth = 3 * dpr; g.strokeStyle = css.getPropertyValue("--palco");
+		g.strokeText("presa", sx, sy); g.fillText("presa", sx, sy);
 	}
 	// spostando i perni: una crocetta su ognuno
 	if (modo === "perno") {
@@ -1176,6 +1104,8 @@ palco.addEventListener("pointerdown", (e) => {
 	const mg = manigliaSotto(px, py);
 	if (mg) {
 		presa = { maniglia: mg.id };
+		// spostando la presa l'arma resta ferma, va nella mano quando lasci
+		if (mg.id === "presa") { fermaPlay(); presa.arma = armaOra; }
 		palco.setPointerCapture(e.pointerId);
 		aggiorna();
 		return;
@@ -1187,7 +1117,7 @@ palco.addEventListener("pointerdown", (e) => {
 	if (nome === "fiammella" && x.canale !== "fiamma_gira") { messaggio("Qui si anima solo la fiammella: trascinala."); return; }
 	if (modo === "perno") {
 		const posto = PERNABILI[x.canale];
-		if (!posto) { messaggio("Questo pezzo non ha un perno da spostare: testa, braccia, gambe, ala e arma sì."); return; }
+		if (!posto) { messaggio(x.canale === "arma" ? "Il perno dell'arma è la presa: trascina il cerchio blu." : "Questo pezzo non ha un perno da spostare: testa, braccia, gambe e ala sì."); return; }
 		canale = x.canale; chiaveScelta = null;
 		// il perno salta dove si clicca e poi segue il mouse
 		presa = { perno: posto, px: x.giunto[0], py: x.giunto[1], d0: sposto(posto).slice() };
@@ -1223,10 +1153,11 @@ palco.addEventListener("pointermove", (e) => {
 		mettiMira(presa.v0 + Math.atan2(Math.sin(d), Math.cos(d)));
 		return;
 	}
-	if (presa.maniglia && presa.maniglia.startsWith("presa")) {
-		// dal canvas all'arma (unità del disegno) e poi ai pixel del mondo
-		const [u, v] = punto(inversa(armaOra), px, py), t = (x) => Math.round(x * K * 10) / 10;
-		pr[$("arma").value][+presa.maniglia.slice(5)] = [t(u), t(v)];
+	if (presa.maniglia === "presa") {
+		// dal canvas all'arma (unità del disegno) e poi ai pixel del mondo: la presa
+		// si sposta sull'arma, l'arma resta ferma finché non lasci
+		const [u, v] = punto(inversa(presa.arma), px, py), t = (x) => Math.round(x * K * 10) / 10;
+		pr[$("arma").value] = [t(u), t(v)];
 		cambiaPrese();
 		return;
 	}
@@ -1275,6 +1206,7 @@ const SECCHIO = [
 	{ nome: "braccio dietro", vis: "mostra_braccio_d", posto: "braccio_dietro", can: "braccio_d" },
 	{ nome: "manina davanti", vis: "mostra_manina_a", posto: "pugno", can: "manina_a" },
 	{ nome: "manina dietro", vis: "mostra_manina_d", posto: "pugno", can: "manina_d" },
+	{ nome: "arma", vis: "mostra_arma", can: "arma", arma: true },
 	{ nome: "gamba davanti", vis: "mostra_gamba_a", posto: "gamba", can: "gamba_a" },
 	{ nome: "gamba dietro", vis: "mostra_gamba_d", posto: "gamba_dietro", can: "gamba_d" },
 	{ nome: "ala", vis: "mostra_ala", posto: "ala", can: "ala" },
@@ -1284,9 +1216,12 @@ function sopraSecchio(e) {
 	const r = $("secchio").getBoundingClientRect();
 	return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
 }
-// la miniatura di un pezzo com'è addosso adesso (pelli e ritocchi)
-function miniatura(cv, posto) {
-	const ps = [].concat(posto).flatMap((x) => strati(x)).filter(Boolean);
+// la miniatura di un pezzo com'è addosso adesso (pelli e ritocchi); l'arma è
+// quella scelta
+function miniatura(cv, pz) {
+	const a = pz.arma && (DA[$("arma").value] || DA.missile);
+	const ps = a ? [{ img: "armi/" + a.img, tinta: a.tinta && "armi/" + a.tinta, x: a.x, y: a.y, w: a.w, h: a.h }]
+		: [].concat(pz.posto).flatMap((x) => strati(x)).filter(Boolean);
 	const dpr = window.devicePixelRatio || 1;
 	cv.width = cv.height = Math.round(44 * dpr);
 	const c = cv.getContext("2d");
@@ -1307,7 +1242,7 @@ function costruisciSecchio() {
 		const b = document.createElement("button");
 		b.className = "pezzo"; b.dataset.vis = pz.vis;
 		b.innerHTML = `<canvas></canvas><span>${pz.nome}</span>`;
-		miniatura(b.querySelector("canvas"), pz.posto);
+		miniatura(b.querySelector("canvas"), pz);
 		b.addEventListener("pointerdown", (e) => prendiDalSecchio(e, pz, b));
 		// da tastiera: Invio mette e toglie
 		b.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); scambia(pz); } });
@@ -1320,6 +1255,7 @@ function aggiornaSecchio() {
 	$("secchio").hidden = nome === "fiammella";
 	for (const b of document.querySelectorAll("#secchio .pezzo")) {
 		const pz = SECCHIO.find((x) => x.vis === b.dataset.vis);
+		b.hidden = pz.arma && !conArma(nome);
 		const si = inScena(pz);
 		b.classList.toggle("in-scena", si);
 		b.title = si ? `${pz.nome}: in scena (trascinalo dal palco qui per toglierlo)` : `${pz.nome}: nel secchio (trascinalo sul palco)`;
@@ -1585,9 +1521,6 @@ function aggiorna() {
 	$("mira-l").hidden = tipoClip(nome) !== "mira";
 	const arma = $("arma").value, v = variante(nome);
 	$("variante").textContent = v ? `Togli la clip di ${arma}` : clips[nome + "_" + arma] ? `Vai alla clip di ${arma}` : `Clip solo per ${arma}`;
-	$("prese-n").value = pr[arma].length;
-	$("libera").checked = valoreProprio(c, "arma_libera", tempo) > 0.5;
-	$("libera").disabled = tipoClip(nome) === "mira";
 	const prl = preseInLua(pr);
 	$("pr-stato").textContent = prl === PRESE_DEL_GIOCO ? "come nel gioco" : prl === preseSalvate ? "salvate" : "cambiate, da salvare";
 	const nums = { largo: hb.cammina.largo, alto: hb.cammina.alto, raggio: hb.colpi.raggio, centro: hb.colpi.centro };
@@ -1670,6 +1603,8 @@ for (const n of Object.keys(DA)) $("arma").add(new Option(n, n));
 $("arma").onchange = () => {
 	const v = variante(nome);
 	if (v) { nome = clips[v.base + "_" + $("arma").value] ? v.base + "_" + $("arma").value : v.base; chiaveScelta = null; }
+	const b = document.querySelector('#secchio .pezzo[data-vis="mostra_arma"] canvas');
+	if (b) miniatura(b, SECCHIO.find((x) => x.arma));
 	aggiorna();
 };
 // una clip solo per l'arma scelta: parte uguale a quella di tutte; dalla clip
@@ -1687,23 +1622,6 @@ $("variante").onclick = () => {
 		messaggio(`Nuova clip ${n}: il gioco la usa solo con ${arma}.`);
 	}
 	nome = n; chiaveScelta = null; dopo();
-};
-// braccia libere: senza altre chiavi vale per tutta la clip, altrimenti cambia
-// a scatto da qui
-$("libera").onchange = () => {
-	prima();
-	const c = clip(), k = c.tracce.arma_libera, v = $("libera").checked ? 1 : 0;
-	if (!k || k.length <= 1) c.tracce.arma_libera = [{ t: 0, v, c: 2 }]; else metti("arma_libera", v);
-	dopo();
-	messaggio(v ? "Braccia libere: l'arma segue la mano del braccio davanti, muovi le braccia come vuoi." : "Le braccia tornano a piegarsi da sole sull'arma.");
-};
-// le impugnature dell'arma scelta: quante mani (la presa resta, la canna si
-// aggiunge davanti)
-$("prese-n").onchange = () => {
-	const a = $("arma").value, l = pr[a], n = +$("prese-n").value;
-	const presa = l[l.length - 1] || [3, -1];
-	pr[a] = n === 0 ? [] : n === 1 ? [presa] : [l.length >= 2 ? l[0] : [presa[0] + 6, presa[1]], presa];
-	cambiaPrese();
 };
 $("pr-gioco").onclick = () => {
 	pr = copiaPrese(PRESE_GIOCO);

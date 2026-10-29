@@ -176,76 +176,12 @@
    "h": 69.4,
    "modo": "sostituisce"
   },
-  "omero_bordo": {
-   "img": "gabriella_omero_bordo",
-   "x": 7.6,
-   "y": 0.0,
-   "w": 33.7,
-   "h": 46.6,
-   "modo": "sostituisce"
-  },
-  "omero": {
-   "img": "gabriella_omero",
-   "x": 7.6,
-   "y": 0.0,
-   "w": 18.3,
-   "h": 31.1,
-   "modo": "sostituisce"
-  },
-  "avambraccio_bordo": {
-   "img": "gabriella_avambraccio_bordo",
-   "x": 8.6,
-   "y": 0.0,
-   "w": 35.7,
-   "h": 42.9,
-   "modo": "sostituisce"
-  },
-  "avambraccio": {
-   "img": "gabriella_avambraccio",
-   "x": 8.6,
-   "y": 0.0,
-   "w": 20.3,
-   "h": 27.4,
-   "modo": "sostituisce"
-  },
   "pugno": {
    "img": "gabriella_pugno",
    "x": 0.0,
    "y": 0.0,
    "w": 28.6,
    "h": 30.9,
-   "modo": "sostituisce"
-  },
-  "omero_dietro": {
-   "img": "gabriella_omero_dietro",
-   "x": 7.6,
-   "y": 0.0,
-   "w": 18.3,
-   "h": 31.1,
-   "modo": "sostituisce"
-  },
-  "avambraccio_dietro": {
-   "img": "gabriella_avambraccio_dietro",
-   "x": 8.6,
-   "y": 0.0,
-   "w": 20.3,
-   "h": 27.4,
-   "modo": "sostituisce"
-  },
-  "omero_dietro_bordo": {
-   "img": "gabriella_omero_dietro_bordo",
-   "x": 7.6,
-   "y": 0.0,
-   "w": 33.7,
-   "h": 46.6,
-   "modo": "sostituisce"
-  },
-  "avambraccio_dietro_bordo": {
-   "img": "gabriella_avambraccio_dietro_bordo",
-   "x": 8.6,
-   "y": 0.0,
-   "w": 35.7,
-   "h": 42.9,
    "modo": "sostituisce"
   }
  }

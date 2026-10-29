@@ -49,9 +49,9 @@ H = 28  # altezza del corpo nel mondo, senza BLASTRON_CORPO
 from vettori import BORDO, RIGA, INK, COL, Disegno, rendi  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# Le armi. Origine nella spalla, x verso dove si mira, y in su. Dove vanno i
-# pugni non è qui: lo dice client/battaglia/impugnature.lua, fatto nell'editor
-# delle animazioni (l'anteprima lo legge per disegnarli).
+# Le armi. x verso dove si mira, y in su. Il punto dove la mano le tiene non è
+# qui: lo dice client/battaglia/impugnature.lua, fatto nell'editor delle
+# animazioni (l'anteprima lo legge per disegnare il pugno).
 
 
 def lanciarune(d):
@@ -199,7 +199,7 @@ def rampino(d):
 
 def bastione(d):
     # Bastione: il concio che si posa, pietra scura cerchiata d'ottone come i
-    # blocchi in mappa (terreno.fp), retto davanti con le due mani (impugnature.lua)
+    # blocchi in mappa (terreno.fp), retto davanti nella mano (impugnature.lua)
     d.rect(1.0, -3.4, 11.0, 6.8, "pietra", r=0.8)
     d.rect(0.6, 2.0, 11.8, 1.8, "ottone", r=0.5)                                     # bordo sopra
     d.rect(0.6, -3.8, 11.8, 1.6, "ottone", r=0.5)                                    # bordo sotto
@@ -350,9 +350,9 @@ def main():
             os.remove(os.path.join(OUT, f))
     immagini = []
     lua = ["-- Fatto da strumenti/grafica/armi.py, non modificare a mano.",
-           "-- Le armi in unità del mondo: origine nella spalla (i colpi nel centro),",
+           "-- Le armi in unità del mondo (i colpi dal centro),",
            "-- x avanti e y in su. Per ogni arma: immagine (tinta: le parti col colore",
-           "-- della squadra), centro (x, y) e misura (w, h). Dove vanno i pugni:",
+           "-- della squadra), centro (x, y) e misura (w, h). Dove le tiene la mano:",
            "-- battaglia/impugnature.lua.",
            "return {", "\tarmi = {"]
     foglio = []
@@ -394,12 +394,10 @@ def main():
 
 
 def impugnature():
-    # battaglia/impugnature.lua: nome = { { x, y }, ... }
-    prese = {}
+    # battaglia/impugnature.lua: nome = { x, y }
     with open(PRESE) as f:
-        for nome, punti in re.findall(r"^\s*(\w+)\s*=\s*\{(.*)\},?\s*$", f.read(), re.M):
-            prese[nome] = [(float(x), float(y)) for x, y in re.findall(r"\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}", punti)]
-    return prese
+        return {n: [(float(x), float(y))] for n, x, y in
+                re.findall(r"^\s*(\w+)\s*=\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\},?\s*$", f.read(), re.M)}
 
 
 def tingi(im, rgb):
