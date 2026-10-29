@@ -7,6 +7,7 @@ bilanciamento e gli highlight (i turni più rari e spettacolari).
     python3 strumenti/arena/arena.py --partite 2000 --livello misto --processi 16
     python3 strumenti/arena/arena.py --rapporto simulazione/arena/partite.jsonl   # solo il rapporto
     python3 strumenti/arena/arena.py --video 3       # il video del 3° highlight (simulatore)
+    python3 strumenti/arena/arena.py --partite 10000 --cartella simulazione/arena/base   # prove separate
 
 Risultati in simulazione/arena/ (ignorata da git): partite.jsonl (una riga per
 partita, con la ricetta per rigiocarla), rapporto.md, highlight.json.
@@ -248,7 +249,11 @@ def main():
     ap.add_argument("--luajit")
     ap.add_argument("--rapporto", help="solo il rapporto da un partite.jsonl già fatto")
     ap.add_argument("--video", type=int, help="il video dell'highlight N")
+    ap.add_argument("--cartella", help="dove scrivere (normale simulazione/arena), per tenere separate più prove")
     args = ap.parse_args()
+    global USCITA
+    if args.cartella:
+        USCITA = Path(args.cartella).resolve()
     if args.video:
         video(args.video, args.rapporto or USCITA / "partite.jsonl")
         return

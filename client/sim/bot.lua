@@ -165,7 +165,7 @@ local function valore(b, g, w)
 			local persa = c.dead and r.hp or math.max(0, r.hp - c.hp)
 			if c.team == me.team then
 				s = s + dp - persa * (i == b.id and PESO_VITA_MIA or PESO_VITA_COMPAGNO)
-				if i == b.id and c.dead then s = s - PESO_MORTE end
+				if c.dead then s = s - PESO_MORTE end
 			else
 				s = s - dp
 			end
@@ -225,6 +225,30 @@ local function prova(b, g, posto, arma, angolo, potenza, fino)
 		s = vicinanza(g, g.robots[b.id], px, py)
 	end
 	return s
+end
+
+-- Il Rampino sul nemico numero chi, e poi il colpo migliore con le armi di
+-- lista (dritto verso di lui, a tutta potenza): quanto vale tutto insieme
+local function prova_rampino(b, g, posto, angolo, chi, lista)
+	local w = M.mondo(g)
+	lavora(b, 20)
+	local c = in_posto(w, b.id, posto)
+	w:use_tool("hook", { weapon = "hook", angle = angolo, power = 1 })
+	fino_a_quieto(b, w, 3 * 60)
+	local o = w.robots[chi]
+	local meglio = valore(b, g, w)
+	if c.dead or o.dead then return meglio end
+	local a = math.atan2(o.y + game.HURT_Y - (c.y + game.DISEGNO_H / 2), o.x - c.x)
+	for _, arma in ipairs(lista) do
+		if w:can_use(arma) then
+			local w2 = M.mondo(w)
+			lavora(b, 20)
+			w2:attack(arma, { weapon = arma, angle = a, power = 1 })
+			fino_a_quieto(b, w2, 4 * 60)
+			meglio = math.max(meglio, valore(b, g, w2))
+		end
+	end
+	return meglio
 end
 
 -- Angoli per colpire (dx, dy) partendo a velocità v con gravità gr (le due
@@ -436,10 +460,12 @@ local function pensa(b, g)
 	table.sort(mosse, prima)
 	b.scelta = mosse[1]
 
-	-- il Rampino porta un nemico lontano a tiro di Lama (o di un'altra secondaria)
-	if liv.rampino and g:can_use("hook") and g:can_use("sword") and (not mosse[1] or mosse[1].punti < 15) then
+	-- il Rampino porta un nemico lontano a tiro: vale quanto il colpo migliore
+	-- che si può dare dopo averlo tirato (provato sulla copia)
+	if liv.rampino and g:can_use("hook") and #lista > 0 then
 		local cx, cy = me.x, me.y + game.DISEGNO_H / 2
-		for _, o in ipairs(nemici(g, me, me.x, me.y)) do
+		for k, o in ipairs(nemici(g, me, me.x, me.y)) do
+			if k > 2 then break end
 			local dx, dy = o.x - cx, o.y + game.HURT_Y - cy
 			local d = math.sqrt(dx * dx + dy * dy)
 			if d > 80 and d < C.HOOK.range then
@@ -447,8 +473,8 @@ local function pensa(b, g)
 				local mx, my = math.cos(a) * game.MUZZLE, math.sin(a) * game.MUZZLE
 				local _, _, hit = g:ray(cx + mx, cy + my, a, C.HOOK.range, me)
 				if hit == o then
-					mosse[#mosse + 1] = { posto = posti[1], arma = "hook", angolo = a, potenza = 1, punti = 14, k = #mosse + 1 }
-					break
+					mosse[#mosse + 1] = { posto = posti[1], arma = "hook", angolo = a, potenza = 1,
+						punti = prova_rampino(b, g, posti[1], a, o.id, lista), k = #mosse + 1 }
 				end
 			end
 		end
@@ -489,9 +515,11 @@ local function pensa(b, g)
 		end
 	end
 
-	-- a volte (livelli bassi) una mossa meno buona
+	-- a volte (livelli bassi) una mossa meno buona, ma non una che fa male a sé
+	-- o al compagno (punti sotto zero quando la migliore non lo è)
 	if liv.sbaglia > 0 and #mosse > 1 and b.rng:next() < liv.sbaglia then
-		b.scelta = mosse[1 + math.floor(b.rng:next() * math.min(3, #mosse))]
+		local m = mosse[1 + math.floor(b.rng:next() * math.min(3, #mosse))]
+		if m.punti >= math.min(0, mosse[1].punti) then b.scelta = m end
 	end
 end
 
