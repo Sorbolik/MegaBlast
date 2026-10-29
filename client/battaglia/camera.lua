@@ -23,9 +23,6 @@ M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
 local SEGUI, SEGUI_VELOCE, ZOOM = 5, 9, 6
 -- allontanarsi è più svelto di avvicinarsi, perché il colpo non scappi dallo schermo
 local ZOOM_FUORI = 12
--- pixel dello schermo che l'inquadratura di due punti lascia liberi ai bordi:
--- sotto di più, perché c'è l'HUD
-local MARGINE_X, MARGINE_SU, MARGINE_GIU = 120, 90, 170
 
 local function limita(c)
 	local hw, hh = c.w / (2 * c.s), c.h / (2 * c.s)
@@ -36,8 +33,14 @@ end
 -- w, h: lo schermo; mw, mh: la mappa
 function M.new(w, h, mw, mh)
 	local c = { w = w, h = h, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1, livello = 1,
-		sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0 }
+		sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, mx = 120, msu = 90, mgiu = 170 }
 	return c
+end
+
+-- pixel dello schermo che l'inquadratura di due punti lascia liberi ai bordi
+-- (ai lati, sopra, sotto): li dà chi disegna l'HUD, che sta sopra e sotto
+function M.margini(c, x, su, giu)
+	c.mx, c.msu, c.mgiu = x, su, giu
 end
 
 -- lo zoom con cui si vede tutta la mappa
@@ -71,18 +74,18 @@ end
 function M.inquadra(c, dt, ax, ay, bx, by, s)
 	local x0, x1 = math.max(0, math.min(ax, bx)), math.min(c.mw, math.max(ax, bx))
 	local y0, y1 = math.max(0, math.min(ay, by)), math.min(c.mh, math.max(ay, by))
-	local serve = math.min((c.w - 2 * MARGINE_X) / math.max(1, x1 - x0),
-		(c.h - MARGINE_SU - MARGINE_GIU) / math.max(1, y1 - y0))
+	local serve = math.min((c.w - 2 * c.mx) / math.max(1, x1 - x0),
+		(c.h - c.msu - c.mgiu) / math.max(1, y1 - y0))
 	s = math.max(M.tutta(c), math.min(s, serve))
-	verso(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (MARGINE_GIU - MARGINE_SU) / (2 * c.s), s,
+	verso(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (c.mgiu - c.msu) / (2 * c.s), s,
 		s < c.s and ZOOM_FUORI or ZOOM, SEGUI_VELOCE)
 	-- le molle arrivano in ritardo: se un punto sta per uscire si allontana subito
 	local m = c.s
 	for i = 1, 2 do
 		local dx, dy = math.abs((i == 1 and x0 or x1) - c.x), (i == 1 and y0 or y1) - c.y
-		if dx > 0 then m = math.min(m, (c.w / 2 - MARGINE_X) / dx) end
-		if dy > 0 then m = math.min(m, (c.h / 2 - MARGINE_SU) / dy) end
-		if dy < 0 then m = math.min(m, (c.h / 2 - MARGINE_GIU) / -dy) end
+		if dx > 0 then m = math.min(m, (c.w / 2 - c.mx) / dx) end
+		if dy > 0 then m = math.min(m, (c.h / 2 - c.msu) / dy) end
+		if dy < 0 then m = math.min(m, (c.h / 2 - c.mgiu) / -dy) end
 	end
 	if m < c.s then
 		c.s = math.max(M.tutta(c), m)

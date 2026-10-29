@@ -2107,6 +2107,8 @@ function init(self)
 
 	-- il cronometro ad anello in basso al centro, col tempo della partita sopra
 	self.crono = hud.cronometro(W / 2, MISURE.ring_y)
+	-- l'inquadratura di chi spara e del colpo resta sopra l'anello e il tempo della partita
+	camera.margini(self.cam, 120, 90, MISURE.ring_y + hud.FUORI + 40)
 	-- i punti in alto al centro; il ticchettio è il suono "punto" dell'oggetto game
 	self.punti = punteggio.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	self.message = label(W / 2, H / 2 + 120, "", 1.6)
