@@ -5,6 +5,9 @@ nessuna regola nostra): ogni generazione gioca, le reti che arrivano più in
 alto in classifica restano, le altre si rifanno mutando e incrociando le
 migliori. La rete giudica ogni mossa che il bot prova (dove andare, cosa
 sparare, dove ripararsi) guardando la posizione che ne esce (bot.caratteristiche).
+Insieme alla rete evolve la soglia del teletrasporto (bot.PESI.teletrasporto:
+sotto quel valore della mossa migliore a piedi il bot prova il teletrasporto),
+che altrimenti resterebbe tarata sul bot di oggi.
 
     python3 strumenti/arena/evolvi.py                   # senza fine (Ctrl+C), riprende da dove era
     python3 strumenti/arena/evolvi.py --generazioni 40  # fino alla generazione 40
@@ -41,8 +44,21 @@ def quanti(strati):
     return sum(strati[k] * (strati[k - 1] + 1) for k in range(1, len(strati)))
 
 
+TELE = (-50.0, 200.0)  # limiti della soglia del teletrasporto
+
+
+def individuo(x):
+    """Una rete che evolve: pesi (w) e soglia del teletrasporto (tele). Gli stati
+    salvati prima della soglia hanno solo i pesi: prendono quella di oggi."""
+    return x if isinstance(x, dict) else {"w": x, "tele": 20.0}
+
+
 def nuova_rete(strati, rng):
-    """Pesi a caso (He: varianza 2/ingressi), scarti a zero: nessuna idea del gioco."""
+    """Pesi a caso (He: varianza 2/ingressi), scarti a zero, soglia a caso: nessuna idea del gioco."""
+    return {"w": pesi_a_caso(strati, rng), "tele": round(rng.uniform(*TELE), 2)}
+
+
+def pesi_a_caso(strati, rng):
     w = []
     for k in range(1, len(strati)):
         nin, nout = strati[k - 1], strati[k]
@@ -53,21 +69,23 @@ def nuova_rete(strati, rng):
     return w
 
 
-def muta(w, rng, forza):
+def muta(ind, rng, forza):
     """Ogni peso si sposta un poco; uno su cinquanta ricomincia da capo."""
     out = []
-    for x in w:
+    for x in ind["w"]:
         if rng.random() < 0.02:
             x = rng.gauss(0, 0.5)
         else:
             x += rng.gauss(0, forza)
         out.append(round(x, 5))
-    return out
+    tele = min(TELE[1], max(TELE[0], ind["tele"] + rng.gauss(0, forza * 100)))
+    return {"w": out, "tele": round(tele, 2)}
 
 
-def incrocia(a, b, strati, rng):
+def incrocia(ia, ib, strati, rng):
     """Figlio di due reti: ogni neurone (i suoi pesi d'ingresso e lo scarto)
     viene tutto da uno dei due genitori, così non si spezzano le idee."""
+    a, b = ia["w"], ib["w"]
     out, p = [], 0
     for k in range(1, len(strati)):
         nin, nout = strati[k - 1], strati[k]
@@ -79,7 +97,7 @@ def incrocia(a, b, strati, rng):
         for o in range(nout):
             out.append((a if da[o] else b)[p])
             p += 1
-    return out
+    return {"w": out, "tele": ia["tele"] if rng.random() < 0.5 else ib["tele"]}
 
 
 def lua_val(v):
@@ -97,8 +115,10 @@ def scrivi_pesi(cartella, individui):
     return cartella / "pesi.lua"
 
 
-def pesi_rete(strati, w):
-    return {"rete": {"strati": strati, "w": w}}
+def pesi_rete(strati, ind):
+    """I pesi del bot (players[i].pesi) per una rete che evolve."""
+    ind = individuo(ind)
+    return {"rete": {"strati": strati, "w": ind["w"]}, "teletrasporto": ind["tele"]}
 
 
 def misura(partite, n):
@@ -218,6 +238,10 @@ def main():
         stato = {"gen": 0, "strati": strati, "pop": [nuova_rete(strati, rng) for _ in range(args.popolazione)],
                  "campioni": [], "storia": [], "esami": []}
     strati = stato["strati"]
+    stato["pop"] = [individuo(x) for x in stato["pop"]]
+    for c in stato["campioni"]:
+        if "w" in c:
+            c["ind"] = individuo(c.pop("w"))
     print(f"rete {strati}: {quanti(strati)} pesi, {len(stato['pop'])} reti")
 
     while not args.generazioni or stato["gen"] < args.generazioni:
@@ -232,7 +256,7 @@ def main():
             altri = passati[:-1]
             rng.shuffle(altri)
             scelti += altri[: args.campioni - 1]
-        individui = [{}] + [pesi_rete(strati, c["w"]) for c in scelti] + [pesi_rete(strati, w) for w in pop]
+        individui = [{}] + [pesi_rete(strati, c["ind"]) for c in scelti] + [pesi_rete(strati, x) for x in pop]
         primo = 2 + len(scelti)  # numero della prima rete che evolve
         cartella = radice / f"generazione_{gen}"
         cartella.mkdir(parents=True, exist_ok=True)
@@ -242,9 +266,10 @@ def main():
 
         ordine = sorted(range(primo, len(individui) + 1), key=lambda i: (-b[i]["alto"], i))
         migliore = ordine[0]
-        campione = {"gen": gen, "w": pop[migliore - primo]}
+        campione = {"gen": gen, "ind": pop[migliore - primo]}
         stato["campioni"].append(campione)
-        voce = {"gen": gen, "campione": comportamento(b[migliore]), "oggi": comportamento(b[1]),
+        voce = {"gen": gen, "campione": comportamento(b[migliore]) | {"teletrasporto": campione["ind"]["tele"]},
+                "oggi": comportamento(b[1]),
                 "media_reti": round(sum(b[i]["alto"] for i in ordine) / len(ordine), 4),
                 "peggiore": round(b[ordine[-1]]["alto"], 4),
                 "avversari": {f"gen {c['gen']}": round(b[2 + k]["alto"], 4) for k, c in enumerate(scelti)}}
@@ -269,7 +294,7 @@ def main():
         stato["gen"] = gen
 
         if args.esame and gen % args.esame == 0:
-            e = esame(radice, gen, pesi_rete(strati, campione["w"]), args)
+            e = esame(radice, gen, pesi_rete(strati, campione["ind"]), args)
             e["gen"] = gen
             stato["esami"].append(e)
             print(f"  esame: il campione della generazione {gen} arriva più in alto del bot di oggi "
@@ -284,7 +309,7 @@ def main():
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
                                                         "esami": stato["esami"]}, indent=1, ensure_ascii=False))
         (radice / "campioni.json").write_text(json.dumps(
-            [pesi_rete(strati, c["w"]) | {"gen": c["gen"]} for c in stato["campioni"]]))
+            [pesi_rete(strati, c["ind"]) | {"gen": c["gen"]} for c in stato["campioni"]]))
         (radice / "evoluzione.md").write_text(rapporto(stato, args))
 
 

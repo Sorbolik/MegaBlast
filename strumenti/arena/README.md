@@ -15,7 +15,7 @@ python3 strumenti/arena/arena.py --video 1                         # video del p
 python3 strumenti/arena/arena.py --partite 10000 --cartella simulazione/arena/base   # prove tenute separate
 python3 strumenti/arena/arena.py --partite 1000 --pesi popolazione.lua   # bot con pesi diversi
 python3 strumenti/arena/arena.py --partite 300 --pesi due.lua --assegna turno   # due individui sempre alla pari
-python3 strumenti/arena/evolvi.py                                  # bot con rete neurale che evolvono, senza fine
+python3 strumenti/arena/evolvi.py --partite 1500                   # bot con rete neurale che evolvono, senza fine
 ```
 
 `variante.lua` restituisce una tabella come `config.SCORE` (`return { damage = 1, kill = 60, ... }`):
@@ -37,7 +37,8 @@ pesi a caso e si evolvono generazione dopo generazione (le migliori restano, le
 altre si rifanno mutando e incrociando le migliori). In ogni generazione giocano
 anche il bot di oggi (riferimento fisso) e alcuni campioni passati; ogni 5
 generazioni il campione fa l'esame contro il bot di oggi sulle stesse partite.
-Salva a ogni generazione: si ferma con Ctrl+C e riparte da dove era (`--nuova`
+Con la rete evolve anche la soglia del teletrasporto. Più partite per generazione
+(`--partite`) vuol dire meno caso nella scelta delle migliori. Salva a ogni generazione: si ferma con Ctrl+C e riparte da dove era (`--nuova`
 ricomincia). Esce `simulazione/arena/reti/`: `evoluzione.md`, `storia.json`
 (tutte le generazioni: bravura, armi, morti, mosse preferite), `campioni.json`
 (la rete migliore di ogni generazione, da mettere in `players[i].pesi`).
