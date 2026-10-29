@@ -154,7 +154,7 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 | `{"t":"state",…}` | S → C | fase, turno, timer, secondi dopo il primo attacco, supplementari, attacchi fatti (e attrezzo usato), teletrasporti, robot e missile (20 al secondo) |
 | `{"t":"ev","type":…}` | S → C | eventi: `turn`, `fire`, `explosion` (x, y, raggio), `damage`, `death`, `miss`, `over` |
 | `{"t":"away","robot":2}` / `{"t":"back","robot":2}` | S → C | un giocatore ha perso la connessione / è tornato |
-| `{"t":"leave"}` | C → S | esco dalla partita (ESCI DALLA PARTITA della rotellina, anche durante la scelta): il posto non si tiene |
+| `{"t":"leave"}` | C → S | esco dalla partita (ESCI DALLA PARTITA della rotellina, anche durante la scelta): il posto non si tiene, il robot sparisce (evento `gone`, `gn` nello stato) |
 | `{"t":"left","robot":2}` | S → C | è uscito o non è tornato in tempo (20 s): è fuori; la partita continua finché restano due squadre |
 
 ### Flusso di un turno

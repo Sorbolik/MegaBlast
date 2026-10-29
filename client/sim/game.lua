@@ -745,6 +745,28 @@ function M:respawn(rb)
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
 end
 
+-- Chi esce dalla partita online (ESCI DALLA PARTITA, server/room.go) sparisce
+-- subito: niente morte né punti a nessuno, non rinasce e non ha più turni. Se
+-- era il suo turno, passa al prossimo.
+function M:remove(id)
+	local rb = self.robots[id]
+	if rb.gone or self.phase == "over" then return end
+	rb.gone, rb.dead, rb.hp, rb.respawn_in = true, true, 0, nil
+	local pos
+	for i, p in ipairs(self.order) do
+		if p == id then pos = i end
+	end
+	table.remove(self.order, pos)
+	if pos < self.order_pos then self.order_pos = self.order_pos - 1 end
+	self:emit({ type = "gone", robot = id })
+	if self.current == id and #self.order > 0 then
+		-- il prossimo è già al posto suo nell'ordine: end_turn passa a lui
+		self.order_pos = pos - 1
+		if self.projectile and self.projectile.owner == id then self.projectile = nil end
+		self:end_turn()
+	end
+end
+
 -- Un punto a caso sulla superficie della mappa (il terreno più alto sotto x)
 -- per cui ok(x, y) è vero, o nil. Usa il generatore della partita, così
 -- server e client trovano lo stesso punto.

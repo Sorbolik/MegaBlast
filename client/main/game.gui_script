@@ -820,6 +820,10 @@ local function handle_event(self, e)
 			local verbo = e.env and " butta giù " or " elimina "
 			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
 		end
+	elseif e.type == "gone" then
+		-- è uscito dalla partita: sparisce e non torna
+		scoria.set_enabled(self.robots[e.robot].rig, false)
+		targa.set_enabled(self.robots[e.robot].targa, false)
 	elseif e.type == "respawn" then
 		scoria.set_enabled(self.robots[e.robot].rig, true)
 		targa.set_enabled(self.robots[e.robot].targa, true)
@@ -898,6 +902,12 @@ local function apply_state(self, s)
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
 		rb.teleports_left, rb.turns, rb.points = r.tl or 0, r.tu or 1, r.pt or 0
 		rb.max_hp = r.mh or rb.max_hp
+		if r.gn and not rb.gone then
+			-- chi torna dopo una caduta non ha visto uscire nessuno: il robot sparisce qui
+			rb.gone = true
+			scoria.set_enabled(self.robots[i].rig, false)
+			targa.set_enabled(self.robots[i].targa, false)
+		end
 		rb.swing = (r.s or 0) > 0 and r.s or nil
 		rb.swing_dir = (r.sd or 0) ~= 0 and r.sd or rb.facing
 		rb.punch = (r.pu or 0) > 0 and r.pu or nil

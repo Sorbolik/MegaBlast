@@ -43,6 +43,11 @@ function N.current(g)
 	return g.current
 end
 
+-- il giocatore i è uscito dalla partita (room.go, leave): il suo robot sparisce
+function N.remove(g, i)
+	g:remove(i)
+end
+
 function N.over(g)
 	return g.phase == "over"
 end
@@ -60,7 +65,8 @@ function N.snapshot(g)
 		-- ("hook" Rampino o "wall" Bastione); lu: tick rimasti dell'Affondo, la: angolo del suo scatto;
 		-- kn: sbalzato da un colpo (non corre da sé);
 		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy); ml: tick del colpo di Maglio,
-		-- ms: tick (con frazione) in cui la sua testa si è fermata sul terreno (0 se gira ancora), md: suo lato
+		-- ms: tick (con frazione) in cui la sua testa si è fermata sul terreno (0 se gira ancora), md: suo lato;
+		-- gn: è uscito dalla partita (sparito, non torna)
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
 			tl = rb.teleports_left, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
 			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, pl = rb.parachutes_left,
@@ -73,7 +79,7 @@ function N.snapshot(g)
 			sw = rb.secondary or "", at = rb.tool, lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
 			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0,
 			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, kn = rb.knocked,
-			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0 }
+			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, gn = rb.gone or false }
 	end
 	-- k: "missile", "grenade" o "sniper", fu: tick prima che l'Uovo scoppi
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }

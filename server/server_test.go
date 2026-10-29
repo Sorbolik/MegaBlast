@@ -472,8 +472,13 @@ func TestLeave(t *testing.T) {
 			t.Fatalf("left inatteso: %v", m)
 		}
 	}
-	// tre squadre: si continua
-	p4.waitFor(`"state"`)
+	// tre squadre: si continua, e il robot di chi è uscito è sparito
+	for {
+		st := p4.waitFor(`"state"`)
+		if st["r"].([]any)[0].(map[string]any)["gn"] == true && st["cur"].(float64) != 1 {
+			break
+		}
+	}
 	p2.send(`{"t":"leave"}`)
 	p3.send(`{"t":"leave"}`)
 	// resta una squadra sola: la partita si chiude

@@ -160,6 +160,12 @@ func (s *Sim) Current() int {
 	return int(n)
 }
 
+// Remove toglie il robot i (da 1) di chi è uscito dalla partita.
+func (s *Sim) Remove(i int) error {
+	_, err := s.e.call("remove", s.g, lua.LNumber(i))
+	return err
+}
+
 func (s *Sim) Over() bool {
 	v, _ := s.e.call("over", s.g)
 	return v == lua.LTrue

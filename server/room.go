@@ -392,6 +392,12 @@ func (r *Room) leave(slot int) {
 	s.p.Close()
 	s.p, s.gone, s.in = nil, true, held{}
 	r.srv.sessions.Delete(s.tok)
+	// in partita il suo robot sparisce subito (durante la scelta non c'è ancora)
+	if r.sim != nil {
+		if err := r.sim.Remove(slot + 1); err != nil {
+			log.Printf("errore remove: %v", err)
+		}
+	}
 	r.broadcast(fmt.Appendf(nil, `{"t":"left","robot":%d}`, slot+1))
 }
 
