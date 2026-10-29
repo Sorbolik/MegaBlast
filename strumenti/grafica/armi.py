@@ -180,21 +180,51 @@ def tonante(d):
     return dict(box=(-4, -8.5, 20.5, 6.5))
 
 
+# la punta del lanciarampino, dove sta l'uncino quando è in canna
+PUNTA_RAMPINO = 15.2
+
+
 def rampino(d):
-    # lanciarampino: tubo di ferro, verricello d'ottone e l'uncino a tre punte
+    # lanciarampino: tubo di ferro, verricello d'ottone e la bocca dove sta
+    # l'uncino (disegnato a parte: vola via quando si spara)
     d.rect(-2.5, -1.5, 15, 3.0, "ferro", r=0.7)
     d.cerchio(2.2, -1.2, 2.2, "ottone")                                              # verricello
     d.cerchio(2.2, -1.2, 0.8, "ferro", contorno=False)
     d.poli([(4.6, -1.4), (6.2, -1.4), (5.6, -4.6), (4.2, -4.4)], "cuoio")
-    d.rect(12.5, -0.5, 3.2, 1.0, "acciaio")                                          # asta
-    d.path("M15.4,0 L20.6,0 M18.6,0 Q21.6,2.8 19.0,4.4 M18.6,0 Q21.6,-2.8 19.0,-4.4", "acciaio",
-           contorno=False)
-    d.path("M15.2,-0.7 L19.6,-0.7 Q22.8,-1.5 19.6,-4.8 L18.2,-4.6 Q20.6,-2.4 18.6,-1.9 L18.6,1.9 "
-           "Q20.6,2.4 18.2,4.6 L19.6,4.8 Q22.8,1.5 19.6,0.7 L15.2,0.7 Z", "acciaio")
-    d.poli([(19.8, -0.6), (22.4, 0), (19.8, 0.6)], "acciaio")
+    d.rect(11.8, -2.0, 3.4, 4.0, "ottone", r=0.6)                                    # bocca
     d.rect(7.5, -0.6, 3.8, 1.2, "bianco", r=0.6, tinta=True)
-    d.riga("M-2,0.7 L12,0.7", COL["ferro"][2], 0.4)
+    d.riga("M-2,0.7 L11.6,0.7", COL["ferro"][2], 0.4)
     return dict(box=(-5, -7.5, 25, 7.5))
+
+
+def uncino(d, ox=0.0):
+    # l'uncino del rampino, stile spia: asta d'acciaio con l'anello per il
+    # filo dietro (origine) e quattro punte ricurve davanti (due di lato si
+    # vedono di scorcio). x verso dove vola; ox lo sposta avanti (in canna)
+    n0 = len(d.forme)
+    d.cerchio(0.8, 0, 1.4, "acciaio")                                                # anello
+    d.cerchio(0.8, 0, 0.55, "ferro", contorno=False)
+    d.rect(1.8, -0.9, 5.4, 1.8, "acciaio", r=0.5)                                    # asta
+    d.path("M5.8,-0.7 Q8.6,-1.0 9.6,-4.0 Q10.0,-5.8 8.4,-6.2 L8.0,-4.9 Q8.6,-3.8 7.8,-2.8 "
+           "Q7.0,-2.1 5.8,-2.0 Z", "acciaio")                                       # punta sotto
+    d.path("M5.8,0.7 Q8.6,1.0 9.6,4.0 Q10.0,5.8 8.4,6.2 L8.0,4.9 Q8.6,3.8 7.8,2.8 "
+           "Q7.0,2.1 5.8,2.0 Z", "acciaio")                                         # punta sopra
+    d.path("M6.4,-0.5 Q8.8,-0.7 9.3,-2.4 L8.6,-2.9 Q8.0,-1.7 6.4,-1.4 Z", "ferro")   # punte di scorcio
+    d.path("M6.4,0.5 Q8.8,0.7 9.3,2.4 L8.6,2.9 Q8.0,1.7 6.4,1.4 Z", "ferro")
+    d.poli([(6.8, -1.0), (10.6, 0), (6.8, 1.0)], "acciaio")                         # punta davanti
+    d.riga(f"M{2.4 + ox},0.35 L{6.6 + ox},0.35", COL["acciaio"][2], 0.4)
+    if ox:
+        for i in range(n0, len(d.forme)):
+            el, col, t, c = d.forme[i]
+            d.forme[i] = (el + f' transform="translate({ox},0)"', col, t, c)
+    return dict(box=(-2, -8, 12.5, 8))
+
+
+def rampino_carico(d):
+    # per l'icona: il lanciarampino con l'uncino in canna
+    info = rampino(d)
+    uncino(d, PUNTA_RAMPINO)
+    return info
 
 
 def bastione(d):
@@ -241,6 +271,24 @@ def affondo(d):
     d.cerchio(R - 9.6, 0, 0.75, "bianco", tinta=True, contorno=False)
     d.riga(f"M-6,0.45 L{R - 9},0.45", COL["legno"][2], 0.35)
     return dict(box=(-9.5, -7.5, R + 2.5, 7.5))
+
+
+def mantice(d):
+    # Mantice: il soffietto della forgia. Due assi di legno a cuneo con le
+    # pieghe di cuoio in mezzo, maniglie dietro e il beccuccio d'ottone davanti
+    d.poli([(-3.5, 1.6), (9.5, 0.9), (9.5, 5.4), (-3.5, 3.4)], "legno")               # asse sopra
+    d.poli([(-3.5, -1.6), (9.5, -0.9), (9.5, -5.4), (-3.5, -3.4)], "legno")           # asse sotto
+    d.path("M-2.8,1.6 L-1.4,0 L-2.8,-1.6 L9.6,-0.9 L11.8,-2.6 L11.8,2.6 L9.6,0.9 Z", "cuoio")  # cuoio
+    d.riga("M1,1.4 L2.2,0 L1,-1.4 M4.4,1.2 L5.6,0 L4.4,-1.2 M7.8,1.0 L9,0 L7.8,-1.0",
+           COL["cuoio"][0], 0.35)                                                    # pieghe
+    d.poli([(11.2, -2.4), (17.0, -0.9), (17.0, 0.9), (11.2, 2.4)], "ottone")          # beccuccio
+    d.rect(16.6, -1.2, 1.6, 2.4, "ferro", r=0.4)
+    d.rect(-6.2, 2.0, 3.2, 1.4, "legno", r=0.6)                                      # maniglie
+    d.rect(-6.2, -3.4, 3.2, 1.4, "legno", r=0.6)
+    d.cerchio(3.2, 3.6, 0.8, "bianco", tinta=True)
+    d.cerchio(3.2, -3.6, 0.8, "bianco", tinta=True)
+    d.riga("M-3,2.7 L9,2.4 M-3,-2.7 L9,-2.4", COL["legno"][2], 0.35)
+    return dict(box=(-8, -7.5, 20.5, 7.5))
 
 
 # I colpi in volo: origine nel centro, x nel verso in cui vanno
@@ -291,7 +339,15 @@ ARMI = {
     "wall": (bastione, 0),
     "mallet": (maglio, 45),
     "lunge": (affondo, 45),
+    "bellows": (mantice, 30),
 }
+# pezzi che non si impugnano, grandi come in mano: l'uncino del Rampino (in
+# canna e in volo, battaglia/fune.lua)
+PEZZI = {
+    "uncino": uncino,
+}
+# icone disegnate diversamente dall'arma in mano
+ICONA_DI = {"hook": rampino_carico}
 COLPI = {
     "razzo": razzo,
     "palla": palla,
@@ -431,7 +487,11 @@ def main():
         info = fn(d)
         box = info["box"]
         base, tinta, w, h = esporta(nome, d, box, immagini)
-        ic = icona(nome, d, box, rot, immagini) if rot is not None else None
+        ic = None
+        if rot is not None:
+            di = Disegno()
+            ic = icona(nome, di, ICONA_DI[nome](di)["box"], rot, immagini) if nome in ICONA_DI else \
+                icona(nome, d, box, rot, immagini)
         cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
         t = f'"{nome}_tinta"' if tinta else "nil"
         lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {cx:.2f}, y = {cy:.2f}, '
@@ -441,6 +501,16 @@ def main():
     for nome, fn in ICONE.items():
         d = Disegno(col=COL_ICONE)
         icona(nome, d, fn(d)["box"], 0, immagini)
+    lua.append("\t},")
+    lua.append("\tpezzi = {")
+    for nome, fn in PEZZI.items():
+        d = Disegno()
+        box = fn(d)["box"]
+        base, tinta, w, h = esporta(nome, d, box, immagini)
+        cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+        t = f'"{nome}_tinta"' if tinta else "nil"
+        lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {cx:.2f}, y = {cy:.2f}, '
+                   f'w = {box[2] - box[0]:.2f}, h = {box[3] - box[1]:.2f} }},')
     lua.append("\t},")
     lua.append("\tcolpi = {")
     colpi = []

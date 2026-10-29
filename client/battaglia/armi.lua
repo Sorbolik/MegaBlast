@@ -17,6 +17,10 @@ return {
 		wall = { img = "wall", tinta = "wall_tinta", x = 6.50, y = 0.00, w = 15.00, h = 12.00 },
 		mallet = { img = "mallet", tinta = "mallet_tinta", x = 20.25, y = -0.25, w = 52.50, h = 17.82 },
 		lunge = { img = "lunge", tinta = "lunge_tinta", x = 16.50, y = 0.00, w = 52.00, h = 15.00 },
+		bellows = { img = "bellows", tinta = "bellows_tinta", x = 6.25, y = 0.00, w = 28.50, h = 15.00 },
+	},
+	pezzi = {
+		uncino = { img = "uncino", tinta = nil, x = 5.25, y = 0.00, w = 14.50, h = 16.00 },
 	},
 	colpi = {
 		razzo = { img = "razzo", tinta = "razzo_tinta", x = 0.00, y = 0.00, w = 20.80, h = 14.40 },
