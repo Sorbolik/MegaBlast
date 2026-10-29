@@ -10,7 +10,6 @@ local gconfig = require "sim.config"
 local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local targa = require "battaglia.targa"
-local battute = require "battaglia.battute"
 local home = require "menu.home"
 local profilo = require "menu.profilo"
 local assetto = require "sim.assetto"
@@ -29,7 +28,6 @@ local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
 local punteggio = require "battaglia.punteggio"
 local hud = require "battaglia.hud"
-local guida = require "battaglia.guida"
 local schermo = require "ui.schermo"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
@@ -383,7 +381,7 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.aim_pad.base, visible and self.touch_ui)
 	gui.set_enabled(self.bar, visible)
 	gui.set_enabled(self.btn_tele.nodo, visible)
-	if not visible then guida.aggiorna(self.guida, nil) end
+	if not visible and self.guida then self.guida:aggiorna(nil) end
 	self.tele_vede = visible
 	hud.cronometro_on(self.crono, visible)
 	if not visible then
@@ -775,7 +773,7 @@ local function handle_event(self, e)
 	-- i personaggi della campagna parlano (battaglia/battute.lua); quelle di
 	-- tutti i giorni non coprono una battuta appena detta
 	if self.parlano then
-		local i, s, forte = battute.evento(self.parlano, e, self.g.current)
+		local i, s, forte = self.parlano:evento(e, self.g.current)
 		local t = i and self.robots[i].targa
 		if s and (forte or t.battuta_t <= 0.8) then targa.battuta(t, s) end
 	end
@@ -1338,7 +1336,7 @@ local function start_missione(self, id, picks)
 	for i, p in ipairs(r.l.giocatori) do
 		if p.nome then self.names[i] = p.nome end
 		if p.bot and (p.battute or p.carattere) then
-			self.parlano = self.parlano or battute.nuove()
+			self.parlano = self.parlano or require("battaglia.battute").nuove()
 			self.parlano.chi[i] = p.battute or p.carattere
 		end
 	end
@@ -1362,6 +1360,30 @@ end
 -- finisce col podio.
 local function missione_update(self, dt)
 	local r = self.missione
+	-- la guida delle lezioni (battaglia/guida.lua): la luce sul comando che la
+	-- riga suggerisce (la primaria o la secondaria scelta, non il Lanciarune o
+	-- la Lama di sempre) e i gesti. Fatta alla prima lezione, dopo tutto l'HUD:
+	-- così ci sta sopra
+	if not self.guida then
+		self.guida = require("battaglia.guida").new()
+		self.levette = { muovi = MOVE_PAD, mira = AIM_PAD }
+	end
+	local cosa = self.controls_visible and missioni.evidenzia(r) or nil
+	local dove
+	if cosa == "teleport" then
+		local p = gui.get_position(self.btn_tele.nodo)
+		dove = { x = p.x, y = p.y, d = TELE_D }
+	elseif cosa and not self.guida.gesto(cosa) then
+		local scelto
+		for _, sl in ipairs(self.slots) do
+			local ok = sl.weapon == cosa or (cosa == "primaria" and sl.group == 1) or (cosa == "secondaria" and sl.group == 2)
+			if ok and sl.have and sl.x and (not scelto or (sl.weapon ~= "missile" and sl.weapon ~= "sword")) then
+				scelto = sl
+			end
+		end
+		if scelto then dove = { x = scelto.x, y = scelto.y, d = scelto.d * (scelto.on == 2 and SCELTO or 1) } end
+	end
+	self.guida:aggiorna(cosa, dove, self.touch_ui, self.levette)
 	local testo, chi = missioni.riga(r)
 	-- {salta}: come si salta con i comandi che hai
 	if testo then
@@ -1586,17 +1608,12 @@ local function vibra_tocco()
 	end
 end
 
--- Nelle lezioni: il giocatore ha toccato quel comando (sim/missioni.lua tocca)
-local function tocca_missione(self, cosa)
-	if self.missione then missioni.tocca(self.missione, cosa) end
-end
-
 local function move_pad_drag(self, x, y)
 	local nx, ny = pad_drag(self.move_pad, x, y)
-	if math.abs(nx) > 0.3 then tocca_missione(self, "cammina") end
+	if math.abs(nx) > 0.3 then missioni.tocca(self.missione, "cammina") end
 	if levette.muovi(self.move_st, nx, ny) then
 		self.jump_pressed = true
-		tocca_missione(self, "salta")
+		missioni.tocca(self.missione, "salta")
 		-- il pollice è appena entrato nell'arco del salto: una micro-vibrazione
 		vibra_tocco()
 	end
@@ -1770,29 +1787,6 @@ local function update_bar(self)
 		gui.set_enabled(self.oggetti_titolo, self.oggetti_on)
 	end
 	return scelto
-end
-
--- La guida delle lezioni: la luce sul comando che la riga suggerisce (la
--- primaria o la secondaria scelta, non il Lanciarune o la Lama di sempre) e i
--- gesti del salto e dell'annullare la mira
-local function guida_update(self)
-	local r = self.missione
-	local cosa = r and self.controls_visible and missioni.evidenzia(r) or nil
-	local dove
-	if cosa == "teleport" then
-		local p = gui.get_position(self.btn_tele.nodo)
-		dove = { x = p.x, y = p.y, d = TELE_D }
-	elseif cosa and not guida.gesto(cosa) then
-		local scelto
-		for _, sl in ipairs(self.slots) do
-			local ok = sl.weapon == cosa or (cosa == "primaria" and sl.group == 1) or (cosa == "secondaria" and sl.group == 2)
-			if ok and sl.have and sl.x and (not scelto or (sl.weapon ~= "missile" and sl.weapon ~= "sword")) then
-				scelto = sl
-			end
-		end
-		if scelto then dove = { x = scelto.x, y = scelto.y, d = scelto.d * (scelto.on == 2 and SCELTO or 1) } end
-	end
-	guida.aggiorna(self.guida, cosa, dove, self.touch_ui, self.levette)
 end
 
 -- La camera sposta e ingrandisce il nodo "mondo" (tutti i nodi della battaglia)
@@ -2557,9 +2551,6 @@ function init(self)
 	self.tele_key = label(-28, -30, "T", 0.6)
 	gui.set_parent(self.tele_key, self.btn_tele.nodo)
 	self.cartellino = hud.cartellino()
-	-- la guida delle lezioni sopra tutto l'HUD
-	self.guida = guida.new()
-	self.levette = { muovi = MOVE_PAD, mira = AIM_PAD }
 	hud.globi_nodi(self.crono)
 	self.pointers = {}
 	set_touch_ui(self, touch_device())
@@ -2636,7 +2627,6 @@ function update(self, dt)
 		self.pose_t, self.pose_dt = self.acc, game.DT
 		if self.missione then
 			missione_update(self, dt)
-			guida_update(self)
 		end
 	elseif self.mode == "online" then
 		self.pose_t = self.pose_t + dt_mondo
@@ -2711,7 +2701,7 @@ end
 
 -- Si sceglie un'arma della barra; gli oggetti invece si usano subito
 local function choose_slot(self, w)
-	tocca_missione(self, w)
+	missioni.tocca(self.missione, w)
 	if game.TOOLS[w] and not game.THROWN[w] then
 		if my_turn(self) and self.g:can_use(w) then self.fire = { angle = 0, power = 1, weapon = w } end
 		return
@@ -2735,7 +2725,7 @@ local function change_zoom(self, passo)
 end
 
 local function toggle_tele(self)
-	tocca_missione(self, "teleport")
+	missioni.tocca(self.missione, "teleport")
 	-- il teletrasporto si attiva come un'arma, ma ha il suo pulsante
 	self.tele_armed = not self.tele_armed and self.g:can_use("teleport")
 end
@@ -2747,7 +2737,7 @@ local function cancel_pad_aim(self)
 	self.aiming = false
 	pad_release(self.aim_pad, AIM_IDLE)
 	show_message(self, "Mira annullata")
-	tocca_missione(self, "annulla")
+	missioni.tocca(self.missione, "annulla")
 end
 
 -- ESCI DALLA PARTITA: online il server lo sa subito (il posto non si tiene, gli
@@ -2842,14 +2832,14 @@ local function pointer_down(self, id, px, py)
 			move_pad_drag(self, x, y)
 		elseif x > PAD_ZONA.dx and y < PAD_ZONA.y and not self.aim_pad.id and my_turn(self) then
 			self.pointers[id] = "pad_aim"
-			tocca_missione(self, "mira")
+			missioni.tocca(self.missione, "mira")
 			pad_press(self.aim_pad, id, x, y)
 			aim_pad_drag(self, x, y)
 		end
 	elseif my_turn(self) then
 		-- sul computer si mira dal robot col mouse
 		self.pointers[id] = "aim"
-		tocca_missione(self, "mira")
+		missioni.tocca(self.missione, "mira")
 		self.aiming = true
 		aim_from(self, x, y, true)
 	end
@@ -2883,7 +2873,7 @@ local function pointer_up(self, id, x, y)
 				weapon = self.tele_armed and "teleport" or self.weapon }
 			self.tele_armed = false
 		elseif self.aim_dist <= CANCEL_R then
-			tocca_missione(self, "annulla")
+			missioni.tocca(self.missione, "annulla")
 		end
 		self.aiming = false
 	end
@@ -2947,7 +2937,7 @@ function on_input(self, action_id, action)
 		missioni.tocca(self.missione)
 	end
 	if (action_id == ACTION.LEFT or action_id == ACTION.RIGHT) and action.pressed then
-		tocca_missione(self, "cammina")
+		missioni.tocca(self.missione, "cammina")
 	end
 	if action_id == ACTION.LEFT then
 		self.keys.left = not action.released
@@ -2956,7 +2946,7 @@ function on_input(self, action_id, action)
 	elseif action_id == ACTION.JUMP then
 		if action.pressed then
 			self.jump_pressed = true
-			tocca_missione(self, "salta")
+			missioni.tocca(self.missione, "salta")
 		end
 		self.keys.jump = not action.released
 	elseif action_id == ACTION.TELE then

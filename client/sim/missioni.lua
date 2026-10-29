@@ -10,7 +10,7 @@
 --   missioni.prepara(r, g)                          -- subito dopo, una volta
 --   missioni.evento(r, g, e, bots)                  -- per ogni evento della simulazione (bots: di replay.partita)
 --   local esito = missioni.tick(r, g)               -- a ogni tick: nil, "fatta" o "fallita"
---   missioni.tocca(r, cosa)                         -- il giocatore ha toccato i comandi (lezioni: parte il tempo);
+--   missioni.tocca(r, cosa)                         -- il giocatore ha toccato i comandi (lezioni: parte il tempo; r nil: niente);
 --                                                   cosa: l'arma scelta, "salta", "mira", "annulla" o nil
 --   local cosa = missioni.evidenzia(r)              -- il comando da mettere in luce (o nil)
 --   missioni.vede(r.l, arma)                        -- quell'arma (o "teleport", "parachute") si vede nell'HUD?
@@ -422,6 +422,7 @@ end
 -- "annulla" o nil): il tempo riparte, ma se la riga aspetta un comando solo
 -- quando tocchi quello
 function M.tocca(r, cosa)
+	if not r then return end
 	if cosa then r.st.toccati[cosa] = true end
 	if r.attende then
 		if not combacia(r.attende, cosa) then return end

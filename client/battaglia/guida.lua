@@ -6,8 +6,8 @@
 -- tasti (A D, SPAZIO). Pochi nodi fatti una volta: a ogni frame si spostano soltanto.
 --
 --   local gd = guida.new()                          -- dopo l'HUD, così sta sopra
---   guida.aggiorna(gd, cosa, dove, telefono, pads)  -- a ogni frame; cosa nil: niente
---   guida.gesto(cosa)                               -- un gesto (salta, mira...), non un pulsante
+--   gd:aggiorna(cosa, dove, telefono, pads)         -- a ogni frame; cosa nil: niente
+--   gd.gesto(cosa)                                  -- un gesto (salta, mira...), non un pulsante
 --     dove = { x, y, d }: il comando da cerchiare (o nil); pads = { muovi, mira }:
 --     i centri delle levette; telefono: i gesti col dito, se no i tasti
 
@@ -37,7 +37,7 @@ local function pos(n, x, y)
 end
 
 function M.new()
-	local gd = { cosa = nil }
+	local gd = setmetatable({ cosa = nil }, { __index = M })
 	gd.anello = ui.anello(0, 0, 100, 7, GIALLO)
 	gd.dito = ui.disco(0, 0, 48, DITO)
 	gd.onda = ui.anello(0, 0, 48, 5, ONDA)

@@ -5,7 +5,7 @@
 --
 --   local p = battute.nuove()                    -- per una partita
 --   p.chi[robot] = "codardo"                     -- chi parla: il carattere o il custode
---   local robot, testo, forte = battute.evento(p, e, corrente)  -- per ogni evento
+--   local robot, testo, forte = p:evento(e, corrente)  -- per ogni evento
 --     della partita (corrente: il robot di turno): chi dice cosa, o nil; forte:
 --     una battuta che può coprire quella di prima
 --   local testo = battute.di(chi, momento, n)    -- la battuta n di quel momento
@@ -63,7 +63,7 @@ function M.di(chi, momento, n)
 end
 
 function M.nuove()
-	return { chi = {}, n = {} }
+	return setmetatable({ chi = {}, n = {} }, { __index = M })
 end
 
 -- Il momento dell'evento e chi lo dice: chi lo subisce, o chi è di turno
