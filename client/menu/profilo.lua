@@ -20,7 +20,7 @@ M.XP_RICONOSCIMENTO = 25
 M.XP_BASE, M.XP_PASSO = 100, 25
 
 function M.nuovo()
-	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1 }
+	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1, lezioni = {} }
 	for i = 1, assetto.LOADOUTS do p.assetti[i] = assetto.new() end
 	return p
 end
@@ -73,6 +73,16 @@ function M.fine_partita(p, posto, riconoscimenti)
 	return g
 end
 
+-- Lezioni (sim/lezioni.lua): le stelle migliori di ognuna, 0..3
+function M.lezione(p, id, stelle)
+	p.lezioni[id] = math.max(p.lezioni[id] or 0, stelle)
+end
+
+-- Chi non ha mai finito la prima partita guidata: GIOCA lo porta lì
+function M.nuovo_giocatore(p)
+	return (p.lezioni.guidata or 0) == 0
+end
+
 -- Salvataggio --------------------------------------------------------------------
 
 local function file()
@@ -82,6 +92,8 @@ end
 function M.carica()
 	local ok, p = pcall(sys.load, file())
 	if not ok or type(p) ~= "table" or p.versione ~= M.VERSIONE then return M.nuovo() end
+	-- i profili salvati prima delle lezioni
+	p.lezioni = p.lezioni or {}
 	return p
 end
 

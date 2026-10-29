@@ -100,7 +100,7 @@ l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla p
 su claude.ai le connessioni verso altri siti sono bloccate.
 
 Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
-`luajit tests/bot_test.lua` (bot e ricette), `go test ./server/` (server).
+`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/lezioni_test.lua` (lezioni e partita guidata), `go test ./server/` (server).
 
 ## Bot e arena
 

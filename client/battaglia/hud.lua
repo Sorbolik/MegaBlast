@@ -6,7 +6,7 @@
 --   local c = hud.cronometro(x, y)
 --   hud.cronometro_update(c, dt, fase, rimasti, totale, squadra, orologio)
 --   hud.globi_nodi(c)      -- dopo i pulsanti, così i globi ci volano sopra
---   hud.globi(c, n, pos)   -- i secondi risparmiati volano come globi su pos (il teletrasporto)
+--   hud.globi(c, n, pos, lento) -- i secondi risparmiati volano come globi su pos (il teletrasporto)
 --     fase: "turno" (bianco), "secondo" (giallo, resta il secondo attacco),
 --     "riparati" (blu, attacchi finiti) o nil (nessun turno da contare)
 --   local t = hud.tondo(x, y, d, icona, colore, parent)   -- icona: "<icona>_icona" dell'atlante armi
@@ -157,7 +157,9 @@ function M.globi_nodi(c)
 	end
 end
 
-function M.globi(c, n, pos)
+-- lento: quante volte più piano (la partita guidata li fa guardare)
+function M.globi(c, n, pos, lento)
+	lento = lento or 1
 	local a0 = math.rad(90 - 360 * c.k)
 	for i = 1, min(n, GLOBI) do
 		local g = c.globi[i]
@@ -165,7 +167,7 @@ function M.globi(c, n, pos)
 		gui.cancel_animations(g, "position")
 		gui.set_position(g, vmath.vector3(c.x + math.cos(a) * M.RAGGIO, c.y + math.sin(a) * M.RAGGIO, 0))
 		gui.set_enabled(g, true)
-		gui.animate(g, "position", pos, gui.EASING_INQUAD, GLOBO_VOLO, (i - 1) * GLOBO_DOPO, spegni)
+		gui.animate(g, "position", pos, gui.EASING_INQUAD, GLOBO_VOLO * lento, (i - 1) * GLOBO_DOPO * lento, spegni)
 	end
 end
 
