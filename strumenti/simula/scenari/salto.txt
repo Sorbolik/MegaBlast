@@ -1,0 +1,18 @@
+# Salto dal telefono: sul bordo della levetta del movimento le tacche dell'arco
+# in cui si salta (da 25° sopra l'orizzontale a 155°), più lunghe agli estremi;
+# quando il pollice entra nell'arco si accendono e il telefono fa una
+# micro-vibrazione (qui l'evento "vibra": nel simulatore non c'è il modulo).
+# Di lato si cammina e non vibra niente.
+imposta giocatori ffa
+imposta comandi telefono
+
+aspetta 2
+tocca_bordo 205 235 basso destra    # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.5
+foto 01_tacche
+levetta 70 10 0.5
+niente_evento vibra 0.5
+levetta 30 70 0.4 02_salto_acceso
+aspetta_evento vibra 2
+aspetta 1

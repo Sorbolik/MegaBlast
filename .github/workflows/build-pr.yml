@@ -1,0 +1,31 @@
+# Build di prova dell'APK su ogni PR che tocca il client: le estensioni native
+# (client/vibra, la WebSocket) si compilano solo sul build server di Defold, che
+# dalle sessioni cloud di Claude non si raggiunge. Qui si vede se compilano prima
+# di entrare su main. Non firma con la chiave di Sergio e non manda niente.
+name: Build di prova
+on:
+  pull_request:
+    paths: ['client/**', '.github/workflows/build-pr.yml']
+concurrency:
+  group: build-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Costruisci l'APK
+        run: |
+          curl -fsSL --retry 4 -o "$RUNNER_TEMP/bob.jar" https://github.com/defold/defold/releases/download/1.14.0/bob.jar
+          java -jar "$RUNNER_TEMP/bob.jar" --root client \
+            --platform arm64-android --architectures arm64-android \
+            --bundle-format apk --variant release --archive \
+            --bundle-output "$RUNNER_TEMP/bundle" resolve build bundle
+          find "$RUNNER_TEMP/bundle" -name '*.apk' -exec ls -l {} \;
