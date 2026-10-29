@@ -49,3 +49,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Pallini della mira più piccoli (Sergio): metà grandezza, uno ogni 10 px. Di base il telefono vibra solo quando il colpo diventa sganciabile (la vibrazione a ogni 5% di potenza diventa un'impostazione). Nasce [docs/impostazioni.md](../impostazioni.md): ogni impostazione nominata da Sergio va lì subito. | questa PR |
 | 29 ott | Mira: solo angolo e potenza, uguale per tutte le armi: mirino che si riempie con la potenza e cartellino coi gradi; niente traiettoria, se non come aiuto nelle lezioni dell'Addestramento. | questa PR |
 | 29 ott | Rampino: quando la fune finisce a metà strada si spezza con uno schiocco, "STRAPPO!" e il filo cade. | #88 |
+| 29 ott | Mira più chiara: puntini uguali con la punta del colore della squadra, cartellino con gradi e potenza sopra la testa, grandi uguali a ogni zoom; micro-vibrazione a ogni 5% di potenza. | questa PR |
+| 29 ott | Corona del primo più grande, sopra il personaggio e sul gettone dei punti. | #89 |
