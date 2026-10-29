@@ -1,0 +1,11 @@
+# Una lezione (imposta prova_missione tonante): nell'HUD solo quello che serve
+# (Lanciarune e Tonante, niente teletrasporto né paracadute), lo scopo sopra il
+# diavoletto e il tempo fermo finché non si toccano i comandi; poi si cammina e
+# il tempo parte.
+imposta prova_missione tonante
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 3
+foto 01_tempo_fermo                  # dopo 3 s il cronometro è ancora pieno
+tieni destra 0.5
+aspetta 2
+foto 02_tempo_partito
