@@ -36,7 +36,7 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Motore Android snello (manifest dell'app senza fisica, Vulkan, registratore, profiler, particellari) e UI senza mipmap. | questa PR |
 | 29 ott | Camera quando si spara: finché chi spara può muoversi inquadra lui e il colpo, allontanandosi quanto basta; a turno finito segue il colpo come prima. | #73 |
 | 29 ott | Niente si deforma: GUI tutta FIT su ogni proporzione dello schermo, comandi attaccati ai bordi veri; la camera scende sotto la mappa così l'HUD non copre il terreno. | #74 |
-| 29 ott | Globi più facili: 2 entro 9 s, 1 entro 17 s, mai 3; tacche viola sul cronometro. | questa PR |
+| 29 ott | Globi più facili: 2 entro 9 s, 1 entro 17 s, mai 3; tacche viola sul cronometro; baratto del secondo attacco con un teletrasporto (pulsante da tenere premuto). | questa PR |
 | 29 ott | Teletrasporto guadagnato sempre usabile (anche al primo turno); globi più chiari che volano in curva al pulsante, numerino che sale all'arrivo con lampo e primo suono dei globi. | questa PR |
 | 29 ott | Campagna: Addestramento (le lezioni, il Tonante al posto delle casse) e I girone: la Forgia con il custode; bot con carattere; stelle con bonus; aiuto silenzioso; ALLENAMENTO solo contro i bot; collaudo delle missioni coi bot. | questa PR |
 | 29 ott | Lezioni rifinite: solo l'HUD che serve, tempo fermo finché non tocchi i comandi, come si salta, oggetti con un'identità (colonna OGGETTI), ESCI torna al menù di prima, ogni stella col suo criterio; Due mani e Fuori portata di nuovo finibili (il bot si rimetteva a 150 di vita); IL TUO TURNO / TURNO DI: nome; RIPROVA nella rotellina. | #80 |

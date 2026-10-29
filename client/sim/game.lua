@@ -5,7 +5,7 @@
 --   local game = require "sim.game"
 --   local g = game.new(seed, "forgia")   -- senza mappa la sceglie il seed
 --   g:step({ left = bool, right = bool, jump = bool,
---            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport"
+--            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport" | "swap"
 --                                                     | "grenade" | "shards" | "punch" } })
 --   g:can_use(weapon)   -- il robot di turno può usarla adesso?
 -- Regole del turno (sim/config.lua): fino a un'arma e un colpo di spada per
@@ -192,7 +192,7 @@ M.DRAFT_TOOLS = { "hook", "wall" }
 -- oggetti che si lanciano mirando (gli altri si usano col tocco)
 M.THROWN = { trampoline = true, hook = true, wall = true }
 -- tutti i nomi validi di fire.weapon
-M.WEAPONS = { teleport = true }
+M.WEAPONS = { teleport = true, swap = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
 for _, w in ipairs(M.CRATE_WEAPONS) do M.WEAPONS[w] = true end
 for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
@@ -2675,13 +2675,27 @@ function M:can_use(weapon)
 	elseif M.TOOLS[weapon] then
 		return rb.ammo[weapon] > 0
 	end
-	if weapon == "teleport" then
+	if weapon == "swap" then
+		-- scambio del secondo attacco con un teletrasporto: dopo il primo attacco, finché il secondo c'è
+		return self.used.primary ~= self.used.secondary
+	elseif weapon == "teleport" then
 		return #self.orbs < M.MAX_ORBS and rb.teleports_left > 0
 			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS + self.teleports_earned)
 	elseif M.SECONDARY[weapon] then
 		return not self.used.secondary and M.has_weapon(rb, weapon)
 	end
 	return not self.used.primary and M.has_weapon(rb, weapon)
+end
+
+-- Scambio (Sergio, 29 ottobre): dopo il primo attacco il secondo si può
+-- cambiare con un globo del teletrasporto, da lanciare quando vuoi (anche al
+-- primo turno: conta come guadagnato). Il turno continua come dopo due attacchi.
+function M:swap_attack()
+	local rb = self.robots[self.current]
+	self.used.primary, self.used.secondary = true, true
+	rb.teleports_left = rb.teleports_left + 1
+	self.teleports_earned = self.teleports_earned + 1
+	self:emit({ type = "swap", robot = rb.id, total = rb.teleports_left })
 end
 
 -- Quanti globi del teletrasporto dà il primo attacco dopo ticks di turno
@@ -2880,6 +2894,8 @@ function M:step(input)
 		if not done and fire and self:can_use(weapon) then
 			if M.TOOLS[weapon] then
 				self:use_tool(weapon, fire)
+			elseif weapon == "swap" then
+				self:swap_attack()
 			elseif weapon == "teleport" then
 				-- il globo non è un attacco: consuma un teletrasporto e il turno continua
 				local rb = self.robots[self.current]

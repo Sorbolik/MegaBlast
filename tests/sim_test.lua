@@ -471,6 +471,28 @@ do
 	check(#ft.orbs == 1 + earned, "partono tutti i globi guadagnati")
 	check(fr.teleports_left > 0 and not ft:can_use("teleport"), "i globi di partenza restano per i turni dopo")
 
+	-- Scambio del secondo attacco con un teletrasporto (Sergio, 29 ottobre)
+	local sw = game.new(42, "forgia")
+	local swr = sw.robots[1]
+	run(sw, 30)
+	check(not sw:can_use("swap"), "prima del primo attacco niente scambio")
+	sw:step(TELE)
+	run(sw, 20 * 60)
+	sw:step(MISSILE)
+	local n_sw = swr.teleports_left
+	check(sw:can_use("swap") and not sw:can_use("teleport"), "dopo il primo attacco (tardi, niente globi) si può scambiare")
+	sw:step({ fire = { angle = 0, power = 1, weapon = "swap" } })
+	check(swr.teleports_left == n_sw + 1 and sw.used.primary and sw.used.secondary, "lo scambio dà un globo e chiude gli attacchi")
+	check(not sw:can_use("sword") and not sw:can_use("swap"), "dopo lo scambio niente secondo attacco né altro scambio")
+	check(sw:can_use("teleport"), "il globo dello scambio si lancia anche al primo turno")
+	sw:step(TELE)
+	check(#sw.orbs >= 1 and swr.teleports_left == n_sw, "parte il globo dello scambio")
+	local sw2 = game.new(42, "forgia")
+	run(sw2, 30)
+	sw2:step(MISSILE)
+	sw2:step(SWORD)
+	check(not sw2:can_use("swap"), "dopo due attacchi niente scambio")
+
 	-- Nessun tetto: i globi si accumulano
 	local fz = game.new(42, "forgia", { players = { { team = 1, stats = { teleports = 5 } }, { team = 2 } } })
 	run(fz, 60)

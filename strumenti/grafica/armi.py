@@ -417,7 +417,32 @@ def paracadute(d):
     return dict(box=(-8, -7.4, 8, 8.4))
 
 
+def scambio(d):
+    # scambio del secondo attacco con un teletrasporto: due frecce che si
+    # inseguono in cerchio (come il cilindro magico), dal giallo del secondo
+    # attacco al viola del teletrasporto
+    import math
+    r, t = 5.0, 1.9
+    for a0, col in ((165, "ottone"), (345, "viola")):
+        # la fascia va in senso orario da a0 per 120 gradi, poi la punta
+        a1 = a0 - 120
+        fuori, dentro = [], []
+        for i in range(13):
+            a = math.radians(a0 + (a1 - a0) * i / 12)
+            fuori.append((round((r + t / 2) * math.cos(a), 2), round((r + t / 2) * math.sin(a), 2)))
+            dentro.append((round((r - t / 2) * math.cos(a), 2), round((r - t / 2) * math.sin(a), 2)))
+        b = math.radians(a1)
+        cb, sb = math.cos(b), math.sin(b)
+        # la punta: larga il doppio della fascia, punta 35 gradi più avanti
+        p = math.radians(a1 - 35)
+        punta = [((r + t * 1.2) * cb, (r + t * 1.2) * sb), (r * math.cos(p), r * math.sin(p)),
+                 ((r - t * 1.2) * cb, (r - t * 1.2) * sb)]
+        d.poli(fuori + punta + dentro[::-1], col)
+    return dict(box=(-7.6, -7.6, 7.6, 7.6))
+
+
 ICONE = {
+    "scambio": scambio,
     "teleport": portale,
     "trap": tagliola,
     "shield": scudo,

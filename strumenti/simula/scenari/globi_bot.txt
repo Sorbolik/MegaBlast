@@ -1,0 +1,16 @@
+# Globi di un avversario: contro il bot, quando lui attacca presto i globi
+# volano dall'anello su di lui, non nel tuo pulsante del teletrasporto.
+
+aspetta 2
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 310 460                       # 1 CONTRO 1
+tocca 890 300                       # DIFFICILE
+tocca 640 140                       # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 5
+mira 150 100 0.3
+aspetta_evento fire 2
+aspetta_evento teleports 2              # i miei
+aspetta_evento teleports 60             # quelli del bot
+aspetta 0.3
+foto 01_globi_verso_il_bot
