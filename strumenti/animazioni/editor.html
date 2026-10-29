@@ -27,6 +27,7 @@
 	--fondo: #15171d; --pannello: #1d2028; --riga: #2c303b; --testo: #e8eaf0; --tenue: #9097a8;
 	--brace: #ff7a4d; --brace-tenue: #3a2219; --chiave: #e8eaf0; --palco: #191b22; --suolo: #2e2a24; --suolo-riga: #b39566; --hitbox: #4fd39a; --colpi: #c39bff; color-scheme: dark }
 * { box-sizing: border-box }
+[hidden] { display: none !important }
 html, body { height: 100% }
 body { background: var(--fondo); color: var(--testo); font: 14px/1.4 var(--f-testo); margin: 0;
 	padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; }
@@ -37,7 +38,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 button.primario { background: var(--brace); border-color: var(--brace); color: #fff; font-weight: 700 }
 button.acceso { background: var(--brace-tenue); border-color: var(--brace) }
 select, input[type=number] { background: var(--pannello); border: 1px solid var(--riga); border-radius: 6px; padding: 4px 6px }
-.app { display: grid; gap: 12px; grid-template-columns: 210px minmax(0, 1fr) 300px; grid-template-areas: "testa testa testa" "clip palco canali" "tempo tempo tempo"; max-width: 1500px; margin: 0 auto }
+.app { display: grid; gap: 12px; grid-template-columns: 210px minmax(0, 1fr) 300px; grid-template-areas: "testa testa testa" "clip palco canali" "tempo tempo tempo" "strumenti strumenti strumenti"; max-width: 1500px; margin: 0 auto }
 header { grid-area: testa; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px }
 h1 { font: 800 22px/1.1 var(--f-titolo); margin: 0 8px 0 0; letter-spacing: -0.01em }
 h1 span { color: var(--brace) }
@@ -49,15 +50,15 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 #clip button small { color: var(--tenue); font-family: var(--f-numeri); font-size: 11px }
 #clip button.scelta { background: var(--brace-tenue); color: var(--testo); font-weight: 700 }
 #clip .gruppo { margin-top: 8px }
-#palco-box { grid-area: palco; display: flex; flex-direction: column; overflow: hidden }
-#palco { width: 100%; flex: 1 1 auto; height: 0; min-height: 380px; display: block; background: var(--palco); touch-action: none; cursor: grab }
+#palco-box { grid-area: palco; display: flex; flex-direction: column; overflow: hidden; align-self: start }
+/* alto quanto la finestra, non quanto la riga: aprendo canali nuovi la riga cresce e lo zoom saltava */
+#palco { width: 100%; flex: none; height: clamp(380px, 62vh, 760px); display: block; background: var(--palco); touch-action: none; cursor: grab }
 .barra { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; border-top: 1px solid var(--riga) }
 .barra label { display: inline-flex; align-items: center; gap: 4px; color: var(--tenue) }
 #guida { padding: 8px 12px; color: var(--tenue); border-bottom: 1px solid var(--riga); min-height: 2.6em }
 #guida b { color: var(--testo) }
 #canali { grid-area: canali; padding: 12px; display: flex; flex-direction: column; gap: 4px; align-self: start }
 .canale { display: grid; grid-template-columns: 22px 1fr 64px; grid-template-rows: auto auto; column-gap: 6px; align-items: center; padding: 3px 4px; border-radius: 6px; cursor: pointer }
-.canale[hidden] { display: none }
 .barra input.hb { width: 64px }
 #hb-stato, #pn-stato { color: var(--tenue); min-width: 11em }
 .canale.scelto { background: var(--brace-tenue) }
@@ -66,6 +67,11 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 .canale input[type=number] { grid-column: 3; width: 64px; font: 12px var(--f-numeri); padding: 2px 4px }
 .canale .k { grid-row: 1 / 3; grid-column: 1; width: 22px; height: 22px; padding: 0; border: 0; background: none; font-size: 15px; line-height: 1; color: var(--tenue) }
 .canale .k.si { color: var(--brace) }
+.canale.vis { grid-template-columns: 22px 20px 1fr; grid-template-rows: auto }
+.canale.vis .k { grid-row: 1 }
+.canale.vis input[type=checkbox] { grid-column: 2; accent-color: var(--brace); width: 16px; height: 16px; margin: 0 }
+.canale.vis .nome { grid-column: 3 }
+#canali h2.sotto { margin-top: 10px }
 .riga-viso { display: flex; gap: 6px; align-items: center; margin-top: 6px }
 #chiave { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--riga); display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
 #tempo-box { grid-area: tempo; overflow: hidden }
@@ -77,14 +83,28 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 .aiuto kbd { font: 11px var(--f-numeri); border: 1px solid var(--riga); border-radius: 4px; padding: 0 4px }
 #messaggio { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--testo); color: var(--fondo); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px) }
 #messaggio.si { opacity: 1 }
+/* gli strumenti per i pezzi e i personaggi nuovi */
+#strumenti { grid-area: strumenti }
+#strumenti > summary { padding: 12px; cursor: pointer; font: 800 16px/1.2 var(--f-titolo) }
+#strumenti > summary span { font: 400 13px var(--f-testo); color: var(--tenue); margin-left: 8px }
+.strumenti { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; padding: 0 12px 12px }
+.strumento { border: 1px solid var(--riga); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px }
+.strumento h3 { font: 600 15px/1.2 var(--f-titolo); margin: 0 }
+.strumento p { margin: 0; color: var(--tenue); font-size: 13px }
+.strumento .righe { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center }
+.strumento label { display: inline-flex; align-items: center; gap: 4px; color: var(--tenue) }
+.strumento input[type=number] { width: 70px }
+.strumento input[type=text], .strumento textarea { background: var(--pannello); border: 1px solid var(--riga); border-radius: 6px; padding: 5px 7px; font: inherit; color: inherit }
+.strumento textarea { min-height: 70px; resize: vertical; width: 100% }
+#nu-anteprima { max-width: 100%; max-height: 180px; object-fit: contain; align-self: flex-start; border-radius: 6px; background: repeating-conic-gradient(var(--riga) 0 25%, transparent 0 50%) 0 0 / 16px 16px }
 @media (max-width: 1100px) {
-	.app { grid-template-columns: 180px minmax(0, 1fr); grid-template-areas: "testa testa" "clip palco" "tempo tempo" "canali canali" }
+	.app { grid-template-columns: 180px minmax(0, 1fr); grid-template-areas: "testa testa" "clip palco" "tempo tempo" "canali canali" "strumenti strumenti" }
 	#canali { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) }
 }
 @media (max-width: 700px) {
-	.app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "testa" "palco" "clip" "tempo" "canali" }
+	.app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "testa" "palco" "clip" "tempo" "canali" "strumenti" }
 	#clip { flex-direction: row; flex-wrap: wrap } #clip .gruppo { width: 100% }
-	#palco { min-height: 340px }
+	#palco { height: clamp(340px, 58vh, 560px) }
 }
 @media (prefers-reduced-motion: reduce) { #messaggio { transition: none } }
 </style>
@@ -116,7 +136,13 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label><input type="checkbox" id="molle" checked> molle del gioco</label>
 			<label><input type="checkbox" id="turno"> di turno</label>
 			<label>squadra <select id="squadra"><option value="0">Rosso</option><option value="1">Blu</option><option value="2">Verde</option><option value="3">Oro</option></select></label>
+			<label title="La fiammella col colore della squadra: ce l'hanno tutti sopra la testa, qualunque cosa indossino, e la anima il gioco a parte"><input type="checkbox" id="fiammella"> fiammella</label>
 			<span id="pelli" title="I pezzi disegnati sullo stampino (strumenti/stampino)"></span>
+		</div>
+		<div class="barra" id="barra-arma" hidden title="L'arma in mano, come nel gioco: le braccia si piegano da sole dalle spalle ai pugni sull'arma">
+			<label>arma <select id="arma"></select></label>
+			<label id="mira-l">mira <input type="range" id="mira" min="-90" max="90" step="1" value="0" style="width: 140px"> <span class="num" id="mira-n">0°</span></label>
+			<span style="color: var(--tenue)">La crocetta arancione è la <b>spalla dell'arma</b>: l'arma gira lì mirando (con "Trascina: perno" la sposti).</span>
 		</div>
 		<div class="barra">
 			<label>durata <input type="number" id="durata" step="0.05" min="0.05" style="width: 76px"> s</label>
@@ -141,7 +167,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="hb-salva" title="Salva corpo.lua (va in client/sim/)">Salva corpo.lua</button>
 		</div>
 		<div class="barra" title="Il punto attorno a cui gira il pezzo: con Trascina: perno lo sposti, il pezzo da fermo resta dov'è">
-			<label>perni di testa, braccia, gambe e ala</label>
+			<label>perni di testa, braccia, gambe, ala e spalla dell'arma</label>
 			<span id="pn-stato"></span>
 			<span class="spazio"></span>
 			<button id="pn-gioco" title="I perni di adesso del gioco">Come nel gioco</button>
@@ -149,6 +175,47 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		</div>
 	</section>
 	<aside id="canali" class="box"></aside>
+	<details id="strumenti" class="box">
+		<summary>Strumenti <span>pezzi e personaggi nuovi, ritocchi allo stampino</span></summary>
+		<div class="strumenti">
+			<div class="strumento">
+				<h3>Nuovo pezzo o personaggio da un'immagine</h3>
+				<p>Carica un'immagine da cui partire (un disegno, uno schizzo, un riferimento) e scrivi cosa vuoi. "Manda a Claude": Claude scrive la scheda coi prompt per ChatGPT (docs/handoff), Codex disegna i pezzi sullo stampino, Claude li taglia, li controlla e li mette nel gioco. Niente prompt da copiare.</p>
+				<input type="file" id="nu-file" accept="image/*">
+				<img id="nu-anteprima" alt="" hidden>
+				<div class="righe">
+					<label>cosa <select id="nu-cosa"></select></label>
+					<label>nome <input type="text" id="nu-nome" placeholder="es. elmo_corna" pattern="[a-z][a-z0-9_]*" size="16"></label>
+				</div>
+				<textarea id="nu-note" placeholder="Cosa vuoi: cosa tenere dell'immagine, stile, colori, parti col colore della squadra..."></textarea>
+				<div class="righe">
+					<label title="L'immagine sul palco, mezza trasparente, alta quanto il diavoletto: per confrontare le proporzioni"><input type="checkbox" id="nu-palco"> sul palco</label>
+					<span class="spazio"></span>
+					<button id="nu-salva" title="Salva la richiesta (immagine e note) sul PC">Salva</button>
+					<button id="nu-manda" class="primario" hidden>Manda a Claude</button>
+				</div>
+			</div>
+			<div class="strumento">
+				<h3>Ritocca i pezzi dello stampino</h3>
+				<p>Sposta e ingrandisci un pezzo delle pelli che hai addosso (scegli la pelle sopra il palco): lo vedi subito su tutte le animazioni. I bordi e le altre facce della testa vanno con lui. "Manda a Claude": li rimette nello stampino (strumenti/stampino/pelli) e rifà le pelli del gioco.</p>
+				<div class="righe">
+					<label>pezzo <select id="rt-pezzo"></select></label>
+				</div>
+				<div class="righe">
+					<label>avanti <input type="number" id="rt-x" step="0.5"></label>
+					<label>su <input type="number" id="rt-y" step="0.5"></label>
+					<label>grandezza <input type="number" id="rt-s" step="1" min="20" max="300"> %</label>
+				</div>
+				<div class="righe">
+					<span id="rt-stato" style="color: var(--tenue)"></span>
+					<span class="spazio"></span>
+					<button id="rt-togli" title="Togli i ritocchi di questo pezzo">Come prima</button>
+					<button id="rt-salva" title="Salva ritocchi.json sul PC">Salva</button>
+					<button id="rt-manda" class="primario" hidden>Manda a Claude</button>
+				</div>
+			</div>
+		</div>
+	</details>
 	<section id="tempo-box" class="box">
 		<canvas id="tempo"></canvas>
 		<div class="aiuto">Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
@@ -233,14 +300,14 @@ let corpoSalvato = CORPO_DEL_GIOCO;
 
 // I perni spostati (battaglia/perni.lua), come li usa battaglia/scoria.lua: per
 // posto, di quanto si sposta il giunto; i pezzi del posto al contrario
-const POSTI_PERNO = ["testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala"];
-const PERNABILI = { testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro", ala: "ala" };
+const POSTI_PERNO = ["testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala", "arma"];
+const PERNABILI = { testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro", ala: "ala", arma: "arma" };
 const PERNI_GIOCO = Object.assign({}, leggiLua(DATI.perni));
 let pn = JSON.parse(JSON.stringify(PERNI_GIOCO));
 const sposto = (posto) => pn[posto] || [0, 0];
 function J(posto) {
 	const b = { testa: PT.collo, braccio: PT.spalle, braccio_dietro: [-PT.spalle[0], PT.spalle[1]], gamba: PT.anche,
-		gamba_dietro: [-PT.anche[0], PT.anche[1]], ala: PT.ala }[posto];
+		gamba_dietro: [-PT.anche[0], PT.anche[1]], ala: PT.ala, arma: PT.spalla_arma }[posto];
 	const d = sposto(posto);
 	return [b[0] + d[0], b[1] + d[1]];
 }
@@ -258,23 +325,33 @@ let perniSalvati = PERNI_DEL_GIOCO;
 const PL = leggiLua(DATI.pelli);
 const FACCE = Object.keys(P).filter((n) => n.startsWith("testa")).sort((a, b) => (a === "testa" ? -1 : b === "testa" ? 1 : a < b ? -1 : 1));
 const addosso = {}; // categoria -> nome della pelle
+// i ritocchi ai pezzi delle pelli (strumenti, in fondo): "pelle/posto" -> spostamento
+// (unità del disegno) e grandezza, sul pezzo com'è nello stampino
+let ritocchi = {};
+function ritoccato(pelle, posto, p) {
+	const r = ritocchi[pelle + "/" + posto];
+	if (!r) return p;
+	return Object.assign({}, p, { x: p.x + r.dx, y: p.y + r.dy, w: p.w * r.s, h: p.h * r.s });
+}
 let vestito = {};
 let formaCoda = { l: D.coda, riposo: D.coda_riposo }; // lunghezze e angoli a riposo, come vesti() di scoria.lua
 function vesti() {
 	vestito = {};
 	formaCoda = { l: D.coda, riposo: D.coda_riposo };
-	const strati = (posto) => (vestito[posto] = vestito[posto] || [P[posto] || null]);
+	const strati = (posto) => (vestito[posto] = vestito[posto] || [P[BASE[posto] || posto] || null]);
 	const metti = (posto, p) => { const l = strati(posto); if (p.modo === "sostituisce") l[0] = p; else l.push(p); };
 	for (const c of [...PL.sostituisce, ...PL.sopra]) {
 		const pl = addosso[c] && PL.pelli[addosso[c]];
 		if (pl && pl.coda) formaCoda = { l: pl.coda, riposo: pl.coda_riposo };
 		const pz = pl && pl.pezzi;
 		if (!pz) continue;
-		for (const posto in pz) metti(posto, pz[posto]);
-		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, pz.testa);
+		for (const posto in pz) metti(posto, ritoccato(addosso[c], posto, pz[posto]));
+		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, ritoccato(addosso[c], "testa", pz.testa));
 	}
 }
-function strati(posto) { return vestito[posto] || [P[posto] || null]; }
+// i bordi delle braccia sull'arma di dietro: quelli di base sono gli stessi davanti e dietro
+const BASE = { omero_dietro_bordo: "omero_bordo", avambraccio_dietro_bordo: "avambraccio_bordo" };
+function strati(posto) { return vestito[posto] || [P[BASE[posto] || posto] || null]; }
 
 // i canali, come battaglia/pose.lua: angoli in radianti, misure in unità del disegno
 const CANALI = [
@@ -305,12 +382,33 @@ const CANALI = [
 	{ id: "ala_y", nome: "Ala, su e giù", tipo: "len", extra: true },
 	{ id: "coda_x", nome: "Coda, avanti e indietro", tipo: "len", extra: true },
 	{ id: "coda_y", nome: "Coda, su e giù", tipo: "len", extra: true },
+	// l'arma in mano (clip con l'arma): quanto gira in più attorno alla spalla, se non si mira
+	{ id: "arma", nome: "Arma, gira", tipo: "ang", arma: true },
+	// i pezzi che si vedono: si mettono e si tolgono a scatto
+	{ id: "mostra_braccio_a", nome: "Mostra il braccio davanti", tipo: "vis" },
+	{ id: "mostra_braccio_d", nome: "Mostra il braccio dietro", tipo: "vis" },
+	{ id: "manina_a", nome: "Mostra la manina davanti, in fondo al braccio", tipo: "vis" },
+	{ id: "manina_d", nome: "Mostra la manina dietro, in fondo al braccio", tipo: "vis" },
+	{ id: "mostra_ala", nome: "Mostra l'ala", tipo: "vis" },
+	{ id: "mostra_coda", nome: "Mostra la coda", tipo: "vis" },
 ];
-// un canale si vede se è di quelli di sempre, ha chiavi in questa clip o è scelto
-function visibile(ch) { const k = clip().tracce[ch.id]; return !ch.extra || ch.id === canale || !!(k && k.length); }
-const NEUTRO = { schiaccia: 1 };
+// le clip con l'arma in mano (battaglia/scoria.lua)
+const conArma = (n) => n.endsWith("_arma") || n === "mira";
+// un canale si vede se è di quelli di sempre, ha chiavi in questa clip o è
+// scelto; fra i canali (pannello) i pezzi che si vedono ci sono sempre, nella
+// linea del tempo solo con chiavi
+function visibile(ch, pannello) {
+	const k = clip().tracce[ch.id];
+	if (ch.id === canale || (k && k.length)) return true;
+	if (ch.tipo === "vis") return !!pannello;
+	if (ch.arma) return conArma(nome);
+	return !ch.extra;
+}
+const TIPO = {};
+CANALI.forEach((c) => { TIPO[c.id] = c.tipo; });
+const NEUTRO = { schiaccia: 1, mostra_braccio_a: 1, mostra_braccio_d: 1, mostra_ala: 1, mostra_coda: 1 };
 CANALI.forEach((c) => { if (NEUTRO[c.id] === undefined) NEUTRO[c.id] = 0; });
-const LIMITI = { ang: [-180, 180, 1], len: [-60, 60, 0.5], scala: [0.4, 1.6, 0.01] };
+const LIMITI = { ang: [-180, 180, 1], len: [-60, 60, 0.5], scala: [0.4, 1.6, 0.01], vis: [0, 1, 1] };
 
 // le clip del gioco, in quest'ordine, con come le usa (battaglia/scoria.lua)
 const CLIP = [
@@ -333,6 +431,14 @@ const CLIP = [
 		["naso", "Si gratta la testa. Una volta, ogni tanto, a chi non è di turno: parte e finisce come il <b>fermo</b>."],
 		["sbadiglio", "Sbadiglia. Una volta, ogni tanto: parte e finisce come il <b>fermo</b>."],
 		["guarda_coda", "Si gira a guardarsi la coda. Una volta, ogni tanto: parte e finisce come il <b>fermo</b>."],
+	]],
+	["Con l'arma", [
+		["fermo_arma", "Fermo con l'arma in mano: chi è di turno, e chi aspetta quando prende l'arma (a caso, alternato al <b>fermo</b> con le scenette). Le braccia sull'arma si piegano da sole; il braccio dietro pende se l'arma è a una mano. \"Arma, gira\" la muove attorno alla spalla."],
+		["corsa_arma", "La corsa con l'arma in mano, come la <b>corsa</b>: un giro a ogni passo."],
+		["aria_arma", "In aria con l'arma in mano, in ciclo; sopra si somma <b>sale arma</b> o <b>scende arma</b>."],
+		["sale_arma", "Si somma ad <b>aria arma</b> salendo. Qui la vedi sopra aria arma.", "aria_arma"],
+		["scende_arma", "Si somma ad <b>aria arma</b> scendendo. Qui la vedi sopra aria arma.", "aria_arma"],
+		["mira", "Fermo mentre mira: l'arma va dove si mira (prova col cursore <b>mira</b>), la testa la segue. Correndo o in aria mirando si usano corsa arma e aria arma."],
 	]],
 ];
 const INFO = {};
@@ -494,7 +600,8 @@ function metti(id, v, relativo) {
 	}
 	const k = c.tracce[id] || (c.tracce[id] = []);
 	let x = chiaveA(k, t);
-	if (x) x.v = v; else { x = { t: Math.round(t * 1000) / 1000, v, c: 0 }; k.push(x); ordina(k); }
+	// i pezzi che si vedono cambiano a scatto
+	if (x) x.v = v; else { x = { t: Math.round(t * 1000) / 1000, v, c: TIPO[id] === "vis" ? 2 : 0 }; k.push(x); ordina(k); }
 	return x;
 }
 
@@ -579,6 +686,37 @@ function posaOra() {
 }
 
 // ---------------------------------------------------------------------------
+// Le armi in mano (battaglia/armi.lua, in pixel del mondo dalla spalla
+// dell'arma) e le braccia piegate su di loro, come battaglia/scoria.lua
+const DA = leggiLua(DATI.armi).armi;
+const RIPOSO = DATI.armi_riposo;
+const [STIRA_CANNA, STIRA_PRESA] = DATI.stira;
+let miraAng = 0; // la mira nella clip mira, radianti verso avanti
+// un braccio piegato dalla spalla (sx, sy) al pugno (px, py) nel corpo: il gomito
+// dal lato destro della direzione spalla-pugno; se non ci arriva si allunga
+function piega(sx, sy, px, py) {
+	let l1 = D.braccio[0], l2 = D.braccio[1];
+	const dx = px - sx, dy = py - sy;
+	const d = Math.max(1e-6, Math.hypot(dx, dy));
+	const f = Math.max(1, d / (l1 + l2));
+	l1 *= f; l2 *= f;
+	const c = (d * d + l1 * l1 - l2 * l2) / (2 * d * l1);
+	const ang = Math.atan2(dy, dx) - Math.acos(Math.max(-1, Math.min(1, c)));
+	const ex = sx + l1 * Math.cos(ang), ey = sy + l1 * Math.sin(ang);
+	return { sx, sy, ang, ex, ey, ang2: Math.atan2(py - ey, px - ex), f, px, py };
+}
+// la mano (hx, hy dalla spalla dell'arma, girati con la mira) a portata del
+// braccio dalla spalla (sx, sy): scivola lungo l'arma verso la spalla dell'arma
+function aPortata(sp, sx, sy, hx, hy, c, sn, stira) {
+	const r = (D.braccio[0] + D.braccio[1]) * stira;
+	const qx = sp[0] - hy * sn - sx, qy = sp[1] + hy * c - sy;
+	const lungo = qx * c + qy * sn;
+	const disc = lungo * lungo - (qx * qx + qy * qy) + r * r;
+	if (disc > 0) hx = Math.max(0, Math.min(hx, -lungo + Math.sqrt(disc)));
+	return [sp[0] + hx * c - hy * sn, sp[1] + hx * sn + hy * c];
+}
+
+// ---------------------------------------------------------------------------
 // Matrici 2D (a b c d e f, come il canvas), y verso l'alto nel disegno
 const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
 const sposta = (m, x, y) => mul(m, [1, 0, 0, 1, x, y]);
@@ -637,7 +775,8 @@ function disegna(dt) {
 	const molle = $("molle").checked && suona;
 	if (molle) simPasso(po, dt || 0); else simAzzera(po);
 	const sq = molle ? sim.x.schiaccia : po.schiaccia;
-	const testa = molle ? sim.x.testa : po.testa;
+	// mirando la testa guarda dove si mira, come nel gioco
+	const testa = nome === "mira" ? Math.max(-0.3, Math.min(0.45, miraAng * 0.5)) : molle ? sim.x.testa : po.testa;
 	const codaBase = molle ? sim.x.coda : po.coda;
 	const braccia = molle ? sim.braccia : [po.braccio_a, po.braccio_d];
 	const gambe = molle ? sim.gambe : [po.gamba_a, po.gamba_d];
@@ -668,7 +807,8 @@ function disegna(dt) {
 	g.beginPath(); g.ellipse(0, 0, LARGO * 1.3 / 2 * (1 + (1 - q) * 0.5), LARGO * 1.3 / 2 * 0.22, 0, 0, 2 * Math.PI); g.fill();
 	// il paracadute, dietro a tutto
 	if (nome === "paracadute") disegnaPezzo(sposta(radice, 0, D.paracadute_y), P.paracadute, null, null, null, col);
-	const corpo = ruota(sposta(radice, po.corpo_x, po.salto), po.corpo + (molle ? sim.x.corpoLean : 0));
+	const lean = molle ? sim.x.corpoLean : 0;
+	const corpo = ruota(sposta(radice, po.corpo_x, po.salto), po.corpo + lean);
 	const forma = scala(corpo, lx, q);
 	formaOra = forma;
 	const gCorpo = punto(corpo, 0, 0);
@@ -676,7 +816,8 @@ function disegna(dt) {
 	const ang = angoliCoda(codaBase, dt || 0, molle);
 	const cx = PT.coda[0] + po.coda_x, cy = PT.coda[1] + po.coda_y;
 	const gCoda = punto(forma, cx, cy);
-	for (let strato = 0; strato < 2; strato++) {
+	const vede = (id) => po[id] > 0.5;
+	for (let strato = 0; strato < 2 && vede("mostra_coda"); strato++) {
 		let m = sposta(forma, cx, cy);
 		for (let i = 0; i < formaCoda.l.length; i++) {
 			if (i > 0) m = sposta(m, formaCoda.l[i - 1], 0);
@@ -687,26 +828,91 @@ function disegna(dt) {
 	const giunto = (m, x, y, a) => ruota(sposta(m, x, y), a);
 	// i pezzi di un posto col perno spostato: al contrario del giunto
 	const vestePerno = (m, posto, can, nomePosto) => { const d = sposto(posto); veste(sposta(m, -d[0], -d[1]), nomePosto || posto, can, punto(m, 0, 0), col); };
+	// un braccio che pende: il braccio e la manina staccata dove finisce, ognuno se la clip lo mostra
+	const pende = (posto, can, x, y, a, mostra, manina) => {
+		const m = giunto(forma, x, y, a), d = sposto(posto), md = sposta(m, -d[0], -d[1]);
+		if (mostra) veste(md, posto, can, punto(m, 0, 0), col);
+		if (manina) {
+			const b = strati(posto)[0] || P[posto], pu = P.pugno;
+			veste(sposta(md, b.x, b.y - b.h / 2 + pu.h * 0.4), "pugno", can, punto(m, 0, 0), col);
+		}
+	};
+	// l'arma in mano (clip con l'arma): gira attorno alla spalla dell'arma, nel
+	// corpo; le braccia vanno dalle spalle ai pugni sull'arma
+	const nomeArma = $("arma").value, arma = DA[nomeArma];
+	const sp = [J("arma")[0] * lx, J("arma")[1] * q];
+	const gSpalla = punto(corpo, sp[0], sp[1]);
+	let mani = null;
+	if (conArma(nome)) {
+		const a = (nome === "mira" ? miraAng : RIPOSO[nomeArma] + po.arma) - lean;
+		const c = Math.cos(a), sn = Math.sin(a), d = sposto("arma");
+		const ox = -d[0], oy = -d[1];
+		const sx = PT.spalle[0] * lx, sy = PT.spalle[1] * q;
+		const n = arma.mani.length, m1 = arma.mani[0];
+		const pa = m1 ? aPortata(sp, sx, sy, m1[0] / K + ox, m1[1] / K + oy, c, sn, n >= 2 ? STIRA_CANNA : STIRA_PRESA)
+			: [sp[0] + ox * c - oy * sn, sp[1] + ox * sn + oy * c];
+		mani = { a, ox, oy, pugno: !!m1, davanti: piega(sx, sy, pa[0], pa[1]) };
+		if (n >= 2) {
+			const mz = arma.mani[n - 1];
+			const pd = aPortata(sp, -sx, sy, mz[0] / K + ox, mz[1] / K + oy, c, sn, STIRA_PRESA);
+			mani.dietro = piega(-sx, sy, pd[0], pd[1]);
+		}
+	}
+	// braccio e avambraccio sull'arma: prima i bordi, poi i colori (si fondono al gomito)
+	const ossa = (b, dietro) => {
+		const d = dietro ? "_dietro" : "";
+		const omero = scala(ruota(sposta(corpo, b.sx, b.sy), b.ang), b.f, 1);
+		const avambraccio = scala(ruota(sposta(corpo, b.ex, b.ey), b.ang2), b.f, 1);
+		veste(omero, "omero" + d + "_bordo", "arma", gSpalla, col);
+		veste(avambraccio, "avambraccio" + d + "_bordo", "arma", gSpalla, col);
+		veste(omero, "omero" + d, "arma", gSpalla, col);
+		veste(avambraccio, "avambraccio" + d, "arma", gSpalla, col);
+	};
 	let m = giunto(forma, J("ala")[0] + po.ala_x, J("ala")[1] + po.ala_y, po.ala);
-	vestePerno(m, "ala", "ala");
-	m = giunto(forma, J("braccio_dietro")[0] + po.braccio_d_x, J("braccio_dietro")[1] + po.braccio_d_y, braccia[1]);
-	vestePerno(m, "braccio_dietro", "braccio_d");
+	if (vede("mostra_ala")) vestePerno(m, "ala", "ala");
+	// il braccio dietro pende, se l'arma non è a due mani
+	if (!(mani && mani.dietro)) pende("braccio_dietro", "braccio_d", J("braccio_dietro")[0] + po.braccio_d_x, J("braccio_dietro")[1] + po.braccio_d_y, braccia[1], vede("mostra_braccio_d"), vede("manina_d"));
 	m = giunto(forma, J("gamba_dietro")[0] + po.gamba_d_x, J("gamba_dietro")[1] + po.alza_d, gambe[1]);
 	vestePerno(m, "gamba_dietro", "gamba_d");
 	m = giunto(forma, J("gamba")[0] + po.gamba_a_x, J("gamba")[1] + po.alza_a, gambe[0]);
 	vestePerno(m, "gamba", "gamba_a");
 	veste(sposta(forma, PT.bacino[0], PT.bacino[1]), "busto", "corpo", gCorpo, col);
+	// il braccio dietro sull'impugnatura passa davanti al petto, sotto la testa
+	if (mani && mani.dietro && vede("mostra_braccio_d")) ossa(mani.dietro, true);
 	const collo = scala(giunto(forma, J("testa")[0] + po.testa_x, J("testa")[1] + po.testa_y, testa), 1 / lx, 1 / q);
 	vestePerno(collo, "testa", "testa", po.viso || "testa");
-	// la fiammella: tre forme a scatti, trema; grande su chi è di turno
-	const f = turno ? 2.2 : 0.8;
-	const tr = Math.sin(orologio * 11) * 0.06 + Math.sin(orologio * 17.3) * 0.04;
-	const cima = ruota(scala(sposta(collo, PT.cima[0] - sposto("testa")[0], PT.cima[1] - sposto("testa")[1]), f * (1 - tr * 0.5), f * (1 + tr)), Math.sin(orologio * 6.7) * 0.06);
-	const fp = P["fiammella_" + ((Math.floor(orologio / 0.09) % 3 + 3) % 3 + 1)];
-	const luce = turno ? 1 : 0.6;
-	disegnaPezzo(cima, fp, null, "testa", punto(collo, 0, 0), col.map((x) => x * luce));
-	m = giunto(forma, J("braccio")[0] + po.braccio_a_x, J("braccio")[1] + po.braccio_a_y, braccia[0]);
-	vestePerno(m, "braccio", "braccio_a");
+	// la fiammella: non è un pezzo del personaggio (ce l'hanno tutti, qualunque
+	// testa indossino) e la anima il gioco: si vede solo se la chiedi. Tre forme
+	// a scatti, trema; grande su chi è di turno
+	if ($("fiammella").checked) {
+		const f = turno ? 2.2 : 0.8;
+		const tr = Math.sin(orologio * 11) * 0.06 + Math.sin(orologio * 17.3) * 0.04;
+		const cima = ruota(scala(sposta(collo, PT.cima[0] - sposto("testa")[0], PT.cima[1] - sposto("testa")[1]), f * (1 - tr * 0.5), f * (1 + tr)), Math.sin(orologio * 6.7) * 0.06);
+		const fp = P["fiammella_" + ((Math.floor(orologio / 0.09) % 3 + 3) % 3 + 1)];
+		const luce = turno ? 1 : 0.6;
+		disegnaPezzo(cima, fp, null, null, null, col.map((x) => x * luce));
+	}
+	if (!mani) pende("braccio", "braccio_a", J("braccio")[0] + po.braccio_a_x, J("braccio")[1] + po.braccio_a_y, braccia[0], vede("mostra_braccio_a"), vede("manina_a"));
+	if (mani) {
+		// l'arma (pixel del mondo) sopra il corpo, poi il braccio davanti e i pugni
+		const spalla = ruota(sposta(corpo, sp[0], sp[1]), mani.a);
+		const pz = { x: arma.x / K, y: arma.y / K, w: arma.w / K, h: arma.h / K, tinta: arma.tinta && "armi/" + arma.tinta };
+		disegnaPezzo(sposta(spalla, mani.ox, mani.oy), pz, "armi/" + arma.img, "arma", gSpalla, col);
+		if (vede("mostra_braccio_a")) ossa(mani.davanti, false);
+		if (mani.dietro) veste(sposta(corpo, mani.dietro.px, mani.dietro.py), "pugno", "arma", gSpalla, col);
+		if (mani.pugno) veste(sposta(corpo, mani.davanti.px, mani.davanti.py), "pugno", "arma", gSpalla, col);
+	}
+
+	// l'immagine di un pezzo nuovo (strumenti), mezza trasparente, alta quanto il diavoletto
+	const nu = nuovo.img;
+	if (nu && $("nu-palco").checked && nu.complete && nu.naturalHeight) {
+		const h = D.altezza, w = h * nu.naturalWidth / nu.naturalHeight;
+		const mm = scala(radice, 1, -1);
+		g.setTransform(mm[0], mm[1], mm[2], mm[3], mm[4], mm[5]);
+		g.globalAlpha = 0.5;
+		g.drawImage(nu, -w / 2, -h, w, h);
+		g.globalAlpha = 1;
+	}
 
 	// le hitbox (sim/corpo.lua) dal centro dei piedi: terreno e colpi toccano
 	// queste, non il disegno
@@ -741,6 +947,16 @@ function disegna(dt) {
 	forma_hb("vedi-colpi", "--colpi", () => { g.arc(0, cc, cr, 0, 2 * Math.PI); },
 		[cr * 0.7, cc + cr * 0.75, "colpi"], [["raggio", -cr, cc, "ew-resize"], ["centro", 0, cc, "ns-resize"]]);
 
+	// la spalla dell'arma: l'arma gira lì mirando (una x, i perni sono croci)
+	if (mani) {
+		const [x, y] = gSpalla, l = 6 * dpr;
+		g.setTransform(1, 0, 0, 1, 0, 0);
+		g.strokeStyle = g.fillStyle = css.getPropertyValue("--brace");
+		g.lineWidth = 2 * dpr;
+		g.beginPath(); g.moveTo(x - l, y - l); g.lineTo(x + l, y + l); g.moveTo(x + l, y - l); g.lineTo(x - l, y + l); g.stroke();
+		g.font = `600 ${12 * dpr}px ${css.getPropertyValue("--f-testo")}`;
+		g.fillText("spalla dell'arma", x - 40 * dpr, y - 12 * dpr);
+	}
 	// spostando i perni: una crocetta su ognuno
 	if (modo === "perno") {
 		g.setTransform(1, 0, 0, 1, 0, 0);
@@ -835,13 +1051,19 @@ palco.addEventListener("pointerdown", (e) => {
 	fermaPlay();
 	if (modo === "perno") {
 		const posto = PERNABILI[x.canale];
-		if (!posto) { messaggio("Questo pezzo non ha un perno da spostare: testa, braccia, gambe e ala sì."); return; }
+		if (!posto) { messaggio("Questo pezzo non ha un perno da spostare: testa, braccia, gambe, ala e arma sì."); return; }
 		canale = x.canale; chiaveScelta = null;
 		// il perno salta dove si clicca e poi segue il mouse
 		presa = { perno: posto, px: x.giunto[0], py: x.giunto[1], d0: sposto(posto).slice() };
 		palco.setPointerCapture(e.pointerId);
 		palco.style.cursor = "grabbing";
 		spostaPerno(px, py);
+		return;
+	}
+	// nella clip mira l'arma va dove si mira: trascinandola si prova la mira
+	if (x.canale === "arma" && nome === "mira") {
+		presa = { mira: true, gx: x.giunto[0], gy: x.giunto[1], v0: miraAng, a0: Math.atan2(-(py - x.giunto[1]), px - x.giunto[0]) };
+		palco.setPointerCapture(e.pointerId);
 		return;
 	}
 	const muovi = (e.shiftKey || modo === "sposta") && SPOSTABILI[x.canale];
@@ -859,6 +1081,11 @@ palco.addEventListener("pointermove", (e) => {
 	const [px, py] = pixel(e);
 	if (!presa) { const mg = manigliaSotto(px, py); palco.style.cursor = mg ? mg.cursore : pezzoSotto(px, py) ? "grab" : "default"; return; }
 	if (presa.perno) { spostaPerno(px, py); return; }
+	if (presa.mira) {
+		const d = Math.atan2(-(py - presa.gy), px - presa.gx) - presa.a0;
+		mettiMira(presa.v0 + Math.atan2(Math.sin(d), Math.cos(d)));
+		return;
+	}
 	if (presa.maniglia) {
 		// dal canvas alle unità del disegno (piedi in 0, 0) e poi ai pixel del mondo
 		const [u, v] = punto(inversa(schermo), px, py);
@@ -881,7 +1108,7 @@ palco.addEventListener("pointermove", (e) => {
 });
 const lascia = () => {
 	if (!presa) return;
-	const solo = presa.maniglia || presa.perno;
+	const solo = presa.maniglia || presa.perno || presa.mira;
 	presa = null;
 	palco.style.cursor = "grab";
 	if (solo) aggiorna(); else memorizza();
@@ -895,7 +1122,7 @@ const tl = $("tempo");
 const tg = tl.getContext("2d");
 const RIGA = 22, RIGHELLO = 24, ETICHETTE = 150;
 let RIGHE = [];
-const righe = () => (RIGHE = CANALI.filter(visibile).map((c) => c.id).concat(["viso"]));
+const righe = () => (RIGHE = CANALI.filter((c) => visibile(c)).map((c) => c.id).concat(["viso"]));
 let tlPresa = null;
 function tlMisure() {
 	const r = tl.getBoundingClientRect();
@@ -1050,19 +1277,28 @@ function costruisciCanali() {
 	box.innerHTML = "<h2>Canali al tempo di adesso</h2>";
 	for (const ch of CANALI) {
 		const [lo, hi, st] = LIMITI[ch.tipo];
+		const vis = ch.tipo === "vis";
+		if (vis && ch.id === CANALI.find((c) => c.tipo === "vis").id) {
+			const t = document.createElement("h2");
+			t.className = "sotto"; t.textContent = "Pezzi che si vedono";
+			t.title = "Si mettono e si tolgono a scatto, a ogni chiave: anche le manine staccate in fondo alle braccia";
+			box.appendChild(t);
+		}
 		const r = document.createElement("div");
-		r.className = "canale"; r.dataset.canale = ch.id;
-		r.innerHTML = `<button class="k" title="Chiave qui (K)">◇</button><span class="nome">${ch.nome}</span><input type="range" min="${lo}" max="${hi}" step="${st}" id="r-${ch.id}" aria-label="${ch.nome}"><input type="number" step="${st}" id="n-${ch.id}" aria-label="${ch.nome}, valore">`;
+		r.className = vis ? "canale vis" : "canale"; r.dataset.canale = ch.id;
+		r.innerHTML = vis ? `<button class="k" title="Chiave qui (K)">◇</button><input type="checkbox" id="r-${ch.id}" aria-label="${ch.nome}"><span class="nome">${ch.nome}</span><input type="number" id="n-${ch.id}" hidden>`
+			: `<button class="k" title="Chiave qui (K)">◇</button><span class="nome">${ch.nome}</span><input type="range" min="${lo}" max="${hi}" step="${st}" id="r-${ch.id}" aria-label="${ch.nome}"><input type="number" step="${st}" id="n-${ch.id}" aria-label="${ch.nome}, valore">`;
 		const verso = (v) => (ch.tipo === "ang" ? (v * Math.PI) / 180 : v);
-		const leggi = (inp) => { const v = parseFloat(inp.value); if (!isNaN(v)) { metti(ch.id, Math.round(verso(v) * 1000) / 1000, true); dopo(); } };
-		const rng = r.querySelector("input[type=range]"), nm = r.querySelector("input[type=number]");
+		const leggi = (inp) => { const v = vis ? (inp.checked ? 1 : 0) : parseFloat(inp.value); if (!isNaN(v)) { metti(ch.id, Math.round(verso(v) * 1000) / 1000, true); dopo(); } };
+		const rng = r.querySelector("#r-" + ch.id), nm = r.querySelector("input[type=number]");
 		rng.addEventListener("pointerdown", () => prima());
 		rng.addEventListener("keydown", () => prima());
 		rng.addEventListener("input", () => { canale = ch.id; leggi(rng); });
 		nm.addEventListener("focus", () => prima());
 		nm.addEventListener("change", () => { canale = ch.id; leggi(nm); });
 		r.querySelector(".k").onclick = (e) => { e.stopPropagation(); canale = ch.id; chiaveQui(); };
-		r.addEventListener("click", () => { canale = ch.id; aggiorna(); });
+		// non sui campi: ridisegnando prima del loro input rimetterebbe il valore vecchio
+		r.addEventListener("click", (e) => { if (e.target.matches("input")) return; canale = ch.id; aggiorna(); });
 		box.appendChild(r);
 	}
 	const v = document.createElement("div");
@@ -1092,6 +1328,8 @@ function aggiorna() {
 	$("guida").innerHTML = `<b>${nome.replace("_", " ")}</b> · ${(INFO[nome] && INFO[nome].guida) || "Clip che il gioco non usa ancora."}`;
 	if (document.activeElement !== $("durata")) $("durata").value = c.durata.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
 	$("ciclo").checked = c.ciclo;
+	$("barra-arma").hidden = !conArma(nome);
+	$("mira-l").hidden = nome !== "mira";
 	const nums = { largo: hb.cammina.largo, alto: hb.cammina.alto, raggio: hb.colpi.raggio, centro: hb.colpi.centro };
 	for (const id in nums) if (document.activeElement !== $("hb-" + id)) $("hb-" + id).value = nums[id];
 	const cl = corpoInLua(hb);
@@ -1103,10 +1341,11 @@ function aggiorna() {
 		const v = valoreProprio(c, ch.id, tempo);
 		const mostra = ch.tipo === "ang" ? (v * 180) / Math.PI : v;
 		const r = $("r-" + ch.id), n = $("n-" + ch.id);
-		if (document.activeElement !== r) r.value = mostra;
+		if (ch.tipo === "vis") r.checked = v > 0.5;
+		else if (document.activeElement !== r) r.value = mostra;
 		if (document.activeElement !== n) n.value = Math.round(mostra * 100) / 100;
 		const riga = document.querySelector(`.canale[data-canale="${ch.id}"]`);
-		riga.hidden = !visibile(ch);
+		riga.hidden = !visibile(ch, true);
 		riga.classList.toggle("scelto", ch.id === canale);
 		const kb = riga.querySelector(".k");
 		const ha = !!chiaveA(c.tracce[ch.id], t);
@@ -1163,7 +1402,17 @@ $("inizio").onclick = () => { fermaPlay(); tempo = 0; aggiorna(); };
 const fotogramma = (d) => { fermaPlay(); const c = clip(); tempo = Math.max(0, Math.min(c.durata, Math.round((dentro(c, tempo) + d / 30) * 30) / 30)); orologio += d / 30; aggiorna(); };
 $("indietro").onclick = () => fotogramma(-1);
 $("avanti").onclick = () => fotogramma(1);
-["molle", "turno", "squadra", "vedi-cammina", "vedi-colpi"].forEach((id) => { $(id).onchange = () => aggiorna(); });
+["molle", "turno", "squadra", "vedi-cammina", "vedi-colpi", "fiammella", "arma"].forEach((id) => { $(id).onchange = () => aggiorna(); });
+// le armi in mano, nell'ordine del file
+for (const n of Object.keys(DA)) $("arma").add(new Option(n, n));
+// la mira della clip mira (solo anteprima: nel gioco la dà chi gioca)
+function mettiMira(a) {
+	miraAng = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, a));
+	$("mira").value = Math.round(miraAng * 180 / Math.PI);
+	$("mira-n").textContent = $("mira").value + "°";
+	aggiorna();
+}
+$("mira").oninput = () => mettiMira(+$("mira").value * Math.PI / 180);
 ["largo", "alto", "raggio", "centro"].forEach((id) => { $("hb-" + id).onchange = () => cambiaCorpo(id, parseFloat($("hb-" + id).value)); });
 $("hb-gioco").onclick = () => {
 	hb = JSON.parse(JSON.stringify(CORPO_GIOCO));
@@ -1243,14 +1492,17 @@ document.addEventListener("keydown", (e) => {
 
 // ---------------------------------------------------------------------------
 // Aprire e salvare
-let claudeDl = null, claudeDb = null;
+let claudeDl = null, claudeDb = null, claudeAssets = null;
+// "Manda a Claude" c'è (claude.ai o Cloudflare): anche negli strumenti
+function mostraManda() { for (const id of ["claude", "nu-manda", "rt-manda"]) $(id).hidden = false; }
 // Salva il testo come file nomeFile (da mettere in cartella); f.file tiene il
 // file scelto sul PC. Restituisce true se è salvato.
 async function scrivi(testo, nomeFile, cartella, f) {
 	// Chrome e Edge sul PC: si sceglie una volta il file nel gioco e poi si salva lì
 	if (window.showSaveFilePicker && !claudeDl) {
 		try {
-			if (!f.file) f.file = await window.showSaveFilePicker({ suggestedName: nomeFile, types: [{ description: "Lua", accept: { "text/plain": [".lua"] } }] });
+			const est = nomeFile.slice(nomeFile.lastIndexOf("."));
+			if (!f.file) f.file = await window.showSaveFilePicker({ suggestedName: nomeFile, types: [{ description: est.slice(1).toUpperCase(), accept: { "text/plain": [est] } }] });
 			const w = await f.file.createWritable();
 			await w.write(testo); await w.close();
 			messaggio("Salvato in " + f.file.name + ".");
@@ -1271,7 +1523,7 @@ async function scrivi(testo, nomeFile, cartella, f) {
 		return false;
 	}
 	const a = document.createElement("a");
-	a.href = URL.createObjectURL(new Blob([testo], { type: "text/plain" }));
+	a.href = URL.createObjectURL(new Blob([testo], { type: nomeFile.endsWith(".json") ? "application/json" : "text/plain" }));
 	a.download = nomeFile;
 	a.click();
 	setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -1318,16 +1570,20 @@ $("file").onchange = async () => {
 	$("file").value = "";
 };
 // "Manda a Claude": su claude.ai nel database della pagina (documenti
-// animazioni/ultima, corpo/ultima, perni/ultima); su Cloudflare
+// animazioni/ultima, corpo/ultima, perni/ultima, ritocchi/ultima; le richieste
+// degli strumenti in richieste/<nome>); su Cloudflare
 // (strumenti/animazioni/cloudflare) nel ramo editor-ultima di GitHub, con la
 // chiave che si scrive la prima volta
 async function manda(nome, lua, quando) {
 	if (claudeDb) { await claudeDb.doc(nome + "/ultima").set({ lua, quando }); return; }
+	return mandaCloudflare({ file: nome, lua });
+}
+async function mandaCloudflare(corpo) {
 	let chiave = null;
 	try { chiave = localStorage.getItem("megablast-chiave"); } catch (e) { /* niente memoria del browser */ }
 	if (!chiave) chiave = prompt("La chiave per mandare a Claude:");
 	if (!chiave) throw new Error("senza chiave");
-	const r = await fetch("api/manda", { method: "POST", headers: { "Content-Type": "application/json", "X-Chiave": chiave }, body: JSON.stringify({ file: nome, lua }) });
+	const r = await fetch("api/manda", { method: "POST", headers: { "Content-Type": "application/json", "X-Chiave": chiave }, body: JSON.stringify(corpo) });
 	if (r.status === 403) { try { localStorage.removeItem("megablast-chiave"); } catch (e) { /* niente */ } throw new Error("chiave sbagliata"); }
 	if (!r.ok) throw new Error(await r.text());
 	try { localStorage.setItem("megablast-chiave", chiave); } catch (e) { /* niente memoria del browser */ }
@@ -1353,6 +1609,124 @@ $("ripristina").onclick = () => {
 	$("avviso").classList.remove("si");
 	costruisciClip(); dopo();
 	messaggio("Tornate le animazioni del gioco (Annulla per riprendere le tue).");
+};
+
+// ---------------------------------------------------------------------------
+// Gli strumenti: un pezzo o un personaggio nuovo da un'immagine, i ritocchi ai
+// pezzi dello stampino
+const nuovo = { img: null, png: null };
+const COSE = [["personaggio", "personaggio intero"], ...PL.sostituisce.slice(1).map((c) => [c, c]), ...PL.sopra.map((c) => [c, c]), ["arma", "arma"], ["altro", "altro"]];
+const fileRitocchi = {}, fileRichiesta = {};
+const nomeValido = (n) => /^[a-z][a-z0-9_]{0,39}$/.test(n);
+function costruisciStrumenti() {
+	for (const [v, t] of COSE) $("nu-cosa").add(new Option(t, v));
+	pezziRitocco();
+}
+// l'immagine scelta, al più 1600 pixel per lato, in PNG (tiene la trasparenza)
+$("nu-file").onchange = () => {
+	const f = $("nu-file").files[0];
+	if (!f) return;
+	const im = new Image();
+	im.onload = () => {
+		const k = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight));
+		const c = document.createElement("canvas");
+		c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+		c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+		nuovo.png = c.toDataURL("image/png");
+		nuovo.img = new Image();
+		nuovo.img.onload = () => aggiorna();
+		nuovo.img.src = nuovo.png;
+		$("nu-anteprima").src = nuovo.png; $("nu-anteprima").hidden = false;
+		if (!$("nu-nome").value) $("nu-nome").value = f.name.toLowerCase().replace(/\.[^.]*$/, "").replace(/[^a-z0-9]+/g, "_").replace(/^[^a-z]+|_+$/g, "").slice(0, 40);
+		URL.revokeObjectURL(im.src);
+	};
+	im.onerror = () => messaggio("Non riesco a leggere questa immagine.");
+	im.src = URL.createObjectURL(f);
+};
+$("nu-palco").onchange = () => aggiorna();
+function richiesta() {
+	const nome = $("nu-nome").value.trim();
+	if (!nuovo.png) { messaggio("Prima scegli un'immagine."); return null; }
+	if (!nomeValido(nome)) { messaggio("Il nome: lettere minuscole, cifre e _, comincia con una lettera."); return null; }
+	return { nome, cosa: $("nu-cosa").value, note: $("nu-note").value.trim(), quando: new Date().toISOString() };
+}
+$("nu-salva").onclick = async () => {
+	const r = richiesta();
+	if (r) await scrivi(JSON.stringify(Object.assign({ immagine: nuovo.png }, r), null, 1), "richiesta_" + r.nome + ".json", "una chat con Claude", fileRichiesta);
+};
+// su claude.ai l'immagine va fra i file della pagina e la richiesta nel database
+// (richieste/<nome>); su Cloudflare tutte e due nel ramo editor-ultima (richieste/)
+$("nu-manda").onclick = async () => {
+	const r = richiesta();
+	if (!r) return;
+	try {
+		if (claudeDb) {
+			if (!claudeAssets) throw new Error("qui non si caricano immagini");
+			const a = await claudeAssets.upload(await (await fetch(nuovo.png)).blob());
+			await claudeDb.doc("richieste/" + r.nome).set(Object.assign({ immagine: a.id, url: a.url }, r));
+		} else await mandaCloudflare({ file: "richiesta", nome: r.nome, lua: JSON.stringify(r, null, 1), immagine: nuovo.png.split(",")[1] });
+		messaggio(`Mandata la richiesta "${r.nome}": di' a Claude di prenderla dall'editor.`);
+	} catch (e) { messaggio("Non sono riuscito a mandarla: " + ((e && e.message) || "errore") + ". Usa Salva."); }
+};
+
+// i pezzi delle pelli addosso che si possono ritoccare: senza i bordi e le altre
+// facce, che vanno col pezzo
+function pezziRitocco() {
+	const sel = $("rt-pezzo"), prima = sel.value;
+	sel.innerHTML = "";
+	for (const c of [...PL.sostituisce, ...PL.sopra]) {
+		const pl = addosso[c] && PL.pelli[addosso[c]];
+		if (!pl) continue;
+		for (const posto of Object.keys(pl.pezzi).sort()) {
+			if (posto.endsWith("_bordo") || (posto.startsWith("testa_") && pl.pezzi.testa)) continue;
+			sel.add(new Option(`${addosso[c]}: ${posto.replace(/_/g, " ")}`, addosso[c] + "/" + posto));
+		}
+	}
+	if (!sel.options.length) sel.add(new Option("metti una pelle (sopra il palco)", ""));
+	if ([...sel.options].some((o) => o.value === prima)) sel.value = prima;
+	mostraRitocco();
+}
+// i pezzi che vanno insieme a quello scelto: il bordo, e per la testa le facce
+function gruppo(chiave) {
+	const [pelle, posto] = chiave.split("/");
+	const pz = PL.pelli[pelle].pezzi;
+	return Object.keys(pz).filter((k) => k === posto || k === posto + "_bordo" || (posto === "testa" && k.startsWith("testa_"))).map((k) => pelle + "/" + k);
+}
+function mostraRitocco() {
+	const k = $("rt-pezzo").value, r = (k && ritocchi[k]) || { dx: 0, dy: 0, s: 1 };
+	for (const id of ["rt-x", "rt-y", "rt-s", "rt-togli"]) $(id).disabled = !k;
+	$("rt-x").value = r.dx; $("rt-y").value = r.dy; $("rt-s").value = Math.round(r.s * 100);
+	const n = Object.keys(ritocchi).length;
+	$("rt-stato").textContent = n ? `${n} pezzi ritoccati` : "nessun ritocco";
+}
+function ritocca() {
+	const k = $("rt-pezzo").value;
+	if (!k) return;
+	const r = { dx: parseFloat($("rt-x").value) || 0, dy: parseFloat($("rt-y").value) || 0, s: Math.max(0.2, Math.min(3, (parseFloat($("rt-s").value) || 100) / 100)) };
+	for (const g of gruppo(k)) { if (r.dx || r.dy || r.s !== 1) ritocchi[g] = r; else delete ritocchi[g]; }
+	try { localStorage.setItem("megablast-ritocchi", JSON.stringify(ritocchi)); } catch (e) { /* niente memoria del browser */ }
+	vesti(); mostraRitocco(); aggiorna();
+}
+["rt-x", "rt-y", "rt-s"].forEach((id) => { $(id).oninput = ritocca; });
+$("rt-pezzo").onchange = mostraRitocco;
+$("rt-togli").onclick = () => { $("rt-x").value = 0; $("rt-y").value = 0; $("rt-s").value = 100; ritocca(); };
+// i ritocchi come li legge strumenti/stampino/taglia.py --ritocchi: i pezzi con i numeri nuovi
+function ritocchiInJson() {
+	const t = (v) => Math.round(v * 10) / 10;
+	const l = Object.keys(ritocchi).sort().map((k) => {
+		const [pelle, posto] = k.split("/"), p = ritoccato(pelle, posto, PL.pelli[pelle].pezzi[posto]);
+		return { pelle, posto, x: t(p.x), y: t(p.y), w: t(p.w), h: t(p.h) };
+	});
+	return JSON.stringify(l, null, 1) + "\n";
+}
+$("rt-salva").onclick = async () => {
+	if (!Object.keys(ritocchi).length) { messaggio("Nessun ritocco da salvare."); return; }
+	await scrivi(ritocchiInJson(), "ritocchi.json", "strumenti/stampino/", fileRitocchi);
+};
+$("rt-manda").onclick = async () => {
+	if (!Object.keys(ritocchi).length) { messaggio("Nessun ritocco da mandare."); return; }
+	try { await manda("ritocchi", ritocchiInJson(), new Date().toISOString()); messaggio("Mandati i ritocchi: di' a Claude di prenderli dall'editor."); }
+	catch (e) { messaggio("Non sono riuscito a mandarli: " + ((e && e.message) || "errore") + ". Usa Salva."); }
 };
 
 // ---------------------------------------------------------------------------
@@ -1385,20 +1759,26 @@ for (const c of [...PL.sostituisce, ...PL.sopra]) {
 	l.textContent = c + " ";
 	const sel = document.createElement("select");
 	for (const n of ["", ...nomi]) sel.add(new Option(n || "—", n));
-	sel.onchange = () => { if (sel.value) addosso[c] = sel.value; else delete addosso[c]; vesti(); aggiorna(); };
+	sel.onchange = () => { if (sel.value) addosso[c] = sel.value; else delete addosso[c]; vesti(); pezziRitocco(); aggiorna(); };
 	l.appendChild(sel);
 	$("pelli").appendChild(l);
 }
+try {
+	const bozza = localStorage.getItem("megablast-ritocchi");
+	if (bozza) { ritocchi = JSON.parse(bozza); vesti(); }
+} catch (e) { /* niente memoria del browser o bozza rotta */ }
 costruisciClip();
 costruisciCanali();
+costruisciStrumenti();
 aggiorna();
 window.addEventListener("resize", () => aggiorna());
 // su claude.ai: scaricare e mandare a Claude passano dalla pagina
 if (window.claude && window.claude.use) {
 	window.claude.use("downloads").then((d) => { claudeDl = d; }).catch(() => {});
-	window.claude.use("db").then((d) => { if (d) { claudeDb = d; $("claude").hidden = false; } }).catch(() => {});
+	window.claude.use("db").then((d) => { if (d) { claudeDb = d; mostraManda(); } }).catch(() => {});
+	window.claude.use("assets").then((a) => { claudeAssets = a; }).catch(() => {});
 } else if (location.protocol === "https:") {
 	// pubblicato su Cloudflare: il pulsante c'è se c'è la funzione che manda
-	fetch("api/manda").then((r) => { if (r.ok) $("claude").hidden = false; }).catch(() => {});
+	fetch("api/manda").then((r) => { if (r.ok) mostraManda(); }).catch(() => {});
 }
 </script>

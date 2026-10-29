@@ -15,3 +15,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 27 ott | Editor delle animazioni (clip, pose, hitbox, perni); stampino per le skin. | #55 (bozza) |
 | 28 ott | Mergiati diavoletto vettoriale, editor e stampino, schede ChatGPT via Codex (WB-001 generata e montata); editor su Cloudflare. | #54–#57 |
 | 29 ott | Roadmap fissata da Sergio (21 aree, novità: torneo della community, tornei a iscrizione, laboratorio bot, statistiche e badge, interfaccia tranquilla, clan e guerre); cartella delle decisioni; regola della sfida tra chat; proposta del bot. | #58 |
+| 29 ott | Editor: arma in mano con clip sue e idle con l'arma a caso, pezzi che si mettono e tolgono (manine comprese), spalla dell'arma come perno, fiammella fuori dal personaggio, zoom fisso, Strumenti (nuovo pezzo da immagine, ritocco dello stampino). | PR del 29 ott |

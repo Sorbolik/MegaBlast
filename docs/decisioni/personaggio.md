@@ -68,6 +68,11 @@ Cloudflare dal main.
 | 28 ott | Editor nostro + stampino per le skin; hitbox e perni modificabili; **il diavoletto di Gabriella torna come skin "personaggio"** con contorno nero spesso. | PR #55 |
 | 28 ott | Dimensione del disegno svincolata dalla fisica (`game.DISEGNO_H`). | PR #55 |
 | 29 ott | L'editor entra nel pannello di Sergio come micro-frontend e avrà un connettore per i pezzi dello stampino (aggiungere/togliere pezzi a animazioni, personaggi, armi, skin). | docs/roadmap.md |
+| 29 ott | Arma in mano **il più possibile** (Sergio): clip a parte con l'arma (`fermo_arma`, `corsa_arma`, `aria_arma`, `sale_arma`, `scende_arma`, `mira`), partite come copie di quelle senza; se una manca si usa quella senza. Chi non è di turno alterna a caso fermo (con scenette) e fermo con l'arma, ogni 4–12 s (Claude: tempi e niente scenette con l'arma in mano). | PR del 29 ott |
+| 29 ott | Le clip mostrano e tolgono i pezzi (braccia, manine staccate in fondo alle braccia, ala, coda) con canali a scatto; la manina è il pezzo `pugno` della pelle. Con l'arma in mano il pugno resta sull'arma anche senza braccio (Claude). | PR del 29 ott |
+| 29 ott | La spalla dell'arma (dove l'arma gira mirando) è segnata nell'editor ed è un perno come gli altri (`arma` in perni.lua): da mirare dritto l'arma resta dov'era. Il canale `arma` gira l'arma quando non si mira. | PR del 29 ott |
+| 29 ott | La fiammella non è un pezzo del personaggio: ce l'hanno tutti, qualunque testa indossino, e la anima il gioco. Nell'editor è spenta di default (casella "fiammella"); nel gioco resta com'è (Claude: lettura della richiesta di Sergio). | PR del 29 ott |
+| 29 ott | Editor, sezione Strumenti: pezzo o personaggio nuovo da un'immagine (va a Claude, che scrive la scheda per Codex: niente prompt da copiare) e ritocco dei pezzi dello stampino (sposta e ingrandisci; `taglia.py --ritocchi` li rimette nelle pelli). Lo zoom del palco non dipende più dai canali aperti. | PR del 29 ott |
 
 ## Scartate, con il motivo
 
@@ -85,6 +90,9 @@ Cloudflare dal main.
 | Strato di contorno unico sull'immagine intera | Contorno cotto per pezzo; solo la coda usa una catena di bordi separata. |
 | Corpo ×2 (`ROBOT_H` 56) | Scalava tutto il mondo; Sergio l'ha ribaltato lo stesso giorno. |
 | Cambiare motore per avere editor migliori (Godot, Unity) | Vedi architettura.md: si resta su Defold. |
+| Ruotare i pezzi nel ritocco dello stampino (29 ott) | I pezzi non hanno un angolo: servirebbe ridisegnare l'immagine; per ora si spostano e si ingrandiscono. |
+| Strumento che scrive da solo i prompt per ChatGPT nell'editor (29 ott) | La regola è che i prompt li scrive Claude nelle schede per Codex: l'editor manda immagine e note, niente testo da copiare. |
+| Fiammella dentro le pelli o ridisegnata per ogni testa (29 ott) | È l'indicatore di chi gioca, uguale per tutti: resta un pezzo del gioco sopra la testa. |
 
 ## Aperte
 
@@ -92,4 +100,5 @@ Cloudflare dal main.
   non ancora arrivate.
 - Quanto può spingersi il vettoriale: tutto ciò che è piatto con gradienti
   semplici, niente texture pittoriche (risposta data, 26 ott).
-- Arma in mano dentro l'editor: non ancora.
+- Fiammella animata da Sergio nell'editor (una clip sua: grandezza, tremolio, posizione sopra le teste più alte): da chiedere.
+- Ritocchi dei pezzi di base (non delle pelli): ora solo le pelli.

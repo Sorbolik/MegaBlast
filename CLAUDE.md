@@ -55,6 +55,14 @@ camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
 perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`). "Manda a
 Claude" li mette nei documenti `corpo/ultima` e `perni/ultima` (campo `lua`).
 
+Nella sezione Strumenti dell'editor Sergio manda anche: le richieste di pezzi o
+personaggi nuovi (immagine e note; su claude.ai documento `richieste/<nome>` con
+l'immagine fra gli asset dell'Artifact, su Cloudflare `richieste/<nome>.json` e
+`.png` nel ramo `editor-ultima`): da lì Claude scrive la scheda per Codex in
+`docs/handoff/`. E i ritocchi ai pezzi dello stampino (documento `ritocchi/ultima`
+o `strumenti/stampino/ritocchi.json`): si applicano con
+`python3 strumenti/stampino/taglia.py --ritocchi FILE`.
+
 L'editor è anche su Cloudflare (Worker `megablast`, repository collegato: a ogni
 push su main lo ricostruisce con `strumenti/animazioni/cloudflare/costruisci.sh`
 e `wrangler.jsonc`). Da lì "Manda a Claude" (`worker.js`) scrive i file nel ramo

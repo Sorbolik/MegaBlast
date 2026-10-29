@@ -6,7 +6,8 @@ Mette dentro strumenti/animazioni/editor.html i pezzi veri del diavoletto
 pelli disegnate sullo stampino (client/battaglia/pelli.lua), le
 animazioni di adesso (client/battaglia/animazioni.lua), l'altezza del disegno
 (client/sim/game.lua), le hitbox (client/sim/corpo.lua), i perni spostati
-(client/battaglia/perni.lua) e i colori delle squadre (client/ui/ui.lua), e scrive
+(client/battaglia/perni.lua), le armi in mano (client/battaglia/armi.lua, immagini
+in client/assets/armi) e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
 salvano direttamente in client/battaglia/animazioni.lua) e si pubblica com'è
 come Artifact di claude.ai.
@@ -39,6 +40,17 @@ def main():
     for n in sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', pelli))):
         dati = (REPO / "client/assets/pelli" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
+    # le armi in mano (solo quelle, non i colpi), come armi/nome
+    armi = leggi("client/battaglia/armi.lua")
+    in_mano = armi.split("colpi = {")[0]
+    for n in sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', in_mano))):
+        dati = (REPO / "client/assets/armi" / (n + ".png")).read_bytes()
+        immagini["armi/" + n] = "data:image/png;base64," + base64.b64encode(dati).decode()
+    # gli angoli a riposo delle armi e quanto si stirano le braccia (battaglia/scoria.lua)
+    scoria = leggi("client/battaglia/scoria.lua")
+    blocco = re.search(r"local ARMI = \{(.*?)\n\}", scoria, re.S).group(1)
+    riposo = {n: float(v) for n, v in re.findall(r"(\w+) = (-?[0-9.]+)", blocco)}
+    stira = [float(x) for x in re.search(r"local STIRA_CANNA, STIRA_PRESA = ([0-9.]+), ([0-9.]+)", scoria).groups()]
     game = leggi("client/sim/game.lua")
     # il disegno è alto game.DISEGNO_H nel profilo blastron, quello del gioco
     assert 'M.DEFAULT_PHYSICS = "blastron"' in game, "l'editor misura il diavoletto sul profilo blastron"
@@ -50,6 +62,9 @@ def main():
         "animazioni": leggi("client/battaglia/animazioni.lua"),
         "pelli": pelli,
         "perni": leggi("client/battaglia/perni.lua"),
+        "armi": armi,
+        "armi_riposo": riposo,
+        "stira": stira,
         "immagini": immagini,
         "disegno_h": misura["BLASTRON_ROBOT_H"] * misura["BLASTRON_CORPO"],
         "corpo": leggi("client/sim/corpo.lua"),
