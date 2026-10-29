@@ -301,6 +301,75 @@ COLPI = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Icone dei pulsanti tondi (solo icona, niente in mano): teletrasporto, oggetti.
+# Il viola è il colore del movimento (teletrasporto e attrezzo, docs/decisioni/interfaccia.md).
+COL_ICONE = dict(COL, viola=("#4b2d8a", "#9466ea", "#dcc8ff"))
+
+
+def portale(d):
+    # teletrasporto: un portale viola che gira, con la scintilla al centro
+    d.cerchio(0, 0, 6.0, "viola")
+    d.cerchio(0, 0, 4.0, "ferro")
+    d.path("M-3.2,0 A3.2,3.2 0 1 1 1.0,3.0 A1.9,1.9 0 1 0 -0.6,-0.6 Z", "viola", contorno=False)
+    d.cerchio(0, 0, 1.1, "osso", contorno=False)
+    for x, y in ((5.6, 5.0), (-5.8, -4.8)):
+        d.poli([(x, y + 1.6), (x + 0.5, y + 0.5), (x + 1.6, y), (x + 0.5, y - 0.5), (x, y - 1.6),
+                (x - 0.5, y - 0.5), (x - 1.6, y), (x - 0.5, y + 0.5)], "osso")
+    return dict(box=(-7.6, -7.6, 7.6, 7.6))
+
+
+def tagliola(d):
+    # trappola: la tagliola che scatta, due ganasce d'acciaio coi denti
+    for lato in (-1, 1):
+        # ganascia: un arco spesso, i denti verso l'altra
+        y0 = lato * 1.4
+        d.path(f"M-6.6,{y0} Q0,{y0 + lato * 8.4} 6.6,{y0} L5.0,{y0} Q0,{y0 + lato * 5.8} -5.0,{y0} Z", "acciaio")
+        for x in (-4.2, -1.4, 1.4, 4.2):
+            yb = y0 + lato * (2.4 - 0.12 * x * x)
+            d.poli([(x - 1.0, yb), (x, y0 - lato * 0.3), (x + 1.0, yb)], "osso")
+    d.cerchio(-6.6, 0, 1.4, "ottone")
+    d.cerchio(6.6, 0, 1.4, "ottone")
+    return dict(box=(-8.4, -6.4, 8.4, 6.4))
+
+
+def scudo(d):
+    # scudo: lo stemma d'acciaio cerchiato d'ottone
+    p = "M0,-6.2 Q5.6,-3.6 5.4,4.8 L0,6.2 L-5.4,4.8 Q-5.6,-3.6 0,-6.2 Z"
+    d.path(p, "ottone")
+    d.path("M0,-4.6 Q4.0,-2.6 3.9,3.8 L0,4.8 L-3.9,3.8 Q-4.0,-2.6 0,-4.6 Z", "acciaio", contorno=False)
+    d.riga("M0,-4.4 L0,4.6 M-3.8,1.4 L3.8,1.4", COL["acciaio"][0], 0.5)
+    return dict(box=(-7, -7.2, 7, 7.2))
+
+
+def trampolino_icona(d):
+    # trampolino: il telo teso sulle due molle
+    for x in (-4.2, 4.2):
+        d.rect(x - 0.8, -5.4, 1.6, 2.6, "ferro", r=0.4)
+        for y in (-2.4, -1.2, 0.0):
+            d.ellisse(x, y, 1.7, 0.55, "ottone")
+    d.rect(-7.0, 1.0, 14, 2.4, "rosso", r=1.2)
+    return dict(box=(-8.4, -6.2, 8.4, 4.6))
+
+
+def paracadute(d):
+    # paracadute: la cupola a spicchi con le funi e il diavoletto (un sacchetto) appeso
+    d.riga("M-6.0,1.2 L0,-4.6 M6.0,1.2 L0,-4.6 M-2.0,1.0 L0,-4.6 M2.0,1.0 L0,-4.6", INK, 0.5)
+    d.path("M-6.6,1.2 A6.6,6.0 0 0 0 6.6,1.2 Q4.4,0.2 2.2,1.2 Q0,0.2 -2.2,1.2 Q-4.4,0.2 -6.6,1.2 Z", "osso")
+    d.path("M-2.2,1.2 A2.6,6.0 0 0 0 2.2,1.2 Q0,0.2 -2.2,1.2 Z", "rosso", contorno=False)
+    d.rect(-1.3, -6.4, 2.6, 2.0, "cuoio", r=0.4)
+    return dict(box=(-8, -7.4, 8, 8.4))
+
+
+ICONE = {
+    "teleport": portale,
+    "trap": tagliola,
+    "shield": scudo,
+    "trampoline": trampolino_icona,
+    "parachute": paracadute,
+}
+
+
 def esporta(nome, d, box, out, px=PX):
     w = round((box[2] - box[0]) * px)
     h = round((box[3] - box[1]) * px)
@@ -368,6 +437,10 @@ def main():
         lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {cx:.2f}, y = {cy:.2f}, '
                    f'w = {box[2] - box[0]:.2f}, h = {box[3] - box[1]:.2f} }},')
         foglio.append((nome, base, tinta, ic, box, prese.get(nome, [])))
+    # le icone dei pulsanti tondi
+    for nome, fn in ICONE.items():
+        d = Disegno(col=COL_ICONE)
+        icona(nome, d, fn(d)["box"], 0, immagini)
     lua.append("\t},")
     lua.append("\tcolpi = {")
     colpi = []

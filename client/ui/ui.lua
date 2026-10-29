@@ -26,6 +26,7 @@ M.C = {
 	SPENTO = c(0.55, 0.52, 0.52),
 	BRACE = c(1, 0.42, 0.16),             -- accento quando non c'è una squadra; colore delle armi primarie
 	ACCIAIO = c(0.62, 0.77, 0.88),        -- colore delle armi secondarie (danno secco, ti muovono)
+	VIOLA = c(0.77, 0.61, 1),             -- il movimento: teletrasporto e attrezzo (Rampino, Bastione)
 	OMBRA = c(0, 0, 0, 0.6),
 	SQUADRA = { c(1, 0.231, 0.306), c(0.239, 0.482, 1), c(0.18, 0.75, 0.44), c(0.96, 0.77, 0.09) },
 }
@@ -136,6 +137,23 @@ function M.indietro(lista, azione, parent)
 		local s = nodo(nil, -2, i * 7, 22, 4, C.LUCE, n)
 		gui.set_rotation(s, vmath.vector3(0, 0, i * 45))
 	end
+	return n
+end
+
+-- Disco e anello (nodi a torta): levette, pulsanti tondi, cronometro. d è il
+-- diametro, spessore quello dell'anello verso l'interno
+function M.disco(x, y, d, colore, parent)
+	local n = gui.new_pie_node(vec(x, y), vec(d, d))
+	gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
+	gui.set_perimeter_vertices(n, 64)
+	gui.set_color(n, colore)
+	if parent then gui.set_parent(n, parent) end
+	return n
+end
+
+function M.anello(x, y, d, spessore, colore, parent)
+	local n = M.disco(x, y, d, colore, parent)
+	gui.set_inner_radius(n, d / 2 - spessore)
 	return n
 end
 

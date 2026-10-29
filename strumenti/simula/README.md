@@ -62,6 +62,7 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `mira DX DY [S] [FOTO] [Z]` | tiene il dito a (DX, DY) pixel dello schermo dal robot di turno (la potenza dipende dai pixel dello schermo, a ogni zoom) per S secondi (la mira), facoltativamente scatta FOTO (con Z, uno zoom Z volte invece della foto intera), poi lascia: spara con l'arma scelta |
 | `levetta DX DY S [FOTO]` | comandi del telefono (`imposta comandi telefono`): appoggia il dito sulla levetta del movimento (`115 117`), lo sposta di (DX, DY) e lo tiene S secondi: di lato cammina, in alto salta (e risalta), facoltativamente scatta FOTO prima di lasciare |
 | `levetta_mira DX DY S [FOTO]` | come `levetta`, ma sulla levetta della mira (`1165 117`): oltre il 20% della corsa (19 px) si accende e lasciando spara; sotto il 10% si spegne |
+| `levetta_annulla DX DY [FOTO]` | mira con la levetta del telefono e la annulla col tasto destro (fa quello che fa un secondo dito sullo schermo), facoltativamente scatta FOTO, poi lascia: non deve partire niente |
 | `annulla DX DY [FOTO]` | mira a (DX, DY) dal robot col sinistro, preme il destro (annulla), facoltativamente scatta FOTO, poi lascia il sinistro |
 | `niente_evento TIPO [S]` | fallisce se nei prossimi S secondi succede l'evento TIPO (per esempio un colpo annullato che parte lo stesso) |
 | `aspetta_evento TIPO [S]` | aspetta un evento della simulazione (`fire`, `explosion`, `swing`, `sword_hit`, `orb`, `teleport`, `grenade`, `shards`, `punch`, `punch_hit`, `sniper`, `sniper_bounce`, `sniper_hit`, `eagle`, `hook`, `hook_end`, `mallet`, `mallet_hit`, `lunge`, `lunge_hit`, `place`, `bounce`, `respawn`, `overtime`, `crate`, `crate_pick`, `damage`, `turn`, `over`...) |
@@ -71,11 +72,12 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 Comandi: sul computer (il predefinito qui) tastiera e mouse, zoom col pulsante `1210 686`, il tasto `z` o la rotella, TELE `1180 62` o
 il tasto `t`, armi coi tasti `1`-`9`. Con `imposta comandi telefono` ci sono le
 due levette (corsa 94 px) e TELE sta a `1208 257`.
-La barra delle armi sta in basso al centro (`y = 62`) e mostra solo le armi che
-il robot ha, centrate, in tre gruppi (primarie color brace, secondarie color
-acciaio, oggetti; Rampino sempre, paracadute finché ne resta uno):
-Lanciarune `479`, Lama di Nucleo `593`, Rampino `707`, Paracadute `801`; con
-una secondaria scelta (`prova_secondaria`) `432`, `546`, `660`, `754`, `848`.
+Attorno al cronometro in basso al centro (sul computer): primarie a sinistra
+(`y = 62`, Lanciarune `506`, poi `412`, `318`, `224`, `130`), secondarie a
+destra (Lama `774`, quella scelta `868`), oggetti tondi sopra le secondarie
+(`y = 148`: `760`, `826`, `892`, `958`, scorrono quando uno finisce), Rampino o
+Bastione tondo accanto al TELE (`1084 62`; sul telefono `1112 257`). Quello
+in mano sale di 10 punti.
 Con `prova_armi` le posizioni sono nei commenti di `scenari/oggetti.txt`.
 Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, ARMERIA `168 108`.
 Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, teletrasporti guadagnati): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`; su un trampolino rimbalza tutto (l'Uovo): `scenari/trampolino.txt`. Effetti di stato: `scenari/stati.txt`. Scelta delle armi d'inizio partita (primaria e secondaria): `scenari/scelta.txt`. Secondarie e Tonante: `scenari/secondarie.txt`; Maglio: `scenari/maglio.txt`; Affondo: `scenari/affondo.txt`; Rampino (oggetto, uno a turno, sale sulla piattaforma colpita): `scenari/rampino.txt`; Rampino che trascina un nemico a terra: `scenari/rampino_nemico.txt`; Cecchino: `scenari/cecchino.txt`. Le skin di tutte le armi in mano e dei colpi in volo: `scenari/armi.txt`.

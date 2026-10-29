@@ -19,7 +19,7 @@ zoom 04_salto_scende 4
 aspetta 1
 tieni salta 0.35                    # salto alto, e in aria il paracadute
 aspetta 0.05
-tocca 801 62
+tocca 760 148                       # Paracadute (oggetto tondo sopra le secondarie)
 aspetta_evento parachute 2
 aspetta 0.25
 zoom 05_paracadute 4
