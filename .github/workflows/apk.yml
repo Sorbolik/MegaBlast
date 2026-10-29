@@ -1,6 +1,8 @@
 # APK Android firmato con la chiave di Sergio, mandato su Telegram a ogni push su
 # main che tocca il client (o a mano da Actions → "APK su Telegram" → Run workflow).
 # Qui l'estensione WebSocket si compila sul build server di Defold, quindi l'online c'è.
+# Solo arm64 (tutti i telefoni da 2017 in poi): con anche armv7 l'APK pesa 70 MB e Telegram
+# ne accetta al massimo 50.
 # Segreti: ANDROID_KEYSTORE (keystore in base64), ANDROID_KEYSTORE_PASS,
 # TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID. Variabile facoltativa: SERVER_URL.
 name: APK su Telegram
@@ -34,7 +36,7 @@ jobs:
           : > "$RUNNER_TEMP/apk.ini"
           [ -n "$SERVER_URL" ] && printf '[megablast]\nserver_url = %s\n' "$SERVER_URL" > "$RUNNER_TEMP/apk.ini"
           java -jar "$RUNNER_TEMP/bob.jar" --root client --settings "$RUNNER_TEMP/apk.ini" \
-            --platform arm64-android --architectures arm64-android,armv7-android \
+            --platform arm64-android --architectures arm64-android --strip-executable \
             --bundle-format apk --variant release --archive --texture-compression true \
             --keystore "$RUNNER_TEMP/chiave.keystore" --keystore-pass "$RUNNER_TEMP/chiave.pass" \
             --bundle-output "$RUNNER_TEMP/bundle" resolve build bundle
