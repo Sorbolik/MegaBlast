@@ -38,8 +38,9 @@
 --     senza vedi si vede tutto, con vedi il cronometro e i punti solo se ci sono.
 --     Un'arma raccolta da una cassa si vede da lì in poi
 --   senza_armi: il giocatore parte senza armi, finché non trova il Lanciarune in una cassa
---   cassa = { dopo = 2, arma = "missile", x = 1250 }: fatto il passo dopo, quella
---     cassa cade lì (nelle lezioni la sua scheda ferma il gioco: battaglia/scheda.lua)
+--   casse = { { dopo = 2, arma = "missile", x = 1250 }, ... }: fatto il passo dopo
+--     (0: subito), quella cassa cade lì (la scheda di un'arma nuova ferma il gioco:
+--     battaglia/scheda.lua)
 --   senza_tempo: niente tempo e niente turni, il turno è tuo finché non finisci.
 --     Finito un attacco (o il Rampino, il Bastione) si riusa subito; se non ha
 --     colpito nessuno né fatto un passo, "Ritenta" (conta "mancati"). Sergio, 29 ott:
@@ -183,7 +184,7 @@ end
 function M.nuova(id)
 	local l = assert(PER_ID[id], "missione sconosciuta: " .. tostring(id))
 	return { l = l, st = { turni = 0, turni_bot = 0, passi = {}, volte = {}, conta = {}, toccati = {} },
-		viste = {}, prese = {}, riga = nil, esito = nil }
+		viste = {}, prese = {}, cadute = {}, riga = nil, esito = nil }
 end
 
 -- seme, mappa e opzioni di game.new. picks: i giocatori usciti dal draft
@@ -516,9 +517,10 @@ end
 function M.tick(r, g)
 	local l, st = r.l, r.st
 	if l.senza_tempo and g.current == GIOCATORE then senza_tempo(r, g) end
-	-- la cassa della lezione cade, fatto il suo passo
-	local c = l.cassa
-	if c and not r.cassa and st.passi[c.dopo] then r.cassa = g:spawn_crate(c.arma, c.x) or true end
+	-- le casse della missione cadono, fatto il loro passo
+	for i, c in ipairs(l.casse or {}) do
+		if not r.cadute[i] and (c.dopo == 0 or st.passi[c.dopo]) then r.cadute[i] = g:spawn_crate(c.arma, c.x) or true end
+	end
 	-- lezioni: finché non tocchi i comandi il tempo del turno e della partita è fermo
 	if r.attesa and g.current == GIOCATORE then
 		r.fermo = r.fermo or { timer = g.timer, window = g.window, match = g.match_left }

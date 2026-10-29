@@ -31,7 +31,7 @@ local ADDESTRAMENTO = {
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
 		vedi = { "missile" },
 		senza_armi = true, senza_tempo = true,
-		cassa = { dopo = 2, arma = "missile", x = 1260 },
+		casse = { { dopo = 2, arma = "missile", x = 1260 } },
 		stelle = {
 			bonus = { conta = "mancati", al_massimo = 2, testo = "AL MASSIMO 2 TIRI A VUOTO" },
 			bonus2 = { conta = "mancati", al_massimo = 0, testo = "AL PRIMO TIRO" },
