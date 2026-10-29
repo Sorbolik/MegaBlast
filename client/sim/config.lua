@@ -157,7 +157,7 @@ C.LUNGE = { damage = 45, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb
 -- più è lontano (al bordo del ventaglio far della spinta). Chi soffia non si
 -- muove. Lo scudo dimezza la spinta come per i colpi. Danno sulla scala della
 -- vita 100 (#79): 10, un decimo
-C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 460, lift = 130, far = 0.45 }
+C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 400, lift = 100, far = 0.35 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.
