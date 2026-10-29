@@ -50,6 +50,8 @@ def main():
     # gli angoli a riposo delle armi nella mano (battaglia/scoria.lua)
     scoria = leggi("client/battaglia/scoria.lua")
     blocco = re.search(r"local ARMI = \{(.*?)\n\}", scoria, re.S).group(1)
+    # il personaggio di tutti nel gioco: l'editor parte con quello addosso
+    personaggio = re.findall(r'"(\w+)"', re.search(r"M\.PERSONAGGIO = \{(.*?)\}", scoria).group(1))
     riposo = {n: float(v) for n, v in re.findall(r"(\w+) = (-?[0-9.]+)", blocco)}
     game = leggi("client/sim/game.lua")
     # il disegno è alto game.DISEGNO_H nel profilo blastron, quello del gioco
@@ -65,6 +67,7 @@ def main():
         "armi": armi,
         "impugnature": leggi("client/battaglia/impugnature.lua"),
         "armi_riposo": riposo,
+        "personaggio": personaggio,
         "immagini": immagini,
         "disegno_h": misura["BLASTRON_ROBOT_H"] * misura["BLASTRON_CORPO"],
         "corpo": leggi("client/sim/corpo.lua"),

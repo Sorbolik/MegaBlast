@@ -1939,9 +1939,10 @@ function init(self)
 	gui.set_visible(self.mondo, false)
 
 	-- prova_pelli elmo_x,corazza_y: tutti con quelle pelli addosso (battaglia/pelli.lua),
-	-- finché non c'è l'armeria che le sceglie
+	-- sennò il personaggio di tutti, finché non c'è l'armeria che le sceglie
 	local look = {}
 	for nome in config_string("megablast.prova_pelli", ""):gmatch("[%w_]+") do look[#look + 1] = nome end
+	if #look == 0 then look = scoria.PERSONAGGIO end
 	self.robots = {}
 	for i = 1, game.MAX_PLAYERS do
 		local r = { rig = scoria.new(TEAM_COLORS[i], look), st = {} }

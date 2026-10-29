@@ -66,7 +66,7 @@ local function gradino(p, x, voce, i)
 	local k = M.SCORIA_H / game.DISEGNO_H
 	gui.set_scale(posa, vmath.vector3(k, k, 1))
 	gui.animate(posa, "position.y", M.BASE_Y + h, gui.EASING_INQUAD, 0.3, ritardo + M.SALITA * 0.7)
-	local s = scoria.new(g.colore)
+	local s = scoria.new(g.colore, scoria.PERSONAGGIO)
 	gui.set_parent(s.root, posa)
 	scoria.set_enabled(s, true)
 	p.figure[#p.figure + 1] = { s = s, posa = posa,
