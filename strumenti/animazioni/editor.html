@@ -1728,17 +1728,29 @@ $("durata").onchange = () => {
 $("ciclo").onchange = () => { prima(); clip().ciclo = $("ciclo").checked; dopo(); };
 
 // copia e incolla la posa intera (tutti i canali che la clip ha, più quelli neutri)
+// sale e scende si sommano alla clip sotto (aria): la posa che si vede è
+// quella sotto più la loro. Si copia quella che si vede e incollando si mette
+// solo la differenza, come il gioco le somma (altrimenti la clip sotto conta
+// due volte e i pezzi si allontanano)
+function posaSotto() {
+	const base = info(nome) && info(nome).base;
+	if (!base || !clips[base]) return null;
+	const po = posaNeutra();
+	campiona(clips[base], orologio, po, 1);
+	return po;
+}
 $("copia-posa").onclick = () => {
 	posaCopiata = {};
-	for (const ch of CANALI) posaCopiata[ch.id] = valoreProprio(clip(), ch.id, tempo);
+	const sotto = posaSotto();
+	for (const ch of CANALI) posaCopiata[ch.id] = valoreProprio(clip(), ch.id, tempo) + (sotto ? sotto[ch.id] - NEUTRO[ch.id] : 0);
 	messaggio("Posa copiata: vai a un altro tempo (o un'altra clip) e incollala.");
 };
 $("incolla-posa").onclick = () => {
 	if (!posaCopiata) { messaggio("Prima copia una posa."); return; }
 	prima();
-	const c = clip();
+	const c = clip(), sotto = posaSotto();
 	for (const ch of CANALI) {
-		const v = posaCopiata[ch.id];
+		const v = posaCopiata[ch.id] - (sotto ? sotto[ch.id] - NEUTRO[ch.id] : 0);
 		if (c.tracce[ch.id] || Math.abs(v - NEUTRO[ch.id]) > 1e-6) metti(ch.id, Math.round(v * 1000) / 1000, true);
 	}
 	dopo();
