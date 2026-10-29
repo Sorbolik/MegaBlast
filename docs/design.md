@@ -141,11 +141,11 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 
 | Messaggio | Direzione | Contenuto |
 |---|---|---|
-| `{"t":"hello","v":2,"mode":"1v1"}` | C → S | primo messaggio: versione del protocollo e modalità (o `"tok"` per tornare in partita) |
+| `{"t":"hello","v":2,"mode":"1v1","tool":"hook"}` | C → S | primo messaggio: versione del protocollo, modalità e attrezzo dell'assetto (o `"tok"` per tornare in partita) |
 | `{"t":"error","e":"version"}` | S → C | errore: `version` (aggiorna il gioco), `expired` (partita finita), `draining` (server in spegnimento) |
 | `{"t":"wait"}` | S → C | sei in attesa di un avversario |
-| `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"you":1,"tok":…,"players":[…]}` | S → C | scelta delle armi d'inizio partita: primarie, secondarie e attrezzi (vedi [server.md](server.md)) |
-| `{"t":"pick","w":"shards"}` / `{"t":"swap","to":3}` | C → S | scelgo un'arma (primaria o secondaria, lo dice l'arma) / propongo lo scambio al compagno |
+| `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"pr":[…],"sw":[…],"you":1,"tok":…,"players":[…],"left":900}` | S → C | scelta delle armi d'inizio partita: primarie, secondarie e attrezzi, scelte di tutti, proposte di scambio (vedi [server.md](server.md)) |
+| `{"t":"pick","w":"shards"}` / `{"t":"swap","to":3}` | C → S | scelgo un'arma (primaria, secondaria o attrezzo, lo dice l'arma) / propongo lo scambio al compagno (`"to":0` ritira la proposta) |
 | `{"t":"start","seed":…,"map":"forgia","you":1,"tok":…,"resume":false,"players":[{"team":1},…]}` | S → C | la partita parte: mappa, seed, quale robot sei, le squadre e il gettone per tornare se cadi |
 | `{"t":"sync","x":[[x,y,r],…]}` | S → C | a chi torna: gli scavi fatti finora nel terreno |
 | `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano) |

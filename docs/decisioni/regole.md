@@ -22,6 +22,7 @@ repository: leggerle costa poco.
 | 28 ott | **Immagini con ChatGPT**: Claude scrive le schede in docs/handoff, Codex sul PC di Sergio le esegue e committa su `design/WB-xxx`. Niente API OpenAI, niente copia-incolla di prompt. Claude resta il coordinatore. | docs/handoff/README.md |
 | 29 ott | **Roadmap fissata** in docs/roadmap.md; ogni chat la consulta prima di proporre lavoro nuovo. | docs/roadmap.md |
 | 29 ott | **Sfida tra chat** ("challenge"): quando una chat fa una proposta, il coordinatore la passa a un'altra chat perché la critichi e la arricchisca prima di portarla a Sergio: strade trascurate, alternative fuori dall'ordinario, cosa va oltre la roadmap. La roadmap e i principi sono una base, non un recinto: una proposta che li contraddice si presenta lo stesso, dicendo cosa romperebbe e perché ne vale la pena. Mai scartare un'idea solo perché "non segue i principi". | questa cartella |
+| 29 ott | **Server sempre in pari con main**: ogni PR che cambia regole, simulazione o protocollo aggiorna anche il server nella stessa PR (campi di `server/net.lua`, messaggi di `server/room.go`, dati che il client usa solo in locale, test Go) e prova l'online nel simulatore. Lista dei controlli in docs/server.md. | CLAUDE.md, docs/server.md |
 | 29 ott | **Storia e decisioni** in questa cartella: ogni chat aggiorna il file della sua area nella stessa PR; l'obiettivo è che una sessione legga solo ciò che le serve. | questo README |
 
 ## Preferenze pratiche

@@ -95,6 +95,7 @@ type Player struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	room      atomic.Pointer[seatRef] // la partita in cui gioca, nil se non gioca
+	tool      string                  // l'attrezzo del suo assetto (dal hello), già scelto nel draft
 	closeOnce sync.Once
 }
 
@@ -194,6 +195,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	if !ok {
 		mode = modes["1v1"]
 	}
+	p.tool = m.Tool
 	s.lobby.Join(p, mode)
 	return true
 }
