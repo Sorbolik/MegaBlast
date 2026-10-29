@@ -77,11 +77,11 @@ local RIGA_SECONDI = 5
 -- Quale arma ha appena usato chi: l'evento dell'attacco -> nome dell'arma
 local ATTACCHI = {
 	fire = "missile", grenade = "grenade", shards = "shards", punch = "punch", sniper = "sniper",
-	swing = "sword", eagle = "eagle", mallet = "mallet", lunge = "lunge",
+	swing = "sword", eagle = "eagle", mallet = "mallet", lunge = "lunge", bellows = "bellows",
 }
 local CATEGORIE = {
 	primaria = { grenade = true, shards = true, punch = true, sniper = true },
-	secondaria = { eagle = true, mallet = true, lunge = true },
+	secondaria = { eagle = true, mallet = true, lunge = true, bellows = true },
 }
 -- usa: l'evento del giocatore che dice che la meccanica è stata usata
 local USA = {

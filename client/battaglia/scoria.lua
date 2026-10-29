@@ -59,6 +59,8 @@
 local game = require "sim.game"
 local D = require "battaglia.diavoletto"
 local DA = require("battaglia.armi").armi
+-- dove sta l'uncino sul lanciarampino (PUNTA_RAMPINO di strumenti/grafica/armi.py)
+local PUNTA_RAMPINO = 15.2
 local pose = require "battaglia.pose"
 local A = require "battaglia.animazioni"
 local PELLI = require "battaglia.pelli"
@@ -279,7 +281,7 @@ end
 -- (strumenti/grafica/armi.py), presa, perno e spalla in battaglia/impugnature.lua
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
-	punch = -0.9, eagle = -0.6, hook = -0.4, wall = -0.2,
+	punch = -0.9, eagle = -0.6, hook = -0.4, wall = -0.2, bellows = -0.3,
 	mallet = 2,  -- in spalla: lungo com'è, in giù entrerebbe nel terreno
 	lunge = 1.3,  -- dritta in su: in giù entrerebbe nel terreno
 }
@@ -338,8 +340,21 @@ local function arma(s, name, color)
 	if a.tinta then
 		s.tinte_arma[#s.tinte_arma + 1] = setup(figura_arma(g, a.tinta, a.x, a.y, a.w, a.h), nil, color)
 	end
+	-- l'uncino in canna del Rampino: un pezzo a sé, sparisce quando vola via
+	if name == "hook" then
+		local u = require("battaglia.armi").pezzi.uncino
+		s.uncino = figura_arma(g, u.img, PUNTA_RAMPINO + u.x, u.y, u.w, u.h)
+	end
 	gui.set_enabled(g, false)
 	s.armi[name] = g
+end
+
+-- L'uncino è in canna (on) o è partito col filo
+function M.uncino(s, on)
+	if s.uncino_on ~= on then
+		s.uncino_on = on
+		gui.set_enabled(s.uncino, on)
+	end
 end
 
 function M.new(color, look)

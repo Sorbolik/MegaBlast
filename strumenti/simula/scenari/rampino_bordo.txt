@@ -1,0 +1,38 @@
+# Rampino in "Giù dal bordo": dal bordo della piattaforma l'uncino vola fino
+# allo scoglio di sinistra (gittata 400), aggancia il bersaglio, lo tira e lo
+# molla sopra il vuoto. Poi un colpo a vuoto: l'uncino cade col filo e si dissolve.
+imposta prova_missione giu_dal_bordo
+imposta zoom 3
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+foto 01_scogli
+cammina sinistra 775
+aspetta 0.5
+tocca 1084 62                       # Rampino (tondo accanto al TELE)
+aspetta 0.4
+mira -210 70 0.3 02_mira            # verso lo scoglio di sinistra
+aspetta 0.08
+foto 03_uncino_in_volo
+aspetta_evento hook 2
+aspetta 0.05
+foto 04_agganciato
+aspetta 0.5
+foto 05_mollato_sul_vuoto
+aspetta 1.5
+foto 06_giu
+aspetta_evento turn 40               # il turno dopo (i bersagli non giocano)
+aspetta_stato fase=aim 10
+aspetta 1
+tocca 1084 62                       # Rampino
+aspetta 0.4
+mira 200 200 0.3                    # in alto a destra, sotto lo scoglio: nel vuoto
+aspetta_evento hook 2
+aspetta 0.1
+foto 07_cade_col_filo
+aspetta 0.25
+foto 08_sul_terreno
+aspetta 0.3
+foto 09_si_dissolve
+aspetta 0.6
+zoom 10_uncino_in_canna 3

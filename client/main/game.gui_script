@@ -24,6 +24,7 @@ local menu = { podio = require "menu.podio", armeria = require "menu.armeria", s
 	allenamento = require "menu.allenamento", fine_livello = require "menu.fine_livello", campagna = require "menu.campagna" }
 local missioni = require "sim.missioni"
 local levette = require "battaglia.levette"
+local mira = require "battaglia.mira"
 local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
 local punteggio = require "battaglia.punteggio"
@@ -81,7 +82,7 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- sotto la sua vita, coi turni che mancano (senza accenti: il font non li ha)
 local STATUS_TEXT = { burn = "BRUCIA!", slow = "RALLENTATO!", cracked = "ARMATURA INCRINATA!" }
 local STATUS_NAME = { { "burn", "BRUCIA" }, { "slow", "LENTO" }, { "cracked", "INCRINATO" } }
-local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge",
+local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows",
 	"trap", "shield", "trampoline", "hook", "wall", "parachute" }
 -- colore del bordo dei quattro gruppi: primarie, secondarie, oggetti, attrezzo
 local BAR_COLORI = { ui.C.BRACE, ui.C.ACCIAIO, ui.C.MENTA, ui.C.VIOLA }
@@ -91,7 +92,7 @@ local function bar_group(w)
 end
 -- icone della barra e della scelta (atlante armi, strumenti/grafica/armi.py)
 local WEAPON_ICON = {}
-for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "hook", "wall",
+for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "bellows", "hook", "wall",
 	"trap", "shield", "trampoline", "parachute" }) do
 	WEAPON_ICON[w] = w .. "_icona"
 end
@@ -101,13 +102,15 @@ local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Sche
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- nomi delle armi nella scelta d'inizio partita
 local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
-	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", hook = "Rampino", wall = "Bastione" }
+	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino",
+	wall = "Bastione" }
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
 	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dalla testa ai piedi; in aria, se colpisce mentre cala, rimbalzi in alto",
 	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
-	hook = "Tira a te il nemico, o ti porta sulla piattaforma colpita",
+	bellows = "Soffio della forgia: spinge via chi hai davanti",
+	hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita",
 	wall = "Posa un blocco di terreno dove miri: riparo, ponte o gradino" }
 -- armi corpo a corpo: niente linea di mira
 local MELEE = { sword = true, punch = true, mallet = true }
@@ -129,6 +132,8 @@ local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1
 -- il Maglio fa il contrario, dall'alto cala sotto i piedi
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
+-- punti della traiettoria chiesti alla simulazione, uno ogni 4 tick (la
+-- freccia ne mostra game.AIM_PREVIEW_DOTS; il Bastione tutti, sul suo bordo)
 local AIM_DOTS = 12
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
 -- riportare il dito sul robot e lasciarlo lì annulla il colpo
@@ -460,6 +465,9 @@ local function capture(pose, g)
 	for i, rb in ipairs(g.robots) do
 		local r = pose.r[i]
 		r.x, r.y, r.g = rb.x, rb.y, rb.grounded
+		-- l'uncino del Rampino in volo
+		r.gs = rb.hook_shot ~= nil
+		if r.gs then r.gx, r.gy = rb.hook_shot.x, rb.hook_shot.y end
 	end
 	pose.has_p = g.projectile ~= nil
 	if pose.has_p then pose.p.x, pose.p.y = g.projectile.x, g.projectile.y end
@@ -500,6 +508,11 @@ local function advance_pose(a, b, k)
 	for i, rb in ipairs(b.r) do
 		local ra = a.r[i]
 		ra.x, ra.y, ra.g = ra.x + (rb.x - ra.x) * k, ra.y + (rb.y - ra.y) * k, rb.g
+		if rb.gs then
+			if not ra.gs then ra.gx, ra.gy = rb.gx, rb.gy end
+			ra.gx, ra.gy = ra.gx + (rb.gx - ra.gx) * k, ra.gy + (rb.gy - ra.gy) * k
+		end
+		ra.gs = rb.gs
 	end
 	if b.has_p then
 		if not a.has_p then a.p.x, a.p.y = b.p.x, b.p.y end
@@ -607,6 +620,7 @@ local function new_match(self, seed, map, opts)
 	self.aiming = false
 	self.weapon = "missile"
 	self.tele_armed = false
+	self.globi_attesa = 0   -- globi nostri ancora in volo verso il teletrasporto
 	self.snap = {}
 	self.crate_tabs = {}
 	for _, n in ipairs(self.crate_nodes) do n.id = nil; gui.set_enabled(n.node, false) end
@@ -717,6 +731,45 @@ local function my_turn(self)
 	return (self.mode == "local" and not self.bots[self.g.current]) or (self.mode == "online" and self.g.current == self.me)
 end
 
+-- Di chi sono le armi nella barra: online le nostre, in locale di chi è di turno
+local function bar_robot(self)
+	if self.mode == "online" then return self.g.robots[self.me] end
+	-- contro i bot, sempre le armi del giocatore
+	if next(self.bots) then return self.g.robots[1] end
+	return self.g.robots[self.g.current]
+end
+
+-- Rampino e Mantice nel disegno, in una tabella sola: il file è vicino ai 200
+-- local che Lua permette
+local RM = { fune = require "battaglia.fune", SOFFI = 5 }
+
+-- Dove sta la mano di chi tira col Rampino, nel disegno (la fune parte da lì)
+function RM.fune_mano(self, chi)
+	local v = self.view[chi]
+	return v.x + self.g.robots[chi].facing * game.MUZZLE * 0.5, v.y + game.SWORD_PIVOT_Y
+end
+
+-- Il soffio del Mantice: RM.SOFFI righe d'aria che partono a ventaglio dal
+-- beccuccio, si allungano e svaniscono, lunghe quanto arriva (config.BELLOWS)
+function RM.soffio(self, x, y, angle)
+	local b = gconfig.BELLOWS
+	for i = 1, RM.SOFFI do
+		local n = self.soffi[i]
+		local a = angle + b.cone * 0.8 * ((i - 1) / (RM.SOFFI - 1) * 2 - 1)
+		local l = b.range * (i % 2 == 1 and 0.85 or 0.65)
+		gui.set_enabled(n, true)
+		gui.cancel_animations(n)
+		gui.set_euler(n, vmath.vector3(0, 0, math.deg(a)))
+		gui.set_position(n, vmath.vector3(x + math.cos(a) * 6, y + math.sin(a) * 6, 0))
+		gui.set_size(n, vmath.vector3(10, 3 * K, 0))
+		gui.set_color(n, vmath.vector4(1, 1, 1, 0.85))
+		local d = 0.22 + i % 2 * 0.06
+		gui.animate(n, "position", vmath.vector3(x + math.cos(a) * l * 0.6, y + math.sin(a) * l * 0.6, 0), gui.EASING_OUTQUAD, d)
+		gui.animate(n, "size", vmath.vector3(l * 0.7, 1.5 * K, 0), gui.EASING_OUTQUAD, d)
+		gui.animate(n, "color.w", 0, gui.EASING_INQUAD, d, 0, hide_node)
+	end
+end
+
 local function handle_event(self, e)
 	if SIMULA then print("SIMULA evento " .. e.type) end
 	-- i personaggi della campagna parlano (battaglia/battute.lua); quelle di
@@ -774,31 +827,60 @@ local function handle_event(self, e)
 			-- nei primi turni della partita guidata i globi volano piano, da guardare
 			local r = self.missione
 			local lento = r and r.l.guidata and r.st.turni <= 3 and 2.5 or nil
-			hud.globi(self.crono, e.amount, gui.get_position(self.btn_tele.nodo), lento)
+			-- se sono globi nostri il numerino aspetta che arrivino: ognuno lo fa
+			-- salire con un lampo e un "pling" un poco più acuto del precedente
+			-- (globi ripartiti prima di arrivare non contano più: si riparte da qui)
+			local mio = bar_robot(self) == self.g.robots[e.robot]
+			if mio then self.globi_attesa = math.min(e.amount, hud.GLOBI) end
+			hud.globi(self.crono, e.amount, gui.get_position(self.btn_tele.nodo), lento, mio and function(i)
+				self.globi_attesa = math.max(0, self.globi_attesa - 1)
+				hud.tondo_lampo(self.btn_tele)
+				sound.play("#globo", { speed = hud.GLOBO_TONI[math.min(i, #hud.GLOBO_TONI)] })
+			end)
 		end
 	elseif e.type == "trap" then
 		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
 		shock(self, e.x, e.y)
-	elseif e.type == "eagle" or e.type == "hook" then
-		-- colpo dritto: la traccia (bianca, o acciaio per la fune del Rampino)
-		-- dalla canna al punto colpito, che sfuma in un quarto di secondo
-		scoria.fire(self.robots[e.robot].rig, e.type == "eagle" and "missile" or "shards")
+	elseif e.type == "eagle" then
+		-- colpo dritto: la traccia bianca dalla canna al punto colpito, che
+		-- sfuma in un quarto di secondo
+		scoria.fire(self.robots[e.robot].rig, "missile")
 		local n, dx, dy = self.tracer, e.x1 - e.x0, e.y1 - e.y0
 		gui.set_enabled(n, true)
 		gui.cancel_animations(n)
 		gui.set_position(n, vmath.vector3((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2, 0))
-		gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), e.type == "hook" and 1.5 * K or 2.5 * K, 0))
+		gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), 2.5 * K, 0))
 		gui.set_euler(n, vmath.vector3(0, 0, math.deg(math.atan2(dy, dx))))
-		gui.set_color(n, e.type == "hook" and ui.C.ACCIAIO or WHITE)
-		-- la fune del Rampino resta tesa finché tira (rope, aggiornata a ogni frame):
-		-- al robot agganciato, o a chi tira se si è agganciato al terreno
-		self.rope = e.type == "hook" and (e.target or e.anchor and e.robot) or nil
-		if not self.rope then gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.25, 0, hide_node) end
+		gui.set_color(n, WHITE)
+		gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.25, 0, hide_node)
 		if e.target then
 			-- il colpo arriva dalla canna: la spinta del colpito va da lì
 			self.colpo_x, self.colpo_y, self.colpo_t = e.x0, e.y0, self.clock
-			if e.type == "hook" then targa.annuncio(self.robots[e.target].targa, "AGGANCIATO!") end
 		end
+	elseif e.type == "hook_shot" then
+		-- l'uncino parte: lascia la canna e la fune si allunga dietro di lui (render)
+		scoria.fire(self.robots[e.robot].rig, "shards")
+		scoria.uncino(self.robots[e.robot].rig, false)
+		self.fune_chi, self.rope = e.robot, nil
+	elseif e.type == "hook" then
+		-- la fune resta tesa finché tira (rope): al robot agganciato, o a chi
+		-- tira se si è agganciato al terreno. Andata a vuoto: cade col filo
+		self.rope = e.target or e.anchor and e.robot or nil
+		if not self.rope then
+			local x0, y0 = RM.fune_mano(self, e.robot)
+			RM.fune.cade(self.fune, x0, y0, e.x1, e.y1)
+		end
+		if e.target then
+			self.colpo_x, self.colpo_y, self.colpo_t = e.x0, e.y0, self.clock
+			targa.annuncio(self.robots[e.target].targa, "AGGANCIATO!")
+		end
+	elseif e.type == "bellows" then
+		-- il soffio: il mantice si schiaccia e un ventaglio d'aria parte dal beccuccio
+		scoria.fire(self.robots[e.robot].rig, "missile")
+		RM.soffio(self, e.x, e.y, e.angle)
+	elseif e.type == "bellows_hit" then
+		self.colpo_x, self.colpo_y, self.colpo_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
+		targa.annuncio(self.robots[e.target].targa, "SOFFIATO VIA!")
 	elseif e.type == "lunge" then
 		scoria.lunge(self.robots[e.robot].rig)
 	elseif e.type == "mallet" then
@@ -938,6 +1020,7 @@ local function apply_state(self, s)
 	local g = self.g
 	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
 	g.window, g.teleports, g.overtime = s.win or 0, s.tp or 0, s.ot or false
+	g.teleports_earned = s.te or 0
 	local u = s.u or 0
 	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
 	g.match_left = s.mt or g.match_left
@@ -967,6 +1050,7 @@ local function apply_state(self, s)
 		rb.lunge_vy = rb.lunge and math.sin(r.la or 0) or nil
 		rb.knocked = r.kn or false
 		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
+		rb.hook_shot = r.gs and { x = r.gx, y = r.gy } or nil
 		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
 		rb.mallet_stop = (r.ms or 0) > 0 and r.ms or nil
 		rb.mallet_dir = (r.md or 0) ~= 0 and r.md or nil
@@ -1183,7 +1267,7 @@ start_local_match = function(self, picked)
 		local colpi = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local vita = config_int("megablast.prova_vita", 0)
-		-- prova_secondaria = eagle | mallet | lunge: tutti hanno quella secondaria
+		-- prova_secondaria = eagle | mallet | lunge | bellows: tutti hanno quella secondaria
 		local secondaria = config_string("megablast.prova_secondaria", "")
 		opts = {
 			players = opts.players,
@@ -1421,19 +1505,42 @@ end
 local PAD_POS = vmath.vector3(0, 0, 0)
 
 -- Levetta come nelle proposte: disco appena velato col bordo e pomello uguale;
--- il bordo di tutti e due prende il colore dello stato (pad_colore)
-local function new_pad(rest, ring_color)
+-- il bordo di tutti e due prende il colore dello stato (pad_colore).
+-- salto: sul bordo le tacche dell'arco in cui la levetta fa saltare (da
+-- levette.JUMP_START_ANGLE sopra l'orizzontale, da tutte e due le parti), più
+-- lunghe ai due estremi; si accendono mentre si salta
+local function new_pad(rest, ring_color, salto)
 	local pad = { rest = rest }
 	pad.base = fit(ui.disco(rest.x, rest.y, PAD_D, PAD_FONDO[1]))
 	pad.ring = fit(ui.anello(0, 0, PAD_D, 3, ring_color, pad.base))
+	if salto then
+		pad.tacche, pad.tacca_spenta, pad.tacca_accesa = {}, vmath.vector4(1, 1, 1, 0.4), vmath.vector4(1, 0.85, 0.55, 1)
+		local a0, n = math.deg(levette.JUMP_START_ANGLE), 9
+		for i = 0, n - 1 do
+			local a = a0 + (180 - 2 * a0) * i / (n - 1)
+			local lungo = (i == 0 or i == n - 1) and 16 or 9
+			local r = PAD_D / 2 - 4 - lungo / 2
+			local t = fit(gui.new_box_node(vmath.vector3(r * math.cos(math.rad(a)), r * math.sin(math.rad(a)), 0),
+				vmath.vector3(lungo, (i == 0 or i == n - 1) and 3 or 2, 0)))
+			gui.set_euler(t, vmath.vector3(0, 0, a))
+			gui.set_color(t, pad.tacca_spenta)
+			gui.set_parent(t, pad.base)
+			pad.tacche[#pad.tacche + 1] = t
+		end
+	end
 	pad.knob = fit(ui.disco(0, 0, KNOB_D, PAD_FONDO[2], pad.base))
 	pad.knob_ring = fit(ui.anello(0, 0, KNOB_D, 3, ring_color, pad.knob))
 	return pad
 end
 
-local function pad_colore(pad, c)
+-- salto: le tacche del salto accese (solo la levetta del movimento le ha)
+local function pad_colore(pad, c, salto)
 	gui.set_color(pad.ring, c)
 	gui.set_color(pad.knob_ring, c)
+	if pad.tacche and pad.salto ~= (salto or false) then
+		pad.salto = salto or false
+		for _, t in ipairs(pad.tacche) do gui.set_color(t, salto and pad.tacca_accesa or pad.tacca_spenta) end
+	end
 end
 
 -- Il pollice si appoggia in (x, y): la base va lì, senza uscire dallo schermo
@@ -1467,6 +1574,18 @@ local function pad_release(pad, ring_color)
 	pad_colore(pad, ring_color)
 end
 
+-- Micro-vibrazione: client/vibra sul telefono Android, nel browser dove c'è
+-- navigator.vibrate
+local function vibra_tocco()
+	if vibra then
+		vibra.tocco()
+	elseif html5 then
+		html5.run("navigator.vibrate && navigator.vibrate(12)")
+	elseif SIMULA then
+		print("SIMULA evento vibra")
+	end
+end
+
 -- Nelle lezioni: il giocatore ha toccato quel comando (sim/missioni.lua tocca)
 local function tocca_missione(self, cosa)
 	if self.missione then missioni.tocca(self.missione, cosa) end
@@ -1478,9 +1597,11 @@ local function move_pad_drag(self, x, y)
 	if levette.muovi(self.move_st, nx, ny) then
 		self.jump_pressed = true
 		tocca_missione(self, "salta")
+		-- il pollice è appena entrato nell'arco del salto: una micro-vibrazione
+		vibra_tocco()
 	end
 	local on = self.move_st.moving or self.move_st.jumping
-	pad_colore(self.move_pad, on and MOVE_LIVE or MOVE_IDLE)
+	pad_colore(self.move_pad, on and MOVE_LIVE or MOVE_IDLE, self.move_st.jumping)
 end
 
 local function aim_pad_drag(self, x, y)
@@ -1534,14 +1655,6 @@ local function set_touch_ui(self, on)
 end
 
 -- Barra delle armi -------------------------------------------------------------
-
--- Di chi sono le armi nella barra: online le nostre, in locale di chi è di turno
-local function bar_robot(self)
-	if self.mode == "online" then return self.g.robots[self.me] end
-	-- contro i bot, sempre le armi del giocatore
-	if next(self.bots) then return self.g.robots[1] end
-	return current_robot(self)
-end
 
 -- Lo slot si vede? Il paracadute finché ne restano o è già aperto; l'attrezzo
 -- (Rampino o Bastione) sempre. Nelle lezioni solo quello che la lezione usa
@@ -1840,26 +1953,36 @@ local function render(self, dt)
 		scoria.update(r.rig, dt, st)
 	end
 
-	-- la fune del Rampino: dalla mano di chi tira al robot appeso; mollato, sfuma
-	if self.rope then
+	-- la fune del Rampino: mentre l'uncino vola si allunga dalla mano fino a
+	-- lui; agganciato resta tesa dalla mano di chi tira al robot appeso (o
+	-- dalla mano dell'appeso al punto del terreno); mollata, sfuma
+	local chi = self.fune_chi
+	local volo = chi and g.robots[chi].hook_shot
+	if volo and not g.robots[chi].dead then
+		local ra, rb2 = pa.r[chi], pb.r[chi]
+		local tx, ty = rb2.gx or volo.x, rb2.gy or volo.y
+		if ra.gs then tx, ty = ra.gx + (tx - ra.gx) * k, ra.gy + (ty - ra.gy) * k end
+		local x0, y0 = RM.fune_mano(self, chi)
+		RM.fune.dritta(self.fune, x0, y0, tx, ty)
+	elseif self.rope then
 		local rb = g.robots[self.rope]
-		local n = self.tracer
 		if rb.hooked and not rb.dead then
-			-- dalla mano di chi tira al centro dell'appeso, o dalla mano
-			-- dell'appeso al punto del terreno
-			local hand = self.view[rb.hooked.by or self.rope]
-			local x0, y0 = hand.x + g.robots[rb.hooked.by or self.rope].facing * game.MUZZLE * 0.5, hand.y + game.SWORD_PIVOT_Y
+			local x0, y0 = RM.fune_mano(self, rb.hooked.by or self.rope)
 			local x1, y1 = rb.hooked.x, rb.hooked.y
 			if rb.hooked.by then x1, y1 = self.view[self.rope].x, self.view[self.rope].y + game.DISEGNO_H / 2 end
-			local dx, dy = x1 - x0, y1 - y0
-			set_pos(n, (x0 + x1) / 2, (y0 + y1) / 2)
-			gui.set_size(n, vmath.vector3(math.sqrt(dx * dx + dy * dy), 1.5 * K, 0))
-			EULER.z = math.deg(math.atan2(dy, dx))
-			gui.set_euler(n, EULER)
+			RM.fune.dritta(self.fune, x0, y0, x1, y1)
 		else
 			self.rope = nil
-			gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.25, 0, hide_node)
+			RM.fune.sfuma(self.fune)
 		end
+	elseif self.fune.stato == "dritta" then
+		-- l'uncino è sparito in volo (chi tirava è morto): sfuma anche lui
+		RM.fune.sfuma(self.fune)
+	end
+	if not RM.fune.update(self.fune, dt, self.solido) and chi then
+		-- finito tutto: l'uncino torna in canna
+		scoria.uncino(self.robots[chi].rig, true)
+		self.fune_chi = nil
 	end
 
 	-- Uovo di Fiamma: rotola mentre vola, sopra i secondi che mancano allo scoppio
@@ -2054,13 +2177,25 @@ local function render(self, dt)
 		local pts = g:preview(self.aim_angle, self.aim_power, AIM_DOTS, 4, self.preview_pts, aim_weapon)
 		-- Blastron mostra solo l'inizio del volo: una freccia lunga quanto la potenza
 		-- (il Bastione mostra tutta la sagoma del blocco)
-		local shown = aim_weapon ~= "wall" and game.AIM_PREVIEW_DOTS or AIM_DOTS
-		for i, n in ipairs(self.dots) do
-			gui.set_enabled(n, i <= shown)
-			set_pos(n, pts[i].x, pts[i].y)
-		end
+		local wall = aim_weapon == "wall"
+		local shown = not wall and game.AIM_PREVIEW_DOTS or AIM_DOTS
+		mira.freccia(self.mira, pts, shown, self.cam.s, self.colors[g.current], wall)
 	else
-		for _, n in ipairs(self.dots) do gui.set_enabled(n, false) end
+		mira.freccia_via(self.mira)
+	end
+	-- sopra la testa i gradi e la potenza; a ogni tacca di potenza una micro-vibrazione
+	if self.aiming and can_aim and not cancel then
+		local v = self.view[g.current]
+		local con = mira.POTENZA[aim_weapon] and self.aim_power or nil
+		mira.cartellino(self.mira, v.x, v.y + scoria.altezza(self.robots[g.current].rig) + 3
+			+ targa.SOPRA * self.cam.s ^ -0.65 + 4 / self.cam.s, self.cam.s,
+			mira.gradi(self.aim_angle), con, self.colors[g.current])
+		local tacca = con and mira.tacca(con)
+		if tacca and self.tacca and tacca ~= self.tacca then vibra_tocco() end
+		self.tacca = tacca
+	else
+		mira.cartellino_via(self.mira)
+		self.tacca = nil
 	end
 
 	-- tempo rimasto della partita, sopra l'anello; a zero si finisce il giro di turni
@@ -2084,7 +2219,7 @@ local function render(self, dt)
 	end
 	punteggio.update(self.punti, dt, g, self.mode == "online" and self.me or g.current)
 	local n = bar_robot(self)
-	local tele = n and n.teleports_left or 0
+	local tele = n and math.max(0, n.teleports_left - self.globi_attesa) or 0
 	if self.tele_n ~= tele then
 		hud.tondo_numero(self.btn_tele, tostring(tele))
 		self.tele_n = tele
@@ -2149,12 +2284,29 @@ local function disponi(self)
 	msg.post("/terreno#script", "schermo", { kx = schermo.kx, ky = schermo.ky })
 end
 
+-- La fune del Rampino con l'uncino (battaglia/fune.lua) e il soffio del Mantice;
+-- self.nodi_rm: i loro nodi, da mettere nel mondo (fuori da init, che ha già
+-- quasi tutti i 60 upvalue che Lua permette)
+function RM.nodi(self)
+	self.fune = RM.fune.nuova(K)
+	-- la fune che cade si appoggia sul terreno della partita
+	self.solido = function(x, y) return self.g ~= nil and self.g.terrain:solid(x, y) end
+	self.soffi = {}
+	for i = 1, RM.SOFFI do
+		self.soffi[i] = box(0, 0, 1, 1, WHITE)
+		gui.set_enabled(self.soffi[i], false)
+	end
+	self.nodi_rm = RM.fune.nodi(self.fune)
+	for _, n in ipairs(self.soffi) do self.nodi_rm[#self.nodi_rm + 1] = n end
+end
+
 function init(self)
 	-- l'ultima scelta dell'allenamento contro i bot (menu/allenamento.lua)
 	self.contro_bot = { modo = "1v1", livello = "normale" }
 	-- l'ultimo capitolo aperto della campagna (menu/campagna.lua)
 	self.campagna_scelta = {}
 	self.bots = {}
+	self.globi_attesa = 0
 	msg.post(".", "acquire_input_focus")
 	self.keys = {}
 	self.preview_pts = {}
@@ -2184,12 +2336,8 @@ function init(self)
 		self.robots[i] = r
 	end
 
-	-- puntini della traiettoria: piccoli bagliori bianchi
-	self.dots = {}
-	for i = 1, AIM_DOTS do
-		local n = glow(0, 0, 14 - i * 0.5, vmath.vector4(1, 1, 1, 1 - i / (AIM_DOTS + 4)))
-		self.dots[i] = n
-	end
+	-- la mira: la freccia e il cartellino coi gradi (battaglia/mira.lua)
+	self.mira = mira.nuova()
 
 	-- missile: scia, alone col colore della squadra e nocciolo bianco
 	self.trail, self.trail_pos, self.trail_i, self.trail_n = {}, {}, 0, 0
@@ -2280,6 +2428,7 @@ function init(self)
 	-- traccia dei colpi dritti (Tonante, Rampino)
 	self.tracer = box(0, 0, 1, 1, WHITE)
 	gui.set_enabled(self.tracer, false)
+	RM.nodi(self)
 
 	-- esplosioni riusate a giro
 	self.booms, self.boom_i = {}, 0
@@ -2309,7 +2458,7 @@ function init(self)
 	-- nel mondo, nell'ordine in cui si disegnano
 	local mondo = {}
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].rig.root end
-	for _, n in ipairs(self.dots) do mondo[#mondo + 1] = n end
+	for _, n in ipairs(self.mira.nodi) do mondo[#mondo + 1] = n end
 	for _, n in ipairs(self.trail) do mondo[#mondo + 1] = n end
 	mondo[#mondo + 1] = self.projectile
 	for _, o in ipairs(self.orbs) do mondo[#mondo + 1] = o.root end
@@ -2319,6 +2468,7 @@ function init(self)
 	for _, n in ipairs(oggetti.nodi(self.oggetti)) do mondo[#mondo + 1] = n end
 	mondo[#mondo + 1] = self.shock
 	mondo[#mondo + 1] = self.tracer
+	for _, n in ipairs(self.nodi_rm) do mondo[#mondo + 1] = n end
 	-- i detriti sotto l'esplosione: ne escono mentre si spegne
 	for _, d in ipairs(self.detriti) do mondo[#mondo + 1] = d.node end
 	for _, b in ipairs(self.booms) do
@@ -2328,6 +2478,7 @@ function init(self)
 	-- le targhe: prima tutte le barre, poi tutti i testi (due draw call in tutto)
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.barre end
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.testi end
+	mondo[#mondo + 1] = self.mira.cartello
 	mondo[#mondo + 1] = self.cancel_label
 	for _, n in ipairs(mondo) do gui.set_parent(n, self.mondo) end
 
@@ -2358,7 +2509,7 @@ function init(self)
 	gui.set_parent(self.zoom_label, self.btn_zoom)
 
 	-- levette del telefono
-	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE)
+	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE, true)
 	self.aim_pad = new_pad(AIM_PAD, AIM_IDLE)
 	self.move_st, self.aim_st = levette.new(), levette.new()
 	-- barra delle armi attorno al cronometro e, a parte, il teletrasporto

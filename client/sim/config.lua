@@ -32,7 +32,8 @@ C.MODES = {
 -- uno, dopo niente; con 1 ogni 5 s se ne accumulavano più di quanti se ne
 -- lanciano.
 C.TELEPORT_SECONDS = 10
--- al primo turno di ogni robot si può fare un solo teletrasporto
+-- al primo turno di ogni robot si lancia un solo globo di partenza (quelli
+-- guadagnati nel turno si lanciano sempre)
 C.FIRST_TURN_TELEPORTS = 1
 
 -- Punti partita (strategia 7 del documento): oltre alle uccisioni contano il
@@ -40,8 +41,12 @@ C.FIRST_TURN_TELEPORTS = 1
 -- più punti allo scadere. Scelta nostra sui valori. Sergio, 29 ottobre 2026
 -- (variante A senza sbalzo e senza doppietta): Corona sul primo, trappola,
 -- parata dello scudo; Rampino e trampolino danno l'uccisione a chi li ha usati.
+-- Il danno vale per la parte di vita tolta, non per i punti di vita: una vita
+-- intera vale 100 * damage, anche a chi ha più vita dai pezzi o dall'albero
+-- (Sergio, 29 ottobre 2026: "disaccoppiare i punti dai danni"). Conta la vita
+-- delle statistiche: la vita data da una missione non cambia i punti del danno.
 C.SCORE = {
-	damage = 1,       -- per ogni punto di vita tolto a un avversario
+	damage = 1,       -- per ogni centesimo della vita intera tolto a un avversario
 	kill = 50,        -- uccisione
 	env_kill = 50,    -- in più se è ambientale (fuori dalla mappa o caduta)
 	death = -20,      -- per chi muore
@@ -50,7 +55,7 @@ C.SCORE = {
 	crown = 25,       -- in più a chi uccide il primo in classifica
 	trap = 10,        -- a chi l'ha posata, quando la trappola scatta su un avversario
 	parry = 0.5,      -- a chi porta lo scudo, per ogni punto di danno nemico che ferma
-	parry_max = 30,   -- al massimo per ogni scudo (dura fino al proprio turno dopo)
+	parry_max = 20,   -- al massimo per ogni scudo (dura fino al proprio turno dopo)
 }
 -- l'uccisione va a chi ha colpito per ultimo, se è stato entro questi secondi
 C.KILL_CREDIT_SECONDS = 10
@@ -83,19 +88,23 @@ C.CRATE_CONTENTS = {
 -- scava. Chi è colpito prende damage e viene sbalzato nella direzione del
 -- colpo a push pixel al secondo (più lift verso l'alto, per staccarlo da
 -- terra). Con un trampolino sotto i piedi vola via.
-C.SNIPER = { damage = 30, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
+C.SNIPER = { damage = 50, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
 	bounces = 6, bounce_normal = 0.5, bounce_tangent = 0.85, min_speed = 40 }
 
--- Secondarie (scelta di Sergio del 24 ottobre 2026): danno secco, nessun
--- effetto di stato, illimitate; ognuna sposta chi la usa a modo suo. La Lama
--- è in sim/game.lua (SWORD_*); Tonante, Maglio e Affondo si scelgono una a
--- testa all'inizio della partita. Distanze in pixel, velocità in pixel al secondo.
+-- Le due categorie (Sergio, 29 ottobre 2026, al posto della regola del 24):
+-- le PRIMARIE fanno danno e sono le sole che lasciano effetti di stato
+-- (C.STATUS: rallentato, armatura incrinata, bruciatura); le SECONDARIE
+-- possono fare di tutto (spostare te, spostare l'avversario, danno secco)
+-- ma non lasciano mai effetti di stato. Le secondarie sono illimitate. La
+-- Lama è in sim/game.lua (SWORD_*); Tonante, Maglio, Affondo e Mantice si
+-- scelgono una a testa all'inizio della partita. Distanze in pixel, velocità
+-- in pixel al secondo.
 -- Tonante (pistola pesante): colpo dritto e istantaneo fino a range, si ferma
 -- al primo robot o terreno. Il rinculo spinge chi spara dalla parte opposta
 -- alla mira, dritto, a recoil per recoil_ticks: la stessa spinta in tutte le
 -- direzioni (Sergio, 26 ottobre 2026), senza gravità né controllo in aria,
 -- e scivola lungo il terreno che incontra. Poi si cade da fermi.
-C.EAGLE = { damage = 23, range = 600, recoil = 300, recoil_ticks = 22 }
+C.EAGLE = { damage = 38, range = 600, recoil = 300, recoil_ticks = 22 }
 -- Maglio: martello a due mani che gira attorno alla spalla come la Lama, da
 -- from (alto dietro la testa) a to (sotto i piedi) in ticks tick, lungo reach
 -- dalla spalla. Colpisce ogni robot che tocca lungo l'arco; la testa si ferma
@@ -103,21 +112,26 @@ C.EAGLE = { damage = 23, range = 600, recoil = 300, recoil_ticks = 22 }
 -- terreno mentre cala (dalla spalla in giù), chi colpisce rimbalza in alto a
 -- bounce (pogo), anche se nel frattempo è atterrato.
 -- Finito (o fermato) l'arco, il martello resta giù hold tick.
-C.MALLET = { damage = 34, reach = 44, from = math.rad(115), to = math.rad(-100), ticks = 12, hold = 12, bounce = 320 }
+C.MALLET = { damage = 57, reach = 44, from = math.rad(115), to = math.rad(-100), ticks = 12, hold = 12, bounce = 320 }
 -- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, uno a
--- turno, si usa in qualsiasi momento del turno e non fa danno): colpo
--- dritto e istantaneo fino a range, due usi.
+-- turno, si usa in qualsiasi momento del turno e non fa danno): l'uncino parte
+-- dalla canna e vola dritto a shot_speed, senza gravità, fino a range (Sergio,
+-- 29 ottobre 2026: con le mappe 1,5 volte più grandi 220 non bastava; 400 arriva
+-- dal bordo della piattaforma agli scogli di "Giù dal bordo"). Se non prende
+-- niente cade col filo (solo nel disegno).
 -- Su un robot: viene tirato con la fune verso la mano di chi tira, dritto
 -- lungo la fune, senza gravità, a speed, per reel pixel al massimo, poi viene
--- mollato e cade dov'è. reel è tutta la portata (Sergio 26 ottobre 2026: "ce
--- lo dobbiamo tirare per bene"): arriva fin addosso a chi tira, che lo ferma.
+-- mollato e cade dov'è. Da vicino arriva fin addosso a chi tira (Sergio 26
+-- ottobre 2026: "ce lo dobbiamo tirare per bene"); da più lontano di reel resta
+-- a metà strada: sopra il vuoto cade giù (scelta nostra, così "Giù dal bordo"
+-- si fa col Rampino).
 -- Il pavimento sotto non lo ferma (scivola e sale i gradini, game.hook_slide);
 -- un muro alto o un altro robot in mezzo sì. Da sotto lo sollevi fino a te.
 -- Chi tira si può muovere nel frattempo: la fune segue la mano.
 -- Sul terreno: è chi tira che sale lungo la fune a climb_speed fino al punto
 -- colpito e si mette in piedi sopra la piattaforma, se la sua cima è entro
 -- climb pixel dal punto (il fianco di un muro alto no: resta lì e cade).
-C.HOOK = { range = 220, reel = 220, speed = 300, climb_speed = 420, climb = 64 }
+C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 64 }
 -- Bastione (attrezzo, uno a turno al posto del Rampino; scelto da Sergio il 29
 -- ottobre): posa un blocco di terreno vero w x h pixel nel punto mirato, a
 -- range pixel al massimo (la potenza della mira); se si mira più su o più giù
@@ -131,13 +145,22 @@ C.WALL = { w = 48, h = 12, range = 160, max = 2 }
 -- lungo il terreno (resta solo la parte di scatto che passa) e si ferma solo
 -- se non passa per niente. Alla fine resta keep della velocità: oltre un
 -- bordo si vola.
-C.LUNGE = { damage = 27, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb = 16 }
+C.LUNGE = { damage = 45, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb = 16 }
+-- Mantice (Sergio, 29 ottobre 2026: "una secondaria che sposta il nemico"): il
+-- soffio della forgia. Istantaneo, a forma di ventaglio: colpisce ogni robot
+-- (non chi soffia) col centro entro range pixel e entro cone radianti dalla
+-- mira, se il terreno non è in mezzo. Fa poco danno e lo spinge lontano lungo
+-- la mira a push (più lift verso l'alto, per staccarlo da terra), meno quanto
+-- più è lontano (al bordo del ventaglio far della spinta). Chi soffia non si
+-- muove. Lo scudo dimezza la spinta come per i colpi. Danno sulla scala della
+-- vita 100 (#79): 10, un decimo
+C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 520, lift = 160, far = 0.6 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.
 -- Trappola: si posa ai piedi e si arma dal turno dopo; un avversario che ci
 -- passa sopra viene lanciato in alto e lontano (per buttarlo fuori dalla mappa).
-C.TRAP = { damage = 8, launch_vy = 220, push_vx = 160 }
+C.TRAP = { damage = 13, launch_vy = 220, push_vx = 160 }
 -- Trampolino: si lancia come l'Uovo e resta dove cade (se cade su un robot, ai
 -- suoi piedi). Qualsiasi cosa ci cada sopra rimbalza in alto: robot, colpi,
 -- Uova, globi, casse e oggetti (la tavola è top pixel sopra la base). Restando
@@ -145,7 +168,7 @@ C.TRAP = { damage = 8, launch_vy = 220, push_vx = 160 }
 -- colpi allora toccano il terreno sotto, e il missile scoppia).
 C.TRAMPOLINE = { half_w = 18, top = 7, launch_vy = 300, decay = 0.6, min_vy = 80 }
 -- Scudo: assorbe hp danni e dimezza le spinte fino all'inizio del proprio turno dopo
-C.SHIELD = { hp = 60, knockback = 0.5 }
+C.SHIELD = { hp = 40, knockback = 0.5 }
 -- Paracadute: nel proprio turno, in aria, un tocco lo apre (se ne hanno
 -- stats.parachutes a partita) e un altro lo chiude. Aperto si scende al
 -- massimo a fall_speed, ci si muove in orizzontale air_mul volte più veloci
@@ -156,7 +179,7 @@ C.PARACHUTE = { fall_speed = 60, air_mul = 1.5 }
 -- punto a caso della superficie (al massimo max insieme). A fine turno, di
 -- chiunque, ogni robot coi piedi dentro (raggio r) riprende hp di vita e, se
 -- ha curato qualcuno, il cerchio sparisce
-C.HEAL = { every = 2, max = 2, hp = 40, r = 26 }
+C.HEAL = { every = 2, max = 2, hp = 27, r = 26 }
 -- trappole e trampolini in mappa al massimo, tutti insieme
 C.MAX_PLACED = 8
 
@@ -178,7 +201,7 @@ C.DRAFT_SHOTS = 2
 -- Bruciatura: danno all'inizio di ogni proprio turno. Rallentamento: corsa,
 -- velocità in aria e salto ridotti. Armatura incrinata: si prende più danno.
 C.STATUS = {
-	burn = { damage = 10 },
+	burn = { damage = 17 },
 	slow = { move = 0.6, jump = 0.8 },
 	cracked = { damage = 1.25 },
 }
@@ -190,9 +213,13 @@ C.WEAPON_STATUS = { shards = "slow", punch = "cracked" }
 -- abilità e l'equipaggiamento (opts.players[i].stats in game.new);
 -- corsa, salto e velocità in aria vengono dal profilo di fisica.
 C.STATS = {
-	-- scelta nostra: 1,5 volte la vita di prima, perché con due attacchi per
-	-- turno il danno può raddoppiare (il documento dice "la vita si alza")
-	max_hp = 150,
+	-- 100: ogni danno è una percentuale della vita. Era 150 (23 ottobre, per i
+	-- due attacchi a turno); Sergio, 29 ottobre 2026: "ci vogliono 5 turni per
+	-- ammazzare qualcuno, tutto deve togliere di più in percentuale". Con le armi
+	-- a 5/3 un colpo toglie 2,5 volte la parte di vita di prima: una vita dura
+	-- circa 2 turni nemici nel 1 contro 1 (erano 4), di rado uno solo.
+	-- Scudo, cure, pezzi e albero sono scesi a 2/3, la stessa parte di vita.
+	max_hp = 100,
 	teleports = 2,           -- globi del teletrasporto all'inizio (Sergio: 2); se ne guadagnano attaccando presto
 	parachutes = 1,          -- paracadute per partita (Sergio, 24 ottobre 2026: uno)
 	time_orbs = 1,           -- 1: i secondi avanzati diventano globi; 0 no (le lezioni che non parlano di globi)

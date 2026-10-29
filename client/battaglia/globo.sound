@@ -1,0 +1,4 @@
+sound: "/assets/suoni/globo.ogg"
+looping: 0
+group: "master"
+gain: 0.6

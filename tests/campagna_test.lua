@@ -299,6 +299,29 @@ for chi = 2, 4 do
 	check(trovato, "giu_dal_bordo: il bersaglio " .. chi .. " cade con un colpo")
 end
 
+-- Giù dal bordo col Rampino: dal bordo della piattaforma l'uncino arriva agli
+-- scogli dei lati (mappa invariata, gittata config.HOOK.range) e il bersaglio,
+-- tirato per reel e mollato sopra il vuoto, cade
+for chi, lato in pairs({ [2] = -1, [3] = 1 }) do
+	local trovato = false
+	for a = 0, 0.6, 0.02 do
+		if not trovato then
+			local angolo = lato < 0 and math.pi - a or a
+			local _, _, g = gioca("giu_dal_bordo", function(c)
+				c.tieni(lato < 0 and SINISTRA or DESTRA, function(g2)
+					local x = g2.robots[1].x
+					return lato < 0 and x <= 775 or lato > 0 and x >= 1145
+				end)
+				c.tieni(FERMO, 10)
+				c.usa("hook", angolo)
+				c.tieni(FERMO, 300)
+			end, nil, 900)
+			trovato = g.robots[1].env_kills > 0 and g.robots[chi].deaths > 0
+		end
+	end
+	check(trovato, "giu_dal_bordo: dal bordo il Rampino prende il bersaglio " .. chi .. " e lo butta giù")
+end
+
 -- Punti e Corona: si abbatte quello con la Corona (missile e Lama)
 ok = cerca("corona", function(c, a, p)
 	c.usa("missile", a, p)
@@ -357,7 +380,7 @@ do
 	local rb = g.robots[2]
 	rb.hp = 10
 	missioni.evento(r, g, { type = "turn", robot = 2 })
-	check(rb.hp == 28 and rb.max_hp == 28, "due_mani: il bot si rimette a 28, non a 150")
+	check(rb.hp == 46 and rb.max_hp == 46, "due_mani: il bot si rimette a 46, non alla vita normale")
 end
 -- e chi rinasce rinasce con la vita della missione (Fuori portata: 40)
 for _, l in ipairs(campagna.CAPITOLI[2].missioni) do

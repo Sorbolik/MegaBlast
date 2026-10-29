@@ -1,0 +1,29 @@
+# Globi guadagnati: al primo turno Rosso lancia il globo di partenza, poi spara
+# subito e guadagna due globi. Volano in curva dall'anello al pulsante viola,
+# ognuno lo fa lampeggiare (e suona); poi i due globi guadagnati si lanciano
+# lo stesso, anche se è il primo turno.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.3
+tocca 1180 62                       # TELE: il globo di partenza
+mira -40 140 0.2
+aspetta_evento orb 2
+mira 150 100 0.3                    # missile subito: due globi
+aspetta_evento fire 2
+aspetta 0.25
+foto 01_globi_si_staccano
+aspetta 0.3
+foto 02_globi_in_volo
+aspetta 0.2
+foto 03_primo_arriva
+aspetta 0.6
+foto 04_arrivati
+tocca 1180 62                       # TELE: primo globo guadagnato
+mira 30 140 0.2
+aspetta_evento orb 2
+tocca 1180 62                       # TELE: secondo globo guadagnato
+mira 60 140 0.2
+aspetta_evento orb 2
+foto 05_globi_guadagnati_lanciati
