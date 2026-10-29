@@ -39,7 +39,8 @@
 --   fallisce = { muori = true, esaurito = "paracadute" } (e sempre se la partita finisce prima)
 --   turni: oltre questi turni del giocatore si ricomincia
 --   stelle = { 3, 2 } (turni per la seconda e la terza) oppure
---     { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } }
+--     { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } } oppure
+--     { bonus = { ... }, bonus2 = { ... } } (due bonus, senza turni: le partite vere)
 --   collaudo = { carattere, piano, senza }: come la prova strumenti/arena/collaudo.lua
 --   righe = { { testo, quando, fino, su = "bot", evidenzia, ferma, subito } }: quando
 --     e fino sono { evento = "crate_pick" }, { passo = 2 } (fatto il passo 2),
@@ -57,7 +58,8 @@
 --   { raggiungi = { x = 1200, y = 150 } }   in piedi sopra quella quota, oltre quella x
 --   { colpisci = 2, con = "sword" | "primaria" | "secondaria" | un'arma }
 --   { abbatti = 2 | "nemico", come = "vuoto", con = arma, volte = 3 }
--- Altri verbi (vinci, sopravvivi, proteggi...) entrano con le missioni che li usano.
+--   { vinci = true }                        la partita finisce e la tua squadra ha vinto
+-- Altri verbi (sopravvivi, proteggi...) entrano con le missioni che li usano.
 -- I conteggi per i bonus delle stelle: morti, teletrasporti, vuoto (uccisioni
 -- ambientali tue), abbattuti, danni (presi da te).
 
@@ -262,6 +264,8 @@ local function passo_fatto(p, i, st, g, e)
 	elseif p.colpisci then
 		return e ~= nil and e.type == "damage" and e.amount > 0 and bersaglio(g, p.colpisci, e.robot)
 			and arma_ok(p.con, st.arma)
+	elseif p.vinci then
+		return e ~= nil and e.type == "over" and e.winner == g.robots[GIOCATORE].team
 	elseif p.abbatti then
 		if e and e.type == "death" and e.by == GIOCATORE and bersaglio(g, p.abbatti, e.robot)
 			and (p.come ~= "vuoto" or e.env) and arma_ok(p.con, st.arma) then
@@ -484,6 +488,7 @@ end
 function M.criteri(l)
 	if l.guidata then return { "FINITA", "VINTA", "CON 100 PUNTI DI VANTAGGIO" } end
 	local s = l.stelle
+	if s.bonus2 then return { "FATTA", s.bonus.testo, s.bonus2.testo } end
 	if s.bonus then return { "FATTA", turni(s.turni), s.bonus.testo } end
 	return { "FATTA", turni(s[1]), turni(s[2]) }
 end
@@ -503,6 +508,7 @@ function M.stelle(r)
 		return { true, st.vinta == true, st.vinta == true and st.distacco >= 100 }
 	end
 	local s = l.stelle
+	if s.bonus2 then return { true, bonus(s.bonus, st), bonus(s.bonus2, st) } end
 	if s.bonus then
 		-- il bonus vale da solo: si può avere la terza senza la seconda
 		return { true, st.turni <= s.turni, bonus(s.bonus, st) }

@@ -21,8 +21,10 @@ local replay = require "sim.replay"
 local SEMI = tonumber(arg[1]) or 12
 local SOLO = arg[2]
 local LIVELLI = { "facile", "normale", "difficile" }
--- tetto di tick per partita: 12 turni da 25 s
+-- tetto di tick per partita: 12 turni da 25 s; le partite vere (senza limite
+-- di turni) fino alla fine del tempo, con i supplementari
 local TETTO = 12 * 26 * 60
+local TETTO_PARTITA = 8 * 60 * 60
 
 local function copia(t)
 	local o = {}
@@ -45,7 +47,7 @@ local function gioca(l, livello, seme, senza)
 		bots[1].liv = liv
 	end
 	missioni.prepara(r, g)
-	for _ = 1, TETTO do
+	for _ = 1, l.turni and TETTO or TETTO_PARTITA do
 		g:step(replay.input(ric, g, bots))
 		for _, e in ipairs(g:pop_events()) do
 			missioni.evento(r, g, e, bots)
