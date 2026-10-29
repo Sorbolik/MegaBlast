@@ -1,6 +1,6 @@
 -- La home (menu principale): fondo scuro, la Scoria col bagliore del Nucleo
 -- dietro, il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
--- online), STESSO TELEFONO e ARMERIA. Le schermate nuove aggiungono qui il loro bottone
+-- online), CONTRO I BOT, STESSO TELEFONO e ARMERIA. Le schermate nuove aggiungono qui il loro bottone
 -- quando esistono (stile in ui/ui.lua).
 --
 -- Uso (dal gui_script, che ha la texture ui e il font titolo):
@@ -8,7 +8,7 @@
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
 --   home.show(h) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
---   local scelta = home.on_input(h, action_id, action)   -- "online", "local", "armeria" o nil
+--   local scelta = home.on_input(h, action_id, action)   -- "online", "bot", "local", "armeria" o nil
 
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
@@ -68,6 +68,7 @@ function M.new(colore)
 
 	-- in basso a destra: le partite
 	local dx = angolo(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
+	ui.bottone(h.bottoni, 0, 256, 340, 72, "CONTRO I BOT", "bot", nil, dx)
 	ui.bottone(h.bottoni, 0, 168, 340, 72, "STESSO TELEFONO", "local", nil, dx)
 	ui.bottone(h.bottoni, 0, 60, 340, 108, "GIOCA", "online", { principale = true, colore = colore }, dx)
 

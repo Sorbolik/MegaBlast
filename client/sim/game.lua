@@ -315,6 +315,7 @@ end
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
 -- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
+-- opts.score = punti partita al posto di config.SCORE (l'arena prova le varianti)
 -- opts.normalize = modalità Torneo: le statistiche di albero e equipaggiamento
 -- non contano, tutti hanno quelle di base (resta l'arma della scelta)
 function M.new(seed, map_id, opts)
@@ -332,6 +333,7 @@ function M.new(seed, map_id, opts)
 	g.order = turn_order(players)
 	g.mode = match_mode(players)
 	g.normalized = opts.normalize or false
+	g.score = opts.score or C.SCORE
 	-- i punti di partenza nell'ordine dei turni (compagni dallo stesso lato), poi i bersagli
 	local placing = {}
 	for k, i in ipairs(g.order) do placing[k] = i end
@@ -497,8 +499,11 @@ end
 -- ambientali: caduta fuori dalla mappa o da troppo in alto) e colpendo chi è
 -- primo in classifica; morire ne toglie. Numeri in config.SCORE.
 
-function M:add_points(rb, n)
+-- reason: "damage", "death" (chi muore), "kill" (chi uccide); other è
+-- l'altro robot. L'evento "points" serve all'arena dei bot (strumenti/arena).
+function M:add_points(rb, n, reason, other)
 	rb.points = rb.points + n
+	self:emit({ type = "points", robot = rb.id, amount = n, reason = reason, other = other and other.id })
 end
 
 -- Chi ha più punti (solo se è uno solo e ne ha più di zero): colpirlo vale di più
@@ -534,7 +539,8 @@ function M:hurt(rb, amount, by, reason)
 		if rb.shield <= 0 then rb.shield = nil end
 		if amount <= 0 then return 0 end
 	end
-	local mult = rb == self:leader() and C.SCORE.leader or 1
+	local score = self.score
+	local mult = rb == self:leader() and score.leader or 1
 	-- per i punti conta solo la vita che c'era davvero
 	local real = math.min(amount, rb.hp)
 	rb.hp = rb.hp - amount
@@ -543,7 +549,7 @@ function M:hurt(rb, amount, by, reason)
 		if enemies(by, rb) then
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
-			self:add_points(by, real * C.SCORE.damage * mult)
+			self:add_points(by, real * score.damage * mult, "damage", rb)
 		end
 	end
 	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage") end
@@ -609,21 +615,22 @@ function M:kill(rb, reason)
 	end
 	-- chi si butta giù da solo non regala il bonus ambientale
 	local env = reason ~= "damage" and not own
-	local mult = rb == self:leader() and C.SCORE.leader or 1
+	local score = self.score
+	local mult = rb == self:leader() and score.leader or 1
 	rb.dead = true
 	rb.hp = 0
 	rb.deaths = rb.deaths + 1
 	if reason == "fell" then rb.falls = rb.falls + 1 end
-	self:add_points(rb, C.SCORE.death + (own and C.SCORE.self_death or 0))
+	self:add_points(rb, score.death + (own and score.self_death or 0), "death", killer)
 	local points = 0
 	if killer and enemies(killer, rb) then
 		killer.kills = killer.kills + 1
-		points = C.SCORE.kill * mult
+		points = score.kill * mult
 		if env then
 			killer.env_kills = killer.env_kills + 1
-			points = points + C.SCORE.env_kill * mult
+			points = points + score.env_kill * mult
 		end
-		self:add_points(killer, points)
+		self:add_points(killer, points, "kill", rb)
 	end
 	rb.last_hit = nil
 	rb.respawn_in = M.RESPAWN_TICKS
@@ -2230,6 +2237,12 @@ function M:explode(x, y, owner, blast, weapon)
 	blast = blast or M.MISSILE_BLAST
 	local cy0, cy1 = self.terrain:carve(x, y, blast.r)
 	self:emit({ type = "explosion", x = x, y = y, r = blast.r, row_min = cy0, row_max = cy1 })
+	self:blast(x, y, owner, blast, weapon)
+end
+
+-- L'esplosione, senza il cratere: fa saltare trappole e trampolini vicini,
+-- colpisce e spinge i robot
+function M:blast(x, y, owner, blast, weapon)
 	-- trappole e trampolini nel cratere saltano
 	for i = #self.placed, 1, -1 do
 		local o = self.placed[i]
@@ -2239,41 +2252,11 @@ function M:explode(x, y, owner, blast, weapon)
 			self:emit({ type = "placed_gone", id = o.id })
 		end
 	end
-	local blastron = M.KNOCKBACK_MODEL == "blastron"
 	for _, rb in ipairs(self.robots) do
 		if not rb.dead then
-			local dx, dy
-			if blastron then
-				-- verso il punto della scatola del robot più vicino all'esplosione
-				-- (col cerchio, il quadrato che lo contiene)
-				local hw, y0, y1 = M.ROBOT_HALF_W, rb.y, rb.y + M.ROBOT_H
-				if M.HURTBOX == "cerchio" then
-					hw = M.HURT_R + M.HURT_FAT
-					y0, y1 = rb.y + M.HURT_Y - hw, rb.y + M.HURT_Y + hw
-				end
-				dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
-				dy = math.max(y0, math.min(y1, y)) - y
-			else
-				dx, dy = rb.x - x, (rb.y + M.HURT_Y) - y
-			end
-			local d = math.sqrt(dx * dx + dy * dy)
-			if d < blast.damage_r then
-				local f = 1 - d / blast.damage_r
-				local dmin = blast.damage_min or 0
-				local dmg = dmin + (blast.damage - dmin) * f
-				if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
-				dmg = math.floor(dmg + 0.5)
-				local k = self:knock_mul(rb)
-				if blastron then
-					-- la velocità viene sostituita; senza impulse, uno con la
-					-- stessa spinta massima del modello "centro"
-					local imp = (blast.impulse or 4 * blast.knockback / blast.damage_r) * k
-					rb.vx, rb.vy = dx * imp * f, dy * imp * f
-				else
-					if d < 1 then dx, dy, d = 0, 1, 1 end
-					rb.vx = dx / d * blast.knockback * f * k
-					rb.vy = (dy / d * blast.knockback * f + 120 * f) * k
-				end
+			local dmg, vx, vy = self:blast_on(rb, x, y, blast, owner)
+			if dmg then
+				rb.vx, rb.vy = vx, vy
 				rb.grounded = false
 				rb.knocked = true
 				local by = owner and self.robots[owner]
@@ -2281,6 +2264,43 @@ function M:explode(x, y, owner, blast, weapon)
 			end
 		end
 	end
+end
+
+-- Cosa fa a rb l'esplosione blast in (x, y) di owner: il danno (prima dello
+-- scudo) e la velocità con cui parte, o nil se è fuori portata. Non cambia
+-- niente: lo usano explode e il bot (sim/bot.lua) per prevedere un colpo.
+function M:blast_on(rb, x, y, blast, owner)
+	local blastron = M.KNOCKBACK_MODEL == "blastron"
+	local dx, dy
+	if blastron then
+		-- verso il punto della scatola del robot più vicino all'esplosione
+		-- (col cerchio, il quadrato che lo contiene)
+		local hw, y0, y1 = M.ROBOT_HALF_W, rb.y, rb.y + M.ROBOT_H
+		if M.HURTBOX == "cerchio" then
+			hw = M.HURT_R + M.HURT_FAT
+			y0, y1 = rb.y + M.HURT_Y - hw, rb.y + M.HURT_Y + hw
+		end
+		dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
+		dy = math.max(y0, math.min(y1, y)) - y
+	else
+		dx, dy = rb.x - x, (rb.y + M.HURT_Y) - y
+	end
+	local d = math.sqrt(dx * dx + dy * dy)
+	if d >= blast.damage_r then return nil end
+	local f = 1 - d / blast.damage_r
+	local dmin = blast.damage_min or 0
+	local dmg = dmin + (blast.damage - dmin) * f
+	if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
+	dmg = math.floor(dmg + 0.5)
+	local k = self:knock_mul(rb)
+	if blastron then
+		-- la velocità viene sostituita; senza impulse, uno con la
+		-- stessa spinta massima del modello "centro"
+		local imp = (blast.impulse or 4 * blast.knockback / blast.damage_r) * k
+		return dmg, dx * imp * f, dy * imp * f
+	end
+	if d < 1 then dx, dy, d = 0, 1, 1 end
+	return dmg, dx / d * blast.knockback * f * k, (dy / d * blast.knockback * f + 120 * f) * k
 end
 
 function M:update_projectile()
@@ -2450,6 +2470,30 @@ function M:results()
 	return { mode = self.mode, normalized = self.normalized, winner = winner, ranking = ranking }
 end
 
+-- Impronta dello stato: un numero che cambia se cambia qualcosa che conta
+-- (tick, turno, caso, robot, colpi in volo). Due partite rigiocate con la
+-- stessa ricetta devono avere le stesse impronte (sim/replay.lua): è il
+-- controllo del determinismo, tra client e server e tra versioni.
+local IMPRONTA_MOD = 2147483629
+local function mescola(h, v)
+	return (h * 31 + math.floor(v) % IMPRONTA_MOD) % IMPRONTA_MOD
+end
+function M:impronta()
+	local h = mescola(mescola(mescola(7, self.tick), self.current), self.rng.state)
+	for _, rb in ipairs(self.robots) do
+		h = mescola(h, rb.x * 16)
+		h = mescola(h, rb.y * 16)
+		h = mescola(h, rb.hp * 16)
+		h = mescola(h, rb.points * 16)
+		h = mescola(h, rb.dead and 1 or 0)
+	end
+	local p = self.projectile
+	if p then h = mescola(mescola(h, p.x * 16), p.y * 16) end
+	h = mescola(h, #self.orbs)
+	h = mescola(h, #self.placed)
+	return h
+end
+
 -- La partita finisce solo allo scadere del tempo, e solo a fine giro: chi ha
 -- cominciato per primo non gioca un turno in più degli altri.
 function M:end_turn()
@@ -2467,27 +2511,10 @@ function M:end_turn()
 	self:start_turn(self.order[self.order_pos])
 end
 
-function M:step(input)
-	if self.phase == "over" then return end
-	input = input or NO_INPUT
-	self.tick = self.tick + 1
-	if self.match_left > 0 then
-		self.match_left = self.match_left - 1
-		if self.match_left == 0 then
-			self.overtime = true
-			self:emit({ type = "overtime" })
-		end
-	end
-	-- chi è morto ricomincia dopo RESPAWN_TICKS, anche a metà turno
-	for _, rb in ipairs(self.robots) do
-		if rb.dead and rb.respawn_in then
-			rb.respawn_in = rb.respawn_in - 1
-			if rb.respawn_in <= 0 then self:respawn(rb) end
-		end
-	end
-
-	-- il robot di turno si muove per tutto il turno, anche dopo gli attacchi
-	local can_move = self.phase == "aim"
+-- Un tick del mondo: robot, globi, colpi, casse, oggetti. Solo il robot di
+-- turno riceve input, se can_move. Lo usa anche il bot (sim/bot.lua) sulle
+-- sue copie della partita, per provare le mosse.
+function M:advance(input, can_move)
 	for i, rb in ipairs(self.robots) do
 		local active = i == self.current and can_move
 		self:update_robot(rb, active and input or NO_INPUT, active)
@@ -2511,6 +2538,29 @@ function M:step(input)
 	self:update_shards()
 	if #self.crates > 0 then self:update_crates() end
 	if #self.placed > 0 then self:update_placed() end
+end
+
+function M:step(input)
+	if self.phase == "over" then return end
+	input = input or NO_INPUT
+	self.tick = self.tick + 1
+	if self.match_left > 0 then
+		self.match_left = self.match_left - 1
+		if self.match_left == 0 then
+			self.overtime = true
+			self:emit({ type = "overtime" })
+		end
+	end
+	-- chi è morto ricomincia dopo RESPAWN_TICKS, anche a metà turno
+	for _, rb in ipairs(self.robots) do
+		if rb.dead and rb.respawn_in then
+			rb.respawn_in = rb.respawn_in - 1
+			if rb.respawn_in <= 0 then self:respawn(rb) end
+		end
+	end
+
+	-- il robot di turno si muove per tutto il turno, anche dopo gli attacchi
+	self:advance(input, self.phase == "aim")
 
 	if self.phase == "aim" then
 		self.timer = math.max(0, self.timer - 1)

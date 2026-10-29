@@ -12,12 +12,15 @@ local scoria = require "battaglia.scoria"
 local targa = require "battaglia.targa"
 local home = require "menu.home"
 local profilo = require "menu.profilo"
-local podio = require "menu.podio"
-local armeria = require "menu.armeria"
 local assetto = require "sim.assetto"
 local riconoscimenti = require "sim.riconoscimenti"
-local scelta_armi = require "menu.scelta"
 local draft = require "sim.draft"
+local bot = require "sim.bot"
+local replay = require "sim.replay"
+-- le schermate fuori dalla battaglia, in una tabella sola: il gui_script è
+-- vicino al limite di 200 variabili locali di Lua
+local menu = { podio = require "menu.podio", armeria = require "menu.armeria", scelta = require "menu.scelta",
+	allenamento = require "menu.allenamento" }
 local tutorial = require "battaglia.tutorial"
 local levette = require "battaglia.levette"
 local camera = require "battaglia.camera"
@@ -41,18 +44,15 @@ local SERVER_ERRORS = {
 	draining = "Il server si sta aggiornando,\nriprova tra poco",
 }
 
-local ACTION_TOUCH = hash("touch")
-local ACTION_LEFT = hash("left")
-local ACTION_RIGHT = hash("right")
-local ACTION_JUMP = hash("jump")
-local ACTION_CANCEL = hash("cancel")
-local ACTION_MULTI = hash("multitouch")
-local ACTION_TELE = hash("teleport")
-local ACTION_ZOOM = hash("zoom")
-local ACTION_ZOOM_IN = hash("zoom_avanti")
-local ACTION_ZOOM_OUT = hash("zoom_indietro")
-local ACTION_WEAPON = {}
-for i = 1, 9 do ACTION_WEAPON[hash("arma" .. i)] = i end
+-- le azioni dell'input, in una tabella sola (limite di 200 variabili locali)
+local ACTION = {
+	TOUCH = hash("touch"), LEFT = hash("left"), RIGHT = hash("right"), JUMP = hash("jump"),
+	CANCEL = hash("cancel"), MULTI = hash("multitouch"), TELE = hash("teleport"), ZOOM = hash("zoom"),
+	ZOOM_IN = hash("zoom_avanti"), ZOOM_OUT = hash("zoom_indietro"),
+	-- tasti 1-9: le armi della barra
+	WEAPON = {},
+}
+for i = 1, 9 do ACTION.WEAPON[hash("arma" .. i)] = i end
 
 -- Squadre: Cremisi e Cobalto della bibbia grafica, poi Verde e Oro per il
 -- tutti contro tutti. La palette sta solo in ui/ui.lua
@@ -521,8 +521,11 @@ local function names_colors(list)
 	return names, colors
 end
 
+-- La partita parte dalla sua ricetta (sim/replay.lua): i bot sono i
+-- giocatori con bot = livello, e i tasti di chi gioca ci finiscono dentro
 local function new_match(self, seed, map, opts)
-	self.g = game.new(seed, map, opts)
+	self.ricetta = replay.nuova(seed, map, opts)
+	self.g, self.bots = replay.partita(self.ricetta)
 	-- se sullo schermo c'è già questa mappa intatta (es. quella del menu) non la ridisegnamo
 	local key = self.g.map .. (maps.get(self.g.map).seeded and seed or "")
 	if key ~= self.drawn_map then
@@ -530,6 +533,7 @@ local function new_match(self, seed, map, opts)
 		self.drawn_map = key
 	end
 	self.names, self.colors = names_colors(self.g.robots)
+	for i in pairs(self.bots) do self.names[i] = self.names[i] .. " (bot)" end
 	for i = #self.g.robots + 1, game.MAX_PLAYERS do
 		scoria.set_enabled(self.robots[i].rig, false)
 		targa.set_enabled(self.robots[i].targa, false)
@@ -656,7 +660,7 @@ local function who_name(self, robot)
 end
 
 local function my_turn(self)
-	return self.mode == "local" or (self.mode == "online" and self.g.current == self.me)
+	return (self.mode == "local" and not self.bots[self.g.current]) or (self.mode == "online" and self.g.current == self.me)
 end
 
 local function handle_event(self, e)
@@ -817,7 +821,7 @@ local function apri_podio(self)
 	show_message(self, "", true)
 	set_controls_visible(self, false)
 	-- prima la schermata, poi il modo: se new si rompe non resta un modo senza schermata
-	self.schermata = { mod = podio, obj = podio.new(res, giocatori, me, guadagno, self.profilo) }
+	self.schermata = { mod = menu.podio, obj = menu.podio.new(res, giocatori, me, guadagno, self.profilo) }
 	self.mode = "schermata"
 end
 
@@ -1036,8 +1040,9 @@ local function tutorial_update(self, dt)
 	end
 end
 
--- Si parte con la scelta delle armi (menu/scelta.lua); finita quella, la partita
-local function start_local(self)
+-- Si parte con la scelta delle armi (menu/scelta.lua); finita quella, la partita.
+-- contro: { modo, livello } per giocare contro i bot (menu/allenamento.lua)
+local function start_local(self, contro)
 	hide_menu(self)
 	-- [megablast] tutorial = 1: STESSO TELEFONO apre il tutorial (finché la home
 	-- non ha il suo pulsante)
@@ -1047,7 +1052,12 @@ local function start_local(self)
 		return
 	end
 	-- [megablast] giocatori = 1v1, 2v2 o ffa (tutti contro tutti), sullo stesso telefono
-	local opts = { players = gconfig.MODES[config_string("megablast.giocatori", "1v1")] }
+	local modo = contro and contro.modo or config_string("megablast.giocatori", "1v1")
+	local opts = { players = {} }
+	for i, p in ipairs(gconfig.MODES[modo]) do
+		-- contro i bot il giocatore è il primo robot, gli altri sono bot
+		opts.players[i] = { team = p.team, bot = (contro and i > 1) and contro.livello or nil }
+	end
 	self.local_opts = opts
 	-- negli scenari di prova la scelta c'è solo con prova_scelta 1 (scenario scelta.txt)
 	if SIMULA and config_int("megablast.prova_scelta", 0) == 0 then
@@ -1056,13 +1066,22 @@ local function start_local(self)
 	end
 	local nomi, colori = names_colors(opts.players)
 	self.mode = "scelta"
-	scelta_armi.show(self.scelta, draft.new(os.time(), opts.players), nomi, colori)
+	local seed = os.time()
+	local d = draft.new(seed, opts.players)
+	-- i bot scelgono subito: nella scelta resta solo chi gioca
+	for i, p in ipairs(opts.players) do
+		if p.bot then bot.scegli(d, i, seed) end
+	end
+	menu.scelta.show(self.scelta, d, nomi, colori)
 end
 
 -- La partita sullo stesso telefono, con i giocatori usciti dalla scelta (nil: senza scelta)
 start_local_match = function(self, picked)
 	local opts = self.local_opts
-	if picked then opts = { players = picked } end
+	if picked then
+		for i, p in ipairs(picked) do p.bot = opts.players[i].bot end
+		opts = { players = picked }
+	end
 	if SIMULA then
 		-- solo per gli scenari di prova (comando "imposta" in strumenti/simula)
 		local colpi = config_int("megablast.prova_armi", 0)
@@ -1106,6 +1125,36 @@ start_local_match = function(self, picked)
 		local y = self.g.terrain:ground_below(a.x + vicino, a.y + 3 * game.ROBOT_H)
 		if y then b.x, b.y, b.grounded = a.x + vicino, y, true end
 	end
+	self.mode = "local"
+	set_controls_visible(self, true)
+end
+
+-- Solo negli scenari: [megablast] ricetta = file JSON di una ricetta
+-- (sim/replay.lua, dall'arena dei bot), rigiocata dall'inizio fino al tick
+-- ricetta_da senza disegnarla, poi si guarda (i video degli highlight). Le
+-- impronte fin lì devono tornare, altrimenti è un errore.
+local function start_ricetta(self, path, da)
+	local f = assert(io.open(path, "r"), "ricetta non trovata: " .. path)
+	local r = json.decode(f:read("*a"))
+	f:close()
+	hide_menu(self)
+	new_match(self, r.seme, r.mappa, r.opzioni)
+	while self.g.tick < da and self.g.phase ~= "over" do
+		self.g:step(replay.input(self.ricetta, self.g, self.bots))
+		replay.dopo(self.ricetta, self.g)
+		self.g:pop_events()
+	end
+	for i, h in ipairs(self.ricetta.impronte) do
+		local attesa = r.impronte[i]
+		if not attesa or attesa.t ~= h.t or attesa.h ~= h.h then
+			error("ricetta diversa al tick " .. h.t)
+		end
+	end
+	print("SIMULA ricetta valida fino al tick " .. self.g.tick)
+	draw_terrain(self)
+	reset_pose(self)
+	local rb = self.g.robots[self.g.current]
+	camera.salta(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
 	self.mode = "local"
 	set_controls_visible(self, true)
 end
@@ -1270,6 +1319,8 @@ end
 -- Di chi sono le armi nella barra: online le nostre, in locale di chi è di turno
 local function bar_robot(self)
 	if self.mode == "online" then return self.g.robots[self.me] end
+	-- contro i bot, sempre le armi del giocatore
+	if next(self.bots) then return self.g.robots[1] end
 	return current_robot(self)
 end
 
@@ -1779,6 +1830,9 @@ end
 -- Ciclo di vita -------------------------------------------------------------
 
 function init(self)
+	-- l'ultima scelta dell'allenamento contro i bot (menu/allenamento.lua)
+	self.contro_bot = { modo = "1v1", livello = "normale" }
+	self.bots = {}
 	msg.post(".", "acquire_input_focus")
 	self.keys = {}
 	self.preview_pts = {}
@@ -2027,7 +2081,7 @@ function init(self)
 	-- la home per ultima, così sta sopra la battaglia
 	self.home = home.new(TEAM_COLORS[1])
 	self.profilo = profilo.carica()
-	self.scelta = scelta_armi.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT)
+	self.scelta = menu.scelta.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT)
 
 	-- Nelle partite vere la mappa la sceglie il seed (sim/maps.lua). Negli scenari di
 	-- prova è fissa, così le foto si ripetono: forgia, o [megablast] prova_mappa.
@@ -2036,6 +2090,8 @@ function init(self)
 	new_match(self, os.time(), self.mappa)
 	self.g:pop_events()
 	show_menu(self)
+	local ricetta = SIMULA and config_string("megablast.ricetta", "") or ""
+	if ricetta ~= "" then start_ricetta(self, ricetta, config_int("megablast.ricetta_da", 0)) end
 end
 
 function final(self)
@@ -2066,7 +2122,9 @@ function update(self, dt)
 			self.jump_pressed = false
 			self.fire = nil
 			capture(self.pose_a, self.g)
-			self.g:step(input)
+			-- di turno un bot: i tasti sono i suoi
+			self.g:step(replay.input(self.ricetta, self.g, self.bots, input))
+			replay.dopo(self.ricetta, self.g)
 			for _, e in ipairs(self.g:pop_events()) do
 				handle_event(self, e)
 				if self.tut then tutorial.evento(self.tut, self.g, e) end
@@ -2119,7 +2177,7 @@ function update(self, dt)
 	end
 	if self.schermata and self.schermata.mod.update then self.schermata.mod.update(self.schermata.obj, dt) end
 	if self.mode == "scelta" then
-		local players = scelta_armi.update(self.scelta, dt)
+		local players = menu.scelta.update(self.scelta, dt)
 		if players then start_local_match(self, players) end
 	end
 
@@ -2231,7 +2289,14 @@ end
 function on_input(self, action_id, action)
 	if self.mode == "schermata" then
 		local fine = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
-		if fine then show_menu(self) end
+		if type(fine) == "table" then
+			-- GIOCA nell'allenamento: la scelta resta per la prossima volta
+			self.contro_bot = fine
+			chiudi_schermata(self)
+			start_local(self, fine)
+		elseif fine then
+			show_menu(self)
+		end
 		return true
 	end
 	if self.mode == "menu" then
@@ -2241,43 +2306,45 @@ function on_input(self, action_id, action)
 		elseif scelta == "online" then
 			start_online(self)
 		elseif scelta == "armeria" then
-			apri_schermata(self, armeria, self.profilo)
+			apri_schermata(self, menu.armeria, self.profilo)
+		elseif scelta == "bot" then
+			apri_schermata(self, menu.allenamento, self.contro_bot)
 		end
 		return true
 	elseif self.mode == "scelta" then
-		scelta_armi.on_input(self.scelta, action_id, action)
+		menu.scelta.on_input(self.scelta, action_id, action)
 		return true
 	end
 	-- un tasto spegne le levette (a meno che non le abbia chieste la configurazione)
-	if action_id and action_id ~= ACTION_TOUCH and action_id ~= ACTION_MULTI and action.pressed
+	if action_id and action_id ~= ACTION.TOUCH and action_id ~= ACTION.MULTI and action.pressed
 		and self.touch_ui and COMANDI == "" then
 		set_touch_ui(self, false)
 	end
-	if action_id == ACTION_LEFT then
+	if action_id == ACTION.LEFT then
 		self.keys.left = not action.released
-	elseif action_id == ACTION_RIGHT then
+	elseif action_id == ACTION.RIGHT then
 		self.keys.right = not action.released
-	elseif action_id == ACTION_JUMP then
+	elseif action_id == ACTION.JUMP then
 		if action.pressed then self.jump_pressed = true end
 		self.keys.jump = not action.released
-	elseif action_id == ACTION_TELE then
+	elseif action_id == ACTION.TELE then
 		if action.pressed then toggle_tele(self) end
-	elseif action_id == ACTION_ZOOM then
+	elseif action_id == ACTION.ZOOM then
 		if action.pressed then change_zoom(self) end
-	elseif action_id == ACTION_ZOOM_IN or action_id == ACTION_ZOOM_OUT then
-		if action.pressed then change_zoom(self, action_id == ACTION_ZOOM_OUT and 1 or -1) end
-	elseif ACTION_WEAPON[action_id] then
+	elseif action_id == ACTION.ZOOM_IN or action_id == ACTION.ZOOM_OUT then
+		if action.pressed then change_zoom(self, action_id == ACTION.ZOOM_OUT and 1 or -1) end
+	elseif ACTION.WEAPON[action_id] then
 		-- tasti 1-5: le armi della barra, in ordine
 		if action.pressed then
 			local n = 0
 			for _, sl in ipairs(self.slots) do
 				if sl.have then
 					n = n + 1
-					if n == ACTION_WEAPON[action_id] then choose_slot(self, sl.weapon) end
+					if n == ACTION.WEAPON[action_id] then choose_slot(self, sl.weapon) end
 				end
 			end
 		end
-	elseif action_id == ACTION_MULTI then
+	elseif action_id == ACTION.MULTI then
 		-- dita vere: da qui in poi il tocco del "mouse" (il primo dito) si ignora
 		if not self.multitouch then
 			self.multitouch = true
@@ -2293,7 +2360,7 @@ function on_input(self, action_id, action)
 				pointer_move(self, t.id, t.x, t.y)
 			end
 		end
-	elseif action_id == ACTION_TOUCH then
+	elseif action_id == ACTION.TOUCH then
 		if self.multitouch then return true end
 		if action.pressed then
 			pointer_down(self, "mouse", action.x, action.y)
@@ -2302,7 +2369,7 @@ function on_input(self, action_id, action)
 		else
 			pointer_move(self, "mouse", action.x, action.y)
 		end
-	elseif action_id == ACTION_CANCEL then
+	elseif action_id == ACTION.CANCEL then
 		-- tasto destro mentre si mira col sinistro: il colpo è annullato, e lasciando
 		-- il sinistro non parte niente (si può cambiare arma e mirare di nuovo)
 		if action.pressed and self.pointers.mouse == "aim" then
