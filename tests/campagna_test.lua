@@ -326,7 +326,7 @@ do
 	local rb = g.robots[2]
 	rb.hp = 10
 	missioni.evento(r, g, { type = "turn", robot = 2 })
-	check(rb.hp == 28 and rb.max_hp == 28, "due_mani: il bot si rimette a 28, non a 150")
+	check(rb.hp == 46 and rb.max_hp == 46, "due_mani: il bot si rimette a 46, non alla vita normale")
 end
 -- e chi rinasce rinasce con la vita della missione (Fuori portata: 40)
 for _, l in ipairs(campagna.CAPITOLI[2].missioni) do
