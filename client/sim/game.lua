@@ -393,6 +393,11 @@ function M.new(seed, map_id, opts)
 	g.crate_chance = not opts.crate_every and M.CRATE_CHANCE or nil
 	g.turn_no = 0
 	g.order_pos = 1
+	-- prove dell'arena (strumenti/arena) per il vantaggio di chi gioca per
+	-- secondo: komi = punti di partenza di chi apre; giro_finale = dopo il tempo
+	-- un giro in più, con chi è avanti che gioca per primo
+	if opts.komi then g.robots[g.order[1]].points = opts.komi end
+	g.giro_finale = opts.giro_finale
 	g:start_turn(g.order[1])
 	return g
 end
@@ -2500,7 +2505,17 @@ function M:end_turn()
 	self:apply_heals()
 	self:age_status(self.robots[self.current])
 	local next_pos = self.order_pos % #self.order + 1
-	if self.match_left <= 0 and next_pos == 1 then
+	if self.match_left <= 0 and next_pos == 1 and self.giro_finale and not self.finale then
+		self.finale = true
+		local pos, order = {}, {}
+		for k, id in ipairs(self.order) do pos[id], order[k] = k, id end
+		table.sort(order, function(a, b)
+			local pa, pb = self.robots[a].points, self.robots[b].points
+			if pa ~= pb then return pa > pb end
+			return pos[a] < pos[b]
+		end)
+		self.order = order
+	elseif self.match_left <= 0 and next_pos == 1 then
 		self.phase = "over"
 		local res = self:results()
 		self.winner = res.winner

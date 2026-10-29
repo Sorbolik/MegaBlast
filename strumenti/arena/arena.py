@@ -44,10 +44,10 @@ def gioca(args):
         blocchi.append((da, q))
         da += q
     extra = []
-    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi"):
+    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "komi", "giro_finale", "ritocchi", "set"):
         v = getattr(args, chiave, None)
         if v:
-            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi") else v]
+            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else v]
     t0 = time.time()
     processi = []
     for k, (da, q) in enumerate(blocchi):
@@ -97,7 +97,7 @@ def per_scelta(partite, campo):
             if p["modo"] != modo:
                 continue
             for r in p["robot"]:
-                d = dati[r[campo]]
+                d = dati[r.get(campo) or "nessuno"]
                 d[0] += 1
                 d[1] += 1 if r["posto"] == 1 else 0
                 d[2] += r["punti"]
@@ -131,7 +131,10 @@ def rapporto(partite):
         if abs(z) >= 2:
             avvisi.append(f"chi gioca per primo nel 1 contro 1 vince {100 * v1 / max(1, len(uno) - pari):.0f}% (z {z:+.1f})")
 
-    for campo, nome in (("secondaria", "Secondarie scelte"), ("primaria", "Primarie scelte (dalla scelta d'inizio partita)")):
+    scelte = [("secondaria", "Secondarie scelte"), ("primaria", "Primarie scelte (dalla scelta d'inizio partita)")]
+    if any(r.get("set") for p in partite for r in p["robot"]):
+        scelte.append(("set", "Set completi (--set misto)"))
+    for campo, nome in scelte:
         righe, a = per_scelta(partite, campo)
         avvisi += a
         out.append(tabella(nome + ": vittorie, punti e danno medi", ["modo", "arma", "robot", "vittorie", "z", "punti", "danno"], righe))
@@ -247,6 +250,10 @@ def main():
     ap.add_argument("--mappa")
     ap.add_argument("--punteggio", help="file Lua con una tabella come config.SCORE")
     ap.add_argument("--pesi", help="file Lua con una lista di pesi del bot (bot.PESI), uno a caso per robot")
+    ap.add_argument("--ritocchi", help="file Lua: function(config, game) che cambia i numeri delle armi (prova)")
+    ap.add_argument("--set", help="misto: ogni robot un set completo a caso (o nessuno)")
+    ap.add_argument("--komi", help="punti di partenza di chi apre (prova)")
+    ap.add_argument("--giro_finale", help="si: un giro in più dopo il tempo, chi è avanti gioca per primo (prova)")
     ap.add_argument("--luajit")
     ap.add_argument("--rapporto", help="solo il rapporto da un partite.jsonl già fatto")
     ap.add_argument("--video", type=int, help="il video dell'highlight N")

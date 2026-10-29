@@ -5,6 +5,10 @@
 --   luajit strumenti/arena/arena.lua [--partite N] [--da SEME] [--modo 1v1|2v2|ffa|tutti]
 --          [--livello facile|normale|difficile|misto] [--mappa forgia|crogiolo] [--uscita file.jsonl]
 --          [--punteggio variante.lua]   -- una tabella come config.SCORE (opts.score), per provare varianti
+--          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
+--                                         la ricetta non li contiene, si rigioca con lo stesso file)
+--          [--set misto]               -- ogni robot un set completo a caso (o nessuno), variante a o b
+--          [--komi N] [--giro_finale si]   -- prove per il vantaggio di chi gioca per secondo (game.new)
 --          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI): ogni robot ne prende uno a caso
 --
 -- Per ogni partita scrive una riga JSON: la ricetta (sim/replay.lua, basta a
@@ -22,6 +26,8 @@ local maps = require "sim.maps"
 local rng = require "sim.rng"
 local bot = require "sim.bot"
 local replay = require "sim.replay"
+local assetto = require "sim.assetto"
+local equip = require "sim.equipaggiamento"
 
 local opt = { partite = 10, da = 1, modo = "tutti", livello = "normale" }
 local i = 1
@@ -85,6 +91,7 @@ local USO = {
 local MODI = { "1v1", "2v2", "ffa" }
 local PUNTEGGIO = opt.punteggio and dofile(opt.punteggio) or nil
 local POPOLAZIONE = opt.pesi and dofile(opt.pesi) or nil
+if opt.ritocchi then dofile(opt.ritocchi)(config, game) end
 
 -- primaria, secondaria o oggetto (il teletrasporto è un oggetto)
 local PRIMARIE = { missile = true }
@@ -122,7 +129,23 @@ local function partita(k)
 			p.pesi = POPOLAZIONE[p.individuo]
 		end
 	end
-	local r = replay.nuova(seme, mappa, { players = players, score = PUNTEGGIO })
+	-- i set con un altro generatore ancora, per lo stesso motivo
+	if opt.set == "misto" then
+		local r2 = rng.new((seme * 69621 + 777) % 2147483647)
+		for _ = 1, 4 do r2:next() end
+		for _, p in ipairs(players) do
+			local k = math.floor(r2:next() * (2 * #equip.SETS + 1))
+			if k > 0 then
+				local set, variant = equip.SETS[1 + (k - 1) % #equip.SETS].id, k > #equip.SETS and "b" or "a"
+				local gear, tiers = {}, {}
+				for _, sl in ipairs(equip.SLOTS) do gear[sl.id], tiers[sl.id] = set, equip.TIERS end
+				p.set = set .. "_" .. variant
+				p.stats = assetto.stats(game.base_stats(), { tree = {}, gear = gear, variant = variant }, tiers)
+			end
+		end
+	end
+	local r = replay.nuova(seme, mappa, { players = players, score = PUNTEGGIO, komi = tonumber(opt.komi),
+		giro_finale = opt.giro_finale == "si" or nil })
 	local g, bots = replay.partita(r)
 
 	local ultima = {}       -- l'ultima arma usata da ogni robot
@@ -187,14 +210,14 @@ local function partita(k)
 		for _, x in ipairs(res.ranking) do
 			if x.robot == k then place = x.place end
 		end
-		robot[k] = { squadra = rb.team, livello = pl.bot, individuo = pl.individuo, primaria = pl.pick, secondaria = pl.secondary,
+		robot[k] = { squadra = rb.team, livello = pl.bot, individuo = pl.individuo, set = pl.set, primaria = pl.pick, secondaria = pl.secondary,
 			posto = place, punti = rb.points, danno = rb.damage, uccisioni = rb.kills, ambientali = rb.env_kills,
 			morti = rb.deaths, cadute = rb.falls, teletrasporti = rb.teleports, casse = rb.crates,
 			uso = s.uso, danno_arma = s.danno, uccisioni_arma = s.uccisioni }
 	end
 	r.ultimo = nil
 	return { numero = k, ricetta = r, modo = modo, mappa = mappa, vincitore = res.winner or 0, tick = g.tick, robot = robot,
-		turni = turni, punti = punti }
+		turni = turni, punti = punti, ritocchi = opt.ritocchi }
 end
 
 local out = opt.uscita and assert(io.open(opt.uscita, "w")) or io.stdout
