@@ -1,12 +1,15 @@
--- Test delle lezioni (sim/lezioni.lua): ognuna si risolve davvero con la sua
--- meccanica, e senza no. Dalla radice del repository:
---   luajit tests/lezioni_test.lua
+-- Test della campagna (sim/campagna.lua, sim/missioni.lua): ogni lezione si
+-- risolve davvero con la sua meccanica, e senza no; ogni missione parte pulita.
+-- Quanto sono difficili i gironi lo misura il collaudo coi bot
+-- (strumenti/arena/collaudo.lua). Dalla radice del repository:
+--   luajit tests/campagna_test.lua
 -- Le soluzioni sono copioni di tasti; dove serve una mira, il test la cerca
 -- su una griglia di angoli e potenze, come farebbe chi prova.
 package.path = "client/?.lua;" .. package.path
 
 local game = require "sim.game"
-local lezioni = require "sim.lezioni"
+local missioni = require "sim.missioni"
+local campagna = require "sim.campagna"
 
 local failures = 0
 local function check(cond, msg)
@@ -26,10 +29,10 @@ local SINISTRA = { left = true }
 -- condizione), c.usa(arma, angolo, potenza), c.turno() (aspetta il prossimo
 -- turno del giocatore). Restituisce l'esito, la lezione e la partita.
 local function gioca(id, copione, picks, limite)
-	local r = lezioni.nuova(id)
-	local seed, mappa, opts = lezioni.partita(r, 3, picks)
+	local r = missioni.nuova(id)
+	local seed, mappa, opts = missioni.partita(r, 3, picks)
 	local g = game.new(seed, mappa, opts)
-	lezioni.prepara(r, g)
+	missioni.prepara(r, g)
 	local co = coroutine.wrap(function(c)
 		copione(c)
 		while true do coroutine.yield(FERMO) end
@@ -60,8 +63,8 @@ local function gioca(id, copione, picks, limite)
 		local input = primo and FERMO or co(c)
 		primo = false
 		g:step(input)
-		for _, e in ipairs(g:pop_events()) do lezioni.evento(r, g, e) end
-		local esito = lezioni.tick(r, g)
+		for _, e in ipairs(g:pop_events()) do missioni.evento(r, g, e) end
+		local esito = missioni.tick(r, g)
 		if esito then return esito, r, g end
 	end
 	return nil, r, g
@@ -86,9 +89,10 @@ end
 
 local function fino_x(x) return function(g) return g.robots[1].x >= x end end
 
--- Ogni lezione: i robot partono appoggiati, e senza fare niente non è fatta
-for _, l in ipairs(lezioni.LISTA) do
-	if not l.guidata then
+-- Ogni missione: i robot partono appoggiati, e senza fare niente non è fatta
+for _, cap in ipairs(campagna.CAPITOLI) do
+for _, l in ipairs(cap.missioni) do
+	if not l.guidata and not l.giocatori[2].bot then
 		local esito, r, g = gioca(l.id, function() end, nil, 60 * 30 * (l.turni or 2) + 600)
 		local giu = true
 		for _, rb in ipairs(g.robots) do
@@ -97,6 +101,13 @@ for _, l in ipairs(lezioni.LISTA) do
 		check(giu, l.id .. ": nessuno cade da solo")
 		check(esito ~= "fatta" and r.riga ~= nil or esito == "fallita", l.id .. ": senza fare niente non si finisce")
 	end
+	-- ogni stella dice cosa serve, e l'obiettivo si legge
+	check(#missioni.criteri(l) == 3, l.id .. ": tre criteri per le stelle")
+	if type(l.obiettivo) == "table" then
+		local r = missioni.nuova(l.id)
+		check(missioni.obiettivo(r) ~= nil, l.id .. ": l'obiettivo si vede")
+	end
+end
 end
 
 -- Armi e draft: granata (primaria scelta) da lontano, poi Maglio da vicino
@@ -108,7 +119,7 @@ local ok, r, a, p = cerca("armi", function(c, a, p)
 	c.usa("mallet", 0)
 end, SCELTA, { 0.2, 1.2, 0.1 }, potenze(0.4, 1, 0.1))
 check(ok, "armi: si finisce con la primaria e la secondaria scelte")
-if ok then check(lezioni.stelle(r) == 3, "armi: in due turni sono tre stelle") end
+if ok then check(missioni.stelle(r) == 3, "armi: in due turni sono tre stelle") end
 -- Solo Lanciarune e Lama non bastano mai
 local esito = gioca("armi", function(c)
 	for _ = 1, 4 do
@@ -144,14 +155,24 @@ esito = gioca("globi", function(c)
 end)
 check(esito ~= "fatta", "globi: senza globi non si arriva")
 
--- Le casse: al secondo turno la cassa cade vicino, la si prende e si lancia la Granata
-ok = cerca("casse", function(c, a, p)
-	c.turno()
-	c.tieni(FERMO, function(g) return g.crates[1] and g.crates[1].landed end)
-	c.tieni(DESTRA, function(g) return g.robots[1].ammo.grenade > 0 end)
-	c.usa("grenade", a, p)
-end, nil, { 0.2, 1.2, 0.1 }, potenze(0.4, 1, 0.1))
-check(ok, "casse: si finisce con quello che c'è nella cassa")
+-- Il Tonante: salto, colpo in basso a mezz'aria, il rinculo porta sul pilastro, poi il missile (il Tonante è già la secondaria del turno)
+ok = cerca("tonante", function(c, a, p)
+	c.tieni(DESTRA, fino_x(940))
+	c.tieni({ jump = true, right = true }, 30)
+	c.usa("eagle", -math.pi / 2 - 0.2)
+	c.tieni(DESTRA, function(g) return g.robots[1].grounded end)
+	c.tieni(FERMO, 10)
+	c.usa("missile", a, p)
+end, nil, { 0, 0.6, 0.1 }, potenze(0.3, 1, 0.1))
+check(ok, "tonante: il rinculo porta sul pilastro")
+esito = gioca("tonante", function(c)
+	c.tieni(DESTRA, fino_x(960))
+	for _ = 1, 10 do
+		c.tieni({ right = true, jump = true }, 12)
+		c.tieni(DESTRA, 30)
+	end
+end)
+check(esito ~= "fatta", "tonante: saltando e basta non si sale")
 
 -- Il paracadute: giù dalla torre, aperto subito, a destra fino alla piattaforma, poi il missile
 ok = cerca("paracadute", function(c, a, p)
@@ -229,6 +250,23 @@ esito = gioca("maglio", function(c)
 end)
 check(esito ~= "fatta", "maglio: saltando e basta non si sale")
 
+-- Giù dal bordo: ognuno dei tre bersagli si butta giù dal suo scoglio con un missile solo
+for chi = 2, 4 do
+	local trovato = false
+	for a = -0.5, 3.6, 0.05 do
+		for p = 0.2, 1, 0.05 do
+			if not trovato then
+				local _, _, g = gioca("giu_dal_bordo", function(c)
+					c.usa("missile", a, p)
+					c.tieni(FERMO, 400)
+				end, nil, 420)
+				trovato = g.robots[1].env_kills > 0 and g.robots[chi].deaths > 0
+			end
+		end
+	end
+	check(trovato, "giu_dal_bordo: il bersaglio " .. chi .. " cade con un colpo")
+end
+
 -- Punti e Corona: si abbatte quello con la Corona (missile e Lama)
 ok = cerca("corona", function(c, a, p)
 	c.usa("missile", a, p)
@@ -243,11 +281,11 @@ check(ok, "corona: si abbatte chi è primo")
 -- primi turni, la partita dura 3 minuti. Il giocatore spara un missile per turno.
 do
 	local replay = require "sim.replay"
-	local r = lezioni.nuova("guidata")
-	local seed, mappa, opts = lezioni.partita(r, 5)
+	local r = missioni.nuova("guidata")
+	local seed, mappa, opts = missioni.partita(r, 5)
 	local ric = replay.nuova(seed, mappa, opts)
 	local g, bots = replay.partita(ric)
-	lezioni.prepara(r, g)
+	missioni.prepara(r, g)
 	local visti, ticks, esito, fermo = {}, 0, nil, nil
 	while not esito and ticks < 60 * 60 * 6 do
 		ticks = ticks + 1
@@ -262,10 +300,10 @@ do
 		end
 		g:step(replay.input(ric, g, bots, input))
 		for _, e in ipairs(g:pop_events()) do
-			lezioni.evento(r, g, e, bots)
+			missioni.evento(r, g, e, bots)
 			if e.robot == 2 then visti[r.st.turni_bot .. e.type] = true end
 		end
-		esito = lezioni.tick(r, g)
+		esito = missioni.tick(r, g)
 	end
 	check(fermo == game.TURN_TICKS, "guidata: al primo turno il cronometro aspetta il primo colpo")
 	check(visti["1swing"] or visti["1mallet"] or visti["1eagle"] or visti["1lunge"],

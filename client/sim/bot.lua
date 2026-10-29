@@ -5,7 +5,7 @@
 -- server per riempire le code.
 --
 --   local bot = require "sim.bot"
---   local b = bot.new(id, "normale", seed, pesi)   -- id del robot, livello, seme, pesi (facoltativi, vedi M.PESI)
+--   local b = bot.new(id, "normale", seed, pesi, carattere)   -- id del robot, livello, seme, pesi e carattere (facoltativi, vedi M.PESI e M.CARATTERI)
 --   local input = bot.input(b, g)           -- a ogni tick, prima di g:step(input)
 --   bot.scegli(d, i, seed)                  -- primaria e secondaria nella scelta (sim/draft.lua)
 --   b.piano = { due_attacchi = true }       -- (facoltativo, per il turno che viene) primaria e secondaria
@@ -57,6 +57,22 @@ M.ORDINE = { "facile", "normale", "difficile" }
 -- evolvere strumenti/arena/evolvi.py o imparare strumenti/arena/impara.py;
 -- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore.
 M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 20 }
+
+-- Caratteri: come gioca un bot, oltre al livello (quanto è bravo). Sono solo
+-- pesi diversi da M.PESI, quindi il bot non bara: preme sempre i tasti di un
+-- giocatore. Li usano la campagna (sim/campagna.lua, players[i].carattere) e i
+-- custodi dei gironi. codardo: tiene alla vita e scappa col globo; testa_calda:
+-- va addosso anche a costo di morire; cecchino: tira da dove sta e cammina
+-- poco; spingitore: cerca il vuoto (l'uccisione ambientale vale il triplo).
+local spinta = {}
+for k, v in pairs(C.SCORE) do spinta[k] = v end
+spinta.env_kill = C.SCORE.env_kill * 3
+M.CARATTERI = {
+	codardo = { vita_mia = 2, morte = 120, teletrasporto = 45 },
+	testa_calda = { vita_mia = 0.15, morte = 15, strada = 0.004 },
+	cecchino = { strada = 0.05, teletrasporto = 5 },
+	spingitore = { punteggio = spinta },
+}
 -- mosse provate fino in fondo (fino a quando tutto è fermo) tra le migliori
 local FINALISTE = 4
 local POTENZE = { 1, 0.75, 0.55, 0.88, 0.42 }
@@ -753,9 +769,10 @@ local function generatore(seme)
 	return r
 end
 
-function M.new(id, livello, seed, pesi)
+function M.new(id, livello, seed, pesi, carattere)
 	local liv = M.LIVELLI[livello] or M.LIVELLI.normale
 	local p = copia(M.PESI)
+	for k, v in pairs(carattere and assert(M.CARATTERI[carattere], "carattere sconosciuto: " .. carattere) or {}) do p[k] = v end
 	for k, v in pairs(pesi or {}) do p[k] = v end
 	return { id = id, livello = livello, liv = liv, pesi = p, rng = generatore((seed or 1) * 7919 + id), lavoro = 0,
 		attacchi = 0 }
