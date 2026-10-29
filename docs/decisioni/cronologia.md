@@ -14,4 +14,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 26 ott | Il diavoletto di Sergio su main (pezzi ChatGPT + Ludo), corpo ×1,4 svincolato, mappe ×1,5; trampolino; morte da soli; teletrasporto sempre; rampino che trascina; Maglio e Affondo; armi vettoriali; mappa Crogiolo e rotazione. Sera: "mi arrendo" agli asset AI, diavoletto vettoriale. Proposta di roadmap. | #44–#53 |
 | 27 ott | Editor delle animazioni (clip, pose, hitbox, perni); stampino per le skin. | #55 (bozza) |
 | 28 ott | Mergiati diavoletto vettoriale, editor e stampino, schede ChatGPT via Codex (WB-001 generata e montata); editor su Cloudflare. | #54–#57 |
+| 29 ott | Punti in partita (variante A con Corona, trappola, parata; Rampino e trampolino danno l'uccisione), HUD dei punti e attrezzo Bastione scelti da Sergio; prove nell'arena dei bot a coppie col thread del bot. | questa PR |
 | 29 ott | Roadmap fissata da Sergio (21 aree, novità: torneo della community, tornei a iscrizione, laboratorio bot, statistiche e badge, interfaccia tranquilla, clan e guerre); cartella delle decisioni; regola della sfida tra chat; proposta del bot. | #58 |

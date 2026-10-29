@@ -29,8 +29,17 @@ delle regole in [../design.md](../design.md); le varianti valutate in
 | 26 ott | **Teletrasporto sempre usabile** nel turno, mai disattivato dagli attacchi (restano i limiti: globi in mano, 6 in volo, 1 al primo turno). | PR #47 |
 | 26 ott | Scala del mondo: `game.CELL` 2 → 3, mondo 1920×1080 (mappe ×1,5). | PR #44 |
 | 28 ott | **Hitbox separate** nella sim: capsula per camminare + cerchio dei colpi, modificabili dall'editor (`client/sim/corpo.lua`); dimensione del disegno svincolata (`game.DISEGNO_H`). | PR #55 |
+| 29 ott | **Punti in partita, variante A senza sbalzo né doppietta** (Sergio): danno 1 per punto vita, uccisione 50, ambientale +50, morte −20 come prima; **Corona** visibile sul primo (×1,5 e +25 a chi lo abbatte, anche se il colpo che lo uccide fa primo chi colpisce); trappola che scatta +10 a chi l'ha posata; **parata** dello scudo 0,5 per punto fermato, max 30 per scudo (lo scudo dura un ciclo di turni, fino al proprio turno dopo); **Rampino e trampolino danno l'uccisione**. Variante B "Taglie" come evento "Caccia alla taglia". Pagina: https://claude.ai/artifact/Dh7MqD37ozQCJMKUZrmb4n | PR in corso |
 
 ## Scartate
+
+- **Punti di sbalzo** per le primarie (29 ott, Sergio): rischiano di rendere le uccisioni ambientali ancora più forti.
+- **Doppietta** (+10 se primaria e secondaria colpiscono lo stesso nemico, 29 ott, Sergio): renderebbe scontato attaccare lo stesso nemico con due colpi; le scelte del turno devono restare aperte.
+- Variante C "Gettoni" (punti fissi per colpo): toglie il premio alla mira (29 ott).
+- Strato "Stile" (al volo, di rimbalzo, da lontano): rinviato, al massimo come modificatori di evento (29 ott).
+- Partita a soglia di punti e attrezzo "Guardia" nel turno degli altri, anche solo come prova nell'arena (29 ott, Sergio: no).
+- **Rimedi all'ordine dei turni** nel 1v1 (chi apre vince il 37% tra i bot): bonus a chi apre, giro finale, serpente, rotazione (29 ott, Sergio: no, l'ordine resta com'è).
+- Fonti di punti scartate nella proposta (29 ott): sopravvivenza, casse raccolte, tempo risparmiato, precisione, danno subito, solo uccisioni, serie di uccisioni, terreno distrutto, punti da spendere, assist nel 2v2.
 
 - Nucleo come risorsa (23–24 ott): l'entrata superava la spesa, barra sempre
   piena, comprava movimento già gratis. Pagina di analisi:

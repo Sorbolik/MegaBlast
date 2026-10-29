@@ -354,6 +354,7 @@ function M.new(seed, map_id, opts)
 			shield = nil,     -- danni che lo scudo può ancora assorbire
 			parachute = false, -- aperto
 			status = {},      -- effetti di stato: tipo -> { turns = turni rimasti, by = chi l'ha dato }
+			parried = 0,      -- punti di parata presi con lo scudo di adesso (config.SCORE.parry_max)
 			life_damage = {}, -- danno preso da ogni avversario in questa vita: id -> punti di vita
 			turns = 0,     -- turni giocati
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
@@ -518,11 +519,18 @@ local function enemies(a, b)
 	return a ~= b and a.team ~= b.team
 end
 
+-- by ha spostato rb senza danno (Rampino, trampolino): conta come ultimo
+-- colpo, così se rb muore entro KILL_CREDIT_SECONDS l'uccisione è di by
+function M:credit(rb, by)
+	if by and enemies(by, rb) then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
+end
+
 -- Toglie amount punti di vita a rb. by è il robot che ha colpito (nil: nessuno,
 -- per esempio una caduta), reason va nell'evento "damage". Restituisce il danno
 -- arrivato alla vita (0 se lo scudo ha preso tutto).
 function M:hurt(rb, amount, by, reason)
 	if rb.dead or amount <= 0 then return 0 end
+	local foe = by and enemies(by, rb)
 	if by and by ~= rb then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
 	if rb.status.cracked then amount = math.floor(amount * C.STATUS.cracked.damage + 0.5) end
 	if rb.shield then
@@ -531,6 +539,14 @@ function M:hurt(rb, amount, by, reason)
 		rb.shield = rb.shield - absorbed
 		amount = amount - absorbed
 		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
+		-- parata: chi porta lo scudo prende punti per il danno nemico che ferma
+		if foe then
+			local p = math.min(C.SCORE.parry_max - rb.parried, absorbed * C.SCORE.parry)
+			if p > 0 then
+				rb.parried = rb.parried + p
+				self:add_points(rb, p)
+			end
+		end
 		if rb.shield <= 0 then rb.shield = nil end
 		if amount <= 0 then return 0 end
 	end
@@ -540,13 +556,14 @@ function M:hurt(rb, amount, by, reason)
 	rb.hp = rb.hp - amount
 	self:emit({ type = "damage", robot = rb.id, amount = amount, reason = reason })
 	if by and by ~= rb then
-		if enemies(by, rb) then
+		if foe then
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
 			self:add_points(by, real * C.SCORE.damage * mult)
 		end
 	end
-	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage") end
+	-- se era il primo prima del colpo, la Corona resta anche se il colpo fa primo chi uccide
+	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage", mult > 1) end
 	return amount
 end
 
@@ -588,8 +605,9 @@ end
 
 -- reason: "damage" (colpi), "fell" (fuori dalla mappa), "fall_damage" (caduta
 -- da troppo in alto). L'uccisione va all'ultimo che l'ha colpito, se è stato
--- da poco (KILL_CREDIT_SECONDS): così buttare giù qualcuno conta.
-function M:kill(rb, reason)
+-- da poco (KILL_CREDIT_SECONDS): così buttare giù qualcuno conta. was_leader:
+-- se era il primo prima del colpo che lo uccide (nil: si guarda adesso).
+function M:kill(rb, reason, was_leader)
 	if rb.dead then return end
 	local killer
 	if rb.last_hit and self.tick - rb.last_hit_tick <= C.KILL_CREDIT_SECONDS * 60 then
@@ -609,7 +627,8 @@ function M:kill(rb, reason)
 	end
 	-- chi si butta giù da solo non regala il bonus ambientale
 	local env = reason ~= "damage" and not own
-	local mult = rb == self:leader() and C.SCORE.leader or 1
+	if was_leader == nil then was_leader = rb == self:leader() end
+	local mult = was_leader and C.SCORE.leader or 1
 	rb.dead = true
 	rb.hp = 0
 	rb.deaths = rb.deaths + 1
@@ -623,6 +642,8 @@ function M:kill(rb, reason)
 			killer.env_kills = killer.env_kills + 1
 			points = points + C.SCORE.env_kill * mult
 		end
+		-- Corona: chi abbatte il primo in classifica prende in più crown
+		if mult > 1 then points = points + C.SCORE.crown end
 		self:add_points(killer, points)
 	end
 	rb.last_hit = nil
@@ -1369,6 +1390,8 @@ function M:fire_hook(angle)
 	self:emit({ type = "hook", robot = rb.id, x0 = x, y0 = y, x1 = ex, y1 = ey, target = hit and hit.id, anchor = anchor })
 	if hit then
 		hit.hooked = { by = rb.id, left = C.HOOK.reel }
+		-- chi tira prende l'uccisione se il nemico cade (KILL_CREDIT_SECONDS)
+		self:credit(hit, rb)
 		hit.vx, hit.vy = 0, 0
 		hit.grounded, hit.knocked, hit.fall_top = false, true, nil
 	elseif anchor then
@@ -2030,7 +2053,7 @@ function M:use_tool(kind, fire)
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
-		rb.shield = C.SHIELD.hp
+		rb.shield, rb.parried = C.SHIELD.hp, 0
 		self:emit({ type = "shield", robot = rb.id })
 		return
 	end
@@ -2100,6 +2123,8 @@ function M:bounce(rb, o)
 	local vy = spring_vy(rb, o)
 	if not vy then return end
 	rb.vy, rb.grounded, rb.rising, rb.knocked, rb.fall_top = vy, false, false, false, nil
+	-- il trampolino di un avversario ti lancia: se cadi l'uccisione è sua
+	self:credit(rb, self.robots[o.owner])
 	self:emit({ type = "bounce", id = o.id, robot = rb.id })
 end
 
@@ -2143,7 +2168,10 @@ function M:update_placed()
 					rb.vx, rb.vy = dir * C.TRAP.push_vx * k, C.TRAP.launch_vy * k
 					rb.grounded, rb.knocked, rb.fall_top = false, true, nil
 					self:emit({ type = "trap", id = o.id, robot = rb.id, x = o.x, y = o.y })
-					self:hurt(rb, C.TRAP.damage, self.robots[o.owner])
+					local owner = self.robots[o.owner]
+					if self:hurt(rb, C.TRAP.damage, owner) > 0 and owner and enemies(owner, rb) then
+						self:add_points(owner, C.SCORE.trap)
+					end
 					gone = true
 				end
 			end

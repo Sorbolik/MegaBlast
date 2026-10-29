@@ -20,10 +20,13 @@ https://claude.ai/artifact/W8SfXvxVNLSZDAx4Wc8QXJ
 | 26 ott | **Tonante** portata 600 (raddoppiata), rinculo uniforme in ogni direzione: 300 px/s × 22 tick = 110 px senza gravità, scivola sul terreno; sollevamento tolto. | PR #47 |
 | 26 ott | Skin delle armi **vettoriali** disegnate da script (`strumenti/grafica/armi.py`, SVG → PNG, contorno nero spesso): le 11 armi in mano, icone, proiettili (disegnati 1,6×). Affondo = forcone del diavolo. | PR #51 |
 | 26 ott | Cassa = baule aperto con i denti di Gabriella (bozza, PR #49). | PR #49 |
+| 29 ott | **Attrezzo del turno**: accanto al Rampino entra il **Bastione** (posa un blocco di terreno vero, 48×12 px, entro 160 px; max 2 a testa, il terzo fa crollare il più vecchio). L'attrezzo si **sceglie nel draft** in un terzo ventaglio, preselezionato dall'assetto; compagni diversi, doppioni ammessi nel tutti contro tutti. Valori del Bastione: Claude. | pagina punti, PR successive |
 
 ## Scartate
 
 - Casse ogni 2 turni (24 ott, Sergio).
+- Attrezzi Scambio, Onda (anche perché doppione della Campana di bronzo proposta dal bot), Àncora e Scatto (29 ott, Sergio ha scelto solo il Bastione). Àncora: spegne le uccisioni ambientali; Scatto: è solo altro movimento.
+- Attrezzo uguale per tutti, equipaggiato solo nell'assetto, o legato al set (29 ott).
 - Rampino come secondaria del draft: sostituito dal Maglio (24 ott).
 - Cecchino a 1400 px/s dritto (24 ott): "non scende per niente".
 - Skill-check sul Cecchino: rinviato.

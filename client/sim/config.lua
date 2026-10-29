@@ -37,14 +37,20 @@ C.FIRST_TURN_TELEPORTS = 1
 
 -- Punti partita (strategia 7 del documento): oltre alle uccisioni contano il
 -- danno, le uccisioni ambientali e i colpi a chi è primo. Vince la squadra con
--- più punti allo scadere. Scelta nostra sui valori.
+-- più punti allo scadere. Scelta nostra sui valori. Sergio, 29 ottobre 2026
+-- (variante A senza sbalzo e senza doppietta): Corona sul primo, trappola,
+-- parata dello scudo; Rampino e trampolino danno l'uccisione a chi li ha usati.
 C.SCORE = {
 	damage = 1,       -- per ogni punto di vita tolto a un avversario
 	kill = 50,        -- uccisione
 	env_kill = 50,    -- in più se è ambientale (fuori dalla mappa o caduta)
 	death = -20,      -- per chi muore
 	self_death = -30, -- in più per chi muore nel proprio turno senza colpa di un avversario
-	leader = 1.5,     -- moltiplicatore se il colpito è il primo in classifica
+	leader = 1.5,     -- moltiplicatore se il colpito è il primo in classifica (la Corona)
+	crown = 25,       -- in più a chi uccide il primo in classifica
+	trap = 10,        -- a chi l'ha posata, quando la trappola scatta su un avversario
+	parry = 0.5,      -- a chi porta lo scudo, per ogni punto di danno nemico che ferma
+	parry_max = 30,   -- al massimo per ogni scudo (dura fino al proprio turno dopo)
 }
 -- l'uccisione va a chi ha colpito per ultimo, se è stato entro questi secondi
 C.KILL_CREDIT_SECONDS = 10

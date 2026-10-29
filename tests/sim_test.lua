@@ -543,6 +543,7 @@ do
 	q:step()
 	check(r2.vy > 0 and math.abs(r2.vx) > 0 and r2.hp == hp2 - config.TRAP.damage and #q.placed == 0,
 		"la trappola lancia l'avversario e sparisce")
+	check(r2.last_hit == 1, "e chi l'ha posata prende l'uccisione se cade")
 	for _ = 1, 3000 do
 		q:step()
 		if q.current == 1 then break end
@@ -1340,6 +1341,32 @@ do
 	gl:hurt(gl.robots[3], 10, gl.robots[1])
 	gl:hurt(gl.robots[4], 10, gl.robots[2])
 	check(gl.robots[1].points == 10 * config.SCORE.leader and gl.robots[2].points == 10, "colpire il primo vale di più")
+
+	-- Corona: chi abbatte il primo in classifica prende crown in più
+	local gc = game.new(3, "forgia", { players = config.MODES.ffa })
+	gc.robots[3].points = 100
+	gc:hurt(gc.robots[3], gc.robots[3].hp, gc.robots[1])
+	local hp3 = gc.robots[3].max_hp
+	check(gc.robots[1].kills == 1 and gc.robots[1].points == (hp3 + config.SCORE.kill) * config.SCORE.leader + config.SCORE.crown,
+		"abbattere il primo vale anche la Corona (" .. gc.robots[1].points .. ")")
+
+	-- Rampino e trampolino: chi sposta un nemico senza danno prende l'uccisione se cade
+	local gk = game.new(3, "forgia")
+	run(gk, 60)
+	gk:credit(gk.robots[2], gk.robots[1])
+	gk:kill(gk.robots[2], "fell")
+	check(gk.robots[1].kills == 1 and gk.robots[1].env_kills == 1
+		and gk.robots[1].points == config.SCORE.kill + config.SCORE.env_kill, "chi tira giu col Rampino prende l'uccisione ambientale")
+
+	-- parata: lo scudo dà punti a chi lo porta per il danno nemico che ferma, fino a parry_max
+	local gp = game.new(3, "forgia", { ammo = { shield = 1 } })
+	run(gp, 60)
+	local p1, p2 = gp.robots[1], gp.robots[2]
+	gp:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
+	gp:hurt(p1, 20, p2)
+	check(p1.points == 20 * config.SCORE.parry, "la parata da punti a chi porta lo scudo (" .. p1.points .. ")")
+	gp:hurt(p1, 100, p2)
+	check(p1.points == config.SCORE.parry_max, "ma al massimo parry_max per scudo (" .. p1.points .. ")")
 
 	-- nel 2 contro 2 il danno al compagno non dà punti, e i punti si sommano per squadra
 	local gt = game.new(3, "forgia", { players = config.MODES["2v2"] })
