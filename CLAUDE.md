@@ -98,7 +98,19 @@ l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla p
 su claude.ai le connessioni verso altri siti sono bloccate.
 
 Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
-`go test ./server/` (server).
+`luajit tests/bot_test.lua` (bot e ricette), `go test ./server/` (server).
+
+## Bot e arena
+
+Il bot (`client/sim/bot.lua`) preme gli stessi tasti di un giocatore e pensa
+provando le mosse su copie della partita (`bot.mondo`, `game:advance`): se
+cambi la fisica il bot la segue da solo. Deve restare deterministico e uguale
+su LuaJIT e gopher-lua (`go test ./server/ -run TestBot`): niente tempo vero,
+niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio.
+Ogni partita ha la sua ricetta (`client/sim/replay.lua`) con le impronte dello
+stato: rigiocandola devono tornare tutte. L'arena (`strumenti/arena/`, vedi il
+README) fa giocare i bot tra loro su tutti i core e scrive il rapporto per il
+bilanciamento e gli highlight.
 
 
 ## Immagini con ChatGPT (Codex)

@@ -1114,14 +1114,17 @@ do
 	s:punch_hit(s.robots[1], sb, 1)
 	check(not sb.status.cracked, "lo scudo ferma l'effetto di stato")
 
-	-- missile normale: niente bruciatura; col set Fornace (burning_blasts) brucia
+	-- Uovo normale: niente bruciatura; col set Fornace (burning_blasts) l'Uovo
+	-- brucia, il missile no
 	local f = game.new(42, "forgia", { players = { { team = 1, stats = { burning_blasts = 1 } }, { team = 2 } } })
 	run(f, 30)
 	local fa, fb = f.robots[1], f.robots[2]
-	f:explode(fb.x, fb.y + 4, 2, nil, "missile")
-	check(not fa.status.burn, "il missile senza Fornace non brucia")
+	f:explode(fb.x, fb.y + 4, 2, nil, "grenade")
+	check(not fa.status.burn, "l'Uovo senza Fornace non brucia")
 	f:explode(fb.x + 20, fb.y + 4, 1, nil, "missile")
-	check(fb.status.burn and fb.status.burn.by == 1, "col set Fornace il missile brucia")
+	check(not fb.status.burn, "col set Fornace il missile non brucia")
+	f:explode(fb.x + 20, fb.y + 4, 1, nil, "grenade")
+	check(fb.status.burn and fb.status.burn.by == 1, "col set Fornace l'Uovo brucia")
 	-- all'inizio del turno chi brucia prende danno, e a fine turno l'effetto finisce
 	run(f, 200)
 	local before, points = fb.hp, fa.points

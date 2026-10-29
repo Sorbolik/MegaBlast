@@ -83,7 +83,7 @@ C.CRATE_CONTENTS = {
 -- scava. Chi è colpito prende damage e viene sbalzato nella direzione del
 -- colpo a push pixel al secondo (più lift verso l'alto, per staccarlo da
 -- terra). Con un trampolino sotto i piedi vola via.
-C.SNIPER = { damage = 25, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
+C.SNIPER = { damage = 30, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
 	bounces = 6, bounce_normal = 0.5, bounce_tangent = 0.85, min_speed = 40 }
 
 -- Secondarie (scelta di Sergio del 24 ottobre 2026): danno secco, nessun
@@ -95,7 +95,7 @@ C.SNIPER = { damage = 25, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp
 -- alla mira, dritto, a recoil per recoil_ticks: la stessa spinta in tutte le
 -- direzioni (Sergio, 26 ottobre 2026), senza gravità né controllo in aria,
 -- e scivola lungo il terreno che incontra. Poi si cade da fermi.
-C.EAGLE = { damage = 25, range = 600, recoil = 300, recoil_ticks = 22 }
+C.EAGLE = { damage = 23, range = 600, recoil = 300, recoil_ticks = 22 }
 -- Maglio: martello a due mani che gira attorno alla spalla come la Lama, da
 -- from (alto dietro la testa) a to (sotto i piedi) in ticks tick, lungo reach
 -- dalla spalla. Colpisce ogni robot che tocca lungo l'arco; la testa si ferma
@@ -103,7 +103,7 @@ C.EAGLE = { damage = 25, range = 600, recoil = 300, recoil_ticks = 22 }
 -- terreno mentre cala (dalla spalla in giù), chi colpisce rimbalza in alto a
 -- bounce (pogo), anche se nel frattempo è atterrato.
 -- Finito (o fermato) l'arco, il martello resta giù hold tick.
-C.MALLET = { damage = 30, reach = 44, from = math.rad(115), to = math.rad(-100), ticks = 12, hold = 12, bounce = 320 }
+C.MALLET = { damage = 34, reach = 44, from = math.rad(115), to = math.rad(-100), ticks = 12, hold = 12, bounce = 320 }
 -- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, uno a
 -- turno, si usa in qualsiasi momento del turno e non fa danno): colpo
 -- dritto e istantaneo fino a range, due usi.
@@ -131,7 +131,7 @@ C.WALL = { w = 48, h = 12, range = 160, max = 2 }
 -- lungo il terreno (resta solo la parte di scatto che passa) e si ferma solo
 -- se non passa per niente. Alla fine resta keep della velocità: oltre un
 -- bordo si vola.
-C.LUNGE = { damage = 30, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb = 16 }
+C.LUNGE = { damage = 27, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb = 16 }
 
 -- Oggetti tattici: si usano in qualsiasi momento del proprio turno, anche nel
 -- riposizionamento, e non contano come attacchi. Velocità in pixel al secondo.
@@ -183,7 +183,7 @@ C.STATUS = {
 	cracked = { damage = 1.25 },
 }
 -- Quale arma dà quale effetto (scelta nostra). La bruciatura viene dalle
--- esplosioni di chi ha stats.burning_blasts (il set Fornace).
+-- Uova di chi ha stats.burning_blasts (il set Fornace).
 C.WEAPON_STATUS = { shards = "slow", punch = "cracked" }
 
 -- Statistiche di ogni robot che non sono fisica. Le modificano l'albero di
@@ -199,7 +199,7 @@ C.STATS = {
 	fall_damage_mul = 1,     -- quanto fa male cadere
 	trap_radius = 12,        -- quanto è larga la trappola posata
 	air_jumps = 0,           -- salti in aria prima di toccare terra (ramo Mobilità, set Corvo)
-	burning_blasts = 0,      -- 1: missile e Uovo bruciano chi colpiscono (set Fornace)
+	burning_blasts = 0,      -- 1: l'Uovo brucia chi colpisce (set Fornace)
 	status_turns = 1,        -- per quanti turni dura un effetto di stato dato da questo robot
 }
 

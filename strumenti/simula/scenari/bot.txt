@@ -1,0 +1,26 @@
+# Contro i bot: dalla home CONTRO I BOT, la scelta di modo e livello (1 contro 1
+# normale), GIOCA. Il giocatore spara, poi gioca il bot da solo: pensa, si muove
+# e attacca (primaria e secondaria), e il turno torna al giocatore.
+
+aspetta 2
+foto 01_home
+tocca 1075 323                      # CONTRO I BOT
+aspetta 1
+foto 02_allenamento
+tocca 310 440                       # 1 CONTRO 1
+tocca 890 280                       # DIFFICILE
+aspetta 0.5
+foto 03_scelta_fatta
+tocca 640 130                       # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 04_partita
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 20
+aspetta 0.3
+foto 05_turno_bot
+aspetta 2.5
+foto 06_il_bot_gioca
+aspetta_stato turno=1 fase=aim 40
+aspetta 0.5
+foto 07_di_nuovo_al_giocatore

@@ -149,7 +149,7 @@ M.SHARD_EVERY = 4        -- tick tra una scheggia e l'altra
 M.SHARD_SPEED = 950      -- la potenza non conta: escono sempre alla stessa velocità
 M.SHARD_GRAVITY = 0.2    -- la gravità le piega appena
 M.SHARD_SPREAD = math.rad(3)
-M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 7, knockback = 90 }
+M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 6.5, knockback = 90 }
 
 -- Cecchino: velocità del colpo (la potenza non conta) e quanto vive al massimo;
 -- danno, spinta, caduta e rimbalzi in config.SNIPER
@@ -317,6 +317,7 @@ end
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
 -- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
+-- opts.score = punti partita diversi da config.SCORE, solo i campi che cambiano (l'arena prova le varianti)
 -- opts.normalize = modalità Torneo: le statistiche di albero e equipaggiamento
 -- non contano, tutti hanno quelle di base (resta l'arma della scelta)
 function M.new(seed, map_id, opts)
@@ -328,12 +329,19 @@ function M.new(seed, map_id, opts)
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.WORLD_W / M.CELL, M.WORLD_H / M.CELL, M.CELL)
 	map.build(g.terrain, seed)
+	g.spawn_spots = M.find_spawn_spots(g.terrain)
 	local players = opts.players or C.MODES["1v1"]
 	assert(#players >= 2 and #players <= M.MAX_PLAYERS, "da 2 a " .. M.MAX_PLAYERS .. " giocatori")
 	g.robots = {}
 	g.order = turn_order(players)
 	g.mode = match_mode(players)
 	g.normalized = opts.normalize or false
+	g.score = C.SCORE
+	if opts.score then
+		g.score = {}
+		for k, v in pairs(C.SCORE) do g.score[k] = v end
+		for k, v in pairs(opts.score) do g.score[k] = v end
+	end
 	-- i punti di partenza nell'ordine dei turni (compagni dallo stesso lato), poi i bersagli
 	local placing = {}
 	for k, i in ipairs(g.order) do placing[k] = i end
@@ -551,7 +559,7 @@ function M:hurt(rb, amount, by, reason)
 		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
 		-- parata: chi porta lo scudo prende punti per il danno nemico che ferma
 		if foe then
-			local p = math.min(C.SCORE.parry_max - rb.parried, absorbed * C.SCORE.parry)
+			local p = math.min(self.score.parry_max - rb.parried, absorbed * self.score.parry)
 			if p > 0 then
 				rb.parried = rb.parried + p
 				self:add_points(rb, p, "parry", by)
@@ -560,7 +568,8 @@ function M:hurt(rb, amount, by, reason)
 		if rb.shield <= 0 then rb.shield = nil end
 		if amount <= 0 then return 0 end
 	end
-	local mult = rb == self:leader() and C.SCORE.leader or 1
+	local score = self.score
+	local mult = rb == self:leader() and score.leader or 1
 	-- per i punti conta solo la vita che c'era davvero
 	local real = math.min(amount, rb.hp)
 	rb.hp = rb.hp - amount
@@ -569,7 +578,7 @@ function M:hurt(rb, amount, by, reason)
 		if foe then
 			by.damage = by.damage + real
 			rb.life_damage[by.id] = (rb.life_damage[by.id] or 0) + real
-			self:add_points(by, real * C.SCORE.damage * mult, "damage", rb)
+			self:add_points(by, real * score.damage * mult, "damage", rb)
 		end
 	end
 	-- se era il primo prima del colpo, la Corona resta anche se il colpo fa primo chi uccide
@@ -596,7 +605,7 @@ end
 -- Il colpo di weapon ha fatto danno: l'effetto che porta, se ne porta uno
 function M:hit_status(rb, weapon, by)
 	local kind = C.WEAPON_STATUS[weapon]
-	if not kind and by and by.stats.burning_blasts > 0 and (weapon == "missile" or weapon == "grenade") then
+	if not kind and by and by.stats.burning_blasts > 0 and weapon == "grenade" then
 		kind = "burn"
 	end
 	if kind then self:add_status(rb, kind, by) end
@@ -637,23 +646,24 @@ function M:kill(rb, reason, was_leader)
 	end
 	-- chi si butta giù da solo non regala il bonus ambientale
 	local env = reason ~= "damage" and not own
+	local score = self.score
 	if was_leader == nil then was_leader = rb == self:leader() end
-	local mult = was_leader and C.SCORE.leader or 1
+	local mult = was_leader and score.leader or 1
 	rb.dead = true
 	rb.hp = 0
 	rb.deaths = rb.deaths + 1
 	if reason == "fell" then rb.falls = rb.falls + 1 end
-	self:add_points(rb, C.SCORE.death + (own and C.SCORE.self_death or 0), "death", killer)
+	self:add_points(rb, score.death + (own and score.self_death or 0), "death", killer)
 	local points = 0
 	if killer and enemies(killer, rb) then
 		killer.kills = killer.kills + 1
-		points = C.SCORE.kill * mult
+		points = score.kill * mult
 		if env then
 			killer.env_kills = killer.env_kills + 1
-			points = points + C.SCORE.env_kill * mult
+			points = points + score.env_kill * mult
 		end
 		-- Corona: chi abbatte il primo in classifica prende in più crown
-		if mult > 1 then points = points + C.SCORE.crown end
+		if mult > 1 then points = points + score.crown end
 		self:add_points(killer, points, "kill", rb)
 	end
 	rb.last_hit = nil
@@ -661,10 +671,69 @@ function M:kill(rb, reason, was_leader)
 	self:emit({ type = "death", robot = rb.id, reason = reason, by = killer and killer.id, env = env, points = points, own = own })
 end
 
--- Alla morte si ricomincia con la vita piena in un punto libero a caso della
--- mappa. Teletrasporti e colpi delle armi restano.
+-- Punti di rinascita: sopra l'acciaio, che non si distrugge, così sotto i
+-- piedi c'è sempre terreno (Sergio, 29 ottobre 2026: "sempre su parti fisse
+-- della mappa, ma sempre randomici"). Ogni SPAWN_PASSO px lungo le superfici
+-- d'acciaio con lo spazio per il robot sopra; nil se la mappa non ne ha.
+M.SPAWN_PASSO = 24
+-- distanza minima dai nemici vivi e dalle trappole per rinascere in un punto
+M.SPAWN_LONTANO = 300
+M.SPAWN_TRAPPOLA = 48
+
+function M.find_spawn_spots(t)
+	local head = math.ceil(M.ROBOT_H / t.cell)
+	local half = math.ceil(M.ROBOT_HALF_W / t.cell)
+	local out = {}
+	for x = 30, M.WORLD_W - 30, M.SPAWN_PASSO do
+		local cx = math.floor(x / t.cell)
+		for cy = 0, t.h - 2 do
+			if t:get(cx, cy) == terrain.STEEL and t:get(cx, cy + 1) == 0
+				and not t:any_solid(cx - half, cx + half, cy + 1, cy + head) then
+				out[#out + 1] = { x = x, y = (cy + 1) * t.cell }
+			end
+		end
+	end
+	return #out > 0 and out or nil
+end
+
+-- Il punto di rinascita di rb: a caso tra quelli liberi, lontani dai nemici
+-- vivi (SPAWN_LONTANO) e dalle trappole; se non ce n'è nessuno, il più
+-- lontano dai nemici. Senza punti d'acciaio, un punto libero a caso.
+function M:spawn_spot(rb)
+	local spots = self.spawn_spots
+	if not spots then
+		return self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
+	end
+	local ok, best, best_d = {}, nil, -1
+	for _, s in ipairs(spots) do
+		if not self:robot_collides(s.x, s.y, rb) then
+			local d = math.huge
+			for _, o in ipairs(self.robots) do
+				if o ~= rb and not o.dead and o.team ~= rb.team then
+					local dx, dy = o.x - s.x, o.y - s.y
+					d = math.min(d, math.sqrt(dx * dx + dy * dy))
+				end
+			end
+			local trappola = false
+			for _, o in ipairs(self.placed) do
+				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAPPOLA and math.abs(o.y - s.y) < M.SPAWN_TRAPPOLA then
+					trappola = true
+				end
+			end
+			if not trappola then
+				if d >= M.SPAWN_LONTANO then ok[#ok + 1] = s end
+				if d > best_d then best, best_d = s, d end
+			end
+		end
+	end
+	local s = #ok > 0 and ok[1 + math.floor(self.rng:next() * #ok)] or best
+	if s then return s.x, s.y end
+end
+
+-- Alla morte si ricomincia con la vita piena in un punto di rinascita
+-- (spawn_spot). Teletrasporti e colpi delle armi restano.
 function M:respawn(rb)
-	local x, y = self:surface_spot(function(x, gy) return not self:robot_collides(x, gy, rb) end)
+	local x, y = self:spawn_spot(rb)
 	local sp = maps.get(self.map).spawns[1]
 	rb.x = x or sp.x
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
@@ -2280,7 +2349,7 @@ function M:update_placed()
 					self:emit({ type = "trap", id = o.id, robot = rb.id, x = o.x, y = o.y })
 					local owner = self.robots[o.owner]
 					if self:hurt(rb, C.TRAP.damage, owner) > 0 and owner and enemies(owner, rb) then
-						self:add_points(owner, C.SCORE.trap, "trap", rb)
+						self:add_points(owner, self.score.trap, "trap", rb)
 					end
 					gone = true
 				end
@@ -2370,6 +2439,12 @@ function M:explode(x, y, owner, blast, weapon)
 	blast = blast or M.MISSILE_BLAST
 	local cy0, cy1 = self.terrain:carve(x, y, blast.r)
 	self:emit({ type = "explosion", x = x, y = y, r = blast.r, row_min = cy0, row_max = cy1 })
+	self:blast(x, y, owner, blast, weapon)
+end
+
+-- L'esplosione, senza il cratere: fa saltare trappole e trampolini vicini,
+-- colpisce e spinge i robot
+function M:blast(x, y, owner, blast, weapon)
 	-- trappole e trampolini nel cratere saltano
 	for i = #self.placed, 1, -1 do
 		local o = self.placed[i]
@@ -2379,41 +2454,11 @@ function M:explode(x, y, owner, blast, weapon)
 			self:emit({ type = "placed_gone", id = o.id })
 		end
 	end
-	local blastron = M.KNOCKBACK_MODEL == "blastron"
 	for _, rb in ipairs(self.robots) do
 		if not rb.dead then
-			local dx, dy
-			if blastron then
-				-- verso il punto della scatola del robot più vicino all'esplosione
-				-- (col cerchio, il quadrato che lo contiene)
-				local hw, y0, y1 = M.ROBOT_HALF_W, rb.y, rb.y + M.ROBOT_H
-				if M.HURTBOX == "cerchio" then
-					hw = M.HURT_R + M.HURT_FAT
-					y0, y1 = rb.y + M.HURT_Y - hw, rb.y + M.HURT_Y + hw
-				end
-				dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
-				dy = math.max(y0, math.min(y1, y)) - y
-			else
-				dx, dy = rb.x - x, (rb.y + M.HURT_Y) - y
-			end
-			local d = math.sqrt(dx * dx + dy * dy)
-			if d < blast.damage_r then
-				local f = 1 - d / blast.damage_r
-				local dmin = blast.damage_min or 0
-				local dmg = dmin + (blast.damage - dmin) * f
-				if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
-				dmg = math.floor(dmg + 0.5)
-				local k = self:knock_mul(rb)
-				if blastron then
-					-- la velocità viene sostituita; senza impulse, uno con la
-					-- stessa spinta massima del modello "centro"
-					local imp = (blast.impulse or 4 * blast.knockback / blast.damage_r) * k
-					rb.vx, rb.vy = dx * imp * f, dy * imp * f
-				else
-					if d < 1 then dx, dy, d = 0, 1, 1 end
-					rb.vx = dx / d * blast.knockback * f * k
-					rb.vy = (dy / d * blast.knockback * f + 120 * f) * k
-				end
+			local dmg, vx, vy = self:blast_on(rb, x, y, blast, owner)
+			if dmg then
+				rb.vx, rb.vy = vx, vy
 				rb.grounded = false
 				rb.knocked = true
 				local by = owner and self.robots[owner]
@@ -2421,6 +2466,43 @@ function M:explode(x, y, owner, blast, weapon)
 			end
 		end
 	end
+end
+
+-- Cosa fa a rb l'esplosione blast in (x, y) di owner: il danno (prima dello
+-- scudo) e la velocità con cui parte, o nil se è fuori portata. Non cambia
+-- niente: lo usano explode e il bot (sim/bot.lua) per prevedere un colpo.
+function M:blast_on(rb, x, y, blast, owner)
+	local blastron = M.KNOCKBACK_MODEL == "blastron"
+	local dx, dy
+	if blastron then
+		-- verso il punto della scatola del robot più vicino all'esplosione
+		-- (col cerchio, il quadrato che lo contiene)
+		local hw, y0, y1 = M.ROBOT_HALF_W, rb.y, rb.y + M.ROBOT_H
+		if M.HURTBOX == "cerchio" then
+			hw = M.HURT_R + M.HURT_FAT
+			y0, y1 = rb.y + M.HURT_Y - hw, rb.y + M.HURT_Y + hw
+		end
+		dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
+		dy = math.max(y0, math.min(y1, y)) - y
+	else
+		dx, dy = rb.x - x, (rb.y + M.HURT_Y) - y
+	end
+	local d = math.sqrt(dx * dx + dy * dy)
+	if d >= blast.damage_r then return nil end
+	local f = 1 - d / blast.damage_r
+	local dmin = blast.damage_min or 0
+	local dmg = dmin + (blast.damage - dmin) * f
+	if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
+	dmg = math.floor(dmg + 0.5)
+	local k = self:knock_mul(rb)
+	if blastron then
+		-- la velocità viene sostituita; senza impulse, uno con la
+		-- stessa spinta massima del modello "centro"
+		local imp = (blast.impulse or 4 * blast.knockback / blast.damage_r) * k
+		return dmg, dx * imp * f, dy * imp * f
+	end
+	if d < 1 then dx, dy, d = 0, 1, 1 end
+	return dmg, dx / d * blast.knockback * f * k, (dy / d * blast.knockback * f + 120 * f) * k
 end
 
 function M:update_projectile()
@@ -2590,6 +2672,30 @@ function M:results()
 	return { mode = self.mode, normalized = self.normalized, winner = winner, ranking = ranking }
 end
 
+-- Impronta dello stato: un numero che cambia se cambia qualcosa che conta
+-- (tick, turno, caso, robot, colpi in volo). Due partite rigiocate con la
+-- stessa ricetta devono avere le stesse impronte (sim/replay.lua): è il
+-- controllo del determinismo, tra client e server e tra versioni.
+local IMPRONTA_MOD = 2147483629
+local function mescola(h, v)
+	return (h * 31 + math.floor(v) % IMPRONTA_MOD) % IMPRONTA_MOD
+end
+function M:impronta()
+	local h = mescola(mescola(mescola(7, self.tick), self.current), self.rng.state)
+	for _, rb in ipairs(self.robots) do
+		h = mescola(h, rb.x * 16)
+		h = mescola(h, rb.y * 16)
+		h = mescola(h, rb.hp * 16)
+		h = mescola(h, rb.points * 16)
+		h = mescola(h, rb.dead and 1 or 0)
+	end
+	local p = self.projectile
+	if p then h = mescola(mescola(h, p.x * 16), p.y * 16) end
+	h = mescola(h, #self.orbs)
+	h = mescola(h, #self.placed)
+	return h
+end
+
 -- La partita finisce solo allo scadere del tempo, e solo a fine giro: chi ha
 -- cominciato per primo non gioca un turno in più degli altri.
 function M:end_turn()
@@ -2607,27 +2713,10 @@ function M:end_turn()
 	self:start_turn(self.order[self.order_pos])
 end
 
-function M:step(input)
-	if self.phase == "over" then return end
-	input = input or NO_INPUT
-	self.tick = self.tick + 1
-	if self.match_left > 0 then
-		self.match_left = self.match_left - 1
-		if self.match_left == 0 then
-			self.overtime = true
-			self:emit({ type = "overtime" })
-		end
-	end
-	-- chi è morto ricomincia dopo RESPAWN_TICKS, anche a metà turno
-	for _, rb in ipairs(self.robots) do
-		if rb.dead and rb.respawn_in then
-			rb.respawn_in = rb.respawn_in - 1
-			if rb.respawn_in <= 0 then self:respawn(rb) end
-		end
-	end
-
-	-- il robot di turno si muove per tutto il turno, anche dopo gli attacchi
-	local can_move = self.phase == "aim"
+-- Un tick del mondo: robot, globi, colpi, casse, oggetti. Solo il robot di
+-- turno riceve input, se can_move. Lo usa anche il bot (sim/bot.lua) sulle
+-- sue copie della partita, per provare le mosse.
+function M:advance(input, can_move)
 	for i, rb in ipairs(self.robots) do
 		local active = i == self.current and can_move
 		self:update_robot(rb, active and input or NO_INPUT, active)
@@ -2651,6 +2740,29 @@ function M:step(input)
 	self:update_shards()
 	if #self.crates > 0 then self:update_crates() end
 	if #self.placed > 0 then self:update_placed() end
+end
+
+function M:step(input)
+	if self.phase == "over" then return end
+	input = input or NO_INPUT
+	self.tick = self.tick + 1
+	if self.match_left > 0 then
+		self.match_left = self.match_left - 1
+		if self.match_left == 0 then
+			self.overtime = true
+			self:emit({ type = "overtime" })
+		end
+	end
+	-- chi è morto ricomincia dopo RESPAWN_TICKS, anche a metà turno
+	for _, rb in ipairs(self.robots) do
+		if rb.dead and rb.respawn_in then
+			rb.respawn_in = rb.respawn_in - 1
+			if rb.respawn_in <= 0 then self:respawn(rb) end
+		end
+	end
+
+	-- il robot di turno si muove per tutto il turno, anche dopo gli attacchi
+	self:advance(input, self.phase == "aim")
 
 	if self.phase == "aim" then
 		self.timer = math.max(0, self.timer - 1)
@@ -2774,7 +2886,8 @@ local function blastron_profile()
 		GRENADE_BOUNCE = 0.4,
 		GRENADE_FRICTION = 1,
 		GRENADE_DAMPING = 1,
-		GRENADE_BLAST = { r = 5.5 * u, damage_r = 10 * u, damage = 550 * hp, damage_min = 300 * hp, impulse = 15 },
+		-- danno al centro 57 invece di 27,5 (arena dei bot, 29 ottobre 2026: l'Uovo era l'arma più debole)
+		GRENADE_BLAST = { r = 5.5 * u, damage_r = 10 * u, damage = 1140 * hp, damage_min = 300 * hp, impulse = 15 },
 		-- Teleport Grenade: non chiude il turno, ti porta lì dopo 3 s
 		ORB_SPEED = 80 * u,
 		ORB_GRAVITY = 1.1,
@@ -2799,7 +2912,7 @@ local function blastron_profile()
 		-- 40 u/s, saltello di 15 u/s
 		PUNCH_MODEL = "blastron",
 		PUNCH_TICKS = 127,
-		PUNCH_DAMAGE = 1000 * hp,
+		PUNCH_DAMAGE = 560 * hp,   -- 28 invece di 50 (arena dei bot, 29 ottobre 2026: vinceva troppo)
 		PUNCH_LAUNCH = 40 * u,
 		PUNCH_PUSH = 0,
 		PUNCH_HOP = 15 * u,

@@ -80,7 +80,11 @@ destra (Lama `774`, quella scelta `868`), oggetti tondi sopra le secondarie
 Bastione tondo accanto al TELE (`1084 62`; sul telefono `1112 257`). Quello
 in mano sale di 10 punti.
 Con `prova_armi` le posizioni sono nei commenti di `scenari/oggetti.txt`.
-Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, ARMERIA `168 108`.
+Home: GIOCA (online) `1075 102`, STESSO TELEFONO `1075 235`, CONTRO I BOT `1075 323`, ARMERIA `168 108`.
+Contro i bot (scelta di modo e livello, poi il bot che gioca il suo turno): `scenari/bot.txt`.
+`imposta ricetta FILE` (e `imposta ricetta_da TICK`) rigioca la ricetta di una partita
+(`client/sim/replay.lua`, dall'arena dei bot) e la mostra da quel tick: è come
+`strumenti/arena/arena.py --video N` fa i video degli highlight.
 Scenario della home: `scenari/home.txt`. Turno con due attacchi (barra gialla e blu, teletrasporti guadagnati): `scenari/turno.txt`. 2 contro 2: `scenari/squadre.txt` (`imposta giocatori 2v2`, o `ffa` per tutti contro tutti). Oggetti tattici (trappola, scudo, trampolino, paracadute): `scenari/oggetti.txt`; su un trampolino rimbalza tutto (l'Uovo): `scenari/trampolino.txt`. Effetti di stato: `scenari/stati.txt`. Scelta delle armi d'inizio partita (primaria, secondaria e attrezzo): `scenari/scelta.txt`; online, 2 contro 2 con lo scambio col compagno: `scenari/scelta_online.txt`. Secondarie e Tonante: `scenari/secondarie.txt`; Maglio: `scenari/maglio.txt`; Affondo: `scenari/affondo.txt`; Rampino (oggetto, uno a turno, sale sulla piattaforma colpita): `scenari/rampino.txt`; Rampino che trascina un nemico a terra: `scenari/rampino_nemico.txt`; Cecchino: `scenari/cecchino.txt`. Le skin di tutte le armi in mano e dei colpi in volo: `scenari/armi.txt`.
 Fine partita, podio, armeria e albero di abilità: `scenari/podio.txt`.
 

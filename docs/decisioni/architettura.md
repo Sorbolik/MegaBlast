@@ -21,6 +21,11 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 | 28 ott | Codex sul PC di Sergio esegue le schede immagini (vedi grafica.md); possibile in futuro lanciarlo da Claude via controllo remoto. | PR #56 |
 | 29 ott | **Server sempre in pari con main** (Sergio, regola permanente: vedi [regole.md](regole.md)). Verificato e allineato in questa PR: l'attrezzo dell'assetto arriva col `hello`; `start` porta le scelte del draft (il client crea la partita con le stesse armi); lo stato porta `kn` (sbalzato) e `la` (direzione dell'Affondo), che il client usava solo in locale. Punti, Corona e Bastione erano già in pari. | questa PR |
 | 29 ott | **L'online si prova nel simulatore**: nella build del simulatore senza estensione il client usa una WebSocket su LuaSocket (`client/main/ws_socket.lua`); il comando `server MODO N` degli scenari avvia il server vero e N giocatori finti (`strumenti/simula/finti`). Scelte di Claude: LuaSocket invece di un server finto dentro il client (prova il protocollo vero, nessun codice di prova nel gioco oltre al trasporto); giocatori finti in Go come quelli della prova di carico. Scartati: un client Python (dipendenza in più), bot nel server (il bot del thread dedicato non è ancora su main). | questa PR |
+| 29 ott | **Bot** (Sergio: "vai, butta giù tutto"): euristico in `client/sim/bot.lua`, preme gli stessi tasti di un giocatore; prova le mosse su copie della partita con la fisica vera (`game:advance`, esplosioni senza cratere) e sceglie quella che vale più punti partita; pensa a pezzi con un tetto di lavoro per tick (~4 ms per tick senza JIT, 400 unità). Livelli facile/normale/difficile. Uguale su server e telefono (test `server/bot_test.go`). | PR del bot |
+| 29 ott | **Ricette e impronte** (`client/sim/replay.lua`): seme, mappa, giocatori (livello dei bot), tasti dei giocatori veri solo quando cambiano, impronta dello stato (`game:impronta`) ogni 10 s e alla fine. Rigiocando devono tornare tutte: base per replay, validazione delle partite e video degli highlight. Sergio: "deve essere possibile ricostruire in maniera deterministica una partita, e validata". | PR del bot |
+| 29 ott | **Arena dei bot** (`strumenti/arena/`): partite senza grafica, un processo luajit per core (~12.000 partite all'ora su 4 core), rapporto per il bilanciamento, highlight per rarità e spettacolo, video rigiocati nel simulatore. Le serie lunghe girano sul PC di Sergio. | PR del bot |
+| 29 ott | **Bot con rete neurale che imparano da soli** (Sergio: "vorrei che si evolvessero, che imparassero il gioco da soli"): la rete (`client/sim/rete.lua`, solo somme, prodotti e ReLU, uguale su LuaJIT e gopher-lua) giudica ogni mossa che il bot prova guardando 20 caratteristiche della posizione che ne esce; il bot resta quello che preme i tasti, quindi non bara. `strumenti/arena/evolvi.py` le fa evolvere da pesi a caso, senza fine, col bot euristico come riferimento fisso, campioni passati come avversari ed esami ogni 5 generazioni. Tutti i bot, finiti gli attacchi, si riparano (a piedi o col Rampino) (Claude). | PR del bot |
+| 29 ott | **Apprendimento a gradiente** (Sergio: "perché non metti in piedi anche l'apprendimento a gradiente... facciamo partire una bella larga scala sul mio computer"): `strumenti/arena/impara.py` fa imparare alla rete quanto rende una posizione (da ogni fine turno a fine partita), giro dopo giro sulle partite che gioca, con numpy; corsa lunga sul PC di Sergio. Rete e strumenti restano fuori dal gioco, che usa il bot euristico. | PR del bot |
 | 29 ott | Roadmap: VPS europeo + SQLite + Litestream + Caddy; account ospite; pannello servito dal Go; GitHub Actions per i test; deploy a script; build anche browser dal nostro server. | docs/roadmap.md |
 
 ## Scartate
@@ -32,6 +37,19 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 - Pagine GitHub per la build web: repo privato richiede piano a pagamento
   (24 ott). Azione GitHub per le build automatiche: nessun host raggiungibile.
 - LuaJIT via cgo sul server: leva futura, non ora.
+- Bot: copiare la partita intera per una ricerca ad albero (MCTS) a ogni mossa
+  (troppo per i telefoni deboli), rete neurale come bot del gioco (resta
+  esperimento del Laboratorio bot e livello "assurdo"), bot che legge il caso
+  o le casse (barerebbe), bot solo sul server (offline non ci sarebbe), cammini
+  A* su tutta la griglia (bastano i passi provati con la fisica vera), librerie
+  di behavior tree/GOAP (pesano più del bot) — 29 ott.
+- Rete neurale che preme i tasti tick per tick (dalla grafica o dallo stato
+  all'input): impara troppo lentamente per le partite che possiamo giocare e
+  sul telefono costerebbe a ogni tick (Claude) — 29 ott.
+- PyTorch per l'apprendimento a gradiente: installazione pesante e GPU inutile
+  per una rete di un migliaio di pesi; basta numpy (Claude) — 29 ott.
+- Tetto di lavoro del bot a tempo (millisecondi): non deterministico, client e
+  server sceglierebbero mosse diverse; si conta il lavoro — 29 ott.
 - Kubernetes, piattaforme gestite, cloud gratuito (29 ott).
 
 ## Aperte
