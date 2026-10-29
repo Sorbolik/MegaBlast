@@ -27,7 +27,7 @@ local SCINTILLE = 3
 
 local function nodo(w, h, color, parent)
 	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(w, h, 0))
-	gui.set_adjust_mode(n, gui.ADJUST_STRETCH)
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_color(n, color)
 	if parent then gui.set_parent(n, parent) end
 	return n
@@ -35,7 +35,7 @@ end
 
 local function cerchio(d, color, parent)
 	local n = gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d, d, 0))
-	gui.set_adjust_mode(n, gui.ADJUST_STRETCH)
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_color(n, color)
 	if parent then gui.set_parent(n, parent) end
 	return n

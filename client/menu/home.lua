@@ -13,6 +13,7 @@
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
 local ui = require "ui.ui"
+local schermo = require "ui.schermo"
 
 local M = {}
 
@@ -77,8 +78,8 @@ function M.new(colore)
 	ui.bottone(h.bottoni, 0, 60, 240, 72, "ARMERIA", "armeria", nil, sx)
 
 	-- velo nero che si dissolve quando la home compare
-	h.velo = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W, H, 0))
-	gui.set_adjust_mode(h.velo, gui.ADJUST_STRETCH)
+	h.velo = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * schermo.PIENO, H * schermo.PIENO, 0))
+	gui.set_adjust_mode(h.velo, gui.ADJUST_FIT)
 	gui.set_color(h.velo, vmath.vector4(0, 0, 0, 1))
 
 	M.hide(h)

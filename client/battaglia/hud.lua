@@ -47,8 +47,8 @@ local GLOBI, GLOBO_VOLO, GLOBO_DOPO = 6, 0.55, 0.09
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(1, 1, 1, 1)
 
-local function stretch(n)
-	gui.set_adjust_mode(n, gui.ADJUST_STRETCH)
+local function fit(n)
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	return n
 end
 
@@ -76,23 +76,30 @@ local ONDA_DA = 0.1   -- da questo battito in su esce anche l'onda dal bordo
 
 function M.cronometro(x, y)
 	local c = { battito = 0, amp = 0, onda = 0, on = true }
-	c.radice = stretch(gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(0, 0, 0)))
+	c.radice = fit(gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(c.radice, false)
-	c.onda_n = stretch(ui.anello(0, 0, 2 * M.FUORI, 3, M.BIANCO, c.radice))
+	c.onda_n = fit(ui.anello(0, 0, 2 * M.FUORI, 3, M.BIANCO, c.radice))
 	gui.set_enabled(c.onda_n, false)
-	stretch(ui.disco(0, 0, 2 * M.FUORI, FONDO, c.radice))
-	c.squadra = stretch(ui.anello(0, 0, 2 * M.FUORI, 3, ui.C.LUCE, c.radice))
+	fit(ui.disco(0, 0, 2 * M.FUORI, FONDO, c.radice))
+	c.squadra = fit(ui.anello(0, 0, 2 * M.FUORI, 3, ui.C.LUCE, c.radice))
 	local d = 2 * M.RAGGIO + M.SPESSORE
-	stretch(ui.anello(0, 0, d, M.SPESSORE, BINARIO, c.radice))
+	fit(ui.anello(0, 0, d, M.SPESSORE, BINARIO, c.radice))
 	-- l'arco parte da mezzogiorno e si consuma in senso orario
-	c.arco = stretch(ui.anello(0, 0, d, M.SPESSORE, M.BIANCO, c.radice))
+	c.arco = fit(ui.anello(0, 0, d, M.SPESSORE, M.BIANCO, c.radice))
 	gui.set_euler(c.arco, vmath.vector3(0, 0, 90))
-	c.numero = stretch(ui.testo("", 0, 2, NUMERO, ui.C.TESTO, c.radice))
-	c.parola = stretch(ui.testo("", 0, -M.RAGGIO * 0.5, PAROLA, M.BIANCO, c.radice))
+	c.numero = fit(ui.testo("", 0, 2, NUMERO, ui.C.TESTO, c.radice))
+	c.parola = fit(ui.testo("", 0, -M.RAGGIO * 0.5, PAROLA, M.BIANCO, c.radice))
 	-- il tempo della partita sopra, più piccolo e fermo
-	c.orologio = stretch(ui.testo("", x, y + M.FUORI + 16, OROLOGIO, ui.C.TESTO))
+	c.orologio = fit(ui.testo("", x, y + M.FUORI + 16, OROLOGIO, ui.C.TESTO))
 	c.x, c.y, c.k = x, y, 1
 	return c
+end
+
+-- sul fondo vero dello schermo (ui/schermo.lua: più in basso di 0 su un tablet)
+function M.cronometro_sposta(c, x, y)
+	c.x, c.y = x, y
+	gui.set_position(c.radice, vmath.vector3(x, y, 0))
+	gui.set_position(c.orologio, vmath.vector3(x, y + M.FUORI + 16, 0))
 end
 
 function M.cronometro_on(c, on)
@@ -150,8 +157,8 @@ local function spegni(_, nodo) gui.set_enabled(nodo, false) end
 function M.globi_nodi(c)
 	c.globi = {}
 	for i = 1, GLOBI do
-		local g = stretch(ui.disco(c.x, c.y, 20, ui.C.VIOLA))
-		stretch(ui.disco(0, 0, 8, ui.C.LUCE, g))
+		local g = fit(ui.disco(c.x, c.y, 20, ui.C.VIOLA))
+		fit(ui.disco(0, 0, 8, ui.C.LUCE, g))
 		gui.set_enabled(g, false)
 		c.globi[i] = g
 	end
@@ -174,9 +181,9 @@ end
 -- Pulsante tondo: disco scuro, bordo del colore della sua famiglia, icona
 function M.tondo(x, y, d, icona, colore, parent)
 	local t = { d = d, colore = colore }
-	t.nodo = stretch(ui.disco(x, y, d, ui.C.PANNELLO, parent))
-	t.bordo = stretch(ui.anello(0, 0, d, 3, colore, t.nodo))
-	t.icona = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(d * 0.74, d * 0.74, 0)))
+	t.nodo = fit(ui.disco(x, y, d, ui.C.PANNELLO, parent))
+	t.bordo = fit(ui.anello(0, 0, d, 3, colore, t.nodo))
+	t.icona = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(d * 0.74, d * 0.74, 0)))
 	gui.set_texture(t.icona, "armi")
 	gui.play_flipbook(t.icona, icona .. "_icona")
 	gui.set_parent(t.icona, t.nodo)
@@ -187,8 +194,8 @@ end
 function M.tondo_numero(t, testo)
 	if not t.num then
 		local r = t.d * 0.36
-		t.num = stretch(ui.disco(r, r, t.d * 0.36, t.colore, t.nodo))
-		t.num_t = stretch(ui.testo("", 0, 1, t.d / 84 * 0.8, ui.C.FONDO, t.num))
+		t.num = fit(ui.disco(r, r, t.d * 0.36, t.colore, t.nodo))
+		t.num_t = fit(ui.testo("", 0, 1, t.d / 84 * 0.8, ui.C.FONDO, t.num))
 		gui.set_outline(t.num_t, vmath.vector4(0, 0, 0, 0))
 	end
 	gui.set_enabled(t.num, testo ~= "")
@@ -199,14 +206,14 @@ end
 function M.cartellino()
 	local k = {}
 	k.nodo, k.bordo = ui.pannello(0, 0, 100, 26)
-	stretch(k.nodo)
+	fit(k.nodo)
 	gui.set_color(k.nodo, ui.C.LUCE)
 	gui.set_color(k.bordo, ui.C.FONDO)
-	k.punta = stretch(gui.new_box_node(vmath.vector3(0, -13, 0), vmath.vector3(10, 10, 0)))
+	k.punta = fit(gui.new_box_node(vmath.vector3(0, -13, 0), vmath.vector3(10, 10, 0)))
 	gui.set_color(k.punta, ui.C.LUCE)
 	gui.set_euler(k.punta, vmath.vector3(0, 0, 45))
 	gui.set_parent(k.punta, k.nodo)
-	k.testo = stretch(ui.testo("", 0, 1, 0.8, ui.C.FONDO, k.nodo))
+	k.testo = fit(ui.testo("", 0, 1, 0.8, ui.C.FONDO, k.nodo))
 	gui.set_outline(k.testo, vmath.vector4(0, 0, 0, 0))
 	gui.set_enabled(k.nodo, false)
 	return k

@@ -10,6 +10,7 @@ python3 strumenti/simula/simula.py        # controlli, test, build e partita con
 python3 strumenti/simula/simula.py -s strumenti/simula/scenari/mio.txt
 python3 strumenti/simula/simula.py --solo-build    # senza avviare il gioco
 python3 strumenti/simula/simula.py --scala 2 -s strumenti/simula/scenari/diavoletto.txt   # schermo 2560 x 1440, personaggio da vicino
+python3 strumenti/simula/simula.py --schermo 1600x720 -s strumenti/simula/scenari/schermo.txt  # telefono 20:9 (960x720: tablet 4:3)
 ```
 
 Nelle sessioni cloud `prepara.sh` parte da solo all'avvio
@@ -55,7 +56,9 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `aspetta S` | aspetta S secondi |
 | `foto NOME` | salva `foto/NOME.png` |
 | `zoom NOME [Z]` | foto ingrandita Z volte (2 se non si dice) attorno al robot di turno, contando lo zoom che la camera del gioco ha già (con la camera a 2,2 uno zoom 4 ingrandisce la foto di 1,8) |
-| `tocca X Y` | tocco breve (pulsanti, menu) |
+| `tocca X Y` | tocco breve (pulsanti, menu), in pixel dello schermo |
+| `tocca_centro X Y` | tocco in pixel del gioco a 16:9, che su ogni schermo stanno al centro (`ui/schermo.lua`): uguale a `tocca` a 1280 x 720, giusto anche con `--schermo` |
+| `tocca_bordo DX DY alto\|basso sinistra\|destra` | tocco a DX, DY pixel del gioco da quell'angolo dello schermo: per quello che è attaccato ai bordi (levette, zoom, bottoni della home) |
 | `tieni TASTO S [ZOOM] [Z]` | tiene premuto un tasto: `sinistra`, `destra`, `salta`, o un nome di xdotool; facoltativamente fa lo zoom ZOOM prima di lasciarlo |
 | `premi TASTO` | pressione breve |
 | `trascina X1 Y1 X2 Y2 [S]` | trascina il dito |

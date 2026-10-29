@@ -355,7 +355,7 @@ function M.new(color, look)
 		posa = pose.nuova(), posa_fiamma = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
 	s.strati, s.forma_coda = vesti(look)
 	s.root = giunto(nil, 0, 0)
-	gui.set_adjust_mode(s.root, gui.ADJUST_STRETCH)
+	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
 	s.lampo_col = vmath.vector4(1, 1, 1, 1)
 

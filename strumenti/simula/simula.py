@@ -173,8 +173,9 @@ class Gioco:
         if not self.win:
             raise Fallito("la finestra del gioco non si è aperta")
         esegui(["xdotool", "windowmove", self.win, "0", "0", "windowfocus", self.win], env=self.env)
-        if S != 1:
-            # la finestra grande come lo schermo: il gioco disegna a S volte la risoluzione
+        if S != 1 or (W, H) != (1280, 720):
+            # la finestra grande come lo schermo: il gioco disegna a S volte la
+            # risoluzione, o con le proporzioni di un altro schermo (--schermo)
             esegui(["xdotool", "windowsize", "--sync", self.win, str(W * S), str(H * S)], env=self.env)
 
     # log ------------------------------------------------------------------------
@@ -220,7 +221,8 @@ class Gioco:
         # dove si vede il centro del robot sullo schermo (con la camera); i
         # giochi di prima scrivono solo x, y del mondo
         if "sx" in self.stato:
-            return int(self.stato["sx"]), int(self.stato["sy"])
+            # il gioco lo scrive stirato su 1280 x 720, come i tocchi (--schermo)
+            return round(int(self.stato["sx"]) * W / 1280), round(int(self.stato["sy"]) * H / 720)
         return int(self.stato["x"]), int(self.stato["y"]) + 8
 
     def scatta(self, nome):
@@ -312,8 +314,18 @@ def comando(g, riga):
         g.scatta(a[0])
     elif c == "zoom":
         g.zoom(a[0], num(1, 2))
-    elif c == "tocca":
-        g.punta(num(0), num(1))
+    elif c in ("tocca", "tocca_centro", "tocca_bordo"):
+        # tocca: pixel dello schermo; tocca_centro: pixel del gioco a 16:9, dove
+        # stanno i menu, centrati su ogni schermo; tocca_bordo DX DY alto|basso
+        # sinistra|destra: a DX, DY pixel del gioco da quell'angolo (ui/schermo.lua)
+        u = min(W / 1280, H / 720)
+        x, y = num(0), num(1)
+        if c == "tocca_centro":
+            x, y = (x - 640) * u + W / 2, (y - 360) * u + H / 2
+        elif c == "tocca_bordo":
+            x = W - x * u if a[3] == "destra" else x * u
+            y = H - y * u if a[2] == "alto" else y * u
+        g.punta(x, y)
         g.xdo("mousedown", 1)
         g.attendi(0.1)
         g.xdo("mouseup", 1)
@@ -465,9 +477,12 @@ def main():
     ap.add_argument("--solo-build", action="store_true", help="controlli, test e build, senza avviare il gioco")
     ap.add_argument("--senza-video", action="store_true")
     ap.add_argument("--scala", type=int, default=1, help="schermo S volte più grande (foto ad alta densità)")
+    ap.add_argument("--schermo", default="1280x720",
+                    help="LxA: schermo con altre proporzioni, per esempio 1600x720 (telefono 20:9) o 960x720 (tablet 4:3)")
     args = ap.parse_args()
-    global S
+    global S, W, H
     S = args.scala
+    W, H = map(int, args.schermo.lower().split("x"))
     out = REPO / "simulazione"
     out.mkdir(parents=True, exist_ok=True)
     problemi = []

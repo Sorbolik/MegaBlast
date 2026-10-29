@@ -27,11 +27,13 @@ local camera = require "battaglia.camera"
 local oggetti = require "battaglia.oggetti"
 local punteggio = require "battaglia.punteggio"
 local hud = require "battaglia.hud"
+local schermo = require "ui.schermo"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
--- W, H: lo schermo del gioco; la mappa è game.WORLD_W x game.WORLD_H
-local W, H = 1280, 720
+-- W, H: lo schermo del gioco (16:9; su altre proporzioni lo schermo vero va da
+-- schermo.x0 a x1 e da y0 a y1, ui/schermo.lua); la mappa è game.WORLD_W x game.WORLD_H
+local W, H = schermo.W, schermo.H
 local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
@@ -128,20 +130,20 @@ local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
 -- riportare il dito sul robot e lasciarlo lì annulla il colpo
 local CANCEL_R = 28
 
-local function stretch(node)
-	gui.set_adjust_mode(node, gui.ADJUST_STRETCH)
+local function fit(node)
+	gui.set_adjust_mode(node, gui.ADJUST_FIT)
 	return node
 end
 
 local function box(x, y, w, h, color)
-	local n = stretch(gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(w, h, 0)))
+	local n = fit(gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(w, h, 0)))
 	gui.set_color(n, color)
 	return n
 end
 
 -- alone bianco in additivo (fx/bagliore.png), tinto con color
 local function glow(x, y, d, color)
-	local n = stretch(gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(d, d, 0)))
+	local n = fit(gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(d, d, 0)))
 	gui.set_texture(n, "battaglia")
 	gui.play_flipbook(n, "bagliore")
 	gui.set_blend_mode(n, gui.BLEND_ADD)
@@ -156,7 +158,7 @@ local FONT_K = 0.4
 -- parti col colore di chi spara. Restituisce il nodo e le parti da tingere.
 local function colpo(nome, sc)
 	local a = require("battaglia.armi").colpi[nome]
-	local img = stretch(gui.new_box_node(vmath.vector3(a.x * sc, a.y * sc, 0), vmath.vector3(a.w * sc, a.h * sc, 0)))
+	local img = fit(gui.new_box_node(vmath.vector3(a.x * sc, a.y * sc, 0), vmath.vector3(a.w * sc, a.h * sc, 0)))
 	gui.set_texture(img, "armi")
 	gui.play_flipbook(img, a.img)
 	local tinta = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(a.w * sc, a.h * sc, 0))
@@ -167,7 +169,7 @@ local function colpo(nome, sc)
 end
 
 local function label(x, y, text, scale)
-	return stretch(ui.testo(text, x, y, (scale or 1) * FONT_K * 2))
+	return fit(ui.testo(text, x, y, (scale or 1) * FONT_K * 2))
 end
 
 -- Simulazione (strumenti/simula): con megablast.simula = 1 il gioco scrive nel
@@ -213,6 +215,8 @@ local SCOSSA_BASE, SCOSSA_DANNO = 4, 0.45
 local DETRITI, DETRITI_PER_COLPO, DETRITO_VITA = 15, 5, 0.9
 local PIETRA = vmath.vector4(0.16, 0.13, 0.15, 1)
 local BRACE_SCURA = vmath.vector4(0.85, 0.3, 0.08, 1)
+-- I pulsanti attaccati ai bordi sono scritti per 16:9: disponi() li sposta sui
+-- bordi veri dello schermo.
 -- pulsante dello zoom, in alto a destra
 local ZOOM_BTN = vmath.vector3(W - 70, H - 34, 0)
 
@@ -226,7 +230,7 @@ local KNOB_D = 112
 local MOVE_PAD = { x = 115, y = 117 }
 local AIM_PAD = { x = W - 115, y = 117 }
 -- le levette si prendono nel 40% a sinistra e a destra, sotto il 60% dell'altezza
-local PAD_ZONE_X, PAD_ZONE_Y = W * 0.4, H * 0.6
+local PAD_ZONA = { sx = W * 0.4, dx = W * 0.6, y = H * 0.6 }
 -- teletrasporto: sul telefono in alto a destra della levetta della mira, come
 -- in Blastron; sul computer in basso a destra (o il tasto T)
 local TELE_TOUCH = vmath.vector3(W - 72, 257, 0)
@@ -1286,10 +1290,10 @@ local PAD_POS = vmath.vector3(0, 0, 0)
 -- il bordo di tutti e due prende il colore dello stato (pad_colore)
 local function new_pad(rest, ring_color)
 	local pad = { rest = rest }
-	pad.base = stretch(ui.disco(rest.x, rest.y, PAD_D, PAD_FONDO[1]))
-	pad.ring = stretch(ui.anello(0, 0, PAD_D, 3, ring_color, pad.base))
-	pad.knob = stretch(ui.disco(0, 0, KNOB_D, PAD_FONDO[2], pad.base))
-	pad.knob_ring = stretch(ui.anello(0, 0, KNOB_D, 3, ring_color, pad.knob))
+	pad.base = fit(ui.disco(rest.x, rest.y, PAD_D, PAD_FONDO[1]))
+	pad.ring = fit(ui.anello(0, 0, PAD_D, 3, ring_color, pad.base))
+	pad.knob = fit(ui.disco(0, 0, KNOB_D, PAD_FONDO[2], pad.base))
+	pad.knob_ring = fit(ui.anello(0, 0, KNOB_D, 3, ring_color, pad.knob))
 	return pad
 end
 
@@ -1302,8 +1306,8 @@ end
 local function pad_press(pad, id, x, y)
 	pad.id, pad.x0, pad.y0 = id, x, y
 	local h = PAD_D / 2
-	PAD_POS.x = math.max(h, math.min(W - h, x))
-	PAD_POS.y = math.max(h, math.min(H - h, y))
+	PAD_POS.x = math.max(schermo.x0 + h, math.min(schermo.x1 - h, x))
+	PAD_POS.y = math.max(schermo.y0 + h, math.min(schermo.y1 - h, y))
 	pad.bx, pad.by = PAD_POS.x, PAD_POS.y
 	gui.set_position(pad.base, PAD_POS)
 end
@@ -1431,7 +1435,8 @@ local function update_bar(self)
 	-- dal centro al primo slot, uguale a destra e a sinistra dell'anello
 	local da = hud.FUORI + MISURE.dal_ring
 	local tele = tel and TELE_TOUCH or TELE_DESK
-	local ogg_y = BAR_Y + s2 / 2 + 14 + MISURE.oggetto / 2
+	local bar_y = BAR_Y + schermo.y0
+	local ogg_y = bar_y + s2 / 2 + 14 + MISURE.oggetto / 2
 	local quanti, scelto, ogg_top = { 0, 0, 0, 0 }, nil, nil
 	for _, sl in ipairs(self.slots) do
 		local have = slot_have(rb, sl.weapon)
@@ -1443,7 +1448,7 @@ local function update_bar(self)
 			local gr = sl.group
 			local k = quanti[gr]
 			quanti[gr] = k + 1
-			local x, y, d = W / 2, BAR_Y, s2
+			local x, y, d = W / 2, bar_y, s2
 			if gr == 1 then
 				d = s1
 				x = W / 2 - da - d / 2 - k * (d + gap)
@@ -1505,8 +1510,11 @@ local function apply_camera(self)
 	gui.set_position(self.mondo, CAM_POS)
 	CAM_SCALE.x, CAM_SCALE.y = c.s, c.s
 	gui.set_scale(self.mondo, CAM_SCALE)
-	local view = self.cam_msg.view
-	view.m00, view.m11, view.m03, view.m13 = c.s, c.s, tx, ty
+	-- il render stira 1280 x 720 su tutto lo schermo: la vista lo compensa, così
+	-- il terreno ha le stesse proporzioni dei nodi (ui/schermo.lua)
+	local view, kx, ky = self.cam_msg.view, schermo.kx, schermo.ky
+	view.m00, view.m11 = c.s / kx, c.s / ky
+	view.m03, view.m13 = W / 2 + (tx - W / 2) / kx, H / 2 + (ty - H / 2) / ky
 	msg.post("@render:", "set_view_projection", self.cam_msg)
 	local l = c.s ^ -0.65
 	LABEL_SCALE.x, LABEL_SCALE.y = 0.7 * FONT_K * l, 0.7 * FONT_K * l
@@ -1925,6 +1933,31 @@ end
 
 -- Ciclo di vita -------------------------------------------------------------
 
+-- Attacca ai bordi veri dello schermo quello che ci sta (ui/schermo.lua): alla
+-- partenza e quando la finestra cambia proporzioni
+local function disponi(self)
+	local x0, y0, x1, y1 = schermo.x0, schermo.y0, schermo.x1, schermo.y1
+	ZOOM_BTN.x, ZOOM_BTN.y = x1 - 70, y1 - 34
+	MOVE_PAD.x, MOVE_PAD.y = x0 + 115, y0 + 117
+	AIM_PAD.x, AIM_PAD.y = x1 - 115, y0 + 117
+	PAD_ZONA.sx, PAD_ZONA.dx, PAD_ZONA.y = x0 + (x1 - x0) * 0.4, x1 - (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.6
+	TELE_TOUCH.x, TELE_TOUCH.y = x1 - 72, y0 + 257
+	TELE_DESK.x, TELE_DESK.y = x1 - 100, y0 + 62
+	gui.set_position(self.btn_zoom, ZOOM_BTN)
+	for _, pad in ipairs({ self.move_pad, self.aim_pad }) do
+		if not pad.id then set_pos(pad.base, pad.rest.x, pad.rest.y) end
+	end
+	gui.set_position(self.btn_tele.nodo, self.touch_ui and TELE_TOUCH or TELE_DESK)
+	-- teletrasporto e barra delle armi li rimette a posto il prossimo update
+	self.tele_state = nil
+	for _, sl in ipairs(self.slots) do sl.x = nil end
+	hud.cronometro_sposta(self.crono, W / 2, y0 + MISURE.ring_y)
+	punteggio.cima(self.punti, y1)
+	camera.vista(self.cam, x0, y0, x1, y1)
+	self.cam_s = nil
+	msg.post("/terreno#script", "schermo", { kx = schermo.kx, ky = schermo.ky })
+end
+
 function init(self)
 	-- l'ultima scelta dell'allenamento contro i bot (menu/allenamento.lua)
 	self.contro_bot = { modo = "1v1", livello = "normale" }
@@ -1944,7 +1977,7 @@ function init(self)
 	self.cam_msg = { id = hash("camera"), view = vmath.matrix4(), projection = vmath.matrix4() }
 	self.cam_sosta = 0
 	self.fermo, self.sc_ox, self.sc_oy = 0, 0, 0
-	self.mondo = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+	self.mondo = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(self.mondo, false)
 
 	-- prova_pelli elmo_x,corazza_y: tutti con quelle pelli addosso (battaglia/pelli.lua),
@@ -1973,7 +2006,7 @@ function init(self)
 	end
 	self.projectile = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(self.projectile, false)
-	gui.set_adjust_mode(self.projectile, gui.ADJUST_STRETCH)
+	gui.set_adjust_mode(self.projectile, gui.ADJUST_FIT)
 	self.projectile_glow = glow(0, 0, 34, WHITE)
 	gui.set_parent(self.projectile_glow, self.projectile)
 	self.razzo, self.razzo_tinta = colpo("razzo", 1 / K)
@@ -1985,7 +2018,7 @@ function init(self)
 	-- globo del teletrasporto: piccolo e tondo
 	self.orbs = {}
 	for i = 1, game.MAX_ORBS do
-		local root = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+		local root = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 		gui.set_visible(root, false)
 		local orb_glow = glow(0, 0, 30, WHITE)
 		gui.set_parent(orb_glow, root)
@@ -1997,7 +2030,7 @@ function init(self)
 	end
 
 	-- Uovo di Fiamma in volo
-	self.egg = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
+	self.egg = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(self.egg, false)
 	gui.set_parent(glow(0, 0, 36, BRACE), self.egg)
 	self.egg_spin = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
@@ -2032,7 +2065,7 @@ function init(self)
 	local cassa = vmath.vector3(22.4 * 83 / 96, 22.4, 0)
 	self.crate_nodes = {}
 	for i = 1, game.CRATE_MAX do
-		local n = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), cassa))
+		local n = fit(gui.new_box_node(vmath.vector3(0, 0, 0), cassa))
 		gui.set_texture(n, "battaglia")
 		gui.play_flipbook(n, "cassa")
 		local chute = glow(0, 20, 40, vmath.vector4(1, 0.8, 0.5, 0.45))
@@ -2058,7 +2091,7 @@ function init(self)
 	-- esplosioni riusate a giro
 	self.booms, self.boom_i = {}, 0
 	for i = 1, 10 do
-		local anim = stretch(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(100, 100, 0)))
+		local anim = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(100, 100, 0)))
 		gui.set_texture(anim, "esplosione")
 		gui.play_flipbook(anim, "esplosione")
 		gui.set_enabled(anim, false)
@@ -2128,7 +2161,7 @@ function init(self)
 	-- barra delle armi attorno al cronometro e, a parte, il teletrasporto
 	self.bar = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(self.bar, false)
-	stretch(self.bar)
+	fit(self.bar)
 	-- l'alone del tuo colore dietro quello che hai in mano
 	self.scelto_glow = glow(0, 0, SLOT * 1.7, WHITE)
 	gui.set_parent(self.scelto_glow, self.bar)
@@ -2142,7 +2175,7 @@ function init(self)
 			sl.node, sl.bordo, sl.icon = sl.tondo.nodo, sl.tondo.bordo, sl.tondo.icona
 		else
 			local n, bordo = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar)
-			stretch(n)
+			fit(n)
 			local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
 			gui.set_texture(icon, "armi")
 			gui.play_flipbook(icon, WEAPON_ICON[w])
@@ -2170,6 +2203,8 @@ function init(self)
 	self.pointers = {}
 	set_touch_ui(self, touch_device())
 	set_controls_visible(self, false)
+	schermo.aggiorna()
+	disponi(self)
 
 	-- la home per ultima, così sta sopra la battaglia
 	self.home = home.new(TEAM_COLORS[1])
@@ -2192,6 +2227,7 @@ function final(self)
 end
 
 function update(self, dt)
+	if schermo.aggiorna() then disponi(self) end
 	if self.conn and ws.poll then ws.poll(self) end
 	-- hit-stop: il mondo resta fermo, lo schermo trema lo stesso
 	local dt_mondo = dt
@@ -2284,7 +2320,8 @@ function update(self, dt)
 	if SIMULA and self.g then
 		-- sx, sy: il centro del robot sullo schermo (dove si appoggia il mouse per mirare)
 		local rb = current_robot(self)
-		local sx, sy = camera.allo_schermo(self.cam, rb.x, rb.y + game.DISEGNO_H / 2)
+		-- (stirato su 1280 x 720 come i tocchi: simula.py lo riporta ai pixel veri)
+		local sx, sy = schermo.a_tocco(camera.allo_schermo(self.cam, rb.x, rb.y + game.DISEGNO_H / 2))
 		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f",
 			self.mode, self.g.current, self.g.phase, math.floor(rb.x), math.floor(rb.y),
 			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s)
@@ -2334,7 +2371,10 @@ local function cancel_pad_aim(self)
 end
 
 -- Un dito (o il mouse) si appoggia in (x, y). id distingue le dita.
-local function pointer_down(self, id, x, y)
+-- x, y arrivano stirati su 1280 x 720 (come li vuole gui.pick_node): per
+-- tutto il resto si riportano alle coordinate del gioco (ui/schermo.lua)
+local function pointer_down(self, id, px, py)
+	local x, y = schermo.da_tocco(px, py)
 	if self.mode == "ended" then
 		if self.podio_t then
 			apri_podio(self)
@@ -2357,21 +2397,21 @@ local function pointer_down(self, id, x, y)
 		self.pointers[id] = "cancelled"
 		return
 	end
-	if self.lezione and gui.pick_node(self.btn_esci, x, y) then
+	if self.lezione and gui.pick_node(self.btn_esci, px, py) then
 		show_menu(self)
 		apri_schermata(self, menu.allenamento, self.contro_bot, self.profilo.lezioni)
-	elseif gui.pick_node(self.btn_zoom, x, y) then
+	elseif gui.pick_node(self.btn_zoom, px, py) then
 		change_zoom(self)
-	elseif gui.pick_node(self.btn_tele.nodo, x, y) then
+	elseif gui.pick_node(self.btn_tele.nodo, px, py) then
 		toggle_tele(self)
-	elseif picked_slot(self, x, y) then
-		choose_slot(self, picked_slot(self, x, y))
+	elseif picked_slot(self, px, py) then
+		choose_slot(self, picked_slot(self, px, py))
 	elseif self.touch_ui then
-		if x < PAD_ZONE_X and y < PAD_ZONE_Y and not self.move_pad.id then
+		if x < PAD_ZONA.sx and y < PAD_ZONA.y and not self.move_pad.id then
 			self.pointers[id] = "move"
 			pad_press(self.move_pad, id, x, y)
 			move_pad_drag(self, x, y)
-		elseif x > W - PAD_ZONE_X and y < PAD_ZONE_Y and not self.aim_pad.id and my_turn(self) then
+		elseif x > PAD_ZONA.dx and y < PAD_ZONA.y and not self.aim_pad.id and my_turn(self) then
 			self.pointers[id] = "pad_aim"
 			pad_press(self.aim_pad, id, x, y)
 			aim_pad_drag(self, x, y)
@@ -2385,6 +2425,7 @@ local function pointer_down(self, id, x, y)
 end
 
 local function pointer_move(self, id, x, y)
+	x, y = schermo.da_tocco(x, y)
 	local m = self.pointers[id]
 	if m == "move" then
 		move_pad_drag(self, x, y)
@@ -2396,6 +2437,7 @@ local function pointer_move(self, id, x, y)
 end
 
 local function pointer_up(self, id, x, y)
+	x, y = schermo.da_tocco(x, y)
 	local m = self.pointers[id]
 	self.pointers[id] = nil
 	if m == "move" then
