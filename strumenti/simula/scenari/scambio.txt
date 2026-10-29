@@ -1,7 +1,6 @@
 # Scambio del secondo attacco con un teletrasporto: dopo il primo attacco sopra
-# il cronometro compare il pulsante con le due frecce e la scritta; tenuto
-# premuto si carica e dà un globo, poi niente secondo attacco. (Il tocco breve
-# che non fa niente lo controlla il codice: scatta solo a carica piena.)
+# il cronometro compare il pulsante con le due frecce e la scritta; un tocco
+# dà un globo, poi niente secondo attacco.
 
 aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
@@ -13,6 +12,6 @@ aspetta_evento fire 2
 foto 02_annuncio_senza_pulsante     # attaccando subito il pulsante aspetta che sparisca TURNO DI
 aspetta 1
 foto 03_pulsante_scambio
-trascina 640 195 641 195 2          # tenuto premuto: scambia
+tocca 640 195                       # un tocco: scambia
 aspetta_evento swap 1
 foto 04_dopo_lo_scambio

@@ -2243,13 +2243,11 @@ local function render(self, dt)
 	-- le tacche dei globi solo se il tempo avanzato dà globi (non in tutte le lezioni)
 	self.crono.tacche_on = g.robots[g.current].stats.time_orbs > 0
 	hud.cronometro_update(self.crono, dt, fase, rimasti, totale, self.colors[g.current], g.phase ~= "over" and clock or "")
-	-- scambio del secondo attacco con un teletrasporto: si tiene premuto
+	-- scambio del secondo attacco con un teletrasporto: un tocco
 	-- (dopo che l'annuncio del turno è sparito: starebbero uno sopra l'altro)
 	local scambio_vede = self.tele_vede and my_turn(self) and g:can_use("swap")
 		and not self.annuncio_aspetta and self.clock >= (self.annuncio_fine or 0)
-	if hud.scambio_update(self.scambio, dt, scambio_vede, self.crono) then
-		self.fire = { angle = 0, power = 0, weapon = "swap" }
-	end
+	hud.scambio_update(self.scambio, scambio_vede, self.crono)
 	-- nell'attesa del secondo attacco le secondarie lampeggiano, se sono loro che restano
 	local blink = g.window > 0 and my_turn(self) and math.sin(self.clock * 12) > 0
 	for _, sl in ipairs(self.slots) do
@@ -2866,7 +2864,7 @@ local function pointer_down(self, id, px, py)
 		return
 	end
 	if hud.scambio_premi(self.scambio, px, py) then
-		self.pointers[id] = "scambio"
+		self.fire = { angle = 0, power = 0, weapon = "swap" }
 	elseif gui.pick_node(self.btn_zoom, px, py) then
 		change_zoom(self)
 	elseif gui.pick_node(self.btn_tele.nodo, px, py) then
@@ -2913,8 +2911,6 @@ local function pointer_up(self, id, x, y)
 		move_pad_release(self)
 	elseif m == "pad_aim" then
 		aim_pad_release(self)
-	elseif m == "scambio" then
-		hud.scambio_lascia(self.scambio)
 	elseif m == "aim" then
 		aim_from(self, x, y)
 		-- rilasciare il dito sopra il robot annulla lo sparo
