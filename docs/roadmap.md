@@ -25,9 +25,9 @@ passano da Sergio.
 |---|---|---|
 | 1 | Account | Ospite con codice di recupero (A); accesso Google e Apple (B) quando si pubblica su iOS. Progressione sul server da subito. |
 | 2 | Server | Un VPS europeo (~5 €/mese), SQLite, Litestream per il backup continuo, Caddy per il TLS. Il server serve anche la build web e il pannello. Secondo nodo e PostgreSQL solo quando i numeri lo chiedono. |
-| 3 | Eventi | Eventi come dati sul server, letti dal client. Tipi nell'ordine: Doppia XP, Torneo (classifica = migliori 10 risultati nella finestra, premi a fasce), Sfida, Modificatore. In più il **Torneo della community** (sotto). |
+| 3 | Eventi | Eventi come dati sul server, letti dal client. Tipi nell'ordine: Doppia XP, Torneo (classifica = migliori 10 risultati nella finestra, premi a fasce), Sfida, Modificatore. In più il **Torneo della community** (sotto), il **rompicapo del giorno** (una lezione come dati con mappa, posizioni e obiettivo, uguale per tutti, si confrontano turni e stelle) e i **fantasmi** (si rigioca una lezione o un rompicapo contro il replay di un amico o del migliore), entrambi preparati dalla sezione Eventi del pannello. |
 | 4 | Pannello | Pagina web servita dal server Go su `/admin`, chiave + TOTP. L'**editor delle animazioni** vi entra come micro-frontend (resta un progetto con vita propria, raggiungibile dal pannello con lo stesso accesso). |
-| 5 | Tutorial | 3 passi obbligatori + prima partita guidata contro un bot + lezioni sbloccate. Deve far capire divertendo: due attacchi per turno, teletrasporti in proporzione al tempo risparmiato, trappole quando si vuole, rampino uno a turno, paracadute uno a partita. Quello che non entra nel tutorial lo insegna la **campagna**, con missioni che matematicamente non si finiscono senza usare la meccanica richiesta. |
+| 5 | Tutorial | La prima partita insegna: GIOCA porta a una partita guidata contro un bot (che sbaglia apposta) finché non la finisci una volta; righe brevi vicino al diavoletto e l'HUD che pulsa; poi 8 lezioni da 3 stelle nell'**Allenamento** (niente pulsante tutorial in home: ALLENAMENTO tiene lezioni e partite libere contro i bot). Deve far capire divertendo: due attacchi per turno, teletrasporti in proporzione al tempo risparmiato, trappole quando si vuole, rampino uno a turno, paracadute uno a partita. Quello che non entra nel tutorial lo insegna la **campagna**, con missioni che matematicamente non si finiscono senza usare la meccanica richiesta. |
 | 6 | Bot | Bot euristico in Lua puro dentro `client/sim/` (gira su server e telefono), a livelli; riempie le code dopo 15 s, è l'avversario del tutorial e della campagna. In parallelo il **Laboratorio bot**: esperimenti di apprendimento automatico (reti neurali) con bot che si affrontano in migliaia di partite simulate, per trovare strategie rotte e bilanciare. Nel gioco resta l'euristico; i bot addestrati possono diventare livelli "assurdi" dell'Allenamento. |
 | 7 | Campagna | Allenamento contro bot (livello a scelta, anche i bot addestrati) appena c'è il bot; poi campagna a missioni come dati (mappa, bot, regole, obiettivo, 3 stelle, premio) con la progressione a sblocco di meccaniche del punto 5. |
 | 8 | Impostazioni | Una schermata: audio, comandi (mancino, levette, mira), schermo (limite fotogrammi, effetti ridotti), lingua, account (codice, collega, cancella), notifiche, info. Niente qualità grafica a livelli né rimappatura dei tasti. |
@@ -182,7 +182,7 @@ In parallelo da qui: **Laboratorio bot** (non blocca le fasi).
 Modello eventi, schermata Eventi, Doppia XP; pannello (calendario, eventi,
 premi, messaggi, stato, editor delle animazioni come micro-frontend); Torneo con
 classifica e fasce di premi; inventario e schermata ricompensa; Sfide e
-Modificatori; posta in gioco e notifiche locali; premi codice-disegnati
+Modificatori; rompicapo del giorno e fantasmi; posta in gioco e notifiche locali; premi codice-disegnati
 (cornici, titoli, scie); sezione Statistiche con obiettivi e badge visibili in
 lobby, draft, partita e podio; Torneo della community in versione manuale.
 **Uscita**: un torneo di prova di una settimana tra amici, programmato dal

@@ -68,7 +68,7 @@ function M.new(colore)
 
 	-- in basso a destra: le partite
 	local dx = angolo(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	ui.bottone(h.bottoni, 0, 256, 340, 72, "CONTRO I BOT", "bot", nil, dx)
+	ui.bottone(h.bottoni, 0, 256, 340, 72, "ALLENAMENTO", "allenamento", nil, dx)
 	ui.bottone(h.bottoni, 0, 168, 340, 72, "STESSO TELEFONO", "local", nil, dx)
 	ui.bottone(h.bottoni, 0, 60, 340, 108, "GIOCA", "online", { principale = true, colore = colore }, dx)
 

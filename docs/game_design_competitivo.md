@@ -32,18 +32,9 @@ Scelte di Sergio del 23 ottobre 2026, aggiornate il 24 ottobre dopo la prima pro
 
 Ancora aperti: zone del Titano (strada 1), turni che si accorciano (I), cosa fare mentre aspetti (J). I teletrasporti si contano al primo attacco.
 
-## Insegnare il turno: tutorial a passi
+## Insegnare il turno: la prima partita
 
-Una regola nuova per volta, ognuna in una mini-missione di meno di un minuto, e un HUD che racconta il turno da solo:
-
-1. **Muoviti e spara**: solo missile, turno normale.
-2. **Riparati**: dopo lo sparo hai 8 s (barra gialla) per spostarti al riparo.
-3. **Spada**: un bersaglio vicino, si impara il fendente.
-4. **Due attacchi**: spara, la barra diventa gialla con l'icona della spada che lampeggia, poi blu quando li hai usati tutti e due.
-5. **Il teletrasporto**: finire presto lascia secondi, che diventano globi del teletrasporto.
-6. **Combo**: teletrasporto ai piedi del nemico e fendente che chiude dall'altra parte.
-
-Nell'HUD le icone di arma e spada si spengono quando le usi, così si vede sempre cosa ti resta nel turno.
+Niente passi prima di giocare: **la prima partita insegna**. È una partita vera contro un bot che sbaglia un colpo su due; nel primo turno il tempo è fermo finché non attacchi, e una riga alla volta sopra il diavoletto spiega quello che serve in quel momento (due attacchi, i globi dai secondi avanzati, la cassa, il paracadute, la Corona, la rinascita), mentre l'elemento dell'HUD di cui si parla pulsa. Le altre meccaniche sono **lezioni da 3 stelle** nell'Allenamento, ognuna risolvibile solo con la meccanica che insegna. Dati e controlli: `client/sim/lezioni.lua`, `tests/lezioni_test.lua`.
 
 ## Albero di abilità: può funzionare
 

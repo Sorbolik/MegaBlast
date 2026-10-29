@@ -99,7 +99,7 @@ M.LISTA = {
 			{ testo = "Lancia un globo col tasto viola: arrivi dove cade",
 				quando = function(st, g, e) return st.turni == 3 and e and e.type == "teleports" and e.robot == GIOCATORE end,
 				fino = function(_, _, e) return e and e.type == "teleport" and e.robot == GIOCATORE end },
-			{ testo = "Una cassa! Passaci sopra per prendere quello che c'e dentro",
+			{ testo = "Passaci sopra per prenderla: dentro c'e un'arma o un oggetto",
 				quando = function(_, _, e) return e and e.type == "crate" end,
 				fino = function(_, _, e) return e and e.type == "crate_pick" end },
 			{ testo = "Tocca in aria per il paracadute: uno a partita",
@@ -112,8 +112,6 @@ M.LISTA = {
 				quando = function(_, g) return g:leader() == g.robots[GIOCATORE] end },
 			{ testo = "Si rinasce subito, e il turno continua",
 				quando = function(_, _, e) return e and e.type == "death" and e.robot == GIOCATORE end },
-			{ testo = "Fermati nel cerchio alla fine di un turno: ti cura",
-				quando = function(_, _, e) return e and e.type == "heal_spawn" end },
 		},
 	},
 	{
