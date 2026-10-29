@@ -1,0 +1,11 @@
+# Prima partita sul telefono: appena si mira la riga dice come si annulla e il
+# dito tocca la metà destra dello schermo; il tempo aspetta che lo provi.
+imposta comandi telefono
+imposta prova_missione guidata
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+levetta_mira -40 40 2 01_annulla     # mirando: il dito e l'onda a destra
+aspetta 1
+levetta_annulla -40 40 02_annullata
+aspetta 1
+foto 03_dopo

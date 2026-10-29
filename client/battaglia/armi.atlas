@@ -113,6 +113,9 @@ images {
   image: "/assets/armi/bellows_icona.png"
 }
 images {
+  image: "/assets/armi/scambio_icona.png"
+}
+images {
   image: "/assets/armi/teleport_icona.png"
 }
 images {

@@ -390,13 +390,17 @@ do
 	local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
 	local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
 
-	-- Primo attacco dopo 9 s: restano 16 s, cioè un teletrasporto (uno ogni TELEPORT_SECONDS)
+	-- Soglie dei globi: entro 9 s due, entro 17 s uno, dopo niente, mai tre
+	check(game.globi_per(0) == 2 and game.globi_per(9 * 60) == 2 and game.globi_per(9 * 60 + 1) == 1
+		and game.globi_per(17 * 60) == 1 and game.globi_per(17 * 60 + 1) == 0, "soglie dei globi 9 s e 17 s")
+
+	-- Primo attacco dopo 12 s: un teletrasporto
 	local at = game.new(42, "forgia")
 	local ar = at.robots[1]
-	run(at, 9 * 60 - 1)
+	run(at, 12 * 60 - 1)
 	at:pop_events()
 	at:step(MISSILE)
-	local gain = math.floor(at.timer / (60 * config.TELEPORT_SECONDS))
+	local gain = 1
 	local nev
 	for _, e in ipairs(at:pop_events()) do if e.type == "teleports" then nev = e end end
 	check(gain >= 1 and ar.teleports_left == config.STATS.teleports + gain and nev and nev.amount == gain,
@@ -467,12 +471,33 @@ do
 	check(#ft.orbs == 1 + earned, "partono tutti i globi guadagnati")
 	check(fr.teleports_left > 0 and not ft:can_use("teleport"), "i globi di partenza restano per i turni dopo")
 
+	-- Scambio del secondo attacco con un teletrasporto (Sergio, 29 ottobre)
+	local sw = game.new(42, "forgia")
+	local swr = sw.robots[1]
+	run(sw, 30)
+	check(not sw:can_use("swap"), "prima del primo attacco niente scambio")
+	sw:step(TELE)
+	run(sw, 20 * 60)
+	sw:step(MISSILE)
+	local n_sw = swr.teleports_left
+	check(sw:can_use("swap") and not sw:can_use("teleport"), "dopo il primo attacco (tardi, niente globi) si può scambiare")
+	sw:step({ fire = { angle = 0, power = 1, weapon = "swap" } })
+	check(swr.teleports_left == n_sw + 1 and sw.used.primary and sw.used.secondary, "lo scambio dà un globo e chiude gli attacchi")
+	check(not sw:can_use("sword") and not sw:can_use("swap"), "dopo lo scambio niente secondo attacco né altro scambio")
+	check(sw:can_use("teleport"), "il globo dello scambio si lancia anche al primo turno")
+	sw:step(TELE)
+	check(#sw.orbs >= 1 and swr.teleports_left == n_sw, "parte il globo dello scambio")
+	local sw2 = game.new(42, "forgia")
+	run(sw2, 30)
+	sw2:step(MISSILE)
+	sw2:step(SWORD)
+	check(not sw2:can_use("swap"), "dopo due attacchi niente scambio")
+
 	-- Nessun tetto: i globi si accumulano
 	local fz = game.new(42, "forgia", { players = { { team = 1, stats = { teleports = 5 } }, { team = 2 } } })
 	run(fz, 60)
 	fz:step(MISSILE)
-	check(fz.robots[1].teleports_left == 5 + math.floor(fz.timer / (60 * config.TELEPORT_SECONDS))
-		and fz.robots[1].teleports_left > 5, "i teletrasporti si accumulano senza tetto")
+	check(fz.robots[1].teleports_left == 7, "i teletrasporti si accumulano senza tetto")
 
 	-- La vita parte dal valore del config e si può cambiare per robot
 	local hv = game.new(42, "forgia", { players = { { team = 1, stats = { max_hp = 200 } }, { team = 2 } } })
@@ -909,10 +934,10 @@ do
 	for _ = 1, 60 do
 		ha.y, ha.vy = sy, 0
 		h:step()
-		for _, e in ipairs(h:pop_events()) do if e.type == "hook_end" then ended = true end end
+		for _, e in ipairs(h:pop_events()) do if e.type == "hook_end" then ended = e end end
 		if not hb.hooked then break end
 	end
-	check(ended and not hb.hooked and math.abs(hb.x - ha.x) < 2 * game.ROBOT_HALF_W + 2, "arriva fin addosso a chi tira e viene mollato")
+	check(ended and not ended.snap and not hb.hooked and math.abs(hb.x - ha.x) < 2 * game.ROBOT_HALF_W + 2, "arriva fin addosso a chi tira e viene mollato")
 	run(h, 5)
 	check(hb.y < y_start and hb.vx == 0, "e cade dritto dov'è")
 	-- tirato da sotto sale fino a chi tira; un robot vicino ferma la fune
@@ -971,6 +996,23 @@ do
 	far.used.tool = false
 	ev = hook(far, 0, function() fa.y, fa.vy = 400, 0 end)
 	check(ev and ev.anchor, "a fine gittata aggancia ancora il terreno")
+	-- un nemico lontano: la fune finisce prima di arrivare e lo molla a mezz'aria (snap)
+	far = game.new(42, "forgia")
+	run(far, 60)
+	fa, fb = far.robots[1], far.robots[2]
+	far.terrain:rect(400, 100, 900, 900, 0)
+	place(fa, 500, 400)
+	place(fb, 500 + config.HOOK.range - 30, 400)
+	ev = hook(far, 0, function() fa.y, fa.vy, fb.y, fb.vy = 400, 0, 400, 0 end)
+	local fine
+	for _ = 1, 120 do
+		fa.y, fa.vy = 400, 0
+		far:step()
+		for _, e in ipairs(far:pop_events()) do if e.type == "hook_end" then fine = e end end
+		if fine then break end
+	end
+	check(ev and ev.target == 2 and fine and fine.snap and fb.x - fa.x > 100,
+		"da lontano la fune finisce a metà strada e si spezza (snap)")
 
 	-- Mantice (secondaria): soffia via chi ha davanti, poco danno, mai effetti
 	local function bellows(dist, angle, setup)

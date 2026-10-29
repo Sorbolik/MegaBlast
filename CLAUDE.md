@@ -34,6 +34,9 @@ Le scelte di game design (tempo del turno, strategia, equipaggiamento,
 ricompense) partono da [docs/game_design_competitivo.md](docs/game_design_competitivo.md):
 leggilo prima di proporre o cambiare una meccanica. Cosa si fa e in che ordine è
 fissato in [docs/roadmap.md](docs/roadmap.md): consultalo prima di proporre lavoro nuovo.
+Ogni impostazione che Sergio nomina (anche di passaggio) va subito in
+[docs/impostazioni.md](docs/impostazioni.md), nella stessa PR: lì si raccolgono
+tutte per quando si farà la schermata delle impostazioni.
 La storia delle decisioni (prese, scartate, aperte) è in [docs/decisioni/](docs/decisioni/README.md):
 leggi [regole.md](docs/decisioni/regole.md) e **solo il file dell'area che tocchi**; quando
 decidi o scarti qualcosa, aggiorna quel file e `cronologia.md` nella stessa PR.

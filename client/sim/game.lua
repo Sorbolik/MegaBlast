@@ -5,7 +5,7 @@
 --   local game = require "sim.game"
 --   local g = game.new(seed, "forgia")   -- senza mappa la sceglie il seed
 --   g:step({ left = bool, right = bool, jump = bool,
---            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport"
+--            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport" | "swap"
 --                                                     | "grenade" | "shards" | "punch" } })
 --   g:can_use(weapon)   -- il robot di turno può usarla adesso?
 -- Regole del turno (sim/config.lua): fino a un'arma e un colpo di spada per
@@ -192,7 +192,7 @@ M.DRAFT_TOOLS = { "hook", "wall" }
 -- oggetti che si lanciano mirando (gli altri si usano col tocco)
 M.THROWN = { trampoline = true, hook = true, wall = true }
 -- tutti i nomi validi di fire.weapon
-M.WEAPONS = { teleport = true }
+M.WEAPONS = { teleport = true, swap = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
 for _, w in ipairs(M.CRATE_WEAPONS) do M.WEAPONS[w] = true end
 for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
@@ -227,8 +227,6 @@ M.AIM_DEADZONE = 0
 M.AIM_EXPONENT = 1
 -- quanto della differenza tra mira e dito si recupera a ogni frame (a 60 Hz); 1 = subito
 M.AIM_SMOOTH = 1
--- punti della traiettoria mostrati mentre si mira (false: tutti)
-M.AIM_PREVIEW_DOTS = false
 -- tenendo premuto il salto si risalta appena si tocca terra
 M.JUMP_REPEAT = false
 -- Salto corto (come Hollow Knight): lasciando il salto mentre si sale la
@@ -1666,7 +1664,9 @@ function M:update_hooked(rb)
 		rb.hooked = nil
 		-- arrivato al terreno (la capsula lo ferma a un passo dal punto): sopra
 		if not by and dist < M.ROBOT_H then self:hook_land(rb, h.x, h.y) end
-		self:emit({ type = "hook_end", robot = rb.id })
+		-- snap: la fune tirata da un robot è finita prima di arrivare, il
+		-- tirato resta lì (sopra il vuoto cade): nel disegno si spezza
+		self:emit({ type = "hook_end", robot = rb.id, by = h.by, snap = by and not stopped or nil })
 	end
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
@@ -2675,13 +2675,36 @@ function M:can_use(weapon)
 	elseif M.TOOLS[weapon] then
 		return rb.ammo[weapon] > 0
 	end
-	if weapon == "teleport" then
+	if weapon == "swap" then
+		-- scambio del secondo attacco con un teletrasporto: dopo il primo attacco, finché il secondo c'è
+		return self.used.primary ~= self.used.secondary
+	elseif weapon == "teleport" then
 		return #self.orbs < M.MAX_ORBS and rb.teleports_left > 0
 			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS + self.teleports_earned)
 	elseif M.SECONDARY[weapon] then
 		return not self.used.secondary and M.has_weapon(rb, weapon)
 	end
 	return not self.used.primary and M.has_weapon(rb, weapon)
+end
+
+-- Scambio (Sergio, 29 ottobre): dopo il primo attacco il secondo si può
+-- cambiare con un globo del teletrasporto, da lanciare quando vuoi (anche al
+-- primo turno: conta come guadagnato). Il turno continua come dopo due attacchi.
+function M:swap_attack()
+	local rb = self.robots[self.current]
+	self.used.primary, self.used.secondary = true, true
+	rb.teleports_left = rb.teleports_left + 1
+	self.teleports_earned = self.teleports_earned + 1
+	self:emit({ type = "swap", robot = rb.id, total = rb.teleports_left })
+end
+
+-- Quanti globi del teletrasporto dà il primo attacco dopo ticks di turno
+function M.globi_per(ticks)
+	local n = 0
+	for _, s in ipairs(C.TELEPORT_SOGLIE) do
+		if ticks <= s * 60 then n = n + 1 end
+	end
+	return n
 end
 
 -- Il robot di turno attacca con weapon (già controllata con can_use)
@@ -2716,8 +2739,8 @@ function M:attack(weapon, fire)
 	if first then
 		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
 		rb.attack_turns = rb.attack_turns + 1
-		-- i secondi rimasti diventano globi del teletrasporto
-		local gain = rb.stats.time_orbs > 0 and math.floor(self.timer / (60 * C.TELEPORT_SECONDS)) or 0
+		-- attaccare presto dà globi del teletrasporto, uno per soglia non passata
+		local gain = rb.stats.time_orbs > 0 and M.globi_per(M.TURN_TICKS - self.timer) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
 			self.teleports_earned = self.teleports_earned + gain
@@ -2871,6 +2894,8 @@ function M:step(input)
 		if not done and fire and self:can_use(weapon) then
 			if M.TOOLS[weapon] then
 				self:use_tool(weapon, fire)
+			elseif weapon == "swap" then
+				self:swap_attack()
 			elseif weapon == "teleport" then
 				-- il globo non è un attacco: consuma un teletrasporto e il turno continua
 				local rb = self.robots[self.current]
@@ -3021,11 +3046,10 @@ local function blastron_profile()
 		SETTLE_TICKS = 60,
 		CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 },
 		-- comandi: zona morta 20%, potenza quadratica, mira che insegue il dito,
-		-- solo l'inizio della traiettoria, salto ripetuto
+		-- salto ripetuto
 		AIM_DEADZONE = 0.2,
 		AIM_EXPONENT = 2,
 		AIM_SMOOTH = 0.2,
-		AIM_PREVIEW_DOTS = 4,
 		JUMP_REPEAT = true,
 	}
 end

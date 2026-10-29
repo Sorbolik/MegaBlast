@@ -164,6 +164,43 @@ func TestHookShotInSnapshot(t *testing.T) {
 	}
 }
 
+// Lo scambio del secondo attacco con un teletrasporto passa dal server come
+// le armi (fire.w = "swap"): un globo in più e gli attacchi chiusi nello stato.
+func TestSwapSecondAttack(t *testing.T) {
+	sim := newTestSim(t, 42, "forgia")
+	type stato struct {
+		U int `json:"u"`
+		R []struct {
+			TL int `json:"tl"`
+		} `json:"r"`
+	}
+	leggi := func() stato {
+		var st stato
+		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
+			t.Fatal(err)
+		}
+		return st
+	}
+	for i := 0; i < 20*60; i++ {
+		sim.Step(Input{})
+	}
+	sim.Step(Input{Fire: true, Angle: 1.0, Power: 0.6})
+	prima := leggi()
+	sim.Step(Input{Fire: true, Weapon: "swap"})
+	swapped := false
+	for _, e := range sim.Events() {
+		var ev map[string]any
+		json.Unmarshal(e, &ev)
+		if ev["type"] == "swap" {
+			swapped = true
+		}
+	}
+	dopo := leggi()
+	if !swapped || dopo.R[0].TL != prima.R[0].TL+1 || dopo.U&3 != 3 {
+		t.Fatalf("scambio non riuscito: evento %v, globi %d -> %d, attacchi %d", swapped, prima.R[0].TL, dopo.R[0].TL, dopo.U)
+	}
+}
+
 // Uno stato Lua riusato deve dare la stessa partita di uno nuovo: la copia
 // della mappa in net.lua non deve cambiare niente.
 func TestEngineReuseIsDeterministic(t *testing.T) {
