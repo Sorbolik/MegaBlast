@@ -1,0 +1,362 @@
+{
+ "colpisce · sempre in volo": {
+  "ind": {
+   "vita_mia": 0.26539,
+   "vita_compagno": 0.18872,
+   "morte": 5.0,
+   "strada": 0.00121,
+   "teletrasporto": 244.0933,
+   "globo_riparo": 5.34124,
+   "vuoto": 4.0,
+   "uccisione": 1.5305,
+   "danno": 0.96651
+  },
+  "bravura": 0.5448,
+  "gen": 25,
+  "prove": 1,
+  "come": {
+   "bravura": 0.5448,
+   "vinte": 0.4457,
+   "partite": 175,
+   "punti": 586.3,
+   "danno": 291.6,
+   "uccisioni": 3.38,
+   "ambientali": 0.57,
+   "morti": 3.43,
+   "cadute": 0.63,
+   "teletrasporti": 4.24,
+   "armi": {
+    "bellows": 0.037,
+    "eagle": 0.0688,
+    "grenade": 0.0425,
+    "hook": 0.0732,
+    "lunge": 0.0515,
+    "mallet": 0.0437,
+    "missile": 0.2317,
+    "parachute": 0.0177,
+    "punch": 0.0291,
+    "shards": 0.0382,
+    "shield": 0.0031,
+    "sniper": 0.0389,
+    "sword": 0.0327,
+    "teleport": 0.2919
+   },
+   "firme": [
+    [
+     "missile",
+     117
+    ],
+    [
+     "missile+kill",
+     97
+    ],
+    [
+     "grenade",
+     17
+    ],
+    [
+     "sniper",
+     17
+    ],
+    [
+     "teleport>bellows+kill+fuori",
+     16
+    ],
+    [
+     "missile>hook",
+     14
+    ]
+   ]
+  },
+  "pesi": {
+   "vita_mia": 0.26539,
+   "vita_compagno": 0.18872,
+   "morte": 5.0,
+   "strada": 0.00121,
+   "teletrasporto": 244.0933,
+   "globo_riparo": 5.34124,
+   "punteggio": {
+    "kill": 76.525,
+    "damage": 0.96651,
+    "death": -20,
+    "self_death": -30,
+    "crown": 25,
+    "env_kill": 200.0,
+    "trap": 10,
+    "parry_max": 20,
+    "leader": 1.5,
+    "parry": 0.5
+   }
+  }
+ },
+ "colpisce · si sposta": {
+  "ind": {
+   "vita_mia": 0.94804,
+   "vita_compagno": 0.1,
+   "morte": 21.81833,
+   "strada": 0.00522,
+   "teletrasporto": 293.10908,
+   "globo_riparo": 20.36782,
+   "vuoto": 2.89604,
+   "uccisione": 2.57446,
+   "danno": 0.75783
+  },
+  "bravura": 0.568,
+  "gen": 24,
+  "prove": 1,
+  "come": {
+   "bravura": 0.568,
+   "vinte": 0.4693,
+   "partite": 179,
+   "punti": 615.0,
+   "danno": 311.1,
+   "uccisioni": 3.54,
+   "ambientali": 0.52,
+   "morti": 3.47,
+   "cadute": 0.63,
+   "teletrasporti": 3.18,
+   "armi": {
+    "bellows": 0.0365,
+    "eagle": 0.0753,
+    "grenade": 0.0452,
+    "hook": 0.0836,
+    "lunge": 0.0793,
+    "mallet": 0.0452,
+    "missile": 0.2426,
+    "parachute": 0.019,
+    "punch": 0.0404,
+    "shards": 0.0436,
+    "shield": 0.004,
+    "sniper": 0.0281,
+    "sword": 0.0317,
+    "teleport": 0.2255
+   },
+   "firme": [
+    [
+     "missile",
+     110
+    ],
+    [
+     "missile+kill",
+     90
+    ],
+    [
+     "grenade",
+     30
+    ],
+    [
+     "teleport>lunge>missile",
+     27
+    ],
+    [
+     "missile>hook",
+     25
+    ],
+    [
+     "missile>eagle+kill",
+     21
+    ]
+   ]
+  },
+  "pesi": {
+   "vita_mia": 0.94804,
+   "vita_compagno": 0.1,
+   "morte": 21.81833,
+   "strada": 0.00522,
+   "teletrasporto": 293.10908,
+   "globo_riparo": 20.36782,
+   "punteggio": {
+    "kill": 128.723,
+    "damage": 0.75783,
+    "death": -20,
+    "self_death": -30,
+    "crown": 25,
+    "env_kill": 144.802,
+    "trap": 10,
+    "parry_max": 20,
+    "leader": 1.5,
+    "parry": 0.5
+   }
+  }
+ },
+ "misto · sempre in volo": {
+  "ind": {
+   "vita_mia": 0.20142,
+   "vita_compagno": 2.59361,
+   "morte": 69.9799,
+   "strada": 0.00209,
+   "teletrasporto": 298.98371,
+   "globo_riparo": -5.07446,
+   "vuoto": 2.69201,
+   "uccisione": 0.52153,
+   "danno": 0.90645
+  },
+  "bravura": 0.5019,
+  "gen": 25,
+  "prove": 1,
+  "come": {
+   "bravura": 0.5019,
+   "vinte": 0.4045,
+   "partite": 178,
+   "punti": 585.3,
+   "danno": 298.9,
+   "uccisioni": 3.26,
+   "ambientali": 0.81,
+   "morti": 3.49,
+   "cadute": 0.46,
+   "teletrasporti": 7.76,
+   "armi": {
+    "bellows": 0.0441,
+    "eagle": 0.0662,
+    "grenade": 0.035,
+    "hook": 0.0312,
+    "lunge": 0.0337,
+    "mallet": 0.0318,
+    "missile": 0.1863,
+    "parachute": 0.0129,
+    "punch": 0.0287,
+    "shards": 0.0334,
+    "shield": 0.0035,
+    "sniper": 0.028,
+    "sword": 0.0299,
+    "teleport": 0.4352
+   },
+   "firme": [
+    [
+     "missile>teleport",
+     149
+    ],
+    [
+     "missile>teleport+kill",
+     89
+    ],
+    [
+     "grenade>teleport",
+     36
+    ],
+    [
+     "teleport>bellows>teleport+kill+fuori",
+     21
+    ],
+    [
+     "eagle>missile>teleport",
+     20
+    ],
+    [
+     "missile>eagle>teleport",
+     19
+    ]
+   ]
+  },
+  "pesi": {
+   "vita_mia": 0.20142,
+   "vita_compagno": 2.59361,
+   "morte": 69.9799,
+   "strada": 0.00209,
+   "teletrasporto": 298.98371,
+   "globo_riparo": -5.07446,
+   "punteggio": {
+    "kill": 26.0765,
+    "damage": 0.90645,
+    "death": -20,
+    "self_death": -30,
+    "crown": 25,
+    "env_kill": 134.6005,
+    "trap": 10,
+    "parry_max": 20,
+    "leader": 1.5,
+    "parry": 0.5
+   }
+  }
+ },
+ "misto · si sposta": {
+  "ind": {
+   "vita_mia": 0.05,
+   "vita_compagno": 0.39176,
+   "morte": 209.59555,
+   "strada": 0.00223,
+   "teletrasporto": 346.80717,
+   "globo_riparo": 11.32521,
+   "vuoto": 1.96343,
+   "uccisione": 1.36736,
+   "danno": 0.70932
+  },
+  "bravura": 0.5665,
+  "gen": 25,
+  "prove": 1,
+  "come": {
+   "bravura": 0.5665,
+   "vinte": 0.474,
+   "partite": 173,
+   "punti": 605.2,
+   "danno": 303.6,
+   "uccisioni": 3.49,
+   "ambientali": 0.74,
+   "morti": 3.47,
+   "cadute": 0.59,
+   "teletrasporti": 3.49,
+   "armi": {
+    "bellows": 0.0508,
+    "eagle": 0.0727,
+    "grenade": 0.0425,
+    "hook": 0.0789,
+    "lunge": 0.0446,
+    "mallet": 0.0446,
+    "missile": 0.2477,
+    "parachute": 0.0149,
+    "punch": 0.0264,
+    "shards": 0.0512,
+    "shield": 0.0033,
+    "sniper": 0.0339,
+    "sword": 0.0396,
+    "teleport": 0.249
+   },
+   "firme": [
+    [
+     "missile",
+     151
+    ],
+    [
+     "missile+kill",
+     84
+    ],
+    [
+     "grenade",
+     26
+    ],
+    [
+     "teleport>bellows+kill+fuori",
+     25
+    ],
+    [
+     "missile>hook",
+     25
+    ],
+    [
+     "eagle>missile",
+     18
+    ]
+   ]
+  },
+  "pesi": {
+   "vita_mia": 0.05,
+   "vita_compagno": 0.39176,
+   "morte": 209.59555,
+   "strada": 0.00223,
+   "teletrasporto": 346.80717,
+   "globo_riparo": 11.32521,
+   "punteggio": {
+    "kill": 68.368,
+    "damage": 0.70932,
+    "death": -20,
+    "self_death": -30,
+    "crown": 25,
+    "env_kill": 98.1715,
+    "trap": 10,
+    "parry_max": 20,
+    "leader": 1.5,
+    "parry": 0.5
+   }
+  }
+ }
+}
