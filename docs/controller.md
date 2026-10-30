@@ -9,14 +9,15 @@ le levette del telefono.
 ## Tasti in battaglia
 
 Mappatura di base di Sergio (30 ott); ognuno la cambia nelle IMPOSTAZIONI
-(sotto). Nomi Xbox, cioè il posto del tasto: A in basso, B a destra, X a
+(sotto). Di base la levetta destra muove e la sinistra mira (Sergio, 30 ott);
+LEVETTA CHE MUOVE nelle impostazioni le rimette al contrario. Nomi Xbox, cioè il posto del tasto: A in basso, B a destra, X a
 sinistra, Y in alto. Su PlayStation sono croce, cerchio, quadrato e triangolo;
 su Nintendo, allo stesso posto, B, A, Y e X.
 
 | Tasto | Cosa fa |
 |---|---|
-| Levetta sinistra | Cammina; spinta in su salta (come la levetta del telefono). Se SALTA ha un tasto (impostazioni) cammina soltanto |
-| Levetta destra | Mira: la direzione è l'angolo, quanto la spingi è la potenza (come sul telefono); riportata al centro si spegne |
+| Levetta destra | Cammina; spinta in su salta (come la levetta del telefono). Se SALTA ha un tasto (impostazioni) cammina soltanto |
+| Levetta sinistra | Mira: la direzione è l'angolo, quanto la spingi è la potenza (come sul telefono); riportata al centro si spegne |
 | RT (grilletto destro) | Spara, con la mira della levetta destra di un attimo prima (0,05 s, come il pollice che si stacca dal telefono). Di base **lasciandolo**: premuto carica, lasciato parte; riportando la levetta destra al centro prima di lasciarlo non parte niente. Nelle impostazioni si sceglie anche PREMENDO, o la potenza dal GRILLETTO (sotto) |
 | LB | La primaria dopo, a giro (1, 2, 3, 1...), dal cronometro verso fuori |
 | RB | La secondaria dopo, a giro |
@@ -49,7 +50,7 @@ ogni comando, col suo tasto. Si sceglie la riga (col tocco o con la luce e A) e
 si preme il tasto nuovo: il comando che lo aveva prende quello lasciato libero
 (o, se il comando nuovo non ne aveva, il primo tasto che nessuno usa: la
 croce). **Y** sulla riga accesa toglie il tasto: il comando resta senza. Start
-annulla e resta sempre alla rotellina; le levette sono fisse. RIPRISTINA torna
+annulla e resta sempre alla rotellina; quale levetta muove si sceglie a parte (LEVETTA CHE MUOVE). RIPRISTINA torna
 alla mappatura di Sergio. Si salva subito nel profilo (`tasti`, `sparo`, `potenza`).
 
 - **SALTA** (Sergio, 30 ott: "la gente lo vuole sulla A"): di base non ha un

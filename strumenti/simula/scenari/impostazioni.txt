@@ -13,7 +13,7 @@ aspetta 2
 tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
 aspetta 0.5
 foto 01_impostazioni
-tocca_centro 330 542                # MIRA: MIRINO
+tocca_centro 249 542                # MIRA: MIRINO
 tocca_centro 395 386                # SALTA: aspetta il tasto
 aspetta 0.3
 foto 02_premi_un_tasto
@@ -36,7 +36,7 @@ aspetta 0.3
 foto 05_tolto
 pad a                               # di nuovo: aspetta il tasto
 pad a                               # SALTA su A
-tocca_centro 1130 542               # POTENZA: GRILLETTO
+tocca_centro 873 542               # POTENZA: GRILLETTO
 aspetta 0.3
 foto 06_grilletto
 pad b                               # B (CERCHIO) torna indietro
@@ -45,7 +45,7 @@ aspetta 0.5
 tocca_bordo 218 216 basso destra    # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
-pad sx_su 0.4                       # la levetta in su non salta più
+pad dx_su 0.4                       # la levetta in su non salta più
 foto 07_levetta_su
 aspetta 0.5
 pad a 0.3                           # A salta
@@ -55,7 +55,7 @@ aspetta 1.5
 pad lb                              # la prima primaria, col controller
 aspetta 0.5
 foto 09_hud_tasti
-pad_tieni dx_destra+dx_su           # la direzione
+pad_tieni sx_destra+sx_su           # la direzione
 aspetta 0.2
 pad_tieni b                         # CERCHIO tenuto: tutta potenza
 aspetta 0.3
@@ -63,6 +63,6 @@ foto 10_carica
 niente_evento grenade 0.3           # finché è premuto non parte
 pad_lascia b                        # lasciato: parte
 aspetta_evento grenade 2
-pad_lascia dx_destra+dx_su
+pad_lascia sx_destra+sx_su
 aspetta 0.5
 foto 11_sparato

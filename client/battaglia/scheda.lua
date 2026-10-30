@@ -67,7 +67,7 @@ local function uso(d, arma, comandi)
 		return d.in_aria and "In aria toccalo fra gli OGGETTI" or "Toccalo fra gli OGGETTI"
 	end
 	if comandi == "controller" then
-		return "Muovi la levetta di destra per sistemare la traiettoria, usa " .. tasto("spara") .. " per far partire il colpo"
+		return "Muovi la levetta " .. (controller.lato("mira") == "dx" and "di destra" or "di sinistra") .. " per sistemare la traiettoria, usa " .. tasto("spara") .. " per far partire il colpo"
 	elseif comandi == "telefono" then
 		return "Sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo"
 	end
