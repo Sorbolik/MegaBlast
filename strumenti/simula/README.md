@@ -64,6 +64,8 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `premi TASTO` | pressione breve |
 | `trascina X1 Y1 X2 Y2 [S]` | trascina il dito |
 | `mira DX DY [S] [FOTO] [Z]` | tiene il dito a (DX, DY) pixel dello schermo dal robot di turno (la potenza dipende dai pixel dello schermo, a ogni zoom) per S secondi (la mira), facoltativamente scatta FOTO (con Z, uno zoom Z volte invece della foto intera), poi lascia: spara con l'arma scelta |
+| `pad TASTI [S]` | controller finto: tiene premuti insieme i tasti TASTI (`a`, `b`, `x`, `y`, `lb`, `rb`, `lt`, `rt`, `start`, `select`, la croce `su` `giu` `sinistra` `destra`, le levette fino in fondo `sx_destra`, `dx_su`... uniti da `+`) per S secondi (0,1 se non si dice). Nella build del simulatore ogni tasto del controller ha anche un tasto della tastiera (`PAD` in `simula.py`). Scenario `scenari/controller.txt` |
+| `pad_tieni TASTI` / `pad_lascia TASTI` | come `pad`, ma i tasti restano premuti fra altri comandi (mirare con la levetta destra e premere `rt`) |
 | `levetta DX DY S [FOTO]` | comandi del telefono (`imposta comandi telefono`): appoggia il dito sulla levetta del movimento (`115 117`), lo sposta di (DX, DY) e lo tiene S secondi: di lato cammina, in alto salta (e risalta), facoltativamente scatta FOTO prima di lasciare |
 | `levetta_mira DX DY S [FOTO]` | come `levetta`, ma sulla levetta della mira (`1165 117`): oltre il 20% della corsa (19 px) si accende e lasciando spara; sotto il 10% si spegne |
 | `levetta_annulla DX DY [FOTO]` | mira con la levetta del telefono e la annulla col tasto destro (fa quello che fa un secondo dito sullo schermo), facoltativamente scatta FOTO, poi lascia: non deve partire niente |

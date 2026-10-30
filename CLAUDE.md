@@ -104,6 +104,16 @@ stampino e si tagliano con `strumenti/stampino/taglia.py`: regole e comandi in
 [strumenti/stampino/README.md](strumenti/stampino/README.md). Il gioco li monta
 con `scoria.new(colore, look)` (`client/battaglia/pelli.lua`, generato).
 
+## Controller
+
+Il gioco si usa anche col controller (Bluetooth o USB): mappatura di Sergio e
+come funziona in [docs/controller.md](docs/controller.md). Cosa fa ogni tasto
+in battaglia sta solo in `controller.BATTAGLIA` (`client/ui/controller.lua`);
+un comando nuovo dell'HUD va aggiunto anche lì e in `PAD.COMANDI`
+(`client/main/game.gui_script`). Una schermata nuova con `ui.tocco` ha già la
+luce del controller. Si prova col controller finto: scenario
+`strumenti/simula/scenari/controller.txt`.
+
 ## Provare il gioco su iPhone
 
 Su iPhone si prova la build HTML5 in Safari: `bash strumenti/web/build.sh` prepara

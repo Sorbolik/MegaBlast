@@ -1,0 +1,79 @@
+# Il controller (ui/controller.lua, docs/controller.md) col controller finto del
+# simulatore (comandi pad, pad_tieni e pad_lascia: ogni tasto ha un tasto della
+# tastiera). Nella home la croce accende GIOCA, su va a STESSO TELEFONO, A entra;
+# nella scelta delle armi la croce sposta la luce sulle carte, Y apre la scheda,
+# A sceglie. In battaglia (la mappatura di Sergio): levetta sinistra cammina e
+# in su salta, LB e RB le primarie e le secondarie a giro, la levetta destra
+# mira e RT spara, riportata al centro non parte niente; LT accende gli oggetti
+# a giro e croce giù usa quello acceso; X Rampino, A teletrasporto, Start la rotellina.
+imposta prova_scelta 1
+imposta prova_armi 1
+imposta zoom 2
+
+aspetta 2
+pad giu                             # la prima pressione accende la luce, su GIOCA
+aspetta 0.3
+foto 01_home_luce
+pad su                              # STESSO TELEFONO
+aspetta 0.3
+foto 02_home_stesso_telefono
+pad a
+aspetta_stato modo=scelta 5
+aspetta 0.5
+pad destra                          # la luce sulla prima carta
+pad destra                          # la seconda
+aspetta 0.3
+foto 03_scelta_luce
+pad y                               # la sua scheda
+aspetta 0.5
+foto 04_scelta_scheda
+pad a                               # la chiude
+aspetta 0.3
+pad a                               # Rosso: primaria
+aspetta 0.3
+pad a                               # Rosso: secondaria (la luce resta sulla seconda carta)
+aspetta 0.3
+pad a                               # Blu: primaria
+aspetta 0.3
+pad a                               # Blu: secondaria, si parte
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 05_battaglia
+pad sx_destra 0.6                   # cammina a destra
+pad sx_su 0.2                       # salta
+aspetta 0.8
+pad rb                              # la prima secondaria: la Lama
+aspetta 0.3
+foto 06_secondaria
+pad lb                              # la prima primaria: il Lanciarune
+pad lb                              # la primaria dopo
+aspetta 0.3
+foto 07_primaria_dopo
+pad_tieni dx_sinistra+dx_su         # mira in alto a sinistra, tutta potenza
+aspetta 0.4
+foto 08_mira
+pad_lascia dx_sinistra+dx_su        # riportata al centro si spegne
+pad rt
+niente_evento fire 1                # RT con la levetta a riposo non spara
+pad lt                              # gli oggetti a giro: il secondo
+aspetta 0.3
+foto 09_oggetto_acceso
+pad x                               # il Rampino in mano
+aspetta 0.3
+foto 10_rampino
+pad lb                              # di nuovo una primaria
+pad_tieni dx_sinistra+dx_su
+aspetta 0.4
+pad rt                              # spara
+pad_lascia dx_sinistra+dx_su
+aspetta_evento fire 2
+aspetta 0.5
+pad giu                             # usa l'oggetto acceso
+aspetta 0.5
+foto 11_oggetto_usato
+pad start                           # la rotellina, con la luce su RIPROVA
+aspetta 0.3
+foto 12_rotellina
+pad b                               # si richiude
+aspetta 0.3
+foto 13_chiusa

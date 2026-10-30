@@ -43,6 +43,16 @@ S = 1
 
 # Nomi comodi dei tasti (quelli di input/game.input_binding)
 TASTI = {"sinistra": "Left", "destra": "Right", "salta": "space", "su": "Up"}
+# Il controller finto (comando "pad"): nella build del simulatore ogni tasto
+# del controller ha anche un tasto della tastiera (azione pad_NOME di
+# input/game.input_binding): (tasto di Defold, tasto di xdotool). Le levette
+# così vanno solo fino in fondo, in otto direzioni.
+PAD = {"a": ("F1", "F1"), "b": ("F2", "F2"), "x": ("F3", "F3"), "y": ("F4", "F4"),
+       "lb": ("F5", "F5"), "rb": ("F6", "F6"), "lt": ("F7", "F7"), "rt": ("F8", "F8"),
+       "start": ("F9", "F9"), "select": ("F10", "F10"),
+       "su": ("PAGEUP", "Prior"), "giu": ("PAGEDOWN", "Next"), "sinistra": ("HOME", "Home"), "destra": ("END", "End"),
+       "sx_sinistra": ("F", "f"), "sx_destra": ("H", "h"), "sx_su": ("Y", "y"), "sx_giu": ("G", "g"),
+       "dx_sinistra": ("J", "j"), "dx_destra": ("L", "l"), "dx_su": ("I", "i"), "dx_giu": ("K", "k")}
 # Righe del log del motore che non sono errori del gioco (nel container non c'è audio)
 IGNORA = re.compile(r"^(ERROR|WARNING):SOUND|^WARNING:(DLIB: Variable LANG|ENGINE: Failed to initialize sound)")
 ERRORE = re.compile(r"^(ERROR|FATAL):|Assertion|Segmentation fault|stack traceback")
@@ -111,6 +121,9 @@ def build(out, extra=""):
     bundle = out / "bundle"
     shutil.rmtree(bundle, ignore_errors=True)
     radice = senza_estensioni.copia(out / "client")
+    with open(radice / "input" / "game.input_binding", "a") as f:
+        for nome, (tasto, _) in PAD.items():
+            f.write(f'key_trigger {{\n  input: KEY_{tasto}\n  action: "pad_{nome}"\n}}\n')
     cmd = [str(JAVA), "-jar", str(BOB), "--root", str(radice), "--output", "build/simula/default",
            "--settings", str(settings), "--platform", "x86_64-linux", "--architectures", "x86_64-linux",
            "--variant", "debug", "--archive", "--texture-compression", "true", "--bundle-output", str(bundle), "build", "bundle"]
@@ -342,6 +355,20 @@ def comando(g, riga):
             # zoom prima di lasciare il tasto (per vedere il movimento)
             g.zoom(a[2], num(3, 2))
         g.xdo("keyup", tasto)
+    elif c == "pad":
+        # pad A+RT [S]: tiene premuti insieme quei tasti del controller finto per S secondi
+        tasti = [PAD[n][1] for n in a[0].split("+")]
+        for t in tasti:
+            g.xdo("keydown", t)
+        g.attendi(num(1, 0.1))
+        for t in tasti:
+            g.xdo("keyup", t)
+        g.attendi(0.05)
+    elif c in ("pad_tieni", "pad_lascia"):
+        # pad_tieni dx_su+dx_destra ... pad_lascia dx_su+dx_destra: tasti tenuti fra altri comandi
+        for n in a[0].split("+"):
+            g.xdo("keydown" if c == "pad_tieni" else "keyup", PAD[n][1])
+        g.attendi(0.05)
     elif c == "cammina":
         # tiene premuto destra o sinistra finché il robot di turno passa X nel
         # mondo (non dipende da quanto va veloce il gioco nel simulatore)
