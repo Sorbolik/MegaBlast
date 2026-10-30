@@ -1,0 +1,20 @@
+# Punti e Corona (imposta prova_missione punti): i punti si vedono da qui. Il
+# Mantice dalla cassa, la sua scheda, e il primo bersaglio soffiato nel vuoto.
+imposta prova_missione punti
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.5
+foto 01_scopo                        # i punti in alto, il quarto bersaglio con la Corona
+cammina destra 555
+tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
+aspetta_evento crate_pick 10
+aspetta 0.8
+foto 02_scheda_mantice
+tocca_centro 640 120                        # PROVALA
+aspetta 1
+foto 03_mantice_in_luce
+cammina sinistra 362
+premi 3                              # il Mantice (dopo Lanciarune e Lama)
+mira -80 0 0.3
+aspetta_evento death 6
+aspetta 1
+foto 04_nel_vuoto                    # la riga sui punti

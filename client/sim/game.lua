@@ -2241,8 +2241,20 @@ function M:update_crates()
 			if not rb.dead and not taken
 				and math.abs(rb.x - c.x) <= M.ROBOT_HALF_W + M.CRATE_HALF_W
 				and rb.y < c.y + M.CRATE_H and rb.y + M.ROBOT_H > c.y then
-				-- il Lanciarune non ha colpi contati: la cassa lo dà a chi non ce l'ha (rb.disarmed)
-				if M.FREE_WEAPONS[c.weapon] then rb.disarmed = nil else rb.ammo[c.weapon] = rb.ammo[c.weapon] + 1 end
+				-- le armi senza colpi contati, l'attrezzo e il paracadute dalle casse delle
+				-- lezioni (sim/missioni.lua casse): il Lanciarune a chi non ce l'ha
+				-- (rb.disarmed), la secondaria e l'attrezzo prendono il posto dei loro
+				local w = c.weapon
+				if M.FREE_WEAPONS[w] then
+					rb.disarmed = nil
+					if M.SECONDARY[w] then rb.secondary = w end
+				elseif w == "hook" or w == "wall" then
+					rb.tool = w
+				elseif w == "parachute" then
+					rb.parachutes_left = rb.parachutes_left + 1
+				else
+					rb.ammo[w] = rb.ammo[w] + 1
+				end
 				rb.crates = rb.crates + 1
 				self:emit({ type = "crate_pick", id = c.id, robot = rb.id, weapon = c.weapon })
 				taken = true
