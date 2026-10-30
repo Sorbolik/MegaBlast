@@ -229,7 +229,7 @@ local ADDESTRAMENTO = {
 			-- niente scelta (Sergio, 30 ott): Lanciarune, Lama e Rampino; le altre
 			-- armi, se vuoi, dalle casse, con la loro scheda
 			{ team = 1 },
-			{ team = 2, bot = "tutorial", pick = "grenade", secondary = "mallet" },
+			{ team = 2, bot = 1, pick = "grenade", secondary = "mallet" },
 		},
 		-- partita corta: 3 minuti
 		secondi = 180,
