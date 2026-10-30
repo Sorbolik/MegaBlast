@@ -30,7 +30,10 @@ local SCELTE = {
 	{ "mira", "MIRA", { { "lancetta", "LANCETTA" }, { "mirino", "MIRINO" } } },
 	{ "sparo", "SPARO COL CONTROLLER", { { "pressione", "PREMENDO" }, { "rilascio", "LASCIANDO" } } },
 	{ "potenza", "POTENZA COL CONTROLLER", { { "levetta", "LEVETTA" }, { "grilletto", "GRILLETTO" } } },
+	{ "levette", "LEVETTA CHE MUOVE", { { "destra", "DESTRA" }, { "sinistra", "SINISTRA" } } },
 }
+-- i gruppi delle scelte: distanza fra i centri e larghezza di ogni scelta
+local GRUPPO, SCELTA_W = 312, 148
 -- due colonne di comandi
 local RIGA_W, RIGA_H, RIGA_PASSO = 470, 48, 54
 local COLONNE = { 395, 885 }
@@ -49,11 +52,11 @@ local function costruisci(s)
 	ui.titolo("IMPOSTAZIONI", 640, 650, 1, C.TESTO, s.radice)
 
 	for k, sc in ipairs(SCELTE) do
-		local cx = 640 + (k - 2) * 400
-		ui.testo(sc[2], cx, 586, 0.6, C.SPENTO, s.radice)
+		local cx = 640 + (k - (#SCELTE + 1) / 2) * GRUPPO
+		ui.testo(sc[2], cx, 586, 0.5, C.SPENTO, s.radice)
 		local v = profilo.impostazione(s.p, sc[1])
 		for i, m in ipairs(sc[3]) do
-			ui.scheda(s.bottoni, cx + (i - 1.5) * 180, 542, 170, 52, m[2], sc[1] .. ":" .. m[1], v == m[1], s.radice)
+			ui.scheda(s.bottoni, cx + (i - 1.5) * (SCELTA_W + 6), 542, SCELTA_W, 52, m[2], sc[1] .. ":" .. m[1], v == m[1], s.radice)
 		end
 	end
 
@@ -76,7 +79,7 @@ local function costruisci(s)
 			glifo.mostra(g, s.c, controller.tasto_di(s.c, cmd))
 			gui.set_position(g.radice, vmath.vector3(RIGA_W / 2 - 22 - glifo.largo(g) / 2, 0, 0))
 		else
-			local nessuno = ui.testo(cmd == "salta" and "LEVETTA SX IN SU" or "NESSUN TASTO", RIGA_W / 2 - 22, 0, 0.6,
+			local nessuno = ui.testo(cmd == "salta" and ("LEVETTA " .. string.upper(controller.lato("muove")) .. " IN SU") or "NESSUN TASTO", RIGA_W / 2 - 22, 0, 0.6,
 				C.SPENTO, nodo)
 			gui.set_pivot(nessuno, gui.PIVOT_E)
 		end
@@ -96,6 +99,7 @@ end
 
 function M.new(p, c)
 	local s = { p = p, c = c }
+	controller.levette = profilo.impostazione(p, "levette")
 	s.fondo = ui.sfondo()
 	costruisci(s)
 	return s
@@ -142,6 +146,7 @@ function M.on_input(s, action_id, action)
 			profilo.salva(s.p)
 		end
 	end
+	controller.levette = profilo.impostazione(s.p, "levette")
 	costruisci(s)
 	return nil
 end

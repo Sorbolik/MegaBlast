@@ -3064,12 +3064,16 @@ function PAD.testi(self)
 	local t = PAD.TESTI[c]
 	if c == "controller" then
 		local spara, salta = PAD.lettore.nome_di("spara"), PAD.lettore.nome_di("salta")
+		local _, muove = PAD.levetta(self, "muove")
+		local _, mira = PAD.levetta(self, "mira")
 		t.mira = PAD.imp(self, "potenza") == "grilletto"
-			and ("muovi la levetta di destra per la direzione, premi " .. spara .. " per la potenza e lascialo per far partire il colpo")
+			and ("muovi la levetta " .. mira .. " per la direzione, premi " .. spara .. " per la potenza e lascialo per far partire il colpo")
 			or PAD.imp(self, "sparo") == "rilascio"
-			and ("muovi la levetta di destra per sistemare la traiettoria, premi e lascia " .. spara .. " per far partire il colpo")
-			or ("muovi la levetta di destra per sistemare la traiettoria, premi " .. spara .. " per far partire il colpo")
-		t.salta = salta ~= "" and ("premi " .. salta) or "spingi in su la levetta di sinistra"
+			and ("muovi la levetta " .. mira .. " per sistemare la traiettoria, premi e lascia " .. spara .. " per far partire il colpo")
+			or ("muovi la levetta " .. mira .. " per sistemare la traiettoria, premi " .. spara .. " per far partire il colpo")
+		t.salta = salta ~= "" and ("premi " .. salta) or ("spingi in su la levetta " .. muove)
+		t.cammina = "sposta di lato la levetta " .. muove
+		t.annulla = "riporta al centro la levetta " .. mira
 	end
 	return t
 end
@@ -3110,6 +3114,14 @@ function PAD.riposo(self)
 end
 
 -- Un'impostazione del profilo (sparo, potenza: menu/impostazioni.lua)
+-- Quale levetta muove e quale mira (impostazioni "levette", Sergio 30 ott: di
+-- base la destra muove e la sinistra mira); e il suo nome per le scritte
+function PAD.levetta(self, uso)
+	PAD.lettore.levette = PAD.imp(self, "levette")
+	local lato = PAD.lettore.lato(uso)
+	return self.ctrl[lato], lato == "dx" and "di destra" or "di sinistra"
+end
+
 function PAD.imp(self, chiave)
 	return profilo.impostazione(self.profilo, chiave)
 end
@@ -3125,7 +3137,7 @@ end
 -- A ogni frame la levetta destra mira, come quella del telefono: accesa oltre
 -- il 20% della corsa, spenta sotto il 10% (levette.lua)
 function PAD.mira(self)
-	local st, l = self.pad_st, self.ctrl.dx
+	local st, l = self.pad_st, PAD.levetta(self, "mira")
 	if not (my_turn(self) and self.g.phase == "aim" and self.g:can_use(self.tele_armed and "teleport" or self.weapon)) then
 		if self.pad_mira then
 			levette.reset(st)
@@ -3253,7 +3265,7 @@ PAD.COMANDI = {
 	zoom = function(self) change_zoom(self) end,
 }
 
--- Ogni frame: la levetta sinistra cammina e salta, la destra mira
+-- Ogni frame: una levetta cammina e salta, l'altra mira (PAD.levetta)
 -- I tasti del controller sull'HUD (ui/glifo.lua, Sergio 30 ott): col
 -- controller in mano ogni pulsante mostra il suo tasto, disegnato come sul
 -- controller che si usa e come è ora nelle impostazioni. Per ogni comando: su
@@ -3322,6 +3334,7 @@ function PAD.ogni_frame(self)
 		self.tasti_letti = true
 		lettore.usa(c, profilo.impostazione(self.profilo, "tasti"))
 	end
+	lettore.levette = PAD.imp(self, "levette")
 	-- Esc o indietro (PAD.on_input), se non era il B del controller
 	if self.menu_chiesto then
 		self.menu_chiesto = nil
@@ -3342,11 +3355,11 @@ function PAD.ogni_frame(self)
 	local tasto_salto = lettore.tasto_di(c, "salta")
 	if tasto_salto then
 		-- col salto su un tasto la levetta sinistra cammina soltanto: conta solo di lato
-		local x = c.sx.x
+		local x = PAD.levetta(self, "muove").x
 		st.moving = math.abs(x) > (st.moving and levette.MOVE_CENTER or levette.LATERAL_DEAD)
 		if st.moving then st.dir = x < 0 and -1 or 1 end
 		self.pad_salta = self.pad_salta and c.giu[tasto_salto] or false
-	elseif levette.muovi(st, c.sx.x, c.sx.y) then
+	elseif levette.muovi(st, PAD.levetta(self, "muove").x, PAD.levetta(self, "muove").y) then
 		self.jump_pressed = true
 		missioni.tocca(self.missione)
 		missioni.tocca(self.missione, "salta")

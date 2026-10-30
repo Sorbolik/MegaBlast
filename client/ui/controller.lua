@@ -219,6 +219,12 @@ function M.nome_di(comando)
 	if not c then return "" end
 	return M.nome(c, M.UI_FISSI[comando] or M.tasto_di(c, comando))
 end
+-- Quale levetta muove (impostazioni "levette": "destra", di base, o
+-- "sinistra"; game.gui_script la mette qui) e il lato di ogni uso, "dx" o "sx"
+M.levette = "destra"
+function M.lato(uso)
+	return ((M.levette == "destra") == (uso == "muove")) and "dx" or "sx"
+end
 -- i tasti fissi dei menu
 M.UI_FISSI = { scheda = "y", conferma = "a", indietro = "b" }
 

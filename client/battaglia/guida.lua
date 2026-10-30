@@ -32,7 +32,7 @@ local GESTI = {
 }
 -- sul computer e col controller i tasti
 local TASTI = { computer = { cammina = "A   D", salta = "SPAZIO" },
-	controller = { cammina = "LEVETTA SX", salta = "SX IN SU", mira = "LEVETTA DX", annulla = "DX AL CENTRO" } }
+	controller = { cammina = "LEVETTA {muove}", salta = "{muove} IN SU", mira = "LEVETTA {mira}", annulla = "{mira} AL CENTRO" } }
 local V = vmath.vector3(0, 0, 0)
 
 local function pos(n, x, y)
@@ -88,7 +88,8 @@ local function anima(gd, cosa, comandi, pads)
 	elseif tasti[cosa] then
 		-- col salto su un tasto (impostazioni) si dice quello
 		local salto = comandi == "controller" and cosa == "salta" and controller.nome_di("salta") or ""
-		gui.set_text(gd.tasto_scritta, salto ~= "" and salto or tasti[cosa])
+		local lati = { muove = string.upper(controller.lato("muove")), mira = string.upper(controller.lato("mira")) }
+		gui.set_text(gd.tasto_scritta, salto ~= "" and salto or (tasti[cosa]:gsub("{(%a+)}", lati)))
 		pos(gd.tasto, pads.muovi.x, pads.muovi.y)
 		gui.animate(gd.tasto, "scale", vmath.vector3(1.12, 1.12, 1), gui.EASING_INOUTSINE, 0.45, 0, nil,
 			gui.PLAYBACK_LOOP_PINGPONG)
