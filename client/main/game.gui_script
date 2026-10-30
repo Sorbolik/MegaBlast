@@ -20,7 +20,8 @@ local replay = require "sim.replay"
 -- le schermate fuori dalla battaglia, in una tabella sola: il gui_script è
 -- vicino al limite di 200 variabili locali di Lua
 local menu = { podio = require "menu.podio", armeria = require "menu.armeria", scelta = require "menu.scelta",
-	allenamento = require "menu.allenamento", fine_livello = require "menu.fine_livello", campagna = require "menu.campagna" }
+	allenamento = require "menu.allenamento", fine_livello = require "menu.fine_livello", campagna = require "menu.campagna",
+	impostazioni = require "menu.impostazioni" }
 local missioni = require "sim.missioni"
 local levette = require "battaglia.levette"
 local mira = require "battaglia.mira"
@@ -1448,7 +1449,7 @@ local function missione_update(self, dt)
 	if self.segnale then self.segnale:mostra(brb and brb.x, brb and brb.y, game.ROBOT_H, game.ROBOT_HALF_W, self.clock) end
 	local testo, chi = missioni.riga(r)
 	-- {salta}: come si salta con i comandi che hai (PAD.TESTI)
-	if testo then testo = testo:gsub("{(%a+)}", PAD.TESTI[PAD.comandi(self)]) end
+	if testo then testo = testo:gsub("{(%a+)}", PAD.testi(self)) end
 	for i, rb in ipairs(self.robots) do targa.riga(rb.targa, i == chi and testo or "") end
 	punteggio.obiettivo(self.punti, missioni.obiettivo(r))
 	-- toccati i comandi, IL TUO TURNO svanisce
@@ -2404,6 +2405,9 @@ function RM.nodi(self)
 	self.ctrl, self.pad_st, self.pad_muovi = PAD.lettore.new(sys.get_sys_info().system_name), levette.new(), levette.new()
 	self.pad_cammina, self.pad_salta = 0, false
 	self.comandi = function() return PAD.comandi(self) end
+	PAD.lettore.attuale = self.ctrl
+	-- negli scenari si prova anche la grafica degli altri controller (prova_pad playstation)
+	if SIMULA then self.ctrl.famiglia = config_string("megablast.prova_pad", "xbox") end
 end
 
 function init(self)
@@ -2907,8 +2911,6 @@ local function esci_partita(self)
 		self.conn, self.tok = nil, nil
 		timer.delay(2, false, function() ws.disconnect(conn) end)
 	end
-	-- il dito che ha toccato ESCI non tocca anche il menù che si apre
-	self.aspetta_rilascio = 0.5
 	if ritorno == "campagna" then
 		apri_campagna(self)
 		return
@@ -3027,7 +3029,8 @@ local function pointer_up(self, id, x, y)
 end
 
 -- Controller -------------------------------------------------------------------
--- Cosa fanno i tasti in battaglia: la tabella PAD.lettore.BATTAGLIA
+-- Cosa fanno i tasti in battaglia: la tabella PAD.lettore.BATTAGLIA, o la
+-- mappatura scelta nelle IMPOSTAZIONI (salvata nel profilo, self.ctrl.tasti)
 -- (ui/controller.lua, docs/controller.md). Le levette fanno come sul
 -- telefono: la sinistra cammina e, spinta in su, salta; la destra mira, e si
 -- spara con RT finché è accesa (riportata al centro si spegne: niente colpo).
@@ -3049,8 +3052,19 @@ PAD.TESTI = {
 		mira = "trascina dal diavoletto per sistemare la traiettoria, lascia per far partire il colpo" },
 	controller = { salta = "spingi in su la levetta di sinistra", annulla = "riporta al centro la levetta di destra",
 		cammina = "sposta di lato la levetta di sinistra",
-		mira = "muovi la levetta di destra per sistemare la traiettoria, premi RT per far partire il colpo" },
+		mira = "" }, -- PAD.testi
 }
+
+-- Le scritte per i comandi in uso; col controller coi nomi dei suoi tasti
+function PAD.testi(self)
+	local c = PAD.comandi(self)
+	local t = PAD.TESTI[c]
+	if c == "controller" then
+		t.mira = "muovi la levetta di destra per sistemare la traiettoria, premi " .. PAD.lettore.nome_di("spara")
+			.. " per far partire il colpo"
+	end
+	return t
+end
 
 -- La scheda di un'arma nuova si chiude con PROVALA (o A), e l'arma resta in mano
 function PAD.chiudi_carta(self)
@@ -3107,6 +3121,8 @@ function PAD.mira(self)
 		if not era or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
 		self.aim_power = math.max(0.1, st.f ^ game.AIM_EXPONENT)
 		self.aim_dist = math.huge
+		-- per sparare con la mira di un attimo prima (PAD.COMANDI.spara)
+		levette.registra(st, self.clock, self.aim_angle, self.aim_power, true)
 	elseif era then
 		-- riportata al centro: la mira si spegne e non parte niente
 		self.pad_mira, self.aiming = false, false
@@ -3149,14 +3165,20 @@ function PAD.giro(self, gruppo)
 	if i0 == 0 or n > 1 then choose_slot(self, l[i0 % n + 1].weapon) end
 end
 
--- I comandi dei tasti in battaglia (PAD.lettore.BATTAGLIA)
+-- I comandi dei tasti in battaglia (PAD.lettore.BATTAGLIA, o quelli scelti nelle impostazioni)
 PAD.COMANDI = {
 	primaria = function(self) PAD.giro(self, 1) end,
 	secondaria = function(self) PAD.giro(self, 2) end,
 	spara = function(self)
 		local w = self.tele_armed and "teleport" or self.weapon
 		if self.pad_mira and my_turn(self) and self.g:can_use(w) then
-			self.fire = { angle = self.aim_angle, power = self.aim_power, weapon = w }
+			-- come sul telefono quando si stacca il pollice: la mira di un attimo
+			-- prima (levette.RILASCIO), così premendo RT la levetta che scivola non
+			-- sposta il colpo
+			local h = levette.al_rilascio(self.pad_st, self.clock)
+			local a, p = self.aim_angle, self.aim_power
+			if h and h.active then a, p = h.angle, h.power end
+			self.fire = { angle = a, power = p, weapon = w }
 			self.tele_armed = false
 			levette.reset(self.pad_st)
 			self.pad_mira, self.aiming = false, false
@@ -3188,8 +3210,82 @@ PAD.COMANDI = {
 }
 
 -- Ogni frame: la levetta sinistra cammina e salta, la destra mira
+-- I tasti del controller sull'HUD (ui/glifo.lua, Sergio 30 ott): col
+-- controller in mano ogni pulsante mostra il suo tasto, disegnato come sul
+-- controller che si usa e come è ora nelle impostazioni. Per ogni comando: su
+-- quale nodo sta e dove, in mezze misure del nodo (1, 1 l'angolo in alto a destra)
+PAD.glifo = require "ui.glifo"
+PAD.GLIFI = {
+	primaria = { -1, 1 }, secondaria = { 1, 1 }, rampino = { -0.75, 0.75 }, paracadute = { -0.75, 0.75 },
+	teletrasporto = { -0.75, 0.75 }, baratto = { -0.75, 0.75 }, usa_oggetto = { 1.3, 0 }, oggetti = { -1.3, 0 },
+	zoom = { -1.35, 0 }, rotellina = { 1, -1 }, spara = { -0.7, 0.7 },
+}
+function PAD.sopra(self, cmd)
+	if cmd == "teletrasporto" then return self.btn_tele.nodo end
+	if cmd == "baratto" then return self.scambio.tondo.nodo end
+	if cmd == "zoom" then return self.btn_zoom end
+	if cmd == "rotellina" then return self.btn_menu end
+	if cmd == "spara" then return self.crono.radice, 2 * hud.FUORI end
+	local scelto
+	for _, sl in ipairs(self.slots) do
+		if sl.have then
+			-- le armi: l'ultima del gruppo, la più lontana dal cronometro
+			if (cmd == "primaria" and sl.group == 1) or (cmd == "secondaria" and sl.group == 2)
+				or (cmd == "rampino" and sl.weapon == "hook") or (cmd == "paracadute" and sl.weapon == "parachute")
+				or (cmd == "usa_oggetto" and sl.group == 3 and sl.weapon == self.pad_oggetto) then
+				scelto = sl
+			end
+			if cmd == "oggetti" and sl.group == 3 then scelto = scelto or sl end
+		end
+	end
+	return scelto and scelto.node
+end
+
+function PAD.glifi(self)
+	local on = self.pad_on and self.controls_visible and (self.mode == "local" or self.mode == "online")
+	if not (on or self.glifi) then return end
+	self.glifi = self.glifi or {}
+	for cmd, angolo in pairs(PAD.GLIFI) do
+		local g = self.glifi[cmd]
+		if not g then
+			g = PAD.glifo.new(nil, 30)
+			self.glifi[cmd] = g
+		end
+		local nodo, lato = nil, nil
+		if on then nodo, lato = PAD.sopra(self, cmd) end
+		local tasto = nodo and (cmd == "rotellina" and "start" or PAD.lettore.tasto_di(self.ctrl, cmd))
+		if tasto then
+			if g.su ~= nodo then
+				gui.set_parent(g.radice, nodo)
+				g.su = nodo
+			end
+			local size = gui.get_size(nodo)
+			local w, h = lato or size.x, lato or size.y
+			PAD.glifo.mostra(g, self.ctrl, tasto, angolo[1] * w / 2, angolo[2] * h / 2)
+		else
+			PAD.glifo.mostra(g, nil)
+		end
+	end
+	-- il tasto della tastiera del teletrasporto lascia il posto a quello del controller
+	gui.set_enabled(self.tele_key, not (on or self.touch_ui))
+end
+
 function PAD.ogni_frame(self)
 	local c, lettore = self.ctrl, PAD.lettore
+	PAD.glifi(self)
+	-- la mappatura delle impostazioni, una volta caricato il profilo
+	if not self.tasti_letti and self.profilo then
+		self.tasti_letti = true
+		lettore.usa(c, profilo.impostazione(self.profilo, "tasti"))
+	end
+	-- Esc o indietro (PAD.on_input), se non era il B del controller
+	if self.menu_chiesto then
+		self.menu_chiesto = nil
+		local da_b = c.giu.b or (self.pad_b_t and self.clock - self.pad_b_t < 0.3)
+		if not da_b and self.controls_visible and (self.mode == "local" or self.mode == "online") then
+			apri_rotellina(self, not self.menu_aperto)
+		end
+	end
 	if not self.pad_on and (lettore.spinta(c.sx) or lettore.spinta(c.dx)) then PAD.evento(self, {}) end
 	local gioca = (self.mode == "local" or self.mode == "online") and self.controls_visible
 		and not self.menu_aperto and not self.carta
@@ -3221,16 +3317,21 @@ end
 -- Un tasto del controller premuto o lasciato (ui/controller.lua)
 function PAD.evento(self, e)
 	self.pad_on = true
+	-- su Android B manda anche il tasto indietro del telefono (PAD.ogni_frame)
+	if e.nome == "b" then self.pad_b_t = self.clock end
 	if self.touch_ui and COMANDI == "" then set_touch_ui(self, false) end
 	if not (e.nome and e.premuto) then return end
 	local battaglia = self.mode == "local" or self.mode == "online" or self.mode == "ended"
 	if not battaglia then
 		-- menu, schermate e scelta delle armi: come i tocchi (ui.tocco)
-		if e.ui then PAD.on_input(self, ACTION.PAD, { pressed = true, ui = e.ui }) end
+		-- (col nome del tasto, per le impostazioni che lo cambiano)
+		if e.ui or self.mode == "schermata" then
+			PAD.on_input(self, ACTION.PAD, { pressed = true, ui = e.ui, nome = e.nome, levetta = e.levetta })
+		end
 		return
 	end
 	local n = e.nome
-	local comando = not e.levetta and PAD.lettore.BATTAGLIA[n]
+	local comando = not e.levetta and PAD.lettore.comando(self.ctrl, n)
 	if self.mode == "ended" then
 		-- il podio, le stelle o la home, come un tocco
 		if n == "a" or n == "start" then pointer_down(self, "pad", 0, 0) end
@@ -3263,8 +3364,8 @@ function PAD.on_input(self, action_id, action)
 	end
 	-- un tasto, il mouse o un dito: non si gioca più col controller
 	if action.pressed and action_id ~= ACTION.PAD then self.pad_on = false end
-	-- dopo ESCI: finché quel dito non si alza (al massimo mezzo secondo) il
-	-- menù non lo sente
+	-- un dito che ha cambiato schermata (on_input): finché non si alza (al
+	-- massimo mezzo secondo) la schermata nuova non lo sente
 	if self.aspetta_rilascio and (action_id == ACTION.TOUCH or action_id == ACTION.MULTI) then
 		if action.released then self.aspetta_rilascio = nil end
 		return true
@@ -3302,6 +3403,8 @@ function PAD.on_input(self, action_id, action)
 			apri_schermata(self, menu.armeria, self.profilo)
 		elseif scelta == "allenamento" then
 			apri_schermata(self, menu.allenamento, self.contro_bot)
+		elseif scelta == "impostazioni" then
+			apri_schermata(self, menu.impostazioni, self.profilo, self.ctrl)
 		elseif scelta == "campagna" then
 			apri_campagna(self)
 		end
@@ -3337,10 +3440,10 @@ function PAD.on_input(self, action_id, action)
 	elseif action_id == ACTION.ZOOM then
 		if action.pressed then change_zoom(self) end
 	elseif action_id == ACTION.MENU then
-		-- Esc (o indietro sul telefono): apre e chiude la rotellina
-		if action.pressed and self.controls_visible and (self.mode == "local" or self.mode == "online") then
-			apri_rotellina(self, not self.menu_aperto)
-		end
+		-- Esc (o indietro sul telefono): apre e chiude la rotellina, a fine
+		-- frame (PAD.ogni_frame): il tasto B del controller su Android manda
+		-- anche "indietro", e quello non conta
+		if action.pressed then self.menu_chiesto = true end
 	elseif action_id == ACTION.ZOOM_IN or action_id == ACTION.ZOOM_OUT then
 		if action.pressed then change_zoom(self, action_id == ACTION.ZOOM_OUT and 1 or -1) end
 	elseif ACTION.WEAPON[action_id] then
@@ -3397,6 +3500,30 @@ function PAD.on_input(self, action_id, action)
 	return true
 end
 
+-- La schermata in cui si è (per PAD.dito)
+function PAD.schermo(self)
+	return self.mode, self.schermata and self.schermata.obj
+end
+
+-- Un dito che si appoggia (col mouse, o uno qualsiasi delle dita vere)?
+function PAD.dito(action_id, action)
+	if action_id == ACTION.TOUCH then return action.pressed end
+	if action_id ~= ACTION.MULTI then return false end
+	for _, t in ipairs(action.touch or {}) do
+		if t.pressed then return true end
+	end
+	return false
+end
+
 function on_input(self, action_id, action)
-	return PAD.on_input(self, action_id, action)
+	local modo, obj = PAD.schermo(self)
+	local r = PAD.on_input(self, action_id, action)
+	-- Un dito che appoggiandosi cambia schermata non tocca anche quella dopo
+	-- (Sergio, 30 ott: uscendo dall'online un tocco premeva il pulsante della
+	-- home sotto il dito, perché lo stesso dito arriva due volte, col mouse e
+	-- con le dita vere): finché non si alza (al massimo mezzo secondo) il resto
+	-- non lo sente
+	local m2, o2 = PAD.schermo(self)
+	if (m2 ~= modo or o2 ~= obj) and PAD.dito(action_id, action) then self.aspetta_rilascio = 0.5 end
+	return r
 end

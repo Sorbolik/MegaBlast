@@ -1,6 +1,7 @@
 -- La home (menu principale): fondo scuro, la Scoria col bagliore del Nucleo
 -- dietro, il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
--- online), CONTRO I BOT, STESSO TELEFONO e ARMERIA. Le schermate nuove aggiungono qui il loro bottone
+-- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA e, in alto a destra,
+-- la rotellina delle IMPOSTAZIONI (menu/impostazioni.lua). Le schermate nuove aggiungono qui il loro bottone
 -- quando esistono (stile in ui/ui.lua).
 --
 -- Uso (dal gui_script, che ha la texture ui e il font titolo):
@@ -8,7 +9,7 @@
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
 --   home.show(h) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
---   local scelta = home.on_input(h, action_id, action)   -- "online", "bot", "local", "armeria" o nil
+--   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "impostazioni" o nil
 
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
@@ -77,6 +78,9 @@ function M.new(colore)
 	-- in basso a sinistra: assetti, albero e set
 	local sx = angolo(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	ui.bottone(h.bottoni, 0, 60, 240, 72, "ARMERIA", "armeria", nil, sx)
+
+	-- in alto a destra: le impostazioni
+	h.tops[#h.tops + 1] = ui.impostazioni(h.bottoni, "impostazioni", nil, true)
 
 	-- velo nero che si dissolve quando la home compare
 	h.velo = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * schermo.PIENO, H * schermo.PIENO, 0))

@@ -148,10 +148,11 @@ function M.indietro(lista, azione, parent)
 	return n
 end
 
--- Impostazioni in partita: lo stesso quadrato con la rotellina, in alto a sinistra
-function M.impostazioni(lista, azione, parent)
-	local n = M.bottone(lista, 30 + 32, 720 - 30 - 32, 64, 64, "", azione, nil, parent)
-	gui.set_xanchor(n, gui.ANCHOR_LEFT)
+-- Impostazioni: lo stesso quadrato con la rotellina, in alto a sinistra (in
+-- partita) o a destra (nella home)
+function M.impostazioni(lista, azione, parent, destra)
+	local n = M.bottone(lista, destra and 1280 - 30 - 32 or 30 + 32, 720 - 30 - 32, 64, 64, "", azione, nil, parent)
+	gui.set_xanchor(n, destra and gui.ANCHOR_RIGHT or gui.ANCHOR_LEFT)
 	gui.set_yanchor(n, gui.ANCHOR_TOP)
 	nodo("ingranaggio", 0, 0, 34, 34, C.LUCE, n)
 	return n
@@ -263,7 +264,7 @@ end
 
 -- Dove parte la luce: l'ultimo confermato, il principale, o il primo
 -- (non quelli in un angolo: indietro e la rotellina)
-local ANGOLO = { indietro = true, rotellina = true }
+local ANGOLO = { indietro = true, rotellina = true, impostazioni = true }
 local function primo(lista)
 	local principale, altro, angolo
 	for _, b in ipairs(lista) do

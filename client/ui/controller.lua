@@ -19,6 +19,14 @@
 --   -- ma con levetta = true. ui = la stessa cosa per i menu (ui.tocco).
 --   c.sx, c.dx                                    -- le levette: { x, y }, y in su, lunghezza al massimo 1
 --   c.giu[nome]                                   -- il tasto è tenuto?
+--   controller.comando(c, tasto) / tasto_di(c, comando) -- la mappatura della battaglia (c.tasti)
+--   controller.assegna(c, comando, tasto)         -- dalle impostazioni: i due comandi si scambiano i tasti
+--   controller.usa(c, salvati) / da_salvare(c) / base(c) -- la mappatura del profilo, da salvare, quella di Sergio
+--   controller.nome(c, tasto)                     -- come si chiama su questo controller ("A", "CROCE", "ZR"...)
+--   controller.nome_di(comando)                   -- il nome del tasto di un comando, sul controller in uso
+--   c.famiglia                                    -- "xbox", "playstation" o "nintendo" (dal nome del controller)
+--   c.connesso                                    -- c'è (o c'è stato) un controller
+--   c.su                                          -- -1 dove gli assi verticali arrivano capovolti (Android)
 
 local M = {}
 
@@ -36,12 +44,13 @@ local TASTI = { pad_a = "a", pad_b = "b", pad_x = "x", pad_y = "y", pad_lb = "lb
 -- B torna indietro, Y apre la scheda (al posto del tocco lungo), Start il menù
 M.UI = { su = "su", giu = "giu", sinistra = "sinistra", destra = "destra", a = "conferma", b = "indietro",
 	y = "scheda", start = "menu" }
--- In battaglia: tasto -> comando (Sergio, 30 ott; nomi Xbox, su PlayStation
--- A=croce, B=cerchio, X=quadrato, Y=triangolo). Le levette sono fisse e
+-- In battaglia: tasto -> comando, la mappatura di base (Sergio, 30 ott). I
+-- tasti hanno il nome del loro posto sul controller, come su Xbox: a è quello
+-- in basso, b a destra, x a sinistra, y in alto. Le levette sono fisse e
 -- fanno come sul telefono: la sinistra cammina e, spinta in su, salta; la
--- destra mira (direzione e potenza). È la mappatura di base: quando ci sarà
--- la schermata delle impostazioni (docs/impostazioni.md) basterà cambiare
--- questa tabella.
+-- destra mira (direzione e potenza). Start apre sempre la rotellina; tutto il
+-- resto si cambia dalle IMPOSTAZIONI (menu/impostazioni.lua), che salvano
+-- c.tasti nel profilo.
 M.BATTAGLIA = {
 	lb = "primaria",        -- la primaria dopo, a giro
 	rb = "secondaria",      -- la secondaria dopo, a giro
@@ -55,6 +64,39 @@ M.BATTAGLIA = {
 	start = "rotellina",
 	select = "zoom",
 }
+-- i comandi che si cambiano, nell'ordine delle impostazioni, e i tasti che si possono dare
+M.COMANDI = { "spara", "primaria", "secondaria", "teletrasporto", "rampino", "paracadute", "oggetti", "usa_oggetto",
+	"baratto", "zoom" }
+M.LIBERI = { a = true, b = true, x = true, y = true, lb = true, rb = true, lt = true, rt = true, select = true,
+	su = true, giu = true, sinistra = true, destra = true }
+
+-- La famiglia del controller, dal nome che dà il sistema: i tasti si
+-- chiamano (e si disegnano) come sopra i tasti veri. Nintendo ha A a destra e
+-- B in basso: lo stesso posto, un altro nome.
+M.FAMIGLIE = {
+	xbox = { a = "A", b = "B", x = "X", y = "Y", lb = "LB", rb = "RB", lt = "LT", rt = "RT", start = "MENU", select = "VISTA" },
+	playstation = { a = "X", b = "CERCHIO", x = "QUADRATO", y = "TRIANGOLO", lb = "L1", rb = "R1", lt = "L2", rt = "R2",
+		start = "OPTIONS", select = "CREATE" },
+	nintendo = { a = "B", b = "A", x = "Y", y = "X", lb = "L", rb = "R", lt = "ZL", rt = "ZR", start = "+", select = "-" },
+}
+M.CROCE = { su = "CROCE SU", giu = "CROCE GIÙ", sinistra = "CROCE SX", destra = "CROCE DX" }
+-- (in quest'ordine: "Xbox Wireless Controller" è Xbox, il solo "Wireless
+-- Controller" è il nome che dà Android al DualSense e al DualShock)
+local RICONOSCI = {
+	{ "xbox", { "xbox", "x%-box", "xinput", "microsoft", "045e" } },
+	{ "nintendo", { "nintendo", "switch", "joy%-con", "pro controller", "057e" } },
+	{ "playstation", { "playstation", "dualsense", "dualshock", "sony", "wireless controller", "054c" } },
+}
+function M.famiglia(nome)
+	nome = string.lower(nome or "")
+	for _, f in ipairs(RICONOSCI) do
+		for _, parola in ipairs(f[2]) do
+			if nome:find(parola) then return f[1] end
+		end
+	end
+	-- gli altri: coi nomi di Xbox, i più comuni
+	return "xbox"
+end
 -- la levetta sinistra conta come la croce oltre questa spinta (e torna sotto RITORNO)
 local SPINTA, RITORNO = 0.6, 0.4
 -- grilletti analogici: premuti oltre metà corsa
@@ -81,14 +123,88 @@ for nome, v in pairs(ASSI) do AZIONI[hash(nome)] = v end
 local NOMI = {}
 for nome, v in pairs(TASTI) do NOMI[hash(nome)] = v end
 
+-- Su Android le levette arrivano con l'asse verticale capovolto (provato da
+-- Sergio col telefono, 30 ott): giù è su, per i controller noti e i grezzi
+local CAPOVOLTO = { Android = true }
+
 function M.new(sistema)
-	return { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 }, giu = {}, mezzi = {}, ignoti = {},
+	local c = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 }, giu = {}, mezzi = {}, ignoti = {},
 		crude = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 } },
-		grezzi = GREZZI[sistema], ev = {} }
+		grezzi = GREZZI[sistema], ev = {}, su = CAPOVOLTO[sistema] and -1 or 1, famiglia = "xbox", tasti = {} }
+	for t, cmd in pairs(M.BATTAGLIA) do c.tasti[t] = cmd end
+	return c
 end
+
+function M.comando(c, tasto)
+	return c.tasti[tasto]
+end
+
+-- Il tasto di un comando (nil se non ne ha), in un ordine fisso
+local ORDINE = { "a", "b", "x", "y", "lb", "rb", "lt", "rt", "start", "select", "su", "giu", "sinistra", "destra" }
+function M.tasto_di(c, comando)
+	for _, t in ipairs(ORDINE) do
+		if c.tasti[t] == comando then return t end
+	end
+end
+
+-- Dà il tasto al comando; il comando che lo aveva prende il tasto lasciato libero
+function M.assegna(c, comando, tasto)
+	if not M.LIBERI[tasto] then return false end
+	local prima, altro = M.tasto_di(c, comando), c.tasti[tasto]
+	c.tasti[tasto] = comando
+	if prima and prima ~= tasto then c.tasti[prima] = altro end
+	return true
+end
+
+-- La mappatura salvata nel profilo (tasto -> comando): si prende solo se ha
+-- tutti i comandi, ognuno su un tasto libero; Start resta alla rotellina
+function M.usa(c, tasti)
+	if type(tasti) ~= "table" then return false end
+	local visti = {}
+	for t, cmd in pairs(tasti) do
+		if not M.LIBERI[t] or visti[cmd] then return false end
+		visti[cmd] = true
+	end
+	for _, cmd in ipairs(M.COMANDI) do
+		if not visti[cmd] then return false end
+	end
+	c.tasti = { start = "rotellina" }
+	for t, cmd in pairs(tasti) do c.tasti[t] = cmd end
+	return true
+end
+
+-- Da salvare nel profilo: senza Start
+function M.da_salvare(c)
+	local t = {}
+	for tasto, cmd in pairs(c.tasti) do
+		if tasto ~= "start" then t[tasto] = cmd end
+	end
+	return t
+end
+
+function M.base(c)
+	c.tasti = {}
+	for t, cmd in pairs(M.BATTAGLIA) do c.tasti[t] = cmd end
+end
+
+function M.nome(c, tasto)
+	return M.CROCE[tasto] or M.FAMIGLIE[c.famiglia][tasto] or string.upper(tasto or "")
+end
+
+-- Il controller in uso, per le scritte delle schede e della scelta delle armi
+-- (game.gui_script lo mette qui): il nome del tasto di un comando
+M.attuale = nil
+function M.nome_di(comando)
+	local c = M.attuale
+	if not c then return "" end
+	return M.nome(c, M.UI_FISSI[comando] or M.tasto_di(c, comando))
+end
+-- i tasti fissi dei menu
+M.UI_FISSI = { scheda = "y", conferma = "a", indietro = "b" }
 
 local function evento(c, nome, premuto, levetta)
 	if (c.giu[nome] or false) == premuto then return end
+	c.connesso = true
 	c.giu[nome] = premuto or nil
 	c.ev[#c.ev + 1] = { nome = nome, premuto = premuto, levetta = levetta, ui = M.UI[nome] }
 end
@@ -108,9 +224,9 @@ local function levetta_croce(c)
 	end
 end
 
--- una levetta da due assi grezzi (y in giù), con la zona morta
-local function levetta_grezza(l, assi, i)
-	local x, y = assi[i[1] + 1] or 0, -(assi[i[2] + 1] or 0)
+-- una levetta da due assi grezzi (y in giù, su: -1 se arriva capovolto), con la zona morta
+local function levetta_grezza(l, assi, i, su)
+	local x, y = assi[i[1] + 1] or 0, -(assi[i[2] + 1] or 0) * su
 	if x * x + y * y < MORTA * MORTA then x, y = 0, 0 end
 	l.x, l.y = x, y
 end
@@ -118,8 +234,8 @@ end
 local function grezzo(c, action)
 	local g = c.grezzi
 	local tasti, assi = action.gamepad_buttons or {}, action.gamepad_axis or {}
-	levetta_grezza(c.sx, assi, g.assi.sx)
-	levetta_grezza(c.dx, assi, g.assi.dx)
+	levetta_grezza(c.sx, assi, g.assi.sx, c.su)
+	levetta_grezza(c.dx, assi, g.assi.dx, c.su)
 	local croce = g.assi.croce
 	local cx, cy = croce and (assi[croce[1] + 1] or 0) or 0, croce and (assi[croce[2] + 1] or 0) or 0
 	-- la croce come cappello (hat): 1 su, 2 destra, 4 giù, 8 sinistra
@@ -157,7 +273,7 @@ function M.input(c, action_id, action)
 				if a[3] > 0 then piu = c.mezzi[id] or 0 else meno = c.mezzi[id] or 0 end
 			end
 		end
-		r[asse[2]] = (piu or 0) - (meno or 0)
+		r[asse[2]] = ((piu or 0) - (meno or 0)) * (asse[2] == "y" and c.su or 1)
 		local m = math.max(1, math.sqrt(r.x * r.x + r.y * r.y))
 		l.x, l.y = r.x / m, r.y / m
 		if asse[1] == "sx" then levetta_croce(c) end
@@ -167,6 +283,8 @@ function M.input(c, action_id, action)
 	elseif action_id == CONNESSO then
 		-- un controller che Defold non conosce: lo leggiamo dall'azione grezza
 		c.ignoti[action.gamepad or 0] = action.gamepad_unknown or nil
+		c.famiglia = M.famiglia(action.gamepad_name)
+		c.connesso = true
 		return ev
 	elseif action_id == GREZZO then
 		if not (c.grezzi and c.ignoti[action.gamepad or 0]) then return ev end
