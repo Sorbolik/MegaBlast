@@ -221,6 +221,22 @@ VUOTO = ((0.2, "colpisce"), (0.45, "misto"), (9, "butta nel vuoto"))
 MOTO = ((2, "fermo"), (5, "si sposta"), (999, "sempre in volo"))
 
 
+STIMA = 300
+
+
+def stima(ind):
+    """Quanto è bravo un bot da tutte le partite giocate, tirato verso 0,5 se ne ha giocate poche."""
+    return round((ind.get("_alto", 0.5) * ind.get("_n", 0) + 0.5 * STIMA) / (ind.get("_n", 0) + STIMA), 4)
+
+
+def somma(ind, b):
+    """Aggiunge le partite di una generazione a quelle che il bot ha già giocato."""
+    n0, n1 = ind.get("_n", 0), b["volte"]
+    if n0 + n1:
+        ind["_alto"] = round((ind.get("_alto", 0.5) * n0 + b["alto"] * n1) / (n0 + n1), 4)
+        ind["_n"] = n0 + n1
+
+
 def nicchia(b):
     v = b["ambientali"] / b["uccisioni"] if b["uccisioni"] > 0.2 else 0
     m = b["teletrasporti"] + b["uso"].get("hook", 0) / max(1, b["volte"])
@@ -291,6 +307,11 @@ def main():
                  "decisioni": [], "forza": args.forza, "partite": args.partite, "stalli": 0,
                  "senza_meglio": 0, "tutti_gli_stili": False}
     gioco = stato["gioco"]
+    # gli stati salvati prima della stima: gli stili valgono le partite che avevano giocato
+    for a in stato["archivio"].values():
+        if "_n" not in a["ind"]:
+            a["ind"].update(_alto=a["bravura"], _n=180 * a.pop("prove", 1))
+            a["bravura"] = stima(a["ind"])
 
     while not args.generazioni or stato["gen"] < args.generazioni:
         gen = stato["gen"] + 1
@@ -308,30 +329,37 @@ def main():
         partite = gioca(cartella, cartella / "pesi.lua", stato["partite"], 1 + gen * 100000 + args.seme * 10 ** 9, args)
         b = misura(partite, len(individui))
 
-        # gli stili che hanno giocato: la bravura è la media di tutte le volte (meno fortuna)
+        # gli stili che hanno giocato: la bravura viene da tutte le volte (meno fortuna)
         for k, s in enumerate(stili):
             a = stato["archivio"][s]
-            n = a.get("prove", 1)
-            a["bravura"] = round((a["bravura"] * n + b[2 + k]["alto"]) / (n + 1), 4)
-            a["prove"] = n + 1
+            somma(a["ind"], b[2 + k])
+            a["bravura"] = stima(a["ind"])
+        # la bravura di chi resta da una generazione all'altra si somma a quella di
+        # prima, e si giudica tirata verso 0,5 (STIMA partite finte a metà
+        # classifica): con 150-200 partite a testa il primo di 24 era quasi sempre
+        # un fortunato (esami fermi al 42-47% nella notte del 30 ottobre)
+        for i in range(primo, len(individui) + 1):
+            somma(pop[i - primo], b[i])
         # i bot che evolvono entrano nell'archivio se sono i più bravi del loro stile
         for i in range(primo, len(individui) + 1):
             if b[i]["volte"] < 20:
                 continue
             s = nicchia(b[i])
             a = stato["archivio"].get(s)
-            if not a or b[i]["alto"] > a["bravura"]:
-                stato["archivio"][s] = {"ind": pop[i - primo], "bravura": round(b[i]["alto"], 4), "gen": gen,
-                                        "prove": 1, "come": comportamento(b[i])}
+            if not a or stima(pop[i - primo]) > a["bravura"]:
+                stato["archivio"][s] = {"ind": pop[i - primo], "bravura": stima(pop[i - primo]), "gen": gen,
+                                        "come": comportamento(b[i])}
 
-        ordine = sorted(range(primo, len(individui) + 1), key=lambda i: (-b[i]["alto"], i))
+        ordine = sorted(range(primo, len(individui) + 1), key=lambda i: (-stima(pop[i - primo]), i))
         migliore = ordine[0]
         campione = pop[migliore - primo]
-        voce = {"gen": gen, "campione": comportamento(b[migliore]) | {"geni": campione, "stile": nicchia(b[migliore])},
+        voce = {"gen": gen, "campione": comportamento(b[migliore]) | {"geni": campione, "stile": nicchia(b[migliore]),
+                                                                       "stima": stima(campione), "provato": campione.get("_n", 0)},
                 "oggi": comportamento(b[1]), "media": round(sum(b[i]["alto"] for i in ordine) / len(ordine), 4),
                 "partite": len(partite), "forza": stato["forza"], "stili": len(stato["archivio"])}
         stato["storia"].append(voce)
-        print(f"generazione {gen}: campione {b[migliore]['alto']:.3f} ({voce['campione']['stile']}), media "
+        print(f"generazione {gen}: campione {b[migliore]['alto']:.3f} (stima {stima(campione):.3f} su {campione.get('_n', 0)} "
+              f"partite, {voce['campione']['stile']}), media "
               f"{voce['media']:.3f}, bot di oggi {b[1]['alto']:.3f}, {len(stato['archivio'])} stili ({len(partite)} partite)")
 
         # le trovate di questa generazione: dei bot che evolvono e degli stili
@@ -431,12 +459,14 @@ def rapporto(stato, args):
     if stato["decisioni"]:
         out += ["\n## Scelte prese da sola quando non migliorava\n"]
         out += [f"- generazione {d['gen']}: {d['cosa']}, perché {d['perché']}" for d in stato["decisioni"]]
-    out += ["\n## Generazioni\n", "| gen | campione | stile | media | bot di oggi | morti | danno | armi principali |",
-            "|---|---|---|---|---|---|---|---|"]
+    out += ["\n## Generazioni\n", "Campione: la bravura nella generazione; stima: da tutte le partite che ha giocato, "
+            "tirata verso 0,5 se sono poche (è quella che sceglie).\n",
+            "| gen | campione | stima | stile | media | bot di oggi | morti | danno | armi principali |",
+            "|---|---|---|---|---|---|---|---|---|"]
     for v in stato["storia"]:
         c = v["campione"]
         armi = ", ".join(f"{k} {100 * q:.0f}%" for k, q in sorted(c["armi"].items(), key=lambda x: -x[1])[:3])
-        out.append(f"| {v['gen']} | {c['bravura']:.3f} | {c['stile']} | {v['media']:.3f} | {v['oggi']['bravura']:.3f} | "
+        out.append(f"| {v['gen']} | {c['bravura']:.3f} | {c.get('stima', '-')} | {c['stile']} | {v['media']:.3f} | {v['oggi']['bravura']:.3f} | "
                    f"{c['morti']:.2f} | {c['danno']:.0f} | {armi} |")
     return "\n".join(out) + "\n"
 
