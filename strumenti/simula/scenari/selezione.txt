@@ -1,7 +1,8 @@
 # Toccare un pulsante sceglie sempre quella cosa (Sergio, 30 ottobre): TELE
 # toccato due volte resta in mano, non torna al Lanciarune. Quello che adesso
 # non si può usare fa no e dice perché (globi del primo turno, primaria già
-# usata), e in mano resta quello che c'era.
+# usata), e in mano resta quello che c'era. Quello che hai in
+# mano resta al turno dopo: sullo stesso telefono ognuno ritrova il suo.
 
 aspetta 2
 tocca_bordo 205 235 basso destra                    # STESSO TELEFONO
@@ -25,3 +26,14 @@ aspetta 0.5
 tocca_centro 506 62                       # Lanciarune già usato: GIÀ USATA, resta la Lama
 aspetta 0.15
 foto 03_primaria_no
+tocca_bordo 196 62 basso destra     # il Rampino (accanto al TELE): in mano per il prossimo turno
+aspetta 0.3
+foto 04_rampino_scelto
+aspetta_stato turno=2 fase=aim 15
+aspetta 0.5
+foto 05_blu_lanciarune              # Blu ritrova il suo (il Lanciarune)
+mira -150 100 0.4
+aspetta_evento fire 2
+aspetta_stato turno=1 fase=aim 15
+aspetta 0.5
+foto 06_rosso_ha_il_rampino         # Rosso ritrova il Rampino, non il Lanciarune

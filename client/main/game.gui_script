@@ -625,6 +625,7 @@ local function new_match(self, seed, map, opts)
 	self.aiming = false
 	self.weapon = "missile"
 	self.tele_armed = false
+	self.mani, self.mano_di = {}, nil   -- sullo stesso telefono, in mano a ognuno
 	self.globi_attesa = 0   -- globi nostri ancora in volo verso il teletrasporto
 	self.snap = {}
 	self.crate_tabs = {}
@@ -943,8 +944,16 @@ local function handle_event(self, e)
 		end
 	elseif e.type == "turn" then
 		punteggio.turno(self.punti, self.g)
-		-- ogni turno ricomincia dal Lanciarune, non dall'arma del turno prima
-		self.tele_armed, self.weapon = false, "missile"
+		-- quello che hai in mano resta da un turno all'altro, anche se l'hai
+		-- scelto nel turno degli altri (Sergio, 30 ottobre); sullo stesso
+		-- telefono ognuno ritrova il suo (all'inizio il Lanciarune)
+		local chi = (self.mode == "online" or next(self.bots)) and bar_robot(self).id or e.robot
+		if self.mano_di ~= chi then
+			if self.mano_di then self.mani[self.mano_di] = { self.weapon, self.tele_armed } end
+			local m = self.mani[chi]
+			self.weapon, self.tele_armed = m and m[1] or "missile", m and m[2] or false
+			self.mano_di = chi
+		end
 		annuncia_turno(self, e.robot)
 	elseif e.type == "death" then
 		-- crolla e svanisce da solo; dopo 1,5 s ricompare altrove, nello stesso turno
@@ -1737,7 +1746,7 @@ local function update_bar(self)
 	local g = self.g
 	local l = self.missione
 	-- finiti i colpi (o lanciato il Rampino del turno) si torna al Lanciarune
-	if not slot_have(rb, self.weapon, l) or (self.weapon == "hook" and g.used.tool) then
+	if not slot_have(rb, self.weapon, l) or (self.weapon == "hook" and g.used.tool and rb.id == g.current) then
 		self.weapon = "missile"
 		-- una lezione senza Lanciarune: la prima arma che si vede
 		if not slot_have(rb, "missile", l) then
@@ -2166,7 +2175,8 @@ local function render(self, dt)
 
 	-- pulsanti: arma scelta e teletrasporto (anche con altri globi in volo)
 	local tele_ok = g:can_use("teleport") and my_turn(self)
-	if self.tele_armed and not tele_ok then self.tele_armed = false end
+	-- scelto nel turno degli altri resta in mano; nel tuo, finiti i globi, no
+	if self.tele_armed and not tele_ok and my_turn(self) and g.phase == "aim" then self.tele_armed = false end
 	local scelto = update_bar(self)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
 	local bt = self.btn_tele
@@ -2823,7 +2833,7 @@ local function choose_slot(self, w)
 		vibra_tocco()
 	elseif w == "teleport" then
 		-- il teletrasporto si prende come un'arma, ma ha il suo pulsante
-		self.tele_armed = g:can_use("teleport")
+		self.tele_armed = true
 	elseif game.TOOLS[w] and not game.THROWN[w] then
 		if my_turn(self) and g:can_use(w) then self.fire = { angle = 0, power = 1, weapon = w } end
 	else
