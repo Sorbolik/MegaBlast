@@ -1388,6 +1388,10 @@ local function missione_update(self, dt)
 	if cosa == "teleport" then
 		local p = gui.get_position(self.btn_tele.nodo)
 		dove = { x = p.x, y = p.y, d = TELE_D }
+	elseif cosa == "baratto" then
+		-- il pulsante delle due frecce sopra il cronometro
+		local p = gui.get_position(self.scambio.radice)
+		dove = { x = p.x, y = p.y, d = 54 }
 	elseif cosa and not self.guida.gesto(cosa) then
 		local scelto
 		for _, sl in ipairs(self.slots) do
@@ -1399,6 +1403,22 @@ local function missione_update(self, dt)
 		if scelto then dove = { x = scelto.x, y = scelto.y, d = scelto.d * (scelto.on == 2 and SCELTO or 1) } end
 	end
 	self.guida:aggiorna(cosa, dove, self.touch_ui, self.levette)
+	-- le schede delle armi che la lezione dà senza cassa (la Lama, il Rampino):
+	-- come quelle delle casse fermano il gioco finché non tocchi PROVALA
+	if not self.carta then
+		local w = missioni.scheda(r)
+		if w then
+			profilo.arma_nuova(self.profilo, w)
+			profilo.salva(self.profilo)
+			self.carta = require("battaglia.scheda").apri(w, self.touch_ui)
+		end
+	end
+	-- il passo vuole vedere più lontano (l'isola): la camera si allarga
+	local z = missioni.zoom(r)
+	if z and self.cam.livello < z then
+		camera.cambia(self.cam, z - self.cam.livello)
+		gui.set_text(self.zoom_label, camera.NOMI[self.cam.livello])
+	end
 	-- la bandierina a scacchi del passo da fare (battaglia/bandiera.lua), dietro ai diavoletti
 	local bx, by = missioni.bandiera(r)
 	if bx and not self.bandiera then self.bandiera = require("battaglia.bandiera").new(self.mondo, self.robots[1].rig.root) end
@@ -2920,6 +2940,7 @@ local function pointer_down(self, id, px, py)
 		return
 	end
 	if hud.scambio_premi(self.scambio, px, py) then
+		missioni.tocca(self.missione, "baratto")
 		self.fire = { angle = 0, power = 0, weapon = "swap" }
 	elseif gui.pick_node(self.btn_zoom, px, py) then
 		change_zoom(self)

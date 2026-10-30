@@ -53,44 +53,49 @@ local ADDESTRAMENTO = {
 				fino = function(st, g) return st.toccati.annulla or g.used.primary end },
 		},
 	},
-	-- Il turno: il cronometro si vede da qui. Due attacchi a turno (una
-	-- primaria e la Lama), attaccare presto dà i globi, il globo porta
-	-- sull'isola; lì le casse dell'Uovo e delle Schegge. Qui il tempo c'è,
-	-- è quello che si impara: le stelle vanno coi globi guadagnati
+	-- Il turno (Sergio, 30 ott): il cronometro si vede da qui, e si usano solo
+	-- il Lanciarune e la Lama, le armi di sempre. Attaccare presto dà i globi
+	-- (il tempo si ferma prima di perderli), la Lama sul primo bersaglio, il
+	-- globo porta sull'isola dal secondo, che cade al primo colpo: il secondo
+	-- attacco non serve e si baratta con un globo, che riporta dal primo.
+	-- Ogni passo si fa con quello che dice (solo), il resto è spento
 	{
 		id = "turno",
 		titolo = "Il turno",
 		scopo = "Il cronometro in basso è il tuo turno. Attacca presto: guadagni globi",
+		evidenzia = "missile",
 		-- la tua terra, il vuoto, e l'isola del secondo bersaglio
 		arena = { { 300, 0, 600, 150 }, { 1200, 100, 320, 50 } },
-		spawns = { { x = 600, from = 600 }, { x = 800, from = 600 }, { x = 1440, from = 600 } },
+		spawns = { { x = 600, from = 600 }, { x = 660, from = 600 }, { x = 1440, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 2, dummy = true } },
+		-- quello sull'isola cade al primo colpo
+		vita = { [3] = 10 },
 		vedi = { "missile", "sword", "teleport", "tempo", "baratto" },
 		globi = 0,
-		casse = { { dopo = 3, arma = "grenade", x = 1250 }, { dopo = 6, arma = "shards", x = 1290 } },
+		schede = { { dopo = 1, arma = "sword" } },
 		stelle = {
-			bonus = { conta = "globi", almeno = 2, testo = "2 GLOBI GUADAGNATI" },
-			bonus2 = { conta = "globi", almeno = 4, testo = "4 GLOBI GUADAGNATI" },
+			bonus = { conta = "mancati", al_massimo = 2, testo = "AL MASSIMO 2 COLPI A VUOTO" },
+			bonus2 = { conta = "mancati", al_massimo = 0, testo = "SENZA SBAGLIARE" },
 		},
 		obiettivo = {
-			{ usa = "globi", testo = "Attacca presto: guadagna un globo" },
-			{ colpisci = 2, con = "sword", testo = "Secondo attacco: colpisci con la Lama" },
-			{ raggiungi = { x = 1200, y = 150 }, testo = "Teletrasportati sull'isola" },
-			{ prendi = "grenade", testo = "Prendi la cassa" },
-			{ colpisci = 3, con = "grenade", testo = "Colpisci il bersaglio con l'Uovo" },
-			{ usa = "baratto", testo = "Baratta il secondo attacco con un teletrasporto" },
-			{ prendi = "shards", testo = "Prendi l'altra cassa" },
-			{ colpisci = 3, con = "shards", testo = "Colpisci il bersaglio con le Schegge" },
+			{ usa = "globi", globi = 2, solo = { "missile" }, testo = "Spara col Lanciarune: guadagni globi" },
+			{ colpisci = 2, con = "sword", solo = { "sword" }, testo = "Secondo attacco: colpisci con la Lama" },
+			{ raggiungi = { x = 1200, y = 150 }, solo = { "teleport" }, zoom = 2, testo = "Teletrasportati sull'isola" },
+			{ colpisci = 3, solo = { "missile", "sword" }, testo = "Colpisci il bersaglio sull'isola" },
+			{ usa = "baratto", solo = { "baratto" }, testo = "Baratta il secondo attacco con un globo" },
+			{ colpisci = 2, solo = { "teleport", "missile", "sword" }, testo = "Torna dal primo bersaglio e colpiscilo" },
 		},
 		righe = {
-			{ testo = "Due attacchi a turno: una primaria e la Lama. Ora la Lama", evidenzia = "sword",
+			{ testo = "Secondo attacco, la Lama: {mira}", evidenzia = "sword",
 				quando = { passo = 1 }, fino = { passo = 2 } },
-			{ testo = "Dopo il secondo attacco hai pochi secondi per metterti al riparo", quando = { passo = 2 } },
 			{ testo = "Tocca il tasto viola, mira l'isola e lascia: arrivi dove cade il globo", evidenzia = "teleport",
-				quando = function(st, g) return st.passi[2] and g.current == GIOCATORE end, fino = { evento = "teleport" } },
-			{ testo = "Le primarie delle casse hanno colpi contati: il numero sotto l'icona", quando = { passo = 4 } },
-			{ testo = "Invece del secondo attacco puoi prendere un globo: tocca le due frecce sopra il cronometro",
-				quando = { passo = 5 }, fino = { passo = 6 } },
+				quando = { passo = 2 }, fino = { evento = "teleport" } },
+			{ testo = "Lanciarune e Lama non finiscono mai: le uniche armi coi colpi infiniti",
+				quando = { evento = "teleport" } },
+			{ testo = "Abbattuto: il secondo attacco non serve. Tocca le due frecce sopra il cronometro: diventa un globo",
+				evidenzia = "baratto", quando = { passo = 4 }, fino = { passo = 5 } },
+			{ testo = "Il prossimo turno torna col globo dal primo bersaglio e colpiscilo come vuoi",
+				quando = { passo = 5 } },
 		},
 	},
 	-- Armi che ti muovono: le secondarie, una cassa per volta. Il Tonante
@@ -137,45 +142,40 @@ local ADDESTRAMENTO = {
 			{ testo = "Una secondaria a partita, oltre alla Lama: la scegli all'inizio", quando = { passo = 8 } },
 		},
 	},
-	-- Attrezzi e paracadute: il Rampino sulla piattaforma, il paracadute per
-	-- scendere oltre il vuoto, il Cecchino sul bersaglio. Niente tempo
+	-- Rampino e paracadute (Sergio, 30 ott): niente casse, perché non si trovano
+	-- lì; dopo qualche passo si apre la scheda e il tasto si accende. Il
+	-- Rampino porta sulla piattaforma, col paracadute si scende oltre il vuoto,
+	-- e di là la Lama sul bersaglio. Niente tempo
 	{
 		id = "attrezzi",
-		titolo = "Attrezzi e paracadute",
-		scopo = "Prendi la cassa: dentro c'è un attrezzo per arrivare in alto",
-		arena = { { 200, 0, 900, 150 }, { 900, 300, 320, 30 }, { 1440, 0, 480, 80 } },
-		spawns = { { x = 640, from = 290 }, { x = 1800, from = 600 } },
+		titolo = "Rampino e paracadute",
+		scopo = "Il bersaglio è dall'altra parte del vuoto. Vai sotto la piattaforma",
+		-- la tua terra, la piattaforma che sporge sul vuoto, l'altra parte
+		arena = { { 200, 0, 900, 150 }, { 900, 300, 320, 30 }, { 1360, 0, 560, 150 } },
+		spawns = { { x = 640, from = 290 }, { x = 1520, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
-		vedi = { "missile", "sword" },
+		vedi = { "sword" },
 		senza_tempo = true,
-		casse = {
-			{ dopo = 0, arma = "hook", x = 760 },
-			{ dopo = 3, arma = "parachute", x = 1140 },
-			{ dopo = 6, arma = "sniper", x = 1580 },
-		},
+		schede = { { dopo = 1, arma = "hook", dai = true }, { dopo = 3, arma = "parachute", dai = true } },
 		stelle = {
 			bonus = { conta = "mancati", al_massimo = 3, testo = "AL MASSIMO 3 TENTATIVI A VUOTO" },
 			bonus2 = { conta = "mancati", al_massimo = 0, testo = "SENZA SBAGLIARE" },
 		},
 		obiettivo = {
-			{ prendi = "hook", testo = "Prendi la cassa" },
-			{ usa = "rampino", testo = "Aggancia il bordo col Rampino" },
+			{ raggiungi = { x = 820, y = 150 }, bandiera = true, testo = "Vai sotto la piattaforma" },
+			{ usa = "rampino", solo = { "hook" }, testo = "Aggancia il bordo col Rampino" },
 			{ raggiungi = { x = 900, y = 330 }, testo = "Sali sulla piattaforma" },
-			{ prendi = "parachute", testo = "Prendi la cassa" },
-			{ usa = "paracadute", testo = "Salta nel vuoto e apri il paracadute" },
-			{ raggiungi = { x = 1440, y = 80 }, testo = "Atterra dall'altra parte" },
-			{ prendi = "sniper", testo = "Prendi la cassa" },
-			{ colpisci = 2, con = "sniper", testo = "Colpisci il bersaglio col Cecchino" },
+			{ usa = "paracadute", solo = { "parachute" }, testo = "Salta nel vuoto e apri il paracadute" },
+			{ raggiungi = { x = 1360, y = 150 }, solo = { "parachute" }, testo = "Atterra dall'altra parte" },
+			{ colpisci = 2, con = "sword", solo = { "sword" }, testo = "Colpisci il bersaglio con la Lama" },
 		},
 		righe = {
 			{ testo = "Il Rampino: toccalo, poi mira il bordo della piattaforma e lascia", evidenzia = "hook",
 				quando = { passo = 1 }, fino = { tocca = "hook" } },
-			{ testo = "Su un nemico, invece, il Rampino lo tira da te",
-				quando = { passo = 3 } },
+			{ testo = "Su un nemico, invece, il Rampino lo tira da te", quando = { passo = 3 } },
 			{ testo = "Salta nel vuoto ({salta}) e in aria tocca il paracadute, fra gli OGGETTI",
-				evidenzia = "parachute", ferma = false, quando = { passo = 4 }, fino = { evento = "parachute" } },
-			{ testo = "Il Cecchino va lontano e dritto: mira il bersaglio", evidenzia = "sniper",
-				quando = { passo = 7 }, fino = { tocca = "sniper" } },
+				evidenzia = "parachute", ferma = false, quando = { passo = 3 }, fino = { evento = "parachute" } },
+			{ testo = "Il paracadute è uno a partita: atterri piano e senza farti male", quando = { passo = 4 } },
 		},
 	},
 	-- Punti e Corona: i punti si vedono da qui. Il Mantice butta nel vuoto
@@ -224,7 +224,9 @@ local ADDESTRAMENTO = {
 		guidata = true,
 		mappa = "forgia",
 		giocatori = {
-			{ team = 1, pick = "grenade", secondary = "mallet" },
+			-- niente scelta (Sergio, 30 ott): Lanciarune, Lama e Rampino; le altre
+			-- armi, se vuoi, dalle casse, con la loro scheda
+			{ team = 1 },
 			{ team = 2, bot = "tutorial", pick = "grenade", secondary = "mallet" },
 		},
 		-- partita corta: 3 minuti
@@ -277,6 +279,8 @@ local GIRONE_1 = {
 		scopo = "Abbatti il bot: un'arma a sinistra e una a destra del cronometro",
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
+		-- le armi che l'Addestramento non presenta si trovano nel girone (Claude)
+		casse = { { dopo = 0, arma = "grenade", x = 620 } },
 		turni = 7,
 		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot" } },
@@ -320,6 +324,7 @@ local GIRONE_1 = {
 		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
 		vita = { [2] = 46 },
 		rigenera = { 2 },
+		casse = { { dopo = 0, arma = "shards", x = 560 } },
 		-- il bot che la prova fa sempre i due attacchi
 		collaudo = { piano = { due_attacchi = true } },
 		turni = 6,
