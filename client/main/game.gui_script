@@ -69,7 +69,7 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- Attorno al cronometro in basso al centro (docs/decisioni/interfaccia.md): a
 -- sinistra le primarie (Lanciarune sempre, accanto all'anello, le altre dalle
 -- casse) col bordo brace, a destra le secondarie (la Lama sempre, più quella
--- scelta all'inizio) col bordo acciaio. L'attrezzo (Rampino o Bastione) è
+-- scelta all'inizio) col bordo acciaio. Il Rampino è
 -- tondo e viola accanto al teletrasporto: a destra, dove c'è la mano che mira,
 -- perché la sinistra muove. Gli oggetti che si consumano (trappola, scudo,
 -- trampolino, paracadute: toccarli li usa subito) sono una cosa a sé (Sergio,
@@ -81,36 +81,34 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 local STATUS_TEXT = { burn = "BRUCIA!", slow = "RALLENTATO!", cracked = "ARMATURA INCRINATA!" }
 local STATUS_NAME = { { "burn", "BRUCIA" }, { "slow", "LENTO" }, { "cracked", "INCRINATO" } }
 local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows",
-	"trap", "shield", "trampoline", "hook", "wall", "parachute" }
--- colore del bordo dei quattro gruppi: primarie, secondarie, oggetti, attrezzo
+	"trap", "shield", "trampoline", "hook", "parachute" }
+-- colore del bordo dei quattro gruppi: primarie, secondarie, oggetti, Rampino
 local BAR_COLORI = { ui.C.BRACE, ui.C.ACCIAIO, ui.C.MENTA, ui.C.VIOLA }
 local function bar_group(w)
-	if w == "hook" or w == "wall" then return 4 end
+	if w == "hook" then return 4 end
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
 end
 -- icone della barra e della scelta (atlante armi, strumenti/grafica/armi.py)
 local WEAPON_ICON = {}
-for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "bellows", "hook", "wall",
+for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "bellows", "hook",
 	"trap", "shield", "trampoline", "parachute" }) do
 	WEAPON_ICON[w] = w .. "_icona"
 end
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
 local WEAPON_FOUND = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
 	sniper = "il Cecchino", eagle = "il Tonante", mallet = "il Maglio", lunge = "l'Affondo", bellows = "il Mantice",
-	hook = "il Rampino", wall = "il Bastione", parachute = "un Paracadute",
+	hook = "il Rampino", parachute = "un Paracadute",
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- nomi delle armi nella scelta d'inizio partita
 local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
-	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino",
-	wall = "Bastione" }
+	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino" }
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
 	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dalla testa ai piedi; in aria, se colpisce mentre cala, rimbalzi in alto",
 	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
 	bellows = "Soffio della forgia: spinge via chi hai davanti",
-	hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita",
-	wall = "Posa un blocco di terreno dove miri: riparo, ponte o gradino" }
+	hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita" }
 -- armi corpo a corpo: niente linea di mira
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 64
 -- sul telefono gli slot sono più piccoli (stretti con cinque primarie, così non
@@ -130,9 +128,8 @@ local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1
 -- il Maglio fa il contrario, dall'alto cala sotto i piedi
 local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
--- punti del bordo del Bastione e della traiettoria intera (uno ogni 4 tick),
--- che si vedono solo nelle lezioni dell'Addestramento
-local AIM_DOTS = 12
+-- punti della traiettoria intera (uno ogni 4 tick), che si vedono solo nelle
+-- lezioni dell'Addestramento
 local AIUTO_PUNTI = 45
 local AIM_RANGE = 220 -- distanza del dito che corrisponde alla potenza massima
 -- riportare il dito sul robot e lasciarlo lì annulla il colpo
@@ -798,25 +795,6 @@ local function handle_event(self, e)
 			math.floor((e.x + e.r) / game.CELL) + 1, row_max + 1)
 		explosion(self, e.x, e.y, e.r)
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA, e.x, e.y
-	elseif e.type == "wall" then
-		-- Bastione posato (v = 1) o crollato (v = 0): online lo rifacciamo noi
-		if self.mode == "online" then game.wall_cells(self.g.terrain, e.x, e.y, e.w, e.h, e.m, e.v) end
-		self.drawn_map = nil
-		redraw_cells(self, e.x - 1, e.y - 1, e.x + e.w, e.y + e.h)
-		-- polvere chiara: sale un poco se si posa, cade se crolla
-		local cx, cy = (e.x + e.w / 2) * game.CELL, (e.y + e.h / 2) * game.CELL
-		for j = 1, DETRITI_PER_COLPO do
-			self.detrito_i = self.detrito_i % #self.detriti + 1
-			local d = self.detriti[self.detrito_i]
-			d.x = cx + (math.random() - 0.5) * e.w * game.CELL
-			d.y = cy + (math.random() - 0.5) * e.h * game.CELL
-			d.vx, d.vy = (math.random() - 0.5) * 60, e.v == 1 and 40 + math.random() * 40 or -math.random() * 30
-			d.a, d.va, d.t = math.random() * 360, (math.random() * 2 - 1) * 360, 0
-			local lato = 2 + math.random() * 3
-			gui.set_size(d.node, vmath.vector3(lato, lato, 0))
-			d.col.x, d.col.y, d.col.z = 0.75, 0.68, 0.6
-			gui.set_enabled(d.node, true)
-		end
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- rinculo del Lanciarune (e del cecchino), slancio del lancio, raffica di schegge
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
@@ -1079,7 +1057,6 @@ local function apply_state(self, s)
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
 		rb.ammo.sniper = r.ac or 0
 		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
-		rb.tool = r.at or rb.tool
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
 		-- la lancia dell'Affondo punta lungo lo scatto (la: il suo angolo)
 		rb.lunge_vx = rb.lunge and math.cos(r.la or 0) or nil
@@ -1163,7 +1140,7 @@ local function on_server_message(self, m)
 		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. self.names[m.you]))
 	elseif m.t == "sync" and self.g then
 		for _, c in ipairs(m.x) do
-			if c.m then game.wall_cells(self.g.terrain, c.x, c.y, c.w, c.h, c.m, c.v) else self.g.terrain:carve(c[1], c[2], c[3]) end
+			self.g.terrain:carve(c[1], c[2], c[3])
 		end
 		self.drawn_map = nil
 		draw_terrain(self)
@@ -1316,11 +1293,6 @@ start_local_match = function(self, picked)
 		for k, v in pairs(p) do players[i][k] = v end
 	end
 	players[1].stats = assetto.stats(game.base_stats(), mio, profilo.tier(self.profilo, mio))
-	-- prova_attrezzo wall: tutti col Bastione al posto del Rampino (scenario bastione.txt)
-	local attrezzo = SIMULA and config_string("megablast.prova_attrezzo", "") or ""
-	if attrezzo ~= "" then
-		for _, p in ipairs(players) do p.tool = attrezzo end
-	end
 	opts.players = players
 	new_match(self, os.time(), self.mappa, opts)
 	-- prova_durata N: la partita dura N secondi (scenari/podio.txt)
@@ -1726,15 +1698,15 @@ end
 
 -- Barra delle armi -------------------------------------------------------------
 
--- Lo slot si vede? Il paracadute finché ne restano o è già aperto; l'attrezzo
--- (Rampino o Bastione) sempre. Nelle lezioni solo quello che la lezione usa
+-- Lo slot si vede? Il paracadute finché ne restano o è già aperto; il Rampino
+-- sempre. Nelle lezioni solo quello che la lezione usa
 -- (r: la missione, sim/missioni.lua vedi).
 local function slot_have(rb, w, r)
 	if not missioni.vede(r, w) then return false end
 	if w == "parachute" then
 		return rb.parachute or rb.parachutes_left > 0
-	elseif w == "hook" or w == "wall" then
-		return rb.tool == w
+	elseif w == "hook" then
+		return true
 	end
 	return game.has_weapon(rb, w)
 end
@@ -1745,7 +1717,7 @@ local function update_bar(self)
 	local g = self.g
 	local l = self.missione
 	-- finiti i colpi (o lanciato il Rampino del turno) si torna al Lanciarune
-	if not slot_have(rb, self.weapon, l) or ((self.weapon == "hook" or self.weapon == "wall") and g.used.tool) then
+	if not slot_have(rb, self.weapon, l) or (self.weapon == "hook" and g.used.tool) then
 		self.weapon = "missile"
 		-- una lezione senza Lanciarune: la prima arma che si vede
 		if not slot_have(rb, "missile", l) then
@@ -2265,17 +2237,14 @@ local function render(self, dt)
 		if tacca and self.tacca and tacca ~= self.tacca then vibra_tocco() end
 		self.tacca = tacca
 		-- nelle lezioni dell'Addestramento, come aiuto, tutta la traiettoria fino
-		-- al terreno (il Bastione: il bordo del blocco)
+		-- al terreno
 		if self.missione and self.missione.l.capitolo == "addestramento" then
-			local wall = aim_weapon == "wall"
-			local n = wall and AIM_DOTS or AIUTO_PUNTI
+			local n = AIUTO_PUNTI
 			local pts = g:preview(self.aim_angle, self.aim_power, n, 4, self.preview_pts, aim_weapon)
-			if not wall then
-				for k = 1, n do
-					if g.terrain:solid(pts[k].x, pts[k].y) then n = k break end
-				end
+			for k = 1, n do
+				if g.terrain:solid(pts[k].x, pts[k].y) then n = k break end
 			end
-			mira.traiettoria(self.mira, pts, n, s, wall)
+			mira.traiettoria(self.mira, pts, n, s)
 		else
 			mira.traiettoria_via(self.mira)
 		end

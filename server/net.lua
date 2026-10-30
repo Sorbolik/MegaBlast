@@ -61,8 +61,8 @@ function N.snapshot(g)
 		-- tl: teletrasporti in mano, mh: vita massima, tu: turni giocati, pt: punti
 		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute aperto;
 		-- pl: paracadute rimasti; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)
-		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna); at: l'attrezzo
-		-- ("hook" Rampino o "wall" Bastione); lu: tick rimasti dell'Affondo, la: angolo del suo scatto;
+		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna);
+		-- lu: tick rimasti dell'Affondo, la: angolo del suo scatto;
 		-- kn: sbalzato da un colpo (non corre da sé);
 		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy);
 		-- gs: il suo uncino del Rampino è in volo, in gx, gy; ml: tick del colpo di Maglio,
@@ -77,7 +77,7 @@ function N.snapshot(g)
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
 			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch, ac = rb.ammo.sniper,
-			sw = rb.secondary or "", at = rb.tool, lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
+			sw = rb.secondary or "", lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
 			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0,
 			gs = rb.hook_shot ~= nil, gx = rb.hook_shot and rb.hook_shot.x or 0, gy = rb.hook_shot and rb.hook_shot.y or 0,
 			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, kn = rb.knocked,
@@ -119,7 +119,6 @@ function N.events(g)
 	for _, e in ipairs(list) do
 		e.t = "ev"
 		if e.type == "explosion" then g.carves[#g.carves + 1] = { e.x, e.y, e.r } end
-		if e.type == "wall" then g.carves[#g.carves + 1] = { x = e.x, y = e.y, w = e.w, h = e.h, m = e.m, v = e.v } end
 	end
 	return list
 end

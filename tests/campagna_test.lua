@@ -254,22 +254,14 @@ esito = gioca("spostano", function(c)
 	end
 end)
 check(esito ~= "fatta", "spostano: saltando e basta non si sale")
--- Attrezzi e paracadute: il Rampino sulla piattaforma, il blocco del Bastione
--- come gradino, il paracadute sopra il vuoto e il Cecchino dall'altra parte
+-- Attrezzi e paracadute: il Rampino sulla piattaforma, il paracadute sopra il
+-- vuoto e il Cecchino dall'altra parte
 local function attrezzi_su(c)
 	c.cassa("hook")
 	c.tieni(DESTRA, fino_x(860))
 	c.usa("hook", 1)
 	c.tieni(FERMO, function(g) return g.robots[1].grounded and g.robots[1].y > 300 end)
 	c.tieni(FERMO, 10)
-	c.cassa("wall")
-	c.tieni(SINISTRA, function(g) return g.robots[1].x <= 1020 end)
-	c.usa("wall", 0.1, 0.45)
-	c.tieni(FERMO, 10)
-	for _ = 1, 8 do
-		c.tieni({ right = true, jump = true }, 12)
-		c.tieni(DESTRA, 30)
-	end
 	c.cassa("parachute")
 end
 ok, r = cerca("attrezzi", function(c, a)
@@ -281,7 +273,7 @@ ok, r = cerca("attrezzi", function(c, a)
 	c.cassa("sniper")
 	c.usa("sniper", a)
 end, nil, { -0.3, 0.3, 0.1 })
-check(ok, "attrezzi: Rampino, Bastione e paracadute portano dall'altra parte")
+check(ok, "attrezzi: Rampino e paracadute portano dall'altra parte")
 esito, r = gioca("attrezzi", function(c)
 	c.cassa("hook")
 	c.tieni(DESTRA, fino_x(860))
@@ -295,7 +287,7 @@ esito, r, g = gioca("attrezzi", function(c)
 	attrezzi_su(c)
 	c.tieni(DESTRA, 600)
 end)
-check(not r.st.passi[9] and g.robots[1].deaths > 0, "attrezzi: senza paracadute si cade nel vuoto")
+check(not r.st.passi[6] and g.robots[1].deaths > 0, "attrezzi: senza paracadute si cade nel vuoto")
 
 -- Giù dal bordo: ognuno dei tre bersagli si butta giù dal suo scoglio con un missile solo
 for chi = 2, 4 do

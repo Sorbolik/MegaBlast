@@ -135,12 +135,6 @@ C.MALLET = { damage = 57, reach = 44, from = math.rad(115), to = math.rad(-100),
 -- la salita si ferma contro il terreno (da sotto, in diagonale) basta essere
 -- entro grab pixel dal punto (dal centro del robot) per salire lo stesso.
 C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 96, grab = 80 }
--- Bastione (attrezzo, uno a turno al posto del Rampino; scelto da Sergio il 29
--- ottobre): posa un blocco di terreno vero w x h pixel nel punto mirato, a
--- range pixel al massimo (la potenza della mira); se si mira più su o più giù
--- di 45 gradi il blocco è in piedi. Si scava come il resto della mappa. Al
--- massimo max blocchi a testa: posando il successivo crolla il più vecchio.
-C.WALL = { w = 48, h = 12, range = 160, max = 2 }
 -- Affondo: scatto nella direzione della mira a speed per ticks tick, passando
 -- attraverso i robot (danno una volta a ognuno). Colpisce chi tocca col corpo
 -- o con la lancia, lunga reach dal centro del corpo. Gradini e gobbe fino a

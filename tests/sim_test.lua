@@ -1320,7 +1320,8 @@ do
 		"allo scadere chi non ha scelto prende la prima arma del ventaglio")
 	local g = game.new(7, "forgia", { players = players })
 	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in partita l'arma scelta ha i suoi colpi")
-	check(g.robots[1].tool == "hook" and g.robots[2].tool == "hook", "il Rampino ce l'hanno tutti")
+	for _ = 1, 600 do if g.phase == "aim" then break end g:step() end
+	check(g:can_use("hook"), "il Rampino ce l'hanno tutti, senza sceglierlo")
 
 	-- il secondo ventaglio: le secondarie, illimitate
 	check(#d.offer2 == math.min(config.DRAFT_OFFER, #game.DRAFT_SECONDARIES) and game.SECONDARY[d.offer2[1]],
@@ -1347,48 +1348,6 @@ do
 	check(draft.pick(v, 1, "sniper") and draft.done(v, 1), "senza secondarie viste basta la primaria")
 	local vp = draft.finish(v)
 	check(vp[1].pick == "sniper" and vp[1].secondary == nil and vp[2].pick == v.offer[1], "nessuna secondaria in più")
-end
-
--- Bastione (attrezzo, config.WALL) ------------------------------------------------
-do
-	local b = game.new(42, "forgia", { tool = "wall" })
-	run(b, 60)
-	local ba, bb = b.robots[1], b.robots[2]
-	local sy = sky_spot(b, 640, 160)
-	b.terrain:rect(400, sy - 80, 480, 200, 0)
-	place(ba, 560, sy)
-	place(bb, 760, sy)
-	b:pop_events()
-	local prima = solid_count(b.terrain)
-	check(b:can_use("wall") and not b:can_use("hook"), "col Bastione il Rampino non c'è")
-	b:step({ fire = { angle = 0, power = 0.5, weapon = "wall" } })
-	local ev
-	for _, e in ipairs(b:pop_events()) do if e.type == "wall" then ev = e end end
-	local celle = (config.WALL.w / game.CELL) * (config.WALL.h / game.CELL)
-	check(ev and ev.v == 1 and solid_count(b.terrain) - prima == celle and ev.w * ev.h == celle and ev.w > ev.h,
-		"posa un blocco orizzontale di terreno vero (" .. (solid_count(b.terrain) - prima) .. " celle)")
-	check(b.used.tool and not b:can_use("wall") and not b.used.primary and b.window == 0, "uno a turno e non conta come attacco")
-	local cx = math.floor((ba.x + config.WALL.range * 0.5) / game.CELL)
-	check(b.terrain:get(cx, math.floor((ba.y + game.DISEGNO_H / 2) / game.CELL)) ~= 0, "dove si mira, a potenza per portata")
-	-- in piedi se si mira in alto; addosso a un robot non si posa
-	b.used.tool = false
-	b:step({ fire = { angle = math.pi / 2, power = 0, weapon = "wall" } })
-	local su
-	for _, e in ipairs(b:pop_events()) do if e.type == "wall" then su = e end end
-	check(su and su.h > su.w and su.m:find("0", 1, true) ~= nil, "mirando in alto il blocco è in piedi, senza le celle del robot")
-	check(not b:terrain_collides(ba.x, ba.y), "chi posa non resta dentro il blocco")
-	-- il terzo fa crollare il più vecchio
-	b.used.tool = false
-	local vecchio = ev
-	b:step({ fire = { angle = math.pi, power = 0.6, weapon = "wall" } })
-	local crollo
-	for _, e in ipairs(b:pop_events()) do if e.type == "wall" and e.v == 0 then crollo = e end end
-	check(crollo and crollo.x == vecchio.x and crollo.y == vecchio.y and #ba.walls == config.WALL.max
-		and b.terrain:get(vecchio.x + 1, vecchio.y + 1) == 0, "al terzo Bastione crolla il più vecchio")
-	-- le celle che servono al client online: wall_cells rifà lo stesso
-	local t2 = require("sim.terrain").new(b.terrain.w, b.terrain.h, game.CELL)
-	game.wall_cells(t2, ev.x, ev.y, ev.w, ev.h, ev.m, 1)
-	check(t2:get(ev.x, ev.y) == 1 and t2:get(ev.x + ev.w, ev.y) == 0, "wall_cells rifà il blocco dell'evento")
 end
 
 -- Salto in aria, scudo, Torneo ----------------------------------------------------

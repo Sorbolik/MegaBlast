@@ -43,7 +43,7 @@
 --     (0: subito), quella cassa cade lì (la scheda di un'arma nuova ferma il gioco:
 --     battaglia/scheda.lua). Un'arma a colpi trovata lì torna quando la si può riusare
 --   senza_tempo: niente tempo e niente turni, il turno è tuo finché non finisci.
---     Finito un attacco (o il Rampino, il Bastione) si riusa subito; se non ha
+--     Finito un attacco (o il Rampino) si riusa subito; se non ha
 --     colpito nessuno né fatto un passo, "Ritenta" (conta "mancati"). Sergio, 29 ott:
 --     in una lezione non si aspetta mai un turno per riprovare. Il paracadute
 --     trovato torna appena sei a terra; chi cade rinasce dove è partito
@@ -69,7 +69,7 @@
 --     che c'è (la mira è già cominciata)
 --
 -- I passi dell'obiettivo (testo: come si legge nella riga dell'obiettivo):
---   { usa = "globi" | "rampino" | "bastione" | "rimbalzo" | "rinculo" | "paracadute" | "baratto" }
+--   { usa = "globi" | "rampino" | "rimbalzo" | "rinculo" | "paracadute" | "baratto" }
 --   { raggiungi = { x = 1200, y = 150 }, bandiera = true }   in piedi sopra quella
 --                                           quota, oltre quella x (bandiera: lì c'è la bandierina a scacchi)
 --   { prendi = "missile" }                  raccogli la cassa con quell'arma
@@ -103,8 +103,8 @@ local ATTACCHI = {
 	fire = "missile", grenade = "grenade", shards = "shards", punch = "punch", sniper = "sniper",
 	swing = "sword", eagle = "eagle", mallet = "mallet", lunge = "lunge", bellows = "bellows",
 }
--- gli eventi del giocatore che consumano l'attacco o l'attrezzo del turno
-local TENTATIVI = { hook_shot = true, wall = true }
+-- gli eventi del giocatore che consumano l'attacco o il Rampino del turno
+local TENTATIVI = { hook_shot = true }
 for k in pairs(ATTACCHI) do TENTATIVI[k] = true end
 local CATEGORIE = {
 	primaria = { grenade = true, shards = true, punch = true, sniper = true },
@@ -114,7 +114,6 @@ local CATEGORIE = {
 local USA = {
 	globi = function(e) return e.type == "teleports" and e.amount > 0 end,
 	rampino = function(e) return e.type == "hook" and e.anchor end,
-	bastione = function(e) return e.type == "wall" and e.v == 1 end,
 	rimbalzo = function(e) return e.type == "mallet_hit" and e.bounce end,
 	-- il Tonante sparato in aria: il rinculo porta via
 	rinculo = function(e, st) return e.type == "eagle" and not st.a_terra end,

@@ -77,15 +77,6 @@ images {
   image: "/assets/armi/hook_icona.png"
 }
 images {
-  image: "/assets/armi/wall.png"
-}
-images {
-  image: "/assets/armi/wall_tinta.png"
-}
-images {
-  image: "/assets/armi/wall_icona.png"
-}
-images {
   image: "/assets/armi/mallet.png"
 }
 images {

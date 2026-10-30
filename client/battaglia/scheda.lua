@@ -44,7 +44,6 @@ M.DATI = {
 	lunge = { tipo = "secondaria", cosa = "Uno scatto che passa oltre chi hai davanti e lo colpisce", barre = { 3, 2, 3 } },
 	bellows = { tipo = "secondaria", cosa = "Il soffio della forgia: spinge via chi hai davanti", barre = { 1, 2, 5 } },
 	hook = { tipo = "movimento", cosa = "Aggancia un bordo e ti arrampichi; su un nemico, lo tiri da te" },
-	wall = { tipo = "movimento", cosa = "Posa un blocco d'acciaio: un riparo, o un gradino" },
 	parachute = { tipo = "oggetto", cosa = "Aprilo in aria: scendi piano e atterri senza farti male", in_aria = true },
 	trap = { tipo = "oggetto", cosa = "Posala a terra: scatta quando ci passa un nemico" },
 	shield = { tipo = "oggetto", cosa = "Ti ripara dai colpi fino al tuo prossimo turno" },

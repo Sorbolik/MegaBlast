@@ -19,4 +19,4 @@ aspetta 0.3
 mira 65 100 0.3 04_mira
 aspetta_evento hook_end 4
 aspetta 1
-foto 05_sopra                        # sulla piattaforma: la cassa del Bastione
+foto 05_sopra                        # sulla piattaforma: la cassa del paracadute
