@@ -434,6 +434,7 @@ local function show_menu(self)
 	show_message(self, "", true)
 	self.missione, self.missione_attesa, self.fine_t = nil, nil, nil
 	if self.bandiera then self.bandiera:mostra(nil) end
+	if self.segnale then self.segnale:mostra(nil) end
 	punteggio.obiettivo(self.punti, nil)
 	for _, r in ipairs(self.robots) do targa.riga(r.targa, "") end
 end
@@ -1432,6 +1433,12 @@ local function missione_update(self, dt)
 	local bx, by = missioni.bandiera(r)
 	if bx and not self.bandiera then self.bandiera = require("battaglia.bandiera").new(self.mondo, self.robots[1].rig.root) end
 	if self.bandiera then self.bandiera:mostra(bx, by, self.clock) end
+	-- il segnale sul bersaglio da colpire adesso (battaglia/segnale.lua)
+	local bi = missioni.bersaglio(r)
+	local brb = bi and self.g.robots[bi]
+	if brb and brb.dead then brb = nil end
+	if brb and not self.segnale then self.segnale = require("battaglia.segnale").new(self.mondo) end
+	if self.segnale then self.segnale:mostra(brb and brb.x, brb and brb.y, game.ROBOT_H, game.ROBOT_HALF_W, self.clock) end
 	local testo, chi = missioni.riga(r)
 	-- {salta}: come si salta con i comandi che hai
 	if testo then

@@ -2212,6 +2212,19 @@ do
 	check(g.robots[1].dead and g.robots[3].dead, "chi è uscito non rinasce")
 end
 
+-- il tempo della partita non scende mentre si aspetta che tutto si fermi fra un turno e l'altro
+do
+	local g = game.new(42, "forgia")
+	g:step({ fire = { weapon = "missile", angle = 1.2, power = 0.8 } })
+	while g.phase == "aim" do g:step() end
+	local prima, t = g.match_left, 0
+	while g.phase == "settle" do
+		g:step()
+		t = t + 1
+	end
+	check(t > 1 and g.match_left == prima, "il tempo della partita è fermo fra un turno e l'altro")
+end
+
 if failures > 0 then
 	print(failures .. " test falliti")
 	os.exit(1)
