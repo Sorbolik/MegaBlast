@@ -14,6 +14,7 @@
 --     "computer" o "controller" (i tasti)
 
 local ui = require "ui.ui"
+local controller = require "ui.controller"
 
 local M = {}
 
@@ -85,7 +86,9 @@ local function anima(gd, cosa, comandi, pads)
 			gui.PLAYBACK_LOOP_FORWARD)
 		gui.animate(gd.onda, "color.w", 0, gui.EASING_OUTQUAD, 0.9, 0, nil, gui.PLAYBACK_LOOP_FORWARD)
 	elseif tasti[cosa] then
-		gui.set_text(gd.tasto_scritta, tasti[cosa])
+		-- col salto su un tasto (impostazioni) si dice quello
+		local salto = comandi == "controller" and cosa == "salta" and controller.nome_di("salta") or ""
+		gui.set_text(gd.tasto_scritta, salto ~= "" and salto or tasti[cosa])
 		pos(gd.tasto, pads.muovi.x, pads.muovi.y)
 		gui.animate(gd.tasto, "scale", vmath.vector3(1.12, 1.12, 1), gui.EASING_INOUTSINE, 0.45, 0, nil,
 			gui.PLAYBACK_LOOP_PINGPONG)

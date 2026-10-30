@@ -135,7 +135,7 @@ local ADDESTRAMENTO = {
 				evidenzia = "eagle", quando = { passo = 1 }, fino = { tocca = "eagle" } },
 			{ testo = "Salta ({salta}) e in aria spara verso il basso: il rinculo ti porta su",
 				evidenzia = "salta", quando = { tocca = "eagle" }, fino = { passo = 3 } },
-			{ testo = "Salta ({salta}) e mentre cali colpisci il pilastro col Maglio: rimbalzi in alto",
+			{ testo = "Colpisci il pilastro col Maglio: rimbalzi in alto. Saltando ({salta}) arrivi più su",
 				evidenzia = "mallet", quando = { passo = 4 }, fino = { tocca = "mallet" } },
 			{ testo = "L'Affondo è uno scatto: passa oltre chi hai davanti e lo colpisce", evidenzia = "lunge",
 				quando = { passo = 7 }, fino = { tocca = "lunge" } },

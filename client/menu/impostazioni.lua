@@ -1,10 +1,11 @@
 -- Impostazioni (la rotellina in alto a destra della home, docs/impostazioni.md):
--- il modo della mira e i tasti del controller in battaglia (Sergio, 30 ott:
--- "la rimappatura dei pulsanti me la metti nelle impostazioni"). Si sceglie un
--- comando (col tocco o con la luce del controller e A), poi si preme il tasto
--- nuovo: il comando che lo aveva prende quello lasciato libero
--- (controller.assegna). Start annulla e resta alla rotellina; RIPRISTINA torna
--- alla mappatura di Sergio. Tutto si salva subito nel profilo.
+-- il modo della mira, come si spara e si dosa la potenza col controller e i
+-- tasti del controller in battaglia (Sergio, 30 ott: "la rimappatura dei
+-- pulsanti me la metti nelle impostazioni"). Si sceglie un comando (col tocco o
+-- con la luce del controller e A), poi si preme il tasto nuovo: il comando che
+-- lo aveva prende quello lasciato libero (controller.assegna). Y sulla riga
+-- accesa toglie il tasto; Start annulla e resta alla rotellina; RIPRISTINA
+-- torna alla mappatura di Sergio. Tutto si salva subito nel profilo.
 --
 --   local impostazioni = require "menu.impostazioni"
 --   local s = impostazioni.new(p, ctrl)         -- p il profilo, ctrl il controller (ui/controller.lua)
@@ -20,17 +21,25 @@ local profilo = require "menu.profilo"
 local M = {}
 
 local NOMI = {
-	spara = "SPARA", primaria = "PRIMARIA DOPO", secondaria = "SECONDARIA DOPO", teletrasporto = "TELETRASPORTO",
+	spara = "SPARA", salta = "SALTA", primaria = "PRIMARIA DOPO", secondaria = "SECONDARIA DOPO", teletrasporto = "TELETRASPORTO",
 	rampino = "RAMPINO", paracadute = "PARACADUTE", oggetti = "OGGETTO DOPO", usa_oggetto = "USA L'OGGETTO",
 	baratto = "BARATTO", zoom = "ZOOM",
 }
-local MIRE = { { "lancetta", "LANCETTA" }, { "mirino", "MIRINO" } }
+-- le scelte in alto, una accanto all'altra (profilo.IMPOSTAZIONI, docs/impostazioni.md)
+local SCELTE = {
+	{ "mira", "MIRA", { { "lancetta", "LANCETTA" }, { "mirino", "MIRINO" } } },
+	{ "sparo", "SPARO COL CONTROLLER", { { "pressione", "PREMENDO" }, { "rilascio", "LASCIANDO" } } },
+	{ "potenza", "POTENZA COL CONTROLLER", { { "levetta", "LEVETTA" }, { "grilletto", "GRILLETTO" } } },
+}
 -- due colonne di comandi
-local RIGA_W, RIGA_H, RIGA_PASSO = 470, 56, 64
+local RIGA_W, RIGA_H, RIGA_PASSO = 470, 48, 54
 local COLONNE = { 395, 885 }
-local PRIMA_RIGA = 410
+local PRIMA_RIGA = 440
 
 local function costruisci(s)
+	-- la luce del controller resta sullo stesso bottone
+	local acceso = s.bottoni and ui.illuminato(s.bottoni)
+	acceso = acceso and acceso.azione
 	if s.radice then gui.delete_node(s.radice) end
 	s.bottoni, s.glifi = {}, {}
 	s.radice = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
@@ -39,13 +48,16 @@ local function costruisci(s)
 	ui.indietro(s.bottoni, "indietro", s.radice)
 	ui.titolo("IMPOSTAZIONI", 640, 650, 1, C.TESTO, s.radice)
 
-	ui.testo("MIRA", 640, 572, 0.7, C.SPENTO, s.radice)
-	local mira = profilo.impostazione(s.p, "mira")
-	for i, m in ipairs(MIRE) do
-		ui.scheda(s.bottoni, 640 + (i - 1.5) * 270, 520, 250, 60, m[2], "mira:" .. m[1], mira == m[1], s.radice)
+	for k, sc in ipairs(SCELTE) do
+		local cx = 640 + (k - 2) * 400
+		ui.testo(sc[2], cx, 586, 0.6, C.SPENTO, s.radice)
+		local v = profilo.impostazione(s.p, sc[1])
+		for i, m in ipairs(sc[3]) do
+			ui.scheda(s.bottoni, cx + (i - 1.5) * 180, 542, 170, 52, m[2], sc[1] .. ":" .. m[1], v == m[1], s.radice)
+		end
 	end
 
-	ui.testo("TASTI DEL CONTROLLER", 640, 466, 0.7, C.SPENTO, s.radice)
+	ui.testo("TASTI DEL CONTROLLER", 640, 488, 0.7, C.SPENTO, s.radice)
 	local n = #controller.COMANDI
 	local per_colonna = math.ceil(n / 2)
 	for i, cmd in ipairs(controller.COMANDI) do
@@ -59,21 +71,27 @@ local function costruisci(s)
 			local premi = ui.testo("PREMI UN TASTO", RIGA_W / 2 - 22, 0, 0.7, C.BRACE, nodo)
 			gui.set_pivot(premi, gui.PIVOT_E)
 			ui.scheda_attiva(s.bottoni[#s.bottoni], true)
-		else
-			local g = glifo.new(nodo, 32)
+		elseif controller.tasto_di(s.c, cmd) then
+			local g = glifo.new(nodo, 30)
 			glifo.mostra(g, s.c, controller.tasto_di(s.c, cmd))
 			gui.set_position(g.radice, vmath.vector3(RIGA_W / 2 - 22 - glifo.largo(g) / 2, 0, 0))
+		else
+			local nessuno = ui.testo(cmd == "salta" and "LEVETTA SX IN SU" or "NESSUN TASTO", RIGA_W / 2 - 22, 0, 0.6,
+				C.SPENTO, nodo)
+			gui.set_pivot(nessuno, gui.PIVOT_E)
 		end
 	end
 
 	local riga = PRIMA_RIGA - per_colonna * RIGA_PASSO
-	ui.bottone(s.bottoni, COLONNE[2] + RIGA_W / 2 - 150, riga - 6, 300, 60, "RIPRISTINA", "ripristina", nil, s.radice)
+	ui.bottone(s.bottoni, COLONNE[2] + RIGA_W / 2 - 150, riga - 4, 300, 56, "RIPRISTINA", "ripristina", nil, s.radice)
 	local aiuto = s.attesa and (controller.nome(s.c, "start") .. " ANNULLA")
-		or (s.c.connesso and "SCEGLI UN COMANDO, POI PREMI IL TASTO NUOVO"
+		or (s.c.connesso and (controller.nome(s.c, "a") .. " CAMBIA IL TASTO, " .. controller.nome(s.c, "y") .. " LO TOGLIE")
 		or "COLLEGA UN CONTROLLER PER CAMBIARE I TASTI")
-	local t = ui.testo(aiuto, COLONNE[1] - RIGA_W / 2, riga - 6, 0.62, C.SPENTO, s.radice)
+	local t = ui.testo(aiuto, COLONNE[1] - RIGA_W / 2, riga - 4, 0.62, C.SPENTO, s.radice)
 	gui.set_pivot(t, gui.PIVOT_W)
-	ui.riaccendi(s.bottoni)
+	for _, b in ipairs(s.bottoni) do
+		if b.azione == acceso then ui.luce(s.bottoni, b) end
+	end
 end
 
 function M.new(p, c)
@@ -97,6 +115,17 @@ function M.on_input(s, action_id, action)
 		costruisci(s)
 		return nil
 	end
+	-- Y sulla riga accesa: il comando resta senza tasto
+	if action_id == ui.PAD and action.pressed and action.ui == "scheda" then
+		local b = ui.illuminato(s.bottoni)
+		local cmd = b and b.azione:match("^tasto:(.*)$")
+		if cmd then
+			controller.togli(s.c, cmd)
+			salva(s)
+			costruisci(s)
+		end
+		return nil
+	end
 	local azione = ui.tocco(s.bottoni, action_id, action)
 	if not azione then return nil end
 	if azione == "indietro" then return "indietro" end
@@ -106,11 +135,11 @@ function M.on_input(s, action_id, action)
 		s.attesa = nil
 	else
 		local tipo, valore = azione:match("^(%a+):(.*)$")
-		if tipo == "mira" then
-			profilo.imposta(s.p, "mira", valore)
-			profilo.salva(s.p)
-		elseif tipo == "tasto" then
+		if tipo == "tasto" then
 			s.attesa = s.attesa ~= valore and valore or nil
+		else
+			profilo.imposta(s.p, tipo, valore)
+			profilo.salva(s.p)
 		end
 	end
 	costruisci(s)

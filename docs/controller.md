@@ -15,9 +15,9 @@ su Nintendo, allo stesso posto, B, A, Y e X.
 
 | Tasto | Cosa fa |
 |---|---|
-| Levetta sinistra | Cammina; spinta in su salta (come la levetta del telefono) |
+| Levetta sinistra | Cammina; spinta in su salta (come la levetta del telefono). Se SALTA ha un tasto (impostazioni) cammina soltanto |
 | Levetta destra | Mira: la direzione è l'angolo, quanto la spingi è la potenza (come sul telefono); riportata al centro si spegne |
-| RT (grilletto destro) | Spara, con la mira della levetta destra di un attimo prima (0,05 s, come il pollice che si stacca dal telefono: premendo il grilletto la levetta scivola) |
+| RT (grilletto destro) | Spara, con la mira della levetta destra di un attimo prima (0,05 s, come il pollice che si stacca dal telefono). Di base **lasciandolo**: premuto carica, lasciato parte; riportando la levetta destra al centro prima di lasciarlo non parte niente. Nelle impostazioni si sceglie anche PREMENDO, o la potenza dal GRILLETTO (sotto) |
 | LB | La primaria dopo, a giro (1, 2, 3, 1...), dal cronometro verso fuori |
 | RB | La secondaria dopo, a giro |
 | A | Teletrasporto in mano |
@@ -42,12 +42,26 @@ riconosce (B tenuto o premuto da meno di 0,3 s) e non apre la rotellina.
 ## Impostazioni: i tasti da cambiare
 
 Nella home, la rotellina in alto a destra apre IMPOSTAZIONI
-(`client/menu/impostazioni.lua`, [impostazioni.md](impostazioni.md)): il modo
-della mira e una riga per ogni comando, col suo tasto. Si sceglie la riga (col
-tocco o con la luce e A) e si preme il tasto nuovo: il comando che lo aveva
-prende quello lasciato libero, così ogni comando ha sempre un tasto. Start
+(`client/menu/impostazioni.lua`, [impostazioni.md](impostazioni.md)). In alto
+tre scelte: MIRA (lancetta o mirino), SPARO COL CONTROLLER (premendo o
+lasciando) e POTENZA COL CONTROLLER (levetta o grilletto). Sotto una riga per
+ogni comando, col suo tasto. Si sceglie la riga (col tocco o con la luce e A) e
+si preme il tasto nuovo: il comando che lo aveva prende quello lasciato libero
+(o, se il comando nuovo non ne aveva, il primo tasto che nessuno usa: la
+croce). **Y** sulla riga accesa toglie il tasto: il comando resta senza. Start
 annulla e resta sempre alla rotellina; le levette sono fisse. RIPRISTINA torna
-alla mappatura di Sergio. Si salva subito nel profilo (`tasti`).
+alla mappatura di Sergio. Si salva subito nel profilo (`tasti`, `sparo`, `potenza`).
+
+- **SALTA** (Sergio, 30 ott: "la gente lo vuole sulla A"): di base non ha un
+  tasto e si salta con la levetta sinistra in su. Con un tasto si salta finché
+  è tenuto e la levetta sinistra cammina soltanto (conta solo di lato), così
+  camminando in diagonale non si salta per sbaglio. Non ha un pulsante
+  sull'HUD, quindi nemmeno il disegno del tasto; le lezioni dicono il tasto.
+- **Potenza dal grilletto**: la levetta destra dà solo la direzione (accesa
+  oltre il 20%), quanto è premuto il tasto di SPARA dà la potenza (oltre il 6%,
+  si vede nel cartellino) e lasciandolo parte il colpo con la potenza di 0,08 s
+  prima, perché il grilletto torna su in un attimo. Su un tasto che non è un
+  grilletto la potenza è sempre piena.
 
 ## I tasti sull'HUD
 
@@ -88,7 +102,11 @@ e le stelle si passano con A.
   li traduciamo noi. Sul computer un controller sconosciuto non funziona
   (Windows e Linux non hanno un ordine standard).
   Su Android gli assi verticali delle levette arrivano capovolti (giù è su):
-  `c.su = -1` li raddrizza, per i controller noti e per i grezzi.
+  `c.su = -1` li raddrizza, per i controller noti e per i grezzi. Un
+  controller letto dai grezzi non conta anche dalle azioni tradotte: una fonte
+  sola, perché due letture che si alternano facevano scattare la mira per un
+  attimo (Sergio, 30 ott, "intorno ai 35 gradi"). `c.valore` dice quanto sono
+  premuti i grilletti.
 - `client/ui/ui.lua`: la luce sui bottoni (`ui.tocco` con `ui.PAD`).
 - `client/ui/glifo.lua`: il disegno dei tasti; `client/menu/impostazioni.lua`: la schermata.
 - `client/main/game.gui_script`, tabella `PAD`: cosa fanno i tasti in battaglia.

@@ -1112,13 +1112,13 @@ do
 	place(ga, sx, sy)
 	place(gb, sx, sy - game.ROBOT_H - 6)
 	hp = gb.hp
-	local hits = mallet(g1, math.rad(-90))
+	local hits = mallet(g1, 0)
 	check(#hits == 1 and hits[1].target == 2 and hits[1].bounce and hp - gb.hp == config.MALLET.damage
 		and next(gb.status) == nil, "in aria colpisce il robot sotto, danno secco, e rimbalza")
 	check(hits[1].vy >= config.MALLET.bounce - 20 and gb.vx == 0, "chi colpisce va in alto, il colpito non viene spinto")
 	check(ga.mallet == nil, "il colpo finisce")
 	-- come la Lama prende tutto quello che c'è sull'arco: anche chi sta dietro in
-	-- alto, dove il martello parte; lì però non si rimbalza (non sta calando)
+	-- alto, dove il martello parte; e anche lì si rimbalza (Sergio, 30 ott: ogni volta che colpisce)
 	local g5 = game.new(42, "forgia", { secondary = "mallet" })
 	run(g5, 60)
 	local g5a, g5b = g5.robots[1], g5.robots[2]
@@ -1127,21 +1127,21 @@ do
 	place(g5b, sx - 20, sy + 35)
 	hp = g5b.hp
 	hits = mallet(g5, 0)
-	check(#hits == 1 and hits[1].target == 2 and not hits[1].bounce and hp - g5b.hp == config.MALLET.damage and g5a.vy < 0,
-		"colpisce anche dietro in alto, all'inizio dell'arco, senza rimbalzo")
+	check(#hits == 1 and hits[1].target == 2 and hits[1].bounce and hp - g5b.hp == config.MALLET.damage,
+		"colpisce anche dietro in alto, all'inizio dell'arco, e rimbalza")
 	-- sul terreno sotto i piedi la testa si ferma e si rimbalza (pogo)
 	local g2 = game.new(42, "forgia", { secondary = "mallet" })
 	run(g2, 60)
 	local g2a = g2.robots[1]
 	g2.robots[2].x = -1000
 	place(g2a, g2a.x, g2a.y + 20)
-	g2:step({ fire = { angle = math.rad(-90), power = 1, weapon = "mallet" } })
+	g2:step({ fire = { angle = 0, power = 1, weapon = "mallet" } })
 	local stop
 	for _ = 1, config.MALLET.ticks do
 		g2:step()
 		if g2a.mallet_stop and not stop then stop = g2a.mallet_stop; check(g2a.vy >= config.MALLET.bounce - 20, "sul terreno sotto i piedi rimbalza in alto (pogo)") end
 	end
-	check(stop and stop < config.MALLET.ticks and game.mallet_angle(config.MALLET.ticks, stop) == game.mallet_angle(stop),
+	check(stop and stop < config.MALLET.ticks and game.mallet_angle(config.MALLET.ticks, 0, stop) == game.mallet_angle(stop),
 		"la testa si ferma dove sbatte e resta lì")
 	-- a vuoto in aria non rimbalza
 	local g3 = game.new(42, "forgia", { secondary = "mallet" })
@@ -1149,9 +1149,9 @@ do
 	local g3a = g3.robots[1]
 	g3.robots[2].x = -1000
 	place(g3a, sky(g3))
-	hits = mallet(g3, math.rad(-90))
+	hits = mallet(g3, 0)
 	check(#hits == 0 and g3a.vy < 0, "a vuoto in aria non rimbalza")
-	-- a terra colpisce davanti, la testa sbatte sul terreno e non si rimbalza
+	-- a terra colpisce davanti e si rimbalza (Sergio, 30 ott: anche senza saltare)
 	local g4 = game.new(42, "forgia", { secondary = "mallet" })
 	run(g4, 60)
 	local g4a, g4b = g4.robots[1], g4.robots[2]
@@ -1159,8 +1159,22 @@ do
 	g4b.grounded = true
 	hp = g4b.hp
 	hits = mallet(g4, 0)
-	check(hp - g4b.hp == config.MALLET.damage and g4a.grounded and #hits == 2 and not hits[1].bounce and not hits[2].bounce,
-		"a terra colpisce davanti, sbatte sul terreno e resta a terra")
+	check(hp - g4b.hp == config.MALLET.damage and hits[1].target == 2 and hits[1].bounce and hits[1].vy >= config.MALLET.bounce - 20,
+		"a terra colpisce davanti e rimbalza in alto")
+	check(#hits == 1 or not hits[2].bounce, "una volta sola per colpo")
+	-- l'arco gira con la mira: chi sta dietro, sotto i piedi, lo prende solo mirando in basso
+	for _, prova in ipairs({ { 0, false }, { math.rad(-70), true } }) do
+		local gd = game.new(42, "forgia", { secondary = "mallet" })
+		run(gd, 60)
+		local da, db = gd.robots[1], gd.robots[2]
+		local px, py = sky(gd)
+		place(da, px, py)
+		local q, d = math.rad(-150), config.MALLET.reach * 0.8
+		place(db, px + math.cos(q) * d, py + game.SWORD_PIVOT_Y + math.sin(q) * d - game.HURT_Y)
+		hits = mallet(gd, prova[1])
+		check((#hits > 0 and hits[1].target == 2) == prova[2],
+			prova[2] and "mirando in basso il Maglio prende chi sta dietro sotto i piedi" or "mirando dritto no")
+	end
 	check(not g4:can_use("sword") and g4:can_use("missile"), "Maglio e Lama sono tutte e due secondarie")
 
 	-- Affondo: scatto che attraversa il robot davanti e lo colpisce una volta

@@ -40,7 +40,7 @@ M.DATI = {
 	sword = { tipo = "secondaria", cosa = "Sempre con te: un colpo da vicino", barre = { 2, 1, 2 } },
 	eagle = { tipo = "secondaria", cosa = "Un colpo dritto e subito; il rinculo ti spinge dall'altra parte",
 		barre = { 3, 4, 4 } },
-	mallet = { tipo = "secondaria", cosa = "Un colpo ad arco; in aria, se colpisce mentre cali, rimbalzi in alto",
+	mallet = { tipo = "secondaria", cosa = "Un colpo ad arco dove miri; quando sbatte su qualcosa o qualcuno rimbalzi in alto",
 		barre = { 3, 1, 4 } },
 	lunge = { tipo = "secondaria", cosa = "Uno scatto che passa oltre chi hai davanti e lo colpisce", barre = { 3, 2, 3 } },
 	bellows = { tipo = "secondaria", cosa = "Il soffio della forgia: spinge via chi hai davanti", barre = { 1, 2, 5 } },
@@ -67,7 +67,7 @@ local function uso(d, arma, comandi)
 		return d.in_aria and "In aria toccalo fra gli OGGETTI" or "Toccalo fra gli OGGETTI"
 	end
 	if comandi == "controller" then
-		return "Muovi la levetta di destra per sistemare la traiettoria, premi " .. tasto("spara") .. " per far partire il colpo"
+		return "Muovi la levetta di destra per sistemare la traiettoria, usa " .. tasto("spara") .. " per far partire il colpo"
 	elseif comandi == "telefono" then
 		return "Sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo"
 	end
