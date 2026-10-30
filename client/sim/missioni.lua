@@ -69,7 +69,7 @@
 --     che c'è (la mira è già cominciata)
 --
 -- I passi dell'obiettivo (testo: come si legge nella riga dell'obiettivo):
---   { usa = "globi" | "rampino" | "bastione" | "rimbalzo" | "rinculo" | "paracadute" }
+--   { usa = "globi" | "rampino" | "bastione" | "rimbalzo" | "rinculo" | "paracadute" | "baratto" }
 --   { raggiungi = { x = 1200, y = 150 }, bandiera = true }   in piedi sopra quella
 --                                           quota, oltre quella x (bandiera: lì c'è la bandierina a scacchi)
 --   { prendi = "missile" }                  raccogli la cassa con quell'arma
@@ -119,6 +119,7 @@ local USA = {
 	-- il Tonante sparato in aria: il rinculo porta via
 	rinculo = function(e, st) return e.type == "eagle" and not st.a_terra end,
 	paracadute = function(e) return e.type == "parachute" end,
+	baratto = function(e) return e.type == "swap" end,
 }
 
 -- Le missioni, per id e per capitolo --------------------------------------------------

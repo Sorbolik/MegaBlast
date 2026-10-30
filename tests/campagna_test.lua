@@ -86,7 +86,7 @@ local function gioca(id, copione, picks, limite)
 		local turni = r.st.turni
 		c.tieni(FERMO, function() return r.st.turni > turni and g.phase == "aim" end)
 	end
-	c.g = g
+	c.g, c.r = g, r
 	local primo = true
 	for _ = 1, limite or 60 * 120 do
 		local input = primo and FERMO or co(c)
@@ -206,13 +206,16 @@ ok, r = cerca("turno", function(c, a, p)
 	c.tieni(FERMO, function(g) return g.robots[1].x > 1150 and g.robots[1].grounded end)
 	c.cassa("grenade")
 	c.usa("grenade", 0.6, 0.2)
-	c.tieni(FERMO, 60)
+	-- l'Uovo scoppia dopo 3 secondi: poi il baratto
+	c.tieni(FERMO, function() return c.r.st.passi[5] end)
+	c.usa("swap")
+	c.tieni(FERMO, 30)
 	c.cassa("shards")
 	c.turno()
 	c.usa("shards", 0)
 	c.tieni(FERMO, 120)
 end, nil, { 0.8, 1.2, 0.05 }, potenze(0.5, 1, 0.1))
-check(ok, "turno: due attacchi, il globo sull'isola, l'Uovo e le Schegge")
+check(ok, "turno: due attacchi, il globo sull'isola, l'Uovo, il baratto e le Schegge")
 if ok then check(missioni.quante(missioni.stelle(r)) >= 2, "turno: un globo e più al primo attacco") end
 -- Senza attaccare prima non ci sono globi
 esito = gioca("turno", function(c)

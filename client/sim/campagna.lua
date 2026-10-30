@@ -65,9 +65,9 @@ local ADDESTRAMENTO = {
 		arena = { { 300, 0, 600, 150 }, { 1200, 100, 320, 50 } },
 		spawns = { { x = 600, from = 600 }, { x = 800, from = 600 }, { x = 1440, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 2, dummy = true } },
-		vedi = { "missile", "sword", "teleport", "tempo" },
+		vedi = { "missile", "sword", "teleport", "tempo", "baratto" },
 		globi = 0,
-		casse = { { dopo = 3, arma = "grenade", x = 1250 }, { dopo = 5, arma = "shards", x = 1290 } },
+		casse = { { dopo = 3, arma = "grenade", x = 1250 }, { dopo = 6, arma = "shards", x = 1290 } },
 		stelle = {
 			bonus = { conta = "globi", almeno = 2, testo = "2 GLOBI GUADAGNATI" },
 			bonus2 = { conta = "globi", almeno = 4, testo = "4 GLOBI GUADAGNATI" },
@@ -78,6 +78,7 @@ local ADDESTRAMENTO = {
 			{ raggiungi = { x = 1200, y = 150 }, testo = "Teletrasportati sull'isola" },
 			{ prendi = "grenade", testo = "Prendi la cassa" },
 			{ colpisci = 3, con = "grenade", testo = "Colpisci il bersaglio con l'Uovo" },
+			{ usa = "baratto", testo = "Baratta il secondo attacco con un teletrasporto" },
 			{ prendi = "shards", testo = "Prendi l'altra cassa" },
 			{ colpisci = 3, con = "shards", testo = "Colpisci il bersaglio con le Schegge" },
 		},
@@ -88,6 +89,8 @@ local ADDESTRAMENTO = {
 			{ testo = "Tocca il tasto viola, mira l'isola e lascia: arrivi dove cade il globo", evidenzia = "teleport",
 				quando = function(st, g) return st.passi[2] and g.current == GIOCATORE end, fino = { evento = "teleport" } },
 			{ testo = "Le primarie delle casse hanno colpi contati: il numero sotto l'icona", quando = { passo = 4 } },
+			{ testo = "Invece del secondo attacco puoi prendere un globo: tocca le due frecce sopra il cronometro",
+				quando = { passo = 5 }, fino = { passo = 6 } },
 		},
 	},
 	-- Armi che ti muovono: le secondarie, una cassa per volta. Il Tonante
