@@ -56,3 +56,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Rampino sul terreno: ti porta sopra la piattaforma anche agganciandola da sotto in diagonale (soglie più larghe). | #91 |
 | 29 ott | Mira a lancetta di base (tacche che si accendono con la potenza); il mirino si sceglie dalla rotellina in partita (MIRA) e resta salvato. | questa PR |
 | 29 ott | Armi da vicino: niente lancetta, una punta nella direzione del colpo e un anello ai piedi di chi verrebbe colpito. | questa PR |
+| 29 ott | Nuove generazioni dei bot: evolvono i numeri del bot del gioco, un campione per stile, scelte da sole quando non migliorano; pagina coi video delle trovate dei bot. | #93 |
+| 29 ott | Stelle della campagna tarate coi bot: quote di seconda e terza stella, missioni da guardare, previsione se cambia la vita degli avversari; controllo su ogni PR che cambia le regole. | #93 |

@@ -1,0 +1,25 @@
+# Stelle della campagna: a ogni PR che cambia le regole (client/sim) i bot
+# rigiocano le missioni dei gironi (strumenti/arena/collaudo.lua) e dicono
+# quali stelle non vanno più bene. La tabella va nel riepilogo del controllo,
+# le missioni da guardare come avvisi sulla PR. Non blocca: le soglie le decide
+# chi fa la PR (e le cambia nella stessa PR, sim/campagna.lua).
+name: Stelle della campagna
+
+on:
+  pull_request:
+    paths: ['client/sim/**', 'strumenti/arena/collaudo.lua', '.github/workflows/stelle.yml']
+concurrency:
+  group: stelle-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  collaudo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collaudo delle missioni
+        run: |
+          sudo apt-get install -y -qq luajit > /dev/null
+          luajit strumenti/arena/collaudo.lua 12 --vita 0.5,1,2 --avvisi
+          cat simulazione/arena/collaudo.md >> "$GITHUB_STEP_SUMMARY"

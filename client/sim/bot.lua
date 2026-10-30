@@ -56,8 +56,8 @@ M.ORDINE = { "facile", "normale", "difficile" }
 -- (strumenti/arena/evolvi.py) e una partita può darne altri a ogni bot
 -- (players[i].pesi, solo i campi che cambiano). rete (se c'è): una rete
 -- neurale (sim/rete.lua) che giudica le mosse al posto di questi pesi, dalle
--- caratteristiche della posizione dopo la mossa (M.caratteristiche); la fanno
--- evolvere strumenti/arena/evolvi.py o imparare strumenti/arena/impara.py;
+-- caratteristiche della posizione dopo la mossa (M.caratteristiche); la allena
+-- strumenti/arena/impara.py;
 -- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore.
 M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 100, globo_riparo = 3 }
 
