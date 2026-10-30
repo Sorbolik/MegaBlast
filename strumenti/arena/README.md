@@ -26,7 +26,9 @@ finisce nelle opzioni della partita (`opts.score`) e nella ricetta.
 `popolazione.lua` restituisce una lista di pesi del bot (`bot.PESI`, solo i
 campi che cambiano, per esempio `return { {}, { morte = 10 }, { punteggio = { damage = 1, kill = 80, ... } } }`):
 ogni robot ne prende uno a caso (con `--assegna turno` a turno: il robot i prende
-il numero i + partita), e il suo numero va nella riga della partita (`individuo`).
+il numero i + partita, e le partite vanno a coppie, la stessa partita due volte
+con i numeri scambiati: due bot uguali fanno esattamente metà e metà), e il suo
+numero va nella riga della partita (`individuo`).
 I pesi non vanno nella ricetta (una rete sono centinaia di numeri): la riga ha il
 file dei pesi e per il video `arena.py` li rimette dal `.json` accanto al `.lua`.
 Con `punteggio` il bot giudica le mosse con altri punti da quelli della partita:
