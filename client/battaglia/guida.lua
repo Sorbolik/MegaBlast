@@ -3,13 +3,15 @@
 -- il dito sposta di lato la levetta di sinistra (cammina) o la spinge in su
 -- (salta), spinge la levetta di destra verso il bersaglio (mira) o tocca la
 -- metà destra dello schermo mentre si mira (annulla); sul computer pulsano i
--- tasti (A D, SPAZIO). Pochi nodi fatti una volta: a ogni frame si spostano soltanto.
+-- tasti (A D, SPAZIO), col controller le levette. Pochi nodi
+-- fatti una volta: a ogni frame si spostano soltanto.
 --
 --   local gd = guida.new()                          -- dopo l'HUD, così sta sopra
---   gd:aggiorna(cosa, dove, telefono, pads)         -- a ogni frame; cosa nil: niente
+--   gd:aggiorna(cosa, dove, comandi, pads)          -- a ogni frame; cosa nil: niente
 --   gd.gesto(cosa)                                  -- un gesto (salta, mira...), non un pulsante
 --     dove = { x, y, d }: il comando da cerchiare (o nil); pads = { muovi, mira }:
---     i centri delle levette; telefono: i gesti col dito, se no i tasti
+--     i centri delle levette; comandi: "telefono" (i gesti col dito),
+--     "computer" o "controller" (i tasti)
 
 local ui = require "ui.ui"
 
@@ -27,8 +29,9 @@ local GESTI = {
 	salta = { pad = "muovi", dx = 0, dy = 1, freccia = "^" },
 	mira = { pad = "mira", dx = 0.7, dy = 0.7 },
 }
--- sul computer i tasti
-local TASTI = { cammina = "A   D", salta = "SPAZIO" }
+-- sul computer e col controller i tasti
+local TASTI = { computer = { cammina = "A   D", salta = "SPAZIO" },
+	controller = { cammina = "LEVETTA SX", salta = "SX IN SU", mira = "LEVETTA DX", annulla = "DX AL CENTRO" } }
 local V = vmath.vector3(0, 0, 0)
 
 local function pos(n, x, y)
@@ -49,7 +52,8 @@ function M.new()
 end
 
 -- Riparte il giro delle animazioni: cambia solo quando cambia il comando
-local function anima(gd, cosa, telefono, pads)
+local function anima(gd, cosa, comandi, pads)
+	local telefono, tasti = comandi == "telefono", TASTI[comandi] or {}
 	for _, n in ipairs({ gd.anello, gd.dito, gd.onda, gd.freccia, gd.tasto }) do
 		gui.cancel_animations(n)
 		gui.set_scale(n, vmath.vector3(1, 1, 1))
@@ -80,8 +84,8 @@ local function anima(gd, cosa, telefono, pads)
 		gui.animate(gd.onda, "scale", vmath.vector3(2.6, 2.6, 1), gui.EASING_OUTQUAD, 0.9, 0, nil,
 			gui.PLAYBACK_LOOP_FORWARD)
 		gui.animate(gd.onda, "color.w", 0, gui.EASING_OUTQUAD, 0.9, 0, nil, gui.PLAYBACK_LOOP_FORWARD)
-	elseif TASTI[cosa] then
-		gui.set_text(gd.tasto_scritta, TASTI[cosa])
+	elseif tasti[cosa] then
+		gui.set_text(gd.tasto_scritta, tasti[cosa])
 		pos(gd.tasto, pads.muovi.x, pads.muovi.y)
 		gui.animate(gd.tasto, "scale", vmath.vector3(1.12, 1.12, 1), gui.EASING_INOUTSINE, 0.45, 0, nil,
 			gui.PLAYBACK_LOOP_PINGPONG)
@@ -93,16 +97,17 @@ function M.gesto(cosa)
 	return GESTI[cosa] ~= nil or cosa == "annulla"
 end
 
-function M.aggiorna(gd, cosa, dove, telefono, pads)
-	local chiave = cosa and (cosa .. (telefono and "t" or "c")) or nil
+function M.aggiorna(gd, cosa, dove, comandi, pads)
+	local chiave = cosa and (cosa .. comandi) or nil
+	local telefono, tasti = comandi == "telefono", TASTI[comandi] or {}
 	if chiave ~= gd.cosa then
 		gd.cosa = chiave
 		local gesto = GESTI[cosa]
 		gui.set_enabled(gd.dito, telefono and (gesto ~= nil or cosa == "annulla"))
 		gui.set_enabled(gd.onda, cosa == "annulla" and telefono)
 		gui.set_enabled(gd.freccia, telefono and gesto ~= nil and gesto.freccia ~= nil)
-		gui.set_enabled(gd.tasto, not telefono and TASTI[cosa] ~= nil)
-		if cosa then anima(gd, cosa, telefono, pads) end
+		gui.set_enabled(gd.tasto, tasti[cosa] ~= nil)
+		if cosa then anima(gd, cosa, comandi, pads) end
 	end
 	gui.set_enabled(gd.anello, dove ~= nil)
 	if dove then

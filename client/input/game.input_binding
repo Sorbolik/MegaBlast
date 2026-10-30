@@ -98,3 +98,99 @@ mouse_trigger {
   input: MOUSE_WHEEL_DOWN
   action: "zoom_indietro"
 }
+gamepad_trigger {
+  input: GAMEPAD_LSTICK_LEFT
+  action: "pad_sx_sinistra"
+}
+gamepad_trigger {
+  input: GAMEPAD_LSTICK_RIGHT
+  action: "pad_sx_destra"
+}
+gamepad_trigger {
+  input: GAMEPAD_LSTICK_UP
+  action: "pad_sx_su"
+}
+gamepad_trigger {
+  input: GAMEPAD_LSTICK_DOWN
+  action: "pad_sx_giu"
+}
+gamepad_trigger {
+  input: GAMEPAD_RSTICK_LEFT
+  action: "pad_dx_sinistra"
+}
+gamepad_trigger {
+  input: GAMEPAD_RSTICK_RIGHT
+  action: "pad_dx_destra"
+}
+gamepad_trigger {
+  input: GAMEPAD_RSTICK_UP
+  action: "pad_dx_su"
+}
+gamepad_trigger {
+  input: GAMEPAD_RSTICK_DOWN
+  action: "pad_dx_giu"
+}
+gamepad_trigger {
+  input: GAMEPAD_LPAD_UP
+  action: "pad_su"
+}
+gamepad_trigger {
+  input: GAMEPAD_LPAD_DOWN
+  action: "pad_giu"
+}
+gamepad_trigger {
+  input: GAMEPAD_LPAD_LEFT
+  action: "pad_sinistra"
+}
+gamepad_trigger {
+  input: GAMEPAD_LPAD_RIGHT
+  action: "pad_destra"
+}
+gamepad_trigger {
+  input: GAMEPAD_RPAD_DOWN
+  action: "pad_a"
+}
+gamepad_trigger {
+  input: GAMEPAD_RPAD_RIGHT
+  action: "pad_b"
+}
+gamepad_trigger {
+  input: GAMEPAD_RPAD_LEFT
+  action: "pad_x"
+}
+gamepad_trigger {
+  input: GAMEPAD_RPAD_UP
+  action: "pad_y"
+}
+gamepad_trigger {
+  input: GAMEPAD_LSHOULDER
+  action: "pad_lb"
+}
+gamepad_trigger {
+  input: GAMEPAD_RSHOULDER
+  action: "pad_rb"
+}
+gamepad_trigger {
+  input: GAMEPAD_LTRIGGER
+  action: "pad_lt"
+}
+gamepad_trigger {
+  input: GAMEPAD_RTRIGGER
+  action: "pad_rt"
+}
+gamepad_trigger {
+  input: GAMEPAD_START
+  action: "pad_start"
+}
+gamepad_trigger {
+  input: GAMEPAD_BACK
+  action: "pad_select"
+}
+gamepad_trigger {
+  input: GAMEPAD_RAW
+  action: "pad_grezzo"
+}
+gamepad_trigger {
+  input: GAMEPAD_CONNECTED
+  action: "pad_connesso"
+}

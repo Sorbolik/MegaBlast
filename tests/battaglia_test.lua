@@ -6,6 +6,7 @@ package.path = "client/?.lua;" .. package.path
 -- finti vmath e gui: ogni nodo ricorda posizione, rotazione, scala e genitore
 local function vec(x, y, z, w) return { x = x or 0, y = y or 0, z = z or 0, w = w } end
 vmath = { vector3 = vec, vector4 = vec }
+hash = function(s) return "#" .. s end
 local nodi = {}
 ordine = 0
 local function nuovo(p, s)
@@ -635,6 +636,50 @@ check(m.anelli[1].enabled and m.anelli[2].enabled and not m.anelli[3].enabled an
 mira.via(m)
 check(not m.lanc.enabled and not m.mir.enabled and not m.c.radice.enabled and not m.linee[2].enabled
 	and not m.punta.enabled and not m.anelli[1].enabled, "mira: via spegne tutto")
+
+-- Controller (ui/controller.lua): le azioni come le manda Defold
+local controller = require "ui.controller"
+local c = controller.new("Android")
+check(controller.input(c, hash("touch"), { pressed = true }) == nil, "controller: il tocco non è suo")
+local ev = controller.input(c, hash("pad_a"), { pressed = true, value = 1 })
+check(#ev == 1 and ev[1].nome == "a" and ev[1].premuto and ev[1].ui == "conferma" and c.giu.a, "controller: A premuto, nei menu conferma")
+ev = controller.input(c, hash("pad_a"), { value = 1 })
+check(#ev == 0, "controller: A tenuto non si ripete")
+ev = controller.input(c, hash("pad_a"), { released = true, value = 0 })
+check(#ev == 1 and not ev[1].premuto and not c.giu.a, "controller: A lasciato")
+ev = controller.input(c, hash("pad_rt"), { value = 0.3 })
+check(#ev == 0, "controller: il grilletto a un terzo non spara")
+ev = controller.input(c, hash("pad_rt"), { value = 0.8 })
+check(#ev == 1 and ev[1].nome == "rt", "controller: il grilletto oltre metà sì")
+controller.input(c, hash("pad_dx_destra"), { value = 0.6 })
+controller.input(c, hash("pad_dx_su"), { value = 0.8 })
+check(math.abs(c.dx.x - 0.6) < 1e-9 and math.abs(c.dx.y - 0.8) < 1e-9, "controller: la levetta destra, y in su")
+controller.input(c, hash("pad_dx_su"), { value = 1 })
+controller.input(c, hash("pad_dx_destra"), { value = 1 })
+check(math.abs(c.dx.x ^ 2 + c.dx.y ^ 2 - 1) < 1e-9, "controller: in diagonale la levetta non va oltre 1")
+controller.input(c, hash("pad_dx_destra"), { released = true, value = 0 })
+check(c.dx.x == 0 and c.dx.y == 1, "controller: lasciato un asse, l'altro resta")
+ev = controller.input(c, hash("pad_sx_sinistra"), { value = 0.9 })
+check(#ev == 1 and ev[1].nome == "sinistra" and ev[1].levetta and ev[1].ui == "sinistra", "controller: la levetta sinistra fa da croce nei menu")
+ev = controller.input(c, hash("pad_sx_sinistra"), { value = 0.95 })
+check(#ev == 0, "controller: una volta sola finché non torna indietro")
+controller.input(c, hash("pad_sx_sinistra"), { released = true, value = 0 })
+ev = controller.input(c, hash("pad_sx_sinistra"), { value = 0.9 })
+check(#ev == 1, "controller: tornata al centro, di nuovo")
+-- un controller che Defold non conosce: dall'azione grezza, coi numeri di Android
+controller.input(c, hash("pad_connesso"), { gamepad = 1, gamepad_unknown = true })
+ev = controller.input(c, hash("pad_grezzo"), { gamepad = 2, gamepad_buttons = { 1 } })
+check(#ev == 0, "controller: il grezzo di un controller conosciuto non conta")
+local tasti = {}
+for i = 1, 20 do tasti[i] = 0 end
+tasti[1], tasti[7] = 1, 1
+ev = controller.input(c, hash("pad_grezzo"), { gamepad = 1, gamepad_buttons = tasti,
+	gamepad_axis = { 0.1, 0, 0.5, -0.5, 0, 1, 0, -1 } })
+local nomi = {}
+for _, e in ipairs(ev) do nomi[#nomi + 1] = e.nome end
+check(table.concat(nomi, " ") == "a su y", "controller sconosciuto: A, Y e la croce in su (RT era già giù), in ordine di nome")
+check(c.sx.x == 0 and math.abs(c.dx.x - 0.5) < 1e-9 and math.abs(c.dx.y - 0.5) < 1e-9, "controller sconosciuto: zona morta e levetta destra, y in su")
+check(controller.new("Darwin").grezzi == nil, "controller: sul computer i grezzi non si leggono")
 
 if failures > 0 then
 	print(failures .. " test falliti")

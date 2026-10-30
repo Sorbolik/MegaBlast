@@ -5,8 +5,8 @@
 -- PROVALA. Non sa niente della partita: la apre la battaglia quando trovi
 -- un'arma nuova, e servirà anche alla scelta delle armi e all'Armeria.
 --
---   local c = scheda.apri("missile", telefono)    -- telefono: come si usa col dito, se no col mouse
---   local c = scheda.apri("missile", telefono, true) -- rivista (scelta delle armi): niente ARMA NUOVA, si chiude con OK
+--   local c = scheda.apri("missile", comandi)     -- comandi: "telefono", "computer" o "controller" (come si usa)
+--   local c = scheda.apri("missile", comandi, true) -- rivista (scelta delle armi): niente ARMA NUOVA, si chiude con OK
 --   if c:premi(x, y) then c:chiudi() end          -- un tocco: sul bottone? (x, y come gui.pick_node)
 --   scheda.DATI.missile                           -- cosa fa e le barre, per chi la mostra altrove
 
@@ -56,11 +56,16 @@ local W, H = 560, 560
 local LARGO = 480
 
 -- come si usa, coi comandi che hai
-local function uso(d, telefono)
-	if d.tipo == "oggetto" then
+local function uso(d, arma, comandi)
+	if d.tipo == "oggetto" and comandi == "controller" then
+		return arma == "parachute" and "In aria premi Y"
+			or (d.in_aria and "In aria sceglilo" or "Sceglilo") .. " fra gli OGGETTI con LT e usalo con la croce giù"
+	elseif d.tipo == "oggetto" then
 		return d.in_aria and "In aria toccalo fra gli OGGETTI" or "Toccalo fra gli OGGETTI"
 	end
-	if telefono then
+	if comandi == "controller" then
+		return "Muovi la levetta di destra per sistemare la traiettoria, premi RT per far partire il colpo"
+	elseif comandi == "telefono" then
 		return "Sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo"
 	end
 	return "Trascina dal diavoletto per sistemare la traiettoria, lascia per far partire il colpo"
@@ -74,7 +79,7 @@ local function riga(t, y, scala, colore, parent)
 	return n
 end
 
-function M.apri(arma, telefono, rivista)
+function M.apri(arma, comandi, rivista)
 	local d = assert(M.DATI[arma], "scheda sconosciuta: " .. tostring(arma))
 	local tipo = TIPI[d.tipo]
 	local col = tipo.colore
@@ -105,7 +110,7 @@ function M.apri(arma, telefono, rivista)
 			y = y - 36
 		end
 	end
-	riga(uso(d, telefono), d.barre and -188 or -110, 0.8, C.TESTO, carta)
+	riga(uso(d, arma, comandi), d.barre and -188 or -110, 0.8, C.TESTO, carta)
 	c.prova = ui.bottone({}, 0, -240, 250, 64, rivista and "OK" or "PROVALA", nil, { principale = true, colore = col }, carta)
 	-- arriva con un piccolo salto
 	gui.set_scale(carta, vmath.vector3(0.6, 0.6, 1))

@@ -16,6 +16,7 @@ dove sta oggi nel codice (se c'è già un interruttore).
 | Traiettoria intera nelle lezioni | Aiuto per imparare: nelle lezioni dell'Addestramento si vede tutta la traiettoria | accesa nelle lezioni, mai in partita | Sergio, 29 ott | sempre accesa nelle lezioni dell'Addestramento (`render` in `client/main/game.gui_script`) |
 | Effetti ridotti | Transizioni ed effetti più leggeri | spenti | roadmap | — |
 | Comandi | Mancino, levette, mira | — | roadmap (area 8) | — |
+| Tasti del controller | Cambiare cosa fa ogni tasto del controller in battaglia | la mappatura di Sergio ([controller.md](controller.md)) | Sergio, 30 ott | **pronta**: tutta in `controller.BATTAGLIA` (`client/ui/controller.lua`), basta cambiare la tabella |
 | HUD sistemabile | Il giocatore sposta i pulsanti della battaglia | predefiniti | Sergio, 29 ott ([interfaccia](decisioni/interfaccia.md)) | — |
 
-Non ci saranno (decisioni di Sergio): qualità grafica a livelli, rimappatura dei tasti.
+Non ci saranno (decisioni di Sergio): qualità grafica a livelli. (La rimappatura dei tasti ora c'è, per il controller: Sergio, 30 ott.)

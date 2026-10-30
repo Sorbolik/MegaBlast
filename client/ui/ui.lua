@@ -11,6 +11,9 @@
 --   local lista = {}                                   -- i bottoni di una schermata
 --   ui.bottone(lista, x, y, w, h, "GIOCA", "online", { principale = true }, parent)
 --   local azione = ui.tocco(lista, action_id, action)  -- in on_input: l'azione o nil
+--   (anche col controller: action_id ui.PAD, action.ui "su" "giu" "sinistra"
+--   "destra" spostano la luce sui bottoni, "conferma" e "indietro" li usano;
+--   ui/controller.lua)
 
 local schermo = require "ui.schermo"
 
@@ -224,7 +227,109 @@ local function premi(b, giu)
 	gui.set_color(b.bordo, giu and b.colore or b.riposo)
 end
 
+-- Controller: un bottone alla volta ha la luce (bordo acceso, un po' più
+-- grande). La croce la sposta verso il bottone più vicino in quella direzione.
+-- Nella lista vanno anche pezzi che non sono bottoni (le carte della scelta),
+-- basta che abbiano nodo, bordo, colore e riposo.
+M.PAD = hash("pad")
+local LUCE_SCALA = vmath.vector3(1.06, 1.06, 1)
+-- l'azione dell'ultimo bottone confermato: quando la schermata si ricostruisce,
+-- la luce ci torna sopra
+local ricorda
+
+local function usabile(b)
+	return not b.spento and gui.is_enabled(b.nodo, true)
+end
+
+-- La luce su b (nil: spenta)
+function M.luce(lista, b)
+	local prima = lista.luce
+	if prima and prima ~= b then
+		gui.set_scale(prima.nodo, NORMALE)
+		gui.set_color(prima.bordo, prima.riposo)
+	end
+	lista.luce = b
+	if b then
+		gui.set_scale(b.nodo, LUCE_SCALA)
+		gui.set_color(b.bordo, b.colore)
+	end
+end
+
+-- Di nuovo la luce dov'era, dopo che la schermata ha ricolorato i bordi
+function M.riaccendi(lista)
+	local b = lista.luce
+	if b and usabile(b) then M.luce(lista, b) elseif b then M.luce(lista, nil) end
+end
+
+-- Dove parte la luce: l'ultimo confermato, il principale, o il primo
+-- (non quelli in un angolo: indietro e la rotellina)
+local ANGOLO = { indietro = true, rotellina = true }
+local function primo(lista)
+	local principale, altro, angolo
+	for _, b in ipairs(lista) do
+		if usabile(b) then
+			if ricorda and b.azione == ricorda then return b end
+			-- (b.luce è il Nucleo, che hanno solo i principali)
+			if ANGOLO[b.azione] then angolo = angolo or b
+			elseif b.luce then principale = principale or b
+			else altro = altro or b end
+		end
+	end
+	return principale or altro or angolo
+end
+
+local DIR = { su = { 0, 1 }, giu = { 0, -1 }, sinistra = { -1, 0 }, destra = { 1, 0 } }
+function M.naviga(lista, verso)
+	local b = lista.luce
+	if not (b and usabile(b)) then
+		M.luce(lista, primo(lista))
+		return
+	end
+	local d = DIR[verso]
+	local p = gui.get_screen_position(b.nodo)
+	local meglio, costo
+	for _, o in ipairs(lista) do
+		if o ~= b and usabile(o) then
+			local q = gui.get_screen_position(o.nodo)
+			local dx, dy = q.x - p.x, q.y - p.y
+			local avanti = dx * d[1] + dy * d[2]
+			if avanti > 1 then
+				-- avanti conta poco, di lato tanto: si va dritti se si può
+				local k = avanti + 2.5 * math.abs(dx * d[2] - dy * d[1])
+				if not costo or k < costo then meglio, costo = o, k end
+			end
+		end
+	end
+	if meglio then M.luce(lista, meglio) end
+end
+
+-- Il bottone con la luce (o nil)
+function M.illuminato(lista)
+	local b = lista.luce
+	return b and usabile(b) and b or nil
+end
+
 function M.tocco(lista, action_id, action)
+	if action_id == M.PAD then
+		if not action.pressed then return nil end
+		local u = action.ui
+		if DIR[u] then
+			M.naviga(lista, u)
+		elseif u == "conferma" then
+			local b = M.illuminato(lista)
+			if not b then
+				M.luce(lista, primo(lista))
+				return nil
+			end
+			if not ANGOLO[b.azione] then ricorda = b.azione end
+			return b.azione
+		elseif u == "indietro" then
+			for _, b in ipairs(lista) do
+				if b.azione == "indietro" and usabile(b) then return "indietro" end
+			end
+		end
+		return nil
+	end
 	if action_id ~= hash("touch") then return nil end
 	if action.pressed then
 		lista.premuto = sotto(lista, action.x, action.y)

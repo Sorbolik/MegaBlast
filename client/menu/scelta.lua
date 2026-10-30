@@ -3,7 +3,9 @@
 -- scelte degli altri non si vedono e i doppioni vanno bene; il Rampino ce
 -- l'hanno tutti. Sotto le carte le due scelte fatte: toccandone una si torna a
 -- quella fila. Tenendo premuta una carta si apre la scheda dell'arma
--- (battaglia/scheda.lua), la stessa delle casse; un tocco la chiude.
+-- (battaglia/scheda.lua), la stessa delle casse; un tocco la chiude. Col
+-- controller la croce sposta la luce su carte, scelte e pulsanti, A sceglie, Y
+-- apre la scheda e Start la rotellina (ui.tocco, ui/controller.lua).
 -- Sullo stesso telefono si sceglie a turno, col tempo che aspetta chi legge
 -- una scheda. Online sceglie solo chi gioca su questo telefono, finché il tempo
 -- del server non scade: le scelte vanno al server (docs/server.md).
@@ -12,8 +14,8 @@
 -- Pannelli e testo dell'interfaccia minimale (ui/ui.lua).
 --
 --   local scelta = require "menu.scelta"
---   local s = scelta.new(icone, nomi, effetti, telefono) -- icone (atlante armi), nomi e una riga sull'effetto per arma;
---                                                  -- telefono(): vero se si gioca col dito (per la scheda)
+--   local s = scelta.new(icone, nomi, effetti, comandi) -- icone (atlante armi), nomi e una riga sull'effetto per arma;
+--                                                  -- comandi(): "telefono", "computer" o "controller" (per la scheda)
 --   scelta.show(s, d, nomi_giocatori, colori, guidata) -- sullo stesso telefono: d = draft.new(...)
 --   local players = scelta.update(s, dt)           -- i giocatori per game.new, quando tutti hanno scelto (online nil)
 --   scelta.on_input(s, action_id, action)          -- "esci" se si tocca ESCI
@@ -70,8 +72,10 @@ local function carta(x, y, w, h, icona_d, parent)
 	return { node = c, bordo = bordo, icona = icona }
 end
 
-function M.new(icone, nomi, effetti, telefono)
-	local s = { icone = icone, nomi = nomi, effetti = effetti, telefono = telefono, carte = {}, scelte = {} }
+function M.new(icone, nomi, effetti, comandi)
+	local s = { icone = icone, nomi = nomi, effetti = effetti, comandi = comandi, carte = {}, scelte = {} }
+	-- quello su cui va la luce del controller: carte, scelte fatte e pulsanti
+	s.luce = {}
 	s.root = nodo(W / 2, H / 2, W * schermo.PIENO, H * schermo.PIENO, VELO)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
 	s.titolo = ui.titolo("", 0, 312, 0.55, nil, s.root)
@@ -83,6 +87,8 @@ function M.new(icone, nomi, effetti, telefono)
 		c.effetto = riga("", -70, 0.5, CARD_W - 24, c.node)
 		gui.set_color(c.effetto, C.SPENTO)
 		s.carte[i] = c
+		c.colore, c.azione, c.nodo = C.LUCE, "carta:" .. i, c.node
+		s.luce[#s.luce + 1] = c
 	end
 	for passo = 1, 2 do
 		local x = (passo - 1.5) * (SCELTA_W + 30)
@@ -93,6 +99,8 @@ function M.new(icone, nomi, effetti, telefono)
 		c.nome = ui.testo("", -SCELTA_W / 2 + 90, -14, 0.65, nil, c.node)
 		gui.set_pivot(c.nome, gui.PIVOT_W)
 		s.scelte[passo] = c
+		c.colore, c.azione, c.nodo = C.LUCE, "scelta:" .. passo, c.node
+		s.luce[#s.luce + 1] = c
 	end
 	s.bottoni = {}
 	s.gioca = ui.bottone(s.bottoni, 0, -290, 300, 70, "GIOCA", "gioca", { principale = true }, s.root)
@@ -100,6 +108,7 @@ function M.new(icone, nomi, effetti, telefono)
 	-- la rotellina: un tocco apre ESCI accanto, un altro la richiude
 	s.rotellina = ui.impostazioni(s.bottoni, "rotellina")
 	s.esci = ui.bottone(s.bottoni, 32 + 12 + 80, 0, 160, 64, "ESCI", "esci", nil, s.rotellina)
+	for _, b in ipairs(s.bottoni) do s.luce[#s.luce + 1] = b end
 	gui.set_enabled(s.root, false)
 	gui.set_enabled(s.rotellina, false)
 	return s
@@ -148,6 +157,10 @@ local function testi(s)
 			.. "Tocca una scelta per cambiarla, o GIOCA."
 			or "Il Rampino ce l'hai sempre. Tocca una scelta per cambiarla."
 	end
+	-- col controller la scheda si apre con Y, e si sceglie con la croce
+	if s.comandi and s.comandi() == "controller" then
+		sotto = sotto:gsub("Tieni premuta una carta", "Premi Y su una carta"):gsub("Tocca una scelta", "Torna su una scelta")
+	end
 	gui.set_text(s.titolo, (titolo:gsub("^%l", string.upper)))
 	gui.set_color(s.titolo, s.online and C.LUCE or s.colori[s.chi] or C.LUCE)
 	gui.set_text(s.sotto, sotto)
@@ -166,7 +179,8 @@ local function aggiorna(s)
 			gui.play_flipbook(c.icona, s.icone[w])
 			gui.set_text(c.nome, s.nomi[w])
 			gui.set_text(c.effetto, s.effetti[w] or "")
-			gui.set_color(c.bordo, picks[chi] == w and C.LUCE or COLORE_PASSO[s.passo])
+			c.riposo = picks[chi] == w and C.LUCE or COLORE_PASSO[s.passo]
+			gui.set_color(c.bordo, c.riposo)
 		end
 	end
 	for passo, c in ipairs(s.scelte) do
@@ -176,10 +190,12 @@ local function aggiorna(s)
 		gui.set_enabled(c.icona, w ~= nil)
 		if w then gui.play_flipbook(c.icona, s.icone[w]) end
 		gui.set_text(c.nome, w and s.nomi[w] or "...")
-		gui.set_color(c.bordo, passo == s.passo and C.LUCE or w and COLORE_PASSO[passo] or C.LINEA)
+		c.riposo = passo == s.passo and C.LUCE or w and COLORE_PASSO[passo] or C.LINEA
+		gui.set_color(c.bordo, c.riposo)
 	end
 	gui.set_enabled(s.gioca, s.guidata and s.passo == 3)
 	gui.set_enabled(s.barra.nodo, not s.guidata)
+	ui.riaccendi(s.luce)
 end
 
 -- La scheda aperta col tocco lungo, se c'è, si chiude
@@ -268,7 +284,7 @@ function M.update(s, dt)
 	if s.premuta then
 		s.premuta.t = s.premuta.t + dt
 		if s.premuta.t >= TIENI then
-			s.carta = scheda.apri(s.premuta.w, s.telefono and s.telefono(), true)
+			s.carta = scheda.apri(s.premuta.w, s.comandi and s.comandi(), true)
 			s.premuta = nil
 		end
 	end
@@ -288,8 +304,52 @@ function M.update(s, dt)
 	return nil
 end
 
+-- Col controller (action_id ui.PAD): la luce, A, Y per la scheda, Start la rotellina
+local function controller(s, action)
+	if not action.pressed then return end
+	if s.carta then
+		chiudi_scheda(s)
+		return
+	end
+	local u = action.ui
+	if u == "menu" or (u == "indietro" and gui.is_enabled(s.esci)) then
+		gui.set_enabled(s.esci, u == "menu" and not gui.is_enabled(s.esci))
+		if gui.is_enabled(s.esci) then ui.luce(s.luce, s.bottoni[#s.bottoni]) end
+		return
+	end
+	local acceso = ui.illuminato(s.luce)
+	local azione
+	if u == "scheda" then
+		azione = acceso and acceso.azione
+	else
+		azione = ui.tocco(s.luce, ui.PAD, action)
+	end
+	if not azione then return end
+	local tipo, i = azione:match("^(%a+):(%d)$")
+	i = tonumber(i)
+	if azione == "esci" then
+		return "esci"
+	elseif azione == "rotellina" then
+		gui.set_enabled(s.esci, not gui.is_enabled(s.esci))
+	elseif azione == "gioca" then
+		s.fatto = 0
+	elseif tipo == "carta" and s.passo <= 2 then
+		local w = fila(s.d, s.passo)[i]
+		if w and u == "scheda" then
+			s.carta = scheda.apri(w, s.comandi and s.comandi(), true)
+		elseif w then
+			scegli(s, w)
+		end
+	elseif tipo == "scelta" and u ~= "scheda" then
+		s.passo = i
+		aggiorna(s)
+	end
+end
+
 function M.on_input(s, action_id, action)
-	if not s.d or s.fatto or action_id ~= TOUCH then return end
+	if not s.d or s.fatto then return end
+	if action_id == ui.PAD then return controller(s, action) end
+	if action_id ~= TOUCH then return end
 	-- la scheda aperta: un tocco qualsiasi la chiude
 	if s.carta then
 		if action.pressed then chiudi_scheda(s) end

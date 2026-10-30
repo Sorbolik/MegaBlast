@@ -58,6 +58,12 @@ local ACTION = {
 	WEAPON = {},
 }
 for i = 1, 9 do ACTION.WEAPON[hash("arma" .. i)] = i end
+-- i tasti del controller arrivano ai menu come ACTION.PAD (ui.tocco)
+ACTION.PAD = ui.PAD
+
+-- Controller (ui/controller.lua, docs/controller.md): la lettura dei tasti e,
+-- più sotto, cosa fanno in battaglia, in una tabella sola (limite di 200 local)
+local PAD = { lettore = require "ui.controller" }
 
 -- Squadre: Cremisi e Cobalto della bibbia grafica, poi Verde e Oro per il
 -- tutti contro tutti. La palette sta solo in ui/ui.lua
@@ -372,6 +378,7 @@ end
 -- sotto, la prima impostazione: la mira a lancetta o a mirino
 local function apri_rotellina(self, aperta)
 	self.menu_aperto = aperta
+	if self.rotellina then ui.luce(self.rotellina, nil) end
 	gui.set_enabled(self.btn_riprova, aperta and self.mode ~= "online")
 	gui.set_enabled(self.btn_esci, aperta)
 	gui.set_enabled(self.btn_mira, aperta)
@@ -930,7 +937,7 @@ local function handle_event(self, e)
 		if self.mode == "local" and e.robot == 1 and (l or next(self.bots))
 			and (profilo.arma_nuova(self.profilo, e.weapon) or (l and l.aspetta)) then
 			profilo.salva(self.profilo)
-			self.carta = require("battaglia.scheda").apri(e.weapon, self.touch_ui)
+			self.carta = require("battaglia.scheda").apri(e.weapon, PAD.comandi(self))
 		end
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
@@ -1412,7 +1419,7 @@ local function missione_update(self, dt)
 		end
 		if scelto then dove = { x = scelto.x, y = scelto.y, d = scelto.d * (scelto.on == 2 and SCELTO or 1) } end
 	end
-	self.guida:aggiorna(cosa, dove, self.touch_ui, self.levette)
+	self.guida:aggiorna(cosa, dove, PAD.comandi(self), self.levette)
 	-- le schede delle armi che la lezione dà senza cassa (la Lama, il Rampino):
 	-- come quelle delle casse fermano il gioco finché non tocchi PROVALA
 	if not self.carta then
@@ -1420,7 +1427,7 @@ local function missione_update(self, dt)
 		if w then
 			profilo.arma_nuova(self.profilo, w)
 			profilo.salva(self.profilo)
-			self.carta = require("battaglia.scheda").apri(w, self.touch_ui)
+			self.carta = require("battaglia.scheda").apri(w, PAD.comandi(self))
 		end
 	end
 	-- il passo vuole vedere più lontano (l'isola): la camera si allarga
@@ -1440,17 +1447,8 @@ local function missione_update(self, dt)
 	if brb and not self.segnale then self.segnale = require("battaglia.segnale").new(self.mondo) end
 	if self.segnale then self.segnale:mostra(brb and brb.x, brb and brb.y, game.ROBOT_H, game.ROBOT_HALF_W, self.clock) end
 	local testo, chi = missioni.riga(r)
-	-- {salta}: come si salta con i comandi che hai
-	if testo then
-		testo = testo:gsub("{salta}", self.touch_ui and "spingi in su la levetta di sinistra" or "premi la barra spaziatrice")
-		testo = testo:gsub("{annulla}", self.touch_ui and "tocca la metà destra dello schermo"
-			or "riporta il mouse sul diavoletto e lascia")
-		testo = testo:gsub("{cammina}", self.touch_ui and "sposta di lato la levetta di sinistra"
-			or "tieni premuto A o D (o le frecce)")
-		testo = testo:gsub("{mira}", self.touch_ui
-			and "sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo"
-			or "trascina dal diavoletto per sistemare la traiettoria, lascia per far partire il colpo")
-	end
+	-- {salta}: come si salta con i comandi che hai (PAD.TESTI)
+	if testo then testo = testo:gsub("{(%a+)}", PAD.TESTI[PAD.comandi(self)]) end
 	for i, rb in ipairs(self.robots) do targa.riga(rb.targa, i == chi and testo or "") end
 	punteggio.obiettivo(self.punti, missioni.obiettivo(r))
 	-- toccati i comandi, IL TUO TURNO svanisce
@@ -1569,15 +1567,15 @@ local function smooth_aim(self, dt)
 	self.aim_angle = self.aim_angle + d * (1 - (1 - game.AIM_SMOOTH) ^ (dt * 60))
 end
 
--- Comandi del movimento: tastiera o levetta
+-- Comandi del movimento: tastiera, levetta o controller
 local function move_left(self)
-	return self.keys.left or (self.move_st.moving and self.move_st.dir < 0)
+	return self.keys.left or (self.move_st.moving and self.move_st.dir < 0) or self.pad_cammina < 0
 end
 local function move_right(self)
-	return self.keys.right or (self.move_st.moving and self.move_st.dir > 0)
+	return self.keys.right or (self.move_st.moving and self.move_st.dir > 0) or self.pad_cammina > 0
 end
 local function jump_held(self)
-	return self.keys.jump or self.move_st.jumping
+	return self.keys.jump or self.move_st.jumping or self.pad_salta
 end
 
 -- Levette ---------------------------------------------------------------------
@@ -1822,6 +1820,8 @@ local function update_bar(self)
 			-- 2: in mano (si alza), 1: si può usare (bordo del colore del gruppo), 0: già usata
 			local on = ((sl.weapon == self.weapon and not self.tele_armed) or (sl.weapon == "parachute" and rb.parachute)) and 2
 				or ((not turn or g:can_use(sl.weapon)) and 1 or 0)
+			-- 3 (4 se ora non si può usare): l'oggetto acceso col controller (LT)
+			if on ~= 2 and gr == 3 and self.pad_on and sl.weapon == self.pad_oggetto then on = on == 0 and 4 or 3 end
 			if on == 2 then
 				y = y + MISURE.alza
 				scelto = sl
@@ -1831,10 +1831,10 @@ local function update_bar(self)
 				set_pos(sl.node, x, y)
 				sl.x, sl.y = x, y
 			end
-			local sc = (gr <= 2 and d / SLOT or 1) * (on == 2 and SCELTO or 1)
+			local sc = (gr <= 2 and d / SLOT or 1) * (on >= 2 and SCELTO or 1)
 			if sl.on ~= on or sl.sc ~= sc then
-				gui.set_color(sl.bordo, on == 2 and ui.C.LUCE or (on == 1 and BAR_COLORI[gr] or SLOT_BORDO[0]))
-				if sl.icon then gui.set_color(sl.icon, on == 0 and ICON_USED or WHITE) end
+				gui.set_color(sl.bordo, on >= 2 and ui.C.LUCE or (on == 1 and BAR_COLORI[gr] or SLOT_BORDO[0]))
+				if sl.icon then gui.set_color(sl.icon, (on == 0 or on == 4) and ICON_USED or WHITE) end
 				SLOT_SCALA.x, SLOT_SCALA.y = sc, sc
 				gui.set_scale(sl.node, SLOT_SCALA)
 				sl.on, sl.sc = on, sc
@@ -2399,6 +2399,11 @@ function RM.nodi(self)
 	end
 	self.nodi_rm = RM.fune.nodi(self.fune)
 	for _, n in ipairs(self.soffi) do self.nodi_rm[#self.nodi_rm + 1] = n end
+	-- il controller: tasti e levette (ui/controller.lua), la sua mira e il suo
+	-- cammino (qui e non in init, che ha già quasi 60 upvalue)
+	self.ctrl, self.pad_st, self.pad_muovi = PAD.lettore.new(sys.get_sys_info().system_name), levette.new(), levette.new()
+	self.pad_cammina, self.pad_salta = 0, false
+	self.comandi = function() return PAD.comandi(self) end
 end
 
 function init(self)
@@ -2603,11 +2608,12 @@ function init(self)
 	-- rotellina: l'ancora al bordo allarga le distanze sugli schermi larghi,
 	-- così restano vicini
 	self.btn_menu = ui.impostazioni({}, "menu")
-	self.btn_riprova = ui.bottone({}, 32 + 12 + 80, 0, 160, 64, "RIPROVA", "riprova", nil, self.btn_menu)
-	self.btn_esci = ui.bottone({}, 32 + 12 + 160 + 12 + 130, 0, 260, 64, "ESCI DALLA PARTITA", "esci", nil, self.btn_menu)
-	local mira_btn = {}
-	self.btn_mira = ui.bottone(mira_btn, 32 + 12 + 130, -76, 260, 64, "MIRA", "mira", nil, self.btn_menu)
-	self.btn_mira_testo = mira_btn[1].testo
+	-- (in una lista, per la luce del controller)
+	self.rotellina = {}
+	self.btn_riprova = ui.bottone(self.rotellina, 32 + 12 + 80, 0, 160, 64, "RIPROVA", "riprova", nil, self.btn_menu)
+	self.btn_esci = ui.bottone(self.rotellina, 32 + 12 + 160 + 12 + 130, 0, 260, 64, "ESCI DALLA PARTITA", "esci", nil, self.btn_menu)
+	self.btn_mira = ui.bottone(self.rotellina, 32 + 12 + 130, -76, 260, 64, "MIRA", "mira", nil, self.btn_menu)
+	self.btn_mira_testo = self.rotellina[3].testo
 	gui.set_enabled(self.btn_mira, false)
 	gui.set_enabled(self.btn_riprova, false)
 	gui.set_enabled(self.btn_esci, false)
@@ -2679,7 +2685,7 @@ function init(self)
 	-- la home per ultima, così sta sopra la battaglia
 	self.home = home.new(TEAM_COLORS[1])
 	self.profilo = profilo.carica()
-	self.scelta = menu.scelta.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, function() return self.touch_ui end)
+	self.scelta = menu.scelta.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, self.comandi)
 
 	-- Nelle partite vere la mappa la sceglie il seed (sim/maps.lua). Negli scenari di
 	-- prova è fissa, così le foto si ripetono: forgia, o [megablast] prova_mappa.
@@ -2709,6 +2715,7 @@ function update(self, dt)
 		if self.aspetta_rilascio <= 0 then self.aspetta_rilascio = nil end
 	end
 	if self.conn and ws.poll then ws.poll(self) end
+	PAD.ogni_frame(self)
 	-- hit-stop: il mondo resta fermo, lo schermo trema lo stesso
 	local dt_mondo = dt
 	if self.fermo > 0 then
@@ -2929,33 +2936,15 @@ local function pointer_down(self, id, px, py)
 	end
 	-- la scheda di un'arma nuova: si chiude con PROVALA, e l'arma resta in mano
 	if self.carta then
-		if self.carta:premi(px, py) then
-			local w = self.carta.arma
-			if not game.TOOLS[w] or game.THROWN[w] then self.weapon = w end
-			self.carta:chiudi()
-			self.carta = nil
-		end
+		if self.carta:premi(px, py) then PAD.chiudi_carta(self) end
 		self.pointers[id] = "cancelled"
 		return
 	end
 	-- la rotellina: aperta, un tocco su ESCI esce, altrove la richiude e basta
 	if self.menu_aperto then
-		local esci = gui.pick_node(self.btn_esci, px, py)
-		local riprova = self.mode ~= "online" and gui.pick_node(self.btn_riprova, px, py)
 		self.pointers[id] = "cancelled"
-		-- MIRA cambia modo e la rotellina resta aperta, così si vede il nuovo
-		if gui.pick_node(self.btn_mira, px, py) then
-			profilo.imposta(self.profilo, "mira", profilo.impostazione(self.profilo, "mira") == "lancetta" and "mirino" or "lancetta")
-			profilo.salva(self.profilo)
-			apri_rotellina(self, true)
-			return
-		end
-		apri_rotellina(self, false)
-		if esci then
-			esci_partita(self)
-		elseif riprova then
-			riprova_partita(self)
-		end
+		PAD.rotellina(self, gui.pick_node(self.btn_mira, px, py) and "mira" or gui.pick_node(self.btn_esci, px, py) and "esci"
+			or self.mode ~= "online" and gui.pick_node(self.btn_riprova, px, py) and "riprova" or nil)
 		return
 	elseif gui.pick_node(self.btn_menu, px, py) then
 		apri_rotellina(self, true)
@@ -3037,7 +3026,243 @@ local function pointer_up(self, id, x, y)
 	end
 end
 
-function on_input(self, action_id, action)
+-- Controller -------------------------------------------------------------------
+-- Cosa fanno i tasti in battaglia: la tabella PAD.lettore.BATTAGLIA
+-- (ui/controller.lua, docs/controller.md). Le levette fanno come sul
+-- telefono: la sinistra cammina e, spinta in su, salta; la destra mira, e si
+-- spara con RT finché è accesa (riportata al centro si spegne: niente colpo).
+-- Nei menu e nella scelta delle armi la croce sposta la luce e A conferma
+-- (ui.tocco).
+
+-- I comandi con cui si sta giocando: per le scritte delle lezioni e delle schede
+function PAD.comandi(self)
+	return self.pad_on and "controller" or (self.touch_ui and "telefono" or "computer")
+end
+
+-- {salta}, {annulla}, {cammina}, {mira} nelle righe delle lezioni (sim/missioni.lua)
+PAD.TESTI = {
+	telefono = { salta = "spingi in su la levetta di sinistra", annulla = "tocca la metà destra dello schermo",
+		cammina = "sposta di lato la levetta di sinistra",
+		mira = "sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo" },
+	computer = { salta = "premi la barra spaziatrice", annulla = "riporta il mouse sul diavoletto e lascia",
+		cammina = "tieni premuto A o D (o le frecce)",
+		mira = "trascina dal diavoletto per sistemare la traiettoria, lascia per far partire il colpo" },
+	controller = { salta = "spingi in su la levetta di sinistra", annulla = "riporta al centro la levetta di destra",
+		cammina = "sposta di lato la levetta di sinistra",
+		mira = "muovi la levetta di destra per sistemare la traiettoria, premi RT per far partire il colpo" },
+}
+
+-- La scheda di un'arma nuova si chiude con PROVALA (o A), e l'arma resta in mano
+function PAD.chiudi_carta(self)
+	local w = self.carta.arma
+	if not game.TOOLS[w] or game.THROWN[w] then self.weapon = w end
+	self.carta:chiudi()
+	self.carta = nil
+end
+
+-- Un pulsante della rotellina (nil: si richiude e basta). MIRA cambia modo e
+-- la rotellina resta aperta, così si vede il nuovo
+function PAD.rotellina(self, azione)
+	if azione == "mira" then
+		profilo.imposta(self.profilo, "mira", profilo.impostazione(self.profilo, "mira") == "lancetta" and "mirino" or "lancetta")
+		profilo.salva(self.profilo)
+		apri_rotellina(self, true)
+		return
+	end
+	apri_rotellina(self, false)
+	if azione == "esci" then
+		esci_partita(self)
+	elseif azione == "riprova" then
+		riprova_partita(self)
+	end
+end
+
+-- Le levette a riposo (fuori dal proprio turno, nei menu, dopo il colpo)
+function PAD.riposo(self)
+	levette.reset(self.pad_muovi)
+	if self.pad_mira then
+		levette.reset(self.pad_st)
+		self.pad_mira, self.aiming = false, false
+	end
+	self.pad_cammina, self.pad_salta = 0, false
+end
+
+-- A ogni frame la levetta destra mira, come quella del telefono: accesa oltre
+-- il 20% della corsa, spenta sotto il 10% (levette.lua)
+function PAD.mira(self)
+	local st, l = self.pad_st, self.ctrl.dx
+	if not (my_turn(self) and self.g.phase == "aim" and self.g:can_use(self.tele_armed and "teleport" or self.weapon)) then
+		if self.pad_mira then
+			levette.reset(st)
+			self.pad_mira, self.aiming = false, false
+		end
+		return
+	end
+	local era = st.active
+	levette.mira(st, l.x, l.y)
+	if st.active then
+		if not era then missioni.tocca(self.missione, "mira") end
+		self.pad_mira, self.aiming = true, true
+		self.aim_target = st.angle
+		if not era or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
+		self.aim_power = math.max(0.1, st.f ^ game.AIM_EXPONENT)
+		self.aim_dist = math.huge
+	elseif era then
+		-- riportata al centro: la mira si spegne e non parte niente
+		self.pad_mira, self.aiming = false, false
+		missioni.tocca(self.missione, "annulla")
+	end
+end
+
+-- Gli OGGETTI che si vedono, dal basso della colonna
+function PAD.oggetti(self)
+	local l = {}
+	for _, sl in ipairs(self.slots) do
+		if sl.have and sl.group == 3 then l[#l + 1] = sl end
+	end
+	return l
+end
+
+-- LB e RB: la primaria (gruppo 1) o la secondaria (2) dopo quella in mano, a
+-- giro nell'ordine della barra (dal cronometro verso fuori); se in mano c'è
+-- altro, la prima. Si saltano quelle che ora non si possono usare; se nessuna
+-- si può, quella dopo dice perché (choose_slot)
+function PAD.giro(self, gruppo)
+	local l = {}
+	for _, sl in ipairs(self.slots) do
+		if sl.have and sl.group == gruppo then l[#l + 1] = sl end
+	end
+	local n = #l
+	if n == 0 then return end
+	local i0 = 0
+	for i, sl in ipairs(l) do
+		if sl.weapon == self.weapon and not self.tele_armed then i0 = i end
+	end
+	local g = self.g
+	for k = 1, n do
+		local w = l[(i0 - 1 + k) % n + 1].weapon
+		if (w ~= self.weapon or self.tele_armed) and not (my_turn(self) and g.phase == "aim" and hud.motivo(g, w)) then
+			choose_slot(self, w)
+			return
+		end
+	end
+	if i0 == 0 or n > 1 then choose_slot(self, l[i0 % n + 1].weapon) end
+end
+
+-- I comandi dei tasti in battaglia (PAD.lettore.BATTAGLIA)
+PAD.COMANDI = {
+	primaria = function(self) PAD.giro(self, 1) end,
+	secondaria = function(self) PAD.giro(self, 2) end,
+	spara = function(self)
+		local w = self.tele_armed and "teleport" or self.weapon
+		if self.pad_mira and my_turn(self) and self.g:can_use(w) then
+			self.fire = { angle = self.aim_angle, power = self.aim_power, weapon = w }
+			self.tele_armed = false
+			levette.reset(self.pad_st)
+			self.pad_mira, self.aiming = false, false
+		end
+	end,
+	teletrasporto = function(self) choose_slot(self, "teleport") end,
+	rampino = function(self) choose_slot(self, "hook") end,
+	paracadute = function(self) choose_slot(self, "parachute") end,
+	oggetti = function(self)
+		local l = PAD.oggetti(self)
+		local i = 0
+		for k, sl in ipairs(l) do
+			if sl.weapon == self.pad_oggetto then i = k end
+		end
+		if #l > 0 then self.pad_oggetto = l[i % #l + 1].weapon end
+	end,
+	usa_oggetto = function(self)
+		if self.pad_oggetto then choose_slot(self, self.pad_oggetto) end
+	end,
+	-- il baratto: il secondo attacco diventa un teletrasporto (come il
+	-- pulsante sopra il cronometro, che c'è quando si può)
+	baratto = function(self)
+		if my_turn(self) and self.g.phase == "aim" and self.g:can_use("swap") and missioni.vede(self.missione, "baratto") then
+			missioni.tocca(self.missione, "baratto")
+			self.fire = { angle = 0, power = 0, weapon = "swap" }
+		end
+	end,
+	zoom = function(self) change_zoom(self) end,
+}
+
+-- Ogni frame: la levetta sinistra cammina e salta, la destra mira
+function PAD.ogni_frame(self)
+	local c, lettore = self.ctrl, PAD.lettore
+	if not self.pad_on and (lettore.spinta(c.sx) or lettore.spinta(c.dx)) then PAD.evento(self, {}) end
+	local gioca = (self.mode == "local" or self.mode == "online") and self.controls_visible
+		and not self.menu_aperto and not self.carta
+	if not gioca then
+		PAD.riposo(self)
+		return
+	end
+	local st = self.pad_muovi
+	local era = st.moving
+	if levette.muovi(st, c.sx.x, c.sx.y) then
+		self.jump_pressed = true
+		missioni.tocca(self.missione)
+		missioni.tocca(self.missione, "salta")
+	end
+	if st.moving and not era then
+		missioni.tocca(self.missione)
+		missioni.tocca(self.missione, "cammina")
+	end
+	self.pad_cammina = st.moving and st.dir or 0
+	self.pad_salta = st.jumping
+	PAD.mira(self)
+	-- l'oggetto acceso (LT): se è finito, il primo della colonna
+	local l = PAD.oggetti(self)
+	local ok = false
+	for _, sl in ipairs(l) do ok = ok or sl.weapon == self.pad_oggetto end
+	if not ok then self.pad_oggetto = l[1] and l[1].weapon end
+end
+
+-- Un tasto del controller premuto o lasciato (ui/controller.lua)
+function PAD.evento(self, e)
+	self.pad_on = true
+	if self.touch_ui and COMANDI == "" then set_touch_ui(self, false) end
+	if not (e.nome and e.premuto) then return end
+	local battaglia = self.mode == "local" or self.mode == "online" or self.mode == "ended"
+	if not battaglia then
+		-- menu, schermate e scelta delle armi: come i tocchi (ui.tocco)
+		if e.ui then PAD.on_input(self, ACTION.PAD, { pressed = true, ui = e.ui }) end
+		return
+	end
+	local n = e.nome
+	local comando = not e.levetta and PAD.lettore.BATTAGLIA[n]
+	if self.mode == "ended" then
+		-- il podio, le stelle o la home, come un tocco
+		if n == "a" or n == "start" then pointer_down(self, "pad", 0, 0) end
+	elseif self.carta then
+		if n == "a" then PAD.chiudi_carta(self) end
+	elseif self.menu_aperto then
+		-- la rotellina: la croce sposta la luce, A conferma, B o Start la chiude
+		if comando == "rotellina" or e.ui == "indietro" then
+			apri_rotellina(self, false)
+		elseif e.ui then
+			local azione = ui.tocco(self.rotellina, ACTION.PAD, { pressed = true, ui = e.ui })
+			if azione then PAD.rotellina(self, azione) end
+		end
+	elseif comando == "rotellina" and self.controls_visible then
+		apri_rotellina(self, true)
+		ui.naviga(self.rotellina, "giu")
+	elseif comando and self.controls_visible then
+		missioni.tocca(self.missione)
+		PAD.COMANDI[comando](self)
+	end
+end
+
+-- (in PAD perché anche i tasti del controller ci ripassano, come ACTION.PAD)
+function PAD.on_input(self, action_id, action)
+	-- il controller: i suoi tasti vanno a PAD.evento, uno alla volta
+	local pad = PAD.lettore.input(self.ctrl, action_id, action)
+	if pad then
+		for _, e in ipairs(pad) do PAD.evento(self, e) end
+		return true
+	end
+	-- un tasto, il mouse o un dito: non si gioca più col controller
+	if action.pressed and action_id ~= ACTION.PAD then self.pad_on = false end
 	-- dopo ESCI: finché quel dito non si alza (al massimo mezzo secondo) il
 	-- menù non lo sente
 	if self.aspetta_rilascio and (action_id == ACTION.TOUCH or action_id == ACTION.MULTI) then
@@ -3134,8 +3359,9 @@ function on_input(self, action_id, action)
 		if not self.multitouch then
 			self.multitouch = true
 			if self.pointers.mouse then pointer_up(self, "mouse", action.x, action.y) end
-			if COMANDI ~= "computer" then set_touch_ui(self, true) end
 		end
+		-- un dito accende le levette (anche dopo un tasto o il controller)
+		if not self.touch_ui and COMANDI ~= "computer" then set_touch_ui(self, true) end
 		for _, t in ipairs(action.touch) do
 			if t.pressed then
 				pointer_down(self, t.id, t.x, t.y)
@@ -3169,4 +3395,8 @@ function on_input(self, action_id, action)
 		pointer_move(self, "mouse", action.x, action.y)
 	end
 	return true
+end
+
+function on_input(self, action_id, action)
+	return PAD.on_input(self, action_id, action)
 end
