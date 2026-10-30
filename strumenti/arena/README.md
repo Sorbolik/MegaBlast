@@ -15,7 +15,7 @@ python3 strumenti/arena/arena.py --video 1                         # video del p
 python3 strumenti/arena/arena.py --partite 10000 --cartella simulazione/arena/base   # prove tenute separate
 python3 strumenti/arena/arena.py --partite 1000 --pesi popolazione.lua   # bot con pesi diversi
 python3 strumenti/arena/arena.py --partite 300 --pesi due.lua --assegna turno   # due individui sempre alla pari
-python3 strumenti/arena/evolvi.py                                  # generazioni del bot del gioco, per stili, senza fine
+python3 strumenti/arena/evolvi.py                                  # specialisti del bot del gioco, senza fine
 python3 strumenti/arena/impara.py                                  # bot con rete neurale che imparano a gradiente, senza fine
 python3 strumenti/arena/trovate.py simulazione/arena/evolvi        # video e pagina delle trovate dei bot
 ```
@@ -26,7 +26,9 @@ finisce nelle opzioni della partita (`opts.score`) e nella ricetta.
 `popolazione.lua` restituisce una lista di pesi del bot (`bot.PESI`, solo i
 campi che cambiano, per esempio `return { {}, { morte = 10 }, { punteggio = { damage = 1, kill = 80, ... } } }`):
 ogni robot ne prende uno a caso (con `--assegna turno` a turno: il robot i prende
-il numero i + partita), e il suo numero va nella riga della partita (`individuo`).
+il numero i + partita, e le partite vanno a coppie, la stessa partita due volte
+con i numeri scambiati: due bot uguali fanno esattamente metà e metà), e il suo
+numero va nella riga della partita (`individuo`).
 I pesi non vanno nella ricetta (una rete sono centinaia di numeri): la riga ha il
 file dei pesi e per il video `arena.py` li rimette dal `.json` accanto al `.lua`.
 Con `punteggio` il bot giudica le mosse con altri punti da quelli della partita:
@@ -34,21 +36,23 @@ serve a separare l'effetto di una regola da quello del bot che cambia stile. Con
 `rete` (`{ strati = {...}, w = {...} }`, `client/sim/rete.lua`) giudica le mosse
 una rete neurale.
 
-`evolvi.py` fa evolvere i numeri del bot del gioco (`bot.PESI`: quanto teme di
-perdere vita o di morire, quando prova il globo, quanto gli piace buttare nel
-vuoto, uccidere, fare danno). Il bot resta quello del gioco, quindi un campione
-si mette nel gioco così com'è (`migliore.json`). Parte dai numeri di adesso
-(letti dal gioco con luajit) e da bot a caso; ogni generazione gioca col bot di
-oggi e con alcuni stili dell'archivio, i migliori restano, gli altri nascono
-mutando e incrociando i migliori e gli stili. Gli stili (`archivio.json`): per
-ogni modo di giocare (quanto butta nel vuoto per quanto si sposta) resta il bot
-più bravo, così le strategie strane non si perdono. Ogni `--esame` generazioni il
-campione gioca contro il bot di oggi sulle stesse partite, a turno. Se per
-`--stallo` esami non migliora cambia da solo (più mutazione, metà popolazione a
-caso, tutti gli stili come avversari e più partite) e lo scrive nel rapporto.
+`evolvi.py` fa evolvere cinque specialisti del bot del gioco (`bot.PESI`: quanto
+teme di perdere vita o di morire, quando prova il globo, quanto gli piace buttare
+nel vuoto, uccidere, fare danno, e il gusto per le armi da vicino, da lontano e
+per il Mantice, che guida anche la scelta d'inizio partita). Il bot resta quello
+del gioco, quindi uno specialista si mette nel gioco così com'è (`migliori.json`).
+Gli specialisti: spingitore (uccisioni nel vuoto), acrobata (globi e Rampino),
+cecchino (danno da lontano), picchiatore (danno da vicino), sopravvissuto (muore
+poco). Ognuno ha la sua popolazione; giocano tutti insieme col bot di oggi. Si
+giudicano sulla bravura (da tutte le partite giocate, tirata verso 0,5 se sono
+poche) meno una penalità se fanno il loro mestiere meno della soglia; la soglia
+parte dal bot di oggi e sale verso il campione finché il campione resta bravo
+quasi quanto il bot di oggi. Ogni `--esame` generazioni il campione di ognuno
+gioca contro il bot di oggi a coppie. Se uno per `--stallo` esami non migliora
+cambia da solo (più mutazione, metà popolazione a caso) e lo scrive nel rapporto.
 Quando cambiano le regole si rifà con `--nuova`. Salva a ogni generazione: si
 ferma con Ctrl+C e riparte da dove era. Esce `simulazione/arena/evolvi/`:
-`evoluzione.md`, `storia.json`, `archivio.json`, `migliore.json` e
+`evoluzione.md`, `storia.json`, `specialisti.json`, `migliori.json` e
 `trovate.jsonl` (i turni rari che fanno tanti punti, con ricetta e pesi).
 
 `trovate.py` sceglie le trovate (i turni che fanno tanti punti con una
