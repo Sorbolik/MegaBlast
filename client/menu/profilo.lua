@@ -19,9 +19,23 @@ M.XP_RICONOSCIMENTO = 25
 -- esperienza per passare dal livello n al n + 1: XP_BASE + XP_PASSO * (n - 1)
 M.XP_BASE, M.XP_PASSO = 100, 25
 
+-- Le impostazioni e i loro valori di base (docs/impostazioni.md)
+M.IMPOSTAZIONI = { mira = "lancetta" }
+
+function M.impostazione(p, chiave)
+	local v = p and p.impostazioni and p.impostazioni[chiave]
+	if v == nil then return M.IMPOSTAZIONI[chiave] end
+	return v
+end
+
+function M.imposta(p, chiave, valore)
+	p.impostazioni = p.impostazioni or {}
+	p.impostazioni[chiave] = valore
+end
+
 function M.nuovo()
 	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1, stelle = {}, fallite = {},
-		armi = {} }
+		armi = {}, impostazioni = {} }
 	for i = 1, assetto.LOADOUTS do p.assetti[i] = assetto.new() end
 	return p
 end
