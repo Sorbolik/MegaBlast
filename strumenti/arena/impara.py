@@ -24,7 +24,7 @@ Un giro:
   4. la rete impara a gradiente (numpy, Adam) sugli esempi degli ultimi giri,
      partendo da dove era;
   5. esame: la rete nuova, senza esplorazione, contro il bot di oggi sempre
-     sulle stesse partite (come evolvi.py). La rete con l'esame migliore resta
+     sulle stesse partite (evolvi.esame). La rete con l'esame migliore resta
      in migliore.json.
 Il giro 0 parte da una rete a caso: nessuna idea del gioco.
 
@@ -47,7 +47,11 @@ import numpy as np
 import arena
 import evolvi
 
-CARATTERISTICHE = evolvi.CARATTERISTICHE
+CARATTERISTICHE = 20  # bot.CARATTERISTICHE
+
+
+def quanti(strati):
+    return sum(strati[k] * (strati[k - 1] + 1) for k in range(1, len(strati)))
 
 
 # La rete in numpy -------------------------------------------------------------------
@@ -192,7 +196,7 @@ def main():
         strati = [CARATTERISTICHE] + [int(x) for x in args.strati.split(",")] + [1]
         stato = {"giro": -1, "strati": strati, "storia": [], "esami": []}
     strati = stato["strati"]
-    print(f"rete {strati}: {evolvi.quanti(strati)} pesi")
+    print(f"rete {strati}: {quanti(strati)} pesi")
 
     while not args.giri or stato["giro"] < args.giri:
         giro = stato["giro"] + 1
@@ -276,7 +280,7 @@ def main():
 
 def rapporto(stato, args):
     out = ["# Bot che imparano a gradiente\n",
-           f"Rete {stato['strati']} ({evolvi.quanti(stato['strati'])} pesi), {args.partite} partite per giro, "
+           f"Rete {stato['strati']} ({quanti(stato['strati'])} pesi), {args.partite} partite per giro, "
            f"livello {args.livello}, modo {args.modo}, TD(λ) {args.lam}, memoria {args.memoria} giri.\n",
            "Esame: in quante delle stesse partite la rete del giro arriva più in alto del bot di oggi. "
            "Varianza spiegata: quanto la rete prevede il suo obiettivo (0 niente, 1 tutto) su esempi che non ha studiato. "
