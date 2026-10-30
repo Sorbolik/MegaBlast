@@ -15,7 +15,8 @@ tieni salta 0.15
 cammina destra 1180
 aspetta 0.5
 foto 03_gradino                      # la cassa cade dal cielo
-cammina destra 1250 15
+cammina destra 1215
+tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
 aspetta_evento crate_pick 10
 aspetta 0.8
 foto 04_scheda                       # la scheda del Lanciarune

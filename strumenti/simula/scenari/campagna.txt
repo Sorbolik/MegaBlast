@@ -1,11 +1,9 @@
 # Campagna: dalla home CAMPAGNA (1062 392) si apre l'Addestramento, le lezioni
 # in carte con le stelle e cosa serve per la prossima. Il I girone (scheda
-# 860 560) è chiuso finché non si hanno 8 stelle. La lezione del Rampino: sotto
-# la piattaforma, aggancio al bordo, su, e la Lama sul bersaglio; in alto al
-# centro l'obiettivo coi passi. Barra: Lanciarune 506, Lama 770, Rampino 1084 (tondo).
-# Carte: x 256 / 640 / 1024, y 440 / 324 / 208 / 92 (Primi passi in alto a sinistra, la Prima partita in fondo; il Rampino 640 324).
-# Fatta, la fine del livello: le stelle una alla volta, RIPROVA 460 110,
-# AVANTI 820 110, la freccia per la campagna 62 658.
+# 860 560) è chiuso finché non si hanno le stelle che servono. Sei lezioni: carte x 256 / 640 / 1024,
+# y 440 / 324 (Primi passi in alto a sinistra, la Prima partita 1024 324).
+# Primi passi fino in fondo, poi la fine del livello: le stelle una alla volta,
+# RIPROVA 460 110, AVANTI 820 110, la freccia per la campagna 62 658.
 
 aspetta 2
 foto 00_home
@@ -17,22 +15,23 @@ aspetta 0.5
 foto 01b_girone_chiuso
 tocca 420 560                       # di nuovo l'Addestramento
 aspetta 0.5
-tocca 640 324                       # Il Rampino
+tocca 256 440                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.8
 foto 02_scopo
-cammina destra 960                  # sotto il bordo
-foto 02b_obiettivo
-tocca 1084 62                       # Rampino
-aspetta 0.3
-mira 70 100 0.3 03a_mira
-aspetta_evento hook_end 3
-aspetta 0.6
-foto 03_sopra
-cammina destra 1182                 # davanti al bersaglio
-tocca 770 62                        # Lama
-mira 80 0 0.3
-aspetta_evento sword_hit 3
+cammina destra 730
+cammina destra 1080 60
+tieni salta 0.15
+cammina destra 1180
+aspetta 0.5
+cammina destra 1215
+tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
+aspetta_evento crate_pick 10
+aspetta 0.8
+tocca_centro 640 120                       # PROVALA
+aspetta 0.8
+mira 141 77 1
+aspetta_evento damage 6
 aspetta 0.6
 foto 04_fatta
 aspetta 1.6
@@ -42,7 +41,7 @@ foto 06_stelle_accese
 tocca 62 658                        # la freccia: si torna alla campagna
 aspetta 1
 foto 07_campagna
-tocca 640 324                       # di nuovo il Rampino
+tocca 640 440                       # Il turno
 aspetta_stato modo=local turno=1 fase=aim 5
 tocca 62 658                        # la rotellina: ESCI DALLA PARTITA accanto, la missione e' ferma
 aspetta 0.5

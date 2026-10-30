@@ -1,0 +1,12 @@
+# Il turno (imposta prova_missione turno): il cronometro aspetta che tocchi i
+# comandi, due attacchi per turno, i globi del tempo risparmiato e il
+# teletrasporto sull'isola; lì le casse dell'Uovo e delle Schegge con le loro schede.
+imposta prova_missione turno
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 3
+foto 01_tempo_fermo                  # dopo 3 s il cronometro è ancora pieno
+premi 1
+mira 160 40 0.5                      # il Lanciarune subito: i globi
+aspetta_evento explosion 6
+aspetta 1
+foto 02_globi

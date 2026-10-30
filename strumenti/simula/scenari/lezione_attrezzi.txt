@@ -1,0 +1,22 @@
+# Attrezzi e paracadute (imposta prova_missione attrezzi): la cassa del
+# Rampino e la sua scheda, il Rampino in luce, l'aggancio sotto il bordo della
+# piattaforma, su.
+imposta prova_missione attrezzi
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.5
+foto 01_scopo
+cammina destra 715
+tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
+aspetta_evento crate_pick 10
+aspetta 0.8
+foto 02_scheda_rampino
+tocca_centro 640 120                        # PROVALA
+aspetta 1
+foto 03_rampino_in_luce
+cammina destra 860
+tocca 1084 62                        # Rampino
+aspetta 0.3
+mira 65 100 0.3 04_mira
+aspetta_evento hook_end 4
+aspetta 1
+foto 05_sopra                        # sulla piattaforma: la cassa del Bastione
