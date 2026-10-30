@@ -16,80 +16,41 @@ local M = {}
 local GIOCATORE = 1
 
 local ADDESTRAMENTO = {
-	-- le basi, una cosa per lezione: camminare, saltare, sparare (Sergio, 29 ott)
+	-- le basi in un percorso solo (Sergio, 29 ott): cammini fino alla
+	-- bandierina, salti sul gradino, prendi la cassa che cade col Lanciarune (e
+	-- la sua scheda) e spari al bersaglio. Niente tempo e niente turni: se manchi,
+	-- ritenti subito. Niente si vede prima di servire
 	{
-		id = "cammina",
-		titolo = "Camminare",
-		scopo = "Cammina fino al bersaglio: {cammina}",
+		id = "primi_passi",
+		titolo = "Primi passi",
+		scopo = "Cammina fino alla bandierina: {cammina}",
 		evidenzia = "cammina",
-		arena = { { 240, 0, 1440, 150 } },
-		-- il bersaglio vicino, che si veda già con la camera da vicino
-		spawns = { { x = 760, from = 600 }, { x = 1120, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, dummy = true } },
-		-- niente armi né tasti: solo le levette
-		vedi = {},
-		turni = 3, stelle = { 2, 1 },
-		obiettivo = { { raggiungi = { x = 1020, y = 150 }, testo = "Raggiungi il bersaglio" } },
-	},
-	{
-		id = "salta",
-		titolo = "Saltare",
-		scopo = "Il gradino è troppo alto per camminarci sopra: {salta}",
-		evidenzia = "salta",
 		-- un gradino più alto di quello che si sale camminando, più basso del salto
-		arena = { { 240, 0, 1440, 150 }, { 1000, 150, 680, 30 } },
-		spawns = { { x = 640, from = 600 }, { x = 1400, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, dummy = true } },
-		vedi = {},
-		turni = 3, stelle = { 2, 1 },
-		obiettivo = { { raggiungi = { x = 1000, y = 180 }, testo = "Salta sul gradino" } },
-		righe = {
-			{ testo = "Cammina verso il gradino e salta quando ci sei vicino", quando = { tocca = "salta" },
-				fino = { passo = 1 } },
-		},
-	},
-	{
-		id = "spara",
-		titolo = "Sparare",
-		scopo = "Colpisci il bersaglio col Lanciarune: {mira}",
-		evidenzia = "mira",
-		arena = { { 240, 0, 1440, 150 } },
-		spawns = { { x = 700, from = 600 }, { x = 1000, from = 600 } },
+		arena = { { 240, 0, 1440, 150 }, { 1100, 150, 580, 30 } },
+		spawns = { { x = 480, from = 600 }, { x = 1560, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
 		vedi = { "missile" },
-		turni = 3, stelle = { 2, 1 },
-		obiettivo = { { colpisci = 2, con = "missile", testo = "Colpisci il bersaglio" } },
-		righe = {
-			-- mentre mira: come si annulla (il tempo aspetta che lo provi)
-			{ testo = "Più tiri lontano, più forte parte. Se cambi idea, {annulla}", evidenzia = "annulla",
-				subito = true, quando = { tocca = "mira" },
-				fino = function(st, g) return st.toccati.annulla or g.used.primary end },
-			{ testo = "Ora mira di nuovo e lascia: il colpo parte", quando = { tocca = "annulla" } },
+		senza_armi = true, senza_tempo = true,
+		casse = { { dopo = 2, arma = "missile", x = 1260 } },
+		stelle = {
+			bonus = { conta = "mancati", al_massimo = 2, testo = "AL MASSIMO 2 TIRI A VUOTO" },
+			bonus2 = { conta = "mancati", al_massimo = 0, testo = "AL PRIMO TIRO" },
 		},
-	},
-	{
-		id = "armi",
-		titolo = "Armi e draft",
-		scopo = "Colpisci il bersaglio con la primaria e con la secondaria che hai scelto",
-		draft = true,
-		arena = { { 240, 0, 1440, 150 } },
-		spawns = { { x = 760, from = 600 }, { x = 1080, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, dummy = true } },
-		-- nell'HUD solo quello che serve
-		vedi = { "primarie", "secondarie" },
-		turni = 4, stelle = { 3, 2 },
-		in_ordine = false,
 		obiettivo = {
-			{ colpisci = 2, con = "primaria", testo = "Colpisci con la primaria scelta" },
-			{ colpisci = 2, con = "secondaria", testo = "Colpisci con la secondaria scelta" },
+			{ raggiungi = { x = 720, y = 150 }, bandiera = true, testo = "Raggiungi la bandierina" },
+			{ raggiungi = { x = 1100, y = 180 }, testo = "Salta sul gradino" },
+			{ prendi = "missile", testo = "Prendi la cassa" },
+			{ colpisci = 2, con = "missile", testo = "Colpisci il bersaglio" },
 		},
 		righe = {
-			{ testo = "Prima la primaria che hai scelto, a sinistra del cronometro: toccala", evidenzia = "primaria",
-				quando = { turno = 1 }, fino = { tocca = "primaria" } },
-			{ testo = "Ora la secondaria, a destra del cronometro: toccala", evidenzia = "secondaria",
-				quando = { passo = 1 }, fino = { tocca = "secondaria" } },
-			{ testo = "Lanciarune e Lama ci sono sempre. La primaria scelta ha 2 colpi, la secondaria non finisce",
-				quando = { turno = 2 } },
+			{ testo = "Il gradino è troppo alto per camminarci sopra: {salta}", evidenzia = "salta",
+				quando = { passo = 1 }, fino = { passo = 2 } },
+			{ testo = "Una cassa cade dal cielo: prendila!", quando = { passo = 2 }, fino = { passo = 3 } },
+			{ testo = "Colpisci il bersaglio: {mira}", evidenzia = "mira", quando = { passo = 3 } },
+			-- mentre mira: come si annulla
+			{ testo = "Più tiri lontano, più forte parte. Se cambi idea, {annulla}", evidenzia = "annulla",
+				subito = true, quando = function(st) return st.passi[3] and st.toccati.mira end,
+				fino = function(st, g) return st.toccati.annulla or g.used.primary end },
 		},
 	},
 	{
@@ -101,7 +62,7 @@ local ADDESTRAMENTO = {
 		spawns = { { x = 600, from = 600 }, { x = 800, from = 600 }, { x = 1380, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 2, dummy = true } },
 		-- nell'HUD solo quello che serve
-		vedi = { "missile", "sword", "teleport" },
+		vedi = { "missile", "sword", "teleport", "tempo" },
 		globi = 0,
 		turni = 3, stelle = { 2, 1 },
 		obiettivo = {
@@ -125,7 +86,7 @@ local ADDESTRAMENTO = {
 		spawns = { { x = 840, from = 600 }, { x = 1120, from = 1000 } },
 		giocatori = { { team = 1, secondary = "eagle", tool = "wall" }, { team = 2, dummy = true } },
 		-- nell'HUD solo quello che serve
-		vedi = { "missile", "eagle" },
+		vedi = { "missile", "eagle", "tempo" },
 		globi = 0,
 		turni = 3, stelle = { 2, 1 },
 		obiettivo = {
@@ -151,7 +112,7 @@ local ADDESTRAMENTO = {
 		spawns = { { x = 360, from = 1000 }, { x = 1100, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
 		-- nell'HUD solo quello che serve
-		vedi = { "missile", "parachute" },
+		vedi = { "missile", "parachute", "tempo" },
 		globi = 0,
 		turni = 2, stelle = { 2, 1 },
 		obiettivo = {
@@ -178,7 +139,7 @@ local ADDESTRAMENTO = {
 		spawns = { { x = 760, from = 290 }, { x = 1220, from = 1000 } },
 		giocatori = { { team = 1, tool = "hook" }, { team = 2, dummy = true } },
 		-- nell'HUD solo quello che serve
-		vedi = { "hook", "sword" },
+		vedi = { "hook", "sword", "tempo" },
 		globi = 0,
 		turni = 2, stelle = { 2, 1 },
 		obiettivo = {
@@ -200,7 +161,7 @@ local ADDESTRAMENTO = {
 		spawns = { { x = 760, from = 600 }, { x = 1300, from = 600 } },
 		giocatori = { { team = 1, tool = "wall" }, { team = 2, dummy = true } },
 		-- nell'HUD solo quello che serve
-		vedi = { "wall", "sword" },
+		vedi = { "wall", "sword", "tempo" },
 		globi = 0,
 		turni = 3, stelle = { 2, 1 },
 		obiettivo = {
@@ -222,7 +183,7 @@ local ADDESTRAMENTO = {
 		spawns = { { x = 840, from = 600 }, { x = 1120, from = 1000 } },
 		giocatori = { { team = 1, secondary = "mallet", tool = "wall" }, { team = 2, dummy = true } },
 		-- nell'HUD solo quello che serve
-		vedi = { "missile", "mallet" },
+		vedi = { "missile", "mallet", "tempo" },
 		globi = 0,
 		turni = 3, stelle = { 2, 1 },
 		obiettivo = {
@@ -247,7 +208,7 @@ local ADDESTRAMENTO = {
 		spawns = { { x = 900, from = 600 }, { x = 560, from = 600 }, { x = 1320, from = 600 }, { x = 1120, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 3, dummy = true }, { team = 4, dummy = true } },
 		-- nell'HUD solo quello che serve
-		vedi = { "missile", "sword" },
+		vedi = { "missile", "sword", "tempo", "punti" },
 		-- il terzo bersaglio è primo in classifica: ha la Corona. Sono già
 		-- feriti, così un turno basta
 		punti = { [2] = 60, [3] = 40, [4] = 200 },
@@ -258,6 +219,32 @@ local ADDESTRAMENTO = {
 		},
 		righe = {
 			{ testo = "Danno = punti. Abbattere vale 50, buttare nel vuoto altri 50", quando = { evento = "points" } },
+		},
+	},
+	-- la scelta delle armi appena prima della Prima partita (Sergio, 29 ott)
+	{
+		id = "armi",
+		titolo = "Armi e draft",
+		scopo = "Colpisci il bersaglio con la primaria e con la secondaria che hai scelto",
+		draft = true,
+		arena = { { 240, 0, 1440, 150 } },
+		spawns = { { x = 760, from = 600 }, { x = 1080, from = 600 } },
+		giocatori = { { team = 1 }, { team = 2, dummy = true } },
+		-- nell'HUD solo quello che serve
+		vedi = { "primarie", "secondarie", "tempo", "punti" },
+		turni = 4, stelle = { 3, 2 },
+		in_ordine = false,
+		obiettivo = {
+			{ colpisci = 2, con = "primaria", testo = "Colpisci con la primaria scelta" },
+			{ colpisci = 2, con = "secondaria", testo = "Colpisci con la secondaria scelta" },
+		},
+		righe = {
+			{ testo = "Prima la primaria che hai scelto, a sinistra del cronometro: toccala", evidenzia = "primaria",
+				quando = { turno = 1 }, fino = { tocca = "primaria" } },
+			{ testo = "Ora la secondaria, a destra del cronometro: toccala", evidenzia = "secondaria",
+				quando = { passo = 1 }, fino = { tocca = "secondaria" } },
+			{ testo = "Lanciarune e Lama ci sono sempre. La primaria scelta ha 2 colpi, la secondaria non finisce",
+				quando = { turno = 2 } },
 		},
 	},
 	-- l'esame del capitolo: una prima vera partita, corta, che mette in pratica

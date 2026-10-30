@@ -35,7 +35,7 @@ end
 
 function M.nuovo()
 	local p = { versione = M.VERSIONE, xp = 0, livello = 1, maestria = {}, assetti = {}, attivo = 1, stelle = {}, fallite = {},
-		impostazioni = {} }
+		armi = {}, impostazioni = {} }
 	for i = 1, assetto.LOADOUTS do p.assetti[i] = assetto.new() end
 	return p
 end
@@ -122,8 +122,9 @@ end
 
 -- Le basi dell'Addestramento (sim/campagna.lua): chi non le ha finite tutte
 -- è un giocatore nuovo, e GIOCA lo porta alla prima che manca (Claude, 29 ott:
--- prima la Prima partita, che ora è l'esame finale del capitolo)
-local BASI = { "cammina", "salta", "spara" }
+-- prima la Prima partita, che ora è l'esame finale del capitolo). Oggi sono un
+-- percorso solo, Primi passi (Sergio, 29 ott)
+local BASI = { "primi_passi" }
 
 function M.prima_lezione(p)
 	for _, id in ipairs(BASI) do
@@ -134,6 +135,14 @@ end
 
 function M.nuovo_giocatore(p)
 	return M.prima_lezione(p) ~= nil
+end
+
+-- Un'arma trovata (battaglia/scheda.lua): vero solo la prima volta, poi resta
+-- vista (la sua scheda non esce più fuori dalle lezioni)
+function M.arma_nuova(p, w)
+	if p.armi[w] then return false end
+	p.armi[w] = true
+	return true
 end
 
 -- Salvataggio --------------------------------------------------------------------
@@ -153,6 +162,7 @@ function M.carica()
 		if type(v) == "number" then p.stelle[id] = { v >= 1, v >= 2, v >= 3 } end
 	end
 	p.fallite = p.fallite or {}
+	p.armi = p.armi or {}
 	return p
 end
 

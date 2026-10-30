@@ -1,0 +1,34 @@
+# Primi passi (computer): il percorso della prima lezione. Niente tempo né
+# turni né armi: cammini fino alla bandierina a scacchi, salti sul gradino,
+# prendi la cassa che cade (la scheda del Lanciarune ferma il gioco finché non
+# tocchi PROVALA), poi spari al bersaglio; il primo tiro a vuoto, e si ritenta subito.
+imposta prova_missione primi_passi
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.2
+foto 01_inizio                       # la bandierina, niente cronometro né punti né armi
+zoom 01_zoom 2
+cammina destra 730
+aspetta 0.8
+foto 02_bandierina                   # arrivato: ora il gradino
+cammina destra 1080 60
+tieni salta 0.15
+cammina destra 1180
+aspetta 0.5
+foto 03_gradino                      # la cassa cade dal cielo
+cammina destra 1250 15
+aspetta_evento crate_pick 10
+aspetta 0.8
+foto 04_scheda                       # la scheda del Lanciarune
+tocca 640 120                        # PROVALA
+aspetta 0.8
+foto 05_lanciarune                   # il Lanciarune in mano, la riga su come si mira
+mira -100 30 1
+aspetta_evento explosion 6
+aspetta 2
+foto 06_ritenta                      # a vuoto: Ritenta, nello stesso turno
+mira 141 77 1 07_mira
+aspetta_evento damage 6
+aspetta 0.3
+foto 08_colpito
+aspetta 2
+foto 09_fatta
