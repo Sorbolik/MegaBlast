@@ -111,7 +111,6 @@ local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande",
 	hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita",
 	wall = "Posa un blocco di terreno dove miri: riparo, ponte o gradino" }
 -- armi corpo a corpo: niente linea di mira
-local MELEE = { sword = true, punch = true, mallet = true }
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 64
 -- sul telefono gli slot sono più piccoli (stretti con cinque primarie, così non
 -- arrivano sulla levetta); gli oggetti tondi; dal bordo dell'anello al primo
@@ -371,11 +370,14 @@ local function annuncia_turno(self, robot)
 	self.annuncio_fine = self.clock + 2
 end
 
--- La rotellina aperta o chiusa: RIPROVA (non online) ed ESCI DALLA PARTITA
+-- La rotellina aperta o chiusa: RIPROVA (non online), ESCI DALLA PARTITA e,
+-- sotto, la prima impostazione: la mira a lancetta o a mirino
 local function apri_rotellina(self, aperta)
 	self.menu_aperto = aperta
 	gui.set_enabled(self.btn_riprova, aperta and self.mode ~= "online")
 	gui.set_enabled(self.btn_esci, aperta)
+	gui.set_enabled(self.btn_mira, aperta)
+	gui.set_text(self.btn_mira_testo, "MIRA: " .. string.upper(profilo.impostazione(self.profilo, "mira")))
 end
 
 local function set_controls_visible(self, visible)
@@ -1894,7 +1896,7 @@ local function render(self, dt)
 		end
 		-- chi mira ha sopra il cartellino della mira: la riga delle missioni sale
 		targa.update(r.targa, dt, v.x, v.y + scoria.altezza(r.rig) + 3, self.cam.s ^ -0.65, self.cam,
-			self.aiming and i == g.current and mira.CARTELLINO_H or 0)
+			self.aiming and i == g.current and (self.tele_armed or not mira.MISCHIA[self.weapon]) and mira.CARTELLINO_H or 0)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -2194,12 +2196,41 @@ local function render(self, dt)
 		local v = self.view[g.current]
 		set_pos(self.cancel_label, v.x, v.y - 14)
 	end
-	-- la mira dice solo angolo e potenza, uguale per tutte le armi: il mirino e,
-	-- sopra la testa, i gradi e la potenza (battaglia/mira.lua)
-	if self.aiming and can_aim and not cancel then
+	-- la mira dice solo angolo e potenza, uguale per tutte le armi che sparano:
+	-- lancetta o mirino e, sopra la testa, i gradi e la potenza; quelle da vicino
+	-- solo una punta e un anello ai piedi di chi colpirebbero (battaglia/mira.lua)
+	if self.aiming and can_aim and not cancel and mira.MISCHIA[aim_weapon] then
 		local v, s = self.view[g.current], self.cam.s
 		local cy = v.y + game.DISEGNO_H / 2
-		mira.mirino(self.mira, v.x + math.cos(self.aim_angle) * game.MUZZLE,
+		-- il Maglio sceglie solo il lato
+		local a = aim_weapon == "mallet" and (math.cos(self.aim_angle) < 0 and math.pi or 0) or self.aim_angle
+		mira.punta(self.mira, v.x + math.cos(a) * game.MUZZLE, cy + math.sin(a) * game.MUZZLE, a, s, self.colors[g.current])
+		-- chi verrebbe colpito, provato su una copia della partita (meno di un
+		-- millisecondo): di nuovo quando la mira gira, al massimo ogni 3 fotogrammi,
+		-- e comunque ogni 10 (si muovono anche gli altri)
+		local b = self.bersagli
+		local gradi = math.floor(math.deg(self.aim_angle) + 0.5)
+		b.attesa = (b.attesa or 0) - 1
+		if b.arma ~= aim_weapon or (b.gradi ~= gradi and b.attesa <= 7) or b.attesa <= 0 then
+			b.arma, b.gradi, b.attesa = aim_weapon, gradi, 10
+			b.n = bot.colpiti(g, aim_weapon, self.aim_angle, b.id)
+		end
+		local n = math.min(b.n, mira.ANELLI)
+		for i = 1, n do
+			local p = b.pos[i] or {}
+			local vt = self.view[b.id[i]]
+			p.x, p.y = vt.x, vt.y
+			b.pos[i] = p
+		end
+		mira.bersagli(self.mira, b.pos, n, s, self.colors[g.current])
+		mira.traiettoria_via(self.mira)
+	elseif self.aiming and can_aim and not cancel then
+		self.bersagli.arma = nil
+		mira.bersagli(self.mira, nil, 0)
+		local v, s = self.view[g.current], self.cam.s
+		local cy = v.y + game.DISEGNO_H / 2
+		-- lancetta o mirino, come dice l'impostazione "mira" (dalla rotellina)
+		mira[profilo.impostazione(self.profilo, "mira")](self.mira, v.x + math.cos(self.aim_angle) * game.MUZZLE,
 			cy + math.sin(self.aim_angle) * game.MUZZLE, self.aim_angle, s, self.aim_power, self.colors[g.current])
 		mira.cartellino(self.mira, v.x, v.y + scoria.altezza(self.robots[g.current].rig) + 3
 			+ targa.SOPRA * s ^ -0.65 + 4 / s, s, mira.gradi(self.aim_angle), self.aim_power, self.colors[g.current])
@@ -2209,7 +2240,7 @@ local function render(self, dt)
 		self.tacca = tacca
 		-- nelle lezioni dell'Addestramento, come aiuto, tutta la traiettoria fino
 		-- al terreno (il Bastione: il bordo del blocco)
-		if self.missione and self.missione.l.capitolo == "addestramento" and not MELEE[aim_weapon] then
+		if self.missione and self.missione.l.capitolo == "addestramento" then
 			local wall = aim_weapon == "wall"
 			local n = wall and AIM_DOTS or AIUTO_PUNTI
 			local pts = g:preview(self.aim_angle, self.aim_power, n, 4, self.preview_pts, aim_weapon)
@@ -2225,6 +2256,7 @@ local function render(self, dt)
 	else
 		mira.via(self.mira)
 		self.tacca = nil
+		self.bersagli.arma = nil
 	end
 
 	-- tempo rimasto della partita, sopra l'anello; a zero si finisce il giro di turni
@@ -2374,6 +2406,8 @@ function init(self)
 
 	-- la mira: il mirino, il cartellino coi gradi, l'aiuto delle lezioni (battaglia/mira.lua)
 	self.mira = mira.nuova()
+	-- chi colpirebbe l'arma da vicino in mano: id dei robot e dove disegnare l'anello
+	self.bersagli = { id = {}, pos = {}, n = 0 }
 
 	-- missile: scia, alone col colore della squadra e nocciolo bianco
 	self.trail, self.trail_pos, self.trail_i, self.trail_n = {}, {}, 0, 0
@@ -2531,11 +2565,17 @@ function init(self)
 	-- la rotellina in alto a sinistra, in ogni partita: apre accanto a sé
 	-- RIPROVA (non online) ed ESCI DALLA PARTITA, che si chiudono toccando
 	-- altrove (niente finestre sopra il gioco). Sullo stesso telefono intanto la
-	-- partita è ferma. I due pulsanti sono figli della rotellina: l'ancora al
-	-- bordo allarga le distanze sugli schermi larghi, così restano vicini
+	-- partita è ferma. Sotto, MIRA: LANCETTA / MIRINO cambia il modo della mira
+	-- (la prima impostazione, nel profilo). I pulsanti sono figli della
+	-- rotellina: l'ancora al bordo allarga le distanze sugli schermi larghi,
+	-- così restano vicini
 	self.btn_menu = ui.impostazioni({}, "menu")
 	self.btn_riprova = ui.bottone({}, 32 + 12 + 80, 0, 160, 64, "RIPROVA", "riprova", nil, self.btn_menu)
 	self.btn_esci = ui.bottone({}, 32 + 12 + 160 + 12 + 130, 0, 260, 64, "ESCI DALLA PARTITA", "esci", nil, self.btn_menu)
+	local mira_btn = {}
+	self.btn_mira = ui.bottone(mira_btn, 32 + 12 + 130, -76, 260, 64, "MIRA", "mira", nil, self.btn_menu)
+	self.btn_mira_testo = mira_btn[1].testo
+	gui.set_enabled(self.btn_mira, false)
 	gui.set_enabled(self.btn_riprova, false)
 	gui.set_enabled(self.btn_esci, false)
 	gui.set_enabled(self.btn_menu, false)
@@ -2840,8 +2880,15 @@ local function pointer_down(self, id, px, py)
 	if self.menu_aperto then
 		local esci = gui.pick_node(self.btn_esci, px, py)
 		local riprova = self.mode ~= "online" and gui.pick_node(self.btn_riprova, px, py)
-		apri_rotellina(self, false)
 		self.pointers[id] = "cancelled"
+		-- MIRA cambia modo e la rotellina resta aperta, così si vede il nuovo
+		if gui.pick_node(self.btn_mira, px, py) then
+			profilo.imposta(self.profilo, "mira", profilo.impostazione(self.profilo, "mira") == "lancetta" and "mirino" or "lancetta")
+			profilo.salva(self.profilo)
+			apri_rotellina(self, true)
+			return
+		end
+		apri_rotellina(self, false)
 		if esci then
 			esci_partita(self)
 		elseif riprova then

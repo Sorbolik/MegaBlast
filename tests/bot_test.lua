@@ -198,6 +198,22 @@ do
 	check(g5:impronta() == prima and celle == dopo, "le prove del bot non cambiano la partita né il terreno")
 end
 
+-- La mira da vicino: chi prenderebbe il colpo, senza toccare la partita
+do
+	local g6 = game.new(3, "forgia", { players = { { team = 1 }, { team = 2 } } })
+	for _ = 1, 120 do g6:step() end
+	local a, b = g6.robots[g6.current], nil
+	for _, r in ipairs(g6.robots) do if r ~= a then b = r end end
+	b.x, b.y = a.x + 50, a.y
+	a.secondary = "bellows"
+	local prima, out = g6:impronta(), {}
+	local verso = bot.colpiti(g6, "bellows", 0, out)
+	local preso = out[1]
+	local via = bot.colpiti(g6, "bellows", math.pi, out)
+	check(verso == 1 and preso == b.id and via == 0 and g6:impronta() == prima,
+		"mira da vicino: il Mantice prende chi ha davanti, non chi ha dietro, e la partita non cambia")
+end
+
 if failures > 0 then
 	print(failures .. " test falliti")
 	os.exit(1)
