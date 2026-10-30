@@ -131,8 +131,8 @@ for _, l in ipairs(cap.missioni) do
 			if rb.dead then giu = false end
 		end
 		check(giu, l.id .. ": nessuno cade da solo")
-		-- (e qualcosa dice cosa fare: la riga, o senza tempo l'obiettivo sempre in vista)
-		local detto = r.riga ~= nil or (l.senza_tempo and missioni.obiettivo(r) ~= nil)
+		-- (e qualcosa dice cosa fare: la riga, o nelle lezioni l'obiettivo sempre in vista)
+		local detto = r.riga ~= nil or (l.riprova and missioni.obiettivo(r) ~= nil)
 		check(esito ~= "fatta" and detto or esito == "fallita", l.id .. ": senza fare niente non si finisce")
 	end
 	-- ogni stella dice cosa serve, e l'obiettivo si legge
@@ -144,9 +144,9 @@ for _, l in ipairs(cap.missioni) do
 end
 end
 
--- Nelle lezioni niente cerchi di cura: dopo quattro turni senza fare niente non ce n'è nessuno
+-- Nel capitolo 0 niente cerchi di cura: dopo quattro turni senza fare niente non ce n'è nessuno
 do
-	local _, _, g = gioca("turno", function(c)
+	local _, _, g = gioca("guidata", function(c)
 		for _ = 1, 3 do
 			c.tieni(DESTRA, 1)
 			c.turno()
@@ -195,34 +195,63 @@ if ok then
 end
 
 local ok, r, a, p, esito
--- Il turno: il missile subito (globo), la Lama, il globo sull'isola, le due casse
-ok, r = cerca("turno", function(c, a, p)
-	c.usa("missile", 0.15, 0.5)
+-- Il turno: il Lanciarune subito (globi), la Lama, il globo sull'isola, il
+-- bersaglio lì cade al primo colpo, il baratto, e il turno dopo di nuovo dal primo
+local function turno_isola(c)
+	c.usa("missile", 2.5, 0.3)
 	c.tieni(FERMO, 20)
-	c.tieni(DESTRA, fino_x(740))
 	c.usa("sword", 0)
-	c.turno()
-	c.usa("teleport", a, p)
+	c.tieni(FERMO, 60)
+	c.usa("teleport", 0.5, 0.6)
 	c.tieni(FERMO, function(g) return g.robots[1].x > 1150 and g.robots[1].grounded end)
-	c.cassa("grenade")
-	c.usa("grenade", 0.6, 0.2)
-	-- l'Uovo scoppia dopo 3 secondi: poi il baratto
-	c.tieni(FERMO, function() return c.r.st.passi[5] end)
-	c.usa("swap")
-	c.tieni(FERMO, 30)
-	c.cassa("shards")
+end
+ok, r = cerca("turno", function(c, a, p)
+	turno_isola(c)
 	c.turno()
-	c.usa("shards", 0)
-	c.tieni(FERMO, 120)
-end, nil, { 0.8, 1.2, 0.05 }, potenze(0.5, 1, 0.1))
-check(ok, "turno: due attacchi, il globo sull'isola, l'Uovo, il baratto e le Schegge")
-if ok then check(missioni.quante(missioni.stelle(r)) >= 2, "turno: un globo e più al primo attacco") end
--- Senza attaccare prima non ci sono globi
-esito = gioca("turno", function(c)
-	c.usa("teleport", 0.6, 0.8)
-	c.tieni(FERMO, 400)
-end)
-check(esito ~= "fatta", "turno: senza globi non si arriva")
+	c.tieni(DESTRA, function(g) return g.robots[1].x >= g.robots[3].x - 50 end)
+	c.usa("sword", 0)
+	c.tieni(FERMO, function() return c.r.st.passi[4] end)
+	c.usa("swap")
+	c.tieni(FERMO, 20)
+	c.turno()
+	c.usa("teleport", math.pi - a, p)
+	c.tieni(FERMO, function(g) return g.robots[1].x < 900 and g.robots[1].grounded end)
+	c.tieni(SINISTRA, function(g) return g.robots[1].x <= g.robots[2].x + 60 end)
+	c.usa("sword", math.pi)
+end, nil, { 0.3, 0.8, 0.1 }, potenze(0.3, 1, 0.1))
+check(ok, "turno: globi, la Lama, l'isola, il baratto e di nuovo dal primo")
+if ok then
+	check(missioni.quante(missioni.stelle(r)) == 3, "turno: senza sbagliare, tre stelle")
+end
+do
+	-- senza attaccare il tempo si ferma prima di perdere i due globi
+	local _, r2, g2 = gioca("turno", function(c)
+		c.tieni(DESTRA, 1)
+		c.tieni(FERMO, 60 * 30)
+		c.usa("missile", 2.5, 0.3)
+		c.tieni(FERMO, 30)
+	end)
+	check(g2.turn_no == 1 and r2.st.conta.globi == 2, "turno: il tempo aspetta il primo attacco, coi due globi")
+	-- prima del passo giusto il resto è spento: niente teletrasporto né Lama
+	local _, r3, g3 = gioca("turno", function(c)
+		c.usa("teleport", 0.6, 0.8)
+		c.usa("sword", 0)
+		c.tieni(FERMO, 30)
+	end)
+	check(not r3.st.passi[2] and #g3.orbs == 0 and not g3.used.secondary, "turno: si usa solo quello che il passo dice")
+	-- la Lama a vuoto torna subito, e tu dov'eri: poi colpisce
+	local esito4, r4, g4 = gioca("turno", function(c)
+		c.usa("missile", 2.5, 0.3)
+		c.tieni(FERMO, function(g) return not g.projectile end)
+		c.tieni(SINISTRA, 60)
+		c.usa("sword", math.pi)
+		c.tieni(FERMO, function(g) return not g.used.secondary end)
+		c.tieni(DESTRA, fino_x(600))
+		c.usa("sword", 0)
+		c.tieni(FERMO, 30)
+	end)
+	check(r4.st.passi[2] and r4.st.conta.mancati == 1 and g4.turn_no == 1, "turno: la Lama a vuoto si ritenta nello stesso turno")
+end
 
 -- Armi che ti muovono: il Tonante verso il basso porta sul primo pilastro, il
 -- Maglio in discesa fa rimbalzare sul secondo, l'Affondo colpisce il bersaglio
@@ -254,40 +283,38 @@ esito = gioca("spostano", function(c)
 	end
 end)
 check(esito ~= "fatta", "spostano: saltando e basta non si sale")
--- Attrezzi e paracadute: il Rampino sulla piattaforma, il paracadute sopra il
--- vuoto e il Cecchino dall'altra parte
+-- Rampino e paracadute: niente casse, le schede si aprono dopo i passi. Il
+-- Rampino porta sulla piattaforma, il paracadute oltre il vuoto, la Lama sul bersaglio
 local function attrezzi_su(c)
-	c.cassa("hook")
 	c.tieni(DESTRA, fino_x(860))
+	c.tieni(FERMO, 10)
 	c.usa("hook", 1)
 	c.tieni(FERMO, function(g) return g.robots[1].grounded and g.robots[1].y > 300 end)
 	c.tieni(FERMO, 10)
-	c.cassa("parachute")
 end
 ok, r = cerca("attrezzi", function(c, a)
 	attrezzi_su(c)
 	c.tieni(DESTRA, function(g) return g.robots[1].x > 1222 and not g.robots[1].grounded end)
 	c.usa("parachute", 0, 1)
 	c.tieni(DESTRA, function(g) return g.robots[1].grounded end)
-	c.tieni(FERMO, 10)
-	c.cassa("sniper")
-	c.usa("sniper", a)
-end, nil, { -0.3, 0.3, 0.1 })
-check(ok, "attrezzi: Rampino e paracadute portano dall'altra parte")
-esito, r = gioca("attrezzi", function(c)
-	c.cassa("hook")
+	c.tieni(DESTRA, function(g) return g.robots[1].x >= g.robots[2].x - 50 end)
+	c.usa("sword", a)
+end, nil, { 0, 0, 1 })
+check(ok, "attrezzi: Rampino e paracadute portano dall'altra parte, la Lama sul bersaglio")
+if ok then check(missioni.quante(missioni.stelle(r)) == 3, "attrezzi: senza sbagliare, tre stelle") end
+esito, r, g = gioca("attrezzi", function(c)
 	c.tieni(DESTRA, fino_x(860))
 	for _ = 1, 10 do
 		c.tieni({ right = true, jump = true }, 12)
 		c.tieni(DESTRA, 30)
 	end
 end)
-check(not r.st.passi[3], "attrezzi: saltando e basta non si sale sulla piattaforma")
+check(not r.st.passi[3] and r.prese.hook, "attrezzi: il Rampino arriva senza cassa, e saltando non si sale")
 esito, r, g = gioca("attrezzi", function(c)
 	attrezzi_su(c)
 	c.tieni(DESTRA, 600)
 end)
-check(not r.st.passi[6] and g.robots[1].deaths > 0, "attrezzi: senza paracadute si cade nel vuoto")
+check(not r.st.passi[5] and g.robots[1].deaths > 0 and r.prese.parachute, "attrezzi: senza aprire il paracadute si cade nel vuoto")
 
 -- Giù dal bordo: ognuno dei tre bersagli si butta giù dal suo scoglio con un missile solo
 for chi = 2, 4 do
@@ -408,6 +435,14 @@ do
 	rb.hp = 10
 	missioni.evento(r, g, { type = "turn", robot = 2 })
 	check(rb.hp == 46 and rb.max_hp == 46, "due_mani: il bot si rimette a 46, non alla vita normale")
+end
+-- Le armi che l'Addestramento non presenta: in Primo sangue l'Uovo, in Due
+-- mani le Schegge, in una cassa vicino a te. Camminandoci sopra la prendi,
+-- e il colpo è uno solo (non torna come nelle lezioni)
+for _, m in ipairs({ { "primo_sangue", "grenade" }, { "due_mani", "shards" } }) do
+	local _, r, g = gioca(m[1], function(c) c.cassa(m[2]) end, nil, 60 * 20)
+	local rb = g.robots[1]
+	check(r.prese[m[2]] and rb.ammo[m[2]] == 1, m[1] .. ": la cassa con l'arma nuova si prende camminando")
 end
 -- e chi rinasce rinasce con la vita della missione (Fuori portata: 40)
 for _, l in ipairs(campagna.CAPITOLI[2].missioni) do

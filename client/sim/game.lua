@@ -7,7 +7,7 @@
 --   g:step({ left = bool, right = bool, jump = bool,
 --            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport" | "swap"
 --                                                     | "grenade" | "shards" | "punch" } })
---   g:can_use(weapon)   -- il robot di turno può usarla adesso?
+--   g:can_use(weapon)   -- il robot di turno può usarla adesso? (g.permesso(w): le lezioni ne vietano)
 -- Regole del turno (sim/config.lua): fino a un'arma e un colpo di spada per
 -- turno, in ordine libero; dopo il primo attacco restano AFTER_ATTACK_SECONDS,
 -- in cui si può fare il secondo e riposizionarsi. I secondi rimasti al primo
@@ -2125,6 +2125,23 @@ function M:spawn_crate(weapon, x)
 	return c
 end
 
+-- Dà al robot quello che c'è in una cassa. Le armi senza colpi contati, il
+-- Rampino e il paracadute arrivano solo dalle lezioni (sim/missioni.lua casse
+-- e dai): il Lanciarune a chi non ce l'ha (rb.disarmed), la secondaria prende
+-- il posto della sua
+function M.dai(rb, w)
+	if M.FREE_WEAPONS[w] then
+		rb.disarmed = nil
+		if M.SECONDARY[w] then rb.secondary = w end
+	elseif w == "hook" then
+		-- il Rampino ce l'hanno tutti: la lezione lo fa solo vedere
+	elseif w == "parachute" then
+		rb.parachutes_left = rb.parachutes_left + 1
+	else
+		rb.ammo[w] = rb.ammo[w] + 1
+	end
+end
+
 function M:update_crates()
 	local i = 1
 	while i <= #self.crates do
@@ -2135,20 +2152,7 @@ function M:update_crates()
 			if not rb.dead and not taken
 				and math.abs(rb.x - c.x) <= M.ROBOT_HALF_W + M.CRATE_HALF_W
 				and rb.y < c.y + M.CRATE_H and rb.y + M.ROBOT_H > c.y then
-				-- le armi senza colpi contati, il Rampino e il paracadute dalle casse delle
-				-- lezioni (sim/missioni.lua casse): il Lanciarune a chi non ce l'ha
-				-- (rb.disarmed), la secondaria prende il posto della sua
-				local w = c.weapon
-				if M.FREE_WEAPONS[w] then
-					rb.disarmed = nil
-					if M.SECONDARY[w] then rb.secondary = w end
-				elseif w == "hook" then
-					-- il Rampino ce l'hanno tutti: la cassa delle lezioni lo fa solo vedere
-				elseif w == "parachute" then
-					rb.parachutes_left = rb.parachutes_left + 1
-				else
-					rb.ammo[w] = rb.ammo[w] + 1
-				end
+				M.dai(rb, c.weapon)
 				rb.crates = rb.crates + 1
 				self:emit({ type = "crate_pick", id = c.id, robot = rb.id, weapon = c.weapon })
 				taken = true
@@ -2583,6 +2587,8 @@ end
 -- dei globi di partenza, ma quelli guadagnati nel turno si usano sempre.
 function M:can_use(weapon)
 	if self.phase ~= "aim" then return false end
+	-- le lezioni lasciano usare solo quello che serve adesso (sim/missioni.lua solo)
+	if self.permesso and not self.permesso(weapon) then return false end
 	local rb = self.robots[self.current]
 	if rb.dead then return false end
 	if weapon == "parachute" then

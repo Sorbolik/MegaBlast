@@ -1,9 +1,11 @@
 # Partita guidata, l'esame dell'Addestramento (imposta prova_missione guidata):
 # contro il bot del tutorial. Il cronometro aspetta che tocchi i comandi, le righe compaiono sopra il
 # diavoletto (e sopra il bot nei suoi turni), il bot fa vedere i due attacchi.
-# Niente scelta delle armi nel tutorial (Sergio, 30 ott): la prima è alla
-# Battaglia della Forgia (scenario scelta_forgia.txt).
+# Niente scelta delle armi nel tutorial (Sergio, 30 ott): Lanciarune, Lama e
+# Rampino, le altre armi dalle casse; la prima scelta è alla Battaglia della
+# Forgia (scenario scelta_forgia.txt). Il bot del tutorial ha Uovo e Maglio.
 imposta prova_missione guidata
+
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 4
 foto 01_cronometro_fermo            # lo scopo sopra il diavoletto, l'anello pieno anche dopo 4 s
