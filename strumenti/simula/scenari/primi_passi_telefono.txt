@@ -8,7 +8,8 @@ aspetta 1.2
 foto 01_inizio                       # il dito va a destra, la bandierina
 cammina destra 1080 60
 tieni salta 0.15
-cammina destra 1250 15
+cammina destra 1215 15
+tieni destra 0.8                     # fino alla cassa: la scheda ferma il gioco
 aspetta_evento crate_pick 10
 aspetta 0.8
 foto 02_scheda                       # la scheda col testo per la levetta
