@@ -1,0 +1,27 @@
+# Toccare un pulsante sceglie sempre quella cosa (Sergio, 30 ottobre): TELE
+# toccato due volte resta in mano, non torna al Lanciarune. Quello che adesso
+# non si può usare fa no e dice perché (globi del primo turno, primaria già
+# usata), e in mano resta quello che c'era.
+
+aspetta 2
+tocca_bordo 205 235 basso destra                    # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+tocca_bordo 100 62 basso destra                      # TELE
+aspetta 0.3
+tocca_bordo 100 62 basso destra                      # TELE di nuovo: resta il teletrasporto
+aspetta 0.3
+foto 01_tele_ancora_in_mano
+mira 30 140 0.2
+aspetta_evento teleport 4
+aspetta 0.3
+tocca_bordo 100 62 basso destra                      # al primo turno uno solo: fa no
+aspetta 0.15
+foto 02_tele_no
+aspetta 1.6
+mira 150 100 0.4                    # Lanciarune
+aspetta_evento fire 2
+aspetta 0.5
+tocca_centro 506 62                       # Lanciarune già usato: fa no, resta la Lama
+aspetta 0.15
+foto 03_primaria_no

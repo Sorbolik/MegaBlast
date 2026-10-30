@@ -18,9 +18,14 @@
 --   hud.scambio_update(s, visibile, c) / if hud.scambio_premi(s, px, py) then ... end
 --   local k = hud.cartellino()
 --   hud.cartellino_su(k, x, y, "LAMA") / hud.cartellino_via(k)
+--   local a = hud.avviso()
+--   local perche = hud.motivo(g, "teleport")   -- perché non si può usare adesso (o nil: si può)
+--   hud.rifiuta(a, nodo, x, y, d, perche)      -- il pulsante fa no e sopra si legge perché
 
 local ui = require "ui.ui"
 local config = require "sim.config"
+local game = require "sim.game"
+local schermo = require "ui.schermo"
 
 local M = {}
 
@@ -320,6 +325,73 @@ end
 
 function M.cartellino_via(k)
 	if k.on then gui.set_enabled(k.nodo, false); k.on = false end
+end
+
+-- Toccare un pulsante sceglie sempre quella cosa (Sergio, 30 ottobre: niente
+-- più accendi e spegni). Se adesso non si può usare, quello che hai in mano
+-- resta lì e il pulsante lo dice: fa no con la testa, sopra compare per un
+-- attimo il motivo (e il telefono vibra appena, game.gui_script).
+local AVVISO_H, AVVISO_VITA = 26, 1.1
+local SCOSSA = vmath.vector({ 0, 1, -1, 0.8, -0.6, 0.3, 0 })
+
+function M.avviso()
+	local a = {}
+	a.nodo, a.bordo = ui.pannello(0, 0, 100, AVVISO_H)
+	fit(a.nodo)
+	gui.set_color(a.nodo, ui.C.PANNELLO)
+	gui.set_color(a.bordo, ui.C.BRACE)
+	a.testo = fit(ui.testo("", 0, 1, 0.7, ui.C.TESTO, a.nodo))
+	gui.set_outline(a.testo, vmath.vector4(0, 0, 0, 0))
+	-- svanisce tutto insieme
+	gui.set_inherit_alpha(a.bordo, true)
+	gui.set_inherit_alpha(a.testo, true)
+	gui.set_enabled(a.nodo, false)
+	return a
+end
+
+-- Perché il robot di turno non può usare w adesso, o nil se può
+function M.motivo(g, w)
+	if g:can_use(w) then return nil end
+	local rb = g.robots[g.current]
+	if g.permesso and not g.permesso(w) then return "NON ADESSO" end
+	if w == "teleport" then
+		if rb.teleports_left <= 0 then return "NIENTE GLOBI" end
+		if #g.orbs >= game.MAX_ORBS then return "ASPETTA I GLOBI IN VOLO" end
+		return "UNO SOLO AL PRIMO TURNO"
+	elseif w == "parachute" then
+		return rb.grounded and "SOLO IN ARIA" or "FINITI"
+	elseif w == "hook" then
+		return "GIÀ USATO IN QUESTO TURNO"
+	elseif w == "shield" and rb.shield then
+		return "SCUDO GIÀ SU"
+	elseif game.TOOLS[w] then
+		return "FINITI"
+	elseif game.SECONDARY[w] then
+		return g.used.secondary and "SECONDARIA GIÀ USATA" or "NON CE L'HAI"
+	end
+	return g.used.primary and "PRIMARIA GIÀ USATA" or "FINITA"
+end
+
+-- nodo: il pulsante (in x, y, largo d nello stesso genitore dell'avviso)
+function M.rifiuta(a, nodo, x, y, d, testo)
+	gui.cancel_animations(nodo, "position.x")
+	V.x, V.y, V.z = x, y, 0
+	gui.set_position(nodo, V)
+	gui.animate(nodo, "position.x", x + 7, SCOSSA, 0.32)
+	gui.set_text(a.testo, testo)
+	a.font = a.font or gui.get_font_resource(gui.get_font(a.testo))
+	local w = resource.get_text_metrics(a.font, testo).width * gui.get_scale(a.testo).x + 24
+	V.x, V.y = w, AVVISO_H
+	gui.set_size(a.nodo, V)
+	gui.set_size(a.bordo, V)
+	-- sopra il pulsante, ma dentro lo schermo (il teletrasporto sta sul bordo)
+	V.x = max(schermo.x0 + w / 2 + 8, min(schermo.x1 - w / 2 - 8, x))
+	V.y = y + d / 2 + 50
+	gui.set_position(a.nodo, V)
+	gui.cancel_animations(a.nodo, "color.w")
+	gui.set_color(a.nodo, ui.C.PANNELLO)
+	gui.set_enabled(a.nodo, true)
+	gui.animate(a.nodo, "color.w", 0, gui.EASING_INCUBIC, 0.4, AVVISO_VITA, function() gui.set_enabled(a.nodo, false) end)
 end
 
 -- Scambio del secondo attacco con un teletrasporto: dopo il primo attacco
