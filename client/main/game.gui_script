@@ -2663,7 +2663,7 @@ function init(self)
 	-- la home per ultima, così sta sopra la battaglia
 	self.home = home.new(TEAM_COLORS[1])
 	self.profilo = profilo.carica()
-	self.scelta = menu.scelta.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT)
+	self.scelta = menu.scelta.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, function() return self.touch_ui end)
 
 	-- Nelle partite vere la mappa la sceglie il seed (sim/maps.lua). Negli scenari di
 	-- prova è fissa, così le foto si ripetono: forgia, o [megablast] prova_mappa.

@@ -6,7 +6,8 @@
 -- un'arma nuova, e servirà anche alla scelta delle armi e all'Armeria.
 --
 --   local c = scheda.apri("missile", telefono)    -- telefono: come si usa col dito, se no col mouse
---   if c:premi(x, y) then c:chiudi() end          -- un tocco: su PROVALA? (x, y come gui.pick_node)
+--   local c = scheda.apri("missile", telefono, true) -- rivista (scelta delle armi): niente ARMA NUOVA, si chiude con OK
+--   if c:premi(x, y) then c:chiudi() end          -- un tocco: sul bottone? (x, y come gui.pick_node)
 --   scheda.DATI.missile                           -- cosa fa e le barre, per chi la mostra altrove
 
 local ui = require "ui.ui"
@@ -74,7 +75,7 @@ local function riga(t, y, scala, colore, parent)
 	return n
 end
 
-function M.apri(arma, telefono)
+function M.apri(arma, telefono, rivista)
 	local d = assert(M.DATI[arma], "scheda sconosciuta: " .. tostring(arma))
 	local tipo = TIPI[d.tipo]
 	local col = tipo.colore
@@ -86,7 +87,7 @@ function M.apri(arma, telefono)
 	gui.set_parent(velo, c.radice)
 	local carta, bordo = ui.pannello(0, 0, W, H, c.radice)
 	gui.set_color(bordo, col)
-	ui.testo("ARMA NUOVA  ·  " .. tipo.nome, 0, 245, 0.8, col, carta)
+	ui.testo(rivista and tipo.nome or "ARMA NUOVA  ·  " .. tipo.nome, 0, 245, 0.8, col, carta)
 	ui.alone(0, 150, 230, vmath.vector4(col.x, col.y, col.z, 0.4), carta)
 	local icona = gui.new_box_node(vmath.vector3(0, 150, 0), vmath.vector3(130, 130, 0))
 	gui.set_texture(icona, "armi")
@@ -106,7 +107,7 @@ function M.apri(arma, telefono)
 		end
 	end
 	riga(uso(d, telefono), d.barre and -188 or -110, 0.8, C.TESTO, carta)
-	c.prova = ui.bottone({}, 0, -240, 250, 64, "PROVALA", nil, { principale = true, colore = col }, carta)
+	c.prova = ui.bottone({}, 0, -240, 250, 64, rivista and "OK" or "PROVALA", nil, { principale = true, colore = col }, carta)
 	-- arriva con un piccolo salto
 	gui.set_scale(carta, vmath.vector3(0.6, 0.6, 1))
 	gui.animate(carta, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35)

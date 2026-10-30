@@ -6,11 +6,14 @@
 -- solo chi gioca su questo telefono, finché il tempo non scade: le scelte vanno
 -- al server, che rimanda a tutti il draft aggiornato (docs/server.md); nel 2
 -- contro 2 un bottone propone lo scambio di tutte le scelte al compagno, e lo
--- scambio si fa quando lo propongono tutti e due.
+-- scambio si fa quando lo propongono tutti e due. Tenendo premuta una carta si
+-- apre la scheda dell'arma (battaglia/scheda.lua), la stessa delle casse; un
+-- tocco la chiude. Sullo stesso telefono il tempo aspetta, online no.
 -- Pannelli e testo dell'interfaccia minimale (ui/ui.lua).
 --
 --   local scelta = require "menu.scelta"
---   local s = scelta.new(icone, nomi, effetti)     -- icone (atlante armi), nomi e una riga sull'effetto per arma, nascosta
+--   local s = scelta.new(icone, nomi, effetti, telefono) -- icone (atlante armi), nomi e una riga sull'effetto per arma;
+--                                                  -- telefono(): vero se si gioca col dito (per la scheda)
 --   scelta.show(s, d, nomi_giocatori, colori)      -- sullo stesso telefono: d = draft.new(...)
 --   local players = scelta.update(s, dt)           -- i giocatori per game.new, quando tutti hanno scelto (online nil)
 --   scelta.on_input(s, action_id, action)
@@ -23,6 +26,7 @@ local draft = require "sim.draft"
 local game = require "sim.game"
 local ui = require "ui.ui"
 local schermo = require "ui.schermo"
+local scheda = require "battaglia.scheda"
 
 local M = {}
 
@@ -40,6 +44,8 @@ local VELO = vmath.vector4(C.FONDO.x, C.FONDO.y, C.FONDO.z, 0.86)
 -- carta di un'arma che non si può prendere (già presa da un compagno)
 local SPENTA = vmath.vector4(C.PANNELLO.x, C.PANNELLO.y, C.PANNELLO.z, 0.35)
 local TOUCH = hash("touch")
+-- quanto tenere premuta una carta per aprire la sua scheda
+local TIENI = 0.45
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
@@ -50,12 +56,12 @@ local function nodo(x, y, w, h, colore, parent)
 	return n
 end
 
-function M.new(icone, nomi, effetti)
-	local s = { icone = icone, nomi = nomi, effetti = effetti, carte = {} }
+function M.new(icone, nomi, effetti, telefono)
+	local s = { icone = icone, nomi = nomi, effetti = effetti, telefono = telefono, carte = {} }
 	s.root = nodo(W / 2, H / 2, W * schermo.PIENO, H * schermo.PIENO, VELO)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
 	s.titolo = ui.titolo("", 0, 312, 0.55, nil, s.root)
-	s.sotto = ui.testo("Della primaria hai " .. config.DRAFT_SHOTS .. " colpi, la secondaria non finisce mai, l'attrezzo una volta per turno. Lanciarune e Lama li hai sempre.",
+	s.sotto = ui.testo("Della primaria hai " .. config.DRAFT_SHOTS .. " colpi, la secondaria non finisce mai, l'attrezzo una volta per turno. Lanciarune e Lama li hai sempre.\nTieni premuta una carta per vedere la sua scheda.",
 		0, 274, 0.6, nil, s.root)
 	s.barra = ui.barra(0, -300, BAR_W, 6, C.LUCE, s.root)
 	s.bottoni = {}
@@ -193,7 +199,14 @@ function M.online(s, m, giocatori, colori, invia)
 	aggiorna(s)
 end
 
+-- La scheda aperta col tocco lungo, se c'è, si chiude
+local function chiudi_scheda(s)
+	if s.carta then s.carta:chiudi() end
+	s.carta, s.premuta = nil, nil
+end
+
 function M.hide(s)
+	chiudi_scheda(s)
 	gui.set_enabled(s.root, false)
 	s.d, s.online = nil, nil
 end
@@ -222,11 +235,22 @@ function M.update(s, dt)
 	if s.fatto then
 		s.fatto = s.fatto - dt
 		if s.fatto > 0 then return nil end
+		chiudi_scheda(s)
 		gui.set_enabled(s.root, false)
 		local players = draft.finish(s.d)
 		s.d = nil
 		return players
 	end
+	-- tenuta abbastanza: la scheda dell'arma, e la carta non si sceglie
+	if s.premuta then
+		s.premuta.t = s.premuta.t + dt
+		if s.premuta.t >= TIENI then
+			s.carta = scheda.apri(s.premuta.w, s.telefono and s.telefono(), true)
+			s.premuta = nil
+		end
+	end
+	-- sullo stesso telefono il tempo aspetta chi legge la scheda
+	if s.carta and not s.online then return nil end
 	s.tempo = s.tempo - dt
 	ui.barra_valore(s.barra, s.tempo / config.DRAFT_SECONDS)
 	-- online allo scadere decide il server
@@ -249,12 +273,25 @@ function M.on_input(s, action_id, action)
 		s.invia({ t = "swap", to = s.sw[s.chi] == j and 0 or j })
 		return
 	end
-	if action_id ~= TOUCH or not action.pressed then return end
+	if action_id ~= TOUCH then return end
+	-- la scheda aperta: un tocco qualsiasi la chiude
+	if s.carta then
+		if action.pressed then chiudi_scheda(s) end
+		return
+	end
+	-- la carta si sceglie quando si lascia, se non è stata tenuta per la scheda
+	if action.released then
+		local p = s.premuta
+		s.premuta = nil
+		if p then scegli(s, p.w) end
+		return
+	end
+	if not action.pressed then return end
 	for fila, carte in ipairs(s.carte) do
 		local offer = ({ s.d.offer, s.d.offer2, s.d.offer3 })[fila]
 		for i, c in ipairs(carte) do
 			if offer[i] and gui.pick_node(c.node, action.x, action.y) then
-				scegli(s, offer[i])
+				s.premuta = { w = offer[i], t = 0 }
 				return
 			end
 		end

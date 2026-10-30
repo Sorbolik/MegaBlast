@@ -4,6 +4,7 @@
 # (il suo assetto), Bastione al compagno. Si sceglie a turno, una per fila.
 # Rosso 1 prende il Bastione e il compagno passa al Rampino; il compagno trova
 # spente le armi già prese; Blu 2 non sceglie e allo scadere prende le prime libere.
+# Prima Rosso 1 tiene premuta una carta: si apre la sua scheda e non la sceglie.
 imposta prova_scelta 1
 imposta giocatori 2v2
 
@@ -12,6 +13,11 @@ tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 01_ventagli
+trascina 900 525 900 525 1          # tocco lungo sul terzo ventaglio delle primarie
+aspetta 0.5
+foto 01a_scheda
+tocca 640 120                       # un tocco la chiude
+aspetta 0.3
 tocca 380 525                       # Rosso 1: primaria
 aspetta 0.3
 tocca 770 175                       # Rosso 1: il Bastione (prima dell'ultima fila: poi tocca a Blu 1)
