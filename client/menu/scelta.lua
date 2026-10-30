@@ -27,6 +27,7 @@ local config = require "sim.config"
 local draft = require "sim.draft"
 local game = require "sim.game"
 local ui = require "ui.ui"
+local controller = require "ui.controller"
 local schermo = require "ui.schermo"
 local scheda = require "battaglia.scheda"
 
@@ -159,7 +160,8 @@ local function testi(s)
 	end
 	-- col controller la scheda si apre con Y, e si sceglie con la croce
 	if s.comandi and s.comandi() == "controller" then
-		sotto = sotto:gsub("Tieni premuta una carta", "Premi Y su una carta"):gsub("Tocca una scelta", "Torna su una scelta")
+		sotto = sotto:gsub("Tieni premuta una carta", "Premi " .. controller.nome_di("scheda") .. " su una carta")
+			:gsub("Tocca una scelta", "Torna su una scelta")
 	end
 	gui.set_text(s.titolo, (titolo:gsub("^%l", string.upper)))
 	gui.set_color(s.titolo, s.online and C.LUCE or s.colori[s.chi] or C.LUCE)

@@ -11,6 +11,7 @@
 --   scheda.DATI.missile                           -- cosa fa e le barre, per chi la mostra altrove
 
 local ui = require "ui.ui"
+local controller = require "ui.controller"
 local hud = require "battaglia.hud"
 local schermo = require "ui.schermo"
 
@@ -57,14 +58,16 @@ local LARGO = 480
 
 -- come si usa, coi comandi che hai
 local function uso(d, arma, comandi)
+	local tasto = controller.nome_di
 	if d.tipo == "oggetto" and comandi == "controller" then
-		return arma == "parachute" and "In aria premi Y"
-			or (d.in_aria and "In aria sceglilo" or "Sceglilo") .. " fra gli OGGETTI con LT e usalo con la croce giù"
+		return arma == "parachute" and "In aria premi " .. tasto("paracadute")
+			or (d.in_aria and "In aria sceglilo" or "Sceglilo") .. " fra gli OGGETTI con " .. tasto("oggetti")
+			.. " e usalo con " .. tasto("usa_oggetto")
 	elseif d.tipo == "oggetto" then
 		return d.in_aria and "In aria toccalo fra gli OGGETTI" or "Toccalo fra gli OGGETTI"
 	end
 	if comandi == "controller" then
-		return "Muovi la levetta di destra per sistemare la traiettoria, premi RT per far partire il colpo"
+		return "Muovi la levetta di destra per sistemare la traiettoria, premi " .. tasto("spara") .. " per far partire il colpo"
 	elseif comandi == "telefono" then
 		return "Sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo"
 	end

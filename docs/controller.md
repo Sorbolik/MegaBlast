@@ -8,14 +8,16 @@ le levette del telefono.
 
 ## Tasti in battaglia
 
-Mappatura di Sergio (30 ott). Nomi Xbox; su PlayStation A = croce, B = cerchio,
-X = quadrato, Y = triangolo.
+Mappatura di base di Sergio (30 ott); ognuno la cambia nelle IMPOSTAZIONI
+(sotto). Nomi Xbox, cioè il posto del tasto: A in basso, B a destra, X a
+sinistra, Y in alto. Su PlayStation sono croce, cerchio, quadrato e triangolo;
+su Nintendo, allo stesso posto, B, A, Y e X.
 
 | Tasto | Cosa fa |
 |---|---|
 | Levetta sinistra | Cammina; spinta in su salta (come la levetta del telefono) |
 | Levetta destra | Mira: la direzione è l'angolo, quanto la spingi è la potenza (come sul telefono); riportata al centro si spegne |
-| RT (grilletto destro) | Spara, con la mira della levetta destra |
+| RT (grilletto destro) | Spara, con la mira della levetta destra di un attimo prima (0,05 s, come il pollice che si stacca dal telefono: premendo il grilletto la levetta scivola) |
 | LB | La primaria dopo, a giro (1, 2, 3, 1...), dal cronometro verso fuori |
 | RB | La secondaria dopo, a giro |
 | A | Teletrasporto in mano |
@@ -31,9 +33,37 @@ Come i pulsanti dell'HUD, LB, RB, A e X scelgono sempre; quello che ora non si
 può usare fa no e dice perché. LB e RB saltano le armi che nel tuo turno non
 puoi usare.
 
-La mappatura sta tutta in `controller.BATTAGLIA` (`client/ui/controller.lua`):
-quando ci sarà la schermata delle impostazioni ([impostazioni.md](impostazioni.md))
-i tasti personalizzati cambieranno solo quella tabella.
+La mappatura di base sta in `controller.BATTAGLIA` (`client/ui/controller.lua`);
+quella in uso è `c.tasti`, che le impostazioni cambiano.
+
+Su Android B manda anche il tasto "indietro" del telefono: il gioco lo
+riconosce (B tenuto o premuto da meno di 0,3 s) e non apre la rotellina.
+
+## Impostazioni: i tasti da cambiare
+
+Nella home, la rotellina in alto a destra apre IMPOSTAZIONI
+(`client/menu/impostazioni.lua`, [impostazioni.md](impostazioni.md)): il modo
+della mira e una riga per ogni comando, col suo tasto. Si sceglie la riga (col
+tocco o con la luce e A) e si preme il tasto nuovo: il comando che lo aveva
+prende quello lasciato libero, così ogni comando ha sempre un tasto. Start
+annulla e resta sempre alla rotellina; le levette sono fisse. RIPRISTINA torna
+alla mappatura di Sergio. Si salva subito nel profilo (`tasti`).
+
+## I tasti sull'HUD
+
+Col controller in mano ogni pulsante dell'HUD mostra, nell'angolo, il tasto che
+lo usa (`client/ui/glifo.lua`, `PAD.glifi` in `game.gui_script`), anche dopo
+averlo cambiato. Il tasto è disegnato come sul controller che si usa,
+riconosciuto dal nome che dà il sistema (`controller.famiglia`):
+
+- **Xbox** (e tutti quelli che non si riconoscono): A verde, B rosso, X blu, Y giallo; LB, RB, LT, RT, MENU, VISTA.
+- **PlayStation**: croce, cerchio, quadrato e triangolo disegnati; L1, R1, L2, R2, OPTIONS, CREATE.
+- **Nintendo**: le lettere al loro posto (B in basso, A a destra, Y a sinistra, X in alto); L, R, ZL, ZR, +, −.
+
+La croce è disegnata col braccio acceso. Le schede, le lezioni e la scelta
+delle armi scrivono il nome giusto del tasto (`controller.nome_di`). Negli
+scenari `imposta prova_pad playstation` (o `nintendo`) prova la grafica degli
+altri controller.
 
 ## Menu e scelta delle armi
 
@@ -57,14 +87,20 @@ e le stelle si passano con A.
   li prende dai codici standard, il browser dallo "standard gamepad"), quindi
   li traduciamo noi. Sul computer un controller sconosciuto non funziona
   (Windows e Linux non hanno un ordine standard).
+  Su Android gli assi verticali delle levette arrivano capovolti (giù è su):
+  `c.su = -1` li raddrizza, per i controller noti e per i grezzi.
 - `client/ui/ui.lua`: la luce sui bottoni (`ui.tocco` con `ui.PAD`).
+- `client/ui/glifo.lua`: il disegno dei tasti; `client/menu/impostazioni.lua`: la schermata.
 - `client/main/game.gui_script`, tabella `PAD`: cosa fanno i tasti in battaglia.
 - Simulatore: il controller finto (comandi `pad`, `pad_tieni`, `pad_lascia`,
-  scenario `strumenti/simula/scenari/controller.txt`).
+  scenari `strumenti/simula/scenari/controller.txt` e `impostazioni.txt`).
 
 Scartate: leggere tutti i controller dall'azione grezza (sul computer l'ordine
 dei tasti cambia da un controller all'altro, e i noti funzionano già meglio
 tradotti da Defold); un file `.gamepads` nostro coi nomi dei controller
 Android (i nomi sono infiniti: la traduzione dei grezzi li copre tutti);
 tenere ferma la mira quando si lascia la levetta destra (era la prima
-proposta: Sergio vuole le levette come sul telefono).
+proposta: Sergio vuole le levette come sul telefono); icone dipinte dei tasti
+(pesano e vanno rifatte per ogni famiglia: bastano le forme di `ui.lua`);
+rimappare anche le levette (restano come sul telefono finché Sergio non chiede
+altro).

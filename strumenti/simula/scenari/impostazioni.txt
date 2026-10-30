@@ -1,0 +1,45 @@
+# Le impostazioni (menu/impostazioni.lua): la rotellina in alto a destra della
+# home le apre. MIRA cambia il modo della mira; i tasti del controller si
+# cambiano scegliendo un comando e premendo il tasto nuovo (il comando che lo
+# aveva prende quello lasciato libero), Start annulla. In battaglia i tasti
+# sull'HUD (ui/glifo.lua) seguono quelli nuovi; con prova_pad playstation sono
+# disegnati come sul controller di PlayStation.
+imposta prova_armi 1
+imposta prova_pad playstation
+
+aspetta 2
+tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
+aspetta 0.5
+foto 01_impostazioni
+tocca_centro 775 520                       # MIRA: MIRINO
+aspetta 0.3
+pad giu                             # il controller accende la luce
+aspetta 0.3
+foto 02_mirino
+tocca_centro 395 410                       # SPARA: aspetta il tasto
+aspetta 0.3
+foto 03_premi_un_tasto
+pad b                               # SPARA va su CERCHIO, il BARATTO prende R2
+aspetta 0.3
+foto 04_spara_su_b
+tocca_centro 395 346                       # PRIMARIA DOPO
+aspetta 0.3
+pad start                           # Start annulla: resta L1
+aspetta 0.3
+foto 05_annullato
+pad b                               # B (CERCHIO) torna indietro
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 218 216 basso destra    # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+pad lb                              # la prima primaria, col controller
+aspetta 0.5
+foto 06_hud_tasti
+pad_tieni dx_destra+dx_su           # mira
+aspetta 0.4
+pad b                               # spara col tasto nuovo
+pad_lascia dx_destra+dx_su
+aspetta_evento grenade 2
+aspetta 0.5
+foto 07_sparato

@@ -20,6 +20,7 @@ M.XP_RICONOSCIMENTO = 25
 M.XP_BASE, M.XP_PASSO = 100, 25
 
 -- Le impostazioni e i loro valori di base (docs/impostazioni.md)
+-- (tasti: i tasti del controller cambiati, tasto -> comando; nil è la mappatura di base, ui/controller.lua)
 M.IMPOSTAZIONI = { mira = "lancetta" }
 
 function M.impostazione(p, chiave)

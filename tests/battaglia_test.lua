@@ -653,12 +653,15 @@ ev = controller.input(c, hash("pad_rt"), { value = 0.8 })
 check(#ev == 1 and ev[1].nome == "rt", "controller: il grilletto oltre metà sì")
 controller.input(c, hash("pad_dx_destra"), { value = 0.6 })
 controller.input(c, hash("pad_dx_su"), { value = 0.8 })
-check(math.abs(c.dx.x - 0.6) < 1e-9 and math.abs(c.dx.y - 0.8) < 1e-9, "controller: la levetta destra, y in su")
+check(math.abs(c.dx.x - 0.6) < 1e-9 and math.abs(c.dx.y + 0.8) < 1e-9, "controller: su Android gli assi verticali arrivano capovolti e si raddrizzano")
+local pc = controller.new("Windows")
+controller.input(pc, hash("pad_dx_su"), { value = 0.8 })
+check(math.abs(pc.dx.y - 0.8) < 1e-9, "controller: sul computer la levetta destra, y in su")
 controller.input(c, hash("pad_dx_su"), { value = 1 })
 controller.input(c, hash("pad_dx_destra"), { value = 1 })
 check(math.abs(c.dx.x ^ 2 + c.dx.y ^ 2 - 1) < 1e-9, "controller: in diagonale la levetta non va oltre 1")
 controller.input(c, hash("pad_dx_destra"), { released = true, value = 0 })
-check(c.dx.x == 0 and c.dx.y == 1, "controller: lasciato un asse, l'altro resta")
+check(c.dx.x == 0 and c.dx.y == -1, "controller: lasciato un asse, l'altro resta")
 ev = controller.input(c, hash("pad_sx_sinistra"), { value = 0.9 })
 check(#ev == 1 and ev[1].nome == "sinistra" and ev[1].levetta and ev[1].ui == "sinistra", "controller: la levetta sinistra fa da croce nei menu")
 ev = controller.input(c, hash("pad_sx_sinistra"), { value = 0.95 })
@@ -678,8 +681,27 @@ ev = controller.input(c, hash("pad_grezzo"), { gamepad = 1, gamepad_buttons = ta
 local nomi = {}
 for _, e in ipairs(ev) do nomi[#nomi + 1] = e.nome end
 check(table.concat(nomi, " ") == "a su y", "controller sconosciuto: A, Y e la croce in su (RT era già giù), in ordine di nome")
-check(c.sx.x == 0 and math.abs(c.dx.x - 0.5) < 1e-9 and math.abs(c.dx.y - 0.5) < 1e-9, "controller sconosciuto: zona morta e levetta destra, y in su")
+check(c.sx.x == 0 and math.abs(c.dx.x - 0.5) < 1e-9 and math.abs(c.dx.y + 0.5) < 1e-9, "controller sconosciuto: zona morta e levetta destra, capovolta su Android")
 check(controller.new("Darwin").grezzi == nil, "controller: sul computer i grezzi non si leggono")
+-- le impostazioni: i tasti da cambiare (menu/impostazioni.lua)
+local m = controller.new("Windows")
+check(controller.assegna(m, "spara", "b") and m.tasti.b == "spara" and m.tasti.rt == "baratto",
+	"controller: SPARA su B, il baratto prende RT")
+check(not controller.assegna(m, "spara", "start") and m.tasti.start == "rotellina", "controller: Start resta alla rotellina")
+local salvati = controller.da_salvare(m)
+check(salvati.start == nil and salvati.b == "spara", "controller: si salva senza Start")
+local m2 = controller.new("Windows")
+check(controller.usa(m2, salvati) and m2.tasti.b == "spara" and m2.tasti.start == "rotellina", "controller: la mappatura salvata si riprende")
+check(not controller.usa(m2, { a = "spara" }), "controller: una mappatura senza tutti i comandi non si prende")
+controller.base(m2)
+check(m2.tasti.rt == "spara" and m2.tasti.b == "baratto", "controller: RIPRISTINA torna a quella di Sergio")
+check(controller.famiglia("Sony Interactive Entertainment Wireless Controller") == "playstation"
+	and controller.famiglia("Nintendo Switch Pro Controller") == "nintendo"
+	and controller.famiglia("Xbox Wireless Controller") == "xbox" and controller.famiglia("Wireless Controller") == "playstation" and controller.famiglia("8BitDo SN30") == "xbox",
+	"controller: la famiglia dal nome")
+m2.famiglia = "nintendo"
+check(controller.nome(m2, "a") == "B" and controller.nome(m2, "rt") == "ZR" and controller.nome(m2, "giu") == "CROCE GIÙ",
+	"controller: su Nintendo il tasto in basso si chiama B")
 
 if failures > 0 then
 	print(failures .. " test falliti")

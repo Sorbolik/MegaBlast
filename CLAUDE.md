@@ -108,11 +108,13 @@ con `scoria.new(colore, look)` (`client/battaglia/pelli.lua`, generato).
 
 Il gioco si usa anche col controller (Bluetooth o USB): mappatura di Sergio e
 come funziona in [docs/controller.md](docs/controller.md). Cosa fa ogni tasto
-in battaglia sta solo in `controller.BATTAGLIA` (`client/ui/controller.lua`);
-un comando nuovo dell'HUD va aggiunto anche lì e in `PAD.COMANDI`
-(`client/main/game.gui_script`). Una schermata nuova con `ui.tocco` ha già la
-luce del controller. Si prova col controller finto: scenario
-`strumenti/simula/scenari/controller.txt`.
+in battaglia di base sta solo in `controller.BATTAGLIA` (`client/ui/controller.lua`;
+ognuno la cambia nelle IMPOSTAZIONI della home); un comando nuovo dell'HUD va
+aggiunto anche lì, in `controller.COMANDI`, in `PAD.COMANDI` e in `PAD.GLIFI`
+(dove si vede il suo tasto sull'HUD, `client/main/game.gui_script`). Una
+schermata nuova con `ui.tocco` ha già la luce del controller. Si prova col
+controller finto: scenari `strumenti/simula/scenari/controller.txt` e
+`impostazioni.txt` (con `imposta prova_pad playstation` o `nintendo`).
 
 ## Provare il gioco su iPhone
 
