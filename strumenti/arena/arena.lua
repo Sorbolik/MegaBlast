@@ -13,7 +13,9 @@
 --                                         caratteristiche della posizione (bot.caratteristiche) e quanto
 --                                         ha guadagnato la sua squadra sulle altre da lì a fine partita
 --          [--assegna turno]           -- con --pesi: invece che a caso, a turno (il robot i prende il numero
---                                         i + partita), così due individui si incontrano sempre alla pari
+--                                         i + partita) e a coppie: le partite 2j e 2j + 1 sono la stessa
+--                                         (seme, modo, mappa, armi) con i numeri scambiati, così due
+--                                         individui si incontrano sempre alla pari
 --
 -- Con --pesi la ricetta non contiene i pesi (le reti sono grandi): ogni
 -- giocatore ha il suo numero (individuo) e la riga il file dei pesi; arena.py
@@ -113,30 +115,37 @@ end
 -- La partita numero k. Il seme non è k: semi vicini darebbero ai primi passi
 -- del generatore (sim/rng.lua) numeri quasi uguali, e quindi partite simili
 -- (stessa scelta d'inizio partita, stesse casse)
+-- Con --assegna turno le partite vanno a coppie (j = k // 2): prima, con due
+-- mappe in rotazione, la parità di k decideva insieme mappa e individui, e il
+-- primo individuo partiva sempre primo sulla stessa mappa (esami falsati di 6-8
+-- punti anche fra due bot uguali)
 local function partita(k)
-	local seme = (k * 48271) % 2147483647
+	local j = opt.assegna == "turno" and math.floor(k / 2) or k
+	local seme = (j * 48271) % 2147483647
 	local r0 = rng.new(seme)
 	for _ = 1, 4 do r0:next() end
-	local modo = opt.modo == "tutti" and MODI[1 + (k % #MODI)] or opt.modo
+	local modo = opt.modo == "tutti" and MODI[1 + (j % #MODI)] or opt.modo
 	local mappa = opt.mappa or maps.pick(seme)
 	local base = {}
 	for k, p in ipairs(config.MODES[modo]) do base[k] = { team = p.team } end
-	local d = draft.new(seme, base)
-	for k = 1, #base do bot.scegli(d, k, seme) end
-	local players = draft.finish(d)
-	for k, p in ipairs(players) do
-		p.bot = opt.livello == "misto" and bot.ORDINE[1 + math.floor(r0:next() * #bot.ORDINE)] or opt.livello
-	end
 	-- i pesi con un generatore a parte: livelli e armi restano quelli delle
-	-- stesse partite senza --pesi, così si confrontano a coppie
+	-- stesse partite senza --pesi, così si confrontano a coppie (le armi
+	-- cambiano solo per chi ha un gusto per le armi, pesi.armi)
+	local individui = {}
 	if POPOLAZIONE then
 		local r1 = rng.new((seme * 16807 + 12345) % 2147483647)
 		for _ = 1, 4 do r1:next() end
-		for i, p in ipairs(players) do
-			p.individuo = opt.assegna == "turno" and 1 + (i + k) % #POPOLAZIONE
+		for i = 1, #base do
+			individui[i] = opt.assegna == "turno" and 1 + (i + k) % #POPOLAZIONE
 				or 1 + math.floor(r1:next() * #POPOLAZIONE)
-			p.pesi = POPOLAZIONE[p.individuo]
 		end
+	end
+	local d = draft.new(seme, base)
+	for i = 1, #base do bot.scegli(d, i, seme, individui[i] and POPOLAZIONE[individui[i]].armi) end
+	local players = draft.finish(d)
+	for i, p in ipairs(players) do
+		p.bot = opt.livello == "misto" and bot.ORDINE[1 + math.floor(r0:next() * #bot.ORDINE)] or opt.livello
+		if individui[i] then p.individuo, p.pesi = individui[i], POPOLAZIONE[individui[i]] end
 	end
 	-- i set con un altro generatore ancora, per lo stesso motivo
 	if opt.set == "misto" then

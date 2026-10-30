@@ -6,7 +6,7 @@ aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.5
 foto 01_scopo                        # solo la Lama, la bandierina sotto la piattaforma
 cammina destra 819
-aspetta 1
+aspetta 2                            # la scheda si apre (sotto carico ci mette di più)
 foto 02_scheda_rampino
 tocca_centro 640 120                 # PROVALA
 aspetta 1

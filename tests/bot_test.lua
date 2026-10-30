@@ -180,7 +180,12 @@ do
 	local tutti = true
 	for i = 1, 4 do tutti = tutti and draft.done(d, i) end
 	check(tutti, "scelta: i bot scelgono tutte e due le armi")
-	check(d.picks[1] ~= d.picks[3] and d.picks2[1] ~= d.picks2[3], "scelta: compagni con armi diverse")
+	-- col gusto per le armi (pesi.armi) prende quelle che gli piacciono, se ci sono
+	local d2 = draft.new(9, { { team = 1 }, { team = 2 } })
+	bot.scegli(d2, 1, 9, { punch = 3, mallet = 3 })
+	local ha = function(offer, w) for _, x in ipairs(offer) do if x == w then return true end end end
+	check((d2.picks[1] == "punch") == ha(d2.offer, "punch") and (d2.picks2[1] == "mallet") == ha(d2.offer2, "mallet"),
+		"scelta: con il gusto per le armi prende Pugno e Maglio")
 end
 
 -- Le copie su cui pensa il bot non toccano la partita vera

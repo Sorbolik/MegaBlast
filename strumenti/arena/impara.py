@@ -289,11 +289,11 @@ def rapporto(stato, args):
            "|---|---|---|---|---|---|---|"]
     for v, e in zip(stato["storia"], stato["esami"]):
         out.append(f"| {v['giro']} | {100 * e['vince']:.0f}% | {v['spiegata']:.2f} | {v['esempi_studiati']} | "
-                   f"{e['rete']['morti']:.2f} / {e['oggi']['morti']:.2f} | {e['rete']['danno']:.0f} / {e['oggi']['danno']:.0f} | "
-                   f"{e['rete']['teletrasporti']:.2f} / {e['oggi']['teletrasporti']:.2f} |")
+                   f"{e['lui']['morti']:.2f} / {e['oggi']['morti']:.2f} | {e['lui']['danno']:.0f} / {e['oggi']['danno']:.0f} | "
+                   f"{e['lui']['teletrasporti']:.2f} / {e['oggi']['teletrasporti']:.2f} |")
     if stato["esami"]:
         e = stato["esami"][-1]
-        out += ["\n## Le mosse preferite dell'ultima rete all'esame\n"] + [f"- {f}: {n}" for f, n in e["rete"]["firme"]]
+        out += ["\n## Le mosse preferite dell'ultima rete all'esame\n"] + [f"- {f}: {n}" for f, n in e["lui"]["firme"]]
     return "\n".join(out) + "\n"
 
 

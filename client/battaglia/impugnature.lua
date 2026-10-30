@@ -16,7 +16,6 @@ return {
 	teleport = { presa = { 2.8, -0.6 }, perno = { -6.5, -0.6 }, spalla = { 32, 110 } },
 	eagle = { presa = { 1.6, -1.2 }, perno = { -7.7, -1.2 }, spalla = { 32, 110 } },
 	hook = { presa = { 5.3, -2.6 }, perno = { -4, -2.6 }, spalla = { 32, 110 } },
-	wall = { presa = { 3.5, -3.4 }, perno = { -5.8, -3.4 }, spalla = { 32, 110 } },
 	mallet = { presa = { 6.5, 0 }, perno = { -2.8, 0 }, spalla = { 32, 110 } },
 	lunge = { presa = { 2, 0 }, perno = { -7.3, 0 }, spalla = { 32, 110 } },
 	bellows = { presa = { -1.5, 0 }, perno = { -10.8, 0 }, spalla = { 32, 110 } },

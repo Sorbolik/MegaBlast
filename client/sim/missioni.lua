@@ -48,7 +48,7 @@
 --     la scheda di quell'arma; dai: e la si ha, senza cassa (Sergio, 30 ott: il
 --     Rampino e il paracadute non si trovano nelle casse)
 --   senza_tempo: niente tempo e niente turni, il turno è tuo finché non finisci.
---     Finito un attacco (o il Rampino, il Bastione) si riusa subito; se non ha
+--     Finito un attacco (o il Rampino) si riusa subito; se non ha
 --     colpito nessuno né fatto un passo, "Ritenta" (conta "mancati"). Sergio, 29 ott:
 --     in una lezione non si aspetta mai un turno per riprovare. Il paracadute
 --     trovato torna appena sei a terra
@@ -118,8 +118,8 @@ local ATTACCHI = {
 	fire = "missile", grenade = "grenade", shards = "shards", punch = "punch", sniper = "sniper",
 	swing = "sword", eagle = "eagle", mallet = "mallet", lunge = "lunge", bellows = "bellows",
 }
--- gli eventi del giocatore che consumano l'attacco o l'attrezzo del turno
-local TENTATIVI = { hook_shot = true, wall = true }
+-- gli eventi del giocatore che consumano l'attacco o il Rampino del turno
+local TENTATIVI = { hook_shot = true }
 for k in pairs(ATTACCHI) do TENTATIVI[k] = true end
 local CATEGORIE = {
 	primaria = { grenade = true, shards = true, punch = true, sniper = true },
@@ -242,7 +242,7 @@ function M.partita(r, seed, picks, aiuto)
 		end
 		if aiuto and q.bot then q.bot = PIU_FACILE[q.bot] end
 		if picks and picks[i] then
-			q.pick, q.secondary, q.tool = picks[i].pick, picks[i].secondary, picks[i].tool or q.tool
+			q.pick, q.secondary = picks[i].pick, picks[i].secondary
 		end
 		players[i] = q
 	end

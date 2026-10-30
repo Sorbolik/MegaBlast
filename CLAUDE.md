@@ -137,7 +137,7 @@ Ogni partita ha la sua ricetta (`client/sim/replay.lua`) con le impronte dello
 stato: rigiocandola devono tornare tutte. L'arena (`strumenti/arena/`, vedi il
 README) fa giocare i bot tra loro su tutti i core e scrive il rapporto per il
 bilanciamento e gli highlight.
-`strumenti/arena/evolvi.py` fa evolvere i numeri del bot per stili (sul PC di Sergio, di
+`strumenti/arena/evolvi.py` fa evolvere i numeri di cinque bot specialisti (sul PC di Sergio, di
 notte; da rifare con `--nuova` quando cambiano le regole) e `strumenti/arena/trovate.py` fa la
 pagina coi video delle trovate dei bot (i turni rari che fanno tanti punti).
 

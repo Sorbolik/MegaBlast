@@ -226,8 +226,8 @@ local ADDESTRAMENTO = {
 		giocatori = {
 			-- niente scelta (Sergio, 30 ott): Lanciarune, Lama e Rampino; le altre
 			-- armi, se vuoi, dalle casse, con la loro scheda
-			{ team = 1, tool = "hook" },
-			{ team = 2, bot = "tutorial", pick = "grenade", secondary = "mallet", tool = "hook" },
+			{ team = 1 },
+			{ team = 2, bot = "tutorial", pick = "grenade", secondary = "mallet" },
 		},
 		-- partita corta: 3 minuti
 		secondi = 180,
@@ -341,7 +341,7 @@ local GIRONE_1 = {
 		-- tutto quello che spinge (Sergio, 29 ottobre 2026): il Cecchino, il Mantice
 		-- e il Rampino, che dal bordo arriva agli scogli e li molla sopra il vuoto
 		giocatori = {
-			{ team = 1, pick = "sniper", secondary = "bellows", tool = "hook" },
+			{ team = 1, pick = "sniper", secondary = "bellows" },
 			{ team = 2, dummy = true }, { team = 2, dummy = true }, { team = 2, dummy = true },
 		},
 		vita = { [2] = 999, [3] = 999, [4] = 999 },
@@ -383,6 +383,8 @@ local GIRONE_1 = {
 		titolo = "Battaglia della Forgia",
 		scopo = "Una partita vera, 2 contro 2: tu e il tuo compagno contro il Fabbro e il cecchino",
 		mappa = "forgia",
+		-- la prima scelta delle armi, guidata, con le armi già viste (Sergio, 30 ott)
+		draft = true,
 		giocatori = {
 			{ team = 1 },
 			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",

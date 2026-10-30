@@ -301,7 +301,7 @@ ok, r = cerca("attrezzi", function(c, a)
 	c.usa("sword", a)
 end, nil, { 0, 0, 1 })
 check(ok, "attrezzi: Rampino e paracadute portano dall'altra parte, la Lama sul bersaglio")
-if ok then check(missioni.quante(missioni.stelle(r)) == 3 and not r.prese.wall, "attrezzi: senza sbagliare, tre stelle") end
+if ok then check(missioni.quante(missioni.stelle(r)) == 3, "attrezzi: senza sbagliare, tre stelle") end
 esito, r, g = gioca("attrezzi", function(c)
 	c.tieni(DESTRA, fino_x(860))
 	for _ = 1, 10 do
@@ -309,7 +309,7 @@ esito, r, g = gioca("attrezzi", function(c)
 		c.tieni(DESTRA, 30)
 	end
 end)
-check(not r.st.passi[3] and g.robots[1].tool == "hook", "attrezzi: il Rampino arriva senza cassa, e saltando non si sale")
+check(not r.st.passi[3] and r.prese.hook, "attrezzi: il Rampino arriva senza cassa, e saltando non si sale")
 esito, r, g = gioca("attrezzi", function(c)
 	attrezzi_su(c)
 	c.tieni(DESTRA, 600)

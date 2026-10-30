@@ -227,17 +227,6 @@ def rampino_carico(d):
     return info
 
 
-def bastione(d):
-    # Bastione: il concio che si posa, pietra scura cerchiata d'ottone come i
-    # blocchi in mappa (terreno.fp), retto davanti nella mano (impugnature.lua)
-    d.rect(1.0, -3.4, 11.0, 6.8, "pietra", r=0.8)
-    d.rect(0.6, 2.0, 11.8, 1.8, "ottone", r=0.5)                                     # bordo sopra
-    d.rect(0.6, -3.8, 11.8, 1.6, "ottone", r=0.5)                                    # bordo sotto
-    d.riga("M1.4,-0.2 L11.6,-0.2 M4.6,-2.2 L4.6,-0.2 M8.4,-0.2 L8.4,2.0", COL["pietra"][0], 0.45)
-    d.cerchio(6.5, 0.9, 0.8, "bianco", tinta=True)
-    return dict(box=(-1, -6, 14, 6))
-
-
 def maglio(d):
     # Maglio: manico di legno lungo, testa di pietra cerchiata d'ottone; la
     # faccia che batte è sul lato -y (quello che va avanti quando cala)
@@ -336,7 +325,6 @@ ARMI = {
     "teleport": (globo_in_mano, None),  # il pulsante usa il globo in volo
     "eagle": (tonante, 25),
     "hook": (rampino, 35),
-    "wall": (bastione, 0),
     "mallet": (maglio, 45),
     "lunge": (affondo, 45),
     "bellows": (mantice, 30),

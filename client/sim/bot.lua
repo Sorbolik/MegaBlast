@@ -7,7 +7,7 @@
 --   local bot = require "sim.bot"
 --   local b = bot.new(id, "normale", seed, pesi, carattere)   -- id del robot, livello, seme, pesi e carattere (facoltativi, vedi M.PESI e M.CARATTERI)
 --   local input = bot.input(b, g)           -- a ogni tick, prima di g:step(input)
---   bot.scegli(d, i, seed)                  -- primaria e secondaria nella scelta (sim/draft.lua)
+--   bot.scegli(d, i, seed, armi)            -- primaria e secondaria nella scelta (sim/draft.lua)
 --   b.piano = { due_attacchi = true }       -- (facoltativo, per il turno che viene) primaria e secondaria
 --   b.piano = { attacca_entro = 4, poi = "teletrasporto" }  -- attacca una volta entro 4 s, poi si teletrasporta al riparo
 --
@@ -52,7 +52,9 @@ M.ORDINE = { "facile", "normale", "difficile" }
 -- impara si teletrasportava molto più del bot e vinceva, e con 100 il bot batte
 -- quello di prima nel 72% delle partite); globo_riparo: il riparo col globo
 -- vince su quello a piedi se vale almeno tanto di più; punteggio (se c'è): i punti
--- con cui il bot giudica le mosse, al posto di quelli della partita. L'arena li fa evolvere
+-- con cui il bot giudica le mosse, al posto di quelli della partita; armi (se
+-- c'è): il gusto per ogni arma (moltiplica i colpi che rendono e guida la scelta
+-- d'inizio partita, M.scegli). L'arena li fa evolvere
 -- (strumenti/arena/evolvi.py) e una partita può darne altri a ogni bot
 -- (players[i].pesi, solo i campi che cambiano). rete (se c'è): una rete
 -- neurale (sim/rete.lua) che giudica le mosse al posto di questi pesi, dalle
@@ -455,6 +457,14 @@ local function armi(g, rb)
 	return out
 end
 
+-- Il gusto per l'arma (pesi.armi, per gli specialisti): un colpo che rende
+-- vale tanto di più quanto piace l'arma
+local function gusto(b, arma, s)
+	local g = b.pesi.armi and b.pesi.armi[arma]
+	if g and s > 0 then return s * g end
+	return s
+end
+
 -- Tutte le mosse da un posto, provate in fretta (solo il volo per i colpi a
 -- distanza). Le aggiunge a mosse.
 local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
@@ -463,7 +473,7 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 	local cy = y + game.DISEGNO_H / 2
 	local bersagli = nemici(g, me, x, y)
 	local function aggiungi(arma, a, p, fino)
-		local s = prova(b, g, posto, arma, a, p, fino)
+		local s = gusto(b, arma, prova(b, g, posto, arma, a, p, fino))
 		mosse[#mosse + 1] = { posto = posto, arma = arma, angolo = a, potenza = p, punti = s - (posto.n or 0) * b.pesi.strada,
 			k = #mosse + 1 }
 	end
@@ -671,7 +681,7 @@ local function pensa(b, g)
 	for i = 1, math.min(FINALISTE, #mosse) do
 		local m = mosse[i]
 		if m.arma ~= "hook" then
-			m.punti = prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto") - (m.posto.n or 0) * b.pesi.strada
+			m.punti = gusto(b, m.arma, prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto")) - (m.posto.n or 0) * b.pesi.strada
 		end
 	end
 	table.sort(mosse, prima)
@@ -973,8 +983,9 @@ function M.input(b, g)
 end
 
 -- Scelta d'inizio partita: una primaria e una secondaria a caso tra quelle
--- che può prendere (sim/draft.lua)
-function M.scegli(d, i, seed)
+-- che può prendere (sim/draft.lua); armi (pesi.armi, se c'è): quella che gli
+-- piace di più, a pari gusto quella a caso
+function M.scegli(d, i, seed, armi)
 	local draft = require "sim.draft"
 	local r = generatore((seed or 1) * 104729 + i)
 	for _, offer in ipairs({ d.offer, d.offer2 }) do
@@ -982,7 +993,13 @@ function M.scegli(d, i, seed)
 		for _, w in ipairs(offer) do
 			if draft.valid(d, i, w) then libere[#libere + 1] = w end
 		end
-		if #libere > 0 then draft.pick(d, i, libere[1 + math.floor(r:next() * #libere)]) end
+		if #libere > 0 then
+			local w = libere[1 + math.floor(r:next() * #libere)]
+			for _, x in ipairs(armi and libere or {}) do
+				if (armi[x] or 1) > (armi[w] or 1) then w = x end
+			end
+			draft.pick(d, i, w)
+		end
 	end
 end
 

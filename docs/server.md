@@ -46,21 +46,16 @@ con le statistiche normalizzate: albero ed equipaggiamento non contano). I
 giocatori e le squadre di ogni modo vengono da `config.MODES` della
 simulazione.
 
-Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`),
-con l'attrezzo dell'assetto di ognuno già scelto (arriva col `hello`, `"tool"`):
-ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"pr":[…],"sw":[…],"you":1,"tok":…,"players":[{"team":1},…],"left":900}`
-(`offer` le primarie, `offer2` le secondarie, `offer3` gli attrezzi `hook` e
-`wall`; `p`, `p2` e `p3` le scelte fatte; `pr[i]` vero se l'attrezzo del robot
-i è solo quello proposto dall'assetto; `sw[i]` il compagno a cui il robot i
-propone lo scambio, 0 nessuno; `left` i tick rimasti) e
-manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la
-categoria; si può cambiare). Nel 2 contro 2 due compagni si scambiano le
-scelte, tutte insieme, se tutti e due mandano
-`{"t":"swap","to":N}`; `{"t":"swap","to":0}` ritira la proposta. A
-ogni cambio tutti ricevono il `draft` aggiornato. Allo scadere di
-`config.DRAFT_SECONDS` chi non ha scelto prende la prima arma libera di ogni
+Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
+ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","you":1,"tok":…,"players":[{"team":1},…],"left":900}`
+(`offer` le primarie, `offer2` le secondarie; `p` e `p2` le **sue** scelte:
+quelle degli altri non si mandano, Sergio 30 ott; `left` i tick rimasti) e
+manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la categoria; si può
+cambiare, i doppioni vanno bene anche fra compagni). La conferma torna solo a
+chi ha scelto. L'attrezzo non si sceglie: il Rampino ce l'hanno tutti. Allo
+scadere di `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma di ogni
 ventaglio e parte la partita (`start`, con `players`: squadra e scelte di
-ognuno, `[{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},…]`, così
+ognuno, `[{"team":1,"pick":"shards","secondary":"eagle"},…]`, così
 il client crea la sua copia della partita con le stesse armi). Chi esce dalla
 rotellina in partita manda `{"t":"leave"}`: il server lo toglie subito (come chi
 non torna in tempo, senza aspettare), chiude la sua connessione e manda `left`
@@ -101,7 +96,7 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 
 ## Protocollo
 
-Il primo messaggio del client è `{"t":"hello","v":2,"mode":"1v1"}`. Se la
+Il primo messaggio del client è `{"t":"hello","v":3,"mode":"1v1"}`. Se la
 versione non è quella del server la risposta è `{"t":"error","e":"version"}` e
 il client chiede di aggiornare il gioco. La versione (`protocolVersion` in
 `server.go`, `PROTOCOL` nel client) va alzata quando i messaggi cambiano in un
@@ -115,7 +110,7 @@ succede, per questo il server manda anche un ping ogni 10 s), gli altri
 ricevono `away`, i tasti tenuti premuti si lasciano e la partita va avanti: se
 era il suo turno, il tempo scorre. Si può tornare anche durante la scelta
 dell'arma (il gettone arriva già col primo `draft`). Il client riprova da solo per circa 18 s con
-`{"t":"hello","v":2,"tok":…}`; il server gli rimanda `start` con
+`{"t":"hello","v":3,"tok":…}`; il server gli rimanda `start` con
 `"resume":true`, gli scavi del terreno e i Bastioni posati o crollati, in ordine (`sync`) e lo stato. Dopo 20 s senza
 tornare il giocatore è fuori (`left`) e, se resta una sola squadra, la
 partita si chiude.
