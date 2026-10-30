@@ -349,27 +349,27 @@ function M.avviso()
 	return a
 end
 
--- Perché il robot di turno non può usare w adesso, o nil se può
+-- Perché il robot di turno non può usare w adesso, o nil se può. Sempre due
+-- parole semplici (Sergio, 30 ottobre): finiti, già usata, o non ora (lezioni,
+-- paracadute a terra, scudo già su, globi in volo, primo turno)
 function M.motivo(g, w)
 	if g:can_use(w) then return nil end
 	local rb = g.robots[g.current]
-	if g.permesso and not g.permesso(w) then return "NON ADESSO" end
+	if g.permesso and not g.permesso(w) then return "NON ORA" end
 	if w == "teleport" then
-		if rb.teleports_left <= 0 then return "NIENTE GLOBI" end
-		if #g.orbs >= game.MAX_ORBS then return "ASPETTA I GLOBI IN VOLO" end
-		return "UNO SOLO AL PRIMO TURNO"
-	elseif w == "parachute" then
-		return rb.grounded and "SOLO IN ARIA" or "FINITI"
+		return rb.teleports_left <= 0 and "GLOBI ESAURITI" or "NON ORA"
 	elseif w == "hook" then
-		return "GIÀ USATO IN QUESTO TURNO"
-	elseif w == "shield" and rb.shield then
-		return "SCUDO GIÀ SU"
+		return "GIÀ USATO"
+	elseif w == "parachute" then
+		return rb.parachutes_left <= 0 and not rb.parachute and "MUNIZIONI ESAURITE" or "NON ORA"
 	elseif game.TOOLS[w] then
-		return "FINITI"
+		return rb.ammo[w] <= 0 and "MUNIZIONI ESAURITE" or "NON ORA"
 	elseif game.SECONDARY[w] then
-		return g.used.secondary and "SECONDARIA GIÀ USATA" or "NON CE L'HAI"
+		return g.used.secondary and "GIÀ USATA" or "NON ORA"
+	elseif g.used.primary then
+		return "GIÀ USATA"
 	end
-	return g.used.primary and "PRIMARIA GIÀ USATA" or "FINITA"
+	return game.has_weapon(rb, w) and "NON ORA" or "MUNIZIONI ESAURITE"
 end
 
 -- nodo: il pulsante (in x, y, largo d nello stesso genitore dell'avviso)
