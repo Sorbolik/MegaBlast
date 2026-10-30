@@ -7,6 +7,7 @@ dove sta oggi nel codice (se c'è già un interruttore).
 
 | Impostazione | Cosa fa | Di base | Chiesta | Oggi nel codice |
 |---|---|---|---|---|
+| Modo della mira | **Lancetta** (dritta dall'arma, si riempie con la potenza: chi comincia la capisce subito) o **mirino** (anellino che si riempie) | lancetta | Sergio, 29 ott | **c'è già**: pulsante MIRA nella rotellina in partita, salvato nel profilo (`profilo.impostazione(p, "mira")`) |
 | Vibrazione allo sgancio | Micro-vibrazione quando sulla levetta della mira il pollice esce dalla zona morta e il colpo diventa sganciabile | accesa | Sergio, 29 ott | sempre accesa (`aim_pad_drag` in `client/main/game.gui_script`) |
 | Vibrazione della potenza | Micro-vibrazione a ogni tacca del 5% di potenza mentre si mira | spenta | Sergio, 29 ott | `mira.VIBRA_TACCHE` (`client/battaglia/mira.lua`) |
 | Modalità delle vibrazioni della mira | Solo sgancio, solo potenza, tutte e due o nessuna (si combinano le due righe sopra) | solo sgancio | Sergio, 29 ott | — |

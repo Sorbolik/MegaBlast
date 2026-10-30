@@ -329,6 +329,29 @@ local function in_posto(w, id, posto)
 	return c
 end
 
+-- Chi prenderebbe adesso il colpo da vicino arma mirato ad angolo: lo prova su
+-- una copia della partita fino alla fine del colpo. out[1..k] = id dei robot
+-- colpiti, torna k. Serve alla mira delle armi da vicino (battaglia/mira.lua).
+local COLPI = { sword_hit = true, punch_hit = true, mallet_hit = true, lunge_hit = true, bellows_hit = true }
+function M.colpiti(g, arma, angolo, out)
+	local w = M.mondo(g)
+	w:attack(arma, { weapon = arma, angle = angolo, power = 1 })
+	local rb = w.robots[w.current]
+	for _ = 1, 4 * 60 do
+		if not (rb.swing or rb.punch or rb.mallet or rb.lunge) then break end
+		w.tick = w.tick + 1
+		w:advance(FERMO, true)
+	end
+	local k = 0
+	for _, e in ipairs(w.events) do
+		if COLPI[e.type] and e.target then
+			k = k + 1
+			out[k] = e.target
+		end
+	end
+	return k
+end
+
 -- Prova un attacco dal posto. fino: "volo" (solo i colpi) o "tutto" (finché
 -- tutto è fermo). Restituisce il punteggio.
 local function prova(b, g, posto, arma, angolo, potenza, fino)

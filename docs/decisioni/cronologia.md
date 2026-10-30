@@ -47,12 +47,14 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Addestramento dalle basi (Camminare, Saltare, Sparare), la Prima partita come esame finale, il I girone chiuso da una partita 2 contro 2, e guidato: il suggerimento mette in luce il comando e ferma il tempo finché non lo tocchi; dito disegnato per saltare e annullare la mira sul telefono; nei gironi la luce senza fermare il gioco. | #86 |
 | 29 ott | Il codardo attacca a ogni turno e scappa col globo nelle tane; i bot con un carattere e i custodi parlano in nuvoletta. | #86 |
 | 29 ott | Pallini della mira più piccoli (Sergio): metà grandezza, uno ogni 10 px. Di base il telefono vibra solo quando il colpo diventa sganciabile (la vibrazione a ogni 5% di potenza diventa un'impostazione). Nasce [docs/impostazioni.md](../impostazioni.md): ogni impostazione nominata da Sergio va lì subito. | questa PR |
-| 29 ott | Mira: solo angolo e potenza, uguale per tutte le armi: mirino che si riempie con la potenza e cartellino coi gradi; niente traiettoria, se non come aiuto nelle lezioni dell'Addestramento. | questa PR |
+| 29 ott | Mira: solo angolo e potenza, uguale per tutte le armi: mirino che si riempie con la potenza e cartellino coi gradi; niente traiettoria, se non come aiuto nelle lezioni dell'Addestramento. | #87 |
 | 29 ott | Rampino: quando la fune finisce a metà strada si spezza con uno schiocco, "STRAPPO!" e il filo cade. | #88 |
-| 29 ott | Mira più chiara: puntini uguali con la punta del colore della squadra, cartellino con gradi e potenza sopra la testa, grandi uguali a ogni zoom; micro-vibrazione a ogni 5% di potenza. | questa PR |
+| 29 ott | Mira più chiara: puntini uguali con la punta del colore della squadra, cartellino con gradi e potenza sopra la testa, grandi uguali a ogni zoom; micro-vibrazione a ogni 5% di potenza. | #84 |
 | 29 ott | Corona del primo più grande, sopra il personaggio e sul gettone dei punti. | #89 |
 | 29 ott | Corse delle reti fermate; il bot del gioco prende le loro lezioni: si teletrasporta molto di più e si ripara col globo. | #90 |
 | 29 ott | Mantice più debole: spinge meno (400 invece di 520, meno in su, meno al bordo del raggio); spingeva fuori troppo facilmente. | #91 |
 | 29 ott | Rampino sul terreno: ti porta sopra la piattaforma anche agganciandola da sotto in diagonale (soglie più larghe). | #91 |
-| 29 ott | Nuove generazioni dei bot: evolvono i numeri del bot del gioco, un campione per stile, scelte da sole quando non migliorano; pagina coi video delle trovate dei bot. | questa PR |
-| 29 ott | Stelle della campagna tarate coi bot: quote di seconda e terza stella, missioni da guardare, previsione se cambia la vita degli avversari; controllo su ogni PR che cambia le regole. | questa PR |
+| 29 ott | Mira a lancetta di base (tacche che si accendono con la potenza); il mirino si sceglie dalla rotellina in partita (MIRA) e resta salvato. | questa PR |
+| 29 ott | Armi da vicino: niente lancetta, una punta nella direzione del colpo e un anello ai piedi di chi verrebbe colpito. | questa PR |
+| 29 ott | Nuove generazioni dei bot: evolvono i numeri del bot del gioco, un campione per stile, scelte da sole quando non migliorano; pagina coi video delle trovate dei bot. | #93 |
+| 29 ott | Stelle della campagna tarate coi bot: quote di seconda e terza stella, missioni da guardare, previsione se cambia la vita degli avversari; controllo su ogni PR che cambia le regole. | #93 |

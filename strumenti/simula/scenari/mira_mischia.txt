@@ -1,0 +1,29 @@
+# La mira delle armi da vicino (battaglia/mira.lua): "bersaglio acceso, minimale"
+# (Sergio, 29 ott). Niente lancetta né cartellino: una punta piccola nella
+# direzione del colpo e un anello ai piedi di chi verrebbe colpito, provato su
+# una copia della partita. Il Blu parte 60 pixel a destra: il Rosso col
+# Mantice soffia dall'altra parte (niente anello), poi il Blu con la Lama.
+imposta prova_secondaria bellows
+imposta prova_vicino 60
+imposta zoom 1
+
+aspetta 4
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.5
+premi 3                             # Mantice
+aspetta 0.4
+# dall'altra parte: solo la punta, nessun anello
+mira -150 20 0.6 01_mantice_via 2
+aspetta_evento bellows 2
+aspetta 1
+tieni salta 0.1                     # il tempo riparte toccando i comandi
+aspetta_stato turno=2 fase=aim 30
+aspetta 1.5
+premi 2                             # il Blu con la Lama
+aspetta 0.4
+# verso il Rosso: l'anello ai suoi piedi, del colore del Blu, e il colpo lo prende
+mira -150 10 0.6 02_lama_verso 2
+aspetta_evento sword_hit 3
+aspetta 0.5
+foto 03_colpito
