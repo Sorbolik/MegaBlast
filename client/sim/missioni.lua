@@ -16,6 +16,7 @@
 --   missioni.vede(r, arma)                          -- quell'arma (o "teleport", "parachute", "tempo",
 --                                                   "punti") si vede nell'HUD? (r nil: tutto)
 --   local x, y = missioni.bandiera(r)               -- dove sta la bandierina a scacchi (o nil)
+--   local i = missioni.bersaglio(r)                 -- nelle lezioni, il robot da colpire adesso (o nil)
 --   local w = missioni.scheda(r)                    -- la scheda d'arma da aprire adesso (una volta), o nil
 --   local z = missioni.zoom(r)                      -- il livello della camera che il passo vuole (una volta), o nil
 --   local testo, chi = missioni.riga(r)             -- il suggerimento da mostrare sopra il robot chi (o nil)
@@ -56,7 +57,10 @@
 --   (Sergio, 30 ott): si usa solo quello che il passo dice (solo, sotto); se il
 --   tempo sta per finire si ferma a un secondo finché non lo fai; un colpo a
 --   vuoto si ridà subito (con tempo: si torna dove eri quando hai colpito);
---   chi cade rinasce dove è partito
+--   chi cade rinasce com'era all'ultimo passo fatto, globi compresi (i bersagli
+--   dove sono partiti; quello abbattuto che non serve più a nessun passo resta
+--   giù); se il passo si fa solo coi globi e non ne hai più, Ritenta e torni com'eri.
+--   Le schede (sotto) si aprono quando il colpo del passo è arrivato
 --   regole: altre opts di game.new; secondi: durata della partita; globi: con
 --     quanti teletrasporti parte il giocatore; vita, punti = { [robot] = n } all'inizio;
 --     rigenera = { robot, ... }: a ogni turno tornano con la vita piena
@@ -109,6 +113,8 @@ local GIOCATORE = M.GIOCATORE
 local RIGA_SECONDI = 5
 -- senza_tempo: un attacco è finito quando niente vola e il giocatore è fermo da tanti tick
 local MANCATO_TICK = 45
+-- la scheda di un'arma si apre questi tick dopo che il colpo del passo è arrivato
+local SCHEDA_DOPO = 24
 -- da quanto sopra il terreno cadono le casse delle missioni
 local CASSA_SOPRA = 280
 local RITENTA = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
@@ -222,7 +228,7 @@ end
 function M.nuova(id)
 	local l = assert(PER_ID[id], "missione sconosciuta: " .. tostring(id))
 	return { l = l, st = { turni = 0, turni_bot = 0, passi = {}, volte = {}, conta = {}, toccati = {} },
-		viste = {}, prese = {}, cadute = {}, aperte = {}, schede = {}, riga = nil, esito = nil }
+		viste = {}, prese = {}, cadute = {}, aperte = {}, attese = {}, schede = {}, giu = {}, riga = nil, esito = nil }
 end
 
 -- seme, mappa e opzioni di game.new. picks: i giocatori usciti dal draft
@@ -447,6 +453,47 @@ local function conta(st, k)
 	st.conta[k] = (st.conta[k] or 0) + 1
 end
 
+-- Quanto è avanti l'obiettivo: i passi fatti e le volte contate
+local function avanti(st)
+	local n = fatti(st)
+	for _, v in pairs(st.volte) do n = n + v end
+	return n
+end
+
+-- Manca un passo da abbattere?
+local function abbattere(l, st)
+	for i, p in ipairs(l.obiettivo) do
+		if not st.passi[i] and p.abbatti then return true end
+	end
+	return false
+end
+
+-- Un passo che manca deve ancora colpire o abbattere quel robot? (per "nemico",
+-- solo se non resta nessun altro nemico in piedi)
+local function serve(l, st, g, robot)
+	for i, p in ipairs(l.obiettivo) do
+		local chi = not st.passi[i] and (p.colpisci or p.abbatti)
+		if chi == robot then return true end
+		if chi == "nemico" then
+			local altri = false
+			for j, rb in ipairs(g.robots) do
+				if j ~= robot and not rb.dead and nemici(g, GIOCATORE, j) then altri = true end
+			end
+			if not altri then return true end
+		end
+	end
+	return false
+end
+
+-- Lezioni: torna com'eri all'ultimo passo fatto (r.salvo): dove eri e i globi
+-- che avevi, così un globo sprecato non lascia senza la mossa che serve
+local function ripristina(r, g)
+	local rb, s = g.robots[GIOCATORE], r.salvo
+	if not rb.dead then rb.x, rb.y, rb.vx, rb.vy = s.x, s.y, 0, 0 end
+	rb.teleports_left = math.max(rb.teleports_left, s.globi)
+	if r.st.turni == s.turno then g.teleports = math.min(g.teleports, s.lanciati) end
+end
+
 function M.evento(r, g, e, bots)
 	local l, st = r.l, r.st
 	if ATTACCHI[e.type] and e.robot == GIOCATORE then
@@ -475,6 +522,9 @@ function M.evento(r, g, e, bots)
 		conta(st, "teletrasporti")
 	elseif e.type == "teleports" and e.robot == GIOCATORE then
 		st.conta.globi = (st.conta.globi or 0) + e.amount
+	elseif e.type == "respawn" and l.riprova and e.robot == GIOCATORE and r.salvo then
+		-- nelle lezioni chi gioca rinasce com'era all'ultimo passo fatto, globi compresi
+		ripristina(r, g)
 	elseif e.type == "respawn" and l.riprova and l.spawns and l.spawns[e.robot] then
 		-- nelle lezioni si rinasce dove si è partiti, non in un posto a caso
 		-- dell'arena (un bersaglio a caso finirebbe in mezzo alla strada)
@@ -496,7 +546,16 @@ function M.evento(r, g, e, bots)
 		end
 		st.distacco = me - altri
 	end
+	local prima = avanti(st)
 	controlla(r, g, e)
+	-- lezioni e bersagli fermi: abbattuto da te, se non serve più resta giù
+	-- (Sergio, 30 ott: l'isola del Il turno, i bersagli di Giù dal bordo). Se
+	-- c'è da abbattere, solo se è contato (buttato nel vuoto): se no torna al suo posto
+	local fermo = l.giocatori[e.robot] and l.giocatori[e.robot].dummy
+	if e.type == "death" and (l.riprova or fermo) and e.by == GIOCATORE and e.robot ~= GIOCATORE
+		and not serve(l, st, g, e.robot) and (avanti(st) > prima or not abbattere(l, st)) then
+		r.giu[e.robot] = true
+	end
 	if r.esito then return end
 	-- lezioni: a ogni tuo turno e quando rinasci l'obiettivo si riscrive e il
 	-- tempo aspetta che tocchi i comandi, così c'è il tempo di leggere
@@ -575,6 +634,36 @@ local function tentativo(r, g)
 	end
 end
 
+-- Lezioni: fatto un passo, a terra e fermo, chi gioca si segna com'è (r.salvo:
+-- ci torna se cade o resta senza la mossa che serve). Se il passo si fa solo
+-- coi globi e non ce ne sono più, Ritenta e torna com'era
+local function punto_fermo(r, g, p)
+	local rb = g.robots[GIOCATORE]
+	local vola = g.projectile or g:shards_flying() or #g.orbs > 0
+	if rb.dead or not rb.grounded or vola then
+		r.bloccato = 0
+		return
+	end
+	local n = fatti(r.st)
+	if not r.salvo or r.salvo.passi ~= n then
+		r.salvo = { passi = n, x = rb.x, y = rb.y, globi = rb.teleports_left, lanciati = g.teleports, turno = r.st.turni }
+	end
+	local senza = p and p.permesso and p.permesso("teleport") and not g:can_use("teleport")
+	if senza then
+		for w in pairs(game.WEAPONS) do
+			if not (w == "teleport" or w == "swap" or game.TOOLS[w]) and p.permesso(w) then senza = false end
+		end
+	end
+	r.bloccato = senza and (r.bloccato or 0) + 1 or 0
+	if r.bloccato >= MANCATO_TICK then
+		r.bloccato = 0
+		ripristina(r, g)
+		conta(r.st, "mancati")
+		togli(r)
+		mostra(r, { testo = RITENTA })
+	end
+end
+
 -- Il passo p si può fare adesso? (uno dei comandi che dice si può usare; per
 -- colpire, un attacco: col solo globo il turno va avanti)
 local function si_puo(g, p)
@@ -603,6 +692,13 @@ local function tempo_fermo(r, g, p)
 	if g.window > 0 and g.window < 60 then g.window = 60 end
 end
 
+-- Il robot da colpire o abbattere nel passo da fare (il segnale sopra di lui), o nil
+function M.bersaglio(r)
+	if not r or r.esito or not r.l.riprova then return nil end
+	local _, p = prossimo(r.l, r.st)
+	return p and (p.colpisci or p.abbatti) or nil
+end
+
 -- La bandierina a scacchi del passo da fare (raggiungi con bandiera), o nil
 function M.bandiera(r)
 	local _, p = prossimo(r.l, r.st)
@@ -618,10 +714,32 @@ function M.tick(r, g)
 	if l.riprova and g.current == GIOCATORE then
 		tentativo(r, g)
 		if p and not l.senza_tempo and not r.esito then tempo_fermo(r, g, p) end
+		punto_fermo(r, g, p)
 	end
-	-- le schede delle armi che arrivano senza cassa
+	-- i bersagli che restano giù spariscono quando rinascerebbero
+	for i, rb in ipairs(g.robots) do
+		if r.giu[i] and rb.dead and rb.respawn_in and rb.respawn_in <= 1 then
+			r.giu[i] = nil
+			local di_turno = false
+			for _, o in ipairs(g.order) do di_turno = di_turno or o == i end
+			if di_turno then
+				g:remove(i)
+			else
+				-- i bersagli fermi non hanno turni: spariscono e basta
+				rb.gone, rb.respawn_in = true, nil
+				g:emit({ type = "gone", robot = i })
+			end
+		end
+	end
+	-- le schede delle armi che arrivano senza cassa: quando il colpo che ha
+	-- fatto il passo è arrivato, e un attimo dopo
+	local vola = g.projectile or g.burst or g:shards_flying() or #g.orbs > 0
 	for i, c in ipairs(l.schede or {}) do
 		if not r.aperte[i] and (c.dopo == 0 or st.passi[c.dopo]) then
+			-- (se niente vola, subito)
+			r.attese[i] = vola and 0 or (r.attese[i] or SCHEDA_DOPO - 1) + 1
+		end
+		if not r.aperte[i] and (r.attese[i] or 0) >= SCHEDA_DOPO then
 			r.aperte[i] = true
 			if c.dai then
 				game.dai(g.robots[GIOCATORE], c.arma)

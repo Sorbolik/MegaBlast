@@ -2,6 +2,8 @@
 # cronometro aspetta che tocchi i comandi; il Lanciarune dà i globi (il tempo
 # si ferma prima di perderli); si apre la scheda della Lama e solo la Lama si
 # può usare; poi la camera si allarga e il teletrasporto si accende per l'isola.
+# Sul bersaglio da colpire quattro angoli rossi; quello dell'isola, abbattuto,
+# non rinasce.
 # Barra: Lanciarune 506, Lama 774, TELE 1180 62 (tasto t).
 imposta prova_missione turno
 aspetta_stato modo=local turno=1 fase=aim 8
@@ -10,11 +12,12 @@ foto 01_tempo_fermo                  # dopo 3 s il cronometro è ancora pieno, i
 premi 1
 mira -120 80 0.5                     # il Lanciarune, lontano dal bersaglio: i globi
 aspetta_evento teleports 6
+aspetta_evento explosion 6           # la scheda aspetta che il missile arrivi
 aspetta 1
 foto 02_scheda_lama                  # la scheda della Lama ferma il gioco
 tocca_centro 640 120                 # PROVALA
 aspetta 1
-foto 03_lama_in_luce                 # teletrasporto e baratto spenti
+foto 03_lama_in_luce                 # teletrasporto e baratto spenti, gli angoli rossi sul bersaglio
 premi 2
 mira 80 0 0.3                        # la Lama sul bersaglio accanto
 aspetta_evento sword_hit 4
@@ -25,3 +28,10 @@ mira 170 90 0.5                      # il globo verso l'isola
 aspetta_evento teleport 6
 aspetta 2
 foto 05_isola_arrivato               # la riga dei colpi infiniti
+aspetta_evento turn 40               # il turno dopo (i bersagli fermi non giocano)
+aspetta 1
+cammina destra 1395
+premi 2
+mira 80 0 0.3                        # la Lama sul bersaglio dell'isola: cade
+aspetta 3.5
+foto 06_non_rinasce                  # il bersaglio dell'isola non torna; il baratto in luce
