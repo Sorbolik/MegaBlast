@@ -279,6 +279,8 @@ local GIRONE_1 = {
 		scopo = "Abbatti il bot: un'arma a sinistra e una a destra del cronometro",
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
+		-- le armi che l'Addestramento non presenta si trovano nel girone (Claude)
+		casse = { { dopo = 0, arma = "grenade", x = 620 } },
 		turni = 7,
 		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot" } },
@@ -322,6 +324,7 @@ local GIRONE_1 = {
 		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
 		vita = { [2] = 46 },
 		rigenera = { 2 },
+		casse = { { dopo = 0, arma = "shards", x = 560 } },
 		-- il bot che la prova fa sempre i due attacchi
 		collaudo = { piano = { due_attacchi = true } },
 		turni = 6,

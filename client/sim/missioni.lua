@@ -43,7 +43,7 @@
 --   senza_armi: il giocatore parte senza armi, finché non trova il Lanciarune in una cassa
 --   casse = { { dopo = 2, arma = "missile", x = 1250 }, ... }: fatto il passo dopo
 --     (0: subito), quella cassa cade lì (la scheda di un'arma nuova ferma il gioco:
---     battaglia/scheda.lua). Un'arma a colpi trovata lì torna quando la si può riusare
+--     battaglia/scheda.lua). Nelle lezioni un'arma a colpi trovata lì torna quando la si può riusare
 --   schede = { { dopo = 1, arma = "sword", dai = true } }: fatto il passo dopo si apre
 --     la scheda di quell'arma; dai: e la si ha, senza cassa (Sergio, 30 ott: il
 --     Rampino e il paracadute non si trovano nelle casse)
@@ -639,10 +639,10 @@ function M.tick(r, g)
 			if cr ~= true and gy then cr.y = math.min(cr.y, gy + CASSA_SOPRA) end
 		end
 	end
-	-- un'arma a colpi trovata in una cassa torna appena puoi riattaccare: si
-	-- riprova quanto serve
+	-- lezioni: un'arma a colpi trovata in una cassa torna appena puoi
+	-- riattaccare, si riprova quanto serve (nei gironi la cassa è un colpo solo)
 	local rb = g.robots[GIOCATORE]
-	for _, c in ipairs(l.casse or {}) do
+	for _, c in ipairs(l.riprova and l.casse or {}) do
 		local n = rb.ammo[c.arma]
 		if n == 0 and r.prese[c.arma] and not g.used.primary then rb.ammo[c.arma] = 1 end
 	end

@@ -436,6 +436,14 @@ do
 	missioni.evento(r, g, { type = "turn", robot = 2 })
 	check(rb.hp == 46 and rb.max_hp == 46, "due_mani: il bot si rimette a 46, non alla vita normale")
 end
+-- Le armi che l'Addestramento non presenta: in Primo sangue l'Uovo, in Due
+-- mani le Schegge, in una cassa vicino a te. Camminandoci sopra la prendi,
+-- e il colpo è uno solo (non torna come nelle lezioni)
+for _, m in ipairs({ { "primo_sangue", "grenade" }, { "due_mani", "shards" } }) do
+	local _, r, g = gioca(m[1], function(c) c.cassa(m[2]) end, nil, 60 * 20)
+	local rb = g.robots[1]
+	check(r.prese[m[2]] and rb.ammo[m[2]] == 1, m[1] .. ": la cassa con l'arma nuova si prende camminando")
+end
 -- e chi rinasce rinasce con la vita della missione (Fuori portata: 40)
 for _, l in ipairs(campagna.CAPITOLI[2].missioni) do
 	if l.vita then

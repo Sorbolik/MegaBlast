@@ -62,3 +62,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Baratto del secondo attacco con un tocco solo (prima si teneva premuto). | #94 |
 | 30 ott | Addestramento in sei lezioni: Primi passi, Il turno (anche il baratto), Armi che ti muovono, Attrezzi e paracadute, Punti e Corona, Prima partita (che comincia con la scelta delle armi); ogni arma arriva da una cassa con la sua scheda. | #96 |
 | 30 ott | Tutorial a mossa quasi obbligata: in ogni lezione si accende solo il comando che serve, il tempo si ferma a 1 s finché non lo usi, un tentativo a vuoto ti rimette dov'eri. Il turno solo con Lanciarune e Lama (isola col teletrasporto, baratto); Rampino e paracadute senza casse, niente Bastione né Cecchino; Prima partita senza scelta delle armi. | questa PR |
+| 30 ott | Nel I girone una cassa con l'Uovo (Primo sangue) e una con le Schegge (Due mani): le armi che l'Addestramento non presenta (Claude). | questa PR |

@@ -1,0 +1,14 @@
+# Primo sangue: una cassa vicino a te con l'Uovo, l'arma che l'Addestramento
+# non presenta; presa, si apre la sua scheda.
+imposta prova_missione primo_sangue
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 4                            # la cassa cade (la camera la segue)
+foto 01_cassa
+cammina destra 580
+tieni destra 0.5                     # sulla cassa: la scheda ferma il gioco
+aspetta 1
+foto 02_scheda_uovo
+tocca_centro 640 120                 # PROVALA
+aspetta 0.5
+foto 03_uovo_in_mano
