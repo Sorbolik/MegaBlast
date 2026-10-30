@@ -111,7 +111,12 @@ e le stelle si passano con A.
   contano mai (dal nome), e le levette contano solo dal controller che ha
   premuto un tasto per ultimo. Prima i loro assi finivano sulle levette e la
   mira scattava per un attimo (Sergio, 30 ott, "intorno ai 35 gradi").
-  `c.valore` dice quanto sono premuti i grilletti.
+  `c.valore` dice quanto sono premuti i grilletti. Un grilletto è premuto
+  oltre metà corsa e lasciato solo sotto il 20% (con la potenza dal grilletto:
+  carica oltre il 15%, parte sotto il 6%): senza questo margine un grilletto
+  tenuto a metà tremava fra premuto e lasciato e una pressione sola sparava
+  due volte, con l'arma in mano e con quella dopo (Sergio, 30 ott). Un tasto
+  lasciato conta solo dal controller in uso.
 - `client/ui/ui.lua`: la luce sui bottoni (`ui.tocco` con `ui.PAD`).
 - `client/ui/glifo.lua`: il disegno dei tasti; `client/menu/impostazioni.lua`: la schermata.
 - `client/main/game.gui_script`, tabella `PAD`: cosa fanno i tasti in battaglia.

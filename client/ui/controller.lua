@@ -103,8 +103,15 @@ function M.famiglia(nome)
 end
 -- la levetta sinistra conta come la croce oltre questa spinta (e torna sotto RITORNO)
 local SPINTA, RITORNO = 0.6, 0.4
--- grilletti analogici: premuti oltre metà corsa
-local GRILLETTO = 0.5
+-- grilletti analogici: premuti oltre metà corsa, lasciati solo sotto il 20%.
+-- Senza questo margine un grilletto tenuto attorno a metà corsa tremava fra
+-- premuto e lasciato, e una pressione sola sparava due volte (prima un'arma,
+-- poi quella dopo: Sergio, 30 ott)
+local GRILLETTO, GRILLETTO_TORNA = 0.5, 0.2
+local function premuto(c, nome, v)
+	if nome == "lt" or nome == "rt" then return v > (c.giu[nome] and GRILLETTO_TORNA or GRILLETTO) end
+	return v > 0.5
+end
 -- zona morta dei controller sconosciuti (per quelli noti la mette Defold)
 local MORTA = 0.2
 -- Su Android un controller PlayStation si presenta come tre controller: il
@@ -282,7 +289,7 @@ local function grezzo(c, action)
 	local hat = (action.gamepad_hats or {})[1] or 0
 	local bit = function(b) return math.floor(hat / b) % 2 == 1 end
 	for nome, i in pairs(g.tasti) do
-		local giu = (tasti[i + 1] or 0) > 0.5
+		local giu = premuto(c, nome, tasti[i + 1] or 0)
 		if nome == "su" then giu = giu or cy < -0.5 or bit(1)
 		elseif nome == "giu" then giu = giu or cy > 0.5 or bit(4)
 		elseif nome == "sinistra" then giu = giu or cx < -0.5 or bit(8)
@@ -292,7 +299,7 @@ local function grezzo(c, action)
 	for _, nome in ipairs({ "lt", "rt" }) do
 		if g.assi[nome] then
 			c.valore[nome] = math.max(0, assi[g.assi[nome] + 1] or 0)
-			evento(c, nome, c.valore[nome] > GRILLETTO)
+			evento(c, nome, premuto(c, nome, c.valore[nome]))
 		elseif g.tasti[nome] then
 			c.valore[nome] = tasti[g.tasti[nome] + 1] or 0
 		end
@@ -304,6 +311,10 @@ local function attivo(c, g)
 	if c.attivo == g then return end
 	c.attivo = g
 	for k in pairs(c.mezzi) do c.mezzi[k] = nil end
+	-- i tasti tenuti sull'altro controller non restano giù
+	for k in pairs(c.giu) do
+		if not k:find("^levetta_") then c.giu[k] = nil end
+	end
 	for _, l in ipairs({ c.sx, c.dx, c.crude.sx, c.crude.dx }) do l.x, l.y = 0, 0 end
 end
 
@@ -324,6 +335,8 @@ function M.input(c, action_id, action)
 	-- le levette contano da un controller solo: quello che ha premuto un tasto
 	-- per ultimo (o il primo che si muove)
 	if nome and action.pressed then attivo(c, g) end
+	-- i tasti lasciati contano solo dal controller in uso
+	if nome and c.attivo and c.attivo ~= g then return ev end
 	if asse and c.attivo ~= g then
 		if c.attivo then return ev end
 		attivo(c, g)
@@ -344,7 +357,7 @@ function M.input(c, action_id, action)
 	elseif nome then
 		local v = (not action.released) and (action.value or 1) or 0
 		if c.valore[nome] then c.valore[nome] = v end
-		evento(c, nome, v > ((nome == "lt" or nome == "rt") and GRILLETTO or 0.5))
+		evento(c, nome, premuto(c, nome, v))
 	elseif action_id == CONNESSO then
 		-- un controller che Defold non conosce: lo leggiamo dall'azione grezza
 		c.ignoti[g] = action.gamepad_unknown or nil

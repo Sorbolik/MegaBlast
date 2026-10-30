@@ -680,7 +680,7 @@ ev = controller.input(c, hash("pad_grezzo"), { gamepad = 1, gamepad_buttons = ta
 	gamepad_axis = { 0.1, 0, 0.5, -0.5, 0, 1, 0, -1 } })
 local nomi = {}
 for _, e in ipairs(ev) do nomi[#nomi + 1] = e.nome end
-check(table.concat(nomi, " ") == "a su y", "controller sconosciuto: A, Y e la croce in su (RT era già giù), in ordine di nome")
+check(table.concat(nomi, " ") == "a rt su y", "controller sconosciuto: A, Y, la croce in su e RT (premuto su questo controller: quello di prima non conta più), in ordine di nome")
 check(c.sx.x == 0 and math.abs(c.dx.x - 0.5) < 1e-9 and math.abs(c.dx.y + 0.5) < 1e-9, "controller sconosciuto: zona morta e levetta destra, capovolta su Android")
 check(controller.new("Darwin").grezzi == nil, "controller: sul computer i grezzi non si leggono")
 ev = controller.input(c, hash("pad_a"), { gamepad = 1, pressed = true, value = 1 })
@@ -703,6 +703,19 @@ check(math.abs(ps.dx.x - 0.8) < 1e-9, "controller: le levette di un altro contro
 controller.input(ps, hash("pad_a"), { gamepad = 3, pressed = true, value = 1 })
 controller.input(ps, hash("pad_dx_destra"), { gamepad = 3, value = 0.3 })
 check(math.abs(ps.dx.x - 0.3) < 1e-9, "controller: premuto un tasto, contano le sue")
+-- il grilletto che trema attorno a metà corsa non si preme due volte (Sergio:
+-- una pressione sparava anche con l'arma dopo)
+local tr = controller.new("Android")
+local function rt(v, gp)
+	local e = controller.input(tr, hash("pad_rt"), { gamepad = gp or 0, value = v, released = v == 0, pressed = v > 0 and not tr.giu.rt })
+	local n = {}
+	for _, x in ipairs(e) do n[#n + 1] = (x.premuto and "+" or "-") .. x.nome end
+	return table.concat(n, " ")
+end
+local seq = { rt(0.8), rt(0.45), rt(0.6), rt(0.3), rt(0.55), rt(0.1), rt(0) }
+check(table.concat(seq, ",") == "+rt,,,,,-rt,", "controller: il grilletto si preme oltre metà e si lascia sotto il 20%")
+rt(0.9)
+check(rt(0, 1) == "" and tr.giu.rt, "controller: un altro controller non lascia il grilletto di questo")
 -- le impostazioni: i tasti da cambiare (menu/impostazioni.lua)
 local m = controller.new("Windows")
 check(controller.assegna(m, "spara", "b") and m.tasti.b == "spara" and m.tasti.rt == "baratto",

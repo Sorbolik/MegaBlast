@@ -3164,7 +3164,7 @@ function PAD.mira(self)
 		if grilletto then
 			-- premuto: si carica; lasciato (sotto la soglia): parte
 			local v = PAD.grilletto(self)
-			if v > PAD.SOGLIA then
+			if v > (self.pad_carica and PAD.SOGLIA or PAD.CARICA) then
 				self.pad_carica = true
 			elseif self.pad_carica then
 				PAD.COMANDI.spara(self, PAD.LASCIA_GRILLETTO)
@@ -3176,9 +3176,11 @@ function PAD.mira(self)
 		missioni.tocca(self.missione, "annulla")
 	end
 end
--- il grilletto conta oltre SOGLIA; lasciandolo si spara con la potenza di
--- LASCIA_GRILLETTO secondi prima (il grilletto torna su in un attimo)
-PAD.SOGLIA, PAD.LASCIA_GRILLETTO = 0.06, 0.08
+-- il grilletto carica oltre CARICA e parte quando torna sotto SOGLIA, con la
+-- potenza di LASCIA_GRILLETTO secondi prima (il grilletto torna su in un
+-- attimo); il margine fra le due evita che un grilletto che trema attorno alla
+-- soglia spari due volte con una pressione sola
+PAD.SOGLIA, PAD.CARICA, PAD.LASCIA_GRILLETTO = 0.06, 0.15, 0.08
 
 -- Gli OGGETTI che si vedono, dal basso della colonna
 function PAD.oggetti(self)
