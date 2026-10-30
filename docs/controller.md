@@ -104,10 +104,14 @@ e le stelle si passano con A.
   (Windows e Linux non hanno un ordine standard).
   Su Android gli assi verticali delle levette arrivano capovolti (giù è su):
   `c.su = -1` li raddrizza, per i controller noti e per i grezzi. Un
-  controller letto dai grezzi non conta anche dalle azioni tradotte: una fonte
-  sola, perché due letture che si alternano facevano scattare la mira per un
-  attimo (Sergio, 30 ott, "intorno ai 35 gradi"). `c.valore` dice quanto sono
-  premuti i grilletti.
+  controller letto dai grezzi non conta anche dalle azioni tradotte (una fonte
+  sola). Su Android un controller PlayStation arriva come tre controller: il
+  controller, il touchpad ("Wireless Controller Touchpad", che Defold traduce
+  con gli assi del controller) e i sensori di movimento: touchpad e sensori non
+  contano mai (dal nome), e le levette contano solo dal controller che ha
+  premuto un tasto per ultimo. Prima i loro assi finivano sulle levette e la
+  mira scattava per un attimo (Sergio, 30 ott, "intorno ai 35 gradi").
+  `c.valore` dice quanto sono premuti i grilletti.
 - `client/ui/ui.lua`: la luce sui bottoni (`ui.tocco` con `ui.PAD`).
 - `client/ui/glifo.lua`: il disegno dei tasti; `client/menu/impostazioni.lua`: la schermata.
 - `client/main/game.gui_script`, tabella `PAD`: cosa fanno i tasti in battaglia.

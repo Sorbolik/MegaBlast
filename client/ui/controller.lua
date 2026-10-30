@@ -107,6 +107,20 @@ local SPINTA, RITORNO = 0.6, 0.4
 local GRILLETTO = 0.5
 -- zona morta dei controller sconosciuti (per quelli noti la mette Defold)
 local MORTA = 0.2
+-- Su Android un controller PlayStation si presenta come tre controller: il
+-- controller, il touchpad ("Wireless Controller Touchpad", che Defold conosce
+-- e traduce con gli assi del controller) e i sensori di movimento
+-- ("... Motion Sensors", sconosciuto: arriva dai grezzi). I loro assi
+-- scrivevano sulle levette del controller vero e la mira scattava per un
+-- attimo (Sergio, 30 ott, "intorno ai 35 gradi"). Questi non contano mai.
+local FINTI = { "touchpad", "motion", "sensor", "accel", "gyro" }
+local function finto(nome)
+	nome = string.lower(nome or "")
+	for _, parola in ipairs(FINTI) do
+		if nome:find(parola) then return true end
+	end
+	return false
+end
 
 -- Controller sconosciuti: i numeri dei tasti e degli assi (da 0) nell'azione
 -- grezza. Android: gli stessi del controller Xbox e PlayStation in
@@ -134,7 +148,7 @@ local CAPOVOLTO = { Android = true }
 function M.new(sistema)
 	local c = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 }, giu = {}, mezzi = {}, ignoti = {},
 		crude = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 } },
-		grezzi = GREZZI[sistema], ev = {}, su = CAPOVOLTO[sistema] and -1 or 1, famiglia = "xbox", tasti = {},
+		grezzi = GREZZI[sistema], ev = {}, finti = {}, su = CAPOVOLTO[sistema] and -1 or 1, famiglia = "xbox", tasti = {},
 		valore = { lt = 0, rt = 0 } }
 	for t, cmd in pairs(M.BATTAGLIA) do c.tasti[t] = cmd end
 	return c
@@ -285,6 +299,14 @@ local function grezzo(c, action)
 	end
 end
 
+-- Il controller da cui contano le levette; cambiandolo le levette ripartono da ferme
+local function attivo(c, g)
+	if c.attivo == g then return end
+	c.attivo = g
+	for k in pairs(c.mezzi) do c.mezzi[k] = nil end
+	for _, l in ipairs({ c.sx, c.dx, c.crude.sx, c.crude.dx }) do l.x, l.y = 0, 0 end
+end
+
 -- L'ordine degli eventi conta (la simulazione li prova uno a uno): per i tasti
 -- grezzi si ordinano per nome
 local function ordina(a, b) return a.nome < b.nome end
@@ -297,7 +319,15 @@ function M.input(c, action_id, action)
 	local nome = NOMI[action_id]
 	-- un controller letto dai grezzi: le sue azioni tradotte non contano (una
 	-- fonte sola per controller, sennò le due letture si alternano)
-	if (asse or nome) and c.ignoti[action.gamepad or 0] then return ev end
+	local g = action.gamepad or 0
+	if c.finti[g] or ((asse or nome) and c.ignoti[g]) then return ev end
+	-- le levette contano da un controller solo: quello che ha premuto un tasto
+	-- per ultimo (o il primo che si muove)
+	if nome and action.pressed then attivo(c, g) end
+	if asse and c.attivo ~= g then
+		if c.attivo then return ev end
+		attivo(c, g)
+	end
 	if asse then
 		c.mezzi[action_id] = (not action.released and action.value) or 0
 		local l, r = c[asse[1]], c.crude[asse[1]]
@@ -317,12 +347,23 @@ function M.input(c, action_id, action)
 		evento(c, nome, v > ((nome == "lt" or nome == "rt") and GRILLETTO or 0.5))
 	elseif action_id == CONNESSO then
 		-- un controller che Defold non conosce: lo leggiamo dall'azione grezza
-		c.ignoti[action.gamepad or 0] = action.gamepad_unknown or nil
+		c.ignoti[g] = action.gamepad_unknown or nil
+		if finto(action.gamepad_name) then
+			c.finti[g] = true
+			return ev
+		end
 		c.famiglia = M.famiglia(action.gamepad_name)
 		c.connesso = true
 		return ev
 	elseif action_id == GREZZO then
-		if not (c.grezzi and c.ignoti[action.gamepad or 0]) then return ev end
+		if not (c.grezzi and c.ignoti[g]) then return ev end
+		for _, v in pairs(action.gamepad_buttons or {}) do
+			if v > 0.5 then attivo(c, g) end
+		end
+		if c.attivo ~= g then
+			if c.attivo then return ev end
+			attivo(c, g)
+		end
 		grezzo(c, action)
 		levetta_croce(c)
 		table.sort(ev, ordina)

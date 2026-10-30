@@ -400,6 +400,21 @@ def comando(g, riga):
         elif len(a) > 3:
             g.scatta(a[3])
         g.xdo("mouseup", 1)
+    elif c == "mira_arco":
+        # tiene il dito a R pixel dal robot e lo gira da A1 a A2 gradi (in su
+        # positivi) in N passi, con una foto ingrandita a ogni passo, poi lascia
+        import math
+        x, y = g.robot()
+        a1, a2, n, r = num(0), num(1), int(num(2)), num(3, 150)
+        punto = lambda gr: (x + r * math.cos(math.radians(gr)), y + r * math.sin(math.radians(gr)))
+        g.punta(*punto(a1))
+        g.xdo("mousedown", 1)
+        for i in range(n + 1):
+            gr = a1 + (a2 - a1) * i / max(1, n)
+            g.punta(*punto(gr))
+            g.attendi(0.15)
+            g.zoom(f"arco_{i:02d}_{gr:.0f}", num(4, 3))
+        g.xdo("mouseup", 1)
     elif c in ("levetta", "levetta_mira"):
         # dito sulla levetta del movimento (o della mira) del telefono, spostato
         # di (dx, dy) dal punto d'appoggio e tenuto S secondi; facoltativamente
