@@ -251,6 +251,54 @@ do
 		c.tieni(FERMO, 30)
 	end)
 	check(r4.st.passi[2] and r4.st.conta.mancati == 1 and g4.turn_no == 1, "turno: la Lama a vuoto si ritenta nello stesso turno")
+	-- la scheda della Lama aspetta che il missile arrivi, e un attimo dopo
+	local presto, tardi
+	gioca("turno", function(c)
+		c.usa("missile", 2.5, 0.3)
+		c.tieni(FERMO, 2)
+		presto = c.r.aperte[1]
+		c.tieni(FERMO, function(g) return not g.projectile end)
+		c.tieni(FERMO, 30)
+		tardi = c.r.aperte[1]
+	end)
+	check(not presto and tardi, "turno: la scheda della Lama dopo che il missile è arrivato")
+	-- il bersaglio dell'isola abbattuto non rinasce
+	local _, _, g5 = gioca("turno", function(c)
+		turno_isola(c)
+		c.turno()
+		c.tieni(DESTRA, function(g) return g.robots[1].x >= g.robots[3].x - 50 end)
+		c.usa("sword", 0)
+		c.tieni(FERMO, 300)
+	end)
+	check(g5.robots[3].dead and g5.robots[3].gone and not g5.robots[2].dead, "turno: il bersaglio dell'isola abbattuto non rinasce")
+	-- i globi sprecati tornano: buttato nel vuoto, rinasci com'eri coi tuoi globi
+	local _, r6, g6 = gioca("turno", function(c)
+		c.usa("missile", 2.5, 0.3)
+		c.tieni(FERMO, 20)
+		c.usa("sword", 0)
+		c.tieni(FERMO, 60)
+		c.usa("teleport", math.pi - 0.3, 1)
+		c.tieni(FERMO, function(g) return g.robots[1].dead end)
+		c.tieni(FERMO, function(g) return not g.robots[1].dead end)
+		c.tieni(FERMO, 10)
+	end)
+	local rb6 = g6.robots[1]
+	check(r6.st.passi[2] and not r6.st.passi[3] and rb6.teleports_left == 2 and g6:can_use("teleport")
+		and math.abs(rb6.x - r6.salvo.x) < 2, "turno: caduto col globo, rinasci com'eri, coi globi")
+	-- e sprecati senza cadere: Ritenta, e torni com'eri
+	local _, r7, g7 = gioca("turno", function(c)
+		c.usa("missile", 2.5, 0.3)
+		c.tieni(FERMO, 20)
+		c.usa("sword", 0)
+		c.tieni(FERMO, 60)
+		for _ = 1, 2 do
+			c.usa("teleport", math.pi / 2, 0.2)
+			c.tieni(FERMO, function(g) return #g.orbs == 0 and g.robots[1].grounded end)
+		end
+		c.tieni(FERMO, 80)
+	end)
+	check(not r7.st.passi[3] and g7.robots[1].teleports_left == 2 and g7:can_use("teleport")
+		and r7.st.conta.mancati == 1, "turno: senza globi per l'isola, Ritenta e tornano")
 end
 
 -- Armi che ti muovono: il Tonante verso il basso porta sul primo pilastro, il
@@ -318,19 +366,22 @@ check(not r.st.passi[5] and g.robots[1].deaths > 0 and r.prese.parachute, "attre
 
 -- Giù dal bordo: ognuno dei tre bersagli si butta giù dal suo scoglio con un missile solo
 for chi = 2, 4 do
-	local trovato = false
+	local trovato, giu = false, false
 	for a = -0.5, 3.6, 0.05 do
 		for p = 0.2, 1, 0.05 do
 			if not trovato then
-				local _, _, g = gioca("giu_dal_bordo", function(c)
+				local _, r, g = gioca("giu_dal_bordo", function(c)
 					c.usa("missile", a, p)
 					c.tieni(FERMO, 400)
 				end, nil, 420)
 				trovato = g.robots[1].env_kills > 0 and g.robots[chi].deaths > 0
+				-- buttato giù resta giù (Sergio, 30 ott)
+				if trovato then giu = g.robots[chi].gone or r.giu[chi] end
 			end
 		end
 	end
 	check(trovato, "giu_dal_bordo: il bersaglio " .. chi .. " cade con un colpo")
+	check(giu, "giu_dal_bordo: il bersaglio " .. chi .. " buttato giù non rinasce")
 end
 
 -- Giù dal bordo col Rampino: dal bordo della piattaforma l'uncino arriva agli
@@ -371,14 +422,14 @@ ok, r = cerca("punti", function(c, a)
 end, nil, { 310, 350, 20 })
 check(ok, "punti: il Mantice butta giù, il Pugno abbatte chi ha la Corona")
 if ok then check(missioni.quante(missioni.stelle(r)) == 3, "punti: senza sbagliare, tre stelle") end
--- chi cade rinasce dove era partito, non in mezzo alla strada
+-- il bersaglio abbattuto che non serve più resta giù (Sergio, 30 ott)
 esito, r, g = gioca("punti", function(c)
 	c.cassa("bellows")
 	c.tieni(SINISTRA, function(g) return g.robots[1].x <= 330 end)
 	c.usa("bellows", math.pi)
 	c.tieni(FERMO, 300)
 end)
-check(r.st.passi[2] and math.abs(g.robots[2].x - 290) < 5, "punti: il bersaglio buttato giù rinasce al suo posto")
+check(r.st.passi[2] and g.robots[2].gone and g.robots[2].dead, "punti: il bersaglio buttato giù non rinasce")
 esito, r = gioca("punti", function(c)
 	c.cassa("bellows")
 	c.tieni(SINISTRA, 600)

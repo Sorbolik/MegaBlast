@@ -2791,7 +2791,9 @@ function M:step(input)
 	if self.phase == "over" then return end
 	input = input or NO_INPUT
 	self.tick = self.tick + 1
-	if self.match_left > 0 then
+	-- il tempo della partita scende solo nei turni: mentre si aspetta che colpi
+	-- e robot si fermino è fermo (Sergio, 30 ott)
+	if self.match_left > 0 and self.phase ~= "settle" then
 		self.match_left = self.match_left - 1
 		if self.match_left == 0 then
 			self.overtime = true
