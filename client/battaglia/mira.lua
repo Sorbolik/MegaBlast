@@ -14,8 +14,7 @@
 --   90° in alto, negativi in basso, uguali a destra e a sinistra) e la potenza in
 --   percento con una barretta del colore della squadra;
 -- - solo nelle lezioni dell'Addestramento, come aiuto, la traiettoria intera:
---   puntini chiari col bordino scuro alla stessa distanza sullo schermo (il
---   Bastione: il bordo del blocco).
+--   puntini chiari col bordino scuro alla stessa distanza sullo schermo.
 -- Le armi da vicino (M.MISCHIA: Lama, Pugno, Maglio, Affondo, Mantice) non
 -- hanno potenza: niente lancetta, mirino né cartellino ma "bersaglio acceso,
 -- minimale" (Sergio, proposte https://claude.ai/artifact/AfpFkoHGuUdS2eiZmsrpcF):
@@ -26,12 +25,12 @@
 --   mira.mirino(m, x, y, angolo, s, potenza, colore)  -- x, y: la bocca dell'arma nel mondo, s lo zoom
 --   mira.lancetta(m, x, y, angolo, s, potenza, colore) -- uguale, l'altro modo
 --   mira.cartellino(m, x, y, s, gradi, potenza, colore)  -- x, y: dove sta il fondo, nel mondo
---   mira.traiettoria(m, pts, n, s, sagoma)         -- pts[1..n] nel mondo; sagoma: puntini sui punti
+--   mira.traiettoria(m, pts, n, s)                 -- pts[1..n] nel mondo
 --   mira.punta(m, x, y, angolo, s, colore)         -- armi da vicino: x, y la bocca dell'arma
 --   mira.bersagli(m, pos, n, s, colore)            -- anelli ai piedi di pos[1..n] = { x, y }
 --   mira.via(m) / mira.traiettoria_via(m)          -- spegne tutto / solo la traiettoria
 --   mira.gradi(angolo), mira.tacca(potenza)        -- i numeri (senza nodi, per i test)
---   mira.posa(pts, n, passo, max, sagoma, out)     -- dove vanno i puntini (senza nodi)
+--   mira.posa(pts, n, passo, max, out)             -- dove vanno i puntini (senza nodi)
 
 local ui = require "ui.ui"
 
@@ -85,17 +84,8 @@ end
 
 -- Dove vanno i puntini lungo la linea pts[1..n], uno ogni passo (nel mondo),
 -- al massimo max: out[i] = { x, y }; torna quanti sono. La linea parte dalla
--- bocca dell'arma, un passo prima di pts[1]. Con sagoma i puntini stanno
--- proprio sui punti (il bordo del Bastione).
-function M.posa(pts, n, passo, maxn, sagoma, out)
-	if sagoma then
-		for i = 1, math.min(n, maxn) do
-			local o = out[i] or {}
-			o.x, o.y = pts[i].x, pts[i].y
-			out[i] = o
-		end
-		return math.min(n, maxn)
-	end
+-- bocca dell'arma, un passo prima di pts[1].
+function M.posa(pts, n, passo, maxn, out)
 	if n < 2 then return 0 end
 	-- la bocca: un passo prima del primo punto
 	local px, py = 2 * pts[1].x - pts[2].x, 2 * pts[1].y - pts[2].y
@@ -258,8 +248,8 @@ local function sposta(n, x, y, scala)
 	gui.set_scale(n, S)
 end
 
-function M.traiettoria(m, pts, n, s, sagoma)
-	local k = M.posa(pts, n, M.PASSO / s, M.PUNTI, sagoma, m.out)
+function M.traiettoria(m, pts, n, s)
+	local k = M.posa(pts, n, M.PASSO / s, M.PUNTI, m.out)
 	local scala = 1 / s
 	for i = 1, M.PUNTI do
 		local on = i <= k

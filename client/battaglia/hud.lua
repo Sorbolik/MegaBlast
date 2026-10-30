@@ -29,7 +29,7 @@ local max, min, ceil = math.max, math.min, math.ceil
 -- i nomi del cartellino
 M.NOMI = { missile = "LANCIARUNE", grenade = "UOVO DI FIAMMA", shards = "SCIAME DI SCHEGGE", punch = "PUGNO DEL TITANO",
 	sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", bellows = "MANTICE", hook = "RAMPINO",
-	wall = "BASTIONE", teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO" }
+	teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO" }
 
 -- I colori delle fasi del turno, quelli della barra di prima
 M.BIANCO = vmath.vector4(0.92, 0.9, 0.86, 1)

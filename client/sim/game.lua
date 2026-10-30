@@ -184,13 +184,11 @@ M.FREE_WEAPONS = { missile = true, teleport = true }
 for w in pairs(M.SECONDARY) do M.FREE_WEAPONS[w] = true end
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
 -- Oggetti tattici delle casse (anche loro in rb.ammo), il paracadute (uno a
--- partita) e l'attrezzo (uno a turno: Rampino o Bastione, rb.tool, scelto
--- all'inizio della partita): non sono attacchi (config.lua)
+-- partita) e il Rampino (uno a turno, per tutti): non sono attacchi (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
-M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true, wall = true }
-M.DRAFT_TOOLS = { "hook", "wall" }
+M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true }
 -- oggetti che si lanciano mirando (gli altri si usano col tocco)
-M.THROWN = { trampoline = true, hook = true, wall = true }
+M.THROWN = { trampoline = true, hook = true }
 -- tutti i nomi validi di fire.weapon
 M.WEAPONS = { teleport = true, swap = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
@@ -375,8 +373,6 @@ function M.new(seed, map_id, opts)
 			mallet = nil,  -- tick del colpo di Maglio in corso, nil se fermo
 			hooked = nil,  -- appeso alla fune del Rampino: { by = chi tira, left = fune da riavvolgere }
 			hook_shot = nil, -- il suo uncino in volo: { x, y, angle, left = celle che restano }
-			tool = p.tool or opts.tool or "hook", -- l'attrezzo del turno: "hook" (Rampino) o "wall" (Bastione)
-			walls = {},    -- i suoi Bastioni in mappa, dal più vecchio
 			ammo = make_ammo(opts.ammo),
 			-- la secondaria scelta all'inizio della partita, oltre alla Lama (sim/draft.lua)
 			secondary = p.secondary or opts.secondary,
@@ -398,8 +394,6 @@ function M.new(seed, map_id, opts)
 	g.crates = {}
 	g.placed = {}            -- trappole e trampolini posati
 	g.placed_id = 0
-	g.wall_id = 0
-	g.wall_cells = {}        -- cella (indice in terrain.data) -> Bastione che l'ha riempita
 	g.heals = {}             -- cerchi di cura { id, x, y }
 	g.heals_on = opts.heals ~= false
 	g.heal_id = 0
@@ -1525,106 +1519,6 @@ function M:update_hook_shot(rb)
 	end
 end
 
--- Bastione (attrezzo, config.WALL): il rettangolo di celle dove va il blocco,
--- mirando con angle e power. Restituisce cx0, cy0, larghezza e altezza in celle.
-function M:wall_rect(angle, power)
-	local rb = self.robots[self.current]
-	local d = C.WALL.range * math.max(0, math.min(1, power))
-	local x, y = rb.x + math.cos(angle) * d, rb.y + M.DISEGNO_H / 2 + math.sin(angle) * d
-	local w, h = C.WALL.w, C.WALL.h
-	if math.abs(math.sin(angle)) > math.sqrt(0.5) then w, h = h, w end
-	local cw, ch = math.floor(w / M.CELL + 0.5), math.floor(h / M.CELL + 0.5)
-	return math.floor(x / M.CELL - cw / 2 + 0.5), math.floor(y / M.CELL - ch / 2 + 0.5), cw, ch
-end
-
--- La sagoma del blocco per la mira: count punti lungo il bordo
-function M:wall_preview(angle, power, count, pts)
-	pts = pts or {}
-	local cx0, cy0, cw, ch = self:wall_rect(angle, power)
-	local x0, y0, w, h = cx0 * M.CELL, cy0 * M.CELL, cw * M.CELL, ch * M.CELL
-	local per = 2 * (w + h)
-	for i = 1, count do
-		local t = (i - 1) / count * per
-		local pt = pts[i] or {}
-		if t < w then pt.x, pt.y = x0 + t, y0
-		elseif t < w + h then pt.x, pt.y = x0 + w, y0 + t - w
-		elseif t < 2 * w + h then pt.x, pt.y = x0 + w - (t - w - h), y0 + h
-		else pt.x, pt.y = x0, y0 + h - (t - 2 * w - h) end
-		pts[i] = pt
-	end
-	return pts
-end
-
--- Mette (v = 1) o toglie (v = 0) le celle di un Bastione: il rettangolo cx0, cy0,
--- cw, ch e mask, una stringa di "0" e "1" riga per riga dal basso (1: la cella
--- cambia). Serve anche al client online, che rifà sul suo terreno quello che
--- dice l'evento "wall" del server.
-function M.wall_cells(terrain, cx0, cy0, cw, ch, mask, v)
-	local k = 0
-	for cy = cy0, cy0 + ch - 1 do
-		for cx = cx0, cx0 + cw - 1 do
-			k = k + 1
-			if mask:byte(k) == 49 then terrain:set(cx, cy, v) end
-		end
-	end
-end
-
--- Bastione: riempie le celle vuote del rettangolo mirato, tranne quelle addosso a
--- un robot. Il blocco di troppo (oltre config.WALL.max) crolla.
-function M:fire_wall(angle, power)
-	local rb = self.robots[self.current]
-	local cx0, cy0, cw, ch = self:wall_rect(angle, power)
-	rb.facing = math.cos(angle) < 0 and -1 or 1
-	local cell, tw = M.CELL, self.terrain.w
-	self.wall_id = self.wall_id + 1
-	local wall = { id = self.wall_id, x = cx0, y = cy0, w = cw, h = ch }
-	local mask, any = {}, false
-	for cy = cy0, cy0 + ch - 1 do
-		for cx = cx0, cx0 + cw - 1 do
-			local free = cx >= 0 and cy >= 0 and cx < tw and cy < self.terrain.h and self.terrain:get(cx, cy) == 0
-			if free then
-				-- non dentro un robot (la sua capsula, con un pixel di margine)
-				for _, o in ipairs(self.robots) do
-					if not o.dead and (cx + 1) * cell > o.x - M.ROBOT_HALF_W - 1 and cx * cell < o.x + M.ROBOT_HALF_W + 1
-						and (cy + 1) * cell > o.y - 1 and cy * cell < o.y + M.ROBOT_H + 1 then
-						free = false
-						break
-					end
-				end
-			end
-			mask[#mask + 1] = free and "1" or "0"
-			if free then
-				any = true
-				self.wall_cells[cy * tw + cx + 1] = wall.id
-			end
-		end
-	end
-	wall.mask = table.concat(mask)
-	if not any then return end
-	M.wall_cells(self.terrain, cx0, cy0, cw, ch, wall.mask, 1)
-	self:emit({ type = "wall", robot = rb.id, x = cx0, y = cy0, w = cw, h = ch, m = wall.mask, v = 1 })
-	rb.walls[#rb.walls + 1] = wall
-	if #rb.walls > C.WALL.max then self:crumble_wall(rb, table.remove(rb.walls, 1)) end
-end
-
--- Un Bastione crolla: tornano vuote le sue celle ancora piene (quelle scavate nel
--- frattempo, o riempite da un altro Bastione, restano come sono)
-function M:crumble_wall(rb, wall)
-	local tw, mask, k = self.terrain.w, {}, 0
-	for cy = wall.y, wall.y + wall.h - 1 do
-		for cx = wall.x, wall.x + wall.w - 1 do
-			k = k + 1
-			local i = cy * tw + cx + 1
-			local mine = wall.mask:byte(k) == 49 and self.wall_cells[i] == wall.id and self.terrain:get(cx, cy) ~= 0
-			if wall.mask:byte(k) == 49 and self.wall_cells[i] == wall.id then self.wall_cells[i] = nil end
-			mask[k] = mine and "1" or "0"
-		end
-	end
-	local m = table.concat(mask)
-	M.wall_cells(self.terrain, wall.x, wall.y, wall.w, wall.h, m, 0)
-	self:emit({ type = "wall", robot = rb.id, x = wall.x, y = wall.y, w = wall.w, h = wall.h, m = m, v = 0 })
-end
-
 -- Dove sta la mano di chi tira (la fune parte da lì)
 function M.hook_hand(by)
 	return by.x + by.facing * M.MUZZLE * 0.5, by.y + M.SWORD_PIVOT_Y
@@ -2241,15 +2135,15 @@ function M:update_crates()
 			if not rb.dead and not taken
 				and math.abs(rb.x - c.x) <= M.ROBOT_HALF_W + M.CRATE_HALF_W
 				and rb.y < c.y + M.CRATE_H and rb.y + M.ROBOT_H > c.y then
-				-- le armi senza colpi contati, l'attrezzo e il paracadute dalle casse delle
+				-- le armi senza colpi contati, il Rampino e il paracadute dalle casse delle
 				-- lezioni (sim/missioni.lua casse): il Lanciarune a chi non ce l'ha
-				-- (rb.disarmed), la secondaria e l'attrezzo prendono il posto dei loro
+				-- (rb.disarmed), la secondaria prende il posto della sua
 				local w = c.weapon
 				if M.FREE_WEAPONS[w] then
 					rb.disarmed = nil
 					if M.SECONDARY[w] then rb.secondary = w end
-				elseif w == "hook" or w == "wall" then
-					rb.tool = w
+				elseif w == "hook" then
+					-- il Rampino ce l'hanno tutti: la cassa delle lezioni lo fa solo vedere
 				elseif w == "parachute" then
 					rb.parachutes_left = rb.parachutes_left + 1
 				else
@@ -2339,10 +2233,10 @@ function M:use_tool(kind, fire)
 		self:emit({ type = "parachute", robot = rb.id })
 		return
 	end
-	if kind == "hook" or kind == "wall" then
-		-- un attrezzo per turno
+	if kind == "hook" then
+		-- un Rampino per turno
 		self.used.tool = true
-		if kind == "hook" then self:fire_hook(fire.angle) else self:fire_wall(fire.angle, fire.power) end
+		self:fire_hook(fire.angle)
 		return
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
@@ -2517,8 +2411,6 @@ function M:preview(angle, power, count, every, pts, weapon)
 		gravity = M.GRAVITY * M.SHARD_GRAVITY
 	elseif weapon == "sniper" then
 		return self:sniper_preview(x, y, angle, count, pts)
-	elseif weapon == "wall" then
-		return self:wall_preview(angle, power, count, pts)
 	elseif weapon == "eagle" or weapon == "hook" or weapon == "bellows" then
 		local range = (weapon == "eagle" and C.EAGLE or weapon == "hook" and C.HOOK or C.BELLOWS).range
 		return self:ray_preview(x, y, angle, range, count, pts)
@@ -2697,8 +2589,8 @@ function M:can_use(weapon)
 		-- solo in aria
 		if rb.grounded then return false end
 		return rb.parachute or rb.parachutes_left > 0
-	elseif weapon == "hook" or weapon == "wall" then
-		return rb.tool == weapon and not self.used.tool
+	elseif weapon == "hook" then
+		return not self.used.tool
 	elseif weapon == "shield" then
 		return not rb.shield and rb.ammo.shield > 0
 	elseif M.TOOLS[weapon] then

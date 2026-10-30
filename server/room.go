@@ -17,13 +17,10 @@ const (
 
 // Messaggio da un client:
 //
-//	{"t":"hello","v":2,"mode":"1v1"}   primo messaggio: versione del protocollo e modalità
-//	{"t":"hello","v":2,"tok":"..."}    oppure: torno nella partita da cui sono caduto
-//	{"t":"hello","v":2,"mode":"2v2","tool":"wall"}   tool: l'attrezzo dell'assetto, già scelto nel draft
-//	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria, una secondaria e un
-//	                                    attrezzo (l'arma dice la categoria; si cambia fino allo scadere)
-//	{"t":"swap","to":3}                 propone lo scambio delle scelte al compagno 3 (se lui
-//	                                    lo propone a sua volta, lo scambio si fa); "to":0 ritira la proposta
+//	{"t":"hello","v":3,"mode":"1v1"}   primo messaggio: versione del protocollo e modalità
+//	{"t":"hello","v":3,"tok":"..."}    oppure: torno nella partita da cui sono caduto
+//	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria e una secondaria
+//	                                    (l'arma dice la categoria; si cambia fino allo scadere)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
 //	{"t":"leave"}                       esco dalla partita (rotellina in partita): non torno, gli
 //	                                    altri lo sanno subito (vale anche durante la scelta)
@@ -43,8 +40,6 @@ type clientMsg struct {
 	V    int     `json:"v"`
 	Mode string  `json:"mode"`
 	Tok  string  `json:"tok"`
-	Tool string  `json:"tool"`
-	To   int     `json:"to"`
 }
 
 func parseClientMsg(data []byte) (clientMsg, error) {
@@ -75,7 +70,6 @@ type seat struct {
 	away int     // tick passati da disconnesso
 	gone bool    // non torna più
 	team int
-	swap int // posto del compagno a cui propone lo scambio, -1 nessuno
 	in   held
 }
 
@@ -107,11 +101,7 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	r.eng = eng
 	list, err := eng.call("mode_players", lua.LString(mode.Sim))
 	if err == nil {
-		tools := eng.L.NewTable()
-		for _, p := range players {
-			tools.Append(lua.LString(p.tool))
-		}
-		r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), tools)
+		r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim))
 	}
 	var secs lua.LValue
 	if err == nil {
@@ -129,7 +119,7 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	for i, p := range players {
 		team := int(list.(*lua.LTable).RawGetInt(i + 1).(*lua.LTable).RawGetString("team").(lua.LNumber))
 		teams = append(teams, fmt.Sprintf(`{"team":%d}`, team))
-		s := &seat{p: p, tok: srv.newToken(), team: team, swap: -1}
+		s := &seat{p: p, tok: srv.newToken(), team: team}
 		r.seats = append(r.seats, s)
 		srv.sessions.Store(s.tok, seatRef{r, i})
 		p.room.Store(&seatRef{r, i})
@@ -175,21 +165,15 @@ func (r *Room) sendStart(slot int, resume bool) {
 		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players))
 }
 
-// sendDraft manda a un giocatore la scelta delle armi: ventagli, scelte
-// fatte (p, p2, p3), proposte di scambio (sw[i]: il compagno a cui il robot i
-// propone lo scambio, 0 nessuno), tick rimasti, e chi è (you, tok, players:
-// serve anche per tornare se cade adesso).
+// sendDraft manda a un giocatore la scelta delle armi: ventagli, le sue
+// scelte (p, p2: quelle degli altri non si vedono), tick rimasti, e chi è
+// (you, tok, players: serve anche per tornare se cade adesso).
 func (r *Room) sendDraft(slot int) {
-	st, err := r.eng.call("draft_state", r.draft)
+	st, err := r.eng.call("draft_state", r.draft, lua.LNumber(slot+1))
 	if err != nil {
 		return
 	}
 	t := st.(*lua.LTable)
-	sw := r.eng.L.NewTable()
-	for _, s := range r.seats {
-		sw.Append(lua.LNumber(s.swap + 1))
-	}
-	t.RawSetString("sw", sw)
 	t.RawSetString("left", lua.LNumber(r.draftLeft))
 	t.RawSetString("you", lua.LNumber(slot+1))
 	t.RawSetString("tok", lua.LString(r.seats[slot].tok))
@@ -322,37 +306,14 @@ func (r *Room) handle(m roomMsg) {
 	}
 }
 
-// handleDraft: scelte e scambi durante la scelta delle armi. A ogni cambio
-// tutti ricevono le scelte aggiornate.
+// handleDraft: le scelte durante la scelta delle armi. Gli altri non le
+// vedono: la conferma torna solo a chi ha scelto.
 func (r *Room) handleDraft(m roomMsg) {
-	changed := false
-	switch m.msg.T {
-	case "pick":
-		v, _ := r.eng.call("draft_pick", r.draft, lua.LNumber(m.slot+1), lua.LString(m.msg.W))
-		changed = v == lua.LTrue
-	case "swap":
-		to := m.msg.To - 1
-		if to == -1 {
-			changed = r.seats[m.slot].swap != -1
-			r.seats[m.slot].swap = -1
-			break
-		}
-		if to < 0 || to >= len(r.seats) || to == m.slot || r.seats[to].team != r.seats[m.slot].team {
-			return
-		}
-		if r.seats[to].swap == m.slot {
-			// l'altro l'aveva già proposto: lo scambio si fa
-			r.eng.call("draft_swap", r.draft, lua.LNumber(m.slot+1), lua.LNumber(to+1))
-			r.seats[to].swap, r.seats[m.slot].swap = -1, -1
-		} else {
-			r.seats[m.slot].swap = to
-		}
-		changed = true
+	if m.msg.T != "pick" {
+		return
 	}
-	if changed {
-		for i := range r.seats {
-			r.sendDraft(i)
-		}
+	if v, _ := r.eng.call("draft_pick", r.draft, lua.LNumber(m.slot+1), lua.LString(m.msg.W)); v == lua.LTrue {
+		r.sendDraft(m.slot)
 	}
 }
 

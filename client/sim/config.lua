@@ -135,12 +135,6 @@ C.MALLET = { damage = 57, reach = 44, from = math.rad(115), to = math.rad(-100),
 -- la salita si ferma contro il terreno (da sotto, in diagonale) basta essere
 -- entro grab pixel dal punto (dal centro del robot) per salire lo stesso.
 C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 96, grab = 80 }
--- Bastione (attrezzo, uno a turno al posto del Rampino; scelto da Sergio il 29
--- ottobre): posa un blocco di terreno vero w x h pixel nel punto mirato, a
--- range pixel al massimo (la potenza della mira); se si mira più su o più giù
--- di 45 gradi il blocco è in piedi. Si scava come il resto della mappa. Al
--- massimo max blocchi a testa: posando il successivo crolla il più vecchio.
-C.WALL = { w = 48, h = 12, range = 160, max = 2 }
 -- Affondo: scatto nella direzione della mira a speed per ticks tick, passando
 -- attraverso i robot (danno una volta a ognuno). Colpisce chi tocca col corpo
 -- o con la lancia, lunga reach dal centro del corpo. Gradini e gobbe fino a
@@ -189,9 +183,9 @@ C.MAX_PLACED = 8
 -- Scelta d'inizio partita (sim/draft.lua): due ventagli uguali per tutti, uno
 -- di DRAFT_OFFER primarie delle casse e uno delle secondarie (game.DRAFT_SECONDARIES).
 -- Ognuno prende una primaria (ne ha DRAFT_SHOTS colpi) e una secondaria
--- (illimitata). Due compagni non possono prendere la stessa; nel tutti contro
--- tutti i doppioni vanno bene. Allo scadere di DRAFT_SECONDS chi non ha scelto
--- prende la prima arma libera di ogni ventaglio.
+-- (illimitata), prima l'una e poi l'altra; le scelte degli altri non si vedono
+-- e i doppioni vanno bene (Sergio, 30 ottobre 2026). Allo scadere di
+-- DRAFT_SECONDS chi non ha scelto prende la prima arma di ogni ventaglio.
 -- Sergio (24 ottobre 2026): 2 colpi, con 3 turni a testa uno solo si consuma
 -- al primo turno utile.
 C.DRAFT_SECONDS = 15

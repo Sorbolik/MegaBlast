@@ -2,8 +2,7 @@
 -- dell'albero: ricostruzione gratuita fuori dalla partita, 3 assetti salvati).
 -- Due schede:
 --   SET    un set dei Titani per ogni pezzo (sidegrade), tier dalla maestria,
---          bonus a set completo e variante B coi pezzi al tier III; in basso
---          l'attrezzo preferito (Rampino o Bastione), già scelto nel draft;
+--          bonus a set completo e variante B coi pezzi al tier III;
 --   ALBERO i punti abilità nei tre rami (sim/abilita.lua).
 -- A destra le statistiche che ne vengono fuori, rispetto alla base.
 --
@@ -32,11 +31,6 @@ M.STATISTICHE = {
 	{ "burning_blasts", "Colpi brucianti", "sì" },
 }
 local ROMANI = { "I", "II", "III" }
--- gli attrezzi del turno (game.DRAFT_TOOLS): nome e cosa fanno
-M.ATTREZZI = {
-	hook = { "RAMPINO", "tira a te il nemico, o ti porta sulla piattaforma colpita" },
-	wall = { "BASTIONE", "posa un blocco di terreno dove miri: riparo, ponte o gradino" },
-}
 local NOMI_STAT = {}
 for _, s in ipairs(M.STATISTICHE) do NOMI_STAT[s[1]] = string.lower(s[2]) end
 
@@ -119,15 +113,6 @@ local function scheda_set(a, parent)
 		local n = ui.testo(pezzo and effetti(pezzo.pieces[slot.id]) or "nessun pezzo", 770, y, 0.6, c.SPENTO, parent)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
-
-	-- l'attrezzo che il draft propone già scelto
-	ui.testo("ATTREZZO", 110, 40, 0.8, c.TESTO, parent)
-	for i, t in ipairs(game.DRAFT_TOOLS) do
-		local nome = M.ATTREZZI[t]
-		ui.scheda(a.bottoni, 260 + (i - 1) * 138, 40, 130, 46, nome[1], "attrezzo:" .. t, (as.tool or "hook") == t, parent)
-	end
-	local n = ui.testo(M.ATTREZZI[as.tool or "hook"][2], 770 - 138 * 2, 40, 0.6, c.SPENTO, parent)
-	gui.set_pivot(n, gui.PIVOT_W)
 
 	-- bonus del set completo, se quel set ne ha uno
 	local id, top = equip.full_set(as.gear, tiers)
@@ -244,8 +229,6 @@ local function esegui(a, azione)
 			as.tree[x] = as.tree[x] - 1
 			if as.tree[x] == 0 then as.tree[x] = nil end
 		end
-	elseif tipo == "attrezzo" then
-		as.tool = x
 	elseif tipo == "azzera" then
 		as.tree = {}
 	end

@@ -610,12 +610,11 @@ check(mira.tacca(0.94) == 18 and mira.tacca(0.95) == 19 and mira.tacca(1) == 20,
 local linea = {}
 for i = 1, 4 do linea[i] = { x = 40 * i, y = 0 } end
 local out = {}
-local k = mira.posa(linea, 4, 15, 40, false, out)
+local k = mira.posa(linea, 4, 15, 40, out)
 check(k == 11 and out[1].x == 7.5 and math.abs(out[2].x - out[1].x - 15) < 1e-9 and out[k].x <= 160,
 	"mira: un puntino ogni 15 dalla bocca fino in fondo")
-k = mira.posa(linea, 4, 1, 40, false, out)
+k = mira.posa(linea, 4, 1, 40, out)
 check(k <= 40 and k >= 38, "mira: non più di 40 puntini, si allargano")
-check(mira.posa(linea, 4, 15, 40, true, out) == 4 and out[3].x == 120, "mira: il Bastione ha i puntini sui punti")
 local m = mira.nuova()
 check(#m.nodi == 2 * mira.PUNTI + 5 + mira.ANELLI and m.cartello, "mira: puntini, linea, mirino, lancetta, punta, anelli e cartellino")
 mira.cartellino(m, 0, 0, 2, 40, 0.94, vec(1, 0, 0, 1))

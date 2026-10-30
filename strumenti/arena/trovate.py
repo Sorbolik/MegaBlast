@@ -32,7 +32,7 @@ import arena
 
 NOMI = {"missile": "Lanciarune", "grenade": "Uovo", "shards": "Schegge", "sniper": "Cecchino",
         "punch": "Pugno", "sword": "Lama", "eagle": "Tonante", "mallet": "Maglio", "lunge": "Affondo",
-        "bellows": "Mantice", "hook": "Rampino", "wall": "Bastione", "teleport": "globo",
+        "bellows": "Mantice", "hook": "Rampino", "teleport": "globo",
         "parachute": "paracadute", "shield": "scudo"}
 MINIMO = 60     # punti in un turno perché sia una trovata
 RARA = 0.01     # la sua combinazione in meno di un turno su cento

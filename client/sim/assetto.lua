@@ -2,13 +2,11 @@
 -- che ne vengono fuori. Lua puro: il client lo manda al server, che lo
 -- controlla con valid() e passa stats() alla partita (opts.stats[i]).
 --
--- Un assetto: { tree = { [nodo] = gradi }, gear = { mask = "corvo", ... }, variant = "a" | "b",
---               tool = "hook" | "wall" } (l'attrezzo che il draft propone già scelto)
+-- Un assetto: { tree = { [nodo] = gradi }, gear = { mask = "corvo", ... }, variant = "a" | "b" }
 -- Si ricostruisce gratis fuori dalla partita; ogni giocatore ne tiene LOADOUTS.
 
 local abilita = require "sim.abilita"
 local equip = require "sim.equipaggiamento"
-local game = require "sim.game"
 
 local M = {}
 
@@ -18,7 +16,7 @@ M.LOADOUTS = 3
 M.MIN = { max_hp = 1, teleport_ticks = 30, teleports = 0, parachutes = 0 }
 
 function M.new()
-	return { tree = {}, gear = {}, variant = "a", tool = game.DRAFT_TOOLS[1] }
+	return { tree = {}, gear = {}, variant = "a" }
 end
 
 -- Applica i gruppi di effetti (un pezzo, un grado, un bonus): prima le somme,
@@ -62,9 +60,6 @@ function M.valid(a, points)
 		if not known then return false end
 	end
 	if a.variant ~= "a" and a.variant ~= "b" then return false end
-	local tool = a.tool == nil
-	for _, t in ipairs(game.DRAFT_TOOLS) do tool = tool or a.tool == t end
-	if not tool then return false end
 	return abilita.valid(a.tree or {}, points)
 end
 

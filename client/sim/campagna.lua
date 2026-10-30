@@ -137,24 +137,21 @@ local ADDESTRAMENTO = {
 			{ testo = "Una secondaria a partita, oltre alla Lama: la scegli all'inizio", quando = { passo = 8 } },
 		},
 	},
-	-- Attrezzi e paracadute: il Rampino sulla piattaforma, il Bastione per la
-	-- sporgenza, il paracadute per scendere oltre il vuoto, il Cecchino sul
-	-- bersaglio. Un attrezzo a partita: la cassa del Bastione prende il posto
-	-- del Rampino. Niente tempo
+	-- Attrezzi e paracadute: il Rampino sulla piattaforma, il paracadute per
+	-- scendere oltre il vuoto, il Cecchino sul bersaglio. Niente tempo
 	{
 		id = "attrezzi",
 		titolo = "Attrezzi e paracadute",
 		scopo = "Prendi la cassa: dentro c'è un attrezzo per arrivare in alto",
-		arena = { { 200, 0, 900, 150 }, { 900, 300, 320, 30 }, { 1060, 330, 160, 72 }, { 1440, 0, 480, 150 } },
+		arena = { { 200, 0, 900, 150 }, { 900, 300, 320, 30 }, { 1440, 0, 480, 80 } },
 		spawns = { { x = 640, from = 290 }, { x = 1800, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
 		vedi = { "missile", "sword" },
 		senza_tempo = true,
 		casse = {
 			{ dopo = 0, arma = "hook", x = 760 },
-			{ dopo = 3, arma = "wall", x = 960 },
-			{ dopo = 6, arma = "parachute", x = 1140 },
-			{ dopo = 9, arma = "sniper", x = 1580 },
+			{ dopo = 3, arma = "parachute", x = 1140 },
+			{ dopo = 6, arma = "sniper", x = 1580 },
 		},
 		stelle = {
 			bonus = { conta = "mancati", al_massimo = 3, testo = "AL MASSIMO 3 TENTATIVI A VUOTO" },
@@ -164,12 +161,9 @@ local ADDESTRAMENTO = {
 			{ prendi = "hook", testo = "Prendi la cassa" },
 			{ usa = "rampino", testo = "Aggancia il bordo col Rampino" },
 			{ raggiungi = { x = 900, y = 330 }, testo = "Sali sulla piattaforma" },
-			{ prendi = "wall", testo = "Prendi la cassa" },
-			{ usa = "bastione", testo = "Posa un blocco col Bastione" },
-			{ raggiungi = { x = 1060, y = 402 }, testo = "Sali sulla sporgenza" },
 			{ prendi = "parachute", testo = "Prendi la cassa" },
 			{ usa = "paracadute", testo = "Salta nel vuoto e apri il paracadute" },
-			{ raggiungi = { x = 1440, y = 150 }, testo = "Atterra dall'altra parte" },
+			{ raggiungi = { x = 1440, y = 80 }, testo = "Atterra dall'altra parte" },
 			{ prendi = "sniper", testo = "Prendi la cassa" },
 			{ colpisci = 2, con = "sniper", testo = "Colpisci il bersaglio col Cecchino" },
 		},
@@ -178,13 +172,10 @@ local ADDESTRAMENTO = {
 				quando = { passo = 1 }, fino = { tocca = "hook" } },
 			{ testo = "Su un nemico, invece, il Rampino lo tira da te",
 				quando = { passo = 3 } },
-			{ testo = "La sporgenza è troppo alta: col Bastione posa un blocco e usalo come gradino",
-				evidenzia = "wall", quando = { passo = 4 }, fino = { tocca = "wall" } },
-			{ testo = "Un attrezzo a partita: il Bastione ha preso il posto del Rampino", quando = { passo = 5 } },
 			{ testo = "Salta nel vuoto ({salta}) e in aria tocca il paracadute, fra gli OGGETTI",
-				evidenzia = "parachute", ferma = false, quando = { passo = 7 }, fino = { evento = "parachute" } },
+				evidenzia = "parachute", ferma = false, quando = { passo = 4 }, fino = { evento = "parachute" } },
 			{ testo = "Il Cecchino va lontano e dritto: mira il bersaglio", evidenzia = "sniper",
-				quando = { passo = 10 }, fino = { tocca = "sniper" } },
+				quando = { passo = 7 }, fino = { tocca = "sniper" } },
 		},
 	},
 	-- Punti e Corona: i punti si vedono da qui. Il Mantice butta nel vuoto
@@ -231,13 +222,10 @@ local ADDESTRAMENTO = {
 		titolo = "Prima partita",
 		scopo = "Trascina dal diavoletto per mirare, lascia per sparare",
 		guidata = true,
-		-- si comincia scegliendo le armi (Sergio, 30 ott: la scelta appena prima
-		-- della Prima partita; prima era la lezione Armi e draft)
-		draft = true,
 		mappa = "forgia",
 		giocatori = {
-			{ team = 1, pick = "grenade", secondary = "mallet", tool = "hook" },
-			{ team = 2, bot = "tutorial", pick = "grenade", secondary = "mallet", tool = "hook" },
+			{ team = 1, pick = "grenade", secondary = "mallet" },
+			{ team = 2, bot = "tutorial", pick = "grenade", secondary = "mallet" },
 		},
 		-- partita corta: 3 minuti
 		secondi = 180,
@@ -348,7 +336,7 @@ local GIRONE_1 = {
 		-- tutto quello che spinge (Sergio, 29 ottobre 2026): il Cecchino, il Mantice
 		-- e il Rampino, che dal bordo arriva agli scogli e li molla sopra il vuoto
 		giocatori = {
-			{ team = 1, pick = "sniper", secondary = "bellows", tool = "hook" },
+			{ team = 1, pick = "sniper", secondary = "bellows" },
 			{ team = 2, dummy = true }, { team = 2, dummy = true }, { team = 2, dummy = true },
 		},
 		vita = { [2] = 999, [3] = 999, [4] = 999 },
@@ -390,6 +378,8 @@ local GIRONE_1 = {
 		titolo = "Battaglia della Forgia",
 		scopo = "Una partita vera, 2 contro 2: tu e il tuo compagno contro il Fabbro e il cecchino",
 		mappa = "forgia",
+		-- la prima scelta delle armi, guidata, con le armi già viste (Sergio, 30 ott)
+		draft = true,
 		giocatori = {
 			{ team = 1 },
 			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",

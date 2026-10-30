@@ -1,0 +1,25 @@
+# La prima scelta delle armi della campagna, alla Battaglia della Forgia
+# (Sergio, 30 ott): guidata, senza tempo, con le spiegazioni, e finisce con
+# GIOCA (640 70). Carte come in scelta.txt (x = 320, 640, 960; y = 410). La
+# rotellina in alto a sinistra (62 658) apre ESCI accanto (186 658).
+# Nel simulatore si offrono tutte le armi (nel gioco solo quelle già viste).
+imposta prova_missione battaglia_forgia
+
+aspetta_stato modo=scelta 8
+aspetta 0.5
+foto 01_primaria
+tocca 640 410                       # primaria
+aspetta 0.3
+foto 02_secondaria
+tocca 320 410                       # secondaria
+aspetta 0.3
+foto 03_pronto
+tocca 62 658                        # rotellina: si vede ESCI
+aspetta 0.3
+foto 04_rotellina
+tocca 62 658                        # la richiude
+aspetta 0.3
+tocca 640 70                        # GIOCA
+aspetta_stato modo=local 10
+aspetta 1
+foto 05_partita
