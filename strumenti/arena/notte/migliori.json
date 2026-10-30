@@ -1,0 +1,172 @@
+{
+ "spingitore": {
+  "vita_mia": 0.54491,
+  "vita_compagno": 0.89894,
+  "morte": 32.34885,
+  "strada": 0.00129,
+  "teletrasporto": 348.00406,
+  "globo_riparo": 14.19996,
+  "armi": {
+   "punch": 0.94756,
+   "mallet": 0.94756,
+   "lunge": 0.94756,
+   "sword": 0.94756,
+   "sniper": 0.92955,
+   "missile": 0.92955,
+   "grenade": 0.92955,
+   "shards": 0.92955,
+   "eagle": 0.92955,
+   "bellows": 1.31216
+  },
+  "punteggio": {
+   "kill": 61.7575,
+   "trap": 10,
+   "death": -20,
+   "self_death": -30,
+   "crown": 25,
+   "env_kill": 37.8805,
+   "damage": 0.97932,
+   "parry_max": 20,
+   "parry": 0.5,
+   "leader": 1.5
+  },
+  "gen": 5,
+  "vince": 0.5275
+ },
+ "acrobata": {
+  "vita_mia": 0.70662,
+  "vita_compagno": 1.11464,
+  "morte": 95.28458,
+  "strada": 0.00109,
+  "teletrasporto": 96.32058,
+  "globo_riparo": 0.21754,
+  "armi": {
+   "punch": 0.98945,
+   "mallet": 0.98945,
+   "lunge": 0.98945,
+   "sword": 0.98945,
+   "sniper": 0.89393,
+   "missile": 0.89393,
+   "grenade": 0.89393,
+   "shards": 0.89393,
+   "eagle": 0.89393,
+   "bellows": 0.94376
+  },
+  "punteggio": {
+   "kill": 48.617,
+   "trap": 10,
+   "death": -20,
+   "self_death": -30,
+   "crown": 25,
+   "env_kill": 44.6645,
+   "damage": 0.9246,
+   "parry_max": 20,
+   "parry": 0.5,
+   "leader": 1.5
+  },
+  "gen": 5,
+  "vince": 0.4925
+ },
+ "cecchino": {
+  "vita_mia": 0.06166,
+  "vita_compagno": 0.74995,
+  "morte": 17.79768,
+  "strada": 0.01015,
+  "teletrasporto": 346.49663,
+  "globo_riparo": -7.34937,
+  "armi": {
+   "punch": 0.87426,
+   "mallet": 0.87426,
+   "lunge": 0.87426,
+   "sword": 0.87426,
+   "sniper": 2.3869,
+   "missile": 2.3869,
+   "grenade": 2.3869,
+   "shards": 2.3869,
+   "eagle": 2.3869,
+   "bellows": 1.32257
+  },
+  "punteggio": {
+   "kill": 37.5195,
+   "trap": 10,
+   "death": -20,
+   "self_death": -30,
+   "crown": 25,
+   "env_kill": 28.703,
+   "damage": 1.31728,
+   "parry_max": 20,
+   "parry": 0.5,
+   "leader": 1.5
+  },
+  "gen": 5,
+  "vince": 0.4375
+ },
+ "picchiatore": {
+  "vita_mia": 0.3201,
+  "vita_compagno": 2.30686,
+  "morte": 40.80057,
+  "strada": 0.00516,
+  "teletrasporto": 103.12295,
+  "globo_riparo": -16.07669,
+  "armi": {
+   "punch": 1.25867,
+   "mallet": 1.25867,
+   "lunge": 1.25867,
+   "sword": 1.25867,
+   "sniper": 0.57483,
+   "missile": 0.57483,
+   "grenade": 0.57483,
+   "shards": 0.57483,
+   "eagle": 0.57483,
+   "bellows": 1.31735
+  },
+  "punteggio": {
+   "kill": 57.6305,
+   "trap": 10,
+   "death": -20,
+   "self_death": -30,
+   "crown": 25,
+   "env_kill": 85.8,
+   "damage": 1.17782,
+   "parry_max": 20,
+   "parry": 0.5,
+   "leader": 1.5
+  },
+  "gen": 5,
+  "vince": 0.5262
+ },
+ "sopravvissuto": {
+  "vita_mia": 0.09663,
+  "vita_compagno": 4.96953,
+  "morte": 11.56354,
+  "strada": 0.001,
+  "teletrasporto": 308.16235,
+  "globo_riparo": 18.57448,
+  "armi": {
+   "punch": 1.60746,
+   "mallet": 1.60746,
+   "lunge": 1.60746,
+   "sword": 1.60746,
+   "sniper": 1.88202,
+   "missile": 1.88202,
+   "grenade": 1.88202,
+   "shards": 1.88202,
+   "eagle": 1.88202,
+   "bellows": 1.77385
+  },
+  "punteggio": {
+   "kill": 53.7185,
+   "trap": 10,
+   "death": -20,
+   "self_death": -30,
+   "crown": 25,
+   "env_kill": 53.8635,
+   "damage": 1.3961,
+   "parry_max": 20,
+   "parry": 0.5,
+   "leader": 1.5
+  },
+  "gen": 5,
+  "vince": 0.505
+ }
+}
