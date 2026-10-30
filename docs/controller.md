@@ -109,13 +109,19 @@ e le stelle si passano con A.
   controller, il touchpad ("Wireless Controller Touchpad", che Defold traduce
   con gli assi del controller) e i sensori di movimento: touchpad e sensori non
   contano mai (dal nome), e le levette contano solo dal controller che ha
-  premuto un tasto per ultimo. Prima i loro assi finivano sulle levette e la
-  mira scattava per un attimo (Sergio, 30 ott, "intorno ai 35 gradi").
+  premuto un tasto per ultimo.
+  Dalle azioni tradotte si legge solo `action.value`, mai `action.released`:
+  Defold mette released quando un valore scende sotto 0,9 (la sua soglia di
+  "premuto"), non quando torna a zero, e il ritorno a zero arriva comunque
+  col valore 0. Leggerlo come "lasciato" azzerava per un fotogramma il lato
+  della levetta che scendeva sotto 0,9 (la mira scattava sempre allo stesso
+  angolo, 27° o 34° secondo il controller, a destra e a sinistra) e lasciava
+  il grilletto appena cominciava a tornare su (partiva il colpo, poi ancora
+  oltre metà corsa si ripremeva e partiva anche l'arma dopo) (Sergio, 30 ott).
   `c.valore` dice quanto sono premuti i grilletti. Un grilletto è premuto
   oltre metà corsa e lasciato solo sotto il 20% (con la potenza dal grilletto:
   carica oltre il 15%, parte sotto il 6%): senza questo margine un grilletto
-  tenuto a metà tremava fra premuto e lasciato e una pressione sola sparava
-  due volte, con l'arma in mano e con quella dopo (Sergio, 30 ott). Un tasto
+  tenuto a metà poteva tremare fra premuto e lasciato. Un tasto
   lasciato conta solo dal controller in uso.
 - `client/ui/ui.lua`: la luce sui bottoni (`ui.tocco` con `ui.PAD`).
 - `client/ui/glifo.lua`: il disegno dei tasti; `client/menu/impostazioni.lua`: la schermata.

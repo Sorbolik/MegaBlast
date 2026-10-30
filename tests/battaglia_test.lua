@@ -716,6 +716,26 @@ local seq = { rt(0.8), rt(0.45), rt(0.6), rt(0.3), rt(0.55), rt(0.1), rt(0) }
 check(table.concat(seq, ",") == "+rt,,,,,-rt,", "controller: il grilletto si preme oltre metà e si lascia sotto il 20%")
 rt(0.9)
 check(rt(0, 1) == "" and tr.giu.rt, "controller: un altro controller non lascia il grilletto di questo")
+-- Defold mette released quando un valore scende sotto 0,9, non quando torna a
+-- zero: non vuol dire lasciato (Sergio: la mira scattava sempre allo stesso
+-- angolo e una pressione sparava due volte)
+local dv = controller.new("Android")
+controller.input(dv, hash("pad_dx_destra"), { value = 1, pressed = true })
+controller.input(dv, hash("pad_dx_su"), { value = 0.3 })
+controller.input(dv, hash("pad_dx_destra"), { value = 0.85, released = true })
+check(math.abs(dv.dx.x - 0.85) < 1e-9, "controller: la levetta sotto 0,9 non torna a zero (la mira non scatta)")
+controller.input(dv, hash("pad_dx_destra"), { value = 0 })
+check(dv.dx.x == 0, "controller: tornata a zero, zero")
+local function rt2(v, extra)
+	local a = { value = v }
+	for k, x in pairs(extra or {}) do a[k] = x end
+	local e = controller.input(dv, hash("pad_rt"), a)
+	local n = {}
+	for _, x in ipairs(e) do n[#n + 1] = (x.premuto and "+" or "-") .. x.nome end
+	return table.concat(n, " ")
+end
+local seq2 = { rt2(0.6), rt2(1, { pressed = true }), rt2(0.85, { released = true }), rt2(0.6), rt2(0.3), rt2(0.1), rt2(0) }
+check(table.concat(seq2, ",") == "+rt,,,,,-rt,", "controller: il grilletto che torna su si lascia una volta sola, sotto il 20%")
 -- le impostazioni: i tasti da cambiare (menu/impostazioni.lua)
 local m = controller.new("Windows")
 check(controller.assegna(m, "spara", "b") and m.tasti.b == "spara" and m.tasti.rt == "baratto",

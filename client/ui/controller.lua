@@ -342,7 +342,14 @@ function M.input(c, action_id, action)
 		attivo(c, g)
 	end
 	if asse then
-		c.mezzi[action_id] = (not action.released and action.value) or 0
+		-- conta solo action.value: Defold mette released quando il valore scende
+		-- sotto 0,9 (la soglia di "premuto"), non quando torna a zero. Leggerlo
+		-- come "lasciato" azzerava per un fotogramma il lato della levetta che
+		-- scendeva sotto 0,9: girando la levetta tutta spinta la mira scattava
+		-- sempre allo stesso angolo, diverso per ogni controller (Sergio, 30 ott:
+		-- 34° e 27°, a destra e a sinistra). Il ritorno a zero arriva da sé col
+		-- valore 0 (Defold manda l'asse che cambia anche a 0).
+		c.mezzi[action_id] = action.value or 0
 		local l, r = c[asse[1]], c.crude[asse[1]]
 		local piu, meno
 		for id, a in pairs(AZIONI) do
@@ -355,7 +362,11 @@ function M.input(c, action_id, action)
 		l.x, l.y = r.x / m, r.y / m
 		if asse[1] == "sx" then levetta_croce(c) end
 	elseif nome then
-		local v = (not action.released) and (action.value or 1) or 0
+		-- come per le levette: il valore vero, non released (che per un
+		-- grilletto arriva appena scende sotto 0,9: lì lo davamo per lasciato,
+		-- partiva il colpo, e subito dopo, ancora oltre metà corsa, si ripremeva
+		-- e partiva anche l'arma dopo, quella che si equipaggia da sola)
+		local v = action.value or (action.released and 0 or 1)
 		if c.valore[nome] then c.valore[nome] = v end
 		evento(c, nome, premuto(c, nome, v))
 	elseif action_id == CONNESSO then
