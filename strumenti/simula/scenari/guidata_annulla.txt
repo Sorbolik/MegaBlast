@@ -2,11 +2,6 @@
 # dito tocca la metà destra dello schermo; il tempo aspetta che lo provi.
 imposta comandi telefono
 imposta prova_missione guidata
-aspetta_stato modo=scelta 8
-aspetta 1.5
-tocca 640 525                       # primaria (il Pugno l'ha preso il bot)
-aspetta 0.3
-tocca 380 350                       # secondaria
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 levetta_mira -40 40 2 01_annulla     # mirando: il dito e l'onda a destra

@@ -231,9 +231,6 @@ local ADDESTRAMENTO = {
 		titolo = "Prima partita",
 		scopo = "Trascina dal diavoletto per mirare, lascia per sparare",
 		guidata = true,
-		-- si comincia scegliendo le armi (Sergio, 30 ott: la scelta appena prima
-		-- della Prima partita; prima era la lezione Armi e draft)
-		draft = true,
 		mappa = "forgia",
 		giocatori = {
 			{ team = 1, pick = "grenade", secondary = "mallet", tool = "hook" },
@@ -390,6 +387,8 @@ local GIRONE_1 = {
 		titolo = "Battaglia della Forgia",
 		scopo = "Una partita vera, 2 contro 2: tu e il tuo compagno contro il Fabbro e il cecchino",
 		mappa = "forgia",
+		-- la prima scelta delle armi, guidata, con le armi già viste (Sergio, 30 ott)
+		draft = true,
 		giocatori = {
 			{ team = 1 },
 			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",

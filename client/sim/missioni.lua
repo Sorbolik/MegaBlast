@@ -209,7 +209,7 @@ function M.partita(r, seed, picks, aiuto)
 		end
 		if aiuto and q.bot then q.bot = PIU_FACILE[q.bot] end
 		if picks and picks[i] then
-			q.pick, q.secondary, q.tool = picks[i].pick, picks[i].secondary, picks[i].tool or q.tool
+			q.pick, q.secondary = picks[i].pick, picks[i].secondary
 		end
 		players[i] = q
 	end

@@ -32,6 +32,7 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 | 29 ott | Roadmap: VPS europeo + SQLite + Litestream + Caddy; account ospite; pannello servito dal Go; GitHub Actions per i test; deploy a script; build anche browser dal nostro server. | docs/roadmap.md |
 | 29 ott | **APK su Telegram in automatico**: GitHub Actions costruisce l'APK a ogni push su main (con l'online, firmato con la chiave di Sergio dai segreti del repository) e il bot @ultrablastbot lo manda a Sergio (Claude). | .github/workflows/apk.yml, docs/setup.md |
 | 29 ott | **Motore Android snello** (Sergio: "ottimizzare senza rinunciare a qualità"): `client/megablast.appmanifest` toglie fisica 2D/3D, Vulkan (resta OpenGL ES), registratore, profiler, particellari, tilemap, image.load e live update; la UI (`/ui/**`) senza mipmap. Grafica e suoni identici (Claude). | client/megablast.appmanifest |
+| 30 ott | **Protocollo 3**: il `hello` non porta più l'attrezzo; il `draft` porta a ognuno solo le sue scelte (`p`, `p2` stringhe), senza `offer3`, `p3`, `pr`, `sw`; niente più messaggio `swap`; lo `start` porta solo `pick` e `secondary`. | questa PR |
 
 ## Scartate
 

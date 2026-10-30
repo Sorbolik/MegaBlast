@@ -140,11 +140,10 @@ function N.draft_seconds()
 	return config.DRAFT_SECONDS
 end
 
--- tools[i]: l'attrezzo dell'assetto del giocatore i (dal suo hello, "" se non lo dice)
-function N.draft_new(seed, mode, tools)
+function N.draft_new(seed, mode)
 	local players = {}
 	for i, p in ipairs(config.MODES[mode]) do
-		players[i] = { team = p.team, tool = tools[i] ~= "" and tools[i] or nil }
+		players[i] = { team = p.team }
 	end
 	return draft.new(seed, players)
 end
@@ -153,26 +152,14 @@ function N.draft_pick(d, i, weapon)
 	return draft.pick(d, i, weapon)
 end
 
-function N.draft_swap(d, i, j)
-	return draft.swap(d, i, j)
-end
-
 function N.draft_finish(d)
 	return draft.finish(d)
 end
 
--- I tre ventagli (offer: primarie, offer2: secondarie, offer3: attrezzi), le
--- scelte fatte finora (p[i], p2[i], p3[i] = scelte del robot i, o ""), pr[i]:
--- l'attrezzo del robot i è solo proposto dall'assetto
-function N.draft_state(d)
-	local picks, picks2, picks3, pr = {}, {}, {}, {}
-	for i = 1, #d.players do
-		picks[i] = d.picks[i] or ""
-		picks2[i] = d.picks2[i] or ""
-		picks3[i] = d.picks3[i] or ""
-		pr[i] = d.proposto[i] or false
-	end
-	return { t = "draft", offer = d.offer, offer2 = d.offer2, offer3 = d.offer3, p = picks, p2 = picks2, p3 = picks3, pr = pr }
+-- I due ventagli (offer: primarie, offer2: secondarie) e le scelte del robot i
+-- (p, p2, o ""): quelle degli altri non si mandano (Sergio, 30 ott)
+function N.draft_state(d, i)
+	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "" }
 end
 
 -- I giocatori della partita per il messaggio start: squadra e scelte del draft,
@@ -180,7 +167,7 @@ end
 function N.start_players(players)
 	local out = {}
 	for i, p in ipairs(players) do
-		out[i] = { team = p.team, pick = p.pick, secondary = p.secondary, tool = p.tool }
+		out[i] = { team = p.team, pick = p.pick, secondary = p.secondary }
 	end
 	return out
 end

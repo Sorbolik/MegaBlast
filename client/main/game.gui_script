@@ -39,7 +39,7 @@ local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
-local PROTOCOL = 2
+local PROTOCOL = 3
 -- Se la connessione cade in partita riproviamo per un po' (il server tiene il
 -- posto per 20 secondi)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
@@ -1211,10 +1211,8 @@ on_socket = function(self, conn, data)
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
 		else
 			show_message(self, "Connesso, in attesa...", true)
-			-- la coda: [megablast] giocatori (1v1, 2v2, ffa) come sullo stesso telefono;
-			-- l'attrezzo dell'assetto parte già scelto nel draft
-			send(self, { t = "hello", v = PROTOCOL, mode = config_string("megablast.giocatori", "1v1"),
-				tool = profilo.assetto_attivo(self.profilo).tool })
+			-- la coda: [megablast] giocatori (1v1, 2v2, ffa) come sullo stesso telefono
+			send(self, { t = "hello", v = PROTOCOL, mode = config_string("megablast.giocatori", "1v1") })
 		end
 	elseif data.event == ws.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
@@ -1279,11 +1277,7 @@ local function start_local(self, contro)
 	local nomi, colori = names_colors(opts.players)
 	self.mode = "scelta"
 	local seed = os.time()
-	-- il primo giocatore parte con l'attrezzo del suo assetto già scelto
-	local scelti = {}
-	for i, p in ipairs(opts.players) do scelti[i] = { team = p.team } end
-	scelti[1].tool = profilo.assetto_attivo(self.profilo).tool
-	local d = draft.new(seed, scelti)
+	local d = draft.new(seed, opts.players)
 	-- i bot scelgono subito: nella scelta resta solo chi gioca
 	for i, p in ipairs(opts.players) do
 		if p.bot then bot.scegli(d, i, seed) end
@@ -1360,10 +1354,13 @@ local function start_missione(self, id, picks)
 		self.missione = r
 		local players = r.l.giocatori
 		local nomi, colori = names_colors(players)
-		-- (nel simulatore sempre le stesse armi proposte: gli scenari sanno dove toccare)
-		local d = draft.new(SIMULA and 1 or os.time(), players)
+		-- solo le armi già viste (nel simulatore tutte e sempre le stesse: gli
+		-- scenari sanno dove toccare)
+		local d = draft.new(SIMULA and 1 or os.time(), players, not SIMULA and profilo.armi_viste(self.profilo) or nil)
+		-- nessuna arma vista da scegliere: si gioca e basta
+		if #d.offer + #d.offer2 == 0 then return start_missione(self, id, {}) end
 		-- bersagli e bot scelgono da soli; il bot della missione tiene le sue
-		-- armi se sono fra quelle proposte (il tutorial fa vedere il Maglio)
+		-- armi se sono fra quelle proposte (il Fabbro il suo Maglio)
 		for i, p in ipairs(players) do
 			if p.dummy or p.bot then
 				bot.scegli(d, i, 1)
@@ -1372,7 +1369,8 @@ local function start_missione(self, id, picks)
 			end
 		end
 		self.mode = "scelta"
-		menu.scelta.show(self.scelta, d, nomi, colori)
+		-- nella campagna la scelta è guidata: senza tempo, spiega di più, finisce con GIOCA
+		menu.scelta.show(self.scelta, d, nomi, colori, true)
 		return
 	end
 	new_match(self, missioni.partita(r, os.time(), picks, profilo.aiuto(self.profilo, id)))
@@ -2869,8 +2867,10 @@ end
 -- ESCI DALLA PARTITA: si torna al menù da cui si era partiti (self.ritorno:
 -- "campagna", "allenamento" o "home")
 local function esci_partita(self)
-	local ritorno = self.mode == "online" and "home" or self.ritorno
-	if self.mode == "online" and self.conn then
+	local online = self.mode == "online" or self.mode == "scelta_online"
+	local ritorno = online and "home" or self.ritorno
+	menu.scelta.hide(self.scelta)
+	if online and self.conn then
 		-- la connessione la chiude il server, dopo aver letto il messaggio
 		-- (chiudendola subito qui potrebbe non partire); se non lo fa, tra un attimo noi
 		local conn = self.conn
@@ -3059,7 +3059,7 @@ function on_input(self, action_id, action)
 		end
 		return true
 	elseif self.mode == "scelta" or self.mode == "scelta_online" then
-		menu.scelta.on_input(self.scelta, action_id, action)
+		if menu.scelta.on_input(self.scelta, action_id, action) == "esci" then esci_partita(self) end
 		return true
 	end
 	-- un tasto spegne le levette (a meno che non le abbia chieste la configurazione)

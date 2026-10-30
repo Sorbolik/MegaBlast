@@ -1312,31 +1312,26 @@ do
 	check(table.concat(d.offer, ",") == table.concat(again.offer, ","), "stesso seme, stesso ventaglio")
 	local w1, w2 = d.offer[1], d.offer[2]
 	check(draft.pick(d, 1, w1), "il primo sceglie")
-	check(not draft.valid(d, 3, w1), "il compagno non può prendere la stessa arma")
-	check(draft.valid(d, 2, w1), "l'avversario sì")
-	check(not draft.pick(d, 1, "teleport"), "solo armi del ventaglio")
-	draft.pick(d, 3, w2)
-	check(draft.swap(d, 1, 3) and d.picks[1] == w2 and d.picks[3] == w1, "i compagni si scambiano le armi")
-	check(not draft.swap(d, 1, 2), "niente scambi con gli avversari")
+	check(draft.pick(d, 3, w1), "anche il compagno può prendere la stessa arma")
+	check(not draft.pick(d, 1, "teleport") and not draft.pick(d, 1, "hook"), "solo armi del ventaglio, niente attrezzi")
+	check(draft.pick(d, 1, w2) and d.picks[1] == w2, "si cambia scelta")
 	local players = draft.finish(d)
-	check(players[2].pick == d.offer[1] and players[4].pick ~= players[2].pick,
-		"allo scadere chi non ha scelto prende la prima arma libera")
+	check(players[2].pick == d.offer[1] and players[4].pick == d.offer[1],
+		"allo scadere chi non ha scelto prende la prima arma del ventaglio")
 	local g = game.new(7, "forgia", { players = players })
 	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in partita l'arma scelta ha i suoi colpi")
+	check(g.robots[1].tool == "hook" and g.robots[2].tool == "hook", "il Rampino ce l'hanno tutti")
 
-	-- il secondo ventaglio: le secondarie, una a testa, illimitate
+	-- il secondo ventaglio: le secondarie, illimitate
 	check(#d.offer2 == math.min(config.DRAFT_OFFER, #game.DRAFT_SECONDARIES) and game.SECONDARY[d.offer2[1]],
 		"il ventaglio delle secondarie")
 	local e = draft.new(9, config.MODES["2v2"])
 	local s1, s2 = e.offer2[1], e.offer2[2]
 	check(not draft.done(e, 1) and draft.pick(e, 1, s1) and not draft.done(e, 1), "la secondaria da sola non basta")
 	check(draft.pick(e, 1, e.offer[1]) and draft.done(e, 1), "primaria e secondaria: ha finito")
-	check(not draft.valid(e, 3, s1) and draft.valid(e, 2, s1), "anche la secondaria del compagno non si prende")
-	draft.pick(e, 3, s2)
-	draft.pick(e, 3, e.offer[2])
-	check(draft.swap(e, 1, 3) and e.picks2[1] == s2 and e.picks[1] == e.offer[2], "lo scambio porta primaria e secondaria")
+	draft.pick(e, 1, s2)
 	local ep = draft.finish(e)
-	check(ep[2].secondary == e.offer2[1] and ep[4].secondary ~= ep[2].secondary, "allo scadere la prima secondaria libera")
+	check(ep[2].secondary == e.offer2[1], "allo scadere la prima secondaria")
 	local eg = game.new(9, "forgia", { players = ep })
 	local r1 = eg.robots[1]
 	check(r1.secondary == s2 and game.has_weapon(r1, s2) and game.has_weapon(r1, "sword") and not game.has_weapon(r1, s1),
@@ -1346,24 +1341,12 @@ do
 	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword") and eg:can_use("missile"),
 		"usata la secondaria scelta, la Lama non si usa più nel turno")
 
-	-- tutti contro tutti: doppioni ammessi
-	local f = draft.new(3, config.MODES.ffa)
-	for i = 1, 4 do draft.pick(f, i, f.offer[1]) end
-	local fp = draft.finish(f)
-	check(fp[1].pick == fp[4].pick, "nel tutti contro tutti i doppioni vanno bene")
-
-	-- il terzo ventaglio: l'attrezzo, già scelto quello dell'assetto, compagni diversi
-	local t = draft.new(5, { { team = 1, tool = "wall" }, { team = 2 }, { team = 1, tool = "wall" }, { team = 2, tool = "wall" } })
-	check(#t.offer3 == #game.DRAFT_TOOLS and t.picks3[1] == "wall" and t.picks3[2] == "hook" and t.picks3[4] == "wall",
-		"l'attrezzo parte già scelto, quello dell'assetto (Rampino senza)")
-	check(t.picks3[3] == "hook", "il compagno con lo stesso attrezzo nell'assetto ha l'altro")
-	check(draft.pick(t, 3, "wall") and t.picks3[1] == "hook", "se lo sceglie lui, il compagno che lo aveva solo proposto passa all'altro")
-	check(draft.pick(t, 1, "hook") and not draft.valid(t, 1, "wall"), "scelto davvero, il compagno non lo può prendere")
-	check(draft.swap(t, 1, 3) and t.picks3[1] == "wall" and t.picks3[3] == "hook", "lo scambio porta anche l'attrezzo")
-	local tp = draft.finish(t)
-	local tg = game.new(5, "forgia", { players = tp })
-	check(tp[1].tool == "wall" and tg.robots[1].tool == "wall" and tg.robots[3].tool == "hook", "in partita l'attrezzo scelto")
-	check(tg:can_use("wall") and not tg:can_use("hook"), "si usa solo il proprio attrezzo")
+	-- la campagna offre solo le armi già viste; un ventaglio vuoto non si sceglie
+	local v = draft.new(3, config.MODES["1v1"], { grenade = true, sniper = true, missile = true })
+	check(#v.offer == 2 and #v.offer2 == 0, "solo le armi viste")
+	check(draft.pick(v, 1, "sniper") and draft.done(v, 1), "senza secondarie viste basta la primaria")
+	local vp = draft.finish(v)
+	check(vp[1].pick == "sniper" and vp[1].secondary == nil and vp[2].pick == v.offer[1], "nessuna secondaria in più")
 end
 
 -- Bastione (attrezzo, config.WALL) ------------------------------------------------

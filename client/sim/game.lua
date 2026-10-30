@@ -184,11 +184,10 @@ M.FREE_WEAPONS = { missile = true, teleport = true }
 for w in pairs(M.SECONDARY) do M.FREE_WEAPONS[w] = true end
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
 -- Oggetti tattici delle casse (anche loro in rb.ammo), il paracadute (uno a
--- partita) e l'attrezzo (uno a turno: Rampino o Bastione, rb.tool, scelto
--- all'inizio della partita): non sono attacchi (config.lua)
+-- partita) e l'attrezzo (uno a turno, rb.tool: il Rampino per tutti; il
+-- Bastione solo nelle lezioni che lo danno): non sono attacchi (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
 M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true, wall = true }
-M.DRAFT_TOOLS = { "hook", "wall" }
 -- oggetti che si lanciano mirando (gli altri si usano col tocco)
 M.THROWN = { trampoline = true, hook = true, wall = true }
 -- tutti i nomi validi di fire.weapon

@@ -180,7 +180,6 @@ do
 	local tutti = true
 	for i = 1, 4 do tutti = tutti and draft.done(d, i) end
 	check(tutti, "scelta: i bot scelgono tutte e due le armi")
-	check(d.picks[1] ~= d.picks[3] and d.picks2[1] ~= d.picks2[3], "scelta: compagni con armi diverse")
 end
 
 -- Le copie su cui pensa il bot non toccano la partita vera

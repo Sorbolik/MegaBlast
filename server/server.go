@@ -18,7 +18,7 @@ import (
 // Versione del protocollo: va cambiata insieme a PROTOCOL in
 // client/main/game.gui_script ogni volta che i messaggi cambiano in modo che
 // un client vecchio non capirebbe.
-const protocolVersion = 2
+const protocolVersion = 3
 
 type Config struct {
 	Node           string // nome del nodo, entra nei gettoni: un bilanciatore può mandare chi torna al nodo giusto
@@ -95,7 +95,6 @@ type Player struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	room      atomic.Pointer[seatRef] // la partita in cui gioca, nil se non gioca
-	tool      string                  // l'attrezzo del suo assetto (dal hello), già scelto nel draft
 	closeOnce sync.Once
 }
 
@@ -195,7 +194,6 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	if !ok {
 		mode = modes["1v1"]
 	}
-	p.tool = m.Tool
 	s.lobby.Join(p, mode)
 	return true
 }

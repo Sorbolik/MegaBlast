@@ -282,7 +282,7 @@ def aspetta_che(g, cond, timeout, cosa):
 PORTA_SERVER = 8090
 
 
-def avvia_server(g, modo, n, propone):
+def avvia_server(g, modo, n):
     """Il server vero e N giocatori finti (strumenti/simula/finti) nella coda modo.
     Lo scenario deve dire al gioco dove sta: imposta server_url ws://127.0.0.1:8090/ws"""
     if g.server:
@@ -298,7 +298,7 @@ def avvia_server(g, modo, n, propone):
                                      stdout=log, stderr=subprocess.STDOUT))
     url = f"ws://127.0.0.1:{PORTA_SERVER}/ws"
     # i finti entrano dopo un attimo: il giocatore vero, che entra subito, è il robot 1
-    argomenti = ["-url", url, "-modo", modo, "-n", str(n), "-attesa", "3s"] + (["-propone"] if propone else [])
+    argomenti = ["-url", url, "-modo", modo, "-n", str(n), "-attesa", "3s"]
     g.server.append(subprocess.Popen([str(bin / "finti"), *argomenti], stdout=log, stderr=subprocess.STDOUT))
 
 
@@ -313,7 +313,7 @@ def comando(g, riga):
     elif c == "aspetta":
         g.attendi(num(0))
     elif c == "server":
-        avvia_server(g, a[0], int(num(1, 1)), len(a) > 2 and a[2] == "propone")
+        avvia_server(g, a[0], int(num(1, 1)))
     elif c == "foto":
         g.scatta(a[0])
     elif c == "zoom":

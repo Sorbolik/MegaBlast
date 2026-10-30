@@ -145,6 +145,23 @@ function M.arma_nuova(p, w)
 	return true
 end
 
+-- Le armi che il giocatore ha già visto: quelle trovate nelle casse e quelle
+-- che le missioni finite gli hanno dato. La scelta delle armi della campagna
+-- offre solo queste (Sergio, 30 ott)
+function M.armi_viste(p)
+	local viste = {}
+	for w in pairs(p.armi) do viste[w] = true end
+	for _, cap in ipairs(require("sim.campagna").CAPITOLI) do
+		for _, l in ipairs(cap.missioni) do
+			local mio = l.giocatori and l.giocatori[1]
+			if mio and p.stelle[l.id] and p.stelle[l.id][1] then
+				for _, w in ipairs({ mio.pick or "", mio.secondary or "" }) do viste[w] = true end
+			end
+		end
+	end
+	return viste
+end
+
 -- Salvataggio --------------------------------------------------------------------
 
 local function file()

@@ -189,9 +189,9 @@ C.MAX_PLACED = 8
 -- Scelta d'inizio partita (sim/draft.lua): due ventagli uguali per tutti, uno
 -- di DRAFT_OFFER primarie delle casse e uno delle secondarie (game.DRAFT_SECONDARIES).
 -- Ognuno prende una primaria (ne ha DRAFT_SHOTS colpi) e una secondaria
--- (illimitata). Due compagni non possono prendere la stessa; nel tutti contro
--- tutti i doppioni vanno bene. Allo scadere di DRAFT_SECONDS chi non ha scelto
--- prende la prima arma libera di ogni ventaglio.
+-- (illimitata), prima l'una e poi l'altra; le scelte degli altri non si vedono
+-- e i doppioni vanno bene (Sergio, 30 ottobre 2026). Allo scadere di
+-- DRAFT_SECONDS chi non ha scelto prende la prima arma di ogni ventaglio.
 -- Sergio (24 ottobre 2026): 2 colpi, con 3 turni a testa uno solo si consuma
 -- al primo turno utile.
 C.DRAFT_SECONDS = 15

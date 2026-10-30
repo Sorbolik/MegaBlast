@@ -1,28 +1,22 @@
 # Scelta d'inizio partita online, 2 contro 2, contro un server vero e tre
 # giocatori finti (strumenti/simula/finti): noi siamo Rosso 1 (entriamo per
-# primi), Rosso 2 è il compagno e ci propone lo scambio appena il draft si apre.
-# Carte come in scelta.txt: primarie y = 525 (x = 380, 640, 900), secondarie
-# y = 350, attrezzi y = 175 (Rampino 510, Bastione 770); il bottone dello
-# scambio sta accanto alla barra del tempo (1110 60).
+# primi). Carte come in scelta.txt: una fila alla volta (x = 320, 640, 960;
+# y = 410), sotto le due scelte fatte (x = 475 e 805, y = 185). Le scelte
+# degli altri non si vedono; finito, si aspetta lo scadere del tempo.
 imposta server_url ws://127.0.0.1:8090/ws
 imposta giocatori 2v2
 
 aspetta 1
-server 2v2 3 propone
+server 2v2 3
 tocca 1075 102                      # GIOCA
 aspetta_stato modo=scelta_online 20
 aspetta 1
-foto 01_proposta                    # Rosso 2 propone lo scambio, il Rampino dell'assetto gia' scelto
-tocca 380 525                       # primaria
-aspetta 0.3
-tocca 380 350                       # secondaria
-aspetta 0.3
-tocca 770 175                       # il Bastione al posto del Rampino
+foto 01_primaria
+tocca 320 410                       # primaria
 aspetta 0.5
-foto 02_scelte
-tocca 1110 60                       # accetta lo scambio: le scelte passano al compagno
-aspetta 0.8
-foto 03_scambio
+tocca 640 410                       # secondaria
+aspetta 0.5
+foto 02_pronto
 aspetta_stato modo=online 25
 aspetta 2
-foto 04_partita
+foto 03_partita
