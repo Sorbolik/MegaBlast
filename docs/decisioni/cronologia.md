@@ -62,3 +62,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 29 ott | Baratto del secondo attacco con un tocco solo (prima si teneva premuto). | #94 |
 | 30 ott | Addestramento in sei lezioni: Primi passi, Il turno (anche il baratto), Armi che ti muovono, Attrezzi e paracadute, Punti e Corona, Prima partita (che comincia con la scelta delle armi); ogni arma arriva da una cassa con la sua scheda. | #96 |
 | 30 ott | Esame dei bot a coppie (prima era storto di 6-8 punti); provati e scartati due attacchi pensati insieme, riparo che guarda la risposta del nemico e il campione della notte: tutti alla pari col bot di oggi. | questa PR |
+| 30 ott | Più calcolo non rende il bot più forte (51% col doppio, 49% con la metà); cinque bot specialisti (spingitore, acrobata, cecchino, picchiatore, sopravvissuto) con gusto per le armi che guida anche la scelta d'inizio partita. | questa PR |
