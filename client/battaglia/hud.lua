@@ -15,8 +15,7 @@
 --   local t = hud.tondo(x, y, d, icona, colore, parent)   -- icona: "<icona>_icona" dell'atlante armi
 --   hud.tondo_numero(t, "2")
 --   local s = hud.scambio()     -- il pulsante che scambia il secondo attacco con un teletrasporto
---   if hud.scambio_update(s, dt, visibile, c) then ... end   -- true: tenuto premuto fino in fondo
---   hud.scambio_premi(s, px, py) / hud.scambio_lascia(s)
+--   hud.scambio_update(s, visibile, c) / if hud.scambio_premi(s, px, py) then ... end
 --   local k = hud.cartellino()
 --   hud.cartellino_su(k, x, y, "LAMA") / hud.cartellino_via(k)
 
@@ -323,60 +322,38 @@ function M.cartellino_via(k)
 	if k.on then gui.set_enabled(k.nodo, false); k.on = false end
 end
 
--- Scambio del secondo attacco con un teletrasporto (Sergio, 29 ottobre: "non
--- deve essere una cosa che uno può fare per sbaglio"): dopo il primo attacco
+-- Scambio del secondo attacco con un teletrasporto: dopo il primo attacco
 -- compare sopra il cronometro un pulsante piccolo con le due frecce che si
--- inseguono e la scritta accanto; scatta solo tenendolo premuto SCAMBIO_TEMPO
--- secondi, mentre un anello chiaro si riempie. Lasciando prima non succede niente.
-local SCAMBIO_TEMPO, SCAMBIO_D = 0.8, 54
+-- inseguono e la scritta accanto; basta un tocco (Sergio, 29 ottobre sera:
+-- prima si teneva premuto).
+local SCAMBIO_D = 54
 
 function M.scambio()
-	local s = { t = nil, on = true }
+	local s = { on = true }
 	s.radice = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(s.radice, false)
 	s.tondo = M.tondo(0, 0, SCAMBIO_D, "scambio", ui.C.VIOLA, s.radice)
-	s.carica = fit(ui.anello(0, 0, SCAMBIO_D + 12, 5, ui.C.LUCE, s.radice))
-	gui.set_euler(s.carica, vmath.vector3(0, 0, 90))
 	local x = SCAMBIO_D / 2 + 10
-	for i, r in ipairs({ { "BARATTA IL SECONDO ATTACCO", 9, ui.C.TESTO }, { "CON UN TELETRASPORTO", -7, ui.C.TESTO },
-		{ "TIENI PREMUTO", -22, ui.C.VIOLA } }) do
-		local n = fit(ui.testo(r[1], x, r[2], 0.5, r[3], s.radice))
+	for _, r in ipairs({ { "BARATTA IL SECONDO ATTACCO", 8 }, { "CON UN TELETRASPORTO", -8 } }) do
+		local n = fit(ui.testo(r[1], x, r[2], 0.5, ui.C.TESTO, s.radice))
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
-	M.scambio_update(s, 0, false)
+	M.scambio_update(s, false)
 	return s
 end
 
 -- c: il cronometro, il pulsante sta sopra il tempo della partita
-function M.scambio_update(s, dt, visibile, c)
+function M.scambio_update(s, visibile, c)
 	if s.on ~= visibile then
 		s.on = visibile
 		gui.set_enabled(s.radice, visibile)
-		if not visibile then s.t = nil end
 	end
-	if not visibile then return false end
-	gui.set_position(s.radice, vmath.vector3(c.x, c.y + M.FUORI + 36 + SCAMBIO_D / 2, 0))
-	if s.t then s.t = s.t + dt end
-	local k = s.t and min(1, s.t / SCAMBIO_TEMPO) or 0
-	gui.set_enabled(s.carica, k > 0)
-	gui.set_fill_angle(s.carica, -360 * k)
-	scala(s.tondo.nodo, 1 + 0.12 * k)
-	if k >= 1 then
-		s.t = nil
-		return true
-	end
-	return false
+	if visibile then gui.set_position(s.radice, vmath.vector3(c.x, c.y + M.FUORI + 36 + SCAMBIO_D / 2, 0)) end
 end
 
--- un dito sul pulsante: comincia a caricare (true se l'ha preso)
+-- un tocco sul pulsante (true se l'ha preso)
 function M.scambio_premi(s, px, py)
-	if not s.on or not gui.pick_node(s.tondo.nodo, px, py) then return false end
-	s.t = 0
-	return true
-end
-
-function M.scambio_lascia(s)
-	s.t = nil
+	return s.on and gui.pick_node(s.tondo.nodo, px, py)
 end
 
 return M
