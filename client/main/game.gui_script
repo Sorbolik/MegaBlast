@@ -95,7 +95,7 @@ for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword",
 	WEAPON_ICON[w] = w .. "_icona"
 end
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
-local WEAPON_FOUND = { grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
+local WEAPON_FOUND = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
 	sniper = "il Cecchino",
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- nomi delle armi nella scelta d'inizio partita
@@ -388,7 +388,9 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.btn_tele.nodo, visible)
 	if not visible and self.guida then self.guida:aggiorna(nil) end
 	self.tele_vede = visible
-	hud.cronometro_on(self.crono, visible)
+	-- le lezioni mostrano il tempo e i punti solo da quando li spiegano (sim/missioni.lua vedi)
+	hud.cronometro_on(self.crono, visible and missioni.vede(self.missione, "tempo"))
+	punteggio.nascondi(self.punti, not missioni.vede(self.missione, "punti"))
 	if not visible then
 		hud.cartellino_via(self.cartellino)
 		gui.cancel_animations(self.annuncio, "color.w")
@@ -433,6 +435,7 @@ local function show_menu(self)
 	set_controls_visible(self, false)
 	show_message(self, "", true)
 	self.missione, self.missione_attesa, self.fine_t = nil, nil, nil
+	if self.bandiera then self.bandiera:mostra(nil) end
 	punteggio.obiettivo(self.punti, nil)
 	for _, r in ipairs(self.robots) do targa.riga(r.targa, "") end
 end
@@ -591,6 +594,7 @@ end
 local function new_match(self, seed, map, opts)
 	-- chi parla lo dice la missione (start_missione), dopo
 	self.parlano = nil
+	if self.carta then self.carta:chiudi(); self.carta = nil end
 	self.ricetta = replay.nuova(seed, map, opts)
 	self.g, self.bots = replay.partita(self.ricetta)
 	-- se sullo schermo c'è già questa mappa intatta (es. quella del menu) non la ridisegnamo
@@ -939,6 +943,14 @@ local function handle_event(self, e)
 	elseif e.type == "crate_pick" then
 		local verbo = (self.mode == "online" and e.robot == self.me) and " hai trovato " or " trova "
 		show_message(self, who_name(self, e.robot) .. verbo .. WEAPON_FOUND[e.weapon] .. "!")
+		-- un'arma nuova in locale: la sua scheda (battaglia/scheda.lua) ferma il
+		-- gioco finché non tocchi PROVALA. Nelle lezioni sempre, se no la prima volta
+		local l = self.missione and self.missione.l
+		if self.mode == "local" and e.robot == 1 and (l or next(self.bots))
+			and (profilo.arma_nuova(self.profilo, e.weapon) or (l and l.aspetta)) then
+			profilo.salva(self.profilo)
+			self.carta = require("battaglia.scheda").apri(e.weapon, self.touch_ui)
+		end
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
@@ -1370,8 +1382,8 @@ local function start_missione(self, id, picks)
 	self.missione, self.missione_attesa = r, nil
 	self.mode = "local"
 	set_controls_visible(self, true)
-	-- il primo turno l'ha già preso missioni.prepara
-	annuncia_turno(self, self.g.current)
+	-- il primo turno l'ha già preso missioni.prepara (senza tempo non ci sono turni da annunciare)
+	if not r.l.senza_tempo then annuncia_turno(self, self.g.current) end
 end
 
 -- La campagna, sul capitolo dell'ultima missione
@@ -1409,6 +1421,10 @@ local function missione_update(self, dt)
 		if scelto then dove = { x = scelto.x, y = scelto.y, d = scelto.d * (scelto.on == 2 and SCELTO or 1) } end
 	end
 	self.guida:aggiorna(cosa, dove, self.touch_ui, self.levette)
+	-- la bandierina a scacchi del passo da fare (battaglia/bandiera.lua), dietro ai diavoletti
+	local bx, by = missioni.bandiera(r)
+	if bx and not self.bandiera then self.bandiera = require("battaglia.bandiera").new(self.mondo, self.robots[1].rig.root) end
+	if self.bandiera then self.bandiera:mostra(bx, by, self.clock) end
 	local testo, chi = missioni.riga(r)
 	-- {salta}: come si salta con i comandi che hai
 	if testo then
@@ -1417,8 +1433,9 @@ local function missione_update(self, dt)
 			or "riporta il mouse sul diavoletto e lascia")
 		testo = testo:gsub("{cammina}", self.touch_ui and "sposta di lato la levetta di sinistra"
 			or "tieni premuto A o D (o le frecce)")
-		testo = testo:gsub("{mira}", self.touch_ui and "spingi la levetta di destra verso il bersaglio e lascia"
-			or "trascina dal diavoletto e lascia")
+		testo = testo:gsub("{mira}", self.touch_ui
+			and "sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo"
+			or "trascina dal diavoletto per sistemare la traiettoria, lascia per far partire il colpo")
 	end
 	for i, rb in ipairs(self.robots) do targa.riga(rb.targa, i == chi and testo or "") end
 	punteggio.obiettivo(self.punti, missioni.obiettivo(r))
@@ -1703,9 +1720,9 @@ end
 
 -- Lo slot si vede? Il paracadute finché ne restano o è già aperto; l'attrezzo
 -- (Rampino o Bastione) sempre. Nelle lezioni solo quello che la lezione usa
--- (l: la missione, sim/missioni.lua vedi).
-local function slot_have(rb, w, l)
-	if l and not missioni.vede(l, w) then return false end
+-- (r: la missione, sim/missioni.lua vedi).
+local function slot_have(rb, w, r)
+	if not missioni.vede(r, w) then return false end
 	if w == "parachute" then
 		return rb.parachute or rb.parachutes_left > 0
 	elseif w == "hook" or w == "wall" then
@@ -1718,7 +1735,7 @@ local function update_bar(self)
 	local rb = bar_robot(self)
 	if not rb then return end
 	local g = self.g
-	local l = self.missione and self.missione.l
+	local l = self.missione
 	-- finiti i colpi (o lanciato il Rampino del turno) si torna al Lanciarune
 	if not slot_have(rb, self.weapon, l) or ((self.weapon == "hook" or self.weapon == "wall") and g.used.tool) then
 		self.weapon = "missile"
@@ -1974,6 +1991,7 @@ local function render(self, dt)
 			st.facing = dir
 		end
 		scoria.set_weapon(r.rig, weapon)
+		scoria.mani_vuote(r.rig, rb.disarmed == true)
 		scoria.update(r.rig, dt, st)
 	end
 
@@ -2153,7 +2171,7 @@ local function render(self, dt)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
 	local bt = self.btn_tele
 	-- nelle lezioni che non parlano di globi il tasto non c'è
-	local tele_vede = self.controls_visible and (not self.missione or missioni.vede(self.missione.l, "teleport"))
+	local tele_vede = self.controls_visible and missioni.vede(self.missione, "teleport")
 	if self.tele_vede ~= tele_vede then
 		gui.set_enabled(bt.nodo, tele_vede)
 		self.tele_vede = tele_vede
@@ -2682,9 +2700,9 @@ function update(self, dt)
 		dt_mondo = 0
 	end
 	self.sc_ox, self.sc_oy = camera.scossa(self.cam, dt)
-	if self.mode == "local" and not self.menu_aperto then
+	if self.mode == "local" and not self.menu_aperto and not self.carta then
 		self.acc = math.min(self.acc + dt_mondo, 0.25)
-		while self.acc >= game.DT and self.mode == "local" do
+		while self.acc >= game.DT and self.mode == "local" and not self.carta do
 			local input = {
 				left = move_left(self),
 				right = move_right(self),
@@ -2876,6 +2894,17 @@ local function pointer_down(self, id, px, py)
 	elseif self.mode ~= "local" and self.mode ~= "online" then
 		return
 	end
+	-- la scheda di un'arma nuova: si chiude con PROVALA, e l'arma resta in mano
+	if self.carta then
+		if self.carta:premi(px, py) then
+			local w = self.carta.arma
+			if not game.TOOLS[w] or game.THROWN[w] then self.weapon = w end
+			self.carta:chiudi()
+			self.carta = nil
+		end
+		self.pointers[id] = "cancelled"
+		return
+	end
 	-- la rotellina: aperta, un tocco su ESCI esce, altrove la richiude e basta
 	if self.menu_aperto then
 		local esci = gui.pick_node(self.btn_esci, px, py)
@@ -2923,13 +2952,15 @@ local function pointer_down(self, id, px, py)
 			self.pointers[id] = "move"
 			pad_press(self.move_pad, id, x, y)
 			move_pad_drag(self, x, y)
-		elseif x > PAD_ZONA.dx and y < PAD_ZONA.y and not self.aim_pad.id and my_turn(self) then
+		elseif x > PAD_ZONA.dx and y < PAD_ZONA.y and not self.aim_pad.id and my_turn(self)
+			-- con qualcosa da lanciare (all'inizio della prima lezione non hai armi)
+			and self.g:can_use(self.tele_armed and "teleport" or self.weapon) then
 			self.pointers[id] = "pad_aim"
 			missioni.tocca(self.missione, "mira")
 			pad_press(self.aim_pad, id, x, y)
 			aim_pad_drag(self, x, y)
 		end
-	elseif my_turn(self) then
+	elseif my_turn(self) and self.g:can_use(self.tele_armed and "teleport" or self.weapon) then
 		-- sul computer si mira dal robot col mouse
 		self.pointers[id] = "aim"
 		missioni.tocca(self.missione, "mira")

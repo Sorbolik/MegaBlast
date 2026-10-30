@@ -1,0 +1,17 @@
+# Primi passi sul telefono: il dito sulla levetta di sinistra, la bandierina,
+# la scheda del Lanciarune con le istruzioni per la levetta e poi la riga che
+# dice "sposta l'analogico... rilascialo". Da provare anche con --schermo 1600x720 e 960x720.
+imposta comandi telefono
+imposta prova_missione primi_passi
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.2
+foto 01_inizio                       # il dito va a destra, la bandierina
+cammina destra 1080 60
+tieni salta 0.15
+cammina destra 1250 15
+aspetta_evento crate_pick 10
+aspetta 0.8
+foto 02_scheda                       # la scheda col testo per la levetta
+tocca_centro 640 120                 # PROVALA
+aspetta 0.8
+foto 03_mira                         # il dito sulla levetta di destra

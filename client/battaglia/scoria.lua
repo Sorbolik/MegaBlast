@@ -508,7 +508,7 @@ function M.reset(s)
 	scale(s.forma, 1, 1)
 	lampo(s, 0)
 	faccia(s, "testa")
-	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], true) end
+	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], not s.vuote) end
 	s.con_arma, s.arma_t = false, ARMA_DA + ARMA_A * math.random()
 	s.arma_a = 0
 	s.face = 1
@@ -815,7 +815,14 @@ function M.set_weapon(s, name)
 	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], false) end
 	s.arma_scelta = name
 	-- da morto l'arma non c'è più
-	gui.set_enabled(s.armi[name], not s.morte)
+	gui.set_enabled(s.armi[name], not s.morte and not s.vuote)
+end
+
+-- A mani vuote (all'inizio della prima lezione non ha armi): l'arma non si vede
+function M.mani_vuote(s, si)
+	if s.vuote == si then return end
+	s.vuote = si
+	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], not s.morte and not si) end
 end
 
 -- Colpo subito: lampo bianco, spinta e inclinazione nella direzione del colpo

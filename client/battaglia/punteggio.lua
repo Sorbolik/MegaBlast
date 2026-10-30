@@ -18,6 +18,7 @@
 --   punteggio.update(p, dt, g, mio)          -- ogni frame; mio: il robot di chi guarda
 --   punteggio.obiettivo(p, testo)            -- nelle missioni: cosa resta da fare, fisso sotto i punti (nil = niente)
 --   punteggio.set_enabled(p, on)
+--   punteggio.nascondi(p, si)                -- le lezioni che non hanno ancora spiegato i punti: resta l'obiettivo
 --
 -- I numeri in volo restano fuori dai gettoni finché non arrivano: il gettone
 -- mostra i punti veri meno quelli ancora in volo, così online (dove i punti
@@ -179,12 +180,20 @@ function M.obiettivo(p, testo)
 	gui.set_enabled(p.obiettivo, p.on and p.obiettivo_on)
 end
 
+-- Le lezioni che non hanno ancora spiegato i punti non li mostrano (sim/missioni.lua vedi)
+function M.nascondi(p, si)
+	p.nascosti = si
+	M.set_enabled(p, p.on)
+end
+
 function M.set_enabled(p, on)
 	p.on = on
-	for t, gt in ipairs(p.gettoni) do gui.set_enabled(gt.radice, on and p.squadre and p.squadre[t] or false) end
-	gui.set_enabled(p.fune, on and p.fune_on or false)
-	gui.set_enabled(p.distacco, on)
-	gui.set_enabled(p.riga, on and p.riga_t > 0)
+	-- l'obiettivo resta anche senza i punti
+	local punti = on and not p.nascosti
+	for t, gt in ipairs(p.gettoni) do gui.set_enabled(gt.radice, punti and p.squadre and p.squadre[t] or false) end
+	gui.set_enabled(p.fune, punti and p.fune_on or false)
+	gui.set_enabled(p.distacco, punti)
+	gui.set_enabled(p.riga, punti and p.riga_t > 0)
 	gui.set_enabled(p.obiettivo, on and p.obiettivo_on)
 	if not on then
 		for _, n in ipairs(p.numeri) do n.attivo = false; gui.set_enabled(n.nodo, false) end
@@ -243,7 +252,7 @@ end
 -- un numero nasce in x, y (schermo); se lo stesso robot ne ha uno appena nato
 -- dallo stesso colpo (danno e uccisione insieme) si somma a quello
 function M.punti(p, e, x, y)
-	if not p.squadre or e.amount == 0 then return end
+	if not p.squadre or p.nascosti or e.amount == 0 then return end
 	local r = e.robot
 	p.volo[r] = (p.volo[r] or 0) + e.amount
 	for _, n in ipairs(p.numeri) do
@@ -272,7 +281,7 @@ end
 
 -- a ogni turno nuovo, il bilancio di quello appena finito
 function M.turno(p, g)
-	if not p.squadre then return end
+	if not p.squadre or p.nascosti then return end
 	local ora = punti_squadre(p, g)
 	local t = p.di_turno
 	if t and p.inizio[t] then
@@ -357,7 +366,7 @@ local function posti(p, v)
 end
 
 function M.update(p, dt, g, mio)
-	if not p.squadre or not p.on then return end
+	if not p.squadre or not p.on or p.nascosti then return end
 	numeri(p, dt, g)
 
 	-- quello che i gettoni mostrano: i punti arrivati, arrotondati

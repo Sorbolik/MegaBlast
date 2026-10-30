@@ -13,7 +13,9 @@
 --   missioni.tocca(r, cosa)                         -- il giocatore ha toccato i comandi (lezioni: parte il tempo; r nil: niente);
 --                                                   cosa: l'arma scelta, "salta", "mira", "annulla" o nil
 --   local cosa = missioni.evidenzia(r)              -- il comando da mettere in luce (o nil)
---   missioni.vede(r.l, arma)                        -- quell'arma (o "teleport", "parachute") si vede nell'HUD?
+--   missioni.vede(r, arma)                          -- quell'arma (o "teleport", "parachute", "tempo",
+--                                                   "punti") si vede nell'HUD? (r nil: tutto)
+--   local x, y = missioni.bandiera(r)               -- dove sta la bandierina a scacchi (o nil)
 --   local testo, chi = missioni.riga(r)             -- il suggerimento da mostrare sopra il robot chi (o nil)
 --   local testo = missioni.obiettivo(r)             -- l'obiettivo che resta, sempre in vista (o nil)
 --   missioni.stelle(r)                              -- { true, false, true }: ogni stella col suo criterio
@@ -31,7 +33,18 @@
 --     battute: chi parla per lui (battaglia/battute.lua; senza, il suo carattere)
 --   vedi = { "missile", "eagle", ... }: le lezioni mostrano solo quello che serve
 --     ("primarie", "secondarie": tutte quelle che hai; "teleport": il tasto e i globi
---     dal tempo; "parachute"): il resto non c'è nemmeno
+--     dal tempo; "parachute"; "tempo": il cronometro; "punti": i punteggi): il
+--     resto non c'è nemmeno. L'interfaccia si scopre a poco a poco (Sergio, 29 ott):
+--     senza vedi si vede tutto, con vedi il cronometro e i punti solo se ci sono.
+--     Un'arma raccolta da una cassa si vede da lì in poi
+--   senza_armi: il giocatore parte senza armi, finché non trova il Lanciarune in una cassa
+--   casse = { { dopo = 2, arma = "missile", x = 1250 }, ... }: fatto il passo dopo
+--     (0: subito), quella cassa cade lì (la scheda di un'arma nuova ferma il gioco:
+--     battaglia/scheda.lua)
+--   senza_tempo: niente tempo e niente turni, il turno è tuo finché non finisci.
+--     Finito un attacco (o il Rampino, il Bastione) si riusa subito; se non ha
+--     colpito nessuno né fatto un passo, "Ritenta" (conta "mancati"). Sergio, 29 ott:
+--     in una lezione non si aspetta mai un turno per riprovare
 --   regole: altre opts di game.new; secondi: durata della partita; globi: con
 --     quanti teletrasporti parte il giocatore; vita, punti = { [robot] = n } all'inizio;
 --     rigenera = { robot, ... }: a ogni turno tornano con la vita piena
@@ -55,13 +68,15 @@
 --
 -- I passi dell'obiettivo (testo: come si legge nella riga dell'obiettivo):
 --   { usa = "globi" | "rampino" | "bastione" | "rimbalzo" | "rinculo" | "paracadute" }
---   { raggiungi = { x = 1200, y = 150 } }   in piedi sopra quella quota, oltre quella x
+--   { raggiungi = { x = 1200, y = 150 }, bandiera = true }   in piedi sopra quella
+--                                           quota, oltre quella x (bandiera: lì c'è la bandierina a scacchi)
+--   { prendi = "missile" }                  raccogli la cassa con quell'arma
 --   { colpisci = 2, con = "sword" | "primaria" | "secondaria" | un'arma }
 --   { abbatti = 2 | "nemico", come = "vuoto", con = arma, volte = 3 }
 --   { vinci = true }                        la partita finisce e la tua squadra ha vinto
 -- Altri verbi (sopravvivi, proteggi...) entrano con le missioni che li usano.
 -- I conteggi per i bonus delle stelle: morti, teletrasporti, vuoto (uccisioni
--- ambientali tue), abbattuti, danni (presi da te).
+-- ambientali tue), abbattuti, danni (presi da te), mancati (senza_tempo).
 
 local game = require "sim.game"
 local maps = require "sim.maps"
@@ -75,12 +90,18 @@ M.GIOCATORE = 1
 local GIOCATORE = M.GIOCATORE
 -- secondi di una riga che non ha un "fino": poi sparisce da sola
 local RIGA_SECONDI = 5
+-- senza_tempo: un attacco è finito quando niente vola e il giocatore è fermo da tanti tick
+local MANCATO_TICK = 45
+local RITENTA = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
 
 -- Quale arma ha appena usato chi: l'evento dell'attacco -> nome dell'arma
 local ATTACCHI = {
 	fire = "missile", grenade = "grenade", shards = "shards", punch = "punch", sniper = "sniper",
 	swing = "sword", eagle = "eagle", mallet = "mallet", lunge = "lunge", bellows = "bellows",
 }
+-- gli eventi del giocatore che consumano l'attacco o l'attrezzo del turno
+local TENTATIVI = { hook_shot = true, wall = true }
+for k in pairs(ATTACCHI) do TENTATIVI[k] = true end
 local CATEGORIE = {
 	primaria = { grenade = true, shards = true, punch = true, sniper = true },
 	secondaria = { eagle = true, mallet = true, lunge = true, bellows = true },
@@ -148,8 +169,10 @@ local function toccato(st, att)
 	return false
 end
 
-function M.vede(l, w)
-	if not l.vedi then return true end
+function M.vede(r, w)
+	local l = r and r.l
+	if not l or not l.vedi then return true end
+	if r.prese and r.prese[w] then return true end
 	local c = categoria(w)
 	for _, v in ipairs(l.vedi) do
 		if v == w or v == c then return true end
@@ -161,7 +184,7 @@ end
 function M.nuova(id)
 	local l = assert(PER_ID[id], "missione sconosciuta: " .. tostring(id))
 	return { l = l, st = { turni = 0, turni_bot = 0, passi = {}, volte = {}, conta = {}, toccati = {} },
-		viste = {}, riga = nil, esito = nil }
+		viste = {}, prese = {}, cadute = {}, riga = nil, esito = nil }
 end
 
 -- seme, mappa e opzioni di game.new. picks: i giocatori usciti dal draft
@@ -191,14 +214,16 @@ function M.partita(r, seed, picks, aiuto)
 		st.teleports = l.globi or st.teleports
 		-- quello che la lezione non mostra non c'è: niente globi (nemmeno dal
 		-- tempo), niente paracadute
-		if not M.vede(l, "teleport") then st.teleports, st.time_orbs = 0, 0 end
-		if not M.vede(l, "parachute") then st.parachutes = 0 end
+		if not M.vede(r, "teleport") then st.teleports, st.time_orbs = 0, 0 end
+		if not M.vede(r, "parachute") then st.parachutes = 0 end
 		players[GIOCATORE].stats = st
 	end
 	local opts = { players = players }
 	for k, v in pairs(l.regole or {}) do opts[k] = v end
 	-- senza casse: le missioni non cambiano col caso
 	if not l.guidata and not opts.crate_every then opts.crate_every = 1000 end
+	-- nelle lezioni niente cerchi di cura che spuntano a caso (Sergio, 29 ott)
+	if l.aspetta then opts.heals = false end
 	return seed or 1, l.mappa, opts
 end
 
@@ -219,11 +244,13 @@ function M.prepara(r, g)
 		end
 	end
 	for i, v in pairs(l.punti or {}) do g.robots[i].points = v end
+	if l.senza_armi then g.robots[GIOCATORE].disarmed = true end
 	g:pop_events()
 	if g.current == GIOCATORE then st.turni = 1 else st.turni_bot = 1 end
 	r.coda = {}
 	r.riga = nil
 	if l.aspetta then r.attesa, r.fermo = true, { timer = g.timer, window = g.window, match = g.match_left } end
+	if l.senza_tempo then r.senza = { timer = g.timer, match = g.match_left } end
 	-- lo scopo finché non si fa la prima cosa
 	-- (nelle lezioni lascia il posto ai suggerimenti appena tocchi i comandi)
 	if l.scopo then
@@ -264,6 +291,8 @@ local function passo_fatto(p, i, st, g, e)
 	elseif p.colpisci then
 		return e ~= nil and e.type == "damage" and e.amount > 0 and bersaglio(g, p.colpisci, e.robot)
 			and arma_ok(p.con, st.arma)
+	elseif p.prendi then
+		return e ~= nil and e.type == "crate_pick" and e.robot == GIOCATORE and e.weapon == p.prendi
 	elseif p.vinci then
 		return e ~= nil and e.type == "over" and e.winner == g.robots[GIOCATORE].team
 	elseif p.abbatti then
@@ -292,6 +321,13 @@ local function obiettivo(l, st, g, e)
 		end
 	end
 	return tutti
+end
+
+-- Quanti passi sono fatti
+local function fatti(st)
+	local n = 0
+	for _ in pairs(st.passi) do n = n + 1 end
+	return n
 end
 
 -- Il primo passo che manca (o nil)
@@ -346,6 +382,8 @@ local function controlla(r, g, e)
 	if r.esito then return end
 	if obiettivo(l, st, g, e) then
 		r.esito = "fatta"
+		-- i suggerimenti non servono più (c'è "Fatta!")
+		togli(r)
 		return
 	end
 	if r.riga and r.riga_fino and quando(r.riga_fino, st, g, e) then togli(r) end
@@ -373,7 +411,15 @@ end
 
 function M.evento(r, g, e, bots)
 	local l, st = r.l, r.st
-	if ATTACCHI[e.type] and e.robot == GIOCATORE then st.arma = ATTACCHI[e.type] end
+	if ATTACCHI[e.type] and e.robot == GIOCATORE then
+		st.arma = ATTACCHI[e.type]
+	end
+	-- senza_tempo: un tentativo, finché non è finito; serve se colpisce qualcuno o fa un passo
+	if l.senza_tempo and TENTATIVI[e.type] and e.robot == GIOCATORE and e.v ~= 0 and not r.tiro then
+		r.tiro = { t = 0, passi = fatti(st) }
+	end
+	if e.type == "damage" and e.amount > 0 and r.tiro and e.robot ~= GIOCATORE then r.tiro.preso = true end
+	if e.type == "crate_pick" and e.robot == GIOCATORE then r.prese[e.weapon] = true end
 	if e.type == "turn" then
 		if e.robot == GIOCATORE then st.turni = st.turni + 1 else st.turni_bot = st.turni_bot + 1 end
 		st.toccati = {}
@@ -441,8 +487,40 @@ function M.evidenzia(r)
 	return r.riga and r.luce or nil
 end
 
+-- senza_tempo: il tempo non passa e il turno non finisce. Finito un
+-- tentativo si riusa tutto; se non è servito a niente, Ritenta
+local function senza_tempo(r, g)
+	local f = r.senza
+	g.timer, g.match_left, g.window = f.timer, f.match, 0
+	local t = r.tiro
+	if not t or r.esito then return end
+	local rb = g.robots[GIOCATORE]
+	local fermo = not (g.projectile or g:shards_flying() or #g.orbs > 0) and (rb.dead or rb.grounded
+		and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch or rb.lunge or rb.mallet or rb.recoil))
+	t.t = fermo and t.t + 1 or 0
+	if t.t < MANCATO_TICK then return end
+	r.tiro = nil
+	g.used.primary, g.used.secondary, g.used.tool = false, false, false
+	if not t.preso and fatti(r.st) == t.passi then
+		conta(r.st, "mancati")
+		togli(r)
+		mostra(r, { testo = RITENTA })
+	end
+end
+
+-- La bandierina a scacchi del passo da fare (raggiungi con bandiera), o nil
+function M.bandiera(r)
+	local _, p = prossimo(r.l, r.st)
+	if p and p.raggiungi and p.bandiera then return p.raggiungi.x, p.raggiungi.y end
+end
+
 function M.tick(r, g)
 	local l, st = r.l, r.st
+	if l.senza_tempo and g.current == GIOCATORE then senza_tempo(r, g) end
+	-- le casse della missione cadono, fatto il loro passo
+	for i, c in ipairs(l.casse or {}) do
+		if not r.cadute[i] and (c.dopo == 0 or st.passi[c.dopo]) then r.cadute[i] = g:spawn_crate(c.arma, c.x) or true end
+	end
 	-- lezioni: finché non tocchi i comandi il tempo del turno e della partita è fermo
 	if r.attesa and g.current == GIOCATORE then
 		r.fermo = r.fermo or { timer = g.timer, window = g.window, match = g.match_left }

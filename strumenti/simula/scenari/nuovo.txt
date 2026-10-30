@@ -1,9 +1,9 @@
 # Un giocatore nuovo (imposta prova_nuovo 1) tocca GIOCA: va alla prima delle
-# basi dell'Addestramento, Camminare, e non online.
+# basi dell'Addestramento, Primi passi, e non online.
 imposta prova_nuovo 1
 
 aspetta 1.5
 tocca 1075 102                      # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
-foto 01_camminare
+foto 01_primi_passi

@@ -115,7 +115,9 @@ for _, l in ipairs(cap.missioni) do
 			if rb.dead then giu = false end
 		end
 		check(giu, l.id .. ": nessuno cade da solo")
-		check(esito ~= "fatta" and r.riga ~= nil or esito == "fallita", l.id .. ": senza fare niente non si finisce")
+		-- (e qualcosa dice cosa fare: la riga, o senza tempo l'obiettivo sempre in vista)
+		local detto = r.riga ~= nil or (l.senza_tempo and missioni.obiettivo(r) ~= nil)
+		check(esito ~= "fatta" and detto or esito == "fallita", l.id .. ": senza fare niente non si finisce")
 	end
 	-- ogni stella dice cosa serve, e l'obiettivo si legge
 	check(#missioni.criteri(l) == 3, l.id .. ": tre criteri per le stelle")
@@ -126,21 +128,55 @@ for _, l in ipairs(cap.missioni) do
 end
 end
 
--- Le basi, una cosa per lezione
-check(gioca("cammina", function(c) c.tieni(DESTRA, fino_x(1030)) end) == "fatta", "cammina: camminando si arriva")
-check(gioca("salta", function(c)
-	for _ = 1, 3 do
-		c.tieni(DESTRA, 60 * 6)
-		c.turno()
-	end
-end) ~= "fatta", "salta: camminando soltanto il gradino non si sale")
-check(gioca("salta", function(c)
-	c.tieni(DESTRA, fino_x(975))
+-- Nelle lezioni niente cerchi di cura: dopo quattro turni senza fare niente non ce n'è nessuno
+do
+	local _, _, g = gioca("corona", function(c)
+		for _ = 1, 3 do
+			c.tieni(DESTRA, 1)
+			c.turno()
+		end
+	end, nil, 60 * 30 * 12)
+	check(#g.heals == 0 and g.turn_no >= 4, "lezioni: niente cerchi di cura")
+end
+
+-- Primi passi: bandierina, gradino, la cassa col Lanciarune, il bersaglio.
+-- Niente tempo né turni; senza la cassa non si spara; chi manca ritenta subito
+local function al_bersaglio(c)
+	c.tieni(DESTRA, fino_x(1075))
 	c.tieni({ right = true, jump = true }, 40)
-	c.tieni(DESTRA, 120)
-end) == "fatta", "salta: saltando si sale")
-check((cerca("spara", function(c, a, p) c.usa("missile", a, p) end, nil, { 0.1, 1.3, 0.05 }, potenze(0.3, 1, 0.1))),
-	"spara: col Lanciarune si colpisce")
+	c.tieni(DESTRA, fino_x(1180))
+	-- la cassa cade sul gradino: le si va incontro
+	c.tieni(DESTRA, function(g) return g.robots[1].x >= 1260 or g.robots[1].disarmed == nil end)
+	c.tieni(FERMO, function(g) return g.robots[1].disarmed == nil end)
+end
+do
+	local esito, r, g = gioca("primi_passi", function(c)
+		c.tieni(DESTRA, fino_x(1000))
+		c.usa("missile", 0.5, 0.6)
+		c.tieni(FERMO, 60 * 60)
+	end)
+	check(esito == nil and r.st.passi[1] and not r.st.passi[2], "primi_passi: camminando soltanto il gradino non si sale")
+	check(g.turn_no == 1 and g.current == 1, "primi_passi: niente turni, anche dopo un minuto")
+	check(not g.projectile and #g.crates == 0 and not game.has_weapon(g.robots[1], "missile") and not g:can_use("missile"),
+		"primi_passi: senza la cassa niente armi")
+end
+local ok, r, a, p = cerca("primi_passi", function(c, a, p)
+	al_bersaglio(c)
+	c.usa("missile", a, p)
+end, nil, { 0.1, 1.3, 0.05 }, potenze(0.3, 1, 0.1))
+check(ok, "primi_passi: bandierina, gradino, cassa e il bersaglio col Lanciarune")
+if ok then
+	check(missioni.vede(r, "missile") and missioni.quante(missioni.stelle(r)) == 3, "primi_passi: al primo tiro tre stelle")
+	-- un tiro a vuoto (verso il cielo dietro di sé): si ritenta subito, nello stesso turno
+	local esito2, r3, g3 = gioca("primi_passi", function(c)
+		al_bersaglio(c)
+		c.usa("missile", 2.6, 0.3)
+		c.tieni(FERMO, function(gg) return not gg.used.primary end)
+		c.usa("missile", a, p)
+	end)
+	check(esito2 == "fatta" and r3.st.conta.mancati == 1 and g3.turn_no == 1, "primi_passi: chi manca ritenta subito")
+	check(missioni.quante(missioni.stelle(r3)) == 2, "primi_passi: un tiro a vuoto, due stelle")
+end
 
 -- Armi e draft: granata (primaria scelta) da lontano, poi Maglio da vicino
 local SCELTA = { { pick = "grenade", secondary = "mallet", tool = "hook" } }
