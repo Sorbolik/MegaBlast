@@ -1,18 +1,20 @@
-# Una lezione guidata (imposta prova_missione tonante): nell'HUD solo quello che
-# serve (Lanciarune e Tonante, niente teletrasporto né paracadute), lo scopo
-# sopra il diavoletto e il tempo fermo finché non si toccano i comandi. Poi la
-# riga mette in luce il Tonante e il tempo aspetta che lo scegli; poi il salto
-# (sul computer pulsa il tasto SPAZIO) e solo saltando il tempo parte.
-imposta prova_missione tonante
+# Una lezione dell'Addestramento (imposta prova_missione spostano, Armi che ti
+# muovono): niente tempo né punti, nell'HUD solo Lanciarune e Lama. Cade la
+# cassa col Tonante: la sua scheda ferma il gioco finché non tocchi PROVALA, poi
+# il Tonante prende il posto della Lama e la riga lo mette in luce; scelto, la
+# riga dice di saltare (sul computer pulsa il tasto SPAZIO).
+imposta prova_missione spostano
 aspetta_stato modo=local turno=1 fase=aim 8
-aspetta 3
-foto 01_tempo_fermo                  # dopo 3 s il cronometro è ancora pieno
-tieni destra 0.3                     # letto lo scopo: il suggerimento
-aspetta 2
-foto 02_tonante_in_luce              # anello sul Tonante, tempo ancora fermo
-premi 2                              # il Tonante (seconda arma della barra)
-aspetta 2
-foto 03_salta                        # SPAZIO che pulsa, tempo ancora fermo
-premi space
 aspetta 1.5
-foto 04_tempo_partito
+foto 01_scopo                        # la cassa cade davanti, niente cronometro
+cammina destra 715
+tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
+aspetta_evento crate_pick 10
+aspetta 0.8
+foto 02_scheda_tonante
+tocca_centro 640 120                        # PROVALA
+aspetta 1
+foto 03_tonante_in_luce
+premi 3                              # il Tonante (dopo Lanciarune e Lama)
+aspetta 1
+foto 04_salta                        # SPAZIO che pulsa

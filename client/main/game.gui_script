@@ -96,7 +96,8 @@ for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword",
 end
 -- per il messaggio "Rosso trova ..." quando si apre una cassa
 local WEAPON_FOUND = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
-	sniper = "il Cecchino",
+	sniper = "il Cecchino", eagle = "il Tonante", mallet = "il Maglio", lunge = "l'Affondo", bellows = "il Mantice",
+	hook = "il Rampino", wall = "il Bastione", parachute = "un Paracadute",
 	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
 -- nomi delle armi nella scelta d'inizio partita
 local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
@@ -1359,9 +1360,16 @@ local function start_missione(self, id, picks)
 		self.missione = r
 		local players = r.l.giocatori
 		local nomi, colori = names_colors(players)
-		local d = draft.new(os.time(), players)
+		-- (nel simulatore sempre le stesse armi proposte: gli scenari sanno dove toccare)
+		local d = draft.new(SIMULA and 1 or os.time(), players)
+		-- bersagli e bot scelgono da soli; il bot della missione tiene le sue
+		-- armi se sono fra quelle proposte (il tutorial fa vedere il Maglio)
 		for i, p in ipairs(players) do
-			if p.dummy then bot.scegli(d, i, 1) end
+			if p.dummy or p.bot then
+				bot.scegli(d, i, 1)
+				if p.pick then draft.pick(d, i, p.pick) end
+				if p.secondary then draft.pick(d, i, p.secondary) end
+			end
 		end
 		self.mode = "scelta"
 		menu.scelta.show(self.scelta, d, nomi, colori)
@@ -1479,7 +1487,9 @@ local function apri_fine_livello(self)
 	punteggio.obiettivo(self.punti, nil)
 	for _, rb in ipairs(self.robots) do targa.riga(rb.targa, "") end
 	apri_schermata(self, menu.fine_livello, {
-		titolo = r.l.titolo, stelle = missioni.stelle(r), criteri = missioni.criteri(r.l), turni = r.st.turni,
+		titolo = r.l.titolo, stelle = missioni.stelle(r), criteri = missioni.criteri(r.l),
+		-- senza tempo non ci sono turni da contare
+		turni = not r.l.senza_tempo and r.st.turni or nil,
 		record = self.fine_record, avanti = missioni.dopo(r.l.id) ~= nil,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 end
@@ -2296,6 +2306,7 @@ local function render(self, dt)
 	-- scambio del secondo attacco con un teletrasporto: un tocco
 	-- (dopo che l'annuncio del turno è sparito: starebbero uno sopra l'altro)
 	local scambio_vede = self.tele_vede and my_turn(self) and g:can_use("swap")
+		and missioni.vede(self.missione, "baratto")
 		and not self.annuncio_aspetta and self.clock >= (self.annuncio_fine or 0)
 	hud.scambio_update(self.scambio, scambio_vede, self.crono)
 	-- nell'attesa del secondo attacco le secondarie lampeggiano, se sono loro che restano

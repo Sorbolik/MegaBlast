@@ -1,7 +1,15 @@
 # Partita guidata, l'esame dell'Addestramento (imposta prova_missione guidata):
 # contro il bot del tutorial. Il cronometro aspetta che tocchi i comandi, le righe compaiono sopra il
 # diavoletto (e sopra il bot nei suoi turni), il bot fa vedere i due attacchi.
+# Si comincia dalla scelta delle armi (Sergio, 30 ott): una primaria e una
+# secondaria (il Rampino è già scelto), il bot del tutorial sceglie da solo (nel simulatore Pugno e Mantice).
 imposta prova_missione guidata
+aspetta_stato modo=scelta 8
+aspetta 1.5
+foto 00_scelta
+tocca 640 525                       # primaria (il Pugno l'ha preso il bot)
+aspetta 0.3
+tocca 380 350                       # secondaria
 
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 4
@@ -13,9 +21,9 @@ premi space                         # salta: il tempo riparte
 aspetta_stato turno=2 fase=aim 20
 aspetta 1
 foto 03_turno_del_bot               # la riga sopra il bot: due attacchi
-aspetta_evento mallet 20
+aspetta_evento bellows 20
 aspetta 0.4
-foto 04_bot_seconda_arma       # il Maglio, la sua secondaria
+foto 04_bot_seconda_arma       # il Mantice, la sua secondaria
 aspetta_stato turno=1 fase=aim 30
 aspetta 0.8
 foto 05_due_attacchi                # la riga del secondo turno: la primaria in luce
