@@ -13,7 +13,9 @@ CARTELLA può essere quella di una partita dell'arena (partite.jsonl, con
 pesi.json se ha giocato con --pesi) o quella di evolvi.py (trovate.jsonl:
 le trovate di ogni generazione, già con la ricetta e i pesi). I video si fanno
 col simulatore (solo Linux) e con lo stesso codice che ha giocato le partite:
-la ricetta rigiocata con regole diverse non torna. Esce CARTELLA/galleria/.
+la ricetta rigiocata con regole diverse non torna. Esce CARTELLA/galleria/; i
+video già fatti restano (rilanciando si rifanno solo quelli mancati): per
+rifarli tutti, cancella la cartella.
 """
 
 import argparse
@@ -114,6 +116,9 @@ def descrivi(t):
 def video(t, cartella, n):
     """Il video del turno: il simulatore rigioca la ricetta da un secondo prima
     e registra fino alla fine del turno (al massimo 26 secondi)."""
+    dest = cartella / f"trovata_{n}.mp4"
+    if dest.exists():
+        return dest.name  # già fatto (si rilancia per rifare solo quelli mancati)
     ricetta = cartella / f"ricetta_{n}.json"
     ricetta.write_text(json.dumps(t["ricetta"]), encoding="utf-8")
     secondi = max(6, min(26, math.ceil(t["durata"] / 60) + 2))
@@ -122,12 +127,15 @@ def video(t, cartella, n):
         f"# trovata {n}: {t['firma']} ({t['modo']}, {t['mappa']}, tick {t['tick']})\n"
         f"imposta ricetta {ricetta}\nimposta ricetta_da {max(0, t['tick'] - 60)}\nimposta zoom 1\n"
         f"aspetta_stato modo=local 20\naspetta 1\nfoto inizio\naspetta {secondi}\nfoto fine\n", encoding="utf-8")
-    r = subprocess.run([sys.executable, str(arena.REPO / "strumenti/simula/simula.py"), "-s", str(scenario)],
-                       cwd=arena.REPO, capture_output=True, text=True)
+    # una seconda prova: a volte lo schermo finto (Xvfb) non parte
+    for _ in range(2):
+        r = subprocess.run([sys.executable, str(arena.REPO / "strumenti/simula/simula.py"), "-s", str(scenario)],
+                           cwd=arena.REPO, capture_output=True, text=True)
+        if r.returncode == 0:
+            break
     if r.returncode != 0:
         print(f"trovata {n}: la simulazione è fallita\n{r.stdout[-800:]}{r.stderr[-800:]}")
         return None
-    dest = cartella / f"trovata_{n}.mp4"
     # più piccolo per la pagina: 854x480, senza audio
     subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(arena.REPO / "simulazione" / "video.mp4"),
                     "-vf", "scale=854:-2", "-c:v", "libx264", "-crf", "30", "-preset", "veryfast", "-an",
@@ -221,9 +229,12 @@ def main():
         if not args.senza_video:
             t["video"] = video(t, uscita, k)
     (uscita / "trovate.json").write_text(json.dumps(trovate, indent=1, ensure_ascii=False), encoding="utf-8")
-    n = len(partite) if partite is not None else sum(1 for _ in trovate)
-    sotto = (f"I turni più rari che fanno più punti, scelti fra {trovate[0]['totale'] if trovate else 0} turni"
-             + (f" di {n} partite" if partite is not None else "") + ": ognuno è una combinazione di mosse che "
+    if partite is not None:
+        da_dove = f"fra {trovate[0]['totale'] if trovate else 0} turni di {len(partite)} partite"
+    else:
+        gen = {t["gen"] for t in tutte}
+        da_dove = f"dalle {len(gen)} generazioni dei bot (circa {trovate[0]['totale'] if trovate else 0} turni l'una)"
+    sotto = (f"I turni più rari che fanno più punti, scelti {da_dove}: ognuno è una combinazione di mosse che "
              "quasi nessun bot fa. I video rigiocano la partita vera dal secondo prima del turno.")
     (uscita / "galleria.html").write_text(pagina(trovate, args.titolo, sotto), encoding="utf-8")
     print(f"galleria: {uscita / 'galleria.html'}")
