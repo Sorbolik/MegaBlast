@@ -10,6 +10,8 @@
 -- i crateri non rompono il rompicapo. I numeri dei gironi (vita, turni, stelle)
 -- li controlla il collaudo coi bot (strumenti/arena/collaudo.lua): la seconda
 -- stella è alla mediana dei turni del bot normale che gioca al posto tuo.
+-- Gli avversari dei gironi sono gradi (sim/bot.lua M.GRADI, da 1 a 10): la
+-- Forgia sale dal 2 al 5 e il compagno della Battaglia è un 7 (Sergio, 30 ott).
 
 local M = {}
 
@@ -278,7 +280,7 @@ local GIRONE_1 = {
 		titolo = "Primo sangue",
 		scopo = "Abbatti il bot: un'arma a sinistra e una a destra del cronometro",
 		mappa = "forgia",
-		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
+		giocatori = { { team = 1 }, { team = 2, bot = 2 } },
 		-- le armi che l'Addestramento non presenta si trovano nel girone (Claude)
 		casse = { { dopo = 0, arma = "grenade", x = 620 } },
 		turni = 7,
@@ -299,7 +301,7 @@ local GIRONE_1 = {
 		scopo = "Il cecchino sta sull'isola. Attacca presto per avere i globi, poi raggiungilo",
 		arena = { { 200, 0, 720, 150 }, { 1240, 120, 460, 50 } },
 		spawns = { { x = 500, from = 600 }, { x = 1520, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, bot = "facile", carattere = "cecchino" } },
+		giocatori = { { team = 1 }, { team = 2, bot = 2, carattere = "cecchino" } },
 		globi = 0,
 		vita = { [2] = 55 },
 		turni = 6,
@@ -321,7 +323,7 @@ local GIRONE_1 = {
 		scopo = "Il bot si rimette in sesto a ogni turno: serve la primaria e la Lama nello stesso turno",
 		arena = { { 240, 0, 1440, 150 } },
 		spawns = { { x = 760, from = 600 }, { x = 1160, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, bot = "facile" } },
+		giocatori = { { team = 1 }, { team = 2, bot = 3 } },
 		vita = { [2] = 46 },
 		rigenera = { 2 },
 		casse = { { dopo = 0, arma = "shards", x = 560 } },
@@ -356,7 +358,7 @@ local GIRONE_1 = {
 		titolo = "Il codardo",
 		scopo = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo col tuo",
 		mappa = "forgia",
-		giocatori = { { team = 1 }, { team = 2, bot = "normale", carattere = "codardo", nome = "Il codardo" } },
+		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
 		turni = 7,
 		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il codardo" } },
@@ -368,12 +370,12 @@ local GIRONE_1 = {
 		mappa = "forgia",
 		giocatori = {
 			{ team = 1 },
-			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
+			{ team = 2, bot = 5, carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
 				battute = "fabbro" },
 		},
 		vita = { [2] = 240 },
 		turni = 10,
-		stelle = { turni = 8, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
+		stelle = { turni = 6, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il Fabbro" } },
 	},
 	-- la fine del girone: una partita completa 2 contro 2, con un bot al tuo
@@ -387,10 +389,10 @@ local GIRONE_1 = {
 		draft = true,
 		giocatori = {
 			{ team = 1 },
-			{ team = 2, bot = "normale", carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
+			{ team = 2, bot = 5, carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
 				battute = "fabbro" },
-			{ team = 1, bot = "normale", nome = "Compagno" },
-			{ team = 2, bot = "facile", carattere = "cecchino" },
+			{ team = 1, bot = 7, nome = "Compagno" },
+			{ team = 2, bot = 2, carattere = "cecchino" },
 		},
 		-- niente limite di turni: si gioca fino alla fine del tempo
 		stelle = { bonus = { conta = "abbattuti", almeno = 3, testo = "ABBATTINE 3" },

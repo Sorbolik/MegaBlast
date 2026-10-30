@@ -5,7 +5,7 @@
 -- server per riempire le code.
 --
 --   local bot = require "sim.bot"
---   local b = bot.new(id, "normale", seed, pesi, carattere)   -- id del robot, livello, seme, pesi e carattere (facoltativi, vedi M.PESI e M.CARATTERI)
+--   local b = bot.new(id, "normale", seed, pesi, carattere)   -- id del robot, livello (o grado, M.GRADI), seme, pesi e carattere (facoltativi, vedi M.PESI e M.CARATTERI)
 --   local input = bot.input(b, g)           -- a ogni tick, prima di g:step(input)
 --   bot.scegli(d, i, seed, armi)            -- primaria e secondaria nella scelta (sim/draft.lua)
 --   b.piano = { due_attacchi = true }       -- (facoltativo, per il turno che viene) primaria e secondaria
@@ -43,6 +43,31 @@ M.LIVELLI = {
 		teletrasporto = true, rampino = true, oggetti = true, lavoro = 400 },
 }
 M.ORDINE = { "facile", "normale", "difficile" }
+
+-- I gradi della campagna (Sergio, 30 ottobre 2026: "vorrei sentire una bella
+-- progressione graduale"): un livello, i campi che cambiano (liv) e i pesi.
+-- Misurati a coppie, 1 contro 1, 300 partite: ogni grado batte quello sotto
+-- nel 55-75% delle partite (2/1 63%, 3/2 65%, 4/3 75%, 5/4 58%, 6/5 55%,
+-- 7/6 58%, 8/7 59%, 9/8 56%; il 10 è il picchiatore di evolvi.py, 54% contro
+-- il difficile). Il salto più grande è il globo: il facile non lo usa mai.
+-- Nella campagna players[i].bot può essere il numero del grado.
+local picchiatore = {}
+for k, v in pairs(C.SCORE) do picchiatore[k] = v end
+picchiatore.env_kill, picchiatore.kill, picchiatore.damage = C.SCORE.env_kill * 1.86, C.SCORE.kill * 1.57, C.SCORE.damage * 0.94
+M.GRADI = {
+	{ livello = "tutorial" },
+	{ livello = "facile" },
+	{ livello = "facile", liv = { teletrasporto = true }, pesi = { teletrasporto = 20 } },
+	{ livello = "facile", liv = { teletrasporto = true }, pesi = { teletrasporto = 50 } },
+	{ livello = "facile", liv = { teletrasporto = true, rampino = true, mira = 0.06, sbaglia = 0.3 }, pesi = { teletrasporto = 50 } },
+	{ livello = "normale", liv = { mira = 0.055, potenza = 0.05, sbaglia = 0.25 } },
+	{ livello = "normale" },
+	{ livello = "normale", liv = { mira = 0.02, potenza = 0.015, sbaglia = 0.05, oggetti = true } },
+	{ livello = "difficile" },
+	{ livello = "difficile", pesi = { vita_mia = 0.12, vita_compagno = 2.77, morte = 77, strada = 0.0025, teletrasporto = 119,
+		globo_riparo = 8.9, punteggio = picchiatore, armi = { punch = 1.51, mallet = 1.51, lunge = 1.51, sword = 1.51,
+		sniper = 0.5, missile = 0.5, grenade = 0.5, shards = 0.5, eagle = 0.5, bellows = 1.09 } } },
+}
 
 -- I pesi del bot: come vale il risultato di una mossa oltre ai punti partita.
 -- vita_mia, vita_compagno: per punto di vita perso; morte: in più del
@@ -847,8 +872,14 @@ local function generatore(seme)
 end
 
 function M.new(id, livello, seed, pesi, carattere)
-	local liv = M.LIVELLI[livello] or M.LIVELLI.normale
+	local grado = M.GRADI[livello] or {}
+	local liv = M.LIVELLI[grado.livello or livello] or M.LIVELLI.normale
+	if grado.liv then
+		liv = copia(liv)
+		for k, v in pairs(grado.liv) do liv[k] = v end
+	end
 	local p = copia(M.PESI)
+	for k, v in pairs(grado.pesi or {}) do p[k] = v end
 	local car = carattere and assert(M.CARATTERI[carattere], "carattere sconosciuto: " .. carattere) or {}
 	for k, v in pairs(car) do
 		if k ~= "piano" then p[k] = v end

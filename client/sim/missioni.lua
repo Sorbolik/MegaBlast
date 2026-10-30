@@ -233,7 +233,7 @@ end
 
 -- seme, mappa e opzioni di game.new. picks: i giocatori usciti dal draft
 -- (menu/scelta.lua), per le missioni che lo fanno fare
--- l'aiuto silenzioso: i bot scendono di un livello e partono con meno vita
+-- l'aiuto silenzioso: i bot scendono di un livello (o di due gradi) e partono con meno vita
 local PIU_FACILE = { difficile = "normale", normale = "facile", facile = "facile" }
 local AIUTO_VITA = 0.75
 
@@ -246,7 +246,7 @@ function M.partita(r, seed, picks, aiuto)
 		for k, v in pairs(p) do
 			if k ~= "nome" and k ~= "battute" then q[k] = v end
 		end
-		if aiuto and q.bot then q.bot = PIU_FACILE[q.bot] end
+		if aiuto and q.bot then q.bot = PIU_FACILE[q.bot] or math.max(1, q.bot - 2) end
 		if picks and picks[i] then
 			q.pick, q.secondary = picks[i].pick, picks[i].secondary
 		end
