@@ -1,6 +1,6 @@
 # Nelle lezioni dell'Addestramento la mira ha in più, come aiuto, tutta la
 # traiettoria fino al terreno (fuori dalle lezioni mai).
-imposta prova_missione tonante
+imposta prova_missione spostano
 
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1

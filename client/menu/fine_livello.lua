@@ -8,7 +8,8 @@
 --   local f = fine_livello.new({ titolo = "Il Rampino", stelle = { true, true, false },
 --     criteri = { "FATTA", "IN 2 TURNI", "IN 1 TURNO" }, turni = 2, record = 3, avanti = true }, suono)
 --     stelle: quali ha preso (ognuna col suo criterio); criteri: cosa serve per
---     ognuna (missioni.criteri); turni: quanti ne sono serviti; record: quante
+--     ognuna (missioni.criteri); turni: quanti ne sono serviti (nil nelle lezioni
+--     senza tempo: lì i turni non ci sono); record: quante
 --     stelle aveva già la missione;
 --     avanti: c'è un livello dopo; suono(v): il tic, v = velocità (tono)
 --   fine_livello.update(f, dt)
@@ -54,9 +55,10 @@ function M.new(o, suono)
 		end
 		ui.testo(criteri[i], x, M.Y - 100, 0.75, o.stelle[i] and c.TESTO or c.SPENTO, f.radice)
 	end
-	local sotto = "Fatta in " .. turni(o.turni)
+	local sotto = o.turni and "Fatta in " .. turni(o.turni) or ""
 	if o.record and o.record > n then
-		sotto = sotto .. "  -  il tuo record: " .. o.record .. (o.record == 1 and " stella" or " stelle")
+		local record = "il tuo record: " .. o.record .. (o.record == 1 and " stella" or " stelle")
+		sotto = sotto == "" and record or sotto .. "  -  " .. record
 	end
 	ui.testo(sotto, 640, 232, 0.8, c.SPENTO, f.radice)
 	ui.bottone(f.bottoni, 640 - 180, 110, 300, 96, "RIPROVA", "riprova", nil, f.radice)

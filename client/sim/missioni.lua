@@ -4,7 +4,7 @@
 -- manda il server e servono anche al rompicapo del giorno (docs/roadmap.md,
 -- area 3). Lua puro: il gui_script mostra la riga, l'obiettivo e le stelle.
 --
---   local r = missioni.nuova("rampino")
+--   local r = missioni.nuova("attrezzi")
 --   local seed, mappa, opts = missioni.partita(r, seed, picks, aiuto)  -- per game.new (o replay.nuova);
 --                                                   aiuto: dopo tante perse, avversari più morbidi
 --   missioni.prepara(r, g)                          -- subito dopo, una volta
@@ -33,23 +33,25 @@
 --     battute: chi parla per lui (battaglia/battute.lua; senza, il suo carattere)
 --   vedi = { "missile", "eagle", ... }: le lezioni mostrano solo quello che serve
 --     ("primarie", "secondarie": tutte quelle che hai; "teleport": il tasto e i globi
---     dal tempo; "parachute"; "tempo": il cronometro; "punti": i punteggi): il
+--     dal tempo; "parachute"; "tempo": il cronometro; "punti": i punteggi; "baratto": il secondo
+--     attacco scambiato con un teletrasporto): il
 --     resto non c'è nemmeno. L'interfaccia si scopre a poco a poco (Sergio, 29 ott):
 --     senza vedi si vede tutto, con vedi il cronometro e i punti solo se ci sono.
 --     Un'arma raccolta da una cassa si vede da lì in poi
 --   senza_armi: il giocatore parte senza armi, finché non trova il Lanciarune in una cassa
 --   casse = { { dopo = 2, arma = "missile", x = 1250 }, ... }: fatto il passo dopo
 --     (0: subito), quella cassa cade lì (la scheda di un'arma nuova ferma il gioco:
---     battaglia/scheda.lua)
+--     battaglia/scheda.lua). Un'arma a colpi trovata lì torna quando la si può riusare
 --   senza_tempo: niente tempo e niente turni, il turno è tuo finché non finisci.
 --     Finito un attacco (o il Rampino, il Bastione) si riusa subito; se non ha
 --     colpito nessuno né fatto un passo, "Ritenta" (conta "mancati"). Sergio, 29 ott:
---     in una lezione non si aspetta mai un turno per riprovare
+--     in una lezione non si aspetta mai un turno per riprovare. Il paracadute
+--     trovato torna appena sei a terra; chi cade rinasce dove è partito
 --   regole: altre opts di game.new; secondi: durata della partita; globi: con
 --     quanti teletrasporti parte il giocatore; vita, punti = { [robot] = n } all'inizio;
 --     rigenera = { robot, ... }: a ogni turno tornano con la vita piena
 --   obiettivo: i passi (sotto), in ordine se non c'è in_ordine = false
---   fallisce = { muori = true, esaurito = "paracadute" } (e sempre se la partita finisce prima)
+--   la missione fallisce se la partita finisce prima
 --   turni: oltre questi turni del giocatore si ricomincia
 --   stelle = { 3, 2 } (turni per la seconda e la terza) oppure
 --     { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } } oppure
@@ -67,7 +69,7 @@
 --     che c'è (la mira è già cominciata)
 --
 -- I passi dell'obiettivo (testo: come si legge nella riga dell'obiettivo):
---   { usa = "globi" | "rampino" | "bastione" | "rimbalzo" | "rinculo" | "paracadute" }
+--   { usa = "globi" | "rampino" | "bastione" | "rimbalzo" | "rinculo" | "paracadute" | "baratto" }
 --   { raggiungi = { x = 1200, y = 150 }, bandiera = true }   in piedi sopra quella
 --                                           quota, oltre quella x (bandiera: lì c'è la bandierina a scacchi)
 --   { prendi = "missile" }                  raccogli la cassa con quell'arma
@@ -76,7 +78,7 @@
 --   { vinci = true }                        la partita finisce e la tua squadra ha vinto
 -- Altri verbi (sopravvivi, proteggi...) entrano con le missioni che li usano.
 -- I conteggi per i bonus delle stelle: morti, teletrasporti, vuoto (uccisioni
--- ambientali tue), abbattuti, danni (presi da te), mancati (senza_tempo).
+-- ambientali tue), abbattuti, danni (presi da te), mancati (senza_tempo), globi (guadagnati).
 
 local game = require "sim.game"
 local maps = require "sim.maps"
@@ -92,6 +94,8 @@ local GIOCATORE = M.GIOCATORE
 local RIGA_SECONDI = 5
 -- senza_tempo: un attacco è finito quando niente vola e il giocatore è fermo da tanti tick
 local MANCATO_TICK = 45
+-- da quanto sopra il terreno cadono le casse delle missioni
+local CASSA_SOPRA = 280
 local RITENTA = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
 
 -- Quale arma ha appena usato chi: l'evento dell'attacco -> nome dell'arma
@@ -115,6 +119,7 @@ local USA = {
 	-- il Tonante sparato in aria: il rinculo porta via
 	rinculo = function(e, st) return e.type == "eagle" and not st.a_terra end,
 	paracadute = function(e) return e.type == "parachute" end,
+	baratto = function(e) return e.type == "swap" end,
 }
 
 -- Le missioni, per id e per capitolo --------------------------------------------------
@@ -434,6 +439,13 @@ function M.evento(r, g, e, bots)
 		if l.turni and st.turni > l.turni and not r.esito then r.esito = "fallita" end
 	elseif e.type == "teleport" and e.robot == GIOCATORE then
 		conta(st, "teletrasporti")
+	elseif e.type == "teleports" and e.robot == GIOCATORE then
+		st.conta.globi = (st.conta.globi or 0) + e.amount
+	elseif e.type == "respawn" and l.senza_tempo and l.spawns and l.spawns[e.robot] then
+		-- senza tempo si rinasce dove si è partiti, non in un posto a caso
+		-- dell'arena (un bersaglio a caso finirebbe in mezzo alla strada)
+		local rb, sp = g.robots[e.robot], l.spawns[e.robot]
+		rb.x, rb.y = sp.x, g.terrain:ground_below(sp.x, sp.from) or rb.y
 	elseif e.type == "damage" and e.robot == GIOCATORE then
 		st.conta.danni = (st.conta.danni or 0) + e.amount
 	elseif e.type == "death" then
@@ -462,8 +474,7 @@ function M.evento(r, g, e, bots)
 		-- (se il turno non ha già la sua riga da dire)
 		if testo and not r.riga then mostra(r, { testo = testo, cede = true }) end
 	end
-	local f = l.fallisce or {}
-	if (f.muori and e.type == "death" and e.robot == GIOCATORE) or (e.type == "over" and not l.guidata) then
+	if e.type == "over" and not l.guidata then
 		r.esito = "fallita"
 	end
 end
@@ -492,9 +503,13 @@ end
 local function senza_tempo(r, g)
 	local f = r.senza
 	g.timer, g.match_left, g.window = f.timer, f.match, 0
+	local rb = g.robots[GIOCATORE]
+	-- il paracadute trovato torna appena sei a terra: si riprova quanto serve
+	if r.prese.parachute and rb.grounded and not rb.parachute and rb.parachutes_left == 0 then
+		rb.parachutes_left = 1
+	end
 	local t = r.tiro
 	if not t or r.esito then return end
-	local rb = g.robots[GIOCATORE]
 	local fermo = not (g.projectile or g:shards_flying() or #g.orbs > 0) and (rb.dead or rb.grounded
 		and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch or rb.lunge or rb.mallet or rb.recoil))
 	t.t = fermo and t.t + 1 or 0
@@ -519,7 +534,19 @@ function M.tick(r, g)
 	if l.senza_tempo and g.current == GIOCATORE then senza_tempo(r, g) end
 	-- le casse della missione cadono, fatto il loro passo
 	for i, c in ipairs(l.casse or {}) do
-		if not r.cadute[i] and (c.dopo == 0 or st.passi[c.dopo]) then r.cadute[i] = g:spawn_crate(c.arma, c.x) or true end
+		if not r.cadute[i] and (c.dopo == 0 or st.passi[c.dopo]) then
+			r.cadute[i] = g:spawn_crate(c.arma, c.x) or true
+			-- parte poco sopra il terreno: la si aspetta un paio di secondi, non dieci
+			local cr, gy = r.cadute[i], g.terrain:ground_below(c.x, game.WORLD_H - 1)
+			if cr ~= true and gy then cr.y = math.min(cr.y, gy + CASSA_SOPRA) end
+		end
+	end
+	-- un'arma a colpi trovata in una cassa torna appena puoi riattaccare: si
+	-- riprova quanto serve
+	local rb = g.robots[GIOCATORE]
+	for _, c in ipairs(l.casse or {}) do
+		local n = rb.ammo[c.arma]
+		if n == 0 and r.prese[c.arma] and not g.used.primary then rb.ammo[c.arma] = 1 end
 	end
 	-- lezioni: finché non tocchi i comandi il tempo del turno e della partita è fermo
 	if r.attesa and g.current == GIOCATORE then
@@ -530,13 +557,6 @@ function M.tick(r, g)
 	controlla(r, g, nil)
 	-- a terra o no prima degli eventi del prossimo tick (il Tonante stacca da terra)
 	st.a_terra = g.robots[GIOCATORE].grounded
-	-- esaurito: la risorsa è finita, sei a terra e il posto da raggiungere no
-	local f = l.fallisce
-	if not r.esito and f and f.esaurito == "paracadute" then
-		local rb = g.robots[GIOCATORE]
-		local _, p = prossimo(l, st)
-		if rb.grounded and rb.parachutes_left == 0 and p and p.raggiungi then r.esito = "fallita" end
-	end
 	if r.riga_t and not r.attesa then
 		r.riga_t = r.riga_t - 1
 		if r.riga_t <= 0 then togli(r) end
