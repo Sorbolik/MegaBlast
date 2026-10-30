@@ -534,7 +534,7 @@ do
 	end
 	local liv, rb = fabbro(false)
 	local liv_aiuto, rb_aiuto = fabbro(true)
-	check(liv == "normale" and liv_aiuto == "facile", "aiuto: il bot scende di un livello")
+	check(liv == 5 and liv_aiuto == 3, "aiuto: il bot scende di due gradi")
 	check(rb_aiuto.hp < rb.hp and rb_aiuto.hp == rb_aiuto.max_hp, "aiuto: meno vita, barra piena")
 end
 

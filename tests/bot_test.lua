@@ -172,6 +172,15 @@ do
 	check(troppo == 0, "il bot rispetta il tetto di lavoro per tick")
 end
 
+-- I gradi della campagna: livello, campi che cambiano e pesi
+do
+	local g3, g10, nome = bot.new(2, 3, 1), bot.new(2, 10, 1), bot.new(2, "facile", 1)
+	check(#bot.GRADI == 10 and g3.liv.teletrasporto and g3.pesi.teletrasporto == 20 and not nome.liv.teletrasporto,
+		"gradi: il 3 è il facile che usa il globo, i livelli per nome restano come sono")
+	check(g10.liv == bot.LIVELLI.difficile and g10.pesi.armi.mallet > 1 and bot.LIVELLI.facile.teletrasporto == false,
+		"gradi: il 10 è il difficile col picchiatore, senza toccare i livelli")
+end
+
 -- Nella scelta d'inizio partita il bot prende una primaria e una secondaria valide
 do
 	local players = { { team = 1 }, { team = 2 }, { team = 1 }, { team = 2 } }
