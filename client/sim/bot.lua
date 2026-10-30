@@ -530,7 +530,9 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 				end
 			elseif arma == "mallet" then
 				if math.abs(dx) < C.MALLET.reach + 30 and math.abs(dy) < C.MALLET.reach + 30 then
+					-- l'arco gira con la mira: dritto e verso il nemico
 					aggiungi(arma, dx < 0 and math.pi or 0, 1, "tutto")
+					aggiungi(arma, dritto, 1, "tutto")
 				end
 			elseif arma == "sword" or arma == "punch" then
 				if dist < 80 then aggiungi(arma, dritto, 1, "tutto") end

@@ -108,10 +108,10 @@ C.SNIPER = { damage = 50, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp
 C.EAGLE = { damage = 38, range = 600, recoil = 300, recoil_ticks = 22 }
 -- Maglio: martello a due mani che gira attorno alla spalla come la Lama, da
 -- from (alto dietro la testa) a to (sotto i piedi) in ticks tick, lungo reach
--- dalla spalla. Colpisce ogni robot che tocca lungo l'arco; la testa si ferma
--- sul terreno. Se il colpo parte in aria e la testa sbatte su un robot o sul
--- terreno mentre cala (dalla spalla in giù), chi colpisce rimbalza in alto a
--- bounce (pogo), anche se nel frattempo è atterrato.
+-- dalla spalla; l'arco gira con la mira (from e to sono per la mira dritta).
+-- Colpisce ogni robot che tocca lungo l'arco; la testa si ferma sul terreno.
+-- Al primo urto, su un robot o sul terreno, chi colpisce rimbalza in alto a
+-- bounce (pogo), a terra come in aria; a vuoto no.
 -- Finito (o fermato) l'arco, il martello resta giù hold tick.
 C.MALLET = { damage = 57, reach = 44, from = math.rad(115), to = math.rad(-100), ticks = 12, hold = 12, bounce = 320 }
 -- Rampino (oggetto tattico, Sergio 24 ottobre 2026: non un'arma, uno a

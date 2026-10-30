@@ -1652,42 +1652,43 @@ function M:fire_bellows(angle)
 end
 
 -- Maglio (config.MALLET) -----------------------------------------------------------
--- Martello a due mani che gira attorno alla spalla come la Lama: parte alto
--- dietro la testa, cala davanti e finisce sotto i piedi. Colpisce una volta
--- ogni robot che tocca lungo l'arco; la testa si ferma sul terreno. Se il
--- colpo è partito in aria e la testa sbatte su un robot o sul terreno mentre
--- cala (dalla spalla in giù), chi colpisce rimbalza in alto (pogo), una volta
--- per colpo, anche se intanto è atterrato.
+-- Martello a due mani che gira attorno alla spalla come la Lama: mirando dritto
+-- parte alto dietro la testa, cala davanti e finisce sotto i piedi; l'arco gira
+-- con la mira (Sergio, 30 ott: "direzionale come la mira della spada"), così
+-- mirando in basso arriva anche dietro i piedi e mirando in alto sopra la
+-- testa. Colpisce una volta ogni robot che tocca lungo l'arco; la testa si
+-- ferma sul terreno. La prima volta che sbatte su qualcosa, un robot o il
+-- terreno, chi colpisce rimbalza in alto (pogo), a terra come in aria; a
+-- vuoto no (Sergio, 30 ott).
 
 function M:start_mallet(angle)
 	local rb = self.robots[self.current]
-	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.mallet_base, rb.facing = M.aim_side(angle)
 	rb.mallet = 0
 	rb.mallet_dir = rb.facing
 	rb.mallet_hit, rb.mallet_stop, rb.mallet_bounced = {}, nil, false
-	rb.mallet_air = not rb.grounded
 	self:emit({ type = "mallet", robot = rb.id })
 end
 
--- Angolo del martello al tick t, per un robot rivolto a destra: la stessa
--- curva della Lama (slancio indietro, poi sempre più veloce); fermato sul
--- terreno al tick stop resta lì.
-function M.mallet_angle(t, stop)
+-- Angolo del martello al tick t, per un robot rivolto a destra che mira a
+-- base (girata a destra, 0 dritto): la stessa curva della Lama (slancio
+-- indietro, poi sempre più veloce); fermato sul terreno al tick stop resta lì.
+function M.mallet_angle(t, base, stop)
 	local s = C.MALLET
 	if stop then t = math.min(t, stop) end
-	return s.from + (s.to - s.from) * M.sword_progress(t / s.ticks)
+	return (base or 0) + s.from + (s.to - s.from) * M.sword_progress(t / s.ticks)
 end
 
--- Partito in aria, un colpo che arriva mentre il martello cala fa rimbalzare in alto
-function M:mallet_bounce(rb, t)
-	if not rb.mallet_air or rb.mallet_bounced or M.mallet_angle(t) > 0 then return false end
+-- Il primo urto del colpo, su un robot o sul terreno, fa rimbalzare in alto
+function M:mallet_bounce(rb)
+	if rb.mallet_bounced then return false end
 	rb.mallet_bounced = true
 	rb.vy, rb.grounded, rb.knocked, rb.fall_top = C.MALLET.bounce, false, false, nil
 	return true
 end
 
-function M:mallet_hit(rb, other, t)
-	local bounce = self:mallet_bounce(rb, t)
+function M:mallet_hit(rb, other)
+	local bounce = self:mallet_bounce(rb)
 	self:emit({ type = "mallet_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.HURT_Y, bounce = bounce })
 	self:hurt(other, C.MALLET.damage, rb)
 end
@@ -1697,15 +1698,16 @@ function M:update_mallet(rb)
 	local t0 = rb.mallet
 	rb.mallet = t0 + 1
 	if not rb.mallet_stop and t0 < s.ticks then
-		local t, x, y = self:sweep_arc(rb, t0, M.mallet_angle, s.reach, rb.mallet_dir, rb.mallet_hit, M.mallet_hit, true)
+		local t, x, y = self:sweep_arc(rb, t0, M.mallet_angle, s.reach, rb.mallet_dir, rb.mallet_hit, M.mallet_hit, true,
+			rb.mallet_base)
 		if t then
 			rb.mallet_stop = t
-			local bounce = self:mallet_bounce(rb, t)
+			local bounce = self:mallet_bounce(rb)
 			self:emit({ type = "mallet_hit", robot = rb.id, x = x, y = y, bounce = bounce })
 		end
 	end
 	if rb.mallet >= s.ticks + s.hold then
-		rb.mallet, rb.mallet_dir, rb.mallet_hit, rb.mallet_stop, rb.mallet_bounced, rb.mallet_air = nil, nil, nil, nil, nil, nil
+		rb.mallet, rb.mallet_dir, rb.mallet_hit, rb.mallet_stop, rb.mallet_bounced, rb.mallet_base = nil, nil, nil, nil, nil, nil
 	end
 end
 
@@ -1810,15 +1812,15 @@ local ARC_SAMPLES = 10
 local HEAD_SIDE = { 0, -5, 5 }
 
 -- Un tick di un'arma lunga reach che gira attorno alla spalla di rb (Lama,
--- Maglio), da t0 a t0 + 1: angle(t) è il suo angolo per un robot rivolto a
--- destra, dir il lato del colpo. Ogni robot toccato lungo l'arma viene colpito
+-- Maglio), da t0 a t0 + 1: angle(t, base) è il suo angolo per un robot rivolto a
+-- destra che mira a base, dir il lato del colpo. Ogni robot toccato lungo l'arma viene colpito
 -- una volta (hit(self, rb, other, t), segnato in done). Con stop la punta si
 -- ferma sul terreno: rende il tick (con la frazione) e il punto dell'urto.
-function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, stop)
+function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, stop, base)
 	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
 	for s = 1, ARC_SUBSTEPS do
 		local t = t0 + s / ARC_SUBSTEPS
-		local a = angle(t)
+		local a = angle(t, base)
 		local cx, cy = math.cos(a) * dir, math.sin(a)
 		for _, other in ipairs(self.robots) do
 			if other ~= rb and not other.dead and not done[other.id] then

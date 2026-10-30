@@ -27,6 +27,8 @@
 --   c.famiglia                                    -- "xbox", "playstation" o "nintendo" (dal nome del controller)
 --   c.connesso                                    -- c'è (o c'è stato) un controller
 --   c.su                                          -- -1 dove gli assi verticali arrivano capovolti (Android)
+--   c.valore.lt, c.valore.rt                      -- quanto sono premuti i grilletti (0..1)
+--   controller.togli(c, comando)                  -- il comando resta senza tasto
 
 local M = {}
 
@@ -64,9 +66,11 @@ M.BATTAGLIA = {
 	start = "rotellina",
 	select = "zoom",
 }
--- i comandi che si cambiano, nell'ordine delle impostazioni, e i tasti che si possono dare
-M.COMANDI = { "spara", "primaria", "secondaria", "teletrasporto", "rampino", "paracadute", "oggetti", "usa_oggetto",
-	"baratto", "zoom" }
+-- i comandi che si cambiano, nell'ordine delle impostazioni, e i tasti che si
+-- possono dare. Salta di base non ha un tasto (si salta con la levetta); con un
+-- tasto la levetta sinistra smette di saltare (Sergio, 30 ott).
+M.COMANDI = { "spara", "salta", "primaria", "secondaria", "teletrasporto", "rampino", "paracadute", "oggetti",
+	"usa_oggetto", "baratto", "zoom" }
 M.LIBERI = { a = true, b = true, x = true, y = true, lb = true, rb = true, lt = true, rt = true, select = true,
 	su = true, giu = true, sinistra = true, destra = true }
 
@@ -130,7 +134,8 @@ local CAPOVOLTO = { Android = true }
 function M.new(sistema)
 	local c = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 }, giu = {}, mezzi = {}, ignoti = {},
 		crude = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 } },
-		grezzi = GREZZI[sistema], ev = {}, su = CAPOVOLTO[sistema] and -1 or 1, famiglia = "xbox", tasti = {} }
+		grezzi = GREZZI[sistema], ev = {}, su = CAPOVOLTO[sistema] and -1 or 1, famiglia = "xbox", tasti = {},
+		valore = { lt = 0, rt = 0 } }
 	for t, cmd in pairs(M.BATTAGLIA) do c.tasti[t] = cmd end
 	return c
 end
@@ -147,26 +152,41 @@ function M.tasto_di(c, comando)
 	end
 end
 
--- Dà il tasto al comando; il comando che lo aveva prende il tasto lasciato libero
+-- Dà il tasto al comando; il comando che lo aveva prende il tasto lasciato
+-- libero o, se il comando non ne aveva, il primo tasto che nessuno usa (la
+-- croce, di base), così mettere Salta su A non toglie il teletrasporto
 function M.assegna(c, comando, tasto)
 	if not M.LIBERI[tasto] then return false end
 	local prima, altro = M.tasto_di(c, comando), c.tasti[tasto]
+	if prima then c.tasti[prima] = nil end
 	c.tasti[tasto] = comando
-	if prima and prima ~= tasto then c.tasti[prima] = altro end
+	if altro and altro ~= comando then
+		local dove = prima
+		for _, t in ipairs(ORDINE) do
+			if not dove and M.LIBERI[t] and not c.tasti[t] then dove = t end
+		end
+		if dove then c.tasti[dove] = altro end
+	end
 	return true
 end
 
--- La mappatura salvata nel profilo (tasto -> comando): si prende solo se ha
--- tutti i comandi, ognuno su un tasto libero; Start resta alla rotellina
+-- Toglie il tasto al comando (Y nelle impostazioni): resta senza
+function M.togli(c, comando)
+	local t = M.tasto_di(c, comando)
+	if t and M.LIBERI[t] then c.tasti[t] = nil end
+end
+
+-- La mappatura salvata nel profilo (tasto -> comando): si prende se ogni
+-- comando è un comando vero, su un tasto libero, una volta sola (un comando
+-- può anche non avere tasti); Start resta alla rotellina
+local VERI = {}
+for _, cmd in ipairs(M.COMANDI) do VERI[cmd] = true end
 function M.usa(c, tasti)
 	if type(tasti) ~= "table" then return false end
 	local visti = {}
 	for t, cmd in pairs(tasti) do
-		if not M.LIBERI[t] or visti[cmd] then return false end
+		if not M.LIBERI[t] or not VERI[cmd] or visti[cmd] then return false end
 		visti[cmd] = true
-	end
-	for _, cmd in ipairs(M.COMANDI) do
-		if not visti[cmd] then return false end
 	end
 	c.tasti = { start = "rotellina" }
 	for t, cmd in pairs(tasti) do c.tasti[t] = cmd end
@@ -250,7 +270,12 @@ local function grezzo(c, action)
 		evento(c, nome, giu)
 	end
 	for _, nome in ipairs({ "lt", "rt" }) do
-		if g.assi[nome] then evento(c, nome, (assi[g.assi[nome] + 1] or 0) > GRILLETTO) end
+		if g.assi[nome] then
+			c.valore[nome] = math.max(0, assi[g.assi[nome] + 1] or 0)
+			evento(c, nome, c.valore[nome] > GRILLETTO)
+		elseif g.tasti[nome] then
+			c.valore[nome] = tasti[g.tasti[nome] + 1] or 0
+		end
 	end
 end
 
@@ -264,6 +289,9 @@ function M.input(c, action_id, action)
 	for i = #ev, 1, -1 do ev[i] = nil end
 	local asse = AZIONI[action_id]
 	local nome = NOMI[action_id]
+	-- un controller letto dai grezzi: le sue azioni tradotte non contano (una
+	-- fonte sola per controller, sennò le due letture si alternano)
+	if (asse or nome) and c.ignoti[action.gamepad or 0] then return ev end
 	if asse then
 		c.mezzi[action_id] = (not action.released and action.value) or 0
 		local l, r = c[asse[1]], c.crude[asse[1]]
@@ -279,6 +307,7 @@ function M.input(c, action_id, action)
 		if asse[1] == "sx" then levetta_croce(c) end
 	elseif nome then
 		local v = (not action.released) and (action.value or 1) or 0
+		if c.valore[nome] then c.valore[nome] = v end
 		evento(c, nome, v > ((nome == "lt" or nome == "rt") and GRILLETTO or 0.5))
 	elseif action_id == CONNESSO then
 		-- un controller che Defold non conosce: lo leggiamo dall'azione grezza

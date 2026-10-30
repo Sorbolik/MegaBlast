@@ -1,8 +1,9 @@
 # Maglio: martello a due mani scelto all'inizio (prova_secondaria mallet, barra:
 # Lanciarune 432, Lama 546, Maglio 660, Rampino 754, Paracadute 848). Gira
-# attorno alla spalla come la Lama: parte alto dietro la testa, cala davanti e
-# finisce sotto i piedi; la testa si ferma dove sbatte. In aria, se sbatte
-# mentre cala, chi colpisce rimbalza in alto (pogo) e la targa dice RIMBALZO!
+# attorno alla spalla come la Lama: mirando dritto parte alto dietro la testa,
+# cala davanti e finisce sotto i piedi; l'arco gira con la mira. La testa si
+# ferma dove sbatte. Al primo urto, sul terreno o su un robot, a terra come in
+# aria, chi colpisce rimbalza in alto (pogo) e la targa dice RIMBALZO!
 imposta prova_secondaria mallet
 imposta zoom 1
 
@@ -13,16 +14,18 @@ aspetta 0.5
 premi 3                             # Maglio
 aspetta 0.4
 zoom 01_maglio_in_mano
-# in aria, scendendo dal salto: l'arco cala sotto i piedi, sbatte sul terreno
-# e si rimbalza (le foto del colpo si vedono meglio nel video: è veloce)
+# in aria, scendendo dal salto, mirando in basso: l'arco parte davanti in alto,
+# cala sotto i piedi, sbatte sul terreno e si rimbalza (le foto del colpo si
+# vedono meglio nel video: è veloce)
 tieni salta 0.75                    # tenuto: lasciato presto il salto si accorcia
 aspetta 0.1
-mira 0 -120 0.05 02_mira_alto_dietro 2
+mira 0 -120 0.05 02_mira_in_basso 2
 aspetta_evento mallet_hit 2
 zoom 03_aria_sbatte
 aspetta 0.15
 zoom 04_rimbalzo
-# turno 2, a terra: l'arco cala davanti e la testa si ferma sul terreno
+# turno 2, a terra, mirando dritto: l'arco cala davanti, la testa si ferma sul
+# terreno e si rimbalza anche senza aver saltato
 aspetta_stato turno=2 fase=aim 40
 aspetta 0.5
 premi 3

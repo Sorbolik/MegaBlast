@@ -683,6 +683,8 @@ for _, e in ipairs(ev) do nomi[#nomi + 1] = e.nome end
 check(table.concat(nomi, " ") == "a su y", "controller sconosciuto: A, Y e la croce in su (RT era già giù), in ordine di nome")
 check(c.sx.x == 0 and math.abs(c.dx.x - 0.5) < 1e-9 and math.abs(c.dx.y + 0.5) < 1e-9, "controller sconosciuto: zona morta e levetta destra, capovolta su Android")
 check(controller.new("Darwin").grezzi == nil, "controller: sul computer i grezzi non si leggono")
+ev = controller.input(c, hash("pad_a"), { gamepad = 1, pressed = true, value = 1 })
+check(#ev == 0, "controller: un controller letto dai grezzi non conta anche tradotto (una fonte sola)")
 -- le impostazioni: i tasti da cambiare (menu/impostazioni.lua)
 local m = controller.new("Windows")
 check(controller.assegna(m, "spara", "b") and m.tasti.b == "spara" and m.tasti.rt == "baratto",
@@ -692,7 +694,23 @@ local salvati = controller.da_salvare(m)
 check(salvati.start == nil and salvati.b == "spara", "controller: si salva senza Start")
 local m2 = controller.new("Windows")
 check(controller.usa(m2, salvati) and m2.tasti.b == "spara" and m2.tasti.start == "rotellina", "controller: la mappatura salvata si riprende")
-check(not controller.usa(m2, { a = "spara" }), "controller: una mappatura senza tutti i comandi non si prende")
+check(controller.usa(m2, { a = "spara" }) and m2.tasti.a == "spara" and controller.tasto_di(m2, "baratto") == nil,
+	"controller: una mappatura con comandi senza tasto si prende")
+check(not controller.usa(m2, { a = "vola" }) and not controller.usa(m2, { a = "spara", b = "spara" }),
+	"controller: comandi sconosciuti o doppi no")
+controller.base(m2)
+check(controller.tasto_di(m2, "salta") == nil, "controller: di base si salta con la levetta")
+check(controller.assegna(m2, "salta", "a") and m2.tasti.a == "salta" and m2.tasti.su == "teletrasporto",
+	"controller: SALTA su A, il teletrasporto va sul primo tasto libero (croce su)")
+controller.togli(m2, "teletrasporto")
+check(controller.tasto_di(m2, "teletrasporto") == nil and m2.tasti.su == nil, "controller: Y toglie il tasto")
+controller.togli(m2, "rotellina")
+check(m2.tasti.start == "rotellina", "controller: Start non si toglie")
+local mv = controller.new("Windows")
+controller.input(mv, hash("pad_rt"), { value = 0.3 })
+check(math.abs(mv.valore.rt - 0.3) < 1e-9, "controller: quanto è premuto il grilletto")
+controller.input(mv, hash("pad_rt"), { released = true, value = 0 })
+check(mv.valore.rt == 0, "controller: grilletto lasciato")
 controller.base(m2)
 check(m2.tasti.rt == "spara" and m2.tasti.b == "baratto", "controller: RIPRISTINA torna a quella di Sergio")
 check(controller.famiglia("Sony Interactive Entertainment Wireless Controller") == "playstation"

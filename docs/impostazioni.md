@@ -19,6 +19,10 @@ nel codice (se c'è già un interruttore).
 | Effetti ridotti | Transizioni ed effetti più leggeri | spenti | roadmap | — |
 | Comandi | Mancino, levette, mira | — | roadmap (area 8) | — |
 | Tasti del controller | Cambiare cosa fa ogni tasto del controller in battaglia (Sergio: "forse molta gente vorrà usare l'analogico destro per dosare la potenza") | la mappatura di Sergio ([controller.md](controller.md)) | Sergio, 30 ott | **c'è**: nelle IMPOSTAZIONI della home (`client/menu/impostazioni.lua`), salvata nel profilo (`profilo.impostazione(p, "tasti")`); le levette sono fisse |
+| Sparo col controller | Il colpo parte **lasciando** il tasto di SPARA (premi per caricare) o **premendolo** | lasciando | Sergio, 30 ott ("la gente è abituata che quando prende la mira poi spara al rilascio") | **c'è**: IMPOSTAZIONI (`sparo`) |
+| Potenza col controller | La potenza la dà la **levetta** destra (quanto la spingi) o il **grilletto** (quanto premi il tasto di SPARA; la levetta dà solo la direzione) | levetta | Sergio, 30 ott ("c'è un modo per gestire la potenza del colpo con il trigger?") | **c'è**: IMPOSTAZIONI (`potenza`) |
+| Salto col controller su un tasto | SALTA su un tasto (per esempio A) invece della levetta sinistra in su; con un tasto la levetta non salta più | levetta in su | Sergio, 30 ott | **c'è**: la riga SALTA dei tasti del controller |
+| Togliere un tasto | Un comando del controller resta senza tasto (Y sulla riga) | — | Sergio, 30 ott | **c'è**: IMPOSTAZIONI |
 | HUD sistemabile | Il giocatore sposta i pulsanti della battaglia | predefiniti | Sergio, 29 ott ([interfaccia](decisioni/interfaccia.md)) | — |
 
 Non ci saranno (decisioni di Sergio): qualità grafica a livelli. (La rimappatura dei tasti ora c'è, per il controller: Sergio, 30 ott.)

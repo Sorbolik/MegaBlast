@@ -80,7 +80,7 @@ function N.snapshot(g)
 			sw = rb.secondary or "", lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
 			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0,
 			gs = rb.hook_shot ~= nil, gx = rb.hook_shot and rb.hook_shot.x or 0, gy = rb.hook_shot and rb.hook_shot.y or 0,
-			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, kn = rb.knocked,
+			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, mb = rb.mallet_base or 0, kn = rb.knocked,
 			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, gn = rb.gone or false }
 	end
 	-- k: "missile", "grenade" o "sniper", fu: tick prima che l'Uovo scoppi

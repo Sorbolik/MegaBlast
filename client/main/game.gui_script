@@ -112,7 +112,7 @@ local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", 
 -- e il loro effetto, nella scelta (senza accenti)
 local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
-	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dalla testa ai piedi; in aria, se colpisce mentre cala, rimbalzi in alto",
+	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dove miri; quando sbatte su qualcosa o qualcuno rimbalzi in alto",
 	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
 	bellows = "Soffio della forgia: spinge via chi hai davanti",
 	hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita" }
@@ -1085,6 +1085,7 @@ local function apply_state(self, s)
 		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
 		rb.mallet_stop = (r.ms or 0) > 0 and r.ms or nil
 		rb.mallet_dir = (r.md or 0) ~= 0 and r.md or nil
+		rb.mallet_base = r.mb or 0
 		rb.ammo.trap, rb.ammo.shield, rb.ammo.trampoline = r.ak or 0, r.ad or 0, r.am or 0
 		rb.shield = (r.sh or 0) > 0 and r.sh or nil
 		rb.parachute = r.pa or false
@@ -1975,15 +1976,18 @@ local function render(self, dt)
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
 		end
-		-- Maglio: mirando sta alto dietro la testa (dove parte l'arco); nel colpo
-		-- gira attorno alla spalla come la Lama e si ferma dove ha sbattuto
+		-- Maglio: mirando sta dove parte l'arco (alto dietro la testa, girato con
+		-- la mira); nel colpo gira attorno alla spalla come la Lama e si ferma
+		-- dove ha sbattuto
 		if aiming and weapon == "mallet" then
-			st.aim = st.facing > 0 and gconfig.MALLET.from or math.pi - gconfig.MALLET.from
+			local base, dir = game.aim_side(self.aim_angle)
+			local a = base + gconfig.MALLET.from
+			st.aim = dir > 0 and a or math.pi - a
 		end
 		if rb.mallet ~= nil and not rb.dead then
 			weapon = "mallet"
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
-			local a = game.mallet_angle(math.max(0, rb.mallet - span + k * span), rb.mallet_stop)
+			local a = game.mallet_angle(math.max(0, rb.mallet - span + k * span), rb.mallet_base, rb.mallet_stop)
 			local dir = rb.mallet_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
@@ -2238,8 +2242,7 @@ local function render(self, dt)
 	if self.aiming and can_aim and not cancel and mira.MISCHIA[aim_weapon] then
 		local v, s = self.view[g.current], self.cam.s
 		local cy = v.y + game.DISEGNO_H / 2
-		-- il Maglio sceglie solo il lato
-		local a = aim_weapon == "mallet" and (math.cos(self.aim_angle) < 0 and math.pi or 0) or self.aim_angle
+		local a = self.aim_angle
 		mira.punta(self.mira, v.x + math.cos(a) * game.MUZZLE, cy + math.sin(a) * game.MUZZLE, a, s, self.colors[g.current])
 		-- chi verrebbe colpito, provato su una copia della partita (meno di un
 		-- millisecondo): di nuovo quando la mira gira, al massimo ogni 3 fotogrammi,
@@ -3060,8 +3063,13 @@ function PAD.testi(self)
 	local c = PAD.comandi(self)
 	local t = PAD.TESTI[c]
 	if c == "controller" then
-		t.mira = "muovi la levetta di destra per sistemare la traiettoria, premi " .. PAD.lettore.nome_di("spara")
-			.. " per far partire il colpo"
+		local spara, salta = PAD.lettore.nome_di("spara"), PAD.lettore.nome_di("salta")
+		t.mira = PAD.imp(self, "potenza") == "grilletto"
+			and ("muovi la levetta di destra per la direzione, premi " .. spara .. " per la potenza e lascialo per far partire il colpo")
+			or PAD.imp(self, "sparo") == "rilascio"
+			and ("muovi la levetta di destra per sistemare la traiettoria, premi e lascia " .. spara .. " per far partire il colpo")
+			or ("muovi la levetta di destra per sistemare la traiettoria, premi " .. spara .. " per far partire il colpo")
+		t.salta = salta ~= "" and ("premi " .. salta) or "spingi in su la levetta di sinistra"
 	end
 	return t
 end
@@ -3098,7 +3106,20 @@ function PAD.riposo(self)
 		levette.reset(self.pad_st)
 		self.pad_mira, self.aiming = false, false
 	end
-	self.pad_cammina, self.pad_salta = 0, false
+	self.pad_cammina, self.pad_salta, self.pad_carica = 0, false, false
+end
+
+-- Un'impostazione del profilo (sparo, potenza: menu/impostazioni.lua)
+function PAD.imp(self, chiave)
+	return profilo.impostazione(self.profilo, chiave)
+end
+
+-- Quanto è premuto il tasto di SPARA (0..1): i grilletti a metà, gli altri tutto o niente
+function PAD.grilletto(self)
+	local c = self.ctrl
+	local t = PAD.lettore.tasto_di(c, "spara")
+	if not t then return 0 end
+	return c.valore[t] or (c.giu[t] and 1 or 0)
 end
 
 -- A ogni frame la levetta destra mira, come quella del telefono: accesa oltre
@@ -3114,21 +3135,38 @@ function PAD.mira(self)
 	end
 	local era = st.active
 	levette.mira(st, l.x, l.y)
+	-- potenza "grilletto" (impostazioni): la levetta dà solo la direzione, la
+	-- potenza è quanto premi il tasto di SPARA, e lasciandolo parte il colpo
+	local grilletto = PAD.imp(self, "potenza") == "grilletto"
 	if st.active then
 		if not era then missioni.tocca(self.missione, "mira") end
 		self.pad_mira, self.aiming = true, true
 		self.aim_target = st.angle
 		if not era or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
-		self.aim_power = math.max(0.1, st.f ^ game.AIM_EXPONENT)
+		local f = st.f
+		if grilletto then f = math.max(0, math.min(1, (PAD.grilletto(self) - PAD.SOGLIA) / (0.95 - PAD.SOGLIA))) end
+		self.aim_power = math.max(0.1, f ^ game.AIM_EXPONENT)
 		self.aim_dist = math.huge
 		-- per sparare con la mira di un attimo prima (PAD.COMANDI.spara)
 		levette.registra(st, self.clock, self.aim_angle, self.aim_power, true)
+		if grilletto then
+			-- premuto: si carica; lasciato (sotto la soglia): parte
+			local v = PAD.grilletto(self)
+			if v > PAD.SOGLIA then
+				self.pad_carica = true
+			elseif self.pad_carica then
+				PAD.COMANDI.spara(self, PAD.LASCIA_GRILLETTO)
+			end
+		end
 	elseif era then
 		-- riportata al centro: la mira si spegne e non parte niente
-		self.pad_mira, self.aiming = false, false
+		self.pad_mira, self.aiming, self.pad_carica = false, false, false
 		missioni.tocca(self.missione, "annulla")
 	end
 end
+-- il grilletto conta oltre SOGLIA; lasciandolo si spara con la potenza di
+-- LASCIA_GRILLETTO secondi prima (il grilletto torna su in un attimo)
+PAD.SOGLIA, PAD.LASCIA_GRILLETTO = 0.06, 0.08
 
 -- Gli OGGETTI che si vedono, dal basso della colonna
 function PAD.oggetti(self)
@@ -3169,13 +3207,14 @@ end
 PAD.COMANDI = {
 	primaria = function(self) PAD.giro(self, 1) end,
 	secondaria = function(self) PAD.giro(self, 2) end,
-	spara = function(self)
+	spara = function(self, prima)
 		local w = self.tele_armed and "teleport" or self.weapon
+		self.pad_carica = false
 		if self.pad_mira and my_turn(self) and self.g:can_use(w) then
 			-- come sul telefono quando si stacca il pollice: la mira di un attimo
 			-- prima (levette.RILASCIO), così premendo RT la levetta che scivola non
 			-- sposta il colpo
-			local h = levette.al_rilascio(self.pad_st, self.clock)
+			local h = levette.al_rilascio(self.pad_st, self.clock - (prima or 0))
 			local a, p = self.aim_angle, self.aim_power
 			if h and h.active then a, p = h.angle, h.power end
 			self.fire = { angle = a, power = p, weapon = w }
@@ -3183,6 +3222,11 @@ PAD.COMANDI = {
 			levette.reset(self.pad_st)
 			self.pad_mira, self.aiming = false, false
 		end
+	end,
+	-- SALTA su un tasto (impostazioni): salta finché è tenuto, come la levetta in su
+	salta = function(self)
+		self.jump_pressed, self.pad_salta = true, true
+		missioni.tocca(self.missione, "salta")
 	end,
 	teletrasporto = function(self) choose_slot(self, "teleport") end,
 	rampino = function(self) choose_slot(self, "hook") end,
@@ -3295,7 +3339,14 @@ function PAD.ogni_frame(self)
 	end
 	local st = self.pad_muovi
 	local era = st.moving
-	if levette.muovi(st, c.sx.x, c.sx.y) then
+	local tasto_salto = lettore.tasto_di(c, "salta")
+	if tasto_salto then
+		-- col salto su un tasto la levetta sinistra cammina soltanto: conta solo di lato
+		local x = c.sx.x
+		st.moving = math.abs(x) > (st.moving and levette.MOVE_CENTER or levette.LATERAL_DEAD)
+		if st.moving then st.dir = x < 0 and -1 or 1 end
+		self.pad_salta = self.pad_salta and c.giu[tasto_salto] or false
+	elseif levette.muovi(st, c.sx.x, c.sx.y) then
 		self.jump_pressed = true
 		missioni.tocca(self.missione)
 		missioni.tocca(self.missione, "salta")
@@ -3305,7 +3356,7 @@ function PAD.ogni_frame(self)
 		missioni.tocca(self.missione, "cammina")
 	end
 	self.pad_cammina = st.moving and st.dir or 0
-	self.pad_salta = st.jumping
+	if not tasto_salto then self.pad_salta = st.jumping end
 	PAD.mira(self)
 	-- l'oggetto acceso (LT): se è finito, il primo della colonna
 	local l = PAD.oggetti(self)
@@ -3320,6 +3371,14 @@ function PAD.evento(self, e)
 	-- su Android B manda anche il tasto indietro del telefono (PAD.ogni_frame)
 	if e.nome == "b" then self.pad_b_t = self.clock end
 	if self.touch_ui and COMANDI == "" then set_touch_ui(self, false) end
+	if e.nome and not e.premuto and not e.levetta and (self.mode == "local" or self.mode == "online") then
+		-- lasciati: SALTA smette di saltare, SPARA "lasciando" fa partire il colpo
+		local comando = PAD.lettore.comando(self.ctrl, e.nome)
+		if comando == "salta" then self.pad_salta = false end
+		if comando == "spara" and self.pad_carica and PAD.imp(self, "potenza") ~= "grilletto" then
+			PAD.COMANDI.spara(self)
+		end
+	end
 	if not (e.nome and e.premuto) then return end
 	local battaglia = self.mode == "local" or self.mode == "online" or self.mode == "ended"
 	if not battaglia then
@@ -3348,6 +3407,16 @@ function PAD.evento(self, e)
 	elseif comando == "rotellina" and self.controls_visible then
 		apri_rotellina(self, true)
 		ui.naviga(self.rotellina, "giu")
+	elseif comando == "spara" and self.controls_visible then
+		-- premendo spara subito; "lasciando" (impostazioni) si carica e parte
+		-- quando si lascia; con la potenza dal grilletto ci pensa PAD.mira
+		missioni.tocca(self.missione)
+		if PAD.imp(self, "potenza") == "grilletto" then return end
+		if PAD.imp(self, "sparo") == "rilascio" then
+			self.pad_carica = self.pad_mira
+		else
+			PAD.COMANDI.spara(self)
+		end
 	elseif comando and self.controls_visible then
 		missioni.tocca(self.missione)
 		PAD.COMANDI[comando](self)
