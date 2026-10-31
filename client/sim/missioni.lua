@@ -294,6 +294,9 @@ function M.prepara(r, g)
 		end
 	end
 	for i, v in pairs(l.punti or {}) do g.robots[i].points = v end
+	-- chi parte coi punti della missione ha già la Corona (di solito arriva dopo
+	-- SCORE.crown_rounds giri): la lezione Punti e Corona la fa colpire subito
+	if l.punti then g.round = math.max(g.round, (g.score.crown_rounds or 0) + 1) end
 	if l.senza_armi then g.robots[GIOCATORE].disarmed = true end
 	g:pop_events()
 	if g.current == GIOCATORE then st.turni = 1 else st.turni_bot = 1 end

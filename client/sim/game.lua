@@ -391,6 +391,7 @@ function M.new(seed, map_id, opts)
 	g.match_left = M.MATCH_TICKS
 	g.current = 1
 	g.window = 0             -- tick rimasti dopo il primo attacco del turno (0: non c'è ancora stato)
+	g.round = 1              -- il giro di turni in corso (la Corona c'è da SCORE.crown_rounds + 1)
 	g.final_round = false    -- l'ultimo giro: i punti valgono SCORE.final_round volte
 	-- con due squadre i turni vanno a coppie (Rosso, Blu): ahead è la squadra che
 	-- apre la coppia, ahead_base i suoi punti quando l'ha aperta. Finché l'altra
@@ -527,8 +528,11 @@ function M:add_points(rb, n, reason, other)
 	self:emit({ type = "points", robot = rb.id, amount = n, reason = reason, other = other and other.id })
 end
 
--- Chi ha più punti (solo se è uno solo e ne ha più di zero): colpirlo vale di più
+-- Chi ha più punti (solo se è uno solo e ne ha più di zero): colpirlo vale di più.
+-- Nei primi SCORE.crown_rounds giri non c'è: chi gioca per primo sarebbe primo
+-- solo perché ha già sparato (Sergio, 31 ottobre 2026).
 function M:leader()
+	if self.round <= (self.score.crown_rounds or 0) then return nil end
 	local best, tie = nil, false
 	for _, rb in ipairs(self.robots) do
 		if not best or rb.points > best.points then
@@ -2803,6 +2807,7 @@ function M:end_turn()
 			return
 		end
 		for _, r in ipairs(self.robots) do r.round_done = false end
+		self.round = self.round + 1
 		if self.match_left <= self:final_round_ticks() then
 			self.final_round = true
 			self:emit({ type = "final_round" })
