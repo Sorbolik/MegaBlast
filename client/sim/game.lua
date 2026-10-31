@@ -584,7 +584,7 @@ function M:hurt(rb, amount, by, reason)
 	-- per i punti conta solo la vita che c'era davvero
 	local real = math.min(amount, rb.hp)
 	rb.hp = rb.hp - amount
-	self:emit({ type = "damage", robot = rb.id, amount = amount, reason = reason })
+	self:emit({ type = "damage", robot = rb.id, amount = amount, real = real, reason = reason, by = by and by.id })
 	if by and by ~= rb then
 		if foe then
 			by.damage = by.damage + real

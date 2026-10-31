@@ -22,6 +22,7 @@
 --   scelta.online(s, m, nomi, colori, invia)       -- online, a ogni messaggio draft del server;
 --                                                  -- invia(msg) manda le scelte
 --   scelta.hide(s)
+--   scelta.quando_chiude(s, fn)                   -- fn() quando la scelta si chiude
 
 local config = require "sim.config"
 local draft = require "sim.draft"
@@ -35,9 +36,10 @@ local M = {}
 
 local W, H = 1280, 720
 local CARD_W, CARD_H, CARD_GAP = 280, 230, 40
-local CARD_Y = 50
+-- (in alto, sopra il titolo, la striscia dei cartellini: menu/schieramento.lua)
+local CARD_Y = 20
 -- le due scelte fatte, sotto le carte
-local SCELTA_W, SCELTA_H, SCELTA_Y = 300, 84, -175
+local SCELTA_W, SCELTA_H, SCELTA_Y = 300, 84, -190
 local BAR_W = 560
 local C = ui.C
 local NOME_PASSO = { "PRIMARIA", "SECONDARIA" }
@@ -79,8 +81,8 @@ function M.new(icone, nomi, effetti, comandi)
 	s.luce = {}
 	s.root = nodo(W / 2, H / 2, W * schermo.PIENO, H * schermo.PIENO, VELO)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
-	s.titolo = ui.titolo("", 0, 312, 0.55, nil, s.root)
-	s.sotto = riga("", 255, 0.6, 1000, s.root)
+	s.titolo = ui.titolo("", 0, 232, 0.55, nil, s.root)
+	s.sotto = riga("", 192, 0.6, 1000, s.root)
 	for i = 1, config.DRAFT_OFFER do
 		local c = carta(0, CARD_Y, CARD_W, CARD_H, 96, s.root)
 		gui.set_position(c.icona, vec(0, 40))
@@ -242,7 +244,18 @@ function M.online(s, m, giocatori, colori, invia)
 	end
 end
 
+-- fn() quando la scelta si chiude (finita, nascosta, uscendo): lo schieramento
+-- e la sua striscia se ne vanno con lei
+function M.quando_chiude(s, fn)
+	s.chiusura = fn
+end
+
+local function chiusa(s)
+	if s.chiusura then s.chiusura() end
+end
+
 function M.hide(s)
+	chiusa(s)
 	chiudi_scheda(s)
 	gui.set_enabled(s.root, false)
 	gui.set_enabled(s.rotellina, false)
@@ -267,6 +280,7 @@ local function scegli(s, w)
 end
 
 local function finisci(s)
+	chiusa(s)
 	chiudi_scheda(s)
 	gui.set_enabled(s.root, false)
 	gui.set_enabled(s.rotellina, false)

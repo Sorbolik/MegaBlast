@@ -12,6 +12,9 @@ aspetta 0.5
 tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
 aspetta_stato modo=scelta_online 20
 aspetta 1
+foto 00_schieramento                # i cartellini di tutti: livello e badge dal server
+tocca 640 360                       # un tocco: alle armi
+aspetta 0.4
 foto 01_primaria
 tocca 320 410                       # primaria
 aspetta 0.5
