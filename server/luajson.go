@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"math"
 	"strconv"
 
@@ -80,4 +81,42 @@ func appendString(b []byte, s string) []byte {
 		}
 	}
 	return append(b, '"')
+}
+
+// fromJSON fa il contrario per le regole degli eventi: un JSON di oggetti,
+// liste, numeri, stringhe e booleani diventa una tabella Lua. nil resta nil.
+func (e *Engine) fromJSON(data []byte) (lua.LValue, error) {
+	if data == nil {
+		return lua.LNil, nil
+	}
+	var v any
+	if err := json.Unmarshal(data, &v); err != nil {
+		return lua.LNil, err
+	}
+	return toLua(e.L, v), nil
+}
+
+func toLua(L *lua.LState, v any) lua.LValue {
+	switch v := v.(type) {
+	case map[string]any:
+		t := L.NewTable()
+		for k, x := range v {
+			t.RawSetString(k, toLua(L, x))
+		}
+		return t
+	case []any:
+		t := L.CreateTable(len(v), 0)
+		for _, x := range v {
+			t.Append(toLua(L, x))
+		}
+		return t
+	case float64:
+		return lua.LNumber(v)
+	case string:
+		return lua.LString(v)
+	case bool:
+		return lua.LBool(v)
+	default:
+		return lua.LNil
+	}
 }

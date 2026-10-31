@@ -2282,6 +2282,26 @@ do
 	check(t > 1 and g.match_left == prima, "il tempo della partita è fermo fra un turno e l'altro")
 end
 
+-- regole come dati (sim/regole.lua): la lista bianca e cosa arriva a game.new e alla scelta
+do
+	local regole = require "sim.regole"
+	local draft = require "sim.draft"
+	check(regole.valida({ casse = 2, cure = false, livello = "fisso", armi = { "punch", "mallet" }, punti = { kill = 80 } }),
+		"regole: una regola giusta passa")
+	for _, r in ipairs({ { vento = 3 }, { casse = 0 }, { casse = 2.5 }, { armi = { "punch" } }, { armi = { "laser", "mallet" } },
+		{ punti = { volo = 3 } }, { punti = { kill = 5000 } }, { livello = "alto" }, { cure = "no" } }) do
+		local k = next(r)
+		check(not regole.valida(r), "regole: rifiutata " .. k)
+	end
+	local opts = regole.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
+	local g = game.new(7, "forgia", opts)
+	check(g.crate_every == 2 and not g.heals_on and g.score.kill == 80 and g.score.damage == config.SCORE.damage,
+		"regole: casse, cure e punti arrivano alla partita")
+	local d = draft.new(7, config.MODES["2v2"], regole.armi({ armi = { "punch", "mallet", "eagle" } }))
+	check(#d.offer == 1 and d.offer[1] == "punch" and #d.offer2 == 2, "regole: la scelta offre solo le armi dell'evento")
+	check(regole.armi({ casse = 2 }) == nil, "regole: senza armi la scelta resta quella di sempre")
+end
+
 if failures > 0 then
 	print(failures .. " test falliti")
 	os.exit(1)

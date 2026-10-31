@@ -19,6 +19,8 @@ Risultati in simulazione/ (ignorata da git): foto/*.png, foto/riepilogo.png, vid
 log.txt. Gli strumenti si installano con strumenti/simula/prepara.sh.
 """
 import argparse
+import datetime
+import json
 import os
 import re
 import shlex
@@ -54,7 +56,9 @@ PAD = {"a": ("F1", "F1"), "b": ("F2", "F2"), "x": ("F3", "F3"), "y": ("F4", "F4"
        "sx_sinistra": ("F", "f"), "sx_destra": ("H", "h"), "sx_su": ("Y", "y"), "sx_giu": ("G", "g"),
        "dx_sinistra": ("J", "j"), "dx_destra": ("L", "l"), "dx_su": ("I", "i"), "dx_giu": ("K", "k")}
 # Righe del log del motore che non sono errori del gioco (nel container non c'è audio)
-IGNORA = re.compile(r"^(ERROR|WARNING):SOUND|^WARNING:(DLIB: Variable LANG|ENGINE: Failed to initialize sound)")
+# (gli eventi chiesti a un server che non c'è: il gioco lo sa e va avanti senza, main/eventi.lua)
+IGNORA = re.compile(r"^(ERROR|WARNING):SOUND|^WARNING:(DLIB: Variable LANG|ENGINE: Failed to initialize sound)"
+                    r"|^ERROR:DLIB: HTTP request to '[^']*/eventi' failed")
 ERRORE = re.compile(r"^(ERROR|FATAL):|Assertion|Segmentation fault|stack traceback")
 
 
@@ -92,7 +96,8 @@ def test_sim():
         info("2. test della simulazione saltati: manca luajit")
         return
     info("2. test della simulazione, di assetto e podio, del personaggio e della camera")
-    for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua", "tests/bot_test.lua", "tests/campagna_test.lua"):
+    for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua", "tests/bot_test.lua", "tests/campagna_test.lua",
+                 "tests/eventi_test.lua"):
         r = esegui([lua, test], cwd=REPO)
         sys.stdout.write(r.stdout[-2000:] + r.stderr[-2000:])
         if r.returncode != 0:
@@ -295,9 +300,25 @@ def aspetta_che(g, cond, timeout, cosa):
 PORTA_SERVER = 8090
 
 
-def avvia_server(g, modo, n):
+def calendario_prova(nome, out):
+    """Il calendario degli eventi per il server dello scenario (scenari/NOME):
+    "OGGI+N HH:MM" e "OGGI+N" diventano le date vere, così gli eventi sono in
+    corso o in arrivo il giorno in cui si simula. Restituisce file e eventi."""
+    oggi = datetime.date.today()
+    def data(m):
+        d = oggi + datetime.timedelta(days=int(m.group(1) or 0))
+        return d.isoformat()
+    testo = re.sub(r"OGGI([+-]\d+)?", data, (QUI / "scenari" / nome).read_text())
+    f = out / "eventi.json"
+    f.write_text(testo)
+    return f, json.loads(testo)["eventi"]
+
+
+def avvia_server(g, modo, n, eventi=None):
     """Il server vero e N giocatori finti (strumenti/simula/finti) nella coda modo.
-    Lo scenario deve dire al gioco dove sta: imposta server_url ws://127.0.0.1:8090/ws"""
+    Lo scenario deve dire al gioco dove sta: imposta server_url ws://127.0.0.1:8090/ws
+    eventi: un calendario in scenari/ (calendario_prova); modo "evento:ID" è la
+    coda di quell'evento (la sua prima volta, che lo scenario fa in corso)."""
     if g.server:
         raise Fallito("il server è già partito")
     bin = g.out / "bin"
@@ -306,8 +327,15 @@ def avvia_server(g, modo, n):
         if r.returncode != 0:
             print(r.stdout + r.stderr)
             raise Fallito(f"go build {pacchetto} fallito")
+    extra = []
+    if eventi:
+        f, lista = calendario_prova(eventi, g.out)
+        extra = ["-eventi", str(f)]
+        if modo.startswith("evento:"):
+            e = next(e for e in lista if e["id"] == modo[7:])
+            modo = e["id"] + "-" + e["da"][:10].replace("-", "")
     log = open(g.out / "server.txt", "w")
-    g.server.append(subprocess.Popen([str(bin / "server"), "-addr", f"127.0.0.1:{PORTA_SERVER}"],
+    g.server.append(subprocess.Popen([str(bin / "server"), "-addr", f"127.0.0.1:{PORTA_SERVER}", *extra],
                                      stdout=log, stderr=subprocess.STDOUT))
     url = f"ws://127.0.0.1:{PORTA_SERVER}/ws"
     # i finti entrano dopo un attimo: il giocatore vero, che entra subito, è il robot 1
@@ -326,7 +354,7 @@ def comando(g, riga):
     elif c == "aspetta":
         g.attendi(num(0))
     elif c == "server":
-        avvia_server(g, a[0], int(num(1, 1)))
+        avvia_server(g, a[0], int(num(1, 1)), a[2] if len(a) > 2 else None)
     elif c == "foto":
         g.scatta(a[0])
     elif c == "zoom":

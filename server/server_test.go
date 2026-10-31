@@ -20,7 +20,7 @@ func newTestSim(t testing.TB, seed int64, mapID string) *Sim {
 		t.Fatal(err)
 	}
 	t.Cleanup(e.L.Close)
-	sim, err := e.NewSim(seed, mapID, lua.LNil, false)
+	sim, err := e.NewSim(seed, mapID, lua.LNil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +224,7 @@ func TestEngineReuseIsDeterministic(t *testing.T) {
 	}
 	defer e.L.Close()
 	for round := 0; round < 3; round++ {
-		sim, err := e.NewSim(7, "forgia", lua.LNil, false)
+		sim, err := e.NewSim(7, "forgia", lua.LNil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -341,7 +341,7 @@ func TestResumeUnknownToken(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":5,"tok":"n1.inventato"}`)
+	c.send(`{"t":"hello","v":6,"tok":"n1.inventato"}`)
 	if m := c.waitFor(`"error"`); m["e"] != "expired" || !c.closed() {
 		t.Fatalf("risposta inattesa: %v", m)
 	}
@@ -352,7 +352,7 @@ func TestOnlineMatch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	hello := `{"t":"hello","v":5,"mode":"1v1"}`
+	hello := `{"t":"hello","v":6,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -459,7 +459,7 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatalf("away inatteso: %v", m)
 	}
 	a = dial(t, ctx, url)
-	a.send(fmt.Sprintf(`{"t":"hello","v":5,"tok":%q}`, sa["tok"]))
+	a.send(fmt.Sprintf(`{"t":"hello","v":6,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("ripresa inattesa: %v", m)
 	}
@@ -486,7 +486,7 @@ func TestTeamDraft(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":5,"mode":"2v2"}`)
+		c[i].send(`{"t":"hello","v":6,"mode":"2v2"}`)
 	}
 	you := map[float64]*testClient{}
 	var offer, offer2 []any
@@ -536,7 +536,7 @@ func TestLeave(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":5,"mode":"ffa"}`)
+		c[i].send(`{"t":"hello","v":6,"mode":"ffa"}`)
 	}
 	you := map[float64]*testClient{}
 	for _, x := range c {

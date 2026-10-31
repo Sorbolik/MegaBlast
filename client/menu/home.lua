@@ -1,6 +1,6 @@
 -- La home (menu principale): fondo scuro, la Scoria col bagliore del Nucleo
 -- dietro, il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
--- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA e, in alto a destra,
+-- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA, EVENTI e, in alto a destra,
 -- la rotellina delle IMPOSTAZIONI (menu/impostazioni.lua). Le schermate nuove aggiungono qui il loro bottone
 -- quando esistono (stile in ui/ui.lua).
 --
@@ -9,7 +9,8 @@
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
 --   home.show(h) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
---   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "impostazioni" o nil
+--   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi", "impostazioni" o nil
+--   home.eventi(h, riga)                        -- la riga sotto EVENTI
 
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
@@ -78,6 +79,10 @@ function M.new(colore)
 	-- in basso a sinistra: assetti, albero e set
 	local sx = angolo(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	ui.bottone(h.bottoni, 0, 60, 240, 72, "ARMERIA", "armeria", nil, sx)
+	-- sopra: gli EVENTI (menu/bacheca.lua), con sotto cosa succede adesso
+	local ev = ui.bottone(h.bottoni, 0, 160, 240, 96, "", "eventi", nil, sx)
+	ui.testo("EVENTI", 0, 14, 0.9, ui.C.TESTO, ev)
+	h.riga_eventi = ui.testo("", 0, -22, 0.55, ui.C.SPENTO, ev)
 
 	-- in alto a destra: le impostazioni
 	h.tops[#h.tops + 1] = ui.impostazioni(h.bottoni, "impostazioni", nil, true)
@@ -107,6 +112,11 @@ function M.hide(h)
 	gui.cancel_animations(h.velo, "color.w")
 	gui.set_enabled(h.velo, false)
 	h.visibile = false
+end
+
+-- La riga sotto EVENTI (main/eventi.lua, riga_home)
+function M.eventi(h, testo)
+	gui.set_text(h.riga_eventi, testo)
 end
 
 function M.update(h, dt)

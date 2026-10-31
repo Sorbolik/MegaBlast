@@ -18,7 +18,7 @@ import (
 // Versione del protocollo: va cambiata insieme a PROTOCOL in
 // client/main/game.gui_script ogni volta che i messaggi cambiano in modo che
 // un client vecchio non capirebbe.
-const protocolVersion = 5
+const protocolVersion = 6
 
 type Config struct {
 	Node           string // nome del nodo, entra nei gettoni: un bilanciatore può mandare chi torna al nodo giusto
@@ -26,6 +26,7 @@ type Config struct {
 	ReconnectTicks int // quanto si aspetta chi è caduto prima di toglierlo dalla partita
 	DraftTicks     int // se > 0 sostituisce config.DRAFT_SECONDS (per le prove)
 	PingEvery      time.Duration
+	Eventi         string // file del calendario degli eventi (eventi.go), vuoto = nessun evento
 }
 
 func DefaultConfig() Config {
@@ -44,13 +45,14 @@ type Server struct {
 	cfg      Config
 	sched    *Scheduler
 	lobby    *Lobby
+	eventi   *Calendario
 	sessions sync.Map // gettone -> seatRef, per chi si riconnette
 	online   atomic.Int64
 	draining atomic.Bool
 }
 
 func NewServer(cfg Config) *Server {
-	s := &Server{cfg: cfg, sched: NewScheduler(cfg.Workers)}
+	s := &Server{cfg: cfg, sched: NewScheduler(cfg.Workers), eventi: NewCalendario(cfg.Eventi)}
 	s.lobby = NewLobby(s)
 	return s
 }
@@ -82,6 +84,13 @@ func (s *Server) Handler() http.Handler {
 			"rooms": s.sched.Rooms(), "load": s.sched.Load(), "late_ticks": s.sched.Late(),
 			"draining": s.draining.Load(),
 		})
+	})
+	// il calendario per la bacheca del gioco: in corso e dei prossimi giorni
+	mux.HandleFunc("/eventi", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*") // la build HTML5 lo chiede da un altro sito
+		w.Header().Set("Cache-Control", "max-age=30")
+		json.NewEncoder(w).Encode(map[string]any{"ora": s.eventi.now().Unix(), "eventi": s.eventi.Occorrenze()})
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("MegaBlast server\n"))
@@ -191,8 +200,15 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 		return false
 	}
 	mode, ok := modes[m.Mode]
+	if !ok && m.Mode != "" {
+		// la coda di un evento (GET /eventi): se nel frattempo è finito, lo diciamo
+		if mode, ok = s.eventi.Coda(m.Mode); !ok {
+			p.Send([]byte(`{"t":"error","e":"evento"}`))
+			return false
+		}
+	}
 	if !ok {
-		mode = modes["1v1"]
+		mode = modes["2v2"]
 	}
 	s.lobby.Join(p, mode)
 	return true

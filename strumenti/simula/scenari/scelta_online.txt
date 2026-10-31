@@ -4,11 +4,12 @@
 # y = 410), sotto le due scelte fatte (x = 475 e 805, y = 185). Le scelte
 # degli altri non si vedono; finito, si aspetta lo scadere del tempo.
 imposta server_url ws://127.0.0.1:8090/ws
-imposta giocatori 2v2
 
 aspetta 1
 server 2v2 3
 tocca 1075 102                      # GIOCA
+aspetta 0.5
+tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
 aspetta_stato modo=scelta_online 20
 aspetta 1
 foto 01_primaria

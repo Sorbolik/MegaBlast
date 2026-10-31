@@ -17,8 +17,9 @@ const (
 
 // Messaggio da un client:
 //
-//	{"t":"hello","v":5,"mode":"1v1"}   primo messaggio: versione del protocollo e modalità
-//	{"t":"hello","v":5,"tok":"..."}    oppure: torno nella partita da cui sono caduto
+//	{"t":"hello","v":6,"mode":"2v2"}   primo messaggio: versione del protocollo e coda ("1v1",
+//	                                    "2v2", "ffa" o l'id di un evento con la sua coda, GET /eventi)
+//	{"t":"hello","v":6,"tok":"..."}    oppure: torno nella partita da cui sono caduto
 //	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria e una secondaria
 //	                                    (l'arma dice la categoria; si cambia fino allo scadere)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
@@ -101,7 +102,10 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	r.eng = eng
 	list, err := eng.call("mode_players", lua.LString(mode.Sim))
 	if err == nil {
-		r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim))
+		var regole lua.LValue
+		if regole, err = eng.fromJSON(mode.Regole); err == nil {
+			r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), regole)
+		}
 	}
 	var secs lua.LValue
 	if err == nil {
@@ -160,9 +164,15 @@ func (r *Room) broadcast(msg []byte) {
 	}
 }
 
+// regole: quelle dell'evento della coda (sim/regole.lua), il client le passa
+// alla sua copia della partita; null fuori dagli eventi.
 func (r *Room) sendStart(slot int, resume bool) {
-	r.send(slot, fmt.Appendf(nil, `{"t":"start","seed":%d,"map":%q,"mode":%q,"you":%d,"tok":%q,"resume":%t,"players":%s}`,
-		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players))
+	regole := r.mode.Regole
+	if regole == nil {
+		regole = []byte("null")
+	}
+	r.send(slot, fmt.Appendf(nil, `{"t":"start","seed":%d,"map":%q,"mode":%q,"you":%d,"tok":%q,"resume":%t,"players":%s,"regole":%s}`,
+		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players, regole))
 }
 
 // sendDraft manda a un giocatore la scelta delle armi: ventagli, le sue
@@ -191,7 +201,7 @@ func (r *Room) startMatch() error {
 		return err
 	}
 	r.draft = nil
-	if r.sim, err = r.eng.NewSim(r.seed, "", players, r.mode.Normalize); err != nil {
+	if r.sim, err = r.eng.NewSim(r.seed, "", players, r.mode.Regole); err != nil {
 		return err
 	}
 	list, err := r.eng.call("start_players", players)

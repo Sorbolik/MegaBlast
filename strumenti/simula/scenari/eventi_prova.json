@@ -1,0 +1,12 @@
+{"eventi": [
+	{"id": "maglio", "tipo": "mod", "nome": "2V2 SOLO MAGLIO", "riga": "Una sola arma per parte, colpi che fanno volare.",
+	 "da": "OGGI-1 10:00", "a": "OGGI+1 23:59", "ogni": 2,
+	 "modo": "2v2", "regole": {"armi": ["punch", "mallet"], "casse": 2},
+	 "premi": [{"testo": "Badge Maglio", "chi": "primi 10%"}, {"testo": "300 monete", "chi": "tutti"}]},
+	{"id": "torneo", "tipo": "torneo", "nome": "TORNEO 2V2", "riga": "Le partite 2 contro 2 di sempre, con la classifica.",
+	 "da": "OGGI-1 18:00", "a": "OGGI+2 22:00", "ogni": 1,
+	 "premi": [{"testo": "Badge Torneo III", "chi": "primi 1%"}, {"testo": "Badge Torneo II", "chi": "primi 10%"}, {"testo": "Badge Torneo I", "chi": "tutti"}]},
+	{"id": "ambientali", "tipo": "sfida", "nome": "SFIDA · 20 UCCISIONI AMBIENTALI",
+	 "da": "OGGI+3 10:00", "a": "OGGI+5 22:00"},
+	{"id": "doppia_xp", "tipo": "xp", "nome": "XP DOPPI", "da": "OGGI+9 18:00", "a": "OGGI+10 23:00"}
+]}
