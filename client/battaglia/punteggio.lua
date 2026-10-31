@@ -51,6 +51,7 @@ local GET_W, GET_H, GET_GAP = 104, 30, 6
 local STRISCIA, BORDO_MIO = 6, 3
 -- due squadre: due gettoni dei punti e la fune in mezzo
 local VAL_W, FUNE_W, FUNE_H, FUNE_GAP = 60, 250, 12, 8
+local FASCIA_W, FASCIA_PASSO, FASCIA_V = 4, 10, 16  -- fasce dei punti in attesa: larghe, ogni, px/s
 local MORBIDO = 60                    -- coi primi punti la fune si sposta poco
 local SCRITTA, PICCOLA = 0.8, 0.6     -- scale di ui.testo
 local CORONA_SCALA = 1.4              -- larga circa 25 px (ui.corona)
@@ -182,10 +183,19 @@ function M.nuovo(colori, tick)
 	gui.set_pivot(p.fune_a, gui.PIVOT_W)
 	p.fune_b = box(p.fune, FUNE_W / 2, 0, FUNE_W / 2, FUNE_H, colori[2])
 	gui.set_pivot(p.fune_b, gui.PIVOT_E)
-	-- la parte della fune dei punti in attesa, a righe di luce (sopra le due metà)
-	p.fune_attesa = box(p.fune, 0, 0, 0, FUNE_H + 4, colori[1])
+	-- la parte della fune dei punti in attesa: come la fune, nel colore di chi
+	-- li ha, ma a fasce diagonali che scorrono verso l'altra squadra (le fasce
+	-- sono ritagliate dalla parte stessa, che fa da stampo)
+	p.fune_attesa = box(p.fune, 0, 0, 0, FUNE_H, colori[1])
 	gui.set_pivot(p.fune_attesa, gui.PIVOT_W)
+	gui.set_clipping_mode(p.fune_attesa, gui.CLIPPING_MODE_STENCIL)
 	gui.set_enabled(p.fune_attesa, false)
+	p.fasce = {}
+	for i = 1, math.ceil(FUNE_W / FASCIA_PASSO) + 3 do
+		local f = box(p.fune_attesa, 0, 0, FASCIA_W, FUNE_H * 2.2, colori[1])
+		gui.set_rotation(f, vmath.vector3(0, 0, 45))
+		p.fasce[i] = f
+	end
 	p.fune_segno = box(p.fune, 0, 0, 3, FUNE_H + 10, ui.C.LUCE)
 	p.fune_f = 0.5
 
@@ -563,7 +573,8 @@ function M.update(p, dt, g, mio)
 		local s = not p.fune_on and pos[t] and (pos[t] .. "°") or ""
 		if gt.posto_s ~= s then gui.set_text(gt.posto, s); gt.posto_s = s end
 		-- la Corona al gettone primo da solo, quando i suoi punti sono arrivati
-		gui.set_enabled(gt.corona, pos[t] == 1 and primi == 1)
+		-- (e dopo i primi giri senza Corona, come game:leader)
+		gui.set_enabled(gt.corona, pos[t] == 1 and primi == 1 and (g.round or 1) > (g.score.crown_rounds or 0))
 	end
 
 	-- il ticchettio sale di tono finché i punti continuano ad arrivare
@@ -596,10 +607,19 @@ function M.update(p, dt, g, mio)
 		gui.set_enabled(p.fune_attesa, on)
 		if on then
 			posizione(p.fune_attesa, FUNE_W * (da - 0.5), 0)
-			dimensione(p.fune_attesa, FUNE_W * (a2 - da), FUNE_H + 4)
-			local c = p.gettoni[attesa_t].colore
-			C.x, C.y, C.z, C.w = c.x, c.y, c.z, 0.45 + 0.25 * math.sin(p.ora * 5)
-			gui.set_color(p.fune_attesa, C)
+			dimensione(p.fune_attesa, FUNE_W * (a2 - da), FUNE_H)
+			-- fondo più scuro e fasce nel colore pieno della squadra
+			if p.fasce_t ~= attesa_t then
+				p.fasce_t = attesa_t
+				local c = p.gettoni[attesa_t].colore
+				C.x, C.y, C.z, C.w = c.x * 0.55, c.y * 0.55, c.z * 0.55, 1
+				gui.set_color(p.fune_attesa, C)
+				for _, f in ipairs(p.fasce) do gui.set_color(f, c) end
+			end
+			-- le fasce sono ferme rispetto alla fune e scorrono verso chi deve rispondere
+			local verso = attesa_t == p.lista[1] and 1 or -1
+			local x0 = (FUNE_W * (0.5 - da) + verso * p.ora * FASCIA_V) % FASCIA_PASSO - 2 * FASCIA_PASSO
+			for i, f in ipairs(p.fasce) do posizione(f, x0 + (i - 1) * FASCIA_PASSO, 0) end
 		end
 	end
 

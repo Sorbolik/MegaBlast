@@ -341,7 +341,7 @@ func TestResumeUnknownToken(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":4,"tok":"n1.inventato"}`)
+	c.send(`{"t":"hello","v":5,"tok":"n1.inventato"}`)
 	if m := c.waitFor(`"error"`); m["e"] != "expired" || !c.closed() {
 		t.Fatalf("risposta inattesa: %v", m)
 	}
@@ -352,7 +352,7 @@ func TestOnlineMatch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	hello := `{"t":"hello","v":4,"mode":"1v1"}`
+	hello := `{"t":"hello","v":5,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -459,7 +459,7 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatalf("away inatteso: %v", m)
 	}
 	a = dial(t, ctx, url)
-	a.send(fmt.Sprintf(`{"t":"hello","v":4,"tok":%q}`, sa["tok"]))
+	a.send(fmt.Sprintf(`{"t":"hello","v":5,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("ripresa inattesa: %v", m)
 	}
@@ -486,7 +486,7 @@ func TestTeamDraft(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":4,"mode":"2v2"}`)
+		c[i].send(`{"t":"hello","v":5,"mode":"2v2"}`)
 	}
 	you := map[float64]*testClient{}
 	var offer, offer2 []any
@@ -536,7 +536,7 @@ func TestLeave(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":4,"mode":"ffa"}`)
+		c[i].send(`{"t":"hello","v":5,"mode":"ffa"}`)
 	}
 	you := map[float64]*testClient{}
 	for _, x := range c {
@@ -569,7 +569,8 @@ func TestLeave(t *testing.T) {
 
 // Coppie di turni e ultimo giro nello stato: av (squadra che ha aperto la
 // coppia), ab (i suoi punti allora), fr (ultimo giro, punti doppi) e gd per
-// robot (ha già giocato nel giro). Online il tabellone dei punti in attesa e
+// robot (ha già giocato nel giro), gr (il giro in corso: la Corona c'è solo
+// dopo SCORE.crown_rounds giri). Online il tabellone dei punti in attesa e
 // dei pallini dei turni li legge da qui.
 func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 	sim := newTestSim(t, 42, "forgia")
@@ -577,6 +578,7 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 		AV int     `json:"av"`
 		AB float64 `json:"ab"`
 		FR bool    `json:"fr"`
+		GR int     `json:"gr"`
 		R  []struct {
 			GD bool `json:"gd"`
 		} `json:"r"`
@@ -589,7 +591,7 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 		return st
 	}
 	st := leggi()
-	if st.AV != 1 || st.AB != 0 || st.FR || st.R[0].GD || st.R[1].GD {
+	if st.AV != 1 || st.AB != 0 || st.FR || st.GR != 1 || st.R[0].GD || st.R[1].GD {
 		t.Fatalf("a inizio partita la coppia è aperta dalla squadra 1, niente ultimo giro: %+v", st)
 	}
 	// il primo turno finisce da solo allo scadere del tempo
@@ -604,5 +606,14 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 	st = leggi()
 	if !st.R[0].GD || st.R[1].GD || st.AV != 1 {
 		t.Fatalf("dopo il turno del primo: lui ha giocato, la coppia resta sua: %+v", st)
+	}
+	// finito anche il turno del secondo comincia il giro 2
+	for i := 0; i < 60*40 && leggi().GR == 1; i++ {
+		if err := sim.Step(Input{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if st = leggi(); st.GR != 2 || st.R[0].GD || st.R[1].GD {
+		t.Fatalf("dopo un giro intero: giro 2, nessuno ha ancora giocato: %+v", st)
 	}
 }

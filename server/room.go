@@ -17,8 +17,8 @@ const (
 
 // Messaggio da un client:
 //
-//	{"t":"hello","v":4,"mode":"1v1"}   primo messaggio: versione del protocollo e modalità
-//	{"t":"hello","v":4,"tok":"..."}    oppure: torno nella partita da cui sono caduto
+//	{"t":"hello","v":5,"mode":"1v1"}   primo messaggio: versione del protocollo e modalità
+//	{"t":"hello","v":5,"tok":"..."}    oppure: torno nella partita da cui sono caduto
 //	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria e una secondaria
 //	                                    (l'arma dice la categoria; si cambia fino allo scadere)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
