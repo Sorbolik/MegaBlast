@@ -11,7 +11,9 @@
 --          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI, anche con la rete): ogni robot ne prende uno a caso
 --          [--impara 1]                -- scrive anche gli esempi per impara.py: a ogni fine turno le
 --                                         caratteristiche della posizione (bot.caratteristiche) e quanto
---                                         ha guadagnato la sua squadra sulle altre da lì a fine partita
+--                                         ha guadagnato la sua squadra sulle altre da lì a fine partita;
+--                                         e in una partita su quattro le mosse provate dalle reti (guida:
+--                                         la descrizione, bot.descrivi, e quanto ha reso)
 --          [--assegna turno]           -- con --pesi: invece che a caso, a turno (il robot i prende il numero
 --                                         i + partita) e a coppie: le partite 2j e 2j + 1 sono la stessa
 --                                         (seme, modo, mappa, armi) con i numeri scambiati, così due
@@ -164,6 +166,13 @@ local function partita(k)
 	end
 	local r = replay.nuova(seme, mappa, { players = players, score = PUNTEGGIO })
 	local g, bots = replay.partita(r)
+	-- per la guida (impara.py): in una partita su quattro, le mosse provate dalle reti
+	local guida = opt.impara and k % 4 == 0 and {} or nil
+	if guida then
+		for _, b in pairs(bots) do
+			if b.pesi.rete then b.diario = guida end
+		end
+	end
 
 	local ultima = {}       -- l'ultima arma usata da ogni robot
 	local stats = {}
@@ -269,7 +278,8 @@ local function partita(k)
 		for _, p in ipairs(r.opzioni.players) do p.pesi = nil end
 	end
 	return { numero = k, ricetta = r, modo = modo, mappa = mappa, vincitore = res.winner or 0, tick = g.tick, robot = robot,
-		turni = turni, punti = punti, ritocchi = opt.ritocchi, pesi = opt.pesi, esempi = esempi }
+		turni = turni, punti = punti, ritocchi = opt.ritocchi, pesi = opt.pesi, esempi = esempi,
+		guida = guida }
 end
 
 local out = opt.uscita and assert(io.open(opt.uscita, "w")) or io.stdout

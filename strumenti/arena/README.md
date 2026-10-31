@@ -71,7 +71,7 @@ intorno, `bot.caratteristiche`) e quanto ha reso fino a fine partita
 (`arena.py --impara 1`), e la rete impara a prevederlo: non l'esito vero ma il
 ritorno a passi TD(λ) (`--lambda`, 1 per l'esito vero), che ha molto meno
 rumore. La rete prova anche i colpi a ventaglio che il bot di oggi non prova
-(`pesi.larga`, circa il doppio del tempo; `--stretta` per toglierli). Poi l'esame
+(`pesi.larga`; `--stretta` per toglierli): dal giro 1 la guida, una rete piccola allenata sulla scheda video (`guida.json`), sceglie quali colpi a ventaglio provare da ogni posto (`--guida-k`, 60). Poi l'esame
 contro il bot di oggi, come `evolvi.py`; la rete con l'esame migliore resta in
 `migliore.json`. Esce `simulazione/arena/impara/`. Serve PyTorch (sul PC di
 Sergio in `C:\Sviluppo\MegaBlast-rete\venv`, versione CUDA). Né la rete né

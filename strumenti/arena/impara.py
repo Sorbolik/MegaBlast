@@ -64,6 +64,7 @@ import arena
 import evolvi
 
 CARATTERISTICHE = 137  # bot.CARATTERISTICHE
+GUIDA = [22, 32, 16, 1]  # la guida: bot.DESCRIZIONE numeri per mossa
 
 
 def quanti(strati):
@@ -189,6 +190,14 @@ def lega(file):
 
 # Il giro ------------------------------------------------------------------------------
 
+def esempi_guida(partite):
+    """Le mosse provate dalle reti (arena.lua --impara, una partita su quattro):
+    la descrizione (bot.descrivi) e quanto ha reso, in centinaia di punti."""
+    d = [e["d"] for m in partite for e in (m.get("guida") or [])]
+    v = [e["v"] for m in partite for e in (m.get("guida") or [])]
+    return np.array(d, dtype=np.float32).reshape(-1, GUIDA[0]), np.array(v, dtype=np.float64)
+
+
 def esempi(partite):
     """x, y (esito vero) e per il ritorno a passi: la catena di ogni robot
     (partita e robot) e il margine della squadra a inizio turno."""
@@ -238,6 +247,7 @@ def main():
     ap.add_argument("--esplora", type=float, default=0.15)
     ap.add_argument("--lega", help="migliori.json di evolvi.py: gli specialisti giocano come avversari fissi")
     ap.add_argument("--stretta", action="store_true", help="la rete prova solo le mosse del bot di oggi (niente ventaglio)")
+    ap.add_argument("--guida-k", type=int, default=60, help="con la guida, quante mosse prova per turno (0: niente guida)")
     ap.add_argument("--epoche", type=int, default=60, help="passate massime sugli esempi a giro")
     ap.add_argument("--pazienza", type=int, default=5, help="ci si ferma dopo tante passate senza migliorare")
     ap.add_argument("--lotto", type=int, default=1024)
@@ -277,6 +287,10 @@ def main():
         else:
             rete, mu, sigma = leggi_rete(file_rete, strati)
         larga = {} if args.stretta else {"larga": True}
+        # la guida del giro prima (dal giro 1): il bot prova solo le mosse che promettono
+        if (radice / "guida.json").exists() and args.guida_k:
+            gr, gm, gs = leggi_rete(radice / "guida.json", GUIDA)
+            larga = larga | {"guida": per_lua(gr, GUIDA, gm, gs)["rete"], "guida_k": args.guida_k}
         adesso = per_lua(rete, strati, mu, sigma) | larga
         # la popolazione: il bot di oggi, la rete di adesso (più copie, che esplora),
         # reti passate e gli specialisti (la lega: deve battere tutti gli stili)
@@ -296,7 +310,8 @@ def main():
         partite = arena.leggi(arena.gioca(ns))
         x, y, catene, ms = esempi(partite)
         catene += giro * 10 ** 9  # catene diverse fra i giri
-        for nome, a in (("x", x), ("y", y), ("catene", catene), ("m", ms)):
+        gx, gy = esempi_guida(partite)
+        for nome, a in (("x", x), ("y", y), ("catene", catene), ("m", ms), ("gx", gx), ("gy", gy)):
             np.save(cartella / f"{nome}.npy", a)
         b = evolvi.misura(partite, len(individui))
         # come ha giocato la rete di adesso (tutte le sue copie insieme) e il bot di oggi
@@ -322,6 +337,17 @@ def main():
         G = ritorni(rete, Xn, B, Y, CAT, M, 1 if giro == 0 else args.lam)
         studio = impara(rete, Xn, (G - B).astype(np.float32), args, rng)
         salva_rete(radice / f"rete_{giro}.json", rete, mu, sigma)
+        # la guida impara quanto rende una mossa dalla sua descrizione (sulla scheda video)
+        GX, GY = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy") for k in giri]) for nome in ("gx", "gy"))
+        if len(GX) > 1000 and args.guida_k:
+            if (radice / "guida.json").exists():
+                gr, gm, gs = leggi_rete(radice / "guida.json", GUIDA)
+            else:
+                gr, gm, gs = nuova(GUIDA, args.seme), GX.mean(0), np.maximum(GX.std(0), 0.1)
+            studio["guida"] = impara(gr, ((GX - gm) / gs).astype(np.float32), GY.astype(np.float32), args, rng)
+            salva_rete(radice / "guida.json", gr, gm, gs)
+            larga = ({} if args.stretta else {"larga": True}) | {"guida": per_lua(gr, GUIDA, gm, gs)["rete"],
+                                                                  "guida_k": args.guida_k}
         nuova_lua = per_lua(rete, strati, mu, sigma) | larga
         voce = {"giro": giro, "partite": len(partite), "esempi": len(y), "esempi_studiati": len(X),
                 "bravura_rete": round(tot["alto"] / max(1, tot["volte"]), 4), "oggi": evolvi.comportamento(b[1]),
@@ -344,7 +370,7 @@ def main():
         # (pesi.lua e pesi.json, megabyte con le reti grandi) non servono più;
         # le reti di ogni giro restano in rete_N.json (1,5 MB l'una)
         vecchio = radice / f"giro_{giro - args.memoria}"
-        for f in ("x.npy", "y.npy", "catene.npy", "m.npy", "pesi.lua", "pesi.json"):
+        for f in ("x.npy", "y.npy", "catene.npy", "m.npy", "gx.npy", "gy.npy", "pesi.lua", "pesi.json"):
             (vecchio / f).unlink(missing_ok=True)
         for f in ("pesi.lua", "pesi.json"):
             (radice / f"esame_{giro}" / f).unlink(missing_ok=True)

@@ -577,6 +577,69 @@ local function gusto(b, arma, s)
 	return s
 end
 
+-- La guida (le reti, strumenti/arena/impara.py): una rete piccola che da
+-- pochi numeri di una mossa, prima di provarla, dice quanto promette. Con la
+-- guida il bot prova il ventaglio da ogni posto, ma sulla copia solo i
+-- pesi.guida_k colpi che promettono di più, più qualcuno a turno perché la
+-- guida impari anche da quelli: il ventaglio da ogni posto senza pagarlo in
+-- tempo del turno. La guida la allena la scheda video.
+--   1-11  l'arma (M.ARMI_RETE e il Rampino), 12-14 coseno e seno dell'angolo
+--         e potenza, 15-17 il posto (dx, dy, tick di strada), 18 vuoto
+--         vicino al posto, 19 il nemico più vicino al posto (distanza), 20
+--         quanto il colpo va verso di lui, 21-22 vita sua e del nemico
+M.DESCRIZIONE = 22
+local ARMA_N = {}
+for k, a in ipairs(M.ARMI_RETE) do ARMA_N[a] = k end
+ARMA_N.hook = #M.ARMI_RETE + 1
+
+local function descrivi(b, g, m, d)
+	for i = 1, M.DESCRIZIONE do d[i] = 0 end
+	local me = g.robots[b.id]
+	local posto = m.posto
+	if ARMA_N[m.arma] then d[ARMA_N[m.arma]] = 1 end
+	d[12], d[13], d[14] = math.cos(m.angolo), math.sin(m.angolo), m.potenza
+	d[15], d[16], d[17] = (posto.x - me.x) / 1000, (posto.y - me.y) / 500, (posto.n or 0) / 300
+	d[18] = bordo(g.terrain, posto.x, posto.y)
+	local vicino, dv = nil, math.huge
+	for _, o in ipairs(g.robots) do
+		if not o.dead and o.team ~= me.team then
+			local dd = (o.x - posto.x) ^ 2 + (o.y - posto.y) ^ 2
+			if dd < dv then vicino, dv = o, dd end
+		end
+	end
+	if vicino then
+		d[19] = math.sqrt(dv) / 1000
+		d[20] = math.cos(m.angolo - math.atan2(vicino.y - posto.y, vicino.x - posto.x))
+		d[22] = vicino.hp / 100
+	end
+	d[21] = me.hp / 100
+	return d
+end
+M.descrivi = descrivi
+
+-- Una mossa da provare: con la guida si mette da parte (b.proposte), se no si
+-- prova subito sulla copia. b.diario (arena.lua --impara): ogni tanto la
+-- descrizione e quanto ha reso, per allenare la guida.
+local DESCR = {}
+local function proponi(b, g, posto, arma, a, p, fino, mosse)
+	local m = { posto = posto, arma = arma, angolo = a, potenza = p, fino = fino }
+	if b.proposte then
+		b.proposte[#b.proposte + 1] = m
+		return
+	end
+	local s = gusto(b, arma, prova(b, g, posto, arma, a, p, fino))
+	m.punti, m.k = s - (posto.n or 0) * b.pesi.strada, #mosse + 1
+	mosse[#mosse + 1] = m
+	if b.diario then
+		b.conta = (b.conta or 0) + 1
+		if b.conta % 23 == 0 then
+			local d = descrivi(b, g, m, {})
+			for i = 1, #d do d[i] = math.floor(d[i] * 1000 + 0.5) / 1000 end
+			b.diario[#b.diario + 1] = { d = d, v = math.floor(m.punti * 10 + 0.5) / 1000 }
+		end
+	end
+end
+
 -- Il ventaglio delle mosse larghe: le potenze provate per arma e fin dove si
 -- prova il colpo in fretta (le armi da vicino fino in fondo)
 local VENTAGLIO = {
@@ -593,9 +656,7 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 	local cy = y + game.DISEGNO_H / 2
 	local bersagli = nemici(g, me, x, y)
 	local function aggiungi(arma, a, p, fino)
-		local s = gusto(b, arma, prova(b, g, posto, arma, a, p, fino))
-		mosse[#mosse + 1] = { posto = posto, arma = arma, angolo = a, potenza = p, punti = s - (posto.n or 0) * b.pesi.strada,
-			k = #mosse + 1 }
+		proponi(b, g, posto, arma, a, p, fino, mosse)
 	end
 	for k, o in ipairs(bersagli) do
 		if k > 2 then break end
@@ -671,11 +732,7 @@ local function ventaglio(b, g, posto, lista_armi, mosse)
 		local v = VENTAGLIO[arma]
 		if v then
 			for _, p in ipairs(v) do
-				for a = -40, 220, 20 do
-					local s = gusto(b, arma, prova(b, g, posto, arma, math.rad(a), p, v.fino))
-					mosse[#mosse + 1] = { posto = posto, arma = arma, angolo = math.rad(a), potenza = p,
-						punti = s - (posto.n or 0) * b.pesi.strada, k = #mosse + 1 }
-				end
+				for a = -40, 220, 20 do proponi(b, g, posto, arma, math.rad(a), p, v.fino, mosse) end
 			end
 		end
 	end
@@ -792,15 +849,39 @@ local function pensa(b, g)
 		cammino = math.min(cammino, piano.attacca_entro * 60 - (g.tick - b.inizio) - 40)
 	end
 	local posti = posti_a_piedi(b, g, cammino)
-	for _, posto in ipairs(posti) do
-		if #lista > 0 then mosse_dal_posto(b, g, posto, lista, mosse) end
+	local guida = b.pesi.guida
+	if guida and #lista > 0 then
+		-- i colpi mirati da tutti i posti come sempre; il ventaglio da tutti i
+		-- posti, ma si provano solo i colpi che la guida dice più promettenti
+		for _, posto in ipairs(posti) do mosse_dal_posto(b, g, posto, lista, mosse) end
+		b.proposte = {}
+		for _, posto in ipairs(posti) do ventaglio(b, g, posto, lista, mosse) end
+		local proposte = b.proposte
+		b.proposte = nil
+		for i, m in ipairs(proposte) do
+			m.punti, m.k = rete.valuta(guida, descrivi(b, g, m, DESCR)), i
+			if i % 50 == 0 then lavora(b, 20) end
+		end
+		table.sort(proposte, prima)
+		local k = b.pesi.guida_k or 60
+		for i, m in ipairs(proposte) do
+			-- le prime k, e una su 40 delle altre (a turno, senza caso) perché la
+			-- guida veda anche come rendono le mosse che scarta
+			if i <= k or (i + b.attacchi) % 40 == 0 then
+				proponi(b, g, m.posto, m.arma, m.angolo, m.potenza, m.fino, mosse)
+			end
+		end
+	else
+		for _, posto in ipairs(posti) do
+			if #lista > 0 then mosse_dal_posto(b, g, posto, lista, mosse) end
+		end
+		table.sort(mosse, prima)
+		if b.pesi.larga and #lista > 0 then
+			ventaglio(b, g, posti[1], lista, mosse)
+			if mosse[1] and mosse[1].posto ~= posti[1] then ventaglio(b, g, mosse[1].posto, lista, mosse) end
+		end
 	end
 	table.sort(mosse, prima)
-	if b.pesi.larga and #lista > 0 then
-		ventaglio(b, g, posti[1], lista, mosse)
-		if mosse[1] and mosse[1].posto ~= posti[1] then ventaglio(b, g, mosse[1].posto, lista, mosse) end
-		table.sort(mosse, prima)
-	end
 	b.scelta = mosse[1]
 
 	-- il Rampino porta un nemico lontano a tiro: vale quanto il colpo migliore
