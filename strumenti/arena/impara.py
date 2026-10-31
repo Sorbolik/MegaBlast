@@ -52,6 +52,7 @@ da installare su Windows, nessun vantaggio per una rete così).
 
 import argparse
 import copy
+import gc
 import json
 import math
 import shutil
@@ -314,6 +315,11 @@ def main():
         for nome, a in (("x", x), ("y", y), ("catene", catene), ("m", ms), ("gx", gx), ("gy", gy)):
             np.save(cartella / f"{nome}.npy", a)
         b = evolvi.misura(partite, len(individui))
+        # la RAM sul PC di Sergio è poca: le partite lette e gli esempi del giro
+        # (già salvati) non servono più mentre si studia
+        n_partite, n_esempi = len(partite), len(y)
+        del partite, x, y, catene, ms, gx, gy
+        gc.collect()
         # come ha giocato la rete di adesso (tutte le sue copie insieme) e il bot di oggi
         tot = {"alto": 0.0, "volte": 0}
         for i in range(2, 2 + args.copie):
@@ -325,31 +331,42 @@ def main():
 
         # impara sugli esempi degli ultimi giri
         giri = range(max(0, giro - args.memoria + 1), giro + 1)
-        X, Y, CAT, M = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy") for k in giri])
+        X, Y, CAT, M = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy", mmap_mode="r") for k in giri])
                         for nome in ("x", "y", "catene", "m"))
         if giro == 0:
             # una caratteristica quasi sempre uguale (le morti dei compagni) non deve
             # diventare un peso enorme quando cambia
             mu, sigma = X.mean(0), np.maximum(X.std(0), 0.1)
-        Xn = ((X - mu) / sigma).astype(np.float32)
-        # al giro 0 la rete è a caso: impara dall'esito vero
         B = base(X)
+        # normalizzati sul posto: una copia in meno degli esempi in memoria
+        Xn = X
+        Xn -= mu
+        Xn /= sigma
+        # al giro 0 la rete è a caso: impara dall'esito vero
         G = ritorni(rete, Xn, B, Y, CAT, M, 1 if giro == 0 else args.lam)
         studio = impara(rete, Xn, (G - B).astype(np.float32), args, rng)
         salva_rete(radice / f"rete_{giro}.json", rete, mu, sigma)
         # la guida impara quanto rende una mossa dalla sua descrizione (sulla scheda video)
-        GX, GY = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy") for k in giri]) for nome in ("gx", "gy"))
+        n_studiati = len(X)
+        del X, Xn, Y, CAT, M, B, G
+        gc.collect()
+        GX, GY = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy", mmap_mode="r") for k in giri])
+                  for nome in ("gx", "gy"))
         if len(GX) > 1000 and args.guida_k:
             if (radice / "guida.json").exists():
                 gr, gm, gs = leggi_rete(radice / "guida.json", GUIDA)
             else:
                 gr, gm, gs = nuova(GUIDA, args.seme), GX.mean(0), np.maximum(GX.std(0), 0.1)
-            studio["guida"] = impara(gr, ((GX - gm) / gs).astype(np.float32), GY.astype(np.float32), args, rng)
+            GX -= gm
+            GX /= gs
+            studio["guida"] = impara(gr, GX, GY.astype(np.float32), args, rng)
             salva_rete(radice / "guida.json", gr, gm, gs)
             larga = ({} if args.stretta else {"larga": True}) | {"guida": per_lua(gr, GUIDA, gm, gs)["rete"],
                                                                   "guida_k": args.guida_k}
+        del GX, GY
+        gc.collect()
         nuova_lua = per_lua(rete, strati, mu, sigma) | larga
-        voce = {"giro": giro, "partite": len(partite), "esempi": len(y), "esempi_studiati": len(X),
+        voce = {"giro": giro, "partite": n_partite, "esempi": n_esempi, "esempi_studiati": n_studiati,
                 "bravura_rete": round(tot["alto"] / max(1, tot["volte"]), 4), "oggi": evolvi.comportamento(b[1]),
                 "rete": evolvi.comportamento(b[2]), **studio}
         e = evolvi.esame(radice, giro, nuova_lua, args)
@@ -359,7 +376,7 @@ def main():
         stato["esami"].append(e)
         stato["storia"].append(voce)
         stato["giro"] = giro
-        print(f"giro {giro}: {len(y)} esempi nuovi, impara su {len(X)} (varianza spiegata {studio['spiegata']:.2f}); "
+        print(f"giro {giro}: {n_esempi} esempi nuovi, impara su {n_studiati} (varianza spiegata {studio['spiegata']:.2f}); "
               f"esame: la rete arriva più in alto del bot di oggi nel {100 * e['vince']:.0f}% delle partite")
 
         file_stato.write_text(json.dumps(stato), encoding="utf-8")
