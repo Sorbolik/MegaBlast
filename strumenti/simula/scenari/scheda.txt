@@ -50,6 +50,9 @@ aspetta 0.3
 tocca_robot 0 20                    # la targa del bot: il suo cartellino
 aspetta 0.4
 foto 08_cartellino_partita
+aspetta_stato turno=1 fase=aim 30    # il secondo giro (l'ultimo, x2): un altro colpo
+aspetta 1
+mira 150 100 0.4
 aspetta_evento over 60
 aspetta 4
 foto 09_podio

@@ -98,6 +98,8 @@ local function scheda_scheda(s, parent)
 	local posa = box(245, 62, 0, 0, C.LUCE, parent)
 	gui.set_visible(posa, false)
 	s.figura = scoria.new(col, scoria.PERSONAGGIO)
+	-- fiamma piccola dell'attesa ma sempre con l'arma in mano (come nelle proposte)
+	s.figura.con_arma, s.figura.arma_t = true, math.huge
 	-- la fiammella "in attesa", come nei cartellini: quella grande è del turno
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = false }
 	scoria.update(s.figura, 0, s.st)
@@ -116,9 +118,9 @@ local function scheda_scheda(s, parent)
 		local r = richiami[slot.id]
 		local pz = v.pezzi[i]
 		local scritta = slot.name .. (pz.set and (" " .. pz.livello) or " · VUOTO")
-		local lx = r[2] > 0 and 420 or 40
+		local lx = r[2] > 0 and 468 or 40
 		testo(scritta, lx, r[1] + 12, 0.75, pz.set and C.LUCE or C.SPENTO, parent, gui.PIVOT_W)
-		box(r[2] > 0 and 345 or 100, r[1], r[2] > 0 and 150 or 120, 2, C.LINEA, parent)
+		box(r[2] > 0 and 365 or 100, r[1], r[2] > 0 and 190 or 120, 2, C.LINEA, parent)
 	end
 	-- come ti vedono gli altri
 	testo("COSÌ TI VEDONO", 590, 612, 0.7, C.ORO, parent, gui.PIVOT_W)

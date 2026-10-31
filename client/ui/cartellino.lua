@@ -206,6 +206,8 @@ function M.new(v, x, y, opz, parent)
 		local posa = box(0, yy - RITRATTO + 16, 0, 0, C.LUCE, c.root)
 		gui.set_visible(posa, false)
 		c.figura = scoria.new(col, scoria.PERSONAGGIO)
+		-- fiamma piccola dell'attesa ma sempre con l'arma in mano (come nelle proposte)
+		c.figura.con_arma, c.figura.arma_t = true, math.huge
 		-- la fiammella "in attesa" (la fiamma grande dice di chi è il turno, e qui non lo è
 		-- di nessuno): resta dentro il ritratto
 		c.st = { x = 0, y = 0, facing = v.verso or 1, grounded = true, moving = 0, turno = false }
