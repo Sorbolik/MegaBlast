@@ -46,12 +46,10 @@ local function carte(c, cap)
 		local prese = c.stelle[l.id] or {}
 		ui.testo(string.upper(l.titolo), 0, 26, 0.8, ui.C.TESTO, n)
 		stelline(prese, 0, -2, n)
-		-- cosa manca: i criteri delle stelle spente (della terza basta quella:
-		-- nelle lezioni a turni chi la prende prende anche la seconda)
+		-- cosa manca: i criteri delle stelle spente
 		local cr, manca = missioni.criteri(l), {}
-		local bonus = l.stelle and l.stelle.bonus
 		for i = 2, 3 do
-			if not prese[i] and (bonus or i == 3) then manca[#manca + 1] = cr[i] end
+			if not prese[i] then manca[#manca + 1] = cr[i] end
 		end
 		if #manca > 0 then ui.testo(table.concat(manca, "  -  "), 0, -32, 0.55, ui.C.SPENTO, n) end
 	end
