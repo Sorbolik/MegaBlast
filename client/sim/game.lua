@@ -366,6 +366,7 @@ function M.new(seed, map_id, opts)
 			parried = 0,      -- punti di parata presi con lo scudo di adesso (config.SCORE.parry_max)
 			life_damage = {}, -- danno preso da ogni avversario in questa vita: id -> punti di vita
 			turns = 0,     -- turni giocati
+			round_done = false, -- ha già giocato in questo giro di turni
 			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
 			lunge = nil,   -- tick rimasti dell'Affondo in corso, nil se fermo
@@ -388,7 +389,12 @@ function M.new(seed, map_id, opts)
 	g.match_left = M.MATCH_TICKS
 	g.current = 1
 	g.window = 0             -- tick rimasti dopo il primo attacco del turno (0: non c'è ancora stato)
-	g.overtime = false       -- tempo scaduto: si finisce il giro di turni
+	g.final_round = false    -- l'ultimo giro: i punti valgono SCORE.final_round volte
+	-- con due squadre i turni vanno a coppie (Rosso, Blu): ahead è la squadra che
+	-- apre la coppia, ahead_base i suoi punti quando l'ha aperta. Finché l'altra
+	-- non ha risposto, i punti fatti da ahead dopo ahead_base sono "in attesa"
+	-- (battaglia/punteggio.lua). 0 con più di due squadre.
+	g.ahead, g.ahead_base = 0, 0
 	g.winner = nil
 	g.shards = {}        -- schegge in volo, per posto nella raffica (1..SHARD_COUNT)
 	g.crates = {}
@@ -513,6 +519,7 @@ end
 -- l'altro robot (il colpito; per death chi ha ucciso). L'evento "points" serve
 -- all'interfaccia (il numero che vola nella classifica) e all'arena dei bot.
 function M:add_points(rb, n, reason, other)
+	if self.final_round then n = n * (self.score.final_round or 1) end
 	rb.points = rb.points + n
 	self:emit({ type = "points", robot = rb.id, amount = n, reason = reason, other = other and other.id })
 end
@@ -2558,6 +2565,7 @@ function M:start_turn(player)
 	self.teleports, self.teleports_earned = 0, 0
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
+	self:pair_start(rb)
 	-- lo scudo dura fino all'inizio del proprio turno dopo
 	if rb.shield then
 		rb.shield = nil
@@ -2742,18 +2750,59 @@ function M:impronta()
 	return h
 end
 
--- La partita finisce solo allo scadere del tempo, e solo a fine giro: chi ha
--- cominciato per primo non gioca un turno in più degli altri.
+-- Tick di gioco sotto i quali il giro che comincia è l'ultimo (config.FINAL_ROUND_SHARE)
+function M:final_round_ticks()
+	return #self.order * M.TURN_TICKS * C.FINAL_ROUND_SHARE
+end
+
+-- Con due squadre, all'inizio di un turno: se le squadre hanno giocato lo
+-- stesso numero di turni nel giro, chi comincia apre una coppia nuova.
+function M:pair_start(rb)
+	local done, teams = {}, 0
+	for _, r in ipairs(self.robots) do
+		if not r.gone then
+			if not done[r.team] then done[r.team] = 0; teams = teams + 1 end
+			if r.round_done then done[r.team] = done[r.team] + 1 end
+		end
+	end
+	if teams ~= 2 then
+		self.ahead, self.ahead_base = 0, 0
+		return
+	end
+	local a, b
+	for _, n in pairs(done) do
+		if a then b = n else a = n end
+	end
+	if a ~= b then return end
+	local base = 0
+	for _, r in ipairs(self.robots) do
+		if r.team == rb.team then base = base + r.points end
+	end
+	self.ahead, self.ahead_base = rb.team, base
+end
+
+-- La partita finisce solo a fine giro: chi ha cominciato per primo non gioca
+-- un turno in più degli altri. Il giro che comincia quando al tempo manca meno
+-- di final_round_ticks è l'ultimo, a punti moltiplicati, e poi si finisce.
 function M:end_turn()
 	self:apply_heals()
-	self:age_status(self.robots[self.current])
+	local rb = self.robots[self.current]
+	self:age_status(rb)
+	rb.round_done = true
 	local next_pos = self.order_pos % #self.order + 1
-	if self.match_left <= 0 and next_pos == 1 then
-		self.phase = "over"
-		local res = self:results()
-		self.winner = res.winner
-		self:emit({ type = "over", winner = res.winner, reason = "time", results = res })
-		return
+	if next_pos == 1 then
+		if self.final_round then
+			self.phase = "over"
+			local res = self:results()
+			self.winner = res.winner
+			self:emit({ type = "over", winner = res.winner, reason = "time", results = res })
+			return
+		end
+		for _, r in ipairs(self.robots) do r.round_done = false end
+		if self.match_left <= self:final_round_ticks() then
+			self.final_round = true
+			self:emit({ type = "final_round" })
+		end
 	end
 	self.order_pos = next_pos
 	self:start_turn(self.order[self.order_pos])
@@ -2797,10 +2846,6 @@ function M:step(input)
 	-- e robot si fermino è fermo (Sergio, 30 ott)
 	if self.match_left > 0 and self.phase ~= "settle" then
 		self.match_left = self.match_left - 1
-		if self.match_left == 0 then
-			self.overtime = true
-			self:emit({ type = "overtime" })
-		end
 	end
 	-- chi è morto ricomincia dopo RESPAWN_TICKS, anche a metà turno
 	for _, rb in ipairs(self.robots) do

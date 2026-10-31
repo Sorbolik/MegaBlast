@@ -40,7 +40,7 @@ local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
-local PROTOCOL = 3
+local PROTOCOL = 4
 -- Se la connessione cade in partita riproviamo per un po' (il server tiene il
 -- posto per 20 secondi)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
@@ -917,8 +917,8 @@ local function handle_event(self, e)
 		shock(self, e.x, e.y)
 		targa.annuncio(self.robots[e.target].targa, "SBALZATO!")
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
-	elseif e.type == "overtime" then
-		show_message(self, "Supplementari: si finisce il giro di turni")
+	elseif e.type == "final_round" then
+		punteggio.ultimo_giro(self.punti)
 	elseif e.type == "parachute" then
 		show_message(self, "Paracadute aperto!")
 	elseif e.type == "status" then
@@ -1051,7 +1051,8 @@ end
 local function apply_state(self, s)
 	local g = self.g
 	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
-	g.window, g.teleports, g.overtime = s.win or 0, s.tp or 0, s.ot or false
+	g.window, g.teleports, g.final_round = s.win or 0, s.tp or 0, s.fr or false
+	g.ahead, g.ahead_base = s.av or 0, s.ab or 0
 	g.teleports_earned = s.te or 0
 	local u = s.u or 0
 	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
@@ -1060,6 +1061,7 @@ local function apply_state(self, s)
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
 		rb.teleports_left, rb.turns, rb.points = r.tl or 0, r.tu or 1, r.pt or 0
+		rb.round_done = r.gd or false
 		rb.max_hp = r.mh or rb.max_hp
 		if r.gn and not rb.gone then
 			-- chi torna dopo una caduta non ha visto uscire nessuno: il robot sparisce qui
@@ -2295,9 +2297,11 @@ local function render(self, dt)
 		self.bersagli.arma = nil
 	end
 
-	-- tempo rimasto della partita, sopra l'anello; a zero si finisce il giro di turni
+	-- tempo rimasto della partita, sopra l'anello; nell'ultimo giro (punti
+	-- doppi) al suo posto la scritta, e l'anello d'oro
 	local left = math.max(0, math.ceil(g.match_left / 60))
-	local clock = g.overtime and "SUPPLEMENTARI" or string.format("%d:%02d", math.floor(left / 60), left % 60)
+	local clock = g.final_round and "×2 ULTIMO GIRO" or string.format("%d:%02d", math.floor(left / 60), left % 60)
+	hud.cronometro_oro(self.crono, g.final_round and g.phase ~= "over")
 	-- l'anello racconta il turno: bianco, giallo finché c'è il secondo attacco, blu dopo
 	local fase, rimasti, totale = nil, 0, 1
 	if g.phase == "aim" then

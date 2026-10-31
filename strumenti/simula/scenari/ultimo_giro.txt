@@ -1,0 +1,48 @@
+# 2 contro 2: punti in attesa, pallini dei turni e ultimo giro a punti doppi
+# (Sergio, 31 ottobre). Rosso 1 colpisce Blu 1 con la Lama: il numero grande
+# resta a turni pari, i punti vanno nel gettone con la clessidra accanto al
+# riquadro rosso e sotto Blu compare "+N PER PAREGGIARE". Blu 1 risponde, la
+# coppia si chiude. La partita dura 30 s: sotto il tabellone c'è l'avviso, e
+# il secondo giro è l'ultimo (striscione, oro, numeri col ×2).
+imposta giocatori 2v2
+imposta zoom 2
+imposta prova_vicino 50
+imposta prova_durata 30
+
+aspetta 2
+tocca_bordo 205 235 basso destra    # STESSO TELEFONO (attaccato all'angolo)
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_inizio_avviso
+premi 2                             # Lama di Nucleo
+aspetta 0.4
+mira 120 0 0.6
+aspetta_evento points 3
+aspetta 1.6
+foto 02_punti_in_attesa
+aspetta_evento turn 30
+aspetta 0.5
+foto 03_blu_deve_rispondere
+premi 2
+aspetta 0.4
+mira -120 0 0.6
+aspetta_evento points 3
+aspetta 1.6
+foto 04_blu_risponde
+aspetta_evento turn 30
+aspetta 0.5
+foto 05_coppia_chiusa
+aspetta_evento turn 30
+aspetta_evento turn 30
+aspetta 0.3
+foto 06_striscione
+aspetta 2.6
+foto 07_ultimo_giro
+premi 2
+aspetta 0.4
+mira 120 0 0.6
+aspetta_evento points 3
+aspetta 0.2
+foto 08_punti_doppi
+aspetta 1.6
+foto 09_dopo_il_colpo

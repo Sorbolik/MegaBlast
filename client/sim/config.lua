@@ -7,9 +7,15 @@
 local C = {}
 
 -- Partita e turni, in secondi
--- durata della partita; allo scadere si finisce il giro di turni in corso
--- (supplementari): tutti hanno giocato lo stesso numero di turni
+-- durata della partita, in secondi di turno. Il giro di turni che comincia
+-- quando ne manca meno di FINAL_ROUND_SHARE di un giro intero (turni pieni:
+-- 50 s nel 2 contro 2) è l'ultimo: ognuno gioca un turno, i punti valgono
+-- SCORE.final_round volte, e alla sua fine la partita finisce, anche se il
+-- tempo non è ancora scaduto (se scade prima, il giro si finisce). Tutti giocano
+-- lo stesso numero di turni (Sergio, 31 ottobre 2026: "l'ultimo turno con punti
+-- doppi"; la soglia di mezzo giro è nostra: la partita dura in media 5 minuti).
 C.MATCH_SECONDS = 5 * 60
+C.FINAL_ROUND_SHARE = 0.5
 C.TURN_SECONDS = 25          -- durata del turno (Blastron con più di due giocatori)
 -- Dopo il primo attacco restano AFTER_ATTACK_SECONDS (mai oltre la fine del
 -- turno): in tutti si può fare il secondo attacco, riposizionarsi, usare oggetti.
@@ -57,6 +63,7 @@ C.SCORE = {
 	trap = 10,        -- a chi l'ha posata, quando la trappola scatta su un avversario
 	parry = 0.5,      -- a chi porta lo scudo, per ogni punto di danno nemico che ferma
 	parry_max = 20,   -- al massimo per ogni scudo (dura fino al proprio turno dopo)
+	final_round = 2,  -- moltiplicatore di tutti i punti nell'ultimo giro (FINAL_ROUND_SHARE)
 }
 -- l'uccisione va a chi ha colpito per ultimo, se è stato entro questi secondi
 C.KILL_CREDIT_SECONDS = 10
