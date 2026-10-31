@@ -70,7 +70,7 @@ agli altri; il suo robot sparisce dalla partita (`game:remove`: evento `gone`,
 `gn` nello stato, non rinasce e non ha più turni) e si continua finché restano
 almeno due squadre. Il client la
 mostra con la schermata dello stesso telefono (`client/menu/scelta.lua`). Nello stato ogni robot
-porta la sua secondaria in `sw`, l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
+porta la sua secondaria in `sw` (i suoi colpi in `ss`), l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
 `hx`, `hy`; `gs`: il suo uncino del Rampino è in volo, in `gx`, `gy`; `kn`: sbalzato da un colpo; `la`: direzione dello scatto
 dell'Affondo).
