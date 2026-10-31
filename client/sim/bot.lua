@@ -257,7 +257,7 @@ end
 --   21-44  gli altri tre robot (prima i compagni, poi i nemici dal più
 --          vicino), 8 numeri ciascuno: c'è, nemico, dx, dy, vita, morto,
 --          vuoto vicino, si vedono
---   45-54  le armi che ha (M.ARMI_RETE), 55-58 globi, scudo, chi gioca dopo,
+--   45-54  le armi che ha e quanti colpi (M.ARMI_RETE), 55-58 globi, scudo, chi gioca dopo,
 --          roccia sopra la testa
 --   59-60  ultimo giro (punti doppi), la Corona (1 la sua squadra, -1 un nemico)
 --   61-137 il terreno intorno: 11 x 7 caselle da 64 px, 1 dove è pieno
@@ -351,9 +351,14 @@ local function caratteristiche(b, g, w, x)
 			if dx * dx + dy * dy < 900 * 900 and libero(t, c.x, cy, o.x, o.y + game.DISEGNO_H / 2) then x[i + 8] = 1 end
 		end
 	end
-	-- le armi, i globi, lo scudo
+	-- le armi (1 se ha colpi infiniti, se no i colpi che restano, fino a 4), i globi, lo scudo
 	for k, a in ipairs(M.ARMI_RETE) do
-		x[44 + k] = game.has_weapon(c, a) and 1 or 0
+		local v = 0
+		if game.has_weapon(c, a) then
+			local n = not game.FREE_WEAPONS[a] and c.ammo[a]
+			v = n and math.min(n, 4) / 4 or 1
+		end
+		x[44 + k] = v
 	end
 	x[55] = (c.teleports_left or 0) / 3
 	x[56] = c.shield and 1 or 0
