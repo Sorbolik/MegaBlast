@@ -649,17 +649,22 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 			end
 		end
 	end
-	-- larga (le reti, strumenti/arena/impara.py): anche i colpi che non puntano
-	-- nessuno, a ventaglio, così la rete può scoprire mosse che il bot di oggi
-	-- non prova mai (scavare, rimbalzi, colpi alti che ricadono)
-	-- (solo da dove sta: il pensiero costa tempo del turno, e da ogni posto
-	-- il ventaglio lo raddoppiava)
-	if b.pesi.larga and (posto.n or 0) == 0 then
-		for _, arma in ipairs(lista_armi) do
-			local ventaglio = VENTAGLIO[arma]
-			if ventaglio then
-				for _, p in ipairs(ventaglio) do
-					for a = -40, 220, 20 do aggiungi(arma, math.rad(a), p, ventaglio.fino) end
+end
+
+-- larga (le reti, strumenti/arena/impara.py): anche i colpi che non puntano
+-- nessuno, a ventaglio, così la rete può scoprire mosse che il bot di oggi
+-- non prova mai (scavare, rimbalzi, colpi alti che ricadono). Solo da due
+-- posti (dove sta e quello della mossa migliore): il pensiero costa tempo del
+-- turno, e da ogni posto il ventaglio faceva perdere (19% contro il bot di oggi)
+local function ventaglio(b, g, posto, lista_armi, mosse)
+	for _, arma in ipairs(lista_armi) do
+		local v = VENTAGLIO[arma]
+		if v then
+			for _, p in ipairs(v) do
+				for a = -40, 220, 20 do
+					local s = gusto(b, arma, prova(b, g, posto, arma, math.rad(a), p, v.fino))
+					mosse[#mosse + 1] = { posto = posto, arma = arma, angolo = math.rad(a), potenza = p,
+						punti = s - (posto.n or 0) * b.pesi.strada, k = #mosse + 1 }
 				end
 			end
 		end
@@ -781,6 +786,11 @@ local function pensa(b, g)
 		if #lista > 0 then mosse_dal_posto(b, g, posto, lista, mosse) end
 	end
 	table.sort(mosse, prima)
+	if b.pesi.larga and #lista > 0 then
+		ventaglio(b, g, posti[1], lista, mosse)
+		if mosse[1] and mosse[1].posto ~= posti[1] then ventaglio(b, g, mosse[1].posto, lista, mosse) end
+		table.sort(mosse, prima)
+	end
 	b.scelta = mosse[1]
 
 	-- il Rampino porta un nemico lontano a tiro: vale quanto il colpo migliore
