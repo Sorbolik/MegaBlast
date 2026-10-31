@@ -6,16 +6,16 @@ Esame: in quante delle stesse partite la rete del giro arriva più in alto del b
 
 | giro | esame | varianza spiegata | esempi | morti (rete / oggi) | danno (rete / oggi) | teletrasporti (rete / oggi) |
 |---|---|---|---|---|---|---|
-| 0 | 31% | 0.26 | 112469 | 3.77 / 2.94 | 274 / 360 | 6.12 / 5.33 |
-| 1 | 32% | 0.57 | 221866 | 3.83 / 2.85 | 276 / 362 | 6.12 / 5.34 |
-| 2 | 36% | 0.57 | 337387 | 3.84 / 2.99 | 280 / 361 | 6.27 / 5.19 |
-| 3 | 35% | 0.56 | 456668 | 3.79 / 2.98 | 279 / 355 | 6.55 / 5.10 |
+| 0 | 28% | 0.25 | 112469 | 3.83 / 2.92 | 277 / 359 | 6.02 / 5.28 |
+| 1 | 27% | 0.56 | 222487 | 3.89 / 2.90 | 277 / 364 | 5.87 / 5.32 |
+| 2 | 32% | 0.55 | 337800 | 3.85 / 2.94 | 280 / 362 | 6.06 / 5.27 |
+| 3 | 32% | 0.52 | 457049 | 3.80 / 2.98 | 280 / 357 | 6.26 / 5.45 |
 
 ## Le mosse preferite dell'ultima rete all'esame
 
-- missile>teleport: 267
-- missile>lunge: 236
-- missile: 174
-- missile>teleport+kill: 142
-- missile>lunge>teleport: 124
-- missile+kill: 102
+- missile>teleport: 280
+- missile>lunge: 270
+- missile: 199
+- missile>lunge>teleport: 196
+- missile>teleport+kill: 136
+- missile>bellows>teleport: 110
