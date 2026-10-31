@@ -96,7 +96,7 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 
 ## Protocollo
 
-Il primo messaggio del client è `{"t":"hello","v":4,"mode":"1v1"}`. Se la
+Il primo messaggio del client è `{"t":"hello","v":5,"mode":"1v1"}`. Se la
 versione non è quella del server la risposta è `{"t":"error","e":"version"}` e
 il client chiede di aggiornare il gioco. La versione (`protocolVersion` in
 `server.go`, `PROTOCOL` nel client) va alzata quando i messaggi cambiano in un
@@ -110,7 +110,7 @@ succede, per questo il server manda anche un ping ogni 10 s), gli altri
 ricevono `away`, i tasti tenuti premuti si lasciano e la partita va avanti: se
 era il suo turno, il tempo scorre. Si può tornare anche durante la scelta
 dell'arma (il gettone arriva già col primo `draft`). Il client riprova da solo per circa 18 s con
-`{"t":"hello","v":4,"tok":…}`; il server gli rimanda `start` con
+`{"t":"hello","v":5,"tok":…}`; il server gli rimanda `start` con
 `"resume":true`, gli scavi del terreno e i Bastioni posati o crollati, in ordine (`sync`) e lo stato. Dopo 20 s senza
 tornare il giocatore è fuori (`left`) e, se resta una sola squadra, la
 partita si chiude.

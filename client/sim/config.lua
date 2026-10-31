@@ -60,6 +60,7 @@ C.SCORE = {
 	self_death = -30, -- in più per chi muore nel proprio turno senza colpa di un avversario
 	leader = 1.5,     -- moltiplicatore se il colpito è il primo in classifica (la Corona)
 	crown = 25,       -- in più a chi uccide il primo in classifica
+	crown_rounds = 1, -- giri interi prima che ci sia la Corona (chi apre non la prende da solo)
 	trap = 10,        -- a chi l'ha posata, quando la trappola scatta su un avversario
 	parry = 0.5,      -- a chi porta lo scudo, per ogni punto di danno nemico che ferma
 	parry_max = 20,   -- al massimo per ogni scudo (dura fino al proprio turno dopo)
