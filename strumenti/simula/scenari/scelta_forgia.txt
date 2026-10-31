@@ -7,6 +7,9 @@ imposta prova_missione battaglia_forgia
 
 aspetta_stato modo=scelta 8
 aspetta 0.5
+foto 00_schieramento                # i cartellini, col nome dei personaggi
+tocca 640 360                       # un tocco: alle armi
+aspetta 0.4
 foto 01_primaria
 tocca 640 410                       # primaria
 aspetta 0.3

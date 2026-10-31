@@ -18,7 +18,7 @@ import (
 // Versione del protocollo: va cambiata insieme a PROTOCOL in
 // client/main/game.gui_script ogni volta che i messaggi cambiano in modo che
 // un client vecchio non capirebbe.
-const protocolVersion = 6
+const protocolVersion = 7
 
 type Config struct {
 	Node           string // nome del nodo, entra nei gettoni: un bilanciatore può mandare chi torna al nodo giusto
@@ -105,6 +105,7 @@ type Player struct {
 	cancel    context.CancelFunc
 	room      atomic.Pointer[seatRef] // la partita in cui gioca, nil se non gioca
 	closeOnce sync.Once
+	vetrina   []byte // il cartellino in JSON, controllato (vetrinaJSON): livello e badge
 }
 
 // Send non blocca mai la partita. Se il client non smaltisce i messaggi lo
@@ -210,6 +211,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	if !ok {
 		mode = modes["2v2"]
 	}
+	p.vetrina = vetrinaJSON(m.Vetrina)
 	s.lobby.Join(p, mode)
 	return true
 }

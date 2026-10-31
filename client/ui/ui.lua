@@ -35,6 +35,9 @@ M.C = {
 	MENTA = c(0.36, 0.86, 0.72),          -- gli oggetti che si consumano: paracadute, trappola, scudo, trampolino
 	OMBRA = c(0, 0, 0, 0.6),
 	SQUADRA = { c(1, 0.231, 0.306), c(0.239, 0.482, 1), c(0.18, 0.75, 0.44), c(0.96, 0.77, 0.09) },
+	-- i gradi dei badge (I..IV) e dei pezzi (ui/cartellino.lua): bronzo, argento, oro, brace
+	GRADI = { c(0.79, 0.54, 0.35), c(0.79, 0.83, 0.86), c(0.96, 0.77, 0.09), c(1, 0.42, 0.16) },
+	ORO = c(0.96, 0.77, 0.09),            -- i poteri e gli scatti dei pezzi
 }
 local C = M.C
 

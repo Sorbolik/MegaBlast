@@ -48,14 +48,19 @@ loro aggiungono una coda per occorrenza (sotto).
 
 
 Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
-ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","you":1,"tok":…,"players":[{"team":1},…],"left":900}`
+ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","you":1,"tok":…,"players":[{"team":1},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`
 (`offer` le primarie, `offer2` le secondarie; `p` e `p2` le **sue** scelte:
-quelle degli altri non si mandano, Sergio 30 ott; `left` i tick rimasti) e
+quelle degli altri non si mandano, Sergio 30 ott; `left` i tick rimasti;
+`vetrine` il cartellino di ognuno, livello e badge, arrivati col `hello` e
+controllati dal server) e
 manda `{"t":"pick","w":"shards"}` per ognuna (l'arma dice la categoria; si può
 cambiare, i doppioni vanno bene anche fra compagni). La conferma torna solo a
 chi ha scelto. L'attrezzo non si sceglie: il Rampino ce l'hanno tutti. Allo
 scadere di `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma di ogni
-ventaglio e parte la partita (`start`, con `players`: squadra e scelte di
+ventaglio e parte la partita. Il tempo della scelta comprende anche i
+`config.SCHIERAMENTO_SECONDS` dello schieramento (i cartellini di tutti, prima
+di scegliere: `client/menu/schieramento.lua`), in cui si può già scegliere
+(`start`, anche lui con `vetrine`, e con `players`: squadra e scelte di
 ognuno, `[{"team":1,"pick":"shards","secondary":"eagle"},…]`, e `regole`, quelle
 dell'evento o `null`, così il client crea la sua copia della partita con le
 stesse armi e le stesse regole). Chi esce dalla
@@ -119,7 +124,8 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
    `draft.new` solo in locale (assetto, profilo) online deve arrivare col
    `hello` o restare fuori consapevolmente (oggi: le statistiche
    dell'equipaggiamento, che arriveranno con la progressione sul server,
-   fase 1 della roadmap).
+   fase 1 della roadmap; del cartellino arrivano solo livello e badge, e il
+   cartellino online mostra le statistiche che valgono davvero, quelle di base).
 4. **Prove**: un test in `server/server_test.go` per il comportamento nuovo e
    l'online nel simulatore (`strumenti/simula/scenari/scelta_online.txt`:
    server vero e giocatori finti).
@@ -128,8 +134,10 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 
 ## Protocollo
 
-Il primo messaggio del client è `{"t":"hello","v":6,"mode":"2v2"}` (la coda
-scelta in DOVE GIOCHI?, o la `coda` di un evento). Se la
+Il primo messaggio del client è `{"t":"hello","v":7,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
+(`mode`: la coda scelta in DOVE GIOCHI?, o la `coda` di un evento; `vetrina`:
+livello e al massimo tre badge, il server tiene solo i valori validi, livello
+1-999, badge di lettere minuscole con grado 1-4). Se la
 versione non è quella del server la risposta è `{"t":"error","e":"version"}` e
 il client chiede di aggiornare il gioco. La versione (`protocolVersion` in
 `server.go`, `PROTOCOL` nel client) va alzata quando i messaggi cambiano in un
@@ -143,7 +151,7 @@ succede, per questo il server manda anche un ping ogni 10 s), gli altri
 ricevono `away`, i tasti tenuti premuti si lasciano e la partita va avanti: se
 era il suo turno, il tempo scorre. Si può tornare anche durante la scelta
 dell'arma (il gettone arriva già col primo `draft`). Il client riprova da solo per circa 18 s con
-`{"t":"hello","v":6,"tok":…}`; il server gli rimanda `start` con
+`{"t":"hello","v":7,"tok":…}`; il server gli rimanda `start` con
 `"resume":true`, gli scavi del terreno e i Bastioni posati o crollati, in ordine (`sync`) e lo stato. Dopo 20 s senza
 tornare il giocatore è fuori (`left`) e, se resta una sola squadra, la
 partita si chiude.

@@ -142,12 +142,12 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 
 | Messaggio | Direzione | Contenuto |
 |---|---|---|
-| `{"t":"hello","v":6,"mode":"2v2"}` | C → S | primo messaggio: versione del protocollo e coda (`2v2`, `1v1` o la coda di un evento, [server.md](server.md#eventi)) (o `"tok"` per tornare in partita) |
+| `{"t":"hello","v":7,"mode":"2v2","vetrina":{…}}` | C → S | primo messaggio: versione del protocollo e coda (`2v2`, `1v1` o la coda di un evento, [server.md](server.md#eventi)) e cartellino (livello e badge) (o `"tok"` per tornare in partita) |
 | `{"t":"error","e":"version"}` | S → C | errore: `version` (aggiorna il gioco), `expired` (partita finita), `draining` (server in spegnimento) |
 | `{"t":"wait"}` | S → C | sei in attesa di un avversario |
 | `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"pr":[…],"sw":[…],"you":1,"tok":…,"players":[…],"left":900}` | S → C | scelta delle armi d'inizio partita: primarie, secondarie e attrezzi, scelte di tutti, proposte di scambio (vedi [server.md](server.md)) |
 | `{"t":"pick","w":"shards"}` / `{"t":"swap","to":3}` | C → S | scelgo un'arma (primaria, secondaria o attrezzo, lo dice l'arma) / propongo lo scambio al compagno (`"to":0` ritira la proposta) |
-| `{"t":"start","seed":…,"map":"forgia","you":1,"tok":…,"resume":false,"players":[{"team":1},…],"regole":null}` | S → C | la partita parte: mappa, seed, quale robot sei, le squadre, le regole dell'evento (o `null`) e il gettone per tornare se cadi |
+| `{"t":"start","seed":…,"map":"forgia","you":1,"tok":…,"resume":false,"players":[{"team":1},…],"regole":null,"vetrine":[…]}` | S → C | la partita parte: mappa, seed, quale robot sei, le squadre, le regole dell'evento (o `null`), i cartellini di tutti e il gettone per tornare se cadi |
 | `{"t":"sync","x":[[x,y,r],…]}` | S → C | a chi torna: gli scavi fatti finora nel terreno |
 | `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano) |
 | `{"t":"jump"}` | C → S | salto |

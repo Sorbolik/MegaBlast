@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"sync/atomic"
 
@@ -17,9 +18,11 @@ const (
 
 // Messaggio da un client:
 //
-//	{"t":"hello","v":6,"mode":"2v2"}   primo messaggio: versione del protocollo e coda ("1v1",
+//	{"t":"hello","v":7,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}
+//	                                    primo messaggio: versione del protocollo, coda ("1v1",
 //	                                    "2v2", "ffa" o l'id di un evento con la sua coda, GET /eventi)
-//	{"t":"hello","v":6,"tok":"..."}    oppure: torno nella partita da cui sono caduto
+//	                                    e cartellino (livello e badge, li vedono gli altri)
+//	{"t":"hello","v":7,"tok":"..."}    oppure: torno nella partita da cui sono caduto
 //	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria e una secondaria
 //	                                    (l'arma dice la categoria; si cambia fino allo scadere)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
@@ -41,6 +44,60 @@ type clientMsg struct {
 	V    int     `json:"v"`
 	Mode string  `json:"mode"`
 	Tok  string  `json:"tok"`
+	// col saluto: livello e badge del cartellino (menu/vetrina.lua, per_rete)
+	// (grezzo: un cartellino sbagliato non deve far fallire il saluto)
+	Vetrina json.RawMessage `json:"vetrina"`
+}
+
+type vetrinaMsg struct {
+	Liv int `json:"liv"`
+	Bdg []struct {
+		ID    string `json:"id"`
+		Grado int    `json:"grado"`
+	} `json:"bdg"`
+}
+
+// I badge sono pochi (menu/traguardi.lua): ne passano al massimo badgeMax, con
+// un nome corto di lettere minuscole e un grado da 1 a gradoMax
+const (
+	badgeMax = 3
+	gradoMax = 4
+	livMax   = 999
+)
+
+var badgeID = regexp.MustCompile(`^[a-z_]{1,16}$`)
+
+// vetrinaJSON controlla quello che manda il client e lo riscrive in JSON:
+// gli altri giocatori lo ricevono così com'è nei messaggi draft e start. Quello
+// che non si legge (o manca) diventa un cartellino vuoto
+func vetrinaJSON(raw json.RawMessage) []byte {
+	var v vetrinaMsg
+	if len(raw) == 0 || json.Unmarshal(raw, &v) != nil {
+		// per esempio "bdg":{} (una tabella Lua vuota diventa un oggetto)
+		var solo struct {
+			Liv int `json:"liv"`
+		}
+		if json.Unmarshal(raw, &solo) != nil || solo.Liv == 0 {
+			return []byte("{}")
+		}
+		v = vetrinaMsg{Liv: solo.Liv}
+	}
+	out := fmt.Appendf(nil, `{"liv":%d,"bdg":[`, min(max(v.Liv, 1), livMax))
+	n := 0
+	for _, b := range v.Bdg {
+		if n == badgeMax {
+			break
+		}
+		if !badgeID.MatchString(b.ID) || b.Grado < 1 || b.Grado > gradoMax {
+			continue
+		}
+		if n > 0 {
+			out = append(out, ',')
+		}
+		out = fmt.Appendf(out, `{"id":%q,"grado":%d}`, b.ID, b.Grado)
+		n++
+	}
+	return append(out, "]}"...)
 }
 
 func parseClientMsg(data []byte) (clientMsg, error) {
@@ -90,6 +147,7 @@ type Room struct {
 	draft     lua.LValue // stato di sim/draft.lua finché si sceglie
 	draftLeft int        // tick alla fine della scelta
 	players   []byte     // squadre in JSON, [{"team":1},...]; da start anche le scelte del draft
+	vetrine   []byte     // i cartellini dei giocatori in JSON, [{"liv":12,"bdg":[...]},...]
 }
 
 // newRoom prepara la partita fuori dai worker e apre la scelta delle armi.
@@ -119,8 +177,13 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	if srv.cfg.DraftTicks > 0 {
 		r.draftLeft = srv.cfg.DraftTicks
 	}
-	teams := []string{}
+	teams, vetrine := []string{}, []string{}
 	for i, p := range players {
+		if p.vetrina != nil {
+			vetrine = append(vetrine, string(p.vetrina))
+		} else {
+			vetrine = append(vetrine, "{}")
+		}
 		team := int(list.(*lua.LTable).RawGetInt(i + 1).(*lua.LTable).RawGetString("team").(lua.LNumber))
 		teams = append(teams, fmt.Sprintf(`{"team":%d}`, team))
 		s := &seat{p: p, tok: srv.newToken(), team: team}
@@ -129,6 +192,7 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 		p.room.Store(&seatRef{r, i})
 	}
 	r.players = []byte("[" + strings.Join(teams, ",") + "]")
+	r.vetrine = []byte("[" + strings.Join(vetrine, ",") + "]")
 	for i := range r.seats {
 		r.sendDraft(i)
 	}
@@ -171,8 +235,8 @@ func (r *Room) sendStart(slot int, resume bool) {
 	if regole == nil {
 		regole = []byte("null")
 	}
-	r.send(slot, fmt.Appendf(nil, `{"t":"start","seed":%d,"map":%q,"mode":%q,"you":%d,"tok":%q,"resume":%t,"players":%s,"regole":%s}`,
-		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players, regole))
+	r.send(slot, fmt.Appendf(nil, `{"t":"start","seed":%d,"map":%q,"mode":%q,"you":%d,"tok":%q,"resume":%t,"players":%s,"regole":%s,"vetrine":%s}`,
+		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players, regole, r.vetrine))
 }
 
 // sendDraft manda a un giocatore la scelta delle armi: ventagli, le sue
@@ -190,7 +254,8 @@ func (r *Room) sendDraft(slot int) {
 	t.RawSetString("mode", lua.LString(r.mode.Name))
 	msg := appendJSON(nil, t)
 	// le squadre sono già in JSON: le aggiungiamo in coda all'oggetto
-	msg = append(append(append(msg[:len(msg)-1], `,"players":`...), r.players...), '}')
+	msg = append(append(append(msg[:len(msg)-1], `,"players":`...), r.players...), `,"vetrine":`...)
+	msg = append(append(msg, r.vetrine...), '}')
 	r.send(slot, msg)
 }
 
