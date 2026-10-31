@@ -618,10 +618,11 @@ end
 M.descrivi = descrivi
 
 -- Una mossa da provare: con la guida si mette da parte (b.proposte), se no si
--- prova subito sulla copia. b.diario (arena.lua --impara): ogni tanto la
--- descrizione e quanto ha reso, per allenare la guida.
+-- prova subito sulla copia. b.diario (arena.lua --impara): per i colpi del
+-- ventaglio con nota, la descrizione e quanto ha reso, per allenare la guida
+-- (nota "conta": uno ogni 23).
 local DESCR = {}
-local function proponi(b, g, posto, arma, a, p, fino, mosse)
+local function proponi(b, g, posto, arma, a, p, fino, mosse, nota)
 	local m = { posto = posto, arma = arma, angolo = a, potenza = p, fino = fino }
 	if b.proposte then
 		b.proposte[#b.proposte + 1] = m
@@ -630,9 +631,9 @@ local function proponi(b, g, posto, arma, a, p, fino, mosse)
 	local s = gusto(b, arma, prova(b, g, posto, arma, a, p, fino))
 	m.punti, m.k = s - (posto.n or 0) * b.pesi.strada, #mosse + 1
 	mosse[#mosse + 1] = m
-	if b.diario then
+	if b.diario and nota then
 		b.conta = (b.conta or 0) + 1
-		if b.conta % 23 == 0 then
+		if nota == true or b.conta % 23 == 0 then
 			local d = descrivi(b, g, m, {})
 			for i = 1, #d do d[i] = math.floor(d[i] * 1000 + 0.5) / 1000 end
 			b.diario[#b.diario + 1] = { d = d, v = math.floor(m.punti * 10 + 0.5) / 1000 }
@@ -732,7 +733,7 @@ local function ventaglio(b, g, posto, lista_armi, mosse)
 		local v = VENTAGLIO[arma]
 		if v then
 			for _, p in ipairs(v) do
-				for a = -40, 220, 20 do proponi(b, g, posto, arma, math.rad(a), p, v.fino, mosse) end
+				for a = -40, 220, 20 do proponi(b, g, posto, arma, math.rad(a), p, v.fino, mosse, "conta") end
 			end
 		end
 	end
@@ -866,9 +867,12 @@ local function pensa(b, g)
 		local k = b.pesi.guida_k or 60
 		for i, m in ipairs(proposte) do
 			-- le prime k, e una su 40 delle altre (a turno, senza caso) perché la
-			-- guida veda anche come rendono le mosse che scarta
+			-- guida veda anche come rendono le mosse che scarta. Nel diario va
+			-- una su 80 di tutte, buone e scartate allo stesso modo: se la guida
+			-- imparasse solo dalle sue prime k (tutte buone) non saprebbe più
+			-- distinguere le buone dalle cattive
 			if i <= k or (i + b.attacchi) % 40 == 0 then
-				proponi(b, g, m.posto, m.arma, m.angolo, m.potenza, m.fino, mosse)
+				proponi(b, g, m.posto, m.arma, m.angolo, m.potenza, m.fino, mosse, (i + b.attacchi) % 80 == 0)
 			end
 		end
 	else
