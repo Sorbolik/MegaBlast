@@ -2,38 +2,48 @@
 """Bot che imparano a gradiente: la rete del bot (client/sim/rete.lua) impara
 dalle partite che gioca a prevedere quanto renderà una posizione, e con quella
 previsione sceglie le mosse. Giro dopo giro gioca meglio, e le partite nuove
-le insegnano di più (come TD-Gammon e AlphaZero, in piccolo).
+le insegnano di più (come TD-Gammon e AlphaZero, in piccolo). Sergio, 31
+ottobre 2026: "voglio creare il bot supremo, voglio che impari tutte le
+tecniche possibili e immaginabili".
 
-    python3 strumenti/arena/impara.py                  # senza fine (Ctrl+C), riprende da dove era
-    python3 strumenti/arena/impara.py --partite 4000   # partite per giro
-    python3 strumenti/arena/impara.py --nuova          # ricomincia da zero
+    python strumenti/arena/impara.py                  # senza fine (Ctrl+C), riprende da dove era
+    python strumenti/arena/impara.py --partite 4000   # partite per giro
+    python strumenti/arena/impara.py --lega simulazione/arena/evolvi/migliori.json
+    python strumenti/arena/impara.py --nuova          # ricomincia da zero
 
 Un giro:
   1. gioca --partite partite nell'arena (tutti i core): la rete di adesso (più
      copie, con un po' di esplorazione: ogni tanto sceglie apposta una mossa
-     non migliore, così vede anche le altre), le reti dei giri passati come
-     avversari e il bot di oggi come riferimento fisso;
-  2. da ogni fine turno di ogni robot un esempio: le caratteristiche della
-     posizione (bot.caratteristiche, le stesse che la rete guarda quando
-     sceglie) e quanto la sua squadra ha guadagnato sulle altre da lì a fine
-     partita (arena.lua --impara);
+     non migliore, così vede anche le altre), le reti dei giri passati, il bot
+     di oggi e (--lega) gli specialisti di evolvi.py come avversari fissi, così
+     impara a battere tutti gli stili e non uno solo;
+  2. da ogni fine turno di ogni robot un esempio: quello che la rete guarda
+     quando sceglie (bot.caratteristiche: punti, vita, gli altri robot uno per
+     uno, le armi, i globi e il terreno intorno) e quanto la sua squadra ha
+     guadagnato sulle altre da lì a fine partita (arena.lua --impara);
   3. l'obiettivo di ogni esempio è il ritorno a passi (TD(λ), --lambda): quanto
      la squadra guadagna fino al turno dopo dello stesso robot più quanto la
      rete prevede da lì, mescolato con l'esito vero. Molto meno rumore
      dell'esito a fine partita, che dipende da tutti i turni che vengono dopo;
-  4. la rete impara a gradiente (numpy, Adam) sugli esempi degli ultimi giri,
-     partendo da dove era;
+  4. la rete impara a gradiente (PyTorch, AdamW, sulla scheda video se c'è)
+     sugli esempi degli ultimi giri, partendo da dove era;
   5. esame: la rete nuova, senza esplorazione, contro il bot di oggi sempre
      sulle stesse partite (evolvi.esame). La rete con l'esame migliore resta
      in migliore.json.
 Il giro 0 parte da una rete a caso: nessuna idea del gioco.
 
-Risultati in simulazione/arena/impara/ (o --cartella): stato.json e rete_N.json
-(per riprendere), storia.json, evoluzione.md, campioni.json (la rete di ogni
-giro, da mettere in players[i].pesi).
+Le mosse: la rete prova quelle del bot di oggi e anche i colpi a ventaglio che
+non puntano nessuno (bot.lua, pesi.larga), così può scoprire mosse che nessuno
+le ha insegnato. Costa circa il doppio del tempo a partita; --stretta lo toglie.
 
-Serve numpy (pip install numpy). Niente PyTorch: per una rete di poche
-migliaia di pesi numpy basta ed è un'installazione leggera.
+Risultati in simulazione/arena/impara/ (o --cartella): stato.json e rete_N.json
+(per riprendere; rete_N è la rete del giro N), storia.json, evoluzione.md,
+migliore.json (da mettere in players[i].pesi).
+
+Serve PyTorch (pip install torch numpy; per la scheda video NVIDIA la versione
+CUDA da download.pytorch.org). Scartati: numpy (andava per una rete da poche
+migliaia di pesi, non per centinaia di migliaia), JAX e TensorFlow (più pesanti
+da installare su Windows, nessun vantaggio per una rete così).
 """
 
 import argparse
@@ -43,90 +53,111 @@ import shutil
 from pathlib import Path
 
 import numpy as np
+import torch
 
 import arena
 import evolvi
 
-CARATTERISTICHE = 20  # bot.CARATTERISTICHE
+CARATTERISTICHE = 135  # bot.CARATTERISTICHE
 
 
 def quanti(strati):
     return sum(strati[k] * (strati[k - 1] + 1) for k in range(1, len(strati)))
 
 
-# La rete in numpy -------------------------------------------------------------------
+# La rete in PyTorch ---------------------------------------------------------------
 
-def nuova(strati, rng):
+def dispositivo():
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def nuova(strati, seme):
     """Pesi a caso (He), scarti a zero."""
-    return [(rng.normal(0, math.sqrt(2 / strati[k - 1]), (strati[k], strati[k - 1])), np.zeros(strati[k]))
-            for k in range(1, len(strati))]
+    torch.manual_seed(seme)
+    strati_t = []
+    for k in range(1, len(strati)):
+        lin = torch.nn.Linear(strati[k - 1], strati[k])
+        torch.nn.init.kaiming_normal_(lin.weight, nonlinearity="relu")
+        torch.nn.init.zeros_(lin.bias)
+        strati_t += [lin, torch.nn.ReLU()]
+    return torch.nn.Sequential(*strati_t[:-1]).to(dispositivo())
 
 
 def avanti(rete, x):
-    """Uscita della rete per le righe di x, e le attivazioni per il gradiente."""
-    att = [x]
-    for k, (w, b) in enumerate(rete):
-        z = att[-1] @ w.T + b
-        att.append(z if k == len(rete) - 1 else np.maximum(z, 0))
-    return att
+    """Uscita della rete per le righe di x (numpy), in numpy."""
+    with torch.no_grad():
+        out = []
+        for s in range(0, len(x), 65536):
+            out.append(rete(torch.from_numpy(x[s:s + 65536]).float().to(dispositivo())).cpu().numpy()[:, 0])
+        return np.concatenate(out) if out else np.zeros(0)
 
 
 def impara(rete, x, y, args, rng):
     """Adam sull'errore di Huber (gli esiti lontani non tirano troppo), sulla
     rete (cambiata sul posto). Restituisce l'errore sugli esempi tenuti da parte."""
+    dev = dispositivo()
     n = len(x)
     idx = rng.permutation(n)
     prova, studio = idx[: n // 10], idx[n // 10:]
-    par = [p for wb in rete for p in wb]  # w0, b0, w1, b1, ...
-    m = [np.zeros_like(p) for p in par]
-    v = [np.zeros_like(p) for p in par]
-    b1, b2, eps, t = 0.9, 0.999, 1e-8, 0
+    xs, ys = torch.from_numpy(x).float().to(dev), torch.from_numpy(y).float().to(dev)
+    opt = torch.optim.AdamW(rete.parameters(), lr=args.lr, weight_decay=args.l2)
+    perdita = torch.nn.HuberLoss(delta=1.0)
+    studio_t = torch.from_numpy(studio).to(dev)
     for _ in range(args.epoche):
-        rng.shuffle(studio)
-        for s in range(0, len(studio), args.lotto):
-            j = studio[s:s + args.lotto]
-            att = avanti(rete, x[j])
-            g = np.clip(att[-1][:, 0] - y[j], -1, 1)[:, None] / len(j)  # Huber con soglia 1
-            grad = [None] * len(par)
-            for k in range(len(rete) - 1, -1, -1):
-                w = rete[k][0]
-                grad[2 * k] = g.T @ att[k] + args.l2 * w
-                grad[2 * k + 1] = g.sum(0)
-                if k > 0:
-                    g = (g @ w) * (att[k] > 0)
-            t += 1
-            for q, p in enumerate(par):
-                m[q] = b1 * m[q] + (1 - b1) * grad[q]
-                v[q] = b2 * v[q] + (1 - b2) * grad[q] ** 2
-                p -= args.lr * (m[q] / (1 - b1 ** t)) / (np.sqrt(v[q] / (1 - b2 ** t)) + eps)
-    e = avanti(rete, x[prova])[-1][:, 0] - y[prova]
+        ordine = studio_t[torch.randperm(len(studio_t), device=dev)]
+        for s in range(0, len(ordine), args.lotto):
+            j = ordine[s:s + args.lotto]
+            opt.zero_grad()
+            perdita(rete(xs[j])[:, 0], ys[j]).backward()
+            opt.step()
+    e = avanti(rete, x[prova]) - y[prova]
     var = float(np.var(y[prova])) or 1.0
     return {"errore": round(float(np.mean(e * e)), 4), "spiegata": round(1 - float(np.mean(e * e)) / var, 4)}
+
+
+def matrici(rete):
+    """[(w, b)] in numpy, strato per strato."""
+    return [(m.weight.detach().cpu().numpy(), m.bias.detach().cpu().numpy())
+            for m in rete if isinstance(m, torch.nn.Linear)]
 
 
 def per_lua(rete, strati, mu, sigma):
     """I pesi nell'ordine di sim/rete.lua (strato per strato: per ogni uscita i
     pesi d'ingresso, poi gli scarti). La normalizzazione degli ingressi
     ((x - mu) / sigma) entra nel primo strato, così in Lua non serve."""
-    w0, b0 = rete[0]
+    mat = matrici(rete)
+    w0, b0 = mat[0]
     w0n = w0 / sigma
     b0n = b0 - w0n @ mu
-    strati_lua = [(w0n, b0n)] + rete[1:]
     w = []
-    for wk, bk in strati_lua:
+    for wk, bk in [(w0n, b0n)] + mat[1:]:
         w += [round(float(a), 6) for a in wk.reshape(-1)]
         w += [round(float(a), 6) for a in bk]
     return {"rete": {"strati": strati, "w": w}}
 
 
 def salva_rete(file, rete, mu, sigma):
-    file.write_text(json.dumps({"strati": [[w.tolist(), b.tolist()] for w, b in rete],
+    file.write_text(json.dumps({"strati": [[w.tolist(), b.tolist()] for w, b in matrici(rete)],
                                 "mu": mu.tolist(), "sigma": sigma.tolist()}), encoding="utf-8")
 
 
-def leggi_rete(file):
+def leggi_rete(file, strati):
     d = json.loads(file.read_text(encoding="utf-8"))
-    return [(np.array(w), np.array(b)) for w, b in d["strati"]], np.array(d["mu"]), np.array(d["sigma"])
+    rete = nuova(strati, 0)
+    with torch.no_grad():
+        for m, (w, b) in zip([m for m in rete if isinstance(m, torch.nn.Linear)], d["strati"]):
+            m.weight.copy_(torch.tensor(w, dtype=torch.float32))
+            m.bias.copy_(torch.tensor(b, dtype=torch.float32))
+    return rete, np.array(d["mu"]), np.array(d["sigma"])
+
+
+def lega(file):
+    """Gli avversari fissi da un migliori.json di evolvi.py (gli specialisti):
+    i pesi di ognuno, senza i numeri dell'esame."""
+    if not file:
+        return []
+    d = json.loads(Path(file).read_text(encoding="utf-8"))
+    return [{k: v for k, v in d[nome].items() if k not in ("gen", "vince")} for nome in sorted(d)]
 
 
 # Il giro ------------------------------------------------------------------------------
@@ -141,7 +172,7 @@ def esempi(partite):
             ys.append(e["y"])
             catene.append(k * 8 + e["c"])
             ms.append(e["m"])
-    return (np.array(xs, dtype=np.float64).reshape(-1, CARATTERISTICHE), np.array(ys, dtype=np.float64),
+    return (np.array(xs, dtype=np.float32).reshape(-1, CARATTERISTICHE), np.array(ys, dtype=np.float64),
             np.array(catene, dtype=np.int64), np.array(ms, dtype=np.float64))
 
 
@@ -150,7 +181,7 @@ def ritorni(rete, xn, y, catene, ms, lam):
     l'esito vero, prima (m' - m) + (1 - λ) V(x') + λ G'. Con λ = 1 è l'esito vero."""
     if lam >= 1:
         return y
-    v = avanti(rete, xn)[-1][:, 0]
+    v = avanti(rete, xn)
     g = y.copy()
     ordine = np.argsort(catene, kind="stable")  # ogni catena di fila, i turni in ordine
     for a, b in zip(ordine[-2::-1], ordine[:0:-1]):
@@ -163,14 +194,16 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--giri", type=int, default=0, help="fino a questo giro (0: senza fine)")
     ap.add_argument("--partite", type=int, default=3000, help="partite per giro")
-    ap.add_argument("--strati", default="64,32", help="neuroni degli strati nascosti")
+    ap.add_argument("--strati", default="256,128", help="neuroni degli strati nascosti")
     ap.add_argument("--copie", type=int, default=4, help="quante volte la rete di adesso sta nella popolazione")
     ap.add_argument("--passate", type=int, default=3, help="reti dei giri passati che giocano come avversari")
     ap.add_argument("--memoria", type=int, default=5, help="su quanti giri di esempi impara")
     ap.add_argument("--lambda", dest="lam", type=float, default=0.7, help="TD(λ): 1 impara dall'esito vero")
     ap.add_argument("--esplora", type=float, default=0.15)
+    ap.add_argument("--lega", help="migliori.json di evolvi.py: gli specialisti giocano come avversari fissi")
+    ap.add_argument("--stretta", action="store_true", help="la rete prova solo le mosse del bot di oggi (niente ventaglio)")
     ap.add_argument("--epoche", type=int, default=6)
-    ap.add_argument("--lotto", type=int, default=256)
+    ap.add_argument("--lotto", type=int, default=1024)
     ap.add_argument("--lr", type=float, default=0.001)
     ap.add_argument("--l2", type=float, default=1e-5)
     ap.add_argument("--esame-partite", type=int, default=480)
@@ -203,16 +236,18 @@ def main():
         rng = np.random.default_rng(args.seme * 1000003 + giro)
         file_rete = radice / f"rete_{giro - 1}.json"
         if giro == 0:
-            rete, mu, sigma = nuova(strati, rng), np.zeros(CARATTERISTICHE), np.ones(CARATTERISTICHE)
+            rete, mu, sigma = nuova(strati, args.seme), np.zeros(CARATTERISTICHE), np.ones(CARATTERISTICHE)
         else:
-            rete, mu, sigma = leggi_rete(file_rete)
-        adesso = per_lua(rete, strati, mu, sigma)
-        # la popolazione: il bot di oggi, la rete di adesso (più copie, che esplora), reti passate
+            rete, mu, sigma = leggi_rete(file_rete, strati)
+        larga = {} if args.stretta else {"larga": True}
+        adesso = per_lua(rete, strati, mu, sigma) | larga
+        # la popolazione: il bot di oggi, la rete di adesso (più copie, che esplora),
+        # reti passate e gli specialisti (la lega: deve battere tutti gli stili)
         passate = []
         for k in range(max(0, giro - args.passate), giro - 1):
-            r, m_, s_ = leggi_rete(radice / f"rete_{k}.json")
-            passate.append(per_lua(r, strati, m_, s_) | {"esplora": args.esplora})
-        individui = [{}] + [adesso | {"esplora": args.esplora}] * args.copie + passate
+            r, m_, s_ = leggi_rete(radice / f"rete_{k}.json", strati)
+            passate.append(per_lua(r, strati, m_, s_) | larga | {"esplora": args.esplora})
+        individui = [{}] + [adesso | {"esplora": args.esplora}] * args.copie + passate + lega(args.lega)
         cartella = radice / f"giro_{giro}"
         cartella.mkdir(parents=True, exist_ok=True)
         file_pesi = evolvi.scrivi_pesi(cartella, individui)
@@ -244,12 +279,12 @@ def main():
             # una caratteristica quasi sempre uguale (le morti dei compagni) non deve
             # diventare un peso enorme quando cambia
             mu, sigma = X.mean(0), np.maximum(X.std(0), 0.1)
-        Xn = (X - mu) / sigma
+        Xn = ((X - mu) / sigma).astype(np.float32)
         # al giro 0 la rete è a caso: impara dall'esito vero
         G = ritorni(rete, Xn, Y, CAT, M, 1 if giro == 0 else args.lam)
         studio = impara(rete, Xn, G, args, rng)
         salva_rete(radice / f"rete_{giro}.json", rete, mu, sigma)
-        nuova_lua = per_lua(rete, strati, mu, sigma)
+        nuova_lua = per_lua(rete, strati, mu, sigma) | larga
         voce = {"giro": giro, "partite": len(partite), "esempi": len(y), "esempi_studiati": len(X),
                 "bravura_rete": round(tot["alto"] / max(1, tot["volte"]), 4), "oggi": evolvi.comportamento(b[1]),
                 "rete": evolvi.comportamento(b[2]), **studio}
@@ -266,11 +301,6 @@ def main():
         file_stato.write_text(json.dumps(stato), encoding="utf-8")
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
                                                         "esami": stato["esami"]}, indent=1, ensure_ascii=False), encoding="utf-8")
-        campioni = []
-        for k in range(giro + 1):
-            r, m_, s_ = leggi_rete(radice / f"rete_{k}.json")
-            campioni.append(per_lua(r, strati, m_, s_) | {"giro": k})
-        (radice / "campioni.json").write_text(json.dumps(campioni), encoding="utf-8")
         (radice / "evoluzione.md").write_text(rapporto(stato, args), encoding="utf-8")
         # gli esempi vecchi non servono più
         vecchio = radice / f"giro_{giro - args.memoria}"

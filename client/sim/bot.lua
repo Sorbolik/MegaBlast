@@ -85,7 +85,8 @@ M.GRADI = {
 -- neurale (sim/rete.lua) che giudica le mosse al posto di questi pesi, dalle
 -- caratteristiche della posizione dopo la mossa (M.caratteristiche); la allena
 -- strumenti/arena/impara.py;
--- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore.
+-- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore;
+-- larga: prova anche i colpi a ventaglio che non puntano nessuno (per le reti).
 M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 100, globo_riparo = 3 }
 
 -- Caratteri: come gioca un bot, oltre al livello (quanto è bravo). Sono solo
@@ -241,10 +242,28 @@ local function bordo(t, x, y)
 	return n / #LATI
 end
 
+-- C'è roccia sopra la testa (fino a 150 px)? Lì i colpi a parabola non arrivano
+local function coperto(t, x, y)
+	for k = 30, 150, 30 do
+		if t:solid(x, y + k) then return 1 end
+	end
+	return 0
+end
+
 -- Le caratteristiche della copia w (dopo una mossa) rispetto alla partita
 -- vera g, per il robot del bot: quello che la rete guarda. Numeri vicini a
 -- -1..1 (punti e vita a centinaia, distanze a migliaia di pixel).
-M.CARATTERISTICHE = 20
+--   1-20   punti, vita e morti guadagnati e persi, la posizione, lo scarto
+--   21-44  gli altri tre robot (prima i compagni, poi i nemici dal più
+--          vicino), 8 numeri ciascuno: c'è, nemico, dx, dy, vita, morto,
+--          vuoto vicino, si vedono
+--   45-54  le armi che ha (M.ARMI_RETE), 55-58 globi, scudo, chi gioca dopo,
+--          roccia sopra la testa
+--   59-135 il terreno intorno: 11 x 7 caselle da 64 px, 1 dove è pieno
+M.ARMI_RETE = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows" }
+local GRIGLIA_X, GRIGLIA_Y, CASELLA = 5, 3, 64
+M.CARATTERISTICHE = 58 + (2 * GRIGLIA_X + 1) * (2 * GRIGLIA_Y + 1)
+local ALTRI = {}
 local function caratteristiche(b, g, w, x)
 	local me = g.robots[b.id]
 	local c = w.robots[b.id]
@@ -301,6 +320,61 @@ local function caratteristiche(b, g, w, x)
 	end
 	x[19] = primo > -math.huge and ((squadre[me.team] or 0) - primo) / 100 or 0
 	x[20] = g.match_left / game.MATCH_TICKS
+	-- gli altri robot, uno per uno
+	local n_altri = 0
+	for _, o in ipairs(w.robots) do
+		if o.id ~= b.id then
+			n_altri = n_altri + 1
+			ALTRI[n_altri] = o
+		end
+	end
+	for k = n_altri + 1, #ALTRI do ALTRI[k] = nil end
+	table.sort(ALTRI, function(p, q)
+		local cp, cq = p.team == me.team, q.team == me.team
+		if cp ~= cq then return cp end
+		local dp, dq = (p.x - c.x) ^ 2 + (p.y - c.y) ^ 2, (q.x - c.x) ^ 2 + (q.y - c.y) ^ 2
+		if dp ~= dq then return dp < dq end
+		return p.id < q.id
+	end)
+	for k = 1, math.min(3, n_altri) do
+		local o, i = ALTRI[k], 20 + (k - 1) * 8
+		x[i + 1] = 1
+		x[i + 2] = o.team ~= me.team and 1 or 0
+		x[i + 3] = (o.x - c.x) / 1000
+		x[i + 4] = (o.y - c.y) / 500
+		x[i + 5] = o.dead and 0 or o.hp / 100
+		x[i + 6] = o.dead and 1 or 0
+		if not o.dead then
+			x[i + 7] = bordo(t, o.x, o.y)
+			local dx, dy = o.x - c.x, o.y - c.y
+			if dx * dx + dy * dy < 900 * 900 and libero(t, c.x, cy, o.x, o.y + game.DISEGNO_H / 2) then x[i + 8] = 1 end
+		end
+	end
+	-- le armi, i globi, lo scudo
+	for k, a in ipairs(M.ARMI_RETE) do
+		x[44 + k] = game.has_weapon(c, a) and 1 or 0
+	end
+	x[55] = (c.teleports_left or 0) / 3
+	x[56] = c.shield and 1 or 0
+	-- chi gioca dopo: 1 un nemico
+	local ordine = w.order
+	for k, id in ipairs(ordine) do
+		if id == b.id then
+			local dopo = w.robots[ordine[k % #ordine + 1]]
+			x[57] = (dopo and dopo.team ~= me.team) and 1 or 0
+			break
+		end
+	end
+	x[58] = c.dead and 0 or coperto(t, c.x, c.y + game.DISEGNO_H)
+	-- il terreno intorno
+	local i = 58
+	for gy = GRIGLIA_Y, -GRIGLIA_Y, -1 do
+		for gx = -GRIGLIA_X, GRIGLIA_X do
+			i = i + 1
+			local px, py = c.x + gx * CASELLA, cy + gy * CASELLA
+			x[i] = (px >= 0 and px < game.WORLD_W and py >= 0 and py < game.WORLD_H and t:solid(px, py)) and 1 or 0
+		end
+	end
 	return x
 end
 M.caratteristiche = caratteristiche
@@ -490,6 +564,14 @@ local function gusto(b, arma, s)
 	return s
 end
 
+-- Il ventaglio delle mosse larghe: le potenze provate per arma e fin dove si
+-- prova il colpo in fretta (le armi da vicino fino in fondo)
+local VENTAGLIO = {
+	missile = { 1, 0.7, 0.45, fino = "volo" }, grenade = { 1, 0.7, 0.45, fino = "volo" },
+	shards = { 1, fino = "volo" }, sniper = { 1, fino = "volo" },
+	bellows = { 1, fino = "tutto" }, lunge = { 1, fino = "tutto" },
+}
+
 -- Tutte le mosse da un posto, provate in fretta (solo il volo per i colpi a
 -- distanza). Le aggiunge a mosse.
 local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
@@ -561,6 +643,19 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 				end
 			elseif arma == "sword" or arma == "punch" then
 				if dist < 80 then aggiungi(arma, dritto, 1, "tutto") end
+			end
+		end
+	end
+	-- larga (le reti, strumenti/arena/impara.py): anche i colpi che non puntano
+	-- nessuno, a ventaglio, così la rete può scoprire mosse che il bot di oggi
+	-- non prova mai (scavare, rimbalzi, colpi alti che ricadono)
+	if b.pesi.larga then
+		for _, arma in ipairs(lista_armi) do
+			local ventaglio = VENTAGLIO[arma]
+			if ventaglio then
+				for _, p in ipairs(ventaglio) do
+					for a = -40, 220, 20 do aggiungi(arma, math.rad(a), p, ventaglio.fino) end
+				end
 			end
 		end
 	end
@@ -705,7 +800,7 @@ local function pensa(b, g)
 
 	-- le migliori si provano fino in fondo: chi cade, chi muore, dove finisce chi spara
 	table.sort(mosse, prima)
-	for i = 1, math.min(FINALISTE, #mosse) do
+	for i = 1, math.min(b.pesi.larga and 2 * FINALISTE or FINALISTE, #mosse) do
 		local m = mosse[i]
 		if m.arma ~= "hook" then
 			m.punti = gusto(b, m.arma, prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto")) - (m.posto.n or 0) * b.pesi.strada
@@ -775,14 +870,6 @@ end
 -- sicuro dal turno degli altri (a piedi o col Rampino su un appiglio). Con la
 -- rete decide lei dove; senza, lontano dai nemici, fuori dalla loro linea di
 -- tiro e lontano dal vuoto.
--- C'è roccia sopra la testa (fino a 150 px)? Lì i colpi a parabola non arrivano
-local function coperto(t, x, y)
-	for k = 30, 150, 30 do
-		if t:solid(x, y + k) then return 1 end
-	end
-	return 0
-end
-
 local function riparo(b, g, w)
 	if b.pesi.rete then return valore(b, g, w) end
 	local x = caratteristiche(b, g, w, CAR)

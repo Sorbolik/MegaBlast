@@ -77,3 +77,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 30 ott | Controller: una pressione del grilletto non spara più due volte (margine fra premuto e lasciato). | #108 |
 | 30 ott | Controller, la causa vera della mira che scattava e del doppio colpo: Defold segna "lasciato" quando un valore scende sotto 0,9, e noi lo leggevamo come zero. Ora conta solo il valore. | questa PR |
 | 30 ott | Campagna a 10 gradi di difficoltà misurati coi bot (ogni grado batte quello sotto nel 55-75%); la Forgia sale dal 2 al 5, niente più burrone fra Due mani e Il codardo. | questa PR |
+| 31 ott | Il bot supremo: la rete vede 135 numeri (anche il terreno intorno e gli altri robot), prova colpi a ventaglio e impara con PyTorch sulla scheda video, in una lega con gli specialisti. | questa PR |

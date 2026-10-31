@@ -16,7 +16,7 @@ python3 strumenti/arena/arena.py --partite 10000 --cartella simulazione/arena/ba
 python3 strumenti/arena/arena.py --partite 1000 --pesi popolazione.lua   # bot con pesi diversi
 python3 strumenti/arena/arena.py --partite 300 --pesi due.lua --assegna turno   # due individui sempre alla pari
 python3 strumenti/arena/evolvi.py                                  # specialisti del bot del gioco, senza fine
-python3 strumenti/arena/impara.py                                  # bot con rete neurale che imparano a gradiente, senza fine
+python3 strumenti/arena/impara.py --lega simulazione/arena/evolvi/migliori.json  # la rete che impara contro tutti, senza fine
 python3 strumenti/arena/trovate.py simulazione/arena/evolvi        # video e pagina delle trovate dei bot
 ```
 
@@ -62,15 +62,20 @@ fa i video col simulatore e scrive `galleria/galleria.html`, da pubblicare come
 Artifact con i video accanto. I video vanno fatti con lo stesso codice che ha
 giocato le partite.
 
-`impara.py` fa imparare la rete a gradiente (numpy, niente PyTorch): a ogni giro
-gioca (la rete di adesso con un po' di esplorazione, le reti dei giri passati e
-il bot di oggi), raccoglie da ogni fine turno le caratteristiche della posizione
-e quanto ha reso fino a fine partita (`arena.py --impara 1`), e la rete impara a
-prevederlo: non l'esito vero ma il ritorno a passi TD(λ) (`--lambda`, 1 per
-l'esito vero), che ha molto meno rumore. Poi l'esame contro il bot di oggi, come
-`evolvi.py`; la rete con l'esame migliore resta in `migliore.json`. Esce
-`simulazione/arena/impara/`. Serve `pip install numpy`. Né la rete né questi
-strumenti finiscono nel gioco: il gioco usa il bot euristico.
+`impara.py` fa imparare la rete a gradiente (PyTorch, sulla scheda video se
+c'è): a ogni giro gioca (la rete di adesso con un po' di esplorazione, le reti
+dei giri passati, il bot di oggi e con `--lega migliori.json` gli specialisti di
+`evolvi.py`), raccoglie da ogni fine turno quello che la rete guarda (135 numeri:
+punti e vita, gli altri robot uno per uno, le armi, i globi e il terreno
+intorno, `bot.caratteristiche`) e quanto ha reso fino a fine partita
+(`arena.py --impara 1`), e la rete impara a prevederlo: non l'esito vero ma il
+ritorno a passi TD(λ) (`--lambda`, 1 per l'esito vero), che ha molto meno
+rumore. La rete prova anche i colpi a ventaglio che il bot di oggi non prova
+(`pesi.larga`, circa il doppio del tempo; `--stretta` per toglierli). Poi l'esame
+contro il bot di oggi, come `evolvi.py`; la rete con l'esame migliore resta in
+`migliore.json`. Esce `simulazione/arena/impara/`. Serve PyTorch (sul PC di
+Sergio in `C:\Sviluppo\MegaBlast-rete\venv`, versione CUDA). Né la rete né
+questi strumenti finiscono nel gioco: il gioco usa il bot euristico.
 
 Serve luajit (sul PC di Windows: `luajit.exe` nel PATH, o `--luajit C:\percorso\luajit.exe`).
 Il video usa il simulatore (`strumenti/simula`), quindi solo su Linux.
