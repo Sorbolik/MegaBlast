@@ -25,12 +25,16 @@ Un giro:
      la squadra guadagna fino al turno dopo dello stesso robot più quanto la
      rete prevede da lì, mescolato con l'esito vero. Molto meno rumore
      dell'esito a fine partita, che dipende da tutti i turni che vengono dopo;
-  4. la rete impara a gradiente (PyTorch, AdamW, sulla scheda video se c'è)
+  4. la rete non parte da zero: il bot somma il giudizio di oggi (punti,
+     vita, morti) e quello della rete, che impara solo la differenza fra il
+     primo e l'esito (31 ottobre: partita da zero, dopo 4 giri la rete era
+     ancora al 10% contro il bot di oggi);
+     la rete impara a gradiente (PyTorch, AdamW, sulla scheda video se c'è)
      sugli esempi degli ultimi giri, partendo da dove era;
   5. esame: la rete nuova, senza esplorazione, contro il bot di oggi sempre
      sulle stesse partite (evolvi.esame). La rete con l'esame migliore resta
      in migliore.json.
-Il giro 0 parte da una rete a caso: nessuna idea del gioco.
+Il giro 0 parte dal bot di oggi: la rete non aggiunge ancora niente.
 
 Le mosse: la rete prova quelle del bot di oggi e anche i colpi a ventaglio che
 non puntano nessuno (bot.lua, pesi.larga), così può scoprire mosse che nessuno
@@ -72,7 +76,7 @@ def dispositivo():
 
 
 def nuova(strati, seme):
-    """Pesi a caso (He), scarti a zero."""
+    """Pesi a caso (He), scarti e ultimo strato a zero."""
     torch.manual_seed(seme)
     strati_t = []
     for k in range(1, len(strati)):
@@ -80,6 +84,9 @@ def nuova(strati, seme):
         torch.nn.init.kaiming_normal_(lin.weight, nonlinearity="relu")
         torch.nn.init.zeros_(lin.bias)
         strati_t += [lin, torch.nn.ReLU()]
+    # l'ultimo strato a zero: al giro 0 la rete non aggiunge niente e il bot
+    # gioca come quello di oggi (col ventaglio), invece che a caso
+    torch.nn.init.zeros_(strati_t[-2].weight)
     return torch.nn.Sequential(*strati_t[:-1]).to(dispositivo())
 
 
@@ -176,12 +183,21 @@ def esempi(partite):
             np.array(catene, dtype=np.int64), np.array(ms, dtype=np.float64))
 
 
-def ritorni(rete, xn, y, catene, ms, lam):
+def base(x):
+    """Il giudizio del bot di oggi (bot.lua valore, con i pesi di bot.PESI) dalle
+    caratteristiche grezze, in centinaia di punti: punti guadagnati dalla squadra
+    meno quelli dei nemici, vita persa (0,6 la sua, 1 dei compagni), morti (60).
+    La rete impara solo quello che manca a questo per arrivare all'esito."""
+    return x[:, 0] + x[:, 1] - x[:, 2] - 0.6 * x[:, 3] - x[:, 4] - 0.6 * (x[:, 6] + x[:, 7])
+
+
+def ritorni(rete, xn, b0, y, catene, ms, lam):
     """TD(λ) all'indietro lungo la catena di ogni robot: dopo l'ultimo turno
-    l'esito vero, prima (m' - m) + (1 - λ) V(x') + λ G'. Con λ = 1 è l'esito vero."""
+    l'esito vero, prima (m' - m) + (1 - λ) V(x') + λ G'. Con λ = 1 è l'esito vero.
+    V è il giudizio di base b0 più quello della rete."""
     if lam >= 1:
         return y
-    v = avanti(rete, xn)
+    v = b0 + avanti(rete, xn)
     g = y.copy()
     ordine = np.argsort(catene, kind="stable")  # ogni catena di fila, i turni in ordine
     for a, b in zip(ordine[-2::-1], ordine[:0:-1]):
@@ -281,8 +297,9 @@ def main():
             mu, sigma = X.mean(0), np.maximum(X.std(0), 0.1)
         Xn = ((X - mu) / sigma).astype(np.float32)
         # al giro 0 la rete è a caso: impara dall'esito vero
-        G = ritorni(rete, Xn, Y, CAT, M, 1 if giro == 0 else args.lam)
-        studio = impara(rete, Xn, G, args, rng)
+        B = base(X)
+        G = ritorni(rete, Xn, B, Y, CAT, M, 1 if giro == 0 else args.lam)
+        studio = impara(rete, Xn, (G - B).astype(np.float32), args, rng)
         salva_rete(radice / f"rete_{giro}.json", rete, mu, sigma)
         nuova_lua = per_lua(rete, strati, mu, sigma) | larga
         voce = {"giro": giro, "partite": len(partite), "esempi": len(y), "esempi_studiati": len(X),

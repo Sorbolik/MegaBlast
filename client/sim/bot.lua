@@ -82,8 +82,8 @@ M.GRADI = {
 -- d'inizio partita, M.scegli). L'arena li fa evolvere
 -- (strumenti/arena/evolvi.py) e una partita può darne altri a ogni bot
 -- (players[i].pesi, solo i campi che cambiano). rete (se c'è): una rete
--- neurale (sim/rete.lua) che giudica le mosse al posto di questi pesi, dalle
--- caratteristiche della posizione dopo la mossa (M.caratteristiche); la allena
+-- neurale (sim/rete.lua) che aggiunge il suo giudizio a quello di questi pesi,
+-- dalle caratteristiche della posizione dopo la mossa (M.caratteristiche); la allena
 -- strumenti/arena/impara.py;
 -- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore;
 -- larga: prova anche i colpi a ventaglio che non puntano nessuno (per le reti).
@@ -382,8 +382,10 @@ M.caratteristiche = caratteristiche
 local CAR = {}
 
 -- Quanto vale la copia w rispetto alla partita vera g, per il robot del bot
+-- Con la rete: il giudizio di qui sopra più quello che la rete aggiunge (lei
+-- impara solo la differenza fra questo e quanto rende davvero la posizione,
+-- così parte già brava e non deve reimparare da zero che un colpo che prende vale)
 local function valore(b, g, w)
-	if b.pesi.rete then return rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR)) * 100 end
 	local me = g.robots[b.id]
 	local s = 0
 	for i, c in ipairs(w.robots) do
@@ -399,6 +401,7 @@ local function valore(b, g, w)
 			end
 		end
 	end
+	if b.pesi.rete then s = s + rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR)) * 100 end
 	return s
 end
 
@@ -649,7 +652,9 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 	-- larga (le reti, strumenti/arena/impara.py): anche i colpi che non puntano
 	-- nessuno, a ventaglio, così la rete può scoprire mosse che il bot di oggi
 	-- non prova mai (scavare, rimbalzi, colpi alti che ricadono)
-	if b.pesi.larga then
+	-- (solo da dove sta: il pensiero costa tempo del turno, e da ogni posto
+	-- il ventaglio lo raddoppiava)
+	if b.pesi.larga and (posto.n or 0) == 0 then
 		for _, arma in ipairs(lista_armi) do
 			local ventaglio = VENTAGLIO[arma]
 			if ventaglio then
@@ -800,11 +805,18 @@ local function pensa(b, g)
 
 	-- le migliori si provano fino in fondo: chi cade, chi muore, dove finisce chi spara
 	table.sort(mosse, prima)
-	for i = 1, math.min(b.pesi.larga and 2 * FINALISTE or FINALISTE, #mosse) do
+	local finaliste = math.min(b.pesi.larga and 2 * FINALISTE or FINALISTE, #mosse)
+	for i = 1, finaliste do
 		local m = mosse[i]
 		if m.arma ~= "hook" then
 			m.punti = gusto(b, m.arma, prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto")) - (m.posto.n or 0) * b.pesi.strada
 		end
+	end
+	-- col ventaglio si sceglie solo fra le finaliste: fra migliaia di colpi
+	-- provati in fretta qualcuno sembra sempre meglio di quanto è (31 ottobre:
+	-- senza questo il ventaglio da solo vinceva il 19% contro il bot di oggi)
+	if b.pesi.larga then
+		for i = #mosse, finaliste + 1, -1 do mosse[i] = nil end
 	end
 	table.sort(mosse, prima)
 	b.scelta = mosse[1]
