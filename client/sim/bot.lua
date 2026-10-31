@@ -148,7 +148,7 @@ function M.mondo(g)
 	w.terrain, w.map, w.tick, w.mode, w.normalized = g.terrain, g.map, g.tick, g.mode, g.normalized
 	w.current, w.phase, w.timer, w.window, w.teleports = g.current, g.phase, g.timer, g.window, g.teleports
 	w.teleports_earned = g.teleports_earned
-	w.match_left, w.overtime, w.order, w.order_pos, w.turn_no = g.match_left, g.overtime, g.order, g.order_pos, g.turn_no
+	w.match_left, w.final_round, w.order, w.order_pos, w.turn_no = g.match_left, g.final_round, g.order, g.order_pos, g.turn_no
 	w.orb_seq, w.placed_id, w.heals, w.score = g.orb_seq, g.placed_id, g.heals, g.score
 	w.rng = rng.new(g.rng.state)
 	w.used = copia(g.used)
@@ -259,10 +259,11 @@ end
 --          vuoto vicino, si vedono
 --   45-54  le armi che ha (M.ARMI_RETE), 55-58 globi, scudo, chi gioca dopo,
 --          roccia sopra la testa
---   59-135 il terreno intorno: 11 x 7 caselle da 64 px, 1 dove è pieno
+--   59-60  ultimo giro (punti doppi), la Corona (1 la sua squadra, -1 un nemico)
+--   61-137 il terreno intorno: 11 x 7 caselle da 64 px, 1 dove è pieno
 M.ARMI_RETE = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows" }
 local GRIGLIA_X, GRIGLIA_Y, CASELLA = 5, 3, 64
-M.CARATTERISTICHE = 58 + (2 * GRIGLIA_X + 1) * (2 * GRIGLIA_Y + 1)
+M.CARATTERISTICHE = 60 + (2 * GRIGLIA_X + 1) * (2 * GRIGLIA_Y + 1)
 local ALTRI = {}
 local function caratteristiche(b, g, w, x)
 	local me = g.robots[b.id]
@@ -366,8 +367,12 @@ local function caratteristiche(b, g, w, x)
 		end
 	end
 	x[58] = c.dead and 0 or coperto(t, c.x, c.y + game.DISEGNO_H)
+	-- l'ultimo giro e la Corona
+	x[59] = w.final_round and 1 or 0
+	local corona = w:leader()
+	x[60] = corona and (corona.team == me.team and 1 or -1) or 0
 	-- il terreno intorno
-	local i = 58
+	local i = 60
 	for gy = GRIGLIA_Y, -GRIGLIA_Y, -1 do
 		for gx = -GRIGLIA_X, GRIGLIA_X do
 			i = i + 1

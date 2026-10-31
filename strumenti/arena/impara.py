@@ -62,7 +62,7 @@ import torch
 import arena
 import evolvi
 
-CARATTERISTICHE = 135  # bot.CARATTERISTICHE
+CARATTERISTICHE = 137  # bot.CARATTERISTICHE
 
 
 def quanti(strati):

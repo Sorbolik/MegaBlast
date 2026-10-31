@@ -57,7 +57,7 @@ end
 if RITOCCHI then dofile(RITOCCHI)(config, game) end
 local LIVELLI = { "facile", "normale", "difficile" }
 -- tetto di tick per partita: 12 turni da 25 s; le partite vere (senza limite
--- di turni) fino alla fine del tempo, con i supplementari
+-- di turni) fino alla fine del tempo, con l'ultimo giro
 local TETTO = 12 * 26 * 60
 local TETTO_PARTITA = 8 * 60 * 60
 -- quando una soglia è da guardare: la seconda stella a più di un turno dalla

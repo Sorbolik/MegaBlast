@@ -105,7 +105,7 @@ func bot(ctx context.Context, url string, seed int64, stop chan struct{}) {
 		return
 	}
 	defer conn.CloseNow()
-	conn.Write(ctx, websocket.MessageText, fmt.Appendf(nil, `{"t":"hello","v":3,"mode":%q}`, *caricoModo))
+	conn.Write(ctx, websocket.MessageText, fmt.Appendf(nil, `{"t":"hello","v":4,"mode":%q}`, *caricoModo))
 	go func() {
 		for {
 			if _, _, err := conn.Read(ctx); err != nil {

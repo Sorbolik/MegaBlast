@@ -67,7 +67,7 @@ function N.snapshot(g)
 		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy);
 		-- gs: il suo uncino del Rampino è in volo, in gx, gy; ml: tick del colpo di Maglio,
 		-- ms: tick (con frazione) in cui la sua testa si è fermata sul terreno (0 se gira ancora), md: suo lato;
-		-- gn: è uscito dalla partita (sparito, non torna)
+		-- gn: è uscito dalla partita (sparito, non torna); gd: ha già giocato in questo giro
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
 			tl = rb.teleports_left, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
 			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, pl = rb.parachutes_left,
@@ -81,7 +81,8 @@ function N.snapshot(g)
 			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0,
 			gs = rb.hook_shot ~= nil, gx = rb.hook_shot and rb.hook_shot.x or 0, gy = rb.hook_shot and rb.hook_shot.y or 0,
 			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, mb = rb.mallet_base or 0, kn = rb.knocked,
-			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, gn = rb.gone or false }
+			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, gn = rb.gone or false,
+			gd = rb.round_done }
 	end
 	-- k: "missile", "grenade" o "sniper", fu: tick prima che l'Uovo scoppi
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
@@ -106,10 +107,12 @@ function N.snapshot(g)
 	local heals = {}
 	for i, h in ipairs(g.heals) do heals[i] = { i = h.id, x = h.x, y = h.y } end
 	-- win: tick rimasti dopo il primo attacco; u: attacchi fatti (1 primaria, 2 secondaria); tp: teletrasporti
-	-- del turno; te: globi guadagnati nel turno; ot: supplementari (tempo scaduto, si finisce il giro)
+	-- del turno; te: globi guadagnati nel turno; fr: ultimo giro (punti moltiplicati);
+	-- av, ab: squadra che ha aperto la coppia di turni e i suoi punti allora (game.ahead)
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
-		u = used, tp = g.teleports, te = g.teleports_earned, mt = g.match_left, ot = g.overtime, r = robots, p = p, o = orbs, s = shards,
+		u = used, tp = g.teleports, te = g.teleports_earned, mt = g.match_left, fr = g.final_round,
+		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
 		c = crates, pl = placed, hl = heals }
 end
 
