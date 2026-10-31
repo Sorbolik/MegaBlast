@@ -260,12 +260,15 @@ end
 --   45-54  le armi che ha e quanti colpi (M.ARMI_RETE), 55-58 globi, scudo, chi gioca dopo,
 --          roccia sopra la testa
 --   59-60  ultimo giro (punti doppi), la Corona (1 la sua squadra, -1 un nemico)
---   61-137 il terreno intorno: 11 x 7 caselle da 64 px, 1 dove è pieno
+--   61     la fase: 1 subito dopo gli attacchi (prima del riparo), 0 a fine turno.
+--          La rete giudica gli attacchi con 1 e i ripari con 0: una posizione
+--          scoperta dopo un colpo non è quella in cui il robot finirà il turno
+--   62-138 il terreno intorno: 11 x 7 caselle da 64 px, 1 dove è pieno
 M.ARMI_RETE = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows" }
 local GRIGLIA_X, GRIGLIA_Y, CASELLA = 5, 3, 64
-M.CARATTERISTICHE = 60 + (2 * GRIGLIA_X + 1) * (2 * GRIGLIA_Y + 1)
+M.CARATTERISTICHE = 61 + (2 * GRIGLIA_X + 1) * (2 * GRIGLIA_Y + 1)
 local ALTRI = {}
-local function caratteristiche(b, g, w, x)
+local function caratteristiche(b, g, w, x, fase)
 	local me = g.robots[b.id]
 	local c = w.robots[b.id]
 	for i = 1, M.CARATTERISTICHE do x[i] = 0 end
@@ -376,8 +379,9 @@ local function caratteristiche(b, g, w, x)
 	x[59] = w.final_round and 1 or 0
 	local corona = w:leader()
 	x[60] = corona and (corona.team == me.team and 1 or -1) or 0
+	x[61] = fase or 0
 	-- il terreno intorno
-	local i = 60
+	local i = 61
 	for gy = GRIGLIA_Y, -GRIGLIA_Y, -1 do
 		for gx = -GRIGLIA_X, GRIGLIA_X do
 			i = i + 1
@@ -395,7 +399,8 @@ local CAR = {}
 -- Con la rete: il giudizio di qui sopra più quello che la rete aggiunge (lei
 -- impara solo la differenza fra questo e quanto rende davvero la posizione,
 -- così parte già brava e non deve reimparare da zero che un colpo che prende vale)
-local function valore(b, g, w)
+-- fase (caratteristiche): 1 per gli attacchi (se non si dice), 0 per il riparo
+local function valore(b, g, w, fase)
 	local me = g.robots[b.id]
 	local s = 0
 	for i, c in ipairs(w.robots) do
@@ -411,7 +416,12 @@ local function valore(b, g, w)
 			end
 		end
 	end
-	if b.pesi.rete then s = s + rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR)) * 100 end
+	if b.pesi.rete then
+		fase = fase or 1
+		-- rete_attacco (0..1): quanto conta la rete negli attacchi, per misurarla
+		local quanto = fase == 1 and (b.pesi.rete_attacco or 1) or 1
+		if quanto > 0 then s = s + quanto * rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR, fase)) * 100 end
+	end
 	return s
 end
 
@@ -988,7 +998,7 @@ end
 -- rete decide lei dove; senza, lontano dai nemici, fuori dalla loro linea di
 -- tiro e lontano dal vuoto.
 local function riparo(b, g, w)
-	if b.pesi.rete then return valore(b, g, w) end
+	if b.pesi.rete then return valore(b, g, w, 0) end
 	local x = caratteristiche(b, g, w, CAR)
 	if x[7] == 1 then return -1000 end
 	local s = x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50

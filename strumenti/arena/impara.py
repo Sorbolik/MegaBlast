@@ -64,7 +64,7 @@ import torch
 import arena
 import evolvi
 
-CARATTERISTICHE = 137  # bot.CARATTERISTICHE
+CARATTERISTICHE = 138  # bot.CARATTERISTICHE
 GUIDA = [22, 32, 16, 1]  # la guida: bot.DESCRIZIONE numeri per mossa
 
 

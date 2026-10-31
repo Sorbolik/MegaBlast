@@ -193,6 +193,17 @@ local function partita(k)
 		end
 		return mio - primo
 	end
+	-- a metà turno, finiti gli attacchi del bot (va a cercare riparo): la
+	-- posizione con la fase 1, quella in cui la rete giudica gli attacchi
+	local function dopo_attacchi()
+		local b = inizio and not inizio.fatto and bots[inizio.chi]
+		if b and b.riparato and b.turno == g.turn_no then
+			inizio.fatto = true
+			local x = bot.caratteristiche({ id = inizio.chi }, inizio.ref, g, {}, 1)
+			for j = 1, #x do x[j] = math.floor(x[j] * 10000 + 0.5) / 10000 end
+			esempi[#esempi + 1] = { c = inizio.chi, x = x, m = inizio.m }
+		end
+	end
 	local function fine_turno()
 		if inizio then
 			local x = bot.caratteristiche({ id = inizio.chi }, inizio.ref, g, {})
@@ -211,6 +222,7 @@ local function partita(k)
 	while g.phase ~= "over" do
 		g:step(replay.input(r, g, bots))
 		replay.dopo(r, g)
+		if esempi then dopo_attacchi() end
 		for _, e in ipairs(g:pop_events()) do
 			local w = USO[e.type] or (e.type == "place" and e.kind) or nil
 			if w and e.robot then

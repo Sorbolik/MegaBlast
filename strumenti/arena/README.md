@@ -65,9 +65,10 @@ giocato le partite.
 `impara.py` fa imparare la rete a gradiente (PyTorch, sulla scheda video se
 c'è): a ogni giro gioca (la rete di adesso con un po' di esplorazione, le reti
 dei giri passati, il bot di oggi e con `--lega migliori.json` gli specialisti di
-`evolvi.py`), raccoglie da ogni fine turno quello che la rete guarda (137 numeri:
-punti e vita, gli altri robot uno per uno, le armi, i globi, l'ultimo giro, la Corona e il terreno
-intorno, `bot.caratteristiche`) e quanto ha reso fino a fine partita
+`evolvi.py`), raccoglie da ogni turno quello che la rete guarda (138 numeri:
+punti e vita, gli altri robot uno per uno, le armi, i globi, l'ultimo giro, la Corona, il terreno
+intorno e la fase, `bot.caratteristiche`) due volte: finiti gli attacchi (fase 1, con cui la
+rete giudica gli attacchi) e a fine turno (fase 0, con cui giudica il riparo) e quanto ha reso fino a fine partita
 (`arena.py --impara 1`), e la rete impara a prevederlo: non l'esito vero ma il
 ritorno a passi TD(λ) (`--lambda`, 1 per l'esito vero), che ha molto meno
 rumore. La rete prova anche i colpi a ventaglio che il bot di oggi non prova
