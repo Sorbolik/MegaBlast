@@ -4,6 +4,9 @@
 aspetta 1.5
 foto 01_home
 tocca 1075 102                      # GIOCA
+aspetta 0.5
+foto 02_dove_giochi
+tocca 368 300                       # 2 contro 2
 aspetta_stato modo=ended 3
 aspetta 0.5
 foto 03_online

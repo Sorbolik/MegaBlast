@@ -21,7 +21,10 @@ local replay = require "sim.replay"
 -- vicino al limite di 200 variabili locali di Lua
 local menu = { podio = require "menu.podio", armeria = require "menu.armeria", scelta = require "menu.scelta",
 	allenamento = require "menu.allenamento", fine_livello = require "menu.fine_livello", campagna = require "menu.campagna",
-	impostazioni = require "menu.impostazioni" }
+	impostazioni = require "menu.impostazioni", bacheca = require "menu.bacheca", coda = require "menu.coda",
+	-- non schermate, qui per non aggiungere variabili locali (limite di 200):
+	-- gli eventi del server e le loro regole (start online)
+	eventi = require "main.eventi", regole = require "sim.regole" }
 local missioni = require "sim.missioni"
 local levette = require "battaglia.levette"
 local mira = require "battaglia.mira"
@@ -40,7 +43,7 @@ local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
-local PROTOCOL = 5
+local PROTOCOL = 6
 -- Se la connessione cade in partita riproviamo per un po' (il server tiene il
 -- posto per 20 secondi)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
@@ -48,6 +51,7 @@ local SERVER_ERRORS = {
 	version = "C'è una versione nuova di MegaBlast:\naggiorna il gioco",
 	expired = "La partita è finita",
 	draining = "Il server si sta aggiornando,\nriprova tra poco",
+	evento = "L'evento è appena finito",
 }
 
 -- le azioni dell'input, in una tabella sola (limite di 200 variabili locali)
@@ -436,6 +440,10 @@ local function show_menu(self)
 	disconnect(self)
 	self.mode = "menu"
 	home.show(self.home)
+	-- gli eventi del server: la riga sotto EVENTI (e la bacheca, la coda)
+	self.eventi_t = 0
+	home.eventi(self.home, menu.eventi.riga_home())
+	menu.eventi.carica(server_url(), function() home.eventi(self.home, menu.eventi.riga_home()) end)
 	-- la home copre tutto: la mappa sotto non serve disegnarla
 	msg.post("/terreno", "disable")
 	set_controls_visible(self, false)
@@ -1155,7 +1163,10 @@ local function on_server_message(self, m)
 		-- ricostruisce dal seed, poi arrivano gli scavi e lo stato.
 		-- players: le squadre dei robot e le loro scelte del draft,
 		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
-		new_match(self, m.seed, m.map, m.players and { players = m.players })
+		-- regole: quelle dell'evento della coda (sim/regole.lua), come sul server
+		local opts = m.players and { players = m.players }
+		if type(m.regole) == "table" then opts = menu.regole.opzioni(m.regole, opts or {}) end
+		new_match(self, m.seed, m.map, opts)
 		self.g:pop_events()
 		self.squadre_online = {}
 		for i, rb in ipairs(self.g.robots) do self.squadre_online[i] = rb.team end
@@ -1213,8 +1224,8 @@ on_socket = function(self, conn, data)
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
 		else
 			show_message(self, "Connesso, in attesa...", true)
-			-- la coda: [megablast] giocatori (1v1, 2v2, ffa) come sullo stesso telefono
-			send(self, { t = "hello", v = PROTOCOL, mode = config_string("megablast.giocatori", "1v1") })
+			-- la coda scelta in DOVE GIOCHI? (menu/coda.lua): 2v2, 1v1 o un evento
+			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2" })
 		end
 	elseif data.event == ws.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
@@ -1242,7 +1253,8 @@ local function hide_menu(self)
 	msg.post("/terreno", "enable")
 end
 
-local function start_online(self)
+local function start_online(self, coda)
+	self.coda = coda
 	hide_menu(self)
 	if not ws then
 		-- l'estensione si scarica con Project -> Fetch Libraries
@@ -2804,7 +2816,15 @@ function update(self, dt)
 	if self.aim_pad.id then levette.registra(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
 	render(self, dt_mondo)
 	muovi_detriti(self, dt_mondo)
-	if self.mode == "menu" then home.update(self.home, dt) end
+	if self.mode == "menu" then
+		home.update(self.home, dt)
+		-- ogni minuto gli eventi di nuovo (uno comincia, uno finisce)
+		self.eventi_t = (self.eventi_t or 0) + dt
+		if self.eventi_t >= 60 then
+			self.eventi_t = 0
+			menu.eventi.carica(server_url(), function() home.eventi(self.home, menu.eventi.riga_home()) end)
+		end
+	end
 	if self.podio_t then
 		self.podio_t = self.podio_t - dt
 		if self.podio_t <= 0 then apri_podio(self) end
@@ -3466,6 +3486,10 @@ function PAD.on_input(self, action_id, action)
 		local fine = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
 		if fine and self.schermata.mod == menu.fine_livello then
 			dopo_fine_livello(self, fine)
+		elseif type(fine) == "table" and fine.coda then
+			-- DOVE GIOCHI? o GIOCA nel dettaglio di un evento: la partita online
+			chiudi_schermata(self)
+			start_online(self, fine.coda)
 		elseif type(fine) == "table" and fine.missione then
 			chiudi_schermata(self)
 			self.ritorno = "campagna"
@@ -3489,8 +3513,14 @@ function PAD.on_input(self, action_id, action)
 			-- le finisce (negli scenari solo con prova_nuovo 1: scenari/nuovo.txt)
 			self.ritorno = "home"
 			start_missione(self, profilo.prima_lezione(self.profilo))
-		elseif scelta == "online" then
-			start_online(self)
+		elseif scelta == "online" or scelta == "eventi" then
+			-- DOVE GIOCHI? (menu/coda.lua) o la bacheca (menu/bacheca.lua): si
+			-- rifanno appena arrivano gli eventi aggiornati
+			local mod = scelta == "online" and menu.coda or menu.bacheca
+			apri_schermata(self, mod, hud.NOMI)
+			menu.eventi.carica(server_url(), function()
+				if self.schermata and self.schermata.mod == mod then mod.ricostruisci(self.schermata.obj) end
+			end)
 		elseif scelta == "armeria" then
 			apri_schermata(self, menu.armeria, self.profilo)
 		elseif scelta == "allenamento" then

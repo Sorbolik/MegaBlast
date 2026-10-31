@@ -100,11 +100,11 @@ func TestGoTerrainSameMatch(t *testing.T) {
 	explosions := 0
 	for k := 0; k < 12; k++ {
 		m, seed := []string{"forgia", "crogiolo"}[k%2], int64(11+k)
-		a, err := goE.NewSim(seed, m, lua.LNil, false)
+		a, err := goE.NewSim(seed, m, lua.LNil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		b, err := luaE.NewSim(seed, m, lua.LNil, false)
+		b, err := luaE.NewSim(seed, m, lua.LNil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}

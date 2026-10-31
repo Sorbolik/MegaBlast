@@ -5,6 +5,7 @@ local game = require "sim.game"
 local maps = require "sim.maps"
 local config = require "sim.config"
 local draft = require "sim.draft"
+local regole = require "sim.regole"
 
 local N = {}
 
@@ -24,9 +25,9 @@ for id, def in pairs(maps.maps) do
 end
 
 -- players: come opts.players di game.new (squadre e scelte del draft);
--- normalize: modalità Torneo
-function N.new(seed, map, players, normalize)
-	local g = game.new(seed, map, { players = players, normalize = normalize })
+-- r: le regole dell'evento della coda (sim/regole.lua), nil fuori dagli eventi
+function N.new(seed, map, players, r)
+	local g = game.new(seed, map, regole.opzioni(r, { players = players }))
 	g:pop_events()
 	g.carves = {} -- scavi del terreno, per chi si riconnette
 	return g
@@ -143,12 +144,18 @@ function N.draft_seconds()
 	return config.DRAFT_SECONDS
 end
 
-function N.draft_new(seed, mode)
+function N.draft_new(seed, mode, r)
 	local players = {}
 	for i, p in ipairs(config.MODES[mode]) do
 		players[i] = { team = p.team }
 	end
-	return draft.new(seed, players)
+	return draft.new(seed, players, regole.armi(r))
+end
+
+-- le regole di un evento si possono usare? (eventi.go, quando legge il file)
+function N.regole_valida(r)
+	local ok, err = regole.valida(r)
+	return ok and "" or err
 end
 
 function N.draft_pick(d, i, weapon)

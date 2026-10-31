@@ -81,3 +81,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 31 ott | La Corona arriva solo dopo il primo giro di turni (chi apre non è più primo solo perché ha già sparato); la parte della fune coi punti in attesa è a fasce diagonali. | questa PR |
 | 31 ott | Niente punti nelle lezioni che non li spiegano; nei gironi la seconda stella è per i punti di vantaggio invece che per i turni, soglie misurate coi bot. | questa PR |
 | 31 ott | Eventi: calendario fatto da Sergio con modelli e ripetizioni, eventi sovrapposti permessi, premi badge/skin/monete, fasce a percentuale, bozza del pannello. | questa PR |
+| 31 ott | Eventi nel gioco, passo 1: regole come dati, calendario degli eventi sul server (file che si rilegge, ripetizioni, code degli eventi), EVENTI nella home, bacheca, dettaglio e DOVE GIOCHI? dopo GIOCA; nel Torneo un tetto ai livelli invece della normalizzazione. | questa PR |

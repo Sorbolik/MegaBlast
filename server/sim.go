@@ -118,13 +118,18 @@ type Sim struct {
 
 // NewSim crea la partita; mapID "" la fa scegliere al seed (maps.pick). players
 // è la lista di opts.players (squadre e armi scelte, da N.draft_finish), LNil
-// per un 1 contro 1; normalize è il Torneo.
-func (e *Engine) NewSim(seed int64, mapID string, players lua.LValue, normalize bool) (*Sim, error) {
+// per un 1 contro 1; regole sono quelle dell'evento della coda in JSON
+// (sim/regole.lua, già controllate da eventi.go), nil fuori dagli eventi.
+func (e *Engine) NewSim(seed int64, mapID string, players lua.LValue, regole []byte) (*Sim, error) {
 	m := lua.LValue(lua.LNil)
 	if mapID != "" {
 		m = lua.LString(mapID)
 	}
-	g, err := e.call("new", lua.LNumber(seed), m, players, lua.LBool(normalize))
+	r, err := e.fromJSON(regole)
+	if err != nil {
+		return nil, err
+	}
+	g, err := e.call("new", lua.LNumber(seed), m, players, r)
 	if err != nil {
 		return nil, err
 	}

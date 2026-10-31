@@ -1364,7 +1364,7 @@ do
 	check(vp[1].pick == "sniper" and vp[1].secondary == nil and vp[2].pick == v.offer[1], "nessuna secondaria in più")
 end
 
--- Salto in aria, scudo, Torneo ----------------------------------------------------
+-- Salto in aria, scudo, livello fisso ----------------------------------------------------
 do
 	-- salto in aria: con air_jumps, premendo di nuovo in volo, gratis
 	local q = game.new(42, "forgia", { players = { { team = 1, stats = { air_jumps = 1 } }, { team = 2 } } })
@@ -1400,12 +1400,12 @@ do
 	s:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
 	check(sr.shield == config.SHIELD.hp and sr.ammo.shield == 0, "lo scudo delle casse si consuma")
 
-	-- Torneo: le statistiche di albero e equipaggiamento non contano, l'arma scelta sì
+	-- livello fisso (regola degli eventi): le statistiche di albero e equipaggiamento non contano, l'arma scelta sì
 	local custom = { { team = 1, stats = { max_hp = 300, walk_speed = 999 }, pick = "shards" }, { team = 2 } }
 	local t = game.new(42, "forgia", { players = custom, normalize = true })
 	check(t.robots[1].max_hp == config.STATS.max_hp and t.robots[1].stats.walk_speed == t.robots[2].stats.walk_speed,
-		"nel Torneo tutti hanno le statistiche di base")
-	check(t.robots[1].ammo.shards == config.DRAFT_SHOTS and t:results().normalized, "nel Torneo resta l'arma scelta")
+		"a livello fisso tutti hanno le statistiche di base")
+	check(t.robots[1].ammo.shards == config.DRAFT_SHOTS and t:results().normalized, "a livello fisso resta l'arma scelta")
 end
 
 -- Determinismo: stesso seed, stessi input, stesso risultato
@@ -2280,6 +2280,26 @@ do
 		t = t + 1
 	end
 	check(t > 1 and g.match_left == prima, "il tempo della partita è fermo fra un turno e l'altro")
+end
+
+-- regole come dati (sim/regole.lua): la lista bianca e cosa arriva a game.new e alla scelta
+do
+	local regole = require "sim.regole"
+	local draft = require "sim.draft"
+	check(regole.valida({ casse = 2, cure = false, livello = "fisso", armi = { "punch", "mallet" }, punti = { kill = 80 } }),
+		"regole: una regola giusta passa")
+	for _, r in ipairs({ { vento = 3 }, { casse = 0 }, { casse = 2.5 }, { armi = { "punch" } }, { armi = { "laser", "mallet" } },
+		{ punti = { volo = 3 } }, { punti = { kill = 5000 } }, { livello = "alto" }, { cure = "no" } }) do
+		local k = next(r)
+		check(not regole.valida(r), "regole: rifiutata " .. k)
+	end
+	local opts = regole.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
+	local g = game.new(7, "forgia", opts)
+	check(g.crate_every == 2 and not g.heals_on and g.score.kill == 80 and g.score.damage == config.SCORE.damage,
+		"regole: casse, cure e punti arrivano alla partita")
+	local d = draft.new(7, config.MODES["2v2"], regole.armi({ armi = { "punch", "mallet", "eagle" } }))
+	check(#d.offer == 1 and d.offer[1] == "punch" and #d.offer2 == 2, "regole: la scelta offre solo le armi dell'evento")
+	check(regole.armi({ casse = 2 }) == nil, "regole: senza armi la scelta resta quella di sempre")
 end
 
 if failures > 0 then
