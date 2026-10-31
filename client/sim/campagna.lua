@@ -285,7 +285,7 @@ local GIRONE_1 = {
 		-- le armi che l'Addestramento non presenta si trovano nel girone (Claude)
 		casse = { { dopo = 0, arma = "grenade", x = 620 } },
 		turni = 7,
-		stelle = { punti = 100, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		stelle = { punti = 110, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot" } },
 		-- nei gironi i consigli mettono in luce il comando ma il gioco non si ferma
 		righe = {
@@ -361,7 +361,7 @@ local GIRONE_1 = {
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
 		turni = 7,
-		stelle = { punti = 130, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		stelle = { punti = 120, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il codardo" } },
 	},
 	{
@@ -376,7 +376,7 @@ local GIRONE_1 = {
 		},
 		vita = { [2] = 240 },
 		turni = 10,
-		stelle = { punti = 20, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
+		stelle = { punti = 10, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il Fabbro" } },
 	},
 	-- la fine del girone: una partita completa 2 contro 2, con un bot al tuo
@@ -396,7 +396,7 @@ local GIRONE_1 = {
 			{ team = 2, bot = 2, carattere = "cecchino" },
 		},
 		-- niente limite di turni: si gioca fino alla fine del tempo
-		stelle = { punti = 130, bonus = { conta = "abbattuti", almeno = 3, testo = "ABBATTINE 3" } },
+		stelle = { punti = 160, bonus = { conta = "abbattuti", almeno = 3, testo = "ABBATTINE 3" } },
 		obiettivo = { { vinci = true, testo = "Vinci la partita con il tuo compagno" } },
 	},
 }
