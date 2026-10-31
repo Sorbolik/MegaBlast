@@ -1,0 +1,19 @@
+# Due mani (imposta prova_missione due_mani): la Lama e il Lanciarune nello
+# stesso turno sul bot che si rimette in sesto, poi la fine del livello con la
+# stella dei punti di vantaggio (non più dei turni) e sotto i punti fatti.
+# Barra: Lanciarune 1, Lama 2.
+imposta prova_missione due_mani
+aspetta_stato modo=local turno=1 fase=aim 30
+aspetta 1
+foto 01_scopo                        # i punti in alto: qui contano
+cammina destra 1090
+premi 2
+mira 80 0 0.3                        # la Lama sul bot accanto
+aspetta_evento sword_hit 4
+aspetta 1
+cammina sinistra 900
+premi 1
+mira 160 60 0.4                      # il Lanciarune sul bot
+aspetta_evento death 8
+aspetta 4
+foto 02_fine_livello                 # la seconda stella: CON 110 PUNTI DI VANTAGGIO

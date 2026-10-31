@@ -508,19 +508,42 @@ for _, l in ipairs(campagna.CAPITOLI[2].missioni) do
 	end
 end
 
--- Ogni stella col suo criterio: in 6 turni senza morire sono la prima e la
--- terza, non la seconda (e nel profilo ogni stella presa resta)
+-- Ogni stella col suo criterio: con pochi punti di vantaggio e senza morire
+-- sono la prima e la terza, non la seconda (e nel profilo ogni stella presa resta)
 do
 	local r = missioni.nuova("primo_sangue")
-	r.esito, r.st.turni = "fatta", 6
+	r.esito, r.st.distacco = "fatta", 40
 	local s = missioni.stelle(r)
-	check(s[1] and not s[2] and s[3], "stelle: il bonus senza i turni accende la terza e non la seconda")
+	check(s[1] and not s[2] and s[3], "stelle: il bonus senza i punti accende la terza e non la seconda")
+	r.st.distacco = 160
+	check(missioni.stelle(r)[2], "stelle: la seconda coi punti di vantaggio")
 	local profilo = require "menu.profilo"
 	local p = profilo.nuovo()
 	profilo.missione(p, "primo_sangue", s)
 	profilo.missione(p, "primo_sangue", { true, true, false })
 	check(profilo.stelle_totali(p) == 3, "stelle: nel profilo ognuna presa resta")
 end
+
+-- Niente punti nelle lezioni che non ne parlano (Sergio, 31 ott: distraggono
+-- dall'esercizio): nessuno ne fa, nemmeno abbattendo. Punti e Corona e la
+-- Prima partita li hanno
+for _, l in ipairs(campagna.CAPITOLI[1].missioni) do
+	local r = missioni.nuova(l.id)
+	local seed, mappa, opts = missioni.partita(r, 3)
+	local g = game.new(seed, mappa, opts)
+	missioni.prepara(r, g)
+	local senza = not missioni.vede(r, "punti")
+	check(g.no_points == senza, l.id .. (senza and ": niente punti" or ": coi punti"))
+	g:hurt(g.robots[2], 999, g.robots[1], 0)
+	local fatti = 0
+	for _, e in ipairs(g:pop_events()) do
+		if e.type == "points" then fatti = fatti + 1 end
+	end
+	check((fatti == 0) == senza and (g.robots[1].points == 0) == senza,
+		l.id .. ": abbattere " .. (senza and "non dà punti" or "dà punti"))
+end
+check(missioni.vede(missioni.nuova("punti"), "punti") and missioni.vede(missioni.nuova("guidata"), "punti"),
+	"punti e guidata hanno i punti")
 
 -- L'aiuto dopo tante perse: il Fabbro scende di livello e parte con meno vita,
 -- ma con la barra piena (non si vede)

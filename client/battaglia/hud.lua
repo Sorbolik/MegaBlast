@@ -96,6 +96,11 @@ function M.cronometro(x, y)
 	gui.set_visible(c.radice, false)
 	c.onda_n = fit(ui.anello(0, 0, 2 * M.FUORI, 3, M.BIANCO, c.radice))
 	gui.set_enabled(c.onda_n, false)
+	-- nell'ultimo giro un alone e un anello d'oro attorno (cronometro_oro)
+	c.oro_alone = fit(ui.alone(0, 0, 2 * M.FUORI + 70, ui.ORO, c.radice))
+	c.oro_anello = fit(ui.anello(0, 0, 2 * M.FUORI + 12, 4, ui.ORO, c.radice))
+	gui.set_enabled(c.oro_alone, false)
+	gui.set_enabled(c.oro_anello, false)
 	fit(ui.disco(0, 0, 2 * M.FUORI, FONDO, c.radice))
 	c.squadra = fit(ui.anello(0, 0, 2 * M.FUORI, 3, ui.C.LUCE, c.radice))
 	local d = 2 * M.RAGGIO + M.SPESSORE
@@ -122,6 +127,15 @@ function M.cronometro_on(c, on)
 	c.on = on
 	gui.set_enabled(c.radice, on)
 	gui.set_enabled(c.orologio, on)
+end
+
+-- L'ultimo giro (punti doppi): anello e alone d'oro, la scritta sopra d'oro
+function M.cronometro_oro(c, on)
+	if c.oro == on then return end
+	c.oro = on
+	gui.set_enabled(c.oro_alone, on)
+	gui.set_enabled(c.oro_anello, on)
+	gui.set_color(c.orologio, on and ui.ORO or ui.C.TESTO)
 end
 
 -- rimasti, totale: secondi (con la virgola); squadra: colore di chi gioca

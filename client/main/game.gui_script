@@ -40,7 +40,7 @@ local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
-local PROTOCOL = 3
+local PROTOCOL = 5
 -- Se la connessione cade in partita riproviamo per un po' (il server tiene il
 -- posto per 20 secondi)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
@@ -917,8 +917,8 @@ local function handle_event(self, e)
 		shock(self, e.x, e.y)
 		targa.annuncio(self.robots[e.target].targa, "SBALZATO!")
 		self.colpo_x, self.colpo_y, self.colpo_t = e.x, e.y, self.clock
-	elseif e.type == "overtime" then
-		show_message(self, "Supplementari: si finisce il giro di turni")
+	elseif e.type == "final_round" then
+		punteggio.ultimo_giro(self.punti)
 	elseif e.type == "parachute" then
 		show_message(self, "Paracadute aperto!")
 	elseif e.type == "status" then
@@ -968,15 +968,19 @@ local function handle_event(self, e)
 		-- crolla e svanisce da solo; dopo 1,5 s ricompare altrove, nello stesso turno
 		scoria.die(self.robots[e.robot].rig)
 		targa.set_enabled(self.robots[e.robot].targa, false)
+		-- senza punti (le lezioni che non ne parlano) solo cosa è successo
+		local senza = self.g.no_points
 		if e.own then
 			-- morto da solo nel proprio turno: l'uccisione va a chi gli ha fatto più danno
 			local chi = (self.mode == "online" and e.robot == self.me) and "Muori da solo" or self.names[e.robot] .. " muore da solo"
 			local pena = gconfig.SCORE.death + gconfig.SCORE.self_death
-			show_message(self, e.by and string.format("%s! %d, +%d a %s", chi, pena, e.points, who_name(self, e.by))
+			show_message(self, senza and chi .. "!"
+				or e.by and string.format("%s! %d, +%d a %s", chi, pena, e.points, who_name(self, e.by))
 				or string.format("%s! %d", chi, pena))
 		elseif e.by then
 			local verbo = e.env and " butta giù " or " elimina "
-			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
+			show_message(self, who_name(self, e.by) .. verbo .. who_name(self, e.robot) .. "!"
+				.. (senza and "" or string.format(" +%d", e.points)))
 		end
 	elseif e.type == "gone" then
 		-- è uscito dalla partita: sparisce e non torna
@@ -1051,7 +1055,8 @@ end
 local function apply_state(self, s)
 	local g = self.g
 	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
-	g.window, g.teleports, g.overtime = s.win or 0, s.tp or 0, s.ot or false
+	g.window, g.teleports, g.final_round, g.round = s.win or 0, s.tp or 0, s.fr or false, s.gr or 1
+	g.ahead, g.ahead_base = s.av or 0, s.ab or 0
 	g.teleports_earned = s.te or 0
 	local u = s.u or 0
 	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
@@ -1060,6 +1065,7 @@ local function apply_state(self, s)
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
 		rb.teleports_left, rb.turns, rb.points = r.tl or 0, r.tu or 1, r.pt or 0
+		rb.round_done = r.gd or false
 		rb.max_hp = r.mh or rb.max_hp
 		if r.gn and not rb.gone then
 			-- chi torna dopo una caduta non ha visto uscire nessuno: il robot sparisce qui
@@ -1494,8 +1500,8 @@ local function apri_fine_livello(self)
 	for _, rb in ipairs(self.robots) do targa.riga(rb.targa, "") end
 	apri_schermata(self, menu.fine_livello, {
 		titolo = r.l.titolo, stelle = missioni.stelle(r), criteri = missioni.criteri(r.l),
-		-- senza tempo non ci sono turni da contare
-		turni = not r.l.senza_tempo and r.st.turni or nil,
+		-- i punti di vantaggio, dove contano
+		vantaggio = missioni.vantaggio(r),
 		record = self.fine_record, avanti = missioni.dopo(r.l.id) ~= nil,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 end
@@ -2295,9 +2301,11 @@ local function render(self, dt)
 		self.bersagli.arma = nil
 	end
 
-	-- tempo rimasto della partita, sopra l'anello; a zero si finisce il giro di turni
+	-- tempo rimasto della partita, sopra l'anello; nell'ultimo giro (punti
+	-- doppi) al suo posto la scritta, e l'anello d'oro
 	local left = math.max(0, math.ceil(g.match_left / 60))
-	local clock = g.overtime and "SUPPLEMENTARI" or string.format("%d:%02d", math.floor(left / 60), left % 60)
+	local clock = g.final_round and "×2 ULTIMO GIRO" or string.format("%d:%02d", math.floor(left / 60), left % 60)
+	hud.cronometro_oro(self.crono, g.final_round and g.phase ~= "over")
 	-- l'anello racconta il turno: bianco, giallo finché c'è il secondo attacco, blu dopo
 	local fase, rimasti, totale = nil, 0, 1
 	if g.phase == "aim" then

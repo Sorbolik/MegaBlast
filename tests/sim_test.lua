@@ -1506,7 +1506,14 @@ do
 		"morto da solo senza danni: solo la penalità")
 
 	-- colpire chi è primo vale di più
+	-- (la Corona c'è solo dopo SCORE.crown_rounds giri interi)
+	local g0 = game.new(3, "forgia", { players = config.MODES.ffa })
+	g0.robots[3].points = 100
+	check(config.SCORE.crown_rounds >= 1 and g0:leader() == nil, "nel primo giro nessuno ha la Corona")
+	for _ = 1, 4 do g0:end_turn() end
+	check(g0.round == 2 and g0:leader() == g0.robots[3], "dal secondo giro la Corona va al primo")
 	local gl = game.new(3, "forgia", { players = config.MODES.ffa })
+	gl.round = config.SCORE.crown_rounds + 1
 	gl.robots[3].points = 100
 	gl:hurt(gl.robots[3], 10, gl.robots[1])
 	gl:hurt(gl.robots[4], 10, gl.robots[2])
@@ -1514,6 +1521,7 @@ do
 
 	-- Corona: chi abbatte il primo in classifica prende crown in più
 	local gc = game.new(3, "forgia", { players = config.MODES.ffa })
+	gc.round = config.SCORE.crown_rounds + 1
 	gc.robots[3].points = 100
 	gc:hurt(gc.robots[3], gc.robots[3].hp, gc.robots[1])
 	local hp3 = gc.robots[3].max_hp
@@ -1584,38 +1592,73 @@ run(g6, game.SWORD_TICKS + 30)
 check(t6.hp < t6.max_hp, "la spada fa danno")
 check(t6.x == tx6 and t6.y == ty6 and t6.grounded, "la spada non sposta l'avversario")
 
--- Partita a tempo: dopo 5 minuti finisce e vince chi ha più vita
+-- Partita a tempo: verso i 5 minuti c'è l'ultimo giro, poi finisce e vince chi ha più punti
 local g7 = game.new(42, "forgia")
 g7.robots[2].points = 10
 local ticks7 = 0
-while g7.phase ~= "over" and ticks7 < game.MATCH_TICKS + 2000 do
+while g7.phase ~= "over" and ticks7 < game.MATCH_TICKS + 4000 do
 	g7:step({})
 	ticks7 = ticks7 + 1
 end
-check(g7.phase == "over" and ticks7 >= game.MATCH_TICKS, "la partita finisce allo scadere dei 5 minuti")
+check(g7.phase == "over" and g7.final_round and g7.match_left <= g7:final_round_ticks(),
+	"la partita finisce dopo l'ultimo giro, verso i 5 minuti")
 check(g7.winner == 2, "a tempo scaduto vince chi ha più punti")
-check(ticks7 <= game.MATCH_TICKS + 2 * (game.TURN_TICKS + game.MAX_SETTLE_TICKS),
-	"dopo lo scadere si finisce il giro di turni")
+check(g7.robots[1].turns == g7.robots[2].turns, "tutti hanno giocato gli stessi turni")
 
--- Supplementari: il turno in corso non si interrompe e si finisce il giro
+-- Ultimo giro (Sergio, 31 ott): il giro che comincia con meno di mezzo giro di
+-- tempo è l'ultimo, i punti valgono doppio, e alla sua fine si finisce
 do
-	-- scade durante il turno del primo: si finisce il suo e si gioca quello del secondo
 	local ot = game.new(42, "forgia")
 	run(ot, 60)
 	ot.match_left = 10
 	run(ot, 20)
-	check(ot.overtime and ot.phase == "aim" and ot.current == 1, "allo scadere il turno in corso continua")
+	check(not ot.final_round and ot.phase == "aim" and ot.current == 1,
+		"il giro già cominciato non diventa l'ultimo: il turno in corso continua")
 	for _ = 1, 4000 do
 		ot:step()
 		if ot.current == 2 or ot.phase == "over" then break end
 	end
-	check(ot.current == 2 and ot.phase == "aim", "supplementari: gioca anche il secondo")
+	check(ot.current == 2 and ot.phase == "aim" and not ot.final_round, "si finisce il giro: gioca anche il secondo")
+	ot:pop_events()
+	local annuncio = false
 	for _ = 1, 4000 do
+		ot:step()
+		for _, e in ipairs(ot:pop_events()) do
+			if e.type == "final_round" then annuncio = true end
+		end
+		if ot.current == 1 or ot.phase == "over" then break end
+	end
+	check(ot.final_round and annuncio and ot.current == 1 and ot.phase == "aim", "poi comincia l'ultimo giro, con l'evento")
+	local prima = ot.robots[1].points
+	ot:add_points(ot.robots[1], 10, "damage", ot.robots[2])
+	check(ot.robots[1].points == prima + 10 * config.SCORE.final_round, "nell'ultimo giro i punti valgono doppio")
+	for _ = 1, 8000 do
 		ot:step()
 		if ot.phase == "over" then break end
 	end
-	check(ot.phase == "over" and ot.current == 2, "finito il giro la partita finisce")
+	check(ot.phase == "over" and ot.current == 2, "finito l'ultimo giro la partita finisce")
 	check(ot.robots[1].turns == ot.robots[2].turns, "tutti hanno giocato gli stessi turni")
+end
+
+-- Coppie di turni con due squadre: chi apre la coppia ha i punti "in attesa"
+-- finché l'altra squadra non ha risposto (battaglia/punteggio.lua)
+do
+	local pc = game.new(42, "forgia", { players = config.MODES["2v2"] })
+	check(pc.ahead == 1 and pc.ahead_base == 0, "il primo turno apre una coppia")
+	pc.robots[1].points = 40
+	local function prossimo(g)
+		local c = g.current
+		for _ = 1, 4000 do
+			g:step()
+			if g.current ~= c or g.phase == "over" then break end
+		end
+	end
+	prossimo(pc)
+	check(pc.current == 2 and pc.ahead == 1 and pc.ahead_base == 0, "mentre risponde l'altra squadra i punti restano in attesa")
+	prossimo(pc)
+	check(pc.current == 3 and pc.ahead == 1 and pc.ahead_base == 40, "chiusa la coppia, i punti entrano")
+	local ffa = game.new(42, "forgia", { players = config.MODES.ffa })
+	check(ffa.ahead == 0, "con più di due squadre niente coppie")
 end
 
 

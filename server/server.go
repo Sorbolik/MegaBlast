@@ -18,7 +18,7 @@ import (
 // Versione del protocollo: va cambiata insieme a PROTOCOL in
 // client/main/game.gui_script ogni volta che i messaggi cambiano in modo che
 // un client vecchio non capirebbe.
-const protocolVersion = 3
+const protocolVersion = 5
 
 type Config struct {
 	Node           string // nome del nodo, entra nei gettoni: un bilanciatore può mandare chi torna al nodo giusto
