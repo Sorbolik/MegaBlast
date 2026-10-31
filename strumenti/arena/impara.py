@@ -302,10 +302,14 @@ def main():
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
                                                         "esami": stato["esami"]}, indent=1, ensure_ascii=False), encoding="utf-8")
         (radice / "evoluzione.md").write_text(rapporto(stato, args), encoding="utf-8")
-        # gli esempi vecchi non servono più
+        # il disco (sul PC di Sergio è poco): gli esempi vecchi e le popolazioni
+        # (pesi.lua e pesi.json, megabyte con le reti grandi) non servono più;
+        # le reti di ogni giro restano in rete_N.json (1,5 MB l'una)
         vecchio = radice / f"giro_{giro - args.memoria}"
-        for f in ("x.npy", "y.npy", "catene.npy", "m.npy"):
+        for f in ("x.npy", "y.npy", "catene.npy", "m.npy", "pesi.lua", "pesi.json"):
             (vecchio / f).unlink(missing_ok=True)
+        for f in ("pesi.lua", "pesi.json"):
+            (radice / f"esame_{giro}" / f).unlink(missing_ok=True)
 
 
 def rapporto(stato, args):
