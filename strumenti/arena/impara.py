@@ -51,6 +51,7 @@ da installare su Windows, nessun vantaggio per una rete così).
 """
 
 import argparse
+import copy
 import json
 import math
 import shutil
@@ -100,8 +101,12 @@ def avanti(rete, x):
 
 
 def impara(rete, x, y, args, rng):
-    """Adam sull'errore di Huber (gli esiti lontani non tirano troppo), sulla
-    rete (cambiata sul posto). Restituisce l'errore sugli esempi tenuti da parte."""
+    """AdamW sull'errore di Huber (gli esiti lontani non tirano troppo), sulla
+    rete (cambiata sul posto). Fino a --epoche passate sugli esempi, sulla
+    scheda video costano secondi: si tiene la rete migliore sugli esempi tenuti
+    da parte e ci si ferma quando da --pazienza passate non migliora (così
+    studiare di più non vuol dire imparare a memoria). Restituisce l'errore
+    sugli esempi tenuti da parte."""
     dev = dispositivo()
     n = len(x)
     idx = rng.permutation(n)
@@ -109,7 +114,14 @@ def impara(rete, x, y, args, rng):
     xs, ys = torch.from_numpy(x).float().to(dev), torch.from_numpy(y).float().to(dev)
     opt = torch.optim.AdamW(rete.parameters(), lr=args.lr, weight_decay=args.l2)
     perdita = torch.nn.HuberLoss(delta=1.0)
-    studio_t = torch.from_numpy(studio).to(dev)
+    studio_t, prova_t = torch.from_numpy(studio).to(dev), torch.from_numpy(prova).to(dev)
+
+    def errore():
+        with torch.no_grad():
+            return float(((rete(xs[prova_t])[:, 0] - ys[prova_t]) ** 2).mean())
+
+    migliore, stato, ferma = errore(), copy.deepcopy(rete.state_dict()), 0
+    passate = 0
     for _ in range(args.epoche):
         ordine = studio_t[torch.randperm(len(studio_t), device=dev)]
         for s in range(0, len(ordine), args.lotto):
@@ -117,9 +129,17 @@ def impara(rete, x, y, args, rng):
             opt.zero_grad()
             perdita(rete(xs[j])[:, 0], ys[j]).backward()
             opt.step()
-    e = avanti(rete, x[prova]) - y[prova]
+        passate += 1
+        e = errore()
+        if e < migliore:
+            migliore, stato, ferma = e, copy.deepcopy(rete.state_dict()), 0
+        else:
+            ferma += 1
+            if ferma >= args.pazienza:
+                break
+    rete.load_state_dict(stato)
     var = float(np.var(y[prova])) or 1.0
-    return {"errore": round(float(np.mean(e * e)), 4), "spiegata": round(1 - float(np.mean(e * e)) / var, 4)}
+    return {"errore": round(migliore, 4), "spiegata": round(1 - migliore / var, 4), "passate": passate}
 
 
 def matrici(rete):
@@ -218,7 +238,8 @@ def main():
     ap.add_argument("--esplora", type=float, default=0.15)
     ap.add_argument("--lega", help="migliori.json di evolvi.py: gli specialisti giocano come avversari fissi")
     ap.add_argument("--stretta", action="store_true", help="la rete prova solo le mosse del bot di oggi (niente ventaglio)")
-    ap.add_argument("--epoche", type=int, default=6)
+    ap.add_argument("--epoche", type=int, default=60, help="passate massime sugli esempi a giro")
+    ap.add_argument("--pazienza", type=int, default=5, help="ci si ferma dopo tante passate senza migliorare")
     ap.add_argument("--lotto", type=int, default=1024)
     ap.add_argument("--lr", type=float, default=0.001)
     ap.add_argument("--l2", type=float, default=1e-5)
