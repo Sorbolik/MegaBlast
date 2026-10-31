@@ -1,0 +1,13 @@
+rete [135, 256, 128, 1]: 67841 pesi
+3000 partite in 1676 s con 15 processi (6443 all'ora)
+480 partite in 234 s con 15 processi (7373 all'ora)
+giro 0: 63448 esempi nuovi, impara su 63448 (varianza spiegata 0.29); esame: la rete arriva più in alto del bot di oggi nel 23% delle partite
+3000 partite in 1573 s con 15 processi (6867 all'ora)
+480 partite in 249 s con 15 processi (6927 all'ora)
+giro 1: 62672 esempi nuovi, impara su 126120 (varianza spiegata 0.48); esame: la rete arriva più in alto del bot di oggi nel 34% delle partite
+3000 partite in 1672 s con 15 processi (6458 all'ora)
+480 partite in 253 s con 15 processi (6831 all'ora)
+giro 2: 61526 esempi nuovi, impara su 187646 (varianza spiegata 0.42); esame: la rete arriva più in alto del bot di oggi nel 35% delle partite
+3000 partite in 1542 s con 15 processi (7005 all'ora)
+480 partite in 214 s con 15 processi (8076 all'ora)
+giro 3: 61462 esempi nuovi, impara su 249108 (varianza spiegata 0.39); esame: la rete arriva più in alto del bot di oggi nel 29% delle partite
