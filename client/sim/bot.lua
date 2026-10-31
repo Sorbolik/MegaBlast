@@ -988,6 +988,17 @@ local function pensa(b, g)
 	-- o al compagno (punti sotto zero quando la migliore non lo è). esplora:
 	-- lo stesso per i bot che imparano (strumenti/arena/impara.py), che così
 	-- vedono anche mosse che non sceglierebbero
+	-- il bivio (arena.lua --impara con --confronta): le due finaliste migliori
+	-- si giocano tutte e due su due copie della partita fino al turno dopo, e
+	-- la rete impara quale rendeva di più (da una partita sola vedrebbe solo
+	-- la mossa scelta). b.forza: nella copia, alla decisione n si prende la j
+	b.decisioni = (b.decisioni or 0) + 1
+	local forza = b.forza
+	if forza and forza.n == b.decisioni then
+		b.scelta = mosse[forza.j] or mosse[1]
+		return
+	end
+	if b.bivio and mosse[2] and mosse[1].visto and mosse[2].visto then b.bivio(b, g, mosse) end
 	local sbaglia = b.pesi.esplora or liv.sbaglia
 	if sbaglia > 0 and #mosse > 1 and b.rng:next() < sbaglia then
 		local m = mosse[1 + math.floor(b.rng:next() * math.min(3, #mosse))]

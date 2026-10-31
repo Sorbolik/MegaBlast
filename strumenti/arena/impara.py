@@ -102,13 +102,16 @@ def avanti(rete, x):
         return np.concatenate(out) if out else np.zeros(0)
 
 
-def impara(rete, x, y, args, rng):
+def impara(rete, x, y, args, rng, coppie=None):
     """AdamW sull'errore di Huber (gli esiti lontani non tirano troppo), sulla
     rete (cambiata sul posto). Fino a --epoche passate sugli esempi, sulla
     scheda video costano secondi: si tiene la rete migliore sugli esempi tenuti
     da parte e ci si ferma quando da --pazienza passate non migliora (così
     studiare di più non vuol dire imparare a memoria). Restituisce l'errore
-    sugli esempi tenuti da parte."""
+    sugli esempi tenuti da parte.
+    coppie (a, b, d): due posizioni dello stesso bivio e quanto la prima rendeva
+    più della seconda (oltre al giudizio di base): a ogni lotto la rete impara
+    anche la differenza f(a) - f(b), che da una partita sola non vedrebbe."""
     dev = dispositivo()
     n = len(x)
     idx = rng.permutation(n)
@@ -122,6 +125,15 @@ def impara(rete, x, y, args, rng):
         with torch.no_grad():
             return float(((rete(xs[prova_t])[:, 0] - ys[prova_t]) ** 2).mean())
 
+    if coppie is not None and len(coppie[2]) >= 100:
+        ca, cb, cd = (torch.from_numpy(np.ascontiguousarray(v)).float().to(dev) for v in coppie)
+        nc = len(cd)
+        cidx = rng.permutation(nc)
+        cprova = torch.from_numpy(cidx[: nc // 10]).to(dev)
+        cstudio = torch.from_numpy(cidx[nc // 10:]).to(dev)
+    else:
+        coppie = None
+
     migliore, stato, ferma = errore(), copy.deepcopy(rete.state_dict()), 0
     passate = 0
     for _ in range(args.epoche):
@@ -129,7 +141,11 @@ def impara(rete, x, y, args, rng):
         for s in range(0, len(ordine), args.lotto):
             j = ordine[s:s + args.lotto]
             opt.zero_grad()
-            perdita(rete(xs[j])[:, 0], ys[j]).backward()
+            p = perdita(rete(xs[j])[:, 0], ys[j])
+            if coppie is not None:
+                c = cstudio[torch.randint(len(cstudio), (args.lotto // 4,), device=dev)]
+                p = p + args.peso_coppie * perdita(rete(ca[c])[:, 0] - rete(cb[c])[:, 0], cd[c])
+            p.backward()
             opt.step()
         passate += 1
         e = errore()
@@ -141,7 +157,16 @@ def impara(rete, x, y, args, rng):
                 break
     rete.load_state_dict(stato)
     var = float(np.var(y[prova])) or 1.0
-    return {"errore": round(migliore, 4), "spiegata": round(1 - migliore / var, 4), "passate": passate}
+    esito = {"errore": round(migliore, 4), "spiegata": round(1 - migliore / var, 4), "passate": passate}
+    if coppie is not None:
+        # sulle coppie tenute da parte: quante volte la rete dice giusto quale
+        # delle due rendeva di più (fra quelle dove una rendeva di più)
+        with torch.no_grad():
+            dd = rete(ca[cprova])[:, 0] - rete(cb[cprova])[:, 0]
+            vero = cd[cprova]
+            conta = vero != 0
+            esito["coppie"] = {"quante": nc, "giuste": round(float(((dd > 0) == (vero > 0))[conta].float().mean()), 4)}
+    return esito
 
 
 def matrici(rete):
@@ -198,9 +223,9 @@ def leggi(file):
     troppi per la RAM del PC di Sergio.
     Restituisce le partite (senza esempi), x, y (esito vero), la catena di ogni
     robot (partita e robot) e il margine della squadra a inizio turno (per il
-    ritorno a passi), e per la guida la descrizione delle mosse e quanto hanno
-    reso (in centinaia di punti)."""
-    partite, xs, ys, catene, ms, gd, gv = [], [], [], [], [], [], []
+    ritorno a passi), per la guida la descrizione delle mosse e quanto hanno
+    reso (in centinaia di punti), e le coppie dei bivi (--confronta)."""
+    partite, xs, ys, catene, ms, gd, gv, ca, cb, cd = [], [], [], [], [], [], [], [], [], []
     with open(file, encoding="utf-8") as f:
         for riga in f:
             if not riga.strip():
@@ -217,6 +242,11 @@ def leggi(file):
             if gu:
                 gd.append(np.array([e["d"] for e in gu], dtype=np.float32).reshape(-1, GUIDA[0]))
                 gv.append(np.array([e["v"] for e in gu], dtype=np.float64))
+            co = m.pop("coppie", None) or []
+            if co:
+                ca.append(np.array([e["a"] for e in co], dtype=np.float32).reshape(-1, CARATTERISTICHE))
+                cb.append(np.array([e["b"] for e in co], dtype=np.float32).reshape(-1, CARATTERISTICHE))
+                cd.append(np.array([e["d"] for e in co], dtype=np.float64))
             partite.append(m)
 
     def tutti(lista, forma, tipo):
@@ -224,7 +254,9 @@ def leggi(file):
 
     return (partite, tutti(xs, (0, CARATTERISTICHE), np.float32), tutti(ys, 0, np.float64),
             tutti(catene, 0, np.int64), tutti(ms, 0, np.float64),
-            tutti(gd, (0, GUIDA[0]), np.float32), tutti(gv, 0, np.float64))
+            tutti(gd, (0, GUIDA[0]), np.float32), tutti(gv, 0, np.float64),
+            tutti(ca, (0, CARATTERISTICHE), np.float32), tutti(cb, (0, CARATTERISTICHE), np.float32),
+            tutti(cd, 0, np.float64))
 
 
 def base(x):
@@ -266,6 +298,8 @@ def main():
     ap.add_argument("--epoche", type=int, default=60, help="passate massime sugli esempi a giro")
     ap.add_argument("--pazienza", type=int, default=5, help="ci si ferma dopo tante passate senza migliorare")
     ap.add_argument("--lotto", type=int, default=1024)
+    ap.add_argument("--confronta", type=int, default=2, help="bivi a partita giocati in due modi (0: niente)")
+    ap.add_argument("--peso-coppie", type=float, default=1.0)
     ap.add_argument("--lr", type=float, default=0.001)
     ap.add_argument("--l2", type=float, default=1e-5)
     ap.add_argument("--esame-partite", type=int, default=480)
@@ -321,16 +355,18 @@ def main():
         ns = argparse.Namespace(partite=args.partite, da=1 + giro * 1000000 + args.seme * 10 ** 9,
                                 processi=args.processi or arena.os.cpu_count() or 1, modo=args.modo,
                                 livello=args.livello, mappa=args.mappa, punteggio=args.punteggio,
-                                pesi=str(file_pesi), ritocchi=None, set=None, assegna=None, impara="1", luajit=None)
-        partite, x, y, catene, ms, gx, gy = leggi(arena.gioca(ns))
+                                pesi=str(file_pesi), ritocchi=None, set=None, assegna=None, impara="1", luajit=None,
+                                confronta=args.confronta or None)
+        partite, x, y, catene, ms, gx, gy, ca, cb, cd = leggi(arena.gioca(ns))
         catene += giro * 10 ** 9  # catene diverse fra i giri
-        for nome, a in (("x", x), ("y", y), ("catene", catene), ("m", ms), ("gx", gx), ("gy", gy)):
+        for nome, a in (("x", x), ("y", y), ("catene", catene), ("m", ms), ("gx", gx), ("gy", gy),
+                        ("ca", ca), ("cb", cb), ("cd", cd)):
             np.save(cartella / f"{nome}.npy", a)
         b = evolvi.misura(partite, len(individui))
         # la RAM sul PC di Sergio è poca: le partite lette e gli esempi del giro
         # (già salvati) non servono più mentre si studia
         n_partite, n_esempi = len(partite), len(y)
-        del partite, x, y, catene, ms, gx, gy
+        del partite, x, y, catene, ms, gx, gy, ca, cb, cd
         gc.collect()
         # come ha giocato la rete di adesso (tutte le sue copie insieme) e il bot di oggi
         tot = {"alto": 0.0, "volte": 0}
@@ -356,7 +392,14 @@ def main():
         Xn /= sigma
         # al giro 0 la rete è a caso: impara dall'esito vero
         G = ritorni(rete, Xn, B, Y, CAT, M, 1 if giro == 0 else args.lam)
-        studio = impara(rete, Xn, (G - B).astype(np.float32), args, rng)
+        # le coppie dei bivi: quanto la prima rendeva di più, oltre al giudizio di base
+        CA, CB, CD = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy") for k in giri])
+                      for nome in ("ca", "cb", "cd"))
+        CD = (CD - (base(CA) - base(CB))).astype(np.float32)
+        CA = ((CA - mu) / sigma).astype(np.float32)
+        CB = ((CB - mu) / sigma).astype(np.float32)
+        studio = impara(rete, Xn, (G - B).astype(np.float32), args, rng, (CA, CB, CD))
+        del CA, CB, CD
         salva_rete(radice / f"rete_{giro}.json", rete, mu, sigma)
         # la guida impara quanto rende una mossa dalla sua descrizione (sulla scheda video)
         n_studiati = len(X)
@@ -389,7 +432,8 @@ def main():
         stato["storia"].append(voce)
         stato["giro"] = giro
         print(f"giro {giro}: {n_esempi} esempi nuovi, impara su {n_studiati} (varianza spiegata {studio['spiegata']:.2f}); "
-              f"esame: la rete arriva più in alto del bot di oggi nel {100 * e['vince']:.0f}% delle partite")
+              f"esame: la rete arriva più in alto del bot di oggi nel {100 * e['vince']:.0f}% delle partite"
+              + (f"; bivi: {studio['coppie']['quante']}, giusti {100 * studio['coppie']['giuste']:.0f}%" if "coppie" in studio else ""))
 
         file_stato.write_text(json.dumps(stato), encoding="utf-8")
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
@@ -399,7 +443,8 @@ def main():
         # (pesi.lua e pesi.json, megabyte con le reti grandi) non servono più;
         # le reti di ogni giro restano in rete_N.json (1,5 MB l'una)
         vecchio = radice / f"giro_{giro - args.memoria}"
-        for f in ("x.npy", "y.npy", "catene.npy", "m.npy", "gx.npy", "gy.npy", "pesi.lua", "pesi.json"):
+        for f in ("x.npy", "y.npy", "catene.npy", "m.npy", "gx.npy", "gy.npy", "ca.npy", "cb.npy", "cd.npy",
+                  "pesi.lua", "pesi.json"):
             (vecchio / f).unlink(missing_ok=True)
         for f in ("pesi.lua", "pesi.json"):
             (radice / f"esame_{giro}" / f).unlink(missing_ok=True)

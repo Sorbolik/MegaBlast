@@ -44,10 +44,10 @@ def gioca(args):
         blocchi.append((da, q))
         da += q
     extra = []
-    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna", "impara"):
+    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna", "impara", "confronta"):
         v = getattr(args, chiave, None)
         if v:
-            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else v]
+            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else str(v)]
     t0 = time.time()
     processi = []
     for k, (da, q) in enumerate(blocchi):
