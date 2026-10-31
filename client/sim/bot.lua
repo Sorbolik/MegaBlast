@@ -418,9 +418,19 @@ local function valore(b, g, w, fase)
 	end
 	if b.pesi.rete then
 		fase = fase or 1
-		-- rete_attacco (0..1): quanto conta la rete negli attacchi, per misurarla
-		local quanto = fase == 1 and (b.pesi.rete_attacco or 1) or 1
-		if quanto > 0 then s = s + quanto * rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR, fase)) * 100 end
+		-- negli attacchi la rete giudica solo le finaliste (b.finale), provate
+		-- fino in fondo: fra centinaia di colpi provati in fretta vincerebbe
+		-- quello su cui la rete sbaglia di più in alto (31 ottobre: la rete su
+		-- tutti gli attacchi 35% contro il bot di oggi, solo sul riparo 54%).
+		-- rete_attacco (0..1): quanto conta lì, per misurarla
+		local quanto = fase ~= 1 and 1 or b.finale and (b.pesi.rete_attacco or 1) or 0
+		local registra = b.finale and b.registro
+		if quanto > 0 or registra then
+			local x = caratteristiche(b, g, w, CAR, fase)
+			if quanto > 0 then s = s + quanto * rete.valuta(b.pesi.rete, x) * 100 end
+			-- per impara.py: quello che la rete ha visto di questa finalista
+			if registra then b.visto = copia(x) end
+		end
 	end
 	return s
 end
@@ -874,7 +884,7 @@ local function pensa(b, g)
 			if i % 50 == 0 then lavora(b, 20) end
 		end
 		table.sort(proposte, prima)
-		local k = b.pesi.guida_k or 60
+		local k = b.pesi.guida_k or 20
 		for i, m in ipairs(proposte) do
 			-- le prime k, e una su 40 delle altre (a turno, senza caso) perché la
 			-- guida veda anche come rendono le mosse che scarta. Nel diario va
@@ -911,7 +921,7 @@ local function pensa(b, g)
 				local mx, my = math.cos(a) * game.MUZZLE, math.sin(a) * game.MUZZLE
 				local _, _, hit = g:ray(cx + mx, cy + my, a, C.HOOK.range, me)
 				if hit == o then
-					mosse[#mosse + 1] = { posto = posti[1], arma = "hook", angolo = a, potenza = 1,
+					mosse[#mosse + 1] = { posto = posti[1], arma = "hook", angolo = a, potenza = 1, chi = o.id,
 						punti = prova_rampino(b, g, posti[1], a, o.id, lista), k = #mosse + 1 }
 				end
 			end
@@ -921,17 +931,29 @@ local function pensa(b, g)
 	-- le migliori si provano fino in fondo: chi cade, chi muore, dove finisce chi spara
 	table.sort(mosse, prima)
 	local finaliste = math.min(b.pesi.larga and 2 * FINALISTE or FINALISTE, #mosse)
+	b.finale = true
 	for i = 1, finaliste do
 		local m = mosse[i]
+		b.visto = nil
 		if m.arma ~= "hook" then
 			m.punti = gusto(b, m.arma, prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto")) - (m.posto.n or 0) * b.pesi.strada
+		elseif b.pesi.rete then
+			-- anche il Rampino col giudizio della rete, come le altre finaliste
+			m.punti = prova_rampino(b, g, m.posto, m.angolo, m.chi, lista)
 		end
+		m.visto = b.visto
 	end
-	-- col ventaglio si sceglie solo fra le finaliste: fra migliaia di colpi
+	b.finale = false
+	-- col ventaglio (e con la rete, che giudica solo le finaliste) si sceglie
+	-- solo fra le finaliste: fra migliaia di colpi
 	-- provati in fretta qualcuno sembra sempre meglio di quanto è (31 ottobre:
 	-- senza questo il ventaglio da solo vinceva il 19% contro il bot di oggi)
-	if b.pesi.larga then
-		for i = #mosse, finaliste + 1, -1 do mosse[i] = nil end
+	if b.pesi.larga or b.pesi.rete then
+		-- una tabella nuova: in gopher-lua (il server) i buchi in fondo lasciano
+		-- # più lungo e table.sort troverebbe dei nil
+		local tenute = {}
+		for i = 1, finaliste do tenute[i] = mosse[i] end
+		mosse = tenute
 	end
 	table.sort(mosse, prima)
 	b.scelta = mosse[1]
@@ -991,6 +1013,9 @@ local function pensa(b, g)
 	if liv.manca and m and not game.TOOLS[m.arma] and b.attacchi % 2 == 0 then
 		m.angolo = angolo_che_manca(b, g, m)
 	end
+	-- b.registro (arena.lua --impara): la posizione dopo l'attacco scelto come
+	-- l'ha giudicata la rete; l'arena ci aggiunge com'è andata davvero
+	if b.registro and m and m.visto then b.registro[#b.registro + 1] = m.visto end
 end
 
 -- Il riparo: finiti gli attacchi, il tempo che resta si usa per mettersi al

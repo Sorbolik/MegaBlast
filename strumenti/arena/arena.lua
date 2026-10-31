@@ -193,15 +193,24 @@ local function partita(k)
 		end
 		return mio - primo
 	end
-	-- a metà turno, finiti gli attacchi del bot (va a cercare riparo): la
-	-- posizione con la fase 1, quella in cui la rete giudica gli attacchi
-	local function dopo_attacchi()
-		local b = inizio and not inizio.fatto and bots[inizio.chi]
-		if b and b.riparato and b.turno == g.turn_no then
-			inizio.fatto = true
-			local x = bot.caratteristiche({ id = inizio.chi }, inizio.ref, g, {}, 1)
-			for j = 1, #x do x[j] = math.floor(x[j] * 10000 + 0.5) / 10000 end
-			esempi[#esempi + 1] = { c = inizio.chi, x = x, m = inizio.m }
+	-- a ogni attacco scelto da una rete, la posizione dopo l'attacco come
+	-- l'ha giudicata (fase 1, b.registro): così la rete impara a giudicare gli
+	-- attacchi da quello che vede quando li sceglie
+	if esempi then
+		for _, b in pairs(bots) do
+			if b.pesi.rete then b.registro = {} end
+		end
+	end
+	local function attacchi()
+		for id = 1, #g.robots do
+			local b = bots[id]
+			if b and b.registro and #b.registro > 0 then
+				for _, x in ipairs(b.registro) do
+					for j = 1, #x do x[j] = math.floor(x[j] * 10000 + 0.5) / 10000 end
+					esempi[#esempi + 1] = { c = id, x = x, m = margine(g.robots[id].team) }
+				end
+				b.registro = {}
+			end
 		end
 	end
 	local function fine_turno()
@@ -222,7 +231,7 @@ local function partita(k)
 	while g.phase ~= "over" do
 		g:step(replay.input(r, g, bots))
 		replay.dopo(r, g)
-		if esempi then dopo_attacchi() end
+		if esempi then attacchi() end
 		for _, e in ipairs(g:pop_events()) do
 			local w = USO[e.type] or (e.type == "place" and e.kind) or nil
 			if w and e.robot then

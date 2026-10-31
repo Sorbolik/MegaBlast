@@ -262,7 +262,7 @@ def main():
     ap.add_argument("--esplora", type=float, default=0.15)
     ap.add_argument("--lega", help="migliori.json di evolvi.py: gli specialisti giocano come avversari fissi")
     ap.add_argument("--stretta", action="store_true", help="la rete prova solo le mosse del bot di oggi (niente ventaglio)")
-    ap.add_argument("--guida-k", type=int, default=60, help="con la guida, quante mosse prova per turno (0: niente guida)")
+    ap.add_argument("--guida-k", type=int, default=20, help="con la guida, quante mosse prova per turno (0: niente guida)")
     ap.add_argument("--epoche", type=int, default=60, help="passate massime sugli esempi a giro")
     ap.add_argument("--pazienza", type=int, default=5, help="ci si ferma dopo tante passate senza migliorare")
     ap.add_argument("--lotto", type=int, default=1024)
