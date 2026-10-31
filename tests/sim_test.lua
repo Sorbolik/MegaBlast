@@ -1506,7 +1506,14 @@ do
 		"morto da solo senza danni: solo la penalità")
 
 	-- colpire chi è primo vale di più
+	-- (la Corona c'è solo dopo SCORE.crown_rounds giri interi)
+	local g0 = game.new(3, "forgia", { players = config.MODES.ffa })
+	g0.robots[3].points = 100
+	check(config.SCORE.crown_rounds >= 1 and g0:leader() == nil, "nel primo giro nessuno ha la Corona")
+	for _ = 1, 4 do g0:end_turn() end
+	check(g0.round == 2 and g0:leader() == g0.robots[3], "dal secondo giro la Corona va al primo")
 	local gl = game.new(3, "forgia", { players = config.MODES.ffa })
+	gl.round = config.SCORE.crown_rounds + 1
 	gl.robots[3].points = 100
 	gl:hurt(gl.robots[3], 10, gl.robots[1])
 	gl:hurt(gl.robots[4], 10, gl.robots[2])
@@ -1514,6 +1521,7 @@ do
 
 	-- Corona: chi abbatte il primo in classifica prende crown in più
 	local gc = game.new(3, "forgia", { players = config.MODES.ffa })
+	gc.round = config.SCORE.crown_rounds + 1
 	gc.robots[3].points = 100
 	gc:hurt(gc.robots[3], gc.robots[3].hp, gc.robots[1])
 	local hp3 = gc.robots[3].max_hp

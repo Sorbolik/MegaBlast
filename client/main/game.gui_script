@@ -40,7 +40,7 @@ local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
-local PROTOCOL = 4
+local PROTOCOL = 5
 -- Se la connessione cade in partita riproviamo per un po' (il server tiene il
 -- posto per 20 secondi)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
@@ -1051,7 +1051,7 @@ end
 local function apply_state(self, s)
 	local g = self.g
 	g.phase, g.current, g.timer = s.phase, s.cur, s.timer
-	g.window, g.teleports, g.final_round = s.win or 0, s.tp or 0, s.fr or false
+	g.window, g.teleports, g.final_round, g.round = s.win or 0, s.tp or 0, s.fr or false, s.gr or 1
 	g.ahead, g.ahead_base = s.av or 0, s.ab or 0
 	g.teleports_earned = s.te or 0
 	local u = s.u or 0

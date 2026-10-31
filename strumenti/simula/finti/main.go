@@ -48,7 +48,7 @@ func gioca(url, modo string) error {
 	defer c.CloseNow()
 	c.SetReadLimit(1 << 20)
 	manda := func(s string) { c.Write(ctx, websocket.MessageText, []byte(s)) }
-	manda(fmt.Sprintf(`{"t":"hello","v":4,"mode":%q}`, modo))
+	manda(fmt.Sprintf(`{"t":"hello","v":5,"mode":%q}`, modo))
 	scelto, sparato, you := false, -1, 0
 	for {
 		_, data, err := c.Read(ctx)
