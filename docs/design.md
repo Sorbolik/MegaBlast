@@ -142,7 +142,7 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 
 | Messaggio | Direzione | Contenuto |
 |---|---|---|
-| `{"t":"hello","v":7,"mode":"2v2","vetrina":{…}}` | C → S | primo messaggio: versione del protocollo e coda (`2v2`, `1v1` o la coda di un evento, [server.md](server.md#eventi)) e cartellino (livello e badge) (o `"tok"` per tornare in partita) |
+| `{"t":"hello","v":8,"mode":"2v2","vetrina":{…}}` | C → S | primo messaggio: versione del protocollo e coda (`2v2`, `1v1` o la coda di un evento, [server.md](server.md#eventi)) e cartellino (livello e badge) (o `"tok"` per tornare in partita) |
 | `{"t":"error","e":"version"}` | S → C | errore: `version` (aggiorna il gioco), `expired` (partita finita), `draining` (server in spegnimento) |
 | `{"t":"wait"}` | S → C | sei in attesa di un avversario |
 | `{"t":"draft","offer":[…],"offer2":[…],"offer3":[…],"p":[…],"p2":[…],"p3":[…],"pr":[…],"sw":[…],"you":1,"tok":…,"players":[…],"left":900}` | S → C | scelta delle armi d'inizio partita: primarie, secondarie e attrezzi, scelte di tutti, proposte di scambio (vedi [server.md](server.md)) |

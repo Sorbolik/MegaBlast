@@ -191,7 +191,7 @@ C.MAX_PLACED = 8
 -- Scelta d'inizio partita (sim/draft.lua): due ventagli uguali per tutti, uno
 -- di DRAFT_OFFER primarie delle casse e uno delle secondarie (game.DRAFT_SECONDARIES).
 -- Ognuno prende una primaria (ne ha DRAFT_SHOTS colpi) e una secondaria
--- (illimitata), prima l'una e poi l'altra; le scelte degli altri non si vedono
+-- (SECONDARY_SHOTS.draft colpi), prima l'una e poi l'altra; le scelte degli altri non si vedono
 -- e i doppioni vanno bene (Sergio, 30 ottobre 2026). Allo scadere di
 -- DRAFT_SECONDS chi non ha scelto prende la prima arma di ogni ventaglio.
 -- Sergio (24 ottobre 2026): 2 colpi, con 3 turni a testa uno solo si consuma
@@ -202,6 +202,10 @@ C.DRAFT_SECONDS = 15
 C.SCHIERAMENTO_SECONDS = 5
 C.DRAFT_OFFER = 3
 C.DRAFT_SHOTS = 2
+-- Colpi della secondaria scelta (Sergio, 31 ottobre 2026: non più illimitata):
+-- draft all'inizio; ogni colpo di Lama su un nemico ne ridà uno, fino a max.
+-- La Lama resta illimitata.
+C.SECONDARY_SHOTS = { draft = 2, max = 2 }
 
 -- Effetti di stato (strategia 9): durano fino alla fine del prossimo turno di
 -- chi li subisce (stats.status_turns di chi colpisce) e si vedono sul robot.

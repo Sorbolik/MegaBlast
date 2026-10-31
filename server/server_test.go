@@ -341,7 +341,7 @@ func TestResumeUnknownToken(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":7,"tok":"n1.inventato"}`)
+	c.send(`{"t":"hello","v":8,"tok":"n1.inventato"}`)
 	if m := c.waitFor(`"error"`); m["e"] != "expired" || !c.closed() {
 		t.Fatalf("risposta inattesa: %v", m)
 	}
@@ -352,7 +352,7 @@ func TestOnlineMatch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	hello := `{"t":"hello","v":7,"mode":"1v1"}`
+	hello := `{"t":"hello","v":8,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -401,6 +401,9 @@ func TestOnlineMatch(t *testing.T) {
 	key := map[string]string{"grenade": "ag", "shards": "as", "punch": "ap", "sniper": "ac"}[w]
 	if _, ok := first["c"].([]any); !ok || r0[key] != 2.0 || colpi(r0) != 2 || colpi(r1) != 2 {
 		t.Fatalf("stato senza casse o colpi scelti: %v", first)
+	}
+	if r0["ss"] != 2.0 || r1["ss"] != 2.0 {
+		t.Fatalf("colpi della secondaria (config.SECONDARY_SHOTS.draft, 2) sbagliati: %v %v", r0["ss"], r1["ss"])
 	}
 	if r0["sw"] != w2 || r1["sw"] != d["offer2"].([]any)[0].(string) {
 		t.Fatalf("secondarie scelte sbagliate: %v %v", r0["sw"], r1["sw"])
@@ -459,7 +462,7 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatalf("away inatteso: %v", m)
 	}
 	a = dial(t, ctx, url)
-	a.send(fmt.Sprintf(`{"t":"hello","v":7,"tok":%q}`, sa["tok"]))
+	a.send(fmt.Sprintf(`{"t":"hello","v":8,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("ripresa inattesa: %v", m)
 	}
@@ -486,7 +489,7 @@ func TestTeamDraft(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":7,"mode":"2v2"}`)
+		c[i].send(`{"t":"hello","v":8,"mode":"2v2"}`)
 	}
 	you := map[float64]*testClient{}
 	var offer, offer2 []any
@@ -536,7 +539,7 @@ func TestLeave(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":7,"mode":"ffa"}`)
+		c[i].send(`{"t":"hello","v":8,"mode":"ffa"}`)
 	}
 	you := map[float64]*testClient{}
 	for _, x := range c {
@@ -626,12 +629,12 @@ func TestVetrine(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":7,"mode":"1v1","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2},` +
+	a.send(`{"t":"hello","v":8,"mode":"1v1","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2},` +
 		`{"id":"<script>","grado":1},{"id":"danno","grado":9},{"id":"globi","grado":4},{"id":"casse","grado":1},{"id":"vinte","grado":1}]}}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
 	// una tabella Lua vuota arriva come oggetto: il saluto vale lo stesso
-	b.send(`{"t":"hello","v":7,"mode":"1v1","vetrina":{"liv":100000,"bdg":{}}}`)
+	b.send(`{"t":"hello","v":8,"mode":"1v1","vetrina":{"liv":100000,"bdg":{}}}`)
 	vetrine := func(m map[string]any) string {
 		j, _ := json.Marshal(m["vetrine"])
 		return string(j)
