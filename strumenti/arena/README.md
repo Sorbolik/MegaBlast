@@ -89,8 +89,9 @@ luajit strumenti/arena/collaudo.lua 10 il_fabbro    # una missione sola
 
 Un bot gioca al posto tuo ogni missione dei gironi (`client/sim/campagna.lua`)
 a ogni livello e scrive `simulazione/arena/collaudo.md`: quante ne vince, in
-quanti turni, quante stelle. La seconda stella va alla mediana dei turni del
-bot normale; il girone deve salire di difficoltà. Con `collaudo.senza` nella
+quanti turni, con quanti punti di vantaggio, quante stelle. La seconda stella
+va alla mediana dei punti di vantaggio del bot normale (31 ott: non più dei
+turni); il girone deve salire di difficoltà. Con `collaudo.senza` nella
 missione rifà la prova col bot senza la meccanica richiesta (deve vincere lo
 0%), con `collaudo.carattere` e `collaudo.piano` il bot gioca con quel
 carattere (`bot.CARATTERI`) o quel piano. Le lezioni no: le risolvono i copioni

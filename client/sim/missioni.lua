@@ -23,7 +23,7 @@
 --   local testo = missioni.obiettivo(r)             -- l'obiettivo che resta, sempre in vista (o nil)
 --   missioni.stelle(r)                              -- { true, false, true }: ogni stella col suo criterio
 --   missioni.quante(stelle)                         -- quante sono accese
---   missioni.criteri(l)                             -- cosa serve per ogni stella: { "FATTA", "IN 2 TURNI", ... }
+--   missioni.criteri(l)                             -- cosa serve per ogni stella: { "FATTA", "CON 60 PUNTI DI VANTAGGIO", ... }
 --   missioni.dopo(id)                               -- la missione che viene dopo nel capitolo (nil dopo l'ultima)
 --
 -- Una missione (campi, tutti dati salvo dove si dice):
@@ -40,6 +40,8 @@
 --     attacco scambiato con un teletrasporto): il
 --     resto non c'è nemmeno. L'interfaccia si scopre a poco a poco (Sergio, 29 ott):
 --     senza vedi si vede tutto, con vedi il cronometro e i punti solo se ci sono.
+--     Senza "punti" i punti non ci sono proprio (Sergio, 31 ott: distraggono
+--     dall'esercizio): nessuno ne fa, niente Corona.
 --     Un'arma raccolta da una cassa si vede da lì in poi
 --   senza_armi: il giocatore parte senza armi, finché non trova il Lanciarune in una cassa
 --   casse = { { dopo = 2, arma = "missile", x = 1250 }, ... }: fatto il passo dopo
@@ -67,9 +69,10 @@
 --   obiettivo: i passi (sotto), in ordine se non c'è in_ordine = false
 --   la missione fallisce se la partita finisce prima
 --   turni: oltre questi turni del giocatore si ricomincia
---   stelle = { 3, 2 } (turni per la seconda e la terza) oppure
---     { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } } oppure
---     { bonus = { ... }, bonus2 = { ... } } (due bonus, senza turni: le partite vere)
+--   stelle = { punti = 60, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } }
+--     (la seconda con almeno quei punti di vantaggio sugli avversari alla fine:
+--     i gironi, dove i punti contano; Sergio, 31 ott: non più i turni) oppure
+--     { bonus = { ... }, bonus2 = { ... } } (due bonus: le lezioni)
 --   collaudo = { carattere, piano, senza }: come la prova strumenti/arena/collaudo.lua
 --   righe = { { testo, quando, fino, su = "bot", evidenzia, ferma, subito } }: quando
 --     e fino sono { evento = "crate_pick" }, { passo = 2 } (fatto il passo 2),
@@ -117,6 +120,8 @@ local MANCATO_TICK = 45
 local SCHEDA_DOPO = 24
 -- da quanto sopra il terreno cadono le casse delle missioni
 local CASSA_SOPRA = 280
+-- la terza stella della Prima partita: vinta con almeno tanti punti di vantaggio
+local GUIDATA_PUNTI = 100
 local RITENTA = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
 
 -- Quale arma ha appena usato chi: l'evento dell'attacco -> nome dell'arma
@@ -267,6 +272,8 @@ function M.partita(r, seed, picks, aiuto)
 	if not l.guidata and not opts.crate_every then opts.crate_every = 1000 end
 	-- nelle lezioni niente cerchi di cura che spuntano a caso (Sergio, 29 ott)
 	if l.aspetta then opts.heals = false end
+	-- e niente punti dove la lezione non ne parla (Sergio, 31 ott)
+	if not M.vede(r, "punti") then opts.score = false end
 	return seed or 1, l.mappa, opts
 end
 
@@ -309,6 +316,17 @@ end
 
 local function nemici(g, a, b)
 	return g.robots[a].team ~= g.robots[b].team
+end
+
+-- I punti della squadra del giocatore meno quelli della squadra avversaria più avanti
+local function distacco(g)
+	local squadre = {}
+	for _, rb in ipairs(g.robots) do squadre[rb.team] = (squadre[rb.team] or 0) + rb.points end
+	local mia, altri = g.robots[GIOCATORE].team, nil
+	for t = 1, #g.robots do
+		if t ~= mia and squadre[t] and (not altri or squadre[t] > altri) then altri = squadre[t] end
+	end
+	return squadre[mia] - (altri or 0)
 end
 
 local function bersaglio(g, voluto, robot)
@@ -542,12 +560,8 @@ function M.evento(r, g, e, bots)
 		end
 	elseif e.type == "over" then
 		st.finita, st.vinta = true, e.winner == g.robots[GIOCATORE].team
-		local me, altri = g.robots[GIOCATORE].points, 0
-		for i, rb in ipairs(g.robots) do
-			if i ~= GIOCATORE then altri = math.max(altri, rb.points) end
-		end
-		st.distacco = me - altri
 	end
+	if e.type == "points" or e.type == "over" then st.distacco = distacco(g) end
 	local prima = avanti(st)
 	controlla(r, g, e)
 	-- lezioni e bersagli fermi: abbattuto da te, se non serve più resta giù
@@ -811,17 +825,22 @@ function M.obiettivo(r)
 	return n > 1 and (i .. "/" .. n .. "  " .. p.testo) or p.testo
 end
 
-local function turni(n)
-	return "IN " .. n .. (n == 1 and " TURNO" or " TURNI")
+local function vantaggio(n)
+	return "CON " .. n .. " PUNTI DI VANTAGGIO"
 end
 
 -- Cosa serve per ogni stella
 function M.criteri(l)
-	if l.guidata then return { "FINITA", "VINTA", "CON 100 PUNTI DI VANTAGGIO" } end
+	if l.guidata then return { "FINITA", "VINTA", vantaggio(GUIDATA_PUNTI) } end
 	local s = l.stelle
 	if s.bonus2 then return { "FATTA", s.bonus.testo, s.bonus2.testo } end
-	if s.bonus then return { "FATTA", turni(s.turni), s.bonus.testo } end
-	return { "FATTA", turni(s[1]), turni(s[2]) }
+	return { "FATTA", vantaggio(s.punti), s.bonus.testo }
+end
+
+-- I punti di vantaggio a fine missione (nil dove i punti non ci sono)
+function M.vantaggio(r)
+	local l = r.l
+	if l.guidata or (l.stelle and l.stelle.punti) then return math.floor((r.st.distacco or 0) + 0.5) end
 end
 
 local function bonus(b, st)
@@ -830,21 +849,19 @@ local function bonus(b, st)
 	return n >= b.almeno
 end
 
--- Stelle: una per averla fatta, poi i turni e il bonus (o due soglie di
--- turni). Nella partita guidata: finita, vinta, vinta con 100 punti di distacco.
+-- Stelle: una per averla fatta, poi i punti di vantaggio e il bonus (o due
+-- bonus). Ognuna vale da sola: si può avere la terza senza la seconda. Nella
+-- partita guidata: finita, vinta, vinta con 100 punti di vantaggio.
 function M.stelle(r)
 	if r.esito ~= "fatta" then return { false, false, false } end
 	local l, st = r.l, r.st
+	local d = st.distacco or 0
 	if l.guidata then
-		return { true, st.vinta == true, st.vinta == true and st.distacco >= 100 }
+		return { true, st.vinta == true, st.vinta == true and d >= GUIDATA_PUNTI }
 	end
 	local s = l.stelle
 	if s.bonus2 then return { true, bonus(s.bonus, st), bonus(s.bonus2, st) } end
-	if s.bonus then
-		-- il bonus vale da solo: si può avere la terza senza la seconda
-		return { true, st.turni <= s.turni, bonus(s.bonus, st) }
-	end
-	return { true, st.turni <= s[1], st.turni <= s[2] }
+	return { true, d >= s.punti, bonus(s.bonus, st) }
 end
 
 function M.quante(stelle)

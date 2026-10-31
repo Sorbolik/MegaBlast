@@ -6,10 +6,10 @@
 --
 --   local fine_livello = require "menu.fine_livello"
 --   local f = fine_livello.new({ titolo = "Il Rampino", stelle = { true, true, false },
---     criteri = { "FATTA", "IN 2 TURNI", "IN 1 TURNO" }, turni = 2, record = 3, avanti = true }, suono)
+--     criteri = { "FATTA", "CON 100 PUNTI DI VANTAGGIO", "SENZA MORIRE" }, vantaggio = 85, record = 3, avanti = true }, suono)
 --     stelle: quali ha preso (ognuna col suo criterio); criteri: cosa serve per
---     ognuna (missioni.criteri); turni: quanti ne sono serviti (nil nelle lezioni
---     senza tempo: lì i turni non ci sono); record: quante
+--     ognuna (missioni.criteri); vantaggio: i punti di vantaggio fatti (nil
+--     dove i punti non contano: le lezioni); record: quante
 --     stelle aveva già la missione;
 --     avanti: c'è un livello dopo; suono(v): il tic, v = velocità (tono)
 --   fine_livello.update(f, dt)
@@ -26,7 +26,6 @@ M.LATO, M.PASSO, M.Y = 116, 190, 400
 M.RITMO, M.PRIMA, M.COLPO = 0.3, 0.25, 0.18
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
-local function turni(n) return n .. (n == 1 and " turno" or " turni") end
 
 function M.new(o, suono)
 	local f = { bottoni = {}, t = 0, suono = suono, accese = 0, prese = {} }
@@ -55,7 +54,7 @@ function M.new(o, suono)
 		end
 		ui.testo(criteri[i], x, M.Y - 100, 0.75, o.stelle[i] and c.TESTO or c.SPENTO, f.radice)
 	end
-	local sotto = o.turni and "Fatta in " .. turni(o.turni) or ""
+	local sotto = o.vantaggio and "Punti di vantaggio: " .. o.vantaggio or ""
 	if o.record and o.record > n then
 		local record = "il tuo record: " .. o.record .. (o.record == 1 and " stella" or " stelle")
 		sotto = sotto == "" and record or sotto .. "  -  " .. record

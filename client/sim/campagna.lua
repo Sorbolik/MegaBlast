@@ -9,7 +9,8 @@
 -- Coordinate del mondo (1920 x 1080, y in alto). Le arene sono d'acciaio, così
 -- i crateri non rompono il rompicapo. I numeri dei gironi (vita, turni, stelle)
 -- li controlla il collaudo coi bot (strumenti/arena/collaudo.lua): la seconda
--- stella è alla mediana dei turni del bot normale che gioca al posto tuo.
+-- stella è alla mediana dei punti di vantaggio del bot normale che gioca al
+-- posto tuo (Sergio, 31 ott: nei gironi i punti contano, i turni no).
 -- Gli avversari dei gironi sono gradi (sim/bot.lua M.GRADI, da 1 a 10): la
 -- Forgia sale dal 2 al 5 e il compagno della Battaglia è un 7 (Sergio, 30 ott).
 
@@ -284,7 +285,7 @@ local GIRONE_1 = {
 		-- le armi che l'Addestramento non presenta si trovano nel girone (Claude)
 		casse = { { dopo = 0, arma = "grenade", x = 620 } },
 		turni = 7,
-		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		stelle = { punti = 110, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot" } },
 		-- nei gironi i consigli mettono in luce il comando ma il gioco non si ferma
 		righe = {
@@ -305,7 +306,7 @@ local GIRONE_1 = {
 		globi = 0,
 		vita = { [2] = 55 },
 		turni = 6,
-		stelle = { turni = 2, bonus = { conta = "teletrasporti", al_massimo = 1, testo = "CON UN SOLO GLOBO" } },
+		stelle = { punti = 100, bonus = { conta = "teletrasporti", al_massimo = 1, testo = "CON UN SOLO GLOBO" } },
 		obiettivo = {
 			{ usa = "globi", testo = "Attacca presto: guadagna un globo" },
 			{ abbatti = 2, con = "sword", testo = "Finisci il cecchino con la Lama" },
@@ -330,7 +331,7 @@ local GIRONE_1 = {
 		-- il bot che la prova fa sempre i due attacchi
 		collaudo = { piano = { due_attacchi = true } },
 		turni = 6,
-		stelle = { turni = 1, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		stelle = { punti = 110, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot in un turno solo" } },
 	},
 	{
@@ -348,7 +349,7 @@ local GIRONE_1 = {
 		},
 		vita = { [2] = 999, [3] = 999, [4] = 999 },
 		turni = 5,
-		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA CADERE" } },
+		stelle = { punti = 400, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA CADERE" } },
 		obiettivo = { { abbatti = "nemico", come = "vuoto", volte = 3, testo = "Butta giù tre bersagli" } },
 		-- il bot che la prova cerca il vuoto
 		collaudo = { carattere = "spingitore" },
@@ -360,7 +361,7 @@ local GIRONE_1 = {
 		mappa = "forgia",
 		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
 		turni = 7,
-		stelle = { turni = 3, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
+		stelle = { punti = 120, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il codardo" } },
 	},
 	{
@@ -375,7 +376,7 @@ local GIRONE_1 = {
 		},
 		vita = { [2] = 240 },
 		turni = 10,
-		stelle = { turni = 6, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
+		stelle = { punti = 10, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il Fabbro" } },
 	},
 	-- la fine del girone: una partita completa 2 contro 2, con un bot al tuo
@@ -395,8 +396,7 @@ local GIRONE_1 = {
 			{ team = 2, bot = 2, carattere = "cecchino" },
 		},
 		-- niente limite di turni: si gioca fino alla fine del tempo
-		stelle = { bonus = { conta = "abbattuti", almeno = 3, testo = "ABBATTINE 3" },
-			bonus2 = { conta = "morti", al_massimo = 1, testo = "AL MASSIMO UNA MORTE" } },
+		stelle = { punti = 160, bonus = { conta = "abbattuti", almeno = 3, testo = "ABBATTINE 3" } },
 		obiettivo = { { vinci = true, testo = "Vinci la partita con il tuo compagno" } },
 	},
 }
