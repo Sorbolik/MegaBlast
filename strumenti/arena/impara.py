@@ -191,26 +191,40 @@ def lega(file):
 
 # Il giro ------------------------------------------------------------------------------
 
-def esempi_guida(partite):
-    """Le mosse provate dalle reti (arena.lua --impara, una partita su quattro):
-    la descrizione (bot.descrivi) e quanto ha reso, in centinaia di punti."""
-    d = [e["d"] for m in partite for e in (m.get("guida") or [])]
-    v = [e["v"] for m in partite for e in (m.get("guida") or [])]
-    return np.array(d, dtype=np.float32).reshape(-1, GUIDA[0]), np.array(v, dtype=np.float64)
+def leggi(file):
+    """Le partite dell'arena, una riga alla volta: gli esempi (arena.lua
+    --impara) e le mosse per la guida diventano subito numpy e si tolgono dalla
+    partita. Tutti insieme come liste di Python erano centinaia di megabyte,
+    troppi per la RAM del PC di Sergio.
+    Restituisce le partite (senza esempi), x, y (esito vero), la catena di ogni
+    robot (partita e robot) e il margine della squadra a inizio turno (per il
+    ritorno a passi), e per la guida la descrizione delle mosse e quanto hanno
+    reso (in centinaia di punti)."""
+    partite, xs, ys, catene, ms, gd, gv = [], [], [], [], [], [], []
+    with open(file, encoding="utf-8") as f:
+        for riga in f:
+            if not riga.strip():
+                continue
+            m = json.loads(riga)
+            k = len(partite)
+            es = m.pop("esempi", None) or []
+            if es:
+                xs.append(np.array([e["x"] for e in es], dtype=np.float32).reshape(-1, CARATTERISTICHE))
+                ys.append(np.array([e["y"] for e in es], dtype=np.float64))
+                catene.append(np.array([k * 8 + e["c"] for e in es], dtype=np.int64))
+                ms.append(np.array([e["m"] for e in es], dtype=np.float64))
+            gu = m.pop("guida", None) or []
+            if gu:
+                gd.append(np.array([e["d"] for e in gu], dtype=np.float32).reshape(-1, GUIDA[0]))
+                gv.append(np.array([e["v"] for e in gu], dtype=np.float64))
+            partite.append(m)
 
+    def tutti(lista, forma, tipo):
+        return np.concatenate(lista) if lista else np.zeros(forma, dtype=tipo)
 
-def esempi(partite):
-    """x, y (esito vero) e per il ritorno a passi: la catena di ogni robot
-    (partita e robot) e il margine della squadra a inizio turno."""
-    xs, ys, catene, ms = [], [], [], []
-    for k, m in enumerate(partite):
-        for e in m.get("esempi") or []:
-            xs.append(e["x"])
-            ys.append(e["y"])
-            catene.append(k * 8 + e["c"])
-            ms.append(e["m"])
-    return (np.array(xs, dtype=np.float32).reshape(-1, CARATTERISTICHE), np.array(ys, dtype=np.float64),
-            np.array(catene, dtype=np.int64), np.array(ms, dtype=np.float64))
+    return (partite, tutti(xs, (0, CARATTERISTICHE), np.float32), tutti(ys, 0, np.float64),
+            tutti(catene, 0, np.int64), tutti(ms, 0, np.float64),
+            tutti(gd, (0, GUIDA[0]), np.float32), tutti(gv, 0, np.float64))
 
 
 def base(x):
@@ -308,10 +322,8 @@ def main():
                                 processi=args.processi or arena.os.cpu_count() or 1, modo=args.modo,
                                 livello=args.livello, mappa=args.mappa, punteggio=args.punteggio,
                                 pesi=str(file_pesi), ritocchi=None, set=None, assegna=None, impara="1", luajit=None)
-        partite = arena.leggi(arena.gioca(ns))
-        x, y, catene, ms = esempi(partite)
+        partite, x, y, catene, ms, gx, gy = leggi(arena.gioca(ns))
         catene += giro * 10 ** 9  # catene diverse fra i giri
-        gx, gy = esempi_guida(partite)
         for nome, a in (("x", x), ("y", y), ("catene", catene), ("m", ms), ("gx", gx), ("gy", gy)):
             np.save(cartella / f"{nome}.npy", a)
         b = evolvi.misura(partite, len(individui))
