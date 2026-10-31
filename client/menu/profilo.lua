@@ -48,8 +48,8 @@ function M.xp_livello(n)
 	return M.XP_BASE + M.XP_PASSO * (n - 1)
 end
 
-function M.punti(p, torneo)
-	return abilita.points(p.livello, torneo)
+function M.punti(p)
+	return abilita.points(p.livello)
 end
 
 -- tier dei pezzi indossati da un assetto: { mask = 1..3, ... }

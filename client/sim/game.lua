@@ -318,8 +318,8 @@ end
 -- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
 -- opts.score = punti partita diversi da config.SCORE, solo i campi che cambiano (l'arena prova le varianti);
 --   false: niente punti (le lezioni che non parlano di punti, Sergio 31 ott)
--- opts.normalize = modalità Torneo: le statistiche di albero e equipaggiamento
--- non contano, tutti hanno quelle di base (resta l'arma della scelta)
+-- opts.normalize = albero ed equipaggiamento non contano, tutti hanno le statistiche
+-- di base (resta l'arma della scelta): la regola livello = "fisso" di un evento (sim/regole.lua)
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)

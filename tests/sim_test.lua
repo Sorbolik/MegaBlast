@@ -1364,7 +1364,7 @@ do
 	check(vp[1].pick == "sniper" and vp[1].secondary == nil and vp[2].pick == v.offer[1], "nessuna secondaria in più")
 end
 
--- Salto in aria, scudo, Torneo ----------------------------------------------------
+-- Salto in aria, scudo, livello fisso ----------------------------------------------------
 do
 	-- salto in aria: con air_jumps, premendo di nuovo in volo, gratis
 	local q = game.new(42, "forgia", { players = { { team = 1, stats = { air_jumps = 1 } }, { team = 2 } } })
@@ -1400,12 +1400,12 @@ do
 	s:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
 	check(sr.shield == config.SHIELD.hp and sr.ammo.shield == 0, "lo scudo delle casse si consuma")
 
-	-- Torneo: le statistiche di albero e equipaggiamento non contano, l'arma scelta sì
+	-- livello fisso (regola degli eventi): le statistiche di albero e equipaggiamento non contano, l'arma scelta sì
 	local custom = { { team = 1, stats = { max_hp = 300, walk_speed = 999 }, pick = "shards" }, { team = 2 } }
 	local t = game.new(42, "forgia", { players = custom, normalize = true })
 	check(t.robots[1].max_hp == config.STATS.max_hp and t.robots[1].stats.walk_speed == t.robots[2].stats.walk_speed,
-		"nel Torneo tutti hanno le statistiche di base")
-	check(t.robots[1].ammo.shards == config.DRAFT_SHOTS and t:results().normalized, "nel Torneo resta l'arma scelta")
+		"a livello fisso tutti hanno le statistiche di base")
+	check(t.robots[1].ammo.shards == config.DRAFT_SHOTS and t:results().normalized, "a livello fisso resta l'arma scelta")
 end
 
 -- Determinismo: stesso seed, stessi input, stesso risultato

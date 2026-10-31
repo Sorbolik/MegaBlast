@@ -38,9 +38,8 @@ for _, s in ipairs(equip.SETS) do
 	end
 end
 
--- Punti per livello e Torneo
+-- Punti per livello
 check(abilita.points(5) == 10 and abilita.points(99) == abilita.POINTS_MAX, "punti: due per livello fino al massimo")
-check(abilita.points(1, true) == abilita.POINTS_MAX, "in Torneo tutti hanno i punti massimi")
 
 -- Righe: la riga 2 si apre dopo ROW_GATE punti nel ramo
 local t = {}
@@ -159,7 +158,7 @@ p.assetti[1].gear = { mask = "vuoto" }
 local gu = profilo.fine_partita(p, 1, { riconoscimenti.LIST[1] })
 check(gu.xp == profilo.XP_POSTO[1] + profilo.XP_RICONOSCIMENTO and p.livello == 2, "il primo posto fa salire di livello")
 check(p.maestria.vuoto_mask == 1, "una partita di maestria per il pezzo indossato")
-check(profilo.punti(p) == 4 and profilo.punti(p, true) == abilita.POINTS_MAX, "punti abilità dal livello, in Torneo il massimo")
+check(profilo.punti(p) == 4, "punti abilità dal livello")
 
 if failures > 0 then
 	print(failures .. " test falliti")

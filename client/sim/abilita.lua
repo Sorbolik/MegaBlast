@@ -17,7 +17,7 @@
 
 local M = {}
 
--- punti al livello massimo; in Torneo tutti hanno questi
+-- punti al livello massimo
 M.POINTS_MAX = 20
 -- punti per livello del giocatore (livello 1 = 2 punti, il massimo al livello 10)
 M.POINTS_PER_LEVEL = 2
@@ -65,9 +65,8 @@ M.NODES = {
 M.BY_ID = {}
 for _, n in ipairs(M.NODES) do M.BY_ID[n.id] = n end
 
--- punti disponibili a un livello (in Torneo: POINTS_MAX)
-function M.points(level, tournament)
-	if tournament then return M.POINTS_MAX end
+-- punti disponibili a un livello
+function M.points(level)
 	return math.max(0, math.min(M.POINTS_MAX, (level or 0) * M.POINTS_PER_LEVEL))
 end
 

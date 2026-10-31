@@ -170,7 +170,7 @@ local function scheda_albero(a, parent)
 	-- in basso: punti, nodo scelto, ricostruzione
 	local pan = ui.pannello(510, 70, 940, 90, parent)
 	ui.testo(string.format("PUNTI %d / %d", abilita.spent(tree), punti), -360, 18, 0.9, c.BRACE, pan)
-	ui.testo(string.format("livello %d · in Torneo %d per tutti", a.prof.livello, abilita.POINTS_MAX), -360, -14, 0.55, c.SPENTO, pan)
+	ui.testo(string.format("livello %d", a.prof.livello), -360, -14, 0.55, c.SPENTO, pan)
 	local nodo = abilita.BY_ID[a.ultimo or ""]
 	if nodo then
 		ui.testo(nodo.name, 30, 18, 0.75, c.TESTO, pan)

@@ -96,6 +96,10 @@ quando apre la home, la bacheca e DOVE GIOCHI?, e ogni minuto nella home. Un
 Una partita conta per tutti gli eventi della sua coda (classifiche e premi col
 passo 2, quando ci sono gli account).
 
+Per provarli sul PC: `python3 strumenti/simula/eventi_prova.py` scrive
+`simulazione/eventi.json` col calendario di prova alle date di oggi, poi
+`go run ./server -eventi simulazione/eventi.json`.
+
 ## Server in pari con main
 
 Regola permanente di Sergio (29 ottobre): il server è sempre in pari con
