@@ -80,3 +80,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 31 ott | Ultimo giro a punti doppi (il giro che comincia con meno di mezzo giro di tempo, al posto dei supplementari) con striscione e oro; nel 2 contro 2 il tabellone è a turni pari, coi punti in attesa, "+N PER PAREGGIARE" e i pallini dei turni. Il 2 contro 2 è la modalità prediletta. | #112 |
 | 31 ott | La Corona arriva solo dopo il primo giro di turni (chi apre non è più primo solo perché ha già sparato); la parte della fune coi punti in attesa è a fasce diagonali. | questa PR |
 | 31 ott | Niente punti nelle lezioni che non li spiegano; nei gironi la seconda stella è per i punti di vantaggio invece che per i turni, soglie misurate coi bot. | questa PR |
+| 31 ott | Eventi: calendario fatto da Sergio con modelli e ripetizioni, eventi sovrapposti permessi, premi badge/skin/monete, fasce a percentuale, bozza del pannello. | questa PR |
