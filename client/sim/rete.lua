@@ -20,8 +20,11 @@ function M.quanti(strati)
 	return n
 end
 
-local a, b = {}, {}
+local a, b, nz = {}, {}, {}
 
+-- Strato per strato, solo sugli ingressi diversi da zero (il terreno e i
+-- robot che mancano nel primo, quelli spenti dalla ReLU negli altri: circa
+-- metà): w * 0 non cambia la somma, quindi il risultato è identico e costa meno
 function M.valuta(r, x)
 	local strati, w = r.strati, r.w
 	local ingresso, uscita = x, a
@@ -29,13 +32,22 @@ function M.valuta(r, x)
 	for k = 2, #strati do
 		local nin, nout = strati[k - 1], strati[k]
 		local ultimo = k == #strati
+		local n = 0
+		for i = 1, nin do
+			if ingresso[i] ~= 0 then
+				n = n + 1
+				nz[n] = i
+			end
+		end
 		for o = 1, nout do
 			local s = 0
-			for i = 1, nin do
-				s = s + w[p] * ingresso[i]
-				p = p + 1
+			local q = p - 1
+			for j = 1, n do
+				local i = nz[j]
+				s = s + w[q + i] * ingresso[i]
 			end
 			uscita[o] = s
+			p = p + nin
 		end
 		for o = 1, nout do
 			local s = uscita[o] + w[p]
