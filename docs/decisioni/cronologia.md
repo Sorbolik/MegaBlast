@@ -78,3 +78,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 30 ott | Controller, la causa vera della mira che scattava e del doppio colpo: Defold segna "lasciato" quando un valore scende sotto 0,9, e noi lo leggevamo come zero. Ora conta solo il valore. | questa PR |
 | 30 ott | Campagna a 10 gradi di difficoltà misurati coi bot (ogni grado batte quello sotto nel 55-75%); la Forgia sale dal 2 al 5, niente più burrone fra Due mani e Il codardo. | questa PR |
 | 31 ott | Ultimo giro a punti doppi (il giro che comincia con meno di mezzo giro di tempo, al posto dei supplementari) con striscione e oro; nel 2 contro 2 il tabellone è a turni pari, coi punti in attesa, "+N PER PAREGGIARE" e i pallini dei turni. Il 2 contro 2 è la modalità prediletta. | questa PR |
+| 31 ott | Niente punti nelle lezioni che non li spiegano; nei gironi la seconda stella è per i punti di vantaggio invece che per i turni, soglie misurate coi bot. | questa PR |

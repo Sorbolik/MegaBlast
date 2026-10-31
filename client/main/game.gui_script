@@ -968,15 +968,19 @@ local function handle_event(self, e)
 		-- crolla e svanisce da solo; dopo 1,5 s ricompare altrove, nello stesso turno
 		scoria.die(self.robots[e.robot].rig)
 		targa.set_enabled(self.robots[e.robot].targa, false)
+		-- senza punti (le lezioni che non ne parlano) solo cosa è successo
+		local senza = self.g.no_points
 		if e.own then
 			-- morto da solo nel proprio turno: l'uccisione va a chi gli ha fatto più danno
 			local chi = (self.mode == "online" and e.robot == self.me) and "Muori da solo" or self.names[e.robot] .. " muore da solo"
 			local pena = gconfig.SCORE.death + gconfig.SCORE.self_death
-			show_message(self, e.by and string.format("%s! %d, +%d a %s", chi, pena, e.points, who_name(self, e.by))
+			show_message(self, senza and chi .. "!"
+				or e.by and string.format("%s! %d, +%d a %s", chi, pena, e.points, who_name(self, e.by))
 				or string.format("%s! %d", chi, pena))
 		elseif e.by then
 			local verbo = e.env and " butta giù " or " elimina "
-			show_message(self, string.format("%s%s%s! +%d", who_name(self, e.by), verbo, who_name(self, e.robot), e.points))
+			show_message(self, who_name(self, e.by) .. verbo .. who_name(self, e.robot) .. "!"
+				.. (senza and "" or string.format(" +%d", e.points)))
 		end
 	elseif e.type == "gone" then
 		-- è uscito dalla partita: sparisce e non torna
@@ -1496,8 +1500,8 @@ local function apri_fine_livello(self)
 	for _, rb in ipairs(self.robots) do targa.riga(rb.targa, "") end
 	apri_schermata(self, menu.fine_livello, {
 		titolo = r.l.titolo, stelle = missioni.stelle(r), criteri = missioni.criteri(r.l),
-		-- senza tempo non ci sono turni da contare
-		turni = not r.l.senza_tempo and r.st.turni or nil,
+		-- i punti di vantaggio, dove contano
+		vantaggio = missioni.vantaggio(r),
 		record = self.fine_record, avanti = missioni.dopo(r.l.id) ~= nil,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 end

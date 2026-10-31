@@ -316,7 +316,8 @@ end
 -- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
 -- opts.heals = false: niente cerchi di cura (le lezioni)
 -- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
--- opts.score = punti partita diversi da config.SCORE, solo i campi che cambiano (l'arena prova le varianti)
+-- opts.score = punti partita diversi da config.SCORE, solo i campi che cambiano (l'arena prova le varianti);
+--   false: niente punti (le lezioni che non parlano di punti, Sergio 31 ott)
 -- opts.normalize = modalità Torneo: le statistiche di albero e equipaggiamento
 -- non contano, tutti hanno quelle di base (resta l'arma della scelta)
 function M.new(seed, map_id, opts)
@@ -336,6 +337,7 @@ function M.new(seed, map_id, opts)
 	g.mode = match_mode(players)
 	g.normalized = opts.normalize or false
 	g.score = C.SCORE
+	g.no_points = opts.score == false
 	if opts.score then
 		g.score = {}
 		for k, v in pairs(C.SCORE) do g.score[k] = v end
@@ -519,6 +521,7 @@ end
 -- l'altro robot (il colpito; per death chi ha ucciso). L'evento "points" serve
 -- all'interfaccia (il numero che vola nella classifica) e all'arena dei bot.
 function M:add_points(rb, n, reason, other)
+	if self.no_points then return end
 	if self.final_round then n = n * (self.score.final_round or 1) end
 	rb.points = rb.points + n
 	self:emit({ type = "points", robot = rb.id, amount = n, reason = reason, other = other and other.id })
@@ -671,6 +674,7 @@ function M:kill(rb, reason, was_leader)
 		-- Corona: chi abbatte il primo in classifica prende in più crown
 		if mult > 1 then points = points + score.crown end
 		self:add_points(killer, points, "kill", rb)
+		if self.no_points then points = 0 end
 	end
 	rb.last_hit = nil
 	rb.respawn_in = M.RESPAWN_TICKS
