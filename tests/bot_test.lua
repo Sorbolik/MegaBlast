@@ -133,6 +133,23 @@ do
 	check(n >= 2, "piano: due attacchi nello stesso turno (" .. n .. ")")
 end
 
+-- Le casse: il bot va a prendere quella che ha vicino (pesi.cassa); con peso 0 la lascia
+do
+	local function prende(peso, d)
+		local g = game.new(4, "forgia", { players = { { team = 1 }, { team = 2 } } })
+		local b = bot.new(2, "normale", 4, { cassa = peso, cassa_fame = 0 })
+		while g.current ~= 2 do g:step({ fire = g.phase == "aim" and { weapon = "missile", angle = 1.4, power = 0.2 } or nil }) end
+		local rb = g.robots[2]
+		local c = g:spawn_crate("grenade", rb.x + d)
+		while not c.landed do g:update_crates() end
+		local turno, inizio = g.turn_no, g.tick
+		while g.turn_no == turno and g.tick - inizio < 40 * 60 do g:step(bot.input(b, g)) end
+		return rb.crates
+	end
+	check(prende(12, -110) >= 1 and prende(12, 110) >= 1, "casse: il bot prende la cassa che ha vicino")
+	check(prende(0, -110) == 0, "casse: con pesi.cassa 0 la lascia")
+end
+
 -- La rete: conti a mano su una rete piccola (ReLU nel mezzo, uscita lineare)
 do
 	local rete = require "sim.rete"
