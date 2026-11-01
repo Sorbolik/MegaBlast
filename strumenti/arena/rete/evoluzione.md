@@ -10,12 +10,17 @@ Esame: in quante delle stesse partite la rete del giro arriva più in alto del b
 | 1 | 27% | 0.56 | 222487 | 3.89 / 2.90 | 277 / 364 | 5.87 / 5.32 |
 | 2 | 32% | 0.55 | 337800 | 3.85 / 2.94 | 280 / 362 | 6.06 / 5.27 |
 | 3 | 32% | 0.52 | 457049 | 3.80 / 2.98 | 280 / 357 | 6.26 / 5.45 |
+| 4 | 32% | 0.50 | 575871 | 3.80 / 2.98 | 280 / 357 | 6.26 / 5.45 |
+| 5 | 32% | 0.50 | 582204 | 3.77 / 2.96 | 275 / 357 | 6.22 / 5.31 |
+| 6 | 30% | 0.53 | 597331 | 3.77 / 3.03 | 291 / 351 | 4.85 / 5.49 |
+| 7 | 36% | 0.53 | 604951 | 3.51 / 2.91 | 282 / 328 | 5.31 / 5.23 |
+| 8 | 48% | 0.53 | 608503 | 3.69 / 3.23 | 315 / 331 | 5.98 / 5.34 |
 
 ## Le mosse preferite dell'ultima rete all'esame
 
-- missile>teleport: 280
-- missile>lunge: 270
-- missile: 199
-- missile>lunge>teleport: 196
-- missile>teleport+kill: 136
-- missile>bellows>teleport: 110
+- missile>teleport: 552
+- missile: 444
+- missile>teleport+kill: 357
+- missile+kill: 192
+- missile>hook: 122
+- missile>teleport>sword>teleport: 83
