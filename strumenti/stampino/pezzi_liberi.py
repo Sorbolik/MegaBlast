@@ -46,8 +46,8 @@ def pezzi(foglio):
     """I 12 pezzi del foglio, per riga e colonna (la faccia resta intera)."""
     a = TG.fondo_via(Image.open(foglio))
     al = a[..., 3] > 128
-    # passo largo: occhi, ciglia e bocca della faccia stanno insieme
-    ms = [m for m in TG.macchie(al, passo=8) if m.sum() > 0.0008 * al.size]
+    # passo largo (in proporzione al foglio): occhi, ciglia e bocca della faccia stanno insieme
+    ms = [m for m in TG.macchie(al, passo=max(8, round(8 * al.shape[1] / 1280))) if m.sum() > 0.0008 * al.size]
     if len(ms) != 12:
         sys.exit(f"{foglio}: trovati {len(ms)} pezzi, ne servono 12 (3 righe x 4)")
     centri = [(np.nonzero(m)[0].mean(), np.nonzero(m)[1].mean(), m) for m in ms]

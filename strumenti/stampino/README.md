@@ -103,6 +103,16 @@ python3 strumenti/stampino/pezzi_liberi.py art/pezzi_tre_quarti/maschio_1.jpg ar
 python3 strumenti/stampino/taglia.py simulazione/tre_quarti/maschio_1.png --nome maschio_1 --categoria personaggio --allinea --senza ala,coda
 ```
 
+La versione vettoriale degli stessi set (`maschio_1_vett` ecc.) passa prima da
+`vettoriale.py`, che ricalca il foglio con potrace (sagoma in bianco, sopra il nero)
+e scrive l'SVG accanto al foglio e un PNG pulito al doppio della misura:
+
+```bash
+python3 strumenti/stampino/vettoriale.py art/pezzi_tre_quarti/maschio_1.jpg art/pezzi_tre_quarti/maschio_1.svg simulazione/tre_quarti/maschio_1_vett.png
+python3 strumenti/stampino/pezzi_liberi.py simulazione/tre_quarti/maschio_1_vett.png art/WB-006/riferimenti/R1_maschio_tre_quarti.png simulazione/tre_quarti/maschio_1_vett_stampino.png
+python3 strumenti/stampino/taglia.py simulazione/tre_quarti/maschio_1_vett_stampino.png --nome maschio_1_vett --categoria personaggio --allinea --senza ala,coda
+```
+
 ## Nel gioco e nell'editor
 
 `scoria.new(colore, { "elmo_corna", "testa_drago" })` veste il diavoletto. Per
