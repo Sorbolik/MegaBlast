@@ -11,6 +11,7 @@ caselle: un PNG trasparente (il livello di Procreate) o un'immagine su magenta
   python3 strumenti/stampino/taglia.py --rifai        # solo pelli.lua e pelli.atlas
   python3 strumenti/stampino/taglia.py --togli NOME   # toglie una pelle
   python3 strumenti/stampino/taglia.py --ritocchi strumenti/stampino/ritocchi.json
+  python3 strumenti/stampino/taglia.py FOGLIO.png --nome maschio_1 --categoria personaggio --allinea --senza ala,coda
 
 Scrive client/assets/pelli/<nome>_<posto>.png, strumenti/stampino/pelli/<nome>.json
 (com'è fatta la pelle), e rifà client/battaglia/pelli.lua da tutte le pelli e
@@ -365,7 +366,19 @@ def tinta(pz):
     return pz, t
 
 
-def taglia(foglio, nome, categoria, sopra, allinea_pezzi):
+def vuoti(pezzi, nome, senza):
+    """I posti che il personaggio non ha (ala, coda): un pezzo trasparente al
+    posto di quello di base, così non si vede."""
+    posti = []
+    for p in senza:
+        posti += [q for c in CATENA for q in (c, c + "_bordo")] if p == "coda" else [p]
+    for posto in posti:
+        img = f"{nome}_{posto}"
+        Image.new("RGBA", (2, 2), (0, 0, 0, 0)).save(os.path.join(ASSETS, img + ".png"))
+        pezzi[posto] = {"img": img, "x": 0.0, "y": 0.0, "w": 0.1, "h": 0.1, "modo": "sostituisce"}
+
+
+def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=()):
     with open(ST.FOGLIO) as f:
         F = json.load(f)
     im = Image.open(foglio).convert("RGBA")
@@ -415,6 +428,10 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi):
                 metti(pezzi, pz, nome, posto, (c["perno"][0] - x0, c["perno"][1] - y0), F["scala"], px, sopra)
     if not pezzi:
         sys.exit("nessun pezzo disegnato nello stampino")
+    if senza:
+        if sopra:
+            sys.exit("--senza solo per le pelli che sostituiscono")
+        vuoti(pezzi, nome, senza)
     # le versioni di dietro, se mancano: più scure (il colore della squadra no)
     for dietro, davanti in DIETRO.items():
         if davanti in pezzi and dietro not in pezzi:
@@ -554,6 +571,7 @@ def main():
     ap.add_argument("--sopra", action="store_true", help="i pezzi vanno sopra quelli di base (default per la categoria)")
     ap.add_argument("--sostituisce", action="store_true", help="i pezzi prendono il posto di quelli di base")
     ap.add_argument("--allinea", action="store_true", help="allinea ogni pezzo al manichino (disegni di ChatGPT)")
+    ap.add_argument("--senza", default="", help="posti che il personaggio non ha, tolti (ala,coda)")
     ap.add_argument("--rifai", action="store_true")
     ap.add_argument("--togli")
     ap.add_argument("--ritocchi", help="i ritocchi dell'editor delle animazioni (ritocchi.json)")
@@ -570,7 +588,11 @@ def main():
         if not re.fullmatch(r"[a-z][a-z0-9_]*", a.nome) or a.nome in ST.DV.PEZZI:
             ap.error("il nome: lettere minuscole, cifre e _, diverso dai pezzi di base")
         sopra = a.sopra or (a.categoria in SOPRA and not a.sostituisce)
-        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea)
+        senza = [p for p in a.senza.split(",") if p]
+        for p in senza:
+            if p not in ("ala", "coda"):
+                ap.error("--senza: solo ala e coda")
+        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza)
     rifai()
 
 
