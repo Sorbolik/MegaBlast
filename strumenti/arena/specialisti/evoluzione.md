@@ -6,11 +6,11 @@
 
 | specialista | mestiere | campione / soglia | bravura | esami | armi principali | cosa cambia |
 |---|---|---|---|---|---|---|
-| spingitore | uccisioni nel vuoto a partita | 1.41 / 1.16 | 0.548 | 52% | missile 23%, punch 20%, shards 13% | voglia di casse 32 (oggi 12) |
-| acrobata | globi e Rampino a partita | 9.48 / 8.69 | 0.503 | 46% | missile 19%, punch 19%, lunge 18% | paura di perdere vita ×2.2, paura di morire ×2.0, voglia di globo 172 (oggi 100), riparo a piedi più che col globo -19 (oggi 3), gusto per il Mantice ÷1.5, voglia di casse 2 (oggi 12) |
-| cecchino | quota del danno fatto da lontano | 0.76 / 0.73 | 0.530 | 47% | shards 21%, missile 21%, sniper 15% | fatica a camminare ÷1.6, voglia di uccidere ×1.8, voglia di casse 21 (oggi 12) |
-| picchiatore | quota del danno fatto da vicino | 0.58 / 0.49 | 0.521 | 55% | punch 20%, missile 19%, lunge 17% | cura del compagno ×1.8, voglia di globo 176 (oggi 100) |
-| sopravvissuto | morti a partita, al contrario | -3.68 / -3.70 | 0.503 | 52% | missile 19%, punch 18%, lunge 17% | fatica a camminare ÷4.8, riparo a piedi più che col globo -3 (oggi 3), voglia di casse quando restano pochi colpi 12 (oggi 8) |
+| spingitore | uccisioni nel vuoto a partita | 1.36 / 1.32 | 0.546 | 52% 53% | missile 21%, punch 19%, sword 13% | paura di perdere vita ÷1.6, paura di morire ×1.8, voglia di globo 147 (oggi 100), riparo a piedi più che col globo 20 (oggi 3), voglia di casse 58 (oggi 12) |
+| acrobata | globi e Rampino a partita | 9.37 / 9.19 | 0.509 | 46% 52% | punch 20%, mallet 18%, missile 17% | paura di perdere vita ×1.6, cura del compagno ×1.5, fatica a camminare ×1.7, voglia di globo 208 (oggi 100), riparo a piedi più che col globo -20 (oggi 3), voglia di buttare nel vuoto ×3.1, gusto per le armi da vicino ×1.6, voglia di casse quando restano pochi colpi 12 (oggi 8) |
+| cecchino | quota del danno fatto da lontano | 0.73 / 0.74 | 0.518 | 47% 52% | shards 23%, missile 20%, sniper 14% | paura di perdere vita ÷1.8, cura del compagno ×1.5, voglia di globo 166 (oggi 100), voglia di casse 20 (oggi 12), voglia di casse quando restano pochi colpi 40 (oggi 8) |
+| picchiatore | quota del danno fatto da vicino | 0.62 / 0.59 | 0.528 | 55% 50% | punch 20%, lunge 19%, missile 17% | paura di perdere vita ÷2.2, paura di morire ×1.6, fatica a camminare ÷1.6, voglia di globo 159 (oggi 100), voglia di uccidere ÷2.0 |
+| sopravvissuto | morti a partita, al contrario | -3.67 / -3.68 | 0.508 | 52% 52% | punch 20%, mallet 17%, missile 17% | fatica a camminare ÷1.6, riparo a piedi più che col globo -5 (oggi 3), gusto per le armi da lontano ÷1.6, voglia di casse 22 (oggi 12) |
 
 ## Generazioni
 
@@ -23,3 +23,8 @@ Per ogni specialista: bravura del campione e mestiere / soglia.
 | 3 | 0.481 | 0.553 (1.36 / 0.98) | 0.525 (7.99 / 7.97) | 0.517 (0.76 / 0.70) | 0.516 (0.60 / 0.42) | 0.531 (-3.73 / -3.71) |
 | 4 | 0.509 | 0.550 (1.39 / 1.08) | 0.504 (9.79 / 8.43) | 0.520 (0.74 / 0.71) | 0.522 (0.58 / 0.46) | 0.513 (-3.69 / -3.70) |
 | 5 | 0.466 | 0.548 (1.41 / 1.16) | 0.503 (9.48 / 8.69) | 0.530 (0.76 / 0.73) | 0.521 (0.58 / 0.49) | 0.503 (-3.68 / -3.70) |
+| 6 | 0.479 | 0.544 (1.40 / 1.22) | 0.514 (9.51 / 8.89) | 0.532 (0.74 / 0.73) | 0.524 (0.64 / 0.53) | 0.505 (-3.65 / -3.68) |
+| 7 | 0.476 | 0.543 (1.38 / 1.26) | 0.513 (9.26 / 8.98) | 0.524 (0.76 / 0.74) | 0.529 (0.63 / 0.56) | 0.498 (-3.69 / -3.68) |
+| 8 | 0.520 | 0.544 (1.37 / 1.29) | 0.518 (9.24 / 9.05) | 0.527 (0.74 / 0.74) | 0.542 (0.62 / 0.57) | 0.505 (-3.69 / -3.68) |
+| 9 | 0.467 | 0.546 (1.36 / 1.31) | 0.514 (9.39 / 9.13) | 0.524 (0.74 / 0.74) | 0.533 (0.62 / 0.58) | 0.515 (-3.66 / -3.68) |
+| 10 | 0.486 | 0.546 (1.36 / 1.32) | 0.509 (9.37 / 9.19) | 0.518 (0.73 / 0.74) | 0.528 (0.62 / 0.59) | 0.508 (-3.67 / -3.68) |
