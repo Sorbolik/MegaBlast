@@ -87,6 +87,32 @@ catena e il colore della squadra, e scrive `client/assets/pelli/<nome>_<posto>.p
 `strumenti/stampino/pelli/<nome>.json`, `client/battaglia/pelli.lua` e l'atlante
 del diavoletto, che contiene base e pelli insieme (si disegna in una volta).
 
+## Fogli a pezzi liberi (personaggi a tre quarti)
+
+I fogli di maschio, femmina e Favilla (`art/pezzi_tre_quarti/`) non sono sullo
+stampino: 12 pezzi staccati su magenta, in 3 righe da 4 (testa, faccia, maglietta,
+pantaloncini o gonna; due braccia e due pugni; due gambe e due scarpe).
+`pezzi_liberi.py` li rimonta sullo stampino (la faccia sulla testa dove sta nel
+disegno a tre quarti, i pantaloncini sotto la maglietta, il pugno in fondo al
+braccio, la scarpa in fondo alla gamba, braccia e gambe girate dritte) e poi si
+tagliano come quelli di ChatGPT. Questi personaggi non hanno ala e coda:
+`--senza ala,coda` mette al loro posto un pezzo trasparente.
+
+```bash
+python3 strumenti/stampino/pezzi_liberi.py art/pezzi_tre_quarti/maschio_1.jpg art/WB-006/riferimenti/R1_maschio_tre_quarti.png simulazione/tre_quarti/maschio_1.png
+python3 strumenti/stampino/taglia.py simulazione/tre_quarti/maschio_1.png --nome maschio_1 --categoria personaggio --allinea --senza ala,coda
+```
+
+La versione vettoriale degli stessi set (`maschio_1_vett` ecc.) passa prima da
+`vettoriale.py`, che ricalca il foglio con potrace (sagoma in bianco, sopra il nero)
+e scrive l'SVG accanto al foglio e un PNG pulito al doppio della misura:
+
+```bash
+python3 strumenti/stampino/vettoriale.py art/pezzi_tre_quarti/maschio_1.jpg art/pezzi_tre_quarti/maschio_1.svg simulazione/tre_quarti/maschio_1_vett.png
+python3 strumenti/stampino/pezzi_liberi.py simulazione/tre_quarti/maschio_1_vett.png art/WB-006/riferimenti/R1_maschio_tre_quarti.png simulazione/tre_quarti/maschio_1_vett_stampino.png
+python3 strumenti/stampino/taglia.py simulazione/tre_quarti/maschio_1_vett_stampino.png --nome maschio_1_vett --categoria personaggio --allinea --senza ala,coda
+```
+
 ## Nel gioco e nell'editor
 
 `scoria.new(colore, { "elmo_corna", "testa_drago" })` veste il diavoletto. Per
