@@ -39,7 +39,7 @@ Tutte le altre immagini non hanno riferimenti: il prompt basta.
 
 ## Immagini da generare
 
-Ogni prompt è completo e va usato così com'è. Sfondo piatto color pergamena chiara, **non**
+Ogni prompt è completo e va usato così com'è. I prompt sono in inglese perché il generatore li segue meglio. Sfondo piatto color pergamena chiara, **non**
 trasparente (eccezione alla regola di `AGENTS.md`: sono illustrazioni per un documento); solo `trio`
 ha uno scenario.
 
@@ -62,183 +62,189 @@ ha uno scenario.
 ### `1_protagonista_A`
 
 ```
-Disegna il protagonista di un videogioco per telefono ambientato nell'Inferno di Dante, raccontato come un cartone animato buffo e affettuoso: un DIAVOLETTO APPRENDISTA FABBRO.
+Draw the main character of a mobile video game set in Dante's Inferno, told as a funny, affectionate cartoon: a LITTLE IMP, A BLACKSMITH'S APPRENTICE.
 
-Il personaggio: piccolo e tozzo, testa grande (circa un terzo dell'altezza), sveglio e testardo, con un ghigno furbo. Pelle rosso mattone, pancia e muso color pergamena chiara. Due corna corte e robuste color osso, leggermente curve in avanti. Occhi grandi e gialli con pupille nere. Una piccola fiammella arancione che arde sopra la testa, fra le corna. Coda sottile e lunga con la punta a freccia. Mani a quattro dita e piedi nudi con tre dita tozze. Qualche macchia di fuliggine sulle guance e sulle mani. Al collo un fazzoletto annodato AZZURRO (il colore della squadra, l'unica cosa che porta sempre). Nient'altro addosso: niente vestiti, niente armatura.
+The character: small and stocky, big head (about one third of his height), clever and stubborn, with a sly grin. Brick-red skin, parchment-colored belly and muzzle. Two short, sturdy bone-colored horns, curving slightly forward. Big yellow eyes with black pupils. A small orange flame burning on top of his head, between the horns. A long thin tail with an arrowhead tip. Four-fingered hands and bare feet with three stubby toes. A few soot smudges on his cheeks and hands. A LIGHT-BLUE neckerchief knotted around his neck (it is the team color, the only thing he always wears). Nothing else on him: no clothes, no armor.
 
-Disegnalo tre volte, in fila da sinistra a destra, tutte della stessa grandezza e ben separate: 1) fermo, di fronte, mani sui fianchi; 2) di tre quarti verso destra, mentre cammina; 3) in salto verso destra, con in mano un martello da fabbro più grande della sua testa, pronto a colpire.
+Draw him three times, in a row from left to right, all the same size and well separated: 1) standing still, front view, hands on hips; 2) three-quarter view facing right, walking; 3) jumping to the right, holding a blacksmith's hammer bigger than his head, ready to strike.
 
-La sagoma deve leggersi anche se il personaggio è alto solo 80 pixel: corna, fiammella e coda ben staccate dal corpo.
+The silhouette must read clearly even when the character is only 80 pixels tall: horns, flame and tail clearly separated from the body.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre, come le vecchie incisioni della Divina Commedia ma in versione cartone. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `2_protagonista_B`
 
 ```
-Disegna il protagonista di un videogioco per telefono ambientato nell'Inferno di Dante, raccontato come un cartone animato buffo e affettuoso: un DIAVOLETTO FATTO DI CARBONE ACCESO, un tizzone vivo uscito dalla forgia.
+Draw the main character of a mobile video game set in Dante's Inferno, told as a funny, affectionate cartoon: a LITTLE IMP MADE OF BURNING COAL, a living ember that walked out of the forge.
 
-Il personaggio: piccolo e rotondetto, testa grande (circa un terzo dell'altezza), sveglio e testardo, con un ghigno furbo. Il corpo è nero-bruno come carbone, opaco, con crepe sottili che brillano di brace arancione (sul petto, sulle braccia, sulle ginocchia). Due corna corte di ossidiana lucida. Occhi grandi, bianchi e gialli, molto luminosi sul nero. Una piccola fiammella arancione che arde sopra la testa, fra le corna. Coda sottile e lunga con la punta a freccia che brilla di brace. Mani a quattro dita e piedi nudi con tre dita tozze. Al collo un fazzoletto annodato AZZURRO (il colore della squadra, l'unica cosa che porta sempre). Nient'altro addosso: niente vestiti, niente armatura.
+The character: small and roundish, big head (about one third of his height), clever and stubborn, with a sly grin. The body is matte charcoal black-brown, with thin cracks glowing ember orange (on the chest, arms and knees). Two short glossy obsidian horns. Big, very bright white-and-yellow eyes standing out on the black. A small orange flame burning on top of his head, between the horns. A long thin tail whose arrowhead tip glows like an ember. Four-fingered hands and bare feet with three stubby toes. A LIGHT-BLUE neckerchief knotted around his neck (it is the team color, the only thing he always wears). Nothing else on him: no clothes, no armor.
 
-Disegnalo tre volte, in fila da sinistra a destra, tutte della stessa grandezza e ben separate: 1) fermo, di fronte, mani sui fianchi; 2) di tre quarti verso destra, mentre cammina; 3) in salto verso destra, con in mano un martello da fabbro più grande della sua testa, pronto a colpire.
+Draw him three times, in a row from left to right, all the same size and well separated: 1) standing still, front view, hands on hips; 2) three-quarter view facing right, walking; 3) jumping to the right, holding a blacksmith's hammer bigger than his head, ready to strike.
 
-La sagoma deve leggersi anche se il personaggio è alto solo 80 pixel: corna, fiammella e coda ben staccate dal corpo.
+The silhouette must read clearly even when the character is only 80 pixels tall: horns, flame and tail clearly separated from the body.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre, come le vecchie incisioni della Divina Commedia ma in versione cartone. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `3_protagonista_C`
 
 ```
-Disegna il protagonista di un videogioco per telefono ambientato nell'Inferno di Dante, raccontato come un cartone animato buffo e affettuoso: un DIAVOLETTO CON LE CORNA GRANDI, come un piccolo montone testardo.
+Draw the main character of a mobile video game set in Dante's Inferno, told as a funny, affectionate cartoon: a LITTLE IMP WITH HUGE HORNS, like a small stubborn ram.
 
-Il personaggio: piccolo, tondo e compatto, testa grande (circa un terzo dell'altezza), sveglio e testardo, con un ghigno furbo. Pelle rosso scuro tendente al bordeaux, pancia e muso color pergamena chiara. Il suo tratto principale sono DUE CORNA GRANDI DA MONTONE, arrotolate a spirale ai lati della testa, color osso con anelli in rilievo: grandi quasi quanto la testa. Occhi grandi e gialli con pupille nere, sopracciglia folte. Una piccola fiammella arancione che arde sopra la testa, fra le corna. Coda corta e grossa con un ciuffo a punta. Mani a quattro dita e zoccoli piccoli al posto dei piedi. Al collo un fazzoletto annodato AZZURRO (il colore della squadra, l'unica cosa che porta sempre). Nient'altro addosso: niente vestiti, niente armatura.
+The character: small, round and compact, big head (about one third of his height), clever and stubborn, with a sly grin. Dark red, almost burgundy skin, parchment-colored belly and muzzle. His main feature is TWO BIG RAM HORNS, curled in spirals on the sides of his head, bone-colored with raised ridges: almost as big as the head itself. Big yellow eyes with black pupils, bushy eyebrows. A small orange flame burning on top of his head, between the horns. A short thick tail ending in a pointed tuft. Four-fingered hands and small hooves instead of feet. A LIGHT-BLUE neckerchief knotted around his neck (it is the team color, the only thing he always wears). Nothing else on him: no clothes, no armor.
 
-Disegnalo tre volte, in fila da sinistra a destra, tutte della stessa grandezza e ben separate: 1) fermo, di fronte, mani sui fianchi; 2) di tre quarti verso destra, mentre cammina; 3) in salto verso destra, con in mano un martello da fabbro più grande della sua testa, pronto a colpire.
+Draw him three times, in a row from left to right, all the same size and well separated: 1) standing still, front view, hands on hips; 2) three-quarter view facing right, walking; 3) jumping to the right, holding a blacksmith's hammer bigger than his head, ready to strike.
 
-La sagoma deve leggersi anche se il personaggio è alto solo 80 pixel: corna, fiammella e coda ben staccate dal corpo.
+The silhouette must read clearly even when the character is only 80 pixels tall: horns, flame and tail clearly separated from the body.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre, come le vecchie incisioni della Divina Commedia ma in versione cartone. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `4_equip_pezzi`
 
 ```
-Disegna un foglio di pezzi di equipaggiamento per un diavoletto piccolo e tozzo (testa grande con due corna corte, coda sottile con la punta a freccia), protagonista di un videogioco a cartoni ambientato nell'Inferno di Dante. Il diavoletto è apprendista nella Forgia dei diavoli e all'inizio non ha niente: questi sono i suoi PRIMI pezzi, rimediati con gli scarti della forgia, buffi e arrangiati.
+Draw a sheet of equipment pieces for a small, stocky imp (big head with two short horns, thin tail with an arrowhead tip), the hero of a cartoon video game set in Dante's Inferno. The imp is an apprentice in the devils' Forge and starts with nothing: these are his FIRST pieces, scrounged from the forge's scraps, funny and makeshift.
 
-Sei pezzi, staccati, senza personaggio, visti di fronte, in due righe da tre, ben separati fra loro e ognuno chiuso tutto intorno dal contorno nero:
-1) TESTA: un pentolino di ferro ammaccato usato come elmo, con due buchi per far passare le corna;
-2) BUSTO: un grembiule di cuoio bruciacchiato con una toppa cucita, legato con una corda;
-3) MANI: due guantoni da forno di cuoio spesso, troppo grandi;
-4) PIEDI: due zoccoli di ferro grezzo legati con lo spago;
-5) CODA: un ditale di ferro infilato sulla punta della coda come puntale, con un pezzetto di coda dentro;
-6) SCHIENA: un paio di piccole ali fatte di tela da sacco cucita su un telaio di bacchette, con le cuciture in vista.
+Six separate pieces, no character, front view, in two rows of three, well apart from each other, each one fully enclosed by the black outline:
+1) HEAD: a dented little iron saucepan used as a helmet, with two holes for the horns to poke through;
+2) TORSO: a scorched leather apron with a sewn-on patch, tied with a rope;
+3) HANDS: two thick leather oven mitts, too big;
+4) FEET: two rough iron clogs tied on with string;
+5) TAIL: an iron thimble used as a tip cover on the end of the tail, with a short piece of tail inside it;
+6) BACK: a pair of small wings made of sackcloth sewn onto a frame of sticks, with visible stitching.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre. Materiali leggibili: ferro grigio-azzurro scuro, cuoio bruno, tela beige, spago. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C. Sfondo piatto color pergamena chiara #F5EBD3, senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Materials must read clearly: dark blue-grey iron, brown leather, beige canvas, string.
+
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `5_equip_livelli`
 
 ```
-Disegna il protagonista di un videogioco a cartoni ambientato nell'Inferno di Dante: un diavoletto apprendista fabbro, piccolo e tozzo, testa grande, pelle rosso mattone con pancia e muso color pergamena, due corna corte color osso, occhi grandi e gialli, una piccola fiammella arancione sopra la testa, coda sottile con la punta a freccia, fazzoletto azzurro annodato al collo.
+Draw the hero of a cartoon video game set in Dante's Inferno: a small blacksmith-apprentice imp, short and stocky, big head, brick-red skin with parchment-colored belly and muzzle, two short bone-colored horns, big yellow eyes, a small orange flame burning on top of his head between the horns, a thin tail with an arrowhead tip, a light-blue neckerchief knotted around his neck.
 
-Disegnalo QUATTRO volte, in fila da sinistra a destra, di fronte, tutte della stessa grandezza e ben separate, sempre con la stessa posa fiera. Indossa lo stesso set di sei pezzi (elmo, corazza sul busto, guanti, stivali, puntale della coda, ali sulla schiena), che diventa più bello a ogni passo. La forma di ogni pezzo resta riconoscibile da una figura all'altra: cambiano materiale e dettagli.
-1) ROTTAMI: pentolino ammaccato come elmo, grembiule di cuoio bruciacchiato, guantoni da forno, zoccoli di ferro legati con lo spago, ditale sulla coda, alette di tela da sacco.
-2) FERRO BATTUTO: gli stessi pezzi rifatti bene in ferro scuro con rivetti e bordi di ottone; l'elmo ha due anelli per le corna; le ali hanno un telaio di ferro.
-3) BRACE: lo stesso ferro con le giunture e i bordi che brillano di brace arancione, piccole fiamme che escono dalle spalle e dalla punta della coda; le ali sono di cuoio con nervature roventi.
-4) GLORIA: gli stessi pezzi in ferro nero e oro, con incisioni a spirale e una gemma di fuoco sul petto; l'elmo ha una cresta di fiamme; le ali sono grandi e piene di fiamma.
-Il fazzoletto azzurro resta sempre visibile al collo. La faccia resta sempre scoperta.
+Draw him FOUR times, in a row from left to right, front view, all the same size and well separated, always in the same proud pose. He wears the same set of six pieces (helmet, chest armor, gloves, boots, tail tip, wings on his back), which gets better at each step. The shape of every piece stays recognizable from one figure to the next: only the material and the details change.
+1) SCRAP: a dented saucepan as a helmet, a scorched leather apron, oven mitts, iron clogs tied with string, a thimble on the tail, little sackcloth wings.
+2) WROUGHT IRON: the same pieces remade properly in dark iron with rivets and brass trim; the helmet has two rings for the horns; the wings have an iron frame.
+3) EMBER: the same iron with joints and edges glowing ember orange, small flames rising from the shoulders and the tail tip; the wings are leather with red-hot ribs.
+4) GLORY: the same pieces in black iron and gold, with spiral engravings and a fire gem on the chest; the helmet has a crest of flames; the wings are large and full of flame.
+The light-blue neckerchief is always visible at the neck. The face is always uncovered.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `6_equip_gironi`
 
 ```
-Disegna un foglio di otto pezzi di equipaggiamento per un diavoletto piccolo e tozzo (testa grande con due corna corte, coda sottile con la punta a freccia), protagonista di un videogioco a cartoni ambientato nell'Inferno di Dante. Ogni pezzo è un trofeo: il Fabbro lo forgia con quello che il diavoletto si porta via dal guardiano di un girone. Tono buffo, mai macabro.
+Draw a sheet of eight equipment pieces for a small, stocky imp (big head with two short horns, thin tail with an arrowhead tip), the hero of a cartoon video game set in Dante's Inferno. Each piece is a trophy: the Blacksmith forges it from what the imp takes away from the guardian of one circle of Hell. Funny tone, never macabre.
 
-Otto pezzi staccati, senza personaggio, visti di fronte, in due righe da quattro, ben separati fra loro e ognuno chiuso tutto intorno dal contorno nero:
-1) ELMO DI CERBERO: un elmo di cuoio scuro con tre musetti di cane sul davanti, orecchie a punta e un collare borchiato come bordo;
-2) CORAZZA DI PLUTONE: una corazza fatta di monete d'oro sovrapposte come squame, con un bottone a forma di sacchetto di monete;
-3) PUNTALE DI MINOSSE: un puntale per la coda a forma di spirale di coda di serpente arrotolata, verde scuro e oro;
-4) ALI DELLE ARPIE: due ali di penne grigio-viola, scompigliate, con artigli piccoli sulle punte;
-5) ZOCCOLI DEL MINOTAURO: due stivali pesanti a forma di zoccolo di toro, ferro e pelo marrone;
-6) MANOPOLE DI DITE: due guanti di ferro rosso rovente con le nocche che fumano;
-7) MANTELLO DI PECE: un mantello corto nero lucido e appiccicoso che cola in gocce, col cappuccio a due punte come le corna dei Malebranche;
-8) CORONA DEL COCITO: una corona di ghiaccio azzurro chiaro con punte di cristallo e due anelli per le corna.
+Eight separate pieces, no character, front view, in two rows of four, well apart from each other, each one fully enclosed by the black outline:
+1) CERBERUS HELMET: a dark leather helmet with three little dog snouts on the front, pointed ears, and a studded collar as its rim;
+2) PLUTUS ARMOR: a chest armor made of overlapping gold coins like scales, with a button shaped like a little money bag;
+3) MINOS TAIL TIP: a tail tip shaped like a coiled serpent's tail, dark green and gold;
+4) HARPY WINGS: two ruffled grey-violet feathered wings with small claws at the tips;
+5) MINOTAUR HOOVES: two heavy boots shaped like bull hooves, iron and brown fur;
+6) GAUNTLETS OF DIS: two red-hot iron gloves with smoking knuckles;
+7) PITCH CLOAK: a short glossy black sticky cloak dripping in drops, with a hood with two points like the horns of the Malebranche devils;
+8) COCYTUS CROWN: a crown of pale blue ice with crystal spikes and two rings for the horns.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre. Ogni pezzo ha il colore del suo girone ma tutti stanno insieme. Palette di base: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C, ghiaccio #BFE9FF. Sfondo piatto color pergamena chiara #F5EBD3, senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Each piece has the color of its circle, but they all belong together.
+
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C, ice blue #BFE9FF. Flat light parchment background #F5EBD3, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `7_equip_misto`
 
 ```
-Disegna il protagonista di un videogioco a cartoni ambientato nell'Inferno di Dante: un diavoletto apprendista fabbro, piccolo e tozzo, testa grande, pelle rosso mattone con pancia e muso color pergamena, due corna corte color osso, occhi grandi e gialli, una piccola fiammella arancione sopra la testa, coda sottile con la punta a freccia, fazzoletto azzurro annodato al collo.
+Draw the hero of a cartoon video game set in Dante's Inferno: a small blacksmith-apprentice imp, short and stocky, big head, brick-red skin with parchment-colored belly and muzzle, two short bone-colored horns, big yellow eyes, a small orange flame burning on top of his head between the horns, a thin tail with an arrowhead tip, a light-blue neckerchief knotted around his neck.
 
-Disegnalo TRE volte, in fila da sinistra a destra, tutte della stessa grandezza e ben separate, per far vedere che i pezzi si mescolano liberamente:
-1) SENZA NIENTE: solo il fazzoletto azzurro, un po' imbarazzato, si copre la pancia con le mani.
-2) MESCOLATO: un pentolino ammaccato come elmo con le corna che escono dai buchi, una corazza di monete d'oro sovrapposte come squame, due guantoni da forno di cuoio, due stivali di ferro battuto con rivetti, niente ali, un ditale sulla punta della coda. Contento e un po' buffo.
-3) TUTTO DEI GIRONI: una corona di ghiaccio azzurro con punte di cristallo, un mantello corto nero di pece che cola, due guanti di ferro rosso rovente con le nocche che fumano, due stivali a zoccolo di toro, un puntale a spirale di coda di serpente, due ali di penne grigio-viola scompigliate. Fiero, in posa da eroe.
-La faccia resta sempre scoperta e il fazzoletto azzurro sempre visibile.
+Draw him THREE times, in a row from left to right, all the same size and well separated, to show that the pieces can be mixed freely:
+1) WITH NOTHING: only the light-blue neckerchief, a bit embarrassed, covering his belly with his hands.
+2) MIXED: a dented saucepan as a helmet with the horns poking through the holes, a chest armor of overlapping gold coins like scales, two leather oven mitts, two wrought-iron boots with rivets, no wings, a thimble on the tail tip. Happy and a bit goofy.
+3) ALL TROPHIES: a pale blue ice crown with crystal spikes, a short dripping black pitch cloak, two red-hot iron gauntlets with smoking knuckles, two bull-hoof boots, a coiled serpent-tail tip, two ruffled grey-violet feathered wings. Proud, in a hero pose.
+The face is always uncovered and the light-blue neckerchief always visible.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C, ghiaccio #BFE9FF. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C, ice blue #BFE9FF. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `8_fabbro_A`
 
 ```
-Disegna il FABBRO, un personaggio di un videogioco a cartoni ambientato nell'Inferno di Dante: il vecchio diavolo che manda avanti la Forgia dei diavoletti e fa da maestro agli apprendisti. Burbero fuori, buono dentro: è il loro primo avversario e poi la loro guida, come Virgilio per Dante.
+Draw THE BLACKSMITH, a character of a cartoon video game set in Dante's Inferno: the old devil who runs the little imps' Forge and teaches the apprentices. Gruff outside, kind inside: he is their first opponent and then their guide, like Virgil for Dante.
 
-Il personaggio: un diavolo anziano ENORME, alto quasi tre volte un diavoletto, spalle larghissime e braccia grosse come incudini, gambe corte e storte. Pelle rosso scuro segnata da cicatrici di scintille. Un corno intero e uno spezzato a metà. Barba lunga e folta grigio cenere, con qualche brace accesa che fuma fra i peli. Sopracciglia enormi, occhi piccoli e furbi, naso grosso. Grembiule di cuoio pesante pieno di bruciature e toppe, polsiere di ferro, occhialoni da fabbro alzati sulla fronte. Tiene in spalla un MAGLIO gigante, con la testa di ferro grande come un barile e il manico di legno fasciato di cuoio.
+The character: a HUGE old devil, almost three times as tall as a little imp, extremely broad shoulders and arms as thick as anvils, short bowed legs. Dark red skin marked by spark scars. One whole horn and one broken halfway. A long, bushy ash-grey beard with a few glowing embers smoking in it. Enormous eyebrows, small sly eyes, big nose. A heavy leather apron full of burns and patches, iron wristbands, blacksmith goggles pushed up on his forehead. On his shoulder he carries a giant MAUL, with an iron head as big as a barrel and a leather-wrapped wooden handle.
 
-Disegnalo tre volte, in fila da sinistra a destra, tutte della stessa grandezza e ben separate: 1) fermo, di fronte, col maglio in spalla, serio; 2) di tre quarti verso destra, mentre sbatte il maglio a terra (pronto a combattere); 3) di tre quarti verso sinistra, che ride con una mano sulla pancia, il maglio appoggiato a terra.
+Draw him three times, in a row from left to right, all the same size and well separated: 1) standing still, front view, maul on his shoulder, serious; 2) three-quarter view facing right, slamming the maul on the ground (ready to fight); 3) three-quarter view facing left, laughing with a hand on his belly, the maul resting on the ground.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre, come le vecchie incisioni della Divina Commedia ma in versione cartone. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `9_fabbro_B`
 
 ```
-Disegna il FABBRO, un personaggio di un videogioco a cartoni ambientato nell'Inferno di Dante: il vecchio diavolo che manda avanti la Forgia dei diavoletti e fa da maestro agli apprendisti. Burbero fuori, buono dentro: è il loro primo avversario e poi la loro guida, come Virgilio per Dante. Il suo fuoco è la sua vita: per questo, quando arriva al lago di ghiaccio, non può andare oltre.
+Draw THE BLACKSMITH, a character of a cartoon video game set in Dante's Inferno: the old devil who runs the little imps' Forge and teaches the apprentices. Gruff outside, kind inside: he is their first opponent and then their guide, like Virgil for Dante. His fire is his life: that is why, when he reaches the frozen lake, he cannot go any further.
 
-Il personaggio: un diavolo anziano ENORME, alto quasi tre volte un diavoletto, a forma di stufa: il busto è una FORNACE di ferro nero con un portello a grata sulla pancia, dentro il quale arde un fuoco arancione vivo; dalla schiena esce un corto camino che fuma. Braccia grosse di pelle rosso scuro, con le mani enormi annerite. Gambe corte e robuste. Testa piccola rispetto al corpo, con due corna lunghe piegate all'indietro, baffoni grigi a manubrio, sopracciglia folte, occhi piccoli e gentili. Grembiule di cuoio sotto la fornace, polsiere di ferro. Tiene in spalla un MAGLIO gigante, con la testa di ferro grande come un barile e il manico di legno fasciato di cuoio.
+The character: a HUGE old devil, almost three times as tall as a little imp, shaped like a stove: his torso is a black iron FURNACE with a grated hatch on the belly, inside which a bright orange fire burns; a short chimney on his back puffs smoke. Thick dark-red arms, with huge soot-blackened hands. Short, sturdy legs. A head that is small compared to the body, with two long horns swept back, grey handlebar mustache, bushy eyebrows, small kind eyes. A leather apron under the furnace, iron wristbands. On his shoulder he carries a giant MAUL, with an iron head as big as a barrel and a leather-wrapped wooden handle.
 
-Disegnalo tre volte, in fila da sinistra a destra, tutte della stessa grandezza e ben separate: 1) fermo, di fronte, col maglio in spalla, il fuoco della pancia ben acceso; 2) di tre quarti verso destra, mentre sbatte il maglio a terra (pronto a combattere), le fiamme escono dalla grata; 3) di fronte, fermo su un bordo di ghiaccio azzurro, la brina sui baffi e il fuoco della pancia quasi spento, triste ma deciso.
+Draw him three times, in a row from left to right, all the same size and well separated: 1) standing still, front view, maul on his shoulder, the belly fire burning bright; 2) three-quarter view facing right, slamming the maul on the ground (ready to fight), flames bursting out of the grate; 3) front view, standing on an edge of pale blue ice, frost on his mustache and the belly fire almost out, sad but determined.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre, come le vecchie incisioni della Divina Commedia ma in versione cartone. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C, ghiaccio #BFE9FF. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra (solo il bordo di ghiaccio sotto la terza figura). Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C, ice blue #BFE9FF. Flat light parchment background #F5EBD3, no scenery and no ground shadows (only the ice edge under the third figure). No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `10_favilla_A`
 
 ```
-Immagine 1 è il disegno di Favilla fatto da Sergio, in bianco e nero: prendi da lì SOLO l'idea della testa (una fiamma nera arricciata in cima, con gli occhioni) e dell'abito (vestito scuro con la gonna chiara, guanti chiari). Non copiare lo stile in bianco e nero.
+Image 1 is Sergio's black-and-white drawing of Favilla: take from it ONLY the idea of the head (a black flame curled at the top, with big eyes) and of the outfit (dark dress with a light skirt, light gloves). Do not copy the black-and-white style.
 
-Disegna FAVILLA, un personaggio di un videogioco a cartoni ambientato nell'Inferno di Dante: una diavoletta apprendista nella Forgia dei diavoli, l'amica d'infanzia del protagonista. La sua fiamma è la più calda di tutto l'inferno. È coraggiosa, allegra e sveglia.
+Draw FAVILLA, a character of a cartoon video game set in Dante's Inferno: a little she-imp, an apprentice in the devils' Forge, the hero's childhood friend. Her flame is the hottest in all of Hell. She is brave, cheerful and clever.
 
-Il personaggio: piccola come un diavoletto, testa grande (circa un terzo dell'altezza). La testa è una goccia di fiamma scura, nero-bruno con il bordo che brilla di brace arancione, con un ricciolo di fiamma arricciato in cima. Occhi enormi e luminosi con le ciglia, guance color brace. Due cornini corti. Vestitino scuro con la gonna color pergamena, guanti color pergamena, scarpette scure. Coda sottile con la punta a cuore.
+The character: as small as a little imp, big head (about one third of her height). Her head is a teardrop of dark flame, black-brown with an edge glowing ember orange, with a curl of flame twisted at the top. Huge bright eyes with eyelashes, ember-colored cheeks. Two short little horns. A dark little dress with a parchment-colored skirt, parchment-colored gloves, dark little shoes. A thin tail with a heart-shaped tip.
 
-Disegnala tre volte, in fila da sinistra a destra, tutte della stessa grandezza e ben separate: 1) ferma, di fronte, che saluta con la mano; 2) di tre quarti verso destra, mentre corre; 3) di fronte, arrabbiata, con il ricciolo di fiamma che si alza più alto e più luminoso.
+Draw her three times, in a row from left to right, all the same size and well separated: 1) standing still, front view, waving her hand; 2) three-quarter view facing right, running; 3) front view, angry, with the flame curl rising higher and brighter.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `11_favilla_B`
 
 ```
-Disegna FAVILLA, un personaggio di un videogioco a cartoni ambientato nell'Inferno di Dante: una diavoletta apprendista nella Forgia dei diavoli, l'amica d'infanzia del protagonista. La sua fiamma è la più calda di tutto l'inferno, e per questo NON è arancione come le altre: è bianca e azzurra, come il fuoco più caldo. È coraggiosa, allegra e sveglia.
+Draw FAVILLA, a character of a cartoon video game set in Dante's Inferno: a little she-imp, an apprentice in the devils' Forge, the hero's childhood friend. Her flame is the hottest in all of Hell, and that is why it is NOT orange like everyone else's: it is white and blue, like the hottest fire. She is brave, cheerful and clever.
 
-Il personaggio: piccola come un diavoletto, testa grande (circa un terzo dell'altezza), pelle rosso mattone con muso color pergamena, due cornini corti. Al posto dei capelli una grande FIAMMA VIVA che parte dalla fronte e sale come una coda di cavallo: bianca al centro, azzurro chiaro ai bordi, con poche punte dorate. Occhi grandi e gialli con le ciglia, un sorriso sicuro. Una tuta da apprendista di tela color pergamena con le maniche arrotolate, un grembiulino di cuoio, stivaletti bruni. Coda sottile con la punta a cuore.
+The character: as small as a little imp, big head (about one third of her height), brick-red skin with a parchment-colored muzzle, two short little horns. Instead of hair, a big LIVING FLAME that starts at her forehead and rises like a ponytail: white in the center, pale blue at the edges, with a few golden tips. Big yellow eyes with eyelashes, a confident smile. A parchment-colored canvas apprentice jumpsuit with rolled-up sleeves, a small leather apron, little brown boots. A thin tail with a heart-shaped tip.
 
-Disegnala tre volte, in fila da sinistra a destra, tutte della stessa grandezza e ben separate: 1) ferma, di fronte, con le mani sui fianchi; 2) di tre quarti verso destra, mentre corre, con la fiamma che svolazza dietro; 3) di fronte, che tiene una piccola sfera di fuoco bianco-azzurro sul palmo della mano e la guarda.
+Draw her three times, in a row from left to right, all the same size and well separated: 1) standing still, front view, hands on hips; 2) three-quarter view facing right, running, with the flame streaming behind her; 3) front view, holding a small ball of white-blue fire on her palm and looking at it.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre. Palette calda: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C, e per la sua fiamma bianco #FFFFFF e azzurro #BFE9FF. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C, and for her flame white #FFFFFF and pale blue #BFE9FF. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `12_favilla_stati`
 
 ```
-Disegna FAVILLA, un personaggio di un videogioco a cartoni ambientato nell'Inferno di Dante: una diavoletta piccola, testa grande, pelle rosso mattone con muso color pergamena, due cornini corti, occhi grandi e gialli con le ciglia, tuta da apprendista color pergamena con le maniche arrotolate, grembiulino di cuoio, stivaletti bruni, coda sottile con la punta a cuore. Al posto dei capelli ha una FIAMMA VIVA bianca e azzurra, il fuoco più caldo dell'inferno.
+Draw FAVILLA, a character of a cartoon video game set in Dante's Inferno: a little she-imp, big head, brick-red skin with a parchment-colored muzzle, two short little horns, big yellow eyes with eyelashes, a parchment-colored apprentice jumpsuit with rolled-up sleeves, a small leather apron, little brown boots, a thin tail with a heart-shaped tip. Instead of hair she has a white and blue LIVING FLAME, the hottest fire in Hell.
 
-Racconta la sua storia in TRE figure, in fila da sinistra a destra, tutte della stessa grandezza e ben separate, di fronte:
-1) PIENA: la fiamma bianca e azzurra è grande, alta e luminosa; lei ride.
-2) RUBATA: è chiusa in una gabbia rotonda di ghiaccio azzurro; la sua fiamma viene tirata via verso l'alto in un lungo filo bianco-azzurro che esce dalle sbarre; la fiamma sulla testa è piccola, lei è stanca ma pugni stretti, ancora testarda.
-3) SCINTILLA: libera, senza gabbia, ma sulla testa le resta solo una scintilla arancione piccolissima; è triste ma sorride, con una mano che protegge la scintilla.
+Tell her story in THREE figures, in a row from left to right, all the same size and well separated, front view:
+1) FULL: the white-blue flame is big, tall and bright; she is laughing.
+2) STOLEN: she is locked in a round cage of pale blue ice; her flame is being pulled upward in a long white-blue thread coming out between the bars; the flame on her head is small; she is tired but has her fists clenched, still stubborn.
+3) SPARK: free, no cage, but only a tiny orange spark is left on her head; she is sad but smiling, one hand shielding the spark.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre. Tono tenero, mai cupo o spaventoso. Palette: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C, ghiaccio #BFE9FF, e per la sua fiamma bianco #FFFFFF e azzurro #BFE9FF. Sfondo piatto color pergamena chiara #F5EBD3, senza scenario e senza ombre a terra. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Tender tone, never dark or scary.
+
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C, ice blue #BFE9FF, and for her flame white #FFFFFF and pale blue #BFE9FF. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ### `13_trio`
 
 ```
-Disegna la copertina di un videogioco a cartoni ambientato nell'Inferno di Dante: i tre personaggi principali insieme nella Forgia dei diavoli, prima che inizi l'avventura. Tono buffo e affettuoso.
+Draw the cover of a cartoon video game set in Dante's Inferno: the three main characters together in the devils' Forge, before the adventure begins. Funny, affectionate tone.
 
-A sinistra il FABBRO: un diavolo anziano enorme, alto quasi tre volte gli altri due, a forma di stufa: il busto è una fornace di ferro nero con un portello a grata sulla pancia dove arde un fuoco arancione; corto camino che fuma dalla schiena; braccia grosse rosso scuro; testa piccola con due corna lunghe piegate all'indietro, baffoni grigi a manubrio; grembiule di cuoio; un maglio gigante appoggiato a terra. Sorride sotto i baffi, con le braccia incrociate.
-Al centro il PROTAGONISTA: un diavoletto apprendista piccolo e tozzo, testa grande, pelle rosso mattone con pancia e muso color pergamena, due corna corte color osso, occhi grandi e gialli, una piccola fiammella arancione sopra la testa, coda sottile con la punta a freccia, fazzoletto azzurro annodato al collo, nient'altro addosso. Tiene un martello da fabbro più grande della sua testa, ghigno furbo.
-A destra FAVILLA: una diavoletta piccola come lui, pelle rosso mattone con muso color pergamena, due cornini corti, occhi grandi e gialli con le ciglia, una grande fiamma viva bianca e azzurra al posto dei capelli, tuta da apprendista color pergamena con le maniche arrotolate, grembiulino di cuoio, coda con la punta a cuore. Gli dà una gomitata e ride.
+On the left THE BLACKSMITH: a huge old devil, almost three times as tall as the other two, shaped like a stove: his torso is a black iron furnace with a grated hatch on the belly where an orange fire burns; a short chimney puffing smoke from his back; thick dark-red arms; a small head with two long horns swept back, grey handlebar mustache; a leather apron; a giant maul resting on the ground. Smiling under his mustache, arms crossed.
+In the center THE HERO: a small blacksmith-apprentice imp, short and stocky, big head, brick-red skin with parchment-colored belly and muzzle, two short bone-colored horns, big yellow eyes, a small orange flame burning on top of his head between the horns, a thin tail with an arrowhead tip, a light-blue neckerchief knotted around his neck, nothing else on him. He holds a blacksmith's hammer bigger than his head, sly grin.
+On the right FAVILLA: a little she-imp as small as him, brick-red skin with a parchment-colored muzzle, two short little horns, big yellow eyes with eyelashes, a big white-and-blue living flame instead of hair, a parchment-colored apprentice jumpsuit with rolled-up sleeves, a small leather apron, a tail with a heart-shaped tip. She elbows him and laughs.
 
-Dietro di loro, semplice e più scuro dei personaggi, la Forgia: un'incudine, il bagliore arancione di una fornace, catene e attrezzi appesi, scintille. Lo sfondo deve essere scuro e spento, i personaggi chiari e netti: devono staccarsi molto dallo sfondo.
+Behind them, simple and darker than the characters, the Forge: an anvil, the orange glow of a furnace, hanging chains and tools, sparks. The background must be dark and muted, the characters bright and crisp: they must stand out strongly from the background.
 
-Stile: illustrazione da cartone animato per un videogioco, contorno nero spesso e chiuso, colori piatti e pieni con una sola ombra netta (cel shading) e pochi tratteggi da incisione antica nelle ombre, come le vecchie incisioni della Divina Commedia ma in versione cartone. Palette: rosso mattone #B8432A, pergamena #F1DFB0, brace #FF8A3D, oro #F2C45A, bruno bruciato #2A160C, e per la fiamma di Favilla bianco e azzurro #BFE9FF. Nessuna scritta, numero, etichetta, freccia o firma. Formato orizzontale 3:2.
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C, and for Favilla's flame white and pale blue #BFE9FF. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
 ```
 
 ## Criteri di accettazione
