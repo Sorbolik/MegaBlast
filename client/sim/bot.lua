@@ -422,18 +422,19 @@ local function valore(b, g, w, fase)
 			-- il riparo: quanto vale la posizione a fine turno (pesi.rete)
 			s = s + rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR, 0)) * 100
 		else
-			-- gli attacchi: solo le finaliste (b.finale), provate fino in fondo, e
-			-- con un'altra rete (pesi.attacco) allenata solo sui bivi, cioè su
-			-- quale fra due attacchi rendeva di più. La rete del riparo qui
-			-- sbagliava: fra due attacchi buoni la differenza si perdeva nel suo
-			-- giudizio di chi sta vincendo (1 novembre, a coppie su 240 partite:
-			-- 33% contro il bot di oggi, 50% senza). rete_attacco (0..1): quanto
-			-- conta, per misurarla
+			-- gli attacchi: un'altra rete (pesi.attacco) allenata solo sui bivi,
+			-- cioè su quale fra le due finaliste migliori rendeva di più, e solo lì
+			-- decide (b.att, pensa). La rete del riparo negli attacchi sbagliava: fra
+			-- due attacchi buoni la differenza si perdeva nel suo giudizio di chi
+			-- sta vincendo (1 novembre, a coppie su 240 partite: 33% contro il bot
+			-- di oggi, 50% senza); e la rete dei bivi su tutte le finaliste faceva
+			-- 39%, perché delle altre non ha mai visto niente. rete_attacco (0..1):
+			-- quanto conta, per misurarla
 			local att = b.finale and b.pesi.attacco
 			local registra = b.finale and b.registro
 			if att or registra then
 				local x = caratteristiche(b, g, w, CAR, 1)
-				if att then s = s + (b.pesi.rete_attacco or 1) * rete.valuta(att, x) * 100 end
+				if att then b.att = (b.pesi.rete_attacco or 1) * rete.valuta(att, x) * 100 end
 				-- per impara.py: quello che il bot ha visto di questa finalista
 				if registra then b.visto = copia(x) end
 			end
@@ -941,14 +942,14 @@ local function pensa(b, g)
 	b.finale = true
 	for i = 1, finaliste do
 		local m = mosse[i]
-		b.visto = nil
+		b.visto, b.att = nil, nil
 		if m.arma ~= "hook" then
 			m.punti = gusto(b, m.arma, prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto")) - (m.posto.n or 0) * b.pesi.strada
 		elseif b.pesi.rete then
 			-- anche il Rampino col giudizio della rete, come le altre finaliste
 			m.punti = prova_rampino(b, g, m.posto, m.angolo, m.chi, lista)
 		end
-		m.visto = b.visto
+		m.visto, m.att = b.visto, b.att
 	end
 	b.finale = false
 	-- col ventaglio (e con la rete, che giudica solo le finaliste) si sceglie
@@ -963,6 +964,11 @@ local function pensa(b, g)
 		mosse = tenute
 	end
 	table.sort(mosse, prima)
+	-- la rete dei bivi sceglie fra le due migliori (solo lì ha imparato)
+	local m1, m2 = mosse[1], mosse[2]
+	if m2 and m1.att and m2.att and m2.punti + m2.att > m1.punti + m1.att then
+		mosse[1], mosse[2] = m2, m1
+	end
 	b.scelta = mosse[1]
 
 	-- se a piedi non c'è niente di buono, il teletrasporto verso un posto migliore
