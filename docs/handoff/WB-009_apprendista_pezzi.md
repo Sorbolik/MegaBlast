@@ -77,9 +77,9 @@ Pochi colori piatti, così il ricalco in SVG è pulito e ogni colore diventa uno
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-008/1_protagonista_A.png` | l'apprendista scelto (concept): la figura in mezzo è di tre quarti |
-| R2 | `art/WB-001/riferimenti/R2_stampino_ai.png` | lo stampino: dove sta ogni pezzo (3072×2048) |
-| R3 | `art/WB-001/riferimenti/R3_manichino.png` | come si attaccano i pezzi |
+| R1 | `art/WB-009/riferimenti/R1_apprendista_concept.png` | l'apprendista scelto (concept): la figura in mezzo è di tre quarti |
+| R2 | `art/WB-009/riferimenti/R2_stampino_ai.png` | lo stampino di oggi (12 posti, rifatto con `stampino.py` il 1 nov): dove sta ogni pezzo (3072×2048) |
+| R3 | `art/WB-009/riferimenti/R3_manichino.png` | come si attaccano i pezzi |
 | R4 | `art/WB-009/scelti/tre_quarti.png` | il tre quarti scelto in fase 1 (c'è solo dopo la fase 1) |
 | R5 | `art/WB-009/scelti/espressioni.png` | le espressioni scelte in fase 1 (c'è solo dopo la fase 1) |
 
@@ -153,16 +153,16 @@ Rendering rules, very strict, because these drawings will be traced into vector 
 ```
 Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right. It is the EXACT model: copy his shapes, proportions, colors and flat style; do not reinterpret him. Image 4 is his approved expression sheet.
 
-Image 2 is a layout sheet: 14 grey placeholder parts on a flat magenta #FF00FF background, in three rows. Use image 2 ONLY to know where each part goes on the sheet, roughly how big it is and where it attaches. Do NOT copy the grey parts' shapes, faces, visor, horns, wing, belt or flat grey style. Image 3 shows how the grey parts attach to each other.
+Image 2 is a layout sheet: 12 grey placeholder parts on a flat magenta #FF00FF background, in three rows. Use image 2 ONLY to know where each part goes on the sheet, roughly how big it is and where it attaches. Do NOT copy the grey parts' shapes, faces, visor, horns, wing, belt or flat grey style. Image 3 shows how the grey parts attach to each other.
 
 Make the PARTS SHEET of the imp of image 1, cut apart like a paper puppet: same canvas as image 2, same flat magenta #FF00FF background, each part placed over its grey placeholder and about the same size. Nothing else may remain on the sheet: no grey placeholders, no labels, no text, no numbers, no shadows on the magenta. Every part is drawn as it looks in image 1 (three-quarter view facing right), COMPLETE even where other parts would hide it, and well separated from the other parts (no part touches another).
 
-OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends, where it slides under or over another part. At a joint end the black outline gets gradually thinner as it approaches the end and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the bottom of each neck stub; the neck opening and the two shoulders of the torso; the top of each arm (shoulder end); the top of each leg (hip end); both ends of the upper arm and both ends of the forearm; the root of the tail (the end attached to the body). Everywhere else the outline stays thick and even.
+OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends, where it slides under or over another part. At a joint end the black outline gets gradually thinner as it approaches the end and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the bottom of each neck stub; the neck opening and the two shoulders of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail (the end attached to the body). Everywhere else the outline stays thick and even.
 
 The parts, left to right:
 Row 1: four heads of the imp of image 1, facing right, each with a short neck stub at the bottom, the head outline, horns and ears IDENTICAL in all four, no flame on top: head 1 = expression 1 of image 4 (sly grin); head 2 = expression 2 (hit, eyes squeezed shut > <, jagged open mouth); head 3 = expression 3 (victory, happy closed eyes, big laughing mouth); head 4 = expression 4 (knocked out, spiral pupils, wavy mouth).
 Row 2: the torso alone (no head, no arms, no legs): chest and round belly with the parchment-colored belly patch, with the neckerchief knotted around the neck painted in pure bright green #00FF00 shaded only with #00B400, round full shoulders and a round closed bottom; then NOTHING where the grey wing is (leave that spot empty magenta: he has no wings); then the WHOLE TAIL in one piece, following the curve of the grey tail: one smooth continuous tube, thick at the root and thinner towards the tip, ending in its arrowhead tip, with no breaks, seams or joints along it.
-Row 3: the near arm and the far arm, each a straight arm hanging down from a round shoulder end and ending in an OPEN relaxed four-fingered hand, palm towards us; the near leg and the far leg, each a straight leg, round at the hip end, ending in a bare three-toed foot pointing right; the upper arm and the forearm, two short straight pieces of the arm with fully rounded, filled ends at both sides so they can overlap at the elbow and shoulder without a visible joint; one closed fist.
+Row 3: the near arm and the far arm, each a straight arm hanging down from a round shoulder end and ending in an OPEN relaxed four-fingered hand, palm towards us; the near leg and the far leg, each a straight leg, round at the hip end, ending in a bare three-toed foot pointing right; one closed four-fingered fist (a small round piece, outlined all around).
 
 Rendering rules, very strict, because these parts will be traced into vector shapes:
 - FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
@@ -196,7 +196,7 @@ Rendering rules, very strict, because these heads will be traced into vector sha
 - [ ] nessuna fiammella sulla testa, nessuna ala, nessun vestito oltre al fazzoletto
 - [ ] il verde `#00FF00` solo sul fazzoletto
 - [ ] tre quarti verso destra in tutte le immagini; nelle teste la sagoma è identica, cambia solo l'espressione
-- [ ] fase 2: 13 pezzi sopra i posti di R2 (posto dell'ala vuoto), nessun manichino grigio rimasto, sfondo magenta pieno senza aloni
+- [ ] fase 2: 11 pezzi sopra i 12 posti di R2 (posto dell'ala vuoto), nessun manichino grigio rimasto, sfondo magenta pieno senza aloni
 - [ ] coda intera, liscia, più spessa alla radice, punta a freccia in fondo
 - [ ] nessuna scritta, numero o firma
 

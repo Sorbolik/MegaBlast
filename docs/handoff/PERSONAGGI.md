@@ -28,15 +28,16 @@ Claude non ridisegna mai un personaggio col proprio codice: si ricalca il disegn
   texture, tratteggi, bagliori. Serve al ricalco in SVG e a leggere il personaggio in piccolo.
 - **Tavolozza fissa** scritta nella scheda con i codici esadecimali, ripetuta in ogni prompt.
 - **Contorno nero `#000000` spesso e chiuso**, che **si assottiglia e sparisce alle estremità
-  delle giunture** (fondo del collo, collo e spalle del busto, cima di braccia e gambe, i due
-  capi di omero e avambraccio, radice della coda): lì il colore arriva fino al bordo, tondo e
+  delle giunture** (fondo del collo, collo e spalle del busto, cima di braccia e gambe, radice
+  della coda): lì il colore arriva fino al bordo, tondo e
   pieno, senza riga nera. Così sovrapposti non si vede la giuntura.
 - **Tre quarti verso destra** sempre: è la vista dello stampino e quella con cui si cammina.
 - **Colore della squadra** solo in verde `#00FF00` (ombra `#00B400`), su un solo dettaglio
   scelto per il personaggio (l'apprendista: il fazzoletto). Il verde non si usa per altro.
 - **Niente fiammella** nelle teste (la disegna il gioco) e **niente equipaggiamento** nel
   corpo base (vestiti, ali, elmi sono pezzi a parte).
-- **Stampino** (`art/WB-001/riferimenti/R2_stampino_ai.png` + `R3_manichino.png`) solo per
+- **Stampino** rifatto ogni volta con `python3 strumenti/stampino/stampino.py`
+  (`simulazione/stampino/stampino_ai.png` + `manichino.png`, copiati fra i riferimenti della scheda) solo per
   posizione e misura dei pezzi: il prompt dice di non copiarne le forme.
 - **Sfondo**: bianco pieno in fase 1, magenta pieno `#FF00FF` in fase 2.
 - **Le 9 espressioni**, sempre le stesse: furbo/normale, colpito, vittoria, stordito (le 4
