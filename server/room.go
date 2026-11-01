@@ -18,11 +18,11 @@ const (
 
 // Messaggio da un client:
 //
-//	{"t":"hello","v":7,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}
+//	{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}
 //	                                    primo messaggio: versione del protocollo, coda ("1v1",
 //	                                    "2v2", "ffa" o l'id di un evento con la sua coda, GET /eventi)
 //	                                    e cartellino (livello e badge, li vedono gli altri)
-//	{"t":"hello","v":7,"tok":"..."}    oppure: torno nella partita da cui sono caduto
+//	{"t":"hello","v":8,"tok":"..."}    oppure: torno nella partita da cui sono caduto
 //	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria e una secondaria
 //	                                    (l'arma dice la categoria; si cambia fino allo scadere)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}

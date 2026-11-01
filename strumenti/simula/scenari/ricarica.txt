@@ -1,0 +1,48 @@
+# Colpi della secondaria e Lama che ricarica (Sergio, 31 ottobre 2026): la
+# secondaria scelta (qui il Maglio, prova_secondaria mallet) ha i suoi colpi
+# (config.SECONDARY_SHOTS.draft), il numerino sullo slot; finiti, lo slot resta
+# spento ("MUNIZIONI ESAURITE"). Ogni colpo di Lama su un nemico ne ridà uno:
+# la targa dice "+1 MAGLIO". Il secondo robot parte 60 px a destra, a terra,
+# e tutti hanno 400 di vita, così il bersaglio resta lì.
+# Barra: Lanciarune 432, Lama 546, Maglio 660.
+imposta prova_secondaria mallet
+imposta prova_vicino 60
+imposta prova_vita 400
+imposta zoom 1
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+foto 01_maglio_due_colpi
+premi 3                             # Maglio
+aspetta 0.3
+mira 120 0 0.1
+aspetta_evento mallet_hit 2
+aspetta 2
+foto 02_maglio_un_colpo
+# di nuovo Rosso (turno = chi gioca): il secondo colpo di Maglio, poi lo slot si spegne
+aspetta_stato turno=2 fase=aim 60
+aspetta_stato turno=1 fase=aim 60
+aspetta 0.5
+premi 3
+aspetta 0.3
+mira 120 0 0.1
+aspetta_evento mallet 2
+aspetta 1.5
+foto 03_maglio_finito
+# di nuovo Rosso: la Lama sul nemico ridà un colpo di Maglio
+aspetta_stato turno=2 fase=aim 60
+aspetta_stato turno=1 fase=aim 60
+aspetta 0.5
+premi 3                             # Maglio spento: avviso, non parte
+aspetta 0.2
+foto 04_maglio_esaurito
+premi 2                             # Lama
+aspetta 0.3
+mira 120 0 0.1
+aspetta_evento sword_hit 2
+aspetta 0.3
+foto 05_ricarica
+aspetta 1
+foto 06_maglio_ricaricato
