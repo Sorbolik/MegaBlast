@@ -6,64 +6,54 @@
 
 ## Obiettivo
 
-Favilla è l'amica rapita da Lucifero nella campagna dei gironi. Sergio l'ha disegnata (R1):
-corpo e vestiti come la femmina, ma la testa è una **fiamma** nera a goccia con il ricciolo
-in cima. Servono le sue espressioni, comprese quelle della storia (spaventata, chiede aiuto,
-sollevata quando la salvano). Sfondo bianco, non trasparente (sono prove).
+Favilla è l'amica rapita da Lucifero nella campagna dei gironi, disegnata da Sergio (R1).
+Il suo foglio di espressioni deve avere le **stesse identiche espressioni** del maschio
+approvato (R2). Cambiano solo la forma della testa (fiamma col ricciolo invece della stella)
+e le ciglia. Sfondo bianco, non trasparente (sono prove).
+
+Versione 2 della scheda (Sergio, 2026-11-01 12:10): la prima chiedeva espressioni nuove per
+la storia, ora si copiano quelle del maschio.
 
 ## Riferimenti da allegare
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-005/riferimenti/R1_favilla.png` | Favilla disegnata da Sergio: **il** modello |
-| R2 | `art/WB-002/riferimenti/R2_arrabbiato.png` | il maschio arrabbiato (come si fanno le sopracciglia bianche) |
-| R3 | `art/WB-003/ghigno_scelto.png` | il ghigno furbo approvato del maschio |
+| R1 | `art/WB-005/riferimenti/R1_favilla.png` | Favilla disegnata da Sergio: com'è fatta |
+| R2 | `art/WB-002/espressioni.png` | il foglio di espressioni del maschio **approvato**: da copiare |
 
 ## Immagini da generare
 
-Ogni prompt è completo e va usato così com'è.
+Ogni prompt è completo e va usato così com'è. Allega R1 e R2 in quest'ordine.
 
 | Nome file | Riferimenti | Misura | Varianti |
 |---|---|---|---|
-| `espressioni_favilla` | R1, R2, R3 | 1024×1024 | 1 |
+| `espressioni_favilla` | R1, R2 | 1024×1024 | 1 |
 
 ### `espressioni_favilla`
 
-Archivio prompt: P-004 v1.
+Archivio prompt: P-004 v2.
 
 ```
-Ti allego tre immagini: la prima è il mio personaggio originale Favilla, ed è il riferimento ESATTO di stile e di forme (non reinterpretarla); la seconda e la terza sono un altro personaggio della stessa serie, arrabbiato e con il ghigno furbo, solo per mostrarti come si fanno sopracciglia e palpebre.
+Ti allego due immagini:
+1. il mio personaggio FAVILLA originale
+2. il foglio di espressioni di un altro personaggio della stessa serie, già approvato: 9 teste in una griglia 3x3
 
-Disegna un foglio di espressioni di FAVILLA: 9 teste in una griglia 3x3, su sfondo bianco puro, ogni testa ben separata dalle altre, tutte della stessa grandezza e nella stessa angolazione del mio disegno.
+Rifai lo STESSO IDENTICO foglio di espressioni della seconda immagine, nella stessa griglia 3x3, nello stesso ordine, con gli stessi nomi sotto ogni testa (al femminile: arrabbiata, sorpresa, concentrata, colpita, stordita, sconfitta), ma con la testa di FAVILLA.
 
-La sua testa, da rispettare alla lettera:
-- testa nera piena a forma di fiamma: una goccia tonda in basso che sale in una punta curva arricciata verso sinistra in cima, con la curva bianca interna del ricciolo come nel mio disegno
-- due occhi enormi ovali bianchi con contorno nero spesso, che si toccano e si sovrappongono un po' al centro; pupille nere ovali
-- ciglia: tre ciglia bianche sottili e corte sul lato esterno di ogni occhio; restano in tutte le espressioni
-- bocca piccola sotto la testa, come nel mio disegno
-- stile: bianco e nero puro, nero pieno e bianco pieno, contorni neri spessi e regolari, nessuna sfumatura, nessun grigio, nessun colore, nessuna texture. Cartone animato anni '30 "rubber hose", pulito
+Ogni espressione deve essere identica a quella della stessa casella: stessi occhi, stessa posizione e forma delle pupille, stesse palpebre, stesse sopracciglia bianche, stessa bocca, stessa grandezza e angolazione.
 
-Le espressioni cambiano con: forma e posizione delle pupille, palpebre (taglio nero sopra o sotto l'occhio bianco), sopracciglia bianche sottili, forma della bocca. La punta della fiamma può piegarsi un poco per accompagnare l'emozione (dritta e alta quando è felice, afflosciata quando è triste, tremolante quando ha paura), ma resta sempre la stessa forma.
+Cambiano SOLO due cose, esattamente come nella prima immagine:
+- la forma della testa: non è una stella a punte ma una fiamma nera a goccia, tonda in basso, che sale in una punta curva arricciata verso sinistra in cima, con la curva bianca interna del ricciolo
+- le ciglia: tre ciglia bianche sottili e corte sul lato esterno di ogni occhio, in tutte e 9 le teste; se l'occhio è chiuso o socchiuso restano sul bordo esterno della palpebra
 
-Le 9 espressioni (scrivi il nome sotto ciascuna in piccolo):
-1. felice (come il mio disegno)
-2. spaventata (pupille piccolissime, sopracciglia alzate al centro, bocca aperta tremolante, punta della fiamma tremolante)
-3. chiede aiuto, grida (occhi spalancati verso l'alto, bocca grande aperta, punta della fiamma tesa in alto)
-4. piange (occhi chiusi a mezzaluna all'ingiù con due lacrime bianche, bocca all'ingiù)
-5. arrabbiata (sopracciglia bianche inclinate verso il centro, bocca piatta, come l'altro personaggio arrabbiato)
-6. sollevata, salvata (occhi chiusi a mezzaluna felici, sorriso dolce chiuso)
-7. sorpresa (bocca piccola a "o", pupille al centro)
-8. ghigno furbo (come l'altro personaggio allegato: un occhio socchiuso, sopracciglio alzato sull'altro, sorriso storto)
-9. triste (pupille in basso, palpebre calate, bocca all'ingiù, punta della fiamma afflosciata)
-
-Non aggiungere naso, orecchie, capelli, fiocchi, trucco, denti, colori o altri dettagli che non ci sono nel mio disegno.
+Stile: bianco e nero puro, nero pieno e bianco pieno, contorni neri spessi e regolari, nessuna sfumatura, nessun grigio, nessun colore. Sfondo bianco puro. Non aggiungere fiocchi, trucco, capelli o altri dettagli.
 ```
 
 ## Criteri di accettazione
 
-- [ ] bianco e nero puro, contorni neri spessi, nessun grigio né colore, sfondo bianco
-- [ ] testa a fiamma col ricciolo e ciglia bianche uguali al disegno di Sergio in tutte e 9
-- [ ] spaventata, chiede aiuto e salvata si leggono subito (servono alla storia)
+- [ ] ogni casella ha la stessa espressione del foglio maschile approvato
+- [ ] cambiano solo testa a fiamma col ricciolo e ciglia bianche, in tutte e 9
+- [ ] bianco e nero puro, contorni neri spessi, sfondo bianco
 
 ---
 
