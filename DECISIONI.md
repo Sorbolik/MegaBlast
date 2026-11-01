@@ -18,3 +18,4 @@ Le più recenti in fondo.
 - 2026-10-28 · Le immagini le genera Codex (ChatGPT) dalle schede in `docs/handoff/` scritte da Claude, che resta il coordinatore: niente copia e incolla di prompt, consegna con commit sul ramo `design/WB-xxx` (regole in `AGENTS.md`).
 - 2026-11-01 · Prove del personaggio nuovo di Sergio (espressioni e versione femminile) nella scheda WB-002, su sfondo bianco perché sono solo prove (Claude).
 - 2026-11-01 · Personaggi nuovi di Sergio (maschio, femmina, Favilla): corpo 30% più piccolo rispetto ai disegni originali, testa uguale. Disegni ufficiali in `art/personaggi/`.
+- 2026-11-01 · Maschio, femmina e Favilla si animano come il diavoletto: pezzi disegnati sullo stampino del gioco (scheda WB-006), con le quattro teste felice, colpita, vittoria e stordita; ala e coda vuote. Il foglio a pezzi liberi (P-007) è scartato (Claude, su richiesta del thread delle animazioni dopo la bocciatura di Sergio).
