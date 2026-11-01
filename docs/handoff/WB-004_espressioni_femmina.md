@@ -6,22 +6,26 @@
 
 ## Obiettivo
 
-Sergio ha disegnato lui la versione femminile (R1): uguale al maschio, con ciglia bianche
-sottili ai lati degli occhi, gonnellina a trapezio e un riflesso bianco sulle scarpe. Serve
-lo stesso foglio di 9 espressioni approvato per il maschio (WB-002), con il ghigno furbo
-scelto in WB-003. Sfondo bianco, non trasparente (sono prove).
+Sergio ha disegnato lui la versione femminile (R1). Il suo foglio di espressioni deve essere
+**identico** a quello del maschio approvato in WB-002 (R2), con il ghigno scelto in WB-003
+(R3): stesse 9 facce, stesse pupille, palpebre, sopracciglia e bocche. L'**unica** differenza
+sono le ciglia della femmina (tre ciglia bianche sottili sul lato esterno di ogni occhio).
+Sfondo bianco, non trasparente (sono prove).
+
+Versione 2 della scheda (Sergio, 2026-11-01 12:03): la prima chiedeva espressioni nuove, ora
+si copiano quelle del maschio.
 
 ## Riferimenti da allegare
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-004/riferimenti/R1_femmina.png` | la femmina disegnata da Sergio: **il** modello |
-| R2 | `art/WB-002/riferimenti/R2_arrabbiato.png` | il maschio arrabbiato (come si fanno le sopracciglia bianche) |
-| R3 | `art/WB-003/ghigno_scelto.png` | il ghigno furbo approvato del maschio |
+| R1 | `art/WB-004/riferimenti/R1_femmina.png` | la femmina disegnata da Sergio: com'è fatta |
+| R2 | `art/WB-002/espressioni.png` | il foglio di espressioni del maschio **approvato**: da copiare. Se non è su `main`, è sul PC: ramo locale `design/WB-002` o cartella `art/WB-002/` |
+| R3 | `art/WB-003/ghigno_scelto.png` | il ghigno furbo scelto: sostituisce il ghigno del foglio R2 |
 
 ## Immagini da generare
 
-Ogni prompt è completo e va usato così com'è.
+Ogni prompt è completo e va usato così com'è. Allega R1, R2 e R3 in quest'ordine.
 
 | Nome file | Riferimenti | Misura | Varianti |
 |---|---|---|---|
@@ -29,41 +33,28 @@ Ogni prompt è completo e va usato così com'è.
 
 ### `espressioni_femmina`
 
-Archivio prompt: P-003 v1.
+Archivio prompt: P-003 v2.
 
 ```
-Ti allego tre immagini: la prima è il mio personaggio femminile originale, ed è il riferimento ESATTO di stile e di forme (non reinterpretarlo); la seconda e la terza sono il maschio della stessa serie, arrabbiato e con il ghigno furbo, solo per mostrarti come si fanno quelle due espressioni.
+Ti allego tre immagini:
+1. il mio personaggio FEMMINILE originale
+2. il foglio di espressioni del personaggio MASCHILE, già approvato: 9 teste in una griglia 3x3
+3. la testa maschile con il "ghigno furbo" approvato, che sostituisce il ghigno furbo del foglio
 
-Disegna un foglio di espressioni della FEMMINA: 9 teste in una griglia 3x3, su sfondo bianco puro, ogni testa ben separata dalle altre, tutte della stessa grandezza e nella stessa angolazione del mio disegno.
+Rifai lo STESSO IDENTICO foglio di espressioni della seconda immagine, nella stessa griglia 3x3, nello stesso ordine, con gli stessi nomi sotto ogni testa, ma con la testa della FEMMINA. Per il ghigno furbo usa la terza immagine.
 
-La sua testa, da rispettare alla lettera:
-- testa nera piena a forma di stella con punte irregolari: due punte alte in cima (la destra più alta e sottile), una punta per lato più corta
-- due occhi enormi ovali bianchi con contorno nero spesso, che si toccano e si sovrappongono un po' al centro; pupille nere ovali piccole
-- ciglia: tre ciglia bianche sottili e corte sul lato esterno di ogni occhio, come nel mio disegno; restano in tutte le espressioni
-- bocca piccola sotto gli occhi, sul nero
-- stile: bianco e nero puro, nero pieno e bianco pieno, contorni neri spessi e regolari, nessuna sfumatura, nessun grigio, nessun colore, nessuna texture. Cartone animato anni '30 "rubber hose", pulito
+Ogni faccia deve essere identica a quella del maschio nella stessa casella: stessa sagoma della testa a stella con le punte, stessi occhi, stessa posizione e forma delle pupille, stesse palpebre, stesse sopracciglia bianche, stessa bocca, stessa grandezza e angolazione.
 
-Le espressioni cambiano SOLO con: forma e posizione delle pupille, palpebre (taglio nero sopra o sotto l'occhio bianco), sopracciglia bianche sottili, forma della bocca. La sagoma della testa, degli occhi e le ciglia restano identiche.
+L'UNICA differenza: la femmina ha le ciglia. Tre ciglia bianche sottili e corte sul lato esterno di ogni occhio, esattamente come nella prima immagine. Le ciglia ci sono in tutte e 9 le teste e seguono l'occhio: se l'occhio è chiuso o socchiuso, restano sul bordo esterno della palpebra.
 
-Le 9 espressioni (scrivi il nome sotto ciascuna in piccolo):
-1. felice (come il mio disegno)
-2. arrabbiata (sopracciglia bianche inclinate verso il centro, bocca piatta, come il maschio arrabbiato)
-3. sorpresa (bocca piccola a "o")
-4. ghigno furbo (come il maschio allegato: occhio sinistro socchiuso con palpebra dritta, sopracciglio bianco alzato sull'occhio destro, pupille di lato, sorriso storto)
-5. concentrata a mirare (occhi stretti, pupille verso destra, bocca piatta stretta)
-6. dolore, appena colpita (occhi chiusi strizzati a forma di > <, bocca aperta a zigzag)
-7. stordita (pupille a spirale, bocca ondulata)
-8. vittoria (occhi chiusi a mezzaluna felici, bocca grande aperta che ride)
-9. triste, sconfitta (pupille in basso, palpebre calate, bocca all'ingiù)
-
-Non aggiungere naso, orecchie, capelli, fiocchi, trucco, denti o altri dettagli che non ci sono nel mio disegno.
+Stile: bianco e nero puro, nero pieno e bianco pieno, contorni neri spessi e regolari, nessuna sfumatura, nessun grigio, nessun colore. Sfondo bianco puro. Non aggiungere fiocchi, trucco, capelli o altri dettagli.
 ```
 
 ## Criteri di accettazione
 
-- [ ] bianco e nero puro, contorni neri spessi, nessun grigio né colore, sfondo bianco
-- [ ] sagoma della testa e ciglia bianche uguali al disegno di Sergio in tutte e 9
-- [ ] espressioni coerenti con quelle approvate del maschio
+- [ ] ogni casella ha la stessa espressione del foglio maschile approvato (ghigno = quello scelto)
+- [ ] l'unica differenza sono le tre ciglia bianche per occhio, in tutte e 9
+- [ ] bianco e nero puro, contorni neri spessi, sfondo bianco
 
 ---
 
