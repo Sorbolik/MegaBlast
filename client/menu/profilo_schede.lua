@@ -97,7 +97,7 @@ local function scheda_scheda(s, parent)
 	-- il diavoletto grande
 	local posa = box(245, 62, 0, 0, C.LUCE, parent)
 	gui.set_visible(posa, false)
-	s.figura = scoria.new(col, scoria.PERSONAGGIO)
+	s.figura = scoria.new(col, scoria.PERSONAGGIO, "missile")
 	-- fiamma piccola dell'attesa ma sempre con l'arma in mano (come nelle proposte)
 	s.figura.con_arma, s.figura.arma_t = true, math.huge
 	-- la fiammella "in attesa", come nei cartellini: quella grande è del turno

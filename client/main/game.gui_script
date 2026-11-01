@@ -426,8 +426,10 @@ end
 -- quando si aprono e si cancellano quando si chiudono, così non pesano mentre si
 -- gioca. Ogni modulo ha new, on_input (-> "indietro" / "continua" per uscire),
 -- distruggi e, se si anima, update. I nodi vivi tutti insieme: circa 650 della
--- battaglia, più il podio del 2 contro 2 (circa 275) o l'armeria (fino a 330):
--- per questo max_nodes di game.gui è 2048 e non 1024.
+-- battaglia, più il podio del 2 contro 2 (circa 275) o l'armeria (fino a 330),
+-- e prima della partita i quattro cartellini dello schieramento con la scelta
+-- (con pezzi, poteri e badge superavano i 2048 nodi e la partita non partiva,
+-- 1° novembre): per questo max_nodes di game.gui è 4096.
 local function chiudi_schermata(self)
 	if self.schermata then
 		self.schermata.mod.distruggi(self.schermata.obj)
@@ -1332,7 +1334,7 @@ end
 function CP.chiudi_scelta(self)
 	if self.schier then menu.schieramento.distruggi(self.schier) end
 	if self.striscia then menu.schieramento.distruggi(self.striscia) end
-	self.schier, self.striscia, self.striscia_dopo = nil, nil, nil
+	self.schier, self.striscia = nil, nil
 end
 
 -- Lo schieramento sopra la scelta delle armi (secondi: quanti ne restano, online)
@@ -1343,6 +1345,7 @@ function CP.apri_schieramento(self, vetrine, titolo, secondi)
 	self.vetrine = vetrine
 	if secondi and secondi <= 0 then
 		self.striscia = menu.schieramento.striscia(vetrine)
+		menu.scelta.sotto_striscia(self.scelta, self.striscia.copre_angolo)
 		return
 	end
 	self.schier = menu.schieramento.new(vetrine, titolo)
@@ -1355,14 +1358,12 @@ function CP.update_scelta(self, dt)
 	if self.schier then
 		if not menu.schieramento.update(self.schier, dt) then return true end
 		menu.schieramento.distruggi(self.schier)
-		-- la striscia al prossimo fotogramma: i nodi tolti si liberano a fine
-		-- fotogramma, e nel 2 contro 2 i quattro cartellini sono tanti
-		self.schier, self.striscia_dopo = nil, true
+		self.schier = nil
+		if self.vetrine then
+			self.striscia = menu.schieramento.striscia(self.vetrine)
+			menu.scelta.sotto_striscia(self.scelta, self.striscia.copre_angolo)
+		end
 		return false
-	end
-	if self.striscia_dopo and self.vetrine then
-		self.striscia_dopo = nil
-		self.striscia = menu.schieramento.striscia(self.vetrine)
 	end
 	if self.striscia then menu.schieramento.update_striscia(self.striscia, dt) end
 	return false
