@@ -27,6 +27,10 @@ ripulire. Le sessioni di Codex stanno solo sul PC (`%USERPROFILE%\.codex\session
 immagini generate in `%USERPROFILE%\.codex\generated_images`: dopo il push si possono
 cancellare tutte e due.
 
+## Personaggi
+
+Ogni personaggio segue la procedura standard di [PERSONAGGI.md](PERSONAGGI.md).
+
 ## Fogli sullo stampino
 
 Per i pezzi del personaggio (`strumenti/stampino/`, taglio con `taglia.py --allinea`): un
