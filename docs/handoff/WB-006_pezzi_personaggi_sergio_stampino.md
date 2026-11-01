@@ -55,7 +55,7 @@ Fai il foglio dei pezzi del personaggio di immagine 1, smontato come una marione
 I pezzi, da sinistra a destra:
 Riga 1, quattro teste del personaggio di immagine 1, girate a destra come in immagine 1, ognuna con un corto moncherino di collo nero in basso. La sagoma della testa è sempre identica, cambiano solo occhi e bocca, copiati dalle facce di immagine 4: testa 1 felice; testa 2 dolore appena colpito (occhi strizzati a > <, bocca aperta a zigzag); testa 3 vittoria (occhi chiusi a mezzaluna, bocca grande aperta che ride); testa 4 stordito (pupille a spirale, bocca ondulata).
 Riga 2: il busto da solo, cioè la maglietta nera CON i pantaloncini bianchi attaccati sotto, come in immagine 1, senza testa, senza braccia e senza gambe, con le spalle tonde e chiuse e il bordo in basso chiuso. Al posto dell'ala e della coda NON disegnare niente: quei due posti restano magenta vuoto.
-Riga 3: il braccio davanti e il braccio dietro, ognuno un tubo nero dritto che pende giù da una spalla tonda e finisce col guanto bianco di immagine 1; la gamba davanti e la gamba dietro, ognuna un tubo nero dritto, tondo e chiuso in cima, che finisce con la scarpa nera tonda di immagine 1 con la punta verso destra; l'omero e l'avambraccio, due corti tubi neri con le estremità tonde e piene, così si sovrappongono al gomito senza far vedere la giuntura; un pugno chiuso col guanto bianco.
+Riga 3: il braccio davanti e il braccio dietro, ognuno un tubo nero dritto che pende giù da una spalla tonda e finisce con la mano APERTA nel guanto bianco di immagine 1 (dita aperte e rilassate, palmo verso di noi); la gamba davanti e la gamba dietro, ognuna un tubo nero dritto, tondo e chiuso in cima, che finisce con la scarpa nera tonda di immagine 1 con la punta verso destra; l'omero e l'avambraccio, due corti tubi neri con le estremità tonde e piene, così si sovrappongono al gomito senza far vedere la giuntura; un pugno chiuso col guanto bianco.
 
 Non usare nessun colore: niente verde, niente rosso, niente grigio.
 ```
@@ -72,7 +72,7 @@ Fai il foglio dei pezzi della personaggia di immagine 1, smontata come una mario
 I pezzi, da sinistra a destra:
 Riga 1, quattro teste della personaggia di immagine 1, girate a destra come in immagine 1, ognuna con un corto moncherino di collo nero in basso. La sagoma della testa e le ciglia sono sempre identiche, cambiano solo occhi e bocca, copiati dalle facce di immagine 4: testa 1 felice; testa 2 dolore appena colpita (occhi strizzati a > <, bocca aperta a zigzag); testa 3 vittoria (occhi chiusi a mezzaluna, bocca grande aperta che ride); testa 4 stordita (pupille a spirale, bocca ondulata).
 Riga 2: il busto da solo, cioè la maglietta nera CON la gonnellina bianca attaccata sotto, come in immagine 1, senza testa, senza braccia e senza gambe, con le spalle tonde e chiuse e il bordo in basso chiuso. Al posto dell'ala e della coda NON disegnare niente: quei due posti restano magenta vuoto.
-Riga 3: il braccio davanti e il braccio dietro, ognuno un tubo nero dritto che pende giù da una spalla tonda e finisce col guanto bianco di immagine 1; la gamba davanti e la gamba dietro, ognuna un tubo nero dritto, tondo e chiuso in cima, che finisce con la scarpa nera tonda di immagine 1 con la punta verso destra; l'omero e l'avambraccio, due corti tubi neri con le estremità tonde e piene, così si sovrappongono al gomito senza far vedere la giuntura; un pugno chiuso col guanto bianco.
+Riga 3: il braccio davanti e il braccio dietro, ognuno un tubo nero dritto che pende giù da una spalla tonda e finisce con la mano APERTA nel guanto bianco di immagine 1 (dita aperte e rilassate, palmo verso di noi); la gamba davanti e la gamba dietro, ognuna un tubo nero dritto, tondo e chiuso in cima, che finisce con la scarpa nera tonda di immagine 1 con la punta verso destra; l'omero e l'avambraccio, due corti tubi neri con le estremità tonde e piene, così si sovrappongono al gomito senza far vedere la giuntura; un pugno chiuso col guanto bianco.
 
 Non usare nessun colore: niente verde, niente rosso, niente grigio.
 ```
@@ -89,7 +89,7 @@ Fai il foglio dei pezzi di Favilla di immagine 1, smontata come una marionetta d
 I pezzi, da sinistra a destra:
 Riga 1, quattro teste di Favilla, cioè la sua testa a fiamma nera col ricciolo in cima di immagine 1, girate a destra come in immagine 1, ognuna con un corto moncherino di collo nero in basso. La sagoma della testa e le ciglia sono sempre identiche, cambiano solo occhi e bocca, copiati dalle facce di immagine 4: testa 1 felice; testa 2 dolore appena colpita (occhi strizzati a > <, bocca aperta a zigzag); testa 3 vittoria (occhi chiusi a mezzaluna, bocca grande aperta che ride); testa 4 stordita (pupille a spirale, bocca ondulata).
 Riga 2: il busto da solo, cioè la maglietta nera CON la gonnellina bianca attaccata sotto, come in immagine 1, senza testa, senza braccia e senza gambe, con le spalle tonde e chiuse e il bordo in basso chiuso. Al posto dell'ala e della coda NON disegnare niente: quei due posti restano magenta vuoto.
-Riga 3: il braccio davanti e il braccio dietro, ognuno un tubo nero dritto che pende giù da una spalla tonda e finisce col guanto bianco di immagine 1; la gamba davanti e la gamba dietro, ognuna un tubo nero dritto, tondo e chiuso in cima, che finisce con la scarpa nera tonda di immagine 1 con la punta verso destra; l'omero e l'avambraccio, due corti tubi neri con le estremità tonde e piene, così si sovrappongono al gomito senza far vedere la giuntura; un pugno chiuso col guanto bianco.
+Riga 3: il braccio davanti e il braccio dietro, ognuno un tubo nero dritto che pende giù da una spalla tonda e finisce con la mano APERTA nel guanto bianco di immagine 1 (dita aperte e rilassate, palmo verso di noi); la gamba davanti e la gamba dietro, ognuna un tubo nero dritto, tondo e chiuso in cima, che finisce con la scarpa nera tonda di immagine 1 con la punta verso destra; l'omero e l'avambraccio, due corti tubi neri con le estremità tonde e piene, così si sovrappongono al gomito senza far vedere la giuntura; un pugno chiuso col guanto bianco.
 
 Non usare nessun colore: niente verde, niente rosso, niente grigio.
 ```
@@ -102,7 +102,7 @@ Non usare nessun colore: niente verde, niente rosso, niente grigio.
 - [ ] solo bianco e nero, contorno nero spesso e chiuso su ogni pezzo
 - [ ] quattro teste con la stessa sagoma, girate a destra, facce come in R4 (felice, colpita, vittoria, stordita)
 - [ ] busto con pantaloncini (maschio) o gonnellina (femmina, Favilla) attaccati
-- [ ] braccia col guanto bianco, gambe con la scarpa nera, omero e avambraccio con le estremità tonde e piene
+- [ ] braccia che finiscono con la mano aperta nel guanto bianco, pugno chiuso a parte, gambe con la scarpa nera, omero e avambraccio con le estremità tonde e piene
 - [ ] nessuna scritta
 
 ---
@@ -114,3 +114,5 @@ non cambia finché non vengono tagliate). Richiesta dal thread delle animazioni 
 ha bocciato il montaggio dei pezzi liberi di P-007. Sergio genera i fogli in ChatGPT (Codex
 non è installato sul PC) e li porta nel thread; li taglia il thread delle animazioni con
 `strumenti/stampino/taglia.py --allinea`.
+
+Aggiornata da Claude, 2026-11-01 14:15, su richiesta di Sergio ("le mani devono essere anche aperte"): le braccia appese finiscono con la mano aperta, il pugno chiuso resta nella sua casella. Così ci sono tutte e due.
