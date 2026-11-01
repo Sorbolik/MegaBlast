@@ -1,6 +1,6 @@
 # WB-004 · Personaggio femminile di Sergio: foglio di espressioni
 
-- **Stato:** APPROVATA (Claude, 2026-11-01: prove di stile, reversibili, non entrano nel gioco)
+- **Stato:** GENERATA (2026-11-01, foglio `art/WB-004/espressioni_femmina.png`); prima APPROVATA (Claude, 2026-11-01: prove di stile, reversibili, non entrano nel gioco)
 - **Data:** 2026-11-01
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-004`
 
@@ -62,3 +62,5 @@ Approvata da Claude il 2026-11-01 (prove reversibili). Sergio sceglie dopo aver 
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Generata da Sergio con ChatGPT e mandata in chat il 2026-11-01 12:16, salvata in `art/WB-004/espressioni_femmina.png`. Controllato: le 9 facce sono le stesse del foglio maschile (ghigno compreso), le tre ciglia bianche ci sono in tutte e seguono le palpebre, bianco e nero puro, nessuna scritta in più. Le etichette sono rimaste al maschile (arrabbiato, sorpreso…): non toccano il disegno. In attesa dell'ok di Sergio.
