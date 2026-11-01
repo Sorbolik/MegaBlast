@@ -192,3 +192,9 @@ con le quattro pose chiave descritte una per una. Note minori, accettate per un 
 in `4_livelli` le braccia a tubo quasi non si vedono (i guanti stanno attaccati al busto); in
 `5_equipaggiamento` l'elmo di livello 1 è generico e non segue la sagoma a stella; in `7_proposta_C`
 il gomito sulla figura intera non si legge, si legge solo nei due pezzi a destra.
+
+2026-11-01 17:15, `2_cammina_A_v2`: adesso le pose di contatto (1 e 3) e di passaggio (2 e 4) si distinguono bene,
+ma l'inversione di braccia e gambe fra 1 e 3 (e fra 2 e 4) manca ancora. Si usa nel documento per
+mostrare le due pose chiave, contatto e passaggio, non come ciclo completo. Il ciclo vero lo fa l'editor
+delle animazioni coi pezzi, quindi non servono altri tentativi.
+
