@@ -197,6 +197,9 @@ C.MAX_PLACED = 8
 -- Sergio (24 ottobre 2026): 2 colpi, con 3 turni a testa uno solo si consuma
 -- al primo turno utile.
 C.DRAFT_SECONDS = 15
+-- lo schieramento coi cartellini di tutti (client/menu/schieramento.lua) prima
+-- della scelta: online il server aspetta anche questi secondi
+C.SCHIERAMENTO_SECONDS = 5
 C.DRAFT_OFFER = 3
 C.DRAFT_SHOTS = 2
 

@@ -140,8 +140,10 @@ function N.mode_players(mode)
 	return config.MODES[mode]
 end
 
+-- la scelta comincia con lo schieramento dei cartellini (menu/schieramento.lua):
+-- il suo tempo è dentro quello della scelta, e intanto si può già scegliere
 function N.draft_seconds()
-	return config.DRAFT_SECONDS
+	return config.DRAFT_SECONDS + config.SCHIERAMENTO_SECONDS
 end
 
 function N.draft_new(seed, mode, r)

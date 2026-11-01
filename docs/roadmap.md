@@ -99,6 +99,9 @@ d'occhio accanto al nome in lobby, nel draft e in partita, e nel podio. Tutto
 codice-disegnato nello stile Sagoma: forma e colore del badge dicono statistica
 e livello. Le statistiche si contano dalla fase 1 (così nulla va perso); la
 schermata, gli obiettivi e i badge arrivano in fase 3 insieme all'inventario.
+(Anticipati il 31 ottobre con la scheda personaggio: profilo con STATISTICHE e
+badge, contati sul telefono finché la progressione non va sul server;
+decisioni in [decisioni/progressione.md](decisioni/progressione.md).)
 Gli obiettivi sono dati sul server: Sergio può aggiungerne dal pannello.
 
 ### Interfaccia: tranquilla ed essenziale

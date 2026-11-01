@@ -1,5 +1,5 @@
 -- La home (menu principale): fondo scuro, la Scoria col bagliore del Nucleo
--- dietro, il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
+-- dietro (toccandolo si apre il PROFILO), il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
 -- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA, EVENTI e, in alto a destra,
 -- la rotellina delle IMPOSTAZIONI (menu/impostazioni.lua). Le schermate nuove aggiungono qui il loro bottone
 -- quando esistono (stile in ui/ui.lua).
@@ -9,7 +9,8 @@
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
 --   home.show(h) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
---   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi", "impostazioni" o nil
+--   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
+--                                                        -- "impostazioni", "profilo" (toccando il diavoletto) o nil
 --   home.eventi(h, riga)                        -- la riga sotto EVENTI
 
 local game = require "sim.game"
@@ -63,6 +64,14 @@ function M.new(colore)
 	gui.set_parent(h.corpo.root, corpo)
 	scoria.set_enabled(h.corpo, true)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true }
+	-- toccando il diavoletto si apre il profilo (menu/profilo_schede.lua): una
+	-- zona che non si vede, sopra di lui, e una scritta discreta sotto i piedi
+	local zona = gui.new_box_node(vmath.vector3(CORPO_X, CORPO_Y + 120, 0), vmath.vector3(260, 320, 0))
+	gui.set_visible(zona, false)
+	h.tops[#h.tops + 1] = zona
+	h.bottoni[#h.bottoni + 1] = { nodo = zona, bordo = zona, azione = "profilo", colore = ui.C.LUCE, riposo = ui.C.LUCE }
+	local scritta = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.SPENTO, h.posa)
+	gui.set_inherit_alpha(scritta, true)
 
 	-- il nome in alto a sinistra
 	local alto_sx = angolo(h, 48, H - 56, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)

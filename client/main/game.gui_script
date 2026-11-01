@@ -22,6 +22,7 @@ local replay = require "sim.replay"
 local menu = { podio = require "menu.podio", armeria = require "menu.armeria", scelta = require "menu.scelta",
 	allenamento = require "menu.allenamento", fine_livello = require "menu.fine_livello", campagna = require "menu.campagna",
 	impostazioni = require "menu.impostazioni", bacheca = require "menu.bacheca", coda = require "menu.coda",
+	schieramento = require "menu.schieramento", profilo_schede = require "menu.profilo_schede",
 	-- non schermate, qui per non aggiungere variabili locali (limite di 200):
 	-- gli eventi del server e le loro regole (start online)
 	eventi = require "main.eventi", regole = require "sim.regole" }
@@ -43,7 +44,7 @@ local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
-local PROTOCOL = 6
+local PROTOCOL = 7
 -- Se la connessione cade in partita riproviamo per un po' (il server tiene il
 -- posto per 20 secondi)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
@@ -449,6 +450,7 @@ local function show_menu(self)
 	set_controls_visible(self, false)
 	show_message(self, "", true)
 	self.missione, self.missione_attesa, self.fine_t = nil, nil, nil
+	self.vetrine, self.conta, self.dal_profilo = nil, nil, nil
 	if self.bandiera then self.bandiera:mostra(nil) end
 	if self.segnale then self.segnale:mostra(nil) end
 	punteggio.obiettivo(self.punti, nil)
@@ -765,6 +767,10 @@ end
 -- Rampino e Mantice nel disegno, in una tabella sola: il file è vicino ai 200
 -- local che Lua permette
 local RM = { fune = require "battaglia.fune", SOFFI = 5 }
+-- La scheda personaggio (Sergio, 31 ott) in una tabella sola: cartellini,
+-- schieramento, statistiche di fine partita e replay. Le funzioni più giù,
+-- prima di start_local (usano new_match, show_menu e le altre)
+local CP = { conta = require "menu.conta", vetrina = require "menu.vetrina", cartellino = require "ui.cartellino" }
 
 -- Dove sta la mano di chi tira col Rampino, nel disegno (la fune parte da lì)
 function RM.fune_mano(self, chi)
@@ -795,6 +801,7 @@ end
 
 local function handle_event(self, e)
 	if SIMULA then print("SIMULA evento " .. e.type) end
+	if self.conta then CP.conta.evento(self.conta, self.g, e) end
 	-- i personaggi della campagna parlano (battaglia/battute.lua); quelle di
 	-- tutti i giorni non coprono una battuta appena detta
 	if self.parlano then
@@ -1003,6 +1010,11 @@ local function handle_event(self, e)
 			snap_robot(self, e.robot)
 		end
 	elseif e.type == "over" then
+		-- il replay finito: si torna al profilo
+		if self.rivedendo then
+			CP.fine_replay(self)
+			return
+		end
 		local text
 		if self.mode == "online" then
 			local mine = self.g.robots[self.me].team
@@ -1039,10 +1051,13 @@ local function apri_podio(self)
 	presi = per_robot[mio] or presi
 	local guadagno = profilo.fine_partita(self.profilo, posto, presi)
 	profilo.salva(self.profilo)
+	-- le statistiche e la partita nel profilo (salva anche il replay)
+	local numero = CP.registra(self, res)
+	for i, g in ipairs(giocatori) do g.vetrina = self.vetrine_partita and self.vetrine_partita[i] end
 	show_message(self, "", true)
 	set_controls_visible(self, false)
 	-- prima la schermata, poi il modo: se new si rompe non resta un modo senza schermata
-	self.schermata = { mod = menu.podio, obj = menu.podio.new(res, giocatori, me, guadagno, self.profilo) }
+	self.schermata = { mod = menu.podio, obj = menu.podio.new(res, giocatori, me, guadagno, self.profilo, numero) }
 	self.mode = "schermata"
 end
 
@@ -1151,12 +1166,20 @@ local function on_server_message(self, m)
 		-- scelta delle armi (menu/scelta.lua): arriva a ogni cambio, nostro o
 		-- degli altri. Il gettone serve già per tornare se la connessione cade adesso.
 		self.tok, self.tries = m.tok or self.tok, 0
-		if self.mode ~= "scelta_online" then show_message(self, "", true) end
+		local primo = self.mode ~= "scelta_online"
+		if primo then show_message(self, "", true) end
 		self.mode = "scelta_online"
 		local nomi, colori = names_colors(m.players)
 		self.squadre_online = {}
 		for i, p in ipairs(m.players) do self.squadre_online[i] = p.team end
 		menu.scelta.online(self.scelta, m, nomi, colori, function(msg) send(self, msg) end)
+		if primo then
+			-- lo schieramento: il server dà alla scelta anche il suo tempo
+			-- (config.SCHIERAMENTO_SECONDS); tornando a metà, solo la striscia
+			local resta = math.min(gconfig.SCHIERAMENTO_SECONDS, (m.left or 0) * game.DT - gconfig.DRAFT_SECONDS)
+			CP.apri_schieramento(self, CP.vetrine(self, m.players, nomi, { me = m.you, rete = m.vetrine or {} }),
+				profilo.NOMI_GRUPPI[m.mode] or "", resta)
+		end
 	elseif m.t == "start" then
 		menu.scelta.hide(self.scelta)
 		-- anche quando torniamo dopo una caduta (resume): la partita si
@@ -1171,6 +1194,7 @@ local function on_server_message(self, m)
 		self.squadre_online = {}
 		for i, rb in ipairs(self.g.robots) do self.squadre_online[i] = rb.team end
 		self.me, self.tok, self.tries = m.you, m.tok, 0
+		CP.inizio(self, m.you, m.vetrine or {}, nil, false)
 		self.mode = "online"
 		set_controls_visible(self, true)
 		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. self.names[m.you]))
@@ -1182,6 +1206,7 @@ local function on_server_message(self, m)
 		draw_terrain(self)
 	elseif m.t == "state" and self.g then
 		apply_state(self, m)
+		if self.conta then CP.conta.tick(self.conta, self.g) end
 	elseif m.t == "ev" then
 		handle_event(self, m)
 	elseif m.t == "away" then
@@ -1224,8 +1249,10 @@ on_socket = function(self, conn, data)
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
 		else
 			show_message(self, "Connesso, in attesa...", true)
-			-- la coda scelta in DOVE GIOCHI? (menu/coda.lua): 2v2, 1v1 o un evento
-			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2" })
+			-- la coda scelta in DOVE GIOCHI? (menu/coda.lua): 2v2, 1v1 o un evento,
+			-- e il cartellino: livello e badge (menu/vetrina.lua)
+			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
+				vetrina = CP.vetrina.per_rete(self.profilo) })
 		end
 	elseif data.event == ws.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
@@ -1268,6 +1295,263 @@ local function start_online(self, coda)
 	connect(self)
 end
 
+-- Scheda personaggio (Sergio, 31 ott) -------------------------------------------
+-- I cartellini (ui/cartellino.lua) prima della scelta delle armi (lo
+-- schieramento), durante (la striscia in alto) e in partita toccando la targa;
+-- a fine partita le statistiche e la partita nel profilo (menu/conta.lua,
+-- profilo.registra) e il replay di quelle giocate qui (sim/replay.lua).
+
+-- Le vetrine (menu/vetrina.lua) dei giocatori: chi gioca qui col suo profilo,
+-- gli altri col nome e basta. opz: me (il robot di chi gioca qui), rete (online:
+-- livello e badge di ognuno, dal server)
+function CP.vetrine(self, players, nomi, opz)
+	local out = {}
+	local mia = players[opz.me] and players[opz.me].team
+	for i, p in ipairs(players) do
+		local sotto = i == opz.me and "TU" or p.dummy and "BERSAGLIO" or p.team == mia and "COMPAGNO" or "AVVERSARIO"
+		local v
+		if opz.rete then
+			v = CP.vetrina.da_rete(opz.rete[i], nomi[i], p.team, sotto)
+		elseif i == opz.me then
+			v = CP.vetrina.da_profilo(self.profilo, nomi[i], p.team, sotto)
+		else
+			v = CP.vetrina.semplice(nomi[i], p.team, sotto)
+			v.bot = (p.bot or p.dummy) and true or nil
+		end
+		v.tu = i == opz.me or nil
+		out[i] = v
+	end
+	return out
+end
+
+-- Toglie lo schieramento e la striscia (anche quando la scelta si chiude da sola)
+function CP.chiudi_scelta(self)
+	if self.schier then menu.schieramento.distruggi(self.schier) end
+	if self.striscia then menu.schieramento.distruggi(self.striscia) end
+	self.schier, self.striscia, self.striscia_dopo = nil, nil, nil
+end
+
+-- Lo schieramento sopra la scelta delle armi (secondi: quanti ne restano, online)
+function CP.apri_schieramento(self, vetrine, titolo, secondi)
+	CP.chiudi_scelta(self)
+	-- se ne vanno con la scelta, comunque si chiuda
+	menu.scelta.quando_chiude(self.scelta, function() CP.chiudi_scelta(self) end)
+	self.vetrine = vetrine
+	if secondi and secondi <= 0 then
+		self.striscia = menu.schieramento.striscia(vetrine)
+		return
+	end
+	self.schier = menu.schieramento.new(vetrine, titolo)
+	if secondi then self.schier.t = secondi end
+end
+
+-- A ogni frame della scelta: true finché lo schieramento la copre (in locale
+-- il tempo della scelta parte dopo; online corre già, lo tiene il server)
+function CP.update_scelta(self, dt)
+	if self.schier then
+		if not menu.schieramento.update(self.schier, dt) then return true end
+		menu.schieramento.distruggi(self.schier)
+		-- la striscia al prossimo fotogramma: i nodi tolti si liberano a fine
+		-- fotogramma, e nel 2 contro 2 i quattro cartellini sono tanti
+		self.schier, self.striscia_dopo = nil, true
+		return false
+	end
+	if self.striscia_dopo and self.vetrine then
+		self.striscia_dopo = nil
+		self.striscia = menu.schieramento.striscia(self.vetrine)
+	end
+	if self.striscia then menu.schieramento.update_striscia(self.striscia, dt) end
+	return false
+end
+
+-- I tocchi nella scelta: prima lo schieramento e la striscia. true se erano loro
+function CP.input_scelta(self, action_id, action)
+	if self.schier then
+		menu.schieramento.on_input(self.schier, action_id, action)
+		return true
+	end
+	return self.striscia ~= nil and menu.schieramento.striscia_tocco(self.striscia, action_id, action)
+end
+
+-- All'inizio della partita: i cartellini con le statistiche vere e la conta di
+-- chi gioca qui. me: il suo robot; rete: le vetrine dal server (online);
+-- gruppo: "campagna" per le missioni (sennò il modo); replay: la partita si può rivedere
+function CP.inizio(self, me, rete, gruppo, replay_ok)
+	CP.chiudi_carta_g(self)
+	local nomi, players = {}, {}
+	local opz = self.ricetta.opzioni.players or {}
+	for i, rb in ipairs(self.g.robots) do
+		nomi[i] = (self.names[i]:gsub(" %(bot%)$", ""))
+		players[i] = { team = rb.team, bot = self.bots[i] and true or nil, dummy = (opz[i] or {}).dummy }
+	end
+	local v = self.vetrine
+	self.vetrine = nil
+	if rete or not v or #v ~= #self.g.robots then v = CP.vetrine(self, players, nomi, { me = me, rete = rete }) end
+	for i, rb in ipairs(self.g.robots) do
+		v[i].nome = nomi[i]
+		CP.vetrina.con_stats(v[i], rb.stats)
+	end
+	self.vetrine_partita = v
+	self.conta = me and CP.conta.nuova(self.g, me, nomi) or nil
+	self.cp_gruppo, self.cp_replay = gruppo, replay_ok
+end
+
+-- Il cartellino in partita: si apre toccando la targa (o il diavoletto) di un
+-- giocatore, si chiude toccando di nuovo. Nel tuo turno si chiude e non si
+-- apre (Sergio, 31 ott): mentre giochi non copre niente. Esce dal lato della
+-- sua squadra, sotto i punti; il tempo intanto corre.
+function CP.chiudi_carta_g(self)
+	if self.carta_g then
+		CP.cartellino.distruggi(self.carta_g.c)
+		gui.delete_node(self.carta_g.radice)
+		self.carta_g = nil
+	end
+end
+
+function CP.apri_carta_g(self, i)
+	CP.chiudi_carta_g(self)
+	local v = self.vetrine_partita[i]
+	-- la prima squadra a sinistra, le altre a destra (come i punti in alto)
+	local sx = self.g.robots[i].team == 1
+	local x = sx and 20 + CP.cartellino.LARGO / 2 or W - 20 - CP.cartellino.LARGO / 2
+	local radice = gui.new_box_node(vmath.vector3(x, H - 78, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(radice, false)
+	gui.set_xanchor(radice, sx and gui.ANCHOR_LEFT or gui.ANCHOR_RIGHT)
+	gui.set_yanchor(radice, gui.ANCHOR_TOP)
+	v.verso = sx and 1 or -1
+	local c = CP.cartellino.new(v, 0, 0, { tu = v.tu }, radice)
+	local nota = ui.testo("tocca di nuovo e si chiude · il tempo corre", 0, -CP.cartellino.ALTO({}) - 14, 0.6,
+		ui.C.SPENTO, radice)
+	gui.set_outline(nota, ui.C.OMBRA)
+	self.carta_g = { c = c, radice = radice, robot = i }
+	if SIMULA then print("SIMULA cartellino del robot " .. i) end
+end
+
+-- Il robot sotto il punto (x, y) dello schermo: dalla targa ai piedi
+function CP.robot_sotto(self, x, y)
+	local s = self.cam.s
+	for i, rb in ipairs(self.g.robots) do
+		local v = self.view[i]
+		if v and not rb.dead and not rb.gone then
+			local rx, piedi = camera.allo_schermo(self.cam, v.x, v.y)
+			local cima = piedi + (scoria.altezza(self.robots[i].rig) + 3 + targa.SOPRA * s ^ -0.65) * s
+			if math.abs(x - rx) <= math.max(40, 30 * s ^ 0.35) and y >= piedi - 10 and y <= cima + 10 then return i end
+		end
+	end
+end
+
+-- Un tocco in partita fuori dal tuo turno: true se era per il cartellino
+function CP.tocco_partita(self, x, y)
+	if my_turn(self) or not self.vetrine_partita then return false end
+	local i = CP.robot_sotto(self, x, y)
+	if self.carta_g then
+		local prima = self.carta_g.robot
+		CP.chiudi_carta_g(self)
+		-- toccando un altro giocatore si passa al suo
+		if i and i ~= prima then CP.apri_carta_g(self, i) end
+		return true
+	end
+	if not i then return false end
+	CP.apri_carta_g(self, i)
+	return true
+end
+
+-- Il file del replay di una partita del profilo
+function CP.file_replay(numero)
+	return sys.get_save_file("megablast", "replay_" .. profilo.posto_replay(numero))
+end
+
+-- Fine partita: le statistiche e la partita nel profilo, e il suo replay se si
+-- è giocata qui. Restituisce il numero della partita se si può rivedere
+function CP.registra(self, res)
+	local c = self.conta
+	self.conta = nil
+	if not c or not res then return nil end
+	local r = CP.conta.fine(c, self.g, res, { gruppo = self.cp_gruppo or res.mode, mappa = self.g.map,
+		quando = os.time(), giocatori = self.vetrine_partita })
+	local pa = profilo.registra(self.profilo, r)
+	if self.cp_replay then
+		pa.replay = pcall(sys.save, CP.file_replay(pa.numero), { r = self.ricetta }) or nil
+	else
+		pa.online = self.fine_online or nil
+	end
+	profilo.salva(self.profilo)
+	return pa.replay and pa.numero or nil
+end
+
+-- La partita col numero numero si può rivedere?
+function CP.replay_ok(self, numero)
+	for _, pa in ipairs(self.profilo.partite) do
+		if pa.numero == numero then return pa.replay == true end
+	end
+	return false
+end
+
+-- Il profilo (menu/profilo_schede.lua), su una scheda
+function CP.apri_profilo(self, scheda, numero)
+	apri_schermata(self, menu.profilo_schede, self.profilo, scheda, TEAM_COLORS[1],
+		function(n) return CP.replay_ok(self, n) end, numero)
+end
+
+-- Rivede la partita numero da tick da: la si rigioca dalla ricetta salvata
+-- senza disegnarla fino a da, poi la si guarda. Un tocco torna al profilo.
+function CP.rivedi(self, numero, da)
+	local ok, dati = pcall(sys.load, CP.file_replay(numero))
+	local r = ok and dati and dati.r
+	if not r or r.fisica ~= game.PHYSICS then
+		show_message(self, "Questo replay non si può più rivedere")
+		return
+	end
+	chiudi_schermata(self)
+	hide_menu(self)
+	new_match(self, r.seme, r.mappa, r.opzioni)
+	self.lettore, self.rivedendo, self.impronta = replay.lettore(r), numero, 1
+	while self.g.tick < (da or 0) and self.g.phase ~= "over" do
+		CP.passo_replay(self)
+		self.g:pop_events()
+	end
+	draw_terrain(self)
+	reset_pose(self)
+	local rb = self.g.robots[self.g.current]
+	camera.salta(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
+	self.mode = "replay"
+	self.acc = 0
+	set_controls_visible(self, false)
+	show_message(self, "", true)
+	-- in basso, finché dura: è un replay, e come si esce
+	local n = ui.titolo("REPLAY · TOCCA PER USCIRE", W / 2, 40, 0.5, ui.C.LUCE)
+	gui.set_yanchor(n, gui.ANCHOR_BOTTOM)
+	gui.set_outline(n, ui.C.OMBRA)
+	self.replay_scritta = n
+end
+
+-- Un passo del replay; se le impronte non tornano (gioco cambiato) si smette
+function CP.passo_replay(self)
+	local g = self.g
+	g:step(replay.rileggi(self.lettore, g, self.bots))
+	local a = self.lettore.r.impronte[self.impronta]
+	if a and a.t == g.tick then
+		self.impronta = self.impronta + 1
+		if a.h ~= g:impronta() then
+			self.replay_rotto = true
+			return false
+		end
+	end
+	return true
+end
+
+-- Fine del replay (finito, toccato, o non torna): di nuovo nel profilo, su quella partita
+function CP.fine_replay(self)
+	local numero = self.rivedendo
+	self.rivedendo, self.lettore = nil, nil
+	if self.replay_scritta then gui.delete_node(self.replay_scritta) end
+	self.replay_scritta = nil
+	show_menu(self)
+	CP.apri_profilo(self, "partite", numero)
+	if self.replay_rotto then show_message(self, "Il replay non torna più: il gioco è cambiato") end
+	self.replay_rotto = nil
+end
+
 local start_local_match
 
 -- Si parte con la scelta delle armi (menu/scelta.lua); finita quella, la partita.
@@ -1297,6 +1581,7 @@ local function start_local(self, contro)
 		if p.bot then bot.scegli(d, i, seed) end
 	end
 	menu.scelta.show(self.scelta, d, nomi, colori)
+	CP.apri_schieramento(self, CP.vetrine(self, opts.players, nomi, { me = 1 }), profilo.NOMI_GRUPPI[modo] or "")
 end
 
 -- La partita sullo stesso telefono, con i giocatori usciti dalla scelta (nil: senza scelta)
@@ -1334,7 +1619,10 @@ start_local_match = function(self, picked)
 	new_match(self, os.time(), self.mappa, opts)
 	-- prova_durata N: la partita dura N secondi (scenari/podio.txt)
 	local durata = SIMULA and config_int("megablast.prova_durata", 0) or 0
-	if durata > 0 then self.g.match_left = durata * 60 end
+	if durata > 0 then
+		self.g.match_left = durata * 60
+		self.ricetta.durata = self.g.match_left
+	end
 	if SIMULA and config_int("megablast.prova_stati", 0) > 0 then
 		-- tutti partono con i tre effetti di stato, per vederli (scenario stati.txt)
 		for _, rb in ipairs(self.g.robots) do
@@ -1349,6 +1637,7 @@ start_local_match = function(self, picked)
 		local y = self.g.terrain:ground_below(a.x + vicino, a.y + 3 * game.ROBOT_H)
 		if y then b.x, b.y, b.grounded = a.x + vicino, y, true end
 	end
+	CP.inizio(self, 1, nil, nil, true)
 	self.mode = "local"
 	set_controls_visible(self, true)
 end
@@ -1380,6 +1669,8 @@ local function start_missione(self, id, picks)
 		self.mode = "scelta"
 		-- nella campagna la scelta è guidata: senza tempo, spiega di più, finisce con GIOCA
 		menu.scelta.show(self.scelta, d, nomi, colori, true)
+		for i, p in ipairs(players) do nomi[i] = p.nome or nomi[i] end
+		CP.apri_schieramento(self, CP.vetrine(self, players, nomi, { me = 1 }), r.l.titolo or "")
 		return
 	end
 	new_match(self, missioni.partita(r, os.time(), picks, profilo.aiuto(self.profilo, id)))
@@ -1392,6 +1683,7 @@ local function start_missione(self, id, picks)
 			self.parlano.chi[i] = p.battute or p.carattere
 		end
 	end
+	CP.inizio(self, 1, nil, "campagna", false)
 	draw_terrain(self)
 	reset_pose(self)
 	self.missione, self.missione_attesa = r, nil
@@ -1507,6 +1799,8 @@ local function apri_fine_livello(self)
 	local r = self.missione
 	self.fine_t, self.missione = nil, nil
 	self.missione_finita = r.l.id
+	-- le battaglie (finite davvero) vanno nelle statistiche, le lezioni no
+	if self.g.phase == "over" then CP.registra(self, self.g:results()) else self.conta = nil end
 	show_message(self, "", true)
 	punteggio.obiettivo(self.punti, nil)
 	for _, rb in ipairs(self.robots) do targa.riga(rb.targa, "") end
@@ -2712,6 +3006,7 @@ function init(self)
 	-- la home per ultima, così sta sopra la battaglia
 	self.home = home.new(TEAM_COLORS[1])
 	self.profilo = profilo.carica()
+	if SIMULA and config_int("megablast.prova_profilo", 0) > 0 then profilo.prova(self.profilo) end
 	self.scelta = menu.scelta.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, self.comandi)
 
 	-- Nelle partite vere la mappa la sceglie il seed (sim/maps.lua). Negli scenari di
@@ -2766,12 +3061,18 @@ function update(self, dt)
 			self.fire = nil
 			capture(self.pose_a, self.g)
 			-- di turno un bot: i tasti sono i suoi
-			self.g:step(replay.input(self.ricetta, self.g, self.bots, input))
+			input = replay.input(self.ricetta, self.g, self.bots, input)
+			-- i colpi di chi gioca qui, per le statistiche
+			if self.conta and input.fire and self.g.current == self.conta.me then
+				CP.conta.sparo(self.conta, self.g, input.fire.weapon)
+			end
+			self.g:step(input)
 			replay.dopo(self.ricetta, self.g)
 			for _, e in ipairs(self.g:pop_events()) do
 				handle_event(self, e)
 				if self.missione then missioni.evento(self.missione, self.g, e, self.bots) end
 			end
+			if self.conta then CP.conta.tick(self.conta, self.g) end
 			if self.missione then missioni.tick(self.missione, self.g) end
 			self.acc = self.acc - game.DT
 			capture(self.pose_b, self.g)
@@ -2800,13 +3101,33 @@ function update(self, dt)
 			if not grounded then self.jump_sent = false end
 			if self.fire then
 				send(self, { t = "fire", a = self.fire.angle, p = self.fire.power, w = self.fire.weapon })
+				if self.conta then CP.conta.sparo(self.conta, self.g, self.fire.weapon) end
 			end
 		else
 			self.sent.l, self.sent.r, self.sent.j = false, false, false
 		end
 		self.jump_pressed = false
 		self.fire = nil
+	elseif self.mode == "replay" then
+		-- il replay di una partita del profilo: la ricetta al posto dei tasti
+		self.acc = math.min(self.acc + dt_mondo, 0.25)
+		while self.acc >= game.DT and self.mode == "replay" do
+			capture(self.pose_a, self.g)
+			if not CP.passo_replay(self) then
+				CP.fine_replay(self)
+				break
+			end
+			for _, e in ipairs(self.g:pop_events()) do
+				handle_event(self, e)
+				if self.mode ~= "replay" then break end
+			end
+			self.acc = self.acc - game.DT
+			capture(self.pose_b, self.g)
+		end
+		self.pose_t, self.pose_dt = self.acc, game.DT
 	end
+	-- il cartellino in partita: nel tuo turno (e fuori dalla partita) si chiude
+	if self.carta_g and (self.mode ~= "local" and self.mode ~= "online" or my_turn(self)) then CP.chiudi_carta_g(self) end
 
 	-- mirando col mouse fermo la camera può muoversi (zoom): il punto dello
 	-- schermo è lo stesso, quello del mondo no
@@ -2834,13 +3155,15 @@ function update(self, dt)
 	end
 	if self.schermata and self.schermata.mod.update then self.schermata.mod.update(self.schermata.obj, dt) end
 	if self.mode == "scelta" then
-		local players = menu.scelta.update(self.scelta, dt)
+		-- in locale il tempo della scelta parte dopo lo schieramento
+		local players = not CP.update_scelta(self, dt) and menu.scelta.update(self.scelta, dt)
 		if players and self.missione then
 			start_missione(self, self.missione.l.id, players)
 		elseif players then
 			start_local_match(self, players)
 		end
 	elseif self.mode == "scelta_online" then
+		CP.update_scelta(self, dt)
 		menu.scelta.update(self.scelta, dt)
 	end
 
@@ -2955,6 +3278,11 @@ end
 -- tutto il resto si riportano alle coordinate del gioco (ui/schermo.lua)
 local function pointer_down(self, id, px, py)
 	local x, y = schermo.da_tocco(px, py)
+	-- il replay: un tocco torna al profilo
+	if self.mode == "replay" then
+		CP.fine_replay(self)
+		return
+	end
 	if self.mode == "ended" then
 		if self.podio_t then
 			apri_podio(self)
@@ -2981,6 +3309,11 @@ local function pointer_down(self, id, px, py)
 		return
 	elseif gui.pick_node(self.btn_menu, px, py) then
 		apri_rotellina(self, true)
+		self.pointers[id] = "cancelled"
+		return
+	end
+	-- fuori dal tuo turno, toccando un giocatore il suo cartellino
+	if CP.tocco_partita(self, x, y) then
 		self.pointers[id] = "cancelled"
 		return
 	end
@@ -3482,6 +3815,11 @@ function PAD.on_input(self, action_id, action)
 		if action.released then self.aspetta_rilascio = nil end
 		return true
 	end
+	-- il replay: un tasto del controller torna al profilo (i tocchi in pointer_down)
+	if self.mode == "replay" and action_id == ACTION.PAD then
+		if action.pressed then CP.fine_replay(self) end
+		return true
+	end
 	if self.mode == "schermata" then
 		local fine = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
 		if fine and self.schermata.mod == menu.fine_livello then
@@ -3490,6 +3828,18 @@ function PAD.on_input(self, action_id, action)
 			-- DOVE GIOCHI? o GIOCA nel dettaglio di un evento: la partita online
 			chiudi_schermata(self)
 			start_online(self, fine.coda)
+		elseif type(fine) == "table" and fine.rivedi then
+			-- RIVEDI nel podio o nel profilo
+			CP.rivedi(self, fine.rivedi, fine.da)
+		elseif fine == "armeria" and self.schermata.mod == menu.profilo_schede then
+			-- l'armeria dal profilo: chiudendola si torna lì
+			chiudi_schermata(self)
+			self.dal_profilo = true
+			apri_schermata(self, menu.armeria, self.profilo)
+		elseif fine and self.dal_profilo and self.schermata.mod == menu.armeria then
+			chiudi_schermata(self)
+			self.dal_profilo = nil
+			CP.apri_profilo(self, "scheda")
 		elseif type(fine) == "table" and fine.missione then
 			chiudi_schermata(self)
 			self.ritorno = "campagna"
@@ -3529,10 +3879,14 @@ function PAD.on_input(self, action_id, action)
 			apri_schermata(self, menu.impostazioni, self.profilo, self.ctrl)
 		elseif scelta == "campagna" then
 			apri_campagna(self)
+		elseif scelta == "profilo" then
+			CP.apri_profilo(self, "scheda")
 		end
 		return true
 	elseif self.mode == "scelta" or self.mode == "scelta_online" then
-		if menu.scelta.on_input(self.scelta, action_id, action) == "esci" then esci_partita(self) end
+		if not CP.input_scelta(self, action_id, action) and menu.scelta.on_input(self.scelta, action_id, action) == "esci" then
+			esci_partita(self)
+		end
 		return true
 	end
 	-- un tasto spegne le levette (a meno che non le abbia chieste la configurazione)

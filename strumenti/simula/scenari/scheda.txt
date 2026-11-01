@@ -1,0 +1,78 @@
+# La scheda personaggio (Sergio, 31 ott). Dalla home, toccando il diavoletto,
+# il PROFILO con le tre schede (SCHEDA 400 662, STATISTICHE 586 662, PARTITE
+# 772 662; indietro 62 658). Poi una partita contro un bot: lo schieramento
+# dei cartellini prima della scelta (un tocco lo chiude), la striscia in alto
+# durante la scelta (un tocco su un cartellino lo apre, un altro lo chiude), in
+# partita il cartellino del bot toccando la sua targa nel suo turno. Partita da
+# 3 secondi: il podio ha RIVEDI (980 205); toccando un giocatore sul podio il
+# suo cartellino. Il replay, un tocco e si torna al profilo, sulla partita.
+imposta prova_scelta 1
+imposta prova_durata 3
+imposta prova_profilo 1             # un profilo che ha già giocato: pezzi, poteri, badge
+
+aspetta 1.5
+foto 01_home
+tocca 400 300                       # il diavoletto: il profilo
+aspetta 0.5
+foto 02_profilo_scheda
+tocca 586 662                       # STATISTICHE
+aspetta 0.3
+foto 03_profilo_statistiche
+tocca 772 662                       # PARTITE (ancora nessuna)
+aspetta 0.3
+foto 04_profilo_partite_vuoto
+tocca 62 658                        # indietro
+aspetta_stato modo=menu 3
+
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 310 460                       # 1 CONTRO 1
+tocca 640 140                       # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.8
+foto 05_schieramento
+tocca 640 360                       # un tocco: alle armi
+aspetta 0.4
+foto 06_scelta_striscia
+tocca 815 680                       # il cartellino del bot nella striscia
+aspetta 0.4
+foto 07_striscia_aperta
+tocca 640 360                       # lo chiude
+aspetta 0.3
+tocca 320 410                       # primaria
+aspetta 0.3
+tocca 960 410                       # secondaria: si parte
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 20
+aspetta 0.3
+tocca_robot 0 20                    # la targa del bot: il suo cartellino
+aspetta 0.4
+foto 08_cartellino_partita
+aspetta_stato turno=1 fase=aim 30    # il secondo giro (l'ultimo, x2): un altro colpo
+aspetta 1
+mira 150 100 0.4
+aspetta_evento over 60
+aspetta 4
+foto 09_podio
+tocca 742 400                       # il primo sul podio: il suo cartellino
+aspetta 0.4
+foto 10_podio_cartellino
+tocca 640 360                       # lo chiude
+aspetta 0.3
+tocca 980 205                       # RIVEDI
+aspetta_stato modo=replay 5
+aspetta 1.5
+foto 11_replay
+tocca 640 360                       # fine: il profilo, sulla partita
+aspetta 0.5
+foto 12_profilo_partite
+tocca 586 662                       # STATISTICHE
+aspetta 0.3
+foto 13_profilo_statistiche
+tocca 400 662                       # SCHEDA
+aspetta 0.3
+foto 14_profilo_scheda
+tocca 62 658                        # indietro
+aspetta_stato modo=menu 3

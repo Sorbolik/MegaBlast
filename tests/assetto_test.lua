@@ -97,9 +97,9 @@ a.gear = { mask = "vuoto", chest = "vuoto", cloak = "vuoto", legs = "vuoto" }
 st = assetto.stats(BASE, a)
 check(st.teleport_ticks < BASE.teleport_ticks * 0.75 and st.max_hp < BASE.max_hp, "set Vuoto completo: teletrasporto più rapido, meno vita")
 a.variant = "b"
-st = assetto.stats(BASE, a, { mask = 1, chest = 3, cloak = 3, legs = 3 })
+st = assetto.stats(BASE, a, { mask = 1, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
 check(st.teleports == BASE.teleports, "la variante B vuole tutti i pezzi al tier III")
-st = assetto.stats(BASE, a, { mask = 3, chest = 3, cloak = 3, legs = 3 })
+st = assetto.stats(BASE, a, { mask = equip.TIERS, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
 check(st.teleports == BASE.teleports + 1, "tier III: variante B del Vuoto, un teletrasporto in più")
 a.gear = { mask = "leviatano", chest = "leviatano", cloak = "leviatano", legs = "leviatano" }
 a.variant = "a"
@@ -114,14 +114,14 @@ a.gear = { mask = "fornace", chest = "fornace", cloak = "fornace", legs = "forna
 st = assetto.stats(BASE, a)
 check(st.burning_blasts == 1 and st.status_turns == BASE.status_turns, "set Fornace completo: colpi brucianti")
 a.variant = "b"
-st = assetto.stats(BASE, a, { mask = 3, chest = 3, cloak = 3, legs = 3 })
+st = assetto.stats(BASE, a, { mask = equip.TIERS, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
 check(st.burning_blasts == 1 and st.status_turns == BASE.status_turns + 1, "tier III: variante B della Fornace")
 a.variant = "a"
 a.gear = { mask = "corvo", chest = "corvo", cloak = "corvo", legs = "corvo" }
 st = assetto.stats(BASE, a)
 check(st.air_jumps == 1 and st.fall_damage_mul == 0, "set Corvo completo: doppio salto e caduta senza danno")
 a.variant = "b"
-st = assetto.stats(BASE, a, { mask = 3, chest = 3, cloak = 3, legs = 3 })
+st = assetto.stats(BASE, a, { mask = equip.TIERS, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
 check(st.air_jumps == 2, "tier III: due salti in aria")
 a.variant = "a"
 a.tree = { hp = 2, fall = 2, anchor = 1, teleport = 1 }
@@ -135,7 +135,11 @@ a.gear.mask = "drago"
 check(not assetto.valid(a, 20), "un set sconosciuto non è valido")
 
 -- Tier dalla maestria
-check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(500) == 3, "tier dalle partite giocate")
+check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(20) == 3 and equip.tier(500) == equip.TIERS,
+	"tier dalle partite giocate, uno per scatto")
+check(equip.tier(29) < equip.TIERS and equip.tier(30) == equip.TIERS, "la variante B a 30 partite con ogni pezzo, come prima")
+check(equip.livello(0) == 0 and equip.livello(12) == 12 and equip.livello(99) == equip.LIVELLO_MAX, "livello del pezzo")
+check(equip.prossimo_scatto(12) == 20 and equip.prossimo_scatto(30) == nil, "prossimo scatto")
 
 -- Riconoscimenti
 local ranking = {

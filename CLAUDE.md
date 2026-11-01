@@ -126,7 +126,7 @@ l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla p
 su claude.ai le connessioni verso altri siti sono bloccate.
 
 Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
-`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campagna_test.lua` (missioni della campagna e partita guidata), `luajit tests/eventi_test.lua` (eventi nel gioco), `luajit strumenti/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
+`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campagna_test.lua` (missioni della campagna e partita guidata), `luajit tests/eventi_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit strumenti/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
 
 ## Sezione "Per Telegram" in ogni PR (Sergio, 29 ott)
 

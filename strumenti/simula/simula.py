@@ -97,7 +97,7 @@ def test_sim():
         return
     info("2. test della simulazione, di assetto e podio, del personaggio e della camera")
     for test in ("tests/sim_test.lua", "tests/assetto_test.lua", "tests/battaglia_test.lua", "tests/bot_test.lua", "tests/campagna_test.lua",
-                 "tests/eventi_test.lua"):
+                 "tests/eventi_test.lua", "tests/scheda_test.lua"):
         r = esegui([lua, test], cwd=REPO)
         sys.stdout.write(r.stdout[-2000:] + r.stderr[-2000:])
         if r.returncode != 0:
@@ -414,6 +414,13 @@ def comando(g, riga):
         for i in range(1, passi + 1):
             g.attendi(num(4, 0.5) / passi)
             g.punta(num(0) + (num(2) - num(0)) * i / passi, num(1) + (num(3) - num(1)) * i / passi)
+        g.xdo("mouseup", 1)
+    elif c == "tocca_robot":
+        # tocco breve a (dx, dy) dal centro del robot di turno (la sua targa: il cartellino)
+        x, y = g.robot()
+        g.punta(x + num(0), y + num(1))
+        g.xdo("mousedown", 1)
+        g.attendi(0.08)
         g.xdo("mouseup", 1)
     elif c == "mira":
         # tiene premuto il dito a (dx, dy) dal robot di turno e poi lascia: spara

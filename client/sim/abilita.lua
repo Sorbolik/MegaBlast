@@ -31,6 +31,8 @@ M.BRANCHES = {
 }
 
 -- Nodi: ramo, riga (1 in alto), gradi, costo di ogni grado ed effetto di ogni grado.
+-- potere: i nodi che danno una cosa nuova (non solo un numero) e come si chiama
+-- sul cartellino (ui/cartellino.lua).
 -- Somma dei costi di tutti i gradi: 62, più del triplo di POINTS_MAX.
 M.NODES = {
 	-- Mobilità (28)
@@ -42,23 +44,23 @@ M.NODES = {
 		desc = "Velocità in aria +3%", effects = { { stat = "air_speed", mul = 1.03 } } },
 	{ id = "orb_fast", branch = "mobility", row = 3, ranks = 2, cost = 3, name = "Orbe impaziente",
 		desc = "Il teletrasporto scatta il 5% prima", effects = { { stat = "teleport_ticks", mul = 0.95 } } },
-	{ id = "air_jump", branch = "mobility", row = 3, ranks = 1, cost = 4, name = "Balzo nel vuoto",
+	{ id = "air_jump", branch = "mobility", row = 3, ranks = 1, cost = 4, name = "Balzo nel vuoto", potere = "salto in aria",
 		desc = "Un salto in aria", effects = { { stat = "air_jumps", add = 1 } } },
 	-- Difesa (24)
 	{ id = "hp", branch = "defense", row = 1, ranks = 4, cost = 2, name = "Crosta spessa",
 		desc = "Vita +2", effects = { { stat = "max_hp", add = 2 } } },
 	{ id = "fall", branch = "defense", row = 1, ranks = 2, cost = 2, name = "Ossa di pietra",
 		desc = "Danno da caduta -5%", effects = { { stat = "fall_damage_mul", mul = 0.95 } } },
-	{ id = "teleport", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Globo di riserva",
+	{ id = "teleport", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Globo di riserva", potere = "globo di riserva",
 		desc = "Si parte con un teletrasporto in più", effects = { { stat = "teleports", add = 1 } } },
-	{ id = "parachute", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Ali di riserva",
+	{ id = "parachute", branch = "defense", row = 2, ranks = 1, cost = 4, name = "Ali di riserva", potere = "paracadute in più",
 		desc = "Un paracadute in più per partita", effects = { { stat = "parachutes", add = 1 } } },
 	{ id = "anchor", branch = "defense", row = 3, ranks = 2, cost = 2, name = "Radici",
 		desc = "Spinta subita -5%", effects = { { stat = "knockback_mul", mul = 0.95 } } },
 	-- Arsenale (10)
 	{ id = "trap_wide", branch = "arsenal", row = 1, ranks = 3, cost = 2, name = "Trappola larga",
 		desc = "Raggio delle trappole +3%", effects = { { stat = "trap_radius", mul = 1.03 } } },
-	{ id = "long_status", branch = "arsenal", row = 2, ranks = 1, cost = 4, name = "Brace lenta",
+	{ id = "long_status", branch = "arsenal", row = 2, ranks = 1, cost = 4, name = "Brace lenta", potere = "brace lenta",
 		desc = "Gli effetti di stato che dai durano un turno in più", effects = { { stat = "status_turns", add = 1 } } },
 }
 

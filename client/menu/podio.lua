@@ -4,11 +4,13 @@
 -- (sim/riconoscimenti.lua) e cosa si è guadagnato: esperienza e livello.
 --
 -- Uso (dal gui_script):
---   local p = podio.new(results, giocatori, me, guadagno, prof)
---     results: g:results() della sim; giocatori[robot] = { nome, colore }
+--   local p = podio.new(results, giocatori, me, guadagno, prof, numero)
+--     results: g:results() della sim; giocatori[robot] = { nome, colore, vetrina }
 --     me: il robot di chi gioca su questo telefono online (nil in locale)
 --     guadagno: profilo.fine_partita(...) di chi gioca su questo telefono, o nil; prof: il profilo
---   podio.update(p, dt) ; podio.on_input(p, action_id, action) -> "continua" o nil
+--     numero: la partita nel profilo, se ha il replay (c'è RIVEDI)
+--   podio.update(p, dt) ; podio.on_input(p, action_id, action) -> "continua", { rivedi = numero } o nil
+--   toccando un giocatore sul podio si apre il suo cartellino (ui/cartellino.lua); un tocco lo chiude
 --   podio.distruggi(p)
 
 local ui = require "ui.ui"
@@ -16,6 +18,7 @@ local scoria = require "battaglia.scoria"
 local game = require "sim.game"
 local riconoscimenti = require "sim.riconoscimenti"
 local profilo = require "menu.profilo"
+local cartellino = require "ui.cartellino"
 
 local M = {}
 
@@ -69,6 +72,13 @@ local function gradino(p, x, voce, i)
 	local s = scoria.new(g.colore, scoria.PERSONAGGIO)
 	gui.set_parent(s.root, posa)
 	scoria.set_enabled(s, true)
+	-- toccando gradino o diavoletto, il suo cartellino
+	if g.vetrina then
+		local zona = gui.new_box_node(vec(x, M.BASE_Y + (h + M.SCORIA_H + 30) / 2), vec(M.LARGO, h + M.SCORIA_H + 30))
+		gui.set_visible(zona, false)
+		gui.set_parent(zona, p.radice)
+		p.bottoni[#p.bottoni + 1] = { nodo = zona, bordo = zona, azione = "carta:" .. voce.robot, colore = c.LUCE, riposo = c.LUCE }
+	end
 	p.figure[#p.figure + 1] = { s = s, posa = posa,
 		st = { x = 0, y = 0, facing = x < 640 and 1 or -1, grounded = true, moving = 0, turno = true,
 			vittoria = voce.place == 1 } }
@@ -122,8 +132,8 @@ local function guadagno(p, g, prof)
 	end
 end
 
-function M.new(results, giocatori, me, guadagno_mio, prof)
-	local p = { giocatori = giocatori, me = me, figure = {}, bottoni = {}, t = 0 }
+function M.new(results, giocatori, me, guadagno_mio, prof, numero)
+	local p = { giocatori = giocatori, me = me, figure = {}, bottoni = {}, t = 0, numero = numero }
 	-- sfondo stirato su tutto lo schermo, il resto in un gruppo che si adatta (FIT)
 	p.fondo = ui.sfondo()
 	p.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
@@ -150,23 +160,54 @@ function M.new(results, giocatori, me, guadagno_mio, prof)
 	end
 
 	if guadagno_mio then guadagno(p, guadagno_mio, prof) end
-	ui.bottone(p.bottoni, 1065, 205, 330, 60, "CONTINUA", "continua", { principale = true }, p.radice)
+	if numero then
+		-- RIVEDI: dritto al replay di questa partita (poi si torna nel profilo)
+		ui.bottone(p.bottoni, 980, 205, 160, 60, "RIVEDI", "rivedi", nil, p.radice)
+		ui.bottone(p.bottoni, 1150, 205, 160, 60, "CONTINUA", "continua", { principale = true }, p.radice)
+	else
+		ui.bottone(p.bottoni, 1065, 205, 330, 60, "CONTINUA", "continua", { principale = true }, p.radice)
+	end
 	return p
 end
 
 function M.update(p, dt)
 	p.t = p.t + dt
 	for _, s in ipairs(p.figure) do scoria.update(s.s, dt, s.st) end
+	if p.carta then cartellino.update(p.carta, dt) end
 	if p.barra and p.t > M.PREMI then
 		ui.barra_valore(p.barra, math.min(p.barra_fine, (p.t - M.PREMI) * 0.8))
 	end
 end
 
+local function chiudi_carta(p)
+	cartellino.distruggi(p.carta)
+	gui.delete_node(p.velo)
+	p.carta, p.velo = nil, nil
+end
+
 function M.on_input(p, action_id, action)
-	return ui.tocco(p.bottoni, action_id, action)
+	-- il cartellino aperto: un tocco (o un tasto) lo chiude
+	if p.carta then
+		if action.pressed and (action_id == hash("touch") or action_id == ui.PAD) then chiudi_carta(p) end
+		return nil
+	end
+	local azione = ui.tocco(p.bottoni, action_id, action)
+	if azione == "rivedi" then return { rivedi = p.numero } end
+	local robot = azione and tonumber(azione:match("^carta:(%d+)$"))
+	if robot then
+		local v = p.giocatori[robot].vetrina
+		p.velo = gui.new_box_node(vec(640, 360), vec(1280 * 4, 720 * 4))
+		gui.set_color(p.velo, vmath.vector4(ui.C.FONDO.x, ui.C.FONDO.y, ui.C.FONDO.z, 0.82))
+		gui.set_parent(p.velo, p.radice)
+		v.verso = 1
+		p.carta = cartellino.new(v, 640, 360 + cartellino.ALTO({ ritratto = true }) / 2, { ritratto = true, tu = v.tu }, p.radice)
+		return nil
+	end
+	return azione
 end
 
 function M.distruggi(p)
+	if p.carta then cartellino.distruggi(p.carta) end
 	gui.delete_node(p.radice)
 	gui.delete_node(p.fondo)
 end

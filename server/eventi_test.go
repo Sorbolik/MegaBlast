@@ -142,7 +142,7 @@ func TestEventoOnline(t *testing.T) {
 	defer cancel()
 	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
 	finito := dial(t, ctx, url)
-	finito.send(`{"t":"hello","v":6,"mode":"maglio-20261116"}`)
+	finito.send(`{"t":"hello","v":7,"mode":"maglio-20261116"}`)
 	if m := finito.waitFor(`"error"`); m["e"] != "evento" {
 		t.Fatalf("coda di un evento non in corso: %v", m)
 	}
@@ -150,7 +150,7 @@ func TestEventoOnline(t *testing.T) {
 	c := make([]*testClient, 4)
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":6,"mode":"maglio-20261102"}`)
+		c[i].send(`{"t":"hello","v":7,"mode":"maglio-20261102"}`)
 	}
 	d := c[0].waitFor(`"draft"`)
 	for _, fila := range []string{"offer", "offer2"} {
