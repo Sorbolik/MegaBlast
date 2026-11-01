@@ -2,7 +2,7 @@
 
 - **Stato:** APPROVATA
 - **Data:** 2026-11-01
-- **Ramo della scheda:** `main` · **Immagini:** generate da Sergio in ChatGPT e portate nel thread
+- **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-006` (con Codex: `esegui WB-006`; oppure a mano in ChatGPT)
 
 ## Obiettivo
 
@@ -31,9 +31,9 @@ file in quest'ordine (pronti, già numerati, in
 
 | Nome file | Riferimenti | Misura | Varianti |
 |---|---|---|---|
-| `foglio_maschio` | R1 maschio, R2, R3, R4 maschio | 3:2 orizzontale, la più grande possibile (minimo 1536×1024) | 1 |
-| `foglio_femmina` | R1 femmina, R2, R3, R4 femmina | come sopra | 1 |
-| `foglio_favilla` | R1 Favilla, R2, R3, R4 Favilla | come sopra | 1 |
+| `foglio_maschio` | `art/WB-006/riferimenti/R1_maschio_tre_quarti.png`, `art/WB-006/riferimenti/R2_stampino.png`, `art/WB-006/riferimenti/R3_manichino.png`, `art/WB-006/riferimenti/R4_espressioni_maschio.png` (in quest'ordine = immagini 1, 2, 3, 4) | 3:2 orizzontale, la più grande possibile (minimo 1536×1024) | 1 |
+| `foglio_femmina` | `art/WB-006/riferimenti/R1_femmina_tre_quarti.png`, `art/WB-006/riferimenti/R2_stampino.png`, `art/WB-006/riferimenti/R3_manichino.png`, `art/WB-006/riferimenti/R4_espressioni_femmina.png` (in quest'ordine = immagini 1, 2, 3, 4) | come sopra | 1 |
+| `foglio_favilla` | `art/WB-006/riferimenti/R1_favilla_tre_quarti.png`, `art/WB-006/riferimenti/R2_stampino.png`, `art/WB-006/riferimenti/R3_manichino.png`, `art/WB-006/riferimenti/R4_espressioni_favilla.png` (in quest'ordine = immagini 1, 2, 3, 4) | come sopra | 1 |
 
 Sfondo **magenta pieno #FF00FF** come R2 (lo usa lo strumento di taglio). Le caselle
 dell'ala e della coda restano **vuote**: questi personaggi non le hanno. Niente foglio
