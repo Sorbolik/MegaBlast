@@ -74,6 +74,8 @@ Sfondo bianco puro, i quattro personaggi della stessa grandezza e ben separati, 
 
 Approvata da Claude il 2026-11-01 (prove reversibili). Sergio sceglie dopo aver visto le immagini.
 
+2026-11-01, Sergio: il ghigno scelto è `art/WB-003/ghigno_scelto.png` (occhio sinistro socchiuso, sopracciglio alzato a destra, sorriso storto). Le quattro femmine semplici non gli piacciono: da ripensare.
+
 ## Consegna di Codex
 
 ## Resoconto di Claude
