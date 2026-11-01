@@ -113,7 +113,7 @@ def impara(rete, x, y, args, rng):
     dev = dispositivo()
     n = len(x)
     idx = rng.permutation(n)
-    prova, studio = idx[: n // 10], idx[n // 10:]
+    prova, misura, studio = idx[: n // 10], idx[n // 10: n // 5], idx[n // 5:]
     xs, ys = torch.from_numpy(x).float().to(dev), torch.from_numpy(y).float().to(dev)
     opt = torch.optim.AdamW(rete.parameters(), lr=args.lr, weight_decay=args.l2)
     perdita = torch.nn.HuberLoss(delta=1.0)
@@ -151,11 +151,13 @@ def impara_coppie(rete, a, b, d, d0, args, rng):
     base (d0 la differenza di quel giudizio). Come impara: Huber, la rete
     migliore sulle coppie tenute da parte. Restituisce anche in quanti bivi
     (dove una rendeva di più) il bot con questa rete sceglie quella giusta,
-    e in quanti la sceglieva il giudizio di base da solo."""
+    e in quanti la sceglieva il giudizio di base da solo: misurati su altre
+    coppie ancora, mai viste e mai usate per fermarsi, con il margine del 95%
+    sulla differenza (a coppie: contano solo i bivi dove i due scelgono diverso)."""
     dev = dispositivo()
     n = len(d)
     idx = rng.permutation(n)
-    prova, studio = idx[: n // 10], idx[n // 10:]
+    prova, misura, studio = idx[: n // 10], idx[n // 10: n // 5], idx[n // 5:]
     ta, tb, td = (torch.from_numpy(np.ascontiguousarray(v)).float().to(dev) for v in (a, b, d))
     opt = torch.optim.AdamW(rete.parameters(), lr=args.lr, weight_decay=args.l2)
     perdita = torch.nn.HuberLoss(delta=1.0)
@@ -186,12 +188,16 @@ def impara_coppie(rete, a, b, d, d0, args, rng):
                 break
     rete.load_state_dict(stato)
     with torch.no_grad():
-        dd = diff(prova_t).cpu().numpy()
-    tot, b0 = d[prova] + d0[prova], d0[prova]
+        dd = diff(torch.from_numpy(misura).to(dev)).cpu().numpy()
+    tot, b0 = d[misura] + d0[misura], d0[misura]
     conta = tot != 0
-    return {"quante": n, "errore": round(migliore, 4), "passate": passate,
-            "giuste": round(float(((dd + b0 > 0) == (tot > 0))[conta].mean()), 4),
-            "giuste_base": round(float(((b0 > 0) == (tot > 0))[conta].mean()), 4)}
+    rete_ok = ((dd + b0 > 0) == (tot > 0))[conta]
+    base_ok = ((b0 > 0) == (tot > 0))[conta]
+    m = max(1, int(conta.sum()))
+    return {"quante": n, "misurate": m, "errore": round(migliore, 4), "passate": passate,
+            "giuste": round(float(rete_ok.mean()), 4),
+            "giuste_base": round(float(base_ok.mean()), 4),
+            "margine": round(float(1.96 * np.sqrt((rete_ok != base_ok).sum()) / m), 4)}
 
 
 def matrici(rete):
@@ -323,7 +329,7 @@ def main():
     ap.add_argument("--epoche", type=int, default=60, help="passate massime sugli esempi a giro")
     ap.add_argument("--pazienza", type=int, default=5, help="ci si ferma dopo tante passate senza migliorare")
     ap.add_argument("--lotto", type=int, default=1024)
-    ap.add_argument("--confronta", type=int, default=2, help="bivi a partita giocati in due modi (0: niente)")
+    ap.add_argument("--confronta", type=int, default=4, help="bivi a partita giocati in due modi (0: niente)")
     ap.add_argument("--lr", type=float, default=0.001)
     ap.add_argument("--l2", type=float, default=1e-5)
     ap.add_argument("--esame-partite", type=int, default=480)
@@ -473,7 +479,8 @@ def main():
         print(f"giro {giro}: {n_esempi} esempi nuovi, impara su {n_studiati} (varianza spiegata {studio['spiegata']:.2f}); "
               f"esame: la rete arriva più in alto del bot di oggi nel {100 * e['vince']:.0f}% delle partite"
               + (f"; bivi: {studio['coppie']['quante']}, scelta giusta {100 * studio['coppie']['giuste']:.0f}% "
-                 f"(senza la rete degli attacchi {100 * studio['coppie']['giuste_base']:.0f}%)" if "coppie" in studio else ""))
+                 f"(senza la rete degli attacchi {100 * studio['coppie']['giuste_base']:.0f}%, "
+                 f"differenza ±{100 * studio['coppie']['margine']:.1f} su {studio['coppie']['misurate']})" if "coppie" in studio else ""))
 
         file_stato.write_text(json.dumps(stato), encoding="utf-8")
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],

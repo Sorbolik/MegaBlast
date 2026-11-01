@@ -87,7 +87,11 @@ M.GRADI = {
 -- strumenti/arena/impara.py;
 -- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore;
 -- larga: prova anche i colpi a ventaglio che non puntano nessuno (per le reti).
-M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 100, globo_riparo = 3 }
+-- cassa: quanto vale prendere una cassa (in punti partita), più cassa_fame
+-- per ogni colpo che manca a quel robot per averne FAME (primarie delle casse
+-- e secondaria scelta: chi resta a secco la vuole di più).
+M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletrasporto = 100, globo_riparo = 3,
+	cassa = 12, cassa_fame = 8 }
 
 -- Caratteri: come gioca un bot, oltre al livello (quanto è bravo). Sono solo
 -- pesi diversi da M.PESI, quindi il bot non bara: preme sempre i tasti di un
@@ -109,6 +113,8 @@ M.CARATTERI = {
 }
 -- mosse provate fino in fondo (fino a quando tutto è fermo) tra le migliori
 local FINALISTE = 4
+-- sotto quanti colpi (primarie delle casse e secondaria) una cassa vale di più
+local FAME = 2
 local POTENZE = { 1, 0.75, 0.55, 0.88, 0.42 }
 
 local FERMO = {}
@@ -140,9 +146,11 @@ local function senza_cratere(self, x, y, owner, blast, weapon)
 	self:blast(x, y, owner, blast, weapon)
 end
 
--- Una copia della partita su cui provare le mosse: robot, colpi, oggetti e
--- generatore sono copiati, il terreno è in comune ma non viene toccato. Le
--- regole del turno (fine turno, casse, cure) non girano: si usa game:advance.
+-- Una copia della partita su cui provare le mosse: robot, colpi, oggetti,
+-- casse e generatore sono copiati, il terreno è in comune ma non viene
+-- toccato. Le regole del turno (fine turno, casse nuove, cure) non girano: si
+-- usa game:advance. Nelle casse copiate non c'è niente ("hook": game.dai non
+-- dà nulla), perché il bot non deve sapere cosa contengono.
 function M.mondo(g)
 	local w = setmetatable({}, game)
 	w.terrain, w.map, w.tick, w.mode, w.normalized = g.terrain, g.map, g.tick, g.mode, g.normalized
@@ -153,6 +161,9 @@ function M.mondo(g)
 	w.rng = rng.new(g.rng.state)
 	w.used = copia(g.used)
 	w.events, w.crates = {}, {}
+	for i, c in ipairs(g.crates) do
+		w.crates[i] = { id = c.id, x = c.x, y = c.y, vy = c.vy, landed = c.landed, weapon = "hook" }
+	end
 	w.robots, w.orbs, w.placed, w.shards = {}, {}, {}, {}
 	for i, rb in ipairs(g.robots) do w.robots[i] = clona(rb) end
 	for i, o in ipairs(g.orbs) do w.orbs[i] = copia(o) end
@@ -395,6 +406,30 @@ M.caratteristiche = caratteristiche
 
 local CAR = {}
 
+-- Quanti colpi contati ha rb: le primarie delle casse e la secondaria scelta
+local function colpi(rb)
+	local n = 0
+	for _, a in ipairs(game.CRATE_WEAPONS) do n = n + rb.ammo[a] end
+	if rb.secondary then n = n + rb.ammo[rb.secondary] end
+	return n
+end
+
+-- Quanto valgono per il bot le casse prese nella copia w (rb.crates sale a
+-- ogni cassa): per la sua squadra in più, per gli avversari in meno
+local function casse(b, g, w)
+	local me = g.robots[b.id]
+	local s = 0
+	for i, c in ipairs(w.robots) do
+		local r = g.robots[i]
+		local n = c.crates - r.crates
+		if n > 0 and not r.dead then
+			local v = n * (b.pesi.cassa + b.pesi.cassa_fame * math.max(0, FAME - colpi(r)))
+			s = s + (c.team == me.team and v or -v)
+		end
+	end
+	return s
+end
+
 -- Quanto vale la copia w rispetto alla partita vera g, per il robot del bot
 -- Con la rete: il giudizio di qui sopra più quello che la rete aggiunge (lei
 -- impara solo la differenza fra questo e quanto rende davvero la posizione,
@@ -440,7 +475,7 @@ local function valore(b, g, w, fase)
 			end
 		end
 	end
-	return s
+	return s + casse(b, g, w)
 end
 
 -- Distanza dal nemico più vicino a (x, y): a parità di danno, un colpo che
@@ -460,13 +495,25 @@ end
 -- Una mossa: dove andare (posto: x, y, strada) e cosa fare lì
 -- (arma, angolo, potenza), col suo punteggio.
 
--- Mette il robot del bot nel posto della copia, fermo a terra
+-- Mette il robot del bot nel posto della copia, fermo a terra, con le casse
+-- che ha toccato per strada (posto.casse: i loro id)
 local function in_posto(w, id, posto)
 	local c = w.robots[id]
 	if posto.strada then
 		c.x, c.y, c.vx, c.vy = posto.x, posto.y, 0, 0
 		c.grounded, c.knocked, c.rising = true, false, false
 		c.facing = posto.facing
+	end
+	if posto.casse then
+		for _, cid in ipairs(posto.casse) do
+			for i, k in ipairs(w.crates) do
+				if k.id == cid then
+					table.remove(w.crates, i)
+					c.crates = c.crates + 1
+					break
+				end
+			end
+		end
 	end
 	return c
 end
@@ -767,6 +814,30 @@ local function ventaglio(b, g, posto, lista_armi, mosse)
 	end
 end
 
+-- Le casse ferme a terra della partita vera che il robot c tocca e che non
+-- sono già in prese (lista di id): una lista nuova con anche quelle, o prese
+-- se non ce ne sono (stessa regola di game:update_crates)
+local function tocca(g, c, prese)
+	local nuove
+	for _, k in ipairs(g.crates) do
+		if k.landed and math.abs(c.x - k.x) <= game.ROBOT_HALF_W + game.CRATE_HALF_W
+			and c.y < k.y + game.CRATE_H and c.y + game.ROBOT_H > k.y then
+			local gia = false
+			for _, id in ipairs(prese) do
+				if id == k.id then gia = true end
+			end
+			if not gia then
+				if not nuove then
+					nuove = {}
+					for i, id in ipairs(prese) do nuove[i] = id end
+				end
+				nuove[#nuove + 1] = k.id
+			end
+		end
+	end
+	return nuove or prese
+end
+
 -- Posti dove si arriva camminando (e saltando) da dove si è: per ogni lato
 -- due modi (ai bordi salta o scende). Ogni posto ha la strada: i tasti tick
 -- per tick (dirs: -1, 0, 1; salti: true dove si salta).
@@ -784,6 +855,8 @@ local function posti_a_piedi(b, g, max)
 			local strada = { dirs = dirs, salti = salti }
 			local input = { left = d < 0, right = d > 0, jump = false, hold = true }
 			local fermo_da, ultimo_x = 0, c.x
+			-- le casse toccate per strada (nella partita vera le prende camminando)
+			local prese, prima_cassa = {}, false
 			for t = 1, max do
 				local salta = false
 				if c.grounded then
@@ -800,7 +873,11 @@ local function posti_a_piedi(b, g, max)
 				if c.dead or c.y < 40 then break end
 				if math.abs(c.x - ultimo_x) >= 1 then fermo_da, ultimo_x = t, c.x end
 				if t - fermo_da > 40 then break end
-				if c.grounded and t % 6 == 0 then
+				if #g.crates > 0 then
+					local p = tocca(g, c, prese)
+					if p ~= prese then prima_cassa, prese = true, p end
+				end
+				if c.grounded and (t % 6 == 0 or prima_cassa) then
 					local nuovo = true
 					for _, p in ipairs(posti) do
 						if math.abs(p.x - c.x) < 24 and math.abs(p.y - c.y) < 20 then
@@ -808,8 +885,10 @@ local function posti_a_piedi(b, g, max)
 							break
 						end
 					end
-					if nuovo then
-						posti[#posti + 1] = { x = c.x, y = c.y, facing = c.facing, n = t, strada = strada }
+					if nuovo or prima_cassa then
+						posti[#posti + 1] = { x = c.x, y = c.y, facing = c.facing, n = t, strada = strada,
+							casse = #prese > 0 and prese or nil }
+						prima_cassa = false
 					end
 				end
 				if t % 10 == 0 then lavora(b, 40) end
@@ -837,7 +916,9 @@ local function posto_teletrasporto(b, g, a, p)
 		if t % 10 == 0 then lavora(b, 40) end
 	end
 	if c.dead or not c.grounded or c.y < 60 then return nil end
-	return { x = c.x, y = c.y, facing = c.facing, n = t, strada = { dirs = {}, salti = {} }, globo = { a, p } }
+	local prese = #g.crates > 0 and tocca(g, c, {}) or {}
+	return { x = c.x, y = c.y, facing = c.facing, n = t, strada = { dirs = {}, salti = {} }, globo = { a, p },
+		casse = #prese > 0 and prese or nil }
 end
 
 -- Un angolo vicino a quello della mossa m con cui il colpo non fa male a
@@ -1050,7 +1131,7 @@ local function riparo(b, g, w)
 	if b.pesi.rete then return valore(b, g, w, 0) end
 	local x = caratteristiche(b, g, w, CAR)
 	if x[7] == 1 then return -1000 end
-	local s = x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50
+	local s = x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50 + casse(b, g, w)
 	-- la tana del codardo: coperto e che nessuno vede
 	local tana = b.pesi.tana
 	if tana then
