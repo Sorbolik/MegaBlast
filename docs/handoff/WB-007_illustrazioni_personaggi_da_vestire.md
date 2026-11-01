@@ -137,3 +137,21 @@ Stile: ESATTAMENTE quello del mio personaggio allegato: bianco e nero piatto, ca
 Approvata da Claude, 2026-11-01: scelta reversibile (sono immagini per un documento di proposta,
 il gioco non cambia). Richiesta da Sergio nel thread del designer ("fatti aiutare da chat, voglio un
 documento serio senza pezzi traballanti").
+
+## Consegna di Codex
+
+2026-11-01. Generati sette PNG 1536×1024 in `art/WB-007/`, ciascuno accompagnato dal TXT con il prompt integrale, invariato, e i riferimenti nell'ordine richiesto:
+
+- `1_pezzi_A.png` e `1_pezzi_A.txt` — 1 tentativo.
+- `2_cammina_A.png` e `2_cammina_A.txt` — 3 tentativi; conservato il primo, più fedele al riferimento. NON conforme alla sequenza di passo richiesta: le braccia non si alternano e le quattro fasi non sono corrette. Gli ultimi tentativi aggiungevano dettagli indesiderati o ripetevano le pose.
+- `3_facce.png` e `3_facce.txt` — 2 tentativi; eliminata la sagoma specchiata di Favilla del primo.
+- `4_livelli.png` e `4_livelli.txt` — 1 tentativo.
+- `5_equipaggiamento.png` e `5_equipaggiamento.txt` — 1 tentativo.
+- `6_proposta_B.png` e `6_proposta_B.txt` — 1 tentativo.
+- `7_proposta_C.png` e `7_proposta_C.txt` — 2 tentativi; eliminata una giuntura visibile sul pezzo del braccio.
+
+Controllati visivamente tutti i file: presenza dei pezzi e delle figure, muso bianco con bocca interna, margini senza tagli, assenza di testi e frecce, rosso limitato alle due colonne di livello 20. Controllate le dimensioni dei PNG. Nessun test del gioco: queste sono illustrazioni di proposta.
+
+Limiti da rivedere con Claude: lo sfondo panna presenta una lieve texture e non è una campitura numericamente uniforme #F5F2EA; la fedeltà di sagome e proporzioni è visiva, non pixel-identica. La tavola 2 resta da correggere; non dichiaro soddisfatti tutti i criteri di accettazione. Gli spallacci della tavola 5 hanno una lieve vista a tre quarti. Nessuna modifica a codice o decisioni. Nessun conflitto operativo con le decisioni del gioco: la scheda riguarda un documento di proposta.
+
+Git CLI non riesce a raggiungere il proxy (porta 8080). Scheda approvata letta da `main` tramite il connettore GitHub; consegna pubblicata sul ramo `design/WB-007` attraverso lo stesso connettore, basata sul commit `34ec8d75254561c9de71c6e4f731a1949d1d0600` di main. Nessuna PR e nessun merge.
