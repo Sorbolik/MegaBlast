@@ -205,7 +205,7 @@ function M.new(v, x, y, opz, parent)
 		box(0, yy - RITRATTO / 2 + 2, 128, RITRATTO - 12, con_alfa(C.FONDO, 0.7), c.root)
 		local posa = box(0, yy - RITRATTO + 16, 0, 0, C.LUCE, c.root)
 		gui.set_visible(posa, false)
-		c.figura = scoria.new(col, scoria.PERSONAGGIO)
+		c.figura = scoria.new(col, scoria.PERSONAGGIO, "missile")
 		-- fiamma piccola dell'attesa ma sempre con l'arma in mano (come nelle proposte)
 		c.figura.con_arma, c.figura.arma_t = true, math.huge
 		-- la fiammella "in attesa" (la fiamma grande dice di chi è il turno, e qui non lo è
