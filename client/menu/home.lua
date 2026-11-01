@@ -7,7 +7,7 @@
 -- Uso (dal gui_script, che ha la texture ui e il font titolo):
 --   local home = require "menu.home"
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
---   home.show(h) / home.hide(h)
+--   home.show(h, senza_velo) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
 --                                                        -- "impostazioni", "profilo" (toccando il diavoletto) o nil
@@ -105,9 +105,16 @@ function M.new(colore)
 	return h
 end
 
-function M.show(h)
+-- senza_velo: ci si arriva con un passaggio (ui/passaggio.lua), che copre già
+function M.show(h, senza_velo)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
 	h.bottoni.premuto = nil
+	h.visibile = true
+	if senza_velo then
+		gui.cancel_animations(h.velo, "color.w")
+		gui.set_enabled(h.velo, false)
+		return
+	end
 	gui.set_enabled(h.velo, true)
 	gui.set_color(h.velo, vmath.vector4(0, 0, 0, 1))
 	gui.animate(h.velo, "color.w", 0, gui.EASING_OUTQUAD, 0.35, 0, function()

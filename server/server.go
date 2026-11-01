@@ -89,7 +89,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/eventi", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*") // la build HTML5 lo chiede da un altro sito
-		w.Header().Set("Cache-Control", "max-age=30")
+		// sempre fresco: il gioco lo chiede all'ingresso e la home deve essere giusta
+		w.Header().Set("Cache-Control", "no-store")
 		json.NewEncoder(w).Encode(map[string]any{"ora": s.eventi.now().Unix(), "eventi": s.eventi.Occorrenze()})
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
