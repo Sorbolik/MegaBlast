@@ -45,6 +45,7 @@ di WB-006 (prima il tre quarti, poi i pezzi).
 | Fazzoletto al collo = colore della squadra | dipinto in verde #00FF00, che `taglia.py` trasforma nel colore della squadra |
 | Mani a quattro dita, piedi nudi a tre dita | come in A |
 | Contorno nero spesso, che si assottiglia e sparisce nelle giunture | richiesta di Sergio: nessuna riga nera dove due pezzi si sovrappongono |
+| Colore uniforme vicino alle giunture, soprattutto sulla pelle scoperta | richiesta di Sergio: due pezzi di pelle sovrapposti devono sembrare una cosa sola |
 | Tre quarti verso destra | è la vista dello stampino e quella con cui cammina |
 
 | Scartiamo | Perché |
@@ -142,7 +143,7 @@ Row 3: 7) DEFEATED: sad, eyebrows up in the middle, eyes looking down, small dow
 
 Rendering rules, very strict, because these drawings will be traced into vector shapes:
 - FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
-- Thick, clean, closed pure-black #000000 outline around each head, thinner black lines only for inner details. The bottom end of the neck stub has NO black outline: the outline gets thinner as it reaches the stub's lower end and stops, and the skin color runs right to the edge.
+- Thick, clean, closed pure-black #000000 outline around each head, thinner black lines only for inner details. The bottom end of the neck stub has NO black outline: the outline gets thinner as it reaches the stub's lower end and stops, and the skin color runs right to the edge. The skin near the bottom of the neck stub is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there.
 - Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; horns #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A.
 - Flat pure white #FFFFFF background.
 - No text, numbers, labels, arrows or signatures. Square format.
@@ -157,7 +158,7 @@ Image 2 is a layout sheet: 12 grey placeholder parts on a flat magenta #FF00FF b
 
 Make the PARTS SHEET of the imp of image 1, cut apart like a paper puppet: same canvas as image 2, same flat magenta #FF00FF background, each part placed over its grey placeholder and about the same size. Nothing else may remain on the sheet: no grey placeholders, no labels, no text, no numbers, no shadows on the magenta. Every part is drawn as it looks in image 1 (three-quarter view facing right), COMPLETE even where other parts would hide it, and well separated from the other parts (no part touches another).
 
-OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends, where it slides under or over another part. At a joint end the black outline gets gradually thinner as it approaches the end and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the bottom of each neck stub; the neck opening and the two shoulders of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail (the end attached to the body). Everywhere else the outline stays thick and even.
+OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends, where it slides under or over another part. At a joint end the black outline gets gradually thinner as it approaches the end and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the bottom of each neck stub; the neck opening and the two shoulders of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail (the end attached to the body). Everywhere else the outline stays thick and even. The color near every joint end must be PERFECTLY UNIFORM: plain base color only (skin #B8432A on bare skin), with no shadow shape, no highlight, no line and no color change in the last stretch before the joint, so that two overlapping parts of bare skin blend into one continuous surface with no visible seam. Keep any shadow shapes well away from the joint ends.
 
 The parts, left to right:
 Row 1: four heads of the imp of image 1, facing right, each with a short neck stub at the bottom, the head outline, horns and ears IDENTICAL in all four, no flame on top: head 1 = expression 1 of image 4 (sly grin); head 2 = expression 2 (hit, eyes squeezed shut > <, jagged open mouth); head 3 = expression 3 (victory, happy closed eyes, big laughing mouth); head 4 = expression 4 (knocked out, spiral pupils, wavy mouth).
@@ -179,7 +180,7 @@ Image 1 is the main character of our game, a little blacksmith-apprentice imp, i
 
 Draw FIVE heads of him in a single row, left to right, all the same size, all facing right in three-quarter view, each with a short neck stub at the bottom, well apart from each other, the head outline, horns and ears IDENTICAL in all five, no flame on top. They are expressions 5 to 9 of image 2, copied exactly: 1) AIMING (focused, far eye squinting, tongue tip out of the corner of the mouth); 2) ANGRY (eyebrows in a V, clenched teeth); 3) DEFEATED (sad, eyes down, downturned mouth); 4) SCARED (wide eyes, tiny pupils, small open mouth); 5) TAUNT (wink and tongue out).
 
-Each head has a thick, clean pure-black #000000 outline, EXCEPT at the bottom of the neck stub: there the outline gets gradually thinner and disappears, and the skin color runs right to the edge, rounded and full, with no black line across it.
+Each head has a thick, clean pure-black #000000 outline, EXCEPT at the bottom of the neck stub: there the outline gets gradually thinner and disappears, and the skin color runs right to the edge, rounded and full, with no black line across it. The skin near the bottom of the neck stub is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there, so the neck blends into the torso with no visible seam.
 
 Rendering rules, very strict, because these heads will be traced into vector shapes:
 - FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
@@ -193,6 +194,7 @@ Rendering rules, very strict, because these heads will be traced into vector sha
 - [ ] è l'apprendista di R1: proporzioni, testa, corna, orecchie, coda a freccia, fazzoletto
 - [ ] solo colori piatti della tavolozza, al massimo un'ombra netta per colore; niente tratteggi, texture, fuliggine
 - [ ] contorno nero spesso e chiuso, tranne alle estremità delle giunture, dove si assottiglia e sparisce
+- [ ] vicino alle giunture il colore è uniforme (pelle `#B8432A` piena): niente ombre, luci o righe, così due pezzi di pelle sovrapposti sembrano una cosa sola
 - [ ] nessuna fiammella sulla testa, nessuna ala, nessun vestito oltre al fazzoletto
 - [ ] il verde `#00FF00` solo sul fazzoletto
 - [ ] tre quarti verso destra in tutte le immagini; nelle teste la sagoma è identica, cambia solo l'espressione
