@@ -1,0 +1,43 @@
+{
+	"casse": 3,
+	"coda_normale": ["tetto"],
+	"modi": {
+		"1v1": 2,
+		"2v2": 4,
+		"ffa": 4
+	},
+	"nomi": {
+		"bellows": "MANTICE",
+		"eagle": "TONANTE",
+		"grenade": "UOVO DI FIAMMA",
+		"hook": "RAMPINO",
+		"lunge": "AFFONDO",
+		"mallet": "MAGLIO",
+		"missile": "LANCIARUNE",
+		"parachute": "PARACADUTE",
+		"punch": "PUGNO DEL TITANO",
+		"shards": "SCIAME DI SCHEGGE",
+		"sniper": "CECCHINO",
+		"sword": "LAMA",
+		"teleport": "TELETRASPORTO",
+		"trampoline": "TRAMPOLINO"
+	},
+	"primarie": ["grenade", "shards", "punch", "sniper"],
+	"punti": {
+		"crown": 25,
+		"crown_rounds": 1,
+		"damage": 1,
+		"death": -20,
+		"env_kill": 50,
+		"final_round": 2,
+		"kill": 50,
+		"leader": 1.5,
+		"parry": 0.5,
+		"parry_max": 20,
+		"self_death": -30,
+		"trap": 10
+	},
+	"secondarie": ["eagle", "mallet", "lunge", "bellows"],
+	"sempre": ["missile", "sword"],
+	"tetto_max": 29
+}

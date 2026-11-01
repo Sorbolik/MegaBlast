@@ -91,6 +91,7 @@ func TestEventiFileSbagliato(t *testing.T) {
 	sbagliati := map[string]string{
 		"regola sconosciuta": `{"eventi":[{"id":"x","tipo":"mod","nome":"X","da":"2026-11-02 10:00","a":"2026-11-03 10:00","modo":"2v2","regole":{"vento":3}}]}`,
 		"arma sconosciuta":   `{"eventi":[{"id":"x","tipo":"mod","nome":"X","da":"2026-11-02 10:00","a":"2026-11-03 10:00","modo":"2v2","regole":{"armi":["bazooka"]}}]}`,
+		"tetto troppo alto":  `{"eventi":[{"id":"x","tipo":"torneo","nome":"X","da":"2026-11-02 10:00","a":"2026-11-03 10:00","regole":{"tetto":30}}]}`,
 		"regole sul torneo":  `{"eventi":[{"id":"x","tipo":"torneo","nome":"X","da":"2026-11-02 10:00","a":"2026-11-03 10:00","regole":{"casse":2}}]}`,
 		"modo che non c'è":   `{"eventi":[{"id":"x","tipo":"mod","nome":"X","da":"2026-11-02 10:00","a":"2026-11-03 10:00","modo":"3v3"}]}`,
 		"si accavalla":       `{"eventi":[{"id":"x","tipo":"xp","nome":"X","da":"2026-11-02 10:00","a":"2026-11-10 10:00","ogni":1}]}`,
@@ -164,5 +165,56 @@ func TestEventoOnline(t *testing.T) {
 	r, _ := s["regole"].(map[string]any)
 	if s["mode"] != "maglio-20261102" || r == nil || r["casse"].(float64) != 2 {
 		t.Fatalf("start senza le regole dell'evento: %v", s)
+	}
+}
+
+// Dal pannello: il server scarica il calendario, chiede con l'ETag (304 se non
+// è cambiato), dice quale versione ha preso e, se la rifiuta, perché; una
+// versione sbagliata o il pannello giù non cancellano il calendario buono.
+func TestEventiDalPannello(t *testing.T) {
+	versione, testo, giu := `"3"`, calendarioProva, false
+	var preso, errore string
+	pannello := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if giu {
+			http.Error(w, "giù", http.StatusBadGateway)
+			return
+		}
+		preso, errore = r.URL.Query().Get("preso"), r.URL.Query().Get("errore")
+		w.Header().Set("ETag", versione)
+		if r.Header.Get("If-None-Match") == versione {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		io.WriteString(w, testo)
+	}))
+	t.Cleanup(pannello.Close)
+	now, _ := time.ParseInLocation("2006-01-02 15:04", "2026-11-03 12:00", roma)
+	c := &Calendario{path: pannello.URL + "/eventi.json", now: func() time.Time { return now }}
+	cl := pannello.Client()
+	c.scarica(cl)
+	if n := len(c.Occorrenze()); n != 4 || preso != "" {
+		t.Fatalf("dal pannello %d occorrenze (preso %q), volevo 4", n, preso)
+	}
+	c.scarica(cl) // non è cambiato: 304, e dice che ha preso la 3
+	if preso != "3" || errore != "" || len(c.Occorrenze()) != 4 {
+		t.Fatalf("seconda volta: preso %q errore %q", preso, errore)
+	}
+	versione, testo = `"4"`, `{"eventi":[{"id":"x","tipo":"torneo","nome":"X","da":"2026-11-02 10:00","a":"2026-11-03 10:00","regole":{"casse":2}}]}`
+	c.scarica(cl)
+	c.scarica(cl)
+	if preso != "4" || !strings.Contains(errore, "casse") || len(c.Occorrenze()) != 4 {
+		t.Fatalf("versione sbagliata: preso %q errore %q, %d occorrenze", preso, errore, len(c.Occorrenze()))
+	}
+	giu = true
+	c.scarica(cl)
+	if len(c.Occorrenze()) != 4 || c.rete == "" {
+		t.Fatalf("pannello giù: %d occorrenze, rete %q", len(c.Occorrenze()), c.rete)
+	}
+	giu, versione, testo = false, `"5"`, `{"eventi":[{"id":"x","tipo":"torneo","nome":"X","da":"2026-11-02 10:00","a":"2026-11-04 10:00","regole":{"tetto":15}}]}`
+	c.scarica(cl)
+	c.scarica(cl)
+	oo := c.Occorrenze()
+	if preso != "5" || errore != "" || len(oo) != 1 || string(oo[0].Regole) != `{"tetto":15}` || c.rete != "" {
+		t.Fatalf("il tetto sul Torneo: preso %q errore %q %+v", preso, errore, oo)
 	}
 }

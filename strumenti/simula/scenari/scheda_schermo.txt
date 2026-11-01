@@ -2,7 +2,8 @@
 # (telefono 20:9) e --schermo 960x720 (tablet 4:3). Profilo, schieramento e
 # striscia restano al centro senza deformarsi; indietro, livello, titolo e
 # tempo dello schieramento si attaccano ai bordi veri. Tocchi in pixel del
-# gioco al centro (tocca_centro) o dai bordi (tocca_bordo).
+# gioco al centro (tocca_centro) o dai bordi (tocca_bordo). Con la striscia del
+# 2 contro 2 la rotellina scende sotto (62 112 dall'angolo) a 20:9, a 4:3 no.
 imposta prova_scelta 1
 imposta prova_profilo 1
 
@@ -17,13 +18,23 @@ tocca_bordo 62 62 alto sinistra     # indietro
 aspetta_stato modo=menu 3
 tocca_bordo 205 323 basso destra    # ALLENAMENTO
 aspetta 1
-tocca_centro 310 460                # 1 CONTRO 1
+tocca_centro 640 460                # 2 CONTRO 2 (la striscia va da un bordo all'altro)
 tocca_centro 640 140                # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8
 foto 03_schieramento
 tocca_centro 640 360                # alle armi
 aspetta 0.4
-tocca_centro 465 680                # il tuo cartellino nella striscia
+tocca_centro 163 680                # il tuo cartellino nella striscia
 aspetta 0.4
 foto 04_striscia_aperta
+tocca_centro 640 360                # lo richiude
+aspetta 0.3
+tocca_bordo 62 112 alto sinistra    # la rotellina a 20:9 (sotto la striscia): ESCI accanto
+aspetta 0.3
+foto 05_rotellina
+tocca_bordo 62 112 alto sinistra    # la richiude (a 4:3 tocca nel vuoto)
+aspetta 0.3
+tocca_bordo 62 62 alto sinistra     # la rotellina a 4:3 (al suo posto)
+aspetta 0.3
+foto 06_rotellina

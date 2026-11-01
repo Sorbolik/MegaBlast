@@ -7,6 +7,8 @@
 --
 -- Lo usano la battaglia (game.gui_script), la home (menu/home.lua) e il podio:
 --   local s = scoria.new(colore, look)  -- look: le pelli addosso (battaglia/pelli.lua)
+--   local s = scoria.new(colore, look, "missile")  -- solo quell'arma, per i ritratti
+--                                  -- (cartellini, profilo): una trentina di nodi in meno
 --   scoria.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
 --   scoria.set_weapon(s, nome) / hit(s, dx) / fire(s, tipo) / lunge(s) / die(s)
 --   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
@@ -357,7 +359,7 @@ function M.uncino(s, on)
 	end
 end
 
-function M.new(color, look)
+function M.new(color, look, solo_arma)
 	local H = game.DISEGNO_H
 	-- largo tre quarti dell'altezza, come la capsula di partenza (sim/corpo.lua)
 	local Wd = H * 0.75
@@ -433,7 +435,11 @@ function M.new(color, look)
 	-- gira l'arma attorno al perno (girata e poi schiacciata si storcerebbe)
 	s.presa = giunto(s.forma, 0, 0)
 	s.giro = giunto(s.presa, 0, 0)
-	for name in pairs(ARMI) do arma(s, name, color) end
+	if solo_arma then
+		arma(s, solo_arma, color)
+	else
+		for name in pairs(ARMI) do arma(s, name, color) end
+	end
 	s.braccio_a = giunto(s.forma, J.braccio[1] * k, J.braccio[2] * k)
 	veste(s, s.braccio_a, "braccio", k)
 	s.manina_a = manina(s, MANO_A, k)
@@ -442,7 +448,7 @@ function M.new(color, look)
 		manina_d = { s.manina_d }, gamba_d = { s.gamba_d }, gamba_a = { s.gamba_a }, busto = { s.busto },
 		testa = { s.collo }, arma = { s.presa }, braccio_a = { s.braccio_a }, manina_a = { s.manina_a } }
 	s.livelli = LIVELLI
-	M.set_weapon(s, "missile")
+	M.set_weapon(s, solo_arma or "missile")
 
 	M.set_color(s, color, true)
 	M.reset(s)

@@ -33,6 +33,9 @@ check(eventi.quando(eventi.lista[2], ORA) == "finisce tra 2h", "quando finisce")
 local c = eventi.cosa_cambia(eventi.lista[1], { punch = "PUGNO", mallet = "MAGLIO" })
 check(c[1] == "2 CONTRO 2" and c[2] == "Armi: PUGNO, MAGLIO" and c[3] == "Casse ogni 2 turni", "cosa cambia: " .. table.concat(c, " | "))
 check(eventi.cosa_cambia(eventi.lista[2])[1] == "Le partite normali 2 CONTRO 2", "il Torneo non cambia le regole")
+local torneo = { coda = "2v2", modo = "2v2", regole = { tetto = 15 } }
+c = eventi.cosa_cambia(torneo)
+check(c[1] == "Le partite normali 2 CONTRO 2" and c[2] == "Pezzi al massimo al livello 15", "il tetto del Torneo: " .. table.concat(c, " | "))
 
 if failures > 0 then
 	print(failures .. " test falliti")

@@ -16,3 +16,5 @@ Le più recenti in fondo.
 - 2026-10-26 · Il diavoletto è fatto a pezzi animati nel codice, non a fogli di fotogrammi (pesanti, deriva delle IA, nessuna reazione ai colpi).
 - 2026-10-26 · I difetti visivi che si vedono (coda tagliata, giunture, salti di colore) non si accettano mai: si correggono o si rigenera.
 - 2026-10-28 · Le immagini le genera Codex (ChatGPT) dalle schede in `docs/handoff/` scritte da Claude, che resta il coordinatore: niente copia e incolla di prompt, consegna con commit sul ramo `design/WB-xxx` (regole in `AGENTS.md`).
+- 2026-11-01 · Prove del personaggio nuovo di Sergio (espressioni e versione femminile) nella scheda WB-002, su sfondo bianco perché sono solo prove (Claude).
+- 2026-11-01 · Personaggi nuovi di Sergio (maschio, femmina, Favilla): corpo 30% più piccolo rispetto ai disegni originali, testa uguale. Disegni ufficiali in `art/personaggi/`.
