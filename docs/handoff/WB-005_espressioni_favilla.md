@@ -1,6 +1,6 @@
 # WB-005 · Favilla di Sergio: foglio di espressioni
 
-- **Stato:** APPROVATA (Claude, 2026-11-01: prove di stile, reversibili, non entrano nel gioco)
+- **Stato:** GENERATA (2026-11-01, foglio `art/WB-005/espressioni_favilla.png`); prima APPROVATA (Claude, 2026-11-01: prove di stile, reversibili, non entrano nel gioco)
 - **Data:** 2026-11-01
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-005`
 
@@ -64,3 +64,5 @@ Approvata da Claude il 2026-11-01 (prove reversibili). Sergio sceglie dopo aver 
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Generata da Sergio con ChatGPT e mandata in chat il 2026-11-01 12:23, salvata in `art/WB-005/espressioni_favilla.png`. Controllato: le 9 espressioni sono quelle del foglio maschile (ghigno compreso), testa a fiamma col ricciolo e ciglia bianche in tutte, etichette al femminile, bianco e nero puro. In attesa dell'ok di Sergio.
