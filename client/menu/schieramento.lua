@@ -11,7 +11,8 @@
 --   schieramento.on_input(s, action_id, action)
 --   schieramento.distruggi(s)
 --
---   local st = schieramento.striscia(vetrine)    -- la striscia in alto durante la scelta
+--   local st = schieramento.striscia(vetrine)    -- la striscia in alto durante la scelta (st.copre_angolo:
+--                                                -- arriva sopra la rotellina, menu/scelta.lua sotto_striscia)
 --   schieramento.striscia_tocco(st, action_id, action) -> true se il tocco era suo
 --   schieramento.distruggi(st)
 
@@ -133,6 +134,13 @@ function M.striscia(vetrine)
 	for i, v in ipairs(vetrine) do squadre[i] = v.squadra end
 	local xs = M.posti(squadre)
 	for i, v in ipairs(vetrine) do
+		-- la rotellina della scelta (64 x 64 a 30 dall'angolo in alto a sinistra
+		-- dello schermo vero) con ESCI accanto (160 di largo): con quattro
+		-- cartellini a 16:9 e a 20:9 la striscia ci arriva sopra, a 4:3 resta sotto
+		if xs[i] - STRISCIA_W / 2 < schermo.x0 + 30 + 64 + 12 + 160 + 8
+			and STRISCIA_Y + STRISCIA_H / 2 > schermo.y1 - 30 - 64 - 8 then
+			st.copre_angolo = true
+		end
 		local col = C.SQUADRA[v.squadra] or C.LUCE
 		local n, bordo = ui.pannello(xs[i], STRISCIA_Y, STRISCIA_W, STRISCIA_H, st.radice)
 		gui.set_color(bordo, v.tu and col or con_alfa(col, 0.6))

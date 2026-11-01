@@ -1,0 +1,98 @@
+# Ogni modo con la scelta delle armi parte davvero, con un profilo che ha già
+# giocato (pezzi, poteri, badge: cartellini pieni). Bug del 1° novembre: nel
+# 2 contro 2 i quattro cartellini dello schieramento finivano i nodi della GUI
+# (erano 2048), lo script si fermava e la partita non partiva.
+# Allenamento 2 contro 2, tutti contro tutti e 1 contro 1 (lo schieramento
+# finisce da solo, poi Rosso 1 sceglie e i bot pure), poi stesso telefono
+# 2 contro 2 (lo schieramento si chiude con un tocco). La campagna è in
+# scelta_forgia.txt, l'online in scelta_online.txt.
+# Allenamento: MODO 1v1 310 460, 2v2 640 460, ffa 970 460; GIOCA 640 140.
+# Con la striscia di quattro cartellini la rotellina della scelta scende (62 608).
+imposta prova_profilo 1
+imposta prova_scelta 1
+imposta giocatori 2v2
+
+aspetta 1
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 640 460                       # 2 CONTRO 2
+tocca 640 140                       # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.5
+foto 01_schieramento_2v2_bot
+aspetta 5                           # lo schieramento finisce da solo
+foto 02_scelta_2v2_bot              # la striscia in alto, la rotellina sotto
+tocca 320 410                       # Rosso 1: primaria
+aspetta 0.3
+tocca 320 410                       # Rosso 1: secondaria
+aspetta_stato modo=local 30
+aspetta 1
+foto 03_partita_2v2_bot
+tocca 62 658                        # rotellina
+aspetta 0.3
+tocca 408 658                       # ESCI: all'allenamento
+aspetta 1
+tocca 970 460                       # TUTTI CONTRO TUTTI
+tocca 640 140                       # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.5
+foto 04_schieramento_ffa
+aspetta 5
+tocca 320 410
+aspetta 0.3
+tocca 320 410
+aspetta_stato modo=local 30
+aspetta 1
+foto 05_partita_ffa
+tocca 62 658
+aspetta 0.3
+tocca 408 658
+aspetta 1
+tocca 310 460                       # 1 CONTRO 1
+tocca 640 140                       # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.5
+foto 06_schieramento_1v1
+aspetta 5
+tocca 320 410
+aspetta 0.3
+tocca 320 410
+aspetta_stato modo=local 30
+aspetta 1
+foto 07_partita_1v1
+tocca 62 658
+aspetta 0.3
+tocca 408 658
+aspetta 1
+tocca 62 658                        # indietro: alla home
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca 1075 235                      # STESSO TELEFONO (2 contro 2)
+aspetta_stato modo=scelta 5
+aspetta 0.5
+foto 08_schieramento_2v2
+tocca 640 360                       # un tocco: alle armi
+aspetta 0.4
+tocca 62 608                        # la rotellina, sotto la striscia: ESCI accanto
+aspetta 0.3
+foto 09_rotellina_sotto_striscia
+tocca 62 608                        # la richiude
+aspetta 0.3
+tocca 320 410                       # Rosso 1
+aspetta 0.3
+tocca 320 410
+aspetta 0.3
+tocca 640 410                       # Blu 1
+aspetta 0.3
+tocca 640 410
+aspetta 0.3
+tocca 960 410                       # Rosso 2
+aspetta 0.3
+tocca 960 410
+aspetta 0.3
+tocca 320 410                       # Blu 2
+aspetta 0.3
+tocca 640 410
+aspetta_stato modo=local 25
+aspetta 1
+foto 10_partita_2v2

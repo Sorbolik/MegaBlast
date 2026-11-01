@@ -208,7 +208,16 @@ local function chiudi_scheda(s)
 	s.carta, s.premuta = nil, nil
 end
 
+-- La rotellina sotto la striscia dei cartellini (menu/schieramento.lua), che
+-- nel 2 contro 2 va da un bordo all'altro; true sotto, false al suo posto
+function M.sotto_striscia(s, sotto)
+	local p = gui.get_position(s.rotellina)
+	p.y = sotto and 720 - 30 - 32 - 50 or 720 - 30 - 32
+	gui.set_position(s.rotellina, p)
+end
+
 local function apri(s)
+	M.sotto_striscia(s, false)
 	gui.set_enabled(s.root, true)
 	gui.set_enabled(s.rotellina, true)
 	gui.set_enabled(s.esci, false)
