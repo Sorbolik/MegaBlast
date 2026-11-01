@@ -788,7 +788,8 @@ local CP = { conta = require "menu.conta", vetrina = require "menu.vetrina", car
 -- completa. Se il server non risponde si riprova dopo 0,5, 1 e 2 secondi;
 -- dopo INGRESSO.max si entra lo stesso, con "senza rete" sotto EVENTI, e la
 -- home riprova da sola ogni 5 secondi. Resta almeno INGRESSO.min, per non
--- lampeggiare. Negli scenari non si aspetta il server (prova_ingresso: i secondi)
+-- lampeggiare. Negli scenari non si aspetta il server: l'ingresso si chiude
+-- subito, se non lo tiene prova_ingresso secondi (scenari/ingresso.txt)
 CP.INGRESSO = { min = 0.5, max = 4, pause = { 0.5, 1, 2 } }
 
 function CP.entra(self)
@@ -1964,7 +1965,7 @@ function CP.avvio(self)
 	self.ingresso = menu.ingresso.new()
 	if SIMULA then
 		CP.INGRESSO.min = 0
-		CP.INGRESSO.max = tonumber(config_string("megablast.prova_ingresso", "0.5")) or 0.5
+		CP.INGRESSO.max = tonumber(config_string("megablast.prova_ingresso", "0")) or 0
 	end
 	CP.entra(self)
 	local ricetta = SIMULA and config_string("megablast.ricetta", "") or ""
