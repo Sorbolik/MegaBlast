@@ -1,0 +1,17 @@
+Draw a sheet of eight equipment pieces for a small, stocky imp (big head with two short horns, thin tail with an arrowhead tip), the hero of a cartoon video game set in Dante's Inferno. Each piece is a trophy: the Blacksmith forges it from what the imp takes away from the guardian of one circle of Hell. Funny tone, never macabre.
+
+Eight separate pieces, no character, front view, in two rows of four, well apart from each other, each one fully enclosed by the black outline:
+1) CERBERUS HELMET: a dark leather helmet with three little dog snouts on the front, pointed ears, and a studded collar as its rim;
+2) PLUTUS ARMOR: a chest armor made of overlapping gold coins like scales, with a button shaped like a little money bag;
+3) MINOS TAIL TIP: a tail tip shaped like a coiled serpent's tail, dark green and gold;
+4) HARPY WINGS: two ruffled grey-violet feathered wings with small claws at the tips;
+5) MINOTAUR HOOVES: two heavy boots shaped like bull hooves, iron and brown fur;
+6) GAUNTLETS OF DIS: two red-hot iron gloves with smoking knuckles;
+7) PITCH CLOAK: a short glossy black sticky cloak dripping in drops, with a hood with two points like the horns of the Malebranche devils;
+8) COCYTUS CROWN: a crown of pale blue ice with crystal spikes and two rings for the horns.
+
+Each piece has the color of its circle, but they all belong together.
+
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C, ice blue #BFE9FF. Flat light parchment background #F5EBD3, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
+
+Riferimenti: nessuno
