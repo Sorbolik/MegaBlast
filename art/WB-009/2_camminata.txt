@@ -1,0 +1,13 @@
+Image 1 shows the main character of our game, a little blacksmith-apprentice imp; the MIDDLE figure is a three-quarter view facing right. Keep exactly his shapes and proportions: small and stocky, big round head (about one third of his height), two short bone-colored horns, pointed ears, big yellow eyes, sly grin, brick-red skin with a parchment-colored belly and muzzle, four-fingered hands, bare three-toed feet, a long thin tail with an arrowhead tip, a neckerchief.
+
+Draw a WALK CYCLE of him walking to the right, in three-quarter view facing right, as FOUR separate figures in a row from left to right, all the same size, well apart, feet on the same invisible ground line: 1) contact: near leg forward with the heel touching the ground, far leg back, arms swinging opposite to the legs; 2) passing: weight on the near leg, the far leg lifting and passing beside it, body slightly higher; 3) contact with the other leg: far leg forward, near leg back, arms swinging the other way; 4) passing on the other leg. The tail sways a little behind him. Cheerful, bouncy, a bit cocky. No flame on his head, no wings; he wears nothing but the neckerchief.
+
+Rendering rules, very strict, because these drawings will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no brush strokes, no soot, no soft shading, no glow.
+- Thick, clean, closed pure-black #000000 outline around each figure, thinner black lines only for inner details.
+- Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; belly and muzzle #F1DFB0, their shadow #D6BC86; horns and toenails #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF; neckerchief pure bright green #00FF00 with shadow #00B400 (only on the neckerchief).
+- Flat pure white #FFFFFF background, no ground, no shadows on the ground.
+- No text, numbers, labels, arrows or signatures. Landscape 3:2.
+
+Riferimenti (ordine):
+R1: art/WB-009/riferimenti/R1_apprendista_concept.png

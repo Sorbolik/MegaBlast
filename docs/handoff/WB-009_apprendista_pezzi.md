@@ -233,4 +233,54 @@ chat dei pezzi di A, l'apprendista».
 
 ## Consegna di Codex
 
+### Fase 1 · 2026-11-01
+
+Eseguita dal `main` aggiornato, sul ramo `design/WB-009`. Generatore immagini usato con
+R1 come unico riferimento, prompt inglesi della scheda copiati integralmente, senza
+aggiunte o modifiche, sfondo non trasparente. Nessuna immagine della fase 2 generata;
+nessun file in `scelti/` creato. La scelta del modello resta a Sergio.
+
+| File consegnato | Misura effettiva | Tentativi | Esito |
+|---|---|---|---|
+| `art/WB-009/1_tre_quarti_1.png` | 1024×1536 | 3, consegnato il terzo | prova visiva, non conforme a tutti i criteri |
+| `art/WB-009/1_tre_quarti_2.png` | 1024×1536 | 3, consegnato il terzo | prova visiva, non conforme a tutti i criteri |
+| `art/WB-009/2_camminata.png` | 1536×1024 | 3, consegnato il terzo | ciclo non conforme: contatti ripetuti |
+| `art/WB-009/3_espressioni.png` | 1254×1254 | 3, conservato il primo, più regolare | nove espressioni presenti, non conforme a tutti i criteri |
+
+Accanto a ogni PNG c'è l'omonimo `.txt` con il prompt esatto e il riferimento usato.
+Sono stati guardati tutti i risultati prima della copia nei file di consegna; nessun
+ritocco, ricalco, ricampionamento o correzione della tavolozza applicato. I tentativi
+successivi hanno mantenuto i difetti descritti sotto; raggiunto il limite di tre per
+ciascun file, la consegna conserva le prove per revisione senza dichiararle approvate.
+
+**Controlli visivi eseguiti.** Figure intere e distanziate, coda con punta presente e
+non tagliata, contorno scuro spesso, tre quarti rivolto verso destra, fazzoletto verde
+solo sul corpo; nessuna fiammella, ala, altro vestito, scritta, firma o numero.
+Le nove espressioni sono nell'ordine richiesto e riconoscibili. Dimensioni e PNG RGB
+senza trasparenza controllati leggendo i file.
+
+**Problemi rimasti / criteri non soddisfatti.**
+
+- Tutti i risultati mostrano leggere sfumature e variazioni di colore nelle aree che
+  dovevano essere piatte. La tavolozza esadecimale non è rispettata in modo esatto;
+  anche lo sfondo è quasi bianco, non bianco pieno: per esempio gli angoli superiori
+  sinistri dei quattro PNG sono rispettivamente RGB (254,253,255), (253,255,255),
+  (254,253,255), (253,253,253). Non sono pronti per il ricalco tecnico così come sono.
+- Nei tre quarti la testa risulta più grande del terzo dell'altezza richiesto e
+  la disposizione degli arti vicino/lontano non segue precisamente quella del prompt.
+  La radice della coda è nascosta dal corpo: continuità visibile, attacco non verificabile.
+- Nella camminata le pose 1 e 3 ripetono la stessa gamba avanti e le pose 2 e 4 sono
+  molto simili: manca l'alternanza completa richiesta. I tre tentativi non l'hanno risolta.
+- Nel foglio delle espressioni sagome, corna e orecchie variano leggermente fra le teste;
+  i colli hanno ombra e linee laterali che non si assottigliano a sufficienza.
+  Non è soddisfatto il requisito del fondo del collo uniforme in #B8432A.
+- Il generatore ha restituito le espressioni a 1254×1254, formato quadrato ma diverso
+  dalle due misure richieste (1536×1536 oppure 1024×1024). File originale conservato.
+
+**Non verificato.** Nessun taglio, SVG, montaggio sullo scheletro o prova animata nel gioco:
+sono le fasi successive affidate a Claude. Nessuna accettazione attribuita a Sergio.
+La scheda approvata aggiorna il protagonista rispetto alle vecchie decisioni sul
+personaggio con occhiali; la decisione del 2026-11-01 conferma l'apprendista, quindi
+non è stato aggiunto alcun accessorio del vecchio diavoletto.
+
 ## Resoconto di Claude
