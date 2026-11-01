@@ -44,7 +44,7 @@ local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Versione del protocollo, uguale a protocolVersion in server/server.go
-local PROTOCOL = 7
+local PROTOCOL = 8
 -- Se la connessione cade in partita riproviamo per un po' (il server tiene il
 -- posto per 20 secondi)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
@@ -944,6 +944,9 @@ local function handle_event(self, e)
 		show_message(self, "Un cerchio di cura: chi ci finisce il turno dentro si cura")
 	elseif e.type == "heal" then
 		targa.annuncio(self.robots[e.robot].targa, "+" .. e.amount)
+	elseif e.type == "recharge" then
+		-- la Lama ha colpito un nemico: un colpo della secondaria torna
+		targa.annuncio(self.robots[e.robot].targa, "+1 " .. (hud.NOMI[e.weapon] or string.upper(e.weapon)))
 	elseif e.type == "crate" then
 		show_message(self, "Una cassa cade dal cielo!")
 	elseif e.type == "crate_pick" then
@@ -1106,6 +1109,7 @@ local function apply_state(self, s)
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
 		rb.ammo.sniper = r.ac or 0
 		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
+		for _, w in ipairs(game.DRAFT_SECONDARIES) do rb.ammo[w] = w == rb.secondary and (r.ss or 0) or 0 end
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
 		-- la lancia dell'Affondo punta lungo lo scatto (la: il suo angolo)
 		rb.lunge_vx = rb.lunge and math.cos(r.la or 0) or nil
@@ -2048,13 +2052,13 @@ end
 -- Barra delle armi -------------------------------------------------------------
 
 -- Lo slot si vede? Il paracadute finché ne restano o è già aperto; il Rampino
--- sempre. Nelle lezioni solo quello che la lezione usa
--- (r: la missione, sim/missioni.lua vedi).
+-- sempre; la secondaria scelta anche senza colpi (spenta: la Lama li ridà).
+-- Nelle lezioni solo quello che la lezione usa (r: la missione, sim/missioni.lua vedi).
 local function slot_have(rb, w, r)
 	if not missioni.vede(r, w) then return false end
 	if w == "parachute" then
 		return rb.parachute or rb.parachutes_left > 0
-	elseif w == "hook" then
+	elseif w == "hook" or (w == rb.secondary and not rb.disarmed) then
 		return true
 	end
 	return game.has_weapon(rb, w)

@@ -778,7 +778,8 @@ function M.tick(r, g)
 	local rb = g.robots[GIOCATORE]
 	for _, c in ipairs(l.riprova and l.casse or {}) do
 		local n = rb.ammo[c.arma]
-		if n == 0 and r.prese[c.arma] and not g.used.primary then rb.ammo[c.arma] = 1 end
+		local usata = game.SECONDARY[c.arma] and g.used.secondary or g.used.primary
+		if n == 0 and r.prese[c.arma] and not usata then rb.ammo[c.arma] = 1 end
 	end
 	-- lezioni: finché non tocchi i comandi il tempo del turno e della partita è fermo
 	if r.attesa and g.current == GIOCATORE then

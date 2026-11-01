@@ -1351,10 +1351,29 @@ do
 	local r1 = eg.robots[1]
 	check(r1.secondary == s2 and game.has_weapon(r1, s2) and game.has_weapon(r1, "sword") and not game.has_weapon(r1, s1),
 		"in partita hai la Lama e la secondaria scelta, non le altre")
-	check(game.FREE_WEAPONS[s2] and eg:can_use(s2) and eg:can_use("sword"), "le secondarie non consumano colpi")
+	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft and eg:can_use(s2) and eg:can_use("sword"),
+		"la secondaria scelta ha i suoi colpi, la Lama è illimitata")
 	eg:step({ fire = { angle = 0, power = 1, weapon = s2 } })
 	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword") and eg:can_use("missile"),
 		"usata la secondaria scelta, la Lama non si usa più nel turno")
+	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft - 1, "la secondaria consuma un colpo")
+	-- la Lama su un nemico ridà un colpo della secondaria, fino al massimo; su un compagno no
+	r1.ammo[s2] = 0
+	check(not game.has_weapon(r1, s2) and game.has_weapon(r1, "sword"), "finiti i colpi resta la Lama")
+	local nemico, compagno
+	for _, rb in ipairs(eg.robots) do
+		if rb.team ~= r1.team then nemico = nemico or rb elseif rb ~= r1 then compagno = rb end
+	end
+	eg:pop_events()
+	eg:sword_hit(r1, compagno)
+	check(r1.ammo[s2] == 0, "la Lama sul compagno non ricarica")
+	eg:sword_hit(r1, nemico)
+	local ev = eg:pop_events()
+	local ricarica = false
+	for _, e in ipairs(ev) do if e.type == "recharge" and e.robot == r1.id and e.weapon == s2 then ricarica = true end end
+	check(r1.ammo[s2] == 1 and ricarica and game.has_weapon(r1, s2), "la Lama sul nemico ridà un colpo")
+	for _ = 1, 5 do eg:sword_hit(r1, nemico) end
+	check(r1.ammo[s2] == config.SECONDARY_SHOTS.max, "mai oltre il massimo")
 
 	-- la campagna offre solo le armi già viste; un ventaglio vuoto non si sceglie
 	local v = draft.new(3, config.MODES["1v1"], { grenade = true, sniper = true, missile = true })

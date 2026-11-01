@@ -379,7 +379,8 @@ function M.motivo(g, w)
 	elseif game.TOOLS[w] then
 		return rb.ammo[w] <= 0 and "MUNIZIONI ESAURITE" or "NON ORA"
 	elseif game.SECONDARY[w] then
-		return g.used.secondary and "GIÀ USATA" or "NON ORA"
+		if g.used.secondary then return "GIÀ USATA" end
+		return game.has_weapon(rb, w) and "NON ORA" or "MUNIZIONI ESAURITE"
 	elseif g.used.primary then
 		return "GIÀ USATA"
 	end

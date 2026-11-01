@@ -70,7 +70,7 @@ agli altri; il suo robot sparisce dalla partita (`game:remove`: evento `gone`,
 `gn` nello stato, non rinasce e non ha più turni) e si continua finché restano
 almeno due squadre. Il client la
 mostra con la schermata dello stesso telefono (`client/menu/scelta.lua`). Nello stato ogni robot
-porta la sua secondaria in `sw`, l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
+porta la sua secondaria in `sw` (i suoi colpi in `ss`), l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
 `hx`, `hy`; `gs`: il suo uncino del Rampino è in volo, in `gx`, `gy`; `kn`: sbalzato da un colpo; `la`: direzione dello scatto
 dell'Affondo).
@@ -134,7 +134,7 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
 
 ## Protocollo
 
-Il primo messaggio del client è `{"t":"hello","v":7,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
+Il primo messaggio del client è `{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}`
 (`mode`: la coda scelta in DOVE GIOCHI?, o la `coda` di un evento; `vetrina`:
 livello e al massimo tre badge, il server tiene solo i valori validi, livello
 1-999, badge di lettere minuscole con grado 1-4). Se la
@@ -151,7 +151,7 @@ succede, per questo il server manda anche un ping ogni 10 s), gli altri
 ricevono `away`, i tasti tenuti premuti si lasciano e la partita va avanti: se
 era il suo turno, il tempo scorre. Si può tornare anche durante la scelta
 dell'arma (il gettone arriva già col primo `draft`). Il client riprova da solo per circa 18 s con
-`{"t":"hello","v":7,"tok":…}`; il server gli rimanda `start` con
+`{"t":"hello","v":8,"tok":…}`; il server gli rimanda `start` con
 `"resume":true`, gli scavi del terreno e i Bastioni posati o crollati, in ordine (`sync`) e lo stato. Dopo 20 s senza
 tornare il giocatore è fuori (`left`) e, se resta una sola squadra, la
 partita si chiude.

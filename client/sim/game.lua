@@ -171,17 +171,17 @@ M.PUNCH_HOP = 220        -- chi colpisce si alza un po' col montante
 -- turno una primaria e una secondaria, in ordine libero, mai due della stessa
 -- categoria. Primarie: fanno danno e sono le sole che lasciano effetti di stato
 -- (config.WEAPON_STATUS); il Lanciarune c'è sempre, le altre danno un colpo per
--- cassa (rb.ammo). Secondarie: illimitate, fanno di tutto (spostano chi le usa
--- o chi colpiscono) ma mai effetti di stato: la Lama colpisce e basta, il
--- Tonante spinge indietro chi spara, il Maglio lo fa rimbalzare in alto,
--- l'Affondo lo porta oltre, il Mantice soffia via chi ha davanti. La Lama c'è
--- sempre; una delle altre si sceglie all'inizio della partita (rb.secondary,
--- sim/draft.lua).
+-- cassa (rb.ammo). Secondarie: fanno di tutto (spostano chi le usa o chi
+-- colpiscono) ma mai effetti di stato: la Lama colpisce e basta, il Tonante
+-- spinge indietro chi spara, il Maglio lo fa rimbalzare in alto, l'Affondo lo
+-- porta oltre, il Mantice soffia via chi ha davanti. La Lama c'è sempre ed è
+-- illimitata; una delle altre si sceglie all'inizio della partita (rb.secondary,
+-- sim/draft.lua) e ha colpi contati in rb.ammo, che tornano colpendo un nemico
+-- con la Lama (config.SECONDARY_SHOTS; Sergio, 31 ottobre 2026).
 M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true }
 M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows" }
 -- armi che non consumano colpi
-M.FREE_WEAPONS = { missile = true, teleport = true }
-for w in pairs(M.SECONDARY) do M.FREE_WEAPONS[w] = true end
+M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
 -- Oggetti tattici delle casse (anche loro in rb.ammo), il paracadute (uno a
 -- partita) e il Rampino (uno a turno, per tutti): non sono attacchi (config.lua)
@@ -193,6 +193,7 @@ M.THROWN = { trampoline = true, hook = true }
 M.WEAPONS = { teleport = true, swap = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
 for _, w in ipairs(M.CRATE_WEAPONS) do M.WEAPONS[w] = true end
+for _, w in ipairs(M.DRAFT_SECONDARIES) do M.WEAPONS[w] = true end
 for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 
 -- Casse: ogni CRATE_EVERY turni ne cade una dal cielo in un punto a caso.
@@ -265,6 +266,7 @@ end
 local function make_ammo(start)
 	local a = {}
 	for _, w in ipairs(M.CRATE_WEAPONS) do a[w] = start and start[w] or 0 end
+	for _, w in ipairs(M.DRAFT_SECONDARIES) do a[w] = start and start[w] or 0 end
 	for _, w in ipairs(M.ITEMS) do a[w] = start and start[w] or 0 end
 	return a
 end
@@ -383,6 +385,8 @@ function M.new(seed, map_id, opts)
 		}
 		-- la primaria presa nella scelta d'inizio partita (sim/draft.lua)
 		if p.pick then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
+		local sec = g.robots[i].secondary
+		if sec then g.robots[i].ammo[sec] = g.robots[i].ammo[sec] + C.SECONDARY_SHOTS.draft end
 	end
 	g.events = {}
 	g.tick = 0
@@ -1880,6 +1884,12 @@ function M:sword_hit(rb, other)
 	-- la spada fa solo danno: il bersaglio resta dov'è (in Blastron si ferma)
 	if M.SWORD_STOP then other.vx, other.vy = 0, 0 end
 	self:hurt(other, M.SWORD_DAMAGE, rb)
+	-- colpire un nemico con la Lama ridà un colpo della secondaria scelta
+	local sec = rb.secondary
+	if sec and other.team ~= rb.team and rb.ammo[sec] < C.SECONDARY_SHOTS.max then
+		rb.ammo[sec] = rb.ammo[sec] + 1
+		self:emit({ type = "recharge", robot = rb.id, weapon = sec })
+	end
 end
 
 -- Affondo (config.LUNGE) -----------------------------------------------------------
@@ -2145,11 +2155,14 @@ end
 -- Dà al robot quello che c'è in una cassa. Le armi senza colpi contati, il
 -- Rampino e il paracadute arrivano solo dalle lezioni (sim/missioni.lua casse
 -- e dai): il Lanciarune a chi non ce l'ha (rb.disarmed), la secondaria prende
--- il posto della sua
+-- il posto della sua, con un colpo
 function M.dai(rb, w)
 	if M.FREE_WEAPONS[w] then
 		rb.disarmed = nil
-		if M.SECONDARY[w] then rb.secondary = w end
+	elseif M.SECONDARY[w] then
+		rb.disarmed = nil
+		rb.secondary = w
+		rb.ammo[w] = rb.ammo[w] + 1
 	elseif w == "hook" then
 		-- il Rampino ce l'hanno tutti: la lezione lo fa solo vedere
 	elseif w == "parachute" then
@@ -2408,7 +2421,8 @@ end
 -- rb.disarmed: nessuna, finché non trova il Lanciarune in una cassa (la prima lezione)
 function M.has_weapon(rb, weapon)
 	if rb.disarmed then return false end
-	if M.SECONDARY[weapon] then return weapon == "sword" or weapon == rb.secondary end
+	if weapon == "sword" then return true end
+	if M.SECONDARY[weapon] then return weapon == rb.secondary and rb.ammo[weapon] > 0 end
 	if M.FREE_WEAPONS[weapon] then return true end
 	return (rb.ammo[weapon] or 0) > 0
 end

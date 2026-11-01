@@ -139,6 +139,8 @@ local function prossimo(s)
 	end
 end
 
+local function colpi(n) return n .. (n == 1 and " colpo" or " colpi") end
+
 -- Titolo e righe sotto, secondo il passo e se la scelta è guidata
 local function testi(s)
 	local p, guida = s.passo, s.guidata
@@ -147,13 +149,15 @@ local function testi(s)
 	if p == 1 then
 		titolo = chi .. "scegli la primaria"
 		sotto = guida and "Prima di ogni partita scegli due armi in più, una per tipo; quelle degli altri non le vedi. "
-			.. "La primaria ha " .. config.DRAFT_SHOTS .. " colpi a partita, e il Lanciarune ce l'hai sempre. "
+			.. "La primaria ha " .. colpi(config.DRAFT_SHOTS) .. " a partita, e il Lanciarune ce l'hai sempre. "
 			.. "Tieni premuta una carta per vedere la sua scheda."
-			or "Ne hai " .. config.DRAFT_SHOTS .. " colpi; il Lanciarune ce l'hai sempre. Tieni premuta una carta per la sua scheda."
+			or "Ne hai " .. colpi(config.DRAFT_SHOTS) .. "; il Lanciarune ce l'hai sempre. Tieni premuta una carta per la sua scheda."
 	elseif p == 2 then
 		titolo = chi .. "scegli la secondaria"
-		sotto = guida and "La secondaria non finisce mai, e la Lama ce l'hai sempre: questa è in più. Tieni premuta una carta per la sua scheda."
-			or "Non finisce mai; la Lama ce l'hai sempre."
+		local n = colpi(config.SECONDARY_SHOTS.draft)
+		sotto = guida and "La secondaria ha " .. n .. ": ogni volta che colpisci un nemico "
+			.. "con la Lama, che ce l'hai sempre, te ne torna uno. Tieni premuta una carta per la sua scheda."
+			or "Ne hai " .. n .. "; colpendo un nemico con la Lama te ne torna uno."
 	else
 		titolo = "Pronto"
 		sotto = guida and "Il Rampino ce l'hai sempre. Nelle altre partite la scelta ha un tempo; qui no. "
