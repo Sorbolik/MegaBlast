@@ -31,6 +31,9 @@ Claude non ridisegna mai un personaggio col proprio codice: si ricalca il disegn
   delle giunture** (fondo del collo, collo e spalle del busto, cima di braccia e gambe, radice
   della coda): lì il colore arriva fino al bordo, tondo e
   pieno, senza riga nera. Così sovrapposti non si vede la giuntura.
+- **Colore uniforme alle giunture** (Sergio): nell'ultimo tratto prima della giuntura solo il
+  colore base, senza ombre, luci o righe, soprattutto sulla pelle scoperta: due pezzi di pelle
+  sovrapposti devono sembrare una superficie sola. Le ombre stanno lontane dalle giunture.
 - **Tre quarti verso destra** sempre: è la vista dello stampino e quella con cui si cammina.
 - **Colore della squadra** solo in verde `#00FF00` (ombra `#00B400`), su un solo dettaglio
   scelto per il personaggio (l'apprendista: il fazzoletto). Il verde non si usa per altro.
