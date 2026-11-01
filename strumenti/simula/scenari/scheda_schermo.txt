@@ -1,0 +1,29 @@
+# La scheda personaggio su altri schermi: da girare con --schermo 1600x720
+# (telefono 20:9) e --schermo 960x720 (tablet 4:3). Profilo, schieramento e
+# striscia restano al centro senza deformarsi; indietro, livello, titolo e
+# tempo dello schieramento si attaccano ai bordi veri. Tocchi in pixel del
+# gioco al centro (tocca_centro) o dai bordi (tocca_bordo).
+imposta prova_scelta 1
+imposta prova_profilo 1
+
+aspetta 1.5
+tocca_centro 400 300                # il diavoletto: il profilo
+aspetta 0.5
+foto 01_profilo_scheda
+tocca_centro 586 662                # STATISTICHE
+aspetta 0.3
+foto 02_profilo_statistiche
+tocca_bordo 62 62 alto sinistra     # indietro
+aspetta_stato modo=menu 3
+tocca_bordo 205 323 basso destra    # ALLENAMENTO
+aspetta 1
+tocca_centro 310 460                # 1 CONTRO 1
+tocca_centro 640 140                # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.8
+foto 03_schieramento
+tocca_centro 640 360                # alle armi
+aspetta 0.4
+tocca_centro 465 680                # il tuo cartellino nella striscia
+aspetta 0.4
+foto 04_striscia_aperta

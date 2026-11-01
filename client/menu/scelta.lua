@@ -22,6 +22,7 @@
 --   scelta.online(s, m, nomi, colori, invia)       -- online, a ogni messaggio draft del server;
 --                                                  -- invia(msg) manda le scelte
 --   scelta.hide(s)
+--   scelta.quando_chiude(s, fn)                   -- fn() quando la scelta si chiude
 
 local config = require "sim.config"
 local draft = require "sim.draft"
@@ -35,9 +36,10 @@ local M = {}
 
 local W, H = 1280, 720
 local CARD_W, CARD_H, CARD_GAP = 280, 230, 40
-local CARD_Y = 50
+-- (in alto, sopra il titolo, la striscia dei cartellini: menu/schieramento.lua)
+local CARD_Y = 20
 -- le due scelte fatte, sotto le carte
-local SCELTA_W, SCELTA_H, SCELTA_Y = 300, 84, -175
+local SCELTA_W, SCELTA_H, SCELTA_Y = 300, 84, -190
 local BAR_W = 560
 local C = ui.C
 local NOME_PASSO = { "PRIMARIA", "SECONDARIA" }
@@ -79,8 +81,8 @@ function M.new(icone, nomi, effetti, comandi)
 	s.luce = {}
 	s.root = nodo(W / 2, H / 2, W * schermo.PIENO, H * schermo.PIENO, VELO)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
-	s.titolo = ui.titolo("", 0, 312, 0.55, nil, s.root)
-	s.sotto = riga("", 255, 0.6, 1000, s.root)
+	s.titolo = ui.titolo("", 0, 232, 0.55, nil, s.root)
+	s.sotto = riga("", 192, 0.6, 1000, s.root)
 	for i = 1, config.DRAFT_OFFER do
 		local c = carta(0, CARD_Y, CARD_W, CARD_H, 96, s.root)
 		gui.set_position(c.icona, vec(0, 40))
@@ -137,6 +139,8 @@ local function prossimo(s)
 	end
 end
 
+local function colpi(n) return n .. (n == 1 and " colpo" or " colpi") end
+
 -- Titolo e righe sotto, secondo il passo e se la scelta è guidata
 local function testi(s)
 	local p, guida = s.passo, s.guidata
@@ -145,13 +149,15 @@ local function testi(s)
 	if p == 1 then
 		titolo = chi .. "scegli la primaria"
 		sotto = guida and "Prima di ogni partita scegli due armi in più, una per tipo; quelle degli altri non le vedi. "
-			.. "La primaria ha " .. config.DRAFT_SHOTS .. " colpi a partita, e il Lanciarune ce l'hai sempre. "
+			.. "La primaria ha " .. colpi(config.DRAFT_SHOTS) .. " a partita, e il Lanciarune ce l'hai sempre. "
 			.. "Tieni premuta una carta per vedere la sua scheda."
-			or "Ne hai " .. config.DRAFT_SHOTS .. " colpi; il Lanciarune ce l'hai sempre. Tieni premuta una carta per la sua scheda."
+			or "Ne hai " .. colpi(config.DRAFT_SHOTS) .. "; il Lanciarune ce l'hai sempre. Tieni premuta una carta per la sua scheda."
 	elseif p == 2 then
 		titolo = chi .. "scegli la secondaria"
-		sotto = guida and "La secondaria non finisce mai, e la Lama ce l'hai sempre: questa è in più. Tieni premuta una carta per la sua scheda."
-			or "Non finisce mai; la Lama ce l'hai sempre."
+		local n = colpi(config.SECONDARY_SHOTS.draft)
+		sotto = guida and "La secondaria ha " .. n .. ": ogni volta che colpisci un nemico "
+			.. "con la Lama, che ce l'hai sempre, te ne torna uno. Tieni premuta una carta per la sua scheda."
+			or "Ne hai " .. n .. "; colpendo un nemico con la Lama te ne torna uno."
 	else
 		titolo = "Pronto"
 		sotto = guida and "Il Rampino ce l'hai sempre. Nelle altre partite la scelta ha un tempo; qui no. "
@@ -242,7 +248,18 @@ function M.online(s, m, giocatori, colori, invia)
 	end
 end
 
+-- fn() quando la scelta si chiude (finita, nascosta, uscendo): lo schieramento
+-- e la sua striscia se ne vanno con lei
+function M.quando_chiude(s, fn)
+	s.chiusura = fn
+end
+
+local function chiusa(s)
+	if s.chiusura then s.chiusura() end
+end
+
 function M.hide(s)
+	chiusa(s)
 	chiudi_scheda(s)
 	gui.set_enabled(s.root, false)
 	gui.set_enabled(s.rotellina, false)
@@ -267,6 +284,7 @@ local function scegli(s, w)
 end
 
 local function finisci(s)
+	chiusa(s)
 	chiudi_scheda(s)
 	gui.set_enabled(s.root, false)
 	gui.set_enabled(s.rotellina, false)

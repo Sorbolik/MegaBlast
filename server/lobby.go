@@ -7,22 +7,21 @@ import (
 )
 
 // Mode è una coda di gioco: quanti giocatori servono per una partita, quale
-// modo della simulazione usare (config.MODES, che dice le squadre) e se le
-// statistiche sono normalizzate (Torneo: albero ed equipaggiamento non contano).
+// modo della simulazione usare (config.MODES, che dice le squadre) e, per le
+// code degli eventi (eventi.go), le regole dell'evento in JSON (sim/regole.lua).
 type Mode struct {
-	Name      string
-	Players   int
-	Sim       string
-	Normalize bool
+	Name    string
+	Players int
+	Sim     string
+	Regole  []byte
 }
 
 // I numeri di giocatori devono essere quelli di config.MODES (lo controlla
 // TestModesMatchConfig).
 var modes = map[string]Mode{
-	"1v1":    {"1v1", 2, "1v1", false},
-	"2v2":    {"2v2", 4, "2v2", false},
-	"ffa":    {"ffa", 4, "ffa", false},
-	"torneo": {"torneo", 2, "1v1", true},
+	"1v1": {"1v1", 2, "1v1", nil},
+	"2v2": {"2v2", 4, "2v2", nil},
+	"ffa": {"ffa", 4, "ffa", nil},
 }
 
 // Lobby tiene una coda per modalità. Il lock serve solo quando qualcuno entra

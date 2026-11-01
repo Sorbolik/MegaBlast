@@ -30,8 +30,13 @@ https://claude.ai/artifact/W8SfXvxVNLSZDAx4Wc8QXJ
 | 29 ott | **Rampino che ti porta sopra** (Sergio: "fatica a portarti dall'altro lato della piattaforma"): salendo da sotto in diagonale la capsula sbatteva sul fondo della piattaforma prima di arrivare al punto e si cadeva. Ora basta essere entro `grab` = 80 px dal punto (prima: l'altezza del robot, 39) e la cima può essere fino a `climb` = 96 px sopra il punto (prima 64, tarato prima del corpo ×1,4). Il fianco di un muro alto resta escluso. | #91 |
 | 29 ott | **Giù dal bordo** (Sergio): oltre al Rampino si hanno il Cecchino (2 colpi) e il Mantice. | questa PR |
 | 30 ott | **Il Bastione esce dalla scelta e dall'armeria** (Sergio: "il bastione è da ripensare, per ora l'unico strumento 1 volta per turno è il rampino"): tutti hanno il Rampino. Il Bastione è **tolto dal codice** (fisica, server, grafica, lezione Attrezzi, test): quando lo si ripensa, la versione di #60 è nella storia di git. | questa PR |
+| 31 ott | **Secondaria scelta a colpi contati, la Lama li ricarica** (Sergio si era accorto che la secondaria del draft era illimitata: lo era dal 24 ottobre, strada 2A, quando il Tonante era nel kit di tutti, ed era rimasta così passando al draft senza ridiscuterla). Ora la secondaria scelta ha **2 colpi** (`config.SECONDARY_SHOTS.draft`) e **ogni colpo di Lama su un nemico ne ridà uno**, fino a 2 (`max`); la Lama resta illimitata. Regola uguale per le due categorie: un'arma base infinita (Lanciarune, Lama) più i colpi di quella scelta; la primaria si ritrova nelle casse, la secondaria colpendo con la Lama. Arena dei bot, 2v2, 800 partite a prova sugli stessi semi (oggi / 2 colpi / 2 + Lama / 1 + Lama / 1 di primaria e 1 di secondaria + Lama): vince chi apre 42/43/45/42/42%, rimonte da sotto a metà 42/45/44/40/43%, turni per uccisione 1,96/2,24/2,15/2,28/2,52, Lanciarune a robot 3,6/3,7/3,8/3,9/5,0; la Lama usata il doppio. Scelte di Claude: finiti i colpi lo slot resta, spento ("MUNIZIONI ESAURITE"), perché la Lama lo può riaccendere; la ricarica la dà anche un bersaglio delle lezioni, non un compagno; la targa dice "+1 MAGLIO" (evento `recharge`); nelle lezioni la secondaria di una cassa torna come le primarie. Online: `ss` nello stato, protocollo 8. | questa PR |
 
 ## Scartate
+
+- Secondaria scelta illimitata (31 ott, Sergio): con la Lama sempre in mano la scelta la batteva quasi sempre e la Lama non serviva più.
+- Ritrovare la secondaria (31 ott, Claude): nelle casse (fortuna, e una diversa dalla propria pone il problema dello slot), un colpo per ogni uccisione (chi vince vince ancora di più), armi lasciate da chi muore (stesso problema dello slot), un colpo extra a chi è indietro (aiuto troppo visibile), un colpo ogni tre turni (arriva da solo, nessuna scelta). Incudini in mappa (finire il turno lì ridà un colpo): rimandate, quasi un doppione dei cerchi di cura.
+- 1 colpo anche di primaria dal draft (31 ott): partite quasi il 30% più lente, più Lanciarune, l'arma scelta si vede la metà.
 
 - Casse ogni 2 turni (24 ott, Sergio).
 - Attrezzi Scambio, Onda (anche perché doppione della Campana di bronzo proposta dal bot), Àncora e Scatto (29 ott, Sergio ha scelto solo il Bastione). Àncora: spegne le uccisioni ambientali; Scatto: è solo altro movimento.
@@ -59,6 +64,7 @@ https://claude.ai/artifact/W8SfXvxVNLSZDAx4Wc8QXJ
 ## Aperte
 
 - Effetti di stato anche per le primarie che non ne hanno (Lanciarune, Uovo senza Fornace, Cecchino): Sergio ha nominato "sanguinante", che oggi non esiste. Proposta: il Cecchino lascia sanguinante. Da decidere dopo i danni nuovi del thread "Rendere le uccisioni più rapide".
+- Il bot non va a cercare la ricarica della secondaria con la Lama (non dà valore ai colpi): da insegnargli, poi rimisurare le rimonte, perché la ricarica premia chi sta già colpendo.
 - Il bot non sa ancora risolvere "Giù dal bordo" (normale e difficile 0% nel collaudo, anche prima di questa PR).
 
 - Pesi degli oggetti tattici nelle casse (vedi gameplay.md).

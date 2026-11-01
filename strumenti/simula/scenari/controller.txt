@@ -20,6 +20,8 @@ foto 02_home_stesso_telefono
 pad a
 aspetta_stato modo=scelta 5
 aspetta 0.5
+pad a                               # chiude lo schieramento dei cartellini
+aspetta 0.3
 pad destra                          # la luce sulla prima carta
 pad destra                          # la seconda
 aspetta 0.3

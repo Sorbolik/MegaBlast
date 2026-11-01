@@ -1,0 +1,38 @@
+# Gli eventi (server/eventi.go, menu/bacheca.lua, menu/coda.lua) contro un
+# server vero col calendario scenari/eventi_prova.json: in corso un
+# modificatore con la coda sua (2v2 solo Maglio) e un Torneo sulla coda 2v2,
+# in arrivo una Sfida e gli XP doppi. EVENTI (sinistra, sopra ARMERIA): la
+# bacheca con ORA e PROSSIMI, il dettaglio del Maglio, poi GIOCA nella home:
+# DOVE GIOCHI? con il 2v2 (conta anche per il Torneo) e la carta del Maglio.
+# Nella coda del Maglio la scelta offre solo Pugno e Maglio. Tocchi attaccati ai
+# bordi e al centro: si prova anche con --schermo 1600x720 e 960x720.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server evento:maglio 3 eventi_prova.json
+aspetta 1
+tocca_bordo 168 208 basso sinistra  # EVENTI
+aspetta 1.5
+foto 01_bacheca
+tocca_centro 328 456                       # la prima carta in corso: il Maglio
+aspetta 0.5
+foto 02_dettaglio
+tocca_bordo 62 62 alto sinistra     # indietro: la bacheca
+aspetta 0.5
+tocca_bordo 62 62 alto sinistra     # indietro: la home (rilegge gli eventi)
+aspetta_stato modo=menu 3
+aspetta 1
+foto 03_home
+tocca_bordo 205 102 basso destra    # GIOCA
+aspetta 1
+foto 04_dove_giochi
+tocca_centro 976 445                       # la carta del Maglio
+aspetta_stato modo=scelta_online 20
+aspetta 1
+foto 05_scelta_maglio
+tocca_centro 640 410                # primaria
+aspetta 0.5
+tocca_centro 640 410                # secondaria
+aspetta_stato modo=online 25
+aspetta 2
+foto 06_partita

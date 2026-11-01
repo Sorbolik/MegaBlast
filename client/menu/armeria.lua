@@ -2,7 +2,7 @@
 -- dell'albero: ricostruzione gratuita fuori dalla partita, 3 assetti salvati).
 -- Due schede:
 --   SET    un set dei Titani per ogni pezzo (sidegrade), tier dalla maestria,
---          bonus a set completo e variante B coi pezzi al tier III;
+--          bonus a set completo e variante B coi pezzi al livello 30;
 --   ALBERO i punti abilità nei tre rami (sim/abilita.lua).
 -- A destra le statistiche che ne vengono fuori, rispetto alla base.
 --
@@ -30,7 +30,7 @@ M.STATISTICHE = {
 	{ "trap_radius", "Raggio trappole" }, { "status_turns", "Turni degli effetti" },
 	{ "burning_blasts", "Colpi brucianti", "sì" },
 }
-local ROMANI = { "I", "II", "III" }
+local ROMANI = { "I", "II", "III", "IV" }
 local NOMI_STAT = {}
 for _, s in ipairs(M.STATISTICHE) do NOMI_STAT[s[1]] = string.lower(s[2]) end
 
@@ -124,7 +124,7 @@ local function scheda_set(a, parent)
 		local y = 4 - (i - 1) * 40
 		local ok = v == "a" or top
 		ui.scheda(a.bottoni, -420, y, 50, 34, string.upper(v), "variante:" .. v, as.variant == v and (v == "a" or top), pan)
-		local testo = set.bonus[v].desc .. (ok and "" or "  (tutti i pezzi al tier III)")
+		local testo = set.bonus[v].desc .. (ok and "" or "  (tutti i pezzi al livello " .. equip.LIVELLO_MAX .. ")")
 		local n = ui.testo(testo, -380, y, 0.62, ok and c.TESTO or c.SPENTO, pan)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
@@ -170,7 +170,7 @@ local function scheda_albero(a, parent)
 	-- in basso: punti, nodo scelto, ricostruzione
 	local pan = ui.pannello(510, 70, 940, 90, parent)
 	ui.testo(string.format("PUNTI %d / %d", abilita.spent(tree), punti), -360, 18, 0.9, c.BRACE, pan)
-	ui.testo(string.format("livello %d · in Torneo %d per tutti", a.prof.livello, abilita.POINTS_MAX), -360, -14, 0.55, c.SPENTO, pan)
+	ui.testo(string.format("livello %d", a.prof.livello), -360, -14, 0.55, c.SPENTO, pan)
 	local nodo = abilita.BY_ID[a.ultimo or ""]
 	if nodo then
 		ui.testo(nodo.name, 30, 18, 0.75, c.TESTO, pan)

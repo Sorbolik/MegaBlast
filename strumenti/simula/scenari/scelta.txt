@@ -1,4 +1,5 @@
-# Scelta d'inizio partita in 2 contro 2 sullo stesso telefono (Sergio, 30 ott):
+# Scelta d'inizio partita in 2 contro 2 sullo stesso telefono (Sergio, 30 ott),
+# dopo lo schieramento dei cartellini (un tocco lo chiude; in alto resta la striscia):
 # prima la primaria, poi la secondaria, una fila di carte alla volta (x = 320,
 # 640, 960; y = 410); sotto le due scelte fatte (x = 475 e 805, y = 185):
 # toccandone una si torna a quella fila. Le scelte degli altri non si vedono e
@@ -11,6 +12,9 @@ aspetta 1
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=scelta 5
 aspetta 0.5
+foto 00_schieramento                # prima i cartellini di tutti, due squadre
+tocca 640 360                       # un tocco: alle armi
+aspetta 0.4
 foto 01_primaria
 trascina 960 410 960 410 1          # tocco lungo sulla terza primaria
 aspetta 0.5

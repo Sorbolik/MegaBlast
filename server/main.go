@@ -2,6 +2,7 @@
 //
 //	go run ./server              (dalla radice del repository)
 //	go run ./server -addr :9000 -node eu1
+//	go run ./server -eventi eventi.json   (calendario degli eventi, eventi.go)
 //
 // Architettura e numeri di carico: docs/server.md.
 package main
@@ -22,6 +23,7 @@ func main() {
 	addr := flag.String("addr", ":8080", "indirizzo su cui ascoltare")
 	flag.StringVar(&cfg.Node, "node", cfg.Node, "nome del nodo (entra nei gettoni di riconnessione)")
 	flag.IntVar(&cfg.Workers, "workers", cfg.Workers, "worker che fanno girare le stanze (di solito uno per core)")
+	flag.StringVar(&cfg.Eventi, "eventi", cfg.Eventi, "file JSON del calendario degli eventi (si rilegge quando cambia)")
 	flag.Parse()
 
 	srv := NewServer(cfg)

@@ -5,6 +5,7 @@ local game = require "sim.game"
 local maps = require "sim.maps"
 local config = require "sim.config"
 local draft = require "sim.draft"
+local regole = require "sim.regole"
 
 local N = {}
 
@@ -24,9 +25,9 @@ for id, def in pairs(maps.maps) do
 end
 
 -- players: come opts.players di game.new (squadre e scelte del draft);
--- normalize: modalità Torneo
-function N.new(seed, map, players, normalize)
-	local g = game.new(seed, map, { players = players, normalize = normalize })
+-- r: le regole dell'evento della coda (sim/regole.lua), nil fuori dagli eventi
+function N.new(seed, map, players, r)
+	local g = game.new(seed, map, regole.opzioni(r, { players = players }))
 	g:pop_events()
 	g.carves = {} -- scavi del terreno, per chi si riconnette
 	return g
@@ -61,7 +62,7 @@ function N.snapshot(g)
 		-- tl: teletrasporti in mano, mh: vita massima, tu: turni giocati, pt: punti
 		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute aperto;
 		-- pl: paracadute rimasti; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)
-		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna);
+		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna), ss: i suoi colpi;
 		-- lu: tick rimasti dell'Affondo, la: angolo del suo scatto;
 		-- kn: sbalzato da un colpo (non corre da sé);
 		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy);
@@ -77,7 +78,7 @@ function N.snapshot(g)
 			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
 			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
 			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch, ac = rb.ammo.sniper,
-			sw = rb.secondary or "", lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
+			sw = rb.secondary or "", ss = rb.secondary and rb.ammo[rb.secondary] or 0, lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
 			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0,
 			gs = rb.hook_shot ~= nil, gx = rb.hook_shot and rb.hook_shot.x or 0, gy = rb.hook_shot and rb.hook_shot.y or 0,
 			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, mb = rb.mallet_base or 0, kn = rb.knocked,
@@ -139,16 +140,24 @@ function N.mode_players(mode)
 	return config.MODES[mode]
 end
 
+-- la scelta comincia con lo schieramento dei cartellini (menu/schieramento.lua):
+-- il suo tempo è dentro quello della scelta, e intanto si può già scegliere
 function N.draft_seconds()
-	return config.DRAFT_SECONDS
+	return config.DRAFT_SECONDS + config.SCHIERAMENTO_SECONDS
 end
 
-function N.draft_new(seed, mode)
+function N.draft_new(seed, mode, r)
 	local players = {}
 	for i, p in ipairs(config.MODES[mode]) do
 		players[i] = { team = p.team }
 	end
-	return draft.new(seed, players)
+	return draft.new(seed, players, regole.armi(r))
+end
+
+-- le regole di un evento si possono usare? (eventi.go, quando legge il file)
+function N.regole_valida(r)
+	local ok, err = regole.valida(r)
+	return ok and "" or err
 end
 
 function N.draft_pick(d, i, weapon)

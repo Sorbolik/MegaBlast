@@ -1,6 +1,6 @@
 -- La home (menu principale): fondo scuro, la Scoria col bagliore del Nucleo
--- dietro, il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
--- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA e, in alto a destra,
+-- dietro (toccandolo si apre il PROFILO), il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
+-- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA, EVENTI e, in alto a destra,
 -- la rotellina delle IMPOSTAZIONI (menu/impostazioni.lua). Le schermate nuove aggiungono qui il loro bottone
 -- quando esistono (stile in ui/ui.lua).
 --
@@ -9,7 +9,9 @@
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
 --   home.show(h) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
---   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "impostazioni" o nil
+--   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
+--                                                        -- "impostazioni", "profilo" (toccando il diavoletto) o nil
+--   home.eventi(h, riga)                        -- la riga sotto EVENTI
 
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
@@ -62,6 +64,14 @@ function M.new(colore)
 	gui.set_parent(h.corpo.root, corpo)
 	scoria.set_enabled(h.corpo, true)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true }
+	-- toccando il diavoletto si apre il profilo (menu/profilo_schede.lua): una
+	-- zona che non si vede, sopra di lui, e una scritta discreta sotto i piedi
+	local zona = gui.new_box_node(vmath.vector3(CORPO_X, CORPO_Y + 120, 0), vmath.vector3(260, 320, 0))
+	gui.set_visible(zona, false)
+	h.tops[#h.tops + 1] = zona
+	h.bottoni[#h.bottoni + 1] = { nodo = zona, bordo = zona, azione = "profilo", colore = ui.C.LUCE, riposo = ui.C.LUCE }
+	local scritta = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.SPENTO, h.posa)
+	gui.set_inherit_alpha(scritta, true)
 
 	-- il nome in alto a sinistra
 	local alto_sx = angolo(h, 48, H - 56, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
@@ -78,6 +88,10 @@ function M.new(colore)
 	-- in basso a sinistra: assetti, albero e set
 	local sx = angolo(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	ui.bottone(h.bottoni, 0, 60, 240, 72, "ARMERIA", "armeria", nil, sx)
+	-- sopra: gli EVENTI (menu/bacheca.lua), con sotto cosa succede adesso
+	local ev = ui.bottone(h.bottoni, 0, 160, 240, 96, "", "eventi", nil, sx)
+	ui.testo("EVENTI", 0, 14, 0.9, ui.C.TESTO, ev)
+	h.riga_eventi = ui.testo("", 0, -22, 0.55, ui.C.SPENTO, ev)
 
 	-- in alto a destra: le impostazioni
 	h.tops[#h.tops + 1] = ui.impostazioni(h.bottoni, "impostazioni", nil, true)
@@ -107,6 +121,11 @@ function M.hide(h)
 	gui.cancel_animations(h.velo, "color.w")
 	gui.set_enabled(h.velo, false)
 	h.visibile = false
+end
+
+-- La riga sotto EVENTI (main/eventi.lua, riga_home)
+function M.eventi(h, testo)
+	gui.set_text(h.riga_eventi, testo)
 end
 
 function M.update(h, dt)

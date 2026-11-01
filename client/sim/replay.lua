@@ -40,6 +40,8 @@ end
 function M.partita(r)
 	assert(r.fisica == game.PHYSICS, "la ricetta è per la fisica " .. tostring(r.fisica))
 	local g = game.new(r.seme, r.mappa, copia(r.opzioni))
+	-- durata: la partita accorciata a mano (negli scenari, prova_durata)
+	if r.durata then g.match_left = r.durata end
 	local bots = {}
 	for i, p in ipairs(r.opzioni.players or {}) do
 		if p.bot then bots[i] = bot.new(i, p.bot, r.seme, p.pesi, p.carattere) end
@@ -77,32 +79,39 @@ function M.dopo(r, g)
 	end
 end
 
+-- Chi rilegge una ricetta: i tasti dei giocatori veri tick per tick (i bot
+-- pensano da soli, come quando si è giocata). Serve a verifica e al replay
+-- nel gioco (scheda PARTITE del profilo).
+function M.lettore(r)
+	return { r = r, k = 1, cur = {} }
+end
+
+-- L'input del prossimo passo di g, letto dalla ricetta
+function M.rileggi(l, g, bots)
+	local b = bots[g.current]
+	-- il colpo vale per un tick solo
+	if l.cur.fire then l.cur = { left = l.cur.left, right = l.cur.right, jump = l.cur.jump, hold = l.cur.hold } end
+	if b then return bot.input(b, g) end
+	local e = l.r.input[l.k]
+	while e and e.t == g.tick + 1 do
+		l.cur = { left = e.l, right = e.r, jump = e.j, hold = e.h,
+			fire = e.f and { weapon = e.f.w, angle = e.f.a, power = e.f.p } or nil }
+		l.k = l.k + 1
+		e = l.r.input[l.k]
+	end
+	return l.cur
+end
+
 -- Rigioca la ricetta e confronta le impronte. Restituisce true, o false e il
 -- tick della prima impronta diversa (o mancante).
 function M.verifica(r, max_tick)
 	local g, bots = M.partita(r)
-	local k, cur = 1, {}
+	local l = M.lettore(r)
 	local n = 1
 	local attese = r.impronte
 	max_tick = max_tick or (attese[#attese] and attese[#attese].t) or 0
 	while g.phase ~= "over" and g.tick < max_tick do
-		local input
-		local b = bots[g.current]
-		if b then
-			input = bot.input(b, g)
-		else
-			local e = r.input[k]
-			while e and e.t == g.tick + 1 do
-				cur = { left = e.l, right = e.r, jump = e.j, hold = e.h,
-					fire = e.f and { weapon = e.f.w, angle = e.f.a, power = e.f.p } or nil }
-				k = k + 1
-				e = r.input[k]
-			end
-			input = cur
-		end
-		g:step(input)
-		-- il colpo vale per un tick solo
-		if cur.fire then cur = { left = cur.left, right = cur.right, jump = cur.jump, hold = cur.hold } end
+		g:step(M.rileggi(l, g, bots))
 		local a = attese[n]
 		if a and a.t == g.tick then
 			if a.h ~= g:impronta() then return false, g.tick end
