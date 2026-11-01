@@ -155,8 +155,8 @@ function N.draft_new(seed, mode, r)
 end
 
 -- le regole di un evento si possono usare? (eventi.go, quando legge il file)
-function N.regole_valida(r)
-	local ok, err = regole.valida(r)
+function N.regole_valida(r, normale)
+	local ok, err = regole.valida(r, normale)
 	return ok and "" or err
 end
 

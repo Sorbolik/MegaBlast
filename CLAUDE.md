@@ -97,6 +97,14 @@ push su main lo ricostruisce con `strumenti/animazioni/cloudflare/costruisci.sh`
 e `wrangler.jsonc`). Da lì "Manda a Claude" (`worker.js`) scrive i file nel ramo
 `editor-ultima` di GitHub: si prendono da lì.
 
+## Pannello degli eventi
+
+Sergio programma gli eventi dal pannello su Cloudflare (Worker `megablast-eventi`,
+`strumenti/eventi`, vedi il README): modelli, calendario, versioni. Il server lo
+scarica con `-eventi https://…/eventi.json`. Se cambiano armi, punti o regole
+degli eventi, rifai `luajit strumenti/eventi/dati.lua` (`go test ./server/` lo
+controlla); `node strumenti/eventi/prova.mjs` prova pagina e Worker.
+
 ## Pezzi nuovi del diavoletto (pelli)
 
 Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo

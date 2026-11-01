@@ -26,7 +26,7 @@ type Config struct {
 	ReconnectTicks int // quanto si aspetta chi è caduto prima di toglierlo dalla partita
 	DraftTicks     int // se > 0 sostituisce config.DRAFT_SECONDS (per le prove)
 	PingEvery      time.Duration
-	Eventi         string // file del calendario degli eventi (eventi.go), vuoto = nessun evento
+	Eventi         string // calendario degli eventi (eventi.go): indirizzo del pannello o file, vuoto = nessun evento
 }
 
 func DefaultConfig() Config {

@@ -2312,6 +2312,9 @@ do
 		local k = next(r)
 		check(not regole.valida(r), "regole: rifiutata " .. k)
 	end
+	check(regole.valida({ tetto = 15 }, true) and not regole.valida({ tetto = 30 }) and not regole.valida({ tetto = 0 }),
+		"regole: il tetto ai livelli va da 1 a sotto il massimo")
+	check(not regole.valida({ casse = 2 }, true), "regole: su una coda normale solo il tetto")
 	local opts = regole.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
 	local g = game.new(7, "forgia", opts)
 	check(g.crate_every == 2 and not g.heals_on and g.score.kill == 80 and g.score.damage == config.SCORE.damage,

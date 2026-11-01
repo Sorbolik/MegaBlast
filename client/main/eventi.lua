@@ -127,6 +127,8 @@ function M.cosa_cambia(o, nomi)
 	if r.livello == "fisso" then out[#out + 1] = "Tutti allo stesso livello" end
 	if r.punti then out[#out + 1] = "Punti diversi" end
 	if #out == 0 then out[1] = o.coda == o.modo and ("Le partite normali " .. M.nome_coda(o.coda)) or "Regole normali" end
+	-- il tetto non cambia la partita: dopo "Le partite normali" del Torneo
+	if r.tetto then out[#out + 1] = "Pezzi al massimo al livello " .. r.tetto end
 	return out
 end
 

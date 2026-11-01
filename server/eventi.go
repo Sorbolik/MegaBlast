@@ -4,18 +4,26 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 	_ "time/tzdata" // gli orari degli eventi sono di Roma anche su un server senza fusi orari
+
+	lua "github.com/yuin/gopher-lua"
 )
 
-// Il calendario degli eventi (docs/server.md, "Eventi"): Sergio lo scrive in un
-// file JSON (go run ./server -eventi eventi.json; più avanti dal pannello) e il
-// server lo rilegge da solo quando cambia. Un evento è un modello con la sua
+// Il calendario degli eventi (docs/server.md, "Eventi"): Sergio lo fa nel
+// pannello degli eventi (strumenti/eventi, un Worker di Cloudflare) e il server
+// lo scarica ogni 30 secondi (go run ./server -eventi https://…/eventi.json),
+// oppure lo legge da un file JSON (-eventi eventi.json) che rilegge da solo
+// quando cambia. Un evento è un modello con la sua
 // finestra e, se vuole, una ripetizione: ogni N settimane fino a una data o per
 // sempre. Il server lo espande nelle occorrenze dei prossimi giorni, ognuna
 // col suo id (evento-AAAAMMGG), e le dà al gioco con GET /eventi.
@@ -29,7 +37,7 @@ import (
 //	  "id": "maglio", "tipo": "mod", "nome": "2V2 SOLO MAGLIO",
 //	  "riga": "Una sola arma, colpi che fanno volare.",
 //	  "da": "2026-11-02 10:00", "a": "2026-11-04 23:59", "ogni": 2, "fino": "2027-01-31",
-//	  "modo": "2v2", "regole": {"armi": ["punch", "mallet"]},
+//	  "modo": "2v2", "regole": {"armi": ["punch", "mallet"]},  (su una coda normale solo {"tetto": 15})
 //	  "premi": [{"testo": "Badge Maglio", "fino": 100}]
 //	}]}
 //
@@ -88,7 +96,11 @@ type Occorrenza struct {
 	Obiettivo json.RawMessage `json:"obiettivo,omitempty"`
 }
 
-// Calendario legge il file degli eventi e lo rilegge quando cambia.
+// Ogni quanto il server chiede il calendario al pannello.
+const ogniQuantoPannello = 30 * time.Second
+
+// Calendario legge il file degli eventi e lo rilegge quando cambia, o lo
+// scarica dal pannello.
 type Calendario struct {
 	path string
 	now  func() time.Time
@@ -97,19 +109,100 @@ type Calendario struct {
 	eventi   []Evento
 	modTime  time.Time
 	guardato time.Time
+
+	// dal pannello: la versione presa (ETag), l'errore se il server l'ha
+	// rifiutata (il pannello lo mostra a Sergio) e l'ultimo problema di rete
+	versione, errore, rete string
 }
 
 func NewCalendario(path string) *Calendario {
 	c := &Calendario{path: path, now: time.Now}
+	if dalPannello(path) {
+		client := &http.Client{Timeout: 10 * time.Second}
+		c.scarica(client)
+		go func() {
+			for range time.Tick(ogniQuantoPannello) {
+				c.scarica(client)
+			}
+		}()
+		return c
+	}
 	c.aggiorna()
 	return c
+}
+
+func dalPannello(path string) bool {
+	return strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://")
+}
+
+// scarica chiede il calendario al pannello. Nella domanda dice quale versione
+// ha preso e, se l'ha rifiutata, perché: il pannello lo mostra a Sergio. Come
+// per il file, un calendario sbagliato non sostituisce quello buono, e se il
+// pannello non risponde resta quello di prima.
+func (c *Calendario) scarica(client *http.Client) {
+	c.mu.Lock()
+	u, etag := c.path, c.versione
+	if c.versione != "" {
+		u += "?" + url.Values{"preso": {strings.Trim(c.versione, `"`)}, "errore": {c.errore}}.Encode()
+	}
+	c.mu.Unlock()
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		c.problema(err.Error())
+		return
+	}
+	if etag != "" {
+		req.Header.Set("If-None-Match", etag)
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		c.problema(err.Error())
+		return
+	}
+	defer res.Body.Close()
+	if res.StatusCode == http.StatusNotModified {
+		c.problema("")
+		return
+	}
+	data, err := io.ReadAll(io.LimitReader(res.Body, 4<<20))
+	if err == nil && res.StatusCode != http.StatusOK {
+		err = fmt.Errorf("%s", res.Status)
+	}
+	if err != nil {
+		c.problema(err.Error())
+		return
+	}
+	c.problema("")
+	ev, err := leggiEventi(data)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.versione = res.Header.Get("ETag")
+	if err != nil {
+		c.errore = err.Error()
+		log.Printf("eventi: la versione %s del pannello non va, tengo il calendario di prima: %v", c.versione, err)
+		return
+	}
+	c.eventi, c.errore = ev, ""
+	log.Printf("eventi: %d dal pannello (versione %s)", len(ev), c.versione)
+}
+
+// problema scrive nel log un problema di rete col pannello solo quando cambia
+func (c *Calendario) problema(p string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if p != c.rete && p != "" {
+		log.Printf("eventi: il pannello non risponde, tengo il calendario di prima: %s", p)
+	} else if p == "" && c.rete != "" {
+		log.Printf("eventi: il pannello risponde di nuovo")
+	}
+	c.rete = p
 }
 
 // aggiorna rilegge il file se è cambiato (al massimo ogni due secondi). Un
 // file sbagliato non cancella il calendario buono: resta quello di prima e
 // l'errore va nel log.
 func (c *Calendario) aggiorna() {
-	if c.path == "" {
+	if c.path == "" || dalPannello(c.path) {
 		return
 	}
 	c.mu.Lock()
@@ -179,7 +272,7 @@ func leggiEventi(data []byte) ([]Evento, error) {
 			r, err := eng.fromJSON(e.Regole)
 			if err == nil {
 				var v interface{ String() string }
-				if v, err = eng.call("regole_valida", r); err == nil && v.String() != "" {
+				if v, err = eng.call("regole_valida", r, lua.LBool(e.Modo == "")); err == nil && v.String() != "" {
 					err = fmt.Errorf("regole: %s", v.String())
 				}
 			}
@@ -241,10 +334,11 @@ func (e *Evento) controlla() error {
 		if _, ok := modes[e.Coda]; !ok {
 			return fmt.Errorf("coda: 1v1, 2v2 o ffa")
 		}
-		if e.Modo != "" || len(e.Regole) > 0 {
-			// le regole cambiano la partita: su una coda normale la cambierebbero a tutti
-			return fmt.Errorf("modo e regole solo per i modificatori (tipo mod), che hanno la coda loro")
+		if e.Modo != "" {
+			return fmt.Errorf("modo solo per i modificatori (tipo mod), che hanno la coda loro")
 		}
+		// le regole che cambiano la partita su una coda normale la cambierebbero a
+		// tutti: lì passa solo il tetto ai livelli (regole.CODA_NORMALE, leggiEventi)
 	}
 	return nil
 }
