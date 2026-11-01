@@ -17,6 +17,7 @@ Esame: in quante delle stesse partite la rete del giro arriva più in alto del b
 | 8 | 48% | 0.53 | 608503 | 3.69 / 3.23 | 315 / 331 | 5.98 / 5.34 |
 | 9 | 44% | 0.54 | 612665 | 3.66 / 3.25 | 313 / 330 | 5.96 / 5.30 |
 | 10 | 48% | 0.55 | 616563 | 3.63 / 3.31 | 321 / 331 | 6.14 / 5.38 |
+| 11 | 48% | 0.56 | 614384 | 3.63 / 3.31 | 321 / 331 | 6.14 / 5.38 |
 
 ## Le mosse preferite dell'ultima rete all'esame
 
