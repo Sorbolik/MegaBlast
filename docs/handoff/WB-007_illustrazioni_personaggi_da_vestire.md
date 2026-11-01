@@ -30,6 +30,7 @@ Ogni prompt è completo e va usato così com'è. Allega i riferimenti nell'ordin
 |---|---|---|---|
 | `1_pezzi_A` | R1, R4 | 1536×1024 | 1 |
 | `2_cammina_A` | R1 | 1536×1024 | 1 |
+| `2_cammina_A_v2` | R1 | 1536×1024 | 1 |
 | `3_facce` | R1, R3 | 1536×1024 | 1 |
 | `4_livelli` | R1, R2, R3 | 1536×1024 | 1 |
 | `5_equipaggiamento` | R1 | 1536×1024 | 1 |
@@ -122,6 +123,24 @@ A sinistra disegna Favilla intera, di fronte, con un braccio piegato al gomito e
 Stile: ESATTAMENTE quello del mio personaggio allegato: bianco e nero piatto, cartone animato anni '30 (rubber hose), nero pieno e bianco pieno, contorno nero spesso e chiuso, nessuna sfumatura, nessun grigio, nessun colore. Sfondo piatto chiaro color panna (#F5F2EA), senza ombre a terra. Nessuna scritta, numero, etichetta o freccia. Formato orizzontale 3:2.
 ```
 
+### `2_cammina_A_v2`
+
+Rifacimento di `2_cammina_A` (Claude, 2026-11-01): nella prima le quattro pose erano quasi uguali e le braccia non oscillavano.
+
+```
+Immagine 1 è il mio personaggio maschio, di fronte. Copia esattamente le forme, le proporzioni e lo stile del personaggio allegato: non reinterpretarlo, non aggiungere nasi, orecchie, capelli o dettagli.
+
+Due modifiche rispetto al disegno allegato, valide per tutto: 1) sotto gli occhi c'è un MUSO bianco, una piccola forma ovale chiusa dal contorno nero, e la bocca sta DENTRO il muso; 2) braccia e gambe sono tubi neri morbidi e curvi, senza gomiti né ginocchia, che finiscono nel guanto bianco e nella scarpa nera.
+
+Disegna 4 pose di un passo verso destra, in fila da sinistra a destra, tutte della stessa grandezza e alla stessa altezza. Le 4 pose devono essere CHIARAMENTE DIVERSE fra loro, come i fotogrammi chiave di un cartone animato. In tutte il corpo resta di fronte, la faccia (occhi e muso) è spostata verso destra sulla testa con l'occhio di destra un po' più stretto, la sagoma della testa non cambia e tutte e due le scarpe puntano a destra.
+Posa 1: la gamba di destra è tesa in avanti verso destra col tallone a terra e la punta alzata, la gamba di sinistra è tesa indietro verso sinistra sulla punta; il braccio di sinistra oscilla in avanti verso destra, il braccio di destra oscilla indietro verso sinistra.
+Posa 2: la gamba di destra è dritta sotto il corpo e porta il peso, la gamba di sinistra è piegata e sollevata e passa sotto il corpo; le braccia sono vicine ai fianchi; tutto il personaggio è un po' più in alto.
+Posa 3: il contrario della posa 1: la gamba di sinistra è tesa in avanti verso destra col tallone a terra, la gamba di destra è tesa indietro sulla punta; il braccio di destra oscilla in avanti verso destra, il braccio di sinistra indietro.
+Posa 4: il contrario della posa 2: la gamba di sinistra è dritta sotto il corpo, la gamba di destra è piegata e sollevata e passa sotto il corpo; braccia vicine ai fianchi; personaggio un po' più in alto.
+
+Stile: ESATTAMENTE quello del mio personaggio allegato: bianco e nero piatto, cartone animato anni '30 (rubber hose), nero pieno e bianco pieno, contorno nero spesso e chiuso, nessuna sfumatura, nessun grigio, nessun colore. Sfondo piatto chiaro color panna (#F5F2EA), senza ombre a terra. Nessuna scritta, numero, etichetta o freccia. Formato orizzontale 3:2.
+```
+
 ## Criteri di accettazione
 
 - [ ] i personaggi sono quelli di Sergio (forme, proporzioni, stile), non reinterpretati
@@ -137,3 +156,31 @@ Stile: ESATTAMENTE quello del mio personaggio allegato: bianco e nero piatto, ca
 Approvata da Claude, 2026-11-01: scelta reversibile (sono immagini per un documento di proposta,
 il gioco non cambia). Richiesta da Sergio nel thread del designer ("fatti aiutare da chat, voglio un
 documento serio senza pezzi traballanti").
+
+## Consegna di Codex
+
+2026-11-01. Generati sette PNG 1536×1024 in `art/WB-007/`, ciascuno accompagnato dal TXT con il prompt integrale, invariato, e i riferimenti nell'ordine richiesto:
+
+- `1_pezzi_A.png` e `1_pezzi_A.txt` — 1 tentativo.
+- `2_cammina_A.png` e `2_cammina_A.txt` — 3 tentativi; conservato il primo, più fedele al riferimento. NON conforme alla sequenza di passo richiesta: le braccia non si alternano e le quattro fasi non sono corrette. Gli ultimi tentativi aggiungevano dettagli indesiderati o ripetevano le pose.
+- `3_facce.png` e `3_facce.txt` — 2 tentativi; eliminata la sagoma specchiata di Favilla del primo.
+- `4_livelli.png` e `4_livelli.txt` — 1 tentativo.
+- `5_equipaggiamento.png` e `5_equipaggiamento.txt` — 1 tentativo.
+- `6_proposta_B.png` e `6_proposta_B.txt` — 1 tentativo.
+- `7_proposta_C.png` e `7_proposta_C.txt` — 2 tentativi; eliminata una giuntura visibile sul pezzo del braccio.
+
+Controllati visivamente tutti i file: presenza dei pezzi e delle figure, muso bianco con bocca interna, margini senza tagli, assenza di testi e frecce, rosso limitato alle due colonne di livello 20. Controllate le dimensioni dei PNG. Nessun test del gioco: queste sono illustrazioni di proposta.
+
+Limiti da rivedere con Claude: lo sfondo panna presenta una lieve texture e non è una campitura numericamente uniforme #F5F2EA; la fedeltà di sagome e proporzioni è visiva, non pixel-identica. La tavola 2 resta da correggere; non dichiaro soddisfatti tutti i criteri di accettazione. Gli spallacci della tavola 5 hanno una lieve vista a tre quarti. Nessuna modifica a codice o decisioni. Nessun conflitto operativo con le decisioni del gioco: la scheda riguarda un documento di proposta.
+
+Git CLI non riesce a raggiungere il proxy (porta 8080). Scheda approvata letta da `main` tramite il connettore GitHub; consegna pubblicata sul ramo `design/WB-007` attraverso lo stesso connettore, basata sul commit `34ec8d75254561c9de71c6e4f731a1949d1d0600` di main. Nessuna PR e nessun merge.
+
+## Resoconto di Claude
+
+2026-11-01. Guardate tutte e sette. Buone e passate al thread del designer: `1_pezzi_A`, `3_facce`,
+`4_livelli`, `5_equipaggiamento`, `6_proposta_B`, `7_proposta_C`. Da rifare: `2_cammina_A`, perché
+le quattro pose sono quasi identiche e le braccia non oscillano. Il nuovo prompt è `2_cammina_A_v2`,
+con le quattro pose chiave descritte una per una. Note minori, accettate per un documento di proposta:
+in `4_livelli` le braccia a tubo quasi non si vedono (i guanti stanno attaccati al busto); in
+`5_equipaggiamento` l'elmo di livello 1 è generico e non segue la sagoma a stella; in `7_proposta_C`
+il gomito sulla figura intera non si legge, si legge solo nei due pezzi a destra.

@@ -1,0 +1,17 @@
+Immagine 1 è il mio personaggio maschio, immagine 2 la femmina (uguale ma con le ciglia e la gonnellina), immagine 3 Favilla (testa a fiamma, ciglia, gonnellina). Copia esattamente le forme, le proporzioni e lo stile del personaggio allegato: non reinterpretarlo, non aggiungere nasi, orecchie, capelli o dettagli.
+
+Due modifiche rispetto al disegno allegato, valide per tutto: 1) sotto gli occhi c'è un MUSO bianco, una piccola forma ovale chiusa dal contorno nero, e la bocca sta DENTRO il muso (non galleggia più sul nero della testa); 2) braccia e gambe sono tubi neri morbidi e curvi, senza gomiti né ginocchia, che finiscono nel guanto bianco e nella scarpa nera.
+
+Disegna una griglia di 9 figure intere di fronte, 3 righe da 3, ben separate e tutte della stessa grandezza. Righe: maschio, femmina, Favilla. Colonne: lo stesso set di equipaggiamento a livello 1, 10 e 20.
+Livello 1: un pettorale semplice sul petto e due bracciali sui tubi delle braccia, vicino ai polsi.
+Livello 10: come il livello 1, più borchie e rifiniture sul pettorale, due spallacci sulle spalle e una cintura in vita.
+Livello 20: come il livello 10, più una fascia sulla fronte con due piccole corna, ghette sopra le scarpe e dettagli di fuoco ROSSO sui pezzi dell'equipaggiamento.
+Gli oggetti si appoggiano SOLO su fronte, petto, spalle, polsi, vita e caviglie: la sagoma della testa non cambia mai e la faccia resta scoperta. Il set è identico per i tre personaggi.
+
+Stile: ESATTAMENTE quello del mio personaggio allegato: bianco e nero piatto, cartone animato anni '30 (rubber hose), nero pieno e bianco pieno, contorno nero spesso e chiuso, nessuna sfumatura, nessun grigio, nessun colore tranne il rosso del fuoco, solo nella colonna del livello 20. Sfondo piatto chiaro color panna (#F5F2EA), senza ombre a terra. Nessuna scritta, numero, etichetta o freccia. Formato orizzontale 3:2.
+
+Riferimenti (in ordine):
+art/personaggi/maschio.png
+art/personaggi/femmina.png
+art/personaggi/favilla.png
+

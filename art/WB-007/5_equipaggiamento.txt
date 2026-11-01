@@ -1,0 +1,9 @@
+Immagine 1 è il mio personaggio maschio, di fronte: serve solo per lo stile e per la grandezza dei pezzi rispetto al corpo.
+
+Disegna un foglio di pezzi di equipaggiamento staccati, senza personaggio, visti di fronte, in 3 colonne: livello 1 (semplice), livello 10 (con borchie, rifiniture e bordi), livello 20 (più ricco, con piccole corna e dettagli di fuoco ROSSO). Una riga per ogni pezzo, nell'ordine: fascia o corona da fronte; elmo intero (prende il posto della sagoma della testa, ma lascia scoperti gli occhi e il muso); pettorale; spallaccio; bracciale da polso; cintura; stivale; mantello. Ogni pezzo è ben separato dagli altri e chiuso tutto intorno dal contorno nero spesso.
+
+Stile: ESATTAMENTE quello del mio personaggio allegato: bianco e nero piatto, cartone animato anni '30 (rubber hose), nero pieno e bianco pieno, contorno nero spesso e chiuso, nessuna sfumatura, nessun grigio, nessun colore tranne il rosso del fuoco, solo nella colonna del livello 20. Sfondo piatto chiaro color panna (#F5F2EA), senza ombre a terra. Nessuna scritta, numero, etichetta o freccia. Formato orizzontale 3:2.
+
+Riferimenti (in ordine):
+art/personaggi/maschio.png
+
