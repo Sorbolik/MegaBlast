@@ -418,18 +418,25 @@ local function valore(b, g, w, fase)
 	end
 	if b.pesi.rete then
 		fase = fase or 1
-		-- negli attacchi la rete giudica solo le finaliste (b.finale), provate
-		-- fino in fondo: fra centinaia di colpi provati in fretta vincerebbe
-		-- quello su cui la rete sbaglia di più in alto (31 ottobre: la rete su
-		-- tutti gli attacchi 35% contro il bot di oggi, solo sul riparo 54%).
-		-- rete_attacco (0..1): quanto conta lì, per misurarla
-		local quanto = fase ~= 1 and 1 or b.finale and (b.pesi.rete_attacco or 1) or 0
-		local registra = b.finale and b.registro
-		if quanto > 0 or registra then
-			local x = caratteristiche(b, g, w, CAR, fase)
-			if quanto > 0 then s = s + quanto * rete.valuta(b.pesi.rete, x) * 100 end
-			-- per impara.py: quello che la rete ha visto di questa finalista
-			if registra then b.visto = copia(x) end
+		if fase ~= 1 then
+			-- il riparo: quanto vale la posizione a fine turno (pesi.rete)
+			s = s + rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR, 0)) * 100
+		else
+			-- gli attacchi: solo le finaliste (b.finale), provate fino in fondo, e
+			-- con un'altra rete (pesi.attacco) allenata solo sui bivi, cioè su
+			-- quale fra due attacchi rendeva di più. La rete del riparo qui
+			-- sbagliava: fra due attacchi buoni la differenza si perdeva nel suo
+			-- giudizio di chi sta vincendo (1 novembre, a coppie su 240 partite:
+			-- 33% contro il bot di oggi, 50% senza). rete_attacco (0..1): quanto
+			-- conta, per misurarla
+			local att = b.finale and b.pesi.attacco
+			local registra = b.finale and b.registro
+			if att or registra then
+				local x = caratteristiche(b, g, w, CAR, 1)
+				if att then s = s + (b.pesi.rete_attacco or 1) * rete.valuta(att, x) * 100 end
+				-- per impara.py: quello che il bot ha visto di questa finalista
+				if registra then b.visto = copia(x) end
+			end
 		end
 	end
 	return s

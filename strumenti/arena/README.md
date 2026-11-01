@@ -70,8 +70,9 @@ punti e vita, gli altri robot uno per uno, le armi, i globi, l'ultimo giro, la C
 intorno e la fase, `bot.caratteristiche`) due volte: a ogni attacco scelto, la posizione dopo l'attacco
 come l'ha vista la rete quando l'ha scelto (fase 1, `b.registro`), e a fine turno (fase 0, con
 cui giudica il riparo). Negli attacchi la rete giudica solo le finaliste, provate fino in fondo. Con `--confronta N` (2 di base) fino a N bivi a partita: le due finaliste migliori di una rete
-giocate tutte e due su due copie della partita fino al suo turno dopo; la rete impara anche quale
-rendeva di più (nel log: quante coppie e in quante la rete dice giusto) e quanto ha reso fino a fine partita
+giocate tutte e due su due copie della partita fino al suo turno dopo; una rete a parte per gli attacchi
+(`attacco.json`, 138-64-32-1) impara solo da questi quale rendeva di più (nel log: quante coppie, in
+quante il bot sceglie giusto con lei e in quante senza) e quanto ha reso fino a fine partita
 (`arena.py --impara 1`), e la rete impara a prevederlo: non l'esito vero ma il
 ritorno a passi TD(λ) (`--lambda`, 1 per l'esito vero), che ha molto meno
 rumore. La rete prova anche i colpi a ventaglio che il bot di oggi non prova

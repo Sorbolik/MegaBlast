@@ -66,6 +66,7 @@ import evolvi
 
 CARATTERISTICHE = 138  # bot.CARATTERISTICHE
 GUIDA = [22, 32, 16, 1]  # la guida: bot.DESCRIZIONE numeri per mossa
+ATTACCO = [CARATTERISTICHE, 64, 32, 1]  # la rete degli attacchi, allenata solo sui bivi
 
 
 def quanti(strati):
@@ -102,16 +103,13 @@ def avanti(rete, x):
         return np.concatenate(out) if out else np.zeros(0)
 
 
-def impara(rete, x, y, args, rng, coppie=None):
+def impara(rete, x, y, args, rng):
     """AdamW sull'errore di Huber (gli esiti lontani non tirano troppo), sulla
     rete (cambiata sul posto). Fino a --epoche passate sugli esempi, sulla
     scheda video costano secondi: si tiene la rete migliore sugli esempi tenuti
     da parte e ci si ferma quando da --pazienza passate non migliora (così
     studiare di più non vuol dire imparare a memoria). Restituisce l'errore
-    sugli esempi tenuti da parte.
-    coppie (a, b, d): due posizioni dello stesso bivio e quanto la prima rendeva
-    più della seconda (oltre al giudizio di base): a ogni lotto la rete impara
-    anche la differenza f(a) - f(b), che da una partita sola non vedrebbe."""
+    sugli esempi tenuti da parte."""
     dev = dispositivo()
     n = len(x)
     idx = rng.permutation(n)
@@ -125,15 +123,6 @@ def impara(rete, x, y, args, rng, coppie=None):
         with torch.no_grad():
             return float(((rete(xs[prova_t])[:, 0] - ys[prova_t]) ** 2).mean())
 
-    if coppie is not None and len(coppie[2]) >= 100:
-        ca, cb, cd = (torch.from_numpy(np.ascontiguousarray(v)).float().to(dev) for v in coppie)
-        nc = len(cd)
-        cidx = rng.permutation(nc)
-        cprova = torch.from_numpy(cidx[: nc // 10]).to(dev)
-        cstudio = torch.from_numpy(cidx[nc // 10:]).to(dev)
-    else:
-        coppie = None
-
     migliore, stato, ferma = errore(), copy.deepcopy(rete.state_dict()), 0
     passate = 0
     for _ in range(args.epoche):
@@ -141,11 +130,7 @@ def impara(rete, x, y, args, rng, coppie=None):
         for s in range(0, len(ordine), args.lotto):
             j = ordine[s:s + args.lotto]
             opt.zero_grad()
-            p = perdita(rete(xs[j])[:, 0], ys[j])
-            if coppie is not None:
-                c = cstudio[torch.randint(len(cstudio), (args.lotto // 4,), device=dev)]
-                p = p + args.peso_coppie * perdita(rete(ca[c])[:, 0] - rete(cb[c])[:, 0], cd[c])
-            p.backward()
+            perdita(rete(xs[j])[:, 0], ys[j]).backward()
             opt.step()
         passate += 1
         e = errore()
@@ -157,16 +142,56 @@ def impara(rete, x, y, args, rng, coppie=None):
                 break
     rete.load_state_dict(stato)
     var = float(np.var(y[prova])) or 1.0
-    esito = {"errore": round(migliore, 4), "spiegata": round(1 - migliore / var, 4), "passate": passate}
-    if coppie is not None:
-        # sulle coppie tenute da parte: quante volte la rete dice giusto quale
-        # delle due rendeva di più (fra quelle dove una rendeva di più)
+    return {"errore": round(migliore, 4), "spiegata": round(1 - migliore / var, 4), "passate": passate}
+
+
+def impara_coppie(rete, a, b, d, d0, args, rng):
+    """La rete degli attacchi (cambiata sul posto) solo sui bivi: f(a) - f(b)
+    deve fare d, quanto la prima rendeva più della seconda oltre al giudizio di
+    base (d0 la differenza di quel giudizio). Come impara: Huber, la rete
+    migliore sulle coppie tenute da parte. Restituisce anche in quanti bivi
+    (dove una rendeva di più) il bot con questa rete sceglie quella giusta,
+    e in quanti la sceglieva il giudizio di base da solo."""
+    dev = dispositivo()
+    n = len(d)
+    idx = rng.permutation(n)
+    prova, studio = idx[: n // 10], idx[n // 10:]
+    ta, tb, td = (torch.from_numpy(np.ascontiguousarray(v)).float().to(dev) for v in (a, b, d))
+    opt = torch.optim.AdamW(rete.parameters(), lr=args.lr, weight_decay=args.l2)
+    perdita = torch.nn.HuberLoss(delta=1.0)
+    studio_t, prova_t = torch.from_numpy(studio).to(dev), torch.from_numpy(prova).to(dev)
+
+    def diff(j):
+        return rete(ta[j])[:, 0] - rete(tb[j])[:, 0]
+
+    def errore():
         with torch.no_grad():
-            dd = rete(ca[cprova])[:, 0] - rete(cb[cprova])[:, 0]
-            vero = cd[cprova]
-            conta = vero != 0
-            esito["coppie"] = {"quante": nc, "giuste": round(float(((dd > 0) == (vero > 0))[conta].float().mean()), 4)}
-    return esito
+            return float(((diff(prova_t) - td[prova_t]) ** 2).mean())
+
+    migliore, stato, ferma, passate = errore(), copy.deepcopy(rete.state_dict()), 0, 0
+    for _ in range(args.epoche):
+        ordine = studio_t[torch.randperm(len(studio_t), device=dev)]
+        for s in range(0, len(ordine), args.lotto):
+            j = ordine[s:s + args.lotto]
+            opt.zero_grad()
+            perdita(diff(j), td[j]).backward()
+            opt.step()
+        passate += 1
+        e = errore()
+        if e < migliore:
+            migliore, stato, ferma = e, copy.deepcopy(rete.state_dict()), 0
+        else:
+            ferma += 1
+            if ferma >= args.pazienza:
+                break
+    rete.load_state_dict(stato)
+    with torch.no_grad():
+        dd = diff(prova_t).cpu().numpy()
+    tot, b0 = d[prova] + d0[prova], d0[prova]
+    conta = tot != 0
+    return {"quante": n, "errore": round(migliore, 4), "passate": passate,
+            "giuste": round(float(((dd + b0 > 0) == (tot > 0))[conta].mean()), 4),
+            "giuste_base": round(float(((b0 > 0) == (tot > 0))[conta].mean()), 4)}
 
 
 def matrici(rete):
@@ -299,7 +324,6 @@ def main():
     ap.add_argument("--pazienza", type=int, default=5, help="ci si ferma dopo tante passate senza migliorare")
     ap.add_argument("--lotto", type=int, default=1024)
     ap.add_argument("--confronta", type=int, default=2, help="bivi a partita giocati in due modi (0: niente)")
-    ap.add_argument("--peso-coppie", type=float, default=1.0)
     ap.add_argument("--lr", type=float, default=0.001)
     ap.add_argument("--l2", type=float, default=1e-5)
     ap.add_argument("--esame-partite", type=int, default=480)
@@ -340,7 +364,12 @@ def main():
         if (radice / "guida.json").exists() and args.guida_k:
             gr, gm, gs = leggi_rete(radice / "guida.json", GUIDA)
             larga = larga | {"guida": per_lua(gr, GUIDA, gm, gs)["rete"], "guida_k": args.guida_k}
-        adesso = per_lua(rete, strati, mu, sigma) | larga
+        # la rete degli attacchi del giro prima (dai bivi): solo per la rete di adesso
+        attacco = {}
+        if (radice / "attacco.json").exists():
+            ar, am, asg = leggi_rete(radice / "attacco.json", ATTACCO)
+            attacco = {"attacco": per_lua(ar, ATTACCO, am, asg)["rete"]}
+        adesso = per_lua(rete, strati, mu, sigma) | larga | attacco
         # la popolazione: il bot di oggi, la rete di adesso (più copie, che esplora),
         # reti passate e gli specialisti (la lega: deve battere tutti gli stili)
         passate = []
@@ -392,13 +421,23 @@ def main():
         Xn /= sigma
         # al giro 0 la rete è a caso: impara dall'esito vero
         G = ritorni(rete, Xn, B, Y, CAT, M, 1 if giro == 0 else args.lam)
-        # le coppie dei bivi: quanto la prima rendeva di più, oltre al giudizio di base
-        CA, CB, CD = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy") for k in giri])
+        studio = impara(rete, Xn, (G - B).astype(np.float32), args, rng)
+        # la rete degli attacchi sulle coppie dei bivi: quanto la prima rendeva
+        # di più, oltre al giudizio di base (che il bot aggiunge da sé)
+        CA, CB, CD = (np.concatenate([np.load(radice / f"giro_{k}" / f"{nome}.npy") for k in giri
+                                      if (radice / f"giro_{k}" / f"{nome}.npy").exists()] or [np.zeros((0, CARATTERISTICHE))])
                       for nome in ("ca", "cb", "cd"))
-        CD = (CD - (base(CA) - base(CB))).astype(np.float32)
-        CA = ((CA - mu) / sigma).astype(np.float32)
-        CB = ((CB - mu) / sigma).astype(np.float32)
-        studio = impara(rete, Xn, (G - B).astype(np.float32), args, rng, (CA, CB, CD))
+        if len(CD) >= 200:
+            D0 = base(CA) - base(CB)
+            if (radice / "attacco.json").exists():
+                ar, am, asg = leggi_rete(radice / "attacco.json", ATTACCO)
+            else:
+                ar, am, asg = nuova(ATTACCO, args.seme), mu, sigma
+            CA = ((CA - am) / asg).astype(np.float32)
+            CB = ((CB - am) / asg).astype(np.float32)
+            studio["coppie"] = impara_coppie(ar, CA, CB, (CD - D0).astype(np.float32), D0, args, rng)
+            salva_rete(radice / "attacco.json", ar, am, asg)
+            attacco = {"attacco": per_lua(ar, ATTACCO, am, asg)["rete"]}
         del CA, CB, CD
         salva_rete(radice / f"rete_{giro}.json", rete, mu, sigma)
         # la guida impara quanto rende una mossa dalla sua descrizione (sulla scheda video)
@@ -420,7 +459,7 @@ def main():
                                                                   "guida_k": args.guida_k}
         del GX, GY
         gc.collect()
-        nuova_lua = per_lua(rete, strati, mu, sigma) | larga
+        nuova_lua = per_lua(rete, strati, mu, sigma) | larga | attacco
         voce = {"giro": giro, "partite": n_partite, "esempi": n_esempi, "esempi_studiati": n_studiati,
                 "bravura_rete": round(tot["alto"] / max(1, tot["volte"]), 4), "oggi": evolvi.comportamento(b[1]),
                 "rete": evolvi.comportamento(b[2]), **studio}
@@ -433,7 +472,8 @@ def main():
         stato["giro"] = giro
         print(f"giro {giro}: {n_esempi} esempi nuovi, impara su {n_studiati} (varianza spiegata {studio['spiegata']:.2f}); "
               f"esame: la rete arriva più in alto del bot di oggi nel {100 * e['vince']:.0f}% delle partite"
-              + (f"; bivi: {studio['coppie']['quante']}, giusti {100 * studio['coppie']['giuste']:.0f}%" if "coppie" in studio else ""))
+              + (f"; bivi: {studio['coppie']['quante']}, scelta giusta {100 * studio['coppie']['giuste']:.0f}% "
+                 f"(senza la rete degli attacchi {100 * studio['coppie']['giuste_base']:.0f}%)" if "coppie" in studio else ""))
 
         file_stato.write_text(json.dumps(stato), encoding="utf-8")
         (radice / "storia.json").write_text(json.dumps({"strati": strati, "storia": stato["storia"],
