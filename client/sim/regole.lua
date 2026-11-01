@@ -7,6 +7,7 @@
 --
 --   local regole = require "sim.regole"
 --   local ok, err = regole.valida(r)        -- r = { casse = 2, armi = { "punch", "mallet" }, ... }
+--   regole.valida(r, true)                  -- su una coda normale: solo CODA_NORMALE (tetto)
 --   regole.opzioni(r, opts)                 -- aggiunge a opts di game.new
 --   local viste = regole.armi(r)            -- armi offerte nella scelta (sim/draft.lua), o nil
 --
@@ -15,6 +16,7 @@
 
 local C = require "sim.config"
 local game = require "sim.game"
+local equip = require "sim.equipaggiamento"
 
 local M = {}
 
@@ -48,6 +50,11 @@ M.LISTA = {
 		end
 		return p and s, "almeno una primaria e una secondaria"
 	end,
+	-- il tetto ai livelli dei pezzi (Torneo, Sergio 31 ottobre: "fissati a un
+	-- massimo, magari 12 o 15 su 20"): sta anche sulle code normali perché non
+	-- cambia la partita, solo chi ci entra; ha effetto quando online arrivano
+	-- gli assetti (fino ad allora il gioco lo mostra e basta)
+	tetto = intero(1, equip.LIVELLO_MAX - 1),
 	-- punti partita diversi da config.SCORE, solo i campi che cambiano
 	punti = function(v)
 		if type(v) ~= "table" then return false, "una tabella di punti" end
@@ -59,11 +66,19 @@ M.LISTA = {
 	end,
 }
 
-function M.valida(r)
+-- Le regole che si possono mettere anche su una coda normale (Torneo, Sfida,
+-- XP): non cambiano la partita, quindi non la cambiano a chi gioca normale.
+M.CODA_NORMALE = { tetto = true }
+
+-- normale: l'evento sta su una coda normale, quindi solo le regole di CODA_NORMALE
+function M.valida(r, normale)
 	if type(r) ~= "table" then return nil, "le regole sono una tabella" end
 	for k, v in pairs(r) do
 		local controllo = M.LISTA[k]
 		if not controllo then return nil, "regola sconosciuta: " .. tostring(k) end
+		if normale and not M.CODA_NORMALE[k] then
+			return nil, k .. ": cambia la partita, solo per i modificatori (tipo mod, con la coda loro)"
+		end
 		local ok, perche = controllo(v)
 		if not ok then return nil, k .. ": " .. perche end
 	end

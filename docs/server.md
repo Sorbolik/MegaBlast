@@ -77,10 +77,15 @@ dell'Affondo).
 
 ## Eventi
 
-Il calendario sta in un file JSON (`go run ./server -eventi eventi.json`, più
-avanti lo scrive il pannello) che il server rilegge da solo quando cambia; un
-file sbagliato non sostituisce quello buono e l'errore va nel log
-(`server/eventi.go`, formato nel commento in cima). Un evento ha `id`, `tipo`
+Il calendario lo fa Sergio nel **pannello degli eventi** (Worker di Cloudflare
+`megablast-eventi`, [strumenti/eventi](../strumenti/eventi/README.md)): il
+server lo scarica ogni 30 secondi
+(`go run ./server -eventi https://megablast-eventi.….workers.dev/eventi.json`,
+con l'ETag) e nella domanda dice quale versione ha preso e, se l'ha rifiutata,
+perché, così il pannello lo mostra. Oppure da un file JSON
+(`go run ./server -eventi eventi.json`) che il server rilegge da solo quando
+cambia. In tutti e due i casi un calendario sbagliato non sostituisce quello
+buono e l'errore va nel log (`server/eventi.go`, formato nel commento in cima). Un evento ha `id`, `tipo`
 (`mod` = modificatore con la coda sua, `torneo`, `sfida`, `xp` = su una coda
 normale, `coda`, di base `2v2`), `nome`, `riga`, `da` e `a` (ora di Roma,
 `"2026-11-02 10:00"`), `ogni` (settimane fra una volta e l'altra, 0 = una
@@ -88,7 +93,8 @@ volta), `fino` (l'ultimo giorno in cui può ricominciare, vuoto = per sempre),
 per i modificatori `modo` (le squadre) e `regole`, e `premi`/`obiettivo` che il
 server passa al gioco così come sono. Le **regole** sono solo valori di una
 lista bianca (`client/sim/regole.lua`: `casse`, `cure`, `livello`, `armi`,
-`punti`): il server le controlla col Lua quando legge il file, le usa per la
+`punti`, `tetto`; su una coda normale solo `tetto`, il tetto ai livelli dei
+pezzi, che non cambia la partita e conta quando online arrivano gli assetti): il server le controlla col Lua quando legge il file, le usa per la
 scelta delle armi e per la partita, e le manda nello `start` perché il client
 faccia la stessa partita.
 

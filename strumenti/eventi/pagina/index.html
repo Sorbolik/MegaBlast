@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eventi di MegaBlast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root {
+	--fondo: #0d0c10; --pannello: #141218; --chip: #241f2a; --testo: #f2e8d9; --luce: #ffe2c4;
+	--spento: #9a9292; --tenue: #b9b0a6; --riga: rgba(255,226,196,0.14); --bordo: rgba(255,226,196,0.28);
+	--mod: #ff6b29; --torneo: #f5c418; --sfida: #9ec4e0; --xp: #5cdbb8; --male: #ff8a6b; --bene: #5cdbb8; --forse: #f5c418;
+	color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--testo); font: 14px/1.4 Inter, system-ui, sans-serif; }
+h1, h2, h3, .marchio { font-family: "Lilita One", sans-serif; font-weight: 400; color: var(--luce); margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--luce); }
+.nascosto { display: none !important; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 12px 24px; border-bottom: 1px solid var(--riga); position: sticky; top: 0; background: var(--fondo); z-index: 5; }
+.marchio { font-size: 22px; letter-spacing: .5px; }
+.server { display: flex; align-items: center; gap: 8px; color: var(--tenue); font-size: 13px; }
+.punto { width: 9px; height: 9px; border-radius: 50%; background: var(--spento); flex: none; }
+.spazio { flex-grow: 1; }
+.bottone { min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--bordo); background: transparent; color: var(--luce); }
+.bottone:hover { background: var(--chip); }
+.principale { border: 0; background: var(--luce); color: var(--fondo); font-weight: 600; }
+.principale:hover { background: #fff; }
+.principale:disabled { background: var(--chip); color: var(--spento); cursor: default; }
+.pericolo { border-color: rgba(255,107,41,.5); color: var(--male); }
+.piccolo { min-height: 32px; padding: 0 10px; font-size: 13px; border-radius: 8px; }
+.stato-bozza { color: var(--tenue); font-size: 13px; }
+
+#problemi { flex: 0 0 calc(100% + 48px); margin: 0 -24px -12px; padding: 10px 24px; background: rgba(255,107,41,.12); color: #ffc3a6; font-size: 13px; list-style: none; }
+#problemi li::before { content: "• "; }
+
+.corpo { display: flex; flex-wrap: wrap; align-items: flex-start; }
+#modelli { flex: 1 1 270px; max-width: 320px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+#calendario { flex: 999 1 560px; min-width: 0; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+#dettaglio { flex: 1 1 320px; max-width: 400px; padding: 20px; display: flex; flex-direction: column; gap: 16px; border-left: 1px solid var(--riga); }
+@media (max-width: 900px) { #modelli, #dettaglio { max-width: none; border: 0; } #calendario { order: -1; } }
+@media (max-width: 700px) { .barra.corta .ora { display: none; } .settimana { padding: 6px; gap: 4px; } }
+
+.titoletto { font-size: 12px; color: var(--spento); text-transform: uppercase; letter-spacing: 1px; }
+.nota { font-size: 12px; color: var(--spento); }
+.modello { padding: 10px 12px; border-radius: 10px; border: 1px solid; display: flex; flex-direction: column; gap: 6px; }
+.modello .riga1 { display: flex; justify-content: space-between; gap: 8px; }
+.modello .azioni { display: flex; gap: 6px; }
+.tipo-mod { --c: var(--mod); background: rgba(255,107,41,.16); border-color: var(--mod); color: #ffc3a6; }
+.tipo-torneo { --c: var(--torneo); background: rgba(245,196,24,.14); border-color: var(--torneo); color: #f8dc7a; }
+.tipo-sfida { --c: var(--sfida); background: rgba(158,196,224,.14); border-color: var(--sfida); color: #c7def0; }
+.tipo-xp { --c: var(--xp); background: rgba(92,219,184,.14); border-color: var(--xp); color: #9eeed8; }
+.leggenda { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--tenue); margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--riga); }
+.leggenda span::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; background: var(--c); }
+
+.mese { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mese h1 { font-size: 26px; min-width: 210px; }
+.quadro { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--bordo); background: transparent; color: var(--luce); }
+.giorni-nomi { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; color: var(--spento); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 0 10px; }
+.settimana { background: var(--pannello); border-radius: 12px; padding: 8px 10px 10px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px 6px; min-height: 96px; align-content: start; }
+.giorno { font-size: 12px; color: var(--spento); padding: 1px 4px; justify-self: start; }
+.giorno.fuori { opacity: .4; }
+.giorno.oggi { background: var(--luce); color: var(--fondo); border-radius: 4px; font-weight: 600; }
+.barra { display: flex; justify-content: space-between; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 7px; font-size: 12px; font-weight: 500; min-width: 0; border: 1px solid; text-align: left; }
+.barra span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barra .ora { opacity: .8; flex: none; }
+.barra.scelto { outline: 2px solid var(--luce); outline-offset: 1px; }
+.barra.continua-prima { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.barra.continua-dopo { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.avviso { grid-column: 1 / span 7; display: flex; gap: 8px; align-items: flex-start; padding: 7px 10px; border-radius: 8px; background: rgba(255,107,41,.12); color: #ffb48f; font-size: 12px; }
+
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo > label, .campo > .etichetta { font-size: 12px; color: var(--spento); }
+input[type=text], input[type=number], input[type=datetime-local], input[type=date], input[type=password], select {
+	min-height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--bordo); background: var(--fondo); width: 100%;
+}
+input:disabled, select:disabled { opacity: .5; }
+.due { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.segmenti { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 10px; background: var(--pannello); }
+.segmenti button { padding: 6px 10px; border-radius: 7px; border: 0; background: transparent; color: var(--spento); }
+.segmenti button[aria-pressed=true] { background: var(--chip); color: var(--luce); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 5px 10px; border-radius: 99px; background: var(--chip); color: var(--tenue); font-size: 13px; border: 1px solid transparent; }
+button.chip[aria-pressed=false] { background: transparent; color: #6f6969; border-color: var(--riga); text-decoration: line-through; }
+button.chip[aria-pressed=true] { background: rgba(255,107,41,.18); color: #ffc3a6; font-weight: 600; }
+button.chip.sec[aria-pressed=true] { background: rgba(158,196,224,.18); color: #c7def0; }
+.gg { display: flex; gap: 5px; }
+.gg button { width: 36px; height: 36px; border-radius: 8px; border: 0; background: var(--chip); color: var(--spento); font-weight: 600; }
+.gg button[aria-pressed=true] { background: var(--mod); color: var(--fondo); }
+.gg button.implicito { box-shadow: inset 0 0 0 2px var(--mod); color: var(--luce); }
+.gg button:disabled { opacity: .35; cursor: default; }
+.lista { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--tenue); }
+.lista .riga { display: flex; justify-content: space-between; gap: 10px; }
+.vuoto { color: var(--spento); }
+.riquadro { padding: 12px; border-radius: 10px; background: var(--pannello); font-size: 13px; color: var(--tenue); }
+.azioni { display: flex; flex-wrap: wrap; gap: 8px; }
+
+dialog { background: var(--fondo); color: var(--testo); border: 1px solid var(--bordo); border-radius: 14px; padding: 0; width: min(980px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }
+dialog::backdrop { background: rgba(0,0,0,.6); }
+.dlg-testa { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--riga); position: sticky; top: 0; background: var(--fondo); z-index: 1; }
+.dlg-corpo { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; }
+.dlg-corpo > div { flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.sezione { background: var(--pannello); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.sezione h2 { font-size: 18px; }
+.punti { display: grid; grid-template-columns: minmax(0, 1fr) 90px; gap: 6px 10px; align-items: center; font-size: 13px; }
+.punti input { min-height: 32px; }
+.premio { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 6px; }
+.anteprima { width: 320px; max-width: 100%; height: 180px; border-radius: 14px; border: 1px solid var(--bordo); padding: 16px; display: flex; flex-direction: column; gap: 6px; align-self: center; background: #0a090c; }
+.anteprima .nome { font-family: "Lilita One", sans-serif; font-size: 22px; color: #ff8a55; text-transform: uppercase; }
+.gioca { padding: 6px 14px; border-radius: 8px; background: var(--mod); color: var(--fondo); font-family: "Lilita One", sans-serif; font-size: 16px; }
+
+#accesso { position: fixed; inset: 0; background: var(--fondo); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+#accesso form { width: min(380px, 100%); display: flex; flex-direction: column; gap: 14px; }
+.errore { color: var(--male); font-size: 13px; }
+#avviso { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); padding: 10px 16px; border-radius: 10px; background: var(--chip); color: var(--testo); border: 1px solid var(--bordo); z-index: 20; max-width: calc(100vw - 32px); }
+</style>
+</head>
+<body>
+
+<div id="accesso">
+	<form id="form-accesso">
+		<div class="marchio">MEGABLAST · EVENTI</div>
+		<div class="campo">
+			<label for="chiave">Chiave del pannello</label>
+			<input id="chiave" type="password" autocomplete="current-password" required>
+		</div>
+		<div id="errore-accesso" class="errore"></div>
+		<button class="bottone principale" type="submit">Entra</button>
+		<div class="nota">È la PANNELLO_CHIAVE del Worker. Resta in questo browser.</div>
+	</form>
+</div>
+
+<header>
+	<div class="marchio">MEGABLAST · EVENTI</div>
+	<div class="server" id="server"><span class="punto"></span><span>…</span></div>
+	<div class="spazio"></div>
+	<span class="stato-bozza" id="stato-bozza"></span>
+	<button class="bottone" type="button" data-azione="annulla" id="annulla">Annulla le modifiche</button>
+	<button class="bottone" type="button" data-azione="versioni">Versioni</button>
+	<button class="bottone principale" type="button" data-azione="pubblica" id="pubblica">Pubblica</button>
+	<ul id="problemi" class="nascosto"></ul>
+</header>
+
+<div class="corpo">
+	<aside id="modelli" aria-label="Modelli"></aside>
+	<main id="calendario"></main>
+	<aside id="dettaglio" aria-label="Evento scelto"></aside>
+</div>
+
+<dialog id="dlg-modello" aria-label="Modello di evento"></dialog>
+<dialog id="dlg-versioni" aria-label="Versioni pubblicate"></dialog>
+<div id="avviso" class="nascosto" role="status"></div>
+
+<script type="module">
+import { TIPI, GIORNI, valida, file, volte, accavallati, minuti, scrivi, giornoSettimana, oraRoma } from "./calendario.js";
+
+const MODI = { "2v2": "2 contro 2", ffa: "Tutti contro tutti", "1v1": "1 contro 1" };
+const PUNTI = {
+	damage: "Danno (per ogni centesimo di vita)", kill: "Uccisione", env_kill: "Uccisione ambientale (in più)",
+	death: "Morte", self_death: "Morte da solo (in più)", leader: "Moltiplicatore sul primo",
+	crown: "Corona (uccidere il primo)", crown_rounds: "Giri prima della Corona", trap: "Trappola che scatta",
+	parry: "Scudo (per punto fermato)", parry_max: "Scudo, al massimo", final_round: "Moltiplicatore dell'ultimo giro",
+};
+const MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+const GG = ["L", "M", "M", "G", "V", "S", "D"];
+const BOZZA = "pannello-eventi-bozza", CHIAVE = "pannello-eventi-chiave";
+
+let dati, chiave = leggi(CHIAVE) || "";
+let S = { base: 0, modelli: [], eventi: [] }; // quello che Sergio sta facendo
+let pubblicato = "", versione = 0, esito = null, storia = [];
+let scelto = null, mese = null;
+
+// ----- piccole cose -----
+function leggi(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function metti(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} }
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const contenuto = () => JSON.stringify({ modelli: S.modelli, eventi: S.eventi });
+const sporco = () => contenuto() !== pubblicato;
+function avviso(t) {
+	const a = $("#avviso");
+	a.textContent = t;
+	a.classList.remove("nascosto");
+	clearTimeout(avviso.t);
+	avviso.t = setTimeout(() => a.classList.add("nascosto"), 4000);
+}
+function giornoBreve(min) {
+	const d = new Date(min * 60000);
+	return `${GIORNI[giornoSettimana(min)]} ${d.getUTCDate()} ${MESI[d.getUTCMonth()].slice(0, 3)}`;
+}
+const oraDi = (min) => scrivi(min).slice(11);
+function fra(ms) {
+	const m = Math.round(ms / 60000);
+	if (m < 1) return "adesso";
+	if (m < 60) return `${m} min fa`;
+	if (m < 1440) return `${Math.round(m / 60)} h fa`;
+	return `${Math.round(m / 1440)} g fa`;
+}
+function slug(nome, presi, max = 24) {
+	let base = nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, max) || "evento";
+	if (base in (dati?.modi || {})) base = "e_" + base;
+	let id = base, n = 2;
+	while (presi.has(id)) id = `${base}_${n++}`;
+	return id;
+}
+const modello = (id) => S.modelli.find((m) => m.id === id);
+const evento = (id) => S.eventi.find((e) => e.id === id);
+
+// ----- il Worker -----
+async function api(percorso, init = {}) {
+	const r = await fetch(percorso, { ...init, headers: { "X-Chiave": chiave, "Content-Type": "application/json", ...(init.headers || {}) } });
+	const corpo = await r.json().catch(() => ({}));
+	if (r.status === 403) { chiave = ""; metti(CHIAVE, null); mostraAccesso("Chiave sbagliata"); }
+	return { ok: r.ok, status: r.status, corpo };
+}
+
+function mostraAccesso(errore) {
+	$("#accesso").classList.remove("nascosto");
+	$("#errore-accesso").textContent = errore || "";
+	$("#chiave").focus();
+}
+
+async function carica() {
+	const r = await api("/api/stato");
+	if (!r.ok) { if (r.status !== 403) mostraAccesso(r.corpo.errore || "Il pannello non risponde"); return; }
+	$("#accesso").classList.add("nascosto");
+	const s = r.corpo.stato;
+	versione = s.versione; esito = r.corpo.esito; storia = r.corpo.storia;
+	pubblicato = JSON.stringify({ modelli: s.modelli, eventi: s.eventi });
+	S = { base: s.versione, modelli: s.modelli, eventi: s.eventi };
+	// una bozza non pubblicata di questo browser riparte da dove era
+	try {
+		const b = JSON.parse(leggi(BOZZA) || "null");
+		if (b && b.base === s.versione && JSON.stringify({ modelli: b.modelli, eventi: b.eventi }) !== pubblicato) {
+			S = b;
+			avviso("Ho ripreso le modifiche non pubblicate di prima");
+		} else if (b && b.base !== s.versione) {
+			metti(BOZZA, null);
+			avviso(`Nel frattempo è uscita la versione ${s.versione}: la bozza di prima è superata`);
+		}
+	} catch {}
+	tutto();
+}
+
+// ogni 30 secondi: cosa dice il server (e se un'altra scheda ha pubblicato)
+async function guarda() {
+	if (!chiave || document.hidden) return;
+	const r = await api("/api/stato");
+	if (!r.ok) return;
+	esito = r.corpo.esito; storia = r.corpo.storia;
+	if (r.corpo.stato.versione !== versione && !sporco()) return carica();
+	if (r.corpo.stato.versione !== versione) avviso(`È uscita la versione ${r.corpo.stato.versione} da un'altra parte: pubblicando la sovrascrivi`);
+	testa();
+}
+
+async function pubblica(forza) {
+	const r = await api("/api/stato", { method: "POST", body: JSON.stringify(forza ? { ...S, base: forza } : S) });
+	if (r.status === 409) {
+		const loro = r.corpo.stato;
+		if (confirm(`Nel frattempo è stata pubblicata la versione ${loro.versione}. Vuoi sovrascriverla con la tua? (Annulla: prendo la loro e butto le tue modifiche)`)) return pubblica(loro.versione);
+		metti(BOZZA, null);
+		return carica();
+	}
+	if (!r.ok) { avviso(r.corpo.errore || "Non è andata"); return; }
+	metti(BOZZA, null);
+	avviso(`Pubblicata la versione ${r.corpo.versione}: il server la prende entro un minuto`);
+	await carica();
+}
+
+// ----- disegno -----
+function cambiato() {
+	metti(BOZZA, sporco() ? JSON.stringify(S) : null);
+	tutto();
+}
+
+function tutto() {
+	testa();
+	disegnaModelli();
+	disegnaCalendario();
+	disegnaDettaglio();
+}
+
+function testa() {
+	const problemi = valida(S, dati);
+	const ul = $("#problemi");
+	ul.classList.toggle("nascosto", !problemi.length);
+	ul.innerHTML = problemi.map((p) => `<li>${esc(p.dove ? p.dove + ": " : "")}${esc(p.testo)}</li>`).join("");
+	const s = sporco();
+	$("#stato-bozza").textContent = s ? (problemi.length ? "Da sistemare prima di pubblicare" : "Modifiche da pubblicare") : `Versione ${versione} pubblicata`;
+	$("#pubblica").disabled = !s || problemi.length > 0;
+	$("#annulla").classList.toggle("nascosto", !s);
+	// il server: quale versione ha e se l'ha presa
+	let colore = "var(--spento)", testo = "Il server non ha ancora chiesto il calendario";
+	if (esito) {
+		const visto = Date.now() - esito.visto;
+		if (esito.errore) { colore = "var(--male)"; testo = `Il server ha rifiutato la versione ${esito.versione}: ${esito.errore}`; }
+		else if (visto > 15 * 60000) testo = `Server spento? L'ultima volta ${fra(visto)}, con la versione ${esito.versione}`;
+		else if (esito.versione === versione) { colore = "var(--bene)"; testo = `Il server ha la versione ${versione}`; }
+		else { colore = "var(--forse)"; testo = `Il server ha la versione ${esito.versione}, la ${versione} arriva entro un minuto`; }
+	}
+	$("#server").innerHTML = `<span class="punto" style="background:${colore}"></span><span>${esc(testo)}</span>`;
+}
+
+function regoleInParole(m) {
+	const r = m.regole || {}, out = [];
+	if (m.tipo === "mod") out.push(MODI[m.modo] || m.modo);
+	else out.push(`Coda ${MODI[m.coda || "2v2"]}`);
+	if (r.armi) out.push("Armi: " + r.armi.map((w) => dati.nomi[w] || w).join(", ").toLowerCase());
+	if (r.casse) out.push(r.casse === 1 ? "Una cassa a ogni turno" : `Casse ogni ${r.casse} turni`);
+	if (r.cure === false) out.push("Niente cure");
+	if (r.livello === "fisso") out.push("Tutti allo stesso livello");
+	if (r.punti) out.push("Punti diversi");
+	if (r.tetto) out.push(`Pezzi al massimo al livello ${r.tetto}`);
+	return out;
+}
+
+function disegnaModelli() {
+	const usati = (id) => S.eventi.filter((e) => e.modello === id).length;
+	$("#modelli").innerHTML = `
+		<div style="display:flex;justify-content:space-between;align-items:baseline">
+			<h2 style="font-size:20px">Modelli</h2>
+			<button class="bottone piccolo" type="button" data-azione="nuovo-modello">+ Nuovo</button>
+		</div>
+		<div class="nota">Pensati una volta, poi messi in calendario quante volte vuoi.</div>
+		${S.modelli.length ? "" : '<div class="vuoto">Ancora nessun modello: fanne uno.</div>'}
+		${S.modelli.map((m) => `
+			<div class="modello tipo-${esc(m.tipo)}">
+				<div class="riga1"><strong>${esc(m.nome)}</strong><span class="nota" style="color:inherit;opacity:.85">${esc(TIPI[m.tipo])}</span></div>
+				<div class="nota" style="color:var(--tenue)">${esc(regoleInParole(m).join(" · "))}${usati(m.id) ? ` · <strong>${usati(m.id)} in calendario</strong>` : ""}</div>
+				<div class="azioni">
+					<button class="bottone piccolo" type="button" data-azione="metti" data-id="${esc(m.id)}">In calendario</button>
+					<button class="bottone piccolo" type="button" data-azione="apri-modello" data-id="${esc(m.id)}">Modifica</button>
+				</div>
+			</div>`).join("")}
+		<div class="leggenda">
+			<span style="--c:var(--mod)">Modificatore (coda sua)</span>
+			<span style="--c:var(--torneo)">Torneo</span>
+			<span style="--c:var(--sfida)">Sfida</span>
+			<span style="--c:var(--xp)">XP doppi</span>
+		</div>`;
+}
+
+function disegnaCalendario() {
+	const adesso = minuti(oraRoma());
+	if (!mese) { const d = new Date(adesso * 60000); mese = { a: d.getUTCFullYear(), m: d.getUTCMonth() }; }
+	const primo = Date.UTC(mese.a, mese.m, 1) / 60000;
+	const ultimo = Date.UTC(mese.a, mese.m + 1, 1) / 60000;
+	const inizio = primo - giornoSettimana(primo) * 1440;
+	const fine = ultimo + ((7 - giornoSettimana(ultimo)) % 7) * 1440;
+	const f = file(S.eventi.every((e) => modello(e.modello)) ? S : { ...S, eventi: S.eventi.filter((e) => modello(e.modello)) });
+	const tutte = volte(f, inizio, fine);
+	const oggi = Math.floor(adesso / 1440) * 1440;
+	let html = `
+		<div class="mese">
+			<h1>${MESI[mese.m][0].toUpperCase() + MESI[mese.m].slice(1)} ${mese.a}</h1>
+			<button class="quadro" type="button" aria-label="Mese prima" data-azione="mese" data-d="-1">‹</button>
+			<button class="quadro" type="button" aria-label="Mese dopo" data-azione="mese" data-d="1">›</button>
+			<button class="bottone piccolo" type="button" data-azione="oggi">Oggi</button>
+			<div class="spazio"></div>
+			<span class="nota">Orari di Roma</span>
+		</div>
+		<div class="giorni-nomi">${GIORNI.map((g) => `<span>${g}</span>`).join("")}</div>`;
+	for (let w = inizio; w < fine; w += 7 * 1440) {
+		html += `<section class="settimana">`;
+		for (let g = 0; g < 7; g++) {
+			const giorno = w + g * 1440, d = new Date(giorno * 60000);
+			const cl = ["giorno", d.getUTCMonth() !== mese.m ? "fuori" : "", giorno === oggi ? "oggi" : ""].join(" ");
+			html += `<div class="${cl}">${d.getUTCDate()}</div>`;
+		}
+		const qui = tutte.filter((v) => v.da < w + 7 * 1440 && v.a > w);
+		for (const v of qui) {
+			const c0 = Math.max(0, Math.floor((v.da - w) / 1440)), c1 = Math.min(6, Math.floor((v.a - 1 - w) / 1440));
+			const cl = ["barra", `tipo-${v.tipo}`, v.programmato === scelto ? "scelto" : "", c0 === c1 ? "corta" : "", v.da < w ? "continua-prima" : "", v.a > w + 7 * 1440 ? "continua-dopo" : ""].join(" ");
+			const quando = v.da >= w ? oraDi(v.da) : "";
+			html += `<button type="button" class="${cl}" style="grid-column:${c0 + 1} / ${c1 + 2}" data-azione="scegli" data-id="${esc(v.programmato)}"
+				title="${esc(`${v.nome}: ${giornoBreve(v.da)} ${oraDi(v.da)} → ${giornoBreve(v.a)} ${oraDi(v.a)}`)}">
+				<span>${esc(v.nome)}</span>${quando ? `<span class="ora">${quando}</span>` : ""}</button>`;
+		}
+		const visti = new Set();
+		for (const [x, y] of accavallati(qui)) {
+			const k = [x.nome, y.nome].sort().join("|");
+			if (visti.has(k) || x.nome === y.nome) continue;
+			visti.add(k);
+			const da = Math.max(x.da, y.da);
+			html += `<div class="avviso"><span aria-hidden="true">⚠</span><span>Da ${esc(giornoBreve(da))} ${oraDi(da)}: ${esc(x.nome)} e ${esc(y.nome)} hanno tutti e due la coda loro. I giocatori si dividono: si può, ma le attese si allungano.</span></div>`;
+		}
+		html += `</section>`;
+	}
+	$("#calendario").innerHTML = html;
+}
+
+// cosa vede il gioco adesso (come GET /eventi del server: in corso e nei prossimi 14 giorni)
+function cosaVedeIlGioco() {
+	const adesso = minuti(oraRoma());
+	const vv = volte(file({ ...S, eventi: S.eventi.filter((e) => modello(e.modello)) }), adesso, adesso + 14 * 1440);
+	if (!vv.length) return '<div class="vuoto">Niente nei prossimi 14 giorni.</div>';
+	return `<div class="lista">${vv.map((v) => `<div class="riga"><span>${v.da <= adesso ? "<strong>ORA</strong> " : ""}${esc(v.nome)}</span><span>${esc(giornoBreve(v.da))} ${oraDi(v.da)}</span></div>`).join("")}</div>`;
+}
+
+function disegnaDettaglio() {
+	const e = scelto && evento(scelto);
+	const box = $("#dettaglio");
+	if (!e) {
+		scelto = null;
+		box.innerHTML = `
+			<div class="titoletto">Nel gioco</div>
+			<h2 style="font-size:20px">Cosa vedono i giocatori</h2>
+			<div class="nota">Gli eventi in corso e quelli dei prossimi 14 giorni, come la bacheca del gioco (con le modifiche non ancora pubblicate).</div>
+			${cosaVedeIlGioco()}
+			<div class="riquadro"><strong style="color:var(--testo)">Come si fa.</strong> Fai un modello (cosa cambia, dove si gioca, i premi), poi «In calendario» e scegli quando e ogni quanto. «Pubblica» lo manda al server, che lo prende entro un minuto.</div>`;
+		return;
+	}
+	const m = modello(e.modello);
+	const prossime = m ? volte(file({ modelli: [m], eventi: [e] }), minuti(oraRoma()), minuti(oraRoma()) + 366 * 1440).slice(0, 5) : [];
+	const da = minuti(e.da), implicito = isNaN(da) ? -1 : giornoSettimana(da);
+	const giorni = e.giorni || [];
+	box.innerHTML = `
+		<div class="titoletto">Evento scelto</div>
+		<div>
+			<h2 style="font-size:22px">${esc(m?.nome || "?")}</h2>
+			<div class="nota">${esc(m ? TIPI[m.tipo] : "")} · nel gioco «${esc(e.id)}»</div>
+		</div>
+		<div class="campo">
+			<label for="d-modello">Modello</label>
+			<select id="d-modello" data-campo="modello">${S.modelli.map((x) => `<option value="${esc(x.id)}" ${x.id === e.modello ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select>
+		</div>
+		<div class="campo"><label for="d-da">Inizio (ora di Roma)</label><input id="d-da" type="datetime-local" data-campo="da" value="${esc(e.da.replace(" ", "T"))}"></div>
+		<div class="campo"><label for="d-a">Fine</label><input id="d-a" type="datetime-local" data-campo="a" value="${esc(e.a.replace(" ", "T"))}"></div>
+		<div class="campo">
+			<span class="etichetta">Ripetizione</span>
+			<div class="segmenti">
+				${[[0, "Una volta"], [1, "Ogni settimana"], [2, "Settimane alterne"]].map(([n, t]) => `<button type="button" data-azione="ogni" data-n="${n}" aria-pressed="${(e.ogni || 0) === n}">${t}</button>`).join("")}
+				<button type="button" data-azione="ogni" data-n="${e.ogni > 2 ? e.ogni : 3}" aria-pressed="${e.ogni > 2}">Ogni ${e.ogni > 2 ? e.ogni : "N"} settimane</button>
+			</div>
+			${e.ogni > 2 ? `<div class="due"><label class="nota" for="d-ogni" style="align-self:center">Ogni quante settimane</label><input id="d-ogni" type="number" min="3" max="52" data-campo="ogni" value="${e.ogni}"></div>` : ""}
+		</div>
+		<div class="campo">
+			<span class="etichetta">Giorni in cui ricomincia</span>
+			<div class="gg">${GG.map((g, i) => `<button type="button" data-azione="giorno" data-g="${i}" aria-label="${GIORNI[i]}" ${e.ogni ? "" : "disabled"}
+				aria-pressed="${giorni.includes(i)}" class="${!giorni.length && i === implicito ? "implicito" : ""}">${g}</button>`).join("")}</div>
+			<div class="nota">${e.ogni ? (giorni.length ? "La stessa finestra (stessi orari, stessa durata) ricomincia in ognuno di questi giorni." : "Solo il giorno dell'inizio. Scegline altri per ripeterla anche in quei giorni.") : "Con una ripetizione si possono scegliere più giorni."}</div>
+		</div>
+		${e.ogni ? `
+		<div class="campo">
+			<span class="etichetta">Fino a</span>
+			<div class="due">
+				<input type="date" aria-label="Ultimo giorno in cui può ricominciare" data-campo="fino" value="${esc(e.fino || "")}" ${e.fino ? "" : "disabled"}>
+				<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-campo="sempre" ${e.fino ? "" : "checked"}> per sempre</label>
+			</div>
+		</div>` : ""}
+		<div class="campo">
+			<span class="etichetta">Prossime volte</span>
+			${prossime.length ? `<div class="lista">${prossime.map((v) => `<div class="riga"><span>${esc(giornoBreve(v.da))} ${oraDi(v.da)}</span><span>→ ${esc(giornoBreve(v.a))} ${oraDi(v.a)}</span></div>`).join("")}</div>` : '<div class="vuoto">Nessuna: è già finito.</div>'}
+		</div>
+		${m ? `<div class="campo"><span class="etichetta">Cosa cambia (dal modello)</span><div class="chips">${regoleInParole(m).map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div></div>` : ""}
+		<div class="azioni">
+			<button class="bottone" type="button" data-azione="apri-modello" data-id="${esc(e.modello)}">Apri il modello</button>
+			<button class="bottone" type="button" data-azione="duplica">Duplica</button>
+			<button class="bottone pericolo" type="button" data-azione="togli">Togli</button>
+			<button class="bottone" type="button" data-azione="chiudi">Chiudi</button>
+		</div>`;
+}
+
+// ----- il modello (finestra) -----
+let aperto = null; // id del modello nella finestra
+
+function disegnaModello() {
+	const m = modello(aperto);
+	const dlg = $("#dlg-modello");
+	if (!m) { dlg.close(); return; }
+	const r = m.regole || {};
+	const mod = m.tipo === "mod";
+	const armi = r.armi ? new Set(r.armi) : null;
+	const arma = (w, sec) => `<button type="button" class="chip ${sec ? "sec" : ""}" data-azione="arma" data-w="${w}" aria-pressed="${!armi || armi.has(w)}">${esc(dati.nomi[w] || w)}</button>`;
+	const usato = S.eventi.filter((e) => e.modello === m.id).length;
+	dlg.innerHTML = `
+		<div class="dlg-testa">
+			<h1 style="font-size:22px">Modello</h1>
+			<div class="spazio"></div>
+			<button class="bottone pericolo" type="button" data-azione="elimina-modello" ${usato ? `disabled title="È in calendario ${usato} volte: toglilo prima da lì"` : ""}>Elimina</button>
+			<button class="bottone principale" type="button" data-azione="chiudi-modello">Fatto</button>
+		</div>
+		<div class="dlg-corpo">
+			<div>
+				<section class="sezione">
+					<div class="campo"><label for="m-nome">Nome (come lo vede il giocatore)</label><input id="m-nome" type="text" maxlength="60" data-mcampo="nome" value="${esc(m.nome)}"></div>
+					<div class="campo"><label for="m-riga">Riga sotto il nome</label><input id="m-riga" type="text" maxlength="140" data-mcampo="riga" value="${esc(m.riga || "")}"></div>
+					<div class="campo"><span class="etichetta">Tipo</span>
+						<div class="segmenti">${Object.entries(TIPI).map(([k, t]) => `<button type="button" data-azione="tipo" data-t="${k}" aria-pressed="${m.tipo === k}">${t}</button>`).join("")}</div>
+						<div class="nota">${mod ? "Ha la coda sua: cambia la partita solo a chi la sceglie." : "Sta su una coda normale: conta per le partite di quella coda, che restano normali."}</div>
+					</div>
+					<div class="campo"><label for="m-coda">${mod ? "Squadre della coda dell'evento" : "Coda su cui si appoggia"}</label>
+						<select id="m-coda" data-mcampo="${mod ? "modo" : "coda"}">${Object.entries(MODI).map(([k, t]) => `<option value="${k}" ${(mod ? m.modo : m.coda || "2v2") === k ? "selected" : ""}>${t}</option>`).join("")}</select>
+					</div>
+				</section>
+				<section class="sezione">
+					<h2>Regole</h2>
+					${mod ? `
+					<div class="due">
+						<div class="campo"><label for="m-casse">Casse</label>
+							<select id="m-casse" data-regola="casse"><option value="">normali (ogni ${dati.casse} turni)</option>
+							${Array.from({ length: 10 }, (_, i) => i + 1).map((n) => `<option value="${n}" ${r.casse === n ? "selected" : ""}>${n === 1 ? "a ogni turno" : `ogni ${n} turni`}</option>`).join("")}</select></div>
+						<div class="campo"><span class="etichetta">Altro</span>
+							<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-regola="cure" ${r.cure === false ? "checked" : ""}> niente cure</label>
+							<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-regola="livello" ${r.livello === "fisso" ? "checked" : ""}> tutti allo stesso livello</label>
+						</div>
+					</div>
+					<div class="campo"><span class="etichetta">Armi nella scelta d'inizio partita (${dati.sempre.map((w) => dati.nomi[w]).join(" e ").toLowerCase()} ci sono sempre)</span>
+						<div class="chips">${dati.primarie.map((w) => arma(w)).join("")}${dati.secondarie.map((w) => arma(w, true)).join("")}</div>
+						<div class="nota">Tocca per togliere. Almeno una primaria (arancio) e una secondaria (azzurra).</div>
+					</div>
+					<details ${r.punti ? "open" : ""}><summary class="etichetta" style="cursor:pointer;color:var(--spento);font-size:12px">Punti della partita ${r.punti ? `(${Object.keys(r.punti).length} cambiati)` : "(normali)"}</summary>
+						<div class="punti" style="margin-top:10px">${Object.entries(dati.punti).map(([k, base]) => `
+							<label for="p-${k}">${esc(PUNTI[k] || k)}</label>
+							<input id="p-${k}" type="number" step="any" min="-1000" max="1000" data-punto="${k}" placeholder="${base}" value="${r.punti && k in r.punti ? r.punti[k] : ""}">`).join("")}
+						</div>
+						<div class="nota" style="margin-top:6px">Vuoto = come nella partita normale (il numero in grigio).</div>
+					</details>` : `<div class="nota">Un evento su una coda normale non cambia la partita: qui c'è solo il tetto ai livelli.</div>`}
+					<div class="due">
+						<div class="campo"><label for="m-tetto">Tetto ai livelli dei pezzi</label>
+							<input id="m-tetto" type="number" min="1" max="${dati.tetto_max}" data-regola="tetto" placeholder="nessuno" value="${r.tetto ?? ""}"></div>
+						<div class="nota" style="align-self:end">Da 1 a ${dati.tetto_max}. Il gioco lo mostra; conta davvero quando online arrivano gli assetti.</div>
+					</div>
+				</section>
+			</div>
+			<div>
+				<section class="sezione">
+					<h2>Premi</h2>
+					${(m.premi || []).map((p, i) => `
+						<div class="premio">
+							<input type="text" aria-label="Premio" placeholder="Badge Maglio" data-premio="${i}" data-pcampo="testo" value="${esc(p.testo)}">
+							<input type="text" aria-label="A chi" placeholder="primi 10%" data-premio="${i}" data-pcampo="chi" value="${esc(p.chi || "")}">
+							<button class="bottone piccolo" type="button" aria-label="Togli il premio" data-azione="togli-premio" data-i="${i}">✕</button>
+						</div>`).join("")}
+					<button class="bottone piccolo" type="button" data-azione="aggiungi-premio" style="align-self:flex-start">+ Premio</button>
+					<div class="nota">Per ora il gioco li mostra e basta: si consegnano quando ci sono gli account.</div>
+				</section>
+				<section class="sezione">
+					<h2>Come lo vede il giocatore</h2>
+					<div class="anteprima">
+						<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--spento);letter-spacing:1px"><span>${esc(TIPI[m.tipo].toUpperCase())} · ${esc((MODI[mod ? m.modo : m.coda || "2v2"] || "").toUpperCase())}</span><span>finisce tra 1g 6h</span></div>
+						<div class="nome">${esc(m.nome || "senza nome")}</div>
+						<div style="font-size:12px;color:var(--tenue)">${esc(m.riga || "")}</div>
+						<div class="spazio"></div>
+						<div style="display:flex;justify-content:space-between;align-items:center">
+							<span style="font-size:12px;color:#c49cff">${esc((m.premi || []).map((p) => p.testo).join(" · ") || "Solo per divertirsi")}</span>
+							<span class="gioca">GIOCA</span>
+						</div>
+					</div>
+					<div class="chips">${regoleInParole(m).map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>
+				</section>
+			</div>
+		</div>`;
+}
+
+function apriModello(id) {
+	aperto = id;
+	disegnaModello();
+	if (!$("#dlg-modello").open) $("#dlg-modello").showModal();
+}
+
+function regola(m, k, v) {
+	m.regole = { ...(m.regole || {}) };
+	if (v === undefined) delete m.regole[k]; else m.regole[k] = v;
+	if (!Object.keys(m.regole).length) delete m.regole;
+}
+
+// ----- le azioni -----
+const azioni = {
+	pubblica: () => pubblica(),
+	annulla: () => { if (confirm("Butto le modifiche non pubblicate?")) { metti(BOZZA, null); carica(); } },
+	versioni: () => {
+		const dlg = $("#dlg-versioni");
+		dlg.innerHTML = `
+			<div class="dlg-testa"><h1 style="font-size:22px">Versioni pubblicate</h1><div class="spazio"></div><button class="bottone" type="button" data-azione="chiudi-versioni">Chiudi</button></div>
+			<div style="padding:20px;display:flex;flex-direction:column;gap:8px">
+				<div class="nota">«Riprendi» la carica qui come modifica: poi la pubblichi se ti va. Si tengono le ultime ${storia.length || 30}, per 90 giorni.</div>
+				${storia.length ? storia.map((v) => `<div class="riquadro" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+					<span><strong style="color:var(--testo)">Versione ${v.versione}</strong> · ${esc(new Date(v.quando).toLocaleString("it-IT", { timeZone: "Europe/Rome", dateStyle: "medium", timeStyle: "short" }))} · ${v.eventi} eventi${v.versione === versione ? " · quella pubblicata" : ""}</span>
+					${v.versione === versione ? "" : `<button class="bottone piccolo" type="button" data-azione="riprendi" data-n="${v.versione}">Riprendi</button>`}</div>`).join("") : '<div class="vuoto">Ancora nessuna.</div>'}
+			</div>`;
+		dlg.showModal();
+	},
+	"chiudi-versioni": () => $("#dlg-versioni").close(),
+	riprendi: async (b) => {
+		const r = await api(`/api/versione?n=${b.dataset.n}`);
+		if (!r.ok) return avviso(r.corpo.errore || "Non trovata");
+		S = { base: versione, modelli: r.corpo.modelli, eventi: r.corpo.eventi };
+		scelto = null;
+		$("#dlg-versioni").close();
+		avviso(`Ripresa la versione ${b.dataset.n}: pubblicala se è quella giusta`);
+		cambiato();
+	},
+	mese: (b) => { const d = new Date(Date.UTC(mese.a, mese.m + +b.dataset.d, 1)); mese = { a: d.getUTCFullYear(), m: d.getUTCMonth() }; disegnaCalendario(); },
+	oggi: () => { mese = null; disegnaCalendario(); },
+	scegli: (b) => {
+		scelto = b.dataset.id;
+		disegnaCalendario(); disegnaDettaglio();
+		if (innerWidth <= 900) $("#dettaglio").scrollIntoView({ behavior: "smooth" });
+	},
+	chiudi: () => { scelto = null; disegnaCalendario(); disegnaDettaglio(); },
+	"nuovo-modello": () => {
+		const id = slug("nuovo modello", new Set(S.modelli.map((m) => m.id)));
+		S.modelli.push({ id, nome: "Nuovo modello", riga: "", tipo: "mod", modo: "2v2" });
+		cambiato();
+		apriModello(id);
+	},
+	"apri-modello": (b) => apriModello(b.dataset.id),
+	"chiudi-modello": () => $("#dlg-modello").close(),
+	"elimina-modello": () => {
+		if (!confirm("Elimino il modello?")) return;
+		S.modelli = S.modelli.filter((m) => m.id !== aperto);
+		$("#dlg-modello").close();
+		cambiato();
+	},
+	tipo: (b) => {
+		const m = modello(aperto), t = b.dataset.t;
+		if (t === m.tipo) return;
+		m.tipo = t;
+		if (t === "mod") { m.modo = m.coda || "2v2"; delete m.coda; }
+		else {
+			m.coda = m.modo || "2v2"; delete m.modo;
+			// su una coda normale restano solo le regole che non cambiano la partita
+			if (m.regole) for (const k of Object.keys(m.regole)) if (!dati.coda_normale.includes(k)) regola(m, k);
+		}
+		cambiato(); disegnaModello();
+	},
+	arma: (b) => {
+		const m = modello(aperto), w = b.dataset.w;
+		const tutte = [...dati.primarie, ...dati.secondarie];
+		const ora = new Set(m.regole?.armi || tutte);
+		ora.has(w) ? ora.delete(w) : ora.add(w);
+		regola(m, "armi", ora.size === tutte.length ? undefined : tutte.filter((x) => ora.has(x)));
+		cambiato(); disegnaModello();
+	},
+	"aggiungi-premio": () => { const m = modello(aperto); m.premi = [...(m.premi || []), { testo: "", chi: "" }]; cambiato(); disegnaModello(); },
+	"togli-premio": (b) => { const m = modello(aperto); m.premi.splice(+b.dataset.i, 1); if (!m.premi.length) delete m.premi; cambiato(); disegnaModello(); },
+	metti: (b) => {
+		const m = modello(b.dataset.id);
+		const domani = Math.floor(minuti(oraRoma()) / 1440) * 1440 + 1440;
+		const id = slug(m.nome, new Set(S.eventi.map((e) => e.id)));
+		S.eventi.push({ id, modello: m.id, da: scrivi(domani + 18 * 60), a: scrivi(domani + 2 * 1440 + 22 * 60), ogni: 0 });
+		scelto = id;
+		const d = new Date(domani * 60000);
+		mese = { a: d.getUTCFullYear(), m: d.getUTCMonth() };
+		cambiato();
+	},
+	ogni: (b) => { const e = evento(scelto); e.ogni = +b.dataset.n; if (!e.ogni) { delete e.giorni; delete e.fino; } cambiato(); },
+	giorno: (b) => {
+		const e = evento(scelto), g = +b.dataset.g;
+		const ora = new Set(e.giorni?.length ? e.giorni : [giornoSettimana(minuti(e.da))]);
+		ora.has(g) ? ora.delete(g) : ora.add(g);
+		e.giorni = [...ora].sort();
+		// solo il giorno dell'inizio è come non sceglierne
+		if (!e.giorni.length || (e.giorni.length === 1 && e.giorni[0] === giornoSettimana(minuti(e.da)))) delete e.giorni;
+		cambiato();
+	},
+	duplica: () => {
+		const e = evento(scelto), m = modello(e.modello);
+		const id = slug(m?.nome || e.id, new Set(S.eventi.map((x) => x.id)));
+		S.eventi.push({ ...structuredClone(e), id });
+		scelto = id;
+		cambiato();
+	},
+	togli: () => { if (!confirm("Tolgo l'evento dal calendario?")) return; S.eventi = S.eventi.filter((e) => e.id !== scelto); scelto = null; cambiato(); },
+};
+
+document.addEventListener("click", (ev) => {
+	const b = ev.target.closest("[data-azione]");
+	if (b && !b.disabled && azioni[b.dataset.azione]) azioni[b.dataset.azione](b);
+});
+
+// i campi dell'evento scelto e del modello aperto
+document.addEventListener("change", (ev) => {
+	const t = ev.target, d = t.dataset;
+	if (d.campo) {
+		const e = evento(scelto);
+		if (d.campo === "da" || d.campo === "a") {
+			if (!t.value) return;
+			const nuovo = t.value.replace("T", " ");
+			// spostando l'inizio la durata resta quella
+			if (d.campo === "da") { const durata = minuti(e.a) - minuti(e.da); e.da = nuovo; if (!isNaN(durata)) e.a = scrivi(minuti(nuovo) + durata); delete e.giorni; }
+			else e.a = nuovo;
+		} else if (d.campo === "modello") e.modello = t.value;
+		else if (d.campo === "ogni") e.ogni = Math.max(1, Math.min(52, parseInt(t.value, 10) || 3));
+		else if (d.campo === "fino") e.fino = t.value || undefined;
+		else if (d.campo === "sempre") { if (t.checked) delete e.fino; else e.fino = scrivi(minuti(e.da) + 90 * 1440).slice(0, 10); }
+		return cambiato();
+	}
+	const m = modello(aperto);
+	if (!m) return;
+	if (d.regola === "casse") regola(m, "casse", t.value ? +t.value : undefined);
+	else if (d.regola === "cure") regola(m, "cure", t.checked ? false : undefined);
+	else if (d.regola === "livello") regola(m, "livello", t.checked ? "fisso" : undefined);
+	else if (d.regola === "tetto") regola(m, "tetto", t.value === "" ? undefined : Number(t.value));
+	else if (d.punto) {
+		const p = { ...(m.regole?.punti || {}) };
+		if (t.value === "") delete p[d.punto]; else p[d.punto] = Number(t.value);
+		regola(m, "punti", Object.keys(p).length ? p : undefined);
+	} else if (d.mcampo === "riga" && !t.value) delete m.riga;
+	else if (d.mcampo) m[d.mcampo] = t.value;
+	else if (d.premio !== undefined) m.premi[+d.premio][d.pcampo] = t.value;
+	else return;
+	cambiato();
+	disegnaModello();
+});
+// nome e riga si vedono nell'anteprima mentre si scrive
+document.addEventListener("input", (ev) => {
+	const t = ev.target;
+	if (t.dataset.mcampo !== "nome" && t.dataset.mcampo !== "riga") return;
+	const a = document.querySelector(t.dataset.mcampo === "nome" ? ".anteprima .nome" : ".anteprima .nome + div");
+	if (a) a.textContent = t.value;
+});
+
+$("#form-accesso").addEventListener("submit", (ev) => {
+	ev.preventDefault();
+	chiave = $("#chiave").value.trim();
+	metti(CHIAVE, chiave);
+	carica();
+});
+window.addEventListener("beforeunload", (ev) => { if (sporco()) ev.preventDefault(); });
+document.addEventListener("visibilitychange", guarda);
+
+dati = await (await fetch("./dati.json")).json();
+if (chiave) carica(); else mostraAccesso();
+setInterval(guarda, 30000);
+setInterval(testa, 60000);
+</script>
+</body>
+</html>
