@@ -268,4 +268,32 @@ eseguo».
 
 ## Consegna di Codex
 
+Eseguita il 2026-11-01 con lo strumento image_gen. Prompt usati integralmente e senza modifiche; R1 allegato soltanto a 10_favilla_A. Sfondo non trasparente come richiesto.
+
+### File consegnati
+
+- `art/WB-008/1_protagonista_A.png` e `1_protagonista_A.txt` — 1 tentativi.
+- `art/WB-008/2_protagonista_B.png` e `2_protagonista_B.txt` — 1 tentativi.
+- `art/WB-008/3_protagonista_C.png` e `3_protagonista_C.txt` — 1 tentativi.
+- `art/WB-008/4_equip_pezzi.png` e `4_equip_pezzi.txt` — 3 tentativi.
+- `art/WB-008/5_equip_livelli.png` e `5_equip_livelli.txt` — 3 tentativi.
+- `art/WB-008/6_equip_gironi.png` e `6_equip_gironi.txt` — 1 tentativi.
+- `art/WB-008/7_equip_misto.png` e `7_equip_misto.txt` — 1 tentativi.
+- `art/WB-008/8_fabbro_A.png` e `8_fabbro_A.txt` — 1 tentativi.
+- `art/WB-008/9_fabbro_B.png` e `9_fabbro_B.txt` — 2 tentativi.
+- `art/WB-008/10_favilla_A.png` e `10_favilla_A.txt` — 1 tentativi.
+- `art/WB-008/11_favilla_B.png` e `11_favilla_B.txt` — 1 tentativi.
+- `art/WB-008/12_favilla_stati.png` e `12_favilla_stati.txt` — 3 tentativi.
+- `art/WB-008/13_trio.png` e `13_trio.txt` — 1 tentativi.
+
+### Controlli e limiti
+
+- Ispezionate visivamente tutte le tavole: personaggi, code e pezzi, margini, assenza di scritte e contenuti cruenti. Fiamma di Favilla B bianca e azzurra; fazzoletto del protagonista azzurro. Progressione dell'equipaggiamento riconoscibile.
+- 4_equip_pezzi: dopo tre tentativi l'elmo presenta corna rosse anziché soltanto fori vuoti. Consegnato con difformità esplicita; richiede revisione di Claude.
+- 12_favilla_stati: dopo tre tentativi il filo di fiamma della figura centrale continua oltre il bordo superiore. La figura centrale è accovacciata e la scintilla finale è più grande del richiesto. Consegnato con difformità esplicite.
+- Il generatore ha introdotto texture, tratteggi e alcune sfumature: colori e sfondo non sono rigorosamente piatti; la testa dei piccoli è spesso più grande di un terzo dell'altezza. La stretta uniformità stilistica resta da approvare.
+- Non verificata la leggibilità mediante una prova a 80 pixel né l'integrazione nel gioco (sono proposte per un documento).
+- Consegna effettuata tramite connettore GitHub, costruendo il commit da main aggiornato: la shell non poteva connettersi al proxy per git pull/push. Nessuna PR e nessun merge.
+
+
 ## Resoconto di Claude

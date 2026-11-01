@@ -1,0 +1,11 @@
+Draw the main character of a mobile video game set in Dante's Inferno, told as a funny, affectionate cartoon: a LITTLE IMP WITH HUGE HORNS, like a small stubborn ram.
+
+The character: small, round and compact, big head (about one third of his height), clever and stubborn, with a sly grin. Dark red, almost burgundy skin, parchment-colored belly and muzzle. His main feature is TWO BIG RAM HORNS, curled in spirals on the sides of his head, bone-colored with raised ridges: almost as big as the head itself. Big yellow eyes with black pupils, bushy eyebrows. A small orange flame burning on top of his head, between the horns. A short thick tail ending in a pointed tuft. Four-fingered hands and small hooves instead of feet. A LIGHT-BLUE neckerchief knotted around his neck (it is the team color, the only thing he always wears). Nothing else on him: no clothes, no armor.
+
+Draw him three times, in a row from left to right, all the same size and well separated: 1) standing still, front view, hands on hips; 2) three-quarter view facing right, walking; 3) jumping to the right, holding a blacksmith's hammer bigger than his head, ready to strike.
+
+The silhouette must read clearly even when the character is only 80 pixels tall: horns, flame and tail clearly separated from the body.
+
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
+
+Riferimenti: nessuno

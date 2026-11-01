@@ -1,0 +1,12 @@
+Draw the hero of a cartoon video game set in Dante's Inferno: a small blacksmith-apprentice imp, short and stocky, big head, brick-red skin with parchment-colored belly and muzzle, two short bone-colored horns, big yellow eyes, a small orange flame burning on top of his head between the horns, a thin tail with an arrowhead tip, a light-blue neckerchief knotted around his neck.
+
+Draw him FOUR times, in a row from left to right, front view, all the same size and well separated, always in the same proud pose. He wears the same set of six pieces (helmet, chest armor, gloves, boots, tail tip, wings on his back), which gets better at each step. The shape of every piece stays recognizable from one figure to the next: only the material and the details change.
+1) SCRAP: a dented saucepan as a helmet, a scorched leather apron, oven mitts, iron clogs tied with string, a thimble on the tail, little sackcloth wings.
+2) WROUGHT IRON: the same pieces remade properly in dark iron with rivets and brass trim; the helmet has two rings for the horns; the wings have an iron frame.
+3) EMBER: the same iron with joints and edges glowing ember orange, small flames rising from the shoulders and the tail tip; the wings are leather with red-hot ribs.
+4) GLORY: the same pieces in black iron and gold, with spiral engravings and a fire gem on the chest; the helmet has a crest of flames; the wings are large and full of flame.
+The light-blue neckerchief is always visible at the neck. The face is always uncovered.
+
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no scenery, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
+
+Riferimenti: nessuno
