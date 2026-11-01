@@ -655,6 +655,330 @@
     "spiegata": 0.2861,
     "passate": 19
    }
+  },
+  {
+   "giro": 4,
+   "partite": 3000,
+   "esempi": 118200,
+   "esempi_studiati": 562100,
+   "bravura_rete": 0.4921,
+   "oggi": {
+    "bravura": 0.5085,
+    "vinte": 0.4094,
+    "partite": 828,
+    "punti": 701.2,
+    "danno": 333.3,
+    "uccisioni": 3.71,
+    "ambientali": 0.57,
+    "morti": 3.59,
+    "cadute": 0.56,
+    "teletrasporti": 5.97,
+    "armi": {
+     "bellows": 0.0296,
+     "eagle": 0.038,
+     "grenade": 0.0522,
+     "hook": 0.097,
+     "lunge": 0.0312,
+     "mallet": 0.0266,
+     "missile": 0.1676,
+     "parachute": 0.0161,
+     "punch": 0.0354,
+     "shards": 0.0476,
+     "shield": 0.0078,
+     "sniper": 0.0457,
+     "sword": 0.0691,
+     "teleport": 0.3361
+    },
+    "danno_armi": {
+     "bellows": 0.0148,
+     "eagle": 0.0681,
+     "grenade": 0.0765,
+     "hook": 0.0259,
+     "lunge": 0.0703,
+     "mallet": 0.0697,
+     "missile": 0.1868,
+     "parachute": 0.0004,
+     "punch": 0.0812,
+     "shards": 0.165,
+     "shield": 0.0002,
+     "sniper": 0.1001,
+     "sword": 0.0882,
+     "teleport": 0.0526
+    },
+    "firme": [
+     [
+      "missile>teleport",
+      235
+     ],
+     [
+      "missile",
+      225
+     ],
+     [
+      "missile+kill",
+      209
+     ],
+     [
+      "missile>teleport+kill",
+      193
+     ],
+     [
+      "missile>hook",
+      186
+     ],
+     [
+      "missile>hook+kill",
+      98
+     ]
+    ]
+   },
+   "rete": {
+    "bravura": 0.4914,
+    "vinte": 0.3974,
+    "partite": 838,
+    "punti": 684.9,
+    "danno": 319.4,
+    "uccisioni": 3.6,
+    "ambientali": 0.5,
+    "morti": 3.82,
+    "cadute": 0.55,
+    "teletrasporti": 6.14,
+    "armi": {
+     "bellows": 0.0428,
+     "eagle": 0.041,
+     "grenade": 0.0459,
+     "hook": 0.0704,
+     "lunge": 0.0352,
+     "mallet": 0.027,
+     "missile": 0.1779,
+     "parachute": 0.0154,
+     "punch": 0.0371,
+     "shards": 0.0437,
+     "shield": 0.0071,
+     "sniper": 0.0432,
+     "sword": 0.068,
+     "teleport": 0.3453
+    },
+    "danno_armi": {
+     "bellows": 0.0297,
+     "eagle": 0.0723,
+     "grenade": 0.069,
+     "hook": 0.0358,
+     "lunge": 0.0504,
+     "mallet": 0.0764,
+     "missile": 0.2038,
+     "punch": 0.0882,
+     "shards": 0.1575,
+     "sniper": 0.0996,
+     "sword": 0.0916,
+     "teleport": 0.0259
+    },
+    "firme": [
+     [
+      "missile>teleport",
+      347
+     ],
+     [
+      "missile>teleport+kill",
+      268
+     ],
+     [
+      "missile",
+      170
+     ],
+     [
+      "missile+kill",
+      132
+     ],
+     [
+      "missile>hook",
+      77
+     ],
+     [
+      "grenade>hook",
+      55
+     ]
+    ]
+   },
+   "errore": 1.0082,
+   "spiegata": 0.5276,
+   "passate": 8,
+   "coppie": {
+    "quante": 34937,
+    "misurate": 1733,
+    "errore": 0.8015,
+    "passate": 7,
+    "giuste": 0.5499,
+    "giuste_base": 0.5159,
+    "margine": 0.0352
+   },
+   "guida": {
+    "errore": 0.0576,
+    "spiegata": 0.303,
+    "passate": 5
+   }
+  },
+  {
+   "giro": 5,
+   "partite": 3000,
+   "esempi": 117668,
+   "esempi_studiati": 573457,
+   "bravura_rete": 0.4827,
+   "oggi": {
+    "bravura": 0.4932,
+    "vinte": 0.3888,
+    "partite": 836,
+    "punti": 688.2,
+    "danno": 329.1,
+    "uccisioni": 3.63,
+    "ambientali": 0.49,
+    "morti": 3.61,
+    "cadute": 0.54,
+    "teletrasporti": 5.9,
+    "armi": {
+     "bellows": 0.0263,
+     "eagle": 0.0358,
+     "grenade": 0.0505,
+     "hook": 0.097,
+     "lunge": 0.0352,
+     "mallet": 0.0267,
+     "missile": 0.1737,
+     "parachute": 0.016,
+     "punch": 0.0337,
+     "shards": 0.0493,
+     "shield": 0.0075,
+     "sniper": 0.0452,
+     "sword": 0.0681,
+     "teleport": 0.3349
+    },
+    "danno_armi": {
+     "altro": 0.0002,
+     "bellows": 0.0139,
+     "eagle": 0.0631,
+     "grenade": 0.0737,
+     "hook": 0.0249,
+     "lunge": 0.0809,
+     "mallet": 0.0709,
+     "missile": 0.1951,
+     "punch": 0.0778,
+     "shards": 0.1664,
+     "shield": 0.0001,
+     "sniper": 0.0991,
+     "sword": 0.0876,
+     "teleport": 0.0462
+    },
+    "firme": [
+     [
+      "missile",
+      289
+     ],
+     [
+      "missile+kill",
+      237
+     ],
+     [
+      "missile>teleport",
+      236
+     ],
+     [
+      "missile>teleport+kill",
+      194
+     ],
+     [
+      "missile>hook",
+      187
+     ],
+     [
+      "grenade>teleport",
+      101
+     ]
+    ]
+   },
+   "rete": {
+    "bravura": 0.4661,
+    "vinte": 0.3656,
+    "partite": 826,
+    "punti": 675.8,
+    "danno": 316.5,
+    "uccisioni": 3.49,
+    "ambientali": 0.49,
+    "morti": 3.72,
+    "cadute": 0.55,
+    "teletrasporti": 6.09,
+    "armi": {
+     "bellows": 0.0421,
+     "eagle": 0.0379,
+     "grenade": 0.0457,
+     "hook": 0.0737,
+     "lunge": 0.0373,
+     "mallet": 0.0292,
+     "missile": 0.1786,
+     "parachute": 0.0146,
+     "punch": 0.0334,
+     "shards": 0.0429,
+     "shield": 0.0072,
+     "sniper": 0.0458,
+     "sword": 0.0691,
+     "teleport": 0.3425
+    },
+    "danno_armi": {
+     "bellows": 0.0271,
+     "eagle": 0.0626,
+     "grenade": 0.0702,
+     "hook": 0.0387,
+     "lunge": 0.0531,
+     "mallet": 0.0822,
+     "missile": 0.2056,
+     "punch": 0.0813,
+     "shards": 0.1543,
+     "sniper": 0.1069,
+     "sword": 0.0928,
+     "teleport": 0.0252
+    },
+    "firme": [
+     [
+      "missile>teleport",
+      345
+     ],
+     [
+      "missile>teleport+kill",
+      275
+     ],
+     [
+      "missile",
+      160
+     ],
+     [
+      "missile+kill",
+      120
+     ],
+     [
+      "missile>hook",
+      105
+     ],
+     [
+      "grenade>hook",
+      60
+     ]
+    ]
+   },
+   "errore": 0.9835,
+   "spiegata": 0.5324,
+   "passate": 5,
+   "coppie": {
+    "quante": 36287,
+    "misurate": 1804,
+    "errore": 0.8032,
+    "passate": 5,
+    "giuste": 0.5211,
+    "giuste_base": 0.51,
+    "margine": 0.0358
+   },
+   "guida": {
+    "errore": 0.0583,
+    "spiegata": 0.3084,
+    "passate": 21
+   }
   }
  ],
  "esami": [
@@ -1233,6 +1557,294 @@
     ]
    },
    "giro": 3
+  },
+  {
+   "vince": 0.4396,
+   "partite": 480,
+   "lui": {
+    "bravura": 0.4508,
+    "vinte": 0.3463,
+    "partite": 800,
+    "punti": 668.8,
+    "danno": 319.8,
+    "uccisioni": 3.46,
+    "ambientali": 0.32,
+    "morti": 3.75,
+    "cadute": 0.43,
+    "teletrasporti": 6.39,
+    "armi": {
+     "bellows": 0.0259,
+     "eagle": 0.0505,
+     "grenade": 0.0494,
+     "hook": 0.0666,
+     "lunge": 0.0487,
+     "mallet": 0.0182,
+     "missile": 0.182,
+     "parachute": 0.0156,
+     "punch": 0.0339,
+     "shards": 0.0422,
+     "shield": 0.0071,
+     "sniper": 0.0431,
+     "sword": 0.0633,
+     "teleport": 0.3535
+    },
+    "danno_armi": {
+     "bellows": 0.0177,
+     "eagle": 0.0841,
+     "grenade": 0.0848,
+     "hook": 0.0378,
+     "lunge": 0.0657,
+     "mallet": 0.0532,
+     "missile": 0.2141,
+     "parachute": 0.0003,
+     "punch": 0.0813,
+     "shards": 0.1503,
+     "shield": 0.0001,
+     "sniper": 0.0987,
+     "sword": 0.0858,
+     "teleport": 0.0261
+    },
+    "firme": [
+     [
+      "missile>teleport",
+      380
+     ],
+     [
+      "missile>teleport+kill",
+      304
+     ],
+     [
+      "missile",
+      192
+     ],
+     [
+      "missile+kill",
+      128
+     ],
+     [
+      "missile>hook",
+      99
+     ],
+     [
+      "teleport>missile>teleport",
+      61
+     ]
+    ]
+   },
+   "oggi": {
+    "bravura": 0.5492,
+    "vinte": 0.4537,
+    "partite": 800,
+    "punti": 684.9,
+    "danno": 332.7,
+    "uccisioni": 3.6,
+    "ambientali": 0.37,
+    "morti": 3.45,
+    "cadute": 0.34,
+    "teletrasporti": 6.02,
+    "armi": {
+     "bellows": 0.0167,
+     "eagle": 0.0517,
+     "grenade": 0.0527,
+     "hook": 0.0921,
+     "lunge": 0.0409,
+     "mallet": 0.0172,
+     "missile": 0.1746,
+     "parachute": 0.0153,
+     "punch": 0.0349,
+     "shards": 0.0466,
+     "shield": 0.0092,
+     "sniper": 0.0456,
+     "sword": 0.0657,
+     "teleport": 0.3369
+    },
+    "danno_armi": {
+     "bellows": 0.0089,
+     "eagle": 0.0909,
+     "grenade": 0.0707,
+     "hook": 0.0252,
+     "lunge": 0.0933,
+     "mallet": 0.0474,
+     "missile": 0.1947,
+     "parachute": 0.0,
+     "punch": 0.0782,
+     "shards": 0.1575,
+     "shield": 0.0003,
+     "sniper": 0.0976,
+     "sword": 0.0839,
+     "teleport": 0.0513
+    },
+    "firme": [
+     [
+      "missile",
+      252
+     ],
+     [
+      "missile+kill",
+      237
+     ],
+     [
+      "missile>teleport",
+      236
+     ],
+     [
+      "missile>teleport+kill",
+      197
+     ],
+     [
+      "missile>hook",
+      172
+     ],
+     [
+      "grenade>teleport",
+      97
+     ]
+    ]
+   },
+   "giro": 4
+  },
+  {
+   "vince": 0.4479,
+   "partite": 480,
+   "lui": {
+    "bravura": 0.4794,
+    "vinte": 0.3688,
+    "partite": 800,
+    "punti": 675.3,
+    "danno": 317.3,
+    "uccisioni": 3.49,
+    "ambientali": 0.36,
+    "morti": 3.76,
+    "cadute": 0.42,
+    "teletrasporti": 6.36,
+    "armi": {
+     "bellows": 0.0253,
+     "eagle": 0.0512,
+     "grenade": 0.0482,
+     "hook": 0.0686,
+     "lunge": 0.0487,
+     "mallet": 0.0187,
+     "missile": 0.1816,
+     "parachute": 0.015,
+     "punch": 0.0339,
+     "shards": 0.0432,
+     "shield": 0.0071,
+     "sniper": 0.0429,
+     "sword": 0.0638,
+     "teleport": 0.3519
+    },
+    "danno_armi": {
+     "bellows": 0.0182,
+     "eagle": 0.0847,
+     "grenade": 0.0833,
+     "hook": 0.0364,
+     "lunge": 0.0649,
+     "mallet": 0.054,
+     "missile": 0.2124,
+     "parachute": 0.0004,
+     "punch": 0.0813,
+     "shards": 0.1539,
+     "sniper": 0.1013,
+     "sword": 0.0858,
+     "teleport": 0.0235
+    },
+    "firme": [
+     [
+      "missile>teleport",
+      349
+     ],
+     [
+      "missile>teleport+kill",
+      304
+     ],
+     [
+      "missile",
+      165
+     ],
+     [
+      "missile+kill",
+      119
+     ],
+     [
+      "missile>hook",
+      111
+     ],
+     [
+      "teleport>missile>teleport",
+      65
+     ]
+    ]
+   },
+   "oggi": {
+    "bravura": 0.5206,
+    "vinte": 0.4313,
+    "partite": 800,
+    "punti": 685.0,
+    "danno": 335.4,
+    "uccisioni": 3.59,
+    "ambientali": 0.36,
+    "morti": 3.46,
+    "cadute": 0.36,
+    "teletrasporti": 6.12,
+    "armi": {
+     "bellows": 0.016,
+     "eagle": 0.0528,
+     "grenade": 0.0506,
+     "hook": 0.0917,
+     "lunge": 0.0412,
+     "mallet": 0.0172,
+     "missile": 0.1722,
+     "parachute": 0.0147,
+     "punch": 0.0355,
+     "shards": 0.0466,
+     "shield": 0.0097,
+     "sniper": 0.0466,
+     "sword": 0.0654,
+     "teleport": 0.3398
+    },
+    "danno_armi": {
+     "bellows": 0.0083,
+     "eagle": 0.0933,
+     "grenade": 0.0679,
+     "hook": 0.0237,
+     "lunge": 0.0939,
+     "mallet": 0.0469,
+     "missile": 0.1887,
+     "punch": 0.0809,
+     "shards": 0.1583,
+     "shield": 0.0005,
+     "sniper": 0.1,
+     "sword": 0.0858,
+     "teleport": 0.052
+    },
+    "firme": [
+     [
+      "missile",
+      249
+     ],
+     [
+      "missile+kill",
+      230
+     ],
+     [
+      "missile>teleport",
+      225
+     ],
+     [
+      "missile>teleport+kill",
+      207
+     ],
+     [
+      "missile>hook",
+      178
+     ],
+     [
+      "grenade",
+      85
+     ]
+    ]
+   },
+   "giro": 5
   }
  ]
 }
