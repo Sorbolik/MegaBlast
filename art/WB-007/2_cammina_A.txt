@@ -1,0 +1,11 @@
+Immagine 1 è il mio personaggio maschio, di fronte. Copia esattamente le forme, le proporzioni e lo stile del personaggio allegato: non reinterpretarlo, non aggiungere nasi, orecchie, capelli o dettagli.
+
+Due modifiche rispetto al disegno allegato, valide per tutto: 1) sotto gli occhi c'è un MUSO bianco, una piccola forma ovale chiusa dal contorno nero, e la bocca sta DENTRO il muso (non galleggia più sul nero della testa); 2) braccia e gambe sono tubi neri morbidi e curvi, senza gomiti né ginocchia, che finiscono nel guanto bianco e nella scarpa nera.
+
+Disegna 4 pose di camminata verso destra, in fila da sinistra a destra, tutte della stessa grandezza. Il corpo resta di fronte, ma il personaggio va a destra: la faccia (occhi e muso) è spostata verso destra sulla testa, con l'occhio di destra un po' più stretto di quello di sinistra; la sagoma della testa non cambia. Tutte e due le scarpe puntano a destra. Le gambe-tubo si alternano come in un vero passo (contatto, passaggio, contatto con l'altra gamba, passaggio) e le braccia-tubo oscillano opposte alle gambe.
+
+Stile: ESATTAMENTE quello del mio personaggio allegato: bianco e nero piatto, cartone animato anni '30 (rubber hose), nero pieno e bianco pieno, contorno nero spesso e chiuso, nessuna sfumatura, nessun grigio, nessun colore. Sfondo piatto chiaro color panna (#F5F2EA), senza ombre a terra. Nessuna scritta, numero, etichetta o freccia. Formato orizzontale 3:2.
+
+Riferimenti (in ordine):
+art/personaggi/maschio.png
+

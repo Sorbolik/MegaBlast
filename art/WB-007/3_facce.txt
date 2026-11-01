@@ -1,0 +1,12 @@
+Immagine 1 è il mio personaggio maschio, immagine 2 è Favilla, la mia personaggia con la testa a fiamma. Copia esattamente le forme, le proporzioni e lo stile del personaggio allegato: non reinterpretarlo, non aggiungere nasi, orecchie, capelli o dettagli.
+
+Modifica valida per tutto: sotto gli occhi c'è un MUSO bianco, una piccola forma ovale chiusa dal contorno nero, e la bocca felice sta DENTRO il muso.
+
+Disegna solo le teste, 6 in tutto, in 2 righe da 3, ben separate, tutte della stessa grandezza. Riga 1: la testa del maschio che guarda a sinistra, davanti, a destra. Riga 2: la testa di Favilla (con le sue ciglia) che guarda a sinistra, davanti, a destra. La sagoma nera della testa resta IDENTICA nelle tre colonne: si spostano solo gli occhi e il muso, verso sinistra o verso destra, e l'occhio dal lato verso cui guarda diventa un po' più stretto.
+
+Stile: ESATTAMENTE quello del mio personaggio allegato: bianco e nero piatto, cartone animato anni '30 (rubber hose), nero pieno e bianco pieno, contorno nero spesso e chiuso, nessuna sfumatura, nessun grigio, nessun colore. Sfondo piatto chiaro color panna (#F5F2EA), senza ombre a terra. Nessuna scritta, numero, etichetta o freccia. Formato orizzontale 3:2.
+
+Riferimenti (in ordine):
+art/personaggi/maschio.png
+art/personaggi/favilla.png
+
