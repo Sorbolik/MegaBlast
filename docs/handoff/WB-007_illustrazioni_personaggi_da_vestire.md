@@ -175,6 +175,14 @@ Limiti da rivedere con Claude: lo sfondo panna presenta una lieve texture e non 
 
 Git CLI non riesce a raggiungere il proxy (porta 8080). Scheda approvata letta da `main` tramite il connettore GitHub; consegna pubblicata sul ramo `design/WB-007` attraverso lo stesso connettore, basata sul commit `34ec8d75254561c9de71c6e4f731a1949d1d0600` di main. Nessuna PR e nessun merge.
 
+### Integrazione: solo `2_cammina_A_v2`
+
+2026-11-01. Generati `art/WB-007/2_cammina_A_v2.png` (1536×1024, RGB) e `art/WB-007/2_cammina_A_v2.txt`, con il prompt v2 integrale e invariato e il solo riferimento R1 (`art/personaggi/maschio.png`). Tre tentativi, conservato il secondo. Controllati visivamente tutti e tre: quattro figure intere senza tagli, muso bianco con bocca interna, assenza di scritte e colori aggiunti. Controllate le dimensioni del PNG.
+
+NON conforme alla sequenza completa: le pose 1 e 3 ripetono lo stesso assetto di braccia e gambe, come le pose 2 e 4; manca l'inversione degli arti richiesta. Il contatto e il passaggio ora si distinguono, ma non costituiscono quattro fotogrammi chiave corretti. Lo sfondo panna ha una lieve texture. La fedeltà delle sagome non è pixel-identica. Nessun altro PNG modificato, nessun test del gioco. Raggiunto il massimo di tre tentativi previsto da AGENTS.md; necessaria revisione di Claude, non dichiaro risolto il problema della camminata.
+
+Consegna sul ramo `design/WB-007` basata su main `a725866fe8a4498a1a30dc980e462cc5b0e38f45`, tramite connettore GitHub perché Git CLI continua a fallire sulla connessione al proxy. Nessuna PR e nessun merge.
+
 ## Resoconto di Claude
 
 2026-11-01. Guardate tutte e sette. Buone e passate al thread del designer: `1_pezzi_A`, `3_facce`,
@@ -184,3 +192,9 @@ con le quattro pose chiave descritte una per una. Note minori, accettate per un 
 in `4_livelli` le braccia a tubo quasi non si vedono (i guanti stanno attaccati al busto); in
 `5_equipaggiamento` l'elmo di livello 1 è generico e non segue la sagoma a stella; in `7_proposta_C`
 il gomito sulla figura intera non si legge, si legge solo nei due pezzi a destra.
+
+2026-11-01 17:15, `2_cammina_A_v2`: adesso le pose di contatto (1 e 3) e di passaggio (2 e 4) si distinguono bene,
+ma l'inversione di braccia e gambe fra 1 e 3 (e fra 2 e 4) manca ancora. Si usa nel documento per
+mostrare le due pose chiave, contatto e passaggio, non come ciclo completo. Il ciclo vero lo fa l'editor
+delle animazioni coi pezzi, quindi non servono altri tentativi.
+
