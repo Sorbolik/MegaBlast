@@ -1,6 +1,6 @@
 # WB-008 · Personaggi ripensati dalla campagna: protagonista, equipaggiamento, Fabbro, Favilla
 
-- **Stato:** APPROVATA
+- **Stato:** IMPLEMENTATA (immagini usate nel documento di proposta)
 - **Data:** 2026-11-01
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-008`
 
@@ -297,3 +297,18 @@ Eseguita il 2026-11-01 con lo strumento image_gen. Prompt usati integralmente e 
 
 
 ## Resoconto di Claude
+
+2026-11-01. Guardate tutte e 13 le tavole: tutte usate nel documento di proposta
+https://claude.ai/artifact/JoPBZRtznYF3xGEao2pTXF (le immagini come JPG ridotti, insieme alla pagina).
+Nessuna è scartata, perché ognuna serve a confrontare le proposte. I difetti sono scritti nel documento:
+
+- `13_trio`: il protagonista ha gli zoccoli (quelli della proposta C) e il muso più lungo che in A; il fondo è più acceso di quanto chiesto.
+- `4_equip_pezzi`: il pentolino ha corna rosse attaccate invece dei buchi per le corna.
+- `7_equip_misto`: il puntale della coda nella terza figura è un serpente con la testa.
+- `12_favilla_stati`: il filo di fiamma esce dal bordo in alto; nella gabbia Favilla è accovacciata.
+- Tutte: più texture e sfumature del chiesto, teste più grandi di un terzo dell'altezza. Per i pezzi del gioco serve uno stile più pulito.
+
+Prova di leggibilità fatta da Claude: la prima posa di protagonisti A, B, C e Favilla A, B ridotta a 90 pixel
+sui colori di Forgia, Cocito e Limbo. A, C e Favilla B si leggono; B e Favilla A si perdono sui fondi scuri.
+Il gioco non cambia: niente simulazione. Non verificato: niente, oltre alla prova a misura di gioco, è stato provato nel gioco.
+
