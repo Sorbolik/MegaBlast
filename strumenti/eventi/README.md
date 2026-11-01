@@ -41,6 +41,7 @@ Un dominio tuo si aggiunge da **Settings → Domains & Routes**.
 - Il server chiede `/eventi.json` ogni 30 secondi (con l'ETag: se non è cambiato non scarica niente)
   e nella domanda dice quale versione ha e, se l'ha rifiutata, perché. Un calendario rifiutato
   non sostituisce quello buono, come col file.
+- Chi sbaglia la chiave più di 10 volte in un minuto aspetta (rate limit di Cloudflare, gratis).
 - `/eventi.json` è senza chiave: dice solo i prossimi eventi, che il gioco mostra comunque.
 - Un programmato con più giorni diventa nel file un evento per giorno (`tutti_sab`, `tutti_dom`).
 - KV gratis: 100.000 letture e 1.000 scritture al giorno. Il server ne usa ~6.000 letture;

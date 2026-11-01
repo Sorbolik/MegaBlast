@@ -85,6 +85,10 @@ if (process.argv[2]) {
 
 	// il Worker
 	check((await worker.fetch(new Request("http://x/api/stato"), env)).status === 403, "senza chiave no");
+	let n = 0;
+	const limitato = { ...env, TENTATIVI: { async limit() { return { success: ++n <= 10 }; } } };
+	for (let i = 0; i < 10; i++) await worker.fetch(new Request("http://x/api/stato", { headers: { "X-Chiave": "boh" } }), limitato);
+	check((await worker.fetch(new Request("http://x/api/stato", { headers: { "X-Chiave": "boh" } }), limitato)).status === 429, "troppe chiavi sbagliate: si aspetta");
 	let r = await (await chiama("/api/stato")).json();
 	check(r.stato.versione === 0 && r.esito === null, "all'inizio è vuoto");
 	let p = await chiama("/api/stato", { method: "POST", body: JSON.stringify({ base: 0, ...sbagliati["arma sconosciuta"] }) });

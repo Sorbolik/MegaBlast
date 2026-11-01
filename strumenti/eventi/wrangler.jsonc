@@ -7,5 +7,7 @@
 	"main": "worker.js",
 	"compatibility_date": "2026-10-01",
 	"assets": { "directory": "pagina", "binding": "ASSETS" },
-	"kv_namespaces": [{ "binding": "EVENTI" }]
+	"kv_namespaces": [{ "binding": "EVENTI" }],
+	// al massimo 10 chiavi sbagliate al minuto per indirizzo (worker.js)
+	"ratelimits": [{ "name": "TENTATIVI", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }]
 }

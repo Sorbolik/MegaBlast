@@ -9,7 +9,8 @@
 //   GET  /api/versione?n=N       (X-Chiave) una versione passata, per tornarci
 //
 // Variabile cifrata del Worker: PANNELLO_CHIAVE (la chiave che Sergio scrive
-// nella pagina la prima volta).
+// nella pagina la prima volta). Le chiavi sbagliate: al massimo 10 al minuto
+// per indirizzo (binding TENTATIVI di wrangler.jsonc).
 import dati from "./pagina/dati.json" with { type: "json" };
 import { valida, file } from "./pagina/calendario.js";
 
@@ -26,7 +27,12 @@ export default {
 		if (url.pathname === "/eventi.json" && request.method === "GET") return perIlServer(request, url, env);
 		if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
 		if (!env.PANNELLO_CHIAVE) return json({ errore: "Manca PANNELLO_CHIAVE nelle variabili del Worker" }, 503);
-		if (request.headers.get("X-Chiave") !== env.PANNELLO_CHIAVE) return json({ errore: "Chiave sbagliata" }, 403);
+		// chi sbaglia la chiave troppe volte aspetta un minuto (binding TENTATIVI, gratis)
+		if (request.headers.get("X-Chiave") !== env.PANNELLO_CHIAVE) {
+			const ip = request.headers.get("CF-Connecting-IP") || "?";
+			if (env.TENTATIVI && !(await env.TENTATIVI.limit({ key: ip })).success) return json({ errore: "Troppi tentativi: riprova fra un minuto" }, 429);
+			return json({ errore: "Chiave sbagliata" }, 403);
+		}
 		if (url.pathname === "/api/stato" && request.method === "GET") return stato(env);
 		if (url.pathname === "/api/stato" && request.method === "POST") return pubblica(request, env);
 		if (url.pathname === "/api/versione" && request.method === "GET") {
