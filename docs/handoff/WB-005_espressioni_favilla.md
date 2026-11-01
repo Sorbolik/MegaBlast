@@ -1,4 +1,4 @@
-# WB-005 · Fiammella di Sergio: foglio di espressioni
+# WB-005 · Favilla di Sergio: foglio di espressioni
 
 - **Stato:** APPROVATA (Claude, 2026-11-01: prove di stile, reversibili, non entrano nel gioco)
 - **Data:** 2026-11-01
@@ -6,7 +6,7 @@
 
 ## Obiettivo
 
-Fiammella è l'amica rapita da Lucifero nella campagna dei gironi. Sergio l'ha disegnata (R1):
+Favilla è l'amica rapita da Lucifero nella campagna dei gironi. Sergio l'ha disegnata (R1):
 corpo e vestiti come la femmina, ma la testa è una **fiamma** nera a goccia con il ricciolo
 in cima. Servono le sue espressioni, comprese quelle della storia (spaventata, chiede aiuto,
 sollevata quando la salvano). Sfondo bianco, non trasparente (sono prove).
@@ -15,7 +15,7 @@ sollevata quando la salvano). Sfondo bianco, non trasparente (sono prove).
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-005/riferimenti/R1_fiammella.png` | Fiammella disegnata da Sergio: **il** modello |
+| R1 | `art/WB-005/riferimenti/R1_favilla.png` | Favilla disegnata da Sergio: **il** modello |
 | R2 | `art/WB-002/riferimenti/R2_arrabbiato.png` | il maschio arrabbiato (come si fanno le sopracciglia bianche) |
 | R3 | `art/WB-003/ghigno_scelto.png` | il ghigno furbo approvato del maschio |
 
@@ -25,16 +25,16 @@ Ogni prompt è completo e va usato così com'è.
 
 | Nome file | Riferimenti | Misura | Varianti |
 |---|---|---|---|
-| `espressioni_fiammella` | R1, R2, R3 | 1024×1024 | 1 |
+| `espressioni_favilla` | R1, R2, R3 | 1024×1024 | 1 |
 
-### `espressioni_fiammella`
+### `espressioni_favilla`
 
 Archivio prompt: P-004 v1.
 
 ```
-Ti allego tre immagini: la prima è il mio personaggio originale Fiammella, ed è il riferimento ESATTO di stile e di forme (non reinterpretarla); la seconda e la terza sono un altro personaggio della stessa serie, arrabbiato e con il ghigno furbo, solo per mostrarti come si fanno sopracciglia e palpebre.
+Ti allego tre immagini: la prima è il mio personaggio originale Favilla, ed è il riferimento ESATTO di stile e di forme (non reinterpretarla); la seconda e la terza sono un altro personaggio della stessa serie, arrabbiato e con il ghigno furbo, solo per mostrarti come si fanno sopracciglia e palpebre.
 
-Disegna un foglio di espressioni di FIAMMELLA: 9 teste in una griglia 3x3, su sfondo bianco puro, ogni testa ben separata dalle altre, tutte della stessa grandezza e nella stessa angolazione del mio disegno.
+Disegna un foglio di espressioni di FAVILLA: 9 teste in una griglia 3x3, su sfondo bianco puro, ogni testa ben separata dalle altre, tutte della stessa grandezza e nella stessa angolazione del mio disegno.
 
 La sua testa, da rispettare alla lettera:
 - testa nera piena a forma di fiamma: una goccia tonda in basso che sale in una punta curva arricciata verso sinistra in cima, con la curva bianca interna del ricciolo come nel mio disegno
