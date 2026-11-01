@@ -7,8 +7,7 @@
 ## Obiettivo
 
 Sergio ha disegnato lui la versione femminile (R1). Il suo foglio di espressioni deve essere
-**identico** a quello del maschio approvato in WB-002 (R2), con il ghigno scelto in WB-003
-(R3): stesse 9 facce, stesse pupille, palpebre, sopracciglia e bocche. L'**unica** differenza
+**identico** a quello del maschio approvato in WB-002 (R2), che ha già il ghigno scelto in WB-003: stesse 9 facce, stesse pupille, palpebre, sopracciglia e bocche. L'**unica** differenza
 sono le ciglia della femmina (tre ciglia bianche sottili sul lato esterno di ogni occhio).
 Sfondo bianco, non trasparente (sono prove).
 
@@ -20,28 +19,26 @@ si copiano quelle del maschio.
 | Codice | File | Cos'è |
 |---|---|---|
 | R1 | `art/WB-004/riferimenti/R1_femmina.png` | la femmina disegnata da Sergio: com'è fatta |
-| R2 | `art/WB-002/espressioni.png` | il foglio di espressioni del maschio **approvato**: da copiare. Se non è su `main`, è sul PC: ramo locale `design/WB-002` o cartella `art/WB-002/` |
-| R3 | `art/WB-003/ghigno_scelto.png` | il ghigno furbo scelto: sostituisce il ghigno del foglio R2 |
+| R2 | `art/WB-002/espressioni.png` | il foglio di espressioni del maschio **approvato**, col ghigno scelto: da copiare |
 
 ## Immagini da generare
 
-Ogni prompt è completo e va usato così com'è. Allega R1, R2 e R3 in quest'ordine.
+Ogni prompt è completo e va usato così com'è. Allega R1 e R2 in quest'ordine.
 
 | Nome file | Riferimenti | Misura | Varianti |
 |---|---|---|---|
-| `espressioni_femmina` | R1, R2, R3 | 1024×1024 | 1 |
+| `espressioni_femmina` | R1, R2 | 1024×1024 | 1 |
 
 ### `espressioni_femmina`
 
-Archivio prompt: P-003 v2.
+Archivio prompt: P-003 v3.
 
 ```
-Ti allego tre immagini:
+Ti allego due immagini:
 1. il mio personaggio FEMMINILE originale
 2. il foglio di espressioni del personaggio MASCHILE, già approvato: 9 teste in una griglia 3x3
-3. la testa maschile con il "ghigno furbo" approvato, che sostituisce il ghigno furbo del foglio
 
-Rifai lo STESSO IDENTICO foglio di espressioni della seconda immagine, nella stessa griglia 3x3, nello stesso ordine, con gli stessi nomi sotto ogni testa, ma con la testa della FEMMINA. Per il ghigno furbo usa la terza immagine.
+Rifai lo STESSO IDENTICO foglio di espressioni della seconda immagine, nella stessa griglia 3x3, nello stesso ordine, con gli stessi nomi sotto ogni testa, ma con la testa della FEMMINA.
 
 Ogni faccia deve essere identica a quella del maschio nella stessa casella: stessa sagoma della testa a stella con le punte, stessi occhi, stessa posizione e forma delle pupille, stesse palpebre, stesse sopracciglia bianche, stessa bocca, stessa grandezza e angolazione.
 
@@ -52,7 +49,7 @@ Stile: bianco e nero puro, nero pieno e bianco pieno, contorni neri spessi e reg
 
 ## Criteri di accettazione
 
-- [ ] ogni casella ha la stessa espressione del foglio maschile approvato (ghigno = quello scelto)
+- [ ] ogni casella ha la stessa espressione del foglio maschile approvato 
 - [ ] l'unica differenza sono le tre ciglia bianche per occhio, in tutte e 9
 - [ ] bianco e nero puro, contorni neri spessi, sfondo bianco
 
