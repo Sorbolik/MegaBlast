@@ -272,6 +272,40 @@ do
 	scoria = require "battaglia.scoria"
 end
 
+-- i perni di corpo, coda e manine: da fermi i pezzi restano dove sono, il
+-- corpo gira attorno al suo perno
+do
+	local function pezzi_di(perni)
+		package.loaded["battaglia.perni"] = perni
+		package.loaded["battaglia.scoria"] = nil
+		local sc2 = require "battaglia.scoria"
+		local da = #nodi
+		local v = sc2.new(vec(1, 0.2, 0.3, 1))
+		sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0 })
+		local trovati = {}
+		for i = da + 1, #nodi do
+			local n = nodi[i]
+			if n.img and not trovati[n.img] then trovati[n.img] = n end
+		end
+		return v, trovati
+	end
+	local v0, p0 = pezzi_di({})
+	local v1, p1 = pezzi_di({ corpo = { 3, 20 }, coda = { 2, -3 }, pugno = { 1, 1 } })
+	local fermi = true
+	for _, img in ipairs({ "busto", "coda_1", "coda_3", "pugno", "testa", "gamba" }) do
+		local x0, y0 = mondo(p0[img], 0, 0)
+		local x1, y1 = mondo(p1[img], 0, 0)
+		if not (p0[img] and math.abs(x0 - x1) < 0.5 and math.abs(y0 - y1) < 0.5) then fermi = false; print(img, x0, y0, x1, y1) end
+	end
+	check(fermi, "perni: corpo, coda e manine spostati, da fermi i pezzi restano dov'erano")
+	local px, py = mondo(v1.corpo, 0, 0)
+	local gx, gy = mondo(v1.root, 3 * v1.k, 20 * v1.k)
+	check(math.abs(px - gx) < 1e-6 and math.abs(py - gy) < 1e-6, "perni: il corpo gira attorno al suo perno")
+	package.loaded["battaglia.perni"] = nil
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
 -- il perno del braccio davanti spostato: l'arma resta nella mano (con una
 -- mira che non sposta niente e il braccio davanti che impugna)
 do

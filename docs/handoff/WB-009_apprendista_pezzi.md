@@ -573,3 +573,14 @@ Guardati `4_foglio_pezzi.png` e `5_teste_extra.png`.
   si taglia sotto il contorno del mento, senza i pezzi neri del collo.
 - Ancora da fare: fase 3 (corpo fedele al tre quarti, braccia col pugno chiuso), poi l'editor
   con gli SVG dei pezzi (zoom, specchio) e i PNG per ogni schermo.
+
+### Fase 3 · teste e tre quarti (2026-11-02)
+
+- **Teste (`7_teste`):** buone tutte e nove, senza collo e col contorno chiuso, nell'ordine
+  giusto. Ricalcate coi colori della tavolozza (`art/WB-009/svg/7_teste.svg`) e tagliate con
+  `taglia.py --teste`: prendono il posto delle quattro del foglio e delle cinque in più.
+  Il taglio del collo a script (`senza_collo`) e `--facce` sono tolti: non servono più.
+- **Coda in SVG:** ogni segmento (bordo e colore) ora ha il suo SVG, come gli altri pezzi.
+- **Tre quarti (`6_tre_quarti_1` e `_2`):** in tutte e due il piede a sinistra guarda a destra
+  come l'altro, il resto è come R4. Sergio ha scelto la **2**: è `scelti/tre_quarti_gamba.png`
+  (R7). Fase 4 pronta: `esegui WB-009 fase 4`.
