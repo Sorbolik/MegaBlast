@@ -288,6 +288,57 @@ La scheda approvata aggiorna il protagonista rispetto alle vecchie decisioni sul
 personaggio con occhiali; la decisione del 2026-11-01 conferma l'apprendista, quindi
 non è stato aggiunto alcun accessorio del vecchio diavoletto.
 
+### Fase 2 · 2026-11-02
+
+Eseguita dalla scheda APPROVATA aggiornata su `main` (a766e81), riportata nel ramo
+`design/WB-009` conservando la consegna della fase 1. Usati i file scelti da Sergio,
+compreso R6 per la mira; nessun riferimento scelto modificato.
+
+| File | Riferimenti, nell'ordine passato al generatore | Misura effettiva | Tentativi |
+|---|---|---|---|
+| `art/WB-009/4_foglio_pezzi.png` | R4, R2, R3, R5 | 1536×1024 | 3, consegnato il terzo |
+| `art/WB-009/5_teste_extra.png` | R4, R5, R6 | 1536×1024 | 3, consegnato il terzo |
+
+Accanto ai PNG sono consegnati `4_foglio_pezzi.txt` e `5_teste_extra.txt`, con i prompt
+integrali della scheda e i percorsi dei riferimenti in ordine. Verificato automaticamente
+che i prompt salvati coincidano esattamente con i blocchi inglesi; usati senza aggiunte
+anche nelle rigenerazioni. Sfondo non trasparente. File originali copiati dal generatore,
+senza ritocchi, ricampionamento, rimozione del magenta o correzioni a codice.
+
+**Controlli eseguiti.** Guardati tutti e tre i tentativi per ciascuna immagine.
+Nel foglio sono presenti 11 pezzi separati in tre righe: quattro teste, busto e coda
+con il posto dell'ala vuoto, due braccia, due gambe e un pugno. Nessun manichino grigio,
+fiammella, ala, testo, numero o firma. Coda continua con punta a freccia, non tagliata.
+Verde visibile soltanto sul fazzoletto. Cinque teste extra in una fila, rivolte a destra,
+con mira, rabbia, sconfitta, paura e provocazione nell'ordine richiesto. La mira mantiene
+occhio lontano chiuso, occhio vicino giallo e punta della lingua; il collo appare di
+larghezza simile agli altri quattro, non quello largo di R6. Dimensioni e RGB senza
+trasparenza verificati nei PNG.
+
+**Difetti rimasti dopo il limite di tre tentativi: consegna per revisione, non piena
+conformità tecnica.**
+
+- Nel foglio la coda segue una U, con radice a sinistra e punta in alto a destra:
+  non segue la curva/orientamento della coda di R2. Anche posizioni e ingombri dei
+  pezzi non coincidono precisamente con lo stampino: non è verificata la tagliabilità.
+- Busto e arti conservano ombre e/o contorno vicino ad alcune giunture; nei colli
+  di entrambi i fogli resta ombra e le linee laterali arrivano troppo in basso.
+  Non è raggiunto il requisito di pelle uniforme #B8432A e contorno che sparisce
+  completamente nelle zone di sovrapposizione.
+- Leggere sfumature, variazioni di colore e differenze fra sagome di teste/corna
+  persistono; nessuna identità geometrica o fedeltà esadecimale dichiarata.
+- Sfondo visivamente magenta, ma non #FF00FF uniforme. Gli angoli superiore sinistro
+  e inferiore destro sono rispettivamente RGB (243,12,242) e (242,30,241) nel foglio,
+  (242,12,243) e (244,30,242) nelle teste extra: il fondo richiede attenzione al taglio.
+- Il foglio esce a 1536×1024: soddisfa il minimo della scheda, non l'ideale 3072×2048.
+
+La scheda aggiornata affida a Claude il ripristino dei colori esatti nel ricalco SVG,
+con controllo della tavolozza su tutti i pezzi e tutte le teste. Questa consegna non
+sostituisce quel controllo e non dichiara risolti i difetti geometrici o delle giunture.
+Nessun taglio, ricalco, montaggio sullo scheletro, test di animazione o integrazione nel
+gioco eseguito: sono le fasi successive di Claude. Nessuna accettazione attribuita a Sergio.
+Nessuna contraddizione nuova con le decisioni lette. Nessuna PR aperta o unione verso main.
+
 ## Resoconto di Claude
 
 ### Fase 1 · scelte di Sergio (2026-11-02)

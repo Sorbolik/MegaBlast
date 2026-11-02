@@ -1,0 +1,16 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right: copy his head exactly (shape, horns, ears, colors, flat style). Image 2 is his approved expression sheet: nine heads in a 3 by 3 grid. Image 3 is the approved aiming face, cropped from image 2.
+
+Draw FIVE heads of him in a single row, left to right, all the same size, all facing right in three-quarter view, each with a short neck stub at the bottom, well apart from each other, the head outline, horns and ears IDENTICAL in all five, no flame on top. They are expressions 5 to 9 of image 2, copied exactly: 1) AIMING: copy the face of image 3 exactly (yellow near eye looking right, far eye squeezed in a wink, tongue tip out of the corner of the mouth), but NOT its neck: in image 3 the neck is too wide; make the neck stub as NARROW as the necks of the other heads in image 2, the same width as the other four heads of this row; 2) ANGRY (eyebrows in a V, clenched teeth); 3) DEFEATED (sad, eyes down, downturned mouth); 4) SCARED (wide eyes, tiny pupils, small open mouth); 5) TAUNT (wink and tongue out).
+
+Each head has a thick, clean pure-black #000000 outline, EXCEPT at the bottom of the neck stub: there the outline gets gradually thinner and disappears, and the skin color runs right to the edge, rounded and full, with no black line across it. The skin near the bottom of the neck stub is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there, so the neck blends into the torso with no visible seam.
+
+Rendering rules, very strict, because these heads will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; horns #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the heads.
+- No text, numbers, labels, arrows or signatures. Landscape 3:2.
+
+Riferimenti (ordine):
+Image 1: art/WB-009/scelti/tre_quarti.png
+Image 2: art/WB-009/scelti/espressioni.png
+Image 3: art/WB-009/scelti/mira.png
