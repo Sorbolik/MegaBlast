@@ -106,12 +106,36 @@ def classi(a, tav):
             sub = lab[y0:y1, x0:x1]
             sub[r] = np.where(dc <= do, chiaro, ombra)
     nero = nomi.index("nero")
-    # le righe sottili (rughe, sopracciglia, righe delle corna): i pixel scuri e
-    # rossicci a metà fra pelle e nero non sono bocca né ombra ma riga nera
+    # gli occhi: il giallo saturo (anche quello più scuro dell'ombra in alto) è
+    # occhio, non crema né corna
+    if "occhi" in nomi:
+        r_, g_, b_ = px[..., 0], px[..., 1], px[..., 2]
+        gial = dentro & (r_ > 180) & (g_ > 0.72 * r_) & (b_ < 0.45 * r_)
+        # solo le macchie grandi: i bordi sfumati fra crema e pelle non sono occhi
+        cc, n = ndimage.label(gial)
+        if n:
+            area = ndimage.sum(gial, cc, range(1, n + 1))
+            gial &= np.isin(cc, np.nonzero(area >= 400)[0] + 1)
+        occhi = nomi.index("occhi")
+        # fuori dagli occhi niente giallo: l'ombra della pancia va al colore più vicino dopo
+        d2 = d.copy()
+        d2[..., occhi] = np.inf
+        lab = np.where((lab == occhi) & ~gial, d2.argmin(-1), lab)
+        lab[gial] = occhi
+    # le righe sottili (rughe, sopracciglia, naso, righe delle corna): i pixel
+    # scuri, anche quelli sfumati ai lati della riga, che non fanno una macchia
+    # grande (la bocca) sono riga nera; restano anche dopo la moda qui sotto
     lum = px @ np.array([0.30, 0.59, 0.11], np.float32)
-    scuro = dentro & (lum < 85) & (lab != nero)
+    scuro = dentro & (lum < 115)
     pieno = ndimage.binary_opening(scuro, iterations=3)
-    lab[scuro & ~pieno] = nero
+    riga = scuro & ~pieno & (lab != nero)
+    riga |= lab == nero
+    # via i puntini isolati (meno di 12 pixel)
+    cc, n = ndimage.label(riga)
+    if n:
+        area = ndimage.sum(riga, cc, range(1, n + 1))
+        riga &= np.isin(cc, np.nonzero(area >= 12)[0] + 1)
+    lab[riga] = nero
     # i fili di un colore (meno di 5 pixel di spessore) prendono il colore vicino
     via = np.zeros_like(dentro)
     for i in range(1, len(tav)):
@@ -125,6 +149,7 @@ def classi(a, tav):
     # moda su 5x5: via i pixel sparsi ai bordi fra due colori
     uno = np.stack([ndimage.uniform_filter((lab == i).astype(np.float32), 5) for i in range(len(tav))], -1)
     lab = uno.argmax(-1)
+    lab[riga] = nero
     lab[~dentro] = -1
     return lab
 
