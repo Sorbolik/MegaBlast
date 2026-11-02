@@ -20,6 +20,8 @@ local M = {}
 
 local W, H = 1280, 720
 M.IRIDE = 0.15           -- secondi per chiudere, e per riaprire
+M.ATTESA = 2             -- secondi al massimo a iride chiusa, se la schermata nuova non è pronta
+M.PASSO = 0.05
 M.SCIVOLO = 0.08         -- metà dello scivolo
 M.SPOSTA = W * 0.07      -- quanto scivola una schermata
 
@@ -50,12 +52,24 @@ local function fine(p)
 	p.n = nil
 end
 
-function M.iride(p, cambia)
+-- pronto (facoltativo): la schermata nuova è pronta da vedere? Finché no l'iride
+-- resta chiusa, al massimo M.ATTESA secondi (le mappe dipinte si caricano in un
+-- altro thread: così non si vede la mappa senza terreno)
+function M.iride(p, cambia, pronto)
 	inizia(p, 1, 0, 1)
 	gui.animate(p.nodo, "color.x", 0, gui.EASING_INQUAD, M.IRIDE, 0, function()
 		cambia()
-		gui.move_above(p.nodo, nil)
-		gui.animate(p.nodo, "color.x", 1, gui.EASING_OUTQUAD, M.IRIDE, 0, function() fine(p) end)
+		local atteso = 0
+		local function apri()
+			if pronto and not pronto() and atteso < M.ATTESA then
+				atteso = atteso + M.PASSO
+				timer.delay(M.PASSO, false, apri)
+				return
+			end
+			gui.move_above(p.nodo, nil)
+			gui.animate(p.nodo, "color.x", 1, gui.EASING_OUTQUAD, M.IRIDE, 0, function() fine(p) end)
+		end
+		apri()
 	end)
 end
 

@@ -1,0 +1,9 @@
+-- Il terreno dipinto di una mappa (strumenti/grafica/mappe_dipinte.py): la sua
+-- collezione si carica solo quando serve (battaglia/dipinti.go) e manda la texture
+-- alla mesh della mappa (battaglia/terreno.script).
+
+go.property("terreno", resource.texture("/assets/fx/bagliore.png"))
+
+function init(self)
+	msg.post("/terreno#script", "dipinto", { terreno = self.terreno })
+end

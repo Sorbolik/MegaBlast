@@ -1,0 +1,46 @@
+name: "forgia_1"
+scale_along_z: 0
+embedded_instances {
+  id: "dipinto"
+  data: "components {\n"
+  "  id: \"dipinto\"\n"
+  "  component: \"/dipinti/sfondo.script\"\n"
+  "  properties {\n"
+  "    id: \"cielo\"\n"
+  "    value: \"/dipinti/sfondi/forgia_cielo_1.png\"\n"
+  "    type: PROPERTY_TYPE_HASH\n"
+  "  }\n"
+  "  properties {\n"
+  "    id: \"lontano\"\n"
+  "    value: \"/dipinti/sfondi/forgia_lontano_1.png\"\n"
+  "    type: PROPERTY_TYPE_HASH\n"
+  "  }\n"
+  "  properties {\n"
+  "    id: \"medio\"\n"
+  "    value: \"/dipinti/sfondi/forgia_medio_1.png\"\n"
+  "    type: PROPERTY_TYPE_HASH\n"
+  "  }\n"
+  "  properties {\n"
+  "    id: \"vicino\"\n"
+  "    value: \"/dipinti/sfondi/forgia_vicino_1.png\"\n"
+  "    type: PROPERTY_TYPE_HASH\n"
+  "  }\n"
+  "}\n"
+  ""
+  position {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  }
+  rotation {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+  }
+  scale3 {
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  }
+}

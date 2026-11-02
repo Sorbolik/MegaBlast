@@ -9,8 +9,8 @@ return {
 		forgia = {
 			foschia = { 0.239, 0.227, 0.290 },
 			gruppi = {
-				{ nome = "lontano", y0 = 68, h = 652, quanto = 0.1, scorre = 2.4 },
-				{ nome = "medio", y0 = 267, h = 453, quanto = 0.3, scorre = 8.7 },
+				{ nome = "lontano", y0 = 0, h = 720, quanto = 0.1, scorre = 2.4 },
+				{ nome = "medio", y0 = 240, h = 480, quanto = 0.3, scorre = 8.7 },
 				{ nome = "vicino", y0 = 0, h = 720, quanto = 0.6, scorre = 16.7 },
 			},
 		},

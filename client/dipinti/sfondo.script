@@ -1,0 +1,13 @@
+-- Lo sfondo dipinto di un girone (strumenti/grafica/mappe_dipinte.py): il cielo e le
+-- tre strisce, caricati solo quando servono (battaglia/dipinti.go) e mandati alla
+-- mesh della mappa (battaglia/terreno.script).
+
+go.property("cielo", resource.texture("/assets/fx/bagliore.png"))
+go.property("lontano", resource.texture("/assets/fx/bagliore.png"))
+go.property("medio", resource.texture("/assets/fx/bagliore.png"))
+go.property("vicino", resource.texture("/assets/fx/bagliore.png"))
+
+function init(self)
+	msg.post("/terreno#script", "dipinto", { cielo = self.cielo, lontano = self.lontano,
+		medio = self.medio, vicino = self.vicino })
+end

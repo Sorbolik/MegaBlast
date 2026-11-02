@@ -1,7 +1,6 @@
 [project]
 title = MegaBlast
 dependencies#0 = https://github.com/defold/extension-websocket/archive/refs/tags/4.2.4.zip
-custom_resources = /dipinti
 
 [bootstrap]
 main_collection = /main/main.collectionc

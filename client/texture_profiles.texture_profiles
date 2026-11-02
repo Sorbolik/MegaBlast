@@ -15,6 +15,14 @@ path_settings {
   profile: "Interfaccia"
 }
 path_settings {
+  path: "/dipinti/mappe/**"
+  profile: "Mappa"
+}
+path_settings {
+  path: "/dipinti/**"
+  profile: "Dipinti"
+}
+path_settings {
   path: "**"
   profile: "Default"
 }
@@ -68,6 +76,20 @@ profiles {
       format: TEXTURE_FORMAT_RGBA
       compression_level: NORMAL
       compression_type: COMPRESSION_TYPE_DEFAULT
+    }
+    mipmaps: false
+    max_texture_size: 0
+    premultiply_alpha: true
+  }
+}
+profiles {
+  name: "Dipinti"
+  platforms {
+    os: OS_ID_GENERIC
+    formats {
+      format: TEXTURE_FORMAT_RGBA
+      compression_level: HIGH
+      compression_type: COMPRESSION_TYPE_BASIS_UASTC
     }
     mipmaps: false
     max_texture_size: 0
