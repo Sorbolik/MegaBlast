@@ -1,26 +1,26 @@
--- Assetto: albero di abilità più equipaggiamento, e le statistiche del robot
--- che ne vengono fuori. Lua puro: il client lo manda al server, che lo
--- controlla con valid() e passa stats() alla partita (opts.stats[i]).
+-- Loadout: skill tree plus gear, and the robot stats that come out of them.
+-- Pure Lua: the client sends it to the server, which checks it with valid()
+-- and passes stats() to the match (opts.stats[i]).
 --
--- Un assetto: { tree = { [nodo] = gradi }, gear = { mask = "corvo", ... }, variant = "a" | "b" }
--- Si ricostruisce gratis fuori dalla partita; ogni giocatore ne tiene LOADOUTS.
+-- A loadout: { tree = { [node] = ranks }, gear = { mask = "corvo", ... }, variant = "a" | "b" }
+-- It can be rebuilt for free outside a match; each player keeps LOADOUTS of them.
 
-local abilita = require "sim.abilita"
-local equip = require "sim.equipaggiamento"
+local skills = require "sim.skills"
+local equip = require "sim.gear"
 
 local M = {}
 
 M.LOADOUTS = 3
 
--- limiti delle statistiche dopo albero e set
+-- stat limits after tree and sets
 M.MIN = { max_hp = 1, teleport_ticks = 30, teleports = 0, parachutes = 0 }
 
 function M.new()
 	return { tree = {}, gear = {}, variant = "a" }
 end
 
--- Applica i gruppi di effetti (un pezzo, un grado, un bonus): prima le somme,
--- poi le moltiplicazioni
+-- Applies the effect groups (a piece, a rank, a bonus): sums first, then
+-- multiplications
 local function apply(st, mods)
 	for _, g in ipairs(mods) do
 		for _, e in ipairs(g) do if e.add then st[e.stat] = st[e.stat] + e.add end end
@@ -34,14 +34,14 @@ local function apply(st, mods)
 	return st
 end
 
--- Statistiche finali. base: game.base_stats() della sim. tiers: tier dei pezzi
--- indossati ({ mask = 1..3, ... }), servono solo per la variante B.
--- I valori interi (vita, tick) restano interi.
+-- Final stats. base: the sim's game.base_stats(). tiers: tiers of the worn
+-- pieces ({ mask = 1..3, ... }), only needed for variant B.
+-- Integer values (hp, ticks) stay integers.
 function M.stats(base, a, tiers)
 	local st = {}
 	for k, v in pairs(base) do st[k] = v end
 	local mods = {}
-	abilita.mods(a.tree or {}, mods)
+	skills.mods(a.tree or {}, mods)
 	equip.mods(a.gear or {}, tiers, a.variant, mods)
 	apply(st, mods)
 	for _, k in ipairs({ "max_hp", "teleport_ticks" }) do
@@ -50,7 +50,7 @@ function M.stats(base, a, tiers)
 	return st
 end
 
--- l'assetto è giocabile con questi punti? (il server lo controlla prima della partita)
+-- is the loadout playable with these points? (the server checks it before the match)
 function M.valid(a, points)
 	if type(a) ~= "table" or type(a.gear) ~= "table" then return false end
 	for slot, set in pairs(a.gear) do
@@ -60,7 +60,7 @@ function M.valid(a, points)
 		if not known then return false end
 	end
 	if a.variant ~= "a" and a.variant ~= "b" then return false end
-	return abilita.valid(a.tree or {}, points)
+	return skills.valid(a.tree or {}, points)
 end
 
 return M

@@ -22,7 +22,7 @@
 
 local ui = require "ui.ui"
 local game = require "sim.game"
-local equip = require "sim.equipaggiamento"
+local equip = require "sim.gear"
 local maps = require "sim.maps"
 local profilo = require "menu.profilo"
 local traguardi = require "menu.traguardi"

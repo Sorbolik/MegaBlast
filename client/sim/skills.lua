@@ -1,27 +1,27 @@
--- Albero di abilità (docs/game_design_competitivo.md, "Albero di abilità").
--- Lua puro: lo usa il client per la schermata e il server per controllare
--- l'assetto che gli arriva.
+-- Skill tree (docs/game_design_competitivo.md, "Albero di abilità").
+-- Pure Lua: the client uses it for the screen and the server to check the
+-- loadout it receives.
 --
--- Le quattro regole del documento:
--- 1. meno punti che nodi: al livello massimo POINTS_MAX punti per un albero che
---    ne costa il doppio, così anche a fine gioco si sceglie;
--- 2. nodi misti: statistiche (salto, velocità, vita) e riserve (teletrasporti, paracadute);
--- 3. differenza che si sente ma si colma con la strategia: con tutti i punti
---    nessuna statistica sale più del 10% (c'è un test);
--- 4. ricostruzione gratuita fuori dalla partita (sim/assetto.lua tiene i 3 assetti).
+-- The four rules of the document:
+-- 1. fewer points than nodes: at max level POINTS_MAX points for a tree that
+--    costs twice as much, so even at the end of the game you choose;
+-- 2. mixed nodes: stats (jump, speed, hp) and reserves (teleports, parachutes);
+-- 3. a difference you feel but that strategy can close: with all points no
+--    stat goes up more than 10% (there is a test);
+-- 4. free rebuild outside matches (sim/loadout.lua keeps the 3 loadouts).
 --
 --
--- Un albero scelto è una tabella { [id del nodo] = gradi presi }.
--- Ogni effetto è { stat = chiave, add = n } o { stat = chiave, mul = n }, per
--- grado; le chiavi sono quelle di game.base_stats() (config.STATS e fisica).
+-- A chosen tree is a table { [node id] = ranks taken }.
+-- Each effect is { stat = key, add = n } or { stat = key, mul = n }, per rank;
+-- the keys are those of game.base_stats() (config.STATS and physics).
 
 local M = {}
 
--- punti al livello massimo
+-- points at max level
 M.POINTS_MAX = 20
--- punti per livello del giocatore (livello 1 = 2 punti, il massimo al livello 10)
+-- points per player level (level 1 = 2 points, the maximum at level 10)
 M.POINTS_PER_LEVEL = 2
--- per prendere un nodo della riga r servono ROW_GATE * (r - 1) punti già spesi nel suo ramo
+-- taking a node in row r needs ROW_GATE * (r - 1) points already spent in its branch
 M.ROW_GATE = 3
 
 M.BRANCHES = {
@@ -30,12 +30,12 @@ M.BRANCHES = {
 	{ id = "arsenal", name = "ARSENALE", desc = "Trappole ed effetti di stato" },
 }
 
--- Nodi: ramo, riga (1 in alto), gradi, costo di ogni grado ed effetto di ogni grado.
--- potere: i nodi che danno una cosa nuova (non solo un numero) e come si chiama
--- sul cartellino (ui/cartellino.lua).
--- Somma dei costi di tutti i gradi: 62, più del triplo di POINTS_MAX.
+-- Nodes: branch, row (1 at the top), ranks, cost of each rank and effect of each rank.
+-- potere: the nodes that give something new (not just a number) and what it
+-- is called on the player card (ui/cartellino.lua).
+-- Sum of the costs of all ranks: 62, more than three times POINTS_MAX.
 M.NODES = {
-	-- Mobilità (28)
+	-- Mobility (28)
 	{ id = "jump", branch = "mobility", row = 1, ranks = 3, cost = 2, name = "Gambe di Titano",
 		desc = "Salto +3%", effects = { { stat = "jump_height", mul = 1.03 } } },
 	{ id = "walk", branch = "mobility", row = 1, ranks = 3, cost = 2, name = "Passo di brace",
@@ -46,7 +46,7 @@ M.NODES = {
 		desc = "Il teletrasporto scatta il 5% prima", effects = { { stat = "teleport_ticks", mul = 0.95 } } },
 	{ id = "air_jump", branch = "mobility", row = 3, ranks = 1, cost = 4, name = "Balzo nel vuoto", potere = "salto in aria",
 		desc = "Un salto in aria", effects = { { stat = "air_jumps", add = 1 } } },
-	-- Difesa (24)
+	-- Defense (24)
 	{ id = "hp", branch = "defense", row = 1, ranks = 4, cost = 2, name = "Crosta spessa",
 		desc = "Vita +2", effects = { { stat = "max_hp", add = 2 } } },
 	{ id = "fall", branch = "defense", row = 1, ranks = 2, cost = 2, name = "Ossa di pietra",
@@ -57,7 +57,7 @@ M.NODES = {
 		desc = "Un paracadute in più per partita", effects = { { stat = "parachutes", add = 1 } } },
 	{ id = "anchor", branch = "defense", row = 3, ranks = 2, cost = 2, name = "Radici",
 		desc = "Spinta subita -5%", effects = { { stat = "knockback_mul", mul = 0.95 } } },
-	-- Arsenale (10)
+	-- Arsenal (10)
 	{ id = "trap_wide", branch = "arsenal", row = 1, ranks = 3, cost = 2, name = "Trappola larga",
 		desc = "Raggio delle trappole +3%", effects = { { stat = "trap_radius", mul = 1.03 } } },
 	{ id = "long_status", branch = "arsenal", row = 2, ranks = 1, cost = 4, name = "Brace lenta", potere = "brace lenta",
@@ -67,12 +67,12 @@ M.NODES = {
 M.BY_ID = {}
 for _, n in ipairs(M.NODES) do M.BY_ID[n.id] = n end
 
--- punti disponibili a un livello
+-- points available at a level
 function M.points(level)
 	return math.max(0, math.min(M.POINTS_MAX, (level or 0) * M.POINTS_PER_LEVEL))
 end
 
--- punti spesi, in tutto e nel ramo
+-- points spent, in total and in the branch
 function M.spent(tree, branch)
 	local n = 0
 	for id, r in pairs(tree) do
@@ -82,7 +82,7 @@ function M.spent(tree, branch)
 	return n
 end
 
--- punti spesi nel ramo sulle righe sopra a row (quelli che aprono la riga)
+-- points spent in the branch on the rows above row (those that open the row)
 local function spent_above(tree, branch, row)
 	local n = 0
 	for id, r in pairs(tree) do
@@ -92,7 +92,7 @@ local function spent_above(tree, branch, row)
 	return n
 end
 
--- si può prendere un grado in più di questo nodo? Restituisce true o false, motivo
+-- can one more rank of this node be taken? Returns true or false, reason
 function M.can_add(tree, id, points)
 	local node = M.BY_ID[id]
 	if not node then return false, "nodo sconosciuto" end
@@ -104,7 +104,7 @@ function M.can_add(tree, id, points)
 	return true
 end
 
--- si può togliere un grado senza chiudere le righe sotto?
+-- can a rank be removed without closing the rows below?
 function M.can_remove(tree, id)
 	local node = M.BY_ID[id]
 	if not node or (tree[id] or 0) == 0 then return false end
@@ -114,7 +114,7 @@ function M.can_remove(tree, id)
 	return ok
 end
 
--- l'albero rispetta gradi, punti e righe? (il server lo controlla prima della partita)
+-- does the tree respect ranks, points and rows? (the server checks it before the match)
 function M.valid(tree, points)
 	if type(tree) ~= "table" then return false end
 	if M.spent(tree) > points then return false end
@@ -126,8 +126,8 @@ function M.valid(tree, points)
 	return true
 end
 
--- aggiunge alla lista mods gli effetti dell'albero, un gruppo per grado
--- (la applica sim/assetto.lua)
+-- adds to the mods list the tree's effects, one group per rank
+-- (sim/loadout.lua applies them)
 function M.mods(tree, mods)
 	for _, node in ipairs(M.NODES) do
 		for _ = 1, tree[node.id] or 0 do mods[#mods + 1] = node.effects end

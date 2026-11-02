@@ -5,19 +5,19 @@ import (
 	"time"
 )
 
-// Scheduler fa girare le stanze su un worker per core. Ogni worker ha un solo
-// ticker a 60 Hz e a ogni tick fa avanzare tutte le sue stanze, una dopo
-// l'altra: con mille stanze sono 4 risvegli per tick invece di mille, e una
-// stanza vive sempre sullo stesso worker, quindi la sua partita non ha lock.
+// Scheduler runs rooms on one worker per core. Each worker has a single 60 Hz
+// ticker and on every tick advances all its rooms, one after another: with a
+// thousand rooms that's 4 wake-ups per tick instead of a thousand, and a room
+// always lives on the same worker, so its match needs no lock.
 type Scheduler struct {
 	workers []*worker
 }
 
 type worker struct {
 	add   chan *Room
-	rooms atomic.Int32 // stanze in questo worker
-	busy  atomic.Int64 // durata dell'ultimo tick in nanosecondi
-	late  atomic.Int64 // tick che hanno sforato i 16,6 ms (partite rallentate)
+	rooms atomic.Int32 // rooms in this worker
+	busy  atomic.Int64 // duration of the last tick in nanoseconds
+	late  atomic.Int64 // ticks that went over 16.6 ms (slowed matches)
 }
 
 func NewScheduler(n int) *Scheduler {
@@ -30,7 +30,7 @@ func NewScheduler(n int) *Scheduler {
 	return s
 }
 
-// Add mette la stanza sul worker con meno stanze.
+// Add puts the room on the worker with the fewest rooms.
 func (s *Scheduler) Add(r *Room) {
 	best := s.workers[0]
 	for _, w := range s.workers[1:] {
@@ -61,7 +61,7 @@ func (w *worker) run() {
 					w.rooms.Add(-1)
 				}
 			}
-			clear(rooms[len(live):]) // le stanze finite si possono liberare
+			clear(rooms[len(live):]) // finished rooms can be released
 			rooms = live
 			d := time.Since(start)
 			w.busy.Store(int64(d))
@@ -72,7 +72,7 @@ func (w *worker) run() {
 	}
 }
 
-// Load è la frazione del tick usata dal worker più carico (1 = pieno).
+// Load is the fraction of the tick used by the busiest worker (1 = full).
 func (s *Scheduler) Load() float64 {
 	var top int64
 	for _, w := range s.workers {

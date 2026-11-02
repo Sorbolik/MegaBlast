@@ -2,7 +2,7 @@
 
 Come si muovono robot, colpi ed esplosioni. I numeri veri sono nel codice:
 `client/sim/game.lua` (fisica), `client/sim/config.lua` (regole e armi),
-`client/sim/corpo.lua` (forme del corpo), `client/sim/mischia.lua` (colpi corpo
+`client/sim/corpo.lua` (forme del corpo), `client/sim/melee.lua` (colpi corpo
 a corpo), `client/battaglia/levette.lua` (comandi sul telefono). La simulazione
 è la stessa per client e server: chi la cambia, la cambia per tutti.
 
@@ -34,7 +34,7 @@ nel codice non tornano, vale il codice (e va corretto questo documento).
 | Gradino che sale da solo | 10,5 px | `MAX_CLIMB` |
 
 L'equipaggiamento e l'albero di abilità cambiano queste statistiche
-(`sim/equipaggiamento.lua`, `sim/abilita.lua`).
+(`sim/gear.lua`, `sim/skills.lua`).
 
 Come si muove (è la parte più importante per la sensazione di gioco):
 
@@ -114,7 +114,7 @@ della spinta** (`damage_r`, sempre più grande). Per ogni robot nel raggio:
 ## Colpi corpo a corpo
 
 La Lama (fendente) e il Pugno del Titano (montante) sono fatti di tre pezzi
-(`sim/mischia.lua`):
+(`sim/melee.lua`):
 
 1. **Un rettangolo lungo l'asse dell'arma** che segue la posa del colpo
    fotogramma per fotogramma (fendente largo 1 U, montante 3 U).

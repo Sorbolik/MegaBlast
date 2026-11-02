@@ -8,7 +8,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-// Stato Lua col terreno di client/sim/terrain.lua così com'è, per confronto.
+// Lua state with the terrain of client/sim/terrain.lua as it is, for comparison.
 func luaTerrainEngine(t *testing.T) *Engine {
 	e, err := buildEngine(func(L *lua.LState) {
 		if err := L.DoString(`terrain_restore = function() return false end; terrain_store = function() end`); err != nil {
@@ -22,8 +22,8 @@ func luaTerrainEngine(t *testing.T) *Engine {
 	return e
 }
 
-// Le stesse operazioni sul terreno Go e su quello Lua danno le stesse celle e
-// le stesse risposte.
+// The same operations on the Go terrain and the Lua one give the same cells
+// and the same answers.
 const terrainOps = `
 local terrain = require "sim.terrain"
 local maps = require "sim.maps"
@@ -82,14 +82,14 @@ func TestGoTerrainMatchesLua(t *testing.T) {
 		for seed := 1; seed <= 3; seed++ {
 			a, b := runTerrainOps(t, goE, m, seed), runTerrainOps(t, luaE, m, seed)
 			if a != b {
-				t.Fatalf("mappa %s seed %d: terreno Go diverso da quello Lua", m, seed)
+				t.Fatalf("map %s seed %d: Go terrain differs from the Lua one", m, seed)
 			}
 		}
 	}
 }
 
-// Una partita intera con comandi a caso: col terreno Go il server deve
-// vedere esattamente quello che vedrebbe col Lua puro (e quindi il client).
+// A whole match with random inputs: with the Go terrain the server must see
+// exactly what it would see with pure Lua (and so the client).
 func TestGoTerrainSameMatch(t *testing.T) {
 	goE, err := newEngine()
 	if err != nil {
@@ -134,22 +134,22 @@ func TestGoTerrainSameMatch(t *testing.T) {
 			}
 			ea, eb := a.Events(), b.Events()
 			if len(ea) != len(eb) {
-				t.Fatalf("%s tick %d: eventi diversi", m, tick)
+				t.Fatalf("%s tick %d: different events", m, tick)
 			}
 			for i := range ea {
 				if strings.Contains(string(ea[i]), `"explosion"`) {
 					explosions++
 				}
 				if !sameJSON(ea[i], eb[i]) {
-					t.Fatalf("%s tick %d: evento diverso\n%s\n%s", m, tick, ea[i], eb[i])
+					t.Fatalf("%s tick %d: different event\n%s\n%s", m, tick, ea[i], eb[i])
 				}
 			}
 			if tick%10 == 0 && !sameJSON(a.Snapshot(), b.Snapshot()) {
-				t.Fatalf("%s tick %d: stato diverso\n%s\n%s", m, tick, a.Snapshot(), b.Snapshot())
+				t.Fatalf("%s tick %d: different state\n%s\n%s", m, tick, a.Snapshot(), b.Snapshot())
 			}
 		}
 	}
 	if explosions < 20 {
-		t.Fatalf("solo %d esplosioni, la prova non scava abbastanza", explosions)
+		t.Fatalf("only %d explosions, the test doesn't dig enough", explosions)
 	}
 }

@@ -1,4 +1,4 @@
--- Il segnale sul bersaglio delle lezioni (sim/missioni.lua bersaglio): quattro
+-- Il segnale sul bersaglio delle lezioni (sim/missions.lua bersaglio): quattro
 -- angoli rossi attorno a chi va colpito adesso, come un mirino agganciato, che
 -- respirano. Diverso dalla luce gialla sui comandi: quella dice cosa usare,
 -- questo chi colpire. Nel mondo, pochi nodi fatti una volta.

@@ -12,8 +12,8 @@ local scoria = require "battaglia.scoria"
 local targa = require "battaglia.targa"
 local home = require "menu.home"
 local profilo = require "menu.profilo"
-local assetto = require "sim.assetto"
-local riconoscimenti = require "sim.riconoscimenti"
+local assetto = require "sim.loadout"
+local riconoscimenti = require "sim.awards"
 local draft = require "sim.draft"
 local bot = require "sim.bot"
 local replay = require "sim.replay"
@@ -25,10 +25,10 @@ local menu = { podio = require "menu.podio", armeria = require "menu.armeria", s
 	schieramento = require "menu.schieramento", profilo_schede = require "menu.profilo_schede",
 	-- non schermate, qui per non aggiungere variabili locali (limite di 200):
 	-- gli eventi del server e le loro regole (start online)
-	eventi = require "main.eventi", regole = require "sim.regole",
+	eventi = require "main.eventi", regole = require "sim.rules",
 	-- l'ingresso, i passaggi tra le schermate e la fiammella d'attesa
 	ingresso = require "ui.ingresso", passaggio = require "ui.passaggio", attesa = require "ui.attesa" }
-local missioni = require "sim.missioni"
+local missioni = require "sim.missions"
 local levette = require "battaglia.levette"
 local mira = require "battaglia.mira"
 local camera = require "battaglia.camera"
@@ -368,7 +368,7 @@ end
 -- A ogni inizio turno, grande sotto il robot: IL TUO TURNO a chi gioca (online
 -- chi è sul telefono, contro i bot e nelle missioni il primo robot), TURNO DI:
 -- NOME agli altri (e sullo stesso telefono, dove giocate tutti). Nelle lezioni
--- resta finché non tocchi i comandi (sim/missioni.lua, attesa), poi svanisce.
+-- resta finché non tocchi i comandi (sim/missions.lua, attesa), poi svanisce.
 local function annuncia_turno(self, robot)
 	local mio = (self.mode == "online" and robot == self.me)
 		or (self.mode == "local" and (next(self.bots) or self.missione) and robot == 1)
@@ -403,7 +403,7 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.btn_tele.nodo, visible)
 	if not visible and self.guida then self.guida:aggiorna(nil) end
 	self.tele_vede = visible
-	-- le lezioni mostrano il tempo e i punti solo da quando li spiegano (sim/missioni.lua vedi)
+	-- le lezioni mostrano il tempo e i punti solo da quando li spiegano (sim/missions.lua vedi)
 	hud.cronometro_on(self.crono, visible and missioni.vede(self.missione, "tempo"))
 	punteggio.nascondi(self.punti, not missioni.vede(self.missione, "punti"))
 	if not visible then
@@ -1278,7 +1278,7 @@ local function on_server_message(self, m)
 		-- ricostruisce dal seed, poi arrivano gli scavi e lo stato.
 		-- players: le squadre dei robot e le loro scelte del draft,
 		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
-		-- regole: quelle dell'evento della coda (sim/regole.lua), come sul server
+		-- regole: quelle dell'evento della coda (sim/rules.lua), come sul server
 		local opts = m.players and { players = m.players }
 		if type(m.regole) == "table" then opts = menu.regole.opzioni(m.regole, opts or {}) end
 		new_match(self, m.seed, m.map, opts)
@@ -1745,7 +1745,7 @@ start_local_match = function(self, picked)
 	set_controls_visible(self, true)
 end
 
--- Missioni della campagna, lezioni e partita guidata (sim/missioni.lua,
+-- Missioni della campagna, lezioni e partita guidata (sim/missions.lua,
 -- schermata CAMPAGNA). picks: i giocatori usciti dalla scelta, per le missioni
 -- che la fanno fare
 local function start_missione(self, id, picks)
@@ -2181,7 +2181,7 @@ end
 
 -- Lo slot si vede? Il paracadute finché ne restano o è già aperto; il Rampino
 -- sempre; la secondaria scelta anche senza colpi (spenta: la Lama li ridà).
--- Nelle lezioni solo quello che la lezione usa (r: la missione, sim/missioni.lua vedi).
+-- Nelle lezioni solo quello che la lezione usa (r: la missione, sim/missions.lua vedi).
 local function slot_have(rb, w, r)
 	if not missioni.vede(r, w) then return false end
 	if w == "parachute" then
@@ -3542,7 +3542,7 @@ function PAD.comandi(self)
 	return self.pad_on and "controller" or (self.touch_ui and "telefono" or "computer")
 end
 
--- {salta}, {annulla}, {cammina}, {mira} nelle righe delle lezioni (sim/missioni.lua)
+-- {salta}, {annulla}, {cammina}, {mira} nelle righe delle lezioni (sim/missions.lua)
 PAD.TESTI = {
 	telefono = { salta = "spingi in su la levetta di sinistra", annulla = "tocca la metà destra dello schermo",
 		cammina = "sposta di lato la levetta di sinistra",

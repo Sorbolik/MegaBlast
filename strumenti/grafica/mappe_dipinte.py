@@ -13,7 +13,7 @@
 #                                             acciaio), che mappa_in_lua.py porta in sim/mapdata.lua
 # Le mappe: il pavimento e la fossa del Fabbro (documento delle mappe dell'apprendista, layout A
 # e C, scelte di Sergio del 2 novembre) e le arene delle missioni, tutte d'acciaio, lette da
-# sim/campagna.lua con luajit.
+# sim/campaign.lua con luajit.
 #
 #   python3 strumenti/grafica/mappe_dipinte.py      (dalla cartella del repository; serve node
 #                                                    con playwright, che disegna gli SVG)
@@ -75,8 +75,8 @@ MAPPE = {
 
 # ---------------------------------------------------------------- le arene, tutte d'acciaio
 def arene():
-    """{id missione: [(x, y, w, h)]} in coordinate del mondo (y verso l'alto), da sim/campagna.lua."""
-    lua = ('package.path="client/?.lua;"..package.path local c=require("sim.campagna") '
+    """{id missione: [(x, y, w, h)]} in coordinate del mondo (y verso l'alto), da sim/campaign.lua."""
+    lua = ('package.path="client/?.lua;"..package.path local c=require("sim.campaign") '
            'for _,cap in ipairs(c.CAPITOLI) do for _,l in ipairs(cap.missioni) do if l.arena then '
            'local t={} for _,q in ipairs(l.arena) do t[#t+1]=string.format("[%g,%g,%g,%g]",q[1],q[2],q[3],q[4]) end '
            'print(l.id.." ["..table.concat(t,",").."]") end end end')

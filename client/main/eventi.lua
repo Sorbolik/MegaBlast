@@ -1,4 +1,4 @@
--- Gli eventi del server (GET /eventi, server/eventi.go): il gioco li chiede
+-- Gli eventi del server (GET /eventi, server/events.go): il gioco li chiede
 -- nella schermata d'ingresso, prima di aprire la home (ui/ingresso.lua), poi
 -- ogni minuto mentre la home si vede e a ogni apertura della bacheca e di
 -- DOVE GIOCHI?. Qui solo i dati e le parole; le schermate sono
@@ -128,7 +128,7 @@ function M.tipo(o) return TIPI[o.tipo] or string.upper(o.tipo or "") end
 local CODE = { ["1v1"] = "1 CONTRO 1", ["2v2"] = "2 CONTRO 2", ffa = "TUTTI CONTRO TUTTI" }
 function M.nome_coda(modo) return CODE[modo] or modo end
 
--- Le regole in parole, una per riga (sim/regole.lua). nomi: arma -> nome (battaglia/hud.lua)
+-- Le regole in parole, una per riga (sim/rules.lua). nomi: arma -> nome (battaglia/hud.lua)
 function M.cosa_cambia(o, nomi)
 	local r, out = o.regole or {}, {}
 	if o.coda ~= o.modo then out[#out + 1] = M.nome_coda(o.modo) end

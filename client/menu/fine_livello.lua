@@ -1,4 +1,4 @@
--- Fine di un livello: una missione della campagna o una lezione (sim/missioni.lua). Una schermata, niente popup: il
+-- Fine di un livello: una missione della campagna o una lezione (sim/missions.lua). Una schermata, niente popup: il
 -- nome del livello, le stelle prese che si accendono una dopo l'altra (col tic
 -- che sale di tono, come i punti in partita) e sotto ognuna cosa serve per
 -- prenderla, così si capisce come fare meglio. Sotto: RIPROVA e AVANTI (il

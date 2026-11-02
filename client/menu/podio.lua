@@ -1,7 +1,7 @@
 -- Podio di fine partita: i gradini salgono, sopra ogni gradino la Scoria del
 -- giocatore col colore della sua squadra, sul gradino posto, nome e punti
 -- partita (calcolati dalla sim, g:results()). Sotto, i riconoscimenti
--- (sim/riconoscimenti.lua) e cosa si è guadagnato: esperienza e livello.
+-- (sim/awards.lua) e cosa si è guadagnato: esperienza e livello.
 --
 -- Uso (dal gui_script):
 --   local p = podio.new(results, giocatori, me, guadagno, prof, numero)
@@ -16,7 +16,7 @@
 local ui = require "ui.ui"
 local scoria = require "battaglia.scoria"
 local game = require "sim.game"
-local riconoscimenti = require "sim.riconoscimenti"
+local riconoscimenti = require "sim.awards"
 local profilo = require "menu.profilo"
 local cartellino = require "ui.cartellino"
 
