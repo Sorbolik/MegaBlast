@@ -281,7 +281,10 @@ end
 -- Terreno -----------------------------------------------------------------------
 
 -- La mesh della mappa legge la maschera di collisione da una texture 640 x 360:
--- r = terreno adesso, g = terreno all'inizio (per riconoscere i crateri).
+-- r = terreno adesso, g = terreno all'inizio (per riconoscere i crateri), b =
+-- distanza dal bordo del cratere più vicino (Sergio, 2 nov: «un cerchio
+-- perfetto»): la fisica scava a celle, ma lo shader delle mappe dipinte disegna
+-- il cerchio vero, interpolando la distanza fra le celle.
 -- Dopo un'esplosione rimandiamo alla GPU solo il rettangolo del cratere.
 local MASK_PATH = "/battaglia/maschera_viva.texturec"
 local RGBA = hash("rgba")
@@ -293,6 +296,56 @@ local PAINTED = { forgia = true, crogiolo = true }
 -- le costanti stanno in graphics (Defold recenti) o in resource (vecchi)
 local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
 local TEX_RGBA = graphics and graphics.TEXTURE_FORMAT_RGBA or resource.TEXTURE_FORMAT_RGBA
+
+-- b: 128 sul bordo del cratere, 8 livelli per unità del mondo (da -16 a +16),
+-- 255 lontano da tutti; terreno.fp lo legge così
+-- (in una tabella: lo script è vicino al limite di 200 variabili locali)
+local CR = { BORDO = 128, PASSO = 8, CELLE = 7 } -- CELLE: oltre il raggio, 16 unità (una cella è 3)
+
+-- Ogni cratere della partita (x, y, r), per rifare il canale b se si ridisegna
+-- tutta la maschera: la lista vale per una partita (self.g)
+function CR.lista(self)
+	if self.crateri_g ~= self.g then self.crateri, self.crateri_g = {}, self.g end
+	return self.crateri
+end
+
+-- Scrive nel canale b (self.mask_stream) la distanza dal cratere (x, y, r). Le
+-- celle d'acciaio e quelle che lo toccano restano fuori: l'acciaio non si scava
+-- e il suo contorno non si morde
+function CR.scava(self, x, y, r)
+	local data, full, c = self.g.terrain.data, self.mask_stream, game.CELL
+	if not full then return 0, 0, 0, 0 end
+	local cx0 = math.max(0, math.floor((x - r) / c) - CR.CELLE)
+	local cx1 = math.min(TW - 1, math.floor((x + r) / c) + CR.CELLE)
+	local cy0 = math.max(0, math.floor((y - r) / c) - CR.CELLE)
+	local cy1 = math.min(TH - 1, math.floor((y + r) / c) + CR.CELLE)
+	local fuori = CR.BORDO + CR.PASSO * 2
+	for cy = cy0, cy1 do
+		local dy = (cy + 0.5) * c - y
+		for cx = cx0, cx1 do
+			local dx = (cx + 0.5) * c - x
+			local v = CR.BORDO + (math.sqrt(dx * dx + dy * dy) - r) * CR.PASSO
+			v = math.floor(math.max(0, math.min(255, v)) + 0.5)
+			local i = cy * TW + cx + 1
+			if v < fuori and (data[i] == 2 or (cx > 0 and data[i - 1] == 2)
+				or (cx < TW - 1 and data[i + 1] == 2) or data[i - TW] == 2 or data[i + TW] == 2) then
+				v = fuori
+			end
+			local j = i * 4 - 1
+			if v < full[j] then full[j] = v end
+		end
+	end
+	return cx0, cy0, cx1, cy1
+end
+
+-- I crateri delle esplosioni in una lista di eventi saltati (replay, ricetta):
+-- così quando si ridisegna la maschera ci sono anche loro
+function CR.ricorda(self, eventi)
+	local k = CR.lista(self)
+	for _, e in ipairs(eventi) do
+		if e.type == "explosion" then k[#k + 1] = { x = e.x, y = e.y, r = e.r } end
+	end
+end
 
 local function mask_params(w, h, x, y)
 	return {
@@ -319,10 +372,11 @@ local function disegna_terreno(self)
 	for i = 1, TW * TH do
 		local v = data[i] ~= 0 and 255 or 0
 		local j = i * 4 - 3
-		st[j], st[j + 1] = v, v
+		st[j], st[j + 1], st[j + 2], st[j + 3] = v, v, 255, 255
 	end
 	self.mask_stream = st
 	self.mask_buf = buf
+	for _, k in ipairs(CR.lista(self)) do CR.scava(self, k.x, k.y, k.r) end
 	fotogrammi.segna("maschera")
 	if self.mask_tex then
 		resource.set_texture(self.mask_tex, mask_params(TW, TH), buf)
@@ -351,7 +405,7 @@ local function redraw_cells(self, cx0, cy0, cx1, cy1)
 			local j = i * 4 - 3
 			local now = data[i] ~= 0 and 255 or 0
 			full[j] = now
-			st[k], st[k + 1] = now, full[j + 1]
+			st[k], st[k + 1], st[k + 2], st[k + 3] = now, full[j + 1], full[j + 2], 255
 			i, k = i + 1, k + 4
 		end
 	end
@@ -909,8 +963,11 @@ local function handle_event(self, e)
 			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
 		end
 		self.drawn_map = nil
-		redraw_cells(self, math.floor((e.x - e.r) / game.CELL) - 1, row_min - 1,
-			math.floor((e.x + e.r) / game.CELL) + 1, row_max + 1)
+		local k = CR.lista(self)
+		k[#k + 1] = { x = e.x, y = e.y, r = e.r }
+		local cx0, cy0, cx1, cy1 = CR.scava(self, e.x, e.y, e.r)
+		redraw_cells(self, math.min(cx0, math.floor((e.x - e.r) / game.CELL) - 1), math.min(cy0, row_min - 1),
+			math.max(cx1, math.floor((e.x + e.r) / game.CELL) + 1), math.max(cy1, row_max + 1))
 		explosion(self, e.x, e.y, e.r)
 		self.cam_sosta, self.sosta_x, self.sosta_y = CAMERA_SOSTA, e.x, e.y
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
@@ -1296,8 +1353,10 @@ local function on_server_message(self, m)
 		set_controls_visible(self, true)
 		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. self.names[m.you]))
 	elseif m.t == "sync" and self.g then
+		local k = CR.lista(self)
 		for _, c in ipairs(m.x) do
 			self.g.terrain:carve(c[1], c[2], c[3])
+			k[#k + 1] = { x = c[1], y = c[2], r = c[3] }
 		end
 		self.drawn_map = nil
 		draw_terrain(self)
@@ -1611,7 +1670,7 @@ function CP.avvia_replay(self, r, numero, da)
 	self.lettore, self.rivedendo, self.impronta = replay.lettore(r), numero, 1
 	while self.g.tick < (da or 0) and self.g.phase ~= "over" do
 		CP.passo_replay(self)
-		self.g:pop_events()
+		CR.ricorda(self, self.g:pop_events())
 	end
 	draw_terrain(self)
 	reset_pose(self)
@@ -1948,7 +2007,7 @@ local function start_ricetta(self, path, da)
 	while self.g.tick < da and self.g.phase ~= "over" do
 		self.g:step(replay.input(self.ricetta, self.g, self.bots))
 		replay.dopo(self.ricetta, self.g)
-		self.g:pop_events()
+		CR.ricorda(self, self.g:pop_events())
 	end
 	for i, h in ipairs(self.ricetta.impronte) do
 		local attesa = r.impronte[i]
