@@ -6,11 +6,11 @@
 
 | specialista | mestiere | campione / soglia | bravura | esami | armi principali | cosa cambia |
 |---|---|---|---|---|---|---|
-| spingitore | uccisioni nel vuoto a partita | 1.38 / 1.38 | 0.518 | 52% 53% 53% 53% 53% 54% | shards 20%, missile 19%, sniper 16% | paura di perdere vita ÷3.2, paura di morire ×3.2, fatica a camminare ×3.5, voglia di globo 193 (oggi 100), riparo a piedi più che col globo 33 (oggi 3), gusto per il Mantice ×1.6, voglia di casse 57 (oggi 12) |
-| acrobata | globi e Rampino a partita | 9.53 / 9.54 | 0.525 | 46% 52% 50% 51% 50% 50% | punch 21%, missile 19%, sword 15% | paura di perdere vita ×8.3, cura del compagno ×1.8, paura di morire ÷1.7, voglia di globo 253 (oggi 100), riparo a piedi più che col globo -19 (oggi 3), voglia di buttare nel vuoto ×2.2, gusto per le armi da vicino ×1.8, gusto per il Mantice ×2.0, voglia di casse 49 (oggi 12) |
-| cecchino | quota del danno fatto da lontano | 0.76 / 0.76 | 0.515 | 47% 52% 49% 49% 51% 51% | shards 26%, missile 17%, grenade 14% | paura di morire ÷7.1, fatica a camminare ÷2.4, voglia di globo 357 (oggi 100), riparo a piedi più che col globo 10 (oggi 3), voglia di casse quando restano pochi colpi 20 (oggi 8) |
-| picchiatore | quota del danno fatto da vicino | 0.66 / 0.65 | 0.527 | 55% 50% 50% 50% 57% 56% | punch 20%, lunge 19%, mallet 16% | cura del compagno ×5.0, fatica a camminare ×8.0, voglia di globo 244 (oggi 100), voglia di buttare nel vuoto ×2.2, voglia di uccidere ÷2.0, gusto per le armi da vicino ×1.9, voglia di casse 43 (oggi 12) |
-| sopravvissuto | morti a partita, al contrario | -3.66 / -3.66 | 0.520 | 52% 52% 52% 53% 56% 52% | punch 20%, lunge 18%, mallet 17% | paura di perdere vita ÷4.6, cura del compagno ×5.0, fatica a camminare ×2.0, voglia di globo 308 (oggi 100), riparo a piedi più che col globo 17 (oggi 3), voglia di uccidere ÷2.0, voglia di casse 34 (oggi 12), voglia di casse quando restano pochi colpi 24 (oggi 8) |
+| spingitore | uccisioni nel vuoto a partita | 1.46 / 1.44 | 0.530 | 52% 53% 53% 53% 53% 54% 57% | punch 22%, missile 19%, sword 15% | paura di perdere vita ÷4.4, cura del compagno ×2.1, paura di morire ×3.3, fatica a camminare ×5.0, voglia di globo 314 (oggi 100), riparo a piedi più che col globo 13 (oggi 3), voglia di buttare nel vuoto ×2.1, gusto per le armi da lontano ÷1.7, voglia di casse 51 (oggi 12), voglia di casse quando restano pochi colpi 15 (oggi 8) |
+| acrobata | globi e Rampino a partita | 9.60 / 9.56 | 0.526 | 46% 52% 50% 51% 50% 50% 48% | missile 22%, punch 20%, sword 15% | paura di perdere vita ×4.0, cura del compagno ×2.5, voglia di globo 171 (oggi 100), riparo a piedi più che col globo -4 (oggi 3), voglia di buttare nel vuoto ×3.2, voglia di uccidere ×1.8, gusto per le armi da vicino ×2.0, gusto per il Mantice ×2.5, voglia di casse 55 (oggi 12), voglia di casse quando restano pochi colpi 0 (oggi 8) |
+| cecchino | quota del danno fatto da lontano | 0.76 / 0.76 | 0.508 | 47% 52% 49% 49% 51% 51% 51% | shards 23%, missile 19%, sniper 14% | paura di morire ÷7.1, fatica a camminare ÷2.4, voglia di globo 357 (oggi 100), riparo a piedi più che col globo 10 (oggi 3), voglia di casse quando restano pochi colpi 20 (oggi 8) |
+| picchiatore | quota del danno fatto da vicino | 0.66 / 0.66 | 0.520 | 55% 50% 50% 50% 57% 56% 56% | punch 21%, mallet 17%, lunge 17% | cura del compagno ×5.0, fatica a camminare ×8.0, voglia di globo 244 (oggi 100), voglia di buttare nel vuoto ×2.2, voglia di uccidere ÷2.0, gusto per le armi da vicino ×1.9, voglia di casse 43 (oggi 12) |
+| sopravvissuto | morti a partita, al contrario | -3.62 / -3.62 | 0.511 | 52% 52% 52% 53% 56% 52% 51% | punch 20%, missile 18%, lunge 16% | paura di perdere vita ×1.8, cura del compagno ×5.0, fatica a camminare ÷3.0, voglia di globo 360 (oggi 100), riparo a piedi più che col globo 29 (oggi 3), voglia di fare danno ×2.0, voglia di casse 21 (oggi 12), voglia di casse quando restano pochi colpi 19 (oggi 8) |
 
 ## Scelte prese da sola quando non migliorava
 
@@ -56,3 +56,8 @@ Per ogni specialista: bravura del campione e mestiere / soglia.
 | 28 | 0.479 | 0.528 (1.40 / 1.38) | 0.530 (9.53 / 9.54) | 0.519 (0.76 / 0.76) | 0.519 (0.66 / 0.64) | 0.536 (-3.69 / -3.66) |
 | 29 | 0.462 | 0.528 (1.39 / 1.38) | 0.527 (9.52 / 9.54) | 0.516 (0.76 / 0.76) | 0.516 (0.67 / 0.65) | 0.539 (-3.68 / -3.66) |
 | 30 | 0.467 | 0.518 (1.38 / 1.38) | 0.525 (9.53 / 9.54) | 0.515 (0.76 / 0.76) | 0.527 (0.66 / 0.65) | 0.520 (-3.66 / -3.66) |
+| 31 | 0.462 | 0.510 (1.39 / 1.39) | 0.526 (9.54 / 9.54) | 0.516 (0.76 / 0.76) | 0.531 (0.66 / 0.66) | 0.531 (-3.66 / -3.66) |
+| 32 | 0.445 | 0.539 (1.52 / 1.42) | 0.521 (9.55 / 9.54) | 0.512 (0.76 / 0.76) | 0.527 (0.66 / 0.66) | 0.524 (-3.61 / -3.65) |
+| 33 | 0.447 | 0.543 (1.45 / 1.43) | 0.519 (9.56 / 9.55) | 0.510 (0.76 / 0.76) | 0.521 (0.66 / 0.66) | 0.517 (-3.52 / -3.62) |
+| 34 | 0.533 | 0.538 (1.47 / 1.44) | 0.517 (9.56 / 9.55) | 0.507 (0.76 / 0.76) | 0.527 (0.66 / 0.66) | 0.521 (-3.61 / -3.62) |
+| 35 | 0.470 | 0.530 (1.46 / 1.44) | 0.526 (9.60 / 9.56) | 0.508 (0.76 / 0.76) | 0.520 (0.66 / 0.66) | 0.511 (-3.62 / -3.62) |
