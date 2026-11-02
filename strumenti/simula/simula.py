@@ -116,7 +116,7 @@ def impostazioni(scenario):
     return "".join(righe)
 
 
-def build(out, extra=""):
+def build(out, extra="", compresse=False):
     info("3. build con bob")
     # niente estensione WebSocket né estensioni native del client (si compilano sul
     # build server di Defold, che da qui non si raggiunge: si compila una copia del
@@ -126,6 +126,14 @@ def build(out, extra=""):
     bundle = out / "bundle"
     shutil.rmtree(bundle, ignore_errors=True)
     radice = senza_estensioni.copia(out / "client")
+    if not compresse:
+        # gli sfondi dipinti non compressi: lo schermo virtuale (Mesa, senza scheda video)
+        # decomprime le texture a ogni lettura e i dipinti a tutto schermo lo portano
+        # da 20 a 3 fotogrammi al secondo (2 nov). --compresse li prova come nell'APK
+        profili = radice / "texture_profiles.texture_profiles"
+        testo = profili.read_text()
+        i = testo.index('name: "Dipinti"')
+        profili.write_text(testo[:i] + testo[i:].replace("COMPRESSION_TYPE_BASIS_UASTC", "COMPRESSION_TYPE_DEFAULT", 1))
     with open(radice / "input" / "game.input_binding", "a") as f:
         for nome, (tasto, _) in PAD.items():
             f.write(f'key_trigger {{\n  input: KEY_{tasto}\n  action: "pad_{nome}"\n}}\n')
@@ -527,6 +535,10 @@ def gioca(exe, out, scenario, video):
     info(f"4. partita: {scenario.relative_to(REPO) if scenario.is_relative_to(REPO) else scenario}")
     g = Gioco(exe, out, video)
     try:
+        # prima si aspetta che il gioco sia pronto (ingresso chiuso, dipinti caricati:
+        # qui si caricano piano), tranne negli scenari che guardano l'ingresso
+        if "prova_ingresso" not in scenario.read_text():
+            aspetta_che(g, lambda: g.stato.get("pronto") == "1", 20, "il gioco pronto (pronto=1)")
         for n, riga in enumerate(scenario.read_text().splitlines(), 1):
             if riga.strip() and not riga.strip().startswith("#"):
                 info(f"   {n}: {riga.strip()}")
@@ -567,6 +579,8 @@ def main():
     ap.add_argument("-s", "--scenario", type=Path, default=QUI / "scenari" / "base.txt")
     ap.add_argument("--solo-build", action="store_true", help="controlli, test e build, senza avviare il gioco")
     ap.add_argument("--senza-video", action="store_true")
+    ap.add_argument("--compresse", action="store_true",
+                    help="i dipinti compressi come nell'APK (lento: la scheda video è simulata)")
     ap.add_argument("--scala", type=int, default=1, help="schermo S volte più grande (foto ad alta densità)")
     ap.add_argument("--schermo", default="1280x720",
                     help="LxA: schermo con altre proporzioni, per esempio 1600x720 (telefono 20:9) o 960x720 (tablet 4:3)")
@@ -585,7 +599,7 @@ def main():
                 passo()
             except Fallito as e:
                 problemi.append(str(e))
-        exe = build(out, "" if args.solo_build else impostazioni(args.scenario.resolve()))
+        exe = build(out, "" if args.solo_build else impostazioni(args.scenario.resolve()), args.compresse)
         if not args.solo_build:
             gioca(exe, out, args.scenario.resolve(), not args.senza_video)
     except Fallito as e:

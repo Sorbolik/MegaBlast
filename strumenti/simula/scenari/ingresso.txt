@@ -8,7 +8,8 @@ aspetta 1
 foto 01_ingresso
 aspetta 1.2
 foto 02_ingresso_dopo
-aspetta 3
+aspetta_stato pronto=1 8           # ingresso chiuso e sfondo della home caricato
+aspetta 0.5
 foto 03_home
 tocca 1075 102                      # GIOCA: lo scivolo
 aspetta 0.06

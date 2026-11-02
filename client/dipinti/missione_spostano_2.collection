@@ -1,0 +1,36 @@
+name: "missione_spostano_2"
+scale_along_z: 0
+embedded_instances {
+  id: "dipinto"
+  data: "components {\n"
+  "  id: \"dipinto\"\n"
+  "  component: \"/dipinti/terreno.script\"\n"
+  "  properties {\n"
+  "    id: \"nome\"\n"
+  "    value: \"missione_spostano_2\"\n"
+  "    type: PROPERTY_TYPE_HASH\n"
+  "  }\n"
+  "  properties {\n"
+  "    id: \"terreno\"\n"
+  "    value: \"/dipinti/mappe/missione_spostano_2.png\"\n"
+  "    type: PROPERTY_TYPE_HASH\n"
+  "  }\n"
+  "}\n"
+  ""
+  position {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  }
+  rotation {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+  }
+  scale3 {
+    x: 1.0
+    y: 1.0
+    z: 1.0
+  }
+}
