@@ -31,7 +31,7 @@ M.LARGO = 286
 local PAD = 14
 local TESTA = 52          -- livello, nome e badge
 local RITRATTO = 196      -- il diavoletto
-local FIGURA_H = 124      -- quanto è alto il diavoletto fino alla testa (con la fiammella circa 170)
+local FIGURA_H = 124      -- quanto è alto il diavoletto fino alla testa
 local PEZZO, PEZZO_GAP = 60, 6
 local POTERI = 30
 local ETICHETTA = 18
@@ -40,9 +40,10 @@ local RISORSE = 24
 local ALBERO = 12
 local LEGENDA = 18
 
--- i pezzi nell'atlante del diavoletto (le pelli di Gabriella con la squadra)
-local PEZZI_IMG = { mask = "testa", chest = "busto", cloak = "ala", legs = "gamba" }
-local PELLE = pelli.pelli.gabriella_squadra.pezzi
+-- i pezzi nell'atlante del diavoletto: quelli dell'apprendista (il personaggio
+-- di tutti) e, per il mantello, l'ala di base (l'apprendista non ha le ali)
+local PELLE = pelli.pelli.apprendista.pezzi
+local PEZZI_IMG = { mask = PELLE.testa, chest = PELLE.busto, cloak = require("battaglia.diavoletto").pezzi.ala, legs = PELLE.gamba }
 -- i colori dei rami dell'albero, nell'ordine di abilita.BRANCHES
 local RAMI = { C.ACCIAIO, C.MENTA, C.BRACE }
 local SIGLE = { "MOB", "DIF", "ARS" }
@@ -116,7 +117,7 @@ function M.pezzo(p, squadra, x, y, d, parent)
 		gui.move_below(a, bordo)
 	end
 	-- l'immagine del pezzo, intera nel riquadro
-	local img = PELLE[PEZZI_IMG[p.slot]]
+	local img = PEZZI_IMG[p.slot]
 	if img then
 		local k = (d - 10) / math.max(img.w, img.h)
 		local alfa = vuoto and 0.22 or 1
@@ -206,10 +207,8 @@ function M.new(v, x, y, opz, parent)
 		local posa = box(0, yy - RITRATTO + 16, 0, 0, C.LUCE, c.root)
 		gui.set_visible(posa, false)
 		c.figura = scoria.new(col, scoria.PERSONAGGIO, "missile")
-		-- fiamma piccola dell'attesa ma sempre con l'arma in mano (come nelle proposte)
+		-- sempre con l'arma in mano (come nelle proposte), non di turno
 		c.figura.con_arma, c.figura.arma_t = true, math.huge
-		-- la fiammella "in attesa" (la fiamma grande dice di chi è il turno, e qui non lo è
-		-- di nessuno): resta dentro il ritratto
 		c.st = { x = 0, y = 0, facing = v.verso or 1, grounded = true, moving = 0, turno = false }
 		scoria.update(c.figura, 0, c.st)
 		local k = FIGURA_H / game.DISEGNO_H

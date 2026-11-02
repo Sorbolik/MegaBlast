@@ -38,7 +38,13 @@ def main():
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le pelli dello stampino (strumenti/stampino/taglia.py), coi loro pezzi
     pelli = leggi("client/battaglia/pelli.lua")
+    # in SVG quelle che ce l'hanno (strumenti/stampino/pelli/svg, da taglia.py --tavolozza):
+    # nell'editor restano nitide con lo zoom
     for n in sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', pelli))):
+        svg = REPO / "strumenti/stampino/pelli/svg" / (n + ".svg")
+        if svg.exists():
+            immagini[n] = "data:image/svg+xml;base64," + base64.b64encode(svg.read_bytes()).decode()
+            continue
         dati = (REPO / "client/assets/pelli" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le armi in mano (solo quelle, non i colpi), come armi/nome
@@ -54,9 +60,9 @@ def main():
     personaggio = re.findall(r'"(\w+)"', re.search(r"M\.PERSONAGGIO = \{(.*?)\}", scoria).group(1))
     riposo = {n: float(v) for n, v in re.findall(r"(\w+) = (-?[0-9.]+)", blocco)}
     game = leggi("client/sim/game.lua")
-    # il disegno è alto game.DISEGNO_H nel profilo blastron, quello del gioco
-    assert 'M.DEFAULT_PHYSICS = "blastron"' in game, "l'editor misura il diavoletto sul profilo blastron"
-    misura = {k: float(re.search(r"M\.%s = ([0-9.]+)" % k, game).group(1)) for k in ("BLASTRON_ROBOT_H", "BLASTRON_CORPO")}
+    # il disegno è alto game.DISEGNO_H = REF_H * CORPO
+    assert "M.DISEGNO_H = M.REF_H * M.CORPO" in game, "l'editor misura il diavoletto come sim/game.lua"
+    misura = {k: float(re.search(r"M\.%s = ([0-9.]+)" % k, game).group(1)) for k in ("REF_H", "CORPO")}
     squadre = re.search(r"SQUADRA = \{(.*)\}", leggi("client/ui/ui.lua")).group(1)
     colori = [[float(x) for x in c.split(",")] for c in re.findall(r"c\(([^)]*)\)", squadre)]
     dati = {
@@ -69,7 +75,7 @@ def main():
         "armi_riposo": riposo,
         "personaggio": personaggio,
         "immagini": immagini,
-        "disegno_h": misura["BLASTRON_ROBOT_H"] * misura["BLASTRON_CORPO"],
+        "disegno_h": misura["REF_H"] * misura["CORPO"],
         "corpo": leggi("client/sim/corpo.lua"),
         "squadre": colori,
     }

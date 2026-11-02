@@ -138,6 +138,10 @@ func TestEventoOnline(t *testing.T) {
 	if err := json.Unmarshal(body, &cal); err != nil || len(cal.Eventi) != 4 || res.Header.Get("Access-Control-Allow-Origin") != "*" {
 		t.Fatalf("GET /eventi: %v %s", err, body)
 	}
+	// l'ingresso del gioco lo vuole sempre fresco, mai una copia tenuta da parte
+	if c := res.Header.Get("Cache-Control"); c != "no-store" {
+		t.Fatalf("GET /eventi: Cache-Control %q, voglio no-store", c)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

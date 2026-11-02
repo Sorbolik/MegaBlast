@@ -27,11 +27,13 @@ sviluppatrice e scrive dall'account di Sergio.
 - Ha provato e lasciato: pezzi staccati fluttuanti, frame ChatGPT, video AI,
   Ludo, pixel art; è tornata al diavoletto con le gambe.
 
-## Stato (28 ott)
+## Stato (2 nov)
 
-Il suo diavoletto dipinto è ora una **skin sullo stampino** (`gabriella`,
-`gabriella_squadra`) montata sul rig vettoriale con contorno nero spesso, dalla
-scheda WB-001 generata da Codex. Vedi [personaggio.md](personaggio.md).
+Il suo diavoletto dipinto è stato una **skin sullo stampino** (`gabriella`,
+`gabriella_squadra`, scheda WB-001 generata da Codex) e il personaggio di tutti
+dal 29 ott al 2 nov; ora il personaggio principale è l'apprendista di Sergio e
+le sue pelli sono tolte dal gioco (restano in git e in `/mnt/project-files/gabriella/`).
+Vedi [personaggio.md](personaggio.md).
 
 ## Aperte
 

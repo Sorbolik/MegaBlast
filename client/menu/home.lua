@@ -1,5 +1,6 @@
--- La home (menu principale): fondo scuro, la Scoria col bagliore del Nucleo
--- dietro (toccandolo si apre il PROFILO), il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
+-- La home (menu principale): dietro lo sfondo dipinto della Forgia che scorre
+-- piano (lo disegna la mesh del terreno, battaglia/terreno.script; Sergio 2 nov),
+-- l'apprendista fermo senza arma col bagliore del Nucleo dietro (toccandolo si apre il PROFILO), il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
 -- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA, EVENTI e, in alto a destra,
 -- la rotellina delle IMPOSTAZIONI (menu/impostazioni.lua). Le schermate nuove aggiungono qui il loro bottone
 -- quando esistono (stile in ui/ui.lua).
@@ -7,7 +8,7 @@
 -- Uso (dal gui_script, che ha la texture ui e il font titolo):
 --   local home = require "menu.home"
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
---   home.show(h) / home.hide(h)
+--   home.show(h, senza_velo) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
 --                                                        -- "impostazioni", "profilo" (toccando il diavoletto) o nil
@@ -46,8 +47,6 @@ end
 function M.new(colore)
 	local h = { tops = {}, bottoni = {}, t = 0, colore = colore }
 
-	h.tops[#h.tops + 1] = ui.sfondo()
-
 	-- il bagliore del Nucleo dietro la Scoria, che respira
 	h.posa = vuoto(CORPO_X, CORPO_Y)
 	h.tops[#h.tops + 1] = h.posa
@@ -63,14 +62,17 @@ function M.new(colore)
 	h.corpo = scoria.new(colore, scoria.PERSONAGGIO)
 	gui.set_parent(h.corpo.root, corpo)
 	scoria.set_enabled(h.corpo, true)
-	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true }
+	-- il fermo senza arma, senza scenette (Sergio, 2 nov)
+	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	-- toccando il diavoletto si apre il profilo (menu/profilo_schede.lua): una
 	-- zona che non si vede, sopra di lui, e una scritta discreta sotto i piedi
 	local zona = gui.new_box_node(vmath.vector3(CORPO_X, CORPO_Y + 120, 0), vmath.vector3(260, 320, 0))
 	gui.set_visible(zona, false)
 	h.tops[#h.tops + 1] = zona
 	h.bottoni[#h.bottoni + 1] = { nodo = zona, bordo = zona, azione = "profilo", colore = ui.C.LUCE, riposo = ui.C.LUCE }
-	local scritta = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.SPENTO, h.posa)
+	local scritta = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.TESTO, h.posa)
+	-- sullo sfondo dipinto la scritta col contorno scuro
+	gui.set_outline(scritta, ui.C.OMBRA)
 	gui.set_inherit_alpha(scritta, true)
 
 	-- il nome in alto a sinistra
@@ -105,9 +107,16 @@ function M.new(colore)
 	return h
 end
 
-function M.show(h)
+-- senza_velo: ci si arriva con un passaggio (ui/passaggio.lua), che copre già
+function M.show(h, senza_velo)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
 	h.bottoni.premuto = nil
+	h.visibile = true
+	if senza_velo then
+		gui.cancel_animations(h.velo, "color.w")
+		gui.set_enabled(h.velo, false)
+		return
+	end
 	gui.set_enabled(h.velo, true)
 	gui.set_color(h.velo, vmath.vector4(0, 0, 0, 1))
 	gui.animate(h.velo, "color.w", 0, gui.EASING_OUTQUAD, 0.35, 0, function()

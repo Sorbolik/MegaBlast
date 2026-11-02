@@ -1,10 +1,8 @@
--- Colpi corpo a corpo di Blastron, ricostruiti dalle animazioni dell'APK
--- (docs/blastron_comandi.md).
+-- Colpi corpo a corpo: la Lama (fendente) e il Pugno del Titano (montante),
+-- fotogramma per fotogramma (docs/fisica.md).
 --
--- In Blastron il braccio dell'arma è figlio di un osso ("dummy_bone") che il
--- codice ruota ogni fotogramma sulla direzione della mira. L'animazione del
--- colpo gira quindi insieme alla mira: mirando in basso il fendente scende
--- dall'alto verso il basso, mirando in alto sale.
+-- L'animazione del colpo gira insieme alla mira: mirando in basso il fendente
+-- scende dall'alto verso il basso, mirando in alto sale.
 -- La parte che colpisce è un rettangolo lungo l'asse dell'arma che segue
 -- l'animazione. Conta solo tra il fotogramma "apri" e "chiudi"; chi ci passa
 -- dentro riceve il colpo una volta sola, quando la finestra si chiude.
@@ -12,12 +10,12 @@
 -- Per ogni fotogramma: ox, oy = dove sta l'osso della mira rispetto ai piedi;
 -- x0, y0 -> x1, y1 = l'asse del rettangolo nel riferimento della mira
 -- (x avanti lungo la mira, y a sinistra), con origine nell'osso; angolo = gradi
--- dell'arma rispetto alla mira. Tutto in unità di Blastron (robot alto 3,612),
--- per un robot rivolto a destra.
+-- dell'arma rispetto alla mira. Tutto in unità U (sim/game.lua: il robot di
+-- riferimento è alto 3,612 U), per un robot rivolto a destra.
 
 local M = {}
 
--- Fendente (bot_hack, Hanzo Special): 70 fotogrammi a 75 al secondo.
+-- Fendente: 70 fotogrammi a 75 al secondo.
 -- Dal fotogramma 0 al 30 la lama sale sopra la testa e va dietro la schiena,
 -- dal 30 al 34 cala in avanti (un quinto di secondo dietro, un ventesimo per scendere).
 M.fendente = {
@@ -99,7 +97,7 @@ M.fendente = {
 	},
 }
 
--- Montante (bot_uppercut, Flame-Yuken): 95 fotogrammi a 45 al secondo.
+-- Montante: 95 fotogrammi a 45 al secondo.
 -- Il pugno parte dal basso davanti e sale fino in alto; poi resta su mentre il
 -- robot si solleva, e torna giù alla fine.
 M.montante = {

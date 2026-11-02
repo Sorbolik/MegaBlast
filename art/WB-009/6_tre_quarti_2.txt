@@ -1,0 +1,13 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right. It is the EXACT model: redraw image 1 as it is, with the same head, face, horns, ears, neckerchief, torso, belly patch, arms, hands, tail, proportions, contours, colors and flat style, in the same pose and the same place on the canvas.
+
+Change ONE thing only: the leg on the LEFT of the picture. In image 1 its foot points to the left. Turn that leg so that its foot points to the RIGHT, exactly like the foot of the other leg (the one on the right of the picture): same direction, same three-quarter angle, same shape of the foot and of the three toes, so that both feet point to the right like a figure standing and facing right. The leg keeps its length, thickness and position under the body; only its knee and foot turn to the right. Everything else stays exactly as in image 1.
+
+Rendering rules, very strict, because this drawing will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no brush strokes, no soot, no noise, no soft shading, no glow.
+- Thick, clean, closed pure-black #000000 outline of even weight around the whole figure, with thinner black lines only for inner details.
+- Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; belly and muzzle #F1DFB0, their shadow #D6BC86; horns and toenails #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF; neckerchief pure bright green #00FF00 with shadow #00B400 (only on the neckerchief).
+- Flat pure white #FFFFFF background, no ground, no shadow on the ground, no glow around the figure.
+- No text, numbers, labels, arrows or signatures. Portrait format 2:3.
+
+Riferimenti (ordine):
+Image 1: art/WB-009/scelti/tre_quarti.png

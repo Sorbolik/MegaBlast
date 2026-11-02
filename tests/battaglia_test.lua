@@ -8,7 +8,8 @@ local function vec(x, y, z, w) return { x = x or 0, y = y or 0, z = z or 0, w = 
 vmath = { vector3 = vec, vector4 = vec }
 hash = function(s) return "#" .. s end
 local nodi = {}
-ordine = 0
+local frazione = 0
+local ordine = 0
 local function nuovo(p, s)
 	ordine = ordine + 1
 	local n = { pos = vec(p.x, p.y), euler = vec(), scale = vec(1, 1, 1), size = s, enabled = true, ordine = ordine }
@@ -34,11 +35,15 @@ gui = {
 	set_font = function() end, set_outline = function() end, set_pivot = function() end, set_line_break = function() end,
 	set_slice9 = function() end, PIVOT_W = 3,
 	set_outer_bounds = function() end, PIEBOUNDS_ELLIPSE = 1, ADJUST_FIT = 0,
-	-- l'ordine fra i fratelli: move_above(n, nil) lo porta sopra a tutti
-	move_above = function(n) ordine = ordine + 1; n.ordine = ordine end,
+	-- l'ordine fra i fratelli: move_above(n, r) lo mette appena sopra r, con nil sopra a tutti
+	move_above = function(n, r) if r then frazione = frazione + 1e-4; n.ordine = r.ordine + frazione else ordine = ordine + 1; n.ordine = ordine end end,
 }
 
 local game = require "sim.game"
+-- i perni spostati dall'editor (battaglia/perni.lua) sono dati di Sergio e
+-- cambiano: qui si prova la meccanica coi perni fermi, e i test che li
+-- spostano mettono i loro
+package.loaded["battaglia.perni"] = {}
 local scoria = require "battaglia.scoria"
 local camera = require "battaglia.camera"
 local targa = require "battaglia.targa"
@@ -224,7 +229,7 @@ end
 check(buone, "animazioni: canali noti, chiavi in ordine dentro la durata")
 for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
 	"sconfitta", "naso", "sbadiglio", "guarda_coda", "fermo_arma", "corsa_arma", "aria_arma", "sale_arma",
-	"scende_arma", "mira", "fiammella" }) do
+	"scende_arma", "mira" }) do
 	check(A[nome] ~= nil, "animazioni: c'è la clip " .. nome)
 end
 
@@ -264,10 +269,44 @@ do
 		and math.abs(braccio.pos.y - (D.pezzi.braccio.y + 2) * k) < 1e-6
 		and math.abs(v.braccio_a.pos.x - (D.punti.spalle[1] + 3 + v.posa.braccio_a_x) * k) < 1e-6,
 		"perni: il braccio gira attorno al perno spostato e da fermo resta dov'era")
-	check(testa and math.abs(testa.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6
-		and math.abs(v.cima.pos.y - (D.punti.cima[2] - 4 + v.posa_fiamma.fiamma_y) * k) < 1e-6,
-		"perni: la testa e la fiammella restano dov'erano")
-	package.loaded["battaglia.perni"] = nil
+	check(testa and math.abs(testa.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6,
+		"perni: la testa resta dov'era")
+	package.loaded["battaglia.perni"] = {}
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
+-- i perni di busto, coda e manine: da fermi i pezzi restano dove sono, il
+-- busto gira attorno al suo perno
+do
+	local function pezzi_di(perni)
+		package.loaded["battaglia.perni"] = perni
+		package.loaded["battaglia.scoria"] = nil
+		local sc2 = require "battaglia.scoria"
+		local da = #nodi
+		local v = sc2.new(vec(1, 0.2, 0.3, 1))
+		sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0 })
+		local trovati = {}
+		for i = da + 1, #nodi do
+			local n = nodi[i]
+			if n.img and not trovati[n.img] then trovati[n.img] = n end
+		end
+		return v, trovati
+	end
+	local v0, p0 = pezzi_di({})
+	local v1, p1 = pezzi_di({ busto = { 3, 20 }, coda = { 2, -3 }, pugno = { 1, 1 } })
+	local fermi = true
+	for _, img in ipairs({ "busto", "coda_1", "coda_3", "pugno", "testa", "gamba" }) do
+		local x0, y0 = mondo(p0[img], 0, 0)
+		local x1, y1 = mondo(p1[img], 0, 0)
+		if not (p0[img] and math.abs(x0 - x1) < 0.5 and math.abs(y0 - y1) < 0.5) then fermi = false; print(img, x0, y0, x1, y1) end
+	end
+	check(fermi, "perni: busto, coda e manine spostati, da fermi i pezzi restano dov'erano")
+	local px, py = mondo(v1.busto, 0, 0)
+	local PT = D0.punti
+	local gx, gy = mondo(v1.forma, (PT.bacino[1] + 3 + v1.posa.busto_x) * v1.k, (PT.bacino[2] + 20 + v1.posa.busto_y) * v1.k)
+	check(math.abs(px - gx) < 1e-6 and math.abs(py - gy) < 1e-6, "perni: il busto gira attorno al suo perno")
+	package.loaded["battaglia.perni"] = {}
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
 end
@@ -278,6 +317,10 @@ do
 	local A2 = require "battaglia.animazioni"
 	local vecchia = A2.mira_missile
 	A2.mira_missile = { durata = 1, ciclo = true, tracce = {} }
+	-- un'impugnatura con la presa lontana dalla spalla quanto è lungo il braccio
+	-- (quella vera la sposta Sergio nell'editor)
+	local presa_vera = PRESE.missile
+	PRESE.missile = { presa = { 2.4, -4 }, perno = { -6.9, -4 }, spalla = { 32, 110 } }
 	package.loaded["battaglia.perni"] = { braccio = { 3, -2 } }
 	package.loaded["battaglia.scoria"] = nil
 	local sc2 = require "battaglia.scoria"
@@ -291,7 +334,8 @@ do
 	local hx, hy = mondo(v.braccio_a, (b.x - 3) * v.k, (b.y + 2 - b.h / 2 + pu.h * 0.4) * v.k)
 	check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5 and px ~= gx, "perni: col perno del braccio spostato l'arma resta nella mano")
 	A2.mira_missile = vecchia
-	package.loaded["battaglia.perni"] = nil
+	PRESE.missile = presa_vera
+	package.loaded["battaglia.perni"] = {}
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
 end
@@ -315,7 +359,7 @@ do
 		and v.braccio_d.enabled and not v.manina_d.enabled and not v.ala.enabled
 		and not v.coda[1][1].enabled and not v.coda[1][2].enabled and not v.testa.enabled and v.collo.enabled
 		and not v.gamba_d.enabled and v.gamba_a.enabled and v.busto.enabled,
-		"pezzi: la clip toglie braccio, testa (non la fiammella), gamba, ala e coda e mette la manina")
+		"pezzi: la clip toglie braccio, testa, gamba, ala e coda e mette la manina")
 	local D = require "battaglia.diavoletto"
 	local mx = (D.punti.spalle[1] + D.pezzi.braccio.x + 7) * v.k
 	check(math.abs(v.manina_a.pos.x - mx) < 1e-6 and math.abs(math.rad(v.manina_a.euler.z) - 0.5) < 1e-6,
@@ -508,12 +552,16 @@ check(not t.pieno.enabled and tutto_finito(), "targa: a zero la vita sparisce, v
 -- Camera -----------------------------------------------------------------------
 
 local c = camera.new(1280, 720, 1920, 1080)
-camera.salta(c, 960, 540, camera.tutta(c))
-check(c.x == 960 and c.y == 540, "zoom mappa: si vede tutta la mappa, la camera non si sposta")
+local B = camera.BANDA
 camera.salta(c, 100, 100, camera.tutta(c))
-local _, fondo = camera.allo_schermo(c, 960, 0)
-check(c.x == 960 and math.abs(fondo - camera.SOTTO) < 1e-9, "zoom mappa: in basso il fondo della mappa resta sopra l'HUD")
-check(camera.tutta(c) == camera.LIVELLI[#camera.LIVELLI], "l'ultimo livello di zoom mostra tutta la mappa")
+local sx0, fondo = camera.allo_schermo(c, 0, 0)
+local sx1, cima = camera.allo_schermo(c, 1920, 1080)
+check(math.abs(fondo - camera.SOTTO) < 1e-9 and math.abs(cima - (720 - B)) < 1e-9,
+	"zoom mappa: tutta la mappa, sopra la banda e sotto l'HUD")
+check(sx0 >= B - 1e-9 and sx1 <= 1280 - B + 1e-9 and math.abs(sx0 + sx1 - 1280) < 1e-9,
+	"zoom mappa: ai lati almeno la banda, la mappa al centro")
+camera.cambia(c, 5)
+check(camera.zoom(c) == camera.tutta(c), "l'ultimo livello di zoom mostra tutta la mappa con le bande")
 
 camera.salta(c, 640, 360, 2.2)
 local px, py = camera.allo_schermo(c, 700, 400)
@@ -524,11 +572,11 @@ check(px == 640 and py == 360, "il punto seguito sta al centro dello schermo")
 
 camera.salta(c, 0, 0, 2.2)
 px, py = camera.allo_schermo(c, 0, 0)
-check(math.abs(px) < 1e-9 and math.abs(py - camera.SOTTO) < 1e-9,
-	"nell'angolo la camera non esce dai lati, e il fondo della mappa resta sopra l'HUD")
+check(math.abs(px - B) < 1e-9 and math.abs(py - camera.SOTTO) < 1e-9,
+	"nell'angolo la camera esce solo della banda, e il fondo della mappa resta sopra l'HUD")
 camera.salta(c, 1920, 1080, 2.2)
 px, py = camera.allo_schermo(c, 1920, 1080)
-check(math.abs(px - 1280) < 1e-9 and math.abs(py - 720) < 1e-9, "in alto a destra la camera non esce dalla mappa")
+check(math.abs(px - (1280 - B)) < 1e-9 and math.abs(py - (720 - B)) < 1e-9, "in alto a destra la camera esce solo della banda")
 
 -- telefono 20:9 (ui/schermo.lua): lo schermo vero va da x = -160 a 1440
 local l = camera.new(1280, 720, 1920, 1080)
@@ -536,12 +584,19 @@ camera.vista(l, -160, 0, 1440, 720)
 camera.salta(l, 1000, 500, 1)
 px, py = camera.allo_schermo(l, 1000, 500)
 check(px == 640 and py == 360, "schermo largo: il punto seguito sta al centro")
-check(math.abs(camera.tutta(l) - 1600 / 1920) < 1e-9, "schermo largo: la mappa intera è larga quanto lo schermo")
 camera.cambia(l, 5)
-check(camera.zoom(l) == camera.tutta(l), "schermo largo: il livello MAPPA non mostra il vuoto ai lati")
+check(camera.zoom(l) == camera.tutta(l), "schermo largo: il livello MAPPA è tutta la mappa")
 camera.salta(l, 0, 540, camera.zoom(l))
 px = camera.allo_schermo(l, 0, 540)
-check(math.abs(px + 160) < 1e-9, "schermo largo: il bordo sinistro della mappa sul bordo vero dello schermo")
+local px1 = camera.allo_schermo(l, 1920, 540)
+check(px >= -160 + B - 1e-9 and math.abs(px + px1 - 1280) < 1e-9, "schermo largo: la mappa intera al centro, con le bande ai lati")
+-- tablet 4:3: lo schermo vero va da y = -120 a 840
+local t43 = camera.new(1280, 720, 1920, 1080)
+camera.vista(t43, 0, -120, 1280, 840)
+camera.cambia(t43, 5)
+camera.salta(t43, 960, 540, camera.zoom(t43))
+local tx0 = camera.allo_schermo(t43, 0, 540)
+check(math.abs(tx0 - B) < 1e-9, "tablet: la mappa intera larga quanto lo schermo meno le bande")
 
 -- l'inseguimento non dipende dalla frequenza dello schermo
 local a, b = camera.new(1280, 720, 1920, 1080), camera.new(1280, 720, 1920, 1080)

@@ -1,9 +1,11 @@
 -- Gli eventi del server (GET /eventi, server/eventi.go): il gioco li chiede
--- quando si apre la home e poi ogni minuto mentre la home si vede. Qui solo i
--- dati e le parole; le schermate sono menu/bacheca.lua e menu/coda.lua.
+-- nella schermata d'ingresso, prima di aprire la home (ui/ingresso.lua), poi
+-- ogni minuto mentre la home si vede e a ogni apertura della bacheca e di
+-- DOVE GIOCHI?. Qui solo i dati e le parole; le schermate sono
+-- menu/bacheca.lua e menu/coda.lua.
 --
 --   local eventi = require "main.eventi"
---   eventi.carica(server_url, function() ... end)   -- ws://host/ws -> http://host/eventi
+--   eventi.carica(server_url, fatto, andata_male)   -- ws://host/ws -> http://host/eventi
 --   eventi.in_corso(), eventi.prossimi()             -- liste di occorrenze, in ordine di inizio
 --   eventi.su_coda("2v2")                            -- quelli in corso che contano per quella coda
 --   eventi.riga_home()                               -- la riga sotto EVENTI nella home
@@ -17,6 +19,7 @@ local M = {}
 M.lista = {}      -- le occorrenze dell'ultima risposta
 M.scarto = 0      -- ora del server meno ora del telefono
 M.caricato = false
+M.senza_rete = false  -- l'ultima domanda non ha avuto risposta
 
 -- L'ora del server (il telefono può avere l'orologio avanti o indietro)
 function M.ora()
@@ -37,11 +40,23 @@ local function url_eventi(ws_url)
 	return (u:gsub("/ws$", "")) .. "/eventi"
 end
 
-function M.carica(ws_url, fatto)
-	if not http then return end
+-- Sempre la risposta fresca: mai quella che il motore tiene da parte
+local OPZIONI = { ignore_cache = true, timeout = 3 }
+
+function M.carica(ws_url, fatto, andata_male)
+	if not http then
+		if andata_male then andata_male() end
+		return
+	end
 	http.request(url_eventi(ws_url), "GET", function(_, _, res)
-		if res.status == 200 and M.leggi(res.response, os.time()) and fatto then fatto() end
-	end)
+		if res.status == 200 and M.leggi(res.response, os.time()) then
+			M.senza_rete = false
+			if fatto then fatto() end
+		else
+			M.senza_rete = true
+			if andata_male then andata_male() end
+		end
+	end, nil, nil, OPZIONI)
 end
 
 function M.in_corso(adesso)
@@ -98,7 +113,7 @@ end
 
 -- La riga sotto EVENTI nella home: niente numeri rossi, solo cosa succede
 function M.riga_home(adesso)
-	if not M.caricato then return "" end
+	if not M.caricato then return M.senza_rete and "senza rete" or "" end
 	local ora = M.in_corso(adesso)
 	if #ora == 1 then return ora[1].nome end
 	if #ora > 1 then return #ora .. " in corso" end

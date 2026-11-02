@@ -408,7 +408,7 @@ func TestOnlineMatch(t *testing.T) {
 	if r0["sw"] != w2 || r1["sw"] != d["offer2"].([]any)[0].(string) {
 		t.Fatalf("secondarie scelte sbagliate: %v %v", r0["sw"], r1["sw"])
 	}
-	// con la fisica di Blastron si cammina piano (28 px/s): un secondo basta
+	// si cammina piano (5 U, 38,8 px/s): un secondo basta
 	a.send(`{"t":"in","l":false,"r":true}`)
 	time.Sleep(1000 * time.Millisecond)
 	a.send(`{"t":"in","l":false,"r":false}`)

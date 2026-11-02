@@ -1,0 +1,25 @@
+# Controlli su ogni PR: gli stessi di strumenti/controlli/tutti.sh (sintassi e
+# globali del Lua, controlli dell'editor di Defold, tutti i test Lua, go vet,
+# gofmt, go test). Non costruisce il gioco: quello lo fa build-pr.yml.
+name: Controlli
+on:
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: controlli-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  controlli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: LuaJIT
+        run: sudo apt-get install -y --no-install-recommends luajit
+      - name: Controlli
+        run: bash strumenti/controlli/tutti.sh

@@ -1,0 +1,20 @@
+# Le mappe dell'apprendista (Sergio, 2 nov): il Fabbro sulla fossa di lava, con
+# lo sfondo dipinto che scorre piano. Il missile scava il pavimento e nel
+# cratere si vede lo sfondo, con l'orlo bruciato. Poi tutta la mappa (zoom
+# MAPPA) con le bande attorno, e la home con lo sfondo dipinto e l'apprendista
+# fermo senza arma.
+imposta prova_missione il_fabbro
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2.5
+foto 01_fossa
+premi 1
+mira 60 -60 0.3
+aspetta_evento explosion 8
+aspetta 0.8
+foto 02_cratere
+zoom 03_cratere_vicino 3
+premi z
+premi z
+aspetta 1.5
+foto 04_tutta_la_mappa

@@ -1,14 +1,19 @@
 # Scrive client/sim/mapdata.lua dalle maschere delle mappe disegnate (640 x 360:
 # bianco terra, rosso acciaio). Lanciare dalla cartella del repository.
+import os, re
 import numpy as np
 from PIL import Image
+# le prime due stanno nei file del progetto, le mappe dipinte qui nel repository
+# (le fa strumenti/grafica/mappe_dipinte.py)
 MAPPE = [
-    ('forgia', 'grafica/mappe/mappa_forgia/maschera.png'),
-    ('crogiolo', 'grafica/mappe/mappa_crogiolo/maschera.png'),
+    ('forgia', '/mnt/project-files/grafica/mappe/mappa_forgia/maschera.png'),
+    ('crogiolo', '/mnt/project-files/grafica/mappe/mappa_crogiolo/maschera.png'),
+    ('pavimento', 'strumenti/grafica/mappe/pavimento.png'),
+    ('fossa', 'strumenti/grafica/mappe/fossa.png'),
 ]
 
 def righe(path):
-    m = np.asarray(Image.open('/mnt/project-files/' + path).convert('RGB')).astype(int)
+    m = np.asarray(Image.open(path).convert('RGB')).astype(int)
     cell = np.zeros(m.shape[:2], np.uint8)
     cell[(m[..., 0] > 127) & (m[..., 1] > 127)] = 1
     cell[(m[..., 0] > 127) & (m[..., 1] < 128)] = 2
@@ -22,10 +27,18 @@ def righe(path):
         rows.append(''.join(s))
     return rows
 
+# fuori dal container di Claude i file del progetto non ci sono: quelle mappe
+# restano come sono già in mapdata.lua
+vecchio = open('client/sim/mapdata.lua').read()
 parti = []
 for nome, path in MAPPE:
+    etichetta = path.replace('/mnt/project-files/', '')
+    if not os.path.exists(path):
+        blocco = re.search(r'-- [^\n]*\nM\.%s = \{.*?\n\}\n' % nome, vecchio, re.S)
+        parti.append(blocco.group(0))
+        continue
     body = '\n'.join(f'\t"{r}",' for r in righe(path))
-    parti.append(f'-- {path}\nM.{nome} = {{\n{body}\n}}\n')
+    parti.append(f'-- {etichetta}\nM.{nome} = {{\n{body}\n}}\n')
 open('client/sim/mapdata.lua', 'w').write('''-- Dati delle mappe disegnate a mano: la maschera di collisione 640 x 360 celle,
 -- una stringa per riga dal basso verso l'alto. Ogni tratto è un carattere
 -- (. vuoto, d terra, s acciaio/ossa) seguito da quante celle dura.

@@ -19,9 +19,12 @@ local M = {}
 -- i canali e il loro valore neutro; angoli in radianti, misure in unità del
 -- disegno (battaglia/diavoletto.lua, 200 dai piedi alla testa)
 M.CANALI = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "braccio_d",
-	"gamba_a", "gamba_d", "alza_a", "alza_d", "ala", "coda",
+	"gamba_a", "gamba_d", "alza_a", "alza_d", "ala",
+	-- il busto: gira attorno al suo perno e si sposta (busto_x, busto_y); la
+	-- coda si arriccia (coda) e gira tutta intera attorno al suo perno (coda_gira)
+	"busto", "coda", "coda_gira",
 	-- gli spostamenti avanti e indietro (x, verso dove guarda) e su e giù (y)
-	"corpo_x", "testa_x", "braccio_a_x", "braccio_a_y", "braccio_d_x", "braccio_d_y",
+	"corpo_x", "testa_x", "busto_x", "busto_y", "braccio_a_x", "braccio_a_y", "braccio_d_x", "braccio_d_y",
 	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y",
 	-- l'arma in mano: quanto gira in più attorno al suo perno quando non si
 	-- mira, e lo spostamento del perno
@@ -32,10 +35,8 @@ M.CANALI = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "br
 	-- i pezzi che si vedono (1) o no (0): li mette e li toglie il secchio
 	-- dell'editor
 	"mostra_testa", "mostra_busto", "mostra_braccio_a", "mostra_braccio_d", "mostra_gamba_a", "mostra_gamba_d",
-	"mostra_ala", "mostra_coda", "mostra_manina_a", "mostra_manina_d", "mostra_arma",
-	-- la fiammella (la sua clip, fiammella): spostamento, rotazione, larghezza e altezza
-	"fiamma_x", "fiamma_y", "fiamma_gira", "fiamma_largo", "fiamma_alto" }
-M.NEUTRO = { schiaccia = 1, fiamma_largo = 1, fiamma_alto = 1 }
+	"mostra_ala", "mostra_coda", "mostra_manina_a", "mostra_manina_d", "mostra_arma" }
+M.NEUTRO = { schiaccia = 1 }
 for _, c in ipairs(M.CANALI) do
 	if c:find("^mostra_") and c ~= "mostra_manina_a" and c ~= "mostra_manina_d" then M.NEUTRO[c] = 1 end
 end

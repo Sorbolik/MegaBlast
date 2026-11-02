@@ -61,7 +61,7 @@ Cloudflare dal main.
 |---|---|---|
 | 23 ott | I 3 pilastri e i 3 riferimenti sopra. | doc personaggio vivo |
 | 23 ott | Camera vicina con dezoom (livelli 2,2 / 1,5 / 1), sfondo procedurale invece di quello dipinto. | PR #25 |
-| 26 ott | Corpo ×1,4 (`BLASTRON_CORPO`), tutto il resto (mondo, armi, casse, proiettili, mani, camera) alle dimensioni di main. Mappe più piccole in futuro. | PR #44 |
+| 26 ott | Corpo ×1,4 (oggi `game.CORPO`), tutto il resto (mondo, armi, casse, proiettili, mani, camera) alle dimensioni di main. Mappe più piccole in futuro. | PR #44 |
 | 26 ott | Fiamma sopra la testa = colore della squadra, più grande e luminosa a chi è di turno; occhi disegnati sulla testa, niente Nucleo. Lampo bianco quando colpito. Corsa solo per movimento proprio. La mira vince su ogni animazione tranne la sconfitta. | PR #44 |
 | 26 ott | Personaggio **vettoriale** disegnato da script, contorno nero puro, animato in codice; niente fogli di frame. | PR #54 |
 | 26 ott | Braccia IK a 2 ossa: mano davanti sulla canna, mano dietro sull'impugnatura. | PR #54 |
@@ -79,6 +79,9 @@ Cloudflare dal main.
 | 29 ott | Un braccio solo per lato, anche con l'arma: l'arma sta sempre nella mano del braccio davanti (quello normale, con perno e pezzi delle pelli), girata rispetto al braccio ("Arma, gira"); mirando il braccio punta dove si mira e l'arma lo prolunga. L'arma è un pezzo del secchio (`mostra_arma`) che si toglie e si rimette; il suo perno è la **presa**, un punto per arma in `impugnature.lua` che si trascina sull'arma. Tolti i pezzi nascosti `omero`/`avambraccio` (base, stampino e pelle di Gabriella), la spalla dell'arma e il canale `arma_libera`. Richiesta di Sergio: "devo poter scegliere tutto, i pezzi di braccia da usare, i pivot, tutto". Un secondo punto di presa per la mano dietro resta possibile se lo vuole. | PR #63 |
 | 29 ott | Livelli, chi impugna e perno dell'arma, scelti da Sergio nell'editor: ogni clip ha l'ordine dei pezzi (`livelli`, pannello Livelli come After Effects, in alto quello davanti) e chi impugna l'arma (`impugna`: braccio davanti o dietro, che gira verso la presa; manina davanti o dietro, che ci sta sopra; nessuno). Ogni arma ha presa, perno (dove gira, anche mirando) e spalla (dove sta il perno nel corpo), più i canali `arma_x`/`arma_y`. Di base il perno è sulla spalla davanti, dietro la presa quanto è lungo il braccio: il braccio ci arriva a ogni angolo. Alt + trascina sposta i perni (sull'arma anche la spalla, così l'arma resta ferma). Nel gioco vince la clip col peso più grande (Claude). | PR #67 |
 | 29 ott | Il personaggio di Gabriella (pelle `gabriella`) è quello di tutti nel gioco (home, battaglia, podio: `scoria.PERSONAGGIO`) finché non c'è l'armeria che lo sceglie; l'editor parte con lei addosso. Animazioni rifatte da Sergio nell'editor (clip loro per lanciamissili, cecchino, granata, schegge e spada; la manina davanti impugna missile e cecchino). Richiesta di Sergio. | PR #69 |
+| 1 nov | Personaggi ripensati dalla campagna (WB-008, pagina https://claude.ai/artifact/JoPBZRtznYF3xGEao2pTXF): Sergio sceglie il protagonista **A, l'apprendista** (diavoletto rosso mattone, corna corte, fazzoletto al collo) e poi **Favilla B**, la fiamma bianca. Il **colore della squadra sta sul fazzoletto**. I personaggi si generano con una **procedura standard** (`docs/handoff/PERSONAGGI.md`): tre quarti e espressioni approvati, poi pezzi sullo stampino, colori piatti di una tavolozza fissa, contorno nero spesso che sparisce alle giunture, poi SVG e PNG per schermo. Un personaggio alla volta: Favilla solo dopo che Sergio ha provato l'apprendista animato nell'editor. | WB-009 |
+| 2 nov | **L'apprendista è il personaggio principale** (Sergio: "ho appena completato le animazioni, mettile in gioco, il personaggio principale adesso è ufficialmente l'apprendista"): `scoria.PERSONAGGIO = { "apprendista" }` in home, battaglia, podio, schede e cartellini (icone dell'equipaggiamento con i suoi pezzi; il mantello con l'ala di base, l'apprendista non ha le ali). Clip, hitbox, perni e impugnature sono quelli mandati da Sergio dall'editor. Le pelli `gabriella` e `gabriella_squadra` sono tolte dal gioco (superate; restano nella storia di git e nei file di Gabriella). | questa PR |
+| 2 nov | **Via la fiammella** sopra la testa, dalla home e dal gioco (Sergio: "togli la fiammella... ci dobbiamo inventare un altro modo per indicare il giocatore attivo"): tolti la clip, i canali, i disegni, il pezzo nell'editor e il codice. Il nuovo indicatore del giocatore di turno è da scegliere: proposte con le immagini di ChatGPT (scheda WB-010). | questa PR |
 
 ## Scartate, con il motivo
 
@@ -89,7 +92,7 @@ Cloudflare dal main.
 | Rive, Spriter, Creature, Live2D, Moho | Rive richiede GL 4.2+ e abbonamento; gli altri stantii o senza Defold. |
 | Fogli di frame (ChatGPT, Ludo, video AI) | Deriva tra i frame, pesanti (fino a 15 MB di atlas), non reagiscono al gioco, code tagliate dal bordo; Sergio ha rinunciato il 26 ott. |
 | Pixel art (PR #43) | Messa da parte: stile misto con mappe e UI, resa sfocata finché non si è fissato il filtro. |
-| Pezzi staccati fluttuanti stile Blastron | Provati con Gabriella, tornata al diavoletto con le gambe. |
+| Pezzi staccati fluttuanti come nel gioco di riferimento | Provati con Gabriella, tornata al diavoletto con le gambe. |
 | Diavoletto senza braccia + braccia da AI | Prospettive sbagliate, spalle strappate; fermato dal coordinatore e da Sergio (25 ott). |
 | Braccia a tubo dritto nella mira | "Che schifo" (26 ott): sostituite da IK. |
 | Versione a colori piatti automatica dei pezzi dipinti | Chiazze; lo stile piatto deve venire dalla fonte. |
@@ -115,3 +118,4 @@ Cloudflare dal main.
 - Quanto può spingersi il vettoriale: tutto ciò che è piatto con gradienti
   semplici, niente texture pittoriche (risposta data, 26 ott).
 - Ritocchi dei pezzi di base (non delle pelli): ora solo le pelli.
+- Indicatore del giocatore di turno al posto della fiammella (2 nov): quattro proposte (anello di brace sotto i piedi, consigliata; freccia di ferro battuto; sigillo del girone; cartiglio), da vedere con le immagini di ChatGPT.

@@ -32,140 +32,121 @@ M.CELL = 3
 M.WORLD_W = 640 * M.CELL
 M.WORLD_H = 360 * M.CELL
 M.DT = 1 / 60
-M.GRAVITY = 600
 
--- Robot (la posizione è il centro dei piedi)
-M.ROBOT_HALF_W = 6
-M.ROBOT_H = 16
+-- Misure. Salti, armi, casse ed esplosioni sono misurati su un robot alto
+-- REF_H pixel, che vale 3,612 unità U: molte misure qui sotto sono in U. Il
+-- corpo del diavoletto è CORPO volte più grande (1,4, scelto il 26 ottobre
+-- perché il diavoletto dipinto si legga): la capsula per camminare e il cerchio
+-- dei colpi sono in sim/corpo.lua (editor delle animazioni), il resto del mondo
+-- resta sulla misura di REF_H. REF_H è 28 dal 23 ottobre (era 20) per vedere
+-- meglio il personaggio. Le misure scritte in pixel (casse, schegge, globo...)
+-- sono state fatte su un robot alto 16 e poi moltiplicate per 28 / 16.
+M.REF_H = 28
+M.U = M.REF_H / 3.612
+M.CORPO = 1.4
+M.GRAVITY = 25 * M.U
+
+-- Robot (la posizione è il centro dei piedi). Il corpo contro il terreno è una
+-- capsula: sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo
+-- rotondo tocca i pendii vicino al centro invece che con lo spigolo, così non
+-- resta sospeso.
+M.ROBOT_H = CORPO.cammina.alto
+M.ROBOT_HALF_W = CORPO.cammina.largo / 2
 -- l'altezza del diavoletto disegnato, dai piedi alla cima della testa: il
 -- disegno non cambia se cambiano la capsula per camminare o il cerchio dei colpi
 -- (sim/corpo.lua). Da qui partono anche i colpi (MUZZLE) e il rampino.
-M.DISEGNO_H = 16
--- quante volte il corpo è più grande della misura su cui è fatto il resto del mondo
--- (proiettili, casse, armi in mano si disegnano su DISEGNO_H / CORPO)
-M.CORPO = 1
-M.MAX_CLIMB = 6          -- gradino massimo che il robot sale da solo
--- Forma del corpo contro il terreno: false = rettangolo; true = capsula, con
--- sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo rotondo tocca
--- i pendii vicino al centro invece che con lo spigolo, così non resta sospeso.
-M.ROBOT_ROUND = false
--- I danni delle armi sono pensati per una vita di DAMAGE_BASE punti; la vita
--- vera dei robot è in sim/config.lua (STATS.max_hp)
-M.DAMAGE_BASE = 100
+-- Proiettili, casse e armi in mano si disegnano su DISEGNO_H / CORPO.
+M.DISEGNO_H = M.REF_H * M.CORPO
+M.MAX_CLIMB = 10.5       -- gradino massimo che il robot sale da solo
 
 -- Statistiche di movimento del robot (le altre sono in sim/config.lua, STATS).
 -- L'equipaggiamento e l'albero di abilità le modificano.
 M.DEFAULT_STATS = {
-	walk_speed = 70,     -- pixel al secondo a terra
-	jump_height = 56,    -- altezza massima del salto in pixel
-	air_speed = 90,      -- velocità orizzontale massima in aria
+	walk_speed = 5 * M.U,    -- velocità a terra, al secondo
+	jump_height = 5.2 * M.U, -- altezza massima del salto
+	air_speed = 5 * M.U,     -- velocità orizzontale in aria
 }
--- Reattività in aria: l'accelerazione è air_speed^2 / AIR_REACTION, quindi
--- più un robot è veloce, più in fretta cambia direzione (meno inerzia).
-M.AIR_REACTION = 8
--- "accel": in aria si accelera fino a air_speed (e non mentre si è sbalzati).
--- "instant" (Blastron): tenendo una direzione la velocità è subito air_speed,
--- senza direzione resta quella che era.
-M.AIR_CONTROL = "accel"
--- Blastron: il robot di turno non va mai di lato più veloce della sua corsa,
--- nemmeno dopo un'esplosione
-M.CLAMP_ACTIVE_VX = false
+-- In aria niente inerzia: tenendo una direzione la velocità è subito
+-- air_speed, senza direzione resta quella che era; il robot di turno non va
+-- mai di lato più veloce della sua corsa, nemmeno dopo un'esplosione.
 -- Danno da caduta: oltre FALL_SAFE pixel di caduta, FALL_DAMAGE per pixel in
--- più fino a FALL_DAMAGE_MAX. FALL_SAFE = false: niente danno.
-M.FALL_SAFE = false
-M.FALL_DAMAGE = 0
-M.FALL_DAMAGE_MAX = 0
+-- più fino a FALL_DAMAGE_MAX (Sergio, 29 ottobre 2026: "ci vogliono 5 turni per
+-- ammazzare qualcuno", tutti i danni sono saliti di 5/3)
+M.FALL_SAFE = 40 * M.U
+M.FALL_DAMAGE = 1.25 / M.U
+M.FALL_DAMAGE_MAX = 75
 
--- Missile
-M.MISSILE_SPEED = 750    -- velocità alla potenza massima
-M.MISSILE_GRAVITY = 1    -- quanta gravità sente, rispetto ai robot
-M.EXPLOSION_R = 30       -- raggio del cratere
-M.DAMAGE_R = 50          -- raggio entro cui si subisce danno
-M.MAX_DAMAGE = 45
-M.KNOCKBACK = 320
--- Come spinge un'esplosione:
--- "centro": dal centro del robot, forte quanto knockback (al centro) e un po' in alto.
--- "blastron": velocità = (punto più vicino della scatola - esplosione) * impulse * t,
--- con t = 1 - distanza / damage_r. Massima a metà raggio, nulla nel colpo diretto.
-M.KNOCKBACK_MODEL = "centro"
-M.SELF_DAMAGE = 1        -- quanto del danno subisce chi si colpisce da solo
+-- Lanciarune (missile)
+M.MISSILE_SPEED = 75 * M.U  -- velocità alla potenza massima
+M.MISSILE_GRAVITY = 1.1     -- quanta gravità sente, rispetto ai robot
+-- Come spinge un'esplosione: velocità = (punto più vicino del quadrato attorno
+-- al cerchio dei colpi - esplosione) * impulse * t, con t = 1 - distanza /
+-- damage_r. Massima a metà raggio, nulla nel colpo diretto. La velocità di chi
+-- viene spinto è sostituita, non sommata.
+M.SELF_DAMAGE = 0.5      -- quanto del danno subisce chi si colpisce da solo
 -- per quanti tick dopo il lancio un proiettile non tocca chi l'ha lanciato
-M.OWNER_SAFE_TICKS = 20
+M.OWNER_SAFE_TICKS = 30
 
--- Lama di Nucleo: fendente di 240° che parte da dietro la schiena (205°),
--- passa sopra la testa e finisce davanti in basso (-35°). Colpisce dietro e davanti.
-M.SWORD_REACH = 40       -- lunghezza della lama dal perno
-M.MUZZLE = 14            -- i colpi partono a questa distanza dal centro del robot
-M.SWORD_PIVOT_Y = 10     -- altezza del perno (la spalla) sopra i piedi
-M.SWORD_FROM = math.rad(205)
-M.SWORD_TO = math.rad(-35)
-M.SWORD_TICKS = 20       -- durata del fendente (1/3 di secondo)
-M.SWORD_DAMAGE = 35
--- Come si muove la lama:
--- "arco": l'arco fisso qui sopra, uguale qualunque sia la mira.
--- "blastron": il fendente di Blastron (sim/mischia.lua) ruotato sulla mira:
--- mirando in basso il colpo scende dall'alto verso il basso. I danni arrivano
--- quando si chiude la finestra del colpo, a tutti quelli toccati dalla lama.
-M.SWORD_MODEL = "arco"
-M.SWORD_STOP = false     -- il colpo ferma il bersaglio (in Blastron la spada gli azzera la velocità)
+-- Lama di Nucleo: il fendente di sim/mischia.lua ruotato sulla mira (mirando in
+-- basso il colpo scende dall'alto verso il basso). I danni arrivano quando si
+-- chiude la finestra del colpo, a tutti quelli toccati dalla lama, e il colpo
+-- ferma il bersaglio.
+M.MUZZLE = 24.5          -- i colpi partono a questa distanza dal centro del robot
+M.SWORD_PIVOT_Y = 17.5   -- altezza del perno (la spalla) sopra i piedi
+M.SWORD_DAMAGE = 25
 
--- Dove un robot può essere colpito (proiettili, globi, lame, esplosioni):
--- "scatola": il rettangolo del robot, largo 2 * ROBOT_HALF_W e alto ROBOT_H;
--- "cerchio": come in Blastron, un cerchio di raggio HURT_R alto HURT_Y dai piedi.
--- Per le esplosioni Blastron misura dal quadrato attorno al cerchio, un po'
--- più largo (HURT_FAT).
-M.HURTBOX = "scatola"
-M.HURT_R = 8
-M.HURT_Y = 8
-M.HURT_FAT = 0
+-- Dove un robot può essere colpito (proiettili, globi, lame, esplosioni): un
+-- cerchio di raggio HURT_R alto HURT_Y dai piedi (sim/corpo.lua). Per le
+-- esplosioni conta il quadrato attorno al cerchio, più largo di HURT_FAT per lato.
+M.HURT_R = CORPO.colpi.raggio
+M.HURT_Y = CORPO.colpi.centro
+M.HURT_FAT = 0.1 * M.U
 
 -- Teletrasporto (Passo d'Ombra): un globo che vola come il missile, rimbalza e
 -- rotola sul terreno, e dopo
 -- TELEPORT_TICKS sposta il robot dove si trova, senza toccare il suo stato:
--- velocità, fendente in corso e direzione restano quelli di prima.
-M.TELEPORT_TICKS = 2 * 60
-M.ORB_SPEED = M.MISSILE_SPEED
-M.ORB_GRAVITY = 1
-M.ORB_DAMPING = 0        -- frenata per secondo dopo il primo urto
+-- velocità, fendente in corso e direzione restano quelli di prima. Non chiude il turno.
+M.TELEPORT_TICKS = 3 * 60
+M.ORB_SPEED = 80 * M.U
+M.ORB_GRAVITY = 1.1
+M.ORB_DAMPING = 1.1      -- frenata per secondo dopo il primo urto
 M.MAX_ORBS = 6           -- globi in volo insieme, al massimo
 
--- Esplosioni: raggio del cratere, raggio del danno, danno massimo, spinta
-M.MISSILE_BLAST = { r = M.EXPLOSION_R, damage_r = M.DAMAGE_R, damage = M.MAX_DAMAGE, knockback = M.KNOCKBACK }
+-- Esplosioni: raggio del cratere, raggio del danno, danno al centro e al bordo,
+-- impulso della spinta
+M.MISSILE_BLAST = { r = 5 * M.U, damage_r = 9 * M.U, damage = 25, damage_min = 12.5, impulse = 10 }
 
--- Uovo di Fiamma (granata): rimbalza e scoppia dopo GRENADE_FUSE tick, con
--- un'esplosione più grande del missile
-M.GRENADE_SPEED = 600    -- velocità alla potenza massima
-M.GRENADE_FUSE = 3 * 60
-M.GRENADE_BOUNCE = 0.45  -- quanta velocità resta dopo un rimbalzo
-M.GRENADE_FRICTION = 0.7 -- attrito quando tocca terra
-M.GRENADE_GRAVITY = 1
-M.GRENADE_DAMPING = 0    -- frenata per secondo dopo il primo urto (come il linear damping di Box2D)
-M.GRENADE_BLAST = { r = 40, damage_r = 64, damage = 55, knockback = 380 }
+-- Uovo di Fiamma (granata): rimbalza (0,4, frenata 1 al secondo dopo il primo
+-- urto) e scoppia dopo GRENADE_FUSE tick, con un'esplosione più grande del missile
+M.GRENADE_SPEED = 85 * M.U  -- velocità alla potenza massima
+M.GRENADE_FUSE = 5 * 60
+M.GRENADE_BOUNCE = 0.4   -- quanta velocità resta dopo un rimbalzo
+M.GRENADE_FRICTION = 1   -- attrito quando tocca terra
+M.GRENADE_GRAVITY = 1.3
+M.GRENADE_DAMPING = 1    -- frenata per secondo dopo il primo urto (come il linear damping di Box2D)
+-- danno al centro 80 e 25 ai bordi (arena dei bot, 29 ottobre 2026: l'Uovo era
+-- l'arma più debole; Sergio: "non ti dico che si deve oneshottare")
+M.GRENADE_BLAST = { r = 5.5 * M.U, damage_r = 10 * M.U, damage = 80, damage_min = 25, impulse = 15 }
 
 -- Sciame di Schegge (mitragliatrice): una raffica di schegge dritte e veloci,
 -- ognuna con un'esplosione piccolissima
 M.SHARD_COUNT = 8
 M.SHARD_EVERY = 4        -- tick tra una scheggia e l'altra
-M.SHARD_SPEED = 950      -- la potenza non conta: escono sempre alla stessa velocità
+M.SHARD_SPEED = 1662.5   -- la potenza non conta: escono sempre alla stessa velocità
 M.SHARD_GRAVITY = 0.2    -- la gravità le piega appena
 M.SHARD_SPREAD = math.rad(3)
-M.SHARD_BLAST = { r = 7, damage_r = 12, damage = 6.5, knockback = 90 }
+M.SHARD_BLAST = { r = 12.25, damage_r = 21, damage = 11, impulse = 30 }
 
 -- Cecchino: velocità del colpo (la potenza non conta) e quanto vive al massimo;
 -- danno, spinta, caduta e rimbalzi in config.SNIPER
-M.SNIPER_SPEED = 480
+M.SNIPER_SPEED = 840
 M.SNIPER_LIFE = 6 * 60
 
--- Pugno del Titano: montante corpo a corpo che lancia in alto chi è davanti.
--- PUNCH_MODEL come SWORD_MODEL: "fisso" (qui sotto) o "blastron" (montante sulla mira).
-M.PUNCH_MODEL = "fisso"
-M.PUNCH_TICKS = 24       -- durata del colpo
-M.PUNCH_HIT_TICK = 8     -- tick in cui il pugno arriva
-M.PUNCH_REACH = 24       -- quanto arriva davanti al robot
-M.PUNCH_DAMAGE = 30
-M.PUNCH_LAUNCH = 480     -- velocità verso l'alto del bersaglio
-M.PUNCH_PUSH = 140       -- e in avanti
-M.PUNCH_HOP = 220        -- chi colpisce si alza un po' col montante
+-- Pugno del Titano: il montante di sim/mischia.lua ruotato sulla mira, lancia
+-- dritto in alto chi tocca; chi colpisce fa un saltello
+M.PUNCH_DAMAGE = 47      -- 28 invece di 50 (arena dei bot, 29 ottobre 2026: vinceva troppo), poi 47 (5/3)
+M.PUNCH_LAUNCH = 40 * M.U   -- velocità verso l'alto del bersaglio
+M.PUNCH_HOP = 15 * M.U      -- chi colpisce si alza un po' col montante
 
 -- Armi, in due categorie (Sergio, 24 ottobre 2026; regola rifatta il 29). Ogni
 -- turno una primaria e una secondaria, in ordine libero, mai due della stessa
@@ -196,24 +177,26 @@ for _, w in ipairs(M.CRATE_WEAPONS) do M.WEAPONS[w] = true end
 for _, w in ipairs(M.DRAFT_SECONDARIES) do M.WEAPONS[w] = true end
 for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 
--- Casse: ogni CRATE_EVERY turni ne cade una dal cielo in un punto a caso.
--- Chi la tocca trova un colpo di un'arma o un oggetto (config.CRATE_CONTENTS).
--- Sergio (24 ottobre 2026): provata una ogni 2 turni, è tornato a questa.
+-- Casse: cadono dal cielo in un punto a caso (CRATE_CHANCE qui sotto). Chi la
+-- tocca trova un colpo di un'arma o un oggetto (config.CRATE_CONTENTS).
+-- CRATE_EVERY: la cadenza che il pannello degli eventi propone per gli eventi
+-- con una cassa ogni tanti turni (sim/regole.lua, casse).
 M.CRATE_EVERY = 3
 M.CRATE_MAX = 3          -- casse in mappa al massimo
-M.CRATE_HALF_W = 10
-M.CRATE_H = 18
-M.CRATE_FALL = 110       -- velocità massima di caduta (scende piano, col paracadute)
--- Blastron: a ogni turno una probabilità, secondo quante casse ci sono già
--- ({ con 0, con 1, con 2, ... }). false: una cassa ogni CRATE_EVERY turni.
-M.CRATE_CHANCE = false
+M.CRATE_HALF_W = 17.5
+M.CRATE_H = 31.5
+M.CRATE_FALL = 192.5     -- velocità massima di caduta (scende piano, col paracadute)
+-- A ogni turno una probabilità, secondo quante casse ci sono già
+-- ({ con 0, con 1, con 2, ... }). Con opts.crate_every (regole degli eventi,
+-- missioni, prove) invece una cassa ogni tanti turni.
+M.CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 }
 
 -- Turni: le durate sono in sim/config.lua, qui in tick
 M.MATCH_TICKS = C.MATCH_SECONDS * 60
 M.TURN_TICKS = C.TURN_SECONDS * 60
 M.AFTER_ATTACK_TICKS = C.AFTER_ATTACK_SECONDS * 60
 M.RESPAWN_TICKS = math.floor(C.RESPAWN_SECONDS * 60)
-M.SETTLE_TICKS = 30
+M.SETTLE_TICKS = 60      -- 1 s tra un turno e l'altro
 M.MAX_SETTLE_TICKS = 5 * 60
 
 -- Online il server manda uno stato ogni SNAPSHOT_TICKS tick (30 al secondo)
@@ -222,21 +205,20 @@ M.SNAPSHOT_TICKS = 2
 -- Comandi (li usa il client). La potenza del tiro viene da quanto è lontano il
 -- dito: f = distanza / portata (0..1). Sotto AIM_DEADZONE non conta, poi
 -- cresce con l'esponente AIM_EXPONENT (2: quadratica, più precisa sui tiri corti).
-M.AIM_DEADZONE = 0
-M.AIM_EXPONENT = 1
+M.AIM_DEADZONE = 0.2
+M.AIM_EXPONENT = 2
 -- quanto della differenza tra mira e dito si recupera a ogni frame (a 60 Hz); 1 = subito
-M.AIM_SMOOTH = 1
--- tenendo premuto il salto si risalta appena si tocca terra
-M.JUMP_REPEAT = false
+M.AIM_SMOOTH = 0.2
 -- Salto corto (come Hollow Knight): lasciando il salto mentre si sale la
 -- velocità verso l'alto si moltiplica per JUMP_CUT. 1 = salto sempre pieno.
 -- Conta solo se l'input dice hold = false: senza hold il salto è pieno.
-M.JUMP_CUT = 1
+-- Tenendo premuto il salto si risalta appena si tocca terra (lo fa il client).
+M.JUMP_CUT = 0.45
 -- Aiuti (come Celeste): per COYOTE_TICKS dopo essere scesi da un bordo si può
 -- ancora saltare; un salto chiesto in aria fino a JUMP_BUFFER_TICKS prima di
 -- toccare terra parte appena si atterra.
-M.COYOTE_TICKS = 0
-M.JUMP_BUFFER_TICKS = 0
+M.COYOTE_TICKS = 6
+M.JUMP_BUFFER_TICKS = 6
 
 function M.aim_power(f)
 	f = math.max(0, math.min(1, f))
@@ -247,7 +229,7 @@ end
 local NO_INPUT = {}
 
 -- Statistiche di un robot senza albero né equipaggiamento: config.STATS più
--- quelle del profilo di fisica. Da qui parte anche sim/assetto.lua.
+-- quelle di movimento (DEFAULT_STATS). Da qui parte anche sim/assetto.lua.
 function M.base_stats()
 	local st = { teleport_ticks = M.TELEPORT_TICKS }
 	for k, v in pairs(C.STATS) do st[k] = v end
@@ -259,7 +241,6 @@ local function make_stats(custom)
 	local st = M.base_stats()
 	for k, v in pairs(custom or {}) do st[k] = v end
 	st.jump_vy = math.sqrt(2 * M.GRAVITY * st.jump_height)
-	st.air_accel = st.air_speed * st.air_speed / M.AIR_REACTION
 	return st
 end
 
@@ -274,7 +255,7 @@ end
 -- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards", secondary = "eagle" }, { team = 2 }, ... }:
 -- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
 -- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
--- mancano vengono da config.STATS e dal profilo di fisica.
+-- mancano vengono da config.STATS e da DEFAULT_STATS.
 -- pick è l'arma della scelta d'inizio partita (sim/draft.lua). dummy = true è
 -- un bersaglio che non gioca mai il suo turno (lezioni). Senza players, due
 -- robot in squadre diverse.
@@ -315,7 +296,7 @@ local function match_mode(players)
 end
 
 -- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
--- opts.crate_every = turni tra una cassa e l'altra (CRATE_EVERY se manca)
+-- opts.crate_every = turni tra una cassa e l'altra (senza: CRATE_CHANCE a ogni turno)
 -- opts.heals = false: niente cerchi di cura (le lezioni)
 -- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
 -- opts.score = punti partita diversi da config.SCORE, solo i campi che cambiano (l'arena prova le varianti);
@@ -371,7 +352,7 @@ function M.new(seed, map_id, opts)
 			life_damage = {}, -- danno preso da ogni avversario in questa vita: id -> punti di vita
 			turns = 0,     -- turni giocati
 			round_done = false, -- ha già giocato in questo giro di turni
-			swing = nil,   -- tick del fendente in corso (1..SWORD_TICKS), nil se fermo
+			swing = nil,   -- tick del fendente in corso (da 0 fino alla fine del colpo), nil se fermo
 			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
 			lunge = nil,   -- tick rimasti dell'Affondo in corso, nil se fermo
 			recoil = nil,  -- tick rimasti del rinculo del Tonante, nil se fermo
@@ -436,9 +417,9 @@ end
 -- un altro robot lo si spinge, ma piano (PUSH della propria velocità).
 M.PUSH = 0.3
 -- Un globo del teletrasporto che arriva addosso a un robot lo sposta di poco
-M.ORB_NUDGE = 3
-M.ORB_R = 3              -- raggio del globo, per gli urti
-M.GRENADE_R = 3          -- raggio dell'Uovo: rimbalza sui robot come il globo
+M.ORB_NUDGE = 5.25
+M.ORB_R = 5.25           -- raggio del globo, per gli urti
+M.GRENADE_R = 5.25       -- raggio dell'Uovo: rimbalza sui robot come il globo
 
 -- Il robot (diverso da me e vivo) la cui scatola si sovrappone a quella con i piedi in (x, y)
 function M:robot_at(x, y, me)
@@ -476,17 +457,13 @@ end
 
 function M:terrain_collides(x, y)
 	local t, c = self.terrain, M.CELL
-	if M.ROBOT_ROUND then
-		local cy0 = math.floor(y / c)
-		local cy1 = math.floor((y + M.ROBOT_H - 0.01) / c)
-		for cy = cy0, cy1 do
-			local hw = capsule_half(y, cy * c, cy * c + c)
-			if hw and t:any_solid(math.floor((x - hw) / c), math.floor((x + hw) / c), cy, cy) then return true end
-		end
-		return false
+	local cy0 = math.floor(y / c)
+	local cy1 = math.floor((y + M.ROBOT_H - 0.01) / c)
+	for cy = cy0, cy1 do
+		local hw = capsule_half(y, cy * c, cy * c + c)
+		if hw and t:any_solid(math.floor((x - hw) / c), math.floor((x + hw) / c), cy, cy) then return true end
 	end
-	return t:any_solid(math.floor((x - M.ROBOT_HALF_W) / c), math.floor((x + M.ROBOT_HALF_W) / c),
-		math.floor(y / c), math.floor((y + M.ROBOT_H - 0.01) / c))
+	return false
 end
 
 -- Sposta il robot di dx in orizzontale, salendo i gradini piccoli. true se ci riesce.
@@ -906,18 +883,12 @@ function M:update_robot(rb, input, active)
 		-- col paracadute ci si muove un po' più veloci, anche appena sbalzati
 		local chute = rb.parachute and C.PARACHUTE.air_mul or 1
 		if rb.parachute and active then rb.knocked = false end
-		if M.AIR_CONTROL == "instant" then
-			-- Blastron: niente inerzia, anche appena sbalzati
-			local air = st.air_speed * move * chute
-			if dir ~= 0 then rb.vx = dir * air end
-			if active and M.CLAMP_ACTIVE_VX then
-				rb.vx = math.max(-air, math.min(air, rb.vx))
-			end
-		elseif not rb.knocked then
-			-- controllo in aria (non mentre si viene sbalzati da un'esplosione)
-			local dv = dir * st.air_speed * move * chute - rb.vx
-			local max_dv = st.air_accel * M.DT
-			rb.vx = rb.vx + math.max(-max_dv, math.min(max_dv, dv))
+		-- niente inerzia, anche appena sbalzati; il robot di turno non va mai
+		-- di lato più veloce della sua corsa
+		local air = st.air_speed * move * chute
+		if dir ~= 0 then rb.vx = dir * air end
+		if active then
+			rb.vx = math.max(-air, math.min(air, rb.vx))
 		end
 		rb.vy = rb.vy - M.GRAVITY * M.DT
 		if rb.parachute then rb.vy = math.max(rb.vy, -C.PARACHUTE.fall_speed) end
@@ -1119,7 +1090,7 @@ end
 -- Cerca un punto libero vicino a (x, y) dove far comparire il robot
 -- Punti dove far comparire il robot attorno al globo, dal più vicino al più
 -- lontano (a parità di distanza prima quelli più in alto)
-M.TELEPORT_SEARCH = 48
+M.TELEPORT_SEARCH = 84
 local OFFSETS = {}
 local function teleport_offsets(r)
 	local key = math.floor(r)
@@ -1161,8 +1132,8 @@ function M:teleport(rb, x, y)
 end
 
 -- Rimbalzo e rotolamento del globo
-M.ORB_BOUNCE = 0.35      -- quanta velocità resta nel rimbalzo
-M.ORB_FRICTION = 0.97    -- attrito lungo la superficie, per ogni tick a contatto
+M.ORB_BOUNCE = 0.4       -- quanta velocità resta nel rimbalzo
+M.ORB_FRICTION = 1       -- attrito lungo la superficie, per ogni tick a contatto
 
 -- Direzione verso fuori dal terreno attorno a (x, y): l'opposto della media
 -- delle celle piene vicine
@@ -1689,13 +1660,23 @@ function M:start_mallet(angle)
 	self:emit({ type = "mallet", robot = rb.id })
 end
 
+-- Curva del colpo del Maglio: come una persona vera, prima porta l'arma un po'
+-- indietro (slancio, circa 13°) e poi accelera sempre di più fino alla fine.
+-- È un "back ease-in": va sotto lo zero all'inizio e arriva a 1 con la velocità massima.
+local ARC_WINDUP = 1.2
+local function arc_progress(u)
+	u = math.max(0, math.min(1, u))
+	local s = ARC_WINDUP
+	return u * u * ((s + 1) * u - s)
+end
+
 -- Angolo del martello al tick t, per un robot rivolto a destra che mira a
--- base (girata a destra, 0 dritto): la stessa curva della Lama (slancio
--- indietro, poi sempre più veloce); fermato sul terreno al tick stop resta lì.
+-- base (girata a destra, 0 dritto): slancio indietro, poi sempre più veloce
+-- (arc_progress); fermato sul terreno al tick stop resta lì.
 function M.mallet_angle(t, base, stop)
 	local s = C.MALLET
 	if stop then t = math.min(t, stop) end
-	return (base or 0) + s.from + (s.to - s.from) * M.sword_progress(t / s.ticks)
+	return (base or 0) + s.from + (s.to - s.from) * arc_progress(t / s.ticks)
 end
 
 -- Il primo urto del colpo, su un robot o sul terreno, fa rimbalzare in alto
@@ -1717,7 +1698,7 @@ function M:update_mallet(rb)
 	local t0 = rb.mallet
 	rb.mallet = t0 + 1
 	if not rb.mallet_stop and t0 < s.ticks then
-		local t, x, y = self:sweep_arc(rb, t0, M.mallet_angle, s.reach, rb.mallet_dir, rb.mallet_hit, M.mallet_hit, true,
+		local t, x, y = self:sweep_arc(rb, t0, M.mallet_angle, s.reach, rb.mallet_dir, rb.mallet_hit, M.mallet_hit,
 			rb.mallet_base)
 		if t then
 			rb.mallet_stop = t
@@ -1732,27 +1713,13 @@ end
 
 -- Lama di Nucleo ----------------------------------------------------------------
 
--- Angolo della lama al tick t del fendente, per un robot rivolto a destra
--- Curva del fendente: come una persona vera, prima porta la lama un po'
--- indietro (slancio, circa 13°) e poi accelera sempre di più fino alla fine.
--- È un "back ease-in": va sotto lo zero all'inizio e arriva a 1 con la velocità massima.
-M.SWORD_WINDUP = 1.2
-function M.sword_progress(u)
-	u = math.max(0, math.min(1, u))
-	local s = M.SWORD_WINDUP
-	return u * u * ((s + 1) * u - s)
-end
-
--- Angolo della lama al tick t per un robot rivolto a destra. Col modello
--- "blastron" dipende dalla mira: base è l'angolo di mira (già girato a destra).
+-- Angolo della lama al tick t per un robot rivolto a destra: dipende dalla
+-- mira, base è l'angolo di mira (già girato a destra).
 function M.sword_angle(t, base)
-	if M.SWORD_MODEL == "blastron" then
-		return (base or 0) + math.rad(M.melee_pose(mischia.fendente, t)[7])
-	end
-	return M.SWORD_FROM + (M.SWORD_TO - M.SWORD_FROM) * M.sword_progress(t / M.SWORD_TICKS)
+	return (base or 0) + math.rad(M.melee_pose(mischia.fendente, t)[7])
 end
 
--- Angolo del pugno al tick t (modello "blastron"), come sword_angle
+-- Angolo del pugno al tick t, come sword_angle
 function M.punch_angle(t, base)
 	return (base or 0) + math.rad(M.melee_pose(mischia.montante, t)[7])
 end
@@ -1785,29 +1752,20 @@ M.aim_side = aim_side
 -- Un robot preso dal punto (x, y), con un margine pad attorno
 function M.hurt_at(r, x, y, pad)
 	pad = pad or 0
-	if M.HURTBOX == "cerchio" then
-		local dx, dy = x - r.x, y - (r.y + M.HURT_Y)
-		local rr = M.HURT_R + pad
-		return dx * dx + dy * dy <= rr * rr
-	end
-	return math.abs(x - r.x) <= M.ROBOT_HALF_W + pad and y >= r.y - pad and y <= r.y + M.ROBOT_H + pad
+	local dx, dy = x - r.x, y - (r.y + M.HURT_Y)
+	local rr = M.HURT_R + pad
+	return dx * dx + dy * dy <= rr * rr
 end
 
 -- Un robot toccato dal segmento (x0, y0) - (x1, y1) largo 2 * pad
 local function seg_hits_robot(r, x0, y0, x1, y1, pad)
-	if M.HURTBOX == "cerchio" then
-		local cx, cy = r.x, r.y + M.HURT_Y
-		local ux, uy = x1 - x0, y1 - y0
-		local l2 = ux * ux + uy * uy
-		local k = l2 > 0 and math.max(0, math.min(1, ((cx - x0) * ux + (cy - y0) * uy) / l2)) or 0
-		local dx, dy = x0 + ux * k - cx, y0 + uy * k - cy
-		local rr = M.HURT_R + pad
-		return dx * dx + dy * dy <= rr * rr
-	end
-	for k = 0, 10 do
-		if M.hurt_at(r, x0 + (x1 - x0) * k / 10, y0 + (y1 - y0) * k / 10, pad) then return true end
-	end
-	return false
+	local cx, cy = r.x, r.y + M.HURT_Y
+	local ux, uy = x1 - x0, y1 - y0
+	local l2 = ux * ux + uy * uy
+	local k = l2 > 0 and math.max(0, math.min(1, ((cx - x0) * ux + (cy - y0) * uy) / l2)) or 0
+	local dx, dy = x0 + ux * k - cx, y0 + uy * k - cy
+	local rr = M.HURT_R + pad
+	return dx * dx + dy * dy <= rr * rr
 end
 
 function M:swing_sword(angle)
@@ -1830,12 +1788,12 @@ local ARC_SAMPLES = 10
 -- dove si guarda se la testa del Maglio tocca il terreno: di traverso all'arma
 local HEAD_SIDE = { 0, -5, 5 }
 
--- Un tick di un'arma lunga reach che gira attorno alla spalla di rb (Lama,
+-- Un tick di un'arma lunga reach che gira attorno alla spalla di rb (il
 -- Maglio), da t0 a t0 + 1: angle(t, base) è il suo angolo per un robot rivolto a
 -- destra che mira a base, dir il lato del colpo. Ogni robot toccato lungo l'arma viene colpito
--- una volta (hit(self, rb, other, t), segnato in done). Con stop la punta si
--- ferma sul terreno: rende il tick (con la frazione) e il punto dell'urto.
-function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, stop, base)
+-- una volta (hit(self, rb, other, t), segnato in done). La punta si ferma sul
+-- terreno: rende il tick (con la frazione) e il punto dell'urto.
+function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, base)
 	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
 	for s = 1, ARC_SUBSTEPS do
 		local t = t0 + s / ARC_SUBSTEPS
@@ -1853,36 +1811,25 @@ function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, stop, base)
 				end
 			end
 		end
-		if stop then
-			local hx, hy = px + cx * reach, py + cy * reach
-			for _, w in ipairs(HEAD_SIDE) do
-				if self.terrain:solid(hx - cy * w, hy + cx * w) then return t, hx, hy end
-			end
+		local hx, hy = px + cx * reach, py + cy * reach
+		for _, w in ipairs(HEAD_SIDE) do
+			if self.terrain:solid(hx - cy * w, hy + cx * w) then return t, hx, hy end
 		end
 	end
 end
 
 function M:update_swing(rb)
-	if M.SWORD_MODEL == "blastron" then
-		if self:update_melee(rb, mischia.fendente, rb.swing, rb.swing_base, rb.swing_dir) then
-			rb.swing = rb.swing + 1
-		else
-			rb.swing, rb.swing_hit, rb.swing_dir, rb.swing_base = nil, nil, nil, nil
-		end
-		return
-	end
-	local t0 = rb.swing
-	rb.swing = t0 + 1
-	self:sweep_arc(rb, t0, M.sword_angle, M.SWORD_REACH, rb.swing_dir, rb.swing_hit, M.sword_hit)
-	if rb.swing >= M.SWORD_TICKS then
-		rb.swing, rb.swing_hit, rb.swing_dir = nil, nil, nil
+	if self:update_melee(rb, mischia.fendente, rb.swing, rb.swing_base, rb.swing_dir) then
+		rb.swing = rb.swing + 1
+	else
+		rb.swing, rb.swing_hit, rb.swing_dir, rb.swing_base = nil, nil, nil, nil
 	end
 end
 
 function M:sword_hit(rb, other)
 	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
-	-- la spada fa solo danno: il bersaglio resta dov'è (in Blastron si ferma)
-	if M.SWORD_STOP then other.vx, other.vy = 0, 0 end
+	-- la spada fa solo danno e ferma il bersaglio
+	other.vx, other.vy = 0, 0
 	self:hurt(other, M.SWORD_DAMAGE, rb)
 	-- colpire un nemico con la Lama ridà un colpo della secondaria scelta
 	local sec = rb.secondary
@@ -1960,12 +1907,12 @@ function M:update_lunge(rb)
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
--- Colpi di mischia alla Blastron ---------------------------------------------------
+-- Colpi di mischia (sim/mischia.lua) --------------------------------------------
 
 -- Il rettangolo che colpisce al tick t, in pixel del mondo: asse e mezza larghezza
 function M.melee_blade(rb, colpo, t, base, dir)
 	local p = M.melee_pose(colpo, t)
-	local u = M.BLASTRON_UNIT
+	local u = M.U
 	local c, s = math.cos(base), math.sin(base)
 	local ox, oy = p[1], p[2]
 	local x0, y0 = ox + c * p[3] - s * p[4], oy + s * p[3] + c * p[4]
@@ -2027,37 +1974,17 @@ end
 function M:punch_hit(rb, other, dir)
 	self:emit({ type = "punch_hit", robot = rb.id, target = other.id, x = other.x, y = other.y + M.HURT_Y })
 	local k = self:knock_mul(other)
-	other.vx, other.vy = dir * M.PUNCH_PUSH * k, M.PUNCH_LAUNCH * k
+	other.vx, other.vy = 0, M.PUNCH_LAUNCH * k
 	other.fall_top = nil
 	other.grounded, other.knocked = false, true
 	if self:hurt(other, M.PUNCH_DAMAGE, rb) > 0 then self:hit_status(other, "punch", rb) end
 end
 
 function M:update_punch(rb)
-	if M.PUNCH_MODEL == "blastron" then
-		if self:update_melee(rb, mischia.montante, rb.punch, rb.punch_base, rb.punch_dir) then
-			rb.punch = rb.punch + 1
-		else
-			rb.punch, rb.punch_dir, rb.punch_base = nil, nil, nil
-		end
-		return
-	end
-	rb.punch = rb.punch + 1
-	if rb.punch == M.PUNCH_HIT_TICK then
-		local dir = rb.punch_dir
-		for _, other in ipairs(self.robots) do
-			if other ~= rb and not other.dead then
-				local dx, dy = (other.x - rb.x) * dir, other.y - rb.y
-				if dx >= -4 and dx <= M.PUNCH_REACH and dy > -M.ROBOT_H and dy < M.ROBOT_H + 8 then
-					self:punch_hit(rb, other, dir)
-				end
-			end
-		end
-		-- il montante solleva anche chi colpisce
-		rb.vy, rb.grounded = M.PUNCH_HOP, false
-	end
-	if rb.punch >= M.PUNCH_TICKS then
-		rb.punch, rb.punch_dir = nil, nil
+	if self:update_melee(rb, mischia.montante, rb.punch, rb.punch_base, rb.punch_dir) then
+		rb.punch = rb.punch + 1
+	else
+		rb.punch, rb.punch_dir, rb.punch_base = nil, nil, nil
 	end
 end
 
@@ -2517,21 +2444,11 @@ end
 -- scudo) e la velocità con cui parte, o nil se è fuori portata. Non cambia
 -- niente: lo usano explode e il bot (sim/bot.lua) per prevedere un colpo.
 function M:blast_on(rb, x, y, blast, owner)
-	local blastron = M.KNOCKBACK_MODEL == "blastron"
-	local dx, dy
-	if blastron then
-		-- verso il punto della scatola del robot più vicino all'esplosione
-		-- (col cerchio, il quadrato che lo contiene)
-		local hw, y0, y1 = M.ROBOT_HALF_W, rb.y, rb.y + M.ROBOT_H
-		if M.HURTBOX == "cerchio" then
-			hw = M.HURT_R + M.HURT_FAT
-			y0, y1 = rb.y + M.HURT_Y - hw, rb.y + M.HURT_Y + hw
-		end
-		dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
-		dy = math.max(y0, math.min(y1, y)) - y
-	else
-		dx, dy = rb.x - x, (rb.y + M.HURT_Y) - y
-	end
+	-- verso il punto più vicino all'esplosione del quadrato attorno al cerchio dei colpi
+	local hw = M.HURT_R + M.HURT_FAT
+	local y0, y1 = rb.y + M.HURT_Y - hw, rb.y + M.HURT_Y + hw
+	local dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
+	local dy = math.max(y0, math.min(y1, y)) - y
 	local d = math.sqrt(dx * dx + dy * dy)
 	if d >= blast.damage_r then return nil end
 	local f = 1 - d / blast.damage_r
@@ -2539,15 +2456,9 @@ function M:blast_on(rb, x, y, blast, owner)
 	local dmg = dmin + (blast.damage - dmin) * f
 	if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
 	dmg = math.floor(dmg + 0.5)
-	local k = self:knock_mul(rb)
-	if blastron then
-		-- la velocità viene sostituita; senza impulse, uno con la
-		-- stessa spinta massima del modello "centro"
-		local imp = (blast.impulse or 4 * blast.knockback / blast.damage_r) * k
-		return dmg, dx * imp * f, dy * imp * f
-	end
-	if d < 1 then dx, dy, d = 0, 1, 1 end
-	return dmg, dx / d * blast.knockback * f * k, (dy / d * blast.knockback * f + 120 * f) * k
+	-- la velocità viene sostituita
+	local imp = blast.impulse * self:knock_mul(rb)
+	return dmg, dx * imp * f, dy * imp * f
 end
 
 function M:update_projectile()
@@ -2928,146 +2839,5 @@ function M:step(input)
 		end
 	end
 end
-
--- Profili di fisica -------------------------------------------------------------
--- "megablast": i valori decisi finora, quelli scritti sopra.
--- "blastron": ricostruiti dall'APK di Blastron (docs/blastron.md). Le misure
--- là sono in unità di Farseer, qui diventano pixel in proporzione al robot:
--- il robot di Blastron è alto 3,612 unità, il nostro BLASTRON_ROBOT_H pixel
--- (28: 1,4 volte i 20 di prima, scelto il 23 ottobre per vedere meglio il
--- personaggio; tutto il resto è in proporzione, quindi la mappa sembra più piccola).
--- La vita là partiva da 2000, qui da DAMAGE_BASE: i danni sono riscalati.
-M.BLASTRON_ROBOT_H = 28
--- Il diavoletto disegnato è BLASTRON_CORPO volte il robot di Blastron (la
--- capsula per camminare e il cerchio dei colpi, partiti dalla stessa misura,
--- sono in sim/corpo.lua); tutto il resto (salti, armi, casse,
--- esplosioni) resta sulla misura di Blastron. 1,4 scelto il 26 ottobre perché il
--- diavoletto dipinto si legga.
-M.BLASTRON_CORPO = 1.4
-M.BLASTRON_UNIT = M.BLASTRON_ROBOT_H / 3.612
-
-local function blastron_profile()
-	local u = M.BLASTRON_UNIT
-	local hp = M.DAMAGE_BASE / 2000
-	-- quanto è più grande il robot rispetto a quello del profilo megablast,
-	-- per le nostre misure (casse, schegge, globo...)
-	local k = M.BLASTRON_ROBOT_H / M.ROBOT_H
-	local corpo = M.BLASTRON_CORPO
-	return {
-		-- capsula per camminare e cerchio dei colpi: sim/corpo.lua (editor delle
-		-- animazioni); all'inizio erano BLASTRON_ROBOT_H * corpo di altezza,
-		-- ROBOT_HALF_W * k * corpo di mezza larghezza e il cerchio qui sotto
-		ROBOT_H = CORPO.cammina.alto,
-		ROBOT_HALF_W = CORPO.cammina.largo / 2,
-		DISEGNO_H = M.BLASTRON_ROBOT_H * corpo,
-		CORPO = corpo,
-		MAX_CLIMB = M.MAX_CLIMB * k,
-		TELEPORT_SEARCH = M.TELEPORT_SEARCH * k,
-		ORB_R = M.ORB_R * k,
-		GRENADE_R = M.GRENADE_R * k,
-		ORB_NUDGE = M.ORB_NUDGE * k,
-		CRATE_HALF_W = M.CRATE_HALF_W * k,
-		CRATE_H = M.CRATE_H * k,
-		CRATE_FALL = M.CRATE_FALL * k,
-		SWORD_REACH = M.SWORD_REACH * k,
-		MUZZLE = M.MUZZLE * k,
-		SWORD_PIVOT_Y = M.SWORD_PIVOT_Y * k,
-		SHARD_SPEED = M.SHARD_SPEED * k,
-		SNIPER_SPEED = M.SNIPER_SPEED * k,
-		SHARD_BLAST = { r = M.SHARD_BLAST.r * k, damage_r = M.SHARD_BLAST.damage_r * k,
-			damage = 11, knockback = M.SHARD_BLAST.knockback * k },
-		GRAVITY = 25 * u,
-		-- corsa 5 u/s a terra e in aria, salto alto 5,2 u
-		DEFAULT_STATS = { walk_speed = 5 * u, jump_height = 5.2 * u, air_speed = 5 * u },
-		AIR_CONTROL = "instant",
-		CLAMP_ACTIVE_VX = true,
-		-- MegaBlast sopra Blastron: corpo a capsula, salto corto, coyote time e
-		-- salto in anticipo (pilastri e riferimenti, fase 2 della roadmap)
-		ROBOT_ROUND = true,
-		JUMP_CUT = 0.45,
-		COYOTE_TICKS = 6,
-		JUMP_BUFFER_TICKS = 6,
-		-- cadere da più di 40 u toglie 15 punti (su 2000) per unità, al massimo 900;
-		-- da noi 25 e 1500: i danni sono 5/3 di Blastron (Sergio, 29 ottobre 2026:
-		-- "ci vogliono 5 turni per ammazzare qualcuno", tutto deve togliere di più)
-		FALL_SAFE = 40 * u,
-		FALL_DAMAGE = 25 * hp / u,
-		FALL_DAMAGE_MAX = 1500 * hp,
-		KNOCKBACK_MODEL = "blastron",
-		SELF_DAMAGE = 0.5,
-		OWNER_SAFE_TICKS = 30,
-		-- Rocket: cratere 5 u, danno e spinta entro 9 u, 150-300 danni, impulso 10
-		-- (da noi 250-500, 5/3)
-		MISSILE_SPEED = 75 * u,
-		MISSILE_GRAVITY = 1.1,
-		MISSILE_BLAST = { r = 5 * u, damage_r = 9 * u, damage = 500 * hp, damage_min = 250 * hp, impulse = 10 },
-		-- Grenade: rimbalzo 0,4, frenata 1/s dopo il primo urto, scoppia dopo 5 s
-		GRENADE_SPEED = 85 * u,
-		GRENADE_GRAVITY = 1.3,
-		GRENADE_FUSE = 5 * 60,
-		GRENADE_BOUNCE = 0.4,
-		GRENADE_FRICTION = 1,
-		GRENADE_DAMPING = 1,
-		-- danno al centro 57 invece di 27,5 (arena dei bot, 29 ottobre 2026: l'Uovo era l'arma più debole),
-		-- poi 80 e 25 ai bordi: 5/3 come tutti, ma il centro sotto la vita intera
-		-- (Sergio, 29 ottobre 2026: "non ti dico che si deve oneshottare")
-		GRENADE_BLAST = { r = 5.5 * u, damage_r = 10 * u, damage = 1600 * hp, damage_min = 500 * hp, impulse = 15 },
-		-- Teleport Grenade: non chiude il turno, ti porta lì dopo 3 s
-		ORB_SPEED = 80 * u,
-		ORB_GRAVITY = 1.1,
-		TELEPORT_TICKS = 3 * 60,
-		ORB_BOUNCE = 0.4,
-		ORB_FRICTION = 1,
-		ORB_DAMPING = 1.1,
-		-- dove si viene colpiti: il cerchio dei robot di Blastron, raggio 0,523 volte
-		-- l'altezza (3,612 × 0,66 × 0,5 × 0,66 × 2,4 = 1,888 u, per BLASTRON_CORPO)
-		-- a metà altezza, ora in sim/corpo.lua; per le esplosioni il quadrato
-		-- attorno, più largo di 0,1 u per lato
-		HURTBOX = "cerchio",
-		HURT_R = CORPO.colpi.raggio,
-		HURT_Y = CORPO.colpi.centro,
-		HURT_FAT = 0.1 * u,
-		-- Hanzo Special: fendente sulla mira (sim/mischia.lua), 300 danni (da noi 500), ferma il bersaglio
-		SWORD_MODEL = "blastron",
-		SWORD_TICKS = 56,
-		SWORD_DAMAGE = 500 * hp,
-		SWORD_STOP = true,
-		-- Flame-Yuken: montante sulla mira, 1000 danni, lancia dritto in alto a
-		-- 40 u/s, saltello di 15 u/s
-		PUNCH_MODEL = "blastron",
-		PUNCH_TICKS = 127,
-		PUNCH_DAMAGE = 940 * hp,   -- 28 invece di 50 (arena dei bot, 29 ottobre 2026: vinceva troppo), poi 47 (5/3)
-		PUNCH_LAUNCH = 40 * u,
-		PUNCH_PUSH = 0,
-		PUNCH_HOP = 15 * u,
-		PUNCH_REACH = 3.5 * u,
-		-- 1 s tra un turno e l'altro (durate del turno e della partita in sim/config.lua)
-		SETTLE_TICKS = 60,
-		CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 },
-		-- comandi: zona morta 20%, potenza quadratica, mira che insegue il dito,
-		-- salto ripetuto
-		AIM_DEADZONE = 0.2,
-		AIM_EXPONENT = 2,
-		AIM_SMOOTH = 0.2,
-		JUMP_REPEAT = true,
-	}
-end
-
-local PROFILES = { blastron = blastron_profile() }
-PROFILES.megablast = {}
-for k in pairs(PROFILES.blastron) do PROFILES.megablast[k] = M[k] end
-
-M.DEFAULT_PHYSICS = "blastron"
-
--- Sceglie il profilo di fisica per tutte le partite che verranno create.
--- Client e server devono usare lo stesso.
-function M.use_physics(name)
-	local prof = PROFILES[name]
-	assert(prof, "profilo di fisica sconosciuto: " .. tostring(name))
-	for k, v in pairs(prof) do M[k] = v end
-	M.PHYSICS = name
-end
-
-M.use_physics(M.DEFAULT_PHYSICS)
 
 return M

@@ -34,5 +34,13 @@ materials {
   name: "lampo"
   material: "/battaglia/lampo.material"
 }
+materials {
+  name: "forgia"
+  material: "/gironi/forgia.material"
+}
+materials {
+  name: "passaggio"
+  material: "/ui/passaggio.material"
+}
 adjust_reference: ADJUST_REFERENCE_PARENT
 max_nodes: 4096

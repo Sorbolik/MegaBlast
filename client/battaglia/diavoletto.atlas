@@ -68,139 +68,760 @@ images {
   image: "/assets/diavoletto/coda_5_bordo.png"
 }
 images {
-  image: "/assets/diavoletto/fiammella.png"
+  image: "/assets/pelli/apprendista_ala.png"
 }
 images {
-  image: "/assets/diavoletto/fiammella_tinta.png"
+  image: "/assets/pelli/apprendista_braccio_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_ala.png"
+  image: "/assets/pelli/apprendista_braccio_2.png"
 }
 images {
-  image: "/assets/pelli/gabriella_braccio.png"
+  image: "/assets/pelli/apprendista_braccio_3.png"
 }
 images {
-  image: "/assets/pelli/gabriella_braccio_dietro.png"
+  image: "/assets/pelli/apprendista_braccio_dietro_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_busto.png"
+  image: "/assets/pelli/apprendista_braccio_dietro_2.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_1.png"
+  image: "/assets/pelli/apprendista_braccio_dietro_3.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_1_bordo.png"
+  image: "/assets/pelli/apprendista_busto_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_2.png"
+  image: "/assets/pelli/apprendista_busto_1_tinta.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_2_bordo.png"
+  image: "/assets/pelli/apprendista_busto_2.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_3.png"
+  image: "/assets/pelli/apprendista_busto_2_tinta.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_3_bordo.png"
+  image: "/assets/pelli/apprendista_coda_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_4.png"
+  image: "/assets/pelli/apprendista_coda_1_bordo.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_4_bordo.png"
+  image: "/assets/pelli/apprendista_coda_2.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_5.png"
+  image: "/assets/pelli/apprendista_coda_2_bordo.png"
 }
 images {
-  image: "/assets/pelli/gabriella_coda_5_bordo.png"
+  image: "/assets/pelli/apprendista_coda_3.png"
 }
 images {
-  image: "/assets/pelli/gabriella_gamba.png"
+  image: "/assets/pelli/apprendista_coda_3_bordo.png"
 }
 images {
-  image: "/assets/pelli/gabriella_gamba_dietro.png"
+  image: "/assets/pelli/apprendista_coda_4.png"
 }
 images {
-  image: "/assets/pelli/gabriella_pugno.png"
+  image: "/assets/pelli/apprendista_coda_4_bordo.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_ala.png"
+  image: "/assets/pelli/apprendista_coda_5.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_braccio.png"
+  image: "/assets/pelli/apprendista_coda_5_bordo.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_braccio_dietro.png"
+  image: "/assets/pelli/apprendista_gamba_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_busto.png"
+  image: "/assets/pelli/apprendista_gamba_2.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_busto_tinta.png"
+  image: "/assets/pelli/apprendista_gamba_dietro_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_1.png"
+  image: "/assets/pelli/apprendista_gamba_dietro_2.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_1_bordo.png"
+  image: "/assets/pelli/apprendista_pugno_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_2.png"
+  image: "/assets/pelli/apprendista_pugno_2.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_2_bordo.png"
+  image: "/assets/pelli/apprendista_testa_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_3.png"
+  image: "/assets/pelli/apprendista_testa_arrabbiata_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_3_bordo.png"
+  image: "/assets/pelli/apprendista_testa_colpita_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_4.png"
+  image: "/assets/pelli/apprendista_testa_felice_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_4_bordo.png"
+  image: "/assets/pelli/apprendista_testa_ko_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_5.png"
+  image: "/assets/pelli/apprendista_testa_mira_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_coda_5_bordo.png"
+  image: "/assets/pelli/apprendista_testa_paura_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_gamba.png"
+  image: "/assets/pelli/apprendista_testa_provocazione_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_gamba_dietro.png"
+  image: "/assets/pelli/apprendista_testa_sconfitta_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_pugno.png"
+  image: "/assets/pelli/favilla_1_ala.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_testa.png"
+  image: "/assets/pelli/favilla_1_braccio.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_testa_colpita.png"
+  image: "/assets/pelli/favilla_1_braccio_dietro.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_testa_felice.png"
+  image: "/assets/pelli/favilla_1_busto.png"
 }
 images {
-  image: "/assets/pelli/gabriella_squadra_testa_ko.png"
+  image: "/assets/pelli/favilla_1_coda_1.png"
 }
 images {
-  image: "/assets/pelli/gabriella_testa.png"
+  image: "/assets/pelli/favilla_1_coda_1_bordo.png"
 }
 images {
-  image: "/assets/pelli/gabriella_testa_colpita.png"
+  image: "/assets/pelli/favilla_1_coda_2.png"
 }
 images {
-  image: "/assets/pelli/gabriella_testa_felice.png"
+  image: "/assets/pelli/favilla_1_coda_2_bordo.png"
 }
 images {
-  image: "/assets/pelli/gabriella_testa_ko.png"
+  image: "/assets/pelli/favilla_1_coda_3.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_coda_4.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_coda_5.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_gamba.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_pugno.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_testa.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_ala.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_braccio.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_busto.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_1.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_2.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_3.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_4.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_5.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_gamba.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_pugno.png"
+}
+images {
+  image: "/assets/pelli/favilla_1_vett_testa.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_ala.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_braccio.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_busto.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_1.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_2.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_3.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_4.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_5.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_gamba.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_pugno.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_testa.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_ala.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_braccio.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_busto.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_1.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_2.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_3.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_4.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_5.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_gamba.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_pugno.png"
+}
+images {
+  image: "/assets/pelli/favilla_2_vett_testa.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_ala.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_braccio.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_busto.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_1.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_2.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_3.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_4.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_5.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_gamba.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_pugno.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_testa.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_ala.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_braccio.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_busto.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_1.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_2.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_3.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_4.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_5.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_gamba.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_pugno.png"
+}
+images {
+  image: "/assets/pelli/femmina_1_vett_testa.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_ala.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_braccio.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_busto.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_1.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_2.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_3.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_4.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_5.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_gamba.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_pugno.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_testa.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_ala.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_braccio.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_busto.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_1.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_2.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_3.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_4.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_5.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_gamba.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_pugno.png"
+}
+images {
+  image: "/assets/pelli/femmina_2_vett_testa.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_ala.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_braccio.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_busto.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_1.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_2.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_3.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_4.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_5.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_gamba.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_pugno.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_testa.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_ala.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_braccio.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_busto.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_1.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_2.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_3.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_4.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_5.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_gamba.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_pugno.png"
+}
+images {
+  image: "/assets/pelli/maschio_1_vett_testa.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_ala.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_braccio.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_busto.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_1.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_2.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_3.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_4.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_5.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_gamba.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_pugno.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_testa.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_ala.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_braccio.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_busto.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_1.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_2.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_3.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_4.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_5.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_gamba.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_pugno.png"
+}
+images {
+  image: "/assets/pelli/maschio_2_vett_testa.png"
 }
 margin: 0
 extrude_borders: 2

@@ -46,21 +46,26 @@ M.ORDINE = { "facile", "normale", "difficile" }
 
 -- I gradi della campagna (Sergio, 30 ottobre 2026: "vorrei sentire una bella
 -- progressione graduale"): un livello, i campi che cambiano (liv) e i pesi.
--- Misurati a coppie, 1 contro 1, 300 partite: ogni grado batte quello sotto
--- nel 55-75% delle partite (2/1 63%, 3/2 65%, 4/3 75%, 5/4 58%, 6/5 55%,
--- 7/6 58%, 8/7 59%, 9/8 56%; il 10 è il picchiatore di evolvi.py, 54% contro
--- il difficile). Il salto più grande è il globo: il facile non lo usa mai.
+-- Le casse (Sergio, 2 novembre 2026): fino al grado 4 i bot le lasciano a
+-- te, il 5 e il 6 le prendono solo se sono a portata facile (metà peso), dal
+-- 7 le contendono come i bot fuori dalla campagna (M.PESI).
+-- Misurati a coppie, 1 contro 1, 300 partite (2 novembre, con le casse): ogni
+-- grado batte quello sotto (2/1 52%, 3/2 58%, 4/3 59%, 5/4 76%, 6/5 66%,
+-- 7/6 58%; dal 30 ottobre, senza casse: 8/7 59%, 9/8 56%; il 10 è il
+-- picchiatore di evolvi.py, 54% contro il difficile). I salti più grandi sono
+-- il globo (il facile non lo usa mai) e le casse (dal 5).
 -- Nella campagna players[i].bot può essere il numero del grado.
 local picchiatore = {}
 for k, v in pairs(C.SCORE) do picchiatore[k] = v end
 picchiatore.env_kill, picchiatore.kill, picchiatore.damage = C.SCORE.env_kill * 1.86, C.SCORE.kill * 1.57, C.SCORE.damage * 0.94
 M.GRADI = {
-	{ livello = "tutorial" },
-	{ livello = "facile" },
-	{ livello = "facile", liv = { teletrasporto = true }, pesi = { teletrasporto = 20 } },
-	{ livello = "facile", liv = { teletrasporto = true }, pesi = { teletrasporto = 50 } },
-	{ livello = "facile", liv = { teletrasporto = true, rampino = true, mira = 0.06, sbaglia = 0.3 }, pesi = { teletrasporto = 50 } },
-	{ livello = "normale", liv = { mira = 0.055, potenza = 0.05, sbaglia = 0.25 } },
+	{ livello = "tutorial", pesi = { cassa = 0, cassa_fame = 0 } },
+	{ livello = "facile", pesi = { cassa = 0, cassa_fame = 0 } },
+	{ livello = "facile", liv = { teletrasporto = true }, pesi = { teletrasporto = 20, cassa = 0, cassa_fame = 0 } },
+	{ livello = "facile", liv = { teletrasporto = true }, pesi = { teletrasporto = 50, cassa = 0, cassa_fame = 0 } },
+	{ livello = "facile", liv = { teletrasporto = true, rampino = true, mira = 0.06, sbaglia = 0.3 },
+		pesi = { teletrasporto = 50, cassa = 6, cassa_fame = 4 } },
+	{ livello = "normale", liv = { mira = 0.055, potenza = 0.05, sbaglia = 0.25 }, pesi = { cassa = 6, cassa_fame = 4 } },
 	{ livello = "normale" },
 	{ livello = "normale", liv = { mira = 0.02, potenza = 0.015, sbaglia = 0.05, oggetti = true } },
 	{ livello = "difficile" },
