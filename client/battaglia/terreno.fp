@@ -220,7 +220,8 @@ void main()
     // netto a ogni zoom. Letta prima dei ritorni, perché fwidth vuole tutti i pixel
     mediump vec3 m = texture(maschera, var_uv).rgb;
     mediump float dc = (m.b * 255.0 - 128.0) * 0.125;
-    mediump float aa = fwidth(dc) * 0.5;
+    // (mai zero: smoothstep con i due bordi uguali non è definito)
+    mediump float aa = max(fwidth(dc) * 0.5, 0.01);
     // sotto la mappa (la camera ci scende perché l'HUD non copra il terreno):
     // il baratro, sempre più buio, con il bagliore della brace appena sotto il bordo
     if (var_uv.y < 0.0 && stile.z < 0.5) {
@@ -258,7 +259,9 @@ void main()
     // il disegno che sporge sopra le celle piene (il contorno in cima al pavimento)
     mediump float buco = 0.0;
     if (stile.y > 0.5) {
-        buco = 1.0 - smoothstep(-aa, aa, dc);
+        // più le celle scavate di crateri che b non conosce (per sicurezza: un buco
+        // a celle, ristretto, che dentro un cerchio noto non si vede)
+        buco = max(1.0 - smoothstep(-aa, aa, dc), smoothstep(0.6, 0.9, scavato));
         scavato = 0.0;
     }
 
@@ -276,8 +279,8 @@ void main()
         if (dc < ORLO) {
             mediump float orlo = 1.0 - smoothstep(ORLO * 0.2, ORLO, dc);
             ter.rgb = mix(ter.rgb, BRUCIATO * ter.a, orlo * 0.92);
-            ter *= 1.0 - buco;
         }
+        ter *= 1.0 - buco;
     } else if (scavato > 0.0) {
         mediump float n1 = vicino(var_uv, 1.5);
         mediump float n2 = vicino(var_uv, 4.5);
