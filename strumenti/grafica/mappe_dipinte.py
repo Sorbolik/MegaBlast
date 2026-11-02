@@ -4,10 +4,6 @@
 # Scrive, per ogni densità di schermo (1 = normale, 2 = alta, vedi DENSITA):
 #   client/dipinti/mappe/<mappa>_<d>.png      il terreno disegnato, 1920 x 1080 per d
 #   client/dipinti/sfondi/<girone>_*_<d>.png  il cielo e i tre gruppi di piani dello sfondo
-#   client/dipinti/<mappa>_<d>.collection     una collezione per immagine (o per sfondo), che il
-#                                             gioco carica solo quando serve (texture compresse,
-#                                             profilo Dipinti di texture_profiles)
-#   client/battaglia/dipinti.collection       le collection factory che le caricano
 #   client/battaglia/dipinti.lua              misure e velocità che servono allo shader
 #   strumenti/grafica/mappe/<mappa>.png       la maschera di collisione (bianco terra, rosso
 #                                             acciaio), che mappa_in_lua.py porta in sim/mapdata.lua
@@ -165,51 +161,6 @@ def maschera(g, nome):
     im.save(os.path.join(MASCHERE, nome + ".png"))
 
 
-# ---------------------------------------------------------------- le risorse di Defold
-def collezione(nome, oggetto, righe):
-    """Il testo di una collezione con un solo oggetto incorporato (righe: il suo .go)."""
-    dati = "".join('  "%s\\n"\n' % r.replace('\\', '\\\\').replace('"', '\\"') for r in righe)
-    return ('name: "%s"\nscale_along_z: 0\nembedded_instances {\n  id: "%s"\n  data: %s  ""\n'
-            '  position {\n    x: 0.0\n    y: 0.0\n    z: 0.0\n  }\n'
-            '  rotation {\n    x: 0.0\n    y: 0.0\n    z: 0.0\n    w: 1.0\n  }\n'
-            '  scale3 {\n    x: 1.0\n    y: 1.0\n    z: 1.0\n  }\n}\n') % (nome, oggetto, dati.lstrip())
-
-
-def scrivi_collezione(nome, script, proprieta):
-    """Una collezione con un oggetto e lo script che manda al terreno le sue texture."""
-    comp = ['components {', '  id: "dipinto"', '  component: "%s"' % script]
-    for chi, png in [("nome", nome)] + proprieta:
-        comp += ['  properties {', '    id: "%s"' % chi, '    value: "%s"' % png, '    type: PROPERTY_TYPE_HASH', '  }']
-    comp.append('}')
-    open(os.path.join(OUT, nome + ".collection"), "w").write(collezione(nome, "dipinto", comp))
-
-
-def collezioni(mappe):
-    """Una collezione per ogni immagine del terreno e per ogni sfondo, a ogni densità, e la
-    collezione con le collection factory a caricamento dinamico: il gioco ne tiene in memoria solo una per tipo."""
-    for f in os.listdir(OUT):
-        if f.endswith(".collection"):
-            os.remove(os.path.join(OUT, f))
-    fabbriche = []
-    for d in DENSITA:
-        for m in mappe:
-            nome = "%s_%d" % (m, d)
-            scrivi_collezione(nome, "/dipinti/terreno.script", [("terreno", "/dipinti/mappe/%s.png" % nome)])
-            fabbriche.append(nome)
-        nome = "forgia_%d" % d
-        scrivi_collezione(nome, "/dipinti/sfondo.script",
-                          [(p, "/dipinti/sfondi/forgia_%s_%d.png" % (p, d)) for p in ("cielo", "lontano", "medio", "vicino")])
-        fabbriche.append(nome)
-    # una collezione e non un .go: go vet leggerebbe un .go come codice Go
-    righe = []
-    for nome in fabbriche:
-        righe += ['embedded_components {', '  id: "%s"' % nome, '  type: "collectionfactory"',
-                  '  data: "prototype: \\"/dipinti/%s.collection\\"\\n"' % nome, '  "load_dynamically: true\\n"',
-                  '  ""', '}']
-    open(os.path.join(RADICE, "client", "battaglia", "dipinti.collection"), "w").write(
-        collezione("dipinti", "fabbriche", righe))
-
-
 def main():
     P = TEMI["forgia"]
     for sotto in ("mappe", "sfondi"):
@@ -256,13 +207,7 @@ def main():
             sc = im.width / 2560
             y0s.append(box[1] / sc)
             y1s.append(box[3] / sc)
-        # le texture compresse vogliono lati multipli di 4 a ogni densità (scale 0,5 ... 1,6):
-        # fondo a multipli di 20 pixel della scena, altezza a multipli di 80 (sopra è vuoto)
-        y1 = min(H, -(-(int(max(y1s)) + 3) // 20) * 20)
-        y0 = max(0, y1 - -(-(y1 - max(0, int(min(y0s)) - 2)) // 80) * 80)
-        if y0 == 0:
-            # arriva in cima: l'altezza è y1, che allora va a multipli di 80 anche lei
-            y1 = min(H, -(-y1 // 80) * 80)
+        y0, y1 = max(0, int(min(y0s)) - 2), min(H, int(max(y1s)) + 3)
         for d in DENSITA:
             f = os.path.join(OUT, "sfondi", "forgia_%s_%d.png" % (nome, d))
             im = Image.open(f)
@@ -294,7 +239,6 @@ def main():
         righe.append('\t\tmissione_%s = "forgia",' % mid)
     righe += ["\t},", "}", ""]
     open(LUA, "w").write("\n".join(righe))
-    collezioni(list(MAPPE) + ["missione_" + mid for mid in arene()])
     print("fatto:", len(lavori), "immagini")
 
 
