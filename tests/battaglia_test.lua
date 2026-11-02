@@ -9,7 +9,7 @@ vmath = { vector3 = vec, vector4 = vec }
 hash = function(s) return "#" .. s end
 local nodi = {}
 local frazione = 0
-ordine = 0
+local ordine = 0
 local function nuovo(p, s)
 	ordine = ordine + 1
 	local n = { pos = vec(p.x, p.y), euler = vec(), scale = vec(1, 1, 1), size = s, enabled = true, ordine = ordine }
