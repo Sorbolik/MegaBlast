@@ -191,6 +191,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label>arma <select id="arma"></select></label>
 			<label id="mira-l">mira <input type="range" id="mira" min="-90" max="90" step="1" value="0" style="width: 140px"> <span class="num" id="mira-n">0°</span></label>
 			<label title="Chi tiene l'arma in questa clip: un braccio gira verso la presa, una manina ci sta sopra">impugnata da <select id="impugna"></select></label>
+			<label title="Quanto è grande l'arma in mano, per quest'arma in tutte le sue clip (anche Maiusc + rotellina sopra l'arma)">grandezza <input type="number" id="arma-scala" min="20" max="300" step="5" value="100" style="width: 56px"> %</label>
 			<button id="variante" title="Una clip solo per quest'arma: il gioco la usa al posto di quella di tutte (es. fermo_arma_mallet)">Clip solo per quest'arma</button>
 		</div>
 		<div class="barra">
@@ -291,7 +292,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		<div id="tempo-scorri"><canvas id="tempo"></canvas></div>
 	</section>
 	<div id="aiuto" class="box" hidden>
-		<div class="aiuto">I pezzi stanno nel <b>secchio</b> sopra il palco: trascinane uno sul palco e va in scena dove lo lasci, da quel momento della clip; trascinalo dal palco al secchio e esce di scena (un clic sul secchio lo mette e lo toglie dov'è). Le manine sono pezzi liberi: si spostano e si girano come gli altri. Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Nelle clip con l'arma i cerchi blu sull'arma sono le <b>impugnature</b> (dove vanno i pugni, per ogni arma, in tutte le sue clip): trascinali, e con "Clip solo per quest'arma" un'arma ha la sua versione della clip. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo (sul righello trascinando scorri), trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. Più chiavi insieme: trascina un rettangolo sulle righe o <kbd>Maiusc</kbd>+clic su ognuna, poi le trascini tutte in blocco (anche la curva e <kbd>Canc</kbd> valgono per tutte). <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> (e ◀︎ ▶︎) vanno alla chiave prima o dopo, su qualsiasi canale; con <kbd>Maiusc</kbd> un fotogramma (1/60 s, la griglia su cui si posano le chiavi); <kbd>spazio</kbd> avvia.</div>
+		<div class="aiuto">I pezzi stanno nel <b>secchio</b> sopra il palco: trascinane uno sul palco e va in scena dove lo lasci, da quel momento della clip; trascinalo dal palco al secchio e esce di scena (un clic sul secchio lo mette e lo toglie dov'è). Le manine sono pezzi liberi: si spostano e si girano come gli altri. Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Nelle clip con l'arma i cerchi blu sull'arma sono le <b>impugnature</b> (dove vanno i pugni, per ogni arma, in tutte le sue clip): trascinali, e con "Clip solo per quest'arma" un'arma ha la sua versione della clip. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo (sul righello trascinando scorri), trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. Più chiavi insieme: trascina un rettangolo sulle righe o <kbd>Maiusc</kbd>+clic su ognuna, poi le trascini tutte in blocco (anche la curva e <kbd>Canc</kbd> valgono per tutte); <kbd>Ctrl+C</kbd> le copia e <kbd>Ctrl+V</kbd> le incolla al tempo dove sei, anche in un'altra clip (senza chiavi scelte Ctrl+C copia la posa). L'arma si ingrandisce con "grandezza" o <kbd>Maiusc</kbd> + rotellina sopra di lei, per tutte le sue clip. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> (e ◀︎ ▶︎) vanno alla chiave prima o dopo, su qualsiasi canale; con <kbd>Maiusc</kbd> un fotogramma (1/60 s, la griglia su cui si posano le chiavi); <kbd>spazio</kbd> avvia.</div>
 	</div>
 </div>
 <div id="messaggio" role="status"></div>
@@ -859,7 +860,7 @@ const copiaPrese = (p) => {
 	const o = {};
 	for (const n of Object.keys(DA)) {
 		const a = p[n] && punto2(p[n].presa) && punto2(p[n].perno) && punto2(p[n].spalla) ? p[n] : PRESE_GIOCO[n];
-		o[n] = { presa: a.presa.slice(), perno: a.perno.slice(), spalla: a.spalla.slice() };
+		o[n] = { presa: a.presa.slice(), perno: a.perno.slice(), spalla: a.spalla.slice(), scala: +a.scala > 0 ? +a.scala : 1 };
 	}
 	return o;
 };
@@ -867,7 +868,7 @@ let pr = copiaPrese(PRESE_GIOCO);
 function preseInLua(p) {
 	const n = (v) => String(Math.round(v * 10) / 10);
 	const xy = (m) => `{ ${n(m[0])}, ${n(m[1])} }`;
-	const righe = Object.keys(DA).map((k) => `\t${k} = { presa = ${xy(p[k].presa)}, perno = ${xy(p[k].perno)}, spalla = ${xy(p[k].spalla)} },\n`);
+	const righe = Object.keys(DA).map((k) => `\t${k} = { presa = ${xy(p[k].presa)}, perno = ${xy(p[k].perno)}, spalla = ${xy(p[k].spalla)}${Math.abs(p[k].scala - 1) > 0.005 ? `, scala = ${String(Math.round(p[k].scala * 100) / 100)}` : ""} },\n`);
 	return DATI.impugnature.replace(/return \{[\s\S]*$/, "return {\n" + righe.join("") + "}\n");
 }
 const PRESE_DEL_GIOCO = preseInLua(pr);
@@ -876,6 +877,12 @@ function cambiaPrese() {
 	try { localStorage.setItem("megablast-impugnature", preseInLua(pr)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
 	aggiorna();
 }
+// la grandezza dell'arma scelta (1 = com'è), per tutte le sue clip
+function scalaArma(v) {
+	pr[$("arma").value].scala = Math.round(Math.max(0.2, Math.min(3, v)) * 100) / 100;
+	cambiaPrese();
+}
+$("arma-scala").onchange = () => scalaArma((parseFloat($("arma-scala").value) || 100) / 100);
 // Chi impugna l'arma e i livelli (cosa sta davanti a cosa) sono della clip; le
 // clip che si sommano sopra un'altra (sale, scende) usano quelli della base,
 // come nel gioco (vince la clip col peso più grande)
@@ -943,8 +950,9 @@ palco.addEventListener("wheel", (e) => {
 	if (e.shiftKey) {
 		const [px, py] = pixel(e);
 		const x = pezzoSotto(px, py);
+		if (x && x.canale === "arma") { scalaArma((pr[$("arma").value].scala || 1) * Math.exp(-(e.deltaY || e.deltaX) * 0.001)); return; }
 		const k = x && x.p && x.p._k;
-		if (!k || !$("rt-pezzo").querySelector(`option[value="${k}"]`)) { messaggio("Maiusc + rotellina: sopra un pezzo della pelle che hai addosso, per cambiarne la grandezza."); return; }
+		if (!k || !$("rt-pezzo").querySelector(`option[value="${k}"]`)) { messaggio("Maiusc + rotellina: sopra un pezzo della pelle che hai addosso (o sull'arma), per cambiarne la grandezza."); return; }
 		if ($("rt-pezzo").value !== k) { $("rt-pezzo").value = k; mostraRitocco(); }
 		const d = e.deltaY || e.deltaX;   // con Maiusc alcuni browser danno la rotellina in orizzontale
 		const v = Math.max(20, Math.min(300, (parseFloat($("rt-s").value) || 100) * Math.exp(-d * 0.001)));
@@ -1052,8 +1060,11 @@ function disegna(dt) {
 		const ax = gr.spalla[0] + po.arma_x, ay = gr.spalla[1] + po.arma_y;
 		const pernoM = ruota(scala(sposta(forma, ax, ay), 1 / lx, 1 / q), th);
 		posti.arma = punto(pernoM, 0, 0);
-		armaM = sposta(pernoM, -gr.perno[0] / K, -gr.perno[1] / K);
-		const dx = (gr.presa[0] - gr.perno[0]) / K, dy = (gr.presa[1] - gr.perno[1]) / K, c = Math.cos(th), sn = Math.sin(th);
+		// la scala dell'arma (grandezza): l'immagine si ingrandisce attorno al perno,
+		// presa e perno restano in unità dell'immagine com'è
+		const sc = gr.scala || 1;
+		armaM = scala(sposta(pernoM, -gr.perno[0] * sc / K, -gr.perno[1] * sc / K), sc, sc);
+		const dx = (gr.presa[0] - gr.perno[0]) * sc / K, dy = (gr.presa[1] - gr.perno[1]) * sc / K, c = Math.cos(th), sn = Math.sin(th);
 		presaF = [ax + (dx * c - dy * sn) / lx, ay + (dx * sn + dy * c) / q];
 		if (chi === "braccio_a") braccia[0] = Math.atan2(presaF[1] - J("braccio")[1] - po.braccio_a_y, presaF[0] - J("braccio")[0] - po.braccio_a_x) - verso("a");
 		if (chi === "braccio_d") braccia[1] = Math.atan2(presaF[1] - J("braccio_dietro")[1] - po.braccio_d_y, presaF[0] - J("braccio_dietro")[0] - po.braccio_d_x) - verso("d");
@@ -1859,6 +1870,7 @@ function aggiorna() {
 	$("variante").textContent = v ? `Togli la clip di ${arma}` : clips[nome + "_" + arma] ? `Vai alla clip di ${arma}` : `Clip solo per ${arma}`;
 	const prl = preseInLua(pr);
 	$("pr-stato").textContent = prl === PRESE_DEL_GIOCO ? "come nel gioco" : prl === preseSalvate ? "salvate" : "cambiate, da salvare";
+	if (document.activeElement !== $("arma-scala")) $("arma-scala").value = Math.round((pr[arma].scala || 1) * 100);
 	const nums = { largo: hb.cammina.largo, alto: hb.cammina.alto, raggio: hb.colpi.raggio, centro: hb.colpi.centro };
 	for (const id in nums) if (document.activeElement !== $("hb-" + id)) $("hb-" + id).value = nums[id];
 	const cl = corpoInLua(hb);
@@ -1888,18 +1900,23 @@ function aggiorna() {
 	const ck = $("chiave");
 	const curve = scelte.filter((s) => s.riga !== "viso").map((s) => s.k);
 	if (scelte.length > 1) {
-		ck.innerHTML = `<span><span class="num">${scelte.length}</span> chiavi scelte: trascinale insieme, <kbd>Canc</kbd> le toglie</span>${curve.length ? `<select id="curva" title="La curva di tutte le chiavi scelte"><option value="">curva…</option><option value="0">liscia</option><option value="1">dritta</option><option value="2">a scatto</option></select>` : ""}<button id="togli">Togli tutte</button>`;
+		ck.innerHTML = `<span><span class="num">${scelte.length}</span> chiavi scelte: trascinale insieme, <kbd>Canc</kbd> le toglie</span>${curve.length ? `<select id="curva" title="La curva di tutte le chiavi scelte"><option value="">curva…</option><option value="0">liscia</option><option value="1">dritta</option><option value="2">a scatto</option></select>` : ""}<button id="copia-chiavi" title="Copia le chiavi scelte (Ctrl+C): si incollano al tempo dove sei, anche in un'altra clip">Copia</button><button id="togli">Togli tutte</button>`;
 		if (curve.length) $("curva").onchange = () => { if ($("curva").value === "") return; prima(); for (const k of curve) k.c = +$("curva").value; dopo(); };
+		$("copia-chiavi").onclick = copiaChiavi;
 		$("togli").onclick = togliChiave;
 	} else if (chiaveScelta && chiaveScelta.riga !== "viso") {
 		const k = chiaveScelta.k;
-		ck.innerHTML = `<span>Chiave a <span class="num">${k.t.toFixed(3)} s</span>, fino alla prossima</span><select id="curva"><option value="0">liscia</option><option value="1">dritta</option><option value="2">a scatto</option></select><button id="togli">Togli</button>`;
+		ck.innerHTML = `<span>Chiave a <span class="num">${k.t.toFixed(3)} s</span>, fino alla prossima</span><select id="curva"><option value="0">liscia</option><option value="1">dritta</option><option value="2">a scatto</option></select><button id="copia-chiavi" title="Copia la chiave (Ctrl+C)">Copia</button><button id="togli">Togli</button>`;
 		$("curva").value = String(k.c);
 		$("curva").onchange = () => { prima(); k.c = +$("curva").value; dopo(); };
+		$("copia-chiavi").onclick = copiaChiavi;
 		$("togli").onclick = togliChiave;
 	} else if (chiaveScelta) {
 		ck.innerHTML = `<span>Faccia a <span class="num">${chiaveScelta.k.t.toFixed(3)} s</span></span><button id="togli">Togli</button>`;
 		$("togli").onclick = togliChiave;
+	} else if (appunti) {
+		ck.innerHTML = `<span style="color: var(--tenue)"><span class="num">${appunti.length}</span> chiavi copiate</span><button id="incolla-chiavi" title="Incolla le chiavi copiate al tempo dove sei (Ctrl+V)">Incolla a ${t.toFixed(2)} s</button>`;
+		$("incolla-chiavi").onclick = incollaChiavi;
 	} else ck.innerHTML = `<span style="color: var(--tenue)">Scegli una chiave nella linea del tempo per la sua curva.</span>`;
 	$("annulla").disabled = !indietro.length;
 	$("rifai").disabled = !avanti.length;
@@ -2057,7 +2074,46 @@ function posaSotto() {
 	campiona(clips[base], orologio, po, 1);
 	return po;
 }
+// le chiavi copiate (Ctrl+C con delle chiavi scelte): si incollano al tempo dove
+// sei, anche in un'altra clip, tenendo le distanze fra loro
+let appunti = null, ultimaCopia = "posa";
+function copiaChiavi() {
+	const l = scelte.length ? scelte : chiaveScelta ? [chiaveScelta] : [];
+	if (!l.length) return false;
+	const t0 = Math.min(...l.map((s) => s.k.t));
+	appunti = l.map((s) => ({ riga: s.riga, k: Object.assign({}, s.k, { t: Math.round((s.k.t - t0) * 1000) / 1000 }) }));
+	ultimaCopia = "chiavi";
+	messaggio(`${l.length} ${l.length === 1 ? "chiave copiata" : "chiavi copiate"}: vai al tempo (o alla clip) dove le vuoi e Ctrl+V.`);
+	aggiorna();
+	return true;
+}
+function incollaChiavi() {
+	if (!appunti) { messaggio("Prima copia delle chiavi (scegline una o più e Ctrl+C)."); return; }
+	prima();
+	const c = clip(), t0 = dentro(c, tempo);
+	scelte = [];
+	let fuori = 0;
+	for (const { riga, k } of appunti) {
+		if (t0 + k.t > c.durata + 1e-6) { fuori++; continue; }
+		const t = Math.round((t0 + k.t) * 1000) / 1000;
+		let lista;
+		if (riga === "viso") lista = c.viso;
+		else {
+			if (!CANALI.some((ch) => ch.id === riga)) continue;
+			lista = c.tracce[riga] = c.tracce[riga] || [];
+		}
+		const vecchia = chiaveA(lista, t);
+		if (vecchia) lista.splice(lista.indexOf(vecchia), 1);
+		const nk = Object.assign({}, k, { t });
+		lista.push(nk); ordina(lista);
+		scelte.push({ riga, k: nk });
+	}
+	chiaveScelta = scelte.length ? scelte[scelte.length - 1] : null;
+	dopo();
+	messaggio(`${scelte.length} chiavi incollate a ${t0.toFixed(2)} s` + (fuori ? `, ${fuori} fuori dalla clip (allungala)` : "") + ".");
+}
 $("copia-posa").onclick = () => {
+	ultimaCopia = "posa";
 	posaCopiata = {};
 	const sotto = posaSotto();
 	for (const ch of CANALI) posaCopiata[ch.id] = valoreProprio(clip(), ch.id, tempo) + (sotto ? sotto[ch.id] - NEUTRO[ch.id] : 0);
@@ -2086,8 +2142,8 @@ document.addEventListener("keydown", (e) => {
 	if (campo) return;
 	if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); (e.shiftKey ? $("rifai") : $("annulla")).click(); }
 	else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); $("rifai").click(); }
-	else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") $("copia-posa").click();
-	else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") $("incolla-posa").click();
+	else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") { if (!copiaChiavi()) $("copia-posa").click(); }
+	else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") { if (ultimaCopia === "chiavi") incollaChiavi(); else $("incolla-posa").click(); }
 	else if (e.key === " ") { e.preventDefault(); $("play").click(); }
 	else if (e.key === "ArrowLeft") fotogramma(-1, e.shiftKey);
 	else if (e.key === "ArrowRight") fotogramma(1, e.shiftKey);
