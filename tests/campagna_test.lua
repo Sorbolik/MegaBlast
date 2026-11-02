@@ -194,7 +194,7 @@ if ok then
 	check(missioni.quante(missioni.stelle(r3)) == 2, "primi_passi: un tiro a vuoto, due stelle")
 end
 
-local ok, r, a, p, esito
+local ok, r, a, p, esito, g
 -- Il turno: il Lanciarune subito (globi), la Lama, il globo sull'isola, il
 -- bersaglio lì cade al primo colpo, il baratto, e il turno dopo di nuovo dal primo
 local function turno_isola(c)

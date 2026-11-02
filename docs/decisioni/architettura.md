@@ -36,6 +36,7 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
 | 29 ott | **APK su Telegram in automatico**: GitHub Actions costruisce l'APK a ogni push su main (con l'online, firmato con la chiave di Sergio dai segreti del repository) e il bot @ultrablastbot lo manda a Sergio (Claude). | .github/workflows/apk.yml, docs/setup.md |
 | 29 ott | **Motore Android snello** (Sergio: "ottimizzare senza rinunciare a qualità"): `client/megablast.appmanifest` toglie fisica 2D/3D, Vulkan (resta OpenGL ES), registratore, profiler, particellari, tilemap, image.load e live update; la UI (`/ui/**`) senza mipmap. Grafica e suoni identici (Claude). | client/megablast.appmanifest |
 | 30 ott | **Protocollo 3**: il `hello` non porta più l'attrezzo; il `draft` porta a ognuno solo le sue scelte (`p`, `p2` stringhe), senza `offer3`, `p3`, `pr`, `sw`; niente più messaggio `swap`; lo `start` porta solo `pick` e `secondary`. | questa PR |
+| 2 nov | **Controlli su ogni PR** (Sergio: "c'è un sistema di revisione del codice?"; piano approvato il 2 nov): `strumenti/controlli/tutti.sh` fa sintassi e globali di tutto il Lua (`globali.py`, dal bytecode di `luajit -bl`), i controlli dell'editor di Defold, tutti i `tests/*_test.lua`, `go vet`, `gofmt` e `go test ./server/`; lo stesso comando gira su GitHub a ogni PR (`.github/workflows/controlli.yml`). Prima di chiedere il merge ogni thread passa `/code-review` sulla sua PR. **Confronto prima/dopo** (`strumenti/confronta/confronta.py`): 200 partite di bot e le missioni dei gironi giocate su main e sul ramo, con l'impronta di tutto lo stato ogni 10 tick, che non dipende dai nomi; per le PR che non devono cambiare il gioco deve dire OK. Trovate subito due globali scritte per sbaglio nei test (`g` in `campagna_test.lua`, `ordine` in `battaglia_test.lua`). | questa PR |
 
 ## Scartate
 
@@ -68,6 +69,8 @@ Il futuro (server pubblico, account, pannello) è in [../roadmap.md](../roadmap.
   ma rischio di sbavature visibili sul terreno dipinto; restano RGBA. Togliere
   il suono wav o ogg: wav lo usa il punto, ogg servirà per l'audio base
   (Claude) — 29 ott.
+
+- Per la revisione (2 nov): selene e luacheck come linter Lua (un programma in più da scaricare; il controllo che conta, le globali, lo fa già `luajit -bl` che c'è; dei due mancano solo le variabili locali inutilizzate) (Claude); la revisione di Claude come GitHub Action (paga l'API a ogni PR, `/code-review` del thread è nell'abbonamento); Copilot code review (abbonamento a pagamento); CodeRabbit e SonarCloud (gratis solo per i repository pubblici, Sonar non legge Lua); StyLua (riscrive migliaia di righe solo per spazi); `simula.py` e il confronto delle 200 partite su GitHub (5-10 minuti a PR sui 2.000 gratis al mese: li fa il thread).
 
 ## Aperte
 
