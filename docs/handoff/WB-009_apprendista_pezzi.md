@@ -475,6 +475,50 @@ densità per schermo e l'integrazione nel gioco restano da fare con Claude dopo
 la revisione. Il file pelli.lua isolato NON sostituisce quello completo del gioco.
 Nessuna PR aperta o unione verso main.
 
+### Fase 3 · immagini 6 e 7 · 2026-11-02
+
+Eseguita la fase 3 della scheda APPROVATA aggiornata su `main` (17ed63b), con le
+righe 6 e 7 e i relativi prompt integrali. La precedente consegna tecnica è
+esplicitamente distinta sopra: non era l'esecuzione di queste immagini.
+
+| File | Riferimenti in ordine | Misura effettiva | Tentativi |
+|---|---|---|---|
+| `art/WB-009/6_tre_quarti_1.png` | R4 | 1024×1536 | 3, consegnato il terzo |
+| `art/WB-009/6_tre_quarti_2.png` | R4 | 1024×1536 | 3, consegnato il terzo |
+| `art/WB-009/7_teste.png` | R4, R5, R6 | 1254×1254 | 3, consegnato il terzo |
+
+Gli omonimi `.txt` contengono il prompt originale e i riferimenti in ordine.
+Verificato che il testo coincida esattamente con i blocchi inglesi della scheda;
+nessuna aggiunta, modifica o accorciamento, anche nelle rigenerazioni.
+Sfondo non trasparente, bianco nei due tre quarti, magenta nelle teste come
+specificato nei prompt. Copiati i PNG originali, senza ritocco o ricampionamento.
+
+**Controlli visivi eseguiti su tutti i tentativi.** Nei due tre quarti il piede a
+sinistra dell'immagine è girato a destra, nella direzione del piede a destra,
+con tre dita; personaggio intero, corna, orecchie, testa, fazzoletto, braccia,
+pancia e coda restano visivamente molto vicini a R4. La coda è intera, non tagliata.
+Il foglio delle teste presenta tutte e nove le espressioni nell'ordine richiesto,
+a tre quarti verso destra; mira con occhio lontano chiuso, vicino giallo e lingua
+all'angolo. Nessun collo, moncherino o fazzoletto: il contorno nero è chiuso
+sotto il mento e dietro la mandibola. Nessuna fiammella, ala, scritta, numero o
+firma; verde soltanto sul fazzoletto dei personaggi interi. Dimensioni, formato
+PNG e assenza di trasparenza controllati leggendo i file.
+
+**Limiti rimasti dopo tre tentativi per file.** Persistono leggere sfumature e
+colori non esatti della tavolozza; lo sfondo non è perfettamente uniforme: pixel
+in alto a sinistra rispettivamente RGB (253,253,253), (254,253,253), (240,14,240).
+Le sagome delle nove teste/corna variano leggermente: non sono geometricamente
+identiche. I tre quarti sono molto simili a R4, ma non si dichiara identità pixel
+per pixel del resto del disegno; ci sono piccole variazioni di contorno e ombra
+anche fuori dalla gamba. Il generatore restituisce le teste a 1254×1254, quadrato
+ma diverso da 1536×1536 o 1024×1024 richiesti: originale conservato.
+
+Consegna per la scelta e revisione di Sergio; non dichiarata piena conformità o
+approvazione. Nessun file in `scelti/` creato o sostituito; R7 resta da scegliere.
+Non avviata la fase 4. In questa esecuzione nessun ricalco, script tecnico, editor,
+taglio o integrazione: solo immagini 6 e 7, prompt e questa consegna.
+Nessuna PR aperta o unione verso main.
+
 ## Resoconto di Claude
 
 ### Fase 1 · scelte di Sergio (2026-11-02)
