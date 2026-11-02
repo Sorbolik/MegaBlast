@@ -46,6 +46,9 @@ SOPRA = ["pantaloni", "maglia", "corazza", "guanti", "elmo"]
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
 DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba"}
+# le facce in più (WB-009), da un foglio a parte in fila da sinistra: nello stampino
+# non hanno casella, vanno sul perno della testa con la sua scala
+FACCE_IN_PIU = ["testa_mira", "testa_arrabbiata", "testa_sconfitta", "testa_paura", "testa_provocazione"]
 SCURO = 0.78
 # I pezzi in catena (i segmenti della coda): come
 # quelli di base, in due strati. Il bordo è il pezzo intero, il colore lo stesso
@@ -378,21 +381,101 @@ def vuoti(pezzi, nome, senza):
         pezzi[posto] = {"img": img, "x": 0.0, "y": 0.0, "w": 0.1, "h": 0.1, "modo": "sostituisce"}
 
 
-def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=()):
-    with open(ST.FOGLIO) as f:
-        F = json.load(f)
+def alla_misura(foglio, F):
+    """Il foglio alla misura dello stampino (ChatGPT dà 1536 x 1024, Procreate
+    quella giusta), senza il fondo."""
     im = Image.open(foglio).convert("RGBA")
-    # alla misura dello stampino (ChatGPT dà 1536 x 1024, Procreate quella giusta)
     if im.size != (F["larghezza"], F["altezza"]):
         k = min(F["larghezza"] / im.width, F["altezza"] / im.height)
         im2 = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
         im = Image.new("RGBA", (F["larghezza"], F["altezza"]), (255, 0, 255, 255))
         im.paste(im2, (0, 0))
-    a = fondo_via(im)
+    return fondo_via(im)
+
+
+def facce_in_piu(foglio, F):
+    """Le teste di un foglio di facce in più, da sinistra: le macchie più grandi."""
+    a = alla_misura(foglio, F)
+    al = a[..., 3] > 128
+    ms = sorted(macchie(al, passo=1), key=lambda m: -m.sum())[:len(FACCE_IN_PIU)]
+    if len(ms) < len(FACCE_IN_PIU):
+        sys.exit(f"nel foglio delle facce servono {len(FACCE_IN_PIU)} teste staccate")
+    out = []
+    for m in sorted(ms, key=lambda m: np.nonzero(m)[1].mean()):
+        x0, y0, x1, y1 = scatola(m)
+        pz = a[y0:y1, x0:x1].copy()
+        pz[~m[y0:y1, x0:x1], 3] = 0
+        out.append(pz)
+    return out
+
+
+def senza_collo(im, k=1.0):
+    """Una testa di ChatGPT senza il moncherino del collo (il collo è del busto):
+    sotto la guancia si taglia dritti fino al fondo del muso, sotto il muso subito
+    dopo il suo contorno; restano solo i pezzi attaccati alla testa. k: quanti
+    pixel di questa testa fanno un pixel del gioco (le misure sono del gioco)."""
+    from collections import deque
+    im = im.copy()
+    a = im[..., 3] > 128
+    H, W = a.shape
+    rgb = im[..., :3].astype(int)
+    nero = (rgb.max(axis=2) < 70) & a
+    crema = (rgb[..., 0] > 200) & (rgb[..., 1] > 180) & (rgb[..., 2] > 120) & a
+    y0 = int(H * 0.76)
+    # A: dove il profilo della guancia smette di rientrare (comincia il collo)
+    xl = [int(np.nonzero(a[y])[0].min()) if a[y].any() else W for y in range(H)]
+    d = max(2, round(2 * k))
+    ya = next(y for y in range(y0, H - d) if xl[y + d] - xl[y] <= 0) - 1
+    xa = xl[ya]
+    # B: il fondo del muso, col suo contorno
+    cy, cx = np.nonzero(crema)
+    yb = int(cy.max()) + round(5 * k)
+    xb = int(cx[cy >= cy.max() - 1].min())
+    for x in range(xa, min(xb, W)):
+        yc = round(ya + (yb - ya) * (x - xa) / max(1, xb - xa))
+        im[yc + 1:, x, 3] = 0
+    im[yb + 1:, xa:, 3] = 0
+    for x in range(xb, W):
+        c = np.nonzero(crema[:, x])[0]
+        y = max(y0, int(c.max()) + 1 if len(c) else 0)
+        while y < H and a[y, x] and not nero[y, x]:
+            y += 1
+        n = 0
+        while y < H and nero[y, x] and n < 6 * k:   # il contorno del mento, non il collo sotto
+            y += 1
+            n += 1
+        if y < H and a[y:, x].any():
+            im[y:, x, 3] = 0
+    b = im[..., 3] > 40
+    lab = np.zeros((H, W), np.int32)
+    n = 0
+    for sy, sx in zip(*np.nonzero(b)):
+        if lab[sy, sx]:
+            continue
+        n += 1
+        lab[sy, sx] = n
+        q = deque([(sy, sx)])
+        while q:
+            y, x = q.popleft()
+            for yy in (y - 1, y, y + 1):
+                for xx in (x - 1, x, x + 1):
+                    if 0 <= yy < H and 0 <= xx < W and b[yy, xx] and not lab[yy, xx]:
+                        lab[yy, xx] = n
+                        q.append((yy, xx))
+    if n > 1:
+        tieni = np.argmax(np.bincount(lab.ravel())[1:]) + 1
+        im[(lab != tieni) & (lab > 0), 3] = 0
+    return im
+
+
+def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), facce=None, tavolozza=None):
+    with open(ST.FOGLIO) as f:
+        F = json.load(f)
+    a = alla_misura(foglio, F)
     D = leggi_diavoletto()
     px = D["px"]
     os.makedirs(ASSETS, exist_ok=True)
-    for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")):
+    for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")) + glob.glob(os.path.join(SVG, nome + "_*.svg")):
         os.remove(f)
     pezzi, forma = {}, {}
     if allinea_pezzi and not sopra:
@@ -407,8 +490,23 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=()):
             faccia = posto.startswith("testa")
             pz, perno, s = monta(pz, posto, F, s_testa if faccia else None)
             if posto == "testa":
-                s_testa = s
+                s_testa, h_testa = s, scatola(liberi["testa"][..., 3] > 128)
+            if faccia and "collo" in senza:
+                pz = senza_collo(pz, F["scala"] / px)
             metti(pezzi, pz, nome, posto, perno, F["scala"], px, sopra)
+        if facce:
+            if s_testa is None:
+                sys.exit("le facce in più vogliono la testa nel foglio")
+            # alte quanto la testa (ChatGPT le disegna di un'altra misura)
+            alta = h_testa[3] - h_testa[1]
+            for posto, pz in zip(FACCE_IN_PIU, facce_in_piu(facce, F)):
+                s = s_testa * alta / (scatola(pz[..., 3] > 128)[3] - scatola(pz[..., 3] > 128)[1])
+                pz, perno, _ = monta(pz, "testa", F, s)
+                if "collo" in senza:
+                    pz = senza_collo(pz, F["scala"] / px)
+                metti(pezzi, pz, nome, posto, perno, F["scala"], px, sopra)
+    elif facce:
+        sys.exit("--facce solo con --allinea, per i personaggi")
     else:
         for posto, c in F["posti"].items():
             x0, y0, x1, y1 = c["casella"]
@@ -431,7 +529,7 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=()):
     if senza:
         if sopra:
             sys.exit("--senza solo per le pelli che sostituiscono")
-        vuoti(pezzi, nome, senza)
+        vuoti(pezzi, nome, [p for p in senza if p != "collo"])
     # le versioni di dietro, se mancano: più scure (il colore della squadra no)
     for dietro, davanti in DIETRO.items():
         if davanti in pezzi and dietro not in pezzi:
@@ -466,7 +564,10 @@ def metti_coda(pezzi, pz, nome, scala, px, sopra):
 
 def metti(pezzi, pz, nome, posto, perno, scala, px, sopra, col=None):
     """Il pezzo di un posto, col suo strato del colore della squadra; quelli in
-    catena che sostituiscono la base anche col bordo a parte."""
+    catena che sostituiscono la base anche col bordo a parte. Con la tavolozza
+    (TAVOLOZZA) anche il pezzo in SVG, ricalcato dal disegno grande."""
+    if TAVOLOZZA and posto not in CATENA:
+        disegno_svg(pz, f"{nome}_{posto}", scala, px)
     pz, t = tinta(pz)
     modo = "sopra" if sopra else "sostituisce"
     strati = [(posto, pz)]
@@ -484,6 +585,27 @@ def metti(pezzi, pz, nome, posto, perno, scala, px, sopra, col=None):
             st = t.copy()
             st[im[..., 3] <= 8, 3] = 0
             pezzi[p]["tinta"] = salva(st, nome, p + "_tinta", perno[0], perno[1], scala, px, scatola=im)["img"]
+
+
+TAVOLOZZA = None    # la tavolozza (vettoriale.py) dei personaggi: allora anche gli SVG
+SVG = os.path.join(JSON, "svg")
+
+
+def disegno_svg(pz, nome_img, scala, px):
+    """Il pezzo in SVG (e lo strato del colore della squadra, se c'è), alla stessa
+    misura in pixel del PNG del gioco: strumenti/stampino/pelli/svg/<img>.svg."""
+    import vettoriale as VT
+    ys, xs = np.nonzero(pz[..., 3] > 8)
+    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    w, h = (x1 - x0) / scala, (y1 - y0) / scala
+    misura = (max(1, round(w * px)), max(1, round(h * px)))
+    os.makedirs(SVG, exist_ok=True)
+    base, squadra = VT.svg_pezzo(pz[y0:y1, x0:x1], TAVOLOZZA, misura)
+    with open(os.path.join(SVG, nome_img + ".svg"), "w") as f:
+        f.write(base)
+    if squadra:
+        with open(os.path.join(SVG, nome_img + "_tinta.svg"), "w") as f:
+            f.write(squadra)
 
 
 def salva(pz, nome, posto, px0, py0, scala, px, scatola=None):
@@ -546,6 +668,22 @@ def rifai():
     print("OK:", len(pelli), "pelli in", os.path.relpath(LUA, RADICE))
 
 
+def specchia(img, nuovo):
+    """La copia girata di un'immagine di una pelle (PNG del gioco e SVG, se c'è)."""
+    if img == nuovo:
+        return img
+    Image.open(os.path.join(ASSETS, img + ".png")).transpose(Image.FLIP_LEFT_RIGHT).save(os.path.join(ASSETS, nuovo + ".png"), optimize=True)
+    svg = os.path.join(SVG, img + ".svg")
+    if os.path.exists(svg):
+        t = open(svg).read()
+        vb = [float(v) for v in re.search(r'viewBox="([^"]*)"', t).group(1).split()]
+        a = t.index(">", t.index("<svg")) + 1
+        b = t.rindex("</svg>")
+        with open(os.path.join(SVG, nuovo + ".svg"), "w") as f:
+            f.write(t[:a] + f'<g transform="translate({vb[2]:g} 0) scale(-1 1)">' + t[a:b] + "</g>\n" + t[b:])
+    return nuovo
+
+
 def ritocca(file):
     """I ritocchi dell'editor delle animazioni: centro e misura nuovi dei pezzi."""
     with open(file) as f:
@@ -555,6 +693,14 @@ def ritocca(file):
         with open(percorso) as f:
             pelle = json.load(f)
         pz = pelle["pezzi"][r["posto"]]
+        if r.get("da") or r.get("specchio"):
+            # un altro disegno della pelle in questo posto (lo stesso PNG, ripetibile)
+            # o specchiato attorno al perno: allora una copia girata
+            fonte = dict(pelle["pezzi"][r.get("da") or r["posto"]])
+            for k in ("img", "tinta"):
+                if fonte.get(k) and r.get("specchio"):
+                    fonte[k] = specchia(fonte[k], f'{r["pelle"]}_{r["posto"]}_specchio' + ("_tinta" if k == "tinta" else ""))
+            pz = pelle["pezzi"][r["posto"]] = {**fonte, "modo": pz["modo"]}
         for k in ("x", "y", "w", "h"):
             pz[k] = round(float(r[k]), 1)
         with open(percorso, "w") as f:
@@ -571,7 +717,9 @@ def main():
     ap.add_argument("--sopra", action="store_true", help="i pezzi vanno sopra quelli di base (default per la categoria)")
     ap.add_argument("--sostituisce", action="store_true", help="i pezzi prendono il posto di quelli di base")
     ap.add_argument("--allinea", action="store_true", help="allinea ogni pezzo al manichino (disegni di ChatGPT)")
-    ap.add_argument("--senza", default="", help="posti che il personaggio non ha, tolti (ala,coda)")
+    ap.add_argument("--senza", default="", help="posti che il personaggio non ha, tolti (ala,coda); collo: le teste senza il moncherino del collo")
+    ap.add_argument("--facce", help="foglio con le cinque facce in più in fila (mira, arrabbiata, sconfitta, paura, provocazione)")
+    ap.add_argument("--tavolozza", help="la tavolozza del personaggio (strumenti/stampino/tavolozze): fa anche gli SVG dei pezzi")
     ap.add_argument("--rifai", action="store_true")
     ap.add_argument("--togli")
     ap.add_argument("--ritocchi", help="i ritocchi dell'editor delle animazioni (ritocchi.json)")
@@ -579,7 +727,7 @@ def main():
     if a.ritocchi:
         ritocca(a.ritocchi)
     elif a.togli:
-        for f in glob.glob(os.path.join(ASSETS, a.togli + "_*.png")) + [os.path.join(JSON, a.togli + ".json")]:
+        for f in glob.glob(os.path.join(ASSETS, a.togli + "_*.png")) + glob.glob(os.path.join(SVG, a.togli + "_*.svg")) + [os.path.join(JSON, a.togli + ".json")]:
             if os.path.exists(f):
                 os.remove(f)
     elif not a.rifai:
@@ -590,9 +738,13 @@ def main():
         sopra = a.sopra or (a.categoria in SOPRA and not a.sostituisce)
         senza = [p for p in a.senza.split(",") if p]
         for p in senza:
-            if p not in ("ala", "coda"):
-                ap.error("--senza: solo ala e coda")
-        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza)
+            if p not in ("ala", "coda", "collo"):
+                ap.error("--senza: solo ala, coda e collo")
+        global TAVOLOZZA
+        if a.tavolozza:
+            import vettoriale as VT
+            TAVOLOZZA = VT.leggi_tavolozza(a.tavolozza)
+        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza, a.facce)
     rifai()
 
 
