@@ -10,7 +10,7 @@
 -- (niente scatti): in memoria c'è un solo terreno e un solo sfondo, della densità
 -- dello schermo. Finché non è pronta si vede solo lo sfondo.
 --
--- Messaggi: "maschera" {path, mappa, dipinta} (una partita), "home" {sfondo}
+-- Messaggi: "maschera" {path, mappa, dipinta, n} (una partita), "home" {sfondo, n}
 -- (solo lo sfondo, dietro la home; senza sfondo la home si chiude), "schermo" {kx, ky},
 -- "dipinto" {terreno} o {cielo, lontano, medio, vicino} (dalle collezioni appena create).
 -- A chi manda "maschera" o "home" (col numero n della richiesta) risponde
@@ -74,7 +74,9 @@ end
 local function chiedi(self, tipo, id)
 	self.voluto[tipo] = id
 	local s = self.stato[id]
-	if s == nil or s == "fallito" then
+	-- uno fallito non si riprova finché serve (riproverebbe all'infinito): si
+	-- riprova solo dopo che libera l'ha tolto, cioè la prossima volta che si chiede
+	if s == nil then
 		self.stato[id], self.tipo_di[id] = "carica", tipo
 		self.per_hash[hash(id)] = id
 		collectionfactory.load(fabbrica(id), function(self, url, ok)

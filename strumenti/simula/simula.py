@@ -529,7 +529,7 @@ def gioca(exe, out, scenario, video):
     try:
         # prima si aspetta che il gioco sia pronto (ingresso chiuso, dipinti caricati:
         # qui si caricano piano), tranne negli scenari che guardano l'ingresso
-        if "prova_ingresso" not in scenario.read_text():
+        if not re.search(r"^\s*imposta\s+prova_ingresso\b", scenario.read_text(), re.M):
             aspetta_che(g, lambda: g.stato.get("pronto") == "1", 20, "il gioco pronto (pronto=1)")
         for n, riga in enumerate(scenario.read_text().splitlines(), 1):
             if riga.strip() and not riga.strip().startswith("#"):

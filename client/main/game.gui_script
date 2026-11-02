@@ -302,8 +302,9 @@ end
 
 -- Una richiesta nuova al terreno (mappa o sfondo della home): finché non risponde
 -- "terreno_pronto" col suo numero, iride e ingresso restano chiusi (ui/passaggio.lua)
+-- e la partita non parte; dopo 5 secondi si va avanti comunque (update)
 local function aspetta_terreno(self)
-	self.terreno_n = (self.terreno_n or 0) + 1
+	self.terreno_n, self.terreno_t = (self.terreno_n or 0) + 1, 0
 	self.terreno_attesa = self.terreno_n
 	return self.terreno_n
 end
@@ -3176,7 +3177,15 @@ function update(self, dt)
 		dt_mondo = 0
 	end
 	self.sc_ox, self.sc_oy = camera.scossa(self.cam, dt)
-	if self.mode == "local" and not self.menu_aperto and not self.carta then
+	if self.terreno_attesa then
+		self.terreno_t = self.terreno_t + dt
+		if self.terreno_t > 5 then
+			print("ERROR: il terreno non ha risposto in 5 secondi")
+			self.terreno_attesa = nil
+		end
+	end
+	-- finché il terreno dipinto non è caricato la partita aspetta (l'iride è chiusa)
+	if self.mode == "local" and not self.menu_aperto and not self.carta and not self.terreno_attesa then
 		self.acc = math.min(self.acc + dt_mondo, 0.25)
 		while self.acc >= game.DT and self.mode == "local" and not self.carta do
 			local input = {
