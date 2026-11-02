@@ -55,7 +55,18 @@ function M.iride(p, cambia)
 	gui.animate(p.nodo, "color.x", 0, gui.EASING_INQUAD, M.IRIDE, 0, function()
 		cambia()
 		gui.move_above(p.nodo, nil)
-		gui.animate(p.nodo, "color.x", 1, gui.EASING_OUTQUAD, M.IRIDE, 0, function() fine(p) end)
+		-- si riapre due frame dopo, a schermo nero: cambiando mappa il frame del
+		-- cambio (dipinto e maschera nuovi) è lungo, e il frame dopo arriva con un dt
+		-- grande. Così lo scatto cade sul nero e non sull'animazione (Sergio, 2 nov:
+		-- «qualche scatto in più ... nelle schermate di transizione»)
+		local k = p.n
+		timer.delay(0, false, function()
+			timer.delay(0, false, function()
+				-- se nel frattempo è partito un altro passaggio, lo chiude lui
+				if p.n ~= k then return end
+				gui.animate(p.nodo, "color.x", 1, gui.EASING_OUTQUAD, M.IRIDE, 0, function() fine(p) end)
+			end)
+		end)
 	end)
 end
 
