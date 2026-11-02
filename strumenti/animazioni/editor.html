@@ -291,7 +291,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		<div id="tempo-scorri"><canvas id="tempo"></canvas></div>
 	</section>
 	<div id="aiuto" class="box" hidden>
-		<div class="aiuto">I pezzi stanno nel <b>secchio</b> sopra il palco: trascinane uno sul palco e va in scena dove lo lasci, da quel momento della clip; trascinalo dal palco al secchio e esce di scena (un clic sul secchio lo mette e lo toglie dov'è). Le manine sono pezzi liberi: si spostano e si girano come gli altri. Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Nelle clip con l'arma i cerchi blu sull'arma sono le <b>impugnature</b> (dove vanno i pugni, per ogni arma, in tutte le sue clip): trascinali, e con "Clip solo per quest'arma" un'arma ha la sua versione della clip. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
+		<div class="aiuto">I pezzi stanno nel <b>secchio</b> sopra il palco: trascinane uno sul palco e va in scena dove lo lasci, da quel momento della clip; trascinalo dal palco al secchio e esce di scena (un clic sul secchio lo mette e lo toglie dov'è). Le manine sono pezzi liberi: si spostano e si girano come gli altri. Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Nelle clip con l'arma i cerchi blu sull'arma sono le <b>impugnature</b> (dove vanno i pugni, per ogni arma, in tutte le sue clip): trascinali, e con "Clip solo per quest'arma" un'arma ha la sua versione della clip. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo (sul righello trascinando scorri), trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. Più chiavi insieme: trascina un rettangolo sulle righe o <kbd>Maiusc</kbd>+clic su ognuna, poi le trascini tutte in blocco (anche la curva e <kbd>Canc</kbd> valgono per tutte). <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
 	</div>
 </div>
 <div id="messaggio" role="status"></div>
@@ -698,6 +698,10 @@ let nome = "fermo";
 let tempo = 0; // tempo dentro la clip
 let orologio = 0; // tempo che passa (coda, fiammella, molle)
 let suona = false, canale = "braccio_a", chiaveScelta = null, modo = "ruota"; // trascinando: ruota, sposta o perno
+// le chiavi scelte nella linea del tempo (più d'una con Maiusc+clic o col rettangolo):
+// chiaveScelta è l'ultima, quella della curva; si trascinano e si tolgono tutte insieme
+let scelte = [];
+const selezionata = (k) => scelte.some((s) => s.k === k);
 let posaCopiata = null;
 const indietro = [], avanti = [];
 const $ = (id) => document.getElementById(id);
@@ -1624,7 +1628,7 @@ function disegnaTempo() {
 		const keys = id === "viso" ? c.viso : c.tracce[id] || [];
 		for (const k of keys) {
 			const x = tlX(k.t, M), yc = y + RIGA / 2;
-			const scelta = chiaveScelta && chiaveScelta.k === k;
+			const scelta = selezionata(k);
 			tg.fillStyle = scelta ? C("--brace") : C("--chiave");
 			tg.beginPath();
 			if (id !== "viso" && k.c === 1) { tg.rect(x - 4, yc - 4, 8, 8); }
@@ -1634,6 +1638,15 @@ function disegnaTempo() {
 			if (id === "viso") { tg.font = `11px ${C("--f-numeri")}`; tg.fillText(k.f.replace("testa_", "").replace("testa", "normale"), x + 6, yc + 4); }
 		}
 	});
+	// il rettangolo di selezione
+	if (tlPresa && tlPresa.lazo && tlPresa.mossa) {
+		// trasparente: le chiavi sotto si devono vedere
+		tg.save(); tg.globalAlpha = 0.25; tg.fillStyle = C("--brace");
+		const rx = Math.min(tlPresa.x0, tlPresa.x1), ry = Math.min(tlPresa.y0, tlPresa.y1);
+		tg.fillRect(rx, ry, Math.abs(tlPresa.x1 - tlPresa.x0), Math.abs(tlPresa.y1 - tlPresa.y0));
+		tg.restore(); tg.strokeStyle = C("--brace"); tg.lineWidth = 1;
+		tg.strokeRect(rx + 0.5, ry + 0.5, Math.abs(tlPresa.x1 - tlPresa.x0), Math.abs(tlPresa.y1 - tlPresa.y0));
+	}
 	// la testina del tempo
 	const x = tlX(dentro(c, tempo), M);
 	tg.fillStyle = C("--brace");
@@ -1653,19 +1666,31 @@ function tlChiave(x, y) {
 	for (const k of keys) { const dx = Math.abs(tlX(k.t, M) - x); if (dx < d) { d = dx; meglio = k; } }
 	return { riga: id, k: meglio };
 }
+// Sulla linea del tempo: una chiave si prende e si trascina (con Maiusc si aggiunge
+// alle scelte; prendendone una già scelta si trascinano tutte); sul righello si
+// scorre il tempo; sulle righe vuote un clic va a quel tempo e trascinando si
+// fa il rettangolo che sceglie le chiavi dentro (con Maiusc le aggiunge)
 tl.addEventListener("pointerdown", (e) => {
 	fermaPlay();
 	const [x, y] = tlEvento(e);
 	const { riga, k } = tlChiave(x, y);
 	if (riga) canale = riga === "viso" ? canale : riga;
 	if (k) {
-		prima();
+		if (e.shiftKey) {
+			if (selezionata(k)) { scelte = scelte.filter((s) => s.k !== k); chiaveScelta = scelte.length ? scelte[scelte.length - 1] : null; tlPresa = null; aggiorna(); return; }
+			scelte.push({ riga, k });
+		} else if (!selezionata(k)) scelte = [{ riga, k }];
 		chiaveScelta = { riga, k };
-		tlPresa = { k, riga, mossa: false };
+		prima();
+		tlPresa = { trascina: true, t0: tlT(x, tlMisure()), da: scelte.map((s) => ({ s, t: s.k.t })), mossa: false };
 		tempo = k.t;
-	} else {
-		chiaveScelta = null;
+	} else if (y < RIGHELLO) {
+		scelte = []; chiaveScelta = null;
 		tlPresa = { scorri: true };
+		tempo = tlT(x, tlMisure());
+	} else {
+		if (!e.shiftKey) { scelte = []; chiaveScelta = null; }
+		tlPresa = { lazo: true, x0: x, y0: y, x1: x, y1: y, mossa: false };
 		tempo = tlT(x, tlMisure());
 	}
 	tl.setPointerCapture(e.pointerId);
@@ -1673,21 +1698,49 @@ tl.addEventListener("pointerdown", (e) => {
 });
 tl.addEventListener("pointermove", (e) => {
 	if (!tlPresa) return;
-	const [x] = tlEvento(e);
-	let t = tlT(x, tlMisure());
+	const [x, y] = tlEvento(e);
+	const t = tlT(x, tlMisure());
 	if (tlPresa.scorri) { tempo = t; aggiorna(); return; }
-	t = e.altKey ? t : Math.round(t * FPS) / FPS;
-	tlPresa.k.t = Math.round(t * 1000) / 1000;
-	tlPresa.mossa = true;
+	if (tlPresa.lazo) { tlPresa.x1 = x; tlPresa.y1 = y; tlPresa.mossa = tlPresa.mossa || Math.hypot(x - tlPresa.x0, y - tlPresa.y0) > 4; aggiorna(); return; }
+	// trascina tutte le chiavi scelte della stessa quantità (a fotogrammi, con Alt
+	// libero) tenendole alla stessa distanza fra loro e dentro la clip
 	const c = clip();
-	ordina(tlPresa.riga === "viso" ? c.viso : c.tracce[tlPresa.riga]);
-	tempo = tlPresa.k.t;
+	let dt = t - tlPresa.t0;
+	if (!e.altKey) dt = Math.round(dt * FPS) / FPS;
+	const tMin = Math.min(...tlPresa.da.map((d) => d.t)), tMax = Math.max(...tlPresa.da.map((d) => d.t));
+	dt = Math.max(-tMin, Math.min(c.durata - tMax, dt));
+	const liste = new Set();
+	for (const { s, t: t0 } of tlPresa.da) {
+		s.k.t = Math.round((t0 + dt) * 1000) / 1000;
+		liste.add(s.riga === "viso" ? c.viso : c.tracce[s.riga]);
+	}
+	for (const l of liste) ordina(l);
+	tlPresa.mossa = true;
+	tempo = chiaveScelta.k.t;
 	aggiorna();
 });
 tl.addEventListener("pointerup", () => {
-	if (tlPresa && tlPresa.k && !tlPresa.mossa) indietro.pop();
-	if (tlPresa && tlPresa.mossa) memorizza();
+	if (!tlPresa) return;
+	if (tlPresa.trascina && !tlPresa.mossa) indietro.pop();
+	if (tlPresa.trascina && tlPresa.mossa) memorizza();
+	if (tlPresa.lazo && tlPresa.mossa) {
+		// le chiavi dentro il rettangolo
+		const M = tlMisure(), c = clip();
+		const x0 = Math.min(tlPresa.x0, tlPresa.x1), x1 = Math.max(tlPresa.x0, tlPresa.x1);
+		const y0 = Math.min(tlPresa.y0, tlPresa.y1), y1 = Math.max(tlPresa.y0, tlPresa.y1);
+		RIGHE.forEach((id, i) => {
+			const yc = RIGHELLO + i * RIGA + RIGA / 2;
+			if (yc < y0 || yc > y1) return;
+			for (const k of id === "viso" ? c.viso : c.tracce[id] || []) {
+				const x = tlX(k.t, M);
+				if (x >= x0 - 4 && x <= x1 + 4 && !selezionata(k)) scelte.push({ riga: id, k });
+			}
+		});
+		chiaveScelta = scelte.length ? scelte[scelte.length - 1] : null;
+		if (chiaveScelta && chiaveScelta.riga !== "viso") canale = chiaveScelta.riga;
+	}
 	tlPresa = null;
+	aggiorna();
 });
 tl.addEventListener("dblclick", (e) => {
 	const [x, y] = tlEvento(e);
@@ -1705,13 +1758,17 @@ function mettiViso(f) {
 	if (x) x.f = f; else { x = { t: Math.round(t * 1000) / 1000, f }; c.viso.push(x); ordina(c.viso); }
 	chiaveScelta = { riga: "viso", k: x };
 }
+// toglie tutte le chiavi scelte
 function togliChiave() {
 	if (!chiaveScelta) return;
 	prima();
-	const c = clip(), { riga, k } = chiaveScelta;
-	const lista = riga === "viso" ? c.viso : c.tracce[riga];
-	lista.splice(lista.indexOf(k), 1);
-	if (riga !== "viso" && !lista.length) delete c.tracce[riga];
+	const c = clip();
+	for (const { riga, k } of scelte.length ? scelte : [chiaveScelta]) {
+		const lista = riga === "viso" ? c.viso : c.tracce[riga];
+		if (!lista) continue;
+		lista.splice(lista.indexOf(k), 1);
+		if (riga !== "viso" && !lista.length) delete c.tracce[riga];
+	}
 	chiaveScelta = null;
 	dopo();
 }
@@ -1819,8 +1876,16 @@ function aggiorna() {
 		kb.textContent = ha ? "◆" : "◇"; kb.classList.toggle("si", ha);
 	}
 	$("viso").value = visoA(c, t) || "testa";
+	// le scelte seguono la chiave scelta altrove (K, doppio clic, cambio clip)
+	if (!chiaveScelta) scelte = [];
+	else if (!selezionata(chiaveScelta.k)) scelte = [chiaveScelta];
 	const ck = $("chiave");
-	if (chiaveScelta && chiaveScelta.riga !== "viso") {
+	const curve = scelte.filter((s) => s.riga !== "viso").map((s) => s.k);
+	if (scelte.length > 1) {
+		ck.innerHTML = `<span><span class="num">${scelte.length}</span> chiavi scelte: trascinale insieme, <kbd>Canc</kbd> le toglie</span>${curve.length ? `<select id="curva" title="La curva di tutte le chiavi scelte"><option value="">curva…</option><option value="0">liscia</option><option value="1">dritta</option><option value="2">a scatto</option></select>` : ""}<button id="togli">Togli tutte</button>`;
+		if (curve.length) $("curva").onchange = () => { if ($("curva").value === "") return; prima(); for (const k of curve) k.c = +$("curva").value; dopo(); };
+		$("togli").onclick = togliChiave;
+	} else if (chiaveScelta && chiaveScelta.riga !== "viso") {
 		const k = chiaveScelta.k;
 		ck.innerHTML = `<span>Chiave a <span class="num">${k.t.toFixed(3)} s</span>, fino alla prossima</span><select id="curva"><option value="0">liscia</option><option value="1">dritta</option><option value="2">a scatto</option></select><button id="togli">Togli</button>`;
 		$("curva").value = String(k.c);
