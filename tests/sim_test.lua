@@ -1782,6 +1782,13 @@ check(booms == game.SHARD_COUNT, "the burst fires " .. game.SHARD_COUNT .. " sha
 check(max_flying > 1, "several shards in flight together")
 check(not sh:shards_flying(), "after the burst nothing is left in flight")
 
+-- shot straight up they leave the map from the top and disappear there (bug of
+-- 2 November: with almost no gravity they flew for more than a minute)
+local up = game.new(42, "forgia")
+up.shards[1] = { x = game.WORLD_W / 2, y = game.WORLD_H - 10, vx = 0, vy = game.SHARD_SPEED, owner = 1, age = 100 }
+for _ = 1, 60 do up:update_shards() end
+check(not up:shards_flying(), "shards shot upwards are gone within a second")
+
 -- Pugno del Titano: launches up whoever is in front, not whoever is behind
 local function punch_game(dx)
 	local q = game.new(42, "forgia")

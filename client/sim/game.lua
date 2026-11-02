@@ -1062,7 +1062,9 @@ function M:update_shards()
 					break
 				end
 			end
-			if self.shards[i] and (p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300) then
+			-- above the map too: gravity barely bends them, so one shot upwards would
+			-- come back down only after more than a minute, holding the turn (and the camera)
+			if self.shards[i] and (p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300 or p.y > M.WORLD_H + 300) then
 				self.shards[i] = nil
 			end
 		end
