@@ -24,6 +24,7 @@ nel codice (se c'è già un interruttore).
 | Levetta che muove | Col controller quale levetta cammina e salta: la **destra** (e la sinistra mira) o la **sinistra** (e la destra mira) | destra | Sergio, 30 ott ("con il destro ti muovi e con il sinistro prendi la mira e lo metti come default") | **c'è**: IMPOSTAZIONI (`levette`) |
 | Salto col controller su un tasto | SALTA su un tasto (per esempio A) invece della levetta sinistra in su; con un tasto la levetta non salta più | levetta in su | Sergio, 30 ott | **c'è**: la riga SALTA dei tasti del controller |
 | Togliere un tasto | Un comando del controller resta senza tasto (Y sulla riga) | — | Sergio, 30 ott | **c'è**: IMPOSTAZIONI |
+| Contatore FPS | In alto al centro FPS, frame peggiore, scatti dell'ultimo minuto e la loro causa; ogni scatto anche nella console ([prestazioni.md](prestazioni.md)) | spento | Sergio, 2 nov ("come facciamo a misurare gli FPS in maniera affidabile") | **c'è**: IMPOSTAZIONI (`fps`), `client/ui/fotogrammi.lua` |
 | HUD sistemabile | Il giocatore sposta i pulsanti della battaglia | predefiniti | Sergio, 29 ott ([interfaccia](decisioni/interfaccia.md)) | — |
 
 Non ci saranno (decisioni di Sergio): qualità grafica a livelli. (La rimappatura dei tasti ora c'è, per il controller: Sergio, 30 ott.)

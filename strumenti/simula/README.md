@@ -45,6 +45,12 @@ Tutto in `simulazione/` (ignorata da git):
   griglia, `foto/errore.png` lo schermo al momento dell'errore
 - `video.mp4` la partita intera (30 fps)
 - `log.txt` il log del motore, `build.txt` quello di bob
+- `fotogrammi.txt` gli scatti (frame oltre 1,5 volte il normale) con la causa e
+  un riassunto ogni 5 secondi (FPS, percentili, lavoro di Lua, KB nuovi per
+  frame): il contatore di `client/ui/fotogrammi.lua`, vedi
+  [docs/prestazioni.md](../../docs/prestazioni.md). La simulazione fallisce se
+  Lua tiene fermo un frame più di 100 ms. Lo scenario `scenari/fluidita.txt`
+  (meglio con `--senza-video`) tocca home, missione e partita col bot.
 
 ## Scenari
 

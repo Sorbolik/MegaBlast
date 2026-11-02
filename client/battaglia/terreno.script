@@ -12,6 +12,7 @@
 -- (solo lo sfondo, dietro la home; senza sfondo la home si chiude), "schermo" {kx, ky}.
 
 local dipinti = require "battaglia.dipinti"
+local fotogrammi = require "ui.fotogrammi"
 
 go.property("forgia_terreno", resource.texture("/assets/mappe/forgia/terreno.png"))
 go.property("forgia_interno", resource.texture("/assets/mappe/forgia/interno_mezzo.png"))
@@ -46,6 +47,9 @@ local function carica(self, posto, file)
 		print("ERROR: manca il dipinto " .. file)
 		return nil
 	end
+	-- decodificare il PNG e caricarlo nella GPU è il lavoro più pesante del
+	-- cambio di mappa: il contatore dei fotogrammi (ui/fotogrammi.lua) lo sa
+	fotogrammi.segna("dipinto")
 	local img = image.load_buffer(dati, { premultiply_alpha = true, flip_vertically = true })
 	local formato = img.type == image.TYPE_RGB and TEX_RGB or TEX_RGBA
 	local p = { type = TEX_2D, format = formato, width = img.width, height = img.height }
@@ -115,7 +119,7 @@ local function applica(self)
 	end
 end
 
-function on_message(self, message_id, message)
+local function messaggio(self, message_id, message)
 	if message_id == MSG_MASCHERA then
 		go.set("#mesh", "texture2", message.path)
 		local mappa = message.mappa
@@ -147,4 +151,11 @@ function on_message(self, message_id, message)
 	elseif message_id == MSG_SCHERMO then
 		self.opzioni.z, self.opzioni.w = message.kx, message.ky
 	end
+end
+
+-- il lavoro dei messaggi conta nel contatore dei fotogrammi (ui/fotogrammi.lua)
+function on_message(self, message_id, message)
+	local t = fotogrammi.ora()
+	messaggio(self, message_id, message)
+	fotogrammi.lavoro(t)
 end

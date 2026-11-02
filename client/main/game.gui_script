@@ -36,6 +36,7 @@ local oggetti = require "battaglia.oggetti"
 local punteggio = require "battaglia.punteggio"
 local hud = require "battaglia.hud"
 local schermo = require "ui.schermo"
+local fotogrammi = require "ui.fotogrammi"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
@@ -300,9 +301,19 @@ local function mask_params(w, h, x, y)
 	}
 end
 
+-- Ridisegna tutta la maschera alla fine dell'update (disegna_terreno):
+-- entrando in una missione la si chiedeva tre volte nello stesso frame, e ogni
+-- volta sono 230 mila celle (docs/prestazioni.md)
 local function draw_terrain(self)
+	self.terreno_in_sospeso = true
+end
+
+local function disegna_terreno(self)
+	if not self.terreno_in_sospeso then return end
+	self.terreno_in_sospeso = false
 	local data = self.g.terrain.data
-	local buf = buffer.create(TW * TH, MASK_FORMAT)
+	-- lo stesso buffer per ogni mappa: niente 900 KB nuovi da raccogliere
+	local buf = self.mask_buf or buffer.create(TW * TH, MASK_FORMAT)
 	local st = buffer.get_stream(buf, RGBA)
 	-- buffer.create non azzera la memoria: scriviamo ogni cella
 	for i = 1, TW * TH do
@@ -312,6 +323,7 @@ local function draw_terrain(self)
 	end
 	self.mask_stream = st
 	self.mask_buf = buf
+	fotogrammi.segna("maschera")
 	if self.mask_tex then
 		resource.set_texture(self.mask_tex, mask_params(TW, TH), buf)
 	else
@@ -323,6 +335,8 @@ end
 
 -- Aggiorna la maschera nel rettangolo dato (coordinate di cella)
 local function redraw_cells(self, cx0, cy0, cx1, cy1)
+	-- tutta la maschera è già da rifare
+	if self.terreno_in_sospeso then return end
 	cx0, cy0 = math.max(0, cx0), math.max(0, cy0)
 	cx1, cy1 = math.min(TW - 1, cx1), math.min(TH - 1, cy1)
 	if cx1 < cx0 or cy1 < cy0 then return end
@@ -3140,6 +3154,7 @@ function final(self)
 end
 
 function update(self, dt)
+	fotogrammi.inizio()
 	if schermo.aggiorna() then disponi(self) end
 	if self.ingresso then CP.ingresso_update(self, dt) end
 	menu.attesa.update(self.attesa, dt)
@@ -3279,6 +3294,8 @@ function update(self, dt)
 		menu.scelta.update(self.scelta, dt)
 	end
 
+	disegna_terreno(self)
+	CP.fotogrammi(self, dt)
 	if SIMULA and self.g then
 		-- sx, sy: il centro del robot sullo schermo (dove si appoggia il mouse per mirare)
 		local rb = current_robot(self)
@@ -3292,6 +3309,40 @@ function update(self, dt)
 			self.simula_line = line
 		end
 	end
+end
+
+-- Il contatore dei fotogrammi (ui/fotogrammi.lua, docs/prestazioni.md): una
+-- schermata nuova è una causa possibile di scatto; la riga in alto al centro solo
+-- se è acceso nelle IMPOSTAZIONI. Nel simulatore è sempre acceso, nel log.
+function CP.fotogrammi(self, dt)
+	if self.mode ~= self.fps_modo then
+		if self.fps_modo then fotogrammi.segna("schermata " .. tostring(self.mode)) end
+		self.fps_modo = self.mode
+	end
+	fotogrammi.acceso = profilo.impostazione(self.profilo, "fps") == "acceso"
+	if SIMULA then
+		fotogrammi.log = true
+		self.fps_riassunto = (self.fps_riassunto or 0) + dt
+		if self.fps_riassunto >= 5 then
+			self.fps_riassunto = 0
+			local r = fotogrammi.riassunto()
+			if r then print(r) end
+		end
+	end
+	if fotogrammi.acceso then
+		if not self.fps_testo then
+			self.fps_testo = fit(ui.testo("", 640, 716, 0.6, ui.C.TESTO))
+			gui.set_yanchor(self.fps_testo, gui.ANCHOR_TOP)
+			gui.set_pivot(self.fps_testo, gui.PIVOT_N)
+		end
+		local riga = fotogrammi.testo()
+		if riga then gui.set_text(self.fps_testo, riga) end
+		gui.set_enabled(self.fps_testo, true)
+		gui.move_above(self.fps_testo, nil)
+	elseif self.fps_testo then
+		gui.set_enabled(self.fps_testo, false)
+	end
+	fotogrammi.fine()
 end
 
 -- Un pulsante dell'HUD (un'arma, un oggetto o il teletrasporto) sceglie
@@ -4120,7 +4171,15 @@ function PAD.dito(action_id, action)
 	return false
 end
 
+-- il lavoro di on_input conta anche lui nel contatore dei fotogrammi
 function on_input(self, action_id, action)
+	local t = fotogrammi.ora()
+	local r = CP.on_input(self, action_id, action)
+	fotogrammi.lavoro(t)
+	return r
+end
+
+function CP.on_input(self, action_id, action)
 	-- durante l'ingresso e i passaggi non si tocca niente
 	if self.ingresso or menu.passaggio.attivo(self.passaggio) then return true end
 	local modo, obj = PAD.schermo(self)
