@@ -92,3 +92,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 1 nov | Schermata d'ingresso con Favilla sullo sfondo vivo della Forgia: la home si apre solo con gli eventi arrivati (riprova, poi "senza rete"); il server non fa più tenere copie di `/eventi`. Fiammella d'attesa, iride fra menu e battaglia, scivolo fra i menu. | questa PR |
 | 2 nov | La home ha dietro lo sfondo vivo del Limbo, il secondo girone, dipinto con una sola tinta verde salvia, raggi, tratteggio e polvere che galleggia. | questa PR |
 | 2 nov | Nella campagna i bot dei gradi 1-4 lasciano le casse a te, il 5 e il 6 prendono solo quelle a portata facile, dal 7 le contendono come prima; scala dei gradi rimisurata, stelle della Forgia invariate. | questa PR |
+| 2 nov | L'apprendista è il personaggio principale di tutti, con le animazioni, le hitbox, i perni e le impugnature fatte da Sergio nell'editor; via le pelli di Gabriella. | questa PR |

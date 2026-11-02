@@ -72,7 +72,7 @@ local PRESE = require "battaglia.impugnature"
 local M = {}
 
 -- il personaggio di tutti (le pelli addosso), finché non c'è l'armeria che lo sceglie
-M.PERSONAGGIO = { "gabriella" }
+M.PERSONAGGIO = { "apprendista" }
 
 local P, PT = D.pezzi, D.punti
 
@@ -327,16 +327,21 @@ local function arma_in_mano(s, po, in_mano, lx, q)
 end
 
 -- mette i pezzi nell'ordine della clip (dal fondo), solo quando cambia; quelli
--- che la clip non nomina vanno sopra, nell'ordine di sempre
+-- che la clip non nomina vanno sopra, nell'ordine di sempre. Ogni pezzo va
+-- sopra a quello prima, fra i fratelli (figli di forma): con move_above(n, nil)
+-- Defold lo stacca dal genitore e il personaggio sparisce
 local function livelli(s, l)
 	if s.livelli == l then return end
 	s.livelli = l
-	local fatti = {}
+	local fatti, prima = {}, nil
 	local function su(nome)
 		local nodi = s.nodi_livello[nome]
 		if fatti[nome] or not nodi then return end
 		fatti[nome] = true
-		for i = 1, #nodi do gui.move_above(nodi[i], nil) end
+		for i = 1, #nodi do
+			if prima then gui.move_above(nodi[i], prima) end
+			prima = nodi[i]
+		end
 	end
 	for i = 1, #l do su(l[i]) end
 	for i = 1, #LIVELLI do su(LIVELLI[i]) end
