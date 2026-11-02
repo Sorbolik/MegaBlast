@@ -527,6 +527,10 @@ def gioca(exe, out, scenario, video):
     info(f"4. partita: {scenario.relative_to(REPO) if scenario.is_relative_to(REPO) else scenario}")
     g = Gioco(exe, out, video)
     try:
+        # prima si aspetta che il gioco sia pronto (ingresso chiuso, dipinti caricati:
+        # qui si caricano piano), tranne negli scenari che guardano l'ingresso
+        if "prova_ingresso" not in scenario.read_text():
+            aspetta_che(g, lambda: g.stato.get("pronto") == "1", 20, "il gioco pronto (pronto=1)")
         for n, riga in enumerate(scenario.read_text().splitlines(), 1):
             if riga.strip() and not riga.strip().startswith("#"):
                 info(f"   {n}: {riga.strip()}")
