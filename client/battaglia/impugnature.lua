@@ -4,6 +4,8 @@
 --          gira verso la presa, o una manina, che ci sta sopra);
 --   perno: il punto dell'arma attorno a cui gira (mirando e con "Arma, gira");
 --   spalla: dove sta il perno nel corpo, in unità del disegno dai piedi.
+--   scala: quanto è ingrandita l'arma in mano (1 se manca); presa e perno
+--          restano in unità dell'immagine com'è.
 -- presa e perno in unità del mondo dall'origine dell'arma, x verso dove punta e
 -- y in su.
 return {

@@ -320,8 +320,11 @@ local function arma_in_mano(s, po, in_mano, lx, q)
 	scale(s.presa, 1 / lx, 1 / q)
 	rot(s.giro, s.arma_a)
 	local ox = -min(s.x[KICK] * s.w * 0.6, PRESA * s.h / 200 / game.CORPO * 0.8)
-	pos(s.armi[s.arma_scelta], ox - g.perno[1], -g.perno[2])
-	local dx, dy = g.presa[1] - g.perno[1] + ox, g.presa[2] - g.perno[2]
+	-- l'arma può essere ingrandita (scala, dall'editor): presa e perno restano
+	-- in unità dell'immagine com'è, e l'immagine si ingrandisce attorno al perno
+	local sc = g.scala or 1
+	pos(s.armi[s.arma_scelta], ox - g.perno[1] * sc, -g.perno[2] * sc)
+	local dx, dy = (g.presa[1] - g.perno[1]) * sc + ox, (g.presa[2] - g.perno[2]) * sc
 	local c, sn = cos(s.arma_a), sin(s.arma_a)
 	return ax + (dx * c - dy * sn) / s.k / lx, ay + (dx * sn + dy * c) / s.k / q
 end
@@ -851,6 +854,8 @@ function M.set_weapon(s, name)
 	if s.arma_scelta == name or not s.armi[name] then return end
 	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], false) end
 	s.arma_scelta = name
+	local sc = PRESE[name] and PRESE[name].scala or 1
+	scale(s.armi[name], sc, sc)
 	-- da morto l'arma non c'è più
 	gui.set_enabled(s.armi[name], not s.morte and not s.vuote)
 end
