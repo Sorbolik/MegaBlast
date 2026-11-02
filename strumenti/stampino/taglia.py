@@ -438,8 +438,10 @@ def senza_collo(im):
         y = max(y0, int(c.max()) + 1 if len(c) else 0)
         while y < H and a[y, x] and not nero[y, x]:
             y += 1
-        while y < H and nero[y, x]:
+        n = 0
+        while y < H and nero[y, x] and n < 6:   # il contorno del mento, non il collo sotto
             y += 1
+            n += 1
         if y < H and a[y:, x].any():
             im[y:, x, 3] = 0
     b = im[..., 3] > 40
