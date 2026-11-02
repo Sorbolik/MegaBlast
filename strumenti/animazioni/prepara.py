@@ -60,9 +60,9 @@ def main():
     personaggio = re.findall(r'"(\w+)"', re.search(r"M\.PERSONAGGIO = \{(.*?)\}", scoria).group(1))
     riposo = {n: float(v) for n, v in re.findall(r"(\w+) = (-?[0-9.]+)", blocco)}
     game = leggi("client/sim/game.lua")
-    # il disegno è alto game.DISEGNO_H nel profilo blastron, quello del gioco
-    assert 'M.DEFAULT_PHYSICS = "blastron"' in game, "l'editor misura il diavoletto sul profilo blastron"
-    misura = {k: float(re.search(r"M\.%s = ([0-9.]+)" % k, game).group(1)) for k in ("BLASTRON_ROBOT_H", "BLASTRON_CORPO")}
+    # il disegno è alto game.DISEGNO_H = REF_H * CORPO
+    assert "M.DISEGNO_H = M.REF_H * M.CORPO" in game, "l'editor misura il diavoletto come sim/game.lua"
+    misura = {k: float(re.search(r"M\.%s = ([0-9.]+)" % k, game).group(1)) for k in ("REF_H", "CORPO")}
     squadre = re.search(r"SQUADRA = \{(.*)\}", leggi("client/ui/ui.lua")).group(1)
     colori = [[float(x) for x in c.split(",")] for c in re.findall(r"c\(([^)]*)\)", squadre)]
     dati = {
@@ -75,7 +75,7 @@ def main():
         "armi_riposo": riposo,
         "personaggio": personaggio,
         "immagini": immagini,
-        "disegno_h": misura["BLASTRON_ROBOT_H"] * misura["BLASTRON_CORPO"],
+        "disegno_h": misura["REF_H"] * misura["CORPO"],
         "corpo": leggi("client/sim/corpo.lua"),
         "squadre": colori,
     }

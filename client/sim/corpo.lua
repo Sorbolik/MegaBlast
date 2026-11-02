@@ -1,4 +1,4 @@
--- Il corpo del diavoletto nella simulazione (profilo di fisica "blastron"), in
+-- Il corpo del diavoletto nella simulazione, in
 -- pixel del mondo misurati dal centro dei piedi. Lo scrive l'editor delle
 -- animazioni (strumenti/animazioni), ma è fisica: cambiarlo cambia il gioco per
 -- tutti, server compreso, non il disegno (che è alto game.DISEGNO_H).

@@ -1,4 +1,4 @@
-# Fisica e comandi di Blastron (profilo "blastron", il predefinito) col
+# Fisica e comandi col
 # telefono: levetta sinistra per muoversi e saltare, levetta destra per
 # mirare (lasciando parte il colpo), teletrasporto sopra la levetta destra.
 # Freccia corta al posto della traiettoria, granata che rimbalza e si ferma.

@@ -36,7 +36,7 @@ ANTEPRIMA = os.path.join(RADICE, "simulazione", "foto", "diavoletto_anteprima.pn
 from vettori import BORDO, RIGA, INK, COL, Disegno, rendi, gradienti  # noqa: E402
 
 ALTEZZA = 200
-# il corpo nel mondo (sim/game.lua: BLASTRON_ROBOT_H * BLASTRON_CORPO), per
+# il corpo nel mondo (sim/game.lua: DISEGNO_H = REF_H * CORPO), per
 # dare al contorno lo stesso spessore delle armi sullo schermo
 CORPO_MONDO = 28 * 1.4
 U = ALTEZZA / CORPO_MONDO          # unità del disegno per unità del mondo

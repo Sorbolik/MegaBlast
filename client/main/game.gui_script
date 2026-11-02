@@ -138,9 +138,6 @@ local SLOT_SCALA, SCELTO = vmath.vector3(1, 1, 1), 1.12
 -- Rimbalzo del cecchino: quanto si schiaccia, quanto presto si calma e quanto tremola
 local BOING_AMP, BOING_DAMP, BOING_FREQ = 0.7, 4, 26
 local SNIPER_EULER, SNIPER_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1)
--- Pugno del Titano: il braccio parte basso davanti e sale fino in alto (montante);
--- il Maglio fa il contrario, dall'alto cala sotto i piedi
-local PUNCH_FROM, PUNCH_TO = math.rad(-60), math.rad(80)
 
 -- punti della traiettoria intera (uno ogni 4 tick), che si vedono solo nelle
 -- lezioni dell'Addestramento
@@ -201,19 +198,14 @@ local SIMULA = config_int("megablast.simula", 0) == 1
 -- nel simulatore (build senza estensione) l'online passa da LuaSocket
 if not ws and SIMULA then ws = require "main.ws_socket" end
 
--- Profilo di fisica (sim/game.lua): "blastron" se non si dice niente.
--- Con [megablast] fisica = megablast si torna ai valori di prima, ma solo in
--- locale: online decide il server.
 local function config_string(key, default)
 	if sys.get_config_string then return sys.get_config_string(key, default) end
 	return sys.get_config(key, default)
 end
-local FISICA = config_string("megablast.fisica", "")
-if FISICA ~= "" then game.use_physics(FISICA) end
 
 -- Proiettili e casse si disegnano in proporzione al robot della simulazione
--- senza l'ingrandimento del corpo: 16 pixel nel profilo megablast, 28 in quello
--- di Blastron
+-- senza l'ingrandimento del corpo (game.REF_H): i loro disegni sono fatti per
+-- un robot alto 16 pixel
 local K = game.DISEGNO_H / game.CORPO / 16
 
 local VK = vmath.vector3(K, K, 1)
@@ -239,8 +231,7 @@ local BRACE_SCURA = vmath.vector4(0.85, 0.3, 0.08, 1)
 -- pulsante dello zoom, in alto a destra
 local ZOOM_BTN = vmath.vector3(W - 70, H - 34, 0)
 
--- Comandi sul telefono: due levette come in Blastron (HUD del tablet, portato
--- da 1024 x 768 a 1280 x 720), la logica è in battaglia/levette.lua. La base
+-- Comandi sul telefono: due levette, la logica è in battaglia/levette.lua. La base
 -- va dove si appoggia il pollice, dentro la sua zona, e torna al suo posto
 -- quando lo si alza. Sul computer niente levette: tastiera e mouse.
 local PAD_R = 94 -- corsa della levetta
@@ -250,8 +241,8 @@ local MOVE_PAD = { x = 115, y = 117 }
 local AIM_PAD = { x = W - 115, y = 117 }
 -- le levette si prendono nel 40% a sinistra e a destra, sotto il 60% dell'altezza
 local PAD_ZONA = { sx = W * 0.4, dx = W * 0.6, y = H * 0.6 }
--- teletrasporto: sul telefono in alto a destra della levetta della mira, come
--- in Blastron; sul computer in basso a destra (o il tasto T)
+-- teletrasporto: sul telefono in alto a destra della levetta della mira; sul
+-- computer in basso a destra (o il tasto T)
 local TELE_TOUCH = vmath.vector3(W - 72, 257, 0)
 local TELE_DESK = vmath.vector3(W - 100, 62, 0)
 local TELE_D = 84
@@ -1588,7 +1579,7 @@ end
 function CP.rivedi(self, numero, da)
 	local ok, dati = pcall(sys.load, CP.file_replay(numero))
 	local r = ok and dati and dati.r
-	if not r or r.fisica ~= game.PHYSICS then
+	if not r or r.versione ~= replay.VERSIONE then
 		show_message(self, "Questo replay non si può più rivedere")
 		return
 	end
@@ -1990,7 +1981,7 @@ local function current_robot(self)
 end
 
 -- snap: la mira va subito sul dito (quando lo si appoggia). Altrimenti con
--- game.AIM_SMOOTH < 1 la mira lo insegue (smooth_aim), come in Blastron.
+-- game.AIM_SMOOTH < 1 la mira lo insegue (smooth_aim).
 -- (x, y) sono sullo schermo: la direzione si prende nel mondo, la distanza (e
 -- quindi la potenza) resta in pixel dello schermo, uguale a ogni zoom.
 local function aim_from(self, x, y, snap)
@@ -2398,21 +2389,13 @@ local function render(self, dt)
 		if i == g.current and my_turn(self) then
 			weapon = self.tele_armed and "teleport" or self.weapon
 		end
-		-- mirando con la spada la lama va dietro la schiena, pronta per il colpo
-		-- (è l'angolo da cui parte il fendente); col Pugno il braccio si carica in basso
-		-- col modello "blastron" invece l'arma punta dove si mira: il colpo parte da lì
-		if aiming and weapon == "sword" and game.SWORD_MODEL ~= "blastron" then
-			st.aim = st.facing > 0 and game.SWORD_FROM or math.pi - game.SWORD_FROM
-		elseif aiming and weapon == "punch" and game.PUNCH_MODEL ~= "blastron" then
-			st.aim = st.facing > 0 and PUNCH_FROM or math.pi - PUNCH_FROM
-		end
-		-- Pugno del Titano: il braccio sale dal basso fino in alto quando il colpo arriva
+		-- mirando con la Lama o col Pugno l'arma punta dove si mira: il colpo parte da lì
+		-- Pugno del Titano: il braccio segue il montante, ruotato sulla mira
 		if rb.punch ~= nil and not rb.dead then
 			weapon = "punch"
 			local span = self.mode == "online" and game.SNAPSHOT_TICKS or 1
 			local t = math.max(0, rb.punch - span + k * span)
-			local a = PUNCH_FROM + (PUNCH_TO - PUNCH_FROM) * math.min(1, t / game.PUNCH_HIT_TICK)
-			if game.PUNCH_MODEL == "blastron" then a = game.punch_angle(t, rb.punch_base) end
+			local a = game.punch_angle(t, rb.punch_base)
 			local dir = rb.punch_dir or rb.facing
 			st.aim = dir > 0 and a or math.pi - a
 			st.facing = dir
@@ -3175,8 +3158,8 @@ function update(self, dt)
 			local input = {
 				left = move_left(self),
 				right = move_right(self),
-				-- con JUMP_REPEAT tenendo premuto si risalta appena si tocca terra
-				jump = self.jump_pressed or (game.JUMP_REPEAT and jump_held(self)) or false,
+				-- tenendo premuto si risalta appena si tocca terra
+				jump = self.jump_pressed or jump_held(self) or false,
 				-- lasciando il salto mentre si sale il salto è corto
 				hold = jump_held(self) or false,
 				fire = self.fire,
@@ -3218,7 +3201,7 @@ function update(self, dt)
 			end
 			-- salto ripetuto: uno per ogni volta che il robot torna a terra
 			local grounded = current_robot(self).grounded
-			if self.jump_pressed or (game.JUMP_REPEAT and jump_held(self) and grounded and not self.jump_sent) then
+			if self.jump_pressed or (jump_held(self) and grounded and not self.jump_sent) then
 				send(self, { t = "jump" })
 				self.jump_sent = true
 			end

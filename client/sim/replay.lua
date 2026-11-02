@@ -32,13 +32,12 @@ local function copia(t)
 end
 
 function M.nuova(seme, mappa, opts)
-	return { versione = M.VERSIONE, fisica = game.PHYSICS, seme = seme, mappa = mappa,
+	return { versione = M.VERSIONE, seme = seme, mappa = mappa,
 		opzioni = copia(opts or {}), input = {}, impronte = {} }
 end
 
 -- La partita e i bot della ricetta, all'inizio
 function M.partita(r)
-	assert(r.fisica == game.PHYSICS, "la ricetta è per la fisica " .. tostring(r.fisica))
 	local g = game.new(r.seme, r.mappa, copia(r.opzioni))
 	-- durata: la partita accorciata a mano (negli scenari, prova_durata)
 	if r.durata then g.match_left = r.durata end

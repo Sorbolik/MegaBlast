@@ -1,26 +1,24 @@
--- Le due levette della battaglia sul telefono, come in Blastron (ButtonJoystick
--- e ButtonAim), con qualche ritocco. Qui c'è solo la logica, senza nodi GUI,
--- così si prova con luajit (tests/sim_test.lua). Le posizioni x, y sono
--- frazioni della corsa: (0, 0) al centro, lunghezza 1 sul bordo.
+-- Le due levette della battaglia sul telefono: a sinistra il movimento, a
+-- destra la mira. Qui c'è solo la logica, senza nodi GUI, così si prova con
+-- luajit (tests/sim_test.lua). Le posizioni x, y sono frazioni della corsa:
+-- (0, 0) al centro, lunghezza 1 sul bordo.
 --
--- Ritocchi rispetto a Blastron:
--- - la levetta del movimento riportata al centro si ferma (in Blastron il
---   robot continuava a camminare finché non si alzava il dito);
+-- - la levetta del movimento riportata al centro si ferma;
 -- - il colpo parte con la mira di RILASCIO secondi prima di staccare il dito,
 --   così lo scivolamento del pollice mentre si alza non sposta il tiro;
--- - i tempi sono in secondi, non in fotogrammi.
+-- - i tempi sono in secondi.
 
 local M = {}
 
 local rad, sin = math.rad, math.sin
 
--- Movimento (valori del Tuning di Blastron)
+-- Movimento
 M.MOVE_START = 0.15 -- di lato oltre il 15% cammina...
 M.MOVE_START_ANGLE = rad(60) -- ...se non punta più in alto di 60°
 M.MOVE_STOP = 0.25 -- spinta in alto oltre 60° e oltre il 25% smette di camminare
 M.MOVE_STOP_ANGLE = rad(60)
 M.LATERAL_DEAD = 0.25 -- verso il basso serve il 25% di lato
-M.MOVE_CENTER = 0.1 -- nostro: sotto il 10% (dito tornato al centro) si ferma
+M.MOVE_CENTER = 0.1 -- sotto il 10% (dito tornato al centro) si ferma
 M.JUMP_START = 0.25 -- in alto oltre 25° e oltre il 25% salta, e risalta finché resta lì
 M.JUMP_START_ANGLE = rad(25)
 M.JUMP_STOP = 0.25 -- smette sotto 22,5° o sotto il 25%

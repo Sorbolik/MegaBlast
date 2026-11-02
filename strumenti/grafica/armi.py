@@ -13,7 +13,7 @@
 #                                         nella spalla, x avanti e y in su
 #   simulazione/foto/armi_anteprima.png   tutte insieme, per guardarle
 #
-# Le misure sono quelle del mondo (non del corpo, che è BLASTRON_CORPO volte più
+# Le misure sono quelle del mondo (non del corpo, che è game.CORPO volte più
 # grande): la bocca del Lanciarune a game.MUZZLE, la lama lunga
 # game.SWORD_REACH, il Maglio e l'Affondo lunghi config.MALLET.reach e
 # config.LUNGE.reach (lì la simulazione colpisce).
@@ -44,7 +44,7 @@ MUZZLE = 14
 SWORD_REACH = 40
 MALLET_REACH = 44
 LUNGE_REACH = 40
-H = 28  # altezza del corpo nel mondo, senza BLASTRON_CORPO
+H = 28  # altezza del corpo nel mondo, senza game.CORPO (game.REF_H)
 
 from vettori import BORDO, RIGA, INK, COL, Disegno, rendi  # noqa: E402
 
