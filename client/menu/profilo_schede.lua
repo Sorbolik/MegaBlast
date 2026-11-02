@@ -98,12 +98,11 @@ local function scheda_scheda(s, parent)
 	local posa = box(245, 62, 0, 0, C.LUCE, parent)
 	gui.set_visible(posa, false)
 	s.figura = scoria.new(col, scoria.PERSONAGGIO, "missile")
-	-- fiamma piccola dell'attesa ma sempre con l'arma in mano (come nelle proposte)
+	-- sempre con l'arma in mano (come nelle proposte), non di turno
 	s.figura.con_arma, s.figura.arma_t = true, math.huge
-	-- la fiammella "in attesa", come nei cartellini: quella grande è del turno
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = false }
 	scoria.update(s.figura, 0, s.st)
-	-- alto 330 fino alla testa, circa 460 con la fiammella
+	-- alto 330 fino alla testa
 	local k = 330 / game.DISEGNO_H
 	gui.set_scale(posa, vmath.vector3(k, k, 1))
 	ui.alone(0, 200 / k, 560 / k, con_alfa(col, 0.2), posa)

@@ -225,7 +225,7 @@ local ADDESTRAMENTO = {
 		titolo = "Prima partita",
 		scopo = "Trascina dal diavoletto per mirare, lascia per sparare",
 		guidata = true,
-		mappa = "forgia",
+		mappa = "pavimento",
 		giocatori = {
 			-- niente scelta (Sergio, 30 ott): Lanciarune, Lama e Rampino; le altre
 			-- armi, se vuoi, dalle casse, con la loro scheda
@@ -280,10 +280,10 @@ local GIRONE_1 = {
 		id = "primo_sangue",
 		titolo = "Primo sangue",
 		scopo = "Abbatti il bot: un'arma a sinistra e una a destra del cronometro",
-		mappa = "forgia",
+		mappa = "pavimento",
 		giocatori = { { team = 1 }, { team = 2, bot = 2 } },
 		-- le armi che l'Addestramento non presenta si trovano nel girone (Claude)
-		casse = { { dopo = 0, arma = "grenade", x = 620 } },
+		casse = { { dopo = 0, arma = "grenade", x = 405 } },
 		turni = 7,
 		stelle = { punti = 110, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il bot" } },
@@ -358,7 +358,7 @@ local GIRONE_1 = {
 		id = "il_codardo",
 		titolo = "Il codardo",
 		scopo = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo col tuo",
-		mappa = "forgia",
+		mappa = "pavimento",
 		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
 		turni = 7,
 		stelle = { punti = 120, bonus = { conta = "morti", al_massimo = 0, testo = "SENZA MORIRE" } },
@@ -367,8 +367,9 @@ local GIRONE_1 = {
 	{
 		id = "il_fabbro",
 		titolo = "Il Fabbro",
-		scopo = "Il custode della Forgia: tanta vita e il Maglio. Buttarlo nel vuoto fa prima",
-		mappa = "forgia",
+		scopo = "Il custode della Forgia: tanta vita e il Maglio. Buttarlo nella fossa di lava fa prima",
+		-- la fossa di lava in mezzo al pavimento: è lì che si butta (Sergio, 2 nov)
+		mappa = "fossa",
 		giocatori = {
 			{ team = 1 },
 			{ team = 2, bot = 5, carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
@@ -376,7 +377,7 @@ local GIRONE_1 = {
 		},
 		vita = { [2] = 240 },
 		turni = 10,
-		stelle = { punti = 10, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NEL VUOTO" } },
+		stelle = { punti = 10, bonus = { conta = "vuoto", almeno = 1, testo = "BUTTALO NELLA FOSSA" } },
 		obiettivo = { { abbatti = 2, testo = "Abbatti il Fabbro" } },
 	},
 	-- la fine del girone: una partita completa 2 contro 2, con un bot al tuo
@@ -385,7 +386,7 @@ local GIRONE_1 = {
 		id = "battaglia_forgia",
 		titolo = "Battaglia della Forgia",
 		scopo = "Una partita vera, 2 contro 2: tu e il tuo compagno contro il Fabbro e il cecchino",
-		mappa = "forgia",
+		mappa = "pavimento",
 		-- la prima scelta delle armi, guidata, con le armi già viste (Sergio, 30 ott)
 		draft = true,
 		giocatori = {

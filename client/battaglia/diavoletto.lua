@@ -31,7 +31,6 @@ return {
 		coda_4_bordo = { img = "coda_4_bordo", tinta = nil, x = 23.0, y = 0.0, w = 70, h = 56 },
 		coda_5 = { img = "coda_5", tinta = nil, x = 22.0, y = 0.0, w = 68, h = 56 },
 		coda_5_bordo = { img = "coda_5_bordo", tinta = nil, x = 22.0, y = 0.0, w = 68, h = 56 },
-		fiammella = { img = "fiammella", tinta = "fiammella_tinta", x = 0.0, y = 30.0, w = 36.2, h = 76 },
 	},
 	punti = {
 		collo = { 0, 122 },

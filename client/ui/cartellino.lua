@@ -31,7 +31,7 @@ M.LARGO = 286
 local PAD = 14
 local TESTA = 52          -- livello, nome e badge
 local RITRATTO = 196      -- il diavoletto
-local FIGURA_H = 124      -- quanto è alto il diavoletto fino alla testa (con la fiammella circa 170)
+local FIGURA_H = 124      -- quanto è alto il diavoletto fino alla testa
 local PEZZO, PEZZO_GAP = 60, 6
 local POTERI = 30
 local ETICHETTA = 18
@@ -207,10 +207,8 @@ function M.new(v, x, y, opz, parent)
 		local posa = box(0, yy - RITRATTO + 16, 0, 0, C.LUCE, c.root)
 		gui.set_visible(posa, false)
 		c.figura = scoria.new(col, scoria.PERSONAGGIO, "missile")
-		-- fiamma piccola dell'attesa ma sempre con l'arma in mano (come nelle proposte)
+		-- sempre con l'arma in mano (come nelle proposte), non di turno
 		c.figura.con_arma, c.figura.arma_t = true, math.huge
-		-- la fiammella "in attesa" (la fiamma grande dice di chi è il turno, e qui non lo è
-		-- di nessuno): resta dentro il ritratto
 		c.st = { x = 0, y = 0, facing = v.verso or 1, grounded = true, moving = 0, turno = false }
 		scoria.update(c.figura, 0, c.st)
 		local k = FIGURA_H / game.DISEGNO_H

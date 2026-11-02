@@ -185,7 +185,6 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label><input type="checkbox" id="molle" checked> molle del gioco</label>
 			<label><input type="checkbox" id="turno"> di turno</label>
 			<label>squadra <select id="squadra"><option value="0">Rosso</option><option value="1">Blu</option><option value="2">Verde</option><option value="3">Oro</option></select></label>
-			<label title="La fiammella col colore della squadra: ce l'hanno tutti sopra la testa, qualunque cosa indossino, e la anima il gioco a parte"><input type="checkbox" id="fiammella"> fiammella</label>
 		</div>
 		<div class="barra" id="barra-arma" hidden title="L'arma in mano, come nel gioco: sta nella mano del braccio davanti, le braccia le animi tu">
 			<label>arma <select id="arma"></select></label>
@@ -502,12 +501,6 @@ const CANALI = [
 	{ id: "mostra_manina_a", nome: "In scena: manina davanti", tipo: "vis" },
 	{ id: "mostra_manina_d", nome: "In scena: manina dietro", tipo: "vis" },
 	{ id: "mostra_arma", nome: "In scena: arma", tipo: "vis", arma: true },
-	// la fiammella, nella sua clip
-	{ id: "fiamma_gira", nome: "Fiammella, gira", tipo: "ang", fiamma: true },
-	{ id: "fiamma_largo", nome: "Fiammella, larga", tipo: "scala", fiamma: true },
-	{ id: "fiamma_alto", nome: "Fiammella, alta", tipo: "scala", fiamma: true },
-	{ id: "fiamma_x", nome: "Fiammella, avanti e indietro", tipo: "len", fiamma: true },
-	{ id: "fiamma_y", nome: "Fiammella, su e giù", tipo: "len", fiamma: true },
 ];
 // le clip con l'arma in mano (battaglia/scoria.lua) e quelle solo per un'arma,
 // che il gioco usa al posto loro con quell'arma (fermo_arma_mallet, mira_mallet)
@@ -522,21 +515,20 @@ const conArma = (n) => ARMATE.includes(n) || !!variante(n);
 const tipoClip = (n) => { const v = variante(n); return v ? v.base : n; };
 const varianti = (n, cl) => Object.keys(cl).filter((k) => { const v = variante(k); return v && v.base === n; }).sort();
 // un canale si vede se è di quelli di sempre, ha chiavi in questa clip o è
-// scelto; nella clip della fiammella solo i suoi. I pezzi in scena li cambia il
+// scelto. I pezzi in scena li cambia il
 // secchio: fra i canali non ci sono, nella linea del tempo con le loro chiavi
 function visibile(ch, pannello) {
 	const k = clip().tracce[ch.id];
-	if (nome === "fiammella") return !!ch.fiamma;
 	if (ch.tipo === "vis") return !pannello && !!(k && k.length);
 	if (ch.id === canale || (k && k.length)) return true;
 	if (ch.arma) return conArma(nome);
 	// nella linea del tempo solo i canali con chiavi (o tutti, a richiesta)
 	if (!pannello && !$("tutti-canali").checked) return false;
-	return !ch.extra && !ch.fiamma;
+	return !ch.extra;
 }
 const TIPO = {};
 CANALI.forEach((c) => { TIPO[c.id] = c.tipo; });
-const NEUTRO = { schiaccia: 1, fiamma_largo: 1, fiamma_alto: 1 };
+const NEUTRO = { schiaccia: 1 };
 CANALI.forEach((c) => { if (c.tipo === "vis") NEUTRO[c.id] = /manina/.test(c.id) ? 0 : 1; });
 CANALI.forEach((c) => { if (NEUTRO[c.id] === undefined) NEUTRO[c.id] = 0; });
 const LIMITI = { ang: [-180, 180, 1], len: [-60, 60, 0.5], scala: [0.4, 1.6, 0.01], vis: [0, 1, 1] };
@@ -570,9 +562,6 @@ const CLIP = [
 		["sale_arma", "Si somma ad <b>aria arma</b> salendo. Qui la vedi sopra aria arma.", "aria_arma"],
 		["scende_arma", "Si somma ad <b>aria arma</b> scendendo. Qui la vedi sopra aria arma.", "aria_arma"],
 		["mira", "Fermo mentre mira: l'arma va dove si mira (prova col cursore <b>mira</b>), la testa la segue. Correndo o in aria mirando si usano corsa arma e aria arma."],
-	]],
-	["Fiammella", [
-		["fiammella", "La fiammella di tutti, sopra qualunque testa: gira sempre, sopra ogni altra clip (qui la vedi sul <b>fermo</b>). Trascinala per girarla, con Maiusc per spostarla. Il colore della squadra e la grandezza su chi è di turno li fa il gioco.", "fermo"],
 	]],
 ];
 const INFO = {};
@@ -697,7 +686,7 @@ let clips = clipDaLua(DATI.animazioni);
 const DEL_GIOCO = clipInLua(clips);
 let nome = "fermo";
 let tempo = 0; // tempo dentro la clip
-let orologio = 0; // tempo che passa (coda, fiammella, molle)
+let orologio = 0; // tempo che passa (coda, molle)
 let suona = false, canale = "braccio_a", chiaveScelta = null, modo = "ruota"; // trascinando: ruota, sposta o perno
 // le chiavi scelte nella linea del tempo (più d'una con Maiusc+clic o col rettangolo):
 // chiaveScelta è l'ultima, quella della curva; si trascinano e si tolgono tutte insieme
@@ -835,8 +824,6 @@ function posaOra() {
 	const base = info(nome) && info(nome).base;
 	if (base && clips[base]) campiona(clips[base], orologio, po, 1);
 	campiona(clip(), tempo, po, 1);
-	// la fiammella si guarda sul diavoletto intero
-	if (nome === "fiammella") for (const c of CANALI) if (c.tipo === "vis") po[c.id] = NEUTRO[c.id];
 	return po;
 }
 
@@ -890,7 +877,7 @@ const IMPUGNA = [["braccio_a", "braccio davanti"], ["braccio_d", "braccio dietro
 	["manina_d", "manina dietro"], ["nessuno", "nessuno"]];
 const LIVELLI = ["coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma", "braccio_a", "manina_a"];
 const NOMI_LIVELLI = { coda: "coda", ala: "ala", braccio_d: "braccio dietro", manina_d: "manina dietro", gamba_d: "gamba dietro",
-	gamba_a: "gamba davanti", busto: "busto", testa: "testa e fiammella", arma: "arma", braccio_a: "braccio davanti", manina_a: "manina davanti" };
+	gamba_a: "gamba davanti", busto: "busto", testa: "testa", arma: "arma", braccio_a: "braccio davanti", manina_a: "manina davanti" };
 function clipDellaScena() {
 	const b = info(nome) && info(nome).base;
 	return b && clips[b] ? clips[b] : clip();
@@ -1116,18 +1103,6 @@ function disegna(dt) {
 	posti.testa = punto(collo, 0, 0);
 	strati.testa = () => {
 		if (vede("mostra_testa")) vestePerno(collo, "testa", "testa", po.viso || "testa");
-		// la fiammella: non è un pezzo del personaggio (ce l'hanno tutti, qualunque
-		// testa indossino) e ha la sua clip, che gira sopra tutte le altre; si vede
-		// nella sua clip o se la chiedi. Grande su chi è di turno
-		if ($("fiammella").checked || nome === "fiammella") {
-			const pf = nome === "fiammella" ? po : posaNeutra();
-			if (nome !== "fiammella" && clips.fiammella) campiona(clips.fiammella, orologio, pf, 1);
-			const f = turno ? 2.2 : 0.8;
-			const cima = ruota(scala(sposta(collo, PT.cima[0] - sposto("testa")[0] + pf.fiamma_x, PT.cima[1] - sposto("testa")[1] + pf.fiamma_y),
-				f * pf.fiamma_largo, f * pf.fiamma_alto), pf.fiamma_gira);
-			const luce = turno ? 1 : 0.6;
-			disegnaPezzo(cima, P.fiammella, null, nome === "fiammella" ? "fiamma_gira" : null, punto(cima, 0, 0), col.map((x) => x * luce));
-		}
 	};
 	strati.arma = () => {
 		if (!armaM || !vede("mostra_arma")) return;
@@ -1255,7 +1230,7 @@ const SPOSTABILI = {
 	busto: ["busto_x", "busto_y"], testa: ["testa_x", "testa_y"], braccio_a: ["braccio_a_x", "braccio_a_y"],
 	braccio_d: ["braccio_d_x", "braccio_d_y"], gamba_a: ["gamba_a_x", "alza_a"], gamba_d: ["gamba_d_x", "alza_d"],
 	ala: ["ala_x", "ala_y"], coda: ["coda_x", "coda_y"], manina_a: ["manina_a_x", "manina_a_y"],
-	manina_d: ["manina_d_x", "manina_d_y"], fiamma_gira: ["fiamma_x", "fiamma_y"], arma: ["arma_x", "arma_y"],
+	manina_d: ["manina_d_x", "manina_d_y"], arma: ["arma_x", "arma_y"],
 };
 let presa = null;
 function pixel(e) {
@@ -1315,8 +1290,6 @@ palco.addEventListener("pointerdown", (e) => {
 	// il pezzo di una pelle cliccato diventa quello da ritoccare (specchia, disegno, grandezza)
 	const k = x.p && x.p._k;
 	if (k && $("rt-pezzo").value !== k && $("rt-pezzo").querySelector(`option[value="${k}"]`)) { $("rt-pezzo").value = k; mostraRitocco(); }
-	// nella clip della fiammella si muove solo lei
-	if (nome === "fiammella" && x.canale !== "fiamma_gira") { messaggio("Qui si anima solo la fiammella: trascinala."); return; }
 	// il perno si sposta col modo "perno" o tenendo premuto Alt
 	if (modo === "perno" || e.altKey) {
 		e.preventDefault();
@@ -1537,7 +1510,6 @@ function costruisciSecchio() {
 }
 const inScena = (pz) => valoreProprio(clip(), pz.vis, tempo) > 0.5;
 function aggiornaSecchio() {
-	$("secchio").hidden = nome === "fiammella";
 	for (const b of document.querySelectorAll("#secchio .pezzo")) {
 		const pz = SECCHIO.find((x) => x.vis === b.dataset.vis);
 		b.hidden = pz.arma && !conArma(nome);
@@ -1982,7 +1954,7 @@ const fotogramma = (d, fine) => {
 $("indietro").onclick = (e) => fotogramma(-1, e.shiftKey);
 $("avanti").onclick = (e) => fotogramma(1, e.shiftKey);
 $("squadra").onchange = () => { if (pronte === nomiImg.length) costruisciSecchio(); aggiorna(); };
-["molle", "turno", "vedi-cammina", "vedi-colpi", "fiammella", "vedi-prese"].forEach((id) => { $(id).onchange = () => aggiorna(); });
+["molle", "turno", "vedi-cammina", "vedi-colpi", "vedi-prese"].forEach((id) => { $(id).onchange = () => aggiorna(); });
 // le armi in mano, nell'ordine del file; cambiando arma dalla clip di un'arma
 // si va a quella della nuova, se c'è, o a quella di tutte
 for (const n of Object.keys(DA)) $("arma").add(new Option(n, n));

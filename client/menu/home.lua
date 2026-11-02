@@ -1,6 +1,6 @@
--- La home (menu principale): dietro lo sfondo vivo del Limbo, il secondo
--- girone della campagna (gironi/limbo.fp, Sergio 2 nov), la Scoria col bagliore del Nucleo
--- dietro (toccandolo si apre il PROFILO), il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
+-- La home (menu principale): dietro lo sfondo dipinto della Forgia che scorre
+-- piano (lo disegna la mesh del terreno, battaglia/terreno.script; Sergio 2 nov),
+-- l'apprendista fermo senza arma col bagliore del Nucleo dietro (toccandolo si apre il PROFILO), il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
 -- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA, EVENTI e, in alto a destra,
 -- la rotellina delle IMPOSTAZIONI (menu/impostazioni.lua). Le schermate nuove aggiungono qui il loro bottone
 -- quando esistono (stile in ui/ui.lua).
@@ -18,7 +18,6 @@ local game = require "sim.game"
 local scoria = require "battaglia.scoria"
 local ui = require "ui.ui"
 local schermo = require "ui.schermo"
-local sfondo = require "gironi.sfondo"
 
 local M = {}
 
@@ -48,9 +47,6 @@ end
 function M.new(colore)
 	local h = { tops = {}, bottoni = {}, t = 0, colore = colore }
 
-	h.sfondo = sfondo.new("limbo")
-	h.tops[#h.tops + 1] = h.sfondo.nodo
-
 	-- il bagliore del Nucleo dietro la Scoria, che respira
 	h.posa = vuoto(CORPO_X, CORPO_Y)
 	h.tops[#h.tops + 1] = h.posa
@@ -66,7 +62,8 @@ function M.new(colore)
 	h.corpo = scoria.new(colore, scoria.PERSONAGGIO)
 	gui.set_parent(h.corpo.root, corpo)
 	scoria.set_enabled(h.corpo, true)
-	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true }
+	-- il fermo senza arma, senza scenette (Sergio, 2 nov)
+	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	-- toccando il diavoletto si apre il profilo (menu/profilo_schede.lua): una
 	-- zona che non si vede, sopra di lui, e una scritta discreta sotto i piedi
 	local zona = gui.new_box_node(vmath.vector3(CORPO_X, CORPO_Y + 120, 0), vmath.vector3(260, 320, 0))
@@ -74,7 +71,7 @@ function M.new(colore)
 	h.tops[#h.tops + 1] = zona
 	h.bottoni[#h.bottoni + 1] = { nodo = zona, bordo = zona, azione = "profilo", colore = ui.C.LUCE, riposo = ui.C.LUCE }
 	local scritta = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.TESTO, h.posa)
-	-- lo sfondo del Limbo è chiaro: la scritta col contorno scuro
+	-- sullo sfondo dipinto la scritta col contorno scuro
 	gui.set_outline(scritta, ui.C.OMBRA)
 	gui.set_inherit_alpha(scritta, true)
 
@@ -143,7 +140,6 @@ end
 function M.update(h, dt)
 	if not h.visibile then return end
 	h.t = h.t + dt
-	sfondo.update(h.sfondo, dt)
 	scoria.update(h.corpo, dt, h.st)
 	local c = h.colore
 	gui.set_color(h.luce, vmath.vector4(c.x, c.y, c.z, 0.22 + 0.08 * math.sin(h.t * 1.7)))

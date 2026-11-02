@@ -1,7 +1,9 @@
 -- Camera della battaglia: guarda un punto del mondo con uno zoom, e lo insegue
--- con una molla esponenziale (uguale a 60, 90 o 120 Hz). Non esce mai dai lati
--- e dalla cima della mappa; sotto scende di SOTTO pixel dello schermo, così il
--- fondo della mappa resta sopra l'HUD (sotto c'è il baratro, terreno.fp).
+-- con una molla esponenziale (uguale a 60, 90 o 120 Hz). Attorno alla mappa c'è
+-- una banda «intoccabile» (Sergio, 2 nov): ai lati e in cima la camera esce di
+-- BANDA pixel dello schermo, sotto di SOTTO, così il fondo della mappa resta
+-- sopra l'HUD (sotto c'è il baratro, terreno.fp). Il livello MAPPA mostra tutta
+-- la mappa con le bande attorno.
 --
 -- Lua puro: game.gui_script la applica al nodo "mondo" della GUI e alla vista
 -- del render (terreno). Da schermo a mondo: x = (sx - tx) / s.
@@ -17,8 +19,8 @@
 local M = {}
 
 -- livelli di zoom che si scelgono col pulsante, la rotella o il tasto Z
--- (MAPPA è 1280 / 1920: tutta la mappa sullo schermo)
-M.LIVELLI = { 2.2, 1, 2 / 3 }
+-- (MAPPA non ha un numero: è M.tutta, tutta la mappa e le bande sullo schermo)
+M.LIVELLI = { 2.2, 1, 0 }
 M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
 
 -- quanto in fretta la camera raggiunge il punto (1/s): più alto = più rigida
@@ -27,11 +29,19 @@ local SEGUI, SEGUI_VELOCE, ZOOM = 5, 9, 6
 local ZOOM_FUORI = 12
 -- pixel dello schermo sotto la mappa: l'altezza della barra dell'HUD
 M.SOTTO = 120
+-- pixel dello schermo ai lati e sopra la mappa
+M.BANDA = 40
+
+-- il centro sta fra a e b; se lo schermo è più grande della mappa con le bande, a metà
+local function fra(v, a, b)
+	if a > b then return (a + b) / 2 end
+	return math.min(math.max(v, a), b)
+end
 
 local function limita(c)
-	local hw = c.w / (2 * c.s)
-	c.x = math.min(math.max(c.x, hw), c.mw - hw)
-	c.y = math.min(math.max(c.y, (c.h / 2 - M.SOTTO) / c.s), c.mh - c.h / (2 * c.s))
+	local hw, hh, b = c.w / (2 * c.s), c.h / (2 * c.s), M.BANDA / c.s
+	c.x = fra(c.x, hw - b, c.mw - hw + b)
+	c.y = fra(c.y, hh - M.SOTTO / c.s, c.mh - hh + b)
 end
 
 -- w, h: lo schermo; mw, mh: la mappa
@@ -54,9 +64,10 @@ function M.margini(c, x, su, giu)
 	c.mx, c.msu, c.mgiu = x, su, giu
 end
 
--- lo zoom con cui si vede tutta la mappa (larga quanto lo schermo)
+-- lo zoom con cui si vede tutta la mappa con le bande attorno (il livello MAPPA,
+-- e il più lontano che la camera va)
 function M.tutta(c)
-	return math.max(c.w / c.mw, c.h / c.mh)
+	return math.min((c.w - 2 * M.BANDA) / c.mw, (c.h - M.BANDA - M.SOTTO) / c.mh)
 end
 
 -- Va subito sul punto, senza inseguirlo (inizio partita, menu)
@@ -118,8 +129,7 @@ function M.allo_schermo(c, x, y)
 	return x * c.s + tx, y * c.s + ty
 end
 
--- mai così lontano da vedere fuori dai lati della mappa (su uno schermo largo
--- il livello MAPPA diventa M.tutta)
+-- mai più lontano di M.tutta (su uno schermo piccolo anche MEDIO può diventarlo)
 function M.zoom(c)
 	return math.max(M.LIVELLI[c.livello], M.tutta(c))
 end
