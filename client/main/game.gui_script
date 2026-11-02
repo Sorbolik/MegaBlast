@@ -300,14 +300,6 @@ local function mask_params(w, h, x, y)
 	}
 end
 
--- Una richiesta nuova al terreno (mappa o sfondo della home): finché non risponde
--- "terreno_pronto" col suo numero, iride e ingresso restano chiusi (ui/passaggio.lua)
-local function aspetta_terreno(self)
-	self.terreno_n = (self.terreno_n or 0) + 1
-	self.terreno_attesa = self.terreno_n
-	return self.terreno_n
-end
-
 local function draw_terrain(self)
 	local data = self.g.terrain.data
 	local buf = buffer.create(TW * TH, MASK_FORMAT)
@@ -326,7 +318,7 @@ local function draw_terrain(self)
 		self.mask_tex = resource.create_texture(MASK_PATH, mask_params(TW, TH), buf)
 	end
 	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = self.g.map,
-		dipinta = PAINTED[self.g.map] == true, n = aspetta_terreno(self) })
+		dipinta = PAINTED[self.g.map] == true })
 end
 
 -- Aggiorna la maschera nel rettangolo dato (coordinate di cella)
@@ -458,7 +450,7 @@ local function show_menu(self, senza_velo)
 	end
 	-- dietro la home solo lo sfondo dipinto della Forgia, che scorre piano (Sergio,
 	-- 2 nov): la mesh del terreno lo disegna senza la mappa, il mondo non si vede
-	msg.post("/terreno#script", "home", { sfondo = "forgia", n = aspetta_terreno(self) })
+	msg.post("/terreno#script", "home", { sfondo = "forgia" })
 	gui.set_enabled(self.mondo, false)
 	set_controls_visible(self, false)
 	show_message(self, "", true)
@@ -823,7 +815,7 @@ function CP.ingresso_update(self, dt)
 	menu.ingresso.update(e, dt)
 	self.ingresso_t = self.ingresso_t + dt
 	local t = self.ingresso_t
-	if (self.ingresso_pronto and not self.terreno_attesa and t >= CP.INGRESSO.min) or t >= CP.INGRESSO.max then
+	if (self.ingresso_pronto and t >= CP.INGRESSO.min) or t >= CP.INGRESSO.max then
 		CP.chiudi_ingresso(self)
 	elseif t > 1.5 then
 		-- un'attesa vera: si dice cosa si sta facendo
@@ -856,8 +848,7 @@ function CP.scivola(self, verso, cambia)
 end
 
 function CP.iride(self, cambia)
-	-- sotto l'ingresso non si aspetta: lo copre lui, e lui aspetta il terreno
-	menu.passaggio.iride(self.passaggio, cambia, function() return not self.terreno_attesa or self.ingresso ~= nil end)
+	menu.passaggio.iride(self.passaggio, cambia)
 end
 
 -- Dove sta la mano di chi tira col Rampino, nel disegno (la fune parte da lì)
@@ -3144,17 +3135,6 @@ function init(self)
 	CP.avvio(self)
 end
 
-local MSG_TERRENO_PRONTO = hash("terreno_pronto")
-
-function on_message(self, message_id, message)
-	-- battaglia/terreno.script: i dipinti della mappa o della home sono caricati
-	-- (solo la risposta all'ultima richiesta: una vecchia arriva anche dopo)
-	if message_id == MSG_TERRENO_PRONTO and message.n == self.terreno_attesa then
-		self.terreno_attesa = nil
-		menu.passaggio.sblocca(self.passaggio)
-	end
-end
-
 function final(self)
 	disconnect(self)
 end
@@ -3304,11 +3284,9 @@ function update(self, dt)
 		local rb = current_robot(self)
 		-- (stirato su 1280 x 720 come i tocchi: simula.py lo riporta ai pixel veri)
 		local sx, sy = schermo.a_tocco(camera.allo_schermo(self.cam, rb.x, rb.y + game.DISEGNO_H / 2))
-		-- pronto: niente ingresso, niente iride, dipinti caricati (si vede quello che c'è)
-		local pronto = not self.ingresso and not self.terreno_attesa and not menu.passaggio.attivo(self.passaggio)
-		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f pronto=%d",
+		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f",
 			self.mode, self.g.current, self.g.phase, math.floor(rb.x), math.floor(rb.y),
-			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s, pronto and 1 or 0)
+			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s)
 		if line ~= self.simula_line then
 			print(line)
 			self.simula_line = line
