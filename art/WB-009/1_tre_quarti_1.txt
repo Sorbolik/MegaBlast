@@ -1,0 +1,13 @@
+Image 1 shows the main character of our game, a little blacksmith-apprentice imp, three times. The MIDDLE figure is a three-quarter view facing right: that is the view we need. Image 1 is the only reference for his shapes and proportions: small and stocky, big round head (about one third of his height), two short bone-colored horns curving slightly forward, pointed ears, big yellow eyes with black pupils, a sly closed-mouth grin, brick-red skin with a parchment-colored belly and muzzle, four-fingered hands, bare feet with three stubby toes, a long thin tail with an arrowhead tip, a neckerchief knotted around his neck. Keep his character; change only the rendering, as described below.
+
+Draw him ONCE, full body, in a clean THREE-QUARTER VIEW FACING RIGHT, standing still in a neutral, relaxed pose: weight on both feet, legs slightly apart, both arms hanging loosely a little away from the body with open relaxed hands, the near arm and near leg (on the right of the picture) fully visible, the far arm and far leg (on the left) partly behind the body, the tail coming out from behind his lower back and curving up behind him on the left, fully visible from root to tip. The face is turned to the right in three-quarter view: the far eye is a bit narrower than the near eye. Do NOT draw any flame on his head and no wings: the game adds the flame itself. He wears nothing but the neckerchief.
+
+Rendering rules, very strict, because this drawing will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no brush strokes, no soot, no noise, no soft shading, no glow.
+- Thick, clean, closed pure-black #000000 outline of even weight around the whole figure, with thinner black lines only for inner details (eyes, mouth, fingers, belly edge).
+- Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; belly and muzzle #F1DFB0, their shadow #D6BC86; horns and toenails #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF; neckerchief pure bright green #00FF00 with shadow #00B400 (the green is the team color: use it ONLY on the neckerchief).
+- Flat pure white #FFFFFF background, no ground, no shadow on the ground, nothing else in the picture.
+- No text, numbers, labels, arrows or signatures. Portrait format 2:3.
+
+Riferimenti (ordine):
+R1: art/WB-009/riferimenti/R1_apprendista_concept.png
