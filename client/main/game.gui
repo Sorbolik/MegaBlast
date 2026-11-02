@@ -39,6 +39,10 @@ materials {
   material: "/gironi/forgia.material"
 }
 materials {
+  name: "limbo"
+  material: "/gironi/limbo.material"
+}
+materials {
   name: "passaggio"
   material: "/ui/passaggio.material"
 }
