@@ -24,7 +24,7 @@ M.XP_BASE, M.XP_PASSO = 100, 25
 -- (tasti: i tasti del controller cambiati, tasto -> comando; nil è la mappatura di base, ui/controller.lua)
 -- (sparo: col controller il colpo parte premendo o lasciando il tasto; potenza:
 -- col controller la dà la levetta destra o quanto è premuto il grilletto)
-M.IMPOSTAZIONI = { mira = "lancetta", sparo = "rilascio", potenza = "levetta", levette = "destra" }
+M.IMPOSTAZIONI = { mira = "lancetta", sparo = "rilascio", potenza = "levetta", levette = "destra", fps = "spento" }
 
 function M.impostazione(p, chiave)
 	local v = p and p.impostazioni and p.impostazioni[chiave]

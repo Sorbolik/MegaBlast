@@ -4,19 +4,15 @@
 --
 -- Le mappe vecchie (forgia, crogiolo) hanno i disegni fra le risorse e lo sfondo
 -- lo fa lo shader. Quelle dell'apprendista (battaglia/dipinti.lua) hanno terreno
--- e sfondo dipinti da SVG in client/dipinti, non compresse, una volta per
--- ogni densità di schermo. Ogni immagine ha la sua collezione, che le collection
--- factory di battaglia/dipinti.collection caricano solo quando serve e in un altro thread
--- (niente scatti): in memoria c'è un solo terreno e un solo sfondo, della densità
--- dello schermo. Finché non è pronta si vede solo lo sfondo.
+-- e sfondo dipinti da SVG in client/dipinti, una volta per ogni densità di
+-- schermo: qui si carica solo quella che serve, quando serve (così in memoria
+-- non c'è mai la versione grande su un telefono piccolo).
 --
--- Messaggi: "maschera" {path, mappa, dipinta, n} (una partita), "home" {sfondo, n}
--- (solo lo sfondo, dietro la home; senza sfondo la home si chiude), "schermo" {kx, ky},
--- "dipinto" {terreno} o {cielo, lontano, medio, vicino} (dalle collezioni appena create).
--- A chi manda "maschera" o "home" (col numero n della richiesta) risponde
--- "terreno_pronto" {n} quando c'è tutto.
+-- Messaggi: "maschera" {path, mappa, dipinta} (una partita), "home" {sfondo}
+-- (solo lo sfondo, dietro la home; senza sfondo la home si chiude), "schermo" {kx, ky}.
 
 local dipinti = require "battaglia.dipinti"
+local fotogrammi = require "ui.fotogrammi"
 
 go.property("forgia_terreno", resource.texture("/assets/mappe/forgia/terreno.png"))
 go.property("forgia_interno", resource.texture("/assets/mappe/forgia/interno_mezzo.png"))
@@ -26,98 +22,66 @@ go.property("crogiolo_interno", resource.texture("/assets/mappe/crogiolo/interno
 local MSG_MASCHERA = hash("maschera")
 local MSG_HOME = hash("home")
 local MSG_SCHERMO = hash("schermo")
-local MSG_DIPINTO = hash("dipinto")
-local MSG_PRONTO = hash("terreno_pronto")
 
+local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
+local TEX_RGBA = graphics and graphics.TEXTURE_FORMAT_RGBA or resource.TEXTURE_FORMAT_RGBA
+local TEX_RGB = graphics and graphics.TEXTURE_FORMAT_RGB or resource.TEXTURE_FORMAT_RGB
 -- le strisce dello sfondo e i loro posti nella mesh (texture3..6, come in terreno.material)
 local PIANI = { "cielo", "lontano", "medio", "vicino" }
 local POSTO = { cielo = "texture3", lontano = "texture4", medio = "texture5", vicino = "texture6" }
 local STRISCIA = { lontano = "striscia1", medio = "striscia2", vicino = "striscia3" }
 
--- la densità delle immagini: la 2 (1,5 volte più grande) solo sugli schermi alti
--- almeno 1400 pixel veri (tablet, telefoni QHD); su un telefono a 1080 basta la 1
+-- la densità delle immagini: la 2 (1,5 volte più grande, circa 55 MB di
+-- memoria video invece di 25) solo sugli schermi alti almeno 1400 pixel veri
+-- (tablet, telefoni QHD); su un telefono a 1080 basta la 1
 local function densita()
 	local _, h = window.get_size()
 	return (h or 0) >= 1400 and dipinti.densita[2] or dipinti.densita[1]
 end
 
-local function fabbrica(id)
-	return msg.url(nil, "/dipinti/fabbriche", id)
+-- Un PNG di client/dipinti in una texture (sempre la stessa per lo stesso posto:
+-- cambiando mappa si riscrive quella)
+local function carica(self, posto, file)
+	local dati = sys.load_resource("/dipinti/" .. file)
+	if not dati then
+		print("ERROR: manca il dipinto " .. file)
+		return nil
+	end
+	-- decodificare il PNG e caricarlo nella GPU è il lavoro più pesante del
+	-- cambio di mappa: il contatore dei fotogrammi (ui/fotogrammi.lua) lo sa
+	fotogrammi.segna("dipinto")
+	local img = image.load_buffer(dati, { premultiply_alpha = true, flip_vertically = true })
+	local formato = img.type == image.TYPE_RGB and TEX_RGB or TEX_RGBA
+	local p = { type = TEX_2D, format = formato, width = img.width, height = img.height }
+	local percorso = self.texture[posto]
+	if percorso and self.misura[posto] == img.width .. "x" .. img.height .. formato then
+		resource.set_texture(percorso, p, img.buffer)
+	else
+		if percorso then resource.release(percorso) end
+		percorso = resource.create_texture("/dipinti/" .. posto .. self.n .. ".texturec", p, img.buffer)
+		self.n = self.n + 1
+	end
+	self.texture[posto], self.misura[posto] = percorso, img.width .. "x" .. img.height .. formato
+	go.set("#mesh", posto, percorso)
+	return percorso
 end
 
--- I dipinti: self.voluto[tipo] è l'id (della collection factory) che serve ora
--- per "terreno" e "sfondo"; self.stato[id] dice a che punto è: "carica" (in un
--- altro thread), "creato" (collezione creata, aspettiamo le sue texture),
--- "pronto" (self.tex[id] le texture) o "fallito". Quello che non serve più si
--- scarica appena si può: un caricamento non si interrompe, si scarica alla fine.
-
-local applica -- più sotto
-
-local function libera(self, tipo)
-	local ids = {}
-	for id, t in pairs(self.tipo_di) do
-		if t == tipo and id ~= self.voluto[tipo] then ids[#ids + 1] = id end
-	end
-	table.sort(ids)
-	for _, id in ipairs(ids) do
-		local s = self.stato[id]
-		if s == "pronto" or s == "fallito" then
-			if s == "pronto" then collectionfactory.unload(fabbrica(id)) end
-			self.stato[id], self.tex[id], self.tipo_di[id] = nil, nil, nil
+-- lo sfondo dipinto di un girone: le immagini (se non ci sono già) e i numeri delle strisce
+local function metti_sfondo(self, nome)
+	local s = dipinti.sfondi[nome]
+	local d = densita()
+	if self.sfondo ~= nome .. d then
+		for _, piano in ipairs(PIANI) do
+			carica(self, POSTO[piano], "sfondi/" .. nome .. "_" .. piano .. "_" .. d .. ".png")
 		end
+		self.sfondo = nome .. d
 	end
-end
-
--- Chiede un dipinto (tipo "terreno" o "sfondo", id della collection factory): lo
--- carica in un altro thread e crea la sua collezione, che manda le texture
--- (MSG_DIPINTO). applica lo mette sulla mesh quando è pronto.
-local function chiedi(self, tipo, id)
-	self.voluto[tipo] = id
-	local s = self.stato[id]
-	-- uno fallito non si riprova finché serve (riproverebbe all'infinito): si
-	-- riprova solo dopo che libera l'ha tolto, cioè la prossima volta che si chiede
-	if s == nil then
-		self.stato[id], self.tipo_di[id] = "carica", tipo
-		self.per_hash[hash(id)] = id
-		collectionfactory.load(fabbrica(id), function(self, url, ok)
-			if not ok then
-				print("ERROR: dipinto " .. id .. " non caricato")
-				self.stato[id] = "fallito"
-				applica(self)
-			elseif self.voluto[tipo] == id then
-				self.stato[id] = "creato"
-				collectionfactory.create(url)
-			else
-				collectionfactory.unload(url)
-				self.stato[id], self.tipo_di[id] = nil, nil
-			end
-		end)
-	end
-	libera(self, tipo)
-end
-
--- lo sfondo dipinto di un girone e i numeri delle sue strisce
-local function chiedi_sfondo(self, nome)
-	chiedi(self, "sfondo", nome .. "_" .. densita())
-	if self.strisce_di == nome then return end
-	self.strisce_di = nome
 	-- w: quanto è scorsa la striscia (lo aggiorna update, già dentro un giro)
 	self.strisce = {}
-	for _, g in ipairs(dipinti.sfondi[nome].gruppi) do
+	for _, g in ipairs(s.gruppi) do
 		self.strisce[#self.strisce + 1] = { nome = STRISCIA[g.nome], scorre = g.scorre,
 			v = vmath.vector4(g.y0 / 720, g.h / 720, g.quanto, 0) }
 	end
-end
-
-local function pronto(self, tipo)
-	local id = self.voluto[tipo]
-	return id ~= nil and self.stato[id] == "pronto"
-end
-
--- pronto o fallito: non c'è altro da aspettare (se è fallito si vede lo sfondo dello shader)
-local function finito(self, tipo)
-	local id = self.voluto[tipo]
-	return id ~= nil and (self.stato[id] == "pronto" or self.stato[id] == "fallito")
 end
 
 function init(self)
@@ -126,10 +90,7 @@ function init(self)
 	self.opzioni = vmath.vector4(0, 0, 1, 1)
 	-- x = sfondo dipinto, y = crateri che mostrano lo sfondo, z = solo sfondo (terreno.fp)
 	self.stile = vmath.vector4(0, 0, 0, 0)
-	self.voluto, self.stato, self.tex, self.tipo_di, self.per_hash = {}, {}, {}, {}, {}
-	-- lo sfondo della home (e delle mappe dipinte) comincia a caricarsi subito,
-	-- mentre c'è ancora la schermata d'ingresso
-	chiedi_sfondo(self, "forgia")
+	self.texture, self.misura, self.n = {}, {}, 0
 end
 
 function update(self, dt)
@@ -147,51 +108,35 @@ function update(self, dt)
 	end
 end
 
--- lo stile della mappa (stile.x, stile.y) o, dietro la home, solo lo sfondo
--- dipinto, con le texture dei dipinti pronti; quello che non è ancora pronto non
--- si disegna. Quando c'è tutto lo dice a chi ha chiesto (MSG_PRONTO): la GUI tiene
--- chiusa l'iride fino ad allora
-function applica(self)
-	local tutto = true
+-- lo stile della mappa (stile.x, stile.y) o, dietro la home, solo lo sfondo dipinto
+local function applica(self)
 	if self.home then
-		chiedi_sfondo(self, self.home)
-		self.voluto.terreno = nil
-		libera(self, "terreno")
-		tutto = finito(self, "sfondo")
-		self.stile.x, self.stile.y, self.stile.z = pronto(self, "sfondo") and 1 or 0, 0, 1
-	elseif self.sfondo_mappa then
-		chiedi_sfondo(self, self.sfondo_mappa)
-		chiedi(self, "terreno", self.mappa .. "_" .. densita())
-		tutto = finito(self, "sfondo") and finito(self, "terreno")
-		self.stile.x, self.stile.y = pronto(self, "sfondo") and 1 or 0, 1
-		self.stile.z = pronto(self, "terreno") and 0 or 1
-		if pronto(self, "terreno") then go.set("#mesh", "texture0", self.tex[self.voluto.terreno].terreno) end
+		metti_sfondo(self, self.home)
+		self.stile.x, self.stile.y, self.stile.z = 1, 0, 1
 	else
-		-- mappe senza dipinti: il terreno dipinto non serve più
-		self.voluto.terreno = nil
-		libera(self, "terreno")
-		self.stile.x, self.stile.y, self.stile.z = 0, 0, 0
-	end
-	if pronto(self, "sfondo") then
-		local t = self.tex[self.voluto.sfondo]
-		for _, piano in ipairs(PIANI) do go.set("#mesh", POSTO[piano], t[piano]) end
-	end
-	if tutto and self.chi then
-		msg.post(self.chi, MSG_PRONTO, { n = self.chi_n })
-		self.chi = nil
+		if self.sfondo_mappa then metti_sfondo(self, self.sfondo_mappa) end
+		self.stile.x, self.stile.y, self.stile.z = self.sfondo_mappa and 1 or 0, self.sfondo_mappa and 1 or 0, 0
 	end
 end
 
-function on_message(self, message_id, message, sender)
+local function messaggio(self, message_id, message)
 	if message_id == MSG_MASCHERA then
 		go.set("#mesh", "texture2", message.path)
 		local mappa = message.mappa
-		self.mappa, self.sfondo_mappa = mappa, dipinti.mappe[mappa]
-		self.chi, self.chi_n = sender, message.n
+		self.sfondo_mappa = dipinti.mappe[mappa]
 		if self.sfondo_mappa then
+			-- la stessa mappa di prima (si riprova la missione): l'immagine c'è già
+			local file = "mappe/" .. mappa .. "_" .. densita() .. ".png"
+			if self.terreno_file ~= file then
+				carica(self, "texture0", file)
+				self.terreno_file = file
+			else
+				go.set("#mesh", "texture0", self.texture.texture0)
+			end
 			self.opzioni.x = 1
 		else
 			-- mappe senza disegni: restano quelli della mesh, lo shader non li usa
+			self.terreno_file = nil
 			if message.dipinta and self[mappa .. "_terreno"] then
 				go.set("#mesh", "texture0", self[mappa .. "_terreno"])
 				go.set("#mesh", "texture1", self[mappa .. "_interno"])
@@ -202,23 +147,15 @@ function on_message(self, message_id, message, sender)
 	elseif message_id == MSG_HOME then
 		-- sfondo: il girone dietro la home; nil, la home si chiude
 		self.home = message.sfondo
-		if self.home then
-			self.chi, self.chi_n = sender, message.n
-		else
-			-- si chiude la home: la mappa la manda poi "maschera"
-			self.mappa, self.sfondo_mappa = nil, nil
-		end
 		applica(self)
-	elseif message_id == MSG_DIPINTO then
-		-- le texture restano caricate finché non si scarica la fabbrica: l'oggetto non serve più
-		go.delete(sender)
-		local id = self.per_hash[message.nome]
-		if id and self.stato[id] == "creato" then
-			self.stato[id], self.tex[id] = "pronto", message
-			libera(self, self.tipo_di[id])
-			applica(self)
-		end
 	elseif message_id == MSG_SCHERMO then
 		self.opzioni.z, self.opzioni.w = message.kx, message.ky
 	end
+end
+
+-- il lavoro dei messaggi conta nel contatore dei fotogrammi (ui/fotogrammi.lua)
+function on_message(self, message_id, message)
+	local t = fotogrammi.ora()
+	messaggio(self, message_id, message)
+	fotogrammi.lavoro(t)
 end

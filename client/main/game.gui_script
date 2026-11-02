@@ -36,6 +36,7 @@ local oggetti = require "battaglia.oggetti"
 local punteggio = require "battaglia.punteggio"
 local hud = require "battaglia.hud"
 local schermo = require "ui.schermo"
+local fotogrammi = require "ui.fotogrammi"
 -- nel browser senza estensione (build web) basta la WebSocket del browser
 local ws = websocket or (html5 and require "main.ws_browser")
 
@@ -300,18 +301,19 @@ local function mask_params(w, h, x, y)
 	}
 end
 
--- Una richiesta nuova al terreno (mappa o sfondo della home): finché non risponde
--- "terreno_pronto" col suo numero, iride e ingresso restano chiusi (ui/passaggio.lua)
--- e la partita non parte; dopo 5 secondi si va avanti comunque (update)
-local function aspetta_terreno(self)
-	self.terreno_n, self.terreno_t = (self.terreno_n or 0) + 1, 0
-	self.terreno_attesa = self.terreno_n
-	return self.terreno_n
+-- Ridisegna tutta la maschera alla fine dell'update (disegna_terreno):
+-- entrando in una missione la si chiedeva tre volte nello stesso frame, e ogni
+-- volta sono 230 mila celle (docs/prestazioni.md)
+local function draw_terrain(self)
+	self.terreno_in_sospeso = true
 end
 
-local function draw_terrain(self)
+local function disegna_terreno(self)
+	if not self.terreno_in_sospeso then return end
+	self.terreno_in_sospeso = false
 	local data = self.g.terrain.data
-	local buf = buffer.create(TW * TH, MASK_FORMAT)
+	-- lo stesso buffer per ogni mappa: niente 900 KB nuovi da raccogliere
+	local buf = self.mask_buf or buffer.create(TW * TH, MASK_FORMAT)
 	local st = buffer.get_stream(buf, RGBA)
 	-- buffer.create non azzera la memoria: scriviamo ogni cella
 	for i = 1, TW * TH do
@@ -321,17 +323,20 @@ local function draw_terrain(self)
 	end
 	self.mask_stream = st
 	self.mask_buf = buf
+	fotogrammi.segna("maschera")
 	if self.mask_tex then
 		resource.set_texture(self.mask_tex, mask_params(TW, TH), buf)
 	else
 		self.mask_tex = resource.create_texture(MASK_PATH, mask_params(TW, TH), buf)
 	end
 	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = self.g.map,
-		dipinta = PAINTED[self.g.map] == true, n = aspetta_terreno(self) })
+		dipinta = PAINTED[self.g.map] == true })
 end
 
 -- Aggiorna la maschera nel rettangolo dato (coordinate di cella)
 local function redraw_cells(self, cx0, cy0, cx1, cy1)
+	-- tutta la maschera è già da rifare
+	if self.terreno_in_sospeso then return end
 	cx0, cy0 = math.max(0, cx0), math.max(0, cy0)
 	cx1, cy1 = math.min(TW - 1, cx1), math.min(TH - 1, cy1)
 	if cx1 < cx0 or cy1 < cy0 then return end
@@ -459,7 +464,7 @@ local function show_menu(self, senza_velo)
 	end
 	-- dietro la home solo lo sfondo dipinto della Forgia, che scorre piano (Sergio,
 	-- 2 nov): la mesh del terreno lo disegna senza la mappa, il mondo non si vede
-	msg.post("/terreno#script", "home", { sfondo = "forgia", n = aspetta_terreno(self) })
+	msg.post("/terreno#script", "home", { sfondo = "forgia" })
 	gui.set_enabled(self.mondo, false)
 	set_controls_visible(self, false)
 	show_message(self, "", true)
@@ -824,7 +829,7 @@ function CP.ingresso_update(self, dt)
 	menu.ingresso.update(e, dt)
 	self.ingresso_t = self.ingresso_t + dt
 	local t = self.ingresso_t
-	if (self.ingresso_pronto and not self.terreno_attesa and t >= CP.INGRESSO.min) or t >= CP.INGRESSO.max then
+	if (self.ingresso_pronto and t >= CP.INGRESSO.min) or t >= CP.INGRESSO.max then
 		CP.chiudi_ingresso(self)
 	elseif t > 1.5 then
 		-- un'attesa vera: si dice cosa si sta facendo
@@ -857,8 +862,7 @@ function CP.scivola(self, verso, cambia)
 end
 
 function CP.iride(self, cambia)
-	-- sotto l'ingresso non si aspetta: lo copre lui, e lui aspetta il terreno
-	menu.passaggio.iride(self.passaggio, cambia, function() return not self.terreno_attesa or self.ingresso ~= nil end)
+	menu.passaggio.iride(self.passaggio, cambia)
 end
 
 -- Dove sta la mano di chi tira col Rampino, nel disegno (la fune parte da lì)
@@ -3145,22 +3149,12 @@ function init(self)
 	CP.avvio(self)
 end
 
-local MSG_TERRENO_PRONTO = hash("terreno_pronto")
-
-function on_message(self, message_id, message)
-	-- battaglia/terreno.script: i dipinti della mappa o della home sono caricati
-	-- (solo la risposta all'ultima richiesta: una vecchia arriva anche dopo)
-	if message_id == MSG_TERRENO_PRONTO and message.n == self.terreno_attesa then
-		self.terreno_attesa = nil
-		menu.passaggio.sblocca(self.passaggio)
-	end
-end
-
 function final(self)
 	disconnect(self)
 end
 
 function update(self, dt)
+	fotogrammi.inizio()
 	if schermo.aggiorna() then disponi(self) end
 	if self.ingresso then CP.ingresso_update(self, dt) end
 	menu.attesa.update(self.attesa, dt)
@@ -3177,15 +3171,7 @@ function update(self, dt)
 		dt_mondo = 0
 	end
 	self.sc_ox, self.sc_oy = camera.scossa(self.cam, dt)
-	if self.terreno_attesa then
-		self.terreno_t = self.terreno_t + dt
-		if self.terreno_t > 5 then
-			print("ERROR: il terreno non ha risposto in 5 secondi")
-			self.terreno_attesa = nil
-		end
-	end
-	-- finché il terreno dipinto non è caricato la partita aspetta (l'iride è chiusa)
-	if self.mode == "local" and not self.menu_aperto and not self.carta and not self.terreno_attesa then
+	if self.mode == "local" and not self.menu_aperto and not self.carta then
 		self.acc = math.min(self.acc + dt_mondo, 0.25)
 		while self.acc >= game.DT and self.mode == "local" and not self.carta do
 			local input = {
@@ -3308,21 +3294,55 @@ function update(self, dt)
 		menu.scelta.update(self.scelta, dt)
 	end
 
+	disegna_terreno(self)
 	if SIMULA and self.g then
 		-- sx, sy: il centro del robot sullo schermo (dove si appoggia il mouse per mirare)
 		local rb = current_robot(self)
 		-- (stirato su 1280 x 720 come i tocchi: simula.py lo riporta ai pixel veri)
 		local sx, sy = schermo.a_tocco(camera.allo_schermo(self.cam, rb.x, rb.y + game.DISEGNO_H / 2))
-		-- pronto: niente ingresso, niente iride, dipinti caricati (si vede quello che c'è)
-		local pronto = not self.ingresso and not self.terreno_attesa and not menu.passaggio.attivo(self.passaggio)
-		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f pronto=%d",
+		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f",
 			self.mode, self.g.current, self.g.phase, math.floor(rb.x), math.floor(rb.y),
-			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s, pronto and 1 or 0)
+			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s)
 		if line ~= self.simula_line then
 			print(line)
 			self.simula_line = line
 		end
 	end
+	CP.fotogrammi(self, dt)
+end
+
+-- Il contatore dei fotogrammi (ui/fotogrammi.lua, docs/prestazioni.md): una
+-- schermata nuova è una causa possibile di scatto; la riga in alto al centro solo
+-- se è acceso nelle IMPOSTAZIONI. Nel simulatore è sempre acceso, nel log.
+function CP.fotogrammi(self, dt)
+	if self.mode ~= self.fps_modo then
+		if self.fps_modo then fotogrammi.segna("schermata " .. tostring(self.mode)) end
+		self.fps_modo = self.mode
+	end
+	fotogrammi.acceso = profilo.impostazione(self.profilo, "fps") == "acceso"
+	if SIMULA then
+		fotogrammi.log = true
+		self.fps_riassunto = (self.fps_riassunto or 0) + dt
+		if self.fps_riassunto >= 5 then
+			self.fps_riassunto = 0
+			local r = fotogrammi.riassunto()
+			if r then print(r) end
+		end
+	end
+	if fotogrammi.acceso then
+		if not self.fps_testo then
+			self.fps_testo = fit(ui.testo("", 640, 716, 0.6, ui.C.TESTO))
+			gui.set_yanchor(self.fps_testo, gui.ANCHOR_TOP)
+			gui.set_pivot(self.fps_testo, gui.PIVOT_N)
+		end
+		local riga = fotogrammi.testo()
+		if riga then gui.set_text(self.fps_testo, riga) end
+		gui.set_enabled(self.fps_testo, true)
+		gui.move_above(self.fps_testo, nil)
+	elseif self.fps_testo then
+		gui.set_enabled(self.fps_testo, false)
+	end
+	fotogrammi.fine()
 end
 
 -- Un pulsante dell'HUD (un'arma, un oggetto o il teletrasporto) sceglie
@@ -4151,7 +4171,15 @@ function PAD.dito(action_id, action)
 	return false
 end
 
+-- il lavoro di on_input conta anche lui nel contatore dei fotogrammi
 function on_input(self, action_id, action)
+	local t = fotogrammi.ora()
+	local r = CP.on_input(self, action_id, action)
+	fotogrammi.lavoro(t)
+	return r
+end
+
+function CP.on_input(self, action_id, action)
 	-- durante l'ingresso e i passaggi non si tocca niente
 	if self.ingresso or menu.passaggio.attivo(self.passaggio) then return true end
 	local modo, obj = PAD.schermo(self)

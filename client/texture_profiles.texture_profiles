@@ -15,10 +15,6 @@ path_settings {
   profile: "Interfaccia"
 }
 path_settings {
-  path: "/dipinti/**"
-  profile: "Mappa"
-}
-path_settings {
   path: "**"
   profile: "Default"
 }

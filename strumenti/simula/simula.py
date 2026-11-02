@@ -527,10 +527,6 @@ def gioca(exe, out, scenario, video):
     info(f"4. partita: {scenario.relative_to(REPO) if scenario.is_relative_to(REPO) else scenario}")
     g = Gioco(exe, out, video)
     try:
-        # prima si aspetta che il gioco sia pronto (ingresso chiuso, dipinti caricati:
-        # qui si caricano piano), tranne negli scenari che guardano l'ingresso
-        if not re.search(r"^\s*imposta\s+prova_ingresso\b", scenario.read_text(), re.M):
-            aspetta_che(g, lambda: g.stato.get("pronto") == "1", 20, "il gioco pronto (pronto=1)")
         for n, riga in enumerate(scenario.read_text().splitlines(), 1):
             if riga.strip() and not riga.strip().startswith("#"):
                 info(f"   {n}: {riga.strip()}")
@@ -547,6 +543,45 @@ def gioca(exe, out, scenario, video):
     for l in avvisi:
         info(f"avviso: {l}")
     riepilogo(g.foto)
+    fotogrammi(g.log_path, out / "fotogrammi.txt")
+
+
+# Il tetto del lavoro di Lua in un frame solo (docs/prestazioni.md): qui gli
+# script girano come su un PC, e il caso peggiore di oggi (entrare in una
+# missione) ne usa circa 60. Un telefono è 3-5 volte più lento. È tempo vero:
+# il margine è largo perché ffmpeg (il video) ruba la CPU al gioco.
+LUA_MAX = 150
+
+
+def fotogrammi(log, dove):
+    """Il contatore dei fotogrammi (client/ui/fotogrammi.lua): gli scatti e i
+    riassunti ogni 5 secondi, in simulazione/fotogrammi.txt e in una riga qui.
+    Qui disegna la CPU (llvmpipe): i millisecondi non sono quelli di un telefono,
+    ma uno scatto da lavoro di Lua (caricamenti, gc) si vede uguale."""
+    dove.unlink(missing_ok=True)
+    righe = [l[l.index("SIMULA "):] for l in open(log, errors="replace").read().splitlines()
+             if re.search(r"SIMULA (scatto|fotogrammi) ", l)]
+    if not righe:
+        return
+    dove.write_text("\n".join(l.removeprefix("SIMULA ") for l in righe) + "\n")
+    cause = {}
+    peggiore = 0.0
+    troppo = []
+    for l in righe:
+        m = re.match(r"SIMULA scatto ([\d.]+) ms .*lua ([\d.]+) ms\) causa: (.*)", l)
+        if m:
+            ms, lua, causa = float(m.group(1)), float(m.group(2)), m.group(3)
+            if lua > LUA_MAX:
+                troppo.append(f"{lua:.0f} ms ({causa})")
+            n, top = cause.get(causa, (0, 0.0))
+            cause[causa] = (n + 1, max(top, ms))
+            peggiore = max(peggiore, ms)
+    elenco = ", ".join(f"{c} {n} (fino a {top:.0f} ms)" for c, (n, top) in
+                       sorted(cause.items(), key=lambda kv: (-kv[1][0], kv[0])))
+    info(f"fotogrammi: {sum(n for n, _ in cause.values())} scatti" + (f": {elenco}" if elenco else "")
+         + f" (dettagli in {dove.relative_to(REPO)})")
+    if troppo:
+        raise Fallito(f"Lua ha tenuto fermo un frame più di {LUA_MAX} ms: {', '.join(troppo)} (docs/prestazioni.md)")
 
 
 def riepilogo(cartella):
