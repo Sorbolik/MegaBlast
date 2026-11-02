@@ -6,17 +6,19 @@
 
 | specialista | mestiere | campione / soglia | bravura | esami | armi principali | cosa cambia |
 |---|---|---|---|---|---|---|
-| spingitore | uccisioni nel vuoto a partita | 1.35 / 1.36 | 0.541 | 52% 53% 53% 53% | missile 23%, punch 19%, shards 13% | paura di perdere vita ÷1.6, paura di morire ×1.8, voglia di globo 147 (oggi 100), riparo a piedi più che col globo 20 (oggi 3), voglia di casse 58 (oggi 12) |
-| acrobata | globi e Rampino a partita | 9.31 / 9.37 | 0.513 | 46% 52% 50% 51% | punch 21%, mallet 18%, missile 16% | paura di perdere vita ×4.0, voglia di globo 278 (oggi 100), riparo a piedi più che col globo -18 (oggi 3), voglia di buttare nel vuoto ×2.6, gusto per il Mantice ÷1.7, voglia di casse 44 (oggi 12), voglia di casse quando restano pochi colpi 15 (oggi 8) |
-| cecchino | quota del danno fatto da lontano | 0.76 / 0.76 | 0.526 | 47% 52% 49% 49% | shards 23%, missile 19%, sniper 16% | paura di morire ÷6.7, fatica a camminare ÷1.5, voglia di globo 162 (oggi 100), riparo a piedi più che col globo 10 (oggi 3), voglia di casse 18 (oggi 12), voglia di casse quando restano pochi colpi 39 (oggi 8) |
-| picchiatore | quota del danno fatto da vicino | 0.62 / 0.62 | 0.521 | 55% 50% 50% 50% | punch 19%, missile 17%, mallet 17% | paura di perdere vita ÷2.2, paura di morire ×1.6, fatica a camminare ÷1.6, voglia di globo 159 (oggi 100), voglia di uccidere ÷2.0 |
-| sopravvissuto | morti a partita, al contrario | -3.68 / -3.67 | 0.521 | 52% 52% 52% 53% | punch 19%, mallet 18%, lunge 17% | paura di morire ×3.2, voglia di uccidere ÷1.6, gusto per le armi da lontano ÷1.9, voglia di casse 19 (oggi 12), voglia di casse quando restano pochi colpi 13 (oggi 8) |
+| spingitore | uccisioni nel vuoto a partita | 1.36 / 1.36 | 0.542 | 52% 53% 53% 53% 53% | missile 22%, punch 18%, sword 13% | paura di perdere vita ÷1.6, paura di morire ×1.8, voglia di globo 147 (oggi 100), riparo a piedi più che col globo 20 (oggi 3), voglia di casse 58 (oggi 12) |
+| acrobata | globi e Rampino a partita | 9.57 / 9.53 | 0.534 | 46% 52% 50% 51% 50% | punch 23%, missile 19%, sword 16% | paura di perdere vita ×8.3, cura del compagno ×1.8, paura di morire ÷1.7, voglia di globo 253 (oggi 100), riparo a piedi più che col globo -19 (oggi 3), voglia di buttare nel vuoto ×2.2, gusto per le armi da vicino ×1.8, gusto per il Mantice ×2.0, voglia di casse 49 (oggi 12) |
+| cecchino | quota del danno fatto da lontano | 0.76 / 0.76 | 0.525 | 47% 52% 49% 49% 51% | shards 22%, missile 19%, sniper 15% | paura di morire ÷7.1, fatica a camminare ÷2.4, voglia di globo 357 (oggi 100), riparo a piedi più che col globo 10 (oggi 3), voglia di casse quando restano pochi colpi 20 (oggi 8) |
+| picchiatore | quota del danno fatto da vicino | 0.62 / 0.62 | 0.513 | 55% 50% 50% 50% 57% | punch 19%, missile 18%, lunge 18% | paura di perdere vita ÷2.1, cura del compagno ÷2.2, paura di morire ×3.1, fatica a camminare ÷2.4, riparo a piedi più che col globo 13 (oggi 3), voglia di buttare nel vuoto ×1.6, voglia di uccidere ÷2.0, voglia di casse 5 (oggi 12) |
+| sopravvissuto | morti a partita, al contrario | -3.69 / -3.66 | 0.521 | 52% 52% 52% 53% 56% | punch 20%, lunge 19%, mallet 17% | paura di perdere vita ÷5.7, cura del compagno ×2.2, paura di morire ×2.6, fatica a camminare ×2.3, voglia di globo 164 (oggi 100), gusto per le armi da vicino ×2.6, gusto per le armi da lontano ÷2.0, voglia di casse 49 (oggi 12), voglia di casse quando restano pochi colpi 29 (oggi 8) |
 
 ## Scelte prese da sola quando non migliorava
 
 - generazione 20: spingitore: muta di più (forza 0.16), perché 3 esami di fila sotto il suo migliore (53%)
 - generazione 20: picchiatore: muta di più (forza 0.16), perché 3 esami di fila sotto il suo migliore (55%)
 - generazione 20: sopravvissuto: muta di più (forza 0.16), perché 3 esami di fila sotto il suo migliore (53%)
+- generazione 25: acrobata: muta di più (forza 0.16), perché 3 esami di fila sotto il suo migliore (52%)
+- generazione 25: cecchino: muta di più (forza 0.16), perché 3 esami di fila sotto il suo migliore (52%)
 
 ## Generazioni
 
@@ -44,3 +46,8 @@ Per ogni specialista: bravura del campione e mestiere / soglia.
 | 18 | 0.512 | 0.540 (1.36 / 1.36) | 0.514 (9.35 / 9.37) | 0.525 (0.76 / 0.76) | 0.522 (0.62 / 0.62) | 0.506 (-3.74 / -3.68) |
 | 19 | 0.527 | 0.540 (1.36 / 1.36) | 0.523 (9.36 / 9.37) | 0.525 (0.76 / 0.76) | 0.521 (0.62 / 0.62) | 0.510 (-3.66 / -3.67) |
 | 20 | 0.499 | 0.541 (1.35 / 1.36) | 0.513 (9.31 / 9.37) | 0.526 (0.76 / 0.76) | 0.521 (0.62 / 0.62) | 0.521 (-3.68 / -3.67) |
+| 21 | 0.465 | 0.541 (1.35 / 1.36) | 0.508 (9.66 / 9.44) | 0.523 (0.76 / 0.76) | 0.519 (0.62 / 0.62) | 0.507 (-3.64 / -3.66) |
+| 22 | 0.471 | 0.542 (1.35 / 1.36) | 0.516 (9.51 / 9.46) | 0.525 (0.76 / 0.76) | 0.517 (0.63 / 0.62) | 0.534 (-3.68 / -3.66) |
+| 23 | 0.513 | 0.541 (1.35 / 1.36) | 0.529 (9.61 / 9.50) | 0.522 (0.76 / 0.76) | 0.516 (0.62 / 0.62) | 0.528 (-3.69 / -3.66) |
+| 24 | 0.484 | 0.543 (1.35 / 1.36) | 0.534 (9.60 / 9.52) | 0.519 (0.76 / 0.76) | 0.516 (0.62 / 0.62) | 0.527 (-3.71 / -3.66) |
+| 25 | 0.490 | 0.542 (1.36 / 1.36) | 0.534 (9.57 / 9.53) | 0.525 (0.76 / 0.76) | 0.513 (0.62 / 0.62) | 0.521 (-3.69 / -3.66) |
