@@ -582,5 +582,5 @@ Guardati `4_foglio_pezzi.png` e `5_teste_extra.png`.
   Il taglio del collo a script (`senza_collo`) e `--facce` sono tolti: non servono più.
 - **Coda in SVG:** ogni segmento (bordo e colore) ora ha il suo SVG, come gli altri pezzi.
 - **Tre quarti (`6_tre_quarti_1` e `_2`):** in tutte e due il piede a sinistra guarda a destra
-  come l'altro, il resto è come R4. Sceglie Sergio; la scelta va in `scelti/tre_quarti_gamba.png`
-  (R7) e poi si lancia la fase 4.
+  come l'altro, il resto è come R4. Sergio ha scelto la **2**: è `scelti/tre_quarti_gamba.png`
+  (R7). Fase 4 pronta: `esegui WB-009 fase 4`.
