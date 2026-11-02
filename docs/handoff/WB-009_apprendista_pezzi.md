@@ -284,3 +284,13 @@ personaggio con occhiali; la decisione del 2026-11-01 conferma l'apprendista, qu
 non è stato aggiunto alcun accessorio del vecchio diavoletto.
 
 ## Resoconto di Claude
+
+### Fase 1 · scelte di Sergio (2026-11-02)
+
+- **Tre quarti:** `art/WB-009/scelti/tre_quarti.png`, una generazione fatta da Sergio (1024×1536), diversa dalle due consegnate. È R4 della fase 2.
+- **Espressioni:** `art/WB-009/scelti/espressioni.png`, il foglio consegnato (`3_espressioni.png`), tutte e nove; la faccia della mira (5) è quella del foglio, ritagliata a parte in `art/WB-009/scelti/mira.png`. È R5 della fase 2.
+- **Camminata:** difettosa (pose 1 e 3 uguali, 2 e 4 uguali) ma era solo una prova: non si rifà.
+- Colori non esatti della tavolozza (leggere sfumature): li riporta alla tavolozza il ricalco in SVG.
+
+Fase 2 pronta: `esegui WB-009 fase 2`.
+
