@@ -183,7 +183,7 @@ export function file(stato) {
 }
 
 // Le volte degli eventi del file che toccano [da, a) (minuti), come
-// Occorrenze() del server: { id, evento, programmato, tipo, nome, da, a, propria }
+// Occurrences() del server: { id, evento, programmato, tipo, nome, da, a, propria }
 export function volte(f, da, a) {
 	const out = [];
 	for (const e of f.eventi) {

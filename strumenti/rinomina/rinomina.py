@@ -13,16 +13,18 @@ Cosa fa, con i dizionari di questa cartella:
   ("sim.campagna" -> "sim.campaign") in tutti i file di testo del repository;
 - nomi_lua.txt / nomi_go.txt: rinomina i nomi (variabili, funzioni, campi)
   nei file Lua / Go dell'ondata. Le parole nei commenti e nelle stringhe non si
-  toccano, tranne nel Lua una stringa che è esattamente un nome rinominato (per
-  esempio conta = "mancati" che indica il campo st.conta.mancati): quelle le
-  elenca. Nel Go le stringhe restano: sono chiavi JSON e nomi dei flag.
+  toccano, tranne nel Lua le stringhe elencate in stringhe.txt (valori dei dati
+  che sono nomi: conta = "mancati" indica st.conta.mancati): le elenca quando
+  le cambia. Nel Go le stringhe restano: sono chiavi JSON e nomi dei flag.
 
 Nel Lua le variabili locali (e i parametri) si rinominano sempre: valgono
 solo dentro il loro file. Un campo (t.nome, t:nome(), { nome = ... }) invece
 NON si rinomina se compare anche in un file Lua fuori dall'ondata, o come
-stringa fuori dall'ondata, o in chiavi_fisse.txt: vuol dire che lo usa qualcun
+stringa fuori dall'ondata (anche nel Go, che chiama il Lua per nome, e nei
+file Python e JavaScript degli strumenti), o in chiavi_fisse.txt: vuol dire che lo usa qualcun
 altro (il client, il bot, gli strumenti, i dati salvati) e va tradotto
-nell'ondata di chi lo usa. Si ferma se in un file il nome nuovo c'è già.
+nell'ondata di chi lo usa. Se in un file il nome nuovo c'è già si ferma prima
+di scrivere qualsiasi file.
 """
 import argparse
 import re
@@ -59,7 +61,8 @@ def tokens_lua(src):
             continue
         m = re.match(r"\[(=*)\[", src[i:i + 20])
         if m:
-            j = src.find("]" + m.group(1) + "]", i) + len(m.group(1)) + 2
+            j = src.find("]" + m.group(1) + "]", i)
+            j = n if j < 0 else j + len(m.group(1)) + 2
             yield "str", src[i:j]
             i = j
             continue
@@ -96,12 +99,14 @@ def tokens_go(src):
             i = j
             continue
         if src.startswith("/*", i):
-            j = src.find("*/", i) + 2
+            j = src.find("*/", i)
+            j = n if j < 0 else j + 2
             yield "comment", src[i:j]
             i = j
             continue
         if c == "`":
-            j = src.find("`", i + 1) + 1
+            j = src.find("`", i + 1)
+            j = n if j < 0 else j + 1
             yield "str", src[i:j]
             i = j
             continue
@@ -188,7 +193,7 @@ def stringa(t):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dentro", nargs="+", default=["client/sim", "server", "tests/sim_test.lua",
-                    "tests/campagna_test.lua", "tests/eventi_test.lua", "tests/assetto_test.lua"],
+                    "tests/campaign_test.lua", "tests/events_test.lua", "tests/loadout_test.lua"],
                     help="file e cartelle dell'ondata")
     ap.add_argument("--fuori", nargs="*", default=["client/sim/bot.lua", "client/sim/rete.lua",
                     "client/sim/corpo.lua"], help="file da lasciare fuori dall'ondata")
@@ -203,6 +208,16 @@ def main():
     # chi usa i nomi fuori dall'ondata: lì non si rinominano
     usati_fuori, stringhe_fuori = set(), set()
     for f in files:
+        if f.endswith(".go"):
+            # il Go chiama il Lua per nome: eng.call("draft_new"), RawGetString("team")
+            for k, t in tokens_go((REPO / f).read_text(errors="replace")):
+                if k == "str" and stringa(t):
+                    stringhe_fuori.add(stringa(t))
+            continue
+        if f.endswith((".py", ".js", ".mjs")):
+            # strumenti che leggono i dati del Lua (cap.missioni, l.arena)
+            stringhe_fuori.update(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", (REPO / f).read_text(errors="replace")))
+            continue
         if f in ondata or not f.endswith(LUA):
             continue
         for k, t in tokens_lua((REPO / f).read_text(errors="replace")):
@@ -215,8 +230,10 @@ def main():
     for n in tenuti:
         print(f"campo tenuto (usato fuori dall'ondata): {n}")
     campi = {".lua": {k: v for k, v in nomi[".lua"].items() if k not in tenuti}, ".go": nomi[".go"]}
+    # stringhe Lua da rinominare: solo quelle elencate (valori dei dati che sono nomi di campi)
+    stringhe = {k: v for k, v in nomi[".lua"].items() if k in set(leggi_dizionario_lista("stringhe.txt"))}
 
-    errori, cambiati = [], 0
+    errori, cambiati, da_scrivere = [], 0, []
     for f in ondata:
         ext = ".go" if f.endswith(".go") else ".lua" if f.endswith(LUA) else None
         if not ext or not nomi[ext]:
@@ -235,18 +252,23 @@ def main():
         for i, (k, t) in enumerate(toks):
             if k == "name" and t in tutti and (ext == ".go" or not campo[i] or t in d):
                 t = tutti[t]
-            elif k == "str" and ext == ".lua" and stringa(t) in d:
-                print(f"{f}: stringa {t} -> \"{d[stringa(t)]}\"")
-                t = t[0] + d[stringa(t)] + t[-1]
+            elif k == "str" and ext == ".lua" and stringa(t) in stringhe:
+                print(f"{f}: stringa {t} -> \"{stringhe[stringa(t)]}\"")
+                t = t[0] + stringhe[stringa(t)] + t[-1]
             out.append(t)
         nuovo_src = "".join(out)
         if nuovo_src != src:
             cambiati += 1
-            if not a.prova:
-                (REPO / f).write_text(nuovo_src)
+            da_scrivere.append((f, nuovo_src))
+            if a.prova:
+                print(f"cambierebbe {f}")
     if errori:
         print("\n".join(errori))
         sys.exit(1)
+    # si scrive solo se nessun file ha dato errore: mai un ramo rinominato a metà
+    if not a.prova:
+        for f, nuovo_src in da_scrivere:
+            (REPO / f).write_text(nuovo_src)
 
     # file spostati: git mv e percorsi in tutti i file di testo
     if sposta:
@@ -270,7 +292,9 @@ def main():
                 nuovo_src = re.sub(r"(?<![A-Za-z0-9_])" + re.escape(v) + r"(?![A-Za-z0-9_])", n, nuovo_src)
             if nuovo_src != src:
                 cambiati += 1
-                if not a.prova:
+                if a.prova:
+                    print(f"cambierebbe {f} (percorsi)")
+                else:
                     p.write_text(nuovo_src)
         for vecchio, nuovo in sposta.items():
             if not (REPO / vecchio).exists():
