@@ -1,8 +1,8 @@
 -- Gli eventi nel gioco (client/main/eventi.lua): cosa è in corso, cosa conta
 -- per quale coda, le righe della home e della bacheca. Il calendario vero lo
--- prova go test ./server/ (eventi_test.go).
+-- prova go test ./server/ (events_test.go).
 --
---   luajit tests/eventi_test.lua
+--   luajit tests/events_test.lua
 
 package.path = "client/?.lua;" .. package.path
 local eventi = require "main.eventi"

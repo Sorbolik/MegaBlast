@@ -25,13 +25,13 @@ import (
 // I client girano nello stesso processo e rubano CPU al server: i numeri
 // sono quindi peggiori di quelli di un server da solo.
 var (
-	caricoStanze = flag.Int("carico", 0, "partite contemporanee della prova di carico (0 = salta)")
-	caricoDurata = flag.Duration("durata", 15*time.Second, "durata della prova di carico")
-	caricoModo   = flag.String("modo", "1v1", "modalità delle partite della prova di carico")
+	loadRooms = flag.Int("carico", 0, "partite contemporanee della prova di carico (0 = salta)")
+	loadDuration = flag.Duration("durata", 15*time.Second, "durata della prova di carico")
+	loadMode   = flag.String("modo", "1v1", "modalità delle partite della prova di carico")
 )
 
-func TestCarico(t *testing.T) {
-	if *caricoStanze == 0 {
+func TestLoad(t *testing.T) {
+	if *loadRooms == 0 {
 		t.Skip("prova di carico: -carico N")
 	}
 	cfg := DefaultConfig()
@@ -40,7 +40,7 @@ func TestCarico(t *testing.T) {
 	hs := httptest.NewServer(srv.Handler())
 	defer hs.Close()
 	url := "ws" + strings.TrimPrefix(hs.URL, "http") + "/ws"
-	ctx, cancel := context.WithTimeout(context.Background(), *caricoDurata+2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), *loadDuration+2*time.Minute)
 	defer cancel()
 
 	var before runtime.MemStats
@@ -50,7 +50,7 @@ func TestCarico(t *testing.T) {
 	start := time.Now()
 	var wg sync.WaitGroup
 	stop := make(chan struct{})
-	for i := 0; i < *caricoStanze*modes[*caricoModo].Players; i++ {
+	for i := 0; i < *loadRooms*modes[*loadMode].Players; i++ {
 		wg.Add(1)
 		go func(seed int64) {
 			defer wg.Done()
@@ -60,7 +60,7 @@ func TestCarico(t *testing.T) {
 			time.Sleep(20 * time.Millisecond) // i giocatori arrivano un po' alla volta
 		}
 	}
-	for srv.sched.Rooms() < *caricoStanze && time.Since(start) < time.Minute {
+	for srv.sched.Rooms() < *loadRooms && time.Since(start) < time.Minute {
 		time.Sleep(50 * time.Millisecond)
 	}
 	t.Logf("%d stanze pronte in %v", srv.sched.Rooms(), time.Since(start).Round(time.Millisecond))
@@ -73,7 +73,7 @@ func TestCarico(t *testing.T) {
 	lateBefore := srv.sched.Late()
 	var sum, top float64
 	n := 0
-	end := time.Now().Add(*caricoDurata)
+	end := time.Now().Add(*loadDuration)
 	for time.Now().Before(end) {
 		time.Sleep(100 * time.Millisecond)
 		l := srv.sched.Load()
@@ -84,7 +84,7 @@ func TestCarico(t *testing.T) {
 	var after runtime.MemStats
 	runtime.ReadMemStats(&after)
 	rooms := srv.sched.Rooms()
-	ticks := float64(caricoDurata.Seconds()) * tickRate
+	ticks := float64(loadDuration.Seconds()) * tickRate
 	t.Logf("stanze %d, worker %d, carico medio %.0f%% (picco %.0f%%), tick in ritardo %.1f%%, memoria %d MB (%.1f MB a stanza)",
 		rooms, srv.cfg.Workers, sum/float64(n)*100, top*100,
 		float64(srv.sched.Late()-lateBefore)/(ticks*float64(srv.cfg.Workers))*100,
@@ -105,7 +105,7 @@ func bot(ctx context.Context, url string, seed int64, stop chan struct{}) {
 		return
 	}
 	defer conn.CloseNow()
-	conn.Write(ctx, websocket.MessageText, fmt.Appendf(nil, `{"t":"hello","v":8,"mode":%q}`, *caricoModo))
+	conn.Write(ctx, websocket.MessageText, fmt.Appendf(nil, `{"t":"hello","v":8,"mode":%q}`, *loadMode))
 	go func() {
 		for {
 			if _, _, err := conn.Read(ctx); err != nil {

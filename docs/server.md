@@ -23,7 +23,7 @@ connessione (goroutine) ──hello──► Lobby (una coda per modalità)
 - **Uno stato Lua per stanza** (`sim.go`): il codice Lua si compila una volta
   per processo e gli stati lo condividono. Tutti i moduli di `client/sim/` si
   caricano da soli: chi ne aggiunge uno non tocca il server.
-- **Terreno in Go** (`terreno.go`): le celle stanno in un `[]byte` invece che in
+- **Terreno in Go** (`terrain.go`): le celle stanno in un `[]byte` invece che in
   una tabella Lua da 230.400 valori, e le funzioni che leggono o scrivono le
   celle (collisioni, scavi) girano in Go. Le mappe fisse si disegnano una volta
   per processo e ogni partita copia le celle. Il resto di `terrain.lua` resta
@@ -85,14 +85,14 @@ con l'ETag) e nella domanda dice quale versione ha preso e, se l'ha rifiutata,
 perché, così il pannello lo mostra. Oppure da un file JSON
 (`go run ./server -eventi eventi.json`) che il server rilegge da solo quando
 cambia. In tutti e due i casi un calendario sbagliato non sostituisce quello
-buono e l'errore va nel log (`server/eventi.go`, formato nel commento in cima). Un evento ha `id`, `tipo`
+buono e l'errore va nel log (`server/events.go`, formato nel commento in cima). Un evento ha `id`, `tipo`
 (`mod` = modificatore con la coda sua, `torneo`, `sfida`, `xp` = su una coda
 normale, `coda`, di base `2v2`), `nome`, `riga`, `da` e `a` (ora di Roma,
 `"2026-11-02 10:00"`), `ogni` (settimane fra una volta e l'altra, 0 = una
 volta), `fino` (l'ultimo giorno in cui può ricominciare, vuoto = per sempre),
 per i modificatori `modo` (le squadre) e `regole`, e `premi`/`obiettivo` che il
 server passa al gioco così come sono. Le **regole** sono solo valori di una
-lista bianca (`client/sim/regole.lua`: `casse`, `cure`, `livello`, `armi`,
+lista bianca (`client/sim/rules.lua`: `casse`, `cure`, `livello`, `armi`,
 `punti`, `tetto`; su una coda normale solo `tetto`, il tetto ai livelli dei
 pezzi, che non cambia la partita e conta quando online arrivano gli assetti): il server le controlla col Lua quando legge il file, le usa per la
 scelta delle armi e per la partita, e le manda nello `start` perché il client

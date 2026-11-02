@@ -18,10 +18,10 @@ local M = {}
 -- Fendente: 70 fotogrammi a 75 al secondo.
 -- Dal fotogramma 0 al 30 la lama sale sopra la testa e va dietro la schiena,
 -- dal 30 al 34 cala in avanti (un quinto di secondo dietro, un ventesimo per scendere).
-M.fendente = {
+M.slash = {
 	fps = 75,
 	apri = 20, chiudi = 60, scossa = 37,
-	mezza_larghezza = 0.5,     -- il rettangolo è largo 1
+	half_width = 0.5,     -- il rettangolo è largo 1
 	pose = {
 		{ -0.58, 1.97, -0.21, -0.89, 5.79, -0.89, 0.0 }, -- 0
 		{ -0.59, 1.96, -0.04, -0.81, 5.83, -2.06, -12.0 }, -- 1
@@ -100,11 +100,11 @@ M.fendente = {
 -- Montante: 95 fotogrammi a 45 al secondo.
 -- Il pugno parte dal basso davanti e sale fino in alto; poi resta su mentre il
 -- robot si solleva, e torna giù alla fine.
-M.montante = {
+M.uppercut = {
 	fps = 45,
 	apri = 5, chiudi = 20, scossa = 10,
 	salto = 10,                -- fotogramma in cui chi colpisce fa il saltello
-	mezza_larghezza = 1.5,     -- il rettangolo è largo 3
+	half_width = 1.5,     -- il rettangolo è largo 3
 	pose = {
 		{ -0.58, 1.97, 0.50, -0.69, 4.00, -0.69, 0.0 }, -- 0
 		{ -0.56, 1.96, 0.43, -0.73, 3.91, -1.04, -5.1 }, -- 1

@@ -4,7 +4,7 @@ package.path = "client/?.lua;" .. package.path
 
 local game = require "sim.game"
 local config = require "sim.config"
-local mischia = require "sim.mischia"
+local melee = require "sim.melee"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
 
@@ -318,7 +318,7 @@ local function sword_game()
 	return q, y
 end
 
-local SWORD_TICKS = game.melee_ticks(mischia.fendente)
+local SWORD_TICKS = game.melee_ticks(melee.slash)
 local sw, swy = sword_game()
 place(sw.robots[1], 640, swy)
 place(sw.robots[2], 640 - 25, swy)  -- dietro (il robot 1 guarda a destra)
@@ -386,8 +386,8 @@ do
 	local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
 
 	-- Soglie dei globi: entro 9 s due, entro 17 s uno, dopo niente, mai tre
-	check(game.globi_per(0) == 2 and game.globi_per(9 * 60) == 2 and game.globi_per(9 * 60 + 1) == 1
-		and game.globi_per(17 * 60) == 1 and game.globi_per(17 * 60 + 1) == 0, "soglie dei globi 9 s e 17 s")
+	check(game.orbs_for(0) == 2 and game.orbs_for(9 * 60) == 2 and game.orbs_for(9 * 60 + 1) == 1
+		and game.orbs_for(17 * 60) == 1 and game.orbs_for(17 * 60 + 1) == 0, "soglie dei globi 9 s e 17 s")
 
 	-- Primo attacco dopo 12 s: un teletrasporto
 	local at = game.new(42, "forgia")
@@ -1028,14 +1028,14 @@ do
 	place(fa, 500, 400)
 	place(fb, 500 + config.HOOK.range - 30, 400)
 	ev = hook(far, 0, function() fa.y, fa.vy, fb.y, fb.vy = 400, 0, 400, 0 end)
-	local fine
+	local end_of
 	for _ = 1, 120 do
 		fa.y, fa.vy = 400, 0
 		far:step()
-		for _, e in ipairs(far:pop_events()) do if e.type == "hook_end" then fine = e end end
-		if fine then break end
+		for _, e in ipairs(far:pop_events()) do if e.type == "hook_end" then end_of = e end end
+		if end_of then break end
 	end
-	check(ev and ev.target == 2 and fine and fine.snap and fb.x - fa.x > 100,
+	check(ev and ev.target == 2 and end_of and end_of.snap and fb.x - fa.x > 100,
 		"da lontano la fune finisce a metà strada e si spezza (snap)")
 
 	-- Mantice (secondaria): soffia via chi ha davanti, poco danno, mai effetti
@@ -1159,7 +1159,7 @@ do
 		"a terra colpisce davanti e rimbalza in alto")
 	check(#hits == 1 or not hits[2].bounce, "una volta sola per colpo")
 	-- l'arco gira con la mira: chi sta dietro, sotto i piedi, lo prende solo mirando in basso
-	for _, prova in ipairs({ { 0, false }, { math.rad(-70), true } }) do
+	for _, try_it in ipairs({ { 0, false }, { math.rad(-70), true } }) do
 		local gd = game.new(42, "forgia", { secondary = "mallet" })
 		run(gd, 60)
 		local da, db = gd.robots[1], gd.robots[2]
@@ -1167,9 +1167,9 @@ do
 		place(da, px, py)
 		local q, d = math.rad(-150), config.MALLET.reach * 0.8
 		place(db, px + math.cos(q) * d, py + game.SWORD_PIVOT_Y + math.sin(q) * d - game.HURT_Y)
-		hits = mallet(gd, prova[1])
-		check((#hits > 0 and hits[1].target == 2) == prova[2],
-			prova[2] and "mirando in basso il Maglio prende chi sta dietro sotto i piedi" or "mirando dritto no")
+		hits = mallet(gd, try_it[1])
+		check((#hits > 0 and hits[1].target == 2) == try_it[2],
+			try_it[2] and "mirando in basso il Maglio prende chi sta dietro sotto i piedi" or "mirando dritto no")
 	end
 	check(not g4:can_use("sword") and g4:can_use("missile"), "Maglio e Lama sono tutte e due secondarie")
 
@@ -1357,18 +1357,18 @@ do
 	-- la Lama su un nemico ridà un colpo della secondaria, fino al massimo; su un compagno no
 	r1.ammo[s2] = 0
 	check(not game.has_weapon(r1, s2) and game.has_weapon(r1, "sword"), "finiti i colpi resta la Lama")
-	local nemico, compagno
+	local nemico, teammate
 	for _, rb in ipairs(eg.robots) do
-		if rb.team ~= r1.team then nemico = nemico or rb elseif rb ~= r1 then compagno = rb end
+		if rb.team ~= r1.team then nemico = nemico or rb elseif rb ~= r1 then teammate = rb end
 	end
 	eg:pop_events()
-	eg:sword_hit(r1, compagno)
+	eg:sword_hit(r1, teammate)
 	check(r1.ammo[s2] == 0, "la Lama sul compagno non ricarica")
 	eg:sword_hit(r1, nemico)
 	local ev = eg:pop_events()
-	local ricarica = false
-	for _, e in ipairs(ev) do if e.type == "recharge" and e.robot == r1.id and e.weapon == s2 then ricarica = true end end
-	check(r1.ammo[s2] == 1 and ricarica and game.has_weapon(r1, s2), "la Lama sul nemico ridà un colpo")
+	local recharge = false
+	for _, e in ipairs(ev) do if e.type == "recharge" and e.robot == r1.id and e.weapon == s2 then recharge = true end end
+	check(r1.ammo[s2] == 1 and recharge and game.has_weapon(r1, s2), "la Lama sul nemico ridà un colpo")
 	for _ = 1, 5 do eg:sword_hit(r1, nemico) end
 	check(r1.ammo[s2] == config.SECONDARY_SHOTS.max, "mai oltre il massimo")
 
@@ -1544,15 +1544,15 @@ do
 	check(gc.robots[1].kills == 1 and gc.robots[1].points == (hp3 + config.SCORE.kill) * config.SCORE.leader + config.SCORE.crown,
 		"abbattere il primo vale anche la Corona (" .. gc.robots[1].points .. ")")
 	-- ogni punto è anche un evento "points" (il numero che vola nell'interfaccia)
-	local somma, motivi = { 0, 0, 0, 0 }, {}
+	local sum, reasons = { 0, 0, 0, 0 }, {}
 	for _, e in ipairs(gc:pop_events()) do
 		if e.type == "points" then
-			somma[e.robot] = somma[e.robot] + e.amount
-			motivi[e.reason] = e.other
+			sum[e.robot] = sum[e.robot] + e.amount
+			reasons[e.reason] = e.other
 		end
 	end
-	check(somma[1] == gc.robots[1].points and somma[3] == config.SCORE.death and motivi.damage == 3
-		and motivi.kill == 3 and motivi.death == 1, "gli eventi points sommano i punti, col motivo e l'altro robot")
+	check(sum[1] == gc.robots[1].points and sum[3] == config.SCORE.death and reasons.damage == 3
+		and reasons.kill == 3 and reasons.death == 1, "gli eventi points sommano i punti, col motivo e l'altro robot")
 
 	-- Rampino e trampolino: chi sposta un nemico senza danno prende l'uccisione se cade
 	local gk = game.new(3, "forgia")
@@ -1636,18 +1636,18 @@ do
 	end
 	check(ot.current == 2 and ot.phase == "aim" and not ot.final_round, "si finisce il giro: gioca anche il secondo")
 	ot:pop_events()
-	local annuncio = false
+	local announcement = false
 	for _ = 1, 4000 do
 		ot:step()
 		for _, e in ipairs(ot:pop_events()) do
-			if e.type == "final_round" then annuncio = true end
+			if e.type == "final_round" then announcement = true end
 		end
 		if ot.current == 1 or ot.phase == "over" then break end
 	end
-	check(ot.final_round and annuncio and ot.current == 1 and ot.phase == "aim", "poi comincia l'ultimo giro, con l'evento")
-	local prima = ot.robots[1].points
+	check(ot.final_round and announcement and ot.current == 1 and ot.phase == "aim", "poi comincia l'ultimo giro, con l'evento")
+	local first_one = ot.robots[1].points
 	ot:add_points(ot.robots[1], 10, "damage", ot.robots[2])
-	check(ot.robots[1].points == prima + 10 * config.SCORE.final_round, "nell'ultimo giro i punti valgono doppio")
+	check(ot.robots[1].points == first_one + 10 * config.SCORE.final_round, "nell'ultimo giro i punti valgono doppio")
 	for _ = 1, 8000 do
 		ot:step()
 		if ot.phase == "over" then break end
@@ -1662,16 +1662,16 @@ do
 	local pc = game.new(42, "forgia", { players = config.MODES["2v2"] })
 	check(pc.ahead == 1 and pc.ahead_base == 0, "il primo turno apre una coppia")
 	pc.robots[1].points = 40
-	local function prossimo(g)
+	local function next_one(g)
 		local c = g.current
 		for _ = 1, 4000 do
 			g:step()
 			if g.current ~= c or g.phase == "over" then break end
 		end
 	end
-	prossimo(pc)
+	next_one(pc)
 	check(pc.current == 2 and pc.ahead == 1 and pc.ahead_base == 0, "mentre risponde l'altra squadra i punti restano in attesa")
-	prossimo(pc)
+	next_one(pc)
 	check(pc.current == 3 and pc.ahead == 1 and pc.ahead_base == 40, "chiusa la coppia, i punti entrano")
 	local ffa = game.new(42, "forgia", { players = config.MODES.ffa })
 	check(ffa.ahead == 0, "con più di due squadre niente coppie")
@@ -1793,7 +1793,7 @@ local function punch_game(dx)
 	q.robots[1].ammo.punch = 1
 	q:step({ fire = { angle = 0, power = 1, weapon = "punch" } })
 	local hit
-	for _ = 1, game.melee_ticks(mischia.montante) do
+	for _ = 1, game.melee_ticks(melee.uppercut) do
 		q:step()
 		for _, e in ipairs(q:pop_events()) do
 			if e.type == "punch_hit" then hit = { vx = q.robots[2].vx, vy = q.robots[2].vy } end
@@ -1978,7 +1978,7 @@ local function melee_at(deg, tx, ty, weapon)
 	end
 	return false, q
 end
-local close = math.ceil(mischia.fendente.chiudi * 60 / mischia.fendente.fps)
+local close = math.ceil(melee.slash.chiudi * 60 / melee.slash.fps)
 check(melee_at(0, 5, 0) == close, "il fendente colpisce quando si chiude la finestra (0,8 s)")
 check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "mirando dritto prende anche dietro e sopra la testa")
 check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "mirando in basso la lama scende davanti in basso")
@@ -2246,15 +2246,15 @@ do
 	-- chi esce online sparisce: niente punti, niente rinascita, il turno passa
 	local g = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
 	g:pop_events()
-	local punti = g.robots[2].points
+	local point_total = g.robots[2].points
 	g:remove(1)
 	local ev = g:pop_events()
-	local tipi = {}
-	for _, e in ipairs(ev) do tipi[#tipi + 1] = e.type end
+	local kinds = {}
+	for _, e in ipairs(ev) do kinds[#kinds + 1] = e.type end
 	check(g.robots[1].gone and g.robots[1].dead and g.current == 2, "esce chi è di turno: il turno passa al 2")
-	check(table.concat(g.order, " ") == "2 3 4" and table.concat(tipi, " "):find("gone") and not table.concat(tipi, " "):find("death"),
+	check(table.concat(g.order, " ") == "2 3 4" and table.concat(kinds, " "):find("gone") and not table.concat(kinds, " "):find("death"),
 		"esce: fuori dall'ordine, evento gone e nessuna morte")
-	check(g.robots[2].points == punti, "esce: nessun punto a nessuno")
+	check(g.robots[2].points == point_total, "esce: nessun punto a nessuno")
 	g:remove(3)
 	g:end_turn()
 	check(g.current == 4, "dopo il 2 tocca al 4 (il 3 è uscito)")
@@ -2269,35 +2269,35 @@ do
 	local g = game.new(42, "forgia")
 	g:step({ fire = { weapon = "missile", angle = 1.2, power = 0.8 } })
 	while g.phase == "aim" do g:step() end
-	local prima, t = g.match_left, 0
+	local first_one, t = g.match_left, 0
 	while g.phase == "settle" do
 		g:step()
 		t = t + 1
 	end
-	check(t > 1 and g.match_left == prima, "il tempo della partita è fermo fra un turno e l'altro")
+	check(t > 1 and g.match_left == first_one, "il tempo della partita è fermo fra un turno e l'altro")
 end
 
--- regole come dati (sim/regole.lua): la lista bianca e cosa arriva a game.new e alla scelta
+-- regole come dati (sim/rules.lua): la lista bianca e cosa arriva a game.new e alla scelta
 do
-	local regole = require "sim.regole"
+	local rules = require "sim.rules"
 	local draft = require "sim.draft"
-	check(regole.valida({ casse = 2, cure = false, livello = "fisso", armi = { "punch", "mallet" }, punti = { kill = 80 } }),
+	check(rules.valida({ casse = 2, cure = false, livello = "fisso", armi = { "punch", "mallet" }, punti = { kill = 80 } }),
 		"regole: una regola giusta passa")
-	for _, r in ipairs({ { vento = 3 }, { casse = 0 }, { casse = 2.5 }, { armi = { "punch" } }, { armi = { "laser", "mallet" } },
+	for _, r in ipairs({ { wind = 3 }, { casse = 0 }, { casse = 2.5 }, { armi = { "punch" } }, { armi = { "laser", "mallet" } },
 		{ punti = { volo = 3 } }, { punti = { kill = 5000 } }, { livello = "alto" }, { cure = "no" } }) do
 		local k = next(r)
-		check(not regole.valida(r), "regole: rifiutata " .. k)
+		check(not rules.valida(r), "regole: rifiutata " .. k)
 	end
-	check(regole.valida({ tetto = 15 }, true) and not regole.valida({ tetto = 30 }) and not regole.valida({ tetto = 0 }),
+	check(rules.valida({ tetto = 15 }, true) and not rules.valida({ tetto = 30 }) and not rules.valida({ tetto = 0 }),
 		"regole: il tetto ai livelli va da 1 a sotto il massimo")
-	check(not regole.valida({ casse = 2 }, true), "regole: su una coda normale solo il tetto")
-	local opts = regole.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
+	check(not rules.valida({ casse = 2 }, true), "regole: su una coda normale solo il tetto")
+	local opts = rules.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
 	local g = game.new(7, "forgia", opts)
 	check(g.crate_every == 2 and not g.heals_on and g.score.kill == 80 and g.score.damage == config.SCORE.damage,
 		"regole: casse, cure e punti arrivano alla partita")
-	local d = draft.new(7, config.MODES["2v2"], regole.armi({ armi = { "punch", "mallet", "eagle" } }))
+	local d = draft.new(7, config.MODES["2v2"], rules.armi({ armi = { "punch", "mallet", "eagle" } }))
 	check(#d.offer == 1 and d.offer[1] == "punch" and #d.offer2 == 2, "regole: la scelta offre solo le armi dell'evento")
-	check(regole.armi({ casse = 2 }) == nil, "regole: senza armi la scelta resta quella di sempre")
+	check(rules.armi({ casse = 2 }) == nil, "regole: senza armi la scelta resta quella di sempre")
 end
 
 if failures > 0 then

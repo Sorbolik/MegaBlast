@@ -22,23 +22,23 @@ local M = {}
 
 M.VERSIONE = 1
 -- ogni quanti tick si prende l'impronta (10 s)
-M.OGNI = 600
+M.EVERY = 600
 
-local function copia(t)
+local function copy(t)
 	if type(t) ~= "table" then return t end
 	local o = {}
-	for k, v in pairs(t) do o[k] = copia(v) end
+	for k, v in pairs(t) do o[k] = copy(v) end
 	return o
 end
 
-function M.nuova(seme, mappa, opts)
-	return { versione = M.VERSIONE, seme = seme, mappa = mappa,
-		opzioni = copia(opts or {}), input = {}, impronte = {} }
+function M.nuova(seed_value, map_name, opts)
+	return { versione = M.VERSIONE, seme = seed_value, mappa = map_name,
+		opzioni = copy(opts or {}), input = {}, impronte = {} }
 end
 
 -- La partita e i bot della ricetta, all'inizio
 function M.partita(r)
-	local g = game.new(r.seme, r.mappa, copia(r.opzioni))
+	local g = game.new(r.seme, r.mappa, copy(r.opzioni))
 	-- durata: la partita accorciata a mano (negli scenari, prova_durata)
 	if r.durata then g.match_left = r.durata end
 	local bots = {}
@@ -49,31 +49,31 @@ function M.partita(r)
 	return g, bots
 end
 
-local function uguali(a, b)
+local function same_input(a, b)
 	return (a.left or false) == (b.left or false) and (a.right or false) == (b.right or false)
 		and (a.jump or false) == (b.jump or false) and a.hold == b.hold
 end
 
 -- L'input del tick: del bot se tocca a un bot, altrimenti quello del
 -- giocatore, che si scrive nella ricetta (solo i cambiamenti e i colpi)
-function M.input(r, g, bots, umano)
+function M.input(r, g, bots, human)
 	local b = bots[g.current]
 	if b then return bot.input(b, g) end
-	umano = umano or {}
-	local prima = r.ultimo or {}
-	if umano.fire or not uguali(umano, prima) then
-		local f = umano.fire
-		r.input[#r.input + 1] = { t = g.tick + 1, l = umano.left or false, r = umano.right or false,
-			j = umano.jump or false, h = umano.hold,
+	human = human or {}
+	local first_one = r.ultimo or {}
+	if human.fire or not same_input(human, first_one) then
+		local f = human.fire
+		r.input[#r.input + 1] = { t = g.tick + 1, l = human.left or false, r = human.right or false,
+			j = human.jump or false, h = human.hold,
 			f = f and { w = f.weapon, a = f.angle, p = f.power } or nil }
 	end
-	r.ultimo = umano
-	return umano
+	r.ultimo = human
+	return human
 end
 
 -- Dopo g:step: l'impronta, ogni OGNI tick e alla fine
 function M.dopo(r, g)
-	if g.tick % M.OGNI == 0 or g.phase == "over" then
+	if g.tick % M.EVERY == 0 or g.phase == "over" then
 		r.impronte[#r.impronte + 1] = { t = g.tick, h = g:impronta() }
 	end
 end
@@ -107,17 +107,17 @@ function M.verifica(r, max_tick)
 	local g, bots = M.partita(r)
 	local l = M.lettore(r)
 	local n = 1
-	local attese = r.impronte
-	max_tick = max_tick or (attese[#attese] and attese[#attese].t) or 0
+	local waits = r.impronte
+	max_tick = max_tick or (waits[#waits] and waits[#waits].t) or 0
 	while g.phase ~= "over" and g.tick < max_tick do
 		g:step(M.rileggi(l, g, bots))
-		local a = attese[n]
+		local a = waits[n]
 		if a and a.t == g.tick then
 			if a.h ~= g:impronta() then return false, g.tick end
 			n = n + 1
 		end
 	end
-	if attese[n] then return false, attese[n].t end
+	if waits[n] then return false, waits[n].t end
 	return true
 end
 

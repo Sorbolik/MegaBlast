@@ -8,7 +8,7 @@
 -- 2. nodi misti: statistiche (salto, velocità, vita) e riserve (teletrasporti, paracadute);
 -- 3. differenza che si sente ma si colma con la strategia: con tutti i punti
 --    nessuna statistica sale più del 10% (c'è un test);
--- 4. ricostruzione gratuita fuori dalla partita (sim/assetto.lua tiene i 3 assetti).
+-- 4. ricostruzione gratuita fuori dalla partita (sim/loadout.lua tiene i 3 assetti).
 --
 --
 -- Un albero scelto è una tabella { [id del nodo] = gradi presi }.
@@ -127,7 +127,7 @@ function M.valid(tree, points)
 end
 
 -- aggiunge alla lista mods gli effetti dell'albero, un gruppo per grado
--- (la applica sim/assetto.lua)
+-- (la applica sim/loadout.lua)
 function M.mods(tree, mods)
 	for _, node in ipairs(M.NODES) do
 		for _ = 1, tree[node.id] or 0 do mods[#mods + 1] = node.effects end

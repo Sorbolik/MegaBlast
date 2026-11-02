@@ -1,15 +1,15 @@
--- Test della campagna (sim/campagna.lua, sim/missioni.lua): ogni lezione si
+-- Test della campagna (sim/campaign.lua, sim/missions.lua): ogni lezione si
 -- risolve davvero con la sua meccanica, e senza no; ogni missione parte pulita.
 -- Quanto sono difficili i gironi lo misura il collaudo coi bot
 -- (strumenti/arena/collaudo.lua). Dalla radice del repository:
---   luajit tests/campagna_test.lua
+--   luajit tests/campaign_test.lua
 -- Le soluzioni sono copioni di tasti; dove serve una mira, il test la cerca
 -- su una griglia di angoli e potenze, come farebbe chi prova.
 package.path = "client/?.lua;" .. package.path
 
 local game = require "sim.game"
-local missioni = require "sim.missioni"
-local campagna = require "sim.campagna"
+local missioni = require "sim.missions"
+local campagna = require "sim.campaign"
 
 local failures = 0
 local function check(cond, msg)

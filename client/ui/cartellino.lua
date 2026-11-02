@@ -18,8 +18,8 @@
 
 local ui = require "ui.ui"
 local game = require "sim.game"
-local abilita = require "sim.abilita"
-local equip = require "sim.equipaggiamento"
+local abilita = require "sim.skills"
+local equip = require "sim.gear"
 local pelli = require "battaglia.pelli"
 local traguardi = require "menu.traguardi"
 local vetrina = require "menu.vetrina"

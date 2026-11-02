@@ -58,7 +58,7 @@ func compileAll() {
 }
 
 // Engine è uno stato Lua con la simulazione caricata: uno per stanza. Con il
-// codice già compilato e la mappa già disegnata (terreno.go) crearne uno
+// codice già compilato e la mappa già disegnata (terrain.go) crearne uno
 // costa meno di un millisecondo, quindi non serve tenerli da parte.
 type Engine struct {
 	L   *lua.LState
@@ -119,13 +119,13 @@ type Sim struct {
 // NewSim crea la partita; mapID "" la fa scegliere al seed (maps.pick). players
 // è la lista di opts.players (squadre e armi scelte, da N.draft_finish), LNil
 // per un 1 contro 1; regole sono quelle dell'evento della coda in JSON
-// (sim/regole.lua, già controllate da eventi.go), nil fuori dagli eventi.
-func (e *Engine) NewSim(seed int64, mapID string, players lua.LValue, regole []byte) (*Sim, error) {
+// (sim/rules.lua, già controllate da events.go), nil fuori dagli eventi.
+func (e *Engine) NewSim(seed int64, mapID string, players lua.LValue, rules []byte) (*Sim, error) {
 	m := lua.LValue(lua.LNil)
 	if mapID != "" {
 		m = lua.LString(mapID)
 	}
-	r, err := e.fromJSON(regole)
+	r, err := e.fromJSON(rules)
 	if err != nil {
 		return nil, err
 	}

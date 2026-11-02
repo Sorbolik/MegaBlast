@@ -2,7 +2,7 @@
 // wrangler.jsonc; come si mette su: README.md). La pagina è in pagina/; il
 // calendario sta in KV (binding EVENTI):
 //
-//   GET  /eventi.json            il file che scarica il server (server/eventi.go), senza chiave;
+//   GET  /eventi.json            il file che scarica il server (server/events.go), senza chiave;
 //                                ?preso=N&errore=… dice quale versione ha preso il server e se l'ha rifiutata
 //   GET  /api/stato              (X-Chiave) modelli, eventi, versione, cosa ha detto il server, le versioni passate
 //   POST /api/stato              (X-Chiave) { base, modelli, eventi }: ricontrolla tutto e pubblica

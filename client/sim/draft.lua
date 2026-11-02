@@ -21,10 +21,10 @@ local game = require "sim.game"
 local D = {}
 
 -- n armi della lista in ordine casuale (solo quelle viste, se viste c'è)
-local function shuffled(r, list, n, viste)
+local function shuffled(r, list, n, seen_weapons)
 	local pool = {}
 	for _, w in ipairs(list) do
-		if not viste or viste[w] then pool[#pool + 1] = w end
+		if not seen_weapons or seen_weapons[w] then pool[#pool + 1] = w end
 	end
 	for i = #pool, 2, -1 do
 		local j = math.floor(r:range(1, i + 1))
@@ -35,11 +35,11 @@ local function shuffled(r, list, n, viste)
 	return out
 end
 
-function D.new(seed, players, viste)
+function D.new(seed, players, seen_weapons)
 	local r = rng.new(seed)
 	return {
-		offer = shuffled(r, game.CRATE_WEAPONS, C.DRAFT_OFFER, viste),
-		offer2 = shuffled(r, game.DRAFT_SECONDARIES, C.DRAFT_OFFER, viste),
+		offer = shuffled(r, game.CRATE_WEAPONS, C.DRAFT_OFFER, seen_weapons),
+		offer2 = shuffled(r, game.DRAFT_SECONDARIES, C.DRAFT_OFFER, seen_weapons),
 		players = players, picks = {}, picks2 = {},
 	}
 end

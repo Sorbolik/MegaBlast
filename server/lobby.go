@@ -8,12 +8,12 @@ import (
 
 // Mode è una coda di gioco: quanti giocatori servono per una partita, quale
 // modo della simulazione usare (config.MODES, che dice le squadre) e, per le
-// code degli eventi (eventi.go), le regole dell'evento in JSON (sim/regole.lua).
+// code degli eventi (events.go), le regole dell'evento in JSON (sim/rules.lua).
 type Mode struct {
 	Name    string
 	Players int
 	Sim     string
-	Regole  []byte
+	Rules  []byte
 }
 
 // I numeri di giocatori devono essere quelli di config.MODES (lo controlla

@@ -5,12 +5,12 @@ local game = require "sim.game"
 local maps = require "sim.maps"
 local config = require "sim.config"
 local draft = require "sim.draft"
-local regole = require "sim.regole"
+local rules = require "sim.rules"
 
 local N = {}
 
 -- Le mappe fisse si disegnano una volta sola per processo: le partite dopo
--- copiano le celle già pronte (server/terreno.go), invece di ridisegnarle
+-- copiano le celle già pronte (server/terrain.go), invece di ridisegnarle
 -- (più di 100 ms in gopher-lua).
 for id, def in pairs(maps.maps) do
 	if not def.seeded then
@@ -25,9 +25,9 @@ for id, def in pairs(maps.maps) do
 end
 
 -- players: come opts.players di game.new (squadre e scelte del draft);
--- r: le regole dell'evento della coda (sim/regole.lua), nil fuori dagli eventi
+-- r: le regole dell'evento della coda (sim/rules.lua), nil fuori dagli eventi
 function N.new(seed, map, players, r)
-	local g = game.new(seed, map, regole.opzioni(r, { players = players }))
+	local g = game.new(seed, map, rules.opzioni(r, { players = players }))
 	g:pop_events()
 	g.carves = {} -- scavi del terreno, per chi si riconnette
 	return g
@@ -151,12 +151,12 @@ function N.draft_new(seed, mode, r)
 	for i, p in ipairs(config.MODES[mode]) do
 		players[i] = { team = p.team }
 	end
-	return draft.new(seed, players, regole.armi(r))
+	return draft.new(seed, players, rules.armi(r))
 end
 
--- le regole di un evento si possono usare? (eventi.go, quando legge il file)
-function N.regole_valida(r, normale)
-	local ok, err = regole.valida(r, normale)
+-- le regole di un evento si possono usare? (events.go, quando legge il file)
+function N.regole_valida(r, normal)
+	local ok, err = rules.valida(r, normal)
 	return ok and "" or err
 end
 

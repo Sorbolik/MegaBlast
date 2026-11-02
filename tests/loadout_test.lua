@@ -1,11 +1,11 @@
 -- Test di albero di abilità, set, assetti, riconoscimenti e profilo. Dalla radice del repository:
---   luajit tests/assetto_test.lua
+--   luajit tests/loadout_test.lua
 package.path = "client/?.lua;" .. package.path
 
-local abilita = require "sim.abilita"
-local equip = require "sim.equipaggiamento"
-local assetto = require "sim.assetto"
-local riconoscimenti = require "sim.riconoscimenti"
+local abilita = require "sim.skills"
+local equip = require "sim.gear"
+local assetto = require "sim.loadout"
+local riconoscimenti = require "sim.awards"
 local profilo = require "menu.profilo"
 
 local failures = 0

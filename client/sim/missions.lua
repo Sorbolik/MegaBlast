@@ -1,4 +1,4 @@
--- Missioni: le lezioni (Capitolo 0) e i gironi della campagna (sim/campagna.lua),
+-- Missioni: le lezioni (Capitolo 0) e i gironi della campagna (sim/campaign.lua),
 -- tutte nello stesso formato. Una missione è una partita vera con un obiettivo
 -- scritto come dati: pochi verbi (sotto) invece di codice, così un giorno le
 -- manda il server e servono anche al rompicapo del giorno (docs/roadmap.md,
@@ -105,53 +105,53 @@ local game = require "sim.game"
 local config = require "sim.config"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
-local campagna = require "sim.campagna"
+local campaign = require "sim.campaign"
 
 local M = {}
 
 local STEEL = terrain.STEEL
 M.GIOCATORE = 1
-local GIOCATORE = M.GIOCATORE
+local PLAYER = M.GIOCATORE
 -- secondi di una riga che non ha un "fino": poi sparisce da sola
-local RIGA_SECONDI = 5
+local LINE_SECONDS = 5
 -- senza_tempo: un attacco è finito quando niente vola e il giocatore è fermo da tanti tick
-local MANCATO_TICK = 45
+local MISS_TICK = 45
 -- la scheda di un'arma si apre questi tick dopo che il colpo del passo è arrivato
-local SCHEDA_DOPO = 24
+local CARD_DELAY = 24
 -- da quanto sopra il terreno cadono le casse delle missioni
-local CASSA_SOPRA = 280
+local CRATE_ABOVE = 280
 -- la terza stella della Prima partita: vinta con almeno tanti punti di vantaggio
-local GUIDATA_PUNTI = 100
-local RITENTA = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
+local GUIDED_POINTS = 100
+local RETRY_TEXT = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
 
 -- Quale arma ha appena usato chi: l'evento dell'attacco -> nome dell'arma
-local ATTACCHI = {
+local ATTACKS = {
 	fire = "missile", grenade = "grenade", shards = "shards", punch = "punch", sniper = "sniper",
 	swing = "sword", eagle = "eagle", mallet = "mallet", lunge = "lunge", bellows = "bellows",
 }
 -- gli eventi del giocatore che consumano l'attacco o il Rampino del turno
-local TENTATIVI = { hook_shot = true }
-for k in pairs(ATTACCHI) do TENTATIVI[k] = true end
-local CATEGORIE = {
+local ATTEMPTS = { hook_shot = true }
+for k in pairs(ATTACKS) do ATTEMPTS[k] = true end
+local CATEGORIES = {
 	primaria = { grenade = true, shards = true, punch = true, sniper = true },
 	secondaria = { eagle = true, mallet = true, lunge = true, bellows = true },
 }
 -- usa: l'evento del giocatore che dice che la meccanica è stata usata
-local USA = {
+local USES = {
 	globi = function(e) return e.type == "teleports" and e.amount > 0 end,
 	rampino = function(e) return e.type == "hook" and e.anchor end,
-	rimbalzo = function(e) return e.type == "mallet_hit" and e.bounce end,
+	pogo = function(e) return e.type == "mallet_hit" and e.bounce end,
 	-- il Tonante sparato in aria: il rinculo porta via
-	rinculo = function(e, st) return e.type == "eagle" and not st.a_terra end,
+	kickback = function(e, st) return e.type == "eagle" and not st.on_ground end,
 	paracadute = function(e) return e.type == "parachute" end,
 	baratto = function(e) return e.type == "swap" end,
 }
 
 -- solo = { ... } di un passo -> la funzione che dice se un comando si può usare
 -- (game.permesso). Camminare e saltare si può sempre
-local function permesso(solo)
+local function allowed_fn(only)
 	local ok = {}
-	for _, w in ipairs(solo) do ok[w == "baratto" and "swap" or w] = true end
+	for _, w in ipairs(only) do ok[w == "baratto" and "swap" or w] = true end
 	return function(w)
 		if ok[w] then return true end
 		if game.SECONDARY[w] then return ok.secondaria == true end
@@ -161,8 +161,8 @@ end
 
 -- Le missioni, per id e per capitolo --------------------------------------------------
 
-local PER_ID, DOPO = {}, {}
-for _, cap in ipairs(campagna.CAPITOLI) do
+local PER_ID, NEXT_ID = {}, {}
+for _, cap in ipairs(campaign.CAPITOLI) do
 	for i, l in ipairs(cap.missioni) do
 		assert(not PER_ID[l.id], "missione doppia: " .. l.id)
 		PER_ID[l.id] = l
@@ -173,10 +173,10 @@ for _, cap in ipairs(campagna.CAPITOLI) do
 		l.riprova = l.aspetta and not l.guidata
 		if type(l.obiettivo) == "table" then
 			for _, p in ipairs(l.obiettivo) do
-				if p.solo then p.permesso = permesso(p.solo) end
+				if p.solo then p.permesso = allowed_fn(p.solo) end
 			end
 		end
-		DOPO[l.id] = cap.missioni[i + 1] and cap.missioni[i + 1].id
+		NEXT_ID[l.id] = cap.missioni[i + 1] and cap.missioni[i + 1].id
 		if l.arena then
 			l.mappa = "missione_" .. l.id
 			maps.registra(l.mappa, { name = l.titolo, spawns = l.spawns, build = function(t)
@@ -191,29 +191,29 @@ function M.trova(id)
 end
 
 function M.dopo(id)
-	return DOPO[id]
+	return NEXT_ID[id]
 end
 
 -- Quello che la missione fa vedere nell'HUD (l.vedi; senza, tutto)
-local function categoria(w)
+local function category(w)
 	if game.SECONDARY[w] then return "secondarie" end
 	if game.TOOLS[w] or w == "teleport" then return nil end
 	return "primarie"
 end
 
 -- Il comando toccato (cosa) è quello che la riga suggerisce (att)?
-local function combacia(att, cosa)
-	if att == cosa then return true end
-	if not cosa or not game.WEAPONS[cosa] then return false end
-	if att == "secondaria" then return game.SECONDARY[cosa] == true end
-	if att == "primaria" then return not game.SECONDARY[cosa] and not game.TOOLS[cosa] end
+local function matches_hint(att, what)
+	if att == what then return true end
+	if not what or not game.WEAPONS[what] then return false end
+	if att == "secondaria" then return game.SECONDARY[what] == true end
+	if att == "primaria" then return not game.SECONDARY[what] and not game.TOOLS[what] end
 	return false
 end
 
 -- In questo turno il giocatore ha già toccato quel comando (o uno della categoria)?
-local function toccato(st, att)
-	for cosa in pairs(st.toccati) do
-		if combacia(att, cosa) then return true end
+local function touched_cmd(st, att)
+	for what in pairs(st.touched_cmds) do
+		if matches_hint(att, what) then return true end
 	end
 	return false
 end
@@ -222,7 +222,7 @@ function M.vede(r, w)
 	local l = r and r.l
 	if not l or not l.vedi then return true end
 	if r.prese and r.prese[w] then return true end
-	local c = categoria(w)
+	local c = category(w)
 	for _, v in ipairs(l.vedi) do
 		if v == w or v == c then return true end
 	end
@@ -232,14 +232,14 @@ end
 -- Lo stato di una missione in corso
 function M.nuova(id)
 	local l = assert(PER_ID[id], "missione sconosciuta: " .. tostring(id))
-	return { l = l, st = { turni = 0, turni_bot = 0, passi = {}, volte = {}, conta = {}, toccati = {} },
-		viste = {}, prese = {}, cadute = {}, aperte = {}, attese = {}, schede = {}, giu = {}, riga = nil, esito = nil }
+	return { l = l, st = { turni = 0, turni_bot = 0, passi = {}, volte = {}, conta = {}, touched_cmds = {} },
+		viste = {}, prese = {}, cadute = {}, aperte = {}, waits = {}, schede = {}, giu = {}, riga = nil, esito = nil }
 end
 
 -- seme, mappa e opzioni di game.new. picks: i giocatori usciti dal draft
 -- (menu/scelta.lua), per le missioni che lo fanno fare
 -- l'aiuto silenzioso: i bot scendono di due gradi (sim/bot.lua M.GRADI) e partono con meno vita
-local AIUTO_VITA = 0.75
+local HELP_HP = 0.75
 
 function M.partita(r, seed, picks, aiuto)
 	local l = r.l
@@ -258,13 +258,13 @@ function M.partita(r, seed, picks, aiuto)
 	end
 	if l.globi or l.vedi then
 		local st = {}
-		for k, v in pairs(players[GIOCATORE].stats or {}) do st[k] = v end
+		for k, v in pairs(players[PLAYER].stats or {}) do st[k] = v end
 		st.teleports = l.globi or st.teleports
 		-- quello che la lezione non mostra non c'è: niente globi (nemmeno dal
 		-- tempo), niente paracadute
 		if not M.vede(r, "teleport") then st.teleports, st.time_orbs = 0, 0 end
 		if not M.vede(r, "parachute") then st.parachutes = 0 end
-		players[GIOCATORE].stats = st
+		players[PLAYER].stats = st
 	end
 	local opts = { players = players }
 	for k, v in pairs(l.regole or {}) do opts[k] = v end
@@ -290,78 +290,78 @@ function M.prepara(r, g)
 		for i, p in ipairs(l.giocatori) do
 			-- anche la vita piena: la barra resta piena, non si vede
 			local rb = g.robots[i]
-			if p.bot then rb.hp = math.floor(rb.hp * AIUTO_VITA); rb.max_hp = rb.hp end
+			if p.bot then rb.hp = math.floor(rb.hp * HELP_HP); rb.max_hp = rb.hp end
 		end
 	end
 	for i, v in pairs(l.punti or {}) do g.robots[i].points = v end
 	-- chi parte coi punti della missione ha già la Corona (di solito arriva dopo
 	-- SCORE.crown_rounds giri): la lezione Punti e Corona la fa colpire subito
 	if l.punti then g.round = math.max(g.round, (g.score.crown_rounds or 0) + 1) end
-	if l.senza_armi then g.robots[GIOCATORE].disarmed = true end
+	if l.no_weapons then g.robots[PLAYER].disarmed = true end
 	g:pop_events()
-	if g.current == GIOCATORE then st.turni = 1 else st.turni_bot = 1 end
+	if g.current == PLAYER then st.turni = 1 else st.turni_bot = 1 end
 	r.coda = {}
 	r.riga = nil
 	if l.aspetta then r.attesa, r.fermo = true, { timer = g.timer, window = g.window, match = g.match_left } end
 	if l.senza_tempo then r.senza = { timer = g.timer, match = g.match_left } end
 	-- lo scopo finché non si fa la prima cosa
 	-- (nelle lezioni lascia il posto ai suggerimenti appena tocchi i comandi)
-	if l.scopo then
-		r.coda[1] = { testo = l.scopo, cede = l.aspetta, evidenzia = l.evidenzia,
+	if l.goal_text then
+		r.coda[1] = { testo = l.goal_text, yields = l.aspetta, evidenzia = l.evidenzia,
 			fino = function(_, g2) return g2.used.primary or g2.used.secondary or g2.used.tool end }
 	end
 end
 
 -- I passi -----------------------------------------------------------------------------
 
-local function nemici(g, a, b)
+local function enemies_list(g, a, b)
 	return g.robots[a].team ~= g.robots[b].team
 end
 
 -- I punti della squadra del giocatore meno quelli della squadra avversaria più avanti
-local function distacco(g)
-	local squadre = {}
-	for _, rb in ipairs(g.robots) do squadre[rb.team] = (squadre[rb.team] or 0) + rb.points end
-	local mia, altri = g.robots[GIOCATORE].team, nil
+local function lead(g)
+	local team_points_of = {}
+	for _, rb in ipairs(g.robots) do team_points_of[rb.team] = (team_points_of[rb.team] or 0) + rb.points end
+	local my_team, others = g.robots[PLAYER].team, nil
 	for t = 1, #g.robots do
-		if t ~= mia and squadre[t] and (not altri or squadre[t] > altri) then altri = squadre[t] end
+		if t ~= my_team and team_points_of[t] and (not others or team_points_of[t] > others) then others = team_points_of[t] end
 	end
-	return squadre[mia] - (altri or 0)
+	return team_points_of[my_team] - (others or 0)
 end
 
-local function bersaglio(g, voluto, robot)
-	if voluto == "nemico" then return nemici(g, GIOCATORE, robot) end
-	return voluto == robot
+local function target(g, wanted, robot)
+	if wanted == "nemico" then return enemies_list(g, PLAYER, robot) end
+	return wanted == robot
 end
 
-local function arma_ok(con, arma)
-	if not con then return true end
-	if CATEGORIE[con] then return CATEGORIE[con][arma] == true end
-	return con == arma
+local function weapon_ok(with_weapon, weapon_name)
+	if not with_weapon then return true end
+	if CATEGORIES[with_weapon] then return CATEGORIES[with_weapon][weapon_name] == true end
+	return with_weapon == weapon_name
 end
 
 -- in piedi sopra la quota y, oltre la x
-local function sopra(g, x, y)
-	local rb = g.robots[GIOCATORE]
+local function over_it(g, x, y)
+	local rb = g.robots[PLAYER]
 	return not rb.dead and rb.grounded and rb.x >= x and rb.y >= y - 1
 end
 
 -- Il passo p è fatto adesso? e = nil: il controllo a ogni tick
-local function passo_fatto(p, i, st, g, e)
+local function step_done(p, i, st, g, e)
 	if p.usa then
-		return e ~= nil and e.robot == GIOCATORE and USA[p.usa](e, st)
-	elseif p.raggiungi then
-		return sopra(g, p.raggiungi.x, p.raggiungi.y)
-	elseif p.colpisci then
-		return e ~= nil and e.type == "damage" and e.amount > 0 and bersaglio(g, p.colpisci, e.robot)
-			and arma_ok(p.con, st.arma)
+		return e ~= nil and e.robot == PLAYER and USES[p.usa](e, st)
+	elseif p.reach then
+		return over_it(g, p.reach.x, p.reach.y)
+	elseif p.hit then
+		return e ~= nil and e.type == "damage" and e.amount > 0 and target(g, p.hit, e.robot)
+			and weapon_ok(p.con, st.arma)
 	elseif p.prendi then
-		return e ~= nil and e.type == "crate_pick" and e.robot == GIOCATORE and e.weapon == p.prendi
-	elseif p.vinci then
-		return e ~= nil and e.type == "over" and e.winner == g.robots[GIOCATORE].team
-	elseif p.abbatti then
-		if e and e.type == "death" and e.by == GIOCATORE and bersaglio(g, p.abbatti, e.robot)
-			and (p.come ~= "vuoto" or e.env) and arma_ok(p.con, st.arma) then
+		return e ~= nil and e.type == "crate_pick" and e.robot == PLAYER and e.weapon == p.prendi
+	elseif p.win then
+		return e ~= nil and e.type == "over" and e.winner == g.robots[PLAYER].team
+	elseif p.down then
+		if e and e.type == "death" and e.by == PLAYER and target(g, p.down, e.robot)
+			and (p.come ~= "vuoto" or e.env) and weapon_ok(p.con, st.arma) then
 			st.volte[i] = (st.volte[i] or 0) + 1
 			return st.volte[i] >= (p.volte or 1)
 		end
@@ -371,31 +371,31 @@ local function passo_fatto(p, i, st, g, e)
 end
 
 -- obiettivo fatto? Segna i passi che si chiudono con e
-local function obiettivo(l, st, g, e)
+local function goal(l, st, g, e)
 	if type(l.obiettivo) == "function" then return l.obiettivo(st, g, e) end
-	local tutti = true
+	local all_done = true
 	for i, p in ipairs(l.obiettivo) do
 		if not st.passi[i] then
-			if passo_fatto(p, i, st, g, e) then
+			if step_done(p, i, st, g, e) then
 				st.passi[i] = true
 			else
-				tutti = false
-				if l.in_ordine ~= false then return false end
+				all_done = false
+				if l.in_order ~= false then return false end
 			end
 		end
 	end
-	return tutti
+	return all_done
 end
 
 -- Quanti passi sono fatti
-local function fatti(st)
+local function steps_count(st)
 	local n = 0
 	for _ in pairs(st.passi) do n = n + 1 end
 	return n
 end
 
 -- Il primo passo che manca (o nil)
-local function prossimo(l, st)
+local function next_one(l, st)
 	if type(l.obiettivo) ~= "table" then return nil end
 	for i, p in ipairs(l.obiettivo) do
 		if not st.passi[i] then return i, p end
@@ -403,16 +403,16 @@ local function prossimo(l, st)
 end
 
 -- Quando di una riga: funzione, o dati
-local function quando(q, st, g, e)
+local function when(q, st, g, e)
 	if type(q) == "function" then return q(st, g, e) end
 	if q.evento then
-		return e ~= nil and e.type == q.evento and (e.robot == nil or e.robot == GIOCATORE)
+		return e ~= nil and e.type == q.evento and (e.robot == nil or e.robot == PLAYER)
 	elseif q.passo then
 		return st.passi[q.passo] == true
 	elseif q.turno then
 		return st.turni == q.turno
 	elseif q.tocca then
-		return toccato(st, q.tocca)
+		return touched_cmd(st, q.tocca)
 	end
 	return false
 end
@@ -422,84 +422,84 @@ end
 -- Senza "fino" resta RIGA_SECONDI, con "fino" al massimo il doppio.
 -- Una riga che evidenzia un comando, nelle lezioni, ferma il tempo finché non
 -- lo tocchi (se non lo hai già toccato in questo turno).
-local function mostra(r, riga)
-	r.riga, r.riga_fino, r.riga_cede = riga.testo, riga.fino, riga.cede
-	r.riga_su = riga.su == "bot" and 2 or GIOCATORE
-	r.riga_t = (riga.fino and 2 or 1) * RIGA_SECONDI * 60
-	r.luce = riga.evidenzia
+local function show_line(r, line)
+	r.riga, r.line_until, r.line_yields = line.testo, line.fino, line.yields
+	r.line_on = line.su == "bot" and 2 or PLAYER
+	r.riga_t = (line.fino and 2 or 1) * LINE_SECONDS * 60
+	r.luce = line.evidenzia
 	r.attende = nil
-	local e = riga.evidenzia
-	if e and r.l.aspetta and riga.ferma ~= false and not toccato(r.st, e) then
+	local e = line.evidenzia
+	if e and r.l.aspetta and line.ferma ~= false and not touched_cmd(r.st, e) then
 		r.attesa, r.attende = true, e
 	end
 end
 
 -- La riga se ne va: se aspettava un comando, il tempo riparte
-local function togli(r)
+local function clear_line(r)
 	if r.attende then r.attesa, r.attende, r.fermo = false, nil, nil end
-	r.riga, r.riga_t, r.luce, r.riga_cede = nil, nil, nil, nil
+	r.riga, r.riga_t, r.luce, r.line_yields = nil, nil, nil, nil
 end
 
 -- e = nil: il controllo a ogni tick
-local function controlla(r, g, e)
+local function check_event(r, g, e)
 	local l, st = r.l, r.st
 	if r.esito then return end
-	if obiettivo(l, st, g, e) then
+	if goal(l, st, g, e) then
 		r.esito = "fatta"
 		-- i suggerimenti non servono più (c'è "Fatta!")
-		togli(r)
+		clear_line(r)
 		return
 	end
-	if r.riga and r.riga_fino and quando(r.riga_fino, st, g, e) then togli(r) end
+	if r.riga and r.line_until and when(r.line_until, st, g, e) then clear_line(r) end
 	-- un turno nuovo: le righe del turno prima non servono più
-	if e and e.type == "turn" then togli(r); r.coda = {} end
-	for i, riga in ipairs(l.righe or {}) do
-		if not r.viste[i] and quando(riga.quando, st, g, e) then
+	if e and e.type == "turn" then clear_line(r); r.coda = {} end
+	for i, line in ipairs(l.righe or {}) do
+		if not r.viste[i] and when(line.quando, st, g, e) then
 			r.viste[i] = true
-			if riga.subito then
-				togli(r)
-				table.insert(r.coda, 1, riga)
+			if line.subito then
+				clear_line(r)
+				table.insert(r.coda, 1, line)
 			else
-				r.coda[#r.coda + 1] = riga
+				r.coda[#r.coda + 1] = line
 			end
 		end
 	end
 	-- lo scopo di una lezione, letto (hai toccato i comandi), lascia il posto
-	if r.riga and r.riga_cede and not r.attesa and #r.coda > 0 then togli(r) end
-	if not r.riga and #r.coda > 0 then mostra(r, table.remove(r.coda, 1)) end
+	if r.riga and r.line_yields and not r.attesa and #r.coda > 0 then clear_line(r) end
+	if not r.riga and #r.coda > 0 then show_line(r, table.remove(r.coda, 1)) end
 end
 
-local function conta(st, k)
+local function count(st, k)
 	st.conta[k] = (st.conta[k] or 0) + 1
 end
 
 -- Quanto è avanti l'obiettivo: i passi fatti e le volte contate
-local function avanti(st)
-	local n = fatti(st)
+local function forward(st)
+	local n = steps_count(st)
 	for _, v in pairs(st.volte) do n = n + v end
 	return n
 end
 
 -- Manca un passo da abbattere?
-local function abbattere(l, st)
+local function needs_down(l, st)
 	for i, p in ipairs(l.obiettivo) do
-		if not st.passi[i] and p.abbatti then return true end
+		if not st.passi[i] and p.down then return true end
 	end
 	return false
 end
 
 -- Un passo che manca deve ancora colpire o abbattere quel robot? (per "nemico",
 -- solo se non resta nessun altro nemico in piedi)
-local function serve(l, st, g, robot)
+local function needs(l, st, g, robot)
 	for i, p in ipairs(l.obiettivo) do
-		local chi = not st.passi[i] and (p.colpisci or p.abbatti)
-		if chi == robot then return true end
-		if chi == "nemico" then
-			local altri = false
+		local who_hit = not st.passi[i] and (p.hit or p.down)
+		if who_hit == robot then return true end
+		if who_hit == "nemico" then
+			local others = false
 			for j, rb in ipairs(g.robots) do
-				if j ~= robot and not rb.dead and nemici(g, GIOCATORE, j) then altri = true end
+				if j ~= robot and not rb.dead and enemies_list(g, PLAYER, j) then others = true end
 			end
-			if not altri then return true end
+			if not others then return true end
 		end
 	end
 	return false
@@ -507,81 +507,81 @@ end
 
 -- Lezioni: torna com'eri all'ultimo passo fatto (r.salvo): dove eri e i globi
 -- che avevi, così un globo sprecato non lascia senza la mossa che serve
-local function ripristina(r, g)
-	local rb, s = g.robots[GIOCATORE], r.salvo
+local function restore_snapshot(r, g)
+	local rb, s = g.robots[PLAYER], r.salvo
 	if not rb.dead then rb.x, rb.y, rb.vx, rb.vy = s.x, s.y, 0, 0 end
 	rb.teleports_left = math.max(rb.teleports_left, s.globi)
-	if r.st.turni == s.turno then g.teleports = math.min(g.teleports, s.lanciati) end
+	if r.st.turni == s.turno then g.teleports = math.min(g.teleports, s.thrown) end
 end
 
 function M.evento(r, g, e, bots)
 	local l, st = r.l, r.st
-	if ATTACCHI[e.type] and e.robot == GIOCATORE then
-		st.arma = ATTACCHI[e.type]
+	if ATTACKS[e.type] and e.robot == PLAYER then
+		st.arma = ATTACKS[e.type]
 	end
 	-- lezioni: un tentativo, finché non è finito; serve se colpisce qualcuno o fa un passo
-	if l.riprova and TENTATIVI[e.type] and e.robot == GIOCATORE and e.v ~= 0 and not r.tiro then
-		local rb = g.robots[GIOCATORE]
-		r.tiro = { t = 0, passi = fatti(st), tipo = e.type, x = rb.x, y = rb.y }
+	if l.riprova and ATTEMPTS[e.type] and e.robot == PLAYER and e.v ~= 0 and not r.shot then
+		local rb = g.robots[PLAYER]
+		r.shot = { t = 0, passi = steps_count(st), tipo = e.type, x = rb.x, y = rb.y }
 	end
-	if e.type == "damage" and e.amount > 0 and r.tiro and e.robot ~= GIOCATORE then r.tiro.preso = true end
-	if e.type == "crate_pick" and e.robot == GIOCATORE then r.prese[e.weapon] = true end
+	if e.type == "damage" and e.amount > 0 and r.shot and e.robot ~= PLAYER then r.shot.preso = true end
+	if e.type == "crate_pick" and e.robot == PLAYER then r.prese[e.weapon] = true end
 	if e.type == "turn" then
-		if e.robot == GIOCATORE then st.turni = st.turni + 1 else st.turni_bot = st.turni_bot + 1 end
-		st.toccati = {}
+		if e.robot == PLAYER then st.turni = st.turni + 1 else st.turni_bot = st.turni_bot + 1 end
+		st.touched_cmds = {}
 		-- il bot di turno fa vedere quello che il giocatore farà dopo (sim/bot.lua, b.piano)
 		local b = bots and bots[e.robot]
 		if b then b.piano = l.piani and l.piani[st.turni_bot] or nil end
-		for _, i in ipairs(l.rigenera or {}) do
+		for _, i in ipairs(l.regrow or {}) do
 			local rb = g.robots[i]
 			if not rb.dead then rb.hp = rb.max_hp end
 		end
 		-- oltre i turni della missione si ricomincia
 		if l.turni and st.turni > l.turni and not r.esito then r.esito = "fallita" end
-	elseif e.type == "teleport" and e.robot == GIOCATORE then
-		conta(st, "teletrasporti")
-	elseif e.type == "teleports" and e.robot == GIOCATORE then
+	elseif e.type == "teleport" and e.robot == PLAYER then
+		count(st, "teletrasporti")
+	elseif e.type == "teleports" and e.robot == PLAYER then
 		st.conta.globi = (st.conta.globi or 0) + e.amount
-	elseif e.type == "respawn" and l.riprova and e.robot == GIOCATORE and r.salvo then
+	elseif e.type == "respawn" and l.riprova and e.robot == PLAYER and r.salvo then
 		-- nelle lezioni chi gioca rinasce com'era all'ultimo passo fatto, globi compresi
-		ripristina(r, g)
+		restore_snapshot(r, g)
 	elseif e.type == "respawn" and l.riprova and l.spawns and l.spawns[e.robot] then
 		-- nelle lezioni si rinasce dove si è partiti, non in un posto a caso
 		-- dell'arena (un bersaglio a caso finirebbe in mezzo alla strada)
 		local rb, sp = g.robots[e.robot], l.spawns[e.robot]
 		rb.x, rb.y = sp.x, g.terrain:ground_below(sp.x, sp.from) or rb.y
-	elseif e.type == "damage" and e.robot == GIOCATORE then
+	elseif e.type == "damage" and e.robot == PLAYER then
 		st.conta.danni = (st.conta.danni or 0) + e.amount
 	elseif e.type == "death" then
-		if e.robot == GIOCATORE then conta(st, "morti") end
-		if e.by == GIOCATORE and nemici(g, GIOCATORE, e.robot) then
-			conta(st, "abbattuti")
-			if e.env then conta(st, "vuoto") end
+		if e.robot == PLAYER then count(st, "morti") end
+		if e.by == PLAYER and enemies_list(g, PLAYER, e.robot) then
+			count(st, "abbattuti")
+			if e.env then count(st, "vuoto") end
 		end
 	elseif e.type == "over" then
-		st.finita, st.vinta = true, e.winner == g.robots[GIOCATORE].team
+		st.finished, st.vinta = true, e.winner == g.robots[PLAYER].team
 	end
-	if e.type == "points" or e.type == "over" then st.distacco = distacco(g) end
-	local prima = avanti(st)
-	controlla(r, g, e)
+	if e.type == "points" or e.type == "over" then st.distacco = lead(g) end
+	local first_one = forward(st)
+	check_event(r, g, e)
 	-- lezioni e bersagli fermi: abbattuto da te, se non serve più resta giù
 	-- (Sergio, 30 ott: l'isola del Il turno, i bersagli di Giù dal bordo). Se
 	-- c'è da abbattere, solo se è contato (buttato nel vuoto): se no torna al suo posto
-	local fermo = l.giocatori[e.robot] and l.giocatori[e.robot].dummy
-	if e.type == "death" and (l.riprova or fermo) and e.by == GIOCATORE and e.robot ~= GIOCATORE
-		and not serve(l, st, g, e.robot) and (avanti(st) > prima or not abbattere(l, st)) then
+	local frozen = l.giocatori[e.robot] and l.giocatori[e.robot].dummy
+	if e.type == "death" and (l.riprova or frozen) and e.by == PLAYER and e.robot ~= PLAYER
+		and not needs(l, st, g, e.robot) and (forward(st) > first_one or not needs_down(l, st)) then
 		r.giu[e.robot] = true
 	end
 	if r.esito then return end
 	-- lezioni: a ogni tuo turno e quando rinasci l'obiettivo si riscrive e il
 	-- tempo aspetta che tocchi i comandi, così c'è il tempo di leggere
-	if l.aspetta and e.robot == GIOCATORE and (e.type == "turn" or e.type == "respawn") then
+	if l.aspetta and e.robot == PLAYER and (e.type == "turn" or e.type == "respawn") then
 		r.attesa, r.fermo = true, { timer = g.timer, window = g.window, match = g.match_left }
-		local testo = l.scopo
-		local i, p = prossimo(l, st)
+		local testo = l.goal_text
+		local i, p = next_one(l, st)
 		if i and i > 1 then testo = p.testo end
 		-- (se il turno non ha già la sua riga da dire)
-		if testo and not r.riga then mostra(r, { testo = testo, cede = true }) end
+		if testo and not r.riga then show_line(r, { testo = testo, yields = true }) end
 	end
 	if e.type == "over" and not l.guidata then
 		r.esito = "fallita"
@@ -591,11 +591,11 @@ end
 -- Il giocatore ha toccato i comandi (cosa: l'arma scelta, "salta", "mira",
 -- "annulla" o nil): il tempo riparte, ma se la riga aspetta un comando solo
 -- quando tocchi quello
-function M.tocca(r, cosa)
+function M.tocca(r, what)
 	if not r then return end
-	if cosa then r.st.toccati[cosa] = true end
+	if what then r.st.touched_cmds[what] = true end
 	if r.attende then
-		if not combacia(r.attende, cosa) then return end
+		if not matches_hint(r.attende, what) then return end
 		-- fatto: la luce si spegne, la riga resta finché serve
 		r.attende, r.luce = nil, nil
 	end
@@ -611,7 +611,7 @@ end
 local function senza_tempo(r, g)
 	local f = r.senza
 	g.timer, g.match_left, g.window = f.timer, f.match, 0
-	local rb = g.robots[GIOCATORE]
+	local rb = g.robots[PLAYER]
 	-- il paracadute trovato torna appena sei a terra: si riprova quanto serve
 	if r.prese.parachute and rb.grounded and not rb.parachute and rb.parachutes_left == 0 then
 		rb.parachutes_left = 1
@@ -620,22 +620,22 @@ end
 
 -- Lezioni: finito un tentativo, senza tempo si riusa tutto; se non è servito a
 -- niente, Ritenta (e col tempo quel colpo torna, e tu dov'eri quando l'hai tirato)
-local function tentativo(r, g)
-	local t = r.tiro
+local function attempt_over(r, g)
+	local t = r.shot
 	if not t or r.esito then return end
-	local rb = g.robots[GIOCATORE]
-	local fermo = not (g.projectile or g:shards_flying() or #g.orbs > 0) and (rb.dead or rb.grounded
+	local rb = g.robots[PLAYER]
+	local frozen = not (g.projectile or g:shards_flying() or #g.orbs > 0) and (rb.dead or rb.grounded
 		and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch or rb.lunge or rb.mallet or rb.recoil))
-	t.t = fermo and t.t + 1 or 0
-	if t.t < MANCATO_TICK then return end
-	r.tiro = nil
-	local mancato = not t.preso and fatti(r.st) == t.passi
+	t.t = frozen and t.t + 1 or 0
+	if t.t < MISS_TICK then return end
+	r.shot = nil
+	local missed = not t.preso and steps_count(r.st) == t.passi
 	if r.l.senza_tempo then
 		g.used.primary, g.used.secondary, g.used.tool = false, false, false
-	elseif mancato then
-		if not ATTACCHI[t.tipo] then
+	elseif missed then
+		if not ATTACKS[t.tipo] then
 			g.used.tool = false
-		elseif game.SECONDARY[ATTACCHI[t.tipo]] then
+		elseif game.SECONDARY[ATTACKS[t.tipo]] then
 			g.used.secondary = false
 		else
 			g.used.primary = false
@@ -643,102 +643,102 @@ local function tentativo(r, g)
 		if not (g.used.primary or g.used.secondary) then g.window = 0 end
 		if not rb.dead then rb.x, rb.y, rb.vx, rb.vy = t.x, t.y, 0, 0 end
 	end
-	if mancato then
-		conta(r.st, "mancati")
-		togli(r)
-		mostra(r, { testo = RITENTA })
+	if missed then
+		count(r.st, "misses")
+		clear_line(r)
+		show_line(r, { testo = RETRY_TEXT })
 	end
 end
 
 -- Lezioni: fatto un passo, a terra e fermo, chi gioca si segna com'è (r.salvo:
 -- ci torna se cade o resta senza la mossa che serve). Se il passo si fa solo
 -- coi globi e non ce ne sono più, Ritenta e torna com'era
-local function punto_fermo(r, g, p)
-	local rb = g.robots[GIOCATORE]
-	local vola = g.projectile or g:shards_flying() or #g.orbs > 0
-	if rb.dead or not rb.grounded or vola then
-		r.bloccato = 0
+local function hold_still(r, g, p)
+	local rb = g.robots[PLAYER]
+	local flying = g.projectile or g:shards_flying() or #g.orbs > 0
+	if rb.dead or not rb.grounded or flying then
+		r.stuck_ticks = 0
 		return
 	end
-	local n = fatti(r.st)
+	local n = steps_count(r.st)
 	if not r.salvo or r.salvo.passi ~= n then
-		r.salvo = { passi = n, x = rb.x, y = rb.y, globi = rb.teleports_left, lanciati = g.teleports, turno = r.st.turni }
+		r.salvo = { passi = n, x = rb.x, y = rb.y, globi = rb.teleports_left, thrown = g.teleports, turno = r.st.turni }
 	end
-	local senza = p and p.permesso and p.permesso("teleport") and not g:can_use("teleport")
-	if senza then
+	local without = p and p.permesso and p.permesso("teleport") and not g:can_use("teleport")
+	if without then
 		for w in pairs(game.WEAPONS) do
-			if not (w == "teleport" or w == "swap" or game.TOOLS[w]) and p.permesso(w) then senza = false end
+			if not (w == "teleport" or w == "swap" or game.TOOLS[w]) and p.permesso(w) then without = false end
 		end
 	end
-	r.bloccato = senza and (r.bloccato or 0) + 1 or 0
-	if r.bloccato >= MANCATO_TICK then
-		r.bloccato = 0
-		ripristina(r, g)
-		conta(r.st, "mancati")
-		togli(r)
-		mostra(r, { testo = RITENTA })
+	r.stuck_ticks = without and (r.stuck_ticks or 0) + 1 or 0
+	if r.stuck_ticks >= MISS_TICK then
+		r.stuck_ticks = 0
+		restore_snapshot(r, g)
+		count(r.st, "misses")
+		clear_line(r)
+		show_line(r, { testo = RETRY_TEXT })
 	end
 end
 
 -- Il passo p si può fare adesso? (uno dei comandi che dice si può usare; per
 -- colpire, un attacco: col solo globo il turno va avanti)
-local function si_puo(g, p)
+local function allowed(g, p)
 	if not p.permesso then return false end
-	local colpo = p.colpisci or p.abbatti
+	local hit_def = p.hit or p.down
 	for w in pairs(game.WEAPONS) do
-		local attacco = not (w == "teleport" or w == "swap" or game.TOOLS[w])
-		if p.permesso(w) and (attacco or not colpo) and g:can_use(w) then return true end
+		local attack = not (w == "teleport" or w == "swap" or game.TOOLS[w])
+		if p.permesso(w) and (attack or not hit_def) and g:can_use(w) then return true end
 	end
 	return false
 end
 
 -- Lezioni col tempo: finché il passo da fare si può fare (o un colpo è in
 -- volo) il tempo non scende sotto un secondo; per i globi, non oltre quelli
-local function tempo_fermo(r, g, p)
-	if not (r.tiro or si_puo(g, p)) then return end
-	local minimo = 60
+local function hold_clock(r, g, p)
+	if not (r.shot or allowed(g, p)) then return end
+	local minimum = 60
 	if p.usa == "globi" and p.globi then
-		local soglie = {}
-		for i, v in ipairs(config.TELEPORT_SOGLIE) do soglie[i] = v end
-		table.sort(soglie)
+		local thresholds = {}
+		for i, v in ipairs(config.TELEPORT_SOGLIE) do thresholds[i] = v end
+		table.sort(thresholds)
 		-- (due tick di margine: il colpo parte il tick dopo)
-		minimo = game.TURN_TICKS - soglie[#soglie - p.globi + 1] * 60 + 2
+		minimum = game.TURN_TICKS - thresholds[#thresholds - p.globi + 1] * 60 + 2
 	end
-	if g.timer < minimo then g.timer = minimo end
+	if g.timer < minimum then g.timer = minimum end
 	if g.window > 0 and g.window < 60 then g.window = 60 end
 end
 
 -- Il robot da colpire o abbattere nel passo da fare (il segnale sopra di lui), o nil
 function M.bersaglio(r)
 	if not r or r.esito or not r.l.riprova then return nil end
-	local _, p = prossimo(r.l, r.st)
-	return p and (p.colpisci or p.abbatti) or nil
+	local _, p = next_one(r.l, r.st)
+	return p and (p.hit or p.down) or nil
 end
 
 -- La bandierina a scacchi del passo da fare (raggiungi con bandiera), o nil
 function M.bandiera(r)
-	local _, p = prossimo(r.l, r.st)
-	if p and p.raggiungi and p.bandiera then return p.raggiungi.x, p.raggiungi.y end
+	local _, p = next_one(r.l, r.st)
+	if p and p.reach and p.bandiera then return p.reach.x, p.reach.y end
 end
 
 function M.tick(r, g)
 	local l, st = r.l, r.st
-	if l.senza_tempo and g.current == GIOCATORE then senza_tempo(r, g) end
-	local _, p = prossimo(l, st)
+	if l.senza_tempo and g.current == PLAYER then senza_tempo(r, g) end
+	local _, p = next_one(l, st)
 	-- si usa solo quello che il passo dice (lezione finita: tutto)
 	g.permesso = not r.esito and p and p.permesso or nil
-	if l.riprova and g.current == GIOCATORE then
-		tentativo(r, g)
-		if p and not l.senza_tempo and not r.esito then tempo_fermo(r, g, p) end
-		punto_fermo(r, g, p)
+	if l.riprova and g.current == PLAYER then
+		attempt_over(r, g)
+		if p and not l.senza_tempo and not r.esito then hold_clock(r, g, p) end
+		hold_still(r, g, p)
 	end
 	-- i bersagli che restano giù spariscono quando rinascerebbero
 	for i, rb in ipairs(g.robots) do
 		if r.giu[i] and rb.dead and rb.respawn_in and rb.respawn_in <= 1 then
 			r.giu[i] = nil
-			local di_turno = false
-			for _, o in ipairs(g.order) do di_turno = di_turno or o == i end
-			if di_turno then
+			local in_order_now = false
+			for _, o in ipairs(g.order) do in_order_now = in_order_now or o == i end
+			if in_order_now then
 				g:remove(i)
 			else
 				-- i bersagli fermi non hanno turni: spariscono e basta
@@ -749,16 +749,16 @@ function M.tick(r, g)
 	end
 	-- le schede delle armi che arrivano senza cassa: quando il colpo che ha
 	-- fatto il passo è arrivato, e un attimo dopo
-	local vola = g.projectile or g.burst or g:shards_flying() or #g.orbs > 0
+	local flying = g.projectile or g.burst or g:shards_flying() or #g.orbs > 0
 	for i, c in ipairs(l.schede or {}) do
 		if not r.aperte[i] and (c.dopo == 0 or st.passi[c.dopo]) then
 			-- (se niente vola, subito)
-			r.attese[i] = vola and 0 or (r.attese[i] or SCHEDA_DOPO - 1) + 1
+			r.waits[i] = flying and 0 or (r.waits[i] or CARD_DELAY - 1) + 1
 		end
-		if not r.aperte[i] and (r.attese[i] or 0) >= SCHEDA_DOPO then
+		if not r.aperte[i] and (r.waits[i] or 0) >= CARD_DELAY then
 			r.aperte[i] = true
 			if c.dai then
-				game.dai(g.robots[GIOCATORE], c.arma)
+				game.dai(g.robots[PLAYER], c.arma)
 				r.prese[c.arma] = true
 			end
 			r.schede[#r.schede + 1] = c.arma
@@ -770,29 +770,29 @@ function M.tick(r, g)
 			r.cadute[i] = g:spawn_crate(c.arma, c.x) or true
 			-- parte poco sopra il terreno: la si aspetta un paio di secondi, non dieci
 			local cr, gy = r.cadute[i], g.terrain:ground_below(c.x, game.WORLD_H - 1)
-			if cr ~= true and gy then cr.y = math.min(cr.y, gy + CASSA_SOPRA) end
+			if cr ~= true and gy then cr.y = math.min(cr.y, gy + CRATE_ABOVE) end
 		end
 	end
 	-- lezioni: un'arma a colpi trovata in una cassa torna appena puoi
 	-- riattaccare, si riprova quanto serve (nei gironi la cassa è un colpo solo)
-	local rb = g.robots[GIOCATORE]
+	local rb = g.robots[PLAYER]
 	for _, c in ipairs(l.riprova and l.casse or {}) do
 		local n = rb.ammo[c.arma]
-		local usata = game.SECONDARY[c.arma] and g.used.secondary or g.used.primary
-		if n == 0 and r.prese[c.arma] and not usata then rb.ammo[c.arma] = 1 end
+		local used_up = game.SECONDARY[c.arma] and g.used.secondary or g.used.primary
+		if n == 0 and r.prese[c.arma] and not used_up then rb.ammo[c.arma] = 1 end
 	end
 	-- lezioni: finché non tocchi i comandi il tempo del turno e della partita è fermo
-	if r.attesa and g.current == GIOCATORE then
+	if r.attesa and g.current == PLAYER then
 		r.fermo = r.fermo or { timer = g.timer, window = g.window, match = g.match_left }
 		local f = r.fermo
 		g.timer, g.window, g.match_left = f.timer, f.window, f.match
 	end
-	controlla(r, g, nil)
+	check_event(r, g, nil)
 	-- a terra o no prima degli eventi del prossimo tick (il Tonante stacca da terra)
-	st.a_terra = g.robots[GIOCATORE].grounded
+	st.on_ground = g.robots[PLAYER].grounded
 	if r.riga_t and not r.attesa then
 		r.riga_t = r.riga_t - 1
-		if r.riga_t <= 0 then togli(r) end
+		if r.riga_t <= 0 then clear_line(r) end
 	end
 	return r.esito
 end
@@ -805,37 +805,37 @@ end
 -- Il livello della camera che vuole il passo da fare (zoom), una volta per passo
 function M.zoom(r)
 	if not r then return nil end
-	local i, p = prossimo(r.l, r.st)
-	if p and p.zoom and r.zoomato ~= i then
-		r.zoomato = i
+	local i, p = next_one(r.l, r.st)
+	if p and p.zoom and r.zoomed ~= i then
+		r.zoomed = i
 		return p.zoom
 	end
 end
 
 -- La riga da mostrare e sopra chi (il robot), o nil
 function M.riga(r)
-	return r.riga, r.riga_su
+	return r.riga, r.line_on
 end
 
 -- L'obiettivo sempre in vista: il passo che manca, col numero se sono più d'uno
 function M.obiettivo(r)
 	local l = r.l
-	local i, p = prossimo(l, r.st)
+	local i, p = next_one(l, r.st)
 	if not i or r.esito then return nil end
 	local n = #l.obiettivo
 	return n > 1 and (i .. "/" .. n .. "  " .. p.testo) or p.testo
 end
 
-local function vantaggio(n)
+local function lead_text(n)
 	return "CON " .. n .. " PUNTI DI VANTAGGIO"
 end
 
 -- Cosa serve per ogni stella
 function M.criteri(l)
-	if l.guidata then return { "FINITA", "VINTA", vantaggio(GUIDATA_PUNTI) } end
+	if l.guidata then return { "FINITA", "VINTA", lead_text(GUIDED_POINTS) } end
 	local s = l.stelle
 	if s.bonus2 then return { "FATTA", s.bonus.testo, s.bonus2.testo } end
-	return { "FATTA", vantaggio(s.punti), s.bonus.testo }
+	return { "FATTA", lead_text(s.punti), s.bonus.testo }
 end
 
 -- I punti di vantaggio a fine missione (nil dove i punti non ci sono)
@@ -846,7 +846,7 @@ end
 
 local function bonus(b, st)
 	local n = st.conta[b.conta] or 0
-	if b.al_massimo then return n <= b.al_massimo end
+	if b.at_most then return n <= b.at_most end
 	return n >= b.almeno
 end
 
@@ -858,17 +858,17 @@ function M.stelle(r)
 	local l, st = r.l, r.st
 	local d = st.distacco or 0
 	if l.guidata then
-		return { true, st.vinta == true, st.vinta == true and d >= GUIDATA_PUNTI }
+		return { true, st.vinta == true, st.vinta == true and d >= GUIDED_POINTS }
 	end
 	local s = l.stelle
 	if s.bonus2 then return { true, bonus(s.bonus, st), bonus(s.bonus2, st) } end
 	return { true, d >= s.punti, bonus(s.bonus, st) }
 end
 
-function M.quante(stelle)
+function M.quante(stars)
 	local n = 0
 	for i = 1, 3 do
-		if stelle[i] then n = n + 1 end
+		if stars[i] then n = n + 1 end
 	end
 	return n
 end

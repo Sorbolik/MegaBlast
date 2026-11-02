@@ -5,8 +5,8 @@
 -- Un assetto: { tree = { [nodo] = gradi }, gear = { mask = "corvo", ... }, variant = "a" | "b" }
 -- Si ricostruisce gratis fuori dalla partita; ogni giocatore ne tiene LOADOUTS.
 
-local abilita = require "sim.abilita"
-local equip = require "sim.equipaggiamento"
+local skills = require "sim.skills"
+local equip = require "sim.gear"
 
 local M = {}
 
@@ -41,7 +41,7 @@ function M.stats(base, a, tiers)
 	local st = {}
 	for k, v in pairs(base) do st[k] = v end
 	local mods = {}
-	abilita.mods(a.tree or {}, mods)
+	skills.mods(a.tree or {}, mods)
 	equip.mods(a.gear or {}, tiers, a.variant, mods)
 	apply(st, mods)
 	for _, k in ipairs({ "max_hp", "teleport_ticks" }) do
@@ -60,7 +60,7 @@ function M.valid(a, points)
 		if not known then return false end
 	end
 	if a.variant ~= "a" and a.variant ~= "b" then return false end
-	return abilita.valid(a.tree or {}, points)
+	return skills.valid(a.tree or {}, points)
 end
 
 return M

@@ -26,7 +26,7 @@ type Config struct {
 	ReconnectTicks int // quanto si aspetta chi è caduto prima di toglierlo dalla partita
 	DraftTicks     int // se > 0 sostituisce config.DRAFT_SECONDS (per le prove)
 	PingEvery      time.Duration
-	Eventi         string // calendario degli eventi (eventi.go): indirizzo del pannello o file, vuoto = nessun evento
+	EventList         string // calendario degli eventi (events.go): indirizzo del pannello o file, vuoto = nessun evento
 }
 
 func DefaultConfig() Config {
@@ -45,14 +45,14 @@ type Server struct {
 	cfg      Config
 	sched    *Scheduler
 	lobby    *Lobby
-	eventi   *Calendario
+	events   *Calendar
 	sessions sync.Map // gettone -> seatRef, per chi si riconnette
 	online   atomic.Int64
 	draining atomic.Bool
 }
 
 func NewServer(cfg Config) *Server {
-	s := &Server{cfg: cfg, sched: NewScheduler(cfg.Workers), eventi: NewCalendario(cfg.Eventi)}
+	s := &Server{cfg: cfg, sched: NewScheduler(cfg.Workers), events: NewCalendar(cfg.EventList)}
 	s.lobby = NewLobby(s)
 	return s
 }
@@ -91,7 +91,7 @@ func (s *Server) Handler() http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "*") // la build HTML5 lo chiede da un altro sito
 		// sempre fresco: il gioco lo chiede all'ingresso e la home deve essere giusta
 		w.Header().Set("Cache-Control", "no-store")
-		json.NewEncoder(w).Encode(map[string]any{"ora": s.eventi.now().Unix(), "eventi": s.eventi.Occorrenze()})
+		json.NewEncoder(w).Encode(map[string]any{"ora": s.events.now().Unix(), "eventi": s.events.Occurrences()})
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("MegaBlast server\n"))
@@ -106,7 +106,7 @@ type Player struct {
 	cancel    context.CancelFunc
 	room      atomic.Pointer[seatRef] // la partita in cui gioca, nil se non gioca
 	closeOnce sync.Once
-	vetrina   []byte // il cartellino in JSON, controllato (vetrinaJSON): livello e badge
+	showcase   []byte // il cartellino in JSON, controllato (vetrinaJSON): livello e badge
 }
 
 // Send non blocca mai la partita. Se il client non smaltisce i messaggi lo
@@ -204,7 +204,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	mode, ok := modes[m.Mode]
 	if !ok && m.Mode != "" {
 		// la coda di un evento (GET /eventi): se nel frattempo è finito, lo diciamo
-		if mode, ok = s.eventi.Coda(m.Mode); !ok {
+		if mode, ok = s.events.Queue(m.Mode); !ok {
 			p.Send([]byte(`{"t":"error","e":"evento"}`))
 			return false
 		}
@@ -212,7 +212,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	if !ok {
 		mode = modes["2v2"]
 	}
-	p.vetrina = vetrinaJSON(m.Vetrina)
+	p.showcase = showcaseJSON(m.Showcase)
 	s.lobby.Join(p, mode)
 	return true
 }

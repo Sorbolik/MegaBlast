@@ -5,7 +5,7 @@
 -- game.new e alla scelta delle armi, così la partita è identica sui due lati.
 -- Proposta: https://claude.ai/artifact/WhmGJpMT4hfsD2MdPfHpUC
 --
---   local regole = require "sim.regole"
+--   local regole = require "sim.rules"
 --   local ok, err = regole.valida(r)        -- r = { casse = 2, armi = { "punch", "mallet" }, ... }
 --   regole.valida(r, true)                  -- su una coda normale: solo CODA_NORMALE (tetto)
 --   regole.opzioni(r, opts)                 -- aggiunge a opts di game.new
@@ -16,16 +16,16 @@
 
 local C = require "sim.config"
 local game = require "sim.game"
-local equip = require "sim.equipaggiamento"
+local equip = require "sim.gear"
 
 local M = {}
 
-local PRIMARIE, SECONDARIE = {}, {}
-for _, w in ipairs(game.CRATE_WEAPONS) do PRIMARIE[w] = true end
-for _, w in ipairs(game.DRAFT_SECONDARIES) do SECONDARIE[w] = true end
+local PRIMARIES, SECONDARIES = {}, {}
+for _, w in ipairs(game.CRATE_WEAPONS) do PRIMARIES[w] = true end
+for _, w in ipairs(game.DRAFT_SECONDARIES) do SECONDARIES[w] = true end
 
 -- un numero intero fra a e b
-local function intero(a, b)
+local function integer(a, b)
 	return function(v)
 		return type(v) == "number" and v == math.floor(v) and v >= a and v <= b, "da " .. a .. " a " .. b
 	end
@@ -34,7 +34,7 @@ end
 -- La lista bianca: chiave -> controllo del valore (vero, o falso e il perché)
 M.LISTA = {
 	-- turni fra una cassa e l'altra (la prima cade sempre al primo turno)
-	casse = intero(1, 10),
+	casse = integer(1, 10),
 	-- false: niente cerchi di cura
 	cure = function(v) return type(v) == "boolean", "vero o falso" end,
 	-- "fisso": albero ed equipaggiamento non contano, tutti hanno le statistiche di base
@@ -45,7 +45,7 @@ M.LISTA = {
 		if type(v) ~= "table" or #v == 0 then return false, "una lista di armi" end
 		local p, s = false, false
 		for _, w in ipairs(v) do
-			if PRIMARIE[w] then p = true elseif SECONDARIE[w] then s = true
+			if PRIMARIES[w] then p = true elseif SECONDARIES[w] then s = true
 			else return false, "arma sconosciuta: " .. tostring(w) end
 		end
 		return p and s, "almeno una primaria e una secondaria"
@@ -54,7 +54,7 @@ M.LISTA = {
 	-- massimo, magari 12 o 15 su 20"): sta anche sulle code normali perché non
 	-- cambia la partita, solo chi ci entra; ha effetto quando online arrivano
 	-- gli assetti (fino ad allora il gioco lo mostra e basta)
-	tetto = intero(1, equip.LIVELLO_MAX - 1),
+	tetto = integer(1, equip.LIVELLO_MAX - 1),
 	-- punti partita diversi da config.SCORE, solo i campi che cambiano
 	punti = function(v)
 		if type(v) ~= "table" then return false, "una tabella di punti" end
@@ -71,16 +71,16 @@ M.LISTA = {
 M.CODA_NORMALE = { tetto = true }
 
 -- normale: l'evento sta su una coda normale, quindi solo le regole di CODA_NORMALE
-function M.valida(r, normale)
+function M.valida(r, normal)
 	if type(r) ~= "table" then return nil, "le regole sono una tabella" end
 	for k, v in pairs(r) do
-		local controllo = M.LISTA[k]
-		if not controllo then return nil, "regola sconosciuta: " .. tostring(k) end
-		if normale and not M.CODA_NORMALE[k] then
+		local checker = M.LISTA[k]
+		if not checker then return nil, "regola sconosciuta: " .. tostring(k) end
+		if normal and not M.CODA_NORMALE[k] then
 			return nil, k .. ": cambia la partita, solo per i modificatori (tipo mod, con la coda loro)"
 		end
-		local ok, perche = controllo(v)
-		if not ok then return nil, k .. ": " .. perche end
+		local ok, why = checker(v)
+		if not ok then return nil, k .. ": " .. why end
 	end
 	return true
 end
@@ -96,9 +96,9 @@ end
 
 function M.armi(r)
 	if not (r and r.armi) then return nil end
-	local viste = {}
-	for _, w in ipairs(r.armi) do viste[w] = true end
-	return viste
+	local seen_weapons = {}
+	for _, w in ipairs(r.armi) do seen_weapons[w] = true end
+	return seen_weapons
 end
 
 return M

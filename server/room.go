@@ -46,14 +46,14 @@ type clientMsg struct {
 	Tok  string  `json:"tok"`
 	// col saluto: livello e badge del cartellino (menu/vetrina.lua, per_rete)
 	// (grezzo: un cartellino sbagliato non deve far fallire il saluto)
-	Vetrina json.RawMessage `json:"vetrina"`
+	Showcase json.RawMessage `json:"vetrina"`
 }
 
-type vetrinaMsg struct {
-	Liv int `json:"liv"`
+type showcaseMsg struct {
+	Level int `json:"liv"`
 	Bdg []struct {
 		ID    string `json:"id"`
-		Grado int    `json:"grado"`
+		Grade int    `json:"grado"`
 	} `json:"bdg"`
 }
 
@@ -61,8 +61,8 @@ type vetrinaMsg struct {
 // un nome corto di lettere minuscole e un grado da 1 a gradoMax
 const (
 	badgeMax = 3
-	gradoMax = 4
-	livMax   = 999
+	gradeMax = 4
+	levelMax   = 999
 )
 
 var badgeID = regexp.MustCompile(`^[a-z_]{1,16}$`)
@@ -70,31 +70,31 @@ var badgeID = regexp.MustCompile(`^[a-z_]{1,16}$`)
 // vetrinaJSON controlla quello che manda il client e lo riscrive in JSON:
 // gli altri giocatori lo ricevono così com'è nei messaggi draft e start. Quello
 // che non si legge (o manca) diventa un cartellino vuoto
-func vetrinaJSON(raw json.RawMessage) []byte {
-	var v vetrinaMsg
+func showcaseJSON(raw json.RawMessage) []byte {
+	var v showcaseMsg
 	if len(raw) == 0 || json.Unmarshal(raw, &v) != nil {
 		// per esempio "bdg":{} (una tabella Lua vuota diventa un oggetto)
-		var solo struct {
-			Liv int `json:"liv"`
+		var only struct {
+			Level int `json:"liv"`
 		}
-		if json.Unmarshal(raw, &solo) != nil || solo.Liv == 0 {
+		if json.Unmarshal(raw, &only) != nil || only.Level == 0 {
 			return []byte("{}")
 		}
-		v = vetrinaMsg{Liv: solo.Liv}
+		v = showcaseMsg{Level: only.Level}
 	}
-	out := fmt.Appendf(nil, `{"liv":%d,"bdg":[`, min(max(v.Liv, 1), livMax))
+	out := fmt.Appendf(nil, `{"liv":%d,"bdg":[`, min(max(v.Level, 1), levelMax))
 	n := 0
 	for _, b := range v.Bdg {
 		if n == badgeMax {
 			break
 		}
-		if !badgeID.MatchString(b.ID) || b.Grado < 1 || b.Grado > gradoMax {
+		if !badgeID.MatchString(b.ID) || b.Grade < 1 || b.Grade > gradeMax {
 			continue
 		}
 		if n > 0 {
 			out = append(out, ',')
 		}
-		out = fmt.Appendf(out, `{"id":%q,"grado":%d}`, b.ID, b.Grado)
+		out = fmt.Appendf(out, `{"id":%q,"grado":%d}`, b.ID, b.Grade)
 		n++
 	}
 	return append(out, "]}"...)
@@ -147,7 +147,7 @@ type Room struct {
 	draft     lua.LValue // stato di sim/draft.lua finché si sceglie
 	draftLeft int        // tick alla fine della scelta
 	players   []byte     // squadre in JSON, [{"team":1},...]; da start anche le scelte del draft
-	vetrine   []byte     // i cartellini dei giocatori in JSON, [{"liv":12,"bdg":[...]},...]
+	showcases   []byte     // i cartellini dei giocatori in JSON, [{"liv":12,"bdg":[...]},...]
 }
 
 // newRoom prepara la partita fuori dai worker e apre la scelta delle armi.
@@ -160,9 +160,9 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	r.eng = eng
 	list, err := eng.call("mode_players", lua.LString(mode.Sim))
 	if err == nil {
-		var regole lua.LValue
-		if regole, err = eng.fromJSON(mode.Regole); err == nil {
-			r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), regole)
+		var rules lua.LValue
+		if rules, err = eng.fromJSON(mode.Rules); err == nil {
+			r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), rules)
 		}
 	}
 	var secs lua.LValue
@@ -177,12 +177,12 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	if srv.cfg.DraftTicks > 0 {
 		r.draftLeft = srv.cfg.DraftTicks
 	}
-	teams, vetrine := []string{}, []string{}
+	teams, showcases := []string{}, []string{}
 	for i, p := range players {
-		if p.vetrina != nil {
-			vetrine = append(vetrine, string(p.vetrina))
+		if p.showcase != nil {
+			showcases = append(showcases, string(p.showcase))
 		} else {
-			vetrine = append(vetrine, "{}")
+			showcases = append(showcases, "{}")
 		}
 		team := int(list.(*lua.LTable).RawGetInt(i + 1).(*lua.LTable).RawGetString("team").(lua.LNumber))
 		teams = append(teams, fmt.Sprintf(`{"team":%d}`, team))
@@ -192,7 +192,7 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 		p.room.Store(&seatRef{r, i})
 	}
 	r.players = []byte("[" + strings.Join(teams, ",") + "]")
-	r.vetrine = []byte("[" + strings.Join(vetrine, ",") + "]")
+	r.showcases = []byte("[" + strings.Join(showcases, ",") + "]")
 	for i := range r.seats {
 		r.sendDraft(i)
 	}
@@ -228,15 +228,15 @@ func (r *Room) broadcast(msg []byte) {
 	}
 }
 
-// regole: quelle dell'evento della coda (sim/regole.lua), il client le passa
+// regole: quelle dell'evento della coda (sim/rules.lua), il client le passa
 // alla sua copia della partita; null fuori dagli eventi.
 func (r *Room) sendStart(slot int, resume bool) {
-	regole := r.mode.Regole
-	if regole == nil {
-		regole = []byte("null")
+	rules := r.mode.Rules
+	if rules == nil {
+		rules = []byte("null")
 	}
 	r.send(slot, fmt.Appendf(nil, `{"t":"start","seed":%d,"map":%q,"mode":%q,"you":%d,"tok":%q,"resume":%t,"players":%s,"regole":%s,"vetrine":%s}`,
-		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players, regole, r.vetrine))
+		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players, rules, r.showcases))
 }
 
 // sendDraft manda a un giocatore la scelta delle armi: ventagli, le sue
@@ -255,7 +255,7 @@ func (r *Room) sendDraft(slot int) {
 	msg := appendJSON(nil, t)
 	// le squadre sono già in JSON: le aggiungiamo in coda all'oggetto
 	msg = append(append(append(msg[:len(msg)-1], `,"players":`...), r.players...), `,"vetrine":`...)
-	msg = append(append(msg, r.vetrine...), '}')
+	msg = append(append(msg, r.showcases...), '}')
 	r.send(slot, msg)
 }
 
@@ -266,7 +266,7 @@ func (r *Room) startMatch() error {
 		return err
 	}
 	r.draft = nil
-	if r.sim, err = r.eng.NewSim(r.seed, "", players, r.mode.Regole); err != nil {
+	if r.sim, err = r.eng.NewSim(r.seed, "", players, r.mode.Rules); err != nil {
 		return err
 	}
 	list, err := r.eng.call("start_players", players)

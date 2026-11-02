@@ -1,5 +1,5 @@
 -- Equipaggiamento: i quattro set dei Titani (bibbia grafica "Le Scorie").
--- Lua puro, come sim/abilita.lua.
+-- Lua puro, come sim/skills.lua.
 --
 -- Dal documento di game design: misto di sidegrade (ogni pezzo dà qualcosa e
 -- toglie qualcosa) e tier che cambiano aspetto e varianti. Il tier non rende
@@ -101,9 +101,9 @@ function M.livello(matches)
 end
 
 -- il prossimo scatto di un pezzo a quel livello (nil: li ha presi tutti)
-function M.prossimo_scatto(livello)
+function M.prossimo_scatto(level_name)
 	for _, s in ipairs(M.SCATTI) do
-		if livello < s then return s end
+		if level_name < s then return s end
 	end
 end
 

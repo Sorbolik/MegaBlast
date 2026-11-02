@@ -30,7 +30,7 @@ import (
 //
 // Un evento o si appoggia a una coda normale (Torneo, Sfida, XP: conta per le
 // partite di quella coda) o ha una coda sua (modificatore: "modo" dice le
-// squadre, "regole" cosa cambia, sim/regole.lua). Il giocatore sceglie solo la
+// squadre, "regole" cosa cambia, sim/rules.lua). Il giocatore sceglie solo la
 // coda: una partita conta per tutti gli eventi attaccati alla sua coda.
 //
 //	{"eventi": [{
@@ -44,9 +44,9 @@ import (
 // "premi" e "obiettivo" il server li passa così come sono: li legge il gioco.
 
 // Quanti giorni avanti il server espande le ripetizioni (le due strisce della bacheca).
-const giorniAvanti = 14
+const daysAhead = 14
 
-var roma = func() *time.Location {
+var rome = func() *time.Location {
 	l, err := time.LoadLocation("Europe/Rome")
 	if err != nil {
 		panic(err)
@@ -55,83 +55,83 @@ var roma = func() *time.Location {
 }()
 
 // Tipi di evento: quelli con la coda sua e quelli che stanno su una coda normale.
-var tipiEvento = map[string]bool{"mod": true, "torneo": false, "sfida": false, "xp": false}
+var eventKinds = map[string]bool{"mod": true, "torneo": false, "sfida": false, "xp": false}
 
-var idEvento = regexp.MustCompile(`^[a-z0-9_]{1,32}$`)
+var eventID = regexp.MustCompile(`^[a-z0-9_]{1,32}$`)
 
 // Evento è come Sergio lo scrive nel file.
-type Evento struct {
+type Event struct {
 	ID        string          `json:"id"`
-	Tipo      string          `json:"tipo"`
-	Nome      string          `json:"nome"`
-	Riga      string          `json:"riga"`
-	Da        string          `json:"da"`   // "2026-11-02 10:00", ora di Roma
+	Kind      string          `json:"tipo"`
+	Title      string          `json:"nome"`
+	Line      string          `json:"riga"`
+	From        string          `json:"da"`   // "2026-11-02 10:00", ora di Roma
 	A         string          `json:"a"`    // fine della prima finestra
-	Ogni      int             `json:"ogni"` // settimane fra una volta e l'altra, 0 = una volta sola
-	Fino      string          `json:"fino"` // "2027-01-31": l'ultimo giorno in cui può ricominciare; vuoto = per sempre
-	Modo      string          `json:"modo"` // coda sua: le squadre (1v1, 2v2, ffa)
-	Coda      string          `json:"coda"` // coda normale a cui si appoggia (di solito 2v2)
-	Regole    json.RawMessage `json:"regole"`
-	Premi     json.RawMessage `json:"premi"`
-	Obiettivo json.RawMessage `json:"obiettivo"`
+	Every      int             `json:"ogni"` // settimane fra una volta e l'altra, 0 = una volta sola
+	Until      string          `json:"fino"` // "2027-01-31": l'ultimo giorno in cui può ricominciare; vuoto = per sempre
+	Teams      string          `json:"modo"` // coda sua: le squadre (1v1, 2v2, ffa)
+	Queue      string          `json:"coda"` // coda normale a cui si appoggia (di solito 2v2)
+	Rules    json.RawMessage `json:"regole"`
+	Rewards     json.RawMessage `json:"premi"`
+	Goal json.RawMessage `json:"obiettivo"`
 
-	da, a, fino time.Time
+	da, a, until time.Time
 }
 
 // Occorrenza è una volta di un evento, come la vede il gioco.
-type Occorrenza struct {
+type Occurrence struct {
 	ID        string          `json:"id"`
-	Evento    string          `json:"evento"`
-	Tipo      string          `json:"tipo"`
-	Nome      string          `json:"nome"`
-	Riga      string          `json:"riga,omitempty"`
-	Da        int64           `json:"da"`              // secondi Unix
+	Event    string          `json:"evento"`
+	Kind      string          `json:"tipo"`
+	Title      string          `json:"nome"`
+	Line      string          `json:"riga,omitempty"`
+	From        int64           `json:"da"`              // secondi Unix
 	A         int64           `json:"a"`               // secondi Unix
-	Torna     int64           `json:"torna,omitempty"` // la volta dopo, se c'è
-	Coda      string          `json:"coda"`            // la coda da chiedere nel hello per giocarlo
-	Modo      string          `json:"modo"`            // le squadre della partita
-	Giocatori int             `json:"giocatori"`
-	Regole    json.RawMessage `json:"regole,omitempty"`
-	Premi     json.RawMessage `json:"premi,omitempty"`
-	Obiettivo json.RawMessage `json:"obiettivo,omitempty"`
+	Next     int64           `json:"torna,omitempty"` // la volta dopo, se c'è
+	Queue      string          `json:"coda"`            // la coda da chiedere nel hello per giocarlo
+	Teams      string          `json:"modo"`            // le squadre della partita
+	PlayerCount int             `json:"giocatori"`
+	Rules    json.RawMessage `json:"regole,omitempty"`
+	Rewards     json.RawMessage `json:"premi,omitempty"`
+	Goal json.RawMessage `json:"obiettivo,omitempty"`
 }
 
 // Ogni quanto il server chiede il calendario al pannello.
-const ogniQuantoPannello = 30 * time.Second
+const panelPoll = 30 * time.Second
 
 // Calendario legge il file degli eventi e lo rilegge quando cambia, o lo
 // scarica dal pannello.
-type Calendario struct {
+type Calendar struct {
 	path string
 	now  func() time.Time
 
 	mu       sync.Mutex
-	eventi   []Evento
+	events   []Event
 	modTime  time.Time
-	guardato time.Time
+	checkedAt time.Time
 
 	// dal pannello: la versione presa (ETag), l'errore se il server l'ha
 	// rifiutata (il pannello lo mostra a Sergio) e l'ultimo problema di rete
-	versione, errore, rete string
+	version, rejected, rete string
 }
 
-func NewCalendario(path string) *Calendario {
-	c := &Calendario{path: path, now: time.Now}
-	if dalPannello(path) {
+func NewCalendar(path string) *Calendar {
+	c := &Calendar{path: path, now: time.Now}
+	if fromPanel(path) {
 		client := &http.Client{Timeout: 10 * time.Second}
-		c.scarica(client)
+		c.download(client)
 		go func() {
-			for range time.Tick(ogniQuantoPannello) {
-				c.scarica(client)
+			for range time.Tick(panelPoll) {
+				c.download(client)
 			}
 		}()
 		return c
 	}
-	c.aggiorna()
+	c.reload()
 	return c
 }
 
-func dalPannello(path string) bool {
+func fromPanel(path string) bool {
 	return strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://")
 }
 
@@ -139,16 +139,16 @@ func dalPannello(path string) bool {
 // ha preso e, se l'ha rifiutata, perché: il pannello lo mostra a Sergio. Come
 // per il file, un calendario sbagliato non sostituisce quello buono, e se il
 // pannello non risponde resta quello di prima.
-func (c *Calendario) scarica(client *http.Client) {
+func (c *Calendar) download(client *http.Client) {
 	c.mu.Lock()
-	u, etag := c.path, c.versione
-	if c.versione != "" {
-		u += "?" + url.Values{"preso": {strings.Trim(c.versione, `"`)}, "errore": {c.errore}}.Encode()
+	u, etag := c.path, c.version
+	if c.version != "" {
+		u += "?" + url.Values{"preso": {strings.Trim(c.version, `"`)}, "errore": {c.rejected}}.Encode()
 	}
 	c.mu.Unlock()
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		c.problema(err.Error())
+		c.problem(err.Error())
 		return
 	}
 	if etag != "" {
@@ -156,12 +156,12 @@ func (c *Calendario) scarica(client *http.Client) {
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		c.problema(err.Error())
+		c.problem(err.Error())
 		return
 	}
 	defer res.Body.Close()
 	if res.StatusCode == http.StatusNotModified {
-		c.problema("")
+		c.problem("")
 		return
 	}
 	data, err := io.ReadAll(io.LimitReader(res.Body, 4<<20))
@@ -169,25 +169,25 @@ func (c *Calendario) scarica(client *http.Client) {
 		err = fmt.Errorf("%s", res.Status)
 	}
 	if err != nil {
-		c.problema(err.Error())
+		c.problem(err.Error())
 		return
 	}
-	c.problema("")
-	ev, err := leggiEventi(data)
+	c.problem("")
+	ev, err := readEvents(data)
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.versione = res.Header.Get("ETag")
+	c.version = res.Header.Get("ETag")
 	if err != nil {
-		c.errore = err.Error()
-		log.Printf("eventi: la versione %s del pannello non va, tengo il calendario di prima: %v", c.versione, err)
+		c.rejected = err.Error()
+		log.Printf("eventi: la versione %s del pannello non va, tengo il calendario di prima: %v", c.version, err)
 		return
 	}
-	c.eventi, c.errore = ev, ""
-	log.Printf("eventi: %d dal pannello (versione %s)", len(ev), c.versione)
+	c.events, c.rejected = ev, ""
+	log.Printf("eventi: %d dal pannello (versione %s)", len(ev), c.version)
 }
 
 // problema scrive nel log un problema di rete col pannello solo quando cambia
-func (c *Calendario) problema(p string) {
+func (c *Calendar) problem(p string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if p != c.rete && p != "" {
@@ -201,23 +201,23 @@ func (c *Calendario) problema(p string) {
 // aggiorna rilegge il file se è cambiato (al massimo ogni due secondi). Un
 // file sbagliato non cancella il calendario buono: resta quello di prima e
 // l'errore va nel log.
-func (c *Calendario) aggiorna() {
-	if c.path == "" || dalPannello(c.path) {
+func (c *Calendar) reload() {
+	if c.path == "" || fromPanel(c.path) {
 		return
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	now := c.now()
-	if !c.guardato.IsZero() && now.Sub(c.guardato) < 2*time.Second {
+	if !c.checkedAt.IsZero() && now.Sub(c.checkedAt) < 2*time.Second {
 		return
 	}
-	c.guardato = now
+	c.checkedAt = now
 	st, err := os.Stat(c.path)
 	if err != nil {
-		if !c.modTime.IsZero() || c.eventi == nil {
+		if !c.modTime.IsZero() || c.events == nil {
 			log.Printf("eventi: %v", err)
 		}
-		c.eventi, c.modTime = []Evento{}, time.Time{}
+		c.events, c.modTime = []Event{}, time.Time{}
 		return
 	}
 	if st.ModTime().Equal(c.modTime) {
@@ -226,9 +226,9 @@ func (c *Calendario) aggiorna() {
 	c.modTime = st.ModTime()
 	data, err := os.ReadFile(c.path)
 	if err == nil {
-		var ev []Evento
-		if ev, err = leggiEventi(data); err == nil {
-			c.eventi = ev
+		var ev []Event
+		if ev, err = readEvents(data); err == nil {
+			c.events = ev
 			log.Printf("eventi: %d letti da %s", len(ev), c.path)
 			return
 		}
@@ -237,42 +237,42 @@ func (c *Calendario) aggiorna() {
 }
 
 // leggiEventi controlla tutto il file: un errore e non si usa niente.
-func leggiEventi(data []byte) ([]Evento, error) {
+func readEvents(data []byte) ([]Event, error) {
 	var f struct {
-		Eventi []Evento `json:"eventi"`
+		EventList []Event `json:"eventi"`
 	}
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields() // un campo scritto male si vede subito
 	if err := dec.Decode(&f); err != nil {
 		return nil, err
 	}
-	visti := map[string]bool{}
+	seen := map[string]bool{}
 	var eng *Engine
 	defer func() {
 		if eng != nil {
 			eng.L.Close()
 		}
 	}()
-	for i := range f.Eventi {
-		e := &f.Eventi[i]
-		if err := e.controlla(); err != nil {
+	for i := range f.EventList {
+		e := &f.EventList[i]
+		if err := e.check(); err != nil {
 			return nil, fmt.Errorf("evento %q: %w", e.ID, err)
 		}
-		if visti[e.ID] {
+		if seen[e.ID] {
 			return nil, fmt.Errorf("evento %q: id ripetuto", e.ID)
 		}
-		visti[e.ID] = true
-		if len(e.Regole) > 0 {
+		seen[e.ID] = true
+		if len(e.Rules) > 0 {
 			if eng == nil {
 				var err error
 				if eng, err = newEngine(); err != nil {
 					return nil, err
 				}
 			}
-			r, err := eng.fromJSON(e.Regole)
+			r, err := eng.fromJSON(e.Rules)
 			if err == nil {
 				var v interface{ String() string }
-				if v, err = eng.call("regole_valida", r, lua.LBool(e.Modo == "")); err == nil && v.String() != "" {
+				if v, err = eng.call("regole_valida", r, lua.LBool(e.Teams == "")); err == nil && v.String() != "" {
 					err = fmt.Errorf("regole: %s", v.String())
 				}
 			}
@@ -281,60 +281,60 @@ func leggiEventi(data []byte) ([]Evento, error) {
 			}
 		}
 	}
-	return f.Eventi, nil
+	return f.EventList, nil
 }
 
-func (e *Evento) controlla() error {
+func (e *Event) check() error {
 	var err error
-	if !idEvento.MatchString(e.ID) {
+	if !eventID.MatchString(e.ID) {
 		return fmt.Errorf("id: lettere minuscole, cifre e _")
 	}
 	if _, ok := modes[e.ID]; ok {
 		return fmt.Errorf("id: %q è già una coda normale", e.ID)
 	}
-	propria, ok := tipiEvento[e.Tipo]
+	own, ok := eventKinds[e.Kind]
 	if !ok {
 		return fmt.Errorf("tipo: mod, torneo, sfida o xp")
 	}
-	if e.Nome == "" {
+	if e.Title == "" {
 		return fmt.Errorf("manca il nome")
 	}
-	if e.da, err = time.ParseInLocation("2006-01-02 15:04", e.Da, roma); err != nil {
+	if e.da, err = time.ParseInLocation("2006-01-02 15:04", e.From, rome); err != nil {
 		return fmt.Errorf("da: %w", err)
 	}
-	if e.a, err = time.ParseInLocation("2006-01-02 15:04", e.A, roma); err != nil {
+	if e.a, err = time.ParseInLocation("2006-01-02 15:04", e.A, rome); err != nil {
 		return fmt.Errorf("a: %w", err)
 	}
 	if !e.a.After(e.da) {
 		return fmt.Errorf("a viene prima di da")
 	}
-	if e.Ogni < 0 {
+	if e.Every < 0 {
 		return fmt.Errorf("ogni: settimane, 0 = una volta sola")
 	}
-	if e.Ogni > 0 && e.a.Sub(e.da) > time.Duration(e.Ogni)*7*24*time.Hour {
-		return fmt.Errorf("dura più di %d settimane: si accavallerebbe con la volta dopo", e.Ogni)
+	if e.Every > 0 && e.a.Sub(e.da) > time.Duration(e.Every)*7*24*time.Hour {
+		return fmt.Errorf("dura più di %d settimane: si accavallerebbe con la volta dopo", e.Every)
 	}
-	if e.Fino != "" {
-		if e.fino, err = time.ParseInLocation("2006-01-02", e.Fino, roma); err != nil {
+	if e.Until != "" {
+		if e.until, err = time.ParseInLocation("2006-01-02", e.Until, rome); err != nil {
 			return fmt.Errorf("fino: %w", err)
 		}
-		e.fino = e.fino.AddDate(0, 0, 1) // compreso quel giorno
+		e.until = e.until.AddDate(0, 0, 1) // compreso quel giorno
 	}
-	if propria {
-		if _, ok := modes[e.Modo]; !ok {
+	if own {
+		if _, ok := modes[e.Teams]; !ok {
 			return fmt.Errorf("modo: 1v1, 2v2 o ffa")
 		}
-		if e.Coda != "" {
+		if e.Queue != "" {
 			return fmt.Errorf("coda: un evento con la coda sua non sta su un'altra")
 		}
 	} else {
-		if e.Coda == "" {
-			e.Coda = "2v2"
+		if e.Queue == "" {
+			e.Queue = "2v2"
 		}
-		if _, ok := modes[e.Coda]; !ok {
+		if _, ok := modes[e.Queue]; !ok {
 			return fmt.Errorf("coda: 1v1, 2v2 o ffa")
 		}
-		if e.Modo != "" {
+		if e.Teams != "" {
 			return fmt.Errorf("modo solo per i modificatori (tipo mod), che hanno la coda loro")
 		}
 		// le regole che cambiano la partita su una coda normale la cambierebbero a
@@ -344,67 +344,67 @@ func (e *Evento) controlla() error {
 }
 
 // volta k dell'evento: inizio e fine (AddDate tiene l'ora anche col cambio dell'ora legale)
-func (e *Evento) volta(k int) (time.Time, time.Time, bool) {
-	if k > 0 && e.Ogni == 0 {
+func (e *Event) window(k int) (time.Time, time.Time, bool) {
+	if k > 0 && e.Every == 0 {
 		return time.Time{}, time.Time{}, false
 	}
-	da, a := e.da.AddDate(0, 0, 7*e.Ogni*k), e.a.AddDate(0, 0, 7*e.Ogni*k)
-	if !e.fino.IsZero() && !da.Before(e.fino) {
+	da, a := e.da.AddDate(0, 0, 7*e.Every*k), e.a.AddDate(0, 0, 7*e.Every*k)
+	if !e.until.IsZero() && !da.Before(e.until) {
 		return da, a, false
 	}
 	return da, a, true
 }
 
-func (e *Evento) occorrenza(da, a time.Time) Occorrenza {
-	o := Occorrenza{
-		ID: e.ID + "-" + da.In(roma).Format("20060102"), Evento: e.ID, Tipo: e.Tipo,
-		Nome: e.Nome, Riga: e.Riga, Da: da.Unix(), A: a.Unix(),
-		Regole: e.Regole, Premi: e.Premi, Obiettivo: e.Obiettivo,
+func (e *Event) occurrence(da, a time.Time) Occurrence {
+	o := Occurrence{
+		ID: e.ID + "-" + da.In(rome).Format("20060102"), Event: e.ID, Kind: e.Kind,
+		Title: e.Title, Line: e.Line, From: da.Unix(), A: a.Unix(),
+		Rules: e.Rules, Rewards: e.Rewards, Goal: e.Goal,
 	}
-	if e.Modo != "" {
-		o.Coda, o.Modo = o.ID, e.Modo
+	if e.Teams != "" {
+		o.Queue, o.Teams = o.ID, e.Teams
 	} else {
-		o.Coda, o.Modo = e.Coda, e.Coda
+		o.Queue, o.Teams = e.Queue, e.Queue
 	}
-	o.Giocatori = modes[o.Modo].Players
+	o.PlayerCount = modes[o.Teams].Players
 	return o
 }
 
 // Occorrenze: quelle in corso adesso e quelle che cominciano nei prossimi
 // giorniAvanti giorni, in ordine di inizio.
-func (c *Calendario) Occorrenze() []Occorrenza {
-	c.aggiorna()
+func (c *Calendar) Occurrences() []Occurrence {
+	c.reload()
 	c.mu.Lock()
-	eventi, now := c.eventi, c.now()
+	events, now := c.events, c.now()
 	c.mu.Unlock()
-	limite := now.AddDate(0, 0, giorniAvanti)
-	out := []Occorrenza{}
-	for i := range eventi {
-		e := &eventi[i]
+	limit := now.AddDate(0, 0, daysAhead)
+	out := []Occurrence{}
+	for i := range events {
+		e := &events[i]
 		// salta le volte già finite senza contarle una a una
 		k := 0
-		if e.Ogni > 0 && now.After(e.a) {
-			k = int(now.Sub(e.a)/(time.Duration(e.Ogni)*7*24*time.Hour)) - 1
+		if e.Every > 0 && now.After(e.a) {
+			k = int(now.Sub(e.a)/(time.Duration(e.Every)*7*24*time.Hour)) - 1
 			k = max(k, 0)
 		}
 		for ; ; k++ {
-			da, a, ok := e.volta(k)
-			if !ok || da.After(limite) {
+			da, a, ok := e.window(k)
+			if !ok || da.After(limit) {
 				break
 			}
 			if !a.After(now) {
 				continue
 			}
-			o := e.occorrenza(da, a)
-			if dopo, _, ok := e.volta(k + 1); ok {
-				o.Torna = dopo.Unix()
+			o := e.occurrence(da, a)
+			if after, _, ok := e.window(k + 1); ok {
+				o.Next = after.Unix()
 			}
 			out = append(out, o)
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool {
-		if out[i].Da != out[j].Da {
-			return out[i].Da < out[j].Da
+		if out[i].From != out[j].From {
+			return out[i].From < out[j].From
 		}
 		return out[i].ID < out[j].ID
 	})
@@ -412,11 +412,11 @@ func (c *Calendario) Occorrenze() []Occorrenza {
 }
 
 // Coda trova la coda di un evento in corso dal suo id (evento-AAAAMMGG).
-func (c *Calendario) Coda(id string) (Mode, bool) {
+func (c *Calendar) Queue(id string) (Mode, bool) {
 	now := c.now().Unix()
-	for _, o := range c.Occorrenze() {
-		if o.Coda == id && o.Modo != o.Coda && o.Da <= now && now < o.A {
-			return Mode{Name: o.ID, Players: o.Giocatori, Sim: o.Modo, Regole: o.Regole}, true
+	for _, o := range c.Occurrences() {
+		if o.Queue == id && o.Teams != o.Queue && o.From <= now && now < o.A {
+			return Mode{Name: o.ID, Players: o.PlayerCount, Sim: o.Teams, Rules: o.Rules}, true
 		}
 	}
 	return Mode{}, false

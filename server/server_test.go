@@ -168,14 +168,14 @@ func TestHookShotInSnapshot(t *testing.T) {
 // le armi (fire.w = "swap"): un globo in più e gli attacchi chiusi nello stato.
 func TestSwapSecondAttack(t *testing.T) {
 	sim := newTestSim(t, 42, "forgia")
-	type stato struct {
+	type state struct {
 		U int `json:"u"`
 		R []struct {
 			TL int `json:"tl"`
 		} `json:"r"`
 	}
-	leggi := func() stato {
-		var st stato
+	read := func() state {
+		var st state
 		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
 			t.Fatal(err)
 		}
@@ -185,7 +185,7 @@ func TestSwapSecondAttack(t *testing.T) {
 		sim.Step(Input{})
 	}
 	sim.Step(Input{Fire: true, Angle: 1.0, Power: 0.6})
-	prima := leggi()
+	before := read()
 	sim.Step(Input{Fire: true, Weapon: "swap"})
 	swapped := false
 	for _, e := range sim.Events() {
@@ -195,9 +195,9 @@ func TestSwapSecondAttack(t *testing.T) {
 			swapped = true
 		}
 	}
-	dopo := leggi()
-	if !swapped || dopo.R[0].TL != prima.R[0].TL+1 || dopo.U&3 != 3 {
-		t.Fatalf("scambio non riuscito: evento %v, globi %d -> %d, attacchi %d", swapped, prima.R[0].TL, dopo.R[0].TL, dopo.U)
+	after := read()
+	if !swapped || after.R[0].TL != before.R[0].TL+1 || after.U&3 != 3 {
+		t.Fatalf("scambio non riuscito: evento %v, globi %d -> %d, attacchi %d", swapped, before.R[0].TL, after.R[0].TL, after.U)
 	}
 }
 
@@ -392,14 +392,14 @@ func TestOnlineMatch(t *testing.T) {
 	// lo stato porta casse, schegge e colpi: il giocatore 1 ha i colpi
 	// (config.DRAFT_SHOTS, 2) della primaria scelta e la sua secondaria
 	r1 := first["r"].([]any)[1].(map[string]any)
-	colpi := func(r map[string]any) (n float64) {
+	shots := func(r map[string]any) (n float64) {
 		for _, k := range []string{"ag", "as", "ap", "ac"} {
 			n += r[k].(float64)
 		}
 		return
 	}
 	key := map[string]string{"grenade": "ag", "shards": "as", "punch": "ap", "sniper": "ac"}[w]
-	if _, ok := first["c"].([]any); !ok || r0[key] != 2.0 || colpi(r0) != 2 || colpi(r1) != 2 {
+	if _, ok := first["c"].([]any); !ok || r0[key] != 2.0 || shots(r0) != 2 || shots(r1) != 2 {
 		t.Fatalf("stato senza casse o colpi scelti: %v", first)
 	}
 	if r0["ss"] != 2.0 || r1["ss"] != 2.0 {
@@ -577,7 +577,7 @@ func TestLeave(t *testing.T) {
 // dei pallini dei turni li legge da qui.
 func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 	sim := newTestSim(t, 42, "forgia")
-	type stato struct {
+	type state struct {
 		AV int     `json:"av"`
 		AB float64 `json:"ab"`
 		FR bool    `json:"fr"`
@@ -586,14 +586,14 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 			GD bool `json:"gd"`
 		} `json:"r"`
 	}
-	leggi := func() stato {
-		var st stato
+	read := func() state {
+		var st state
 		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
 			t.Fatal(err)
 		}
 		return st
 	}
-	st := leggi()
+	st := read()
 	if st.AV != 1 || st.AB != 0 || st.FR || st.GR != 1 || st.R[0].GD || st.R[1].GD {
 		t.Fatalf("a inizio partita la coppia è aperta dalla squadra 1, niente ultimo giro: %+v", st)
 	}
@@ -602,21 +602,21 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 		if err := sim.Step(Input{}); err != nil {
 			t.Fatal(err)
 		}
-		if leggi().R[0].GD {
+		if read().R[0].GD {
 			break
 		}
 	}
-	st = leggi()
+	st = read()
 	if !st.R[0].GD || st.R[1].GD || st.AV != 1 {
 		t.Fatalf("dopo il turno del primo: lui ha giocato, la coppia resta sua: %+v", st)
 	}
 	// finito anche il turno del secondo comincia il giro 2
-	for i := 0; i < 60*40 && leggi().GR == 1; i++ {
+	for i := 0; i < 60*40 && read().GR == 1; i++ {
 		if err := sim.Step(Input{}); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if st = leggi(); st.GR != 2 || st.R[0].GD || st.R[1].GD {
+	if st = read(); st.GR != 2 || st.R[0].GD || st.R[1].GD {
 		t.Fatalf("dopo un giro intero: giro 2, nessuno ha ancora giocato: %+v", st)
 	}
 }
@@ -624,7 +624,7 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 // Il cartellino di ognuno (livello e badge, col saluto) arriva agli altri con
 // la scelta e con lo start, controllato: livello fra 1 e livMax, al massimo
 // badgeMax badge validi
-func TestVetrine(t *testing.T) {
+func TestShowcases(t *testing.T) {
 	url := testServer(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -635,15 +635,15 @@ func TestVetrine(t *testing.T) {
 	b := dial(t, ctx, url)
 	// una tabella Lua vuota arriva come oggetto: il saluto vale lo stesso
 	b.send(`{"t":"hello","v":8,"mode":"1v1","vetrina":{"liv":100000,"bdg":{}}}`)
-	vetrine := func(m map[string]any) string {
+	showcases := func(m map[string]any) string {
 		j, _ := json.Marshal(m["vetrine"])
 		return string(j)
 	}
 	want := `[{"bdg":[{"grado":2,"id":"mira"},{"grado":4,"id":"globi"},{"grado":1,"id":"casse"}],"liv":12},{"bdg":[],"liv":999}]`
-	if d := b.waitFor(`"draft"`); vetrine(d) != want {
-		t.Fatalf("vetrine nella scelta: %s, attese %s", vetrine(d), want)
+	if d := b.waitFor(`"draft"`); showcases(d) != want {
+		t.Fatalf("vetrine nella scelta: %s, attese %s", showcases(d), want)
 	}
-	if s := a.waitFor(`"start"`); vetrine(s) != want {
-		t.Fatalf("vetrine nello start: %s, attese %s", vetrine(s), want)
+	if s := a.waitFor(`"start"`); showcases(s) != want {
+		t.Fatalf("vetrine nello start: %s, attese %s", showcases(s), want)
 	}
 }

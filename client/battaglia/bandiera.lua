@@ -1,4 +1,4 @@
--- La bandierina a scacchi delle lezioni (sim/missioni.lua, raggiungi con
+-- La bandierina a scacchi delle lezioni (sim/missions.lua, raggiungi con
 -- bandiera): un'asta e un drappo a scacchi bianchi e neri che sventola, nel
 -- mondo, dove devi arrivare. Pochi nodi fatti una volta.
 --

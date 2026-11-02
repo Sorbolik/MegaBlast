@@ -17,9 +17,9 @@
 local rng = require "sim.rng"
 local terrain = require "sim.terrain"
 local maps = require "sim.maps"
-local mischia = require "sim.mischia"
+local melee = require "sim.melee"
 local C = require "sim.config"
-local CORPO = require "sim.corpo"
+local BODY_SCALE = require "sim.corpo"
 
 local M = {}
 M.__index = M
@@ -50,8 +50,8 @@ M.GRAVITY = 25 * M.U
 -- capsula: sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo
 -- rotondo tocca i pendii vicino al centro invece che con lo spigolo, così non
 -- resta sospeso.
-M.ROBOT_H = CORPO.cammina.alto
-M.ROBOT_HALF_W = CORPO.cammina.largo / 2
+M.ROBOT_H = BODY_SCALE.cammina.alto
+M.ROBOT_HALF_W = BODY_SCALE.cammina.largo / 2
 -- l'altezza del diavoletto disegnato, dai piedi alla cima della testa: il
 -- disegno non cambia se cambiano la capsula per camminare o il cerchio dei colpi
 -- (sim/corpo.lua). Da qui partono anche i colpi (MUZZLE) e il rampino.
@@ -87,7 +87,7 @@ M.SELF_DAMAGE = 0.5      -- quanto del danno subisce chi si colpisce da solo
 -- per quanti tick dopo il lancio un proiettile non tocca chi l'ha lanciato
 M.OWNER_SAFE_TICKS = 30
 
--- Lama di Nucleo: il fendente di sim/mischia.lua ruotato sulla mira (mirando in
+-- Lama di Nucleo: il fendente di sim/melee.lua ruotato sulla mira (mirando in
 -- basso il colpo scende dall'alto verso il basso). I danni arrivano quando si
 -- chiude la finestra del colpo, a tutti quelli toccati dalla lama, e il colpo
 -- ferma il bersaglio.
@@ -98,8 +98,8 @@ M.SWORD_DAMAGE = 25
 -- Dove un robot può essere colpito (proiettili, globi, lame, esplosioni): un
 -- cerchio di raggio HURT_R alto HURT_Y dai piedi (sim/corpo.lua). Per le
 -- esplosioni conta il quadrato attorno al cerchio, più largo di HURT_FAT per lato.
-M.HURT_R = CORPO.colpi.raggio
-M.HURT_Y = CORPO.colpi.centro
+M.HURT_R = BODY_SCALE.colpi.raggio
+M.HURT_Y = BODY_SCALE.colpi.centro
 M.HURT_FAT = 0.1 * M.U
 
 -- Teletrasporto (Passo d'Ombra): un globo che vola come il missile, rimbalza e
@@ -142,7 +142,7 @@ M.SHARD_BLAST = { r = 12.25, damage_r = 21, damage = 11, impulse = 30 }
 M.SNIPER_SPEED = 840
 M.SNIPER_LIFE = 6 * 60
 
--- Pugno del Titano: il montante di sim/mischia.lua ruotato sulla mira, lancia
+-- Pugno del Titano: il montante di sim/melee.lua ruotato sulla mira, lancia
 -- dritto in alto chi tocca; chi colpisce fa un saltello
 M.PUNCH_DAMAGE = 47      -- 28 invece di 50 (arena dei bot, 29 ottobre 2026: vinceva troppo), poi 47 (5/3)
 M.PUNCH_LAUNCH = 40 * M.U   -- velocità verso l'alto del bersaglio
@@ -180,7 +180,7 @@ for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 -- Casse: cadono dal cielo in un punto a caso (CRATE_CHANCE qui sotto). Chi la
 -- tocca trova un colpo di un'arma o un oggetto (config.CRATE_CONTENTS).
 -- CRATE_EVERY: la cadenza che il pannello degli eventi propone per gli eventi
--- con una cassa ogni tanti turni (sim/regole.lua, casse).
+-- con una cassa ogni tanti turni (sim/rules.lua, casse).
 M.CRATE_EVERY = 3
 M.CRATE_MAX = 3          -- casse in mappa al massimo
 M.CRATE_HALF_W = 17.5
@@ -229,7 +229,7 @@ end
 local NO_INPUT = {}
 
 -- Statistiche di un robot senza albero né equipaggiamento: config.STATS più
--- quelle di movimento (DEFAULT_STATS). Da qui parte anche sim/assetto.lua.
+-- quelle di movimento (DEFAULT_STATS). Da qui parte anche sim/loadout.lua.
 function M.base_stats()
 	local st = { teleport_ticks = M.TELEPORT_TICKS }
 	for k, v in pairs(C.STATS) do st[k] = v end
@@ -302,7 +302,7 @@ end
 -- opts.score = punti partita diversi da config.SCORE, solo i campi che cambiano (l'arena prova le varianti);
 --   false: niente punti (le lezioni che non parlano di punti, Sergio 31 ott)
 -- opts.normalize = albero ed equipaggiamento non contano, tutti hanno le statistiche
--- di base (resta l'arma della scelta): la regola livello = "fisso" di un evento (sim/regole.lua)
+-- di base (resta l'arma della scelta): la regola livello = "fisso" di un evento (sim/rules.lua)
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
@@ -670,16 +670,16 @@ end
 -- piedi c'è sempre terreno (Sergio, 29 ottobre 2026: "sempre su parti fisse
 -- della mappa, ma sempre randomici"). Ogni SPAWN_PASSO px lungo le superfici
 -- d'acciaio con lo spazio per il robot sopra; nil se la mappa non ne ha.
-M.SPAWN_PASSO = 24
+M.SPAWN_STEP = 24
 -- distanza minima dai nemici vivi e dalle trappole per rinascere in un punto
-M.SPAWN_LONTANO = 300
-M.SPAWN_TRAPPOLA = 48
+M.SPAWN_FAR = 300
+M.SPAWN_TRAP = 48
 
 function M.find_spawn_spots(t)
 	local head = math.ceil(M.ROBOT_H / t.cell)
 	local half = math.ceil(M.ROBOT_HALF_W / t.cell)
 	local out = {}
-	for x = 30, M.WORLD_W - 30, M.SPAWN_PASSO do
+	for x = 30, M.WORLD_W - 30, M.SPAWN_STEP do
 		local cx = math.floor(x / t.cell)
 		for cy = 0, t.h - 2 do
 			if t:get(cx, cy) == terrain.STEEL and t:get(cx, cy + 1) == 0
@@ -709,14 +709,14 @@ function M:spawn_spot(rb)
 					d = math.min(d, math.sqrt(dx * dx + dy * dy))
 				end
 			end
-			local trappola = false
+			local trap_name = false
 			for _, o in ipairs(self.placed) do
-				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAPPOLA and math.abs(o.y - s.y) < M.SPAWN_TRAPPOLA then
-					trappola = true
+				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAP and math.abs(o.y - s.y) < M.SPAWN_TRAP then
+					trap_name = true
 				end
 			end
-			if not trappola then
-				if d >= M.SPAWN_LONTANO then ok[#ok + 1] = s end
+			if not trap_name then
+				if d >= M.SPAWN_FAR then ok[#ok + 1] = s end
 				if d > best_d then best, best_d = s, d end
 			end
 		end
@@ -1716,28 +1716,28 @@ end
 -- Angolo della lama al tick t per un robot rivolto a destra: dipende dalla
 -- mira, base è l'angolo di mira (già girato a destra).
 function M.sword_angle(t, base)
-	return (base or 0) + math.rad(M.melee_pose(mischia.fendente, t)[7])
+	return (base or 0) + math.rad(M.melee_pose(melee.slash, t)[7])
 end
 
 -- Angolo del pugno al tick t, come sword_angle
 function M.punch_angle(t, base)
-	return (base or 0) + math.rad(M.melee_pose(mischia.montante, t)[7])
+	return (base or 0) + math.rad(M.melee_pose(melee.uppercut, t)[7])
 end
 
 -- Durata in tick di un colpo di mischia.lua
-function M.melee_ticks(colpo)
-	return math.ceil((#colpo.pose - 1) * 60 / colpo.fps)
+function M.melee_ticks(hit_def)
+	return math.ceil((#hit_def.pose - 1) * 60 / hit_def.fps)
 end
 
 -- Posa del colpo al tick t (con frazione): i valori tra due fotogrammi
-local POSA = {}
-function M.melee_pose(colpo, t)
-	local f = math.max(0, math.min(#colpo.pose - 1, t * colpo.fps / 60))
+local POSE_CACHE = {}
+function M.melee_pose(hit_def, t)
+	local f = math.max(0, math.min(#hit_def.pose - 1, t * hit_def.fps / 60))
 	local i = math.floor(f)
-	local a, b = colpo.pose[i + 1], colpo.pose[math.min(#colpo.pose, i + 2)]
+	local a, b = hit_def.pose[i + 1], hit_def.pose[math.min(#hit_def.pose, i + 2)]
 	local k = f - i
-	for j = 1, 7 do POSA[j] = a[j] + (b[j] - a[j]) * k end
-	return POSA
+	for j = 1, 7 do POSE_CACHE[j] = a[j] + (b[j] - a[j]) * k end
+	return POSE_CACHE
 end
 
 -- Mira girata verso destra, tra -90° e 90°, e il lato verso cui si guarda
@@ -1819,7 +1819,7 @@ function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, base)
 end
 
 function M:update_swing(rb)
-	if self:update_melee(rb, mischia.fendente, rb.swing, rb.swing_base, rb.swing_dir) then
+	if self:update_melee(rb, melee.slash, rb.swing, rb.swing_base, rb.swing_dir) then
 		rb.swing = rb.swing + 1
 	else
 		rb.swing, rb.swing_hit, rb.swing_dir, rb.swing_base = nil, nil, nil, nil
@@ -1907,35 +1907,35 @@ function M:update_lunge(rb)
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
--- Colpi di mischia (sim/mischia.lua) --------------------------------------------
+-- Colpi di mischia (sim/melee.lua) --------------------------------------------
 
 -- Il rettangolo che colpisce al tick t, in pixel del mondo: asse e mezza larghezza
-function M.melee_blade(rb, colpo, t, base, dir)
-	local p = M.melee_pose(colpo, t)
+function M.melee_blade(rb, hit_def, t, base, dir)
+	local p = M.melee_pose(hit_def, t)
 	local u = M.U
 	local c, s = math.cos(base), math.sin(base)
 	local ox, oy = p[1], p[2]
 	local x0, y0 = ox + c * p[3] - s * p[4], oy + s * p[3] + c * p[4]
 	local x1, y1 = ox + c * p[5] - s * p[6], oy + s * p[5] + c * p[6]
-	return rb.x + dir * x0 * u, rb.y + y0 * u, rb.x + dir * x1 * u, rb.y + y1 * u, colpo.mezza_larghezza * u
+	return rb.x + dir * x0 * u, rb.y + y0 * u, rb.x + dir * x1 * u, rb.y + y1 * u, hit_def.half_width * u
 end
 
 -- Avanza di un tick il colpo che al tick t è nella posa t. Chi la lama tocca
 -- mentre la finestra è aperta viene segnato; quando si chiude riceve il colpo.
 -- Restituisce false quando il colpo è finito.
 local MELEE_SUBSTEPS = 6
-function M:update_melee(rb, colpo, t, base, dir)
-	local f0, f1 = t * colpo.fps / 60, (t + 1) * colpo.fps / 60
+function M:update_melee(rb, hit_def, t, base, dir)
+	local f0, f1 = t * hit_def.fps / 60, (t + 1) * hit_def.fps / 60
 	local hit = rb.melee_hit or {}
 	rb.melee_hit = hit
 	if t == 0 then for k in pairs(hit) do hit[k] = nil end end
-	if f1 >= colpo.apri and f0 <= colpo.chiudi then
+	if f1 >= hit_def.apri and f0 <= hit_def.chiudi then
 		-- più passi per tick: alla fine la lama gira veloce e potrebbe saltare un bersaglio
 		for s = 1, MELEE_SUBSTEPS do
 			local ts = t + s / MELEE_SUBSTEPS
-			local f = ts * colpo.fps / 60
-			if f >= colpo.apri and f <= colpo.chiudi then
-				local x0, y0, x1, y1, w = M.melee_blade(rb, colpo, ts, base, dir)
+			local f = ts * hit_def.fps / 60
+			if f >= hit_def.apri and f <= hit_def.chiudi then
+				local x0, y0, x1, y1, w = M.melee_blade(rb, hit_def, ts, base, dir)
 				for _, other in ipairs(self.robots) do
 					if other ~= rb and not other.dead and not hit[other.id]
 						and seg_hits_robot(other, x0, y0, x1, y1, w) then
@@ -1945,20 +1945,20 @@ function M:update_melee(rb, colpo, t, base, dir)
 			end
 		end
 	end
-	if colpo.salto and f0 < colpo.salto and f1 >= colpo.salto then
+	if hit_def.salto and f0 < hit_def.salto and f1 >= hit_def.salto then
 		rb.vy, rb.grounded = M.PUNCH_HOP, false
 	end
-	if f0 < colpo.chiudi and f1 >= colpo.chiudi then
+	if f0 < hit_def.chiudi and f1 >= hit_def.chiudi then
 		for _, other in ipairs(self.robots) do
 			if hit[other.id] then
 				hit[other.id] = nil
 				if not other.dead then
-					if colpo == mischia.fendente then self:sword_hit(rb, other) else self:punch_hit(rb, other, dir) end
+					if hit_def == melee.slash then self:sword_hit(rb, other) else self:punch_hit(rb, other, dir) end
 				end
 			end
 		end
 	end
-	return t + 1 < M.melee_ticks(colpo)
+	return t + 1 < M.melee_ticks(hit_def)
 end
 
 -- Pugno del Titano --------------------------------------------------------------
@@ -1981,7 +1981,7 @@ function M:punch_hit(rb, other, dir)
 end
 
 function M:update_punch(rb)
-	if self:update_melee(rb, mischia.montante, rb.punch, rb.punch_base, rb.punch_dir) then
+	if self:update_melee(rb, melee.uppercut, rb.punch, rb.punch_base, rb.punch_dir) then
 		rb.punch = rb.punch + 1
 	else
 		rb.punch, rb.punch_dir, rb.punch_base = nil, nil, nil
@@ -2047,13 +2047,13 @@ end
 -- Sceglie un punto a caso sulla superficie, lontano dai robot e dalle altre
 -- casse, e fa cadere lì una cassa dal cielo. Usa il generatore della partita,
 -- così server e client la mettono nello stesso posto. weapon e x: quella
--- cassa proprio lì (le lezioni, sim/missioni.lua cassa)
+-- cassa proprio lì (le lezioni, sim/missions.lua cassa)
 function M:spawn_crate(weapon, x)
 	if #self.crates >= M.CRATE_MAX then return nil end
 	weapon = weapon or self:crate_content()
 	local hw = M.CRATE_HALF_W
 	-- lontano dai robot e dalle altre casse
-	local function libero(x, gy)
+	local function free_spot(x, gy)
 		if self:robot_collides(x, gy) or self:object_collides(x, gy, hw) or self:object_collides(x, gy + M.CRATE_H, hw) then
 			return false
 		end
@@ -2069,7 +2069,7 @@ function M:spawn_crate(weapon, x)
 	if x then
 		gy = self.terrain:ground_below(x, M.WORLD_H - 1)
 	else
-		x, gy = self:surface_spot(libero)
+		x, gy = self:surface_spot(free_spot)
 	end
 	if not x then return nil end
 	self.crate_id = self.crate_id + 1
@@ -2080,7 +2080,7 @@ function M:spawn_crate(weapon, x)
 end
 
 -- Dà al robot quello che c'è in una cassa. Le armi senza colpi contati, il
--- Rampino e il paracadute arrivano solo dalle lezioni (sim/missioni.lua casse
+-- Rampino e il paracadute arrivano solo dalle lezioni (sim/missions.lua casse
 -- e dai): il Lanciarune a chi non ce l'ha (rb.disarmed), la secondaria prende
 -- il posto della sua, con un colpo
 function M.dai(rb, w)
@@ -2530,7 +2530,7 @@ end
 -- dei globi di partenza, ma quelli guadagnati nel turno si usano sempre.
 function M:can_use(weapon)
 	if self.phase ~= "aim" then return false end
-	-- le lezioni lasciano usare solo quello che serve adesso (sim/missioni.lua solo)
+	-- le lezioni lasciano usare solo quello che serve adesso (sim/missions.lua solo)
 	if self.permesso and not self.permesso(weapon) then return false end
 	local rb = self.robots[self.current]
 	if rb.dead then return false end
@@ -2569,7 +2569,7 @@ function M:swap_attack()
 end
 
 -- Quanti globi del teletrasporto dà il primo attacco dopo ticks di turno
-function M.globi_per(ticks)
+function M.orbs_for(ticks)
 	local n = 0
 	for _, s in ipairs(C.TELEPORT_SOGLIE) do
 		if ticks <= s * 60 then n = n + 1 end
@@ -2610,7 +2610,7 @@ function M:attack(weapon, fire)
 		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
 		rb.attack_turns = rb.attack_turns + 1
 		-- attaccare presto dà globi del teletrasporto, uno per soglia non passata
-		local gain = rb.stats.time_orbs > 0 and M.globi_per(M.TURN_TICKS - self.timer) or 0
+		local gain = rb.stats.time_orbs > 0 and M.orbs_for(M.TURN_TICKS - self.timer) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
 			self.teleports_earned = self.teleports_earned + gain
@@ -2663,23 +2663,23 @@ end
 -- (tick, turno, caso, robot, colpi in volo). Due partite rigiocate con la
 -- stessa ricetta devono avere le stesse impronte (sim/replay.lua): è il
 -- controllo del determinismo, tra client e server e tra versioni.
-local IMPRONTA_MOD = 2147483629
-local function mescola(h, v)
-	return (h * 31 + math.floor(v) % IMPRONTA_MOD) % IMPRONTA_MOD
+local FINGERPRINT_MOD = 2147483629
+local function shuffle(h, v)
+	return (h * 31 + math.floor(v) % FINGERPRINT_MOD) % FINGERPRINT_MOD
 end
 function M:impronta()
-	local h = mescola(mescola(mescola(7, self.tick), self.current), self.rng.state)
+	local h = shuffle(shuffle(shuffle(7, self.tick), self.current), self.rng.state)
 	for _, rb in ipairs(self.robots) do
-		h = mescola(h, rb.x * 16)
-		h = mescola(h, rb.y * 16)
-		h = mescola(h, rb.hp * 16)
-		h = mescola(h, rb.points * 16)
-		h = mescola(h, rb.dead and 1 or 0)
+		h = shuffle(h, rb.x * 16)
+		h = shuffle(h, rb.y * 16)
+		h = shuffle(h, rb.hp * 16)
+		h = shuffle(h, rb.points * 16)
+		h = shuffle(h, rb.dead and 1 or 0)
 	end
 	local p = self.projectile
-	if p then h = mescola(mescola(h, p.x * 16), p.y * 16) end
-	h = mescola(h, #self.orbs)
-	h = mescola(h, #self.placed)
+	if p then h = shuffle(shuffle(h, p.x * 16), p.y * 16) end
+	h = shuffle(h, #self.orbs)
+	h = shuffle(h, #self.placed)
 	return h
 end
 
