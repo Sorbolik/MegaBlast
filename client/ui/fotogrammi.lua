@@ -32,7 +32,8 @@ local SCATTO = 1.5
 -- ogni quanto si ricalcola il frame normale e la riga sullo schermo (secondi)
 local OGNI = 0.25
 
-local adesso = socket and socket.gettime or os.clock
+-- l'orologio vero (LuaSocket c'è in ogni build di Defold), non il tempo di CPU
+local adesso = socket.gettime
 
 M.acceso = false
 -- nel simulatore: righe nel log per simula.py
@@ -47,7 +48,7 @@ local prima, inizio_lua, lavoro_lua = nil, nil, 0
 local memoria
 -- cause segnate in questo frame e nel frame prima
 local cause, cause_prima = nil, nil
--- gli scatti (tempo, durata, causa) dell'ultimo minuto, in giro
+-- gli scatti (tempo, durata, causa) dell'ultimo minuto, in giro (1024 bastano anche a 120 Hz tutto a scatti)
 local scatti, n_scatti = {}, 0
 local orologio, calcolato = 0, 0
 local riga_cambiata = false
@@ -73,15 +74,25 @@ end
 
 -- in testa all'update della GUI: chiude il frame prima
 function M.inizio()
+	-- spento: niente lavoro (riacceso, si riparte da zero)
+	if not (M.acceso or M.log) then
+		prima, inizio_lua, lavoro_lua = nil, nil, 0
+		return
+	end
 	local t = adesso()
 	inizio_lua = t
 	local kb = collectgarbage("count")
 	if not prima then
-		prima, memoria = t, kb
+		prima, memoria, lavoro_lua = t, kb, 0
 		return
 	end
 	local dt = t - prima
 	prima = t
+	-- più di un secondo: il gioco era in pausa o in secondo piano, non è uno scatto
+	if dt > 1 then
+		memoria, cause, cause_prima, lavoro_lua = kb, nil, nil, 0
+		return
+	end
 	pos = pos % N + 1
 	tempi[pos] = dt
 	pieni = math.min(pieni + 1, N)
@@ -104,13 +115,16 @@ function M.inizio()
 	end
 
 	if pieni >= 30 and dt > normale * SCATTO then
-		local causa = cause_prima or cause
+		-- il lavoro segnato in questo frame si paga adesso; quello del frame
+		-- prima a volte un frame dopo (la GPU che carica una texture)
+		local causa = cause or cause_prima
+		cause_prima = nil
 		if not causa then
 			if gc then causa = "gc"
 			elseif lavoro_lua > (dt - normale) * 0.5 then causa = "lua"
 			else causa = "motore" end
 		end
-		n_scatti = n_scatti % 64 + 1
+		n_scatti = n_scatti % 1024 + 1
 		scatti[n_scatti] = { orologio, dt, causa }
 		riassunto.scatti = riassunto.scatti + 1
 		M.ultimo = string.format("%s %.0f ms", causa, dt * 1000)
@@ -130,9 +144,10 @@ function M.fine()
 	lavoro_lua = lavoro_lua + adesso() - inizio_lua
 end
 
--- il lavoro fatto fuori dall'update (on_input): t = M.ora() all'inizio
+-- il lavoro fatto fuori dall'update (on_input, messaggi): t = M.ora() all'inizio
 M.ora = adesso
 function M.lavoro(t)
+	if not prima then return end
 	lavoro_lua = lavoro_lua + adesso() - t
 end
 

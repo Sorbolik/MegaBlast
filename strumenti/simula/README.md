@@ -49,7 +49,7 @@ Tutto in `simulazione/` (ignorata da git):
   un riassunto ogni 5 secondi (FPS, percentili, lavoro di Lua, KB nuovi per
   frame): il contatore di `client/ui/fotogrammi.lua`, vedi
   [docs/prestazioni.md](../../docs/prestazioni.md). La simulazione fallisce se
-  Lua tiene fermo un frame più di 100 ms. Lo scenario `scenari/fluidita.txt`
+  Lua tiene fermo un frame più di 150 ms. Lo scenario `scenari/fluidita.txt`
   (meglio con `--senza-video`) tocca home, missione e partita col bot.
 
 ## Scenari

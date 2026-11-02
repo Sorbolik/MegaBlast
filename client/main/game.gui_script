@@ -3295,7 +3295,6 @@ function update(self, dt)
 	end
 
 	disegna_terreno(self)
-	CP.fotogrammi(self, dt)
 	if SIMULA and self.g then
 		-- sx, sy: il centro del robot sullo schermo (dove si appoggia il mouse per mirare)
 		local rb = current_robot(self)
@@ -3309,6 +3308,7 @@ function update(self, dt)
 			self.simula_line = line
 		end
 	end
+	CP.fotogrammi(self, dt)
 end
 
 -- Il contatore dei fotogrammi (ui/fotogrammi.lua, docs/prestazioni.md): una

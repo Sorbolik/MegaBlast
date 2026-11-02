@@ -28,7 +28,7 @@ Deve finire con `OK`. Poi guarda `simulazione/foto/riepilogo.png` (e le foto
 singole se serve) per controllare che quello che hai cambiato si veda davvero.
 Per provare una funzione nuova scrivi uno scenario in `strumenti/simula/scenari/`.
 La simulazione conta anche i frame (`simulazione/fotogrammi.txt`) e fallisce se Lua
-tiene fermo un frame più di 100 ms: misure, contatore FPS nel gioco e regole in
+tiene fermo un frame più di 150 ms: misure, contatore FPS nel gioco e regole in
 [docs/prestazioni.md](docs/prestazioni.md).
 Dettagli e comandi degli scenari: [strumenti/simula/README.md](strumenti/simula/README.md).
 

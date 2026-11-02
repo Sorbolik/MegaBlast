@@ -548,8 +548,9 @@ def gioca(exe, out, scenario, video):
 
 # Il tetto del lavoro di Lua in un frame solo (docs/prestazioni.md): qui gli
 # script girano come su un PC, e il caso peggiore di oggi (entrare in una
-# missione) ne usa circa 60. Un telefono è 3-5 volte più lento.
-LUA_MAX = 100
+# missione) ne usa circa 60. Un telefono è 3-5 volte più lento. È tempo vero:
+# il margine è largo perché ffmpeg (il video) ruba la CPU al gioco.
+LUA_MAX = 150
 
 
 def fotogrammi(log, dove):
@@ -557,6 +558,7 @@ def fotogrammi(log, dove):
     riassunti ogni 5 secondi, in simulazione/fotogrammi.txt e in una riga qui.
     Qui disegna la CPU (llvmpipe): i millisecondi non sono quelli di un telefono,
     ma uno scatto da lavoro di Lua (caricamenti, gc) si vede uguale."""
+    dove.unlink(missing_ok=True)
     righe = [l[l.index("SIMULA "):] for l in open(log, errors="replace").read().splitlines()
              if re.search(r"SIMULA (scatto|fotogrammi) ", l)]
     if not righe:

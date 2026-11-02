@@ -39,8 +39,10 @@ SCATTO 48.2 ms (normale 16.7, lua 1.2 ms) causa: motore
 ```
 
 `lua` è quanto hanno lavorato gli script in quel frame (update e input della
-GUI, messaggi del terreno): se è piccolo e lo scatto è grande, il tempo l'ha
-preso il disegno o il sistema.
+GUI, messaggi del terreno; non l'update del terreno, che sono pochi `go.set`):
+se è piccolo e lo scatto è grande, il tempo l'ha preso il disegno o il
+sistema. Una pausa di più di un secondo (il gioco in secondo piano) non conta.
+Spento, il contatore non fa niente.
 
 Il codice è `client/ui/fotogrammi.lua`. Chi aggiunge un lavoro pesante (un
 caricamento, una schermata grande) chiama `fotogrammi.segna("nome")`, così il
@@ -74,17 +76,19 @@ caricamenti, che sono lavoro della CPU come sul PC.
 
 ## Il controllo che lo mantiene
 
-`simula.py` fallisce se in un frame Lua lavora più di **100 ms** (`LUA_MAX`),
+`simula.py` fallisce se in un frame Lua lavora più di **150 ms** (`LUA_MAX`),
 con qualsiasi scenario: CLAUDE.md chiede di girare il simulatore prima di ogni
 PR che tocca `client/`, quindi un caricamento o un calcolo nuovo che blocca il
 gioco si vede prima del merge. Oggi il caso peggiore è entrare in una missione,
 circa 60 ms nel simulatore (su un telefono 3-5 volte di più: va abbassato,
-vedi sotto).
+vedi sotto). Il tetto è largo perché è tempo vero e, col video, ffmpeg ruba la
+CPU al gioco: serve a fermare i blocchi nuovi grossi, non i millisecondi.
 
 Regole per il codice (dalla regola di Sergio del 19 ott):
 
 - niente allocazioni a ogni frame (tabelle, stringhe, vettori nuovi): il
-  contatore nel simulatore riporta `kb_frame`, i KB nuovi per frame (oggi 1-15);
+  contatore nel simulatore riporta `kb_frame`, i KB nuovi per frame (oggi 1-15;
+  è un minimo: i frame in cui passa il gc non si possono contare);
 - i lavori pesanti (decodificare immagini, ridisegnare la maschera, costruire
   schermate) solo dietro una transizione, una volta sola, e segnati con
   `fotogrammi.segna`;
