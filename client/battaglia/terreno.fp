@@ -64,7 +64,7 @@ const mediump vec3 BRACE_SPENTA = vec3(0.86, 0.66, 0.36);
 // l'orlo bruciato attorno ai crateri che mostrano lo sfondo
 const mediump vec3 BRUCIATO = vec3(0.078, 0.047, 0.031);
 // l'orlo bruciato attorno ai crateri, in unità del mondo (una cella è 3)
-const mediump float ORLO = 9.0;
+const mediump float ORLO = 14.0;
 // lo sfondo dipinto è largo un giro (2560 pixel della scena), poi si ripete
 const highp float GIRO = 2560.0;
 
@@ -277,7 +277,7 @@ void main()
     if (stile.y > 0.5) {
         // il cratere mostra lo sfondo; il terreno attorno ha l'orlo bruciato
         if (dc < ORLO) {
-            mediump float orlo = 1.0 - smoothstep(ORLO * 0.2, ORLO, dc);
+            mediump float orlo = 1.0 - smoothstep(ORLO * 0.35, ORLO, dc);
             ter.rgb = mix(ter.rgb, BRUCIATO * ter.a, orlo * 0.92);
         }
         ter *= 1.0 - buco;
