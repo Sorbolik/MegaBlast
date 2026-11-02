@@ -42,8 +42,9 @@ Come si muove (è la parte più importante per la sensazione di gioco):
   quella di corsa, a terra e in aria; si cambia verso all'istante anche in aria.
 - A terra senza comandi si ferma di colpo; in aria senza comandi tiene la
   velocità orizzontale che aveva.
-- Il robot di turno non va mai di lato più veloce della sua corsa, nemmeno
-  dopo un'esplosione: può subito frenare o girarsi. Gli altri volano liberi.
+- Il robot di turno non va mai di lato più veloce della sua corsa (col
+  paracadute aperto il 50% in più), nemmeno dopo un'esplosione: può subito
+  frenare o girarsi. Gli altri volano liberi.
 - **Salto**: da terra, e anche per `COYOTE_TICKS` dopo essere scesi da un bordo;
   un salto chiesto poco prima di toccare terra parte all'atterraggio
   (`JUMP_BUFFER_TICKS`). Lasciando il tasto presto la salita si taglia
@@ -108,7 +109,7 @@ della spinta** (`damage_r`, sempre più grande). Per ogni robot nel raggio:
 |---|---|---|---|---|
 | Lanciarune | 5 U | 9 U | 12,5–25 | 10 |
 | Uovo di Fiamma | 5,5 U | 10 U | 25–80 | 15 |
-| Scheggia | 12,25 px | 21 px | 11 | 30 |
+| Scheggia | 12,25 px | 21 px | 0–11 | 30 |
 
 ## Colpi corpo a corpo
 
@@ -157,9 +158,9 @@ Sul telefono ci sono due levette (`client/battaglia/levette.lua`):
   schermo, e torna al suo posto quando lo alzi.
 - Per le armi corpo a corpo la potenza non conta: conta solo la direzione.
 
-Sul computer: A/D o le frecce per muoversi, W o spazio per saltare, mira col
-mouse dal robot, tasto destro per annullare, T per il teletrasporto, 1-5 per
-le armi. Col controller: [controller.md](controller.md).
+Sul computer: A/D o le frecce per muoversi, W, freccia su o spazio per
+saltare, mira col mouse dal robot, tasto destro per annullare, T per il
+teletrasporto, 1-9 per le armi (`client/input/game.input_binding`). Col controller: [controller.md](controller.md).
 
 La mira mostra solo angolo e potenza, mai la traiettoria (la traiettoria
 intera solo come aiuto nell'Addestramento).
@@ -168,9 +169,10 @@ intera solo come aiuto nell'Addestramento).
 
 Le durate sono in `config.lua`: turno di 25 s, dopo il primo attacco restano
 al massimo `AFTER_ATTACK_SECONDS`, partita di 5 minuti, 1 s tra un turno e
-l'altro. A ogni turno può cadere una cassa con una probabilità che dipende da
-quante ce ne sono già (`CRATE_CHANCE`: 90%, 50%, 30%, 10%, al massimo
-`CRATE_MAX`); eventi e missioni possono chiedere invece una cassa ogni tanti
+l'altro. Dal secondo turno, a ogni turno può cadere una cassa con una
+probabilità che dipende da quante ce ne sono già (`CRATE_CHANCE`: 90% con
+nessuna, 50% con una, 30% con due; con `CRATE_MAX` = 3 in mappa non ne cadono
+altre); eventi e missioni possono chiedere invece una cassa ogni tanti
 turni (`opts.crate_every`).
 
 ## La rete

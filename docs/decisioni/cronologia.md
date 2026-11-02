@@ -93,6 +93,6 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 2 nov | La home ha dietro lo sfondo vivo del Limbo, il secondo girone, dipinto con una sola tinta verde salvia, raggi, tratteggio e polvere che galleggia. | questa PR |
 | 2 nov | Nella campagna i bot dei gradi 1-4 lasciano le casse a te, il 5 e il 6 prendono solo quelle a portata facile, dal 7 le contendono come prima; scala dei gradi rimisurata, stelle della Forgia invariate. | questa PR |
 | 2 nov | L'apprendista è il personaggio principale di tutti, con le animazioni, le hitbox, i perni e le impugnature fatte da Sergio nell'editor; via le pelli di Gabriella. | questa PR |
-| 2 nov | Piano di pulizia approvato da Sergio (una fisica sola, via dal repository i riferimenti al gioco di partenza, codice in inglese a ondate). Prima PR: controlli automatici su ogni PR (test, globali Lua, Go) e confronto prima/dopo con 200 partite di bot. | questa PR |
+| 2 nov | Piano di pulizia approvato da Sergio (una fisica sola, via dal repository le analisi del gioco di riferimento, codice in inglese a ondate). Prima PR: controlli automatici su ogni PR (test, globali Lua, Go) e confronto prima/dopo con 200 partite di bot. | questa PR |
 | 2 nov | Una fisica sola: via il profilo fisico vecchio e la scelta del profilo, restano i numeri di oggi; nel gioco non cambia niente. | questa PR |
-| 2 nov | Via dal repository i riferimenti al gioco di partenza: nuovo `docs/fisica.md` con la fisica di oggi, `design.md` aggiornato coi numeri veri. | questa PR |
+| 2 nov | Via dal repository le analisi del gioco di riferimento: nuovo `docs/fisica.md` con la fisica di oggi, `design.md` aggiornato coi numeri veri. | questa PR |
