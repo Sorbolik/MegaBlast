@@ -5,7 +5,7 @@
 --   luajit strumenti/eventi/dati.lua      (dalla radice del repository)
 --
 -- Scrive strumenti/eventi/pagina/dati.json; go test ./server/ controlla che sia
--- in pari con la simulazione (TestPannelloDati).
+-- in pari con la simulazione (TestPanelData).
 package.path = "client/?.lua;" .. package.path
 local C = require "sim.config"
 local game = require "sim.game"

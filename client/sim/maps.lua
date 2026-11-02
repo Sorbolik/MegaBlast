@@ -1,11 +1,12 @@
--- Mappe. Ogni mappa disegna il terreno con forme semplici (rettangoli, cerchi,
--- tubi) oppure carica una maschera da sim/mapdata.lua, e dice dove compaiono i robot. Le forme in acciaio sono indistruttibili.
--- spawns: quattro punti, uno per robot nell'ordine dei turni. 1 e 3 a
--- sinistra, 2 e 4 a destra, così nel 2 contro 2 i compagni partono dallo
--- stesso lato. from è l'altezza da cui si cerca il terreno sotto.
+-- Maps. Each map draws its terrain with simple shapes (rectangles, circles,
+-- pipes) or loads a mask from sim/mapdata.lua, and says where the robots
+-- appear. Steel shapes are indestructible.
+-- spawns: four points, one per robot in turn order. 1 and 3 on the left, 2
+-- and 4 on the right, so in 2v2 teammates start on the same side. from is the
+-- height from which the ground below is searched.
 --
--- Per aggiungere una mappa: scrivi una funzione build(t, seed) qui sotto e
--- aggiungila a M.maps. Coordinate del mondo: 1920 x 1080, y verso l'alto.
+-- To add a map: write a build(t, seed) function below and add it to M.maps.
+-- World coordinates: 1920 x 1080, y up.
 
 local terrain = require "sim.terrain"
 local mapdata = require "sim.mapdata"
@@ -23,10 +24,10 @@ local function add(id, name, def)
 	M.order[#M.order + 1] = id
 end
 
--- Forgia dei Titani: due fortezze a specchio con torre a gradini e galleria,
--- l'incudine in mezzo con il corno d'acciaio per ripararsi, piattaforme in alto.
--- Forma a poligoni dritti (grafica/strumenti/mappa_forgia.py): quello che si
--- vede è esattamente quello su cui si cammina. Travi e bordi in acciaio.
+-- Forge of the Titans: two mirrored fortresses with a stepped tower and a
+-- tunnel, the anvil in the middle with the steel horn for cover, platforms up
+-- high. Straight polygon shape (grafica/strumenti/mappa_forgia.py): what you
+-- see is exactly what you walk on. Beams and edges in steel.
 add("forgia", "Forgia dei Titani", {
 	spawns = { { x = 480, from = 600 }, { x = 1440, from = 600 }, { x = 180, from = 1080 }, { x = 1740, from = 1080 } },
 	build = function(t)
@@ -34,10 +35,10 @@ add("forgia", "Forgia dei Titani", {
 	end,
 })
 
--- Il Crogiolo: altopiani ai lati con una grotta sotto, ponti d'acciaio fino al
--- crogiolo in mezzo (una conca a 45° dove rotolano le granate), sotto una galleria
--- che attraversa il fondo, mestoli sospesi e una trave in cima.
--- Forma e disegno: strumenti/grafica/mappa_crogiolo.py.
+-- The Crucible: plateaus on the sides with a cave below, steel bridges up to
+-- the crucible in the middle (a 45° bowl where grenades roll), a tunnel
+-- crossing the bottom, hanging ladles and a beam on top.
+-- Shape and drawing: strumenti/grafica/mappa_crogiolo.py.
 add("crogiolo", "Il Crogiolo", {
 	spawns = { { x = 195, from = 1080 }, { x = 1725, from = 1080 }, { x = 630, from = 300 }, { x = 1290, from = 300 } },
 	build = function(t)
@@ -45,9 +46,9 @@ add("crogiolo", "Il Crogiolo", {
 	end,
 })
 
--- Casuale: colline generate dal seed, con un tubo di fondazione.
+-- Random: hills generated from the seed, with a foundation pipe.
 add("casuale", "Colline casuali", {
-	seeded = true, -- il terreno cambia con il seed
+	seeded = true, -- the terrain changes with the seed
 	spawns = { { x = 384, from = 1080 }, { x = 1536, from = 1080 }, { x = 780, from = 1080 }, { x = 1140, from = 1080 } },
 	build = function(t, seed)
 		t:generate(seed)
@@ -57,16 +58,16 @@ add("casuale", "Colline casuali", {
 
 M.DEFAULT = "forgia"
 
--- Le mappe delle partite vere: se non si chiede una mappa, la sceglie il seed
--- della partita, così server e client (che hanno lo stesso seed) giocano sulla stessa.
+-- The maps of real matches: if no map is asked for, the match seed picks it,
+-- so server and client (which share the seed) play on the same one.
 M.ROTATION = { "forgia", "crogiolo" }
 
 function M.pick(seed)
 	return M.ROTATION[math.floor(seed) % #M.ROTATION + 1]
 end
 
--- Mappe fuori rotazione e fuori da M.order (le missioni, sim/missions.lua):
--- si giocano solo chiedendole per nome.
+-- Maps out of rotation and out of M.order (the missions, sim/missions.lua):
+-- they are played only when asked for by name.
 function M.registra(id, def)
 	def.id, def.name = id, def.name or id
 	M.maps[id] = def
@@ -76,11 +77,12 @@ function M.get(id)
 	return M.maps[id] or M.maps[M.DEFAULT]
 end
 
--- Le mappe dipinte della campagna (strumenti/grafica/mappe_dipinte.py, documento delle
--- mappe dell'apprendista): il pavimento, un terreno unico da muro a muro con le isole
--- sopra, dove non si cade (le missioni libere dell'Addestramento e della Forgia), e la
--- fossa, lo stesso pavimento con una fossa di lava in mezzo (il Fabbro). Scelte di
--- Sergio, 2 novembre 2026. Fuori rotazione: si giocano solo nelle missioni.
+-- The painted campaign maps (strumenti/grafica/mappe_dipinte.py, the
+-- apprentice maps document): the floor, a single wall-to-wall ground with the
+-- islands above, where you cannot fall (the free missions of Training and of
+-- the Forge), and the pit, the same floor with a lava pit in the middle (the
+-- Smith). Sergio's choices, 2 November 2026. Out of rotation: played only in
+-- missions.
 local PAVIMENTO_SPAWNS = { { x = 225, from = 300 }, { x = 1650, from = 585 }, { x = 630, from = 390 }, { x = 1260, from = 300 } }
 
 M.registra("pavimento", { name = "La Forgia", spawns = PAVIMENTO_SPAWNS,

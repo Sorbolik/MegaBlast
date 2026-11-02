@@ -1,6 +1,11 @@
 # MegaBlast
 
-Repository in italiano (commenti, documenti, messaggi di commit).
+Documenti, CLAUDE.md, messaggi di commit e PR in italiano. Il codice (nomi di file,
+funzioni, variabili e commenti) passa all'inglese a ondate (piano di Sergio, 2 nov):
+già in inglese `client/sim/` (tranne `bot.lua`, `rete.lua`, `corpo.lua`), `server/` e i
+loro test; il resto resta in italiano finché non arriva la sua ondata. Nei file in
+inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
+errori del server) restano in italiano. Si rinomina con `strumenti/rinomina/rinomina.py`.
 
 ## Prima di ogni PR: controlli e revisione (Sergio, 2 nov)
 

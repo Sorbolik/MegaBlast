@@ -14,36 +14,36 @@ import (
 	"strings"
 	"sync"
 	"time"
-	_ "time/tzdata" // gli orari degli eventi sono di Roma anche su un server senza fusi orari
+	_ "time/tzdata" // event times are Rome times even on a server without time zones
 
 	lua "github.com/yuin/gopher-lua"
 )
 
-// Il calendario degli eventi (docs/server.md, "Eventi"): Sergio lo fa nel
-// pannello degli eventi (strumenti/eventi, un Worker di Cloudflare) e il server
-// lo scarica ogni 30 secondi (go run ./server -eventi https://…/eventi.json),
-// oppure lo legge da un file JSON (-eventi eventi.json) che rilegge da solo
-// quando cambia. Un evento è un modello con la sua
-// finestra e, se vuole, una ripetizione: ogni N settimane fino a una data o per
-// sempre. Il server lo espande nelle occorrenze dei prossimi giorni, ognuna
-// col suo id (evento-AAAAMMGG), e le dà al gioco con GET /eventi.
+// The event calendar (docs/server.md, "Eventi"): Sergio makes it in the
+// events panel (strumenti/eventi, a Cloudflare Worker) and the server
+// downloads it every 30 seconds (go run ./server -eventi https://…/eventi.json),
+// or reads it from a JSON file (-eventi eventi.json) that it reloads by itself
+// when it changes. An event is a template with its window and, optionally, a
+// repetition: every N weeks until a date or forever. The server expands it
+// into the occurrences of the next few days, each with its own id
+// (event-YYYYMMDD), and gives them to the game with GET /eventi.
 //
-// Un evento o si appoggia a una coda normale (Torneo, Sfida, XP: conta per le
-// partite di quella coda) o ha una coda sua (modificatore: "modo" dice le
-// squadre, "regole" cosa cambia, sim/rules.lua). Il giocatore sceglie solo la
-// coda: una partita conta per tutti gli eventi attaccati alla sua coda.
+// An event either sits on a normal queue (Torneo, Sfida, XP: it counts for the
+// matches of that queue) or has a queue of its own (modifier: "modo" says the
+// teams, "regole" what changes, sim/rules.lua). The player only picks the
+// queue: a match counts for all the events attached to its queue.
 //
 //	{"eventi": [{
 //	  "id": "maglio", "tipo": "mod", "nome": "2V2 SOLO MAGLIO",
 //	  "riga": "Una sola arma, colpi che fanno volare.",
 //	  "da": "2026-11-02 10:00", "a": "2026-11-04 23:59", "ogni": 2, "fino": "2027-01-31",
-//	  "modo": "2v2", "regole": {"armi": ["punch", "mallet"]},  (su una coda normale solo {"tetto": 15})
+//	  "modo": "2v2", "regole": {"armi": ["punch", "mallet"]},  (on a normal queue only {"tetto": 15})
 //	  "premi": [{"testo": "Badge Maglio", "fino": 100}]
 //	}]}
 //
-// "premi" e "obiettivo" il server li passa così come sono: li legge il gioco.
+// The server passes "premi" and "obiettivo" through as they are: the game reads them.
 
-// Quanti giorni avanti il server espande le ripetizioni (le due strisce della bacheca).
+// How many days ahead the server expands repetitions (the two strips of the board).
 const daysAhead = 14
 
 var rome = func() *time.Location {
@@ -54,64 +54,64 @@ var rome = func() *time.Location {
 	return l
 }()
 
-// Tipi di evento: quelli con la coda sua e quelli che stanno su una coda normale.
+// Event kinds: those with their own queue and those sitting on a normal queue.
 var eventKinds = map[string]bool{"mod": true, "torneo": false, "sfida": false, "xp": false}
 
 var eventID = regexp.MustCompile(`^[a-z0-9_]{1,32}$`)
 
-// Evento è come Sergio lo scrive nel file.
+// Event is how Sergio writes it in the file.
 type Event struct {
-	ID        string          `json:"id"`
-	Kind      string          `json:"tipo"`
-	Title      string          `json:"nome"`
-	Line      string          `json:"riga"`
-	From        string          `json:"da"`   // "2026-11-02 10:00", ora di Roma
-	A         string          `json:"a"`    // fine della prima finestra
-	Every      int             `json:"ogni"` // settimane fra una volta e l'altra, 0 = una volta sola
-	Until      string          `json:"fino"` // "2027-01-31": l'ultimo giorno in cui può ricominciare; vuoto = per sempre
-	Teams      string          `json:"modo"` // coda sua: le squadre (1v1, 2v2, ffa)
-	Queue      string          `json:"coda"` // coda normale a cui si appoggia (di solito 2v2)
-	Rules    json.RawMessage `json:"regole"`
-	Rewards     json.RawMessage `json:"premi"`
-	Goal json.RawMessage `json:"obiettivo"`
+	ID      string          `json:"id"`
+	Kind    string          `json:"tipo"`
+	Title   string          `json:"nome"`
+	Line    string          `json:"riga"`
+	From    string          `json:"da"`   // "2026-11-02 10:00", Rome time
+	A       string          `json:"a"`    // end of the first window
+	Every   int             `json:"ogni"` // weeks between one time and the next, 0 = only once
+	Until   string          `json:"fino"` // "2027-01-31": the last day it can start again; empty = forever
+	Teams   string          `json:"modo"` // own queue: the teams (1v1, 2v2, ffa)
+	Queue   string          `json:"coda"` // normal queue it sits on (usually 2v2)
+	Rules   json.RawMessage `json:"regole"`
+	Rewards json.RawMessage `json:"premi"`
+	Goal    json.RawMessage `json:"obiettivo"`
 
 	da, a, until time.Time
 }
 
-// Occorrenza è una volta di un evento, come la vede il gioco.
+// Occurrence is one time of an event, as the game sees it.
 type Occurrence struct {
-	ID        string          `json:"id"`
-	Event    string          `json:"evento"`
-	Kind      string          `json:"tipo"`
-	Title      string          `json:"nome"`
-	Line      string          `json:"riga,omitempty"`
-	From        int64           `json:"da"`              // secondi Unix
-	A         int64           `json:"a"`               // secondi Unix
-	Next     int64           `json:"torna,omitempty"` // la volta dopo, se c'è
-	Queue      string          `json:"coda"`            // la coda da chiedere nel hello per giocarlo
-	Teams      string          `json:"modo"`            // le squadre della partita
+	ID          string          `json:"id"`
+	Event       string          `json:"evento"`
+	Kind        string          `json:"tipo"`
+	Title       string          `json:"nome"`
+	Line        string          `json:"riga,omitempty"`
+	From        int64           `json:"da"`              // Unix seconds
+	A           int64           `json:"a"`               // Unix seconds
+	Next        int64           `json:"torna,omitempty"` // the next time, if any
+	Queue       string          `json:"coda"`            // the queue to ask for in hello to play it
+	Teams       string          `json:"modo"`            // the teams of the match
 	PlayerCount int             `json:"giocatori"`
-	Rules    json.RawMessage `json:"regole,omitempty"`
+	Rules       json.RawMessage `json:"regole,omitempty"`
 	Rewards     json.RawMessage `json:"premi,omitempty"`
-	Goal json.RawMessage `json:"obiettivo,omitempty"`
+	Goal        json.RawMessage `json:"obiettivo,omitempty"`
 }
 
-// Ogni quanto il server chiede il calendario al pannello.
+// How often the server asks the panel for the calendar.
 const panelPoll = 30 * time.Second
 
-// Calendario legge il file degli eventi e lo rilegge quando cambia, o lo
-// scarica dal pannello.
+// Calendar reads the events file and reloads it when it changes, or downloads
+// it from the panel.
 type Calendar struct {
 	path string
 	now  func() time.Time
 
-	mu       sync.Mutex
-	events   []Event
-	modTime  time.Time
+	mu        sync.Mutex
+	events    []Event
+	modTime   time.Time
 	checkedAt time.Time
 
-	// dal pannello: la versione presa (ETag), l'errore se il server l'ha
-	// rifiutata (il pannello lo mostra a Sergio) e l'ultimo problema di rete
+	// from the panel: the version taken (ETag), the error if the server rejected
+	// it (the panel shows it to Sergio) and the last network problem
 	version, rejected, rete string
 }
 
@@ -135,10 +135,10 @@ func fromPanel(path string) bool {
 	return strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://")
 }
 
-// scarica chiede il calendario al pannello. Nella domanda dice quale versione
-// ha preso e, se l'ha rifiutata, perché: il pannello lo mostra a Sergio. Come
-// per il file, un calendario sbagliato non sostituisce quello buono, e se il
-// pannello non risponde resta quello di prima.
+// download asks the panel for the calendar. In the request it says which
+// version it took and, if it rejected it, why: the panel shows it to Sergio.
+// As with the file, a wrong calendar doesn't replace the good one, and if the
+// panel doesn't answer the previous one stays.
 func (c *Calendar) download(client *http.Client) {
 	c.mu.Lock()
 	u, etag := c.path, c.version
@@ -186,7 +186,7 @@ func (c *Calendar) download(client *http.Client) {
 	log.Printf("eventi: %d dal pannello (versione %s)", len(ev), c.version)
 }
 
-// problema scrive nel log un problema di rete col pannello solo quando cambia
+// problem logs a network problem with the panel only when it changes
 func (c *Calendar) problem(p string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -198,9 +198,9 @@ func (c *Calendar) problem(p string) {
 	c.rete = p
 }
 
-// aggiorna rilegge il file se è cambiato (al massimo ogni due secondi). Un
-// file sbagliato non cancella il calendario buono: resta quello di prima e
-// l'errore va nel log.
+// reload reads the file again if it changed (at most every two seconds). A
+// wrong file doesn't erase the good calendar: the previous one stays and the
+// error goes to the log.
 func (c *Calendar) reload() {
 	if c.path == "" || fromPanel(c.path) {
 		return
@@ -236,13 +236,13 @@ func (c *Calendar) reload() {
 	log.Printf("eventi: %s non va, tengo il calendario di prima: %v", c.path, err)
 }
 
-// leggiEventi controlla tutto il file: un errore e non si usa niente.
+// readEvents checks the whole file: one error and nothing is used.
 func readEvents(data []byte) ([]Event, error) {
 	var f struct {
 		EventList []Event `json:"eventi"`
 	}
 	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields() // un campo scritto male si vede subito
+	dec.DisallowUnknownFields() // a misspelled field shows up at once
 	if err := dec.Decode(&f); err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func readEvents(data []byte) ([]Event, error) {
 			r, err := eng.fromJSON(e.Rules)
 			if err == nil {
 				var v interface{ String() string }
-				if v, err = eng.call("regole_valida", r, lua.LBool(e.Teams == "")); err == nil && v.String() != "" {
+				if v, err = eng.call("rules_valid", r, lua.LBool(e.Teams == "")); err == nil && v.String() != "" {
 					err = fmt.Errorf("regole: %s", v.String())
 				}
 			}
@@ -318,7 +318,7 @@ func (e *Event) check() error {
 		if e.until, err = time.ParseInLocation("2006-01-02", e.Until, rome); err != nil {
 			return fmt.Errorf("fino: %w", err)
 		}
-		e.until = e.until.AddDate(0, 0, 1) // compreso quel giorno
+		e.until = e.until.AddDate(0, 0, 1) // that day included
 	}
 	if own {
 		if _, ok := modes[e.Teams]; !ok {
@@ -337,13 +337,13 @@ func (e *Event) check() error {
 		if e.Teams != "" {
 			return fmt.Errorf("modo solo per i modificatori (tipo mod), che hanno la coda loro")
 		}
-		// le regole che cambiano la partita su una coda normale la cambierebbero a
-		// tutti: lì passa solo il tetto ai livelli (regole.CODA_NORMALE, leggiEventi)
+		// rules that change the match on a normal queue would change it for everyone:
+		// only the level cap gets through there (rules.CODA_NORMALE, readEvents)
 	}
 	return nil
 }
 
-// volta k dell'evento: inizio e fine (AddDate tiene l'ora anche col cambio dell'ora legale)
+// time k of the event: start and end (AddDate keeps the hour across daylight saving changes)
 func (e *Event) window(k int) (time.Time, time.Time, bool) {
 	if k > 0 && e.Every == 0 {
 		return time.Time{}, time.Time{}, false
@@ -370,8 +370,8 @@ func (e *Event) occurrence(da, a time.Time) Occurrence {
 	return o
 }
 
-// Occorrenze: quelle in corso adesso e quelle che cominciano nei prossimi
-// giorniAvanti giorni, in ordine di inizio.
+// Occurrences: those running now and those starting in the next daysAhead
+// days, in order of start.
 func (c *Calendar) Occurrences() []Occurrence {
 	c.reload()
 	c.mu.Lock()
@@ -381,7 +381,7 @@ func (c *Calendar) Occurrences() []Occurrence {
 	out := []Occurrence{}
 	for i := range events {
 		e := &events[i]
-		// salta le volte già finite senza contarle una a una
+		// skip the times already over without counting them one by one
 		k := 0
 		if e.Every > 0 && now.After(e.a) {
 			k = int(now.Sub(e.a)/(time.Duration(e.Every)*7*24*time.Hour)) - 1
@@ -411,7 +411,7 @@ func (c *Calendar) Occurrences() []Occurrence {
 	return out
 }
 
-// Coda trova la coda di un evento in corso dal suo id (evento-AAAAMMGG).
+// Queue finds the queue of a running event from its id (event-YYYYMMDD).
 func (c *Calendar) Queue(id string) (Mode, bool) {
 	now := c.now().Unix()
 	for _, o := range c.Occurrences() {

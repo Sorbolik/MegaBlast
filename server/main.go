@@ -1,11 +1,11 @@
-// Server di MegaBlast: mette in coda i giocatori e fa girare le partite.
+// MegaBlast server: queues players and runs matches.
 //
-//	go run ./server              (dalla radice del repository)
+//	go run ./server              (from the repository root)
 //	go run ./server -addr :9000 -node eu1
-//	go run ./server -eventi https://…/eventi.json   (calendario degli eventi dal pannello, events.go)
-//	go run ./server -eventi eventi.json             (o da un file)
+//	go run ./server -eventi https://…/eventi.json   (event calendar from the panel, events.go)
+//	go run ./server -eventi eventi.json             (or from a file)
 //
-// Architettura e numeri di carico: docs/server.md.
+// Architecture and load numbers: docs/server.md.
 package main
 
 import (
@@ -36,8 +36,8 @@ func main() {
 		}
 	}()
 
-	// Spegnimento morbido (SIGTERM da un deploy): niente partite nuove, il
-	// bilanciatore vede /health a 503, le partite in corso finiscono.
+	// Graceful shutdown (SIGTERM from a deploy): no new matches, the load
+	// balancer sees /health at 503, running matches finish.
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
@@ -47,7 +47,7 @@ func main() {
 	for srv.sched.Rooms() > 0 && time.Now().Before(deadline) {
 		select {
 		case <-stop:
-			deadline = time.Now() // secondo segnale: si esce subito
+			deadline = time.Now() // second signal: exit at once
 		case <-time.After(time.Second):
 		}
 	}

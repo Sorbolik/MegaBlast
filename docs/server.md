@@ -166,7 +166,7 @@ partita si chiude.
 
 ## Numeri
 
-Prova di carico (`go test ./server/ -run Carico -v -carico 100 -durata 15s`):
+Prova di carico (`go test ./server/ -run Load -v -carico 100 -durata 15s`):
 partite 1v1 con giocatori finti collegati via WebSocket che camminano, saltano
 e sparano a caso. I giocatori finti girano nello stesso processo, quindi
 rubano CPU al server: i numeri veri sono un po' migliori. Macchina: 4 core

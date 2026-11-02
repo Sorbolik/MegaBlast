@@ -13,26 +13,26 @@ import (
 
 const (
 	tickRate      = 60
-	snapshotEvery = 2 // 30 stati al secondo, come SNAPSHOT_TICKS in client/sim/game.lua
+	snapshotEvery = 2 // 30 states per second, like SNAPSHOT_TICKS in client/sim/game.lua
 )
 
-// Messaggio da un client:
+// Message from a client:
 //
 //	{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}
-//	                                    primo messaggio: versione del protocollo, coda ("1v1",
-//	                                    "2v2", "ffa" o l'id di un evento con la sua coda, GET /eventi)
-//	                                    e cartellino (livello e badge, li vedono gli altri)
-//	{"t":"hello","v":8,"tok":"..."}    oppure: torno nella partita da cui sono caduto
-//	{"t":"pick","w":"shards"}           scelta d'inizio partita: una primaria e una secondaria
-//	                                    (l'arma dice la categoria; si cambia fino allo scadere)
+//	                                    first message: protocol version, queue ("1v1",
+//	                                    "2v2", "ffa" or the id of an event with its queue, GET /eventi)
+//	                                    and card (level and badges, the others see them)
+//	{"t":"hello","v":8,"tok":"..."}    or: I'm back in the match I dropped from
+//	{"t":"pick","w":"shards"}           start-of-match draft: one primary and one secondary
+//	                                    (the weapon tells the category; can change until time's up)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
-//	{"t":"leave"}                       esco dalla partita (rotellina in partita): non torno, gli
-//	                                    altri lo sanno subito (vale anche durante la scelta)
+//	{"t":"leave"}                       I leave the match (in-match gear wheel): I don't come
+//	                                    back, the others know at once (also during the draft)
 //
-// "j" dice se il salto è ancora tenuto premuto: lasciandolo mentre si sale il salto è corto.
-// "w" è l'arma: "missile" (se manca), "sword", "teleport", una secondaria scelta
-// all'inizio ("eagle", "mallet", "lunge", "bellows") o un'arma delle casse ("grenade",
-// "shards", "punch", "sniper": la simulazione la usa solo se il robot ha colpi).
+// "j" says whether jump is still held down: releasing it while rising makes the jump short.
+// "w" is the weapon: "missile" (if missing), "sword", "teleport", a secondary picked
+// at the start ("eagle", "mallet", "lunge", "bellows") or a crate weapon ("grenade",
+// "shards", "punch", "sniper": the simulation only uses it if the robot has shots).
 type clientMsg struct {
 	T    string  `json:"t"`
 	L    bool    `json:"l"`
@@ -44,36 +44,36 @@ type clientMsg struct {
 	V    int     `json:"v"`
 	Mode string  `json:"mode"`
 	Tok  string  `json:"tok"`
-	// col saluto: livello e badge del cartellino (menu/vetrina.lua, per_rete)
-	// (grezzo: un cartellino sbagliato non deve far fallire il saluto)
+	// with the greeting: level and badges of the card (menu/vetrina.lua, per_rete)
+	// (raw: a wrong card must not make the greeting fail)
 	Showcase json.RawMessage `json:"vetrina"`
 }
 
 type showcaseMsg struct {
 	Level int `json:"liv"`
-	Bdg []struct {
+	Bdg   []struct {
 		ID    string `json:"id"`
 		Grade int    `json:"grado"`
 	} `json:"bdg"`
 }
 
-// I badge sono pochi (menu/traguardi.lua): ne passano al massimo badgeMax, con
-// un nome corto di lettere minuscole e un grado da 1 a gradoMax
+// Badges are few (menu/traguardi.lua): at most badgeMax get through, with a
+// short name of lowercase letters and a grade from 1 to gradeMax
 const (
 	badgeMax = 3
 	gradeMax = 4
-	levelMax   = 999
+	levelMax = 999
 )
 
 var badgeID = regexp.MustCompile(`^[a-z_]{1,16}$`)
 
-// vetrinaJSON controlla quello che manda il client e lo riscrive in JSON:
-// gli altri giocatori lo ricevono così com'è nei messaggi draft e start. Quello
-// che non si legge (o manca) diventa un cartellino vuoto
+// showcaseJSON checks what the client sends and rewrites it as JSON: the other
+// players receive it as it is in the draft and start messages. Whatever can't
+// be read (or is missing) becomes an empty card
 func showcaseJSON(raw json.RawMessage) []byte {
 	var v showcaseMsg
 	if len(raw) == 0 || json.Unmarshal(raw, &v) != nil {
-		// per esempio "bdg":{} (una tabella Lua vuota diventa un oggetto)
+		// for example "bdg":{} (an empty Lua table becomes an object)
 		var only struct {
 			Level int `json:"liv"`
 		}
@@ -106,13 +106,13 @@ func parseClientMsg(data []byte) (clientMsg, error) {
 	return msg, err
 }
 
-// roomMsg arriva alla stanza dalle goroutine delle connessioni. La stanza li
-// legge solo all'inizio del suo tick, sul suo worker: lo stato della partita
-// non è mai toccato da due goroutine insieme e non servono lock.
+// roomMsg reaches the room from the connection goroutines. The room reads them
+// only at the start of its tick, on its worker: the match state is never
+// touched by two goroutines at once and no locks are needed.
 type roomMsg struct {
 	slot   int
 	msg    clientMsg
-	attach *Player // il giocatore del posto slot si è riconnesso con questa connessione
+	attach *Player // the player of seat slot reconnected with this connection
 }
 
 type held struct {
@@ -121,36 +121,36 @@ type held struct {
 	weapon                        string
 }
 
-// seat è un posto nella stanza: il robot slot+1.
+// seat is a place in the room: robot slot+1.
 type seat struct {
-	p    *Player // nil mentre il giocatore è disconnesso
-	tok  string  // per tornare nella partita
-	away int     // tick passati da disconnesso
-	gone bool    // non torna più
+	p    *Player // nil while the player is disconnected
+	tok  string  // to come back to the match
+	away int     // ticks spent disconnected
+	gone bool    // not coming back
 	team int
 	in   held
 }
 
-// Room è una partita: la simulazione Lua e i suoi giocatori.
+// Room is a match: the Lua simulation and its players.
 type Room struct {
 	srv   *Server
 	mode  Mode
 	seed  int64
-	mapID string // la sceglie la simulazione dal seed (maps.pick) quando parte
+	mapID string // the simulation picks it from the seed (maps.pick) when it starts
 	seats []*seat
 	in    chan roomMsg
 	eng   *Engine
-	sim   *Sim // nil durante la scelta delle armi
+	sim   *Sim // nil during the weapon draft
 	tick  int
 	ended atomic.Bool
 
-	draft     lua.LValue // stato di sim/draft.lua finché si sceglie
-	draftLeft int        // tick alla fine della scelta
-	players   []byte     // squadre in JSON, [{"team":1},...]; da start anche le scelte del draft
-	showcases   []byte     // i cartellini dei giocatori in JSON, [{"liv":12,"bdg":[...]},...]
+	draft     lua.LValue // state of sim/draft.lua while picking
+	draftLeft int        // tick at the end of the draft
+	players   []byte     // teams as JSON, [{"team":1},...]; from start also the draft picks
+	showcases []byte     // the players' cards as JSON, [{"liv":12,"bdg":[...]},...]
 }
 
-// newRoom prepara la partita fuori dai worker e apre la scelta delle armi.
+// newRoom prepares the match outside the workers and opens the weapon draft.
 func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, error) {
 	r := &Room{srv: srv, mode: mode, seed: seed, in: make(chan roomMsg, 64*len(players))}
 	eng, err := newEngine()
@@ -199,14 +199,14 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	return r, nil
 }
 
-// seatRef dice dove sta un giocatore: stanza e posto.
+// seatRef says where a player is: room and seat.
 type seatRef struct {
 	room *Room
 	slot int
 }
 
-// Post consegna un messaggio alla stanza senza mai bloccare chi lo manda: se la
-// coda è piena (client che inonda di messaggi) il messaggio si perde.
+// Post delivers a message to the room without ever blocking the sender: if
+// the queue is full (a client flooding messages) the message is lost.
 func (r *Room) Post(m roomMsg) {
 	select {
 	case r.in <- m:
@@ -228,8 +228,8 @@ func (r *Room) broadcast(msg []byte) {
 	}
 }
 
-// regole: quelle dell'evento della coda (sim/rules.lua), il client le passa
-// alla sua copia della partita; null fuori dagli eventi.
+// rules: those of the queue's event (sim/rules.lua), the client passes them to
+// its copy of the match; null outside events.
 func (r *Room) sendStart(slot int, resume bool) {
 	rules := r.mode.Rules
 	if rules == nil {
@@ -239,9 +239,9 @@ func (r *Room) sendStart(slot int, resume bool) {
 		r.seed, r.mapID, r.mode.Name, slot+1, r.seats[slot].tok, resume, r.players, rules, r.showcases))
 }
 
-// sendDraft manda a un giocatore la scelta delle armi: ventagli, le sue
-// scelte (p, p2: quelle degli altri non si vedono), tick rimasti, e chi è
-// (you, tok, players: serve anche per tornare se cade adesso).
+// sendDraft sends a player the weapon draft: fans, their picks (p, p2: the
+// others' aren't shown), ticks left, and who they are (you, tok, players: also
+// needed to come back if they drop now).
 func (r *Room) sendDraft(slot int) {
 	st, err := r.eng.call("draft_state", r.draft, lua.LNumber(slot+1))
 	if err != nil {
@@ -253,13 +253,13 @@ func (r *Room) sendDraft(slot int) {
 	t.RawSetString("tok", lua.LString(r.seats[slot].tok))
 	t.RawSetString("mode", lua.LString(r.mode.Name))
 	msg := appendJSON(nil, t)
-	// le squadre sono già in JSON: le aggiungiamo in coda all'oggetto
+	// teams are already JSON: we append them at the end of the object
 	msg = append(append(append(msg[:len(msg)-1], `,"players":`...), r.players...), `,"vetrine":`...)
 	msg = append(append(msg, r.showcases...), '}')
 	r.send(slot, msg)
 }
 
-// startMatch chiude la scelta delle armi e crea la partita.
+// startMatch closes the weapon draft and creates the match.
 func (r *Room) startMatch() error {
 	players, err := r.eng.call("draft_finish", r.draft)
 	if err != nil {
@@ -281,7 +281,7 @@ func (r *Room) startMatch() error {
 	return nil
 }
 
-// Tick fa avanzare la partita di un passo. Restituisce false quando è finita.
+// Tick advances the match by one step. Returns false when it's over.
 func (r *Room) Tick() bool {
 	for {
 		select {
@@ -317,7 +317,7 @@ func (r *Room) Tick() bool {
 		r.close()
 		return false
 	}
-	// salto e sparo valgono per un solo tick; i tasti tenuti premuti restano
+	// jump and fire count for one tick only; held keys stay
 	for _, s := range r.seats {
 		s.in.jump, s.in.fire = false, false
 	}
@@ -346,7 +346,7 @@ func (r *Room) handle(m roomMsg) {
 			return
 		}
 		if s.p != nil && s.p != m.attach {
-			s.p.Close() // la vecchia connessione non serve più
+			s.p.Close() // the old connection isn't needed any more
 		}
 		s.p, s.away = m.attach, 0
 		if r.sim == nil {
@@ -381,8 +381,8 @@ func (r *Room) handle(m roomMsg) {
 	}
 }
 
-// handleDraft: le scelte durante la scelta delle armi. Gli altri non le
-// vedono: la conferma torna solo a chi ha scelto.
+// handleDraft: picks during the weapon draft. The others don't see them: the
+// confirmation goes back only to whoever picked.
 func (r *Room) handleDraft(m roomMsg) {
 	if m.msg.T != "pick" {
 		return
@@ -392,16 +392,16 @@ func (r *Room) handleDraft(m roomMsg) {
 	}
 }
 
-// checkAway si accorge delle connessioni cadute e conta il tempo di chi è
-// disconnesso. Passato il tempo per tornare il giocatore esce davvero; la
-// partita continua finché restano almeno due squadre con qualcuno collegato o
-// in arrivo.
-// Restituisce false se la partita va chiusa.
+// checkAway notices dropped connections and counts the time of whoever is
+// disconnected. Once the time to come back has passed the player really
+// leaves; the match goes on as long as at least two teams have someone
+// connected or on the way.
+// Returns false if the match must be closed.
 func (r *Room) checkAway() bool {
 	teams := map[int]bool{}
 	for i, s := range r.seats {
 		if s.p != nil && s.p.Closed() {
-			s.p, s.away, s.in = nil, 0, held{} // i tasti tenuti si lasciano
+			s.p, s.away, s.in = nil, 0, held{} // held keys are released
 			r.broadcast(fmt.Appendf(nil, `{"t":"away","robot":%d}`, i+1))
 		}
 		if s.p == nil && !s.gone {
@@ -419,16 +419,16 @@ func (r *Room) checkAway() bool {
 	return len(teams) >= 2
 }
 
-// leave: il giocatore del posto slot esce di sua scelta. Come chi non torna in
-// tempo, ma subito: il posto non si tiene e gli altri ricevono "left". La
-// partita continua (checkAway) se restano almeno due squadre.
+// leave: the player of seat slot leaves by choice. Like someone who doesn't
+// come back in time, but at once: the seat isn't kept and the others receive
+// "left". The match goes on (checkAway) if at least two teams remain.
 func (r *Room) leave(slot int) {
 	s := r.seats[slot]
 	s.p.room.Store(nil)
 	s.p.Close()
 	s.p, s.gone, s.in = nil, true, held{}
 	r.srv.sessions.Delete(s.tok)
-	// in partita il suo robot sparisce subito (durante la scelta non c'è ancora)
+	// in the match their robot disappears at once (during the draft it doesn't exist yet)
 	if r.sim != nil {
 		if err := r.sim.Remove(slot + 1); err != nil {
 			log.Printf("errore remove: %v", err)
@@ -437,7 +437,7 @@ func (r *Room) leave(slot int) {
 	r.broadcast(fmt.Appendf(nil, `{"t":"left","robot":%d}`, slot+1))
 }
 
-// close chiude la partita e le connessioni (dopo aver mandato gli ultimi messaggi).
+// close closes the match and the connections (after sending the last messages).
 func (r *Room) close() {
 	r.ended.Store(true)
 	for {

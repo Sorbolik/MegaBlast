@@ -1,18 +1,18 @@
--- Regole come dati (Sergio, 31 ottobre 2026): quello che un evento può
--- cambiare della partita, scritto come valori e mai come codice. La lista
--- bianca è qui: il server rifiuta un evento con una chiave che non c'è o un
--- valore fuori dai limiti, e client e server passano le stesse regole a
--- game.new e alla scelta delle armi, così la partita è identica sui due lati.
--- Proposta: https://claude.ai/artifact/WhmGJpMT4hfsD2MdPfHpUC
+-- Rules as data (Sergio, 31 October 2026): what an event can change about a
+-- match, written as values and never as code. The whitelist is here: the
+-- server rejects an event with an unknown key or a value out of bounds, and
+-- client and server pass the same rules to game.new and to the weapon draft,
+-- so the match is identical on both sides.
+-- Proposal: https://claude.ai/artifact/WhmGJpMT4hfsD2MdPfHpUC
 --
---   local regole = require "sim.rules"
---   local ok, err = regole.valida(r)        -- r = { casse = 2, armi = { "punch", "mallet" }, ... }
---   regole.valida(r, true)                  -- su una coda normale: solo CODA_NORMALE (tetto)
---   regole.opzioni(r, opts)                 -- aggiunge a opts di game.new
---   local viste = regole.armi(r)            -- armi offerte nella scelta (sim/draft.lua), o nil
+--   local rules = require "sim.rules"
+--   local ok, err = rules.validate(r)       -- r = { casse = 2, armi = { "punch", "mallet" }, ... }
+--   rules.validate(r, true)                 -- on a normal queue: only CODA_NORMALE (tetto)
+--   rules.opzioni(r, opts)                  -- adds to the opts of game.new
+--   local offered = rules.armi(r)           -- weapons offered in the draft (sim/draft.lua), or nil
 --
--- Una regola nuova si aggiunge qui (con i suoi limiti) e in opzioni; se serve
--- una cosa che game.new non sa ancora fare, prima va insegnata alla simulazione.
+-- A new rule is added here (with its bounds) and in opzioni; if it needs
+-- something game.new cannot do yet, teach it to the simulation first.
 
 local C = require "sim.config"
 local game = require "sim.game"
@@ -24,23 +24,23 @@ local PRIMARIES, SECONDARIES = {}, {}
 for _, w in ipairs(game.CRATE_WEAPONS) do PRIMARIES[w] = true end
 for _, w in ipairs(game.DRAFT_SECONDARIES) do SECONDARIES[w] = true end
 
--- un numero intero fra a e b
+-- an integer between a and b
 local function integer(a, b)
 	return function(v)
 		return type(v) == "number" and v == math.floor(v) and v >= a and v <= b, "da " .. a .. " a " .. b
 	end
 end
 
--- La lista bianca: chiave -> controllo del valore (vero, o falso e il perché)
+-- The whitelist: key -> check of the value (true, or false and why)
 M.LISTA = {
-	-- turni fra una cassa e l'altra (la prima cade sempre al primo turno)
+	-- turns between one crate and the next (the first always drops on the first turn)
 	casse = integer(1, 10),
-	-- false: niente cerchi di cura
+	-- false: no healing circles
 	cure = function(v) return type(v) == "boolean", "vero o falso" end,
-	-- "fisso": albero ed equipaggiamento non contano, tutti hanno le statistiche di base
+	-- "fisso": skill tree and gear don't count, everyone has the base stats
 	livello = function(v) return v == "fisso", "solo \"fisso\"" end,
-	-- le armi della scelta d'inizio partita: almeno una primaria e una secondaria
-	-- (Lanciarune e Lama restano sempre)
+	-- the weapons of the start-of-match draft: at least one primary and one secondary
+	-- (Lanciarune and Lama always stay)
 	armi = function(v)
 		if type(v) ~= "table" or #v == 0 then return false, "una lista di armi" end
 		local p, s = false, false
@@ -50,12 +50,12 @@ M.LISTA = {
 		end
 		return p and s, "almeno una primaria e una secondaria"
 	end,
-	-- il tetto ai livelli dei pezzi (Torneo, Sergio 31 ottobre: "fissati a un
-	-- massimo, magari 12 o 15 su 20"): sta anche sulle code normali perché non
-	-- cambia la partita, solo chi ci entra; ha effetto quando online arrivano
-	-- gli assetti (fino ad allora il gioco lo mostra e basta)
+	-- the cap on piece levels (Torneo, Sergio 31 October: "fissati a un
+	-- massimo, magari 12 o 15 su 20"): it is allowed on normal queues too because
+	-- it doesn't change the match, only who can join; it takes effect when
+	-- loadouts arrive online (until then the game only shows it)
 	tetto = integer(1, equip.LIVELLO_MAX - 1),
-	-- punti partita diversi da config.SCORE, solo i campi che cambiano
+	-- match points different from config.SCORE, only the fields that change
 	punti = function(v)
 		if type(v) ~= "table" then return false, "una tabella di punti" end
 		for k, n in pairs(v) do
@@ -66,12 +66,12 @@ M.LISTA = {
 	end,
 }
 
--- Le regole che si possono mettere anche su una coda normale (Torneo, Sfida,
--- XP): non cambiano la partita, quindi non la cambiano a chi gioca normale.
+-- The rules that can also go on a normal queue (Torneo, Sfida, XP): they
+-- don't change the match, so they don't change it for people playing normally.
 M.CODA_NORMALE = { tetto = true }
 
--- normale: l'evento sta su una coda normale, quindi solo le regole di CODA_NORMALE
-function M.valida(r, normal)
+-- normal: the event is on a normal queue, so only the rules in CODA_NORMALE
+function M.validate(r, normal)
 	if type(r) ~= "table" then return nil, "le regole sono una tabella" end
 	for k, v in pairs(r) do
 		local checker = M.LISTA[k]

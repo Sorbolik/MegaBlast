@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-// Il pannello degli eventi (strumenti/eventi) controlla gli eventi coi dati di
-// pagina/dati.json: devono essere quelli della simulazione, altrimenti il
-// pannello lascia passare un evento che il server rifiuta. Se fallisce:
+// The events panel (strumenti/eventi) checks events with the data in
+// pagina/dati.json: it must match the simulation, otherwise the panel lets
+// through an event the server rejects. If it fails:
 // luajit strumenti/eventi/dati.lua
 func TestPanelData(t *testing.T) {
 	file, err := os.ReadFile("../strumenti/eventi/pagina/dati.json")
@@ -34,12 +34,12 @@ func TestPanelData(t *testing.T) {
 		t.Fatal(err)
 	}
 	type data struct {
-		Primaries    []string           `json:"primarie"`
-		Secondaries  []string           `json:"secondarie"`
-		Points       map[string]float64 `json:"punti"`
-		Crates       int                `json:"casse"`
-		CapMax    int                `json:"tetto_max"`
-		ModeSizes        map[string]int     `json:"modi"`
+		Primaries   []string           `json:"primarie"`
+		Secondaries []string           `json:"secondarie"`
+		Points      map[string]float64 `json:"punti"`
+		Crates      int                `json:"casse"`
+		CapMax      int                `json:"tetto_max"`
+		ModeSizes   map[string]int     `json:"modi"`
 		NormalQueue []string           `json:"coda_normale"`
 	}
 	var inPanel, nellaSim data
@@ -50,6 +50,6 @@ func TestPanelData(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(inPanel, nellaSim) {
-		t.Fatalf("strumenti/eventi/pagina/dati.json non è in pari con la simulazione: luajit strumenti/eventi/dati.lua\npannello %+v\nsimulazione %+v", inPanel, nellaSim)
+		t.Fatalf("strumenti/eventi/pagina/dati.json is out of sync with the simulation: luajit strumenti/eventi/dati.lua\npanel %+v\nsimulation %+v", inPanel, nellaSim)
 	}
 }

@@ -1,7 +1,7 @@
 # Progressione, podio, equipaggiamento, premi
 
-Codice: `client/sim/skills.lua`, `equipaggiamento.lua`, `assetto.lua`,
-`riconoscimenti.lua`; schermate `client/menu/profilo.lua`, `podio.lua`,
+Codice: `client/sim/skills.lua`, `gear.lua`, `loadout.lua`,
+`awards.lua`; schermate `client/menu/profilo.lua`, `podio.lua`,
 `armeria.lua`. Principi in [../game_design_competitivo.md](../game_design_competitivo.md),
 futuro in [../roadmap.md](../roadmap.md) (aree 9, 10).
 

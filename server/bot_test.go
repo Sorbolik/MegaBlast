@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-// Una partita tra bot (sim/bot.lua) con la sua ricetta (sim/replay.lua):
-// restituisce le impronte dello stato, separate da virgole. Il secondo bot
-// gioca con una rete neurale (sim/rete.lua) di pesi fissi.
+// A match between bots (sim/bot.lua) with its recipe (sim/replay.lua):
+// returns the state fingerprints, comma separated. The second bot plays with
+// a neural network (sim/rete.lua) with fixed weights.
 const botMatchLua = `
 local replay = require "sim.replay"
 local bot, rete = require "sim.bot", require "sim.rete"
@@ -32,9 +32,9 @@ for _, x in ipairs(r.impronte) do s[#s + 1] = string.format("%d", x.h) end
 return table.concat(s, ",")
 `
 
-// Il bot e la partita danno le stesse impronte sul server (gopher-lua, terreno
-// in Go) e sul telefono (LuaJIT): così il server può far giocare i bot e
-// controllare le ricette delle partite. Senza luajit il confronto si salta.
+// The bot and the match give the same fingerprints on the server (gopher-lua,
+// Go terrain) and on the phone (LuaJIT): so the server can have bots play and
+// check match recipes. Without luajit the comparison is skipped.
 func TestBotSameOnServerAndClient(t *testing.T) {
 	e, err := newEngine()
 	if err != nil {
@@ -46,11 +46,11 @@ func TestBotSameOnServerAndClient(t *testing.T) {
 	}
 	server := e.L.Get(-1).String()
 	if strings.Count(server, ",") < 4 {
-		t.Fatalf("poche impronte: %q", server)
+		t.Fatalf("too few fingerprints: %q", server)
 	}
 	luajit, err := exec.LookPath("luajit")
 	if err != nil {
-		t.Skip("manca luajit: confronto col client saltato")
+		t.Skip("luajit missing: comparison with the client skipped")
 	}
 	root, _ := filepath.Abs("..")
 	cmd := exec.Command(luajit, "-e", `package.path = "client/?.lua;" .. package.path
@@ -62,6 +62,6 @@ io.write(f())`)
 		t.Fatalf("luajit: %v\n%s", err, out)
 	}
 	if client := string(out); client != server {
-		t.Fatalf("impronte diverse:\nserver %s\nclient %s", server, client)
+		t.Fatalf("different fingerprints:\nserver %s\nclient %s", server, client)
 	}
 }

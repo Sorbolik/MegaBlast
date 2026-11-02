@@ -1,6 +1,6 @@
--- Collante tra il server Go e la simulazione: passa gli input al gioco e
--- prepara stato ed eventi come tabelle Lua semplici. Il JSON lo scrive il
--- server in Go (server/luajson.go), molto più in fretta di string.format qui.
+-- Glue between the Go server and the simulation: passes inputs to the game and
+-- prepares state and events as simple Lua tables. The JSON is written by the
+-- server in Go (server/luajson.go), much faster than string.format here.
 local game = require "sim.game"
 local maps = require "sim.maps"
 local config = require "sim.config"
@@ -9,9 +9,9 @@ local rules = require "sim.rules"
 
 local N = {}
 
--- Le mappe fisse si disegnano una volta sola per processo: le partite dopo
--- copiano le celle già pronte (server/terrain.go), invece di ridisegnarle
--- (più di 100 ms in gopher-lua).
+-- Fixed maps are drawn only once per process: later matches copy the ready
+-- cells (server/terrain.go), instead of drawing them again (over 100 ms in
+-- gopher-lua).
 for id, def in pairs(maps.maps) do
 	if not def.seeded then
 		local build = def.build
@@ -24,16 +24,16 @@ for id, def in pairs(maps.maps) do
 	end
 end
 
--- players: come opts.players di game.new (squadre e scelte del draft);
--- r: le regole dell'evento della coda (sim/rules.lua), nil fuori dagli eventi
+-- players: like opts.players of game.new (teams and draft picks);
+-- r: the rules of the queue's event (sim/rules.lua), nil outside events
 function N.new(seed, map, players, r)
 	local g = game.new(seed, map, rules.opzioni(r, { players = players }))
 	g:pop_events()
-	g.carves = {} -- scavi del terreno, per chi si riconnette
+	g.carves = {} -- terrain digs, for whoever reconnects
 	return g
 end
 
--- hold: il salto è ancora tenuto premuto (lasciandolo mentre si sale il salto è corto)
+-- hold: jump is still held down (releasing it while rising makes the jump short)
 function N.step(g, left, right, jump, hold, angle, power, weapon)
 	local fire = nil
 	if angle then fire = { angle = angle, power = power, weapon = game.WEAPONS[weapon] and weapon or "missile" } end
@@ -44,7 +44,7 @@ function N.current(g)
 	return g.current
 end
 
--- il giocatore i è uscito dalla partita (room.go, leave): il suo robot sparisce
+-- player i left the match (room.go, leave): their robot disappears
 function N.remove(g, i)
 	g:remove(i)
 end
@@ -56,19 +56,19 @@ end
 function N.snapshot(g)
 	local robots = {}
 	for i, rb in ipairs(g.robots) do
-		-- s: tick del fendente in corso (0 se il robot non sta colpendo), sd: sua direzione
-		-- pu, pd: lo stesso per il Pugno del Titano; ag, as, ap, ac: colpi di Uovo, Schegge, Pugno e Cecchino
-		-- sb, pb: angolo di mira del fendente e del pugno (il colpo gira con la mira)
-		-- tl: teletrasporti in mano, mh: vita massima, tu: turni giocati, pt: punti
-		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute aperto;
-		-- pl: paracadute rimasti; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)
-		-- sw: la secondaria scelta all'inizio (oltre alla Lama, "" se nessuna), ss: i suoi colpi;
-		-- lu: tick rimasti dell'Affondo, la: angolo del suo scatto;
-		-- kn: sbalzato da un colpo (non corre da sé);
-		-- hk: chi lo sta tirando col Rampino (0 nessuno, -1 se è appeso al terreno in hx, hy);
-		-- gs: il suo uncino del Rampino è in volo, in gx, gy; ml: tick del colpo di Maglio,
-		-- ms: tick (con frazione) in cui la sua testa si è fermata sul terreno (0 se gira ancora), md: suo lato;
-		-- gn: è uscito dalla partita (sparito, non torna); gd: ha già giocato in questo giro
+		-- s: tick of the ongoing slash (0 if the robot isn't hitting), sd: its direction
+		-- pu, pd: the same for the Pugno del Titano; ag, as, ap, ac: shots of Uovo, Schegge, Pugno and Cecchino
+		-- sb, pb: aim angle of the slash and the punch (the hit rotates with the aim)
+		-- tl: teleports in hand, mh: max life, tu: turns played, pt: points
+		-- ak, ad, am: traps, shields and trampolines; sh: shield left; pa: parachute open;
+		-- pl: parachutes left; st: turns left of the effects (burn + 10 x slow + 100 x cracked armour)
+		-- sw: the secondary picked at the start (besides the Lama, "" if none), ss: its shots;
+		-- lu: ticks left of the Affondo, la: angle of its dash;
+		-- kn: knocked by a hit (doesn't run by itself);
+		-- hk: who's pulling it with the Rampino (0 nobody, -1 if hanging from the terrain at hx, hy);
+		-- gs: its Rampino hook is in flight, at gx, gy; ml: tick of the Maglio swing,
+		-- ms: tick (with fraction) when its head stopped on terrain (0 if still swinging), md: its side;
+		-- gn: left the match (gone, won't come back); gd: has already played in this round
 		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
 			tl = rb.teleports_left, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
 			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, pl = rb.parachutes_left,
@@ -85,12 +85,12 @@ function N.snapshot(g)
 			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, gn = rb.gone or false,
 			gd = rb.round_done }
 	end
-	-- k: "missile", "grenade" o "sniper", fu: tick prima che l'Uovo scoppi
+	-- k: "missile", "grenade" or "sniper", fu: ticks before the Uovo blows up
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
-	-- o: i globi del teletrasporto in volo (i = numero del globo, per seguirlo tra uno stato e l'altro)
+	-- o: the teleport orbs in flight (i = orb number, to follow it from one state to the next)
 	local orbs = {}
 	for i, ob in ipairs(g.orbs) do orbs[i] = { i = ob.id, x = ob.x, y = ob.y } end
-	-- schegge in volo col loro posto nella raffica, casse (l'arma dentro resta segreta)
+	-- shards in flight with their place in the burst, crates (the weapon inside stays secret)
 	local shards, crates = {}, {}
 	for i = 1, game.SHARD_COUNT do
 		local sh = g.shards[i]
@@ -99,18 +99,18 @@ function N.snapshot(g)
 	for _, c in ipairs(g.crates) do
 		crates[#crates + 1] = { i = c.id, x = c.x, y = c.y, l = c.landed }
 	end
-	-- pl: trappole e trampolini (k: tipo, a: armata, tm: squadra, r: mezza larghezza, v: in volo)
+	-- pl: traps and trampolines (k: kind, a: armed, tm: team, r: half width, v: in flight)
 	local placed = {}
 	for i, o in ipairs(g.placed) do
 		placed[i] = { i = o.id, k = o.kind, x = o.x, y = o.y, a = o.armed, tm = o.team, r = o.r, v = o.flying or false }
 	end
-	-- hl: cerchi di cura
+	-- hl: healing circles
 	local heals = {}
 	for i, h in ipairs(g.heals) do heals[i] = { i = h.id, x = h.x, y = h.y } end
-	-- win: tick rimasti dopo il primo attacco; u: attacchi fatti (1 primaria, 2 secondaria); tp: teletrasporti
-	-- del turno; te: globi guadagnati nel turno; fr: ultimo giro (punti moltiplicati);
-	-- av, ab: squadra che ha aperto la coppia di turni e i suoi punti allora (game.ahead);
-	-- gr: il giro in corso (la Corona c'è solo da SCORE.crown_rounds + 1)
+	-- win: ticks left after the first attack; u: attacks done (1 primary, 2 secondary); tp: teleports
+	-- of the turn; te: orbs earned this turn; fr: last round (multiplied points);
+	-- av, ab: team that opened the pair of turns and its points then (game.ahead);
+	-- gr: the current round (the Crown only exists from SCORE.crown_rounds + 1)
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, tp = g.teleports, te = g.teleports_earned, mt = g.match_left, fr = g.final_round, gr = g.round,
@@ -118,7 +118,7 @@ function N.snapshot(g)
 		c = crates, pl = placed, hl = heals }
 end
 
--- Eventi dall'ultimo tick (una lista, vuota se non ne sono successi)
+-- Events since the last tick (a list, empty if none happened)
 function N.events(g)
 	local list = g:pop_events()
 	for _, e in ipairs(list) do
@@ -128,20 +128,20 @@ function N.events(g)
 	return list
 end
 
--- Gli scavi fatti finora (e i Bastioni posati o crollati, quelli con m): chi si
--- riconnette li rifà sul suo terreno, nello stesso ordine
+-- The digs made so far: whoever reconnects redoes them on their terrain, in
+-- the same order
 function N.sync(g)
 	return { t = "sync", x = g.carves }
 end
 
--- Scelta d'inizio partita (sim/draft.lua), prima di N.new --------------------
+-- Start-of-match draft (sim/draft.lua), before N.new --------------------
 
 function N.mode_players(mode)
 	return config.MODES[mode]
 end
 
--- la scelta comincia con lo schieramento dei cartellini (menu/schieramento.lua):
--- il suo tempo è dentro quello della scelta, e intanto si può già scegliere
+-- the draft starts with the line-up of the cards (menu/schieramento.lua): its
+-- time is inside the draft time, and meanwhile you can already pick
 function N.draft_seconds()
 	return config.DRAFT_SECONDS + config.SCHIERAMENTO_SECONDS
 end
@@ -154,9 +154,9 @@ function N.draft_new(seed, mode, r)
 	return draft.new(seed, players, rules.armi(r))
 end
 
--- le regole di un evento si possono usare? (events.go, quando legge il file)
-function N.regole_valida(r, normal)
-	local ok, err = rules.valida(r, normal)
+-- can an event's rules be used? (events.go, when it reads the file)
+function N.rules_valid(r, normal)
+	local ok, err = rules.validate(r, normal)
 	return ok and "" or err
 end
 
@@ -168,14 +168,14 @@ function N.draft_finish(d)
 	return draft.finish(d)
 end
 
--- I due ventagli (offer: primarie, offer2: secondarie) e le scelte del robot i
--- (p, p2, o ""): quelle degli altri non si mandano (Sergio, 30 ott)
+-- The two fans (offer: primaries, offer2: secondaries) and the picks of robot i
+-- (p, p2, or ""): the others' picks aren't sent (Sergio, 30 Oct)
 function N.draft_state(d, i)
 	return { t = "draft", offer = d.offer, offer2 = d.offer2, p = d.picks[i] or "", p2 = d.picks2[i] or "" }
 end
 
--- I giocatori della partita per il messaggio start: squadra e scelte del draft,
--- così il client crea la sua copia della partita con le stesse armi
+-- The match players for the start message: team and draft picks, so the
+-- client creates its copy of the match with the same weapons
 function N.start_players(players)
 	local out = {}
 	for i, p in ipairs(players) do

@@ -27,19 +27,19 @@ func newTestSim(t testing.TB, seed int64, mapID string) *Sim {
 	return sim
 }
 
-// Senza mappa la sceglie il seed fra quelle delle partite (maps.ROTATION):
-// lo stesso seed dà sempre la stessa, e le escono tutte.
+// Without a map the seed picks it among the match maps (maps.ROTATION): the
+// same seed always gives the same one, and all of them come out.
 func TestSimPicksMapFromSeed(t *testing.T) {
 	seen := map[string]bool{}
 	for seed := int64(1); seed <= 4; seed++ {
 		m := newTestSim(t, seed, "").Map()
 		if m != newTestSim(t, seed, "").Map() {
-			t.Fatalf("seed %d: mappa diversa a parità di seed", seed)
+			t.Fatalf("seed %d: different map for the same seed", seed)
 		}
 		seen[m] = true
 	}
 	if !seen["forgia"] || !seen["crogiolo"] {
-		t.Fatalf("mappe uscite: %v", seen)
+		t.Fatalf("maps that came out: %v", seen)
 	}
 }
 
@@ -61,10 +61,10 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 		} `json:"r"`
 	}
 	if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
-		t.Fatalf("snapshot non è JSON valido: %v\n%s", err, sim.Snapshot())
+		t.Fatalf("snapshot is not valid JSON: %v\n%s", err, sim.Snapshot())
 	}
 	if st.Phase != "aim" || st.Cur != 1 || len(st.R) != 2 || !st.R[0].G || st.R[0].HP != st.R[0].MH || st.R[0].MH == 0 {
-		t.Fatalf("stato inatteso: %+v", st)
+		t.Fatalf("unexpected state: %+v", st)
 	}
 	if err := sim.Step(Input{Fire: true, Angle: 1.0, Power: 0.6}); err != nil {
 		t.Fatal(err)
@@ -75,7 +75,7 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 		for _, e := range sim.Events() {
 			var ev map[string]any
 			if err := json.Unmarshal(e, &ev); err != nil {
-				t.Fatalf("evento non è JSON valido: %v\n%s", err, e)
+				t.Fatalf("event is not valid JSON: %v\n%s", err, e)
 			}
 			if ev["type"] == "explosion" || ev["type"] == "miss" {
 				found = true
@@ -83,12 +83,13 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Fatal("il missile non è mai esploso")
+		t.Fatal("the missile never exploded")
 	}
 }
 
-// Al primo turno, lanciato il globo di partenza, i globi guadagnati attaccando
-// si lanciano lo stesso anche sul server, e lo stato li porta al client (te).
+// On the first turn, after throwing the starting orb, the orbs earned by
+// attacking can still be thrown on the server too, and the state carries them
+// to the client (te).
 func TestEarnedTeleportsFirstTurn(t *testing.T) {
 	sim := newTestSim(t, 42, "forgia")
 	orbs := func() int {
@@ -108,24 +109,24 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 		}
 	}
 	if n := orbs(); n != 1 {
-		t.Fatalf("al primo turno un solo globo di partenza: %d in volo", n)
+		t.Fatalf("on the first turn only one starting orb: %d in flight", n)
 	}
 	var st struct {
 		TE int `json:"te"`
 	}
 	json.Unmarshal(sim.Snapshot(), &st)
 	if st.TE != 2 {
-		t.Fatalf("attaccando subito si guadagnano due globi, stato te=%d", st.TE)
+		t.Fatalf("attacking at once earns two orbs, state te=%d", st.TE)
 	}
 	sim.Step(tele)
 	sim.Step(tele)
 	if n := orbs(); n != 3 {
-		t.Fatalf("i due globi guadagnati devono partire: %d in volo", n)
+		t.Fatalf("the two earned orbs must leave: %d in flight", n)
 	}
 }
 
-// L'uncino del Rampino vola: nello stato c'è finché è in volo (gs, gx, gy), così
-// online il client disegna il filo che si allunga; poi arriva l'evento "hook".
+// The Rampino hook flies: it's in the state while in flight (gs, gx, gy), so
+// online the client draws the rope getting longer; then the "hook" event arrives.
 func TestHookShotInSnapshot(t *testing.T) {
 	sim := newTestSim(t, 42, "forgia")
 	for i := 0; i < 60; i++ {
@@ -160,12 +161,12 @@ func TestHookShotInSnapshot(t *testing.T) {
 		}
 	}
 	if flying < 2 || !ended {
-		t.Fatalf("l'uncino non vola (stati in volo %d, finito %v)", flying, ended)
+		t.Fatalf("the hook doesn't fly (states in flight %d, finished %v)", flying, ended)
 	}
 }
 
-// Lo scambio del secondo attacco con un teletrasporto passa dal server come
-// le armi (fire.w = "swap"): un globo in più e gli attacchi chiusi nello stato.
+// Swapping the second attack for a teleport goes through the server like the
+// weapons (fire.w = "swap"): one more orb and the attacks closed in the state.
 func TestSwapSecondAttack(t *testing.T) {
 	sim := newTestSim(t, 42, "forgia")
 	type state struct {
@@ -197,12 +198,12 @@ func TestSwapSecondAttack(t *testing.T) {
 	}
 	after := read()
 	if !swapped || after.R[0].TL != before.R[0].TL+1 || after.U&3 != 3 {
-		t.Fatalf("scambio non riuscito: evento %v, globi %d -> %d, attacchi %d", swapped, before.R[0].TL, after.R[0].TL, after.U)
+		t.Fatalf("swap failed: event %v, orbs %d -> %d, attacks %d", swapped, before.R[0].TL, after.R[0].TL, after.U)
 	}
 }
 
-// Uno stato Lua riusato deve dare la stessa partita di uno nuovo: la copia
-// della mappa in net.lua non deve cambiare niente.
+// A reused Lua state must give the same match as a new one: the map copy in
+// net.lua must change nothing.
 func TestEngineReuseIsDeterministic(t *testing.T) {
 	play := func(sim *Sim) []byte {
 		for i := 0; i < 300; i++ {
@@ -229,24 +230,24 @@ func TestEngineReuseIsDeterministic(t *testing.T) {
 			t.Fatal(err)
 		}
 		if got := play(sim); !sameJSON(got, fresh) {
-			t.Fatalf("partita %d sullo stato riusato diversa:\n%s\n%s", round, got, fresh)
+			t.Fatalf("match %d on the reused state differs:\n%s\n%s", round, got, fresh)
 		}
 	}
 }
 
-// sameJSON confronta due messaggi: l'ordine delle chiavi non conta.
+// sameJSON compares two messages: key order doesn't matter.
 func sameJSON(a, b []byte) bool {
 	var x, y any
 	return json.Unmarshal(a, &x) == nil && json.Unmarshal(b, &y) == nil && reflect.DeepEqual(x, y)
 }
 
-// testClient legge sempre, come un client vero: chi non legge viene
-// disconnesso dal server quando la sua coda si riempie.
+// testClient always reads, like a real client: whoever doesn't read gets
+// disconnected by the server when its queue fills up.
 type testClient struct {
 	t    *testing.T
 	conn *websocket.Conn
 	ctx  context.Context
-	msgs chan []byte // chiuso quando la connessione cade
+	msgs chan []byte // closed when the connection drops
 	err  error
 }
 
@@ -270,7 +271,7 @@ func dial(t *testing.T, ctx context.Context, url string) *testClient {
 	return c
 }
 
-// waitFor legge messaggi finché uno contiene want.
+// waitFor reads messages until one contains want.
 func (c *testClient) waitFor(want string) map[string]any {
 	c.t.Helper()
 	for data := range c.msgs {
@@ -280,11 +281,11 @@ func (c *testClient) waitFor(want string) map[string]any {
 			return m
 		}
 	}
-	c.t.Fatalf("in attesa di %q: %v", want, c.err)
+	c.t.Fatalf("waiting for %q: %v", want, c.err)
 	return nil
 }
 
-// closed aspetta che il server chiuda la connessione.
+// closed waits for the server to close the connection.
 func (c *testClient) closed() bool {
 	for range c.msgs {
 	}
@@ -299,14 +300,14 @@ func (c *testClient) send(msg string) {
 
 func testServer(t *testing.T) string {
 	cfg := DefaultConfig()
-	cfg.ReconnectTicks = tickRate / 2 // mezzo secondo per tornare, per non far durare troppo le prove
-	cfg.DraftTicks = tickRate         // e un secondo per scegliere l'arma
+	cfg.ReconnectTicks = tickRate / 2 // half a second to come back, so the tests don't take too long
+	cfg.DraftTicks = tickRate         // and one second to pick the weapon
 	srv := httptest.NewServer(NewServer(cfg).Handler())
 	t.Cleanup(srv.Close)
 	return "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
 }
 
-// I giocatori di ogni coda sono quelli di config.MODES
+// The players of each queue are those of config.MODES
 func TestModesMatchConfig(t *testing.T) {
 	e, err := newEngine()
 	if err != nil {
@@ -317,7 +318,7 @@ func TestModesMatchConfig(t *testing.T) {
 		v, err := e.call("mode_players", lua.LString(m.Sim))
 		list, ok := v.(*lua.LTable)
 		if err != nil || !ok || list.Len() != m.Players {
-			t.Fatalf("modalità %s: %d giocatori, config.MODES[%q] dice %v", name, m.Players, m.Sim, v)
+			t.Fatalf("mode %s: %d players, config.MODES[%q] says %v", name, m.Players, m.Sim, v)
 		}
 	}
 }
@@ -329,10 +330,10 @@ func TestHelloWrongVersion(t *testing.T) {
 	c := dial(t, ctx, url)
 	c.send(`{"t":"hello","v":1,"mode":"1v1"}`)
 	if m := c.waitFor(`"error"`); m["e"] != "version" || m["v"].(float64) != protocolVersion {
-		t.Fatalf("risposta inattesa: %v", m)
+		t.Fatalf("unexpected answer: %v", m)
 	}
 	if !c.closed() {
-		t.Fatal("la connessione doveva chiudersi")
+		t.Fatal("the connection should have closed")
 	}
 }
 
@@ -343,7 +344,7 @@ func TestResumeUnknownToken(t *testing.T) {
 	c := dial(t, ctx, url)
 	c.send(`{"t":"hello","v":8,"tok":"n1.inventato"}`)
 	if m := c.waitFor(`"error"`); m["e"] != "expired" || !c.closed() {
-		t.Fatalf("risposta inattesa: %v", m)
+		t.Fatalf("unexpected answer: %v", m)
 	}
 }
 
@@ -359,38 +360,38 @@ func TestOnlineMatch(t *testing.T) {
 	b := dial(t, ctx, url)
 	b.send(hello)
 
-	// Prima la scelta delle armi: il giocatore 1 prende la prima primaria e la
-	// seconda secondaria dei ventagli, il 2 non sceglie e allo scadere riceve
-	// le prime libere
+	// First the weapon draft: player 1 takes the first primary and the second
+	// secondary of the fans, player 2 doesn't pick and when time's up gets the
+	// first free ones
 	d := a.waitFor(`"draft"`)
 	if len(d["offer"].([]any)) != 3 || len(d["offer2"].([]any)) != 3 || len(d["players"].([]any)) != 2 || d["tok"] == "" {
-		t.Fatalf("scelta inattesa: %v", d)
+		t.Fatalf("unexpected draft: %v", d)
 	}
 	w := d["offer"].([]any)[0].(string)
 	w2 := d["offer2"].([]any)[1].(string)
 	a.send(`{"t":"pick","w":"` + w + `"}`)
 	if d := b.waitFor(`"draft"`); d["you"].(float64) != 2 {
-		t.Fatalf("scelta inattesa: %v", d)
+		t.Fatalf("unexpected draft: %v", d)
 	}
 	if d := a.waitFor(`"draft"`); d["p"] != w {
-		t.Fatalf("la scelta non torna a chi l'ha fatta: %v", d)
+		t.Fatalf("the pick doesn't come back to whoever made it: %v", d)
 	}
 	a.send(`{"t":"pick","w":"` + w2 + `"}`)
 	if d := a.waitFor(`"draft"`); d["p2"] != w2 {
-		t.Fatalf("la secondaria non torna a chi l'ha fatta: %v", d)
+		t.Fatalf("the secondary doesn't come back to whoever picked it: %v", d)
 	}
 	sa := a.waitFor(`"start"`)
 	sb := b.waitFor(`"start"`)
 	if sa["you"].(float64) != 1 || sb["you"].(float64) != 2 || sa["seed"] != sb["seed"] {
-		t.Fatalf("start inatteso: %v %v", sa, sb)
+		t.Fatalf("unexpected start: %v %v", sa, sb)
 	}
 
-	// Il giocatore 1 cammina: l'avversario riceve la nuova posizione
+	// Player 1 walks: the opponent receives the new position
 	first := b.waitFor(`"state"`)
 	r0 := first["r"].([]any)[0].(map[string]any)
 	x0 := r0["x"].(float64)
-	// lo stato porta casse, schegge e colpi: il giocatore 1 ha i colpi
-	// (config.DRAFT_SHOTS, 2) della primaria scelta e la sua secondaria
+	// the state carries crates, shards and shots: player 1 has the shots
+	// (config.DRAFT_SHOTS, 2) of the picked primary and their secondary
 	r1 := first["r"].([]any)[1].(map[string]any)
 	shots := func(r map[string]any) (n float64) {
 		for _, k := range []string{"ag", "as", "ap", "ac"} {
@@ -400,15 +401,15 @@ func TestOnlineMatch(t *testing.T) {
 	}
 	key := map[string]string{"grenade": "ag", "shards": "as", "punch": "ap", "sniper": "ac"}[w]
 	if _, ok := first["c"].([]any); !ok || r0[key] != 2.0 || shots(r0) != 2 || shots(r1) != 2 {
-		t.Fatalf("stato senza casse o colpi scelti: %v", first)
+		t.Fatalf("state without crates or picked shots: %v", first)
 	}
 	if r0["ss"] != 2.0 || r1["ss"] != 2.0 {
-		t.Fatalf("colpi della secondaria (config.SECONDARY_SHOTS.draft, 2) sbagliati: %v %v", r0["ss"], r1["ss"])
+		t.Fatalf("wrong secondary shots (config.SECONDARY_SHOTS.draft, 2): %v %v", r0["ss"], r1["ss"])
 	}
 	if r0["sw"] != w2 || r1["sw"] != d["offer2"].([]any)[0].(string) {
-		t.Fatalf("secondarie scelte sbagliate: %v %v", r0["sw"], r1["sw"])
+		t.Fatalf("wrong picked secondaries: %v %v", r0["sw"], r1["sw"])
 	}
-	// si cammina piano (5 U, 38,8 px/s): un secondo basta
+	// walking is slow (5 U, 38.8 px/s): one second is enough
 	a.send(`{"t":"in","l":false,"r":true}`)
 	time.Sleep(1000 * time.Millisecond)
 	a.send(`{"t":"in","l":false,"r":false}`)
@@ -419,27 +420,27 @@ func TestOnlineMatch(t *testing.T) {
 		moved = x > x0+10
 	}
 	if !moved {
-		t.Fatal("il movimento del giocatore 1 non arriva al giocatore 2")
+		t.Fatal("player 1's movement doesn't reach player 2")
 	}
 
-	// Il globo del teletrasporto parte senza chiudere il turno
+	// The teleport orb leaves without ending the turn
 	a.send(`{"t":"fire","a":1.7,"p":0.3,"w":"teleport"}`)
 	if orb := b.waitFor(`"orb"`); orb["robot"].(float64) != 1 {
-		t.Fatalf("globo del robot sbagliato: %v", orb)
+		t.Fatalf("orb of the wrong robot: %v", orb)
 	}
 
-	// Senza colpi l'Uovo di Fiamma non parte (resta il turno del giocatore 1).
-	// Il giocatore 2 non può sparare fuori turno; il giocatore 1 sì
+	// Without shots the Uovo di Fiamma doesn't leave (it stays player 1's turn).
+	// Player 2 can't shoot out of turn; player 1 can
 	a.send(`{"t":"fire","a":1.0,"p":0.6,"w":"grenade"}`)
 	b.send(`{"t":"fire","a":2.0,"p":0.5}`)
 	a.send(`{"t":"fire","a":1.0,"p":0.6}`)
 	ev := b.waitFor(`"fire"`)
 	if ev["robot"].(float64) != 1 {
-		t.Fatalf("ha sparato il robot sbagliato: %v", ev)
+		t.Fatalf("the wrong robot fired: %v", ev)
 	}
 	turn := b.waitFor(`"turn"`)
 	if turn["robot"].(float64) != 2 {
-		t.Fatalf("il turno non passa al giocatore 2: %v", turn)
+		t.Fatalf("the turn doesn't pass to player 2: %v", turn)
 	}
 
 	explosions := 0
@@ -456,32 +457,32 @@ func TestOnlineMatch(t *testing.T) {
 		}
 	}
 
-	// Chi cade può tornare col gettone: riceve di nuovo la partita e gli scavi
+	// Whoever drops can come back with the token: they get the match and the digs again
 	a.conn.CloseNow()
 	if m := b.waitFor(`"away"`); m["robot"].(float64) != 1 {
-		t.Fatalf("away inatteso: %v", m)
+		t.Fatalf("unexpected away: %v", m)
 	}
 	a = dial(t, ctx, url)
 	a.send(fmt.Sprintf(`{"t":"hello","v":8,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
-		t.Fatalf("ripresa inattesa: %v", m)
+		t.Fatalf("unexpected resume: %v", m)
 	}
 	if m := a.waitFor(`"sync"`); len(m["x"].([]any)) < explosions || explosions == 0 {
-		t.Fatalf("scavi mancanti (%d esplosioni): %v", explosions, m)
+		t.Fatalf("missing digs (%d explosions): %v", explosions, m)
 	}
 	a.waitFor(`"state"`)
 	b.waitFor(`"back"`)
 
-	// Se non torna in tempo, l'altro viene avvisato e la partita finisce
+	// If they don't come back in time, the other is told and the match ends
 	a.conn.CloseNow()
 	b.waitFor(`"away"`)
 	if m := b.waitFor(`"left"`); m["robot"].(float64) != 1 {
-		t.Fatalf("left inatteso: %v", m)
+		t.Fatalf("unexpected left: %v", m)
 	}
 }
 
-// 2 contro 2: ognuno prende quello che vuole, anche la stessa arma del
-// compagno, e vede solo le sue scelte (Sergio, 30 ott); il Rampino ce l'hanno tutti
+// 2 v 2: everyone takes what they want, even the same weapon as their
+// teammate, and sees only their own picks (Sergio, 30 Oct); everyone has the Rampino
 func TestTeamDraft(t *testing.T) {
 	url := testServer(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -498,16 +499,16 @@ func TestTeamDraft(t *testing.T) {
 		you[d["you"].(float64)] = x
 		offer, offer2 = d["offer"].([]any), d["offer2"].([]any)
 		if d["p"] != "" || d["p2"] != "" || d["offer3"] != nil {
-			t.Fatalf("draft iniziale inatteso: %v", d)
+			t.Fatalf("unexpected initial draft: %v", d)
 		}
 	}
 	p1, p3 := you[1], you[3]
 	w1, s1 := offer[0].(string), offer2[0].(string)
 	p1.send(`{"t":"pick","w":"` + w1 + `"}`)
-	p3.send(`{"t":"pick","w":"` + w1 + `"}`) // la stessa del compagno: va bene
+	p3.send(`{"t":"pick","w":"` + w1 + `"}`) // the same as the teammate's: fine
 	p3.send(`{"t":"pick","w":"` + s1 + `"}`)
 	if d := p1.waitFor(`"draft"`); d["p"] != w1 || d["p2"] != "" {
-		t.Fatalf("p1 deve vedere solo la sua scelta: %v", d)
+		t.Fatalf("p1 must see only their own pick: %v", d)
 	}
 	for {
 		d := p3.waitFor(`"draft"`)
@@ -521,17 +522,17 @@ func TestTeamDraft(t *testing.T) {
 		teams = append(teams, p.(map[string]any)["team"].(float64))
 	}
 	if !reflect.DeepEqual(teams, []float64{1, 2, 1, 2}) || st["mode"] != "2v2" {
-		t.Fatalf("start inatteso: %v", st)
+		t.Fatalf("unexpected start: %v", st)
 	}
-	// start porta anche le scelte: il client crea la partita con le stesse armi
+	// start also carries the picks: the client creates the match with the same weapons
 	pl := st["players"].([]any)
 	if pl[0].(map[string]any)["pick"] != w1 || pl[2].(map[string]any)["pick"] != w1 || pl[2].(map[string]any)["secondary"] != s1 {
-		t.Fatalf("scelte mancanti nello start: %v", pl)
+		t.Fatalf("picks missing in start: %v", pl)
 	}
 }
 
-// Chi esce dalla rotellina in partita non torna: gli altri lo sanno subito e
-// la partita continua finché restano due squadre
+// Whoever leaves from the in-match gear wheel doesn't come back: the others
+// know at once and the match goes on as long as two teams remain
 func TestLeave(t *testing.T) {
 	url := testServer(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -548,14 +549,14 @@ func TestLeave(t *testing.T) {
 	p1, p2, p3, p4 := you[1], you[2], you[3], you[4]
 	p1.send(`{"t":"leave"}`)
 	if !p1.closed() {
-		t.Fatal("chi esce deve essere disconnesso")
+		t.Fatal("whoever leaves must be disconnected")
 	}
 	for _, c := range []*testClient{p2, p3, p4} {
 		if m := c.waitFor(`"left"`); m["robot"].(float64) != 1 {
-			t.Fatalf("left inatteso: %v", m)
+			t.Fatalf("unexpected left: %v", m)
 		}
 	}
-	// tre squadre: si continua, e il robot di chi è uscito è sparito
+	// three teams: it goes on, and the robot of whoever left is gone
 	for {
 		st := p4.waitFor(`"state"`)
 		if st["r"].([]any)[0].(map[string]any)["gn"] == true && st["cur"].(float64) != 1 {
@@ -564,17 +565,17 @@ func TestLeave(t *testing.T) {
 	}
 	p2.send(`{"t":"leave"}`)
 	p3.send(`{"t":"leave"}`)
-	// resta una squadra sola: la partita si chiude
+	// only one team left: the match closes
 	if !p4.closed() {
-		t.Fatal("con una squadra sola la partita deve chiudersi")
+		t.Fatal("with only one team the match must close")
 	}
 }
 
-// Coppie di turni e ultimo giro nello stato: av (squadra che ha aperto la
-// coppia), ab (i suoi punti allora), fr (ultimo giro, punti doppi) e gd per
-// robot (ha già giocato nel giro), gr (il giro in corso: la Corona c'è solo
-// dopo SCORE.crown_rounds giri). Online il tabellone dei punti in attesa e
-// dei pallini dei turni li legge da qui.
+// Turn pairs and last round in the state: av (team that opened the pair), ab
+// (its points then), fr (last round, double points) and gd per robot (has
+// already played in the round), gr (the current round: the Crown only exists
+// after SCORE.crown_rounds rounds). Online the board of pending points and
+// the turn dots read them from here.
 func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 	sim := newTestSim(t, 42, "forgia")
 	type state struct {
@@ -595,9 +596,9 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 	}
 	st := read()
 	if st.AV != 1 || st.AB != 0 || st.FR || st.GR != 1 || st.R[0].GD || st.R[1].GD {
-		t.Fatalf("a inizio partita la coppia è aperta dalla squadra 1, niente ultimo giro: %+v", st)
+		t.Fatalf("at the start of the match the pair is opened by team 1, no last round: %+v", st)
 	}
-	// il primo turno finisce da solo allo scadere del tempo
+	// the first turn ends by itself when time runs out
 	for i := 0; i < 60*40; i++ {
 		if err := sim.Step(Input{}); err != nil {
 			t.Fatal(err)
@@ -608,22 +609,22 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 	}
 	st = read()
 	if !st.R[0].GD || st.R[1].GD || st.AV != 1 {
-		t.Fatalf("dopo il turno del primo: lui ha giocato, la coppia resta sua: %+v", st)
+		t.Fatalf("after the first one's turn: they have played, the pair stays theirs: %+v", st)
 	}
-	// finito anche il turno del secondo comincia il giro 2
+	// once the second one's turn is over too round 2 starts
 	for i := 0; i < 60*40 && read().GR == 1; i++ {
 		if err := sim.Step(Input{}); err != nil {
 			t.Fatal(err)
 		}
 	}
 	if st = read(); st.GR != 2 || st.R[0].GD || st.R[1].GD {
-		t.Fatalf("dopo un giro intero: giro 2, nessuno ha ancora giocato: %+v", st)
+		t.Fatalf("after a full round: round 2, nobody has played yet: %+v", st)
 	}
 }
 
-// Il cartellino di ognuno (livello e badge, col saluto) arriva agli altri con
-// la scelta e con lo start, controllato: livello fra 1 e livMax, al massimo
-// badgeMax badge validi
+// Each player's card (level and badges, with the greeting) reaches the others
+// with the draft and with start, checked: level between 1 and levelMax, at
+// most badgeMax valid badges
 func TestShowcases(t *testing.T) {
 	url := testServer(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -633,7 +634,7 @@ func TestShowcases(t *testing.T) {
 		`{"id":"<script>","grado":1},{"id":"danno","grado":9},{"id":"globi","grado":4},{"id":"casse","grado":1},{"id":"vinte","grado":1}]}}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
-	// una tabella Lua vuota arriva come oggetto: il saluto vale lo stesso
+	// an empty Lua table arrives as an object: the greeting still counts
 	b.send(`{"t":"hello","v":8,"mode":"1v1","vetrina":{"liv":100000,"bdg":{}}}`)
 	showcases := func(m map[string]any) string {
 		j, _ := json.Marshal(m["vetrine"])
@@ -641,9 +642,9 @@ func TestShowcases(t *testing.T) {
 	}
 	want := `[{"bdg":[{"grado":2,"id":"mira"},{"grado":4,"id":"globi"},{"grado":1,"id":"casse"}],"liv":12},{"bdg":[],"liv":999}]`
 	if d := b.waitFor(`"draft"`); showcases(d) != want {
-		t.Fatalf("vetrine nella scelta: %s, attese %s", showcases(d), want)
+		t.Fatalf("cards in the draft: %s, expected %s", showcases(d), want)
 	}
 	if s := a.waitFor(`"start"`); showcases(s) != want {
-		t.Fatalf("vetrine nello start: %s, attese %s", showcases(s), want)
+		t.Fatalf("cards in start: %s, expected %s", showcases(s), want)
 	}
 }

@@ -15,8 +15,8 @@ import (
 //go:embed net.lua
 var netLua string
 
-// Il codice Lua si compila una volta sola per tutto il processo: le proto
-// compilate non cambiano e gopher-lua permette di condividerle tra gli stati.
+// The Lua code is compiled only once for the whole process: compiled protos
+// don't change and gopher-lua allows sharing them between states.
 var (
 	compileOnce sync.Once
 	simProtos   map[string]*lua.FunctionProto // "sim.game" -> proto
@@ -39,7 +39,7 @@ func compileAll() {
 		compileErr = err
 		return
 	}
-	// tutti i moduli di client/sim: chi ne aggiunge uno non deve toccare il server
+	// all the modules of client/sim: whoever adds one doesn't have to touch the server
 	for _, e := range entries {
 		file := "client/sim/" + e.Name()
 		src, err := megablast.SimFS.ReadFile(file)
@@ -57,9 +57,9 @@ func compileAll() {
 	netProto, compileErr = compileLua("server/net.lua", netLua)
 }
 
-// Engine è uno stato Lua con la simulazione caricata: uno per stanza. Con il
-// codice già compilato e la mappa già disegnata (terrain.go) crearne uno
-// costa meno di un millisecondo, quindi non serve tenerli da parte.
+// Engine is a Lua state with the simulation loaded: one per room. With the
+// code already compiled and the map already drawn (terrain.go) creating one
+// takes less than a millisecond, so there's no need to keep them around.
 type Engine struct {
 	L   *lua.LState
 	net *lua.LTable
@@ -67,8 +67,8 @@ type Engine struct {
 
 func newEngine() (*Engine, error) { return buildEngine(installGoTerrain) }
 
-// buildEngine prepara lo stato; setup gira dopo il caricamento dei moduli e
-// prima di net.lua (le prove lo usano per confrontare il terreno Lua puro).
+// buildEngine prepares the state; setup runs after the modules are loaded and
+// before net.lua (tests use it to compare the pure Lua terrain).
 func buildEngine(setup func(*lua.LState)) (*Engine, error) {
 	compileOnce.Do(compileAll)
 	if compileErr != nil {
@@ -110,16 +110,16 @@ func (e *Engine) call(fn string, args ...lua.LValue) (lua.LValue, error) {
 	return ret, nil
 }
 
-// Sim è una partita in esecuzione su un Engine.
+// Sim is a match running on an Engine.
 type Sim struct {
 	e *Engine
 	g lua.LValue
 }
 
-// NewSim crea la partita; mapID "" la fa scegliere al seed (maps.pick). players
-// è la lista di opts.players (squadre e armi scelte, da N.draft_finish), LNil
-// per un 1 contro 1; regole sono quelle dell'evento della coda in JSON
-// (sim/rules.lua, già controllate da events.go), nil fuori dagli eventi.
+// NewSim creates the match; mapID "" lets the seed pick it (maps.pick).
+// players is the opts.players list (teams and weapons picked, from
+// N.draft_finish), LNil for a 1 v 1; rules are those of the queue's event as
+// JSON (sim/rules.lua, already checked by events.go), nil outside events.
 func (e *Engine) NewSim(seed int64, mapID string, players lua.LValue, rules []byte) (*Sim, error) {
 	m := lua.LValue(lua.LNil)
 	if mapID != "" {
@@ -136,16 +136,16 @@ func (e *Engine) NewSim(seed int64, mapID string, players lua.LValue, rules []by
 	return &Sim{e: e, g: g}, nil
 }
 
-// Input del giocatore di turno per un tick.
+// Input of the player on turn for one tick.
 type Input struct {
 	Left, Right, Jump bool
-	Hold              bool // il salto è ancora tenuto premuto
+	Hold              bool // jump is still held down
 	Fire              bool
 	Angle, Power      float64
-	Weapon            string // "missile", "sword", "teleport", le secondarie ("eagle", "mallet", "lunge", "bellows"), quelle delle casse o un oggetto
+	Weapon            string // "missile", "sword", "teleport", the secondaries ("eagle", "mallet", "lunge", "bellows"), crate weapons or an item
 }
 
-// Map è la mappa della partita.
+// Map is the match's map.
 func (s *Sim) Map() string {
 	return s.g.(*lua.LTable).RawGetString("map").String()
 }
@@ -165,7 +165,7 @@ func (s *Sim) Current() int {
 	return int(n)
 }
 
-// Remove toglie il robot i (da 1) di chi è uscito dalla partita.
+// Remove removes robot i (from 1) of whoever left the match.
 func (s *Sim) Remove(i int) error {
 	_, err := s.e.call("remove", s.g, lua.LNumber(i))
 	return err
@@ -176,15 +176,15 @@ func (s *Sim) Over() bool {
 	return v == lua.LTrue
 }
 
-// I messaggi JSON tornano come []byte nuovi: si mandano così come sono a tutti
-// i giocatori della stanza, e nessuno li modifica più.
+// JSON messages come back as new []byte: they're sent as they are to all the
+// players in the room, and nobody modifies them any more.
 
 func (s *Sim) Snapshot() []byte {
 	v, _ := s.e.call("snapshot", s.g)
 	return appendJSON(make([]byte, 0, 1024), v)
 }
 
-// Events restituisce gli eventi dell'ultimo tick, un JSON per elemento.
+// Events returns the events of the last tick, one JSON per element.
 func (s *Sim) Events() [][]byte {
 	v, _ := s.e.call("events", s.g)
 	t, ok := v.(*lua.LTable)
@@ -198,7 +198,7 @@ func (s *Sim) Events() [][]byte {
 	return out
 }
 
-// Sync restituisce gli scavi fatti finora nel terreno, per chi si riconnette.
+// Sync returns the digs made so far in the terrain, for whoever reconnects.
 func (s *Sim) Sync() []byte {
 	v, _ := s.e.call("sync", s.g)
 	return appendJSON(nil, v)

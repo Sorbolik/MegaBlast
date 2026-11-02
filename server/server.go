@@ -15,18 +15,18 @@ import (
 	"github.com/coder/websocket"
 )
 
-// Versione del protocollo: va cambiata insieme a PROTOCOL in
-// client/main/game.gui_script ogni volta che i messaggi cambiano in modo che
-// un client vecchio non capirebbe.
+// Protocol version: change it together with PROTOCOL in
+// client/main/game.gui_script every time the messages change in a way an old
+// client wouldn't understand.
 const protocolVersion = 8
 
 type Config struct {
-	Node           string // nome del nodo, entra nei gettoni: un bilanciatore può mandare chi torna al nodo giusto
+	Node           string // node name, goes into tokens: a load balancer can send whoever comes back to the right node
 	Workers        int
-	ReconnectTicks int // quanto si aspetta chi è caduto prima di toglierlo dalla partita
-	DraftTicks     int // se > 0 sostituisce config.DRAFT_SECONDS (per le prove)
+	ReconnectTicks int // how long to wait for someone who dropped before removing them from the match
+	DraftTicks     int // if > 0 replaces config.DRAFT_SECONDS (for tests)
 	PingEvery      time.Duration
-	EventList         string // calendario degli eventi (events.go): indirizzo del pannello o file, vuoto = nessun evento
+	EventList      string // event calendar (events.go): panel address or file, empty = no events
 }
 
 func DefaultConfig() Config {
@@ -38,15 +38,15 @@ func DefaultConfig() Config {
 	}
 }
 
-// Server è un nodo: accetta i giocatori, li mette in coda e fa girare le stanze.
-// Non tiene stato condiviso con altri nodi, così per reggere più giocatori
-// basta aggiungere nodi dietro un bilanciatore (vedi docs/server.md).
+// Server is a node: it accepts players, queues them and runs rooms.
+// It shares no state with other nodes, so to handle more players you just add
+// nodes behind a load balancer (see docs/server.md).
 type Server struct {
 	cfg      Config
 	sched    *Scheduler
 	lobby    *Lobby
 	events   *Calendar
-	sessions sync.Map // gettone -> seatRef, per chi si riconnette
+	sessions sync.Map // token -> seatRef, for whoever reconnects
 	online   atomic.Int64
 	draining atomic.Bool
 }
@@ -63,7 +63,7 @@ func (s *Server) newToken() string {
 	return s.cfg.Node + "." + hex.EncodeToString(b[:])
 }
 
-// Drain prepara lo spegnimento: niente partite nuove, quelle in corso finiscono.
+// Drain prepares the shutdown: no new matches, running ones finish.
 func (s *Server) Drain() {
 	s.draining.Store(true)
 	s.lobby.Drain()
@@ -72,7 +72,7 @@ func (s *Server) Drain() {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", s.handleWS)
-	// per il bilanciatore: 503 quando il nodo si sta spegnendo o è pieno
+	// for the load balancer: 503 when the node is shutting down or full
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if s.draining.Load() || s.sched.Load() > 0.8 {
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -85,11 +85,11 @@ func (s *Server) Handler() http.Handler {
 			"draining": s.draining.Load(),
 		})
 	})
-	// il calendario per la bacheca del gioco: in corso e dei prossimi giorni
+	// the calendar for the game's board: running and in the next few days
 	mux.HandleFunc("/eventi", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*") // la build HTML5 lo chiede da un altro sito
-		// sempre fresco: il gioco lo chiede all'ingresso e la home deve essere giusta
+		w.Header().Set("Access-Control-Allow-Origin", "*") // the HTML5 build asks for it from another site
+		// always fresh: the game asks for it on entry and the home must be right
 		w.Header().Set("Cache-Control", "no-store")
 		json.NewEncoder(w).Encode(map[string]any{"ora": s.events.now().Unix(), "eventi": s.events.Occurrences()})
 	})
@@ -99,19 +99,19 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
-// Player è una connessione di un giocatore.
+// Player is one player's connection.
 type Player struct {
-	out       chan []byte // nil: chiudi dopo aver scritto quello che c'è prima
+	out       chan []byte // nil: close after writing what's ahead of it
 	ctx       context.Context
 	cancel    context.CancelFunc
-	room      atomic.Pointer[seatRef] // la partita in cui gioca, nil se non gioca
+	room      atomic.Pointer[seatRef] // the match they're playing, nil if not playing
 	closeOnce sync.Once
-	showcase   []byte // il cartellino in JSON, controllato (vetrinaJSON): livello e badge
+	showcase  []byte // the card as JSON, checked (showcaseJSON): level and badges
 }
 
-// Send non blocca mai la partita. Se il client non smaltisce i messaggi lo
-// disconnettiamo: tornando riceve lo stato completo, mentre perdere un
-// messaggio (uno scavo nel terreno) lo lascerebbe con una mappa sbagliata.
+// Send never blocks the match. If the client doesn't drain its messages we
+// disconnect it: coming back it gets the full state, while losing one message
+// (a dig in the terrain) would leave it with a wrong map.
 func (p *Player) Send(msg []byte) {
 	select {
 	case p.out <- msg:
@@ -120,7 +120,7 @@ func (p *Player) Send(msg []byte) {
 	}
 }
 
-// Close chiude la connessione dopo aver mandato i messaggi già in coda.
+// Close closes the connection after sending the messages already queued.
 func (p *Player) Close() {
 	p.closeOnce.Do(func() {
 		select {
@@ -139,7 +139,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.CloseNow()
-	conn.SetReadLimit(1024) // i messaggi dei client sono di poche decine di byte
+	conn.SetReadLimit(1024) // client messages are a few tens of bytes
 	s.online.Add(1)
 	defer s.online.Add(-1)
 
@@ -174,7 +174,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// hello controlla la versione e mette il giocatore in coda o nella sua partita.
+// hello checks the version and puts the player in the queue or in their match.
 func (s *Server) hello(p *Player, m clientMsg) bool {
 	if m.T != "hello" || m.V != protocolVersion {
 		p.Send(fmt.Appendf(nil, `{"t":"error","e":"version","v":%d}`, protocolVersion))
@@ -190,8 +190,8 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 		p.room.Store(&ref)
 		ref.room.Post(roomMsg{slot: ref.slot, attach: p})
 		if ref.room.ended.Load() {
-			// la partita si è chiusa proprio adesso: se close non ha visto il
-			// nostro attach, rispondiamo noi (Close vale una volta sola)
+			// the match closed right now: if close didn't see our attach, we answer
+			// ourselves (Close only works once)
 			p.Send([]byte(`{"t":"error","e":"expired"}`))
 			return false
 		}
@@ -203,7 +203,7 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	}
 	mode, ok := modes[m.Mode]
 	if !ok && m.Mode != "" {
-		// la coda di un evento (GET /eventi): se nel frattempo è finito, lo diciamo
+		// an event's queue (GET /eventi): if it ended meanwhile, we say so
 		if mode, ok = s.events.Queue(m.Mode); !ok {
 			p.Send([]byte(`{"t":"error","e":"evento"}`))
 			return false
@@ -217,8 +217,8 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 	return true
 }
 
-// writeLoop manda i messaggi in ordine e tiene viva la connessione con un ping:
-// sui telefoni una connessione può morire senza avvisare.
+// writeLoop sends messages in order and keeps the connection alive with a
+// ping: on phones a connection can die without notice.
 func (s *Server) writeLoop(conn *websocket.Conn, p *Player) {
 	ping := time.NewTicker(s.cfg.PingEvery)
 	defer ping.Stop()
