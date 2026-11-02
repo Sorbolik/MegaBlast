@@ -156,3 +156,54 @@ Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoo
 Approvata da Claude, 2026-11-02. È una scelta reversibile: sono immagini di proposta e il gioco non
 cambia finché Sergio non sceglie. Le opzioni scartate senza immagine (alone, occhio di bue, gli altri
 sbiaditi, un'altra fiammella) sono nella richiesta della designer.
+
+
+## Consegna di Codex
+
+Eseguita il 2026-11-02 dal `main` aggiornato, sul ramo `design/WB-010`.
+
+### File consegnati
+
+Tutti in `art/WB-010/`, PNG RGB 1536×1024, ciascuno accompagnato dal `.txt`
+con il prompt originale integrale e il riferimento R1 allegato:
+
+| PNG | Tentativi effettuati | Risultato conservato |
+|---|---:|---|
+| `p1_anello_scena.png` | 1 | 1 |
+| `p1_anello_foglio.png` | 3 | 2, scintille nei colori delle squadre |
+| `p2_freccia_scena.png` | 1 | 1 |
+| `p2_freccia_foglio.png` | 3 | 1, forma più vicina alla scena |
+| `p3_sigillo_scena.png` | 3 | 3, posa più vicina ai tre quarti |
+| `p3_sigillo_foglio.png` | 3 | 3, non conforme: vedere sotto |
+| `p4_cartiglio_scena.png` | 1 | 1 |
+| `p4_cartiglio_foglio.png` | 3 | 1, cartiglio aperto più vicino alla scena |
+
+18 generazioni totali. Prompt mai modificati; R1 allegato a ogni chiamata.
+Nessun ritocco, ricalco, taglio o integrazione nel gioco.
+
+### Controlli e limiti
+
+- Ispezionate visivamente tutte le generazioni; controllati risoluzione e formato dei file salvati.
+- Personaggi interi, code comprese; contorni scuri, nessuna scritta o numero visibile.
+  Personaggi riconoscibili come R1, ma non copie geometricamente identiche.
+- Scene con sfondo dipinto scuro e indicatore blu. Anello e freccia conservano la posa
+  con un piede alzato del riferimento, anziché entrambi i piedi appoggiati.
+- Fogli: due righe, blu sopra e oro sotto; 4 fotogrammi per riga per anello, freccia,
+  sigillo e 3 per cartiglio. Oggetti separati, nessun personaggio.
+- **Magenta non conforme al pieno #FF00FF:** tutti i fogli mostrano variazioni di colore,
+  confermate dal campionamento dei pixel agli angoli. Raggiunto il limite di 3 tentativi
+  per ogni foglio; non dichiarati pronti per un taglio basato sul colore esatto.
+- **Sigillo non conforme dopo 3 tentativi:** il foglio presenta una base piena e otto
+  tacche visibili invece delle nove richieste; anche la scena non garantisce nove tacche.
+  Il foglio non riproduce il sigillo di sole linee della scena.
+- Il disegno varia leggermente fra fotogrammi; identità geometrica, dimensioni identiche
+  e regolarità dell'animazione non garantite. Il cartiglio cambia larghezza con l'apertura.
+- Colori squadra riconoscibili visivamente; fedeltà esatta ai codici esadecimali non certificata.
+- **Incongruenza della fonte:** l'obiettivo elimina la fiammella, ma R1 la include e i prompt
+  impongono di copiare esattamente il personaggio. Le scene conservano quindi la fiammella.
+  Anche DECISIONI.md mantiene la vecchia decisione del 26 ottobre; la decisione più recente
+  in docs/decisioni/personaggio.md ne registra la rimozione. Segnalato senza alterare i prompt.
+- Non verificati: leggibilità effettiva a 40 px sul telefono, taglio nello strumento della
+  designer, animazione o resa nel gioco. Criteri di accettazione lasciati invariati.
+
+Consegna di proposte da revisionare, non validazione finale di asset integrabili.

@@ -1,0 +1,10 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp: use it ONLY for the style and for the size of the object compared to him. Do not draw the imp.
+
+The object: a circular infernal sigil of glowing lines, concentric circles like Dante's circles of hell with nine small notches around the outer ring, glowing in the team colour, seen slightly from above as a flat ellipse. 4 frames per row of the sigil slowly rotating: the notches move a little clockwise in each frame, the glow stays the same.
+
+Sheet layout: solid flat magenta #FF00FF background, nothing else on it (no shadows on the magenta, no ground, no imp). Two rows, all frames the same size and evenly spaced, no frame touching another: top row = BLUE team version (#3d7bff), bottom row = GOLD team version (#f2c45a). Same object in both rows, only the team colour changes. Do not use magenta or pink anywhere on the object. Landscape 3:2.
+
+Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoon, thick black outline, flat cel colours with light Doré-style engraving hatching in the shadows. Campaign palette: brick red, parchment, ember orange, old gold, wrought iron grey. Hell of Dante seen as a forge. Clean shapes that read at 40 px on a phone. No text, no letters, no numbers.
+
+Riferimenti allegati:
+Immagine 1 (R1): art/WB-009/riferimenti/R1_apprendista_concept.png
