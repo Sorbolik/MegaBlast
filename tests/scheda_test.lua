@@ -10,7 +10,7 @@ local vetrina = require "menu.vetrina"
 local conta = require "menu.conta"
 local replay = require "sim.replay"
 local game = require "sim.game"
-local equip = require "sim.equipaggiamento"
+local equip = require "sim.gear"
 
 local failures = 0
 local function check(cond, msg)

@@ -14,7 +14,7 @@
 -- Partite: la k-esima ha un seme suo, ruota modo (1v1, 2v2, tutti contro
 -- tutti), mappa (tutte quelle di sim/maps.lua), grado del bot (1-10) e, una
 -- volta su due, set di equipaggiamento a caso. Con --missioni 1 aggiunge una
--- partita per ogni missione dei gironi (sim/campagna.lua), col bot al posto
+-- partita per ogni missione dei gironi (sim/campaign.lua), col bot al posto
 -- del giocatore.
 package.path = "client/?.lua;" .. package.path
 
@@ -24,11 +24,11 @@ local maps = require "sim.maps"
 local rng = require "sim.rng"
 local bot = require "sim.bot"
 local replay = require "sim.replay"
-local assetto = require "sim.assetto"
-local equip = require "sim.equipaggiamento"
+local assetto = require "sim.loadout"
+local equip = require "sim.gear"
 local game = require "sim.game"
-local missioni = require "sim.missioni"
-local campagna = require "sim.campagna"
+local missioni = require "sim.missions"
+local campagna = require "sim.campaign"
 
 local opt = { partite = 10, da = 1, ogni = 10, missioni = 0 }
 do

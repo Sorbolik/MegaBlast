@@ -63,12 +63,12 @@ di WB-006 (prima il tre quarti, poi i pezzi).
 | Scartiamo | Perché |
 |---|---|
 | Tratteggi da incisione, texture, sfumature, macchie di fuliggine | a misura di gioco diventano rumore e il ricalco in SVG viene sporco: solo colori piatti |
-| La fiammella nei pezzi | la disegna il gioco (si anima e cresce nel proprio turno), non va nelle teste |
+| La fiammella nei pezzi | non c'è più nel gioco (tolta il 2 nov, PR #147): l'apprendista non ha nessuna fiamma sulla testa, in nessuna immagine |
 | Le ali | sono un pezzo d'equipaggiamento (schiena): il posto dell'ala resta vuoto |
 | Vestiti di qualunque tipo | si parte senza niente: i vestiti sono equipaggiamento |
 | Le forme del manichino grigio | lo stampino dice solo dove va ogni pezzo e quanto è grande (lezione di WB-001) |
 | Il foglio a pezzi liberi (P-007) | bocciato da Sergio una volta animato: si usa lo stampino |
-| Il colore della squadra sul corpo o sulla fiammella | un corpo tinto sparisce nei gironi rossi; basta il fazzoletto |
+| Il colore della squadra sul corpo | un corpo tinto sparisce nei gironi rossi; basta il fazzoletto |
 | Chiedere a ChatGPT l'SVG direttamente | i vettoriali disegnati "a codice" vengono storti (come quelli di Claude): si ricalca il disegno buono |
 
 ## La tavolozza (uguale in ogni prompt)
@@ -90,7 +90,8 @@ Pochi colori piatti, così il ricalco in SVG è pulito e ogni colore diventa uno
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-009/riferimenti/R1_apprendista_concept.png` | l'apprendista scelto (concept): la figura in mezzo è di tre quarti |
+| R1 | `art/WB-009/riferimenti/R1_apprendista_concept.png` | il concept dell'apprendista, usato per la fase 1: **ha la fiammella sulla testa, che dal 2 nov non esiste più**. Non si allega più a prompt nuovi |
+| R1b | `art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png` | **il riferimento standard dell'apprendista** dal 2 nov: il tre quarti scelto in fase 1 (R4), senza fiammella, col fazzoletto blu del concept al posto del verde di squadra. Si allega come immagine 1 a ogni prompt che deve mostrare l'apprendista (scene, proposte, personaggi nuovi da confrontare) |
 | R2 | `art/WB-009/riferimenti/R2_stampino_ai.png` | lo stampino di oggi (12 posti, rifatto con `stampino.py` il 1 nov): dove sta ogni pezzo (3072×2048) |
 | R3 | `art/WB-009/riferimenti/R3_manichino.png` | come si attaccano i pezzi |
 | R4 | `art/WB-009/scelti/tre_quarti.png` | il tre quarti scelto in fase 1 (c'è solo dopo la fase 1) |
@@ -124,7 +125,7 @@ non è uno sfondo: è il fazzoletto, e non va tolto.
 ```
 Image 1 shows the main character of our game, a little blacksmith-apprentice imp, three times. The MIDDLE figure is a three-quarter view facing right: that is the view we need. Image 1 is the only reference for his shapes and proportions: small and stocky, big round head (about one third of his height), two short bone-colored horns curving slightly forward, pointed ears, big yellow eyes with black pupils, a sly closed-mouth grin, brick-red skin with a parchment-colored belly and muzzle, four-fingered hands, bare feet with three stubby toes, a long thin tail with an arrowhead tip, a neckerchief knotted around his neck. Keep his character; change only the rendering, as described below.
 
-Draw him ONCE, full body, in a clean THREE-QUARTER VIEW FACING RIGHT, standing still in a neutral, relaxed pose: weight on both feet, legs slightly apart, both arms hanging loosely a little away from the body with open relaxed hands, the near arm and near leg (on the right of the picture) fully visible, the far arm and far leg (on the left) partly behind the body, the tail coming out from behind his lower back and curving up behind him on the left, fully visible from root to tip. The face is turned to the right in three-quarter view: the far eye is a bit narrower than the near eye. Do NOT draw any flame on his head and no wings: the game adds the flame itself. He wears nothing but the neckerchief.
+Draw him ONCE, full body, in a clean THREE-QUARTER VIEW FACING RIGHT, standing still in a neutral, relaxed pose: weight on both feet, legs slightly apart, both arms hanging loosely a little away from the body with open relaxed hands, the near arm and near leg (on the right of the picture) fully visible, the far arm and far leg (on the left) partly behind the body, the tail coming out from behind his lower back and curving up behind him on the left, fully visible from root to tip. The face is turned to the right in three-quarter view: the far eye is a bit narrower than the near eye. Do NOT draw any flame on his head and no wings: he has no flame at all. He wears nothing but the neckerchief.
 
 Rendering rules, very strict, because this drawing will be traced into vector shapes:
 - FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no brush strokes, no soot, no noise, no soft shading, no glow.
@@ -313,8 +314,9 @@ Rendering rules, very strict, because these arms will be traced into vector shap
    clip e alla scheda personaggio: aggiungere i posti è codice, in una PR a parte.
 5. Prova nell'editor delle animazioni e in simulazione, foto nel resoconto.
 
-Nel gioco, oggi, la fiammella ha il colore della squadra. Con il fazzoletto la squadra si vede
-già, quindi la fiammella può tornare arancione: anche questa è una PR a parte.
+La fiammella sopra la testa non c'è più nel gioco (tolta il 2 nov, PR #147): la squadra si vede
+dal fazzoletto e il giocatore di turno lo indica la scheda WB-010. Per questo il riferimento
+standard è R1b, senza fiammella: R1 resta solo come storia della fase 1.
 
 ---
 

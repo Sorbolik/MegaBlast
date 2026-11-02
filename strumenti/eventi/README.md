@@ -12,7 +12,7 @@ in [docs/server.md](../../docs/server.md#eventi)).
 - `pagina/index.html`: la pagina (niente build, niente librerie).
 - `pagina/calendario.js`: controlli, file del server, ripetizioni e accavallamenti; lo usano pagina e Worker.
 - `pagina/dati.json`: armi, punti, code e limiti presi dalla simulazione. Si rifà con
-  `luajit strumenti/eventi/dati.lua` quando cambiano; `go test ./server/` (TestPannelloDati) fallisce se è indietro.
+  `luajit strumenti/eventi/dati.lua` quando cambiano; `go test ./server/` (TestPanelData) fallisce se è indietro.
 - `worker.js`: il Worker (API con la chiave, `/eventi.json` per il server), il calendario in KV.
 - `prova.mjs`: `node strumenti/eventi/prova.mjs` fa i controlli; `node strumenti/eventi/prova.mjs 8787`
   apre il pannello su http://localhost:8787 (chiave `prova`) con un KV finto in memoria.

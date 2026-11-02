@@ -1,5 +1,5 @@
 -- Collaudo delle missioni coi bot: un bot gioca al posto del giocatore ogni
--- missione dei gironi (sim/campagna.lua) con tanti semi e a ogni livello, e
+-- missione dei gironi (sim/campaign.lua) con tanti semi e a ogni livello, e
 -- dice quante ne vince, in quanti turni, con quanti punti di vantaggio e con
 -- quante stelle. Così si vede se una missione si vince, se è troppo dura, dove
 -- mettere le soglie delle stelle (la seconda alla mediana dei punti di
@@ -8,7 +8,7 @@
 -- prova col bot senza la meccanica richiesta (per esempio senza teletrasporto):
 -- lì non deve vincere mai; con collaudo.piano il bot segue quel piano a ogni
 -- turno (sim/bot.lua, b.piano). Le lezioni no: sono rompicapi, li risolvono i
--- copioni di tests/campagna_test.lua.
+-- copioni di tests/campaign_test.lua.
 --
 -- La taratura delle stelle: per ogni missione la quota di vinte del bot normale
 -- che prende la seconda e la terza stella, e cosa guardare (DA GUARDARE) quando
@@ -27,8 +27,8 @@
 -- Scrive anche simulazione/arena/collaudo.md.
 package.path = "client/?.lua;" .. package.path
 
-local missioni = require "sim.missioni"
-local campagna = require "sim.campagna"
+local missioni = require "sim.missions"
+local campagna = require "sim.campaign"
 local replay = require "sim.replay"
 local config = require "sim.config"
 local game = require "sim.game"

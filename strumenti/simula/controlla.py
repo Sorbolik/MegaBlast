@@ -91,6 +91,33 @@ def controlla_proporzioni(root, f, errori):
                           f"non 16:9: usa gui.ADJUST_FIT e i bordi di ui/schermo.lua")
 
 
+# Il motore Android è sfoltito (megablast.appmanifest): un modulo Lua tolto lì
+# manca solo nell'APK, mentre sul PC e nella simulazione c'è (2 nov: image.load
+# tolto, sul telefono le mappe dipinte non si caricavano). Modulo usato -> librerie
+# che non devono essere escluse.
+MODULI_NATIVI = {"image": ("image", "ScriptImageExt", "image_null")}
+
+
+def controlla_manifest(root, errori):
+    manifest = root / "megablast.appmanifest"
+    if not manifest.exists():
+        return
+    testo_m = manifest.read_text(encoding="utf-8")
+    righe_m = [r for r in testo_m.splitlines() if not r.lstrip().startswith("#")]
+    voci = set(re.findall(r"[A-Za-z0-9_]+", "\n".join(righe_m)))
+    usati = set()
+    for f in root.rglob("*"):
+        if f.suffix in (".lua", ".script", ".gui_script") and "build" not in f.relative_to(root).parts:
+            for modulo in MODULI_NATIVI:
+                if re.search(r"\b%s\.load" % modulo, f.read_text(encoding="utf-8", errors="replace")):
+                    usati.add(modulo)
+    for modulo in sorted(usati):
+        tolti = [n for n in MODULI_NATIVI[modulo] if n in voci]
+        if tolti:
+            errori.append(f"/megablast.appmanifest: il codice usa {modulo}.load ma il motore Android "
+                          f"lo toglie ({', '.join(tolti)}): nell'APK non funzionerebbe")
+
+
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else Path(__file__).resolve().parents[2] / "client")
     errori = []
@@ -103,6 +130,7 @@ def main():
             controlla_mesh(root, f, errori)
         if f.suffix in (".lua", ".gui_script", ".gui", ".script"):
             controlla_proporzioni(root, f, errori)
+    controlla_manifest(root, errori)
     for e in errori:
         print("ERRORE EDITOR:", e)
     if errori:

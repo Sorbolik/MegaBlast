@@ -1,19 +1,19 @@
--- Ricetta di una partita: i pochi dati che bastano a rigiocarla identica
--- (la simulazione è deterministica). Seme, mappa, opzioni di game.new (coi
--- giocatori, e per i bot il livello), i tasti dei giocatori veri solo quando
--- cambiano, e le impronte dello stato (game:impronta) ogni OGNI tick e alla
--- fine: chi la rigioca deve ritrovarle tutte uguali, altrimenti la partita non
--- è valida (versione diversa, codice cambiato, dati toccati).
--- Serve all'arena dei bot (strumenti/arena), ai replay e ai controlli del server.
+-- Match recipe: the little data needed to replay it identically (the
+-- simulation is deterministic). Seed, map, game.new options (with the players,
+-- and the level for bots), the real players' keys only when they change, and
+-- the state fingerprints (game:impronta) every EVERY ticks and at the end:
+-- whoever replays it must find them all the same, otherwise the match is not
+-- valid (different version, changed code, tampered data).
+-- Used by the bot arena (strumenti/arena), by replays and by server checks.
 --
 --   local replay = require "sim.replay"
---   local r = replay.nuova(seme, mappa, opts)    -- opts come game.new; players[i].bot = "normale" per un bot (e carattere, pesi)
+--   local r = replay.nuova(seed, map, opts)      -- opts as in game.new; players[i].bot = "normale" for a bot (and carattere, pesi)
 --   local g, bots = replay.partita(r)
---   ogni tick:
---     local input = replay.input(r, g, bots, input_del_giocatore)
+--   every tick:
+--     local input = replay.input(r, g, bots, player_input)
 --     g:step(input)
 --     replay.dopo(r, g)
---   local ok, tick = replay.verifica(r)          -- la rigioca: true, o false e il tick dove diverge
+--   local ok, tick = replay.verifica(r)          -- replays it: true, or false and the tick where it diverges
 
 local game = require "sim.game"
 local bot = require "sim.bot"
@@ -21,25 +21,25 @@ local bot = require "sim.bot"
 local M = {}
 
 M.VERSIONE = 1
--- ogni quanti tick si prende l'impronta (10 s)
-M.OGNI = 600
+-- how many ticks between fingerprints (10 s)
+M.EVERY = 600
 
-local function copia(t)
+local function copy(t)
 	if type(t) ~= "table" then return t end
 	local o = {}
-	for k, v in pairs(t) do o[k] = copia(v) end
+	for k, v in pairs(t) do o[k] = copy(v) end
 	return o
 end
 
-function M.nuova(seme, mappa, opts)
-	return { versione = M.VERSIONE, seme = seme, mappa = mappa,
-		opzioni = copia(opts or {}), input = {}, impronte = {} }
+function M.nuova(seed_value, map_name, opts)
+	return { versione = M.VERSIONE, seme = seed_value, mappa = map_name,
+		opzioni = copy(opts or {}), input = {}, impronte = {} }
 end
 
--- La partita e i bot della ricetta, all'inizio
+-- The recipe's match and bots, at the start
 function M.partita(r)
-	local g = game.new(r.seme, r.mappa, copia(r.opzioni))
-	-- durata: la partita accorciata a mano (negli scenari, prova_durata)
+	local g = game.new(r.seme, r.mappa, copy(r.opzioni))
+	-- durata: the match shortened by hand (in scenarios, prova_durata)
 	if r.durata then g.match_left = r.durata end
 	local bots = {}
 	for i, p in ipairs(r.opzioni.players or {}) do
@@ -49,46 +49,46 @@ function M.partita(r)
 	return g, bots
 end
 
-local function uguali(a, b)
+local function same_input(a, b)
 	return (a.left or false) == (b.left or false) and (a.right or false) == (b.right or false)
 		and (a.jump or false) == (b.jump or false) and a.hold == b.hold
 end
 
--- L'input del tick: del bot se tocca a un bot, altrimenti quello del
--- giocatore, che si scrive nella ricetta (solo i cambiamenti e i colpi)
-function M.input(r, g, bots, umano)
+-- This tick's input: the bot's if it is a bot's turn, otherwise the player's,
+-- which is written into the recipe (only changes and shots)
+function M.input(r, g, bots, human)
 	local b = bots[g.current]
 	if b then return bot.input(b, g) end
-	umano = umano or {}
-	local prima = r.ultimo or {}
-	if umano.fire or not uguali(umano, prima) then
-		local f = umano.fire
-		r.input[#r.input + 1] = { t = g.tick + 1, l = umano.left or false, r = umano.right or false,
-			j = umano.jump or false, h = umano.hold,
+	human = human or {}
+	local first_one = r.ultimo or {}
+	if human.fire or not same_input(human, first_one) then
+		local f = human.fire
+		r.input[#r.input + 1] = { t = g.tick + 1, l = human.left or false, r = human.right or false,
+			j = human.jump or false, h = human.hold,
 			f = f and { w = f.weapon, a = f.angle, p = f.power } or nil }
 	end
-	r.ultimo = umano
-	return umano
+	r.ultimo = human
+	return human
 end
 
--- Dopo g:step: l'impronta, ogni OGNI tick e alla fine
+-- After g:step: the fingerprint, every EVERY ticks and at the end
 function M.dopo(r, g)
-	if g.tick % M.OGNI == 0 or g.phase == "over" then
+	if g.tick % M.EVERY == 0 or g.phase == "over" then
 		r.impronte[#r.impronte + 1] = { t = g.tick, h = g:impronta() }
 	end
 end
 
--- Chi rilegge una ricetta: i tasti dei giocatori veri tick per tick (i bot
--- pensano da soli, come quando si è giocata). Serve a verifica e al replay
--- nel gioco (scheda PARTITE del profilo).
+-- Reads a recipe back: the real players' keys tick by tick (bots think on
+-- their own, as when it was played). Used by verifica and by the in-game
+-- replay (MATCHES tab of the profile).
 function M.lettore(r)
 	return { r = r, k = 1, cur = {} }
 end
 
--- L'input del prossimo passo di g, letto dalla ricetta
+-- The input of g's next step, read from the recipe
 function M.rileggi(l, g, bots)
 	local b = bots[g.current]
-	-- il colpo vale per un tick solo
+	-- the shot lasts one tick only
 	if l.cur.fire then l.cur = { left = l.cur.left, right = l.cur.right, jump = l.cur.jump, hold = l.cur.hold } end
 	if b then return bot.input(b, g) end
 	local e = l.r.input[l.k]
@@ -101,23 +101,23 @@ function M.rileggi(l, g, bots)
 	return l.cur
 end
 
--- Rigioca la ricetta e confronta le impronte. Restituisce true, o false e il
--- tick della prima impronta diversa (o mancante).
+-- Replays the recipe and compares fingerprints. Returns true, or false and
+-- the tick of the first different (or missing) fingerprint.
 function M.verifica(r, max_tick)
 	local g, bots = M.partita(r)
 	local l = M.lettore(r)
 	local n = 1
-	local attese = r.impronte
-	max_tick = max_tick or (attese[#attese] and attese[#attese].t) or 0
+	local waits = r.impronte
+	max_tick = max_tick or (waits[#waits] and waits[#waits].t) or 0
 	while g.phase ~= "over" and g.tick < max_tick do
 		g:step(M.rileggi(l, g, bots))
-		local a = attese[n]
+		local a = waits[n]
 		if a and a.t == g.tick then
 			if a.h ~= g:impronta() then return false, g.tick end
 			n = n + 1
 		end
 	end
-	if attese[n] then return false, attese[n].t end
+	if waits[n] then return false, waits[n].t end
 	return true
 end
 

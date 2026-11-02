@@ -1,7 +1,7 @@
 -- Dove giochi? (GIOCA della home): la coda della partita online. A sinistra la
 -- grande, il 2 contro 2 di sempre, con gli eventi che contano anche lì (Torneo,
 -- Sfida, XP: "conta anche per"); a destra gli eventi con una coda loro (i
--- modificatori, server/eventi.go) e, piccolo, l'1 contro 1. Il giocatore
+-- modificatori, server/events.go) e, piccolo, l'1 contro 1. Il giocatore
 -- sceglie solo la coda: una partita conta per tutti gli eventi della sua coda.
 -- Stile in ui/ui.lua, eventi da main/eventi.lua.
 --

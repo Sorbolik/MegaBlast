@@ -1,4 +1,4 @@
--- Campagna (bottone CAMPAGNA della home): i capitoli di sim/campagna.lua in
+-- Campagna (bottone CAMPAGNA della home): i capitoli di sim/campaign.lua in
 -- schede, l'Addestramento (le lezioni) per primo. Ogni missione è una carta col
 -- titolo, le stelle prese e cosa serve per averle tutte, così si sa prima
 -- come fare meglio. Un capitolo si apre con le stelle di tutti (capitolo.serve):
@@ -11,8 +11,8 @@
 --   campagna.distruggi(c)
 
 local ui = require "ui.ui"
-local dati = require "sim.campagna"
-local missioni = require "sim.missioni"
+local dati = require "sim.campaign"
+local missioni = require "sim.missions"
 
 local M = {}
 

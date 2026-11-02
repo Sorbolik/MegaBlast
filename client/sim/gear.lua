@@ -1,14 +1,14 @@
--- Equipaggiamento: i quattro set dei Titani (bibbia grafica "Le Scorie").
--- Lua puro, come sim/abilita.lua.
+-- Gear: the four Titan sets (art bible "Le Scorie").
+-- Pure Lua, like sim/skills.lua.
 --
--- Dal documento di game design: misto di sidegrade (ogni pezzo dà qualcosa e
--- toglie qualcosa) e tier che cambiano aspetto e varianti. Il tier non rende
--- più forti: con tutti e quattro i pezzi di un set all'ultimo tier si sceglie la
--- variante B del bonus del set invece della A. I tier cambieranno l'aspetto
--- quando l'armatura si vedrà sulla Scoria. potere: il nome breve del bonus,
--- sul cartellino (ui/cartellino.lua).
+-- From the game design document: a mix of sidegrades (each piece gives
+-- something and takes something away) and tiers that change look and variants.
+-- Tiers do not make you stronger: with all four pieces of a set at the last
+-- tier you pick variant B of the set bonus instead of A. Tiers will change the
+-- look once armour is visible on the Scoria. potere: the short name of the
+-- bonus, shown on the card (ui/cartellino.lua).
 --
--- Effetti come in abilita.lua: { stat, add } | { stat, mul }.
+-- Effects as in skills.lua: { stat, add } | { stat, mul }.
 
 local M = {}
 
@@ -18,22 +18,22 @@ M.SLOTS = {
 	{ id = "cloak", name = "MANTELLO", art = "mantello" },
 	{ id = "legs", name = "GAMBALI", art = "gambali_davanti" },
 }
--- Livello di un pezzo: le partite giocate con lui, fino a LIVELLO_MAX. Ogni
--- SCATTI livelli il pezzo sale di tier (Sergio, 31 ott, ancora un'ipotesi:
+-- Level of a piece: matches played with it, up to LIVELLO_MAX. Every SCATTI
+-- levels the piece goes up a tier (Sergio, 31 Oct, still a hypothesis:
 -- "ogni pezzo uppato 20 o 30 volte, e agli scatti di 10 livelli poteri o
--- cose particolari e graficamente più figo"). Oggi il tier cambia solo
--- l'aspetto (quando l'armatura si vedrà addosso), e coi quattro pezzi di un
--- set al massimo si sceglie la variante B del bonus: come prima, a 30 partite.
+-- cose particolari e graficamente più figo"). Today the tier only changes the
+-- look (once armour is visible on the character), and with all four pieces of
+-- a set maxed you pick variant B of the bonus: as before, at 30 matches.
 M.LIVELLO_MAX = 30
 M.SCATTI = { 10, 20, 30 }
 M.TIERS = #M.SCATTI + 1
--- pezzi dello stesso set che servono per il bonus
+-- pieces of the same set needed for the bonus
 M.SET_PIECES = 4
--- partite giocate con un pezzo per farlo salire di tier (maestria del set)
+-- matches played with a piece to raise its tier (set mastery)
 M.TIER_MATCHES = { 0, M.SCATTI[1], M.SCATTI[2], M.SCATTI[3] }
 
--- Pezzi: per ogni set e slot un più e un meno, in percentuale sulla base (le
--- statistiche di movimento partono da sim/game.lua, DEFAULT_STATS). Bonus: a pezzi completi.
+-- Pieces: for each set and slot one plus and one minus, as a percentage of the
+-- base (movement stats start from sim/game.lua, DEFAULT_STATS). Bonus: full set.
 M.SETS = {
 	{ id = "corvo", name = "CORVO", style = "Agilità",
 		pieces = {
@@ -95,19 +95,19 @@ M.SETS = {
 M.BY_ID = {}
 for _, s in ipairs(M.SETS) do M.BY_ID[s.id] = s end
 
--- livello di un pezzo dalle partite giocate con lui
+-- level of a piece from the matches played with it
 function M.livello(matches)
 	return math.min(M.LIVELLO_MAX, matches or 0)
 end
 
--- il prossimo scatto di un pezzo a quel livello (nil: li ha presi tutti)
-function M.prossimo_scatto(livello)
+-- the next step of a piece at that level (nil: it has reached all of them)
+function M.prossimo_scatto(level_name)
 	for _, s in ipairs(M.SCATTI) do
-		if livello < s then return s end
+		if level_name < s then return s end
 	end
 end
 
--- tier di un pezzo dalle partite giocate con lui
+-- tier of a piece from the matches played with it
 function M.tier(matches)
 	local t = 1
 	for i, n in ipairs(M.TIER_MATCHES) do
@@ -116,8 +116,8 @@ function M.tier(matches)
 	return t
 end
 
--- il set che dà il bonus, se c'è: id del set e variante possibile ("b" solo con tutti i pezzi all'ultimo tier)
--- gear = { mask = id del set, ... }, tiers = { mask = 1..3, ... }
+-- the set giving the bonus, if any: set id and allowed variant ("b" only with all pieces at the last tier)
+-- gear = { mask = set id, ... }, tiers = { mask = 1..3, ... }
 function M.full_set(gear, tiers)
 	local id, n, top = nil, 0, true
 	for _, s in ipairs(M.SLOTS) do
@@ -131,8 +131,8 @@ function M.full_set(gear, tiers)
 	return id, top
 end
 
--- aggiunge a mods gli effetti dei pezzi e del bonus, un gruppo per pezzo e
--- uno per il bonus; variant "b" solo se concessa
+-- adds to mods the effects of the pieces and of the bonus, one group per piece
+-- and one for the bonus; variant "b" only if allowed
 function M.mods(gear, tiers, variant, mods)
 	for _, s in ipairs(M.SLOTS) do
 		local set = M.BY_ID[gear[s.id] or ""]

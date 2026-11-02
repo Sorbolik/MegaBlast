@@ -6,9 +6,9 @@
 -- il livello dà i punti dell'albero; giocare con un pezzo ne alza il tier.
 -- Le Scorie (materiale della Forgia) arriveranno con la Forgia.
 
-local abilita = require "sim.abilita"
-local assetto = require "sim.assetto"
-local equip = require "sim.equipaggiamento"
+local abilita = require "sim.skills"
+local assetto = require "sim.loadout"
+local equip = require "sim.gear"
 local traguardi = require "menu.traguardi"
 
 local M = {}
@@ -194,7 +194,7 @@ function M.posto_replay(numero)
 	return (numero - 1) % M.PARTITE + 1
 end
 
--- Missioni della campagna e lezioni (sim/campagna.lua): per ognuna le tre
+-- Missioni della campagna e lezioni (sim/campaign.lua): per ognuna le tre
 -- stelle { true, false, true }, ognuna presa una volta resta (anche in
 -- partite diverse)
 function M.missione(p, id, stelle)
@@ -205,7 +205,7 @@ function M.missione(p, id, stelle)
 end
 
 -- Una missione persa: dalla terza di fila gli avversari si danno una calmata
--- (sim/missioni.lua, aiuto), senza dirlo
+-- (sim/missions.lua, aiuto), senza dirlo
 M.AIUTO_DOPO = 3
 function M.fallita(p, id)
 	p.fallite[id] = (p.fallite[id] or 0) + 1
@@ -226,7 +226,7 @@ function M.stelle_totali(p)
 	return n
 end
 
--- Le basi dell'Addestramento (sim/campagna.lua): chi non le ha finite tutte
+-- Le basi dell'Addestramento (sim/campaign.lua): chi non le ha finite tutte
 -- è un giocatore nuovo, e GIOCA lo porta alla prima che manca (Claude, 29 ott:
 -- prima la Prima partita, che ora è l'esame finale del capitolo). Oggi sono un
 -- percorso solo, Primi passi (Sergio, 29 ott)
@@ -257,7 +257,7 @@ end
 function M.armi_viste(p)
 	local viste = {}
 	for w in pairs(p.armi) do viste[w] = true end
-	for _, cap in ipairs(require("sim.campagna").CAPITOLI) do
+	for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
 		for _, l in ipairs(cap.missioni) do
 			local mio = l.giocatori and l.giocatori[1]
 			if mio and p.stelle[l.id] and p.stelle[l.id][1] then

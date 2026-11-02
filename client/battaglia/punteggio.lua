@@ -260,7 +260,7 @@ function M.obiettivo(p, testo)
 	gui.set_enabled(p.obiettivo, p.on and p.obiettivo_on)
 end
 
--- Le lezioni che non hanno ancora spiegato i punti non li mostrano (sim/missioni.lua vedi)
+-- Le lezioni che non hanno ancora spiegato i punti non li mostrano (sim/missions.lua vedi)
 function M.nascondi(p, si)
 	p.nascosti = si
 	M.set_enabled(p, p.on)

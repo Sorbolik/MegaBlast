@@ -5,12 +5,12 @@
 --   luajit strumenti/eventi/dati.lua      (dalla radice del repository)
 --
 -- Scrive strumenti/eventi/pagina/dati.json; go test ./server/ controlla che sia
--- in pari con la simulazione (TestPannelloDati).
+-- in pari con la simulazione (TestPanelData).
 package.path = "client/?.lua;" .. package.path
 local C = require "sim.config"
 local game = require "sim.game"
-local equip = require "sim.equipaggiamento"
-local regole = require "sim.regole"
+local equip = require "sim.gear"
+local regole = require "sim.rules"
 
 -- i nomi delle armi come li vede il giocatore (battaglia/hud.lua usa Defold:
 -- si prende solo la tabella dei nomi)

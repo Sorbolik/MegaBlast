@@ -3,7 +3,7 @@
 -- Due schede:
 --   SET    un set dei Titani per ogni pezzo (sidegrade), tier dalla maestria,
 --          bonus a set completo e variante B coi pezzi al livello 30;
---   ALBERO i punti abilità nei tre rami (sim/abilita.lua).
+--   ALBERO i punti abilità nei tre rami (sim/skills.lua).
 -- A destra le statistiche che ne vengono fuori, rispetto alla base.
 --
 -- La schermata si ricostruisce da capo a ogni tocco: pochi nodi, solo quando
@@ -14,9 +14,9 @@
 
 local ui = require "ui.ui"
 local game = require "sim.game"
-local abilita = require "sim.abilita"
-local equip = require "sim.equipaggiamento"
-local assetto = require "sim.assetto"
+local abilita = require "sim.skills"
+local equip = require "sim.gear"
+local assetto = require "sim.loadout"
 local profilo = require "menu.profilo"
 
 local M = {}

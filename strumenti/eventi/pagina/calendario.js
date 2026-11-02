@@ -1,5 +1,5 @@
 // Il calendario del pannello degli eventi: come si controlla, come diventa il
-// file che legge il server (server/eventi.go) e come si espande nelle volte.
+// file che legge il server (server/events.go) e come si espande nelle volte.
 // Lo usano la pagina (index.html) e il Worker (worker.js), che ricontrolla
 // tutto prima di salvare: una sola copia delle regole.
 //
@@ -52,7 +52,7 @@ function intero(v, a, b) {
 	return typeof v === "number" && Number.isInteger(v) && v >= a && v <= b;
 }
 
-// Le regole come client/sim/regole.lua (la lista bianca), coi dati di dati.json
+// Le regole come client/sim/rules.lua (la lista bianca), coi dati di dati.json
 function validaRegole(r, normale, dati) {
 	if (typeof r !== "object" || r === null || Array.isArray(r)) return "le regole sono una tabella";
 	const prim = new Set(dati.primarie), sec = new Set(dati.secondarie);
@@ -176,14 +176,14 @@ function nelFile(e, m) {
 	return giorni.map((g) => dove(`${e.id}_${GIORNI[g]}`, da + ((g - g0 + 7) % 7) * 1440));
 }
 
-// Il file del server (server/eventi.go): { eventi: [...] }
+// Il file del server (server/events.go): { eventi: [...] }
 export function file(stato) {
 	const modelli = new Map(stato.modelli.map((m) => [m.id, m]));
 	return { eventi: stato.eventi.flatMap((e) => nelFile(e, modelli.get(e.modello))) };
 }
 
 // Le volte degli eventi del file che toccano [da, a) (minuti), come
-// Occorrenze() del server: { id, evento, programmato, tipo, nome, da, a, propria }
+// Occurrences() del server: { id, evento, programmato, tipo, nome, da, a, propria }
 export function volte(f, da, a) {
 	const out = [];
 	for (const e of f.eventi) {

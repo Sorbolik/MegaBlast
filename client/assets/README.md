@@ -37,4 +37,4 @@ Lo stile e le regole sono nella bibbia grafica "MegaBlast – Bibbia grafica: Le
 
 Gli script in `strumenti/grafica/` (Python 3 con Pillow, numpy, scipy) ritagliano i fogli del generatore.
 `mappa_in_lua.py` riscrive `client/sim/mapdata.lua` dalle `maschera.png` delle mappe.
-`mappe_dipinte.py` (Python, più node con Playwright per disegnare gli SVG) rifà le mappe dell'apprendista: i layout del pavimento e della fossa, le arene delle missioni prese da `client/sim/campagna.lua`, le immagini di `client/dipinti/`, le maschere in `strumenti/grafica/mappe/` e `client/battaglia/dipinti.lua`; poi va rilanciato `mappa_in_lua.py`. Le scene vengono da `strumenti/grafica/gironi/` (la ricetta di Gabriella).
+`mappe_dipinte.py` (Python, più node con Playwright per disegnare gli SVG) rifà le mappe dell'apprendista: i layout del pavimento e della fossa, le arene delle missioni prese da `client/sim/campaign.lua`, le immagini di `client/dipinti/`, le maschere in `strumenti/grafica/mappe/` e `client/battaglia/dipinti.lua`; poi va rilanciato `mappa_in_lua.py`. Le scene vengono da `strumenti/grafica/gironi/` (la ricetta di Gabriella).

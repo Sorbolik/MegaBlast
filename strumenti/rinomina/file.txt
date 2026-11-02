@@ -1,0 +1,18 @@
+# File spostati: vecchio nuovo. PR 4: simulazione, server, test.
+client/sim/abilita.lua client/sim/skills.lua
+client/sim/assetto.lua client/sim/loadout.lua
+client/sim/campagna.lua client/sim/campaign.lua
+client/sim/equipaggiamento.lua client/sim/gear.lua
+client/sim/mischia.lua client/sim/melee.lua
+client/sim/missioni.lua client/sim/missions.lua
+client/sim/regole.lua client/sim/rules.lua
+client/sim/riconoscimenti.lua client/sim/awards.lua
+server/eventi.go server/events.go
+server/eventi_test.go server/events_test.go
+server/terreno.go server/terrain.go
+server/terreno_test.go server/terrain_test.go
+server/carico_test.go server/load_test.go
+server/pannello_test.go server/panel_test.go
+tests/campagna_test.lua tests/campaign_test.lua
+tests/eventi_test.lua tests/events_test.lua
+tests/assetto_test.lua tests/loadout_test.lua

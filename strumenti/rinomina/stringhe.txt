@@ -1,0 +1,5 @@
+# Stringhe Lua che si rinominano col nome nuovo del dizionario (valori dei dati
+# delle missioni che indicano un campo o un verbo). Le altre stringhe non si toccano.
+mancati
+rimbalzo
+rinculo
