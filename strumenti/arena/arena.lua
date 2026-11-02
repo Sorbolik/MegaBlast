@@ -3,7 +3,7 @@
 -- core c'è arena.py, che ne lancia una per core e mette insieme i risultati.
 --
 --   luajit strumenti/arena/arena.lua [--partite N] [--da SEME] [--modo 1v1|2v2|ffa|tutti]
---          [--livello facile|normale|difficile|misto] [--mappa forgia|crogiolo] [--uscita file.jsonl]
+--          [--livello facile|normale|difficile|misto] [--mappa forgia|crogiolo|a,b,...] [--uscita file.jsonl]
 --          [--punteggio variante.lua]   -- una tabella come config.SCORE (opts.score), per provare varianti
 --          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
@@ -131,7 +131,10 @@ local function partita(k)
 	local r0 = rng.new(seme)
 	for _ = 1, 4 do r0:next() end
 	local modo = opt.modo == "tutti" and MODI[1 + (j % #MODI)] or opt.modo
-	local mappa = opt.mappa or maps.pick(seme)
+	-- --mappa a,b,c: a turno fra quelle (anche le mappe delle missioni, fuori rotazione)
+	local mappe = {}
+	for m in (opt.mappa or ""):gmatch("[^,]+") do mappe[#mappe + 1] = m end
+	local mappa = #mappe > 0 and mappe[math.floor(seme) % #mappe + 1] or maps.pick(seme)
 	local base = {}
 	for k, p in ipairs(config.MODES[modo]) do base[k] = { team = p.team } end
 	-- i pesi con un generatore a parte: livelli e armi restano quelli delle
