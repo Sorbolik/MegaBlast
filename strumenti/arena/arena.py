@@ -37,31 +37,49 @@ def gioca(args):
         sys.exit("manca luajit: installalo o passa --luajit percorso")
     USCITA.mkdir(parents=True, exist_ok=True)
     n, p = args.partite, max(1, min(args.processi, args.partite))
-    # semi consecutivi divisi in blocchi, uno per processo
+    # semi consecutivi divisi in blocchi piccoli (circa 8 per processo): appena
+    # un processo finisce il suo blocco ne parte un altro, così le partite
+    # lunghe non lasciano gli altri processi fermi ad aspettare alla fine
+    nb = max(1, min(n, p * 8))
     blocchi, da = [], args.da
-    for k in range(p):
-        q = n // p + (1 if k < n % p else 0)
+    for k in range(nb):
+        q = n // nb + (1 if k < n % nb else 0)
         blocchi.append((da, q))
         da += q
     extra = []
-    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna", "impara"):
+    for chiave in ("modo", "livello", "mappa", "punteggio", "pesi", "ritocchi", "set", "assegna", "impara", "confronta"):
         v = getattr(args, chiave, None)
         if v:
-            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else v]
+            extra += [f"--{chiave}", str(Path(v).resolve()) if chiave in ("punteggio", "pesi", "ritocchi") else str(v)]
     t0 = time.time()
-    processi = []
-    for k, (da, q) in enumerate(blocchi):
-        parte = USCITA / f"parte_{k}.jsonl"
+
+    def lancia(k):
+        da, q = blocchi[k]
+        parte, errori = USCITA / f"parte_{k}.jsonl", USCITA / f"parte_{k}.err"
         cmd = [luajit, "strumenti/arena/arena.lua", "--partite", str(q), "--da", str(da), "--uscita", str(parte)] + extra
-        processi.append((subprocess.Popen(cmd, cwd=REPO, stderr=subprocess.PIPE, text=True), parte))
+        with errori.open("w", encoding="utf-8") as e:
+            return subprocess.Popen(cmd, cwd=REPO, stderr=e, text=True)
+
+    attivi, prossimo = {}, 0
+    while prossimo < nb or attivi:
+        while prossimo < nb and len(attivi) < p:
+            attivi[prossimo] = lancia(prossimo)
+            prossimo += 1
+        time.sleep(0.2)
+        for k, pr in list(attivi.items()):
+            if pr.poll() is not None:
+                del attivi[k]
+                if pr.returncode != 0:
+                    for altro in attivi.values():
+                        altro.kill()
+                    sys.exit("arena.lua fallita:\n" + (USCITA / f"parte_{k}.err").read_text(encoding="utf-8"))
     tutte = USCITA / "partite.jsonl"
     with tutte.open("w", encoding="utf-8") as out:
-        for pr, parte in processi:
-            _, err = pr.communicate()
-            if pr.returncode != 0:
-                sys.exit(f"arena.lua fallita:\n{err}")
+        for k in range(nb):
+            parte = USCITA / f"parte_{k}.jsonl"
             out.write(parte.read_text(encoding="utf-8"))
             parte.unlink()
+            (USCITA / f"parte_{k}.err").unlink()
     dt = time.time() - t0
     print(f"{n} partite in {dt:.0f} s con {p} processi ({n / dt * 3600:.0f} all'ora)")
     return tutte

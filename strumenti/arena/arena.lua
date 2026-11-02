@@ -3,7 +3,7 @@
 -- core c'è arena.py, che ne lancia una per core e mette insieme i risultati.
 --
 --   luajit strumenti/arena/arena.lua [--partite N] [--da SEME] [--modo 1v1|2v2|ffa|tutti]
---          [--livello facile|normale|difficile|misto] [--mappa forgia|crogiolo] [--uscita file.jsonl]
+--          [--livello facile|normale|difficile|misto] [--mappa forgia|crogiolo|a,b,...] [--uscita file.jsonl]
 --          [--punteggio variante.lua]   -- una tabella come config.SCORE (opts.score), per provare varianti
 --          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
@@ -11,7 +11,13 @@
 --          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI, anche con la rete): ogni robot ne prende uno a caso
 --          [--impara 1]                -- scrive anche gli esempi per impara.py: a ogni fine turno le
 --                                         caratteristiche della posizione (bot.caratteristiche) e quanto
---                                         ha guadagnato la sua squadra sulle altre da lì a fine partita
+--                                         ha guadagnato la sua squadra sulle altre da lì a fine partita;
+--                                         e in una partita su quattro le mosse provate dalle reti (guida:
+--                                         la descrizione, bot.descrivi, e quanto ha reso)
+--          [--confronta N]             -- con --impara: fino a N bivi a partita (bot.lua b.bivio): le due
+--                                         finaliste migliori di una rete giocate tutte e due su due copie
+--                                         della partita fino al suo turno dopo (coppie: quello che la rete
+--                                         ha visto di ognuna e quanto rendeva in più la prima)
 --          [--assegna turno]           -- con --pesi: invece che a caso, a turno (il robot i prende il numero
 --                                         i + partita) e a coppie: le partite 2j e 2j + 1 sono la stessa
 --                                         (seme, modo, mappa, armi) con i numeri scambiati, così due
@@ -125,7 +131,10 @@ local function partita(k)
 	local r0 = rng.new(seme)
 	for _ = 1, 4 do r0:next() end
 	local modo = opt.modo == "tutti" and MODI[1 + (j % #MODI)] or opt.modo
-	local mappa = opt.mappa or maps.pick(seme)
+	-- --mappa a,b,c: a turno fra quelle (anche le mappe delle missioni, fuori rotazione)
+	local mappe = {}
+	for m in (opt.mappa or ""):gmatch("[^,]+") do mappe[#mappe + 1] = m end
+	local mappa = #mappe > 0 and mappe[math.floor(seme) % #mappe + 1] or maps.pick(seme)
 	local base = {}
 	for k, p in ipairs(config.MODES[modo]) do base[k] = { team = p.team } end
 	-- i pesi con un generatore a parte: livelli e armi restano quelli delle
@@ -164,6 +173,13 @@ local function partita(k)
 	end
 	local r = replay.nuova(seme, mappa, { players = players, score = PUNTEGGIO })
 	local g, bots = replay.partita(r)
+	-- per la guida (impara.py): in una partita su quattro, le mosse provate dalle reti
+	local guida = opt.impara and k % 4 == 0 and {} or nil
+	if guida then
+		for _, b in pairs(bots) do
+			if b.pesi.rete then b.diario = guida end
+		end
+	end
 
 	local ultima = {}       -- l'ultima arma usata da ogni robot
 	local stats = {}
@@ -173,9 +189,9 @@ local function partita(k)
 	-- esempi per impara.py: dall'inizio di un turno alla fine, la posizione
 	-- che ne è uscita; a fine partita, quanto ha reso
 	local esempi, inizio = opt.impara and {} or nil, nil
-	local function margine(team)
+	local function margine(team, gg)
 		local mio, altri = 0, {}
-		for _, rb in ipairs(g.robots) do
+		for _, rb in ipairs((gg or g).robots) do
 			if rb.team == team then mio = mio + rb.points else altri[rb.team] = (altri[rb.team] or 0) + rb.points end
 		end
 		local primo = 0
@@ -183,6 +199,39 @@ local function partita(k)
 			if altri[t] then primo = math.max(primo, altri[t]) end
 		end
 		return mio - primo
+	end
+	-- a ogni attacco scelto da una rete, la posizione dopo l'attacco come
+	-- l'ha giudicata (fase 1, b.registro): così la rete impara a giudicare gli
+	-- attacchi da quello che vede quando li sceglie
+	if esempi then
+		for _, b in pairs(bots) do
+			if b.pesi.rete then b.registro = {} end
+		end
+	end
+	-- i bivi: quali decisioni delle reti si giocano in due modi (a fine partita)
+	local bivi = (esempi and (opt.confronta or 0) > 0) and {} or nil
+	if bivi then
+		for id, b in pairs(bots) do
+			if b.pesi.rete then
+				b.bivio = function(b, _, mosse)
+					if #bivi < opt.confronta and (b.decisioni + 7 * k + id) % 6 == 0 then
+						bivi[#bivi + 1] = { id = id, n = b.decisioni, a = mosse[1].visto, b = mosse[2].visto }
+					end
+				end
+			end
+		end
+	end
+	local function attacchi()
+		for id = 1, #g.robots do
+			local b = bots[id]
+			if b and b.registro and #b.registro > 0 then
+				for _, x in ipairs(b.registro) do
+					for j = 1, #x do x[j] = math.floor(x[j] * 10000 + 0.5) / 10000 end
+					esempi[#esempi + 1] = { c = id, x = x, m = margine(g.robots[id].team) }
+				end
+				b.registro = {}
+			end
+		end
 	end
 	local function fine_turno()
 		if inizio then
@@ -202,6 +251,7 @@ local function partita(k)
 	while g.phase ~= "over" do
 		g:step(replay.input(r, g, bots))
 		replay.dopo(r, g)
+		if esempi then attacchi() end
 		for _, e in ipairs(g:pop_events()) do
 			local w = USO[e.type] or (e.type == "place" and e.kind) or nil
 			if w and e.robot then
@@ -243,6 +293,31 @@ local function partita(k)
 		end
 	end
 	chiudi_turno()
+	local coppie = bivi and {} or nil
+	if bivi then
+		-- ogni bivio due volte, dall'inizio con la stessa ricetta (tutto è
+		-- deterministico: fino alla decisione le due copie sono la partita vera)
+		local function ramo(bv, j)
+			local g2, bots2 = replay.partita(r)
+			bots2[bv.id].forza = { n = bv.n, j = j }
+			local team = g2.robots[bv.id].team
+			local fatto = false
+			while g2.phase ~= "over" and not fatto do
+				g2:step(replay.input(r, g2, bots2))
+				for _, e in ipairs(g2:pop_events()) do
+					if e.type == "turn" and e.robot == bv.id and (bots2[bv.id].decisioni or 0) >= bv.n then fatto = true end
+				end
+			end
+			return margine(team, g2)
+		end
+		for _, bv in ipairs(bivi) do
+			local d = (ramo(bv, 1) - ramo(bv, 2)) / 100
+			for _, x in ipairs({ bv.a, bv.b }) do
+				for j = 1, #x do x[j] = math.floor(x[j] * 10000 + 0.5) / 10000 end
+			end
+			coppie[#coppie + 1] = { a = bv.a, b = bv.b, d = d }
+		end
+	end
 	if esempi then
 		fine_turno()
 		for _, x in ipairs(esempi) do
@@ -269,7 +344,8 @@ local function partita(k)
 		for _, p in ipairs(r.opzioni.players) do p.pesi = nil end
 	end
 	return { numero = k, ricetta = r, modo = modo, mappa = mappa, vincitore = res.winner or 0, tick = g.tick, robot = robot,
-		turni = turni, punti = punti, ritocchi = opt.ritocchi, pesi = opt.pesi, esempi = esempi }
+		turni = turni, punti = punti, ritocchi = opt.ritocchi, pesi = opt.pesi, esempi = esempi,
+		guida = guida, coppie = coppie }
 end
 
 local out = opt.uscita and assert(io.open(opt.uscita, "w")) or io.stdout

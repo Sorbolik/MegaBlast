@@ -87,10 +87,11 @@ M.GRADI = {
 -- d'inizio partita, M.scegli). L'arena li fa evolvere
 -- (strumenti/arena/evolvi.py) e una partita può darne altri a ogni bot
 -- (players[i].pesi, solo i campi che cambiano). rete (se c'è): una rete
--- neurale (sim/rete.lua) che giudica le mosse al posto di questi pesi, dalle
--- caratteristiche della posizione dopo la mossa (M.caratteristiche); la allena
+-- neurale (sim/rete.lua) che aggiunge il suo giudizio a quello di questi pesi,
+-- dalle caratteristiche della posizione dopo la mossa (M.caratteristiche); la allena
 -- strumenti/arena/impara.py;
 -- esplora: probabilità di scegliere apposta una delle mosse dopo la migliore;
+-- larga: prova anche i colpi a ventaglio che non puntano nessuno (per le reti).
 -- cassa: quanto vale prendere una cassa (in punti partita), più cassa_fame
 -- per ogni colpo che manca a quel robot per averne FAME (primarie delle casse
 -- e secondaria scelta: chi resta a secco la vuole di più).
@@ -257,11 +258,33 @@ local function bordo(t, x, y)
 	return n / #LATI
 end
 
+-- C'è roccia sopra la testa (fino a 150 px)? Lì i colpi a parabola non arrivano
+local function coperto(t, x, y)
+	for k = 30, 150, 30 do
+		if t:solid(x, y + k) then return 1 end
+	end
+	return 0
+end
+
 -- Le caratteristiche della copia w (dopo una mossa) rispetto alla partita
 -- vera g, per il robot del bot: quello che la rete guarda. Numeri vicini a
 -- -1..1 (punti e vita a centinaia, distanze a migliaia di pixel).
-M.CARATTERISTICHE = 20
-local function caratteristiche(b, g, w, x)
+--   1-20   punti, vita e morti guadagnati e persi, la posizione, lo scarto
+--   21-44  gli altri tre robot (prima i compagni, poi i nemici dal più
+--          vicino), 8 numeri ciascuno: c'è, nemico, dx, dy, vita, morto,
+--          vuoto vicino, si vedono
+--   45-54  le armi che ha e quanti colpi (M.ARMI_RETE), 55-58 globi, scudo, chi gioca dopo,
+--          roccia sopra la testa
+--   59-60  ultimo giro (punti doppi), la Corona (1 la sua squadra, -1 un nemico)
+--   61     la fase: 1 subito dopo gli attacchi (prima del riparo), 0 a fine turno.
+--          La rete giudica gli attacchi con 1 e i ripari con 0: una posizione
+--          scoperta dopo un colpo non è quella in cui il robot finirà il turno
+--   62-138 il terreno intorno: 11 x 7 caselle da 64 px, 1 dove è pieno
+M.ARMI_RETE = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows" }
+local GRIGLIA_X, GRIGLIA_Y, CASELLA = 5, 3, 64
+M.CARATTERISTICHE = 61 + (2 * GRIGLIA_X + 1) * (2 * GRIGLIA_Y + 1)
+local ALTRI = {}
+local function caratteristiche(b, g, w, x, fase)
 	local me = g.robots[b.id]
 	local c = w.robots[b.id]
 	for i = 1, M.CARATTERISTICHE do x[i] = 0 end
@@ -317,6 +340,71 @@ local function caratteristiche(b, g, w, x)
 	end
 	x[19] = primo > -math.huge and ((squadre[me.team] or 0) - primo) / 100 or 0
 	x[20] = g.match_left / game.MATCH_TICKS
+	-- gli altri robot, uno per uno
+	local n_altri = 0
+	for _, o in ipairs(w.robots) do
+		if o.id ~= b.id then
+			n_altri = n_altri + 1
+			ALTRI[n_altri] = o
+		end
+	end
+	for k = n_altri + 1, #ALTRI do ALTRI[k] = nil end
+	table.sort(ALTRI, function(p, q)
+		local cp, cq = p.team == me.team, q.team == me.team
+		if cp ~= cq then return cp end
+		local dp, dq = (p.x - c.x) ^ 2 + (p.y - c.y) ^ 2, (q.x - c.x) ^ 2 + (q.y - c.y) ^ 2
+		if dp ~= dq then return dp < dq end
+		return p.id < q.id
+	end)
+	for k = 1, math.min(3, n_altri) do
+		local o, i = ALTRI[k], 20 + (k - 1) * 8
+		x[i + 1] = 1
+		x[i + 2] = o.team ~= me.team and 1 or 0
+		x[i + 3] = (o.x - c.x) / 1000
+		x[i + 4] = (o.y - c.y) / 500
+		x[i + 5] = o.dead and 0 or o.hp / 100
+		x[i + 6] = o.dead and 1 or 0
+		if not o.dead then
+			x[i + 7] = bordo(t, o.x, o.y)
+			local dx, dy = o.x - c.x, o.y - c.y
+			if dx * dx + dy * dy < 900 * 900 and libero(t, c.x, cy, o.x, o.y + game.DISEGNO_H / 2) then x[i + 8] = 1 end
+		end
+	end
+	-- le armi (1 se ha colpi infiniti, se no i colpi che restano, fino a 4), i globi, lo scudo
+	for k, a in ipairs(M.ARMI_RETE) do
+		local v = 0
+		if game.has_weapon(c, a) then
+			local n = not game.FREE_WEAPONS[a] and c.ammo[a]
+			v = n and math.min(n, 4) / 4 or 1
+		end
+		x[44 + k] = v
+	end
+	x[55] = (c.teleports_left or 0) / 3
+	x[56] = c.shield and 1 or 0
+	-- chi gioca dopo: 1 un nemico
+	local ordine = w.order
+	for k, id in ipairs(ordine) do
+		if id == b.id then
+			local dopo = w.robots[ordine[k % #ordine + 1]]
+			x[57] = (dopo and dopo.team ~= me.team) and 1 or 0
+			break
+		end
+	end
+	x[58] = c.dead and 0 or coperto(t, c.x, c.y + game.DISEGNO_H)
+	-- l'ultimo giro e la Corona
+	x[59] = w.final_round and 1 or 0
+	local corona = w:leader()
+	x[60] = corona and (corona.team == me.team and 1 or -1) or 0
+	x[61] = fase or 0
+	-- il terreno intorno
+	local i = 61
+	for gy = GRIGLIA_Y, -GRIGLIA_Y, -1 do
+		for gx = -GRIGLIA_X, GRIGLIA_X do
+			i = i + 1
+			local px, py = c.x + gx * CASELLA, cy + gy * CASELLA
+			x[i] = (px >= 0 and px < game.WORLD_W and py >= 0 and py < game.WORLD_H and t:solid(px, py)) and 1 or 0
+		end
+	end
 	return x
 end
 M.caratteristiche = caratteristiche
@@ -348,8 +436,11 @@ local function casse(b, g, w)
 end
 
 -- Quanto vale la copia w rispetto alla partita vera g, per il robot del bot
-local function valore(b, g, w)
-	if b.pesi.rete then return rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR)) * 100 end
+-- Con la rete: il giudizio di qui sopra più quello che la rete aggiunge (lei
+-- impara solo la differenza fra questo e quanto rende davvero la posizione,
+-- così parte già brava e non deve reimparare da zero che un colpo che prende vale)
+-- fase (caratteristiche): 1 per gli attacchi (se non si dice), 0 per il riparo
+local function valore(b, g, w, fase)
 	local me = g.robots[b.id]
 	local s = 0
 	for i, c in ipairs(w.robots) do
@@ -362,6 +453,30 @@ local function valore(b, g, w)
 				if c.dead then s = s - b.pesi.morte end
 			else
 				s = s - dp
+			end
+		end
+	end
+	if b.pesi.rete then
+		fase = fase or 1
+		if fase ~= 1 then
+			-- il riparo: quanto vale la posizione a fine turno (pesi.rete)
+			s = s + rete.valuta(b.pesi.rete, caratteristiche(b, g, w, CAR, 0)) * 100
+		else
+			-- gli attacchi: un'altra rete (pesi.attacco) allenata solo sui bivi,
+			-- cioè su quale fra le due finaliste migliori rendeva di più, e solo lì
+			-- decide (b.att, pensa). La rete del riparo negli attacchi sbagliava: fra
+			-- due attacchi buoni la differenza si perdeva nel suo giudizio di chi
+			-- sta vincendo (1 novembre, a coppie su 240 partite: 33% contro il bot
+			-- di oggi, 50% senza); e la rete dei bivi su tutte le finaliste faceva
+			-- 39%, perché delle altre non ha mai visto niente. rete_attacco (0..1):
+			-- quanto conta, per misurarla
+			local att = b.finale and b.pesi.attacco
+			local registra = b.finale and b.registro
+			if att or registra then
+				local x = caratteristiche(b, g, w, CAR, 1)
+				if att then b.att = (b.pesi.rete_attacco or 1) * rete.valuta(att, x) * 100 end
+				-- per impara.py: quello che il bot ha visto di questa finalista
+				if registra then b.visto = copia(x) end
 			end
 		end
 	end
@@ -542,6 +657,78 @@ local function gusto(b, arma, s)
 	return s
 end
 
+-- La guida (le reti, strumenti/arena/impara.py): una rete piccola che da
+-- pochi numeri di una mossa, prima di provarla, dice quanto promette. Con la
+-- guida il bot prova il ventaglio da ogni posto, ma sulla copia solo i
+-- pesi.guida_k colpi che promettono di più, più qualcuno a turno perché la
+-- guida impari anche da quelli: il ventaglio da ogni posto senza pagarlo in
+-- tempo del turno. La guida la allena la scheda video.
+--   1-11  l'arma (M.ARMI_RETE e il Rampino), 12-14 coseno e seno dell'angolo
+--         e potenza, 15-17 il posto (dx, dy, tick di strada), 18 vuoto
+--         vicino al posto, 19 il nemico più vicino al posto (distanza), 20
+--         quanto il colpo va verso di lui, 21-22 vita sua e del nemico
+M.DESCRIZIONE = 22
+local ARMA_N = {}
+for k, a in ipairs(M.ARMI_RETE) do ARMA_N[a] = k end
+ARMA_N.hook = #M.ARMI_RETE + 1
+
+local function descrivi(b, g, m, d)
+	for i = 1, M.DESCRIZIONE do d[i] = 0 end
+	local me = g.robots[b.id]
+	local posto = m.posto
+	if ARMA_N[m.arma] then d[ARMA_N[m.arma]] = 1 end
+	d[12], d[13], d[14] = math.cos(m.angolo), math.sin(m.angolo), m.potenza
+	d[15], d[16], d[17] = (posto.x - me.x) / 1000, (posto.y - me.y) / 500, (posto.n or 0) / 300
+	d[18] = bordo(g.terrain, posto.x, posto.y)
+	local vicino, dv = nil, math.huge
+	for _, o in ipairs(g.robots) do
+		if not o.dead and o.team ~= me.team then
+			local dd = (o.x - posto.x) ^ 2 + (o.y - posto.y) ^ 2
+			if dd < dv then vicino, dv = o, dd end
+		end
+	end
+	if vicino then
+		d[19] = math.sqrt(dv) / 1000
+		d[20] = math.cos(m.angolo - math.atan2(vicino.y - posto.y, vicino.x - posto.x))
+		d[22] = vicino.hp / 100
+	end
+	d[21] = me.hp / 100
+	return d
+end
+M.descrivi = descrivi
+
+-- Una mossa da provare: con la guida si mette da parte (b.proposte), se no si
+-- prova subito sulla copia. b.diario (arena.lua --impara): per i colpi del
+-- ventaglio con nota, la descrizione e quanto ha reso, per allenare la guida
+-- (nota "conta": uno ogni 23).
+local DESCR = {}
+local function proponi(b, g, posto, arma, a, p, fino, mosse, nota)
+	local m = { posto = posto, arma = arma, angolo = a, potenza = p, fino = fino }
+	if b.proposte then
+		b.proposte[#b.proposte + 1] = m
+		return
+	end
+	local s = gusto(b, arma, prova(b, g, posto, arma, a, p, fino))
+	m.punti, m.k = s - (posto.n or 0) * b.pesi.strada, #mosse + 1
+	mosse[#mosse + 1] = m
+	if b.diario and nota then
+		b.conta = (b.conta or 0) + 1
+		if nota == true or b.conta % 23 == 0 then
+			local d = descrivi(b, g, m, {})
+			for i = 1, #d do d[i] = math.floor(d[i] * 1000 + 0.5) / 1000 end
+			b.diario[#b.diario + 1] = { d = d, v = math.floor(m.punti * 10 + 0.5) / 1000 }
+		end
+	end
+end
+
+-- Il ventaglio delle mosse larghe: le potenze provate per arma e fin dove si
+-- prova il colpo in fretta (le armi da vicino fino in fondo)
+local VENTAGLIO = {
+	missile = { 1, 0.7, 0.45, fino = "volo" }, grenade = { 1, 0.7, 0.45, fino = "volo" },
+	shards = { 1, fino = "volo" }, sniper = { 1, fino = "volo" },
+	bellows = { 1, fino = "tutto" }, lunge = { 1, fino = "tutto" },
+}
+
 -- Tutte le mosse da un posto, provate in fretta (solo il volo per i colpi a
 -- distanza). Le aggiunge a mosse.
 local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
@@ -550,9 +737,7 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 	local cy = y + game.DISEGNO_H / 2
 	local bersagli = nemici(g, me, x, y)
 	local function aggiungi(arma, a, p, fino)
-		local s = gusto(b, arma, prova(b, g, posto, arma, a, p, fino))
-		mosse[#mosse + 1] = { posto = posto, arma = arma, angolo = a, potenza = p, punti = s - (posto.n or 0) * b.pesi.strada,
-			k = #mosse + 1 }
+		proponi(b, g, posto, arma, a, p, fino, mosse)
 	end
 	for k, o in ipairs(bersagli) do
 		if k > 2 then break end
@@ -613,6 +798,22 @@ local function mosse_dal_posto(b, g, posto, lista_armi, mosse)
 				end
 			elseif arma == "sword" or arma == "punch" then
 				if dist < 80 then aggiungi(arma, dritto, 1, "tutto") end
+			end
+		end
+	end
+end
+
+-- larga (le reti, strumenti/arena/impara.py): anche i colpi che non puntano
+-- nessuno, a ventaglio, così la rete può scoprire mosse che il bot di oggi
+-- non prova mai (scavare, rimbalzi, colpi alti che ricadono). Solo da due
+-- posti (dove sta e quello della mossa migliore): il pensiero costa tempo del
+-- turno, e da ogni posto il ventaglio faceva perdere (19% contro il bot di oggi)
+local function ventaglio(b, g, posto, lista_armi, mosse)
+	for _, arma in ipairs(lista_armi) do
+		local v = VENTAGLIO[arma]
+		if v then
+			for _, p in ipairs(v) do
+				for a = -40, 220, 20 do proponi(b, g, posto, arma, math.rad(a), p, v.fino, mosse, "conta") end
 			end
 		end
 	end
@@ -763,8 +964,40 @@ local function pensa(b, g)
 		cammino = math.min(cammino, piano.attacca_entro * 60 - (g.tick - b.inizio) - 40)
 	end
 	local posti = posti_a_piedi(b, g, cammino)
-	for _, posto in ipairs(posti) do
-		if #lista > 0 then mosse_dal_posto(b, g, posto, lista, mosse) end
+	local guida = b.pesi.guida
+	if guida and #lista > 0 then
+		-- i colpi mirati da tutti i posti come sempre; il ventaglio da tutti i
+		-- posti, ma si provano solo i colpi che la guida dice più promettenti
+		for _, posto in ipairs(posti) do mosse_dal_posto(b, g, posto, lista, mosse) end
+		b.proposte = {}
+		for _, posto in ipairs(posti) do ventaglio(b, g, posto, lista, mosse) end
+		local proposte = b.proposte
+		b.proposte = nil
+		for i, m in ipairs(proposte) do
+			m.punti, m.k = rete.valuta(guida, descrivi(b, g, m, DESCR)), i
+			if i % 50 == 0 then lavora(b, 20) end
+		end
+		table.sort(proposte, prima)
+		local k = b.pesi.guida_k or 20
+		for i, m in ipairs(proposte) do
+			-- le prime k, e una su 40 delle altre (a turno, senza caso) perché la
+			-- guida veda anche come rendono le mosse che scarta. Nel diario va
+			-- una su 80 di tutte, buone e scartate allo stesso modo: se la guida
+			-- imparasse solo dalle sue prime k (tutte buone) non saprebbe più
+			-- distinguere le buone dalle cattive
+			if i <= k or (i + b.attacchi) % 40 == 0 then
+				proponi(b, g, m.posto, m.arma, m.angolo, m.potenza, m.fino, mosse, (i + b.attacchi) % 80 == 0)
+			end
+		end
+	else
+		for _, posto in ipairs(posti) do
+			if #lista > 0 then mosse_dal_posto(b, g, posto, lista, mosse) end
+		end
+		table.sort(mosse, prima)
+		if b.pesi.larga and #lista > 0 then
+			ventaglio(b, g, posti[1], lista, mosse)
+			if mosse[1] and mosse[1].posto ~= posti[1] then ventaglio(b, g, mosse[1].posto, lista, mosse) end
+		end
 	end
 	table.sort(mosse, prima)
 	b.scelta = mosse[1]
@@ -782,7 +1015,7 @@ local function pensa(b, g)
 				local mx, my = math.cos(a) * game.MUZZLE, math.sin(a) * game.MUZZLE
 				local _, _, hit = g:ray(cx + mx, cy + my, a, C.HOOK.range, me)
 				if hit == o then
-					mosse[#mosse + 1] = { posto = posti[1], arma = "hook", angolo = a, potenza = 1,
+					mosse[#mosse + 1] = { posto = posti[1], arma = "hook", angolo = a, potenza = 1, chi = o.id,
 						punti = prova_rampino(b, g, posti[1], a, o.id, lista), k = #mosse + 1 }
 				end
 			end
@@ -791,13 +1024,37 @@ local function pensa(b, g)
 
 	-- le migliori si provano fino in fondo: chi cade, chi muore, dove finisce chi spara
 	table.sort(mosse, prima)
-	for i = 1, math.min(FINALISTE, #mosse) do
+	local finaliste = math.min(b.pesi.larga and 2 * FINALISTE or FINALISTE, #mosse)
+	b.finale = true
+	for i = 1, finaliste do
 		local m = mosse[i]
+		b.visto, b.att = nil, nil
 		if m.arma ~= "hook" then
 			m.punti = gusto(b, m.arma, prova(b, g, m.posto, m.arma, m.angolo, m.potenza, "tutto")) - (m.posto.n or 0) * b.pesi.strada
+		elseif b.pesi.rete then
+			-- anche il Rampino col giudizio della rete, come le altre finaliste
+			m.punti = prova_rampino(b, g, m.posto, m.angolo, m.chi, lista)
 		end
+		m.visto, m.att = b.visto, b.att
+	end
+	b.finale = false
+	-- col ventaglio (e con la rete, che giudica solo le finaliste) si sceglie
+	-- solo fra le finaliste: fra migliaia di colpi
+	-- provati in fretta qualcuno sembra sempre meglio di quanto è (31 ottobre:
+	-- senza questo il ventaglio da solo vinceva il 19% contro il bot di oggi)
+	if b.pesi.larga or b.pesi.rete then
+		-- una tabella nuova: in gopher-lua (il server) i buchi in fondo lasciano
+		-- # più lungo e table.sort troverebbe dei nil
+		local tenute = {}
+		for i = 1, finaliste do tenute[i] = mosse[i] end
+		mosse = tenute
 	end
 	table.sort(mosse, prima)
+	-- la rete dei bivi sceglie fra le due migliori (solo lì ha imparato)
+	local m1, m2 = mosse[1], mosse[2]
+	if m2 and m1.att and m2.att and m2.punti + m2.att > m1.punti + m1.att then
+		mosse[1], mosse[2] = m2, m1
+	end
 	b.scelta = mosse[1]
 
 	-- se a piedi non c'è niente di buono, il teletrasporto verso un posto migliore
@@ -830,6 +1087,17 @@ local function pensa(b, g)
 	-- o al compagno (punti sotto zero quando la migliore non lo è). esplora:
 	-- lo stesso per i bot che imparano (strumenti/arena/impara.py), che così
 	-- vedono anche mosse che non sceglierebbero
+	-- il bivio (arena.lua --impara con --confronta): le due finaliste migliori
+	-- si giocano tutte e due su due copie della partita fino al turno dopo, e
+	-- la rete impara quale rendeva di più (da una partita sola vedrebbe solo
+	-- la mossa scelta). b.forza: nella copia, alla decisione n si prende la j
+	b.decisioni = (b.decisioni or 0) + 1
+	local forza = b.forza
+	if forza and forza.n == b.decisioni then
+		b.scelta = mosse[forza.j] or mosse[1]
+		return
+	end
+	if b.bivio and mosse[2] and mosse[1].visto and mosse[2].visto then b.bivio(b, g, mosse) end
 	local sbaglia = b.pesi.esplora or liv.sbaglia
 	if sbaglia > 0 and #mosse > 1 and b.rng:next() < sbaglia then
 		local m = mosse[1 + math.floor(b.rng:next() * math.min(3, #mosse))]
@@ -855,22 +1123,17 @@ local function pensa(b, g)
 	if liv.manca and m and not game.TOOLS[m.arma] and b.attacchi % 2 == 0 then
 		m.angolo = angolo_che_manca(b, g, m)
 	end
+	-- b.registro (arena.lua --impara): la posizione dopo l'attacco scelto come
+	-- l'ha giudicata la rete; l'arena ci aggiunge com'è andata davvero
+	if b.registro and m and m.visto then b.registro[#b.registro + 1] = m.visto end
 end
 
 -- Il riparo: finiti gli attacchi, il tempo che resta si usa per mettersi al
 -- sicuro dal turno degli altri (a piedi o col Rampino su un appiglio). Con la
 -- rete decide lei dove; senza, lontano dai nemici, fuori dalla loro linea di
 -- tiro e lontano dal vuoto.
--- C'è roccia sopra la testa (fino a 150 px)? Lì i colpi a parabola non arrivano
-local function coperto(t, x, y)
-	for k = 30, 150, 30 do
-		if t:solid(x, y + k) then return 1 end
-	end
-	return 0
-end
-
 local function riparo(b, g, w)
-	if b.pesi.rete then return valore(b, g, w) end
+	if b.pesi.rete then return valore(b, g, w, 0) end
 	local x = caratteristiche(b, g, w, CAR)
 	if x[7] == 1 then return -1000 end
 	local s = x[11] * 10 - x[16] * 4 - x[14] * 8 - x[15] * 3 - x[4] * 50 + casse(b, g, w)

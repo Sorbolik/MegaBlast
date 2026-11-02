@@ -62,6 +62,8 @@ GENI = [
     ("vicino", 0.5, 3, True, "gusto per le armi da vicino"),
     ("lontano", 0.5, 3, True, "gusto per le armi da lontano"),
     ("spinta", 0.5, 3, True, "gusto per il Mantice"),
+    ("cassa", 0, 60, False, "voglia di casse"),
+    ("cassa_fame", 0, 40, False, "voglia di casse quando restano pochi colpi"),
 ]
 PUNTEGGIO = {"vuoto": "env_kill", "uccisione": "kill", "danno": "damage"}
 # i gusti per le armi (bot.PESI.armi): moltiplicano i colpi che rendono e
