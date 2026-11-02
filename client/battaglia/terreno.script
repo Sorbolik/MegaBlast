@@ -45,26 +45,53 @@ local function fabbrica(id)
 	return msg.url(nil, "/dipinti/fabbriche", id)
 end
 
+-- I dipinti: self.voluto[tipo] è l'id (della collection factory) che serve ora
+-- per "terreno" e "sfondo"; self.stato[id] dice a che punto è: "carica" (in un
+-- altro thread), "creato" (collezione creata, aspettiamo le sue texture),
+-- "pronto" (self.tex[id] le texture) o "fallito". Quello che non serve più si
+-- scarica appena si può: un caricamento non si interrompe, si scarica alla fine.
+
+local applica -- più sotto
+
+local function libera(self, tipo)
+	local ids = {}
+	for id, t in pairs(self.tipo_di) do
+		if t == tipo and id ~= self.voluto[tipo] then ids[#ids + 1] = id end
+	end
+	table.sort(ids)
+	for _, id in ipairs(ids) do
+		local s = self.stato[id]
+		if s == "pronto" or s == "fallito" then
+			if s == "pronto" then collectionfactory.unload(fabbrica(id)) end
+			self.stato[id], self.tex[id], self.tipo_di[id] = nil, nil, nil
+		end
+	end
+end
+
 -- Chiede un dipinto (tipo "terreno" o "sfondo", id della collection factory): lo
 -- carica in un altro thread e crea la sua collezione, che manda le texture
--- (MSG_DIPINTO). Il dipinto di prima resta finché il nuovo non è pronto.
+-- (MSG_DIPINTO). applica lo mette sulla mesh quando è pronto.
 local function chiedi(self, tipo, id)
-	local p = self.pezzi[tipo]
-	if p and p.id == id then return end
-	local nuovo = { id = id, vecchio = p and (p.pronto and p.id or p.vecchio) }
-	if p and not p.pronto then
-		-- quello che si stava caricando non serve più
-		collectionfactory.unload(fabbrica(p.id))
+	self.voluto[tipo] = id
+	local s = self.stato[id]
+	if s == nil or s == "fallito" then
+		self.stato[id], self.tipo_di[id] = "carica", tipo
+		self.per_hash[hash(id)] = id
+		collectionfactory.load(fabbrica(id), function(self, url, ok)
+			if not ok then
+				print("ERROR: dipinto " .. id .. " non caricato")
+				self.stato[id] = "fallito"
+				applica(self)
+			elseif self.voluto[tipo] == id then
+				self.stato[id] = "creato"
+				collectionfactory.create(url)
+			else
+				collectionfactory.unload(url)
+				self.stato[id], self.tipo_di[id] = nil, nil
+			end
+		end)
 	end
-	self.pezzi[tipo] = nuovo
-	collectionfactory.load(fabbrica(id), function(self, url, ok)
-		if self.pezzi[tipo] ~= nuovo then return end
-		if not ok then
-			print("ERROR: dipinto " .. id .. " non caricato")
-			return
-		end
-		collectionfactory.create(url)
-	end)
+	libera(self, tipo)
 end
 
 -- lo sfondo dipinto di un girone e i numeri delle sue strisce
@@ -81,8 +108,14 @@ local function chiedi_sfondo(self, nome)
 end
 
 local function pronto(self, tipo)
-	local p = self.pezzi[tipo]
-	return p ~= nil and p.pronto == true
+	local id = self.voluto[tipo]
+	return id ~= nil and self.stato[id] == "pronto"
+end
+
+-- pronto o fallito: non c'è altro da aspettare (se è fallito si vede lo sfondo dello shader)
+local function finito(self, tipo)
+	local id = self.voluto[tipo]
+	return id ~= nil and (self.stato[id] == "pronto" or self.stato[id] == "fallito")
 end
 
 function init(self)
@@ -91,7 +124,7 @@ function init(self)
 	self.opzioni = vmath.vector4(0, 0, 1, 1)
 	-- x = sfondo dipinto, y = crateri che mostrano lo sfondo, z = solo sfondo (terreno.fp)
 	self.stile = vmath.vector4(0, 0, 0, 0)
-	self.pezzi = {}
+	self.voluto, self.stato, self.tex, self.tipo_di, self.per_hash = {}, {}, {}, {}, {}
 	-- lo sfondo della home (e delle mappe dipinte) comincia a caricarsi subito,
 	-- mentre c'è ancora la schermata d'ingresso
 	chiedi_sfondo(self, "forgia")
@@ -113,22 +146,33 @@ function update(self, dt)
 end
 
 -- lo stile della mappa (stile.x, stile.y) o, dietro la home, solo lo sfondo
--- dipinto; quello che non è ancora pronto non si disegna. Quando c'è tutto lo
--- dice alla GUI (MSG_PRONTO), che tiene chiusa l'iride fino ad allora
-local function applica(self)
+-- dipinto, con le texture dei dipinti pronti; quello che non è ancora pronto non
+-- si disegna. Quando c'è tutto lo dice a chi ha chiesto (MSG_PRONTO): la GUI tiene
+-- chiusa l'iride fino ad allora
+function applica(self)
 	local tutto = true
 	if self.home then
 		chiedi_sfondo(self, self.home)
-		tutto = pronto(self, "sfondo")
-		self.stile.x, self.stile.y, self.stile.z = tutto and 1 or 0, 0, 1
+		self.voluto.terreno = nil
+		libera(self, "terreno")
+		tutto = finito(self, "sfondo")
+		self.stile.x, self.stile.y, self.stile.z = pronto(self, "sfondo") and 1 or 0, 0, 1
 	elseif self.sfondo_mappa then
 		chiedi_sfondo(self, self.sfondo_mappa)
 		chiedi(self, "terreno", self.mappa .. "_" .. densita())
-		tutto = pronto(self, "sfondo") and pronto(self, "terreno")
+		tutto = finito(self, "sfondo") and finito(self, "terreno")
 		self.stile.x, self.stile.y = pronto(self, "sfondo") and 1 or 0, 1
 		self.stile.z = pronto(self, "terreno") and 0 or 1
+		if pronto(self, "terreno") then go.set("#mesh", "texture0", self.tex[self.voluto.terreno].terreno) end
 	else
+		-- mappe senza dipinti: il terreno dipinto non serve più
+		self.voluto.terreno = nil
+		libera(self, "terreno")
 		self.stile.x, self.stile.y, self.stile.z = 0, 0, 0
+	end
+	if pronto(self, "sfondo") then
+		local t = self.tex[self.voluto.sfondo]
+		for _, piano in ipairs(PIANI) do go.set("#mesh", POSTO[piano], t[piano]) end
 	end
 	if tutto and self.chi then
 		msg.post(self.chi, MSG_PRONTO, { n = self.chi_n })
@@ -156,24 +200,22 @@ function on_message(self, message_id, message, sender)
 	elseif message_id == MSG_HOME then
 		-- sfondo: il girone dietro la home; nil, la home si chiude
 		self.home = message.sfondo
-		if self.home then self.chi, self.chi_n = sender, message.n end
+		if self.home then
+			self.chi, self.chi_n = sender, message.n
+		else
+			-- si chiude la home: la mappa la manda poi "maschera"
+			self.mappa, self.sfondo_mappa = nil, nil
+		end
 		applica(self)
 	elseif message_id == MSG_DIPINTO then
-		local tipo = message.terreno and "terreno" or "sfondo"
-		local p = self.pezzi[tipo]
-		if message.terreno then
-			go.set("#mesh", "texture0", message.terreno)
-		else
-			for _, piano in ipairs(PIANI) do go.set("#mesh", POSTO[piano], message[piano]) end
-		end
 		-- le texture restano caricate finché non si scarica la fabbrica: l'oggetto non serve più
 		go.delete(sender)
-		if p and not p.pronto then
-			p.pronto = true
-			if p.vecchio and p.vecchio ~= p.id then collectionfactory.unload(fabbrica(p.vecchio)) end
-			p.vecchio = nil
+		local id = self.per_hash[message.nome]
+		if id and self.stato[id] == "creato" then
+			self.stato[id], self.tex[id] = "pronto", message
+			libera(self, self.tipo_di[id])
+			applica(self)
 		end
-		applica(self)
 	elseif message_id == MSG_SCHERMO then
 		self.opzioni.z, self.opzioni.w = message.kx, message.ky
 	end

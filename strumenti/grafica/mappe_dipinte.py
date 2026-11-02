@@ -178,7 +178,7 @@ def collezione(nome, oggetto, righe):
 def scrivi_collezione(nome, script, proprieta):
     """Una collezione con un oggetto e lo script che manda al terreno le sue texture."""
     comp = ['components {', '  id: "dipinto"', '  component: "%s"' % script]
-    for chi, png in proprieta:
+    for chi, png in [("nome", nome)] + proprieta:
         comp += ['  properties {', '    id: "%s"' % chi, '    value: "%s"' % png, '    type: PROPERTY_TYPE_HASH', '  }']
     comp.append('}')
     open(os.path.join(OUT, nome + ".collection"), "w").write(collezione(nome, "dipinto", comp))
@@ -260,6 +260,9 @@ def main():
         # fondo a multipli di 20 pixel della scena, altezza a multipli di 80 (sopra è vuoto)
         y1 = min(H, -(-(int(max(y1s)) + 3) // 20) * 20)
         y0 = max(0, y1 - -(-(y1 - max(0, int(min(y0s)) - 2)) // 80) * 80)
+        if y0 == 0:
+            # arriva in cima: l'altezza è y1, che allora va a multipli di 80 anche lei
+            y1 = min(H, -(-y1 // 80) * 80)
         for d in DENSITA:
             f = os.path.join(OUT, "sfondi", "forgia_%s_%d.png" % (nome, d))
             im = Image.open(f)

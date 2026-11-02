@@ -3151,6 +3151,7 @@ function on_message(self, message_id, message)
 	-- (solo la risposta all'ultima richiesta: una vecchia arriva anche dopo)
 	if message_id == MSG_TERRENO_PRONTO and message.n == self.terreno_attesa then
 		self.terreno_attesa = nil
+		menu.passaggio.sblocca(self.passaggio)
 	end
 end
 
