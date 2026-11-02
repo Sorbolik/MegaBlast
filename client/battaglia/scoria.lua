@@ -41,9 +41,9 @@
 -- stesse animazioni. Una testa nuova senza le sue facce le fa tutte; una coda
 -- nuova ha bordo e colore a parte come quella di base; le
 -- parti col colore della squadra hanno il loro strato, come la fiammella.
--- I perni di testa, braccia, gambe e ala si spostano
--- dall'editor delle animazioni (battaglia/perni.lua): cambia il punto in cui il
--- pezzo gira, non dove sta da fermo.
+-- I perni di tutti i pezzi (corpo, testa, braccia, manine, gambe, ala, coda) si
+-- spostano dall'editor delle animazioni (battaglia/perni.lua): cambia il punto in
+-- cui il pezzo gira, non dove sta da fermo.
 -- Le clip dicono anche quali pezzi si vedono (testa, busto, braccia, gambe,
 -- ala, coda, arma e le manine staccate, pezzi liberi che le clip spostano e
 -- girano). Con l'arma in mano le clip sono quelle _arma (fermo_arma, corsa_arma,
@@ -92,6 +92,15 @@ local J = {
 	gamba_dietro = perno("gamba_dietro", -PT.anche[1], PT.anche[2]),
 	ala = perno("ala", PT.ala[1], PT.ala[2]),
 }
+-- il corpo gira attorno al suo perno (fermo: ai piedi)
+local PERNO_CORPO = sposto("corpo")
+-- la coda: la radice si sposta col perno, i segmenti al contrario (girati come il
+-- primo segmento a riposo, così con la coda a riposo restano dove sono)
+local function perno_coda(r1)
+	local d = sposto("coda")
+	local c, sn = math.cos(r1), math.sin(r1)
+	return d, { -(d[1] * c + d[2] * sn), -(-d[1] * sn + d[2] * c) }
+end
 -- dove sta la fiammella nel collo (la testa sposta i suoi pezzi, non la fiammella)
 local CIMA = { PT.cima[1] - sposto("testa")[1], PT.cima[2] - sposto("testa")[2] }
 
@@ -258,6 +267,8 @@ local function mano_ferma(posto, x)
 	return { x + b.x, PT.spalle[2] + b.y - b.h / 2 + pu.h * 0.4 }
 end
 local MANO_A, MANO_D = mano_ferma("braccio", PT.spalle[1]), mano_ferma("braccio_dietro", -PT.spalle[1])
+-- il perno delle manine: da ferme girano lì (i pezzi si spostano al contrario)
+local MANINA = sposto("pugno")
 -- la mano del braccio che pende vista dalla spalla, per girarlo verso la presa
 local VERSO_A = atan2(MANO_A[2] - J.braccio[2], MANO_A[1] - J.braccio[1])
 local VERSO_D = atan2(MANO_D[2] - J.braccio_dietro[2], MANO_D[1] - J.braccio_dietro[1])
@@ -267,7 +278,7 @@ local VERSO_D = atan2(MANO_D[2] - J.braccio_dietro[2], MANO_D[1] - J.braccio_die
 local LIVELLI = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma",
 	"braccio_a", "manina_a" }
 local function manina(s, punto, k)
-	local g = giunto(s.forma, punto[1] * k, punto[2] * k)
+	local g = giunto(s.forma, (punto[1] + sposto("pugno")[1]) * k, (punto[2] + sposto("pugno")[2]) * k)
 	veste(s, g, "pugno", k)
 	return g
 end
@@ -386,19 +397,21 @@ function M.new(color, look, solo_arma)
 	gui.set_enabled(s.para, false)
 	-- corpo: inclinazione e spinta; forma: schiaccia e allunga. L'arma sta sul
 	-- corpo e non sulla forma, così schiacciandosi non si storce la mira
-	s.corpo = giunto(s.root, 0, 0)
-	s.forma = giunto(s.corpo, 0, 0)
+	s.corpo = giunto(s.root, PERNO_CORPO[1] * k, PERNO_CORPO[2] * k)
+	s.forma = giunto(s.corpo, -PERNO_CORPO[1] * k, -PERNO_CORPO[2] * k)
 
 	-- dal fondo: la coda (prima tutti i bordi, poi tutti i colori: così i
 	-- segmenti si fondono in una coda sola), l'ala, il braccio di dietro, le
 	-- gambe, il busto, la testa con la fiammella, l'arma, il braccio davanti
+	s.perno_coda, s.coda_dentro = perno_coda(s.forma_coda.riposo[1])
 	for strato = 1, 2 do
-		local padre, x, y = s.forma, PT.coda[1] * k, PT.coda[2] * k
+		local padre, x, y = s.forma, (PT.coda[1] + s.perno_coda[1]) * k, (PT.coda[2] + s.perno_coda[2]) * k
 		for i = 1, #s.forma_coda.l do
 			padre = giunto(padre, x, y)
-			veste(s, padre, "coda_" .. i .. (strato == 1 and "_bordo" or ""), k)
 			s.coda[i] = s.coda[i] or {}
 			s.coda[i][strato] = padre
+			if i == 1 then padre = giunto(padre, s.coda_dentro[1] * k, s.coda_dentro[2] * k) end
+			veste(s, padre, "coda_" .. i .. (strato == 1 and "_bordo" or ""), k)
 			x, y = s.forma_coda.l[i] * k, 0
 		end
 	end
@@ -738,7 +751,7 @@ function M.update(s, dt, st)
 	-- scende e sale con il busto
 	scale(s.forma, lx, q)
 	rot(s.corpo, s.x[LEAN] + po.corpo)
-	pos(s.corpo, -s.x[SHOVE] * s.w + po.corpo_x * s.k, po.salto * s.k)
+	pos(s.corpo, -s.x[SHOVE] * s.w + (po.corpo_x + PERNO_CORPO[1]) * s.k, (po.salto + PERNO_CORPO[2]) * s.k)
 	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
 
 	-- braccia e gambe inseguono la posa (così si passa piano da uno stato
@@ -776,19 +789,20 @@ function M.update(s, dt, st)
 		pos(s.manina_a, hx * s.k, hy * s.k)
 		rot(s.manina_a, s.arma_a + po.manina_a)
 	else
-		pos(s.manina_a, (MANO_A[1] + po.manina_a_x) * s.k, (MANO_A[2] + po.manina_a_y) * s.k)
+		pos(s.manina_a, (MANO_A[1] + MANINA[1] + po.manina_a_x) * s.k, (MANO_A[2] + MANINA[2] + po.manina_a_y) * s.k)
 		rot(s.manina_a, po.manina_a)
 	end
 	if chi == "manina_d" then
 		pos(s.manina_d, hx * s.k, hy * s.k)
 		rot(s.manina_d, s.arma_a + po.manina_d)
 	else
-		pos(s.manina_d, (MANO_D[1] + po.manina_d_x) * s.k, (MANO_D[2] + po.manina_d_y) * s.k)
+		pos(s.manina_d, (MANO_D[1] + MANINA[1] + po.manina_d_x) * s.k, (MANO_D[2] + MANINA[2] + po.manina_d_y) * s.k)
 		rot(s.manina_d, po.manina_d)
 	end
 	rot(s.ala, po.ala)
-	pos(s.coda[1][1], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
-	pos(s.coda[1][2], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
+	local dc = s.perno_coda
+	pos(s.coda[1][1], (PT.coda[1] + dc[1] + po.coda_x) * s.k, (PT.coda[2] + dc[2] + po.coda_y) * s.k)
+	pos(s.coda[1][2], (PT.coda[1] + dc[1] + po.coda_x) * s.k, (PT.coda[2] + dc[2] + po.coda_y) * s.k)
 	coda(s, dt)
 	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[TESTA])

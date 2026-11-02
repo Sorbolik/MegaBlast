@@ -428,6 +428,97 @@ Nessun taglio, ricalco, montaggio sullo scheletro, test di animazione o integraz
 gioco eseguito: sono le fasi successive di Claude. Nessuna accettazione attribuita a Sergio.
 Nessuna contraddizione nuova con le decisioni lette. Nessuna PR aperta o unione verso main.
 
+La consegna tecnica seguente precedeva la definizione delle immagini 6 e 7 su main;
+non costituisce esecuzione della fase 3 attuale e non è integrata nel gioco.
+
+### Consegna tecnica precedente · 2026-11-02 · fuori dalla fase 3 aggiornata
+
+Su richiesta di Sergio («esegui WB-009 fase 3»), eseguiti taglio e ricalco dei fogli
+della fase 2. Pacchetto in `art/WB-009/fase3/`, procedura e limiti in
+`art/WB-009/FASE3.md`. Nessuna modifica a client, server o strumenti condivisi:
+il montaggio è disponibile nell'editor autonomo del pacchetto. Il gioco non passa
+all'apprendista e la validazione di Sergio non è anticipata.
+
+**Consegna.**
+
+- `art/WB-009/fase3.py`: procedura ripetibile; riusa taglio/allineamento, separazione
+  della coda in cinque segmenti e maschera squadra degli strumenti esistenti,
+  indirizzando la scrittura al pacchetto. Estende il ricalco a tutti i colori con
+  potrace, senza disegnare forme nuove a codice. Separa le cinque teste extra.
+- `art/WB-009/verifica_fase3.py`: controllo ripetibile con casi negativi.
+- `fase3/svg/`: 27 SVG, riempimenti esatti della tavolozza; nove teste complessive,
+  cinque segmenti di coda con bordo/colore separati, busto con maschera squadra,
+  arti, pugno e ala trasparente.
+- `fase3/png/{1x,2x,3x}/`: 81 PNG renderizzati esclusivamente dagli SVG.
+- `fase3/pelli/apprendista.json` e `fase3/pelli.lua`: metadati del montaggio isolato.
+- `fase3/editor.html`: editor autonomo con apprendista già selezionato e tutte le
+  nove espressioni. Usa le clip del gioco, immagini 2x incorporate e quattro squadre.
+- `fase3/controlli.json`, `fase3/prove/browser.json`, `fase3/prove/{fermo,corsa,colpito}.png`:
+  verifiche e foto dell'anteprima reale nel browser.
+
+**Verifiche passate.** 27 SVG con soli tracciati/gruppi e colori ammessi; il
+controllo rifiuta #123456, CSS e immagini raster incorporate. 81 PNG verificati
+pixel per pixel contro il rendering degli SVG, tre densità con dimensioni corrette.
+Nove teste, cinque lunghezze di coda positive, ala trasparente e immagini referenziate
+esistenti. Browser Chromium: sei clip (fermo, corsa, colpito, vittoria, sconfitta,
+mira) con fotogrammi effettivamente diversi durante la riproduzione; nove facce
+selezionabili, quattro squadre, nessun errore JavaScript.
+
+**Limiti visivi e lavoro successivo.** La tavolozza esatta elimina le sfumature,
+ma non corregge tutti i problemi del disegno: le foto mostrano ancora giunture a
+collo e spalle, zone di colore sulle corna e una coda spessa sul lato destro del
+personaggio. Sagome delle teste non geometricamente identiche. Il montaggio è
+una prova da validare, non un risultato visivo approvato. Nessun disegno sorgente
+sovrascritto. Nessuna partita in Defold o prova su telefono eseguita; editor non
+pubblicato online. I posti aggiuntivi delle facce nel runtime, la selezione delle
+densità per schermo e l'integrazione nel gioco restano da fare con Claude dopo
+la revisione. Il file pelli.lua isolato NON sostituisce quello completo del gioco.
+Nessuna PR aperta o unione verso main.
+
+### Fase 3 · immagini 6 e 7 · 2026-11-02
+
+Eseguita la fase 3 della scheda APPROVATA aggiornata su `main` (17ed63b), con le
+righe 6 e 7 e i relativi prompt integrali. La precedente consegna tecnica è
+esplicitamente distinta sopra: non era l'esecuzione di queste immagini.
+
+| File | Riferimenti in ordine | Misura effettiva | Tentativi |
+|---|---|---|---|
+| `art/WB-009/6_tre_quarti_1.png` | R4 | 1024×1536 | 3, consegnato il terzo |
+| `art/WB-009/6_tre_quarti_2.png` | R4 | 1024×1536 | 3, consegnato il terzo |
+| `art/WB-009/7_teste.png` | R4, R5, R6 | 1254×1254 | 3, consegnato il terzo |
+
+Gli omonimi `.txt` contengono il prompt originale e i riferimenti in ordine.
+Verificato che il testo coincida esattamente con i blocchi inglesi della scheda;
+nessuna aggiunta, modifica o accorciamento, anche nelle rigenerazioni.
+Sfondo non trasparente, bianco nei due tre quarti, magenta nelle teste come
+specificato nei prompt. Copiati i PNG originali, senza ritocco o ricampionamento.
+
+**Controlli visivi eseguiti su tutti i tentativi.** Nei due tre quarti il piede a
+sinistra dell'immagine è girato a destra, nella direzione del piede a destra,
+con tre dita; personaggio intero, corna, orecchie, testa, fazzoletto, braccia,
+pancia e coda restano visivamente molto vicini a R4. La coda è intera, non tagliata.
+Il foglio delle teste presenta tutte e nove le espressioni nell'ordine richiesto,
+a tre quarti verso destra; mira con occhio lontano chiuso, vicino giallo e lingua
+all'angolo. Nessun collo, moncherino o fazzoletto: il contorno nero è chiuso
+sotto il mento e dietro la mandibola. Nessuna fiammella, ala, scritta, numero o
+firma; verde soltanto sul fazzoletto dei personaggi interi. Dimensioni, formato
+PNG e assenza di trasparenza controllati leggendo i file.
+
+**Limiti rimasti dopo tre tentativi per file.** Persistono leggere sfumature e
+colori non esatti della tavolozza; lo sfondo non è perfettamente uniforme: pixel
+in alto a sinistra rispettivamente RGB (253,253,253), (254,253,253), (240,14,240).
+Le sagome delle nove teste/corna variano leggermente: non sono geometricamente
+identiche. I tre quarti sono molto simili a R4, ma non si dichiara identità pixel
+per pixel del resto del disegno; ci sono piccole variazioni di contorno e ombra
+anche fuori dalla gamba. Il generatore restituisce le teste a 1254×1254, quadrato
+ma diverso da 1536×1536 o 1024×1024 richiesti: originale conservato.
+
+Consegna per la scelta e revisione di Sergio; non dichiarata piena conformità o
+approvazione. Nessun file in `scelti/` creato o sostituito; R7 resta da scegliere.
+Non avviata la fase 4. In questa esecuzione nessun ricalco, script tecnico, editor,
+taglio o integrazione: solo immagini 6 e 7, prompt e questa consegna.
+Nessuna PR aperta o unione verso main.
+
 ## Resoconto di Claude
 
 ### Fase 1 · scelte di Sergio (2026-11-02)
@@ -482,3 +573,14 @@ Guardati `4_foglio_pezzi.png` e `5_teste_extra.png`.
   si taglia sotto il contorno del mento, senza i pezzi neri del collo.
 - Ancora da fare: fase 3 (corpo fedele al tre quarti, braccia col pugno chiuso), poi l'editor
   con gli SVG dei pezzi (zoom, specchio) e i PNG per ogni schermo.
+
+### Fase 3 · teste e tre quarti (2026-11-02)
+
+- **Teste (`7_teste`):** buone tutte e nove, senza collo e col contorno chiuso, nell'ordine
+  giusto. Ricalcate coi colori della tavolozza (`art/WB-009/svg/7_teste.svg`) e tagliate con
+  `taglia.py --teste`: prendono il posto delle quattro del foglio e delle cinque in più.
+  Il taglio del collo a script (`senza_collo`) e `--facce` sono tolti: non servono più.
+- **Coda in SVG:** ogni segmento (bordo e colore) ora ha il suo SVG, come gli altri pezzi.
+- **Tre quarti (`6_tre_quarti_1` e `_2`):** in tutte e due il piede a sinistra guarda a destra
+  come l'altro, il resto è come R4. Sergio ha scelto la **2**: è `scelti/tre_quarti_gamba.png`
+  (R7). Fase 4 pronta: `esegui WB-009 fase 4`.
