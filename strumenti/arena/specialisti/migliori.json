@@ -1,29 +1,29 @@
 {
  "spingitore": {
-  "vita_mia": 0.37367,
-  "vita_compagno": 1.21021,
-  "morte": 107.70122,
-  "strada": 0.01037,
-  "teletrasporto": 146.70663,
-  "globo_riparo": 19.64442,
-  "cassa": 58.27882,
-  "cassa_fame": 8.14443,
+  "vita_mia": 0.18876,
+  "vita_compagno": 0.89382,
+  "morte": 190.05616,
+  "strada": 0.03528,
+  "teletrasporto": 192.87096,
+  "globo_riparo": 33.44913,
+  "cassa": 56.73758,
+  "cassa_fame": 4.7886,
   "armi": {
-   "punch": 1.00238,
-   "mallet": 1.00238,
-   "lunge": 1.00238,
-   "sword": 1.00238,
-   "sniper": 0.87892,
-   "missile": 0.87892,
-   "grenade": 0.87892,
-   "shards": 0.87892,
-   "eagle": 0.87892,
-   "bellows": 1.33235
+   "punch": 0.77066,
+   "mallet": 0.77066,
+   "lunge": 0.77066,
+   "sword": 0.77066,
+   "sniper": 0.82514,
+   "missile": 0.82514,
+   "grenade": 0.82514,
+   "shards": 0.82514,
+   "eagle": 0.82514,
+   "bellows": 1.58825
   },
   "punteggio": {
-   "env_kill": 47.8695,
-   "kill": 58.374,
-   "damage": 0.98957,
+   "env_kill": 69.518,
+   "kill": 63.4185,
+   "damage": 1.27267,
    "death": -20,
    "self_death": -30,
    "crown": 25,
@@ -34,8 +34,8 @@
    "parry_max": 20,
    "trap": 10
   },
-  "gen": 10,
-  "vince": 0.53
+  "gen": 30,
+  "vince": 0.54
  },
  "acrobata": {
   "vita_mia": 0.93663,
