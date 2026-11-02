@@ -145,6 +145,50 @@ def ritocca(lab, nomi, file):
             lab[m & (lab == nomi.index(da))] = nomi.index(r["a"])
 
 
+SQUADRA = {"squadra": "#FFFFFF", "squadra_ombra": "#B4B4B4"}   # lo strato che il gioco tinge
+
+
+def fai_strati(a, lab, tav, senza=()):
+    """Gli strati ricalcati, dal basso: la sagoma del primo colore, un colore per
+    strato (un filo più grandi, così fra due colori non resta la riga di quello
+    sotto), il nero sopra a tutto."""
+    from scipy import ndimage
+    nomi = [n for n, _ in tav]
+    nero = nomi.index("nero")
+    sagoma = liscia(a[..., 3], 128)
+    strati = [ricalca(sagoma, tav[0][1])]
+    for i, (n, c) in enumerate(tav[1:], 1):
+        if i == nero or n in senza:
+            continue
+        m = lab == i
+        if m.sum() < 30:
+            continue
+        m = ndimage.binary_dilation(m, iterations=2) & (a[..., 3] > 128)
+        strati.append(ricalca(liscia(m * 255.0, 128), c))
+    if (lab == nero).any():
+        strati.append(ricalca(sagoma & liscia((lab == nero) * 255.0, 128), tav[nero][1]))
+    return strati
+
+
+def svg_pezzo(a, tav, misura):
+    """Un pezzo ritagliato (RGBA, grande) in SVG alla misura in pixel del gioco.
+    Torna l'SVG del pezzo (senza il colore della squadra) e quello dello strato
+    della squadra in grigi (bianco e ombra, come il PNG _tinta), o None."""
+    lab = classi(a, tav)
+    h, w = a.shape[:2]
+    testa = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{misura[0]}" height="{misura[1]}" '
+             f'viewBox="0 0 {2 * w} {2 * h}" preserveAspectRatio="none">\n')
+    base = testa + "\n".join(fai_strati(a, lab, tav, senza=SQUADRA)) + "\n</svg>\n"
+    controlla(base, tav, "pezzo")
+    nomi = [n for n, _ in tav]
+    nero = lab == nomi.index("nero")
+    squadra = []
+    for n, c in SQUADRA.items():
+        if n in nomi and (lab == nomi.index(n)).sum() >= 30:
+            squadra.append(ricalca(liscia(((lab == nomi.index(n)) & ~nero) * 255.0, 128), c))
+    return base, (testa + "\n".join(squadra) + "\n</svg>\n") if squadra else None
+
+
 def main_colori(tavolozza, foglio, uscita_svg, uscita_png, ritocchi=None):
     from scipy import ndimage
     tav = leggi_tavolozza(tavolozza)
@@ -157,19 +201,7 @@ def main_colori(tavolozza, foglio, uscita_svg, uscita_png, ritocchi=None):
     nomi = [n for n, _ in tav]
     if ritocchi:
         ritocca(lab, nomi, ritocchi)
-    nero = nomi.index("nero")
-    sagoma = liscia(a[..., 3], 128)
-    strati = [ricalca(sagoma, tav[0][1])]
-    for i, (n, c) in enumerate(tav[1:], 1):
-        if i == nero:
-            continue
-        m = lab == i
-        if m.sum() < 30:
-            continue
-        # un filo più grande: fra due colori non resta la riga del colore sotto
-        m = ndimage.binary_dilation(m, iterations=2) & (a[..., 3] > 128)
-        strati.append(ricalca(liscia(m * 255.0, 128), c))
-    strati.append(ricalca(sagoma & liscia((lab == nero) * 255.0, 128), tav[nero][1]))
+    strati = fai_strati(a, lab, tav)
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {2 * w} {2 * h}">\n'
            + "\n".join(strati) + "\n</svg>\n")
     controlla(svg, tav, uscita_svg)
