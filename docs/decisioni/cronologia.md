@@ -5,8 +5,8 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | Data | Cosa | PR |
 |---|---|---|
 | 19 ott | Nasce il progetto: README, design e architettura (Defold + Go, sim condivisa), prototipo hot-seat con terreno distruttibile, server online in rete locale, fisica e mappe (niente vento, salto libero), fluidità (interpolazione). | #1–#8 |
-| 20 ott | Nome MegaBlast. Direzione artistica D "Le Scorie". Analisi dell'APK di Blastron. Mappa isole, integrazione grafica in battaglia, home, teletrasporto e Lama, casse e armi, collisioni tra robot. | #9–#22 |
-| 21 ott | Profilo fisico "blastron", levette, mappa Forgia dei Titani; skill del progetto. Tentativo di look Blastron bocciato. | #23, #24 |
+| 20 ott | Nome MegaBlast. Direzione artistica D "Le Scorie". Analisi dell'APK del gioco di riferimento. Mappa isole, integrazione grafica in battaglia, home, teletrasporto e Lama, casse e armi, collisioni tra robot. | #9–#22 |
+| 21 ott | Fisica nuova ricavata dal gioco di riferimento (quella di oggi), levette, mappa Forgia dei Titani; skill del progetto. Tentativo di copiarne il look bocciato. | #23, #24 |
 | 22 ott | Personaggio v2 (bocciato la sera); discussione di game design competitivo (tempo del turno, strategia, equipaggiamento). | — |
 | 23 ott | Decisioni del design competitivo (Nucleo, due attacchi, draft, albero, calendario eventi). Pilastri del personaggio, greybox, Corona del Titano, game feel. UI minimale stile Sagoma. Server scalabile. Regole di igiene del codice e autonomia tracciata. | #25–#28, #31–#34 (bozze) |
 | 24 ott | Mergiate regole competitive, UI minimale, podio e albero, server con code e draft; Nucleo rimosso (globi di teletrasporto); arsenale primarie/secondarie; Cecchino rifatto; cerchi di cura; build HTML5 per iPhone; `max_nodes` 2048. Regole per lavorare con Gabriella. | #29, #31–#40 |
@@ -93,5 +93,6 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 2 nov | La home ha dietro lo sfondo vivo del Limbo, il secondo girone, dipinto con una sola tinta verde salvia, raggi, tratteggio e polvere che galleggia. | questa PR |
 | 2 nov | Nella campagna i bot dei gradi 1-4 lasciano le casse a te, il 5 e il 6 prendono solo quelle a portata facile, dal 7 le contendono come prima; scala dei gradi rimisurata, stelle della Forgia invariate. | questa PR |
 | 2 nov | L'apprendista è il personaggio principale di tutti, con le animazioni, le hitbox, i perni e le impugnature fatte da Sergio nell'editor; via le pelli di Gabriella. | questa PR |
-| 2 nov | Piano di pulizia approvato da Sergio (una fisica sola, via Blastron dal repository, codice in inglese a ondate). Prima PR: controlli automatici su ogni PR (test, globali Lua, Go) e confronto prima/dopo con 200 partite di bot. | questa PR |
+| 2 nov | Piano di pulizia approvato da Sergio (una fisica sola, via dal repository i riferimenti al gioco di partenza, codice in inglese a ondate). Prima PR: controlli automatici su ogni PR (test, globali Lua, Go) e confronto prima/dopo con 200 partite di bot. | questa PR |
 | 2 nov | Una fisica sola: via il profilo fisico vecchio e la scelta del profilo, restano i numeri di oggi; nel gioco non cambia niente. | questa PR |
+| 2 nov | Via dal repository i riferimenti al gioco di partenza: nuovo `docs/fisica.md` con la fisica di oggi, `design.md` aggiornato coi numeri veri. | questa PR |

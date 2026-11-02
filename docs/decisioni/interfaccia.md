@@ -10,7 +10,7 @@ codice. Regole della roadmap: [../roadmap.md](../roadmap.md) area 21.
 | Data | Decisione | Dove |
 |---|---|---|
 | 20 ott | Home: GIOCA (oro) = online, STESSO TELEFONO = locale. | PR #16 |
-| 21 ott | Comandi touch: due pulsanti sinistra/destra + salto; mira trascinando il dito dal robot (direzione = angolo, lunghezza = potenza, tratteggio della traiettoria), tornare sul robot annulla. Poi (PR #23) **due levette** tipo Blastron con smorzamento della mira mantenuto, teletrasporto sopra la levetta di mira; "meglio di Blastron, basato sul tempo". | docs/design.md, PR #23 |
+| 21 ott | Comandi touch: due pulsanti sinistra/destra + salto; mira trascinando il dito dal robot (direzione = angolo, lunghezza = potenza, tratteggio della traiettoria), tornare sul robot annulla. Poi (PR #23) **due levette** come nel gioco di riferimento, con smorzamento della mira mantenuto, teletrasporto sopra la levetta di mira; "meglio dell'originale, basato sul tempo". | docs/design.md, PR #23 |
 | 23 ott | **UI super minimale**: tutto il kit dipinto ritirato; elementi aggiunti solo quando una schermata li richiede; stile provvisorio che anticipa quello finale. **Mai più asset dipinti per la UI.** | PR #32 |
 | 24 ott | Stile **A "Sagoma"** scelto (carbone + contorno chiaro, accento acceso sul pulsante principale); B "Nucleo" e C "Maschera" scartati. I colori vivono solo in `ui.C`; `config.lua` della sim non ha colori. | PR #32 |
 | 24 ott | Barra delle armi in basso al centro in tre gruppi col nome: PRIMARIE (brace), SECONDARIA (acciaio), OGGETTI; l'arma usata nel turno si spegne. Barra del turno: gialla finché resta il secondo attacco, blu dopo, lampeggia negli ultimi 2 s. Effetti di stato: scritta che sale, icona coi turni accanto alla vita. | PR #36, #38 |

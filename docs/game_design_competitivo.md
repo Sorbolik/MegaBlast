@@ -57,7 +57,7 @@ Tre principi guidano tutte le strade qui sotto:
 2. **Ogni turno è una scelta tra più cose buone.** Colpire, prendere posizione, prendere una cassa, conquistare una zona, risparmiare Nucleo: se la risposta giusta è sempre "spara al più vicino", il gioco è solo mira.
 3. **In partita vince chi gioca meglio, fuori dalla partita cresci.** L'equipaggiamento dà identità e varietà, mai un vantaggio che si compra con le ore di gioco.
 
-Un numero da tenere presente: con 4 giocatori, turni da 25 s e partita da 3 minuti, ognuno gioca **meno di 2 turni** (circa 7 turni in tutto). Con il profilo blastron (5 minuti) sono circa 3 a testa. Quindi oggi chi spreca tempo ruba turni a tutti, ed è un motivo in più per premiare chi è veloce.
+Un numero da tenere presente: con 4 giocatori, turni da 25 s e partita da 3 minuti, ognuno gioca **meno di 2 turni** (circa 7 turni in tutto). Con la partita di oggi (5 minuti) sono circa 3 a testa. Quindi oggi chi spreca tempo ruba turni a tutti, ed è un motivo in più per premiare chi è veloce.
 
 ## Il tempo del turno
 
@@ -74,7 +74,7 @@ Definizione comune a tutte: **tempo risparmiato = secondi rimasti quando attacch
 | **E. Nucleo (consigliata)** | 1 punto ogni 2 s risparmiati, barra massima 10. Lo spendi in azioni tattiche: scudo per un turno, salto extra, mira completa per un colpo, arma speciale del set. | Alta | Effetto valanga se si spende in danno: per questo solo azioni tattiche e tetto basso | Alta |
 | F. Carica del Titano | Come E ma una sola barra verso una mossa finale (ultimate) da caricare in più turni. | Alta | Una sola scelta, meno decisioni a turno | Media |
 | G. Calore che sale | Dopo 15 s il Nucleo si surriscalda: perdi 5 HP al secondo o la mira trema. | Alta (col bastone) | Punisce invece di premiare, frustra i nuovi | Bassa |
-| H. Turno a punti azione | Muoversi, saltare e attaccare costano punti; il turno finisce quando li finisci, il tempo resta solo come limite anti-stallo. | Alta (naturale) | Cambia la sensazione Blastron di movimento libero | Alta |
+| H. Turno a punti azione | Muoversi, saltare e attaccare costano punti; il turno finisce quando li finisci, il tempo resta solo come limite anti-stallo. | Alta (naturale) | Cambia la sensazione di movimento libero | Alta |
 | I. Turni che si accorciano | 25 s nel primo giro, 20 nel secondo, 15 nel terzo. | Media | Non premia il singolo, solo il ritmo | Bassa |
 | J. Fare qualcosa mentre aspetti | Durante il turno altrui puoi preparare la mira, scegliere l'arma, guardare la mappa liberamente, scegliere una postura (vedi la parte strategica). | Indiretta | Nessuno, si somma alle altre | Media |
 
@@ -89,7 +89,7 @@ Serve che ogni turno abbia almeno due mosse buone in competizione. Consiglio di 
 | # | Meccanica | Cosa premia | Peso da costruire |
 | --- | --- | --- | --- |
 | 1 | **Zone del Titano**: 1 o 2 punti della mappa (un Nucleo caduto nel cimitero). Chi finisce il turno sopra guadagna punti podio e 1 Nucleo. | Posizione, rischio, controllo della mappa | Basso |
-| 2 | **Uccisioni ambientali**: buttare un avversario nel vuoto o farlo cadere da molto in alto vale più di un'uccisione a colpi. Il danno da caduta c'è già nel profilo blastron. | Spinta, terreno distrutto, lettura della mappa | Basso |
+| 2 | **Uccisioni ambientali**: buttare un avversario nel vuoto o farlo cadere da molto in alto vale più di un'uccisione a colpi. Il danno da caduta c'è già. | Spinta, terreno distrutto, lettura della mappa | Basso |
 | 3 | **Casse visibili**: si vede quale arma contiene la cassa prima di prenderla (oggi è nascosta). | Scelte di percorso, contese tra giocatori | Minimo |
 | 4 | **Armi con ricarica**: l'arma usata in questo turno non è disponibile nel turno dopo (missile escluso). | Pianificare due turni avanti, varietà | Basso |
 | 5 | **Mappa che si stringe**: negli ultimi 60 s sale la lava della Forgia o crolla il bordo. | Posizione alta, urgenza nel finale | Medio |
@@ -115,7 +115,7 @@ Consiglio la **combinazione 2 + 3 + 6**: i set sono stili di gioco diversi a par
 | 4. Budget di peso | Ogni pezzo pesa; il carico massimo è uguale per tutti. Pezzi più forti pesano di più. | Media, piace a chi ottimizza | Alta | Armored Core, Battletech |
 | 5. Potere vero + matchmaking per potere | I tier aumentano le statistiche, ma incontri solo chi ha un livello simile. | Alta all'inizio | Bassa: sembra pay-to-win e divide i giocatori | Clash Royale, Brawl Stars |
 | **6. Normalizzazione in classificata** | Nelle partite libere i tier contano un poco; in classificata tutti sono portati allo stesso livello. | Media | Totale dove conta | Guild Wars 2 PvP |
-| 7. Scelta delle armi prima della partita | Porti 3 armi su N; gli altri le vedono all'inizio e possono rispondere. | Alta, fa strategia | Alta | Worms, Blastron |
+| 7. Scelta delle armi prima della partita | Porti 3 armi su N; gli altri le vedono all'inizio e possono rispondere. | Alta, fa strategia | Alta | Worms |
 | 8. Albero di abilità | Punti da spendere su rami. Va bene solo se ogni ramo è una scelta laterale, non una salita. | Alta | Media, rischio di build obbligatoria | Molti RPG |
 
 I bonus set come stili di gioco, a pari forza (proposte da bilanciare):
