@@ -61,7 +61,7 @@ Cloudflare dal main.
 |---|---|---|
 | 23 ott | I 3 pilastri e i 3 riferimenti sopra. | doc personaggio vivo |
 | 23 ott | Camera vicina con dezoom (livelli 2,2 / 1,5 / 1), sfondo procedurale invece di quello dipinto. | PR #25 |
-| 26 ott | Corpo ×1,4 (`BLASTRON_CORPO`), tutto il resto (mondo, armi, casse, proiettili, mani, camera) alle dimensioni di main. Mappe più piccole in futuro. | PR #44 |
+| 26 ott | Corpo ×1,4 (oggi `game.CORPO`), tutto il resto (mondo, armi, casse, proiettili, mani, camera) alle dimensioni di main. Mappe più piccole in futuro. | PR #44 |
 | 26 ott | Fiamma sopra la testa = colore della squadra, più grande e luminosa a chi è di turno; occhi disegnati sulla testa, niente Nucleo. Lampo bianco quando colpito. Corsa solo per movimento proprio. La mira vince su ogni animazione tranne la sconfitta. | PR #44 |
 | 26 ott | Personaggio **vettoriale** disegnato da script, contorno nero puro, animato in codice; niente fogli di frame. | PR #54 |
 | 26 ott | Braccia IK a 2 ossa: mano davanti sulla canna, mano dietro sull'impugnatura. | PR #54 |
@@ -91,7 +91,7 @@ Cloudflare dal main.
 | Rive, Spriter, Creature, Live2D, Moho | Rive richiede GL 4.2+ e abbonamento; gli altri stantii o senza Defold. |
 | Fogli di frame (ChatGPT, Ludo, video AI) | Deriva tra i frame, pesanti (fino a 15 MB di atlas), non reagiscono al gioco, code tagliate dal bordo; Sergio ha rinunciato il 26 ott. |
 | Pixel art (PR #43) | Messa da parte: stile misto con mappe e UI, resa sfocata finché non si è fissato il filtro. |
-| Pezzi staccati fluttuanti stile Blastron | Provati con Gabriella, tornata al diavoletto con le gambe. |
+| Pezzi staccati fluttuanti come nel gioco di riferimento | Provati con Gabriella, tornata al diavoletto con le gambe. |
 | Diavoletto senza braccia + braccia da AI | Prospettive sbagliate, spalle strappate; fermato dal coordinatore e da Sergio (25 ott). |
 | Braccia a tubo dritto nella mira | "Che schifo" (26 ott): sostituite da IK. |
 | Versione a colori piatti automatica dei pezzi dipinti | Chiazze; lo stile piatto deve venire dalla fonte. |
