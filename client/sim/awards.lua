@@ -1,11 +1,11 @@
--- Riconoscimenti di fine partita (docs/game_design_competitivo.md, "Fine
--- partita"): premiano lo stile oltre al vincitore. Lua puro, così li dà anche
--- il server. Si calcolano dai risultati della sim, g:results().ranking.
+-- End-of-match awards (docs/game_design_competitivo.md, "Fine partita"): they
+-- reward style, not just the winner. Pure Lua, so the server gives them too.
+-- They are computed from the sim results, g:results().ranking.
 --
--- Ogni riconoscimento guarda una voce dei risultati: va a chi ha il valore più
--- alto (best = "max") o più basso ("min"), se arriva almeno a min. A parità
--- vince chi sta più in alto in classifica. Un giocatore ne prende al massimo
--- PER_PLAYER, nell'ordine della lista.
+-- Each award looks at one entry of the results: it goes to whoever has the
+-- highest value (best = "max") or the lowest ("min"), if it reaches at least
+-- min. Ties go to whoever ranks higher. A player gets at most PER_PLAYER of
+-- them, in list order.
 
 local M = {}
 
@@ -19,8 +19,8 @@ M.LIST = {
 	{ id = "predone", name = "PREDONE", desc = "Apre più casse", stat = "crates", best = "max", min = 1 },
 }
 
--- ranking: lista dei giocatori in ordine di posto. Restituisce { [robot] = { riconoscimenti } }
--- e la lista { { robot, award } } in ordine.
+-- ranking: list of players in finishing order. Returns { [robot] = { awards } }
+-- and the list { { robot, award } } in order.
 function M.assign(ranking)
 	local by_robot, list, count = {}, {}, {}
 	for _, aw in ipairs(M.LIST) do

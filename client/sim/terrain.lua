@@ -1,7 +1,7 @@
--- Terreno distruttibile: una griglia di celle.
---   0 = vuoto, 1 = terra (si distrugge), 2 = acciaio (indistruttibile, es. tubi)
--- Ogni cella è CELL x CELL unità del mondo. L'origine è in basso a sinistra
--- e la y cresce verso l'alto, come in Defold.
+-- Destructible terrain: a grid of cells.
+--   0 = empty, 1 = dirt (destructible), 2 = steel (indestructible, e.g. pipes)
+-- Each cell is CELL x CELL world units. The origin is bottom left and y grows
+-- upwards, as in Defold.
 
 local rng = require "sim.rng"
 
@@ -18,7 +18,7 @@ function M.new(w, h, cell)
 	return t
 end
 
--- Valore della cella (cx, cy). Fuori dalla griglia è sempre vuoto.
+-- Value of cell (cx, cy). Outside the grid it is always empty.
 function M:get(cx, cy)
 	if cx < 0 or cy < 0 or cx >= self.w or cy >= self.h then return 0 end
 	return self.data[cy * self.w + cx + 1]
@@ -29,10 +29,10 @@ function M:set(cx, cy, v)
 	self.data[cy * self.w + cx + 1] = v
 end
 
--- C'è terreno nel rettangolo di celle [cx0, cx1] x [cy0, cy1]? Come get, fuori
--- dalla griglia è vuoto. È il controllo più usato della simulazione (le
--- collisioni dei robot): legge data direttamente invece di chiamare get cella
--- per cella, molto più veloce sia in LuaJIT sia sul server (gopher-lua).
+-- Is there terrain in the cell rectangle [cx0, cx1] x [cy0, cy1]? Like get,
+-- outside the grid is empty. It is the most used check of the simulation
+-- (robot collisions): it reads data directly instead of calling get cell by
+-- cell, much faster both in LuaJIT and on the server (gopher-lua).
 function M:any_solid(cx0, cx1, cy0, cy1)
 	local w, data = self.w, self.data
 	if cx0 < 0 then cx0 = 0 end
@@ -48,15 +48,15 @@ function M:any_solid(cx0, cx1, cy0, cy1)
 	return false
 end
 
--- C'è terreno (di qualsiasi tipo) nel punto del mondo (x, y)?
+-- Is there terrain (of any kind) at the world point (x, y)?
 function M:solid(x, y)
 	local c = self.cell
 	return self:get(math.floor(x / c), math.floor(y / c)) ~= 0
 end
 
--- Forme per disegnare le mappe (coordinate del mondo) ---------------------------
+-- Shapes to draw maps (world coordinates) ---------------------------------------
 
--- Riempie le celle il cui centro soddisfa inside(px, py), dentro il rettangolo dato.
+-- Fills the cells whose center satisfies inside(px, py), within the given rectangle.
 local function fill(t, x0, y0, x1, y1, v, inside)
 	local c = t.cell
 	for cy = math.max(0, math.floor(y0 / c)), math.min(t.h - 1, math.floor(y1 / c)) do
@@ -81,7 +81,7 @@ function M:circle(x, y, r, v)
 	end)
 end
 
--- Un "tubo": segmento da (x1, y1) a (x2, y2) con spessore r.
+-- A "pipe": segment from (x1, y1) to (x2, y2) with thickness r.
 function M:capsule(x1, y1, x2, y2, r, v)
 	local dx, dy = x2 - x1, y2 - y1
 	local len2 = dx * dx + dy * dy
@@ -94,8 +94,8 @@ function M:capsule(x1, y1, x2, y2, r, v)
 		end)
 end
 
--- Carica una maschera disegnata a mano: una stringa per riga dal basso, fatta di
--- tratti "carattere + lunghezza" (. vuoto, d terra, s acciaio). Vedi sim/mapdata.lua.
+-- Loads a hand-drawn mask: one string per row from the bottom, made of
+-- "character + length" runs (. empty, d dirt, s steel). See sim/mapdata.lua.
 local CODES = { ["."] = 0, d = 1, s = 2 }
 
 function M:load(rows)
@@ -111,7 +111,7 @@ function M:load(rows)
 	end
 end
 
--- Colline casuali con qualche grotta, a partire da un seed.
+-- Random hills with a few caves, from a seed.
 function M:generate(seed)
 	local r = rng.new(seed)
 	local w, h = self.w, self.h
@@ -136,8 +136,8 @@ function M:generate(seed)
 	end
 end
 
--- Scava un cerchio di raggio radius centrato in (x, y) (coordinate del mondo).
--- L'acciaio resta intatto. Restituisce le righe toccate (cy_min, cy_max).
+-- Carves a circle of radius radius centered at (x, y) (world coordinates).
+-- Steel stays intact. Returns the rows touched (cy_min, cy_max).
 function M:carve(x, y, radius)
 	local c = self.cell
 	local cx0 = math.max(0, math.floor((x - radius) / c))
@@ -158,7 +158,7 @@ function M:carve(x, y, radius)
 	return cy0, cy1
 end
 
--- Prima superficie sotto la quota y nella colonna x (o nil se non c'è niente).
+-- First surface below height y in column x (or nil if there is nothing).
 function M:ground_below(x, y)
 	local cx = math.floor(x / self.cell)
 	local start = math.min(self.h - 1, math.floor(y / self.cell))
@@ -168,7 +168,7 @@ function M:ground_below(x, y)
 	return nil
 end
 
--- Superficie più alta nella colonna x (o nil se vuota).
+-- Highest surface in column x (or nil if empty).
 function M:surface_y(x)
 	return self:ground_below(x, self.h * self.cell)
 end

@@ -1,5 +1,5 @@
-// Package megablast contiene la simulazione di gioco in Lua, condivisa tra
-// il client Defold e il server Go. Il server la incorpora nell'eseguibile.
+// Package megablast holds the game simulation in Lua, shared between the
+// Defold client and the Go server. The server embeds it in the executable.
 package megablast
 
 import "embed"

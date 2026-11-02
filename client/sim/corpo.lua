@@ -1,10 +1,10 @@
--- Il corpo del diavoletto nella simulazione, in
--- pixel del mondo misurati dal centro dei piedi. Lo scrive l'editor delle
--- animazioni (strumenti/animazioni), ma è fisica: cambiarlo cambia il gioco per
--- tutti, server compreso, non il disegno (che è alto game.DISEGNO_H).
+-- The imp's body in the simulation, in world pixels measured from the center
+-- of the feet. The animation editor writes it (strumenti/animazioni), but it
+-- is physics: changing it changes the game for everyone, server included, not
+-- the drawing (which is game.DISEGNO_H tall).
 return {
-	-- la capsula per camminare: terreno, spinte fra robot, casse, chi sta sopra a chi
+	-- the walking capsule: terrain, pushes between robots, crates, who stands on whom
 	cammina = { largo = 29.4, alto = 39.2 },
-	-- il cerchio dei colpi: proiettili, esplosioni, spada, pugno, affondo, globi
+	-- the hit circle: projectiles, explosions, sword, punch, lunge, orbs
 	colpi = { raggio = 20.49, centro = 19.6 },
 }

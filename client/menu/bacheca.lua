@@ -3,7 +3,7 @@
 -- casella con una barretta per evento, e sotto i prossimi in fila. Un tocco su
 -- un evento apre il dettaglio: cosa cambia, dove si gioca, quando torna, i premi
 -- e GIOCA (se è in corso). Niente numeri rossi né finestre sopra: si guarda e
--- basta. Stile in ui/ui.lua, eventi da main/eventi.lua (server/eventi.go).
+-- basta. Stile in ui/ui.lua, eventi da main/eventi.lua (server/events.go).
 --
 --   local bacheca = require "menu.bacheca"
 --   local b = bacheca.new(nomi)   -- nomi: arma -> nome (battaglia/hud.lua)

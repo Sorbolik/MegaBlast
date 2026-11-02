@@ -99,7 +99,7 @@ M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletra
 
 -- Caratteri: come gioca un bot, oltre al livello (quanto è bravo). Sono solo
 -- pesi diversi da M.PESI, quindi il bot non bara: preme sempre i tasti di un
--- giocatore. Li usano la campagna (sim/campagna.lua, players[i].carattere) e i
+-- giocatore. Li usano la campagna (sim/campaign.lua, players[i].carattere) e i
 -- custodi dei gironi. codardo: a ogni turno attacca subito (così guadagna i
 -- globi) e poi scappa col globo nella tana peggiore, coperta e dove nessuno lo
 -- vede (tana: quanto conta; piano: il piano di ogni turno); testa_calda:

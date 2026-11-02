@@ -7,23 +7,23 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-// Terreno del server: le celle stanno in un []byte invece che in una tabella
-// Lua da 230.400 valori. Una partita occupa 230 KB invece di 3,7 MB, e i
-// controlli più usati dalla simulazione (collisioni, scavi) girano in Go.
+// Server terrain: cells live in a []byte instead of a Lua table of 230,400
+// values. A match takes 230 KB instead of 3.7 MB, and the checks the
+// simulation uses most (collisions, digging) run in Go.
 //
-// Si sostituiscono solo le funzioni di sim.terrain che leggono o scrivono le
-// celle; tutto il resto (load, rect, circle, generate...) resta il Lua di
-// client/sim/terrain.lua e arriva alle celle attraverso t.data, che qui è un
-// userdata con __index e __newindex. TestGoTerrainMatchesLua controlla che
-// il risultato sia identico a quello del Lua puro, cella per cella.
+// Only the sim.terrain functions that read or write cells are replaced;
+// everything else (load, rect, circle, generate...) stays the Lua of
+// client/sim/terrain.lua and reaches the cells through t.data, which here is
+// a userdata with __index and __newindex. TestGoTerrainMatchesLua checks that
+// the result is identical to pure Lua, cell by cell.
 
 type cells []byte
 
 const cellsType = "megablast.cells"
 
-// Celle delle mappe fisse già disegnate, condivise da tutti gli stati Lua del
-// processo (sola lettura): una partita nuova le copia in pochi microsecondi.
-var baseCells sync.Map // id mappa -> cells
+// Cells of the fixed maps already drawn, shared by all the Lua states of the
+// process (read-only): a new match copies them in a few microseconds.
+var baseCells sync.Map // map id -> cells
 
 func installGoTerrain(L *lua.LState) {
 	L.Push(L.GetGlobal("require"))
@@ -58,7 +58,7 @@ func installGoTerrain(L *lua.LState) {
 		c := t.RawGetString("data").(*lua.LUserData).Value.(cells)
 		return t, c, int(t.RawGetString("w").(lua.LNumber)), int(t.RawGetString("h").(lua.LNumber))
 	}
-	// get come in Lua: fuori dalla griglia 0, indice non intero nil
+	// get as in Lua: outside the grid 0, non-integer index nil
 	get := func(c cells, w, h int, cx, cy float64) lua.LValue {
 		if cx < 0 || cy < 0 || cx >= float64(w) || cy >= float64(h) {
 			return lua.LNumber(0)
@@ -110,7 +110,7 @@ func installGoTerrain(L *lua.LState) {
 		cx0, cx1 := max(0, int(L.CheckNumber(2))), min(w-1, int(L.CheckNumber(3)))
 		cy0, cy1 := max(0, int(L.CheckNumber(4))), min(h-1, int(L.CheckNumber(5)))
 		if cx0 > cx1 {
-			cy1 = -1 // rettangolo tutto fuori dalla griglia
+			cy1 = -1 // rectangle entirely outside the grid
 		}
 		for cy := cy0; cy <= cy1; cy++ {
 			for _, v := range c[cy*w+cx0 : cy*w+cx1+1] {
@@ -136,8 +136,8 @@ func installGoTerrain(L *lua.LState) {
 			dy := float64((float64(cy)+0.5)*size) - y
 			for cx := cx0; cx <= cx1; cx++ {
 				dx := float64((float64(cx)+0.5)*size) - x
-				// le conversioni esplicite impediscono a Go di fondere le
-				// operazioni (FMA): i conti restano identici a quelli di Lua
+				// the explicit conversions stop Go from fusing the operations (FMA): the
+				// maths stays identical to Lua's
 				if float64(dx*dx)+float64(dy*dy) <= r2 && c[cy*w+cx] == 1 {
 					c[cy*w+cx] = 0
 				}
@@ -170,7 +170,7 @@ func installGoTerrain(L *lua.LState) {
 		return 1
 	})
 
-	// per net.lua: celle delle mappe fisse disegnate una volta per processo
+	// for net.lua: cells of the fixed maps drawn once per process
 	L.SetGlobal("terrain_restore", L.NewFunction(func(L *lua.LState) int {
 		_, c, _, _ := grid(L)
 		base, ok := baseCells.Load(L.CheckString(2))
@@ -187,7 +187,7 @@ func installGoTerrain(L *lua.LState) {
 	}))
 }
 
-// index converte una chiave Lua nella posizione in c (le chiavi partono da 1).
+// index converts a Lua key into the position in c (keys start at 1).
 func index(k lua.LValue, n int) (int, bool) {
 	f, ok := k.(lua.LNumber)
 	if !ok || float64(f) != math.Floor(float64(f)) || f < 1 || int(f) > n {

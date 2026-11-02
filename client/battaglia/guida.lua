@@ -1,4 +1,4 @@
--- La guida delle lezioni (sim/missioni.lua, evidenzia): un anello giallo che
+-- La guida delle lezioni (sim/missions.lua, evidenzia): un anello giallo che
 -- pulsa sul comando da toccare e, per i gesti, un dito che li fa. Sul telefono
 -- il dito sposta di lato la levetta di sinistra (cammina) o la spinge in su
 -- (salta), spinge la levetta di destra verso il bersaglio (mira) o tocca la
