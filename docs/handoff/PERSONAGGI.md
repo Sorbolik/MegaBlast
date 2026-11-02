@@ -14,7 +14,7 @@ prova dell'apprendista nell'editor; poi gli altri.
 |---|---|---|
 | 0 | Il concept approvato (per esempio una tavola di WB-008) | Sergio sceglie |
 | 1 | Tre quarti verso destra nello stile pulito, camminata di prova, foglio di 9 espressioni | ChatGPT; Sergio sceglie, Claude salva in `art/WB-xxx/scelti/` |
-| 2 | Foglio dei pezzi sullo stampino + teste in più + braccia col pugno chiuso, copiati dai file scelti | ChatGPT |
+| 2 | Foglio del corpo sullo stampino + 9 teste senza collo + braccia col pugno chiuso, copiati dai file scelti | ChatGPT |
 | 3 | Ricalco in SVG coi colori esatti, taglio, un SVG per pezzo, PNG per ogni schermo, editor | Claude |
 | 4 | Prova animata nell'editor delle animazioni (pezzi in SVG, zoom, specchio, ogni disegno in qualsiasi posto) | Sergio valida |
 
@@ -58,9 +58,9 @@ correzioni qui sotto già dentro: si copia la scheda, si cambiano solo descrizio
 e dettaglio della squadra. Ogni ritocco che si fa a un personaggio si riporta qui e nel set.
 
 Fase 1: `1_tre_quarti`, `2_camminata` (solo prova: non serve allo scheletro, si può
-saltare), `3_espressioni`. Fase 2: il foglio dei pezzi come `6_corpo_fedele` (non come
-`4_foglio_pezzi`), le teste come `4_foglio_pezzi` riga 1 e `5_teste_extra`, le braccia
-col pugno come `7_braccia_chiuse`.
+saltare), `3_espressioni`; nel tre quarti entrambi i piedi girati a destra (come
+`6_tre_quarti`). Fase 2: il foglio del corpo come `8_corpo_fedele` (non come
+`4_foglio_pezzi`), le nove teste come `7_teste`, le braccia col pugno come `9_braccia_chiuse`.
 
 Lezioni di WB-009, da tenere nei prompt:
 
@@ -69,13 +69,15 @@ Lezioni di WB-009, da tenere nei prompt:
   mette le spalline, ingrossa le gambe e cambia la coda.
 - **Busto senza spalline**: alle spalle il busto finisce tondo, di pelle piena, senza
   contorno e senza righe nere fra spalla e pancia (lì si attaccano le braccia).
-- **Teste col collo stretto** come nelle espressioni scelte; il collo poi lo toglie il
-  taglio (`--senza collo`): il collo è del busto. Una faccia scelta da un altro foglio si
-  allega come riferimento a parte e si chiede di rifare solo il collo.
+- **Teste senza collo, contorno chiuso** (Sergio, 2026-11-02): tutte e nove in un foglio
+  3×3, disegnate come se fossero ritagliate dal tre quarti lungo il contorno della testa,
+  col nero chiuso anche sotto il mento e la mascella. Il collo è del busto. Tagliare il collo
+  dopo, con lo script, lasciava resti neri e un bordo aperto.
+- **Tutti e due i piedi verso destra** nel tre quarti (Sergio, 2026-11-02): la gamba davanti
+  dello stampino è già messa per guardare a destra; con un piede girato a sinistra non torna.
 - **Braccia col pugno chiuso** (davanti e dietro), oltre a quelle con la mano aperta: servono
   alle impugnature delle armi.
-- **Tutte le nove facce** sempre: le quattro dello stampino nel foglio dei pezzi, le altre
-  cinque in un foglio a parte in fila (mira, arrabbiata, sconfitta, paura, provocazione).
+- **Tutte le nove facce** sempre, nello stesso foglio e nello stesso ordine delle espressioni.
 - Il **controllo dei colori** si fa sull'SVG, non sull'immagine di ChatGPT: i colori di
   ChatGPT non sono mai esatti.
 
