@@ -102,6 +102,8 @@ if (process.argv[2]) {
 	check(g.ok && etag === '"1"' && JSON.stringify(await g.json()) === JSON.stringify(f), "il server scarica il file, senza chiave");
 	g = await worker.fetch(new Request("http://x/eventi.json?preso=1&errore=", { headers: { "If-None-Match": etag } }), env);
 	check(g.status === 304, "304 se non è cambiato");
+	g = await worker.fetch(new Request("http://x/eventi.json?preso=" + encodeURIComponent('W/"1'), { headers: { "If-None-Match": "W/" + etag } }), env);
+	check(g.status === 304 && (await env.EVENTI.get("esito", "json")).versione === 1, "anche con l'ETag debole di Cloudflare (W/)");
 	r = await (await chiama("/api/stato")).json();
 	check(r.esito.versione === 1 && r.esito.errore === "" && r.storia.length === 1, "il pannello sa che il server l'ha presa");
 	await worker.fetch(new Request("http://x/eventi.json?preso=1&errore=" + encodeURIComponent("evento \"x\": è rotto")), env);

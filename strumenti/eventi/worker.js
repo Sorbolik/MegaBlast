@@ -77,7 +77,8 @@ async function perIlServer(request, url, env) {
 	const etag = `"${versione}"`;
 	// il server dice cosa ha fatto con la versione che ha: si scrive solo quando cambia
 	if (url.searchParams.has("preso")) {
-		const esito = { versione: parseInt(url.searchParams.get("preso"), 10) || 0, errore: (url.searchParams.get("errore") || "").slice(0, 500) };
+		// solo le cifre: Cloudflare, se comprime la risposta, rende l'ETag debole (W/"3")
+		const esito = { versione: parseInt((url.searchParams.get("preso") || "").replace(/\D/g, ""), 10) || 0, errore: (url.searchParams.get("errore") || "").slice(0, 500) };
 		const prima = await env.EVENTI.get("esito", "json");
 		const adesso = Date.now();
 		if (!prima || prima.versione !== esito.versione || prima.errore !== esito.errore || adesso - (prima.visto || 0) > VISTO_OGNI) {
@@ -85,6 +86,6 @@ async function perIlServer(request, url, env) {
 		}
 	}
 	const headers = { ETag: etag, "Cache-Control": "no-store" };
-	if (request.headers.get("If-None-Match") === etag) return new Response(null, { status: 304, headers });
+	if ((request.headers.get("If-None-Match") || "").replace(/^W\//, "") === etag) return new Response(null, { status: 304, headers });
 	return new Response(value || '{"eventi": []}', { headers: { ...headers, "Content-Type": "application/json" } });
 }
