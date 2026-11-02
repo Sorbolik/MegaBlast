@@ -6,11 +6,11 @@
 
 | specialista | mestiere | campione / soglia | bravura | esami | armi principali | cosa cambia |
 |---|---|---|---|---|---|---|
-| spingitore | uccisioni nel vuoto a partita | 1.29 / 1.22 | 0.550 | 53% 53% | missile 22%, punch 20%, sword 12% | cura del compagno ×1.6, paura di morire ×2.7, riparo a piedi più che col globo 22 (oggi 3), voglia di casse 55 (oggi 12) |
-| acrobata | globi e Rampino a partita | 9.49 / 8.78 | 0.511 | 50% 51% | punch 21%, missile 20%, sword 15% | paura di perdere vita ×1.9, cura del compagno ×2.0, paura di morire ×1.6, riparo a piedi più che col globo -4 (oggi 3), gusto per le armi da lontano ÷1.6, voglia di casse 18 (oggi 12), voglia di casse quando restano pochi colpi 2 (oggi 8) |
-| cecchino | quota del danno fatto da lontano | 0.60 / 0.60 | 0.519 | 50% 50% | missile 20%, shards 19%, sniper 10% | come il bot di oggi |
-| picchiatore | quota del danno fatto da vicino | 0.62 / 0.58 | 0.540 | 54% 57% | punch 20%, lunge 18%, missile 16% | paura di perdere vita ÷2.1, fatica a camminare ×1.7, voglia di uccidere ÷1.6, gusto per le armi da vicino ×1.5 |
-| sopravvissuto | morti a partita, al contrario | -3.52 / -3.54 | 0.505 | 57% 49% | missile 19%, punch 17%, lunge 17% | cura del compagno ×3.0, fatica a camminare ÷2.2, voglia di globo 247 (oggi 100), riparo a piedi più che col globo -9 (oggi 3), voglia di uccidere ×1.9, gusto per il Mantice ÷1.8, voglia di casse 42 (oggi 12) |
+| spingitore | uccisioni nel vuoto a partita | 1.30 / 1.27 | 0.544 | 53% 53% 52% | missile 21%, punch 21%, sword 12% | paura di perdere vita ÷1.6, paura di morire ×1.6, riparo a piedi più che col globo 30 (oggi 3), gusto per il Mantice ×1.7, voglia di casse 45 (oggi 12), voglia di casse quando restano pochi colpi 27 (oggi 8) |
+| acrobata | globi e Rampino a partita | 9.52 / 9.27 | 0.524 | 50% 51% 48% | missile 23%, punch 19%, sword 13% | paura di perdere vita ÷1.9, cura del compagno ÷4.2, paura di morire ×1.8, voglia di globo 295 (oggi 100), voglia di casse quando restano pochi colpi 0 (oggi 8) |
+| cecchino | quota del danno fatto da lontano | 0.59 / 0.60 | 0.510 | 50% 50% 50% | missile 19%, shards 17%, lunge 10% | come il bot di oggi |
+| picchiatore | quota del danno fatto da vicino | 0.61 / 0.61 | 0.549 | 54% 57% 55% | punch 20%, lunge 17%, missile 17% | cura del compagno ÷4.3, paura di morire ÷1.6, voglia di globo 223 (oggi 100) |
+| sopravvissuto | morti a partita, al contrario | -3.49 / -3.52 | 0.504 | 57% 49% 47% | eagle 21%, missile 18%, shards 17% | fatica a camminare ×7.7, voglia di globo 223 (oggi 100), voglia di buttare nel vuoto ×1.6, voglia di uccidere ×2.6, voglia di fare danno ×1.9, gusto per il Mantice ÷2.0, voglia di casse quando restano pochi colpi 20 (oggi 8) |
 
 ## Generazioni
 
@@ -28,3 +28,8 @@ Per ogni specialista: bravura del campione e mestiere / soglia.
 | 8 | 0.524 | 0.556 (1.30 / 1.16) | 0.513 (8.19 / 8.18) | 0.525 (0.60 / 0.60) | 0.551 (0.61 / 0.56) | 0.508 (-3.50 / -3.54) |
 | 9 | 0.487 | 0.556 (1.30 / 1.19) | 0.511 (9.65 / 8.55) | 0.524 (0.60 / 0.60) | 0.542 (0.62 / 0.57) | 0.525 (-3.56 / -3.54) |
 | 10 | 0.503 | 0.550 (1.29 / 1.22) | 0.511 (9.49 / 8.78) | 0.519 (0.60 / 0.60) | 0.540 (0.62 / 0.58) | 0.505 (-3.52 / -3.54) |
+| 11 | 0.463 | 0.544 (1.29 / 1.24) | 0.517 (9.45 / 8.95) | 0.516 (0.60 / 0.60) | 0.538 (0.61 / 0.59) | 0.499 (-3.54 / -3.54) |
+| 12 | 0.551 | 0.536 (1.28 / 1.25) | 0.525 (9.78 / 8.95) | 0.511 (0.60 / 0.60) | 0.539 (0.61 / 0.60) | 0.511 (-3.48 / -3.54) |
+| 13 | 0.499 | 0.536 (1.28 / 1.25) | 0.522 (9.45 / 9.08) | 0.507 (0.60 / 0.60) | 0.532 (0.61 / 0.60) | 0.512 (-3.51 / -3.53) |
+| 14 | 0.463 | 0.540 (1.28 / 1.26) | 0.529 (9.51 / 9.18) | 0.506 (0.60 / 0.60) | 0.528 (0.61 / 0.60) | 0.520 (-3.53 / -3.53) |
+| 15 | 0.466 | 0.544 (1.30 / 1.27) | 0.524 (9.52 / 9.27) | 0.510 (0.59 / 0.60) | 0.549 (0.61 / 0.61) | 0.504 (-3.49 / -3.52) |
