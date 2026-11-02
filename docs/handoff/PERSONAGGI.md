@@ -87,10 +87,18 @@ Lezioni di WB-009, da tenere nei prompt:
    FOGLIO_col.png [RITOCCHI.json]`: ricalco a strati coi soli colori della tavolozza (si
    ferma se ne trova un altro). I ritocchi a mano (JSON accanto all'SVG, poligoni con il colore
    da cambiare) correggono gli errori di ChatGPT, per esempio il nero sulle spalle.
-2. `taglia.py FOGLIO_col.png --nome <nome> --categoria personaggio --allinea --senza ala
-   --teste TESTE_col.png --tavolozza strumenti/stampino/tavolozze/<nome>.json`: i pezzi del
-   gioco e un SVG per pezzo, anche ogni segmento della coda (`strumenti/stampino/pelli/svg/`);
-   le nove teste (foglio 3×3 senza collo) prendono il posto di quelle del foglio.
+2. `taglia.py`, un foglio alla volta, ogni disegno diventa una **versione numerata** della
+   pelle (busto_1, busto_2, braccio_3...) e il posto prende l'ultima; nell'editor si sceglie
+   quale versione va in scena, per ogni posto e per ogni faccia:
+   - il primo foglio del corpo: `taglia.py FOGLIO_col.png --nome <nome> --categoria personaggio
+     --allinea --senza ala --teste TESTE_col.png --tavolozza strumenti/stampino/tavolozze/<nome>.json`
+     (le nove teste del foglio 3×3 senza collo prendono il posto di quelle del foglio);
+   - gli altri fogli del corpo: lo stesso con `--aggiungi` (e senza `--teste`);
+   - le braccia col pugno: `taglia.py --nome <nome> --categoria personaggio --allinea --aggiungi
+     --pugni PUGNI_col.png --tavolozza ...` (versioni in più delle braccia, il posto resta al
+     braccio aperto).
+   Escono i pezzi del gioco e un SVG per disegno, anche ogni segmento della coda
+   (`strumenti/stampino/pelli/svg/`); la coda è una sola (l'ultima).
 3. `prepara.py` e l'editor ripubblicato: la cassetta dei pezzi in SVG del personaggio.
    Nell'editor ogni pezzo ha il suo perno (corpo, testa, braccia, manine, gambe, ala, coda,
    arma). Le scelte di Sergio (disegno per posto, specchio, spostamenti) tornano con "Manda a

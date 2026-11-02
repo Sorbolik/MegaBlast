@@ -235,7 +235,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			</div>
 			<div class="strumento">
 				<h3>Ritocca i pezzi dello stampino</h3>
-				<p>Sposta e ingrandisci un pezzo delle pelli che hai addosso (scegli la pelle sopra il palco): lo vedi subito su tutte le animazioni. Sul palco, <kbd>Maiusc</kbd> + rotellina sopra un pezzo cambia la sua grandezza (la rotellina da sola fa lo zoom del palco). I bordi e le altre facce della testa vanno con lui. In ogni posto puoi mettere qualsiasi disegno della cassetta della pelle, anche lo stesso in due posti (due gambe uguali), e specchiarlo. "Manda a Claude": li rimette nello stampino (strumenti/stampino/pelli) e rifà le pelli del gioco.</p>
+				<p>Sposta e ingrandisci un pezzo delle pelli che hai addosso (scegli la pelle sopra il palco): lo vedi subito su tutte le animazioni. Sul palco, <kbd>Maiusc</kbd> + rotellina sopra un pezzo cambia la sua grandezza (la rotellina da sola fa lo zoom del palco). I bordi e le altre facce della testa vanno con lui. In ogni posto puoi mettere qualsiasi disegno della cassetta della pelle: le versioni numerate di ogni pezzo (busto 1, busto 2, braccio 3 col pugno...), anche lo stesso in due posti (due gambe uguali), e specchiarlo. Ogni faccia sceglie la sua versione. "Manda a Claude": li rimette nello stampino (strumenti/stampino/pelli) e rifà le pelli del gioco.</p>
 				<div class="righe">
 					<label>pezzo <select id="rt-pezzo"></select></label>
 				</div>
@@ -393,8 +393,8 @@ function vesti() {
 		if (pl && pl.coda) formaCoda = { l: pl.coda, riposo: pl.coda_riposo };
 		const pz = pl && pl.pezzi;
 		if (!pz) continue;
-		// _k: il pezzo da ritoccare (pelle/posto; le facce vanno con la testa), per la rotellina
-		const k = (posto) => addosso[c] + "/" + (posto.startsWith("testa") ? "testa" : posto);
+		// _k: il pezzo da ritoccare (pelle/posto), per la rotellina e il clic
+		const k = (posto) => addosso[c] + "/" + posto;
 		for (const posto in pz) metti(posto, Object.assign({}, ritoccato(addosso[c], posto, pz[posto]), { _k: k(posto) }));
 		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, Object.assign({}, ritoccato(addosso[c], "testa", pz.testa), { _k: k("testa") }));
 	}
@@ -2138,8 +2138,10 @@ $("nu-manda").onclick = async () => {
 	} catch (e) { messaggio("Non sono riuscito a mandarla: " + ((e && e.message) || "errore") + ". Usa Salva."); }
 };
 
-// i pezzi delle pelli addosso che si possono ritoccare: senza i bordi e le altre
-// facce, che vanno col pezzo
+// un disegno numerato della pelle (busto_2, braccio_3): una versione, non un posto
+const versione = (posto) => /_\d+$/.test(posto);
+// i pezzi delle pelli addosso che si possono ritoccare: i posti (anche le facce,
+// per scegliere la versione di ognuna), senza bordi e versioni
 function pezziRitocco() {
 	const sel = $("rt-pezzo"), prima = sel.value;
 	sel.innerHTML = "";
@@ -2147,7 +2149,7 @@ function pezziRitocco() {
 		const pl = addosso[c] && PL.pelli[addosso[c]];
 		if (!pl) continue;
 		for (const posto of Object.keys(pl.pezzi).sort()) {
-			if (posto.endsWith("_bordo") || (posto.startsWith("testa_") && pl.pezzi.testa)) continue;
+			if (posto.endsWith("_bordo") || versione(posto)) continue;
 			sel.add(new Option(`${addosso[c]}: ${posto.replace(/_/g, " ")}`, addosso[c] + "/" + posto));
 		}
 	}
@@ -2159,11 +2161,16 @@ function pezziRitocco() {
 function gruppo(chiave) {
 	const [pelle, posto] = chiave.split("/");
 	const pz = PL.pelli[pelle].pezzi;
-	return Object.keys(pz).filter((k) => k === posto || k === posto + "_bordo" || (posto === "testa" && k.startsWith("testa_"))).map((k) => pelle + "/" + k);
+	const base = FACCE.includes(posto) ? "testa" : posto;
+	return Object.keys(pz).filter((k) => k === base || k === base + "_bordo" || (base === "testa" && FACCE.includes(k))).map((k) => pelle + "/" + k);
 }
-// i disegni della cassetta di una pelle: i suoi pezzi, senza bordi, tinte e coda
+// i disegni della cassetta di una pelle: le versioni numerate (busto_1, busto_2,
+// braccio_3 col pugno...) e i pezzi senza versioni; senza bordi, tinte e coda
 function cassetta(pelle) {
-	return Object.keys(PL.pelli[pelle].pezzi).filter((k) => !k.endsWith("_bordo") && !k.startsWith("coda_") && PL.pelli[pelle].pezzi[k].w > 1).sort();
+	const pz = PL.pelli[pelle].pezzi;
+	const k = Object.keys(pz).filter((k) => !k.endsWith("_bordo") && !k.startsWith("coda_") && pz[k].w > 1);
+	const conVersioni = new Set(k.filter(versione).map((v) => v.replace(/_\d+$/, "")));
+	return k.filter((x) => versione(x) || !conVersioni.has(x)).sort((a, b) => a.localeCompare(b, "it", { numeric: true }));
 }
 function mostraRitocco() {
 	const k = $("rt-pezzo").value, r = (k && ritocchi[k]) || { dx: 0, dy: 0, s: 1 };
@@ -2173,8 +2180,9 @@ function mostraRitocco() {
 	sel.innerHTML = "";
 	if (k) {
 		const [pelle, posto] = k.split("/");
-		for (const d of cassetta(pelle)) sel.add(new Option(d === posto ? `${d.replace(/_/g, " ")} (suo)` : d.replace(/_/g, " "), d));
-		sel.value = r.img || posto;
+		const pz = PL.pelli[pelle].pezzi, suo = cassetta(pelle).find((d) => pz[d].img === pz[posto].img) || posto;
+		for (const d of cassetta(pelle)) sel.add(new Option(d === suo ? `${d.replace(/_/g, " ")} (di partenza)` : d.replace(/_/g, " "), d));
+		sel.value = r.img || suo;
 	}
 	$("rt-sp").checked = !!r.sp;
 	const n = Object.keys(ritocchi).length;
@@ -2188,7 +2196,8 @@ function ritocca() {
 	const posto = k.split("/")[1];
 	for (const g of gruppo(k)) {
 		const v = Object.assign({}, r);
-		const qui = g === k ? { img: $("rt-img").value !== posto ? $("rt-img").value : undefined, sp: $("rt-sp").checked || undefined } : ritocchi[g] || {};
+		const pz = PL.pelli[k.split("/")[0]].pezzi, scelto = $("rt-img").value;
+		const qui = g === k ? { img: scelto && pz[scelto] && pz[scelto].img !== pz[posto].img ? scelto : undefined, sp: $("rt-sp").checked || undefined } : ritocchi[g] || {};
 		if (qui.img) v.img = qui.img;
 		if (qui.sp) v.sp = true;
 		if (v.dx || v.dy || v.s !== 1 || v.img || v.sp) ritocchi[g] = v; else delete ritocchi[g];
@@ -2208,7 +2217,7 @@ $("specchia").onclick = () => {
 	messaggio(`${k.replace("/", ": ").replace(/_/g, " ")}: ${$("rt-sp").checked ? "specchiato" : "dritto"}`);
 };
 $("rt-pezzo").onchange = mostraRitocco;
-$("rt-togli").onclick = () => { $("rt-x").value = 0; $("rt-y").value = 0; $("rt-s").value = 100; $("rt-img").value = $("rt-pezzo").value.split("/")[1]; $("rt-sp").checked = false; ritocca(); };
+$("rt-togli").onclick = () => { $("rt-x").value = 0; $("rt-y").value = 0; $("rt-s").value = 100; $("rt-img").value = ""; $("rt-sp").checked = false; ritocca(); mostraRitocco(); };
 // i ritocchi come li legge strumenti/stampino/taglia.py --ritocchi: i pezzi con i numeri nuovi
 function ritocchiInJson() {
 	const t = (v) => Math.round(v * 10) / 10;
