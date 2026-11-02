@@ -32,6 +32,8 @@ local SCELTE = {
 	{ "potenza", "POTENZA COL CONTROLLER", { { "levetta", "LEVETTA" }, { "grilletto", "GRILLETTO" } } },
 	{ "levette", "LEVETTA CHE MUOVE", { { "destra", "DESTRA" }, { "sinistra", "SINISTRA" } } },
 }
+-- il contatore dei fotogrammi (ui/fotogrammi.lua, docs/prestazioni.md), in alto a destra
+local FPS = { "fps", "CONTATORE FPS", { { "spento", "SPENTO" }, { "acceso", "ACCESO" } } }
 -- i gruppi delle scelte: distanza fra i centri e larghezza di ogni scelta
 local GRUPPO, SCELTA_W = 312, 148
 -- due colonne di comandi
@@ -51,14 +53,17 @@ local function costruisci(s)
 	ui.indietro(s.bottoni, "indietro", s.radice)
 	ui.titolo("IMPOSTAZIONI", 640, 650, 1, C.TESTO, s.radice)
 
-	for k, sc in ipairs(SCELTE) do
-		local cx = 640 + (k - (#SCELTE + 1) / 2) * GRUPPO
-		ui.testo(sc[2], cx, 586, 0.5, C.SPENTO, s.radice)
+	local function scelta(sc, cx, y, w)
+		ui.testo(sc[2], cx, y + 44, 0.5, C.SPENTO, s.radice)
 		local v = profilo.impostazione(s.p, sc[1])
 		for i, m in ipairs(sc[3]) do
-			ui.scheda(s.bottoni, cx + (i - 1.5) * (SCELTA_W + 6), 542, SCELTA_W, 52, m[2], sc[1] .. ":" .. m[1], v == m[1], s.radice)
+			ui.scheda(s.bottoni, cx + (i - 1.5) * (w + 6), y, w, 52, m[2], sc[1] .. ":" .. m[1], v == m[1], s.radice)
 		end
 	end
+	for k, sc in ipairs(SCELTE) do
+		scelta(sc, 640 + (k - (#SCELTE + 1) / 2) * GRUPPO, 542, SCELTA_W)
+	end
+	scelta(FPS, 1110, 628, 118)
 
 	ui.testo("TASTI DEL CONTROLLER", 640, 488, 0.7, C.SPENTO, s.radice)
 	local n = #controller.COMANDI

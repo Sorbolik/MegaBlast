@@ -1,0 +1,45 @@
+# Fluidità (docs/prestazioni.md): un giro che tocca le cose che possono far
+# scattare il gioco. Il contatore dei fotogrammi (ui/fotogrammi.lua) scrive ogni
+# scatto con la causa; simula.py li raccoglie in simulazione/fotogrammi.txt.
+# Meglio con --senza-video (ffmpeg ruba la CPU al gioco).
+# La home dipinta ferma, Primi passi (carica il terreno dipinto), la camminata,
+# fuori dalla partita e di nuovo la home, poi una partita contro il bot
+# (un'altra mappa, colpi che scavano, il bot che pensa).
+
+aspetta 2
+tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
+aspetta 0.5
+tocca_centro 1172 628               # CONTATORE FPS: ACCESO
+aspetta 0.5
+foto 00_impostazioni
+tocca 62 658                        # indietro
+aspetta 5                           # la home: lo sfondo dipinto che scorre
+tocca 1062 392                      # CAMPAGNA
+aspetta 2
+tocca 256 440                       # Primi passi
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2
+cammina destra 730
+aspetta 2
+foto 01_primi_passi
+tocca 62 658                        # la rotellina
+aspetta 1
+tocca 408 658                       # ESCI DALLA PARTITA
+aspetta 3
+tocca 62 658                        # indietro alla home
+aspetta 4
+foto 02_home
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 310 460                       # 1 CONTRO 1
+tocca 890 300                       # DIFFICILE
+tocca 640 140                       # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 20
+aspetta 2.5
+foto 03_il_bot_gioca
+aspetta_stato turno=1 fase=aim 40
+aspetta 1
+foto 04_di_nuovo_al_giocatore
