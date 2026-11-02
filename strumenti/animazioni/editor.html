@@ -234,7 +234,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			</div>
 			<div class="strumento">
 				<h3>Ritocca i pezzi dello stampino</h3>
-				<p>Sposta e ingrandisci un pezzo delle pelli che hai addosso (scegli la pelle sopra il palco): lo vedi subito su tutte le animazioni. I bordi e le altre facce della testa vanno con lui. In ogni posto puoi mettere qualsiasi disegno della cassetta della pelle, anche lo stesso in due posti (due gambe uguali), e specchiarlo. "Manda a Claude": li rimette nello stampino (strumenti/stampino/pelli) e rifà le pelli del gioco.</p>
+				<p>Sposta e ingrandisci un pezzo delle pelli che hai addosso (scegli la pelle sopra il palco): lo vedi subito su tutte le animazioni. Sul palco, <kbd>Maiusc</kbd> + rotellina sopra un pezzo cambia la sua grandezza (la rotellina da sola fa lo zoom del palco). I bordi e le altre facce della testa vanno con lui. In ogni posto puoi mettere qualsiasi disegno della cassetta della pelle, anche lo stesso in due posti (due gambe uguali), e specchiarlo. "Manda a Claude": li rimette nello stampino (strumenti/stampino/pelli) e rifà le pelli del gioco.</p>
 				<div class="righe">
 					<label>pezzo <select id="rt-pezzo"></select></label>
 				</div>
@@ -390,8 +390,10 @@ function vesti() {
 		if (pl && pl.coda) formaCoda = { l: pl.coda, riposo: pl.coda_riposo };
 		const pz = pl && pl.pezzi;
 		if (!pz) continue;
-		for (const posto in pz) metti(posto, ritoccato(addosso[c], posto, pz[posto]));
-		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, ritoccato(addosso[c], "testa", pz.testa));
+		// _k: il pezzo da ritoccare (pelle/posto; le facce vanno con la testa), per la rotellina
+		const k = (posto) => addosso[c] + "/" + (posto.startsWith("testa") ? "testa" : posto);
+		for (const posto in pz) metti(posto, Object.assign({}, ritoccato(addosso[c], posto, pz[posto]), { _k: k(posto) }));
+		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, Object.assign({}, ritoccato(addosso[c], "testa", pz.testa), { _k: k("testa") }));
 	}
 }
 function strati(posto) { return vestito[posto] || [pezzoBase(posto)]; }
@@ -882,6 +884,19 @@ function vista() {
 const zoomVista = { z: 1, x: 0, y: 0 };
 palco.addEventListener("wheel", (e) => {
 	e.preventDefault();
+	// Maiusc + rotellina sopra un pezzo di una pelle: lo ingrandisce o lo rimpicciolisce
+	if (e.shiftKey) {
+		const [px, py] = pixel(e);
+		const x = pezzoSotto(px, py);
+		const k = x && x.p && x.p._k;
+		if (!k || !$("rt-pezzo").querySelector(`option[value="${k}"]`)) { messaggio("Maiusc + rotellina: sopra un pezzo della pelle che hai addosso, per cambiarne la grandezza."); return; }
+		if ($("rt-pezzo").value !== k) { $("rt-pezzo").value = k; mostraRitocco(); }
+		const d = e.deltaY || e.deltaX;   // con Maiusc alcuni browser danno la rotellina in orizzontale
+		const v = Math.max(20, Math.min(300, (parseFloat($("rt-s").value) || 100) * Math.exp(-d * 0.001)));
+		$("rt-s").value = Math.round(v);
+		ritocca();
+		return;
+	}
 	const r = palco.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
 	const mx = (e.clientX - r.left) * dpr, my = (e.clientY - r.top) * dpr;
 	const z = Math.max(0.5, Math.min(12, zoomVista.z * Math.exp(-e.deltaY * 0.0015)));
