@@ -24,6 +24,9 @@ Claude non ridisegna mai un personaggio col proprio codice: si ricalca il disegn
 ## Le regole di ogni prompt
 
 - **Prompt in inglese**, completi, uno per immagine; riferimenti allegati in ordine ("image 1"...).
+- **L'apprendista nei prompt** (scene, proposte, confronti con personaggi nuovi) è sempre
+  `art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png`, senza fiammella; il concept R1
+  con la fiamma non si allega più.
 - **Colori piatti**: una tinta per area più al massimo un'ombra netta; niente sfumature,
   texture, tratteggi, bagliori. Serve al ricalco in SVG e a leggere il personaggio in piccolo.
 - **Tavolozza fissa** scritta nella scheda con i codici esadecimali, ripetuta in ogni prompt.
@@ -37,7 +40,7 @@ Claude non ridisegna mai un personaggio col proprio codice: si ricalca il disegn
 - **Tre quarti verso destra** sempre: è la vista dello stampino e quella con cui si cammina.
 - **Colore della squadra** solo in verde `#00FF00` (ombra `#00B400`), su un solo dettaglio
   scelto per il personaggio (l'apprendista: il fazzoletto). Il verde non si usa per altro.
-- **Niente fiammella** nelle teste (la disegna il gioco) e **niente equipaggiamento** nel
+- **Niente fiammella** da nessuna parte (tolta dal gioco il 2 nov, PR #147) e **niente equipaggiamento** nel
   corpo base (vestiti, ali, elmi sono pezzi a parte).
 - **Stampino** rifatto ogni volta con `python3 strumenti/stampino/stampino.py`
   (`simulazione/stampino/stampino_ai.png` + `manichino.png`, copiati fra i riferimenti della scheda) solo per

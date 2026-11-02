@@ -18,7 +18,7 @@ costruisce la pagina delle proposte. Richiesta completa e opzioni scartate:
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-009/riferimenti/R1_apprendista_concept.png` | l'apprendista, il personaggio di tutti |
+| R1 | `art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png` | l'apprendista, il personaggio di tutti, senza fiammella (il riferimento standard di WB-009 dal 2 nov) |
 
 ## Immagini da generare
 
@@ -42,7 +42,7 @@ perché lo usa lo strumento di taglio.
 ### `p1_anello_scena`
 
 ```
-Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him.
+Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him. He has NO flame on his head: do not add one. His neckerchief is in the team colour of the scene.
 
 A glowing ring of embers on the ground under the feet of the imp: a flat ellipse of hot coals and cracks in the floor, glowing in the team colour, small sparks rising from it. Seen slightly from above, like a forge floor heating up. The imp's feet stand inside the ring.
 
@@ -68,7 +68,7 @@ Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoo
 ### `p2_freccia_scena`
 
 ```
-Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him.
+Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him. He has NO flame on his head: do not add one. His neckerchief is in the team colour of the scene.
 
 A small wrought-iron arrowhead / chevron floating above the imp's head, pointing down at him, hammered metal with rivets, an ember glow inside a slot in the middle in the team colour.
 
@@ -94,7 +94,7 @@ Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoo
 ### `p3_sigillo_scena`
 
 ```
-Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him.
+Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him. He has NO flame on his head: do not add one. His neckerchief is in the team colour of the scene.
 
 A circular infernal sigil drawn in glowing lines on the ground under the imp: concentric circles like Dante's circles of hell, with nine small notches around the outer ring, glowing in the team colour, seen slightly from above as a flat ellipse. The imp's feet stand in the centre.
 
@@ -120,7 +120,7 @@ Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoo
 ### `p4_cartiglio_scena`
 
 ```
-Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him.
+Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him. He has NO flame on his head: do not add one. His neckerchief is in the team colour of the scene.
 
 A small parchment scroll ribbon floating above the imp's head, unrolled, with a team-colour wax seal on its left end, completely blank (no text, no symbols on the parchment).
 
@@ -144,6 +144,7 @@ Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoo
 ## Criteri di accettazione
 
 - [ ] l'apprendista è quello di R1 (forme, colori, corna, fazzoletto), non reinterpretato
+- [ ] nessuna fiamma sulla testa dell'apprendista: la fiammella non esiste più
 - [ ] l'indicatore si legge subito ed è nel colore della squadra
 - [ ] nella scena il personaggio spicca più dello sfondo
 - [ ] fogli: magenta pieno, fotogrammi staccati e della stessa grandezza, riga blu sopra e oro sotto
