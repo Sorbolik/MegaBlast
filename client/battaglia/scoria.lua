@@ -41,9 +41,9 @@
 -- stesse animazioni. Una testa nuova senza le sue facce le fa tutte; una coda
 -- nuova ha bordo e colore a parte come quella di base; le
 -- parti col colore della squadra hanno il loro strato, come la fiammella.
--- I perni di testa, braccia, gambe e ala si spostano
--- dall'editor delle animazioni (battaglia/perni.lua): cambia il punto in cui il
--- pezzo gira, non dove sta da fermo.
+-- I perni di tutti i pezzi (corpo, testa, braccia, manine, gambe, ala, coda) si
+-- spostano dall'editor delle animazioni (battaglia/perni.lua): cambia il punto in
+-- cui il pezzo gira, non dove sta da fermo.
 -- Le clip dicono anche quali pezzi si vedono (testa, busto, braccia, gambe,
 -- ala, coda, arma e le manine staccate, pezzi liberi che le clip spostano e
 -- girano). Con l'arma in mano le clip sono quelle _arma (fermo_arma, corsa_arma,
@@ -72,7 +72,7 @@ local PRESE = require "battaglia.impugnature"
 local M = {}
 
 -- il personaggio di tutti (le pelli addosso), finché non c'è l'armeria che lo sceglie
-M.PERSONAGGIO = { "gabriella" }
+M.PERSONAGGIO = { "apprendista" }
 
 local P, PT = D.pezzi, D.punti
 
@@ -91,7 +91,15 @@ local J = {
 	gamba = perno("gamba", PT.anche[1], PT.anche[2]),
 	gamba_dietro = perno("gamba_dietro", -PT.anche[1], PT.anche[2]),
 	ala = perno("ala", PT.ala[1], PT.ala[2]),
+	busto = perno("busto", PT.bacino[1], PT.bacino[2]),
 }
+-- la coda: la radice si sposta col perno, i segmenti al contrario (girati come il
+-- primo segmento a riposo, così con la coda a riposo restano dove sono)
+local function perno_coda(r1)
+	local d = sposto("coda")
+	local c, sn = math.cos(r1), math.sin(r1)
+	return d, { -(d[1] * c + d[2] * sn), -(-d[1] * sn + d[2] * c) }
+end
 -- dove sta la fiammella nel collo (la testa sposta i suoi pezzi, non la fiammella)
 local CIMA = { PT.cima[1] - sposto("testa")[1], PT.cima[2] - sposto("testa")[2] }
 
@@ -200,8 +208,10 @@ local function pezzo(s, parent, p, k, lampo, d)
 	return n
 end
 
--- le facce: una testa nuova senza le sue facce fa anche quelle
-local FACCE = { "testa", "testa_colpita", "testa_felice", "testa_ko" }
+-- le facce: una testa nuova senza le sue facce fa anche quelle. Le ultime cinque
+-- (WB-009) il diavoletto di base non le ha: fa la testa normale
+local FACCE = { "testa", "testa_colpita", "testa_felice", "testa_ko",
+	"testa_mira", "testa_arrabbiata", "testa_sconfitta", "testa_paura", "testa_provocazione" }
 
 -- I pezzi di ogni posto con addosso le pelli di look (nomi di battaglia/pelli.lua,
 -- una per categoria): per posto, i pezzi dal basso. Il primo è quello di base o
@@ -217,18 +227,22 @@ local function vesti(look)
 	end
 	local V = {}
 	local function strati(posto)
-		V[posto] = V[posto] or { P[posto] or false }
+		V[posto] = V[posto] or { P[posto] or (posto:sub(1, 6) == "testa_" and P.testa) or false }
 		return V[posto]
 	end
 	local function metti(posto, p)
 		local l = strati(posto)
 		if p.modo == "sostituisce" then l[1] = p else l[#l + 1] = p end
 	end
-	local coda = { l = D.coda, riposo = D.coda_riposo }
+	-- la coda: lunghezze, angoli a riposo e dove sta la radice rispetto a quella
+	-- del disegno (la pelle può averla spostata)
+	local coda = { l = D.coda, riposo = D.coda_riposo, radice = FERMO }
 	for _, categorie in ipairs({ PELLI.sostituisce, PELLI.sopra }) do
 		for _, c in ipairs(categorie) do
 			local pz = per[c] and per[c].pezzi
-			if per[c] and per[c].coda then coda = { l = per[c].coda, riposo = per[c].coda_riposo } end
+			if per[c] and per[c].coda then
+				coda = { l = per[c].coda, riposo = per[c].coda_riposo, radice = per[c].coda_radice or FERMO }
+			end
 			if pz then
 				for posto, p in pairs(pz) do metti(posto, p) end
 				for i = 2, #FACCE do
@@ -256,6 +270,8 @@ local function mano_ferma(posto, x)
 	return { x + b.x, PT.spalle[2] + b.y - b.h / 2 + pu.h * 0.4 }
 end
 local MANO_A, MANO_D = mano_ferma("braccio", PT.spalle[1]), mano_ferma("braccio_dietro", -PT.spalle[1])
+-- il perno delle manine: da ferme girano lì (i pezzi si spostano al contrario)
+local MANINA = sposto("pugno")
 -- la mano del braccio che pende vista dalla spalla, per girarlo verso la presa
 local VERSO_A = atan2(MANO_A[2] - J.braccio[2], MANO_A[1] - J.braccio[1])
 local VERSO_D = atan2(MANO_D[2] - J.braccio_dietro[2], MANO_D[1] - J.braccio_dietro[1])
@@ -265,7 +281,7 @@ local VERSO_D = atan2(MANO_D[2] - J.braccio_dietro[2], MANO_D[1] - J.braccio_die
 local LIVELLI = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma",
 	"braccio_a", "manina_a" }
 local function manina(s, punto, k)
-	local g = giunto(s.forma, punto[1] * k, punto[2] * k)
+	local g = giunto(s.forma, (punto[1] + sposto("pugno")[1]) * k, (punto[2] + sposto("pugno")[2]) * k)
 	veste(s, g, "pugno", k)
 	return g
 end
@@ -304,23 +320,31 @@ local function arma_in_mano(s, po, in_mano, lx, q)
 	scale(s.presa, 1 / lx, 1 / q)
 	rot(s.giro, s.arma_a)
 	local ox = -min(s.x[KICK] * s.w * 0.6, PRESA * s.h / 200 / game.CORPO * 0.8)
-	pos(s.armi[s.arma_scelta], ox - g.perno[1], -g.perno[2])
-	local dx, dy = g.presa[1] - g.perno[1] + ox, g.presa[2] - g.perno[2]
+	-- l'arma può essere ingrandita (scala, dall'editor): presa e perno restano
+	-- in unità dell'immagine com'è, e l'immagine si ingrandisce attorno al perno
+	local sc = g.scala or 1
+	pos(s.armi[s.arma_scelta], ox - g.perno[1] * sc, -g.perno[2] * sc)
+	local dx, dy = (g.presa[1] - g.perno[1]) * sc + ox, (g.presa[2] - g.perno[2]) * sc
 	local c, sn = cos(s.arma_a), sin(s.arma_a)
 	return ax + (dx * c - dy * sn) / s.k / lx, ay + (dx * sn + dy * c) / s.k / q
 end
 
 -- mette i pezzi nell'ordine della clip (dal fondo), solo quando cambia; quelli
--- che la clip non nomina vanno sopra, nell'ordine di sempre
+-- che la clip non nomina vanno sopra, nell'ordine di sempre. Ogni pezzo va
+-- sopra a quello prima, fra i fratelli (figli di forma): con move_above(n, nil)
+-- Defold lo stacca dal genitore e il personaggio sparisce
 local function livelli(s, l)
 	if s.livelli == l then return end
 	s.livelli = l
-	local fatti = {}
+	local fatti, prima = {}, nil
 	local function su(nome)
 		local nodi = s.nodi_livello[nome]
 		if fatti[nome] or not nodi then return end
 		fatti[nome] = true
-		for i = 1, #nodi do gui.move_above(nodi[i], nil) end
+		for i = 1, #nodi do
+			if prima then gui.move_above(nodi[i], prima) end
+			prima = nodi[i]
+		end
 	end
 	for i = 1, #l do su(l[i]) end
 	for i = 1, #LIVELLI do su(LIVELLI[i]) end
@@ -390,13 +414,18 @@ function M.new(color, look, solo_arma)
 	-- dal fondo: la coda (prima tutti i bordi, poi tutti i colori: così i
 	-- segmenti si fondono in una coda sola), l'ala, il braccio di dietro, le
 	-- gambe, il busto, la testa con la fiammella, l'arma, il braccio davanti
+	s.perno_coda, s.coda_dentro = perno_coda(s.forma_coda.riposo[1])
+	-- la radice della coda: quella del disegno, spostata dalla pelle e dal perno
+	local rc = s.forma_coda.radice
+	s.radice_coda = { PT.coda[1] + rc[1] + s.perno_coda[1], PT.coda[2] + rc[2] + s.perno_coda[2] }
 	for strato = 1, 2 do
-		local padre, x, y = s.forma, PT.coda[1] * k, PT.coda[2] * k
+		local padre, x, y = s.forma, s.radice_coda[1] * k, s.radice_coda[2] * k
 		for i = 1, #s.forma_coda.l do
 			padre = giunto(padre, x, y)
-			veste(s, padre, "coda_" .. i .. (strato == 1 and "_bordo" or ""), k)
 			s.coda[i] = s.coda[i] or {}
 			s.coda[i][strato] = padre
+			if i == 1 then padre = giunto(padre, s.coda_dentro[1] * k, s.coda_dentro[2] * k) end
+			veste(s, padre, "coda_" .. i .. (strato == 1 and "_bordo" or ""), k)
 			x, y = s.forma_coda.l[i] * k, 0
 		end
 	end
@@ -409,7 +438,7 @@ function M.new(color, look, solo_arma)
 	veste(s, s.gamba_d, "gamba_dietro", k)
 	s.gamba_a = giunto(s.forma, J.gamba[1] * k, J.gamba[2] * k)
 	veste(s, s.gamba_a, "gamba", k)
-	s.busto = giunto(s.forma, PT.bacino[1] * k, PT.bacino[2] * k)
+	s.busto = giunto(s.forma, J.busto[1] * k, J.busto[2] * k)
 	veste(s, s.busto, "busto", k)
 	s.collo = giunto(s.forma, J.testa[1] * k, J.testa[2] * k)
 	-- la testa in un giunto suo (le clip la tolgono), la fiammella no
@@ -578,7 +607,8 @@ end
 -- (resta indietro correndo, frusta saltando e quando arriva un colpo). Ogni
 -- segmento insegue il suo angolo un po' più piano del precedente: così il moto
 -- arriva alla punta in ritardo
-local function coda(s, dt)
+-- gira: la coda intera gira di tanto attorno alla sua radice (il canale coda_gira)
+local function coda(s, dt, gira)
 	local base, r = s.x[CODA], s.forma_coda.riposo
 	local prima = 0
 	for i = 1, #s.coda_a do
@@ -586,8 +616,9 @@ local function coda(s, dt)
 		prima = r[i]
 		local a = riposo + (base + sin(s.t * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i)
 		s.coda_a[i] = s.coda_a[i] + (a - s.coda_a[i]) * min(1, dt * (18 - 2.5 * i))
-		rot(s.coda[i][1], s.coda_a[i])
-		rot(s.coda[i][2], s.coda_a[i])
+		local g = i == 1 and gira or 0
+		rot(s.coda[i][1], s.coda_a[i] + g)
+		rot(s.coda[i][2], s.coda_a[i] + g)
 	end
 end
 
@@ -774,20 +805,23 @@ function M.update(s, dt, st)
 		pos(s.manina_a, hx * s.k, hy * s.k)
 		rot(s.manina_a, s.arma_a + po.manina_a)
 	else
-		pos(s.manina_a, (MANO_A[1] + po.manina_a_x) * s.k, (MANO_A[2] + po.manina_a_y) * s.k)
+		pos(s.manina_a, (MANO_A[1] + MANINA[1] + po.manina_a_x) * s.k, (MANO_A[2] + MANINA[2] + po.manina_a_y) * s.k)
 		rot(s.manina_a, po.manina_a)
 	end
 	if chi == "manina_d" then
 		pos(s.manina_d, hx * s.k, hy * s.k)
 		rot(s.manina_d, s.arma_a + po.manina_d)
 	else
-		pos(s.manina_d, (MANO_D[1] + po.manina_d_x) * s.k, (MANO_D[2] + po.manina_d_y) * s.k)
+		pos(s.manina_d, (MANO_D[1] + MANINA[1] + po.manina_d_x) * s.k, (MANO_D[2] + MANINA[2] + po.manina_d_y) * s.k)
 		rot(s.manina_d, po.manina_d)
 	end
 	rot(s.ala, po.ala)
-	pos(s.coda[1][1], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
-	pos(s.coda[1][2], (PT.coda[1] + po.coda_x) * s.k, (PT.coda[2] + po.coda_y) * s.k)
-	coda(s, dt)
+	pos(s.busto, (J.busto[1] + po.busto_x) * s.k, (J.busto[2] + po.busto_y) * s.k)
+	rot(s.busto, po.busto)
+	local rc = s.radice_coda
+	pos(s.coda[1][1], (rc[1] + po.coda_x) * s.k, (rc[2] + po.coda_y) * s.k)
+	pos(s.coda[1][2], (rc[1] + po.coda_x) * s.k, (rc[2] + po.coda_y) * s.k)
+	coda(s, dt, po.coda_gira)
 	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[TESTA])
 	scale(s.collo, 1 / lx, 1 / q)
@@ -820,6 +854,8 @@ function M.set_weapon(s, name)
 	if s.arma_scelta == name or not s.armi[name] then return end
 	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], false) end
 	s.arma_scelta = name
+	local sc = PRESE[name] and PRESE[name].scala or 1
+	scale(s.armi[name], sc, sc)
 	-- da morto l'arma non c'è più
 	gui.set_enabled(s.armi[name], not s.morte and not s.vuote)
 end

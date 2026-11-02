@@ -1,4 +1,5 @@
--- La home (menu principale): fondo scuro, la Scoria col bagliore del Nucleo
+-- La home (menu principale): dietro lo sfondo vivo del Limbo, il secondo
+-- girone della campagna (gironi/limbo.fp, Sergio 2 nov), la Scoria col bagliore del Nucleo
 -- dietro (toccandolo si apre il PROFILO), il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
 -- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA, EVENTI e, in alto a destra,
 -- la rotellina delle IMPOSTAZIONI (menu/impostazioni.lua). Le schermate nuove aggiungono qui il loro bottone
@@ -7,7 +8,7 @@
 -- Uso (dal gui_script, che ha la texture ui e il font titolo):
 --   local home = require "menu.home"
 --   local h = home.new(colore)                  -- crea i nodi, nascosta
---   home.show(h) / home.hide(h)
+--   home.show(h, senza_velo) / home.hide(h)
 --   home.update(h, dt)                          -- a ogni frame mentre si vede
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
 --                                                        -- "impostazioni", "profilo" (toccando il diavoletto) o nil
@@ -17,6 +18,7 @@ local game = require "sim.game"
 local scoria = require "battaglia.scoria"
 local ui = require "ui.ui"
 local schermo = require "ui.schermo"
+local sfondo = require "gironi.sfondo"
 
 local M = {}
 
@@ -46,7 +48,8 @@ end
 function M.new(colore)
 	local h = { tops = {}, bottoni = {}, t = 0, colore = colore }
 
-	h.tops[#h.tops + 1] = ui.sfondo()
+	h.sfondo = sfondo.new("limbo")
+	h.tops[#h.tops + 1] = h.sfondo.nodo
 
 	-- il bagliore del Nucleo dietro la Scoria, che respira
 	h.posa = vuoto(CORPO_X, CORPO_Y)
@@ -70,7 +73,9 @@ function M.new(colore)
 	gui.set_visible(zona, false)
 	h.tops[#h.tops + 1] = zona
 	h.bottoni[#h.bottoni + 1] = { nodo = zona, bordo = zona, azione = "profilo", colore = ui.C.LUCE, riposo = ui.C.LUCE }
-	local scritta = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.SPENTO, h.posa)
+	local scritta = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.TESTO, h.posa)
+	-- lo sfondo del Limbo è chiaro: la scritta col contorno scuro
+	gui.set_outline(scritta, ui.C.OMBRA)
 	gui.set_inherit_alpha(scritta, true)
 
 	-- il nome in alto a sinistra
@@ -105,9 +110,16 @@ function M.new(colore)
 	return h
 end
 
-function M.show(h)
+-- senza_velo: ci si arriva con un passaggio (ui/passaggio.lua), che copre già
+function M.show(h, senza_velo)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
 	h.bottoni.premuto = nil
+	h.visibile = true
+	if senza_velo then
+		gui.cancel_animations(h.velo, "color.w")
+		gui.set_enabled(h.velo, false)
+		return
+	end
 	gui.set_enabled(h.velo, true)
 	gui.set_color(h.velo, vmath.vector4(0, 0, 0, 1))
 	gui.animate(h.velo, "color.w", 0, gui.EASING_OUTQUAD, 0.35, 0, function()
@@ -131,6 +143,7 @@ end
 function M.update(h, dt)
 	if not h.visibile then return end
 	h.t = h.t + dt
+	sfondo.update(h.sfondo, dt)
 	scoria.update(h.corpo, dt, h.st)
 	local c = h.colore
 	gui.set_color(h.luce, vmath.vector4(c.x, c.y, c.z, 0.22 + 0.08 * math.sin(h.t * 1.7)))

@@ -1,0 +1,18 @@
+{
+ "_": "La tavolozza dell'apprendista (docs/handoff/WB-009): i soli colori degli SVG, dal basso in alto. Il primo riempie tutta la sagoma, il nero è il contorno e va sopra a tutto.",
+ "colori": [
+  ["pelle", "#B8432A"],
+  ["pelle_ombra", "#8E2F1C"],
+  ["crema", "#F1DFB0"],
+  ["crema_ombra", "#D6BC86"],
+  ["corna", "#EFE3C8"],
+  ["corna_ombra", "#C9B48E"],
+  ["occhi", "#F2C45A"],
+  ["bocca", "#5A1A10"],
+  ["lingua", "#E0605A"],
+  ["bianco", "#FFFFFF"],
+  ["squadra", "#00FF00"],
+  ["squadra_ombra", "#00B400"],
+  ["nero", "#000000"]
+ ]
+}

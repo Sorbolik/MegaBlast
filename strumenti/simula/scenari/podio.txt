@@ -22,7 +22,7 @@ aspetta 1.8
 foto 01_podio_sale
 aspetta 2
 foto 02_podio
-tocca 1065 205                      # CONTINUA
+tocca 1150 205                      # CONTINUA
 aspetta_stato modo=menu 3
 aspetta 0.5
 
@@ -52,6 +52,7 @@ tocca 168 108                       # ARMERIA
 aspetta 0.5
 tocca 62 658                        # indietro
 aspetta_stato modo=menu 3
+aspetta 0.3                         # lo scivolo finisce
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1

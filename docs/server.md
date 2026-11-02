@@ -102,7 +102,9 @@ faccia la stessa partita.
 cominciano nei prossimi 14 giorni, ognuna con `id` (`maglio-20261102`), `da`,
 `a`, `torna` (la volta dopo), `coda` (da mettere nel `hello`: l'id stesso per un
 modificatore, `2v2` per un Torneo), `modo` e `giocatori`. Il gioco le chiede
-quando apre la home, la bacheca e DOVE GIOCHI?, e ogni minuto nella home. Un
+nella schermata d'ingresso, prima di aprire la home (`client/ui/ingresso.lua`),
+poi tornando alla home, aprendo la bacheca e DOVE GIOCHI?, e ogni minuto nella
+home. La risposta ha `Cache-Control: no-store`: mai una copia vecchia. Un
 `hello` con la coda di un evento non in corso riceve `{"t":"error","e":"evento"}`.
 Una partita conta per tutti gli eventi della sua coda (classifiche e premi col
 passo 2, quando ci sono gli account).

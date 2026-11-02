@@ -2,6 +2,20 @@
 
 Repository in italiano (commenti, documenti, messaggi di commit).
 
+## Prima di ogni PR: controlli e revisione (Sergio, 2 nov)
+
+```bash
+bash strumenti/controlli/tutti.sh
+```
+
+Deve finire con `OK` (sintassi e globali del Lua, controlli dell'editor, tutti i
+test Lua, `go vet`, `gofmt`, `go test ./server/`); GitHub lo ripete su ogni PR
+(`.github/workflows/controlli.yml`) e una PR rossa non si mergia. Prima di
+chiedere a Sergio il merge passa `/code-review` sulla PR e correggi quello che trova.
+Se la PR non deve cambiare il gioco (pulizia, rinomi, traduzione) dimostralo con
+`python3 strumenti/confronta/confronta.py` (200 partite di bot e le missioni,
+identiche a main tick per tick) e scrivi il risultato nella PR.
+
 ## Prima di consegnare una modifica al client
 
 Simula il gioco e guarda le foto prima di aprire o aggiornare una PR che tocca `client/`:
@@ -133,7 +147,7 @@ https://claude.ai/artifact/WeHdWjA9HzabJJpfKKhH5G . Senza l'estensione WebSocket
 l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla pagina
 su claude.ai le connessioni verso altri siti sono bloccate.
 
-Altri test: `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
+I test (tutti insieme in `strumenti/controlli/tutti.sh`): `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
 `luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campagna_test.lua` (missioni della campagna e partita guidata), `luajit tests/eventi_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit strumenti/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
 
 ## Sezione "Per Telegram" in ogni PR (Sergio, 29 ott)

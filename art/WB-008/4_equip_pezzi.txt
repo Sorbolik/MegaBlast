@@ -1,0 +1,15 @@
+Draw a sheet of equipment pieces for a small, stocky imp (big head with two short horns, thin tail with an arrowhead tip), the hero of a cartoon video game set in Dante's Inferno. The imp is an apprentice in the devils' Forge and starts with nothing: these are his FIRST pieces, scrounged from the forge's scraps, funny and makeshift.
+
+Six separate pieces, no character, front view, in two rows of three, well apart from each other, each one fully enclosed by the black outline:
+1) HEAD: a dented little iron saucepan used as a helmet, with two holes for the horns to poke through;
+2) TORSO: a scorched leather apron with a sewn-on patch, tied with a rope;
+3) HANDS: two thick leather oven mitts, too big;
+4) FEET: two rough iron clogs tied on with string;
+5) TAIL: an iron thimble used as a tip cover on the end of the tail, with a short piece of tail inside it;
+6) BACK: a pair of small wings made of sackcloth sewn onto a frame of sticks, with visible stitching.
+
+Materials must read clearly: dark blue-grey iron, brown leather, beige canvas, string.
+
+Style: cartoon illustration for a mobile video game, thick closed pure-black outline, flat solid colors with a single hard shadow (cel shading) and a few light antique-engraving hatch lines in the shadows, like the old engravings of Dante's Divine Comedy but in cartoon form. Warm palette: brick red #B8432A, parchment #F1DFB0, ember orange #FF8A3D, gold #F2C45A, burnt brown #2A160C. Flat light parchment background #F5EBD3, no ground shadows. No text, numbers, labels, arrows or signatures anywhere. Landscape 3:2.
+
+Riferimenti: nessuno

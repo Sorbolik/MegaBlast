@@ -1,0 +1,6 @@
+{
+ "ritocchi": [
+  {"nota": "spallina davanti: niente nero, pelle piena (ci va sopra il braccio)", "poligono": [[535, 775], [665, 770], [668, 855], [560, 875], [535, 850]], "da": ["nero", "pelle_ombra"], "a": "pelle"},
+  {"nota": "spallina dietro: idem", "poligono": [[815, 870], [905, 880], [910, 975], [870, 1010], [815, 960]], "da": ["nero", "pelle_ombra"], "a": "pelle"}
+ ]
+}

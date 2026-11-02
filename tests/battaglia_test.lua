@@ -8,7 +8,8 @@ local function vec(x, y, z, w) return { x = x or 0, y = y or 0, z = z or 0, w = 
 vmath = { vector3 = vec, vector4 = vec }
 hash = function(s) return "#" .. s end
 local nodi = {}
-ordine = 0
+local frazione = 0
+local ordine = 0
 local function nuovo(p, s)
 	ordine = ordine + 1
 	local n = { pos = vec(p.x, p.y), euler = vec(), scale = vec(1, 1, 1), size = s, enabled = true, ordine = ordine }
@@ -34,11 +35,15 @@ gui = {
 	set_font = function() end, set_outline = function() end, set_pivot = function() end, set_line_break = function() end,
 	set_slice9 = function() end, PIVOT_W = 3,
 	set_outer_bounds = function() end, PIEBOUNDS_ELLIPSE = 1, ADJUST_FIT = 0,
-	-- l'ordine fra i fratelli: move_above(n, nil) lo porta sopra a tutti
-	move_above = function(n) ordine = ordine + 1; n.ordine = ordine end,
+	-- l'ordine fra i fratelli: move_above(n, r) lo mette appena sopra r, con nil sopra a tutti
+	move_above = function(n, r) if r then frazione = frazione + 1e-4; n.ordine = r.ordine + frazione else ordine = ordine + 1; n.ordine = ordine end end,
 }
 
 local game = require "sim.game"
+-- i perni spostati dall'editor (battaglia/perni.lua) sono dati di Sergio e
+-- cambiano: qui si prova la meccanica coi perni fermi, e i test che li
+-- spostano mettono i loro
+package.loaded["battaglia.perni"] = {}
 local scoria = require "battaglia.scoria"
 local camera = require "battaglia.camera"
 local targa = require "battaglia.targa"
@@ -267,7 +272,42 @@ do
 	check(testa and math.abs(testa.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6
 		and math.abs(v.cima.pos.y - (D.punti.cima[2] - 4 + v.posa_fiamma.fiamma_y) * k) < 1e-6,
 		"perni: la testa e la fiammella restano dov'erano")
-	package.loaded["battaglia.perni"] = nil
+	package.loaded["battaglia.perni"] = {}
+	package.loaded["battaglia.scoria"] = nil
+	scoria = require "battaglia.scoria"
+end
+
+-- i perni di busto, coda e manine: da fermi i pezzi restano dove sono, il
+-- busto gira attorno al suo perno
+do
+	local function pezzi_di(perni)
+		package.loaded["battaglia.perni"] = perni
+		package.loaded["battaglia.scoria"] = nil
+		local sc2 = require "battaglia.scoria"
+		local da = #nodi
+		local v = sc2.new(vec(1, 0.2, 0.3, 1))
+		sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0 })
+		local trovati = {}
+		for i = da + 1, #nodi do
+			local n = nodi[i]
+			if n.img and not trovati[n.img] then trovati[n.img] = n end
+		end
+		return v, trovati
+	end
+	local v0, p0 = pezzi_di({})
+	local v1, p1 = pezzi_di({ busto = { 3, 20 }, coda = { 2, -3 }, pugno = { 1, 1 } })
+	local fermi = true
+	for _, img in ipairs({ "busto", "coda_1", "coda_3", "pugno", "testa", "gamba" }) do
+		local x0, y0 = mondo(p0[img], 0, 0)
+		local x1, y1 = mondo(p1[img], 0, 0)
+		if not (p0[img] and math.abs(x0 - x1) < 0.5 and math.abs(y0 - y1) < 0.5) then fermi = false; print(img, x0, y0, x1, y1) end
+	end
+	check(fermi, "perni: busto, coda e manine spostati, da fermi i pezzi restano dov'erano")
+	local px, py = mondo(v1.busto, 0, 0)
+	local PT = D0.punti
+	local gx, gy = mondo(v1.forma, (PT.bacino[1] + 3 + v1.posa.busto_x) * v1.k, (PT.bacino[2] + 20 + v1.posa.busto_y) * v1.k)
+	check(math.abs(px - gx) < 1e-6 and math.abs(py - gy) < 1e-6, "perni: il busto gira attorno al suo perno")
+	package.loaded["battaglia.perni"] = {}
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
 end
@@ -278,6 +318,10 @@ do
 	local A2 = require "battaglia.animazioni"
 	local vecchia = A2.mira_missile
 	A2.mira_missile = { durata = 1, ciclo = true, tracce = {} }
+	-- un'impugnatura con la presa lontana dalla spalla quanto è lungo il braccio
+	-- (quella vera la sposta Sergio nell'editor)
+	local presa_vera = PRESE.missile
+	PRESE.missile = { presa = { 2.4, -4 }, perno = { -6.9, -4 }, spalla = { 32, 110 } }
 	package.loaded["battaglia.perni"] = { braccio = { 3, -2 } }
 	package.loaded["battaglia.scoria"] = nil
 	local sc2 = require "battaglia.scoria"
@@ -291,7 +335,8 @@ do
 	local hx, hy = mondo(v.braccio_a, (b.x - 3) * v.k, (b.y + 2 - b.h / 2 + pu.h * 0.4) * v.k)
 	check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5 and px ~= gx, "perni: col perno del braccio spostato l'arma resta nella mano")
 	A2.mira_missile = vecchia
-	package.loaded["battaglia.perni"] = nil
+	PRESE.missile = presa_vera
+	package.loaded["battaglia.perni"] = {}
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
 end
