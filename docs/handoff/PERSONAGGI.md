@@ -100,9 +100,11 @@ Lezioni di WB-009, da tenere nei prompt:
    Escono i pezzi del gioco e un SVG per disegno, anche ogni segmento della coda
    (`strumenti/stampino/pelli/svg/`); la coda è una sola (l'ultima).
 3. `prepara.py` e l'editor ripubblicato: la cassetta dei pezzi in SVG del personaggio.
-   Nell'editor ogni pezzo ha il suo perno (corpo, testa, braccia, manine, gambe, ala, coda,
-   arma). Le scelte di Sergio (disegno per posto, specchio, spostamenti) tornano con "Manda a
-   Claude" e si applicano con `taglia.py --ritocchi`.
+   Nell'editor ogni pezzo ha il suo perno (busto, testa, braccia, manine, gambe, ala, coda,
+   arma) e i suoi canali: anche il busto si sposta e gira da solo, la coda gira tutta intera
+   trascinandola (l'arricciarsi è il suo cursore) e si ingrandisce con Maiusc + rotellina.
+   Le scelte di Sergio (disegno per posto, specchio, spostamenti, grandezza e radice della coda)
+   tornano con "Manda a Claude" e si applicano con `taglia.py --ritocchi`.
 
 4. Simulazione con `imposta prova_pelli <nome>` (come `strumenti/simula/scenari/apprendista.txt`).
 
