@@ -87,11 +87,13 @@ Lezioni di WB-009, da tenere nei prompt:
    FOGLIO_col.png [RITOCCHI.json]`: ricalco a strati coi soli colori della tavolozza (si
    ferma se ne trova un altro). I ritocchi a mano (JSON accanto all'SVG, poligoni con il colore
    da cambiare) correggono gli errori di ChatGPT, per esempio il nero sulle spalle.
-2. `taglia.py FOGLIO_col.png --nome <nome> --categoria personaggio --allinea --senza ala,collo
-   --facce TESTE_col.png --tavolozza strumenti/stampino/tavolozze/<nome>.json`: i pezzi del
-   gioco e un SVG per pezzo (`strumenti/stampino/pelli/svg/`), le teste senza collo.
+2. `taglia.py FOGLIO_col.png --nome <nome> --categoria personaggio --allinea --senza ala
+   --teste TESTE_col.png --tavolozza strumenti/stampino/tavolozze/<nome>.json`: i pezzi del
+   gioco e un SVG per pezzo, anche ogni segmento della coda (`strumenti/stampino/pelli/svg/`);
+   le nove teste (foglio 3×3 senza collo) prendono il posto di quelle del foglio.
 3. `prepara.py` e l'editor ripubblicato: la cassetta dei pezzi in SVG del personaggio.
-   Le scelte di Sergio (disegno per posto, specchio, spostamenti) tornano con "Manda a
+   Nell'editor ogni pezzo ha il suo perno (corpo, testa, braccia, manine, gambe, ala, coda,
+   arma). Le scelte di Sergio (disegno per posto, specchio, spostamenti) tornano con "Manda a
    Claude" e si applicano con `taglia.py --ritocchi`.
 
 4. Simulazione con `imposta prova_pelli <nome>` (come `strumenti/simula/scenari/apprendista.txt`).

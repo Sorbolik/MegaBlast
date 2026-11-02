@@ -164,6 +164,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label>squadra <select id="squadra"><option value="0">Rosso</option><option value="1">Blu</option><option value="2">Verde</option><option value="3">Oro</option></select></label>
 			<label title="La fiammella col colore della squadra: ce l'hanno tutti sopra la testa, qualunque cosa indossino, e la anima il gioco a parte"><input type="checkbox" id="fiammella"> fiammella</label>
 			<span id="pelli" title="I pezzi disegnati sullo stampino (strumenti/stampino)"></span>
+			<button id="specchia" title="Specchia il pezzo che hai cliccato sul palco (tasto F): attorno al suo perno. Lo trovi anche in Strumenti, Ritocca i pezzi">specchia pezzo</button>
 			<button id="zoom-via" title="Zoom: la rotellina sul palco ingrandisce dove sta il mouse (sui pezzi in SVG resta nitido); questo torna alla misura di partenza">zoom 1:1</button>
 		</div>
 		<div class="barra" id="barra-arma" hidden title="L'arma in mano, come nel gioco: sta nella mano del braccio davanti, le braccia le animi tu">
@@ -204,7 +205,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="hb-salva" title="Salva corpo.lua (va in client/sim/)">Salva corpo.lua</button>
 		</div>
 		<div class="barra" title="Il punto attorno a cui gira il pezzo: con Trascina: perno lo sposti, il pezzo da fermo resta dov'è">
-			<label>perni di testa, braccia, gambe e ala</label>
+			<label>perni di tutti i pezzi (corpo, testa, braccia, manine, gambe, ala, coda, arma)</label>
 			<span id="pn-stato"></span>
 			<span class="spazio"></span>
 			<button id="pn-gioco" title="I perni di adesso del gioco">Come nel gioco</button>
@@ -341,8 +342,10 @@ let corpoSalvato = CORPO_DEL_GIOCO;
 
 // I perni spostati (battaglia/perni.lua), come li usa battaglia/scoria.lua: per
 // posto, di quanto si sposta il giunto; i pezzi del posto al contrario
-const POSTI_PERNO = ["testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala"];
-const PERNABILI = { testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro", ala: "ala" };
+// (corpo: dove gira tutto il corpo; coda: la radice; pugno: le due manine)
+const POSTI_PERNO = ["corpo", "testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala", "coda", "pugno"];
+const PERNABILI = { corpo: "corpo", testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro",
+	ala: "ala", coda: "coda", manina_a: "pugno", manina_d: "pugno" };
 const PERNI_GIOCO = Object.assign({}, leggiLua(DATI.perni));
 let pn = JSON.parse(JSON.stringify(PERNI_GIOCO));
 const sposto = (posto) => pn[posto] || [0, 0];
@@ -967,13 +970,19 @@ function disegna(dt) {
 	// il paracadute, dietro a tutto
 	if (nome === "paracadute") disegnaPezzo(sposta(radice, 0, D.paracadute_y), P.paracadute, null, null, null, col);
 	const lean = molle ? sim.x.corpoLean : 0;
-	const corpo = ruota(sposta(radice, po.corpo_x, po.salto), po.corpo + lean);
+	// il corpo gira attorno al suo perno (fermo: ai piedi)
+	const dC = sposto("corpo");
+	const corpo = sposta(ruota(sposta(radice, po.corpo_x + dC[0], po.salto + dC[1]), po.corpo + lean), -dC[0], -dC[1]);
 	const forma = scala(corpo, lx, q);
 	formaOra = forma;
-	const gCorpo = punto(corpo, 0, 0);
+	const gCorpo = punto(corpo, dC[0], dC[1]);
 	// la coda: prima i bordi, poi i colori
 	const ang = angoliCoda(codaBase, dt || 0, molle);
-	const cx = PT.coda[0] + po.coda_x, cy = PT.coda[1] + po.coda_y;
+	// il perno della coda sposta la radice; i segmenti, al contrario, restano dov'erano
+	// con la coda a riposo (girati come il primo segmento a riposo)
+	const dK = sposto("coda"), r1 = formaCoda.riposo[0];
+	const cx = PT.coda[0] + po.coda_x + dK[0], cy = PT.coda[1] + po.coda_y + dK[1];
+	const oK = [-(dK[0] * Math.cos(r1) + dK[1] * Math.sin(r1)), -(-dK[0] * Math.sin(r1) + dK[1] * Math.cos(r1))];
 	const gCoda = punto(forma, cx, cy);
 	const vede = (id) => po[id] > 0.5;
 	posti = { coda: gCoda };
@@ -1009,11 +1018,11 @@ function disegna(dt) {
 	// una manina staccata: libera sulla forma, da ferma dove finisce il braccio;
 	// se impugna l'arma sta sulla presa e gira con l'arma
 	const manina = (l) => {
-		const p0 = MANO[l];
+		const p0 = MANO[l], dP = sposto("pugno");
 		const m = chi === "manina_" + l ? giunto(forma, presaF[0], presaF[1], armaM.th + po["manina_" + l])
-			: giunto(forma, p0[0] + po["manina_" + l + "_x"], p0[1] + po["manina_" + l + "_y"], po["manina_" + l]);
+			: giunto(forma, p0[0] + dP[0] + po["manina_" + l + "_x"], p0[1] + dP[1] + po["manina_" + l + "_y"], po["manina_" + l]);
 		posti["manina_" + l] = punto(m, 0, 0);
-		return () => { if (vede("mostra_manina_" + l)) veste(m, "pugno", "manina_" + l, posti["manina_" + l], col); };
+		return () => { if (vede("mostra_manina_" + l)) vestePerno(m, "pugno", "manina_" + l); };
 	};
 	const strati = {};
 	strati.coda = () => {
@@ -1022,6 +1031,7 @@ function disegna(dt) {
 			for (let i = 0; i < formaCoda.l.length; i++) {
 				if (i > 0) m = sposta(m, formaCoda.l[i - 1], 0);
 				m = ruota(m, ang[i]);
+				if (i === 0) m = sposta(m, oK[0], oK[1]);
 				veste(m, "coda_" + (i + 1) + (strato === 0 ? "_bordo" : ""), "coda", gCoda, col);
 			}
 		}
@@ -1192,7 +1202,8 @@ function pixel(e) {
 // il perno preso va nel punto (pixel del canvas): lo spostamento nella forma
 // del corpo, dove stanno i giunti
 function spostaPerno(px, py) {
-	const inv = inversa(formaOra);
+	// la forma di quando l'hai preso: il perno del corpo sposta anche la forma
+	const inv = presa.inv || (presa.inv = inversa(formaOra));
 	const [a0, b0] = punto(inv, presa.px, presa.py), [a1, b1] = punto(inv, px, py);
 	const t = (v) => Math.round(v * 10) / 10;
 	pn[presa.perno] = [t(presa.d0[0] + a1 - a0), t(presa.d0[1] + b1 - b0)];
@@ -1238,6 +1249,9 @@ palco.addEventListener("pointerdown", (e) => {
 	const x = pezzoSotto(px, py);
 	if (!x) return;
 	fermaPlay();
+	// il pezzo di una pelle cliccato diventa quello da ritoccare (specchia, disegno, grandezza)
+	const k = x.p && x.p._k;
+	if (k && $("rt-pezzo").value !== k && $("rt-pezzo").querySelector(`option[value="${k}"]`)) { $("rt-pezzo").value = k; mostraRitocco(); }
 	// nella clip della fiammella si muove solo lei
 	if (nome === "fiammella" && x.canale !== "fiamma_gira") { messaggio("Qui si anima solo la fiammella: trascinala."); return; }
 	// il perno si sposta col modo "perno" o tenendo premuto Alt
@@ -1251,7 +1265,7 @@ palco.addEventListener("pointerdown", (e) => {
 			return;
 		}
 		const posto = PERNABILI[x.canale];
-		if (!posto) { messaggio("Questo pezzo non ha un perno da spostare: testa, braccia, gambe, ala e arma sì."); return; }
+		if (!posto) { messaggio("Questo pezzo non ha un perno da spostare."); return; }
 		canale = x.canale; chiaveScelta = null;
 		// il perno salta dove si clicca e poi segue il mouse
 		presa = { perno: posto, px: x.giunto[0], py: x.giunto[1], d0: sposto(posto).slice() };
@@ -1935,6 +1949,7 @@ document.addEventListener("keydown", (e) => {
 	else if (e.key === "ArrowRight") fotogramma(1);
 	else if (e.key === "Delete" || e.key === "Backspace") togliChiave();
 	else if (e.key.toLowerCase() === "k") chiaveQui();
+	else if (e.key.toLowerCase() === "f") $("specchia").click();
 });
 
 // ---------------------------------------------------------------------------
@@ -2184,6 +2199,14 @@ function ritocca() {
 ["rt-x", "rt-y", "rt-s"].forEach((id) => { $(id).oninput = ritocca; });
 $("rt-img").onchange = ritocca;
 $("rt-sp").onchange = ritocca;
+// specchia il pezzo scelto (cliccato sul palco) dalla barra del palco o col tasto F
+$("specchia").onclick = () => {
+	const k = $("rt-pezzo").value;
+	if (!k) { messaggio("Clicca prima un pezzo della pelle sul palco, poi Specchia (o il tasto F)."); return; }
+	$("rt-sp").checked = !$("rt-sp").checked;
+	ritocca();
+	messaggio(`${k.replace("/", ": ").replace(/_/g, " ")}: ${$("rt-sp").checked ? "specchiato" : "dritto"}`);
+};
 $("rt-pezzo").onchange = mostraRitocco;
 $("rt-togli").onclick = () => { $("rt-x").value = 0; $("rt-y").value = 0; $("rt-s").value = 100; $("rt-img").value = $("rt-pezzo").value.split("/")[1]; $("rt-sp").checked = false; ritocca(); };
 // i ritocchi come li legge strumenti/stampino/taglia.py --ritocchi: i pezzi con i numeri nuovi
