@@ -83,6 +83,7 @@ Pochi colori piatti, così il ricalco in SVG è pulito e ogni colore diventa uno
 | R3 | `art/WB-009/riferimenti/R3_manichino.png` | come si attaccano i pezzi |
 | R4 | `art/WB-009/scelti/tre_quarti.png` | il tre quarti scelto in fase 1 (c'è solo dopo la fase 1) |
 | R5 | `art/WB-009/scelti/espressioni.png` | le espressioni scelte in fase 1 (c'è solo dopo la fase 1) |
+| R6 | `art/WB-009/scelti/mira.png` | la faccia della mira scelta da Sergio (5 del foglio): si tiene la faccia, il collo va stretto come nelle altre teste |
 
 ## Immagini da generare
 
@@ -95,7 +96,7 @@ Allega i riferimenti nell'ordine scritto: il primo è "image 1", il secondo "ima
 | 1 | `2_camminata` | R1 | 1536×1024 | 1 |
 | 1 | `3_espressioni` | R1 | 1536×1536 (o 1024×1024) | 1 |
 | 2 | `4_foglio_pezzi` | R4, R2, R3, R5 | 3:2 orizzontale, la più grande possibile (ideale 3072×2048, minimo 1536×1024) | 1 |
-| 2 | `5_teste_extra` | R4, R5 | 1536×1024 | 1 |
+| 2 | `5_teste_extra` | R4, R5, R6 | 1536×1024 | 1 |
 
 Sfondo **non** trasparente (eccezione alla regola di `AGENTS.md`): bianco pieno in fase 1,
 magenta pieno `#FF00FF` in fase 2 perché lo usa lo strumento di taglio. Il verde `#00FF00`
@@ -176,9 +177,9 @@ Rendering rules, very strict, because these parts will be traced into vector sha
 ### `5_teste_extra`
 
 ```
-Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right: copy his head exactly (shape, horns, ears, colors, flat style). Image 2 is his approved expression sheet: nine heads in a 3 by 3 grid.
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right: copy his head exactly (shape, horns, ears, colors, flat style). Image 2 is his approved expression sheet: nine heads in a 3 by 3 grid. Image 3 is the approved aiming face, cropped from image 2.
 
-Draw FIVE heads of him in a single row, left to right, all the same size, all facing right in three-quarter view, each with a short neck stub at the bottom, well apart from each other, the head outline, horns and ears IDENTICAL in all five, no flame on top. They are expressions 5 to 9 of image 2, copied exactly: 1) AIMING (focused, far eye squinting, tongue tip out of the corner of the mouth); 2) ANGRY (eyebrows in a V, clenched teeth); 3) DEFEATED (sad, eyes down, downturned mouth); 4) SCARED (wide eyes, tiny pupils, small open mouth); 5) TAUNT (wink and tongue out).
+Draw FIVE heads of him in a single row, left to right, all the same size, all facing right in three-quarter view, each with a short neck stub at the bottom, well apart from each other, the head outline, horns and ears IDENTICAL in all five, no flame on top. They are expressions 5 to 9 of image 2, copied exactly: 1) AIMING: copy the face of image 3 exactly (yellow near eye looking right, far eye squeezed in a wink, tongue tip out of the corner of the mouth), but NOT its neck: in image 3 the neck is too wide; make the neck stub as NARROW as the necks of the other heads in image 2, the same width as the other four heads of this row; 2) ANGRY (eyebrows in a V, clenched teeth); 3) DEFEATED (sad, eyes down, downturned mouth); 4) SCARED (wide eyes, tiny pupils, small open mouth); 5) TAUNT (wink and tongue out).
 
 Each head has a thick, clean pure-black #000000 outline, EXCEPT at the bottom of the neck stub: there the outline gets gradually thinner and disappears, and the skin color runs right to the edge, rounded and full, with no black line across it. The skin near the bottom of the neck stub is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there, so the neck blends into the torso with no visible seam.
 
@@ -209,7 +210,11 @@ Rendering rules, very strict, because these heads will be traced into vector sha
 2. **Vettoriale.** `strumenti/stampino/vettoriale.py` oggi ricalca solo il bianco e nero. Va
    esteso ai colori: ogni pixel va al colore più vicino della tavolozza qui sopra, ogni colore
    si ricalca con potrace in uno strato SVG, e gli strati si impilano dal fondo al contorno.
-   Esce un SVG per pezzo, accanto al foglio. Scartato `vtracer`: raggruppa i colori da solo,
+   Esce un SVG per pezzo, accanto al foglio. **Colori giusti ovunque (Sergio, 2026-11-02:
+   «è troppo importante»):** negli SVG finali ogni riempimento è esattamente un codice della
+   tavolozza, in tutti i pezzi e in tutte le teste, nessuna sfumatura rimasta da ChatGPT; uno
+   script lo controlla e fallisce se trova un colore fuori tavolozza. I PNG si fanno solo da
+   questi SVG. Scartato `vtracer`: raggruppa i colori da solo,
    li sposta dalla tavolozza e fa più nodi.
 3. **PNG per ogni schermo.** Dagli SVG si fanno i PNG alla densità che serve (per esempio
    1×, 2× e 3× della misura del gioco, decisa con lo schermo vero); il gioco carica quella
@@ -233,4 +238,65 @@ chat dei pezzi di A, l'apprendista».
 
 ## Consegna di Codex
 
+### Fase 1 · 2026-11-01
+
+Eseguita dal `main` aggiornato, sul ramo `design/WB-009`. Generatore immagini usato con
+R1 come unico riferimento, prompt inglesi della scheda copiati integralmente, senza
+aggiunte o modifiche, sfondo non trasparente. Nessuna immagine della fase 2 generata;
+nessun file in `scelti/` creato. La scelta del modello resta a Sergio.
+
+| File consegnato | Misura effettiva | Tentativi | Esito |
+|---|---|---|---|
+| `art/WB-009/1_tre_quarti_1.png` | 1024×1536 | 3, consegnato il terzo | prova visiva, non conforme a tutti i criteri |
+| `art/WB-009/1_tre_quarti_2.png` | 1024×1536 | 3, consegnato il terzo | prova visiva, non conforme a tutti i criteri |
+| `art/WB-009/2_camminata.png` | 1536×1024 | 3, consegnato il terzo | ciclo non conforme: contatti ripetuti |
+| `art/WB-009/3_espressioni.png` | 1254×1254 | 3, conservato il primo, più regolare | nove espressioni presenti, non conforme a tutti i criteri |
+
+Accanto a ogni PNG c'è l'omonimo `.txt` con il prompt esatto e il riferimento usato.
+Sono stati guardati tutti i risultati prima della copia nei file di consegna; nessun
+ritocco, ricalco, ricampionamento o correzione della tavolozza applicato. I tentativi
+successivi hanno mantenuto i difetti descritti sotto; raggiunto il limite di tre per
+ciascun file, la consegna conserva le prove per revisione senza dichiararle approvate.
+
+**Controlli visivi eseguiti.** Figure intere e distanziate, coda con punta presente e
+non tagliata, contorno scuro spesso, tre quarti rivolto verso destra, fazzoletto verde
+solo sul corpo; nessuna fiammella, ala, altro vestito, scritta, firma o numero.
+Le nove espressioni sono nell'ordine richiesto e riconoscibili. Dimensioni e PNG RGB
+senza trasparenza controllati leggendo i file.
+
+**Problemi rimasti / criteri non soddisfatti.**
+
+- Tutti i risultati mostrano leggere sfumature e variazioni di colore nelle aree che
+  dovevano essere piatte. La tavolozza esadecimale non è rispettata in modo esatto;
+  anche lo sfondo è quasi bianco, non bianco pieno: per esempio gli angoli superiori
+  sinistri dei quattro PNG sono rispettivamente RGB (254,253,255), (253,255,255),
+  (254,253,255), (253,253,253). Non sono pronti per il ricalco tecnico così come sono.
+- Nei tre quarti la testa risulta più grande del terzo dell'altezza richiesto e
+  la disposizione degli arti vicino/lontano non segue precisamente quella del prompt.
+  La radice della coda è nascosta dal corpo: continuità visibile, attacco non verificabile.
+- Nella camminata le pose 1 e 3 ripetono la stessa gamba avanti e le pose 2 e 4 sono
+  molto simili: manca l'alternanza completa richiesta. I tre tentativi non l'hanno risolta.
+- Nel foglio delle espressioni sagome, corna e orecchie variano leggermente fra le teste;
+  i colli hanno ombra e linee laterali che non si assottigliano a sufficienza.
+  Non è soddisfatto il requisito del fondo del collo uniforme in #B8432A.
+- Il generatore ha restituito le espressioni a 1254×1254, formato quadrato ma diverso
+  dalle due misure richieste (1536×1536 oppure 1024×1024). File originale conservato.
+
+**Non verificato.** Nessun taglio, SVG, montaggio sullo scheletro o prova animata nel gioco:
+sono le fasi successive affidate a Claude. Nessuna accettazione attribuita a Sergio.
+La scheda approvata aggiorna il protagonista rispetto alle vecchie decisioni sul
+personaggio con occhiali; la decisione del 2026-11-01 conferma l'apprendista, quindi
+non è stato aggiunto alcun accessorio del vecchio diavoletto.
+
 ## Resoconto di Claude
+
+### Fase 1 · scelte di Sergio (2026-11-02)
+
+- **Tre quarti:** `art/WB-009/scelti/tre_quarti.png`, una generazione fatta da Sergio (1024×1536), diversa dalle due consegnate. È R4 della fase 2.
+- **Espressioni:** `art/WB-009/scelti/espressioni.png`, il foglio consegnato (`3_espressioni.png`), tutte e nove; la faccia della mira (5) è quella del foglio, ritagliata a parte in `art/WB-009/scelti/mira.png`. È R5 della fase 2.
+- **Camminata:** difettosa (pose 1 e 3 uguali, 2 e 4 uguali) ma era solo una prova: non si rifà.
+- Colori non esatti della tavolozza (leggere sfumature): li riporta alla tavolozza il ricalco in SVG.
+- **Mira, collo da stringere** (Sergio): la faccia di `mira.png` resta, ma il collo è più largo di quello delle altre teste. `5_teste_extra` la ridisegna con R6 come riferimento e il collo stretto come nel foglio.
+
+Fase 2 pronta: `esegui WB-009 fase 2`.
+
