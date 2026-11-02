@@ -451,7 +451,7 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
         with open(os.path.join(JSON, nome + ".json")) as f:
             vecchia = json.load(f)
         pezzi = vecchia["pezzi"]
-        forma = {k: vecchia[k] for k in ("coda", "coda_riposo") if k in vecchia}
+        forma = {k: vecchia[k] for k in ("coda", "coda_riposo", "coda_radice") if k in vecchia}
     else:
         for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")) + glob.glob(os.path.join(SVG, nome + "_*.svg")):
             os.remove(f)
@@ -637,13 +637,14 @@ def rifai():
            "-- va in un posto dello scheletro (come i pezzi di battaglia/diavoletto.lua:",
            "-- immagine, centro rispetto al perno, misura) e sostituisce il pezzo di base",
            "-- o si disegna sopra. Una pelle per categoria; quelle sopra in ordine. Una",
-           "-- coda nuova ha le sue lunghezze e i suoi angoli a riposo (radianti).",
+           "-- coda nuova ha le sue lunghezze, i suoi angoli a riposo (radianti) e, se",
+           "-- l'editor l'ha spostata, di quanto sta spostata la radice (coda_radice).",
            "return {",
            "\tsostituisce = { " + ", ".join(f'"{c}"' for c in SOSTITUISCE) + " },",
            "\tsopra = { " + ", ".join(f'"{c}"' for c in SOPRA) + " },",
            "\tpelli = {"]
     for p in pelli:
-        forma = "".join(f'{k} = {{ {", ".join(str(v) for v in p[k])} }}, ' for k in ("coda", "coda_riposo") if k in p)
+        forma = "".join(f'{k} = {{ {", ".join(str(v) for v in p[k])} }}, ' for k in ("coda", "coda_riposo", "coda_radice") if k in p)
         lua.append(f'\t\t{p["nome"]} = {{ categoria = "{p["categoria"]}", {forma}pezzi = {{')
         for posto in sorted(p["pezzi"]):
             z = p["pezzi"][posto]
@@ -682,6 +683,23 @@ def ritocca(file):
         percorso = os.path.join(JSON, r["pelle"] + ".json")
         with open(percorso) as f:
             pelle = json.load(f)
+        if r["posto"] == "coda":
+            # la coda intera: le lunghezze nuove dei segmenti (i pezzi si ingrandiscono
+            # in proporzione) e dove sta la radice
+            s = sum(r["coda"]) / sum(pelle["coda"])
+            s = 1 if abs(s - 1) < 0.005 else s
+            pelle["coda"] = [round(float(v), 1) for v in r["coda"]]
+            for c in CATENA:
+                for q in (c, c + "_bordo"):
+                    for k in ("x", "y", "w", "h"):
+                        pelle["pezzi"][q][k] = round(pelle["pezzi"][q][k] * s, 1)
+            pelle.pop("coda_radice", None)
+            if any(r["radice"]):
+                pelle["coda_radice"] = [round(float(v), 1) for v in r["radice"]]
+            with open(percorso, "w") as f:
+                json.dump(pelle, f, indent=1, ensure_ascii=False)
+                f.write("\n")
+            continue
         pz = pelle["pezzi"][r["posto"]]
         if r.get("da") or r.get("specchio"):
             # un altro disegno della pelle in questo posto (lo stesso PNG, ripetibile)

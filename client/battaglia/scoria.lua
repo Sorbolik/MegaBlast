@@ -91,9 +91,8 @@ local J = {
 	gamba = perno("gamba", PT.anche[1], PT.anche[2]),
 	gamba_dietro = perno("gamba_dietro", -PT.anche[1], PT.anche[2]),
 	ala = perno("ala", PT.ala[1], PT.ala[2]),
+	busto = perno("busto", PT.bacino[1], PT.bacino[2]),
 }
--- il corpo gira attorno al suo perno (fermo: ai piedi)
-local PERNO_CORPO = sposto("corpo")
 -- la coda: la radice si sposta col perno, i segmenti al contrario (girati come il
 -- primo segmento a riposo, così con la coda a riposo restano dove sono)
 local function perno_coda(r1)
@@ -235,11 +234,15 @@ local function vesti(look)
 		local l = strati(posto)
 		if p.modo == "sostituisce" then l[1] = p else l[#l + 1] = p end
 	end
-	local coda = { l = D.coda, riposo = D.coda_riposo }
+	-- la coda: lunghezze, angoli a riposo e dove sta la radice rispetto a quella
+	-- del disegno (la pelle può averla spostata)
+	local coda = { l = D.coda, riposo = D.coda_riposo, radice = FERMO }
 	for _, categorie in ipairs({ PELLI.sostituisce, PELLI.sopra }) do
 		for _, c in ipairs(categorie) do
 			local pz = per[c] and per[c].pezzi
-			if per[c] and per[c].coda then coda = { l = per[c].coda, riposo = per[c].coda_riposo } end
+			if per[c] and per[c].coda then
+				coda = { l = per[c].coda, riposo = per[c].coda_riposo, radice = per[c].coda_radice or FERMO }
+			end
 			if pz then
 				for posto, p in pairs(pz) do metti(posto, p) end
 				for i = 2, #FACCE do
@@ -397,15 +400,18 @@ function M.new(color, look, solo_arma)
 	gui.set_enabled(s.para, false)
 	-- corpo: inclinazione e spinta; forma: schiaccia e allunga. L'arma sta sul
 	-- corpo e non sulla forma, così schiacciandosi non si storce la mira
-	s.corpo = giunto(s.root, PERNO_CORPO[1] * k, PERNO_CORPO[2] * k)
-	s.forma = giunto(s.corpo, -PERNO_CORPO[1] * k, -PERNO_CORPO[2] * k)
+	s.corpo = giunto(s.root, 0, 0)
+	s.forma = giunto(s.corpo, 0, 0)
 
 	-- dal fondo: la coda (prima tutti i bordi, poi tutti i colori: così i
 	-- segmenti si fondono in una coda sola), l'ala, il braccio di dietro, le
 	-- gambe, il busto, la testa con la fiammella, l'arma, il braccio davanti
 	s.perno_coda, s.coda_dentro = perno_coda(s.forma_coda.riposo[1])
+	-- la radice della coda: quella del disegno, spostata dalla pelle e dal perno
+	local rc = s.forma_coda.radice
+	s.radice_coda = { PT.coda[1] + rc[1] + s.perno_coda[1], PT.coda[2] + rc[2] + s.perno_coda[2] }
 	for strato = 1, 2 do
-		local padre, x, y = s.forma, (PT.coda[1] + s.perno_coda[1]) * k, (PT.coda[2] + s.perno_coda[2]) * k
+		local padre, x, y = s.forma, s.radice_coda[1] * k, s.radice_coda[2] * k
 		for i = 1, #s.forma_coda.l do
 			padre = giunto(padre, x, y)
 			s.coda[i] = s.coda[i] or {}
@@ -424,7 +430,7 @@ function M.new(color, look, solo_arma)
 	veste(s, s.gamba_d, "gamba_dietro", k)
 	s.gamba_a = giunto(s.forma, J.gamba[1] * k, J.gamba[2] * k)
 	veste(s, s.gamba_a, "gamba", k)
-	s.busto = giunto(s.forma, PT.bacino[1] * k, PT.bacino[2] * k)
+	s.busto = giunto(s.forma, J.busto[1] * k, J.busto[2] * k)
 	veste(s, s.busto, "busto", k)
 	s.collo = giunto(s.forma, J.testa[1] * k, J.testa[2] * k)
 	-- la testa in un giunto suo (le clip la tolgono), la fiammella no
@@ -593,7 +599,8 @@ end
 -- (resta indietro correndo, frusta saltando e quando arriva un colpo). Ogni
 -- segmento insegue il suo angolo un po' più piano del precedente: così il moto
 -- arriva alla punta in ritardo
-local function coda(s, dt)
+-- gira: la coda intera gira di tanto attorno alla sua radice (il canale coda_gira)
+local function coda(s, dt, gira)
 	local base, r = s.x[CODA], s.forma_coda.riposo
 	local prima = 0
 	for i = 1, #s.coda_a do
@@ -601,8 +608,9 @@ local function coda(s, dt)
 		prima = r[i]
 		local a = riposo + (base + sin(s.t * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i)
 		s.coda_a[i] = s.coda_a[i] + (a - s.coda_a[i]) * min(1, dt * (18 - 2.5 * i))
-		rot(s.coda[i][1], s.coda_a[i])
-		rot(s.coda[i][2], s.coda_a[i])
+		local g = i == 1 and gira or 0
+		rot(s.coda[i][1], s.coda_a[i] + g)
+		rot(s.coda[i][2], s.coda_a[i] + g)
 	end
 end
 
@@ -751,7 +759,7 @@ function M.update(s, dt, st)
 	-- scende e sale con il busto
 	scale(s.forma, lx, q)
 	rot(s.corpo, s.x[LEAN] + po.corpo)
-	pos(s.corpo, -s.x[SHOVE] * s.w + (po.corpo_x + PERNO_CORPO[1]) * s.k, (po.salto + PERNO_CORPO[2]) * s.k)
+	pos(s.corpo, -s.x[SHOVE] * s.w + po.corpo_x * s.k, po.salto * s.k)
 	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
 
 	-- braccia e gambe inseguono la posa (così si passa piano da uno stato
@@ -800,10 +808,12 @@ function M.update(s, dt, st)
 		rot(s.manina_d, po.manina_d)
 	end
 	rot(s.ala, po.ala)
-	local dc = s.perno_coda
-	pos(s.coda[1][1], (PT.coda[1] + dc[1] + po.coda_x) * s.k, (PT.coda[2] + dc[2] + po.coda_y) * s.k)
-	pos(s.coda[1][2], (PT.coda[1] + dc[1] + po.coda_x) * s.k, (PT.coda[2] + dc[2] + po.coda_y) * s.k)
-	coda(s, dt)
+	pos(s.busto, (J.busto[1] + po.busto_x) * s.k, (J.busto[2] + po.busto_y) * s.k)
+	rot(s.busto, po.busto)
+	local rc = s.radice_coda
+	pos(s.coda[1][1], (rc[1] + po.coda_x) * s.k, (rc[2] + po.coda_y) * s.k)
+	pos(s.coda[1][2], (rc[1] + po.coda_x) * s.k, (rc[2] + po.coda_y) * s.k)
+	coda(s, dt, po.coda_gira)
 	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[TESTA])
 	scale(s.collo, 1 / lx, 1 / q)

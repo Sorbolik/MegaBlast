@@ -205,7 +205,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="hb-salva" title="Salva corpo.lua (va in client/sim/)">Salva corpo.lua</button>
 		</div>
 		<div class="barra" title="Il punto attorno a cui gira il pezzo: con Trascina: perno lo sposti, il pezzo da fermo resta dov'è">
-			<label>perni di tutti i pezzi (corpo, testa, braccia, manine, gambe, ala, coda, arma)</label>
+			<label>perni di tutti i pezzi (busto, testa, braccia, manine, gambe, ala, coda, arma)</label>
 			<span id="pn-stato"></span>
 			<span class="spazio"></span>
 			<button id="pn-gioco" title="I perni di adesso del gioco">Come nel gioco</button>
@@ -342,16 +342,16 @@ let corpoSalvato = CORPO_DEL_GIOCO;
 
 // I perni spostati (battaglia/perni.lua), come li usa battaglia/scoria.lua: per
 // posto, di quanto si sposta il giunto; i pezzi del posto al contrario
-// (corpo: dove gira tutto il corpo; coda: la radice; pugno: le due manine)
-const POSTI_PERNO = ["corpo", "testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala", "coda", "pugno"];
-const PERNABILI = { corpo: "corpo", testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro",
+// (coda: la radice; pugno: le due manine)
+const POSTI_PERNO = ["busto", "testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala", "coda", "pugno"];
+const PERNABILI = { busto: "busto", testa: "testa", braccio_a: "braccio", braccio_d: "braccio_dietro", gamba_a: "gamba", gamba_d: "gamba_dietro",
 	ala: "ala", coda: "coda", manina_a: "pugno", manina_d: "pugno" };
 const PERNI_GIOCO = Object.assign({}, leggiLua(DATI.perni));
 let pn = JSON.parse(JSON.stringify(PERNI_GIOCO));
 const sposto = (posto) => pn[posto] || [0, 0];
 function J(posto) {
 	const b = { testa: PT.collo, braccio: PT.spalle, braccio_dietro: [-PT.spalle[0], PT.spalle[1]], gamba: PT.anche,
-		gamba_dietro: [-PT.anche[0], PT.anche[1]], ala: PT.ala }[posto];
+		gamba_dietro: [-PT.anche[0], PT.anche[1]], ala: PT.ala, busto: PT.bacino }[posto];
 	const d = sposto(posto);
 	return [b[0] + d[0], b[1] + d[1]];
 }
@@ -375,6 +375,11 @@ const addosso = {}; // categoria -> nome della pelle
 // (unità del disegno) e grandezza, sul pezzo com'è nello stampino
 let ritocchi = {};
 function ritoccato(pelle, posto, p) {
+	// i segmenti della coda si ingrandiscono tutti col ritocco "coda" (la coda intera)
+	if (posto.startsWith("coda_")) {
+		const r = ritocchi[pelle + "/coda"];
+		return r ? Object.assign({}, p, { x: p.x * r.s, y: p.y * r.s, w: p.w * r.s, h: p.h * r.s }) : p;
+	}
 	const r = ritocchi[pelle + "/" + posto];
 	if (!r) return p;
 	// un altro disegno della cassetta della pelle in questo posto, anche specchiato
@@ -382,19 +387,25 @@ function ritoccato(pelle, posto, p) {
 	return Object.assign({}, q, { x: (r.sp ? -q.x : q.x) + r.dx, y: q.y + r.dy, w: q.w * r.s, h: q.h * r.s, sp: !!r.sp });
 }
 let vestito = {};
-let formaCoda = { l: D.coda, riposo: D.coda_riposo }; // lunghezze e angoli a riposo, come vesti() di scoria.lua
+// la coda: lunghezze, angoli a riposo e di quanto è spostata la radice, come vesti() di scoria.lua
+let formaCoda = { l: D.coda, riposo: D.coda_riposo, radice: [0, 0] };
 function vesti() {
 	vestito = {};
-	formaCoda = { l: D.coda, riposo: D.coda_riposo };
+	formaCoda = { l: D.coda, riposo: D.coda_riposo, radice: [0, 0] };
 	const strati = (posto) => (vestito[posto] = vestito[posto] || [pezzoBase(posto)]);
 	const metti = (posto, p) => { const l = strati(posto); if (p.modo === "sostituisce") l[0] = p; else l.push(p); };
 	for (const c of [...PL.sostituisce, ...PL.sopra]) {
 		const pl = addosso[c] && PL.pelli[addosso[c]];
-		if (pl && pl.coda) formaCoda = { l: pl.coda, riposo: pl.coda_riposo };
+		if (pl && pl.coda) {
+			// la coda intera ritoccata: più grande (le lunghezze con i pezzi) e con la radice spostata
+			const r = ritocchi[addosso[c] + "/coda"] || { dx: 0, dy: 0, s: 1 }, rc = pl.coda_radice || [0, 0];
+			formaCoda = { l: pl.coda.map((v) => v * r.s), riposo: pl.coda_riposo, radice: [rc[0] + r.dx, rc[1] + r.dy] };
+		}
 		const pz = pl && pl.pezzi;
 		if (!pz) continue;
-		// _k: il pezzo da ritoccare (pelle/posto), per la rotellina e il clic
-		const k = (posto) => addosso[c] + "/" + posto;
+		// _k: il pezzo da ritoccare (pelle/posto), per la rotellina e il clic; i
+		// segmenti della coda si ritoccano insieme (coda)
+		const k = (posto) => addosso[c] + "/" + (posto.startsWith("coda_") ? "coda" : posto);
 		for (const posto in pz) metti(posto, Object.assign({}, ritoccato(addosso[c], posto, pz[posto]), { _k: k(posto) }));
 		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, Object.assign({}, ritoccato(addosso[c], "testa", pz.testa), { _k: k("testa") }));
 	}
@@ -415,11 +426,15 @@ const CANALI = [
 	{ id: "alza_a", nome: "Piede davanti, alza", tipo: "len" },
 	{ id: "alza_d", nome: "Piede dietro, alza", tipo: "len" },
 	{ id: "ala", nome: "Ala", tipo: "ang" },
-	{ id: "coda", nome: "Coda", tipo: "ang" },
+	{ id: "busto", nome: "Busto, gira", tipo: "ang" },
+	{ id: "coda", nome: "Coda, si arriccia", tipo: "ang" },
+	{ id: "coda_gira", nome: "Coda, gira tutta", tipo: "ang" },
 	// gli spostamenti in tutte le direzioni (Trascina: sposta): nella linea del
 	// tempo e fra i canali compaiono quando hanno chiavi o sono scelti
 	{ id: "corpo_x", nome: "Corpo, avanti e indietro", tipo: "len", extra: true },
 	{ id: "testa_x", nome: "Testa, avanti e indietro", tipo: "len", extra: true },
+	{ id: "busto_x", nome: "Busto, avanti e indietro", tipo: "len", extra: true },
+	{ id: "busto_y", nome: "Busto, su e giù", tipo: "len", extra: true },
 	{ id: "braccio_a_x", nome: "Braccio davanti, avanti e indietro", tipo: "len", extra: true },
 	{ id: "braccio_a_y", nome: "Braccio davanti, su e giù", tipo: "len", extra: true },
 	{ id: "braccio_d_x", nome: "Braccio dietro, avanti e indietro", tipo: "len", extra: true },
@@ -970,18 +985,17 @@ function disegna(dt) {
 	// il paracadute, dietro a tutto
 	if (nome === "paracadute") disegnaPezzo(sposta(radice, 0, D.paracadute_y), P.paracadute, null, null, null, col);
 	const lean = molle ? sim.x.corpoLean : 0;
-	// il corpo gira attorno al suo perno (fermo: ai piedi)
-	const dC = sposto("corpo");
-	const corpo = sposta(ruota(sposta(radice, po.corpo_x + dC[0], po.salto + dC[1]), po.corpo + lean), -dC[0], -dC[1]);
+	// il corpo gira attorno ai piedi
+	const corpo = ruota(sposta(radice, po.corpo_x, po.salto), po.corpo + lean);
 	const forma = scala(corpo, lx, q);
 	formaOra = forma;
-	const gCorpo = punto(corpo, dC[0], dC[1]);
-	// la coda: prima i bordi, poi i colori
-	const ang = angoliCoda(codaBase, dt || 0, molle);
+	// la coda: prima i bordi, poi i colori; gira tutta intera attorno alla radice (coda_gira)
+	const ang = angoliCoda(codaBase, dt || 0, molle).slice();
+	ang[0] += po.coda_gira;
 	// il perno della coda sposta la radice; i segmenti, al contrario, restano dov'erano
 	// con la coda a riposo (girati come il primo segmento a riposo)
-	const dK = sposto("coda"), r1 = formaCoda.riposo[0];
-	const cx = PT.coda[0] + po.coda_x + dK[0], cy = PT.coda[1] + po.coda_y + dK[1];
+	const dK = sposto("coda"), r1 = formaCoda.riposo[0], rc = formaCoda.radice;
+	const cx = PT.coda[0] + rc[0] + po.coda_x + dK[0], cy = PT.coda[1] + rc[1] + po.coda_y + dK[1];
 	const oK = [-(dK[0] * Math.cos(r1) + dK[1] * Math.sin(r1)), -(-dK[0] * Math.sin(r1) + dK[1] * Math.cos(r1))];
 	const gCoda = punto(forma, cx, cy);
 	const vede = (id) => po[id] > 0.5;
@@ -1047,8 +1061,9 @@ function disegna(dt) {
 	const mGa = giunto(forma, J("gamba")[0] + po.gamba_a_x, J("gamba")[1] + po.alza_a, gambe[0]);
 	posti.gamba_a = punto(mGa, 0, 0);
 	strati.gamba_a = () => { if (vede("mostra_gamba_a")) vestePerno(mGa, "gamba", "gamba_a"); };
-	posti.corpo = gCorpo;
-	strati.busto = () => { if (vede("mostra_busto")) veste(sposta(forma, PT.bacino[0], PT.bacino[1]), "busto", "corpo", gCorpo, col); };
+	const mBusto = giunto(forma, J("busto")[0] + po.busto_x, J("busto")[1] + po.busto_y, po.busto);
+	posti.busto = punto(mBusto, 0, 0);
+	strati.busto = () => { if (vede("mostra_busto")) vestePerno(mBusto, "busto", "busto"); };
 	const collo = scala(giunto(forma, J("testa")[0] + po.testa_x, J("testa")[1] + po.testa_y, testa), 1 / lx, 1 / q);
 	posti.testa = punto(collo, 0, 0);
 	strati.testa = () => {
@@ -1189,7 +1204,7 @@ function pezzoSotto(px, py) {
 // trascinare un pezzo: ruota il suo canale attorno al giunto, o lo sposta
 // i canali [avanti e indietro, su e giù] di ogni pezzo
 const SPOSTABILI = {
-	corpo: ["corpo_x", "salto"], testa: ["testa_x", "testa_y"], braccio_a: ["braccio_a_x", "braccio_a_y"],
+	busto: ["busto_x", "busto_y"], testa: ["testa_x", "testa_y"], braccio_a: ["braccio_a_x", "braccio_a_y"],
 	braccio_d: ["braccio_d_x", "braccio_d_y"], gamba_a: ["gamba_a_x", "alza_a"], gamba_d: ["gamba_d_x", "alza_d"],
 	ala: ["ala_x", "ala_y"], coda: ["coda_x", "coda_y"], manina_a: ["manina_a_x", "manina_a_y"],
 	manina_d: ["manina_d_x", "manina_d_y"], fiamma_gira: ["fiamma_x", "fiamma_y"], arma: ["arma_x", "arma_y"],
@@ -1202,7 +1217,7 @@ function pixel(e) {
 // il perno preso va nel punto (pixel del canvas): lo spostamento nella forma
 // del corpo, dove stanno i giunti
 function spostaPerno(px, py) {
-	// la forma di quando l'hai preso: il perno del corpo sposta anche la forma
+	// la forma di quando l'hai preso (col mouse fuori dal pezzo non deve scappare)
 	const inv = presa.inv || (presa.inv = inversa(formaOra));
 	const [a0, b0] = punto(inv, presa.px, presa.py), [a1, b1] = punto(inv, px, py);
 	const t = (v) => Math.round(v * 10) / 10;
@@ -1281,7 +1296,8 @@ palco.addEventListener("pointerdown", (e) => {
 		return;
 	}
 	const muovi = (e.shiftKey || modo === "sposta") && SPOSTABILI[x.canale];
-	const id = muovi ? muovi[1] : x.canale;
+	// trascinando la coda gira tutta intera; l'arricciarsi (coda) è il suo cursore
+	const id = muovi ? muovi[1] : x.canale === "coda" ? "coda_gira" : x.canale;
 	canale = id; chiaveScelta = null;
 	const [gx, gy] = x.giunto;
 	prima();
@@ -1367,8 +1383,7 @@ function costruisciLivelli() {
 	davanti.forEach((l, i) => {
 		const d = document.createElement("div");
 		d.className = "livello"; d.dataset.l = l;
-		const can = l === "busto" ? "corpo" : l;
-		d.classList.toggle("scelto", can === canale);
+		d.classList.toggle("scelto", l === canale);
 		d.innerHTML = `<span class="maniglia">⋮⋮</span><span class="n">${NOMI_LIVELLI[l]}</span>`
 			+ `<button title="Più avanti" ${i === 0 || !mie ? "disabled" : ""}>▲</button><button title="Più indietro" ${i === davanti.length - 1 || !mie ? "disabled" : ""}>▼</button>`;
 		const [su, giu] = d.querySelectorAll("button");
@@ -1423,7 +1438,7 @@ $("impugna").onchange = () => {
 // lo lasci) e dal palco al secchio (esce di scena)
 const SECCHIO = [
 	{ nome: "testa", vis: "mostra_testa", posto: "testa", can: "testa" },
-	{ nome: "busto", vis: "mostra_busto", posto: "busto", can: "corpo" },
+	{ nome: "busto", vis: "mostra_busto", posto: "busto", can: "busto" },
 	{ nome: "braccio davanti", vis: "mostra_braccio_a", posto: "braccio", can: "braccio_a" },
 	{ nome: "braccio dietro", vis: "mostra_braccio_d", posto: "braccio_dietro", can: "braccio_d" },
 	{ nome: "manina davanti", vis: "mostra_manina_a", posto: "pugno", can: "manina_a" },
@@ -1492,7 +1507,7 @@ function scambia(pz) {
 function mettiInScena(pz, px, py) {
 	fermaPlay(); prima();
 	metti(pz.vis, 1);
-	const mv = pz.can !== "corpo" && SPOSTABILI[pz.can], g = posti[pz.can];
+	const mv = SPOSTABILI[pz.can], g = posti[pz.can];
 	if (mv && g) {
 		const inv = inversa(formaOra), [a0, b0] = punto(inv, g[0], g[1]), [a1, b1] = punto(inv, px, py);
 		for (const [id, d] of [[mv[0], a1 - a0], [mv[1], b1 - b0]]) metti(id, Math.round((valoreProprio(clip(), id, tempo) + d) * 1000) / 1000);
@@ -2148,10 +2163,9 @@ function pezziRitocco() {
 	for (const c of [...PL.sostituisce, ...PL.sopra]) {
 		const pl = addosso[c] && PL.pelli[addosso[c]];
 		if (!pl) continue;
-		for (const posto of Object.keys(pl.pezzi).sort()) {
-			if (posto.endsWith("_bordo") || versione(posto)) continue;
-			sel.add(new Option(`${addosso[c]}: ${posto.replace(/_/g, " ")}`, addosso[c] + "/" + posto));
-		}
+		const posti = Object.keys(pl.pezzi).filter((p) => !p.endsWith("_bordo") && !versione(p));
+		if (pl.coda) posti.push("coda");   // la coda intera: i segmenti insieme
+		for (const posto of posti.sort()) sel.add(new Option(`${addosso[c]}: ${posto.replace(/_/g, " ")}`, addosso[c] + "/" + posto));
 	}
 	if (!sel.options.length) sel.add(new Option("metti una pelle (sopra il palco)", ""));
 	if ([...sel.options].some((o) => o.value === prima)) sel.value = prima;
@@ -2161,6 +2175,7 @@ function pezziRitocco() {
 function gruppo(chiave) {
 	const [pelle, posto] = chiave.split("/");
 	const pz = PL.pelli[pelle].pezzi;
+	if (posto === "coda") return [chiave];
 	const base = FACCE.includes(posto) ? "testa" : posto;
 	return Object.keys(pz).filter((k) => k === base || k === base + "_bordo" || (base === "testa" && FACCE.includes(k))).map((k) => pelle + "/" + k);
 }
@@ -2178,7 +2193,9 @@ function mostraRitocco() {
 	$("rt-x").value = r.dx; $("rt-y").value = r.dy; $("rt-s").value = Math.round(r.s * 100);
 	const sel = $("rt-img");
 	sel.innerHTML = "";
-	if (k) {
+	// la coda intera: si sposta e si ingrandisce, non si cambia disegno né si specchia
+	if (k && k.endsWith("/coda")) { $("rt-img").disabled = true; $("rt-sp").disabled = true; }
+	if (k && !k.endsWith("/coda")) {
 		const [pelle, posto] = k.split("/");
 		const pz = PL.pelli[pelle].pezzi, suo = cassetta(pelle).find((d) => pz[d].img === pz[posto].img) || posto;
 		for (const d of cassetta(pelle)) sel.add(new Option(d === suo ? `${d.replace(/_/g, " ")} (di partenza)` : d.replace(/_/g, " "), d));
@@ -2212,6 +2229,7 @@ $("rt-sp").onchange = ritocca;
 $("specchia").onclick = () => {
 	const k = $("rt-pezzo").value;
 	if (!k) { messaggio("Clicca prima un pezzo della pelle sul palco, poi Specchia (o il tasto F)."); return; }
+	if (k.endsWith("/coda")) { messaggio("La coda non si specchia: si gira trascinandola, si ingrandisce con Maiusc + rotellina."); return; }
 	$("rt-sp").checked = !$("rt-sp").checked;
 	ritocca();
 	messaggio(`${k.replace("/", ": ").replace(/_/g, " ")}: ${$("rt-sp").checked ? "specchiato" : "dritto"}`);
@@ -2222,8 +2240,14 @@ $("rt-togli").onclick = () => { $("rt-x").value = 0; $("rt-y").value = 0; $("rt-
 function ritocchiInJson() {
 	const t = (v) => Math.round(v * 10) / 10;
 	const l = Object.keys(ritocchi).sort().map((k) => {
-		const [pelle, posto] = k.split("/"), p = ritoccato(pelle, posto, PL.pelli[pelle].pezzi[posto]);
-		const r = ritocchi[k], v = { pelle, posto, x: t(p.x), y: t(p.y), w: t(p.w), h: t(p.h) };
+		const [pelle, posto] = k.split("/"), r = ritocchi[k], pl = PL.pelli[pelle];
+		if (posto === "coda") {
+			// la coda intera: le lunghezze nuove dei segmenti e dove sta la radice
+			const rc = pl.coda_radice || [0, 0];
+			return { pelle, posto, coda: pl.coda.map((v) => t(v * r.s)), radice: [t(rc[0] + r.dx), t(rc[1] + r.dy)] };
+		}
+		const p = ritoccato(pelle, posto, pl.pezzi[posto]);
+		const v = { pelle, posto, x: t(p.x), y: t(p.y), w: t(p.w), h: t(p.h) };
 		if (r.img) v.da = r.img;      // il disegno di un altro posto della pelle
 		if (r.sp) v.specchio = true;  // specchiato attorno al perno
 		return v;
