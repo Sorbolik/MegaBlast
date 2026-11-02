@@ -257,7 +257,7 @@ local ESITO = { V = { "VINTA", C.MENTA }, S = { "PERSA", C.BRACE }, P = { "PARI"
 local function faccina(v, x, y, d, parent)
 	local col = C.SQUADRA[v.squadra] or C.LUCE
 	ui.disco(x, y, d, C.FONDO, parent)
-	local img = require("battaglia.pelli").pelli.gabriella_squadra.pezzi.testa
+	local img = require("battaglia.pelli").pelli.apprendista.pezzi.testa
 	local k = (d * 1.1) / img.h
 	local n = box(x, y - d * 0.08, img.w * k, img.h * k, vmath.vector4(1, 1, 1, 1), parent)
 	gui.set_texture(n, "diavoletto")

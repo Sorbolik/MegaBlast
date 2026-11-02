@@ -40,9 +40,10 @@ local RISORSE = 24
 local ALBERO = 12
 local LEGENDA = 18
 
--- i pezzi nell'atlante del diavoletto (le pelli di Gabriella con la squadra)
-local PEZZI_IMG = { mask = "testa", chest = "busto", cloak = "ala", legs = "gamba" }
-local PELLE = pelli.pelli.gabriella_squadra.pezzi
+-- i pezzi nell'atlante del diavoletto: quelli dell'apprendista (il personaggio
+-- di tutti) e, per il mantello, l'ala di base (l'apprendista non ha le ali)
+local PELLE = pelli.pelli.apprendista.pezzi
+local PEZZI_IMG = { mask = PELLE.testa, chest = PELLE.busto, cloak = require("battaglia.diavoletto").pezzi.ala, legs = PELLE.gamba }
 -- i colori dei rami dell'albero, nell'ordine di abilita.BRANCHES
 local RAMI = { C.ACCIAIO, C.MENTA, C.BRACE }
 local SIGLE = { "MOB", "DIF", "ARS" }
@@ -116,7 +117,7 @@ function M.pezzo(p, squadra, x, y, d, parent)
 		gui.move_below(a, bordo)
 	end
 	-- l'immagine del pezzo, intera nel riquadro
-	local img = PELLE[PEZZI_IMG[p.slot]]
+	local img = PEZZI_IMG[p.slot]
 	if img then
 		local k = (d - 10) / math.max(img.w, img.h)
 		local alfa = vuoto and 0.22 or 1
