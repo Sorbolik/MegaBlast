@@ -83,6 +83,7 @@ Pochi colori piatti, così il ricalco in SVG è pulito e ogni colore diventa uno
 | R3 | `art/WB-009/riferimenti/R3_manichino.png` | come si attaccano i pezzi |
 | R4 | `art/WB-009/scelti/tre_quarti.png` | il tre quarti scelto in fase 1 (c'è solo dopo la fase 1) |
 | R5 | `art/WB-009/scelti/espressioni.png` | le espressioni scelte in fase 1 (c'è solo dopo la fase 1) |
+| R6 | `art/WB-009/scelti/mira.png` | la faccia della mira scelta da Sergio (5 del foglio): si tiene la faccia, il collo va stretto come nelle altre teste |
 
 ## Immagini da generare
 
@@ -95,7 +96,7 @@ Allega i riferimenti nell'ordine scritto: il primo è "image 1", il secondo "ima
 | 1 | `2_camminata` | R1 | 1536×1024 | 1 |
 | 1 | `3_espressioni` | R1 | 1536×1536 (o 1024×1024) | 1 |
 | 2 | `4_foglio_pezzi` | R4, R2, R3, R5 | 3:2 orizzontale, la più grande possibile (ideale 3072×2048, minimo 1536×1024) | 1 |
-| 2 | `5_teste_extra` | R4, R5 | 1536×1024 | 1 |
+| 2 | `5_teste_extra` | R4, R5, R6 | 1536×1024 | 1 |
 
 Sfondo **non** trasparente (eccezione alla regola di `AGENTS.md`): bianco pieno in fase 1,
 magenta pieno `#FF00FF` in fase 2 perché lo usa lo strumento di taglio. Il verde `#00FF00`
@@ -176,9 +177,9 @@ Rendering rules, very strict, because these parts will be traced into vector sha
 ### `5_teste_extra`
 
 ```
-Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right: copy his head exactly (shape, horns, ears, colors, flat style). Image 2 is his approved expression sheet: nine heads in a 3 by 3 grid.
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right: copy his head exactly (shape, horns, ears, colors, flat style). Image 2 is his approved expression sheet: nine heads in a 3 by 3 grid. Image 3 is the approved aiming face, cropped from image 2.
 
-Draw FIVE heads of him in a single row, left to right, all the same size, all facing right in three-quarter view, each with a short neck stub at the bottom, well apart from each other, the head outline, horns and ears IDENTICAL in all five, no flame on top. They are expressions 5 to 9 of image 2, copied exactly: 1) AIMING (focused, far eye squinting, tongue tip out of the corner of the mouth); 2) ANGRY (eyebrows in a V, clenched teeth); 3) DEFEATED (sad, eyes down, downturned mouth); 4) SCARED (wide eyes, tiny pupils, small open mouth); 5) TAUNT (wink and tongue out).
+Draw FIVE heads of him in a single row, left to right, all the same size, all facing right in three-quarter view, each with a short neck stub at the bottom, well apart from each other, the head outline, horns and ears IDENTICAL in all five, no flame on top. They are expressions 5 to 9 of image 2, copied exactly: 1) AIMING: copy the face of image 3 exactly (yellow near eye looking right, far eye squeezed in a wink, tongue tip out of the corner of the mouth), but NOT its neck: in image 3 the neck is too wide; make the neck stub as NARROW as the necks of the other heads in image 2, the same width as the other four heads of this row; 2) ANGRY (eyebrows in a V, clenched teeth); 3) DEFEATED (sad, eyes down, downturned mouth); 4) SCARED (wide eyes, tiny pupils, small open mouth); 5) TAUNT (wink and tongue out).
 
 Each head has a thick, clean pure-black #000000 outline, EXCEPT at the bottom of the neck stub: there the outline gets gradually thinner and disappears, and the skin color runs right to the edge, rounded and full, with no black line across it. The skin near the bottom of the neck stub is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there, so the neck blends into the torso with no visible seam.
 
@@ -209,7 +210,11 @@ Rendering rules, very strict, because these heads will be traced into vector sha
 2. **Vettoriale.** `strumenti/stampino/vettoriale.py` oggi ricalca solo il bianco e nero. Va
    esteso ai colori: ogni pixel va al colore più vicino della tavolozza qui sopra, ogni colore
    si ricalca con potrace in uno strato SVG, e gli strati si impilano dal fondo al contorno.
-   Esce un SVG per pezzo, accanto al foglio. Scartato `vtracer`: raggruppa i colori da solo,
+   Esce un SVG per pezzo, accanto al foglio. **Colori giusti ovunque (Sergio, 2026-11-02:
+   «è troppo importante»):** negli SVG finali ogni riempimento è esattamente un codice della
+   tavolozza, in tutti i pezzi e in tutte le teste, nessuna sfumatura rimasta da ChatGPT; uno
+   script lo controlla e fallisce se trova un colore fuori tavolozza. I PNG si fanno solo da
+   questi SVG. Scartato `vtracer`: raggruppa i colori da solo,
    li sposta dalla tavolozza e fa più nodi.
 3. **PNG per ogni schermo.** Dagli SVG si fanno i PNG alla densità che serve (per esempio
    1×, 2× e 3× della misura del gioco, decisa con lo schermo vero); il gioco carica quella
@@ -291,6 +296,7 @@ non è stato aggiunto alcun accessorio del vecchio diavoletto.
 - **Espressioni:** `art/WB-009/scelti/espressioni.png`, il foglio consegnato (`3_espressioni.png`), tutte e nove; la faccia della mira (5) è quella del foglio, ritagliata a parte in `art/WB-009/scelti/mira.png`. È R5 della fase 2.
 - **Camminata:** difettosa (pose 1 e 3 uguali, 2 e 4 uguali) ma era solo una prova: non si rifà.
 - Colori non esatti della tavolozza (leggere sfumature): li riporta alla tavolozza il ricalco in SVG.
+- **Mira, collo da stringere** (Sergio): la faccia di `mira.png` resta, ma il collo è più largo di quello delle altre teste. `5_teste_extra` la ridisegna con R6 come riferimento e il collo stretto come nel foglio.
 
 Fase 2 pronta: `esegui WB-009 fase 2`.
 
