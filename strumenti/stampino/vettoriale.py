@@ -125,8 +125,9 @@ def classi(a, tav):
     # le righe sottili (rughe, sopracciglia, naso, righe delle corna): i pixel
     # scuri, anche quelli sfumati ai lati della riga, che non fanno una macchia
     # grande (la bocca) sono riga nera; restano anche dopo la moda qui sotto
+    # (scuro: quasi nero, non un colore scuro come l'ombra della pelle o la bocca)
     lum = px @ np.array([0.30, 0.59, 0.11], np.float32)
-    scuro = dentro & (lum < 115)
+    scuro = dentro & (lum < 115) & (px.max(-1) < 110)
     pieno = ndimage.binary_opening(scuro, iterations=3)
     riga = scuro & ~pieno & (lab != nero)
     riga |= lab == nero
