@@ -46,6 +46,11 @@ Claude non ridisegna mai un personaggio col proprio codice: si ricalca il disegn
 - **Le 9 espressioni**, sempre le stesse: furbo/normale, colpito, vittoria, stordito (le 4
   dello stampino), mira, arrabbiato, sconfitto, paura, provocazione.
 
+- **Colori giusti alla fine, ovunque** (Sergio: «è troppo importante»): ChatGPT non rispetta
+  mai la tavolozza al pixel, quindi nel ricalco ogni area va al codice esatto della tavolozza,
+  in ogni pezzo e testa; uno script controlla gli SVG e fallisce se trova un colore fuori
+  tavolozza. I PNG del gioco escono solo da quegli SVG.
+
 ## Dopo le immagini
 
 Taglio (`strumenti/stampino/taglia.py --allinea`), ricalco in SVG a strati di colore,
