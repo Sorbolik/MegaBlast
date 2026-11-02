@@ -13,9 +13,9 @@
 #                                         nella spalla, x avanti e y in su
 #   simulazione/foto/armi_anteprima.png   tutte insieme, per guardarle
 #
-# Le misure sono quelle del mondo (non del corpo, che è game.CORPO volte più
-# grande): la bocca del Lanciarune a game.MUZZLE, la lama lunga
-# game.SWORD_REACH, il Maglio e l'Affondo lunghi config.MALLET.reach e
+# Le misure: la bocca del Lanciarune e la lama sono per un robot alto 16 (nel
+# gioco ×K = game.DISEGNO_H / game.CORPO / 16 = 1,75: la bocca torna a
+# game.MUZZLE = 24,5); il Maglio e l'Affondo sono lunghi config.MALLET.reach e
 # config.LUNGE.reach (lì la simulazione colpisce).
 #
 # python3 strumenti/grafica/armi.py   (serve cairosvg: pip install cairosvg)
@@ -39,7 +39,7 @@ PX = 6
 ICONA = 128  # lato delle icone, in pixel
 GRANDI = 1.6  # i colpi in volo, più grandi delle loro misure
 
-# misure della simulazione (sim/game.lua, sim/config.lua)
+# misure (vedi sopra)
 MUZZLE = 14
 SWORD_REACH = 40
 MALLET_REACH = 44

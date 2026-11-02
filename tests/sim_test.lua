@@ -1736,7 +1736,7 @@ am:step({ fire = { angle = math.rad(45), power = 0.6, weapon = "grenade" } })
 check(am.projectile and am.projectile.kind == "grenade" and am.robots[1].ammo.grenade == 0,
 	"con un colpo l'Uovo parte e il colpo si consuma")
 
--- Uovo di Fiamma: rimbalza, si posa e scoppia dopo 3 secondi, più grande del missile
+-- Uovo di Fiamma: rimbalza, si posa e scoppia dopo 5 secondi, più grande del missile
 local gr = game.new(42, "forgia")
 run(gr, 120)
 gr:pop_events()
@@ -1756,7 +1756,7 @@ for i = 1, game.GRENADE_FUSE + 5 do
 end
 check(bounced, "l'Uovo rimbalza sul terreno")
 check(boom and boom.r == game.GRENADE_BLAST.r and boom.r > game.MISSILE_BLAST.r, "l'Uovo fa un'esplosione più grande del missile")
-check(boom_tick and math.abs(boom_tick - game.GRENADE_FUSE) <= 1, "l'Uovo scoppia dopo 3 secondi (" .. tostring(boom_tick) .. " tick)")
+check(boom_tick and math.abs(boom_tick - game.GRENADE_FUSE) <= 1, "l'Uovo scoppia dopo 5 secondi (" .. tostring(boom_tick) .. " tick)")
 
 -- Sciame di Schegge: una raffica di SHARD_COUNT schegge con piccoli crateri
 local sh = game.new(42, "forgia")

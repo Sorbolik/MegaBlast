@@ -91,7 +91,6 @@ M.OWNER_SAFE_TICKS = 30
 -- basso il colpo scende dall'alto verso il basso). I danni arrivano quando si
 -- chiude la finestra del colpo, a tutti quelli toccati dalla lama, e il colpo
 -- ferma il bersaglio.
-M.SWORD_REACH = 70       -- lunghezza della lama dal perno (la usano Maglio e bot)
 M.MUZZLE = 24.5          -- i colpi partono a questa distanza dal centro del robot
 M.SWORD_PIVOT_Y = 17.5   -- altezza del perno (la spalla) sopra i piedi
 M.SWORD_DAMAGE = 25
@@ -1699,7 +1698,7 @@ function M:update_mallet(rb)
 	local t0 = rb.mallet
 	rb.mallet = t0 + 1
 	if not rb.mallet_stop and t0 < s.ticks then
-		local t, x, y = self:sweep_arc(rb, t0, M.mallet_angle, s.reach, rb.mallet_dir, rb.mallet_hit, M.mallet_hit, true,
+		local t, x, y = self:sweep_arc(rb, t0, M.mallet_angle, s.reach, rb.mallet_dir, rb.mallet_hit, M.mallet_hit,
 			rb.mallet_base)
 		if t then
 			rb.mallet_stop = t
@@ -1789,12 +1788,12 @@ local ARC_SAMPLES = 10
 -- dove si guarda se la testa del Maglio tocca il terreno: di traverso all'arma
 local HEAD_SIDE = { 0, -5, 5 }
 
--- Un tick di un'arma lunga reach che gira attorno alla spalla di rb (Lama,
+-- Un tick di un'arma lunga reach che gira attorno alla spalla di rb (il
 -- Maglio), da t0 a t0 + 1: angle(t, base) è il suo angolo per un robot rivolto a
 -- destra che mira a base, dir il lato del colpo. Ogni robot toccato lungo l'arma viene colpito
--- una volta (hit(self, rb, other, t), segnato in done). Con stop la punta si
--- ferma sul terreno: rende il tick (con la frazione) e il punto dell'urto.
-function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, stop, base)
+-- una volta (hit(self, rb, other, t), segnato in done). La punta si ferma sul
+-- terreno: rende il tick (con la frazione) e il punto dell'urto.
+function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, base)
 	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
 	for s = 1, ARC_SUBSTEPS do
 		local t = t0 + s / ARC_SUBSTEPS
@@ -1812,11 +1811,9 @@ function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, stop, base)
 				end
 			end
 		end
-		if stop then
-			local hx, hy = px + cx * reach, py + cy * reach
-			for _, w in ipairs(HEAD_SIDE) do
-				if self.terrain:solid(hx - cy * w, hy + cx * w) then return t, hx, hy end
-			end
+		local hx, hy = px + cx * reach, py + cy * reach
+		for _, w in ipairs(HEAD_SIDE) do
+			if self.terrain:solid(hx - cy * w, hy + cx * w) then return t, hx, hy end
 		end
 	end
 end

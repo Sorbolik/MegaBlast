@@ -117,7 +117,7 @@ local WEAPON_FOUND = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", 
 local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
 	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino" }
 -- e il loro effetto, nella scelta (senza accenti)
-local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 3 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
+local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 5 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
 	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
 	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dove miri; quando sbatte su qualcosa o qualcuno rimbalzi in alto",
 	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
