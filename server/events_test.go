@@ -222,3 +222,21 @@ func TestEventsFromPanel(t *testing.T) {
 		t.Fatalf("the cap on the Torneo: took %q error %q %+v", taken, rejected, oo)
 	}
 }
+
+// Cloudflare turns the ETag weak (W/"6") when it compresses the answer: the
+// server must still say it took version 6, or the panel stays yellow.
+func TestEventsFromPanelWeakETag(t *testing.T) {
+	var taken string
+	pannello := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		taken = r.URL.Query().Get("preso")
+		w.Header().Set("ETag", `W/"6"`)
+		io.WriteString(w, testCalendar)
+	}))
+	t.Cleanup(pannello.Close)
+	c := &Calendar{path: pannello.URL + "/eventi.json", now: time.Now}
+	c.download(pannello.Client())
+	c.download(pannello.Client())
+	if taken != "6" {
+		t.Fatalf("with a weak ETag the server says it took %q, wanted 6", taken)
+	}
+}

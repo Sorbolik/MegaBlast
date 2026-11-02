@@ -143,7 +143,7 @@ func (c *Calendar) download(client *http.Client) {
 	c.mu.Lock()
 	u, etag := c.path, c.version
 	if c.version != "" {
-		u += "?" + url.Values{"preso": {strings.Trim(c.version, `"`)}, "errore": {c.rejected}}.Encode()
+		u += "?" + url.Values{"preso": {strings.Trim(strings.TrimPrefix(c.version, "W/"), `"`)}, "errore": {c.rejected}}.Encode()
 	}
 	c.mu.Unlock()
 	req, err := http.NewRequest("GET", u, nil)
