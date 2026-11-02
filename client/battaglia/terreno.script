@@ -30,11 +30,12 @@ local PIANI = { "cielo", "lontano", "medio", "vicino" }
 local POSTO = { cielo = "texture3", lontano = "texture4", medio = "texture5", vicino = "texture6" }
 local STRISCIA = { lontano = "striscia1", medio = "striscia2", vicino = "striscia3" }
 
--- la densità delle immagini: la 2 (1,5 volte più grande) sugli schermi alti
--- almeno 1000 pixel veri, dove la 1 si vedrebbe sfocata da vicino
+-- la densità delle immagini: la 2 (1,5 volte più grande, circa 55 MB di
+-- memoria video invece di 25) solo sugli schermi alti almeno 1400 pixel veri
+-- (tablet, telefoni QHD); su un telefono a 1080 basta la 1
 local function densita()
 	local _, h = window.get_size()
-	return (h or 0) >= 1000 and dipinti.densita[2] or dipinti.densita[1]
+	return (h or 0) >= 1400 and dipinti.densita[2] or dipinti.densita[1]
 end
 
 -- Un PNG di client/dipinti in una texture (sempre la stessa per lo stesso posto:
@@ -71,8 +72,11 @@ local function metti_sfondo(self, nome)
 		end
 		self.sfondo = nome .. d
 	end
+	-- w: quanto è scorsa la striscia (lo aggiorna update, già dentro un giro)
+	self.strisce = {}
 	for _, g in ipairs(s.gruppi) do
-		go.set("#mesh", STRISCIA[g.nome], vmath.vector4(g.y0 / 720, g.h / 720, g.quanto, g.scorre))
+		self.strisce[#self.strisce + 1] = { nome = STRISCIA[g.nome], scorre = g.scorre,
+			v = vmath.vector4(g.y0 / 720, g.h / 720, g.quanto, 0) }
 	end
 end
 
@@ -86,12 +90,18 @@ function init(self)
 end
 
 function update(self, dt)
-	-- dopo un'ora si ricomincia, così il float dello shader resta preciso (un
-	-- giro dello sfondo, 2560 pixel, ci sta un numero intero di volte solo per
-	-- caso: il salto si vede una volta ogni ora)
+	-- dopo un'ora si ricomincia, così il float dello shader resta preciso
 	self.opzioni.y = (self.opzioni.y + dt) % 3600
 	go.set("#mesh", "opzioni", self.opzioni)
 	go.set("#mesh", "stile", self.stile)
+	-- lo scorrimento di ogni striscia lo contiamo qui, dentro un giro: nello
+	-- shader il tempo in mediump andrebbe a scatti, e al giro dell'ora salterebbe
+	if self.strisce and self.stile.x > 0.5 then
+		for _, st in ipairs(self.strisce) do
+			st.v.w = (st.v.w + dt * st.scorre) % dipinti.giro
+			go.set("#mesh", st.nome, st.v)
+		end
+	end
 end
 
 -- lo stile della mappa (stile.x, stile.y) o, dietro la home, solo lo sfondo dipinto
@@ -111,10 +121,18 @@ function on_message(self, message_id, message)
 		local mappa = message.mappa
 		self.sfondo_mappa = dipinti.mappe[mappa]
 		if self.sfondo_mappa then
-			carica(self, "texture0", "mappe/" .. mappa .. "_" .. densita() .. ".png")
+			-- la stessa mappa di prima (si riprova la missione): l'immagine c'è già
+			local file = "mappe/" .. mappa .. "_" .. densita() .. ".png"
+			if self.terreno_file ~= file then
+				carica(self, "texture0", file)
+				self.terreno_file = file
+			else
+				go.set("#mesh", "texture0", self.texture.texture0)
+			end
 			self.opzioni.x = 1
 		else
 			-- mappe senza disegni: restano quelli della mesh, lo shader non li usa
+			self.terreno_file = nil
 			if message.dipinta and self[mappa .. "_terreno"] then
 				go.set("#mesh", "texture0", self[mappa .. "_terreno"])
 				go.set("#mesh", "texture1", self[mappa .. "_interno"])

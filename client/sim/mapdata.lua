@@ -5,7 +5,7 @@
 
 local M = {}
 
--- /mnt/project-files/grafica/mappe/mappa_forgia/maschera.png
+-- grafica/mappe/mappa_forgia/maschera.png
 M.forgia = {
 	".640",
 	".640",
@@ -369,7 +369,7 @@ M.forgia = {
 	".640",
 }
 
--- /mnt/project-files/grafica/mappe/mappa_crogiolo/maschera.png
+-- grafica/mappe/mappa_crogiolo/maschera.png
 M.crogiolo = {
 	".640",
 	".640",

@@ -40,7 +40,7 @@ uniform fs_uniforms
     // bruciato), z = 1 solo lo sfondo (la home)
     mediump vec4 stile;
     // per ogni striscia dello sfondo dipinto: dove comincia dall'alto e quanto è
-    // alta (diviso 720), quanto segue la camera, pixel della scena al secondo
+    // alta (diviso 720), quanto segue la camera, quanto è già scorsa (pixel della scena)
     highp vec4 striscia1;
     highp vec4 striscia2;
     highp vec4 striscia3;
@@ -142,7 +142,7 @@ mediump vec3 striscia(mediump vec3 col, mediump sampler2D img, highp vec4 s, hig
     highp vec2 q = fila(camera, s.z);
     highp float dall_alto = ((MONDO.y - q.y) / MONDO.y - s.x) / s.y;
     if (dall_alto < 0.0) return col;
-    highp float u = fract((q.x + opzioni.y * s.w) / GIRO);
+    highp float u = fract((q.x + s.w) / GIRO);
     mediump vec4 c = texture(img, vec2(u, 1.0 - min(dall_alto, 1.0)));
     return col * (1.0 - c.a) + c.rgb;
 }
@@ -233,7 +233,8 @@ void main()
     if (var_uv.y < 0.0 && stile.z < 0.5) {
         highp float giu = -var_uv.y * 1080.0;
         mediump vec3 col = sfondo() * (1.0 - smoothstep(0.0, 160.0, giu) * 0.75);
-        col += BRACE * exp(-giu / 45.0) * 0.18;
+        // il bagliore solo sotto la mappa, non sotto le bande ai lati
+        col += BRACE * exp(-giu / 45.0) * 0.18 * step(0.0, var_uv.x) * step(var_uv.x, 1.0);
         out_fragColor = vec4(col, 1.0);
         return;
     }
@@ -274,10 +275,14 @@ void main()
     if (stile.y > 0.5) {
         // il cratere mostra lo sfondo; il terreno attorno ha l'orlo bruciato
         // la maschera a celle, ammorbidita e tagliata a metà: il bordo esce tondo
-        mediump float buco = smoothstep(0.4, 0.6, scavato * 0.5 + scavo_attorno(var_uv, 0.8) * 0.5);
-        mediump float orlo = scavo_attorno(var_uv, 2.0) * 0.6 + scavo_attorno(var_uv, 4.5) * 0.4;
-        ter.rgb = mix(ter.rgb, BRUCIATO * ter.a, smoothstep(0.0, 0.25, orlo) * 0.92);
-        ter *= 1.0 - buco;
+        // lontano dai crateri (quasi sempre) basta una lettura in 8 direzioni
+        mediump float largo = scavo_attorno(var_uv, 4.5);
+        if (largo > 0.0 || scavato > 0.0) {
+            mediump float buco = smoothstep(0.4, 0.6, scavato * 0.5 + scavo_attorno(var_uv, 0.8) * 0.5);
+            mediump float orlo = scavo_attorno(var_uv, 2.0) * 0.6 + largo * 0.4;
+            ter.rgb = mix(ter.rgb, BRUCIATO * ter.a, smoothstep(0.0, 0.25, orlo) * 0.92);
+            ter *= 1.0 - buco;
+        }
     } else if (scavato > 0.0) {
         mediump float n1 = vicino(var_uv, 1.5);
         mediump float n2 = vicino(var_uv, 4.5);
