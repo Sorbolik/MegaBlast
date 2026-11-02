@@ -1,4 +1,4 @@
-# Fendente alla Blastron (profilo "blastron"): la lama punta dove si mira e
+# Fendente della Lama: la lama punta dove si mira e
 # il colpo gira con la mira. Mirando in basso a destra la lama sale sopra la
 # testa, va dietro la schiena e cala dall'alto verso il basso. Il fendente
 # dura meno di un secondo: per vederlo bene guarda video.mp4 a 4,6-5 s.

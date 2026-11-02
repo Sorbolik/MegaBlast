@@ -58,7 +58,7 @@ function N.snapshot(g)
 	for i, rb in ipairs(g.robots) do
 		-- s: tick del fendente in corso (0 se il robot non sta colpendo), sd: sua direzione
 		-- pu, pd: lo stesso per il Pugno del Titano; ag, as, ap, ac: colpi di Uovo, Schegge, Pugno e Cecchino
-		-- sb, pb: angolo di mira del fendente e del pugno (servono col modello "blastron")
+		-- sb, pb: angolo di mira del fendente e del pugno (il colpo gira con la mira)
 		-- tl: teletrasporti in mano, mh: vita massima, tu: turni giocati, pt: punti
 		-- ak, ad, am: trappole, scudi e trampolini; sh: scudo rimasto; pa: paracadute aperto;
 		-- pl: paracadute rimasti; st: turni rimasti degli effetti (bruciatura + 10 x rallentamento + 100 x armatura incrinata)

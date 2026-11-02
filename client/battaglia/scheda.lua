@@ -31,7 +31,7 @@ local TIPI = {
 M.DATI = {
 	missile = { tipo = "primaria", cosa = "Spara una runa che esplode dove tocca: fa danno a chi è vicino e scava il terreno",
 		barre = { 3, 4, 3 } },
-	grenade = { tipo = "primaria", cosa = "Un uovo che rimbalza e scoppia dopo 3 secondi: cratere grande",
+	grenade = { tipo = "primaria", cosa = "Un uovo che rimbalza e scoppia dopo 5 secondi: cratere grande",
 		barre = { 4, 3, 5 } },
 	shards = { tipo = "primaria", cosa = "Una raffica di 8 schegge: rallenta chi colpisce", barre = { 3, 3, 2 } },
 	punch = { tipo = "primaria", cosa = "Un montante da vicino: lancia in alto e incrina l'armatura", barre = { 4, 1, 1 } },

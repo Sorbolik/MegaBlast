@@ -2,7 +2,7 @@
 -- Lua puro, di sola lettura: lo leggono la simulazione (client e server) e
 -- l'interfaccia. Le scelte vengono da docs/game_design_competitivo.md
 -- ("Decisioni prese"); quelle prese senza Sergio sono segnate con "scelta nostra".
--- La fisica (gravità, armi, salto) resta nei profili di sim/game.lua.
+-- La fisica (gravità, armi, salto) resta in sim/game.lua.
 
 local C = {}
 
@@ -16,7 +16,7 @@ local C = {}
 -- doppi"; la soglia di mezzo giro è nostra: la partita dura in media 5 minuti).
 C.MATCH_SECONDS = 5 * 60
 C.FINAL_ROUND_SHARE = 0.5
-C.TURN_SECONDS = 25          -- durata del turno (Blastron con più di due giocatori)
+C.TURN_SECONDS = 25          -- durata del turno
 -- Dopo il primo attacco restano AFTER_ATTACK_SECONDS (mai oltre la fine del
 -- turno): in tutti si può fare il secondo attacco, riposizionarsi, usare oggetti.
 -- Sergio: 4 s "per il secondo attacco" + 4 di riposizionamento, ma in tutti e 8
@@ -223,7 +223,7 @@ C.WEAPON_STATUS = { shards = "slow", punch = "cracked" }
 
 -- Statistiche di ogni robot che non sono fisica. Le modificano l'albero di
 -- abilità e l'equipaggiamento (opts.players[i].stats in game.new);
--- corsa, salto e velocità in aria vengono dal profilo di fisica.
+-- corsa, salto e velocità in aria vengono da sim/game.lua (DEFAULT_STATS).
 C.STATS = {
 	-- 100: ogni danno è una percentuale della vita. Era 150 (23 ottobre, per i
 	-- due attacchi a turno); Sergio, 29 ottobre 2026: "ci vogliono 5 turni per

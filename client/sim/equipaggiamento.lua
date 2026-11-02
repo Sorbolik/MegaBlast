@@ -33,7 +33,7 @@ M.SET_PIECES = 4
 M.TIER_MATCHES = { 0, M.SCATTI[1], M.SCATTI[2], M.SCATTI[3] }
 
 -- Pezzi: per ogni set e slot un più e un meno, in percentuale sulla base (le
--- statistiche di movimento cambiano col profilo di fisica). Bonus: a pezzi completi.
+-- statistiche di movimento partono da sim/game.lua, DEFAULT_STATS). Bonus: a pezzi completi.
 M.SETS = {
 	{ id = "corvo", name = "CORVO", style = "Agilità",
 		pieces = {

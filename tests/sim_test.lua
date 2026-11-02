@@ -8,9 +8,6 @@ local mischia = require "sim.mischia"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
 
--- Quasi tutti i test sono scritti per i valori "megablast"; quelli del profilo
--- "blastron" (il predefinito) sono in fondo.
-game.use_physics("megablast")
 -- Le prove si fanno sulla forgia (alcune sul crogiolo).
 
 local failures = 0
@@ -59,7 +56,7 @@ run(g, 120)
 
 -- Il robot di turno cammina
 local x0, x2 = g.robots[1].x, g.robots[2].x
-run(g, 30, { right = true })
+run(g, 60, { right = true })
 check(g.robots[1].x > x0 + 20, "il robot cammina verso destra")
 check(g.robots[2].x == x2, "l'avversario resta fermo")
 
@@ -82,20 +79,16 @@ run(g, 20, { left = true })
 check(rb.x < sx - 10 and not rb.grounded, "in aria il robot si sposta a sinistra")
 run(g, 120)
 
--- Reattività: un robot veloce inverte la direzione in aria più in fretta di uno lento
-local function reverse_ticks(stats)
-	local q = game.new(42, "forgia", { players = { { team = 1, stats = stats }, { team = 2 } } })
+-- In aria niente inerzia: la direzione cambia subito, alla velocità air_speed
+do
+	local q = game.new(42, "forgia", { players = { { team = 1, stats = { air_speed = 60 } }, { team = 2 } } })
 	run(q, 120)
 	local r = q.robots[1]
 	q:step({ jump = true, right = true })
 	run(q, 10, { right = true })
-	local n = 0
-	while r.vx > 0 and n < 100 do q:step({ left = true }); n = n + 1 end
-	return n
+	q:step({ left = true })
+	check(not r.grounded and r.vx == -60, "in aria la direzione cambia subito (" .. r.vx .. ")")
 end
-local slow = reverse_ticks({ air_speed = 60 })
-local fast = reverse_ticks({ air_speed = 200 })
-check(fast < slow, string.format("il robot veloce cambia direzione prima (%d tick contro %d)", fast, slow))
 
 -- Le statistiche cambiano l'altezza del salto
 local hj = game.new(42, "forgia", { players = { { team = 1, stats = { jump_height = 120 } }, { team = 2 } } })
@@ -325,6 +318,7 @@ local function sword_game()
 	return q, y
 end
 
+local SWORD_TICKS = game.melee_ticks(mischia.fendente)
 local sw, swy = sword_game()
 place(sw.robots[1], 640, swy)
 place(sw.robots[2], 640 - 25, swy)  -- dietro (il robot 1 guarda a destra)
@@ -332,17 +326,18 @@ place(sw.robots[3], 640 + 25, swy)  -- davanti
 sw:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 check(sw.used.secondary and sw.window > 0, "il fendente è un attacco: si apre il tempo del secondo")
 local order = {}
-for _ = 1, game.SWORD_TICKS do
+for _ = 1, SWORD_TICKS do
 	sw:step()
 	for _, e in ipairs(sw:pop_events()) do
 		if e.type == "sword_hit" then order[#order + 1] = e.target end
 	end
 end
-check(order[1] == 2 and order[2] == 3, "la spada colpisce prima dietro e poi davanti")
+check(#order == 2, "la spada colpisce chi è dietro e chi è davanti (" .. table.concat(order, " ") .. ")")
 check(sw.robots[2].hp == sw.robots[2].max_hp - game.SWORD_DAMAGE and sw.robots[3].hp == sw.robots[3].max_hp - game.SWORD_DAMAGE,
 	"ogni bersaglio subisce il danno una volta sola")
 
--- Combo: colpo dietro la schiena, teletrasporto a metà fendente, colpo davanti nel punto d'arrivo
+-- Combo: teletrasporto a metà fendente, la lama prende anche chi è nel punto
+-- d'arrivo (i colpi arrivano tutti quando si chiude la finestra)
 local function combo(with_orb)
 	local q, y = sword_game()
 	place(q.robots[1], 400, y)
@@ -350,11 +345,11 @@ local function combo(with_orb)
 	place(q.robots[3], 800 + 25, y)  -- davanti, nel punto d'arrivo
 	q.robots[3].vy, q.robots[3].vx = 0, 0
 	if with_orb then
-		q.orbs = { { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = math.floor(game.SWORD_TICKS * 0.75) } }
+		q.orbs = { { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = 30 } }
 	end
 	q:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 	local seq = {}
-	for _ = 1, game.SWORD_TICKS do
+	for _ = 1, SWORD_TICKS do
 		q:step()
 		for _, e in ipairs(q:pop_events()) do
 			if e.type == "sword_hit" then seq[#seq + 1] = "hit" .. e.target end
@@ -363,7 +358,7 @@ local function combo(with_orb)
 	end
 	return table.concat(seq, " ")
 end
-check(combo(true) == "hit2 tp hit3", "combo: dietro, teletrasporto, davanti (" .. combo(true) .. ")")
+check(combo(true) == "tp hit2 hit3", "combo: teletrasporto e colpo a chi era dietro e a chi è all'arrivo (" .. combo(true) .. ")")
 check(combo(false) == "hit2", "senza globo il bersaglio lontano non viene colpito")
 
 -- Il turno aspetta il globo e la ritirata, poi passa all'avversario
@@ -819,7 +814,7 @@ do
 	check(d.projectile == p and p.vy > -40 and p.vx > game.SNIPER_SPEED * 0.9, "all'inizio va quasi dritto e veloce")
 	local vy10 = p.vy
 	run(d, 30)
-	check(d.projectile == p and p.vy < vy10 - 100 and p.vx < game.SNIPER_SPEED * 0.85, "poi cala sempre di più e frena")
+	check(d.projectile == p and p.vy < vy10 - 40 and p.vx < game.SNIPER_SPEED * 0.85, "poi cala sempre di più e frena")
 
 	-- verso il terreno rimbalza (non scava), e dopo l'ultimo rimbalzo si ferma
 	local r = game.new(42, "forgia", { ammo = { sniper = 1 } })
@@ -953,8 +948,9 @@ do
 		u:step()
 		if not ub.hooked then break end
 	end
-	check(not ub.hooked and ub.y > sy - 60 + 20 and math.abs(ub.x - ua.x) < 2 * game.ROBOT_HALF_W + 2,
-		"da sotto lo tira su fino a chi spara e lo ferma addosso")
+	check(not ub.hooked and ub.y > sy - 60 + 15 and math.abs(ub.x - ua.x) < 2 * game.ROBOT_HALF_W + 2,
+		string.format("da sotto lo tira su fino a chi spara e lo ferma addosso (%s, salito %.0f, a %.0f px)",
+			tostring(ub.hooked), ub.y - (sy - 60), math.abs(ub.x - ua.x)))
 	-- sul terreno è chi tira che sale lungo la fune e si mette sopra la
 	-- piattaforma colpita: da sotto una piattaforma si finisce in piedi sopra
 	local m = game.new(42, "forgia")
@@ -1275,12 +1271,13 @@ do
 	c:hurt(b, 20, a)
 	check(hp - b.hp == math.floor(20 * config.STATUS.cracked.damage + 0.5), "con l'armatura incrinata il danno sale")
 
-	-- lo scudo ferma l'effetto
+	-- lo scudo che regge ferma l'effetto (il Pugno, 47, lo romperebbe: le schegge no)
 	local s = game.new(42, "forgia")
+	run(s, 30)
 	local sb = s.robots[2]
 	sb.shield = config.SHIELD.hp
-	s:punch_hit(s.robots[1], sb, 1)
-	check(not sb.status.cracked, "lo scudo ferma l'effetto di stato")
+	s:explode(sb.x, sb.y + 4, 1, game.SHARD_BLAST, "shards")
+	check(sb.shield < config.SHIELD.hp and not sb.status.slow, "lo scudo ferma l'effetto di stato")
 
 	-- Uovo normale: niente bruciatura; col set Fornace (burning_blasts) l'Uovo
 	-- brucia, il missile no
@@ -1596,7 +1593,7 @@ g5:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 check(g5.robots[1].swing_dir == 1, "il fendente parte verso destra")
 for _ = 1, 4 do g5:step({ left = true }) end
 check(g5.robots[1].facing == -1 and g5.robots[1].swing_dir == 1, "girarsi non cambia la direzione del fendente")
-run(g5, game.SWORD_TICKS)
+run(g5, SWORD_TICKS)
 check(g5.robots[2].hp < g5.robots[2].max_hp, "il fendente colpisce a destra anche dopo essersi girato")
 
 -- Il colpo di spada fa danno ma non fa volare l'avversario
@@ -1607,7 +1604,7 @@ t6.x, t6.y = g6.robots[1].x + 25, g6.robots[1].y
 for _ = 1, 30 do g6:step({}) end -- si posa nel nuovo punto
 local tx6, ty6 = t6.x, t6.y
 g6:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
-run(g6, game.SWORD_TICKS + 30)
+run(g6, SWORD_TICKS + 30)
 check(t6.hp < t6.max_hp, "la spada fa danno")
 check(t6.x == tx6 and t6.y == ty6 and t6.grounded, "la spada non sposta l'avversario")
 
@@ -1681,16 +1678,6 @@ do
 end
 
 
--- Il fendente non è lineare: prima torna un po' indietro, poi accelera fino alla fine
-local a0, a1 = game.sword_angle(0), game.sword_angle(game.SWORD_TICKS * 0.3)
-check(a1 > a0, "all'inizio del fendente la lama va un po' indietro")
-local function step_deg(u)
-	local t = game.SWORD_TICKS
-	return math.abs(math.deg(game.sword_angle(t * u + 1) - game.sword_angle(t * u)))
-end
-check(step_deg(0.9) > 2 * step_deg(0.55), "verso la fine il fendente è sempre più veloce")
-check(math.abs(game.sword_angle(game.SWORD_TICKS) - game.SWORD_TO) < 1e-9, "il fendente finisce davanti in basso")
-
 -- Collisioni: i robot non si attraversano, camminando si spingono un pizzico
 local cg = game.new(7, "forgia")
 for _ = 1, 120 do cg:step({}) end
@@ -1749,7 +1736,7 @@ am:step({ fire = { angle = math.rad(45), power = 0.6, weapon = "grenade" } })
 check(am.projectile and am.projectile.kind == "grenade" and am.robots[1].ammo.grenade == 0,
 	"con un colpo l'Uovo parte e il colpo si consuma")
 
--- Uovo di Fiamma: rimbalza, si posa e scoppia dopo 3 secondi, più grande del missile
+-- Uovo di Fiamma: rimbalza, si posa e scoppia dopo 5 secondi, più grande del missile
 local gr = game.new(42, "forgia")
 run(gr, 120)
 gr:pop_events()
@@ -1768,8 +1755,8 @@ for i = 1, game.GRENADE_FUSE + 5 do
 	end
 end
 check(bounced, "l'Uovo rimbalza sul terreno")
-check(boom and boom.r == game.GRENADE_BLAST.r and boom.r > game.EXPLOSION_R, "l'Uovo fa un'esplosione più grande del missile")
-check(boom_tick and math.abs(boom_tick - game.GRENADE_FUSE) <= 1, "l'Uovo scoppia dopo 3 secondi (" .. tostring(boom_tick) .. " tick)")
+check(boom and boom.r == game.GRENADE_BLAST.r and boom.r > game.MISSILE_BLAST.r, "l'Uovo fa un'esplosione più grande del missile")
+check(boom_tick and math.abs(boom_tick - game.GRENADE_FUSE) <= 1, "l'Uovo scoppia dopo 5 secondi (" .. tostring(boom_tick) .. " tick)")
 
 -- Sciame di Schegge: una raffica di SHARD_COUNT schegge con piccoli crateri
 local sh = game.new(42, "forgia")
@@ -1806,7 +1793,7 @@ local function punch_game(dx)
 	q.robots[1].ammo.punch = 1
 	q:step({ fire = { angle = 0, power = 1, weapon = "punch" } })
 	local hit
-	for _ = 1, game.PUNCH_TICKS do
+	for _ = 1, game.melee_ticks(mischia.montante) do
 		q:step()
 		for _, e in ipairs(q:pop_events()) do
 			if e.type == "punch_hit" then hit = { vx = q.robots[2].vx, vy = q.robots[2].vy } end
@@ -1814,17 +1801,18 @@ local function punch_game(dx)
 	end
 	return q, hit
 end
-local pq, ph = punch_game(14)
+local pq, ph = punch_game(2 * game.U)
 check(ph and pq.robots[2].hp == pq.robots[2].max_hp - game.PUNCH_DAMAGE, "il pugno colpisce chi è davanti")
-check(ph and ph.vy == game.PUNCH_LAUNCH and ph.vx > 0, "il pugno lancia in alto e in avanti")
-local _, ph2 = punch_game(-14)
+check(ph and ph.vy == game.PUNCH_LAUNCH and ph.vx == 0, "il pugno lancia dritto in alto")
+local _, ph2 = punch_game(-6 * game.U)
 check(ph2 == nil, "il pugno non colpisce chi è dietro")
 
 -- Casse ---------------------------------------------------------------------------
 
--- Una cassa cade dopo ogni 3 turni, sempre nello stesso punto con lo stesso seed
+-- Con una cadenza (regole degli eventi, opts.crate_every) una cassa cade dopo
+-- ogni 3 turni, sempre nello stesso punto con lo stesso seed
 local function crate_turns(seed)
-	local q = game.new(seed, "crogiolo")
+	local q = game.new(seed, "crogiolo", { crate_every = 3 })
 	local spawned = {}
 	for _ = 1, 12000 do
 		q:step()
@@ -1893,10 +1881,9 @@ local function play2(seed)
 end
 check(play2(5) == play2(5), "armi delle casse e casse sono deterministiche")
 
--- Profilo "blastron" ------------------------------------------------------------
+-- Fisica: corsa, salto, esplosioni, mischia, cadute ------------------------------
 
-game.use_physics("blastron")
-local U = game.BLASTRON_UNIT
+local U = game.U
 
 -- Movimento: corsa 5 u/s, salto alto 5,2 u
 local bm = game.new(42, "forgia")
@@ -1904,14 +1891,14 @@ run(bm, 120)
 local br = bm.robots[1]
 local x0 = br.x
 run(bm, 60, { right = true })
-check(math.abs((br.x - x0) - 5 * U) < 2, string.format("blastron: corsa 5 u/s (%.1f px in 1 s)", br.x - x0))
+check(math.abs((br.x - x0) - 5 * U) < 2, string.format("corsa 5 u/s (%.1f px in 1 s)", br.x - x0))
 local top, base = br.y, br.y
 bm:step({ jump = true })
 for _ = 1, 200 do
 	bm:step()
 	top = math.max(top, br.y)
 end
-check(math.abs((top - base) - 5.2 * U) < 0.35 * U, string.format("blastron: salto alto 5,2 u (%.1f px)", top - base))
+check(math.abs((top - base) - 5.2 * U) < 0.35 * U, string.format("salto alto 5,2 u (%.1f px)", top - base))
 
 -- Controllo in aria istantaneo; senza direzione la velocità resta
 local ba = game.new(42, "forgia")
@@ -1919,13 +1906,13 @@ run(ba, 120)
 local ar = ba.robots[1]
 ba:step({ jump = true, right = true })
 run(ba, 5, { right = true })
-check(ar.vx == ar.stats.air_speed, "blastron: in aria va subito a tutta corsa")
+check(ar.vx == ar.stats.air_speed, "in aria va subito a tutta corsa")
 ba:step({ left = true })
-check(ar.vx == -ar.stats.air_speed, "blastron: e si gira di colpo")
+check(ar.vx == -ar.stats.air_speed, "e si gira di colpo")
 ba:step()
-check(ar.vx == -ar.stats.air_speed and not ar.grounded, "blastron: senza direzione in aria la velocità resta")
+check(ar.vx == -ar.stats.air_speed and not ar.grounded, "senza direzione in aria la velocità resta")
 
--- Esplosione: danno dal punto più vicino della scatola, spinta nulla nel colpo
+-- Esplosione: danno dal punto più vicino del quadrato, spinta nulla nel colpo
 -- diretto, massima a metà raggio, metà danno a sé stessi
 local function blast_at(dx, owner)
 	local q = game.new(42, "forgia")
@@ -1934,41 +1921,41 @@ local function blast_at(dx, owner)
 	local y = sky_spot(q, 640, 60)
 	place(r, 640, y)
 	local hp = r.hp
-	-- il bordo destro della scatola (col cerchio, del quadrato attorno)
-	local edge = game.HURTBOX == "cerchio" and game.HURT_R + game.HURT_FAT or game.ROBOT_HALF_W
+	-- il bordo destro del quadrato attorno al cerchio dei colpi
+	local edge = game.HURT_R + game.HURT_FAT
 	q:explode(640 + edge + dx, y + game.HURT_Y, owner, game.MISSILE_BLAST)
 	return r, hp - r.hp
 end
 local B = game.MISSILE_BLAST
 local d0r, d0 = blast_at(-1, 1)
 check(d0 == math.floor(B.damage + 0.5) and d0r.vx == 0 and d0r.vy == 0,
-	"blastron: colpo diretto, danno pieno e nessuna spinta")
+	"colpo diretto, danno pieno e nessuna spinta")
 local half = B.damage_r / 2
 local dhr, dh = blast_at(half, 1)
 check(math.abs(dhr.vx + half * B.impulse * 0.5) < 0.01 and dhr.vy == 0,
-	string.format("blastron: a metà raggio spinta di %.0f px/s", -dhr.vx))
-check(dh == math.floor(B.damage_min + (B.damage - B.damage_min) * 0.5 + 0.5), "blastron: danno tra minimo e massimo")
+	string.format("a metà raggio spinta di %.0f px/s", -dhr.vx))
+check(dh == math.floor(B.damage_min + (B.damage - B.damage_min) * 0.5 + 0.5), "danno tra minimo e massimo")
 local _, ds = blast_at(-1, 2)
-check(ds == math.floor(B.damage * 0.5 + 0.5), "blastron: metà danno a sé stessi")
+check(ds == math.floor(B.damage * 0.5 + 0.5), "metà danno a sé stessi")
 
 -- Dove si viene colpiti: un cerchio a metà altezza, non la scatola
 local hb = game.new(42, "forgia")
 local hr = hb.robots[2]
 local hcy = hr.y + game.HURT_Y
 check(hb:hits_robot(hr.x + game.HURT_R - 0.5, hcy, 1, 0) and not hb:hits_robot(hr.x + game.HURT_R + 0.5, hcy, 1, 0),
-	"blastron: il bersaglio è un cerchio di raggio HURT_R")
-check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "blastron: l'angolo in basso della scatola non conta")
+	"il bersaglio è un cerchio di raggio HURT_R")
+check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "l'angolo in basso della scatola non conta")
 
 -- Capsula per camminare e cerchio dei colpi vengono da sim/corpo.lua (l'editor
 -- delle animazioni li cambia); il disegno resta della sua misura
 local corpo = require "sim.corpo"
 check(game.ROBOT_H == corpo.cammina.alto and game.ROBOT_HALF_W * 2 == corpo.cammina.largo
 	and game.HURT_R == corpo.colpi.raggio and game.HURT_Y == corpo.colpi.centro,
-	"blastron: capsula e cerchio dei colpi da sim/corpo.lua")
-check(game.DISEGNO_H == game.BLASTRON_ROBOT_H * game.BLASTRON_CORPO, "blastron: il disegno non dipende da sim/corpo.lua")
+	"capsula e cerchio dei colpi da sim/corpo.lua")
+check(game.DISEGNO_H == game.REF_H * game.CORPO, "il disegno non dipende da sim/corpo.lua")
 
 -- Mischia sulla mira: target = posizione del bersaglio rispetto ai piedi (in unità
--- di Blastron), i robot restano fermi in aria; restituisce il tick del colpo o false
+-- U), i robot restano fermi in aria; restituisce il tick del colpo o false
 local function melee_at(deg, tx, ty, weapon)
 	local q = game.new(42, "forgia")
 	run(q, 120)
@@ -1992,21 +1979,19 @@ local function melee_at(deg, tx, ty, weapon)
 	return false, q
 end
 local close = math.ceil(mischia.fendente.chiudi * 60 / mischia.fendente.fps)
-check(melee_at(0, 5, 0) == close, "blastron: il fendente colpisce quando si chiude la finestra (0,8 s)")
-check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "blastron: mirando dritto prende anche dietro e sopra la testa")
-check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "blastron: mirando in basso la lama scende davanti in basso")
--- i bersagli da non prendere stanno più lontani quanto il corpo è più grande di
--- quello di Blastron (BLASTRON_CORPO)
-local C = game.BLASTRON_CORPO
+check(melee_at(0, 5, 0) == close, "il fendente colpisce quando si chiude la finestra (0,8 s)")
+check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "mirando dritto prende anche dietro e sopra la testa")
+check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "mirando in basso la lama scende davanti in basso")
+-- i bersagli da non prendere stanno più lontani quanto il corpo è più grande
+-- del robot di riferimento (CORPO)
+local C = game.CORPO
 check(melee_at(60, 4, 5) and melee_at(-60, 0, -5) and not melee_at(60, 0, -5 - 7.5 * (C - 1)),
-	"blastron: il colpo gira con la mira")
-check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "blastron: mirando giù non prende chi è dietro")
+	"il colpo gira con la mira")
+check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "mirando giù non prende chi è dietro")
 local pt, pq2 = melee_at(0, 2, 0, "punch")
 check(pt and pq2.robots[2].vy == game.PUNCH_LAUNCH and pq2.robots[2].vx == 0,
-	"blastron: il montante lancia dritto in alto")
-check(not melee_at(-60, 0, 4 + 7.5 * (C - 1), "punch"), "blastron: il montante mirato in basso non prende chi è sopra")
-check(game.melee_ticks(mischia.fendente) == game.SWORD_TICKS and game.melee_ticks(mischia.montante) == game.PUNCH_TICKS,
-	"blastron: durate del fendente e del montante coerenti con le animazioni")
+	"il montante lancia dritto in alto")
+check(not melee_at(-60, 0, 4 + 7.5 * (C - 1), "punch"), "il montante mirato in basso non prende chi è sopra")
 
 
 -- Danno da caduta oltre 40 u
@@ -2032,7 +2017,7 @@ for x = 60, game.WORLD_W - 60, 8 do
 		break
 	end
 end
-check(fx ~= nil, "blastron: c'è un punto da cui cadere")
+check(fx ~= nil, "c'è un punto da cui cadere")
 place(fr2, fx, gy2 + DROP)
 for _ = 1, 400 do
 	bf:step()
@@ -2042,17 +2027,17 @@ local fall = gy2 + DROP - fr2.y
 local expect = math.floor(math.min((fall - game.FALL_SAFE) * game.FALL_DAMAGE, game.FALL_DAMAGE_MAX) + 0.5)
 game.FALL_SAFE = safe0
 check(fr2.grounded and fall > 20 * U and expect > 0 and hp0 - fr2.hp == expect,
-	string.format("blastron: cadendo da %.0f px perde %d (%d)", fall, expect, hp0 - fr2.hp))
+	string.format("cadendo da %.0f px perde %d (%d)", fall, expect, hp0 - fr2.hp))
 local bf2 = game.new(42, "forgia")
 run(bf2, 120)
 local sr = bf2.robots[1]
 bf2:step({ jump = true })
 run(bf2, 200)
-check(sr.hp == sr.max_hp, "blastron: un salto non fa danno")
+check(sr.hp == sr.max_hp, "un salto non fa danno")
 
 -- Potenza: zona morta 20% e curva quadratica
 check(game.aim_power(0.2) == 0.1 and game.aim_power(1) == 1 and math.abs(game.aim_power(0.6) - 0.25) < 1e-9,
-	"blastron: potenza quadratica con zona morta")
+	"potenza quadratica con zona morta")
 
 -- Casse a probabilità: ne cadono, e sempre negli stessi punti con lo stesso seed
 local function crates_seen(seed)
@@ -2068,10 +2053,8 @@ local function crates_seen(seed)
 	return table.concat(seen, " ")
 end
 local cs = crates_seen(9)
-check(cs ~= "" and cs == crates_seen(9), "blastron: le casse cadono a caso ma uguali con lo stesso seed (" .. cs .. ")")
+check(cs ~= "" and cs == crates_seen(9), "le casse cadono a caso ma uguali con lo stesso seed (" .. cs .. ")")
 
--- Una partita intera con tutte le armi è deterministica anche con questo profilo
-check(play2(5) == play2(5), "blastron: partita deterministica")
 
 -- Corpo a capsula, salto corto, coyote time e salto in anticipo -----------------
 
@@ -2090,23 +2073,18 @@ local function shaped_world(ground)
 	return q
 end
 
--- Su un pendio a 45 gradi il fondo rotondo resta più vicino al terreno del rettangolo
-local function slope_gap(round)
-	local saved = game.ROBOT_ROUND
-	game.ROBOT_ROUND = round
+-- Su un pendio a 45 gradi il fondo rotondo resta vicino al terreno (un
+-- rettangolo resterebbe sospeso sullo spigolo)
+local function slope_gap()
 	local slope = function(x) return 100 + math.max(0, math.min(200, x - 500)) end
 	local q = shaped_world(slope)
 	local r = q.robots[1]
 	place(r, 600, 260)
 	run(q, 120)
-	game.ROBOT_ROUND = saved
 	return r.y - slope(r.x), r.grounded
 end
-local gap_box, gb = slope_gap(false)
-local gap_round, gr = slope_gap(true)
-check(gb and gr and gap_round < gap_box - 2,
-	string.format("capsula: sul pendio a 45 gradi resta più bassa del rettangolo (%.1f px contro %.1f)", gap_round, gap_box))
-check(gap_round < game.ROBOT_HALF_W * 0.6, string.format("capsula: al centro sta sopra il pendio quanto il bordo del cerchio (%.1f px)", gap_round))
+local gap_round, gr = slope_gap()
+check(gr and gap_round < game.ROBOT_HALF_W * 0.6, string.format("capsula: al centro sta sopra il pendio quanto il bordo del cerchio (%.1f px)", gap_round))
 
 -- Salto corto: lasciando il tasto subito si sale molto meno
 local function jump_top(hold_ticks)
@@ -2216,8 +2194,6 @@ for _, id in ipairs(maps.order) do
 end
 check(hook_drag(function(x) return (x > 560 and x < 572) and 100 + game.ROBOT_H or 100 end, 500, 650) > 650 - 560,
 	"Rampino: un muro alto ferma il nemico")
-
-game.use_physics("megablast")
 
 -- Prestazioni: un cratere e 600 tick di simulazione
 local t = os.clock()
