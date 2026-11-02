@@ -1,0 +1,23 @@
+# Sciame di Schegge sparato dritto in alto (bug del 2 novembre, su Due mani): le
+# schegge escono dalla mappa da sopra e spariscono, la camera torna vicina a chi
+# ha sparato e lo zoom si cambia di nuovo. Prima volavano più di un minuto e la
+# camera restava lontana per tenerle dentro. Sul Crogiolo sopra Rosso c'è cielo.
+imposta prova_mappa crogiolo
+imposta prova_armi 1
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_prima
+tocca 318 62                        # Sciame di Schegge
+aspetta 0.3
+mira 0 220 0.6                      # dritto in alto
+aspetta_evento shards 3
+aspetta 0.5
+foto 02_schegge_in_volo
+aspetta 2.5
+foto 03_tornata_vicina
+premi z
+aspetta 1
+foto 04_zoom_cambiato
