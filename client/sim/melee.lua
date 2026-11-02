@@ -1,27 +1,27 @@
--- Colpi corpo a corpo: la Lama (fendente) e il Pugno del Titano (montante),
--- fotogramma per fotogramma (docs/fisica.md).
+-- Melee hits: the Lama (slash) and the Pugno del Titano (uppercut), frame by
+-- frame (docs/fisica.md).
 --
--- L'animazione del colpo gira insieme alla mira: mirando in basso il fendente
--- scende dall'alto verso il basso, mirando in alto sale.
--- La parte che colpisce è un rettangolo lungo l'asse dell'arma che segue
--- l'animazione. Conta solo tra il fotogramma "apri" e "chiudi"; chi ci passa
--- dentro riceve il colpo una volta sola, quando la finestra si chiude.
+-- The hit animation rotates with the aim: aiming down the slash comes down
+-- from above, aiming up it rises.
+-- The part that hits is a rectangle along the weapon axis that follows the
+-- animation. It only counts between the "apri" and "chiudi" frames; whoever
+-- passes through it gets hit once, when the window closes.
 --
--- Per ogni fotogramma: ox, oy = dove sta l'osso della mira rispetto ai piedi;
--- x0, y0 -> x1, y1 = l'asse del rettangolo nel riferimento della mira
--- (x avanti lungo la mira, y a sinistra), con origine nell'osso; angolo = gradi
--- dell'arma rispetto alla mira. Tutto in unità U (sim/game.lua: il robot di
--- riferimento è alto 3,612 U), per un robot rivolto a destra.
+-- For each frame: ox, oy = where the aim bone is relative to the feet;
+-- x0, y0 -> x1, y1 = the rectangle axis in the aim frame (x forward along the
+-- aim, y to the left), with origin at the bone; angolo = degrees of the weapon
+-- relative to the aim. Everything in U units (sim/game.lua: the reference
+-- robot is 3.612 U tall), for a robot facing right.
 
 local M = {}
 
--- Fendente: 70 fotogrammi a 75 al secondo.
--- Dal fotogramma 0 al 30 la lama sale sopra la testa e va dietro la schiena,
--- dal 30 al 34 cala in avanti (un quinto di secondo dietro, un ventesimo per scendere).
-M.fendente = {
+-- Slash: 70 frames at 75 per second.
+-- From frame 0 to 30 the blade rises over the head and goes behind the back,
+-- from 30 to 34 it swings forward (a fifth of a second behind, a twentieth to come down).
+M.slash = {
 	fps = 75,
 	apri = 20, chiudi = 60, scossa = 37,
-	mezza_larghezza = 0.5,     -- il rettangolo è largo 1
+	half_width = 0.5,     -- the rectangle is 1 wide
 	pose = {
 		{ -0.58, 1.97, -0.21, -0.89, 5.79, -0.89, 0.0 }, -- 0
 		{ -0.59, 1.96, -0.04, -0.81, 5.83, -2.06, -12.0 }, -- 1
@@ -97,14 +97,14 @@ M.fendente = {
 	},
 }
 
--- Montante: 95 fotogrammi a 45 al secondo.
--- Il pugno parte dal basso davanti e sale fino in alto; poi resta su mentre il
--- robot si solleva, e torna giù alla fine.
-M.montante = {
+-- Uppercut: 95 frames at 45 per second.
+-- The fist starts low in front and rises all the way up; then it stays up while
+-- the robot lifts itself, and comes back down at the end.
+M.uppercut = {
 	fps = 45,
 	apri = 5, chiudi = 20, scossa = 10,
-	salto = 10,                -- fotogramma in cui chi colpisce fa il saltello
-	mezza_larghezza = 1.5,     -- il rettangolo è largo 3
+	salto = 10,                -- frame where the attacker does the little hop
+	half_width = 1.5,     -- the rectangle is 3 wide
 	pose = {
 		{ -0.58, 1.97, 0.50, -0.69, 4.00, -0.69, 0.0 }, -- 0
 		{ -0.56, 1.96, 0.43, -0.73, 3.91, -1.04, -5.1 }, -- 1

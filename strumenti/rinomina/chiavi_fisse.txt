@@ -1,0 +1,27 @@
+# Campi che NON si rinominano in questa ondata, anche se la simulazione è
+# l'unica a usarli: sono chiavi dei dati salvati fuori dal codice.
+# - eventi del pannello (KV di Cloudflare, sim/rules.lua): li converte l'ondata degli strumenti
+casse
+cure
+livello
+armi
+tetto
+punti
+giocatori
+coda
+evento
+obiettivo
+nome
+riga
+premi
+regole
+ogni
+fino
+modo
+# - corpo.lua lo scrive l'editor delle animazioni: l'ondata del client
+cammina
+colpi
+largo
+alto
+raggio
+centro

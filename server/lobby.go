@@ -6,26 +6,25 @@ import (
 	"time"
 )
 
-// Mode è una coda di gioco: quanti giocatori servono per una partita, quale
-// modo della simulazione usare (config.MODES, che dice le squadre) e, per le
-// code degli eventi (eventi.go), le regole dell'evento in JSON (sim/regole.lua).
+// Mode is a game queue: how many players a match needs, which simulation mode
+// to use (config.MODES, which defines the teams) and, for event queues
+// (events.go), the event rules as JSON (sim/rules.lua).
 type Mode struct {
 	Name    string
 	Players int
 	Sim     string
-	Regole  []byte
+	Rules   []byte
 }
 
-// I numeri di giocatori devono essere quelli di config.MODES (lo controlla
-// TestModesMatchConfig).
+// The player counts must match config.MODES (checked by TestModesMatchConfig).
 var modes = map[string]Mode{
 	"1v1": {"1v1", 2, "1v1", nil},
 	"2v2": {"2v2", 4, "2v2", nil},
 	"ffa": {"ffa", 4, "ffa", nil},
 }
 
-// Lobby tiene una coda per modalità. Il lock serve solo quando qualcuno entra
-// o esce dalla coda, mai durante le partite.
+// Lobby keeps one queue per mode. The lock is only needed when someone joins
+// or leaves a queue, never during matches.
 type Lobby struct {
 	srv    *Server
 	mu     sync.Mutex
@@ -36,8 +35,8 @@ func NewLobby(srv *Server) *Lobby {
 	return &Lobby{srv: srv, queues: map[string][]*Player{}}
 }
 
-// Join mette il giocatore in coda; quando la coda ha abbastanza giocatori
-// parte una partita.
+// Join puts the player in the queue; when the queue has enough players a
+// match starts.
 func (l *Lobby) Join(p *Player, mode Mode) {
 	l.mu.Lock()
 	q := append(l.queues[mode.Name], p)
@@ -68,7 +67,7 @@ func (l *Lobby) start(mode Mode, players []*Player) {
 	l.srv.sched.Add(r)
 }
 
-// Leave toglie dalla coda chi si disconnette mentre aspetta.
+// Leave removes from the queue whoever disconnects while waiting.
 func (l *Lobby) Leave(p *Player) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -82,7 +81,7 @@ func (l *Lobby) Leave(p *Player) {
 	}
 }
 
-// Drain svuota le code: chi aspetta va a cercare partita su un altro server.
+// Drain empties the queues: whoever is waiting goes looking for a match on another server.
 func (l *Lobby) Drain() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -95,7 +94,7 @@ func (l *Lobby) Drain() {
 	}
 }
 
-// Waiting è il numero di giocatori in coda.
+// Waiting is the number of players in queue.
 func (l *Lobby) Waiting() int {
 	l.mu.Lock()
 	defer l.mu.Unlock()

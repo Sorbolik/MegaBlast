@@ -15,9 +15,9 @@
 --   vetrina.risorse(v)                       -- globi, paracadute, salti in aria
 
 local game = require "sim.game"
-local abilita = require "sim.abilita"
-local assetto = require "sim.assetto"
-local equip = require "sim.equipaggiamento"
+local abilita = require "sim.skills"
+local assetto = require "sim.loadout"
+local equip = require "sim.gear"
 local profilo = require "menu.profilo"
 
 local M = {}

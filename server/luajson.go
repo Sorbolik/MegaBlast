@@ -8,10 +8,10 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-// appendJSON scrive in JSON un valore Lua fatto di tabelle, numeri, stringhe e
-// booleani. Una tabella con solo la parte a lista (o vuota) diventa un array.
-// I numeri interi restano interi, gli altri hanno due decimali: bastano per
-// posizioni e angoli e tengono piccoli i messaggi.
+// appendJSON writes as JSON a Lua value made of tables, numbers, strings and
+// booleans. A table with only the list part (or empty) becomes an array.
+// Integers stay integers, the others get two decimals: enough for positions
+// and angles, and it keeps messages small.
 func appendJSON(b []byte, v lua.LValue) []byte {
 	switch v := v.(type) {
 	case lua.LNumber:
@@ -83,8 +83,8 @@ func appendString(b []byte, s string) []byte {
 	return append(b, '"')
 }
 
-// fromJSON fa il contrario per le regole degli eventi: un JSON di oggetti,
-// liste, numeri, stringhe e booleani diventa una tabella Lua. nil resta nil.
+// fromJSON does the opposite for event rules: a JSON of objects, lists,
+// numbers, strings and booleans becomes a Lua table. nil stays nil.
 func (e *Engine) fromJSON(data []byte) (lua.LValue, error) {
 	if data == nil {
 		return lua.LNil, nil

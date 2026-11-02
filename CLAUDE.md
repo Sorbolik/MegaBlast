@@ -1,6 +1,11 @@
 # MegaBlast
 
-Repository in italiano (commenti, documenti, messaggi di commit).
+Documenti, CLAUDE.md, messaggi di commit e PR in italiano. Il codice (nomi di file,
+funzioni, variabili e commenti) passa all'inglese a ondate (piano di Sergio, 2 nov):
+già in inglese `client/sim/` (tranne `bot.lua`, `rete.lua`, `corpo.lua`), `server/` e i
+loro test; il resto resta in italiano finché non arriva la sua ondata. Nei file in
+inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
+errori del server) restano in italiano. Si rinomina con `strumenti/rinomina/rinomina.py`.
 
 ## Prima di ogni PR: controlli e revisione (Sergio, 2 nov)
 
@@ -68,7 +73,7 @@ controlla ogni volta la lista in [docs/server.md](docs/server.md#server-in-pari-
 manda solo in locale, test in `server/server_test.go`) e prova l'online nel
 simulatore (`strumenti/simula/scenari/scelta_online.txt`, server vero e giocatori finti).
 
-Il server usa un terreno suo in Go (`server/terreno.go`) per le funzioni di
+Il server usa un terreno suo in Go (`server/terrain.go`) per le funzioni di
 `client/sim/terrain.lua` che toccano le celle: `new`, `get`, `set`, `solid`,
 `any_solid`, `carve`, `ground_below`, `surface_y`. Se ne cambi una in Lua,
 cambiala anche in Go: `go test ./server/` le confronta e fallisce se
@@ -148,7 +153,7 @@ l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla p
 su claude.ai le connessioni verso altri siti sono bloccate.
 
 I test (tutti insieme in `strumenti/controlli/tutti.sh`): `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
-`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campagna_test.lua` (missioni della campagna e partita guidata), `luajit tests/eventi_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit strumenti/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
+`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campaign_test.lua` (missioni della campagna e partita guidata), `luajit tests/events_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit strumenti/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
 
 ## Sezione "Per Telegram" in ogni PR (Sergio, 29 ott)
 
@@ -178,7 +183,7 @@ pagina coi video delle trovate dei bot (i turni rari che fanno tanti punti).
 Stelle della campagna: a ogni PR che tocca `client/sim/` il controllo "Stelle della campagna"
 (`.github/workflows/stelle.yml`) rigioca le missioni coi bot (`collaudo.lua --vita 0.5,1,2`)
 e mette sulla PR un avviso per ogni stella da guardare. Se ce ne sono di nuovi, ritara le
-soglie in `client/sim/campagna.lua` nella stessa PR o di' nella PR perché no.
+soglie in `client/sim/campaign.lua` nella stessa PR o di' nella PR perché no.
 
 
 ## Immagini con ChatGPT (Codex)

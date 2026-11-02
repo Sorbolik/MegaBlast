@@ -1,14 +1,14 @@
--- Test della simulazione. Dalla radice del repository:
+-- Simulation tests. From the repository root:
 --   lua tests/sim_test.lua
 package.path = "client/?.lua;" .. package.path
 
 local game = require "sim.game"
 local config = require "sim.config"
-local mischia = require "sim.mischia"
+local melee = require "sim.melee"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
 
--- Le prove si fanno sulla forgia (alcune sul crogiolo).
+-- The tests run on the forgia (some on the crogiolo).
 
 local failures = 0
 local function check(cond, msg)
@@ -30,56 +30,56 @@ local function solid_count(t)
 	return n
 end
 
--- Ogni mappa: i robot compaiono appoggiati al terreno
+-- Every map: robots appear resting on the terrain
 for _, id in ipairs(maps.order) do
 	local m = game.new(42, id)
 	run(m, 120)
-	check(m.robots[1].grounded and m.robots[2].grounded, id .. ": i robot si appoggiano al terreno")
-	check(not m.robots[1].dead and not m.robots[2].dead, id .. ": nessun robot muore all'avvio")
+	check(m.robots[1].grounded and m.robots[2].grounded, id .. ": robots rest on the terrain")
+	check(not m.robots[1].dead and not m.robots[2].dead, id .. ": no robot dies at startup")
 end
 
--- Partite vere: senza mappa la sceglie il seed, fra quelle di maps.ROTATION
+-- Real matches: without a map the seed picks it, among those of maps.ROTATION
 do
 	local seen = {}
 	for seed = 1, 4 do
 		local id = game.new(seed).map
-		check(id == game.new(seed).map, "stesso seed, stessa mappa")
+		check(id == game.new(seed).map, "same seed, same map")
 		seen[id] = true
 	end
 	for _, id in ipairs(maps.ROTATION) do
-		check(maps.maps[id] and seen[id], id .. ": esce nelle partite")
+		check(maps.maps[id] and seen[id], id .. ": comes up in matches")
 	end
 end
 
 local g = game.new(42, "forgia")
 run(g, 120)
 
--- Il robot di turno cammina
+-- The robot on turn walks
 local x0, x2 = g.robots[1].x, g.robots[2].x
 run(g, 60, { right = true })
-check(g.robots[1].x > x0 + 20, "il robot cammina verso destra")
-check(g.robots[2].x == x2, "l'avversario resta fermo")
+check(g.robots[1].x > x0 + 20, "the robot walks to the right")
+check(g.robots[2].x == x2, "the opponent stays still")
 
--- Salto verticale: senza direzione il robot sale dritto e riatterra nello stesso punto
+-- Vertical jump: without a direction the robot goes straight up and lands at the same spot
 local rb = g.robots[1]
 local sx, sy = rb.x, rb.y
 g:step({ jump = true })
-check(not rb.grounded, "il robot salta")
+check(not rb.grounded, "the robot jumps")
 local top = rb.y
 for _ = 1, 120 do
 	g:step()
 	top = math.max(top, rb.y)
 end
-check(rb.grounded and rb.x == sx, "il salto senza direzione è verticale")
-check(math.abs(top - sy - rb.stats.jump_height) < 4, "il salto arriva all'altezza delle statistiche")
+check(rb.grounded and rb.x == sx, "the jump without direction is vertical")
+check(math.abs(top - sy - rb.stats.jump_height) < 4, "the jump reaches the stats height")
 
--- Controllo in aria: si salta dritto e poi ci si sposta a mezz'aria
+-- Air control: jump straight and then move in mid-air
 g:step({ jump = true })
 run(g, 20, { left = true })
-check(rb.x < sx - 10 and not rb.grounded, "in aria il robot si sposta a sinistra")
+check(rb.x < sx - 10 and not rb.grounded, "in the air the robot moves left")
 run(g, 120)
 
--- In aria niente inerzia: la direzione cambia subito, alla velocità air_speed
+-- No inertia in the air: the direction changes at once, at air_speed
 do
 	local q = game.new(42, "forgia", { players = { { team = 1, stats = { air_speed = 60 } }, { team = 2 } } })
 	run(q, 120)
@@ -87,19 +87,19 @@ do
 	q:step({ jump = true, right = true })
 	run(q, 10, { right = true })
 	q:step({ left = true })
-	check(not r.grounded and r.vx == -60, "in aria la direzione cambia subito (" .. r.vx .. ")")
+	check(not r.grounded and r.vx == -60, "in the air the direction changes at once (" .. r.vx .. ")")
 end
 
--- Le statistiche cambiano l'altezza del salto
+-- Stats change the jump height
 local hj = game.new(42, "forgia", { players = { { team = 1, stats = { jump_height = 120 } }, { team = 2 } } })
 run(hj, 120)
 local hy = hj.robots[1].y
 hj:step({ jump = true })
 local htop = hy
 for _ = 1, 120 do hj:step(); htop = math.max(htop, hj.robots[1].y) end
-check(htop - hy > 100, "jump_height alto fa saltare di più")
+check(htop - hy > 100, "high jump_height jumps higher")
 
--- L'acciaio non si scava
+-- Steel can't be dug
 local tt = g.terrain
 local before_steel, before_dirt = 0, 0
 for i = 1, #tt.data do
@@ -110,15 +110,15 @@ local after_steel = 0
 for i = 1, #tt.data do
 	if tt.data[i] == terrain.STEEL then after_steel = after_steel + 1 end
 end
-check(before_steel > 0 and after_steel == before_steel, "i tubi d'acciaio restano dopo un'esplosione")
+check(before_steel > 0 and after_steel == before_steel, "steel pipes remain after an explosion")
 
--- Sparo: dopo lo sparo ci si può ancora muovere per qualche secondo, poi il turno passa
+-- Shooting: after the shot you can still move for a few seconds, then the turn passes
 run(g, 60)
 local fx = rb.x
 g:step({ fire = { angle = math.rad(60), power = 0.6 } })
-check(g.phase == "aim" and g.window > 0 and g.used.primary, "il missile parte e si apre il tempo del secondo attacco")
+check(g.phase == "aim" and g.window > 0 and g.used.primary, "the missile leaves and the second attack window opens")
 run(g, 30, { left = true })
-check(rb.x < fx - 10, "dopo lo sparo il robot si muove")
+check(rb.x < fx - 10, "after the shot the robot moves")
 local exploded = false
 for _ = 1, 900 do
 	g:step()
@@ -127,24 +127,24 @@ for _ = 1, 900 do
 	end
 	if g.current == 2 then break end
 end
-check(exploded, "il missile esplode o esce dalla mappa")
-check(g.current == 2, "il turno passa al giocatore 2")
+check(exploded, "the missile explodes or leaves the map")
+check(g.current == 2, "the turn passes to player 2")
 local lx = rb.x
 run(g, 30, { left = true })
-check(rb.x == lx, "finita la ritirata il robot non si muove più")
+check(rb.x == lx, "after the retreat the robot no longer moves")
 
--- Esplosione diretta su un robot: danno e cratere
+-- Direct explosion on a robot: damage and crater
 local g2 = game.new(7, "casuale")
 run(g2, 120)
 local r2 = g2.robots[2]
 local t0 = solid_count(g2.terrain)
 g2:explode(r2.x, r2.y + 2)
-check(r2.hp < r2.max_hp, "l'esplosione fa danno")
-check(solid_count(g2.terrain) < t0, "l'esplosione scava un cratere")
+check(r2.hp < r2.max_hp, "the explosion does damage")
+check(solid_count(g2.terrain) < t0, "the explosion digs a crater")
 
--- Teletrasporto e Lama di Nucleo ---------------------------------------------
+-- Teleport and Lama di Nucleo ---------------------------------------------
 
--- Un'area di cielo libero dove mettere i robot a mano
+-- An area of open sky to place robots by hand
 local function sky_spot(q, x0, w)
 	for y = game.WORLD_H - 60, 100, -4 do
 		local free = true
@@ -159,9 +159,9 @@ local function place(rb, x, y)
 	rb.x, rb.y, rb.vx, rb.vy, rb.grounded, rb.knocked = x, y, 0, 0, false, false
 end
 
--- Spara il Rampino e aspetta l'uncino, che vola (config.HOOK.shot_speed):
--- restituisce l'evento "hook" (senza target né anchor se va a vuoto). ogni() gira a ogni tick
--- di volo (per tenere fermo chi tira)
+-- Fires the Rampino and waits for the hook, which flies (config.HOOK.shot_speed):
+-- returns the "hook" event (without target or anchor on a miss). ogni() runs on
+-- every tick of flight (to keep the puller still)
 local function hook(g, angle, ogni)
 	local rb = g.robots[g.current]
 	g:step({ fire = { angle = angle, power = 1, weapon = "hook" } })
@@ -173,17 +173,17 @@ local function hook(g, angle, ogni)
 	end
 end
 
--- Lanciare il globo non chiude il turno; dopo 2 secondi il robot è dove si trova il globo
+-- Throwing the orb doesn't end the turn; after 2 seconds the robot is where the orb is
 local tp = game.new(42, "forgia")
 run(tp, 120)
 tp:pop_events()
 local tr = tp.robots[1]
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orbs[1] ~= nil and tp.phase == "aim", "il globo parte e il turno continua")
+check(tp.orbs[1] ~= nil and tp.phase == "aim", "the orb leaves and the turn goes on")
 tp:step()
 local ox, oy = tp.orbs[1].x, tp.orbs[1].y
 tp:step()
-check(tp.orbs[1].x ~= ox or tp.orbs[1].y ~= oy, "il globo vola")
+check(tp.orbs[1].x ~= ox or tp.orbs[1].y ~= oy, "the orb flies")
 local tp_ev, last_orb
 for _ = 1, game.TELEPORT_TICKS do
 	if tp.orbs[1] then last_orb = { x = tp.orbs[1].x, y = tp.orbs[1].y } end
@@ -192,25 +192,25 @@ for _ = 1, game.TELEPORT_TICKS do
 		if e.type == "teleport" then tp_ev = e end
 	end
 end
-check(tp_ev and tp_ev.type == "teleport", "dopo qualche secondo il robot si teletrasporta")
+check(tp_ev and tp_ev.type == "teleport", "after a few seconds the robot teleports")
 check(tp_ev and math.abs(tp_ev.x - last_orb.x) <= 8 and math.abs(tp_ev.y - (last_orb.y - game.ROBOT_H / 2)) <= 24,
-	"il robot compare dove si trova il globo")
-check(tp.phase == "aim" and tp.current == 1, "dopo il teletrasporto si può ancora attaccare")
-check(tp.orbs[1] == nil, "il globo sparisce dopo il teletrasporto")
-check(tr.teleports_left == config.STATS.teleports - 1, "il teletrasporto consuma un globo")
+	"the robot appears where the orb is")
+check(tp.phase == "aim" and tp.current == 1, "after the teleport you can still attack")
+check(tp.orbs[1] == nil, "the orb disappears after the teleport")
+check(tr.teleports_left == config.STATS.teleports - 1, "the teleport uses up an orb")
 tr.teleports_left = 5
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orbs[1] == nil and tr.teleports_left == 5, "al primo turno si fa un solo teletrasporto")
+check(tp.orbs[1] == nil and tr.teleports_left == 5, "on the first turn only one teleport")
 tr.turns = 2
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orbs[1] ~= nil and tr.teleports_left == 4, "dal secondo turno, con globi in mano, se ne lancia un altro")
+check(tp.orbs[1] ~= nil and tr.teleports_left == 4, "from the second turn, with orbs in hand, another one can be thrown")
 tr.teleports_left = 0
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(#tp.orbs == 1, "senza globi il teletrasporto non parte")
+check(#tp.orbs == 1, "without orbs the teleport doesn't leave")
 
--- Più globi in volo insieme: ognuno teletrasporta allo scadere del suo tempo,
--- e in mezzo si può sparare. Il turno passa solo quando tutti hanno finito.
--- Un robot che può teletrasportarsi quanto vuole (per le prove)
+-- Several orbs in flight together: each teleports when its time is up, and in
+-- between you can shoot. The turn passes only when all are done.
+-- A robot that can teleport as much as it likes (for tests)
 local function free_tp(r)
 	r.teleports_left, r.turns = 99, 2
 end
@@ -240,11 +240,11 @@ local function multi(plan)
 	return table.concat(seq, " ")
 end
 local m1 = multi({ [1] = "tp", [20] = "tp", [40] = "missile" })
-check(m1 == "orb orb fire teleport teleport turn", "tp, tp, missile: due teletrasporti e poi il turno passa (" .. m1 .. ")")
+check(m1 == "orb orb fire teleport teleport turn", "tp, tp, missile: two teleports and then the turn passes (" .. m1 .. ")")
 local m2 = multi({ [1] = "tp", [60] = "tp", [game.TELEPORT_TICKS + 10] = "missile" })
-check(m2 == "orb orb teleport fire teleport turn", "tp, tp, teletrasporto, missile, teletrasporto (" .. m2 .. ")")
+check(m2 == "orb orb teleport fire teleport turn", "tp, tp, teleport, missile, teleport (" .. m2 .. ")")
 
--- Lo stato si conserva: chi sta cadendo continua a cadere con la stessa velocità
+-- State is kept: whoever is falling keeps falling at the same speed
 local function falling(with_orb)
 	local q = game.new(42, "forgia")
 	run(q, 120)
@@ -260,12 +260,12 @@ local function falling(with_orb)
 end
 local fr, fy = falling(true)
 local nr = falling(false)
-check(fr.x == 720 and math.abs(fr.y - fy) < 1, "il teletrasporto porta il robot nel punto del globo")
+check(fr.x == 720 and math.abs(fr.y - fy) < 1, "the teleport carries the robot to the orb's point")
 check(fr.vx == nr.vx and fr.vy == nr.vy and fr.vy < -250,
-	"la velocità di caduta resta la stessa dopo il teletrasporto")
-check(not fr.grounded, "il robot non viene appoggiato a terra")
+	"the fall speed stays the same after the teleport")
+check(not fr.grounded, "the robot isn't set down on the ground")
 
--- Il globo non si appiccica: tocca terra e rotola
+-- The orb doesn't stick: it touches ground and rolls
 local rl = game.new(42, "forgia")
 run(rl, 120)
 local rr = rl.robots[1]
@@ -276,15 +276,15 @@ for _ = 1, 40 do
 	rl:step()
 	if rl.orbs[1] and not touched_x and rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y - 3) then touched_x = rl.orbs[1].x end
 end
-check(touched_x and rl.orbs[1] and rl.orbs[1].x > touched_x + 10, "il globo rotola dopo aver toccato terra")
-check(rl.orbs[1] and not rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y), "il globo non entra nel terreno")
+check(touched_x and rl.orbs[1] and rl.orbs[1].x > touched_x + 10, "the orb rolls after touching ground")
+check(rl.orbs[1] and not rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y), "the orb doesn't go into the terrain")
 
--- Il teletrasporto avviene sempre, anche se il globo è in un punto impossibile
+-- The teleport always happens, even if the orb is at an impossible spot
 local im = game.new(42, "forgia")
 run(im, 120)
 local ir = im.robots[1]
 local tx0 = ir.x
--- un tunnel troppo stretto per il robot, scavato nel terreno pieno sotto i suoi piedi
+-- a tunnel too narrow for the robot, dug into the solid terrain under its feet
 for cx = math.floor((tx0 + 100) / game.CELL), math.floor((tx0 + 110) / game.CELL) do
 	im.terrain:set(cx, math.floor((ir.y - 30) / game.CELL), 0)
 end
@@ -292,25 +292,25 @@ im.orbs = { { x = tx0 + 105, y = ir.y - 30, vx = 0, vy = 0, owner = 1, timer = 1
 local im_tp
 im:step()
 for _, e in ipairs(im:pop_events()) do if e.type == "teleport" then im_tp = e end end
-check(im_tp ~= nil, "nel punto impossibile ti teletrasporta lo stesso")
+check(im_tp ~= nil, "at the impossible spot it teleports you anyway")
 check(im_tp and not im:robot_collides(ir.x, ir.y, ir) and math.abs(ir.x - (tx0 + 105)) <= 48,
-	"e ti mette nel punto libero più vicino")
+	"and puts you at the nearest free point")
 
--- Se il globo esce dalla mappa il teletrasporto ti porta lì e cadi
+-- If the orb leaves the map the teleport takes you there and you fall
 local om = game.new(42, "forgia")
 run(om, 120)
 om.orbs = { { x = -200, y = -100, vx = 0, vy = 0, owner = 1, timer = 1 } }
 om:step()
 om:step()
-check(om.robots[1].dead, "un globo fuori dalla mappa ti fa cadere nel vuoto")
+check(om.robots[1].dead, "an orb off the map makes you fall into the void")
 
--- Fendente: colpisce dietro la schiena e davanti
+-- Slash: hits behind the back and in front
 local function sword_game()
 	local q = game.new(42, "forgia")
 	run(q, 120)
 	q:pop_events()
 	local y = sky_spot(q, 640, 300)
-	-- un terzo robot per provare la combo dietro + davanti
+	-- a third robot to try the behind + in front combo
 	local r3 = {}
 	for k, v in pairs(q.robots[2]) do r3[k] = v end
 	r3.id = 3
@@ -318,13 +318,13 @@ local function sword_game()
 	return q, y
 end
 
-local SWORD_TICKS = game.melee_ticks(mischia.fendente)
+local SWORD_TICKS = game.melee_ticks(melee.slash)
 local sw, swy = sword_game()
 place(sw.robots[1], 640, swy)
-place(sw.robots[2], 640 - 25, swy)  -- dietro (il robot 1 guarda a destra)
-place(sw.robots[3], 640 + 25, swy)  -- davanti
+place(sw.robots[2], 640 - 25, swy)  -- behind (robot 1 faces right)
+place(sw.robots[3], 640 + 25, swy)  -- in front
 sw:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
-check(sw.used.secondary and sw.window > 0, "il fendente è un attacco: si apre il tempo del secondo")
+check(sw.used.secondary and sw.window > 0, "the slash is an attack: the second attack window opens")
 local order = {}
 for _ = 1, SWORD_TICKS do
 	sw:step()
@@ -332,17 +332,17 @@ for _ = 1, SWORD_TICKS do
 		if e.type == "sword_hit" then order[#order + 1] = e.target end
 	end
 end
-check(#order == 2, "la spada colpisce chi è dietro e chi è davanti (" .. table.concat(order, " ") .. ")")
+check(#order == 2, "the sword hits whoever is behind and whoever is in front (" .. table.concat(order, " ") .. ")")
 check(sw.robots[2].hp == sw.robots[2].max_hp - game.SWORD_DAMAGE and sw.robots[3].hp == sw.robots[3].max_hp - game.SWORD_DAMAGE,
-	"ogni bersaglio subisce il danno una volta sola")
+	"each target takes the damage only once")
 
--- Combo: teletrasporto a metà fendente, la lama prende anche chi è nel punto
--- d'arrivo (i colpi arrivano tutti quando si chiude la finestra)
+-- Combo: teleport mid-slash, the blade also catches whoever is at the arrival
+-- point (all hits land when the window closes)
 local function combo(with_orb)
 	local q, y = sword_game()
 	place(q.robots[1], 400, y)
-	place(q.robots[2], 400 - 25, y)  -- dietro, nel punto di partenza
-	place(q.robots[3], 800 + 25, y)  -- davanti, nel punto d'arrivo
+	place(q.robots[2], 400 - 25, y)  -- behind, at the starting point
+	place(q.robots[3], 800 + 25, y)  -- in front, at the arrival point
 	q.robots[3].vy, q.robots[3].vx = 0, 0
 	if with_orb then
 		q.orbs = { { x = 800, y = y + game.ROBOT_H / 2, vx = 0, vy = 0, owner = 1, timer = 30 } }
@@ -358,10 +358,10 @@ local function combo(with_orb)
 	end
 	return table.concat(seq, " ")
 end
-check(combo(true) == "tp hit2 hit3", "combo: teletrasporto e colpo a chi era dietro e a chi è all'arrivo (" .. combo(true) .. ")")
-check(combo(false) == "hit2", "senza globo il bersaglio lontano non viene colpito")
+check(combo(true) == "tp hit2 hit3", "combo: teleport and hit on whoever was behind and whoever is at the arrival (" .. combo(true) .. ")")
+check(combo(false) == "hit2", "without an orb the far target isn't hit")
 
--- Il turno aspetta il globo e la ritirata, poi passa all'avversario
+-- The turn waits for the orb and the retreat, then passes to the opponent
 local tw = game.new(42, "forgia")
 run(tw, 120)
 tw:step({ fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } })
@@ -375,21 +375,21 @@ for _ = 1, 900 do
 	end
 	if tw.current == 2 then break end
 end
-check(tw_tp, "il turno non passa prima che il globo abbia finito")
-check(tw.current == 2, "dopo fendente e teletrasporto il turno passa")
+check(tw_tp, "the turn doesn't pass before the orb is done")
+check(tw.current == 2, "after slash and teleport the turn passes")
 
--- Due attacchi per turno e teletrasporti --------------------------------------------------
+-- Two attacks per turn and teleports --------------------------------------------------
 do
 
 	local MISSILE = { fire = { angle = math.rad(60), power = 0.6 } }
 	local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
 	local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
 
-	-- Soglie dei globi: entro 9 s due, entro 17 s uno, dopo niente, mai tre
-	check(game.globi_per(0) == 2 and game.globi_per(9 * 60) == 2 and game.globi_per(9 * 60 + 1) == 1
-		and game.globi_per(17 * 60) == 1 and game.globi_per(17 * 60 + 1) == 0, "soglie dei globi 9 s e 17 s")
+	-- Orb thresholds: within 9 s two, within 17 s one, after that none, never three
+	check(game.orbs_for(0) == 2 and game.orbs_for(9 * 60) == 2 and game.orbs_for(9 * 60 + 1) == 1
+		and game.orbs_for(17 * 60) == 1 and game.orbs_for(17 * 60 + 1) == 0, "orb thresholds 9 s and 17 s")
 
-	-- Primo attacco dopo 12 s: un teletrasporto
+	-- First attack after 12 s: one teleport
 	local at = game.new(42, "forgia")
 	local ar = at.robots[1]
 	run(at, 12 * 60 - 1)
@@ -399,35 +399,35 @@ do
 	local nev
 	for _, e in ipairs(at:pop_events()) do if e.type == "teleports" then nev = e end end
 	check(gain >= 1 and ar.teleports_left == config.STATS.teleports + gain and nev and nev.amount == gain,
-		"i secondi rimasti al primo attacco diventano teletrasporti (" .. ar.teleports_left .. ")")
-	check(at.window == game.AFTER_ATTACK_TICKS, "dopo il primo attacco restano 8 s")
+		"the seconds left at the first attack become teleports (" .. ar.teleports_left .. ")")
+	check(at.window == game.AFTER_ATTACK_TICKS, "after the first attack 8 s remain")
 	at:step(MISSILE)
-	check(not at:can_use("missile") and at.used.primary, "una sola arma per turno")
+	check(not at:can_use("missile") and at.used.primary, "only one weapon per turn")
 	local n0 = ar.teleports_left
 	run(at, game.AFTER_ATTACK_TICKS - 30)
-	check(at:can_use("sword"), "il secondo attacco si fa fino all'ultimo secondo")
+	check(at:can_use("sword"), "the second attack can be done until the last second")
 	at:step(SWORD)
-	check(at.used.secondary and at.window > 0, "dopo il secondo attacco il tempo continua")
-	check(ar.teleports_left == n0, "il secondo attacco non dà teletrasporti")
-	check(not at:can_use("missile") and not at:can_use("sword"), "dopo i due attacchi niente più attacchi")
+	check(at.used.secondary and at.window > 0, "after the second attack time goes on")
+	check(ar.teleports_left == n0, "the second attack gives no teleports")
+	check(not at:can_use("missile") and not at:can_use("sword"), "after the two attacks no more attacks")
 	local turn_at
 	for i = 1, 2000 do
 		at:step()
 		if at.current == 2 then turn_at = i break end
 	end
-	check(turn_at and turn_at >= 28, "il turno passa allo scadere degli 8 s")
+	check(turn_at and turn_at >= 28, "the turn passes when the 8 s run out")
 
-	-- Ordine libero: prima la spada, poi il missile
+	-- Any order: first the sword, then the missile
 	local ao = game.new(42, "forgia")
 	run(ao, 60)
 	ao:step(SWORD)
 	run(ao, 30)
-	check(ao:can_use("missile"), "dopo la spada si può ancora sparare")
+	check(ao:can_use("missile"), "after the sword you can still shoot")
 	ao:step(MISSILE)
-	check(ao.used.primary and ao.used.secondary, "spada e missile nello stesso turno")
+	check(ao.used.primary and ao.used.secondary, "sword and missile in the same turn")
 
-	-- Il teletrasporto non si spegne mai sparando: dopo la secondaria, dopo la
-	-- primaria e dopo tutte e due si lancia ancora, come gli oggetti
+	-- The teleport never goes off by shooting: after the secondary, after the
+	-- primary and after both it can still be thrown, like items
 	for _, order in ipairs({ { "sword" }, { "missile" }, { "sword", "missile" }, { "missile", "sword" } }) do
 		local q = game.new(42, "forgia")
 		run(q, 120)
@@ -436,86 +436,86 @@ do
 			q:step({ fire = { angle = math.rad(60), power = 0.6, weapon = w } })
 		end
 		local label = table.concat(order, "+")
-		check(q.phase == "aim" and q:can_use("teleport"), "teletrasporto usabile dopo " .. label)
+		check(q.phase == "aim" and q:can_use("teleport"), "teleport usable after " .. label)
 		q:step({ fire = { angle = math.rad(90), power = 0.15, weapon = "teleport" } })
-		check(#q.orbs == 1, "il globo parte dopo " .. label)
+		check(#q.orbs == 1, "the orb leaves after " .. label)
 	end
 
-	-- Chi attacca allo scadere non ha tempo per altro
+	-- Whoever attacks at the last moment has no time for anything else
 	local az = game.new(42, "forgia")
 	run(az, game.TURN_TICKS - 2)
 	az:step(MISSILE)
-	check(az.used.primary and az.window <= 1, "attaccando allo scadere non resta tempo")
+	check(az.used.primary and az.window <= 1, "attacking at the last moment leaves no time")
 	run(az, 3)
-	check(az.phase ~= "aim", "il turno chiude allo scadere anche dopo un attacco")
+	check(az.phase ~= "aim", "the turn closes on time even after an attack")
 
-	-- Al primo turno: lanciato il globo di partenza, quelli guadagnati attaccando
-	-- si usano lo stesso (Sergio: un teletrasporto guadagnato nel turno si usa sempre)
+	-- On the first turn: after throwing the starting orb, the ones earned by
+	-- attacking can still be used (Sergio: a teleport earned in the turn can always be used)
 	local ft = game.new(42, "forgia")
 	local fr = ft.robots[1]
 	run(ft, 30)
 	ft:step(TELE)
-	check(not ft:can_use("teleport"), "al primo turno un solo globo di partenza")
+	check(not ft:can_use("teleport"), "on the first turn only one starting orb")
 	ft:step(MISSILE)
 	local earned = ft.teleports_earned
-	check(earned == 2, "attaccando subito si guadagnano due globi (" .. earned .. ")")
+	check(earned == 2, "attacking at once earns two orbs (" .. earned .. ")")
 	for k = 1, earned do
-		check(ft:can_use("teleport"), "globo guadagnato " .. k .. " usabile al primo turno")
+		check(ft:can_use("teleport"), "earned orb " .. k .. " usable on the first turn")
 		ft:step(TELE)
 	end
-	check(#ft.orbs == 1 + earned, "partono tutti i globi guadagnati")
-	check(fr.teleports_left > 0 and not ft:can_use("teleport"), "i globi di partenza restano per i turni dopo")
+	check(#ft.orbs == 1 + earned, "all the earned orbs leave")
+	check(fr.teleports_left > 0 and not ft:can_use("teleport"), "the starting orbs remain for the later turns")
 
-	-- Scambio del secondo attacco con un teletrasporto (Sergio, 29 ottobre)
+	-- Swapping the second attack for a teleport (Sergio, 29 October)
 	local sw = game.new(42, "forgia")
 	local swr = sw.robots[1]
 	run(sw, 30)
-	check(not sw:can_use("swap"), "prima del primo attacco niente scambio")
+	check(not sw:can_use("swap"), "no swap before the first attack")
 	sw:step(TELE)
 	run(sw, 20 * 60)
 	sw:step(MISSILE)
 	local n_sw = swr.teleports_left
-	check(sw:can_use("swap") and not sw:can_use("teleport"), "dopo il primo attacco (tardi, niente globi) si può scambiare")
+	check(sw:can_use("swap") and not sw:can_use("teleport"), "after the first attack (late, no orbs) you can swap")
 	sw:step({ fire = { angle = 0, power = 1, weapon = "swap" } })
-	check(swr.teleports_left == n_sw + 1 and sw.used.primary and sw.used.secondary, "lo scambio dà un globo e chiude gli attacchi")
-	check(not sw:can_use("sword") and not sw:can_use("swap"), "dopo lo scambio niente secondo attacco né altro scambio")
-	check(sw:can_use("teleport"), "il globo dello scambio si lancia anche al primo turno")
+	check(swr.teleports_left == n_sw + 1 and sw.used.primary and sw.used.secondary, "the swap gives an orb and closes the attacks")
+	check(not sw:can_use("sword") and not sw:can_use("swap"), "after the swap no second attack or other swap")
+	check(sw:can_use("teleport"), "the swap orb can be thrown on the first turn too")
 	sw:step(TELE)
-	check(#sw.orbs >= 1 and swr.teleports_left == n_sw, "parte il globo dello scambio")
+	check(#sw.orbs >= 1 and swr.teleports_left == n_sw, "the swap orb leaves")
 	local sw2 = game.new(42, "forgia")
 	run(sw2, 30)
 	sw2:step(MISSILE)
 	sw2:step(SWORD)
-	check(not sw2:can_use("swap"), "dopo due attacchi niente scambio")
+	check(not sw2:can_use("swap"), "after two attacks no swap")
 
-	-- Nessun tetto: i globi si accumulano
+	-- No cap: orbs pile up
 	local fz = game.new(42, "forgia", { players = { { team = 1, stats = { teleports = 5 } }, { team = 2 } } })
 	run(fz, 60)
 	fz:step(MISSILE)
-	check(fz.robots[1].teleports_left == 7, "i teletrasporti si accumulano senza tetto")
+	check(fz.robots[1].teleports_left == 7, "teleports pile up without a cap")
 
-	-- La vita parte dal valore del config e si può cambiare per robot
+	-- Life starts from the config value and can be changed per robot
 	local hv = game.new(42, "forgia", { players = { { team = 1, stats = { max_hp = 200 } }, { team = 2 } } })
-	check(hv.robots[1].hp == 200 and hv.robots[2].hp == config.STATS.max_hp, "vita dalle statistiche del robot")
+	check(hv.robots[1].hp == 200 and hv.robots[2].hp == config.STATS.max_hp, "life from the robot's stats")
 end
 
--- Da 2 a 4 giocatori, con squadre -------------------------------------------------
+-- From 2 to 4 players, with teams -------------------------------------------------
 do
 
-	-- 2 contro 2: le squadre si alternano e i compagni partono dallo stesso lato
+	-- 2 v 2: teams alternate and teammates start on the same side
 	local four = { { team = 1 }, { team = 1 }, { team = 2 }, { team = 2 } }
 	for _, id in ipairs(maps.order) do
 		local q = game.new(42, id, { players = four })
 		run(q, 120)
 		local ok = #q.robots == 4
 		for _, r in ipairs(q.robots) do ok = ok and r.grounded and not r.dead end
-		check(ok, id .. ": quattro robot compaiono appoggiati al terreno")
+		check(ok, id .. ": four robots appear resting on the terrain")
 		local mid = game.WORLD_W / 2
 		check((q.robots[1].x < mid) == (q.robots[2].x < mid) and (q.robots[3].x < mid) == (q.robots[4].x < mid)
-			and (q.robots[1].x < mid) ~= (q.robots[3].x < mid), id .. ": i compagni partono dallo stesso lato")
+			and (q.robots[1].x < mid) ~= (q.robots[3].x < mid), id .. ": teammates start on the same side")
 	end
 
-	-- Gioca il turno corrente (un missile verso l'alto) e restituisce chi gioca dopo
+	-- Plays the current turn (a missile upwards) and returns who plays next
 	local function next_turn(q)
 		local cur = q.current
 		q:step({ fire = { angle = math.rad(90), power = 0.1 } })
@@ -528,33 +528,33 @@ do
 
 	local q4 = game.new(42, "forgia", { players = four })
 	check(q4.mode == "2v2" and table.concat(q4.order, " ") == "1 3 2 4",
-		"2 contro 2: turni A1, B1, A2, B2 (" .. table.concat(q4.order, " ") .. ")")
+		"2 v 2: turns A1, B1, A2, B2 (" .. table.concat(q4.order, " ") .. ")")
 	local seen4 = { q4.current }
 	for _ = 1, 4 do seen4[#seen4 + 1] = next_turn(q4) end
-	check(table.concat(seen4, " ") == "1 3 2 4 1", "i turni seguono l'ordine delle squadre (" .. table.concat(seen4, " ") .. ")")
-	-- chi muore ricomincia dopo RESPAWN_TICKS, anche a metà del turno, e non perde il suo turno
+	check(table.concat(seen4, " ") == "1 3 2 4 1", "turns follow the order of the teams (" .. table.concat(seen4, " ") .. ")")
+	-- whoever dies starts again after RESPAWN_TICKS, even mid-turn, and doesn't lose their turn
 	q4:kill(q4.robots[3])
 	run(q4, game.RESPAWN_TICKS)
 	check(not q4.robots[3].dead and q4.robots[3].hp == q4.robots[3].max_hp and q4.current == 1,
-		"il robot morto ricomincia nello stesso turno con la vita piena")
-	check(next_turn(q4) == 3, "e gioca il suo turno")
-	-- chi muore nel suo turno ricomincia e il turno continua
+		"the dead robot starts again in the same turn with full life")
+	check(next_turn(q4) == 3, "and plays its turn")
+	-- whoever dies in their own turn starts again and the turn goes on
 	local own = game.new(42, "forgia")
 	run(own, 30)
 	own:kill(own.robots[1], "fell")
 	run(own, game.RESPAWN_TICKS + 5)
 	check(own.current == 1 and own.phase == "aim" and not own.robots[1].dead and own:can_use("missile"),
-		"morto nel proprio turno: si ricomincia e il turno continua")
+		"died in their own turn: starts again and the turn goes on")
 
-	-- Tutti contro tutti: quattro squadre da uno, turni nell'ordine di arrivo
+	-- Free for all: four teams of one, turns in order of arrival
 	local ffa = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
-	check(ffa.mode == "ffa" and table.concat(ffa.order, " ") == "1 2 3 4", "tutti contro tutti: turni 1, 2, 3, 4")
-	check(game.new(42, "forgia").mode == "1v1", "senza players è un 1 contro 1")
+	check(ffa.mode == "ffa" and table.concat(ffa.order, " ") == "1 2 3 4", "free for all: turns 1, 2, 3, 4")
+	check(game.new(42, "forgia").mode == "1v1", "without players it's a 1 v 1")
 end
 
--- Oggetti tattici: trappole, scudi, trampolini, paracadute, cerchi di cura -------------
+-- Tactical items: traps, shields, trampolines, parachutes, healing circles -------------
 do
-	-- le casse contengono anche gli oggetti
+	-- crates also contain items
 	local mix = game.new(5, "forgia")
 	local seen = {}
 	for _ = 1, 60 do
@@ -562,46 +562,46 @@ do
 		local c = mix:spawn_crate()
 		if c then seen[c.weapon] = true end
 	end
-	check(seen.trap and seen.shield and seen.trampoline, "nelle casse ci sono trappole, scudi e trampolini")
+	check(seen.trap and seen.shield and seen.trampoline, "crates contain traps, shields and trampolines")
 
-	-- gli oggetti si usano anche nel riposizionamento e non sono attacchi
+	-- items can also be used while repositioning and aren't attacks
 	local q = game.new(42, "forgia", { ammo = { trap = 1, shield = 1 } })
 	run(q, 60)
 	local r1, r2 = q.robots[1], q.robots[2]
 	q:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
 	check(r1.shield == config.SHIELD.hp and not q.used.primary and not q.used.secondary,
-		"lo scudo si attiva e non è un attacco")
+		"the shield turns on and isn't an attack")
 	q:step({ fire = { angle = math.rad(60), power = 0.6 } })
 	q:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
-	check(q.window > 0 and q:can_use("trap"), "dopo i due attacchi la trappola si può ancora posare")
+	check(q.window > 0 and q:can_use("trap"), "after the two attacks the trap can still be placed")
 	q:step({ fire = { angle = 0, power = 1, weapon = "trap" } })
 	local trap = q.placed[1]
-	check(trap and trap.kind == "trap" and not trap.armed and r1.ammo.trap == 0, "la trappola è posata ai piedi, non ancora armata")
+	check(trap and trap.kind == "trap" and not trap.armed and r1.ammo.trap == 0, "the trap is placed at the feet, not armed yet")
 
-	-- scudo: assorbe il danno e finisce all'inizio del proprio turno dopo
+	-- shield: absorbs damage and ends at the start of the owner's next turn
 	q:hurt(r1, 20, r2)
-	check(r1.hp == r1.max_hp and r1.shield == config.SHIELD.hp - 20, "lo scudo assorbe il danno")
-	check(q:knock_mul(r1) < 1, "con lo scudo si viene spinti meno")
+	check(r1.hp == r1.max_hp and r1.shield == config.SHIELD.hp - 20, "the shield absorbs the damage")
+	check(q:knock_mul(r1) < 1, "with the shield you get pushed less")
 
-	-- al turno dopo la trappola è armata: l'avversario che ci passa sopra vola via
+	-- on the next turn the trap is armed: the opponent stepping on it flies away
 	for _ = 1, 3000 do
 		q:step()
 		if q.current == 2 then break end
 	end
-	check(trap.armed and r1.shield, "al turno dopo la trappola è armata e lo scudo c'è ancora")
+	check(trap.armed and r1.shield, "on the next turn the trap is armed and the shield is still there")
 	r2.x, r2.y, r2.vx, r2.vy, r2.grounded = trap.x, trap.y, 0, 0, true
 	local hp2 = r2.hp
 	q:step()
 	check(r2.vy > 0 and math.abs(r2.vx) > 0 and r2.hp == hp2 - config.TRAP.damage and #q.placed == 0,
-		"la trappola lancia l'avversario e sparisce")
-	check(r2.last_hit == 1, "e chi l'ha posata prende l'uccisione se cade")
+		"the trap launches the opponent and disappears")
+	check(r2.last_hit == 1, "and whoever placed it gets the kill if they fall")
 	for _ = 1, 3000 do
 		q:step()
 		if q.current == 1 then break end
 	end
-	check(r1.shield == nil, "lo scudo finisce all'inizio del proprio turno")
+	check(r1.shield == nil, "the shield ends at the start of the owner's turn")
 
-	-- un compagno non fa scattare la trappola
+	-- a teammate doesn't set off the trap
 	local t2 = game.new(42, "forgia", { players = config.MODES["2v2"], ammo = { trap = 1 } })
 	run(t2, 60)
 	t2:step({ fire = { angle = 0, power = 1, weapon = "trap" } })
@@ -611,10 +611,10 @@ do
 	mate.x, mate.y, mate.vy, mate.grounded = tt.x, tt.y, 0, true
 	t2.robots[1].x = tt.x + 60
 	t2:step()
-	check(#t2.placed == 1 and mate.vy <= 0, "il compagno non fa scattare la trappola")
+	check(#t2.placed == 1 and mate.vy <= 0, "the teammate doesn't set off the trap")
 
-	-- trampolino: si lancia; tirato addosso a un robot cade ai suoi piedi e lo fa
-	-- rimbalzare, sempre; restandoci sopra i rimbalzi calano fino a fermarsi
+	-- trampoline: it's thrown; thrown at a robot it lands at its feet and makes it
+	-- bounce, always; staying on it the bounces shrink until stopping
 	local tb = game.new(42, "forgia", { ammo = { trampoline = 1 } })
 	run(tb, 60)
 	local a, b = tb.robots[1], tb.robots[2]
@@ -622,7 +622,7 @@ do
 	run(tb, 5)
 	tb:step({ fire = { angle = math.rad(10), power = 0.4, weapon = "trampoline" } })
 	local tramp = tb.placed[1]
-	check(tramp and tramp.flying and a.ammo.trampoline == 0, "il trampolino si lancia")
+	check(tramp and tramp.flying and a.ammo.trampoline == 0, "the trampoline is thrown")
 	local bounces, first_vy = 0, nil
 	for _ = 1, 600 do
 		tb:step()
@@ -634,10 +634,10 @@ do
 		end
 	end
 	check(not tramp.flying and math.abs(tramp.x - b.x) <= tramp.r + game.ROBOT_HALF_W,
-		"tirato su un robot cade ai suoi piedi")
-	check(bounces >= 2 and first_vy == config.TRAMPOLINE.launch_vy, "e lo fa rimbalzare (" .. bounces .. ")")
-	check(b.grounded and b.vy == 0, "restando sopra i rimbalzi calano e ci si ferma")
-	-- sceso e risalito, si rimbalza di nuovo alto
+		"thrown at a robot it lands at its feet")
+	check(bounces >= 2 and first_vy == config.TRAMPOLINE.launch_vy, "and makes it bounce (" .. bounces .. ")")
+	check(b.grounded and b.vy == 0, "staying on it the bounces shrink and you stop")
+	-- stepped off and back on, you bounce high again
 	b.x = tramp.x + 60
 	run(tb, 30)
 	b.x, b.y = tramp.x, tramp.y
@@ -647,10 +647,10 @@ do
 		tb:step()
 		for _, e in ipairs(tb:pop_events()) do if e.type == "bounce" then again = b.vy end end
 	end
-	check(again == config.TRAMPOLINE.launch_vy, "risalendoci si rimbalza di nuovo alto")
+	check(again == config.TRAMPOLINE.launch_vy, "stepping back on it you bounce high again")
 
-	-- sul trampolino rimbalza tutto: missile, Uovo, schegge, Cecchino, globo, cassa.
-	-- Ogni corpo cade dritto sulla tavola e deve risalire alla velocità del rimbalzo.
+	-- everything bounces on the trampoline: missile, Uovo, shards, Cecchino, orb, crate.
+	-- Each body falls straight onto the board and must go back up at the bounce speed.
 	local top = tramp.y + config.TRAMPOLINE.top
 	b.x = tramp.x + 80
 	run(tb, 30)
@@ -669,21 +669,21 @@ do
 	for kind, body in pairs(bodies) do
 		tb.projectile = body
 		local vy = falls_on(body, function() tb:update_projectile() end)
-		check(tb.projectile == body and vy == config.TRAMPOLINE.launch_vy, "sul trampolino rimbalza: " .. kind)
+		check(tb.projectile == body and vy == config.TRAMPOLINE.launch_vy, "bounces on the trampoline: " .. kind)
 	end
 	tb.projectile = nil
 	local shard = { owner = 1, age = 100 }
 	tb.shards[1] = shard
 	check(falls_on(shard, function() tb:update_shards() end) == config.TRAMPOLINE.launch_vy and tb.shards[1] == shard,
-		"sul trampolino rimbalza: scheggia")
+		"bounces on the trampoline: shard")
 	tb.shards[1] = nil
 	local orb = { id = 99, owner = 1, age = 100, timer = 600 }
 	check(falls_on(orb, function() tb:update_orb(orb) end) == config.TRAMPOLINE.launch_vy,
-		"sul trampolino rimbalza: globo")
+		"bounces on the trampoline: orb")
 	local crate = { id = 99, weapon = "grenade", landed = false }
 	check(falls_on(crate, function() tb:fall(crate, game.CRATE_HALF_W, game.CRATE_FALL) end)
-		== config.TRAMPOLINE.launch_vy, "sul trampolino rimbalza: cassa")
-	-- l'Uovo lasciato sopra rimbalza sempre meno e poi si posa
+		== config.TRAMPOLINE.launch_vy, "bounces on the trampoline: crate")
+	-- the Uovo left on it bounces less and less and then settles
 	local egg = { kind = "grenade", owner = 1, age = 100, fuse = 100000, x = tramp.x, y = top + 20, vx = 0, vy = 0 }
 	tb.projectile = egg
 	tb:pop_events()
@@ -694,29 +694,29 @@ do
 			if e.type == "bounce" and not e.robot then egg_bounces = egg_bounces + 1 end
 		end
 	end
-	check(egg_bounces == 3 and egg.vy == 0 and egg.y < top, "l'Uovo rimbalza sempre più basso e si posa (" .. egg_bounces .. ")")
+	check(egg_bounces == 3 and egg.vy == 0 and egg.y < top, "the Uovo bounces lower and lower and settles (" .. egg_bounces .. ")")
 	tb.projectile = nil
 
-	-- un'esplosione porta via quello che è posato
+	-- an explosion takes away what's placed
 	tb:explode(tramp.x, tramp.y + 4)
-	check(#tb.placed == 0, "un'esplosione distrugge il trampolino")
+	check(#tb.placed == 0, "an explosion destroys the trampoline")
 
-	-- paracadute: in aria un tocco lo apre (uno a partita), rallenta la caduta,
-	-- dà più controllo in orizzontale e annulla il danno da caduta
+	-- parachute: in the air a tap opens it (one per match), it slows the fall,
+	-- gives more horizontal control and cancels fall damage
 	local pc = game.new(42, "forgia")
 	run(pc, 60)
 	local p = pc.robots[1]
-	check(not pc:can_use("parachute"), "a terra il paracadute non si apre")
+	check(not pc:can_use("parachute"), "on the ground the parachute doesn't open")
 	local safe, dmg, max = game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX
 	game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX = 10, 1, 100
 	local y = sky_spot(pc, 640, 200)
 	place(p, 640, y)
 	pc:step()
 	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
-	check(p.parachute and p.parachutes_left == config.STATS.parachutes - 1, "il paracadute in aria si apre e ne consuma uno")
-	check(pc:can_use("parachute"), "aperto si può richiudere")
+	check(p.parachute and p.parachutes_left == config.STATS.parachutes - 1, "the parachute opens in the air and uses one up")
+	check(pc:can_use("parachute"), "once open it can be closed again")
 	local slowest, fastest = 0, 0
-	-- a destra solo per un secondo: col paracadute veloce si uscirebbe dalla mappa
+	-- to the right only for a second: with the fast parachute you'd leave the map
 	for i = 1, 1200 do
 		pc:step({ right = i <= 60 })
 		slowest = math.min(slowest, p.vy)
@@ -724,21 +724,21 @@ do
 		if p.grounded then break end
 	end
 	check(slowest >= -config.PARACHUTE.fall_speed - 1 and p.hp == p.max_hp and not p.parachute,
-		"col paracadute si scende piano e si atterra senza danno")
-	check(fastest > p.stats.air_speed, "col paracadute in orizzontale si va un po' più veloci")
-	-- richiuderlo non lo restituisce
+		"with the parachute you come down slowly and land without damage")
+	check(fastest > p.stats.air_speed, "with the parachute you go a bit faster horizontally")
+	-- closing it doesn't give it back
 	p.parachutes_left = 3
 	place(p, 640, y)
 	pc:step()
 	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
 	pc:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
-	check(not p.parachute and p.parachutes_left == 2, "un altro tocco lo chiude")
+	check(not p.parachute and p.parachutes_left == 2, "another tap closes it")
 	p.parachutes_left = 0
-	check(not pc:can_use("parachute"), "finiti i paracadute della partita non si apre più")
+	check(not pc:can_use("parachute"), "once the match's parachutes are used up it no longer opens")
 	game.FALL_SAFE, game.FALL_DAMAGE, game.FALL_DAMAGE_MAX = safe, dmg, max
 
-	-- cerchio di cura: a fine turno chi ha i piedi dentro si cura e il cerchio
-	-- sparisce (a inizio turno ne può comparire un altro)
+	-- healing circle: at the end of the turn whoever has their feet inside is
+	-- healed and the circle disappears (at the start of a turn another can appear)
 	local hg = game.new(42, "forgia")
 	run(hg, 60)
 	local function has_heal(id)
@@ -749,19 +749,19 @@ do
 	local ha, hb = hg.robots[1], hg.robots[2]
 	ha.x, ha.y, ha.hp = h.x, h.y, 50
 	hg:end_turn()
-	check(ha.hp == 50 + config.HEAL.hp and not has_heal(h.id), "a fine turno nel cerchio ci si cura e il cerchio sparisce")
+	check(ha.hp == 50 + config.HEAL.hp and not has_heal(h.id), "at the end of the turn in the circle you heal and the circle disappears")
 	hg.heals = {}
 	local h2 = hg:spawn_heal()
 	hb.x, hb.y, hb.hp = h2.x, h2.y, hb.max_hp
 	hg:end_turn()
-	check(has_heal(h2.id), "con la vita piena il cerchio resta")
+	check(has_heal(h2.id), "with full life the circle stays")
 	hb.hp = 10
 	hb.x = h2.x + config.HEAL.r + 10
 	hg:end_turn()
-	check(hb.hp == 10 and has_heal(h2.id), "fuori dal cerchio niente cura")
+	check(hb.hp == 10 and has_heal(h2.id), "outside the circle no healing")
 end
 
--- L'Uovo rimbalza sui robot, come il globo del teletrasporto
+-- The Uovo bounces on robots, like the teleport orb
 do
 	local q = game.new(42, "forgia", { ammo = { grenade = 1 } })
 	run(q, 60)
@@ -774,49 +774,49 @@ do
 		q:step()
 		if q.projectile then max_x = math.max(max_x, q.projectile.x) end
 	end
-	check(q.projectile and max_x < b.x and q.projectile.touched, "l'Uovo rimbalza sul robot invece di attraversarlo")
+	check(q.projectile and max_x < b.x and q.projectile.touched, "the Uovo bounces on the robot instead of passing through it")
 end
 
--- Cecchino: lento, dritto e poi cala, rimbalza, sbalza nella direzione del colpo ---
+-- Cecchino: slow, straight and then drops, bounces, knocks in the direction of the shot ---
 do
 	local q = game.new(42, "forgia", { ammo = { sniper = 1 } })
 	run(q, 60)
 	local a, b = q.robots[1], q.robots[2]
-	-- in cielo, così il terreno non si mette in mezzo
+	-- in the sky, so the terrain doesn't get in the way
 	local sy = sky_spot(q, 640, 80)
 	place(a, 600, sy)
 	place(b, 650, sy)
 	local hp = b.hp
 	q:step({ fire = { angle = 0, power = 1, weapon = "sniper" } })
-	check(q.projectile and q.projectile.kind == "sniper" and a.ammo.sniper == 0, "il cecchino spara")
+	check(q.projectile and q.projectile.kind == "sniper" and a.ammo.sniper == 0, "the sniper fires")
 	local hit
 	for _ = 1, 60 do
 		q:step()
 		for _, e in ipairs(q:pop_events()) do if e.type == "sniper_hit" then hit = e end end
 		if hit then break end
 	end
-	check(hit and hit.target == 2 and hp - b.hp == config.SNIPER.damage, "colpisce e fa danno")
-	check(b.vx > 0 and not b.grounded and b.knocked, "sbalza nella direzione del colpo")
+	check(hit and hit.target == 2 and hp - b.hp == config.SNIPER.damage, "it hits and does damage")
+	check(b.vx > 0 and not b.grounded and b.knocked, "knocks in the direction of the shot")
 	local sp = math.sqrt(b.vx * b.vx + b.vy * b.vy)
-	check(sp <= config.SNIPER.push + config.SNIPER.lift + 1, "con una spinta moderata")
+	check(sp <= config.SNIPER.push + config.SNIPER.lift + 1, "with a moderate push")
 
-	-- parte veloce e quasi dritto, poi frena e cala sempre di più
+	-- it starts fast and almost straight, then slows down and drops more and more
 	local d = game.new(42, "forgia", { ammo = { sniper = 1 } })
 	run(d, 60)
 	local da = d.robots[1]
 	d.robots[2].x = -1000
 	local dy = sky_spot(d, 500, 300)
 	place(da, 200, dy)
-	d.terrain:rect(0, dy - 200, 1280, 260, 0)  -- cielo libero davanti
+	d.terrain:rect(0, dy - 200, 1280, 260, 0)  -- open sky ahead
 	d:step({ fire = { angle = 0, power = 1, weapon = "sniper" } })
 	local p = d.projectile
 	run(d, 10)
-	check(d.projectile == p and p.vy > -40 and p.vx > game.SNIPER_SPEED * 0.9, "all'inizio va quasi dritto e veloce")
+	check(d.projectile == p and p.vy > -40 and p.vx > game.SNIPER_SPEED * 0.9, "at first it goes almost straight and fast")
 	local vy10 = p.vy
 	run(d, 30)
-	check(d.projectile == p and p.vy < vy10 - 40 and p.vx < game.SNIPER_SPEED * 0.85, "poi cala sempre di più e frena")
+	check(d.projectile == p and p.vy < vy10 - 40 and p.vx < game.SNIPER_SPEED * 0.85, "then it drops more and more and slows down")
 
-	-- verso il terreno rimbalza (non scava), e dopo l'ultimo rimbalzo si ferma
+	-- towards the terrain it bounces (doesn't dig), and after the last bounce it stops
 	local r = game.new(42, "forgia", { ammo = { sniper = 1 } })
 	run(r, 60)
 	local cells = solid_count(r.terrain)
@@ -833,20 +833,20 @@ do
 		end
 		if not r.projectile then break end
 	end
-	check(bounces >= 1 and bounces <= config.SNIPER.bounces, "rimbalza sul terreno, al massimo " .. config.SNIPER.bounces .. " volte (" .. bounces .. ")")
+	check(bounces >= 1 and bounces <= config.SNIPER.bounces, "bounces on the terrain, at most " .. config.SNIPER.bounces .. " times (" .. bounces .. ")")
 	local slower = true
 	for i = 2, bounces do if speeds[i] >= speeds[i - 1] then slower = false end end
-	check(slower, "come una palla: a ogni rimbalzo è più lento")
-	check(solid_count(r.terrain) == cells, "il cecchino non scava")
+	check(slower, "like a ball: each bounce it's slower")
+	check(solid_count(r.terrain) == cells, "the sniper doesn't dig")
 
-	-- la linea di mira piega al primo rimbalzo
+	-- the aim line bends at the first bounce
 	local pts = r:preview(math.rad(-60), 1, 30, 4, nil, "sniper")
-	check(#pts == 30 and pts[30].y > pts[1].y - 200, "la mira del cecchino segue il rimbalzo")
+	check(#pts == 30 and pts[30].y > pts[1].y - 200, "the sniper aim follows the bounce")
 end
 
--- Secondarie da lontano e Affondo: Tonante, Rampino, Affondo --------------------
+-- Ranged secondaries and Affondo: Tonante, Rampino, Affondo --------------------
 do
-	-- Tonante: colpo dritto e istantaneo, danno secco senza effetti, rinculo su chi spara
+	-- Tonante: straight instant shot, flat damage without effects, recoil on the shooter
 	local q = game.new(42, "forgia", { secondary = "eagle" })
 	run(q, 60)
 	local a, b = q.robots[1], q.robots[2]
@@ -857,20 +857,20 @@ do
 	q:step({ fire = { angle = 0, power = 1, weapon = "eagle" } })
 	local ev
 	for _, e in ipairs(q:pop_events()) do if e.type == "eagle" then ev = e end end
-	check(ev and ev.target == 2 and hp - b.hp == config.EAGLE.damage, "il Tonante colpisce subito e fa danno secco")
-	check(next(b.status) == nil and b.vx == 0, "senza effetti di stato e senza spingere il bersaglio")
-	check(a.recoil and a.recoil_vx < 0 and a.recoil_vy == 0 and not a.grounded, "il rinculo spinge chi spara dalla parte opposta")
-	check(not q.projectile, "senza proiettile in volo")
+	check(ev and ev.target == 2 and hp - b.hp == config.EAGLE.damage, "the Tonante hits at once and does flat damage")
+	check(next(b.status) == nil and b.vx == 0, "without status effects and without pushing the target")
+	check(a.recoil and a.recoil_vx < 0 and a.recoil_vy == 0 and not a.grounded, "the recoil pushes the shooter the opposite way")
+	check(not q.projectile, "no projectile in flight")
 
-	-- il rinculo è lo stesso in tutte le direzioni: in cielo sposta della
-	-- stessa distanza a destra, a sinistra, in alto e in diagonale
+	-- the recoil is the same in every direction: in the sky it moves you the same
+	-- distance right, left, up and diagonally
 	local push = config.EAGLE.recoil * config.EAGLE.recoil_ticks / 60
 	for _, deg in ipairs({ 0, 180, 90, -90, 45, -45, -135 }) do
 		local d = game.new(42, "forgia", { secondary = "eagle" })
 		run(d, 60)
 		local da = d.robots[1]
 		d.robots[2].x = -1000
-		-- un buco di 150 px di raggio nel terreno, per avere spazio da tutte le parti
+		-- a hole of radius 150 px in the terrain, to have room on all sides
 		d.terrain:carve(640, 400, 150)
 		place(da, 640, 400 - game.ROBOT_H / 2)
 		local x0, y0 = da.x, da.y
@@ -878,10 +878,10 @@ do
 		run(d, config.EAGLE.recoil_ticks)
 		local dist = math.sqrt((da.x - x0) ^ 2 + (da.y - y0) ^ 2)
 		check(math.abs(dist - push) <= 2 and not da.recoil and da.vx == 0 and da.vy == 0,
-			"rinculo di " .. math.floor(push) .. " px sparando a " .. deg .. " gradi (" .. math.floor(dist) .. ")")
+			"recoil of " .. math.floor(push) .. " px shooting at " .. deg .. " degrees (" .. math.floor(dist) .. ")")
 	end
 
-	-- da terra, sparando in orizzontale, si scivola sul terreno della stessa distanza
+	-- from the ground, shooting horizontally, you slide on the terrain the same distance
 	local g2 = game.new(42, "forgia", { secondary = "eagle" })
 	run(g2, 60)
 	local ga = g2.robots[1]
@@ -889,42 +889,42 @@ do
 	local gx = ga.x
 	g2:step({ fire = { angle = math.pi, power = 1, weapon = "eagle" } })
 	run(g2, config.EAGLE.recoil_ticks)
-	check(ga.x - gx > push * 0.8, "da terra il rinculo in orizzontale sposta quanto in aria (" .. math.floor(ga.x - gx) .. ")")
+	check(ga.x - gx > push * 0.8, "from the ground the horizontal recoil moves as much as in the air (" .. math.floor(ga.x - gx) .. ")")
 
-	-- il terreno ferma il colpo, entro la portata
+	-- terrain stops the shot, within range
 	local t = game.new(42, "forgia", { secondary = "eagle" })
 	run(t, 60)
 	t.robots[2].x = -1000
 	t:step({ fire = { angle = math.rad(-90), power = 1, weapon = "eagle" } })
 	for _, e in ipairs(t:pop_events()) do if e.type == "eagle" then ev = e end end
-	check(ev and ev.target == nil and ev.y0 - ev.y1 < 40, "il terreno ferma il colpo")
+	check(ev and ev.target == nil and ev.y0 - ev.y1 < 40, "terrain stops the shot")
 	local pts = t:preview(0, 1, 12, 4, nil, "eagle")
-	check(#pts == 12 and math.abs(pts[12].x - pts[1].x) <= config.EAGLE.range, "la linea di mira è dritta e non supera la portata")
+	check(#pts == 12 and math.abs(pts[12].x - pts[1].x) <= config.EAGLE.range, "the aim line is straight and doesn't go past the range")
 
-	-- Rampino: oggetto, uno a turno, non un attacco; riavvolge il bersaglio dritto
-	-- verso la mano, fin addosso a chi tira, poi lo molla
+	-- Rampino: an item, one per turn, not an attack; reels the target straight
+	-- towards the hand, right up to the puller, then releases it
 	local h = game.new(42, "forgia")
 	run(h, 60)
 	local ha, hb = h.robots[1], h.robots[2]
 	sy = sky_spot(h, 640, 120)
-	-- cielo libero tutto attorno: la fune va fino a chi tira
+	-- open sky all around: the rope goes all the way to the puller
 	h.terrain:rect(500, sy - 60, 300, 140, 0)
 	place(ha, 560, sy)
 	place(hb, 740, sy)
 	hp = hb.hp
-	check(h:can_use("hook"), "il Rampino si usa senza colpi")
+	check(h:can_use("hook"), "the Rampino is used without shots")
 	ev = hook(h, 0, function() ha.y, ha.vy, hb.y, hb.vy = sy, 0, sy, 0 end)
-	check(ev and ev.target == 2 and hb.hp == hp, "il Rampino aggancia senza fare danno")
+	check(ev and ev.target == 2 and hb.hp == hp, "the Rampino hooks without doing damage")
 	check(h.used.tool and not h:can_use("hook") and not h.used.primary and not h.used.secondary and h.window == 0,
-		"uno a turno e non conta come attacco")
-	check(hb.hooked and hb.hooked.by == 1 and ha.vx == 0, "il bersaglio resta appeso alla fune, chi tira no")
+		"one per turn and doesn't count as an attack")
+	check(hb.hooked and hb.hooked.by == 1 and ha.vx == 0, "the target hangs from the rope, the puller doesn't")
 	local y_start = hb.y
-	-- chi tira resta fermo lì (in cielo cadrebbe e la fune lo inseguirebbe)
+	-- the puller stays still there (in the sky they would fall and the rope would follow)
 	for _ = 1, 10 do
 		ha.y, ha.vy = sy, 0
 		h:step()
 	end
-	check(hb.x < 740 - 40 and math.abs(hb.y - y_start) < 2 and hb.hooked, "viene tirato dritto, senza cadere")
+	check(hb.x < 740 - 40 and math.abs(hb.y - y_start) < 2 and hb.hooked, "it's pulled straight, without falling")
 	local ended
 	for _ = 1, 60 do
 		ha.y, ha.vy = sy, 0
@@ -932,10 +932,10 @@ do
 		for _, e in ipairs(h:pop_events()) do if e.type == "hook_end" then ended = e end end
 		if not hb.hooked then break end
 	end
-	check(ended and not ended.snap and not hb.hooked and math.abs(hb.x - ha.x) < 2 * game.ROBOT_HALF_W + 2, "arriva fin addosso a chi tira e viene mollato")
+	check(ended and not ended.snap and not hb.hooked and math.abs(hb.x - ha.x) < 2 * game.ROBOT_HALF_W + 2, "it comes right up to the puller and is released")
 	run(h, 5)
-	check(hb.y < y_start and hb.vx == 0, "e cade dritto dov'è")
-	-- tirato da sotto sale fino a chi tira; un robot vicino ferma la fune
+	check(hb.y < y_start and hb.vx == 0, "and falls straight where it is")
+	-- pulled from below it rises up to the puller; a nearby robot stops the rope
 	local u = game.new(42, "forgia")
 	run(u, 60)
 	local ua, ub = u.robots[1], u.robots[2]
@@ -943,36 +943,36 @@ do
 	place(ua, 640, sy)
 	place(ub, 640 + 30, sy - 60)
 	hook(u, math.atan2(-60 + game.ROBOT_H / 2, 30))
-	check(ub.hooked, "aggancia anche in diagonale")
+	check(ub.hooked, "it hooks diagonally too")
 	for _ = 1, 40 do
 		u:step()
 		if not ub.hooked then break end
 	end
 	check(not ub.hooked and ub.y > sy - 60 + 15 and math.abs(ub.x - ua.x) < 2 * game.ROBOT_HALF_W + 2,
-		string.format("da sotto lo tira su fino a chi spara e lo ferma addosso (%s, salito %.0f, a %.0f px)",
+		string.format("from below it pulls it up to the shooter and stops it right there (%s, rose %.0f, at %.0f px)",
 			tostring(ub.hooked), ub.y - (sy - 60), math.abs(ub.x - ua.x)))
-	-- sul terreno è chi tira che sale lungo la fune e si mette sopra la
-	-- piattaforma colpita: da sotto una piattaforma si finisce in piedi sopra
+	-- on terrain it's the puller who climbs along the rope and gets on top of the
+	-- platform hit: from below a platform you end up standing on top
 	local m = game.new(42, "forgia")
 	run(m, 60)
 	local ma, mb = m.robots[1], m.robots[2]
 	mb.x = -1000
-	-- una colonna di cielo libero con dentro una piattaforma a sé, vuoto sotto e sopra
+	-- a column of open sky with a separate platform inside, empty below and above
 	m.terrain:rect(560, 100, 160, 900, 0)
 	m.terrain:rect(600, 300, 80, 16, 1)
 	place(ma, 640, 240)
 	local y0 = ma.y
 	ev = hook(m, math.rad(90))
-	check(ev and ev.anchor and not ev.target and ma.hooked and ma.hooked.x == 640, "sul terreno la fune si aggancia e chi tira resta appeso")
+	check(ev and ev.anchor and not ev.target and ma.hooked and ma.hooked.x == 640, "on terrain the rope hooks and the puller hangs")
 	for _ = 1, 40 do
 		m:step()
 		if not ma.hooked then break end
 	end
 	run(m, 5)
 	check(not ma.hooked and math.abs(ma.y - 316) < 4 and math.abs(ma.x - 640) < 10 and ma.grounded,
-		"sale lungo la fune e si mette in piedi sopra la piattaforma")
-	-- da sotto in diagonale la salita sbatte sul fondo della piattaforma prima
-	-- di arrivare al punto: entro config.HOOK.grab sale sopra lo stesso
+		"climbs along the rope and stands on top of the platform")
+	-- from below diagonally the climb hits the bottom of the platform before
+	-- reaching the point: within config.HOOK.grab it gets on top anyway
 	local dg = game.new(42, "forgia")
 	run(dg, 60)
 	local da = dg.robots[1]
@@ -987,8 +987,8 @@ do
 	end
 	run(dg, 20)
 	check(ev and ev.anchor and da.grounded and math.abs(da.y - 530) < 4,
-		"da sotto in diagonale sale sopra la piattaforma")
-	-- il fianco di un muro alto (cima oltre config.HOOK.climb) no: resta lì e cade
+		"from below diagonally it gets on top of the platform")
+	-- the side of a high wall (top past config.HOOK.climb) no: it stays there and falls
 	dg.terrain:rect(1200, 200, 60, 400, 1)
 	place(da, 1100, 300)
 	dg.used.tool = false
@@ -998,13 +998,13 @@ do
 		if not da.hooked then break end
 	end
 	run(dg, 10)
-	check(ev and ev.anchor and da.y < 590, "sul fianco di un muro alto non sale in cima")
-	-- sparando nel vuoto non succede niente
+	check(ev and ev.anchor and da.y < 590, "on the side of a high wall it doesn't climb to the top")
+	-- shooting into the void nothing happens
 	place(ma, 640, 340)
 	m.used.tool = false
 	ev = hook(m, math.rad(90))
-	check(ev and not ev.anchor and not ev.target and not ma.hooked and ma.vx == 0, "nel vuoto il Rampino non aggancia niente")
-	-- l'uncino vola: alla fine della gittata ci mette più di un tick, e arriva fin là
+	check(ev and not ev.anchor and not ev.target and not ma.hooked and ma.vx == 0, "in the void the Rampino hooks nothing")
+	-- the hook flies: at the end of its reach it takes more than one tick, and gets all the way there
 	local far = game.new(42, "forgia")
 	run(far, 60)
 	local fa, fb = far.robots[1], far.robots[2]
@@ -1014,13 +1014,13 @@ do
 	local ticks = 0
 	ev = hook(far, 0, function() ticks = ticks + 1; fa.y, fa.vy = 400, 0 end)
 	check(ev and not ev.anchor and not ev.target and ticks >= math.floor(config.HOOK.range / config.HOOK.shot_speed * 60) - 3,
-		"l'uncino vola per tutta la gittata e se non prende niente si perde")
+		"the hook flies over its whole reach and if it catches nothing it's lost")
 	far.terrain:rect(500 + config.HOOK.range - 20, 380, 40, 60, 1)
 	place(fa, 500, 400)
 	far.used.tool = false
 	ev = hook(far, 0, function() fa.y, fa.vy = 400, 0 end)
-	check(ev and ev.anchor, "a fine gittata aggancia ancora il terreno")
-	-- un nemico lontano: la fune finisce prima di arrivare e lo molla a mezz'aria (snap)
+	check(ev and ev.anchor, "at the end of its reach it still hooks the terrain")
+	-- a far enemy: the rope runs out before arriving and releases it in mid-air (snap)
 	far = game.new(42, "forgia")
 	run(far, 60)
 	fa, fb = far.robots[1], far.robots[2]
@@ -1028,17 +1028,17 @@ do
 	place(fa, 500, 400)
 	place(fb, 500 + config.HOOK.range - 30, 400)
 	ev = hook(far, 0, function() fa.y, fa.vy, fb.y, fb.vy = 400, 0, 400, 0 end)
-	local fine
+	local end_of
 	for _ = 1, 120 do
 		fa.y, fa.vy = 400, 0
 		far:step()
-		for _, e in ipairs(far:pop_events()) do if e.type == "hook_end" then fine = e end end
-		if fine then break end
+		for _, e in ipairs(far:pop_events()) do if e.type == "hook_end" then end_of = e end end
+		if end_of then break end
 	end
-	check(ev and ev.target == 2 and fine and fine.snap and fb.x - fa.x > 100,
-		"da lontano la fune finisce a metà strada e si spezza (snap)")
+	check(ev and ev.target == 2 and end_of and end_of.snap and fb.x - fa.x > 100,
+		"from far away the rope runs out halfway and breaks (snap)")
 
-	-- Mantice (secondaria): soffia via chi ha davanti, poco danno, mai effetti
+	-- Mantice (secondary): blows away whoever is in front, little damage, never effects
 	local function bellows(dist, angle, setup)
 		local q = game.new(42, "forgia", { secondary = "bellows" })
 		run(q, 60)
@@ -1056,36 +1056,36 @@ do
 		return q, a, b, hp, x0, vx, vy
 	end
 	local q, a, b, hp, x0, vx, vy = bellows(60)
-	check(hp - b.hp == config.BELLOWS.damage and vx > 300 and vy > 0 and b.knocked, "il Mantice spinge lontano chi ha davanti")
-	check(next(b.status) == nil and q.used.secondary and not q.used.primary, "è una secondaria e non lascia effetti")
-	check(a.vx == 0 and a.x == 600, "chi soffia resta dov'è")
+	check(hp - b.hp == config.BELLOWS.damage and vx > 300 and vy > 0 and b.knocked, "the Mantice pushes whoever is in front far away")
+	check(next(b.status) == nil and q.used.secondary and not q.used.primary, "it's a secondary and leaves no effects")
+	check(a.vx == 0 and a.x == 600, "the user stays where they are")
 	run(q, 30)
-	check(b.x > x0 + 60, "il bersaglio vola via")
+	check(b.x > x0 + 60, "the target flies away")
 	local _, _, _, _, _, vfar = bellows(config.BELLOWS.range - 25)
-	check(vfar > 0 and vfar < vx, "più è lontano, meno spinge")
+	check(vfar > 0 and vfar < vx, "the further it is, the less it pushes")
 	local _, _, b2, hp2 = bellows(config.BELLOWS.range + 30)
-	check(b2.hp == hp2 and not b2.knocked, "oltre la portata non arriva")
+	check(b2.hp == hp2 and not b2.knocked, "it doesn't reach past its range")
 	local _, _, b3, hp3 = bellows(60, math.pi)
-	check(b3.hp == hp3, "dietro le spalle non arriva")
+	check(b3.hp == hp3, "it doesn't reach behind the back")
 	local _, _, b4, hp4 = bellows(90, 0, function(q2) q2.terrain:rect(640, 100, 9, 60, 1) end)
-	check(b4.hp == hp4, "il terreno in mezzo ripara")
-	-- regola delle categorie: nessuna secondaria lascia effetti di stato
+	check(b4.hp == hp4, "terrain in between shelters")
+	-- category rule: no secondary leaves status effects
 	local rq = game.new(42, "forgia")
 	for w in pairs(game.SECONDARY) do
 		rq:hit_status(rq.robots[2], w, rq.robots[1])
-		check(next(rq.robots[2].status) == nil, "la secondaria " .. w .. " non lascia effetti")
+		check(next(rq.robots[2].status) == nil, "the secondary " .. w .. " leaves no effects")
 	end
 
-	-- Maglio: arco attorno alla spalla come la Lama, da sopra la testa (dietro)
-	-- fino sotto i piedi; colpisce tutto lungo l'arco, la testa si ferma sul
-	-- terreno; in aria, se sbatte mentre cala, chi colpisce rimbalza in alto.
-	-- sky(g): svuota una colonna di cielo e rende un punto in mezzo
+	-- Maglio: arc around the shoulder like the Lama, from above the head (behind)
+	-- to below the feet; it hits everything along the arc, the head stops on
+	-- terrain; in the air, if it slams while coming down, the attacker bounces up.
+	-- sky(g): clears a column of sky and returns a point in the middle
 	local function sky(g)
 		g.terrain:rect(540, 200, 200, 300, 0)
 		return 640, 350
 	end
-	-- mallet(g, angolo): tutto il colpo; rende gli urti e la vy di chi colpisce
-	-- subito dopo ogni urto
+	-- mallet(g, angle): the whole swing; returns the impacts and the attacker's vy
+	-- right after each impact
 	local function mallet(g, angle)
 		local rb = g.robots[g.current]
 		g:step({ fire = { angle = angle, power = 1, weapon = "mallet" } })
@@ -1099,7 +1099,7 @@ do
 		end
 		return hits, rb
 	end
-	-- in aria: il robot sotto i piedi è colpito mentre il martello cala, e si rimbalza
+	-- in the air: the robot under the feet is hit while the hammer comes down, and you bounce
 	local g1 = game.new(42, "forgia", { secondary = "mallet" })
 	run(g1, 60)
 	local ga, gb = g1.robots[1], g1.robots[2]
@@ -1110,11 +1110,11 @@ do
 	hp = gb.hp
 	local hits = mallet(g1, 0)
 	check(#hits == 1 and hits[1].target == 2 and hits[1].bounce and hp - gb.hp == config.MALLET.damage
-		and next(gb.status) == nil, "in aria colpisce il robot sotto, danno secco, e rimbalza")
-	check(hits[1].vy >= config.MALLET.bounce - 20 and gb.vx == 0, "chi colpisce va in alto, il colpito non viene spinto")
-	check(ga.mallet == nil, "il colpo finisce")
-	-- come la Lama prende tutto quello che c'è sull'arco: anche chi sta dietro in
-	-- alto, dove il martello parte; e anche lì si rimbalza (Sergio, 30 ott: ogni volta che colpisce)
+		and next(gb.status) == nil, "in the air it hits the robot below, flat damage, and bounces")
+	check(hits[1].vy >= config.MALLET.bounce - 20 and gb.vx == 0, "the attacker goes up, the target isn't pushed")
+	check(ga.mallet == nil, "the swing ends")
+	-- like the Lama it catches everything on the arc: also whoever is behind and
+	-- high, where the hammer starts; and there too you bounce (Sergio, 30 Oct: every time it hits)
 	local g5 = game.new(42, "forgia", { secondary = "mallet" })
 	run(g5, 60)
 	local g5a, g5b = g5.robots[1], g5.robots[2]
@@ -1124,8 +1124,8 @@ do
 	hp = g5b.hp
 	hits = mallet(g5, 0)
 	check(#hits == 1 and hits[1].target == 2 and hits[1].bounce and hp - g5b.hp == config.MALLET.damage,
-		"colpisce anche dietro in alto, all'inizio dell'arco, e rimbalza")
-	-- sul terreno sotto i piedi la testa si ferma e si rimbalza (pogo)
+		"it also hits behind and high, at the start of the arc, and bounces")
+	-- on the terrain under the feet the head stops and you bounce (pogo)
 	local g2 = game.new(42, "forgia", { secondary = "mallet" })
 	run(g2, 60)
 	local g2a = g2.robots[1]
@@ -1135,19 +1135,19 @@ do
 	local stop
 	for _ = 1, config.MALLET.ticks do
 		g2:step()
-		if g2a.mallet_stop and not stop then stop = g2a.mallet_stop; check(g2a.vy >= config.MALLET.bounce - 20, "sul terreno sotto i piedi rimbalza in alto (pogo)") end
+		if g2a.mallet_stop and not stop then stop = g2a.mallet_stop; check(g2a.vy >= config.MALLET.bounce - 20, "on the terrain under the feet it bounces up (pogo)") end
 	end
 	check(stop and stop < config.MALLET.ticks and game.mallet_angle(config.MALLET.ticks, 0, stop) == game.mallet_angle(stop),
-		"la testa si ferma dove sbatte e resta lì")
-	-- a vuoto in aria non rimbalza
+		"the head stops where it slams and stays there")
+	-- a miss in the air doesn't bounce
 	local g3 = game.new(42, "forgia", { secondary = "mallet" })
 	run(g3, 60)
 	local g3a = g3.robots[1]
 	g3.robots[2].x = -1000
 	place(g3a, sky(g3))
 	hits = mallet(g3, 0)
-	check(#hits == 0 and g3a.vy < 0, "a vuoto in aria non rimbalza")
-	-- a terra colpisce davanti e si rimbalza (Sergio, 30 ott: anche senza saltare)
+	check(#hits == 0 and g3a.vy < 0, "a miss in the air doesn't bounce")
+	-- on the ground it hits in front and you bounce (Sergio, 30 Oct: even without jumping)
 	local g4 = game.new(42, "forgia", { secondary = "mallet" })
 	run(g4, 60)
 	local g4a, g4b = g4.robots[1], g4.robots[2]
@@ -1156,10 +1156,10 @@ do
 	hp = g4b.hp
 	hits = mallet(g4, 0)
 	check(hp - g4b.hp == config.MALLET.damage and hits[1].target == 2 and hits[1].bounce and hits[1].vy >= config.MALLET.bounce - 20,
-		"a terra colpisce davanti e rimbalza in alto")
-	check(#hits == 1 or not hits[2].bounce, "una volta sola per colpo")
-	-- l'arco gira con la mira: chi sta dietro, sotto i piedi, lo prende solo mirando in basso
-	for _, prova in ipairs({ { 0, false }, { math.rad(-70), true } }) do
+		"on the ground it hits in front and bounces up")
+	check(#hits == 1 or not hits[2].bounce, "only once per swing")
+	-- the arc rotates with the aim: whoever is behind, under the feet, only gets hit aiming down
+	for _, try_it in ipairs({ { 0, false }, { math.rad(-70), true } }) do
 		local gd = game.new(42, "forgia", { secondary = "mallet" })
 		run(gd, 60)
 		local da, db = gd.robots[1], gd.robots[2]
@@ -1167,13 +1167,13 @@ do
 		place(da, px, py)
 		local q, d = math.rad(-150), config.MALLET.reach * 0.8
 		place(db, px + math.cos(q) * d, py + game.SWORD_PIVOT_Y + math.sin(q) * d - game.HURT_Y)
-		hits = mallet(gd, prova[1])
-		check((#hits > 0 and hits[1].target == 2) == prova[2],
-			prova[2] and "mirando in basso il Maglio prende chi sta dietro sotto i piedi" or "mirando dritto no")
+		hits = mallet(gd, try_it[1])
+		check((#hits > 0 and hits[1].target == 2) == try_it[2],
+			try_it[2] and "aiming down the Maglio catches whoever is behind under the feet" or "aiming straight it doesn't")
 	end
-	check(not g4:can_use("sword") and g4:can_use("missile"), "Maglio e Lama sono tutte e due secondarie")
+	check(not g4:can_use("sword") and g4:can_use("missile"), "Maglio and Lama are both secondaries")
 
-	-- Affondo: scatto che attraversa il robot davanti e lo colpisce una volta
+	-- Affondo: dash that goes through the robot in front and hits it once
 	local l = game.new(42, "forgia", { secondary = "lunge" })
 	run(l, 60)
 	local la, lb = l.robots[1], l.robots[2]
@@ -1183,20 +1183,20 @@ do
 	hp = lb.hp
 	local x1 = la.x
 	l:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
-	check(la.lunge == config.LUNGE.ticks and la.lunge_vx > 0, "l'Affondo parte")
+	check(la.lunge == config.LUNGE.ticks and la.lunge_vx > 0, "the Affondo starts")
 	run(l, config.LUNGE.ticks)
-	check(la.lunge == nil and la.x > lb.x + 10, "e passa oltre il robot davanti")
-	check(hp - lb.hp == config.LUNGE.damage and next(lb.status) == nil, "colpendolo una volta, senza effetti")
-	check(la.vx > 0 and la.vx < config.LUNGE.speed, "alla fine resta un po' di slancio")
-	-- il terreno lo ferma
+	check(la.lunge == nil and la.x > lb.x + 10, "and goes past the robot in front")
+	check(hp - lb.hp == config.LUNGE.damage and next(lb.status) == nil, "hitting it once, without effects")
+	check(la.vx > 0 and la.vx < config.LUNGE.speed, "at the end some momentum remains")
+	-- terrain stops it
 	local w = game.new(42, "forgia", { secondary = "lunge" })
 	run(w, 60)
 	local wa = w.robots[1]
 	local y1 = wa.y
 	w:step({ fire = { angle = math.rad(-90), power = 1, weapon = "lunge" } })
 	run(w, 2)
-	check(wa.lunge == nil and wa.y >= y1 - 2, "il terreno ferma l'Affondo")
-	-- gradini e gobbe piccoli non lo fermano: li sale e va avanti
+	check(wa.lunge == nil and wa.y >= y1 - 2, "terrain stops the Affondo")
+	-- small steps and bumps don't stop it: it climbs them and goes on
 	local v = game.new(42, "forgia", { secondary = "lunge" })
 	run(v, 60)
 	local va, vb = v.robots[1], v.robots[2]
@@ -1207,8 +1207,8 @@ do
 	vb.x = -1000
 	v:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
 	run(v, config.LUNGE.ticks)
-	check(va.x > 440 + 0.9 * config.LUNGE.speed * config.LUNGE.ticks / 60, "sale la gobba e fa tutto lo scatto")
-	-- un muro alto lo ferma
+	check(va.x > 440 + 0.9 * config.LUNGE.speed * config.LUNGE.ticks / 60, "it climbs the bump and does the whole dash")
+	-- a high wall stops it
 	local wl = game.new(42, "forgia", { secondary = "lunge" })
 	run(wl, 60)
 	local wla = wl.robots[1]
@@ -1219,8 +1219,8 @@ do
 	place(wla, 440, 220)
 	wl:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
 	run(wl, config.LUNGE.ticks)
-	check(wla.x < 500 and wla.x > 480, "contro un muro alto si ferma")
-	-- la lancia colpisce anche chi resta oltre la fine dello scatto
+	check(wla.x < 500 and wla.x > 480, "against a high wall it stops")
+	-- the spear also hits whoever is just past the end of the dash
 	local q = game.new(42, "forgia", { secondary = "lunge" })
 	run(q, 60)
 	local qa, qb = q.robots[1], q.robots[2]
@@ -1232,12 +1232,12 @@ do
 	hp = qb.hp
 	q:step({ fire = { angle = 0, power = 1, weapon = "lunge" } })
 	run(q, config.LUNGE.ticks)
-	check(hp - qb.hp == config.LUNGE.damage, "la lancia prende chi sta poco oltre la fine dello scatto")
-	-- Affondo e Lama sono tutte e due secondarie: una per turno
-	check(not w:can_use("sword") and w:can_use("missile"), "dopo l'Affondo niente Lama nello stesso turno")
+	check(hp - qb.hp == config.LUNGE.damage, "the spear catches whoever is just past the end of the dash")
+	-- Affondo and Lama are both secondaries: one per turn
+	check(not w:can_use("sword") and w:can_use("missile"), "after the Affondo no Lama in the same turn")
 end
 
--- Effetti di stato: bruciatura, rallentamento, armatura incrinata ------------------
+-- Status effects: burn, slow, cracked armour ------------------
 do
 	local function to_turn(q, who)
 		for _ = 1, 4000 do
@@ -1246,12 +1246,12 @@ do
 		end
 	end
 
-	-- le schegge rallentano: corsa e salto ridotti fino alla fine del proprio turno dopo
+	-- shards slow: run and jump reduced until the end of the owner's next turn
 	local q = game.new(42, "forgia")
 	run(q, 30)
 	local r1, r2 = q.robots[1], q.robots[2]
 	q:explode(r2.x, r2.y + 4, 1, game.SHARD_BLAST, "shards")
-	check(r2.status.slow and r2.status.slow.turns == 1, "le schegge rallentano")
+	check(r2.status.slow and r2.status.slow.turns == 1, "shards slow")
 	local x0 = r2.x
 	q.current = 2
 	run(q, 20, { right = true })
@@ -1259,144 +1259,144 @@ do
 	r2.status.slow = nil
 	x0 = r2.x
 	run(q, 20, { right = true })
-	check(slow_dx < math.abs(r2.x - x0) * 0.8, "rallentato si corre più piano")
+	check(slow_dx < math.abs(r2.x - x0) * 0.8, "slowed you run slower")
 	q.current = 1
 
-	-- armatura incrinata dal pugno: si prende più danno
+	-- armour cracked by the punch: you take more damage
 	local c = game.new(42, "forgia")
 	local a, b = c.robots[1], c.robots[2]
 	c:punch_hit(a, b, 1)
-	check(b.status.cracked, "il pugno incrina l'armatura")
+	check(b.status.cracked, "the punch cracks the armour")
 	local hp = b.hp
 	c:hurt(b, 20, a)
-	check(hp - b.hp == math.floor(20 * config.STATUS.cracked.damage + 0.5), "con l'armatura incrinata il danno sale")
+	check(hp - b.hp == math.floor(20 * config.STATUS.cracked.damage + 0.5), "with cracked armour the damage goes up")
 
-	-- lo scudo che regge ferma l'effetto (il Pugno, 47, lo romperebbe: le schegge no)
+	-- a shield that holds stops the effect (the Pugno, 47, would break it: shards don't)
 	local s = game.new(42, "forgia")
 	run(s, 30)
 	local sb = s.robots[2]
 	sb.shield = config.SHIELD.hp
 	s:explode(sb.x, sb.y + 4, 1, game.SHARD_BLAST, "shards")
-	check(sb.shield < config.SHIELD.hp and not sb.status.slow, "lo scudo ferma l'effetto di stato")
+	check(sb.shield < config.SHIELD.hp and not sb.status.slow, "the shield stops the status effect")
 
-	-- Uovo normale: niente bruciatura; col set Fornace (burning_blasts) l'Uovo
-	-- brucia, il missile no
+	-- normal Uovo: no burn; with the Fornace set (burning_blasts) the Uovo burns,
+	-- the missile doesn't
 	local f = game.new(42, "forgia", { players = { { team = 1, stats = { burning_blasts = 1 } }, { team = 2 } } })
 	run(f, 30)
 	local fa, fb = f.robots[1], f.robots[2]
 	f:explode(fb.x, fb.y + 4, 2, nil, "grenade")
-	check(not fa.status.burn, "l'Uovo senza Fornace non brucia")
+	check(not fa.status.burn, "the Uovo without Fornace doesn't burn")
 	f:explode(fb.x + 20, fb.y + 4, 1, nil, "missile")
-	check(not fb.status.burn, "col set Fornace il missile non brucia")
+	check(not fb.status.burn, "with the Fornace set the missile doesn't burn")
 	f:explode(fb.x + 20, fb.y + 4, 1, nil, "grenade")
-	check(fb.status.burn and fb.status.burn.by == 1, "col set Fornace l'Uovo brucia")
-	-- all'inizio del turno chi brucia prende danno, e a fine turno l'effetto finisce
+	check(fb.status.burn and fb.status.burn.by == 1, "with the Fornace set the Uovo burns")
+	-- at the start of the turn whoever is burning takes damage, and at the end of the turn the effect ends
 	run(f, 200)
-	fb.hp = 50 -- i tre scoppi qui sopra l'hanno quasi finito: la bruciatura lo ucciderebbe
+	fb.hp = 50 -- the three blasts above nearly finished it: the burn would kill it
 	local before, points = fb.hp, fa.points
 	to_turn(f, 2)
-	check(fb.hp == before - config.STATUS.burn.damage and fa.points > points, "la bruciatura fa danno a inizio turno e dà punti")
+	check(fb.hp == before - config.STATUS.burn.damage and fa.points > points, "the burn does damage at the start of the turn and gives points")
 	to_turn(f, 1)
-	check(next(fb.status) == nil, "gli effetti finiscono alla fine del proprio turno")
+	check(next(fb.status) == nil, "effects end at the end of the owner's turn")
 
-	-- status_turns di chi colpisce allunga l'effetto
+	-- the attacker's status_turns makes the effect last longer
 	local l = game.new(42, "forgia", { players = { { team = 1, stats = { status_turns = 2 } }, { team = 2 } } })
 	run(l, 30)
 	local lb = l.robots[2]
 	l:explode(lb.x, lb.y + 4, 1, game.SHARD_BLAST, "shards")
 	to_turn(l, 2)
 	to_turn(l, 1)
-	check(lb.status.slow and lb.status.slow.turns == 1, "con status_turns 2 dura un turno in più")
+	check(lb.status.slow and lb.status.slow.turns == 1, "with status_turns 2 it lasts one more turn")
 
-	-- la morte cancella gli effetti
+	-- death clears the effects
 	l:kill(lb, "damage")
 	l:respawn(lb)
-	check(next(lb.status) == nil, "dopo il respawn niente effetti")
+	check(next(lb.status) == nil, "after respawn no effects")
 end
 
--- Scelta d'inizio partita (sim/draft.lua) ----------------------------------------
+-- Start-of-match draft (sim/draft.lua) ----------------------------------------
 do
 	local draft = require "sim.draft"
 	local d = draft.new(7, config.MODES["2v2"])
-	check(#d.offer == config.DRAFT_OFFER, "il ventaglio ha " .. config.DRAFT_OFFER .. " armi")
+	check(#d.offer == config.DRAFT_OFFER, "the fan has " .. config.DRAFT_OFFER .. " weapons")
 	local again = draft.new(7, config.MODES["2v2"])
-	check(table.concat(d.offer, ",") == table.concat(again.offer, ","), "stesso seme, stesso ventaglio")
+	check(table.concat(d.offer, ",") == table.concat(again.offer, ","), "same seed, same fan")
 	local w1, w2 = d.offer[1], d.offer[2]
-	check(draft.pick(d, 1, w1), "il primo sceglie")
-	check(draft.pick(d, 3, w1), "anche il compagno può prendere la stessa arma")
-	check(not draft.pick(d, 1, "teleport") and not draft.pick(d, 1, "hook"), "solo armi del ventaglio, niente attrezzi")
-	check(draft.pick(d, 1, w2) and d.picks[1] == w2, "si cambia scelta")
+	check(draft.pick(d, 1, w1), "the first one picks")
+	check(draft.pick(d, 3, w1), "the teammate can take the same weapon too")
+	check(not draft.pick(d, 1, "teleport") and not draft.pick(d, 1, "hook"), "only weapons from the fan, no tools")
+	check(draft.pick(d, 1, w2) and d.picks[1] == w2, "the pick can be changed")
 	local players = draft.finish(d)
 	check(players[2].pick == d.offer[1] and players[4].pick == d.offer[1],
-		"allo scadere chi non ha scelto prende la prima arma del ventaglio")
+		"when time's up whoever didn't pick takes the first weapon of the fan")
 	local g = game.new(7, "forgia", { players = players })
-	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in partita l'arma scelta ha i suoi colpi")
+	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in the match the picked weapon has its shots")
 	for _ = 1, 600 do if g.phase == "aim" then break end g:step() end
-	check(g:can_use("hook"), "il Rampino ce l'hanno tutti, senza sceglierlo")
+	check(g:can_use("hook"), "everyone has the Rampino, without picking it")
 
-	-- il secondo ventaglio: le secondarie, illimitate
+	-- the second fan: the secondaries, unlimited
 	check(#d.offer2 == math.min(config.DRAFT_OFFER, #game.DRAFT_SECONDARIES) and game.SECONDARY[d.offer2[1]],
-		"il ventaglio delle secondarie")
+		"the secondaries fan")
 	local e = draft.new(9, config.MODES["2v2"])
 	local s1, s2 = e.offer2[1], e.offer2[2]
-	check(not draft.done(e, 1) and draft.pick(e, 1, s1) and not draft.done(e, 1), "la secondaria da sola non basta")
-	check(draft.pick(e, 1, e.offer[1]) and draft.done(e, 1), "primaria e secondaria: ha finito")
+	check(not draft.done(e, 1) and draft.pick(e, 1, s1) and not draft.done(e, 1), "the secondary alone isn't enough")
+	check(draft.pick(e, 1, e.offer[1]) and draft.done(e, 1), "primary and secondary: done")
 	draft.pick(e, 1, s2)
 	local ep = draft.finish(e)
-	check(ep[2].secondary == e.offer2[1], "allo scadere la prima secondaria")
+	check(ep[2].secondary == e.offer2[1], "when time's up the first secondary")
 	local eg = game.new(9, "forgia", { players = ep })
 	local r1 = eg.robots[1]
 	check(r1.secondary == s2 and game.has_weapon(r1, s2) and game.has_weapon(r1, "sword") and not game.has_weapon(r1, s1),
-		"in partita hai la Lama e la secondaria scelta, non le altre")
+		"in the match you have the Lama and the picked secondary, not the others")
 	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft and eg:can_use(s2) and eg:can_use("sword"),
-		"la secondaria scelta ha i suoi colpi, la Lama è illimitata")
+		"the picked secondary has its shots, the Lama is unlimited")
 	eg:step({ fire = { angle = 0, power = 1, weapon = s2 } })
 	check(eg.used.secondary and not eg.used.primary and not eg:can_use("sword") and eg:can_use("missile"),
-		"usata la secondaria scelta, la Lama non si usa più nel turno")
-	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft - 1, "la secondaria consuma un colpo")
-	-- la Lama su un nemico ridà un colpo della secondaria, fino al massimo; su un compagno no
+		"once the picked secondary is used, the Lama can't be used in the turn")
+	check(r1.ammo[s2] == config.SECONDARY_SHOTS.draft - 1, "the secondary uses up a shot")
+	-- the Lama on an enemy gives back a secondary shot, up to the maximum; on a teammate no
 	r1.ammo[s2] = 0
-	check(not game.has_weapon(r1, s2) and game.has_weapon(r1, "sword"), "finiti i colpi resta la Lama")
-	local nemico, compagno
+	check(not game.has_weapon(r1, s2) and game.has_weapon(r1, "sword"), "when the shots are over the Lama remains")
+	local nemico, teammate
 	for _, rb in ipairs(eg.robots) do
-		if rb.team ~= r1.team then nemico = nemico or rb elseif rb ~= r1 then compagno = rb end
+		if rb.team ~= r1.team then nemico = nemico or rb elseif rb ~= r1 then teammate = rb end
 	end
 	eg:pop_events()
-	eg:sword_hit(r1, compagno)
-	check(r1.ammo[s2] == 0, "la Lama sul compagno non ricarica")
+	eg:sword_hit(r1, teammate)
+	check(r1.ammo[s2] == 0, "the Lama on a teammate doesn't reload")
 	eg:sword_hit(r1, nemico)
 	local ev = eg:pop_events()
-	local ricarica = false
-	for _, e in ipairs(ev) do if e.type == "recharge" and e.robot == r1.id and e.weapon == s2 then ricarica = true end end
-	check(r1.ammo[s2] == 1 and ricarica and game.has_weapon(r1, s2), "la Lama sul nemico ridà un colpo")
+	local recharge = false
+	for _, e in ipairs(ev) do if e.type == "recharge" and e.robot == r1.id and e.weapon == s2 then recharge = true end end
+	check(r1.ammo[s2] == 1 and recharge and game.has_weapon(r1, s2), "the Lama on an enemy gives back a shot")
 	for _ = 1, 5 do eg:sword_hit(r1, nemico) end
-	check(r1.ammo[s2] == config.SECONDARY_SHOTS.max, "mai oltre il massimo")
+	check(r1.ammo[s2] == config.SECONDARY_SHOTS.max, "never past the maximum")
 
-	-- la campagna offre solo le armi già viste; un ventaglio vuoto non si sceglie
+	-- the campaign offers only the weapons already seen; an empty fan isn't picked from
 	local v = draft.new(3, config.MODES["1v1"], { grenade = true, sniper = true, missile = true })
-	check(#v.offer == 2 and #v.offer2 == 0, "solo le armi viste")
-	check(draft.pick(v, 1, "sniper") and draft.done(v, 1), "senza secondarie viste basta la primaria")
+	check(#v.offer == 2 and #v.offer2 == 0, "only the seen weapons")
+	check(draft.pick(v, 1, "sniper") and draft.done(v, 1), "with no secondaries seen the primary is enough")
 	local vp = draft.finish(v)
-	check(vp[1].pick == "sniper" and vp[1].secondary == nil and vp[2].pick == v.offer[1], "nessuna secondaria in più")
+	check(vp[1].pick == "sniper" and vp[1].secondary == nil and vp[2].pick == v.offer[1], "no extra secondary")
 end
 
--- Salto in aria, scudo, livello fisso ----------------------------------------------------
+-- Air jump, shield, fixed level ----------------------------------------------------
 do
-	-- salto in aria: con air_jumps, premendo di nuovo in volo, gratis
+	-- air jump: with air_jumps, pressing again in flight, free
 	local q = game.new(42, "forgia", { players = { { team = 1, stats = { air_jumps = 1 } }, { team = 2 } } })
 	run(q, 60)
 	local r = q.robots[1]
 	q:step({ jump = true })
 	run(q, 10, { jump = true })
-	check(r.air_left == 1, "tenendo premuto il salto non si salta in aria")
+	check(r.air_left == 1, "holding jump doesn't jump in the air")
 	run(q, 2)
 	local vy0 = r.vy
 	q:step({ jump = true })
-	check(r.vy > vy0 and r.air_left == 0, "premendo di nuovo in aria si risalta")
+	check(r.vy > vy0 and r.air_left == 0, "pressing again in the air jumps again")
 	run(q, 2)
 	vy0 = r.vy
 	q:step({ jump = true })
-	check(r.vy < vy0, "un solo salto in aria con air_jumps 1")
+	check(r.vy < vy0, "only one air jump with air_jumps 1")
 	local n = game.new(42, "forgia")
 	run(n, 60)
 	local nr = n.robots[1]
@@ -1404,27 +1404,27 @@ do
 	run(n, 12)
 	vy0 = nr.vy
 	n:step({ jump = true })
-	check(nr.vy < vy0, "senza air_jumps niente salto in aria")
+	check(nr.vy < vy0, "without air_jumps no air jump")
 
-	-- scudo: si trova solo nelle casse e si usa quando si vuole
+	-- shield: found only in crates and used whenever you like
 	local s = game.new(42, "forgia")
 	run(s, 30)
 	local sr = s.robots[1]
-	check(not s:can_use("shield"), "senza scudi delle casse niente scudo")
+	check(not s:can_use("shield"), "without crate shields no shield")
 	sr.ammo.shield = 1
-	check(s:can_use("shield"), "con uno scudo in tasca si usa subito")
+	check(s:can_use("shield"), "with a shield in the pocket it's used at once")
 	s:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
-	check(sr.shield == config.SHIELD.hp and sr.ammo.shield == 0, "lo scudo delle casse si consuma")
+	check(sr.shield == config.SHIELD.hp and sr.ammo.shield == 0, "the crate shield is used up")
 
-	-- livello fisso (regola degli eventi): le statistiche di albero e equipaggiamento non contano, l'arma scelta sì
+	-- fixed level (event rule): tree and gear stats don't count, the picked weapon does
 	local custom = { { team = 1, stats = { max_hp = 300, walk_speed = 999 }, pick = "shards" }, { team = 2 } }
 	local t = game.new(42, "forgia", { players = custom, normalize = true })
 	check(t.robots[1].max_hp == config.STATS.max_hp and t.robots[1].stats.walk_speed == t.robots[2].stats.walk_speed,
-		"a livello fisso tutti hanno le statistiche di base")
-	check(t.robots[1].ammo.shards == config.DRAFT_SHOTS and t:results().normalized, "a livello fisso resta l'arma scelta")
+		"at fixed level everyone has the base stats")
+	check(t.robots[1].ammo.shards == config.DRAFT_SHOTS and t:results().normalized, "at fixed level the picked weapon stays")
 end
 
--- Determinismo: stesso seed, stessi input, stesso risultato
+-- Determinism: same seed, same inputs, same result
 local function play(seed, map)
 	local p = game.new(seed, map)
 	for i = 1, 3000 do
@@ -1444,12 +1444,12 @@ for _, map in ipairs(maps.order) do
 	local b = { play(99, map) }
 	local same = true
 	for i = 1, #a do if a[i] ~= b[i] then same = false end end
-	check(same, map .. ": stesso seed e stessi input danno lo stesso risultato")
+	check(same, map .. ": same seed and same inputs give the same result")
 end
 
--- Punti, uccisioni e respawn -------------------------------------------------------
+-- Points, kills and respawn -------------------------------------------------------
 do
-	-- uccisione a colpi: punti del danno e dell'uccisione a chi colpisce, meno a chi muore
+	-- kill by hits: damage and kill points to the attacker, minus for whoever dies
 	local g3 = game.new(3, "forgia")
 	run(g3, 60)
 	local a, b = g3.robots[1], g3.robots[2]
@@ -1458,38 +1458,38 @@ do
 	g3:explode(b.x, b.y + 8, 1)
 	local death
 	for _, e in ipairs(g3:pop_events()) do if e.type == "death" then death = e end end
-	check(b.dead and death and death.by == 1 and not death.env, "l'uccisione va a chi ha colpito")
+	check(b.dead and death and death.by == 1 and not death.env, "the kill goes to whoever hit")
 	check(a.kills == 1 and a.points == 10 * config.SCORE.damage + config.SCORE.kill and b.points == config.SCORE.death,
-		"punti: danno e uccisione a chi colpisce (" .. a.points .. "), " .. config.SCORE.death .. " a chi muore")
-	-- dopo RESPAWN_TICKS ricomincia in un punto libero a caso, nel turno di chi l'ha ucciso
+		"points: damage and kill to the attacker (" .. a.points .. "), " .. config.SCORE.death .. " to whoever dies")
+	-- after RESPAWN_TICKS it starts again at a random free point, in the killer's turn
 	local resp
 	for _ = 1, game.RESPAWN_TICKS do
 		g3:step()
 		for _, e in ipairs(g3:pop_events()) do if e.type == "respawn" then resp = e end end
 	end
 	check(resp and not b.dead and b.hp == b.max_hp and g3.current == 1,
-		"alla morte si ricomincia con la vita piena, nello stesso turno")
-	check(not g3:robot_collides(b.x, b.y, b), "in un punto libero")
+		"on death you start again with full life, in the same turn")
+	check(not g3:robot_collides(b.x, b.y, b), "at a free point")
 
-	-- uccisione ambientale: chi colpisce un robot che poi cade fuori dalla mappa
-	-- prende anche il bonus; senza colpi recenti nessuno prende niente
+	-- environmental kill: whoever hits a robot that then falls off the map also
+	-- gets the bonus; without recent hits nobody gets anything
 	local ge = game.new(3, "forgia")
 	run(ge, 60)
 	local ea, eb = ge.robots[1], ge.robots[2]
 	ge:hurt(eb, 5, ea)
 	eb.x, eb.y = -40, 300
 	ge:step()
-	check(eb.dead and ea.env_kills == 1 and eb.falls == 1, "chi butta fuori dalla mappa fa un'uccisione ambientale")
-	check(ea.points == 5 + config.SCORE.kill + config.SCORE.env_kill, "che vale più di un'uccisione a colpi (" .. ea.points .. ")")
+	check(eb.dead and ea.env_kills == 1 and eb.falls == 1, "whoever knocks someone off the map makes an environmental kill")
+	check(ea.points == 5 + config.SCORE.kill + config.SCORE.env_kill, "which is worth more than a kill by hits (" .. ea.points .. ")")
 	local gf = game.new(3, "forgia")
 	run(gf, 60)
 	gf:hurt(gf.robots[2], 5, gf.robots[1])
 	gf.tick = gf.tick + config.KILL_CREDIT_SECONDS * 60 + 1
 	gf:kill(gf.robots[2], "fell")
-	check(gf.robots[1].kills == 0, "una caduta molto dopo il colpo non conta come uccisione")
+	check(gf.robots[1].kills == 0, "a fall long after the hit doesn't count as a kill")
 
-	-- chi si butta giù nel proprio turno: l'uccisione va a chi gli ha fatto più
-	-- danno in questa vita (senza bonus ambientale) e lui perde di più
+	-- whoever jumps off in their own turn: the kill goes to whoever did them the
+	-- most damage in this life (without environmental bonus) and they lose more
 	local gs = game.new(3, "forgia", { players = config.MODES.ffa })
 	run(gs, 60)
 	local s1, s2, s3 = gs.robots[1], gs.robots[2], gs.robots[3]
@@ -1501,114 +1501,114 @@ do
 	gs:step()
 	local sd
 	for _, e in ipairs(gs:pop_events()) do if e.type == "death" then sd = e end end
-	check(s1.dead and sd and sd.own and sd.by == 2 and not sd.env, "chi si butta giù regala l'uccisione a chi gli ha fatto più danno")
+	check(s1.dead and sd and sd.own and sd.by == 2 and not sd.env, "whoever jumps off gives the kill to whoever did them the most damage")
 	check(s2.kills == 1 and s2.env_kills == 0 and s2.points == 30 + config.SCORE.kill and s3.points == 10,
-		"che prende i punti di un'uccisione (" .. s2.points .. ")")
-	check(s1.points == config.SCORE.death + config.SCORE.self_death, "e chi si butta giù perde di più (" .. s1.points .. ")")
+		"who gets the points of a kill (" .. s2.points .. ")")
+	check(s1.points == config.SCORE.death + config.SCORE.self_death, "and whoever jumps off loses more (" .. s1.points .. ")")
 	run(gs, game.RESPAWN_TICKS + 5)
 	check(not s1.dead and gs.current == 1 and gs.phase == "aim" and next(s1.life_damage) == nil,
-		"poi ricomincia nel suo turno, e il danno della vita prima non conta più")
-	-- nel proprio turno, colpito da poco da un avversario: vale la regola normale
+		"then starts again in their turn, and the damage of the previous life no longer counts")
+	-- in their own turn, recently hit by an opponent: the normal rule applies
 	local gr = game.new(3, "forgia")
 	run(gr, 60)
 	gr:hurt(gr.robots[1], 5, gr.robots[2])
 	gr:kill(gr.robots[1], "fell")
-	check(gr.robots[2].env_kills == 1 and gr.robots[1].points == config.SCORE.death, "colpito da poco: uccisione ambientale normale")
-	-- nel proprio turno senza danni da nessuno: niente punti agli altri, ma la penalità sì
+	check(gr.robots[2].env_kills == 1 and gr.robots[1].points == config.SCORE.death, "recently hit: normal environmental kill")
+	-- in their own turn without damage from anyone: no points to the others, but the penalty yes
 	local gn = game.new(3, "forgia")
 	run(gn, 60)
 	gn:kill(gn.robots[1], "fell")
 	check(gn.robots[2].kills == 0 and gn.robots[1].points == config.SCORE.death + config.SCORE.self_death,
-		"morto da solo senza danni: solo la penalità")
+		"died alone without damage: only the penalty")
 
-	-- colpire chi è primo vale di più
-	-- (la Corona c'è solo dopo SCORE.crown_rounds giri interi)
+	-- hitting whoever is first is worth more
+	-- (the Crown only exists after SCORE.crown_rounds full rounds)
 	local g0 = game.new(3, "forgia", { players = config.MODES.ffa })
 	g0.robots[3].points = 100
-	check(config.SCORE.crown_rounds >= 1 and g0:leader() == nil, "nel primo giro nessuno ha la Corona")
+	check(config.SCORE.crown_rounds >= 1 and g0:leader() == nil, "in the first round nobody has the Crown")
 	for _ = 1, 4 do g0:end_turn() end
-	check(g0.round == 2 and g0:leader() == g0.robots[3], "dal secondo giro la Corona va al primo")
+	check(g0.round == 2 and g0:leader() == g0.robots[3], "from the second round the Crown goes to the leader")
 	local gl = game.new(3, "forgia", { players = config.MODES.ffa })
 	gl.round = config.SCORE.crown_rounds + 1
 	gl.robots[3].points = 100
 	gl:hurt(gl.robots[3], 10, gl.robots[1])
 	gl:hurt(gl.robots[4], 10, gl.robots[2])
-	check(gl.robots[1].points == 10 * config.SCORE.leader and gl.robots[2].points == 10, "colpire il primo vale di più")
+	check(gl.robots[1].points == 10 * config.SCORE.leader and gl.robots[2].points == 10, "hitting the leader is worth more")
 
-	-- Corona: chi abbatte il primo in classifica prende crown in più
+	-- Crown: whoever downs the leader gets crown extra
 	local gc = game.new(3, "forgia", { players = config.MODES.ffa })
 	gc.round = config.SCORE.crown_rounds + 1
 	gc.robots[3].points = 100
 	gc:hurt(gc.robots[3], gc.robots[3].hp, gc.robots[1])
 	local hp3 = gc.robots[3].max_hp
 	check(gc.robots[1].kills == 1 and gc.robots[1].points == (hp3 + config.SCORE.kill) * config.SCORE.leader + config.SCORE.crown,
-		"abbattere il primo vale anche la Corona (" .. gc.robots[1].points .. ")")
-	-- ogni punto è anche un evento "points" (il numero che vola nell'interfaccia)
-	local somma, motivi = { 0, 0, 0, 0 }, {}
+		"downing the leader is also worth the Crown (" .. gc.robots[1].points .. ")")
+	-- every point is also a "points" event (the number flying in the UI)
+	local sum, reasons = { 0, 0, 0, 0 }, {}
 	for _, e in ipairs(gc:pop_events()) do
 		if e.type == "points" then
-			somma[e.robot] = somma[e.robot] + e.amount
-			motivi[e.reason] = e.other
+			sum[e.robot] = sum[e.robot] + e.amount
+			reasons[e.reason] = e.other
 		end
 	end
-	check(somma[1] == gc.robots[1].points and somma[3] == config.SCORE.death and motivi.damage == 3
-		and motivi.kill == 3 and motivi.death == 1, "gli eventi points sommano i punti, col motivo e l'altro robot")
+	check(sum[1] == gc.robots[1].points and sum[3] == config.SCORE.death and reasons.damage == 3
+		and reasons.kill == 3 and reasons.death == 1, "points events add up the points, with the reason and the other robot")
 
-	-- Rampino e trampolino: chi sposta un nemico senza danno prende l'uccisione se cade
+	-- Rampino and trampoline: whoever moves an enemy without damage gets the kill if it falls
 	local gk = game.new(3, "forgia")
 	run(gk, 60)
 	gk:credit(gk.robots[2], gk.robots[1])
 	gk:kill(gk.robots[2], "fell")
 	check(gk.robots[1].kills == 1 and gk.robots[1].env_kills == 1
-		and gk.robots[1].points == config.SCORE.kill + config.SCORE.env_kill, "chi tira giu col Rampino prende l'uccisione ambientale")
+		and gk.robots[1].points == config.SCORE.kill + config.SCORE.env_kill, "whoever pulls someone off with the Rampino gets the environmental kill")
 
-	-- parata: lo scudo dà punti a chi lo porta per il danno nemico che ferma, fino a parry_max
+	-- parry: the shield gives points to its carrier for the enemy damage it stops, up to parry_max
 	local gp = game.new(3, "forgia", { ammo = { shield = 1 } })
 	run(gp, 60)
 	local p1, p2 = gp.robots[1], gp.robots[2]
 	gp:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
 	gp:hurt(p1, 20, p2)
-	check(p1.points == 20 * config.SCORE.parry, "la parata da punti a chi porta lo scudo (" .. p1.points .. ")")
+	check(p1.points == 20 * config.SCORE.parry, "the parry gives points to the shield carrier (" .. p1.points .. ")")
 	gp:hurt(p1, 100, p2)
-	check(p1.points == config.SCORE.parry_max, "ma al massimo parry_max per scudo (" .. p1.points .. ")")
+	check(p1.points == config.SCORE.parry_max, "but at most parry_max per shield (" .. p1.points .. ")")
 
-	-- nel 2 contro 2 il danno al compagno non dà punti, e i punti si sommano per squadra
+	-- in 2 v 2 damage to a teammate gives no points, and points add up per team
 	local gt = game.new(3, "forgia", { players = config.MODES["2v2"] })
 	gt:hurt(gt.robots[3], 10, gt.robots[1])
-	check(gt.robots[1].points == 0, "colpire il compagno non dà punti")
+	check(gt.robots[1].points == 0, "hitting a teammate gives no points")
 	gt.robots[2].points, gt.robots[3].points, gt.robots[4].points = 30, 20, 0
 	local res = gt:results()
 	check(res.mode == "2v2" and res.winner == 2 and res.ranking[1].robot == 2 and res.ranking[2].robot == 4
-		and res.ranking[2].place == 1 and res.ranking[3].place == 2, "risultati: classifica per punti di squadra")
+		and res.ranking[2].place == 1 and res.ranking[3].place == 2, "results: standings by team points")
 	gt.robots[3].points = 30
-	check(gt:results().winner == nil, "squadre pari: pareggio")
+	check(gt:results().winner == nil, "equal teams: a draw")
 end
 
--- Il fendente resta nella direzione di partenza anche se il robot si gira
+-- The slash stays in the starting direction even if the robot turns
 local g5 = game.new(7, "forgia")
-for _ = 1, 120 do g5:step({}) end -- i robot cadono e si posano
+for _ = 1, 120 do g5:step({}) end -- robots fall and settle
 g5.robots[2].x, g5.robots[2].y = g5.robots[1].x + 25, g5.robots[1].y
 g5.robots[2].vx, g5.robots[2].vy = 0, 0
 g5:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
-check(g5.robots[1].swing_dir == 1, "il fendente parte verso destra")
+check(g5.robots[1].swing_dir == 1, "the slash starts to the right")
 for _ = 1, 4 do g5:step({ left = true }) end
-check(g5.robots[1].facing == -1 and g5.robots[1].swing_dir == 1, "girarsi non cambia la direzione del fendente")
+check(g5.robots[1].facing == -1 and g5.robots[1].swing_dir == 1, "turning doesn't change the direction of the slash")
 run(g5, SWORD_TICKS)
-check(g5.robots[2].hp < g5.robots[2].max_hp, "il fendente colpisce a destra anche dopo essersi girato")
+check(g5.robots[2].hp < g5.robots[2].max_hp, "the slash hits to the right even after turning")
 
--- Il colpo di spada fa danno ma non fa volare l'avversario
+-- The sword hit does damage but doesn't make the opponent fly
 local g6 = game.new(7, "forgia")
 for _ = 1, 120 do g6:step({}) end
 local t6 = g6.robots[2]
 t6.x, t6.y = g6.robots[1].x + 25, g6.robots[1].y
-for _ = 1, 30 do g6:step({}) end -- si posa nel nuovo punto
+for _ = 1, 30 do g6:step({}) end -- settles at the new point
 local tx6, ty6 = t6.x, t6.y
 g6:step({ fire = { angle = 0, power = 1, weapon = "sword" } })
 run(g6, SWORD_TICKS + 30)
-check(t6.hp < t6.max_hp, "la spada fa danno")
-check(t6.x == tx6 and t6.y == ty6 and t6.grounded, "la spada non sposta l'avversario")
+check(t6.hp < t6.max_hp, "the sword does damage")
+check(t6.x == tx6 and t6.y == ty6 and t6.grounded, "the sword doesn't move the opponent")
 
--- Partita a tempo: verso i 5 minuti c'è l'ultimo giro, poi finisce e vince chi ha più punti
+-- Timed match: around 5 minutes there's the last round, then it ends and whoever has the most points wins
 local g7 = game.new(42, "forgia")
 g7.robots[2].points = 10
 local ticks7 = 0
@@ -1617,89 +1617,89 @@ while g7.phase ~= "over" and ticks7 < game.MATCH_TICKS + 4000 do
 	ticks7 = ticks7 + 1
 end
 check(g7.phase == "over" and g7.final_round and g7.match_left <= g7:final_round_ticks(),
-	"la partita finisce dopo l'ultimo giro, verso i 5 minuti")
-check(g7.winner == 2, "a tempo scaduto vince chi ha più punti")
-check(g7.robots[1].turns == g7.robots[2].turns, "tutti hanno giocato gli stessi turni")
+	"the match ends after the last round, around 5 minutes")
+check(g7.winner == 2, "when time's up whoever has the most points wins")
+check(g7.robots[1].turns == g7.robots[2].turns, "everyone played the same turns")
 
--- Ultimo giro (Sergio, 31 ott): il giro che comincia con meno di mezzo giro di
--- tempo è l'ultimo, i punti valgono doppio, e alla sua fine si finisce
+-- Last round (Sergio, 31 Oct): the round that starts with less than half a
+-- round of time left is the last, points are worth double, and when it ends it's over
 do
 	local ot = game.new(42, "forgia")
 	run(ot, 60)
 	ot.match_left = 10
 	run(ot, 20)
 	check(not ot.final_round and ot.phase == "aim" and ot.current == 1,
-		"il giro già cominciato non diventa l'ultimo: il turno in corso continua")
+		"the round already started doesn't become the last: the current turn goes on")
 	for _ = 1, 4000 do
 		ot:step()
 		if ot.current == 2 or ot.phase == "over" then break end
 	end
-	check(ot.current == 2 and ot.phase == "aim" and not ot.final_round, "si finisce il giro: gioca anche il secondo")
+	check(ot.current == 2 and ot.phase == "aim" and not ot.final_round, "the round is finished: the second one plays too")
 	ot:pop_events()
-	local annuncio = false
+	local announcement = false
 	for _ = 1, 4000 do
 		ot:step()
 		for _, e in ipairs(ot:pop_events()) do
-			if e.type == "final_round" then annuncio = true end
+			if e.type == "final_round" then announcement = true end
 		end
 		if ot.current == 1 or ot.phase == "over" then break end
 	end
-	check(ot.final_round and annuncio and ot.current == 1 and ot.phase == "aim", "poi comincia l'ultimo giro, con l'evento")
-	local prima = ot.robots[1].points
+	check(ot.final_round and announcement and ot.current == 1 and ot.phase == "aim", "then the last round starts, with the event")
+	local first_one = ot.robots[1].points
 	ot:add_points(ot.robots[1], 10, "damage", ot.robots[2])
-	check(ot.robots[1].points == prima + 10 * config.SCORE.final_round, "nell'ultimo giro i punti valgono doppio")
+	check(ot.robots[1].points == first_one + 10 * config.SCORE.final_round, "in the last round points are worth double")
 	for _ = 1, 8000 do
 		ot:step()
 		if ot.phase == "over" then break end
 	end
-	check(ot.phase == "over" and ot.current == 2, "finito l'ultimo giro la partita finisce")
-	check(ot.robots[1].turns == ot.robots[2].turns, "tutti hanno giocato gli stessi turni")
+	check(ot.phase == "over" and ot.current == 2, "after the last round the match ends")
+	check(ot.robots[1].turns == ot.robots[2].turns, "everyone played the same turns")
 end
 
--- Coppie di turni con due squadre: chi apre la coppia ha i punti "in attesa"
--- finché l'altra squadra non ha risposto (battaglia/punteggio.lua)
+-- Turn pairs with two teams: whoever opens the pair has "pending" points
+-- until the other team has answered (battaglia/punteggio.lua)
 do
 	local pc = game.new(42, "forgia", { players = config.MODES["2v2"] })
-	check(pc.ahead == 1 and pc.ahead_base == 0, "il primo turno apre una coppia")
+	check(pc.ahead == 1 and pc.ahead_base == 0, "the first turn opens a pair")
 	pc.robots[1].points = 40
-	local function prossimo(g)
+	local function next_one(g)
 		local c = g.current
 		for _ = 1, 4000 do
 			g:step()
 			if g.current ~= c or g.phase == "over" then break end
 		end
 	end
-	prossimo(pc)
-	check(pc.current == 2 and pc.ahead == 1 and pc.ahead_base == 0, "mentre risponde l'altra squadra i punti restano in attesa")
-	prossimo(pc)
-	check(pc.current == 3 and pc.ahead == 1 and pc.ahead_base == 40, "chiusa la coppia, i punti entrano")
+	next_one(pc)
+	check(pc.current == 2 and pc.ahead == 1 and pc.ahead_base == 0, "while the other team answers the points stay pending")
+	next_one(pc)
+	check(pc.current == 3 and pc.ahead == 1 and pc.ahead_base == 40, "once the pair is closed, the points count")
 	local ffa = game.new(42, "forgia", { players = config.MODES.ffa })
-	check(ffa.ahead == 0, "con più di due squadre niente coppie")
+	check(ffa.ahead == 0, "with more than two teams no pairs")
 end
 
 
--- Collisioni: i robot non si attraversano, camminando si spingono un pizzico
+-- Collisions: robots don't pass through each other, walking they push a tiny bit
 local cg = game.new(7, "forgia")
 for _ = 1, 120 do cg:step({}) end
 local c1, c2 = cg.robots[1], cg.robots[2]
 c2.x, c2.y, c2.vx, c2.vy = c1.x + 20, c1.y + 4, 0, 0
-for _ = 1, 30 do cg:step({}) end -- il robot 2 si posa
+for _ = 1, 30 do cg:step({}) end -- robot 2 settles
 local c2x = c2.x
 local c1x = c1.x
 for _ = 1, 60 do cg:step({ right = true }) end
-check(c2.x > c1.x and cg:robot_at(c1.x, c1.y, c1) == nil, "i robot non si attraversano")
-check(c2.x > c2x + 2 and c2.x < c2x + 35, string.format("camminando si spinge l'altro un pizzico (%.1f px)", c2.x - c2x))
-check(c1.x < c1x + 50, "chi spinge va più piano")
+check(c2.x > c1.x and cg:robot_at(c1.x, c1.y, c1) == nil, "robots don't pass through each other")
+check(c2.x > c2x + 2 and c2.x < c2x + 35, string.format("walking you push the other a tiny bit (%.1f px)", c2.x - c2x))
+check(c1.x < c1x + 50, "whoever pushes goes slower")
 
--- Un robot che cade su un altro gli resta sopra
+-- A robot falling on another stays on top of it
 local hg = game.new(7, "forgia")
 for _ = 1, 120 do hg:step({}) end
 local h1, h2 = hg.robots[1], hg.robots[2]
 h2.x, h2.y, h2.vx, h2.vy, h2.grounded = h1.x, h1.y + 60, 0, 0, false
 for _ = 1, 90 do hg:step({}) end
-check(h2.grounded and math.abs(h2.y - (h1.y + game.ROBOT_H)) < 1.01, "chi cade su un robot gli resta in testa")
+check(h2.grounded and math.abs(h2.y - (h1.y + game.ROBOT_H)) < 1.01, "whoever falls on a robot stays on its head")
 
--- Il globo che arriva addosso a un robot lo sposta un briciolo e rimbalza
+-- The orb landing on a robot moves it a tiny bit and bounces
 local og = game.new(7, "forgia")
 for _ = 1, 120 do og:step({}) end
 local o2 = og.robots[2]
@@ -1710,33 +1710,33 @@ for _ = 1, 10 do
 	og:step({})
 	if og.orbs[1] and og.orbs[1].vx < 0 then bounced = true end
 end
-check(o2.x > o2x and o2.x <= o2x + game.ORB_NUDGE + 0.01, string.format("il globo sposta il robot di un briciolo (%.1f px)", o2.x - o2x))
-check(bounced, "il globo rimbalza sul robot")
+check(o2.x > o2x and o2.x <= o2x + game.ORB_NUDGE + 0.01, string.format("the orb moves the robot a tiny bit (%.1f px)", o2.x - o2x))
+check(bounced, "the orb bounces on the robot")
 
--- I globi si urtano anche tra loro
+-- Orbs also bump into each other
 local bg = game.new(42, "forgia")
 run(bg, 120)
-local by = 500 -- cielo libero sulla forgia
+local by = 500 -- open sky on the forgia
 bg.orbs = {
 	{ id = 1, x = 600, y = by, vx = 200, vy = 0, owner = 1, timer = 100, age = 100 },
 	{ id = 2, x = 680, y = by, vx = -200, vy = 0, owner = 1, timer = 100, age = 100 },
 }
 for _ = 1, 20 do bg:step({}) end
-check(bg.orbs[1].x < bg.orbs[2].x and bg.orbs[1].vx < 0 and bg.orbs[2].vx > 0, "due globi che si scontrano rimbalzano")
+check(bg.orbs[1].x < bg.orbs[2].x and bg.orbs[1].vx < 0 and bg.orbs[2].vx > 0, "two colliding orbs bounce")
 
--- Armi delle casse -------------------------------------------------------------
+-- Crate weapons -------------------------------------------------------------
 
--- Senza colpi le armi delle casse non sparano; con un colpo sparano una volta
+-- Without shots crate weapons don't fire; with one shot they fire once
 local am = game.new(42, "forgia")
 run(am, 120)
 am:step({ fire = { angle = math.rad(45), power = 0.6, weapon = "grenade" } })
-check(am.phase == "aim" and not am.projectile, "senza colpi l'Uovo di Fiamma non parte")
+check(am.phase == "aim" and not am.projectile, "without shots the Uovo di Fiamma doesn't leave")
 am.robots[1].ammo.grenade = 1
 am:step({ fire = { angle = math.rad(45), power = 0.6, weapon = "grenade" } })
 check(am.projectile and am.projectile.kind == "grenade" and am.robots[1].ammo.grenade == 0,
-	"con un colpo l'Uovo parte e il colpo si consuma")
+	"with one shot the Uovo leaves and the shot is used up")
 
--- Uovo di Fiamma: rimbalza, si posa e scoppia dopo 5 secondi, più grande del missile
+-- Uovo di Fiamma: bounces, settles and blows up after 5 seconds, bigger than the missile
 local gr = game.new(42, "forgia")
 run(gr, 120)
 gr:pop_events()
@@ -1754,11 +1754,11 @@ for i = 1, game.GRENADE_FUSE + 5 do
 		if e.type == "explosion" and not boom then boom, boom_tick = e, i end
 	end
 end
-check(bounced, "l'Uovo rimbalza sul terreno")
-check(boom and boom.r == game.GRENADE_BLAST.r and boom.r > game.MISSILE_BLAST.r, "l'Uovo fa un'esplosione più grande del missile")
-check(boom_tick and math.abs(boom_tick - game.GRENADE_FUSE) <= 1, "l'Uovo scoppia dopo 5 secondi (" .. tostring(boom_tick) .. " tick)")
+check(bounced, "the Uovo bounces on the terrain")
+check(boom and boom.r == game.GRENADE_BLAST.r and boom.r > game.MISSILE_BLAST.r, "the Uovo makes a bigger explosion than the missile")
+check(boom_tick and math.abs(boom_tick - game.GRENADE_FUSE) <= 1, "the Uovo blows up after 5 seconds (" .. tostring(boom_tick) .. " tick)")
 
--- Sciame di Schegge: una raffica di SHARD_COUNT schegge con piccoli crateri
+-- Sciame di Schegge: a burst of SHARD_COUNT shards with small craters
 local sh = game.new(42, "forgia")
 run(sh, 120)
 sh:pop_events()
@@ -1774,15 +1774,15 @@ for _ = 1, 120 do
 	for _, e in ipairs(sh:pop_events()) do
 		if e.type == "explosion" then
 			booms = booms + 1
-			check(e.r == game.SHARD_BLAST.r, "le schegge fanno crateri piccoli")
+			check(e.r == game.SHARD_BLAST.r, "shards make small craters")
 		end
 	end
 end
-check(booms == game.SHARD_COUNT, "la raffica spara " .. game.SHARD_COUNT .. " schegge (" .. booms .. ")")
-check(max_flying > 1, "più schegge in volo insieme")
-check(not sh:shards_flying(), "finita la raffica non resta niente in volo")
+check(booms == game.SHARD_COUNT, "the burst fires " .. game.SHARD_COUNT .. " shards (" .. booms .. ")")
+check(max_flying > 1, "several shards in flight together")
+check(not sh:shards_flying(), "after the burst nothing is left in flight")
 
--- Pugno del Titano: lancia in alto chi è davanti, non chi è dietro
+-- Pugno del Titano: launches up whoever is in front, not whoever is behind
 local function punch_game(dx)
 	local q = game.new(42, "forgia")
 	run(q, 120)
@@ -1793,7 +1793,7 @@ local function punch_game(dx)
 	q.robots[1].ammo.punch = 1
 	q:step({ fire = { angle = 0, power = 1, weapon = "punch" } })
 	local hit
-	for _ = 1, game.melee_ticks(mischia.montante) do
+	for _ = 1, game.melee_ticks(melee.uppercut) do
 		q:step()
 		for _, e in ipairs(q:pop_events()) do
 			if e.type == "punch_hit" then hit = { vx = q.robots[2].vx, vy = q.robots[2].vy } end
@@ -1802,15 +1802,15 @@ local function punch_game(dx)
 	return q, hit
 end
 local pq, ph = punch_game(2 * game.U)
-check(ph and pq.robots[2].hp == pq.robots[2].max_hp - game.PUNCH_DAMAGE, "il pugno colpisce chi è davanti")
-check(ph and ph.vy == game.PUNCH_LAUNCH and ph.vx == 0, "il pugno lancia dritto in alto")
+check(ph and pq.robots[2].hp == pq.robots[2].max_hp - game.PUNCH_DAMAGE, "the punch hits whoever is in front")
+check(ph and ph.vy == game.PUNCH_LAUNCH and ph.vx == 0, "the punch launches straight up")
 local _, ph2 = punch_game(-6 * game.U)
-check(ph2 == nil, "il pugno non colpisce chi è dietro")
+check(ph2 == nil, "the punch doesn't hit whoever is behind")
 
--- Casse ---------------------------------------------------------------------------
+-- Crates ---------------------------------------------------------------------------
 
--- Con una cadenza (regole degli eventi, opts.crate_every) una cassa cade dopo
--- ogni 3 turni, sempre nello stesso punto con lo stesso seed
+-- With a rate (event rules, opts.crate_every) a crate drops after every 3
+-- turns, always at the same point with the same seed
 local function crate_turns(seed)
 	local q = game.new(seed, "crogiolo", { crate_every = 3 })
 	local spawned = {}
@@ -1824,35 +1824,35 @@ local function crate_turns(seed)
 	return q, spawned
 end
 local cq, cs = crate_turns(42)
-check(cs[1] and cs[1].turn == 4 and cs[2] and cs[2].turn == 7, "una cassa ogni 3 turni (turni " ..
+check(cs[1] and cs[1].turn == 4 and cs[2] and cs[2].turn == 7, "one crate every 3 turns (turns " ..
 	tostring(cs[1] and cs[1].turn) .. ", " .. tostring(cs[2] and cs[2].turn) .. ")")
 local _, cs2 = crate_turns(42)
-check(cs2[1] and cs2[1].x == cs[1].x and cs2[2].x == cs[2].x, "stesso seed, casse negli stessi punti")
+check(cs2[1] and cs2[1].x == cs[1].x and cs2[2].x == cs[2].x, "same seed, crates at the same points")
 local _, cs3 = crate_turns(7)
-check(cs3[1] and cs3[1].x ~= cs[1].x, "con un altro seed le casse cadono altrove")
+check(cs3[1] and cs3[1].x ~= cs[1].x, "with another seed crates drop elsewhere")
 local c1, c2 = cq.crates[1], cq.crates[2]
-check(#cq.crates == 2 and c2.y > game.WORLD_H, "la cassa nuova cade dal cielo")
-check(c1.landed and math.abs(c1.y - cs[1].y) <= game.CELL, "la cassa si posa sulla superficie")
-check(c1.x >= 40 and c1.x <= game.WORLD_W - 40 and c2.x >= 40 and c2.x <= game.WORLD_W - 40, "le casse sono dentro la mappa")
+check(#cq.crates == 2 and c2.y > game.WORLD_H, "the new crate drops from the sky")
+check(c1.landed and math.abs(c1.y - cs[1].y) <= game.CELL, "the crate settles on the surface")
+check(c1.x >= 40 and c1.x <= game.WORLD_W - 40 and c2.x >= 40 and c2.x <= game.WORLD_W - 40, "crates are inside the map")
 
--- Toccare una cassa dà un colpo di un'arma delle casse
+-- Touching a crate gives a shot of a crate weapon
 local pk = game.new(42, "forgia", { crate_every = 1 })
 run(pk, 120)
 local c = pk:spawn_crate()
-check(c ~= nil and c.y > game.WORLD_H, "la cassa parte dal cielo")
+check(c ~= nil and c.y > game.WORLD_H, "the crate starts from the sky")
 run(pk, 600)
-check(c.landed, "la cassa atterra")
+check(c.landed, "the crate lands")
 pk:pop_events()
 local pr = pk.robots[pk.current]
 place(pr, c.x, c.y)
 pk:step()
 local got
 for _, e in ipairs(pk:pop_events()) do if e.type == "crate_pick" then got = e end end
-check(got and got.robot == pr.id and pr.ammo[got.weapon] == 1, "chi tocca la cassa trova un'arma (" ..
+check(got and got.robot == pr.id and pr.ammo[got.weapon] == 1, "whoever touches the crate finds a weapon (" ..
 	tostring(got and got.weapon) .. ")")
-check(#pk.crates == 0, "la cassa raccolta sparisce")
+check(#pk.crates == 0, "the picked crate disappears")
 
--- Le casse scelgono tutte e tre le armi
+-- Crates pick all three weapons
 local seen = {}
 local mix = game.new(11, "forgia")
 for _ = 1, 30 do
@@ -1860,9 +1860,9 @@ for _ = 1, 30 do
 	local cc = mix:spawn_crate()
 	if cc then seen[cc.weapon] = true end
 end
-check(seen.grenade and seen.shards and seen.punch, "nelle casse si trovano tutte e tre le armi")
+check(seen.grenade and seen.shards and seen.punch, "all three weapons are found in crates")
 
--- Determinismo con le armi nuove: stesso seed e stessi input, stesso risultato
+-- Determinism with the new weapons: same seed and same inputs, same result
 local function play2(seed)
 	local p = game.new(seed, "crogiolo", { ammo = { grenade = 9, shards = 9, punch = 9 }, crate_every = 1 })
 	local ws = { "grenade", "shards", "punch", "missile" }
@@ -1879,41 +1879,41 @@ local function play2(seed)
 	for _, cr in ipairs(p.crates) do r[#r + 1] = cr.x; r[#r + 1] = cr.y end
 	return table.concat(r, " ")
 end
-check(play2(5) == play2(5), "armi delle casse e casse sono deterministiche")
+check(play2(5) == play2(5), "crate weapons and crates are deterministic")
 
--- Fisica: corsa, salto, esplosioni, mischia, cadute ------------------------------
+-- Physics: run, jump, explosions, melee, falls ------------------------------
 
 local U = game.U
 
--- Movimento: corsa 5 u/s, salto alto 5,2 u
+-- Movement: run 5 u/s, jump 5.2 u high
 local bm = game.new(42, "forgia")
 run(bm, 120)
 local br = bm.robots[1]
 local x0 = br.x
 run(bm, 60, { right = true })
-check(math.abs((br.x - x0) - 5 * U) < 2, string.format("corsa 5 u/s (%.1f px in 1 s)", br.x - x0))
+check(math.abs((br.x - x0) - 5 * U) < 2, string.format("run 5 u/s (%.1f px in 1 s)", br.x - x0))
 local top, base = br.y, br.y
 bm:step({ jump = true })
 for _ = 1, 200 do
 	bm:step()
 	top = math.max(top, br.y)
 end
-check(math.abs((top - base) - 5.2 * U) < 0.35 * U, string.format("salto alto 5,2 u (%.1f px)", top - base))
+check(math.abs((top - base) - 5.2 * U) < 0.35 * U, string.format("jump 5.2 u high (%.1f px)", top - base))
 
--- Controllo in aria istantaneo; senza direzione la velocità resta
+-- Instant air control; without direction the speed stays
 local ba = game.new(42, "forgia")
 run(ba, 120)
 local ar = ba.robots[1]
 ba:step({ jump = true, right = true })
 run(ba, 5, { right = true })
-check(ar.vx == ar.stats.air_speed, "in aria va subito a tutta corsa")
+check(ar.vx == ar.stats.air_speed, "in the air it goes full speed at once")
 ba:step({ left = true })
-check(ar.vx == -ar.stats.air_speed, "e si gira di colpo")
+check(ar.vx == -ar.stats.air_speed, "and turns sharply")
 ba:step()
-check(ar.vx == -ar.stats.air_speed and not ar.grounded, "senza direzione in aria la velocità resta")
+check(ar.vx == -ar.stats.air_speed and not ar.grounded, "without direction in the air the speed stays")
 
--- Esplosione: danno dal punto più vicino del quadrato, spinta nulla nel colpo
--- diretto, massima a metà raggio, metà danno a sé stessi
+-- Explosion: damage from the nearest point of the square, no push on a direct
+-- hit, maximum at half radius, half damage to oneself
 local function blast_at(dx, owner)
 	local q = game.new(42, "forgia")
 	run(q, 120)
@@ -1921,7 +1921,7 @@ local function blast_at(dx, owner)
 	local y = sky_spot(q, 640, 60)
 	place(r, 640, y)
 	local hp = r.hp
-	-- il bordo destro del quadrato attorno al cerchio dei colpi
+	-- the right edge of the square around the hit circle
 	local edge = game.HURT_R + game.HURT_FAT
 	q:explode(640 + edge + dx, y + game.HURT_Y, owner, game.MISSILE_BLAST)
 	return r, hp - r.hp
@@ -1929,33 +1929,33 @@ end
 local B = game.MISSILE_BLAST
 local d0r, d0 = blast_at(-1, 1)
 check(d0 == math.floor(B.damage + 0.5) and d0r.vx == 0 and d0r.vy == 0,
-	"colpo diretto, danno pieno e nessuna spinta")
+	"direct hit, full damage and no push")
 local half = B.damage_r / 2
 local dhr, dh = blast_at(half, 1)
 check(math.abs(dhr.vx + half * B.impulse * 0.5) < 0.01 and dhr.vy == 0,
-	string.format("a metà raggio spinta di %.0f px/s", -dhr.vx))
-check(dh == math.floor(B.damage_min + (B.damage - B.damage_min) * 0.5 + 0.5), "danno tra minimo e massimo")
+	string.format("at half radius a push of %.0f px/s", -dhr.vx))
+check(dh == math.floor(B.damage_min + (B.damage - B.damage_min) * 0.5 + 0.5), "damage between minimum and maximum")
 local _, ds = blast_at(-1, 2)
-check(ds == math.floor(B.damage * 0.5 + 0.5), "metà danno a sé stessi")
+check(ds == math.floor(B.damage * 0.5 + 0.5), "half damage to oneself")
 
--- Dove si viene colpiti: un cerchio a metà altezza, non la scatola
+-- Where you get hit: a circle at mid height, not the box
 local hb = game.new(42, "forgia")
 local hr = hb.robots[2]
 local hcy = hr.y + game.HURT_Y
 check(hb:hits_robot(hr.x + game.HURT_R - 0.5, hcy, 1, 0) and not hb:hits_robot(hr.x + game.HURT_R + 0.5, hcy, 1, 0),
-	"il bersaglio è un cerchio di raggio HURT_R")
-check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "l'angolo in basso della scatola non conta")
+	"the target is a circle of radius HURT_R")
+check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "the bottom corner of the box doesn't count")
 
--- Capsula per camminare e cerchio dei colpi vengono da sim/corpo.lua (l'editor
--- delle animazioni li cambia); il disegno resta della sua misura
+-- Walking capsule and hit circle come from sim/corpo.lua (the animation editor
+-- changes them); the drawing keeps its own size
 local corpo = require "sim.corpo"
 check(game.ROBOT_H == corpo.cammina.alto and game.ROBOT_HALF_W * 2 == corpo.cammina.largo
 	and game.HURT_R == corpo.colpi.raggio and game.HURT_Y == corpo.colpi.centro,
-	"capsula e cerchio dei colpi da sim/corpo.lua")
-check(game.DISEGNO_H == game.REF_H * game.CORPO, "il disegno non dipende da sim/corpo.lua")
+	"capsule and hit circle from sim/corpo.lua")
+check(game.DISEGNO_H == game.REF_H * game.CORPO, "the drawing doesn't depend on sim/corpo.lua")
 
--- Mischia sulla mira: target = posizione del bersaglio rispetto ai piedi (in unità
--- U), i robot restano fermi in aria; restituisce il tick del colpo o false
+-- Melee on the aim: target = position of the target relative to the feet (in U
+-- units), robots stay still in the air; returns the tick of the hit or false
 local function melee_at(deg, tx, ty, weapon)
 	local q = game.new(42, "forgia")
 	run(q, 120)
@@ -1978,34 +1978,34 @@ local function melee_at(deg, tx, ty, weapon)
 	end
 	return false, q
 end
-local close = math.ceil(mischia.fendente.chiudi * 60 / mischia.fendente.fps)
-check(melee_at(0, 5, 0) == close, "il fendente colpisce quando si chiude la finestra (0,8 s)")
-check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "mirando dritto prende anche dietro e sopra la testa")
-check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "mirando in basso la lama scende davanti in basso")
--- i bersagli da non prendere stanno più lontani quanto il corpo è più grande
--- del robot di riferimento (CORPO)
+local close = math.ceil(melee.slash.chiudi * 60 / melee.slash.fps)
+check(melee_at(0, 5, 0) == close, "the slash hits when the window closes (0.8 s)")
+check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "aiming straight it also catches behind and above the head")
+check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "aiming down the blade comes down in front, low")
+-- the targets not to be hit are further away as much as the body is bigger
+-- than the reference robot (CORPO)
 local C = game.CORPO
 check(melee_at(60, 4, 5) and melee_at(-60, 0, -5) and not melee_at(60, 0, -5 - 7.5 * (C - 1)),
-	"il colpo gira con la mira")
-check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "mirando giù non prende chi è dietro")
+	"the hit rotates with the aim")
+check(melee_at(-90, 4, -4) and not melee_at(-90, -4, 0), "aiming down it doesn't catch whoever is behind")
 local pt, pq2 = melee_at(0, 2, 0, "punch")
 check(pt and pq2.robots[2].vy == game.PUNCH_LAUNCH and pq2.robots[2].vx == 0,
-	"il montante lancia dritto in alto")
-check(not melee_at(-60, 0, 4 + 7.5 * (C - 1), "punch"), "il montante mirato in basso non prende chi è sopra")
+	"the uppercut launches straight up")
+check(not melee_at(-60, 0, 4 + 7.5 * (C - 1), "punch"), "the uppercut aimed down doesn't catch whoever is above")
 
 
--- Danno da caduta oltre 40 u
+-- Fall damage past 40 u
 local bf = game.new(42, "forgia")
 run(bf, 120)
 local fr2 = bf.robots[1]
 local hp0 = fr2.hp
--- la mappa è alta 57,6 u: per avere spazio la soglia scende a 20 u
+-- the map is 57.6 u tall: to have room the threshold goes down to 20 u
 local safe0 = game.FALL_SAFE
 game.FALL_SAFE = 20 * U
 local DROP = math.floor(28 * U)
 local fx, gy2
 for x = 60, game.WORLD_W - 60, 8 do
-	-- la terra più alta sotto il robot, largo 2 * ROBOT_HALF_W
+	-- the highest ground under the robot, 2 * ROBOT_HALF_W wide
 	local gy
 	for _, o in ipairs({ -game.ROBOT_HALF_W, 0, game.ROBOT_HALF_W }) do
 		local g = bf.terrain:ground_below(x + o, game.WORLD_H - 1)
@@ -2017,7 +2017,7 @@ for x = 60, game.WORLD_W - 60, 8 do
 		break
 	end
 end
-check(fx ~= nil, "c'è un punto da cui cadere")
+check(fx ~= nil, "there's a point to fall from")
 place(fr2, fx, gy2 + DROP)
 for _ = 1, 400 do
 	bf:step()
@@ -2027,19 +2027,19 @@ local fall = gy2 + DROP - fr2.y
 local expect = math.floor(math.min((fall - game.FALL_SAFE) * game.FALL_DAMAGE, game.FALL_DAMAGE_MAX) + 0.5)
 game.FALL_SAFE = safe0
 check(fr2.grounded and fall > 20 * U and expect > 0 and hp0 - fr2.hp == expect,
-	string.format("cadendo da %.0f px perde %d (%d)", fall, expect, hp0 - fr2.hp))
+	string.format("falling from %.0f px it loses %d (%d)", fall, expect, hp0 - fr2.hp))
 local bf2 = game.new(42, "forgia")
 run(bf2, 120)
 local sr = bf2.robots[1]
 bf2:step({ jump = true })
 run(bf2, 200)
-check(sr.hp == sr.max_hp, "un salto non fa danno")
+check(sr.hp == sr.max_hp, "a jump does no damage")
 
--- Potenza: zona morta 20% e curva quadratica
+-- Power: 20% dead zone and quadratic curve
 check(game.aim_power(0.2) == 0.1 and game.aim_power(1) == 1 and math.abs(game.aim_power(0.6) - 0.25) < 1e-9,
-	"potenza quadratica con zona morta")
+	"quadratic power with dead zone")
 
--- Casse a probabilità: ne cadono, e sempre negli stessi punti con lo stesso seed
+-- Random crates: they drop, and always at the same points with the same seed
 local function crates_seen(seed)
 	local q = game.new(seed, "crogiolo")
 	local seen = {}
@@ -2053,12 +2053,12 @@ local function crates_seen(seed)
 	return table.concat(seen, " ")
 end
 local cs = crates_seen(9)
-check(cs ~= "" and cs == crates_seen(9), "le casse cadono a caso ma uguali con lo stesso seed (" .. cs .. ")")
+check(cs ~= "" and cs == crates_seen(9), "crates drop at random but the same with the same seed (" .. cs .. ")")
 
 
--- Corpo a capsula, salto corto, coyote time e salto in anticipo -----------------
+-- Capsule body, short jump, coyote time and early jump -----------------
 
--- Un mondo vuoto con il terreno pieno sotto ground(x) (pixel dal basso)
+-- An empty world with solid terrain below ground(x) (pixels from the bottom)
 local function shaped_world(ground)
 	local q = game.new(42, "forgia")
 	local t, c = q.terrain, game.CELL
@@ -2073,8 +2073,8 @@ local function shaped_world(ground)
 	return q
 end
 
--- Su un pendio a 45 gradi il fondo rotondo resta vicino al terreno (un
--- rettangolo resterebbe sospeso sullo spigolo)
+-- On a 45 degree slope the round bottom stays close to the terrain (a
+-- rectangle would stay hanging on the corner)
 local function slope_gap()
 	local slope = function(x) return 100 + math.max(0, math.min(200, x - 500)) end
 	local q = shaped_world(slope)
@@ -2084,9 +2084,9 @@ local function slope_gap()
 	return r.y - slope(r.x), r.grounded
 end
 local gap_round, gr = slope_gap()
-check(gr and gap_round < game.ROBOT_HALF_W * 0.6, string.format("capsula: al centro sta sopra il pendio quanto il bordo del cerchio (%.1f px)", gap_round))
+check(gr and gap_round < game.ROBOT_HALF_W * 0.6, string.format("capsule: at the centre it's as far above the slope as the edge of the circle (%.1f px)", gap_round))
 
--- Salto corto: lasciando il tasto subito si sale molto meno
+-- Short jump: releasing the button at once rises much less
 local function jump_top(hold_ticks)
 	local q = shaped_world(function() return 100 end)
 	local r = q.robots[1]
@@ -2101,10 +2101,10 @@ local function jump_top(hold_ticks)
 	return top - base
 end
 local full, short = jump_top(1000), jump_top(4)
-check(math.abs(full - 5.2 * U) < 0.35 * U, string.format("salto corto: tenendo premuto il salto è pieno (%.1f px)", full))
-check(short < full * 0.5, string.format("salto corto: lasciando subito sale meno della metà (%.1f px)", short))
+check(math.abs(full - 5.2 * U) < 0.35 * U, string.format("short jump: holding it the jump is full (%.1f px)", full))
+check(short < full * 0.5, string.format("short jump: releasing at once rises less than half (%.1f px)", short))
 
--- Coyote time: appena scesi dal bordo si salta ancora, poco dopo no
+-- Coyote time: right after stepping off the edge you can still jump, a bit later no
 local function ledge_jump(after)
 	local q = shaped_world(function(x) return x < 640 and 200 or 40 end)
 	local r = q.robots[1]
@@ -2116,10 +2116,10 @@ local function ledge_jump(after)
 	q:step({ jump = true })
 	return r.vy > 0
 end
-check(ledge_jump(3), "coyote: tre tick dopo il bordo il salto parte")
-check(not ledge_jump(game.COYOTE_TICKS + 4), "coyote: più tardi in aria non si salta")
+check(ledge_jump(3), "coyote: three ticks after the edge the jump starts")
+check(not ledge_jump(game.COYOTE_TICKS + 4), "coyote: later in the air you can't jump")
 
--- Salto in anticipo: chiesto poco prima di atterrare parte appena si tocca terra
+-- Early jump: asked just before landing it starts as soon as you touch ground
 local function buffered(early)
 	local q = shaped_world(function() return 100 end)
 	local r = q.robots[1]
@@ -2131,13 +2131,13 @@ local function buffered(early)
 	q:step()
 	return r.vy > 0 and not r.grounded
 end
-check(buffered(3), "salto in anticipo: chiesto 3 tick prima, parte all'atterraggio")
-check(not buffered(game.JUMP_BUFFER_TICKS + 4), "salto in anticipo: chiesto troppo presto non conta")
+check(buffered(3), "early jump: asked 3 ticks before, starts on landing")
+check(not buffered(game.JUMP_BUFFER_TICKS + 4), "early jump: asked too early doesn't count")
 
--- Rampino su un robot a terra: il pavimento sotto il bersaglio non ferma la
--- fune, né in piano (anche con chi tira una cella più in basso) né su un
--- pendio, in salita o in discesa: arriva fin addosso a chi tira. Prima 9
--- volte su 10 si fermava subito. hook_drag dà la distanza finale tra i due.
+-- Rampino on a robot on the ground: the floor under the target doesn't stop
+-- the rope, neither on the flat (even with the puller one cell lower) nor on a
+-- slope, uphill or downhill: it comes right up to the puller. Before, 9 times
+-- out of 10 it stopped at once. hook_drag gives the final distance between the two.
 local function hook_drag(ground, xa, xb)
 	local q = shaped_world(ground)
 	local a, b = q.robots[1], q.robots[2]
@@ -2154,16 +2154,16 @@ local function hook_drag(ground, xa, xb)
 	return math.abs(b.x - a.x)
 end
 local close = 2 * game.ROBOT_HALF_W + 4
-check(hook_drag(function() return 100 end, 500, 680) < close, "Rampino in piano: il nemico a terra viene trascinato fin addosso")
+check(hook_drag(function() return 100 end, 500, 680) < close, "Rampino on the flat: the enemy on the ground is dragged right up")
 check(hook_drag(function(x) return x < 560 and 100 - game.CELL or 100 end, 500, 680) < close,
-	"Rampino in piano, chi tira una cella più in basso: trascinato lo stesso")
+	"Rampino on the flat, puller one cell lower: dragged anyway")
 check(hook_drag(function(x) return 100 + (x - 500) * 0.4 end, 500, 680) < close,
-	"Rampino in salita (il nemico più in alto): trascinato giù")
+	"Rampino uphill (enemy higher): dragged down")
 check(hook_drag(function(x) return 200 - (x - 500) * 0.4 end, 500, 680) < close,
-	"Rampino in discesa (il nemico più in basso): trascinato su")
+	"Rampino downhill (enemy lower): dragged up")
 check(hook_drag(function(x) return 100 + math.floor(x / 24) % 2 * 4 end, 500, 680) < close,
-	"Rampino su un pavimento a gradini: trascinato lo stesso")
--- sulle mappe vere: nemici a terra a 120 pixel, in tanti punti diversi
+	"Rampino on a stepped floor: dragged anyway")
+-- on the real maps: enemies on the ground at 120 pixels, at many different points
 for _, id in ipairs(maps.order) do
 	local pulled, tries = 0, 0
 	for x0 = 100, game.WORLD_W - 220, 37 do
@@ -2190,118 +2190,118 @@ for _, id in ipairs(maps.order) do
 			end
 		end
 	end
-	check(tries > 0 and pulled == tries, id .. ": il Rampino trascina il nemico a terra ogni volta (" .. pulled .. "/" .. tries .. ")")
+	check(tries > 0 and pulled == tries, id .. ": the Rampino drags the enemy on the ground every time (" .. pulled .. "/" .. tries .. ")")
 end
 check(hook_drag(function(x) return (x > 560 and x < 572) and 100 + game.ROBOT_H or 100 end, 500, 650) > 650 - 560,
-	"Rampino: un muro alto ferma il nemico")
+	"Rampino: a high wall stops the enemy")
 
--- Prestazioni: un cratere e 600 tick di simulazione
+-- Performance: one crater and 600 ticks of simulation
 local t = os.clock()
 local g4 = game.new(5, "casuale")
 for i = 1, 600 do g4:step({ right = i % 2 == 0 }) end
 for i = 1, 20 do g4.terrain:carve(100 + i * 50, 200, 30) end
-print(string.format("info 600 tick + 20 crateri in %.1f ms", (os.clock() - t) * 1000))
+print(string.format("info 600 ticks + 20 craters in %.1f ms", (os.clock() - t) * 1000))
 
--- Levette del telefono (client/battaglia/levette.lua)
+-- Phone sticks (client/battaglia/levette.lua)
 do
 	local levette = require "battaglia.levette"
 	local s = levette.new()
 	levette.muovi(s, 0.1, 0)
-	check(not s.moving, "levetta: al 10% di lato non cammina")
+	check(not s.moving, "stick: at 10% sideways it doesn't walk")
 	levette.muovi(s, 0.5, 0)
-	check(s.moving and s.dir == 1, "levetta: di lato cammina a destra")
+	check(s.moving and s.dir == 1, "stick: sideways it walks right")
 	local jumped = levette.muovi(s, 0.5, 0.5)
-	check(s.moving and s.jumping and jumped, "levetta: in diagonale cammina e salta")
-	check(not levette.muovi(s, 0.5, 0.55), "levetta: il salto parte una volta sola")
+	check(s.moving and s.jumping and jumped, "stick: diagonally it walks and jumps")
+	check(not levette.muovi(s, 0.5, 0.55), "stick: the jump starts only once")
 	levette.muovi(s, 0.05, 0.6)
-	check(not s.moving and s.jumping, "levetta: dritta in alto salta sul posto")
+	check(not s.moving and s.jumping, "stick: straight up it jumps in place")
 	levette.muovi(s, -0.6, -0.1)
-	check(s.moving and s.dir == -1 and not s.jumping, "levetta: in basso a sinistra cammina e non salta")
+	check(s.moving and s.dir == -1 and not s.jumping, "stick: down left it walks and doesn't jump")
 	levette.muovi(s, -0.05, 0)
-	check(not s.moving, "levetta: tornata al centro si ferma")
+	check(not s.moving, "stick: back at the centre it stops")
 	levette.muovi(s, 0.2, -0.6)
-	check(not s.moving, "levetta: verso il basso serve il 25% di lato")
+	check(not s.moving, "stick: downwards 25% sideways is needed")
 
 	local a = levette.new()
 	levette.mira(a, 0.15, 0)
-	check(not a.active, "mira: sotto il 20% spenta")
+	check(not a.active, "aim: below 20% off")
 	levette.mira(a, 0, -0.6)
 	check(a.active and math.abs(a.angle + math.pi / 2) < 1e-6 and math.abs(a.f - 0.5) < 1e-6,
-		"mira: accesa, verso il basso, potenza 0,5 al 60%")
+		"aim: on, downwards, power 0.5 at 60%")
 	levette.mira(a, 0.15, 0)
-	check(a.active, "mira: tra il 10% e il 20% resta accesa")
+	check(a.active, "aim: between 10% and 20% it stays on")
 	levette.mira(a, 0.05, 0)
-	check(not a.active, "mira: sotto il 10% si spegne")
+	check(not a.active, "aim: below 10% it turns off")
 
-	-- lo scivolamento del pollice nell'ultimo istante non conta
+	-- the thumb slipping at the last instant doesn't count
 	local r = levette.new()
 	for i = 0, 30 do levette.registra(r, i / 60, i < 28 and 1.0 or 2.0, 0.7, i < 30) end
 	local h = levette.al_rilascio(r, 30 / 60)
-	check(h and h.angle == 1.0 and h.active, "mira: al rilascio vale la mira di 50 ms prima")
+	check(h and h.angle == 1.0 and h.active, "aim: on release the aim of 50 ms earlier counts")
 	levette.reset(r)
-	check(levette.al_rilascio(r, 1) == nil, "mira: dopo reset nessuna mira registrata")
+	check(levette.al_rilascio(r, 1) == nil, "aim: after reset no aim recorded")
 end
 
 do
-	-- chi esce online sparisce: niente punti, niente rinascita, il turno passa
+	-- whoever leaves online disappears: no points, no respawn, the turn passes
 	local g = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
 	g:pop_events()
-	local punti = g.robots[2].points
+	local point_total = g.robots[2].points
 	g:remove(1)
 	local ev = g:pop_events()
-	local tipi = {}
-	for _, e in ipairs(ev) do tipi[#tipi + 1] = e.type end
-	check(g.robots[1].gone and g.robots[1].dead and g.current == 2, "esce chi è di turno: il turno passa al 2")
-	check(table.concat(g.order, " ") == "2 3 4" and table.concat(tipi, " "):find("gone") and not table.concat(tipi, " "):find("death"),
-		"esce: fuori dall'ordine, evento gone e nessuna morte")
-	check(g.robots[2].points == punti, "esce: nessun punto a nessuno")
+	local kinds = {}
+	for _, e in ipairs(ev) do kinds[#kinds + 1] = e.type end
+	check(g.robots[1].gone and g.robots[1].dead and g.current == 2, "the one on turn leaves: the turn passes to 2")
+	check(table.concat(g.order, " ") == "2 3 4" and table.concat(kinds, " "):find("gone") and not table.concat(kinds, " "):find("death"),
+		"leaves: out of the order, gone event and no death")
+	check(g.robots[2].points == point_total, "leaves: no points to anyone")
 	g:remove(3)
 	g:end_turn()
-	check(g.current == 4, "dopo il 2 tocca al 4 (il 3 è uscito)")
+	check(g.current == 4, "after 2 it's 4's turn (3 left)")
 	g:end_turn()
-	check(g.current == 2, "e poi di nuovo al 2")
+	check(g.current == 2, "and then 2 again")
 	for _ = 1, game.RESPAWN_TICKS + 5 do g:step({}) end
-	check(g.robots[1].dead and g.robots[3].dead, "chi è uscito non rinasce")
+	check(g.robots[1].dead and g.robots[3].dead, "whoever left doesn't respawn")
 end
 
--- il tempo della partita non scende mentre si aspetta che tutto si fermi fra un turno e l'altro
+-- match time doesn't go down while waiting for everything to settle between turns
 do
 	local g = game.new(42, "forgia")
 	g:step({ fire = { weapon = "missile", angle = 1.2, power = 0.8 } })
 	while g.phase == "aim" do g:step() end
-	local prima, t = g.match_left, 0
+	local first_one, t = g.match_left, 0
 	while g.phase == "settle" do
 		g:step()
 		t = t + 1
 	end
-	check(t > 1 and g.match_left == prima, "il tempo della partita è fermo fra un turno e l'altro")
+	check(t > 1 and g.match_left == first_one, "match time is stopped between turns")
 end
 
--- regole come dati (sim/regole.lua): la lista bianca e cosa arriva a game.new e alla scelta
+-- rules as data (sim/rules.lua): the whitelist and what reaches game.new and the draft
 do
-	local regole = require "sim.regole"
+	local rules = require "sim.rules"
 	local draft = require "sim.draft"
-	check(regole.valida({ casse = 2, cure = false, livello = "fisso", armi = { "punch", "mallet" }, punti = { kill = 80 } }),
-		"regole: una regola giusta passa")
-	for _, r in ipairs({ { vento = 3 }, { casse = 0 }, { casse = 2.5 }, { armi = { "punch" } }, { armi = { "laser", "mallet" } },
+	check(rules.validate({ casse = 2, cure = false, livello = "fisso", armi = { "punch", "mallet" }, punti = { kill = 80 } }),
+		"rules: a correct rule passes")
+	for _, r in ipairs({ { wind = 3 }, { casse = 0 }, { casse = 2.5 }, { armi = { "punch" } }, { armi = { "laser", "mallet" } },
 		{ punti = { volo = 3 } }, { punti = { kill = 5000 } }, { livello = "alto" }, { cure = "no" } }) do
 		local k = next(r)
-		check(not regole.valida(r), "regole: rifiutata " .. k)
+		check(not rules.validate(r), "rules: rejected " .. k)
 	end
-	check(regole.valida({ tetto = 15 }, true) and not regole.valida({ tetto = 30 }) and not regole.valida({ tetto = 0 }),
-		"regole: il tetto ai livelli va da 1 a sotto il massimo")
-	check(not regole.valida({ casse = 2 }, true), "regole: su una coda normale solo il tetto")
-	local opts = regole.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
+	check(rules.validate({ tetto = 15 }, true) and not rules.validate({ tetto = 30 }) and not rules.validate({ tetto = 0 }),
+		"rules: the level cap goes from 1 to below the maximum")
+	check(not rules.validate({ casse = 2 }, true), "rules: on a normal queue only the cap")
+	local opts = rules.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
 	local g = game.new(7, "forgia", opts)
 	check(g.crate_every == 2 and not g.heals_on and g.score.kill == 80 and g.score.damage == config.SCORE.damage,
-		"regole: casse, cure e punti arrivano alla partita")
-	local d = draft.new(7, config.MODES["2v2"], regole.armi({ armi = { "punch", "mallet", "eagle" } }))
-	check(#d.offer == 1 and d.offer[1] == "punch" and #d.offer2 == 2, "regole: la scelta offre solo le armi dell'evento")
-	check(regole.armi({ casse = 2 }) == nil, "regole: senza armi la scelta resta quella di sempre")
+		"rules: crates, heals and points reach the match")
+	local d = draft.new(7, config.MODES["2v2"], rules.armi({ armi = { "punch", "mallet", "eagle" } }))
+	check(#d.offer == 1 and d.offer[1] == "punch" and #d.offer2 == 2, "rules: the draft offers only the event's weapons")
+	check(rules.armi({ casse = 2 }) == nil, "rules: without weapons the draft stays the usual one")
 end
 
 if failures > 0 then
-	print(failures .. " test falliti")
+	print(failures .. " tests failed")
 	os.exit(1)
 end
-print("tutti i test superati")
+print("all tests passed")

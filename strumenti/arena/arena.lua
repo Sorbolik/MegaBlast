@@ -36,8 +36,8 @@ local maps = require "sim.maps"
 local rng = require "sim.rng"
 local bot = require "sim.bot"
 local replay = require "sim.replay"
-local assetto = require "sim.assetto"
-local equip = require "sim.equipaggiamento"
+local assetto = require "sim.loadout"
+local equip = require "sim.gear"
 
 local opt = { partite = 10, da = 1, modo = "tutti", livello = "normale" }
 local i = 1

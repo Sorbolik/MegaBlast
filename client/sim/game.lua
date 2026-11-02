@@ -1,222 +1,223 @@
--- Simulazione di una partita: robot, missile, turni.
--- Lua puro, nessuna API Defold: la stessa logica girerà anche sul server.
+-- Simulation of a match: robots, missiles, turns.
+-- Pure Lua, no Defold API: the same logic runs on the server too.
 --
--- Uso:
+-- Usage:
 --   local game = require "sim.game"
---   local g = game.new(seed, "forgia")   -- senza mappa la sceglie il seed
+--   local g = game.new(seed, "forgia")   -- without a map the seed picks it
 --   g:step({ left = bool, right = bool, jump = bool,
 --            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport" | "swap"
 --                                                     | "grenade" | "shards" | "punch" } })
---   g:can_use(weapon)   -- il robot di turno può usarla adesso? (g.permesso(w): le lezioni ne vietano)
--- Regole del turno (sim/config.lua): fino a un'arma e un colpo di spada per
--- turno, in ordine libero; dopo il primo attacco restano AFTER_ATTACK_SECONDS,
--- in cui si può fare il secondo e riposizionarsi. I secondi rimasti al primo
--- attacco diventano globi del teletrasporto (rb.teleports_left).
+--   g:can_use(weapon)   -- can the robot on turn use it now? (g.permesso(w): the lessons forbid some)
+-- Turn rules (sim/config.lua): up to one weapon and one sword hit per turn, in
+-- any order; after the first attack AFTER_ATTACK_SECONDS remain, during which
+-- you can do the second and reposition. The seconds left at the first attack
+-- become teleport orbs (rb.teleports_left).
 --   for _, e in ipairs(g:pop_events()) do ... end
 
 local rng = require "sim.rng"
 local terrain = require "sim.terrain"
 local maps = require "sim.maps"
-local mischia = require "sim.mischia"
+local melee = require "sim.melee"
 local C = require "sim.config"
-local CORPO = require "sim.corpo"
+local BODY_SCALE = require "sim.corpo"
 
 local M = {}
 M.__index = M
 
--- Mondo: 640 x 360 celle (le maschere delle mappe). CELL 3 dal 26 ottobre, era 2:
--- la mappa era piccola per il diavoletto (ci si attraversava in fretta e nei
--- buchi in mezzo non passava). 3 e non un valore con la virgola, così le celle
--- restano intere e la mappa coincide pixel per pixel con le immagini 1920 x 1080.
+-- World: 640 x 360 cells (the map masks). CELL 3 since 26 October, it was 2:
+-- the map was small for the devil (you crossed it quickly and it didn't fit
+-- through the holes in the middle). 3 and not a fractional value, so cells stay
+-- whole and the map matches the 1920 x 1080 images pixel for pixel.
 M.CELL = 3
 M.WORLD_W = 640 * M.CELL
 M.WORLD_H = 360 * M.CELL
 M.DT = 1 / 60
 
--- Misure. Salti, armi, casse ed esplosioni sono misurati su un robot alto
--- REF_H pixel, che vale 3,612 unità U: molte misure qui sotto sono in U. Il
--- corpo del diavoletto è CORPO volte più grande (1,4, scelto il 26 ottobre
--- perché il diavoletto dipinto si legga): la capsula per camminare e il cerchio
--- dei colpi sono in sim/corpo.lua (editor delle animazioni), il resto del mondo
--- resta sulla misura di REF_H. REF_H è 28 dal 23 ottobre (era 20) per vedere
--- meglio il personaggio. Le misure scritte in pixel (casse, schegge, globo...)
--- sono state fatte su un robot alto 16 e poi moltiplicate per 28 / 16.
+-- Measures. Jumps, weapons, crates and explosions are measured on a robot
+-- REF_H pixels tall, which is 3.612 U units: many measures below are in U. The
+-- devil's body is CORPO times bigger (1.4, chosen on 26 October so the painted
+-- devil reads well): the walking capsule and the hit circle are in
+-- sim/corpo.lua (animation editor), the rest of the world stays on the REF_H
+-- scale. REF_H is 28 since 23 October (it was 20) to see the character better.
+-- The measures written in pixels (crates, shards, orb...) were made on a robot
+-- 16 tall and then multiplied by 28 / 16.
 M.REF_H = 28
 M.U = M.REF_H / 3.612
 M.CORPO = 1.4
 M.GRAVITY = 25 * M.U
 
--- Robot (la posizione è il centro dei piedi). Il corpo contro il terreno è una
--- capsula: sopra e sotto un mezzo cerchio di raggio ROBOT_HALF_W. Il fondo
--- rotondo tocca i pendii vicino al centro invece che con lo spigolo, così non
--- resta sospeso.
-M.ROBOT_H = CORPO.cammina.alto
-M.ROBOT_HALF_W = CORPO.cammina.largo / 2
--- l'altezza del diavoletto disegnato, dai piedi alla cima della testa: il
--- disegno non cambia se cambiano la capsula per camminare o il cerchio dei colpi
--- (sim/corpo.lua). Da qui partono anche i colpi (MUZZLE) e il rampino.
--- Proiettili, casse e armi in mano si disegnano su DISEGNO_H / CORPO.
+-- Robot (the position is the centre of the feet). The body against terrain is
+-- a capsule: above and below a half circle of radius ROBOT_HALF_W. The round
+-- bottom touches slopes near the centre instead of with the corner, so it
+-- doesn't stay hanging.
+M.ROBOT_H = BODY_SCALE.cammina.alto
+M.ROBOT_HALF_W = BODY_SCALE.cammina.largo / 2
+-- the height of the drawn devil, from the feet to the top of the head: the
+-- drawing doesn't change if the walking capsule or the hit circle change
+-- (sim/corpo.lua). Shots (MUZZLE) and the grapple also start from here.
+-- Projectiles, crates and held weapons are drawn on DISEGNO_H / CORPO.
 M.DISEGNO_H = M.REF_H * M.CORPO
-M.MAX_CLIMB = 10.5       -- gradino massimo che il robot sale da solo
+M.MAX_CLIMB = 10.5       -- highest step the robot climbs by itself
 
--- Statistiche di movimento del robot (le altre sono in sim/config.lua, STATS).
--- L'equipaggiamento e l'albero di abilità le modificano.
+-- Robot movement stats (the others are in sim/config.lua, STATS).
+-- Gear and the skill tree modify them.
 M.DEFAULT_STATS = {
-	walk_speed = 5 * M.U,    -- velocità a terra, al secondo
-	jump_height = 5.2 * M.U, -- altezza massima del salto
-	air_speed = 5 * M.U,     -- velocità orizzontale in aria
+	walk_speed = 5 * M.U,    -- ground speed, per second
+	jump_height = 5.2 * M.U, -- maximum jump height
+	air_speed = 5 * M.U,     -- horizontal speed in the air
 }
--- In aria niente inerzia: tenendo una direzione la velocità è subito
--- air_speed, senza direzione resta quella che era; il robot di turno non va
--- mai di lato più veloce della sua corsa, nemmeno dopo un'esplosione.
--- Danno da caduta: oltre FALL_SAFE pixel di caduta, FALL_DAMAGE per pixel in
--- più fino a FALL_DAMAGE_MAX (Sergio, 29 ottobre 2026: "ci vogliono 5 turni per
--- ammazzare qualcuno", tutti i danni sono saliti di 5/3)
+-- No inertia in the air: holding a direction the speed is air_speed at once,
+-- with no direction it stays what it was; the robot on turn never moves
+-- sideways faster than its run, not even after an explosion.
+-- Fall damage: past FALL_SAFE pixels of fall, FALL_DAMAGE per extra pixel up
+-- to FALL_DAMAGE_MAX (Sergio, 29 October 2026: "ci vogliono 5 turni per
+-- ammazzare qualcuno", all damage went up by 5/3)
 M.FALL_SAFE = 40 * M.U
 M.FALL_DAMAGE = 1.25 / M.U
 M.FALL_DAMAGE_MAX = 75
 
 -- Lanciarune (missile)
-M.MISSILE_SPEED = 75 * M.U  -- velocità alla potenza massima
-M.MISSILE_GRAVITY = 1.1     -- quanta gravità sente, rispetto ai robot
--- Come spinge un'esplosione: velocità = (punto più vicino del quadrato attorno
--- al cerchio dei colpi - esplosione) * impulse * t, con t = 1 - distanza /
--- damage_r. Massima a metà raggio, nulla nel colpo diretto. La velocità di chi
--- viene spinto è sostituita, non sommata.
-M.SELF_DAMAGE = 0.5      -- quanto del danno subisce chi si colpisce da solo
--- per quanti tick dopo il lancio un proiettile non tocca chi l'ha lanciato
+M.MISSILE_SPEED = 75 * M.U  -- speed at full power
+M.MISSILE_GRAVITY = 1.1     -- how much gravity it feels, relative to robots
+-- How an explosion pushes: velocity = (closest point of the square around the
+-- hit circle - explosion) * impulse * t, with t = 1 - distance / damage_r.
+-- Maximum at half radius, zero on a direct hit. The pushed one's velocity is
+-- replaced, not added.
+M.SELF_DAMAGE = 0.5      -- how much of the damage whoever hits themselves takes
+-- for how many ticks after launch a projectile doesn't touch its launcher
 M.OWNER_SAFE_TICKS = 30
 
--- Lama di Nucleo: il fendente di sim/mischia.lua ruotato sulla mira (mirando in
--- basso il colpo scende dall'alto verso il basso). I danni arrivano quando si
--- chiude la finestra del colpo, a tutti quelli toccati dalla lama, e il colpo
--- ferma il bersaglio.
-M.MUZZLE = 24.5          -- i colpi partono a questa distanza dal centro del robot
-M.SWORD_PIVOT_Y = 17.5   -- altezza del perno (la spalla) sopra i piedi
+-- Lama di Nucleo: the slash of sim/melee.lua rotated on the aim (aiming down
+-- the hit comes down from above). Damage lands when the hit window closes, on
+-- everyone touched by the blade, and the hit stops the target.
+M.MUZZLE = 24.5          -- shots start at this distance from the robot's centre
+M.SWORD_PIVOT_Y = 17.5   -- height of the pivot (the shoulder) above the feet
 M.SWORD_DAMAGE = 25
 
--- Dove un robot può essere colpito (proiettili, globi, lame, esplosioni): un
--- cerchio di raggio HURT_R alto HURT_Y dai piedi (sim/corpo.lua). Per le
--- esplosioni conta il quadrato attorno al cerchio, più largo di HURT_FAT per lato.
-M.HURT_R = CORPO.colpi.raggio
-M.HURT_Y = CORPO.colpi.centro
+-- Where a robot can be hit (projectiles, orbs, blades, explosions): a circle of
+-- radius HURT_R, HURT_Y above the feet (sim/corpo.lua). For explosions the
+-- square around the circle counts, HURT_FAT wider on each side.
+M.HURT_R = BODY_SCALE.colpi.raggio
+M.HURT_Y = BODY_SCALE.colpi.centro
 M.HURT_FAT = 0.1 * M.U
 
--- Teletrasporto (Passo d'Ombra): un globo che vola come il missile, rimbalza e
--- rotola sul terreno, e dopo
--- TELEPORT_TICKS sposta il robot dove si trova, senza toccare il suo stato:
--- velocità, fendente in corso e direzione restano quelli di prima. Non chiude il turno.
+-- Teleport (Passo d'Ombra): an orb that flies like the missile, bounces and
+-- rolls on terrain, and after
+-- TELEPORT_TICKS moves the robot to where it is, without touching its state:
+-- velocity, ongoing slash and facing stay as they were. It doesn't end the turn.
 M.TELEPORT_TICKS = 3 * 60
 M.ORB_SPEED = 80 * M.U
 M.ORB_GRAVITY = 1.1
-M.ORB_DAMPING = 1.1      -- frenata per secondo dopo il primo urto
-M.MAX_ORBS = 6           -- globi in volo insieme, al massimo
+M.ORB_DAMPING = 1.1      -- slowdown per second after the first impact
+M.MAX_ORBS = 6           -- orbs in flight together, at most
 
--- Esplosioni: raggio del cratere, raggio del danno, danno al centro e al bordo,
--- impulso della spinta
+-- Explosions: crater radius, damage radius, damage at centre and at edge,
+-- push impulse
 M.MISSILE_BLAST = { r = 5 * M.U, damage_r = 9 * M.U, damage = 25, damage_min = 12.5, impulse = 10 }
 
--- Uovo di Fiamma (granata): rimbalza (0,4, frenata 1 al secondo dopo il primo
--- urto) e scoppia dopo GRENADE_FUSE tick, con un'esplosione più grande del missile
-M.GRENADE_SPEED = 85 * M.U  -- velocità alla potenza massima
+-- Uovo di Fiamma (grenade): bounces (0.4, slowdown 1 per second after the
+-- first impact) and blows up after GRENADE_FUSE ticks, with a bigger explosion
+-- than the missile
+M.GRENADE_SPEED = 85 * M.U  -- speed at full power
 M.GRENADE_FUSE = 5 * 60
-M.GRENADE_BOUNCE = 0.4   -- quanta velocità resta dopo un rimbalzo
-M.GRENADE_FRICTION = 1   -- attrito quando tocca terra
+M.GRENADE_BOUNCE = 0.4   -- how much speed is left after a bounce
+M.GRENADE_FRICTION = 1   -- friction when touching ground
 M.GRENADE_GRAVITY = 1.3
-M.GRENADE_DAMPING = 1    -- frenata per secondo dopo il primo urto (come il linear damping di Box2D)
--- danno al centro 80 e 25 ai bordi (arena dei bot, 29 ottobre 2026: l'Uovo era
--- l'arma più debole; Sergio: "non ti dico che si deve oneshottare")
+M.GRENADE_DAMPING = 1    -- slowdown per second after the first impact (like Box2D's linear damping)
+-- damage 80 at the centre and 25 at the edges (bot arena, 29 October 2026: the
+-- Uovo was the weakest weapon; Sergio: "non ti dico che si deve oneshottare")
 M.GRENADE_BLAST = { r = 5.5 * M.U, damage_r = 10 * M.U, damage = 80, damage_min = 25, impulse = 15 }
 
--- Sciame di Schegge (mitragliatrice): una raffica di schegge dritte e veloci,
--- ognuna con un'esplosione piccolissima
+-- Sciame di Schegge (machine gun): a burst of straight, fast shards, each with
+-- a tiny explosion
 M.SHARD_COUNT = 8
-M.SHARD_EVERY = 4        -- tick tra una scheggia e l'altra
-M.SHARD_SPEED = 1662.5   -- la potenza non conta: escono sempre alla stessa velocità
-M.SHARD_GRAVITY = 0.2    -- la gravità le piega appena
+M.SHARD_EVERY = 4        -- ticks between one shard and the next
+M.SHARD_SPEED = 1662.5   -- power doesn't count: they always leave at the same speed
+M.SHARD_GRAVITY = 0.2    -- gravity barely bends them
 M.SHARD_SPREAD = math.rad(3)
 M.SHARD_BLAST = { r = 12.25, damage_r = 21, damage = 11, impulse = 30 }
 
--- Cecchino: velocità del colpo (la potenza non conta) e quanto vive al massimo;
--- danno, spinta, caduta e rimbalzi in config.SNIPER
+-- Cecchino: shot speed (power doesn't count) and its maximum lifetime; damage,
+-- push, drop and bounces in config.SNIPER
 M.SNIPER_SPEED = 840
 M.SNIPER_LIFE = 6 * 60
 
--- Pugno del Titano: il montante di sim/mischia.lua ruotato sulla mira, lancia
--- dritto in alto chi tocca; chi colpisce fa un saltello
-M.PUNCH_DAMAGE = 47      -- 28 invece di 50 (arena dei bot, 29 ottobre 2026: vinceva troppo), poi 47 (5/3)
-M.PUNCH_LAUNCH = 40 * M.U   -- velocità verso l'alto del bersaglio
-M.PUNCH_HOP = 15 * M.U      -- chi colpisce si alza un po' col montante
+-- Pugno del Titano: the uppercut of sim/melee.lua rotated on the aim, it
+-- launches whoever it touches straight up; the attacker does a little hop
+M.PUNCH_DAMAGE = 47      -- 28 instead of 50 (bot arena, 29 October 2026: it won too much), then 47 (5/3)
+M.PUNCH_LAUNCH = 40 * M.U   -- upward speed of the target
+M.PUNCH_HOP = 15 * M.U      -- the attacker rises a little with the uppercut
 
--- Armi, in due categorie (Sergio, 24 ottobre 2026; regola rifatta il 29). Ogni
--- turno una primaria e una secondaria, in ordine libero, mai due della stessa
--- categoria. Primarie: fanno danno e sono le sole che lasciano effetti di stato
--- (config.WEAPON_STATUS); il Lanciarune c'è sempre, le altre danno un colpo per
--- cassa (rb.ammo). Secondarie: fanno di tutto (spostano chi le usa o chi
--- colpiscono) ma mai effetti di stato: la Lama colpisce e basta, il Tonante
--- spinge indietro chi spara, il Maglio lo fa rimbalzare in alto, l'Affondo lo
--- porta oltre, il Mantice soffia via chi ha davanti. La Lama c'è sempre ed è
--- illimitata; una delle altre si sceglie all'inizio della partita (rb.secondary,
--- sim/draft.lua) e ha colpi contati in rb.ammo, che tornano colpendo un nemico
--- con la Lama (config.SECONDARY_SHOTS; Sergio, 31 ottobre 2026).
+-- Weapons, in two categories (Sergio, 24 October 2026; rule redone on the
+-- 29th). Each turn one primary and one secondary, in any order, never two of
+-- the same category. Primaries: do damage and are the only ones that leave
+-- status effects (config.WEAPON_STATUS); the Lanciarune is always there, the
+-- others give one shot per crate (rb.ammo). Secondaries: do anything (move the
+-- user or the target) but never status effects: the Lama just hits, the
+-- Tonante pushes the shooter back, the Maglio bounces them up, the Affondo
+-- carries them past, the Mantice blows away whoever is in front. The Lama is
+-- always there and unlimited; one of the others is picked at the start of the
+-- match (rb.secondary, sim/draft.lua) and has counted shots in rb.ammo, which
+-- come back by hitting an enemy with the Lama (config.SECONDARY_SHOTS; Sergio,
+-- 31 October 2026).
 M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true }
 M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows" }
--- armi che non consumano colpi
+-- weapons that don't use up shots
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
 M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
--- Oggetti tattici delle casse (anche loro in rb.ammo), il paracadute (uno a
--- partita) e il Rampino (uno a turno, per tutti): non sono attacchi (config.lua)
+-- Tactical items from crates (also in rb.ammo), the parachute (one per match)
+-- and the Rampino (one per turn, for everyone): they aren't attacks (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
 M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true }
--- oggetti che si lanciano mirando (gli altri si usano col tocco)
+-- items thrown by aiming (the others are used with a tap)
 M.THROWN = { trampoline = true, hook = true }
--- tutti i nomi validi di fire.weapon
+-- all the valid names of fire.weapon
 M.WEAPONS = { teleport = true, swap = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
 for _, w in ipairs(M.CRATE_WEAPONS) do M.WEAPONS[w] = true end
 for _, w in ipairs(M.DRAFT_SECONDARIES) do M.WEAPONS[w] = true end
 for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 
--- Casse: cadono dal cielo in un punto a caso (CRATE_CHANCE qui sotto). Chi la
--- tocca trova un colpo di un'arma o un oggetto (config.CRATE_CONTENTS).
--- CRATE_EVERY: la cadenza che il pannello degli eventi propone per gli eventi
--- con una cassa ogni tanti turni (sim/regole.lua, casse).
+-- Crates: they drop from the sky at a random spot (CRATE_CHANCE below).
+-- Whoever touches one finds a shot of a weapon or an item (config.CRATE_CONTENTS).
+-- CRATE_EVERY: the rate the events panel proposes for events with a crate
+-- every so many turns (sim/rules.lua, casse).
 M.CRATE_EVERY = 3
-M.CRATE_MAX = 3          -- casse in mappa al massimo
+M.CRATE_MAX = 3          -- crates on the map at most
 M.CRATE_HALF_W = 17.5
 M.CRATE_H = 31.5
-M.CRATE_FALL = 192.5     -- velocità massima di caduta (scende piano, col paracadute)
--- A ogni turno una probabilità, secondo quante casse ci sono già
--- ({ con 0, con 1, con 2, ... }). Con opts.crate_every (regole degli eventi,
--- missioni, prove) invece una cassa ogni tanti turni.
+M.CRATE_FALL = 192.5     -- maximum fall speed (it comes down slowly, with a parachute)
+-- Each turn a probability, depending on how many crates there already are
+-- ({ with 0, with 1, with 2, ... }). With opts.crate_every (event rules,
+-- missions, tests) instead one crate every so many turns.
 M.CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 }
 
--- Turni: le durate sono in sim/config.lua, qui in tick
+-- Turns: durations are in sim/config.lua, here in ticks
 M.MATCH_TICKS = C.MATCH_SECONDS * 60
 M.TURN_TICKS = C.TURN_SECONDS * 60
 M.AFTER_ATTACK_TICKS = C.AFTER_ATTACK_SECONDS * 60
 M.RESPAWN_TICKS = math.floor(C.RESPAWN_SECONDS * 60)
-M.SETTLE_TICKS = 60      -- 1 s tra un turno e l'altro
+M.SETTLE_TICKS = 60      -- 1 s between one turn and the next
 M.MAX_SETTLE_TICKS = 5 * 60
 
--- Online il server manda uno stato ogni SNAPSHOT_TICKS tick (30 al secondo)
+-- Online the server sends a state every SNAPSHOT_TICKS ticks (30 per second)
 M.SNAPSHOT_TICKS = 2
 
--- Comandi (li usa il client). La potenza del tiro viene da quanto è lontano il
--- dito: f = distanza / portata (0..1). Sotto AIM_DEADZONE non conta, poi
--- cresce con l'esponente AIM_EXPONENT (2: quadratica, più precisa sui tiri corti).
+-- Controls (used by the client). Shot power comes from how far the finger is:
+-- f = distance / reach (0..1). Below AIM_DEADZONE it doesn't count, then it
+-- grows with exponent AIM_EXPONENT (2: quadratic, more precise on short shots).
 M.AIM_DEADZONE = 0.2
 M.AIM_EXPONENT = 2
--- quanto della differenza tra mira e dito si recupera a ogni frame (a 60 Hz); 1 = subito
+-- how much of the gap between aim and finger is recovered each frame (at 60 Hz); 1 = at once
 M.AIM_SMOOTH = 0.2
--- Salto corto (come Hollow Knight): lasciando il salto mentre si sale la
--- velocità verso l'alto si moltiplica per JUMP_CUT. 1 = salto sempre pieno.
--- Conta solo se l'input dice hold = false: senza hold il salto è pieno.
--- Tenendo premuto il salto si risalta appena si tocca terra (lo fa il client).
+-- Short jump (like Hollow Knight): releasing jump while rising multiplies the
+-- upward speed by JUMP_CUT. 1 = always a full jump.
+-- It only counts if the input says hold = false: without hold the jump is full.
+-- Holding jump you jump again as soon as you touch ground (the client does that).
 M.JUMP_CUT = 0.45
--- Aiuti (come Celeste): per COYOTE_TICKS dopo essere scesi da un bordo si può
--- ancora saltare; un salto chiesto in aria fino a JUMP_BUFFER_TICKS prima di
--- toccare terra parte appena si atterra.
+-- Assists (like Celeste): for COYOTE_TICKS after stepping off an edge you can
+-- still jump; a jump asked in the air up to JUMP_BUFFER_TICKS before touching
+-- ground starts as soon as you land.
 M.COYOTE_TICKS = 6
 M.JUMP_BUFFER_TICKS = 6
 
@@ -228,8 +229,8 @@ end
 
 local NO_INPUT = {}
 
--- Statistiche di un robot senza albero né equipaggiamento: config.STATS più
--- quelle di movimento (DEFAULT_STATS). Da qui parte anche sim/assetto.lua.
+-- Stats of a robot without tree or gear: config.STATS plus the movement ones
+-- (DEFAULT_STATS). sim/loadout.lua starts from here too.
 function M.base_stats()
 	local st = { teleport_ticks = M.TELEPORT_TICKS }
 	for k, v in pairs(C.STATS) do st[k] = v end
@@ -253,20 +254,20 @@ local function make_ammo(start)
 end
 
 -- opts.players = { { team = 1, stats = { walk_speed = ... }, pick = "shards", secondary = "eagle" }, { team = 2 }, ... }:
--- da 2 a MAX_PLAYERS robot, nell'ordine in cui arrivano. Stesso team = alleati.
--- stats sono le statistiche del robot (albero e equipaggiamento); quelle che
--- mancano vengono da config.STATS e da DEFAULT_STATS.
--- pick è l'arma della scelta d'inizio partita (sim/draft.lua). dummy = true è
--- un bersaglio che non gioca mai il suo turno (lezioni). Senza players, due
--- robot in squadre diverse.
+-- from 2 to MAX_PLAYERS robots, in the order they come. Same team = allies.
+-- stats are the robot's stats (tree and gear); the missing ones come from
+-- config.STATS and DEFAULT_STATS.
+-- pick is the weapon of the start-of-match draft (sim/draft.lua). dummy = true
+-- is a target that never plays its turn (lessons). Without players, two robots
+-- on different teams.
 M.MAX_PLAYERS = 4
 
--- Ordine dei turni: le squadre si alternano (nel 2 contro 2 A1, B1, A2, B2),
--- nell'ordine in cui compaiono in players. Restituisce gli indici dei robot.
+-- Turn order: teams alternate (in 2 v 2 A1, B1, A2, B2), in the order they
+-- appear in players. Returns the robot indices.
 local function turn_order(players)
 	local teams, members = {}, {}
 	for i, p in ipairs(players) do
-		-- i bersagli non giocano
+		-- targets don't play
 		if not p.dummy then
 			if not members[p.team] then
 				members[p.team] = {}
@@ -285,7 +286,7 @@ local function turn_order(players)
 	return order
 end
 
--- "1v1", "ffa" (tutti contro tutti: ogni squadra ha un robot) o "2v2" (squadre)
+-- "1v1", "ffa" (free for all: each team has one robot) or "2v2" (teams)
 local function match_mode(players)
 	local size = {}
 	for _, p in ipairs(players) do size[p.team] = (size[p.team] or 0) + 1 end
@@ -295,18 +296,18 @@ local function match_mode(players)
 	return #players == 2 and "1v1" or "ffa"
 end
 
--- opts.ammo = { grenade = 2, ... } colpi iniziali delle armi delle casse (per le prove)
--- opts.crate_every = turni tra una cassa e l'altra (senza: CRATE_CHANCE a ogni turno)
--- opts.heals = false: niente cerchi di cura (le lezioni)
--- opts.hp = vita iniziale (stats.max_hp se manca; per le prove)
--- opts.score = punti partita diversi da config.SCORE, solo i campi che cambiano (l'arena prova le varianti);
---   false: niente punti (le lezioni che non parlano di punti, Sergio 31 ott)
--- opts.normalize = albero ed equipaggiamento non contano, tutti hanno le statistiche
--- di base (resta l'arma della scelta): la regola livello = "fisso" di un evento (sim/regole.lua)
+-- opts.ammo = { grenade = 2, ... } starting shots of crate weapons (for tests)
+-- opts.crate_every = turns between one crate and the next (without: CRATE_CHANCE each turn)
+-- opts.heals = false: no healing circles (the lessons)
+-- opts.hp = starting life (stats.max_hp if missing; for tests)
+-- opts.score = match points different from config.SCORE, only the fields that change (the arena tries variants);
+--   false: no points (the lessons that aren't about points, Sergio 31 Oct)
+-- opts.normalize = tree and gear don't count, everyone has the base stats (the
+-- draft weapon stays): an event's livello = "fisso" rule (sim/rules.lua)
 function M.new(seed, map_id, opts)
 	opts = opts or {}
 	local g = setmetatable({}, M)
-	-- senza mappa la sceglie il seed (maps.ROTATION)
+	-- without a map the seed picks it (maps.ROTATION)
 	local map = maps.get(map_id or maps.pick(seed))
 	g.map = map.id
 	g.rng = rng.new(seed)
@@ -326,7 +327,7 @@ function M.new(seed, map_id, opts)
 		for k, v in pairs(C.SCORE) do g.score[k] = v end
 		for k, v in pairs(opts.score) do g.score[k] = v end
 	end
-	-- i punti di partenza nell'ordine dei turni (compagni dallo stesso lato), poi i bersagli
+	-- the spawn points in turn order (teammates on the same side), then the targets
 	local placing = {}
 	for k, i in ipairs(g.order) do placing[k] = i end
 	for i, p in ipairs(players) do
@@ -340,60 +341,60 @@ function M.new(seed, map_id, opts)
 			id = i, team = p.team, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
 			vx = 0, vy = 0, grounded = false, knocked = false, facing = sp.x < M.WORLD_W / 2 and 1 or -1,
 			hp = opts.hp or st.max_hp, max_hp = st.max_hp, dead = false,
-			-- per i punti e i risultati di fine partita
+			-- for points and end-of-match results
 			points = 0, damage = 0, kills = 0, env_kills = 0, deaths = 0, falls = 0,
 			attack_ticks = 0, attack_turns = 0, teleports = 0, crates = 0,
-			teleports_left = st.teleports,   -- globi del teletrasporto in mano
-			parachutes_left = st.parachutes, -- paracadute rimasti per la partita
-			shield = nil,     -- danni che lo scudo può ancora assorbire
-			parachute = false, -- aperto
-			status = {},      -- effetti di stato: tipo -> { turns = turni rimasti, by = chi l'ha dato }
-			parried = 0,      -- punti di parata presi con lo scudo di adesso (config.SCORE.parry_max)
-			life_damage = {}, -- danno preso da ogni avversario in questa vita: id -> punti di vita
-			turns = 0,     -- turni giocati
-			round_done = false, -- ha già giocato in questo giro di turni
-			swing = nil,   -- tick del fendente in corso (da 0 fino alla fine del colpo), nil se fermo
-			punch = nil,   -- tick del Pugno del Titano in corso, nil se fermo
-			lunge = nil,   -- tick rimasti dell'Affondo in corso, nil se fermo
-			recoil = nil,  -- tick rimasti del rinculo del Tonante, nil se fermo
-			mallet = nil,  -- tick del colpo di Maglio in corso, nil se fermo
-			hooked = nil,  -- appeso alla fune del Rampino: { by = chi tira, left = fune da riavvolgere }
-			hook_shot = nil, -- il suo uncino in volo: { x, y, angle, left = celle che restano }
+			teleports_left = st.teleports,   -- teleport orbs in hand
+			parachutes_left = st.parachutes, -- parachutes left for the match
+			shield = nil,     -- damage the shield can still absorb
+			parachute = false, -- open
+			status = {},      -- status effects: type -> { turns = turns left, by = who gave it }
+			parried = 0,      -- parry points earned with the current shield (config.SCORE.parry_max)
+			life_damage = {}, -- damage taken from each opponent in this life: id -> hit points
+			turns = 0,     -- turns played
+			round_done = false, -- has already played in this round of turns
+			swing = nil,   -- tick of the ongoing slash (from 0 to the end of the hit), nil if idle
+			punch = nil,   -- tick of the ongoing Pugno del Titano, nil if idle
+			lunge = nil,   -- ticks left of the ongoing Affondo, nil if idle
+			recoil = nil,  -- ticks left of the Tonante's recoil, nil if idle
+			mallet = nil,  -- tick of the ongoing Maglio hit, nil if idle
+			hooked = nil,  -- hanging from the Rampino's rope: { by = who pulls, left = rope to reel in }
+			hook_shot = nil, -- its hook in flight: { x, y, angle, left = cells remaining }
 			ammo = make_ammo(opts.ammo),
-			-- la secondaria scelta all'inizio della partita, oltre alla Lama (sim/draft.lua)
+			-- the secondary picked at the start of the match, besides the Lama (sim/draft.lua)
 			secondary = p.secondary or opts.secondary,
 			stats = st,
 		}
-		-- la primaria presa nella scelta d'inizio partita (sim/draft.lua)
+		-- the primary taken in the start-of-match draft (sim/draft.lua)
 		if p.pick then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
 		local sec = g.robots[i].secondary
 		if sec then g.robots[i].ammo[sec] = g.robots[i].ammo[sec] + C.SECONDARY_SHOTS.draft end
 	end
 	g.events = {}
 	g.tick = 0
-	g.orbs = {}              -- globi del teletrasporto in volo, dal più vecchio
+	g.orbs = {}              -- teleport orbs in flight, oldest first
 	g.orb_seq = 0
 	g.match_left = M.MATCH_TICKS
 	g.current = 1
-	g.window = 0             -- tick rimasti dopo il primo attacco del turno (0: non c'è ancora stato)
-	g.round = 1              -- il giro di turni in corso (la Corona c'è da SCORE.crown_rounds + 1)
-	g.final_round = false    -- l'ultimo giro: i punti valgono SCORE.final_round volte
-	-- con due squadre i turni vanno a coppie (Rosso, Blu): ahead è la squadra che
-	-- apre la coppia, ahead_base i suoi punti quando l'ha aperta. Finché l'altra
-	-- non ha risposto, i punti fatti da ahead dopo ahead_base sono "in attesa"
-	-- (battaglia/punteggio.lua). 0 con più di due squadre.
+	g.window = 0             -- ticks left after the first attack of the turn (0: there hasn't been one yet)
+	g.round = 1              -- the current round of turns (the Crown exists from SCORE.crown_rounds + 1)
+	g.final_round = false    -- the last round: points are worth SCORE.final_round times
+	-- with two teams turns go in pairs (Red, Blue): ahead is the team that opens
+	-- the pair, ahead_base its points when it opened it. Until the other has
+	-- answered, the points scored by ahead after ahead_base are "pending"
+	-- (battaglia/punteggio.lua). 0 with more than two teams.
 	g.ahead, g.ahead_base = 0, 0
 	g.winner = nil
-	g.shards = {}        -- schegge in volo, per posto nella raffica (1..SHARD_COUNT)
+	g.shards = {}        -- shards in flight, by place in the burst (1..SHARD_COUNT)
 	g.crates = {}
-	g.placed = {}            -- trappole e trampolini posati
+	g.placed = {}            -- placed traps and trampolines
 	g.placed_id = 0
-	g.heals = {}             -- cerchi di cura { id, x, y }
+	g.heals = {}             -- healing circles { id, x, y }
 	g.heals_on = opts.heals ~= false
 	g.heal_id = 0
 	g.crate_id = 0
 	g.crate_every = opts.crate_every or M.CRATE_EVERY
-	-- con crate_every esplicito si usa sempre quello (le prove ne hanno bisogno)
+	-- with an explicit crate_every that one is always used (tests need it)
 	g.crate_chance = not opts.crate_every and M.CRATE_CHANCE or nil
 	g.turn_no = 0
 	g.order_pos = 1
@@ -411,17 +412,17 @@ function M:pop_events()
 	return e
 end
 
--- Collisioni robot / terreno -------------------------------------------------
+-- Robot / terrain collisions -------------------------------------------------
 
--- Collisioni tra robot: sono scatole che non si attraversano. Camminando contro
--- un altro robot lo si spinge, ma piano (PUSH della propria velocità).
+-- Collisions between robots: they are boxes that can't pass through each
+-- other. Walking against another robot pushes it, but slowly (PUSH of your own speed).
 M.PUSH = 0.3
--- Un globo del teletrasporto che arriva addosso a un robot lo sposta di poco
+-- A teleport orb landing on a robot moves it a little
 M.ORB_NUDGE = 5.25
-M.ORB_R = 5.25           -- raggio del globo, per gli urti
-M.GRENADE_R = 5.25       -- raggio dell'Uovo: rimbalza sui robot come il globo
+M.ORB_R = 5.25           -- orb radius, for impacts
+M.GRENADE_R = 5.25       -- Uovo radius: it bounces on robots like the orb
 
--- Il robot (diverso da me e vivo) la cui scatola si sovrappone a quella con i piedi in (x, y)
+-- The robot (other than me and alive) whose box overlaps the one with feet at (x, y)
 function M:robot_at(x, y, me)
 	for _, o in ipairs(self.robots) do
 		if o ~= me and not o.dead and math.abs(x - o.x) < 2 * M.ROBOT_HALF_W
@@ -431,17 +432,17 @@ function M:robot_at(x, y, me)
 	end
 end
 
--- La scatola del robot con i piedi in (x, y) tocca il terreno o un altro robot?
--- me è il robot stesso (per non urtare sé stesso); senza me contano tutti i robot.
+-- Does the box of the robot with feet at (x, y) touch terrain or another robot?
+-- me is the robot itself (so it doesn't bump into itself); without me all robots count.
 function M:robot_collides(x, y, me)
 	return self:terrain_collides(x, y) or self:robot_at(x, y, me) ~= nil
 end
 
--- Mezza larghezza della capsula all'altezza della riga di celle [a, b) (dai piedi in y)
+-- Half width of the capsule at the height of the cell row [a, b) (from the feet in y)
 local function capsule_half(y, a, b)
 	local r, h = M.ROBOT_HALF_W, M.ROBOT_H
 	local low, high = y + r, y + h - r
-	-- il punto della riga più vicino al tratto dritto della capsula
+	-- the point of the row closest to the straight part of the capsule
 	local p = math.max(a, math.min(b, low))
 	if p < low then
 		local d = low - p
@@ -466,7 +467,7 @@ function M:terrain_collides(x, y)
 	return false
 end
 
--- Sposta il robot di dx in orizzontale, salendo i gradini piccoli. true se ci riesce.
+-- Moves the robot by dx horizontally, climbing small steps. true if it succeeds.
 local function step_x(g, rb, dx)
 	for climb = 0, M.MAX_CLIMB do
 		if not g:robot_collides(rb.x + dx, rb.y + climb, rb) then
@@ -478,7 +479,7 @@ local function step_x(g, rb, dx)
 	return false
 end
 
--- rb va contro un altro robot: lo spinge di poco e lo segue
+-- rb walks into another robot: pushes it a little and follows it
 function M:push(rb, dx)
 	local other = self:robot_at(rb.x + dx, rb.y, rb)
 	if not other then return false end
@@ -494,14 +495,14 @@ local function walk(g, rb, dx)
 	if not step_x(g, rb, dx) then g:push(rb, dx) end
 end
 
--- Punti partita ------------------------------------------------------------------
--- Si guadagnano con il danno agli avversari, le uccisioni (di più quelle
--- ambientali: caduta fuori dalla mappa o da troppo in alto) e colpendo chi è
--- primo in classifica; morire ne toglie. Numeri in config.SCORE.
+-- Match points ------------------------------------------------------------------
+-- Earned with damage to opponents, kills (more for environmental ones: falling
+-- off the map or from too high) and by hitting whoever is first in the
+-- standings; dying takes some away. Numbers in config.SCORE.
 
--- reason dice da dove vengono (damage, kill, death, trap, parry), other è
--- l'altro robot (il colpito; per death chi ha ucciso). L'evento "points" serve
--- all'interfaccia (il numero che vola nella classifica) e all'arena dei bot.
+-- reason says where they come from (damage, kill, death, trap, parry), other
+-- is the other robot (the one hit; for death the killer). The "points" event
+-- serves the UI (the number flying into the standings) and the bot arena.
 function M:add_points(rb, n, reason, other)
 	if self.no_points then return end
 	if self.final_round then n = n * (self.score.final_round or 1) end
@@ -509,9 +510,10 @@ function M:add_points(rb, n, reason, other)
 	self:emit({ type = "points", robot = rb.id, amount = n, reason = reason, other = other and other.id })
 end
 
--- Chi ha più punti (solo se è uno solo e ne ha più di zero): colpirlo vale di più.
--- Nei primi SCORE.crown_rounds giri non c'è: chi gioca per primo sarebbe primo
--- solo perché ha già sparato (Sergio, 31 ottobre 2026).
+-- Whoever has the most points (only if there's exactly one and they have more
+-- than zero): hitting them is worth more. In the first SCORE.crown_rounds
+-- rounds there's none: whoever plays first would be first only because they
+-- already shot (Sergio, 31 October 2026).
 function M:leader()
 	if self.round <= (self.score.crown_rounds or 0) then return nil end
 	local best, tie = nil, false
@@ -529,27 +531,27 @@ local function enemies(a, b)
 	return a ~= b and a.team ~= b.team
 end
 
--- by ha spostato rb senza danno (Rampino, trampolino): conta come ultimo
--- colpo, così se rb muore entro KILL_CREDIT_SECONDS l'uccisione è di by
+-- by moved rb without damage (Rampino, trampoline): it counts as the last hit,
+-- so if rb dies within KILL_CREDIT_SECONDS the kill goes to by
 function M:credit(rb, by)
 	if by and enemies(by, rb) then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
 end
 
--- Toglie amount punti di vita a rb. by è il robot che ha colpito (nil: nessuno,
--- per esempio una caduta), reason va nell'evento "damage". Restituisce il danno
--- arrivato alla vita (0 se lo scudo ha preso tutto).
+-- Takes amount hit points from rb. by is the robot that hit (nil: nobody, for
+-- example a fall), reason goes in the "damage" event. Returns the damage that
+-- reached life (0 if the shield took it all).
 function M:hurt(rb, amount, by, reason)
 	if rb.dead or amount <= 0 then return 0 end
 	local foe = by and enemies(by, rb)
 	if by and by ~= rb then rb.last_hit, rb.last_hit_tick = by.id, self.tick end
 	if rb.status.cracked then amount = math.floor(amount * C.STATUS.cracked.damage + 0.5) end
 	if rb.shield then
-		-- lo scudo assorbe per primo
+		-- the shield absorbs first
 		local absorbed = math.min(rb.shield, amount)
 		rb.shield = rb.shield - absorbed
 		amount = amount - absorbed
 		self:emit({ type = "shield_hit", robot = rb.id, amount = absorbed, left = rb.shield })
-		-- parata: chi porta lo scudo prende punti per il danno nemico che ferma
+		-- parry: whoever carries the shield earns points for the enemy damage it stops
 		if foe then
 			local p = math.min(self.score.parry_max - rb.parried, absorbed * self.score.parry)
 			if p > 0 then
@@ -562,7 +564,7 @@ function M:hurt(rb, amount, by, reason)
 	end
 	local score = self.score
 	local mult = rb == self:leader() and score.leader or 1
-	-- per i punti conta solo la vita che c'era davvero
+	-- for points only the life that was really there counts
 	local real = math.min(amount, rb.hp)
 	rb.hp = rb.hp - amount
 	self:emit({ type = "damage", robot = rb.id, amount = amount, real = real, reason = reason, by = by and by.id })
@@ -573,14 +575,14 @@ function M:hurt(rb, amount, by, reason)
 			self:add_points(by, real * 100 / rb.stats.max_hp * score.damage * mult, "damage", rb)
 		end
 	end
-	-- se era il primo prima del colpo, la Corona resta anche se il colpo fa primo chi uccide
+	-- if they were first before the hit, the Crown stays even if the hit makes the killer first
 	if rb.hp <= 0 then self:kill(rb, reason == "fall" and "fall_damage" or "damage", mult > 1) end
 	return amount
 end
 
--- Effetti di stato ------------------------------------------------------------------
--- Durano fino alla fine del prossimo turno di chi li subisce (o di più, con
--- stats.status_turns di chi li dà). Numeri in config.STATUS.
+-- Status effects ------------------------------------------------------------------
+-- They last until the end of the next turn of whoever suffers them (or longer,
+-- with stats.status_turns of whoever gives them). Numbers in config.STATUS.
 
 function M:add_status(rb, kind, by)
 	if rb.dead then return end
@@ -594,9 +596,9 @@ function M:add_status(rb, kind, by)
 	self:emit({ type = "status", robot = rb.id, kind = kind, turns = rb.status[kind].turns })
 end
 
--- Il colpo di weapon ha fatto danno: l'effetto che porta, se ne porta uno
+-- The hit of weapon did damage: the effect it carries, if it carries one
 function M:hit_status(rb, weapon, by)
-	-- le secondarie non lasciano mai effetti (la regola delle categorie)
+	-- secondaries never leave effects (the category rule)
 	if M.SECONDARY[weapon] then return end
 	local kind = C.WEAPON_STATUS[weapon]
 	if not kind and by and by.stats.burning_blasts > 0 and weapon == "grenade" then
@@ -605,7 +607,7 @@ function M:hit_status(rb, weapon, by)
 	if kind then self:add_status(rb, kind, by) end
 end
 
--- A fine turno di rb gli effetti perdono un turno
+-- At the end of rb's turn the effects lose a turn
 function M:age_status(rb)
 	for kind, s in pairs(rb.status) do
 		s.turns = s.turns - 1
@@ -616,19 +618,19 @@ function M:age_status(rb)
 	end
 end
 
--- reason: "damage" (colpi), "fell" (fuori dalla mappa), "fall_damage" (caduta
--- da troppo in alto). L'uccisione va all'ultimo che l'ha colpito, se è stato
--- da poco (KILL_CREDIT_SECONDS): così buttare giù qualcuno conta. was_leader:
--- se era il primo prima del colpo che lo uccide (nil: si guarda adesso).
+-- reason: "damage" (hits), "fell" (off the map), "fall_damage" (fall from too
+-- high). The kill goes to whoever hit them last, if recently
+-- (KILL_CREDIT_SECONDS): so knocking someone off counts. was_leader: whether
+-- they were first before the hit that kills them (nil: look now).
 function M:kill(rb, reason, was_leader)
 	if rb.dead then return end
 	local killer
 	if rb.last_hit and self.tick - rb.last_hit_tick <= C.KILL_CREDIT_SECONDS * 60 then
 		killer = self.robots[rb.last_hit]
 	end
-	-- morto nel proprio turno senza un colpo recente di un avversario: l'uccisione
-	-- va a chi gli ha fatto più danno in questa vita (a pari danno a chi l'ha
-	-- colpito per ultimo), e lui perde di più
+	-- died in their own turn without a recent hit from an opponent: the kill goes
+	-- to whoever did them the most damage in this life (on equal damage to whoever
+	-- hit them last), and they lose more
 	local own = rb.id == self.current and self.phase ~= "over" and not (killer and enemies(killer, rb))
 	if own then
 		killer = nil
@@ -638,7 +640,7 @@ function M:kill(rb, reason, was_leader)
 			if dmg > best or (dmg > 0 and dmg == best and o.id == rb.last_hit) then killer, best = o, dmg end
 		end
 	end
-	-- chi si butta giù da solo non regala il bonus ambientale
+	-- whoever jumps off by themselves doesn't give away the environmental bonus
 	local env = reason ~= "damage" and not own
 	local score = self.score
 	if was_leader == nil then was_leader = rb == self:leader() end
@@ -656,7 +658,7 @@ function M:kill(rb, reason, was_leader)
 			killer.env_kills = killer.env_kills + 1
 			points = points + score.env_kill * mult
 		end
-		-- Corona: chi abbatte il primo in classifica prende in più crown
+		-- Crown: whoever downs the leader gets crown extra
 		if mult > 1 then points = points + score.crown end
 		self:add_points(killer, points, "kill", rb)
 		if self.no_points then points = 0 end
@@ -666,20 +668,20 @@ function M:kill(rb, reason, was_leader)
 	self:emit({ type = "death", robot = rb.id, reason = reason, by = killer and killer.id, env = env, points = points, own = own })
 end
 
--- Punti di rinascita: sopra l'acciaio, che non si distrugge, così sotto i
--- piedi c'è sempre terreno (Sergio, 29 ottobre 2026: "sempre su parti fisse
--- della mappa, ma sempre randomici"). Ogni SPAWN_PASSO px lungo le superfici
--- d'acciaio con lo spazio per il robot sopra; nil se la mappa non ne ha.
-M.SPAWN_PASSO = 24
--- distanza minima dai nemici vivi e dalle trappole per rinascere in un punto
-M.SPAWN_LONTANO = 300
-M.SPAWN_TRAPPOLA = 48
+-- Respawn points: on steel, which can't be destroyed, so there's always ground
+-- under the feet (Sergio, 29 October 2026: "sempre su parti fisse della mappa,
+-- ma sempre randomici"). Every SPAWN_STEP px along the steel surfaces with room
+-- for the robot above; nil if the map has none.
+M.SPAWN_STEP = 24
+-- minimum distance from living enemies and traps to respawn at a point
+M.SPAWN_FAR = 300
+M.SPAWN_TRAP = 48
 
 function M.find_spawn_spots(t)
 	local head = math.ceil(M.ROBOT_H / t.cell)
 	local half = math.ceil(M.ROBOT_HALF_W / t.cell)
 	local out = {}
-	for x = 30, M.WORLD_W - 30, M.SPAWN_PASSO do
+	for x = 30, M.WORLD_W - 30, M.SPAWN_STEP do
 		local cx = math.floor(x / t.cell)
 		for cy = 0, t.h - 2 do
 			if t:get(cx, cy) == terrain.STEEL and t:get(cx, cy + 1) == 0
@@ -691,9 +693,9 @@ function M.find_spawn_spots(t)
 	return #out > 0 and out or nil
 end
 
--- Il punto di rinascita di rb: a caso tra quelli liberi, lontani dai nemici
--- vivi (SPAWN_LONTANO) e dalle trappole; se non ce n'è nessuno, il più
--- lontano dai nemici. Senza punti d'acciaio, un punto libero a caso.
+-- rb's respawn point: random among the free ones, far from living enemies
+-- (SPAWN_FAR) and from traps; if there are none, the one furthest from enemies.
+-- Without steel points, a random free point.
 function M:spawn_spot(rb)
 	local spots = self.spawn_spots
 	if not spots then
@@ -709,14 +711,14 @@ function M:spawn_spot(rb)
 					d = math.min(d, math.sqrt(dx * dx + dy * dy))
 				end
 			end
-			local trappola = false
+			local trap_name = false
 			for _, o in ipairs(self.placed) do
-				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAPPOLA and math.abs(o.y - s.y) < M.SPAWN_TRAPPOLA then
-					trappola = true
+				if o.kind == "trap" and math.abs(o.x - s.x) < M.SPAWN_TRAP and math.abs(o.y - s.y) < M.SPAWN_TRAP then
+					trap_name = true
 				end
 			end
-			if not trappola then
-				if d >= M.SPAWN_LONTANO then ok[#ok + 1] = s end
+			if not trap_name then
+				if d >= M.SPAWN_FAR then ok[#ok + 1] = s end
 				if d > best_d then best, best_d = s, d end
 			end
 		end
@@ -725,8 +727,8 @@ function M:spawn_spot(rb)
 	if s then return s.x, s.y end
 end
 
--- Alla morte si ricomincia con la vita piena in un punto di rinascita
--- (spawn_spot). Teletrasporti e colpi delle armi restano.
+-- On death you start again with full life at a respawn point (spawn_spot).
+-- Teleports and weapon shots remain.
 function M:respawn(rb)
 	local x, y = self:spawn_spot(rb)
 	local sp = maps.get(self.map).spawns[1]
@@ -741,9 +743,9 @@ function M:respawn(rb)
 	self:emit({ type = "respawn", robot = rb.id, x = rb.x, y = rb.y })
 end
 
--- Chi esce dalla partita online (ESCI DALLA PARTITA, server/room.go) sparisce
--- subito: niente morte né punti a nessuno, non rinasce e non ha più turni. Se
--- era il suo turno, passa al prossimo.
+-- Whoever leaves the online match (ESCI DALLA PARTITA, server/room.go)
+-- disappears at once: no death and no points for anyone, no respawn and no
+-- more turns. If it was their turn, it passes to the next.
 function M:remove(id)
 	local rb = self.robots[id]
 	if rb.gone or self.phase == "over" then return end
@@ -756,16 +758,16 @@ function M:remove(id)
 	if pos < self.order_pos then self.order_pos = self.order_pos - 1 end
 	self:emit({ type = "gone", robot = id })
 	if self.current == id and #self.order > 0 then
-		-- il prossimo è già al posto suo nell'ordine: end_turn passa a lui
+		-- the next one is already in their place in the order: end_turn passes to them
 		self.order_pos = pos - 1
 		if self.projectile and self.projectile.owner == id then self.projectile = nil end
 		self:end_turn()
 	end
 end
 
--- Un punto a caso sulla superficie della mappa (il terreno più alto sotto x)
--- per cui ok(x, y) è vero, o nil. Usa il generatore della partita, così
--- server e client trovano lo stesso punto.
+-- A random point on the map surface (the highest terrain under x) for which
+-- ok(x, y) is true, or nil. It uses the match generator, so server and client
+-- find the same point.
 function M:surface_spot(ok)
 	for _ = 1, 40 do
 		local x = math.floor(self.rng:range(40, M.WORLD_W - 40))
@@ -774,13 +776,13 @@ function M:surface_spot(ok)
 	end
 end
 
--- Danno da caduta (solo se FALL_SAFE): conta dal punto più alto da cui è
--- iniziata la discesa, anche se ci si è arrivati per un'esplosione
+-- Fall damage (only if FALL_SAFE): counts from the highest point where the
+-- descent started, even if you got there through an explosion
 function M:land(rb)
 	local top = rb.fall_top
 	rb.fall_top = nil
 	if rb.parachute then
-		-- col paracadute aperto si atterra senza danno, e il paracadute è finito
+		-- with the parachute open you land without damage, and the parachute is used up
 		rb.parachute = false
 		self:emit({ type = "parachute_land", robot = rb.id })
 		return
@@ -793,21 +795,21 @@ function M:land(rb)
 	self:hurt(rb, dmg, nil, "fall")
 end
 
--- active: è il robot di turno e può muoversi (riceve i comandi)
+-- active: it's the robot on turn and it can move (it receives the controls)
 function M:update_robot(rb, input, active)
 	if rb.dead then return end
-	-- durante l'Affondo lo scatto comanda il movimento, nel rinculo del Tonante
-	-- la spinta; appeso al Rampino, la fune
+	-- during the Affondo the dash drives the movement, in the Tonante's recoil the
+	-- push; hanging from the Rampino, the rope
 	if rb.lunge then return self:update_lunge(rb) end
 	if rb.recoil then return self:update_recoil(rb) end
 	if rb.hooked then return self:update_hooked(rb) end
 
-	-- Se il robot è finito dentro il terreno, lo spingiamo fuori verso l'alto
+	-- If the robot ended up inside terrain, push it out upwards
 	if self:terrain_collides(rb.x, rb.y) then
 		rb.y = rb.y + 1
 		return
 	end
-	-- se è incastrato in un altro robot si allontanano di un pixel alla volta
+	-- if it's stuck in another robot they move apart one pixel at a time
 	local stuck = self:robot_at(rb.x, rb.y, rb)
 	if stuck then
 		local away = rb.x < stuck.x and -1 or (rb.x > stuck.x and 1 or (rb.id < stuck.id and -1 or 1))
@@ -815,24 +817,24 @@ function M:update_robot(rb, input, active)
 	end
 
 	local st = rb.stats
-	-- rallentato: corsa, velocità in aria e salto ridotti
+	-- slowed: run, air speed and jump reduced
 	local slow = rb.status.slow and C.STATUS.slow
 	local move, jump = slow and slow.move or 1, slow and slow.jump or 1
 	local dir = (input.right and 1 or 0) - (input.left and 1 or 0)
 	if dir ~= 0 then rb.facing = dir end
 
-	-- aiuti al salto: il tempo concesso dopo il bordo e il salto chiesto in anticipo
+	-- jump assists: the grace time after the edge and the jump asked in advance
 	rb.coyote = math.max(0, (rb.coyote or 0) - 1)
 	rb.jump_buf = math.max(0, (rb.jump_buf or 0) - 1)
 	local want_jump = input.jump
-	-- salto appena premuto (tenendolo premuto non si risalta in aria)
+	-- jump just pressed (holding it you don't jump again in the air)
 	local pressed = input.jump and not rb.jump_held
 	rb.jump_held = input.jump
 	if want_jump and not rb.grounded then
 		if rb.coyote > 0 then
 			rb.grounded = true
 		elseif pressed and active and (rb.air_left or 0) > 0 then
-			-- salto in aria (stats.air_jumps per ogni volo)
+			-- air jump (stats.air_jumps per flight)
 			rb.air_left = rb.air_left - 1
 			rb.vx, rb.vy = dir * st.walk_speed * move, st.jump_vy * jump
 			rb.knocked, rb.rising, rb.fall_top = false, true, nil
@@ -849,14 +851,14 @@ function M:update_robot(rb, input, active)
 			walk(self, rb, dir * st.walk_speed * move * M.DT)
 		end
 		if want_jump then
-			-- salto libero: verso l'alto, oppure nella direzione in cui si sta andando
+			-- free jump: upwards, or in the direction you're moving
 			rb.vx = dir * st.walk_speed * move
 			rb.vy = st.jump_vy * jump
 			rb.grounded = false
 			rb.rising = true
 			rb.coyote, rb.jump_buf = 0, 0
 		elseif not self:robot_collides(rb.x, rb.y - 1, rb) then
-			-- In discesa resta attaccato al terreno, altrimenti inizia a cadere
+			-- Going downhill it sticks to the terrain, otherwise it starts falling
 			local landed = false
 			for d = 1, M.MAX_CLIMB do
 				if self:robot_collides(rb.x, rb.y - d - 1, rb) then
@@ -874,17 +876,17 @@ function M:update_robot(rb, input, active)
 	end
 
 	if not rb.grounded then
-		-- salto corto: lasciando il tasto mentre si sale si smette di salire
+		-- short jump: releasing the button while rising stops the rise
 		if rb.rising and (rb.knocked or rb.vy <= 0) then rb.rising = false end
 		if rb.rising and input.hold == false then
 			rb.vy = rb.vy * M.JUMP_CUT
 			rb.rising = false
 		end
-		-- col paracadute ci si muove un po' più veloci, anche appena sbalzati
+		-- with the parachute you move a bit faster, even right after being knocked
 		local chute = rb.parachute and C.PARACHUTE.air_mul or 1
 		if rb.parachute and active then rb.knocked = false end
-		-- niente inerzia, anche appena sbalzati; il robot di turno non va mai
-		-- di lato più veloce della sua corsa
+		-- no inertia, even right after being knocked; the robot on turn never moves
+		-- sideways faster than its run
 		local air = st.air_speed * move * chute
 		if dir ~= 0 then rb.vx = dir * air end
 		if active then
@@ -902,10 +904,10 @@ function M:update_robot(rb, input, active)
 				if not self:robot_collides(rb.x + sx, rb.y, rb) then
 					rb.x = rb.x + sx
 				elseif not self:robot_collides(rb.x + sx, rb.y + 3, rb) then
-					-- piccolo gradino in aria: lo scavalca invece di incastrarsi
+					-- small step in the air: climb over it instead of getting stuck
 					rb.x, rb.y = rb.x + sx, rb.y + 3
 				else
-					-- contro un robot in volo: lo sposta un pizzico e si ferma
+					-- against a robot in flight: nudge it a little and stop
 					self:push(rb, sx)
 					rb.vx, sx = 0, 0
 				end
@@ -964,8 +966,8 @@ function M:throw_grenade(angle, power)
 	self:emit({ type = "grenade", robot = rb.id })
 end
 
--- Rimbalza sul terreno muovendosi un asse alla volta: semplice e stabile sulla
--- griglia di celle. Sui robot rimbalza come il globo del teletrasporto.
+-- It bounces on terrain moving one axis at a time: simple and stable on the
+-- cell grid. On robots it bounces like the teleport orb.
 function M:update_grenade(p)
 	p.age = p.age + 1
 	p.fuse = p.fuse - 1
@@ -998,7 +1000,7 @@ function M:update_grenade(p)
 				if sy < 0 then p.vx = p.vx * M.GRENADE_FRICTION end
 				p.touched = true
 				p.vy = -p.vy * M.GRENADE_BOUNCE
-				-- un rimbalzo piccolo non vale: si posa
+				-- a small bounce doesn't count: it settles
 				if math.abs(p.vy) < 40 then p.vy = 0 end
 				sy = 0
 			else
@@ -1034,7 +1036,7 @@ function M:update_burst()
 	if b.wait > 0 then return end
 	b.n = b.n + 1
 	b.wait = M.SHARD_EVERY
-	-- la mira resta quella dello sparo, le schegge escono da dove si trova il robot
+	-- the aim stays the one of the shot, the shards come out from where the robot is
 	local a = b.angle + (self.rng:next() * 2 - 1) * M.SHARD_SPREAD
 	local x, y = muzzle(rb, a)
 	self.shards[b.n] = { x = x, y = y, vx = math.cos(a) * M.SHARD_SPEED, vy = math.sin(a) * M.SHARD_SPEED,
@@ -1075,7 +1077,7 @@ function M:shards_flying()
 	return false
 end
 
--- Teletrasporto -----------------------------------------------------------------
+-- Teleport -----------------------------------------------------------------
 
 function M:throw_orb(angle, power)
 	local rb = self.robots[self.current]
@@ -1087,15 +1089,15 @@ function M:throw_orb(angle, power)
 	self:emit({ type = "orb", robot = rb.id })
 end
 
--- Cerca un punto libero vicino a (x, y) dove far comparire il robot
--- Punti dove far comparire il robot attorno al globo, dal più vicino al più
--- lontano (a parità di distanza prima quelli più in alto)
+-- Look for a free point near (x, y) to make the robot appear
+-- Points where the robot can appear around the orb, from nearest to furthest
+-- (at equal distance the higher ones first)
 M.TELEPORT_SEARCH = 84
 local OFFSETS = {}
 local function teleport_offsets(r)
 	local key = math.floor(r)
 	if OFFSETS[key] then return OFFSETS[key] end
-	-- passo di 2 pixel fino a 48, poi in proporzione: sempre circa 1800 punti
+	-- 2 pixel steps up to 48, then proportional: always about 1800 points
 	local step = math.max(2, math.floor(key / 24))
 	local list = {}
 	for dy = -key, key, step do
@@ -1112,8 +1114,8 @@ local function teleport_offsets(r)
 	return list
 end
 
--- Il teletrasporto avviene sempre: nel punto libero più vicino al globo e, se
--- attorno è tutto pieno, proprio lì (il robot poi esce dal terreno verso l'alto).
+-- The teleport always happens: at the free point nearest the orb and, if
+-- everything around is full, right there (the robot then gets out of the terrain upwards).
 function M:teleport(rb, x, y)
 	local tx, ty = x, y
 	for _, o in ipairs(teleport_offsets(M.TELEPORT_SEARCH)) do
@@ -1124,19 +1126,19 @@ function M:teleport(rb, x, y)
 	end
 	local fx, fy = rb.x, rb.y
 	rb.x, rb.y = tx, ty
-	-- lo stato resta identico: chi cadeva continua a cadere con la stessa velocità.
-	-- Non è più appoggiato a niente, la fisica lo rimette a terra se serve.
+	-- the state stays identical: whoever was falling keeps falling at the same speed.
+	-- It no longer rests on anything, physics puts it back on the ground if needed.
 	rb.grounded = false
 	rb.fall_top = nil
 	self:emit({ type = "teleport", robot = rb.id, from_x = fx, from_y = fy, x = tx, y = ty })
 end
 
--- Rimbalzo e rotolamento del globo
-M.ORB_BOUNCE = 0.4       -- quanta velocità resta nel rimbalzo
-M.ORB_FRICTION = 1       -- attrito lungo la superficie, per ogni tick a contatto
+-- Orb bounce and roll
+M.ORB_BOUNCE = 0.4       -- how much speed is left in the bounce
+M.ORB_FRICTION = 1       -- friction along the surface, for each tick in contact
 
--- Direzione verso fuori dal terreno attorno a (x, y): l'opposto della media
--- delle celle piene vicine
+-- Direction out of the terrain around (x, y): the opposite of the average of
+-- the nearby full cells
 local function surface_normal(t, x, y)
 	local c = M.CELL
 	local cx, cy = math.floor(x / c), math.floor(y / c)
@@ -1153,10 +1155,10 @@ local function surface_normal(t, x, y)
 	return nx / d, ny / d
 end
 
--- Il robot contro cui urta il globo in (x, y), o nil. Chi l'ha lanciato
--- conta solo dopo un attimo, così il globo non gli rimbalza in faccia.
--- Il robot toccato da un corpo rotondo di raggio r in (x, y) (globo, Uovo), o nil.
--- Chi l'ha lanciato non lo tocca nei primi OWNER_SAFE_TICKS.
+-- The robot the orb bumps into at (x, y), or nil. Whoever threw it only counts
+-- after a moment, so the orb doesn't bounce in their face.
+-- The robot touched by a round body of radius r at (x, y) (orb, Uovo), or nil.
+-- Whoever threw it doesn't touch it in the first OWNER_SAFE_TICKS.
 function M:body_hits_robot(o, x, y, r)
 	for _, rb in ipairs(self.robots) do
 		if not rb.dead and (rb.id ~= o.owner or o.age > M.OWNER_SAFE_TICKS) and M.hurt_at(rb, x, y, r) then
@@ -1165,7 +1167,7 @@ function M:body_hits_robot(o, x, y, r)
 	end
 end
 
--- Il corpo o rimbalza sulla scatola del robot hit e, se arriva forte, lo sposta un briciolo
+-- Body o bounces on the box of robot hit and, if it comes in hard, moves it a tiny bit
 function M:bounce_on_robot(o, hit, bounce, friction)
 	local sx, sy = 0, 1
 	if o.y < hit.y + M.ROBOT_H - 2 then sx, sy = o.x < hit.x and -1 or 1, 0 end
@@ -1184,13 +1186,13 @@ function M:bounce_on_robot(o, hit, bounce, friction)
 	o.touched = true
 end
 
--- Aggiorna un globo; restituisce false quando ha finito (teletrasporto fatto)
+-- Updates an orb; returns false when it's done (teleport done)
 function M:update_orb(o)
 	local rb = self.robots[o.owner]
 	if rb.dead then return false end
 	o.age = (o.age or 0) + 1
-	-- vola come il missile; quando tocca il terreno rimbalza e rotola.
-	-- Se esce dalla mappa continua a cadere: il teletrasporto ti porta lì lo stesso.
+	-- flies like the missile; when it touches terrain it bounces and rolls.
+	-- If it leaves the map it keeps falling: the teleport takes you there anyway.
 	local t = self.terrain
 	o.vy = o.vy - M.GRAVITY * M.ORB_GRAVITY * M.DT
 	if o.touched and M.ORB_DAMPING > 0 then
@@ -1211,8 +1213,8 @@ function M:update_orb(o)
 			local sx, sy = surface_normal(t, nx, ny)
 			local vn = o.vx * sx + o.vy * sy
 			if vn < 0 then
-				-- toglie la parte di velocità contro il terreno (e ne rimanda indietro
-				-- un po' se l'urto è forte), frena quella lungo la superficie
+				-- removes the part of velocity against the terrain (and sends some back if
+				-- the impact is strong), slows the part along the surface
 				local e = vn < -60 and M.ORB_BOUNCE or 0
 				local tx, ty = o.vx - vn * sx, o.vy - vn * sy
 				o.vx = tx * M.ORB_FRICTION - e * vn * sx
@@ -1225,14 +1227,14 @@ function M:update_orb(o)
 	end
 	o.timer = o.timer - 1
 	if o.timer <= 0 then
-		-- il globo è al centro del robot, la posizione del robot è ai piedi
+		-- the orb is at the centre of the robot, the robot's position is at the feet
 		self:teleport(rb, o.x, o.y - M.ROBOT_H / 2)
 		return false
 	end
 	return true
 end
 
--- Tutti i globi in volo, dal più vecchio: ognuno teletrasporta allo scadere del suo tempo
+-- All the orbs in flight, oldest first: each one teleports when its time is up
 function M:update_orbs()
 	local orbs, n = self.orbs, 0
 	for i = 1, #orbs do
@@ -1243,7 +1245,7 @@ function M:update_orbs()
 		end
 	end
 	for i = #orbs, n + 1, -1 do orbs[i] = nil end
-	-- i globi si urtano anche tra loro: si separano e si scambiano la spinta
+	-- orbs also bump into each other: they separate and swap momentum
 	for i = 1, n - 1 do
 		local a = orbs[i]
 		for j = i + 1, n do
@@ -1278,10 +1280,10 @@ function M:fire_sniper(angle)
 	self:emit({ type = "sniper", robot = rb.id })
 end
 
--- Rimbalzo come una palla sulla superficie del terreno in (x, y): la parte
--- della velocità contro la superficie si ribalta e si smorza (bounce_normal),
--- quella lungo la superficie frena un po' (bounce_tangent): ogni rimbalzo è
--- più basso e più lento
+-- Bounce like a ball on the terrain surface at (x, y): the part of the
+-- velocity against the surface flips and is damped (bounce_normal), the one
+-- along the surface slows a little (bounce_tangent): each bounce is lower and
+-- slower
 local function bounce(t, x, y, vx, vy)
 	local nx, ny = surface_normal(t, x, y)
 	local d = vx * nx + vy * ny
@@ -1291,9 +1293,9 @@ local function bounce(t, x, y, vx, vy)
 	return tx * s.bounce_tangent + nx * d, ty * s.bounce_tangent + ny * d
 end
 
--- Un tick di volo: parte veloce e frena (drag), la gravità cresce a poco a
--- poco fino a drop volte quella dei robot in drop_ramp secondi, così
--- all'inizio va quasi dritto e poi cala sempre di più
+-- One tick of flight: it starts fast and slows down (drag), gravity grows
+-- little by little up to drop times the robots' gravity in drop_ramp seconds,
+-- so at first it goes almost straight and then drops more and more
 local function sniper_step(vx, vy, age)
 	local s = C.SNIPER
 	local g = M.GRAVITY * s.drop * math.min(1, age / (s.drop_ramp * 60))
@@ -1319,7 +1321,7 @@ function M:update_sniper(p)
 		elseif t:solid(nx, ny) then
 			p.bounces = p.bounces + 1
 			p.vx, p.vy = bounce(t, nx, ny, p.vx, p.vy)
-			-- troppi rimbalzi o quasi fermo: si spegne lì
+			-- too many bounces or almost still: it dies out there
 			if p.bounces > C.SNIPER.bounces or p.vx * p.vx + p.vy * p.vy < C.SNIPER.min_speed ^ 2 then
 				self:emit({ type = "sniper_end", x = p.x, y = p.y })
 				self.projectile = nil
@@ -1336,7 +1338,7 @@ function M:update_sniper(p)
 	end
 end
 
--- Il colpo sbalza il bersaglio nella direzione in cui andava
+-- The hit knocks the target in the direction it was going
 function M:sniper_hit(p, rb)
 	local sp = math.sqrt(p.vx * p.vx + p.vy * p.vy)
 	local k = self:knock_mul(rb)
@@ -1349,8 +1351,8 @@ function M:sniper_hit(p, rb)
 	if self:hurt(rb, C.SNIPER.damage, by) > 0 and by ~= rb then self:hit_status(rb, "sniper", by) end
 end
 
--- Linea di mira del cecchino: il primo secondo di volo (com'è il colpo vero,
--- tick per tick); un rimbalzo la chiude subito
+-- Sniper aim line: the first second of flight (like the real shot, tick by
+-- tick); a bounce ends it at once
 M.SNIPER_PREVIEW_TICKS = 60
 function M:sniper_preview(x, y, angle, count, pts)
 	pts = pts or {}
@@ -1370,7 +1372,7 @@ function M:sniper_preview(x, y, angle, count, pts)
 				after = after + 1
 				if after > 4 then break end
 			end
-			-- i punti spaziati lungo il tratto mostrato
+			-- the points spaced along the shown stretch
 			if i % math.max(1, math.floor(shown / count)) == 0 and n < count then
 				n = n + 1
 				local pt = pts[n] or {}
@@ -1379,7 +1381,7 @@ function M:sniper_preview(x, y, angle, count, pts)
 			end
 		end
 	end
-	-- i punti che avanzano restano sull'ultimo
+	-- the leftover points stay on the last one
 	for i = n + 1, count do
 		local pt = pts[i] or {}
 		pt.x, pt.y = x, y
@@ -1388,13 +1390,12 @@ function M:sniper_preview(x, y, angle, count, pts)
 	return pts
 end
 
--- Colpi dritti: Tonante e Rampino (config.EAGLE, config.HOOK) --------------------
--- Istantanei: niente proiettile da seguire, un raggio sulle celle del terreno
--- come la linea di mira.
+-- Straight shots: Tonante and Rampino (config.EAGLE, config.HOOK) --------------------
+-- Instant: no projectile to follow, a ray over the terrain cells like the aim line.
 
--- Il raggio da (x, y) nella direzione angle, lungo al massimo range: dove si
--- ferma e il robot che incontra (nil se si ferma sul terreno o a fine corsa).
--- Chi spara (me) non si colpisce.
+-- The ray from (x, y) in direction angle, at most range long: where it stops
+-- and the robot it meets (nil if it stops on terrain or at the end of its run).
+-- The shooter (me) doesn't hit itself.
 function M:ray(x, y, angle, range, me)
 	local dx, dy = math.cos(angle) * M.CELL, math.sin(angle) * M.CELL
 	local t = self.terrain
@@ -1409,7 +1410,7 @@ function M:ray(x, y, angle, range, me)
 	return x, y, nil
 end
 
--- Linea di mira dei colpi dritti: count punti fino al terreno o a fine corsa
+-- Aim line of straight shots: count points up to the terrain or the end of the run
 function M:ray_preview(x, y, angle, range, count, pts)
 	pts = pts or {}
 	local ex, ey = self:ray(x, y, angle, range, self.robots[self.current])
@@ -1421,8 +1422,8 @@ function M:ray_preview(x, y, angle, range, count, pts)
 	return pts
 end
 
--- Tonante: danno secco a chi è sulla linea; il rinculo spinge chi spara
--- dalla parte opposta (da terra anche un po' in alto), così si riposiziona
+-- Tonante: flat damage to whoever is on the line; the recoil pushes the
+-- shooter the opposite way (from the ground also a bit upwards), so they reposition
 function M:fire_eagle(angle)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
@@ -1436,10 +1437,10 @@ function M:fire_eagle(angle)
 	if hit then self:hurt(hit, s.damage, rb) end
 end
 
--- Un tick di rinculo del Tonante, al posto della fisica normale del robot:
--- velocità fissa, niente gravità; contro il terreno o un robot scivola
--- sull'asse libero (in orizzontale sale i gradini come camminando), e se sono
--- bloccati tutti e due si ferma.
+-- One tick of the Tonante's recoil, in place of the robot's normal physics:
+-- fixed speed, no gravity; against terrain or a robot it slides on the free
+-- axis (horizontally it climbs steps as when walking), and if both are blocked
+-- it stops.
 function M:update_recoil(rb)
 	local mx, my = rb.recoil_vx * M.DT, rb.recoil_vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
@@ -1448,7 +1449,7 @@ function M:update_recoil(rb)
 		if not self:robot_collides(rb.x + sx, rb.y + sy, rb) then
 			rb.x, rb.y = rb.x + sx, rb.y + sy
 		elseif sx ~= 0 and step_x(self, rb, sx) then
-			-- scivola in orizzontale, salendo i gradini piccoli come camminando
+			-- slide horizontally, climbing small steps as when walking
 		elseif sy ~= 0 and not self:robot_collides(rb.x, rb.y + sy, rb) then
 			rb.y = rb.y + sy
 		else
@@ -1466,24 +1467,24 @@ end
 
 local HOOK_LAND_DX = { 0, -8, 8, -16, 16 }
 
--- Rampino (oggetto, uno a turno, config.HOOK): l'uncino vola dritto dalla
--- canna (rb.hook_shot) a shot_speed fino a range. Su un robot, quello resta
--- appeso alla fune (rb.hooked.by) e viene riavvolto verso la mano di chi tira
--- (config.HOOK.reel pixel al massimo), senza danno. Sul terreno è chi tira che
--- resta appeso (rb.hooked.x, y = il punto colpito) e sale lungo la fune fin
--- lì, per poi mettersi in piedi sopra la piattaforma colpita. A fine corsa
--- senza niente: mancato (evento "hook" senza target né anchor).
+-- Rampino (item, one per turn, config.HOOK): the hook flies straight from the
+-- muzzle (rb.hook_shot) at shot_speed up to range. On a robot, that one hangs
+-- from the rope (rb.hooked.by) and is reeled towards the puller's hand
+-- (config.HOOK.reel pixels at most), without damage. On terrain it's the
+-- puller who hangs (rb.hooked.x, y = the point hit) and climbs along the rope
+-- up there, then stands on top of the platform hit. At the end of the run with
+-- nothing: a miss ("hook" event without target or anchor).
 function M:fire_hook(angle)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	rb.facing = math.cos(angle) < 0 and -1 or 1
-	-- left: celle che restano da percorrere, come il raggio istantaneo
+	-- left: cells still to travel, like the instant ray
 	rb.hook_shot = { x = x, y = y, x0 = x, y0 = y, angle = angle, left = math.ceil(C.HOOK.range / M.CELL) }
 	self:emit({ type = "hook_shot", robot = rb.id, x0 = x, y0 = y, angle = angle })
 end
 
--- Un tick dell'uncino in volo: avanza come il raggio (M.ray) e si ferma sul
--- primo robot o sul terreno, o a fine corsa
+-- One tick of the hook in flight: it advances like the ray (M.ray) and stops
+-- on the first robot or on terrain, or at the end of the run
 function M:update_hook_shot(rb)
 	local h = rb.hook_shot
 	local n = math.min(math.ceil(C.HOOK.shot_speed * M.DT / M.CELL), h.left)
@@ -1497,27 +1498,27 @@ function M:update_hook_shot(rb)
 	self:emit({ type = "hook", robot = rb.id, x0 = h.x0, y0 = h.y0, x1 = ex, y1 = ey, target = hit and hit.id, anchor = anchor })
 	if hit then
 		hit.hooked = { by = rb.id, left = C.HOOK.reel }
-		-- chi tira prende l'uccisione se il nemico cade (KILL_CREDIT_SECONDS)
+		-- the puller gets the kill if the enemy falls (KILL_CREDIT_SECONDS)
 		self:credit(hit, rb)
 		hit.vx, hit.vy = 0, 0
 		hit.grounded, hit.knocked, hit.fall_top = false, true, nil
 	elseif anchor then
-		-- la fune si aggancia dentro la cella piena, così si sa da dove salire
+		-- the rope hooks inside the full cell, so we know where to climb from
 		rb.hooked = { x = ex + dx, y = ey + dy, left = C.HOOK.range }
 		rb.vx, rb.vy = 0, 0
 		rb.grounded, rb.knocked, rb.fall_top = false, false, nil
 	end
 end
 
--- Dove sta la mano di chi tira (la fune parte da lì)
+-- Where the puller's hand is (the rope starts from there)
 function M.hook_hand(by)
 	return by.x + by.facing * M.MUZZLE * 0.5, by.y + M.SWORD_PIVOT_Y
 end
 
--- Un tick di fune, al posto della fisica normale del robot: va dritto verso
--- la mano di chi tira (che intanto può muoversi) o verso il punto agganciato
--- del terreno, finché la fune non è riavvolta tutta o qualcosa lo ferma. Chi
--- era tirato cade dov'è; chi è salito su una piattaforma ci si mette sopra.
+-- One tick of rope, in place of the robot's normal physics: it goes straight
+-- towards the puller's hand (which can move meanwhile) or towards the hooked
+-- terrain point, until the rope is fully reeled or something stops it. Whoever
+-- was pulled falls where they are; whoever climbed a platform stands on it.
 function M:update_hooked(rb)
 	local h = rb.hooked
 	local by = h.by and self.robots[h.by]
@@ -1534,8 +1535,8 @@ function M:update_hooked(rb)
 		for _ = 1, n do
 			local nx, ny = rb.x + ux * step / n, rb.y + uy * step / n
 			if self:robot_collides(nx, ny, rb) then
-				-- tirato da un robot: il terreno sotto non lo ferma, scivola
-				-- sopra gradini e pendii come camminando (hook_slide)
+				-- pulled by a robot: the terrain below doesn't stop it, it slides over steps
+				-- and slopes as when walking (hook_slide)
 				nx, ny = self:hook_slide(rb, nx, ny, by)
 				if not nx then
 					stopped = true
@@ -1548,25 +1549,25 @@ function M:update_hooked(rb)
 	end
 	if stopped or h.left <= 0.5 then
 		rb.hooked = nil
-		-- arrivato al terreno (la capsula lo ferma a un passo dal punto, o
-		-- contro il fondo della piattaforma salendo in diagonale): sopra
+		-- reached the terrain (the capsule stops it a step from the point, or against
+		-- the bottom of the platform when climbing diagonally): on top
 		if not by then
 			local ex, ey = h.x - rb.x, h.y - rb.y - M.ROBOT_H / 2
 			if ex * ex + ey * ey < C.HOOK.grab * C.HOOK.grab then self:hook_land(rb, h.x, h.y) end
 		end
-		-- snap: la fune tirata da un robot è finita prima di arrivare, il
-		-- tirato resta lì (sopra il vuoto cade): nel disegno si spezza
+		-- snap: the rope pulled by a robot ran out before arriving, the pulled one
+		-- stays there (over the void it falls): in the drawing it breaks
 		self:emit({ type = "hook_end", robot = rb.id, by = h.by, snap = by and not stopped or nil })
 	end
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
--- Il robot tirato dalla fune urta il terreno in (nx, ny): invece di fermarsi
--- lo si alza di poco (fino a MAX_CLIMB, come un gradino) o, se la fune tira
--- verso il basso, lo si tiene alla sua altezza, così il pavimento, un pendio o
--- un dislivello di un pixel non bloccano la presa. Restituisce dove va, o nil
--- se lo ferma un muro o un robot (chi tira: è arrivato). Solo per chi è tirato
--- (by): chi sale lungo la fune sul terreno si ferma alla piattaforma.
+-- The robot pulled by the rope hits terrain at (nx, ny): instead of stopping
+-- it is lifted a little (up to MAX_CLIMB, like a step) or, if the rope pulls
+-- downwards, kept at its height, so the floor, a slope or a one-pixel ledge
+-- don't break the grab. Returns where it goes, or nil if a wall or a robot
+-- stops it (the puller: it has arrived). Only for the pulled one (by): whoever
+-- climbs along the rope onto terrain stops at the platform.
 function M:hook_slide(rb, nx, ny, by)
 	if not by or self:robot_at(nx, ny, rb) then return nil end
 	local y = math.max(ny, rb.y)
@@ -1575,10 +1576,10 @@ function M:hook_slide(rb, nx, ny, by)
 	end
 end
 
--- Mette il robot in piedi sopra la piattaforma colpita dal Rampino: dalla
--- cella agganciata sale nella colonna fino alla prima cella vuota (al massimo
--- config.HOOK.climb pixel), spostandosi di poco ai lati se lì non ci sta. Se
--- la cima è troppo in alto (il fianco di un muro), resta dov'è e cade.
+-- Puts the robot standing on top of the platform hit by the Rampino: from the
+-- hooked cell it goes up the column to the first empty cell (at most
+-- config.HOOK.climb pixels), shifting a little sideways if it doesn't fit
+-- there. If the top is too high (the side of a wall), it stays where it is and falls.
 function M:hook_land(rb, ax, ay)
 	local t, c = self.terrain, M.CELL
 	local cx, cy = math.floor(ax / c), math.floor(ay / c)
@@ -1598,12 +1599,13 @@ function M:hook_land(rb, ax, ay)
 end
 
 -- Mantice (config.BELLOWS) --------------------------------------------------------
--- Il soffio della forgia: istantaneo, un ventaglio davanti a chi soffia.
--- Colpisce ogni robot col centro entro range e entro cone dalla mira, se tra i
--- due non c'è terreno (gli altri robot non riparano), e lo spinge lungo la mira:
--- forte da vicino, far volte meno al bordo. Chi soffia resta dov'è.
+-- The forge's blast: instant, a fan in front of the user.
+-- It hits every robot with its centre within range and within cone of the aim,
+-- if there's no terrain between the two (other robots don't shelter), and
+-- pushes it along the aim: hard up close, far times less at the edge. The user
+-- stays where they are.
 
--- c'è terreno tra (x0, y0) e (x1, y1)?
+-- is there terrain between (x0, y0) and (x1, y1)?
 function M:terrain_between(x0, y0, x1, y1)
 	local dx, dy = x1 - x0, y1 - y0
 	local n = math.ceil(math.sqrt(dx * dx + dy * dy) / M.CELL)
@@ -1626,14 +1628,14 @@ function M:fire_bellows(angle)
 			local ox, oy = o.x, o.y + M.HURT_Y
 			local dx, dy = ox - cx, oy - cy
 			local d = math.sqrt(dx * dx + dy * dy)
-			-- dentro il ventaglio: l'angolo dalla mira entro cone (coseno, senza acos)
+			-- inside the fan: the angle from the aim within cone (cosine, no acos)
 			if d <= s.range and dx * ux + dy * uy >= d * math.cos(s.cone) and not self:terrain_between(cx, cy, ox, oy) then
 				local f = (1 - (1 - s.far) * d / s.range) * self:knock_mul(o)
 				o.vx, o.vy = ux * s.push * f, (uy * s.push + s.lift) * f
 				o.hooked = nil
 				o.grounded, o.knocked, o.fall_top = false, true, nil
 				self:emit({ type = "bellows_hit", robot = rb.id, target = o.id, x = ox, y = oy })
-				-- chi soffia prende l'uccisione se il nemico cade (anche con lo scudo che para tutto)
+				-- the user gets the kill if the enemy falls (even with a shield that parries everything)
 				self:credit(o, rb)
 				self:hurt(o, s.damage, rb)
 			end
@@ -1642,14 +1644,14 @@ function M:fire_bellows(angle)
 end
 
 -- Maglio (config.MALLET) -----------------------------------------------------------
--- Martello a due mani che gira attorno alla spalla come la Lama: mirando dritto
--- parte alto dietro la testa, cala davanti e finisce sotto i piedi; l'arco gira
--- con la mira (Sergio, 30 ott: "direzionale come la mira della spada"), così
--- mirando in basso arriva anche dietro i piedi e mirando in alto sopra la
--- testa. Colpisce una volta ogni robot che tocca lungo l'arco; la testa si
--- ferma sul terreno. La prima volta che sbatte su qualcosa, un robot o il
--- terreno, chi colpisce rimbalza in alto (pogo), a terra come in aria; a
--- vuoto no (Sergio, 30 ott).
+-- Two-handed hammer that swings around the shoulder like the Lama: aiming
+-- straight it starts high behind the head, comes down in front and ends below
+-- the feet; the arc rotates with the aim (Sergio, 30 Oct: "direzionale come la
+-- mira della spada"), so aiming down it also reaches behind the feet and
+-- aiming up above the head. It hits each robot it touches along the arc once;
+-- the head stops on terrain. The first time it slams into something, a robot
+-- or terrain, the attacker bounces up (pogo), on the ground as in the air; on
+-- a miss no (Sergio, 30 Oct).
 
 function M:start_mallet(angle)
 	local rb = self.robots[self.current]
@@ -1660,9 +1662,9 @@ function M:start_mallet(angle)
 	self:emit({ type = "mallet", robot = rb.id })
 end
 
--- Curva del colpo del Maglio: come una persona vera, prima porta l'arma un po'
--- indietro (slancio, circa 13°) e poi accelera sempre di più fino alla fine.
--- È un "back ease-in": va sotto lo zero all'inizio e arriva a 1 con la velocità massima.
+-- Curve of the Maglio swing: like a real person, it first brings the weapon a
+-- little back (wind-up, about 13°) and then speeds up more and more to the end.
+-- It's a "back ease-in": it goes below zero at the start and reaches 1 at top speed.
 local ARC_WINDUP = 1.2
 local function arc_progress(u)
 	u = math.max(0, math.min(1, u))
@@ -1670,16 +1672,16 @@ local function arc_progress(u)
 	return u * u * ((s + 1) * u - s)
 end
 
--- Angolo del martello al tick t, per un robot rivolto a destra che mira a
--- base (girata a destra, 0 dritto): slancio indietro, poi sempre più veloce
--- (arc_progress); fermato sul terreno al tick stop resta lì.
+-- Hammer angle at tick t, for a robot facing right aiming at base (turned
+-- right, 0 straight): wind-up backwards, then faster and faster
+-- (arc_progress); stopped on terrain at tick stop it stays there.
 function M.mallet_angle(t, base, stop)
 	local s = C.MALLET
 	if stop then t = math.min(t, stop) end
 	return (base or 0) + s.from + (s.to - s.from) * arc_progress(t / s.ticks)
 end
 
--- Il primo urto del colpo, su un robot o sul terreno, fa rimbalzare in alto
+-- The first impact of the swing, on a robot or on terrain, bounces you up
 function M:mallet_bounce(rb)
 	if rb.mallet_bounced then return false end
 	rb.mallet_bounced = true
@@ -1713,34 +1715,34 @@ end
 
 -- Lama di Nucleo ----------------------------------------------------------------
 
--- Angolo della lama al tick t per un robot rivolto a destra: dipende dalla
--- mira, base è l'angolo di mira (già girato a destra).
+-- Blade angle at tick t for a robot facing right: depends on the aim, base is
+-- the aim angle (already turned right).
 function M.sword_angle(t, base)
-	return (base or 0) + math.rad(M.melee_pose(mischia.fendente, t)[7])
+	return (base or 0) + math.rad(M.melee_pose(melee.slash, t)[7])
 end
 
--- Angolo del pugno al tick t, come sword_angle
+-- Fist angle at tick t, like sword_angle
 function M.punch_angle(t, base)
-	return (base or 0) + math.rad(M.melee_pose(mischia.montante, t)[7])
+	return (base or 0) + math.rad(M.melee_pose(melee.uppercut, t)[7])
 end
 
--- Durata in tick di un colpo di mischia.lua
-function M.melee_ticks(colpo)
-	return math.ceil((#colpo.pose - 1) * 60 / colpo.fps)
+-- Length in ticks of a melee.lua hit
+function M.melee_ticks(hit_def)
+	return math.ceil((#hit_def.pose - 1) * 60 / hit_def.fps)
 end
 
--- Posa del colpo al tick t (con frazione): i valori tra due fotogrammi
-local POSA = {}
-function M.melee_pose(colpo, t)
-	local f = math.max(0, math.min(#colpo.pose - 1, t * colpo.fps / 60))
+-- Pose of the hit at tick t (with fraction): the values between two frames
+local POSE_CACHE = {}
+function M.melee_pose(hit_def, t)
+	local f = math.max(0, math.min(#hit_def.pose - 1, t * hit_def.fps / 60))
 	local i = math.floor(f)
-	local a, b = colpo.pose[i + 1], colpo.pose[math.min(#colpo.pose, i + 2)]
+	local a, b = hit_def.pose[i + 1], hit_def.pose[math.min(#hit_def.pose, i + 2)]
 	local k = f - i
-	for j = 1, 7 do POSA[j] = a[j] + (b[j] - a[j]) * k end
-	return POSA
+	for j = 1, 7 do POSE_CACHE[j] = a[j] + (b[j] - a[j]) * k end
+	return POSE_CACHE
 end
 
--- Mira girata verso destra, tra -90° e 90°, e il lato verso cui si guarda
+-- Aim turned to the right, between -90° and 90°, and the side being faced
 local function aim_side(angle)
 	local dir = math.cos(angle) < 0 and -1 or 1
 	local a = dir > 0 and angle or math.pi - angle
@@ -1749,7 +1751,7 @@ local function aim_side(angle)
 end
 M.aim_side = aim_side
 
--- Un robot preso dal punto (x, y), con un margine pad attorno
+-- A robot hit by point (x, y), with a margin pad around it
 function M.hurt_at(r, x, y, pad)
 	pad = pad or 0
 	local dx, dy = x - r.x, y - (r.y + M.HURT_Y)
@@ -1757,7 +1759,7 @@ function M.hurt_at(r, x, y, pad)
 	return dx * dx + dy * dy <= rr * rr
 end
 
--- Un robot toccato dal segmento (x0, y0) - (x1, y1) largo 2 * pad
+-- A robot touched by segment (x0, y0) - (x1, y1), 2 * pad wide
 local function seg_hits_robot(r, x0, y0, x1, y1, pad)
 	local cx, cy = r.x, r.y + M.HURT_Y
 	local ux, uy = x1 - x0, y1 - y0
@@ -1771,7 +1773,7 @@ end
 function M:swing_sword(angle)
 	local rb = self.robots[self.current]
 	rb.swing_base, rb.facing = aim_side(angle)
-	-- il fendente resta nella direzione di partenza anche se il robot si gira
+	-- the slash stays in the starting direction even if the robot turns
 	rb.swing_dir = rb.facing
 	rb.swing = 0
 	rb.swing_hit = {}
@@ -1782,17 +1784,17 @@ local function in_robot(r, x, y)
 	return M.hurt_at(r, x, y, 0)
 end
 
--- alla fine l'arma gira veloce: tanti passi per tick, così non salta un bersaglio
+-- at the end the weapon swings fast: many steps per tick, so it doesn't skip a target
 local ARC_SUBSTEPS = 8
 local ARC_SAMPLES = 10
--- dove si guarda se la testa del Maglio tocca il terreno: di traverso all'arma
+-- where to look if the Maglio's head touches terrain: across the weapon
 local HEAD_SIDE = { 0, -5, 5 }
 
--- Un tick di un'arma lunga reach che gira attorno alla spalla di rb (il
--- Maglio), da t0 a t0 + 1: angle(t, base) è il suo angolo per un robot rivolto a
--- destra che mira a base, dir il lato del colpo. Ogni robot toccato lungo l'arma viene colpito
--- una volta (hit(self, rb, other, t), segnato in done). La punta si ferma sul
--- terreno: rende il tick (con la frazione) e il punto dell'urto.
+-- One tick of a weapon reach long swinging around rb's shoulder (the Maglio),
+-- from t0 to t0 + 1: angle(t, base) is its angle for a robot facing right
+-- aiming at base, dir the side of the swing. Every robot touched along the
+-- weapon gets hit once (hit(self, rb, other, t), marked in done). The tip stops
+-- on terrain: returns the tick (with the fraction) and the impact point.
 function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, base)
 	local px, py = rb.x, rb.y + M.SWORD_PIVOT_Y
 	for s = 1, ARC_SUBSTEPS do
@@ -1819,7 +1821,7 @@ function M:sweep_arc(rb, t0, angle, reach, dir, done, hit, base)
 end
 
 function M:update_swing(rb)
-	if self:update_melee(rb, mischia.fendente, rb.swing, rb.swing_base, rb.swing_dir) then
+	if self:update_melee(rb, melee.slash, rb.swing, rb.swing_base, rb.swing_dir) then
 		rb.swing = rb.swing + 1
 	else
 		rb.swing, rb.swing_hit, rb.swing_dir, rb.swing_base = nil, nil, nil, nil
@@ -1828,10 +1830,10 @@ end
 
 function M:sword_hit(rb, other)
 	self:emit({ type = "sword_hit", robot = rb.id, target = other.id })
-	-- la spada fa solo danno e ferma il bersaglio
+	-- the sword only does damage and stops the target
 	other.vx, other.vy = 0, 0
 	self:hurt(other, M.SWORD_DAMAGE, rb)
-	-- colpire un nemico con la Lama ridà un colpo della secondaria scelta
+	-- hitting an enemy with the Lama gives back one shot of the drafted secondary
 	local sec = rb.secondary
 	if sec and other.team ~= rb.team and rb.ammo[sec] < C.SECONDARY_SHOTS.max then
 		rb.ammo[sec] = rb.ammo[sec] + 1
@@ -1840,9 +1842,9 @@ function M:sword_hit(rb, other)
 end
 
 -- Affondo (config.LUNGE) -----------------------------------------------------------
--- Scatto nella direzione della mira che passa attraverso i robot, colpendoli
--- una volta ciascuno col corpo o con la lancia; sale i gradini piccoli e
--- scivola lungo il terreno, si ferma solo quando non passa per niente.
+-- Dash in the aim direction passing through robots, hitting each once with the
+-- body or the spear; it climbs small steps and slides along terrain, it stops
+-- only when nothing passes at all.
 
 function M:start_lunge(angle)
 	local rb = self.robots[self.current]
@@ -1854,9 +1856,9 @@ function M:start_lunge(angle)
 	self:emit({ type = "lunge", robot = rb.id, angle = angle })
 end
 
--- Dove va un passo di scatto da (x, y) di (dx, dy): dritto, o salendo un
--- gradino fino a climb, o solo la parte orizzontale o verticale che passa.
--- nil se non passa niente.
+-- Where a dash step from (x, y) by (dx, dy) goes: straight, or climbing a step
+-- up to climb, or only the horizontal or vertical part that passes.
+-- nil if nothing passes.
 function M:lunge_step(rb, dx, dy)
 	local x, y = rb.x + dx, rb.y + dy
 	if not self:terrain_collides(x, y) then return x, y end
@@ -1870,7 +1872,7 @@ function M:lunge_step(rb, dx, dy)
 	if math.abs(dy) > 0.05 and not self:terrain_collides(rb.x, y) then return rb.x, y end
 end
 
--- Un tick di scatto: al posto della fisica normale del robot (update_robot)
+-- One tick of dash: in place of the robot's normal physics (update_robot)
 function M:update_lunge(rb)
 	local mx, my = rb.lunge_vx * M.DT, rb.lunge_vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
@@ -1884,7 +1886,7 @@ function M:update_lunge(rb)
 			break
 		end
 		rb.x, rb.y = nx, ny
-		-- colpito chi tocca col corpo o con la lancia
+		-- hit whoever it touches with the body or the spear
 		local cx, cy = rb.x, rb.y + M.DISEGNO_H / 2
 		for _, other in ipairs(self.robots) do
 			if other ~= rb and not other.dead and not rb.lunge_hit[other.id]
@@ -1898,7 +1900,7 @@ function M:update_lunge(rb)
 	end
 	rb.lunge = rb.lunge - 1
 	if stopped or rb.lunge <= 0 then
-		-- lo slancio che resta: oltre un bordo si vola, contro il terreno ci si ferma
+		-- the momentum that's left: past an edge you fly, against terrain you stop
 		local keep = stopped and 0 or C.LUNGE.keep
 		rb.vx, rb.vy = rb.lunge_vx * keep, rb.lunge_vy * keep
 		rb.lunge, rb.lunge_hit, rb.lunge_vx, rb.lunge_vy = nil, nil, nil, nil
@@ -1907,35 +1909,35 @@ function M:update_lunge(rb)
 	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
 end
 
--- Colpi di mischia (sim/mischia.lua) --------------------------------------------
+-- Melee hits (sim/melee.lua) --------------------------------------------
 
--- Il rettangolo che colpisce al tick t, in pixel del mondo: asse e mezza larghezza
-function M.melee_blade(rb, colpo, t, base, dir)
-	local p = M.melee_pose(colpo, t)
+-- The rectangle that hits at tick t, in world pixels: axis and half width
+function M.melee_blade(rb, hit_def, t, base, dir)
+	local p = M.melee_pose(hit_def, t)
 	local u = M.U
 	local c, s = math.cos(base), math.sin(base)
 	local ox, oy = p[1], p[2]
 	local x0, y0 = ox + c * p[3] - s * p[4], oy + s * p[3] + c * p[4]
 	local x1, y1 = ox + c * p[5] - s * p[6], oy + s * p[5] + c * p[6]
-	return rb.x + dir * x0 * u, rb.y + y0 * u, rb.x + dir * x1 * u, rb.y + y1 * u, colpo.mezza_larghezza * u
+	return rb.x + dir * x0 * u, rb.y + y0 * u, rb.x + dir * x1 * u, rb.y + y1 * u, hit_def.half_width * u
 end
 
--- Avanza di un tick il colpo che al tick t è nella posa t. Chi la lama tocca
--- mentre la finestra è aperta viene segnato; quando si chiude riceve il colpo.
--- Restituisce false quando il colpo è finito.
+-- Advances by one tick the hit that is in pose t at tick t. Whoever the blade
+-- touches while the window is open is marked; when it closes they get the hit.
+-- Returns false when the hit is over.
 local MELEE_SUBSTEPS = 6
-function M:update_melee(rb, colpo, t, base, dir)
-	local f0, f1 = t * colpo.fps / 60, (t + 1) * colpo.fps / 60
+function M:update_melee(rb, hit_def, t, base, dir)
+	local f0, f1 = t * hit_def.fps / 60, (t + 1) * hit_def.fps / 60
 	local hit = rb.melee_hit or {}
 	rb.melee_hit = hit
 	if t == 0 then for k in pairs(hit) do hit[k] = nil end end
-	if f1 >= colpo.apri and f0 <= colpo.chiudi then
-		-- più passi per tick: alla fine la lama gira veloce e potrebbe saltare un bersaglio
+	if f1 >= hit_def.apri and f0 <= hit_def.chiudi then
+		-- several steps per tick: at the end the blade swings fast and could skip a target
 		for s = 1, MELEE_SUBSTEPS do
 			local ts = t + s / MELEE_SUBSTEPS
-			local f = ts * colpo.fps / 60
-			if f >= colpo.apri and f <= colpo.chiudi then
-				local x0, y0, x1, y1, w = M.melee_blade(rb, colpo, ts, base, dir)
+			local f = ts * hit_def.fps / 60
+			if f >= hit_def.apri and f <= hit_def.chiudi then
+				local x0, y0, x1, y1, w = M.melee_blade(rb, hit_def, ts, base, dir)
 				for _, other in ipairs(self.robots) do
 					if other ~= rb and not other.dead and not hit[other.id]
 						and seg_hits_robot(other, x0, y0, x1, y1, w) then
@@ -1945,20 +1947,20 @@ function M:update_melee(rb, colpo, t, base, dir)
 			end
 		end
 	end
-	if colpo.salto and f0 < colpo.salto and f1 >= colpo.salto then
+	if hit_def.salto and f0 < hit_def.salto and f1 >= hit_def.salto then
 		rb.vy, rb.grounded = M.PUNCH_HOP, false
 	end
-	if f0 < colpo.chiudi and f1 >= colpo.chiudi then
+	if f0 < hit_def.chiudi and f1 >= hit_def.chiudi then
 		for _, other in ipairs(self.robots) do
 			if hit[other.id] then
 				hit[other.id] = nil
 				if not other.dead then
-					if colpo == mischia.fendente then self:sword_hit(rb, other) else self:punch_hit(rb, other, dir) end
+					if hit_def == melee.slash then self:sword_hit(rb, other) else self:punch_hit(rb, other, dir) end
 				end
 			end
 		end
 	end
-	return t + 1 < M.melee_ticks(colpo)
+	return t + 1 < M.melee_ticks(hit_def)
 end
 
 -- Pugno del Titano --------------------------------------------------------------
@@ -1981,16 +1983,16 @@ function M:punch_hit(rb, other, dir)
 end
 
 function M:update_punch(rb)
-	if self:update_melee(rb, mischia.montante, rb.punch, rb.punch_base, rb.punch_dir) then
+	if self:update_melee(rb, melee.uppercut, rb.punch, rb.punch_base, rb.punch_dir) then
 		rb.punch = rb.punch + 1
 	else
 		rb.punch, rb.punch_dir, rb.punch_base = nil, nil, nil
 	end
 end
 
--- Oggetti che cadono: casse, trappole, trampolini ---------------------------------
+-- Falling objects: crates, traps, trampolines ---------------------------------
 
--- Il fondo largo 2 * hw di un oggetto con la base in (x, y) tocca il terreno?
+-- Does the 2 * hw wide bottom of an object with its base at (x, y) touch terrain?
 function M:object_collides(x, y, hw)
 	local t, c = self.terrain, M.CELL
 	local cy = math.floor(y / c)
@@ -2000,8 +2002,8 @@ function M:object_collides(x, y, hw)
 	return false
 end
 
--- Fa cadere o.y fino al terreno (anche dopo, se un'esplosione scava sotto),
--- al massimo a velocità max_fall. Restituisce true se è appoggiato.
+-- Drops o.y to the terrain (later too, if an explosion digs below), at most at
+-- speed max_fall. Returns true if it's resting.
 function M:fall(o, hw, max_fall)
 	if self:object_collides(o.x, o.y - 0.5, hw) then
 		o.vy = 0
@@ -2014,13 +2016,13 @@ function M:fall(o, hw, max_fall)
 		local ny = o.y + my / steps
 		if self:spring(o, ny, hw) then return false end
 		if self:object_collides(o.x, ny, hw) then
-			-- risalendo dal trampolino si ripassa da dove si è scesi: qui
-			-- c'è solo un cratere richiuso, ci si ferma
+			-- going back up from the trampoline you pass where you came down: here there's
+			-- only a closed-up crater, stop
 			if my > 0 then
 				o.vy = 0
 				return false
 			end
-			-- appoggiato sul bordo della cella sotto
+			-- resting on the edge of the cell below
 			o.y = (math.floor(ny / M.CELL) + 1) * M.CELL
 			o.vy = 0
 			return true
@@ -2030,9 +2032,9 @@ function M:fall(o, hw, max_fall)
 	return false
 end
 
--- Casse --------------------------------------------------------------------------
+-- Crates --------------------------------------------------------------------------
 
--- Cosa c'è nella cassa: a caso secondo i pesi di config.CRATE_CONTENTS
+-- What's in the crate: random according to the weights of config.CRATE_CONTENTS
 function M:crate_content()
 	local total = 0
 	for _, c in ipairs(C.CRATE_CONTENTS) do total = total + c[2] end
@@ -2044,16 +2046,16 @@ function M:crate_content()
 	return C.CRATE_CONTENTS[#C.CRATE_CONTENTS][1]
 end
 
--- Sceglie un punto a caso sulla superficie, lontano dai robot e dalle altre
--- casse, e fa cadere lì una cassa dal cielo. Usa il generatore della partita,
--- così server e client la mettono nello stesso posto. weapon e x: quella
--- cassa proprio lì (le lezioni, sim/missioni.lua cassa)
+-- Picks a random point on the surface, far from robots and other crates, and
+-- drops a crate from the sky there. It uses the match generator, so server and
+-- client put it in the same place. weapon and x: that crate right there (the
+-- lessons, sim/missions.lua casse)
 function M:spawn_crate(weapon, x)
 	if #self.crates >= M.CRATE_MAX then return nil end
 	weapon = weapon or self:crate_content()
 	local hw = M.CRATE_HALF_W
-	-- lontano dai robot e dalle altre casse
-	local function libero(x, gy)
+	-- far from robots and other crates
+	local function free_spot(x, gy)
 		if self:robot_collides(x, gy) or self:object_collides(x, gy, hw) or self:object_collides(x, gy + M.CRATE_H, hw) then
 			return false
 		end
@@ -2069,7 +2071,7 @@ function M:spawn_crate(weapon, x)
 	if x then
 		gy = self.terrain:ground_below(x, M.WORLD_H - 1)
 	else
-		x, gy = self:surface_spot(libero)
+		x, gy = self:surface_spot(free_spot)
 	end
 	if not x then return nil end
 	self.crate_id = self.crate_id + 1
@@ -2079,11 +2081,11 @@ function M:spawn_crate(weapon, x)
 	return c
 end
 
--- Dà al robot quello che c'è in una cassa. Le armi senza colpi contati, il
--- Rampino e il paracadute arrivano solo dalle lezioni (sim/missioni.lua casse
--- e dai): il Lanciarune a chi non ce l'ha (rb.disarmed), la secondaria prende
--- il posto della sua, con un colpo
-function M.dai(rb, w)
+-- Gives the robot what's in a crate. Weapons without counted shots, the
+-- Rampino and the parachute only come from the lessons (sim/missions.lua casse
+-- and give): the Lanciarune to whoever doesn't have it (rb.disarmed), the
+-- secondary replaces theirs, with one shot
+function M.give(rb, w)
 	if M.FREE_WEAPONS[w] then
 		rb.disarmed = nil
 	elseif M.SECONDARY[w] then
@@ -2091,7 +2093,7 @@ function M.dai(rb, w)
 		rb.secondary = w
 		rb.ammo[w] = rb.ammo[w] + 1
 	elseif w == "hook" then
-		-- il Rampino ce l'hanno tutti: la lezione lo fa solo vedere
+		-- everyone has the Rampino: the lesson only shows it
 	elseif w == "parachute" then
 		rb.parachutes_left = rb.parachutes_left + 1
 	else
@@ -2109,7 +2111,7 @@ function M:update_crates()
 			if not rb.dead and not taken
 				and math.abs(rb.x - c.x) <= M.ROBOT_HALF_W + M.CRATE_HALF_W
 				and rb.y < c.y + M.CRATE_H and rb.y + M.ROBOT_H > c.y then
-				M.dai(rb, c.weapon)
+				M.give(rb, c.weapon)
 				rb.crates = rb.crates + 1
 				self:emit({ type = "crate_pick", id = c.id, robot = rb.id, weapon = c.weapon })
 				taken = true
@@ -2124,19 +2126,19 @@ function M:update_crates()
 	end
 end
 
--- Oggetti tattici ----------------------------------------------------------------
+-- Tactical items ----------------------------------------------------------------
 
--- Quanto viene spinto rb: meno con lo scudo
+-- How far rb gets pushed: less with the shield
 function M:knock_mul(rb)
 	local k = rb.stats.knockback_mul
 	if rb.shield then k = k * C.SHIELD.knockback end
 	return k
 end
 
--- Cerchi di cura (config.HEAL) ------------------------------------------------
+-- Healing circles (config.HEAL) ------------------------------------------------
 
--- Un cerchio in un punto a caso della superficie, lontano dagli altri cerchi
--- (anche sotto un robot: va curato lui, o spinto via)
+-- A circle at a random point of the surface, far from other circles
+-- (even under a robot: it gets healed, or pushed away)
 function M:spawn_heal()
 	if #self.heals >= C.HEAL.max then return nil end
 	local x, gy = self:surface_spot(function(x)
@@ -2153,8 +2155,8 @@ function M:spawn_heal()
 	return h
 end
 
--- A fine turno: chi ha i piedi in un cerchio si cura, e il cerchio che ha
--- curato qualcuno sparisce
+-- At the end of the turn: whoever has their feet in a circle is healed, and the
+-- circle that healed someone disappears
 function M:apply_heals()
 	local r2 = C.HEAL.r * C.HEAL.r
 	local i = 1
@@ -2178,12 +2180,12 @@ function M:apply_heals()
 	end
 end
 
--- Il robot di turno usa un oggetto (già controllato con can_use)
--- fire (angolo e potenza) serve agli oggetti lanciati
+-- The robot on turn uses an item (already checked with can_use)
+-- fire (angle and power) is needed by thrown items
 function M:use_tool(kind, fire)
 	local rb = self.robots[self.current]
 	if kind == "parachute" then
-		-- aperto si chiude (gratis), chiuso si apre
+		-- open it closes (free), closed it opens
 		if rb.parachute then
 			rb.parachute = false
 			self:emit({ type = "parachute_close", robot = rb.id })
@@ -2195,7 +2197,7 @@ function M:use_tool(kind, fire)
 		return
 	end
 	if kind == "hook" then
-		-- un Rampino per turno
+		-- one Rampino per turn
 		self.used.tool = true
 		self:fire_hook(fire.angle)
 		return
@@ -2206,7 +2208,7 @@ function M:use_tool(kind, fire)
 		self:emit({ type = "shield", robot = rb.id })
 		return
 	end
-	-- la trappola si posa ai piedi, il trampolino si lancia come l'Uovo
+	-- the trap is placed at the feet, the trampoline is thrown like the Uovo
 	self.placed_id = self.placed_id + 1
 	local o = { id = self.placed_id, kind = kind, x = rb.x, y = rb.y, vy = 0, owner = rb.id, team = rb.team,
 		armed = false, r = kind == "trap" and rb.stats.trap_radius or C.TRAMPOLINE.half_w, age = 0 }
@@ -2217,20 +2219,20 @@ function M:use_tool(kind, fire)
 	end
 	self.placed[#self.placed + 1] = o
 	if #self.placed > C.MAX_PLACED then
-		-- troppi: sparisce il più vecchio
+		-- too many: the oldest disappears
 		self:emit({ type = "placed_gone", id = self.placed[1].id })
 		table.remove(self.placed, 1)
 	end
 	if not o.flying then self:emit({ type = "place", id = o.id, kind = kind, robot = rb.id, x = o.x, y = o.y }) end
 end
 
--- Il robot ha i piedi sopra l'oggetto o?
+-- Does the robot have its feet on object o?
 local function on_top(rb, o)
 	return math.abs(rb.x - o.x) <= M.ROBOT_HALF_W + o.r and rb.y >= o.y - 2 and rb.y <= o.y + 6
 end
 
--- Il trampolino in volo, come l'Uovo: si ferma dove tocca il terreno, o ai
--- piedi del robot che colpisce
+-- The trampoline in flight, like the Uovo: it stops where it touches terrain,
+-- or at the feet of the robot it hits
 function M:fly_placed(o)
 	o.age = o.age + 1
 	o.vy = o.vy - M.GRAVITY * M.GRENADE_GRAVITY * M.DT
@@ -2256,8 +2258,8 @@ function M:fly_placed(o)
 	end
 end
 
--- Velocità del rimbalzo di b (robot o corpo) sul trampolino o: sempre, ma
--- restandoci sopra ogni volta più bassa. nil se i rimbalzi sono finiti.
+-- Bounce speed of b (robot or body) on trampoline o: always, but lower each
+-- time while staying on it. nil if the bounces are over.
 local function spring_vy(b, o)
 	local tr = C.TRAMPOLINE
 	local chain = b.bounced_on == o.id and (b.bounces or 0) or 0
@@ -2267,19 +2269,19 @@ local function spring_vy(b, o)
 	return vy
 end
 
--- Rimbalzo di un robot sul trampolino
+-- A robot bouncing on the trampoline
 function M:bounce(rb, o)
 	local vy = spring_vy(rb, o)
 	if not vy then return end
 	rb.vy, rb.grounded, rb.rising, rb.knocked, rb.fall_top = vy, false, false, false, nil
-	-- il trampolino di un avversario ti lancia: se cadi l'uccisione è sua
+	-- an opponent's trampoline launches you: if you fall the kill is theirs
 	self:credit(rb, self.robots[o.owner])
 	self:emit({ type = "bounce", id = o.id, robot = rb.id })
 end
 
--- Un corpo largo 2 * r (colpo, Uovo, globo, cassa, oggetto) che scendendo
--- verso ny passa la tavola di un trampolino ci rimbalza: torna sulla tavola e
--- riparte in alto. Restituisce true se è rimbalzato.
+-- A 2 * r wide body (shot, Uovo, orb, crate, item) that crosses a trampoline's
+-- board while going down towards ny bounces on it: it goes back onto the board
+-- and leaves upwards. Returns true if it bounced.
 function M:spring(b, ny, r)
 	if b.vy >= 0 then return false end
 	local top = C.TRAMPOLINE.top
@@ -2311,7 +2313,7 @@ function M:update_placed()
 				if o.kind == "trampoline" then
 					self:bounce(rb, o)
 				elseif o.armed and rb.team ~= o.team then
-					-- la trappola lancia in alto e lontano dal suo centro, poi sparisce
+					-- the trap launches high and away from its centre, then disappears
 					local dir = rb.x > o.x and 1 or (rb.x < o.x and -1 or -rb.facing)
 					local k = self:knock_mul(rb)
 					rb.vx, rb.vy = dir * C.TRAP.push_vx * k, C.TRAP.launch_vy * k
@@ -2332,7 +2334,7 @@ function M:update_placed()
 			i = i + 1
 		end
 	end
-	-- chi tocca terra fuori dal trampolino ci rimbalza di nuovo alto
+	-- whoever touches ground outside the trampoline bounces high off it again
 	for _, rb in ipairs(self.robots) do
 		if rb.bounced_on and rb.grounded then
 			local still = false
@@ -2344,8 +2346,8 @@ function M:update_placed()
 	end
 end
 
--- Il robot può usare quest'arma? Le armi delle casse hanno colpi contati.
--- rb.disarmed: nessuna, finché non trova il Lanciarune in una cassa (la prima lezione)
+-- Can the robot use this weapon? Crate weapons have counted shots.
+-- rb.disarmed: none, until it finds the Lanciarune in a crate (the first lesson)
 function M.has_weapon(rb, weapon)
 	if rb.disarmed then return false end
 	if weapon == "sword" then return true end
@@ -2354,9 +2356,9 @@ function M.has_weapon(rb, weapon)
 	return (rb.ammo[weapon] or 0) > 0
 end
 
--- Punti della traiettoria prevista, per la linea di mira.
--- pts (facoltativo) è una tabella da riusare, per non allocare a ogni frame.
--- weapon (facoltativo): "grenade" e "shards" volano diversamente dal missile.
+-- Points of the predicted trajectory, for the aim line.
+-- pts (optional) is a table to reuse, so as not to allocate every frame.
+-- weapon (optional): "grenade" and "shards" fly differently from the missile.
 function M:preview(angle, power, count, every, pts, weapon)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
@@ -2377,7 +2379,7 @@ function M:preview(angle, power, count, every, pts, weapon)
 		local range = (weapon == "eagle" and C.EAGLE or weapon == "hook" and C.HOOK or C.BELLOWS).range
 		return self:ray_preview(x, y, angle, range, count, pts)
 	elseif weapon == "lunge" then
-		-- lo scatto: dal centro del robot, lungo quanto l'Affondo
+		-- the dash: from the robot's centre, as long as the Affondo
 		return self:ray_preview(rb.x, rb.y + M.DISEGNO_H / 2, angle, C.LUNGE.speed * C.LUNGE.ticks / 60, count, pts)
 	end
 	pts = pts or {}
@@ -2404,9 +2406,9 @@ function M:hits_robot(x, y, owner, age)
 	return false
 end
 
--- owner (facoltativo) è chi ha sparato, per contare i danni inflitti.
--- blast (facoltativo) dice quanto è grande: MISSILE_BLAST se manca.
--- weapon (facoltativo) è l'arma, per l'effetto di stato che porta.
+-- owner (optional) is the shooter, to count the damage dealt.
+-- blast (optional) says how big it is: MISSILE_BLAST if missing.
+-- weapon (optional) is the weapon, for the status effect it carries.
 function M:explode(x, y, owner, blast, weapon)
 	blast = blast or M.MISSILE_BLAST
 	local cy0, cy1 = self.terrain:carve(x, y, blast.r)
@@ -2414,10 +2416,10 @@ function M:explode(x, y, owner, blast, weapon)
 	self:blast(x, y, owner, blast, weapon)
 end
 
--- L'esplosione, senza il cratere: fa saltare trappole e trampolini vicini,
--- colpisce e spinge i robot
+-- The explosion, without the crater: it sets off nearby traps and
+-- trampolines, hits and pushes robots
 function M:blast(x, y, owner, blast, weapon)
-	-- trappole e trampolini nel cratere saltano
+	-- traps and trampolines in the crater blow up
 	for i = #self.placed, 1, -1 do
 		local o = self.placed[i]
 		local ox, oy = o.x - x, o.y - y
@@ -2440,11 +2442,11 @@ function M:blast(x, y, owner, blast, weapon)
 	end
 end
 
--- Cosa fa a rb l'esplosione blast in (x, y) di owner: il danno (prima dello
--- scudo) e la velocità con cui parte, o nil se è fuori portata. Non cambia
--- niente: lo usano explode e il bot (sim/bot.lua) per prevedere un colpo.
+-- What explosion blast at (x, y) by owner does to rb: the damage (before the
+-- shield) and the speed it leaves with, or nil if out of reach. It changes
+-- nothing: explode and the bot (sim/bot.lua) use it to predict a hit.
 function M:blast_on(rb, x, y, blast, owner)
-	-- verso il punto più vicino all'esplosione del quadrato attorno al cerchio dei colpi
+	-- towards the point of the square around the hit circle nearest the explosion
 	local hw = M.HURT_R + M.HURT_FAT
 	local y0, y1 = rb.y + M.HURT_Y - hw, rb.y + M.HURT_Y + hw
 	local dx = math.max(rb.x - hw, math.min(rb.x + hw, x)) - x
@@ -2456,7 +2458,7 @@ function M:blast_on(rb, x, y, blast, owner)
 	local dmg = dmin + (blast.damage - dmin) * f
 	if owner == rb.id then dmg = dmg * M.SELF_DAMAGE end
 	dmg = math.floor(dmg + 0.5)
-	-- la velocità viene sostituita
+	-- the velocity is replaced
 	local imp = blast.impulse * self:knock_mul(rb)
 	return dmg, dx * imp * f, dy * imp * f
 end
@@ -2485,32 +2487,32 @@ function M:update_projectile()
 	end
 end
 
--- Turni ------------------------------------------------------------------------
+-- Turns ------------------------------------------------------------------------
 
 function M:start_turn(player)
 	self.current = player
 	self.phase = "aim"
 	self.timer = M.TURN_TICKS
 	self.window = 0
-	-- attacchi già fatti nel turno (al massimo un'arma e un colpo di spada) e l'attrezzo, uno a turno
+	-- attacks already done this turn (at most a weapon and a sword hit) and the tool, one per turn
 	self.used = { primary = false, secondary = false, tool = false }
-	-- teletrasporti lanciati e globi guadagnati nel turno (per il limite del primo turno)
+	-- teleports thrown and orbs earned this turn (for the first-turn limit)
 	self.teleports, self.teleports_earned = 0, 0
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
 	self:pair_start(rb)
-	-- lo scudo dura fino all'inizio del proprio turno dopo
+	-- the shield lasts until the start of the owner's next turn
 	if rb.shield then
 		rb.shield = nil
 		self:emit({ type = "shield_end", robot = rb.id })
 	end
-	-- le trappole posate prima di questo turno sono armate
+	-- traps placed before this turn are armed
 	for _, o in ipairs(self.placed) do o.armed = true end
 	self:emit({ type = "turn", robot = player })
-	-- chi brucia prende danno all'inizio del turno (l'uccisione va a chi l'ha bruciato)
+	-- whoever is burning takes damage at the start of the turn (the kill goes to whoever burned them)
 	local burn = rb.status.burn
 	if burn then self:hurt(rb, C.STATUS.burn.damage, burn.by and self.robots[burn.by], "burn") end
-	-- dopo ogni crate_every turni cade una cassa
+	-- every crate_every turns a crate drops
 	self.turn_no = self.turn_no + 1
 	if self.turn_no > 1 then
 		if self.crate_chance then
@@ -2523,19 +2525,19 @@ function M:start_turn(player)
 	if self.heals_on and self.turn_no % C.HEAL.every == 0 then self:spawn_heal() end
 end
 
--- Il robot di turno può usare weapon adesso? "teleport", "sword", un'arma o un
--- oggetto. Un'arma e un colpo di spada per turno, fino all'ultimo tick. Il
--- teletrasporto consuma un globo (rb.teleports_left) e, come gli oggetti, si
--- lancia in qualsiasi momento del turno. Al primo turno se ne lancia uno solo
--- dei globi di partenza, ma quelli guadagnati nel turno si usano sempre.
+-- Can the robot on turn use weapon now? "teleport", "sword", a weapon or an
+-- item. One weapon and one sword hit per turn, up to the last tick. The
+-- teleport uses up an orb (rb.teleports_left) and, like items, can be thrown
+-- at any moment of the turn. On the first turn only one of the starting orbs
+-- can be thrown, but the ones earned during the turn can always be used.
 function M:can_use(weapon)
 	if self.phase ~= "aim" then return false end
-	-- le lezioni lasciano usare solo quello che serve adesso (sim/missioni.lua solo)
+	-- the lessons only allow what's needed right now (sim/missions.lua only)
 	if self.permesso and not self.permesso(weapon) then return false end
 	local rb = self.robots[self.current]
 	if rb.dead then return false end
 	if weapon == "parachute" then
-		-- solo in aria
+		-- only in the air
 		if rb.grounded then return false end
 		return rb.parachute or rb.parachutes_left > 0
 	elseif weapon == "hook" then
@@ -2546,7 +2548,7 @@ function M:can_use(weapon)
 		return rb.ammo[weapon] > 0
 	end
 	if weapon == "swap" then
-		-- scambio del secondo attacco con un teletrasporto: dopo il primo attacco, finché il secondo c'è
+		-- swapping the second attack for a teleport: after the first attack, as long as the second is there
 		return self.used.primary ~= self.used.secondary
 	elseif weapon == "teleport" then
 		return #self.orbs < M.MAX_ORBS and rb.teleports_left > 0
@@ -2557,9 +2559,9 @@ function M:can_use(weapon)
 	return not self.used.primary and M.has_weapon(rb, weapon)
 end
 
--- Scambio (Sergio, 29 ottobre): dopo il primo attacco il secondo si può
--- cambiare con un globo del teletrasporto, da lanciare quando vuoi (anche al
--- primo turno: conta come guadagnato). Il turno continua come dopo due attacchi.
+-- Swap (Sergio, 29 October): after the first attack the second can be
+-- exchanged for a teleport orb, to throw whenever you like (even on the first
+-- turn: it counts as earned). The turn goes on as after two attacks.
 function M:swap_attack()
 	local rb = self.robots[self.current]
 	self.used.primary, self.used.secondary = true, true
@@ -2568,8 +2570,8 @@ function M:swap_attack()
 	self:emit({ type = "swap", robot = rb.id, total = rb.teleports_left })
 end
 
--- Quanti globi del teletrasporto dà il primo attacco dopo ticks di turno
-function M.globi_per(ticks)
+-- How many teleport orbs the first attack gives after ticks of turn
+function M.orbs_for(ticks)
 	local n = 0
 	for _, s in ipairs(C.TELEPORT_SOGLIE) do
 		if ticks <= s * 60 then n = n + 1 end
@@ -2577,7 +2579,7 @@ function M.globi_per(ticks)
 	return n
 end
 
--- Il robot di turno attacca con weapon (già controllata con can_use)
+-- The robot on turn attacks with weapon (already checked with can_use)
 function M:attack(weapon, fire)
 	local rb = self.robots[self.current]
 	local first = not (self.used.primary or self.used.secondary)
@@ -2609,8 +2611,8 @@ function M:attack(weapon, fire)
 	if first then
 		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
 		rb.attack_turns = rb.attack_turns + 1
-		-- attaccare presto dà globi del teletrasporto, uno per soglia non passata
-		local gain = rb.stats.time_orbs > 0 and M.globi_per(M.TURN_TICKS - self.timer) or 0
+		-- attacking early gives teleport orbs, one per threshold not passed
+		local gain = rb.stats.time_orbs > 0 and M.orbs_for(M.TURN_TICKS - self.timer) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
 			self.teleports_earned = self.teleports_earned + gain
@@ -2620,10 +2622,10 @@ function M:attack(weapon, fire)
 	end
 end
 
--- Risultati della partita, anche a metà: la classifica per punti della
--- squadra (a parità, dei robot). place è il posto della squadra: i compagni
--- hanno lo stesso, chi ha gli stessi punti pure.
--- { mode, winner = squadra o nil se pari, ranking = { { robot, team, place, points, ... } } }
+-- Match results, even midway: the standings by team points (on a tie, by
+-- robot). place is the team's place: teammates share it, and so does whoever
+-- has the same points.
+-- { mode, winner = team or nil on a tie, ranking = { { robot, team, place, points, ... } } }
 function M:results()
 	local team_points = {}
 	for _, rb in ipairs(self.robots) do team_points[rb.team] = (team_points[rb.team] or 0) + rb.points end
@@ -2639,7 +2641,7 @@ function M:results()
 	local ranking, place, last_team = {}, 0, nil
 	for i, rb in ipairs(list) do
 		if rb.team ~= last_team then
-			-- squadra nuova: scende di posto solo se ha meno punti della precedente
+			-- new team: it drops a place only if it has fewer points than the previous one
 			if not last_team or team_points[rb.team] < team_points[last_team] then place = place + 1 end
 			last_team = rb.team
 		end
@@ -2659,37 +2661,37 @@ function M:results()
 	return { mode = self.mode, normalized = self.normalized, winner = winner, ranking = ranking }
 end
 
--- Impronta dello stato: un numero che cambia se cambia qualcosa che conta
--- (tick, turno, caso, robot, colpi in volo). Due partite rigiocate con la
--- stessa ricetta devono avere le stesse impronte (sim/replay.lua): è il
--- controllo del determinismo, tra client e server e tra versioni.
-local IMPRONTA_MOD = 2147483629
-local function mescola(h, v)
-	return (h * 31 + math.floor(v) % IMPRONTA_MOD) % IMPRONTA_MOD
+-- State fingerprint: a number that changes if something that matters changes
+-- (tick, turn, rng, robots, shots in flight). Two matches replayed from the
+-- same recipe must have the same fingerprints (sim/replay.lua): it's the
+-- determinism check, between client and server and between versions.
+local FINGERPRINT_MOD = 2147483629
+local function shuffle(h, v)
+	return (h * 31 + math.floor(v) % FINGERPRINT_MOD) % FINGERPRINT_MOD
 end
 function M:impronta()
-	local h = mescola(mescola(mescola(7, self.tick), self.current), self.rng.state)
+	local h = shuffle(shuffle(shuffle(7, self.tick), self.current), self.rng.state)
 	for _, rb in ipairs(self.robots) do
-		h = mescola(h, rb.x * 16)
-		h = mescola(h, rb.y * 16)
-		h = mescola(h, rb.hp * 16)
-		h = mescola(h, rb.points * 16)
-		h = mescola(h, rb.dead and 1 or 0)
+		h = shuffle(h, rb.x * 16)
+		h = shuffle(h, rb.y * 16)
+		h = shuffle(h, rb.hp * 16)
+		h = shuffle(h, rb.points * 16)
+		h = shuffle(h, rb.dead and 1 or 0)
 	end
 	local p = self.projectile
-	if p then h = mescola(mescola(h, p.x * 16), p.y * 16) end
-	h = mescola(h, #self.orbs)
-	h = mescola(h, #self.placed)
+	if p then h = shuffle(shuffle(h, p.x * 16), p.y * 16) end
+	h = shuffle(h, #self.orbs)
+	h = shuffle(h, #self.placed)
 	return h
 end
 
--- Tick di gioco sotto i quali il giro che comincia è l'ultimo (config.FINAL_ROUND_SHARE)
+-- Game ticks below which the round that starts is the last (config.FINAL_ROUND_SHARE)
 function M:final_round_ticks()
 	return #self.order * M.TURN_TICKS * C.FINAL_ROUND_SHARE
 end
 
--- Con due squadre, all'inizio di un turno: se le squadre hanno giocato lo
--- stesso numero di turni nel giro, chi comincia apre una coppia nuova.
+-- With two teams, at the start of a turn: if the teams have played the same
+-- number of turns in the round, whoever starts opens a new pair.
 function M:pair_start(rb)
 	local done, teams = {}, 0
 	for _, r in ipairs(self.robots) do
@@ -2714,9 +2716,9 @@ function M:pair_start(rb)
 	self.ahead, self.ahead_base = rb.team, base
 end
 
--- La partita finisce solo a fine giro: chi ha cominciato per primo non gioca
--- un turno in più degli altri. Il giro che comincia quando al tempo manca meno
--- di final_round_ticks è l'ultimo, a punti moltiplicati, e poi si finisce.
+-- The match ends only at the end of a round: whoever started first doesn't
+-- play one turn more than the others. The round that starts when less than
+-- final_round_ticks is left is the last, with multiplied points, and then it ends.
 function M:end_turn()
 	self:apply_heals()
 	local rb = self.robots[self.current]
@@ -2742,15 +2744,15 @@ function M:end_turn()
 	self:start_turn(self.order[self.order_pos])
 end
 
--- Un tick del mondo: robot, globi, colpi, casse, oggetti. Solo il robot di
--- turno riceve input, se can_move. Lo usa anche il bot (sim/bot.lua) sulle
--- sue copie della partita, per provare le mosse.
+-- One world tick: robots, orbs, shots, crates, items. Only the robot on turn
+-- receives input, if can_move. The bot (sim/bot.lua) also uses it on its
+-- copies of the match, to try out moves.
 function M:advance(input, can_move)
 	for i, rb in ipairs(self.robots) do
 		local active = i == self.current and can_move
 		self:update_robot(rb, active and input or NO_INPUT, active)
 	end
-	-- prima il teletrasporto, poi la spada: il fendente colpisce già dalla nuova posizione
+	-- first the teleport, then the sword: the slash already hits from the new position
 	if #self.orbs > 0 then self:update_orbs() end
 	for _, rb in ipairs(self.robots) do
 		if rb.swing then
@@ -2776,12 +2778,12 @@ function M:step(input)
 	if self.phase == "over" then return end
 	input = input or NO_INPUT
 	self.tick = self.tick + 1
-	-- il tempo della partita scende solo nei turni: mentre si aspetta che colpi
-	-- e robot si fermino è fermo (Sergio, 30 ott)
+	-- match time only goes down during turns: while waiting for shots and robots
+	-- to settle it's stopped (Sergio, 30 Oct)
 	if self.match_left > 0 and self.phase ~= "settle" then
 		self.match_left = self.match_left - 1
 	end
-	-- chi è morto ricomincia dopo RESPAWN_TICKS, anche a metà turno
+	-- whoever died starts again after RESPAWN_TICKS, even mid-turn
 	for _, rb in ipairs(self.robots) do
 		if rb.dead and rb.respawn_in then
 			rb.respawn_in = rb.respawn_in - 1
@@ -2789,7 +2791,7 @@ function M:step(input)
 		end
 	end
 
-	-- il robot di turno si muove per tutto il turno, anche dopo gli attacchi
+	-- the robot on turn moves for the whole turn, even after the attacks
 	self:advance(input, self.phase == "aim")
 
 	if self.phase == "aim" then
@@ -2807,7 +2809,7 @@ function M:step(input)
 			elseif weapon == "swap" then
 				self:swap_attack()
 			elseif weapon == "teleport" then
-				-- il globo non è un attacco: consuma un teletrasporto e il turno continua
+				-- the orb isn't an attack: it uses up a teleport and the turn goes on
 				local rb = self.robots[self.current]
 				rb.teleports_left = rb.teleports_left - 1
 				rb.teleports = rb.teleports + 1
@@ -2817,14 +2819,14 @@ function M:step(input)
 				self:attack(weapon, fire)
 			end
 		end
-		-- turno finito: chi mira perde il colpo. Chi muore nel suo turno
-		-- ricomincia e continua; allo scadere della partita il turno si finisce.
+		-- turn over: whoever is aiming loses the shot. Whoever dies in their own turn
+		-- starts again and goes on; when the match time runs out the turn is finished.
 		if done or self.timer <= 0 then
 			self.window = 0
 			self.phase, self.settle, self.settle_total = "settle", 0, 0
 		end
 	elseif self.phase == "settle" then
-		-- si aspetta che colpi, globi e robot si fermino
+		-- wait for shots, orbs and robots to settle
 		self.settle_total = self.settle_total + 1
 		local still = #self.orbs == 0 and not self.projectile and not self:shards_flying()
 		for _, o in ipairs(self.placed) do
