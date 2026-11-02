@@ -77,16 +77,34 @@ images {
   image: "/assets/pelli/apprendista_ala.png"
 }
 images {
-  image: "/assets/pelli/apprendista_braccio.png"
+  image: "/assets/pelli/apprendista_braccio_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_braccio_dietro.png"
+  image: "/assets/pelli/apprendista_braccio_2.png"
 }
 images {
-  image: "/assets/pelli/apprendista_busto.png"
+  image: "/assets/pelli/apprendista_braccio_3.png"
 }
 images {
-  image: "/assets/pelli/apprendista_busto_tinta.png"
+  image: "/assets/pelli/apprendista_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/pelli/apprendista_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/pelli/apprendista_braccio_dietro_3.png"
+}
+images {
+  image: "/assets/pelli/apprendista_busto_1.png"
+}
+images {
+  image: "/assets/pelli/apprendista_busto_1_tinta.png"
+}
+images {
+  image: "/assets/pelli/apprendista_busto_2.png"
+}
+images {
+  image: "/assets/pelli/apprendista_busto_2_tinta.png"
 }
 images {
   image: "/assets/pelli/apprendista_coda_1.png"
@@ -119,40 +137,49 @@ images {
   image: "/assets/pelli/apprendista_coda_5_bordo.png"
 }
 images {
-  image: "/assets/pelli/apprendista_gamba.png"
+  image: "/assets/pelli/apprendista_gamba_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_gamba_dietro.png"
+  image: "/assets/pelli/apprendista_gamba_2.png"
 }
 images {
-  image: "/assets/pelli/apprendista_pugno.png"
+  image: "/assets/pelli/apprendista_gamba_dietro_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa.png"
+  image: "/assets/pelli/apprendista_gamba_dietro_2.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa_arrabbiata.png"
+  image: "/assets/pelli/apprendista_pugno_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa_colpita.png"
+  image: "/assets/pelli/apprendista_pugno_2.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa_felice.png"
+  image: "/assets/pelli/apprendista_testa_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa_ko.png"
+  image: "/assets/pelli/apprendista_testa_arrabbiata_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa_mira.png"
+  image: "/assets/pelli/apprendista_testa_colpita_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa_paura.png"
+  image: "/assets/pelli/apprendista_testa_felice_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa_provocazione.png"
+  image: "/assets/pelli/apprendista_testa_ko_1.png"
 }
 images {
-  image: "/assets/pelli/apprendista_testa_sconfitta.png"
+  image: "/assets/pelli/apprendista_testa_mira_1.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_paura_1.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_provocazione_1.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_sconfitta_1.png"
 }
 images {
   image: "/assets/pelli/favilla_1_ala.png"

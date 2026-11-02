@@ -412,39 +412,89 @@ def teste(foglio, F):
     return out
 
 
-def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste=None):
+# le braccia col pugno chiuso (--pugni): versioni in più delle braccia, per le
+# impugnature; si scelgono nell'editor, il posto resta al braccio aperto
+PUGNI = ("braccio", "braccio_dietro")
+
+
+def pugni(foglio, F):
+    """Le due braccia col pugno del foglio (--pugni), da sinistra: davanti e dietro."""
+    a = alla_misura(foglio, F)
+    ms = sorted(macchie(a[..., 3] > 128, passo=1), key=lambda m: -m.sum())[:2]
+    if len(ms) < 2:
+        sys.exit("nel foglio dei pugni servono due braccia staccate")
+    out = []
+    for m in sorted(ms, key=lambda m: np.nonzero(m)[1].mean()):
+        x0, y0, x1, y1 = scatola(m)
+        pz = a[y0:y1, x0:x1].copy()
+        pz[~m[y0:y1, x0:x1], 3] = 0
+        out.append(pz)
+    return out
+
+
+def versione(pezzi, posto):
+    """Il nome della prossima versione di un posto (busto_1, busto_2...): ogni
+    disegno resta nella pelle e nell'editor si sceglie quale va in scena."""
+    n = [int(m.group(1)) for k in pezzi for m in [re.fullmatch(re.escape(posto) + r"_(\d+)", k)] if m]
+    return f"{posto}_{max(n, default=0) + 1}"
+
+
+def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste=None, foglio_pugni=None, aggiungi=False):
     with open(ST.FOGLIO) as f:
         F = json.load(f)
-    a = alla_misura(foglio, F)
     D = leggi_diavoletto()
     px = D["px"]
     os.makedirs(ASSETS, exist_ok=True)
-    for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")) + glob.glob(os.path.join(SVG, nome + "_*.svg")):
-        os.remove(f)
     pezzi, forma = {}, {}
+    if aggiungi:
+        # i pezzi nuovi si aggiungono alla pelle come versioni in più
+        with open(os.path.join(JSON, nome + ".json")) as f:
+            vecchia = json.load(f)
+        pezzi = vecchia["pezzi"]
+        forma = {k: vecchia[k] for k in ("coda", "coda_riposo") if k in vecchia}
+    else:
+        for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")) + glob.glob(os.path.join(SVG, nome + "_*.svg")):
+            os.remove(f)
     if allinea_pezzi and not sopra:
         # ChatGPT: pezzi liberi, ognuno montato sullo scheletro; le facce con la scala della testa
-        liberi = trova(a, F)
+        liberi = trova(alla_misura(foglio, F), F) if foglio else {}
         if foglio_teste:
             liberi = {p: v for p, v in liberi.items() if not p.startswith("testa")}
             for i, pz in enumerate(teste(foglio_teste, F)):
                 liberi[FACCE[i]] = pz
-        s_testa = None
-        for posto in sorted(liberi, key=lambda p: p != "testa"):
-            pz = liberi[posto]
-            if posto == "coda":
+        if foglio_pugni:
+            for posto, pz in zip(PUGNI, pugni(foglio_pugni, F)):
+                liberi[posto + "/pugno"] = pz
+        s_testa, scale = None, {}
+        alto = lambda im: scatola(im[..., 3] > 128)[3] - scatola(im[..., 3] > 128)[1]
+        for chiave in sorted(liberi, key=lambda p: (p != "testa", "/" in p)):
+            pz = liberi[chiave]
+            if chiave == "coda":
                 forma = metti_coda(pezzi, pz, nome, F["scala"], px, sopra)
                 continue
+            posto, pugno = chiave.split("/")[0], "/" in chiave
             faccia = posto.startswith("testa")
-            # le facce alte quanto la testa (ChatGPT le disegna di misure un po' diverse)
-            s = s_testa * alta / (scatola(pz[..., 3] > 128)[3] - scatola(pz[..., 3] > 128)[1]) if faccia and s_testa else None
+            s = None
+            if faccia and s_testa:
+                # le facce alte quanto la testa (ChatGPT le disegna di misure un po' diverse)
+                s = s_testa * alta / alto(pz)
+            elif pugno:
+                # il braccio col pugno: alto quanto il braccio aperto di questa pelle
+                if posto not in pezzi:
+                    sys.exit(f"--pugni vuole prima {posto} nella pelle")
+                s = pezzi[posto]["h"] * F["scala"] / alto(pz)
             pz, perno, s = monta(pz, "testa" if faccia else posto, F, s)
             if posto == "testa":
-                s_testa, alta = s, scatola(liberi["testa"][..., 3] > 128)[3] - scatola(liberi["testa"][..., 3] > 128)[1]
-            metti(pezzi, pz, nome, posto, perno, F["scala"], px, sopra)
-    elif foglio_teste:
-        sys.exit("--teste solo con --allinea, per i personaggi")
+                s_testa, alta = s, alto(liberi["testa"])
+            # ogni disegno è una versione numerata; il posto prende l'ultima (i pugni no)
+            v = versione(pezzi, posto)
+            metti(pezzi, pz, nome, v, perno, F["scala"], px, sopra)
+            if not pugno:
+                pezzi[posto] = dict(pezzi[v])
+    elif foglio_teste or foglio_pugni or aggiungi:
+        sys.exit("--teste, --pugni e --aggiungi solo con --allinea, per i personaggi")
     else:
+        a = alla_misura(foglio, F)
         for posto, c in F["posti"].items():
             x0, y0, x1, y1 = c["casella"]
             pz = a[y0:y1, x0:x1].copy()
@@ -659,6 +709,8 @@ def main():
     ap.add_argument("--allinea", action="store_true", help="allinea ogni pezzo al manichino (disegni di ChatGPT)")
     ap.add_argument("--senza", default="", help="posti che il personaggio non ha, tolti (ala,coda)")
     ap.add_argument("--teste", help="foglio con le nove teste senza collo, 3 x 3 (furbo, colpita, felice, ko, mira, arrabbiata, sconfitta, paura, provocazione): prendono il posto di quelle del foglio")
+    ap.add_argument("--pugni", help="foglio con le due braccia col pugno chiuso (davanti, dietro): versioni in più delle braccia, per le impugnature")
+    ap.add_argument("--aggiungi", action="store_true", help="aggiunge i pezzi alla pelle che c'è già, come versioni in più (busto_2...)")
     ap.add_argument("--tavolozza", help="la tavolozza del personaggio (strumenti/stampino/tavolozze): fa anche gli SVG dei pezzi")
     ap.add_argument("--rifai", action="store_true")
     ap.add_argument("--togli")
@@ -671,7 +723,7 @@ def main():
             if os.path.exists(f):
                 os.remove(f)
     elif not a.rifai:
-        if not (a.foglio and a.nome and a.categoria):
+        if not ((a.foglio or (a.aggiungi and (a.teste or a.pugni))) and a.nome and a.categoria):
             ap.error("servono FOGLIO, --nome e --categoria")
         if not re.fullmatch(r"[a-z][a-z0-9_]*", a.nome) or a.nome in ST.DV.PEZZI:
             ap.error("il nome: lettere minuscole, cifre e _, diverso dai pezzi di base")
@@ -684,7 +736,7 @@ def main():
         if a.tavolozza:
             import vettoriale as VT
             TAVOLOZZA = VT.leggi_tavolozza(a.tavolozza)
-        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza, a.teste)
+        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza, a.teste, a.pugni, a.aggiungi)
     rifai()
 
 

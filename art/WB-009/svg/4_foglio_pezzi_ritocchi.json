@@ -1,7 +1,0 @@
-{
- "_": "Ritocchi al ricalco di 4_foglio_pezzi.png (strumenti/stampino/vettoriale.py), in pixel del foglio largo 3072. Sergio, 2026-11-02: il busto senza il nero sulle spalline, dove si attaccano le braccia.",
- "ritocchi": [
-  {"cosa": "spallina davanti: la riga fra spallina e pancia", "poligono": [[372, 950], [478, 925], [500, 930], [500, 1000], [465, 1065], [410, 1065], [410, 1005], [380, 1000]], "da": ["nero", "pelle_ombra"], "a": "pelle"},
-  {"cosa": "spallina dietro: la riga in diagonale e la macchia chiara", "poligono": [[735, 865], [790, 858], [835, 955], [805, 985], [765, 905], [735, 905]], "da": ["nero", "crema", "pelle_ombra"], "a": "pelle"}
- ]
-}
