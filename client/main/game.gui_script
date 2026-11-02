@@ -285,7 +285,8 @@ end
 local MASK_PATH = "/battaglia/maschera_viva.texturec"
 local RGBA = hash("rgba")
 local MASK_FORMAT = { { name = RGBA, type = buffer.VALUE_TYPE_UINT8, count = 4 } }
--- mappe che hanno i disegni in assets/mappe (le altre usano una roccia semplice)
+-- mappe che hanno i disegni in assets/mappe (quelle dell'apprendista li hanno in
+-- client/dipinti, battaglia/dipinti.lua; le altre usano una roccia semplice)
 local PAINTED = { forgia = true, crogiolo = true }
 
 -- le costanti stanno in graphics (Defold recenti) o in resource (vecchi)
@@ -447,8 +448,10 @@ local function show_menu(self, senza_velo)
 	if self.ingresso == nil and self.passaggio then
 		menu.eventi.carica(server_url(), function() home.eventi(self.home, menu.eventi.riga_home()) end)
 	end
-	-- la home copre tutto: la mappa sotto non serve disegnarla
-	msg.post("/terreno", "disable")
+	-- dietro la home solo lo sfondo dipinto della Forgia, che scorre piano (Sergio,
+	-- 2 nov): la mesh del terreno lo disegna senza la mappa, il mondo non si vede
+	msg.post("/terreno#script", "home", { sfondo = "forgia" })
+	gui.set_enabled(self.mondo, false)
 	set_controls_visible(self, false)
 	show_message(self, "", true)
 	self.missione, self.missione_attesa, self.fine_t = nil, nil, nil
@@ -1359,7 +1362,8 @@ end
 
 local function hide_menu(self)
 	home.hide(self.home)
-	msg.post("/terreno", "enable")
+	msg.post("/terreno#script", "home", {})
+	gui.set_enabled(self.mondo, true)
 end
 
 local function start_online(self, coda)

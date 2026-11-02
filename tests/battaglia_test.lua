@@ -229,7 +229,7 @@ end
 check(buone, "animazioni: canali noti, chiavi in ordine dentro la durata")
 for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
 	"sconfitta", "naso", "sbadiglio", "guarda_coda", "fermo_arma", "corsa_arma", "aria_arma", "sale_arma",
-	"scende_arma", "mira", "fiammella" }) do
+	"scende_arma", "mira" }) do
 	check(A[nome] ~= nil, "animazioni: c'è la clip " .. nome)
 end
 
@@ -269,9 +269,8 @@ do
 		and math.abs(braccio.pos.y - (D.pezzi.braccio.y + 2) * k) < 1e-6
 		and math.abs(v.braccio_a.pos.x - (D.punti.spalle[1] + 3 + v.posa.braccio_a_x) * k) < 1e-6,
 		"perni: il braccio gira attorno al perno spostato e da fermo resta dov'era")
-	check(testa and math.abs(testa.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6
-		and math.abs(v.cima.pos.y - (D.punti.cima[2] - 4 + v.posa_fiamma.fiamma_y) * k) < 1e-6,
-		"perni: la testa e la fiammella restano dov'erano")
+	check(testa and math.abs(testa.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6,
+		"perni: la testa resta dov'era")
 	package.loaded["battaglia.perni"] = {}
 	package.loaded["battaglia.scoria"] = nil
 	scoria = require "battaglia.scoria"
@@ -360,7 +359,7 @@ do
 		and v.braccio_d.enabled and not v.manina_d.enabled and not v.ala.enabled
 		and not v.coda[1][1].enabled and not v.coda[1][2].enabled and not v.testa.enabled and v.collo.enabled
 		and not v.gamba_d.enabled and v.gamba_a.enabled and v.busto.enabled,
-		"pezzi: la clip toglie braccio, testa (non la fiammella), gamba, ala e coda e mette la manina")
+		"pezzi: la clip toglie braccio, testa, gamba, ala e coda e mette la manina")
 	local D = require "battaglia.diavoletto"
 	local mx = (D.punti.spalle[1] + D.pezzi.braccio.x + 7) * v.k
 	check(math.abs(v.manina_a.pos.x - mx) < 1e-6 and math.abs(math.rad(v.manina_a.euler.z) - 0.5) < 1e-6,
@@ -553,12 +552,16 @@ check(not t.pieno.enabled and tutto_finito(), "targa: a zero la vita sparisce, v
 -- Camera -----------------------------------------------------------------------
 
 local c = camera.new(1280, 720, 1920, 1080)
-camera.salta(c, 960, 540, camera.tutta(c))
-check(c.x == 960 and c.y == 540, "zoom mappa: si vede tutta la mappa, la camera non si sposta")
+local B = camera.BANDA
 camera.salta(c, 100, 100, camera.tutta(c))
-local _, fondo = camera.allo_schermo(c, 960, 0)
-check(c.x == 960 and math.abs(fondo - camera.SOTTO) < 1e-9, "zoom mappa: in basso il fondo della mappa resta sopra l'HUD")
-check(camera.tutta(c) == camera.LIVELLI[#camera.LIVELLI], "l'ultimo livello di zoom mostra tutta la mappa")
+local sx0, fondo = camera.allo_schermo(c, 0, 0)
+local sx1, cima = camera.allo_schermo(c, 1920, 1080)
+check(math.abs(fondo - camera.SOTTO) < 1e-9 and math.abs(cima - (720 - B)) < 1e-9,
+	"zoom mappa: tutta la mappa, sopra la banda e sotto l'HUD")
+check(sx0 >= B - 1e-9 and sx1 <= 1280 - B + 1e-9 and math.abs(sx0 + sx1 - 1280) < 1e-9,
+	"zoom mappa: ai lati almeno la banda, la mappa al centro")
+camera.cambia(c, 5)
+check(camera.zoom(c) == camera.tutta(c), "l'ultimo livello di zoom mostra tutta la mappa con le bande")
 
 camera.salta(c, 640, 360, 2.2)
 local px, py = camera.allo_schermo(c, 700, 400)
@@ -569,11 +572,11 @@ check(px == 640 and py == 360, "il punto seguito sta al centro dello schermo")
 
 camera.salta(c, 0, 0, 2.2)
 px, py = camera.allo_schermo(c, 0, 0)
-check(math.abs(px) < 1e-9 and math.abs(py - camera.SOTTO) < 1e-9,
-	"nell'angolo la camera non esce dai lati, e il fondo della mappa resta sopra l'HUD")
+check(math.abs(px - B) < 1e-9 and math.abs(py - camera.SOTTO) < 1e-9,
+	"nell'angolo la camera esce solo della banda, e il fondo della mappa resta sopra l'HUD")
 camera.salta(c, 1920, 1080, 2.2)
 px, py = camera.allo_schermo(c, 1920, 1080)
-check(math.abs(px - 1280) < 1e-9 and math.abs(py - 720) < 1e-9, "in alto a destra la camera non esce dalla mappa")
+check(math.abs(px - (1280 - B)) < 1e-9 and math.abs(py - (720 - B)) < 1e-9, "in alto a destra la camera esce solo della banda")
 
 -- telefono 20:9 (ui/schermo.lua): lo schermo vero va da x = -160 a 1440
 local l = camera.new(1280, 720, 1920, 1080)
@@ -581,12 +584,19 @@ camera.vista(l, -160, 0, 1440, 720)
 camera.salta(l, 1000, 500, 1)
 px, py = camera.allo_schermo(l, 1000, 500)
 check(px == 640 and py == 360, "schermo largo: il punto seguito sta al centro")
-check(math.abs(camera.tutta(l) - 1600 / 1920) < 1e-9, "schermo largo: la mappa intera è larga quanto lo schermo")
 camera.cambia(l, 5)
-check(camera.zoom(l) == camera.tutta(l), "schermo largo: il livello MAPPA non mostra il vuoto ai lati")
+check(camera.zoom(l) == camera.tutta(l), "schermo largo: il livello MAPPA è tutta la mappa")
 camera.salta(l, 0, 540, camera.zoom(l))
 px = camera.allo_schermo(l, 0, 540)
-check(math.abs(px + 160) < 1e-9, "schermo largo: il bordo sinistro della mappa sul bordo vero dello schermo")
+local px1 = camera.allo_schermo(l, 1920, 540)
+check(px >= -160 + B - 1e-9 and math.abs(px + px1 - 1280) < 1e-9, "schermo largo: la mappa intera al centro, con le bande ai lati")
+-- tablet 4:3: lo schermo vero va da y = -120 a 840
+local t43 = camera.new(1280, 720, 1920, 1080)
+camera.vista(t43, 0, -120, 1280, 840)
+camera.cambia(t43, 5)
+camera.salta(t43, 960, 540, camera.zoom(t43))
+local tx0 = camera.allo_schermo(t43, 0, 540)
+check(math.abs(tx0 - B) < 1e-9, "tablet: la mappa intera larga quanto lo schermo meno le bande")
 
 -- l'inseguimento non dipende dalla frequenza dello schermo
 local a, b = camera.new(1280, 720, 1920, 1080), camera.new(1280, 720, 1920, 1080)

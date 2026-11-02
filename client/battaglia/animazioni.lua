@@ -1646,13 +1646,4 @@ return {
 		viso = { 0, "testa_arrabbiata" },
 		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	fiammella = { durata = 0.9, ciclo = true,
-		tracce = {
-			fiamma_gira = { 0, -0.042, 0, 0.225, 0.018, 0, 0.45, -0.042, 0, 0.675, -0.102, 0 },
-			fiamma_largo = { 0, 1, 0, 0.15, 0.96, 0, 0.3, 1.02, 0, 0.45, 0.97, 0, 0.6, 1.03, 0, 0.75, 0.98, 0 },
-			fiamma_alto = { 0, 1, 0, 0.15, 1.08, 0, 0.3, 0.97, 0, 0.45, 1.06, 0, 0.6, 0.95, 0, 0.75, 1.04, 0 },
-			fiamma_x = { 0, 14.745, 0 },
-			fiamma_y = { 0, 40.553, 0 },
-		},
-	},
 }

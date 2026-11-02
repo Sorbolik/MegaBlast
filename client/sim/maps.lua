@@ -76,4 +76,16 @@ function M.get(id)
 	return M.maps[id] or M.maps[M.DEFAULT]
 end
 
+-- Le mappe dipinte della campagna (strumenti/grafica/mappe_dipinte.py, documento delle
+-- mappe dell'apprendista): il pavimento, un terreno unico da muro a muro con le isole
+-- sopra, dove non si cade (le missioni libere dell'Addestramento e della Forgia), e la
+-- fossa, lo stesso pavimento con una fossa di lava in mezzo (il Fabbro). Scelte di
+-- Sergio, 2 novembre 2026. Fuori rotazione: si giocano solo nelle missioni.
+local PAVIMENTO_SPAWNS = { { x = 225, from = 300 }, { x = 1650, from = 585 }, { x = 630, from = 390 }, { x = 1260, from = 300 } }
+
+M.registra("pavimento", { name = "La Forgia", spawns = PAVIMENTO_SPAWNS,
+	build = function(t) t:load(mapdata.pavimento) end })
+M.registra("fossa", { name = "La fossa del Fabbro", spawns = PAVIMENTO_SPAWNS,
+	build = function(t) t:load(mapdata.fossa) end })
+
 return M

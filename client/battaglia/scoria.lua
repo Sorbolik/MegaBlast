@@ -3,7 +3,7 @@
 -- battaglia/diavoletto.lua) e animati qui nel codice: niente fotogrammi, così
 -- il movimento è fluido a qualsiasi frequenza e l'atlante pesa poco. Dai piedi
 -- alla cima della testa è alto come il corpo della simulazione (DISEGNO_H);
--- corna, coda e fiammella escono.
+-- corna e coda escono.
 --
 -- Lo usano la battaglia (game.gui_script), la home (menu/home.lua) e il podio:
 --   local s = scoria.new(colore, look)  -- look: le pelli addosso (battaglia/pelli.lua)
@@ -17,13 +17,13 @@
 --
 -- Pezzi: testa (con occhiali e corna, in quattro facce), busto, due gambe, due
 -- braccia (un pezzo solo per braccio, col pugno), l'ala, la coda in segmenti,
--- le manine staccate, la fiammella e il paracadute. Chi è di turno (o mira)
+-- le manine staccate e il paracadute. Chi è di turno (o mira)
 -- tiene l'arma: gira attorno al suo perno (mirando punta dove si mira, la
 -- testa guarda lì) e chi la impugna la segue. Mirando (o colpendo) la mira
 -- vince su tutto tranne la sconfitta: anche in aria, correndo o colpiti.
 --
 -- Il movimento è fatto di molle (schiaccia e allunga, inclinazione, spinta del
--- colpo, rinculo, testa, coda, fiammella) e di pose per stato, che sono clip a
+-- colpo, rinculo, testa, coda) e di pose per stato, che sono clip a
 -- fotogrammi chiave (battaglia/animazioni.lua, fatte con l'editor
 -- strumenti/animazioni/editor.html; le campiona battaglia/pose.lua) e danno le
 -- mete alle molle e agli arti. Gli stati, in ordine: sconfitta (cade
@@ -40,7 +40,7 @@
 -- cambiano i pezzi o ci vanno sopra, negli stessi giunti: si muovono con le
 -- stesse animazioni. Una testa nuova senza le sue facce le fa tutte; una coda
 -- nuova ha bordo e colore a parte come quella di base; le
--- parti col colore della squadra hanno il loro strato, come la fiammella.
+-- parti col colore della squadra hanno il loro strato.
 -- I perni di tutti i pezzi (corpo, testa, braccia, manine, gambe, ala, coda) si
 -- spostano dall'editor delle animazioni (battaglia/perni.lua): cambia il punto in
 -- cui il pezzo gira, non dove sta da fermo.
@@ -55,8 +55,6 @@
 -- la presa, o una manina, che ci sta sopra; di base il braccio davanti) e
 -- l'ordine dei pezzi, cosa sta davanti a cosa (livelli). Chi non è di turno
 -- alterna a caso il fermo (con le scenette) e il fermo con l'arma in mano.
--- La fiammella ha il colore della squadra ed è l'indicatore di chi gioca: su chi
--- è di turno è grande e accesa, sugli altri piccola e più scura.
 
 local game = require "sim.game"
 local D = require "battaglia.diavoletto"
@@ -100,8 +98,6 @@ local function perno_coda(r1)
 	local c, sn = math.cos(r1), math.sin(r1)
 	return d, { -(d[1] * c + d[2] * sn), -(-d[1] * sn + d[2] * c) }
 end
--- dove sta la fiammella nel collo (la testa sposta i suoi pezzi, non la fiammella)
-local CIMA = { PT.cima[1] - sposto("testa")[1], PT.cima[2] - sposto("testa")[2] }
 
 local sin, cos, min, max, abs, pi, sqrt = math.sin, math.cos, math.min, math.max, math.abs, math.pi, math.sqrt
 local atan2 = math.atan2 or math.atan
@@ -112,20 +108,15 @@ local BIANCO = vmath.vector4(1, 1, 1, 1)
 -- quanto è bianco il lampo del colpo al massimo (1 tutto bianco)
 local LAMPO = 0.85
 
--- la fiammella: quanto è grande su chi è di turno e sugli altri, con la luce
-local FUOCO_TURNO, FUOCO_ATTESA, LUCE_ATTESA = 2.2, 0.8, 0.6
-
 -- molle: posizione, velocità, rigidità, smorzamento
-local SQ, LEAN, SHOVE, KICK, TESTA, CODA, FUOCO = 1, 2, 3, 4, 5, 6, 7
-local W_MOLLA = { 16, 10, 12, 18, 11, 7, 6 }
-local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25, 0.4 }
+local SQ, LEAN, SHOVE, KICK, TESTA, CODA = 1, 2, 3, 4, 5, 6
+local W_MOLLA = { 16, 10, 12, 18, 11, 7 }
+local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25 }
 
--- altezza del diavoletto dai piedi alla cima della fiammella com'è ora (grande
--- su chi è di turno), per mettere sopra la targa
-local CIMA_FIAMMA = (PT.collo[2] + PT.cima[2]) * game.DISEGNO_H / D.altezza
-local FIAMMA_H = P.fiammella.h * 0.8 * game.DISEGNO_H / D.altezza
-function M.altezza(s)
-	return CIMA_FIAMMA + FIAMMA_H * s.x[FUOCO]
+-- altezza del diavoletto dai piedi alla cima della testa, per mettere sopra la targa
+local CIMA_TESTA = (PT.collo[2] + PT.cima[2]) * game.DISEGNO_H / D.altezza
+function M.altezza()
+	return CIMA_TESTA
 end
 
 -- un passo: la strada che fa il corpo mentre una gamba fa un'oscillazione
@@ -393,7 +384,7 @@ function M.new(color, look, solo_arma)
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- la posa delle clip di questo frame e gli angoli (radianti) delle
 		-- braccia e delle gambe che pendono, che la inseguono
-		posa = pose.nuova(), posa_fiamma = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
+		posa = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
 	s.strati, s.forma_coda = vesti(look)
 	s.root = giunto(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
@@ -413,7 +404,7 @@ function M.new(color, look, solo_arma)
 
 	-- dal fondo: la coda (prima tutti i bordi, poi tutti i colori: così i
 	-- segmenti si fondono in una coda sola), l'ala, il braccio di dietro, le
-	-- gambe, il busto, la testa con la fiammella, l'arma, il braccio davanti
+	-- gambe, il busto, la testa, l'arma, il braccio davanti
 	s.perno_coda, s.coda_dentro = perno_coda(s.forma_coda.riposo[1])
 	-- la radice della coda: quella del disegno, spostata dalla pelle e dal perno
 	local rc = s.forma_coda.radice
@@ -441,7 +432,7 @@ function M.new(color, look, solo_arma)
 	s.busto = giunto(s.forma, J.busto[1] * k, J.busto[2] * k)
 	veste(s, s.busto, "busto", k)
 	s.collo = giunto(s.forma, J.testa[1] * k, J.testa[2] * k)
-	-- la testa in un giunto suo (le clip la tolgono), la fiammella no
+	-- la testa in un giunto suo (le clip la tolgono)
 	s.testa = giunto(s.collo, 0, 0)
 	-- la testa: tanti pezzi quanti ne ha la faccia con più strati, ognuno col suo
 	-- strato del colore della squadra; li cambia faccia()
@@ -456,9 +447,6 @@ function M.new(color, look, solo_arma)
 		gui.set_texture(s.teste_t[i], "diavoletto")
 		s.tinte[#s.tinte + 1] = s.teste_t[i]
 	end
-	s.cima = giunto(s.collo, CIMA[1] * k, CIMA[2] * k)
-	s.fuoco = pezzo(s, s.cima, P.fiammella, k)
-	s.fuoco_tinta = s.tinte[#s.tinte]
 	-- l'arma: sopra il corpo e la testa, sotto il braccio davanti. La presa sta
 	-- sulla spalla dell'arma e toglie la schiacciata della forma, il giro dentro
 	-- gira l'arma attorno al perno (girata e poi schiacciata si storcerebbe)
@@ -484,7 +472,7 @@ function M.new(color, look, solo_arma)
 	return s
 end
 
--- Ridipinge fiammella, paracadute e armi con il colore di un'altra squadra
+-- Ridipinge paracadute e armi con il colore di un'altra squadra
 function M.set_color(s, color, forza)
 	if s.color == color and not forza then return end
 	s.color = color
@@ -525,7 +513,7 @@ end
 
 function M.reset(s)
 	for i = 1, #W_MOLLA do s.x[i], s.v[i], s.goal[i] = 0, 0, 0 end
-	s.x[SQ], s.x[FUOCO] = 1, 1
+	s.x[SQ] = 1
 	s.t = math.random() * 10
 	s.azione, s.azione_t = nil, 0
 	s.vy, s.vx, s.last_x, s.last_y, s.ground = 0, 0, nil, nil, true
@@ -622,23 +610,8 @@ local function coda(s, dt, gira)
 	end
 end
 
--- la fiammella: un disegno solo, che si muove con la sua clip (fiammella:
--- trema, ondeggia) e su chi è di turno si gonfia e si accende. È di tutti,
--- sopra qualunque testa: non è un pezzo delle pelli
-local function fiammella(s, turno)
-	local po, f = s.posa_fiamma, s.x[FUOCO]
-	pose.azzera(po)
-	if A.fiammella then pose.aggiungi(po, A.fiammella, s.t, 1) end
-	pos(s.cima, (CIMA[1] + po.fiamma_x) * s.k, (CIMA[2] + po.fiamma_y) * s.k)
-	scale(s.cima, f * po.fiamma_largo, f * po.fiamma_alto)
-	rot(s.cima, po.fiamma_gira)
-	local l = turno and 1 or LUCE_ATTESA
-	C.x, C.y, C.z, C.w = s.color.x * l, s.color.y * l, s.color.z * l, 1
-	gui.set_color(s.fuoco_tinta, C)
-end
-
 -- Sconfitta: l'arma cade, cade all'indietro con la faccia a X (la clip
--- sconfitta), la fiammella si spegne, poi svanisce. Il terreno sotto può non esserci più (il cratere),
+-- sconfitta), poi svanisce. Il terreno sotto può non esserci più (il cratere),
 -- quindi niente resta appoggiato: tutto svanisce
 local function morte(s, dt)
 	local t = s.morte + dt
@@ -695,7 +668,8 @@ function M.update(s, dt, st)
 	local para = st.paracadute and not ground and not s.morte
 	-- chi è di turno (o mira) tiene l'arma, chi aspetta ogni tanto; da morto,
 	-- sul podio e appeso al paracadute (le mani sono sulle cinghie) no
-	if st.turno or st.aim ~= nil then s.con_arma = false end
+	-- st.fermo: solo il fermo, senza arma e senza scenette (la home)
+	if st.turno or st.aim ~= nil or st.fermo then s.con_arma = false end
 	local in_mano = (st.turno or st.aim ~= nil or s.con_arma) and not s.morte and not st.vittoria and not para
 	local mira = st.aim ~= nil and not s.morte and not para
 	-- le clip: con l'arma in mano quelle _arma, mirando da fermo mira (quelle
@@ -742,7 +716,7 @@ function M.update(s, dt, st)
 		pose.aggiungi(po, clip.corsa, s.passo / (2 * pi) * clip.corsa.durata, c)
 	elseif st.vittoria then
 		pose.aggiungi(po, A.vittoria, s.t, 1)
-	elseif not st.turno and not mira then
+	elseif not st.turno and not mira and not st.fermo then
 		-- fermo, non di turno: ogni tanto una scenetta
 		attesa(s, dt)
 	else
@@ -753,10 +727,8 @@ function M.update(s, dt, st)
 	if mira then testa = max(-TESTA_GIU, min(TESTA_SU, a * 0.5)) end
 	if not s.morte then
 		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = po.schiaccia + sq, lean, testa, cd + po.coda
-		s.goal[FUOCO] = st.turno and FUOCO_TURNO or FUOCO_ATTESA
 	else
 		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = 1, 0, testa, 0
-		s.goal[FUOCO] = 0
 	end
 	faccia(s, po.viso or "testa")
 	molle(s, dt)
@@ -825,7 +797,6 @@ function M.update(s, dt, st)
 	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
 	rot(s.collo, s.x[TESTA])
 	scale(s.collo, 1 / lx, 1 / q)
-	fiammella(s, st.turno)
 
 	-- lampo bianco del colpo
 	if s.flash > 0 then

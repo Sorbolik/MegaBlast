@@ -68,12 +68,6 @@ images {
   image: "/assets/diavoletto/coda_5_bordo.png"
 }
 images {
-  image: "/assets/diavoletto/fiammella.png"
-}
-images {
-  image: "/assets/diavoletto/fiammella_tinta.png"
-}
-images {
   image: "/assets/pelli/apprendista_ala.png"
 }
 images {
