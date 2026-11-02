@@ -359,7 +359,9 @@ let perniSalvati = PERNI_DEL_GIOCO;
 // pezzi dal basso, il primo al posto di quello di base, poi quelli sopra. Una
 // testa nuova senza le sue facce fa anche quelle.
 const PL = leggiLua(DATI.pelli);
-const FACCE = Object.keys(P).filter((n) => n.startsWith("testa")).sort((a, b) => (a === "testa" ? -1 : b === "testa" ? 1 : a < b ? -1 : 1));
+// come FACCE di scoria.lua: le ultime cinque il diavoletto di base non le ha, fa la testa normale
+const FACCE = ["testa", "testa_colpita", "testa_felice", "testa_ko", "testa_mira", "testa_arrabbiata", "testa_sconfitta", "testa_paura", "testa_provocazione"];
+const pezzoBase = (posto) => P[posto] || (posto.startsWith("testa_") && P.testa) || null;
 const addosso = {}; // categoria -> nome della pelle
 // i ritocchi ai pezzi delle pelli (strumenti, in fondo): "pelle/posto" -> spostamento
 // (unità del disegno) e grandezza, sul pezzo com'è nello stampino
@@ -374,7 +376,7 @@ let formaCoda = { l: D.coda, riposo: D.coda_riposo }; // lunghezze e angoli a ri
 function vesti() {
 	vestito = {};
 	formaCoda = { l: D.coda, riposo: D.coda_riposo };
-	const strati = (posto) => (vestito[posto] = vestito[posto] || [P[posto] || null]);
+	const strati = (posto) => (vestito[posto] = vestito[posto] || [pezzoBase(posto)]);
 	const metti = (posto, p) => { const l = strati(posto); if (p.modo === "sostituisce") l[0] = p; else l.push(p); };
 	for (const c of [...PL.sostituisce, ...PL.sopra]) {
 		const pl = addosso[c] && PL.pelli[addosso[c]];
@@ -385,7 +387,7 @@ function vesti() {
 		for (const f of FACCE.slice(1)) if (pz.testa && !pz[f]) metti(f, ritoccato(addosso[c], "testa", pz.testa));
 	}
 }
-function strati(posto) { return vestito[posto] || [P[posto] || null]; }
+function strati(posto) { return vestito[posto] || [pezzoBase(posto)]; }
 
 // i canali, come battaglia/pose.lua: angoli in radianti, misure in unità del disegno
 const CANALI = [

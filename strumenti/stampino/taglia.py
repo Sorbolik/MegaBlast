@@ -46,6 +46,9 @@ SOPRA = ["pantaloni", "maglia", "corazza", "guanti", "elmo"]
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
 DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba"}
+# le facce in più (WB-009), da un foglio a parte in fila da sinistra: nello stampino
+# non hanno casella, vanno sul perno della testa con la sua scala
+FACCE_IN_PIU = ["testa_mira", "testa_arrabbiata", "testa_sconfitta", "testa_paura", "testa_provocazione"]
 SCURO = 0.78
 # I pezzi in catena (i segmenti della coda): come
 # quelli di base, in due strati. Il bordo è il pezzo intero, il colore lo stesso
@@ -378,17 +381,101 @@ def vuoti(pezzi, nome, senza):
         pezzi[posto] = {"img": img, "x": 0.0, "y": 0.0, "w": 0.1, "h": 0.1, "modo": "sostituisce"}
 
 
-def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=()):
-    with open(ST.FOGLIO) as f:
-        F = json.load(f)
+def alla_misura(foglio, F):
+    """Il foglio alla misura dello stampino (ChatGPT dà 1536 x 1024, Procreate
+    quella giusta), senza il fondo."""
     im = Image.open(foglio).convert("RGBA")
-    # alla misura dello stampino (ChatGPT dà 1536 x 1024, Procreate quella giusta)
     if im.size != (F["larghezza"], F["altezza"]):
         k = min(F["larghezza"] / im.width, F["altezza"] / im.height)
         im2 = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
         im = Image.new("RGBA", (F["larghezza"], F["altezza"]), (255, 0, 255, 255))
         im.paste(im2, (0, 0))
-    a = fondo_via(im)
+    return fondo_via(im)
+
+
+def facce_in_piu(foglio, F):
+    """Le teste di un foglio di facce in più, da sinistra: le macchie più grandi."""
+    a = alla_misura(foglio, F)
+    al = a[..., 3] > 128
+    ms = sorted(macchie(al, passo=1), key=lambda m: -m.sum())[:len(FACCE_IN_PIU)]
+    if len(ms) < len(FACCE_IN_PIU):
+        sys.exit(f"nel foglio delle facce servono {len(FACCE_IN_PIU)} teste staccate")
+    out = []
+    for m in sorted(ms, key=lambda m: np.nonzero(m)[1].mean()):
+        x0, y0, x1, y1 = scatola(m)
+        pz = a[y0:y1, x0:x1].copy()
+        pz[~m[y0:y1, x0:x1], 3] = 0
+        out.append(pz)
+    return out
+
+
+def senza_collo(im):
+    """Una testa di ChatGPT senza il moncherino del collo (il collo è del busto):
+    sotto la guancia si taglia dritti fino al fondo del muso, sotto il muso subito
+    dopo il suo contorno; restano solo i pezzi attaccati alla testa."""
+    from collections import deque
+    im = im.copy()
+    a = im[..., 3] > 128
+    H, W = a.shape
+    rgb = im[..., :3].astype(int)
+    nero = (rgb.max(axis=2) < 70) & a
+    crema = (rgb[..., 0] > 200) & (rgb[..., 1] > 180) & (rgb[..., 2] > 120) & a
+    y0 = int(H * 0.76)
+    # A: dove il profilo della guancia smette di rientrare (comincia il collo)
+    xl = [int(np.nonzero(a[y])[0].min()) if a[y].any() else W for y in range(H)]
+    ya = next(y for y in range(y0, H - 2) if xl[y + 2] - xl[y] <= 0) - 1
+    xa = xl[ya]
+    # B: il fondo del muso, col suo contorno
+    cy, cx = np.nonzero(crema)
+    yb = int(cy.max()) + 5
+    xb = int(cx[cy >= cy.max() - 1].min())
+    for x in range(xa, min(xb, W)):
+        yc = round(ya + (yb - ya) * (x - xa) / max(1, xb - xa))
+        im[yc + 1:, x, 3] = 0
+    im[yb + 1:, xa:, 3] = 0
+    for x in range(xb, W):
+        c = np.nonzero(crema[:, x])[0]
+        y = max(y0, int(c.max()) + 1 if len(c) else 0)
+        while y < H and a[y, x] and not nero[y, x]:
+            y += 1
+        while y < H and nero[y, x]:
+            y += 1
+        if y < H and a[y:, x].any():
+            im[y:, x, 3] = 0
+    b = im[..., 3] > 40
+    lab = np.zeros((H, W), np.int32)
+    n = 0
+    for sy, sx in zip(*np.nonzero(b)):
+        if lab[sy, sx]:
+            continue
+        n += 1
+        lab[sy, sx] = n
+        q = deque([(sy, sx)])
+        while q:
+            y, x = q.popleft()
+            for yy in (y - 1, y, y + 1):
+                for xx in (x - 1, x, x + 1):
+                    if 0 <= yy < H and 0 <= xx < W and b[yy, xx] and not lab[yy, xx]:
+                        lab[yy, xx] = n
+                        q.append((yy, xx))
+    if n > 1:
+        tieni = np.argmax(np.bincount(lab.ravel())[1:]) + 1
+        im[(lab != tieni) & (lab > 0), 3] = 0
+    return im
+
+
+def via_i_colli(pezzi):
+    for posto, p in pezzi.items():
+        if posto.startswith("testa"):
+            f = os.path.join(ASSETS, p["img"] + ".png")
+            im = np.asarray(Image.open(f).convert("RGBA"))
+            Image.fromarray(senza_collo(im)).save(f, optimize=True)
+
+
+def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), facce=None):
+    with open(ST.FOGLIO) as f:
+        F = json.load(f)
+    a = alla_misura(foglio, F)
     D = leggi_diavoletto()
     px = D["px"]
     os.makedirs(ASSETS, exist_ok=True)
@@ -407,8 +494,19 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=()):
             faccia = posto.startswith("testa")
             pz, perno, s = monta(pz, posto, F, s_testa if faccia else None)
             if posto == "testa":
-                s_testa = s
+                s_testa, h_testa = s, scatola(liberi["testa"][..., 3] > 128)
             metti(pezzi, pz, nome, posto, perno, F["scala"], px, sopra)
+        if facce:
+            if s_testa is None:
+                sys.exit("le facce in più vogliono la testa nel foglio")
+            # alte quanto la testa (ChatGPT le disegna di un'altra misura)
+            alta = h_testa[3] - h_testa[1]
+            for posto, pz in zip(FACCE_IN_PIU, facce_in_piu(facce, F)):
+                s = s_testa * alta / (scatola(pz[..., 3] > 128)[3] - scatola(pz[..., 3] > 128)[1])
+                pz, perno, _ = monta(pz, "testa", F, s)
+                metti(pezzi, pz, nome, posto, perno, F["scala"], px, sopra)
+    elif facce:
+        sys.exit("--facce solo con --allinea, per i personaggi")
     else:
         for posto, c in F["posti"].items():
             x0, y0, x1, y1 = c["casella"]
@@ -431,7 +529,9 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=()):
     if senza:
         if sopra:
             sys.exit("--senza solo per le pelli che sostituiscono")
-        vuoti(pezzi, nome, senza)
+        if "collo" in senza:
+            via_i_colli(pezzi)
+        vuoti(pezzi, nome, [p for p in senza if p != "collo"])
     # le versioni di dietro, se mancano: più scure (il colore della squadra no)
     for dietro, davanti in DIETRO.items():
         if davanti in pezzi and dietro not in pezzi:
@@ -571,7 +671,8 @@ def main():
     ap.add_argument("--sopra", action="store_true", help="i pezzi vanno sopra quelli di base (default per la categoria)")
     ap.add_argument("--sostituisce", action="store_true", help="i pezzi prendono il posto di quelli di base")
     ap.add_argument("--allinea", action="store_true", help="allinea ogni pezzo al manichino (disegni di ChatGPT)")
-    ap.add_argument("--senza", default="", help="posti che il personaggio non ha, tolti (ala,coda)")
+    ap.add_argument("--senza", default="", help="posti che il personaggio non ha, tolti (ala,coda); collo: le teste senza il moncherino del collo")
+    ap.add_argument("--facce", help="foglio con le cinque facce in più in fila (mira, arrabbiata, sconfitta, paura, provocazione)")
     ap.add_argument("--rifai", action="store_true")
     ap.add_argument("--togli")
     ap.add_argument("--ritocchi", help="i ritocchi dell'editor delle animazioni (ritocchi.json)")
@@ -590,9 +691,9 @@ def main():
         sopra = a.sopra or (a.categoria in SOPRA and not a.sostituisce)
         senza = [p for p in a.senza.split(",") if p]
         for p in senza:
-            if p not in ("ala", "coda"):
-                ap.error("--senza: solo ala e coda")
-        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza)
+            if p not in ("ala", "coda", "collo"):
+                ap.error("--senza: solo ala, coda e collo")
+        taglia(a.foglio, a.nome, a.categoria, sopra, a.allinea, senza, a.facce)
     rifai()
 
 

@@ -351,3 +351,29 @@ Nessuna contraddizione nuova con le decisioni lette. Nessuna PR aperta o unione 
 
 Fase 2 pronta: `esegui WB-009 fase 2`.
 
+
+### Fase 2 · primo taglio (2026-11-02)
+
+Guardati `4_foglio_pezzi.png` e `5_teste_extra.png`.
+
+- **Buoni:** 11 pezzi separati, ala vuota, verde solo sul fazzoletto, coda intera con la
+  freccia. Cima di braccia e gambe e fondo dei colli senza contorno nero, come chiesto.
+  Nelle teste extra la mira ha la faccia scelta e il collo stretto come le altre.
+- **Difetti visibili:** il busto ha le spalle contornate di nero (con il braccio davanti
+  non si vede; dietro, sul braccio lontano, sì); ombre vicino ad alcune giunture (lato del
+  busto, colli); colori sfumati e fuori tavolozza; fondo magenta non uniforme; foglio a
+  1536×1024 invece di 3072×2048; la coda è a U (il taglio la segue lo stesso).
+- **Taglio:** `taglia.py art/WB-009/4_foglio_pezzi.png --nome apprendista --categoria personaggio
+  --allinea --senza ala,collo --facce art/WB-009/5_teste_extra.png` monta tutti i pezzi e le
+  nove teste (le cinque in più alte quanto la testa, sul suo perno); `collo` toglie il
+  moncherino del collo a tutte le teste, come ha chiesto Sergio (il collo è del busto); la pelle si prova con
+  `imposta prova_pelli apprendista` (scenario `strumenti/simula/scenari/apprendista.txt`,
+  foto in `art/WB-009/prova_simulazione.png`): fermo, corsa, salto, mira e Lama tengono.
+  Nel gioco di tutti non cambia niente finché la pelle non diventa il personaggio di base.
+- **Editor delle animazioni** ripubblicato (versione 26) con la pelle `apprendista` e le
+  nove facce nella riga "Faccia": Sergio la prova lì. Il diavoletto di base, che le cinque
+  facce nuove non le ha, mette la testa normale.
+- **Ancora da fare,** dopo la prova di Sergio: ricalco in SVG coi colori esatti della
+  tavolozza (controllo che fallisce sui colori fuori tavolozza), PNG per ogni schermo,
+  poi nell'editor lo zoom sugli SVG e i pezzi da specchiare (Sergio). Il pugno e le
+  spalle dietro si giudicano nella prova.

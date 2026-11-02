@@ -200,8 +200,10 @@ local function pezzo(s, parent, p, k, lampo, d)
 	return n
 end
 
--- le facce: una testa nuova senza le sue facce fa anche quelle
-local FACCE = { "testa", "testa_colpita", "testa_felice", "testa_ko" }
+-- le facce: una testa nuova senza le sue facce fa anche quelle. Le ultime cinque
+-- (WB-009) il diavoletto di base non le ha: fa la testa normale
+local FACCE = { "testa", "testa_colpita", "testa_felice", "testa_ko",
+	"testa_mira", "testa_arrabbiata", "testa_sconfitta", "testa_paura", "testa_provocazione" }
 
 -- I pezzi di ogni posto con addosso le pelli di look (nomi di battaglia/pelli.lua,
 -- una per categoria): per posto, i pezzi dal basso. Il primo è quello di base o
@@ -217,7 +219,7 @@ local function vesti(look)
 	end
 	local V = {}
 	local function strati(posto)
-		V[posto] = V[posto] or { P[posto] or false }
+		V[posto] = V[posto] or { P[posto] or (posto:sub(1, 6) == "testa_" and P.testa) or false }
 		return V[posto]
 	end
 	local function metti(posto, p)
