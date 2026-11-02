@@ -177,9 +177,9 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		</div>
 		<div class="barra">
 			<button id="inizio" title="All'inizio">⏮</button>
-			<button id="indietro" title="Fotogramma prima (←)">◀︎</button>
+			<button id="indietro" title="Chiave prima (←); con Maiusc un fotogramma">◀︎</button>
 			<button id="play" class="primario" title="Avvia e ferma (spazio)">▶ Avvia</button>
-			<button id="avanti" title="Fotogramma dopo (→)">▶︎</button>
+			<button id="avanti" title="Chiave dopo (→); con Maiusc un fotogramma">▶︎</button>
 			<span class="num" id="ora">0.00 s</span>
 			<label>velocità <select id="velocita"><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
 			<label><input type="checkbox" id="molle" checked> molle del gioco</label>
@@ -291,7 +291,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		<div id="tempo-scorri"><canvas id="tempo"></canvas></div>
 	</section>
 	<div id="aiuto" class="box" hidden>
-		<div class="aiuto">I pezzi stanno nel <b>secchio</b> sopra il palco: trascinane uno sul palco e va in scena dove lo lasci, da quel momento della clip; trascinalo dal palco al secchio e esce di scena (un clic sul secchio lo mette e lo toglie dov'è). Le manine sono pezzi liberi: si spostano e si girano come gli altri. Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Nelle clip con l'arma i cerchi blu sull'arma sono le <b>impugnature</b> (dove vanno i pugni, per ogni arma, in tutte le sue clip): trascinali, e con "Clip solo per quest'arma" un'arma ha la sua versione della clip. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo (sul righello trascinando scorri), trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. Più chiavi insieme: trascina un rettangolo sulle righe o <kbd>Maiusc</kbd>+clic su ognuna, poi le trascini tutte in blocco (anche la curva e <kbd>Canc</kbd> valgono per tutte). <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
+		<div class="aiuto">I pezzi stanno nel <b>secchio</b> sopra il palco: trascinane uno sul palco e va in scena dove lo lasci, da quel momento della clip; trascinalo dal palco al secchio e esce di scena (un clic sul secchio lo mette e lo toglie dov'è). Le manine sono pezzi liberi: si spostano e si girano come gli altri. Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Nelle clip con l'arma i cerchi blu sull'arma sono le <b>impugnature</b> (dove vanno i pugni, per ogni arma, in tutte le sue clip): trascinali, e con "Clip solo per quest'arma" un'arma ha la sua versione della clip. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo (sul righello trascinando scorri), trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. Più chiavi insieme: trascina un rettangolo sulle righe o <kbd>Maiusc</kbd>+clic su ognuna, poi le trascini tutte in blocco (anche la curva e <kbd>Canc</kbd> valgono per tutte). <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> (e ◀︎ ▶︎) vanno alla chiave prima o dopo, su qualsiasi canale; con <kbd>Maiusc</kbd> un fotogramma (1/60 s, la griglia su cui si posano le chiavi); <kbd>spazio</kbd> avvia.</div>
 	</div>
 </div>
 <div id="messaggio" role="status"></div>
@@ -1613,6 +1613,12 @@ function disegnaTempo() {
 	tg.font = `11px ${C("--f-numeri")}`;
 	tg.fillStyle = C("--tenue"); tg.strokeStyle = C("--riga");
 	const passo = c.durata > 3 ? 0.5 : c.durata > 1.2 ? 0.25 : 0.1;
+	// i fotogrammi (1/60 s), quando c'è posto: sono la griglia su cui si posano le chiavi
+	if ((M.x1 - M.x0) / (c.durata * FPS) >= 5) {
+		tg.fillStyle = C("--riga");
+		for (let i = 1; i < c.durata * FPS; i++) tg.fillRect(tlX(i / FPS, M), RIGHELLO - 2, 1, 2);
+		tg.fillStyle = C("--tenue");
+	}
 	for (let t = 0; t <= c.durata + 1e-6; t += passo / 2) {
 		const x = tlX(t, M), grande = Math.abs(t / passo - Math.round(t / passo)) < 1e-6;
 		tg.fillRect(x, RIGHELLO - (grande ? 8 : 4), 1, grande ? 8 : 4);
@@ -1932,9 +1938,32 @@ $("play").onclick = () => {
 	requestAnimationFrame(ciclo);
 };
 $("inizio").onclick = () => { fermaPlay(); tempo = 0; aggiorna(); };
-const fotogramma = (d) => { fermaPlay(); const c = clip(); tempo = Math.max(0, Math.min(c.durata, Math.round((dentro(c, tempo) + d / 30) * 30) / 30)); orologio += d / 30; aggiorna(); };
-$("indietro").onclick = () => fotogramma(-1);
-$("avanti").onclick = () => fotogramma(1);
+// i tempi di tutte le chiavi della clip (ogni canale e il viso), in ordine
+function tempiChiavi(c) {
+	const s = new Set([0, c.durata]);
+	for (const l of Object.values(c.tracce)) for (const k of l) s.add(k.t);
+	for (const k of c.viso) s.add(k.t);
+	return [...s].sort((a, b) => a - b);
+}
+// ◀︎ ▶︎ vanno alla chiave prima o dopo (su qualsiasi canale), così ogni scatto
+// cade dove c'è un salto nella linea del tempo; con Maiusc un fotogramma (1/60 s)
+const fotogramma = (d, fine) => {
+	fermaPlay();
+	const c = clip(), t = dentro(c, tempo);
+	let nt;
+	if (fine) nt = Math.round((t + d / FPS) * FPS) / FPS;
+	else {
+		const ts = tempiChiavi(c);
+		nt = d > 0 ? ts.find((x) => x > t + 0.5 / FPS) : ts.reverse().find((x) => x < t - 0.5 / FPS);
+		if (nt === undefined) nt = d > 0 ? c.durata : 0;
+	}
+	nt = Math.max(0, Math.min(c.durata, nt));
+	orologio += nt - t;
+	tempo = nt;
+	aggiorna();
+};
+$("indietro").onclick = (e) => fotogramma(-1, e.shiftKey);
+$("avanti").onclick = (e) => fotogramma(1, e.shiftKey);
 $("squadra").onchange = () => { if (pronte === nomiImg.length) costruisciSecchio(); aggiorna(); };
 ["molle", "turno", "vedi-cammina", "vedi-colpi", "fiammella", "vedi-prese"].forEach((id) => { $(id).onchange = () => aggiorna(); });
 // le armi in mano, nell'ordine del file; cambiando arma dalla clip di un'arma
@@ -2060,8 +2089,8 @@ document.addEventListener("keydown", (e) => {
 	else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") $("copia-posa").click();
 	else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") $("incolla-posa").click();
 	else if (e.key === " ") { e.preventDefault(); $("play").click(); }
-	else if (e.key === "ArrowLeft") fotogramma(-1);
-	else if (e.key === "ArrowRight") fotogramma(1);
+	else if (e.key === "ArrowLeft") fotogramma(-1, e.shiftKey);
+	else if (e.key === "ArrowRight") fotogramma(1, e.shiftKey);
 	else if (e.key === "Delete" || e.key === "Backspace") togliChiave();
 	else if (e.key.toLowerCase() === "k") chiaveQui();
 	else if (e.key.toLowerCase() === "f") $("specchia").click();
