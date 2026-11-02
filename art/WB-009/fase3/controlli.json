@@ -1,0 +1,235 @@
+{
+  "palette": [
+    "#000000",
+    "#B8432A",
+    "#8E2F1C",
+    "#F1DFB0",
+    "#D6BC86",
+    "#EFE3C8",
+    "#C9B48E",
+    "#F2C45A",
+    "#FFFFFF",
+    "#5A1A10",
+    "#E0605A",
+    "#00FF00",
+    "#00B400"
+  ],
+  "svg": [
+    {
+      "file": "svg/apprendista_testa.svg",
+      "paths": 394,
+      "size_1x": [
+        163,
+        151
+      ]
+    },
+    {
+      "file": "svg/apprendista_testa_colpita.svg",
+      "paths": 397,
+      "size_1x": [
+        161,
+        151
+      ]
+    },
+    {
+      "file": "svg/apprendista_testa_felice.svg",
+      "paths": 391,
+      "size_1x": [
+        163,
+        151
+      ]
+    },
+    {
+      "file": "svg/apprendista_testa_ko.svg",
+      "paths": 371,
+      "size_1x": [
+        161,
+        151
+      ]
+    },
+    {
+      "file": "svg/apprendista_busto.svg",
+      "paths": 100,
+      "size_1x": [
+        94,
+        107
+      ]
+    },
+    {
+      "file": "svg/apprendista_busto_tinta.svg",
+      "paths": 16,
+      "size_1x": [
+        94,
+        107
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_1_bordo.svg",
+      "paths": 17,
+      "size_1x": [
+        42,
+        24
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_1.svg",
+      "paths": 3,
+      "size_1x": [
+        35,
+        13
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_2_bordo.svg",
+      "paths": 11,
+      "size_1x": [
+        50,
+        27
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_2.svg",
+      "paths": 3,
+      "size_1x": [
+        50,
+        16
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_3_bordo.svg",
+      "paths": 15,
+      "size_1x": [
+        55,
+        28
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_3.svg",
+      "paths": 4,
+      "size_1x": [
+        55,
+        18
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_4_bordo.svg",
+      "paths": 12,
+      "size_1x": [
+        66,
+        24
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_4.svg",
+      "paths": 2,
+      "size_1x": [
+        59,
+        15
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_5_bordo.svg",
+      "paths": 11,
+      "size_1x": [
+        73,
+        49
+      ]
+    },
+    {
+      "file": "svg/apprendista_coda_5.svg",
+      "paths": 6,
+      "size_1x": [
+        62,
+        29
+      ]
+    },
+    {
+      "file": "svg/apprendista_braccio.svg",
+      "paths": 20,
+      "size_1x": [
+        42,
+        73
+      ]
+    },
+    {
+      "file": "svg/apprendista_braccio_dietro.svg",
+      "paths": 18,
+      "size_1x": [
+        43,
+        71
+      ]
+    },
+    {
+      "file": "svg/apprendista_gamba.svg",
+      "paths": 63,
+      "size_1x": [
+        70,
+        96
+      ]
+    },
+    {
+      "file": "svg/apprendista_gamba_dietro.svg",
+      "paths": 51,
+      "size_1x": [
+        76,
+        89
+      ]
+    },
+    {
+      "file": "svg/apprendista_pugno.svg",
+      "paths": 22,
+      "size_1x": [
+        36,
+        34
+      ]
+    },
+    {
+      "file": "svg/apprendista_testa_mira.svg",
+      "paths": 557,
+      "size_1x": [
+        158,
+        156
+      ]
+    },
+    {
+      "file": "svg/apprendista_testa_arrabbiata.svg",
+      "paths": 730,
+      "size_1x": [
+        157,
+        156
+      ]
+    },
+    {
+      "file": "svg/apprendista_testa_sconfitta.svg",
+      "paths": 613,
+      "size_1x": [
+        156,
+        157
+      ]
+    },
+    {
+      "file": "svg/apprendista_testa_paura.svg",
+      "paths": 584,
+      "size_1x": [
+        157,
+        157
+      ]
+    },
+    {
+      "file": "svg/apprendista_testa_provocazione.svg",
+      "paths": 585,
+      "size_1x": [
+        158,
+        156
+      ]
+    },
+    {
+      "file": "svg/apprendista_ala.svg",
+      "paths": 0,
+      "size_1x": [
+        2,
+        2
+      ]
+    }
+  ]
+}

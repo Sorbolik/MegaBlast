@@ -1,0 +1,229 @@
+{
+  "nome": "apprendista",
+  "categoria": "personaggio",
+  "coda": [
+    21.7,
+    22.6,
+    27.9,
+    34.5,
+    21.2
+  ],
+  "coda_riposo": [
+    5.037,
+    5.452,
+    6.139,
+    6.915,
+    7.536
+  ],
+  "pezzi": {
+    "testa": {
+      "img": "apprendista_testa",
+      "x": 7.2,
+      "y": 47.6,
+      "w": 138.3,
+      "h": 128.0,
+      "modo": "sostituisce"
+    },
+    "testa_colpita": {
+      "img": "apprendista_testa_colpita",
+      "x": 7.1,
+      "y": 47.6,
+      "w": 136.9,
+      "h": 128.0,
+      "modo": "sostituisce"
+    },
+    "testa_felice": {
+      "img": "apprendista_testa_felice",
+      "x": 7.2,
+      "y": 47.6,
+      "w": 138.3,
+      "h": 128.0,
+      "modo": "sostituisce"
+    },
+    "testa_ko": {
+      "img": "apprendista_testa_ko",
+      "x": 7.1,
+      "y": 47.6,
+      "w": 136.6,
+      "h": 128.0,
+      "modo": "sostituisce"
+    },
+    "busto": {
+      "img": "apprendista_busto",
+      "x": 0.0,
+      "y": 10.9,
+      "w": 80.0,
+      "h": 90.3,
+      "modo": "sostituisce",
+      "tinta": "apprendista_busto_tinta"
+    },
+    "coda_1_bordo": {
+      "img": "apprendista_coda_1_bordo",
+      "x": 14.1,
+      "y": -0.2,
+      "w": 35.4,
+      "h": 20.6,
+      "modo": "sostituisce"
+    },
+    "coda_1": {
+      "img": "apprendista_coda_1",
+      "x": 16.9,
+      "y": 0.7,
+      "w": 29.7,
+      "h": 10.9,
+      "modo": "sostituisce"
+    },
+    "coda_2_bordo": {
+      "img": "apprendista_coda_2_bordo",
+      "x": 11.5,
+      "y": -0.7,
+      "w": 42.6,
+      "h": 22.6,
+      "modo": "sostituisce"
+    },
+    "coda_2": {
+      "img": "apprendista_coda_2",
+      "x": 11.5,
+      "y": 0.3,
+      "w": 42.6,
+      "h": 13.1,
+      "modo": "sostituisce"
+    },
+    "coda_3_bordo": {
+      "img": "apprendista_coda_3_bordo",
+      "x": 13.4,
+      "y": -0.9,
+      "w": 46.3,
+      "h": 24.0,
+      "modo": "sostituisce"
+    },
+    "coda_3": {
+      "img": "apprendista_coda_3",
+      "x": 13.4,
+      "y": 0.5,
+      "w": 46.3,
+      "h": 14.9,
+      "modo": "sostituisce"
+    },
+    "coda_4_bordo": {
+      "img": "apprendista_coda_4_bordo",
+      "x": 13.7,
+      "y": -1.9,
+      "w": 56.0,
+      "h": 20.6,
+      "modo": "sostituisce"
+    },
+    "coda_4": {
+      "img": "apprendista_coda_4",
+      "x": 16.3,
+      "y": -0.1,
+      "w": 49.7,
+      "h": 12.9,
+      "modo": "sostituisce"
+    },
+    "coda_5_bordo": {
+      "img": "apprendista_coda_5_bordo",
+      "x": 23.5,
+      "y": -1.8,
+      "w": 61.7,
+      "h": 41.7,
+      "modo": "sostituisce"
+    },
+    "coda_5": {
+      "img": "apprendista_coda_5",
+      "x": 19.1,
+      "y": -2.7,
+      "w": 52.9,
+      "h": 24.6,
+      "modo": "sostituisce"
+    },
+    "braccio": {
+      "img": "apprendista_braccio",
+      "x": 2.0,
+      "y": -21.9,
+      "w": 35.7,
+      "h": 61.7,
+      "modo": "sostituisce"
+    },
+    "braccio_dietro": {
+      "img": "apprendista_braccio_dietro",
+      "x": 2.1,
+      "y": -21.5,
+      "w": 36.3,
+      "h": 60.6,
+      "modo": "sostituisce"
+    },
+    "gamba": {
+      "img": "apprendista_gamba",
+      "x": 4.8,
+      "y": -30.5,
+      "w": 59.4,
+      "h": 81.4,
+      "modo": "sostituisce"
+    },
+    "gamba_dietro": {
+      "img": "apprendista_gamba_dietro",
+      "x": 5.1,
+      "y": -28.1,
+      "w": 64.3,
+      "h": 75.1,
+      "modo": "sostituisce"
+    },
+    "pugno": {
+      "img": "apprendista_pugno",
+      "x": 0.0,
+      "y": 0.0,
+      "w": 30.6,
+      "h": 28.9,
+      "modo": "sostituisce"
+    },
+    "ala": {
+      "img": "apprendista_ala",
+      "x": 0.0,
+      "y": 0.0,
+      "w": 0.1,
+      "h": 0.1,
+      "modo": "sostituisce"
+    },
+    "testa_mira": {
+      "img": "apprendista_testa_mira",
+      "x": 7.0,
+      "y": 49.1,
+      "w": 134.0,
+      "h": 132.3,
+      "modo": "sostituisce"
+    },
+    "testa_arrabbiata": {
+      "img": "apprendista_testa_arrabbiata",
+      "x": 6.9,
+      "y": 49.3,
+      "w": 133.4,
+      "h": 132.6,
+      "modo": "sostituisce"
+    },
+    "testa_sconfitta": {
+      "img": "apprendista_testa_sconfitta",
+      "x": 6.9,
+      "y": 49.6,
+      "w": 132.6,
+      "h": 133.4,
+      "modo": "sostituisce"
+    },
+    "testa_paura": {
+      "img": "apprendista_testa_paura",
+      "x": 6.9,
+      "y": 49.4,
+      "w": 133.4,
+      "h": 132.9,
+      "modo": "sostituisce"
+    },
+    "testa_provocazione": {
+      "img": "apprendista_testa_provocazione",
+      "x": 7.0,
+      "y": 49.0,
+      "w": 134.3,
+      "h": 132.0,
+      "modo": "sostituisce"
+    }
+  }
+}

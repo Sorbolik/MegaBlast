@@ -1,0 +1,66 @@
+{
+  "errors": [],
+  "tests": [
+    {
+      "clip": "fermo",
+      "frame_changes": true
+    },
+    {
+      "clip": "corsa",
+      "frame_changes": true
+    },
+    {
+      "clip": "colpito",
+      "frame_changes": true
+    },
+    {
+      "clip": "vittoria",
+      "frame_changes": true
+    },
+    {
+      "clip": "sconfitta",
+      "frame_changes": true
+    },
+    {
+      "clip": "mira",
+      "frame_changes": true
+    },
+    {
+      "face": "testa",
+      "selected": true
+    },
+    {
+      "face": "testa_arrabbiata",
+      "selected": true
+    },
+    {
+      "face": "testa_colpita",
+      "selected": true
+    },
+    {
+      "face": "testa_felice",
+      "selected": true
+    },
+    {
+      "face": "testa_ko",
+      "selected": true
+    },
+    {
+      "face": "testa_mira",
+      "selected": true
+    },
+    {
+      "face": "testa_paura",
+      "selected": true
+    },
+    {
+      "face": "testa_provocazione",
+      "selected": true
+    },
+    {
+      "face": "testa_sconfitta",
+      "selected": true
+    }
+  ],
+  "teams": 4
+}

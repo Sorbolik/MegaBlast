@@ -339,6 +339,50 @@ Nessun taglio, ricalco, montaggio sullo scheletro, test di animazione o integraz
 gioco eseguito: sono le fasi successive di Claude. Nessuna accettazione attribuita a Sergio.
 Nessuna contraddizione nuova con le decisioni lette. Nessuna PR aperta o unione verso main.
 
+### Fase 3 · 2026-11-02 · pacchetto tecnico per la prova
+
+Su richiesta di Sergio («esegui WB-009 fase 3»), eseguiti taglio e ricalco dei fogli
+della fase 2. Pacchetto in `art/WB-009/fase3/`, procedura e limiti in
+`art/WB-009/FASE3.md`. Nessuna modifica a client, server o strumenti condivisi:
+il montaggio è disponibile nell'editor autonomo del pacchetto. Il gioco non passa
+all'apprendista e la validazione di Sergio non è anticipata.
+
+**Consegna.**
+
+- `art/WB-009/fase3.py`: procedura ripetibile; riusa taglio/allineamento, separazione
+  della coda in cinque segmenti e maschera squadra degli strumenti esistenti,
+  indirizzando la scrittura al pacchetto. Estende il ricalco a tutti i colori con
+  potrace, senza disegnare forme nuove a codice. Separa le cinque teste extra.
+- `art/WB-009/verifica_fase3.py`: controllo ripetibile con casi negativi.
+- `fase3/svg/`: 27 SVG, riempimenti esatti della tavolozza; nove teste complessive,
+  cinque segmenti di coda con bordo/colore separati, busto con maschera squadra,
+  arti, pugno e ala trasparente.
+- `fase3/png/{1x,2x,3x}/`: 81 PNG renderizzati esclusivamente dagli SVG.
+- `fase3/pelli/apprendista.json` e `fase3/pelli.lua`: metadati del montaggio isolato.
+- `fase3/editor.html`: editor autonomo con apprendista già selezionato e tutte le
+  nove espressioni. Usa le clip del gioco, immagini 2x incorporate e quattro squadre.
+- `fase3/controlli.json`, `fase3/prove/browser.json`, `fase3/prove/{fermo,corsa,colpito}.png`:
+  verifiche e foto dell'anteprima reale nel browser.
+
+**Verifiche passate.** 27 SVG con soli tracciati/gruppi e colori ammessi; il
+controllo rifiuta #123456, CSS e immagini raster incorporate. 81 PNG verificati
+pixel per pixel contro il rendering degli SVG, tre densità con dimensioni corrette.
+Nove teste, cinque lunghezze di coda positive, ala trasparente e immagini referenziate
+esistenti. Browser Chromium: sei clip (fermo, corsa, colpito, vittoria, sconfitta,
+mira) con fotogrammi effettivamente diversi durante la riproduzione; nove facce
+selezionabili, quattro squadre, nessun errore JavaScript.
+
+**Limiti visivi e lavoro successivo.** La tavolozza esatta elimina le sfumature,
+ma non corregge tutti i problemi del disegno: le foto mostrano ancora giunture a
+collo e spalle, zone di colore sulle corna e una coda spessa sul lato destro del
+personaggio. Sagome delle teste non geometricamente identiche. Il montaggio è
+una prova da validare, non un risultato visivo approvato. Nessun disegno sorgente
+sovrascritto. Nessuna partita in Defold o prova su telefono eseguita; editor non
+pubblicato online. I posti aggiuntivi delle facce nel runtime, la selezione delle
+densità per schermo e l'integrazione nel gioco restano da fare con Claude dopo
+la revisione. Il file pelli.lua isolato NON sostituisce quello completo del gioco.
+Nessuna PR aperta o unione verso main.
+
 ## Resoconto di Claude
 
 ### Fase 1 · scelte di Sergio (2026-11-02)
