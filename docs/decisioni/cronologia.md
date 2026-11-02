@@ -99,3 +99,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 2 nov | Via dal repository le analisi del gioco di riferimento: nuovo `docs/fisica.md` con la fisica di oggi, `design.md` aggiornato coi numeri veri. | questa PR |
 | 2 nov | Prima ondata del codice in inglese: simulazione e server (nomi di file, funzioni, variabili e commenti); nel gioco non cambia niente (200 partite di bot identiche). | questa PR |
 | 2 nov | Contatore dei frame (FPS, peggiore, scatti con la causa) nelle impostazioni e nel simulatore, controllo sul lavoro di Lua per frame; entrando in una missione la maschera del terreno si ridisegna una volta invece di tre. | questa PR |
+| 2 nov | Crateri rotondi sulle mappe dipinte, senza la linea sospesa (distanza dal cerchio nella maschera). Scartata la pipeline di Defold per i dipinti (#153 revertata, #156 chiusa): le immagini venivano ridimensionate alla potenza di due. | questa PR |

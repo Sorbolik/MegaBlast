@@ -3,7 +3,8 @@
 // Tutta la mappa in un solo rettangolo opaco: sfondo a strati, terreno dipinto
 // ritagliato dalla maschera di collisione, parete e brace dei crateri.
 // maschera: r = terreno adesso, g = terreno all'inizio (640 x 360 celle,
-// filtro lineare, così i bordi escono morbidi invece che a scalini).
+// filtro lineare, così i bordi escono morbidi invece che a scalini), b = distanza
+// dal cratere più vicino (cerchi veri, non celle: game.gui_script, crateri).
 // Le texture sono a alfa premoltiplicato.
 //
 // Lo sfondo delle mappe vecchie non è un disegno: è un cielo con tre file di
@@ -62,6 +63,8 @@ const mediump vec3 BAGLIORE = vec3(0.6, 0.24, 0.09);
 const mediump vec3 BRACE_SPENTA = vec3(0.86, 0.66, 0.36);
 // l'orlo bruciato attorno ai crateri che mostrano lo sfondo
 const mediump vec3 BRUCIATO = vec3(0.078, 0.047, 0.031);
+// l'orlo bruciato attorno ai crateri, in unità del mondo (una cella è 3)
+const mediump float ORLO = 9.0;
 // lo sfondo dipinto è largo un giro (2560 pixel della scena), poi si ripete
 const highp float GIRO = 2560.0;
 
@@ -189,23 +192,6 @@ mediump float vicino(mediump vec2 uv, mediump float r)
     return n;
 }
 
-// quanto è stato scavato attorno a uv, in media a distanza r celle (8
-// direzioni): la media, non il massimo, così i bordi non fanno scalini
-mediump float scavo_attorno(mediump vec2 uv, mediump float r)
-{
-    mediump vec2 d = CELLA * r;
-    mediump vec2 e = d * 0.7071;
-    mediump vec2 m = texture(maschera, uv + vec2(d.x, 0.0)).rg
-        + texture(maschera, uv - vec2(d.x, 0.0)).rg
-        + texture(maschera, uv + vec2(0.0, d.y)).rg
-        + texture(maschera, uv - vec2(0.0, d.y)).rg
-        + texture(maschera, uv + e).rg
-        + texture(maschera, uv - e).rg
-        + texture(maschera, uv + vec2(e.x, -e.y)).rg
-        + texture(maschera, uv + vec2(-e.x, e.y)).rg;
-    return clamp((m.g - m.r) * 0.125, 0.0, 1.0);
-}
-
 // Conci di pietra col bordo scuro e la cima d'ottone, come le piattaforme
 // delle mappe dipinte: il Bastione e le mappe senza disegno
 mediump vec3 conci()
@@ -228,6 +214,13 @@ mediump vec3 conci()
 
 void main()
 {
+    // b della maschera: distanza dal bordo del cratere più vicino, in unità del
+    // mondo (8 livelli per unità, 128 sul bordo, negativa dentro). Interpolata fra
+    // le celle resta un cerchio vero; fwidth: un pixel dello schermo, per un bordo
+    // netto a ogni zoom. Letta prima dei ritorni, perché fwidth vuole tutti i pixel
+    mediump vec3 m = texture(maschera, var_uv).rgb;
+    mediump float dc = (m.b * 255.0 - 128.0) * 0.125;
+    mediump float aa = fwidth(dc) * 0.5;
     // sotto la mappa (la camera ci scende perché l'HUD non copra il terreno):
     // il baratro, sempre più buio, con il bagliore della brace appena sotto il bordo
     if (var_uv.y < 0.0 && stile.z < 0.5) {
@@ -244,7 +237,6 @@ void main()
         out_fragColor = vec4(sfondo(), 1.0);
         return;
     }
-    mediump vec2 m = texture(maschera, var_uv).rg;
     mediump vec4 ter;
     if (opzioni.x > 0.5) {
         ter = texture(terreno, var_uv);
@@ -262,10 +254,17 @@ void main()
 
     // scavato = c'era terreno all'inizio e adesso non c'è più
     mediump float scavato = clamp(m.g - m.r, 0.0, 1.0);
+    // mappe dipinte: il cratere è il cerchio dell'esplosione (b), che toglie anche
+    // il disegno che sporge sopra le celle piene (il contorno in cima al pavimento)
+    mediump float buco = 0.0;
+    if (stile.y > 0.5) {
+        buco = 1.0 - smoothstep(-aa, aa, dc);
+        scavato = 0.0;
+    }
 
     // lo sfondo solo dove il terreno non lo copre tutto
     mediump vec3 col = vec3(0.0);
-    if (ter.a * (1.0 - scavato) < 0.999) {
+    if (ter.a * (1.0 - scavato) * (1.0 - buco) < 0.999) {
         col = sfondo();
         // il terreno fa ombra sullo sfondo, in basso a destra: lo stacca
         mediump float ombra = texture(maschera, var_uv + vec2(-1.5, 2.5) * CELLA).r * 0.55
@@ -274,13 +273,9 @@ void main()
     }
     if (stile.y > 0.5) {
         // il cratere mostra lo sfondo; il terreno attorno ha l'orlo bruciato
-        // la maschera a celle, ammorbidita e tagliata a metà: il bordo esce tondo
-        // lontano dai crateri (quasi sempre) basta una lettura in 8 direzioni
-        mediump float largo = scavo_attorno(var_uv, 4.5);
-        if (largo > 0.0 || scavato > 0.0) {
-            mediump float buco = smoothstep(0.4, 0.6, scavato * 0.5 + scavo_attorno(var_uv, 0.8) * 0.5);
-            mediump float orlo = scavo_attorno(var_uv, 2.0) * 0.6 + largo * 0.4;
-            ter.rgb = mix(ter.rgb, BRUCIATO * ter.a, smoothstep(0.0, 0.25, orlo) * 0.92);
+        if (dc < ORLO) {
+            mediump float orlo = 1.0 - smoothstep(ORLO * 0.2, ORLO, dc);
+            ter.rgb = mix(ter.rgb, BRUCIATO * ter.a, orlo * 0.92);
             ter *= 1.0 - buco;
         }
     } else if (scavato > 0.0) {
