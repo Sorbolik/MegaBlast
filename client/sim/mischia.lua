@@ -1,5 +1,5 @@
 -- Colpi corpo a corpo: la Lama (fendente) e il Pugno del Titano (montante),
--- fotogramma per fotogramma (docs/blastron_comandi.md).
+-- fotogramma per fotogramma (docs/fisica.md).
 --
 -- L'animazione del colpo gira insieme alla mira: mirando in basso il fendente
 -- scende dall'alto verso il basso, mirando in alto sale.
