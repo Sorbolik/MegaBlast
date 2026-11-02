@@ -120,6 +120,13 @@ Misure nel simulatore, stesso scenario, prima (de591e4) e dopo la #147:
   di Sergio) potrebbe. È il primo sospetto per gli scatti "ogni tanto" durante il
   gioco, ma va confermato col contatore sul PC.
 - **Il bot** non ha mai tenuto un tick più di 4 ms (pensa a pezzi).
+- **Sul PC di Sergio** (2 nov, RTX 4060, schermo 2560 x 1600 a 165 Hz, il
+  contatore in console per una sessione di campagna): il frame normale è 6 ms,
+  ma molti frame durano 10-18 ms (un giro di schermo perso) con Lua a 0-1 ms,
+  quindi il tempo lo prende il disegno; entrare in una missione blocca un frame
+  80-135 ms di Lua (maschera e dipinto grande, densità 2). Lo shader del terreno
+  lo riscrive per primo il thread di Gabvi (crateri nuovi), con l'idea del canale
+  blu qui sotto; poi si rimisura col contatore.
 
 ## Da fare
 
