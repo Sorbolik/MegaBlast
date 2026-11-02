@@ -38,7 +38,13 @@ def main():
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le pelli dello stampino (strumenti/stampino/taglia.py), coi loro pezzi
     pelli = leggi("client/battaglia/pelli.lua")
+    # in SVG quelle che ce l'hanno (strumenti/stampino/pelli/svg, da taglia.py --tavolozza):
+    # nell'editor restano nitide con lo zoom
     for n in sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', pelli))):
+        svg = REPO / "strumenti/stampino/pelli/svg" / (n + ".svg")
+        if svg.exists():
+            immagini[n] = "data:image/svg+xml;base64," + base64.b64encode(svg.read_bytes()).decode()
+            continue
         dati = (REPO / "client/assets/pelli" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le armi in mano (solo quelle, non i colpi), come armi/nome

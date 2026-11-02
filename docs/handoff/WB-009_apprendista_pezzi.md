@@ -34,6 +34,13 @@ di WB-006 (prima il tre quarti, poi i pezzi).
   espressioni; Claude li salva in `art/WB-009/scelti/tre_quarti.png` e
   `art/WB-009/scelti/espressioni.png` su main.
 - **Fase 2**, `esegui WB-009 fase 2`: immagini 4 e 5, coi due file scelti come riferimento.
+- Codex esegue solo le righe della tabella della fase chiesta; se non le trova si ferma
+  (il 2 novembre, senza questa scheda su main, aveva rifatto per conto suo ricalchi ed
+  editor: lavoro di Claude, non integrato).
+- **Fase 3**, `esegui WB-009 fase 3` (Sergio, 2026-11-02): immagini 6 e 7. Il foglio della
+  fase 2 si era allontanato dal tre quarti (busto a uovo con le spalline, gambe grosse, coda
+  a U): il 6 rifà solo il corpo, copiato forma per forma dal tre quarti; le teste della fase 2
+  restano. Il 7 sono le braccia con la mano chiusa, per le impugnature delle armi.
 
 ## Cosa teniamo e cosa scartiamo
 
@@ -97,6 +104,8 @@ Allega i riferimenti nell'ordine scritto: il primo è "image 1", il secondo "ima
 | 1 | `3_espressioni` | R1 | 1536×1536 (o 1024×1024) | 1 |
 | 2 | `4_foglio_pezzi` | R4, R2, R3, R5 | 3:2 orizzontale, la più grande possibile (ideale 3072×2048, minimo 1536×1024) | 1 |
 | 2 | `5_teste_extra` | R4, R5, R6 | 1536×1024 | 1 |
+| 3 | `6_corpo_fedele` | R4, R2, R3 | 3:2 orizzontale, la più grande possibile (minimo 1536×1024) | 1 |
+| 3 | `7_braccia_chiuse` | R4, `art/WB-009/6_corpo_fedele.png` | 1536×1024 | 1 |
 
 Sfondo **non** trasparente (eccezione alla regola di `AGENTS.md`): bianco pieno in fase 1,
 magenta pieno `#FF00FF` in fase 2 perché lo usa lo strumento di taglio. Il verde `#00FF00`
@@ -190,6 +199,43 @@ Rendering rules, very strict, because these heads will be traced into vector sha
 - No text, numbers, labels, arrows or signatures. Landscape 3:2.
 ```
 
+### `6_corpo_fedele`
+
+```
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right. It is the EXACT model: every body part you draw must be COPIED from image 1, shape by shape, with the same proportions, the same thickness and the same contours. Do not invent, round off, fatten or simplify any part.
+
+Image 2 is a layout sheet: grey placeholder parts on a flat magenta #FF00FF background, in three rows. Use image 2 ONLY to know where each part goes on the sheet and roughly how big it is. Do NOT copy the grey parts' shapes. Image 3 shows how the grey parts attach to each other.
+
+Make the BODY PARTS SHEET of the imp of image 1, cut apart like a paper puppet, on the same canvas as image 2 with the same flat magenta #FF00FF background. Leave the WHOLE FIRST ROW EMPTY (pure magenta, no heads: the heads are already done). Draw only these parts, each over its grey placeholder, well separated from each other, each COMPLETE even where other parts would hide it in image 1:
+Row 2: the TORSO of image 1 without head, arms, legs and tail: the same pear shape as in image 1, narrow at the chest and wider at the round belly, with the same parchment-colored belly patch, the neckerchief knotted around the neck painted in pure bright green #00FF00 shaded only with #00B400, and a short neck stub on top. NO shoulder bumps and no stubby arms: at each shoulder the torso simply ends with a smooth, round, full edge of plain skin. Then NOTHING where the grey wing is (leave that spot empty magenta: he has no wings). Then the WHOLE TAIL of image 1 in one piece, with the same S curve, the same thickness and the same arrowhead tip: one smooth continuous tube, thick at the root and thinner towards the tip, with no breaks, seams or joints along it.
+Row 3: the near arm and the far arm, copied from image 1 (same slim shape, same open relaxed four-fingered hand), each straight and hanging down from a round shoulder end; the near leg and the far leg, copied from image 1 (same slim thigh and calf, same bare three-toed foot pointing right), each straight, round at the hip end; one closed four-fingered fist, the size of the hands in image 1 (a small round piece, outlined all around).
+
+OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends. At a joint end the black outline gets gradually thinner and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the neck stub and the two shoulder edges of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail. The color near every joint end must be PERFECTLY UNIFORM plain skin #B8432A: no shadow, no highlight, no line, no color change in the last stretch before the joint, so that two overlapping parts of bare skin blend into one surface with no visible seam. Keep shadow shapes well away from the joint ends.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline black #000000; skin #B8432A, skin shadow #8E2F1C; belly #F1DFB0, its shadow #D6BC86; toenails #EFE3C8, their shadow #C9B48E; neckerchief #00FF00 with shadow #00B400.
+- The bright green #00FF00 is used ONLY on the neckerchief, nowhere else.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels or signatures. Landscape 3:2, as large as possible.
+```
+
+### `7_braccia_chiuse`
+
+```
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right. Image 2 is his parts sheet: copy the arms of image 2 exactly (same length, thickness, contour, colors and flat style).
+
+Draw TWO ARMS of him side by side, left to right, the same size as the arms in image 2, well apart from each other, on a flat pure magenta #FF00FF background: 1) the NEAR arm, 2) the FAR arm. Each arm is straight and hangs down from a round shoulder end, exactly like in image 2, but the hand is CLOSED IN A FIST as if gripping the handle of a tool: four fingers curled, the thumb wrapped over them, the knuckles towards the right. The fist is the same size as the open hands of image 2.
+
+OUTLINE AND JOINTS, very important: each arm has a thick, clean pure-black #000000 outline, EXCEPT at the shoulder end at the top: there the outline gets gradually thinner and disappears completely, and the skin runs right to the edge, rounded and full, with no black line across it. The skin near the shoulder end is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there, so the arm blends into the torso with no visible seam. Keep shadow shapes well away from the shoulder end.
+
+Rendering rules, very strict, because these arms will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline black #000000; skin #B8432A, skin shadow #8E2F1C.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the arms.
+- No text, numbers, labels or signatures. Landscape 3:2.
+```
+
 ## Criteri di accettazione
 
 - [ ] è l'apprendista di R1: proporzioni, testa, corna, orecchie, coda a freccia, fazzoletto
@@ -202,6 +248,8 @@ Rendering rules, very strict, because these heads will be traced into vector sha
 - [ ] fase 2: 11 pezzi sopra i 12 posti di R2 (posto dell'ala vuoto), nessun manichino grigio rimasto, sfondo magenta pieno senza aloni
 - [ ] coda intera, liscia, più spessa alla radice, punta a freccia in fondo
 - [ ] nessuna scritta, numero o firma
+- [ ] fase 3: busto a pera come nel tre quarti, senza spalline; gambe, braccia e coda copiate dal tre quarti; prima riga vuota
+- [ ] fase 3: braccia col pugno chiuso, lunghe e grosse come quelle aperte, spalla senza contorno
 
 ## Dopo le immagini (lo fa Claude)
 
@@ -288,6 +336,57 @@ La scheda approvata aggiorna il protagonista rispetto alle vecchie decisioni sul
 personaggio con occhiali; la decisione del 2026-11-01 conferma l'apprendista, quindi
 non è stato aggiunto alcun accessorio del vecchio diavoletto.
 
+### Fase 2 · 2026-11-02
+
+Eseguita dalla scheda APPROVATA aggiornata su `main` (a766e81), riportata nel ramo
+`design/WB-009` conservando la consegna della fase 1. Usati i file scelti da Sergio,
+compreso R6 per la mira; nessun riferimento scelto modificato.
+
+| File | Riferimenti, nell'ordine passato al generatore | Misura effettiva | Tentativi |
+|---|---|---|---|
+| `art/WB-009/4_foglio_pezzi.png` | R4, R2, R3, R5 | 1536×1024 | 3, consegnato il terzo |
+| `art/WB-009/5_teste_extra.png` | R4, R5, R6 | 1536×1024 | 3, consegnato il terzo |
+
+Accanto ai PNG sono consegnati `4_foglio_pezzi.txt` e `5_teste_extra.txt`, con i prompt
+integrali della scheda e i percorsi dei riferimenti in ordine. Verificato automaticamente
+che i prompt salvati coincidano esattamente con i blocchi inglesi; usati senza aggiunte
+anche nelle rigenerazioni. Sfondo non trasparente. File originali copiati dal generatore,
+senza ritocchi, ricampionamento, rimozione del magenta o correzioni a codice.
+
+**Controlli eseguiti.** Guardati tutti e tre i tentativi per ciascuna immagine.
+Nel foglio sono presenti 11 pezzi separati in tre righe: quattro teste, busto e coda
+con il posto dell'ala vuoto, due braccia, due gambe e un pugno. Nessun manichino grigio,
+fiammella, ala, testo, numero o firma. Coda continua con punta a freccia, non tagliata.
+Verde visibile soltanto sul fazzoletto. Cinque teste extra in una fila, rivolte a destra,
+con mira, rabbia, sconfitta, paura e provocazione nell'ordine richiesto. La mira mantiene
+occhio lontano chiuso, occhio vicino giallo e punta della lingua; il collo appare di
+larghezza simile agli altri quattro, non quello largo di R6. Dimensioni e RGB senza
+trasparenza verificati nei PNG.
+
+**Difetti rimasti dopo il limite di tre tentativi: consegna per revisione, non piena
+conformità tecnica.**
+
+- Nel foglio la coda segue una U, con radice a sinistra e punta in alto a destra:
+  non segue la curva/orientamento della coda di R2. Anche posizioni e ingombri dei
+  pezzi non coincidono precisamente con lo stampino: non è verificata la tagliabilità.
+- Busto e arti conservano ombre e/o contorno vicino ad alcune giunture; nei colli
+  di entrambi i fogli resta ombra e le linee laterali arrivano troppo in basso.
+  Non è raggiunto il requisito di pelle uniforme #B8432A e contorno che sparisce
+  completamente nelle zone di sovrapposizione.
+- Leggere sfumature, variazioni di colore e differenze fra sagome di teste/corna
+  persistono; nessuna identità geometrica o fedeltà esadecimale dichiarata.
+- Sfondo visivamente magenta, ma non #FF00FF uniforme. Gli angoli superiore sinistro
+  e inferiore destro sono rispettivamente RGB (243,12,242) e (242,30,241) nel foglio,
+  (242,12,243) e (244,30,242) nelle teste extra: il fondo richiede attenzione al taglio.
+- Il foglio esce a 1536×1024: soddisfa il minimo della scheda, non l'ideale 3072×2048.
+
+La scheda aggiornata affida a Claude il ripristino dei colori esatti nel ricalco SVG,
+con controllo della tavolozza su tutti i pezzi e tutte le teste. Questa consegna non
+sostituisce quel controllo e non dichiara risolti i difetti geometrici o delle giunture.
+Nessun taglio, ricalco, montaggio sullo scheletro, test di animazione o integrazione nel
+gioco eseguito: sono le fasi successive di Claude. Nessuna accettazione attribuita a Sergio.
+Nessuna contraddizione nuova con le decisioni lette. Nessuna PR aperta o unione verso main.
+
 ## Resoconto di Claude
 
 ### Fase 1 · scelte di Sergio (2026-11-02)
@@ -300,3 +399,45 @@ non è stato aggiunto alcun accessorio del vecchio diavoletto.
 
 Fase 2 pronta: `esegui WB-009 fase 2`.
 
+
+### Fase 2 · primo taglio (2026-11-02)
+
+Guardati `4_foglio_pezzi.png` e `5_teste_extra.png`.
+
+- **Buoni:** 11 pezzi separati, ala vuota, verde solo sul fazzoletto, coda intera con la
+  freccia. Cima di braccia e gambe e fondo dei colli senza contorno nero, come chiesto.
+  Nelle teste extra la mira ha la faccia scelta e il collo stretto come le altre.
+- **Difetti visibili:** il busto ha le spalle contornate di nero (con il braccio davanti
+  non si vede; dietro, sul braccio lontano, sì); ombre vicino ad alcune giunture (lato del
+  busto, colli); colori sfumati e fuori tavolozza; fondo magenta non uniforme; foglio a
+  1536×1024 invece di 3072×2048; la coda è a U (il taglio la segue lo stesso).
+- **Taglio:** `taglia.py art/WB-009/4_foglio_pezzi.png --nome apprendista --categoria personaggio
+  --allinea --senza ala,collo --facce art/WB-009/5_teste_extra.png` monta tutti i pezzi e le
+  nove teste (le cinque in più alte quanto la testa, sul suo perno); `collo` toglie il
+  moncherino del collo a tutte le teste, come ha chiesto Sergio (il collo è del busto); la pelle si prova con
+  `imposta prova_pelli apprendista` (scenario `strumenti/simula/scenari/apprendista.txt`,
+  foto in `art/WB-009/prova_simulazione.png`): fermo, corsa, salto, mira e Lama tengono.
+  Nel gioco di tutti non cambia niente finché la pelle non diventa il personaggio di base.
+- **Editor delle animazioni** ripubblicato (versione 26) con la pelle `apprendista` e le
+  nove facce nella riga "Faccia": Sergio la prova lì. Il diavoletto di base, che le cinque
+  facce nuove non le ha, mette la testa normale.
+- **Ancora da fare,** dopo la prova di Sergio: ricalco in SVG coi colori esatti della
+  tavolozza (controllo che fallisce sui colori fuori tavolozza), PNG per ogni schermo,
+  poi nell'editor lo zoom sugli SVG e i pezzi da specchiare (Sergio). Il pugno e le
+  spalle dietro si giudicano nella prova.
+
+### Fase 2 · ricalco in SVG coi colori esatti (2026-11-02)
+
+- `strumenti/stampino/vettoriale.py --tavolozza strumenti/stampino/tavolozze/apprendista.json`
+  ricalca i due fogli in `art/WB-009/svg/4_foglio_pezzi.svg` e `5_teste_extra.svg`: un
+  strato per colore, solo i 13 codici della tavolozza (controllo con `--controlla`, si ferma
+  su ogni colore fuori). Crema e corna, quasi uguali, si scelgono per macchia: dentro la pelle
+  è crema (muso, pancia), se sporge è corna (corna, unghie). Le righe sottili scure diventano
+  nere, i fili di un colore prendono quello vicino.
+- Ritocchi a mano in `art/WB-009/svg/4_foglio_pezzi_ritocchi.json` (Sergio): il busto senza
+  il nero sulle spalline, dove si attaccano le braccia.
+- Il taglio parte dai PNG fatti dagli SVG: `taglia.py simulazione/4_col.png --nome apprendista
+  --categoria personaggio --allinea --senza ala,collo --facce simulazione/5_col.png`. Il collo
+  si taglia sotto il contorno del mento, senza i pezzi neri del collo.
+- Ancora da fare: fase 3 (corpo fedele al tre quarti, braccia col pugno chiuso), poi l'editor
+  con gli SVG dei pezzi (zoom, specchio) e i PNG per ogni schermo.

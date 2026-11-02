@@ -74,6 +74,87 @@ images {
   image: "/assets/diavoletto/fiammella_tinta.png"
 }
 images {
+  image: "/assets/pelli/apprendista_ala.png"
+}
+images {
+  image: "/assets/pelli/apprendista_braccio.png"
+}
+images {
+  image: "/assets/pelli/apprendista_braccio_dietro.png"
+}
+images {
+  image: "/assets/pelli/apprendista_busto.png"
+}
+images {
+  image: "/assets/pelli/apprendista_busto_tinta.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_1.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_1_bordo.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_2.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_2_bordo.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_3.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_3_bordo.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_4.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_4_bordo.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_5.png"
+}
+images {
+  image: "/assets/pelli/apprendista_coda_5_bordo.png"
+}
+images {
+  image: "/assets/pelli/apprendista_gamba.png"
+}
+images {
+  image: "/assets/pelli/apprendista_gamba_dietro.png"
+}
+images {
+  image: "/assets/pelli/apprendista_pugno.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_arrabbiata.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_colpita.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_felice.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_ko.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_mira.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_paura.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_provocazione.png"
+}
+images {
+  image: "/assets/pelli/apprendista_testa_sconfitta.png"
+}
+images {
   image: "/assets/pelli/favilla_1_ala.png"
 }
 images {
