@@ -189,12 +189,15 @@ local function pezzo(s, parent, p, k, lampo, d)
 	if p.tinta then
 		local t = box(parent, x, y, p.w * k, p.h * k)
 		gui.set_texture(t, "diavoletto")
+		gui.set_material(t, "pezzi")
 		gui.play_flipbook(t, p.tinta)
 		s.tinte[#s.tinte + 1] = t
 	end
 	if lampo or not p.tinta then
 		gui.set_material(n, "lampo")
 		s.lampi[#s.lampi + 1] = n
+	else
+		gui.set_material(n, "pezzi")
 	end
 	return n
 end
@@ -445,6 +448,7 @@ function M.new(color, look, solo_arma)
 		s.teste[i] = pezzo(s, s.testa, s.facce.testa[i] or s.facce.testa[1], k, true, sposto("testa"))
 		s.teste_t[i] = box(s.testa, 0, 0, 0, 0)
 		gui.set_texture(s.teste_t[i], "diavoletto")
+		gui.set_material(s.teste_t[i], "pezzi")
 		s.tinte[#s.tinte + 1] = s.teste_t[i]
 	end
 	-- l'arma: sopra il corpo e la testa, sotto il braccio davanti. La presa sta

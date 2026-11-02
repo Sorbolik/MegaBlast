@@ -4,7 +4,7 @@ path_settings {
 }
 path_settings {
   path: "/battaglia/diavoletto.atlas"
-  profile: "Compressa"
+  profile: "Default"
 }
 path_settings {
   path: "/battaglia/armi.atlas"

@@ -32,11 +32,12 @@ local POSTO = { cielo = "texture3", lontano = "texture4", medio = "texture5", vi
 local STRISCIA = { lontano = "striscia1", medio = "striscia2", vicino = "striscia3" }
 
 -- la densità delle immagini: la 2 (1,5 volte più grande, circa 55 MB di
--- memoria video invece di 25) solo sugli schermi alti almeno 1400 pixel veri
--- (tablet, telefoni QHD); su un telefono a 1080 basta la 1
+-- memoria video invece di 25) dagli schermi alti 1000 pixel veri (telefoni e PC
+-- a 1080 compresi: con la 1 da vicino il terreno era stirato 3,3 volte e gli
+-- sfondi 1,5; Sergio, 2 nov: «il livello di dettaglio migliore possibile»)
 local function densita()
 	local _, h = window.get_size()
-	return (h or 0) >= 1400 and dipinti.densita[2] or dipinti.densita[1]
+	return (h or 0) >= 1000 and dipinti.densita[2] or dipinti.densita[1]
 end
 
 -- Un PNG di client/dipinti in una texture (sempre la stessa per lo stesso posto:

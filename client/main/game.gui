@@ -35,6 +35,10 @@ materials {
   material: "/battaglia/lampo.material"
 }
 materials {
+  name: "pezzi"
+  material: "/battaglia/pezzi.material"
+}
+materials {
   name: "forgia"
   material: "/gironi/forgia.material"
 }
