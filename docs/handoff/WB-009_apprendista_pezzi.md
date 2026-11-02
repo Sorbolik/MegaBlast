@@ -34,6 +34,9 @@ di WB-006 (prima il tre quarti, poi i pezzi).
   espressioni; Claude li salva in `art/WB-009/scelti/tre_quarti.png` e
   `art/WB-009/scelti/espressioni.png` su main.
 - **Fase 2**, `esegui WB-009 fase 2`: immagini 4 e 5, coi due file scelti come riferimento.
+- Codex esegue solo le righe della tabella della fase chiesta; se non le trova si ferma
+  (il 2 novembre, senza questa scheda su main, aveva rifatto per conto suo ricalchi ed
+  editor: lavoro di Claude, non integrato).
 - **Fase 3**, `esegui WB-009 fase 3` (Sergio, 2026-11-02): immagini 6 e 7. Il foglio della
   fase 2 si era allontanato dal tre quarti (busto a uovo con le spalline, gambe grosse, coda
   a U): il 6 rifà solo il corpo, copiato forma per forma dal tre quarti; le teste della fase 2

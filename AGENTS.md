@@ -16,6 +16,9 @@ Sergio ti dice solo quale scheda eseguire (es. "esegui WB-001").
 
 1. Aggiorna `main` (`git checkout main` e `git pull`) e prendi lì la scheda; se Sergio
    ti indica un altro ramo, usa quello. Eseguila solo se lo stato è APPROVATA.
+   **Se la scheda non ha la fase o le immagini che ti chiedono** (per esempio "fase 3" e nella
+   tabella non ci sono righe di fase 3), fermati: non improvvisare e non fare il lavoro di
+   Claude (ricalchi, script, editor). Scrivi nella consegna cosa mancava e fai solo il push.
 2. Crea il ramo `design/WB-xxx` dal ramo della scheda.
 3. Per ogni riga della tabella "Immagini da generare" genera l'immagine con il tuo strumento
    di generazione immagini, usando **esattamente** il prompt scritto e le immagini di
