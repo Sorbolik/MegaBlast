@@ -519,6 +519,57 @@ Non avviata la fase 4. In questa esecuzione nessun ricalco, script tecnico, edit
 taglio o integrazione: solo immagini 6 e 7, prompt e questa consegna.
 Nessuna PR aperta o unione verso main.
 
+### Fase 4 · immagini 8 e 9 · 2026-11-02
+
+Eseguita dalla scheda APPROVATA su `main` (aafe515), sul ramo `design/WB-009`.
+R7 presente: la variante 2 scelta da Sergio, `scelti/tre_quarti_gamba.png`.
+Generati esclusivamente i due fogli richiesti dalla fase 4.
+
+| File | Riferimenti in ordine | Misura effettiva | Tentativi |
+|---|---|---|---|
+| `art/WB-009/8_corpo_fedele.png` | R7, R2, R3 | 1536×1024 | 3, conservato il primo: migliore disposizione sullo stampino |
+| `art/WB-009/9_braccia_chiuse.png` | R7, `art/WB-009/8_corpo_fedele.png` consegnato | 1536×1024 | 3, consegnato il terzo |
+
+Gli omonimi `.txt` contengono i prompt integrali e i riferimenti in ordine.
+Verificata l'identità con i blocchi inglesi della scheda. Nessuna modifica o
+aggiunta ai prompt, neppure nelle rigenerazioni. Per il 9 è stata allegata proprio
+l'immagine 8 consegnata, dopo averla guardata. PNG originali copiati dal generatore,
+nessun ritocco, ricalco, ricampionamento o rimozione dello sfondo.
+
+**Controlli eseguiti su tutti i tentativi.** Il foglio 8 ha la prima riga vuota e
+sette pezzi separati: busto con fazzoletto e moncherino del collo, coda intera,
+due braccia aperte, due gambe coi piedi a tre dita rivolti a destra e un pugno.
+Posto dell'ala vuoto; nessuna testa, ala o fiammella aggiunta. La coda è continua,
+con radice piena e punta a freccia non tagliata. Verde soltanto sul fazzoletto.
+Il foglio 9 ha due braccia separate, entrambe con mano chiusa, pollice e nocche
+visibili verso destra. Nessun testo, numero, firma o manichino grigio nei due
+fogli. Verificati formato PNG, dimensioni 1536×1024 e RGB senza trasparenza.
+
+**Difetti rimasti dopo tre tentativi: consegna non pienamente conforme.**
+
+- Il busto mantiene sporgenze alle spalle e non copia fedelmente il profilo a pera
+  di R7. Le gambe e parte delle braccia risultano più grosse e arrotondate del
+  modello. Non è soddisfatta la copia forma per forma richiesta dal nome del foglio.
+- La coda consegnata è una curva a C/J, non la stessa curva a S di R7; anche
+  spessore e punta sono reinterpretati. Negli altri tentativi il problema persiste.
+- Linee nere e ombre arrivano ancora vicino a spalle, anche, collo e radice della
+  coda. Non raggiunta l'uniformità #B8432A nell'ultimo tratto di ogni giuntura né
+  la completa scomparsa del contorno richiesta in quelle zone.
+- Nel 9 le braccia sono ingrandite rispetto al foglio 8 e differiscono un poco
+  nella forma oltre alla chiusura della mano; pugni stilizzati, non verificata
+  una presa effettiva su un attrezzo o la leggibilità di tutte e quattro le dita.
+- Restano leggere sfumature e colori fuori tavolozza; fondo magenta non uniforme.
+  Angoli in alto a sinistra: RGB (242,12,242) nel foglio 8 e (242,16,243) nel 9,
+  anziché #FF00FF. Non è stato tolto il verde del fazzoletto.
+- 1536×1024 soddisfa il minimo, non l'ideale 3072×2048 del foglio del corpo.
+
+Non dichiarata approvazione di Sergio o piena accettazione. Nessun file scelto o
+immagine delle fasi precedenti sostituito. Non eseguiti taglio, ricalco SVG,
+montaggio, prova animata o integrazione nel gioco: spettano alla revisione di
+Claude. In questa esecuzione modificati soltanto i quattro file immagini/prompt
+e questa sezione della scheda, oltre all'aggiornamento del ramo da main.
+Nessuna PR aperta o unione verso main.
+
 ## Resoconto di Claude
 
 ### Fase 1 · scelte di Sergio (2026-11-02)
