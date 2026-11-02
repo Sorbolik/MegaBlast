@@ -12,7 +12,8 @@
   come battaglia/pose.lua; salva battaglia/animazioni.lua nello stesso formato.
 -->
 <style>
-/* banco di lavoro: palco grande al centro, clip a sinistra, canali a destra, linea del tempo sotto */
+/* banco di lavoro alto quanto la finestra, niente scorrimento della pagina: clip a sinistra,
+   palco al centro, canali a destra (scorrono), linea del tempo sotto (scorre), sempre tutti a schermo */
 :root {
 	--fondo: #eef0f4; --pannello: #ffffff; --riga: #dfe3ea; --testo: #1b1e26; --tenue: #687082;
 	--brace: #e5532d; --brace-tenue: #fbe3dc; --chiave: #1b1e26; --palco: #f7f8fb; --suolo: #e6dccb; --suolo-riga: #8a7350; --hitbox: #1d8a5a; --colpi: #8a3fd1; --presa: #1f6fd1;
@@ -29,8 +30,8 @@
 * { box-sizing: border-box }
 [hidden] { display: none !important }
 html, body { height: 100% }
-body { background: var(--fondo); color: var(--testo); font: 14px/1.4 var(--f-testo); margin: 0;
-	padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px; }
+body { background: var(--fondo); color: var(--testo); font: 14px/1.4 var(--f-testo); margin: 0; overflow: hidden;
+	padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); padding-block: 8px; }
 button, select, input { font: inherit; color: inherit }
 button { background: var(--pannello); border: 1px solid var(--riga); border-radius: 6px; padding: 5px 10px; cursor: pointer }
 button:hover { border-color: var(--tenue) }
@@ -38,22 +39,23 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 button.primario { background: var(--brace); border-color: var(--brace); color: #fff; font-weight: 700 }
 button.acceso { background: var(--brace-tenue); border-color: var(--brace) }
 select, input[type=number] { background: var(--pannello); border: 1px solid var(--riga); border-radius: 6px; padding: 4px 6px }
-.app { display: grid; gap: 12px; grid-template-columns: 210px minmax(0, 1fr) 300px; grid-template-areas: "testa testa testa" "clip palco canali" "tempo tempo tempo" "strumenti strumenti strumenti"; max-width: 1500px; margin: 0 auto }
+.app { display: grid; gap: 8px; height: 100%; grid-template-columns: 200px minmax(0, 1fr) 300px; grid-template-rows: auto auto minmax(0, 1fr) clamp(130px, 25vh, 320px);
+	grid-template-areas: "testa testa testa" "avviso avviso avviso" "clip palco canali" "tempo tempo tempo"; margin: 0 auto }
 header { grid-area: testa; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px }
 h1 { font: 800 22px/1.1 var(--f-titolo); margin: 0 8px 0 0; letter-spacing: -0.01em }
 h1 span { color: var(--brace) }
 .spazio { flex: 1 }
 .box { background: var(--pannello); border: 1px solid var(--riga); border-radius: 10px; min-width: 0 }
 h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing: 0.08em; color: var(--tenue); margin: 0 0 8px }
-#clip { grid-area: clip; padding: 12px; display: flex; flex-direction: column; gap: 2px; align-self: start }
+#clip { grid-area: clip; padding: 8px; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; min-height: 0 }
 #clip button { text-align: left; border: 0; background: none; padding: 6px 8px; display: flex; justify-content: space-between; gap: 6px }
 #clip button small { color: var(--tenue); font-family: var(--f-numeri); font-size: 11px }
 #clip button.variante { padding-left: 22px }
 #clip button.scelta { background: var(--brace-tenue); color: var(--testo); font-weight: 700 }
 #clip .gruppo { margin-top: 8px }
-#palco-box { grid-area: palco; display: flex; flex-direction: column; overflow: hidden; align-self: start }
-/* alto quanto la finestra, non quanto la riga: aprendo canali nuovi la riga cresce e lo zoom saltava */
-.scena { position: relative }
+#palco-box { grid-area: palco; display: flex; flex-direction: column; overflow: auto; min-height: 0 }
+/* il palco prende tutta l'altezza che resta fra il secchio e le barre (mai meno di 220 px: allora scorre la colonna) */
+.scena { position: relative; flex: 1; min-height: 220px }
 #livelli { position: absolute; top: 8px; left: 8px; width: 190px; background: color-mix(in srgb, var(--pannello, var(--palco)) 92%, transparent); border: 1px solid var(--riga); border-radius: 8px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08) }
 #livelli summary { padding: 5px 8px; cursor: pointer; font-weight: 600 }
 #livelli-lista { display: flex; flex-direction: column; padding: 0 4px }
@@ -66,24 +68,32 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 .livelli-piede { display: flex; align-items: center; gap: 4px; padding: 4px 6px 6px; color: var(--tenue); font-size: 11px }
 .livelli-piede span { flex: 1 }
 #livelli.fermo .livello { cursor: default; opacity: 0.6 }
-#palco { width: 100%; flex: none; height: clamp(380px, 62vh, 760px); display: block; background: var(--palco); touch-action: none; cursor: grab }
-.barra { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; border-top: 1px solid var(--riga) }
+#palco { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: var(--palco); touch-action: none; cursor: grab }
+.barra { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 4px 10px; border-top: 1px solid var(--riga); font-size: 13px }
+.barra button { padding: 3px 8px } .barra select, .barra input[type=number] { padding: 2px 5px }
+/* le barre che servono di rado (impugnature, hitbox, perni) stanno chiuse sotto il palco */
+#fisica > summary { padding: 5px 10px; border-top: 1px solid var(--riga); cursor: pointer; color: var(--tenue); font-size: 12.5px }
+#fisica > summary span { margin-left: 6px }
 .barra label { display: inline-flex; align-items: center; gap: 4px; color: var(--tenue) }
-#guida { padding: 8px 12px; color: var(--tenue); border-bottom: 1px solid var(--riga); min-height: 2.6em }
+.guida-riga { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 12px; border-bottom: 1px solid var(--riga); font-size: 13px }
+.guida-riga button { padding: 3px 8px } .guida-riga select { padding: 2px 5px }
+#guida { flex: 1; min-width: 0; color: var(--tenue); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+#pelli label { display: inline-flex; align-items: center; gap: 4px; color: var(--tenue) }
 #guida b { color: var(--testo) }
 /* il secchio: tutti i pezzi; si trascinano sul palco e dal palco qui */
-#secchio { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--riga); align-items: center }
+#secchio { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px; padding: 4px 10px; border-bottom: 1px solid var(--riga); align-items: center }
 #secchio.sopra { background: var(--brace-tenue); outline: 2px dashed var(--brace); outline-offset: -4px }
 #secchio .titolo { color: var(--tenue); font-size: 12px; margin-right: 4px; max-width: 9em; line-height: 1.2 }
-#secchio .pezzo { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 66px; padding: 4px 2px; touch-action: none; cursor: grab; font-size: 11px; line-height: 1.1; text-align: center }
-#secchio .pezzo canvas { width: 44px; height: 44px; pointer-events: none }
+#secchio .pezzo { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 58px; flex: none; padding: 3px 2px; touch-action: none; cursor: grab; font-size: 10.5px; line-height: 1.1; text-align: center }
+#secchio .pezzo canvas { width: 36px; height: 36px; pointer-events: none }
 #secchio .pezzo span { pointer-events: none }
 #secchio .pezzo.in-scena { opacity: 0.4; border-style: dashed }
 .fantasma { position: fixed; z-index: 10; width: 56px; height: 56px; pointer-events: none; transform: translate(-50%, -50%); opacity: 0.85 }
-#canali { grid-area: canali; padding: 12px; display: flex; flex-direction: column; gap: 4px; align-self: start }
-.canale { display: grid; grid-template-columns: 22px 1fr 64px; grid-template-rows: auto auto; column-gap: 6px; align-items: center; padding: 3px 4px; border-radius: 6px; cursor: pointer }
+#colonna { grid-area: canali; overflow-y: auto; min-height: 0; display: flex; flex-direction: column }
+#canali { padding: 10px; display: flex; flex-direction: column; gap: 2px }
+.canale { display: grid; grid-template-columns: 22px 1fr 64px; grid-template-rows: auto auto; column-gap: 6px; align-items: center; padding: 2px 4px; border-radius: 6px; cursor: pointer }
 .barra input.hb { width: 64px }
-#hb-stato, #pn-stato { color: var(--tenue); min-width: 11em }
+#hb-stato, #pn-stato, #pr-stato { color: var(--tenue) }
 .canale.scelto { background: var(--brace-tenue) }
 .canale .nome { grid-column: 2 / 4; font-size: 13px }
 .canale input[type=range] { grid-column: 2; width: 100%; accent-color: var(--brace) }
@@ -91,21 +101,27 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 .canale .k { grid-row: 1 / 3; grid-column: 1; width: 22px; height: 22px; padding: 0; border: 0; background: none; font-size: 15px; line-height: 1; color: var(--tenue) }
 .canale .k.si { color: var(--brace) }
 .riga-viso { display: flex; gap: 6px; align-items: center; margin-top: 6px }
-#chiave { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--riga); display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
-#tempo-box { grid-area: tempo; overflow: hidden }
+#chiave { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center }
+/* la linea del tempo: testa fissa (chiave scelta, quali canali), righe che scorrono */
+#tempo-box { grid-area: tempo; overflow: hidden; display: flex; flex-direction: column; min-height: 0 }
+.tempo-testa { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 4px 10px; border-bottom: 1px solid var(--riga); font-size: 12.5px }
+.tempo-testa label { display: inline-flex; align-items: center; gap: 4px; color: var(--tenue) }
+#tempo-scorri { flex: 1; min-height: 0; overflow: auto }
 #tempo { width: 100%; display: block; touch-action: none }
 .num { font-family: var(--f-numeri); font-variant-numeric: tabular-nums }
-#avviso { grid-area: avviso; display: none; padding: 8px 12px; border-radius: 8px; background: var(--brace-tenue); border: 1px solid var(--brace) }
+#avviso { grid-area: avviso; display: none; padding: 6px 12px; border-radius: 8px; background: var(--brace-tenue); border: 1px solid var(--brace) }
 #avviso.si { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
-.aiuto { color: var(--tenue); font-size: 12.5px; padding: 8px 12px; border-top: 1px solid var(--riga) }
+/* l'aiuto: un pannello che si apre dal bottone ? in alto */
+#aiuto { position: fixed; z-index: 20; top: 52px; right: 16px; width: min(560px, calc(100% - 32px)); max-height: calc(100% - 70px); overflow: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.2) }
+.aiuto { color: var(--tenue); font-size: 12.5px; padding: 10px 14px }
 .aiuto kbd { font: 11px var(--f-numeri); border: 1px solid var(--riga); border-radius: 4px; padding: 0 4px }
 #messaggio { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--testo); color: var(--fondo); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100% - 32px) }
 #messaggio.si { opacity: 1 }
-/* gli strumenti per i pezzi e i personaggi nuovi */
-#strumenti { grid-area: strumenti }
-#strumenti > summary { padding: 12px; cursor: pointer; font: 800 16px/1.2 var(--f-titolo) }
-#strumenti > summary span { font: 400 13px var(--f-testo); color: var(--tenue); margin-left: 8px }
-.strumenti { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; padding: 0 12px 12px }
+/* gli strumenti per i pezzi e i personaggi nuovi: in fondo alla colonna dei canali, chiusi */
+#strumenti { border-top: 1px solid var(--riga); margin-top: 6px }
+#strumenti > summary { padding: 10px; cursor: pointer; font: 800 15px/1.2 var(--f-titolo) }
+#strumenti > summary span { display: block; font: 400 12px var(--f-testo); color: var(--tenue) }
+.strumenti { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 10px 10px }
 .strumento { border: 1px solid var(--riga); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px }
 .strumento h3 { font: 600 15px/1.2 var(--f-titolo); margin: 0 }
 .strumento p { margin: 0; color: var(--tenue); font-size: 13px }
@@ -115,14 +131,15 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 .strumento input[type=text], .strumento textarea { background: var(--pannello); border: 1px solid var(--riga); border-radius: 6px; padding: 5px 7px; font: inherit; color: inherit }
 .strumento textarea { min-height: 70px; resize: vertical; width: 100% }
 #nu-anteprima { max-width: 100%; max-height: 180px; object-fit: contain; align-self: flex-start; border-radius: 6px; background: repeating-conic-gradient(var(--riga) 0 25%, transparent 0 50%) 0 0 / 16px 16px }
-@media (max-width: 1100px) {
-	.app { grid-template-columns: 180px minmax(0, 1fr); grid-template-areas: "testa testa" "clip palco" "tempo tempo" "canali canali" "strumenti strumenti" }
-	#canali { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) }
-}
-@media (max-width: 700px) {
-	.app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "testa" "palco" "clip" "tempo" "canali" "strumenti" }
+/* finestre strette: la pagina torna a scorrere, tutto in colonna */
+@media (max-width: 1000px) {
+	body { overflow: auto }
+	.app { height: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "testa" "avviso" "palco" "tempo" "clip" "canali" }
+	.scena { height: clamp(340px, 58vh, 600px); flex: none }
+	#tempo-box { height: clamp(150px, 30vh, 340px) }
 	#clip { flex-direction: row; flex-wrap: wrap } #clip .gruppo { width: 100% }
-	#palco { height: clamp(340px, 58vh, 560px) }
+	#canali { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) }
+	.strumenti { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) }
 }
 @media (prefers-reduced-motion: reduce) { #messaggio { transition: none } }
 </style>
@@ -132,6 +149,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		<h1>MegaBlast · <span>animazioni</span></h1>
 		<button id="annulla" title="Annulla (Ctrl+Z)">↶ Annulla</button>
 		<button id="rifai" title="Rifai (Ctrl+Y)">↷ Rifai</button>
+		<button id="aiuto-apri" title="Come si usa l'editor">? Aiuto</button>
 		<span class="spazio"></span>
 		<button id="apri" title="Apri un file animazioni.lua">Apri…</button>
 		<button id="copia" title="Copia il file animazioni.lua negli appunti">Copia il testo</button>
@@ -139,14 +157,19 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		<button id="salva" class="primario" title="Salva animazioni.lua (Ctrl+S)">Salva animazioni.lua</button>
 		<input id="file" type="file" accept=".lua,.txt" hidden>
 	</header>
-	<div id="avviso" style="grid-column: 1 / -1"><span id="avviso-testo"></span><button id="ripristina">Torna a quelle del gioco</button></div>
+	<div id="avviso"><span id="avviso-testo"></span><button id="ripristina">Torna a quelle del gioco</button></div>
 	<nav id="clip" class="box"></nav>
 	<section id="palco-box" class="box">
-		<div id="guida"></div>
+		<div class="guida-riga">
+			<div id="guida"></div>
+			<span id="pelli" title="I pezzi disegnati sullo stampino (strumenti/stampino)"></span>
+			<button id="specchia" title="Specchia il pezzo che hai cliccato sul palco (tasto F): attorno al suo perno. Lo trovi anche in Strumenti, Ritocca i pezzi">specchia</button>
+			<button id="zoom-via" title="Zoom: la rotellina sul palco ingrandisce dove sta il mouse (sui pezzi in SVG resta nitido); questo torna alla misura di partenza">zoom 1:1</button>
+		</div>
 		<div id="secchio" title="Trascina un pezzo sul palco per metterlo in scena dove vuoi (da questo momento della clip); trascinalo dal palco qui per toglierlo"></div>
 		<div class="scena">
 			<canvas id="palco"></canvas>
-			<details id="livelli" open title="Cosa sta davanti a cosa in questa clip, come i livelli di After Effects: in alto quello davanti">
+			<details id="livelli" title="Cosa sta davanti a cosa in questa clip, come i livelli di After Effects: in alto quello davanti">
 				<summary>Livelli</summary>
 				<div id="livelli-lista"></div>
 				<div class="livelli-piede"><span id="livelli-nota"></span><button id="livelli-tutte" title="Torna all'ordine di sempre">Come sempre</button></div>
@@ -163,34 +186,31 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<label><input type="checkbox" id="turno"> di turno</label>
 			<label>squadra <select id="squadra"><option value="0">Rosso</option><option value="1">Blu</option><option value="2">Verde</option><option value="3">Oro</option></select></label>
 			<label title="La fiammella col colore della squadra: ce l'hanno tutti sopra la testa, qualunque cosa indossino, e la anima il gioco a parte"><input type="checkbox" id="fiammella"> fiammella</label>
-			<span id="pelli" title="I pezzi disegnati sullo stampino (strumenti/stampino)"></span>
-			<button id="specchia" title="Specchia il pezzo che hai cliccato sul palco (tasto F): attorno al suo perno. Lo trovi anche in Strumenti, Ritocca i pezzi">specchia pezzo</button>
-			<button id="zoom-via" title="Zoom: la rotellina sul palco ingrandisce dove sta il mouse (sui pezzi in SVG resta nitido); questo torna alla misura di partenza">zoom 1:1</button>
 		</div>
 		<div class="barra" id="barra-arma" hidden title="L'arma in mano, come nel gioco: sta nella mano del braccio davanti, le braccia le animi tu">
 			<label>arma <select id="arma"></select></label>
 			<label id="mira-l">mira <input type="range" id="mira" min="-90" max="90" step="1" value="0" style="width: 140px"> <span class="num" id="mira-n">0°</span></label>
 			<label title="Chi tiene l'arma in questa clip: un braccio gira verso la presa, una manina ci sta sopra">impugnata da <select id="impugna"></select></label>
 			<button id="variante" title="Una clip solo per quest'arma: il gioco la usa al posto di quella di tutte (es. fermo_arma_mallet)">Clip solo per quest'arma</button>
-			<span style="color: var(--tenue)">L'arma è un pezzo come gli altri: la togli e la rimetti dal secchio, la sposti con Maiusc e la giri trascinandola (attorno al perno; mirando punta dove si mira).</span>
-		</div>
-		<div class="barra" id="barra-prese" hidden title="Presa, perno e spalla di ogni arma (client/battaglia/impugnature.lua): valgono per tutte le clip con quell'arma">
-			<label style="color: var(--presa)"><input type="checkbox" id="vedi-prese" checked> presa e perno</label>
-			<span style="color: var(--tenue)">Sull'arma: il cerchio blu è la <b>presa</b> (dove la tiene chi la impugna), la croce arancione il <b>perno</b> (dove gira). Trascinali; il perno anche con Alt sull'arma.</span>
-			<span id="pr-stato"></span>
-			<span class="spazio"></span>
-			<button id="pr-gioco" title="Le impugnature di adesso del gioco">Come nel gioco</button>
-			<button id="pr-salva" title="Salva impugnature.lua (va in client/battaglia/)">Salva impugnature.lua</button>
 		</div>
 		<div class="barra">
 			<label>durata <input type="number" id="durata" step="0.05" min="0.05" style="width: 76px"> s</label>
 			<label title="Cambiando la durata le chiavi si stirano con lei"><input type="checkbox" id="stira" checked> stira le chiavi</label>
 			<label><input type="checkbox" id="ciclo"> in ciclo</label>
-			<label title="Cambiando un pezzo nel primo fotogramma, le altre chiavi di quel pezzo si spostano della stessa quantità: il movimento resta uguale"><input type="checkbox" id="insieme" checked> dal primo fotogramma sposta tutta la clip</label>
-			<span class="spazio"></span>
+			<label title="Cambiando un pezzo nel primo fotogramma, le altre chiavi di quel pezzo si spostano della stessa quantità: il movimento resta uguale"><input type="checkbox" id="insieme" checked> il primo fotogramma sposta tutto</label>
 			<button id="sposta" title="Trascinando: ruota, sposta (anche tenendo Maiusc) o sposta il perno (anche tenendo Alt)">Trascina: ruota</button>
 			<button id="copia-posa" title="Copia la posa (Ctrl+C)">Copia posa</button>
 			<button id="incolla-posa" title="Incolla la posa qui (Ctrl+V)">Incolla posa</button>
+		</div>
+		<details id="fisica">
+		<summary>Impugnature, hitbox e perni<span id="fisica-stato"></span></summary>
+		<div class="barra" id="barra-prese" hidden title="Presa, perno e spalla di ogni arma (client/battaglia/impugnature.lua): valgono per tutte le clip con quell'arma">
+			<label style="color: var(--presa)"><input type="checkbox" id="vedi-prese" checked> presa e perno</label>
+			<span style="color: var(--tenue)">cerchio blu: presa · croce: perno (anche Alt sull'arma)</span>
+			<span id="pr-stato"></span>
+			<span class="spazio"></span>
+			<button id="pr-gioco" title="Le impugnature di adesso del gioco">Come nel gioco</button>
+			<button id="pr-salva" title="Salva impugnature.lua (va in client/battaglia/)">Salva impugnature.lua</button>
 		</div>
 		<div class="barra" title="Le hitbox sono fisica (client/sim/corpo.lua): cambiano il gioco per tutti, anche online, non il disegno">
 			<label style="color: var(--hitbox)"><input type="checkbox" id="vedi-cammina" checked> camminare</label>
@@ -205,15 +225,17 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="hb-salva" title="Salva corpo.lua (va in client/sim/)">Salva corpo.lua</button>
 		</div>
 		<div class="barra" title="Il punto attorno a cui gira il pezzo: con Trascina: perno lo sposti, il pezzo da fermo resta dov'è">
-			<label>perni di tutti i pezzi (busto, testa, braccia, manine, gambe, ala, coda, arma)</label>
+			<label>perni dei pezzi (con Trascina: perno)</label>
 			<span id="pn-stato"></span>
 			<span class="spazio"></span>
 			<button id="pn-gioco" title="I perni di adesso del gioco">Come nel gioco</button>
 			<button id="pn-salva" title="Salva perni.lua (va in client/battaglia/)">Salva perni.lua</button>
 		</div>
+		</details>
 	</section>
-	<aside id="canali" class="box"></aside>
-	<details id="strumenti" class="box">
+	<aside id="colonna" class="box">
+	<div id="canali"></div>
+	<details id="strumenti">
 		<summary>Strumenti <span>pezzi e personaggi nuovi, ritocchi allo stampino</span></summary>
 		<div class="strumenti">
 			<div class="strumento">
@@ -258,10 +280,19 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			</div>
 		</div>
 	</details>
+	</aside>
 	<section id="tempo-box" class="box">
-		<canvas id="tempo"></canvas>
-		<div class="aiuto">I pezzi stanno nel <b>secchio</b> sopra il palco: trascinane uno sul palco e va in scena dove lo lasci, da quel momento della clip; trascinalo dal palco al secchio e esce di scena (un clic sul secchio lo mette e lo toglie dov'è). Le manine sono pezzi liberi: si spostano e si girano come gli altri. Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Nelle clip con l'arma i cerchi blu sull'arma sono le <b>impugnature</b> (dove vanno i pugni, per ogni arma, in tutte le sue clip): trascinali, e con "Clip solo per quest'arma" un'arma ha la sua versione della clip. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
+		<div class="tempo-testa">
+			<h2 style="margin: 0">Linea del tempo</h2>
+			<label title="Di solito si vedono solo i canali con chiavi e quello scelto"><input type="checkbox" id="tutti-canali"> tutti i canali</label>
+			<span class="spazio"></span>
+			<div id="chiave"></div>
+		</div>
+		<div id="tempo-scorri"><canvas id="tempo"></canvas></div>
 	</section>
+	<div id="aiuto" class="box" hidden>
+		<div class="aiuto">I pezzi stanno nel <b>secchio</b> sopra il palco: trascinane uno sul palco e va in scena dove lo lasci, da quel momento della clip; trascinalo dal palco al secchio e esce di scena (un clic sul secchio lo mette e lo toglie dov'è). Le manine sono pezzi liberi: si spostano e si girano come gli altri. Trascina un pezzo del diavoletto per ruotarlo; con <kbd>Maiusc</kbd> (o "Trascina: sposta") lo sposti in tutte le direzioni; con "Trascina: perno" clicchi sul pezzo nel punto attorno a cui deve girare e la crocetta va lì (tenendo premuto la sposti), per tutte le animazioni. Le hitbox (pixel del mondo, dai piedi) si cambiano con le maniglie quadrate o coi numeri: la capsula verde per camminare (terreno, spinte, casse), il cerchio viola per i colpi (proiettili, esplosioni, spada, pugno, affondo). Sono fisica: cambiano il gioco per tutti, anche online. Nelle clip con l'arma i cerchi blu sull'arma sono le <b>impugnature</b> (dove vanno i pugni, per ogni arma, in tutte le sue clip): trascinali, e con "Clip solo per quest'arma" un'arma ha la sua versione della clip. Ogni modifica mette una chiave al tempo dove sei; nel primo fotogramma sposta anche le altre chiavi del pezzo (si toglie con "dal primo fotogramma sposta tutta la clip"). Nella linea del tempo: clic per andare a un tempo, trascina le chiavi per spostarle, doppio clic su una riga per aggiungere una chiave, <kbd>Canc</kbd> la toglie. <kbd>K</kbd> chiave sul canale scelto, <kbd>←</kbd> <kbd>→</kbd> un fotogramma, <kbd>spazio</kbd> avvia.</div>
+	</div>
 </div>
 <div id="messaggio" role="status"></div>
 <script id="dati" type="application/json">/*DATI*/</script>
@@ -498,6 +529,8 @@ function visibile(ch, pannello) {
 	if (ch.tipo === "vis") return !pannello && !!(k && k.length);
 	if (ch.id === canale || (k && k.length)) return true;
 	if (ch.arma) return conArma(nome);
+	// nella linea del tempo solo i canali con chiavi (o tutti, a richiesta)
+	if (!pannello && !$("tutti-canali").checked) return false;
 	return !ch.extra && !ch.fiamma;
 }
 const TIPO = {};
@@ -1730,10 +1763,10 @@ function costruisciCanali() {
 	box.appendChild(v);
 	$("viso").onchange = () => { prima(); mettiViso($("viso").value); dopo(); };
 	$("viso-k").onclick = () => { prima(); mettiViso($("viso").value); dopo(); };
-	const k = document.createElement("div");
-	k.id = "chiave";
-	box.appendChild(k);
 }
+$("tutti-canali").onchange = () => aggiorna();
+$("aiuto-apri").onclick = () => { $("aiuto").hidden = !$("aiuto").hidden; };
+document.addEventListener("pointerdown", (e) => { if (!$("aiuto").hidden && !$("aiuto").contains(e.target) && e.target !== $("aiuto-apri")) $("aiuto").hidden = true; });
 // la chiave del canale scelto: c'è, la toglie; non c'è, la mette
 function chiaveQui() {
 	prima();
@@ -1769,6 +1802,8 @@ function aggiorna() {
 	const pl = perniInLua(pn);
 	$("pn-stato").textContent = pl === PERNI_DEL_GIOCO ? "come nel gioco" : pl === perniSalvati ? "salvati" : "spostati, da salvare";
 	$("hb-stato").textContent = cl === CORPO_DEL_GIOCO ? "come nel gioco" : cl === corpoSalvato ? "salvate" : "cambiate, da salvare";
+	const daSalvare = [cl !== CORPO_DEL_GIOCO && cl !== corpoSalvato && "hitbox", pl !== PERNI_DEL_GIOCO && pl !== perniSalvati && "perni", conArma(nome) && prl !== PRESE_DEL_GIOCO && prl !== preseSalvate && "impugnature"].filter(Boolean);
+	$("fisica-stato").textContent = daSalvare.length ? `· ${daSalvare.join(", ")} da salvare` : "";
 	const t = dentro(c, tempo);
 	for (const ch of CANALI) {
 		const v = valoreProprio(c, ch.id, tempo);
