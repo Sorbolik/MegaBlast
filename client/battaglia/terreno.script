@@ -35,9 +35,12 @@ local STRISCIA = { lontano = "striscia1", medio = "striscia2", vicino = "strisci
 -- memoria video invece di 25) dagli schermi alti 1000 pixel veri (telefoni e PC
 -- a 1080 compresi: con la 1 da vicino il terreno era stirato 3,3 volte e gli
 -- sfondi 1,5; Sergio, 2 nov: «il livello di dettaglio migliore possibile»)
+-- Nella build web (Safari su iPhone, solo per provare) resta la 1: la memoria di
+-- una scheda del browser è poca
+local WEB = sys.get_sys_info().system_name == "HTML5"
 local function densita()
 	local _, h = window.get_size()
-	return (h or 0) >= 1000 and dipinti.densita[2] or dipinti.densita[1]
+	return not WEB and (h or 0) >= 1000 and dipinti.densita[2] or dipinti.densita[1]
 end
 
 -- Un PNG di client/dipinti in una texture (sempre la stessa per lo stesso posto:

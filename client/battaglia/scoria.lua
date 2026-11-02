@@ -347,6 +347,7 @@ end
 local function figura_arma(parent, img, x, y, w, h)
 	local n = box(parent, x, y, w, h)
 	gui.set_texture(n, "armi")
+	gui.set_material(n, "pezzi")
 	gui.play_flipbook(n, img)
 	return n
 end

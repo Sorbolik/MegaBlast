@@ -3,14 +3,6 @@ path_settings {
   profile: "Mappa"
 }
 path_settings {
-  path: "/battaglia/diavoletto.atlas"
-  profile: "Default"
-}
-path_settings {
-  path: "/battaglia/armi.atlas"
-  profile: "Compressa"
-}
-path_settings {
   path: "/ui/**"
   profile: "Interfaccia"
 }
@@ -40,20 +32,6 @@ profiles {
       format: TEXTURE_FORMAT_RGBA
       compression_level: NORMAL
       compression_type: COMPRESSION_TYPE_DEFAULT
-    }
-    mipmaps: true
-    max_texture_size: 0
-    premultiply_alpha: true
-  }
-}
-profiles {
-  name: "Compressa"
-  platforms {
-    os: OS_ID_GENERIC
-    formats {
-      format: TEXTURE_FORMAT_RGBA
-      compression_level: HIGH
-      compression_type: COMPRESSION_TYPE_BASIS_UASTC
     }
     mipmaps: true
     max_texture_size: 0
