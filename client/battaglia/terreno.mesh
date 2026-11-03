@@ -1,7 +1,6 @@
 material: "/battaglia/terreno.material"
 vertices: "/battaglia/terreno.buffer"
-textures: "/assets/mappe/forgia/terreno.png"
-textures: "/assets/mappe/forgia/interno_mezzo.png"
+textures: "/assets/fx/bagliore.png"
 textures: "/assets/fx/bagliore.png"
 textures: "/assets/fx/bagliore.png"
 textures: "/assets/fx/bagliore.png"

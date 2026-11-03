@@ -34,7 +34,7 @@ local function partita(seme, modo, livello, mappa)
 end
 
 -- I bot giocano: attaccano a ogni turno e fanno danno
-local g, r, ev = partita(11, "1v1", "difficile", "forgia")
+local g, r, ev = partita(11, "1v1", "difficile", "pavimento")
 check(g.phase == "over", "1v1: la partita tra bot finisce")
 local attacchi = (ev.fire or 0) + (ev.grenade or 0) + (ev.shards or 0) + (ev.sniper or 0) + (ev.swing or 0)
 	+ (ev.eagle or 0) + (ev.mallet or 0) + (ev.lunge or 0) + (ev.punch or 0)
@@ -55,7 +55,7 @@ check(not ok2, "ricetta: con un seme diverso le impronte non tornano")
 
 -- 2 contro 2 e tutti contro tutti, sull'altra mappa
 for _, modo in ipairs({ "2v2", "ffa" }) do
-	local g2 = partita(5, modo, "normale", "crogiolo")
+	local g2 = partita(5, modo, "normale", "fossa")
 	local danno = 0
 	for _, rb in ipairs(g2.robots) do danno = danno + rb.damage end
 	check(g2.phase == "over" and danno > 50, modo .. ": la partita tra bot finisce con dei danni")
@@ -65,7 +65,7 @@ end
 do
 	local function impronte(pesi)
 		local players = { { team = 1, bot = "normale", pesi = pesi }, { team = 2, bot = "normale" } }
-		local r5 = replay.nuova(6, "forgia", { players = players })
+		local r5 = replay.nuova(6, "pavimento", { players = players })
 		local g5, bots = replay.partita(r5)
 		while g5.tick < 2400 do
 			g5:step(replay.input(r5, g5, bots))
@@ -95,7 +95,7 @@ end
 do
 	-- gioca il turno del robot 2 (bot) fino alla fine; restituisce gli eventi del turno
 	local function turno_del_bot(livello, piano, seme)
-		local g = game.new(seme or 3, "forgia", { players = { { team = 1 }, { team = 2 } } })
+		local g = game.new(seme or 3, "pavimento", { players = { { team = 1 }, { team = 2 } } })
 		local b = bot.new(2, livello, seme or 3)
 		while g.current ~= 2 do g:step({ fire = g.phase == "aim" and { weapon = "missile", angle = 1.4, power = 0.2 } or nil }) end
 		g:pop_events()
@@ -136,10 +136,13 @@ end
 -- Le casse: il bot va a prendere quella che ha vicino (pesi.cassa); con peso 0 la lascia
 do
 	local function prende(peso, d)
-		local g = game.new(4, "forgia", { players = { { team = 1 }, { team = 2 } } })
+		local g = game.new(4, "pavimento", { players = { { team = 1 }, { team = 2 } } })
 		local b = bot.new(2, "normale", 4, { cassa = peso, cassa_fame = 0 })
 		while g.current ~= 2 do g:step({ fire = g.phase == "aim" and { weapon = "missile", angle = 1.4, power = 0.2 } or nil }) end
+		-- il bot sul fondo piatto del pavimento, fra le due rampe
 		local rb = g.robots[2]
+		rb.x = 1000
+		rb.y = g.terrain:ground_below(rb.x, game.WORLD_H - 1)
 		local c = g:spawn_crate("grenade", rb.x + d)
 		while not c.landed do g:update_crates() end
 		local turno, inizio = g.turn_no, g.tick
@@ -161,7 +164,7 @@ end
 -- Un giocatore vero e un bot: i tasti del giocatore finiscono nella ricetta e la rigiocano
 do
 	local players = { { team = 1 }, { team = 2, bot = "facile" } }
-	local r3 = replay.nuova(4, "forgia", { players = players })
+	local r3 = replay.nuova(4, "pavimento", { players = players })
 	local g3, bots = replay.partita(r3)
 	while g3.tick < 3600 and g3.phase ~= "over" do
 		local umano = { right = g3.tick % 200 < 100, left = false, hold = true, jump = g3.tick % 150 == 0 }
@@ -175,7 +178,7 @@ end
 
 -- Il bot pensa poco alla volta: mai troppo lavoro in un tick
 do
-	local g4 = game.new(2, "forgia", { players = { { team = 1 }, { team = 2 } } })
+	local g4 = game.new(2, "pavimento", { players = { { team = 1 }, { team = 2 } } })
 	local b1, b2 = bot.new(1, "difficile", 2), bot.new(2, "difficile", 2)
 	local troppo = 0
 	while g4.tick < 6000 do
@@ -216,7 +219,7 @@ end
 
 -- Le copie su cui pensa il bot non toccano la partita vera
 do
-	local g5 = game.new(3, "forgia")
+	local g5 = game.new(3, "pavimento")
 	for _ = 1, 120 do g5:step() end
 	local prima = g5:impronta()
 	local celle = 0
@@ -231,7 +234,7 @@ end
 
 -- La mira da vicino: chi prenderebbe il colpo, senza toccare la partita
 do
-	local g6 = game.new(3, "forgia", { players = { { team = 1 }, { team = 2 } } })
+	local g6 = game.new(3, "pavimento", { players = { { team = 1 }, { team = 2 } } })
 	for _ = 1, 120 do g6:step() end
 	local a, b = g6.robots[g6.current], nil
 	for _, r in ipairs(g6.robots) do if r ~= a then b = r end end

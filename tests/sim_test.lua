@@ -8,7 +8,7 @@ local melee = require "sim.melee"
 local maps = require "sim.maps"
 local terrain = require "sim.terrain"
 
--- The tests run on the forgia (some on the crogiolo).
+-- The tests run on the floor ("pavimento", some on the pit, "fossa").
 
 local failures = 0
 local function check(cond, msg)
@@ -51,7 +51,7 @@ do
 	end
 end
 
-local g = game.new(42, "forgia")
+local g = game.new(42, "pavimento")
 run(g, 120)
 
 -- The robot on turn walks
@@ -81,7 +81,7 @@ run(g, 120)
 
 -- No inertia in the air: the direction changes at once, at air_speed
 do
-	local q = game.new(42, "forgia", { players = { { team = 1, stats = { air_speed = 60 } }, { team = 2 } } })
+	local q = game.new(42, "pavimento", { players = { { team = 1, stats = { air_speed = 60 } }, { team = 2 } } })
 	run(q, 120)
 	local r = q.robots[1]
 	q:step({ jump = true, right = true })
@@ -91,7 +91,7 @@ do
 end
 
 -- Stats change the jump height
-local hj = game.new(42, "forgia", { players = { { team = 1, stats = { jump_height = 120 } }, { team = 2 } } })
+local hj = game.new(42, "pavimento", { players = { { team = 1, stats = { jump_height = 120 } }, { team = 2 } } })
 run(hj, 120)
 local hy = hj.robots[1].y
 hj:step({ jump = true })
@@ -134,7 +134,7 @@ run(g, 30, { left = true })
 check(rb.x == lx, "after the retreat the robot no longer moves")
 
 -- Direct explosion on a robot: damage and crater
-local g2 = game.new(7, "casuale")
+local g2 = game.new(7, "pavimento")
 run(g2, 120)
 local r2 = g2.robots[2]
 local t0 = solid_count(g2.terrain)
@@ -174,7 +174,7 @@ local function hook(g, angle, ogni)
 end
 
 -- Throwing the orb doesn't end the turn; after 2 seconds the robot is where the orb is
-local tp = game.new(42, "forgia")
+local tp = game.new(42, "pavimento")
 run(tp, 120)
 tp:pop_events()
 local tr = tp.robots[1]
@@ -213,7 +213,7 @@ local function free_tp(r)
 end
 
 local function multi(plan)
-	local q = game.new(42, "forgia")
+	local q = game.new(42, "pavimento")
 	run(q, 120)
 	q:pop_events()
 	free_tp(q.robots[1])
@@ -243,7 +243,7 @@ check(m2 == "orb orb teleport fire teleport turn", "tp, tp, teleport, missile, t
 
 -- State is kept: whoever is falling keeps falling at the same speed
 local function falling(with_orb)
-	local q = game.new(42, "forgia")
+	local q = game.new(42, "pavimento")
 	run(q, 120)
 	local r = q.robots[1]
 	local y = sky_spot(q, 640, 120)
@@ -263,7 +263,7 @@ check(fr.vx == nr.vx and fr.vy == nr.vy and fr.vy < -250,
 check(not fr.grounded, "the robot isn't set down on the ground")
 
 -- The orb doesn't stick: it touches ground and rolls
-local rl = game.new(42, "forgia")
+local rl = game.new(42, "pavimento")
 run(rl, 120)
 local rr = rl.robots[1]
 local gy = rr.y
@@ -277,7 +277,7 @@ check(touched_x and rl.orbs[1] and rl.orbs[1].x > touched_x + 10, "the orb rolls
 check(rl.orbs[1] and not rl.terrain:solid(rl.orbs[1].x, rl.orbs[1].y), "the orb doesn't go into the terrain")
 
 -- The teleport always happens, even if the orb is at an impossible spot
-local im = game.new(42, "forgia")
+local im = game.new(42, "pavimento")
 run(im, 120)
 local ir = im.robots[1]
 local tx0 = ir.x
@@ -294,7 +294,7 @@ check(im_tp and not im:robot_collides(ir.x, ir.y, ir) and math.abs(ir.x - (tx0 +
 	"and puts you at the nearest free point")
 
 -- If the orb leaves the map the teleport takes you there and you fall
-local om = game.new(42, "forgia")
+local om = game.new(42, "pavimento")
 run(om, 120)
 om.orbs = { { x = -200, y = -100, vx = 0, vy = 0, owner = 1, timer = 1 } }
 om:step()
@@ -303,7 +303,7 @@ check(om.robots[1].dead, "an orb off the map makes you fall into the void")
 
 -- Slash: hits behind the back and in front
 local function sword_game()
-	local q = game.new(42, "forgia")
+	local q = game.new(42, "pavimento")
 	run(q, 120)
 	q:pop_events()
 	local y = sky_spot(q, 640, 300)
@@ -359,7 +359,7 @@ check(combo(true) == "tp hit2 hit3", "combo: teleport and hit on whoever was beh
 check(combo(false) == "hit2", "without an orb the far target isn't hit")
 
 -- The turn waits for the orb and the retreat, then passes to the opponent
-local tw = game.new(42, "forgia")
+local tw = game.new(42, "pavimento")
 run(tw, 120)
 tw:step({ fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } })
 run(tw, 30)
@@ -387,7 +387,7 @@ do
 		and game.orbs_for(17 * 60) == 1 and game.orbs_for(17 * 60 + 1) == 0, "orb thresholds 9 s and 17 s")
 
 	-- First attack after 12 s: one teleport
-	local at = game.new(42, "forgia")
+	local at = game.new(42, "pavimento")
 	local ar = at.robots[1]
 	run(at, 12 * 60 - 1)
 	at:pop_events()
@@ -415,7 +415,7 @@ do
 	check(turn_at and turn_at >= 28, "the turn passes when the 8 s run out")
 
 	-- Any order: first the sword, then the missile
-	local ao = game.new(42, "forgia")
+	local ao = game.new(42, "pavimento")
 	run(ao, 60)
 	ao:step(SWORD)
 	run(ao, 30)
@@ -426,7 +426,7 @@ do
 	-- The teleport never goes off by shooting: after the secondary, after the
 	-- primary and after both it can still be thrown, like items
 	for _, order in ipairs({ { "sword" }, { "missile" }, { "sword", "missile" }, { "missile", "sword" } }) do
-		local q = game.new(42, "forgia")
+		local q = game.new(42, "pavimento")
 		run(q, 120)
 		free_tp(q.robots[1])
 		for _, w in ipairs(order) do
@@ -439,7 +439,7 @@ do
 	end
 
 	-- Whoever attacks at the last moment has no time for anything else
-	local az = game.new(42, "forgia")
+	local az = game.new(42, "pavimento")
 	run(az, game.TURN_TICKS - 2)
 	az:step(MISSILE)
 	check(az.used.primary and az.window <= 1, "attacking at the last moment leaves no time")
@@ -448,7 +448,7 @@ do
 
 	-- On the first turn every orb can be thrown, the starting ones too (Sergio,
 	-- 3 November: no more limit of one), and then the ones earned by attacking
-	local ft = game.new(42, "forgia")
+	local ft = game.new(42, "pavimento")
 	local fr = ft.robots[1]
 	local start = fr.teleports_left
 	run(ft, 30)
@@ -466,7 +466,7 @@ do
 	check(#ft.orbs == start + 2 and fr.teleports_left == 0, "all the orbs leave")
 
 	-- Swapping the second attack for a teleport (Sergio, 29 October)
-	local sw = game.new(42, "forgia")
+	local sw = game.new(42, "pavimento")
 	local swr = sw.robots[1]
 	run(sw, 30)
 	check(not sw:can_use("swap"), "no swap before the first attack")
@@ -481,20 +481,20 @@ do
 	check(sw:can_use("teleport"), "the swap orb can be thrown at once")
 	sw:step(TELE_BTN)
 	check(#sw.orbs >= 1 and swr.teleports_left == n_sw, "the swap orb leaves")
-	local sw2 = game.new(42, "forgia")
+	local sw2 = game.new(42, "pavimento")
 	run(sw2, 30)
 	sw2:step(MISSILE)
 	sw2:step(SWORD)
 	check(not sw2:can_use("swap"), "after two attacks no swap")
 
 	-- No cap: orbs pile up
-	local fz = game.new(42, "forgia", { players = { { team = 1, stats = { teleports = 5 } }, { team = 2 } } })
+	local fz = game.new(42, "pavimento", { players = { { team = 1, stats = { teleports = 5 } }, { team = 2 } } })
 	run(fz, 60)
 	fz:step(MISSILE)
 	check(fz.robots[1].teleports_left == 7, "teleports pile up without a cap")
 
 	-- Life starts from the config value and can be changed per robot
-	local hv = game.new(42, "forgia", { players = { { team = 1, stats = { max_hp = 200 } }, { team = 2 } } })
+	local hv = game.new(42, "pavimento", { players = { { team = 1, stats = { max_hp = 200 } }, { team = 2 } } })
 	check(hv.robots[1].hp == 200 and hv.robots[2].hp == config.STATS.max_hp, "life from the robot's stats")
 end
 
@@ -525,7 +525,7 @@ do
 		return q.current
 	end
 
-	local q4 = game.new(42, "forgia", { players = four })
+	local q4 = game.new(42, "pavimento", { players = four })
 	check(q4.mode == "2v2" and table.concat(q4.order, " ") == "1 3 2 4",
 		"2 v 2: turns A1, B1, A2, B2 (" .. table.concat(q4.order, " ") .. ")")
 	local seen4 = { q4.current }
@@ -538,7 +538,7 @@ do
 		"the dead robot starts again in the same turn with full life")
 	check(next_turn(q4) == 3, "and plays its turn")
 	-- whoever dies in their own turn starts again and the turn goes on
-	local own = game.new(42, "forgia")
+	local own = game.new(42, "pavimento")
 	run(own, 30)
 	own:kill(own.robots[1], "fell")
 	run(own, game.RESPAWN_TICKS + 5)
@@ -546,15 +546,15 @@ do
 		"died in their own turn: starts again and the turn goes on")
 
 	-- Free for all: four teams of one, turns in order of arrival
-	local ffa = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
+	local ffa = game.new(42, "pavimento", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
 	check(ffa.mode == "ffa" and table.concat(ffa.order, " ") == "1 2 3 4", "free for all: turns 1, 2, 3, 4")
-	check(game.new(42, "forgia").mode == "1v1", "without players it's a 1 v 1")
+	check(game.new(42, "pavimento").mode == "1v1", "without players it's a 1 v 1")
 end
 
 -- Tactical items: traps, shields, trampolines, parachutes, healing circles -------------
 do
 	-- crates also contain items
-	local mix = game.new(5, "forgia")
+	local mix = game.new(5, "pavimento")
 	local seen = {}
 	for _ = 1, 60 do
 		mix.crates = {}
@@ -564,7 +564,7 @@ do
 	check(seen.trap and seen.shield and seen.trampoline, "crates contain traps, shields and trampolines")
 
 	-- items can also be used while repositioning and aren't attacks
-	local q = game.new(42, "forgia", { ammo = { trap = 1, shield = 1 } })
+	local q = game.new(42, "pavimento", { ammo = { trap = 1, shield = 1 } })
 	run(q, 60)
 	local r1, r2 = q.robots[1], q.robots[2]
 	q:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
@@ -601,7 +601,7 @@ do
 	check(r1.shield == nil, "the shield ends at the start of the owner's turn")
 
 	-- a teammate doesn't set off the trap
-	local t2 = game.new(42, "forgia", { players = config.MODES["2v2"], ammo = { trap = 1 } })
+	local t2 = game.new(42, "pavimento", { players = config.MODES["2v2"], ammo = { trap = 1 } })
 	run(t2, 60)
 	t2:step({ fire = { angle = 0, power = 1, weapon = "trap" } })
 	local tt = t2.placed[1]
@@ -614,7 +614,7 @@ do
 
 	-- trampoline: it's thrown; thrown at a robot it lands at its feet and makes it
 	-- bounce, always; staying on it the bounces shrink until stopping
-	local tb = game.new(42, "forgia", { ammo = { trampoline = 1 } })
+	local tb = game.new(42, "pavimento", { ammo = { trampoline = 1 } })
 	run(tb, 60)
 	local a, b = tb.robots[1], tb.robots[2]
 	b.x, b.y = a.x + 40, a.y
@@ -702,7 +702,7 @@ do
 
 	-- parachute: in the air a tap opens it (one per match), it slows the fall,
 	-- gives more horizontal control and cancels fall damage
-	local pc = game.new(42, "forgia")
+	local pc = game.new(42, "pavimento")
 	run(pc, 60)
 	local p = pc.robots[1]
 	check(not pc:can_use("parachute"), "on the ground the parachute doesn't open")
@@ -738,7 +738,7 @@ do
 
 	-- healing circle: at the end of the turn whoever has their feet inside is
 	-- healed and the circle disappears (at the start of a turn another can appear)
-	local hg = game.new(42, "forgia")
+	local hg = game.new(42, "pavimento")
 	run(hg, 60)
 	local function has_heal(id)
 		for _, x in ipairs(hg.heals) do if x.id == id then return true end end
@@ -762,7 +762,7 @@ end
 
 -- The Uovo bounces on robots, like the teleport orb
 do
-	local q = game.new(42, "forgia", { ammo = { grenade = 1 } })
+	local q = game.new(42, "pavimento", { ammo = { grenade = 1 } })
 	run(q, 60)
 	local a, b = q.robots[1], q.robots[2]
 	b.x, b.y = a.x + 60, a.y
@@ -778,7 +778,7 @@ end
 
 -- Cecchino: slow, straight and then drops, bounces, knocks in the direction of the shot ---
 do
-	local q = game.new(42, "forgia", { ammo = { sniper = 1 } })
+	local q = game.new(42, "pavimento", { ammo = { sniper = 1 } })
 	run(q, 60)
 	local a, b = q.robots[1], q.robots[2]
 	-- in the sky, so the terrain doesn't get in the way
@@ -800,7 +800,7 @@ do
 	check(sp <= config.SNIPER.push + config.SNIPER.lift + 1, "with a moderate push")
 
 	-- it starts fast and almost straight, then slows down and drops more and more
-	local d = game.new(42, "forgia", { ammo = { sniper = 1 } })
+	local d = game.new(42, "pavimento", { ammo = { sniper = 1 } })
 	run(d, 60)
 	local from_pt = d.robots[1]
 	d.robots[2].x = -1000
@@ -816,10 +816,10 @@ do
 	check(d.projectile == p and p.vy < vy10 - 40 and p.vx < game.SNIPER_SPEED * 0.85, "then it drops more and more and slows down")
 
 	-- towards the terrain it bounces (doesn't dig), and after the last bounce it stops
-	local r = game.new(42, "forgia", { ammo = { sniper = 1 } })
+	local r = game.new(42, "pavimento", { ammo = { sniper = 1 } })
 	run(r, 60)
 	local cells = solid_count(r.terrain)
-	r:step({ fire = { angle = math.rad(-60), power = 1, weapon = "sniper" } })
+	r:step({ fire = { angle = math.rad(-75), power = 1, weapon = "sniper" } })
 	local bounces, speeds = 0, {}
 	for _ = 1, game.SNIPER_LIFE + 5 do
 		r:step()
@@ -846,7 +846,7 @@ end
 -- Ranged secondaries and Affondo: Tonante, Rampino, Affondo --------------------
 do
 	-- Tonante: straight instant shot, flat damage without effects, recoil on the shooter
-	local q = game.new(42, "forgia", { secondary = "eagle" })
+	local q = game.new(42, "pavimento", { secondary = "eagle" })
 	run(q, 60)
 	local a, b = q.robots[1], q.robots[2]
 	local sy = sky_spot(q, 640, 80)
@@ -865,7 +865,7 @@ do
 	-- distance right, left, up and diagonally
 	local push = config.EAGLE.recoil * config.EAGLE.recoil_ticks / 60
 	for _, deg in ipairs({ 0, 180, 90, -90, 45, -45, -135 }) do
-		local d = game.new(42, "forgia", { secondary = "eagle" })
+		local d = game.new(42, "pavimento", { secondary = "eagle" })
 		run(d, 60)
 		local from_pt = d.robots[1]
 		d.robots[2].x = -1000
@@ -881,7 +881,7 @@ do
 	end
 
 	-- from the ground, shooting horizontally, you slide on the terrain the same distance
-	local g2 = game.new(42, "forgia", { secondary = "eagle" })
+	local g2 = game.new(42, "pavimento", { secondary = "eagle" })
 	run(g2, 60)
 	local ga = g2.robots[1]
 	g2.robots[2].x = -1000
@@ -891,7 +891,7 @@ do
 	check(ga.x - gx > push * 0.8, "from the ground the horizontal recoil moves as much as in the air (" .. math.floor(ga.x - gx) .. ")")
 
 	-- terrain stops the shot, within range
-	local t = game.new(42, "forgia", { secondary = "eagle" })
+	local t = game.new(42, "pavimento", { secondary = "eagle" })
 	run(t, 60)
 	t.robots[2].x = -1000
 	t:step({ fire = { angle = math.rad(-90), power = 1, weapon = "eagle" } })
@@ -902,7 +902,7 @@ do
 
 	-- Rampino: an item, one per turn, not an attack; reels the target straight
 	-- towards the hand, right up to the puller, then releases it
-	local h = game.new(42, "forgia")
+	local h = game.new(42, "pavimento")
 	run(h, 60)
 	local ha, hb = h.robots[1], h.robots[2]
 	sy = sky_spot(h, 640, 120)
@@ -935,7 +935,7 @@ do
 	run(h, 5)
 	check(hb.y < y_start and hb.vx == 0, "and falls straight where it is")
 	-- pulled from below it rises up to the puller; a nearby robot stops the rope
-	local u = game.new(42, "forgia")
+	local u = game.new(42, "pavimento")
 	run(u, 60)
 	local ua, ub = u.robots[1], u.robots[2]
 	sy = sky_spot(u, 640, 120)
@@ -952,7 +952,7 @@ do
 			tostring(ub.hooked), ub.y - (sy - 60), math.abs(ub.x - ua.x)))
 	-- on terrain it's the puller who climbs along the rope and gets on top of the
 	-- platform hit: from below a platform you end up standing on top
-	local m = game.new(42, "forgia")
+	local m = game.new(42, "pavimento")
 	run(m, 60)
 	local ma, mb = m.robots[1], m.robots[2]
 	mb.x = -1000
@@ -972,7 +972,7 @@ do
 		"climbs along the rope and stands on top of the platform")
 	-- from below diagonally the climb hits the bottom of the platform before
 	-- reaching the point: within config.HOOK.grab it gets on top anyway
-	local dg = game.new(42, "forgia")
+	local dg = game.new(42, "pavimento")
 	run(dg, 60)
 	local from_pt = dg.robots[1]
 	dg.robots[2].x = -1000
@@ -1004,7 +1004,7 @@ do
 	ev = hook(m, math.rad(90))
 	check(ev and not ev.anchor and not ev.target and not ma.hooked and ma.vx == 0, "in the void the Rampino hooks nothing")
 	-- the hook flies: at the end of its reach it takes more than one tick, and gets all the way there
-	local far = game.new(42, "forgia")
+	local far = game.new(42, "pavimento")
 	run(far, 60)
 	local fa, fb = far.robots[1], far.robots[2]
 	fb.x = -1000
@@ -1020,7 +1020,7 @@ do
 	ev = hook(far, 0, function() fa.y, fa.vy = 400, 0 end)
 	check(ev and ev.anchor, "at the end of its reach it still hooks the terrain")
 	-- a far enemy: the rope runs out before arriving and releases it in mid-air (snap)
-	far = game.new(42, "forgia")
+	far = game.new(42, "pavimento")
 	run(far, 60)
 	fa, fb = far.robots[1], far.robots[2]
 	far.terrain:rect(400, 100, 900, 900, 0)
@@ -1039,7 +1039,7 @@ do
 
 	-- Mantice (secondary): blows away whoever is in front, little damage, never effects
 	local function bellows(dist, angle, setup)
-		local q = game.new(42, "forgia", { secondary = "bellows" })
+		local q = game.new(42, "pavimento", { secondary = "bellows" })
 		run(q, 60)
 		local a, b = q.robots[1], q.robots[2]
 		local gy = 100
@@ -1069,7 +1069,7 @@ do
 	local _, _, b4, hp4 = bellows(90, 0, function(q2) q2.terrain:rect(640, 100, 9, 60, 1) end)
 	check(b4.hp == hp4, "terrain in between shelters")
 	-- category rule: no secondary leaves status effects
-	local rq = game.new(42, "forgia")
+	local rq = game.new(42, "pavimento")
 	for w in pairs(game.SECONDARY) do
 		rq:hit_status(rq.robots[2], w, rq.robots[1])
 		check(next(rq.robots[2].status) == nil, "the secondary " .. w .. " leaves no effects")
@@ -1099,7 +1099,7 @@ do
 		return hits, rb
 	end
 	-- in the air: the robot under the feet is hit while the hammer comes down, and you bounce
-	local g1 = game.new(42, "forgia", { secondary = "mallet" })
+	local g1 = game.new(42, "pavimento", { secondary = "mallet" })
 	run(g1, 60)
 	local ga, gb = g1.robots[1], g1.robots[2]
 	local sx
@@ -1114,7 +1114,7 @@ do
 	check(ga.mallet == nil, "the swing ends")
 	-- like the Lama it catches everything on the arc: also whoever is behind and
 	-- high, where the hammer starts; and there too you bounce (Sergio, 30 Oct: every time it hits)
-	local g5 = game.new(42, "forgia", { secondary = "mallet" })
+	local g5 = game.new(42, "pavimento", { secondary = "mallet" })
 	run(g5, 60)
 	local g5a, g5b = g5.robots[1], g5.robots[2]
 	sx, sy = sky(g5)
@@ -1125,7 +1125,7 @@ do
 	check(#hits == 1 and hits[1].target == 2 and hits[1].bounce and hp - g5b.hp == config.MALLET.damage,
 		"it also hits behind and high, at the start of the arc, and bounces")
 	-- on the terrain under the feet the head stops and you bounce (pogo)
-	local g2 = game.new(42, "forgia", { secondary = "mallet" })
+	local g2 = game.new(42, "pavimento", { secondary = "mallet" })
 	run(g2, 60)
 	local g2a = g2.robots[1]
 	g2.robots[2].x = -1000
@@ -1139,7 +1139,7 @@ do
 	check(stop and stop < config.MALLET.ticks and game.mallet_angle(config.MALLET.ticks, 0, stop) == game.mallet_angle(stop),
 		"the head stops where it slams and stays there")
 	-- a miss in the air doesn't bounce
-	local g3 = game.new(42, "forgia", { secondary = "mallet" })
+	local g3 = game.new(42, "pavimento", { secondary = "mallet" })
 	run(g3, 60)
 	local g3a = g3.robots[1]
 	g3.robots[2].x = -1000
@@ -1147,7 +1147,7 @@ do
 	hits = mallet(g3, 0)
 	check(#hits == 0 and g3a.vy < 0, "a miss in the air doesn't bounce")
 	-- on the ground it hits in front and you bounce (Sergio, 30 Oct: even without jumping)
-	local g4 = game.new(42, "forgia", { secondary = "mallet" })
+	local g4 = game.new(42, "pavimento", { secondary = "mallet" })
 	run(g4, 60)
 	local g4a, g4b = g4.robots[1], g4.robots[2]
 	place(g4b, g4a.x + 2 * game.ROBOT_HALF_W + 16, g4a.y)
@@ -1159,7 +1159,7 @@ do
 	check(#hits == 1 or not hits[2].bounce, "only once per swing")
 	-- the arc rotates with the aim: whoever is behind, under the feet, only gets hit aiming down
 	for _, try_it in ipairs({ { 0, false }, { math.rad(-70), true } }) do
-		local gd = game.new(42, "forgia", { secondary = "mallet" })
+		local gd = game.new(42, "pavimento", { secondary = "mallet" })
 		run(gd, 60)
 		local from_pt, db = gd.robots[1], gd.robots[2]
 		local px, py = sky(gd)
@@ -1173,7 +1173,7 @@ do
 	check(not g4:can_use("sword") and g4:can_use("missile"), "Maglio and Lama are both secondaries")
 
 	-- Affondo: dash that goes through the robot in front and hits it once
-	local l = game.new(42, "forgia", { secondary = "lunge" })
+	local l = game.new(42, "pavimento", { secondary = "lunge" })
 	run(l, 60)
 	local la, lb = l.robots[1], l.robots[2]
 	sy = sky_spot(l, 640, 120)
@@ -1188,7 +1188,7 @@ do
 	check(hp - lb.hp == config.LUNGE.damage and next(lb.status) == nil, "hitting it once, without effects")
 	check(la.vx > 0 and la.vx < config.LUNGE.speed, "at the end some momentum remains")
 	-- terrain stops it
-	local w = game.new(42, "forgia", { secondary = "lunge" })
+	local w = game.new(42, "pavimento", { secondary = "lunge" })
 	run(w, 60)
 	local wa = w.robots[1]
 	local y1 = wa.y
@@ -1196,7 +1196,7 @@ do
 	run(w, 2)
 	check(wa.lunge == nil and wa.y >= y1 - 2, "terrain stops the Affondo")
 	-- small steps and bumps don't stop it: it climbs them and goes on
-	local v = game.new(42, "forgia", { secondary = "lunge" })
+	local v = game.new(42, "pavimento", { secondary = "lunge" })
 	run(v, 60)
 	local va, vb = v.robots[1], v.robots[2]
 	v.terrain:rect(300, 200, 680, 300, 0)
@@ -1208,7 +1208,7 @@ do
 	run(v, config.LUNGE.ticks)
 	check(va.x > 440 + 0.9 * config.LUNGE.speed * config.LUNGE.ticks / 60, "it climbs the bump and does the whole dash")
 	-- a high wall stops it
-	local wl = game.new(42, "forgia", { secondary = "lunge" })
+	local wl = game.new(42, "pavimento", { secondary = "lunge" })
 	run(wl, 60)
 	local wla = wl.robots[1]
 	wl.robots[2].x = -1000
@@ -1220,7 +1220,7 @@ do
 	run(wl, config.LUNGE.ticks)
 	check(wla.x < 500 and wla.x > 480, "against a high wall it stops")
 	-- the spear also hits whoever is just past the end of the dash
-	local q = game.new(42, "forgia", { secondary = "lunge" })
+	local q = game.new(42, "pavimento", { secondary = "lunge" })
 	run(q, 60)
 	local qa, qb = q.robots[1], q.robots[2]
 	q.terrain:rect(300, 200, 680, 300, 0)
@@ -1246,7 +1246,7 @@ do
 	end
 
 	-- shards slow: run and jump reduced until the end of the owner's next turn
-	local q = game.new(42, "forgia")
+	local q = game.new(42, "pavimento")
 	run(q, 30)
 	local r1, r2 = q.robots[1], q.robots[2]
 	q:explode(r2.x, r2.y + 4, 1, game.SHARD_BLAST, "shards")
@@ -1262,7 +1262,7 @@ do
 	q.current = 1
 
 	-- armour cracked by the punch: you take more damage
-	local c = game.new(42, "forgia")
+	local c = game.new(42, "pavimento")
 	local a, b = c.robots[1], c.robots[2]
 	c:punch_hit(a, b, 1)
 	check(b.status.cracked, "the punch cracks the armour")
@@ -1271,7 +1271,7 @@ do
 	check(hp - b.hp == math.floor(20 * config.STATUS.cracked.damage + 0.5), "with cracked armour the damage goes up")
 
 	-- a shield that holds stops the effect (the Pugno, 47, would break it: shards don't)
-	local s = game.new(42, "forgia")
+	local s = game.new(42, "pavimento")
 	run(s, 30)
 	local sb = s.robots[2]
 	sb.shield = config.SHIELD.hp
@@ -1280,7 +1280,7 @@ do
 
 	-- normal Uovo: no burn; with the Fornace set (burning_blasts) the Uovo burns,
 	-- the missile doesn't
-	local f = game.new(42, "forgia", { players = { { team = 1, stats = { burning_blasts = 1 } }, { team = 2 } } })
+	local f = game.new(42, "pavimento", { players = { { team = 1, stats = { burning_blasts = 1 } }, { team = 2 } } })
 	run(f, 30)
 	local fa, fb = f.robots[1], f.robots[2]
 	f:explode(fb.x, fb.y + 4, 2, nil, "grenade")
@@ -1299,7 +1299,7 @@ do
 	check(next(fb.status) == nil, "effects end at the end of the owner's turn")
 
 	-- the attacker's status_turns makes the effect last longer
-	local l = game.new(42, "forgia", { players = { { team = 1, stats = { status_turns = 2 } }, { team = 2 } } })
+	local l = game.new(42, "pavimento", { players = { { team = 1, stats = { status_turns = 2 } }, { team = 2 } } })
 	run(l, 30)
 	local lb = l.robots[2]
 	l:explode(lb.x, lb.y + 4, 1, game.SHARD_BLAST, "shards")
@@ -1328,7 +1328,7 @@ do
 	local players = draft.finish(d)
 	check(players[2].pick == d.offer[1] and players[4].pick == d.offer[1],
 		"when time's up whoever didn't pick takes the first weapon of the fan")
-	local g = game.new(7, "forgia", { players = players })
+	local g = game.new(7, "pavimento", { players = players })
 	check(g.robots[1].ammo[w2] == config.DRAFT_SHOTS and g.robots[1].ammo[w1] == 0, "in the match the picked weapon has its shots")
 	for _ = 1, 600 do if g.phase == "aim" then break end g:step() end
 	check(g:can_use("hook"), "everyone has the Rampino, without picking it")
@@ -1343,7 +1343,7 @@ do
 	draft.pick(e, 1, s2)
 	local ep = draft.finish(e)
 	check(ep[2].secondary == e.offer2[1], "when time's up the first secondary")
-	local eg = game.new(9, "forgia", { players = ep })
+	local eg = game.new(9, "pavimento", { players = ep })
 	local r1 = eg.robots[1]
 	check(r1.secondary == s2 and game.has_weapon(r1, s2) and game.has_weapon(r1, "sword") and not game.has_weapon(r1, s1),
 		"in the match you have the Lama and the picked secondary, not the others")
@@ -1382,7 +1382,7 @@ end
 -- Air jump, shield, fixed level ----------------------------------------------------
 do
 	-- air jump: with air_jumps, pressing again in flight, free
-	local q = game.new(42, "forgia", { players = { { team = 1, stats = { air_jumps = 1 } }, { team = 2 } } })
+	local q = game.new(42, "pavimento", { players = { { team = 1, stats = { air_jumps = 1 } }, { team = 2 } } })
 	run(q, 60)
 	local r = q.robots[1]
 	q:step({ jump = true })
@@ -1396,7 +1396,7 @@ do
 	vy0 = r.vy
 	q:step({ jump = true })
 	check(r.vy < vy0, "only one air jump with air_jumps 1")
-	local n = game.new(42, "forgia")
+	local n = game.new(42, "pavimento")
 	run(n, 60)
 	local nr = n.robots[1]
 	n:step({ jump = true })
@@ -1406,7 +1406,7 @@ do
 	check(nr.vy < vy0, "without air_jumps no air jump")
 
 	-- shield: found only in crates and used whenever you like
-	local s = game.new(42, "forgia")
+	local s = game.new(42, "pavimento")
 	run(s, 30)
 	local sr = s.robots[1]
 	check(not s:can_use("shield"), "without crate shields no shield")
@@ -1417,7 +1417,7 @@ do
 
 	-- fixed level (event rule): tree and gear stats don't count, the picked weapon does
 	local custom = { { team = 1, stats = { max_hp = 300, walk_speed = 999 }, pick = "shards" }, { team = 2 } }
-	local t = game.new(42, "forgia", { players = custom, normalize = true })
+	local t = game.new(42, "pavimento", { players = custom, normalize = true })
 	check(t.robots[1].max_hp == config.STATS.max_hp and t.robots[1].stats.walk_speed == t.robots[2].stats.walk_speed,
 		"at fixed level everyone has the base stats")
 	check(t.robots[1].ammo.shards == config.DRAFT_SHOTS and t:results().normalized, "at fixed level the picked weapon stays")
@@ -1449,7 +1449,7 @@ end
 -- Points, kills and respawn -------------------------------------------------------
 do
 	-- kill by hits: damage and kill points to the attacker, minus for whoever dies
-	local g3 = game.new(3, "forgia")
+	local g3 = game.new(3, "pavimento")
 	run(g3, 60)
 	local a, b = g3.robots[1], g3.robots[2]
 	b.hp = 10
@@ -1472,7 +1472,7 @@ do
 
 	-- environmental kill: whoever hits a robot that then falls off the map also
 	-- gets the bonus; without recent hits nobody gets anything
-	local ge = game.new(3, "forgia")
+	local ge = game.new(3, "pavimento")
 	run(ge, 60)
 	local ea, eb = ge.robots[1], ge.robots[2]
 	ge:hurt(eb, 5, ea)
@@ -1480,7 +1480,7 @@ do
 	ge:step()
 	check(eb.dead and ea.env_kills == 1 and eb.falls == 1, "whoever knocks someone off the map makes an environmental kill")
 	check(ea.points == 5 + config.SCORE.kill + config.SCORE.env_kill, "which is worth more than a kill by hits (" .. ea.points .. ")")
-	local gf = game.new(3, "forgia")
+	local gf = game.new(3, "pavimento")
 	run(gf, 60)
 	gf:hurt(gf.robots[2], 5, gf.robots[1])
 	gf.tick = gf.tick + config.KILL_CREDIT_SECONDS * 60 + 1
@@ -1489,7 +1489,7 @@ do
 
 	-- whoever jumps off in their own turn: the kill goes to whoever did them the
 	-- most damage in this life (without environmental bonus) and they lose more
-	local gs = game.new(3, "forgia", { players = config.MODES.ffa })
+	local gs = game.new(3, "pavimento", { players = config.MODES.ffa })
 	run(gs, 60)
 	local s1, s2, s3 = gs.robots[1], gs.robots[2], gs.robots[3]
 	gs:hurt(s1, 30, s2)
@@ -1508,13 +1508,13 @@ do
 	check(not s1.dead and gs.current == 1 and gs.phase == "aim" and next(s1.life_damage) == nil,
 		"then starts again in their turn, and the damage of the previous life no longer counts")
 	-- in their own turn, recently hit by an opponent: the normal rule applies
-	local gr = game.new(3, "forgia")
+	local gr = game.new(3, "pavimento")
 	run(gr, 60)
 	gr:hurt(gr.robots[1], 5, gr.robots[2])
 	gr:kill(gr.robots[1], "fell")
 	check(gr.robots[2].env_kills == 1 and gr.robots[1].points == config.SCORE.death, "recently hit: normal environmental kill")
 	-- in their own turn without damage from anyone: no points to the others, but the penalty yes
-	local gn = game.new(3, "forgia")
+	local gn = game.new(3, "pavimento")
 	run(gn, 60)
 	gn:kill(gn.robots[1], "fell")
 	check(gn.robots[2].kills == 0 and gn.robots[1].points == config.SCORE.death + config.SCORE.self_death,
@@ -1522,12 +1522,12 @@ do
 
 	-- hitting whoever is first is worth more
 	-- (the Crown only exists after SCORE.crown_rounds full rounds)
-	local g0 = game.new(3, "forgia", { players = config.MODES.ffa })
+	local g0 = game.new(3, "pavimento", { players = config.MODES.ffa })
 	g0.robots[3].points = 100
 	check(config.SCORE.crown_rounds >= 1 and g0:leader() == nil, "in the first round nobody has the Crown")
 	for _ = 1, 4 do g0:end_turn() end
 	check(g0.round == 2 and g0:leader() == g0.robots[3], "from the second round the Crown goes to the leader")
-	local gl = game.new(3, "forgia", { players = config.MODES.ffa })
+	local gl = game.new(3, "pavimento", { players = config.MODES.ffa })
 	gl.round = config.SCORE.crown_rounds + 1
 	gl.robots[3].points = 100
 	gl:hurt(gl.robots[3], 10, gl.robots[1])
@@ -1535,7 +1535,7 @@ do
 	check(gl.robots[1].points == 10 * config.SCORE.leader and gl.robots[2].points == 10, "hitting the leader is worth more")
 
 	-- Crown: whoever downs the leader gets crown extra
-	local gc = game.new(3, "forgia", { players = config.MODES.ffa })
+	local gc = game.new(3, "pavimento", { players = config.MODES.ffa })
 	gc.round = config.SCORE.crown_rounds + 1
 	gc.robots[3].points = 100
 	gc:hurt(gc.robots[3], gc.robots[3].hp, gc.robots[1])
@@ -1554,7 +1554,7 @@ do
 		and reasons.kill == 3 and reasons.death == 1, "points events add up the points, with the reason and the other robot")
 
 	-- Rampino and trampoline: whoever moves an enemy without damage gets the kill if it falls
-	local gk = game.new(3, "forgia")
+	local gk = game.new(3, "pavimento")
 	run(gk, 60)
 	gk:credit(gk.robots[2], gk.robots[1])
 	gk:kill(gk.robots[2], "fell")
@@ -1562,7 +1562,7 @@ do
 		and gk.robots[1].points == config.SCORE.kill + config.SCORE.env_kill, "whoever pulls someone off with the Rampino gets the environmental kill")
 
 	-- parry: the shield gives points to its carrier for the enemy damage it stops, up to parry_max
-	local gp = game.new(3, "forgia", { ammo = { shield = 1 } })
+	local gp = game.new(3, "pavimento", { ammo = { shield = 1 } })
 	run(gp, 60)
 	local p1, p2 = gp.robots[1], gp.robots[2]
 	gp:step({ fire = { angle = 0, power = 1, weapon = "shield" } })
@@ -1572,7 +1572,7 @@ do
 	check(p1.points == config.SCORE.parry_max, "but at most parry_max per shield (" .. p1.points .. ")")
 
 	-- in 2 v 2 damage to a teammate gives no points, and points add up per team
-	local gt = game.new(3, "forgia", { players = config.MODES["2v2"] })
+	local gt = game.new(3, "pavimento", { players = config.MODES["2v2"] })
 	gt:hurt(gt.robots[3], 10, gt.robots[1])
 	check(gt.robots[1].points == 0, "hitting a teammate gives no points")
 	gt.robots[2].points, gt.robots[3].points, gt.robots[4].points = 30, 20, 0
@@ -1584,7 +1584,7 @@ do
 end
 
 -- The slash stays in the starting direction even if the robot turns
-local g5 = game.new(7, "forgia")
+local g5 = game.new(7, "pavimento")
 for _ = 1, 120 do g5:step({}) end -- robots fall and settle
 g5.robots[2].x, g5.robots[2].y = g5.robots[1].x + 25, g5.robots[1].y
 g5.robots[2].vx, g5.robots[2].vy = 0, 0
@@ -1596,7 +1596,7 @@ run(g5, SWORD_TICKS)
 check(g5.robots[2].hp < g5.robots[2].max_hp, "the slash hits to the right even after turning")
 
 -- The sword hit does damage but doesn't make the opponent fly
-local g6 = game.new(7, "forgia")
+local g6 = game.new(7, "pavimento")
 for _ = 1, 120 do g6:step({}) end
 local t6 = g6.robots[2]
 t6.x, t6.y = g6.robots[1].x + 25, g6.robots[1].y
@@ -1608,7 +1608,7 @@ check(t6.hp < t6.max_hp, "the sword does damage")
 check(t6.x == tx6 and t6.y == ty6 and t6.grounded, "the sword doesn't move the opponent")
 
 -- Timed match: around 5 minutes there's the last round, then it ends and whoever has the most points wins
-local g7 = game.new(42, "forgia")
+local g7 = game.new(42, "pavimento")
 g7.robots[2].points = 10
 local ticks7 = 0
 while g7.phase ~= "over" and ticks7 < game.MATCH_TICKS + 4000 do
@@ -1623,7 +1623,7 @@ check(g7.robots[1].turns == g7.robots[2].turns, "everyone played the same turns"
 -- Last round (Sergio, 31 Oct): the round that starts with less than half a
 -- round of time left is the last, points are worth double, and when it ends it's over
 do
-	local ot = game.new(42, "forgia")
+	local ot = game.new(42, "pavimento")
 	run(ot, 60)
 	ot.match_left = 10
 	run(ot, 20)
@@ -1658,7 +1658,7 @@ end
 -- Turn pairs with two teams: whoever opens the pair has "pending" points
 -- until the other team has answered (battaglia/punteggio.lua)
 do
-	local pc = game.new(42, "forgia", { players = config.MODES["2v2"] })
+	local pc = game.new(42, "pavimento", { players = config.MODES["2v2"] })
 	check(pc.ahead == 1 and pc.ahead_base == 0, "the first turn opens a pair")
 	pc.robots[1].points = 40
 	local function next_one(g)
@@ -1672,13 +1672,13 @@ do
 	check(pc.current == 2 and pc.ahead == 1 and pc.ahead_base == 0, "while the other team answers the points stay pending")
 	next_one(pc)
 	check(pc.current == 3 and pc.ahead == 1 and pc.ahead_base == 40, "once the pair is closed, the points count")
-	local ffa = game.new(42, "forgia", { players = config.MODES.ffa })
+	local ffa = game.new(42, "pavimento", { players = config.MODES.ffa })
 	check(ffa.ahead == 0, "with more than two teams no pairs")
 end
 
 
 -- Collisions: robots don't pass through each other, walking they push a tiny bit
-local cg = game.new(7, "forgia")
+local cg = game.new(7, "pavimento")
 for _ = 1, 120 do cg:step({}) end
 local c1, c2 = cg.robots[1], cg.robots[2]
 c2.x, c2.y, c2.vx, c2.vy = c1.x + 20, c1.y + 4, 0, 0
@@ -1691,7 +1691,7 @@ check(c2.x > c2x + 2 and c2.x < c2x + 35, string.format("walking you push the ot
 check(c1.x < c1x + 50, "whoever pushes goes slower")
 
 -- A robot falling on another stays on top of it
-local hg = game.new(7, "forgia")
+local hg = game.new(7, "pavimento")
 for _ = 1, 120 do hg:step({}) end
 local h1, h2 = hg.robots[1], hg.robots[2]
 h2.x, h2.y, h2.vx, h2.vy, h2.grounded = h1.x, h1.y + 60, 0, 0, false
@@ -1699,7 +1699,7 @@ for _ = 1, 90 do hg:step({}) end
 check(h2.grounded and math.abs(h2.y - (h1.y + game.ROBOT_H)) < 1.01, "whoever falls on a robot stays on its head")
 
 -- The orb landing on a robot moves it a tiny bit and bounces
-local og = game.new(7, "forgia")
+local og = game.new(7, "pavimento")
 for _ = 1, 120 do og:step({}) end
 local o2 = og.robots[2]
 local o2x = o2.x
@@ -1713,9 +1713,9 @@ check(o2.x > o2x and o2.x <= o2x + game.ORB_NUDGE + 0.01, string.format("the orb
 check(bounced, "the orb bounces on the robot")
 
 -- Orbs also bump into each other
-local bg = game.new(42, "forgia")
+local bg = game.new(42, "pavimento")
 run(bg, 120)
-local by = 500 -- open sky on the forgia
+local by = 950 -- open sky on the floor
 bg.orbs = {
 	{ id = 1, x = 600, y = by, vx = 200, vy = 0, owner = 1, timer = 100, age = 100 },
 	{ id = 2, x = 680, y = by, vx = -200, vy = 0, owner = 1, timer = 100, age = 100 },
@@ -1726,7 +1726,7 @@ check(bg.orbs[1].x < bg.orbs[2].x and bg.orbs[1].vx < 0 and bg.orbs[2].vx > 0, "
 -- Crate weapons -------------------------------------------------------------
 
 -- Without shots crate weapons don't fire; with one shot they fire once
-local am = game.new(42, "forgia")
+local am = game.new(42, "pavimento")
 run(am, 120)
 am:step({ fire = { angle = math.rad(45), power = 0.6, weapon = "grenade" } })
 check(am.phase == "aim" and not am.projectile, "without shots the Uovo di Fiamma doesn't leave")
@@ -1736,7 +1736,7 @@ check(am.projectile and am.projectile.kind == "grenade" and am.robots[1].ammo.gr
 	"with one shot the Uovo leaves and the shot is used up")
 
 -- Uovo di Fiamma: bounces, settles and blows up after 5 seconds, bigger than the missile
-local gr = game.new(42, "forgia")
+local gr = game.new(42, "pavimento")
 run(gr, 120)
 gr:pop_events()
 gr.robots[1].ammo.grenade = 1
@@ -1758,7 +1758,7 @@ check(boom and boom.r == game.GRENADE_BLAST.r and boom.r > game.MISSILE_BLAST.r,
 check(boom_tick and math.abs(boom_tick - game.GRENADE_FUSE) <= 1, "the Uovo blows up after 5 seconds (" .. tostring(boom_tick) .. " tick)")
 
 -- Sciame di Schegge: a burst of SHARD_COUNT shards with small craters
-local sh = game.new(42, "forgia")
+local sh = game.new(42, "pavimento")
 run(sh, 120)
 sh:pop_events()
 sh.robots[1].ammo.shards = 1
@@ -1783,14 +1783,14 @@ check(not sh:shards_flying(), "after the burst nothing is left in flight")
 
 -- shot straight up they leave the map from the top and disappear there (bug of
 -- 2 November: with almost no gravity they flew for more than a minute)
-local up = game.new(42, "forgia")
+local up = game.new(42, "pavimento")
 up.shards[1] = { x = game.WORLD_W / 2, y = game.WORLD_H - 10, vx = 0, vy = game.SHARD_SPEED, owner = 1, age = 100 }
 for _ = 1, 60 do up:update_shards() end
 check(not up:shards_flying(), "shards shot upwards are gone within a second")
 
 -- Pugno del Titano: launches up whoever is in front, not whoever is behind
 local function punch_game(dx)
-	local q = game.new(42, "forgia")
+	local q = game.new(42, "pavimento")
 	run(q, 120)
 	q:pop_events()
 	local y = sky_spot(q, 640, 120)
@@ -1818,7 +1818,7 @@ check(ph2 == nil, "the punch doesn't hit whoever is behind")
 -- With a rate (event rules, opts.crate_every) a crate drops after every 3
 -- turns, always at the same point with the same seed
 local function crate_turns(seed)
-	local q = game.new(seed, "crogiolo", { crate_every = 3 })
+	local q = game.new(seed, "fossa", { crate_every = 3 })
 	local spawned = {}
 	for _ = 1, 12000 do
 		q:step()
@@ -1842,7 +1842,7 @@ check(c1.landed and math.abs(c1.y - cs[1].y) <= game.CELL, "the crate settles on
 check(c1.x >= 40 and c1.x <= game.WORLD_W - 40 and c2.x >= 40 and c2.x <= game.WORLD_W - 40, "crates are inside the map")
 
 -- Touching a crate gives a shot of a crate weapon
-local pk = game.new(42, "forgia", { crate_every = 1 })
+local pk = game.new(42, "pavimento", { crate_every = 1 })
 run(pk, 120)
 local c = pk:spawn_crate()
 check(c ~= nil and c.y > game.WORLD_H, "the crate starts from the sky")
@@ -1860,7 +1860,7 @@ check(#pk.crates == 0, "the picked crate disappears")
 
 -- Crates pick all three weapons
 local seen = {}
-local mix = game.new(11, "forgia")
+local mix = game.new(11, "pavimento")
 for _ = 1, 30 do
 	mix.crates = {}
 	local cc = mix:spawn_crate()
@@ -1870,7 +1870,7 @@ check(seen.grenade and seen.shards and seen.punch, "all three weapons are found 
 
 -- Determinism with the new weapons: same seed and same inputs, same result
 local function play2(seed)
-	local p = game.new(seed, "crogiolo", { ammo = { grenade = 9, shards = 9, punch = 9 }, crate_every = 1 })
+	local p = game.new(seed, "fossa", { ammo = { grenade = 9, shards = 9, punch = 9 }, crate_every = 1 })
 	local ws = { "grenade", "shards", "punch", "missile" }
 	local k = 0
 	for i = 1, 4000 do
@@ -1892,7 +1892,7 @@ check(play2(5) == play2(5), "crate weapons and crates are deterministic")
 local U = game.U
 
 -- Movement: run 5 u/s, jump 5.2 u high
-local bm = game.new(42, "forgia")
+local bm = game.new(42, "pavimento")
 run(bm, 120)
 local br = bm.robots[1]
 local x0 = br.x
@@ -1907,7 +1907,7 @@ end
 check(math.abs((top - base) - 5.2 * U) < 0.35 * U, string.format("jump 5.2 u high (%.1f px)", top - base))
 
 -- Instant air control; without direction the speed stays
-local ba = game.new(42, "forgia")
+local ba = game.new(42, "pavimento")
 run(ba, 120)
 local ar = ba.robots[1]
 ba:step({ jump = true, right = true })
@@ -1921,7 +1921,7 @@ check(ar.vx == -ar.stats.air_speed and not ar.grounded, "without direction in th
 -- Explosion: damage from the nearest point of the square, no push on a direct
 -- hit, maximum at half radius, half damage to oneself
 local function blast_at(dx, owner)
-	local q = game.new(42, "forgia")
+	local q = game.new(42, "pavimento")
 	run(q, 120)
 	local r = q.robots[2]
 	local y = sky_spot(q, 640, 60)
@@ -1945,7 +1945,7 @@ local _, ds = blast_at(-1, 2)
 check(ds == math.floor(B.damage * 0.5 + 0.5), "half damage to oneself")
 
 -- Where you get hit: a circle at mid height, not the box
-local hb = game.new(42, "forgia")
+local hb = game.new(42, "pavimento")
 local hr = hb.robots[2]
 local hcy = hr.y + game.HURT_Y
 check(hb:hits_robot(hr.x + game.HURT_R - 0.5, hcy, 1, 0) and not hb:hits_robot(hr.x + game.HURT_R + 0.5, hcy, 1, 0),
@@ -1963,7 +1963,7 @@ check(game.DISEGNO_H == game.REF_H * game.CORPO, "the drawing doesn't depend on 
 -- Melee on the aim: target = position of the target relative to the feet (in U
 -- units), robots stay still in the air; returns the tick of the hit or false
 local function melee_at(deg, tx, ty, weapon)
-	local q = game.new(42, "forgia")
+	local q = game.new(42, "pavimento")
 	run(q, 120)
 	q:pop_events()
 	local pos = { { 0, 0 }, { tx * U, ty * U } }
@@ -2001,7 +2001,7 @@ check(not melee_at(-60, 0, 4 + 7.5 * (C - 1), "punch"), "the uppercut aimed down
 
 
 -- Fall damage past 40 u
-local bf = game.new(42, "forgia")
+local bf = game.new(42, "pavimento")
 run(bf, 120)
 local fr2 = bf.robots[1]
 local hp0 = fr2.hp
@@ -2034,7 +2034,7 @@ local expect = math.floor(math.min((fall - game.FALL_SAFE) * game.FALL_DAMAGE, g
 game.FALL_SAFE = safe0
 check(fr2.grounded and fall > 20 * U and expect > 0 and hp0 - fr2.hp == expect,
 	string.format("falling from %.0f px it loses %d (%d)", fall, expect, hp0 - fr2.hp))
-local bf2 = game.new(42, "forgia")
+local bf2 = game.new(42, "pavimento")
 run(bf2, 120)
 local sr = bf2.robots[1]
 bf2:step({ jump = true })
@@ -2047,7 +2047,7 @@ check(game.aim_power(0.2) == 0.1 and game.aim_power(1) == 1 and math.abs(game.ai
 
 -- Random crates: they drop, and always at the same points with the same seed
 local function crates_seen(seed)
-	local q = game.new(seed, "crogiolo")
+	local q = game.new(seed, "fossa")
 	local seen = {}
 	for i = 1, 12 * (game.TURN_TICKS + 200) do
 		q:step()
@@ -2066,7 +2066,7 @@ check(cs ~= "" and cs == crates_seen(9), "crates drop at random but the same wit
 
 -- An empty world with solid terrain below ground(x) (pixels from the bottom)
 local function shaped_world(ground)
-	local q = game.new(42, "forgia")
+	local q = game.new(42, "pavimento")
 	local t, c = q.terrain, game.CELL
 	for i = 1, #t.data do t.data[i] = 0 end
 	for cx = 0, game.WORLD_W / c - 1 do
@@ -2203,7 +2203,7 @@ check(hook_drag(function(x) return (x > 560 and x < 572) and 100 + game.ROBOT_H 
 
 -- Performance: one crater and 600 ticks of simulation
 local t = os.clock()
-local g4 = game.new(5, "casuale")
+local g4 = game.new(5, "pavimento")
 for i = 1, 600 do g4:step({ right = i % 2 == 0 }) end
 for i = 1, 20 do g4.terrain:carve(100 + i * 50, 200, 30) end
 print(string.format("info 600 ticks + 20 craters in %.1f ms", (os.clock() - t) * 1000))
@@ -2250,7 +2250,7 @@ end
 
 do
 	-- whoever leaves online disappears: no points, no respawn, the turn passes
-	local g = game.new(42, "forgia", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
+	local g = game.new(42, "pavimento", { players = { { team = 1 }, { team = 2 }, { team = 3 }, { team = 4 } } })
 	g:pop_events()
 	local point_total = g.robots[2].points
 	g:remove(1)
@@ -2272,7 +2272,7 @@ end
 
 -- match time doesn't go down while waiting for everything to settle between turns
 do
-	local g = game.new(42, "forgia")
+	local g = game.new(42, "pavimento")
 	g:step({ fire = { weapon = "missile", angle = 1.2, power = 0.8 } })
 	while g.phase == "aim" do g:step() end
 	local first_one, t = g.match_left, 0
@@ -2298,7 +2298,7 @@ do
 		"rules: the level cap goes from 1 to below the maximum")
 	check(not rules.validate({ casse = 2 }, true), "rules: on a normal queue only the cap")
 	local opts = rules.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
-	local g = game.new(7, "forgia", opts)
+	local g = game.new(7, "pavimento", opts)
 	check(g.crate_every == 2 and not g.heals_on and g.score.kill == 80 and g.score.damage == config.SCORE.damage,
 		"rules: crates, heals and points reach the match")
 	local d = draft.new(7, config.MODES["2v2"], rules.armi({ armi = { "punch", "mallet", "eagle" } }))

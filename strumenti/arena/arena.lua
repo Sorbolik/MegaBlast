@@ -3,7 +3,7 @@
 -- core c'è arena.py, che ne lancia una per core e mette insieme i risultati.
 --
 --   luajit strumenti/arena/arena.lua [--partite N] [--da SEME] [--modo 1v1|2v2|ffa|tutti]
---          [--livello facile|normale|difficile|misto] [--mappa forgia|crogiolo] [--uscita file.jsonl]
+--          [--livello facile|normale|difficile|misto] [--mappa pavimento|fossa] [--uscita file.jsonl]
 --          [--punteggio variante.lua]   -- una tabella come config.SCORE (opts.score), per provare varianti
 --          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
