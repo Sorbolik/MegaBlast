@@ -39,10 +39,12 @@ local SEGUI, SEGUI_VELOCE, ZOOM = 5, 9, 6
 -- allontanarsi è più svelto di avvicinarsi, perché il colpo non scappi dallo schermo
 local ZOOM_FUORI = 12
 -- pixel dello schermo sotto lo spazio di gioco (la barra dell'HUD), sopra (i
--- punti) e ai lati
-M.SOTTO = 120
-M.SOPRA = 70
-M.LATO = 16
+-- punti) e ai lati. Con un po' di margine oltre l'HUD (Sergio, 3 nov: allo zoom
+-- massimo i pulsanti a volte coprivano i personaggi): sotto la barra e le
+-- levette, ai lati le colonne di pulsanti tondi che salgono più della barra
+M.SOTTO = 150
+M.SOPRA = 85
+M.LATO = 44
 
 local function clamp(v, a, b)
 	return math.min(math.max(v, a), b)
