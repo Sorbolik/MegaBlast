@@ -36,6 +36,9 @@ local OGNI = 0.25
 local adesso = socket.gettime
 
 M.acceso = false
+-- il velo di un passaggio copre tutto (ui/passaggio.lua): uno scatto adesso non
+-- si vede, si scrive "(coperto)" e non conta fra gli scatti
+M.coperto = false
 -- nel simulatore: righe nel log per simula.py
 M.log = false
 
@@ -48,12 +51,14 @@ local prima, inizio_lua, lavoro_lua = nil, nil, 0
 local memoria
 -- cause segnate in questo frame e nel frame prima
 local cause, cause_prima = nil, nil
+-- il velo copriva anche il frame prima (lo scatto si paga un frame dopo)
+local coperto_prima = false
 -- gli scatti (tempo, durata, causa) dell'ultimo minuto, in giro (1024 bastano anche a 120 Hz tutto a scatti)
 local scatti, n_scatti = {}, 0
 local orologio, calcolato = 0, 0
 local riga_cambiata = false
 -- il riassunto per il simulatore (dall'ultimo riassunto)
-local riassunto = { n = 0, scatti = 0, peggiore = 0, peggiore_lua = 0, allocati = 0, t = 0 }
+local riassunto = { n = 0, scatti = 0, coperti = 0, peggiore = 0, peggiore_lua = 0, allocati = 0, t = 0 }
 
 function M.segna(causa)
 	cause = cause and (cause .. "+" .. causa) or causa
@@ -114,6 +119,8 @@ function M.inizio()
 		riga_cambiata = true
 	end
 
+	local coperto = M.coperto or coperto_prima
+	coperto_prima = M.coperto
 	if pieni >= 30 and dt > normale * SCATTO then
 		-- il lavoro segnato in questo frame si paga adesso; quello del frame
 		-- prima a volte un frame dopo (la GPU che carica una texture)
@@ -124,11 +131,16 @@ function M.inizio()
 			elseif lavoro_lua > (dt - normale) * 0.5 then causa = "lua"
 			else causa = "motore" end
 		end
-		n_scatti = n_scatti % 1024 + 1
-		scatti[n_scatti] = { orologio, dt, causa }
-		riassunto.scatti = riassunto.scatti + 1
-		M.ultimo = string.format("%s %.0f ms", causa, dt * 1000)
-		riga_cambiata = true
+		if coperto then
+			causa = causa .. " (coperto)"
+			riassunto.coperti = riassunto.coperti + 1
+		else
+			n_scatti = n_scatti % 1024 + 1
+			scatti[n_scatti] = { orologio, dt, causa }
+			riassunto.scatti = riassunto.scatti + 1
+			M.ultimo = string.format("%s %.0f ms", causa, dt * 1000)
+			riga_cambiata = true
+		end
 		if M.acceso or M.log then
 			print(string.format("%s %.1f ms (normale %.1f, lua %.1f ms) causa: %s",
 				M.log and "SIMULA scatto" or "SCATTO", dt * 1000, normale * 1000, lavoro_lua * 1000, causa))
@@ -180,10 +192,10 @@ function M.riassunto()
 	if r.n == 0 then return nil end
 	local n = ricalcola()
 	local riga = string.format(
-		"SIMULA fotogrammi n=%d fps=%.1f p50=%.1f p95=%.1f p99=%.1f max=%.1f scatti=%d lua_max=%.1f kb_frame=%.1f",
+		"SIMULA fotogrammi n=%d fps=%.1f p50=%.1f p95=%.1f p99=%.1f max=%.1f scatti=%d coperti=%d lua_max=%.1f kb_frame=%.1f",
 		r.n, r.n / r.t, percentile(ordinati, n, 0.5) * 1000, percentile(ordinati, n, 0.95) * 1000,
-		percentile(ordinati, n, 0.99) * 1000, r.peggiore * 1000, r.scatti, r.peggiore_lua * 1000, r.allocati / r.n)
-	riassunto = { n = 0, scatti = 0, peggiore = 0, peggiore_lua = 0, allocati = 0, t = 0 }
+		percentile(ordinati, n, 0.99) * 1000, r.peggiore * 1000, r.scatti, r.coperti, r.peggiore_lua * 1000, r.allocati / r.n)
+	riassunto = { n = 0, scatti = 0, coperti = 0, peggiore = 0, peggiore_lua = 0, allocati = 0, t = 0 }
 	return riga
 end
 

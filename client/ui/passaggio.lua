@@ -6,6 +6,10 @@
 --           spegne nel carbone, la nuova arriva da destra (80 + 80 ms);
 --           tornando indietro al contrario
 -- Mentre un passaggio è in corso il gioco non ascolta i tocchi (attivo).
+-- Dopo il cambio di scena il velo resta chiuso ancora ATTESA frame: il frame del
+-- cambio (dipinti, maschera, nodi della schermata nuova) è lungo, e spesso anche
+-- quello dopo, così gli scatti cadono a schermo coperto e l'animazione che riapre
+-- non salta. Intanto il contatore dei frame (ui/fotogrammi.lua) sa che non si vedono.
 --
 --   local passaggio = require "ui.passaggio"
 --   local p = passaggio.new()
@@ -15,6 +19,7 @@
 --   passaggio.attivo(p)
 
 local schermo = require "ui.schermo"
+local fotogrammi = require "ui.fotogrammi"
 
 local M = {}
 
@@ -22,6 +27,7 @@ local W, H = 1280, 720
 M.IRIDE = 0.15           -- secondi per chiudere, e per riaprire
 M.SCIVOLO = 0.08         -- metà dello scivolo
 M.SPOSTA = W * 0.07      -- quanto scivola una schermata
+M.ATTESA = 3             -- frame a schermo coperto dopo il cambio di scena
 
 function M.new()
 	local n = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * schermo.PIENO, H * schermo.PIENO, 0))
@@ -50,27 +56,33 @@ local function fine(p)
 	p.n = nil
 end
 
+-- A schermo coperto: cambia la scena, poi riapre (riapri) dopo ATTESA frame
+local function coperto(p, cambia, riapri)
+	fotogrammi.coperto = true
+	local nuovi = cambia()
+	gui.move_above(p.nodo, nil)
+	local k = p.n
+	local function dopo(frame)
+		-- se nel frattempo è partito un altro passaggio, lo chiude lui
+		if p.n ~= k then return end
+		if frame > 0 then
+			timer.delay(0, false, function() dopo(frame - 1) end)
+		else
+			fotogrammi.coperto = false
+			riapri(nuovi)
+		end
+	end
+	dopo(M.ATTESA)
+end
+
 function M.iride(p, cambia)
 	inizia(p, 1, 0, 1)
 	gui.animate(p.nodo, "color.x", 0, gui.EASING_INQUAD, M.IRIDE, 0, function()
-		cambia()
-		gui.move_above(p.nodo, nil)
-		-- si riapre tre frame dopo, a schermo nero: cambiando mappa il frame del
-		-- cambio (dipinto e maschera nuovi) è lungo, e spesso anche quello dopo (la
-		-- GPU carica le texture nuove). Così gli scatti cadono sul nero e non
-		-- sull'animazione (Sergio, 2 nov: «qualche scatto in più ... nelle
-		-- schermate di transizione»)
-		local k = p.n
-		local function dopo(frame)
-			-- se nel frattempo è partito un altro passaggio, lo chiude lui
-			if p.n ~= k then return end
-			if frame > 0 then
-				timer.delay(0, false, function() dopo(frame - 1) end)
-			else
-				gui.animate(p.nodo, "color.x", 1, gui.EASING_OUTQUAD, M.IRIDE, 0, function() fine(p) end)
-			end
-		end
-		dopo(3)
+		-- si riapre a schermo nero tre frame dopo (Sergio, 2 nov: «qualche
+		-- scatto in più ... nelle schermate di transizione»)
+		coperto(p, cambia, function()
+			gui.animate(p.nodo, "color.x", 1, gui.EASING_OUTQUAD, M.IRIDE, 0, function() fine(p) end)
+		end)
 	end)
 end
 
@@ -107,14 +119,17 @@ function M.scivolo(p, vecchi, cambia, verso)
 	gui.animate(p.nodo, "color.w", 1, gui.EASING_INQUAD, M.SCIVOLO, 0, function()
 		-- i nodi vecchi tornano a posto (la home si riusa), poi la scena cambia
 		rimetti(vecchi, da)
-		local nuovi = cambia() or {}
-		gui.move_above(p.nodo, nil)
-		local arrivo = sposta(nuovi, verso * M.SPOSTA, 0)
-		for i, n in ipairs(nuovi) do
-			gui.animate(n, "position.x", arrivo[i], gui.EASING_OUTQUAD, M.SCIVOLO)
-		end
-		gui.animate(p.nodo, "color.w", 0, gui.EASING_OUTQUAD, M.SCIVOLO, 0, function()
-			fine(p)
+		-- anche qui la schermata nuova arriva tre frame dopo, a velo pieno
+		coperto(p, function()
+			local nuovi = cambia() or {}
+			return { nuovi, sposta(nuovi, verso * M.SPOSTA, 0) }
+		end, function(n)
+			for i, nodo in ipairs(n[1]) do
+				gui.animate(nodo, "position.x", n[2][i], gui.EASING_OUTQUAD, M.SCIVOLO)
+			end
+			gui.animate(p.nodo, "color.w", 0, gui.EASING_OUTQUAD, M.SCIVOLO, 0, function()
+				fine(p)
+			end)
 		end)
 	end)
 end
