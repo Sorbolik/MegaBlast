@@ -2,11 +2,11 @@
 # Stile del diavoletto: contorno nero spesso (come il diavoletto), colori pieni con una
 # sfumatura semplice (scuro sotto, chiaro sopra) e qualche riga interna.
 # Scrive:
-#   client/assets/armi/<arma>.png         l'arma in mano (punta verso destra)
-#   client/assets/armi/<arma>_tinta.png   le parti col colore della squadra
+#   client/assets/weapons/<arma>.png         l'arma in mano (punta verso destra)
+#   client/assets/weapons/<arma>_tinta.png   le parti col colore della squadra
 #                                         (bianche e grigie, il gioco le tinge)
-#   client/assets/armi/<arma>_icona.png   l'icona della barra e della scelta
-#   client/assets/armi/<proiettile>.png   i colpi in volo (razzo, palla del
+#   client/assets/weapons/<arma>_icona.png   l'icona della barra e della scelta
+#   client/assets/weapons/<proiettile>.png   i colpi in volo (razzo, palla del
 #                                         Cecchino, uovo, scheggia, globo)
 #   client/battle/weapons.atlas
 #   client/battle/weapons.lua             misure in unità del mondo, origine
@@ -27,7 +27,7 @@ from PIL import Image
 QUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, QUI)
 RADICE = os.path.join(QUI, "..", "..")
-OUT = os.path.join(RADICE, "client", "assets", "armi")
+OUT = os.path.join(RADICE, "client", "assets", "weapons")
 LUA = os.path.join(RADICE, "client", "battle", "weapons.lua")
 ATLAS = os.path.join(RADICE, "client", "battle", "weapons.atlas")
 PRESE = os.path.join(RADICE, "client", "battle", "grips.lua")
@@ -543,7 +543,7 @@ def main():
         f.write("\n".join(lua) + "\n")
     with open(ATLAS, "w") as f:
         for n in immagini:
-            f.write(f'images {{\n  image: "/assets/armi/{n}.png"\n}}\n')
+            f.write(f'images {{\n  image: "/assets/weapons/{n}.png"\n}}\n')
         f.write("margin: 0\nextrude_borders: 2\ninner_padding: 0\n")
     anteprima(foglio, colpi)
 

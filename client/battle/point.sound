@@ -1,4 +1,4 @@
-sound: "/assets/suoni/punto.wav"
+sound: "/assets/sounds/punto.wav"
 looping: 0
 group: "master"
 gain: 0.5

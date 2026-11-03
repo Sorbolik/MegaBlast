@@ -2,12 +2,12 @@
 """Prepara l'editor delle animazioni del diavoletto in una pagina sola.
 
 Mette dentro strumenti/animazioni/editor.html i pezzi veri del diavoletto
-(client/assets/diavoletto/*.png), i perni (client/battle/devil.lua), le
+(client/assets/devil/*.png), i perni (client/battle/devil.lua), le
 pelli disegnate sullo stampino (client/battle/skins.lua), le
 animazioni di adesso (client/battle/animations.lua), l'altezza del disegno
 (client/sim/game.lua), le hitbox (client/sim/body.lua), i perni spostati
 (client/battle/pivots.lua), le armi in mano (client/battle/weapons.lua, immagini
-in client/assets/armi) con le loro impugnature (client/battle/grips.lua)
+in client/assets/weapons) con le loro impugnature (client/battle/grips.lua)
 e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
 salvano direttamente in client/battle/animations.lua) e si pubblica com'è
@@ -34,7 +34,7 @@ def main():
     nomi = sorted(set(re.findall(r'(?:img|tint) = "([a-z0-9_]+)"', diavoletto)))
     immagini = {}
     for n in nomi:
-        dati = (REPO / "client/assets/diavoletto" / (n + ".png")).read_bytes()
+        dati = (REPO / "client/assets/devil" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le pelli dello stampino (strumenti/stampino/taglia.py), coi loro pezzi
     pelli = leggi("client/battle/skins.lua")
@@ -45,13 +45,13 @@ def main():
         if svg.exists():
             immagini[n] = "data:image/svg+xml;base64," + base64.b64encode(svg.read_bytes()).decode()
             continue
-        dati = (REPO / "client/assets/pelli" / (n + ".png")).read_bytes()
+        dati = (REPO / "client/assets/skins" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le armi in mano (solo quelle, non i colpi), come armi/nome
     armi = leggi("client/battle/weapons.lua")
     in_mano = armi.split("shots = {")[0]
     for n in sorted(set(re.findall(r'(?:img|tint) = "([a-z0-9_]+)"', in_mano))):
-        dati = (REPO / "client/assets/armi" / (n + ".png")).read_bytes()
+        dati = (REPO / "client/assets/weapons" / (n + ".png")).read_bytes()
         immagini["armi/" + n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # gli angoli a riposo delle armi nella mano (battle/scoria.lua)
     scoria = leggi("client/battle/scoria.lua")

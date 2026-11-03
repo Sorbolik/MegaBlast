@@ -1,4 +1,4 @@
-sound: "/assets/suoni/globo.ogg"
+sound: "/assets/sounds/globo.ogg"
 looping: 0
 group: "master"
 gain: 0.6

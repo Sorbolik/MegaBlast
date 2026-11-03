@@ -2,8 +2,8 @@
 # «partire dall'svg per creare la texture per ogni schermo»).
 #
 # Scrive, per ogni densità di schermo (1 = normale, 2 = alta, vedi DENSITA):
-#   client/dipinti/mappe/<mappa>_<d>.png      il terreno disegnato, 1920 x 1080 per d
-#   client/dipinti/sfondi/<girone>_*_<d>.png  il cielo e i tre gruppi di piani dello sfondo
+#   client/paintings/mappe/<mappa>_<d>.png      il terreno disegnato, 1920 x 1080 per d
+#   client/paintings/sfondi/<girone>_*_<d>.png  il cielo e i tre gruppi di piani dello sfondo
 #   client/battle/paintings.lua              misure e velocità che servono allo shader
 #   strumenti/grafica/mappe/<mappa>.png       la maschera di collisione (bianco terra, rosso
 #                                             acciaio), che mappa_in_lua.py porta in sim/mapdata.lua
@@ -26,7 +26,7 @@ from scena import mix, W, H                                    # noqa: E402
 from dipinto import piani, raggi, grade, DEFS, GRUPPI          # noqa: E402
 from temi import TEMI                                          # noqa: E402
 
-OUT = os.path.join(RADICE, "client", "dipinti")
+OUT = os.path.join(RADICE, "client", "paintings")
 MASCHERE = os.path.join(QUI, "mappe")
 LUA = os.path.join(RADICE, "client", "battle", "paintings.lua")
 
@@ -163,7 +163,7 @@ def maschera(g, nome):
 
 def main():
     P = TEMI["forgia"]
-    for sotto in ("mappe", "sfondi"):
+    for sotto in ("maps", "backgrounds"):
         os.makedirs(os.path.join(OUT, sotto), exist_ok=True)
         for f in os.listdir(os.path.join(OUT, sotto)):
             os.remove(os.path.join(OUT, sotto, f))
@@ -173,11 +173,11 @@ def main():
     for d, k in DENSITA.items():
         lavori.append((svg(p["cielo"] + '<g style="mix-blend-mode:screen">%s</g>' % raggi(FORGIA, P), (0, 0, W, H),
                            round(W * k["cielo"]), round(H * k["cielo"])),
-                       os.path.join(OUT, "sfondi", "forgia_cielo_%d.png" % d), round(W * k["cielo"]), round(H * k["cielo"])))
+                       os.path.join(OUT, "backgrounds", "forgia_cielo_%d.png" % d), round(W * k["cielo"]), round(H * k["cielo"])))
         for nome, contenuto, vel in p["gruppi"]:
             w = min(4096, round(2560 * k[nome]))
             lavori.append((svg(contenuto, (0, 0, 2560, H), w, round(H * w / 2560)),
-                           os.path.join(OUT, "sfondi", "forgia_%s_%d.png" % (nome, d)), w, round(H * w / 2560)))
+                           os.path.join(OUT, "backgrounds", "forgia_%s_%d.png" % (nome, d)), w, round(H * w / 2560)))
     for nome, contenuto, vel in p["gruppi"]:
         strisce.append((nome, vel))
     # il terreno delle mappe dipinte
@@ -186,14 +186,14 @@ def main():
         gioco = piani(g, P)["gioco"]
         for d, k in DENSITA.items():
             w, h = round(1920 * k["terreno"]), round(1080 * k["terreno"])
-            lavori.append((svg(gioco, (0, 0, W, H), w, h), os.path.join(OUT, "mappe", "%s_%d.png" % (nome, d)), w, h))
+            lavori.append((svg(gioco, (0, 0, W, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
     # le arene delle missioni: acciaio, in coordinate del mondo
     m = {c: grade(v, "materiale", P) for c, v in FORGIA["mat"].items() if isinstance(v, str) and v.startswith("#")}
     for mid, rett in arene().items():
         corpo = "".join(acciaio(x, 1080 - y - h, w, h, m) for x, y, w, h in rett)
         for d, k in DENSITA.items():
             w, h = round(1920 * k["terreno"]), round(1080 * k["terreno"])
-            lavori.append((svg(corpo, (0, 0, 1920, 1080), w, h), os.path.join(OUT, "mappe", "missione_%s_%d.png" % (mid, d)), w, h))
+            lavori.append((svg(corpo, (0, 0, 1920, 1080), w, h), os.path.join(OUT, "maps", "missione_%s_%d.png" % (mid, d)), w, h))
     with tempfile.TemporaryDirectory() as tmp:
         rendi(lavori, tmp)
     # i gruppi dello sfondo: si tiene solo la fascia che ha qualcosa (misure nella scena)
@@ -201,7 +201,7 @@ def main():
     for nome, vel in strisce:
         y0s, y1s = [], []
         for d in DENSITA:
-            f = os.path.join(OUT, "sfondi", "forgia_%s_%d.png" % (nome, d))
+            f = os.path.join(OUT, "backgrounds", "forgia_%s_%d.png" % (nome, d))
             im = Image.open(f)
             box = im.getchannel("A").getbbox()
             sc = im.width / 2560
@@ -209,14 +209,14 @@ def main():
             y1s.append(box[3] / sc)
         y0, y1 = max(0, int(min(y0s)) - 2), min(H, int(max(y1s)) + 3)
         for d in DENSITA:
-            f = os.path.join(OUT, "sfondi", "forgia_%s_%d.png" % (nome, d))
+            f = os.path.join(OUT, "backgrounds", "forgia_%s_%d.png" % (nome, d))
             im = Image.open(f)
             sc = im.width / 2560
             im.crop((0, round(y0 * sc), im.width, round(y1 * sc))).save(f, optimize=True)
         fasce[nome] = (y0, y1 - y0, vel)
     # i numeri per lo shader
     righe = ["-- Made by strumenti/grafica/mappe_dipinte.py, do not edit by hand.",
-             "-- The painted images (client/dipinti, one per screen density) and the background",
+             "-- The painted images (client/paintings, one per screen density) and the background",
              "-- numbers: for each group of planes where it sits in the 1280 x 720 scene (y0 from",
              "-- the top, h), how much it follows the camera (parallax) and how many scene pixels",
              "-- it scrolls per second.",

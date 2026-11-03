@@ -1,8 +1,8 @@
 # Cassa delle armi: il baule aperto con i denti disegnato da Gabriella (ChatGPT,
 # già scontornato). Toglie il bordo chiaro da adesivo attorno al disegno (il
 # contorno scuro resta) e lo riduce a ALTO pixel, quanto serve sullo schermo.
-#   client/assets/casse/cassa.png        il baule
-#   client/assets/casse/cassa_luce.png   serratura e punte dei denti, bianche:
+#   client/assets/crates/cassa.png        il baule
+#   client/assets/crates/cassa_luce.png   serratura e punte dei denti, bianche:
 #                                        il gioco le tinge di brace e le fa pulsare
 # Uso: python3 strumenti/grafica/cassa.py [baule_aperto.png]
 import sys
@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 SORGENTE = sys.argv[1] if len(sys.argv) > 1 else "/mnt/project-files/gabriella/disegni/2026-10-24_chatgpt/scontornati/baule_aperto.png"
-OUT = Path(__file__).resolve().parents[2] / "client/assets/casse"
+OUT = Path(__file__).resolve().parents[2] / "client/assets/crates"
 # in gioco è alta 22,4 unità: alla camera vicina (2,2) su un telefono sono ~80
 # pixel veri, 96 lascia margine senza pesare
 ALTO = 96

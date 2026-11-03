@@ -1,158 +1,158 @@
 images {
-  image: "/assets/armi/missile.png"
+  image: "/assets/weapons/missile.png"
 }
 images {
-  image: "/assets/armi/missile_tinta.png"
+  image: "/assets/weapons/missile_tinta.png"
 }
 images {
-  image: "/assets/armi/missile_icona.png"
+  image: "/assets/weapons/missile_icona.png"
 }
 images {
-  image: "/assets/armi/sniper.png"
+  image: "/assets/weapons/sniper.png"
 }
 images {
-  image: "/assets/armi/sniper_tinta.png"
+  image: "/assets/weapons/sniper_tinta.png"
 }
 images {
-  image: "/assets/armi/sniper_icona.png"
+  image: "/assets/weapons/sniper_icona.png"
 }
 images {
-  image: "/assets/armi/grenade.png"
+  image: "/assets/weapons/grenade.png"
 }
 images {
-  image: "/assets/armi/grenade_tinta.png"
+  image: "/assets/weapons/grenade_tinta.png"
 }
 images {
-  image: "/assets/armi/grenade_icona.png"
+  image: "/assets/weapons/grenade_icona.png"
 }
 images {
-  image: "/assets/armi/shards.png"
+  image: "/assets/weapons/shards.png"
 }
 images {
-  image: "/assets/armi/shards_tinta.png"
+  image: "/assets/weapons/shards_tinta.png"
 }
 images {
-  image: "/assets/armi/shards_icona.png"
+  image: "/assets/weapons/shards_icona.png"
 }
 images {
-  image: "/assets/armi/punch.png"
+  image: "/assets/weapons/punch.png"
 }
 images {
-  image: "/assets/armi/punch_tinta.png"
+  image: "/assets/weapons/punch_tinta.png"
 }
 images {
-  image: "/assets/armi/punch_icona.png"
+  image: "/assets/weapons/punch_icona.png"
 }
 images {
-  image: "/assets/armi/sword.png"
+  image: "/assets/weapons/sword.png"
 }
 images {
-  image: "/assets/armi/sword_tinta.png"
+  image: "/assets/weapons/sword_tinta.png"
 }
 images {
-  image: "/assets/armi/sword_icona.png"
+  image: "/assets/weapons/sword_icona.png"
 }
 images {
-  image: "/assets/armi/teleport.png"
+  image: "/assets/weapons/teleport.png"
 }
 images {
-  image: "/assets/armi/teleport_tinta.png"
+  image: "/assets/weapons/teleport_tinta.png"
 }
 images {
-  image: "/assets/armi/eagle.png"
+  image: "/assets/weapons/eagle.png"
 }
 images {
-  image: "/assets/armi/eagle_tinta.png"
+  image: "/assets/weapons/eagle_tinta.png"
 }
 images {
-  image: "/assets/armi/eagle_icona.png"
+  image: "/assets/weapons/eagle_icona.png"
 }
 images {
-  image: "/assets/armi/hook.png"
+  image: "/assets/weapons/hook.png"
 }
 images {
-  image: "/assets/armi/hook_tinta.png"
+  image: "/assets/weapons/hook_tinta.png"
 }
 images {
-  image: "/assets/armi/hook_icona.png"
+  image: "/assets/weapons/hook_icona.png"
 }
 images {
-  image: "/assets/armi/mallet.png"
+  image: "/assets/weapons/mallet.png"
 }
 images {
-  image: "/assets/armi/mallet_tinta.png"
+  image: "/assets/weapons/mallet_tinta.png"
 }
 images {
-  image: "/assets/armi/mallet_icona.png"
+  image: "/assets/weapons/mallet_icona.png"
 }
 images {
-  image: "/assets/armi/lunge.png"
+  image: "/assets/weapons/lunge.png"
 }
 images {
-  image: "/assets/armi/lunge_tinta.png"
+  image: "/assets/weapons/lunge_tinta.png"
 }
 images {
-  image: "/assets/armi/lunge_icona.png"
+  image: "/assets/weapons/lunge_icona.png"
 }
 images {
-  image: "/assets/armi/bellows.png"
+  image: "/assets/weapons/bellows.png"
 }
 images {
-  image: "/assets/armi/bellows_tinta.png"
+  image: "/assets/weapons/bellows_tinta.png"
 }
 images {
-  image: "/assets/armi/bellows_icona.png"
+  image: "/assets/weapons/bellows_icona.png"
 }
 images {
-  image: "/assets/armi/scambio_icona.png"
+  image: "/assets/weapons/scambio_icona.png"
 }
 images {
-  image: "/assets/armi/teleport_icona.png"
+  image: "/assets/weapons/teleport_icona.png"
 }
 images {
-  image: "/assets/armi/trap_icona.png"
+  image: "/assets/weapons/trap_icona.png"
 }
 images {
-  image: "/assets/armi/shield_icona.png"
+  image: "/assets/weapons/shield_icona.png"
 }
 images {
-  image: "/assets/armi/trampoline_icona.png"
+  image: "/assets/weapons/trampoline_icona.png"
 }
 images {
-  image: "/assets/armi/parachute_icona.png"
+  image: "/assets/weapons/parachute_icona.png"
 }
 images {
-  image: "/assets/armi/uncino.png"
+  image: "/assets/weapons/uncino.png"
 }
 images {
-  image: "/assets/armi/razzo.png"
+  image: "/assets/weapons/razzo.png"
 }
 images {
-  image: "/assets/armi/razzo_tinta.png"
+  image: "/assets/weapons/razzo_tinta.png"
 }
 images {
-  image: "/assets/armi/palla.png"
+  image: "/assets/weapons/palla.png"
 }
 images {
-  image: "/assets/armi/palla_tinta.png"
+  image: "/assets/weapons/palla_tinta.png"
 }
 images {
-  image: "/assets/armi/uovo.png"
+  image: "/assets/weapons/uovo.png"
 }
 images {
-  image: "/assets/armi/uovo_tinta.png"
+  image: "/assets/weapons/uovo_tinta.png"
 }
 images {
-  image: "/assets/armi/scheggia.png"
+  image: "/assets/weapons/scheggia.png"
 }
 images {
-  image: "/assets/armi/scheggia_tinta.png"
+  image: "/assets/weapons/scheggia_tinta.png"
 }
 images {
-  image: "/assets/armi/globo.png"
+  image: "/assets/weapons/globo.png"
 }
 images {
-  image: "/assets/armi/globo_tinta.png"
+  image: "/assets/weapons/globo_tinta.png"
 }
 margin: 0
 extrude_borders: 2

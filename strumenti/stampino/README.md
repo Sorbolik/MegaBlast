@@ -83,7 +83,7 @@ python3 strumenti/stampino/taglia.py --ritocchi ritocchi.json   # i ritocchi fat
 
 `taglia.py` ritaglia ogni casella cambiata, toglie il manichino (per quelle
 sopra), allinea se serve, divide la coda, separa bordo e colore dei pezzi in
-catena e il colore della squadra, e scrive `client/assets/pelli/<nome>_<posto>.png`,
+catena e il colore della squadra, e scrive `client/assets/skins/<nome>_<posto>.png`,
 `strumenti/stampino/pelli/<nome>.json`, `client/battle/skins.lua` e l'atlante
 del diavoletto, che contiene base e pelli insieme (si disegna in una volta).
 
