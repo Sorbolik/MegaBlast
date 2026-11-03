@@ -1304,6 +1304,8 @@ local function handle_event(self, e)
 			snap_robot(self, e.robot)
 		end
 	elseif e.type == "over" then
+		-- prova_vince 1: the first robot's team wins (scenari/podio_forgia.txt)
+		if SIMULATE and config_int("megablast.prova_vince", 0) > 0 then e.winner = self.g.robots[1].team end
 		-- the replay is over: back to the profile
 		if self.rewatching then
 			CP.replay_end(self)
@@ -1320,9 +1322,14 @@ local function handle_event(self, e)
 		show_message(self, text, true)
 		self.online_end = self.mode == "online"
 		self.mode = "ended"
-		-- after a moment (or at the first tap) the podium with the results
-		self.risultati = e.results
-		self.podium_t = PODIUM_WAIT
+		-- after a moment (or at the first tap) the podium with the results; a
+		-- campaign battle (not the guided match) ends with its stars instead
+		-- (open_level_end): with both, the podium stayed under the stars screen
+		-- and the game looked stuck (Sergio, 3 nov)
+		if not (self.missione and not self.missione.l.guidata) then
+			self.risultati = e.results
+			self.podium_t = PODIUM_WAIT
+		end
 	end
 end
 
@@ -1982,6 +1989,12 @@ local function start_mission(self, id, picks)
 		return
 	end
 	new_match(self, missions.partita(r, os.time(), picks, profile.help(self.profilo, id)))
+	-- prova_durata N also in the missions' battles (scenari/podio_forgia.txt)
+	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
+	if duration > 0 then
+		self.g.match_left = duration * 60
+		self.ricetta.durata = self.g.match_left
+	end
 	missions.prepara(r, self.g)
 	-- the keepers and the opponents with their names, and who speaks
 	for i, p in ipairs(r.l.giocatori) do
