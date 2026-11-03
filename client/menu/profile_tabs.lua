@@ -165,7 +165,7 @@ local function sheet_stats(s, parent)
 	for _, g in ipairs(profile.GROUPS) do
 		local nome = profile.GROUP_NAMES[g]
 		local w = 24 + #nome * 11
-		ui.scheda(s.buttons, x + w / 2, 610, w, 40, nome, "gruppo:" .. g, s.gruppo == g, parent)
+		ui.scheda(s.buttons, x + w / 2, 604, w, 40, nome, "gruppo:" .. g, s.gruppo == g, parent)
 		x = x + w + 8
 	end
 	local st = profile.statistiche(p, s.gruppo)
@@ -397,9 +397,9 @@ local function build(s)
 	s.angoli = { back, dx }
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
-	ui.scheda(s.buttons, 400, 662, 150, 56, "SCHEDA", "scheda:scheda", s.scheda == "scheda", s.radice)
-	ui.scheda(s.buttons, 586, 662, 206, 56, "STATISTICHE", "scheda:statistiche", s.scheda == "statistiche", s.radice)
-	ui.scheda(s.buttons, 772, 662, 150, 56, "PARTITE", "scheda:partite", s.scheda == "partite", s.radice)
+	ui.scheda(s.buttons, 400, 652, 150, 48, "SCHEDA", "scheda:scheda", s.scheda == "scheda", s.radice)
+	ui.scheda(s.buttons, 586, 652, 206, 48, "STATISTICHE", "scheda:statistiche", s.scheda == "statistiche", s.radice)
+	ui.scheda(s.buttons, 772, 652, 150, 48, "PARTITE", "scheda:partite", s.scheda == "partite", s.radice)
 	-- level and experience at the top right
 	gui.set_visible(dx, false)
 	gui.set_xanchor(dx, gui.ANCHOR_RIGHT)
