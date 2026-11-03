@@ -6,7 +6,7 @@ passare la build automatica e comparire solo quando Sergio apre il progetto.
 Qui ripetiamo quei controlli. Ogni regola cita da dove viene nell'editor.
 
 In più una regola del gioco: niente nodi GUI stirati (ADJUST_STRETCH), che su
-uno schermo non 16:9 diventano ovali (ui/schermo.lua).
+uno schermo non 16:9 diventano ovali (ui/screen.lua).
 
 Uso: python3 strumenti/simula/controlla.py [cartella del client]
 Esce con 1 se trova errori.
@@ -83,12 +83,12 @@ STIRATO = re.compile(r"ADJUST_STRETCH|ADJUST_MODE_STRETCH")
 
 
 def controlla_proporzioni(root, f, errori):
-    # Sergio, 29 ott: niente deve mai diventare ovale. Tutto FIT (ui/schermo.lua).
+    # Sergio, 29 ott: niente deve mai diventare ovale. Tutto FIT (ui/screen.lua).
     nome = "/" + f.relative_to(root).as_posix()
     for i, riga in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
         if STIRATO.search(riga) and not riga.lstrip().startswith("--"):
             errori.append(f"{nome}:{i}: nodo stirato (ADJUST_STRETCH) che si deforma sugli schermi "
-                          f"non 16:9: usa gui.ADJUST_FIT e i bordi di ui/schermo.lua")
+                          f"non 16:9: usa gui.ADJUST_FIT e i bordi di ui/screen.lua")
 
 
 # Il motore Android è sfoltito (megablast.appmanifest): un modulo Lua tolto lì

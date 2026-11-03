@@ -1,4 +1,4 @@
-# La mira delle armi da vicino (battaglia/mira.lua): "bersaglio acceso, minimale"
+# La mira delle armi da vicino (battle/aim.lua): "bersaglio acceso, minimale"
 # (Sergio, 29 ott). Niente lancetta né cartellino: una punta piccola nella
 # direzione del colpo e un anello ai piedi di chi verrebbe colpito, provato su
 # una copia della partita. Il Blu parte 60 pixel a destra: il Rosso col

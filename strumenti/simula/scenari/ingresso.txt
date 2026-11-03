@@ -1,4 +1,4 @@
-# L'ingresso (ui/ingresso.lua) con lo sfondo vivo della Forgia, poi i
+# L'ingresso (ui/entry.lua) con lo sfondo vivo della Forgia, poi i
 # passaggi: lo scivolo verso DOVE GIOCHI?, l'iride verso la partita.
 # prova_ingresso: quanti secondi resta l'ingresso (negli altri scenari si
 # chiude subito).

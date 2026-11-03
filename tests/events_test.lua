@@ -1,11 +1,11 @@
--- Events in the game (client/main/eventi.lua): what's running, what counts for
+-- Events in the game (client/main/events.lua): what's running, what counts for
 -- which queue, the lines of the home and of the board. The real calendar is
 -- tested by go test ./server/ (events_test.go).
 --
 --   luajit tests/events_test.lua
 
 package.path = "client/?.lua;" .. package.path
-local events = require "main.eventi"
+local events = require "main.events"
 
 local failures = 0
 local function check(cond, msg)

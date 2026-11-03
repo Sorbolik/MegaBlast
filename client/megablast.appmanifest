@@ -3,7 +3,7 @@
 # (collisioni e terreno sono nella nostra sim), registratore video, profiler,
 # particellari, tilemap, live update, Vulkan (resta OpenGL ES).
 # Restano image.load (le mappe dipinte di client/dipinti si caricano a runtime,
-# battaglia/terreno.script), grafica, suono (wav e ogg), GUI, font, input, mesh, Basis (texture compresse).
+# battle/terrain.script), grafica, suono (wav e ogg), GUI, font, input, mesh, Basis (texture compresse).
 platforms:
   armv7-android:
     context:

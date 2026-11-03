@@ -4,14 +4,14 @@
 -- they join the queue (level and badges, from the server's "wait"), the empty
 -- ones wait with "IN ARRIVO". Above, what you are looking for, how many there
 -- are and the time that passes; below, a tip that changes every TIP_EVERY
--- seconds. When the queue is full the lineup takes over (menu/schieramento.lua).
+-- seconds. When the queue is full the lineup takes over (menu/lineup.lua).
 -- If nobody else arrives, after the server's BotAfter (25 s, lobby.go) bots
 -- fill the empty places: the line counts it down (BOT TRA N s). ESCI DALLA
 -- CODA, at the bottom, leaves the queue (like the gear's ESCI DALLA RICERCA).
 --
 --   local s = sala.new(of, titolo, parent_below)  -- of: players of the match; parent_below: the
 --                                                 -- gear, which stays above (its wheel too)
---   sala.giocatori(s, vetrine) -> true if someone new arrived (vetrine: menu/vetrina.lua, in queue order)
+--   sala.giocatori(s, vetrine) -> true if someone new arrived (vetrine: menu/showcase.lua, in queue order)
 --   sala.bot_in(s, secs)                         -- the bots arrive in secs seconds (nil: no bots, events)
 --   sala.exit_hit(s, x, y) -> true on ESCI DALLA CODA (x, y as gui.pick_node wants them)
 --   sala.update(s, dt)
@@ -19,7 +19,7 @@
 --   sala.destroy(s)
 
 local ui = require "ui.ui"
-local tag = require "ui.cartellino"
+local tag = require "ui.tag_card"
 
 local M = {}
 

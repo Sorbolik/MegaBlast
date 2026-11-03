@@ -1,5 +1,5 @@
 # Fluidità (docs/prestazioni.md): un giro che tocca le cose che possono far
-# scattare il gioco. Il contatore dei fotogrammi (ui/fotogrammi.lua) scrive ogni
+# scattare il gioco. Il contatore dei fotogrammi (ui/frames.lua) scrive ogni
 # scatto con la causa; simula.py li raccoglie in simulazione/fotogrammi.txt.
 # Meglio con --senza-video (ffmpeg ruba la CPU al gioco).
 # La home dipinta ferma, Primi passi (carica il terreno dipinto), la camminata,

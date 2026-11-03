@@ -1,6 +1,6 @@
--- Tests of the Scoria (battaglia/scoria.lua) and of the plate with name and
--- health (battaglia/targa.lua) with a fake gui, and of the camera
--- (battaglia/camera.lua). From the repository root:
+-- Tests of the Scoria (battle/scoria.lua) and of the plate with name and
+-- health (battle/plate.lua) with a fake gui, and of the camera
+-- (battle/camera.lua). From the repository root:
 --   luajit tests/battaglia_test.lua
 package.path = "client/?.lua;" .. package.path
 
@@ -46,13 +46,13 @@ gui = {
 resource = { get_text_metrics = function(_, txt) return { width = 20 * #txt, height = 40 } end }
 
 local game = require "sim.game"
--- the pivots moved in the editor (battaglia/perni.lua) are Sergio's data and
+-- the pivots moved in the editor (battle/pivots.lua) are Sergio's data and
 -- change: here the mechanics are tested with still pivots, and the tests that
 -- move them set their own
-package.loaded["battaglia.perni"] = {}
-local scoria = require "battaglia.scoria"
-local camera = require "battaglia.camera"
-local plate = require "battaglia.targa"
+package.loaded["battle.pivots"] = {}
+local scoria = require "battle.scoria"
+local camera = require "battle.camera"
+local plate = require "battle.plate"
 
 local failures = 0
 local function check(cond, msg)
@@ -95,9 +95,9 @@ local st = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = t
 for _ = 1, 60 do scoria.update(s, 1 / 60, st) end
 check(everything_done(), "at rest: finite values")
 
--- grip, pivot and shoulder of each weapon (battaglia/impugnature.lua)
-local GRIPS = require "battaglia.impugnature"
-local D0 = require "battaglia.diavoletto"
+-- grip, pivot and shoulder of each weapon (battle/grips.lua)
+local GRIPS = require "battle.grips"
+local D0 = require "battle.devil"
 -- whoever grips the weapon (the clip says who) holds it: the little hand sits
 -- on the grip, the arm points toward the grip (it reaches it only if the grip
 -- is as far from the shoulder as the arm is long, and clips can move the shoulder)
@@ -153,7 +153,7 @@ st.aim = nil
 -- in a fixed order: pairs changes order from one run to the next and, if the
 -- last one were the Blade, the death check below wouldn't change it
 local name_list = {}
-for name in pairs(require("battaglia.armi").armi) do name_list[#name_list + 1] = name end
+for name in pairs(require("battle.weapons").armi) do name_list[#name_list + 1] = name end
 table.sort(name_list)
 for _, name in ipairs(name_list) do
 	check(s.armi[name] ~= nil, name .. ": the drawing is in the hand")
@@ -197,10 +197,10 @@ scoria.set_enabled(s, true)
 check(s.root.enabled and not s.morte, "new match: the body comes back")
 check(math.abs(game.DISEGNO_H - s.h) < 1e-9, "the body is as tall as the drawing (DISEGNO_H)")
 
--- Poses (battaglia/pose.lua) and clips (battaglia/animazioni.lua) --------------
+-- Poses (battle/pose.lua) and clips (battle/animations.lua) --------------
 
-local pose = require "battaglia.pose"
-local A = require "battaglia.animazioni"
+local pose = require "battle.pose"
+local A = require "battle.animations"
 local function near(a, b) return math.abs(a - b) < 1e-6 end
 local clip = { durata = 1, ciclo = true, tracce = { testa = { 0, 0, 0, 0.5, 1, 1, 0.75, 2, 2 } },
 	viso = { 0.2, "testa_felice", 0.6, "testa_ko" } }
@@ -241,13 +241,13 @@ end
 
 -- the pieces' forward-back and up-down moves
 do
-	local A2 = require "battaglia.animazioni"
+	local A2 = require "battle.animations"
 	local old_f = A2.fermo
 	A2.fermo = { durata = 1, ciclo = true, tracce = { testa_x = { 0, 10, 0 }, braccio_d_y = { 0, -8, 0 }, coda_x = { 0, 5, 0 } } }
 	local v = scoria.new(vec(1, 0.2, 0.3, 1))
 	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0 }
 	for _ = 1, 5 do scoria.update(v, 1 / 60, st2) end
-	local D = require "battaglia.diavoletto"
+	local D = require "battle.devil"
 	local k = v.k
 	check(math.abs(v.collo.pos.x - (D.punti.collo[1] + 10) * k) < 1e-6
 		and math.abs(v.braccio_d.pos.y - (D.punti.spalle[2] - 8) * k) < 1e-6
@@ -256,13 +256,13 @@ do
 	A2.fermo = old_f
 end
 
--- the pivots moved in the editor (battaglia/perni.lua): the joint moves, the
+-- the pivots moved in the editor (battle/pivots.lua): the joint moves, the
 -- pieces the opposite way, so at rest they stay where they are
 do
-	local D = require "battaglia.diavoletto"
-	package.loaded["battaglia.perni"] = { braccio = { 3, -2 }, testa = { 1, 4 } }
-	package.loaded["battaglia.scoria"] = nil
-	local sc2 = require "battaglia.scoria"
+	local D = require "battle.devil"
+	package.loaded["battle.pivots"] = { braccio = { 3, -2 }, testa = { 1, 4 } }
+	package.loaded["battle.scoria"] = nil
+	local sc2 = require "battle.scoria"
 	local v = sc2.new(vec(1, 0.2, 0.3, 1))
 	sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0 })
 	local k = v.k
@@ -277,18 +277,18 @@ do
 		"pivots: the arm turns around the moved pivot and at rest stays where it was")
 	check(head and math.abs(head.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6,
 		"pivots: the head stays where it was")
-	package.loaded["battaglia.perni"] = {}
-	package.loaded["battaglia.scoria"] = nil
-	scoria = require "battaglia.scoria"
+	package.loaded["battle.pivots"] = {}
+	package.loaded["battle.scoria"] = nil
+	scoria = require "battle.scoria"
 end
 
 -- the pivots of torso, tail and little hands: at rest the pieces stay where
 -- they are, the torso turns around its pivot
 do
 	local function pieces_of(pivots)
-		package.loaded["battaglia.perni"] = pivots
-		package.loaded["battaglia.scoria"] = nil
-		local sc2 = require "battaglia.scoria"
+		package.loaded["battle.pivots"] = pivots
+		package.loaded["battle.scoria"] = nil
+		local sc2 = require "battle.scoria"
 		local from_pt = #nodes
 		local v = sc2.new(vec(1, 0.2, 0.3, 1))
 		sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0 })
@@ -312,24 +312,24 @@ do
 	local PT = D0.punti
 	local gx, gy = world(v1.forma, (PT.bacino[1] + 3 + v1.posa.busto_x) * v1.k, (PT.bacino[2] + 20 + v1.posa.busto_y) * v1.k)
 	check(math.abs(px - gx) < 1e-6 and math.abs(py - gy) < 1e-6, "pivots: the torso turns around its pivot")
-	package.loaded["battaglia.perni"] = {}
-	package.loaded["battaglia.scoria"] = nil
-	scoria = require "battaglia.scoria"
+	package.loaded["battle.pivots"] = {}
+	package.loaded["battle.scoria"] = nil
+	scoria = require "battle.scoria"
 end
 
 -- the front arm's pivot moved: the weapon stays in the hand (with an aim that
 -- moves nothing and the front arm gripping)
 do
-	local A2 = require "battaglia.animazioni"
+	local A2 = require "battle.animations"
 	local old_f = A2.mira_missile
 	A2.mira_missile = { durata = 1, ciclo = true, tracce = {} }
 	-- a grip as far from the shoulder as the arm is long (the real one is moved
 	-- by Sergio in the editor)
 	local real_grip = GRIPS.missile
 	GRIPS.missile = { presa = { 2.4, -4 }, perno = { -6.9, -4 }, spalla = { 32, 110 } }
-	package.loaded["battaglia.perni"] = { braccio = { 3, -2 } }
-	package.loaded["battaglia.scoria"] = nil
-	local sc2 = require "battaglia.scoria"
+	package.loaded["battle.pivots"] = { braccio = { 3, -2 } }
+	package.loaded["battle.scoria"] = nil
+	local sc2 = require "battle.scoria"
 	local v = sc2.new(vec(1, 0.2, 0.3, 1))
 	sc2.set_weapon(v, "missile")
 	for _ = 1, 30 do sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true, aim = 0.3 }) end
@@ -341,22 +341,22 @@ do
 	check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5 and px ~= gx, "pivots: with the arm's pivot moved the weapon stays in the hand")
 	A2.mira_missile = old_f
 	GRIPS.missile = real_grip
-	package.loaded["battaglia.perni"] = {}
-	package.loaded["battaglia.scoria"] = nil
-	scoria = require "battaglia.scoria"
+	package.loaded["battle.pivots"] = {}
+	package.loaded["battle.scoria"] = nil
+	scoria = require "battle.scoria"
 end
 
 -- the pieces the clips show and remove, and the clips with the weapon in hand
 do
-	local A2 = require "battaglia.animazioni"
+	local A2 = require "battle.animations"
 	local old_fs = { fermo = A2.fermo, fermo_arma = A2.fermo_arma, fermo_arma_missile = A2.fermo_arma_missile }
 	A2.fermo_arma_missile = nil
 	A2.fermo = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, mostra_manina_a = { 0, 1, 2 },
 		manina_a_x = { 0, 7, 2 }, manina_a = { 0, 0.5, 2 }, mostra_ala = { 0, 0, 2 }, mostra_coda = { 0, 0, 2 },
 		mostra_testa = { 0, 0, 2 }, mostra_gamba_d = { 0, 0, 2 } } }
 	A2.fermo_arma = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, arma = { 0, 0.5, 2 } } }
-	package.loaded["battaglia.scoria"] = nil
-	local sc2 = require "battaglia.scoria"
+	package.loaded["battle.scoria"] = nil
+	local sc2 = require "battle.scoria"
 	local v = sc2.new(vec(1, 0.2, 0.3, 1))
 	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = false }
 	v.weapon_t = 100
@@ -366,7 +366,7 @@ do
 		and not v.coda[1][1].enabled and not v.coda[1][2].enabled and not v.testa.enabled and v.collo.enabled
 		and not v.gamba_d.enabled and v.gamba_a.enabled and v.busto.enabled,
 		"pieces: the clip removes arm, head, leg, wing and tail and adds the little hand")
-	local D = require "battaglia.diavoletto"
+	local D = require "battle.devil"
 	local mx = (D.punti.spalle[1] + D.pezzi.braccio.x + 7) * v.k
 	check(math.abs(v.manina_a.pos.x - mx) < 1e-6 and math.abs(math.rad(v.manina_a.euler.z) - 0.5) < 1e-6,
 		"pieces: the little hand is free, the clip moves and turns it")
@@ -386,17 +386,17 @@ do
 	end
 	check(grip and posed, "waiting: whoever's turn it isn't takes and puts down the weapon")
 	A2.fermo, A2.fermo_arma, A2.fermo_arma_missile = old_fs.fermo, old_fs.fermo_arma, old_fs.fermo_arma_missile
-	package.loaded["battaglia.scoria"] = nil
-	scoria = require "battaglia.scoria"
+	package.loaded["battle.scoria"] = nil
+	scoria = require "battle.scoria"
 end
 
 -- the clips for one weapon only (fermo_arma_mallet) and each weapon's grips
 do
-	local A2 = require "battaglia.animazioni"
+	local A2 = require "battle.animations"
 	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true }
 	local function turn_around(nome)
-		package.loaded["battaglia.scoria"] = nil
-		local sc2 = require "battaglia.scoria"
+		package.loaded["battle.scoria"] = nil
+		local sc2 = require "battle.scoria"
 		local v = sc2.new(vec(1, 0.2, 0.3, 1))
 		sc2.set_weapon(v, nome)
 		for _ = 1, 30 do sc2.update(v, 1 / 60, st2) end
@@ -408,21 +408,21 @@ do
 	check(mallet - mallet0 > 0.8 and math.abs(missile - missile0) < 0.05,
 		"weapon clip: the Mallet uses fermo_arma_mallet, the others fermo_arma")
 	A2.fermo_arma_mallet = nil
-	package.loaded["battaglia.scoria"] = nil
-	scoria = require "battaglia.scoria"
+	package.loaded["battle.scoria"] = nil
+	scoria = require "battle.scoria"
 	-- the weapon is a piece like the others: the clip removes it (mostra_arma)
 	A2.fermo_arma_sword = { durata = 1, ciclo = true, tracce = { mostra_arma = { 0, 0, 2 } } }
-	package.loaded["battaglia.scoria"] = nil
-	local sc3 = require "battaglia.scoria"
+	package.loaded["battle.scoria"] = nil
+	local sc3 = require "battle.scoria"
 	local v = sc3.new(vec(1, 0.2, 0.3, 1))
 	sc3.set_weapon(v, "sword")
 	for _ = 1, 3 do sc3.update(v, 1 / 60, st2) end
 	check(not v.presa.enabled and v.braccio_a.enabled, "pieces: the clip removes the weapon, the arm stays")
 	A2.fermo_arma_sword = nil
-	package.loaded["battaglia.scoria"] = nil
-	scoria = require "battaglia.scoria"
-	local PR = require "battaglia.impugnature"
-	for nome in pairs(require("battaglia.armi").armi) do
+	package.loaded["battle.scoria"] = nil
+	scoria = require "battle.scoria"
+	local PR = require "battle.grips"
+	for nome in pairs(require("battle.weapons").armi) do
 		local g = PR[nome]
 		check(g ~= nil and #g.presa == 2 and #g.perno == 2 and #g.spalla == 2, nome .. ": has grip, pivot and shoulder")
 	end
@@ -431,8 +431,8 @@ do
 	-- which sits on the weapon's shoulder (plus the clip's arma_x and arma_y)
 	local function try_it(traces, grips, levels)
 		A2.fermo_arma_sword = { durata = 1, ciclo = true, tracce = traces, impugna = grips, livelli = levels }
-		package.loaded["battaglia.scoria"] = nil
-		local sc = require "battaglia.scoria"
+		package.loaded["battle.scoria"] = nil
+		local sc = require "battle.scoria"
 		local v = sc.new(vec(1, 0.2, 0.3, 1))
 		sc.set_weapon(v, "sword")
 		for _ = 1, 60 do sc.update(v, 1 / 60, st2) end
@@ -471,15 +471,15 @@ do
 	check(v5.presa.ordine < v5.coda[1][1].ordine and v5.braccio_a.ordine < v5.busto.ordine
 		and v5.busto.ordine < v5.collo.ordine, "layers: the clip picks what is in front")
 	A2.fermo_arma_sword = nil
-	package.loaded["battaglia.scoria"] = nil
-	scoria = require "battaglia.scoria"
+	package.loaded["battle.scoria"] = nil
+	scoria = require "battle.scoria"
 end
 
--- Skins (battaglia/pelli.lua) ---------------------------------------------------
+-- Skins (battle/skins.lua) ---------------------------------------------------
 
 -- fake skins: a new head without faces with the team color, a helmet on top,
 -- a segmented tail, new arms
-local SKINS = require "battaglia.pelli"
+local SKINS = require "battle.skins"
 local function pz(img, modo, tint) return { img = img, tinta = tint, x = 1, y = 2, w = 30, h = 40, modo = modo } end
 SKINS.pelli.prova_testa = { categoria = "testa", pezzi = { testa = pz("t", "sostituisce", "t_tinta") } }
 SKINS.pelli.prova_elmo = { categoria = "elmo", pezzi = { testa = pz("e", "sopra"), busto = pz("eb", "sopra") } }
@@ -621,7 +621,7 @@ for _ = 1, 600 do camera.follow(c, 1 / 60, 0, 0, 2.2) end
 px, py = camera.to_screen(c, 0, 0)
 check(math.abs(px - 640) < 0.5 and math.abs(py - 360) < 0.5, "in the corner the character stays in the center")
 
--- 20:9 phone (ui/schermo.lua): the real screen goes from x = -160 to 1440
+-- 20:9 phone (ui/screen.lua): the real screen goes from x = -160 to 1440
 local l = camera.new(1280, 720, 1920, 1080)
 camera.viewport(l, -160, 0, 1440, 720)
 camera.salta(l, 1000, 500, 1)
@@ -686,9 +686,9 @@ check(a.sc_x == 1, "shake: a weaker one doesn't cancel the running one")
 for _ = 1, 60 do ox = camera.shake_frame(a, 1 / 60) end
 check(ox == 0, "shake: after a moment it stops")
 
--- The aim (battaglia/mira.lua): degrees equal right and left, power ticks,
+-- The aim (battle/aim.lua): degrees equal right and left, power ticks,
 -- dots at the same distance and tip on the last point
-local aim_name = require "battaglia.mira"
+local aim_name = require "battle.aim"
 check(aim_name.gradi(math.rad(40)) == 40 and aim_name.gradi(math.rad(140)) == 40, "aim: 40° right and left")
 check(aim_name.gradi(math.rad(-30)) == -30 and aim_name.gradi(math.rad(-150)) == -30, "aim: pointing down the degrees are negative")
 check(aim_name.gradi(math.rad(90)) == 90, "aim: straight up 90°")
@@ -823,7 +823,7 @@ local function rt2(v, extra)
 end
 local seq2 = { rt2(0.6), rt2(1, { pressed = true }), rt2(0.85, { released = true }), rt2(0.6), rt2(0.3), rt2(0.1), rt2(0) }
 check(table.concat(seq2, ",") == "+rt,,,,,-rt,", "controller: the trigger coming back up is released only once, below 20%")
--- the settings: the buttons to change (menu/impostazioni.lua)
+-- the settings: the buttons to change (menu/settings.lua)
 local m = controller.new("Windows")
 check(controller.assegna(m, "spara", "b") and m.tasti.b == "spara" and m.tasti.rt == "baratto",
 	"controller: SPARA on B, the swap takes RT")

@@ -1,9 +1,9 @@
 -- The home (main menu): behind it the painted Forge background scrolling
--- slowly (drawn by the terrain mesh, battaglia/terreno.script; Sergio 2 Nov),
+-- slowly (drawn by the terrain mesh, battle/terrain.script; Sergio 2 Nov),
 -- the apprentice standing still without a weapon with the Core's glow behind
 -- (tapping it opens the PROFILO), the game's name and only the buttons needed
 -- today: GIOCA (online match), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA,
--- EVENTI and, at the top right, the IMPOSTAZIONI wheel (menu/impostazioni.lua).
+-- EVENTI and, at the top right, the IMPOSTAZIONI wheel (menu/settings.lua).
 -- New screens add their button here once they exist (style in ui/ui.lua).
 --
 -- Use (from the gui_script, which has the ui texture and the titolo font):
@@ -16,9 +16,9 @@
 --   home.eventi(h, riga)                        -- the line under EVENTI
 
 local game = require "sim.game"
-local scoria = require "battaglia.scoria"
+local scoria = require "battle.scoria"
 local ui = require "ui.ui"
-local screen = require "ui.schermo"
+local screen = require "ui.screen"
 
 local M = {}
 
@@ -65,7 +65,7 @@ function M.new(color)
 	scoria.set_enabled(h.corpo, true)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
-	-- tapping the devil opens the profile (menu/profilo_schede.lua): an invisible
+	-- tapping the devil opens the profile (menu/profile_tabs.lua): an invisible
 	-- zone over it, and a discreet label under the feet
 	local zone = gui.new_box_node(vmath.vector3(BODY_X, BODY_Y + 120, 0), vmath.vector3(260, 320, 0))
 	gui.set_visible(zone, false)
@@ -91,7 +91,7 @@ function M.new(color)
 	-- bottom left: loadouts, tree and sets
 	local sx = angle_deg(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	ui.button(h.buttons, 0, 60, 240, 72, "ARMERIA", "armeria", nil, sx)
-	-- above: the EVENTI (menu/bacheca.lua), with what is happening now below
+	-- above: the EVENTI (menu/board.lua), with what is happening now below
 	local ev = ui.button(h.buttons, 0, 160, 240, 96, "", "eventi", nil, sx)
 	ui.testo("EVENTI", 0, 14, 0.9, ui.C.TEXT, ev)
 	h.events_row = ui.testo("", 0, -22, 0.55, ui.C.OFF, ev)
@@ -108,7 +108,7 @@ function M.new(color)
 	return h
 end
 
--- without_veil: you get here with a transition (ui/passaggio.lua), which already covers
+-- without_veil: you get here with a transition (ui/transition.lua), which already covers
 function M.show(h, without_veil)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
 	h.buttons.held_down = nil
@@ -133,7 +133,7 @@ function M.hide(h)
 	h.is_visible = false
 end
 
--- The line under EVENTI (main/eventi.lua, home_line)
+-- The line under EVENTI (main/events.lua, home_line)
 function M.eventi(h, txt)
 	gui.set_text(h.events_row, txt)
 end

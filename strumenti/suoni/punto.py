@@ -1,6 +1,6 @@
 """Il ticchettio dei punti (client/assets/suoni/punto.wav): un tic corto e chiaro,
 due sinusoidi che si spengono in 45 ms. Il gioco lo suona sempre più acuto
-(velocità) finché i punti salgono nel gettone (client/battaglia/punteggio.lua).
+(velocità) finché i punti salgono nel gettone (client/battle/score.lua).
 
     python3 strumenti/suoni/punto.py
 """

@@ -33,7 +33,7 @@
 --     craters don't break the puzzle) and spawns (the player first)
 --   giocatori: opts.players of game.new (team, bot = level, carattere, dummy, pick,
 --     secondary, tool, stats); nome: what that robot is called (the keepers);
---     battute: who speaks for it (battaglia/battute.lua; without, its carattere)
+--     battute: who speaks for it (battle/quips.lua; without, its carattere)
 --   vedi = { "missile", "eagle", ... }: the lessons show only what's needed
 --     ("primarie", "secondarie": all the ones you have; "teleport": the button and
 --     the orbs from time; "parachute"; "tempo": the timer; "punti": the scores;
@@ -46,7 +46,7 @@
 --   no_weapons: the player starts without weapons, until they find the Lanciarune in a crate
 --   casse = { { dopo = 2, arma = "missile", x = 1250 }, ... }: once step dopo is done
 --     (0: at once), that crate drops there (the card of a new weapon pauses the
---     game: battaglia/scheda.lua). In the lessons a limited-shot weapon found
+--     game: battle/card.lua). In the lessons a limited-shot weapon found
 --     there comes back when it can be used again
 --   cards = { { dopo = 1, arma = "sword", give = true } }: once step dopo is done
 --     that weapon's card opens; give: and you get it, without a crate (Sergio,
@@ -90,7 +90,7 @@
 -- The goal steps (testo: how it reads in the goal line). In addition, in the
 -- lessons: only = { "sword", "teleport", "baratto", "primaria", ... }: until
 -- the step is done only that can be used; zoom = 2: the camera widens to that
--- level (battaglia/camera.lua); globi = 2 (with usa = "globi"): time stops
+-- level (battle/camera.lua); globi = 2 (with usa = "globi"): time stops
 -- where those orbs can still be earned
 --   { usa = "globi" | "rampino" | "pogo" | "kickback" | "paracadute" | "baratto" }
 --   { reach = { x = 1200, y = 150 }, flag = true }       standing above that
@@ -240,7 +240,7 @@ function M.nuova(id)
 end
 
 -- seed, map and options of game.new. picks: the players out of the draft
--- (menu/scelta.lua), for the missions that have one
+-- (menu/pick.lua), for the missions that have one
 -- the silent help: bots go down two grades (sim/bot.lua M.GRADI) and start with less life
 local HELP_HP = 0.75
 

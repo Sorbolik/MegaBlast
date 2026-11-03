@@ -38,7 +38,9 @@ REPO = QUI.parents[1]
 LUA = (".lua", ".script", ".gui_script", ".render_script")
 TESTO = (".lua", ".script", ".gui_script", ".render_script", ".go", ".py", ".sh", ".yml",
          ".yaml", ".md", ".js", ".mjs", ".html", ".json", ".jsonc", ".txt", ".collection", ".go_",
-         ".gui", ".project", ".input_binding", ".settings")
+         ".gui", ".project", ".input_binding", ".settings", ".material", ".fp", ".vp", ".glsl",
+         ".mesh", ".atlas", ".font", ".tilesource", ".sound", ".appmanifest", ".texture_profiles",
+         ".manifest", ".render", ".css", ".toml")
 
 
 def tokens_lua(src):
@@ -217,9 +219,9 @@ def main():
                     help="file e cartelle dell'ondata")
     ap.add_argument("--fuori", nargs="*", default=[
         "client/sim/bot.lua", "client/sim/rete.lua", "client/sim/corpo.lua", "tests/bot_test.lua",
-        "client/battaglia/animazioni.lua", "client/battaglia/armi.lua", "client/battaglia/diavoletto.lua",
-        "client/battaglia/dipinti.lua", "client/battaglia/impugnature.lua", "client/battaglia/pelli.lua",
-        "client/battaglia/perni.lua", "client/sim/mapdata.lua"], help="file da lasciare fuori dall'ondata")
+        "client/battle/animations.lua", "client/battle/weapons.lua", "client/battle/devil.lua",
+        "client/battle/paintings.lua", "client/battle/grips.lua", "client/battle/skins.lua",
+        "client/battle/pivots.lua", "client/sim/mapdata.lua"], help="file da lasciare fuori dall'ondata")
     ap.add_argument("--prova", action="store_true", help="dice cosa farebbe, senza cambiare niente")
     a = ap.parse_args()
 
@@ -349,6 +351,7 @@ def main():
                 continue
             print(f"sposta {vecchio} -> {nuovo}")
             if not a.prova:
+                (REPO / nuovo).parent.mkdir(parents=True, exist_ok=True)
                 subprocess.run(["git", "mv", vecchio, nuovo], cwd=REPO, check=True)
     print(f"{'cambierebbe' if a.prova else 'cambiati'} {cambiati} file")
 

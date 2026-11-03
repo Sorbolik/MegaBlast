@@ -8,13 +8,13 @@ caselle: un PNG trasparente (il livello di Procreate) o un'immagine su magenta
 (ChatGPT). Le caselle vuote o uguali al manichino non cambiano niente.
 
   python3 strumenti/stampino/taglia.py FOGLIO.png --nome elmo_corna --categoria elmo [--allinea]
-  python3 strumenti/stampino/taglia.py --rifai        # solo pelli.lua e pelli.atlas
+  python3 strumenti/stampino/taglia.py --rifai        # solo skins.lua e pelli.atlas
   python3 strumenti/stampino/taglia.py --togli NOME   # toglie una pelle
   python3 strumenti/stampino/taglia.py --ritocchi strumenti/stampino/ritocchi.json
   python3 strumenti/stampino/taglia.py FOGLIO.png --nome maschio_1 --categoria personaggio --allinea --senza ala,coda
 
 Scrive client/assets/pelli/<nome>_<posto>.png, strumenti/stampino/pelli/<nome>.json
-(com'è fatta la pelle), e rifà client/battaglia/pelli.lua da tutte le pelli e
+(com'è fatta la pelle), e rifà client/battle/skins.lua da tutte le pelli e
 l'atlante del diavoletto, che le contiene insieme ai pezzi di base. --allinea sposta e scala ogni pezzo finché combacia col manichino: per
 i disegni di ChatGPT, che non rispetta mai al pixel le caselle. --ritocchi mette
 nelle pelli i pezzi spostati e ingranditi con gli strumenti dell'editor delle
@@ -37,7 +37,7 @@ import stampino as ST  # noqa: E402
 
 ASSETS = os.path.join(RADICE, "client", "assets", "pelli")
 JSON = os.path.join(QUI, "pelli")
-LUA = os.path.join(RADICE, "client", "battaglia", "pelli.lua")
+LUA = os.path.join(RADICE, "client", "battle", "skins.lua")
 
 # Le categorie: una pelle per categoria addosso. Le prime sostituiscono i pezzi
 # del diavoletto, le altre si disegnano sopra, in quest'ordine.
@@ -616,25 +616,25 @@ def salva(pz, nome, posto, px0, py0, scala, px, scatola=None):
 
 
 def leggi_diavoletto():
-    """px dal diavoletto di base (battaglia/diavoletto.lua): i pezzi nuovi hanno la
+    """px dal diavoletto di base (battle/devil.lua): i pezzi nuovi hanno la
     stessa densità."""
-    with open(os.path.join(RADICE, "client", "battaglia", "diavoletto.lua")) as f:
+    with open(os.path.join(RADICE, "client", "battle", "devil.lua")) as f:
         for riga in f:
             riga = riga.strip()
             if riga.startswith("px ="):
                 return {"px": float(riga.split("=")[1].split(",")[0])}
-    raise SystemExit("px non trovato in diavoletto.lua")
+    raise SystemExit("px non trovato in devil.lua")
 
 
 def rifai():
-    """client/battaglia/pelli.lua e l'atlante del diavoletto da tutte le pelli."""
+    """client/battle/skins.lua e l'atlante del diavoletto da tutte le pelli."""
     pelli = []
     for f in sorted(glob.glob(os.path.join(JSON, "*.json"))):
         with open(f) as fh:
             pelli.append(json.load(fh))
     lua = ["-- Fatto da strumenti/stampino/taglia.py, non modificare a mano.",
            "-- Le pelli: i pezzi nuovi del diavoletto disegnati sullo stampino. Ogni pezzo",
-           "-- va in un posto dello scheletro (come i pezzi di battaglia/diavoletto.lua:",
+           "-- va in un posto dello scheletro (come i pezzi di battle/devil.lua:",
            "-- immagine, centro rispetto al perno, misura) e sostituisce il pezzo di base",
            "-- o si disegna sopra. Una pelle per categoria; quelle sopra in ordine. Una",
            "-- coda nuova ha le sue lunghezze, i suoi angoli a riposo (radianti) e, se",

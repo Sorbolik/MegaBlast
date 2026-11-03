@@ -6,7 +6,7 @@ local skills = require "sim.skills"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local awards = require "sim.awards"
-local profile = require "menu.profilo"
+local profile = require "menu.profile"
 
 local failures = 0
 local function check(cond, msg)

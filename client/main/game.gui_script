@@ -1,5 +1,5 @@
 -- MegaBlast client: menus, local match (hot-seat) and online match.
--- The map is a mesh with the terrain shader (battaglia/terreno.*), everything
+-- The map is a mesh with the terrain shader (battle/terrain.*), everything
 -- else (robots, missile, explosions, controls) is GUI nodes created in code.
 -- The game logic lives in sim/ (pure Lua). Locally we run it here, online the
 -- server runs it and we draw the state it sends us.
@@ -7,10 +7,10 @@
 local game = require "sim.game"
 local ui = require "ui.ui"
 local gconfig = require "sim.config"
-local scoria = require "battaglia.scoria"
-local plate = require "battaglia.targa"
+local scoria = require "battle.scoria"
+local plate = require "battle.plate"
 local home = require "menu.home"
-local profile = require "menu.profilo"
+local profile = require "menu.profile"
 local loadout = require "sim.loadout"
 local awards = require "sim.awards"
 local draft = require "sim.draft"
@@ -18,29 +18,29 @@ local bot = require "sim.bot"
 local replay = require "sim.replay"
 -- the screens outside the battle, in a single table: the gui_script is close
 -- to Lua's limit of 200 local variables
-local menu = { podio = require "menu.podio", armeria = require "menu.armeria", scelta = require "menu.scelta",
-	allenamento = require "menu.allenamento", level_end = require "menu.fine_livello", campagna = require "menu.campagna",
-	impostazioni = require "menu.impostazioni", bacheca = require "menu.bacheca", coda = require "menu.coda",
-	lineup = require "menu.schieramento", profile_tabs = require "menu.profilo_schede", sala = require "menu.sala",
+local menu = { podium = require "menu.podium", armory = require "menu.armory", pick = require "menu.pick",
+	training = require "menu.training", level_end = require "menu.level_end", campaign = require "menu.campaign",
+	settings = require "menu.settings", board = require "menu.board", queue = require "menu.queue",
+	lineup = require "menu.lineup", profile_tabs = require "menu.profile_tabs", sala = require "menu.sala",
 	-- not screens, here so as not to add local variables (limit of 200): the
 	-- server's events and their rules (start online)
-	eventi = require "main.eventi", regole = require "sim.rules",
+	eventi = require "main.events", regole = require "sim.rules",
 	-- the entry, the transitions between screens and the waiting flame
-	ingresso = require "ui.ingresso", passaggio = require "ui.passaggio", attesa = require "ui.attesa" }
+	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting" }
 local missions = require "sim.missions"
-local sticks = require "battaglia.levette"
-local aim_name = require "battaglia.mira"
-local camera = require "battaglia.camera"
-local items = require "battaglia.oggetti"
-local score = require "battaglia.punteggio"
-local hud = require "battaglia.hud"
-local screen = require "ui.schermo"
-local frames = require "ui.fotogrammi"
+local sticks = require "battle.sticks"
+local aim_name = require "battle.aim"
+local camera = require "battle.camera"
+local items = require "battle.items"
+local score = require "battle.score"
+local hud = require "battle.hud"
+local screen = require "ui.screen"
+local frames = require "ui.frames"
 -- in the browser without the extension (web build) the browser's WebSocket is enough
 local ws = websocket or (html5 and require "main.ws_browser")
 
 -- W, H: the game screen (16:9; on other proportions the real screen goes from
--- schermo.x0 to x1 and from y0 to y1, ui/schermo.lua); the map is game.WORLD_W x game.WORLD_H
+-- schermo.x0 to x1 and from y0 to y1, ui/screen.lua); the map is game.WORLD_W x game.WORLD_H
 local W, H = screen.W, screen.H
 local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
 
@@ -171,10 +171,10 @@ end
 -- HUD labels in the interface font: scale 1 = about 16 px
 local FONT_K = 0.4
 -- A shot in flight (or the button's orb) from the weapons atlas, sc times its
--- world size (battaglia/armi.lua): the image and on top the parts with the
+-- world size (battle/weapons.lua): the image and on top the parts with the
 -- shooter's color. Returns the node and the parts to tint.
 local function hit_def(nome, sc)
-	local a = require("battaglia.armi").colpi[nome]
+	local a = require("battle.weapons").colpi[nome]
 	local img = fit(gui.new_box_node(vmath.vector3(a.x * sc, a.y * sc, 0), vmath.vector3(a.w * sc, a.h * sc, 0)))
 	gui.set_texture(img, "armi")
 	gui.play_flipbook(img, a.img)
@@ -213,7 +213,7 @@ local K = game.DISEGNO_H / game.CORPO / 16
 local VK = vmath.vector3(K, K, 1)
 
 -- Camera: [megablast] zoom = 1, 2 or 3 picks the starting level (near,
--- medium, the farthest zoom: battaglia/camera.lua)
+-- medium, the farthest zoom: battle/camera.lua)
 local ZOOM_START = tonumber(config_string("megablast.zoom", "")) or 1
 -- after an explosion the camera stays there a moment before going back to the robot
 local CAMERA_HOLD = 0.7
@@ -235,7 +235,7 @@ local DARK_EMBER = vmath.vector4(0.85, 0.3, 0.08, 1)
 -- phone's notifications (Sergio, 3 Nov; it was 34)
 local ZOOM_BTN = vmath.vector3(W - 70, H - 110, 0)
 
--- Phone controls: two sticks, the logic is in battaglia/levette.lua. The base
+-- Phone controls: two sticks, the logic is in battle/sticks.lua. The base
 -- goes where the thumb rests, within its zone, and goes back to its place
 -- when the thumb lifts. On the computer no sticks: keyboard and mouse.
 local PAD_R = 94 -- stick travel
@@ -289,7 +289,7 @@ end
 -- perfetto»): the physics digs in cells, but the painted maps' shader draws
 -- the real circle, interpolating the distance between cells.
 -- After an explosion we send only the crater's rectangle back to the GPU.
-local MASK_PATH = "/battaglia/maschera_viva.texturec"
+local MASK_PATH = "/battle/maschera_viva.texturec"
 local RGBA = hash("rgba")
 local MASK_FORMAT = { { name = RGBA, type = buffer.VALUE_TYPE_UINT8, count = 4 } }
 
@@ -298,7 +298,7 @@ local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
 local TEX_RGBA = graphics and graphics.TEXTURE_FORMAT_RGBA or resource.TEXTURE_FORMAT_RGBA
 
 -- b: 128 on the crater's edge, 8 levels per world unit (from -16 to +16),
--- 255 far from all of them; terreno.fp reads it this way
+-- 255 far from all of them; terrain.fp reads it this way
 -- (in a table: the script is close to the limit of 200 local variables)
 local CR = { BORDER = 128, STEP = 8, CELLS = 7 } -- CELLS: past the radius, 16 units (a cell is 3)
 
@@ -503,7 +503,7 @@ local function close_screen(self)
 	end
 end
 
--- without_veil: you get here with a transition (ui/passaggio.lua), which already covers
+-- without_veil: you get here with a transition (ui/transition.lua), which already covers
 local function show_menu(self, without_veil)
 	close_screen(self)
 	if self.sala then menu.sala.destroy(self.sala); self.sala = nil end
@@ -538,7 +538,7 @@ local function show_menu(self, without_veil)
 	-- The world shows again only when the next match exists (new_match): before,
 	-- while connecting, waiting for players or in the draft, the old match was
 	-- still on screen. What stays is reused by the next match: the GUI nodes (a
-	-- fixed pool), the mask buffer and the map's painting in terreno.script.
+	-- fixed pool), the mask buffer and the map's painting in terrain.script.
 	self.g, self.bots, self.ricetta, self.view = nil, nil, nil, nil
 	self.craters, self.craters_g = nil, nil
 	self.drawn_map, self.pending_terrain = nil, false
@@ -857,11 +857,11 @@ end
 
 -- Grapple and Bellows as drawn, in a single table: the file is close to the
 -- 200 locals Lua allows
-local RM = { fune = require "battaglia.fune", GUSTS = 5 }
+local RM = { fune = require "battle.rope", GUSTS = 5 }
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
-local CP = { conta = require "menu.conta", vetrina = require "menu.vetrina", tag = require "ui.cartellino" }
+local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card" }
 
 -- The zoom (Sergio, 3 Nov, choice Z1): the button at the top right shows with a
 -- dot where the zoom is between the nearest (top) and the farthest (bottom).
@@ -997,7 +997,7 @@ function CP.notches_end(self, color)
 end
 
 -- The entry (Sergio, 1 Nov): the home opens only when the game has from the
--- server what it needs (today the events, main/eventi.lua), so it is always
+-- server what it needs (today the events, main/events.lua), so it is always
 -- complete. If the server doesn't answer it retries after 0.5, 1 and 2
 -- seconds; after ENTRY.max it enters anyway, with "senza rete" under EVENTI,
 -- and the home retries by itself every 5 seconds. It stays at least
@@ -1067,14 +1067,14 @@ function CP.close_room(self)
 	self.sala = nil
 end
 
--- The waiting flame (ui/attesa.lua) instead of a fixed message
+-- The waiting flame (ui/waiting.lua) instead of a fixed message
 function CP.aspetta(self, txt)
 	gui.cancel_animations(self.message, "color.w")
 	gui.set_text(self.message, "")
 	menu.attesa.display(self.attesa, txt)
 end
 
--- The transitions (ui/passaggio.lua): the slider between menus, the iris
+-- The transitions (ui/transition.lua): the slider between menus, the iris
 -- between menus and battle. CP.radici: the root nodes of what is visible now
 function CP.radici(self)
 	if self.mode == "menu" then return self.home.tops end
@@ -1125,7 +1125,7 @@ end
 local function handle_event(self, e)
 	if SIMULATE then print("SIMULA evento " .. e.type) end
 	if self.conta then CP.conta.evento(self.conta, self.g, e) end
-	-- the campaign characters speak (battaglia/battute.lua); everyday quips
+	-- the campaign characters speak (battle/quips.lua); everyday quips
 	-- don't cover a quip just said
 	if self.speak then
 		local i, s, strong = self.speak:evento(e, self.g.current)
@@ -1277,13 +1277,13 @@ local function handle_event(self, e)
 	elseif e.type == "crate_pick" then
 		local verb = (self.mode == "online" and e.robot == self.me) and " hai trovato " or " trova "
 		show_message(self, who_name(self, e.robot) .. verb .. WEAPON_FOUND[e.weapon] .. "!")
-		-- a new weapon locally: its card (battaglia/scheda.lua) stops the game until
+		-- a new weapon locally: its card (battle/card.lua) stops the game until
 		-- you tap PROVALA. Always in the lessons, otherwise the first time
 		local l = self.missione and self.missione.l
 		if self.mode == "local" and e.robot == 1 and (l or next(self.bots))
 			and (profile.new_weapon(self.profilo, e.weapon) or (l and l.aspetta)) then
 			profile.salva(self.profilo)
-			self.carta = require("battaglia.scheda").open_view(e.weapon, PAD.comandi(self))
+			self.carta = require("battle.card").open_view(e.weapon, PAD.comandi(self))
 		end
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
@@ -1394,7 +1394,7 @@ local function open_podium(self)
 	show_message(self, "", true)
 	set_controls_visible(self, false)
 	-- first the screen, then the mode: if new breaks, no mode is left without a screen
-	self.schermata = { mod = menu.podio, obj = menu.podio.new(res, giocatori, me, gain, self.profilo, number) }
+	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
 	self.mode = "schermata"
 end
 
@@ -1500,7 +1500,7 @@ local function on_server_message(self, m)
 	if m.t == "wait" then
 		CP.open_room(self, m)
 	elseif m.t == "draft" then
-		-- weapon draft (menu/scelta.lua): it arrives at every change, ours or the
+		-- weapon draft (menu/pick.lua): it arrives at every change, ours or the
 		-- others'. The token is already needed to come back if the connection drops now.
 		self.tok, self.tries = m.tok or self.tok, 0
 		local first = self.mode ~= "scelta_online"
@@ -1515,7 +1515,7 @@ local function on_server_message(self, m)
 		local name_list, palette = names_colors(m.players)
 		self.online_teams = {}
 		for i, p in ipairs(m.players) do self.online_teams[i] = p.team end
-		menu.scelta.online(self.scelta, m, name_list, palette, function(msg) send(self, msg) end)
+		menu.pick.online(self.scelta, m, name_list, palette, function(msg) send(self, msg) end)
 		if first then
 			-- the lineup: the server also gives the draft its time
 			-- (config.LINEUP_SECONDS); coming back halfway, only the strip
@@ -1538,7 +1538,7 @@ local function on_server_message(self, m)
 	elseif m.t == "start_now" then
 		m = m.m
 		CP.close_room(self)
-		menu.scelta.hide(self.scelta)
+		menu.pick.hide(self.scelta)
 		-- also when we come back after a drop (resume): the match is rebuilt from the
 		-- seed, then the digs and the state arrive.
 		-- players: the robots' teams and their draft picks,
@@ -1583,12 +1583,12 @@ local function on_server_message(self, m)
 			show_message(self, (self.mode == "online" and self.names[m.robot] or "Un giocatore") .. " è uscito")
 			return
 		end
-		menu.scelta.hide(self.scelta)
+		menu.pick.hide(self.scelta)
 		self.mode = "ended"
 		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
 	elseif m.t == "error" then
 		CP.close_room(self)
-		menu.scelta.hide(self.scelta)
+		menu.pick.hide(self.scelta)
 		self.mode, self.tok = "ended", nil
 		show_message(self, (SERVER_ERRORS[m.e] or "Errore del server") .. "\nTocca per tornare al menu", true)
 	end
@@ -1609,8 +1609,8 @@ on_socket = function(self, conn, data)
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
 		else
 			CP.aspetta(self, "Connesso, in attesa...")
-			-- the queue picked in DOVE GIOCHI? (menu/coda.lua): 2v2, 1v1 or an event,
-			-- and the tag: level and badges (menu/vetrina.lua)
+			-- the queue picked in DOVE GIOCHI? (menu/queue.lua): 2v2, 1v1 or an event,
+			-- and the tag: level and badges (menu/showcase.lua)
 			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
 				vetrina = CP.vetrina.per_rete(self.profilo) })
 		end
@@ -1631,7 +1631,7 @@ on_socket = function(self, conn, data)
 			end)
 		elseif self.mode ~= "menu" and self.mode ~= "ended" then
 			CP.close_room(self)
-			menu.scelta.hide(self.scelta)
+			menu.pick.hide(self.scelta)
 			self.mode = "ended"
 			show_message(self, "Connessione persa\nTocca per tornare al menu", true)
 		end
@@ -1661,12 +1661,12 @@ local function start_online(self, coda)
 end
 
 -- Character sheet (Sergio, 31 Oct) ---------------------------------------------
--- The tags (ui/cartellino.lua) before the weapon draft (the lineup), during
+-- The tags (ui/tag_card.lua) before the weapon draft (the lineup), during
 -- it (the strip at the top) and in the match by tapping the plate; at the end
--- of the match the stats and the match into the profile (menu/conta.lua,
+-- of the match the stats and the match into the profile (menu/tally.lua,
 -- profilo.registra) and the replay of those played here (sim/replay.lua).
 
--- The players' showcases (menu/vetrina.lua): whoever plays here with their
+-- The players' showcases (menu/showcase.lua): whoever plays here with their
 -- profile, the others with just the name. opt: me (the robot of whoever
 -- plays here), rete (online: everyone's level and badges, from the server)
 function CP.vetrine(self, players, name_list, opt)
@@ -1700,11 +1700,11 @@ end
 function CP.open_lineup(self, showcases, title, seconds_left)
 	CP.close_choice(self)
 	-- they leave with the draft, however it closes
-	menu.scelta.when_closing(self.scelta, function() CP.close_choice(self) end)
+	menu.pick.when_closing(self.scelta, function() CP.close_choice(self) end)
 	self.vetrine = showcases
 	if seconds_left and seconds_left <= 0 then
 		self.strip = menu.lineup.strip(showcases)
-		menu.scelta.under_strip(self.scelta, self.strip.covers_corner)
+		menu.pick.under_strip(self.scelta, self.strip.covers_corner)
 		return
 	end
 	self.schier = menu.lineup.new(showcases, title)
@@ -1720,7 +1720,7 @@ function CP.update_choice(self, dt)
 		self.schier = nil
 		if self.vetrine then
 			self.strip = menu.lineup.strip(self.vetrine)
-			menu.scelta.under_strip(self.scelta, self.strip.covers_corner)
+			menu.pick.under_strip(self.scelta, self.strip.covers_corner)
 		end
 		return false
 	end
@@ -1852,7 +1852,7 @@ function CP.replay_ok(self, number)
 	return false
 end
 
--- The profile (menu/profilo_schede.lua), on a tab
+-- The profile (menu/profile_tabs.lua), on a tab
 function CP.open_profile(self, card, number)
 	open_screen(self, menu.profile_tabs, self.profilo, card, TEAM_COLORS[1],
 		function(n) return CP.replay_ok(self, n) end, number)
@@ -1928,8 +1928,8 @@ end
 
 local start_local_match
 
--- It starts with the weapon draft (menu/scelta.lua); after that, the match.
--- against: { modo, livello, mappa } to play against the bots (menu/allenamento.lua)
+-- It starts with the weapon draft (menu/pick.lua); after that, the match.
+-- against: { modo, livello, mappa } to play against the bots (menu/training.lua)
 local function start_local(self, against)
 	hide_menu(self)
 	self.ritorno = against and "allenamento" or "home"
@@ -1937,7 +1937,7 @@ local function start_local(self, against)
 	-- the other modes on the one the seed picks (sim/maps.lua)
 	self.local_map = nil
 	if against then
-		local open_maps = menu.allenamento.open_maps(profile.total_stars(self.profilo))
+		local open_maps = menu.training.open_maps(profile.total_stars(self.profilo))
 		self.local_map = against.mappa ~= "caso" and against.mappa or open_maps[os.time() % #open_maps + 1]
 		-- in the test scenarios A CASO is the scenario's map (prova_mappa), so they repeat
 		if SIMULATE and against.mappa == "caso" then self.local_map = self.mappa end
@@ -1963,7 +1963,7 @@ local function start_local(self, against)
 	for i, p in ipairs(opts.players) do
 		if p.bot then bot.scegli(d, i, seed) end
 	end
-	menu.scelta.show(self.scelta, d, name_list, palette)
+	menu.pick.show(self.scelta, d, name_list, palette)
 	CP.open_lineup(self, CP.vetrine(self, opts.players, name_list, { me = 1 }), profile.GROUP_NAMES[modo] or "")
 end
 
@@ -2051,7 +2051,7 @@ local function start_mission(self, id, picks)
 		end
 		self.mode = "scelta"
 		-- in the campaign the draft is guided: no timer, it explains more, it ends with GIOCA
-		menu.scelta.show(self.scelta, d, name_list, palette, true)
+		menu.pick.show(self.scelta, d, name_list, palette, true)
 		for i, p in ipairs(players) do name_list[i] = p.nome or name_list[i] end
 		CP.open_lineup(self, CP.vetrine(self, players, name_list, { me = 1 }), r.l.titolo or "")
 		return
@@ -2068,7 +2068,7 @@ local function start_mission(self, id, picks)
 	for i, p in ipairs(r.l.giocatori) do
 		if p.nome then self.names[i] = p.nome end
 		if p.bot and (p.battute or p.carattere) then
-			self.speak = self.speak or require("battaglia.battute").nuove()
+			self.speak = self.speak or require("battle.quips").nuove()
 			self.speak.chi[i] = p.battute or p.carattere
 		end
 	end
@@ -2085,7 +2085,7 @@ end
 -- The campaign, on the last mission's chapter
 local function open_campaign(self)
 	show_menu(self, true)
-	open_screen(self, menu.campagna, self.chosen_campaign, self.profilo.stelle)
+	open_screen(self, menu.campaign, self.chosen_campaign, self.profilo.stelle)
 end
 
 -- Every frame: the line above the devil and the goal under the points; done,
@@ -2093,12 +2093,12 @@ end
 -- with the podium.
 local function mission_update(self, dt)
 	local r = self.missione
-	-- the lessons' guide (battaglia/guida.lua): the light on the control the line
+	-- the lessons' guide (battle/guide.lua): the light on the control the line
 	-- suggests (the primary or the picked secondary, not the usual Rune launcher
 	-- or Blade) and the gestures. Made at the first lesson, after the whole HUD:
 	-- so it sits on top
 	if not self.guide then
-		self.guide = require("battaglia.guida").new()
+		self.guide = require("battle.guide").new()
 		self.levette = { muovi = MOVE_PAD, mira = AIM_PAD }
 	end
 	local what = self.controls_visible and missions.highlight(r) or nil
@@ -2128,21 +2128,21 @@ local function mission_update(self, dt)
 		if w then
 			profile.new_weapon(self.profilo, w)
 			profile.salva(self.profilo)
-			self.carta = require("battaglia.scheda").open_view(w, PAD.comandi(self))
+			self.carta = require("battle.card").open_view(w, PAD.comandi(self))
 		end
 	end
 	-- the step wants to see farther (the island): the camera widens
 	local z = missions.zoom(r)
 	if z then camera.allarga(self.cam, z) end
-	-- the checkered flag of the step to do (battaglia/bandiera.lua), behind the devils
+	-- the checkered flag of the step to do (battle/flag.lua), behind the devils
 	local bx, by = missions.flag(r)
-	if bx and not self.flag then self.flag = require("battaglia.bandiera").new(self.mondo, self.robots[1].rig.root) end
+	if bx and not self.flag then self.flag = require("battle.flag").new(self.mondo, self.robots[1].rig.root) end
 	if self.flag then self.flag:display(bx, by, self.clock) end
-	-- the marker on the target to hit now (battaglia/segnale.lua)
+	-- the marker on the target to hit now (battle/signal.lua)
 	local bi = missions.target_robot(r)
 	local brb = bi and self.g.robots[bi]
 	if brb and brb.dead then brb = nil end
-	if brb and not self.signal then self.signal = require("battaglia.segnale").new(self.mondo) end
+	if brb and not self.signal then self.signal = require("battle.signal").new(self.mondo) end
 	if self.signal then self.signal:display(brb and brb.x, brb and brb.y, game.ROBOT_H, game.ROBOT_HALF_W, self.clock) end
 	local txt, who = missions.riga(r)
 	-- {salta}: how to jump with the controls you have (PAD.TEXTS)
@@ -2180,7 +2180,7 @@ local function mission_update(self, dt)
 	end
 end
 
--- The end-of-level screen (menu/fine_livello.lua) of the mission just done
+-- The end-of-level screen (menu/level_end.lua) of the mission just done
 local function open_level_end(self)
 	local r = self.missione
 	self.end_t, self.missione = nil, nil
@@ -2659,7 +2659,7 @@ local function apply_camera(self)
 	CAM_SCALE.x, CAM_SCALE.y = c.s, c.s
 	gui.set_scale(self.mondo, CAM_SCALE)
 	-- the render stretches 1280 x 720 over the whole screen: the view compensates,
-	-- so the terrain has the same proportions as the nodes (ui/schermo.lua)
+	-- so the terrain has the same proportions as the nodes (ui/screen.lua)
 	local view, kx, ky = self.cam_msg.view, screen.kx, screen.ky
 	view.m00, view.m11 = c.s / kx, c.s / ky
 	view.m03, view.m13 = W / 2 + (tx - W / 2) / kx, H / 2 + (ty - H / 2) / ky
@@ -3037,7 +3037,7 @@ local function render(self, dt)
 	end
 	-- the aim says only angle and power, the same for all firing weapons: gauge
 	-- or reticle and, above the head, degrees and power; close-range ones only a
-	-- tip and a ring at the feet of whoever they would hit (battaglia/mira.lua)
+	-- tip and a ring at the feet of whoever they would hit (battle/aim.lua)
 	if self.aiming and can_aim and not cancel and aim_name.MELEE[aim_weapon] then
 		local v, s = self.view[g.current], self.cam.s
 		local cy = v.y + game.DISEGNO_H / 2
@@ -3164,7 +3164,7 @@ end
 
 -- Lifecycle -------------------------------------------------------------------
 
--- Sticks what belongs there to the real screen edges (ui/schermo.lua): at
+-- Sticks what belongs there to the real screen edges (ui/screen.lua): at
 -- startup and when the window changes proportions
 local function arrange(self)
 	local x0, y0, x1, y1 = screen.x0, screen.y0, screen.x1, screen.y1
@@ -3189,7 +3189,7 @@ local function arrange(self)
 	msg.post("/terreno#script", "schermo", { kx = screen.kx, ky = screen.ky })
 end
 
--- The Grapple's rope with the hook (battaglia/fune.lua) and the Bellows' gust;
+-- The Grapple's rope with the hook (battle/rope.lua) and the Bellows' gust;
 -- self.rm_nodes: their nodes, to put in the world (outside init, which already
 -- has almost all of the 60 upvalues Lua allows)
 function RM.nodi(self)
@@ -3214,9 +3214,9 @@ function RM.nodi(self)
 end
 
 function init(self)
-	-- the last training choice against the bots (menu/allenamento.lua)
+	-- the last training choice against the bots (menu/training.lua)
 	self.against_bot = { modo = "1v1", livello = "normale", mappa = "caso" }
-	-- the last campaign chapter opened (menu/campagna.lua)
+	-- the last campaign chapter opened (menu/campaign.lua)
 	self.chosen_campaign = {}
 	self.bots = {}
 	self.orbs_wait = 0
@@ -3238,7 +3238,7 @@ function init(self)
 	self.mondo = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(self.mondo, false)
 
-	-- prova_pelli elmo_x,corazza_y: everyone wearing those skins (battaglia/pelli.lua),
+	-- prova_pelli elmo_x,corazza_y: everyone wearing those skins (battle/skins.lua),
 	-- otherwise everyone's character, until the armory picks them
 	local look = {}
 	for nome in config_string("megablast.prova_pelli", ""):gmatch("[%w_]+") do look[#look + 1] = nome end
@@ -3249,7 +3249,7 @@ function init(self)
 		self.robots[i] = r
 	end
 
-	-- the aim: the reticle, the degrees tag, the lessons' help (battaglia/mira.lua)
+	-- the aim: the reticle, the degrees tag, the lessons' help (battle/aim.lua)
 	self.mira = aim_name.nuova()
 	-- whom the close-range weapon in hand would hit: robot ids and where to draw the ring
 	self.bersagli = { id = {}, pos = {}, n = 0 }
@@ -3312,7 +3312,7 @@ function init(self)
 		self.shard_nodes[i] = n
 	end
 
-	-- traps, springboards, healing circles and shields (battaglia/oggetti.lua)
+	-- traps, springboards, healing circles and shields (battle/items.lua)
 	self.oggetti = items.new(TEAM_COLORS)
 
 	-- crates (at most CRATE_MAX are needed), with a glow above while falling:
@@ -3496,7 +3496,7 @@ function init(self)
 	self.home = home.new(TEAM_COLORS[1])
 	self.profilo = profile.load_up()
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.prova(self.profilo) end
-	self.scelta = menu.scelta.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, self.comandi)
+	self.scelta = menu.pick.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, self.comandi)
 
 	-- In real matches the map is picked by the seed (sim/maps.lua). In the test
 	-- scenarios it is fixed, so the photos repeat: pavimento, or [megablast] prova_mappa.
@@ -3640,7 +3640,7 @@ function update(self, dt)
 	if self.schermata and self.schermata.mod.update then self.schermata.mod.update(self.schermata.obj, dt) end
 	if self.mode == "scelta" then
 		-- locally the draft's time starts after the lineup
-		local players = not CP.update_choice(self, dt) and menu.scelta.update(self.scelta, dt)
+		local players = not CP.update_choice(self, dt) and menu.pick.update(self.scelta, dt)
 		-- the match starts under the iris: the painted map loads in a long frame
 		-- (docs/prestazioni.md, "I caricamenti sotto il velo")
 		if players and self.missione then
@@ -3651,7 +3651,7 @@ function update(self, dt)
 		end
 	elseif self.mode == "scelta_online" then
 		CP.update_choice(self, dt)
-		menu.scelta.update(self.scelta, dt)
+		menu.pick.update(self.scelta, dt)
 	end
 
 	paint_terrain(self)
@@ -3676,7 +3676,7 @@ function update(self, dt)
 	CP.fotogrammi(self, dt)
 end
 
--- The frame counter (ui/fotogrammi.lua, docs/prestazioni.md): a new screen is
+-- The frame counter (ui/frames.lua, docs/prestazioni.md): a new screen is
 -- a possible cause of stutter; the line at the top center only if it is on in
 -- the IMPOSTAZIONI. In the simulator it is always on, in the log.
 function CP.fotogrammi(self, dt)
@@ -3713,7 +3713,7 @@ end
 -- A HUD button (a weapon, an item or the teleport) always selects that thing,
 -- it never turns it off (Sergio, 30 October). On your turn, if it can't be
 -- used now, what you had stays in hand and the button says why
--- (battaglia/hud.lua rifiuta), with the phone vibrating lightly.
+-- (battle/hud.lua rifiuta), with the phone vibrating lightly.
 -- Items that aren't thrown are used at once.
 local function choose_slot(self, w)
 	-- the hidden teleport (lessons that don't talk about orbs) doesn't respond
@@ -3788,7 +3788,7 @@ end
 local function quit_match(self)
 	local online = self.mode == "online" or self.mode == "scelta_online" or self.mode == "connecting"
 	local comeback = online and "home" or self.ritorno
-	menu.scelta.hide(self.scelta)
+	menu.pick.hide(self.scelta)
 	if online and self.conn then
 		-- the server closes the connection, after reading the message (closing it
 		-- here at once it might not leave); if it doesn't, we do in a moment
@@ -3803,13 +3803,13 @@ local function quit_match(self)
 			return
 		end
 		show_menu(self, true)
-		if comeback == "allenamento" then open_screen(self, menu.allenamento, self.against_bot, profile.total_stars(self.profilo)) end
+		if comeback == "allenamento" then open_screen(self, menu.training, self.against_bot, profile.total_stars(self.profilo)) end
 	end)
 end
 
 -- A finger (or the mouse) touches down at (x, y). id tells fingers apart.
 -- x, y arrive stretched over 1280 x 720 (as gui.pick_node wants them): for
--- everything else they are brought back to game coordinates (ui/schermo.lua)
+-- everything else they are brought back to game coordinates (ui/screen.lua)
 local function pointer_down(self, id, px, py)
 	local x, y = screen.from_touch(px, py)
 	-- the replay: a tap goes back to the profile
@@ -4029,7 +4029,7 @@ function PAD.riposo(self)
 	self.pad_zoom = nil
 end
 
--- A profile setting (sparo, potenza: menu/impostazioni.lua)
+-- A profile setting (sparo, potenza: menu/settings.lua)
 -- Which stick moves and which aims (the "levette" setting, Sergio 30 Oct: by
 -- default the right one moves and the left one aims); and its name for the labels
 function PAD.levetta(self, use)
@@ -4051,7 +4051,7 @@ function PAD.grilletto(self)
 end
 
 -- Every frame the right stick aims, like the phone's: lit past 20% of the
--- travel, off below 10% (levette.lua)
+-- travel, off below 10% (sticks.lua)
 function PAD.mira(self)
 	local st, l = self.pad_st, PAD.levetta(self, "mira")
 	if not (my_turn(self) and self.g.phase == "aim" and self.g:can_use(self.tele_armed and "teleport" or self.weapon)) then
@@ -4205,11 +4205,11 @@ function PAD.zoom(self)
 end
 
 -- Every frame: one stick walks and jumps, the other aims (PAD.levetta)
--- The controller's buttons on the HUD (ui/glifo.lua, Sergio 30 Oct): with the
+-- The controller's buttons on the HUD (ui/glyph.lua, Sergio 30 Oct): with the
 -- controller in hand each button shows its key, drawn as on the controller in
 -- use and as it is now in the settings. For each command: which node it sits
 -- on and where, in half sizes of the node (1, 1 the top right corner)
-PAD.glyph = require "ui.glifo"
+PAD.glyph = require "ui.glyph"
 PAD.GLYPHS = {
 	primaria = { -1, 1 }, secondaria = { 1, 1 }, rampino = { -0.75, 0.75 }, paracadute = { -0.75, 0.75 },
 	teletrasporto = { -0.75, 0.75 }, baratto = { -0.75, 0.75 }, usa_oggetto = { 1.3, 0 }, oggetti = { -1.3, 0 },
@@ -4418,9 +4418,9 @@ function PAD.on_input(self, action_id, action)
 			CP.slide(self, 1, function()
 				close_screen(self)
 				self.from_the_profile = true
-				open_screen(self, menu.armeria, self.profilo)
+				open_screen(self, menu.armory, self.profilo)
 			end)
-		elseif end_of and self.from_the_profile and self.schermata.mod == menu.armeria then
+		elseif end_of and self.from_the_profile and self.schermata.mod == menu.armory then
 			CP.slide(self, -1, function()
 				close_screen(self)
 				self.from_the_profile = nil
@@ -4440,7 +4440,7 @@ function PAD.on_input(self, action_id, action)
 			end)
 		elseif end_of then
 			-- INDIETRO: the slider the other way (from the podium, which follows the battle, the iris)
-			if self.schermata.mod == menu.podio then
+			if self.schermata.mod == menu.podium then
 				CP.iris(self, function() show_menu(self, true) end)
 			else
 				CP.slide(self, -1, function() show_menu(self, true) end)
@@ -4459,9 +4459,9 @@ function PAD.on_input(self, action_id, action)
 			self.ritorno = "home"
 			CP.iris(self, function() start_mission(self, profile.first_lesson(self.profilo)) end)
 		elseif choice == "online" or choice == "eventi" then
-			-- DOVE GIOCHI? (menu/coda.lua) or the board (menu/bacheca.lua): they are
+			-- DOVE GIOCHI? (menu/queue.lua) or the board (menu/board.lua): they are
 			-- redone as soon as the updated events arrive
-			local mod = choice == "online" and menu.coda or menu.bacheca
+			local mod = choice == "online" and menu.queue or menu.board
 			CP.slide(self, 1, function() open_screen(self, mod, hud.NAMES) end)
 			-- not while the slide still moves the screen's nodes: rebuilding deletes
 			-- them, and the slide stopped on a deleted node (simulator, 3 Nov)
@@ -4474,11 +4474,11 @@ function PAD.on_input(self, action_id, action)
 			end
 			menu.eventi.load_up(server_url(), rebuild)
 		elseif choice then
-			-- the menus: they arrive with the slider (ui/passaggio.lua)
+			-- the menus: they arrive with the slider (ui/transition.lua)
 			local open_view = {
-				armeria = function() open_screen(self, menu.armeria, self.profilo) end,
-				allenamento = function() open_screen(self, menu.allenamento, self.against_bot, profile.total_stars(self.profilo)) end,
-				impostazioni = function() open_screen(self, menu.impostazioni, self.profilo, self.ctrl) end,
+				armeria = function() open_screen(self, menu.armory, self.profilo) end,
+				allenamento = function() open_screen(self, menu.training, self.against_bot, profile.total_stars(self.profilo)) end,
+				impostazioni = function() open_screen(self, menu.settings, self.profilo, self.ctrl) end,
 				campagna = function() open_campaign(self) end,
 				profilo = function() CP.open_profile(self, "scheda") end,
 			}
@@ -4486,7 +4486,7 @@ function PAD.on_input(self, action_id, action)
 		end
 		return true
 	elseif self.mode == "scelta" or self.mode == "scelta_online" then
-		if not CP.input_choice(self, action_id, action) and menu.scelta.on_input(self.scelta, action_id, action) == "esci" then
+		if not CP.input_choice(self, action_id, action) and menu.pick.on_input(self.scelta, action_id, action) == "esci" then
 			quit_match(self)
 		end
 		return true

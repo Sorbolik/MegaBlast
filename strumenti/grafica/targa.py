@@ -1,11 +1,11 @@
-# I pezzi della targa sopra i personaggi (client/battaglia/targa.lua). Dal foglio di
+# I pezzi della targa sopra i personaggi (client/battle/plate.lua). Dal foglio di
 # ChatGPT dello stile C della scheda WB-011 (art/WB-011/c_lama_foglio.png, sfondo
 # magenta) taglia la Corona d'oro; la lama dello stesso foglio non si usa più
 # (Sergio, 3 nov: la vita è una riga piena, più leggibile). Scrive in client/assets/fx/:
 #   targa_corona.png  la Corona d'oro del primo (accanto al nome e sopra i punti)
 #   targa_bianco.png  un quadratino bianco: la vita, i fondi e la punta a V, tinti
 #                     dal gioco, così tutta la targa sta in una draw call con la Corona
-# (vanno in battaglia.atlas).
+# (vanno in battle.atlas).
 #
 # python3 strumenti/grafica/targa.py
 import os

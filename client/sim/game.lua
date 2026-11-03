@@ -382,7 +382,7 @@ function M.new(seed, map_id, opts)
 	-- with two teams turns go in pairs (Red, Blue): ahead is the team that opens
 	-- the pair, ahead_base its points when it opened it. Until the other has
 	-- answered, the points scored by ahead after ahead_base are "pending"
-	-- (battaglia/punteggio.lua). 0 with more than two teams.
+	-- (battle/score.lua). 0 with more than two teams.
 	g.ahead, g.ahead_base = 0, 0
 	g.winner = nil
 	g.shards = {}        -- shards in flight, by place in the burst (1..SHARD_COUNT)

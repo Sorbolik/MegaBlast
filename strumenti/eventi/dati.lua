@@ -12,9 +12,9 @@ local game = require "sim.game"
 local equip = require "sim.gear"
 local regole = require "sim.rules"
 
--- i nomi delle armi come li vede il giocatore (battaglia/hud.lua usa Defold:
+-- i nomi delle armi come li vede il giocatore (battle/hud.lua usa Defold:
 -- si prende solo la tabella dei nomi)
-local hud = io.open("client/battaglia/hud.lua"):read("*a")
+local hud = io.open("client/battle/hud.lua"):read("*a")
 local nomi = assert(load("return " .. hud:match("M%.NOMI = (%b{})")))()
 
 local function chiavi(t)

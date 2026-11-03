@@ -6,7 +6,7 @@
 -- Tiers do not make you stronger: with all four pieces of a set at the last
 -- tier you pick variant B of the set bonus instead of A. Tiers will change the
 -- look once armour is visible on the Scoria. potere: the short name of the
--- bonus, shown on the card (ui/cartellino.lua).
+-- bonus, shown on the card (ui/tag_card.lua).
 --
 -- Effects as in skills.lua: { stat, add } | { stat, mul }.
 
