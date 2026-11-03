@@ -1,0 +1,30 @@
+# La fine della Battaglia della Forgia, l'ultima missione del I girone (Sergio,
+# 3 nov: «mi si blocca il podio»). Vinta (prova_vince) dopo 10 secondi di
+# partita (prova_durata): dopo "Fatta!" solo le stelle, niente podio sotto;
+# CAMPAGNA porta alla campagna, la freccia alla home.
+imposta prova_missione battaglia_forgia
+imposta prova_durata 10
+imposta prova_vince 1
+aspetta_stato modo=scelta 8
+aspetta 0.5
+tocca 640 360                       # alle armi
+aspetta 0.4
+tocca 640 410                       # primaria
+aspetta 0.3
+tocca 320 410                       # secondaria
+aspetta 0.3
+tocca 640 70                        # GIOCA
+aspetta_stato modo=local fase=aim 10
+aspetta 1
+mira 150 100 0.4
+aspetta_stato modo=ended 200
+aspetta 0.5
+foto 01_fatta
+aspetta 3
+foto 02_stelle
+tocca 848 110                       # CAMPAGNA
+aspetta 1.5
+foto 03_campagna
+tocca 60 660                        # la freccia: la home
+aspetta 1.5
+foto 04_home

@@ -23,6 +23,10 @@ textures {
   name: "ui"
   texture: "/ui/ui.atlas"
 }
+textures {
+  name: "mappe"
+  texture: "/ui/mappe.atlas"
+}
 background_color {
   x: 0.0
   y: 0.0
