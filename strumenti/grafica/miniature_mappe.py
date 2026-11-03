@@ -38,13 +38,13 @@ end
 local maps, seen = {}, {}
 for _, cap in ipairs(campaign.CAPITOLI) do
   for _, l in ipairs(cap.id:match("^girone_") and cap.missioni or {}) do
-    if l.mappa and not l.arena and not seen[l.mappa] and dipinti.mappe[l.mappa] then
+    if l.mappa and not l.arena and not seen[l.mappa] and dipinti.maps[l.mappa] then
       seen[l.mappa] = true
-      maps[#maps + 1] = { id = l.mappa, sfondo = dipinti.mappe[l.mappa] }
+      maps[#maps + 1] = { id = l.mappa, sfondo = dipinti.maps[l.mappa] }
     end
   end
 end
-print(enc({ mappe = maps, sfondi = dipinti.sfondi }))
+print(enc({ mappe = maps, sfondi = dipinti.backgrounds }))
 """
 
 
@@ -56,8 +56,8 @@ def leggi():
 def cartolina(mappa, sfondo):
     im = Image.open(os.path.join(DIPINTI, "sfondi", "%s_cielo_1.png" % mappa["sfondo"])).convert("RGBA")
     im = im.resize((SCENA_W, SCENA_H), Image.LANCZOS)
-    for g in sfondo["gruppi"]:
-        piano = Image.open(os.path.join(DIPINTI, "sfondi", "%s_%s_1.png" % (mappa["sfondo"], g["nome"]))).convert("RGBA")
+    for g in sfondo["groups"]:
+        piano = Image.open(os.path.join(DIPINTI, "sfondi", "%s_%s_1.png" % (mappa["sfondo"], g["name"]))).convert("RGBA")
         w = round(piano.width * g["h"] / piano.height)
         piano = piano.resize((w, g["h"]), Image.LANCZOS).crop((0, 0, min(w, SCENA_W), g["h"]))
         im.alpha_composite(piano, (0, g["y0"]))

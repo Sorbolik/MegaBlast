@@ -139,7 +139,7 @@ local function next_one(s)
 	end
 end
 
-local function colpi(n) return n .. (n == 1 and " colpo" or " colpi") end
+local function shots_text(n) return n .. (n == 1 and " colpo" or " colpi") end
 
 -- Title and lines below, by step and by whether the draft is guided
 local function texts(s)
@@ -149,12 +149,12 @@ local function texts(s)
 	if p == 1 then
 		title = who .. "scegli la primaria"
 		under = guide and "Prima di ogni partita scegli due armi in più, una per tipo; quelle degli altri non le vedi. "
-			.. "La primaria ha " .. colpi(config.DRAFT_SHOTS) .. " a partita, e il Lanciarune ce l'hai sempre. "
+			.. "La primaria ha " .. shots_text(config.DRAFT_SHOTS) .. " a partita, e il Lanciarune ce l'hai sempre. "
 			.. "Tieni premuta una carta per vedere la sua scheda."
-			or "Ne hai " .. colpi(config.DRAFT_SHOTS) .. "; il Lanciarune ce l'hai sempre. Tieni premuta una carta per la sua scheda."
+			or "Ne hai " .. shots_text(config.DRAFT_SHOTS) .. "; il Lanciarune ce l'hai sempre. Tieni premuta una carta per la sua scheda."
 	elseif p == 2 then
 		title = who .. "scegli la secondaria"
-		local n = colpi(config.SECONDARY_SHOTS.draft)
+		local n = shots_text(config.SECONDARY_SHOTS.draft)
 		under = guide and "La secondaria ha " .. n .. ": ogni volta che colpisci un nemico "
 			.. "con la Lama, che ce l'hai sempre, te ne torna uno. Tieni premuta una carta per la sua scheda."
 			or "Ne hai " .. n .. "; colpendo un nemico con la Lama te ne torna uno."

@@ -19,7 +19,7 @@ local terrain = require "sim.terrain"
 local maps = require "sim.maps"
 local melee = require "sim.melee"
 local C = require "sim.config"
-local BODY_SCALE = require "sim.corpo"
+local BODY_SCALE = require "sim.body"
 
 local M = {}
 M.__index = M
@@ -37,7 +37,7 @@ M.DT = 1 / 60
 -- REF_H pixels tall, which is 3.612 U units: many measures below are in U. The
 -- devil's body is CORPO times bigger (1.4, chosen on 26 October so the painted
 -- devil reads well): the walking capsule and the hit circle are in
--- sim/corpo.lua (animation editor), the rest of the world stays on the REF_H
+-- sim/body.lua (animation editor), the rest of the world stays on the REF_H
 -- scale. REF_H is 28 since 23 October (it was 20) to see the character better.
 -- The measures written in pixels (crates, shards, orb...) were made on a robot
 -- 16 tall and then multiplied by 28 / 16.
@@ -50,11 +50,11 @@ M.GRAVITY = 25 * M.U
 -- a capsule: above and below a half circle of radius ROBOT_HALF_W. The round
 -- bottom touches slopes near the centre instead of with the corner, so it
 -- doesn't stay hanging.
-M.ROBOT_H = BODY_SCALE.cammina.alto
-M.ROBOT_HALF_W = BODY_SCALE.cammina.largo / 2
+M.ROBOT_H = BODY_SCALE.walk.height
+M.ROBOT_HALF_W = BODY_SCALE.walk.width / 2
 -- the height of the drawn devil, from the feet to the top of the head: the
 -- drawing doesn't change if the walking capsule or the hit circle change
--- (sim/corpo.lua). Shots (MUZZLE) and the grapple also start from here.
+-- (sim/body.lua). Shots (MUZZLE) and the grapple also start from here.
 -- Projectiles, crates and held weapons are drawn on DISEGNO_H / CORPO.
 M.DISEGNO_H = M.REF_H * M.CORPO
 M.MAX_CLIMB = 10.5       -- highest step the robot climbs by itself
@@ -95,10 +95,10 @@ M.SWORD_PIVOT_Y = 17.5   -- height of the pivot (the shoulder) above the feet
 M.SWORD_DAMAGE = 25
 
 -- Where a robot can be hit (projectiles, orbs, blades, explosions): a circle of
--- radius HURT_R, HURT_Y above the feet (sim/corpo.lua). For explosions the
+-- radius HURT_R, HURT_Y above the feet (sim/body.lua). For explosions the
 -- square around the circle counts, HURT_FAT wider on each side.
-M.HURT_R = BODY_SCALE.colpi.raggio
-M.HURT_Y = BODY_SCALE.colpi.centro
+M.HURT_R = BODY_SCALE.hit.radius
+M.HURT_Y = BODY_SCALE.hit.center
 M.HURT_FAT = 0.1 * M.U
 
 -- Teleport (Passo d'Ombra): an orb that flies like the missile, bounces and

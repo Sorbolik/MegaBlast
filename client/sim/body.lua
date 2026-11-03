@@ -4,7 +4,7 @@
 -- the drawing (which is game.DISEGNO_H tall).
 return {
 	-- the walking capsule: terrain, pushes between robots, crates, who stands on whom
-	cammina = { largo = 29.4, alto = 39.2 },
+	walk = { width = 29.4, height = 39.2 },
 	-- the hit circle: projectiles, explosions, sword, punch, lunge, orbs
-	colpi = { raggio = 20.49, centro = 19.6 },
+	hit = { radius = 20.49, center = 19.6 },
 }
