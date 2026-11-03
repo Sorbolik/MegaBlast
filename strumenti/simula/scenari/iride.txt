@@ -1,0 +1,33 @@
+# L'iride col logo (ui/passaggio.lua): si chiude sul logo e si riapre
+# partendo dal logo, senza tempo in più. Foto ravvicinate all'andata (home -> Primi passi) e
+# al ritorno; il video le fa vedere meglio.
+
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 2
+tocca 256 440                       # Primi passi
+aspetta 0.08
+foto 00_si_chiude
+aspetta 0.06
+foto 01_quasi_chiusa
+aspetta 0.08
+foto 02_logo
+aspetta 0.12
+foto 03_logo
+aspetta 0.12
+foto 04_si_riapre
+aspetta 0.1
+foto 05_aperta
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+tocca 62 658                        # la rotellina
+aspetta 1
+tocca 408 658                       # ESCI DALLA PARTITA
+aspetta 0.12
+foto 06_ritorno_si_chiude
+aspetta 0.15
+foto 07_ritorno_logo
+aspetta 0.3
+foto 08_ritorno_si_riapre
+aspetta 2
+foto 09_home
