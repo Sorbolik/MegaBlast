@@ -14,7 +14,8 @@
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
 --                                                        -- "impostazioni", "profilo" (tapping the devil) or nil
 --   home.eventi(h, riga)                        -- the line under EVENTI
---   home.queued(h, on)                          -- in the online queue (ui/pill.lua): GIOCA says IN CODA...
+--   home.queued(h, on)                          -- in the online queue (ui/pill.lua): GIOCA is off and says IN CODA
+--                                               -- (the room is reached only from the pill: one way, Sergio 3 Nov)
 --                                               -- and the CAMPAGNA is off (a mission cut halfway loses its stars)
 
 local game = require "sim.game"
@@ -145,7 +146,13 @@ function M.eventi(h, txt)
 end
 
 function M.queued(h, on)
-	gui.set_text(h.play.testo, on and "IN CODA..." or "GIOCA")
+	gui.set_text(h.play.testo, on and "IN CODA" or "GIOCA")
+	h.play.spento = on or nil
+	gui.set_color(h.play.testo, on and ui.C.OFF or ui.C.TEXT)
+	-- the Core goes out, the border too
+	h.play.riposo = on and ui.C.LINE or ui.C.LIGHT
+	gui.set_color(h.play.bordo, h.play.riposo)
+	for _, n in ipairs(h.play.core) do gui.set_enabled(n, not on) end
 	h.campaign.spento = on or nil
 	gui.set_color(h.campaign.testo, on and ui.C.OFF or ui.C.TEXT)
 	gui.set_position(h.campaign.testo, vmath.vector3(0, on and 10 or 0, 0))

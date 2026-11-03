@@ -1,6 +1,6 @@
 # La coda che resta attiva nei menu (Sergio, 3 nov: "andare indietro senza
 # abbandonare la coda"): GIOCA, 2 contro 2, un giocatore finto; dalla sala
-# TORNA AI MENU. Nella home la pillola IN CODA in basso, GIOCA dice IN CODA...
+# TORNA AI MENU. Nella home la pillola IN CODA in basso, GIOCA è spento e dice IN CODA
 # e la CAMPAGNA è spenta. Si va in ARMERIA (la pillola resta sopra), si torna
 # alla sala toccando la pillola, poi di nuovo ai menu. I bot arrivano dopo
 # 14 s: la pillola dice PARTITA TROVATA e dopo 3 s si va allo schieramento.
@@ -19,7 +19,7 @@ foto 01_sala
 tocca_centro 440 44                       # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 aspetta 1
-foto 02_home_in_coda               # pillola in basso, IN CODA..., CAMPAGNA spenta
+foto 02_home_in_coda               # pillola in basso, GIOCA spento, CAMPAGNA spenta
 tocca 168 108                       # ARMERIA
 aspetta_stato modo=schermata 3
 aspetta 0.8
