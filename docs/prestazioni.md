@@ -81,7 +81,8 @@ GPU) e maschera del terreno, 209-234 ms sul telefono di Sergio (2 nov, a 120 Hz,
 114 FPS in partita, il 99% dei frame sotto 10 ms). Succede sotto l'iride chiusa:
 dopo il cambio di scena il velo resta chiuso ancora 3 frame (`passaggio.ATTESA`,
 `client/ui/passaggio.lua`, #159), così il frame lungo cade sul nero e l'iride si
-riapre intera invece di saltare. Lo stesso vale per lo scivolo fra i menu (la
+riapre intera invece di saltare. Da quel momento sul nero c'è il logo (3 nov):
+l'attesa del caricamento non sembra più un frame nero. Lo stesso vale per lo scivolo fra i menu (la
 schermata nuova arriva tre frame dopo, a velo pieno). Il contatore segna questi
 scatti `(coperto)` e non li conta fra gli SCATTI/MIN, perché non si vedono; nel
 simulatore restano nel controllo dei 150 ms di Lua.
