@@ -102,3 +102,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 2 nov | Crateri rotondi sulle mappe dipinte, senza la linea sospesa (distanza dal cerchio nella maschera). Scartata la pipeline di Defold per i dipinti (#153 revertata, #156 chiusa): le immagini venivano ridimensionate alla potenza di due. | questa PR |
 | 2 nov | Le schegge dello Sciame sparate in alto spariscono sopra la mappa: prima volavano più di un minuto, bloccando turno e zoom della camera. | questa PR |
 | 2 nov | Dettaglio a ogni zoom, primo passo: dipinti delle mappe a densità 2 dagli schermi a 1080, diavoletto non compresso e più nitido da lontano. | questa PR |
+| 3 nov | Freccia di ferro sopra il nome di chi è di turno, con la brace del colore della squadra che pulsa (scheda WB-010). | questa PR |

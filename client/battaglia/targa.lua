@@ -16,6 +16,13 @@
 --                                          -- resta un paio di secondi e svanisce
 --   targa.posto(t, testo, corona)         -- il posto in classifica a sinistra della barra
 --                                          -- ("" = niente) e la Corona sopra il nome
+--   targa.sopra(t)                        -- dove finisce la targa in alto (unità a scala 1)
+--
+-- La freccia di ferro di chi è di turno (scheda WB-010, scelta di Sergio del 2 nov):
+-- una sola per tutta la partita, sopra il nome (o sopra la Corona), che dondola
+-- con la brace del colore della squadra che pulsa (più accesa giù in basso).
+--   local f = targa.freccia()             -- f.radice va nella scena fra le barre e i testi
+--   targa.freccia_su(f, t, dt)            -- a ogni frame, dopo targa.update: su t (nil = via)
 --
 -- Ogni targa ha due radici, t.barre e t.testi, che si muovono insieme. La GUI
 -- disegna i nodi nell'ordine in cui stanno: chi le mette nella scena mette prima
@@ -41,19 +48,23 @@ local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
 -- la Corona del primo sopra il nome: grande come nei punti in alto (ui.corona è
 -- alta 13 a scala 1, 3,5 sotto il centro della fascia)
 local CORONA_Y, CORONA_SCALA = NOME_Y + 13, 1.6
--- dove finisce la targa in alto (Corona compresa): sopra ci sta il cartellino della mira
-M.SOPRA = CORONA_Y + 17
+-- dove finiscono il nome e la Corona in alto
+local NOME_CIMA, CORONA_CIMA = NOME_Y + 6, CORONA_Y + 17
+-- la freccia di ferro: larga FRECCIA_W, FRECCIA_STACCO sopra il nome o la Corona;
+-- dondola di FRECCIA_DONDOLA in su e in giù ogni FRECCIA_T secondi
+local FRECCIA_W, FRECCIA_H = 28, 28 * 122 / 128
+local FRECCIA_STACCO, FRECCIA_DONDOLA, FRECCIA_T = 3, 1.5, 1.4
 -- la riga delle missioni: sopra la Corona e gli annunci che salgono, a capo
 -- oltre RIGA_W; grande RIGA_SCALA sullo schermo a ogni zoom (circa 22 px: con la
 -- camera lontana non si rimpicciolisce come il resto della targa). Non esce
 -- dai lati dello schermo: col robot vicino a un bordo si sposta verso il centro
-local RIGA_Y, RIGA_SCALA, RIGA_W, RIGA_LATO = CORONA_Y + 30, 0.55, 1640, 16
+local RIGA_STACCO, RIGA_SCALA, RIGA_W, RIGA_LATO = 13, 0.55, 1640, 16
 -- e non sale fin sotto i punti e l'obiettivo in cima (battaglia/punteggio.lua):
 -- col robot in alto scende, sopra il robot
 local RIGA_CIMA = 130
 -- la nuvoletta delle battute: sopra la Corona, grande BATTUTA_SCALA sullo
 -- schermo a ogni zoom, col fondo scuro attorno (BATTUTA_BORDO px)
-local BATTUTA_Y, BATTUTA_SCALA, BATTUTA_BORDO, BATTUTA_T = CORONA_Y + 14, 0.42, 8, 2.6
+local BATTUTA_STACCO, BATTUTA_SCALA, BATTUTA_BORDO, BATTUTA_T = -3, 0.42, 8, 2.6
 local NUVOLA = vmath.vector4(0.06, 0.05, 0.08, 0.82)
 
 local FONDO = ui.C.OMBRA
@@ -122,7 +133,7 @@ function M.nuove(colori, nomi)
 		gui.set_scale(t.corona, vmath.vector3(CORONA_SCALA, CORONA_SCALA, 1))
 		gui.set_enabled(t.corona, false)
 		-- il fondo della nuvoletta, con le forme (fuori dal nodo che sobbalza)
-		t.nuvola = rettangolo(t.barre, 0, BATTUTA_Y, 0, 0, NUVOLA)
+		t.nuvola = rettangolo(t.barre, 0, 0, 0, 0, NUVOLA)
 		gui.set_pivot(t.nuvola, gui.PIVOT_S)
 		gui.set_enabled(t.nuvola, false)
 		t.battuta_t = 0
@@ -139,12 +150,12 @@ function M.nuove(colori, nomi)
 		t.stato = testo(t.dentro_testi, 0, STATO_Y, "", STATO_SCALA, ui.C.TESTO)
 		t.annuncio = testo(t.dentro_testi, 0, ANNUNCIO_Y, "", ANNUNCIO_SCALA, ui.C.LUCE)
 		gui.set_enabled(t.annuncio, false)
-		t.riga = testo(t.testi, 0, RIGA_Y, "", RIGA_SCALA, ui.C.LUCE)
+		t.riga = testo(t.testi, 0, 0, "", RIGA_SCALA, ui.C.LUCE)
 		gui.set_pivot(t.riga, gui.PIVOT_S)
 		gui.set_line_break(t.riga, true)
 		gui.set_size(t.riga, vmath.vector3(RIGA_W, 0, 0))
 		t.riga_testo, t.riga_h = "", 0
-		t.battuta = testo(t.testi, 0, BATTUTA_Y, "", BATTUTA_SCALA, ui.C.TESTO)
+		t.battuta = testo(t.testi, 0, 0, "", BATTUTA_SCALA, ui.C.TESTO)
 		gui.set_pivot(t.battuta, gui.PIVOT_S)
 		gui.set_enabled(t.battuta, false)
 		M.vita(t, 1, 1)
@@ -169,6 +180,13 @@ end
 function M.posto(t, s, corona)
 	gui.set_text(t.posto, s)
 	gui.set_enabled(t.corona, corona)
+	t.con_corona = corona
+end
+
+-- dove finisce la targa in alto, freccia compresa (unità a scala 1, dal centro
+-- in basso): sopra ci stanno il cartellino della mira, le battute e la riga
+function M.sopra(t)
+	return max(CORONA_CIMA, t.freccia_cima or 0)
 end
 
 function M.riga(t, s)
@@ -220,6 +238,7 @@ end
 
 function M.update(t, dt, x, y, scala, cam, su)
 	t.t = t.t + dt
+	t.x, t.y, t.scala = x, y, scala
 	V.x, V.y, V.z = x, y, 0
 	gui.set_position(t.barre, V)
 	gui.set_position(t.testi, V)
@@ -238,7 +257,7 @@ function M.update(t, dt, x, y, scala, cam, su)
 		local cx = math.max(schermo.x0 + mezzo, math.min(schermo.x1 - mezzo, sx))
 		if schermo.x1 - schermo.x0 < 2 * mezzo then cx = (schermo.x0 + schermo.x1) / 2 end
 		V.x = (camera.al_mondo(cam, cx, 0) - x) / scala
-		V.y = math.min(RIGA_Y + (su or 0) / (scala * cam.s), (tetto - y) / scala)
+		V.y = math.min(M.sopra(t) + RIGA_STACCO + (su or 0) / (scala * cam.s), (tetto - y) / scala)
 		gui.set_position(t.riga, V)
 	end
 
@@ -251,7 +270,10 @@ function M.update(t, dt, x, y, scala, cam, su)
 		gui.set_scale(t.battuta, V)
 		V.x, V.y, V.z = t.battuta_w * k + 2 * bordo, t.battuta_h * k + 2 * bordo, 0
 		gui.set_size(t.nuvola, V)
-		V.x, V.y = 0, BATTUTA_Y + bordo
+		local y0 = M.sopra(t) + BATTUTA_STACCO
+		V.x, V.y = 0, y0
+		gui.set_position(t.nuvola, V)
+		V.y = y0 + bordo
 		gui.set_position(t.battuta, V)
 		local a = math.min(1, t.battuta_t * 2)
 		C.x, C.y, C.z, C.w = ui.C.TESTO.x, ui.C.TESTO.y, ui.C.TESTO.z, a
@@ -300,6 +322,58 @@ function M.update(t, dt, x, y, scala, cam, su)
 	local c = t.colore
 	C.x, C.y, C.z, C.w = c.x + (1 - c.x) * bianco, c.y + (1 - c.y) * bianco, c.z + (1 - c.z) * bianco, 1
 	gui.set_color(t.pieno, C)
+end
+
+-- la freccia: il ferro, la brace bianca tinta col colore della squadra, il cuore
+-- bianco (strumenti/grafica/freccia.py), nell'atlante della battaglia
+local function strato(r, nome)
+	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(FRECCIA_W, FRECCIA_H, 0))
+	gui.set_texture(n, "battaglia")
+	gui.play_flipbook(n, nome)
+	gui.set_size_mode(n, gui.SIZE_MODE_MANUAL)
+	gui.set_size(n, vmath.vector3(FRECCIA_W, FRECCIA_H, 0))
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
+	gui.set_parent(n, r)
+	gui.set_inherit_alpha(n, true)
+	return n
+end
+
+function M.freccia()
+	local f = { t = 0 }
+	f.radice = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(f.radice, false)
+	gui.set_adjust_mode(f.radice, gui.ADJUST_FIT)
+	f.ferro = strato(f.radice, "freccia_ferro")
+	f.brace = strato(f.radice, "freccia_brace")
+	f.cuore = strato(f.radice, "freccia_cuore")
+	gui.set_enabled(f.radice, false)
+	return f
+end
+
+-- su t (la targa di chi è di turno, nil = nessuno): dopo targa.update, che l'ha
+-- messa al suo posto. In alto dondola piano con la brace bassa, in basso è accesa
+function M.freccia_su(f, t, dt)
+	if f.su ~= t then
+		if f.su then f.su.freccia_cima = nil end
+		f.su = t
+		gui.set_enabled(f.radice, t ~= nil)
+	end
+	if not t then return end
+	f.t = (f.t + dt) % FRECCIA_T
+	local c = math.cos(f.t / FRECCIA_T * 2 * math.pi)
+	local accesa = (1 - c) / 2
+	local base = (t.con_corona and CORONA_CIMA or NOME_CIMA) + FRECCIA_STACCO + FRECCIA_H / 2
+	-- segue la targa (non il sobbalzo del colpo: la freccia resta ferma)
+	V.x, V.y, V.z = t.x, t.y + (base + FRECCIA_DONDOLA * c) * t.scala, 0
+	gui.set_position(f.radice, V)
+	V.x, V.y, V.z = t.scala, t.scala, 1
+	gui.set_scale(f.radice, V)
+	t.freccia_cima = base + FRECCIA_H / 2 + FRECCIA_DONDOLA
+	local col = t.colore
+	C.x, C.y, C.z, C.w = col.x, col.y, col.z, 0.55 + 0.45 * accesa
+	gui.set_color(f.brace, C)
+	C.x, C.y, C.z, C.w = 1, 1, 1, 0.15 + 0.85 * accesa * accesa
+	gui.set_color(f.cuore, C)
 end
 
 return M

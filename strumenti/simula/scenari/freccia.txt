@@ -1,0 +1,23 @@
+# La freccia di ferro sopra chi è di turno (scheda WB-010, scelta di Sergio del
+# 2 nov): sopra il nome, o sopra la Corona di chi è primo, dondola e la brace del
+# colore della squadra pulsa. Mirando, il cartellino sta sopra la freccia.
+aspetta 3
+tocca_bordo 205 235 basso destra    # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.2
+foto 01_rosso
+aspetta 0.7
+foto 02_rosso_dondola
+mira 150 100 0.6 03_mira
+aspetta_evento fire 2
+aspetta_stato turno=2 fase=aim 15
+aspetta 1.5
+foto 04_blu
+premi z
+aspetta 0.6
+premi z
+aspetta 2
+foto 05_mappa
+premi z
+aspetta 2
+foto 06_vicino

@@ -1592,7 +1592,7 @@ function CP.robot_sotto(self, x, y)
 		local v = self.view[i]
 		if v and not rb.dead and not rb.gone then
 			local rx, piedi = camera.allo_schermo(self.cam, v.x, v.y)
-			local cima = piedi + (scoria.altezza(self.robots[i].rig) + 3 + targa.SOPRA * s ^ -0.65) * s
+			local cima = piedi + (scoria.altezza(self.robots[i].rig) + 3 + targa.sopra(self.robots[i].targa) * s ^ -0.65) * s
 			if math.abs(x - rx) <= math.max(40, 30 * s ^ 0.35) and y >= piedi - 10 and y <= cima + 10 then return i end
 		end
 	end
@@ -2441,6 +2441,11 @@ local function render(self, dt)
 		-- chi mira ha sopra il cartellino della mira: la riga delle missioni sale
 		targa.update(r.targa, dt, v.x, v.y + scoria.altezza(r.rig) + 3, self.cam.s ^ -0.65, self.cam,
 			self.aiming and i == g.current and (self.tele_armed or not mira.MISCHIA[self.weapon]) and mira.CARTELLINO_H or 0)
+		-- la freccia di ferro sopra chi è di turno, finché la partita va avanti
+		if i == g.current then
+			local su = not rb.dead and not rb.gone and g.phase ~= "over" and gui.is_enabled(r.targa.barre)
+			targa.freccia_su(self.freccia, su and r.targa or nil, dt)
+		end
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -2773,7 +2778,7 @@ local function render(self, dt)
 		mira[profilo.impostazione(self.profilo, "mira")](self.mira, v.x + math.cos(self.aim_angle) * game.MUZZLE,
 			cy + math.sin(self.aim_angle) * game.MUZZLE, self.aim_angle, s, self.aim_power, self.colors[g.current])
 		mira.cartellino(self.mira, v.x, v.y + scoria.altezza(self.robots[g.current].rig) + 3
-			+ targa.SOPRA * s ^ -0.65 + 4 / s, s, mira.gradi(self.aim_angle), self.aim_power, self.colors[g.current])
+			+ targa.sopra(self.robots[g.current].targa) * s ^ -0.65 + 4 / s, s, mira.gradi(self.aim_angle), self.aim_power, self.colors[g.current])
 		-- a ogni tacca di potenza una micro-vibrazione, se accesa
 		local tacca = mira.VIBRA_TACCHE and mira.tacca(self.aim_power)
 		if tacca and self.tacca and tacca ~= self.tacca then vibra_tocco() end
@@ -3070,6 +3075,8 @@ function init(self)
 
 	local targhe = targa.nuove(TEAM_COLORS, TEAM_NAMES)
 	for i = 1, game.MAX_PLAYERS do self.robots[i].targa = targhe[i] end
+	-- la freccia di ferro sopra chi è di turno (una sola)
+	self.freccia = targa.freccia()
 	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
 	gui.set_enabled(self.cancel_label, false)
 
@@ -3094,7 +3101,9 @@ function init(self)
 		mondo[#mondo + 1] = b.flash
 	end
 	-- le targhe: prima tutte le barre, poi tutti i testi (due draw call in tutto)
+	-- (la freccia in mezzo: i nomi e gli annunci le passano sopra)
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.barre end
+	mondo[#mondo + 1] = self.freccia.radice
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.testi end
 	mondo[#mondo + 1] = self.mira.cartello
 	mondo[#mondo + 1] = self.cancel_label

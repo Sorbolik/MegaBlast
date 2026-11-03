@@ -16,6 +16,15 @@ images {
 images {
   image: "/assets/fx/cura_scintilla.png"
 }
+images {
+  image: "/assets/fx/freccia_ferro.png"
+}
+images {
+  image: "/assets/fx/freccia_brace.png"
+}
+images {
+  image: "/assets/fx/freccia_cuore.png"
+}
 margin: 0
 extrude_borders: 2
 inner_padding: 0
