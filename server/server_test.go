@@ -38,7 +38,7 @@ func TestSimPicksMapFromSeed(t *testing.T) {
 		}
 		seen[m] = true
 	}
-	if !seen["forgia"] || !seen["crogiolo"] {
+	if !seen["pavimento"] || !seen["fossa"] {
 		t.Fatalf("maps that came out: %v", seen)
 	}
 }

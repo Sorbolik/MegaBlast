@@ -108,7 +108,7 @@ Alternative scartate:
 - Le collisioni sono letture sulla maschera, senza motore fisico.
 - **Rendering**: la maschera viene applicata come canale alfa sopra una texture di terreno disegnata. Quando c'è un cratere si aggiorna solo il rettangolo toccato della texture (`resource.set_texture` con regione).
 - **Celle**: 0 vuoto, 1 terra (si scava), 2 acciaio (non si scava mai).
-- **Mappe**: sono in `client/sim/maps.lua`. Una mappa si disegna con poche forme (rettangoli, cerchi, tubi) oppure carica una maschera disegnata da `client/sim/mapdata.lua`, generata da `maschera.png` (640×360: nero vuoto, bianco terra, rosso indistruttibile). Nelle partite (in locale e online) la mappa la sceglie il seed fra quelle di `maps.ROTATION`: "forgia" (Forgia dei Titani) e "crogiolo" (Il Crogiolo). Resta "casuale" (colline generate dal seed, per le prove).
+- **Mappe**: sono in `client/sim/maps.lua`. Una mappa si disegna con poche forme (rettangoli, cerchi, tubi) oppure carica una maschera disegnata da `client/sim/mapdata.lua`, generata da `maschera.png` (640×360: nero vuoto, bianco terra, rosso indistruttibile). Nelle partite online e sullo stesso telefono la mappa la sceglie il seed fra quelle di `maps.ROTATION`, le mappe ufficiali della campagna: "pavimento" (La Forgia) e "fossa" (La fossa del Fabbro); in allenamento la sceglie il giocatore fra le stesse (`client/menu/allenamento.lua`). Le mappe vecchie "forgia" (Forgia dei Titani), "crogiolo" (Il Crogiolo) e "casuale" (colline generate dal seed) restano solo come terreno di prova per i test e gli scenari del simulatore.
 
 ### Dipendenze del client
 

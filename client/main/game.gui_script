@@ -1481,7 +1481,20 @@ local function on_server_message(self, m)
 			CP.open_lineup(self, CP.vetrine(self, m.players, name_list, { me = m.you, rete = m.vetrine or {} }),
 				profile.GROUP_NAMES[m.mode] or "", stays)
 		end
-	elseif m.t == "start" then
+	elseif m.t == "start" and not self.online_iris then
+		-- the match starts under the iris (the painted map loads in a long
+		-- frame); what the server sends meanwhile waits and goes after it
+		self.online_iris = {}
+		CP.iris(self, function()
+			local waiting = self.online_iris
+			self.online_iris = nil
+			on_server_message(self, { t = "start_now", m = m })
+			for _, q in ipairs(waiting) do on_server_message(self, q) end
+		end)
+	elseif self.online_iris then
+		self.online_iris[#self.online_iris + 1] = m
+	elseif m.t == "start_now" then
+		m = m.m
 		menu.scelta.hide(self.scelta)
 		-- also when we come back after a drop (resume): the match is rebuilt from the
 		-- seed, then the digs and the state arrive.
@@ -3580,10 +3593,13 @@ function update(self, dt)
 	if self.mode == "scelta" then
 		-- locally the draft's time starts after the lineup
 		local players = not CP.update_choice(self, dt) and menu.scelta.update(self.scelta, dt)
+		-- the match starts under the iris: the painted map loads in a long frame
+		-- (docs/prestazioni.md, "I caricamenti sotto il velo")
 		if players and self.missione then
-			start_mission(self, self.missione.l.id, players)
+			local id = self.missione.l.id
+			CP.iris(self, function() start_mission(self, id, players) end)
 		elseif players then
-			start_local_match(self, players)
+			CP.iris(self, function() start_local_match(self, players) end)
 		end
 	elseif self.mode == "scelta_online" then
 		CP.update_choice(self, dt)
