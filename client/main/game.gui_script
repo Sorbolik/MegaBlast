@@ -22,7 +22,7 @@ local replay = require "sim.replay"
 local menu = { podio = require "menu.podio", armeria = require "menu.armeria", scelta = require "menu.scelta",
 	allenamento = require "menu.allenamento", level_end = require "menu.fine_livello", campagna = require "menu.campagna",
 	impostazioni = require "menu.impostazioni", bacheca = require "menu.bacheca", coda = require "menu.coda",
-	lineup = require "menu.schieramento", profile_tabs = require "menu.profilo_schede",
+	lineup = require "menu.schieramento", profile_tabs = require "menu.profilo_schede", sala = require "menu.sala",
 	-- not screens, here so as not to add local variables (limit of 200): the
 	-- server's events and their rules (start online)
 	eventi = require "main.eventi", regole = require "sim.rules",
@@ -459,6 +459,7 @@ local function open_wheel(self, is_open)
 	gui.set_enabled(self.btn_aim, is_open)
 	gui.set_text(self.btn_aim_text, "MIRA: " .. string.upper(profile.setting(self.profilo, "mira")))
 	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and "ESCI DALLA RICERCA" or "ESCI DALLA PARTITA")
+	if self.sala then menu.sala.wheel_open(self.sala, is_open) end
 end
 
 local function set_controls_visible(self, visible)
@@ -510,6 +511,7 @@ end
 -- without_veil: you get here with a transition (ui/passaggio.lua), which already covers
 local function show_menu(self, without_veil)
 	close_screen(self)
+	if self.sala then menu.sala.destroy(self.sala); self.sala = nil end
 	self.podium_t = nil
 	disconnect(self)
 	self.mode = "menu"
@@ -1047,6 +1049,29 @@ function CP.entry_update(self, dt)
 	end
 end
 
+-- The waiting room (menu/sala.lua): the server's "wait" says who is in the
+-- queue, in order (vetrine: level and badges) and our place (you)
+function CP.open_room(self, m)
+	menu.attesa.via(self.attesa)
+	local of = tonumber(m.of) or 0
+	if of < 1 or of > game.MAX_PLAYERS or type(m.vetrine) ~= "table" then return end
+	if not self.sala then
+		self.sala = menu.sala.new(of, profile.GROUP_NAMES[self.coda] or "", self.btn_menu)
+	end
+	-- ours first, then the others in queue order
+	local list = { CP.vetrina.from_profile(self.profilo, "Tu", nil, "In coda") }
+	list[1].tu = true
+	for i = 1, math.min(#m.vetrine, of) do
+		if i ~= m.you then list[#list + 1] = CP.vetrina.from_net(m.vetrine[i], "Giocatore", nil, "In coda") end
+	end
+	if menu.sala.giocatori(self.sala, list) then sound.play("#punto") end
+end
+
+function CP.close_room(self)
+	if self.sala then menu.sala.destroy(self.sala) end
+	self.sala = nil
+end
+
 -- The waiting flame (ui/attesa.lua) instead of a fixed message
 function CP.aspetta(self, txt)
 	gui.cancel_animations(self.message, "color.w")
@@ -1478,13 +1503,14 @@ end
 
 local function on_server_message(self, m)
 	if m.t == "wait" then
-		CP.aspetta(self, "In attesa degli avversari...")
+		CP.open_room(self, m)
 	elseif m.t == "draft" then
 		-- weapon draft (menu/scelta.lua): it arrives at every change, ours or the
 		-- others'. The token is already needed to come back if the connection drops now.
 		self.tok, self.tries = m.tok or self.tok, 0
 		local first = self.mode ~= "scelta_online"
 		if first then
+			CP.close_room(self)
 			show_message(self, "", true)
 			-- the players are found: the search's gear goes away (the match has its own)
 			open_wheel(self, false)
@@ -1516,6 +1542,7 @@ local function on_server_message(self, m)
 		self.online_iris[#self.online_iris + 1] = m
 	elseif m.t == "start_now" then
 		m = m.m
+		CP.close_room(self)
 		menu.scelta.hide(self.scelta)
 		-- also when we come back after a drop (resume): the match is rebuilt from the
 		-- seed, then the digs and the state arrive.
@@ -1565,6 +1592,7 @@ local function on_server_message(self, m)
 		self.mode = "ended"
 		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
 	elseif m.t == "error" then
+		CP.close_room(self)
 		menu.scelta.hide(self.scelta)
 		self.mode, self.tok = "ended", nil
 		show_message(self, (SERVER_ERRORS[m.e] or "Errore del server") .. "\nTocca per tornare al menu", true)
@@ -1607,6 +1635,7 @@ on_socket = function(self, conn, data)
 				if (self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online") and not self.conn then connect(self) end
 			end)
 		elseif self.mode ~= "menu" and self.mode ~= "ended" then
+			CP.close_room(self)
 			menu.scelta.hide(self.scelta)
 			self.mode = "ended"
 			show_message(self, "Connessione persa\nTocca per tornare al menu", true)
@@ -3490,6 +3519,7 @@ function update(self, dt)
 	if screen.aggiorna() then arrange(self) end
 	if self.ingresso then CP.entry_update(self, dt) end
 	menu.attesa.update(self.attesa, dt)
+	if self.sala then menu.sala.update(self.sala, dt) end
 	if self.wait_release then
 		self.wait_release = self.wait_release - dt
 		if self.wait_release <= 0 then self.wait_release = nil end
@@ -4436,9 +4466,16 @@ function PAD.on_input(self, action_id, action)
 			-- redone as soon as the updated events arrive
 			local mod = choice == "online" and menu.coda or menu.bacheca
 			CP.slide(self, 1, function() open_screen(self, mod, hud.NAMES) end)
-			menu.eventi.load_up(server_url(), function()
-				if self.schermata and self.schermata.mod == mod then mod.rebuild(self.schermata.obj) end
-			end)
+			-- not while the slide still moves the screen's nodes: rebuilding deletes
+			-- them, and the slide stopped on a deleted node (simulator, 3 Nov)
+			local function rebuild()
+				if menu.passaggio.is_active(self.passaggio) then
+					timer.delay(0.05, false, rebuild)
+				elseif self.schermata and self.schermata.mod == mod then
+					mod.rebuild(self.schermata.obj)
+				end
+			end
+			menu.eventi.load_up(server_url(), rebuild)
 		elseif choice then
 			-- the menus: they arrive with the slider (ui/passaggio.lua)
 			local open_view = {

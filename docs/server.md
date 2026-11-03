@@ -46,6 +46,12 @@ Le code normali sono `2v2` (quella di sempre, la prediletta), `1v1` e `ffa`
 ogni modo vengono da `config.MODES` della simulazione. Gli eventi con la coda
 loro aggiungono una coda per occorrenza (sotto).
 
+Finché la coda non è piena, a ogni entrata e uscita tutti quelli in coda
+ricevono `{"t":"wait","of":4,"you":2,"vetrine":[{"liv":12,"bdg":[…]},{}]}`:
+quanti servono alla partita, il proprio posto e i cartellini di chi aspetta,
+nell'ordine della coda (la sala d'attesa del gioco, `client/menu/sala.lua`).
+Chi si scollega in coda esce dalla coda (`Lobby.Leave`).
+
 
 Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
 ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","you":1,"tok":…,"players":[{"team":1},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`

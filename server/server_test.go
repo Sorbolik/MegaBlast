@@ -640,3 +640,33 @@ func TestShowcases(t *testing.T) {
 		t.Fatalf("cards in start: %s, expected %s", showcases(s), want)
 	}
 }
+
+// The waiting room (client/menu/sala.lua): everyone in the queue gets the
+// cards of who is waiting, at every join and leave, with their own place.
+func TestWaitingRoom(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":3}}`)
+	w := a.waitFor(`"wait"`)
+	if w["of"] != float64(4) || w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
+		t.Fatalf("first wait: %v", w)
+	}
+	b := dial(t, ctx, url)
+	b.send(`{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":5}}`)
+	w = b.waitFor(`"wait"`)
+	cards := w["vetrine"].([]any)
+	if w["you"] != float64(2) || len(cards) != 2 || cards[0].(map[string]any)["liv"] != float64(3) {
+		t.Fatalf("second wait: %v", w)
+	}
+	if w = a.waitFor(`"wait"`); len(w["vetrine"].([]any)) != 2 {
+		t.Fatalf("the first doesn't see the second: %v", w)
+	}
+	// the first leaves: the second moves up to place 1
+	a.conn.Close(websocket.StatusNormalClosure, "")
+	w = b.waitFor(`"wait"`)
+	if w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
+		t.Fatalf("after leaving: %v", w)
+	}
+}

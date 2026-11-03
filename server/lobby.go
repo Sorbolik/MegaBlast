@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 )
@@ -29,29 +31,49 @@ type Lobby struct {
 	srv    *Server
 	mu     sync.Mutex
 	queues map[string][]*Player
+	sizes  map[string]int // players a queue's match needs (also event queues)
 }
 
 func NewLobby(srv *Server) *Lobby {
-	return &Lobby{srv: srv, queues: map[string][]*Player{}}
+	return &Lobby{srv: srv, queues: map[string][]*Player{}, sizes: map[string]int{}}
 }
 
 // Join puts the player in the queue; when the queue has enough players a
 // match starts.
 func (l *Lobby) Join(p *Player, mode Mode) {
 	l.mu.Lock()
+	l.sizes[mode.Name] = mode.Players
 	q := append(l.queues[mode.Name], p)
 	var group []*Player
 	if len(q) >= mode.Players {
 		group, q = q[:mode.Players:mode.Players], q[mode.Players:]
 	}
 	l.queues[mode.Name] = q
+	if group == nil {
+		l.announce(q, mode.Players)
+	}
 	l.mu.Unlock()
 
-	if group == nil {
-		p.Send([]byte(`{"t":"wait"}`))
-		return
+	if group != nil {
+		go l.start(mode, group)
 	}
-	go l.start(mode, group)
+}
+
+// announce tells everyone in a queue who is waiting (the waiting room's cards,
+// client/menu/sala.lua): {"t":"wait","of":4,"you":2,"vetrine":[{"liv":12,...},{}]}
+// in queue order, you = your place. Called with the lock held, at every join and leave.
+func (l *Lobby) announce(q []*Player, of int) {
+	cards := make([]string, len(q))
+	for i, x := range q {
+		cards[i] = "{}"
+		if x.showcase != nil {
+			cards[i] = string(x.showcase)
+		}
+	}
+	list := strings.Join(cards, ",")
+	for i, x := range q {
+		x.Send(fmt.Appendf(nil, `{"t":"wait","of":%d,"you":%d,"vetrine":[%s]}`, of, i+1, list))
+	}
 }
 
 func (l *Lobby) start(mode Mode, players []*Player) {
@@ -74,7 +96,9 @@ func (l *Lobby) Leave(p *Player) {
 	for name, q := range l.queues {
 		for i, x := range q {
 			if x == p {
-				l.queues[name] = append(q[:i:i], q[i+1:]...)
+				q = append(q[:i:i], q[i+1:]...)
+				l.queues[name] = q
+				l.announce(q, l.sizes[name])
 				return
 			}
 		}
