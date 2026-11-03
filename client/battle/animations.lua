@@ -1,9 +1,9 @@
--- Le animazioni del diavoletto (battle/scoria.lua): fatte con l'editor
--- strumenti/animazioni/editor.html, che le apre e le salva qui. Non serve
--- toccarle a mano. Il formato, e come si campionano: battle/pose.lua.
+-- The devil's animations (battle/scoria.lua): made with the editor
+-- strumenti/animazioni/editor.html, which opens them and saves them here. No
+-- need to edit them by hand. The format, and how they are sampled: battle/pose.lua.
 return {
-	fermo = { durata = 2.618, ciclo = true,
-		tracce = {
+	fermo = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, -1.742, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
@@ -40,10 +40,10 @@ return {
 			mostra_gamba_a = { 0, 1, 2 },
 			mostra_manina_d = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "testa", "gamba_a", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "testa", "gamba_a", "arma", "braccio_a", "manina_a" },
 	},
-	corsa = { durata = 0.6, ciclo = true,
-		tracce = {
+	corsa = { duration = 0.6, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, 0, 0 },
 			testa = { 0, -0.01, 0, 0.067, 0.04, 0, 0.133, -0.01, 0, 0.225, -0.06, 0, 0.3, -0.01, 0, 0.375, -0.012, 0, 0.45, -0.01, 0, 0.525, -0.06, 0 },
@@ -75,10 +75,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	vittoria = { durata = 1.875, ciclo = true,
-		tracce = {
+	vittoria = { duration = 1.875, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, 0, 0, 0.078, 4.592, 0, 0.156, 8.485, 0, 0.234, 11.087, 0, 0.312, 12, 0, 0.391, 11.087, 0, 0.469, 8.485, 0, 0.547, 4.592, 0, 0.625, 0, 0, 0.703, 4.592, 0, 0.781, 8.485, 0, 0.859, 11.087, 0, 0.938, 12, 0, 1.016, 11.087, 0, 1.094, 8.485, 0, 1.172, 4.592, 0, 1.25, 0, 0, 1.328, 4.592, 0, 1.406, 8.485, 0, 1.484, 11.087, 0, 1.562, 12, 0, 1.641, 11.087, 0, 1.719, 8.485, 0, 1.797, 4.592, 0 },
 			testa = { 0, -0.01, 0, 0.234, 0.061, 0, 0.469, 0.09, 0, 0.703, 0.061, 0, 0.938, -0.01, 0, 1.172, -0.081, 0, 1.406, -0.11, 0, 1.641, -0.081, 0 },
@@ -110,11 +110,11 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		viso = { 0, "testa_felice" },
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		face = { 0, "testa_felice" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	aria = { durata = 0.449, ciclo = true,
-		tracce = {
+	aria = { duration = 0.449, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -145,10 +145,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	sale = { durata = 1, ciclo = false,
-		tracce = {
+	sale = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -172,8 +172,8 @@ return {
 			coda_y = { 0, 0, 0 },
 		},
 	},
-	scende = { durata = 1, ciclo = false,
-		tracce = {
+	scende = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -197,8 +197,8 @@ return {
 			coda_y = { 0, 0, 0 },
 		},
 	},
-	paracadute = { durata = 2.094, ciclo = true,
-		tracce = {
+	paracadute = { duration = 2.094, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -229,10 +229,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	colpito = { durata = 0.45, ciclo = false,
-		tracce = {
+	colpito = { duration = 0.45, loop = false,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -263,11 +263,11 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		viso = { 0, "testa_colpita" },
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		face = { 0, "testa_colpita" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	sconfitta = { durata = 0.5, ciclo = false,
-		tracce = {
+	sconfitta = { duration = 0.5, loop = false,
+		tracks = {
 			corpo = { 0, -0.097, 0, 0.5, 1.353, 0 },
 			testa = { 0, -0.01, 0, 0.5, -0.31, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -298,11 +298,11 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		viso = { 0, "testa_ko" },
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		face = { 0, "testa_ko" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	naso = { durata = 2.2, ciclo = false,
-		tracce = {
+	naso = { duration = 2.2, loop = false,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0, 0.275, 0.115, 0, 0.55, 0.24, 0, 0.825, 0.24, 0, 1.1, 0.24, 0, 1.375, 0.24, 0, 1.65, 0.24, 0, 1.925, 0.115, 0, 2.2, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -333,10 +333,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	sbadiglio = { durata = 2.4, ciclo = false,
-		tracce = {
+	sbadiglio = { duration = 2.4, loop = false,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.2, 1.01, 0, 0.4, 1.02, 0, 0.6, 1.03, 0, 0.8, 1.04, 0, 1, 1.04, 0, 1.2, 1.04, 0, 1.4, 1.04, 0, 1.6, 1.04, 0, 1.8, 1.03, 0, 2, 1.02, 0, 2.2, 1.01, 0, 2.4, 1, 0 },
 			testa = { 0, -0.01, 0, 0.2, 0.077, 0, 0.4, 0.165, 0, 0.6, 0.252, 0, 0.8, 0.34, 0, 1, 0.34, 0, 1.2, 0.34, 0, 1.4, 0.34, 0, 1.6, 0.34, 0, 1.8, 0.252, 0, 2, 0.165, 0, 2.2, 0.078, 0, 2.4, -0.01, 0 },
@@ -368,11 +368,11 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		viso = { 0, "testa", 0.6, "testa_colpita", 1.92, "testa" },
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		face = { 0, "testa", 0.6, "testa_colpita", 1.92, "testa" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	guarda_coda = { durata = 2, ciclo = false,
-		tracce = {
+	guarda_coda = { duration = 2, loop = false,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0, 0.25, 0.24, 0, 0.5, 0.49, 0, 0.75, 0.49, 0, 1, 0.49, 0, 1.25, 0.49, 0, 1.5, 0.49, 0, 1.75, 0.24, 0, 2, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -403,10 +403,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	fermo_arma = { durata = 2.618, ciclo = true,
-		tracce = {
+	fermo_arma = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -448,10 +448,10 @@ return {
 			mostra_manina_a = { 0, 0, 2 },
 			mostra_manina_d = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	fermo_arma_grenade = { durata = 2.618, ciclo = true,
-		tracce = {
+	fermo_arma_grenade = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -493,10 +493,10 @@ return {
 			mostra_manina_a = { 0, 0, 2 },
 			mostra_manina_d = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	fermo_arma_missile = { durata = 2.618, ciclo = true,
-		tracce = {
+	fermo_arma_missile = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -538,10 +538,10 @@ return {
 			mostra_manina_a = { 0, 0, 2 },
 			mostra_manina_d = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	fermo_arma_shards = { durata = 2.618, ciclo = true,
-		tracce = {
+	fermo_arma_shards = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -583,10 +583,10 @@ return {
 			mostra_manina_a = { 0, 0, 2 },
 			mostra_manina_d = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	fermo_arma_sniper = { durata = 2.618, ciclo = true,
-		tracce = {
+	fermo_arma_sniper = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -628,10 +628,10 @@ return {
 			mostra_manina_a = { 0, 0, 2 },
 			mostra_manina_d = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	fermo_arma_sword = { durata = 2.618, ciclo = true,
-		tracce = {
+	fermo_arma_sword = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -673,10 +673,10 @@ return {
 			mostra_manina_a = { 0, 0, 2 },
 			mostra_manina_d = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	corsa_arma = { durata = 0.6, ciclo = true,
-		tracce = {
+	corsa_arma = { duration = 0.6, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, 0, 0 },
 			testa = { 0, -0.01, 0, 0.067, 0.04, 0, 0.133, -0.01, 0, 0.225, -0.06, 0, 0.3, -0.01, 0, 0.375, -0.012, 0, 0.45, -0.01, 0, 0.525, -0.06, 0 },
@@ -711,10 +711,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	corsa_arma_grenade = { durata = 0.6, ciclo = true,
-		tracce = {
+	corsa_arma_grenade = { duration = 0.6, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, 0, 0 },
 			testa = { 0, -0.01, 0, 0.067, 0.04, 0, 0.133, -0.01, 0, 0.225, -0.06, 0, 0.3, -0.01, 0, 0.375, -0.012, 0, 0.45, -0.01, 0, 0.525, -0.06, 0 },
@@ -747,10 +747,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	corsa_arma_missile = { durata = 0.6, ciclo = true,
-		tracce = {
+	corsa_arma_missile = { duration = 0.6, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, 0, 0 },
 			testa = { 0, -0.01, 0, 0.067, 0.04, 0, 0.133, -0.01, 0, 0.15, -0.01, 0, 0.225, -0.06, 0, 0.3, -0.01, 0, 0.375, -0.012, 0, 0.45, -0.01, 0, 0.525, -0.06, 0 },
@@ -785,10 +785,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	corsa_arma_shards = { durata = 0.6, ciclo = true,
-		tracce = {
+	corsa_arma_shards = { duration = 0.6, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, 0, 0 },
 			testa = { 0, -0.01, 0, 0.067, 0.04, 0, 0.133, -0.01, 0, 0.225, -0.06, 0, 0.3, -0.01, 0, 0.375, -0.012, 0, 0.45, -0.01, 0, 0.525, -0.06, 0 },
@@ -822,10 +822,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	corsa_arma_sniper = { durata = 0.6, ciclo = true,
-		tracce = {
+	corsa_arma_sniper = { duration = 0.6, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, 0, 0 },
 			testa = { 0, -0.01, 0, 0.067, 0.04, 0, 0.133, -0.01, 0, 0.225, -0.06, 0, 0.3, -0.01, 0, 0.375, -0.012, 0, 0.45, -0.01, 0, 0.525, -0.06, 0 },
@@ -859,10 +859,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	corsa_arma_sword = { durata = 0.6, ciclo = true,
-		tracce = {
+	corsa_arma_sword = { duration = 0.6, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			salto = { 0, 0, 0 },
 			testa = { 0, -0.01, 0, 0.067, 0.04, 0, 0.133, -0.01, 0, 0.225, -0.06, 0, 0.3, -0.01, 0, 0.375, -0.012, 0, 0.45, -0.01, 0, 0.525, -0.06, 0 },
@@ -896,10 +896,10 @@ return {
 			manina_d_x = { 0, 202.41, 0 },
 			manina_d_y = { 0, 225.18, 0 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	aria_arma = { durata = 0.449, ciclo = true,
-		tracce = {
+	aria_arma = { duration = 0.449, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -939,10 +939,10 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	aria_arma_grenade = { durata = 0.449, ciclo = true,
-		tracce = {
+	aria_arma_grenade = { duration = 0.449, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -982,10 +982,10 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	aria_arma_missile = { durata = 0.449, ciclo = true,
-		tracce = {
+	aria_arma_missile = { duration = 0.449, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -1025,10 +1025,10 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	aria_arma_shards = { durata = 0.449, ciclo = true,
-		tracce = {
+	aria_arma_shards = { duration = 0.449, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -1068,10 +1068,10 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	aria_arma_sword = { durata = 0.449, ciclo = true,
-		tracce = {
+	aria_arma_sword = { duration = 0.449, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			testa = { 0, -0.01, 0 },
 			testa_y = { 0, 12.753, 0 },
@@ -1111,10 +1111,10 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	sale_arma = { durata = 1, ciclo = false,
-		tracce = {
+	sale_arma = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1138,8 +1138,8 @@ return {
 			coda_y = { 0, 0, 0 },
 		},
 	},
-	sale_arma_grenade = { durata = 1, ciclo = false,
-		tracce = {
+	sale_arma_grenade = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1163,8 +1163,8 @@ return {
 			coda_y = { 0, 0, 0 },
 		},
 	},
-	sale_arma_missile = { durata = 1, ciclo = false,
-		tracce = {
+	sale_arma_missile = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1188,8 +1188,8 @@ return {
 			coda_y = { 0, 0, 0 },
 		},
 	},
-	sale_arma_shards = { durata = 1, ciclo = false,
-		tracce = {
+	sale_arma_shards = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1213,8 +1213,8 @@ return {
 			coda_y = { 0, 0, 0 },
 		},
 	},
-	sale_arma_sword = { durata = 1, ciclo = false,
-		tracce = {
+	sale_arma_sword = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1238,8 +1238,8 @@ return {
 			coda_y = { 0, 0, 0 },
 		},
 	},
-	scende_arma = { durata = 1, ciclo = false,
-		tracce = {
+	scende_arma = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1266,8 +1266,8 @@ return {
 			arma_y = { 0, -5.59, 0 },
 		},
 	},
-	scende_arma_grenade = { durata = 1, ciclo = false,
-		tracce = {
+	scende_arma_grenade = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1294,8 +1294,8 @@ return {
 			arma_y = { 0, 0, 0 },
 		},
 	},
-	scende_arma_missile = { durata = 1, ciclo = false,
-		tracce = {
+	scende_arma_missile = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1322,8 +1322,8 @@ return {
 			arma_y = { 0, 0, 0 },
 		},
 	},
-	scende_arma_shards = { durata = 1, ciclo = false,
-		tracce = {
+	scende_arma_shards = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1350,8 +1350,8 @@ return {
 			arma_y = { 0, 0, 0 },
 		},
 	},
-	scende_arma_sword = { durata = 1, ciclo = false,
-		tracce = {
+	scende_arma_sword = { duration = 1, loop = false,
+		tracks = {
 			testa = { 0, 0, 0 },
 			testa_y = { 0, 0, 0 },
 			braccio_a = { 0, 0, 0 },
@@ -1378,8 +1378,8 @@ return {
 			arma_y = { 0, 0, 0 },
 		},
 	},
-	mira = { durata = 2.618, ciclo = true,
-		tracce = {
+	mira = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -1420,10 +1420,10 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	mira_grenade = { durata = 2.618, ciclo = true,
-		tracce = {
+	mira_grenade = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -1464,11 +1464,11 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		viso = { 0, "testa_mira" },
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		face = { 0, "testa_mira" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	mira_missile = { durata = 2.618, ciclo = true,
-		tracce = {
+	mira_missile = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -1509,11 +1509,11 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		viso = { 0, "testa_mira" },
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		face = { 0, "testa_mira" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	mira_shards = { durata = 2.618, ciclo = true,
-		tracce = {
+	mira_shards = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -1554,10 +1554,10 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		viso = { 0, "testa_mira" },
+		face = { 0, "testa_mira" },
 	},
-	mira_sniper = { durata = 2.618, ciclo = true,
-		tracce = {
+	mira_sniper = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -1598,11 +1598,11 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		viso = { 0, "testa_mira" },
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		face = { 0, "testa_mira" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
-	mira_sword = { durata = 2.618, ciclo = true,
-		tracce = {
+	mira_sword = { duration = 2.618, loop = true,
+		tracks = {
 			corpo = { 0, -0.097, 0 },
 			schiaccia = { 0, 1, 0, 0.327, 1.018, 0, 0.654, 1.025, 0, 0.982, 1.018, 0, 1.309, 1, 0, 1.636, 0.982, 0, 1.963, 0.975, 0, 2.291, 0.982, 0 },
 			testa = { 0, -0.01, 0 },
@@ -1643,7 +1643,7 @@ return {
 			mostra_braccio_a = { 0, 1, 2 },
 			mostra_manina_a = { 0, 0, 2 },
 		},
-		viso = { 0, "testa_arrabbiata" },
-		livelli = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
+		face = { 0, "testa_arrabbiata" },
+		layers = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "busto", "gamba_a", "testa", "arma", "braccio_a", "manina_a" },
 	},
 }

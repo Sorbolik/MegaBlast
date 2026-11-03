@@ -1952,13 +1952,13 @@ check(hb:hits_robot(hr.x + game.HURT_R - 0.5, hcy, 1, 0) and not hb:hits_robot(h
 	"the target is a circle of radius HURT_R")
 check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "the bottom corner of the box doesn't count")
 
--- Walking capsule and hit circle come from sim/corpo.lua (the animation editor
+-- Walking capsule and hit circle come from sim/body.lua (the animation editor
 -- changes them); the drawing keeps its own size
-local body_shape = require "sim.corpo"
-check(game.ROBOT_H == body_shape.cammina.alto and game.ROBOT_HALF_W * 2 == body_shape.cammina.largo
-	and game.HURT_R == body_shape.colpi.raggio and game.HURT_Y == body_shape.colpi.centro,
-	"capsule and hit circle from sim/corpo.lua")
-check(game.DISEGNO_H == game.REF_H * game.CORPO, "the drawing doesn't depend on sim/corpo.lua")
+local body_shape = require "sim.body"
+check(game.ROBOT_H == body_shape.walk.height and game.ROBOT_HALF_W * 2 == body_shape.walk.width
+	and game.HURT_R == body_shape.hit.radius and game.HURT_Y == body_shape.hit.center,
+	"capsule and hit circle from sim/body.lua")
+check(game.DISEGNO_H == game.REF_H * game.CORPO, "the drawing doesn't depend on sim/body.lua")
 
 -- Melee on the aim: target = position of the target relative to the feet (in U
 -- units), robots stay still in the air; returns the tick of the hit or false

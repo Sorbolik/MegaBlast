@@ -215,24 +215,25 @@ def main():
             im.crop((0, round(y0 * sc), im.width, round(y1 * sc))).save(f, optimize=True)
         fasce[nome] = (y0, y1 - y0, vel)
     # i numeri per lo shader
-    righe = ["-- Fatto da strumenti/grafica/mappe_dipinte.py, non modificare a mano.",
-             "-- Le immagini dipinte (client/dipinti, una per densità dello schermo) e i numeri dello",
-             "-- sfondo: per ogni gruppo di piani dove sta nella scena di 1280 x 720 (y0 dall'alto, h),",
-             "-- quanto segue la camera e quanti pixel della scena scorre al secondo.",
+    righe = ["-- Made by strumenti/grafica/mappe_dipinte.py, do not edit by hand.",
+             "-- The painted images (client/dipinti, one per screen density) and the background",
+             "-- numbers: for each group of planes where it sits in the 1280 x 720 scene (y0 from",
+             "-- the top, h), how much it follows the camera (parallax) and how many scene pixels",
+             "-- it scrolls per second.",
              "return {",
-             "\tdensita = { %s }," % ", ".join(str(d) for d in DENSITA),
-             "\tgiro = 2560,",
-             "\tsfondi = {",
+             "\tdensities = { %s }," % ", ".join(str(d) for d in DENSITA),
+             "\twrap = 2560,",
+             "\tbackgrounds = {",
              "\t\tforgia = {",
-             "\t\t\tfoschia = { %s }," % ", ".join("%.3f" % (v / 255) for v in Image.new("RGB", (1, 1), P["foschia"]).getpixel((0, 0))),
-             "\t\t\tgruppi = {"]
+             "\t\t\thaze = { %s }," % ", ".join("%.3f" % (v / 255) for v in Image.new("RGB", (1, 1), P["foschia"]).getpixel((0, 0))),
+             "\t\t\tgroups = {"]
     for nome, _, _ in GRUPPI:
         y0, h, vel = fasce[nome]
-        righe.append('\t\t\t\t{ nome = "%s", y0 = %d, h = %d, quanto = %g, scorre = %.1f },'
+        righe.append('\t\t\t\t{ name = "%s", y0 = %d, h = %d, parallax = %g, scroll = %.1f },'
                      % (nome, y0, h, QUANTO[nome], CALMO * vel))
     righe += ["\t\t\t},", "\t\t},", "\t},",
-              "\t-- le mappe con il terreno dipinto e il loro sfondo",
-              "\tmappe = {"]
+              "\t-- the maps with painted terrain and their background",
+              "\tmaps = {"]
     for nome in MAPPE:
         righe.append('\t\t%s = "forgia",' % nome)
     for mid in arene():

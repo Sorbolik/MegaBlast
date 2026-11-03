@@ -41,8 +41,8 @@ local LEGEND = 18
 
 -- the pieces in the devil's atlas: the apprentice's (everyone's character)
 -- and, for the cloak, the base wing (the apprentice has no wings)
-local SKIN = skins.pelli.apprendista.pezzi
-local PIECE_IMAGES = { mask = SKIN.testa, chest = SKIN.busto, cloak = require("battle.devil").pezzi.ala, legs = SKIN.gamba }
+local SKIN = skins.skins.apprendista.pieces
+local PIECE_IMAGES = { mask = SKIN.testa, chest = SKIN.busto, cloak = require("battle.devil").pieces.ala, legs = SKIN.gamba }
 -- the colors of the tree branches, in the order of skills.BRANCHES
 local BRANCHES = { C.STEEL, C.MINT, C.BRACE }
 local ABBREVIATIONS = { "MOB", "DIF", "ARS" }
@@ -123,10 +123,10 @@ function M.pezzo(p, team, x, y, d, parent)
 		local n = box(0, 0, img.w * k, img.h * k, with_alpha(vmath.vector4(1, 1, 1, 1), alpha), outside)
 		gui.set_texture(n, "diavoletto")
 		gui.play_flipbook(n, img.img)
-		if img.tinta then
+		if img.tint then
 			local t = box(0, 0, img.w * k, img.h * k, with_alpha(col, alpha), outside)
 			gui.set_texture(t, "diavoletto")
-			gui.play_flipbook(t, img.tinta)
+			gui.play_flipbook(t, img.tint)
 		end
 	end
 	if empty then return outside end
@@ -145,14 +145,14 @@ end
 
 -- A golden pill per power; sx: the left edge
 -- how wide a ui.testo text is at that scale, without creating it
-local function largo(t, scale)
+local function wide(t, scale)
 	return resource.get_text_metrics(gui.get_font_resource(hash("titolo")), t).width * scale * 0.5
 end
 
 -- the power pills: first the shapes, then the text (so it sits on top)
 local function pills(abilities, sx, y, space, parent)
 	if #abilities == 0 then
-		local w = largo("nessun potere", 0.58) + 16
+		local w = wide("nessun potere", 0.58) + 16
 		box(sx + w / 2, y, w + 2, 24, C.LINE, parent)
 		box(sx + w / 2, y, w, 22, C.PANEL, parent)
 		txt("nessun potere", sx + 8, y, 0.58, C.OFF, parent, gui.PIVOT_W)
@@ -160,7 +160,7 @@ local function pills(abilities, sx, y, space, parent)
 	end
 	local x = sx
 	for _, p in ipairs(abilities) do
-		local w = largo(p, 0.58) + 16
+		local w = wide(p, 0.58) + 16
 		if x + w > sx + space then break end
 		box(x + w / 2, y, w + 3, 25, C.GOLD, parent)
 		box(x + w / 2, y, w, 22, C.BOTTOM, parent)

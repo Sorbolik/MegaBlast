@@ -4,8 +4,11 @@ Documenti, CLAUDE.md, messaggi di commit e PR in italiano. Il codice (nomi di fi
 funzioni, variabili e commenti) passa all'inglese a ondate (piano di Sergio, 2 nov):
 già in inglese i nomi e i commenti di tutto `client/` e `server/` e dei loro test,
 tranne il bot (`client/sim/bot.lua`, `rete.lua`, `tests/bot_test.lua`) e i file scritti
-dagli strumenti o dall'editor (`corpo.lua`, `animations.lua`, `skins.lua`, `pivots.lua`,
-`grips.lua`, `weapons.lua`, `devil.lua`, `paintings.lua`: dentro sono ancora italiani).
+dagli strumenti o dall'editor (`body.lua`, `animations.lua`, `skins.lua`, `pivots.lua`,
+`grips.lua`, `weapons.lua`, `devil.lua`, `paintings.lua`): i loro campi sono in inglese, ma
+i nomi dei pezzi, dei posti, dei canali, delle clip e delle immagini restano italiani
+(sono id, vanno con le immagini). L'editor delle animazioni dentro resta italiano e
+traduce i campi quando legge e scrive i file.
 I nomi dei file e delle cartelle del client sono in inglese (`client/battle/`,
 `client/circles/`, ...) tranne `client/dipinti/` e `client/assets/`; gli strumenti
 restano in italiano finché non arriva la loro ondata.
@@ -112,12 +115,12 @@ ripubblicalo. "Manda a Claude" nell'editor salva il file nel database
 dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
 `client/battle/animations.lua`.
 
-Dallo stesso editor si cambiano le hitbox (`client/sim/corpo.lua`: la capsula per
+Dallo stesso editor si cambiano le hitbox (`client/sim/body.lua`: la capsula per
 camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
 perni di testa, braccia, gambe e ala (`client/battle/pivots.lua`) e le
-impugnature di ogni arma: presa (dove la tiene chi la impugna), perno (dove gira) e spalla
-(dove sta il perno nel corpo) in `client/battle/grips.lua`. Ogni clip sceglie chi
-impugna l'arma (`impugna`) e l'ordine dei pezzi davanti e dietro (`livelli`).
+impugnature di ogni arma: presa (`grip`, dove la tiene chi la impugna), perno (`pivot`,
+dove gira) e spalla (`shoulder`, dove sta il perno nel corpo) in `client/battle/grips.lua`. Ogni clip sceglie chi
+impugna l'arma (`held_by`) e l'ordine dei pezzi davanti e dietro (`layers`).
 "Manda a Claude" li mette nei documenti `corpo/ultima`, `perni/ultima` e
 `impugnature/ultima` (campo `lua`). Una clip con l'arma può avere la versione di
 una sola arma (`fermo_arma_mallet`): il gioco la preferisce a quella di tutte.

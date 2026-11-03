@@ -256,7 +256,7 @@ local OUTCOME = { V = { "VINTA", C.MINT }, S = { "PERSA", C.BRACE }, P = { "PARI
 local function face_icon(v, x, y, d, parent)
 	local col = C.SQUADRA[v.squadra] or C.LIGHT
 	ui.disco(x, y, d, C.BOTTOM, parent)
-	local img = require("battle.skins").pelli.apprendista.pezzi.testa
+	local img = require("battle.skins").skins.apprendista.pieces.testa
 	local k = (d * 1.1) / img.h
 	local n = box(x, y - d * 0.08, img.w * k, img.h * k, vmath.vector4(1, 1, 1, 1), parent)
 	gui.set_texture(n, "diavoletto")

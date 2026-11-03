@@ -18,13 +18,6 @@ regole
 ogni
 fino
 modo
-# - corpo.lua lo scrive l'editor delle animazioni: l'ondata del client
-cammina
-colpi
-largo
-alto
-raggio
-centro
 # - nomi che strumenti/animazioni/prepara.py cerca con una regex (local ARMI e
 #   M.PERSONAGGIO in battle/scoria.lua, SQUADRA in ui/ui.lua): vanno con la PR 5b
 ARMI
@@ -33,6 +26,3 @@ SQUADRA
 # - l'estensione nativa client/vibra (globale vibra, funzione vibra.tocco): si
 #   compila solo sul build server di Defold, si traduce a parte
 vibra
-# - le chiavi che l'editor delle animazioni scrive nelle clip anche se oggi nessuna
-#   clip le usa (impugna: chi tiene l'arma)
-impugna

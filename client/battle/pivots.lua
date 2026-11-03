@@ -1,7 +1,7 @@
--- I perni spostati nell'editor delle animazioni (strumenti/animazioni), in unità
--- del disegno: per posto, di quanto si sposta il punto attorno a cui il pezzo
--- gira rispetto allo scheletro (battle/devil.lua). I pezzi del posto, di
--- base e delle pelli, si spostano al contrario: fermi restano dove sono.
+-- The pivots moved in the animation editor (strumenti/animazioni), in drawing
+-- units: per slot, how far the point the piece turns around moves relative to
+-- the skeleton (battle/devil.lua). The slot's pieces, base and skins, move the
+-- opposite way: still, they stay where they are.
 return {
 	busto = { 15.4, -6.8 },
 	testa = { 22, -1.8 },

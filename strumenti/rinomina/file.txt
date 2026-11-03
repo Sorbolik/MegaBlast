@@ -89,3 +89,4 @@ client/ui/titolo.font client/ui/title.font
 client/menu/coda.lua client/menu/queue.lua
 client/ui/attesa.lua client/ui/waiting.lua
 client/menu/sala.lua client/menu/lobby.lua
+client/sim/corpo.lua client/sim/body.lua

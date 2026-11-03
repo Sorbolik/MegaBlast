@@ -25,7 +25,7 @@ local M = {}
 -- steps from left to right, by standings position: 2nd, 1st, 3rd, 4th
 -- (in 2 vs 2 teammates share the place: the winning pair is in the middle)
 M.ORDINE = { 2, 1, 3, 4 }
-M.ALTEZZA = { 170, 125, 95, 70 }   -- height of each place
+M.HEIGHT = { 170, 125, 95, 70 }   -- height of each place
 M.WIDE, M.STEP = 190, 205        -- step width and distance between centers
 M.BASE_Y_POS = 250                     -- where the steps rest
 M.SCORIA_H = 110                   -- the Scoria on the step, in pixels
@@ -47,7 +47,7 @@ end
 local function stair(p, x, voice, i)
 	local c = ui.C
 	local g = p.giocatori[voice.robot] or { nome = "?", colore = c.TEXT }
-	local h = M.ALTEZZA[voice.place] or M.ALTEZZA[#M.ALTEZZA]
+	local h = M.HEIGHT[voice.place] or M.HEIGHT[#M.HEIGHT]
 	-- the step grows from the bottom: it sits in an empty node at the base, which stretches
 	local base = gui.new_box_node(vec(x, M.BASE_Y_POS), vec(0, 0))
 	gui.set_visible(base, false)
