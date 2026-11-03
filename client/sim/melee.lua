@@ -4,7 +4,7 @@
 -- The hit animation rotates with the aim: aiming down the slash comes down
 -- from above, aiming up it rises.
 -- The part that hits is a rectangle along the weapon axis that follows the
--- animation. It only counts between the "apri" and "chiudi" frames; whoever
+-- animation. It only counts between the hit_from and hit_to frames; whoever
 -- passes through it gets hit once, when the window closes.
 --
 -- For each frame: ox, oy = where the aim bone is relative to the feet;
@@ -20,7 +20,7 @@ local M = {}
 -- from 30 to 34 it swings forward (a fifth of a second behind, a twentieth to come down).
 M.slash = {
 	fps = 75,
-	apri = 20, chiudi = 60, scossa = 37,
+	hit_from = 20, hit_to = 60, shake_at = 37,
 	half_width = 0.5,     -- the rectangle is 1 wide
 	pose = {
 		{ -0.58, 1.97, -0.21, -0.89, 5.79, -0.89, 0.0 }, -- 0
@@ -102,7 +102,7 @@ M.slash = {
 -- the robot lifts itself, and comes back down at the end.
 M.uppercut = {
 	fps = 45,
-	apri = 5, chiudi = 20, scossa = 10,
+	hit_from = 5, hit_to = 20, shake_at = 10,
 	salto = 10,                -- frame where the attacker does the little hop
 	half_width = 1.5,     -- the rectangle is 3 wide
 	pose = {

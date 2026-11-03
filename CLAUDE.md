@@ -2,8 +2,13 @@
 
 Documenti, CLAUDE.md, messaggi di commit e PR in italiano. Il codice (nomi di file,
 funzioni, variabili e commenti) passa all'inglese a ondate (piano di Sergio, 2 nov):
-già in inglese `client/sim/` (tranne `bot.lua`, `rete.lua`, `corpo.lua`), `server/` e i
-loro test; il resto resta in italiano finché non arriva la sua ondata. Nei file in
+già in inglese i nomi e i commenti di tutto `client/` e `server/` e dei loro test,
+tranne il bot (`client/sim/bot.lua`, `rete.lua`, `tests/bot_test.lua`) e i file scritti
+dagli strumenti o dall'editor (`corpo.lua`, `animazioni.lua`, `pelli.lua`, `perni.lua`,
+`impugnature.lua`, `armi.lua`, `diavoletto.lua`, `dipinti.lua`); i nomi dei file e delle
+cartelle del client e gli strumenti restano in italiano finché non arriva la loro ondata.
+Un campo usato anche fuori dall'ondata o scritto come stringa (id, impostazioni, nodi
+della GUI) resta italiano per ora. Nei file in
 inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
 errori del server) restano in italiano. Si rinomina con `strumenti/rinomina/rinomina.py`.
 
@@ -147,9 +152,9 @@ con `scoria.new(colore, look)` (`client/battaglia/pelli.lua`, generato).
 
 Il gioco si usa anche col controller (Bluetooth o USB): mappatura di Sergio e
 come funziona in [docs/controller.md](docs/controller.md). Cosa fa ogni tasto
-in battaglia di base sta solo in `controller.BATTAGLIA` (`client/ui/controller.lua`;
+in battaglia di base sta solo in `controller.BATTLE` (`client/ui/controller.lua`;
 ognuno la cambia nelle IMPOSTAZIONI della home); un comando nuovo dell'HUD va
-aggiunto anche lì, in `controller.COMANDI`, in `PAD.COMANDI` e, se ha un pulsante, in `PAD.GLIFI`
+aggiunto anche lì, in `controller.COMMANDS`, in `PAD.COMMANDS` e, se ha un pulsante, in `PAD.GLYPHS`
 (dove si vede il suo tasto sull'HUD, `client/main/game.gui_script`). Una
 schermata nuova con `ui.tocco` ha già la luce del controller. Si prova col
 controller finto: scenari `strumenti/simula/scenari/controller.txt` e

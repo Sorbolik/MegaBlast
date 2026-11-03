@@ -34,7 +34,7 @@ Come i pulsanti dell'HUD, LB, RB, A e X scelgono sempre; quello che ora non si
 può usare fa no e dice perché. LB e RB saltano le armi che nel tuo turno non
 puoi usare.
 
-La mappatura di base sta in `controller.BATTAGLIA` (`client/ui/controller.lua`);
+La mappatura di base sta in `controller.BATTLE` (`client/ui/controller.lua`);
 quella in uso è `c.tasti`, che le impostazioni cambiano.
 
 Su Android B manda anche il tasto "indietro" del telefono: il gioco lo
@@ -67,16 +67,16 @@ alla mappatura di Sergio. Si salva subito nel profilo (`tasti`, `sparo`, `potenz
 ## I tasti sull'HUD
 
 Col controller in mano ogni pulsante dell'HUD mostra, nell'angolo, il tasto che
-lo usa (`client/ui/glifo.lua`, `PAD.glifi` in `game.gui_script`), anche dopo
+lo usa (`client/ui/glifo.lua`, `PAD.glyphs` in `game.gui_script`), anche dopo
 averlo cambiato. Il tasto è disegnato come sul controller che si usa,
-riconosciuto dal nome che dà il sistema (`controller.famiglia`):
+riconosciuto dal nome che dà il sistema (`controller.family`):
 
 - **Xbox** (e tutti quelli che non si riconoscono): A verde, B rosso, X blu, Y giallo; LB, RB, LT, RT, MENU, VISTA.
 - **PlayStation**: croce, cerchio, quadrato e triangolo disegnati; L1, R1, L2, R2, OPTIONS, CREATE.
 - **Nintendo**: le lettere al loro posto (B in basso, A a destra, Y a sinistra, X in alto); L, R, ZL, ZR, +, −.
 
 La croce è disegnata col braccio acceso. Le schede, le lezioni e la scelta
-delle armi scrivono il nome giusto del tasto (`controller.nome_di`). Negli
+delle armi scrivono il nome giusto del tasto (`controller.name_of`). Negli
 scenari `imposta prova_pad playstation` (o `nintendo`) prova la grafica degli
 altri controller.
 

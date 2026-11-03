@@ -1,34 +1,34 @@
--- Le due levette della battaglia sul telefono: a sinistra il movimento, a
--- destra la mira. Qui c'è solo la logica, senza nodi GUI, così si prova con
--- luajit (tests/sim_test.lua). Le posizioni x, y sono frazioni della corsa:
--- (0, 0) al centro, lunghezza 1 sul bordo.
+-- The two battle sticks on the phone: movement on the left, aim on the
+-- right. Only the logic lives here, no GUI nodes, so it can be tested with
+-- luajit (tests/sim_test.lua). Positions x, y are fractions of the travel:
+-- (0, 0) at the center, length 1 at the edge.
 --
--- - la levetta del movimento riportata al centro si ferma;
--- - il colpo parte con la mira di RILASCIO secondi prima di staccare il dito,
---   così lo scivolamento del pollice mentre si alza non sposta il tiro;
--- - i tempi sono in secondi.
+-- - the movement stick brought back to the center stops;
+-- - the shot fires with the aim from RELEASE seconds before the finger lifts,
+--   so the thumb sliding as it lifts doesn't move the shot;
+-- - times are in seconds.
 
 local M = {}
 
 local rad, sin = math.rad, math.sin
 
--- Movimento
-M.MOVE_START = 0.15 -- di lato oltre il 15% cammina...
-M.MOVE_START_ANGLE = rad(60) -- ...se non punta più in alto di 60°
-M.MOVE_STOP = 0.25 -- spinta in alto oltre 60° e oltre il 25% smette di camminare
+-- Movement
+M.MOVE_START = 0.15 -- sideways past 15% walks...
+M.MOVE_START_ANGLE = rad(60) -- ...if it doesn't point higher than 60°
+M.MOVE_STOP = 0.25 -- pushed up past 60° and past 25% stops walking
 M.MOVE_STOP_ANGLE = rad(60)
-M.LATERAL_DEAD = 0.25 -- verso il basso serve il 25% di lato
-M.MOVE_CENTER = 0.1 -- sotto il 10% (dito tornato al centro) si ferma
-M.JUMP_START = 0.25 -- in alto oltre 25° e oltre il 25% salta, e risalta finché resta lì
+M.LATERAL_DEAD = 0.25 -- pointing down it takes 25% sideways
+M.MOVE_CENTER = 0.1 -- below 10% (finger back at the center) it stops
+M.JUMP_START = 0.25 -- up past 25° and past 25% jumps, and jumps again while it stays there
 M.JUMP_START_ANGLE = rad(25)
-M.JUMP_STOP = 0.25 -- smette sotto 22,5° o sotto il 25%
+M.JUMP_STOP = 0.25 -- stops below 22.5° or below 25%
 M.JUMP_STOP_ANGLE = rad(22.5)
 
--- Mira: oltre il 20% la levetta si accende (si può sparare), sotto il 10% si
--- spegne (lasciando non parte niente). La potenza parte dal 20%.
+-- Aim: past 20% the stick lights up (you can fire), below 10% it goes off
+-- (releasing fires nothing). Power starts from 20%.
 M.AIM_ON = 0.2
 M.AIM_OFF = 0.1
-M.RILASCIO = 0.05
+M.RELEASE = 0.05
 
 function M.new()
 	return { moving = false, dir = 0, jumping = false, active = false, angle = 0, f = 0,
@@ -40,8 +40,8 @@ function M.reset(s)
 	for i = 1, #s.hist do s.hist[i].t = -math.huge end
 end
 
--- Il dito della levetta del movimento è in (x, y). Torna true quando parte un
--- salto (il salto ripetuto finché la levetta resta in alto lo fa la simulazione).
+-- The movement stick's finger is at (x, y). Returns true when a jump starts
+-- (the repeated jump while the stick stays up is done by the simulation).
 function M.muovi(s, x, y)
 	local mag = math.sqrt(x * x + y * y)
 	local up = mag > 0 and y / mag or 0
@@ -55,7 +55,7 @@ function M.muovi(s, x, y)
 			s.moving = math.abs(x) > M.LATERAL_DEAD
 		end
 	end
-	-- la direzione cambia solo con il dito davvero da un lato
+	-- the direction changes only with the finger really to one side
 	if math.abs(x) > 0.05 then s.dir = x < 0 and -1 or 1 end
 	local was = s.jumping
 	if s.jumping and (up < sin(M.JUMP_STOP_ANGLE) or mag < M.JUMP_STOP) then s.jumping = false end
@@ -63,7 +63,7 @@ function M.muovi(s, x, y)
 	return s.jumping and not was
 end
 
--- Il dito della levetta della mira è in (x, y): direzione e potenza (0..1)
+-- The aim stick's finger is at (x, y): direction and power (0..1)
 function M.mira(s, x, y)
 	local mag = math.sqrt(x * x + y * y)
 	if not s.active and mag > M.AIM_ON then
@@ -75,7 +75,7 @@ function M.mira(s, x, y)
 	s.f = math.max(0, math.min(1, (mag - M.AIM_ON) / (1 - M.AIM_ON)))
 end
 
--- Ogni frame: com'era la mira all'istante t (in secondi)
+-- Every frame: what the aim was at instant t (in seconds)
 local HIST = 24
 function M.registra(s, t, angle, power, active)
 	s.hist_i = s.hist_i % HIST + 1
@@ -87,13 +87,13 @@ function M.registra(s, t, angle, power, active)
 	h.t, h.angle, h.power, h.active = t, angle, power, active
 end
 
--- Mira con cui sparare se il dito si stacca all'istante t: l'ultima registrata
--- almeno RILASCIO secondi prima; se non ce n'è, la più vecchia; nil se nessuna.
-function M.al_rilascio(s, t)
+-- Aim to fire with if the finger lifts at instant t: the last one recorded
+-- at least RELEASE seconds earlier; if there is none, the oldest; nil if none.
+function M.on_release(s, t)
 	local best, oldest
 	for _, h in ipairs(s.hist) do
 		if h.t > -math.huge then
-			if h.t <= t - M.RILASCIO and (not best or h.t > best.t) then best = h end
+			if h.t <= t - M.RELEASE and (not best or h.t > best.t) then best = h end
 			if not oldest or h.t < oldest.t then oldest = h end
 		end
 	end

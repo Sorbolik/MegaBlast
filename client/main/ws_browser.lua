@@ -1,14 +1,14 @@
--- WebSocket del browser per la build HTML5 senza l'estensione (strumenti/web/build.sh:
--- l'estensione si compila sul build server di Defold, che dal cloud non si raggiunge).
--- Stessa interfaccia dell'estensione per quello che usa game.gui_script; gli eventi
--- arrivano da una coda in JavaScript che poll(self) svuota a ogni frame.
+-- Browser WebSocket for the HTML5 build without the extension (strumenti/web/build.sh:
+-- the extension compiles on Defold's build server, which can't be reached from the cloud).
+-- Same interface as the extension for what game.gui_script uses; events
+-- arrive from a JavaScript queue that poll(self) empties every frame.
 
 local M = {
 	EVENT_CONNECTED = 0, EVENT_DISCONNECTED = 1, EVENT_MESSAGE = 2, EVENT_ERROR = 3,
 	DATA_TYPE_TEXT = 0,
 }
 
--- Una riga in coda per evento: "id evento testo"; ogni socket manda un solo evento di chiusura
+-- One queued line per event: "id event text"; every socket sends a single close event
 local JS = [[
 window.mbws = window.mbws || { n: 0, s: {}, q: [],
 	connect: function (url, timeout) {
@@ -29,9 +29,9 @@ window.mbws = window.mbws || { n: 0, s: {}, q: [],
 };
 ]]
 
-local callback, attuale
+local callback, current_value
 
--- stringa Lua -> stringa JavaScript tra virgolette
+-- Lua string -> quoted JavaScript string
 local function js_str(s)
 	return json.encode({ s }):sub(2, -2)
 end
@@ -39,8 +39,8 @@ end
 function M.connect(url, params, cb)
 	html5.run(JS)
 	callback = cb
-	attuale = tonumber(html5.run(("mbws.connect(%s, %d)"):format(js_str(url), params and params.timeout or 5000)))
-	return attuale
+	current_value = tonumber(html5.run(("mbws.connect(%s, %d)"):format(js_str(url), params and params.timeout or 5000)))
+	return current_value
 end
 
 function M.send(conn, data)
@@ -56,10 +56,10 @@ function M.poll(self)
 	while true do
 		local riga = html5.run("mbws.poll()")
 		if riga == "" then return end
-		local id, ev, testo = riga:match("^(%d+) (%d) (.*)$")
-		-- gli eventi rimasti di un socket chiuso si buttano
-		if tonumber(id) == attuale then
-			callback(self, attuale, { event = tonumber(ev), message = testo })
+		local id, ev, txt = riga:match("^(%d+) (%d) (.*)$")
+		-- leftover events of a closed socket are thrown away
+		if tonumber(id) == current_value then
+			callback(self, current_value, { event = tonumber(ev), message = txt })
 		end
 	end
 end

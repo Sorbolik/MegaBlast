@@ -1,144 +1,145 @@
--- La home (menu principale): dietro lo sfondo dipinto della Forgia che scorre
--- piano (lo disegna la mesh del terreno, battaglia/terreno.script; Sergio 2 nov),
--- l'apprendista fermo senza arma col bagliore del Nucleo dietro (toccandolo si apre il PROFILO), il nome del gioco e solo i bottoni che servono oggi: GIOCA (partita
--- online), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA, EVENTI e, in alto a destra,
--- la rotellina delle IMPOSTAZIONI (menu/impostazioni.lua). Le schermate nuove aggiungono qui il loro bottone
--- quando esistono (stile in ui/ui.lua).
+-- The home (main menu): behind it the painted Forge background scrolling
+-- slowly (drawn by the terrain mesh, battaglia/terreno.script; Sergio 2 Nov),
+-- the apprentice standing still without a weapon with the Core's glow behind
+-- (tapping it opens the PROFILO), the game's name and only the buttons needed
+-- today: GIOCA (online match), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA,
+-- EVENTI and, at the top right, the IMPOSTAZIONI wheel (menu/impostazioni.lua).
+-- New screens add their button here once they exist (style in ui/ui.lua).
 --
--- Uso (dal gui_script, che ha la texture ui e il font titolo):
+-- Use (from the gui_script, which has the ui texture and the titolo font):
 --   local home = require "menu.home"
---   local h = home.new(colore)                  -- crea i nodi, nascosta
---   home.show(h, senza_velo) / home.hide(h)
---   home.update(h, dt)                          -- a ogni frame mentre si vede
+--   local h = home.new(colore)                  -- creates the nodes, hidden
+--   home.show(h, without_veil) / home.hide(h)
+--   home.update(h, dt)                          -- every frame while visible
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
---                                                        -- "impostazioni", "profilo" (toccando il diavoletto) o nil
---   home.eventi(h, riga)                        -- la riga sotto EVENTI
+--                                                        -- "impostazioni", "profilo" (tapping the devil) or nil
+--   home.eventi(h, riga)                        -- the line under EVENTI
 
 local game = require "sim.game"
 local scoria = require "battaglia.scoria"
 local ui = require "ui.ui"
-local schermo = require "ui.schermo"
+local screen = require "ui.schermo"
 
 local M = {}
 
 local W, H = 1280, 720
--- la Scoria (alta game.DISEGNO_H) alta circa 220 px, piedi qui
-local CORPO_X, CORPO_Y = 400, 200
-local CORPO_K = 220 / game.DISEGNO_H
+-- the Scoria (game.DISEGNO_H tall) about 220 px tall, feet here
+local BODY_X, BODY_Y = 400, 200
+local BODY_K = 220 / game.DISEGNO_H
 
 local V = vmath.vector3()
 
-local function vuoto(x, y, parent)
+local function empty(x, y, parent)
 	local n = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(n, false)
 	if parent then gui.set_parent(n, parent) end
 	return n
 end
 
--- gruppo agganciato a un bordo dello schermo
-local function angolo(h, x, y, xa, ya)
-	local n = vuoto(x, y)
+-- group stuck to a screen edge
+local function angle_deg(h, x, y, xa, ya)
+	local n = empty(x, y)
 	gui.set_xanchor(n, xa)
 	gui.set_yanchor(n, ya)
 	h.tops[#h.tops + 1] = n
 	return n
 end
 
-function M.new(colore)
-	local h = { tops = {}, bottoni = {}, t = 0, colore = colore }
+function M.new(color)
+	local h = { tops = {}, buttons = {}, t = 0, colore = color }
 
-	-- il bagliore del Nucleo dietro la Scoria, che respira
-	h.posa = vuoto(CORPO_X, CORPO_Y)
+	-- the Core's glow behind the Scoria, breathing
+	h.posa = empty(BODY_X, BODY_Y)
 	h.tops[#h.tops + 1] = h.posa
-	h.luce = ui.alone(0, 110, 620, colore, h.posa)
-	-- un velo d'ombra sotto i piedi: il suolo che non c'è
-	local suolo = ui.alone(0, 0, 260, ui.C.OMBRA, h.posa)
-	gui.set_blend_mode(suolo, gui.BLEND_ALPHA)
+	h.luce = ui.alone(0, 110, 620, color, h.posa)
+	-- a veil of shadow under the feet: the ground that isn't there
+	local ground = ui.alone(0, 0, 260, ui.C.SHADOW, h.posa)
+	gui.set_blend_mode(ground, gui.BLEND_ALPHA)
 	V.x, V.y, V.z = 1, 0.16, 1
-	gui.set_scale(suolo, V)
-	local corpo = vuoto(0, 0, h.posa)
-	V.x, V.y, V.z = CORPO_K, CORPO_K, 1
-	gui.set_scale(corpo, V)
-	h.corpo = scoria.new(colore, scoria.PERSONAGGIO)
-	gui.set_parent(h.corpo.root, corpo)
+	gui.set_scale(ground, V)
+	local body_shape = empty(0, 0, h.posa)
+	V.x, V.y, V.z = BODY_K, BODY_K, 1
+	gui.set_scale(body_shape, V)
+	h.corpo = scoria.new(color, scoria.PERSONAGGIO)
+	gui.set_parent(h.corpo.root, body_shape)
 	scoria.set_enabled(h.corpo, true)
-	-- il fermo senza arma, senza scenette (Sergio, 2 nov)
+	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
-	-- toccando il diavoletto si apre il profilo (menu/profilo_schede.lua): una
-	-- zona che non si vede, sopra di lui, e una scritta discreta sotto i piedi
-	local zona = gui.new_box_node(vmath.vector3(CORPO_X, CORPO_Y + 120, 0), vmath.vector3(260, 320, 0))
-	gui.set_visible(zona, false)
-	h.tops[#h.tops + 1] = zona
-	h.bottoni[#h.bottoni + 1] = { nodo = zona, bordo = zona, azione = "profilo", colore = ui.C.LUCE, riposo = ui.C.LUCE }
-	local scritta = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.TESTO, h.posa)
-	-- sullo sfondo dipinto la scritta col contorno scuro
-	gui.set_outline(scritta, ui.C.OMBRA)
-	gui.set_inherit_alpha(scritta, true)
+	-- tapping the devil opens the profile (menu/profilo_schede.lua): an invisible
+	-- zone over it, and a discreet label under the feet
+	local zone = gui.new_box_node(vmath.vector3(BODY_X, BODY_Y + 120, 0), vmath.vector3(260, 320, 0))
+	gui.set_visible(zone, false)
+	h.tops[#h.tops + 1] = zone
+	h.buttons[#h.buttons + 1] = { nodo = zone, bordo = zone, ui_action = "profilo", colore = ui.C.LIGHT, riposo = ui.C.LIGHT }
+	local label = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.TEXT, h.posa)
+	-- on the painted background the label with a dark outline
+	gui.set_outline(label, ui.C.SHADOW)
+	gui.set_inherit_alpha(label, true)
 
-	-- il nome in alto a sinistra
-	local alto_sx = angolo(h, 48, H - 56, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
-	local nome = ui.titolo("MEGABLAST", 0, 0, 1.3, ui.C.LUCE, alto_sx)
+	-- the name at the top left
+	local top_left = angle_deg(h, 48, H - 56, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
+	local nome = ui.titolo("MEGABLAST", 0, 0, 1.3, ui.C.LIGHT, top_left)
 	gui.set_pivot(nome, gui.PIVOT_W)
 
-	-- in basso a destra: le partite
-	local dx = angolo(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	ui.bottone(h.bottoni, 0, 344, 340, 72, "CAMPAGNA", "campagna", nil, dx)
-	ui.bottone(h.bottoni, 0, 256, 340, 72, "ALLENAMENTO", "allenamento", nil, dx)
-	ui.bottone(h.bottoni, 0, 168, 340, 72, "STESSO TELEFONO", "local", nil, dx)
-	ui.bottone(h.bottoni, 0, 60, 340, 108, "GIOCA", "online", { principale = true, colore = colore }, dx)
+	-- bottom right: the matches
+	local dx = angle_deg(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
+	ui.button(h.buttons, 0, 344, 340, 72, "CAMPAGNA", "campagna", nil, dx)
+	ui.button(h.buttons, 0, 256, 340, 72, "ALLENAMENTO", "allenamento", nil, dx)
+	ui.button(h.buttons, 0, 168, 340, 72, "STESSO TELEFONO", "local", nil, dx)
+	ui.button(h.buttons, 0, 60, 340, 108, "GIOCA", "online", { main = true, colore = color }, dx)
 
-	-- in basso a sinistra: assetti, albero e set
-	local sx = angolo(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	ui.bottone(h.bottoni, 0, 60, 240, 72, "ARMERIA", "armeria", nil, sx)
-	-- sopra: gli EVENTI (menu/bacheca.lua), con sotto cosa succede adesso
-	local ev = ui.bottone(h.bottoni, 0, 160, 240, 96, "", "eventi", nil, sx)
-	ui.testo("EVENTI", 0, 14, 0.9, ui.C.TESTO, ev)
-	h.riga_eventi = ui.testo("", 0, -22, 0.55, ui.C.SPENTO, ev)
+	-- bottom left: loadouts, tree and sets
+	local sx = angle_deg(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
+	ui.button(h.buttons, 0, 60, 240, 72, "ARMERIA", "armeria", nil, sx)
+	-- above: the EVENTI (menu/bacheca.lua), with what is happening now below
+	local ev = ui.button(h.buttons, 0, 160, 240, 96, "", "eventi", nil, sx)
+	ui.testo("EVENTI", 0, 14, 0.9, ui.C.TEXT, ev)
+	h.events_row = ui.testo("", 0, -22, 0.55, ui.C.OFF, ev)
 
-	-- in alto a destra: le impostazioni
-	h.tops[#h.tops + 1] = ui.impostazioni(h.bottoni, "impostazioni", nil, true)
+	-- top right: the settings
+	h.tops[#h.tops + 1] = ui.impostazioni(h.buttons, "impostazioni", nil, true)
 
-	-- velo nero che si dissolve quando la home compare
-	h.velo = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * schermo.PIENO, H * schermo.PIENO, 0))
-	gui.set_adjust_mode(h.velo, gui.ADJUST_FIT)
-	gui.set_color(h.velo, vmath.vector4(0, 0, 0, 1))
+	-- black veil dissolving when the home appears
+	h.veil = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
+	gui.set_adjust_mode(h.veil, gui.ADJUST_FIT)
+	gui.set_color(h.veil, vmath.vector4(0, 0, 0, 1))
 
 	M.hide(h)
 	return h
 end
 
--- senza_velo: ci si arriva con un passaggio (ui/passaggio.lua), che copre già
-function M.show(h, senza_velo)
+-- without_veil: you get here with a transition (ui/passaggio.lua), which already covers
+function M.show(h, without_veil)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
-	h.bottoni.premuto = nil
-	h.visibile = true
-	if senza_velo then
-		gui.cancel_animations(h.velo, "color.w")
-		gui.set_enabled(h.velo, false)
+	h.buttons.held_down = nil
+	h.is_visible = true
+	if without_veil then
+		gui.cancel_animations(h.veil, "color.w")
+		gui.set_enabled(h.veil, false)
 		return
 	end
-	gui.set_enabled(h.velo, true)
-	gui.set_color(h.velo, vmath.vector4(0, 0, 0, 1))
-	gui.animate(h.velo, "color.w", 0, gui.EASING_OUTQUAD, 0.35, 0, function()
-		gui.set_enabled(h.velo, false)
+	gui.set_enabled(h.veil, true)
+	gui.set_color(h.veil, vmath.vector4(0, 0, 0, 1))
+	gui.animate(h.veil, "color.w", 0, gui.EASING_OUTQUAD, 0.35, 0, function()
+		gui.set_enabled(h.veil, false)
 	end)
-	h.visibile = true
+	h.is_visible = true
 end
 
 function M.hide(h)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, false) end
-	gui.cancel_animations(h.velo, "color.w")
-	gui.set_enabled(h.velo, false)
-	h.visibile = false
+	gui.cancel_animations(h.veil, "color.w")
+	gui.set_enabled(h.veil, false)
+	h.is_visible = false
 end
 
--- La riga sotto EVENTI (main/eventi.lua, riga_home)
-function M.eventi(h, testo)
-	gui.set_text(h.riga_eventi, testo)
+-- The line under EVENTI (main/eventi.lua, home_line)
+function M.eventi(h, txt)
+	gui.set_text(h.events_row, txt)
 end
 
 function M.update(h, dt)
-	if not h.visibile then return end
+	if not h.is_visible then return end
 	h.t = h.t + dt
 	scoria.update(h.corpo, dt, h.st)
 	local c = h.colore
@@ -146,8 +147,8 @@ function M.update(h, dt)
 end
 
 function M.on_input(h, action_id, action)
-	if not h.visibile then return nil end
-	return ui.tocco(h.bottoni, action_id, action)
+	if not h.is_visible then return nil end
+	return ui.tocco(h.buttons, action_id, action)
 end
 
 return M

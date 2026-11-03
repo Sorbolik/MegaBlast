@@ -1,405 +1,406 @@
--- Controller (gamepad) via Bluetooth o USB: Xbox, PlayStation e generici, sul
--- telefono Android, sul computer e nel browser. Qui c'è solo la lettura dei
--- tasti, senza nodi GUI, così si prova con luajit (tests/battaglia_test.lua);
--- cosa fa ogni tasto lo decide game.gui_script (docs/controller.md).
+-- Controller (gamepad) over Bluetooth or USB: Xbox, PlayStation and generic,
+-- on Android phones, on the computer and in the browser. Only the button
+-- reading lives here, without GUI nodes, so it is tested with luajit
+-- (tests/battaglia_test.lua); what each button does is decided by
+-- game.gui_script (docs/controller.md).
 --
--- I controller che Defold conosce (/builtins/input/default.gamepads) arrivano
--- come azioni pad_* di input/game.input_binding. Quelli che non conosce danno
--- solo l'azione grezza pad_grezzo: su Android e nel browser i tasti hanno lo
--- stesso ordine per tutti (Android li numera dai codici standard, il browser
--- segue lo "standard gamepad"), quindi li leggiamo da lì.
+-- The controllers Defold knows (/builtins/input/default.gamepads) arrive as
+-- pad_* actions of input/game.input_binding. Those it doesn't know only give
+-- the raw action pad_grezzo: on Android and in the browser the buttons have
+-- the same order for everyone (Android numbers them from the standard codes,
+-- the browser follows the "standard gamepad"), so we read them from there.
 --
 --   local controller = require "ui.controller"
---   local c = controller.new(sistema)            -- sistema: sys.get_sys_info().system_name
+--   local c = controller.new(fix)                -- fix: sys.get_sys_info().system_name
 --   local ev = controller.input(c, action_id, action)
---   -- nil: non è un'azione del controller. Altrimenti la lista dei tasti che
---   -- cambiano: { nome = "a", premuto = true } (premuto false: lasciato); nome
---   -- "a" "b" "x" "y" "lb" "rb" "lt" "rt" "start" "select", la croce "su" "giu"
---   -- "sinistra" "destra" e la levetta sinistra spinta oltre metà, come la croce
---   -- ma con levetta = true. ui = la stessa cosa per i menu (ui.tocco).
---   c.sx, c.dx                                    -- le levette: { x, y }, y in su, lunghezza al massimo 1
---   c.giu[nome]                                   -- il tasto è tenuto?
---   controller.comando(c, tasto) / tasto_di(c, comando) -- la mappatura della battaglia (c.tasti)
---   controller.assegna(c, comando, tasto)         -- dalle impostazioni: i due comandi si scambiano i tasti
---   controller.usa(c, salvati) / da_salvare(c) / base(c) -- la mappatura del profilo, da salvare, quella di Sergio
---   controller.nome(c, tasto)                     -- come si chiama su questo controller ("A", "CROCE", "ZR"...)
---   controller.nome_di(comando)                   -- il nome del tasto di un comando, sul controller in uso
---   c.famiglia                                    -- "xbox", "playstation" o "nintendo" (dal nome del controller)
---   c.connesso                                    -- c'è (o c'è stato) un controller
---   c.su                                          -- -1 dove gli assi verticali arrivano capovolti (Android)
---   c.valore.lt, c.valore.rt                      -- quanto sono premuti i grilletti (0..1)
---   controller.togli(c, comando)                  -- il comando resta senza tasto
+--   -- nil: not a controller action. Otherwise the list of buttons that
+--   -- change: { nome = "a", held_down = true } (held_down false: released); nome
+--   -- "a" "b" "x" "y" "lb" "rb" "lt" "rt" "start" "select", the d-pad "su" "giu"
+--   -- "sinistra" "destra" and the left stick pushed past halfway, like the d-pad
+--   -- but with levetta = true. ui = the same thing for the menus (ui.tocco).
+--   c.sx, c.dx                                    -- the sticks: { x, y }, y up, length at most 1
+--   c.giu[nome]                                   -- is the button held?
+--   controller.comando(c, button_key) / key_of(c, comando) -- the battle mapping (c.tasti)
+--   controller.assegna(c, comando, button_key)    -- from the settings: the two commands swap buttons
+--   controller.usa(c, keys) / to_save(c) / base(c) -- the profile's mapping, to save, Sergio's one
+--   controller.nome(c, button_key)                -- what it is called on this controller ("A", "CROCE", "ZR"...)
+--   controller.name_of(comando)                   -- the name of a command's button, on the controller in use
+--   c.family                                      -- "xbox", "playstation" or "nintendo" (from the controller's name)
+--   c.connected                                   -- there is (or has been) a controller
+--   c.su                                          -- -1 where vertical axes arrive flipped (Android)
+--   c.valore.lt, c.valore.rt                      -- how far the triggers are pressed (0..1)
+--   controller.togli(c, comando)                  -- the command is left without a button
 
 local M = {}
 
--- metà di una levetta: { levetta, asse, segno }
-local ASSI = {
+-- half of a stick: { stick, axis, sign }
+local AXES = {
 	pad_sx_sinistra = { "sx", "x", -1 }, pad_sx_destra = { "sx", "x", 1 },
 	pad_sx_su = { "sx", "y", 1 }, pad_sx_giu = { "sx", "y", -1 },
 	pad_dx_sinistra = { "dx", "x", -1 }, pad_dx_destra = { "dx", "x", 1 },
 	pad_dx_su = { "dx", "y", 1 }, pad_dx_giu = { "dx", "y", -1 },
 }
-local TASTI = { pad_a = "a", pad_b = "b", pad_x = "x", pad_y = "y", pad_lb = "lb", pad_rb = "rb",
+local KEYS_LIST = { pad_a = "a", pad_b = "b", pad_x = "x", pad_y = "y", pad_lb = "lb", pad_rb = "rb",
 	pad_lt = "lt", pad_rt = "rt", pad_start = "start", pad_select = "select",
 	pad_su = "su", pad_giu = "giu", pad_sinistra = "sinistra", pad_destra = "destra" }
--- per i menu (ui.tocco): la croce e la levetta muovono la luce, A conferma,
--- B torna indietro, Y apre la scheda (al posto del tocco lungo), Start il menù
+-- for the menus (ui.tocco): the d-pad and the stick move the light, A
+-- confirms, B goes back, Y opens the card (instead of the long press), Start the menu
 M.UI = { su = "su", giu = "giu", sinistra = "sinistra", destra = "destra", a = "conferma", b = "indietro",
 	y = "scheda", start = "menu" }
--- In battaglia: tasto -> comando, la mappatura di base (Sergio, 30 ott). I
--- tasti hanno il nome del loro posto sul controller, come su Xbox: a è quello
--- in basso, b a destra, x a sinistra, y in alto. Le levette sono fisse e
--- fanno come sul telefono: la sinistra cammina e, spinta in su, salta; la
--- destra mira (direzione e potenza). Start apre sempre la rotellina; tutto il
--- resto si cambia dalle IMPOSTAZIONI (menu/impostazioni.lua), che salvano
--- c.tasti nel profilo.
-M.BATTAGLIA = {
-	lb = "primaria",        -- la primaria dopo, a giro
-	rb = "secondaria",      -- la secondaria dopo, a giro
-	rt = "spara",           -- con la mira della levetta destra
+-- In battle: button -> command, the default mapping (Sergio, 30 Oct). The
+-- buttons are named after their place on the controller, as on Xbox: a is the
+-- bottom one, b on the right, x on the left, y at the top. The sticks are
+-- fixed and work as on the phone: the left one walks and, pushed up, jumps;
+-- the right one aims (direction and power). Start always opens the wheel;
+-- everything else is changed from the IMPOSTAZIONI (menu/impostazioni.lua),
+-- which save c.tasti in the profile.
+M.BATTLE = {
+	lb = "primaria",        -- the next primary, cycling
+	rb = "secondaria",      -- the next secondary, cycling
+	rt = "spara",           -- with the right stick's aim
 	a = "teletrasporto",
 	x = "rampino",
 	y = "paracadute",
-	lt = "oggetti",         -- l'oggetto dopo nella colonna OGGETTI, a giro
-	giu = "usa_oggetto",    -- usa quello acceso (croce giù)
-	b = "baratto",          -- salta il secondo attacco (+1 teletrasporto)
+	lt = "oggetti",         -- the next item in the OGGETTI column, cycling
+	giu = "usa_oggetto",    -- uses the lit one (d-pad down)
+	b = "baratto",          -- skips the second attack (+1 teleport)
 	start = "rotellina",
 	select = "zoom",
 }
--- i comandi che si cambiano, nell'ordine delle impostazioni, e i tasti che si
--- possono dare. Salta di base non ha un tasto (si salta con la levetta); con un
--- tasto la levetta sinistra smette di saltare (Sergio, 30 ott).
-M.COMANDI = { "spara", "salta", "primaria", "secondaria", "teletrasporto", "rampino", "paracadute", "oggetti",
+-- the commands that can be changed, in the settings' order, and the buttons
+-- that can be given. Jump has no button by default (you jump with the stick);
+-- with a button the left stick stops jumping (Sergio, 30 Oct).
+M.COMMANDS = { "spara", "salta", "primaria", "secondaria", "teletrasporto", "rampino", "paracadute", "oggetti",
 	"usa_oggetto", "baratto", "zoom" }
-M.LIBERI = { a = true, b = true, x = true, y = true, lb = true, rb = true, lt = true, rt = true, select = true,
+M.FREE = { a = true, b = true, x = true, y = true, lb = true, rb = true, lt = true, rt = true, select = true,
 	su = true, giu = true, sinistra = true, destra = true }
 
--- La famiglia del controller, dal nome che dà il sistema: i tasti si
--- chiamano (e si disegnano) come sopra i tasti veri. Nintendo ha A a destra e
--- B in basso: lo stesso posto, un altro nome.
-M.FAMIGLIE = {
+-- The controller's family, from the name the system gives: buttons are named
+-- (and drawn) as on the real buttons. Nintendo has A on the right and B at
+-- the bottom: same place, another name.
+M.FAMILIES = {
 	xbox = { a = "A", b = "B", x = "X", y = "Y", lb = "LB", rb = "RB", lt = "LT", rt = "RT", start = "MENU", select = "VISTA" },
 	playstation = { a = "X", b = "CERCHIO", x = "QUADRATO", y = "TRIANGOLO", lb = "L1", rb = "R1", lt = "L2", rt = "R2",
 		start = "OPTIONS", select = "CREATE" },
 	nintendo = { a = "B", b = "A", x = "Y", y = "X", lb = "L", rb = "R", lt = "ZL", rt = "ZR", start = "+", select = "-" },
 }
-M.CROCE = { su = "CROCE SU", giu = "CROCE GIÙ", sinistra = "CROCE SX", destra = "CROCE DX" }
--- (in quest'ordine: "Xbox Wireless Controller" è Xbox, il solo "Wireless
--- Controller" è il nome che dà Android al DualSense e al DualShock)
-local RICONOSCI = {
+M.CROSS = { su = "CROCE SU", giu = "CROCE GIÙ", sinistra = "CROCE SX", destra = "CROCE DX" }
+-- (in this order: "Xbox Wireless Controller" is Xbox, a bare "Wireless
+-- Controller" is the name Android gives the DualSense and the DualShock)
+local RECOGNIZE = {
 	{ "xbox", { "xbox", "x%-box", "xinput", "microsoft", "045e" } },
 	{ "nintendo", { "nintendo", "switch", "joy%-con", "pro controller", "057e" } },
 	{ "playstation", { "playstation", "dualsense", "dualshock", "sony", "wireless controller", "054c" } },
 }
-function M.famiglia(nome)
+function M.family(nome)
 	nome = string.lower(nome or "")
-	for _, f in ipairs(RICONOSCI) do
-		for _, parola in ipairs(f[2]) do
-			if nome:find(parola) then return f[1] end
+	for _, f in ipairs(RECOGNIZE) do
+		for _, word in ipairs(f[2]) do
+			if nome:find(word) then return f[1] end
 		end
 	end
-	-- gli altri: coi nomi di Xbox, i più comuni
+	-- the others: with the Xbox names, the most common
 	return "xbox"
 end
--- la levetta sinistra conta come la croce oltre questa spinta (e torna sotto RITORNO)
-local SPINTA, RITORNO = 0.6, 0.4
--- grilletti analogici: premuti oltre metà corsa, lasciati solo sotto il 20%.
--- Senza questo margine un grilletto tenuto attorno a metà corsa tremava fra
--- premuto e lasciato, e una pressione sola sparava due volte (prima un'arma,
--- poi quella dopo: Sergio, 30 ott)
-local GRILLETTO, GRILLETTO_TORNA = 0.5, 0.2
-local function premuto(c, nome, v)
-	if nome == "lt" or nome == "rt" then return v > (c.giu[nome] and GRILLETTO_TORNA or GRILLETTO) end
+-- the left stick counts as the d-pad past this push (and comes back below RETURN_T)
+local PUSH_K, RETURN_T = 0.6, 0.4
+-- analog triggers: pressed past half travel, released only below 20%.
+-- Without this margin a trigger held around half travel flickered between
+-- pressed and released, and a single press fired twice (first one weapon,
+-- then the next one: Sergio, 30 Oct)
+local TRIGGER, TRIGGER_BACK = 0.5, 0.2
+local function held_down(c, nome, v)
+	if nome == "lt" or nome == "rt" then return v > (c.giu[nome] and TRIGGER_BACK or TRIGGER) end
 	return v > 0.5
 end
--- zona morta dei controller sconosciuti (per quelli noti la mette Defold)
-local MORTA = 0.2
--- Su Android un controller PlayStation si presenta come tre controller: il
--- controller, il touchpad ("Wireless Controller Touchpad", che Defold conosce
--- e traduce con gli assi del controller) e i sensori di movimento
--- ("... Motion Sensors", sconosciuto: arriva dai grezzi). I loro assi
--- scrivevano sulle levette del controller vero e la mira scattava per un
--- attimo (Sergio, 30 ott, "intorno ai 35 gradi"). Questi non contano mai.
-local FINTI = { "touchpad", "motion", "sensor", "accel", "gyro" }
-local function finto(nome)
+-- dead zone of unknown controllers (for known ones Defold sets it)
+local DEAD = 0.2
+-- On Android a PlayStation controller shows up as three controllers: the
+-- controller, the touchpad ("Wireless Controller Touchpad", which Defold knows
+-- and translates with the controller's axes) and the motion sensors ("...
+-- Motion Sensors", unknown: it comes from the raw ones). Their axes wrote on
+-- the real controller's sticks and the aim jumped for a moment (Sergio, 30
+-- Oct, "intorno ai 35 gradi"). These never count.
+local FAKES = { "touchpad", "motion", "sensor", "accel", "gyro" }
+local function fake(nome)
 	nome = string.lower(nome or "")
-	for _, parola in ipairs(FINTI) do
-		if nome:find(parola) then return true end
+	for _, word in ipairs(FAKES) do
+		if nome:find(word) then return true end
 	end
 	return false
 end
 
--- Controller sconosciuti: i numeri dei tasti e degli assi (da 0) nell'azione
--- grezza. Android: gli stessi del controller Xbox e PlayStation in
--- default.gamepads (assi 0-1 levetta sinistra, 2-3 destra, 4-5 grilletti,
--- 6-7 la croce; la croce anche come tasti 11-14). Browser: lo standard gamepad.
-local GREZZI = {
+-- Unknown controllers: the button and axis numbers (from 0) in the raw
+-- action. Android: the same as the Xbox and PlayStation controllers in
+-- default.gamepads (axes 0-1 left stick, 2-3 right, 4-5 triggers, 6-7 the
+-- d-pad; the d-pad also as buttons 11-14). Browser: the standard gamepad.
+local RAW_LIST = {
 	Android = { tasti = { a = 0, b = 1, x = 3, y = 6, lb = 4, rb = 5, start = 15, select = 16,
 		su = 11, giu = 12, sinistra = 13, destra = 14 },
-		assi = { sx = { 0, 1 }, dx = { 2, 3 }, lt = 4, rt = 5, croce = { 6, 7 } } },
+		axes = { sx = { 0, 1 }, dx = { 2, 3 }, lt = 4, rt = 5, cross = { 6, 7 } } },
 	HTML5 = { tasti = { a = 0, b = 1, x = 2, y = 3, lb = 4, rb = 5, lt = 6, rt = 7, select = 8, start = 9,
 		su = 12, giu = 13, sinistra = 14, destra = 15 },
-		assi = { sx = { 0, 1 }, dx = { 2, 3 } } },
+		axes = { sx = { 0, 1 }, dx = { 2, 3 } } },
 }
 
-local GREZZO, CONNESSO = hash("pad_grezzo"), hash("pad_connesso")
-local AZIONI = {}
-for nome, v in pairs(ASSI) do AZIONI[hash(nome)] = v end
-local NOMI = {}
-for nome, v in pairs(TASTI) do NOMI[hash(nome)] = v end
+local RAW, CONNECTED = hash("pad_grezzo"), hash("pad_connesso")
+local ACTIONS = {}
+for nome, v in pairs(AXES) do ACTIONS[hash(nome)] = v end
+local NAMES = {}
+for nome, v in pairs(KEYS_LIST) do NAMES[hash(nome)] = v end
 
--- Su Android le levette arrivano con l'asse verticale capovolto (provato da
--- Sergio col telefono, 30 ott): giù è su, per i controller noti e i grezzi
-local CAPOVOLTO = { Android = true }
+-- On Android the sticks arrive with the vertical axis flipped (tested by
+-- Sergio with the phone, 30 Oct): down is up, for known and raw controllers
+local UPSIDE_DOWN = { Android = true }
 
-function M.new(sistema)
-	local c = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 }, giu = {}, mezzi = {}, ignoti = {},
+function M.new(fix)
+	local c = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 }, giu = {}, halves = {}, unknown = {},
 		crude = { sx = { x = 0, y = 0 }, dx = { x = 0, y = 0 } },
-		grezzi = GREZZI[sistema], ev = {}, finti = {}, su = CAPOVOLTO[sistema] and -1 or 1, famiglia = "xbox", tasti = {},
+		raw_ones = RAW_LIST[fix], ev = {}, finti = {}, su = UPSIDE_DOWN[fix] and -1 or 1, family = "xbox", tasti = {},
 		valore = { lt = 0, rt = 0 } }
-	for t, cmd in pairs(M.BATTAGLIA) do c.tasti[t] = cmd end
+	for t, cmd in pairs(M.BATTLE) do c.tasti[t] = cmd end
 	return c
 end
 
-function M.comando(c, tasto)
-	return c.tasti[tasto]
+function M.comando(c, button_key)
+	return c.tasti[button_key]
 end
 
--- Il tasto di un comando (nil se non ne ha), in un ordine fisso
-local ORDINE = { "a", "b", "x", "y", "lb", "rb", "lt", "rt", "start", "select", "su", "giu", "sinistra", "destra" }
-function M.tasto_di(c, comando)
-	for _, t in ipairs(ORDINE) do
-		if c.tasti[t] == comando then return t end
+-- A command's button (nil if it has none), in a fixed order
+local ORDER = { "a", "b", "x", "y", "lb", "rb", "lt", "rt", "start", "select", "su", "giu", "sinistra", "destra" }
+function M.key_of(c, command)
+	for _, t in ipairs(ORDER) do
+		if c.tasti[t] == command then return t end
 	end
 end
 
--- Dà il tasto al comando; il comando che lo aveva prende il tasto lasciato
--- libero o, se il comando non ne aveva, il primo tasto che nessuno usa (la
--- croce, di base), così mettere Salta su A non toglie il teletrasporto
-function M.assegna(c, comando, tasto)
-	if not M.LIBERI[tasto] then return false end
-	local prima, altro = M.tasto_di(c, comando), c.tasti[tasto]
-	if prima then c.tasti[prima] = nil end
-	c.tasti[tasto] = comando
-	if altro and altro ~= comando then
-		local dove = prima
-		for _, t in ipairs(ORDINE) do
-			if not dove and M.LIBERI[t] and not c.tasti[t] then dove = t end
+-- Gives the button to the command; the command that had it takes the button
+-- left free or, if the command had none, the first button nobody uses (the
+-- d-pad, by default), so putting Jump on A doesn't take away the teleport
+function M.assegna(c, command, button_key)
+	if not M.FREE[button_key] then return false end
+	local first_one, another = M.key_of(c, command), c.tasti[button_key]
+	if first_one then c.tasti[first_one] = nil end
+	c.tasti[button_key] = command
+	if another and another ~= command then
+		local where = first_one
+		for _, t in ipairs(ORDER) do
+			if not where and M.FREE[t] and not c.tasti[t] then where = t end
 		end
-		if dove then c.tasti[dove] = altro end
+		if where then c.tasti[where] = another end
 	end
 	return true
 end
 
--- Toglie il tasto al comando (Y nelle impostazioni): resta senza
-function M.togli(c, comando)
-	local t = M.tasto_di(c, comando)
-	if t and M.LIBERI[t] then c.tasti[t] = nil end
+-- Removes the command's button (Y in the settings): it is left without
+function M.togli(c, command)
+	local t = M.key_of(c, command)
+	if t and M.FREE[t] then c.tasti[t] = nil end
 end
 
--- La mappatura salvata nel profilo (tasto -> comando): si prende se ogni
--- comando è un comando vero, su un tasto libero, una volta sola (un comando
--- può anche non avere tasti); Start resta alla rotellina
-local VERI = {}
-for _, cmd in ipairs(M.COMANDI) do VERI[cmd] = true end
-function M.usa(c, tasti)
-	if type(tasti) ~= "table" then return false end
-	local visti = {}
-	for t, cmd in pairs(tasti) do
-		if not M.LIBERI[t] or not VERI[cmd] or visti[cmd] then return false end
-		visti[cmd] = true
+-- The mapping saved in the profile (button -> command): it is taken if every
+-- command is a real command, on a free button, only once (a command may also
+-- have no buttons); Start stays on the wheel
+local REAL_ONES = {}
+for _, cmd in ipairs(M.COMMANDS) do REAL_ONES[cmd] = true end
+function M.usa(c, keys)
+	if type(keys) ~= "table" then return false end
+	local seen = {}
+	for t, cmd in pairs(keys) do
+		if not M.FREE[t] or not REAL_ONES[cmd] or seen[cmd] then return false end
+		seen[cmd] = true
 	end
 	c.tasti = { start = "rotellina" }
-	for t, cmd in pairs(tasti) do c.tasti[t] = cmd end
+	for t, cmd in pairs(keys) do c.tasti[t] = cmd end
 	return true
 end
 
--- Da salvare nel profilo: senza Start
-function M.da_salvare(c)
+-- To save in the profile: without Start
+function M.to_save(c)
 	local t = {}
-	for tasto, cmd in pairs(c.tasti) do
-		if tasto ~= "start" then t[tasto] = cmd end
+	for button_key, cmd in pairs(c.tasti) do
+		if button_key ~= "start" then t[button_key] = cmd end
 	end
 	return t
 end
 
 function M.base(c)
 	c.tasti = {}
-	for t, cmd in pairs(M.BATTAGLIA) do c.tasti[t] = cmd end
+	for t, cmd in pairs(M.BATTLE) do c.tasti[t] = cmd end
 end
 
-function M.nome(c, tasto)
-	return M.CROCE[tasto] or M.FAMIGLIE[c.famiglia][tasto] or string.upper(tasto or "")
+function M.nome(c, button_key)
+	return M.CROSS[button_key] or M.FAMILIES[c.family][button_key] or string.upper(button_key or "")
 end
 
--- Il controller in uso, per le scritte delle schede e della scelta delle armi
--- (game.gui_script lo mette qui): il nome del tasto di un comando
-M.attuale = nil
-function M.nome_di(comando)
-	local c = M.attuale
+-- The controller in use, for the labels of the cards and of the weapon draft
+-- (game.gui_script puts it here): the name of a command's button
+M.current_value = nil
+function M.name_of(command)
+	local c = M.current_value
 	if not c then return "" end
-	return M.nome(c, M.UI_FISSI[comando] or M.tasto_di(c, comando))
+	return M.nome(c, M.UI_FIXED[command] or M.key_of(c, command))
 end
--- Quale levetta muove (impostazioni "levette": "destra", di base, o
--- "sinistra"; game.gui_script la mette qui) e il lato di ogni uso, "dx" o "sx"
+-- Which stick moves (the "levette" setting: "destra", by default, or
+-- "sinistra"; game.gui_script puts it here) and the side of each use, "dx" or "sx"
 M.levette = "destra"
-function M.lato(uso)
-	return ((M.levette == "destra") == (uso == "muove")) and "dx" or "sx"
+function M.lato(use)
+	return ((M.levette == "destra") == (use == "muove")) and "dx" or "sx"
 end
--- i tasti fissi dei menu
-M.UI_FISSI = { scheda = "y", conferma = "a", indietro = "b" }
+-- the menus' fixed buttons
+M.UI_FIXED = { scheda = "y", conferma = "a", indietro = "b" }
 
-local function evento(c, nome, premuto, levetta)
-	if (c.giu[nome] or false) == premuto then return end
-	c.connesso = true
-	c.giu[nome] = premuto or nil
-	c.ev[#c.ev + 1] = { nome = nome, premuto = premuto, levetta = levetta, ui = M.UI[nome] }
+local function evento(c, nome, held_down, stick)
+	if (c.giu[nome] or false) == held_down then return end
+	c.connected = true
+	c.giu[nome] = held_down or nil
+	c.ev[#c.ev + 1] = { nome = nome, held_down = held_down, levetta = stick, ui = M.UI[nome] }
 end
 
--- La levetta sinistra spinta oltre SPINTA fa da croce (per i menu e gli oggetti)
-local DIREZIONI = { { "sinistra", "x", -1 }, { "destra", "x", 1 }, { "su", "y", 1 }, { "giu", "y", -1 } }
-local function levetta_croce(c)
-	for _, d in ipairs(DIREZIONI) do
+-- The left stick pushed past PUSH_K acts as a d-pad (for the menus and the items)
+local DIRECTIONS = { { "sinistra", "x", -1 }, { "destra", "x", 1 }, { "su", "y", 1 }, { "giu", "y", -1 } }
+local function stick_cross(c)
+	for _, d in ipairs(DIRECTIONS) do
 		local v = c.sx[d[2]] * d[3]
 		local nome = "levetta_" .. d[1]
-		if v > SPINTA and not c.giu[nome] then
+		if v > PUSH_K and not c.giu[nome] then
 			c.giu[nome] = true
-			c.ev[#c.ev + 1] = { nome = d[1], premuto = true, levetta = true, ui = d[1] }
-		elseif v < RITORNO and c.giu[nome] then
+			c.ev[#c.ev + 1] = { nome = d[1], held_down = true, levetta = true, ui = d[1] }
+		elseif v < RETURN_T and c.giu[nome] then
 			c.giu[nome] = nil
 		end
 	end
 end
 
--- una levetta da due assi grezzi (y in giù, su: -1 se arriva capovolto), con la zona morta
-local function levetta_grezza(l, assi, i, su)
-	local x, y = assi[i[1] + 1] or 0, -(assi[i[2] + 1] or 0) * su
-	if x * x + y * y < MORTA * MORTA then x, y = 0, 0 end
+-- a stick from two raw axes (y down, su: -1 if it arrives flipped), with the dead zone
+local function raw_stick(l, axes, i, above)
+	local x, y = axes[i[1] + 1] or 0, -(axes[i[2] + 1] or 0) * above
+	if x * x + y * y < DEAD * DEAD then x, y = 0, 0 end
 	l.x, l.y = x, y
 end
 
-local function grezzo(c, action)
-	local g = c.grezzi
-	local tasti, assi = action.gamepad_buttons or {}, action.gamepad_axis or {}
-	levetta_grezza(c.sx, assi, g.assi.sx, c.su)
-	levetta_grezza(c.dx, assi, g.assi.dx, c.su)
-	local croce = g.assi.croce
-	local cx, cy = croce and (assi[croce[1] + 1] or 0) or 0, croce and (assi[croce[2] + 1] or 0) or 0
-	-- la croce come cappello (hat): 1 su, 2 destra, 4 giù, 8 sinistra
+local function raw(c, action)
+	local g = c.raw_ones
+	local keys, axes = action.gamepad_buttons or {}, action.gamepad_axis or {}
+	raw_stick(c.sx, axes, g.axes.sx, c.su)
+	raw_stick(c.dx, axes, g.axes.dx, c.su)
+	local cross = g.axes.cross
+	local cx, cy = cross and (axes[cross[1] + 1] or 0) or 0, cross and (axes[cross[2] + 1] or 0) or 0
+	-- the d-pad as a hat: 1 up, 2 right, 4 down, 8 left
 	local hat = (action.gamepad_hats or {})[1] or 0
 	local bit = function(b) return math.floor(hat / b) % 2 == 1 end
 	for nome, i in pairs(g.tasti) do
-		local giu = premuto(c, nome, tasti[i + 1] or 0)
-		if nome == "su" then giu = giu or cy < -0.5 or bit(1)
-		elseif nome == "giu" then giu = giu or cy > 0.5 or bit(4)
-		elseif nome == "sinistra" then giu = giu or cx < -0.5 or bit(8)
-		elseif nome == "destra" then giu = giu or cx > 0.5 or bit(2) end
-		evento(c, nome, giu)
+		local fell = held_down(c, nome, keys[i + 1] or 0)
+		if nome == "su" then fell = fell or cy < -0.5 or bit(1)
+		elseif nome == "giu" then fell = fell or cy > 0.5 or bit(4)
+		elseif nome == "sinistra" then fell = fell or cx < -0.5 or bit(8)
+		elseif nome == "destra" then fell = fell or cx > 0.5 or bit(2) end
+		evento(c, nome, fell)
 	end
 	for _, nome in ipairs({ "lt", "rt" }) do
-		if g.assi[nome] then
-			c.valore[nome] = math.max(0, assi[g.assi[nome] + 1] or 0)
-			evento(c, nome, premuto(c, nome, c.valore[nome]))
+		if g.axes[nome] then
+			c.valore[nome] = math.max(0, axes[g.axes[nome] + 1] or 0)
+			evento(c, nome, held_down(c, nome, c.valore[nome]))
 		elseif g.tasti[nome] then
-			c.valore[nome] = tasti[g.tasti[nome] + 1] or 0
+			c.valore[nome] = keys[g.tasti[nome] + 1] or 0
 		end
 	end
 end
 
--- Il controller da cui contano le levette; cambiandolo le levette ripartono da ferme
-local function attivo(c, g)
-	if c.attivo == g then return end
-	c.attivo = g
-	for k in pairs(c.mezzi) do c.mezzi[k] = nil end
-	-- i tasti tenuti sull'altro controller non restano giù
+-- The controller the sticks count from; changing it the sticks restart from rest
+local function is_active(c, g)
+	if c.is_active == g then return end
+	c.is_active = g
+	for k in pairs(c.halves) do c.halves[k] = nil end
+	-- buttons held on the other controller don't stay down
 	for k in pairs(c.giu) do
 		if not k:find("^levetta_") then c.giu[k] = nil end
 	end
 	for _, l in ipairs({ c.sx, c.dx, c.crude.sx, c.crude.dx }) do l.x, l.y = 0, 0 end
 end
 
--- L'ordine degli eventi conta (la simulazione li prova uno a uno): per i tasti
--- grezzi si ordinano per nome
-local function ordina(a, b) return a.nome < b.nome end
+-- The order of events matters (the simulation tries them one by one): raw
+-- buttons are sorted by name
+local function sort_by(a, b) return a.nome < b.nome end
 
 function M.input(c, action_id, action)
 	if not action_id then return nil end
 	local ev = c.ev
 	for i = #ev, 1, -1 do ev[i] = nil end
-	local asse = AZIONI[action_id]
-	local nome = NOMI[action_id]
-	-- un controller letto dai grezzi: le sue azioni tradotte non contano (una
-	-- fonte sola per controller, sennò le due letture si alternano)
+	local axis = ACTIONS[action_id]
+	local nome = NAMES[action_id]
+	-- a controller read from the raw ones: its translated actions don't count (a
+	-- single source per controller, otherwise the two readings alternate)
 	local g = action.gamepad or 0
-	if c.finti[g] or ((asse or nome) and c.ignoti[g]) then return ev end
-	-- le levette contano da un controller solo: quello che ha premuto un tasto
-	-- per ultimo (o il primo che si muove)
-	if nome and action.pressed then attivo(c, g) end
-	-- i tasti lasciati contano solo dal controller in uso
-	if nome and c.attivo and c.attivo ~= g then return ev end
-	if asse and c.attivo ~= g then
-		if c.attivo then return ev end
-		attivo(c, g)
+	if c.finti[g] or ((axis or nome) and c.unknown[g]) then return ev end
+	-- the sticks count from one controller only: the one that pressed a button
+	-- last (or the first that moves)
+	if nome and action.pressed then is_active(c, g) end
+	-- released buttons count only from the controller in use
+	if nome and c.is_active and c.is_active ~= g then return ev end
+	if axis and c.is_active ~= g then
+		if c.is_active then return ev end
+		is_active(c, g)
 	end
-	if asse then
-		-- conta solo action.value: Defold mette released quando il valore scende
-		-- sotto 0,9 (la soglia di "premuto"), non quando torna a zero. Leggerlo
-		-- come "lasciato" azzerava per un fotogramma il lato della levetta che
-		-- scendeva sotto 0,9: girando la levetta tutta spinta la mira scattava
-		-- sempre allo stesso angolo, diverso per ogni controller (Sergio, 30 ott:
-		-- 34° e 27°, a destra e a sinistra). Il ritorno a zero arriva da sé col
-		-- valore 0 (Defold manda l'asse che cambia anche a 0).
-		c.mezzi[action_id] = action.value or 0
-		local l, r = c[asse[1]], c.crude[asse[1]]
-		local piu, meno
-		for id, a in pairs(AZIONI) do
-			if a[1] == asse[1] and a[2] == asse[2] then
-				if a[3] > 0 then piu = c.mezzi[id] or 0 else meno = c.mezzi[id] or 0 end
+	if axis then
+		-- only action.value counts: Defold sets released when the value drops below
+		-- 0.9 (the "pressed" threshold), not when it goes back to zero. Reading it as
+		-- "released" zeroed for a frame the side of the stick dropping below 0.9:
+		-- rotating the stick fully pushed, the aim always jumped to the same angle,
+		-- different for each controller (Sergio, 30 Oct: 34° and 27°, right and
+		-- left). The return to zero arrives by itself with value 0 (Defold sends the
+		-- changing axis at 0 too).
+		c.halves[action_id] = action.value or 0
+		local l, r = c[axis[1]], c.crude[axis[1]]
+		local more, minus
+		for id, a in pairs(ACTIONS) do
+			if a[1] == axis[1] and a[2] == axis[2] then
+				if a[3] > 0 then more = c.halves[id] or 0 else minus = c.halves[id] or 0 end
 			end
 		end
-		r[asse[2]] = ((piu or 0) - (meno or 0)) * (asse[2] == "y" and c.su or 1)
+		r[axis[2]] = ((more or 0) - (minus or 0)) * (axis[2] == "y" and c.su or 1)
 		local m = math.max(1, math.sqrt(r.x * r.x + r.y * r.y))
 		l.x, l.y = r.x / m, r.y / m
-		if asse[1] == "sx" then levetta_croce(c) end
+		if axis[1] == "sx" then stick_cross(c) end
 	elseif nome then
-		-- come per le levette: il valore vero, non released (che per un
-		-- grilletto arriva appena scende sotto 0,9: lì lo davamo per lasciato,
-		-- partiva il colpo, e subito dopo, ancora oltre metà corsa, si ripremeva
-		-- e partiva anche l'arma dopo, quella che si equipaggia da sola)
+		-- as for the sticks: the real value, not released (which for a trigger
+		-- arrives as soon as it drops below 0.9: there we took it as released, the
+		-- shot fired, and right after, still past half travel, it was pressed again
+		-- and the next weapon fired too, the one that equips itself)
 		local v = action.value or (action.released and 0 or 1)
 		if c.valore[nome] then c.valore[nome] = v end
-		evento(c, nome, premuto(c, nome, v))
-	elseif action_id == CONNESSO then
-		-- un controller che Defold non conosce: lo leggiamo dall'azione grezza
-		c.ignoti[g] = action.gamepad_unknown or nil
-		if finto(action.gamepad_name) then
+		evento(c, nome, held_down(c, nome, v))
+	elseif action_id == CONNECTED then
+		-- a controller Defold doesn't know: we read it from the raw action
+		c.unknown[g] = action.gamepad_unknown or nil
+		if fake(action.gamepad_name) then
 			c.finti[g] = true
 			return ev
 		end
-		c.famiglia = M.famiglia(action.gamepad_name)
-		c.connesso = true
+		c.family = M.family(action.gamepad_name)
+		c.connected = true
 		return ev
-	elseif action_id == GREZZO then
-		if not (c.grezzi and c.ignoti[g]) then return ev end
+	elseif action_id == RAW then
+		if not (c.raw_ones and c.unknown[g]) then return ev end
 		for _, v in pairs(action.gamepad_buttons or {}) do
-			if v > 0.5 then attivo(c, g) end
+			if v > 0.5 then is_active(c, g) end
 		end
-		if c.attivo ~= g then
-			if c.attivo then return ev end
-			attivo(c, g)
+		if c.is_active ~= g then
+			if c.is_active then return ev end
+			is_active(c, g)
 		end
-		grezzo(c, action)
-		levetta_croce(c)
-		table.sort(ev, ordina)
+		raw(c, action)
+		stick_cross(c)
+		table.sort(ev, sort_by)
 	else
 		return nil
 	end
 	return ev
 end
 
--- La levetta è spinta? (per sapere se si sta usando il controller)
-function M.spinta(l, soglia)
-	return l.x * l.x + l.y * l.y > (soglia or 0.3) ^ 2
+-- Is the stick pushed? (to know whether the controller is in use)
+function M.spinta(l, threshold)
+	return l.x * l.x + l.y * l.y > (threshold or 0.3) ^ 2
 end
 
 return M

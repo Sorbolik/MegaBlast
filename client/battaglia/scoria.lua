@@ -1,100 +1,101 @@
--- Il diavoletto: il personaggio della battaglia, della home e del podio. È fatto
--- di pezzi disegnati a vettori (strumenti/grafica/diavoletto.py ->
--- battaglia/diavoletto.lua) e animati qui nel codice: niente fotogrammi, così
--- il movimento è fluido a qualsiasi frequenza e l'atlante pesa poco. Dai piedi
--- alla cima della testa è alto come il corpo della simulazione (DISEGNO_H);
--- corna e coda escono.
+-- The devil: the character of the battle, the home and the podium. It is made
+-- of vector-drawn pieces (strumenti/grafica/diavoletto.py ->
+-- battaglia/diavoletto.lua) animated here in code: no frames, so motion is
+-- smooth at any frame rate and the atlas stays light. From the feet to the top
+-- of the head it is as tall as the simulation's body (DISEGNO_H); horns and
+-- tail stick out.
 --
--- Lo usano la battaglia (game.gui_script), la home (menu/home.lua) e il podio:
---   local s = scoria.new(colore, look)  -- look: le pelli addosso (battaglia/pelli.lua)
---   local s = scoria.new(colore, look, "missile")  -- solo quell'arma, per i ritratti
---                                  -- (cartellini, profilo): una trentina di nodi in meno
---   scoria.update(s, dt, stato)    -- a ogni frame, nessuna allocazione
---   scoria.set_weapon(s, nome) / hit(s, dx) / fire(s, tipo) / lunge(s) / die(s)
---   scoria.set_color(s, colore)    -- la squadra cambia da una partita all'altra
--- stato: x, y, facing, grounded, moving, aim (nil se non mira), turno (è di turno),
--- paracadute (appeso al paracadute aperto), vittoria (festeggia sul podio)
+-- Used by the battle (game.gui_script), the home (menu/home.lua) and the podium:
+--   local s = scoria.new(color, look)  -- look: the skins worn (battaglia/pelli.lua)
+--   local s = scoria.new(color, look, "missile")  -- only that weapon, for portraits
+--                                  -- (tags, profile): about thirty fewer nodes
+--   scoria.update(s, dt, stato)    -- every frame, no allocation
+--   scoria.set_weapon(s, nome) / hit(s, dx) / fire(s, kind) / lunge(s) / die(s)
+--   scoria.set_color(s, color)     -- the team changes from one match to the next
+-- stato: x, y, facing, grounded, moving, aim (nil if not aiming), turno (it is their turn),
+-- paracadute (hanging from the open parachute), vittoria (celebrates on the podium)
 --
--- Pezzi: testa (con occhiali e corna, in quattro facce), busto, due gambe, due
--- braccia (un pezzo solo per braccio, col pugno), l'ala, la coda in segmenti,
--- le manine staccate e il paracadute. Chi è di turno (o mira)
--- tiene l'arma: gira attorno al suo perno (mirando punta dove si mira, la
--- testa guarda lì) e chi la impugna la segue. Mirando (o colpendo) la mira
--- vince su tutto tranne la sconfitta: anche in aria, correndo o colpiti.
+-- Pieces: head (with goggles and horns, in four faces), torso, two legs, two
+-- arms (a single piece per arm, with the fist), the wing, the tail in segments,
+-- the detached little hands and the parachute. Whoever's turn it is (or who
+-- aims) holds the weapon: it turns around its pivot (aiming, it points where
+-- you aim and the head looks there) and whoever grips it follows it. Aiming
+-- (or hitting) the aim wins over everything except defeat: also in the air,
+-- running or hit.
 --
--- Il movimento è fatto di molle (schiaccia e allunga, inclinazione, spinta del
--- colpo, rinculo, testa, coda) e di pose per stato, che sono clip a
--- fotogrammi chiave (battaglia/animazioni.lua, fatte con l'editor
--- strumenti/animazioni/editor.html; le campiona battaglia/pose.lua) e danno le
--- mete alle molle e agli arti. Gli stati, in ordine: sconfitta (cade
--- all'indietro e svanisce), colpito (lampo bianco, faccia colpita, braccia
--- all'aria), paracadute (appeso alle cinghie, gambe unite che dondolano), aria
--- (l'ala sbatte, gambe raccolte salendo e avanti scendendo: le clip sale e
--- scende pesate con la velocità), corsa (guidata dalla strada fatta, sfuma nel
--- fermo), vittoria (salta con le braccia in alto), fermo (respira; chi non è di
--- turno fa ogni tanto una scenetta a caso: naso, sbadiglio, guarda_coda). Quello
--- che dipende dal gioco resta nel codice: inclinazione e coda con la velocità,
--- il dondolo del paracadute, la mira. Spinto o trascinato
--- senza comandi non corre: resta fermo.
--- Le pelli (battaglia/pelli.lua, disegnate sullo stampino: strumenti/stampino)
--- cambiano i pezzi o ci vanno sopra, negli stessi giunti: si muovono con le
--- stesse animazioni. Una testa nuova senza le sue facce le fa tutte; una coda
--- nuova ha bordo e colore a parte come quella di base; le
--- parti col colore della squadra hanno il loro strato.
--- I perni di tutti i pezzi (corpo, testa, braccia, manine, gambe, ala, coda) si
--- spostano dall'editor delle animazioni (battaglia/perni.lua): cambia il punto in
--- cui il pezzo gira, non dove sta da fermo.
--- Le clip dicono anche quali pezzi si vedono (testa, busto, braccia, gambe,
--- ala, coda, arma e le manine staccate, pezzi liberi che le clip spostano e
--- girano). Con l'arma in mano le clip sono quelle _arma (fermo_arma, corsa_arma,
--- aria_arma, sale_arma, scende_arma) e mirando da fermo la clip mira; un'arma
--- può averne di sue (fermo_arma_mallet, mira_mallet); se una manca si usa
--- quella _arma, poi quella senza arma. Presa, perno e spalla di ogni arma li
--- dice battaglia/impugnature.lua (anche questo dall'editor). La clip col peso
--- più grande sceglie chi impugna l'arma (impugna: un braccio, che gira verso
--- la presa, o una manina, che ci sta sopra; di base il braccio davanti) e
--- l'ordine dei pezzi, cosa sta davanti a cosa (livelli). Chi non è di turno
--- alterna a caso il fermo (con le scenette) e il fermo con l'arma in mano.
+-- Motion is made of springs (squash and stretch, tilt, hit push, recoil, head,
+-- tail) and of poses per state, which are keyframe clips
+-- (battaglia/animazioni.lua, made with the editor
+-- strumenti/animazioni/editor.html; sampled by battaglia/pose.lua) giving the
+-- targets to the springs and limbs. The states, in order: defeat (falls
+-- backward and fades), hit (white flash, hit face, arms up), parachute
+-- (hanging from the straps, legs together swinging), air (the wing flaps, legs
+-- tucked going up and forward going down: the sale and scende clips weighted by
+-- speed), run (driven by the distance covered, fades into idle), victory (jumps
+-- with arms up), idle (breathes; whoever's turn it isn't plays a random skit
+-- now and then: naso, sbadiglio, guarda_coda). What depends on the game stays
+-- in code: tilt and tail with speed, the parachute swing, the aim. Pushed or
+-- dragged without input it doesn't run: it stays idle.
+-- The skins (battaglia/pelli.lua, drawn on the stencil: strumenti/stampino)
+-- replace pieces or go on top of them, in the same joints: they move with the
+-- same animations. A new head without its own faces makes all of them; a new
+-- tail has separate border and color like the base one; the parts with the
+-- team color have their own layer.
+-- The pivots of all pieces (body, head, arms, little hands, legs, wing, tail)
+-- are moved from the animation editor (battaglia/perni.lua): it changes the
+-- point the piece turns around, not where it sits at rest.
+-- The clips also say which pieces are shown (head, torso, arms, legs, wing,
+-- tail, weapon and the detached little hands, free pieces the clips move and
+-- turn). With the weapon in hand the clips are the _arma ones (fermo_arma,
+-- corsa_arma, aria_arma, sale_arma, scende_arma) and aiming while still the
+-- mira clip; a weapon can have its own (fermo_arma_mallet, mira_mallet); if
+-- one is missing the _arma one is used, then the one without a weapon. Grip,
+-- pivot and shoulder of each weapon come from battaglia/impugnature.lua (also
+-- from the editor). The clip with the biggest weight picks who grips the
+-- weapon (impugna: an arm, which turns toward the grip, or a little hand,
+-- which sits on it; by default the front arm) and the order of the pieces,
+-- what is in front of what (livelli). Whoever's turn it isn't randomly
+-- alternates idle (with the skits) and idle with the weapon in hand.
 
 local game = require "sim.game"
 local D = require "battaglia.diavoletto"
-local DA = require("battaglia.armi").armi
--- dove sta l'uncino sul lanciarampino (PUNTA_RAMPINO di strumenti/grafica/armi.py)
-local PUNTA_RAMPINO = 15.2
+local FROM = require("battaglia.armi").armi
+-- where the hook sits on the grapple launcher (HOOK_TIP of strumenti/grafica/armi.py)
+local HOOK_TIP = 15.2
 local pose = require "battaglia.pose"
 local A = require "battaglia.animazioni"
-local PELLI = require "battaglia.pelli"
-local PERNI = require "battaglia.perni"
-local PRESE = require "battaglia.impugnature"
+local SKINS = require "battaglia.pelli"
+local PIVOTS = require "battaglia.perni"
+local GRIPS = require "battaglia.impugnature"
 
 local M = {}
 
--- il personaggio di tutti (le pelli addosso), finché non c'è l'armeria che lo sceglie
+-- everyone's character (the skins worn), until the armory picks it
 M.PERSONAGGIO = { "apprendista" }
 
 local P, PT = D.pezzi, D.punti
 
--- dove gira ogni posto nel corpo fermo: il punto dello scheletro più il perno
--- spostato (battaglia/perni.lua); i pezzi del posto si spostano al contrario
-local FERMO = { 0, 0 }
-local function sposto(posto) return PERNI[posto] or FERMO end
-local function perno(posto, x, y)
-	local d = sposto(posto)
+-- where each spot turns in the idle body: the skeleton point plus the moved
+-- pivot (battaglia/perni.lua); the spot's pieces move the opposite way
+local IDLE = { 0, 0 }
+local function shift(spot) return PIVOTS[spot] or IDLE end
+local function pivot(spot, x, y)
+	local d = shift(spot)
 	return { x + d[1], y + d[2] }
 end
 local J = {
-	testa = perno("testa", PT.collo[1], PT.collo[2]),
-	braccio = perno("braccio", PT.spalle[1], PT.spalle[2]),
-	braccio_dietro = perno("braccio_dietro", -PT.spalle[1], PT.spalle[2]),
-	gamba = perno("gamba", PT.anche[1], PT.anche[2]),
-	gamba_dietro = perno("gamba_dietro", -PT.anche[1], PT.anche[2]),
-	ala = perno("ala", PT.ala[1], PT.ala[2]),
-	busto = perno("busto", PT.bacino[1], PT.bacino[2]),
+	testa = pivot("testa", PT.collo[1], PT.collo[2]),
+	braccio = pivot("braccio", PT.spalle[1], PT.spalle[2]),
+	braccio_dietro = pivot("braccio_dietro", -PT.spalle[1], PT.spalle[2]),
+	gamba = pivot("gamba", PT.anche[1], PT.anche[2]),
+	gamba_dietro = pivot("gamba_dietro", -PT.anche[1], PT.anche[2]),
+	ala = pivot("ala", PT.ala[1], PT.ala[2]),
+	busto = pivot("busto", PT.bacino[1], PT.bacino[2]),
 }
--- la coda: la radice si sposta col perno, i segmenti al contrario (girati come il
--- primo segmento a riposo, così con la coda a riposo restano dove sono)
-local function perno_coda(r1)
-	local d = sposto("coda")
+-- the tail: the root moves with the pivot, the segments the opposite way
+-- (turned like the first segment at rest, so with the tail at rest they stay put)
+local function tail_pivot(r1)
+	local d = shift("coda")
 	local c, sn = math.cos(r1), math.sin(r1)
 	return d, { -(d[1] * c + d[2] * sn), -(-d[1] * sn + d[2] * c) }
 end
@@ -103,38 +104,38 @@ local sin, cos, min, max, abs, pi, sqrt = math.sin, math.cos, math.min, math.max
 local atan2 = math.atan2 or math.atan
 local DEG = 180 / pi
 
-local OMBRA = vmath.vector4(0, 0, 0, 0.35)
-local BIANCO = vmath.vector4(1, 1, 1, 1)
--- quanto è bianco il lampo del colpo al massimo (1 tutto bianco)
-local LAMPO = 0.85
+local SHADOW = vmath.vector4(0, 0, 0, 0.35)
+local WHITE = vmath.vector4(1, 1, 1, 1)
+-- how white the hit flash is at most (1 all white)
+local FLASH = 0.85
 
--- molle: posizione, velocità, rigidità, smorzamento
-local SQ, LEAN, SHOVE, KICK, TESTA, CODA = 1, 2, 3, 4, 5, 6
-local W_MOLLA = { 16, 10, 12, 18, 11, 7 }
-local Z_MOLLA = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25 }
+-- springs: position, velocity, stiffness, damping
+local SQ, LEAN, SHOVE, KICK, HEAD, TAIL = 1, 2, 3, 4, 5, 6
+local SPRING_W = { 16, 10, 12, 18, 11, 7 }
+local SPRING_Z = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25 }
 
--- altezza del diavoletto dai piedi alla cima della testa, per mettere sopra la targa
-local CIMA_TESTA = (PT.collo[2] + PT.cima[2]) * game.DISEGNO_H / D.altezza
+-- the devil's height from the feet to the top of the head, to put the plate above
+local HEAD_TOP = (PT.collo[2] + PT.cima[2]) * game.DISEGNO_H / D.altezza
 function M.altezza()
-	return CIMA_TESTA
+	return HEAD_TOP
 end
 
--- un passo: la strada che fa il corpo mentre una gamba fa un'oscillazione
--- intera, in altezze del personaggio
-local PASSO = 0.9
--- la testa guarda dove si mira, fino a questo angolo (radianti) in su e in giù
-local TESTA_SU, TESTA_GIU = 0.45, 0.3
--- la sconfitta: dopo la caduta (la clip) svanisce in questo tempo
-local CADE, SVANISCE = A.sconfitta.durata, 0.6
--- fermo, chi non è di turno fa ogni tanto una scenetta a caso: fra una e l'altra
--- da PAUSA_DA a PAUSA_DA + PAUSA_A secondi (math.random: solo grafica, la
--- simulazione ha il suo generatore)
-local PAUSA_DA, PAUSA_A = 3, 6
--- chi non è di turno prende e posa l'arma a caso: tiene l'arma (o no) da
--- ARMA_DA a ARMA_DA + ARMA_A secondi
-local ARMA_DA, ARMA_A = 4, 8
--- la velocità con cui si stacca da terra saltando
-local V_SALTO = sqrt(2 * game.GRAVITY * game.base_stats().jump_height)
+-- a step: the distance the body covers while a leg makes a full swing, in
+-- character heights
+local STEP = 0.9
+-- the head looks where you aim, up to this angle (radians) up and down
+local HEAD_UP, HEAD_DOWN = 0.45, 0.3
+-- defeat: after the fall (the clip) it fades in this time
+local FALLS, FADES = A.sconfitta.durata, 0.6
+-- idle, whoever's turn it isn't plays a random skit now and then: between one
+-- and the next from PAUSE_FROM to PAUSE_FROM + PAUSE_TO seconds (math.random:
+-- graphics only, the simulation has its own generator)
+local PAUSE_FROM, PAUSE_TO = 3, 6
+-- whoever's turn it isn't randomly takes and puts down the weapon: holds it
+-- (or not) from WEAPON_FROM to WEAPON_FROM + WEAPON_TO seconds
+local WEAPON_FROM, WEAPON_TO = 4, 8
+-- the speed at which it leaves the ground when jumping
+local JUMP_V = sqrt(2 * game.GRAVITY * game.base_stats().jump_height)
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(0, 0, 0, 1)
@@ -164,24 +165,24 @@ end
 local function box(parent, x, y, w, h, color)
 	return setup(gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(w, h, 0)), parent, color)
 end
-local function cerchio(parent, x, y, d, color)
+local function circle_shape(parent, x, y, d, color)
 	local n = setup(gui.new_pie_node(vmath.vector3(x, y, 0), vmath.vector3(d, d, 0)), parent, color)
-	-- abbastanza lati da restare tondo anche grande, nella home
+	-- enough sides to stay round even when big, in the home
 	gui.set_perimeter_vertices(n, 32)
 	return n
 end
--- un giunto: un nodo vuoto in (x, y) attorno a cui girano i pezzi figli
-local function giunto(parent, x, y)
+-- a joint: an empty node at (x, y) that the child pieces turn around
+local function joint(parent, x, y)
 	local n = box(parent, 0, 0, 0, 0)
 	pos(n, x, y)
 	gui.set_visible(n, false)
 	return n
 end
--- un pezzo disegnato (p di diavoletto.lua), k unità del mondo per unità del
--- disegno, nel giunto parent spostato al contrario del perno d; col lampo del
--- colpo se non è tinto (o se lampo)
-local function pezzo(s, parent, p, k, lampo, d)
-	d = d or FERMO
+-- a drawn piece (p of diavoletto.lua), k world units per drawing unit, in the
+-- parent joint moved opposite to pivot d; with the hit flash if it isn't
+-- tinted (or if flash_fx)
+local function piece(s, parent, p, k, flash_fx, d)
+	d = d or IDLE
 	local x, y = (p.x - d[1]) * k, (p.y - d[2]) * k
 	local n = box(parent, x, y, p.w * k, p.h * k)
 	gui.set_texture(n, "diavoletto")
@@ -193,158 +194,158 @@ local function pezzo(s, parent, p, k, lampo, d)
 		gui.play_flipbook(t, p.tinta)
 		s.tinte[#s.tinte + 1] = t
 	end
-	if lampo or not p.tinta then
+	if flash_fx or not p.tinta then
 		gui.set_material(n, "lampo")
-		s.lampi[#s.lampi + 1] = n
+		s.flashes[#s.flashes + 1] = n
 	else
 		gui.set_material(n, "pezzi")
 	end
 	return n
 end
 
--- le facce: una testa nuova senza le sue facce fa anche quelle. Le ultime cinque
--- (WB-009) il diavoletto di base non le ha: fa la testa normale
-local FACCE = { "testa", "testa_colpita", "testa_felice", "testa_ko",
+-- the faces: a new head without its own faces makes those too. The base devil
+-- doesn't have the last five (WB-009): it uses the normal head
+local FACES = { "testa", "testa_colpita", "testa_felice", "testa_ko",
 	"testa_mira", "testa_arrabbiata", "testa_sconfitta", "testa_paura", "testa_provocazione" }
 
--- I pezzi di ogni posto con addosso le pelli di look (nomi di battaglia/pelli.lua,
--- una per categoria): per posto, i pezzi dal basso. Il primo è quello di base o
--- quello che lo sostituisce, poi quelli sopra, nell'ordine delle categorie. Torna
--- anche la coda: lunghezze dei segmenti e angoli a riposo, di base o della pelle
--- che l'ha cambiata.
-local function vesti(look)
+-- The pieces of each spot wearing the skins of look (names from
+-- battaglia/pelli.lua, one per category): per spot, the pieces from the bottom.
+-- The first is the base one or the one replacing it, then those on top, in
+-- category order. Also returns the tail: segment lengths and rest angles, base
+-- or from the skin that changed it.
+local function dress(look)
 	local per = {}
 	for i = 1, #(look or {}) do
-		local pelle = PELLI.pelli[look[i]]
-		assert(pelle, "pelle sconosciuta: " .. tostring(look[i]))
-		per[pelle.categoria] = pelle
+		local skin = SKINS.pelli[look[i]]
+		assert(skin, "pelle sconosciuta: " .. tostring(look[i]))
+		per[skin.categoria] = skin
 	end
 	local V = {}
-	local function strati(posto)
-		V[posto] = V[posto] or { P[posto] or (posto:sub(1, 6) == "testa_" and P.testa) or false }
-		return V[posto]
+	local function layers(spot)
+		V[spot] = V[spot] or { P[spot] or (spot:sub(1, 6) == "testa_" and P.testa) or false }
+		return V[spot]
 	end
-	local function metti(posto, p)
-		local l = strati(posto)
+	local function put(spot, p)
+		local l = layers(spot)
 		if p.modo == "sostituisce" then l[1] = p else l[#l + 1] = p end
 	end
-	-- la coda: lunghezze, angoli a riposo e dove sta la radice rispetto a quella
-	-- del disegno (la pelle può averla spostata)
-	local coda = { l = D.coda, riposo = D.coda_riposo, radice = FERMO }
-	for _, categorie in ipairs({ PELLI.sostituisce, PELLI.sopra }) do
-		for _, c in ipairs(categorie) do
+	-- the tail: lengths, rest angles and where the root sits relative to the
+	-- drawing's one (the skin may have moved it)
+	local coda = { l = D.coda, riposo = D.coda_riposo, radice = IDLE }
+	for _, categories in ipairs({ SKINS.sostituisce, SKINS.sopra }) do
+		for _, c in ipairs(categories) do
 			local pz = per[c] and per[c].pezzi
 			if per[c] and per[c].coda then
-				coda = { l = per[c].coda, riposo = per[c].coda_riposo, radice = per[c].coda_radice or FERMO }
+				coda = { l = per[c].coda, riposo = per[c].coda_riposo, radice = per[c].coda_radice or IDLE }
 			end
 			if pz then
-				for posto, p in pairs(pz) do metti(posto, p) end
-				for i = 2, #FACCE do
-					if pz.testa and not pz[FACCE[i]] then metti(FACCE[i], pz.testa) end
+				for spot, p in pairs(pz) do put(spot, p) end
+				for i = 2, #FACES do
+					if pz.testa and not pz[FACES[i]] then put(FACES[i], pz.testa) end
 				end
 			end
 		end
 	end
-	return strati, coda
+	return layers, coda
 end
 
--- i pezzi di un posto (vesti) nel giunto parent
-local function veste(s, parent, posto, k)
-	for _, p in ipairs(s.strati(posto)) do
-		if p then pezzo(s, parent, p, k, true, sposto(posto)) end
+-- the pieces of a spot (dress) in the parent joint
+local function dresses(s, parent, spot, k)
+	for _, p in ipairs(s.strati(spot)) do
+		if p then piece(s, parent, p, k, true, shift(spot)) end
 	end
 end
 
 
--- Le manine staccate (il pugno): pezzi liberi sulla forma; da ferme stanno
--- dove finiscono le braccia che pendono (unità del disegno), le clip le girano
--- e le spostano
-local function mano_ferma(posto, x)
-	local b, pu = P[posto], P.pugno
+-- The detached little hands (the fist): free pieces on the shape; at rest they
+-- sit where the hanging arms end (drawing units), the clips turn and move them
+local function steady_hand(spot, x)
+	local b, pu = P[spot], P.pugno
 	return { x + b.x, PT.spalle[2] + b.y - b.h / 2 + pu.h * 0.4 }
 end
-local MANO_A, MANO_D = mano_ferma("braccio", PT.spalle[1]), mano_ferma("braccio_dietro", -PT.spalle[1])
--- il perno delle manine: da ferme girano lì (i pezzi si spostano al contrario)
-local MANINA = sposto("pugno")
--- la mano del braccio che pende vista dalla spalla, per girarlo verso la presa
-local VERSO_A = atan2(MANO_A[2] - J.braccio[2], MANO_A[1] - J.braccio[1])
-local VERSO_D = atan2(MANO_D[2] - J.braccio_dietro[2], MANO_D[1] - J.braccio_dietro[1])
+local HAND_FRONT, HAND_BACK = steady_hand("braccio", PT.spalle[1]), steady_hand("braccio_dietro", -PT.spalle[1])
+-- the little hands' pivot: at rest they turn there (the pieces move the opposite way)
+local HAND = shift("pugno")
+-- the hand of the hanging arm seen from the shoulder, to turn it toward the grip
+local TOWARD_A = atan2(HAND_FRONT[2] - J.braccio[2], HAND_FRONT[1] - J.braccio[1])
+local TOWARD_D = atan2(HAND_BACK[2] - J.braccio_dietro[2], HAND_BACK[1] - J.braccio_dietro[1])
 
--- I livelli: i pezzi dal fondo, cosa sta davanti a cosa. Una clip può avere
--- il suo ordine (livelli), sennò questo
-local LIVELLI = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma",
+-- The layers: the pieces from the back, what is in front of what. A clip can
+-- have its own order (livelli), otherwise this one
+local LEVELS = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma",
 	"braccio_a", "manina_a" }
-local function manina(s, punto, k)
-	local g = giunto(s.forma, (punto[1] + sposto("pugno")[1]) * k, (punto[2] + sposto("pugno")[2]) * k)
-	veste(s, g, "pugno", k)
+local function little_hand(s, point, k)
+	local g = joint(s.forma, (point[1] + shift("pugno")[1]) * k, (point[2] + shift("pugno")[2]) * k)
+	dresses(s, g, "pugno", k)
 	return g
 end
 
--- mostra o nasconde un nodo, solo quando cambia
-local function vedi(s, n, on)
+-- shows or hides a node, only when it changes
+local function visible(s, n, on)
 	if s.vis[n] ~= on then
 		s.vis[n] = on
 		gui.set_enabled(n, on)
 	end
 end
 
--- Le armi in mano: angolo a riposo (radianti) attorno al perno, 0 verso
--- avanti. Le immagini e le misure sono in battaglia/armi.lua
--- (strumenti/grafica/armi.py), presa, perno e spalla in battaglia/impugnature.lua
+-- The weapons in hand: rest angle (radians) around the pivot, 0 facing
+-- forward. Images and sizes are in battaglia/armi.lua
+-- (strumenti/grafica/armi.py), grip, pivot and shoulder in battaglia/impugnature.lua
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
 	punch = -0.9, eagle = -0.6, hook = -0.4, bellows = -0.3,
-	mallet = 2,  -- in spalla: lungo com'è, in giù entrerebbe nel terreno
-	lunge = 1.3,  -- dritta in su: in giù entrerebbe nel terreno
+	mallet = 2,  -- on the shoulder: as long as it is, pointing down it would go into the terrain
+	lunge = 1.3,  -- straight up: pointing down it would go into the terrain
 }
--- il rinculo al più (unità del mondo su 200)
-local PRESA = 20
+-- the recoil at most (world units per 200)
+local GRIP = 20
 
--- un'immagine dell'atlante delle armi, misure in unità del mondo
--- l'arma: in mano a chi è di turno o mira (e a chi aspetta, ogni tanto), col
--- perno sulla spalla dell'arma (battaglia/impugnature.lua, più la clip) e
--- girata di s.arma_a; il rinculo la spinge indietro lungo il suo asse. Torna
--- dov'è la presa nella forma (unità del disegno), per chi la impugna
-local ARMA0 = { presa = FERMO, perno = FERMO, spalla = PT.spalle }
-local function arma_in_mano(s, po, in_mano, lx, q)
-	if not in_mano then return 0, 0 end
-	local g = PRESE[s.arma_scelta] or ARMA0
+-- an image from the weapons atlas, sizes in world units
+-- the weapon: in the hand of whoever's turn it is or who aims (and of whoever
+-- waits, now and then), with the pivot on the weapon's shoulder
+-- (battaglia/impugnature.lua, plus the clip) and turned by s.weapon_a; the
+-- recoil pushes it back along its axis. Returns where the grip is in the
+-- shape (drawing units), for whoever grips it
+local WEAPON0 = { presa = IDLE, perno = IDLE, spalla = PT.spalle }
+local function weapon_in_hand(s, po, in_hand, lx, q)
+	if not in_hand then return 0, 0 end
+	local g = GRIPS[s.chosen_weapon] or WEAPON0
 	local ax, ay = g.spalla[1] + po.arma_x, g.spalla[2] + po.arma_y
 	pos(s.presa, ax * s.k, ay * s.k)
 	scale(s.presa, 1 / lx, 1 / q)
-	rot(s.giro, s.arma_a)
-	local ox = -min(s.x[KICK] * s.w * 0.6, PRESA * s.h / 200 / game.CORPO * 0.8)
-	-- l'arma può essere ingrandita (scala, dall'editor): presa e perno restano
-	-- in unità dell'immagine com'è, e l'immagine si ingrandisce attorno al perno
+	rot(s.giro, s.weapon_a)
+	local ox = -min(s.x[KICK] * s.w * 0.6, GRIP * s.h / 200 / game.CORPO * 0.8)
+	-- the weapon can be enlarged (scale, from the editor): grip and pivot stay in
+	-- units of the image as it is, and the image grows around the pivot
 	local sc = g.scala or 1
-	pos(s.armi[s.arma_scelta], ox - g.perno[1] * sc, -g.perno[2] * sc)
+	pos(s.armi[s.chosen_weapon], ox - g.perno[1] * sc, -g.perno[2] * sc)
 	local dx, dy = (g.presa[1] - g.perno[1]) * sc + ox, (g.presa[2] - g.perno[2]) * sc
-	local c, sn = cos(s.arma_a), sin(s.arma_a)
+	local c, sn = cos(s.weapon_a), sin(s.weapon_a)
 	return ax + (dx * c - dy * sn) / s.k / lx, ay + (dx * sn + dy * c) / s.k / q
 end
 
--- mette i pezzi nell'ordine della clip (dal fondo), solo quando cambia; quelli
--- che la clip non nomina vanno sopra, nell'ordine di sempre. Ogni pezzo va
--- sopra a quello prima, fra i fratelli (figli di forma): con move_above(n, nil)
--- Defold lo stacca dal genitore e il personaggio sparisce
-local function livelli(s, l)
+-- puts the pieces in the clip's order (from the back), only when it changes;
+-- those the clip doesn't name go on top, in the usual order. Each piece goes
+-- above the previous one, among siblings (children of forma): with
+-- move_above(n, nil) Defold detaches it from the parent and the character vanishes
+local function levels(s, l)
 	if s.livelli == l then return end
 	s.livelli = l
-	local fatti, prima = {}, nil
-	local function su(nome)
-		local nodi = s.nodi_livello[nome]
-		if fatti[nome] or not nodi then return end
-		fatti[nome] = true
-		for i = 1, #nodi do
-			if prima then gui.move_above(nodi[i], prima) end
-			prima = nodi[i]
+	local steps_count, first_one = {}, nil
+	local function above(nome)
+		local nodes = s.level_nodes[nome]
+		if steps_count[nome] or not nodes then return end
+		steps_count[nome] = true
+		for i = 1, #nodes do
+			if first_one then gui.move_above(nodes[i], first_one) end
+			first_one = nodes[i]
 		end
 	end
-	for i = 1, #l do su(l[i]) end
-	for i = 1, #LIVELLI do su(LIVELLI[i]) end
+	for i = 1, #l do above(l[i]) end
+	for i = 1, #LEVELS do above(LEVELS[i]) end
 end
 
-local function figura_arma(parent, img, x, y, w, h)
+local function weapon_figure(parent, img, x, y, w, h)
 	local n = box(parent, x, y, w, h)
 	gui.set_texture(n, "armi")
 	gui.set_material(n, "pezzi")
@@ -352,154 +353,154 @@ local function figura_arma(parent, img, x, y, w, h)
 	return n
 end
 
--- le armi sono grandi come il mondo, non come il corpo (game.CORPO): l'immagine,
--- sopra le parti col colore della squadra. La tiene la mano del braccio davanti.
-local function arma(s, name, color)
-	local a = DA[name]
-	local g = giunto(s.giro, 0, 0)
-	figura_arma(g, a.img, a.x, a.y, a.w, a.h)
+-- the weapons are world-sized, not body-sized (game.CORPO): the image, above
+-- the parts with the team color. The front arm's hand holds it.
+local function weapon_name(s, name, color)
+	local a = FROM[name]
+	local g = joint(s.giro, 0, 0)
+	weapon_figure(g, a.img, a.x, a.y, a.w, a.h)
 	if a.tinta then
-		s.tinte_arma[#s.tinte_arma + 1] = setup(figura_arma(g, a.tinta, a.x, a.y, a.w, a.h), nil, color)
+		s.weapon_tints[#s.weapon_tints + 1] = setup(weapon_figure(g, a.tinta, a.x, a.y, a.w, a.h), nil, color)
 	end
-	-- l'uncino in canna del Rampino: un pezzo a sé, sparisce quando vola via
+	-- the Grapple's hook in the barrel: a piece of its own, it vanishes when it flies off
 	if name == "hook" then
 		local u = require("battaglia.armi").pezzi.uncino
-		s.uncino = figura_arma(g, u.img, PUNTA_RAMPINO + u.x, u.y, u.w, u.h)
+		s.uncino = weapon_figure(g, u.img, HOOK_TIP + u.x, u.y, u.w, u.h)
 	end
 	gui.set_enabled(g, false)
 	s.armi[name] = g
 end
 
--- L'uncino è in canna (on) o è partito col filo
+-- The hook is in the barrel (on) or has left with the wire
 function M.uncino(s, on)
-	if s.uncino_on ~= on then
-		s.uncino_on = on
+	if s.hook_on ~= on then
+		s.hook_on = on
 		gui.set_enabled(s.uncino, on)
 	end
 end
 
-function M.new(color, look, solo_arma)
+function M.new(color, look, weapon_only)
 	local H = game.DISEGNO_H
-	-- largo tre quarti dell'altezza, come la capsula di partenza (sim/corpo.lua)
+	-- three quarters of the height wide, like the starting capsule (sim/corpo.lua)
 	local Wd = H * 0.75
 	local k = H / D.altezza
-	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, tinte_arma = {}, lampi = {},
-		teste = {}, teste_t = {}, facce = {}, vis = {},
+	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, weapon_tints = {}, flashes = {},
+		teste = {}, heads_t = {}, facce = {}, vis = {},
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
-		-- la posa delle clip di questo frame e gli angoli (radianti) delle
-		-- braccia e delle gambe che pendono, che la inseguono
+		-- this frame's pose from the clips and the angles (radians) of the hanging
+		-- arms and legs, which chase it
 		posa = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
-	s.strati, s.forma_coda = vesti(look)
-	s.root = giunto(nil, 0, 0)
+	s.strati, s.tail_shape = dress(look)
+	s.root = joint(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
 	s.alpha = vmath.vector4(1, 1, 1, 1)
-	s.lampo_col = vmath.vector4(1, 1, 1, 1)
+	s.flash_col = vmath.vector4(1, 1, 1, 1)
 
-	s.ombra = cerchio(s.root, 0, 0, Wd * 1.3, OMBRA)
+	s.ombra = circle_shape(s.root, 0, 0, Wd * 1.3, SHADOW)
 	scale(s.ombra, 1, 0.22)
-	-- il paracadute, dietro a tutto: dondola attorno al punto dove convergono le funi
-	s.para = giunto(s.root, 0, D.paracadute_y * k)
-	pezzo(s, s.para, P.paracadute, k)
+	-- the parachute, behind everything: swings around the point where the lines meet
+	s.para = joint(s.root, 0, D.paracadute_y * k)
+	piece(s, s.para, P.paracadute, k)
 	gui.set_enabled(s.para, false)
-	-- corpo: inclinazione e spinta; forma: schiaccia e allunga. L'arma sta sul
-	-- corpo e non sulla forma, così schiacciandosi non si storce la mira
-	s.corpo = giunto(s.root, 0, 0)
-	s.forma = giunto(s.corpo, 0, 0)
+	-- corpo: tilt and push; forma: squash and stretch. The weapon sits on corpo
+	-- and not on forma, so squashing doesn't skew the aim
+	s.corpo = joint(s.root, 0, 0)
+	s.forma = joint(s.corpo, 0, 0)
 
-	-- dal fondo: la coda (prima tutti i bordi, poi tutti i colori: così i
-	-- segmenti si fondono in una coda sola), l'ala, il braccio di dietro, le
-	-- gambe, il busto, la testa, l'arma, il braccio davanti
-	s.perno_coda, s.coda_dentro = perno_coda(s.forma_coda.riposo[1])
-	-- la radice della coda: quella del disegno, spostata dalla pelle e dal perno
-	local rc = s.forma_coda.radice
-	s.radice_coda = { PT.coda[1] + rc[1] + s.perno_coda[1], PT.coda[2] + rc[2] + s.perno_coda[2] }
-	for strato = 1, 2 do
-		local padre, x, y = s.forma, s.radice_coda[1] * k, s.radice_coda[2] * k
-		for i = 1, #s.forma_coda.l do
-			padre = giunto(padre, x, y)
+	-- from the back: the tail (all the borders first, then all the colors: so the
+	-- segments merge into a single tail), the wing, the back arm, the legs, the
+	-- torso, the head, the weapon, the front arm
+	s.tail_pivot, s.coda_dentro = tail_pivot(s.tail_shape.riposo[1])
+	-- the tail's root: the drawing's one, moved by the skin and the pivot
+	local rc = s.tail_shape.radice
+	s.tail_base = { PT.coda[1] + rc[1] + s.tail_pivot[1], PT.coda[2] + rc[2] + s.tail_pivot[2] }
+	for layer = 1, 2 do
+		local parent_node, x, y = s.forma, s.tail_base[1] * k, s.tail_base[2] * k
+		for i = 1, #s.tail_shape.l do
+			parent_node = joint(parent_node, x, y)
 			s.coda[i] = s.coda[i] or {}
-			s.coda[i][strato] = padre
-			if i == 1 then padre = giunto(padre, s.coda_dentro[1] * k, s.coda_dentro[2] * k) end
-			veste(s, padre, "coda_" .. i .. (strato == 1 and "_bordo" or ""), k)
-			x, y = s.forma_coda.l[i] * k, 0
+			s.coda[i][layer] = parent_node
+			if i == 1 then parent_node = joint(parent_node, s.coda_dentro[1] * k, s.coda_dentro[2] * k) end
+			dresses(s, parent_node, "coda_" .. i .. (layer == 1 and "_bordo" or ""), k)
+			x, y = s.tail_shape.l[i] * k, 0
 		end
 	end
-	s.ala = giunto(s.forma, J.ala[1] * k, J.ala[2] * k)
-	veste(s, s.ala, "ala", k)
-	s.braccio_d = giunto(s.forma, J.braccio_dietro[1] * k, J.braccio_dietro[2] * k)
-	veste(s, s.braccio_d, "braccio_dietro", k)
-	s.manina_d = manina(s, MANO_D, k)
-	s.gamba_d = giunto(s.forma, J.gamba_dietro[1] * k, J.gamba_dietro[2] * k)
-	veste(s, s.gamba_d, "gamba_dietro", k)
-	s.gamba_a = giunto(s.forma, J.gamba[1] * k, J.gamba[2] * k)
-	veste(s, s.gamba_a, "gamba", k)
-	s.busto = giunto(s.forma, J.busto[1] * k, J.busto[2] * k)
-	veste(s, s.busto, "busto", k)
-	s.collo = giunto(s.forma, J.testa[1] * k, J.testa[2] * k)
-	-- la testa in un giunto suo (le clip la tolgono)
-	s.testa = giunto(s.collo, 0, 0)
-	-- la testa: tanti pezzi quanti ne ha la faccia con più strati, ognuno col suo
-	-- strato del colore della squadra; li cambia faccia()
-	local strati = 0
-	for _, f in ipairs(FACCE) do
+	s.ala = joint(s.forma, J.ala[1] * k, J.ala[2] * k)
+	dresses(s, s.ala, "ala", k)
+	s.braccio_d = joint(s.forma, J.braccio_dietro[1] * k, J.braccio_dietro[2] * k)
+	dresses(s, s.braccio_d, "braccio_dietro", k)
+	s.manina_d = little_hand(s, HAND_BACK, k)
+	s.gamba_d = joint(s.forma, J.gamba_dietro[1] * k, J.gamba_dietro[2] * k)
+	dresses(s, s.gamba_d, "gamba_dietro", k)
+	s.gamba_a = joint(s.forma, J.gamba[1] * k, J.gamba[2] * k)
+	dresses(s, s.gamba_a, "gamba", k)
+	s.busto = joint(s.forma, J.busto[1] * k, J.busto[2] * k)
+	dresses(s, s.busto, "busto", k)
+	s.collo = joint(s.forma, J.testa[1] * k, J.testa[2] * k)
+	-- the head in its own joint (the clips remove it)
+	s.testa = joint(s.collo, 0, 0)
+	-- the head: as many pieces as the face with the most layers, each with its own
+	-- team-color layer; faccia() changes them
+	local layers = 0
+	for _, f in ipairs(FACES) do
 		s.facce[f] = s.strati(f)
-		strati = max(strati, #s.facce[f])
+		layers = max(layers, #s.facce[f])
 	end
-	for i = 1, strati do
-		s.teste[i] = pezzo(s, s.testa, s.facce.testa[i] or s.facce.testa[1], k, true, sposto("testa"))
-		s.teste_t[i] = box(s.testa, 0, 0, 0, 0)
-		gui.set_texture(s.teste_t[i], "diavoletto")
-		gui.set_material(s.teste_t[i], "pezzi")
-		s.tinte[#s.tinte + 1] = s.teste_t[i]
+	for i = 1, layers do
+		s.teste[i] = piece(s, s.testa, s.facce.testa[i] or s.facce.testa[1], k, true, shift("testa"))
+		s.heads_t[i] = box(s.testa, 0, 0, 0, 0)
+		gui.set_texture(s.heads_t[i], "diavoletto")
+		gui.set_material(s.heads_t[i], "pezzi")
+		s.tinte[#s.tinte + 1] = s.heads_t[i]
 	end
-	-- l'arma: sopra il corpo e la testa, sotto il braccio davanti. La presa sta
-	-- sulla spalla dell'arma e toglie la schiacciata della forma, il giro dentro
-	-- gira l'arma attorno al perno (girata e poi schiacciata si storcerebbe)
-	s.presa = giunto(s.forma, 0, 0)
-	s.giro = giunto(s.presa, 0, 0)
-	if solo_arma then
-		arma(s, solo_arma, color)
+	-- the weapon: above the body and the head, below the front arm. The grip sits
+	-- on the weapon's shoulder and undoes the shape's squash, the inner turn turns
+	-- the weapon around the pivot (turned and then squashed it would skew)
+	s.presa = joint(s.forma, 0, 0)
+	s.giro = joint(s.presa, 0, 0)
+	if weapon_only then
+		weapon_name(s, weapon_only, color)
 	else
-		for name in pairs(ARMI) do arma(s, name, color) end
+		for name in pairs(ARMI) do weapon_name(s, name, color) end
 	end
-	s.braccio_a = giunto(s.forma, J.braccio[1] * k, J.braccio[2] * k)
-	veste(s, s.braccio_a, "braccio", k)
-	s.manina_a = manina(s, MANO_A, k)
-	-- i nodi di ogni livello, nell'ordine in cui sono stati fatti (LIVELLI)
-	s.nodi_livello = { coda = { s.coda[1][1], s.coda[1][2] }, ala = { s.ala }, braccio_d = { s.braccio_d },
+	s.braccio_a = joint(s.forma, J.braccio[1] * k, J.braccio[2] * k)
+	dresses(s, s.braccio_a, "braccio", k)
+	s.manina_a = little_hand(s, HAND_FRONT, k)
+	-- the nodes of each layer, in the order they were made (LEVELS)
+	s.level_nodes = { coda = { s.coda[1][1], s.coda[1][2] }, ala = { s.ala }, braccio_d = { s.braccio_d },
 		manina_d = { s.manina_d }, gamba_d = { s.gamba_d }, gamba_a = { s.gamba_a }, busto = { s.busto },
 		testa = { s.collo }, arma = { s.presa }, braccio_a = { s.braccio_a }, manina_a = { s.manina_a } }
-	s.livelli = LIVELLI
-	M.set_weapon(s, solo_arma or "missile")
+	s.livelli = LEVELS
+	M.set_weapon(s, weapon_only or "missile")
 
 	M.set_color(s, color, true)
 	M.reset(s)
 	return s
 end
 
--- Ridipinge paracadute e armi con il colore di un'altra squadra
-function M.set_color(s, color, forza)
-	if s.color == color and not forza then return end
+-- Repaints parachute and weapons with another team's color
+function M.set_color(s, color, force)
+	if s.color == color and not force then return end
 	s.color = color
 	C.x, C.y, C.z, C.w = color.x, color.y, color.z, 1
 	for _, n in ipairs(s.tinte) do gui.set_color(n, C) end
-	for _, n in ipairs(s.tinte_arma) do gui.set_color(n, C) end
+	for _, n in ipairs(s.weapon_tints) do gui.set_color(n, C) end
 end
 
--- il lampo del colpo: i pezzi diventano bianchi, a scendere. Lo fa il materiale
--- lampo (battaglia/lampo.fp): il verde del colore dice quanto è bianco
-local function lampo(s, q)
-	local c = s.lampo_col
-	c.y = 1 - LAMPO * q
-	for i = 1, #s.lampi do gui.set_color(s.lampi[i], c) end
+-- the hit flash: the pieces turn white, fading. The lampo material does it
+-- (battaglia/lampo.fp): the color's green says how white
+local function flash_fx(s, q)
+	local c = s.flash_col
+	c.y = 1 - FLASH * q
+	for i = 1, #s.flashes do gui.set_color(s.flashes[i], c) end
 end
 
-local function faccia(s, nome)
+local function face_img(s, nome)
 	if s.faccia ~= nome then
 		s.faccia = nome
-		local f, k, d = s.facce[nome], s.k, sposto("testa")
+		local f, k, d = s.facce[nome], s.k, shift("testa")
 		for i = 1, #s.teste do
-			local n, t, p = s.teste[i], s.teste_t[i], f[i]
+			local n, t, p = s.teste[i], s.heads_t[i], f[i]
 			gui.set_enabled(n, p ~= nil)
 			gui.set_enabled(t, p ~= nil and p.tinta ~= nil)
 			if p then
@@ -517,28 +518,28 @@ local function faccia(s, nome)
 end
 
 function M.reset(s)
-	for i = 1, #W_MOLLA do s.x[i], s.v[i], s.goal[i] = 0, 0, 0 end
+	for i = 1, #SPRING_W do s.x[i], s.v[i], s.goal[i] = 0, 0, 0 end
 	s.x[SQ] = 1
 	s.t = math.random() * 10
-	s.azione, s.azione_t = nil, 0
+	s.ui_action, s.action_t = nil, 0
 	s.vy, s.vx, s.last_x, s.last_y, s.ground = 0, 0, nil, nil, true
-	s.passo, s.cammina, s.dondolo = 0, 0, 0
+	s.passo, s.cammina, s.swing = 0, 0, 0
 	for i = 1, 2 do s.braccia[i], s.gambe[i] = 0, 0 end
-	local riposo = s.forma_coda.riposo
-	for i = 1, #riposo do s.coda_a[i] = riposo[i] - (i > 1 and riposo[i - 1] or 0) end
+	local rest = s.tail_shape.riposo
+	for i = 1, #rest do s.coda_a[i] = rest[i] - (i > 1 and rest[i - 1] or 0) end
 	s.flash = 0
 	s.morte, s.morto = nil, nil
-	s.scenetta, s.scenetta_t, s.n_scenette = nil, 0, 0
-	s.pausa = PAUSA_DA + PAUSA_A * math.random()
+	s.skit, s.skit_t, s.n_skits = nil, 0, 0
+	s.paused = PAUSE_FROM + PAUSE_TO * math.random()
 	s.alpha.w = 1
 	gui.set_color(s.root, s.alpha)
 	rot(s.corpo, 0)
 	scale(s.forma, 1, 1)
-	lampo(s, 0)
-	faccia(s, "testa")
-	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], not s.vuote) end
-	s.con_arma, s.arma_t = false, ARMA_DA + ARMA_A * math.random()
-	s.arma_a = 0
+	flash_fx(s, 0)
+	face_img(s, "testa")
+	if s.chosen_weapon then gui.set_enabled(s.armi[s.chosen_weapon], not s.vuote) end
+	s.holding_weapon, s.weapon_t = false, WEAPON_FROM + WEAPON_TO * math.random()
+	s.weapon_a = 0
 	s.face = 1
 end
 
@@ -547,82 +548,82 @@ function M.set_enabled(s, on)
 	gui.set_enabled(s.root, on)
 end
 
-local function molle(s, dt)
+local function springs(s, dt)
 	local x, v, goal = s.x, s.v, s.goal
 	local n = max(1, math.ceil(dt * 120))
 	local h = dt / n
 	for _ = 1, n do
-		for i = 1, #W_MOLLA do
-			local w, z = W_MOLLA[i], Z_MOLLA[i]
+		for i = 1, #SPRING_W do
+			local w, z = SPRING_W[i], SPRING_Z[i]
 			v[i] = v[i] + (w * w * (goal[i] - x[i]) - 2 * z * w * v[i]) * h
 			x[i] = x[i] + v[i] * h
 		end
 	end
 end
 
--- Le scenette dell'attesa: clip che non girano, una a caso ogni tanto
-local SCENETTE = { "naso", "sbadiglio", "guarda_coda" }
+-- The waiting skits: non-looping clips, a random one now and then
+local SKITS = { "naso", "sbadiglio", "guarda_coda" }
 
--- le clip con l'arma in mano, per ogni arma: prima quella solo per lei
--- (fermo_arma_mallet, mira_mallet), poi quella _arma, poi quella senza arma
-local ARMATE = {}
-for name in pairs(DA) do
-	local function con(nome)
+-- the clips with the weapon in hand, for each weapon: first the one just for
+-- it (fermo_arma_mallet, mira_mallet), then the _arma one, then the one without a weapon
+local ARMED = {}
+for name in pairs(FROM) do
+	local function with_weapon(nome)
 		return A[nome .. "_arma_" .. name] or A[nome .. "_arma"] or A[nome]
 	end
-	ARMATE[name] = { fermo = con("fermo"), corsa = con("corsa"), aria = con("aria"),
-		sale = con("sale"), scende = con("scende"), mira = A["mira_" .. name] or A.mira }
+	ARMED[name] = { fermo = with_weapon("fermo"), corsa = with_weapon("corsa"), aria = with_weapon("aria"),
+		sale = with_weapon("sale"), scende = with_weapon("scende"), mira = A["mira_" .. name] or A.mira }
 end
 
--- chi non è di turno prende e posa l'arma a caso (mai a metà di una scenetta);
--- con l'arma in mano niente scenette
-local function attesa(s, dt)
-	s.arma_t = s.arma_t - dt
-	if s.arma_t <= 0 and not s.scenetta then
-		s.con_arma, s.arma_t = not s.con_arma, ARMA_DA + ARMA_A * math.random()
+-- whoever's turn it isn't randomly takes and puts down the weapon (never in
+-- the middle of a skit); with the weapon in hand no skits
+local function waiting(s, dt)
+	s.weapon_t = s.weapon_t - dt
+	if s.weapon_t <= 0 and not s.skit then
+		s.holding_weapon, s.weapon_t = not s.holding_weapon, WEAPON_FROM + WEAPON_TO * math.random()
 	end
-	if s.con_arma then return pose.aggiungi(s.posa, ARMATE[s.arma_scelta].fermo, s.t, 1) end
-	if s.scenetta then
-		local sc = A[s.scenetta]
-		s.scenetta_t = s.scenetta_t + dt
-		if s.scenetta_t < sc.durata then return pose.aggiungi(s.posa, sc, s.scenetta_t, 1) end
-		s.scenetta, s.pausa = nil, PAUSA_DA + PAUSA_A * math.random()
+	if s.holding_weapon then return pose.aggiungi(s.posa, ARMED[s.chosen_weapon].fermo, s.t, 1) end
+	if s.skit then
+		local sc = A[s.skit]
+		s.skit_t = s.skit_t + dt
+		if s.skit_t < sc.durata then return pose.aggiungi(s.posa, sc, s.skit_t, 1) end
+		s.skit, s.paused = nil, PAUSE_FROM + PAUSE_TO * math.random()
 	end
-	s.pausa = s.pausa - dt
-	if s.pausa <= 0 then
-		s.scenetta, s.scenetta_t = SCENETTE[math.random(#SCENETTE)], 0
-		s.n_scenette = s.n_scenette + 1
+	s.paused = s.paused - dt
+	if s.paused <= 0 then
+		s.skit, s.skit_t = SKITS[math.random(#SKITS)], 0
+		s.n_skits = s.n_skits + 1
 	end
 	pose.aggiungi(s.posa, A.fermo, s.t, 1)
 end
 
--- la coda: un'onda che parte dalla schiena e arriva alla punta, più la molla CODA
--- (resta indietro correndo, frusta saltando e quando arriva un colpo). Ogni
--- segmento insegue il suo angolo un po' più piano del precedente: così il moto
--- arriva alla punta in ritardo
--- gira: la coda intera gira di tanto attorno alla sua radice (il canale coda_gira)
-local function coda(s, dt, gira)
-	local base, r = s.x[CODA], s.forma_coda.riposo
-	local prima = 0
+-- the tail: a wave starting at the back and reaching the tip, plus the TAIL
+-- spring (it lags behind running, whips when jumping and when a hit lands).
+-- Each segment chases its angle a bit more slowly than the previous one: so
+-- the motion reaches the tip late
+-- turn_around: the whole tail turns by this much around its root (the coda_gira channel)
+local function coda(s, dt, turn_around)
+	local base, r = s.x[TAIL], s.tail_shape.riposo
+	local first_one = 0
 	for i = 1, #s.coda_a do
-		local riposo = r[i] - prima
-		prima = r[i]
-		local a = riposo + (base + sin(s.t * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i)
+		local rest = r[i] - first_one
+		first_one = r[i]
+		local a = rest + (base + sin(s.t * 2.6 - i * 0.8) * 0.05) * (0.5 + 0.1 * i)
 		s.coda_a[i] = s.coda_a[i] + (a - s.coda_a[i]) * min(1, dt * (18 - 2.5 * i))
-		local g = i == 1 and gira or 0
+		local g = i == 1 and turn_around or 0
 		rot(s.coda[i][1], s.coda_a[i] + g)
 		rot(s.coda[i][2], s.coda_a[i] + g)
 	end
 end
 
--- Sconfitta: l'arma cade, cade all'indietro con la faccia a X (la clip
--- sconfitta), poi svanisce. Il terreno sotto può non esserci più (il cratere),
--- quindi niente resta appoggiato: tutto svanisce
-local function morte(s, dt)
+-- Defeat: the weapon drops, it falls backward with X eyes (the sconfitta
+-- clip), then fades. The terrain below may be gone (the crater), so nothing
+-- stays resting: everything fades
+local function death(s, dt)
 	local t = s.morte + dt
 	s.morte = t
 	pose.aggiungi(s.posa, A.sconfitta, t, 1)
-	s.alpha.w = max(0, 1 - max(0, t - CADE - 0.3) / SVANISCE)
+	s.alpha.w = max(0, 1 - max(0, t - FALLS - 0.3) / FADES)
 	gui.set_color(s.root, s.alpha)
 	if s.alpha.w == 0 then
 		s.morto = true
@@ -649,126 +650,127 @@ function M.update(s, dt, st)
 	s.last_x, s.last_y = st.x, st.y
 	local ground = st.grounded
 
-	-- passi: contano la strada fatta a terra (non i teletrasporti)
-	local corre = ground and st.moving ~= 0 and dx < s.h and not s.morte
-	if corre then s.passo = (s.passo + dx / (PASSO * s.h) * 2 * pi) % (2 * pi) end
-	s.cammina = s.cammina + ((corre and 1 or 0) - s.cammina) * min(1, dt * 10)
+	-- steps: count the distance covered on the ground (not teleports)
+	local runs = ground and st.moving ~= 0 and dx < s.h and not s.morte
+	if runs then s.passo = (s.passo + dx / (STEP * s.h) * 2 * pi) % (2 * pi) end
+	s.cammina = s.cammina + ((runs and 1 or 0) - s.cammina) * min(1, dt * 10)
 
-	-- atterraggio e stacco: schiaccia e allunga, la testa fa un cenno, la coda frusta
+	-- landing and takeoff: squash and stretch, the head nods, the tail whips
 	if ground and not s.ground and s.vy < -40 then
 		s.v[SQ] = s.v[SQ] - min(7, -s.vy / 40)
-		s.v[TESTA] = s.v[TESTA] - min(4, -s.vy / 80)
-		s.v[CODA] = s.v[CODA] - min(3, -s.vy / 100)
+		s.v[HEAD] = s.v[HEAD] - min(4, -s.vy / 80)
+		s.v[TAIL] = s.v[TAIL] - min(3, -s.vy / 100)
 	elseif not ground and s.ground and s.vy > 20 then
 		s.v[SQ] = s.v[SQ] + 4
-		s.v[CODA] = s.v[CODA] + 2
+		s.v[TAIL] = s.v[TAIL] + 2
 	end
 	s.ground = ground
-	if s.azione then s.azione_t = s.azione_t + dt end
+	if s.ui_action then s.action_t = s.action_t + dt end
 
-	-- la mira, verso dove si guarda
+	-- the aim, toward where it faces
 	local a = 0
 	if st.aim then a = face > 0 and st.aim or pi - st.aim end
 	if a > pi then a = a - 2 * pi end
 	local para = st.paracadute and not ground and not s.morte
-	-- chi è di turno (o mira) tiene l'arma, chi aspetta ogni tanto; da morto,
-	-- sul podio e appeso al paracadute (le mani sono sulle cinghie) no
-	-- st.fermo: solo il fermo, senza arma e senza scenette (la home)
-	if st.turno or st.aim ~= nil or st.fermo then s.con_arma = false end
-	local in_mano = (st.turno or st.aim ~= nil or s.con_arma) and not s.morte and not st.vittoria and not para
-	local mira = st.aim ~= nil and not s.morte and not para
-	-- le clip: con l'arma in mano quelle _arma, mirando da fermo mira (quelle
-	-- dell'arma se ci sono)
-	local armate = ARMATE[s.arma_scelta]
-	local clip = in_mano and armate or A
-	local fermo = mira and armate.mira or clip.fermo
+	-- whoever's turn it is (or who aims) holds the weapon, whoever waits now and
+	-- then; dead, on the podium and hanging from the parachute (hands on the
+	-- straps) no
+	-- st.fermo: only idle, without weapon and without skits (the home)
+	if st.turno or st.aim ~= nil or st.fermo then s.holding_weapon = false end
+	local in_hand = (st.turno or st.aim ~= nil or s.holding_weapon) and not s.morte and not st.vittoria and not para
+	local aim_name = st.aim ~= nil and not s.morte and not para
+	-- the clips: with the weapon in hand the _arma ones, aiming while still mira
+	-- (the weapon's own if any)
+	local armed = ARMED[s.chosen_weapon]
+	local clip = in_hand and armed or A
+	local frozen = aim_name and armed.mira or clip.fermo
 
-	-- la posa dello stato, dalle clip; sopra, quello che dipende dal gioco:
-	-- l'inclinazione e la coda con la velocità, la mira
+	-- the state's pose, from the clips; on top, what depends on the game: tilt
+	-- and tail with speed, the aim
 	local po = s.posa
 	pose.azzera(po)
-	local avanti = st.moving * face
-	local lean = -0.22 * max(-1, min(1, avanti / 70)) * s.cammina
+	local forward = st.moving * face
+	local lean = -0.22 * max(-1, min(1, forward / 70)) * s.cammina
 	local sq = 0
-	-- correndo la coda si allontana dal corpo, verso dietro, e torna quando ci si
-	-- ferma; in aria segue la velocità
-	local cd = 0.2 * max(-1, min(1, avanti / 70)) * s.cammina
+	-- running the tail moves away from the body, backward, and comes back when
+	-- stopping; in the air it follows the velocity
+	local cd = 0.2 * max(-1, min(1, forward / 70)) * s.cammina
 	if not ground then cd = cd + max(-0.2, min(0.2, s.vy / 900)) end
 	gui.set_enabled(s.para, para)
 
 	if s.morte then
-		morte(s, dt)
-	elseif s.azione == "colpito" and s.azione_t < A.colpito.durata then
-		-- colpito: faccia colpita, braccia all'aria (se non tengono l'arma)
-		pose.aggiungi(po, A.colpito, s.azione_t, 1)
+		death(s, dt)
+	elseif s.ui_action == "colpito" and s.action_t < A.colpito.durata then
+		-- hit: hit face, arms up (if they don't hold the weapon)
+		pose.aggiungi(po, A.colpito, s.action_t, 1)
 	elseif para then
-		-- appeso alle cinghie; il paracadute e il corpo dondolano contro la velocità
-		s.dondolo = s.dondolo + (-max(-0.35, min(0.35, s.vx / 400)) - s.dondolo) * min(1, dt * 4)
+		-- hanging from the straps; parachute and body swing against the velocity
+		s.swing = s.swing + (-max(-0.35, min(0.35, s.vx / 400)) - s.swing) * min(1, dt * 4)
 		pose.aggiungi(po, A.paracadute, s.t, 1)
-		rot(s.para, s.dondolo * 0.6)
-		lean = s.dondolo * 0.5
+		rot(s.para, s.swing * 0.6)
+		lean = s.swing * 0.5
 	elseif not ground then
-		-- in aria: salendo la posa sale, scendendo la scende, e si allunga con la velocità
-		local su = max(-1, min(1, s.vy / V_SALTO))
+		-- in the air: going up the sale pose, going down the scende one, and it
+		-- stretches with speed
+		local above = max(-1, min(1, s.vy / JUMP_V))
 		pose.aggiungi(po, clip.aria, s.t, 1)
-		pose.aggiungi(po, clip.sale, 0, su)
-		pose.aggiungi(po, clip.scende, 0, -su)
+		pose.aggiungi(po, clip.sale, 0, above)
+		pose.aggiungi(po, clip.scende, 0, -above)
 		sq = min(0.2, abs(s.vy) / 900)
-	elseif corre or s.cammina > 0.05 then
-		-- la corsa: un giro della clip a ogni passo, sfuma nel fermo
+	elseif runs or s.cammina > 0.05 then
+		-- the run: one loop of the clip per step, fading into idle
 		local c = s.cammina
-		pose.aggiungi(po, fermo, s.t, 1 - c)
+		pose.aggiungi(po, frozen, s.t, 1 - c)
 		pose.aggiungi(po, clip.corsa, s.passo / (2 * pi) * clip.corsa.durata, c)
 	elseif st.vittoria then
 		pose.aggiungi(po, A.vittoria, s.t, 1)
-	elseif not st.turno and not mira and not st.fermo then
-		-- fermo, non di turno: ogni tanto una scenetta
-		attesa(s, dt)
+	elseif not st.turno and not aim_name and not st.fermo then
+		-- idle, not their turn: a skit now and then
+		waiting(s, dt)
 	else
-		pose.aggiungi(po, fermo, s.t, 1)
+		pose.aggiungi(po, frozen, s.t, 1)
 	end
-	-- mirando la testa guarda dove si mira
-	local testa = po.testa
-	if mira then testa = max(-TESTA_GIU, min(TESTA_SU, a * 0.5)) end
+	-- aiming, the head looks where you aim
+	local head = po.testa
+	if aim_name then head = max(-HEAD_DOWN, min(HEAD_UP, a * 0.5)) end
 	if not s.morte then
-		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = po.schiaccia + sq, lean, testa, cd + po.coda
+		s.goal[SQ], s.goal[LEAN], s.goal[HEAD], s.goal[TAIL] = po.schiaccia + sq, lean, head, cd + po.coda
 	else
-		s.goal[SQ], s.goal[LEAN], s.goal[TESTA], s.goal[CODA] = 1, 0, testa, 0
+		s.goal[SQ], s.goal[LEAN], s.goal[HEAD], s.goal[TAIL] = 1, 0, head, 0
 	end
-	faccia(s, po.viso or "testa")
-	molle(s, dt)
+	face_img(s, po.viso or "testa")
+	springs(s, dt)
 
 	local q = max(0.4, s.x[SQ])
 	local lx = 1 + (1 - q) * 0.8
-	-- la testa non si schiaccia (i dettagli del disegno si vedrebbero storti):
-	-- scende e sale con il busto
+	-- the head doesn't squash (the drawing's details would look skewed): it goes
+	-- down and up with the torso
 	scale(s.forma, lx, q)
 	rot(s.corpo, s.x[LEAN] + po.corpo)
 	pos(s.corpo, -s.x[SHOVE] * s.w + po.corpo_x * s.k, po.salto * s.k)
 	scale(s.ombra, 1 + (1 - q) * 0.5, 0.22)
 
-	-- braccia e gambe inseguono la posa (così si passa piano da uno stato
-	-- all'altro); le gambe si alzano nei passi
-	local segui = min(1, dt * 16)
-	s.braccia[1] = s.braccia[1] + (po.braccio_a - s.braccia[1]) * segui
-	s.braccia[2] = s.braccia[2] + (po.braccio_d - s.braccia[2]) * segui
-	-- l'arma gira attorno al suo perno: mirando dove si mira, sennò a riposo
-	-- più la clip
-	if in_mano and mira then
-		s.arma_a = a - s.x[LEAN] - po.corpo
+	-- arms and legs chase the pose (so states blend gently); the legs lift in the steps
+	local follow = min(1, dt * 16)
+	s.braccia[1] = s.braccia[1] + (po.braccio_a - s.braccia[1]) * follow
+	s.braccia[2] = s.braccia[2] + (po.braccio_d - s.braccia[2]) * follow
+	-- the weapon turns around its pivot: aiming toward the aim, otherwise at rest
+	-- plus the clip
+	if in_hand and aim_name then
+		s.weapon_a = a - s.x[LEAN] - po.corpo
 	else
-		s.arma_a = s.arma_a + (ARMI[s.arma_scelta] + po.arma - s.arma_a) * segui
+		s.weapon_a = s.weapon_a + (ARMI[s.chosen_weapon] + po.arma - s.weapon_a) * follow
 	end
-	local chi = in_mano and po.mostra_arma > 0.5 and (po.clip and po.clip.impugna or "braccio_a")
-	local hx, hy = arma_in_mano(s, po, in_mano, lx, q)
-	-- chi la impugna la segue: il braccio gira verso la presa, la manina ci sta sopra
-	if chi == "braccio_a" then
-		s.braccia[1] = atan2(hy - J.braccio[2] - po.braccio_a_y, hx - J.braccio[1] - po.braccio_a_x) - VERSO_A
-	elseif chi == "braccio_d" then
-		s.braccia[2] = atan2(hy - J.braccio_dietro[2] - po.braccio_d_y, hx - J.braccio_dietro[1] - po.braccio_d_x) - VERSO_D
+	local who_hit = in_hand and po.mostra_arma > 0.5 and (po.clip and po.clip.impugna or "braccio_a")
+	local hx, hy = weapon_in_hand(s, po, in_hand, lx, q)
+	-- whoever grips it follows it: the arm turns toward the grip, the little hand sits on it
+	if who_hit == "braccio_a" then
+		s.braccia[1] = atan2(hy - J.braccio[2] - po.braccio_a_y, hx - J.braccio[1] - po.braccio_a_x) - TOWARD_A
+	elseif who_hit == "braccio_d" then
+		s.braccia[2] = atan2(hy - J.braccio_dietro[2] - po.braccio_d_y, hx - J.braccio_dietro[1] - po.braccio_d_x) - TOWARD_D
 	end
-	s.gambe[1] = s.gambe[1] + (po.gamba_a - s.gambe[1]) * segui
-	s.gambe[2] = s.gambe[2] + (po.gamba_d - s.gambe[2]) * segui
+	s.gambe[1] = s.gambe[1] + (po.gamba_a - s.gambe[1]) * follow
+	s.gambe[2] = s.gambe[2] + (po.gamba_d - s.gambe[2]) * follow
 	rot(s.braccio_a, s.braccia[1])
 	rot(s.braccio_d, s.braccia[2])
 	rot(s.gamba_a, s.gambe[1])
@@ -778,74 +780,74 @@ function M.update(s, dt, st)
 	pos(s.braccio_a, (J.braccio[1] + po.braccio_a_x) * s.k, (J.braccio[2] + po.braccio_a_y) * s.k)
 	pos(s.braccio_d, (J.braccio_dietro[1] + po.braccio_d_x) * s.k, (J.braccio_dietro[2] + po.braccio_d_y) * s.k)
 	pos(s.ala, (J.ala[1] + po.ala_x) * s.k, (J.ala[2] + po.ala_y) * s.k)
-	if chi == "manina_a" then
+	if who_hit == "manina_a" then
 		pos(s.manina_a, hx * s.k, hy * s.k)
-		rot(s.manina_a, s.arma_a + po.manina_a)
+		rot(s.manina_a, s.weapon_a + po.manina_a)
 	else
-		pos(s.manina_a, (MANO_A[1] + MANINA[1] + po.manina_a_x) * s.k, (MANO_A[2] + MANINA[2] + po.manina_a_y) * s.k)
+		pos(s.manina_a, (HAND_FRONT[1] + HAND[1] + po.manina_a_x) * s.k, (HAND_FRONT[2] + HAND[2] + po.manina_a_y) * s.k)
 		rot(s.manina_a, po.manina_a)
 	end
-	if chi == "manina_d" then
+	if who_hit == "manina_d" then
 		pos(s.manina_d, hx * s.k, hy * s.k)
-		rot(s.manina_d, s.arma_a + po.manina_d)
+		rot(s.manina_d, s.weapon_a + po.manina_d)
 	else
-		pos(s.manina_d, (MANO_D[1] + MANINA[1] + po.manina_d_x) * s.k, (MANO_D[2] + MANINA[2] + po.manina_d_y) * s.k)
+		pos(s.manina_d, (HAND_BACK[1] + HAND[1] + po.manina_d_x) * s.k, (HAND_BACK[2] + HAND[2] + po.manina_d_y) * s.k)
 		rot(s.manina_d, po.manina_d)
 	end
 	rot(s.ala, po.ala)
 	pos(s.busto, (J.busto[1] + po.busto_x) * s.k, (J.busto[2] + po.busto_y) * s.k)
 	rot(s.busto, po.busto)
-	local rc = s.radice_coda
+	local rc = s.tail_base
 	pos(s.coda[1][1], (rc[1] + po.coda_x) * s.k, (rc[2] + po.coda_y) * s.k)
 	pos(s.coda[1][2], (rc[1] + po.coda_x) * s.k, (rc[2] + po.coda_y) * s.k)
 	coda(s, dt, po.coda_gira)
 	pos(s.collo, (J.testa[1] + po.testa_x) * s.k, (J.testa[2] + po.testa_y) * s.k)
-	rot(s.collo, s.x[TESTA])
+	rot(s.collo, s.x[HEAD])
 	scale(s.collo, 1 / lx, 1 / q)
 
-	-- lampo bianco del colpo
+	-- white hit flash
 	if s.flash > 0 then
 		s.flash = max(0, s.flash - dt * 6)
-		lampo(s, min(1, s.flash * 1.5))
+		flash_fx(s, min(1, s.flash * 1.5))
 	end
 
-	vedi(s, s.presa, in_mano and po.mostra_arma > 0.5)
-	livelli(s, po.clip and po.clip.livelli or LIVELLI)
-	-- i pezzi che la clip mostra o toglie: le braccia, le manine, la testa, il
-	-- busto, le gambe, l'ala, la coda
-	vedi(s, s.braccio_a, po.mostra_braccio_a > 0.5)
-	vedi(s, s.manina_a, po.mostra_manina_a > 0.5)
-	vedi(s, s.braccio_d, po.mostra_braccio_d > 0.5)
-	vedi(s, s.manina_d, po.mostra_manina_d > 0.5)
-	vedi(s, s.ala, po.mostra_ala > 0.5)
-	vedi(s, s.testa, po.mostra_testa > 0.5)
-	vedi(s, s.busto, po.mostra_busto > 0.5)
-	vedi(s, s.gamba_a, po.mostra_gamba_a > 0.5)
-	vedi(s, s.gamba_d, po.mostra_gamba_d > 0.5)
-	vedi(s, s.coda[1][1], po.mostra_coda > 0.5)
-	vedi(s, s.coda[1][2], po.mostra_coda > 0.5)
+	visible(s, s.presa, in_hand and po.mostra_arma > 0.5)
+	levels(s, po.clip and po.clip.livelli or LEVELS)
+	-- the pieces the clip shows or removes: the arms, the little hands, the head,
+	-- the torso, the legs, the wing, the tail
+	visible(s, s.braccio_a, po.mostra_braccio_a > 0.5)
+	visible(s, s.manina_a, po.mostra_manina_a > 0.5)
+	visible(s, s.braccio_d, po.mostra_braccio_d > 0.5)
+	visible(s, s.manina_d, po.mostra_manina_d > 0.5)
+	visible(s, s.ala, po.mostra_ala > 0.5)
+	visible(s, s.testa, po.mostra_testa > 0.5)
+	visible(s, s.busto, po.mostra_busto > 0.5)
+	visible(s, s.gamba_a, po.mostra_gamba_a > 0.5)
+	visible(s, s.gamba_d, po.mostra_gamba_d > 0.5)
+	visible(s, s.coda[1][1], po.mostra_coda > 0.5)
+	visible(s, s.coda[1][2], po.mostra_coda > 0.5)
 end
 
 function M.set_weapon(s, name)
-	if s.arma_scelta == name or not s.armi[name] then return end
-	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], false) end
-	s.arma_scelta = name
-	local sc = PRESE[name] and PRESE[name].scala or 1
+	if s.chosen_weapon == name or not s.armi[name] then return end
+	if s.chosen_weapon then gui.set_enabled(s.armi[s.chosen_weapon], false) end
+	s.chosen_weapon = name
+	local sc = GRIPS[name] and GRIPS[name].scala or 1
 	scale(s.armi[name], sc, sc)
-	-- da morto l'arma non c'è più
+	-- dead, the weapon is gone
 	gui.set_enabled(s.armi[name], not s.morte and not s.vuote)
 end
 
--- A mani vuote (all'inizio della prima lezione non ha armi): l'arma non si vede
-function M.mani_vuote(s, si)
+-- Empty-handed (at the start of the first lesson it has no weapons): the weapon isn't shown
+function M.empty_hands(s, si)
 	if s.vuote == si then return end
 	s.vuote = si
-	if s.arma_scelta then gui.set_enabled(s.armi[s.arma_scelta], not s.morte and not si) end
+	if s.chosen_weapon then gui.set_enabled(s.armi[s.chosen_weapon], not s.morte and not si) end
 end
 
--- Colpo subito: lampo bianco, spinta e inclinazione nella direzione del colpo
--- (dx: verso dove spinge, nel mondo; senza, da davanti), schiacciata, testa che
--- scatta, coda che frusta
+-- Hit taken: white flash, push and tilt in the hit direction (dx: toward where
+-- it pushes, in the world; without it, from the front), squash, head snapping,
+-- tail whipping
 function M.hit(s, dx)
 	if s.morte then return end
 	local d = (dx and dx ~= 0) and (dx > 0 and 1 or -1) * s.face or -1
@@ -853,36 +855,36 @@ function M.hit(s, dx)
 	s.v[SHOVE] = s.v[SHOVE] - 9 * d
 	s.v[SQ] = s.v[SQ] - 4
 	s.v[LEAN] = s.v[LEAN] - 5 * d
-	s.v[TESTA] = s.v[TESTA] - 8 * d
-	s.v[CODA] = s.v[CODA] + 4 * d
-	s.azione, s.azione_t = "colpito", 0
+	s.v[HEAD] = s.v[HEAD] - 8 * d
+	s.v[TAIL] = s.v[TAIL] + 4 * d
+	s.ui_action, s.action_t = "colpito", 0
 end
 
--- Colpo sparato: rinculo dell'arma lungo il suo asse (il corpo non si piega né
--- si schiaccia: sposterebbe la mano fuori dalla mira), testa e coda scattano
+-- Shot fired: the weapon recoils along its axis (the body neither bends nor
+-- squashes: it would move the hand off the aim), head and tail snap
 function M.fire(s, kind)
 	local k = kind == "shards" and 0.5 or 1
 	s.v[KICK] = s.v[KICK] + 14 * k
-	s.v[TESTA] = s.v[TESTA] + 3 * k
-	s.v[CODA] = s.v[CODA] - 1.5 * k
+	s.v[HEAD] = s.v[HEAD] + 3 * k
+	s.v[TAIL] = s.v[TAIL] - 1.5 * k
 end
 
--- Scatto dell'Affondo: si allunga in avanti e si piega
+-- Lunge dash: stretches forward and bends
 function M.lunge(s)
 	s.v[SQ] = s.v[SQ] + 6
 	s.v[LEAN] = s.v[LEAN] + 8
-	s.v[TESTA] = s.v[TESTA] + 4
-	s.v[CODA] = s.v[CODA] - 3
+	s.v[HEAD] = s.v[HEAD] + 4
+	s.v[TAIL] = s.v[TAIL] - 3
 end
 
--- Sconfitta: l'arma cade, cade all'indietro e svanisce
+-- Defeat: the weapon drops, it falls backward and fades
 function M.die(s)
 	if s.morte then return end
 	s.morte = 0
 	s.flash = 0
-	s.azione = nil
-	lampo(s, 0)
-	faccia(s, "testa_ko")
+	s.ui_action = nil
+	flash_fx(s, 0)
+	face_img(s, "testa_ko")
 	gui.set_enabled(s.para, false)
 end
 

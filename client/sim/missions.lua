@@ -12,22 +12,22 @@
 --   local outcome = missions.tick(r, g)             -- every tick: nil, "fatta" or "fallita"
 --   missions.tocca(r, what)                         -- the player touched the controls (lessons: time starts; r nil: nothing);
 --                                                   what: the chosen weapon, "salta", "mira", "annulla" or nil
---   local what = missions.evidenzia(r)              -- the control to highlight (or nil)
+--   local what = missions.highlight(r)              -- the control to highlight (or nil)
 --   missions.vede(r, weapon)                        -- is that weapon (or "teleport", "parachute", "tempo",
 --                                                   "punti") shown in the HUD? (r nil: everything)
---   local x, y = missions.bandiera(r)               -- where the chequered flag is (or nil)
---   local i = missions.bersaglio(r)                 -- in the lessons, the robot to hit now (or nil)
+--   local x, y = missions.flag(r)                   -- where the chequered flag is (or nil)
+--   local i = missions.target_robot(r)              -- in the lessons, the robot to hit now (or nil)
 --   local w = missions.scheda(r)                    -- the weapon card to open now (once), or nil
 --   local z = missions.zoom(r)                      -- the camera level the step wants (once), or nil
 --   local text, who = missions.riga(r)              -- the hint to show above robot who (or nil)
 --   local text = missions.obiettivo(r)              -- the remaining goal, always in view (or nil)
 --   missions.stelle(r)                              -- { true, false, true }: each star with its criterion
 --   missions.quante(stars)                          -- how many are lit
---   missions.criteri(l)                             -- what each star needs: { "FATTA", "CON 60 PUNTI DI VANTAGGIO", ... }
+--   missions.criteria(l)                            -- what each star needs: { "FATTA", "CON 60 PUNTI DI VANTAGGIO", ... }
 --   missions.dopo(id)                               -- the next mission in the chapter (nil after the last)
 --
 -- A mission (fields, all data except where stated):
---   id, titolo, goal_text (the first line, until the first thing is done), evidenzia
+--   id, titolo, goal_text (the first line, until the first thing is done), highlight
 --     (the control the goal_text highlights, as in the lines below)
 --   mappa (a game map) or arena = { { x, y, w, h }, ... } (steel rectangles:
 --     craters don't break the puzzle) and spawns (the player first)
@@ -51,7 +51,7 @@
 --   cards = { { dopo = 1, arma = "sword", give = true } }: once step dopo is done
 --     that weapon's card opens; give: and you get it, without a crate (Sergio,
 --     30 Oct: the Rampino and the parachute aren't found in crates)
---   senza_tempo: no timer and no turns, the turn is yours until you finish.
+--   without_time: no timer and no turns, the turn is yours until you finish.
 --     After an attack (or the Rampino) you can use it again at once; if it hit
 --     nobody and did no step, "Ritenta" (counts "misses"). Sergio, 29 Oct: in a
 --     lesson you never wait a turn to retry. A parachute you found comes back
@@ -76,11 +76,11 @@
 --     the circles, where points count; Sergio, 31 Oct: no longer turns) or
 --     { bonus = { ... }, bonus2 = { ... } } (two bonuses: the lessons)
 --   collaudo = { carattere, piano, senza }: how strumenti/arena/collaudo.lua tests it
---   righe = { { testo, quando, fino, su = "bot", evidenzia, stops, subito } }: quando
+--   righe = { { testo, quando, fino, su = "bot", highlight, stops, subito } }: quando
 --     and fino are { evento = "crate_pick" }, { passo = 2 } (step 2 done),
 --     { turno = 2 }, { tocca = "mira" } (the player touched that, this turn) or
 --     functions(st, g, e) for cases the data can't express (the guided match).
---     evidenzia: the control the line suggests ("primaria", "secondaria", a
+--     highlight: the control the line suggests ("primaria", "secondaria", a
 --     weapon, "teleport", "cammina", "salta", "mira", "annulla"): the HUD
 --     highlights it and, in the lessons, time stays stopped until you touch it
 --     (stops = false: only the highlight, for lines that come while airborne).
@@ -93,15 +93,15 @@
 -- level (battaglia/camera.lua); globi = 2 (with usa = "globi"): time stops
 -- where those orbs can still be earned
 --   { usa = "globi" | "rampino" | "pogo" | "kickback" | "paracadute" | "baratto" }
---   { reach = { x = 1200, y = 150 }, bandiera = true }   standing above that
---                                           height, past that x (bandiera: the chequered flag is there)
+--   { reach = { x = 1200, y = 150 }, flag = true }       standing above that
+--                                           height, past that x (flag: the chequered flag is there)
 --   { prendi = "missile" }                  pick up the crate with that weapon
 --   { hit = 2, con = "sword" | "primaria" | "secondaria" | a weapon }
 --   { down = 2 | "nemico", come = "vuoto", con = weapon, times = 3 }
 --   { win = true }                          the match ends and your team won
 -- Other verbs (survive, protect...) come with the missions that use them.
 -- The counters for star bonuses: morti, teletrasporti, vuoto (your
--- environmental kills), abbattuti, danni (taken by you), misses (senza_tempo),
+-- environmental kills), abbattuti, danni (taken by you), misses (without_time),
 -- globi (earned).
 
 local game = require "sim.game"
@@ -117,7 +117,7 @@ M.GIOCATORE = 1
 local PLAYER = M.GIOCATORE
 -- seconds of a line without a "fino": then it disappears by itself
 local LINE_SECONDS = 5
--- senza_tempo: an attack is over when nothing is flying and the player has been still for many ticks
+-- without_time: an attack is over when nothing is flying and the player has been still for many ticks
 local MISS_TICK = 45
 -- a weapon card opens this many ticks after the hit of the step has landed
 local CARD_DELAY = 24
@@ -151,7 +151,7 @@ local USES = {
 }
 
 -- only = { ... } of a step -> the function saying whether a control can be used
--- (p.permesso). Walking and jumping are always allowed
+-- (p.permitted). Walking and jumping are always allowed
 local function allowed_fn(only)
 	local ok = {}
 	for _, w in ipairs(only) do ok[w == "baratto" and "swap" or w] = true end
@@ -169,14 +169,14 @@ for _, cap in ipairs(campaign.CAPITOLI) do
 	for i, l in ipairs(cap.missioni) do
 		assert(not PER_ID[l.id], "missione doppia: " .. l.id)
 		PER_ID[l.id] = l
-		l.capitolo = cap.id
+		l.chapter = cap.id
 		-- in the lessons time waits for you to touch the controls (capitolo.aspetta)
 		l.aspetta = cap.aspetta
 		-- the nearly forced next action: the lessons, not the Prima partita
 		l.riprova = l.aspetta and not l.guidata
 		if type(l.obiettivo) == "table" then
 			for _, p in ipairs(l.obiettivo) do
-				if p.only then p.permesso = allowed_fn(p.only) end
+				if p.only then p.permitted = allowed_fn(p.only) end
 			end
 		end
 		NEXT_ID[l.id] = cap.missioni[i + 1] and cap.missioni[i + 1].id
@@ -236,7 +236,7 @@ end
 function M.nuova(id)
 	local l = assert(PER_ID[id], "missione sconosciuta: " .. tostring(id))
 	return { l = l, st = { turni = 0, bot_turns = 0, steps_done = {}, times = {}, conta = {}, touched_cmds = {} },
-		viste = {}, prese = {}, cadute = {}, opened = {}, waits = {}, cards = {}, giu = {}, riga = nil, esito = nil }
+		seen_weapons = {}, prese = {}, cadute = {}, opened = {}, waits = {}, cards = {}, giu = {}, riga = nil, esito = nil }
 end
 
 -- seed, map and options of game.new. picks: the players out of the draft
@@ -244,16 +244,16 @@ end
 -- the silent help: bots go down two grades (sim/bot.lua M.GRADI) and start with less life
 local HELP_HP = 0.75
 
-function M.partita(r, seed, picks, aiuto)
+function M.partita(r, seed, picks, help)
 	local l = r.l
 	local players = {}
-	r.aiuto = aiuto
+	r.help = help
 	for i, p in ipairs(l.giocatori) do
 		local q = {}
 		for k, v in pairs(p) do
 			if k ~= "nome" and k ~= "battute" then q[k] = v end
 		end
-		if aiuto and q.bot then q.bot = math.max(1, q.bot - 2) end
+		if help and q.bot then q.bot = math.max(1, q.bot - 2) end
 		if picks and picks[i] then
 			q.pick, q.secondary = picks[i].pick, picks[i].secondary
 		end
@@ -289,7 +289,7 @@ function M.prepara(r, g)
 	for i, v in pairs(l.vita or {}) do
 		g.robots[i].hp, g.robots[i].max_hp = v, v
 	end
-	if r.aiuto then
+	if r.help then
 		for i, p in ipairs(l.giocatori) do
 			-- the full life too: the bar stays full, it doesn't show
 			local rb = g.robots[i]
@@ -306,11 +306,11 @@ function M.prepara(r, g)
 	r.coda = {}
 	r.riga = nil
 	if l.aspetta then r.attesa, r.fermo = true, { timer = g.timer, window = g.window, match = g.match_left } end
-	if l.senza_tempo then r.senza = { timer = g.timer, match = g.match_left } end
+	if l.without_time then r.senza = { timer = g.timer, match = g.match_left } end
 	-- the goal_text until the first thing is done
 	-- (in the lessons it gives way to the hints as soon as you touch the controls)
 	if l.goal_text then
-		r.coda[1] = { testo = l.goal_text, yields = l.aspetta, evidenzia = l.evidenzia,
+		r.coda[1] = { testo = l.goal_text, yields = l.aspetta, highlight = l.highlight,
 			fino = function(_, g2) return g2.used.primary or g2.used.secondary or g2.used.tool end }
 	end
 end
@@ -428,19 +428,19 @@ end
 local function show_line(r, line)
 	r.riga, r.line_until, r.line_yields = line.testo, line.fino, line.yields
 	r.line_on = line.su == "bot" and 2 or PLAYER
-	r.riga_t = (line.fino and 2 or 1) * LINE_SECONDS * 60
-	r.luce = line.evidenzia
-	r.attende = nil
-	local e = line.evidenzia
+	r.line_ticks = (line.fino and 2 or 1) * LINE_SECONDS * 60
+	r.luce = line.highlight
+	r.awaiting = nil
+	local e = line.highlight
 	if e and r.l.aspetta and line.stops ~= false and not touched_cmd(r.st, e) then
-		r.attesa, r.attende = true, e
+		r.attesa, r.awaiting = true, e
 	end
 end
 
 -- The line goes away: if it was waiting for a control, time restarts
 local function clear_line(r)
-	if r.attende then r.attesa, r.attende, r.fermo = false, nil, nil end
-	r.riga, r.riga_t, r.luce, r.line_yields = nil, nil, nil, nil
+	if r.awaiting then r.attesa, r.awaiting, r.fermo = false, nil, nil end
+	r.riga, r.line_ticks, r.luce, r.line_yields = nil, nil, nil, nil
 end
 
 -- e = nil: the check every tick
@@ -457,8 +457,8 @@ local function check_event(r, g, e)
 	-- a new turn: the previous turn's lines aren't needed anymore
 	if e and e.type == "turn" then clear_line(r); r.coda = {} end
 	for i, line in ipairs(l.righe or {}) do
-		if not r.viste[i] and when(line.quando, st, g, e) then
-			r.viste[i] = true
+		if not r.seen_weapons[i] and when(line.quando, st, g, e) then
+			r.seen_weapons[i] = true
 			if line.subito then
 				clear_line(r)
 				table.insert(r.coda, 1, line)
@@ -495,9 +495,9 @@ end
 -- only if no other enemy is left standing)
 local function needs(l, st, g, robot)
 	for i, p in ipairs(l.obiettivo) do
-		local who_hit = not st.steps_done[i] and (p.hit or p.down)
-		if who_hit == robot then return true end
-		if who_hit == "nemico" then
+		local who = not st.steps_done[i] and (p.hit or p.down)
+		if who == robot then return true end
+		if who == "nemico" then
 			local others = false
 			for j, rb in ipairs(g.robots) do
 				if j ~= robot and not rb.dead and enemies_list(g, PLAYER, j) then others = true end
@@ -561,9 +561,9 @@ function M.evento(r, g, e, bots)
 			if e.env then count(st, "vuoto") end
 		end
 	elseif e.type == "over" then
-		st.finished, st.vinta = true, e.winner == g.robots[PLAYER].team
+		st.finished, st.won = true, e.winner == g.robots[PLAYER].team
 	end
-	if e.type == "points" or e.type == "over" then st.distacco = lead(g) end
+	if e.type == "points" or e.type == "over" then st.gap = lead(g) end
 	local first_one = forward(st)
 	check_event(r, g, e)
 	-- lessons and still targets: downed by you, if no longer needed it stays down
@@ -579,11 +579,11 @@ function M.evento(r, g, e, bots)
 	-- time waits for you to touch the controls, so there's time to read
 	if l.aspetta and e.robot == PLAYER and (e.type == "turn" or e.type == "respawn") then
 		r.attesa, r.fermo = true, { timer = g.timer, window = g.window, match = g.match_left }
-		local testo = l.goal_text
+		local txt = l.goal_text
 		local i, p = next_one(l, st)
-		if i and i > 1 then testo = p.testo end
+		if i and i > 1 then txt = p.testo end
 		-- (if the turn doesn't already have its own line to say)
-		if testo and not r.riga then show_line(r, { testo = testo, yields = true }) end
+		if txt and not r.riga then show_line(r, { testo = txt, yields = true }) end
 	end
 	if e.type == "over" and not l.guidata then
 		r.esito = "fallita"
@@ -596,21 +596,21 @@ end
 function M.tocca(r, what)
 	if not r then return end
 	if what then r.st.touched_cmds[what] = true end
-	if r.attende then
-		if not matches_hint(r.attende, what) then return end
+	if r.awaiting then
+		if not matches_hint(r.awaiting, what) then return end
 		-- done: the highlight goes off, the line stays as long as needed
-		r.attende, r.luce = nil, nil
+		r.awaiting, r.luce = nil, nil
 	end
 	r.attesa, r.fermo = false, nil
 end
 
 -- The control to highlight, while its line is in view
-function M.evidenzia(r)
+function M.highlight(r)
 	return r.riga and r.luce or nil
 end
 
--- senza_tempo: time doesn't pass and the turn doesn't end
-local function senza_tempo(r, g)
+-- without_time: time doesn't pass and the turn doesn't end
+local function without_time(r, g)
 	local f = r.senza
 	g.timer, g.match_left, g.window = f.timer, f.match, 0
 	local rb = g.robots[PLAYER]
@@ -633,7 +633,7 @@ local function attempt_over(r, g)
 	if t.t < MISS_TICK then return end
 	r.shot = nil
 	local missed = not t.preso and steps_count(r.st) == t.steps_done
-	if r.l.senza_tempo then
+	if r.l.without_time then
 		g.used.primary, g.used.secondary, g.used.tool = false, false, false
 	elseif missed then
 		if not ATTACKS[t.tipo] then
@@ -668,10 +668,10 @@ local function hold_still(r, g, p)
 	if not r.saved or r.saved.steps_done ~= n then
 		r.saved = { steps_done = n, x = rb.x, y = rb.y, globi = rb.teleports_left }
 	end
-	local without = p and p.permesso and p.permesso("teleport") and not g:can_use("teleport")
+	local without = p and p.permitted and p.permitted("teleport") and not g:can_use("teleport")
 	if without then
 		for w in pairs(game.WEAPONS) do
-			if not (w == "teleport" or w == "swap" or game.TOOLS[w]) and p.permesso(w) then without = false end
+			if not (w == "teleport" or w == "swap" or game.TOOLS[w]) and p.permitted(w) then without = false end
 		end
 	end
 	r.stuck_ticks = without and (r.stuck_ticks or 0) + 1 or 0
@@ -687,11 +687,11 @@ end
 -- Can step p be done now? (one of the controls it names can be used; to hit,
 -- an attack: with only the orb the turn goes on)
 local function allowed(g, p)
-	if not p.permesso then return false end
+	if not p.permitted then return false end
 	local hit_def = p.hit or p.down
 	for w in pairs(game.WEAPONS) do
 		local attack = not (w == "teleport" or w == "swap" or game.TOOLS[w])
-		if p.permesso(w) and (attack or not hit_def) and g:can_use(w) then return true end
+		if p.permitted(w) and (attack or not hit_def) and g:can_use(w) then return true end
 	end
 	return false
 end
@@ -703,7 +703,7 @@ local function hold_clock(r, g, p)
 	local minimum = 60
 	if p.usa == "globi" and p.globi then
 		local thresholds = {}
-		for i, v in ipairs(config.TELEPORT_SOGLIE) do thresholds[i] = v end
+		for i, v in ipairs(config.TELEPORT_THRESHOLDS) do thresholds[i] = v end
 		table.sort(thresholds)
 		-- (two ticks of margin: the shot leaves the next tick)
 		minimum = game.TURN_TICKS - thresholds[#thresholds - p.globi + 1] * 60 + 2
@@ -713,27 +713,27 @@ local function hold_clock(r, g, p)
 end
 
 -- The robot to hit or down in the step to do (the marker above it), or nil
-function M.bersaglio(r)
+function M.target_robot(r)
 	if not r or r.esito or not r.l.riprova then return nil end
 	local _, p = next_one(r.l, r.st)
 	return p and (p.hit or p.down) or nil
 end
 
--- The chequered flag of the step to do (reach with bandiera), or nil
-function M.bandiera(r)
+-- The chequered flag of the step to do (reach with flag), or nil
+function M.flag(r)
 	local _, p = next_one(r.l, r.st)
-	if p and p.reach and p.bandiera then return p.reach.x, p.reach.y end
+	if p and p.reach and p.flag then return p.reach.x, p.reach.y end
 end
 
 function M.tick(r, g)
 	local l, st = r.l, r.st
-	if l.senza_tempo and g.current == PLAYER then senza_tempo(r, g) end
+	if l.without_time and g.current == PLAYER then without_time(r, g) end
 	local _, p = next_one(l, st)
 	-- only what the step says can be used (lesson over: everything)
-	g.permesso = not r.esito and p and p.permesso or nil
+	g.permitted = not r.esito and p and p.permitted or nil
 	if l.riprova and g.current == PLAYER then
 		attempt_over(r, g)
-		if p and not l.senza_tempo and not r.esito then hold_clock(r, g, p) end
+		if p and not l.without_time and not r.esito then hold_clock(r, g, p) end
 		hold_still(r, g, p)
 	end
 	-- the targets that stay down vanish when they would respawn
@@ -794,9 +794,9 @@ function M.tick(r, g)
 	check_event(r, g, nil)
 	-- on the ground or not before the events of the next tick (the Tonante lifts you off the ground)
 	st.on_ground = g.robots[PLAYER].grounded
-	if r.riga_t and not r.attesa then
-		r.riga_t = r.riga_t - 1
-		if r.riga_t <= 0 then clear_line(r) end
+	if r.line_ticks and not r.attesa then
+		r.line_ticks = r.line_ticks - 1
+		if r.line_ticks <= 0 then clear_line(r) end
 	end
 	return r.esito
 end
@@ -835,7 +835,7 @@ local function lead_text(n)
 end
 
 -- What each star needs
-function M.criteri(l)
+function M.criteria(l)
 	if l.guidata then return { "FINITA", "VINTA", lead_text(GUIDED_POINTS) } end
 	local s = l.stelle
 	if s.bonus2 then return { "FATTA", s.bonus.testo, s.bonus2.testo } end
@@ -845,7 +845,7 @@ end
 -- The point lead at the end of the mission (nil where there are no points)
 function M.vantaggio(r)
 	local l = r.l
-	if l.guidata or (l.stelle and l.stelle.punti) then return math.floor((r.st.distacco or 0) + 0.5) end
+	if l.guidata or (l.stelle and l.stelle.punti) then return math.floor((r.st.gap or 0) + 0.5) end
 end
 
 local function bonus(b, st)
@@ -860,9 +860,9 @@ end
 function M.stelle(r)
 	if r.esito ~= "fatta" then return { false, false, false } end
 	local l, st = r.l, r.st
-	local d = st.distacco or 0
+	local d = st.gap or 0
 	if l.guidata then
-		return { true, st.vinta == true, st.vinta == true and d >= GUIDED_POINTS }
+		return { true, st.won == true, st.won == true and d >= GUIDED_POINTS }
 	end
 	local s = l.stelle
 	if s.bonus2 then return { true, bonus(s.bonus, st), bonus(s.bonus2, st) } end

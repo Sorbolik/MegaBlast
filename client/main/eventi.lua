@@ -1,96 +1,96 @@
--- Gli eventi del server (GET /eventi, server/events.go): il gioco li chiede
--- nella schermata d'ingresso, prima di aprire la home (ui/ingresso.lua), poi
--- ogni minuto mentre la home si vede e a ogni apertura della bacheca e di
--- DOVE GIOCHI?. Qui solo i dati e le parole; le schermate sono
--- menu/bacheca.lua e menu/coda.lua.
+-- The server's events (GET /eventi, server/events.go): the game asks for them
+-- on the entry screen, before opening the home (ui/ingresso.lua), then every
+-- minute while the home is visible and every time the board and DOVE GIOCHI?
+-- open. Only data and words here; the screens are menu/bacheca.lua and
+-- menu/coda.lua.
 --
 --   local eventi = require "main.eventi"
---   eventi.carica(server_url, fatto, andata_male)   -- ws://host/ws -> http://host/eventi
---   eventi.in_corso(), eventi.prossimi()             -- liste di occorrenze, in ordine di inizio
---   eventi.su_coda("2v2")                            -- quelli in corso che contano per quella coda
---   eventi.riga_home()                               -- la riga sotto EVENTI nella home
---   eventi.cosa_cambia(o, nomi)                      -- le regole in parole ("Casse ogni 2 turni")
+--   eventi.load_up(server_url, done, went_wrong)    -- ws://host/ws -> http://host/eventi
+--   eventi.in_progress(), eventi.upcoming()          -- lists of occurrences, by start time
+--   eventi.on_queue("2v2")                           -- the running ones that count for that queue
+--   eventi.home_line()                               -- the line under EVENTI in the home
+--   eventi.what_changes(o, name_list)                -- the rules in words ("Casse ogni 2 turni")
 --
--- Un'occorrenza: { id, evento, tipo = mod|torneo|sfida|xp, nome, riga, da, a,
--- torna, coda, modo, giocatori, regole, premi }. da, a, torna in secondi Unix.
+-- An occurrence: { id, evento, tipo = mod|torneo|sfida|xp, nome, riga, da, a,
+-- torna, coda, modo, giocatori, regole, premi }. da, a, torna in Unix seconds.
 
 local M = {}
 
-M.lista = {}      -- le occorrenze dell'ultima risposta
-M.scarto = 0      -- ora del server meno ora del telefono
-M.caricato = false
-M.senza_rete = false  -- l'ultima domanda non ha avuto risposta
+M.lista = {}      -- the occurrences of the last answer
+M.offset = 0      -- server time minus phone time
+M.loaded_ok = false
+M.without_net = false  -- the last request got no answer
 
--- L'ora del server (il telefono può avere l'orologio avanti o indietro)
+-- The server's time (the phone's clock may be ahead or behind)
 function M.ora()
-	return os.time() + M.scarto
+	return os.time() + M.offset
 end
 
-function M.leggi(risposta, adesso)
-	local ok, d = pcall(json.decode, risposta)
+function M.read(answer, now)
+	local ok, d = pcall(json.decode, answer)
 	if not ok or type(d) ~= "table" or type(d.eventi) ~= "table" then return false end
 	M.lista = d.eventi
-	M.scarto = (d.ora or adesso) - adesso
-	M.caricato = true
+	M.offset = (d.ora or now) - now
+	M.loaded_ok = true
 	return true
 end
 
-local function url_eventi(ws_url)
+local function events_url(ws_url)
 	local u = ws_url:gsub("^ws", "http")
 	return (u:gsub("/ws$", "")) .. "/eventi"
 end
 
--- Sempre la risposta fresca: mai quella che il motore tiene da parte
-local OPZIONI = { ignore_cache = true, timeout = 3 }
+-- Always the fresh answer: never the one the engine keeps aside
+local OPTIONS = { ignore_cache = true, timeout = 3 }
 
-function M.carica(ws_url, fatto, andata_male)
+function M.load_up(ws_url, done, went_wrong)
 	if not http then
-		if andata_male then andata_male() end
+		if went_wrong then went_wrong() end
 		return
 	end
-	http.request(url_eventi(ws_url), "GET", function(_, _, res)
-		if res.status == 200 and M.leggi(res.response, os.time()) then
-			M.senza_rete = false
-			if fatto then fatto() end
+	http.request(events_url(ws_url), "GET", function(_, _, res)
+		if res.status == 200 and M.read(res.response, os.time()) then
+			M.without_net = false
+			if done then done() end
 		else
-			M.senza_rete = true
-			if andata_male then andata_male() end
+			M.without_net = true
+			if went_wrong then went_wrong() end
 		end
-	end, nil, nil, OPZIONI)
+	end, nil, nil, OPTIONS)
 end
 
-function M.in_corso(adesso)
-	adesso = adesso or M.ora()
+function M.in_progress(now)
+	now = now or M.ora()
 	local out = {}
 	for _, o in ipairs(M.lista) do
-		if o.da <= adesso and adesso < o.a then out[#out + 1] = o end
+		if o.da <= now and now < o.a then out[#out + 1] = o end
 	end
 	return out
 end
 
-function M.prossimi(adesso)
-	adesso = adesso or M.ora()
+function M.upcoming(now)
+	now = now or M.ora()
 	local out = {}
 	for _, o in ipairs(M.lista) do
-		if o.da > adesso then out[#out + 1] = o end
+		if o.da > now then out[#out + 1] = o end
 	end
 	return out
 end
 
--- Gli eventi in corso che stanno su una coda normale (Torneo, Sfida, XP):
--- una partita in quella coda conta anche per loro
-function M.su_coda(coda, adesso)
+-- The running events that sit on a normal queue (Tournament, Challenge, XP):
+-- a match in that queue counts for them too
+function M.on_queue(coda, now)
 	local out = {}
-	for _, o in ipairs(M.in_corso(adesso)) do
+	for _, o in ipairs(M.in_progress(now)) do
 		if o.coda == coda then out[#out + 1] = o end
 	end
 	return out
 end
 
--- Gli eventi in corso con la coda loro (i modificatori)
-function M.con_coda(adesso)
+-- The running events with their own queue (the modifiers)
+function M.with_queue(now)
 	local out = {}
-	for _, o in ipairs(M.in_corso(adesso)) do
+	for _, o in ipairs(M.in_progress(now)) do
 		if o.coda ~= o.modo then out[#out + 1] = o end
 	end
 	return out
@@ -105,44 +105,44 @@ function M.durata(s)
 	return math.max(m, 1) .. "m"
 end
 
-function M.quando(o, adesso)
-	adesso = adesso or M.ora()
-	if o.da > adesso then return "comincia tra " .. M.durata(o.da - adesso) end
-	return "finisce tra " .. M.durata(o.a - adesso)
+function M.quando(o, now)
+	now = now or M.ora()
+	if o.da > now then return "comincia tra " .. M.durata(o.da - now) end
+	return "finisce tra " .. M.durata(o.a - now)
 end
 
--- La riga sotto EVENTI nella home: niente numeri rossi, solo cosa succede
-function M.riga_home(adesso)
-	if not M.caricato then return M.senza_rete and "senza rete" or "" end
-	local ora = M.in_corso(adesso)
-	if #ora == 1 then return ora[1].nome end
-	if #ora > 1 then return #ora .. " in corso" end
-	local dopo = M.prossimi(adesso)[1]
-	if dopo then return "il prossimo tra " .. M.durata(dopo.da - (adesso or M.ora())) end
+-- The line under EVENTI in the home: no red numbers, only what is happening
+function M.home_line(now)
+	if not M.loaded_ok then return M.without_net and "senza rete" or "" end
+	local hour_of = M.in_progress(now)
+	if #hour_of == 1 then return hour_of[1].nome end
+	if #hour_of > 1 then return #hour_of .. " in corso" end
+	local after_step = M.upcoming(now)[1]
+	if after_step then return "il prossimo tra " .. M.durata(after_step.da - (now or M.ora())) end
 	return "nessuno in programma"
 end
 
-local TIPI = { mod = "MODIFICATORE", torneo = "TORNEO", sfida = "SFIDA", xp = "XP" }
-function M.tipo(o) return TIPI[o.tipo] or string.upper(o.tipo or "") end
+local TYPES = { mod = "MODIFICATORE", torneo = "TORNEO", sfida = "SFIDA", xp = "XP" }
+function M.tipo(o) return TYPES[o.tipo] or string.upper(o.tipo or "") end
 
 local CODE = { ["1v1"] = "1 CONTRO 1", ["2v2"] = "2 CONTRO 2", ffa = "TUTTI CONTRO TUTTI" }
-function M.nome_coda(modo) return CODE[modo] or modo end
+function M.queue_name(modo) return CODE[modo] or modo end
 
--- Le regole in parole, una per riga (sim/rules.lua). nomi: arma -> nome (battaglia/hud.lua)
-function M.cosa_cambia(o, nomi)
+-- The rules in words, one per line (sim/rules.lua). name_list: weapon -> name (battaglia/hud.lua)
+function M.what_changes(o, name_list)
 	local r, out = o.regole or {}, {}
-	if o.coda ~= o.modo then out[#out + 1] = M.nome_coda(o.modo) end
+	if o.coda ~= o.modo then out[#out + 1] = M.queue_name(o.modo) end
 	if r.armi then
 		local n = {}
-		for i, w in ipairs(r.armi) do n[i] = (nomi and nomi[w]) or w end
+		for i, w in ipairs(r.armi) do n[i] = (name_list and name_list[w]) or w end
 		out[#out + 1] = "Armi: " .. table.concat(n, ", ")
 	end
 	if r.casse then out[#out + 1] = r.casse == 1 and "Una cassa a ogni turno" or ("Casse ogni " .. r.casse .. " turni") end
 	if r.cure == false then out[#out + 1] = "Niente cure" end
 	if r.livello == "fisso" then out[#out + 1] = "Tutti allo stesso livello" end
 	if r.punti then out[#out + 1] = "Punti diversi" end
-	if #out == 0 then out[1] = o.coda == o.modo and ("Le partite normali " .. M.nome_coda(o.coda)) or "Regole normali" end
-	-- il tetto non cambia la partita: dopo "Le partite normali" del Torneo
+	if #out == 0 then out[1] = o.coda == o.modo and ("Le partite normali " .. M.queue_name(o.coda)) or "Regole normali" end
+	-- the cap doesn't change the match: after the Tournament's "Le partite normali"
 	if r.tetto then out[#out + 1] = "Pezzi al massimo al livello " .. r.tetto end
 	return out
 end
