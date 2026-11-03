@@ -945,6 +945,9 @@ end
 -- when it comes back. Missile, egg, sniper, every orb, the swarm (one for all)
 CP.NOTCH = { W = 18, BELOW = 10, LATO = 12, N = 4 }
 
+-- the plates stand this many screen units above the horns, at every zoom
+CP.PLATE_GAP = 4
+
 function CP.notch_create(self)
 	self.ticks = {}
 	for i = 1, CP.NOTCH.N do
@@ -1731,7 +1734,7 @@ function CP.robot_below(self, x, y)
 		local v = self.view[i]
 		if v and not rb.dead and not rb.gone then
 			local rx, feet = camera.to_screen(self.cam, v.x, v.y)
-			local top = feet + (scoria.altezza(self.robots[i].rig) + 3 + 4 / s + plate.sopra(self.robots[i].plate) * plate.scala(self.cam)) * s
+			local top = feet + (scoria.cima(self.robots[i].rig) + CP.PLATE_GAP / s + plate.sopra(self.robots[i].plate) * plate.scala(self.cam)) * s
 			if math.abs(x - rx) <= math.max(40, 30 * s ^ 0.35) and y >= feet - 10 and y <= top + 10 then return i end
 		end
 	end
@@ -2643,7 +2646,7 @@ local function render(self, dt)
 			plate.arrow_up(self.arrow, above and r.plate or nil)
 		end
 		-- above the horns: 3 in the world and 4 screen pixels
-		plate.update(r.plate, dt, v.x, v.y + scoria.altezza(r.rig) + 3 + 4 / self.cam.s, plate.scala(self.cam), self.cam)
+		plate.update(r.plate, dt, v.x, v.y + scoria.cima(r.rig) + CP.PLATE_GAP / self.cam.s, plate.scala(self.cam), self.cam)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
