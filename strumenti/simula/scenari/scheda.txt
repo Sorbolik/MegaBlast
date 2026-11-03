@@ -27,6 +27,8 @@ aspetta_stato modo=menu 3
 tocca 1075 323                      # ALLENAMENTO
 aspetta 1
 tocca 310 460                       # 1 CONTRO 1
+tocca 640 140                       # AVANTI (la mappa resta A CASO)
+aspetta 0.3
 tocca 640 140                       # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8

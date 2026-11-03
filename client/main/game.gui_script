@@ -1863,10 +1863,19 @@ end
 local start_local_match
 
 -- It starts with the weapon draft (menu/scelta.lua); after that, the match.
--- against: { modo, livello } to play against the bots (menu/allenamento.lua)
+-- against: { modo, livello, mappa } to play against the bots (menu/allenamento.lua)
 local function start_local(self, against)
 	hide_menu(self)
 	self.ritorno = against and "allenamento" or "home"
+	-- training plays on the map chosen (A CASO: one of those open, from the seed);
+	-- the other modes on the one the seed picks (sim/maps.lua)
+	self.local_map = nil
+	if against then
+		local open_maps = menu.allenamento.open_maps(profile.total_stars(self.profilo))
+		self.local_map = against.mappa ~= "caso" and against.mappa or open_maps[os.time() % #open_maps + 1]
+		-- in the test scenarios A CASO is the scenario's map (prova_mappa), so they repeat
+		if SIMULATE and against.mappa == "caso" then self.local_map = self.mappa end
+	end
 	-- [megablast] giocatori = 1v1, 2v2 or ffa (free-for-all), on the same phone (and online queue)
 	local modo = against and against.modo or config_string("megablast.giocatori", "1v1")
 	local opts = { players = {} }
@@ -1924,7 +1933,7 @@ start_local_match = function(self, picked)
 	end
 	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.tier(self.profilo, my_own))
 	opts.players = players
-	new_match(self, os.time(), self.mappa, opts)
+	new_match(self, os.time(), self.local_map or self.mappa, opts)
 	-- prova_durata N: the match lasts N seconds (scenari/podio.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
 	if duration > 0 then
@@ -3130,7 +3139,7 @@ end
 
 function init(self)
 	-- the last training choice against the bots (menu/allenamento.lua)
-	self.against_bot = { modo = "1v1", livello = "normale" }
+	self.against_bot = { modo = "1v1", livello = "normale", mappa = "caso" }
 	-- the last campaign chapter opened (menu/campagna.lua)
 	self.chosen_campaign = {}
 	self.bots = {}
@@ -3683,8 +3692,12 @@ end
 local function retry_match(self)
 	if self.missione then
 		start_mission(self, self.missione.l.id)
+	elseif self.ritorno == "allenamento" then
+		-- the same map, also when it came out A CASO
+		local against = self.against_bot
+		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa })
 	else
-		start_local(self, self.ritorno == "allenamento" and self.against_bot or nil)
+		start_local(self, nil)
 	end
 end
 
@@ -3708,7 +3721,7 @@ local function quit_match(self)
 			return
 		end
 		show_menu(self, true)
-		if comeback == "allenamento" then open_screen(self, menu.allenamento, self.against_bot) end
+		if comeback == "allenamento" then open_screen(self, menu.allenamento, self.against_bot, profile.total_stars(self.profilo)) end
 	end)
 end
 
@@ -4360,7 +4373,7 @@ function PAD.on_input(self, action_id, action)
 			-- the menus: they arrive with the slider (ui/passaggio.lua)
 			local open_view = {
 				armeria = function() open_screen(self, menu.armeria, self.profilo) end,
-				allenamento = function() open_screen(self, menu.allenamento, self.against_bot) end,
+				allenamento = function() open_screen(self, menu.allenamento, self.against_bot, profile.total_stars(self.profilo)) end,
 				impostazioni = function() open_screen(self, menu.impostazioni, self.profilo, self.ctrl) end,
 				campagna = function() open_campaign(self) end,
 				profilo = function() CP.open_profile(self, "scheda") end,

@@ -20,6 +20,8 @@ aspetta 0.3                         # lo scivolo finisce
 tocca_bordo 205 323 basso destra    # ALLENAMENTO
 aspetta 1
 tocca_centro 640 460                # 2 CONTRO 2 (la striscia va da un bordo all'altro)
+tocca_centro 640 140                # AVANTI (la mappa resta A CASO)
+aspetta 0.3
 tocca_centro 640 140                # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8
