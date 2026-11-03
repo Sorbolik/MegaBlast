@@ -52,6 +52,23 @@ quanti servono alla partita, il proprio posto e i cartellini di chi aspetta,
 nell'ordine della coda (la sala d'attesa del gioco, `client/menu/sala.lua`).
 Chi si scollega in coda esce dalla coda (`Lobby.Leave`).
 
+**Bot che riempiono la coda** (Sergio, 3 nov): nelle code normali, se la coda
+non è piena `BotAfter` dopo l'entrata del primo (25 s, flag `-bot-dopo`, 0 =
+mai), la stanza parte coi posti vuoti presi dai bot. Il `wait` ha allora anche
+`"bot_in":N`, i secondi che mancano (il gioco li conta da solo). Le persone
+prendono i posti di `config.MODES` nell'ordine, che alterna le squadre: due
+persone in un 2 contro 2 finiscono in squadre diverse. Il grado del bot
+(`sim/bot.lua`, `M.GRADI`) è 3 + il livello medio delle persone / 5, al massimo
+8 (`botGrade`). Nella scelta delle armi il bot sceglie subito (`bot.scegli`), il
+suo cartellino è `{"bot":true}` e in `players` ha `"bot":G`; in partita
+`N.step` usa i suoi tasti (`bot.input`). Sul server il bot pensa al massimo
+`N.WORK` = 100 tick simulati per tick (sul telefono 400): con 400 una stanza
+da 4 bot "normale" costava 2,2 ms a tick con punte di 50 ms in gopher-lua, con
+100 1,6 ms e punte di 21 ms (misure del 3 nov). Le stanze coi bot girano su
+worker loro (`botSched`), così le punte non rallentano le partite fra persone;
+`/health` dice `bot_rooms` e `bot_late_ticks`. Una stanza resta aperta finché
+c'è almeno una persona. Le code degli eventi non hanno bot.
+
 
 Quando una coda è piena la stanza apre la scelta delle armi (`sim/draft.lua`):
 ognuno riceve `{"t":"draft","offer":[…],"offer2":[…],"p":"","p2":"","you":1,"tok":…,"players":[{"team":1},…],"vetrine":[{"liv":12,"bdg":[…]},…],"left":1200}`

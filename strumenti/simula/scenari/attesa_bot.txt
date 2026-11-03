@@ -1,0 +1,30 @@
+# I bot riempiono la coda (Sergio, 3 nov: "coda da 25 secondi che poi ti
+# metcha con i bot"): 2 contro 2 con un solo giocatore finto; qui il server
+# chiama i bot dopo 6 s invece di 25. La sala conta BOT TRA N s, poi arriva
+# lo schieramento con due cartellini BOT (il finto è in squadra contro di noi),
+# e in partita i bot giocano il loro turno da soli.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server 2v2 1 bot_dopo=6s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 205 102 basso destra                     # GIOCA
+aspetta 0.5
+tocca_centro 368 300                      # DOVE GIOCHI?: 2 contro 2
+aspetta_stato modo=connecting 5
+aspetta 3.5                         # il finto è entrato
+foto 01_sala_bot_tra                # due cartellini, BOT TRA 2 s
+aspetta_stato modo=scelta_online 10
+aspetta 0.5
+foto 02_schieramento_bot            # due cartellini BOT
+aspetta_stato modo=online 20
+aspetta 1
+foto 03_partita
+aspetta_stato modo=online turno=3 80             # il mio turno passa da solo (30 s), poi il finto
+aspetta 4
+foto 04_turno_del_bot               # TURNO DI: ... (bot), il bot si muove o spara
+aspetta 4
+foto 05_turno_del_bot_dopo
+aspetta_stato modo=online turno=4 40             # il bot ha giocato e ha passato il turno
+foto 06_dopo_il_bot

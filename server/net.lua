@@ -6,8 +6,19 @@ local maps = require "sim.maps"
 local config = require "sim.config"
 local draft = require "sim.draft"
 local rules = require "sim.rules"
+local bot = require "sim.bot"
 
 local N = {}
+
+-- The bots that fill a queue (lobby.go, after BotAfter): those of each match,
+-- by robot. On the server a bot thinks at most WORK simulated ticks per game
+-- tick (on the phone 400, sim/bot.lua): a worker runs many rooms, and with 400
+-- a "normale" took 2.2 ms per tick with peaks of 50 ms on gopher-lua; with 100,
+-- 1.6 ms and peaks of 21 ms (measured 3 Nov). It thinks over more ticks, so
+-- its moves can differ from the phone's: fine, online the client only follows
+-- the server's state and these matches are not replayed.
+N.WORK = 100
+local BOTS = setmetatable({}, { __mode = "k" })
 
 -- Fixed maps are drawn only once per process: later matches copy the ready
 -- cells (server/terrain.go), instead of drawing them again (over 100 ms in
@@ -30,11 +41,25 @@ function N.new(seed, map, players, r)
 	local g = game.new(seed, map, rules.opzioni(r, { players = players }))
 	g:pop_events()
 	g.carves = {} -- terrain digs, for whoever reconnects
+	for i, p in ipairs(players or {}) do
+		if p.bot then
+			local b = bot.new(i, p.bot, seed)
+			b.liv = setmetatable({ lavoro = N.WORK }, { __index = b.liv })
+			BOTS[g] = BOTS[g] or {}
+			BOTS[g][i] = b
+		end
+	end
 	return g
 end
 
 -- hold: jump is still held down (releasing it while rising makes the jump short)
 function N.step(g, left, right, jump, hold, angle, power, weapon)
+	-- a bot's turn: the keys are its own (the server passes none)
+	local b = BOTS[g] and BOTS[g][g.current]
+	if b then
+		g:step(bot.input(b, g))
+		return
+	end
 	local fire = nil
 	if angle then fire = { angle = angle, power = power, weapon = game.WEAPONS[weapon] and weapon or "missile" } end
 	g:step({ left = left, right = right, jump = jump, hold = hold, fire = fire })
@@ -146,12 +171,18 @@ function N.draft_seconds()
 	return config.DRAFT_SECONDS + config.LINEUP_SECONDS
 end
 
-function N.draft_new(seed, mode, r)
+-- bots: the grade (sim/bot.lua GRADI) of the robots that are bots, by robot;
+-- they pick at once, like on the phone
+function N.draft_new(seed, mode, r, bots)
 	local players = {}
 	for i, p in ipairs(config.MODES[mode]) do
-		players[i] = { team = p.team }
+		players[i] = { team = p.team, bot = bots and bots[i] or nil }
 	end
-	return draft.new(seed, players, rules.armi(r))
+	local d = draft.new(seed, players, rules.armi(r))
+	for i, p in ipairs(players) do
+		if p.bot then bot.scegli(d, i, seed) end
+	end
+	return d
 end
 
 -- can an event's rules be used? (events.go, when it reads the file)
@@ -165,7 +196,9 @@ function N.draft_pick(d, i, weapon)
 end
 
 function N.draft_finish(d)
-	return draft.finish(d)
+	local out = draft.finish(d)
+	for i, p in ipairs(d.players) do out[i].bot = p.bot end
+	return out
 end
 
 -- The two fans (offer: primaries, offer2: secondaries) and the picks of robot i
@@ -179,7 +212,7 @@ end
 function N.start_players(players)
 	local out = {}
 	for i, p in ipairs(players) do
-		out[i] = { team = p.team, pick = p.pick, secondary = p.secondary }
+		out[i] = { team = p.team, pick = p.pick, secondary = p.secondary, bot = p.bot }
 	end
 	return out
 end

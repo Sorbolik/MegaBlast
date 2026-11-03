@@ -30,3 +30,14 @@ tocca_bordo 408 62 alto sinistra                      # ESCI
 aspetta_stato modo=menu 3
 aspetta 1
 foto 03_home
+# di nuovo in coda, e si esce col bottone ESCI DALLA CODA in basso
+tocca_bordo 205 102 basso destra                     # GIOCA
+aspetta 0.5
+tocca_centro 368 300                      # 2 contro 2
+aspetta_stato modo=connecting 5
+aspetta 1.5
+foto 04_ricerca_di_nuovo
+tocca_centro 640 44                       # ESCI DALLA CODA
+aspetta_stato modo=menu 3
+aspetta 1
+foto 05_home_dal_bottone

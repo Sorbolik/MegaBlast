@@ -1065,6 +1065,7 @@ function CP.open_room(self, m)
 		if i ~= m.you then list[#list + 1] = CP.vetrina.from_net(m.vetrine[i], "Giocatore", nil, "In coda") end
 	end
 	if menu.sala.giocatori(self.sala, list) then sound.play("#punto") end
+	menu.sala.bot_in(self.sala, m.bot_in)
 end
 
 function CP.close_room(self)
@@ -3837,6 +3838,8 @@ local function pointer_down(self, id, px, py)
 			PAD.rotellina(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci" or nil)
 		elseif gui.pick_node(self.btn_menu, px, py) then
 			open_wheel(self, true)
+		elseif self.sala and menu.sala.exit_hit(self.sala, px, py) then
+			quit_match(self)
 		end
 		return
 	elseif self.mode ~= "local" and self.mode ~= "online" then

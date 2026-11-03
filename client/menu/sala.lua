@@ -5,10 +5,15 @@
 -- ones wait with "IN ARRIVO". Above, what you are looking for, how many there
 -- are and the time that passes; below, a tip that changes every TIP_EVERY
 -- seconds. When the queue is full the lineup takes over (menu/schieramento.lua).
+-- If nobody else arrives, after the server's BotAfter (25 s, lobby.go) bots
+-- fill the empty places: the line counts it down (BOT TRA N s). ESCI DALLA
+-- CODA, at the bottom, leaves the queue (like the gear's ESCI DALLA RICERCA).
 --
 --   local s = sala.new(of, titolo, parent_below)  -- of: players of the match; parent_below: the
 --                                                 -- gear, which stays above (its wheel too)
 --   sala.giocatori(s, vetrine) -> true if someone new arrived (vetrine: menu/vetrina.lua, in queue order)
+--   sala.bot_in(s, secs)                         -- the bots arrive in secs seconds (nil: no bots, events)
+--   sala.exit_hit(s, x, y) -> true on ESCI DALLA CODA (x, y as gui.pick_node wants them)
 --   sala.update(s, dt)
 --   sala.wheel_open(s, open)                     -- the gear's wheel covers the title: it hides it
 --   sala.destroy(s)
@@ -66,6 +71,8 @@ function M.new(of, title, parent_below)
 	local w = 980
 	ui.pannello(640, 110, w, 52, s.radice)
 	s.tip = ui.testo(M.TIPS[1], 640, 110, 0.8, C.TEXT, s.radice)
+	s.buttons = {}
+	s.exit = ui.button(s.buttons, 640, 44, 360, 52, "ESCI DALLA CODA", "esci", nil, s.radice)
 	s.title = title
 	M.update(s, 0)
 	return s
@@ -96,11 +103,24 @@ function M.giocatori(s, showcases)
 	return arrived
 end
 
+function M.bot_in(s, secs)
+	s.bot_left = tonumber(secs)
+end
+
+function M.exit_hit(s, x, y)
+	return gui.pick_node(s.exit, x, y)
+end
+
 function M.update(s, dt)
 	s.t = s.t + dt
 	local secs = math.floor(s.t)
-	gui.set_text(s.riga, string.format("%s%d SU %d  ·  %d:%02d", s.title ~= "" and (s.title .. "  ·  ") or "",
-		s.n, s.of, math.floor(secs / 60), secs % 60))
+	local bots = ""
+	if s.bot_left and s.n < s.of then
+		s.bot_left = math.max(0, s.bot_left - dt)
+		bots = s.bot_left > 0 and string.format("  ·  BOT TRA %d s", math.ceil(s.bot_left)) or "  ·  ARRIVANO I BOT"
+	end
+	gui.set_text(s.riga, string.format("%s%d SU %d  ·  %d:%02d%s", s.title ~= "" and (s.title .. "  ·  ") or "",
+		s.n, s.of, math.floor(secs / 60), secs % 60, bots))
 	-- the empty rings breathe, all together
 	local a = 0.25 + 0.2 * (0.5 + 0.5 * math.sin(s.t * 3))
 	for _, e in ipairs(s.empty) do gui.set_color(e.ring, with_alpha(C.LIGHT, a)) end

@@ -128,6 +128,7 @@ type seat struct {
 	away int     // ticks spent disconnected
 	gone bool    // not coming back
 	team int
+	bot  int // > 0: a bot of that grade (sim/bot.lua GRADI) that fills the queue, no connection
 	in   held
 }
 
@@ -151,8 +152,11 @@ type Room struct {
 }
 
 // newRoom prepares the match outside the workers and opens the weapon draft.
-func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, error) {
-	r := &Room{srv: srv, mode: mode, seed: seed, in: make(chan roomMsg, 64*len(players))}
+// The seats past the players are bots of grade botGrade (lobby.go fills a
+// queue after BotAfter); in queue order the players land on alternating teams
+// (config.MODES), so two people in a 2 vs 2 play against each other.
+func newRoom(srv *Server, mode Mode, players []*Player, seed int64, botGrade int) (*Room, error) {
+	r := &Room{srv: srv, mode: mode, seed: seed, in: make(chan roomMsg, 64*mode.Players)}
 	eng, err := newEngine()
 	if err != nil {
 		return nil, err
@@ -162,7 +166,11 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 	if err == nil {
 		var rules lua.LValue
 		if rules, err = eng.fromJSON(mode.Rules); err == nil {
-			r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), rules)
+			bots := eng.L.NewTable()
+			for i := len(players); i < mode.Players; i++ {
+				bots.RawSetInt(i+1, lua.LNumber(botGrade))
+			}
+			r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), rules, bots)
 		}
 	}
 	var secs lua.LValue
@@ -178,13 +186,20 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64) (*Room, erro
 		r.draftLeft = srv.cfg.DraftTicks
 	}
 	teams, showcases := []string{}, []string{}
-	for i, p := range players {
+	for i := 0; i < mode.Players; i++ {
+		team := int(list.(*lua.LTable).RawGetInt(i + 1).(*lua.LTable).RawGetString("team").(lua.LNumber))
+		if i >= len(players) {
+			showcases = append(showcases, `{"bot":true}`)
+			teams = append(teams, fmt.Sprintf(`{"team":%d,"bot":%d}`, team, botGrade))
+			r.seats = append(r.seats, &seat{team: team, bot: botGrade})
+			continue
+		}
+		p := players[i]
 		if p.showcase != nil {
 			showcases = append(showcases, string(p.showcase))
 		} else {
 			showcases = append(showcases, "{}")
 		}
-		team := int(list.(*lua.LTable).RawGetInt(i + 1).(*lua.LTable).RawGetString("team").(lua.LNumber))
 		teams = append(teams, fmt.Sprintf(`{"team":%d}`, team))
 		s := &seat{p: p, tok: srv.newToken(), team: team}
 		r.seats = append(r.seats, s)
@@ -399,7 +414,12 @@ func (r *Room) handleDraft(m roomMsg) {
 // Returns false if the match must be closed.
 func (r *Room) checkAway() bool {
 	teams := map[int]bool{}
+	people := 0
 	for i, s := range r.seats {
+		if s.bot > 0 {
+			teams[s.team] = true
+			continue
+		}
 		if s.p != nil && s.p.Closed() {
 			s.p, s.away, s.in = nil, 0, held{} // held keys are released
 			r.broadcast(fmt.Appendf(nil, `{"t":"away","robot":%d}`, i+1))
@@ -414,9 +434,11 @@ func (r *Room) checkAway() bool {
 		}
 		if !s.gone {
 			teams[s.team] = true
+			people++
 		}
 	}
-	return len(teams) >= 2
+	// bots alone don't play for nobody
+	return len(teams) >= 2 && people > 0
 }
 
 // leave: the player of seat slot leaves by choice. Like someone who doesn't
