@@ -3,10 +3,10 @@
 # Si parte con 30 punti di vita su 150: la barra è bassa e pulsa. Poi lo zoom a metà e il massimo: la targa resta grande uguale sullo schermo.
 imposta prova_vita 30
 
-aspetta 1
+aspetta 3
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
-aspetta 1
+aspetta 3
 zoom 01_targa 3
 foto 02_scena
 mira 4 150 0.4

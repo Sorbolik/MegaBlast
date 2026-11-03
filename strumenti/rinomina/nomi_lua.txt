@@ -1616,3 +1616,10 @@ zoom_cursore zoom_cursor
 zoom_dito zoom_finger
 zoom_guida zoom_guide
 zoom_punto zoom_point
+# dopo #167 (la targa a lama incisa)
+LAMA_H BLADE_H
+LAMA_PX BLADE_PX
+LAMA_SX BLADE_LEFT
+LAMA_DX BLADE_RIGHT
+CORONA_W CROWN_W
+CORONA_H CROWN_H
