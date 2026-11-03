@@ -1,13 +1,14 @@
-# Build di prova dell'APK su ogni PR che tocca il client: le estensioni native
-# (client/vibra, la WebSocket) si compilano solo sul build server di Defold, che
-# dalle sessioni cloud di Claude non si raggiunge. Qui si vede se compilano prima
-# di entrare su main. Non firma con la chiave di Sergio e non manda niente.
+# Build di prova dell'APK, solo a mano (Actions > Build di prova > Run workflow,
+# scegliendo il ramo): le estensioni native (client/vibra, la WebSocket) si
+# compilano solo sul build server di Defold, che dalle sessioni cloud di Claude
+# non si raggiunge. Serve a un ramo che tocca un'estensione nativa o il manifest
+# del motore. Non firma con la chiave di Sergio e non manda niente. Sulle PR non
+# gira più (Sergio, 3 nov): l'APK di main lo costruisce comunque apk.yml.
 name: Build di prova
 on:
-  pull_request:
-    paths: ['client/**', '.github/workflows/build-pr.yml']
+  workflow_dispatch:
 concurrency:
-  group: build-pr-${{ github.event.pull_request.number }}
+  group: build-pr-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read

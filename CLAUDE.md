@@ -7,23 +7,31 @@ loro test; il resto resta in italiano finché non arriva la sua ondata. Nei file
 inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
 errori del server) restano in italiano. Si rinomina con `strumenti/rinomina/rinomina.py`.
 
-## Prima di ogni PR: controlli e revisione (Sergio, 2 nov)
+## Controlli: veloci in locale, completi su main (Sergio, 3 nov)
+
+Sulle PR GitHub non fa più girare niente: lo sviluppo deve essere veloce. Prima
+di aprire o aggiornare una PR è consigliato (non obbligatorio) il controllo
+veloce in locale, circa un minuto:
 
 ```bash
 bash strumenti/controlli/tutti.sh
 ```
 
 Deve finire con `OK` (sintassi e globali del Lua, controlli dell'editor, tutti i
-test Lua, `go vet`, `gofmt`, `go test ./server/`); GitHub lo ripete su ogni PR
-(`.github/workflows/controlli.yml`) e una PR rossa non si mergia. Prima di
-chiedere a Sergio il merge passa `/code-review` sulla PR e correggi quello che trova.
-Se la PR non deve cambiare il gioco (pulizia, rinomi, traduzione) dimostralo con
-`python3 strumenti/confronta/confronta.py` (200 partite di bot e le missioni,
-identiche a main tick per tick) e scrivi il risultato nella PR.
+test Lua, `go vet`, `gofmt`, `go test ./server/`). Lo stesso controllo gira su
+GitHub dopo ogni merge su `main` (`.github/workflows/controlli.yml`); prima di una
+versione online si lancia a mano sul ramo (Actions > Controlli > Run workflow).
+Se diventa rosso su main, il thread che ha mergiato lo sistema subito.
+`/code-review` non è più obbligatorio: si usa sulle PR grandi o delicate.
+Se una PR che cambia regole o simulazione (`client/sim/`) non deve cambiare il
+gioco, dimostralo con `python3 strumenti/confronta/confronta.py` (200 partite di
+bot e le missioni, identiche a main tick per tick) e scrivi il risultato nella PR;
+per pulizie e rinomi fuori da `client/sim/` basta `tutti.sh`.
 
 ## Prima di consegnare una modifica al client
 
-Simula il gioco e guarda le foto prima di aprire o aggiornare una PR che tocca `client/`:
+Se la PR cambia quello che si vede o le regole, simula il gioco e guarda le foto
+prima di aprirla (per rinomi e pulizie che non cambiano niente sullo schermo non serve):
 
 ```bash
 python3 strumenti/simula/simula.py
@@ -46,7 +54,8 @@ l'HUD o i menu prova anche `--schermo 1600x720` e `--schermo 960x720` (scenario 
 Le estensioni native del client (cartelle con `ext.manifest`, per ora `client/vibra`:
 la micro-vibrazione) si compilano solo sul build server di Defold: simulazione e build
 web nel cloud compilano una copia del client senza (`strumenti/simula/senza_estensioni.py`),
-e la build di prova dell'APK su ogni PR (`.github/workflows/build-pr.yml`) dice se compilano.
+e la build di prova dell'APK (`.github/workflows/build-pr.yml`, da lanciare a mano sul
+ramo da Actions quando si tocca un'estensione o il manifest del motore) dice se compilano.
 
 `simula.py` ripete anche i controlli che fa l'editor di Defold ma `bob.jar` no
 (`strumenti/simula/controlla.py`). Se Sergio vede nell'editor un errore che la
@@ -183,10 +192,12 @@ bilanciamento e gli highlight.
 notte; da rifare con `--nuova` quando cambiano le regole) e `strumenti/arena/trovate.py` fa la
 pagina coi video delle trovate dei bot (i turni rari che fanno tanti punti).
 
-Stelle della campagna: a ogni PR che tocca `client/sim/` il controllo "Stelle della campagna"
-(`.github/workflows/stelle.yml`) rigioca le missioni coi bot (`collaudo.lua --vita 0.5,1,2`)
-e mette sulla PR un avviso per ogni stella da guardare. Se ce ne sono di nuovi, ritara le
-soglie in `client/sim/campaign.lua` nella stessa PR o di' nella PR perché no.
+Stelle della campagna: dopo ogni merge su main che tocca `client/sim/` il controllo "Stelle
+della campagna" (`.github/workflows/stelle.yml`) rigioca le missioni coi bot (`collaudo.lua
+--vita 0.5,1,2`) e mette un avviso per ogni stella da guardare; su un ramo si lancia a mano
+da Actions, o in locale con `luajit strumenti/arena/collaudo.lua 12 --vita 0.5,1,2`. Se ci
+sono avvisi nuovi, ritara le soglie in `client/sim/campaign.lua` (nella stessa PR se l'hai
+lanciato prima, se no in una PR subito dopo).
 
 
 ## Immagini con ChatGPT (Codex)

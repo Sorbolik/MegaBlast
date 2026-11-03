@@ -172,7 +172,7 @@ Misure nel simulatore, stesso scenario, prima (de591e4) e dopo la #147:
   disegna la CPU, quindi i millisecondi del disegno sono rumore, e costerebbe
   5-10 minuti a PR (già scartato il 2 nov per `simula.py`, vedi
   [architettura](decisioni/architettura.md)). Il controllo su Lua lo fa già
-  `simula.py`, che si gira prima di ogni PR del client.
+  `simula.py`, che si gira prima delle PR che cambiano ciò che si vede.
 - **Confrontare main e ramo con una soglia sugli FPS** nel simulatore: troppo
   rumoroso, perché lì disegna la CPU e gli scatti `motore` vanno e vengono; si
   confronta a mano, come sopra, quando serve.
