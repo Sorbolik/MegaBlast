@@ -1,0 +1,13 @@
+Image 1 is Favilla, a character of our game: a young she-devil, the senior blacksmith apprentice. The LEFT figure (front view, hands on hips) is the master reference. Image 2 shows the illustration style we want (Favilla also appears there, but her clothes there are NOT the reference: use the clothes of image 1).
+
+Draw a CHARACTER MODEL SHEET of this exact character, as a 3 by 3 grid of equal square cells on a plain flat parchment background (#F3E7CF), with a thin clear gap between cells and nothing else in the picture.
+- Top-left cell: the full body, standing, three-quarter view facing right, one hand on the hip.
+- The other eight cells: head-and-shoulders BUSTS, all the same size and framing (the whole flame hair visible, head and top of the chest), all in three-quarter view facing right, with these expressions in reading order: 1) friendly confident smile, 2) laughing with mouth open, 3) explaining: one hand raised with the index finger up, 4) surprised, wide eyes, 5) worried, brows up, 6) angry, 7) proud and cocky, a wink, 8) scared, reaching out.
+
+Keep EXACTLY her design from image 1 in every cell: red skin, a big flame for hair that is white in the middle and light blue at the edges with a few golden tips, two short bone-colored horns, pointed ears, big yellow eyes with lashes, small pink nose, a lighter muzzle; parchment shirt with rolled-up sleeves and matching parchment bib overalls, brown leather suspenders with brass buttons, small brown leather apron, brown boots, a thin tail with a heart-shaped tip. Colors: skin #B8432A, muzzle #F1DFB0, flame hair white #FFFFFF and light blue #BFE9FF with golden tips #F2C45A, eyes #F2C45A, black #000000 outline. Same proportions, same colors, same face in all nine cells: only the expression changes. Her flame hair has the same shape and size in every cell.
+
+Style as in image 2: cartoon illustration, thick black outline, flat cel colors, light engraving-like hatching only in the shadows. No background scenery, no props, no other characters. No text, numbers, labels, speech balloons or signatures.
+
+Riferimenti allegati in ordine:
+Image 1: R4 — art/WB-008/11_favilla_B.png
+Image 2: R3 — art/WB-008/13_trio.png
