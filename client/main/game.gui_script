@@ -2438,14 +2438,15 @@ local function render(self, dt)
 			targa.stato(r.targa, testo)
 			v.stato = codice
 		end
+		-- la freccia di ferro sopra chi è di turno, finché la partita va avanti
+		-- (prima di targa.update, che la mette al suo posto)
+		if i == g.current then
+			local su = not rb.dead and not rb.gone and g.phase ~= "over" and gui.is_enabled(r.targa.barre)
+			targa.freccia_su(self.freccia, su and r.targa or nil)
+		end
 		-- chi mira ha sopra il cartellino della mira: la riga delle missioni sale
 		targa.update(r.targa, dt, v.x, v.y + scoria.altezza(r.rig) + 3, self.cam.s ^ -0.65, self.cam,
 			self.aiming and i == g.current and (self.tele_armed or not mira.MISCHIA[self.weapon]) and mira.CARTELLINO_H or 0)
-		-- la freccia di ferro sopra chi è di turno, finché la partita va avanti
-		if i == g.current then
-			local su = not rb.dead and not rb.gone and g.phase ~= "over" and gui.is_enabled(r.targa.barre)
-			targa.freccia_su(self.freccia, su and r.targa or nil, dt)
-		end
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -3100,8 +3101,8 @@ function init(self)
 		mondo[#mondo + 1] = b.anim
 		mondo[#mondo + 1] = b.flash
 	end
-	-- le targhe: prima tutte le barre, poi tutti i testi (due draw call in tutto)
-	-- (la freccia in mezzo: i nomi e gli annunci le passano sopra)
+	-- le targhe: prima tutte le barre, poi la freccia, poi tutti i testi (tre draw
+	-- call in tutto; i nomi e gli annunci passano sopra la freccia)
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.barre end
 	mondo[#mondo + 1] = self.freccia.radice
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.testi end

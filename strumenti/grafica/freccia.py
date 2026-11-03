@@ -7,7 +7,7 @@
 #   freccia_brace.png  la brace in bianco con le sue venature: il gioco la tinge
 #                      col colore della squadra e la fa pulsare
 #   freccia_cuore.png  il cuore bianco della brace, che si accende al massimo
-# Il gioco (battaglia/freccia.lua) li mette uno sopra l'altro e fa dondolare la
+# Il gioco (client/battaglia/targa.lua, targa.freccia) li mette uno sopra l'altro e fa dondolare la
 # freccia. Scrive client/assets/fx/freccia_*.png (vanno in battaglia.atlas).
 #
 # python3 strumenti/grafica/freccia.py
@@ -49,10 +49,13 @@ def main():
     bg = np.array([253.0, 4.0, 251.0])
     a3 = np.maximum(alfa, 1e-3)[..., None]
     rgb = np.clip((im - (1 - alfa)[..., None] * bg) / a3, 0, 255)
-    rgb[alfa < 0.02] = 0
+    # il bordo del magenta che resta appena visibile: via del tutto
+    alfa[alfa < 0.04] = 0
+    rgb[alfa == 0] = 0
 
-    # la brace: dov'è blu (b più di r: anche l'azzurro quasi bianco; il ferro è un grigio caldo). La fessura è la zona blu piena (chiusa e un po'
-    # allargata, così ci sta anche il cuore quasi bianco); fuori resta l'alone
+    # la brace: dov'è blu (b più di r, anche l'azzurro quasi bianco; il ferro è
+    # un grigio caldo). La fessura è la zona blu piena, coi buchi riempiti (così
+    # ci sta anche il cuore quasi bianco); fuori resta l'alone
     blu = np.clip((b - r - 10) / 80, 0, 1) * alfa
     fessura = filtro(riempi(filtro(blu > 0.7, ImageFilter.MaxFilter(3)) > 0.5), ImageFilter.MinFilter(3))
     fessura = filtro(fessura, ImageFilter.GaussianBlur(1.0))
@@ -65,8 +68,10 @@ def main():
     cuore = fessura * np.clip((np.minimum(r, g) - 110) / 110, 0, 1)
 
     # il ferro: la fessura spenta, l'alone sul ferro tolto (il pixel torna grigio)
+    # (anche l'azzurro leggero, che col rosso o l'oro sarebbe un alone blu)
     grigio = (0.3 * r + 0.55 * g + 0.15 * b)[..., None] * np.ones(3)
-    ferro = rgb * (1 - blu[..., None]) + grigio * blu[..., None]
+    via = np.clip((b - r) / 30, 0, 1)[..., None]
+    ferro = rgb * (1 - via) + grigio * via
     ferro = ferro * (1 - fessura[..., None]) + SPENTA * fessura[..., None]
 
     h = round(LARGO * im.shape[0] / im.shape[1])
@@ -74,7 +79,9 @@ def main():
 
     def salva(nome, colore, a):
         px = np.dstack([colore, a * 255]).clip(0, 255).astype(np.uint8)
-        Image.fromarray(px, "RGBA").resize((LARGO, h), Image.LANCZOS).save(os.path.join(OUT, nome + ".png"))
+        im = np.array(Image.fromarray(px, "RGBA").resize((LARGO, h), Image.LANCZOS))
+        im[im[..., 3] < 8] = 0  # niente velo quasi trasparente attorno (lo lascia il ridimensionamento)
+        Image.fromarray(im, "RGBA").save(os.path.join(OUT, nome + ".png"))
         print("scritto", nome, LARGO, "x", h)
 
     bianco = np.full(im.shape, 255.0)

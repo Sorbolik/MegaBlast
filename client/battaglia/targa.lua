@@ -22,12 +22,12 @@
 -- una sola per tutta la partita, sopra il nome (o sopra la Corona), che dondola
 -- con la brace del colore della squadra che pulsa (più accesa giù in basso).
 --   local f = targa.freccia()             -- f.radice va nella scena fra le barre e i testi
---   targa.freccia_su(f, t, dt)            -- a ogni frame, dopo targa.update: su t (nil = via)
+--   targa.freccia_su(f, t)                -- a ogni frame, prima di targa.update: su t (nil = via)
 --
 -- Ogni targa ha due radici, t.barre e t.testi, che si muovono insieme. La GUI
 -- disegna i nodi nell'ordine in cui stanno: chi le mette nella scena mette prima
 -- le barre di tutte le targhe e poi tutti i testi, così bastano due draw call per
--- tutte (forme senza immagine, poi il font). Non usiamo i layer della GUI perché
+-- tutte (forme senza immagine, poi il font), più una per la freccia in mezzo. Non usiamo i layer della GUI perché
 -- disegnerebbero le targhe sopra i pulsanti e i menu.
 
 local ui = require "ui.ui"
@@ -50,9 +50,10 @@ local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
 local CORONA_Y, CORONA_SCALA = NOME_Y + 13, 1.6
 -- dove finiscono il nome e la Corona in alto
 local NOME_CIMA, CORONA_CIMA = NOME_Y + 6, CORONA_Y + 17
--- la freccia di ferro: larga FRECCIA_W, FRECCIA_STACCO sopra il nome o la Corona;
+-- la freccia di ferro: larga FRECCIA_W (alta come dice l'immagine), FRECCIA_STACCO
+-- sopra il nome o la Corona (nel nodo che sobbalza col colpo, come loro);
 -- dondola di FRECCIA_DONDOLA in su e in giù ogni FRECCIA_T secondi
-local FRECCIA_W, FRECCIA_H = 28, 28 * 122 / 128
+local FRECCIA_W = 28
 local FRECCIA_STACCO, FRECCIA_DONDOLA, FRECCIA_T = 3, 1.5, 1.4
 -- la riga delle missioni: sopra la Corona e gli annunci che salgono, a capo
 -- oltre RIGA_W; grande RIGA_SCALA sullo schermo a ogni zoom (circa 22 px: con la
@@ -64,7 +65,9 @@ local RIGA_STACCO, RIGA_SCALA, RIGA_W, RIGA_LATO = 13, 0.55, 1640, 16
 local RIGA_CIMA = 130
 -- la nuvoletta delle battute: sopra la Corona, grande BATTUTA_SCALA sullo
 -- schermo a ogni zoom, col fondo scuro attorno (BATTUTA_BORDO px)
+-- (BATTUTA_STACCO sotto la cima della Corona, o FRECCIA_SOPRA sopra la freccia)
 local BATTUTA_STACCO, BATTUTA_SCALA, BATTUTA_BORDO, BATTUTA_T = -3, 0.42, 8, 2.6
+local FRECCIA_SOPRA = 2
 local NUVOLA = vmath.vector4(0.06, 0.05, 0.08, 0.82)
 
 local FONDO = ui.C.OMBRA
@@ -236,6 +239,8 @@ function M.vita(t, vita, massima, scudo)
 	gui.set_text(t.numero, tostring(math.floor(vita + 0.5)))
 end
 
+local freccia_update -- più sotto, con la freccia
+
 function M.update(t, dt, x, y, scala, cam, su)
 	t.t = t.t + dt
 	t.x, t.y, t.scala = x, y, scala
@@ -270,7 +275,7 @@ function M.update(t, dt, x, y, scala, cam, su)
 		gui.set_scale(t.battuta, V)
 		V.x, V.y, V.z = t.battuta_w * k + 2 * bordo, t.battuta_h * k + 2 * bordo, 0
 		gui.set_size(t.nuvola, V)
-		local y0 = M.sopra(t) + BATTUTA_STACCO
+		local y0 = M.sopra(t) + (t.freccia and FRECCIA_SOPRA or BATTUTA_STACCO)
 		V.x, V.y = 0, y0
 		gui.set_position(t.nuvola, V)
 		V.y = y0 + bordo
@@ -298,6 +303,7 @@ function M.update(t, dt, x, y, scala, cam, su)
 	V.x, V.y, V.z = k, k, 1
 	gui.set_scale(t.dentro, V)
 	gui.set_scale(t.dentro_testi, V)
+	if t.freccia then freccia_update(t.freccia, t, dt, k) end
 
 	-- l'annuncio sale e svanisce
 	if t.annuncio_t > 0 then
@@ -325,13 +331,16 @@ function M.update(t, dt, x, y, scala, cam, su)
 end
 
 -- la freccia: il ferro, la brace bianca tinta col colore della squadra, il cuore
--- bianco (strumenti/grafica/freccia.py), nell'atlante della battaglia
+-- bianco (strumenti/grafica/freccia.py), nell'atlante della battaglia. Larga
+-- FRECCIA_W, alta quanto dice l'immagine (niente si deforma)
 local function strato(r, nome)
-	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(FRECCIA_W, FRECCIA_H, 0))
+	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_texture(n, "battaglia")
+	gui.set_size_mode(n, gui.SIZE_MODE_AUTO)
 	gui.play_flipbook(n, nome)
+	local px = gui.get_size(n)
 	gui.set_size_mode(n, gui.SIZE_MODE_MANUAL)
-	gui.set_size(n, vmath.vector3(FRECCIA_W, FRECCIA_H, 0))
+	gui.set_size(n, vmath.vector3(FRECCIA_W, FRECCIA_W * px.y / px.x, 0))
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_parent(n, r)
 	gui.set_inherit_alpha(n, true)
@@ -346,29 +355,39 @@ function M.freccia()
 	f.ferro = strato(f.radice, "freccia_ferro")
 	f.brace = strato(f.radice, "freccia_brace")
 	f.cuore = strato(f.radice, "freccia_cuore")
+	f.h = gui.get_size(f.ferro).y
 	gui.set_enabled(f.radice, false)
 	return f
 end
 
--- su t (la targa di chi è di turno, nil = nessuno): dopo targa.update, che l'ha
--- messa al suo posto. In alto dondola piano con la brace bassa, in basso è accesa
-function M.freccia_su(f, t, dt)
+-- il centro della freccia sopra il nome o la Corona (nel nodo che sobbalza)
+local function freccia_base(f, t)
+	return (t.con_corona and CORONA_CIMA or NOME_CIMA) + FRECCIA_STACCO + f.h / 2
+end
+
+-- la freccia va su t (la targa di chi è di turno, nil = nessuno): prima di
+-- targa.update, che la mette al suo posto, così cartellino e battute la sanno già
+function M.freccia_su(f, t)
 	if f.su ~= t then
-		if f.su then f.su.freccia_cima = nil end
+		if f.su then f.su.freccia, f.su.freccia_cima = nil, nil end
 		f.su = t
 		gui.set_enabled(f.radice, t ~= nil)
 	end
 	if not t then return end
+	t.freccia = f
+	t.freccia_cima = H / 2 + BORDO + freccia_base(f, t) + f.h / 2 + FRECCIA_DONDOLA
+end
+
+-- in targa.update, col sobbalzo del colpo (k) come il nome e la Corona. In alto
+-- dondola piano con la brace bassa, in basso è accesa
+freccia_update = function(f, t, dt, k)
 	f.t = (f.t + dt) % FRECCIA_T
 	local c = math.cos(f.t / FRECCIA_T * 2 * math.pi)
 	local accesa = (1 - c) / 2
-	local base = (t.con_corona and CORONA_CIMA or NOME_CIMA) + FRECCIA_STACCO + FRECCIA_H / 2
-	-- segue la targa (non il sobbalzo del colpo: la freccia resta ferma)
-	V.x, V.y, V.z = t.x, t.y + (base + FRECCIA_DONDOLA * c) * t.scala, 0
+	V.x, V.y, V.z = t.x, t.y + (H / 2 + BORDO + (freccia_base(f, t) + FRECCIA_DONDOLA * c) * k) * t.scala, 0
 	gui.set_position(f.radice, V)
-	V.x, V.y, V.z = t.scala, t.scala, 1
+	V.x, V.y, V.z = t.scala * k, t.scala * k, 1
 	gui.set_scale(f.radice, V)
-	t.freccia_cima = base + FRECCIA_H / 2 + FRECCIA_DONDOLA
 	local col = t.colore
 	C.x, C.y, C.z, C.w = col.x, col.y, col.z, 0.55 + 0.45 * accesa
 	gui.set_color(f.brace, C)
