@@ -28,7 +28,7 @@ end
 -- the Forge), and the pit, the same floor with a lava pit in the middle (the
 -- Smith). Sergio's choices, 2 November 2026; the only maps of real matches
 -- since 3 November (the old ones are gone), chosen in Training
--- (menu/allenamento.lua).
+-- (menu/training.lua).
 local PAVIMENTO_SPAWNS = { { x = 225, from = 300 }, { x = 1650, from = 585 }, { x = 630, from = 390 }, { x = 1260, from = 300 } }
 
 add("pavimento", "La Forgia", { spawns = PAVIMENTO_SPAWNS,

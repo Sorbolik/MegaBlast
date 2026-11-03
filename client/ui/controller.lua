@@ -52,7 +52,7 @@ M.UI = { su = "su", giu = "giu", sinistra = "sinistra", destra = "destra", a = "
 -- bottom one, b on the right, x on the left, y at the top. The sticks are
 -- fixed and work as on the phone: the left one walks and, pushed up, jumps;
 -- the right one aims (direction and power). Start always opens the wheel;
--- everything else is changed from the IMPOSTAZIONI (menu/impostazioni.lua),
+-- everything else is changed from the IMPOSTAZIONI (menu/settings.lua),
 -- which save c.tasti in the profile.
 M.BATTLE = {
 	lb = "primaria",        -- the next primary, cycling

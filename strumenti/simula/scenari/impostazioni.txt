@@ -1,10 +1,10 @@
-# Le impostazioni (menu/impostazioni.lua): la rotellina in alto a destra della
+# Le impostazioni (menu/settings.lua): la rotellina in alto a destra della
 # home le apre. In alto MIRA, SPARO e POTENZA col controller; sotto i tasti del
 # controller: si sceglie un comando e si preme il tasto nuovo (il comando che
 # lo aveva prende quello lasciato libero, o il primo tasto che nessuno usa),
 # Start annulla, Y toglie il tasto alla riga accesa. In battaglia: SALTA su A
 # (la levetta in su non salta più), SPARA su B con la potenza dal tasto (premuto
-# carica, lasciato spara). I tasti sull'HUD (ui/glifo.lua) seguono quelli
+# carica, lasciato spara). I tasti sull'HUD (ui/glyph.lua) seguono quelli
 # nuovi; con prova_pad playstation sono disegnati come su PlayStation.
 imposta prova_armi 1
 imposta prova_pad playstation

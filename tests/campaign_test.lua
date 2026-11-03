@@ -519,7 +519,7 @@ do
 	check(s[1] and not s[2] and s[3], "stars: the bonus without the points lights the third and not the second")
 	r.st.gap = 160
 	check(missions.stelle(r)[2], "stars: the second with the point lead")
-	local profile = require "menu.profilo"
+	local profile = require "menu.profile"
 	local p = profile.nuovo()
 	profile.missione(p, "primo_sangue", s)
 	profile.missione(p, "primo_sangue", { true, true, false })

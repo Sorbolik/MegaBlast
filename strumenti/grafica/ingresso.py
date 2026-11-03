@@ -1,4 +1,4 @@
-"""La testa di Favilla nel disco della schermata d'ingresso (client/ui/ingresso.lua).
+"""La testa di Favilla nel disco della schermata d'ingresso (client/ui/entry.lua).
 
 Dal disegno di Sergio (art/personaggi/favilla.png, 2328 x 2328): toglie pugni e
 vestito, ritaglia un cerchio attorno alla testa e lo salva a 400 x 400 con il

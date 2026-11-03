@@ -1,0 +1,94 @@
+-- End of a level: a campaign mission or a lesson (sim/missions.lua). One
+-- screen, no popups: the level's name, the stars taken lighting up one after
+-- the other (with the tick rising in pitch, like the points in a match) and
+-- under each one what it takes to get it, so you see how to do better. Below:
+-- RIPROVA and AVANTI (the next level, or the list if it was the last); the
+-- arrow goes back to the list.
+--
+--   local level_end = require "menu.level_end"
+--   local f = level_end.new({ titolo = "Il Rampino", stelle = { true, true, false },
+--     criteria = { "FATTA", "CON 100 PUNTI DI VANTAGGIO", "SENZA MORIRE" }, vantaggio = 85, record = 3, avanti = true }, sound)
+--     stelle: which ones it took (each with its criterion); criteria: what each
+--     one takes (missions.criteria); vantaggio: the lead points made (nil where
+--     points don't count: the lessons); record: how many stars the mission
+--     already had;
+--     avanti: there is a next level; sound(v): the tick, v = speed (pitch)
+--   fine_livello.update(f, dt)
+--   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro" or nil
+--   fine_livello.destroy(f)
+
+local ui = require "ui.ui"
+
+local M = {}
+
+-- the stars: side, distance between centers, the middle one bigger and higher
+M.LATO, M.STEP, M.Y = 116, 190, 400
+-- when each star lights up (seconds from opening) and how long the pop lasts
+M.RHYTHM, M.FIRST, M.SHOT = 0.3, 0.25, 0.18
+
+local function vec(x, y) return vmath.vector3(x, y, 0) end
+
+function M.new(o, sound)
+	local f = { buttons = {}, t = 0, sound = sound, lit_ones = 0, prese = {} }
+	local n = 0
+	f.fondo = ui.sfondo()
+	f.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
+	gui.set_visible(f.radice, false)
+	local c = ui.C
+	ui.indietro(f.buttons, "indietro", f.radice)
+	ui.testo("MISSIONE FATTA", 640, 640, 0.8, c.OFF, f.radice)
+	ui.titolo(string.upper(o.titolo), 640, 585, 1, c.LIGHT, f.radice)
+	local criteria = o.criteria
+	for i = 1, 3 do
+		local big = i == 2 and 1.2 or 1
+		local x, y = 640 + (i - 2) * M.STEP, M.Y + (i == 2 and 18 or 0)
+		local side_of = M.LATO * big
+		-- below, the unlit star; above, the golden one lighting up with its halo
+		ui.stella(x, y, side_of, c.LINE, f.radice)
+		local s = { lato = side_of }
+		if o.stelle[i] then
+			n = n + 1
+			f.prese[n] = s
+			s.alone = ui.alone(x, y, side_of * 2.2, vmath.vector4(1, 0.8, 0.25, 0), f.radice)
+			s.nodo = ui.stella(x, y, side_of, ui.GOLD, f.radice)
+			gui.set_scale(s.nodo, vec(0, 0))
+		end
+		ui.testo(criteria[i], x, M.Y - 100, 0.75, o.stelle[i] and c.TEXT or c.OFF, f.radice)
+	end
+	local under = o.vantaggio and "Punti di vantaggio: " .. o.vantaggio or ""
+	if o.record and o.record > n then
+		local record = "il tuo record: " .. o.record .. (o.record == 1 and " stella" or " stelle")
+		under = under == "" and record or under .. "  -  " .. record
+	end
+	ui.testo(under, 640, 232, 0.8, c.OFF, f.radice)
+	ui.button(f.buttons, 640 - 180, 110, 300, 96, "RIPROVA", "riprova", nil, f.radice)
+	ui.button(f.buttons, 640 + 180, 110, 300, 96, o.avanti and "AVANTI" or "CAMPAGNA", "avanti",
+		{ main = true }, f.radice)
+	return f
+end
+
+-- the stars taken light up one at a time: they grow past their size and come
+-- back, the halo lights up and settles
+function M.update(f, dt)
+	f.t = f.t + dt
+	local i = f.lit_ones + 1
+	if i > #f.prese or f.t < M.FIRST + (i - 1) * M.RHYTHM then return end
+	f.lit_ones = i
+	local s = f.prese[i]
+	gui.animate(s.nodo, "scale", vec(1, 1), gui.EASING_OUTBACK, M.SHOT)
+	gui.animate(s.alone, "color.w", 0.7, gui.EASING_OUTQUAD, M.SHOT * 0.5, 0, function()
+		gui.animate(s.alone, "color.w", 0.3, gui.EASING_INOUTQUAD, 0.5)
+	end)
+	if f.sound then f.sound(1 + 0.15 * (i - 1)) end
+end
+
+function M.on_input(f, action_id, action)
+	return ui.tocco(f.buttons, action_id, action)
+end
+
+function M.destroy(f)
+	gui.delete_node(f.radice)
+	gui.delete_node(f.fondo)
+end
+
+return M

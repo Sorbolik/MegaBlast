@@ -4,9 +4,11 @@ Documenti, CLAUDE.md, messaggi di commit e PR in italiano. Il codice (nomi di fi
 funzioni, variabili e commenti) passa all'inglese a ondate (piano di Sergio, 2 nov):
 già in inglese i nomi e i commenti di tutto `client/` e `server/` e dei loro test,
 tranne il bot (`client/sim/bot.lua`, `rete.lua`, `tests/bot_test.lua`) e i file scritti
-dagli strumenti o dall'editor (`corpo.lua`, `animazioni.lua`, `pelli.lua`, `perni.lua`,
-`impugnature.lua`, `armi.lua`, `diavoletto.lua`, `dipinti.lua`); i nomi dei file e delle
-cartelle del client e gli strumenti restano in italiano finché non arriva la loro ondata.
+dagli strumenti o dall'editor (`corpo.lua`, `animations.lua`, `skins.lua`, `pivots.lua`,
+`grips.lua`, `weapons.lua`, `devil.lua`, `paintings.lua`: dentro sono ancora italiani).
+I nomi dei file e delle cartelle del client sono in inglese (`client/battle/`,
+`client/circles/`, ...) tranne `client/dipinti/` e `client/assets/`; gli strumenti
+restano in italiano finché non arriva la loro ondata.
 Un campo usato anche fuori dall'ondata o scritto come stringa (id, impostazioni, nodi
 della GUI) resta italiano per ora. Nei file in
 inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
@@ -53,7 +55,7 @@ Dettagli e comandi degli scenari: [strumenti/simula/README.md](strumenti/simula/
 Niente si deve mai deformare (Sergio, 29 ott): ogni nodo GUI è `gui.ADJUST_FIT`, mai
 `ADJUST_STRETCH` (lo controlla `controlla.py`). Il gioco è disegnato a 1280 x 720 al
 centro; su 20:9 o 4:3 lo schermo vero va da `schermo.x0` a `x1` e da `y0` a `y1`
-(`client/ui/schermo.lua`), e quello che sta su un bordo si attacca lì. Se tocchi
+(`client/ui/screen.lua`), e quello che sta su un bordo si attacca lì. Se tocchi
 l'HUD o i menu prova anche `--schermo 1600x720` e `--schermo 960x720` (scenario `schermo.txt`).
 
 Le estensioni native del client (cartelle con `ext.manifest`, per ora `client/vibra`:
@@ -100,21 +102,21 @@ server senza toccare il Go.
 ## Animazioni del diavoletto
 
 Le pose del diavoletto (fermo, corsa, aria, paracadute, colpito, vittoria,
-sconfitta, scenette) sono clip in `client/battaglia/animazioni.lua`, campionate da
-`client/battaglia/pose.lua` sotto le molle e la mira di `scoria.lua`. Si fanno con
+sconfitta, scenette) sono clip in `client/battle/animations.lua`, campionate da
+`client/battle/pose.lua` sotto le molle e la mira di `scoria.lua`. Si fanno con
 l'editor `strumenti/animazioni/editor.html`: `python3 strumenti/animazioni/prepara.py`
 scrive `simulazione/animazioni/editor.html` (pezzi e animazioni dentro), che si
 apre nel browser e si pubblica come Artifact sempre allo stesso indirizzo:
 https://claude.ai/artifact/YJeMenvfJLGmto89yAbKJ5 . Se cambiano i pezzi o le animazioni,
 ripubblicalo. "Manda a Claude" nell'editor salva il file nel database
 dell'Artifact (documento `animazioni/ultima`, campo `lua`): da lì va copiato in
-`client/battaglia/animazioni.lua`.
+`client/battle/animations.lua`.
 
 Dallo stesso editor si cambiano le hitbox (`client/sim/corpo.lua`: la capsula per
 camminare e il cerchio dei colpi; è fisica, cambia il gioco anche online) e i
-perni di testa, braccia, gambe e ala (`client/battaglia/perni.lua`) e le
+perni di testa, braccia, gambe e ala (`client/battle/pivots.lua`) e le
 impugnature di ogni arma: presa (dove la tiene chi la impugna), perno (dove gira) e spalla
-(dove sta il perno nel corpo) in `client/battaglia/impugnature.lua`. Ogni clip sceglie chi
+(dove sta il perno nel corpo) in `client/battle/grips.lua`. Ogni clip sceglie chi
 impugna l'arma (`impugna`) e l'ordine dei pezzi davanti e dietro (`livelli`).
 "Manda a Claude" li mette nei documenti `corpo/ultima`, `perni/ultima` e
 `impugnature/ultima` (campo `lua`). Una clip con l'arma può avere la versione di
@@ -146,7 +148,7 @@ controlla); `node strumenti/eventi/prova.mjs` prova pagina e Worker.
 Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo
 stampino e si tagliano con `strumenti/stampino/taglia.py`: regole e comandi in
 [strumenti/stampino/README.md](strumenti/stampino/README.md). Il gioco li monta
-con `scoria.new(colore, look)` (`client/battaglia/pelli.lua`, generato).
+con `scoria.new(colore, look)` (`client/battle/skins.lua`, generato).
 
 ## Controller
 

@@ -1,8 +1,8 @@
 # Il cerchio di cura, disegnato a vettori come le armi e il diavoletto
 # (vettori.py): un anello di pietra a terra con le rune accese, un cuore che
-# galleggia sopra e una scintilla che sale. Il gioco (battaglia/oggetti.lua)
+# galleggia sopra e una scintilla che sale. Il gioco (battle/items.lua)
 # li anima: l'anello pulsa, il cuore dondola, le scintille salgono.
-# Scrive client/assets/fx/cura_*.png (vanno in client/battaglia/battaglia.atlas).
+# Scrive client/assets/fx/cura_*.png (vanno in client/battle/battle.atlas).
 #
 # python3 strumenti/grafica/cura.py   (serve cairosvg: pip install cairosvg)
 import os

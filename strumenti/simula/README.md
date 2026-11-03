@@ -22,7 +22,7 @@ Nelle sessioni cloud `prepara.sh` parte da solo all'avvio
    segnala ma `bob.jar` no, quindi la build automatica non li vede. Oggi:
    - mesh con un materiale in vertex space WORLD senza `position_stream` o
      `normal_stream`, o con uno stream che non c'è nel buffer
-     (è l'errore "Normal Stream must be specified..." di `terreno.mesh`);
+     (è l'errore "Normal Stream must be specified..." di `terrain.mesh`);
    - riferimenti a file che non esistono nei file di risorse.
 
    Se l'editor segnala un nuovo tipo di errore che sfugge, aggiungi la regola qui.
@@ -47,7 +47,7 @@ Tutto in `simulazione/` (ignorata da git):
 - `log.txt` il log del motore, `build.txt` quello di bob
 - `fotogrammi.txt` gli scatti (frame oltre 1,5 volte il normale) con la causa e
   un riassunto ogni 5 secondi (FPS, percentili, lavoro di Lua, KB nuovi per
-  frame): il contatore di `client/ui/fotogrammi.lua`, vedi
+  frame): il contatore di `client/ui/frames.lua`, vedi
   [docs/prestazioni.md](../../docs/prestazioni.md). La simulazione fallisce se
   Lua tiene fermo un frame più di 150 ms. Lo scenario `scenari/fluidita.txt`
   (meglio con `--senza-video`) tocca home, missione e partita col bot.
@@ -63,7 +63,7 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `foto NOME` | salva `foto/NOME.png` |
 | `zoom NOME [Z]` | foto ingrandita Z volte (2 se non si dice) attorno al robot di turno, contando lo zoom che la camera del gioco ha già (con la camera a 2,2 uno zoom 4 ingrandisce la foto di 1,8) |
 | `tocca X Y` | tocco breve (pulsanti, menu), in pixel dello schermo |
-| `tocca_centro X Y` | tocco in pixel del gioco a 16:9, che su ogni schermo stanno al centro (`ui/schermo.lua`): uguale a `tocca` a 1280 x 720, giusto anche con `--schermo` |
+| `tocca_centro X Y` | tocco in pixel del gioco a 16:9, che su ogni schermo stanno al centro (`ui/screen.lua`): uguale a `tocca` a 1280 x 720, giusto anche con `--schermo` |
 | `tocca_bordo DX DY alto\|basso sinistra\|destra` | tocco a DX, DY pixel del gioco da quell'angolo dello schermo: per quello che è attaccato ai bordi (levette, zoom, bottoni della home) |
 | `tocca_robot DX DY` | tocco breve a (DX, DY) pixel dello schermo dal centro del robot di turno: nel turno del bot, sulla sua targa si apre il suo cartellino (scenario `scenari/scheda.txt`) |
 | `cammina destra X [S]` | tiene premuto `destra` (o `sinistra`) finché il robot di turno passa X nel mondo: non dipende da quanto va veloce il gioco nel simulatore |

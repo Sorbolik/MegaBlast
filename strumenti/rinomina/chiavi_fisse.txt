@@ -26,7 +26,7 @@ alto
 raggio
 centro
 # - nomi che strumenti/animazioni/prepara.py cerca con una regex (local ARMI e
-#   M.PERSONAGGIO in battaglia/scoria.lua, SQUADRA in ui/ui.lua): vanno con la PR 5b
+#   M.PERSONAGGIO in battle/scoria.lua, SQUADRA in ui/ui.lua): vanno con la PR 5b
 ARMI
 PERSONAGGIO
 SQUADRA

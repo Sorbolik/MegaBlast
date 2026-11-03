@@ -644,7 +644,7 @@ func TestShowcases(t *testing.T) {
 	}
 }
 
-// The waiting room (client/menu/sala.lua): everyone in the queue gets the
+// The waiting room (client/menu/lobby.lua): everyone in the queue gets the
 // cards of who is waiting, at every join and leave, with their own place.
 func TestWaitingRoom(t *testing.T) {
 	url := testServer(t)

@@ -2,15 +2,15 @@
 """Prepara l'editor delle animazioni del diavoletto in una pagina sola.
 
 Mette dentro strumenti/animazioni/editor.html i pezzi veri del diavoletto
-(client/assets/diavoletto/*.png), i perni (client/battaglia/diavoletto.lua), le
-pelli disegnate sullo stampino (client/battaglia/pelli.lua), le
-animazioni di adesso (client/battaglia/animazioni.lua), l'altezza del disegno
+(client/assets/diavoletto/*.png), i perni (client/battle/devil.lua), le
+pelli disegnate sullo stampino (client/battle/skins.lua), le
+animazioni di adesso (client/battle/animations.lua), l'altezza del disegno
 (client/sim/game.lua), le hitbox (client/sim/corpo.lua), i perni spostati
-(client/battaglia/perni.lua), le armi in mano (client/battaglia/armi.lua, immagini
-in client/assets/armi) con le loro impugnature (client/battaglia/impugnature.lua)
+(client/battle/pivots.lua), le armi in mano (client/battle/weapons.lua, immagini
+in client/assets/armi) con le loro impugnature (client/battle/grips.lua)
 e i colori delle squadre (client/ui/ui.lua), e scrive
 simulazione/animazioni/editor.html: si apre col doppio clic (Chrome o Edge
-salvano direttamente in client/battaglia/animazioni.lua) e si pubblica com'è
+salvano direttamente in client/battle/animations.lua) e si pubblica com'è
 come Artifact di claude.ai.
 
     python3 strumenti/animazioni/prepara.py
@@ -29,7 +29,7 @@ def leggi(p):
 
 
 def main():
-    diavoletto = leggi("client/battaglia/diavoletto.lua")
+    diavoletto = leggi("client/battle/devil.lua")
     # le immagini che i pezzi usano (img e tinta)
     nomi = sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', diavoletto)))
     immagini = {}
@@ -37,7 +37,7 @@ def main():
         dati = (REPO / "client/assets/diavoletto" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le pelli dello stampino (strumenti/stampino/taglia.py), coi loro pezzi
-    pelli = leggi("client/battaglia/pelli.lua")
+    pelli = leggi("client/battle/skins.lua")
     # in SVG quelle che ce l'hanno (strumenti/stampino/pelli/svg, da taglia.py --tavolozza):
     # nell'editor restano nitide con lo zoom
     for n in sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', pelli))):
@@ -48,13 +48,13 @@ def main():
         dati = (REPO / "client/assets/pelli" / (n + ".png")).read_bytes()
         immagini[n] = "data:image/png;base64," + base64.b64encode(dati).decode()
     # le armi in mano (solo quelle, non i colpi), come armi/nome
-    armi = leggi("client/battaglia/armi.lua")
+    armi = leggi("client/battle/weapons.lua")
     in_mano = armi.split("colpi = {")[0]
     for n in sorted(set(re.findall(r'(?:img|tinta) = "([a-z0-9_]+)"', in_mano))):
         dati = (REPO / "client/assets/armi" / (n + ".png")).read_bytes()
         immagini["armi/" + n] = "data:image/png;base64," + base64.b64encode(dati).decode()
-    # gli angoli a riposo delle armi nella mano (battaglia/scoria.lua)
-    scoria = leggi("client/battaglia/scoria.lua")
+    # gli angoli a riposo delle armi nella mano (battle/scoria.lua)
+    scoria = leggi("client/battle/scoria.lua")
     blocco = re.search(r"local ARMI = \{(.*?)\n\}", scoria, re.S).group(1)
     # il personaggio di tutti nel gioco: l'editor parte con quello addosso
     personaggio = re.findall(r'"(\w+)"', re.search(r"M\.PERSONAGGIO = \{(.*?)\}", scoria).group(1))
@@ -67,11 +67,11 @@ def main():
     colori = [[float(x) for x in c.split(",")] for c in re.findall(r"c\(([^)]*)\)", squadre)]
     dati = {
         "diavoletto": diavoletto,
-        "animazioni": leggi("client/battaglia/animazioni.lua"),
+        "animazioni": leggi("client/battle/animations.lua"),
         "pelli": pelli,
-        "perni": leggi("client/battaglia/perni.lua"),
+        "perni": leggi("client/battle/pivots.lua"),
         "armi": armi,
-        "impugnature": leggi("client/battaglia/impugnature.lua"),
+        "impugnature": leggi("client/battle/grips.lua"),
         "armi_riposo": riposo,
         "personaggio": personaggio,
         "immagini": immagini,

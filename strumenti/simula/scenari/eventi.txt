@@ -1,4 +1,4 @@
-# Gli eventi (server/events.go, menu/bacheca.lua, menu/coda.lua) contro un
+# Gli eventi (server/events.go, menu/board.lua, menu/queue.lua) contro un
 # server vero col calendario scenari/eventi_prova.json: in corso un
 # modificatore con la coda sua (2v2 solo Maglio) e un Torneo sulla coda 2v2,
 # in arrivo una Sfida e gli XP doppi. EVENTI (sinistra, sopra ARMERIA): la

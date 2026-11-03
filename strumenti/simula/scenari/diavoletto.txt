@@ -1,4 +1,4 @@
-# Il diavoletto a pezzi (battaglia/scoria.lua): fermo di turno, corsa, salto,
+# Il diavoletto a pezzi (battle/scoria.lua): fermo di turno, corsa, salto,
 # paracadute (barra da 4: Paracadute a 801), mira in su, rinculo, la Lama in giù,
 # poi l'altro di turno (chi aspetta fa le scenette) e il cerchio di cura, che
 # compare al turno 2. Da vicino: --scala 2.

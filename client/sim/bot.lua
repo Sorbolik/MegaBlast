@@ -409,7 +409,7 @@ end
 
 -- Chi prenderebbe adesso il colpo da vicino arma mirato ad angolo: lo prova su
 -- una copia della partita fino alla fine del colpo. out[1..k] = id dei robot
--- colpiti, torna k. Serve alla mira delle armi da vicino (battaglia/mira.lua).
+-- colpiti, torna k. Serve alla mira delle armi da vicino (battle/aim.lua).
 local COLPI = { sword_hit = true, punch_hit = true, mallet_hit = true, lunge_hit = true, bellows_hit = true }
 function M.colpiti(g, arma, angolo, out)
 	local w = M.mondo(g)

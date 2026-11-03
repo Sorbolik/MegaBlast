@@ -8,8 +8,8 @@
   Editor delle animazioni del diavoletto di MegaBlast. Sorgente: questa pagina
   non ha i dati; strumenti/animazioni/prepara.py ci mette pezzi, perni e
   animazioni e scrive simulazione/animazioni/editor.html. Disegna il diavoletto
-  come battaglia/scoria.lua (stessi giunti, stesso ordine) e campiona le clip
-  come battaglia/pose.lua; salva battaglia/animazioni.lua nello stesso formato.
+  come battle/scoria.lua (stessi giunti, stesso ordine) e campiona le clip
+  come battle/pose.lua; salva battle/animations.lua nello stesso formato.
 -->
 <style>
 /* banco di lavoro alto quanto la finestra, niente scorrimento della pagina: clip a sinistra,
@@ -151,10 +151,10 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		<button id="rifai" title="Rifai (Ctrl+Y)">↷ Rifai</button>
 		<button id="aiuto-apri" title="Come si usa l'editor">? Aiuto</button>
 		<span class="spazio"></span>
-		<button id="apri" title="Apri un file animazioni.lua">Apri…</button>
-		<button id="copia" title="Copia il file animazioni.lua negli appunti">Copia il testo</button>
+		<button id="apri" title="Apri un file animations.lua">Apri…</button>
+		<button id="copia" title="Copia il file animations.lua negli appunti">Copia il testo</button>
 		<button id="claude" hidden title="Salva qui sulla pagina: Claude le prende da qui e le mette nel gioco">Manda a Claude</button>
-		<button id="salva" class="primario" title="Salva animazioni.lua (Ctrl+S)">Salva animazioni.lua</button>
+		<button id="salva" class="primario" title="Salva animations.lua (Ctrl+S)">Salva animations.lua</button>
 		<input id="file" type="file" accept=".lua,.txt" hidden>
 	</header>
 	<div id="avviso"><span id="avviso-testo"></span><button id="ripristina">Torna a quelle del gioco</button></div>
@@ -204,13 +204,13 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 		</div>
 		<details id="fisica">
 		<summary>Impugnature, hitbox e perni<span id="fisica-stato"></span></summary>
-		<div class="barra" id="barra-prese" hidden title="Presa, perno e spalla di ogni arma (client/battaglia/impugnature.lua): valgono per tutte le clip con quell'arma">
+		<div class="barra" id="barra-prese" hidden title="Presa, perno e spalla di ogni arma (client/battle/grips.lua): valgono per tutte le clip con quell'arma">
 			<label style="color: var(--presa)"><input type="checkbox" id="vedi-prese" checked> presa e perno</label>
 			<span style="color: var(--tenue)">cerchio blu: presa · croce: perno (anche Alt sull'arma)</span>
 			<span id="pr-stato"></span>
 			<span class="spazio"></span>
 			<button id="pr-gioco" title="Le impugnature di adesso del gioco">Come nel gioco</button>
-			<button id="pr-salva" title="Salva impugnature.lua (va in client/battaglia/)">Salva impugnature.lua</button>
+			<button id="pr-salva" title="Salva grips.lua (va in client/battle/)">Salva grips.lua</button>
 		</div>
 		<div class="barra" title="Le hitbox sono fisica (client/sim/corpo.lua): cambiano il gioco per tutti, anche online, non il disegno">
 			<label style="color: var(--hitbox)"><input type="checkbox" id="vedi-cammina" checked> camminare</label>
@@ -229,7 +229,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<span id="pn-stato"></span>
 			<span class="spazio"></span>
 			<button id="pn-gioco" title="I perni di adesso del gioco">Come nel gioco</button>
-			<button id="pn-salva" title="Salva perni.lua (va in client/battaglia/)">Salva perni.lua</button>
+			<button id="pn-salva" title="Salva pivots.lua (va in client/battle/)">Salva pivots.lua</button>
 		</div>
 		</details>
 	</section>
@@ -300,7 +300,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 "use strict";
 // ---------------------------------------------------------------------------
 // Lettura di file Lua: solo le tabelle con numeri, stringhe e vero/falso che
-// usano diavoletto.lua e animazioni.lua
+// usano devil.lua e animations.lua
 function leggiLua(src) {
 	let i = 0;
 	const err = (m) => { throw new Error(m + " (carattere " + i + ")"); };
@@ -355,7 +355,7 @@ const D = leggiLua(DATI.diavoletto);
 const P = D.pezzi, PT = D.punti;
 // il disegno è alto DISEGNO_H pixel del mondo (sim/game.lua), qualunque siano le hitbox
 const K = DATI.disegno_h / D.altezza; // pixel del mondo per unità del disegno
-const LARGO = D.altezza * 0.75; // largo come in battaglia/scoria.lua, per l'ombra
+const LARGO = D.altezza * 0.75; // largo come in battle/scoria.lua, per l'ombra
 
 // Le hitbox (sim/corpo.lua), in pixel del mondo dai piedi: la capsula per
 // camminare e il cerchio dei colpi
@@ -371,7 +371,7 @@ function corpoInLua(c) {
 const CORPO_DEL_GIOCO = corpoInLua(CORPO_GIOCO);
 let corpoSalvato = CORPO_DEL_GIOCO;
 
-// I perni spostati (battaglia/perni.lua), come li usa battaglia/scoria.lua: per
+// I perni spostati (battle/pivots.lua), come li usa battle/scoria.lua: per
 // posto, di quanto si sposta il giunto; i pezzi del posto al contrario
 // (coda: la radice; pugno: le due manine)
 const POSTI_PERNO = ["busto", "testa", "braccio", "braccio_dietro", "gamba", "gamba_dietro", "ala", "coda", "pugno"];
@@ -394,7 +394,7 @@ function perniInLua(p) {
 const PERNI_DEL_GIOCO = perniInLua(PERNI_GIOCO);
 let perniSalvati = PERNI_DEL_GIOCO;
 
-// Le pelli (battaglia/pelli.lua), come le veste battaglia/scoria.lua: per posto i
+// Le pelli (battle/skins.lua), come le veste battle/scoria.lua: per posto i
 // pezzi dal basso, il primo al posto di quello di base, poi quelli sopra. Una
 // testa nuova senza le sue facce fa anche quelle.
 const PL = leggiLua(DATI.pelli);
@@ -443,7 +443,7 @@ function vesti() {
 }
 function strati(posto) { return vestito[posto] || [pezzoBase(posto)]; }
 
-// i canali, come battaglia/pose.lua: angoli in radianti, misure in unità del disegno
+// i canali, come battle/pose.lua: angoli in radianti, misure in unità del disegno
 const CANALI = [
 	{ id: "corpo", nome: "Corpo, inclina", tipo: "ang" },
 	{ id: "salto", nome: "Corpo, su e giù", tipo: "len" },
@@ -502,7 +502,7 @@ const CANALI = [
 	{ id: "mostra_manina_d", nome: "In scena: manina dietro", tipo: "vis" },
 	{ id: "mostra_arma", nome: "In scena: arma", tipo: "vis", arma: true },
 ];
-// le clip con l'arma in mano (battaglia/scoria.lua) e quelle solo per un'arma,
+// le clip con l'arma in mano (battle/scoria.lua) e quelle solo per un'arma,
 // che il gioco usa al posto loro con quell'arma (fermo_arma_mallet, mira_mallet)
 const ARMATE = ["fermo_arma", "corsa_arma", "aria_arma", "sale_arma", "scende_arma", "mira"];
 const NOMI_ARMI = new Set(Object.keys(leggiLua(DATI.armi).armi));
@@ -533,7 +533,7 @@ CANALI.forEach((c) => { if (c.tipo === "vis") NEUTRO[c.id] = /manina/.test(c.id)
 CANALI.forEach((c) => { if (NEUTRO[c.id] === undefined) NEUTRO[c.id] = 0; });
 const LIMITI = { ang: [-180, 180, 1], len: [-60, 60, 0.5], scala: [0.4, 1.6, 0.01], vis: [0, 1, 1] };
 
-// le clip del gioco, in quest'ordine, con come le usa (battaglia/scoria.lua)
+// le clip del gioco, in quest'ordine, con come le usa (battle/scoria.lua)
 const CLIP = [
 	["A terra", [
 		["fermo", "Fermo a terra: gira a tempo e sfuma nella <b>corsa</b> quando parte."],
@@ -577,9 +577,9 @@ function info(n) {
 const ORDINE = CLIP.flatMap(([, l]) => l.map(([n]) => n));
 
 const TESTA_FILE = [
-	"-- Le animazioni del diavoletto (battaglia/scoria.lua): fatte con l'editor",
+	"-- Le animazioni del diavoletto (battle/scoria.lua): fatte con l'editor",
 	"-- strumenti/animazioni/editor.html, che le apre e le salva qui. Non serve",
-	"-- toccarle a mano. Il formato, e come si campionano: battaglia/pose.lua.",
+	"-- toccarle a mano. Il formato, e come si campionano: battle/pose.lua.",
 ];
 
 // clip dal file: tracce piatte {t, v, curva, ...} -> chiavi {t, v, c}
@@ -630,7 +630,7 @@ function clipInLua(clips) {
 }
 
 // ---------------------------------------------------------------------------
-// Campionare, come battaglia/pose.lua
+// Campionare, come battle/pose.lua
 function dentro(c, t) {
 	const d = c.durata;
 	if (c.ciclo) return t - Math.floor(t / d) * d;
@@ -784,7 +784,7 @@ function tinta(n, col) {
 }
 
 // ---------------------------------------------------------------------------
-// Molle e coda, come battaglia/scoria.lua (solo quelle che le pose muovono)
+// Molle e coda, come battle/scoria.lua (solo quelle che le pose muovono)
 const MOLLE = { schiaccia: [16, 0.3], corpoLean: [10, 0.45], testa: [11, 0.28], coda: [7, 0.25] };
 const sim = { x: {}, v: {}, braccia: [0, 0], gambe: [0, 0], coda: [] };
 function simAzzera(po) {
@@ -828,17 +828,17 @@ function posaOra() {
 }
 
 // ---------------------------------------------------------------------------
-// Le armi in mano (battaglia/armi.lua, in pixel del mondo), come
-// battaglia/scoria.lua
+// Le armi in mano (battle/weapons.lua, in pixel del mondo), come
+// battle/scoria.lua
 const DA = leggiLua(DATI.armi).armi;
-// le manine staccate da ferme: dove finiscono le braccia che pendono (battaglia/scoria.lua)
+// le manine staccate da ferme: dove finiscono le braccia che pendono (battle/scoria.lua)
 const manoFerma = (posto, x) => [x + P[posto].x, PT.spalle[1] + P[posto].y - P[posto].h / 2 + P.pugno.h * 0.4];
 const MANO = { a: manoFerma("braccio", PT.spalle[0]), d: manoFerma("braccio_dietro", -PT.spalle[0]) };
 // la mano del braccio che pende vista dalla spalla, per girarlo verso la presa
 const verso = (l) => { const j = J(l === "a" ? "braccio" : "braccio_dietro"); return Math.atan2(MANO[l][1] - j[1], MANO[l][0] - j[0]); };
 // di quanto è girata l'arma a riposo attorno al perno, 0 verso avanti
 const RIPOSO = DATI.armi_riposo;
-// Presa, perno e spalla di ogni arma (battaglia/impugnature.lua): presa e perno
+// Presa, perno e spalla di ogni arma (battle/grips.lua): presa e perno
 // in pixel del mondo dall'origine dell'arma, la spalla in unità del disegno.
 // Le bozze di prima (un punto o due) non valgono più: si riparte dal gioco
 const PRESE_GIOCO = leggiLua(DATI.impugnature);
@@ -1038,7 +1038,7 @@ function disegna(dt) {
 	// l'arma in mano (clip con l'arma): gira attorno al suo perno, che sta sulla
 	// spalla dell'arma (più arma_x e arma_y); mirando punta dove si mira. Chi la
 	// impugna la segue: il braccio gira verso la presa, la manina ci sta sopra.
-	// Come battaglia/scoria.lua
+	// Come battle/scoria.lua
 	const nomeArma = $("arma").value, arma = DA[nomeArma], gr = pr[nomeArma];
 	const chi = conArma(nome) && vede("mostra_arma") ? impugnaOra() : null;
 	let armaM = null, presaF = null;
@@ -1893,7 +1893,7 @@ function aggiorna() {
 	$("annulla").disabled = !indietro.length;
 	$("rifai").disabled = !avanti.length;
 	const modificato = clipInLua(clips) !== salvato;
-	$("salva").textContent = modificato ? "Salva animazioni.lua •" : "Salva animazioni.lua";
+	$("salva").textContent = modificato ? "Salva animations.lua •" : "Salva animations.lua";
 	if (!suona) disegna(0);
 	disegnaTempo();
 	aggiornaSecchio();
@@ -2167,16 +2167,16 @@ async function scrivi(testo, nomeFile, cartella, f) {
 const fileAnimazioni = {}, fileCorpo = {}, filePerni = {}, filePrese = {};
 async function salva() {
 	const testo = clipInLua(clips);
-	if (await scrivi(testo, "animazioni.lua", "client/battaglia/", fileAnimazioni)) { salvato = testo; aggiorna(); }
+	if (await scrivi(testo, "animations.lua", "client/battle/", fileAnimazioni)) { salvato = testo; aggiorna(); }
 }
 $("salva").onclick = salva;
 $("pn-salva").onclick = async () => {
 	const testo = perniInLua(pn);
-	if (await scrivi(testo, "perni.lua", "client/battaglia/", filePerni)) { perniSalvati = testo; aggiorna(); }
+	if (await scrivi(testo, "pivots.lua", "client/battle/", filePerni)) { perniSalvati = testo; aggiorna(); }
 };
 $("pr-salva").onclick = async () => {
 	const testo = preseInLua(pr);
-	if (await scrivi(testo, "impugnature.lua", "client/battaglia/", filePrese)) { preseSalvate = testo; aggiorna(); }
+	if (await scrivi(testo, "grips.lua", "client/battle/", filePrese)) { preseSalvate = testo; aggiorna(); }
 };
 $("hb-salva").onclick = async () => {
 	const testo = corpoInLua(hb);
@@ -2184,7 +2184,7 @@ $("hb-salva").onclick = async () => {
 };
 $("copia").onclick = async () => {
 	const testo = clipInLua(clips);
-	try { await navigator.clipboard.writeText(testo); messaggio("Copiato: incollalo in client/battaglia/animazioni.lua o in chat."); }
+	try { await navigator.clipboard.writeText(testo); messaggio("Copiato: incollalo in client/battle/animations.lua o in chat."); }
 	catch (e) {
 		const ta = document.createElement("textarea");
 		ta.value = testo; document.body.appendChild(ta); ta.select();

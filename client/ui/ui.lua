@@ -5,7 +5,7 @@
 -- Pieces are added only when a screen needs them.
 --
 -- The .gui using it must have the "ui" texture (/ui/ui.atlas) and the
--- "titolo" font (/ui/titolo.font). To change style, change the values here.
+-- "titolo" font (/ui/title.font). To change style, change the values here.
 --
 --   local ui = require "ui.ui"
 --   local list_of = {}                                 -- a screen's buttons
@@ -15,7 +15,7 @@
 --   "destra" move the light over the buttons, "conferma" and "indietro" use them;
 --   ui/controller.lua)
 
-local screen = require "ui.schermo"
+local screen = require "ui.screen"
 
 local M = {}
 
@@ -35,7 +35,7 @@ M.C = {
 	MINT = c(0.36, 0.86, 0.72),          -- consumable items: parachute, trap, shield, springboard
 	SHADOW = c(0, 0, 0, 0.6),
 	SQUADRA = { c(1, 0.231, 0.306), c(0.239, 0.482, 1), c(0.18, 0.75, 0.44), c(0.96, 0.77, 0.09) },
-	-- the grades of badges (I..IV) and of pieces (ui/cartellino.lua): bronze, silver, gold, ember
+	-- the grades of badges (I..IV) and of pieces (ui/tag_card.lua): bronze, silver, gold, ember
 	GRADI = { c(0.79, 0.54, 0.35), c(0.79, 0.83, 0.86), c(0.96, 0.77, 0.09), c(1, 0.42, 0.16) },
 	GOLD = c(0.96, 0.77, 0.09),            -- the powers and the pieces' upgrades
 }
@@ -88,7 +88,7 @@ function M.alone(x, y, d, color, parent)
 	return n
 end
 
--- Full-screen solid background, on any proportion (ui/schermo.lua)
+-- Full-screen solid background, on any proportion (ui/screen.lua)
 function M.sfondo(parent)
 	local n = gui_node(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, C.BOTTOM, parent)
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)

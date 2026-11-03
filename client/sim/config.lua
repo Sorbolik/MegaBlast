@@ -194,7 +194,7 @@ C.MAX_PLACED = 8
 -- Sergio (24 October 2026): 2 shots, with 3 turns each a single one gets used
 -- up on the first useful turn.
 C.DRAFT_SECONDS = 15
--- the line-up with everyone's cards (client/menu/schieramento.lua) before the
+-- the line-up with everyone's cards (client/menu/lineup.lua) before the
 -- draft: online the server waits these seconds too
 C.LINEUP_SECONDS = 5
 C.DRAFT_OFFER = 3

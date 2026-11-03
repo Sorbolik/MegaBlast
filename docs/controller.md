@@ -43,7 +43,7 @@ riconosce (B tenuto o premuto da meno di 0,3 s) e non apre la rotellina.
 ## Impostazioni: i tasti da cambiare
 
 Nella home, la rotellina in alto a destra apre IMPOSTAZIONI
-(`client/menu/impostazioni.lua`, [impostazioni.md](impostazioni.md)). In alto
+(`client/menu/settings.lua`, [impostazioni.md](impostazioni.md)). In alto
 tre scelte: MIRA (lancetta o mirino), SPARO COL CONTROLLER (premendo o
 lasciando) e POTENZA COL CONTROLLER (levetta o grilletto). Sotto una riga per
 ogni comando, col suo tasto. Si sceglie la riga (col tocco o con la luce e A) e
@@ -67,7 +67,7 @@ alla mappatura di Sergio. Si salva subito nel profilo (`tasti`, `sparo`, `potenz
 ## I tasti sull'HUD
 
 Col controller in mano ogni pulsante dell'HUD mostra, nell'angolo, il tasto che
-lo usa (`client/ui/glifo.lua`, `PAD.glyphs` in `game.gui_script`), anche dopo
+lo usa (`client/ui/glyph.lua`, `PAD.glyphs` in `game.gui_script`), anche dopo
 averlo cambiato. Il tasto è disegnato come sul controller che si usa,
 riconosciuto dal nome che dà il sistema (`controller.family`):
 
@@ -124,7 +124,7 @@ e le stelle si passano con A.
   tenuto a metà poteva tremare fra premuto e lasciato. Un tasto
   lasciato conta solo dal controller in uso.
 - `client/ui/ui.lua`: la luce sui bottoni (`ui.tocco` con `ui.PAD`).
-- `client/ui/glifo.lua`: il disegno dei tasti; `client/menu/impostazioni.lua`: la schermata.
+- `client/ui/glyph.lua`: il disegno dei tasti; `client/menu/settings.lua`: la schermata.
 - `client/main/game.gui_script`, tabella `PAD`: cosa fanno i tasti in battaglia.
 - Simulatore: il controller finto (comandi `pad`, `pad_tieni`, `pad_lascia`,
   scenari `strumenti/simula/scenari/controller.txt` e `impostazioni.txt`).

@@ -108,7 +108,7 @@ func (l *Lobby) Join(p *Player, mode Mode) {
 }
 
 // announce tells everyone in a queue who is waiting (the waiting room's cards,
-// client/menu/sala.lua): {"t":"wait","of":4,"you":2,"vetrine":[{"liv":12,...},{}]}
+// client/menu/lobby.lua): {"t":"wait","of":4,"you":2,"vetrine":[{"liv":12,...},{}]}
 // in queue order, you = your place. Called with the lock held, at every join and leave.
 // bot_in: the seconds before the bots (normal queues only).
 func (l *Lobby) announce(name string, q []*Player, of int) {

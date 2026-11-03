@@ -8,8 +8,8 @@
 #   client/assets/armi/<arma>_icona.png   l'icona della barra e della scelta
 #   client/assets/armi/<proiettile>.png   i colpi in volo (razzo, palla del
 #                                         Cecchino, uovo, scheggia, globo)
-#   client/battaglia/armi.atlas
-#   client/battaglia/armi.lua             misure in unità del mondo, origine
+#   client/battle/weapons.atlas
+#   client/battle/weapons.lua             misure in unità del mondo, origine
 #                                         nella spalla, x avanti e y in su
 #   simulazione/foto/armi_anteprima.png   tutte insieme, per guardarle
 #
@@ -28,9 +28,9 @@ QUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, QUI)
 RADICE = os.path.join(QUI, "..", "..")
 OUT = os.path.join(RADICE, "client", "assets", "armi")
-LUA = os.path.join(RADICE, "client", "battaglia", "armi.lua")
-ATLAS = os.path.join(RADICE, "client", "battaglia", "armi.atlas")
-PRESE = os.path.join(RADICE, "client", "battaglia", "impugnature.lua")
+LUA = os.path.join(RADICE, "client", "battle", "weapons.lua")
+ATLAS = os.path.join(RADICE, "client", "battle", "weapons.atlas")
+PRESE = os.path.join(RADICE, "client", "battle", "grips.lua")
 ANTEPRIMA = os.path.join(RADICE, "simulazione", "foto", "armi_anteprima.png")
 
 # pixel delle immagini per unità del mondo: a zoom vicino su un telefono
@@ -50,7 +50,7 @@ from vettori import BORDO, RIGA, INK, COL, Disegno, rendi  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Le armi. x verso dove si mira, y in su. Il punto dove la mano le tiene non è
-# qui: lo dice client/battaglia/impugnature.lua, fatto nell'editor delle
+# qui: lo dice client/battle/grips.lua, fatto nell'editor delle
 # animazioni (l'anteprima lo legge per disegnare il pugno).
 
 
@@ -330,7 +330,7 @@ ARMI = {
     "bellows": (mantice, 30),
 }
 # pezzi che non si impugnano, grandi come in mano: l'uncino del Rampino (in
-# canna e in volo, battaglia/fune.lua)
+# canna e in volo, battle/rope.lua)
 PEZZI = {
     "uncino": uncino,
 }
@@ -491,7 +491,7 @@ def main():
            "-- Le armi in unità del mondo (i colpi dal centro),",
            "-- x avanti e y in su. Per ogni arma: immagine (tinta: le parti col colore",
            "-- della squadra), centro (x, y) e misura (w, h). Dove le tiene la mano:",
-           "-- battaglia/impugnature.lua.",
+           "-- battle/grips.lua.",
            "return {", "\tarmi = {"]
     foglio = []
     prese = impugnature()
@@ -550,7 +550,7 @@ def main():
 
 
 def impugnature():
-    # battaglia/impugnature.lua: nome = { presa = { x, y }, ... }, la presa
+    # battle/grips.lua: nome = { presa = { x, y }, ... }, la presa
     with open(PRESE) as f:
         return {n: [(float(x), float(y))] for n, x, y in
                 re.findall(r"^\s*(\w+)\s*=\s*\{\s*presa\s*=\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}", f.read(), re.M)}

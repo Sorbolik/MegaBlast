@@ -3,7 +3,7 @@
 Come si muovono robot, colpi ed esplosioni. I numeri veri sono nel codice:
 `client/sim/game.lua` (fisica), `client/sim/config.lua` (regole e armi),
 `client/sim/corpo.lua` (forme del corpo), `client/sim/melee.lua` (colpi corpo
-a corpo), `client/battaglia/levette.lua` (comandi sul telefono). La simulazione
+a corpo), `client/battle/sticks.lua` (comandi sul telefono). La simulazione
 è la stessa per client e server: chi la cambia, la cambia per tutti.
 
 Qui si spiega il perché e come stanno insieme i pezzi. Se un numero qui e uno
@@ -143,7 +143,7 @@ client disegna la stessa posa.
 
 ## I comandi
 
-Sul telefono ci sono due levette (`client/battaglia/levette.lua`):
+Sul telefono ci sono due levette (`client/battle/sticks.lua`):
 
 - **Levetta sinistra (movimento)**: di lato oltre il 15% cammina; inclinata in
   alto oltre 25° e spinta oltre il 25% salta, e risalta finché resta lì.
