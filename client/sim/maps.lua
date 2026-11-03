@@ -58,9 +58,12 @@ add("casuale", "Colline casuali", {
 
 M.DEFAULT = "forgia"
 
--- The maps of real matches: if no map is asked for, the match seed picks it,
--- so server and client (which share the seed) play on the same one.
-M.ROTATION = { "forgia", "crogiolo" }
+-- The maps of real matches (online and on the same phone): if no map is asked
+-- for, the match seed picks it, so server and client (which share the seed)
+-- play on the same one. Only the official campaign maps (Sergio, 3 Nov 2026:
+-- the old ones out of the game); Forge of the Titans, the Crucible and the
+-- random hills stay only as test terrain (tests and simulator scenarios).
+M.ROTATION = { "pavimento", "fossa" }
 
 function M.pick(seed)
 	return M.ROTATION[math.floor(seed) % #M.ROTATION + 1]
@@ -81,8 +84,8 @@ end
 -- apprentice maps document): the floor, a single wall-to-wall ground with the
 -- islands above, where you cannot fall (the free missions of Training and of
 -- the Forge), and the pit, the same floor with a lava pit in the middle (the
--- Smith). Sergio's choices, 2 November 2026. Out of rotation: played only in
--- missions.
+-- Smith). Sergio's choices, 2 November 2026. In M.ROTATION since 3 November,
+-- chosen in Training (menu/allenamento.lua).
 local PAVIMENTO_SPAWNS = { { x = 225, from = 300 }, { x = 1650, from = 585 }, { x = 630, from = 390 }, { x = 1260, from = 300 } }
 
 M.registra("pavimento", { name = "La Forgia", spawns = PAVIMENTO_SPAWNS,

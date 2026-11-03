@@ -8,7 +8,7 @@ cresce coi core (circa 12.000 partite all'ora su 4 core).
 ```bash
 python3 strumenti/arena/arena.py --partite 400                     # modi a turno, bot normali
 python3 strumenti/arena/arena.py --partite 5000 --livello misto    # livelli mescolati
-python3 strumenti/arena/arena.py --partite 1000 --modo ffa --mappa crogiolo
+python3 strumenti/arena/arena.py --partite 1000 --modo ffa --mappa fossa
 python3 strumenti/arena/arena.py --partite 1000 --punteggio variante.lua   # punti partita diversi
 python3 strumenti/arena/arena.py --rapporto simulazione/arena/partite.jsonl   # rifà solo il rapporto
 python3 strumenti/arena/arena.py --video 1                         # video del primo highlight

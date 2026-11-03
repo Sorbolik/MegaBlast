@@ -88,7 +88,10 @@ simulatore restano nel controllo dei 150 ms di Lua.
 
 Preparare i dipinti prima (durante la scelta delle armi) è stato scartato: la
 decodifica gira sul thread principale e lo scatto passerebbe su una schermata
-che si vede.
+che si vede. Per questo anche la partita che parte dopo la scelta delle armi
+(sullo stesso telefono, in missione e online) parte sotto l'iride (3 nov, da
+quando online si gioca sulle mappe dipinte): online i messaggi del server che
+arrivano mentre l'iride si chiude aspettano e passano subito dopo.
 
 ## Il controllo che lo mantiene
 

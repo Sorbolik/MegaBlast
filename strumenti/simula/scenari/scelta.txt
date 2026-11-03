@@ -8,7 +8,7 @@
 imposta prova_scelta 1
 imposta giocatori 2v2
 
-aspetta 1
+aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=scelta 5
 aspetta 0.5
