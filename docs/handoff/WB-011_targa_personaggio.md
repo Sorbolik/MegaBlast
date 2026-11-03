@@ -195,3 +195,5 @@ rifare per la scelta: i difetti stanno nei colori delle scene (A arancione) e ne
 - [x] la Corona sta sulla stessa riga del nome, a sinistra
 - [x] nessuna scritta nelle immagini
 - [x] pezzi staccati e dritti; la riga accesa (non usata) in bianco
+
+2026-11-03, più tardi · Sergio ha chiesto una targa ancora più semplice: la lama non si usa più (la vita è una riga piena). Della scheda resta nel gioco la Corona d'oro.

@@ -940,7 +940,7 @@ end
 
 -- Shots that left the screen at the top (Sergio, 3 Nov: «non mi interessa sapere
 -- quanto è in alto, ma in che punto tornerà sullo schermo», for the teleports):
--- a small iron arrow per shot, with the ember in the shooter's color, above
+-- a small V per shot, in the shooter's color, above
 -- the points, at the shot's x. It follows it while it is out and disappears
 -- when it comes back. Missile, egg, sniper, every orb, the swarm (one for all)
 CP.NOTCH = { W = 18, BELOW = 10, LATO = 12, N = 4 }
@@ -952,9 +952,8 @@ function CP.notch_create(self)
 	self.ticks = {}
 	for i = 1, CP.NOTCH.N do
 		local f = plate.arrow()
-		local k = CP.NOTCH.W / gui.get_size(f.ferro).x
+		local k = CP.NOTCH.W / f.w
 		gui.set_scale(f.radice, vmath.vector3(k, k, 1))
-		gui.set_color(f.cuore, vmath.vector4(1, 1, 1, 0.7))
 		f.pos = vmath.vector3()
 		self.ticks[i] = f
 	end
@@ -962,7 +961,7 @@ function CP.notch_create(self)
 end
 
 -- every frame: CP.notch(self, x, y) for every shot in flight (in the world), then
--- CP.notches_end(self, ember_color)
+-- CP.notches_end(self, color)
 function CP.notch(self, x, y)
 	local sx, sy = camera.to_screen(self.cam, x, y)
 	if sy <= screen.y1 or self.notches_n >= CP.NOTCH.N then return end
@@ -973,10 +972,10 @@ function CP.notch(self, x, y)
 	gui.set_position(f.radice, f.pos)
 end
 
-function CP.notches_end(self, ember_color)
+function CP.notches_end(self, color)
 	for i, f in ipairs(self.ticks) do
 		local above = i <= self.notches_n
-		if above then gui.set_color(f.ember, ember_color) end
+		if above then plate.arrow_color(f, color) end
 		if above ~= f.acceso then
 			gui.set_enabled(f.radice, above)
 			f.acceso = above
