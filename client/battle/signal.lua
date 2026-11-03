@@ -49,14 +49,14 @@ function M.new(world)
 	return s
 end
 
-function M.display(s, x, y, alto, largo, clock)
+function M.display(s, x, y, tall, wide, clock)
 	gui.set_enabled(s.radice, x ~= nil)
 	if not x then return end
-	V.x, V.y, V.z = x, y + alto / 2, 0
+	V.x, V.y, V.z = x, y + tall / 2, 0
 	gui.set_position(s.radice, V)
 	-- breathes: tightens and widens slightly, twice a second
 	local d = MARGIN + 1.5 * (1 + math.sin((clock or 0) * 6))
-	local mx, my = largo + d, alto / 2 + d
+	local mx, my = wide + d, tall / 2 + d
 	for _, a in ipairs(s.angoli) do
 		V.x, V.y = -a.sx * mx, -a.sy * my
 		gui.set_position(a.radice, V)

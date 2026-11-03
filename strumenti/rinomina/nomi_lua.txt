@@ -185,8 +185,8 @@ bersaglio target_pt
 luce highlight_now
 di_turno in_order_now
 vantaggio lead_text
-cammina walk_box
-colpi hit_circle
+cammina walk
+colpi shots
 PRIMARIE PRIMARIES
 LIVELLO_MAX LEVEL_MAX
 TELEPORT_SOGLIE TELEPORT_THRESHOLDS
@@ -206,10 +206,10 @@ tutti all_done
 avanti forward
 chi who_hit
 vinta won
-largo wide
+largo width
 alto tall
-raggio radius_px
-centro center_y
+raggio radius
+centro center
 scossa shake_frame
 LISTA WHITELIST
 tetto level_cap
@@ -1050,7 +1050,7 @@ lezioni lessons
 limita clamp_to
 linea segment
 linee segments
-livelli levels
+livelli z_order
 livello_prima level_before
 lontano far
 luci lights
@@ -1532,7 +1532,7 @@ vicini neighbors
 vicino near
 vinte won_ones
 visibile is_visible
-viso visage
+viso face_name
 vista viewport
 visti seen
 visto was_seen

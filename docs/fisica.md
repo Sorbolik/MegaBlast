@@ -2,7 +2,7 @@
 
 Come si muovono robot, colpi ed esplosioni. I numeri veri sono nel codice:
 `client/sim/game.lua` (fisica), `client/sim/config.lua` (regole e armi),
-`client/sim/corpo.lua` (forme del corpo), `client/sim/melee.lua` (colpi corpo
+`client/sim/body.lua` (forme del corpo), `client/sim/melee.lua` (colpi corpo
 a corpo), `client/battle/sticks.lua` (comandi sul telefono). La simulazione
 è la stessa per client e server: chi la cambia, la cambia per tutti.
 
@@ -55,7 +55,7 @@ Come si muove (è la parte più importante per la sensazione di gioco):
 
 ### Le forme del corpo
 
-Due forme, che si cambiano dall'editor delle animazioni (`sim/corpo.lua`):
+Due forme, che si cambiano dall'editor delle animazioni (`sim/body.lua`):
 
 - la **capsula per camminare** (largo 29,4, alto 39,2): urta il terreno, le
   casse e gli altri robot;

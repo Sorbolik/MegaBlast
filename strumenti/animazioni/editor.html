@@ -212,7 +212,7 @@ h2 { font: 600 12px/1 var(--f-testo); text-transform: uppercase; letter-spacing:
 			<button id="pr-gioco" title="Le impugnature di adesso del gioco">Come nel gioco</button>
 			<button id="pr-salva" title="Salva grips.lua (va in client/battle/)">Salva grips.lua</button>
 		</div>
-		<div class="barra" title="Le hitbox sono fisica (client/sim/corpo.lua): cambiano il gioco per tutti, anche online, non il disegno">
+		<div class="barra" title="Le hitbox sono fisica (client/sim/body.lua): cambiano il gioco per tutti, anche online, non il disegno">
 			<label style="color: var(--hitbox)"><input type="checkbox" id="vedi-cammina" checked> camminare</label>
 			<label>largo <input type="number" class="hb" id="hb-largo" step="0.1" min="4"></label>
 			<label>alto <input type="number" class="hb" id="hb-alto" step="0.1" min="4"></label>
@@ -348,25 +348,47 @@ function leggiLua(src) {
 	return valore();
 }
 
+// I file del gioco hanno i nomi dei campi in inglese; qui dentro l'editor li usa
+// in italiano: si traducono quando si leggono (anche i file e le bozze di prima,
+// coi nomi italiani, si aprono) e quando si scrivono
+const CAMPI = {
+	diavoletto: { height: "altezza", outline: "bordo", pieces: "pezzi", tint: "tinta", points: "punti", tail: "coda", tail_rest: "coda_riposo", chute_y: "paracadute_y" },
+	corpo: { walk: "cammina", width: "largo", height: "alto", hit: "colpi", radius: "raggio", center: "centro" },
+	pelli: { replace: "sostituisce", over: "sopra", skins: "pelli", category: "categoria", pieces: "pezzi", tint: "tinta", mode: "modo", tail: "coda", tail_rest: "coda_riposo", tail_root: "coda_radice" },
+	armi: { weapons: "armi", pieces: "pezzi", shots: "colpi", tint: "tinta" },
+	impugnature: { grip: "presa", pivot: "perno", shoulder: "spalla", scale: "scala" },
+	clip: { duration: "durata", loop: "ciclo", tracks: "tracce", face: "viso", held_by: "impugna", layers: "livelli" },
+};
+// i valori di modo nelle pelli
+const MODI = { replace: "sostituisce", over: "sopra" };
+function inItaliano(v, m) {
+	if (Array.isArray(v)) return v.map((x) => inItaliano(x, m));
+	if (!v || typeof v !== "object") return v;
+	const o = {};
+	for (const [k, x] of Object.entries(v)) o[m[k] || k] = m === CAMPI.pelli && k === "mode" ? (MODI[x] || x) : inItaliano(x, m);
+	return o;
+}
+const leggiDati = (src, m) => inItaliano(leggiLua(src), m);
+
 // ---------------------------------------------------------------------------
 // I dati del gioco
 const DATI = JSON.parse(document.getElementById("dati").textContent);
-const D = leggiLua(DATI.diavoletto);
+const D = leggiDati(DATI.diavoletto, CAMPI.diavoletto);
 const P = D.pezzi, PT = D.punti;
 // il disegno è alto DISEGNO_H pixel del mondo (sim/game.lua), qualunque siano le hitbox
 const K = DATI.disegno_h / D.altezza; // pixel del mondo per unità del disegno
 const LARGO = D.altezza * 0.75; // largo come in battle/scoria.lua, per l'ombra
 
-// Le hitbox (sim/corpo.lua), in pixel del mondo dai piedi: la capsula per
+// Le hitbox (sim/body.lua), in pixel del mondo dai piedi: la capsula per
 // camminare e il cerchio dei colpi
-const CORPO_GIOCO = leggiLua(DATI.corpo);
+const CORPO_GIOCO = leggiDati(DATI.corpo, CAMPI.corpo);
 let hb = JSON.parse(JSON.stringify(CORPO_GIOCO));
 // corpo.lua com'è, coi numeri nuovi (i commenti restano)
 function corpoInLua(c) {
 	const n = (v) => String(Math.round(v * 100) / 100);
 	return DATI.corpo
-		.replace(/cammina = \{[^}]*\}/, `cammina = { largo = ${n(c.cammina.largo)}, alto = ${n(c.cammina.alto)} }`)
-		.replace(/colpi = \{[^}]*\}/, `colpi = { raggio = ${n(c.colpi.raggio)}, centro = ${n(c.colpi.centro)} }`);
+		.replace(/(cammina|walk) = \{[^}]*\}/, `walk = { width = ${n(c.cammina.largo)}, height = ${n(c.cammina.alto)} }`)
+		.replace(/(colpi|hit) = \{[^}]*\}/, `hit = { radius = ${n(c.colpi.raggio)}, center = ${n(c.colpi.centro)} }`);
 }
 const CORPO_DEL_GIOCO = corpoInLua(CORPO_GIOCO);
 let corpoSalvato = CORPO_DEL_GIOCO;
@@ -397,7 +419,7 @@ let perniSalvati = PERNI_DEL_GIOCO;
 // Le pelli (battle/skins.lua), come le veste battle/scoria.lua: per posto i
 // pezzi dal basso, il primo al posto di quello di base, poi quelli sopra. Una
 // testa nuova senza le sue facce fa anche quelle.
-const PL = leggiLua(DATI.pelli);
+const PL = leggiDati(DATI.pelli, CAMPI.pelli);
 // come FACCE di scoria.lua: le ultime cinque il diavoletto di base non le ha, fa la testa normale
 const FACCE = ["testa", "testa_colpita", "testa_felice", "testa_ko", "testa_mira", "testa_arrabbiata", "testa_sconfitta", "testa_paura", "testa_provocazione"];
 const pezzoBase = (posto) => P[posto] || (posto.startsWith("testa_") && P.testa) || null;
@@ -505,7 +527,7 @@ const CANALI = [
 // le clip con l'arma in mano (battle/scoria.lua) e quelle solo per un'arma,
 // che il gioco usa al posto loro con quell'arma (fermo_arma_mallet, mira_mallet)
 const ARMATE = ["fermo_arma", "corsa_arma", "aria_arma", "sale_arma", "scende_arma", "mira"];
-const NOMI_ARMI = new Set(Object.keys(leggiLua(DATI.armi).armi));
+const NOMI_ARMI = new Set(Object.keys(leggiDati(DATI.armi, CAMPI.armi).armi));
 function variante(n) {
 	for (const b of ARMATE) if (n.startsWith(b + "_") && NOMI_ARMI.has(n.slice(b.length + 1))) return { base: b, arma: n.slice(b.length + 1) };
 	return null;
@@ -577,14 +599,14 @@ function info(n) {
 const ORDINE = CLIP.flatMap(([, l]) => l.map(([n]) => n));
 
 const TESTA_FILE = [
-	"-- Le animazioni del diavoletto (battle/scoria.lua): fatte con l'editor",
-	"-- strumenti/animazioni/editor.html, che le apre e le salva qui. Non serve",
-	"-- toccarle a mano. Il formato, e come si campionano: battle/pose.lua.",
+	"-- The devil's animations (battle/scoria.lua): made with the editor",
+	"-- strumenti/animazioni/editor.html, which opens them and saves them here. No",
+	"-- need to edit them by hand. The format, and how they are sampled: battle/pose.lua.",
 ];
 
 // clip dal file: tracce piatte {t, v, curva, ...} -> chiavi {t, v, c}
 function clipDaLua(src) {
-	const tab = leggiLua(src);
+	const tab = leggiDati(src, CAMPI.clip);
 	const clips = {};
 	for (const [nome, c] of Object.entries(tab)) {
 		const tracce = {};
@@ -613,16 +635,16 @@ function clipInLua(clips) {
 	nomi.push(...Object.keys(clips).filter((n) => !nomi.includes(n)));
 	for (const nome of nomi) {
 		const c = clips[nome];
-		r.push(`\t${nome} = { durata = ${num(c.durata)}, ciclo = ${c.ciclo ? "true" : "false"},`);
-		r.push("\t\ttracce = {");
+		r.push(`\t${nome} = { duration = ${num(c.durata)}, loop = ${c.ciclo ? "true" : "false"},`);
+		r.push("\t\ttracks = {");
 		for (const { id } of CANALI) {
 			const k = c.tracce[id];
 			if (k && k.length) r.push(`\t\t\t${id} = { ${k.map((x) => `${num(x.t)}, ${num(x.v)}, ${x.c}`).join(", ")} },`);
 		}
 		r.push("\t\t},");
-		if (c.viso.length) r.push(`\t\tviso = { ${c.viso.map((x) => `${num(x.t)}, "${x.f}"`).join(", ")} },`);
-		if (c.impugna) r.push(`\t\timpugna = "${c.impugna}",`);
-		if (c.livelli) r.push(`\t\tlivelli = { ${c.livelli.map((x) => `"${x}"`).join(", ")} },`);
+		if (c.viso.length) r.push(`\t\tface = { ${c.viso.map((x) => `${num(x.t)}, "${x.f}"`).join(", ")} },`);
+		if (c.impugna) r.push(`\t\theld_by = "${c.impugna}",`);
+		if (c.livelli) r.push(`\t\tlayers = { ${c.livelli.map((x) => `"${x}"`).join(", ")} },`);
 		r.push("\t},");
 	}
 	r.push("}");
@@ -830,7 +852,7 @@ function posaOra() {
 // ---------------------------------------------------------------------------
 // Le armi in mano (battle/weapons.lua, in pixel del mondo), come
 // battle/scoria.lua
-const DA = leggiLua(DATI.armi).armi;
+const DA = leggiDati(DATI.armi, CAMPI.armi).armi;
 // le manine staccate da ferme: dove finiscono le braccia che pendono (battle/scoria.lua)
 const manoFerma = (posto, x) => [x + P[posto].x, PT.spalle[1] + P[posto].y - P[posto].h / 2 + P.pugno.h * 0.4];
 const MANO = { a: manoFerma("braccio", PT.spalle[0]), d: manoFerma("braccio_dietro", -PT.spalle[0]) };
@@ -841,7 +863,7 @@ const RIPOSO = DATI.armi_riposo;
 // Presa, perno e spalla di ogni arma (battle/grips.lua): presa e perno
 // in pixel del mondo dall'origine dell'arma, la spalla in unità del disegno.
 // Le bozze di prima (un punto o due) non valgono più: si riparte dal gioco
-const PRESE_GIOCO = leggiLua(DATI.impugnature);
+const PRESE_GIOCO = leggiDati(DATI.impugnature, CAMPI.impugnature);
 const punto2 = (m) => Array.isArray(m) && m.length === 2 && m.every((x) => typeof x === "number");
 const copiaPrese = (p) => {
 	const o = {};
@@ -855,7 +877,7 @@ let pr = copiaPrese(PRESE_GIOCO);
 function preseInLua(p) {
 	const n = (v) => String(Math.round(v * 10) / 10);
 	const xy = (m) => `{ ${n(m[0])}, ${n(m[1])} }`;
-	const righe = Object.keys(DA).map((k) => `\t${k} = { presa = ${xy(p[k].presa)}, perno = ${xy(p[k].perno)}, spalla = ${xy(p[k].spalla)}${Math.abs(p[k].scala - 1) > 0.005 ? `, scala = ${String(Math.round(p[k].scala * 100) / 100)}` : ""} },\n`);
+	const righe = Object.keys(DA).map((k) => `\t${k} = { grip = ${xy(p[k].presa)}, pivot = ${xy(p[k].perno)}, shoulder = ${xy(p[k].spalla)}${Math.abs(p[k].scala - 1) > 0.005 ? `, scale = ${String(Math.round(p[k].scala * 100) / 100)}` : ""} },\n`);
 	return DATI.impugnature.replace(/return \{[\s\S]*$/, "return {\n" + righe.join("") + "}\n");
 }
 const PRESE_DEL_GIOCO = preseInLua(pr);
@@ -1125,7 +1147,7 @@ function disegna(dt) {
 		g.globalAlpha = 1;
 	}
 
-	// le hitbox (sim/corpo.lua) dal centro dei piedi: terreno e colpi toccano
+	// le hitbox (sim/body.lua) dal centro dei piedi: terreno e colpi toccano
 	// queste, non il disegno
 	maniglie = [];
 	const dpr = window.devicePixelRatio || 1;
@@ -2435,7 +2457,7 @@ try {
 try {
 	const bozza = localStorage.getItem("megablast-corpo");
 	if (bozza && bozza !== CORPO_DEL_GIOCO) {
-		const c = leggiLua(bozza);
+		const c = leggiDati(bozza, CAMPI.corpo);
 		if (c.cammina && c.colpi) hb = c;
 	}
 } catch (e) { /* niente memoria del browser o bozza rotta */ }
@@ -2445,7 +2467,7 @@ try {
 } catch (e) { /* niente memoria del browser o bozza rotta */ }
 try {
 	const bozza = localStorage.getItem("megablast-impugnature");
-	if (bozza && bozza !== PRESE_DEL_GIOCO) pr = copiaPrese(leggiLua(bozza));
+	if (bozza && bozza !== PRESE_DEL_GIOCO) pr = copiaPrese(leggiDati(bozza, CAMPI.impugnature));
 } catch (e) { /* niente memoria del browser o bozza rotta */ }
 // una scelta per categoria, solo per quelle che hanno pelli
 for (const c of [...PL.sostituisce, ...PL.sopra]) {

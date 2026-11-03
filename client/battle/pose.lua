@@ -2,9 +2,9 @@
 -- editor strumenti/animazioni/editor.html): keyframes per channel, sampled at
 -- any time, so motion is smooth at every frame rate.
 --
--- A clip: { durata = seconds, ciclo = true if it loops, tracce = { channel =
--- { t, v, curve, t, v, curve, ... } }, viso = { t, "face", ... },
--- livelli = { pieces from the back }, impugna = "who holds the weapon" }. The
+-- A clip: { duration = seconds, loop = true if it loops, tracks = { channel =
+-- { t, v, curve, t, v, curve, ... } }, face = { t, "face", ... },
+-- layers = { pieces from the back }, held_by = "who holds the weapon" }. The
 -- curve says how to go from one key to the next: 0 smooth, 1 linear, 2 step.
 -- Channels a clip doesn't have stay neutral.
 --
@@ -44,21 +44,21 @@ for _, c in ipairs(M.CHANNELS) do M.NEUTRAL[c] = M.NEUTRAL[c] or 0 end
 local floor = math.floor
 
 function M.nuova()
-	local p = { viso = nil, face_weight = 0 }
+	local p = { face_name = nil, face_weight = 0 }
 	M.azzera(p)
 	return p
 end
 
 function M.azzera(p)
 	for c, v in pairs(M.NEUTRAL) do p[c] = v end
-	p.viso, p.face_weight = nil, 0
+	p.face_name, p.face_weight = nil, 0
 	p.clip, p.clip_weight = nil, 0
 end
 
 -- the time inside the clip: looping it wraps, otherwise it stops at the end
 local function inside(clip, t)
-	local d = clip.durata
-	if clip.ciclo then return t - floor(t / d) * d end
+	local d = clip.duration
+	if clip.loop then return t - floor(t / d) * d end
 	return t < 0 and 0 or (t > d and d or t)
 end
 
@@ -122,12 +122,12 @@ end
 function M.aggiungi(p, clip, t, weight)
 	if weight <= 0 then return end
 	t = inside(clip, t)
-	local d, cycle = clip.durata, clip.ciclo
-	for c, tr in pairs(clip.tracce) do
+	local d, cycle = clip.duration, clip.loop
+	for c, tr in pairs(clip.tracks) do
 		p[c] = p[c] + weight * (M.valore(tr, t, d, cycle) - M.NEUTRAL[c])
 	end
 	if weight > p.clip_weight then p.clip, p.clip_weight = clip, weight end
-	local visage = clip.viso
+	local visage = clip.face
 	if visage and weight > p.face_weight then
 		-- the face steps: the last key not after t (before the first one, looping,
 		-- the last one of the previous loop)
@@ -135,7 +135,7 @@ function M.aggiungi(p, clip, t, weight)
 		for k = 1, #visage, 2 do
 			if visage[k] <= t then f = visage[k + 1] else break end
 		end
-		p.viso, p.face_weight = f, weight
+		p.face_name, p.face_weight = f, weight
 	end
 end
 

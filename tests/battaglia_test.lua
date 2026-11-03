@@ -103,15 +103,15 @@ local D0 = require "battle.devil"
 -- is as far from the shoulder as the arm is long, and clips can move the shoulder)
 local function holds(v, name)
 	local g = GRIPS[name]
-	local gx, gy = world(v.armi[name], g.presa[1], g.presa[2])
-	local who = v.posa.clip and v.posa.clip.impugna or "braccio_a"
+	local gx, gy = world(v.armi[name], g.grip[1], g.grip[2])
+	local who = v.posa.clip and v.posa.clip.held_by or "braccio_a"
 	if who:find("^manina") then
 		local mx, my = world(v[who], 0, 0)
 		return math.abs(gx - mx) < 0.5 and math.abs(gy - my) < 0.5, who
 	elseif who:find("^braccio") then
-		local pz = D0.pezzi[who == "braccio_a" and "braccio" or "braccio_dietro"]
+		local pz = D0.pieces[who == "braccio_a" and "braccio" or "braccio_dietro"]
 		local jx, jy = world(v[who], 0, 0)
-		local hx, hy = world(v[who], pz.x * v.k, (pz.y - pz.h / 2 + D0.pezzi.pugno.h * 0.4) * v.k)
+		local hx, hy = world(v[who], pz.x * v.k, (pz.y - pz.h / 2 + D0.pieces.pugno.h * 0.4) * v.k)
 		return math.abs(angle_deg(math.atan2(hy - jy, hx - jx) - math.atan2(gy - jy, gx - jx))) < 0.02, who
 	end
 	return true, who
@@ -153,7 +153,7 @@ st.aim = nil
 -- in a fixed order: pairs changes order from one run to the next and, if the
 -- last one were the Blade, the death check below wouldn't change it
 local name_list = {}
-for name in pairs(require("battle.weapons").armi) do name_list[#name_list + 1] = name end
+for name in pairs(require("battle.weapons").weapons) do name_list[#name_list + 1] = name end
 table.sort(name_list)
 for _, name in ipairs(name_list) do
 	check(s.armi[name] ~= nil, name .. ": the drawing is in the hand")
@@ -202,9 +202,9 @@ check(math.abs(game.DISEGNO_H - s.h) < 1e-9, "the body is as tall as the drawing
 local pose = require "battle.pose"
 local A = require "battle.animations"
 local function near(a, b) return math.abs(a - b) < 1e-6 end
-local clip = { durata = 1, ciclo = true, tracce = { testa = { 0, 0, 0, 0.5, 1, 1, 0.75, 2, 2 } },
-	viso = { 0.2, "testa_felice", 0.6, "testa_ko" } }
-local tr = clip.tracce.testa
+local clip = { duration = 1, loop = true, tracks = { testa = { 0, 0, 0, 0.5, 1, 1, 0.75, 2, 2 } },
+	face = { 0.2, "testa_felice", 0.6, "testa_ko" } }
+local tr = clip.tracks.testa
 check(near(pose.valore(tr, 0, 1, true), 0) and near(pose.valore(tr, 0.5, 1, true), 1),
 	"poses: on the keys the key's value")
 check(near(pose.valore(tr, 0.625, 1, true), 1.5), "poses: linear curve halfway")
@@ -213,22 +213,22 @@ local p = pose.nuova()
 pose.aggiungi(p, clip, 3.5, 0.5)
 check(near(p.testa, 0.5) and near(p.schiaccia, 1) and near(p.braccio_a, 0),
 	"poses: looping, time wraps, the weight scales, missing channels stay neutral")
-check(p.viso == "testa_felice", "poses: the face steps")
+check(p.face_name == "testa_felice", "poses: the face steps")
 pose.azzera(p)
 pose.aggiungi(p, clip, 0.1, 1)
-check(p.viso == "testa_ko", "poses: before the first face, looping, the last one")
-local end_of = { durata = 1, ciclo = false, tracce = { corpo = { 0, 0, 0, 1, 2, 0 } } }
-check(near(pose.valore(end_of.tracce.corpo, 0.5, 1, false), 1) and near(pose.valore(end_of.tracce.corpo, 1, 1, false), 2),
+check(p.face_name == "testa_ko", "poses: before the first face, looping, the last one")
+local end_of = { duration = 1, loop = false, tracks = { corpo = { 0, 0, 0, 1, 2, 0 } } }
+check(near(pose.valore(end_of.tracks.corpo, 0.5, 1, false), 1) and near(pose.valore(end_of.tracks.corpo, 1, 1, false), 2),
 	"poses: a non-looping clip starts and arrives gently and stops at the end")
 local name_list = {}
 for _, c in ipairs(pose.CHANNELS) do name_list[c] = true end
 local good_ones = true
 for nome, c in pairs(A) do
-	if not (c.durata > 0) then good_ones = false; print("     " .. nome .. ": duration") end
-	for channel, tr in pairs(c.tracce) do
+	if not (c.duration > 0) then good_ones = false; print("     " .. nome .. ": duration") end
+	for channel, tr in pairs(c.tracks) do
 		if not name_list[channel] or #tr % 3 ~= 0 or #tr == 0 then good_ones = false; print("     " .. nome .. "." .. channel) end
 		for k = 1, #tr - 3, 3 do
-			if tr[k + 3] < tr[k] or tr[k] < 0 or tr[k + 3] > c.durata then good_ones = false; print("     " .. nome .. "." .. channel .. ": times") end
+			if tr[k + 3] < tr[k] or tr[k] < 0 or tr[k + 3] > c.duration then good_ones = false; print("     " .. nome .. "." .. channel .. ": times") end
 		end
 	end
 end
@@ -243,15 +243,15 @@ end
 do
 	local A2 = require "battle.animations"
 	local old_f = A2.fermo
-	A2.fermo = { durata = 1, ciclo = true, tracce = { testa_x = { 0, 10, 0 }, braccio_d_y = { 0, -8, 0 }, coda_x = { 0, 5, 0 } } }
+	A2.fermo = { duration = 1, loop = true, tracks = { testa_x = { 0, 10, 0 }, braccio_d_y = { 0, -8, 0 }, coda_x = { 0, 5, 0 } } }
 	local v = scoria.new(vec(1, 0.2, 0.3, 1))
 	local st2 = { x = 100, y = 50, facing = 1, grounded = true, moving = 0 }
 	for _ = 1, 5 do scoria.update(v, 1 / 60, st2) end
 	local D = require "battle.devil"
 	local k = v.k
-	check(math.abs(v.collo.pos.x - (D.punti.collo[1] + 10) * k) < 1e-6
-		and math.abs(v.braccio_d.pos.y - (D.punti.spalle[2] - 8) * k) < 1e-6
-		and math.abs(v.coda[1][2].pos.x - (D.punti.coda[1] + 5) * k) < 1e-6,
+	check(math.abs(v.collo.pos.x - (D.points.collo[1] + 10) * k) < 1e-6
+		and math.abs(v.braccio_d.pos.y - (D.points.spalle[2] - 8) * k) < 1e-6
+		and math.abs(v.coda[1][2].pos.x - (D.points.coda[1] + 5) * k) < 1e-6,
 		"poses: head, arm and tail move with the x and y channels")
 	A2.fermo = old_f
 end
@@ -271,11 +271,11 @@ do
 		if n.parent == v.braccio_a and n.img == "braccio" then arm = n end
 		if n.parent == v.testa and n.img == "testa" then head = n end
 	end
-	check(arm and math.abs(arm.pos.x - (D.pezzi.braccio.x - 3) * k) < 1e-6
-		and math.abs(arm.pos.y - (D.pezzi.braccio.y + 2) * k) < 1e-6
-		and math.abs(v.braccio_a.pos.x - (D.punti.spalle[1] + 3 + v.posa.braccio_a_x) * k) < 1e-6,
+	check(arm and math.abs(arm.pos.x - (D.pieces.braccio.x - 3) * k) < 1e-6
+		and math.abs(arm.pos.y - (D.pieces.braccio.y + 2) * k) < 1e-6
+		and math.abs(v.braccio_a.pos.x - (D.points.spalle[1] + 3 + v.posa.braccio_a_x) * k) < 1e-6,
 		"pivots: the arm turns around the moved pivot and at rest stays where it was")
-	check(head and math.abs(head.pos.y - (D.pezzi.testa.y - 4) * k) < 1e-6,
+	check(head and math.abs(head.pos.y - (D.pieces.testa.y - 4) * k) < 1e-6,
 		"pivots: the head stays where it was")
 	package.loaded["battle.pivots"] = {}
 	package.loaded["battle.scoria"] = nil
@@ -309,7 +309,7 @@ do
 	end
 	check(still_ones, "pivots: torso, tail and little hands moved, at rest the pieces stay where they were")
 	local px, py = world(v1.busto, 0, 0)
-	local PT = D0.punti
+	local PT = D0.points
 	local gx, gy = world(v1.forma, (PT.bacino[1] + 3 + v1.posa.busto_x) * v1.k, (PT.bacino[2] + 20 + v1.posa.busto_y) * v1.k)
 	check(math.abs(px - gx) < 1e-6 and math.abs(py - gy) < 1e-6, "pivots: the torso turns around its pivot")
 	package.loaded["battle.pivots"] = {}
@@ -322,11 +322,11 @@ end
 do
 	local A2 = require "battle.animations"
 	local old_f = A2.mira_missile
-	A2.mira_missile = { durata = 1, ciclo = true, tracce = {} }
+	A2.mira_missile = { duration = 1, loop = true, tracks = {} }
 	-- a grip as far from the shoulder as the arm is long (the real one is moved
 	-- by Sergio in the editor)
 	local real_grip = GRIPS.missile
-	GRIPS.missile = { presa = { 2.4, -4 }, perno = { -6.9, -4 }, spalla = { 32, 110 } }
+	GRIPS.missile = { grip = { 2.4, -4 }, pivot = { -6.9, -4 }, shoulder = { 32, 110 } }
 	package.loaded["battle.pivots"] = { braccio = { 3, -2 } }
 	package.loaded["battle.scoria"] = nil
 	local sc2 = require "battle.scoria"
@@ -334,9 +334,9 @@ do
 	sc2.set_weapon(v, "missile")
 	for _ = 1, 30 do sc2.update(v, 1 / 60, { x = 100, y = 50, facing = 1, grounded = true, moving = 0, turno = true, aim = 0.3 }) end
 	local g = GRIPS.missile
-	local gx, gy = world(v.armi.missile, g.presa[1], g.presa[2])
+	local gx, gy = world(v.armi.missile, g.grip[1], g.grip[2])
 	local px, py = world(v.braccio_a, 0, 0)
-	local b, pu = D0.pezzi.braccio, D0.pezzi.pugno
+	local b, pu = D0.pieces.braccio, D0.pieces.pugno
 	local hx, hy = world(v.braccio_a, (b.x - 3) * v.k, (b.y + 2 - b.h / 2 + pu.h * 0.4) * v.k)
 	check(math.abs(gx - hx) < 0.5 and math.abs(gy - hy) < 0.5 and px ~= gx, "pivots: with the arm's pivot moved the weapon stays in the hand")
 	A2.mira_missile = old_f
@@ -351,10 +351,10 @@ do
 	local A2 = require "battle.animations"
 	local old_fs = { fermo = A2.fermo, fermo_arma = A2.fermo_arma, fermo_arma_missile = A2.fermo_arma_missile }
 	A2.fermo_arma_missile = nil
-	A2.fermo = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, mostra_manina_a = { 0, 1, 2 },
+	A2.fermo = { duration = 1, loop = true, tracks = { mostra_braccio_a = { 0, 0, 2 }, mostra_manina_a = { 0, 1, 2 },
 		manina_a_x = { 0, 7, 2 }, manina_a = { 0, 0.5, 2 }, mostra_ala = { 0, 0, 2 }, mostra_coda = { 0, 0, 2 },
 		mostra_testa = { 0, 0, 2 }, mostra_gamba_d = { 0, 0, 2 } } }
-	A2.fermo_arma = { durata = 1, ciclo = true, tracce = { mostra_braccio_a = { 0, 0, 2 }, arma = { 0, 0.5, 2 } } }
+	A2.fermo_arma = { duration = 1, loop = true, tracks = { mostra_braccio_a = { 0, 0, 2 }, arma = { 0, 0.5, 2 } } }
 	package.loaded["battle.scoria"] = nil
 	local sc2 = require "battle.scoria"
 	local v = sc2.new(vec(1, 0.2, 0.3, 1))
@@ -367,7 +367,7 @@ do
 		and not v.gamba_d.enabled and v.gamba_a.enabled and v.busto.enabled,
 		"pieces: the clip removes arm, head, leg, wing and tail and adds the little hand")
 	local D = require "battle.devil"
-	local mx = (D.punti.spalle[1] + D.pezzi.braccio.x + 7) * v.k
+	local mx = (D.points.spalle[1] + D.pieces.braccio.x + 7) * v.k
 	check(math.abs(v.manina_a.pos.x - mx) < 1e-6 and math.abs(math.rad(v.manina_a.euler.z) - 0.5) < 1e-6,
 		"pieces: the little hand is free, the clip moves and turns it")
 	st2.turno = true
@@ -403,7 +403,7 @@ do
 		return math.rad(v.giro.euler.z)
 	end
 	local mallet0, missile0 = turn_around("mallet"), turn_around("missile")
-	A2.fermo_arma_mallet = { durata = 1, ciclo = true, tracce = { arma = { 0, 1, 2 } } }
+	A2.fermo_arma_mallet = { duration = 1, loop = true, tracks = { arma = { 0, 1, 2 } } }
 	local mallet, missile = turn_around("mallet"), turn_around("missile")
 	check(mallet - mallet0 > 0.8 and math.abs(missile - missile0) < 0.05,
 		"weapon clip: the Mallet uses fermo_arma_mallet, the others fermo_arma")
@@ -411,7 +411,7 @@ do
 	package.loaded["battle.scoria"] = nil
 	scoria = require "battle.scoria"
 	-- the weapon is a piece like the others: the clip removes it (mostra_arma)
-	A2.fermo_arma_sword = { durata = 1, ciclo = true, tracce = { mostra_arma = { 0, 0, 2 } } }
+	A2.fermo_arma_sword = { duration = 1, loop = true, tracks = { mostra_arma = { 0, 0, 2 } } }
 	package.loaded["battle.scoria"] = nil
 	local sc3 = require "battle.scoria"
 	local v = sc3.new(vec(1, 0.2, 0.3, 1))
@@ -422,15 +422,15 @@ do
 	package.loaded["battle.scoria"] = nil
 	scoria = require "battle.scoria"
 	local PR = require "battle.grips"
-	for nome in pairs(require("battle.weapons").armi) do
+	for nome in pairs(require("battle.weapons").weapons) do
 		local g = PR[nome]
-		check(g ~= nil and #g.presa == 2 and #g.perno == 2 and #g.spalla == 2, nome .. ": has grip, pivot and shoulder")
+		check(g ~= nil and #g.grip == 2 and #g.pivot == 2 and #g.shoulder == 2, nome .. ": has grip, pivot and shoulder")
 	end
 
 	-- the clip picks who grips the weapon; the weapon turns around the pivot,
 	-- which sits on the weapon's shoulder (plus the clip's arma_x and arma_y)
 	local function try_it(traces, grips, levels)
-		A2.fermo_arma_sword = { durata = 1, ciclo = true, tracce = traces, impugna = grips, livelli = levels }
+		A2.fermo_arma_sword = { duration = 1, loop = true, tracks = traces, held_by = grips, layers = levels }
 		package.loaded["battle.scoria"] = nil
 		local sc = require "battle.scoria"
 		local v = sc.new(vec(1, 0.2, 0.3, 1))
@@ -442,27 +442,27 @@ do
 	end
 	local g = PR.sword
 	local function neighbors(ax, ay, bx, by) return math.abs(ax - bx) < 0.3 and math.abs(ay - by) < 0.3 end
-	local function pivot(v) return world(v.armi.sword, g.perno[1], g.perno[2]) end
+	local function pivot(v) return world(v.armi.sword, g.pivot[1], g.pivot[2]) end
 	local v1 = try_it({ arma = { 0, 0.3, 2 } }, "manina_d")
 	local mx, my = world(v1.manina_d, 0, 0)
-	check(neighbors(mx, my, world(v1.armi.sword, g.presa[1], g.presa[2])), "back little hand grips: the little hand sits on the grip")
+	check(neighbors(mx, my, world(v1.armi.sword, g.grip[1], g.grip[2])), "back little hand grips: the little hand sits on the grip")
 	local v2 = try_it({ arma = { 0, 1.2, 2 } }, "manina_d")
 	local p1x, p1y = pivot(v1)
 	local p2x, p2y = pivot(v2)
 	check(neighbors(p1x, p1y, p2x, p2y), "pivot: turning the weapon the pivot stays still")
-	local sx, sy = world(v2.forma, g.spalla[1] * v2.k, g.spalla[2] * v2.k)
+	local sx, sy = world(v2.forma, g.shoulder[1] * v2.k, g.shoulder[2] * v2.k)
 	check(neighbors(p2x, p2y, sx, sy), "pivot: it sits on the weapon's shoulder")
 	local v3 = try_it({ arma_x = { 0, 10, 2 } }, "manina_d")
 	local p3x, p3y = pivot(v3)
-	sx, sy = world(v3.forma, (g.spalla[1] + 10) * v3.k, g.spalla[2] * v3.k)
+	sx, sy = world(v3.forma, (g.shoulder[1] + 10) * v3.k, g.shoulder[2] * v3.k)
 	check(neighbors(p3x, p3y, sx, sy), "pivot: arma_x moves it")
 	-- the back arm turns toward the grip (it reaches it if the grip is as far
 	-- from its shoulder as the arm is long)
 	local v4 = try_it({}, "braccio_d")
-	local b, pu = D0.pezzi.braccio_dietro, D0.pezzi.pugno
+	local b, pu = D0.pieces.braccio_dietro, D0.pieces.pugno
 	local jx, jy = world(v4.braccio_d, 0, 0)
 	local hx, hy = world(v4.braccio_d, b.x * v4.k, (b.y - b.h / 2 + pu.h * 0.4) * v4.k)
-	local gx, gy = world(v4.armi.sword, g.presa[1], g.presa[2])
+	local gx, gy = world(v4.armi.sword, g.grip[1], g.grip[2])
 	check(math.abs(angle_deg(math.atan2(hy - jy, hx - jx) - math.atan2(gy - jy, gx - jx))) < 0.01,
 		"back arm grips: the arm points toward the grip")
 	-- the clip's layers: the front arm under the torso, the weapon at the back
@@ -480,17 +480,17 @@ end
 -- fake skins: a new head without faces with the team color, a helmet on top,
 -- a segmented tail, new arms
 local SKINS = require "battle.skins"
-local function pz(img, modo, tint) return { img = img, tinta = tint, x = 1, y = 2, w = 30, h = 40, modo = modo } end
-SKINS.pelli.prova_testa = { categoria = "testa", pezzi = { testa = pz("t", "sostituisce", "t_tinta") } }
-SKINS.pelli.prova_elmo = { categoria = "elmo", pezzi = { testa = pz("e", "sopra"), busto = pz("eb", "sopra") } }
+local function pz(img, mode, tint) return { img = img, tint = tint, x = 1, y = 2, w = 30, h = 40, mode = mode } end
+SKINS.skins.prova_testa = { category = "testa", pieces = { testa = pz("t", "replace", "t_tinta") } }
+SKINS.skins.prova_elmo = { category = "elmo", pieces = { testa = pz("e", "over"), busto = pz("eb", "over") } }
 local coda = {}
 for i = 1, 5 do
-	coda["coda_" .. i] = pz("c" .. i, "sostituisce")
-	coda["coda_" .. i .. "_bordo"] = pz("cb" .. i, "sostituisce")
+	coda["coda_" .. i] = pz("c" .. i, "replace")
+	coda["coda_" .. i .. "_bordo"] = pz("cb" .. i, "replace")
 end
-SKINS.pelli.prova_coda = { categoria = "coda", pezzi = coda }
-SKINS.pelli.prova_corpo = { categoria = "corpo", pezzi = { braccio = pz("br", "sostituisce"),
-	braccio_dietro = pz("bd", "sostituisce") } }
+SKINS.skins.prova_coda = { category = "coda", pieces = coda }
+SKINS.skins.prova_corpo = { category = "corpo", pieces = { braccio = pz("br", "replace"),
+	braccio_dietro = pz("bd", "replace") } }
 local function images(from_pt)
 	local l = {}
 	for i = from_pt, #nodes do
@@ -519,8 +519,8 @@ check(v.faccia == "testa_colpita" and v.teste[1].img == "t" and v.teste[2].enabl
 scoria.die(v)
 for _ = 1, 60 do scoria.update(v, 1 / 60, st) end
 check(everything_done(), "skins: animated, finite values")
-for nome in pairs(SKINS.pelli) do
-	if nome:sub(1, 6) == "prova_" then SKINS.pelli[nome] = nil end
+for nome in pairs(SKINS.skins) do
+	if nome:sub(1, 6) == "prova_" then SKINS.skins[nome] = nil end
 end
 
 -- Plate ------------------------------------------------------------------------

@@ -259,27 +259,27 @@ def main():
     immagini, pezzi = [], {}
     for nome, fn in PEZZI.items():
         pezzi[nome] = esporta(nome, fn, immagini)
-    lua = ["-- Fatto da strumenti/grafica/diavoletto.py, non modificare a mano.",
-           "-- Il diavoletto a pezzi, in unità del disegno (ALTEZZA dai piedi alla cima",
-           "-- della testa, y verso l'alto, guarda a destra). Per ogni pezzo: immagine",
-           "-- (tinta: la parte col colore della squadra), centro (x, y) rispetto al suo",
-           "-- perno e misura (w, h). I punti dicono dove vanno i perni, dal centro dei",
-           "-- piedi (la cima dal collo).",
-           "return {", f"\taltezza = {ALTEZZA},", f"\tpx = {PX},  -- pixel delle immagini per unità",
-           f"\tbordo = {BORDO_D},  -- spessore del contorno",
-           "\tpezzi = {"]
+    lua = ["-- Made by strumenti/grafica/diavoletto.py, do not edit by hand.",
+           "-- The devil in pieces, in drawing units (height from the feet to the top",
+           "-- of the head, y up, facing right). For each piece: image (tint: the part",
+           "-- in the team color), center (x, y) relative to its pivot and size (w, h).",
+           "-- The points say where the pivots go, from the center of the feet (cima",
+           "-- from the neck).",
+           "return {", f"\theight = {ALTEZZA},", f"\tpx = {PX},  -- image pixels per unit",
+           f"\toutline = {BORDO_D},  -- outline thickness",
+           "\tpieces = {"]
     for nome, p in pezzi.items():
         t = f'"{nome}_tinta"' if p["tinta"] else "nil"
-        lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {p["x"]:.1f}, y = {p["y"]:.1f}, '
+        lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {p["x"]:.1f}, y = {p["y"]:.1f}, '
                    f'w = {p["w"]}, h = {p["h"]} }},')
     lua.append("\t},")
-    lua.append("\tpunti = {")
+    lua.append("\tpoints = {")
     for nome, (x, y) in PUNTI.items():
         lua.append(f"\t\t{nome} = {{ {x}, {y} }},")
     lua.append("\t},")
-    lua.append("\tcoda = { " + ", ".join(str(L) for L, _, _ in CODA) + " },  -- lunghezza dei segmenti")
-    lua.append("\tcoda_riposo = { " + ", ".join(f"{math.radians(a):.3f}" for a in CODA_RIPOSO) + " },  -- angoli a riposo")
-    lua.append(f"\tparacadute_y = {PARACADUTE_Y},  -- il perno del paracadute, dai piedi")
+    lua.append("\ttail = { " + ", ".join(str(L) for L, _, _ in CODA) + " },  -- segment lengths")
+    lua.append("\ttail_rest = { " + ", ".join(f"{math.radians(a):.3f}" for a in CODA_RIPOSO) + " },  -- rest angles")
+    lua.append(f"\tchute_y = {PARACADUTE_Y},  -- the parachute pivot, from the feet")
     lua.append("}")
     with open(LUA, "w") as f:
         f.write("\n".join(lua) + "\n")

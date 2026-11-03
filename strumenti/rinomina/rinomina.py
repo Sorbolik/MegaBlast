@@ -218,7 +218,7 @@ def main():
     ap.add_argument("--dentro", nargs="+", default=["client", "server", "tests"],
                     help="file e cartelle dell'ondata")
     ap.add_argument("--fuori", nargs="*", default=[
-        "client/sim/bot.lua", "client/sim/rete.lua", "client/sim/corpo.lua", "tests/bot_test.lua",
+        "client/sim/bot.lua", "client/sim/rete.lua", "client/sim/body.lua", "tests/bot_test.lua",
         "client/battle/animations.lua", "client/battle/weapons.lua", "client/battle/devil.lua",
         "client/battle/paintings.lua", "client/battle/grips.lua", "client/battle/skins.lua",
         "client/battle/pivots.lua", "client/sim/mapdata.lua"], help="file da lasciare fuori dall'ondata")

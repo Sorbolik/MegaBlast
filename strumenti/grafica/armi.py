@@ -487,12 +487,11 @@ def main():
         if f.endswith(".png"):
             os.remove(os.path.join(OUT, f))
     immagini = []
-    lua = ["-- Fatto da strumenti/grafica/armi.py, non modificare a mano.",
-           "-- Le armi in unità del mondo (i colpi dal centro),",
-           "-- x avanti e y in su. Per ogni arma: immagine (tinta: le parti col colore",
-           "-- della squadra), centro (x, y) e misura (w, h). Dove le tiene la mano:",
-           "-- battle/grips.lua.",
-           "return {", "\tarmi = {"]
+    lua = ["-- Made by strumenti/grafica/armi.py, do not edit by hand.",
+           "-- The weapons in world units (shots from their center), x forward and",
+           "-- y up. For each one: image (tint: the parts in the team color), center",
+           "-- (x, y) and size (w, h). Where the hand holds them: battle/grips.lua.",
+           "return {", "\tweapons = {"]
     foglio = []
     prese = impugnature()
     for nome, (fn, rot) in ARMI.items():
@@ -507,7 +506,7 @@ def main():
                 icona(nome, d, box, rot, immagini)
         cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
         t = f'"{nome}_tinta"' if tinta else "nil"
-        lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {cx:.2f}, y = {cy:.2f}, '
+        lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {cx:.2f}, y = {cy:.2f}, '
                    f'w = {box[2] - box[0]:.2f}, h = {box[3] - box[1]:.2f} }},')
         foglio.append((nome, base, tinta, ic, box, prese.get(nome, [])))
     # le icone dei pulsanti tondi
@@ -515,17 +514,17 @@ def main():
         d = Disegno(col=COL_ICONE)
         icona(nome, d, fn(d)["box"], 0, immagini)
     lua.append("\t},")
-    lua.append("\tpezzi = {")
+    lua.append("\tpieces = {")
     for nome, fn in PEZZI.items():
         d = Disegno()
         box = fn(d)["box"]
         base, tinta, w, h = esporta(nome, d, box, immagini)
         cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
         t = f'"{nome}_tinta"' if tinta else "nil"
-        lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {cx:.2f}, y = {cy:.2f}, '
+        lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {cx:.2f}, y = {cy:.2f}, '
                    f'w = {box[2] - box[0]:.2f}, h = {box[3] - box[1]:.2f} }},')
     lua.append("\t},")
-    lua.append("\tcolpi = {")
+    lua.append("\tshots = {")
     colpi = []
     for nome, fn in COLPI.items():
         d = Disegno()
@@ -535,7 +534,7 @@ def main():
         base, tinta, w, h = esporta(nome, d, box, immagini, PX * GRANDI)
         cx, cy = (box[0] + box[2]) / 2 * GRANDI, (box[1] + box[3]) / 2 * GRANDI
         t = f'"{nome}_tinta"' if tinta else "nil"
-        lua.append(f'\t\t{nome} = {{ img = "{nome}", tinta = {t}, x = {cx:.2f}, y = {cy:.2f}, '
+        lua.append(f'\t\t{nome} = {{ img = "{nome}", tint = {t}, x = {cx:.2f}, y = {cy:.2f}, '
                    f'w = {(box[2] - box[0]) * GRANDI:.2f}, h = {(box[3] - box[1]) * GRANDI:.2f} }},')
         colpi.append((nome, base, tinta))
     lua.append("\t},")
@@ -550,10 +549,10 @@ def main():
 
 
 def impugnature():
-    # battle/grips.lua: nome = { presa = { x, y }, ... }, la presa
+    # battle/grips.lua: nome = { grip = { x, y }, ... }, la presa
     with open(PRESE) as f:
         return {n: [(float(x), float(y))] for n, x, y in
-                re.findall(r"^\s*(\w+)\s*=\s*\{\s*presa\s*=\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}", f.read(), re.M)}
+                re.findall(r"^\s*(\w+)\s*=\s*\{\s*grip\s*=\s*\{\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\}", f.read(), re.M)}
 
 
 def tingi(im, rgb):

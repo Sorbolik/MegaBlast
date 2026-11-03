@@ -32,7 +32,7 @@ local STRIP = { lontano = "striscia1", medio = "striscia2", vicino = "striscia3"
 local WEB = sys.get_sys_info().system_name == "HTML5"
 local function density()
 	local _, h = window.get_size()
-	return not WEB and (h or 0) >= 1000 and paintings.densita[2] or paintings.densita[1]
+	return not WEB and (h or 0) >= 1000 and paintings.densities[2] or paintings.densities[1]
 end
 
 -- A PNG from client/dipinti into a texture (always the same one for the same
@@ -64,7 +64,7 @@ end
 
 -- a circle's painted background: the images (if not already there) and the strip numbers
 local function set_background(self, nome)
-	local s = paintings.sfondi[nome]
+	local s = paintings.backgrounds[nome]
 	local d = density()
 	if self.sfondo ~= nome .. d then
 		for _, plan_def in ipairs(LAYERS) do
@@ -74,9 +74,9 @@ local function set_background(self, nome)
 	end
 	-- w: how far the strip has scrolled (update sets it, already wrapped)
 	self.strips = {}
-	for _, g in ipairs(s.gruppi) do
-		self.strips[#self.strips + 1] = { nome = STRIP[g.nome], scorre = g.scorre,
-			v = vmath.vector4(g.y0 / 720, g.h / 720, g.quanto, 0) }
+	for _, g in ipairs(s.groups) do
+		self.strips[#self.strips + 1] = { nome = STRIP[g.name], scorre = g.scroll,
+			v = vmath.vector4(g.y0 / 720, g.h / 720, g.parallax, 0) }
 	end
 end
 
@@ -95,7 +95,7 @@ function update(self, dt)
 	-- would stutter, and it would jump when the hour wraps
 	if self.strips then
 		for _, st in ipairs(self.strips) do
-			st.v.w = (st.v.w + dt * st.scorre) % paintings.giro
+			st.v.w = (st.v.w + dt * st.scorre) % paintings.wrap
 			go.set("#mesh", st.nome, st.v)
 		end
 	end
@@ -112,7 +112,7 @@ local function handle_message(self, message_id, message)
 	if message_id == MSG_MASK then
 		go.set("#mesh", "texture1", message.path)
 		local map_name = message.mappa
-		self.map_background = paintings.mappe[map_name]
+		self.map_background = paintings.maps[map_name]
 		if not self.map_background then print("ERROR: la mappa " .. tostring(map_name) .. " non ha il dipinto") end
 		-- the same map as before (the mission is retried): the image is already there
 		local file = "mappe/" .. map_name .. "_" .. density() .. ".png"

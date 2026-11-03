@@ -12,7 +12,7 @@
 --   fune.update(f, dt, is_solid)      -- the fall (is_solid(x, y): there is terrain there); false once no longer visible
 --   f.stato: nil (not visible), "dritta", "sfuma", "cade"
 
-local HOOK = require("battle.weapons").pezzi.uncino
+local HOOK = require("battle.weapons").pieces.uncino
 
 local M = {}
 

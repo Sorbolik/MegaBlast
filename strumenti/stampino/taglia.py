@@ -8,7 +8,7 @@ caselle: un PNG trasparente (il livello di Procreate) o un'immagine su magenta
 (ChatGPT). Le caselle vuote o uguali al manichino non cambiano niente.
 
   python3 strumenti/stampino/taglia.py FOGLIO.png --nome elmo_corna --categoria elmo [--allinea]
-  python3 strumenti/stampino/taglia.py --rifai        # solo skins.lua e pelli.atlas
+  python3 strumenti/stampino/taglia.py --rifai        # solo skins.lua e l'atlante
   python3 strumenti/stampino/taglia.py --togli NOME   # toglie una pelle
   python3 strumenti/stampino/taglia.py --ritocchi strumenti/stampino/ritocchi.json
   python3 strumenti/stampino/taglia.py FOGLIO.png --nome maschio_1 --categoria personaggio --allinea --senza ala,coda
@@ -632,25 +632,28 @@ def rifai():
     for f in sorted(glob.glob(os.path.join(JSON, "*.json"))):
         with open(f) as fh:
             pelli.append(json.load(fh))
-    lua = ["-- Fatto da strumenti/stampino/taglia.py, non modificare a mano.",
-           "-- Le pelli: i pezzi nuovi del diavoletto disegnati sullo stampino. Ogni pezzo",
-           "-- va in un posto dello scheletro (come i pezzi di battle/devil.lua:",
-           "-- immagine, centro rispetto al perno, misura) e sostituisce il pezzo di base",
-           "-- o si disegna sopra. Una pelle per categoria; quelle sopra in ordine. Una",
-           "-- coda nuova ha le sue lunghezze, i suoi angoli a riposo (radianti) e, se",
-           "-- l'editor l'ha spostata, di quanto sta spostata la radice (coda_radice).",
+    lua = ["-- Made by strumenti/stampino/taglia.py, do not edit by hand.",
+           "-- The skins: the devil's new pieces drawn on the stencil. Each piece goes",
+           "-- in a slot of the skeleton (like the pieces of battle/devil.lua: image,",
+           "-- center relative to the pivot, size) and replaces the base piece or is",
+           "-- drawn over it. One skin per category; the \"over\" ones in order. A new",
+           "-- tail has its own lengths, its rest angles (radians) and, if the editor",
+           "-- moved it, how far its root is moved (tail_root).",
            "return {",
-           "\tsostituisce = { " + ", ".join(f'"{c}"' for c in SOSTITUISCE) + " },",
-           "\tsopra = { " + ", ".join(f'"{c}"' for c in SOPRA) + " },",
-           "\tpelli = {"]
+           "\treplace = { " + ", ".join(f'"{c}"' for c in SOSTITUISCE) + " },",
+           "\tover = { " + ", ".join(f'"{c}"' for c in SOPRA) + " },",
+           "\tskins = {"]
+    # the skin JSON files (strumenti/stampino/pelli) keep the tool's names
+    forme = {"coda": "tail", "coda_riposo": "tail_rest", "coda_radice": "tail_root"}
+    modi = {"sostituisce": "replace", "sopra": "over"}
     for p in pelli:
-        forma = "".join(f'{k} = {{ {", ".join(str(v) for v in p[k])} }}, ' for k in ("coda", "coda_riposo", "coda_radice") if k in p)
-        lua.append(f'\t\t{p["nome"]} = {{ categoria = "{p["categoria"]}", {forma}pezzi = {{')
+        forma = "".join(f'{forme[k]} = {{ {", ".join(str(v) for v in p[k])} }}, ' for k in forme if k in p)
+        lua.append(f'\t\t{p["nome"]} = {{ category = "{p["categoria"]}", {forma}pieces = {{')
         for posto in sorted(p["pezzi"]):
             z = p["pezzi"][posto]
             t = f'"{z["tinta"]}"' if z.get("tinta") else "nil"
-            lua.append(f'\t\t\t{posto} = {{ img = "{z["img"]}", tinta = {t}, x = {z["x"]}, y = {z["y"]}, '
-                       f'w = {z["w"]}, h = {z["h"]}, modo = "{z["modo"]}" }},')
+            lua.append(f'\t\t\t{posto} = {{ img = "{z["img"]}", tint = {t}, x = {z["x"]}, y = {z["y"]}, '
+                       f'w = {z["w"]}, h = {z["h"]}, mode = "{modi[z["modo"]]}" }},')
         lua.append("\t\t} },")
     lua += ["\t},", "}"]
     with open(LUA, "w") as f:

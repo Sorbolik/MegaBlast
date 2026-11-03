@@ -176,13 +176,13 @@ local FONT_K = 0.4
 -- world size (battle/weapons.lua): the image and on top the parts with the
 -- shooter's color. Returns the node and the parts to tint.
 local function hit_def(nome, sc)
-	local a = require("battle.weapons").colpi[nome]
+	local a = require("battle.weapons").shots[nome]
 	local img = fit(gui.new_box_node(vmath.vector3(a.x * sc, a.y * sc, 0), vmath.vector3(a.w * sc, a.h * sc, 0)))
 	gui.set_texture(img, "armi")
 	gui.play_flipbook(img, a.img)
 	local tint = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(a.w * sc, a.h * sc, 0))
 	gui.set_texture(tint, "armi")
-	gui.play_flipbook(tint, a.tinta)
+	gui.play_flipbook(tint, a.tint)
 	gui.set_parent(tint, img)
 	return img, tint
 end
@@ -2141,7 +2141,7 @@ start_local_match = function(self, picked)
 	end
 	if SIMULATE then
 		-- only for the test scenarios (the "imposta" command in strumenti/simula)
-		local colpi = config_int("megablast.prova_armi", 0)
+		local ammo_n = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local hp_value = config_int("megablast.prova_vita", 0)
 		-- prova_secondaria = eagle | mallet | lunge | bellows: everyone has that secondary
@@ -2150,8 +2150,8 @@ start_local_match = function(self, picked)
 			players = opts.players,
 			hp = hp_value > 0 and hp_value or nil,
 			secondary = game.SECONDARY[secondary_weapon] and secondary_weapon or nil,
-			ammo = colpi > 0 and { grenade = colpi, shards = colpi, punch = colpi, sniper = colpi,
-				trap = colpi, shield = colpi, trampoline = colpi } or nil,
+			ammo = ammo_n > 0 and { grenade = ammo_n, shards = ammo_n, punch = ammo_n, sniper = ammo_n,
+				trap = ammo_n, shield = ammo_n, trampoline = ammo_n } or nil,
 			crate_every = ogni > 0 and ogni or nil,
 		}
 	end
