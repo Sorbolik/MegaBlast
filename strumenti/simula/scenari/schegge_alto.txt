@@ -1,8 +1,9 @@
 # Sciame di Schegge sparato dritto in alto (bug del 2 novembre, su Due mani): le
 # schegge escono dalla mappa da sopra e spariscono, la camera torna vicina a chi
 # ha sparato e lo zoom si cambia di nuovo. Prima volavano più di un minuto e la
-# camera restava lontana per tenerle dentro. Sul Crogiolo sopra Rosso c'è cielo.
-imposta prova_mappa crogiolo
+# camera restava lontana per tenerle dentro. Sulla fossa del Fabbro sopra Rosso
+# c'è cielo.
+imposta prova_mappa fossa
 imposta prova_armi 1
 
 aspetta 2

@@ -3,7 +3,7 @@
 --
 -- Usage:
 --   local game = require "sim.game"
---   local g = game.new(seed, "forgia")   -- without a map the seed picks it
+--   local g = game.new(seed, "pavimento")   -- without a map the seed picks it
 --   g:step({ left = bool, right = bool, jump = bool,
 --            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport" | "swap"
 --                                                     | "grenade" | "shards" | "punch" } })

@@ -88,7 +88,7 @@ check(pr.liv == p.livello and #(pr.bdg or {}) <= milestones.SHOWN, "showcase: le
 check(showcase.per_rete(profile.nuovo()).bdg == nil, "showcase: no badges, no bdg (in JSON it would be an object)")
 
 -- Count and replay on a real match: two bots, replayed the same ----------------
-local r = replay.nuova(7, "forgia", { players = { { team = 1, bot = "normale" }, { team = 2, bot = "normale" } } })
+local r = replay.nuova(7, "pavimento", { players = { { team = 1, bot = "normale" }, { team = 2, bot = "normale" } } })
 local g, bots = replay.partita(r)
 local c = count.nuova(g, 1, { "Rosso", "Blu" })
 while g.phase ~= "over" and g.tick < 60 * 60 * 3 do
@@ -109,7 +109,7 @@ check(#end_of.partita.fune >= 2 and end_of.partita.esito:match("^[VSP]$"), "coun
 local ok, tick = replay.verifica(r, g.tick)
 check(ok, "replay: the match replayed from the recipe comes back the same" .. (ok and "" or (" (diverges at tick " .. tostring(tick) .. ")")))
 -- the reader replays the keys as it recorded them: also a duration changed by hand
-local r2 = replay.nuova(3, "forgia", { players = { { team = 1 }, { team = 2, bot = "normale" } } })
+local r2 = replay.nuova(3, "pavimento", { players = { { team = 1 }, { team = 2, bot = "normale" } } })
 local g2, b2 = replay.partita(r2)
 r2.durata = 600
 g2.match_left = r2.durata

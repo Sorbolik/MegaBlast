@@ -21,7 +21,7 @@ for i = 1, rete.quanti(strati) do
 end
 local players = { { team = 1, bot = "normale" }, { team = 2, bot = "difficile" },
 	{ team = 3, bot = "difficile", pesi = { rete = { strati = strati, w = w } } } }
-local r = replay.nuova(7, "forgia", { players = players })
+local r = replay.nuova(7, "pavimento", { players = players })
 local g, bots = replay.partita(r)
 while g.tick < 3600 and g.phase ~= "over" do
 	g:step(replay.input(r, g, bots))
