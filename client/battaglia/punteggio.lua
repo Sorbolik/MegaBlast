@@ -58,6 +58,12 @@ local CORONA_SCALA = 1.4              -- larga circa 25 px (ui.corona)
 local CORONA_Y = GET_H / 2 + 4
 local VOLO_SCALA, ARRIVO_SCALA = 1.7, 0.8
 local NASCE_T, VOLO_T, SALE = 0.5, 0.45, 24
+-- due numeri che nascono nello stesso posto (lo Sciame, un uovo su due vicini)
+-- non si coprono (Sergio, 3 nov): il nuovo nasce nel primo posto libero di
+-- PILA (in righe di PILA_Y sopra e colonne di PILA_X di lato), così anche otto
+-- schegge restano vicine al colpito; "lo stesso posto" è entro PILA_X e PILA_Y
+local PILA_X, PILA_Y = 70, 32
+local PILA = { { 0, 0 }, { 0, 1 }, { -1, 0 }, { 1, 0 }, { -1, 1 }, { 1, 1 }, { 0, 2 }, { -1, 2 }, { 1, 2 } }
 local TURNO_T, TURNO_SVANISCE = 2.4, 0.8
 local NUMERI = 8
 local TICK_OGNI, TICK_PASSO = 0.045, 5  -- un tic ogni 5 punti, non più spesso di così
@@ -367,6 +373,16 @@ function M.punti(p, e, x, y)
 	n.doppio = p.ultimo
 	p.nato = n.nato
 	n.x, n.y = x, y
+	for _, q in ipairs(PILA) do
+		local px, py, libero = x + q[1] * PILA_X, y + q[2] * PILA_Y, true
+		for _, m in ipairs(p.numeri) do
+			if m ~= n and m.attivo and m.fase == 1 and abs(m.x - px) < PILA_X and abs(m.y - py) < PILA_Y then libero = false end
+		end
+		if libero then
+			n.x, n.y = px, py
+			break
+		end
+	end
 	gui.set_text(n.nodo, con_segno(n.punti) .. (n.doppio and " ×2" or ""))
 	gui.set_enabled(n.nodo, p.on)
 end

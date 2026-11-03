@@ -1,0 +1,23 @@
+# Colpi usciti dallo schermo in alto (Sergio, 3 nov): sopra i punti una piccola
+# freccia di ferro, del colore di chi tira, segna in che punto torna giù il colpo.
+# Rosso lancia un globo del teletrasporto quasi dritto in alto, poi un missile.
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+tocca 1180 62                       # TELE
+mira 40 220 0.6                     # quasi dritto in alto, a tutta forza
+aspetta_evento orb 2
+aspetta 0.7
+foto 01_globo_fuori
+aspetta 0.6
+foto 02_globo_scende
+aspetta_evento teleport 6
+aspetta 0.3
+foto 03_arrivato
+aspetta 0.5
+mira -30 220 0.6                    # missile quasi dritto in alto
+aspetta_evento fire 2
+aspetta 0.6
+foto 04_missile_fuori

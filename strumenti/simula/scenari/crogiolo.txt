@@ -17,6 +17,6 @@ aspetta_evento fire 2
 aspetta_evento explosion 8
 aspetta 0.2
 foto 04_cratere
-premi z                             # VICINO
+premi z                             # dal massimo allo zoom medio
 aspetta 1.2
 foto 05_vicino

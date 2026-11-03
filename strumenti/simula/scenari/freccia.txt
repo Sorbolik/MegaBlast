@@ -13,9 +13,7 @@ aspetta_evento fire 2
 aspetta_stato turno=2 fase=aim 15
 aspetta 1.5
 foto 04_blu
-premi z
-aspetta 0.6
-premi z
+premi z                             # zoom massimo
 aspetta 2
 foto 05_mappa
 premi z

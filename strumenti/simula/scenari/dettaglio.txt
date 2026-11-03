@@ -1,13 +1,11 @@
 # Il dettaglio a ogni zoom (Sergio, 2 nov): il diavoletto e il pavimento allo
-# zoom VICINO e allo zoom MAPPA. Da provare a più risoluzioni, per esempio
+# zoom più vicino e allo zoom massimo. Da provare a più risoluzioni, per esempio
 # --schermo 1920x1080, 2560x1600 e 2400x1080.
 imposta prova_missione il_fabbro
 
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 2.5
 foto 01_vicino
-premi z
-aspetta 0.6
-premi z
+premi z                             # zoom massimo
 aspetta 2
 foto 02_mappa

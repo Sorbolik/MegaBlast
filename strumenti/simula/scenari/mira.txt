@@ -23,10 +23,8 @@ levetta_mira 60 -20 0.6 02_lama
 aspetta_stato turno=2 fase=aim 15
 aspetta 1.5
 
-# Blu: camera lontana (tutta la mappa), l'Uovo di Fiamma a mezza potenza
-tocca_bordo 70 34 alto destra       # zoom
-aspetta 0.5
-tocca_bordo 70 34 alto destra
+# Blu: camera lontana (tutto lo spazio di gioco), l'Uovo di Fiamma a mezza potenza
+tocca_bordo 70 34 alto destra       # zoom: un tocco, tutto lo spazio di gioco
 aspetta 1
 tocca 446 66                        # Uovo di Fiamma
 aspetta 0.3

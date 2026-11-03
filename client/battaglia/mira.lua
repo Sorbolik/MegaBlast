@@ -10,9 +10,11 @@
 --   direzione in cui si mira, che si riempie del colore della squadra con la
 --   potenza (da sopra, in senso orario), unito alla bocca da una linea
 --   sottilissima che fa vedere l'inclinazione (Sergio);
--- - il cartellino sopra la testa: i gradi (0° orizzontale verso dove si guarda,
---   90° in alto, negativi in basso, uguali a destra e a sinistra) e la potenza in
---   percento con una barretta del colore della squadra;
+-- - i numeri in punta, appena oltre la lancetta o il mirino (Sergio, 3 nov: il
+--   cartellino sopra la testa copriva la lancetta, «più snello, pulito e
+--   minimale»): i gradi (0° orizzontale verso dove si guarda, 90° in alto,
+--   negativi in basso, uguali a destra e a sinistra) e la potenza in percento,
+--   piccoli, chiari col bordo scuro, senza fondo;
 -- - solo nelle lezioni dell'Addestramento, come aiuto, la traiettoria intera:
 --   puntini chiari col bordino scuro alla stessa distanza sullo schermo.
 -- Le armi da vicino (M.MISCHIA: Lama, Pugno, Maglio, Affondo, Mantice) non
@@ -24,7 +26,7 @@
 --   local m = mira.nuova()                         -- m.nodi (puntini e mirino) e m.cartello: da mettere nel mondo
 --   mira.mirino(m, x, y, angolo, s, potenza, colore)  -- x, y: la bocca dell'arma nel mondo, s lo zoom
 --   mira.lancetta(m, x, y, angolo, s, potenza, colore) -- uguale, l'altro modo
---   mira.cartellino(m, x, y, s, gradi, potenza, colore)  -- x, y: dove sta il fondo, nel mondo
+--   mira.cartellino(m, x, y, angolo, s, gradi, potenza)  -- i numeri: x, y la bocca, come sopra
 --   mira.traiettoria(m, pts, n, s)                 -- pts[1..n] nel mondo
 --   mira.punta(m, x, y, angolo, s, colore)         -- armi da vicino: x, y la bocca dell'arma
 --   mira.bersagli(m, pos, n, s, colore)            -- anelli ai piedi di pos[1..n] = { x, y }
@@ -41,7 +43,9 @@ local sqrt, floor, max, deg, cos, sin = math.sqrt, math.floor, math.max, math.de
 -- misure in pixel dello schermo (GUI a 1280 x 720)
 M.PASSO = 10          -- tra un puntino e l'altro
 M.PUNTI = 80          -- puntini al massimo (con la traiettoria lunga si allargano)
-M.CARTELLINO_H = 40   -- quanto è alto il cartellino col suo stacco
+-- i numeri in punta: lo stacco dalla fine della lancetta o del mirino, la
+-- scala del font; sotto questo coseno (mira quasi dritta) stanno sopra o sotto
+local NUMERI_STACCO, NUMERI_SCALA, NUMERI_DRITTA, NUMERI_SU = 8, 0.36, 0.35, 8
 local DOT, DOT_BORDO = 4, 6
 -- il mirino: quanto sta oltre la bocca dell'arma, il diametro, lo spessore
 -- dell'anello e del riempimento, il puntino in mezzo
@@ -221,21 +225,11 @@ function M.nuova()
 		m.nodi[#m.nodi + 1] = r
 	end
 
-	-- il cartellino: carbone col bordo chiaro, gradi a sinistra, potenza a destra
+	-- i numeri in punta
 	local c = {}
 	c.radice = radice()
-	c.fondo, c.bordo = ui.pannello(0, 0, 120, 34, c.radice)
-	gui.set_color(c.fondo, vmath.vector4(ui.C.PANNELLO.x, ui.C.PANNELLO.y, ui.C.PANNELLO.z, 0.92))
-	gui.set_color(c.bordo, LUCE)
-	c.riga = gui.new_box_node(vmath.vector3(2, 0, 0), vmath.vector3(1.5, 22, 0))
-	gui.set_color(c.riga, ui.C.LINEA)
-	gui.set_parent(c.riga, c.radice)
-	c.barra = ui.barra(32, -10, 40, 4, LUCE, c.radice)
-	c.gradi = ui.titolo("", -28, 1, 0.6, LUCE, c.radice)
-	c.potenza = ui.titolo("", 32, 4, 0.42, LUCE, c.radice)
-	for _, n in ipairs({ c.fondo, c.bordo, c.riga, c.barra.nodo, c.barra.pieno, c.gradi, c.potenza }) do
-		gui.set_adjust_mode(n, gui.ADJUST_FIT)
-	end
+	c.testo_n = ui.titolo("", 0, 0, NUMERI_SCALA, LUCE, c.radice)
+	gui.set_adjust_mode(c.testo_n, gui.ADJUST_FIT)
 	m.c = c
 	m.cartello = c.radice
 	return m
@@ -274,6 +268,7 @@ function M.mirino(m, x, y, angolo, s, potenza, colore)
 	gui.set_euler(m.pieno, E)
 	gui.set_color(m.pieno, colore)
 	gui.set_enabled(m.mir, true)
+	m.fine = M.MIRINO_D + MIRINO / 2 + 3
 	gui.set_enabled(m.lanc, false)
 	gui.set_enabled(m.punta, false)
 	-- la linea parte dalla bocca e si ferma dove comincia l'anello
@@ -296,6 +291,7 @@ function M.lancetta(m, x, y, angolo, s, potenza, colore)
 	local piene = math.max(1, math.floor(potenza * TACCHE + 0.5))
 	for i, n in ipairs(m.tacche) do gui.set_color(n, i <= piene and colore or TRACCIA_C) end
 	gui.set_enabled(m.lanc, true)
+	m.fine = LANC_DA + LANC_L + 4
 	gui.set_enabled(m.mir, false)
 	gui.set_enabled(m.punta, false)
 	for _, n in ipairs(m.linee) do gui.set_enabled(n, false) end
@@ -325,22 +321,30 @@ function M.bersagli(m, pos, n, s, colore)
 	end
 end
 
-function M.cartellino(m, x, y, s, gradi, potenza, colore)
+function M.cartellino(m, x, y, angolo, s, gradi, potenza)
 	local c = m.c
-	local testo = gradi .. "°"
-	if c.testo ~= testo then
-		gui.set_text(c.gradi, testo)
-		c.testo = testo
-	end
 	local p = floor(potenza * 100 + 0.5)
-	if c.p ~= p then
-		gui.set_text(c.potenza, p .. "%")
-		ui.barra_valore(c.barra, potenza)
-		c.p = p
+	if c.gradi ~= gradi or c.p ~= p then
+		gui.set_text(c.testo_n, gradi .. "°  " .. p .. "%")
+		c.gradi, c.p = gradi, p
 	end
-	gui.set_color(c.barra.pieno, colore)
-	-- il fondo del cartellino su (x, y), 17 pixel sotto il centro
-	sposta(c.radice, x, y + 17 / s, 1 / s)
+	-- appena oltre la punta, dalla parte di fuori: di lato con la mira
+	-- inclinata, sopra o sotto con la mira quasi dritta
+	-- (di lato un poco sopra la linea della mira: nelle lezioni la traiettoria
+	-- ci passa sotto, perché cade)
+	local cs, sn = cos(angolo), sin(angolo)
+	local pivot, su = nil, 0
+	if math.abs(cs) >= NUMERI_DRITTA then
+		pivot, su = cs > 0 and gui.PIVOT_W or gui.PIVOT_E, NUMERI_SU
+	else
+		pivot = sn > 0 and gui.PIVOT_S or gui.PIVOT_N
+	end
+	if c.pivot ~= pivot then
+		gui.set_pivot(c.testo_n, pivot)
+		c.pivot = pivot
+	end
+	local d = ((m.fine or 0) + NUMERI_STACCO) / s
+	sposta(c.radice, x + cs * d, y + sn * d + su / s, 1 / s)
 	gui.set_enabled(c.radice, true)
 end
 

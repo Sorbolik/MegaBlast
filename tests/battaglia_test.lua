@@ -30,14 +30,19 @@ gui = {
 	set_texture = function() end, play_flipbook = function(n, img) n.img = img end, set_material = function() end,
 	new_text_node = function(p, text) local n = nuovo(p); n.text = text; return n end,
 	set_text = function(n, text) n.text = text end,
+	get_text = function(n) return n.text end,
+	get_font = function() return "titolo" end, get_font_resource = function() return "titolo" end,
 	set_size = function(n, v) n.size = copia(v) end,
 	get_size = function(n) return n.size end,
 	set_font = function() end, set_outline = function() end, set_pivot = function() end, set_line_break = function() end,
-	set_slice9 = function() end, PIVOT_W = 3,
+	set_slice9 = function() end, PIVOT_W = 3, PIVOT_E = 7, PIVOT_S = 5, PIVOT_N = 1,
 	set_outer_bounds = function() end, PIEBOUNDS_ELLIPSE = 1, ADJUST_FIT = 0,
 	-- l'ordine fra i fratelli: move_above(n, r) lo mette appena sopra r, con nil sopra a tutti
 	move_above = function(n, r) if r then frazione = frazione + 1e-4; n.ordine = r.ordine + frazione else ordine = ordine + 1; n.ordine = ordine end end,
 }
+
+-- le misure dei testi: 20 di largo per lettera, 40 di alto
+resource = { get_text_metrics = function(_, testo) return { width = 20 * #testo, height = 40 } end }
 
 local game = require "sim.game"
 -- i perni spostati dall'editor (battaglia/perni.lua) sono dati di Sergio e
@@ -552,31 +557,68 @@ check(not t.pieno.enabled and tutto_finito(), "targa: a zero la vita sparisce, v
 -- Camera -----------------------------------------------------------------------
 
 local c = camera.new(1280, 720, 1920, 1080)
-local B = camera.BANDA
-camera.salta(c, 100, 100, camera.tutta(c))
-local sx0, fondo = camera.allo_schermo(c, 0, 0)
-local sx1, cima = camera.allo_schermo(c, 1920, 1080)
-check(math.abs(fondo - camera.SOTTO) < 1e-9 and math.abs(cima - (720 - B)) < 1e-9,
-	"zoom mappa: tutta la mappa, sopra la banda e sotto l'HUD")
-check(sx0 >= B - 1e-9 and sx1 <= 1280 - B + 1e-9 and math.abs(sx0 + sx1 - 1280) < 1e-9,
-	"zoom mappa: ai lati almeno la banda, la mappa al centro")
-camera.cambia(c, 5)
-check(camera.zoom(c) == camera.tutta(c), "l'ultimo livello di zoom mostra tutta la mappa con le bande")
+-- lo zoom continuo: 0 lo zoom massimo (lo spazio di gioco intero), 1 VICINO
+camera.trascina(c, 0)
+check(math.abs(camera.zoom(c) - camera.tutta(c)) < 1e-9, "zoom a 0: tutto lo spazio di gioco")
+camera.trascina(c, 1)
+check(math.abs(camera.zoom(c) - camera.VICINO) < 1e-9, "zoom a 1: il più vicino")
+camera.trascina(c, 0.5)
+local z5 = camera.zoom(c)
+check(z5 > camera.tutta(c) and z5 < camera.VICINO, "zoom a metà: in mezzo")
+camera.passo(c, 0.1)
+check(camera.zoom(c) > z5, "un passo avanti avvicina")
+camera.trascina(c, 7)
+check(c.f == 1, "lo zoom non va oltre il più vicino")
+camera.livello(c, 2)
+check(math.abs(camera.zoom(c) - 1) < 1e-9, "il vecchio livello MEDIO è lo zoom 1")
+camera.trascina(c, 0.6)
+camera.alterna(c)
+check(c.f == 0, "un tocco sul pulsante: lo zoom massimo")
+camera.alterna(c)
+check(math.abs(c.f - 0.6) < 1e-9, "un altro tocco: si torna allo zoom di prima")
+camera.allarga(c, 3)
+check(c.f == 0, "una missione che vuole vedere tutto allarga lo zoom")
 
+-- lo spazio di gioco misurato sul terreno: conta anche il pavimento sotto una
+-- piattaforma, e sopra la più alta lascia il posto che si chiede
+do
+	local terreno = require("sim.terrain").new(100, 60, 3)
+	for cx = 0, 99 do terreno:set(cx, 9, 1) end       -- il pavimento: superficie a y 30
+	for cx = 20, 79 do terreno:set(cx, 39, 1) end     -- una piattaforma sopra: a y 120
+	local m = camera.new(1280, 720, 300, 180)
+	camera.dal_terreno(m, terreno, 50)
+	check(m.spazio and m.spazio.y0 < 30 and m.spazio.y0 > 10, "lo spazio parte sotto il pavimento più basso")
+	check(math.abs(m.spazio.y1 - 170) < 1e-9, "e arriva sopra la piattaforma più alta del posto chiesto")
+end
+
+-- lo spazio di gioco: allo zoom massimo sta tutto fra l'HUD in basso, quello in
+-- alto e i lati, e nessun personaggio è al centro
+camera.spazio(c, 0, 230, 1920, 960)
+check(camera.tutta(c) > camera.tutta(c, true), "lo spazio di gioco è più vicino della mappa intera")
+camera.trascina(c, 0)
+camera.salta(c, 300, 300, camera.zoom(c))
+for _ = 1, 600 do camera.segui(c, 1 / 60, 300, 300, camera.zoom(c)) end
+local sx0, fondo = camera.allo_schermo(c, 0, 230)
+local sx1, cima = camera.allo_schermo(c, 1920, 960)
+check(sx0 >= camera.LATO - 0.5 and sx1 <= 1280 - camera.LATO + 0.5 and fondo >= camera.SOTTO - 0.5
+	and cima <= 720 - camera.SOPRA + 0.5, "zoom massimo: lo spazio di gioco entra tutto fra l'HUD")
+check(math.abs(sx0 + sx1 - 1280) < 1, "zoom massimo: lo spazio di gioco al centro, non il personaggio")
+-- allo zoom massimo un personaggio in un cratere sotto lo spazio di gioco resta sullo schermo
+for _ = 1, 600 do camera.segui(c, 1 / 60, 900, 120, camera.zoom(c)) end
+local _, giu = camera.allo_schermo(c, 900, 120)
+check(giu >= camera.SOTTO - 0.5, "zoom massimo: chi sta sotto lo spazio di gioco non finisce sotto l'HUD")
+
+camera.trascina(c, 1)
 camera.salta(c, 640, 360, 2.2)
 local px, py = camera.allo_schermo(c, 700, 400)
 local wx, wy = camera.al_mondo(c, px, py)
 check(math.abs(wx - 700) < 1e-9 and math.abs(wy - 400) < 1e-9, "da mondo a schermo e ritorno")
 px, py = camera.allo_schermo(c, 640, 360)
 check(px == 640 and py == 360, "il punto seguito sta al centro dello schermo")
-
-camera.salta(c, 0, 0, 2.2)
+-- anche nell'angolo della mappa il personaggio resta al centro (si vede lo sfondo oltre)
+for _ = 1, 600 do camera.segui(c, 1 / 60, 0, 0, 2.2) end
 px, py = camera.allo_schermo(c, 0, 0)
-check(math.abs(px - B) < 1e-9 and math.abs(py - camera.SOTTO) < 1e-9,
-	"nell'angolo la camera esce solo della banda, e il fondo della mappa resta sopra l'HUD")
-camera.salta(c, 1920, 1080, 2.2)
-px, py = camera.allo_schermo(c, 1920, 1080)
-check(math.abs(px - (1280 - B)) < 1e-9 and math.abs(py - (720 - B)) < 1e-9, "in alto a destra la camera esce solo della banda")
+check(math.abs(px - 640) < 0.5 and math.abs(py - 360) < 0.5, "nell'angolo il personaggio resta al centro")
 
 -- telefono 20:9 (ui/schermo.lua): lo schermo vero va da x = -160 a 1440
 local l = camera.new(1280, 720, 1920, 1080)
@@ -584,19 +626,13 @@ camera.vista(l, -160, 0, 1440, 720)
 camera.salta(l, 1000, 500, 1)
 px, py = camera.allo_schermo(l, 1000, 500)
 check(px == 640 and py == 360, "schermo largo: il punto seguito sta al centro")
-camera.cambia(l, 5)
-check(camera.zoom(l) == camera.tutta(l), "schermo largo: il livello MAPPA è tutta la mappa")
-camera.salta(l, 0, 540, camera.zoom(l))
-px = camera.allo_schermo(l, 0, 540)
-local px1 = camera.allo_schermo(l, 1920, 540)
-check(px >= -160 + B - 1e-9 and math.abs(px + px1 - 1280) < 1e-9, "schermo largo: la mappa intera al centro, con le bande ai lati")
--- tablet 4:3: lo schermo vero va da y = -120 a 840
+camera.spazio(l, 0, 230, 1920, 960)
+check(camera.tutta(l) > camera.tutta(c), "schermo largo: lo zoom massimo è più vicino")
+-- tablet 4:3: lo schermo vero va da y = -120 a 840: decide la larghezza
 local t43 = camera.new(1280, 720, 1920, 1080)
 camera.vista(t43, 0, -120, 1280, 840)
-camera.cambia(t43, 5)
-camera.salta(t43, 960, 540, camera.zoom(t43))
-local tx0 = camera.allo_schermo(t43, 0, 540)
-check(math.abs(tx0 - B) < 1e-9, "tablet: la mappa intera larga quanto lo schermo meno le bande")
+check(math.abs(camera.tutta(t43, true) - (1280 - 2 * camera.LATO) / 1920) < 1e-9,
+	"tablet: la mappa intera larga quanto lo schermo meno i lati")
 
 -- l'inseguimento non dipende dalla frequenza dello schermo
 local a, b = camera.new(1280, 720, 1920, 1080), camera.new(1280, 720, 1920, 1080)
@@ -623,7 +659,7 @@ for i = 1, 90 do
 	tutti_dentro = tutti_dentro and dentro(q, 300, 400) and dentro(q, 300 + i * 16, 400 + i * 5)
 end
 check(tutti_dentro, "inquadratura: chi spara e il colpo restano sempre sullo schermo")
-check(q.s < 2.2 and q.s >= camera.tutta(q), "inquadratura: si allontana, ma non oltre tutta la mappa")
+check(q.s < 2.2 and q.s >= camera.tutta(q), "inquadratura: si allontana, ma non oltre lo zoom massimo")
 for _ = 1, 600 do camera.inquadra(q, 1 / 60, 300, 400, 330, 410, 2.2) end
 check(math.abs(q.s - 2.2) < 0.01, "inquadratura: con il colpo vicino torna allo zoom scelto")
 local q2 = camera.new(1280, 720, 1920, 1080)
@@ -649,13 +685,6 @@ check(a.sc_x == 1, "scossa: una più debole non cancella quella in corso")
 for _ = 1, 60 do ox = camera.scossa(a, 1 / 60) end
 check(ox == 0, "scossa: dopo un attimo si ferma")
 
-camera.cambia(c, 5)
-check(camera.zoom(c) == camera.tutta(c), "rotella indietro: si ferma su tutta la mappa")
-camera.cambia(c, -5)
-check(camera.zoom(c) == camera.LIVELLI[1], "rotella avanti: si ferma sul più vicino")
-camera.prossimo(c); camera.prossimo(c); camera.prossimo(c)
-check(c.livello == 1, "il pulsante gira: vicino, medio, mappa, vicino")
-
 -- La mira (battaglia/mira.lua): gradi uguali a destra e a sinistra, tacche
 -- della potenza, puntini alla stessa distanza e punta sull'ultimo punto
 local mira = require "battaglia.mira"
@@ -673,8 +702,10 @@ k = mira.posa(linea, 4, 1, 40, out)
 check(k <= 40 and k >= 38, "mira: non più di 40 puntini, si allargano")
 local m = mira.nuova()
 check(#m.nodi == 2 * mira.PUNTI + 5 + mira.ANELLI and m.cartello, "mira: puntini, linea, mirino, lancetta, punta, anelli e cartellino")
-mira.cartellino(m, 0, 0, 2, 40, 0.94, vec(1, 0, 0, 1))
-check(m.c.testo == "40°" and m.c.p == 94 and m.c.radice.scale.x == 0.5, "mira: gradi e potenza, grandi uguali a ogni zoom")
+mira.lancetta(m, 0, 0, 0, 2, 0.94, vec(1, 0, 0, 1))
+mira.cartellino(m, 0, 0, 0, 2, 40, 0.94)
+check(m.c.gradi == 40 and m.c.p == 94 and m.c.radice.scale.x == 0.5 and m.c.radice.pos.x > 50,
+	"mira: gradi e potenza oltre la punta della lancetta, grandi uguali a ogni zoom")
 mira.mirino(m, 100, 50, 0, 2, 0.5, vec(1, 0, 0, 1))
 check(m.mir.enabled and m.mir.scale.x == 0.5 and math.abs(m.mir.pos.x - (100 + mira.MIRINO_D / 2)) < 1e-9 and m.mir.pos.y == 50,
 	"mira: il mirino a distanza fissa sullo schermo nella direzione della mira")

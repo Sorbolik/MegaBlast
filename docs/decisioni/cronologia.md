@@ -103,3 +103,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 2 nov | Le schegge dello Sciame sparate in alto spariscono sopra la mappa: prima volavano più di un minuto, bloccando turno e zoom della camera. | questa PR |
 | 2 nov | Dettaglio a ogni zoom, primo passo: dipinti delle mappe a densità 2 dagli schermi a 1080, diavoletto non compresso e più nitido da lontano. | questa PR |
 | 3 nov | Freccia di ferro sopra il nome di chi è di turno, con la brace del colore della squadra che pulsa (scheda WB-010). | questa PR |
+| 3 nov | Zoom continuo fino allo spazio di gioco, col pulsante che si trascina e il tuo personaggio sempre al centro; freccia piccola sopra i punti dove torna un colpo uscito in alto; targhe grandi uguali a ogni zoom con la Corona accanto al nome; numeri della mira in punta alla lancetta; numeri dei punti che non si coprono; l'icona della secondaria che vola al pulsante quando la Lama la ricarica. | questa PR |

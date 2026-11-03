@@ -6,8 +6,10 @@
 --
 --   local tt = targa.nuove(colori, nomi)  -- una targa per colore, tutte insieme
 --   targa.vita(t, vita, massima, scudo)   -- quando cambia (scudo può mancare)
---   targa.update(t, dt, x, y, scala, cam, su) -- a ogni frame: x, y è il centro in basso (nel
+--   targa.update(t, dt, x, y, scala, cam)   -- a ogni frame: x, y è il centro in basso (nel
 --                                          mondo); cam (battaglia/camera.lua) per la riga
+--   targa.scala(cam)                      -- la scala da dare a update: la targa resta
+--                                          -- grande uguale sullo schermo a ogni zoom
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, testo)                 -- gli effetti addosso, sotto la barra ("" = niente)
 --   targa.annuncio(t, testo)              -- una scritta che sale sopra il nome e svanisce
@@ -15,11 +17,11 @@
 --   targa.battuta(t, testo)               -- quello che dice il personaggio: una nuvoletta che
 --                                          -- resta un paio di secondi e svanisce
 --   targa.posto(t, testo, corona)         -- il posto in classifica a sinistra della barra
---                                          -- ("" = niente) e la Corona sopra il nome
+--                                          -- ("" = niente) e la Corona accanto al nome
 --   targa.sopra(t)                        -- dove finisce la targa in alto (unità a scala 1)
 --
 -- La freccia di ferro di chi è di turno (scheda WB-010, scelta di Sergio del 2 nov):
--- una sola per tutta la partita, sopra il nome (o sopra la Corona), che dondola
+-- una sola per tutta la partita, sopra il nome, che dondola
 -- con la brace del colore della squadra che pulsa (più accesa giù in basso).
 --   local f = targa.freccia()             -- f.radice va nella scena fra le barre e i testi
 --   targa.freccia_su(f, t)                -- a ogni frame, prima di targa.update: su t (nil = via)
@@ -45,15 +47,20 @@ local NOME_Y = 10           -- centro del nome sopra la barra
 -- scala del font "titolo" (scala 1 = circa 40 px)
 local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
 local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
--- la Corona del primo sopra il nome: grande come nei punti in alto (ui.corona è
--- alta 13 a scala 1, 3,5 sotto il centro della fascia)
-local CORONA_Y, CORONA_SCALA = NOME_Y + 13, 1.6
--- dove finiscono il nome e la Corona in alto
-local NOME_CIMA, CORONA_CIMA = NOME_Y + 6, CORONA_Y + 17
+-- La targa resta grande uguale sullo schermo a ogni zoom (Sergio, 3 nov: da
+-- lontano non deve essere più grande del personaggio): scala SCHERMO / zoom
+local SCHERMO = 0.85
+-- la Corona del primo sulla riga del nome, a sinistra (Sergio, 3 nov, scelta L1:
+-- la targa resta bassa). ui.corona è larga 18 e alta 13 a scala 1, col centro
+-- 3 sopra il suo punto
+local CORONA_SCALA, CORONA_STACCO = 0.75, 2
+local CORONA_Y = NOME_Y - 3 * CORONA_SCALA
+-- dove finisce il nome in alto
+local NOME_CIMA = NOME_Y + 6
 -- la freccia di ferro: larga FRECCIA_W (alta come dice l'immagine), FRECCIA_STACCO
--- sopra il nome o la Corona (nel nodo che sobbalza col colpo, come loro);
+-- sopra il nome (nel nodo che sobbalza col colpo, come lui);
 -- dondola di FRECCIA_DONDOLA in su e in giù ogni FRECCIA_T secondi
-local FRECCIA_W = 28
+local FRECCIA_W = 18
 local FRECCIA_STACCO, FRECCIA_DONDOLA, FRECCIA_T = 3, 1.5, 1.4
 -- la riga delle missioni: sopra la Corona e gli annunci che salgono, a capo
 -- oltre RIGA_W; grande RIGA_SCALA sullo schermo a ogni zoom (circa 22 px: con la
@@ -63,10 +70,10 @@ local RIGA_STACCO, RIGA_SCALA, RIGA_W, RIGA_LATO = 13, 0.55, 1640, 16
 -- e non sale fin sotto i punti e l'obiettivo in cima (battaglia/punteggio.lua):
 -- col robot in alto scende, sopra il robot
 local RIGA_CIMA = 130
--- la nuvoletta delle battute: sopra la Corona, grande BATTUTA_SCALA sullo
+-- la nuvoletta delle battute: sopra il nome, grande BATTUTA_SCALA sullo
 -- schermo a ogni zoom, col fondo scuro attorno (BATTUTA_BORDO px)
--- (BATTUTA_STACCO sotto la cima della Corona, o FRECCIA_SOPRA sopra la freccia)
-local BATTUTA_STACCO, BATTUTA_SCALA, BATTUTA_BORDO, BATTUTA_T = -3, 0.42, 8, 2.6
+-- (BATTUTA_STACCO sopra il nome, o FRECCIA_SOPRA sopra la freccia)
+local BATTUTA_STACCO, BATTUTA_SCALA, BATTUTA_BORDO, BATTUTA_T = 2, 0.42, 8, 2.6
 local FRECCIA_SOPRA = 2
 local NUVOLA = vmath.vector4(0.06, 0.05, 0.08, 0.82)
 
@@ -121,6 +128,14 @@ local function radice()
 	return r, d
 end
 
+-- la Corona a sinistra del nome: dipende da quanto è largo
+local function corona_posto(t)
+	local font = gui.get_font_resource(gui.get_font(t.nome))
+	local w = resource.get_text_metrics(font, gui.get_text(t.nome)).width * NOME_SCALA
+	V.x, V.y, V.z = -w / 2 - CORONA_STACCO - 9 * CORONA_SCALA, CORONA_Y, 0
+	gui.set_position(t.corona, V)
+end
+
 function M.nuove(colori, nomi)
 	local tt = {}
 	-- prima le barre di tutte le targhe
@@ -162,12 +177,18 @@ function M.nuove(colori, nomi)
 		gui.set_pivot(t.battuta, gui.PIVOT_S)
 		gui.set_enabled(t.battuta, false)
 		M.vita(t, 1, 1)
+		corona_posto(t)
 	end
 	return tt
 end
 
 function M.nome(t, nome)
 	gui.set_text(t.nome, nome)
+	corona_posto(t)
+end
+
+function M.scala(cam)
+	return SCHERMO / cam.s
 end
 
 -- il colore della squadra (cambia da una partita all'altra)
@@ -183,13 +204,12 @@ end
 function M.posto(t, s, corona)
 	gui.set_text(t.posto, s)
 	gui.set_enabled(t.corona, corona)
-	t.con_corona = corona
 end
 
 -- dove finisce la targa in alto, freccia compresa (unità a scala 1, dal centro
--- in basso): sopra ci stanno il cartellino della mira, le battute e la riga
+-- in basso): sopra ci stanno le battute e la riga
 function M.sopra(t)
-	return max(CORONA_CIMA, t.freccia_cima or 0)
+	return max(NOME_CIMA, t.freccia_cima or 0)
 end
 
 function M.riga(t, s)
@@ -241,7 +261,7 @@ end
 
 local freccia_update -- più sotto, con la freccia
 
-function M.update(t, dt, x, y, scala, cam, su)
+function M.update(t, dt, x, y, scala, cam)
 	t.t = t.t + dt
 	t.x, t.y, t.scala = x, y, scala
 	V.x, V.y, V.z = x, y, 0
@@ -256,13 +276,12 @@ function M.update(t, dt, x, y, scala, cam, su)
 		V.x, V.y = k, k
 		gui.set_scale(t.riga, V)
 		local _, tetto = camera.al_mondo(cam, 0, schermo.y1 - RIGA_CIMA - t.riga_h * RIGA_SCALA)
-		-- su: pixel dello schermo in più sopra la targa (il cartellino della mira)
 		local sx = camera.allo_schermo(cam, x, y)
 		local mezzo = (t.riga_w or 0) * RIGA_SCALA / 2 + RIGA_LATO
 		local cx = math.max(schermo.x0 + mezzo, math.min(schermo.x1 - mezzo, sx))
 		if schermo.x1 - schermo.x0 < 2 * mezzo then cx = (schermo.x0 + schermo.x1) / 2 end
 		V.x = (camera.al_mondo(cam, cx, 0) - x) / scala
-		V.y = math.min(M.sopra(t) + RIGA_STACCO + (su or 0) / (scala * cam.s), (tetto - y) / scala)
+		V.y = math.min(M.sopra(t) + RIGA_STACCO, (tetto - y) / scala)
 		gui.set_position(t.riga, V)
 	end
 
@@ -360,9 +379,9 @@ function M.freccia()
 	return f
 end
 
--- il centro della freccia sopra il nome o la Corona (nel nodo che sobbalza)
-local function freccia_base(f, t)
-	return (t.con_corona and CORONA_CIMA or NOME_CIMA) + FRECCIA_STACCO + f.h / 2
+-- il centro della freccia sopra il nome (nel nodo che sobbalza)
+local function freccia_base(f)
+	return NOME_CIMA + FRECCIA_STACCO + f.h / 2
 end
 
 -- la freccia va su t (la targa di chi è di turno, nil = nessuno): prima di
@@ -375,7 +394,7 @@ function M.freccia_su(f, t)
 	end
 	if not t then return end
 	t.freccia = f
-	t.freccia_cima = H / 2 + BORDO + freccia_base(f, t) + f.h / 2 + FRECCIA_DONDOLA
+	t.freccia_cima = H / 2 + BORDO + freccia_base(f) + f.h / 2 + FRECCIA_DONDOLA
 end
 
 -- in targa.update, col sobbalzo del colpo (k) come il nome e la Corona. In alto
@@ -384,7 +403,7 @@ freccia_update = function(f, t, dt, k)
 	f.t = (f.t + dt) % FRECCIA_T
 	local c = math.cos(f.t / FRECCIA_T * 2 * math.pi)
 	local accesa = (1 - c) / 2
-	V.x, V.y, V.z = t.x, t.y + (H / 2 + BORDO + (freccia_base(f, t) + FRECCIA_DONDOLA * c) * k) * t.scala, 0
+	V.x, V.y, V.z = t.x, t.y + (H / 2 + BORDO + (freccia_base(f) + FRECCIA_DONDOLA * c) * k) * t.scala, 0
 	gui.set_position(f.radice, V)
 	V.x, V.y, V.z = t.scala * k, t.scala * k, 1
 	gui.set_scale(f.radice, V)
