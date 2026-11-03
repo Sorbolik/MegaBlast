@@ -1,8 +1,9 @@
 -- The plate above the Scoria in battle: the name, with no tag behind it, above a
--- thin steel blade with the health running in its groove, in the team color
--- (style C of card WB-011, "lama incisa", Sergio's choice of 3 Nov, with its
--- golden Crown). The images are cut by strumenti/grafica/targa.py from the
--- ChatGPT sheet; the font is the interface's (ui/ui.lua). Damage shows in two
+-- plain bar of health in the team color on a dark background, and the golden
+-- Crown of card WB-011 (Sergio, 3 Nov: «ancora più minimali e leggibili ... hanno
+-- un livello di dettaglio che fa perdere il focus dal personaggio»; the steel
+-- blade of the same day is gone). The Crown is cut by strumenti/grafica/targa.py
+-- from the ChatGPT sheet; the font is the interface's (ui/ui.lua). Damage shows in two
 -- steps: health drops at once, the lost piece stays white for a moment and then
 -- wears away; the bar jolts and flashes. Below 30% health pulses. The shield,
 -- if any, is a light stretch after the health.
@@ -23,17 +24,18 @@
 --                                          -- ("" = nothing) and the Crown beside the name
 --   targa.sopra(t)                        -- where the plate ends at the top (units at scale 1)
 --
--- The iron arrow of whoever's turn it is (card WB-010, Sergio's choice of 2 Nov):
--- just one for the whole match, above the name, bobbing,
--- with the ember in the team color pulsing (brighter at the bottom).
+-- The arrow of whoever's turn it is: a solid V in the team color with a dark
+-- border (Sergio, 3 Nov, instead of the iron arrow of card WB-010), just one for
+-- the whole match, above the name, bobbing.
 --   local f = targa.arrow()               -- f.radice goes in the scene between the bars and the texts
 --   targa.arrow_up(f, t)                  -- every frame, before targa.update: on t (nil = off)
+--   targa.arrow_color(f, color)           -- the V's color (the arrows above the points)
 --
 -- Each plate has two roots, t.bars and t.texts, that move together. The GUI
 -- draws nodes in the order they are in: whoever puts them in the scene puts
 -- first the bars of all plates, then the arrow and then all the texts, so two
--- draw calls are enough for all of them: the battle atlas images (blade, health,
--- Crown, quip background and arrow: the rectangles use targa_bianco too), then
+-- draw calls are enough for all of them: the battle atlas images (health, Crown,
+-- quip background and arrow: the rectangles are targa_bianco tinted), then
 -- the font. We don't use GUI layers because they would draw the plates above
 -- buttons and menus.
 
@@ -45,32 +47,29 @@ local M = {}
 
 local max = math.max
 
--- sizes in GUI units at scale 1. The health is W wide and H tall; the blade is
--- BLADE_H tall, starts FIRST before the health (the hilt) and ends AFTER it (the
--- tip), and the health sits BAR_UP above its center. The image has BLADE_PX pixels
--- per unit and stretches only between the BLADE_LEFT and BLADE_RIGHT edges
--- (pixels): sizes from strumenti/grafica/targa.py
-local W = 36
-local H, BLADE_H, FIRST, AFTER, BAR_UP = 2.59, 9, 8.44, 12.6, 0.39
-local BLADE_PX, BLADE_LEFT, BLADE_RIGHT = 4, 47, 92
-local BASE = BLADE_H / 2     -- from the bottom point of the plate to the center of the blade
-local NAME_Y = BLADE_H / 2 + 6 -- center of the name above the blade
+-- sizes in GUI units at scale 1: the health is W wide and H tall, on a dark
+-- background BORDER wider on each side
+local W, H, BORDER = 40, 5, 1
+local BASE = H / 2 + BORDER   -- from the bottom point of the plate to the center of the bar
+local NAME_Y = BASE + 6.5     -- center of the name above the bar
+local BAR_BG = vmath.vector4(0.04, 0.03, 0.05, 0.9)
 -- scale of the "titolo" font (scale 1 = about 40 px)
 local NAME_SCALE, NUMBER_SCALE, STATE_SCALE, BANNER_SCALE = 0.25, 0.2, 0.18, 0.3
-local STATE_Y, BANNER_Y, BANNER_RISE, BANNER_T = -(BLADE_H / 2 + 4), 22, 14, 1.4
+local STATE_Y, BANNER_Y, BANNER_RISE, BANNER_T = -(BASE + 4), 22, 14, 1.4
 -- The plate stays the same size on screen at every zoom (Sergio, 3 Nov: from
 -- far away it must not be bigger than the character): scale ON_SCREEN / zoom
-local ON_SCREEN = 0.85
+-- (0.85 until Sergio found it «ancora un po' piccolo», 3 Nov)
+local ON_SCREEN = 1.1
 -- the first one's Crown on the name's line, on the left (Sergio, 3 Nov, choice L1:
 -- the plate stays low), CROWN_W wide and CROWN_H tall like the image (108 x 59)
 local CROWN_W, CROWN_GAP = 13.5, 2
 local CROWN_H = CROWN_W * 59 / 108
 -- where the name ends at the top
 local NAME_TOP = NAME_Y + 6
--- the iron arrow: ARROW_W wide (as tall as the image says), ARROW_GAP
--- above the name (in the node that jolts with a hit, like the name);
--- it bobs ARROW_BOB up and down every ARROW_T seconds
-local ARROW_W = 18
+-- the arrow: a V ARROW_W wide and ARROW_H tall (two bars at 45 degrees, the
+-- dark border ARROW_EDGE thicker), ARROW_GAP above the name (in the node that
+-- jolts with a hit, like the name); it bobs ARROW_BOB up and down every ARROW_T seconds
+local ARROW_W, ARROW_H, ARROW_BAR, ARROW_LEN, ARROW_EDGE = 18, 12, 3.5, 11, 3
 local ARROW_GAP, ARROW_BOB, ARROW_T = 3, 1.5, 1.4
 -- the missions' line: above the Crown and the rising announcements, wrapping
 -- past ROW_W; ROW_SCALE big on screen at every zoom (about 22 px: with the
@@ -124,14 +123,14 @@ end
 
 -- a piece of the bar: starts at the left edge, w wide (from x)
 local function piece(t, color)
-	local n = rect(t.dentro, -W / 2, BAR_UP, 0, H, color)
+	local n = rect(t.dentro, -W / 2, 0, 0, H, color)
 	gui.set_pivot(n, gui.PIVOT_W)
 	return n
 end
 
 local function span(n, x, w)
 	gui.set_enabled(n, w > 0.05)
-	V.x, V.y, V.z = -W / 2 + x, BAR_UP, 0
+	V.x, V.y, V.z = -W / 2 + x, 0, 0
 	gui.set_position(n, V)
 	V.x, V.y = w, H
 	gui.set_size(n, V)
@@ -164,12 +163,7 @@ function M.nuove(palette, name_list)
 		local t = { colore = vmath.vector4(color.x, color.y, color.z, 1), hp_f = 1, trail_f = 1,
 			shield_f = 0, max_f = 1, attesa = 0, colpo = 0, t = 0, banner_t = 0 }
 		t.bars, t.dentro = root_node()
-		-- the blade: it stretches only in the middle (slice9 in image pixels,
-		-- which is why it is BLADE_PX times bigger and scaled down)
-		local blade_w = FIRST + W + AFTER
-		local blade = image(t.dentro, "targa_lama", (AFTER - FIRST) / 2, 0, blade_w * BLADE_PX, BLADE_H * BLADE_PX)
-		gui.set_slice9(blade, vmath.vector4(BLADE_LEFT, 0, BLADE_RIGHT, 0))
-		gui.set_scale(blade, vmath.vector3(1 / BLADE_PX, 1 / BLADE_PX, 1))
+		rect(t.dentro, 0, 0, W + 2 * BORDER, H + 2 * BORDER, BAR_BG)
 		t.trail = piece(t, TRAIL)
 		t.scudo = piece(t, SHIELD)
 		t.full = piece(t, color)
@@ -186,9 +180,9 @@ function M.nuove(palette, name_list)
 	for i, t in ipairs(tt) do
 		t.texts, t.inside_texts = root_node()
 		t.nome = txt(t.inside_texts, 0, NAME_Y, name_list[i] or "", NAME_SCALE, t.colore)
-		t.numero = txt(t.inside_texts, W / 2 + AFTER + 2, 0, "", NUMBER_SCALE, ui.C.TEXT)
+		t.numero = txt(t.inside_texts, W / 2 + BORDER + 3, 0, "", NUMBER_SCALE, ui.C.TEXT)
 		gui.set_pivot(t.numero, gui.PIVOT_W)
-		t.posto = txt(t.inside_texts, -W / 2 - FIRST - 2, 0, "", NUMBER_SCALE, ui.C.TEXT)
+		t.posto = txt(t.inside_texts, -W / 2 - BORDER - 3, 0, "", NUMBER_SCALE, ui.C.TEXT)
 		gui.set_pivot(t.posto, gui.PIVOT_E)
 		t.stato = txt(t.inside_texts, 0, STATE_Y, "", STATE_SCALE, ui.C.TEXT)
 		t.announcement = txt(t.inside_texts, 0, BANNER_Y, "", BANNER_SCALE, ui.C.LIGHT)
@@ -374,34 +368,31 @@ function M.update(t, dt, x, y, scale, cam)
 	gui.set_color(t.full, C)
 end
 
--- the arrow: the iron, the white ember tinted with the team color, the white
--- core (strumenti/grafica/freccia.py), in the battle atlas. ARROW_W wide, as
--- tall as the image says (nothing gets deformed)
-local function layer(r, nome)
-	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_texture(n, "battaglia")
-	gui.set_size_mode(n, gui.SIZE_MODE_AUTO)
-	gui.play_flipbook(n, nome)
-	local px = gui.get_size(n)
-	gui.set_size_mode(n, gui.SIZE_MODE_MANUAL)
-	gui.set_size(n, vmath.vector3(ARROW_W, ARROW_W * px.y / px.x, 0))
-	gui.set_adjust_mode(n, gui.ADJUST_FIT)
-	gui.set_parent(n, r)
-	gui.set_inherit_alpha(n, true)
-	return n
+-- the arrow: two bars of targa_bianco at 45 degrees in a V, first the dark
+-- border (thicker and longer) and then the team color on top; ARROW_W wide
+local ARROW_SIDE = ARROW_W * 0.18  -- how far each bar's center is from the middle
+
+local function arrow_bars(f, thick, len, color, list)
+	for _, side in ipairs({ -1, 1 }) do
+		local n = rect(f.radice, side * ARROW_SIDE, 0, thick, len, color)
+		gui.set_euler(n, vmath.vector3(0, 0, -side * 45))
+		if list then list[#list + 1] = n end
+	end
 end
 
 function M.arrow()
-	local f = { t = 0 }
+	local f = { t = 0, w = ARROW_W, h = ARROW_H, color_nodes = {} }
 	f.radice = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(f.radice, false)
 	gui.set_adjust_mode(f.radice, gui.ADJUST_FIT)
-	f.ferro = layer(f.radice, "freccia_ferro")
-	f.ember = layer(f.radice, "freccia_brace")
-	f.cuore = layer(f.radice, "freccia_cuore")
-	f.h = gui.get_size(f.ferro).y
+	arrow_bars(f, ARROW_BAR + ARROW_EDGE, ARROW_LEN + ARROW_EDGE, BAR_BG)
+	arrow_bars(f, ARROW_BAR, ARROW_LEN, ui.C.LIGHT, f.color_nodes)
 	gui.set_enabled(f.radice, false)
 	return f
+end
+
+function M.arrow_color(f, color)
+	for _, n in ipairs(f.color_nodes) do gui.set_color(n, color) end
 end
 
 -- the arrow's center above the name (in the node that jolts)
@@ -427,16 +418,11 @@ end
 arrow_update = function(f, t, dt, k)
 	f.t = (f.t + dt) % ARROW_T
 	local c = math.cos(f.t / ARROW_T * 2 * math.pi)
-	local is_lit = (1 - c) / 2
 	V.x, V.y, V.z = t.x, t.y + (BASE + (arrow_base(f) + ARROW_BOB * c) * k) * t.scala, 0
 	gui.set_position(f.radice, V)
 	V.x, V.y, V.z = t.scala * k, t.scala * k, 1
 	gui.set_scale(f.radice, V)
-	local col = t.colore
-	C.x, C.y, C.z, C.w = col.x, col.y, col.z, 0.55 + 0.45 * is_lit
-	gui.set_color(f.ember, C)
-	C.x, C.y, C.z, C.w = 1, 1, 1, 0.15 + 0.85 * is_lit * is_lit
-	gui.set_color(f.cuore, C)
+	M.arrow_color(f, t.colore)
 end
 
 return M

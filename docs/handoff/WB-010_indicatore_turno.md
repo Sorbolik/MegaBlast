@@ -185,3 +185,5 @@ dall'altro; nel sigillo le tacche sono 8 invece di 9.
   - nel ferro non restano pixel azzurri e attorno all'immagine non c'è un velo trasparente.
 - **Non verificato:** il telefono vero (c'è l'APK di prova da mandare a Sergio) e la freccia
   sopra la Corona in una partita vera, che ho controllato solo con i numeri delle misure.
+
+2026-11-03, più tardi · Sergio ha chiesto una freccia più semplice: la freccia di ferro è sostituita da una punta a V del colore della squadra disegnata dal codice; `strumenti/grafica/freccia.py` e le sue immagini sono tolti (le immagini di ChatGPT restano in `art/WB-010/`).

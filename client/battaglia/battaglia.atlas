@@ -17,18 +17,6 @@ images {
   image: "/assets/fx/cura_scintilla.png"
 }
 images {
-  image: "/assets/fx/freccia_ferro.png"
-}
-images {
-  image: "/assets/fx/freccia_brace.png"
-}
-images {
-  image: "/assets/fx/freccia_cuore.png"
-}
-images {
-  image: "/assets/fx/targa_lama.png"
-}
-images {
   image: "/assets/fx/targa_corona.png"
 }
 images {
