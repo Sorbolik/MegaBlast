@@ -104,4 +104,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 2 nov | Dettaglio a ogni zoom, primo passo: dipinti delle mappe a densità 2 dagli schermi a 1080, diavoletto non compresso e più nitido da lontano. | questa PR |
 | 3 nov | Il contatore FPS non conta gli scatti nascosti dal velo dei passaggi; anche lo scivolo fra i menu fa arrivare la schermata nuova tre frame dopo, a velo pieno. | questa PR |
 | 3 nov | Il logo del gioco al centro dell'iride: si chiude sul logo e si riapre dal logo, senza allungare il passaggio. | questa PR |
+| 3 nov | Tolto il logo dall'iride: troppo rapido, sembrava un bug; i loghi solo nei caricamenti veri. | questa PR |
 | 3 nov | Al primo turno si lanciano tutti e due i globi di partenza: via il limite di uno, resto del Nucleo. | #163 |
