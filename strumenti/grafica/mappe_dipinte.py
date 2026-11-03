@@ -4,7 +4,7 @@
 # Scrive, per ogni densità di schermo (1 = normale, 2 = alta, vedi DENSITA):
 #   client/dipinti/mappe/<mappa>_<d>.png      il terreno disegnato, 1920 x 1080 per d
 #   client/dipinti/sfondi/<girone>_*_<d>.png  il cielo e i tre gruppi di piani dello sfondo
-#   client/battaglia/dipinti.lua              misure e velocità che servono allo shader
+#   client/battle/paintings.lua              misure e velocità che servono allo shader
 #   strumenti/grafica/mappe/<mappa>.png       la maschera di collisione (bianco terra, rosso
 #                                             acciaio), che mappa_in_lua.py porta in sim/mapdata.lua
 # Le mappe: il pavimento e la fossa del Fabbro (documento delle mappe dell'apprendista, layout A
@@ -28,7 +28,7 @@ from temi import TEMI                                          # noqa: E402
 
 OUT = os.path.join(RADICE, "client", "dipinti")
 MASCHERE = os.path.join(QUI, "mappe")
-LUA = os.path.join(RADICE, "client", "battaglia", "dipinti.lua")
+LUA = os.path.join(RADICE, "client", "battle", "paintings.lua")
 
 # quanti pixel dell'immagine per pixel della scena (1280 x 720), per densità e per pezzo:
 # i piani lontani sono morbidi e si vedono piccoli, bastano meno pixel. Il terreno è per il

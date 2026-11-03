@@ -1,0 +1,11 @@
+material: "/battle/terrain.material"
+vertices: "/battle/terrain.buffer"
+textures: "/assets/fx/bagliore.png"
+textures: "/assets/fx/bagliore.png"
+textures: "/assets/fx/bagliore.png"
+textures: "/assets/fx/bagliore.png"
+textures: "/assets/fx/bagliore.png"
+textures: "/assets/fx/bagliore.png"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+normal_stream: "normal"

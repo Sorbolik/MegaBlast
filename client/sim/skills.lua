@@ -32,7 +32,7 @@ M.BRANCHES = {
 
 -- Nodes: branch, row (1 at the top), ranks, cost of each rank and effect of each rank.
 -- potere: the nodes that give something new (not just a number) and what it
--- is called on the player card (ui/cartellino.lua).
+-- is called on the player card (ui/tag_card.lua).
 -- Sum of the costs of all ranks: 62, more than three times POINTS_MAX.
 M.NODES = {
 	-- Mobility (28)

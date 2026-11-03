@@ -1,13 +1,13 @@
 # Il diavoletto a pezzi, disegnato a vettori (SVG) come le armi (vettori.py):
 # contorno nero spesso, colori pieni con una sfumatura semplice. Il gioco monta
-# i pezzi e li anima nel codice (client/battaglia/scoria.lua): niente fogli di
+# i pezzi e li anima nel codice (client/battle/scoria.lua): niente fogli di
 # fotogrammi, l'atlante è piccolo e il movimento è fluido a qualsiasi frequenza.
 # Scrive:
 #   client/assets/diavoletto/<pezzo>.png        un pezzo (guarda a destra)
 #   client/assets/diavoletto/<pezzo>_tinta.png  le parti col colore della
 #                                               squadra (bianche e grigie, tinte nel codice)
-#   client/battaglia/diavoletto.atlas
-#   client/battaglia/diavoletto.lua             misure di ogni pezzo rispetto al suo
+#   client/battle/devil.atlas
+#   client/battle/devil.lua             misure di ogni pezzo rispetto al suo
 #                                               perno e i punti dove si attaccano
 #   simulazione/foto/diavoletto_anteprima.png   il diavoletto montato, per guardarlo
 #
@@ -29,8 +29,8 @@ QUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, QUI)
 RADICE = os.path.join(QUI, "..", "..")
 OUT = os.path.join(RADICE, "client", "assets", "diavoletto")
-LUA = os.path.join(RADICE, "client", "battaglia", "diavoletto.lua")
-ATLAS = os.path.join(RADICE, "client", "battaglia", "diavoletto.atlas")
+LUA = os.path.join(RADICE, "client", "battle", "devil.lua")
+ATLAS = os.path.join(RADICE, "client", "battle", "devil.atlas")
 ANTEPRIMA = os.path.join(RADICE, "simulazione", "foto", "diavoletto_anteprima.png")
 
 from vettori import BORDO, RIGA, INK, COL, Disegno, rendi, gradienti  # noqa: E402

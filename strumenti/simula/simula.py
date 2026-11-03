@@ -56,7 +56,7 @@ PAD = {"a": ("F1", "F1"), "b": ("F2", "F2"), "x": ("F3", "F3"), "y": ("F4", "F4"
        "sx_sinistra": ("F", "f"), "sx_destra": ("H", "h"), "sx_su": ("Y", "y"), "sx_giu": ("G", "g"),
        "dx_sinistra": ("J", "j"), "dx_destra": ("L", "l"), "dx_su": ("I", "i"), "dx_giu": ("K", "k")}
 # Righe del log del motore che non sono errori del gioco (nel container non c'è audio)
-# (gli eventi chiesti a un server che non c'è: il gioco lo sa e va avanti senza, main/eventi.lua)
+# (gli eventi chiesti a un server che non c'è: il gioco lo sa e va avanti senza, main/events.lua)
 IGNORA = re.compile(r"^(ERROR|WARNING):SOUND|^WARNING:(DLIB: Variable LANG|ENGINE: Failed to initialize sound)"
                     r"|^ERROR:DLIB: HTTP request to '[^']*/eventi' failed")
 ERRORE = re.compile(r"^(ERROR|FATAL):|Assertion|Segmentation fault|stack traceback")
@@ -369,7 +369,7 @@ def comando(g, riga):
     elif c in ("tocca", "tocca_centro", "tocca_bordo"):
         # tocca: pixel dello schermo; tocca_centro: pixel del gioco a 16:9, dove
         # stanno i menu, centrati su ogni schermo; tocca_bordo DX DY alto|basso
-        # sinistra|destra: a DX, DY pixel del gioco da quell'angolo (ui/schermo.lua)
+        # sinistra|destra: a DX, DY pixel del gioco da quell'angolo (ui/screen.lua)
         u = min(W / 1280, H / 720)
         x, y = num(0), num(1)
         if c == "tocca_centro":
@@ -566,7 +566,7 @@ LUA_MAX_COPERTO = 300
 
 
 def fotogrammi(log, dove):
-    """Il contatore dei fotogrammi (client/ui/fotogrammi.lua): gli scatti e i
+    """Il contatore dei fotogrammi (client/ui/frames.lua): gli scatti e i
     riassunti ogni 5 secondi, in simulazione/fotogrammi.txt e in una riga qui.
     Qui disegna la CPU (llvmpipe): i millisecondi non sono quelli di un telefono,
     ma uno scatto da lavoro di Lua (caricamenti, gc) si vede uguale."""

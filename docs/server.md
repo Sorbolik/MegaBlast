@@ -49,7 +49,7 @@ loro aggiungono una coda per occorrenza (sotto).
 Finché la coda non è piena, a ogni entrata e uscita tutti quelli in coda
 ricevono `{"t":"wait","of":4,"you":2,"vetrine":[{"liv":12,"bdg":[…]},{}]}`:
 quanti servono alla partita, il proprio posto e i cartellini di chi aspetta,
-nell'ordine della coda (la sala d'attesa del gioco, `client/menu/sala.lua`).
+nell'ordine della coda (la sala d'attesa del gioco, `client/menu/lobby.lua`).
 Chi si scollega in coda esce dalla coda (`Lobby.Leave`).
 
 **Bot che riempiono la coda** (Sergio, 3 nov): nelle code normali, se la coda
@@ -82,7 +82,7 @@ chi ha scelto. L'attrezzo non si sceglie: il Rampino ce l'hanno tutti. Allo
 scadere di `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma di ogni
 ventaglio e parte la partita. Il tempo della scelta comprende anche i
 `config.LINEUP_SECONDS` dello schieramento (i cartellini di tutti, prima
-di scegliere: `client/menu/schieramento.lua`), in cui si può già scegliere
+di scegliere: `client/menu/lineup.lua`), in cui si può già scegliere
 (`start`, anche lui con `vetrine`, e con `players`: squadra e scelte di
 ognuno, `[{"team":1,"pick":"shards","secondary":"eagle"},…]`, e `regole`, quelle
 dell'evento o `null`, così il client crea la sua copia della partita con le
@@ -92,7 +92,7 @@ non torna in tempo, senza aspettare), chiude la sua connessione e manda `left`
 agli altri; il suo robot sparisce dalla partita (`game:remove`: evento `gone`,
 `gn` nello stato, non rinasce e non ha più turni) e si continua finché restano
 almeno due squadre. Il client la
-mostra con la schermata dello stesso telefono (`client/menu/scelta.lua`). Nello stato ogni robot
+mostra con la schermata dello stesso telefono (`client/menu/pick.lua`). Nello stato ogni robot
 porta la sua secondaria in `sw` (i suoi colpi in `ss`), l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
 `hx`, `hy`; `gs`: il suo uncino del Rampino è in volo, in `gx`, `gy`; `kn`: sbalzato da un colpo; `la`: direzione dello scatto
@@ -125,7 +125,7 @@ faccia la stessa partita.
 cominciano nei prossimi 14 giorni, ognuna con `id` (`maglio-20261102`), `da`,
 `a`, `torna` (la volta dopo), `coda` (da mettere nel `hello`: l'id stesso per un
 modificatore, `2v2` per un Torneo), `modo` e `giocatori`. Il gioco le chiede
-nella schermata d'ingresso, prima di aprire la home (`client/ui/ingresso.lua`),
+nella schermata d'ingresso, prima di aprire la home (`client/ui/entry.lua`),
 poi tornando alla home, aprendo la bacheca e DOVE GIOCHI?, e ogni minuto nella
 home. La risposta ha `Cache-Control: no-store`: mai una copia vecchia. Un
 `hello` con la coda di un evento non in corso riceve `{"t":"error","e":"evento"}`.

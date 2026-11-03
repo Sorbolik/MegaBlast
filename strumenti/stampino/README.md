@@ -2,7 +2,7 @@
 
 Teste, corazze, maglie, ali, code, elmi o un personaggio intero si disegnano
 sopra lo stesso foglio, lo **stampino**, e il gioco li monta sullo scheletro del
-diavoletto: si muovono con le stesse animazioni (`client/battaglia/animazioni.lua`)
+diavoletto: si muovono con le stesse animazioni (`client/battle/animations.lua`)
 senza toccare il codice.
 
 ## Lo scheletro e i posti
@@ -84,7 +84,7 @@ python3 strumenti/stampino/taglia.py --ritocchi ritocchi.json   # i ritocchi fat
 `taglia.py` ritaglia ogni casella cambiata, toglie il manichino (per quelle
 sopra), allinea se serve, divide la coda, separa bordo e colore dei pezzi in
 catena e il colore della squadra, e scrive `client/assets/pelli/<nome>_<posto>.png`,
-`strumenti/stampino/pelli/<nome>.json`, `client/battaglia/pelli.lua` e l'atlante
+`strumenti/stampino/pelli/<nome>.json`, `client/battle/skins.lua` e l'atlante
 del diavoletto, che contiene base e pelli insieme (si disegna in una volta).
 
 ## Fogli a pezzi liberi (personaggi a tre quarti)

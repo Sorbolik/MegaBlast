@@ -1,23 +1,23 @@
 script: "/main/game.gui_script"
 fonts {
   name: "titolo"
-  font: "/ui/titolo.font"
+  font: "/ui/title.font"
 }
 textures {
   name: "battaglia"
-  texture: "/battaglia/battaglia.atlas"
+  texture: "/battle/battle.atlas"
 }
 textures {
   name: "armi"
-  texture: "/battaglia/armi.atlas"
+  texture: "/battle/weapons.atlas"
 }
 textures {
   name: "diavoletto"
-  texture: "/battaglia/diavoletto.atlas"
+  texture: "/battle/devil.atlas"
 }
 textures {
   name: "esplosione"
-  texture: "/battaglia/esplosione.tilesource"
+  texture: "/battle/explosion.tilesource"
 }
 textures {
   name: "ui"
@@ -25,7 +25,7 @@ textures {
 }
 textures {
   name: "mappe"
-  texture: "/ui/mappe.atlas"
+  texture: "/ui/maps.atlas"
 }
 background_color {
   x: 0.0
@@ -36,19 +36,19 @@ background_color {
 material: "/builtins/materials/gui.material"
 materials {
   name: "lampo"
-  material: "/battaglia/lampo.material"
+  material: "/battle/flash.material"
 }
 materials {
   name: "pezzi"
-  material: "/battaglia/pezzi.material"
+  material: "/battle/pieces.material"
 }
 materials {
   name: "forgia"
-  material: "/gironi/forgia.material"
+  material: "/circles/forgia.material"
 }
 materials {
   name: "passaggio"
-  material: "/ui/passaggio.material"
+  material: "/ui/transition.material"
 }
 adjust_reference: ADJUST_REFERENCE_PARENT
 max_nodes: 4096

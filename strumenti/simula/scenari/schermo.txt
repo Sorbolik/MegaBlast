@@ -1,4 +1,4 @@
-# Proporzioni: niente si deforma su nessuno schermo (ui/schermo.lua). Da girare
+# Proporzioni: niente si deforma su nessuno schermo (ui/screen.lua). Da girare
 # anche con --schermo 1600x720 (telefono 20:9) e --schermo 960x720 (tablet 4:3):
 # anello del cronometro e pulsanti tondi restano tondi, levette e pulsanti
 # attaccati ai bordi veri, il fondo della mappa sopra l'HUD. I tocchi sono in

@@ -1656,7 +1656,7 @@ do
 end
 
 -- Turn pairs with two teams: whoever opens the pair has "pending" points
--- until the other team has answered (battaglia/punteggio.lua)
+-- until the other team has answered (battle/score.lua)
 do
 	local pc = game.new(42, "pavimento", { players = config.MODES["2v2"] })
 	check(pc.ahead == 1 and pc.ahead_base == 0, "the first turn opens a pair")
@@ -2208,9 +2208,9 @@ for i = 1, 600 do g4:step({ right = i % 2 == 0 }) end
 for i = 1, 20 do g4.terrain:carve(100 + i * 50, 200, 30) end
 print(string.format("info 600 ticks + 20 craters in %.1f ms", (os.clock() - t) * 1000))
 
--- Phone sticks (client/battaglia/levette.lua)
+-- Phone sticks (client/battle/sticks.lua)
 do
-	local sticks = require "battaglia.levette"
+	local sticks = require "battle.sticks"
 	local s = sticks.new()
 	sticks.muovi(s, 0.1, 0)
 	check(not s.moving, "stick: at 10% sideways it doesn't walk")

@@ -1,10 +1,10 @@
-# Le cartoline delle mappe per la scelta della mappa in ALLENAMENTO (client/menu/allenamento.lua):
+# Le cartoline delle mappe per la scelta della mappa in ALLENAMENTO (client/menu/training.lua):
 # per ogni mappa dipinta della campagna, il cielo, i tre gruppi di piani dello sfondo e il
 # terreno, messi insieme come li vede la camera a mappa intera, e rimpiccioliti.
 #
-# Scrive client/assets/mappe/miniature/<mappa>.png e client/ui/mappe.atlas (la texture "mappe"
+# Scrive client/assets/mappe/miniature/<mappa>.png e client/ui/maps.atlas (la texture "mappe"
 # di client/main/game.gui). Le mappe sono quelle dei gironi di client/sim/campaign.lua (non le
-# arene delle missioni), come le elenca allenamento.lua, che hanno un'immagine in client/dipinti/mappe/.
+# arene delle missioni), come le elenca training.lua, che hanno un'immagine in client/dipinti/mappe/.
 #
 #   python3 strumenti/grafica/miniature_mappe.py      (dalla cartella del repository, dopo
 #                                                      mappe_dipinte.py)
@@ -15,7 +15,7 @@ QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
 DIPINTI = os.path.join(RADICE, "client", "dipinti")
 OUT = os.path.join(RADICE, "client", "assets", "mappe", "miniature")
-ATLAS = os.path.join(RADICE, "client", "ui", "mappe.atlas")
+ATLAS = os.path.join(RADICE, "client", "ui", "maps.atlas")
 
 # la cartolina sta in una carta di 378 x 212 della scena (1280 x 720): un po' di più per gli
 # schermi fitti, ma due stanno ancora in una texture di 512 x 1024
@@ -25,7 +25,7 @@ SCENA_W, SCENA_H = 1280, 720
 LUA = r"""
 package.path = "client/?.lua;" .. package.path
 local campaign = require "sim.campaign"
-local dipinti = require "battaglia.dipinti"
+local dipinti = require "battle.paintings"
 local function enc(v)
   if type(v) == "table" then
     local out, list = {}, #v > 0

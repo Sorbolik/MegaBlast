@@ -44,7 +44,7 @@ type clientMsg struct {
 	V    int     `json:"v"`
 	Mode string  `json:"mode"`
 	Tok  string  `json:"tok"`
-	// with the greeting: level and badges of the card (menu/vetrina.lua, per_rete)
+	// with the greeting: level and badges of the card (menu/showcase.lua, per_rete)
 	// (raw: a wrong card must not make the greeting fail)
 	Showcase json.RawMessage `json:"vetrina"`
 }
@@ -57,7 +57,7 @@ type showcaseMsg struct {
 	} `json:"bdg"`
 }
 
-// Badges are few (menu/traguardi.lua): at most badgeMax get through, with a
+// Badges are few (menu/milestones.lua): at most badgeMax get through, with a
 // short name of lowercase letters and a grade from 1 to gradeMax
 const (
 	badgeMax = 3

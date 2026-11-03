@@ -44,7 +44,7 @@ se è piccolo e lo scatto è grande, il tempo l'ha preso il disegno o il
 sistema. Una pausa di più di un secondo (il gioco in secondo piano) non conta.
 Spento, il contatore non fa niente.
 
-Il codice è `client/ui/fotogrammi.lua`. Chi aggiunge un lavoro pesante (un
+Il codice è `client/ui/frames.lua`. Chi aggiunge un lavoro pesante (un
 caricamento, una schermata grande) chiama `fotogrammi.segna("nome")`, così il
 contatore lo riconosce.
 
@@ -80,7 +80,7 @@ Entrare in una missione è il frame più pesante del gioco: dipinti (decodifica 
 GPU) e maschera del terreno, 209-234 ms sul telefono di Sergio (2 nov, a 120 Hz,
 114 FPS in partita, il 99% dei frame sotto 10 ms). Succede sotto l'iride chiusa:
 dopo il cambio di scena il velo resta chiuso ancora 3 frame (`passaggio.HOLD_FRAMES`,
-`client/ui/passaggio.lua`, #159), così il frame lungo cade sul nero e l'iride si
+`client/ui/transition.lua`, #159), così il frame lungo cade sul nero e l'iride si
 riapre intera invece di saltare. Lo stesso vale per lo scivolo fra i menu (la
 schermata nuova arriva tre frame dopo, a velo pieno). Il contatore segna questi
 scatti `(coperto)` e non li conta fra gli SCATTI/MIN, perché non si vedono; nel

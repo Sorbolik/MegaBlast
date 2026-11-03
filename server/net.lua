@@ -165,7 +165,7 @@ function N.mode_players(mode)
 	return config.MODES[mode]
 end
 
--- the draft starts with the line-up of the cards (menu/schieramento.lua): its
+-- the draft starts with the line-up of the cards (menu/lineup.lua): its
 -- time is inside the draft time, and meanwhile you can already pick
 function N.draft_seconds()
 	return config.DRAFT_SECONDS + config.LINEUP_SECONDS

@@ -1,0 +1,28 @@
+#version 140
+
+// Vertici del fondo di un girone: un rettangolo della GUI grande come
+// schermo.PIENO schermate (circles/background.lua). Al frammento passa il punto in
+// pixel della tavola (x a destra, y in giù, 1280 x 720 al centro) e il
+// colore del nodo così com'è: rg il tempo, b la misura di un pixel.
+
+in highp vec3 position;
+in highp vec2 texcoord0;
+in highp vec4 color;
+
+out highp vec2 var_tavola;
+out highp vec4 var_color;
+
+uniform vs_uniforms
+{
+    highp mat4 view_proj;
+};
+
+// il nodo è largo 1280 x 4 e alto 720 x 4 (ui/screen.lua PIENO)
+const highp vec2 NODO = vec2(5120.0, 2880.0);
+
+void main()
+{
+    var_tavola = vec2(640.0 + (texcoord0.x - 0.5) * NODO.x, 360.0 - (texcoord0.y - 0.5) * NODO.y);
+    var_color = color;
+    gl_Position = view_proj * vec4(position.xyz, 1.0);
+}

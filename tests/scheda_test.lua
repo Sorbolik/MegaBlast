@@ -1,13 +1,13 @@
--- Character sheet tests: badges and stats (menu/traguardi.lua,
--- menu/profilo.lua), the tags' showcases (menu/vetrina.lua), the end-of-match
--- count (menu/conta.lua) and the replay (sim/replay.lua). From the root:
+-- Character sheet tests: badges and stats (menu/milestones.lua,
+-- menu/profile.lua), the tags' showcases (menu/showcase.lua), the end-of-match
+-- count (menu/tally.lua) and the replay (sim/replay.lua). From the root:
 --   luajit tests/scheda_test.lua
 package.path = "client/?.lua;" .. package.path
 
-local milestones = require "menu.traguardi"
-local profile = require "menu.profilo"
-local showcase = require "menu.vetrina"
-local count = require "menu.conta"
+local milestones = require "menu.milestones"
+local profile = require "menu.profile"
+local showcase = require "menu.showcase"
+local count = require "menu.tally"
 local replay = require "sim.replay"
 local game = require "sim.game"
 local equip = require "sim.gear"
