@@ -109,3 +109,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 3 nov | Freccia di ferro sopra il nome di chi è di turno, con la brace del colore della squadra che pulsa (scheda WB-010). | #162 |
 | 3 nov | Zoom continuo fino allo spazio di gioco, col pulsante che si trascina e il tuo personaggio sempre al centro; freccia piccola sopra i punti dove torna un colpo uscito in alto; targhe grandi uguali a ogni zoom con la Corona accanto al nome; numeri della mira in punta alla lancetta; numeri dei punti che non si coprono; l'icona della secondaria che vola al pulsante quando la Lama la ricarica. | #162 |
 | 3 nov | Via i controlli dalle PR per andare più veloci: girano su main dopo il merge e a mano prima delle versioni online; APK di prova solo a mano. | questa PR |
+| 3 nov | Targa a lama incisa (WB-011, stile C con la sua Corona): la vita scorre nella scanalatura di una lama d'acciaio, il nome senza fondo sopra. | questa PR |
