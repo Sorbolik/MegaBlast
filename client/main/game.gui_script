@@ -1692,8 +1692,8 @@ end
 -- dalla coda"; plan https://claude.ai/artifact/DfaPTiKqa3MzqNC7kBMsLK).
 -- TORNA AI MENU leaves the room but not the queue: the connection stays and
 -- self.queue keeps its mode, its time and the last "wait". Meanwhile the pill
--- (ui/pill.lua) says how it goes, and a tap on it goes back to the room (the
--- only way: GIOCA is off and says IN CODA, menu/home.lua). When the queue fills (the "draft") outside the room,
+-- (ui/pill.lua) says how it goes, and a tap on it or on GIOCA (which
+-- stays GIOCA, menu/home.lua) goes back to the room. When the queue fills (the "draft") outside the room,
 -- the pill says PARTITA TROVATA for CP.QUEUE_FOUND seconds (a training match
 -- stops, under a veil, and is cancelled: nothing goes into the profile), then
 -- the iris takes you to the lineup, with the time the countdown used taken
@@ -1733,7 +1733,7 @@ function CP.queue_to_menu(self)
 	CP.iris(self, function() show_menu(self, true) end)
 end
 
--- Back to the room (a tap on the pill); with the queue lost, in again
+-- Back to the room (the pill, GIOCA); with the queue lost, in again
 function CP.queue_open(self)
 	local q = self.queue
 	CP.iris(self, function()
@@ -4631,6 +4631,9 @@ function PAD.on_input(self, action_id, action)
 		local choice = home.on_input(self.home, action_id, action)
 		if choice == "local" then
 			CP.iris(self, function() start_local(self) end)
+		elseif choice == "online" and self.queue then
+			-- GIOCA while queued: the matchmaking, i.e. the waiting room (Sergio wants both)
+			CP.queue_open(self)
 		elseif choice == "online" and profile.new_player(self.profilo)
 			and (not SIMULATE or config_int("megablast.prova_nuovo", 0) > 0) then
 			-- for a new player GIOCA leads to the Training basics, until they finish

@@ -116,8 +116,8 @@ function M.button(list_of, x, y, w, h, label, ui_action, opt, parent)
 		-- the Core: a lit dot with its halo, left of the label
 		local r = h * 0.5
 		b.luce = M.alone(-w / 2 + r, 0, h * 1.1, vmath.vector4(col.x, col.y, col.z, 0.55), n)
-		b.core = { b.luce, M.alone(-w / 2 + r, 0, h * 0.34, vmath.vector4((1 + col.x) / 2, (1 + col.y) / 2, (1 + col.z) / 2, 1), n),
-			M.alone(-w / 2 + r, 0, h * 0.18, C.LIGHT, n) }
+		M.alone(-w / 2 + r, 0, h * 0.34, vmath.vector4((1 + col.x) / 2, (1 + col.y) / 2, (1 + col.z) / 2, 1), n)
+		M.alone(-w / 2 + r, 0, h * 0.18, C.LIGHT, n)
 		tx = h * 0.3
 	end
 	b.testo = M.testo(label, tx, 0, opt.scala or (h >= 90 and 1.6 or 0.9),

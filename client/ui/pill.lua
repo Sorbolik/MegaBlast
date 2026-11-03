@@ -1,8 +1,8 @@
 -- The queue pill (Sergio, 3 Nov: "una bella proposta di design che ti ricordi
 -- che sei in coda e che ti faccia capire anche quando si sta riempiendo e
 -- quando stai per essere portato in partita"): while you stay in the online
--- queue outside the waiting room (menus, training), a small pill in the
--- middle at the bottom (in a battle at the top) with Favilla's head, the mode, one dot per place and the
+-- queue outside the waiting room (menus, training), a small pill at the top
+-- in the middle with Favilla's head, the mode, one dot per place and the
 -- time. Tapping it goes back to the room. When the queue is full it lights
 -- up (PARTITA TROVATA · 3) and, in a match, a veil comes down with the count.
 -- It is created above everything (like the waiting flame) and raised again
@@ -25,9 +25,9 @@ local M = {}
 
 local C = ui.C
 local W, H = 1280, 720
--- where it sits: on the menus at the bottom (at the top there are the screens'
--- tabs), in a battle at the top under the scores (at the bottom the weapons)
-local LOW, HIGH = 24, H - 112
+-- where it sits, always at the top (Sergio, 3 Nov): on the menus at the
+-- edge, in a battle under the scores
+local MENU_Y, BATTLE_Y = H - 22, H - 112
 local CARD = vmath.vector4(0.94, 0.9, 0.82, 1)
 local DOT = 12
 local V = vmath.vector3()
@@ -36,8 +36,10 @@ local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
 
 function M.new()
 	local p = { t = 0, of = 0, dots = {} }
-	p.root = gui.new_box_node(vmath.vector3(W / 2, LOW, 0), vmath.vector3(0, 0, 0))
+	p.root = gui.new_box_node(vmath.vector3(W / 2, MENU_Y, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(p.root, false)
+	-- stuck to the real screen's top edge (20:9, 4:3: ui/screen.lua)
+	gui.set_yanchor(p.root, gui.ANCHOR_TOP)
 	p.panel, p.border = ui.pannello(0, 0, 520, 34, p.root)
 	p.head = gui.new_box_node(vmath.vector3(-238, 0, 0), vmath.vector3(28, 28, 0))
 	gui.set_texture(p.head, "ui")
@@ -60,10 +62,8 @@ end
 function M.show(p, on, in_battle)
 	gui.set_enabled(p.root, on)
 	if not on then gui.set_enabled(p.veil, false) end
-	V.x, V.y, V.z = W / 2, in_battle and HIGH or LOW, 0
+	V.x, V.y, V.z = W / 2, in_battle and BATTLE_Y or MENU_Y, 0
 	gui.set_position(p.root, V)
-	-- stuck to the real screen's edge (20:9, 4:3: ui/screen.lua)
-	gui.set_yanchor(p.root, in_battle and gui.ANCHOR_TOP or gui.ANCHOR_BOTTOM)
 end
 
 -- The dots, one per place, to the right of the text
