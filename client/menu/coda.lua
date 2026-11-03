@@ -1,118 +1,118 @@
--- Dove giochi? (GIOCA della home): la coda della partita online. A sinistra la
--- grande, il 2 contro 2 di sempre, con gli eventi che contano anche lì (Torneo,
--- Sfida, XP: "conta anche per"); a destra gli eventi con una coda loro (i
--- modificatori, server/events.go) e, piccolo, l'1 contro 1. Il giocatore
--- sceglie solo la coda: una partita conta per tutti gli eventi della sua coda.
--- Stile in ui/ui.lua, eventi da main/eventi.lua.
+-- Where do you play? (the home's GIOCA): the online match queue. On the left
+-- the big one, the usual 2 vs 2, with the events that count there too
+-- (Tournament, Challenge, XP: "conta anche per"); on the right the events with
+-- a queue of their own (the modifiers, server/events.go) and, small, the
+-- 1 vs 1. The player only picks the queue: a match counts for all the events
+-- of its queue. Style in ui/ui.lua, events from main/eventi.lua.
 --
 --   local coda = require "menu.coda"
 --   local c = coda.new()
 --   local fine = coda.on_input(c, action_id, action)
---     -- "indietro", { coda = "2v2" | "1v1" | id dell'evento }, o nil
---   coda.distruggi(c)
+--     -- "indietro", { coda = "2v2" | "1v1" | event id }, or nil
+--   coda.destroy(c)
 
 local ui = require "ui.ui"
-local eventi = require "main.eventi"
+local events = require "main.eventi"
 
 local M = {}
 
--- quanti eventi con la coda loro ci stanno a destra (sopra l'1 contro 1)
-local MAX_EVENTI = 2
+-- how many events with their own queue fit on the right (above the 1 vs 1)
+local MAX_EVENTS = 2
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
--- testo allineato a sinistra; w: va a capo oltre quella larghezza
-local function riga(t, x, y, scala, colore, parent, w)
-	local n = ui.testo(t, x, y, scala, colore, parent)
+-- left-aligned text; w: wraps past that width
+local function riga(t, x, y, scale, color, parent, w)
+	local n = ui.testo(t, x, y, scale, color, parent)
 	gui.set_pivot(n, w and gui.PIVOT_NW or gui.PIVOT_W)
 	if w then
 		gui.set_line_break(n, true)
-		gui.set_size(n, vec(w / (scala * 0.5), 200))
+		gui.set_size(n, vec(w / (scale * 0.5), 200))
 	end
 	return n
 end
 
-local function a_destra(t, x, y, scala, colore, parent)
-	local n = ui.testo(t, x, y, scala, colore, parent)
+local function to_right(t, x, y, scale, color, parent)
+	local n = ui.testo(t, x, y, scale, color, parent)
 	gui.set_pivot(n, gui.PIVOT_E)
 	return n
 end
 
-local function costruisci(c)
+local function build(c)
 	if c.radice then gui.delete_node(c.radice) end
-	c.bottoni = {}
+	c.buttons = {}
 	c.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(c.radice, false)
 	local C = ui.C
-	-- la freccia sta fuori dalla radice: solo un nodo senza genitore si attacca al bordo
-	if c.freccia then gui.delete_node(c.freccia) end
-	c.freccia = ui.indietro(c.bottoni, "indietro")
-	ui.titolo("DOVE GIOCHI?", 640, 640, 1, C.TESTO, c.radice)
+	-- the arrow sits outside the root: only a node without a parent sticks to the edge
+	if c.arrow then gui.delete_node(c.arrow) end
+	c.arrow = ui.indietro(c.buttons, "indietro")
+	ui.titolo("DOVE GIOCHI?", 640, 640, 1, C.TEXT, c.radice)
 
-	-- il 2 contro 2: la carta grande, col bordo chiaro
+	-- the 2 vs 2: the big card, with the light border
 	local W2, H2 = 640, 440
-	local n = ui.bottone(c.bottoni, 48 + W2 / 2, 300, W2, H2, "", "coda:2v2", { colore = C.LUCE }, c.radice)
-	local b = c.bottoni[#c.bottoni]
-	b.riposo = C.LUCE
-	gui.set_color(b.bordo, C.LUCE)
+	local n = ui.button(c.buttons, 48 + W2 / 2, 300, W2, H2, "", "coda:2v2", { colore = C.LIGHT }, c.radice)
+	local b = c.buttons[#c.buttons]
+	b.riposo = C.LIGHT
+	gui.set_color(b.bordo, C.LIGHT)
 	local x0, y0 = -W2 / 2 + 36, H2 / 2 - 44
-	riga("LA PARTITA DI SEMPRE", x0, y0, 0.65, C.SPENTO, n)
-	gui.set_pivot(ui.titolo("2 CONTRO 2", x0, y0 - 64, 1.1, C.LUCE, n), gui.PIVOT_W)
-	local anche = eventi.su_coda("2v2")
-	if #anche > 0 then
-		riga("CONTA ANCHE PER", x0, y0 - 140, 0.65, C.SPENTO, n)
-		for i, o in ipairs(anche) do
+	riga("LA PARTITA DI SEMPRE", x0, y0, 0.65, C.OFF, n)
+	gui.set_pivot(ui.titolo("2 CONTRO 2", x0, y0 - 64, 1.1, C.LIGHT, n), gui.PIVOT_W)
+	local also = events.on_queue("2v2")
+	if #also > 0 then
+		riga("CONTA ANCHE PER", x0, y0 - 140, 0.65, C.OFF, n)
+		for i, o in ipairs(also) do
 			if i > 3 then break end
-			riga(o.nome, x0, y0 - 140 - i * 44, 0.75, C.TESTO, n)
+			riga(o.nome, x0, y0 - 140 - i * 44, 0.75, C.TEXT, n)
 		end
 	end
-	a_destra("GIOCA", W2 / 2 - 36, -H2 / 2 + 44, 1.3, C.LUCE, n)
+	to_right("GIOCA", W2 / 2 - 36, -H2 / 2 + 44, 1.3, C.LIGHT, n)
 
-	-- a destra: gli eventi con la coda loro, poi l'1 contro 1
+	-- on the right: the events with their own queue, then the 1 vs 1
 	local x, w = 48 + W2 + 32 + (1280 - 48 * 2 - W2 - 32) / 2, 1280 - 48 * 2 - W2 - 32
 	local y = 300 + H2 / 2
-	for i, o in ipairs(eventi.con_coda()) do
-		if i > MAX_EVENTI then break end
+	for i, o in ipairs(events.with_queue()) do
+		if i > MAX_EVENTS then break end
 		local h = 150
-		local e = ui.bottone(c.bottoni, x, y - h / 2, w, h, "", "coda:" .. o.coda, nil, c.radice)
-		gui.set_color(c.bottoni[#c.bottoni].bordo, C.BRACE)
-		c.bottoni[#c.bottoni].riposo = C.BRACE
+		local e = ui.button(c.buttons, x, y - h / 2, w, h, "", "coda:" .. o.coda, nil, c.radice)
+		gui.set_color(c.buttons[#c.buttons].bordo, C.BRACE)
+		c.buttons[#c.buttons].riposo = C.BRACE
 		local ex, ey = -w / 2 + 24, h / 2 - 26
-		riga("EVENTO · " .. eventi.nome_coda(o.modo), ex, ey, 0.6, C.BRACE, e)
-		a_destra(eventi.quando(o), w / 2 - 24, ey, 0.6, C.SPENTO, e)
-		riga(o.nome, ex, ey - 40, 0.85, C.TESTO, e)
-		if o.riga and o.riga ~= "" then riga(o.riga, ex, ey - 64, 0.6, C.SPENTO, e, w - 150) end
-		a_destra("GIOCA", w / 2 - 24, -h / 2 + 28, 0.9, C.BRACE, e)
+		riga("EVENTO · " .. events.queue_name(o.modo), ex, ey, 0.6, C.BRACE, e)
+		to_right(events.quando(o), w / 2 - 24, ey, 0.6, C.OFF, e)
+		riga(o.nome, ex, ey - 40, 0.85, C.TEXT, e)
+		if o.riga and o.riga ~= "" then riga(o.riga, ex, ey - 64, 0.6, C.OFF, e, w - 150) end
+		to_right("GIOCA", w / 2 - 24, -h / 2 + 28, 0.9, C.BRACE, e)
 		y = y - h - 20
 	end
 	local h1 = 90
-	local u = ui.bottone(c.bottoni, x, 300 - H2 / 2 + h1 / 2, w, h1, "", "coda:1v1", nil, c.radice)
-	riga("1 CONTRO 1", -w / 2 + 24, 0, 0.85, C.TESTO, u)
-	a_destra("GIOCA", w / 2 - 24, 0, 0.9, C.SPENTO, u)
+	local u = ui.button(c.buttons, x, 300 - H2 / 2 + h1 / 2, w, h1, "", "coda:1v1", nil, c.radice)
+	riga("1 CONTRO 1", -w / 2 + 24, 0, 0.85, C.TEXT, u)
+	to_right("GIOCA", w / 2 - 24, 0, 0.9, C.OFF, u)
 end
 
 function M.new()
 	local c = {}
 	c.fondo = ui.sfondo()
-	costruisci(c)
+	build(c)
 	return c
 end
 
--- di nuovo, con gli eventi appena arrivati dal server
-function M.ricostruisci(x)
-	costruisci(x)
+-- again, with the events that just arrived from the server
+function M.rebuild(x)
+	build(x)
 end
 
 function M.on_input(c, action_id, action)
-	local azione = ui.tocco(c.bottoni, action_id, action)
-	if not azione then return nil end
-	if azione == "indietro" then return "indietro" end
-	return { coda = azione:match("^coda:(.*)$") }
+	local ui_action = ui.tocco(c.buttons, action_id, action)
+	if not ui_action then return nil end
+	if ui_action == "indietro" then return "indietro" end
+	return { coda = ui_action:match("^coda:(.*)$") }
 end
 
-function M.distruggi(c)
+function M.destroy(c)
 	gui.delete_node(c.radice)
-	gui.delete_node(c.freccia)
+	gui.delete_node(c.arrow)
 	gui.delete_node(c.fondo)
 end
 

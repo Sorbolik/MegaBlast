@@ -1,109 +1,108 @@
--- Lo schieramento (scheda personaggio, Sergio 31 ott): prima della scelta delle
--- armi i cartellini di tutti (ui/cartellino.lua), le squadre una di fronte
--- all'altra. È il momento in cui si ha il tempo di guardare, e serve: le armi
--- si scelgono a carte coperte, quindi sapere che l'altro ha il doppio salto fa
--- scegliere meglio. Dura SECONDI (config.SCHIERAMENTO_SECONDS) o finché non si
--- tocca. Durante la scelta i cartellini restano in alto in una striscia: un
--- tocco su uno lo apre, un altro tocco lo chiude.
+-- The lineup (character sheet, Sergio 31 Oct): before the weapon draft
+-- everyone's tags (ui/cartellino.lua), the teams facing each other. It is the
+-- moment when there is time to look, and it matters: weapons are picked face
+-- down, so knowing the other one has the double jump makes you pick better. It
+-- lasts SECONDI (config.LINEUP_SECONDS) or until a tap. During the draft the
+-- tags stay at the top in a strip: a tap on one opens it, another tap closes it.
 --
---   local s = schieramento.new(vetrine, titolo)  -- vetrine: una per robot (menu/vetrina.lua)
---   schieramento.update(s, dt) -> true quando è finito (tempo o tocco)
+--   local s = schieramento.new(vetrine, titolo)  -- vetrine: one per robot (menu/vetrina.lua)
+--   schieramento.update(s, dt) -> true when it is over (time or tap)
 --   schieramento.on_input(s, action_id, action)
---   schieramento.distruggi(s)
+--   schieramento.destroy(s)
 --
---   local st = schieramento.striscia(vetrine)    -- la striscia in alto durante la scelta (st.copre_angolo:
---                                                -- arriva sopra la rotellina, menu/scelta.lua sotto_striscia)
---   schieramento.striscia_tocco(st, action_id, action) -> true se il tocco era suo
---   schieramento.distruggi(st)
+--   local st = schieramento.strip(vetrine)       -- the strip at the top during the draft (st.covers_corner:
+--                                                -- it reaches over the wheel, menu/scelta.lua under_strip)
+--   schieramento.strip_touch(st, action_id, action) -> true if the tap was its own
+--   schieramento.destroy(st)
 
 local ui = require "ui.ui"
-local schermo = require "ui.schermo"
+local screen = require "ui.schermo"
 local config = require "sim.config"
-local cartellino = require "ui.cartellino"
+local tag = require "ui.cartellino"
 
 local M = {}
 
 local C = ui.C
 local W, H = 1280, 720
 local TOUCH = hash("touch")
-local CIMA = 616          -- dove comincia un cartellino
-local STRISCIA_Y, STRISCIA_W, STRISCIA_H = 680, 284, 56
+local TOP = 616          -- where a tag starts
+local STRIP_Y, STRIP_W, STRIP_H = 680, 284, 56
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
-local function con_alfa(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
+local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
 
--- Le x dei cartellini: due squadre ai lati del centro (nel tutti contro tutti
--- in fila). squadre: la squadra di ogni robot
-function M.posti(squadre)
-	local n = #squadre
+-- The tags' x: two teams on the sides of the center (in free-for-all in a
+-- row). squads: each robot's team
+function M.posti(squads)
+	local n = #squads
 	local teams = {}
-	for _, t in ipairs(squadre) do teams[t] = true end
-	local quante = 0
-	for _ in pairs(teams) do quante = quante + 1 end
+	for _, t in ipairs(squads) do teams[t] = true end
+	local how_many = 0
+	for _ in pairs(teams) do how_many = how_many + 1 end
 	local xs = {}
 	if n == 2 then return { 640 - 175, 640 + 175 }, true end
-	if n == 4 and quante == 2 then
-		-- prima la squadra del primo, a sinistra; poi l'altra, a destra
+	if n == 4 and how_many == 2 then
+		-- first the first one's team, on the left; then the other, on the right
 		local sx, dx = {}, {}
-		for i, t in ipairs(squadre) do
-			if t == squadre[1] then sx[#sx + 1] = i else dx[#dx + 1] = i end
+		for i, t in ipairs(squads) do
+			if t == squads[1] then sx[#sx + 1] = i else dx[#dx + 1] = i end
 		end
 		local pos = { 163, 469, 811, 1117 }
 		for k, i in ipairs(sx) do xs[i] = pos[k] end
 		for k, i in ipairs(dx) do xs[i] = pos[2 + k] end
 		return xs, true
 	end
-	local passo = 306
-	local x0 = 640 - (n - 1) * passo / 2
-	for i = 1, n do xs[i] = x0 + (i - 1) * passo end
+	local step = 306
+	local x0 = 640 - (n - 1) * step / 2
+	for i = 1, n do xs[i] = x0 + (i - 1) * step end
 	return xs, false
 end
 
-function M.new(vetrine, titolo)
-	local s = { vetrine = vetrine, carte = {}, t = config.SCHIERAMENTO_SECONDS }
+function M.new(showcases, title)
+	local s = { vetrine = showcases, card_list = {}, t = config.LINEUP_SECONDS }
 	s.fondo = ui.sfondo()
-	-- titolo e tempo si attaccano ai bordi veri: solo un nodo senza genitore si attacca
-	local alto_sx = gui.new_box_node(vec(44, H - 34), vec(0, 0))
-	gui.set_visible(alto_sx, false)
-	gui.set_xanchor(alto_sx, gui.ANCHOR_LEFT)
-	gui.set_yanchor(alto_sx, gui.ANCHOR_TOP)
-	local t = ui.titolo(titolo, 0, 0, 0.75, C.LUCE, alto_sx)
+	-- title and time stick to the real edges: only a node without a parent sticks
+	local top_left = gui.new_box_node(vec(44, H - 34), vec(0, 0))
+	gui.set_visible(top_left, false)
+	gui.set_xanchor(top_left, gui.ANCHOR_LEFT)
+	gui.set_yanchor(top_left, gui.ANCHOR_TOP)
+	local t = ui.titolo(title, 0, 0, 0.75, C.LIGHT, top_left)
 	gui.set_pivot(t, gui.PIVOT_W)
-	local sotto = ui.testo("TOCCA PER SCEGLIERE LE ARMI", 2, -40, 0.75, C.SPENTO, alto_sx)
-	gui.set_pivot(sotto, gui.PIVOT_W)
-	local alto_dx = gui.new_box_node(vec(W - 44 - 115, H - 52), vec(0, 0))
-	gui.set_visible(alto_dx, false)
-	gui.set_xanchor(alto_dx, gui.ANCHOR_RIGHT)
-	gui.set_yanchor(alto_dx, gui.ANCHOR_TOP)
-	s.angoli = { alto_sx, alto_dx }
+	local under = ui.testo("TOCCA PER SCEGLIERE LE ARMI", 2, -40, 0.75, C.OFF, top_left)
+	gui.set_pivot(under, gui.PIVOT_W)
+	local top_right = gui.new_box_node(vec(W - 44 - 115, H - 52), vec(0, 0))
+	gui.set_visible(top_right, false)
+	gui.set_xanchor(top_right, gui.ANCHOR_RIGHT)
+	gui.set_yanchor(top_right, gui.ANCHOR_TOP)
+	s.angoli = { top_left, top_right }
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
-	ui.pannello(0, 0, 230, 58, alto_dx)
-	local armi = ui.testo("ARMI TRA", -24, 0, 0.85, C.SPENTO, alto_dx)
+	ui.pannello(0, 0, 230, 58, top_right)
+	local armi = ui.testo("ARMI TRA", -24, 0, 0.85, C.OFF, top_right)
 	gui.set_pivot(armi, gui.PIVOT_E)
-	s.conto = ui.testo("", -12, 0, 0.95, C.LUCE, alto_dx)
-	gui.set_pivot(s.conto, gui.PIVOT_W)
+	s.tally = ui.testo("", -12, 0, 0.95, C.LIGHT, top_right)
+	gui.set_pivot(s.tally, gui.PIVOT_W)
 
-	local squadre = {}
-	for i, v in ipairs(vetrine) do squadre[i] = v.squadra end
-	local xs, vs = M.posti(squadre)
-	for i, v in ipairs(vetrine) do
+	local squads = {}
+	for i, v in ipairs(showcases) do squads[i] = v.squadra end
+	local xs, vs = M.posti(squads)
+	for i, v in ipairs(showcases) do
 		v.verso = xs[i] < 640 and 1 or -1
-		s.carte[i] = cartellino.new(v, xs[i], CIMA, { ritratto = true, tu = v.tu }, s.radice)
+		s.card_list[i] = tag.new(v, xs[i], TOP, { portrait = true, tu = v.tu }, s.radice)
 	end
 	if vs then
-		ui.titolo("VS", 640, CIMA - 260, 0.75, C.SPENTO, s.radice)
-		-- una linea del colore di ogni squadra sopra i suoi cartellini
+		ui.titolo("VS", 640, TOP - 260, 0.75, C.OFF, s.radice)
+		-- a line in each team's color above its tags
 		local per = {}
-		for i, v in ipairs(vetrine) do
+		for i, v in ipairs(showcases) do
 			local p = per[v.squadra] or { min = 9999, max = -9999 }
 			p.min, p.max = math.min(p.min, xs[i]), math.max(p.max, xs[i])
 			per[v.squadra] = p
 		end
 		for team, p in pairs(per) do
-			local w = p.max - p.min + cartellino.LARGO
-			local n = gui.new_box_node(vec((p.min + p.max) / 2, CIMA + 10), vec(w, 3))
-			gui.set_color(n, C.SQUADRA[team] or C.LUCE)
+			local w = p.max - p.min + tag.WIDE
+			local n = gui.new_box_node(vec((p.min + p.max) / 2, TOP + 10), vec(w, 3))
+			gui.set_color(n, C.SQUADRA[team] or C.LIGHT)
 			gui.set_parent(n, s.radice)
 		end
 	end
@@ -112,63 +111,63 @@ function M.new(vetrine, titolo)
 end
 
 function M.update(s, dt)
-	for _, c in ipairs(s.carte or {}) do cartellino.update(c, dt) end
+	for _, c in ipairs(s.card_list or {}) do tag.update(c, dt) end
 	if not s.t then return false end
 	s.t = s.t - dt
-	if s.conto then gui.set_text(s.conto, string.format("0:%02d", math.max(0, math.ceil(s.t)))) end
-	return s.t <= 0 or s.toccato
+	if s.tally then gui.set_text(s.tally, string.format("0:%02d", math.max(0, math.ceil(s.t)))) end
+	return s.t <= 0 or s.touched
 end
 
 function M.on_input(s, action_id, action)
 	if (action_id == TOUCH and action.released) or (action_id == ui.PAD and action.pressed) then
-		s.toccato = true
+		s.touched = true
 	end
 end
 
--- La striscia in alto durante la scelta: un cartellino piccolo per robot
-function M.striscia(vetrine)
-	local st = { vetrine = vetrine, mini = {} }
+-- The strip at the top during the draft: a small tag per robot
+function M.strip(showcases)
+	local st = { vetrine = showcases, mini = {} }
 	st.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(st.radice, false)
-	local squadre = {}
-	for i, v in ipairs(vetrine) do squadre[i] = v.squadra end
-	local xs = M.posti(squadre)
-	for i, v in ipairs(vetrine) do
-		-- la rotellina della scelta (64 x 64 a 30 dall'angolo in alto a sinistra
-		-- dello schermo vero) con ESCI accanto (160 di largo): con quattro
-		-- cartellini a 16:9 e a 20:9 la striscia ci arriva sopra, a 4:3 resta sotto
-		if xs[i] - STRISCIA_W / 2 < schermo.x0 + 30 + 64 + 12 + 160 + 8
-			and STRISCIA_Y + STRISCIA_H / 2 > schermo.y1 - 30 - 64 - 8 then
-			st.copre_angolo = true
+	local squads = {}
+	for i, v in ipairs(showcases) do squads[i] = v.squadra end
+	local xs = M.posti(squads)
+	for i, v in ipairs(showcases) do
+		-- the draft's wheel (64 x 64 at 30 from the top left corner of the real
+		-- screen) with ESCI next to it (160 wide): with four tags at 16:9 and at 20:9
+		-- the strip reaches over it, at 4:3 it stays below
+		if xs[i] - STRIP_W / 2 < screen.x0 + 30 + 64 + 12 + 160 + 8
+			and STRIP_Y + STRIP_H / 2 > screen.y1 - 30 - 64 - 8 then
+			st.covers_corner = true
 		end
-		local col = C.SQUADRA[v.squadra] or C.LUCE
-		local n, bordo = ui.pannello(xs[i], STRISCIA_Y, STRISCIA_W, STRISCIA_H, st.radice)
-		gui.set_color(bordo, v.tu and col or con_alfa(col, 0.6))
-		local sx = -STRISCIA_W / 2 + 12
-		ui.anello(sx + 17, 0, 34, 2.5, col, n)
+		local col = C.SQUADRA[v.squadra] or C.LIGHT
+		local n, border = ui.pannello(xs[i], STRIP_Y, STRIP_W, STRIP_H, st.radice)
+		gui.set_color(border, v.tu and col or with_alpha(col, 0.6))
+		local sx = -STRIP_W / 2 + 12
+		ui.ring_node(sx + 17, 0, 34, 2.5, col, n)
 		ui.testo(v.livello and tostring(v.livello) or v.bot and "BOT" or "–", sx + 17, 0, (v.livello or not v.bot) and 0.75 or 0.5, col, n)
-		local nome = ui.titolo(v.nome or "?", sx + 42, 8, 0.4, C.LUCE, n)
+		local nome = ui.titolo(v.nome or "?", sx + 42, 8, 0.4, C.LIGHT, n)
 		gui.set_pivot(nome, gui.PIVOT_W)
-		-- i quattro pezzi in piccolo: un quadretto col bordo del tier e il livello
+		-- the four pieces in small: a little square with the tier border and the level
 		for k, p in ipairs(v.pezzi or {}) do
 			local x = sx + 50 + (k - 1) * 24
 			local q = gui.new_box_node(vec(x, -12), vec(20, 20))
-			gui.set_color(q, not p.set and con_alfa(C.LUCE, 0.12) or p.tier >= 3 and C.ORO or p.tier == 2 and C.ACCIAIO
-				or con_alfa(C.LUCE, 0.5))
+			gui.set_color(q, not p.set and with_alpha(C.LIGHT, 0.12) or p.tier >= 3 and C.GOLD or p.tier == 2 and C.STEEL
+				or with_alpha(C.LIGHT, 0.5))
 			gui.set_parent(q, n)
 			local d = gui.new_box_node(vec(0, 0), vec(16, 16))
-			gui.set_color(d, C.FONDO)
+			gui.set_color(d, C.BOTTOM)
 			gui.set_parent(d, q)
-			if p.set then ui.testo(tostring(p.livello), 0, 0, 0.5, C.LUCE, q) end
+			if p.set then ui.testo(tostring(p.livello), 0, 0, 0.5, C.LIGHT, q) end
 		end
-		local bx = STRISCIA_W / 2 - 14
+		local bx = STRIP_W / 2 - 14
 		for k = #(v.badge or {}), 1, -1 do
-			cartellino.badge(v.badge[k], bx, -12, 18, n)
+			tag.badge(v.badge[k], bx, -12, 18, n)
 			bx = bx - 22
 		end
-		local poteri = #(v.poteri or {})
-		if poteri > 0 then
-			local t = ui.testo(poteri == 1 and "1 potere" or poteri .. " poteri", STRISCIA_W / 2 - 14, 10, 0.5, C.ORO, n)
+		local abilities = #(v.abilities or {})
+		if abilities > 0 then
+			local t = ui.testo(abilities == 1 and "1 potere" or abilities .. " poteri", STRIP_W / 2 - 14, 10, 0.5, C.GOLD, n)
 			gui.set_pivot(t, gui.PIVOT_E)
 		end
 		st.mini[i] = n
@@ -176,45 +175,45 @@ function M.striscia(vetrine)
 	return st
 end
 
--- Un tocco sulla striscia: apre il cartellino toccato; col cartellino aperto
--- un tocco qualsiasi lo chiude. true se il tocco era della striscia
-function M.striscia_tocco(st, action_id, action)
+-- A tap on the strip: opens the tag tapped; with the tag open any tap closes
+-- it. true if the tap belonged to the strip
+function M.strip_touch(st, action_id, action)
 	if action_id ~= TOUCH or not st.radice then return false end
 	if st.aperto then
 		if action.pressed then
-			cartellino.distruggi(st.aperto)
-			gui.delete_node(st.velo)
-			st.aperto, st.velo = nil, nil
-			st.mangia = true
+			tag.destroy(st.aperto)
+			gui.delete_node(st.veil)
+			st.aperto, st.veil = nil, nil
+			st.eats = true
 		end
 		return true
 	end
-	if st.mangia then
-		-- il dito che ha chiuso il cartellino: anche il suo rilascio è nostro
-		if action.released then st.mangia = nil end
+	if st.eats then
+		-- the finger that closed the tag: its release is ours too
+		if action.released then st.eats = nil end
 		return true
 	end
 	if not action.pressed then return false end
 	for i, n in ipairs(st.mini) do
 		if gui.pick_node(n, action.x, action.y) then
-			st.velo = gui.new_box_node(vec(W / 2, H / 2), vec(W * schermo.PIENO, H * schermo.PIENO))
-			gui.set_color(st.velo, con_alfa(C.FONDO, 0.8))
-			gui.set_parent(st.velo, st.radice)
+			st.veil = gui.new_box_node(vec(W / 2, H / 2), vec(W * screen.FULL, H * screen.FULL))
+			gui.set_color(st.veil, with_alpha(C.BOTTOM, 0.8))
+			gui.set_parent(st.veil, st.radice)
 			local v = st.vetrine[i]
 			v.verso = 1
-			st.aperto = cartellino.new(v, W / 2, 360 + cartellino.ALTO({ ritratto = true }) / 2, { ritratto = true, tu = v.tu }, st.radice)
-			st.mangia = true
+			st.aperto = tag.new(v, W / 2, 360 + tag.TALL({ portrait = true }) / 2, { portrait = true, tu = v.tu }, st.radice)
+			st.eats = true
 			return true
 		end
 	end
 	return false
 end
 
-function M.update_striscia(st, dt)
-	if st.aperto then cartellino.update(st.aperto, dt) end
+function M.update_strip(st, dt)
+	if st.aperto then tag.update(st.aperto, dt) end
 end
 
-function M.distruggi(s)
+function M.destroy(s)
 	for _, n in ipairs(s.angoli or {}) do gui.delete_node(n) end
 	s.angoli = nil
 	if s.radice then gui.delete_node(s.radice) end

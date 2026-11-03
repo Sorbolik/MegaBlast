@@ -58,7 +58,7 @@ cambiare, i doppioni vanno bene anche fra compagni). La conferma torna solo a
 chi ha scelto. L'attrezzo non si sceglie: il Rampino ce l'hanno tutti. Allo
 scadere di `config.DRAFT_SECONDS` chi non ha scelto prende la prima arma di ogni
 ventaglio e parte la partita. Il tempo della scelta comprende anche i
-`config.SCHIERAMENTO_SECONDS` dello schieramento (i cartellini di tutti, prima
+`config.LINEUP_SECONDS` dello schieramento (i cartellini di tutti, prima
 di scegliere: `client/menu/schieramento.lua`), in cui si può già scegliere
 (`start`, anche lui con `vetrine`, e con `players`: squadra e scelte di
 ognuno, `[{"team":1,"pick":"shards","secondary":"eagle"},…]`, e `regole`, quelle

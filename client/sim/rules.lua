@@ -32,7 +32,7 @@ local function integer(a, b)
 end
 
 -- The whitelist: key -> check of the value (true, or false and why)
-M.LISTA = {
+M.WHITELIST = {
 	-- turns between one crate and the next (the first always drops on the first turn)
 	casse = integer(1, 10),
 	-- false: no healing circles
@@ -74,7 +74,7 @@ M.CODA_NORMALE = { tetto = true }
 function M.validate(r, normal)
 	if type(r) ~= "table" then return nil, "le regole sono una tabella" end
 	for k, v in pairs(r) do
-		local checker = M.LISTA[k]
+		local checker = M.WHITELIST[k]
 		if not checker then return nil, "regola sconosciuta: " .. tostring(k) end
 		if normal and not M.CODA_NORMALE[k] then
 			return nil, k .. ": cambia la partita, solo per i modificatori (tipo mod, con la coda loro)"

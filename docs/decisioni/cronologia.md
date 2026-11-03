@@ -108,3 +108,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 3 nov | Al primo turno si lanciano tutti e due i globi di partenza: via il limite di uno, resto del Nucleo. | #163 |
 | 3 nov | Freccia di ferro sopra il nome di chi è di turno, con la brace del colore della squadra che pulsa (scheda WB-010). | #162 |
 | 3 nov | Zoom continuo fino allo spazio di gioco, col pulsante che si trascina e il tuo personaggio sempre al centro; freccia piccola sopra i punti dove torna un colpo uscito in alto; targhe grandi uguali a ogni zoom con la Corona accanto al nome; numeri della mira in punta alla lancetta; numeri dei punti che non si coprono; l'icona della secondaria che vola al pulsante quando la Lama la ricarica. | #162 |
+| 3 nov | Seconda ondata del codice in inglese: il client (nomi e commenti di menu, interfaccia e battaglia); il profilo sul telefono riparte da zero; nel gioco non cambia niente (207 partite identiche). | questa PR |

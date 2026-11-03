@@ -1,31 +1,31 @@
--- Oggetti tattici nella battaglia: trappole e trampolini posati, cerchi di
--- cura, scudo ed effetti di stato dei robot, e le icone degli oggetti nella
--- barra. Il cerchio di cura è disegnato a vettori (strumenti/grafica/cura.py,
--- atlante battaglia); il resto sono forme. Il paracadute aperto lo disegna il
--- diavoletto (battaglia/scoria.lua).
+-- Tactical items in battle: placed traps and springboards, healing circles,
+-- robots' shield and status effects, and the item icons in the bar. The
+-- healing circle is vector-drawn (strumenti/grafica/cura.py, battle atlas);
+-- the rest are shapes. The open parachute is drawn by the devil
+-- (battaglia/scoria.lua).
 --
---   local o = oggetti.new(colori)             -- colori[squadra]
---   oggetti.nodi(o)                            -- da mettere nel nodo "mondo"
---   oggetti.update(o, g, view, clock)          -- a ogni frame, nessuna allocazione
+--   local o = oggetti.new(colori)             -- colori[team]
+--   oggetti.nodi(o)                            -- to put in the "mondo" node
+--   oggetti.update(o, g, view, clock)          -- every frame, no allocation
 
 local game = require "sim.game"
 local config = require "sim.config"
 
 local M = {}
 
-local AMBRA = vmath.vector4(1, 0.72, 0.25, 1)
-local BIANCO = vmath.vector4(1, 1, 1, 0.9)
-local OPACO = vmath.vector4(1, 1, 1, 1)
--- effetti di stato: fiamma sulla testa, anello freddo ai piedi, crepa sul petto
-local FUOCO = vmath.vector4(1, 0.45, 0.1, 0.7)
-local GELO = vmath.vector4(0.45, 0.8, 1, 0.8)
-local CREPA = vmath.vector4(1, 1, 1, 0.75)
--- cerchio di cura: un anello di pietra a terra con le rune accese (cura.py, 6
--- pixel per unità), un cuore che galleggia sopra e scintille che salgono
-local CURA_PX = 6
-local SCINTILLE = 3
+local AMBER = vmath.vector4(1, 0.72, 0.25, 1)
+local WHITE = vmath.vector4(1, 1, 1, 0.9)
+local OPAQUE = vmath.vector4(1, 1, 1, 1)
+-- status effects: flame on the head, cold ring at the feet, crack on the chest
+local FIRE = vmath.vector4(1, 0.45, 0.1, 0.7)
+local FROST = vmath.vector4(0.45, 0.8, 1, 0.8)
+local CRACK = vmath.vector4(1, 1, 1, 0.75)
+-- healing circle: a stone ring on the ground with glowing runes (cura.py, 6
+-- pixels per unit), a heart floating above and sparks rising
+local HEAL_PX = 6
+local SPARKS = 3
 
-local function nodo(w, h, color, parent)
+local function gui_node(w, h, color, parent)
 	local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(w, h, 0))
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_color(n, color)
@@ -33,7 +33,7 @@ local function nodo(w, h, color, parent)
 	return n
 end
 
-local function cerchio(d, color, parent)
+local function circle_shape(d, color, parent)
 	local n = gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d, d, 0))
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_color(n, color)
@@ -45,95 +45,95 @@ local function pos(n, x, y)
 	gui.set_position(n, vmath.vector3(x, y, 0))
 end
 
--- Trappola: un rombo; trampolino: una tavola sopra due gambe
-local function trappola(r, parent)
-	local n = nodo(r * 1.2, r * 1.2, BIANCO, parent)
+-- Trap: a rhombus; springboard: a board on two legs
+local function trap_name(r, parent)
+	local n = gui_node(r * 1.2, r * 1.2, WHITE, parent)
 	gui.set_euler(n, vmath.vector3(0, 0, 45))
 	return n
 end
 
-local function trampolino(hw, parent)
-	local n = nodo(hw * 2, 3, AMBRA, parent)
-	local a = nodo(2, 5, AMBRA, n)
+local function springboard(hw, parent)
+	local n = gui_node(hw * 2, 3, AMBER, parent)
+	local a = gui_node(2, 5, AMBER, n)
 	pos(a, -hw * 0.6, -4)
-	local b = nodo(2, 5, AMBRA, n)
+	local b = gui_node(2, 5, AMBER, n)
 	pos(b, hw * 0.6, -4)
 	return n
 end
 
--- un'immagine dell'atlante della battaglia, grande come nel mondo
-local function immagine(nome, w, h, parent)
-	local n = nodo(w, h, OPACO, parent)
+-- an image from the battle atlas, as big as in the world
+local function image(nome, w, h, parent)
+	local n = gui_node(w, h, OPAQUE, parent)
 	gui.set_texture(n, "battaglia")
 	gui.play_flipbook(n, nome)
 	return n
 end
 
--- Scudo: un anello
-local function anello(d, color, parent)
-	local n = cerchio(d, color, parent)
+-- Shield: a ring
+local function ring_node(d, color, parent)
+	local n = circle_shape(d, color, parent)
 	gui.set_inner_radius(n, d * 0.42)
 	return n
 end
 
-function M.new(colori)
-	local o = { colori = colori, posati = {}, cure = {}, scudi = {}, fiamme = {}, geli = {}, crepe = {},
+function M.new(palette)
+	local o = { colori = palette, posed_ones = {}, cure = {}, shields = {}, flames = {}, frosts = {}, crepe = {},
 		col = vmath.vector4(), size = vmath.vector3(), rot = vmath.vector3() }
 	local h = game.DISEGNO_H
 	for i = 1, config.MAX_PLACED do
-		local root = nodo(0, 0, BIANCO)
-		local t = trappola(config.STATS.trap_radius, root)
-		local b = trampolino(config.TRAMPOLINE.half_w, root)
+		local root = gui_node(0, 0, WHITE)
+		local t = trap_name(config.STATS.trap_radius, root)
+		local b = springboard(config.TRAMPOLINE.half_w, root)
 		gui.set_visible(root, false)
 		gui.set_enabled(root, false)
-		o.posati[i] = { root = root, trap = t, tramp = b, id = nil }
+		o.posed_ones[i] = { root = root, trap = t, tramp = b, id = nil }
 	end
 	for i = 1, config.HEAL.max do
-		local root = nodo(0, 0, OPACO)
+		local root = gui_node(0, 0, OPAQUE)
 		gui.set_visible(root, false)
-		local a = immagine("cura_anello", 336 / CURA_PX, 124 / CURA_PX, root)
-		local scintille = {}
-		for j = 1, SCINTILLE do scintille[j] = immagine("cura_scintilla", 8, 8, root) end
-		local cuore = immagine("cura_cuore", 20, 21, root)
+		local a = image("cura_anello", 336 / HEAL_PX, 124 / HEAL_PX, root)
+		local sparks = {}
+		for j = 1, SPARKS do sparks[j] = image("cura_scintilla", 8, 8, root) end
+		local heart = image("cura_cuore", 20, 21, root)
 		gui.set_enabled(root, false)
-		o.cure[i] = { root = root, anello = a, cuore = cuore, scintille = scintille }
+		o.cure[i] = { root = root, ring_node = a, cuore = heart, sparks = sparks }
 	end
 	for i = 1, game.MAX_PLAYERS do
-		local s = anello(h * 1.9, BIANCO)
+		local s = ring_node(h * 1.9, WHITE)
 		gui.set_enabled(s, false)
-		o.scudi[i] = s
-		local f = cerchio(h * 0.5, FUOCO)
+		o.shields[i] = s
+		local f = circle_shape(h * 0.5, FIRE)
 		gui.set_enabled(f, false)
-		o.fiamme[i] = f
-		local ge = anello(h * 1.4, GELO)
+		o.flames[i] = f
+		local ge = ring_node(h * 1.4, FROST)
 		gui.set_scale(ge, vmath.vector3(1, 0.3, 1))
 		gui.set_enabled(ge, false)
-		o.geli[i] = ge
-		local c = nodo(0, 0, CREPA)
-		gui.set_euler(nodo(2, h * 0.7, CREPA, c), vmath.vector3(0, 0, 30))
-		gui.set_euler(nodo(2, h * 0.5, CREPA, c), vmath.vector3(0, 0, -40))
+		o.frosts[i] = ge
+		local c = gui_node(0, 0, CRACK)
+		gui.set_euler(gui_node(2, h * 0.7, CRACK, c), vmath.vector3(0, 0, 30))
+		gui.set_euler(gui_node(2, h * 0.5, CRACK, c), vmath.vector3(0, 0, -40))
 		gui.set_enabled(c, false)
 		o.crepe[i] = c
 	end
 	return o
 end
 
--- I nodi da mettere nel mondo, nell'ordine in cui si disegnano
+-- The nodes to put in the world, in drawing order
 function M.nodi(o)
 	local list = {}
 	for _, c in ipairs(o.cure) do list[#list + 1] = c.root end
-	for _, p in ipairs(o.posati) do list[#list + 1] = p.root end
-	for _, n in ipairs(o.scudi) do list[#list + 1] = n end
-	for _, n in ipairs(o.geli) do list[#list + 1] = n end
+	for _, p in ipairs(o.posed_ones) do list[#list + 1] = p.root end
+	for _, n in ipairs(o.shields) do list[#list + 1] = n end
+	for _, n in ipairs(o.frosts) do list[#list + 1] = n end
 	for _, n in ipairs(o.crepe) do list[#list + 1] = n end
-	for _, n in ipairs(o.fiamme) do list[#list + 1] = n end
+	for _, n in ipairs(o.flames) do list[#list + 1] = n end
 	return list
 end
 
 
 function M.update(o, g, view, clock)
-	-- cerchi di cura: l'anello pulsa, il cuore galleggia e dondola, le
-	-- scintille salgono dall'anello e svaniscono
+	-- healing circles: the ring pulses, the heart floats and sways, the
+	-- sparks rise from the ring and fade
 	for i, c in ipairs(o.cure) do
 		local h = g.heals[i]
 		gui.set_enabled(c.root, h ~= nil)
@@ -142,12 +142,12 @@ function M.update(o, g, view, clock)
 			local p = 1 + 0.04 * math.sin(clock * 2.5 + i)
 			o.size.x, o.size.y = p, p
 			o.size.z = 1
-			gui.set_scale(c.anello, o.size)
+			gui.set_scale(c.ring_node, o.size)
 			pos(c.cuore, 0, 18 + 3 * math.sin(clock * 2.2 + i))
 			o.rot.z = 8 * math.sin(clock * 1.7 + i)
 			gui.set_euler(c.cuore, o.rot)
-			for j, sc in ipairs(c.scintille) do
-				local u = (clock * 0.45 + j / SCINTILLE + i * 0.37) % 1
+			for j, sc in ipairs(c.sparks) do
+				local u = (clock * 0.45 + j / SPARKS + i * 0.37) % 1
 				local a = math.sin(u * math.pi)
 				pos(sc, math.sin(j * 2.1 + i) * 16 + math.sin(clock * 2 + j) * 2, 2 + u * 30)
 				o.col.x, o.col.y, o.col.z, o.col.w = 1, 1, 1, a
@@ -157,8 +157,8 @@ function M.update(o, g, view, clock)
 			end
 		end
 	end
-	-- trappole (del colore della squadra, lampeggiano quando sono armate) e trampolini
-	for i, p in ipairs(o.posati) do
+	-- traps (in the team color, they blink when armed) and springboards
+	for i, p in ipairs(o.posed_ones) do
 		local it = g.placed[i]
 		gui.set_enabled(p.root, it ~= nil)
 		if it then
@@ -175,30 +175,30 @@ function M.update(o, g, view, clock)
 			end
 		end
 	end
-	-- scudo attorno al robot
+	-- shield around the robot
 	for i = 1, game.MAX_PLAYERS do
 		local rb, v = g.robots[i], view[i]
 		local shield = rb ~= nil and not rb.dead and rb.shield ~= nil
-		gui.set_enabled(o.scudi[i], shield)
+		gui.set_enabled(o.shields[i], shield)
 		if shield then
 			local c = o.colori[rb.team]
 			o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 0.35 + 0.25 * rb.shield / config.SHIELD.hp
-			gui.set_color(o.scudi[i], o.col)
-			pos(o.scudi[i], v.x, v.y + game.DISEGNO_H / 2)
+			gui.set_color(o.shields[i], o.col)
+			pos(o.shields[i], v.x, v.y + game.DISEGNO_H / 2)
 		end
-		-- effetti di stato
+		-- status effects
 		local st = rb ~= nil and not rb.dead and rb.status or nil
 		local burn, slow, cracked = st and st.burn, st and st.slow, st and st.cracked
-		gui.set_enabled(o.fiamme[i], burn ~= nil)
+		gui.set_enabled(o.flames[i], burn ~= nil)
 		if burn then
-			-- la fiamma tremola
+			-- the flame flickers
 			local d = game.DISEGNO_H * (0.32 + 0.06 * math.sin(clock * 17 + i * 2))
 			o.size.x, o.size.y = d, d * 1.3
-			gui.set_size(o.fiamme[i], o.size)
-			pos(o.fiamme[i], v.x, v.y + game.DISEGNO_H * 1.05)
+			gui.set_size(o.flames[i], o.size)
+			pos(o.flames[i], v.x, v.y + game.DISEGNO_H * 1.05)
 		end
-		gui.set_enabled(o.geli[i], slow ~= nil)
-		if slow then pos(o.geli[i], v.x, v.y + 1) end
+		gui.set_enabled(o.frosts[i], slow ~= nil)
+		if slow then pos(o.frosts[i], v.x, v.y + 1) end
 		gui.set_enabled(o.crepe[i], cracked ~= nil)
 		if cracked then pos(o.crepe[i], v.x, v.y + game.DISEGNO_H * 0.55) end
 	end

@@ -5,7 +5,7 @@ package.path = "client/?.lua;" .. package.path
 local skills = require "sim.skills"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
-local riconoscimenti = require "sim.awards"
+local awards = require "sim.awards"
 local profile = require "menu.profilo"
 
 local failures = 0
@@ -139,7 +139,7 @@ check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(20) == 3 and equ
 	"tier from matches played, one per step")
 check(equip.tier(29) < equip.TIERS and equip.tier(30) == equip.TIERS, "variant B at 30 matches with each piece, as before")
 check(equip.livello(0) == 0 and equip.livello(12) == 12 and equip.livello(99) == equip.LIVELLO_MAX, "piece level")
-check(equip.prossimo_scatto(12) == 20 and equip.prossimo_scatto(30) == nil, "next step")
+check(equip.next_tier(12) == 20 and equip.next_tier(30) == nil, "next step")
 
 -- Awards
 local ranking = {
@@ -147,21 +147,21 @@ local ranking = {
 	{ robot = 1, place = 2, damage = 90, env_kills = 2, avg_attack_secs = 4, turns = 3, teleports = 3, crates = 1 },
 	{ robot = 3, place = 3, damage = 10, env_kills = 0, avg_attack_secs = 2, turns = 0, teleports = 0, crates = 0 },
 }
-local by, list = riconoscimenti.assign(ranking)
+local by, list = awards.assign(ranking)
 check(by[1] and by[1][1].id == "becchino", "Becchino to whoever knocks down the most enemies")
 check(by[1] and by[1][2].id == "fulmine", "Fulmine to the fastest who played at least one turn")
-check(#by[1] == riconoscimenti.PER_PLAYER, "at most " .. riconoscimenti.PER_PLAYER .. " each")
+check(#by[1] == awards.PER_PLAYER, "at most " .. awards.PER_PLAYER .. " each")
 check(by[2] and by[2][1].id == "martello", "Martello to whoever does the most damage")
 check(by[3] == nil, "whoever didn't play gets nothing")
 check(#list >= 3, "list of awards in order")
 
 -- Profile: experience, levels and mastery
 local p = profile.nuovo()
-check(#p.assetti == loadout.LOADOUTS and p.livello == 1, "new profile: 3 loadouts, level 1")
-p.assetti[1].gear = { mask = "vuoto" }
-local gu = profile.fine_partita(p, 1, { riconoscimenti.LIST[1] })
-check(gu.xp == profile.XP_POSTO[1] + profile.XP_RICONOSCIMENTO and p.livello == 2, "first place levels you up")
-check(p.maestria.vuoto_mask == 1, "a mastery match for the worn piece")
+check(#p.loadouts == loadout.LOADOUTS and p.livello == 1, "new profile: 3 loadouts, level 1")
+p.loadouts[1].gear = { mask = "vuoto" }
+local gu = profile.match_end(p, 1, { awards.LIST[1] })
+check(gu.xp == profile.XP_PLACE[1] + profile.XP_AWARD and p.livello == 2, "first place levels you up")
+check(p.mastery.vuoto_mask == 1, "a mastery match for the worn piece")
 check(profile.punti(p) == 4, "skill points from the level")
 
 if failures > 0 then

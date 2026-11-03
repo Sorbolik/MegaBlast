@@ -1,165 +1,165 @@
--- Rettangolo della mappa (mesh con lo shader del terreno). La GUI crea la
--- texture della maschera e ci manda il suo percorso: qui la colleghiamo alla mesh,
--- insieme ai disegni della mappa (terreno e parete dei crateri).
+-- The map rectangle (a mesh with the terrain shader). The GUI creates the
+-- mask texture and sends us its path: here we bind it to the mesh, together
+-- with the map's drawings (terrain and crater wall).
 --
--- Le mappe vecchie (forgia, crogiolo) hanno i disegni fra le risorse e lo sfondo
--- lo fa lo shader. Quelle dell'apprendista (battaglia/dipinti.lua) hanno terreno
--- e sfondo dipinti da SVG in client/dipinti, una volta per ogni densità di
--- schermo: qui si carica solo quella che serve, quando serve (così in memoria
--- non c'è mai la versione grande su un telefono piccolo).
+-- The old maps (forgia, crogiolo) have their drawings among the resources and
+-- the shader makes the background. The apprentice's maps
+-- (battaglia/dipinti.lua) have terrain and background painted from SVG in
+-- client/dipinti, once per screen density: here only the one needed is
+-- loaded, when needed (so the big version is never in memory on a small phone).
 --
--- Messaggi: "maschera" {path, mappa, dipinta} (una partita), "home" {sfondo}
--- (solo lo sfondo, dietro la home; senza sfondo la home si chiude), "schermo" {kx, ky}.
+-- Messages: "maschera" {path, mappa, dipinta} (a match), "home" {sfondo}
+-- (only the background, behind the home; without sfondo the home closes), "schermo" {kx, ky}.
 
-local dipinti = require "battaglia.dipinti"
-local fotogrammi = require "ui.fotogrammi"
+local paintings = require "battaglia.dipinti"
+local frames = require "ui.fotogrammi"
 
 go.property("forgia_terreno", resource.texture("/assets/mappe/forgia/terreno.png"))
 go.property("forgia_interno", resource.texture("/assets/mappe/forgia/interno_mezzo.png"))
 go.property("crogiolo_terreno", resource.texture("/assets/mappe/crogiolo/terreno.png"))
 go.property("crogiolo_interno", resource.texture("/assets/mappe/crogiolo/interno_mezzo.png"))
 
-local MSG_MASCHERA = hash("maschera")
+local MSG_MASK = hash("maschera")
 local MSG_HOME = hash("home")
-local MSG_SCHERMO = hash("schermo")
+local MSG_SCREEN = hash("schermo")
 
 local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
 local TEX_RGBA = graphics and graphics.TEXTURE_FORMAT_RGBA or resource.TEXTURE_FORMAT_RGBA
 local TEX_RGB = graphics and graphics.TEXTURE_FORMAT_RGB or resource.TEXTURE_FORMAT_RGB
--- le strisce dello sfondo e i loro posti nella mesh (texture3..6, come in terreno.material)
-local PIANI = { "cielo", "lontano", "medio", "vicino" }
-local POSTO = { cielo = "texture3", lontano = "texture4", medio = "texture5", vicino = "texture6" }
-local STRISCIA = { lontano = "striscia1", medio = "striscia2", vicino = "striscia3" }
+-- the background strips and their slots in the mesh (texture3..6, as in terreno.material)
+local LAYERS = { "cielo", "lontano", "medio", "vicino" }
+local PLACE = { cielo = "texture3", lontano = "texture4", medio = "texture5", vicino = "texture6" }
+local STRIP = { lontano = "striscia1", medio = "striscia2", vicino = "striscia3" }
 
--- la densità delle immagini: la 2 (1,5 volte più grande, circa 55 MB di
--- memoria video invece di 25) dagli schermi alti 1000 pixel veri (telefoni e PC
--- a 1080 compresi: con la 1 da vicino il terreno era stirato 3,3 volte e gli
--- sfondi 1,5; Sergio, 2 nov: «il livello di dettaglio migliore possibile»)
--- Nella build web (Safari su iPhone, solo per provare) resta la 1: la memoria di
--- una scheda del browser è poca
+-- the images' density: 2 (1.5 times bigger, about 55 MB of video memory
+-- instead of 25) from screens 1000 real pixels tall (phones and PCs at 1080
+-- included: with 1, up close the terrain was stretched 3.3 times and the
+-- backgrounds 1.5; Sergio, 2 Nov: «il livello di dettaglio migliore possibile»)
+-- The web build (Safari on iPhone, only for testing) keeps 1: a browser tab
+-- has little memory
 local WEB = sys.get_sys_info().system_name == "HTML5"
-local function densita()
+local function density()
 	local _, h = window.get_size()
-	return not WEB and (h or 0) >= 1000 and dipinti.densita[2] or dipinti.densita[1]
+	return not WEB and (h or 0) >= 1000 and paintings.densita[2] or paintings.densita[1]
 end
 
--- Un PNG di client/dipinti in una texture (sempre la stessa per lo stesso posto:
--- cambiando mappa si riscrive quella)
-local function carica(self, posto, file)
-	local dati = sys.load_resource("/dipinti/" .. file)
-	if not dati then
+-- A PNG from client/dipinti into a texture (always the same one for the same
+-- slot: changing map rewrites it)
+local function load_up(self, spot, file)
+	local payload = sys.load_resource("/dipinti/" .. file)
+	if not payload then
 		print("ERROR: manca il dipinto " .. file)
 		return nil
 	end
-	-- decodificare il PNG e caricarlo nella GPU è il lavoro più pesante del
-	-- cambio di mappa: il contatore dei fotogrammi (ui/fotogrammi.lua) lo sa
-	fotogrammi.segna("dipinto")
-	local img = image.load_buffer(dati, { premultiply_alpha = true, flip_vertically = true })
-	local formato = img.type == image.TYPE_RGB and TEX_RGB or TEX_RGBA
-	local p = { type = TEX_2D, format = formato, width = img.width, height = img.height }
-	local percorso = self.texture[posto]
-	if percorso and self.misura[posto] == img.width .. "x" .. img.height .. formato then
-		resource.set_texture(percorso, p, img.buffer)
+	-- decoding the PNG and uploading it to the GPU is the heaviest work of a map
+	-- change: the frame counter (ui/fotogrammi.lua) knows it
+	frames.segna("dipinto")
+	local img = image.load_buffer(payload, { premultiply_alpha = true, flip_vertically = true })
+	local fmt = img.type == image.TYPE_RGB and TEX_RGB or TEX_RGBA
+	local p = { type = TEX_2D, format = fmt, width = img.width, height = img.height }
+	local resource_path = self.texture[spot]
+	if resource_path and self.misura[spot] == img.width .. "x" .. img.height .. fmt then
+		resource.set_texture(resource_path, p, img.buffer)
 	else
-		if percorso then resource.release(percorso) end
-		percorso = resource.create_texture("/dipinti/" .. posto .. self.n .. ".texturec", p, img.buffer)
+		if resource_path then resource.release(resource_path) end
+		resource_path = resource.create_texture("/dipinti/" .. spot .. self.n .. ".texturec", p, img.buffer)
 		self.n = self.n + 1
 	end
-	self.texture[posto], self.misura[posto] = percorso, img.width .. "x" .. img.height .. formato
-	go.set("#mesh", posto, percorso)
-	return percorso
+	self.texture[spot], self.misura[spot] = resource_path, img.width .. "x" .. img.height .. fmt
+	go.set("#mesh", spot, resource_path)
+	return resource_path
 end
 
--- lo sfondo dipinto di un girone: le immagini (se non ci sono già) e i numeri delle strisce
-local function metti_sfondo(self, nome)
-	local s = dipinti.sfondi[nome]
-	local d = densita()
+-- a circle's painted background: the images (if not already there) and the strip numbers
+local function set_background(self, nome)
+	local s = paintings.sfondi[nome]
+	local d = density()
 	if self.sfondo ~= nome .. d then
-		for _, piano in ipairs(PIANI) do
-			carica(self, POSTO[piano], "sfondi/" .. nome .. "_" .. piano .. "_" .. d .. ".png")
+		for _, plan_def in ipairs(LAYERS) do
+			load_up(self, PLACE[plan_def], "sfondi/" .. nome .. "_" .. plan_def .. "_" .. d .. ".png")
 		end
 		self.sfondo = nome .. d
 	end
-	-- w: quanto è scorsa la striscia (lo aggiorna update, già dentro un giro)
-	self.strisce = {}
+	-- w: how far the strip has scrolled (update sets it, already wrapped)
+	self.strips = {}
 	for _, g in ipairs(s.gruppi) do
-		self.strisce[#self.strisce + 1] = { nome = STRISCIA[g.nome], scorre = g.scorre,
+		self.strips[#self.strips + 1] = { nome = STRIP[g.nome], scorre = g.scorre,
 			v = vmath.vector4(g.y0 / 720, g.h / 720, g.quanto, 0) }
 	end
 end
 
 function init(self)
-	-- x = 1 mappa dipinta, y = secondi (braci che salgono, sfondo che scorre),
-	-- zw = proporzioni dello schermo (ui/schermo.lua: kx, ky)
+	-- x = 1 painted map, y = seconds (rising embers, scrolling background),
+	-- zw = screen proportions (ui/schermo.lua: kx, ky)
 	self.opzioni = vmath.vector4(0, 0, 1, 1)
-	-- x = sfondo dipinto, y = crateri che mostrano lo sfondo, z = solo sfondo (terreno.fp)
+	-- x = painted background, y = craters showing the background, z = background only (terreno.fp)
 	self.stile = vmath.vector4(0, 0, 0, 0)
 	self.texture, self.misura, self.n = {}, {}, 0
 end
 
 function update(self, dt)
-	-- dopo un'ora si ricomincia, così il float dello shader resta preciso
+	-- after an hour it starts over, so the shader's float stays precise
 	self.opzioni.y = (self.opzioni.y + dt) % 3600
 	go.set("#mesh", "opzioni", self.opzioni)
 	go.set("#mesh", "stile", self.stile)
-	-- lo scorrimento di ogni striscia lo contiamo qui, dentro un giro: nello
-	-- shader il tempo in mediump andrebbe a scatti, e al giro dell'ora salterebbe
-	if self.strisce and self.stile.x > 0.5 then
-		for _, st in ipairs(self.strisce) do
-			st.v.w = (st.v.w + dt * st.scorre) % dipinti.giro
+	-- we count each strip's scrolling here, wrapped: in the shader a mediump time
+	-- would stutter, and it would jump when the hour wraps
+	if self.strips and self.stile.x > 0.5 then
+		for _, st in ipairs(self.strips) do
+			st.v.w = (st.v.w + dt * st.scorre) % paintings.giro
 			go.set("#mesh", st.nome, st.v)
 		end
 	end
 end
 
--- lo stile della mappa (stile.x, stile.y) o, dietro la home, solo lo sfondo dipinto
-local function applica(self)
+-- the map's style (stile.x, stile.y) or, behind the home, only the painted background
+local function apply(self)
 	if self.home then
-		metti_sfondo(self, self.home)
+		set_background(self, self.home)
 		self.stile.x, self.stile.y, self.stile.z = 1, 0, 1
 	else
-		if self.sfondo_mappa then metti_sfondo(self, self.sfondo_mappa) end
-		self.stile.x, self.stile.y, self.stile.z = self.sfondo_mappa and 1 or 0, self.sfondo_mappa and 1 or 0, 0
+		if self.map_background then set_background(self, self.map_background) end
+		self.stile.x, self.stile.y, self.stile.z = self.map_background and 1 or 0, self.map_background and 1 or 0, 0
 	end
 end
 
-local function messaggio(self, message_id, message)
-	if message_id == MSG_MASCHERA then
+local function handle_message(self, message_id, message)
+	if message_id == MSG_MASK then
 		go.set("#mesh", "texture2", message.path)
-		local mappa = message.mappa
-		self.sfondo_mappa = dipinti.mappe[mappa]
-		if self.sfondo_mappa then
-			-- la stessa mappa di prima (si riprova la missione): l'immagine c'è già
-			local file = "mappe/" .. mappa .. "_" .. densita() .. ".png"
-			if self.terreno_file ~= file then
-				carica(self, "texture0", file)
-				self.terreno_file = file
+		local map_name = message.mappa
+		self.map_background = paintings.mappe[map_name]
+		if self.map_background then
+			-- the same map as before (the mission is retried): the image is already there
+			local file = "mappe/" .. map_name .. "_" .. density() .. ".png"
+			if self.terrain_file ~= file then
+				load_up(self, "texture0", file)
+				self.terrain_file = file
 			else
 				go.set("#mesh", "texture0", self.texture.texture0)
 			end
 			self.opzioni.x = 1
 		else
-			-- mappe senza disegni: restano quelli della mesh, lo shader non li usa
-			self.terreno_file = nil
-			if message.dipinta and self[mappa .. "_terreno"] then
-				go.set("#mesh", "texture0", self[mappa .. "_terreno"])
-				go.set("#mesh", "texture1", self[mappa .. "_interno"])
+			-- maps without drawings: the mesh's ones stay, the shader doesn't use them
+			self.terrain_file = nil
+			if message.painted and self[map_name .. "_terreno"] then
+				go.set("#mesh", "texture0", self[map_name .. "_terreno"])
+				go.set("#mesh", "texture1", self[map_name .. "_interno"])
 			end
-			self.opzioni.x = message.dipinta and 1 or 0
+			self.opzioni.x = message.painted and 1 or 0
 		end
-		applica(self)
+		apply(self)
 	elseif message_id == MSG_HOME then
-		-- sfondo: il girone dietro la home; nil, la home si chiude
+		-- sfondo: the circle behind the home; nil, the home closes
 		self.home = message.sfondo
-		applica(self)
-	elseif message_id == MSG_SCHERMO then
+		apply(self)
+	elseif message_id == MSG_SCREEN then
 		self.opzioni.z, self.opzioni.w = message.kx, message.ky
 	end
 end
 
--- il lavoro dei messaggi conta nel contatore dei fotogrammi (ui/fotogrammi.lua)
+-- the messages' work counts in the frame counter (ui/fotogrammi.lua)
 function on_message(self, message_id, message)
-	local t = fotogrammi.ora()
-	messaggio(self, message_id, message)
-	fotogrammi.lavoro(t)
+	local t = frames.ora()
+	handle_message(self, message_id, message)
+	frames.lavoro(t)
 end

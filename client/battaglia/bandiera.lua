@@ -1,52 +1,52 @@
--- La bandierina a scacchi delle lezioni (sim/missions.lua, raggiungi con
--- bandiera): un'asta e un drappo a scacchi bianchi e neri che sventola, nel
--- mondo, dove devi arrivare. Pochi nodi fatti una volta.
+-- The lessons' checkered flag (sim/missions.lua, reach with flag): a
+-- pole and a black-and-white checkered drape waving, in the world, where you
+-- have to get to. A few nodes made once.
 --
---   local b = bandiera.new(mondo, sotto)   -- mondo: il nodo del mondo; sotto: il nodo da tenere davanti
---   b:mostra(x, y, clock)                  -- a ogni frame; x nil: non c'è
+--   local b = bandiera.new(world, under)   -- world: the world node; under: the node to keep in front of
+--   b:display(x, y, clock)                    -- every frame; x nil: not there
 
 local M = {}
 
--- misure in unità del mondo (il diavoletto è alto una ventina)
-local ASTA_H, ASTA_W = 38, 1.6
-local COLONNE, RIGHE, LATO = 6, 4, 3
-local BIANCO = vmath.vector4(0.95, 0.93, 0.9, 1)
-local NERO = vmath.vector4(0.08, 0.07, 0.09, 1)
-local ASTA = vmath.vector4(0.62, 0.58, 0.55, 1)
+-- sizes in world units (the devil is about twenty tall)
+local POLE_H, POLE_W = 38, 1.6
+local COLUMNS, ROWS, SIDE = 6, 4, 3
+local WHITE = vmath.vector4(0.95, 0.93, 0.9, 1)
+local BLACK = vmath.vector4(0.08, 0.07, 0.09, 1)
+local POLE = vmath.vector4(0.62, 0.58, 0.55, 1)
 local V = vmath.vector3()
 local EULER = vmath.vector3()
 
-local function box(x, y, w, h, colore, parent)
+local function box(x, y, w, h, color, parent)
 	local n = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(w, h, 0))
-	gui.set_color(n, colore)
+	gui.set_color(n, color)
 	gui.set_parent(n, parent)
 	return n
 end
 
-function M.new(mondo, sotto)
+function M.new(world, under)
 	local b = setmetatable({}, { __index = M })
 	b.radice = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_parent(b.radice, mondo)
-	if sotto then gui.move_below(b.radice, sotto) end
-	box(0, ASTA_H / 2, ASTA_W, ASTA_H, ASTA, b.radice)
-	-- il drappo gira attorno all'attacco in cima all'asta
-	b.drappo = box(ASTA_W / 2, ASTA_H - RIGHE * LATO / 2, 0, 0, BIANCO, b.radice)
-	for i = 0, COLONNE - 1 do
-		for j = 0, RIGHE - 1 do
-			box((i + 0.5) * LATO, (j + 0.5 - RIGHE / 2) * LATO, LATO, LATO, (i + j) % 2 == 0 and NERO or BIANCO, b.drappo)
+	gui.set_parent(b.radice, world)
+	if under then gui.move_below(b.radice, under) end
+	box(0, POLE_H / 2, POLE_W, POLE_H, POLE, b.radice)
+	-- the drape turns around the attachment at the top of the pole
+	b.drape = box(POLE_W / 2, POLE_H - ROWS * SIDE / 2, 0, 0, WHITE, b.radice)
+	for i = 0, COLUMNS - 1 do
+		for j = 0, ROWS - 1 do
+			box((i + 0.5) * SIDE, (j + 0.5 - ROWS / 2) * SIDE, SIDE, SIDE, (i + j) % 2 == 0 and BLACK or WHITE, b.drape)
 		end
 	end
 	gui.set_enabled(b.radice, false)
 	return b
 end
 
-function M.mostra(b, x, y, clock)
+function M.display(b, x, y, clock)
 	gui.set_enabled(b.radice, x ~= nil)
 	if not x then return end
 	V.x, V.y, V.z = x, y, 0
 	gui.set_position(b.radice, V)
 	EULER.z = math.sin((clock or 0) * 3) * 6
-	gui.set_euler(b.drappo, EULER)
+	gui.set_euler(b.drape, EULER)
 end
 
 return M
