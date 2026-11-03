@@ -1,12 +1,15 @@
-# Controlli su ogni PR: gli stessi di strumenti/controlli/tutti.sh (sintassi e
-# globali del Lua, controlli dell'editor di Defold, tutti i test Lua, go vet,
-# gofmt, go test). Non costruisce il gioco: quello lo fa build-pr.yml.
+# Controlli su main (dopo ogni merge) e a mano (Actions > Controlli > Run
+# workflow, anche su un ramo prima di una versione online): gli stessi di
+# strumenti/controlli/tutti.sh (sintassi e globali del Lua, controlli
+# dell'editor di Defold, tutti i test Lua, go vet, gofmt, go test). Sulle PR
+# non girano più, per non rallentare lo sviluppo (Sergio, 3 nov).
 name: Controlli
 on:
-  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 concurrency:
-  group: controlli-${{ github.event.pull_request.number || github.ref }}
+  group: controlli-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
