@@ -72,6 +72,7 @@ futuro in [../roadmap.md](../roadmap.md) (aree 9, 10).
 
 ## Aperte
 
+- **Vignette del tutorial con Favilla** (3 nov, proposta https://claude.ai/artifact/JwGUbbN17jKuKKRSqooTSP, thread "Progettare le vignette del tutorial con Favilla"; Sergio: «non voglio più quei messaggi che appaiono in testa», «ogni cosa importante che viene spiegata viene interrotta da una vignetta che te la spiega per bene prima di fartela fare», le lezioni di oggi non gli piacciono). Dieci scelte aperte: nel cortile della Forgia ti allena Favilla, poi il Fabbro maestro; sette lezioni corte + sette missioni della Forgia (le prime due in 2 contro 2 con Favilla, la lezione dei punti nella Forgia); spiega, mostra, fai, brava; striscia in alto, vignetta grande e tavola; fogli modello fissi; fiammella nelle vignette; vestito di Favilla; Fabbro B; Favilla animata nel campo; rapimento a fine Battaglia della Forgia che apre l'online. Se Sergio dice sì, riapre la scartata del 29 ott «storia con dialoghi e scene». Concordata col thread della campagna. Scelta di Claude, reversibile: approvata la fase 1 di WB-012 (fogli modello), che serve a ogni risposta.
 - Quando si apre l'online nella campagna (Sergio, 30 ott: chiuso per buona parte; 3 nov: dopo una prova seria della campagna, uno o due boss, una porta sola per ogni cosa). Proposte in [../sblocco_online.md](../sblocco_online.md).
 - Nome della valuta morbida ("Scorie"? il nome viene dalla vecchia direzione
   artistica).
