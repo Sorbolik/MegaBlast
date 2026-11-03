@@ -17,6 +17,9 @@ Un campo usato anche fuori dall'ondata o scritto come stringa (id, impostazioni,
 della GUI) resta italiano per ora. Nei file in
 inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
 errori del server) restano in italiano. Si rinomina con `strumenti/rinomina/rinomina.py`.
+Le frasi del gioco stanno in `client/lang/it.lua` (un gruppo per schermata, come si usano
+in `client/lang/text.lua`; per ora i menu, il resto arriva con la PR 6b e 6c): una frase
+nuova di un menu va lì, non nel codice (`tests/lang_test.lua` controlla le chiavi).
 
 ## Controlli: veloci in locale, completi su main (Sergio, 3 nov)
 
@@ -176,7 +179,7 @@ l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla p
 su claude.ai le connessioni verso altri siti sono bloccate.
 
 I test (tutti insieme in `strumenti/controlli/tutti.sh`): `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
-`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campaign_test.lua` (missioni della campagna e partita guidata), `luajit tests/events_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit strumenti/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
+`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campaign_test.lua` (missioni della campagna e partita guidata), `luajit tests/events_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit tests/lang_test.lua` (testi del gioco), `luajit strumenti/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
 
 ## Sezione "Per Telegram" in ogni PR (Sergio, 29 ott)
 
