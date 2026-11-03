@@ -84,7 +84,7 @@ dopo il cambio di scena il velo resta chiuso ancora 3 frame (`passaggio.HOLD_FRA
 riapre intera invece di saltare. Lo stesso vale per lo scivolo fra i menu (la
 schermata nuova arriva tre frame dopo, a velo pieno). Il contatore segna questi
 scatti `(coperto)` e non li conta fra gli SCATTI/MIN, perché non si vedono; nel
-simulatore restano nel controllo dei 150 ms di Lua.
+simulatore hanno un tetto loro di 300 ms di Lua (sotto).
 
 Preparare i dipinti prima (durante la scelta delle armi) è stato scartato: la
 decodifica gira sul thread principale e lo scatto passerebbe su una schermata
@@ -98,10 +98,21 @@ arrivano mentre l'iride si chiude aspettano e passano subito dopo.
 `simula.py` fallisce se in un frame Lua lavora più di **150 ms** (`LUA_MAX`),
 con qualsiasi scenario: CLAUDE.md chiede di girare il simulatore prima di ogni
 PR che tocca `client/`, quindi un caricamento o un calcolo nuovo che blocca il
-gioco si vede prima del merge. Oggi il caso peggiore è entrare in una missione,
-circa 60 ms nel simulatore (su un telefono 3-5 volte di più: va abbassato,
-vedi sotto). Il tetto è largo perché è tempo vero e, col video, ffmpeg ruba la
-CPU al gioco: serve a fermare i blocchi nuovi grossi, non i millisecondi.
+gioco si vede prima del merge. Il tetto è largo perché è tempo vero e, col
+video, ffmpeg ruba la CPU al gioco: serve a fermare i blocchi nuovi grossi, non
+i millisecondi.
+
+I frame `(coperto)`, sotto l'iride chiusa, hanno un tetto loro di **300 ms**
+(`LUA_MAX_COPERTO`, 3 nov). Oggi il caso peggiore è entrare in una mappa dipinta
+grande (pavimento o fossa: un PNG di 2880 x 1620 da decodificare), 105-125 ms
+nel simulatore e fino a 162 col video (le arene delle lezioni, più piccole, circa
+60; su un telefono 3-5 volte di più: va abbassato, vedi sotto). Da quando le
+mappe vecchie sono state tolte lo scenario base gioca sul pavimento, e con 150
+falliva per caso. Scartati: tenere la mappa in cache (c'è già: sfondo e terreno
+non si ricaricano se non cambiano, ma la prima volta va decodificata comunque),
+misurare senza il caricamento (sparirebbe proprio il controllo sui caricamenti
+nuovi), lasciare lo scenario base su una mappa piccola (non proverebbe più una
+partita vera).
 
 Regole per il codice (dalla regola di Sergio del 19 ott):
 
