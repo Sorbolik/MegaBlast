@@ -1,0 +1,12 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp: use it ONLY for the style. Do not draw the imp.
+
+The objects: the parts of a minimal life bar for a mobile game HUD. Life bar: a thin straight wrought-iron rail with one rivet at each end, about eight times longer than tall. Inside the rail a glowing ember strip in the team colour fills 70% of it from the left; the empty 30% on the right is cooled dark iron with a faint red glow.
+
+Pieces, top to bottom: 1) the empty life bar rail, long and straight, with the rivets, its middle part perfectly uniform so it can be stretched; 2) the ember strip alone, glowing WHITE-HOT and neutral (white and pale cream only, no team colour, the game tints it); 3) the same strip cooled down (dark iron with a faint red glow); 4) the tiny iron crown with old-gold tips, big on the sheet.
+
+Sheet layout: solid flat magenta #FF00FF background, nothing else on it (no shadows on the magenta, no ground). Every piece alone, well separated from the others, drawn straight and flat, seen exactly from the front. Do not use magenta or pink anywhere on the pieces. Landscape 3:2.
+
+Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoon, thick black outline, flat cel colours with light Doré-style engraving hatching in the shadows. Campaign palette: brick red, parchment, ember orange, old gold, wrought iron grey. Hell of Dante seen as a forge. Clean shapes that read at 20 px tall on a phone. No text, no letters, no numbers anywhere.
+
+Riferimenti allegati, in ordine:
+R1: art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png

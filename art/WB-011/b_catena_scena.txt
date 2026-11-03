@@ -1,0 +1,11 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him. He has NO flame on his head: do not add one. His neckerchief is BLUE #3d7bff. Image 2 is the small wrought-iron arrow that already marks the active player in our game: copy it exactly, only smaller.
+
+Life bar: a short horizontal chain of five small hammered iron links touching each other, about eight times longer than tall. The links are lit from inside by a glowing ember in the team colour: the first three and a half links glow, the last one and a half are cold, dark and slightly cracked. Crown (only the first in the ranking has it): a tiny ring of chain with three old-gold spikes, placed on the LEFT of the name slot, on the same line, not above it.
+
+Scene: the imp of image 1 small in the picture (about one quarter of the image height), three-quarter view facing right, standing in the middle of a flat painted brick platform of the Forge in muted slate-blue bricks; behind, a dark muted slate-blue background with engraving hatching, darker and duller than the imp. Above his head, close to his horns, his minimal game HUD, stacked from top to bottom: the arrow of image 2, then the name line, then the life bar. The whole HUD is narrower than the imp's body and its total height is less than half of the imp's height: the imp must stay by far the most visible thing. Where the name goes, draw only a short empty slot (the game writes the name with its own font). The team colour of this scene is BLUE #3d7bff. Landscape 3:2.
+
+Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoon, thick black outline, flat cel colours with light Doré-style engraving hatching in the shadows. Campaign palette: brick red, parchment, ember orange, old gold, wrought iron grey. Hell of Dante seen as a forge. Clean shapes that read at 20 px tall on a phone. No text, no letters, no numbers anywhere.
+
+Riferimenti allegati, in ordine:
+R1: art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png
+R2: art/WB-010/p2_freccia_scena.png
