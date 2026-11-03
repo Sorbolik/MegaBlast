@@ -196,26 +196,8 @@ function M.bar_value(b, v)
 	gui.set_size(b.full, V)
 end
 
--- The standings leader's Crown: a band and three diamond points, with a dark
--- border. Returns the root (invisible), centered on the band; sizes in GUI
--- units at scale 1 (18 wide).
+-- the gold of the Crown and of what counts double
 M.GOLD = c(1, 0.8, 0.25)
-local WHITE = c(1, 1, 1)
-local CROWN_PIECES = { { 0, 0, 16, 5, 0 }, { -6, 4, 5, 5, 45 }, { 0, 6, 5, 5, 45 }, { 6, 4, 5, 5, 45 } }
-
-function M.crown(x, y, color, parent)
-	local r = gui_node(nil, x, y, 0, 0, WHITE, parent)
-	gui.set_visible(r, false)
-	for pass = 1, 2 do
-		local b = pass == 1 and 2 or 0
-		for _, p in ipairs(CROWN_PIECES) do
-			local n = gui_node(nil, p[1], p[2], p[3] + b, p[4] + b, pass == 1 and C.BOTTOM or color or M.GOLD, r)
-			gui.set_inherit_alpha(n, true)
-			gui.set_euler(n, vmath.vector3(0, 0, p[5]))
-		end
-	end
-	return r
-end
 
 -- Tap on the buttons of a list: pressed, released over it (the action) or
 -- outside. The last one added wins, which is drawn on top (a button inside a panel)

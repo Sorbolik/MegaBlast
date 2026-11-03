@@ -111,3 +111,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 3 nov | Seconda ondata del codice in inglese: il client (nomi e commenti di menu, interfaccia e battaglia); il profilo sul telefono riparte da zero; nel gioco non cambia niente (207 partite identiche). | questa PR |
 | 3 nov | Via i controlli dalle PR per andare più veloci: girano su main dopo il merge e a mano prima delle versioni online; APK di prova solo a mano. | questa PR |
 | 3 nov | Targa a lama incisa (WB-011, stile C con la sua Corona): la vita scorre nella scanalatura di una lama d'acciaio, il nome senza fondo sopra. | questa PR |
+| 3 nov | Zoom più in basso (via dalla tendina delle notifiche) con una micro-vibrazione a ogni scatto; targhe sopra le corna; la Corona d'oro anche sopra i punti. | questa PR |

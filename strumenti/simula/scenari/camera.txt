@@ -1,8 +1,8 @@
 # Camera vicina che segue il robot di turno e sfondo in parallasse.
-# Zoom: pulsante in alto a destra (1210 686): un tocco va al massimo e torna,
+# Zoom: pulsante in alto a destra (1210 610): un tocco va al massimo e torna,
 # trascinato giù allontana; tasto z come il tocco, rotella a passi.
 
-aspetta 1
+aspetta 3
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1.2
@@ -27,10 +27,10 @@ foto 07_ritorno
 aspetta_stato turno=2 fase=aim 15
 aspetta 1.2
 foto 08_turno_blu
-trascina 1210 686 1210 560 0.6       # pulsante trascinato giù: a metà
+trascina 1210 610 1210 484 0.6       # pulsante trascinato giù: a metà
 aspetta 1.2
 foto 09_meta
-tocca 1210 686                      # tocco: zoom massimo
+tocca 1210 610                      # tocco: zoom massimo
 aspetta 1.2
 foto 10_massimo
 tieni sinistra 0.8

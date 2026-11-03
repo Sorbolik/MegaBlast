@@ -232,7 +232,9 @@ local DARK_EMBER = vmath.vector4(0.85, 0.3, 0.08, 1)
 -- The buttons stuck to the edges are written for 16:9: arrange() moves them
 -- onto the real screen edges.
 -- zoom button, at the top right
-local ZOOM_BTN = vmath.vector3(W - 70, H - 34, 0)
+-- the zoom button: 110 below the top edge, so dragging it down does not pull the
+-- phone's notifications (Sergio, 3 Nov; it was 34)
+local ZOOM_BTN = vmath.vector3(W - 70, H - 110, 0)
 
 -- Phone controls: two sticks, the logic is in battaglia/levette.lua. The base
 -- goes where the thumb rests, within its zone, and goes back to its place
@@ -861,7 +863,9 @@ local CP = { conta = require "menu.conta", vetrina = require "menu.vetrina", tag
 CP.ZM = {
 	STEP = 0.12,        -- a wheel notch or a key, in shares of the zoom
 	RUN = 230,         -- how long the guide is, in screen units
-	TOP = 8,            -- the guide starts this far below the top edge
+	TOP = 40,           -- the guide starts this far below the top edge (out of the
+	                    -- strip where the phone pulls down its notifications)
+	TICKS = 24,         -- a micro-vibration every 1/TICKS of the zoom while dragging
 	DRAG_PX = 10,          -- past this the finger drags and it is no longer a tap
 	STICK_RATE = 0.9,       -- with the controller: shares of the zoom per second at full stick
 	W = 44, H = 44,      -- the button
@@ -920,6 +924,10 @@ function ZM.trascina(self, y)
 		f = d.f * (y - d.fondo) / (d.y - d.fondo)
 	end
 	camera.trascina(self.cam, f)
+	-- a micro-vibration at every notch (Sergio, 3 Nov: «un feedback di vibrazione granulare»)
+	local notch = math.floor(f * ZM.TICKS + 0.5)
+	if d.notch and notch ~= d.notch then CP.vibrate() end
+	d.notch = notch
 	gui.set_position(self.zoom_cursor, vmath.vector3(0, y - (d.cima + d.fondo) / 2, 0))
 end
 
@@ -936,6 +944,9 @@ end
 -- the points, at the shot's x. It follows it while it is out and disappears
 -- when it comes back. Missile, egg, sniper, every orb, the swarm (one for all)
 CP.NOTCH = { W = 18, BELOW = 10, LATO = 12, N = 4 }
+
+-- the plates stand this many screen units above the horns, at every zoom
+CP.PLATE_GAP = 4
 
 function CP.notch_create(self)
 	self.ticks = {}
@@ -1723,7 +1734,7 @@ function CP.robot_below(self, x, y)
 		local v = self.view[i]
 		if v and not rb.dead and not rb.gone then
 			local rx, feet = camera.to_screen(self.cam, v.x, v.y)
-			local top = feet + (scoria.altezza(self.robots[i].rig) + 3 + 4 / s + plate.sopra(self.robots[i].plate) * plate.scala(self.cam)) * s
+			local top = feet + (scoria.cima(self.robots[i].rig) + CP.PLATE_GAP / s + plate.sopra(self.robots[i].plate) * plate.scala(self.cam)) * s
 			if math.abs(x - rx) <= math.max(40, 30 * s ^ 0.35) and y >= feet - 10 and y <= top + 10 then return i end
 		end
 	end
@@ -2303,6 +2314,8 @@ local function vibrate_touch()
 	end
 end
 
+CP.vibrate = vibrate_touch -- for the blocks above it (the zoom)
+
 local function move_pad_drag(self, x, y)
 	local nx, ny = pad_drag(self.move_pad, x, y)
 	if math.abs(nx) > 0.3 then missions.tocca(self.missione, "cammina") end
@@ -2633,7 +2646,7 @@ local function render(self, dt)
 			plate.arrow_up(self.arrow, above and r.plate or nil)
 		end
 		-- above the horns: 3 in the world and 4 screen pixels
-		plate.update(r.plate, dt, v.x, v.y + scoria.altezza(r.rig) + 3 + 4 / self.cam.s, plate.scala(self.cam), self.cam)
+		plate.update(r.plate, dt, v.x, v.y + scoria.cima(r.rig) + CP.PLATE_GAP / self.cam.s, plate.scala(self.cam), self.cam)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -3071,7 +3084,7 @@ end
 -- startup and when the window changes proportions
 local function arrange(self)
 	local x0, y0, x1, y1 = screen.x0, screen.y0, screen.x1, screen.y1
-	ZOOM_BTN.x, ZOOM_BTN.y = x1 - 70, y1 - 34
+	ZOOM_BTN.x, ZOOM_BTN.y = x1 - 70, y1 - 110
 	MOVE_PAD.x, MOVE_PAD.y = x0 + 115, y0 + 117
 	AIM_PAD.x, AIM_PAD.y = x1 - 115, y0 + 117
 	PAD_ZONE.sx, PAD_ZONE.dx, PAD_ZONE.y = x0 + (x1 - x0) * 0.4, x1 - (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.6

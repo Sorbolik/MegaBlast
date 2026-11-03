@@ -120,6 +120,12 @@ function M.altezza()
 	return HEAD_TOP
 end
 
+-- the top of the head image, horns included (they stick out above altezza): the
+-- plate goes above this, so up close it never covers the horns
+function M.cima(s)
+	return s.cima
+end
+
 -- a step: the distance the body covers while a leg makes a full swing, in
 -- character heights
 local STEP = 0.9
@@ -446,6 +452,8 @@ function M.new(color, look, weapon_only)
 		s.facce[f] = s.strati(f)
 		layers = max(layers, #s.facce[f])
 	end
+	local head = s.facce.testa[1]
+	s.cima = (PT.collo[2] + head.y + head.h / 2) * k
 	for i = 1, layers do
 		s.teste[i] = piece(s, s.testa, s.facce.testa[i] or s.facce.testa[1], k, true, shift("testa"))
 		s.heads_t[i] = box(s.testa, 0, 0, 0, 0)
