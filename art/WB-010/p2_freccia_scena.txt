@@ -1,0 +1,10 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp. Copy him exactly (shapes, proportions, colours, horns, neckerchief, tail); do not reinterpret him.
+
+A small wrought-iron arrowhead / chevron floating above the imp's head, pointing down at him, hammered metal with rivets, an ember glow inside a slot in the middle in the team colour.
+
+Scene: the imp of image 1, in three-quarter view facing right, standing in the middle of a flat painted brick platform of the Forge, in muted slate-blue bricks; behind, a dark muted slate-blue background with engraving hatching, darker and duller than the imp so that he stands out. The team colour in this scene is BLUE #3d7bff. Landscape 3:2.
+
+Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoon, thick black outline, flat cel colours with light Doré-style engraving hatching in the shadows. Campaign palette: brick red, parchment, ember orange, old gold, wrought iron grey. Hell of Dante seen as a forge. Clean shapes that read at 40 px on a phone. No text, no letters, no numbers.
+
+Riferimenti allegati:
+Immagine 1 (R1): art/WB-009/riferimenti/R1_apprendista_concept.png
