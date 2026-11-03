@@ -200,10 +200,7 @@ check(tp.orbs[1] == nil, "the orb disappears after the teleport")
 check(tr.teleports_left == config.STATS.teleports - 1, "the teleport uses up an orb")
 tr.teleports_left = 5
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orbs[1] == nil and tr.teleports_left == 5, "on the first turn only one teleport")
-tr.turns = 2
-tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
-check(tp.orbs[1] ~= nil and tr.teleports_left == 4, "from the second turn, with orbs in hand, another one can be thrown")
+check(tp.orbs[1] ~= nil and tr.teleports_left == 4, "with orbs in hand another one can be thrown, on the first turn too")
 tr.teleports_left = 0
 tp:step({ fire = { angle = math.rad(70), power = 0.5, weapon = "teleport" } })
 check(#tp.orbs == 1, "without orbs the teleport doesn't leave")
@@ -449,29 +446,31 @@ do
 	run(az, 3)
 	check(az.phase ~= "aim", "the turn closes on time even after an attack")
 
-	-- On the first turn: after throwing the starting orb, the ones earned by
-	-- attacking can still be used (Sergio: a teleport earned in the turn can always be used)
+	-- On the first turn every orb can be thrown, the starting ones too (Sergio,
+	-- 3 November: no more limit of one), and then the ones earned by attacking
 	local ft = game.new(42, "forgia")
 	local fr = ft.robots[1]
+	local start = fr.teleports_left
 	run(ft, 30)
-	ft:step(TELE)
-	check(not ft:can_use("teleport"), "on the first turn only one starting orb")
+	for k = 1, start do
+		check(ft:can_use("teleport"), "starting orb " .. k .. " usable on the first turn")
+		ft:step(TELE)
+	end
+	check(not ft:can_use("teleport"), "no orbs left after the starting ones")
 	ft:step(MISSILE)
-	local earned = ft.teleports_earned
-	check(earned == 2, "attacking at once earns two orbs (" .. earned .. ")")
-	for k = 1, earned do
+	check(fr.teleports_left == 2, "attacking at once earns two orbs (" .. fr.teleports_left .. ")")
+	for k = 1, 2 do
 		check(ft:can_use("teleport"), "earned orb " .. k .. " usable on the first turn")
 		ft:step(TELE)
 	end
-	check(#ft.orbs == 1 + earned, "all the earned orbs leave")
-	check(fr.teleports_left > 0 and not ft:can_use("teleport"), "the starting orbs remain for the later turns")
+	check(#ft.orbs == start + 2 and fr.teleports_left == 0, "all the orbs leave")
 
 	-- Swapping the second attack for a teleport (Sergio, 29 October)
 	local sw = game.new(42, "forgia")
 	local swr = sw.robots[1]
 	run(sw, 30)
 	check(not sw:can_use("swap"), "no swap before the first attack")
-	sw:step(TELE)
+	for _ = 1, swr.teleports_left do sw:step(TELE) end
 	run(sw, 20 * 60)
 	sw:step(MISSILE)
 	local n_sw = swr.teleports_left
@@ -479,7 +478,7 @@ do
 	sw:step({ fire = { angle = 0, power = 1, weapon = "swap" } })
 	check(swr.teleports_left == n_sw + 1 and sw.used.primary and sw.used.secondary, "the swap gives an orb and closes the attacks")
 	check(not sw:can_use("sword") and not sw:can_use("swap"), "after the swap no second attack or other swap")
-	check(sw:can_use("teleport"), "the swap orb can be thrown on the first turn too")
+	check(sw:can_use("teleport"), "the swap orb can be thrown at once")
 	sw:step(TELE)
 	check(#sw.orbs >= 1 and swr.teleports_left == n_sw, "the swap orb leaves")
 	local sw2 = game.new(42, "forgia")

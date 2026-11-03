@@ -40,9 +40,6 @@ C.MODES = {
 -- wider; the numbers are ours, they used to be 5 and 15 s). The timer shows
 -- them as notches.
 C.TELEPORT_SOGLIE = { 9, 17 }
--- on each robot's first turn only one starting orb can be thrown (the ones
--- earned during the turn can always be thrown)
-C.FIRST_TURN_TELEPORTS = 1
 
 -- Match points (strategy 7 of the document): besides kills, damage counts,
 -- environmental kills and hits on whoever is first. The team with the most

@@ -113,7 +113,7 @@ function N.snapshot(g)
 	-- gr: the current round (the Crown only exists from SCORE.crown_rounds + 1)
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
-		u = used, tp = g.teleports, te = g.teleports_earned, mt = g.match_left, fr = g.final_round, gr = g.round,
+		u = used, mt = g.match_left, fr = g.final_round, gr = g.round,
 		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
 		c = crates, pl = placed, hl = heals }
 end
