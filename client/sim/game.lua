@@ -7,7 +7,7 @@
 --   g:step({ left = bool, right = bool, jump = bool,
 --            fire = { angle = rad, power = 0..1, weapon = "missile" | "sword" | "teleport" | "swap"
 --                                                     | "grenade" | "shards" | "punch" } })
---   g:can_use(weapon)   -- can the robot on turn use it now? (g.permesso(w): the lessons forbid some)
+--   g:can_use(weapon)   -- can the robot on turn use it now? (g.permitted(w): the lessons forbid some)
 -- Turn rules (sim/config.lua): up to one weapon and one sword hit per turn, in
 -- any order; after the first attack AFTER_ATTACK_SECONDS remain, during which
 -- you can do the second and reposition. The seconds left at the first attack
@@ -1933,12 +1933,12 @@ function M:update_melee(rb, hit_def, t, base, dir)
 	local hit = rb.melee_hit or {}
 	rb.melee_hit = hit
 	if t == 0 then for k in pairs(hit) do hit[k] = nil end end
-	if f1 >= hit_def.apri and f0 <= hit_def.chiudi then
+	if f1 >= hit_def.hit_from and f0 <= hit_def.hit_to then
 		-- several steps per tick: at the end the blade swings fast and could skip a target
 		for s = 1, MELEE_SUBSTEPS do
 			local ts = t + s / MELEE_SUBSTEPS
 			local f = ts * hit_def.fps / 60
-			if f >= hit_def.apri and f <= hit_def.chiudi then
+			if f >= hit_def.hit_from and f <= hit_def.hit_to then
 				local x0, y0, x1, y1, w = M.melee_blade(rb, hit_def, ts, base, dir)
 				for _, other in ipairs(self.robots) do
 					if other ~= rb and not other.dead and not hit[other.id]
@@ -1952,7 +1952,7 @@ function M:update_melee(rb, hit_def, t, base, dir)
 	if hit_def.salto and f0 < hit_def.salto and f1 >= hit_def.salto then
 		rb.vy, rb.grounded = M.PUNCH_HOP, false
 	end
-	if f0 < hit_def.chiudi and f1 >= hit_def.chiudi then
+	if f0 < hit_def.hit_to and f1 >= hit_def.hit_to then
 		for _, other in ipairs(self.robots) do
 			if hit[other.id] then
 				hit[other.id] = nil
@@ -2535,7 +2535,7 @@ end
 function M:can_use(weapon)
 	if self.phase ~= "aim" then return false end
 	-- the lessons only allow what's needed right now (sim/missions.lua only)
-	if self.permesso and not self.permesso(weapon) then return false end
+	if self.permitted and not self.permitted(weapon) then return false end
 	local rb = self.robots[self.current]
 	if rb.dead then return false end
 	if weapon == "parachute" then
@@ -2575,7 +2575,7 @@ end
 -- How many teleport orbs the first attack gives after ticks of turn
 function M.orbs_for(ticks)
 	local n = 0
-	for _, s in ipairs(C.TELEPORT_SOGLIE) do
+	for _, s in ipairs(C.TELEPORT_THRESHOLDS) do
 		if ticks <= s * 60 then n = n + 1 end
 	end
 	return n

@@ -383,7 +383,7 @@ do
 
 	local MISSILE = { fire = { angle = math.rad(60), power = 0.6 } }
 	local SWORD = { fire = { angle = 0, power = 1, weapon = "sword" } }
-	local TELE = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
+	local TELE_BTN = { fire = { angle = math.rad(90), power = 0.2, weapon = "teleport" } }
 
 	-- Orb thresholds: within 9 s two, within 17 s one, after that none, never three
 	check(game.orbs_for(0) == 2 and game.orbs_for(9 * 60) == 2 and game.orbs_for(9 * 60 + 1) == 1
@@ -454,14 +454,14 @@ do
 	local ft = game.new(42, "forgia")
 	local fr = ft.robots[1]
 	run(ft, 30)
-	ft:step(TELE)
+	ft:step(TELE_BTN)
 	check(not ft:can_use("teleport"), "on the first turn only one starting orb")
 	ft:step(MISSILE)
 	local earned = ft.teleports_earned
 	check(earned == 2, "attacking at once earns two orbs (" .. earned .. ")")
 	for k = 1, earned do
 		check(ft:can_use("teleport"), "earned orb " .. k .. " usable on the first turn")
-		ft:step(TELE)
+		ft:step(TELE_BTN)
 	end
 	check(#ft.orbs == 1 + earned, "all the earned orbs leave")
 	check(fr.teleports_left > 0 and not ft:can_use("teleport"), "the starting orbs remain for the later turns")
@@ -471,7 +471,7 @@ do
 	local swr = sw.robots[1]
 	run(sw, 30)
 	check(not sw:can_use("swap"), "no swap before the first attack")
-	sw:step(TELE)
+	sw:step(TELE_BTN)
 	run(sw, 20 * 60)
 	sw:step(MISSILE)
 	local n_sw = swr.teleports_left
@@ -480,7 +480,7 @@ do
 	check(swr.teleports_left == n_sw + 1 and sw.used.primary and sw.used.secondary, "the swap gives an orb and closes the attacks")
 	check(not sw:can_use("sword") and not sw:can_use("swap"), "after the swap no second attack or other swap")
 	check(sw:can_use("teleport"), "the swap orb can be thrown on the first turn too")
-	sw:step(TELE)
+	sw:step(TELE_BTN)
 	check(#sw.orbs >= 1 and swr.teleports_left == n_sw, "the swap orb leaves")
 	local sw2 = game.new(42, "forgia")
 	run(sw2, 30)
@@ -803,10 +803,10 @@ do
 	-- it starts fast and almost straight, then slows down and drops more and more
 	local d = game.new(42, "forgia", { ammo = { sniper = 1 } })
 	run(d, 60)
-	local da = d.robots[1]
+	local from_pt = d.robots[1]
 	d.robots[2].x = -1000
 	local dy = sky_spot(d, 500, 300)
-	place(da, 200, dy)
+	place(from_pt, 200, dy)
 	d.terrain:rect(0, dy - 200, 1280, 260, 0)  -- open sky ahead
 	d:step({ fire = { angle = 0, power = 1, weapon = "sniper" } })
 	local p = d.projectile
@@ -868,16 +868,16 @@ do
 	for _, deg in ipairs({ 0, 180, 90, -90, 45, -45, -135 }) do
 		local d = game.new(42, "forgia", { secondary = "eagle" })
 		run(d, 60)
-		local da = d.robots[1]
+		local from_pt = d.robots[1]
 		d.robots[2].x = -1000
 		-- a hole of radius 150 px in the terrain, to have room on all sides
 		d.terrain:carve(640, 400, 150)
-		place(da, 640, 400 - game.ROBOT_H / 2)
-		local x0, y0 = da.x, da.y
+		place(from_pt, 640, 400 - game.ROBOT_H / 2)
+		local x0, y0 = from_pt.x, from_pt.y
 		d:step({ fire = { angle = math.rad(deg), power = 1, weapon = "eagle" } })
 		run(d, config.EAGLE.recoil_ticks)
-		local dist = math.sqrt((da.x - x0) ^ 2 + (da.y - y0) ^ 2)
-		check(math.abs(dist - push) <= 2 and not da.recoil and da.vx == 0 and da.vy == 0,
+		local dist = math.sqrt((from_pt.x - x0) ^ 2 + (from_pt.y - y0) ^ 2)
+		check(math.abs(dist - push) <= 2 and not from_pt.recoil and from_pt.vx == 0 and from_pt.vy == 0,
 			"recoil of " .. math.floor(push) .. " px shooting at " .. deg .. " degrees (" .. math.floor(dist) .. ")")
 	end
 
@@ -975,30 +975,30 @@ do
 	-- reaching the point: within config.HOOK.grab it gets on top anyway
 	local dg = game.new(42, "forgia")
 	run(dg, 60)
-	local da = dg.robots[1]
+	local from_pt = dg.robots[1]
 	dg.robots[2].x = -1000
 	dg.terrain:rect(500, 200, 900, 900, 0)
 	dg.terrain:rect(900, 500, 200, 30, 1)
-	place(da, 850, 420)
-	ev = hook(dg, math.atan2(499 - 420 - game.DISEGNO_H / 2, 1000 - 850), function() da.vy = 0 end)
+	place(from_pt, 850, 420)
+	ev = hook(dg, math.atan2(499 - 420 - game.DISEGNO_H / 2, 1000 - 850), function() from_pt.vy = 0 end)
 	for _ = 1, 60 do
 		dg:step()
-		if not da.hooked then break end
+		if not from_pt.hooked then break end
 	end
 	run(dg, 20)
-	check(ev and ev.anchor and da.grounded and math.abs(da.y - 530) < 4,
+	check(ev and ev.anchor and from_pt.grounded and math.abs(from_pt.y - 530) < 4,
 		"from below diagonally it gets on top of the platform")
 	-- the side of a high wall (top past config.HOOK.climb) no: it stays there and falls
 	dg.terrain:rect(1200, 200, 60, 400, 1)
-	place(da, 1100, 300)
+	place(from_pt, 1100, 300)
 	dg.used.tool = false
-	ev = hook(dg, 0, function() da.vy = 0 end)
+	ev = hook(dg, 0, function() from_pt.vy = 0 end)
 	for _ = 1, 60 do
 		dg:step()
-		if not da.hooked then break end
+		if not from_pt.hooked then break end
 	end
 	run(dg, 10)
-	check(ev and ev.anchor and da.y < 590, "on the side of a high wall it doesn't climb to the top")
+	check(ev and ev.anchor and from_pt.y < 590, "on the side of a high wall it doesn't climb to the top")
 	-- shooting into the void nothing happens
 	place(ma, 640, 340)
 	m.used.tool = false
@@ -1162,9 +1162,9 @@ do
 	for _, try_it in ipairs({ { 0, false }, { math.rad(-70), true } }) do
 		local gd = game.new(42, "forgia", { secondary = "mallet" })
 		run(gd, 60)
-		local da, db = gd.robots[1], gd.robots[2]
+		local from_pt, db = gd.robots[1], gd.robots[2]
 		local px, py = sky(gd)
-		place(da, px, py)
+		place(from_pt, px, py)
 		local q, d = math.rad(-150), config.MALLET.reach * 0.8
 		place(db, px + math.cos(q) * d, py + game.SWORD_PIVOT_Y + math.sin(q) * d - game.HURT_Y)
 		hits = mallet(gd, try_it[1])
@@ -1357,19 +1357,19 @@ do
 	-- the Lama on an enemy gives back a secondary shot, up to the maximum; on a teammate no
 	r1.ammo[s2] = 0
 	check(not game.has_weapon(r1, s2) and game.has_weapon(r1, "sword"), "when the shots are over the Lama remains")
-	local nemico, teammate
+	local enemy, teammate
 	for _, rb in ipairs(eg.robots) do
-		if rb.team ~= r1.team then nemico = nemico or rb elseif rb ~= r1 then teammate = rb end
+		if rb.team ~= r1.team then enemy = enemy or rb elseif rb ~= r1 then teammate = rb end
 	end
 	eg:pop_events()
 	eg:sword_hit(r1, teammate)
 	check(r1.ammo[s2] == 0, "the Lama on a teammate doesn't reload")
-	eg:sword_hit(r1, nemico)
+	eg:sword_hit(r1, enemy)
 	local ev = eg:pop_events()
 	local recharge = false
 	for _, e in ipairs(ev) do if e.type == "recharge" and e.robot == r1.id and e.weapon == s2 then recharge = true end end
 	check(r1.ammo[s2] == 1 and recharge and game.has_weapon(r1, s2), "the Lama on an enemy gives back a shot")
-	for _ = 1, 5 do eg:sword_hit(r1, nemico) end
+	for _ = 1, 5 do eg:sword_hit(r1, enemy) end
 	check(r1.ammo[s2] == config.SECONDARY_SHOTS.max, "never past the maximum")
 
 	-- the campaign offers only the weapons already seen; an empty fan isn't picked from
@@ -1955,9 +1955,9 @@ check(not hb:hits_robot(hr.x + game.ROBOT_HALF_W, hr.y, 1, 0), "the bottom corne
 
 -- Walking capsule and hit circle come from sim/corpo.lua (the animation editor
 -- changes them); the drawing keeps its own size
-local corpo = require "sim.corpo"
-check(game.ROBOT_H == corpo.cammina.alto and game.ROBOT_HALF_W * 2 == corpo.cammina.largo
-	and game.HURT_R == corpo.colpi.raggio and game.HURT_Y == corpo.colpi.centro,
+local body_shape = require "sim.corpo"
+check(game.ROBOT_H == body_shape.cammina.alto and game.ROBOT_HALF_W * 2 == body_shape.cammina.largo
+	and game.HURT_R == body_shape.colpi.raggio and game.HURT_Y == body_shape.colpi.centro,
 	"capsule and hit circle from sim/corpo.lua")
 check(game.DISEGNO_H == game.REF_H * game.CORPO, "the drawing doesn't depend on sim/corpo.lua")
 
@@ -1985,7 +1985,7 @@ local function melee_at(deg, tx, ty, weapon)
 	end
 	return false, q
 end
-local close = math.ceil(melee.slash.chiudi * 60 / melee.slash.fps)
+local close = math.ceil(melee.slash.hit_to * 60 / melee.slash.fps)
 check(melee_at(0, 5, 0) == close, "the slash hits when the window closes (0.8 s)")
 check(melee_at(0, -4, 0) and melee_at(0, 0, 7), "aiming straight it also catches behind and above the head")
 check(melee_at(-60, 4, -4) and not melee_at(60, 4, -4), "aiming down the blade comes down in front, low")
@@ -2211,42 +2211,42 @@ print(string.format("info 600 ticks + 20 craters in %.1f ms", (os.clock() - t) *
 
 -- Phone sticks (client/battaglia/levette.lua)
 do
-	local levette = require "battaglia.levette"
-	local s = levette.new()
-	levette.muovi(s, 0.1, 0)
+	local sticks = require "battaglia.levette"
+	local s = sticks.new()
+	sticks.muovi(s, 0.1, 0)
 	check(not s.moving, "stick: at 10% sideways it doesn't walk")
-	levette.muovi(s, 0.5, 0)
+	sticks.muovi(s, 0.5, 0)
 	check(s.moving and s.dir == 1, "stick: sideways it walks right")
-	local jumped = levette.muovi(s, 0.5, 0.5)
+	local jumped = sticks.muovi(s, 0.5, 0.5)
 	check(s.moving and s.jumping and jumped, "stick: diagonally it walks and jumps")
-	check(not levette.muovi(s, 0.5, 0.55), "stick: the jump starts only once")
-	levette.muovi(s, 0.05, 0.6)
+	check(not sticks.muovi(s, 0.5, 0.55), "stick: the jump starts only once")
+	sticks.muovi(s, 0.05, 0.6)
 	check(not s.moving and s.jumping, "stick: straight up it jumps in place")
-	levette.muovi(s, -0.6, -0.1)
+	sticks.muovi(s, -0.6, -0.1)
 	check(s.moving and s.dir == -1 and not s.jumping, "stick: down left it walks and doesn't jump")
-	levette.muovi(s, -0.05, 0)
+	sticks.muovi(s, -0.05, 0)
 	check(not s.moving, "stick: back at the centre it stops")
-	levette.muovi(s, 0.2, -0.6)
+	sticks.muovi(s, 0.2, -0.6)
 	check(not s.moving, "stick: downwards 25% sideways is needed")
 
-	local a = levette.new()
-	levette.mira(a, 0.15, 0)
+	local a = sticks.new()
+	sticks.mira(a, 0.15, 0)
 	check(not a.active, "aim: below 20% off")
-	levette.mira(a, 0, -0.6)
+	sticks.mira(a, 0, -0.6)
 	check(a.active and math.abs(a.angle + math.pi / 2) < 1e-6 and math.abs(a.f - 0.5) < 1e-6,
 		"aim: on, downwards, power 0.5 at 60%")
-	levette.mira(a, 0.15, 0)
+	sticks.mira(a, 0.15, 0)
 	check(a.active, "aim: between 10% and 20% it stays on")
-	levette.mira(a, 0.05, 0)
+	sticks.mira(a, 0.05, 0)
 	check(not a.active, "aim: below 10% it turns off")
 
 	-- the thumb slipping at the last instant doesn't count
-	local r = levette.new()
-	for i = 0, 30 do levette.registra(r, i / 60, i < 28 and 1.0 or 2.0, 0.7, i < 30) end
-	local h = levette.al_rilascio(r, 30 / 60)
+	local r = sticks.new()
+	for i = 0, 30 do sticks.registra(r, i / 60, i < 28 and 1.0 or 2.0, 0.7, i < 30) end
+	local h = sticks.on_release(r, 30 / 60)
 	check(h and h.angle == 1.0 and h.active, "aim: on release the aim of 50 ms earlier counts")
-	levette.reset(r)
-	check(levette.al_rilascio(r, 1) == nil, "aim: after reset no aim recorded")
+	sticks.reset(r)
+	check(sticks.on_release(r, 1) == nil, "aim: after reset no aim recorded")
 end
 
 do

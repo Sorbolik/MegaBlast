@@ -1,162 +1,162 @@
--- Impostazioni (la rotellina in alto a destra della home, docs/impostazioni.md):
--- il modo della mira, come si spara e si dosa la potenza col controller e i
--- tasti del controller in battaglia (Sergio, 30 ott: "la rimappatura dei
--- pulsanti me la metti nelle impostazioni"). Si sceglie un comando (col tocco o
--- con la luce del controller e A), poi si preme il tasto nuovo: il comando che
--- lo aveva prende quello lasciato libero (controller.assegna). Y sulla riga
--- accesa toglie il tasto; Start annulla e resta alla rotellina; RIPRISTINA
--- torna alla mappatura di Sergio. Tutto si salva subito nel profilo.
+-- Settings (the wheel at the top right of the home, docs/impostazioni.md):
+-- the aim mode, how you fire and dose power with the controller, and the
+-- controller buttons in battle (Sergio, 30 Oct: "la rimappatura dei pulsanti
+-- me la metti nelle impostazioni"). You pick a command (by tapping or with the
+-- controller light and A), then press the new button: the command that had it
+-- takes the one left free (controller.assegna). Y on the lit row removes the
+-- button; Start cancels and stays on the wheel; RIPRISTINA goes back to
+-- Sergio's mapping. Everything is saved to the profile at once.
 --
 --   local impostazioni = require "menu.impostazioni"
---   local s = impostazioni.new(p, ctrl)         -- p il profilo, ctrl il controller (ui/controller.lua)
---   impostazioni.on_input(s, action_id, action) -- "indietro" o nil
---     (i tasti arrivano come ui.PAD con action.nome, il tasto premuto)
---   impostazioni.distruggi(s)
+--   local s = impostazioni.new(p, ctrl)         -- p the profile, ctrl the controller (ui/controller.lua)
+--   impostazioni.on_input(s, action_id, action) -- "indietro" or nil
+--     (buttons arrive as ui.PAD with action.nome, the button pressed)
+--   impostazioni.destroy(s)
 
 local ui = require "ui.ui"
-local glifo = require "ui.glifo"
+local glyph = require "ui.glifo"
 local controller = require "ui.controller"
-local profilo = require "menu.profilo"
+local profile = require "menu.profilo"
 
 local M = {}
 
-local NOMI = {
+local NAMES = {
 	spara = "SPARA", salta = "SALTA", primaria = "PRIMARIA DOPO", secondaria = "SECONDARIA DOPO", teletrasporto = "TELETRASPORTO",
 	rampino = "RAMPINO", paracadute = "PARACADUTE", oggetti = "OGGETTO DOPO", usa_oggetto = "USA L'OGGETTO",
 	baratto = "BARATTO", zoom = "ZOOM",
 }
--- le scelte in alto, una accanto all'altra (profilo.IMPOSTAZIONI, docs/impostazioni.md)
-local SCELTE = {
+-- the choices at the top, side by side (profilo.SETTINGS, docs/impostazioni.md)
+local CHOICES = {
 	{ "mira", "MIRA", { { "lancetta", "LANCETTA" }, { "mirino", "MIRINO" } } },
 	{ "sparo", "SPARO COL CONTROLLER", { { "pressione", "PREMENDO" }, { "rilascio", "LASCIANDO" } } },
 	{ "potenza", "POTENZA COL CONTROLLER", { { "levetta", "LEVETTA" }, { "grilletto", "GRILLETTO" } } },
 	{ "levette", "LEVETTA CHE MUOVE", { { "destra", "DESTRA" }, { "sinistra", "SINISTRA" } } },
 }
--- il contatore dei fotogrammi (ui/fotogrammi.lua, docs/prestazioni.md), in alto a destra
+-- the frame counter (ui/fotogrammi.lua, docs/prestazioni.md), at the top right
 local FPS = { "fps", "CONTATORE FPS", { { "spento", "SPENTO" }, { "acceso", "ACCESO" } } }
--- i gruppi delle scelte: distanza fra i centri e larghezza di ogni scelta
-local GRUPPO, SCELTA_W = 312, 148
--- due colonne di comandi
-local RIGA_W, RIGA_H, RIGA_PASSO = 470, 48, 54
-local COLONNE = { 395, 885 }
-local PRIMA_RIGA = 440
+-- the choice groups: distance between centers and width of each choice
+local GROUP, CHOICE_W = 312, 148
+-- two columns of commands
+local ROW_W, ROW_H, ROW_STEP = 470, 48, 54
+local COLUMNS = { 395, 885 }
+local FIRST_ROW = 440
 
-local function costruisci(s)
-	-- la luce del controller resta sullo stesso bottone
-	local acceso = s.bottoni and ui.illuminato(s.bottoni)
-	acceso = acceso and acceso.azione
+local function build(s)
+	-- the controller light stays on the same button
+	local lit = s.buttons and ui.lit_up(s.buttons)
+	lit = lit and lit.ui_action
 	if s.radice then gui.delete_node(s.radice) end
-	s.bottoni, s.glifi = {}, {}
+	s.buttons, s.glyphs = {}, {}
 	s.radice = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(s.radice, false)
 	local C = ui.C
-	ui.indietro(s.bottoni, "indietro", s.radice)
-	ui.titolo("IMPOSTAZIONI", 640, 650, 1, C.TESTO, s.radice)
+	ui.indietro(s.buttons, "indietro", s.radice)
+	ui.titolo("IMPOSTAZIONI", 640, 650, 1, C.TEXT, s.radice)
 
-	local function scelta(sc, cx, y, w)
-		ui.testo(sc[2], cx, y + 44, 0.5, C.SPENTO, s.radice)
-		local v = profilo.impostazione(s.p, sc[1])
+	local function choice(sc, cx, y, w)
+		ui.testo(sc[2], cx, y + 44, 0.5, C.OFF, s.radice)
+		local v = profile.setting(s.p, sc[1])
 		for i, m in ipairs(sc[3]) do
-			ui.scheda(s.bottoni, cx + (i - 1.5) * (w + 6), y, w, 52, m[2], sc[1] .. ":" .. m[1], v == m[1], s.radice)
+			ui.scheda(s.buttons, cx + (i - 1.5) * (w + 6), y, w, 52, m[2], sc[1] .. ":" .. m[1], v == m[1], s.radice)
 		end
 	end
-	for k, sc in ipairs(SCELTE) do
-		scelta(sc, 640 + (k - (#SCELTE + 1) / 2) * GRUPPO, 542, SCELTA_W)
+	for k, sc in ipairs(CHOICES) do
+		choice(sc, 640 + (k - (#CHOICES + 1) / 2) * GROUP, 542, CHOICE_W)
 	end
-	scelta(FPS, 1110, 628, 118)
+	choice(FPS, 1110, 628, 118)
 
-	ui.testo("TASTI DEL CONTROLLER", 640, 488, 0.7, C.SPENTO, s.radice)
-	local n = #controller.COMANDI
-	local per_colonna = math.ceil(n / 2)
-	for i, cmd in ipairs(controller.COMANDI) do
-		local col = i <= per_colonna and 1 or 2
-		local riga = (i - 1) % per_colonna
-		local x, y = COLONNE[col], PRIMA_RIGA - riga * RIGA_PASSO
-		local nodo = ui.bottone(s.bottoni, x, y, RIGA_W, RIGA_H, "", "tasto:" .. cmd, nil, s.radice)
-		local nome = ui.testo(NOMI[cmd], -RIGA_W / 2 + 22, 0, 0.8, C.TESTO, nodo)
+	ui.testo("TASTI DEL CONTROLLER", 640, 488, 0.7, C.OFF, s.radice)
+	local n = #controller.COMMANDS
+	local per_column = math.ceil(n / 2)
+	for i, cmd in ipairs(controller.COMMANDS) do
+		local col = i <= per_column and 1 or 2
+		local riga = (i - 1) % per_column
+		local x, y = COLUMNS[col], FIRST_ROW - riga * ROW_STEP
+		local gui_node = ui.button(s.buttons, x, y, ROW_W, ROW_H, "", "tasto:" .. cmd, nil, s.radice)
+		local nome = ui.testo(NAMES[cmd], -ROW_W / 2 + 22, 0, 0.8, C.TEXT, gui_node)
 		gui.set_pivot(nome, gui.PIVOT_W)
 		if s.attesa == cmd then
-			local premi = ui.testo("PREMI UN TASTO", RIGA_W / 2 - 22, 0, 0.7, C.BRACE, nodo)
+			local premi = ui.testo("PREMI UN TASTO", ROW_W / 2 - 22, 0, 0.7, C.BRACE, gui_node)
 			gui.set_pivot(premi, gui.PIVOT_E)
-			ui.scheda_attiva(s.bottoni[#s.bottoni], true)
-		elseif controller.tasto_di(s.c, cmd) then
-			local g = glifo.new(nodo, 30)
-			glifo.mostra(g, s.c, controller.tasto_di(s.c, cmd))
-			gui.set_position(g.radice, vmath.vector3(RIGA_W / 2 - 22 - glifo.largo(g) / 2, 0, 0))
+			ui.sheet_active(s.buttons[#s.buttons], true)
+		elseif controller.key_of(s.c, cmd) then
+			local g = glyph.new(gui_node, 30)
+			glyph.display(g, s.c, controller.key_of(s.c, cmd))
+			gui.set_position(g.radice, vmath.vector3(ROW_W / 2 - 22 - glyph.largo(g) / 2, 0, 0))
 		else
-			local nessuno = ui.testo(cmd == "salta" and ("LEVETTA " .. string.upper(controller.lato("muove")) .. " IN SU") or "NESSUN TASTO", RIGA_W / 2 - 22, 0, 0.6,
-				C.SPENTO, nodo)
-			gui.set_pivot(nessuno, gui.PIVOT_E)
+			local nobody = ui.testo(cmd == "salta" and ("LEVETTA " .. string.upper(controller.lato("muove")) .. " IN SU") or "NESSUN TASTO", ROW_W / 2 - 22, 0, 0.6,
+				C.OFF, gui_node)
+			gui.set_pivot(nobody, gui.PIVOT_E)
 		end
 	end
 
-	local riga = PRIMA_RIGA - per_colonna * RIGA_PASSO
-	ui.bottone(s.bottoni, COLONNE[2] + RIGA_W / 2 - 150, riga - 4, 300, 56, "RIPRISTINA", "ripristina", nil, s.radice)
-	local aiuto = s.attesa and (controller.nome(s.c, "start") .. " ANNULLA")
-		or (s.c.connesso and (controller.nome(s.c, "a") .. " CAMBIA IL TASTO, " .. controller.nome(s.c, "y") .. " LO TOGLIE")
+	local riga = FIRST_ROW - per_column * ROW_STEP
+	ui.button(s.buttons, COLUMNS[2] + ROW_W / 2 - 150, riga - 4, 300, 56, "RIPRISTINA", "ripristina", nil, s.radice)
+	local help = s.attesa and (controller.nome(s.c, "start") .. " ANNULLA")
+		or (s.c.connected and (controller.nome(s.c, "a") .. " CAMBIA IL TASTO, " .. controller.nome(s.c, "y") .. " LO TOGLIE")
 		or "COLLEGA UN CONTROLLER PER CAMBIARE I TASTI")
-	local t = ui.testo(aiuto, COLONNE[1] - RIGA_W / 2, riga - 4, 0.62, C.SPENTO, s.radice)
+	local t = ui.testo(help, COLUMNS[1] - ROW_W / 2, riga - 4, 0.62, C.OFF, s.radice)
 	gui.set_pivot(t, gui.PIVOT_W)
-	for _, b in ipairs(s.bottoni) do
-		if b.azione == acceso then ui.luce(s.bottoni, b) end
+	for _, b in ipairs(s.buttons) do
+		if b.ui_action == lit then ui.luce(s.buttons, b) end
 	end
 end
 
 function M.new(p, c)
 	local s = { p = p, c = c }
-	controller.levette = profilo.impostazione(p, "levette")
+	controller.levette = profile.setting(p, "levette")
 	s.fondo = ui.sfondo()
-	costruisci(s)
+	build(s)
 	return s
 end
 
-local function salva(s)
-	profilo.imposta(s.p, "tasti", controller.da_salvare(s.c))
-	profilo.salva(s.p)
+local function save(s)
+	profile.imposta(s.p, "tasti", controller.to_save(s.c))
+	profile.salva(s.p)
 end
 
 function M.on_input(s, action_id, action)
-	-- in attesa del tasto nuovo: il primo tasto del controller (non le levette)
+	-- waiting for the new button: the controller's first button (not the sticks)
 	if s.attesa and action_id == ui.PAD then
 		if not (action.pressed and action.nome) or action.levetta then return nil end
-		if action.nome ~= "start" and controller.assegna(s.c, s.attesa, action.nome) then salva(s) end
+		if action.nome ~= "start" and controller.assegna(s.c, s.attesa, action.nome) then save(s) end
 		s.attesa = nil
-		costruisci(s)
+		build(s)
 		return nil
 	end
-	-- Y sulla riga accesa: il comando resta senza tasto
+	-- Y on the lit row: the command is left without a button
 	if action_id == ui.PAD and action.pressed and action.ui == "scheda" then
-		local b = ui.illuminato(s.bottoni)
-		local cmd = b and b.azione:match("^tasto:(.*)$")
+		local b = ui.lit_up(s.buttons)
+		local cmd = b and b.ui_action:match("^tasto:(.*)$")
 		if cmd then
 			controller.togli(s.c, cmd)
-			salva(s)
-			costruisci(s)
+			save(s)
+			build(s)
 		end
 		return nil
 	end
-	local azione = ui.tocco(s.bottoni, action_id, action)
-	if not azione then return nil end
-	if azione == "indietro" then return "indietro" end
-	if azione == "ripristina" then
+	local ui_action = ui.tocco(s.buttons, action_id, action)
+	if not ui_action then return nil end
+	if ui_action == "indietro" then return "indietro" end
+	if ui_action == "ripristina" then
 		controller.base(s.c)
-		salva(s)
+		save(s)
 		s.attesa = nil
 	else
-		local tipo, valore = azione:match("^(%a+):(.*)$")
-		if tipo == "tasto" then
-			s.attesa = s.attesa ~= valore and valore or nil
+		local kind, value = ui_action:match("^(%a+):(.*)$")
+		if kind == "tasto" then
+			s.attesa = s.attesa ~= value and value or nil
 		else
-			profilo.imposta(s.p, tipo, valore)
-			profilo.salva(s.p)
+			profile.imposta(s.p, kind, value)
+			profile.salva(s.p)
 		end
 	end
-	controller.levette = profilo.impostazione(s.p, "levette")
-	costruisci(s)
+	controller.levette = profile.setting(s.p, "levette")
+	build(s)
 	return nil
 end
 
-function M.distruggi(s)
+function M.destroy(s)
 	gui.delete_node(s.radice)
 	gui.delete_node(s.fondo)
 end

@@ -1,215 +1,215 @@
--- Interfaccia minimale di MegaBlast, nello stile della Scoria: forme piatte color
--- carbone col bordo chiaro (come il contorno del personaggio) e il bagliore del
--- Nucleo, nel colore della squadra, su quello che conta. Niente immagini dipinte:
--- poche forme bianche (assets/ui/, strumenti/grafica/ui.py) colorate da qui.
--- I pezzi si aggiungono solo quando una schermata ne ha bisogno.
+-- MegaBlast's minimal interface, in the Scoria's style: flat charcoal shapes
+-- with a light border (like the character's outline) and the Core's glow, in
+-- the team color, on what matters. No painted images: a few white shapes
+-- (assets/ui/, strumenti/grafica/ui.py) colored from here.
+-- Pieces are added only when a screen needs them.
 --
--- Il .gui che lo usa deve avere la texture "ui" (/ui/ui.atlas) e il font
--- "titolo" (/ui/titolo.font). Per cambiare stile si cambiano i valori qui.
+-- The .gui using it must have the "ui" texture (/ui/ui.atlas) and the
+-- "titolo" font (/ui/titolo.font). To change style, change the values here.
 --
 --   local ui = require "ui.ui"
---   local lista = {}                                   -- i bottoni di una schermata
---   ui.bottone(lista, x, y, w, h, "GIOCA", "online", { principale = true }, parent)
---   local azione = ui.tocco(lista, action_id, action)  -- in on_input: l'azione o nil
---   (anche col controller: action_id ui.PAD, action.ui "su" "giu" "sinistra"
---   "destra" spostano la luce sui bottoni, "conferma" e "indietro" li usano;
+--   local list_of = {}                                 -- a screen's buttons
+--   ui.button(list_of, x, y, w, h, "GIOCA", "online", { main = true }, parent)
+--   local ui_action = ui.tocco(list_of, action_id, action)  -- in on_input: the action or nil
+--   (also with the controller: action_id ui.PAD, action.ui "su" "giu" "sinistra"
+--   "destra" move the light over the buttons, "conferma" and "indietro" use them;
 --   ui/controller.lua)
 
-local schermo = require "ui.schermo"
+local screen = require "ui.schermo"
 
 local M = {}
 
 local function c(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 
--- Palette: dal personaggio (scoria.lua) e dalla bibbia grafica
+-- Palette: from the character (scoria.lua) and the art bible
 M.C = {
-	FONDO = c(0.051, 0.047, 0.063),       -- quasi nero, il buio del cimitero
-	PANNELLO = c(0.078, 0.071, 0.094),    -- il carbone della Scoria
-	LINEA = c(1, 0.886, 0.769, 0.28),     -- bordo dei pezzi a riposo
-	LUCE = c(1, 0.886, 0.769),            -- il contorno chiaro della Scoria
-	TESTO = c(0.95, 0.91, 0.85),
-	SPENTO = c(0.55, 0.52, 0.52),
-	BRACE = c(1, 0.42, 0.16),             -- accento quando non c'è una squadra; colore delle armi primarie
-	ACCIAIO = c(0.62, 0.77, 0.88),        -- colore delle armi secondarie (danno secco, ti muovono)
-	VIOLA = c(0.77, 0.61, 1),             -- il movimento: teletrasporto e Rampino
-	MENTA = c(0.36, 0.86, 0.72),          -- gli oggetti che si consumano: paracadute, trappola, scudo, trampolino
-	OMBRA = c(0, 0, 0, 0.6),
+	BOTTOM = c(0.051, 0.047, 0.063),       -- almost black, the graveyard's dark
+	PANEL = c(0.078, 0.071, 0.094),    -- the Scoria's charcoal
+	LINE = c(1, 0.886, 0.769, 0.28),     -- border of pieces at rest
+	LIGHT = c(1, 0.886, 0.769),            -- the Scoria's light outline
+	TEXT = c(0.95, 0.91, 0.85),
+	OFF = c(0.55, 0.52, 0.52),
+	BRACE = c(1, 0.42, 0.16),             -- accent when there is no team; color of the primary weapons
+	STEEL = c(0.62, 0.77, 0.88),        -- color of the secondary weapons (plain damage, they move you)
+	PURPLE = c(0.77, 0.61, 1),             -- movement: teleport and Grapple
+	MINT = c(0.36, 0.86, 0.72),          -- consumable items: parachute, trap, shield, springboard
+	SHADOW = c(0, 0, 0, 0.6),
 	SQUADRA = { c(1, 0.231, 0.306), c(0.239, 0.482, 1), c(0.18, 0.75, 0.44), c(0.96, 0.77, 0.09) },
-	-- i gradi dei badge (I..IV) e dei pezzi (ui/cartellino.lua): bronzo, argento, oro, brace
+	-- the grades of badges (I..IV) and of pieces (ui/cartellino.lua): bronze, silver, gold, ember
 	GRADI = { c(0.79, 0.54, 0.35), c(0.79, 0.83, 0.86), c(0.96, 0.77, 0.09), c(1, 0.42, 0.16) },
-	ORO = c(0.96, 0.77, 0.09),            -- i poteri e gli scatti dei pezzi
+	GOLD = c(0.96, 0.77, 0.09),            -- the powers and the pieces' upgrades
 }
 local C = M.C
 
-local BORDO_9 = vmath.vector4(16, 16, 16, 16)
--- le forme che si allungano in 9-slice (le altre si scalano intere)
-local NOVE = { forma = true, bordo = true }
+local BORDER_9 = vmath.vector4(16, 16, 16, 16)
+-- the shapes that stretch in 9-slice (the others scale whole)
+local NINE = { forma = true, bordo = true }
 local V = vmath.vector3()
-local PREMUTO, NORMALE = vmath.vector3(0.96, 0.96, 1), vmath.vector3(1, 1, 1)
+local PRESSED, NORMAL = vmath.vector3(0.96, 0.96, 1), vmath.vector3(1, 1, 1)
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
-local function nodo(tex, x, y, w, h, colore, parent)
+local function gui_node(tex, x, y, w, h, color, parent)
 	local n = gui.new_box_node(vec(x, y), vec(w, h))
 	if tex then
 		gui.set_texture(n, "ui")
 		gui.play_flipbook(n, tex)
-		if NOVE[tex] then gui.set_slice9(n, BORDO_9) end
+		if NINE[tex] then gui.set_slice9(n, BORDER_9) end
 	end
-	gui.set_color(n, colore)
+	gui.set_color(n, color)
 	if parent then gui.set_parent(n, parent) end
 	return n
 end
 
-local function scrivi(font, t, x, y, scala, colore, parent)
+local function write(font, t, x, y, scale, color, parent)
 	local n = gui.new_text_node(vec(x, y), t)
 	gui.set_font(n, font)
-	gui.set_color(n, colore or C.TESTO)
-	gui.set_outline(n, C.OMBRA)
-	V.x, V.y, V.z = scala or 1, scala or 1, 1
+	gui.set_color(n, color or C.TEXT)
+	gui.set_outline(n, C.SHADOW)
+	V.x, V.y, V.z = scale or 1, scale or 1, 1
 	gui.set_scale(n, V)
 	if parent then gui.set_parent(n, parent) end
 	return n
 end
 
--- Testo normale e titolo (oggi lo stesso font, più grande)
-function M.testo(t, x, y, scala, colore, parent)
-	return scrivi("titolo", t, x, y, (scala or 1) * 0.5, colore, parent)
+-- Normal text and title (today the same font, bigger)
+function M.testo(t, x, y, scale, color, parent)
+	return write("titolo", t, x, y, (scale or 1) * 0.5, color, parent)
 end
 
-function M.titolo(t, x, y, scala, colore, parent)
-	return scrivi("titolo", t, x, y, scala or 1, colore or C.LUCE, parent)
+function M.titolo(t, x, y, scale, color, parent)
+	return write("titolo", t, x, y, scale or 1, color or C.LIGHT, parent)
 end
 
--- Alone morbido in additivo: il bagliore del Nucleo e dell'occhio
-function M.alone(x, y, d, colore, parent)
-	local n = nodo("alone", x, y, d, d, colore, parent)
+-- Soft additive halo: the glow of the Core and of the eye
+function M.alone(x, y, d, color, parent)
+	local n = gui_node("alone", x, y, d, d, color, parent)
 	gui.set_blend_mode(n, gui.BLEND_ADD)
 	return n
 end
 
--- Fondo pieno a tutto schermo, su ogni proporzione (ui/schermo.lua)
+-- Full-screen solid background, on any proportion (ui/schermo.lua)
 function M.sfondo(parent)
-	local n = nodo(nil, 640, 360, 1280 * schermo.PIENO, 720 * schermo.PIENO, C.FONDO, parent)
+	local n = gui_node(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, C.BOTTOM, parent)
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	return n
 end
 
--- Pannello: carbone col bordo chiaro appena accennato. Rende anche il nodo del
--- bordo, per accenderlo (C.LUCE) quando il pannello è scelto
+-- Panel: charcoal with a faint light border. Also returns the border node, to
+-- light it (C.LIGHT) when the panel is selected
 function M.pannello(x, y, w, h, parent)
-	local n = nodo("forma", x, y, w, h, C.PANNELLO, parent)
-	return n, nodo("bordo", 0, 0, w, h, C.LINEA, n)
+	local n = gui_node("forma", x, y, w, h, C.PANEL, parent)
+	return n, gui_node("bordo", 0, 0, w, h, C.LINE, n)
 end
 
--- Bottone. opz: principale (bordo pieno e Nucleo acceso), colore (del Nucleo,
--- di solito la squadra), spento (si vede ma non risponde)
-function M.bottone(lista, x, y, w, h, scritta, azione, opz, parent)
-	opz = opz or {}
-	local n = nodo("forma", x, y, w, h, C.PANNELLO, parent)
-	local col = opz.colore or C.BRACE
-	local b = { nodo = n, azione = azione, spento = opz.spento, colore = col }
-	b.bordo = nodo("bordo", 0, 0, w, h, opz.principale and C.LUCE or C.LINEA, n)
+-- Button. opt: main (solid border and Core lit), colore (of the Core, usually
+-- the team), spento (visible but not responding)
+function M.button(list_of, x, y, w, h, label, ui_action, opt, parent)
+	opt = opt or {}
+	local n = gui_node("forma", x, y, w, h, C.PANEL, parent)
+	local col = opt.colore or C.BRACE
+	local b = { nodo = n, ui_action = ui_action, spento = opt.spento, colore = col }
+	b.bordo = gui_node("bordo", 0, 0, w, h, opt.main and C.LIGHT or C.LINE, n)
 	b.riposo = gui.get_color(b.bordo)
 	local tx = 0
-	if opz.principale and not opz.spento then
-		-- il Nucleo: un punto acceso con il suo alone, a sinistra della scritta
+	if opt.main and not opt.spento then
+		-- the Core: a lit dot with its halo, left of the label
 		local r = h * 0.5
 		b.luce = M.alone(-w / 2 + r, 0, h * 1.1, vmath.vector4(col.x, col.y, col.z, 0.55), n)
 		M.alone(-w / 2 + r, 0, h * 0.34, vmath.vector4((1 + col.x) / 2, (1 + col.y) / 2, (1 + col.z) / 2, 1), n)
-		M.alone(-w / 2 + r, 0, h * 0.18, C.LUCE, n)
+		M.alone(-w / 2 + r, 0, h * 0.18, C.LIGHT, n)
 		tx = h * 0.3
 	end
-	b.testo = M.testo(scritta, tx, 0, opz.scala or (h >= 90 and 1.6 or 0.9),
-		opz.spento and C.SPENTO or C.TESTO, n)
-	lista[#lista + 1] = b
+	b.testo = M.testo(label, tx, 0, opt.scala or (h >= 90 and 1.6 or 0.9),
+		opt.spento and C.OFF or C.TEXT, n)
+	list_of[#list_of + 1] = b
 	return n
 end
 
--- Scheda: come un bottone, l'attiva ha il bordo chiaro e il testo acceso
-function M.scheda(lista, x, y, w, h, scritta, azione, attiva, parent)
-	local n = M.bottone(lista, x, y, w, h, scritta, azione, nil, parent)
-	M.scheda_attiva(lista[#lista], attiva)
+-- Tab: like a button, the active one has the light border and lit text
+function M.scheda(list_of, x, y, w, h, label, ui_action, activate, parent)
+	local n = M.button(list_of, x, y, w, h, label, ui_action, nil, parent)
+	M.sheet_active(list_of[#list_of], activate)
 	return n
 end
 
-function M.scheda_attiva(b, attiva)
-	b.riposo = attiva and C.LUCE or C.LINEA
+function M.sheet_active(b, activate)
+	b.riposo = activate and C.LIGHT or C.LINE
 	gui.set_color(b.bordo, b.riposo)
-	gui.set_color(b.testo, attiva and C.TESTO or C.SPENTO)
+	gui.set_color(b.testo, activate and C.TEXT or C.OFF)
 end
 
--- Indietro: quadrato con la freccia, agganciato in alto a sinistra
-function M.indietro(lista, azione, parent)
-	local n = M.bottone(lista, 30 + 32, 720 - 30 - 32, 64, 64, "", azione, nil, parent)
+-- Back: square with the arrow, stuck at the top left
+function M.indietro(list_of, ui_action, parent)
+	local n = M.button(list_of, 30 + 32, 720 - 30 - 32, 64, 64, "", ui_action, nil, parent)
 	gui.set_xanchor(n, gui.ANCHOR_LEFT)
 	gui.set_yanchor(n, gui.ANCHOR_TOP)
 	for i = -1, 1, 2 do
-		local s = nodo(nil, -2, i * 7, 22, 4, C.LUCE, n)
+		local s = gui_node(nil, -2, i * 7, 22, 4, C.LIGHT, n)
 		gui.set_rotation(s, vmath.vector3(0, 0, i * 45))
 	end
 	return n
 end
 
--- Impostazioni: lo stesso quadrato con la rotellina, in alto a sinistra (in
--- partita) o a destra (nella home)
-function M.impostazioni(lista, azione, parent, destra)
-	local n = M.bottone(lista, destra and 1280 - 30 - 32 or 30 + 32, 720 - 30 - 32, 64, 64, "", azione, nil, parent)
-	gui.set_xanchor(n, destra and gui.ANCHOR_RIGHT or gui.ANCHOR_LEFT)
+-- Settings: the same square with the wheel, at the top left (in a match) or
+-- right (in the home)
+function M.impostazioni(list_of, ui_action, parent, right)
+	local n = M.button(list_of, right and 1280 - 30 - 32 or 30 + 32, 720 - 30 - 32, 64, 64, "", ui_action, nil, parent)
+	gui.set_xanchor(n, right and gui.ANCHOR_RIGHT or gui.ANCHOR_LEFT)
 	gui.set_yanchor(n, gui.ANCHOR_TOP)
-	nodo("ingranaggio", 0, 0, 34, 34, C.LUCE, n)
+	gui_node("ingranaggio", 0, 0, 34, 34, C.LIGHT, n)
 	return n
 end
 
--- Stella delle lezioni e della campagna: d è il lato
-function M.stella(x, y, d, colore, parent)
-	return nodo("stella", x, y, d, d, colore, parent)
+-- Star of the lessons and of the campaign: d is the side
+function M.stella(x, y, d, color, parent)
+	return gui_node("stella", x, y, d, d, color, parent)
 end
 
--- Disco e anello (nodi a torta): levette, pulsanti tondi, cronometro. d è il
--- diametro, spessore quello dell'anello verso l'interno
-function M.disco(x, y, d, colore, parent)
+-- Disc and ring (pie nodes): sticks, round buttons, stopwatch. d is the
+-- diameter, thickness the ring's toward the inside
+function M.disco(x, y, d, color, parent)
 	local n = gui.new_pie_node(vec(x, y), vec(d, d))
 	gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
 	gui.set_perimeter_vertices(n, 64)
-	gui.set_color(n, colore)
+	gui.set_color(n, color)
 	if parent then gui.set_parent(n, parent) end
 	return n
 end
 
-function M.anello(x, y, d, spessore, colore, parent)
-	local n = M.disco(x, y, d, colore, parent)
-	gui.set_inner_radius(n, d / 2 - spessore)
+function M.ring_node(x, y, d, thickness, color, parent)
+	local n = M.disco(x, y, d, color, parent)
+	gui.set_inner_radius(n, d / 2 - thickness)
 	return n
 end
 
--- Barra di avanzamento (vita, esperienza): binario scuro e riempimento colorato
-function M.barra(x, y, w, h, colore, parent)
-	local n = nodo(nil, x, y, w, h, C.OMBRA, parent)
-	local p = nodo(nil, -w / 2, 0, w, h, colore or C.LUCE, n)
+-- Progress bar (health, experience): dark track and colored fill
+function M.bar(x, y, w, h, color, parent)
+	local n = gui_node(nil, x, y, w, h, C.SHADOW, parent)
+	local p = gui_node(nil, -w / 2, 0, w, h, color or C.LIGHT, n)
 	gui.set_pivot(p, gui.PIVOT_W)
-	return { nodo = n, pieno = p, w = w, h = h }
+	return { nodo = n, full = p, w = w, h = h }
 end
 
-function M.barra_valore(b, v)
+function M.bar_value(b, v)
 	V.x, V.y, V.z = b.w * math.max(0, math.min(1, v)), b.h, 0
-	gui.set_size(b.pieno, V)
+	gui.set_size(b.full, V)
 end
 
--- La Corona del primo in classifica: una fascia e tre punte a rombo, col bordo
--- scuro. Restituisce la radice (invisibile), centrata sulla fascia; misure in
--- unità della GUI a scala 1 (larga 18).
-M.ORO = c(1, 0.8, 0.25)
-local BIANCO = c(1, 1, 1)
-local PEZZI_CORONA = { { 0, 0, 16, 5, 0 }, { -6, 4, 5, 5, 45 }, { 0, 6, 5, 5, 45 }, { 6, 4, 5, 5, 45 } }
+-- The standings leader's Crown: a band and three diamond points, with a dark
+-- border. Returns the root (invisible), centered on the band; sizes in GUI
+-- units at scale 1 (18 wide).
+M.GOLD = c(1, 0.8, 0.25)
+local WHITE = c(1, 1, 1)
+local CROWN_PIECES = { { 0, 0, 16, 5, 0 }, { -6, 4, 5, 5, 45 }, { 0, 6, 5, 5, 45 }, { 6, 4, 5, 5, 45 } }
 
-function M.corona(x, y, colore, parent)
-	local r = nodo(nil, x, y, 0, 0, BIANCO, parent)
+function M.crown(x, y, color, parent)
+	local r = gui_node(nil, x, y, 0, 0, WHITE, parent)
 	gui.set_visible(r, false)
-	for passata = 1, 2 do
-		local b = passata == 1 and 2 or 0
-		for _, p in ipairs(PEZZI_CORONA) do
-			local n = nodo(nil, p[1], p[2], p[3] + b, p[4] + b, passata == 1 and C.FONDO or colore or M.ORO, r)
+	for pass = 1, 2 do
+		local b = pass == 1 and 2 or 0
+		for _, p in ipairs(CROWN_PIECES) do
+			local n = gui_node(nil, p[1], p[2], p[3] + b, p[4] + b, pass == 1 and C.BOTTOM or color or M.GOLD, r)
 			gui.set_inherit_alpha(n, true)
 			gui.set_euler(n, vmath.vector3(0, 0, p[5]))
 		end
@@ -217,132 +217,132 @@ function M.corona(x, y, colore, parent)
 	return r
 end
 
--- Tocco sui bottoni di una lista: premuto, rilasciato sopra (l'azione) o fuori.
--- Vince l'ultimo aggiunto, che è disegnato sopra (un bottone dentro un pannello)
-local function sotto(lista, x, y)
-	for i = #lista, 1, -1 do
-		local b = lista[i]
+-- Tap on the buttons of a list: pressed, released over it (the action) or
+-- outside. The last one added wins, which is drawn on top (a button inside a panel)
+local function under(list_of, x, y)
+	for i = #list_of, 1, -1 do
+		local b = list_of[i]
 		if not b.spento and gui.is_enabled(b.nodo, true) and gui.pick_node(b.nodo, x, y) then return b end
 	end
 end
 
-local function premi(b, giu)
-	gui.set_scale(b.nodo, giu and PREMUTO or NORMALE)
-	gui.set_color(b.bordo, giu and b.colore or b.riposo)
+local function premi(b, fell)
+	gui.set_scale(b.nodo, fell and PRESSED or NORMAL)
+	gui.set_color(b.bordo, fell and b.colore or b.riposo)
 end
 
--- Controller: un bottone alla volta ha la luce (bordo acceso, un po' più
--- grande). La croce la sposta verso il bottone più vicino in quella direzione.
--- Nella lista vanno anche pezzi che non sono bottoni (le carte della scelta),
--- basta che abbiano nodo, bordo, colore e riposo.
+-- Controller: one button at a time has the light (lit border, a bit bigger).
+-- The d-pad moves it toward the nearest button in that direction. The list
+-- may also hold pieces that aren't buttons (the draft's cards), as long as
+-- they have nodo, bordo, colore and riposo.
 M.PAD = hash("pad")
-local LUCE_SCALA = vmath.vector3(1.06, 1.06, 1)
--- l'azione dell'ultimo bottone confermato: quando la schermata si ricostruisce,
--- la luce ci torna sopra
-local ricorda
+local LIGHT_SCALE = vmath.vector3(1.06, 1.06, 1)
+-- the action of the last button confirmed: when the screen is rebuilt, the
+-- light goes back on it
+local remember
 
-local function usabile(b)
+local function usable(b)
 	return not b.spento and gui.is_enabled(b.nodo, true)
 end
 
--- La luce su b (nil: spenta)
-function M.luce(lista, b)
-	local prima = lista.luce
-	if prima and prima ~= b then
-		gui.set_scale(prima.nodo, NORMALE)
-		gui.set_color(prima.bordo, prima.riposo)
+-- The light on b (nil: off)
+function M.luce(list_of, b)
+	local first_one = list_of.luce
+	if first_one and first_one ~= b then
+		gui.set_scale(first_one.nodo, NORMAL)
+		gui.set_color(first_one.bordo, first_one.riposo)
 	end
-	lista.luce = b
+	list_of.luce = b
 	if b then
-		gui.set_scale(b.nodo, LUCE_SCALA)
+		gui.set_scale(b.nodo, LIGHT_SCALE)
 		gui.set_color(b.bordo, b.colore)
 	end
 end
 
--- Di nuovo la luce dov'era, dopo che la schermata ha ricolorato i bordi
-function M.riaccendi(lista)
-	local b = lista.luce
-	if b and usabile(b) then M.luce(lista, b) elseif b then M.luce(lista, nil) end
+-- The light again where it was, after the screen recolored the borders
+function M.relight(list_of)
+	local b = list_of.luce
+	if b and usable(b) then M.luce(list_of, b) elseif b then M.luce(list_of, nil) end
 end
 
--- Dove parte la luce: l'ultimo confermato, il principale, o il primo
--- (non quelli in un angolo: indietro e la rotellina)
-local ANGOLO = { indietro = true, rotellina = true, impostazioni = true }
-local function primo(lista)
-	local principale, altro, angolo
-	for _, b in ipairs(lista) do
-		if usabile(b) then
-			if ricorda and b.azione == ricorda then return b end
-			-- (b.luce è il Nucleo, che hanno solo i principali)
-			if ANGOLO[b.azione] then angolo = angolo or b
-			elseif b.luce then principale = principale or b
-			else altro = altro or b end
+-- Where the light starts: the last confirmed, the main one, or the first
+-- (not those in a corner: back and the wheel)
+local ANGLE = { indietro = true, rotellina = true, impostazioni = true }
+local function first(list_of)
+	local main, another, angle_deg
+	for _, b in ipairs(list_of) do
+		if usable(b) then
+			if remember and b.ui_action == remember then return b end
+			-- (b.luce is the Core, which only main ones have)
+			if ANGLE[b.ui_action] then angle_deg = angle_deg or b
+			elseif b.luce then main = main or b
+			else another = another or b end
 		end
 	end
-	return principale or altro or angolo
+	return main or another or angle_deg
 end
 
-local DIR = { su = { 0, 1 }, giu = { 0, -1 }, sinistra = { -1, 0 }, destra = { 1, 0 } }
-function M.naviga(lista, verso)
-	local b = lista.luce
-	if not (b and usabile(b)) then
-		M.luce(lista, primo(lista))
+local DIR_NODE = { su = { 0, 1 }, giu = { 0, -1 }, sinistra = { -1, 0 }, destra = { 1, 0 } }
+function M.navigate(list_of, toward)
+	local b = list_of.luce
+	if not (b and usable(b)) then
+		M.luce(list_of, first(list_of))
 		return
 	end
-	local d = DIR[verso]
+	local d = DIR_NODE[toward]
 	local p = gui.get_screen_position(b.nodo)
-	local meglio, costo
-	for _, o in ipairs(lista) do
-		if o ~= b and usabile(o) then
+	local better, cost
+	for _, o in ipairs(list_of) do
+		if o ~= b and usable(o) then
 			local q = gui.get_screen_position(o.nodo)
 			local dx, dy = q.x - p.x, q.y - p.y
-			local avanti = dx * d[1] + dy * d[2]
-			if avanti > 1 then
-				-- avanti conta poco, di lato tanto: si va dritti se si può
-				local k = avanti + 2.5 * math.abs(dx * d[2] - dy * d[1])
-				if not costo or k < costo then meglio, costo = o, k end
+			local forward = dx * d[1] + dy * d[2]
+			if forward > 1 then
+				-- forward counts little, sideways a lot: go straight if you can
+				local k = forward + 2.5 * math.abs(dx * d[2] - dy * d[1])
+				if not cost or k < cost then better, cost = o, k end
 			end
 		end
 	end
-	if meglio then M.luce(lista, meglio) end
+	if better then M.luce(list_of, better) end
 end
 
--- Il bottone con la luce (o nil)
-function M.illuminato(lista)
-	local b = lista.luce
-	return b and usabile(b) and b or nil
+-- The button with the light (or nil)
+function M.lit_up(list_of)
+	local b = list_of.luce
+	return b and usable(b) and b or nil
 end
 
-function M.tocco(lista, action_id, action)
+function M.tocco(list_of, action_id, action)
 	if action_id == M.PAD then
 		if not action.pressed then return nil end
 		local u = action.ui
-		if DIR[u] then
-			M.naviga(lista, u)
+		if DIR_NODE[u] then
+			M.navigate(list_of, u)
 		elseif u == "conferma" then
-			local b = M.illuminato(lista)
+			local b = M.lit_up(list_of)
 			if not b then
-				M.luce(lista, primo(lista))
+				M.luce(list_of, first(list_of))
 				return nil
 			end
-			if not ANGOLO[b.azione] then ricorda = b.azione end
-			return b.azione
+			if not ANGLE[b.ui_action] then remember = b.ui_action end
+			return b.ui_action
 		elseif u == "indietro" then
-			for _, b in ipairs(lista) do
-				if b.azione == "indietro" and usabile(b) then return "indietro" end
+			for _, b in ipairs(list_of) do
+				if b.ui_action == "indietro" and usable(b) then return "indietro" end
 			end
 		end
 		return nil
 	end
 	if action_id ~= hash("touch") then return nil end
 	if action.pressed then
-		lista.premuto = sotto(lista, action.x, action.y)
-		if lista.premuto then premi(lista.premuto, true) end
-	elseif action.released and lista.premuto then
-		local b = lista.premuto
-		lista.premuto = nil
+		list_of.held_down = under(list_of, action.x, action.y)
+		if list_of.held_down then premi(list_of.held_down, true) end
+	elseif action.released and list_of.held_down then
+		local b = list_of.held_down
+		list_of.held_down = nil
 		premi(b, false)
-		if sotto(lista, action.x, action.y) == b then return b.azione end
+		if under(list_of, action.x, action.y) == b then return b.ui_action end
 	end
 	return nil
 end

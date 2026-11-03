@@ -181,6 +181,25 @@ def git_files():
     return out.stdout.split()
 
 
+def nomi_nelle_stringhe(src, f):
+    """I nomi scritti dentro le stringhe di un file Python o JavaScript."""
+    nomi = set()
+    if f.endswith(".py"):
+        import io
+        import tokenize
+        try:
+            for t in tokenize.generate_tokens(io.StringIO(src).readline):
+                if t.type == tokenize.STRING or t.type == getattr(tokenize, "FSTRING_MIDDLE", -1):
+                    nomi.update(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", t.string))
+            return nomi
+        except (tokenize.TokenError, SyntaxError):
+            return set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", src))
+    src = re.sub(r"^\s*//.*$", "", src, flags=re.M)
+    for m in re.finditer(r"`[^`]*`|\"(?:\\.|[^\"\n])*\"|'(?:\\.|[^'\n])*'", src):
+        nomi.update(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", m.group(0)))
+    return nomi
+
+
 def nell_ondata(f, dentro, fuori):
     return any(f == d or f.startswith(d.rstrip("/") + "/") for d in dentro) and not any(
         f == x or f.startswith(x.rstrip("/") + "/") for x in fuori)
@@ -192,11 +211,15 @@ def stringa(t):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--dentro", nargs="+", default=["client/sim", "server", "tests/sim_test.lua",
-                    "tests/campaign_test.lua", "tests/events_test.lua", "tests/loadout_test.lua"],
+    # PR 5a: tutto il client; restano fuori il bot (PR 8) e i file fatti dagli strumenti
+    # o dall'editor delle animazioni (PR 5b, insieme ai loro strumenti)
+    ap.add_argument("--dentro", nargs="+", default=["client", "server", "tests"],
                     help="file e cartelle dell'ondata")
-    ap.add_argument("--fuori", nargs="*", default=["client/sim/bot.lua", "client/sim/rete.lua",
-                    "client/sim/corpo.lua"], help="file da lasciare fuori dall'ondata")
+    ap.add_argument("--fuori", nargs="*", default=[
+        "client/sim/bot.lua", "client/sim/rete.lua", "client/sim/corpo.lua", "tests/bot_test.lua",
+        "client/battaglia/animazioni.lua", "client/battaglia/armi.lua", "client/battaglia/diavoletto.lua",
+        "client/battaglia/dipinti.lua", "client/battaglia/impugnature.lua", "client/battaglia/pelli.lua",
+        "client/battaglia/perni.lua", "client/sim/mapdata.lua"], help="file da lasciare fuori dall'ondata")
     ap.add_argument("--prova", action="store_true", help="dice cosa farebbe, senza cambiare niente")
     a = ap.parse_args()
 
@@ -214,9 +237,14 @@ def main():
                 if k == "str" and stringa(t):
                     stringhe_fuori.add(stringa(t))
             continue
+        if f.endswith((".cpp", ".java")):
+            # estensioni native: le funzioni che danno al Lua ("tocco" in vibra.cpp)
+            stringhe_fuori.update(re.findall(r'"([A-Za-z_][A-Za-z0-9_]*)"', (REPO / f).read_text(errors="replace")))
+            continue
         if f.endswith((".py", ".js", ".mjs")):
-            # strumenti che leggono i dati del Lua (cap.missioni, l.arena)
-            stringhe_fuori.update(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", (REPO / f).read_text(errors="replace")))
+            # strumenti che leggono i dati del Lua (cap.missioni, l.arena): i nomi dentro
+            # le loro stringhe (codice Lua passato a luajit, regex sui file), non i commenti
+            stringhe_fuori.update(nomi_nelle_stringhe((REPO / f).read_text(errors="replace"), f))
             continue
         if f in ondata or not f.endswith(LUA):
             continue
@@ -225,8 +253,25 @@ def main():
                 usati_fuori.add(t)
             elif k == "str" and stringa(t):
                 stringhe_fuori.add(stringa(t))
+    # chiavi composte nel codice: t["mostra_" .. posto] usa i campi mostra_ala, mostra_testa...
+    # e chiavi scritte come stringa anche dentro l'ondata: { id = "a_segno" } poi
+    # conta[id], hash("pad_salta"), PAD.imp(self, "sparo"). Le stringhe tutte
+    # maiuscole sono testi del gioco ("STATISTICHE"), non chiavi.
+    prefissi, stringhe_dentro = set(), set()
+    for f in files:
+        if f.endswith(LUA):
+            for k, t in tokens_lua((REPO / f).read_text(errors="replace")):
+                if k == "str" and stringa(t) and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", stringa(t)):
+                    if stringa(t).endswith("_"):
+                        prefissi.add(stringa(t))
+                    elif not stringa(t).isupper():
+                        stringhe_dentro.add(stringa(t))
+        elif f.endswith((".gui", ".atlas", ".input_binding", ".collection", ".go", ".tilesource")):
+            # nomi dei nodi, delle immagini e dei tasti: il codice li cerca per nome
+            stringhe_dentro.update(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", (REPO / f).read_text(errors="replace")))
     fissi = set(leggi_dizionario_lista("chiavi_fisse.txt"))
-    tenuti = sorted(n for n in nomi[".lua"] if n in usati_fuori or n in stringhe_fuori or n in fissi)
+    tenuti = sorted(n for n in nomi[".lua"] if n in usati_fuori or n in stringhe_fuori or n in fissi
+                    or n in stringhe_dentro or any(n.startswith(p) for p in prefissi))
     for n in tenuti:
         print(f"campo tenuto (usato fuori dall'ondata): {n}")
     campi = {".lua": {k: v for k, v in nomi[".lua"].items() if k not in tenuti}, ".go": nomi[".go"]}
@@ -239,6 +284,9 @@ def main():
         if not ext or not nomi[ext]:
             continue
         tutti, d = nomi[ext], campi[ext]
+        if ext == ".lua":
+            # i nomi in chiavi_fisse.txt restano anche come locali: li leggono gli strumenti
+            tutti = {k: v for k, v in tutti.items() if k not in fissi}
         src = (REPO / f).read_text()
         toks = list((tokens_go if ext == ".go" else tokens_lua)(src))
         presenti = {t for k, t in toks if k == "name"}

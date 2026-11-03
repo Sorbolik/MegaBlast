@@ -20,7 +20,7 @@ local bot = require "sim.bot"
 
 local M = {}
 
-M.VERSIONE = 1
+M.VERSION = 1
 -- how many ticks between fingerprints (10 s)
 M.EVERY = 600
 
@@ -32,7 +32,7 @@ local function copy(t)
 end
 
 function M.nuova(seed_value, map_name, opts)
-	return { versione = M.VERSIONE, seme = seed_value, mappa = map_name,
+	return { versione = M.VERSION, seme = seed_value, mappa = map_name,
 		opzioni = copy(opts or {}), input = {}, impronte = {} }
 end
 
@@ -81,12 +81,12 @@ end
 -- Reads a recipe back: the real players' keys tick by tick (bots think on
 -- their own, as when it was played). Used by verifica and by the in-game
 -- replay (MATCHES tab of the profile).
-function M.lettore(r)
+function M.reader(r)
 	return { r = r, k = 1, cur = {} }
 end
 
 -- The input of g's next step, read from the recipe
-function M.rileggi(l, g, bots)
+function M.read_step(l, g, bots)
 	local b = bots[g.current]
 	-- the shot lasts one tick only
 	if l.cur.fire then l.cur = { left = l.cur.left, right = l.cur.right, jump = l.cur.jump, hold = l.cur.hold } end
@@ -105,12 +105,12 @@ end
 -- the tick of the first different (or missing) fingerprint.
 function M.verifica(r, max_tick)
 	local g, bots = M.partita(r)
-	local l = M.lettore(r)
+	local l = M.reader(r)
 	local n = 1
 	local waits = r.impronte
 	max_tick = max_tick or (waits[#waits] and waits[#waits].t) or 0
 	while g.phase ~= "over" and g.tick < max_tick do
-		g:step(M.rileggi(l, g, bots))
+		g:step(M.read_step(l, g, bots))
 		local a = waits[n]
 		if a and a.t == g.tick then
 			if a.h ~= g:impronta() then return false, g.tick end

@@ -1,65 +1,65 @@
--- Statistiche del giocatore e i loro badge (docs/roadmap.md, "Statistiche,
--- obiettivi e badge"; scheda personaggio, Sergio 31 ott). Lua puro: il profilo
--- le conta a fine partita (menu/profilo.lua, menu/conta.lua), la scheda
--- STATISTICHE le mostra (menu/profilo_schede.lua), il cartellino porta i badge
+-- Player stats and their badges (docs/roadmap.md, "Statistiche, obiettivi e
+-- badge"; character sheet, Sergio 31 Oct). Pure Lua: the profile counts them
+-- at the end of the match (menu/profilo.lua, menu/conta.lua), the STATISTICHE
+-- tab shows them (menu/profilo_schede.lua), the tag carries the badges
 -- (ui/cartellino.lua).
 --
--- Ogni statistica con un badge ha soglie che crescono di dieci volte in dieci
--- (10, 100, 1.000, 10.000): ogni soglia passata è un grado del badge (I..IV).
--- Il badge ha una forma (quale statistica) e il colore del grado.
+-- Each stat with a badge has thresholds growing tenfold (10, 100, 1,000,
+-- 10,000): each threshold passed is a badge grade (I..IV). The badge has a
+-- shape (which stat) and the grade's color.
 
 local M = {}
 
--- Le statistiche, nell'ordine della scheda. id: la chiave nel profilo; nome: come
--- si legge; badge: il nome del badge (nil: senza); forma: cerchio, rombo,
--- esagono o stella; soglie: i gradi; record: si tiene il massimo, non la somma.
-M.LISTA = {
-	{ id = "nel_vuoto", nome = "Abbattuti nel vuoto", badge = "BECCHINO", forma = "rombo", soglie = { 10, 100, 1000, 10000 } },
-	{ id = "abbattuti", nome = "Abbattuti", badge = "CACCIATORE", forma = "esagono", soglie = { 10, 100, 1000, 10000 } },
-	{ id = "a_segno", nome = "Colpi a segno", badge = "MIRA", forma = "cerchio", soglie = { 10, 100, 1000, 10000 } },
-	{ id = "danno", nome = "Danno fatto", badge = "MARTELLO", forma = "stella", soglie = { 1000, 10000, 100000, 1000000 } },
-	{ id = "globi", nome = "Globi guadagnati", badge = "FULMINE", forma = "esagono", soglie = { 10, 100, 1000, 10000 } },
-	{ id = "colpo_lungo", nome = "Colpo più lungo", badge = "LONTANO", forma = "stella", soglie = { 600, 900, 1200, 1500 },
-		record = true, unita = "px" },
-	{ id = "casse", nome = "Casse aperte", badge = "PREDONE", forma = "cerchio", soglie = { 10, 100, 1000, 10000 } },
-	{ id = "vinte", nome = "Partite vinte", badge = "VINCITORE", forma = "rombo", soglie = { 10, 100, 1000, 10000 } },
+-- The stats, in the tab's order. id: the key in the profile; nome: how it
+-- reads; badge: the badge's name (nil: none); forma: cerchio, rombo, esagono
+-- or stella; thresholds: the grades; record: keep the max, not the sum.
+M.WHITELIST = {
+	{ id = "nel_vuoto", nome = "Abbattuti nel vuoto", badge = "BECCHINO", forma = "rombo", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "abbattuti", nome = "Abbattuti", badge = "CACCIATORE", forma = "esagono", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "a_segno", nome = "Colpi a segno", badge = "MIRA", forma = "cerchio", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "danno", nome = "Danno fatto", badge = "MARTELLO", forma = "stella", thresholds = { 1000, 10000, 100000, 1000000 } },
+	{ id = "globi", nome = "Globi guadagnati", badge = "FULMINE", forma = "esagono", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "colpo_lungo", nome = "Colpo più lungo", badge = "LONTANO", forma = "stella", thresholds = { 600, 900, 1200, 1500 },
+		record = true, unit = "px" },
+	{ id = "casse", nome = "Casse aperte", badge = "PREDONE", forma = "cerchio", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "vinte", nome = "Partite vinte", badge = "VINCITORE", forma = "rombo", thresholds = { 10, 100, 1000, 10000 } },
 	{ id = "cadute", nome = "Cadute" },
 }
 M.BY_ID = {}
-for _, s in ipairs(M.LISTA) do M.BY_ID[s.id] = s end
+for _, s in ipairs(M.WHITELIST) do M.BY_ID[s.id] = s end
 
--- Le altre voci contate (in alto nella scheda, o per calcolarne altre)
-M.ALTRE = { "partite", "serie", "colpi", "morti", "teletrasporti" }
+-- The other entries counted (at the top of the tab, or to compute others)
+M.OTHERS = { "partite", "serie", "colpi", "morti", "teletrasporti" }
 
--- quanti badge si vedono accanto al nome
-M.MOSTRATI = 3
+-- how many badges show next to the name
+M.SHOWN = 3
 
--- grado del badge per il valore v (0: nessuno)
+-- badge grade for value v (0: none)
 function M.grado(s, v)
 	local g = 0
-	for i, soglia in ipairs(s.soglie or {}) do
-		if (v or 0) >= soglia then g = i end
+	for i, threshold in ipairs(s.thresholds or {}) do
+		if (v or 0) >= threshold then g = i end
 	end
 	return g
 end
 
--- la prossima soglia e quanto ci manca, da 0 a 1 (dalla soglia di prima)
+-- the next threshold and how far off it is, from 0 to 1 (from the previous threshold)
 function M.prossima(s, v)
 	v = v or 0
-	local prima = 0
-	for _, soglia in ipairs(s.soglie or {}) do
-		if v < soglia then return soglia, math.max(0, (v - prima) / (soglia - prima)) end
-		prima = soglia
+	local first_one = 0
+	for _, threshold in ipairs(s.thresholds or {}) do
+		if v < threshold then return threshold, math.max(0, (v - first_one) / (threshold - first_one)) end
+		first_one = threshold
 	end
 	return nil, 1
 end
 
--- I badge presi con quei valori, dal grado più alto (a pari grado nell'ordine
--- della lista): { { id, grado }, ... }
-function M.presi(valori)
+-- The badges earned with those values, from the highest grade (same grade in
+-- list order): { { id, grade }, ... }
+function M.presi(values)
 	local out = {}
-	for i, s in ipairs(M.LISTA) do
-		local g = M.grado(s, valori[s.id])
+	for i, s in ipairs(M.WHITELIST) do
+		local g = M.grado(s, values[s.id])
 		if g > 0 then out[#out + 1] = { id = s.id, grado = g, i = i } end
 	end
 	table.sort(out, function(a, b)
@@ -70,34 +70,34 @@ function M.presi(valori)
 	return out
 end
 
--- I badge da mostrare: quelli scelti (ancora presi), poi i più alti, fino a MOSTRATI
-function M.mostrati(valori, scelti)
-	local presi = M.presi(valori)
-	local per_id = {}
-	for _, b in ipairs(presi) do per_id[b.id] = b end
-	local out, messi = {}, {}
-	for _, id in ipairs(scelti or {}) do
-		if per_id[id] and not messi[id] and #out < M.MOSTRATI then
-			out[#out + 1] = per_id[id]
-			messi[id] = true
+-- The badges to show: the chosen ones (still earned), then the highest, up to SHOWN
+function M.shown(values, picked_ones)
+	local taken = M.presi(values)
+	local by_id = {}
+	for _, b in ipairs(taken) do by_id[b.id] = b end
+	local out, placed = {}, {}
+	for _, id in ipairs(picked_ones or {}) do
+		if by_id[id] and not placed[id] and #out < M.SHOWN then
+			out[#out + 1] = by_id[id]
+			placed[id] = true
 		end
 	end
-	for _, b in ipairs(presi) do
-		if #out >= M.MOSTRATI then break end
-		if not messi[b.id] then
+	for _, b in ipairs(taken) do
+		if #out >= M.SHOWN then break end
+		if not placed[b.id] then
 			out[#out + 1] = b
-			messi[b.id] = true
+			placed[b.id] = true
 		end
 	end
 	return out
 end
 
--- Un badge arrivato da fuori (online, dagli altri): valido o nil
-function M.valido(b)
+-- A badge arriving from outside (online, from the others): valid or nil
+function M.valid(b)
 	if type(b) ~= "table" then return nil end
 	local s = M.BY_ID[b.id]
 	local g = tonumber(b.grado)
-	if not (s and s.soglie and g and g >= 1 and g <= #s.soglie and g % 1 == 0) then return nil end
+	if not (s and s.thresholds and g and g >= 1 and g <= #s.thresholds and g % 1 == 0) then return nil end
 	return { id = b.id, grado = g }
 end
 

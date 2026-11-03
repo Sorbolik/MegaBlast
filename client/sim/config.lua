@@ -39,7 +39,7 @@ C.MODES = {
 -- frustrating, the first a little wider than before and the second much
 -- wider; the numbers are ours, they used to be 5 and 15 s). The timer shows
 -- them as notches.
-C.TELEPORT_SOGLIE = { 9, 17 }
+C.TELEPORT_THRESHOLDS = { 9, 17 }
 -- on each robot's first turn only one starting orb can be thrown (the ones
 -- earned during the turn can always be thrown)
 C.FIRST_TURN_TELEPORTS = 1
@@ -199,7 +199,7 @@ C.MAX_PLACED = 8
 C.DRAFT_SECONDS = 15
 -- the line-up with everyone's cards (client/menu/schieramento.lua) before the
 -- draft: online the server waits these seconds too
-C.SCHIERAMENTO_SECONDS = 5
+C.LINEUP_SECONDS = 5
 C.DRAFT_OFFER = 3
 C.DRAFT_SHOTS = 2
 -- Shots of the drafted secondary (Sergio, 31 October 2026: no longer unlimited):

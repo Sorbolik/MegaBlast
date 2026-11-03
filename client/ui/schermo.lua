@@ -1,22 +1,22 @@
--- Proporzioni dello schermo: niente si deforma mai.
+-- Screen proportions: nothing ever gets distorted.
 --
--- Il gioco è disegnato su 1280 x 720 (16:9). Ogni nodo della GUI è FIT: la
--- stessa scala in x e in y (la più piccola delle due), centrato. Su uno schermo
--- più largo (telefono 20:9) avanza spazio ai lati, su uno più alto (tablet 4:3)
--- sopra e sotto. Le coordinate del gioco restano quelle di 1280 x 720 con il
--- centro in (640, 360), ma lo schermo vero va da x0 a x1 e da y0 a y1: quello
--- che sta attaccato a un bordo (levette, pulsanti) si mette lì.
+-- The game is drawn at 1280 x 720 (16:9). Every GUI node is FIT: the same
+-- scale in x and in y (the smaller of the two), centered. On a wider screen
+-- (20:9 phone) there is spare room on the sides, on a taller one (4:3 tablet)
+-- above and below. Game coordinates stay those of 1280 x 720 with the center
+-- at (640, 360), but the real screen goes from x0 to x1 and from y0 to y1:
+-- what sticks to an edge (sticks, buttons) goes there.
 --
--- I tocchi (action.x, action.y) arrivano invece stirati su 1280 x 720: da_tocco
--- li riporta alle coordinate del gioco. gui.pick_node vuole quelli stirati.
--- Mai gui.ADJUST_STRETCH: deforma (cerchi ovali).
+-- Taps (action.x, action.y) instead arrive stretched over 1280 x 720:
+-- from_touch brings them back to game coordinates. gui.pick_node wants the
+-- stretched ones. Never gui.ADJUST_STRETCH: it distorts (oval circles).
 
 local M = { W = 1280, H = 720, kx = 1, ky = 1, x0 = 0, x1 = 1280, y0 = 0, y1 = 720 }
 
--- un fondo grande così copre ogni schermo (fino a 4 volte più largo o più alto)
-M.PIENO = 4
+-- a background this big covers any screen (up to 4 times wider or taller)
+M.FULL = 4
 
--- Rilegge la finestra; true se le proporzioni sono cambiate
+-- Reads the window again; true if the proportions changed
 function M.aggiorna()
 	local w, h = window.get_size()
 	if w <= 0 or h <= 0 then return false end
@@ -30,15 +30,15 @@ function M.aggiorna()
 	return true
 end
 
--- larghezza e altezza vere dello schermo, in pixel del gioco
+-- real width and height of the screen, in game pixels
 function M.largo() return M.x1 - M.x0 end
 function M.alto() return M.y1 - M.y0 end
 
-function M.da_tocco(x, y)
+function M.from_touch(x, y)
 	return M.W / 2 + (x - M.W / 2) * M.kx, M.H / 2 + (y - M.H / 2) * M.ky
 end
 
-function M.a_tocco(x, y)
+function M.on_touch(x, y)
 	return M.W / 2 + (x - M.W / 2) / M.kx, M.H / 2 + (y - M.H / 2) / M.ky
 end
 

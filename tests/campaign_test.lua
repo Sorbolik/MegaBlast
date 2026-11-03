@@ -31,7 +31,7 @@ local LEFT = { left = true }
 -- The test player touches what the lesson highlights (time is stopped until
 -- it does) and, before using a weapon, selects it
 local function obey(r, input)
-	local a = r.attende
+	local a = r.awaiting
 	if a then missions.tocca(r, a == "primaria" and "missile" or a == "secondaria" and "sword" or a) end
 	if input and input.fire then
 		missions.tocca(r, input.fire.weapon)
@@ -63,8 +63,8 @@ local function play_mission(id, script, picks, limit)
 			coroutine.yield(input)
 		end
 	end
-	function c.usa(weapon_name, angle_deg, potenza)
-		coroutine.yield({ fire = { weapon = weapon_name, angle = angle_deg, power = potenza or 1 } })
+	function c.usa(weapon_name, angle_deg, strength)
+		coroutine.yield({ fire = { weapon = weapon_name, angle = angle_deg, power = strength or 1 } })
 	end
 	-- walks towards the crate with that weapon until it picks it up (waits for it to drop)
 	function c.cassa(w)
@@ -87,10 +87,10 @@ local function play_mission(id, script, picks, limit)
 		c.hold(IDLE, function() return r.st.turni > turns_played and g.phase == "aim" end)
 	end
 	c.g, c.r = g, r
-	local primo = true
+	local first = true
 	for _ = 1, limit or 60 * 120 do
-		local input = primo and IDLE or co(c)
-		primo = false
+		local input = first and IDLE or co(c)
+		first = false
 		-- any key: in the lessons time starts from here
 		obey(r, input)
 		if next(input) then missions.tocca(r) end
@@ -113,9 +113,9 @@ local function search(id, script, picks, angles, powers)
 	return false
 end
 
-local function powers(da, a, stride)
+local function powers(from_pt, a, stride)
 	local t = {}
-	for p = da, a, stride do t[#t + 1] = p end
+	for p = from_pt, a, stride do t[#t + 1] = p end
 	return t
 end
 
@@ -136,7 +136,7 @@ for _, l in ipairs(cap.missioni) do
 		check(outcome ~= "fatta" and said or outcome == "fallita", l.id .. ": doing nothing doesn't finish it")
 	end
 	-- each star says what it needs, and the goal can be read
-	check(#missions.criteri(l) == 3, l.id .. ": three star criteria")
+	check(#missions.criteria(l) == 3, l.id .. ": three star criteria")
 	if type(l.obiettivo) == "table" then
 		local r = missions.nuova(l.id)
 		check(missions.obiettivo(r) ~= nil, l.id .. ": the goal is visible")
@@ -366,7 +366,7 @@ end)
 check(not r.st.steps_done[5] and g.robots[1].deaths > 0 and r.prese.parachute, "attrezzi: without opening the parachute you fall into the void")
 
 -- Giù dal bordo: each of the three targets is knocked off its rock with a single missile
-for who_hit = 2, 4 do
+for who = 2, 4 do
 	local found, fell = false, false
 	for a = -0.5, 3.6, 0.05 do
 		for p = 0.2, 1, 0.05 do
@@ -375,20 +375,20 @@ for who_hit = 2, 4 do
 					c.usa("missile", a, p)
 					c.hold(IDLE, 400)
 				end, nil, 420)
-				found = g.robots[1].env_kills > 0 and g.robots[who_hit].deaths > 0
+				found = g.robots[1].env_kills > 0 and g.robots[who].deaths > 0
 				-- knocked off it stays down (Sergio, 30 Oct)
-				if found then fell = g.robots[who_hit].gone or r.giu[who_hit] end
+				if found then fell = g.robots[who].gone or r.giu[who] end
 			end
 		end
 	end
-	check(found, "giu_dal_bordo: target " .. who_hit .. " falls with one shot")
-	check(fell, "giu_dal_bordo: target " .. who_hit .. " knocked off doesn't respawn")
+	check(found, "giu_dal_bordo: target " .. who .. " falls with one shot")
+	check(fell, "giu_dal_bordo: target " .. who .. " knocked off doesn't respawn")
 end
 
 -- Giù dal bordo with the Rampino: from the edge of the platform the hook
 -- reaches the side rocks (map unchanged, reach config.HOOK.range) and the
 -- target, pulled by reel and released over the void, falls
-for who_hit, side_of in pairs({ [2] = -1, [3] = 1 }) do
+for who, side_of in pairs({ [2] = -1, [3] = 1 }) do
 	local found = false
 	for a = 0, 0.6, 0.02 do
 		if not found then
@@ -402,10 +402,10 @@ for who_hit, side_of in pairs({ [2] = -1, [3] = 1 }) do
 				c.usa("hook", angle_deg)
 				c.hold(IDLE, 300)
 			end, nil, 900)
-			found = g.robots[1].env_kills > 0 and g.robots[who_hit].deaths > 0
+			found = g.robots[1].env_kills > 0 and g.robots[who].deaths > 0
 		end
 	end
-	check(found, "giu_dal_bordo: from the edge the Rampino catches target " .. who_hit .. " and knocks it off")
+	check(found, "giu_dal_bordo: from the edge the Rampino catches target " .. who .. " and knocks it off")
 end
 
 -- Punti e Corona: the Mantice throws the first target into the void, then two Pugni on whoever has the Crown
@@ -447,7 +447,7 @@ do
 	local ric = replay.nuova(seed, map_name, opts)
 	local g, bots = replay.partita(ric)
 	missions.prepara(r, g)
-	local visti, ticks, outcome, frozen = {}, 0, nil, nil
+	local seen, ticks, outcome, frozen = {}, 0, nil, nil
 	while not outcome and ticks < 60 * 60 * 6 do
 		ticks = ticks + 1
 		local input = {}
@@ -464,14 +464,14 @@ do
 		g:step(replay.input(ric, g, bots, input))
 		for _, e in ipairs(g:pop_events()) do
 			missions.evento(r, g, e, bots)
-			if e.robot == 2 then visti[r.st.bot_turns .. e.type] = true end
+			if e.robot == 2 then seen[r.st.bot_turns .. e.type] = true end
 		end
 		outcome = missions.tick(r, g)
 	end
 	check(frozen == game.TURN_TICKS, "guidata: on the first turn the timer waits for the controls to be touched")
-	check(visti["1swing"] or visti["1mallet"] or visti["1eagle"] or visti["1lunge"],
+	check(seen["1swing"] or seen["1mallet"] or seen["1eagle"] or seen["1lunge"],
 		"guidata: on its first turn the bot also uses the secondary")
-	check(visti["2teleports"] and visti["2teleport"], "guidata: on its second turn the bot earns orbs and teleports")
+	check(seen["2teleports"] and seen["2teleport"], "guidata: on its second turn the bot earns orbs and teleports")
 	check(outcome == "fatta" and g.phase == "over", "guidata: the short match ends")
 	check(ticks < 60 * 60 * 5, "guidata: lasts less than 5 minutes (" .. math.floor(ticks / 60) .. " s)")
 end
@@ -514,16 +514,16 @@ end
 -- earned stays)
 do
 	local r = missions.nuova("primo_sangue")
-	r.esito, r.st.distacco = "fatta", 40
+	r.esito, r.st.gap = "fatta", 40
 	local s = missions.stelle(r)
 	check(s[1] and not s[2] and s[3], "stars: the bonus without the points lights the third and not the second")
-	r.st.distacco = 160
+	r.st.gap = 160
 	check(missions.stelle(r)[2], "stars: the second with the point lead")
 	local profile = require "menu.profilo"
 	local p = profile.nuovo()
 	profile.missione(p, "primo_sangue", s)
 	profile.missione(p, "primo_sangue", { true, true, false })
-	check(profile.stelle_totali(p) == 3, "stars: in the profile each one earned stays")
+	check(profile.total_stars(p) == 3, "stars: in the profile each one earned stays")
 end
 
 -- No points in the lessons that aren't about them (Sergio, 31 Oct: they
@@ -550,15 +550,15 @@ check(missions.vede(missions.nuova("punti"), "punti") and missions.vede(missions
 -- The help after many losses: the Fabbro goes down a level and starts with
 -- less life, but with a full bar (it doesn't show)
 do
-	local function fabbro(aiuto)
+	local function smith(help)
 		local r = missions.nuova("il_fabbro")
-		local seed, map_name, opts = missions.partita(r, 7, nil, aiuto)
+		local seed, map_name, opts = missions.partita(r, 7, nil, help)
 		local g = game.new(seed, map_name, opts)
 		missions.prepara(r, g)
 		return opts.players[2].bot, g.robots[2]
 	end
-	local liv, rb = fabbro(false)
-	local help_level, help_rb = fabbro(true)
+	local liv, rb = smith(false)
+	local help_level, help_rb = smith(true)
 	check(liv == 5 and help_level == 3, "help: the bot goes down two grades")
 	check(help_rb.hp < rb.hp and help_rb.hp == help_rb.max_hp, "help: less life, full bar")
 end

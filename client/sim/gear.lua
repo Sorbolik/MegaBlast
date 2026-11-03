@@ -25,12 +25,12 @@ M.SLOTS = {
 -- look (once armour is visible on the character), and with all four pieces of
 -- a set maxed you pick variant B of the bonus: as before, at 30 matches.
 M.LIVELLO_MAX = 30
-M.SCATTI = { 10, 20, 30 }
-M.TIERS = #M.SCATTI + 1
+M.TIER_LEVELS = { 10, 20, 30 }
+M.TIERS = #M.TIER_LEVELS + 1
 -- pieces of the same set needed for the bonus
 M.SET_PIECES = 4
 -- matches played with a piece to raise its tier (set mastery)
-M.TIER_MATCHES = { 0, M.SCATTI[1], M.SCATTI[2], M.SCATTI[3] }
+M.TIER_MATCHES = { 0, M.TIER_LEVELS[1], M.TIER_LEVELS[2], M.TIER_LEVELS[3] }
 
 -- Pieces: for each set and slot one plus and one minus, as a percentage of the
 -- base (movement stats start from sim/game.lua, DEFAULT_STATS). Bonus: full set.
@@ -43,10 +43,10 @@ M.SETS = {
 			legs = { { stat = "jump_height", mul = 1.03 }, { stat = "walk_speed", mul = 0.98 } },
 		},
 		bonus = {
-			a = { desc = "Doppio salto e caduta senza danno, vita -10%", potere = "doppio salto",
+			a = { desc = "Doppio salto e caduta senza danno, vita -10%", power_name = "doppio salto",
 				effects = { { stat = "air_jumps", add = 1 }, { stat = "fall_damage_mul", mul = 0 },
 					{ stat = "max_hp", mul = 0.9 } } },
-			b = { desc = "Due salti in aria, vita -10%", potere = "due salti in aria",
+			b = { desc = "Due salti in aria, vita -10%", power_name = "due salti in aria",
 				effects = { { stat = "air_jumps", add = 2 }, { stat = "max_hp", mul = 0.9 } } },
 		} },
 	{ id = "fornace", name = "FORNACE", style = "Territorio",
@@ -57,9 +57,9 @@ M.SETS = {
 			legs = { { stat = "max_hp", add = 2 }, { stat = "walk_speed", mul = 0.98 } },
 		},
 		bonus = {
-			a = { desc = "L'Uovo brucia chi colpisce, salto -10%", potere = "uovo che brucia",
+			a = { desc = "L'Uovo brucia chi colpisce, salto -10%", power_name = "uovo che brucia",
 				effects = { { stat = "burning_blasts", add = 1 }, { stat = "jump_height", mul = 0.9 } } },
-			b = { desc = "L'Uovo brucia, gli effetti durano un turno in più, vita -10%", potere = "brace lunga",
+			b = { desc = "L'Uovo brucia, gli effetti durano un turno in più, vita -10%", power_name = "brace lunga",
 				effects = { { stat = "burning_blasts", add = 1 }, { stat = "status_turns", add = 1 },
 					{ stat = "max_hp", mul = 0.9 } } },
 		} },
@@ -71,10 +71,10 @@ M.SETS = {
 			legs = { { stat = "max_hp", add = 3 }, { stat = "walk_speed", mul = 0.97 } },
 		},
 		bonus = {
-			a = { desc = "Spinta subita -30%, metà danno da caduta, corsa -10%", potere = "radici",
+			a = { desc = "Spinta subita -30%, metà danno da caduta, corsa -10%", power_name = "radici",
 				effects = { { stat = "knockback_mul", mul = 0.7 }, { stat = "fall_damage_mul", mul = 0.5 },
 					{ stat = "walk_speed", mul = 0.9 } } },
-			b = { desc = "Spinta subita dimezzata, salto -10%", potere = "radici profonde",
+			b = { desc = "Spinta subita dimezzata, salto -10%", power_name = "radici profonde",
 				effects = { { stat = "knockback_mul", mul = 0.5 }, { stat = "jump_height", mul = 0.9 } } },
 		} },
 	{ id = "vuoto", name = "VUOTO", style = "Inganno",
@@ -85,9 +85,9 @@ M.SETS = {
 			legs = { { stat = "walk_speed", mul = 1.03 }, { stat = "air_speed", mul = 0.98 } },
 		},
 		bonus = {
-			a = { desc = "Il teletrasporto scatta il 25% prima, vita -10%", potere = "globo lesto",
+			a = { desc = "Il teletrasporto scatta il 25% prima, vita -10%", power_name = "globo lesto",
 				effects = { { stat = "teleport_ticks", mul = 0.75 }, { stat = "max_hp", mul = 0.9 } } },
-			b = { desc = "Un teletrasporto in più, vita -10%", potere = "globo in più",
+			b = { desc = "Un teletrasporto in più, vita -10%", power_name = "globo in più",
 				effects = { { stat = "teleports", add = 1 }, { stat = "max_hp", mul = 0.9 } } },
 		} },
 }
@@ -101,9 +101,9 @@ function M.livello(matches)
 end
 
 -- the next step of a piece at that level (nil: it has reached all of them)
-function M.prossimo_scatto(level_name)
-	for _, s in ipairs(M.SCATTI) do
-		if level_name < s then return s end
+function M.next_tier(level)
+	for _, s in ipairs(M.TIER_LEVELS) do
+		if level < s then return s end
 	end
 end
 

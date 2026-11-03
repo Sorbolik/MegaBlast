@@ -1,155 +1,155 @@
--- I passaggi tra le schermate (Sergio, 1 nov), con un solo velo sopra tutto
+-- The transitions between screens (Sergio, 1 Nov), with a single veil over everything
 -- (ui/passaggio.fp):
---   iride   tra la home (o i menu) e la battaglia: il cerchio dei vecchi cartoni
---           si chiude sul nero, la scena cambia, si riapre (150 + 150 ms)
---   scivolo tra i menu: la schermata vecchia scivola del 7% a sinistra e si
---           spegne nel carbone, la nuova arriva da destra (80 + 80 ms);
---           tornando indietro al contrario
--- Nell'iride c'è il logo (Sergio, 3 nov: «quando si chiude finisce con quello e
--- quando si apre inizia con quello»): è stampato sul nero, quindi il cerchio che
--- si chiude lo scopre e quello che si riapre lo mangia dal centro. Nessun tempo in
--- più (Sergio: «non vorrei rinunciare alla velocità»): il logo riempie il nero
--- che c'è già, quello del caricamento della mappa. È uno stencil rovesciato (un cerchio grande
--- come il buco, figli visibili solo fuori), mosso insieme al velo.
--- Mentre un passaggio è in corso il gioco non ascolta i tocchi (attivo).
--- Dopo il cambio di scena il velo resta chiuso ancora ATTESA frame: il frame del
--- cambio (dipinti, maschera, nodi della schermata nuova) è lungo, e spesso anche
--- quello dopo, così gli scatti cadono a schermo coperto e l'animazione che riapre
--- non salta. Intanto il contatore dei frame (ui/fotogrammi.lua) sa che non si vedono.
+--   iris    between the home (or the menus) and the battle: the circle of old cartoons
+--           closes on black, the scene changes, it opens again (150 + 150 ms)
+--   slide   between menus: the old screen slides 7% to the left and fades
+--           into the charcoal, the new one comes from the right (80 + 80 ms);
+--           the other way round when going back
+-- The iris has the logo in it (Sergio, 3 Nov: «quando si chiude finisce con quello e
+-- quando si apre inizia con quello»): it is printed on the black, so the closing
+-- circle uncovers it and the reopening one eats it from the center. No extra
+-- time (Sergio: «non vorrei rinunciare alla velocità»): the logo fills the black
+-- that is already there, the map loading's. It is an inverted stencil (a circle as big
+-- as the hole, children visible only outside), moved together with the veil.
+-- While a transition runs the game doesn't listen to taps (is_active).
+-- After the scene change the veil stays closed HOLD_FRAMES more frames: the change
+-- frame (paintings, mask, the new screen's nodes) is long, and often the one
+-- after too, so the stutters fall while the screen is covered and the reopening
+-- animation doesn't skip. Meanwhile the frame counter (ui/fotogrammi.lua) knows they are not seen.
 --
 --   local passaggio = require "ui.passaggio"
 --   local p = passaggio.new()
---   passaggio.iride(p, cambia)                     -- cambia(): la scena nuova
---   passaggio.scivolo(p, vecchi, cambia, verso)    -- vecchi: i nodi radice della
---        schermata di adesso; cambia() rende quelli della nuova; verso 1 avanti, -1 indietro
---   passaggio.attivo(p)
+--   passaggio.iris(p, change)                      -- change(): the new scene
+--   passaggio.slider(p, old_ones, change, toward)  -- old_ones: the root nodes of the
+--        current screen; change() returns the new one's; toward 1 forward, -1 back
+--   passaggio.is_active(p)
 
-local schermo = require "ui.schermo"
-local fotogrammi = require "ui.fotogrammi"
+local screen = require "ui.schermo"
+local frames = require "ui.fotogrammi"
 local ui = require "ui.ui"
 
 local M = {}
 
 local W, H = 1280, 720
-M.IRIDE = 0.15           -- secondi per chiudere, e per riaprire
-M.SCIVOLO = 0.08         -- metà dello scivolo
-M.SPOSTA = W * 0.07      -- quanto scivola una schermata
-M.ATTESA = 3             -- frame a schermo coperto dopo il cambio di scena
-local CARTA = vmath.vector4(0.94, 0.9, 0.82, 1)
+M.IRIS = 0.15           -- seconds to close, and to open again
+M.SLIDE = 0.08         -- half of the slide
+M.SHIFT = W * 0.07      -- how far a screen slides
+M.HOLD_FRAMES = 3        -- frames with the screen covered after the scene change
+local CARD = vmath.vector4(0.94, 0.9, 0.82, 1)
 
--- il logo dell'iride: per ora quello dell'ingresso (ui/ingresso.lua), la testa
--- di Favilla nel disco di carta e il nome
+-- the iris logo: for now the entry screen's (ui/ingresso.lua), Favilla's head
+-- in the paper disc and the name
 local function logo()
-	local buco = gui.new_pie_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(0, 0, 0))
-	gui.set_adjust_mode(buco, gui.ADJUST_FIT)
-	gui.set_perimeter_vertices(buco, 96)
-	gui.set_clipping_mode(buco, gui.CLIPPING_MODE_STENCIL)
-	gui.set_clipping_inverted(buco, true)
-	gui.set_clipping_visible(buco, false)
-	local disco = gui.new_box_node(vmath.vector3(0, 40, 0), vmath.vector3(230, 230, 0))
-	gui.set_adjust_mode(disco, gui.ADJUST_FIT)
-	gui.set_texture(disco, "ui")
-	gui.play_flipbook(disco, "favilla")
-	gui.set_color(disco, CARTA)
-	gui.set_parent(disco, buco)
-	local nome = ui.titolo("MEGABLAST", 0, -125, 1.2, ui.C.LUCE, buco)
-	gui.set_adjust_mode(nome, gui.ADJUST_FIT)
-	gui.set_enabled(buco, false)
-	return buco
+	local hole = gui.new_pie_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(0, 0, 0))
+	gui.set_adjust_mode(hole, gui.ADJUST_FIT)
+	gui.set_perimeter_vertices(hole, 96)
+	gui.set_clipping_mode(hole, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_inverted(hole, true)
+	gui.set_clipping_visible(hole, false)
+	local disc = gui.new_box_node(vmath.vector3(0, 40, 0), vmath.vector3(230, 230, 0))
+	gui.set_adjust_mode(disc, gui.ADJUST_FIT)
+	gui.set_texture(disc, "ui")
+	gui.play_flipbook(disc, "favilla")
+	gui.set_color(disc, CARD)
+	gui.set_parent(disc, hole)
+	local name_node = ui.titolo("MEGABLAST", 0, -125, 1.2, ui.C.LIGHT, hole)
+	gui.set_adjust_mode(name_node, gui.ADJUST_FIT)
+	gui.set_enabled(hole, false)
+	return hole
 end
 
 function M.new()
-	local n = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * schermo.PIENO, H * schermo.PIENO, 0))
+	local n = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_material(n, "passaggio")
 	gui.set_enabled(n, false)
-	return { nodo = n, colore = vmath.vector4(1, 0, 0, 0), logo = logo(), buco = vmath.vector3() }
+	return { nodo = n, colore = vmath.vector4(1, 0, 0, 0), logo = logo(), hole = vmath.vector3() }
 end
 
-function M.attivo(p)
+function M.is_active(p)
 	return p.n ~= nil
 end
 
--- sopra a tutto, anche ai nodi creati adesso (il logo sopra al velo)
-local function sopra(p)
+-- on top of everything, even of the nodes created just now (the logo above the veil)
+local function over_it(p)
 	gui.move_above(p.nodo, nil)
 	gui.move_above(p.logo, p.nodo)
 end
 
-local function inizia(p, r, g, a)
+local function begin(p, r, g, a)
 	p.n = (p.n or 0) + 1
-	-- un passaggio nuovo riparte da schermo scoperto (anche se uno era in attesa)
-	fotogrammi.coperto = false
+	-- a new transition starts from an uncovered screen (even if one was waiting)
+	frames.covered = false
 	local c = p.colore
 	c.x, c.y, c.z, c.w = r, g, 0, a
 	gui.set_color(p.nodo, c)
 	gui.set_enabled(p.nodo, true)
 	gui.cancel_animations(p.logo, "size")
 	gui.set_enabled(p.logo, false)
-	-- sopra a tutto, anche alle schermate create dopo
-	sopra(p)
+	-- on top of everything, even of the screens created later
+	over_it(p)
 end
 
-local function fine(p)
+local function end_of(p)
 	gui.set_enabled(p.nodo, false)
 	gui.set_enabled(p.logo, false)
-	fotogrammi.coperto = false
+	frames.covered = false
 	p.n = nil
 end
 
--- A schermo coperto: cambia la scena, poi riapre (riapri) dopo ATTESA frame
-local function coperto(p, cambia, riapri)
-	fotogrammi.coperto = true
-	local nuovi = cambia()
-	sopra(p)
+-- With the screen covered: changes the scene, then reopens (reopen) after HOLD_FRAMES frames
+local function covered(p, change, reopen)
+	frames.covered = true
+	local news = change()
+	over_it(p)
 	local k = p.n
-	local function dopo(frame)
-		-- se nel frattempo è partito un altro passaggio, lo chiude lui
+	local function after_step(frame)
+		-- if another transition started meanwhile, that one closes it
 		if p.n ~= k then return end
-		-- la schermata nuova a volte crea nodi anche nei frame dopo (l'HUD)
-		sopra(p)
+		-- the new screen sometimes creates nodes in the following frames too (the HUD)
+		over_it(p)
 		if frame > 0 then
-			timer.delay(0, false, function() dopo(frame - 1) end)
+			timer.delay(0, false, function() after_step(frame - 1) end)
 		else
-			fotogrammi.coperto = false
-			riapri(nuovi)
+			frames.covered = false
+			reopen(news)
 		end
 	end
-	dopo(M.ATTESA)
+	after_step(M.HOLD_FRAMES)
 end
 
--- il buco del logo grande come quello del velo (raggio = color.x * 1000 pixel)
-local function buco(p, x, easing)
+-- the logo's hole as big as the veil's (radius = color.x * 1000 pixels)
+local function set_hole(p, x, easing)
 	local d = x * 2000
-	p.buco.x, p.buco.y = d, d
+	p.hole.x, p.hole.y = d, d
 	if easing then
-		gui.animate(p.logo, "size", p.buco, easing, M.IRIDE)
+		gui.animate(p.logo, "size", p.hole, easing, M.IRIS)
 	else
-		gui.set_size(p.logo, p.buco)
+		gui.set_size(p.logo, p.hole)
 	end
 end
 
-function M.iride(p, cambia)
-	inizia(p, 1, 0, 1)
-	buco(p, 1)
+function M.iris(p, change)
+	begin(p, 1, 0, 1)
+	set_hole(p, 1)
 	gui.set_enabled(p.logo, true)
-	buco(p, 0, gui.EASING_INQUAD)
-	gui.animate(p.nodo, "color.x", 0, gui.EASING_INQUAD, M.IRIDE, 0, function()
-		-- si riapre a schermo nero tre frame dopo (Sergio, 2 nov: «qualche
+	set_hole(p, 0, gui.EASING_INQUAD)
+	gui.animate(p.nodo, "color.x", 0, gui.EASING_INQUAD, M.IRIS, 0, function()
+		-- it reopens on a black screen three frames later (Sergio, 2 Nov: «qualche
 		-- scatto in più ... nelle schermate di transizione»)
-		coperto(p, cambia, function()
-			buco(p, 1, gui.EASING_OUTQUAD)
-			gui.animate(p.nodo, "color.x", 1, gui.EASING_OUTQUAD, M.IRIDE, 0, function() fine(p) end)
+		covered(p, change, function()
+			set_hole(p, 1, gui.EASING_OUTQUAD)
+			gui.animate(p.nodo, "color.x", 1, gui.EASING_OUTQUAD, M.IRIS, 0, function() end_of(p) end)
 		end)
 	end)
 end
 
--- sposta i nodi di dx (con un'animazione di durata t) e rende dove stavano
-local function sposta(nodi, dx, t, easing)
-	local da = {}
-	for i, n in ipairs(nodi) do
+-- moves the nodes by dx (with an animation lasting t) and returns where they were
+local function move(nodes, dx, t, easing)
+	local was = {}
+	for i, n in ipairs(nodes) do
 		local x = gui.get_position(n).x
-		da[i] = x
+		was[i] = x
 		if t > 0 then
 			gui.animate(n, "position.x", x + dx, easing, t)
 		else
@@ -158,35 +158,35 @@ local function sposta(nodi, dx, t, easing)
 			gui.set_position(n, pos)
 		end
 	end
-	return da
+	return was
 end
 
-local function rimetti(nodi, da)
-	for i, n in ipairs(nodi) do
+local function put_back(nodes, was)
+	for i, n in ipairs(nodes) do
 		gui.cancel_animations(n, "position.x")
 		local pos = gui.get_position(n)
-		pos.x = da[i]
+		pos.x = was[i]
 		gui.set_position(n, pos)
 	end
 end
 
-function M.scivolo(p, vecchi, cambia, verso)
-	verso = verso or 1
-	inizia(p, 0, 1, 0)
-	local da = sposta(vecchi, -verso * M.SPOSTA, M.SCIVOLO, gui.EASING_INQUAD)
-	gui.animate(p.nodo, "color.w", 1, gui.EASING_INQUAD, M.SCIVOLO, 0, function()
-		-- i nodi vecchi tornano a posto (la home si riusa), poi la scena cambia
-		rimetti(vecchi, da)
-		-- anche qui la schermata nuova arriva tre frame dopo, a velo pieno
-		coperto(p, function()
-			local nuovi = cambia() or {}
-			return { nuovi, sposta(nuovi, verso * M.SPOSTA, 0) }
+function M.slider(p, old_ones, change, toward)
+	toward = toward or 1
+	begin(p, 0, 1, 0)
+	local was = move(old_ones, -toward * M.SHIFT, M.SLIDE, gui.EASING_INQUAD)
+	gui.animate(p.nodo, "color.w", 1, gui.EASING_INQUAD, M.SLIDE, 0, function()
+		-- the old nodes go back in place (the home is reused), then the scene changes
+		put_back(old_ones, was)
+		-- here too the new screen arrives three frames later, under the full veil
+		covered(p, function()
+			local news = change() or {}
+			return { news, move(news, toward * M.SHIFT, 0) }
 		end, function(n)
-			for i, nodo in ipairs(n[1]) do
-				gui.animate(nodo, "position.x", n[2][i], gui.EASING_OUTQUAD, M.SCIVOLO)
+			for i, gui_node in ipairs(n[1]) do
+				gui.animate(gui_node, "position.x", n[2][i], gui.EASING_OUTQUAD, M.SLIDE)
 			end
-			gui.animate(p.nodo, "color.w", 0, gui.EASING_OUTQUAD, M.SCIVOLO, 0, function()
-				fine(p)
+			gui.animate(p.nodo, "color.w", 0, gui.EASING_OUTQUAD, M.SLIDE, 0, function()
+				end_of(p)
 			end)
 		end)
 	end)

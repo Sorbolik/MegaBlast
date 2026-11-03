@@ -1,107 +1,107 @@
--- Camera della battaglia: guarda un punto del mondo con uno zoom, e lo insegue
--- con una molla esponenziale (uguale a 60, 90 o 120 Hz). Attorno alla mappa c'è
--- una banda «intoccabile» (Sergio, 2 nov): ai lati e in cima la camera esce di
--- BANDA pixel dello schermo, sotto di SOTTO, così il fondo della mappa resta
--- sopra l'HUD (sotto c'è il baratro, terreno.fp). Il livello MAPPA mostra tutta
--- la mappa con le bande attorno.
+-- Battle camera: looks at a point in the world with a zoom and chases it with
+-- an exponential spring (same at 60, 90 or 120 Hz). Around the map there is an
+-- "untouchable" band (Sergio, 2 Nov): on the sides and at the top the camera
+-- goes BAND screen pixels past the map, BELOW pixels at the bottom, so the
+-- bottom of the map stays above the HUD (below it is the abyss, terreno.fp).
+-- The MAPPA level shows the whole map with the bands around it.
 --
--- Lua puro: game.gui_script la applica al nodo "mondo" della GUI e alla vista
--- del render (terreno). Da schermo a mondo: x = (sx - tx) / s.
+-- Pure Lua: game.gui_script applies it to the GUI "mondo" node and to the
+-- render view (terrain). Screen to world: x = (sx - tx) / s.
 --
---   local c = camera.new(1280, 720, 1920, 1080)   -- schermo, mappa
---   camera.vista(c, x0, y0, x1, y1)           -- lo schermo vero (ui/schermo.lua)
---   camera.segui(c, dt, x, y, zoom, veloce)   -- a ogni frame
---   camera.inquadra(c, dt, ax, ay, bx, by, zoom)  -- oppure: due punti insieme
---   local tx, ty = camera.spostamento(c)      -- schermo = mondo * c.s + t
---   camera.scuoti(c, dx, dy, forza)           -- un colpo: scossa verso (dx, dy)
---   local ox, oy = camera.scossa(c, dt)       -- a ogni frame, pixel da aggiungere
+--   local c = camera.new(1280, 720, 1920, 1080)   -- screen, map
+--   camera.viewport(c, x0, y0, x1, y1)        -- the real screen (ui/schermo.lua)
+--   camera.follow(c, dt, x, y, zoom, fast)    -- every frame
+--   camera.frame_on(c, dt, ax, ay, bx, by, zoom)  -- or: two points together
+--   local tx, ty = camera.spostamento(c)      -- screen = world * c.s + t
+--   camera.shake(c, dx, dy, force)            -- a hit: shake toward (dx, dy)
+--   local ox, oy = camera.shake_frame(c, dt)  -- every frame, pixels to add
 
 local M = {}
 
--- livelli di zoom che si scelgono col pulsante, la rotella o il tasto Z
--- (MAPPA non ha un numero: è M.tutta, tutta la mappa e le bande sullo schermo)
+-- zoom levels picked with the button, the mouse wheel or the Z key
+-- (MAPPA has no number: it is M.tutta, the whole map and its bands on screen)
 M.LIVELLI = { 2.2, 1, 0 }
-M.NOMI = { "VICINO", "MEDIO", "MAPPA" }
+M.NAMES = { "VICINO", "MEDIO", "MAPPA" }
 
--- quanto in fretta la camera raggiunge il punto (1/s): più alto = più rigida
-local SEGUI, SEGUI_VELOCE, ZOOM = 5, 9, 6
--- allontanarsi è più svelto di avvicinarsi, perché il colpo non scappi dallo schermo
-local ZOOM_FUORI = 12
--- pixel dello schermo sotto la mappa: l'altezza della barra dell'HUD
-M.SOTTO = 120
--- pixel dello schermo ai lati e sopra la mappa
-M.BANDA = 40
+-- how fast the camera reaches the point (1/s): higher = stiffer
+local FOLLOW, FOLLOW_FAST, ZOOM = 5, 9, 6
+-- zooming out is quicker than zooming in, so the shot doesn't leave the screen
+local ZOOM_OUT = 12
+-- screen pixels below the map: the height of the HUD bar
+M.BELOW = 120
+-- screen pixels beside and above the map
+M.BAND = 40
 
--- il centro sta fra a e b; se lo schermo è più grande della mappa con le bande, a metà
-local function fra(v, a, b)
+-- the center stays between a and b; if the screen is bigger than the map with its bands, halfway
+local function among(v, a, b)
 	if a > b then return (a + b) / 2 end
 	return math.min(math.max(v, a), b)
 end
 
-local function limita(c)
-	local hw, hh, b = c.w / (2 * c.s), c.h / (2 * c.s), M.BANDA / c.s
-	c.x = fra(c.x, hw - b, c.mw - hw + b)
-	c.y = fra(c.y, hh - M.SOTTO / c.s, c.mh - hh + b)
+local function clamp_to(c)
+	local hw, hh, b = c.w / (2 * c.s), c.h / (2 * c.s), M.BAND / c.s
+	c.x = among(c.x, hw - b, c.mw - hw + b)
+	c.y = among(c.y, hh - M.BELOW / c.s, c.mh - hh + b)
 end
 
--- w, h: lo schermo; mw, mh: la mappa
+-- w, h: the screen; mw, mh: the map
 function M.new(w, h, mw, mh)
 	local c = { w = w, h = h, cx = w / 2, cy = h / 2, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1, livello = 1,
 		sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, mx = 120, msu = 90, mgiu = 170 }
 	return c
 end
 
--- Lo schermo vero in coordinate del gioco: più largo di w su un telefono 20:9,
--- più alto su un tablet 4:3 (ui/schermo.lua)
-function M.vista(c, x0, y0, x1, y1)
+-- The real screen in game coordinates: wider than w on a 20:9 phone,
+-- taller on a 4:3 tablet (ui/schermo.lua)
+function M.viewport(c, x0, y0, x1, y1)
 	c.w, c.h, c.cx, c.cy = x1 - x0, y1 - y0, (x0 + x1) / 2, (y0 + y1) / 2
-	limita(c)
+	clamp_to(c)
 end
 
--- pixel dello schermo che l'inquadratura di due punti lascia liberi ai bordi
--- (ai lati, sopra, sotto): li dà chi disegna l'HUD, che sta sopra e sotto
-function M.margini(c, x, su, giu)
-	c.mx, c.msu, c.mgiu = x, su, giu
+-- screen pixels that framing two points leaves free at the edges
+-- (sides, top, bottom): given by whoever draws the HUD, which sits above and below
+function M.margins(c, x, above, fell)
+	c.mx, c.msu, c.mgiu = x, above, fell
 end
 
--- lo zoom con cui si vede tutta la mappa con le bande attorno (il livello MAPPA,
--- e il più lontano che la camera va)
+-- the zoom that shows the whole map with the bands around it (the MAPPA level,
+-- and the farthest the camera goes)
 function M.tutta(c)
-	return math.min((c.w - 2 * M.BANDA) / c.mw, (c.h - M.BANDA - M.SOTTO) / c.mh)
+	return math.min((c.w - 2 * M.BAND) / c.mw, (c.h - M.BAND - M.BELOW) / c.mh)
 end
 
--- Va subito sul punto, senza inseguirlo (inizio partita, menu)
+-- Jumps straight to the point without chasing it (match start, menus)
 function M.salta(c, x, y, s)
 	c.x, c.y, c.s = x, y, s
-	limita(c)
+	clamp_to(c)
 end
 
--- zoom e segui: rigidezza delle due molle (1/s)
-local function verso(c, dt, x, y, s, zoom, segui)
+-- zoom and follow: stiffness of the two springs (1/s)
+local function toward(c, dt, x, y, s, zoom, follow)
 	c.s = c.s + (s - c.s) * (1 - math.exp(-dt * zoom))
-	local k = 1 - math.exp(-dt * segui)
+	local k = 1 - math.exp(-dt * follow)
 	c.x = c.x + (x - c.x) * k
 	c.y = c.y + (y - c.y) * k
-	limita(c)
+	clamp_to(c)
 end
 
--- veloce: per i colpi in volo, che altrimenti scappano dallo schermo
-function M.segui(c, dt, x, y, s, veloce)
-	verso(c, dt, x, y, s, ZOOM, veloce and SEGUI_VELOCE or SEGUI)
+-- fast: for shots in flight, which would otherwise leave the screen
+function M.follow(c, dt, x, y, s, fast)
+	toward(c, dt, x, y, s, ZOOM, fast and FOLLOW_FAST or FOLLOW)
 end
 
--- Tiene dentro due punti (chi ha sparato e il suo colpo): resta allo zoom s se
--- ci stanno, altrimenti si allontana quanto basta (al massimo tutta la mappa).
--- Il centro sta nella parte di schermo libera dall'HUD.
-function M.inquadra(c, dt, ax, ay, bx, by, s)
+-- Keeps two points in view (the shooter and their shot): stays at zoom s if
+-- they fit, otherwise zooms out just enough (at most the whole map).
+-- The center sits in the part of the screen not covered by the HUD.
+function M.frame_on(c, dt, ax, ay, bx, by, s)
 	local x0, x1 = math.max(0, math.min(ax, bx)), math.min(c.mw, math.max(ax, bx))
 	local y0, y1 = math.max(0, math.min(ay, by)), math.min(c.mh, math.max(ay, by))
-	local serve = math.min((c.w - 2 * c.mx) / math.max(1, x1 - x0),
+	local needs = math.min((c.w - 2 * c.mx) / math.max(1, x1 - x0),
 		(c.h - c.msu - c.mgiu) / math.max(1, y1 - y0))
-	s = math.max(M.tutta(c), math.min(s, serve))
-	verso(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (c.mgiu - c.msu) / (2 * c.s), s,
-		s < c.s and ZOOM_FUORI or ZOOM, SEGUI_VELOCE)
-	-- le molle arrivano in ritardo: se un punto sta per uscire si allontana subito
+	s = math.max(M.tutta(c), math.min(s, needs))
+	toward(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (c.mgiu - c.msu) / (2 * c.s), s,
+		s < c.s and ZOOM_OUT or ZOOM, FOLLOW_FAST)
+	-- the springs lag behind: if a point is about to leave, zoom out at once
 	local m = c.s
 	for i = 1, 2 do
 		local dx, dy = math.abs((i == 1 and x0 or x1) - c.x), (i == 1 and y0 or y1) - c.y
@@ -111,7 +111,7 @@ function M.inquadra(c, dt, ax, ay, bx, by, s)
 	end
 	if m < c.s then
 		c.s = math.max(M.tutta(c), m)
-		limita(c)
+		clamp_to(c)
 	end
 end
 
@@ -119,56 +119,56 @@ function M.spostamento(c)
 	return c.cx - c.x * c.s, c.cy - c.y * c.s
 end
 
-function M.al_mondo(c, sx, sy)
+function M.to_world(c, sx, sy)
 	local tx, ty = M.spostamento(c)
 	return (sx - tx) / c.s, (sy - ty) / c.s
 end
 
-function M.allo_schermo(c, x, y)
+function M.to_screen(c, x, y)
 	local tx, ty = M.spostamento(c)
 	return x * c.s + tx, y * c.s + ty
 end
 
--- mai più lontano di M.tutta (su uno schermo piccolo anche MEDIO può diventarlo)
+-- never farther than M.tutta (on a small screen MEDIO can get there too)
 function M.zoom(c)
 	return math.max(M.LIVELLI[c.livello], M.tutta(c))
 end
 
--- passo +1 = più lontano, -1 = più vicino
-function M.cambia(c, passo)
-	c.livello = math.min(#M.LIVELLI, math.max(1, c.livello + passo))
+-- step +1 = farther, -1 = closer
+function M.cambia(c, step)
+	c.livello = math.min(#M.LIVELLI, math.max(1, c.livello + step))
 end
 
--- Scossa dello schermo: il colpo spinge lo schermo di 'forza' pixel nella
--- direzione (dx, dy), poi torna indietro oscillando e si smorza in fretta. Dipende
--- dal tempo e non dai fotogrammi, quindi è uguale a 60, 90 o 120 Hz.
-local SC_OSCILLA, SC_SMORZA, SC_FINE = 32, 8, 0.6
+-- Screen shake: the hit pushes the screen 'force' pixels in direction
+-- (dx, dy), then it swings back and dies down quickly. It depends on time,
+-- not on frames, so it is the same at 60, 90 or 120 Hz.
+local SC_SWING, SC_DAMP, SC_END = 32, 8, 0.6
 
-local function forza_ora(c)
-	if c.sc_t >= SC_FINE then return 0 end
-	return c.sc_f * math.exp(-c.sc_t * SC_SMORZA)
+local function force_now(c)
+	if c.sc_t >= SC_END then return 0 end
+	return c.sc_f * math.exp(-c.sc_t * SC_DAMP)
 end
 
--- se c'è ancora una scossa più forte vince quella
-function M.scuoti(c, dx, dy, forza)
-	if forza < forza_ora(c) then return end
+-- if a stronger shake is still running, that one wins
+function M.shake(c, dx, dy, force)
+	if force < force_now(c) then return end
 	local l = math.sqrt(dx * dx + dy * dy)
 	if l < 1e-6 then dx, dy, l = 0, -1, 1 end
-	c.sc_x, c.sc_y, c.sc_f, c.sc_t = dx / l, dy / l, forza, 0
+	c.sc_x, c.sc_y, c.sc_f, c.sc_t = dx / l, dy / l, force, 0
 end
 
-function M.scossa(c, dt)
+function M.shake_frame(c, dt)
 	c.sc_t = c.sc_t + dt
-	local f = forza_ora(c)
+	local f = force_now(c)
 	if f == 0 then return 0, 0 end
-	local t = c.sc_t * SC_OSCILLA
-	-- lungo la direzione del colpo, più un po' di traverso perché non sembri una molla
+	local t = c.sc_t * SC_SWING
+	-- along the hit direction, plus a bit sideways so it doesn't look like a spring
 	local a, b = f * math.cos(t), f * 0.3 * math.sin(t * 1.7)
 	return c.sc_x * a - c.sc_y * b, c.sc_y * a + c.sc_x * b
 end
 
--- il pulsante gira: vicino, medio, mappa, vicino...
-function M.prossimo(c)
+-- the button cycles: near, medium, map, near...
+function M.next_one(c)
 	c.livello = c.livello % #M.LIVELLI + 1
 end
 

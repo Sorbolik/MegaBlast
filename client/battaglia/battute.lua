@@ -1,22 +1,22 @@
--- Le battute dei personaggi: i bot della campagna con un carattere
--- (sim/bot.lua M.CARATTERI) o un custode parlano in una nuvoletta sopra la
--- testa (battaglia/targa.lua battuta) quando succede qualcosa. Solo nel
--- client: non toccano la partita, quindi né il server né le ricette.
+-- Character quips: campaign bots with a personality (sim/bot.lua
+-- M.CARATTERI) or a keeper speak in a speech bubble above their head
+-- (battaglia/targa.lua quip) when something happens. Client only: they
+-- don't touch the match, so neither the server nor the recipes.
 --
---   local p = battute.nuove()                    -- per una partita
---   p.chi[robot] = "codardo"                     -- chi parla: il carattere o il custode
---   local robot, testo, forte = p:evento(e, corrente)  -- per ogni evento
---     della partita (corrente: il robot di turno): chi dice cosa, o nil; forte:
---     una battuta che può coprire quella di prima
---   local testo = battute.di(chi, momento, n)    -- la battuta n di quel momento
+--   local p = battute.nuove()                    -- one per match
+--   p.chi[robot] = "codardo"                     -- who speaks: the personality or the keeper
+--   local robot, testo, forte = p:evento(e, current_one)  -- for every match
+--     event (current_one: the robot whose turn it is): who says what, or nil;
+--     forte: a quip that may cover the previous one
+--   local testo = battute.di(chi, moment, n)     -- quip n of that moment
 --
--- Le battute girano in ordine (n: quante volte è già capitato), senza caso.
--- Momenti: turno (comincia il suo turno), colpisce (ferisce qualcuno nel suo
--- turno), colpito (lo feriscono), scappa (si teletrasporta), abbatte, muore.
+-- Quips cycle in order (n: how many times it already happened), no randomness.
+-- Moments: turno (their turn starts), colpisce (hurts someone on their turn),
+-- colpito (they get hurt), scappa (teleports), abbatte, muore.
 
 local M = {}
 
-local BATTUTE = {
+local QUIPS = {
 	codardo = {
 		turno = { "Un colpo e via!", "Non guardarmi così...", "Stavolta non mi prendi!" },
 		colpisce = { "Preso! E ora scappo!", "Questo era gratis!", "Colpito e sparito!" },
@@ -55,46 +55,46 @@ local BATTUTE = {
 	},
 }
 
-function M.di(chi, momento, n)
-	local b = BATTUTE[chi]
-	local lista = b and b[momento]
-	if not lista then return nil end
-	return lista[n % #lista + 1]
+function M.di(who, moment, n)
+	local b = QUIPS[who]
+	local list_of = b and b[moment]
+	if not list_of then return nil end
+	return list_of[n % #list_of + 1]
 end
 
 function M.nuove()
 	return setmetatable({ chi = {}, n = {} }, { __index = M })
 end
 
--- Il momento dell'evento e chi lo dice: chi lo subisce, o chi è di turno
-local function momento(chi, e, corrente)
+-- The event's moment and who says it: whoever takes it, or whoever's turn it is
+local function moment(who, e, current_one)
 	if e.type == "turn" then
 		return e.robot, "turno"
 	elseif e.type == "teleport" then
 		return e.robot, "scappa"
 	elseif e.type == "damage" and e.amount > 0 then
-		if chi[e.robot] then return e.robot, "colpito" end
-		if e.robot ~= corrente then return corrente, "colpisce" end
+		if who[e.robot] then return e.robot, "colpito" end
+		if e.robot ~= current_one then return current_one, "colpisce" end
 	elseif e.type == "death" then
-		if chi[e.robot] then return e.robot, "muore" end
+		if who[e.robot] then return e.robot, "muore" end
 		return e.by, "abbatte"
 	end
 	return nil
 end
 
-local FORTI = { muore = true, abbatte = true, scappa = true }
+local STRONG = { muore = true, abbatte = true, scappa = true }
 
-function M.evento(p, e, corrente)
-	local i, m = momento(p.chi, e, corrente)
-	local chi = i and p.chi[i]
-	if not chi then return nil end
-	local k = chi .. m
+function M.evento(p, e, current_one)
+	local i, m = moment(p.chi, e, current_one)
+	local who = i and p.chi[i]
+	if not who then return nil end
+	local k = who .. m
 	local n = p.n[k] or 0
 	p.n[k] = n + 1
-	-- all'inizio del turno uno sì e uno no
+	-- at turn start, every other one
 	if m == "turno" and n % 2 == 1 then return nil end
-	local s = M.di(chi, m, n)
-	return s and i, s, FORTI[m] == true
+	local s = M.di(who, m, n)
+	return s and i, s, STRONG[m] == true
 end
 
 return M

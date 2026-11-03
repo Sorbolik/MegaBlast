@@ -143,7 +143,7 @@ end
 -- the draft starts with the line-up of the cards (menu/schieramento.lua): its
 -- time is inside the draft time, and meanwhile you can already pick
 function N.draft_seconds()
-	return config.DRAFT_SECONDS + config.SCHIERAMENTO_SECONDS
+	return config.DRAFT_SECONDS + config.LINEUP_SECONDS
 end
 
 function N.draft_new(seed, mode, r)
