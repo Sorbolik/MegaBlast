@@ -1,0 +1,31 @@
+# La ricerca dei giocatori online (Sergio, 3 nov): prima una partita sullo
+# stesso telefono, lasciata con ESCI; poi GIOCA, 2 contro 2, con un solo
+# giocatore finto (la coda non si riempie). Mentre si cerca non si deve vedere
+# la mappa della partita di prima, solo lo sfondo della Forgia, e
+# dall'ingranaggio si esce e si torna alla home.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server 2v2 1
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 00_partita_prima
+tocca 62 658                        # rotellina
+aspetta 0.3
+tocca 408 658                       # ESCI DALLA PARTITA
+aspetta_stato modo=menu 3
+aspetta 1
+tocca 1075 102                      # GIOCA
+aspetta 0.5
+tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
+aspetta_stato modo=connecting 5
+aspetta 4                           # il finto è entrato: si aspetta
+foto 01_ricerca                     # niente mappa vecchia, l'ingranaggio in basso
+tocca 62 658                        # ingranaggio
+aspetta 0.4
+foto 02_rotellina                   # solo MIRA ed ESCI DALLA RICERCA, niente RIPROVA
+tocca 408 658                       # ESCI
+aspetta_stato modo=menu 3
+aspetta 1
+foto 03_home

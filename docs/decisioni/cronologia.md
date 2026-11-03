@@ -113,6 +113,7 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 3 nov | Targa a lama incisa (WB-011, stile C con la sua Corona): la vita scorre nella scanalatura di una lama d'acciaio, il nome senza fondo sopra. | questa PR |
 | 3 nov | Zoom più in basso (via dalla tendina delle notifiche) con una micro-vibrazione a ogni scatto; targhe sopra le corna; la Corona d'oro anche sopra i punti. | questa PR |
 | 3 nov | Targa più semplice e più grande: la vita in una riga piena, una punta a V del colore della squadra per chi è di turno, tutto il 30% più grande. | questa PR |
+| 3 nov | Mentre cerchi gli avversari online non si vede più la partita di prima, e dall'ingranaggio si esce dalla ricerca; la partita finita non resta in memoria. Proposte per l'attesa. | questa PR |
 | 3 nov | La Battaglia della Forgia finisce con le stelle e non resta più bloccata sul podio: si torna alla campagna e alla home. | questa PR |
 | 3 nov | Scelta della mappa in allenamento: dopo modo e livello, le cartoline delle mappe della campagna (A CASO, La Forgia, La fossa del Fabbro). | questa PR |
 | 3 nov | Online e sullo stesso telefono si gioca solo sulle mappe della campagna; la partita dopo la scelta delle armi parte sotto l'iride. | questa PR |
