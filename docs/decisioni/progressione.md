@@ -72,7 +72,7 @@ futuro in [../roadmap.md](../roadmap.md) (aree 9, 10).
 
 ## Aperte
 
-- Quando si apre l'online nella campagna (Sergio, 30 ott: chiuso per buona parte).
+- Quando si apre l'online nella campagna (Sergio, 30 ott: chiuso per buona parte; 3 nov: dopo una prova seria della campagna, uno o due boss, una porta sola per ogni cosa). Proposte in [../sblocco_online.md](../sblocco_online.md).
 - Nome della valuta morbida ("Scorie"? il nome viene dalla vecchia direzione
   artistica).
 - Premi delle stelle della campagna e gironi dopo il primo (fase 5).
