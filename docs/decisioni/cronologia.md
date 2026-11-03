@@ -124,4 +124,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 3 nov | File e cartelle del client in inglese (`battle/`, `circles/`, menu e interfaccia); gli strumenti e l'editor scrivono nei file nuovi. Nel gioco non cambia niente. | #177 |
 | 3 nov | Campi dei file scritti dagli strumenti e dall'editor in inglese (`body.lua`, clip, impugnature, pelli, armi, dipinti); l'editor li traduce leggendo e scrivendo. Nel gioco non cambia niente. | #180 |
 | 3 nov | Cartelle delle immagini e dei suoni in inglese (`client/paintings/`, `client/assets/weapons/`, ...); i nomi delle immagini restano. Nel gioco non cambia niente. | #181 |
+| 3 nov | Tutorial con Favilla e vignette a fumetto (sì a tutte le scelte): fogli modello WB-012 scelti, fase 2 delle tavole approvata. | questa PR |
 | 3 nov | Testi dei menu in `client/lang/it.lua` (prima parte della PR 6): ogni schermata prende le sue frasi da lì. Nel gioco non cambia niente. | questa PR |
