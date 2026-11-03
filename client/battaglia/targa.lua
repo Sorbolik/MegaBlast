@@ -1,6 +1,8 @@
--- La targa sopra la Scoria in battaglia: il nome e una barra della vita sottile,
--- solo forme semplici disegnate dal codice (nessuna immagine) con la palette e il
--- font dell'interfaccia (ui/ui.lua), nel colore della squadra. Il danno si vede in due tempi: la vita scende subito, il pezzo perso
+-- La targa sopra la Scoria in battaglia: il nome, senza targhetta, sopra una lama
+-- d'acciaio sottile con la vita che scorre nella scanalatura, nel colore della
+-- squadra (stile C della scheda WB-011, "lama incisa", scelta di Sergio del 3 nov,
+-- con la sua Corona d'oro). Le immagini le taglia strumenti/grafica/targa.py dal
+-- foglio di ChatGPT; il font è quello dell'interfaccia (ui/ui.lua). Il danno si vede in due tempi: la vita scende subito, il pezzo perso
 -- resta bianco un attimo e poi si consuma; la barra sobbalza e lampeggia. Sotto
 -- il 30% la vita pulsa. Lo scudo, se c'è, è un tratto chiaro dopo la vita.
 --
@@ -28,8 +30,9 @@
 --
 -- Ogni targa ha due radici, t.barre e t.testi, che si muovono insieme. La GUI
 -- disegna i nodi nell'ordine in cui stanno: chi le mette nella scena mette prima
--- le barre di tutte le targhe e poi tutti i testi, così bastano due draw call per
--- tutte (forme senza immagine, poi il font), più una per la freccia in mezzo. Non usiamo i layer della GUI perché
+-- le barre di tutte le targhe, poi la freccia e poi tutti i testi, così bastano due
+-- draw call per tutte: le immagini dell'atlante della battaglia (lama, vita, Corona,
+-- fondo delle battute e freccia: anche i rettangoli usano targa_bianco), poi il font. Non usiamo i layer della GUI perché
 -- disegnerebbero le targhe sopra i pulsanti e i menu.
 
 local ui = require "ui.ui"
@@ -40,21 +43,25 @@ local M = {}
 
 local max = math.max
 
--- misure in unità della GUI con scala 1
-local W, H = 44, 4          -- la barra
-local BORDO = 1             -- il fondo scuro attorno
-local NOME_Y = 10           -- centro del nome sopra la barra
+-- misure in unità della GUI con scala 1. La vita è larga W e alta H; la lama è alta
+-- LAMA_H, comincia PRIMA della vita (il manico) e finisce DOPO (la punta), e la vita
+-- sta SU sopra il suo centro. L'immagine ha LAMA_PX pixel per unità e si allunga
+-- solo fra i bordi LAMA_SX e LAMA_DX (pixel): misure da strumenti/grafica/targa.py
+local W = 36
+local H, LAMA_H, PRIMA, DOPO, SU = 2.59, 9, 8.44, 12.6, 0.39
+local LAMA_PX, LAMA_SX, LAMA_DX = 4, 47, 92
+local BASE = LAMA_H / 2     -- dal punto in basso della targa al centro della lama
+local NOME_Y = LAMA_H / 2 + 6 -- centro del nome sopra la lama
 -- scala del font "titolo" (scala 1 = circa 40 px)
 local NOME_SCALA, NUMERO_SCALA, STATO_SCALA, ANNUNCIO_SCALA = 0.25, 0.2, 0.18, 0.3
-local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -8, 22, 14, 1.4
+local STATO_Y, ANNUNCIO_Y, ANNUNCIO_SALE, ANNUNCIO_T = -(LAMA_H / 2 + 4), 22, 14, 1.4
 -- La targa resta grande uguale sullo schermo a ogni zoom (Sergio, 3 nov: da
 -- lontano non deve essere più grande del personaggio): scala SCHERMO / zoom
 local SCHERMO = 0.85
 -- la Corona del primo sulla riga del nome, a sinistra (Sergio, 3 nov, scelta L1:
--- la targa resta bassa). ui.corona è larga 18 e alta 13 a scala 1, col centro
--- 3 sopra il suo punto
-local CORONA_SCALA, CORONA_STACCO = 0.75, 2
-local CORONA_Y = NOME_Y - 3 * CORONA_SCALA
+-- la targa resta bassa), larga CORONA_W e alta CORONA_H come l'immagine (108 x 59)
+local CORONA_W, CORONA_STACCO = 13.5, 2
+local CORONA_H = CORONA_W * 59 / 108
 -- dove finisce il nome in alto
 local NOME_CIMA = NOME_Y + 6
 -- la freccia di ferro: larga FRECCIA_W (alta come dice l'immagine), FRECCIA_STACCO
@@ -77,17 +84,26 @@ local BATTUTA_STACCO, BATTUTA_SCALA, BATTUTA_BORDO, BATTUTA_T = 2, 0.42, 8, 2.6
 local FRECCIA_SOPRA = 2
 local NUVOLA = vmath.vector4(0.06, 0.05, 0.08, 0.82)
 
-local FONDO = ui.C.OMBRA
 local SCIA = ui.C.LUCE
 local SCUDO = vmath.vector4(0.75, 0.86, 1, 1)
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(1, 1, 1, 1)
 
-local function rettangolo(parent, x, y, w, h, colore)
+-- un'immagine dell'atlante della battaglia, grande w x h
+local function immagine(parent, nome, x, y, w, h)
 	local n = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(w, h, 0))
+	gui.set_texture(n, "battaglia")
+	gui.play_flipbook(n, nome)
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_parent(n, parent)
 	gui.set_inherit_alpha(n, true)
+	return n
+end
+
+-- un rettangolo pieno: targa_bianco tinto (così sta nella draw call delle immagini)
+local function rettangolo(parent, x, y, w, h, colore)
+	local n = immagine(parent, "targa_bianco", x, y, w, h)
 	gui.set_color(n, colore)
 	return n
 end
@@ -105,14 +121,14 @@ end
 
 -- un pezzo della barra: parte dal bordo sinistro, largo w (da x)
 local function pezzo(t, colore)
-	local n = rettangolo(t.dentro, -W / 2, 0, 0, H, colore)
+	local n = rettangolo(t.dentro, -W / 2, SU, 0, H, colore)
 	gui.set_pivot(n, gui.PIVOT_W)
 	return n
 end
 
 local function larghezza(n, x, w)
 	gui.set_enabled(n, w > 0.05)
-	V.x, V.y, V.z = -W / 2 + x, 0, 0
+	V.x, V.y, V.z = -W / 2 + x, SU, 0
 	gui.set_position(n, V)
 	V.x, V.y = w, H
 	gui.set_size(n, V)
@@ -123,7 +139,9 @@ local function radice()
 	local r = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(r, false)
 	gui.set_adjust_mode(r, gui.ADJUST_FIT)
-	local d = rettangolo(r, 0, H / 2 + BORDO, 0, 0, FONDO)
+	local d = gui.new_box_node(vmath.vector3(0, BASE, 0), vmath.vector3(0, 0, 0))
+	gui.set_parent(d, r)
+	gui.set_inherit_alpha(d, true)
 	gui.set_visible(d, false)
 	return r, d
 end
@@ -132,7 +150,7 @@ end
 local function corona_posto(t)
 	local font = gui.get_font_resource(gui.get_font(t.nome))
 	local w = resource.get_text_metrics(font, gui.get_text(t.nome)).width * NOME_SCALA
-	V.x, V.y, V.z = -w / 2 - CORONA_STACCO - 9 * CORONA_SCALA, CORONA_Y, 0
+	V.x, V.y, V.z = -w / 2 - CORONA_STACCO - CORONA_W / 2, NOME_Y, 0
 	gui.set_position(t.corona, V)
 end
 
@@ -143,12 +161,16 @@ function M.nuove(colori, nomi)
 		local t = { colore = vmath.vector4(colore.x, colore.y, colore.z, 1), vita_f = 1, scia_f = 1,
 			scudo_f = 0, max_f = 1, attesa = 0, colpo = 0, t = 0, annuncio_t = 0 }
 		t.barre, t.dentro = radice()
-		rettangolo(t.dentro, 0, 0, W + 2 * BORDO, H + 2 * BORDO, FONDO)
+		-- la lama: si allunga solo nel mezzo (slice9 in pixel dell'immagine,
+		-- per questo è grande LAMA_PX volte e rimpicciolita)
+		local lw = PRIMA + W + DOPO
+		local lama = immagine(t.dentro, "targa_lama", (DOPO - PRIMA) / 2, 0, lw * LAMA_PX, LAMA_H * LAMA_PX)
+		gui.set_slice9(lama, vmath.vector4(LAMA_SX, 0, LAMA_DX, 0))
+		gui.set_scale(lama, vmath.vector3(1 / LAMA_PX, 1 / LAMA_PX, 1))
 		t.scia = pezzo(t, SCIA)
 		t.scudo = pezzo(t, SCUDO)
 		t.pieno = pezzo(t, colore)
-		t.corona = ui.corona(0, CORONA_Y, nil, t.dentro)
-		gui.set_scale(t.corona, vmath.vector3(CORONA_SCALA, CORONA_SCALA, 1))
+		t.corona = immagine(t.dentro, "targa_corona", 0, NOME_Y, CORONA_W, CORONA_H)
 		gui.set_enabled(t.corona, false)
 		-- il fondo della nuvoletta, con le forme (fuori dal nodo che sobbalza)
 		t.nuvola = rettangolo(t.barre, 0, 0, 0, 0, NUVOLA)
@@ -161,9 +183,9 @@ function M.nuove(colori, nomi)
 	for i, t in ipairs(tt) do
 		t.testi, t.dentro_testi = radice()
 		t.nome = testo(t.dentro_testi, 0, NOME_Y, nomi[i] or "", NOME_SCALA, t.colore)
-		t.numero = testo(t.dentro_testi, W / 2 + BORDO + 3, 0, "", NUMERO_SCALA, ui.C.TESTO)
+		t.numero = testo(t.dentro_testi, W / 2 + DOPO + 2, 0, "", NUMERO_SCALA, ui.C.TESTO)
 		gui.set_pivot(t.numero, gui.PIVOT_W)
-		t.posto = testo(t.dentro_testi, -W / 2 - BORDO - 3, 0, "", NUMERO_SCALA, ui.C.TESTO)
+		t.posto = testo(t.dentro_testi, -W / 2 - PRIMA - 2, 0, "", NUMERO_SCALA, ui.C.TESTO)
 		gui.set_pivot(t.posto, gui.PIVOT_E)
 		t.stato = testo(t.dentro_testi, 0, STATO_Y, "", STATO_SCALA, ui.C.TESTO)
 		t.annuncio = testo(t.dentro_testi, 0, ANNUNCIO_Y, "", ANNUNCIO_SCALA, ui.C.LUCE)
@@ -394,7 +416,7 @@ function M.freccia_su(f, t)
 	end
 	if not t then return end
 	t.freccia = f
-	t.freccia_cima = H / 2 + BORDO + freccia_base(f) + f.h / 2 + FRECCIA_DONDOLA
+	t.freccia_cima = BASE + freccia_base(f) + f.h / 2 + FRECCIA_DONDOLA
 end
 
 -- in targa.update, col sobbalzo del colpo (k) come il nome e la Corona. In alto
@@ -403,7 +425,7 @@ freccia_update = function(f, t, dt, k)
 	f.t = (f.t + dt) % FRECCIA_T
 	local c = math.cos(f.t / FRECCIA_T * 2 * math.pi)
 	local accesa = (1 - c) / 2
-	V.x, V.y, V.z = t.x, t.y + (H / 2 + BORDO + (freccia_base(f) + FRECCIA_DONDOLA * c) * k) * t.scala, 0
+	V.x, V.y, V.z = t.x, t.y + (BASE + (freccia_base(f) + FRECCIA_DONDOLA * c) * k) * t.scala, 0
 	gui.set_position(f.radice, V)
 	V.x, V.y, V.z = t.scala * k, t.scala * k, 1
 	gui.set_scale(f.radice, V)

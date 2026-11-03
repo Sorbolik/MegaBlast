@@ -25,6 +25,15 @@ images {
 images {
   image: "/assets/fx/freccia_cuore.png"
 }
+images {
+  image: "/assets/fx/targa_lama.png"
+}
+images {
+  image: "/assets/fx/targa_corona.png"
+}
+images {
+  image: "/assets/fx/targa_bianco.png"
+}
 margin: 0
 extrude_borders: 2
 inner_padding: 0

@@ -142,3 +142,56 @@ Opzioni scartate senza immagine:
 - la vita in numeri e basta: si legge male di colpo, mentre una barra si capisce con un'occhiata;
 - la vita come anello sotto i piedi: sui crateri e sui bordi si perde, e copre il terreno dove si cammina;
 - i cuori o le icone a pezzi: non sono della storia del gioco, e con 100 di vita la precisione si perde.
+
+
+## Consegna di Codex
+
+2026-11-03 · Generazione eseguita; risultati di proposta con difetti residui, non tutti i criteri di accettazione sono soddisfatti. Nessuna integrazione nel gioco.
+
+### File consegnati
+
+In `art/WB-011/`, ciascuno con il proprio `.txt` contenente il prompt originale e i riferimenti nell'ordine richiesto:
+
+| File PNG | Tentativi eseguiti | Tentativo consegnato |
+|---|---:|---:|
+| `a_ferro_scena.png` | 3 | 1 |
+| `a_ferro_foglio.png` | 1 | 1 |
+| `b_catena_scena.png` | 3 | 2 |
+| `b_catena_foglio.png` | 3 | 1 |
+| `c_lama_scena.png` | 3 | 2 |
+| `c_lama_foglio.png` | 1 | 1 |
+
+### Controlli e limiti
+
+- Usati esattamente i sei prompt della scheda; R1 allegato per primo, R2 per secondo nelle scene. Sfondo dipinto nelle scene, magenta nei fogli. Nessun ritocco, ricalco o taglio.
+- Guardati tutti i tentativi. Verificati formato PNG, misura 1536×1024, assenza visibile di scritte, pezzi separati nei fogli, contorni neri, coda e corna intere, assenza di fiammella sulla testa e corona a sinistra della riga del nome nelle scene.
+- **Scene, proporzioni non conformi:** il personaggio resta circa il 44–60% dell'altezza dell'immagine anziché circa il 25%. La targa supera la larghezza del torso, pur rimanendo più stretta della sagoma completa. I tentativi successivi non hanno risolto questi vincoli. R1 è riconoscibile ma non è una copia geometrica esatta.
+- **A scena:** la vita resta arancione invece del blu #3d7bff in tutti e tre i tentativi. Il primo è consegnato come proposta di forma, non come risultato conforme al colore richiesto.
+- **B scena:** selezionato il secondo tentativo, con cinque maglie e luce blu; il primo e il terzo presentavano luce arancione. Il riempimento è approssimato, non verificato al pixel.
+- **B foglio:** nei tre tentativi persistono giallo/arancione attorno alla brace e sulla metà accesa; il bianco neutro non è rispettato pienamente. Consegnato il primo, senza la catena extra introdotta dal secondo e con meno arancione del terzo. La corona del foglio ha cinque punte, diversa dalle tre della scena.
+- **A foglio:** la striscia chiara ha tratteggi dorati alle estremità; non è interamente neutra. La guida risulta più allungata del rapporto indicativo 8:1.
+- **C:** luce blu nella scena; foglio con lama, linea chiara e corona separati. Anche la lama del foglio è più allungata del rapporto indicativo 12:1.
+- **Fogli, sfondo non esatto:** appare magenta ma gli angoli campionati variano (R 237–247, G 12–36, B 234–243), quindi non è il pieno #FF00FF richiesto. Non certificati gli aloni al taglio; necessario riesame prima del taglio automatico. Nessuna correzione esterna delle immagini.
+- Non verificati nel gioco: leggibilità a 20 px, tintura del materiale, taglio e stiramento delle barre. I criteri della scheda restano non spuntati per la revisione di Claude e Sergio.
+- Segnalazione documentale: DECISIONI.md (2026-10-26) descrive ancora la fiammella sopra la testa, mentre questa scheda prescrive esplicitamente R1 senza fiammella. Le immagini seguono il prompt approvato senza modificare le decisioni.
+
+## Resoconto di Claude
+
+2026-11-03 · Guardate tutte e sei le immagini (pagina delle proposte, sezione 6). Nessuna è da
+rifare per la scelta: i difetti stanno nei colori delle scene (A arancione) e nei pezzi che il gioco non usa.
+
+- **Scelta di Sergio: C, con la sua Corona**, e il nome senza targhetta sopra la vita. Claude
+  consigliava A (più vicina alla freccia di ferro); B scartata perché da lontano la vita si legge a
+  scatti di 20.
+- **Integrati** da `c_lama_foglio.png` con `strumenti/grafica/targa.py`: la lama (manico, un pezzetto
+  di mezzo senza graffi che il gioco allunga, la punta) e la Corona. La riga chiara del foglio non
+  serve: la vita è un rettangolo tinto dentro la scanalatura, che si accorcia senza deformare punte
+  tonde. Il magenta non pieno si toglie come per la freccia; nessun alone visibile.
+- **Non usati**: le scene (sono di prova), i fogli A e B. In `art/WB-011/` restano solo i file di C;
+  gli altri sono sul ramo `design/WB-011`.
+- Provata nel simulatore a ogni zoom e a 2x (come sul telefono), con la Corona su Oro nella lezione dei punti.
+
+- [x] la targa è più stretta del personaggio e alta meno della sua metà
+- [x] la Corona sta sulla stessa riga del nome, a sinistra
+- [x] nessuna scritta nelle immagini
+- [x] pezzi staccati e dritti; la riga accesa (non usata) in bianco
