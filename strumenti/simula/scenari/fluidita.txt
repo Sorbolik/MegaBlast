@@ -33,6 +33,8 @@ tocca 1075 323                      # ALLENAMENTO
 aspetta 1
 tocca 310 460                       # 1 CONTRO 1
 tocca 890 300                       # DIFFICILE
+tocca 640 140                       # AVANTI (la mappa resta A CASO)
+aspetta 0.3
 tocca 640 140                       # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1

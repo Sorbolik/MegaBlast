@@ -1,5 +1,5 @@
 # Contro i bot: dalla home ALLENAMENTO, la scelta di modo
-# e livello (1 contro 1 difficile), GIOCA. Il giocatore spara, poi gioca il bot da solo: pensa, si muove
+# e livello (1 contro 1 difficile), AVANTI, la mappa (la fossa del Fabbro), GIOCA. Il giocatore spara, poi gioca il bot da solo: pensa, si muove
 # e attacca (primaria e secondaria), e il turno torna al giocatore.
 
 aspetta 2
@@ -11,16 +11,22 @@ tocca 310 460                       # 1 CONTRO 1
 tocca 890 300                       # DIFFICILE
 aspetta 0.5
 foto 03_scelta_fatta
+tocca 640 140                       # AVANTI
+aspetta 0.5
+foto 04_scegli_la_mappa
+tocca 987 380                       # LA FOSSA DEL FABBRO
+aspetta 0.3
+foto 05_mappa_scelta
 tocca 640 140                       # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
-foto 04_partita
+foto 06_partita
 mira 150 100 0.4
 aspetta_stato turno=2 fase=aim 20
 aspetta 0.3
-foto 05_turno_bot
+foto 07_turno_bot
 aspetta 2.5
-foto 06_il_bot_gioca
+foto 08_il_bot_gioca
 aspetta_stato turno=1 fase=aim 40
 aspetta 0.5
-foto 07_di_nuovo_al_giocatore
+foto 09_di_nuovo_al_giocatore
