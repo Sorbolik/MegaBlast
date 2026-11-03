@@ -25,6 +25,7 @@ func main() {
 	flag.StringVar(&cfg.Node, "node", cfg.Node, "nome del nodo (entra nei gettoni di riconnessione)")
 	flag.IntVar(&cfg.Workers, "workers", cfg.Workers, "worker che fanno girare le stanze (di solito uno per core)")
 	flag.StringVar(&cfg.EventList, "eventi", cfg.EventList, "calendario degli eventi: l'indirizzo del pannello (https://…/eventi.json) o un file JSON (si rilegge quando cambia)")
+	flag.DurationVar(&cfg.BotAfter, "bot-dopo", cfg.BotAfter, "dopo quanto i bot riempiono una coda normale (0 = mai)")
 	flag.Parse()
 
 	srv := NewServer(cfg)
@@ -41,10 +42,10 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
-	log.Printf("spegnimento: aspetto la fine di %d partite", srv.sched.Rooms())
+	log.Printf("spegnimento: aspetto la fine di %d partite", (srv.sched.Rooms() + srv.botSched.Rooms()))
 	srv.Drain()
 	deadline := time.Now().Add(10 * time.Minute)
-	for srv.sched.Rooms() > 0 && time.Now().Before(deadline) {
+	for (srv.sched.Rooms()+srv.botSched.Rooms()) > 0 && time.Now().Before(deadline) {
 		select {
 		case <-stop:
 			deadline = time.Now() // second signal: exit at once

@@ -290,10 +290,13 @@ func (c *testClient) send(msg string) {
 	}
 }
 
-func testServer(t *testing.T) string {
+func testServer(t *testing.T, change ...func(*Config)) string {
 	cfg := DefaultConfig()
 	cfg.ReconnectTicks = tickRate / 2 // half a second to come back, so the tests don't take too long
 	cfg.DraftTicks = tickRate         // and one second to pick the weapon
+	for _, c := range change {
+		c(&cfg)
+	}
 	srv := httptest.NewServer(NewServer(cfg).Handler())
 	t.Cleanup(srv.Close)
 	return "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
@@ -638,5 +641,93 @@ func TestShowcases(t *testing.T) {
 	}
 	if s := a.waitFor(`"start"`); showcases(s) != want {
 		t.Fatalf("cards in start: %s, expected %s", showcases(s), want)
+	}
+}
+
+// The waiting room (client/menu/sala.lua): everyone in the queue gets the
+// cards of who is waiting, at every join and leave, with their own place.
+func TestWaitingRoom(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":3}}`)
+	w := a.waitFor(`"wait"`)
+	if w["of"] != float64(4) || w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
+		t.Fatalf("first wait: %v", w)
+	}
+	b := dial(t, ctx, url)
+	b.send(`{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":5}}`)
+	w = b.waitFor(`"wait"`)
+	cards := w["vetrine"].([]any)
+	if w["you"] != float64(2) || len(cards) != 2 || cards[0].(map[string]any)["liv"] != float64(3) {
+		t.Fatalf("second wait: %v", w)
+	}
+	if w = a.waitFor(`"wait"`); len(w["vetrine"].([]any)) != 2 {
+		t.Fatalf("the first doesn't see the second: %v", w)
+	}
+	// the first leaves: the second moves up to place 1
+	a.conn.Close(websocket.StatusNormalClosure, "")
+	w = b.waitFor(`"wait"`)
+	if w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
+		t.Fatalf("after leaving: %v", w)
+	}
+}
+
+// Bots fill the queue (lobby.go): two people in a 2 vs 2, after BotAfter
+// (here one second) the match starts with two bots, and the people are on
+// different teams.
+func TestBotsFillQueue(t *testing.T) {
+	url := testServer(t, func(c *Config) { c.BotAfter = time.Second })
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":12}}`)
+	if w := a.waitFor(`"wait"`); w["bot_in"] == nil {
+		t.Fatalf("no bot_in in a normal queue: %v", w)
+	}
+	b := dial(t, ctx, url)
+	b.send(`{"t":"hello","v":8,"mode":"2v2"}`)
+	d := a.waitFor(`"draft"`)
+	players := d["players"].([]any)
+	cards := d["vetrine"].([]any)
+	if len(players) != 4 || players[0].(map[string]any)["team"] == players[1].(map[string]any)["team"] {
+		t.Fatalf("the two people must be on different teams: %v", players)
+	}
+	for i := 2; i < 4; i++ {
+		if players[i].(map[string]any)["bot"] != float64(4) || cards[i].(map[string]any)["bot"] != true {
+			t.Fatalf("seat %d is not a grade 4 bot (average level 6): %v %v", i+1, players, cards)
+		}
+	}
+	b.waitFor(`"draft"`)
+	a.waitFor(`"start"`)
+	// a few game states arrive: the room with bots runs (that they play is
+	// checked by TestNetBotPlays, without waiting for the real turns)
+	a.waitFor(`"t":"state"`)
+	a.waitFor(`"t":"state"`)
+}
+
+// A bot seat in net.lua (N.new with players[i].bot) plays its turn by itself
+// on the server: it shoots and passes the turn on, with the server's work
+// budget (N.WORK).
+func TestNetBotPlays(t *testing.T) {
+	e, err := newEngine()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.L.Close()
+	e.L.SetGlobal("N", e.net)
+	err = e.L.DoString(`
+local g = N.new(5, nil, { { team = 1, bot = 4 }, { team = 2, bot = 4 } })
+local shot = false
+while g.tick < 3000 and N.current(g) == 1 do
+	N.step(g, false, false, false, false)
+	shot = shot or g.used.primary or g.used.secondary
+end
+assert(shot, "the bot didn't shoot")
+assert(N.current(g) ~= 1, "the bot's turn didn't end")
+`)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

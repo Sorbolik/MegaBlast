@@ -2,30 +2,42 @@
 # stesso telefono, lasciata con ESCI; poi GIOCA, 2 contro 2, con un solo
 # giocatore finto (la coda non si riempie). Mentre si cerca non si deve vedere
 # la mappa della partita di prima, solo lo sfondo della Forgia, e
-# dall'ingranaggio si esce e si torna alla home.
+# dall'ingranaggio si esce e si torna alla home. Tocchi ai bordi: va anche con
+# --schermo 1600x720 e 960x720.
 imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 1
-tocca 1075 235                      # STESSO TELEFONO
+tocca_bordo 205 235 basso destra                     # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 00_partita_prima
-tocca 62 658                        # rotellina
+tocca_bordo 62 62 alto sinistra                       # rotellina
 aspetta 0.3
-tocca 408 658                       # ESCI DALLA PARTITA
+tocca_bordo 408 62 alto sinistra                      # ESCI DALLA PARTITA
 aspetta_stato modo=menu 3
 aspetta 1
-tocca 1075 102                      # GIOCA
+tocca_bordo 205 102 basso destra                     # GIOCA
 aspetta 0.5
-tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
+tocca_centro 368 300                      # DOVE GIOCHI?: 2 contro 2
 aspetta_stato modo=connecting 5
-aspetta 4                           # il finto è entrato: si aspetta
-foto 01_ricerca                     # niente mappa vecchia, l'ingranaggio in basso
-tocca 62 658                        # ingranaggio
+aspetta 4                           # il finto è entrato: due cartellini su quattro
+foto 01_ricerca                     # la sala: il mio cartellino, quello del finto, due posti IN ARRIVO
+tocca_bordo 62 62 alto sinistra                       # ingranaggio
 aspetta 0.4
 foto 02_rotellina                   # solo MIRA ed ESCI DALLA RICERCA, niente RIPROVA
-tocca 408 658                       # ESCI
+tocca_bordo 408 62 alto sinistra                      # ESCI
 aspetta_stato modo=menu 3
 aspetta 1
 foto 03_home
+# di nuovo in coda, e si esce col bottone ESCI DALLA CODA in basso
+tocca_bordo 205 102 basso destra                     # GIOCA
+aspetta 0.5
+tocca_centro 368 300                      # 2 contro 2
+aspetta_stato modo=connecting 5
+aspetta 1.5
+foto 04_ricerca_di_nuovo
+tocca_centro 640 44                       # ESCI DALLA CODA
+aspetta_stato modo=menu 3
+aspetta 1
+foto 05_home_dal_bottone

@@ -126,7 +126,10 @@ function M.from_net(t, nome, team, under)
 		local ok = milestones.valid(b)
 		if ok and #badge < milestones.SHOWN then badge[#badge + 1] = ok end
 	end
-	return M.simple(nome, team, under, liv, badge)
+	local v = M.simple(nome, team, under, liv, badge)
+	-- a bot that fills the queue (server/lobby.go): its ring says BOT
+	v.bot = type(t) == "table" and t.bot == true or nil
+	return v
 end
 
 -- What is sent to the server with the greeting (hello): level and badges

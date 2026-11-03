@@ -26,7 +26,8 @@ type Config struct {
 	ReconnectTicks int // how long to wait for someone who dropped before removing them from the match
 	DraftTicks     int // if > 0 replaces config.DRAFT_SECONDS (for tests)
 	PingEvery      time.Duration
-	EventList      string // event calendar (events.go): panel address or file, empty = no events
+	EventList      string        // event calendar (events.go): panel address or file, empty = no events
+	BotAfter       time.Duration // bots fill a normal queue this long after the first joined (0 = never)
 }
 
 func DefaultConfig() Config {
@@ -35,6 +36,7 @@ func DefaultConfig() Config {
 		Workers:        runtime.GOMAXPROCS(0),
 		ReconnectTicks: 20 * tickRate,
 		PingEvery:      10 * time.Second,
+		BotAfter:       25 * time.Second,
 	}
 }
 
@@ -44,6 +46,7 @@ func DefaultConfig() Config {
 type Server struct {
 	cfg      Config
 	sched    *Scheduler
+	botSched *Scheduler // rooms with bots (lobby.go): their own workers
 	lobby    *Lobby
 	events   *Calendar
 	sessions sync.Map // token -> seatRef, for whoever reconnects
@@ -52,7 +55,7 @@ type Server struct {
 }
 
 func NewServer(cfg Config) *Server {
-	s := &Server{cfg: cfg, sched: NewScheduler(cfg.Workers), events: NewCalendar(cfg.EventList)}
+	s := &Server{cfg: cfg, sched: NewScheduler(cfg.Workers), botSched: NewScheduler(cfg.Workers), events: NewCalendar(cfg.EventList)}
 	s.lobby = NewLobby(s)
 	return s
 }
@@ -74,14 +77,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/ws", s.handleWS)
 	// for the load balancer: 503 when the node is shutting down or full
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		if s.draining.Load() || s.sched.Load() > 0.8 {
+		if s.draining.Load() || max(s.sched.Load(), s.botSched.Load()) > 0.8 {
 			w.WriteHeader(http.StatusServiceUnavailable)
 		}
 	})
 	mux.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]any{
 			"node": s.cfg.Node, "online": s.online.Load(), "waiting": s.lobby.Waiting(),
-			"rooms": s.sched.Rooms(), "load": s.sched.Load(), "late_ticks": s.sched.Late(),
+			"rooms": s.sched.Rooms() + s.botSched.Rooms(), "bot_rooms": s.botSched.Rooms(),
+			"load": max(s.sched.Load(), s.botSched.Load()), "late_ticks": s.sched.Late(), "bot_late_ticks": s.botSched.Late(),
 			"draining": s.draining.Load(),
 		})
 	})
@@ -106,7 +110,8 @@ type Player struct {
 	cancel    context.CancelFunc
 	room      atomic.Pointer[seatRef] // the match they're playing, nil if not playing
 	closeOnce sync.Once
-	showcase  []byte // the card as JSON, checked (showcaseJSON): level and badges
+	showcase  []byte    // the card as JSON, checked (showcaseJSON): level and badges
+	joined    time.Time // when they entered the queue (bots after BotAfter, lobby.go)
 }
 
 // Send never blocks the match. If the client doesn't drain its messages we

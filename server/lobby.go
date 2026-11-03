@@ -1,7 +1,11 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
+	"math"
+	"strings"
 	"sync"
 	"time"
 )
@@ -29,39 +33,117 @@ type Lobby struct {
 	srv    *Server
 	mu     sync.Mutex
 	queues map[string][]*Player
+	sizes  map[string]int // players a queue's match needs (also event queues)
 }
 
 func NewLobby(srv *Server) *Lobby {
-	return &Lobby{srv: srv, queues: map[string][]*Player{}}
+	l := &Lobby{srv: srv, queues: map[string][]*Player{}, sizes: map[string]int{}}
+	if srv.cfg.BotAfter > 0 {
+		go l.fillLoop()
+	}
+	return l
+}
+
+// Bots fill a normal queue (Sergio, 3 Nov: "coda da 25 secondi che poi ti
+// matcha con i bot", no button: with two people waiting, who would choose?):
+// BotAfter after the first in line joined, the match starts with whoever is
+// there and bots in the empty seats. Event queues wait for people (their
+// leaderboards would count the bots).
+func (l *Lobby) fillLoop() {
+	t := time.NewTicker(time.Second / 4)
+	defer t.Stop()
+	for range t.C {
+		l.mu.Lock()
+		var groups [][]*Player
+		var ms []Mode
+		for name, q := range l.queues {
+			m, normal := modes[name]
+			if !normal || len(q) == 0 || time.Since(q[0].joined) < l.srv.cfg.BotAfter {
+				continue
+			}
+			groups, ms = append(groups, q), append(ms, m)
+			delete(l.queues, name)
+		}
+		l.mu.Unlock()
+		for i, g := range groups {
+			go l.start(ms[i], g)
+		}
+	}
+}
+
+// botGrade: the bots' grade (sim/bot.lua GRADI, 1-10) from the average level
+// of the people in the match: 3 up to level 4, one more every 5 levels, at
+// most 8 (the two strongest stay for the arena).
+func botGrade(players []*Player) int {
+	sum := 0
+	for _, p := range players {
+		var v showcaseMsg
+		if p.showcase != nil && json.Unmarshal(p.showcase, &v) == nil {
+			sum += v.Level
+		}
+	}
+	return min(8, 3+sum/len(players)/5)
 }
 
 // Join puts the player in the queue; when the queue has enough players a
 // match starts.
 func (l *Lobby) Join(p *Player, mode Mode) {
 	l.mu.Lock()
+	p.joined = time.Now()
+	l.sizes[mode.Name] = mode.Players
 	q := append(l.queues[mode.Name], p)
 	var group []*Player
 	if len(q) >= mode.Players {
 		group, q = q[:mode.Players:mode.Players], q[mode.Players:]
 	}
 	l.queues[mode.Name] = q
+	if group == nil {
+		l.announce(mode.Name, q, mode.Players)
+	}
 	l.mu.Unlock()
 
-	if group == nil {
-		p.Send([]byte(`{"t":"wait"}`))
-		return
+	if group != nil {
+		go l.start(mode, group)
 	}
-	go l.start(mode, group)
+}
+
+// announce tells everyone in a queue who is waiting (the waiting room's cards,
+// client/menu/sala.lua): {"t":"wait","of":4,"you":2,"vetrine":[{"liv":12,...},{}]}
+// in queue order, you = your place. Called with the lock held, at every join and leave.
+// bot_in: the seconds before the bots (normal queues only).
+func (l *Lobby) announce(name string, q []*Player, of int) {
+	cards := make([]string, len(q))
+	for i, x := range q {
+		cards[i] = "{}"
+		if x.showcase != nil {
+			cards[i] = string(x.showcase)
+		}
+	}
+	list := strings.Join(cards, ",")
+	bots := ""
+	if _, normal := modes[name]; normal && l.srv.cfg.BotAfter > 0 && len(q) > 0 {
+		left := l.srv.cfg.BotAfter - time.Since(q[0].joined)
+		bots = fmt.Sprintf(`,"bot_in":%d`, max(0, int(math.Ceil(left.Seconds()))))
+	}
+	for i, x := range q {
+		x.Send(fmt.Appendf(nil, `{"t":"wait","of":%d,"you":%d,"vetrine":[%s]%s}`, of, i+1, list, bots))
+	}
 }
 
 func (l *Lobby) start(mode Mode, players []*Player) {
-	r, err := newRoom(l.srv, mode, players, time.Now().UnixNano()%2147483646+1)
+	r, err := newRoom(l.srv, mode, players, time.Now().UnixNano()%2147483646+1, botGrade(players))
 	if err != nil {
 		log.Printf("errore simulazione: %v", err)
 		for _, p := range players {
 			p.Send([]byte(`{"t":"error"}`))
 			p.Close()
 		}
+		return
+	}
+	// rooms with bots on their own workers: a bot thinking (peaks of 20 ms)
+	// must not slow down the matches between people
+	if len(players) < mode.Players {
+		l.srv.botSched.Add(r)
 		return
 	}
 	l.srv.sched.Add(r)
@@ -74,7 +156,9 @@ func (l *Lobby) Leave(p *Player) {
 	for name, q := range l.queues {
 		for i, x := range q {
 			if x == p {
-				l.queues[name] = append(q[:i:i], q[i+1:]...)
+				q = append(q[:i:i], q[i+1:]...)
+				l.queues[name] = q
+				l.announce(name, q, l.sizes[name])
 				return
 			}
 		}

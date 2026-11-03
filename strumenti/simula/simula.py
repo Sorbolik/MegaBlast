@@ -314,8 +314,10 @@ def calendario_prova(nome, out):
     return f, json.loads(testo)["eventi"]
 
 
-def avvia_server(g, modo, n, eventi=None):
+def avvia_server(g, modo, n, eventi=None, bot_dopo=None):
     """Il server vero e N giocatori finti (strumenti/simula/finti) nella coda modo.
+    bot_dopo: dopo quanto i bot riempiono la coda (-bot-dopo del server, per
+    esempio "6s"; senza, quello del server: 25 s).
     Lo scenario deve dire al gioco dove sta: imposta server_url ws://127.0.0.1:8090/ws
     eventi: un calendario in scenari/ (calendario_prova); modo "evento:ID" è la
     coda di quell'evento (la sua prima volta, che lo scenario fa in corso)."""
@@ -334,6 +336,8 @@ def avvia_server(g, modo, n, eventi=None):
         if modo.startswith("evento:"):
             e = next(e for e in lista if e["id"] == modo[7:])
             modo = e["id"] + "-" + e["da"][:10].replace("-", "")
+    if bot_dopo:
+        extra += ["-bot-dopo", bot_dopo]
     log = open(g.out / "server.txt", "w")
     g.server.append(subprocess.Popen([str(bin / "server"), "-addr", f"127.0.0.1:{PORTA_SERVER}", *extra],
                                      stdout=log, stderr=subprocess.STDOUT))
@@ -354,7 +358,10 @@ def comando(g, riga):
     elif c == "aspetta":
         g.attendi(num(0))
     elif c == "server":
-        avvia_server(g, a[0], int(num(1, 1)), a[2] if len(a) > 2 else None)
+        # server MODO [N] [CALENDARIO] [bot_dopo=6s]
+        chiavi = dict(x.split("=", 1) for x in a if "=" in x)
+        a = [x for x in a if "=" not in x]
+        avvia_server(g, a[0], int(num(1, 1)), a[2] if len(a) > 2 else None, chiavi.get("bot_dopo"))
     elif c == "foto":
         g.scatta(a[0])
     elif c == "zoom":

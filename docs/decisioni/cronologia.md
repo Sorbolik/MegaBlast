@@ -117,4 +117,6 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 3 nov | La Battaglia della Forgia finisce con le stelle e non resta più bloccata sul podio: si torna alla campagna e alla home. | questa PR |
 | 3 nov | Scelta della mappa in allenamento: dopo modo e livello, le cartoline delle mappe della campagna (A CASO, La Forgia, La fossa del Fabbro). | questa PR |
 | 3 nov | Online e sullo stesso telefono si gioca solo sulle mappe della campagna; la partita dopo la scelta delle armi parte sotto l'iride. | questa PR |
+| 3 nov | Sala d'attesa online coi cartellini: il tuo subito, gli altri si accendono quando entrano in coda; il tempo che passa e un consiglio sotto. | questa PR |
+| 3 nov | I bot riempiono la coda online dopo 25 s (persone in squadre diverse, grado dal livello, niente bot negli eventi), BOT TRA N s nella sala ed ESCI DALLA CODA; il rating futuro conterà solo le partite contro persone. | questa PR |
 | 3 nov | Tolte le mappe vecchie (Forgia dei Titani, Il Crogiolo, colline casuali) con immagini e shader: test e scenari sulle mappe della campagna. Nel gioco non cambia niente. | questa PR |
