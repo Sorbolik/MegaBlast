@@ -2498,8 +2498,6 @@ function M:start_turn(player)
 	self.window = 0
 	-- attacks already done this turn (at most a weapon and a sword hit) and the tool, one per turn
 	self.used = { primary = false, secondary = false, tool = false }
-	-- teleports thrown and orbs earned this turn (for the first-turn limit)
-	self.teleports, self.teleports_earned = 0, 0
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
 	self:pair_start(rb)
@@ -2530,8 +2528,8 @@ end
 -- Can the robot on turn use weapon now? "teleport", "sword", a weapon or an
 -- item. One weapon and one sword hit per turn, up to the last tick. The
 -- teleport uses up an orb (rb.teleports_left) and, like items, can be thrown
--- at any moment of the turn. On the first turn only one of the starting orbs
--- can be thrown, but the ones earned during the turn can always be used.
+-- at any moment of the turn, as many as you have, on the first turn too
+-- (Sergio, 3 November).
 function M:can_use(weapon)
 	if self.phase ~= "aim" then return false end
 	-- the lessons only allow what's needed right now (sim/missions.lua only)
@@ -2554,7 +2552,6 @@ function M:can_use(weapon)
 		return self.used.primary ~= self.used.secondary
 	elseif weapon == "teleport" then
 		return #self.orbs < M.MAX_ORBS and rb.teleports_left > 0
-			and (rb.turns > 1 or self.teleports < C.FIRST_TURN_TELEPORTS + self.teleports_earned)
 	elseif M.SECONDARY[weapon] then
 		return not self.used.secondary and M.has_weapon(rb, weapon)
 	end
@@ -2562,13 +2559,12 @@ function M:can_use(weapon)
 end
 
 -- Swap (Sergio, 29 October): after the first attack the second can be
--- exchanged for a teleport orb, to throw whenever you like (even on the first
--- turn: it counts as earned). The turn goes on as after two attacks.
+-- exchanged for a teleport orb, to throw whenever you like. The turn goes on
+-- as after two attacks.
 function M:swap_attack()
 	local rb = self.robots[self.current]
 	self.used.primary, self.used.secondary = true, true
 	rb.teleports_left = rb.teleports_left + 1
-	self.teleports_earned = self.teleports_earned + 1
 	self:emit({ type = "swap", robot = rb.id, total = rb.teleports_left })
 end
 
@@ -2617,7 +2613,6 @@ function M:attack(weapon, fire)
 		local gain = rb.stats.time_orbs > 0 and M.orbs_for(M.TURN_TICKS - self.timer) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
-			self.teleports_earned = self.teleports_earned + gain
 			self:emit({ type = "teleports", robot = rb.id, amount = gain, total = rb.teleports_left })
 		end
 		self.window = math.min(self.timer, M.AFTER_ATTACK_TICKS)
@@ -2815,7 +2810,6 @@ function M:step(input)
 				local rb = self.robots[self.current]
 				rb.teleports_left = rb.teleports_left - 1
 				rb.teleports = rb.teleports + 1
-				self.teleports = self.teleports + 1
 				self:throw_orb(fire.angle, fire.power)
 			else
 				self:attack(weapon, fire)

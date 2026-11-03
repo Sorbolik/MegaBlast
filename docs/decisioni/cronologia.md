@@ -104,5 +104,7 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 2 nov | Dettaglio a ogni zoom, primo passo: dipinti delle mappe a densità 2 dagli schermi a 1080, diavoletto non compresso e più nitido da lontano. | questa PR |
 | 3 nov | Il contatore FPS non conta gli scatti nascosti dal velo dei passaggi; anche lo scivolo fra i menu fa arrivare la schermata nuova tre frame dopo, a velo pieno. | questa PR |
 | 3 nov | Il logo del gioco al centro dell'iride: si chiude sul logo e si riapre dal logo, senza allungare il passaggio. | questa PR |
-| 3 nov | Freccia di ferro sopra il nome di chi è di turno, con la brace del colore della squadra che pulsa (scheda WB-010). | questa PR |
-| 3 nov | Zoom continuo fino allo spazio di gioco, col pulsante che si trascina e il tuo personaggio sempre al centro; freccia piccola sopra i punti dove torna un colpo uscito in alto; targhe grandi uguali a ogni zoom con la Corona accanto al nome; numeri della mira in punta alla lancetta; numeri dei punti che non si coprono; l'icona della secondaria che vola al pulsante quando la Lama la ricarica. | questa PR |
+| 3 nov | Tolto il logo dall'iride: troppo rapido, sembrava un bug; i loghi solo nei caricamenti veri. | #164 |
+| 3 nov | Al primo turno si lanciano tutti e due i globi di partenza: via il limite di uno, resto del Nucleo. | #163 |
+| 3 nov | Freccia di ferro sopra il nome di chi è di turno, con la brace del colore della squadra che pulsa (scheda WB-010). | #162 |
+| 3 nov | Zoom continuo fino allo spazio di gioco, col pulsante che si trascina e il tuo personaggio sempre al centro; freccia piccola sopra i punti dove torna un colpo uscito in alto; targhe grandi uguali a ogni zoom con la Corona accanto al nome; numeri della mira in punta alla lancetta; numeri dei punti che non si coprono; l'icona della secondaria che vola al pulsante quando la Lama la ricarica. | #162 |

@@ -87,9 +87,8 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 	}
 }
 
-// On the first turn, after throwing the starting orb, the orbs earned by
-// attacking can still be thrown on the server too, and the state carries them
-// to the client (te).
+// On the first turn every orb can be thrown on the server too: both starting
+// orbs and then the two earned by attacking at once (Sergio, 3 November).
 func TestEarnedTeleportsFirstTurn(t *testing.T) {
 	sim := newTestSim(t, 42, "forgia")
 	orbs := func() int {
@@ -108,20 +107,13 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if n := orbs(); n != 1 {
-		t.Fatalf("on the first turn only one starting orb: %d in flight", n)
-	}
-	var st struct {
-		TE int `json:"te"`
-	}
-	json.Unmarshal(sim.Snapshot(), &st)
-	if st.TE != 2 {
-		t.Fatalf("attacking at once earns two orbs, state te=%d", st.TE)
+	if n := orbs(); n != 2 {
+		t.Fatalf("on the first turn both starting orbs leave: %d in flight", n)
 	}
 	sim.Step(tele)
 	sim.Step(tele)
-	if n := orbs(); n != 3 {
-		t.Fatalf("the two earned orbs must leave: %d in flight", n)
+	if n := orbs(); n != 4 {
+		t.Fatalf("the two earned orbs must leave too: %d in flight", n)
 	}
 }
 
