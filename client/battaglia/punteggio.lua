@@ -55,8 +55,9 @@ local VAL_W, ROPE_W, ROPE_H, ROPE_GAP = 60, 250, 12, 8
 local BAND_W, BAND_STEP, BAND_V = 4, 10, 16  -- stripes of the pending points: width, spacing, px/s
 local SOFT = 60                    -- with the first points the rope moves little
 local CAPTION, SMALL = 0.8, 0.6     -- ui.testo scales
-local CROWN_SCALE = 1.4              -- about 25 px wide (ui.crown)
-local CROWN_Y = GET_H / 2 + 4
+-- the first one's Crown: the gold one of the plates (fx/targa_corona.png, 108 x 59)
+local CROWN_W = 25
+local CROWN_Y = GET_H / 2 + 1 + CROWN_W * 59 / 108 / 2
 local FLIGHT_SCALE, ARRIVAL_SCALE = 1.7, 0.8
 local SPAWN_T, FLIGHT_T, SALE = 0.5, 0.45, 24
 -- two numbers born in the same spot (the Swarm, an egg on two close robots)
@@ -129,8 +130,12 @@ local function token(color)
 	gt.posto = ui.testo("", -GET_W / 2 + STRIP + 6, 0, CAPTION, color, gt.dentro)
 	gui.set_pivot(gt.posto, gui.PIVOT_W)
 	-- the first one's Crown: big, resting on the token's top border
-	gt.crown = ui.crown(0, CROWN_Y, nil, gt.dentro)
-	scale(gt.crown, CROWN_SCALE)
+	gt.crown = gui.new_box_node(vmath.vector3(0, CROWN_Y, 0), vmath.vector3(CROWN_W, CROWN_W * 59 / 108, 0))
+	gui.set_texture(gt.crown, "battaglia")
+	gui.play_flipbook(gt.crown, "targa_corona")
+	gui.set_adjust_mode(gt.crown, gui.ADJUST_FIT)
+	gui.set_parent(gt.crown, gt.dentro)
+	gui.set_inherit_alpha(gt.crown, true)
 	gt.valore = ui.testo("0", GET_W / 2 - 8, 0, CAPTION, ui.C.TEXT, gt.dentro)
 	gui.set_pivot(gt.valore, gui.PIVOT_E)
 	-- the pending points: a dashed token... in our own way, border in the team
