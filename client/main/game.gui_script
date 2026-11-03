@@ -21,7 +21,7 @@ local replay = require "sim.replay"
 local menu = { podium = require "menu.podium", armory = require "menu.armory", pick = require "menu.pick",
 	training = require "menu.training", level_end = require "menu.level_end", campaign = require "menu.campaign",
 	settings = require "menu.settings", board = require "menu.board", queue = require "menu.queue",
-	lineup = require "menu.lineup", profile_tabs = require "menu.profile_tabs", sala = require "menu.sala",
+	lineup = require "menu.lineup", profile_tabs = require "menu.profile_tabs", lobby = require "menu.lobby",
 	-- not screens, here so as not to add local variables (limit of 200): the
 	-- server's events and their rules (start online)
 	eventi = require "main.events", regole = require "sim.rules",
@@ -454,7 +454,7 @@ local function open_wheel(self, is_open)
 	gui.set_enabled(self.btn_aim, is_open)
 	gui.set_text(self.btn_aim_text, "MIRA: " .. string.upper(profile.setting(self.profilo, "mira")))
 	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and "ESCI DALLA RICERCA" or "ESCI DALLA PARTITA")
-	if self.sala then menu.sala.wheel_open(self.sala, is_open) end
+	if self.sala then menu.lobby.wheel_open(self.sala, is_open) end
 end
 
 local function set_controls_visible(self, visible)
@@ -506,7 +506,7 @@ end
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
 local function show_menu(self, without_veil)
 	close_screen(self)
-	if self.sala then menu.sala.destroy(self.sala); self.sala = nil end
+	if self.sala then menu.lobby.destroy(self.sala); self.sala = nil end
 	self.podium_t = nil
 	disconnect(self)
 	self.mode = "menu"
@@ -1043,14 +1043,14 @@ function CP.entry_update(self, dt)
 	end
 end
 
--- The waiting room (menu/sala.lua): the server's "wait" says who is in the
+-- The waiting room (menu/lobby.lua): the server's "wait" says who is in the
 -- queue, in order (vetrine: level and badges) and our place (you)
 function CP.open_room(self, m)
 	menu.attesa.via(self.attesa)
 	local of = tonumber(m.of) or 0
 	if of < 1 or of > game.MAX_PLAYERS or type(m.vetrine) ~= "table" then return end
 	if not self.sala then
-		self.sala = menu.sala.new(of, profile.GROUP_NAMES[self.coda] or "", self.btn_menu)
+		self.sala = menu.lobby.new(of, profile.GROUP_NAMES[self.coda] or "", self.btn_menu)
 	end
 	-- ours first, then the others in queue order
 	local list = { CP.vetrina.from_profile(self.profilo, "Tu", nil, "In coda") }
@@ -1058,12 +1058,12 @@ function CP.open_room(self, m)
 	for i = 1, math.min(#m.vetrine, of) do
 		if i ~= m.you then list[#list + 1] = CP.vetrina.from_net(m.vetrine[i], "Giocatore", nil, "In coda") end
 	end
-	if menu.sala.giocatori(self.sala, list) then sound.play("#punto") end
-	menu.sala.bot_in(self.sala, m.bot_in)
+	if menu.lobby.giocatori(self.sala, list) then sound.play("#punto") end
+	menu.lobby.bot_in(self.sala, m.bot_in)
 end
 
 function CP.close_room(self)
-	if self.sala then menu.sala.destroy(self.sala) end
+	if self.sala then menu.lobby.destroy(self.sala) end
 	self.sala = nil
 end
 
@@ -3514,7 +3514,7 @@ function update(self, dt)
 	if screen.aggiorna() then arrange(self) end
 	if self.ingresso then CP.entry_update(self, dt) end
 	menu.attesa.update(self.attesa, dt)
-	if self.sala then menu.sala.update(self.sala, dt) end
+	if self.sala then menu.lobby.update(self.sala, dt) end
 	if self.wait_release then
 		self.wait_release = self.wait_release - dt
 		if self.wait_release <= 0 then self.wait_release = nil end
@@ -3832,7 +3832,7 @@ local function pointer_down(self, id, px, py)
 			PAD.rotellina(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci" or nil)
 		elseif gui.pick_node(self.btn_menu, px, py) then
 			open_wheel(self, true)
-		elseif self.sala and menu.sala.exit_hit(self.sala, px, py) then
+		elseif self.sala and menu.lobby.exit_hit(self.sala, px, py) then
 			quit_match(self)
 		end
 		return

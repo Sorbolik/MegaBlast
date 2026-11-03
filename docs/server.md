@@ -49,7 +49,7 @@ loro aggiungono una coda per occorrenza (sotto).
 Finché la coda non è piena, a ogni entrata e uscita tutti quelli in coda
 ricevono `{"t":"wait","of":4,"you":2,"vetrine":[{"liv":12,"bdg":[…]},{}]}`:
 quanti servono alla partita, il proprio posto e i cartellini di chi aspetta,
-nell'ordine della coda (la sala d'attesa del gioco, `client/menu/sala.lua`).
+nell'ordine della coda (la sala d'attesa del gioco, `client/menu/lobby.lua`).
 Chi si scollega in coda esce dalla coda (`Lobby.Leave`).
 
 **Bot che riempiono la coda** (Sergio, 3 nov): nelle code normali, se la coda

@@ -88,3 +88,4 @@ client/ui/schermo.lua client/ui/screen.lua
 client/ui/titolo.font client/ui/title.font
 client/menu/coda.lua client/menu/queue.lua
 client/ui/attesa.lua client/ui/waiting.lua
+client/menu/sala.lua client/menu/lobby.lua
