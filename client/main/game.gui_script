@@ -366,7 +366,7 @@ local function draw_terrain(self)
 end
 
 local function paint_terrain(self)
-	if not self.pending_terrain then return end
+	if not self.pending_terrain or not self.g then return end
 	self.pending_terrain = false
 	local data = self.g.terrain.data
 	-- the same buffer for every map: no new 900 KB to collect
@@ -454,10 +454,11 @@ end
 local function open_wheel(self, is_open)
 	self.menu_open = is_open
 	if self.rotellina then ui.luce(self.rotellina, nil) end
-	gui.set_enabled(self.btn_retry, is_open and self.mode ~= "online")
+	gui.set_enabled(self.btn_retry, is_open and self.mode == "local")
 	gui.set_enabled(self.btn_quit, is_open)
 	gui.set_enabled(self.btn_aim, is_open)
 	gui.set_text(self.btn_aim_text, "MIRA: " .. string.upper(profile.setting(self.profilo, "mira")))
+	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and "ESCI DALLA RICERCA" or "ESCI DALLA PARTITA")
 end
 
 local function set_controls_visible(self, visible)
@@ -533,6 +534,17 @@ local function show_menu(self, without_veil)
 	if self.signal then self.signal:display(nil) end
 	score.obiettivo(self.punti, nil)
 	for _, r in ipairs(self.robots) do plate.riga(r.plate, "") end
+	-- the finished match is let go (Sergio, 3 Nov): nothing keeps it (the replay
+	-- is in the profile, RIPROVA starts a new one), so its terrain cells and the
+	-- bots (about 2 MB of Lua for a 1 vs 1, 4 for a 2 vs 2) go to the garbage
+	-- collector, and render no longer moves the invisible world every frame.
+	-- The world shows again only when the next match exists (new_match): before,
+	-- while connecting, waiting for players or in the draft, the old match was
+	-- still on screen. What stays is reused by the next match: the GUI nodes (a
+	-- fixed pool), the mask buffer and the map's painting in terreno.script.
+	self.g, self.bots, self.ricetta, self.view = nil, nil, nil, nil
+	self.craters, self.craters_g = nil, nil
+	self.drawn_map, self.pending_terrain = nil, false
 end
 
 -- Smoothness -------------------------------------------------------------------
@@ -692,7 +704,10 @@ local function new_match(self, seed, map, opts)
 	if self.carta then self.carta:close_view(); self.carta = nil end
 	self.ricetta = replay.nuova(seed, map, opts)
 	self.g, self.bots = replay.partita(self.ricetta)
-	-- if this intact map is already on screen (e.g. the menu's) we don't redraw it
+	-- the world shows only now that there is a match (show_menu)
+	msg.post("/terreno#script", "home", {})
+	gui.set_enabled(self.mondo, true)
+	-- if this intact map is already on screen (RIPROVA, the next mission) we don't redraw it
 	local key = self.g.map .. (maps.get(self.g.map).seeded and seed or "")
 	if key ~= self.drawn_map then
 		draw_terrain(self)
@@ -832,6 +847,7 @@ local function who_name(self, robot)
 end
 
 local function my_turn(self)
+	if not self.g then return false end
 	return (self.mode == "local" and not self.bots[self.g.current]) or (self.mode == "online" and self.g.current == self.me)
 end
 
@@ -1461,7 +1477,12 @@ local function on_server_message(self, m)
 		-- others'. The token is already needed to come back if the connection drops now.
 		self.tok, self.tries = m.tok or self.tok, 0
 		local first = self.mode ~= "scelta_online"
-		if first then show_message(self, "", true) end
+		if first then
+			show_message(self, "", true)
+			-- the players are found: the search's gear goes away (the match has its own)
+			open_wheel(self, false)
+			gui.set_enabled(self.btn_menu, false)
+		end
 		self.mode = "scelta_online"
 		local name_list, palette = names_colors(m.players)
 		self.online_teams = {}
@@ -1503,7 +1524,7 @@ local function on_server_message(self, m)
 	elseif m.t == "state" and self.g then
 		apply_state(self, m)
 		if self.conta then CP.conta.tick(self.conta, self.g) end
-	elseif m.t == "ev" then
+	elseif m.t == "ev" and self.g then
 		handle_event(self, m)
 	elseif m.t == "away" then
 		show_message(self, "L'avversario ha perso la connessione...", true)
@@ -1573,10 +1594,9 @@ on_socket = function(self, conn, data)
 	end
 end
 
+-- The home closes; the Forge's background stays until the match exists (new_match)
 local function hide_menu(self)
 	home.hide(self.home)
-	msg.post("/terreno#script", "home", {})
-	gui.set_enabled(self.mondo, true)
 end
 
 local function start_online(self, coda)
@@ -1590,6 +1610,8 @@ local function start_online(self, coda)
 	end
 	self.mode, self.tok, self.tries = "connecting", nil, 0
 	self.exited, self.online_teams = {}, nil
+	-- while searching for the others you can leave, with the usual gear (Sergio, 3 Nov)
+	gui.set_enabled(self.btn_menu, true)
 	CP.aspetta(self, "Mi collego al server...")
 	connect(self)
 end
@@ -2200,6 +2222,8 @@ end
 -- (x, y) are on screen: the direction is taken in the world, the distance
 -- (and so the power) stays in screen pixels, the same at every zoom.
 local function aim_from(self, x, y, snap)
+	-- a mouse still held after the match was let go (show_menu)
+	if not self.g then return end
 	local rb = current_robot(self)
 	self.aim_left, self.aim_sy = x, y
 	local wx, wy = camera.to_world(self.cam, x, y)
@@ -2589,6 +2613,8 @@ end
 local function render(self, dt)
 	self.clock = self.clock + dt
 	local g = self.g
+	-- no match (home, screens, connecting): nothing to move
+	if not g then return end
 	local k, pa, pb = pose_k(self), self.pose_a, self.pose_b
 	for i, rb in ipairs(g.robots) do
 		local v, r, ra, rb2 = self.view[i], self.robots[i], pa.r[i], pb.r[i]
@@ -3416,9 +3442,6 @@ function init(self)
 	-- In real matches the map is picked by the seed (sim/maps.lua). In the test
 	-- scenarios it is fixed, so the photos repeat: forgia, or [megablast] prova_mappa.
 	self.mappa = SIMULATE and config_string("megablast.prova_mappa", "forgia") or nil
-	-- a map behind the menu
-	new_match(self, os.time(), self.mappa)
-	self.g:pop_events()
 	show_menu(self)
 	CP.startup(self)
 end
@@ -3581,7 +3604,12 @@ function update(self, dt)
 			print(line)
 			self.simulate_line = line
 		end
+	elseif SIMULATE and self.mode ~= self.simulate_mode then
+		-- no match (home, screens, connecting): only the mode
+		print("SIMULA stato modo=" .. tostring(self.mode))
+		self.simulate_line = nil
 	end
+	self.simulate_mode = self.mode
 	CP.fotogrammi(self, dt)
 end
 
@@ -3691,7 +3719,7 @@ end
 -- ESCI DALLA PARTITA: back to the menu they started from (self.ritorno:
 -- "campagna", "allenamento" or "home")
 local function quit_match(self)
-	local online = self.mode == "online" or self.mode == "scelta_online"
+	local online = self.mode == "online" or self.mode == "scelta_online" or self.mode == "connecting"
 	local comeback = online and "home" or self.ritorno
 	menu.scelta.hide(self.scelta)
 	if online and self.conn then
@@ -3729,6 +3757,14 @@ local function pointer_down(self, id, px, py)
 			open_level_end(self)
 		else
 			CP.iris(self, function() show_menu(self, true) end)
+		end
+		return
+	elseif self.mode == "connecting" then
+		-- searching for players: only the gear, with ESCI
+		if self.menu_open then
+			PAD.rotellina(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci" or nil)
+		elseif gui.pick_node(self.btn_menu, px, py) then
+			open_wheel(self, true)
 		end
 		return
 	elseif self.mode ~= "local" and self.mode ~= "online" then
@@ -3816,7 +3852,12 @@ local function pointer_up(self, id, x, y)
 	x, y = screen.from_touch(x, y)
 	local m = self.pointers[id]
 	self.pointers[id] = nil
-	if m == "zoom" then
+	if not self.g and (m == "aim" or m == "pad_aim") then
+		-- a finger still down when the match was let go (show_menu): no shot
+		sticks.reset(self.aim_st)
+		self.aiming = false
+		pad_release(self.aim_pad, AIM_IDLE)
+	elseif m == "zoom" then
 		ZM.release(self)
 	elseif m == "move" then
 		move_pad_release(self)
@@ -4168,7 +4209,7 @@ function PAD.every_frame(self)
 	if self.menu_requested then
 		self.menu_requested = nil
 		local from_b = c.giu.b or (self.pad_b_t and self.clock - self.pad_b_t < 0.3)
-		if not from_b and self.controls_visible and (self.mode == "local" or self.mode == "online") then
+		if not from_b and (self.controls_visible and (self.mode == "local" or self.mode == "online") or self.mode == "connecting") then
 			open_wheel(self, not self.menu_open)
 		end
 	end
@@ -4226,7 +4267,7 @@ function PAD.evento(self, e)
 		end
 	end
 	if not (e.nome and e.held_down) then return end
-	local battle = self.mode == "local" or self.mode == "online" or self.mode == "ended"
+	local battle = self.mode == "local" or self.mode == "online" or self.mode == "ended" or self.mode == "connecting"
 	if not battle then
 		-- menus, screens and weapon draft: like taps (ui.tocco)
 		-- (with the button's name, for the settings that change it)
@@ -4250,7 +4291,7 @@ function PAD.evento(self, e)
 			local ui_action = ui.tocco(self.rotellina, ACTION.PAD, { pressed = true, ui = e.ui })
 			if ui_action then PAD.rotellina(self, ui_action) end
 		end
-	elseif command == "rotellina" and self.controls_visible then
+	elseif command == "rotellina" and (self.controls_visible or self.mode == "connecting") then
 		open_wheel(self, true)
 		ui.navigate(self.rotellina, "giu")
 	elseif command == "spara" and self.controls_visible then
