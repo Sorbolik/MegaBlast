@@ -1,0 +1,13 @@
+Image 1 is the Blacksmith (il Fabbro), a character of our game: a huge old devil blacksmith with a furnace in his belly. The LEFT figure (front view, hammer on the shoulder) is the master reference. Image 2 shows the illustration style we want (a blacksmith also appears there, but his horns and hands there are NOT the reference: use image 1).
+
+Draw a CHARACTER MODEL SHEET of this exact character, as a 3 by 3 grid of equal square cells on a plain flat parchment background (#F3E7CF), with a thin clear gap between cells and nothing else in the picture.
+- Top-left cell: the full body, standing, three-quarter view facing LEFT, the big hammer resting on its head on the ground beside him.
+- The other eight cells: head-and-shoulders BUSTS, all the same size and framing (horns, head, shoulders and the top of the furnace grate), all in three-quarter view facing LEFT, with these expressions in reading order: 1) stern, calm, 2) approving half smile under the moustache, 3) explaining: one gloved hand raised with the index finger up, 4) surprised, brows up, 5) worried, 6) angry, shouting, 7) proud, arms crossed, 8) grim and sad, the furnace glowing low.
+
+Keep EXACTLY his design from image 1 in every cell: dark red skin, long ridged brown horns curving out sideways and up with the tips turning inward, big white moustache and bushy eyebrows, pointed ears, yellow eyes; a riveted iron chest-furnace with a barred grate of five bars showing orange fire, a smoking chimney on his shoulder, heavy dark gloves, leather apron, brass straps. Same proportions, same colors, same face in all nine cells: only the expression changes.
+
+Style as in image 2: cartoon illustration, thick black outline, flat cel colors, light engraving-like hatching only in the shadows. No background scenery, no other characters. No text, numbers, labels, speech balloons or signatures.
+
+Riferimenti allegati in ordine:
+Image 1: R5 — art/WB-008/9_fabbro_B.png
+Image 2: R3 — art/WB-008/13_trio.png
