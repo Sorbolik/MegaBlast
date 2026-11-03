@@ -31,6 +31,8 @@ local ui = require "ui.ui"
 local controller = require "ui.controller"
 local screen = require "ui.screen"
 local card = require "battle.card"
+local T = require("lang.text").pick
+local common = require("lang.text").common
 
 local M = {}
 
@@ -42,7 +44,7 @@ local CARD_Y = 20
 local CHOICE_W, CHOICE_H, CHOICE_Y = 300, 84, -190
 local BAR_W = 560
 local C = ui.C
-local NAME_STEP = { "PRIMARIA", "SECONDARIA" }
+local NAME_STEP = T.step_names
 local STEP_COLOR = { C.BRACE, C.STEEL }
 local VEIL = vmath.vector4(C.BOTTOM.x, C.BOTTOM.y, C.BOTTOM.z, 0.86)
 local TOUCH = hash("touch")
@@ -106,11 +108,11 @@ function M.new(icons, name_list, effects, commands)
 		s.luce[#s.luce + 1] = c
 	end
 	s.buttons = {}
-	s.gioca = ui.button(s.buttons, 0, -290, 300, 70, "GIOCA", "gioca", { main = true }, s.root)
+	s.gioca = ui.button(s.buttons, 0, -290, 300, 70, common.play, "gioca", { main = true }, s.root)
 	s.bar = ui.bar(0, -300, BAR_W, 6, C.LIGHT, s.root)
 	-- the wheel: a tap opens ESCI next to it, another closes it again
 	s.rotellina = ui.impostazioni(s.buttons, "rotellina")
-	s.esci = ui.button(s.buttons, 32 + 12 + 80, 0, 160, 64, "ESCI", "esci", nil, s.rotellina)
+	s.esci = ui.button(s.buttons, 32 + 12 + 80, 0, 160, 64, common.quit, "esci", nil, s.rotellina)
 	for _, b in ipairs(s.buttons) do s.luce[#s.luce + 1] = b end
 	gui.set_enabled(s.root, false)
 	gui.set_enabled(s.rotellina, false)
@@ -139,7 +141,7 @@ local function next_one(s)
 	end
 end
 
-local function shots_text(n) return n .. (n == 1 and " colpo" or " colpi") end
+local function shots_text(n) return (n == 1 and T.shot or T.shots):format(n) end
 
 -- Title and lines below, by step and by whether the draft is guided
 local function texts(s)
@@ -147,27 +149,19 @@ local function texts(s)
 	local who = s.online and "" or (#s.giocatori > 1 and not s.guidata and s.giocatori[s.chi] .. ", " or "")
 	local title, under
 	if p == 1 then
-		title = who .. "scegli la primaria"
-		under = guide and "Prima di ogni partita scegli due armi in più, una per tipo; quelle degli altri non le vedi. "
-			.. "La primaria ha " .. shots_text(config.DRAFT_SHOTS) .. " a partita, e il Lanciarune ce l'hai sempre. "
-			.. "Tieni premuta una carta per vedere la sua scheda."
-			or "Ne hai " .. shots_text(config.DRAFT_SHOTS) .. "; il Lanciarune ce l'hai sempre. Tieni premuta una carta per la sua scheda."
+		title = who .. T.pick_primary
+		under = (guide and T.primary_guided or T.primary):format(shots_text(config.DRAFT_SHOTS))
 	elseif p == 2 then
-		title = who .. "scegli la secondaria"
-		local n = shots_text(config.SECONDARY_SHOTS.draft)
-		under = guide and "La secondaria ha " .. n .. ": ogni volta che colpisci un nemico "
-			.. "con la Lama, che ce l'hai sempre, te ne torna uno. Tieni premuta una carta per la sua scheda."
-			or "Ne hai " .. n .. "; colpendo un nemico con la Lama te ne torna uno."
+		title = who .. T.pick_secondary
+		under = (guide and T.secondary_guided or T.secondary):format(shots_text(config.SECONDARY_SHOTS.draft))
 	else
-		title = "Pronto"
-		under = guide and "Il Rampino ce l'hai sempre. Nelle altre partite la scelta ha un tempo; qui no. "
-			.. "Tocca una scelta per cambiarla, o GIOCA."
-			or "Il Rampino ce l'hai sempre. Tocca una scelta per cambiarla."
+		title = T.ready
+		under = guide and T.ready_guided or T.ready_text
 	end
 	-- with the controller the card opens with Y, and you pick with the d-pad
 	if s.comandi and s.comandi() == "controller" then
-		under = under:gsub("Tieni premuta una carta", "Premi " .. controller.name_of("scheda") .. " su una carta")
-			:gsub("Tocca una scelta", "Torna su una scelta")
+		under = under:gsub(T.hold_card, T.press_on_card:format(controller.name_of("scheda")))
+			:gsub(T.tap_pick, T.back_to_pick)
 	end
 	gui.set_text(s.titolo, (title:gsub("^%l", string.upper)))
 	gui.set_color(s.titolo, s.online and C.LIGHT or s.colori[s.chi] or C.LIGHT)

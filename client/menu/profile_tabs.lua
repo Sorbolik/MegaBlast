@@ -29,15 +29,13 @@ local milestones = require "menu.milestones"
 local showcase = require "menu.showcase"
 local tag = require "ui.tag_card"
 local scoria = require "battle.scoria"
+local T = require("lang.text").profile_tabs
 
 local M = {}
 
 local C = ui.C
 local W, H = 1280, 720
 local TOUCH = hash("touch")
-local ARMI = { missile = "Lanciarune", grenade = "Uovo", shards = "Schegge", punch = "Pugno", sniper = "Cecchino",
-	sword = "Lama", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice" }
-local OF = { fornace = "della" }
 local ROMAN = { "I", "II", "III", "IV" }
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
@@ -80,17 +78,17 @@ local function piece_name(set, slot)
 	local nome = slot.name:sub(1, 1) .. slot.name:sub(2):lower()
 	local s = equip.BY_ID[set]
 	local n = s.name:sub(1, 1) .. s.name:sub(2):lower()
-	return nome .. " " .. (OF[set] or "del") .. " " .. n
+	return (T.piece_of[set] or T.piece_of.default):format(nome, n)
 end
 
 -- SCHEDA tab ------------------------------------------------------------------------
 
 local function sheet_sheet(s, parent)
 	local p = s.prof
-	local v = showcase.from_profile(p, "Tu", 1, "ASSETTO " .. p.is_active)
+	local v = showcase.from_profile(p, T.you, 1, T.loadout_n:format(p.is_active))
 	v.tu = true
 	local col = s.colore
-	txt("ASSETTO", 44, 612, 0.7, C.OFF, parent, gui.PIVOT_W)
+	txt(T.loadout, 44, 612, 0.7, C.OFF, parent, gui.PIVOT_W)
 	for i = 1, #p.loadouts do
 		ui.scheda(s.buttons, 64 + (i - 1) * 50, 574, 42, 42, tostring(i), "assetto:" .. i, p.is_active == i, parent)
 	end
@@ -116,18 +114,18 @@ local function sheet_sheet(s, parent)
 	for i, slot in ipairs(equip.SLOTS) do
 		local r = calls[slot.id]
 		local pz = v.pezzi[i]
-		local label = slot.name .. (pz.set and (" " .. pz.livello) or " · VUOTO")
+		local label = pz.set and T.slot_level:format(slot.name, pz.livello) or T.slot_empty:format(slot.name)
 		local lx = r[2] > 0 and 468 or 40
 		txt(label, lx, r[1] + 12, 0.75, pz.set and C.LIGHT or C.OFF, parent, gui.PIVOT_W)
 		box(r[2] > 0 and 365 or 100, r[1], r[2] > 0 and 190 or 120, 2, C.LINE, parent)
 	end
 	-- how others see you
-	txt("COSÌ TI VEDONO", 590, 612, 0.7, C.GOLD, parent, gui.PIVOT_W)
+	txt(T.how_others_see, 590, 612, 0.7, C.GOLD, parent, gui.PIVOT_W)
 	tag.new(v, 590 + tag.WIDE / 2, 594, { tu = true }, parent)
 	-- each piece's next upgrades
 	local pan = ui.pannello(1072, 318, 336, 588, parent)
-	title("PROSSIMI SCATTI", -146, 264, 0.55, C.LIGHT, pan, gui.PIVOT_W)
-	txt("ogni 10 livelli un aspetto nuovo, al 30 la variante B", -146, 236, 0.55, C.OFF, pan, gui.PIVOT_W)
+	title(T.next_steps, -146, 264, 0.55, C.LIGHT, pan, gui.PIVOT_W)
+	txt(T.steps_hint, -146, 236, 0.55, C.OFF, pan, gui.PIVOT_W)
 	for i, slot in ipairs(equip.SLOTS) do
 		local pz = v.pezzi[i]
 		local y = 180 - (i - 1) * 100
@@ -142,19 +140,18 @@ local function sheet_sheet(s, parent)
 				for _, sc in ipairs(equip.TIER_LEVELS) do if sc < next_one then first_one = sc end end
 				ui.bar_value(b, (pz.livello - first_one) / (next_one - first_one))
 				local tier = equip.tier(next_one)
-				local what = "al " .. next_one .. ": aspetto " .. ROMAN[tier]
-				if tier >= equip.TIERS then what = what .. " e variante B" end
+				local what = (tier >= equip.TIERS and T.next_look_b or T.next_look):format(next_one, ROMAN[tier])
 				txt(what, -94, y - 34, 0.55, C.GOLD, pan, gui.PIVOT_W)
 			else
 				ui.bar_value(b, 1)
-				txt("tutti gli scatti presi", -94, y - 34, 0.55, C.GOLD, pan, gui.PIVOT_W)
+				txt(T.all_steps, -94, y - 34, 0.55, C.GOLD, pan, gui.PIVOT_W)
 			end
 		else
-			txt("nessun pezzo", -94, y + 4, 0.72, C.OFF, pan, gui.PIVOT_W)
-			txt("sceglilo nell'ARMERIA", -94, y - 18, 0.55, C.OFF, pan, gui.PIVOT_W)
+			txt(T.no_piece, -94, y + 4, 0.72, C.OFF, pan, gui.PIVOT_W)
+			txt(T.pick_in_armory, -94, y - 18, 0.55, C.OFF, pan, gui.PIVOT_W)
 		end
 	end
-	ui.button(s.buttons, 0, -248, 296, 56, "ARMERIA", "armeria", nil, pan)
+	ui.button(s.buttons, 0, -248, 296, 56, T.armory, "armeria", nil, pan)
 end
 
 -- STATISTICHE tab -------------------------------------------------------------------
@@ -171,17 +168,17 @@ local function sheet_stats(s, parent)
 	local st = profile.statistiche(p, s.gruppo)
 	local matches = st.partite or 0
 	local numbers = {
-		{ thousands(matches), "PARTITE" },
-		{ matches > 0 and (math.floor((st.vinte or 0) * 100 / matches + 0.5) .. "%") or "–", "VINTE" },
-		{ (st.colpi or 0) > 0 and (math.floor((st.a_segno or 0) * 100 / st.colpi + 0.5) .. "%") or "–", "PRECISIONE" },
-		{ tostring(st.serie or 0), "SERIE MIGLIORE" },
+		{ thousands(matches), T.matches },
+		{ matches > 0 and (math.floor((st.vinte or 0) * 100 / matches + 0.5) .. "%") or "–", T.won },
+		{ (st.colpi or 0) > 0 and (math.floor((st.a_segno or 0) * 100 / st.colpi + 0.5) .. "%") or "–", T.accuracy },
+		{ tostring(st.serie or 0), T.best_streak },
 	}
 	for i, n in ipairs(numbers) do
 		local nx = 44 + (i - 1) * 150
 		title(n[1], nx, 548, 1, C.LIGHT, parent, gui.PIVOT_W)
 		txt(n[2], nx + 2, 516, 0.55, C.OFF, parent, gui.PIVOT_W)
 	end
-	txt("tocca un badge per metterlo accanto al tuo nome (al massimo " .. milestones.SHOWN .. ")", 1236, 516, 0.55,
+	txt(T.badge_hint:format(milestones.SHOWN), 1236, 516, 0.55,
 		C.OFF, parent, gui.PIVOT_E)
 
 	-- the stats with their badges
@@ -206,18 +203,18 @@ local function sheet_stats(s, parent)
 			local next_f, how_much = milestones.prossima(t, tot)
 			local b = ui.bar(70, y, 220, 8, C.GOLD, pan)
 			ui.bar_value(b, how_much)
-			local dx = picked_ones[t.id] and g > 0 and "ACCANTO AL NOME" or
-				(next_f and ("prossimo a " .. thousands(next_f)) or (t.badge .. " " .. ROMAN[g]))
+			local dx = picked_ones[t.id] and g > 0 and T.next_to_name or
+				(next_f and T.next_at:format(thousands(next_f)) or T.badge_grade:format(t.badge, ROMAN[g]))
 			txt(dx, 380, y, 0.55, picked_ones[t.id] and g > 0 and C.GOLD or C.OFF, pan, gui.PIVOT_E)
 		else
-			txt("senza badge", 380, y, 0.55, C.OFF, pan, gui.PIVOT_E)
+			txt(T.no_badge, 380, y, 0.55, C.OFF, pan, gui.PIVOT_E)
 		end
 	end
 
 	-- the damage per weapon
 	local dan = ui.pannello(1050, 252, 396, 456, parent)
-	title("DANNO PER ARMA", -176, 196, 0.55, C.LIGHT, dan, gui.PIVOT_W)
-	txt("quanto del tuo danno, arma per arma", -176, 168, 0.55, C.OFF, dan, gui.PIVOT_W)
+	title(T.damage_by_weapon, -176, 196, 0.55, C.LIGHT, dan, gui.PIVOT_W)
+	txt(T.damage_hint, -176, 168, 0.55, C.OFF, dan, gui.PIVOT_W)
 	local armi, tot = {}, 0
 	for w, n in pairs(st.armi or {}) do
 		armi[#armi + 1] = { w = w, n = n }
@@ -227,12 +224,12 @@ local function sheet_stats(s, parent)
 		if a.n ~= b.n then return a.n > b.n end
 		return a.w < b.w
 	end)
-	if #armi == 0 then txt("ancora niente: gioca una partita", -176, 110, 0.7, C.OFF, dan, gui.PIVOT_W) end
+	if #armi == 0 then txt(T.nothing_yet, -176, 110, 0.7, C.OFF, dan, gui.PIVOT_W) end
 	local first = armi[1] and armi[1].n or 1
 	for i, a in ipairs(armi) do
 		if i > 7 then break end
 		local y = 120 - (i - 1) * 50
-		txt(ARMI[a.w] or a.w, -176, y, 0.8, C.TEXT, dan, gui.PIVOT_W)
+		txt(T.weapons[a.w] or a.w, -176, y, 0.8, C.TEXT, dan, gui.PIVOT_W)
 		local b = ui.bar(40, y, 160, 12, game.SECONDARY[a.w] and C.STEEL or C.BRACE, dan)
 		ui.bar_value(b, a.n / first)
 		txt(math.floor(a.n * 100 / tot + 0.5) .. "%", 176, y, 0.8, C.LIGHT, dan, gui.PIVOT_E)
@@ -246,12 +243,12 @@ local function when(t)
 	local hour_of = os.time()
 	local today = os.date("*t", hour_of)
 	local d = os.date("*t", t)
-	if d.year == today.year and d.yday == today.yday then return os.date("oggi %H:%M", t) end
-	if d.year == today.year and d.yday == today.yday - 1 then return os.date("ieri %H:%M", t) end
+	if d.year == today.year and d.yday == today.yday then return os.date(T.today, t) end
+	if d.year == today.year and d.yday == today.yday - 1 then return os.date(T.yesterday, t) end
 	return os.date("%d/%m %H:%M", t)
 end
 
-local OUTCOME = { V = { "VINTA", C.MINT }, S = { "PERSA", C.BRACE }, P = { "PARI", C.LIGHT } }
+local OUTCOME = { V = { T.outcome_won, C.MINT }, S = { T.outcome_lost, C.BRACE }, P = { T.outcome_tie, C.LIGHT } }
 
 local function face_icon(v, x, y, d, parent)
 	local col = C.SQUADRA[v.squadra] or C.LIGHT
@@ -287,7 +284,7 @@ local function rope(values, cx, cy, w, h, parent, my_own, another)
 		local x, y = point(i)
 		ui.disco(x, y, i == n and 13 or 9, values[i] >= 0 and my_own or another, parent)
 		if i > 1 then
-			txt(i == n and "FINE" or ("giro " .. (i - 1)), x, cy - h / 2 - 12, 0.45, C.OFF, parent)
+			txt(i == n and T.chart_end or T.chart_round:format(i - 1), x, cy - h / 2 - 12, 0.45, C.OFF, parent)
 		end
 	end
 	txt("+" .. thousands(max), cx - w / 2 - 8, cy + h / 2 - 10, 0.45, my_own, parent, gui.PIVOT_E)
@@ -296,10 +293,10 @@ end
 
 local function sheet_matches(s, parent)
 	local p = s.prof
-	txt("LE ULTIME " .. profile.MATCHES .. " · I REPLAY DI QUELLE GIOCATE SU QUESTO TELEFONO", 44, 612, 0.6, C.OFF,
+	txt(T.last_matches:format(profile.MATCHES), 44, 612, 0.6, C.OFF,
 		parent, gui.PIVOT_W)
 	if #p.partite == 0 then
-		txt("Nessuna partita ancora: gioca, e la ritrovi qui.", 640, 360, 1, C.OFF, parent)
+		txt(T.no_matches, 640, 360, 1, C.OFF, parent)
 		return
 	end
 	s.scelta = math.min(s.scelta or 1, #p.partite)
@@ -345,12 +342,12 @@ local function sheet_matches(s, parent)
 	local wpt = resource.get_text_metrics(gui.get_font_resource(gui.get_font(pt)), gui.get_text(pt)).width * 0.6
 	txt("–", 306 - wpt - 12, 262, 0.8, C.OFF, pan)
 	title(thousands(pa.punti[1] or 0), 306 - wpt - 24, 262, 0.6, my_own, pan, gui.PIVOT_E)
-	txt("COM'È ANDATA, GIRO PER GIRO", -306, 222, 0.55, C.OFF, pan, gui.PIVOT_W)
+	txt(T.round_by_round, -306, 222, 0.55, C.OFF, pan, gui.PIVOT_W)
 	rope(pa.fune or { 0 }, 20, 120, 560, 160, pan, my_own, another)
-	txt("MOMENTI · TOCCA PER RIVEDERLO DA LÌ", -306, 6, 0.55, C.OFF, pan, gui.PIVOT_W)
+	txt(T.moments, -306, 6, 0.55, C.OFF, pan, gui.PIVOT_W)
 	local ok = s.replay_ok and s.replay_ok(pa.numero)
 	local moments = pa.moments or {}
-	if #moments == 0 then txt("nessun momento da ricordare", -306, -30, 0.65, C.OFF, pan, gui.PIVOT_W) end
+	if #moments == 0 then txt(T.no_moments, -306, -30, 0.65, C.OFF, pan, gui.PIVOT_W) end
 	for i, m in ipairs(moments) do
 		if i > 4 then break end
 		local mx = -156 + ((i - 1) % 2) * 316
@@ -370,14 +367,14 @@ local function sheet_matches(s, parent)
 		local gx = -296 + (k - 1) * 150
 		face_icon(g, gx + 20, -158, 40, pan)
 		txt(g.nome or "?", gx + 46, -150, 0.55, C.TEXT, pan, gui.PIVOT_W)
-		txt(g.livello and ("LIV " .. g.livello) or (g.bot and "BOT" or ""), gx + 46, -168, 0.45, C.OFF, pan,
+		txt(g.livello and T.level:format(g.livello) or (g.bot and T.bot or ""), gx + 46, -168, 0.45, C.OFF, pan,
 			gui.PIVOT_W)
 		zone(s, gx + 60, -158, 140, 46, "giocatore:" .. k, pan)
 	end
 	if ok then
-		ui.button(s.buttons, 210, -246, 200, 58, "RIVEDI", "rivedi", { main = true, colore = my_own }, pan)
+		ui.button(s.buttons, 210, -246, 200, 58, T.replay, "rivedi", { main = true, colore = my_own }, pan)
 	else
-		txt(pa.online and "replay solo delle partite su questo telefono" or "replay non disponibile",
+		txt(pa.online and T.replay_local_only or T.replay_missing,
 			306, -246, 0.6, C.OFF, pan, gui.PIVOT_E)
 	end
 end
@@ -397,17 +394,17 @@ local function build(s)
 	s.angoli = { back, dx }
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
-	ui.scheda(s.buttons, 400, 662, 150, 56, "SCHEDA", "scheda:scheda", s.scheda == "scheda", s.radice)
-	ui.scheda(s.buttons, 586, 662, 206, 56, "STATISTICHE", "scheda:statistiche", s.scheda == "statistiche", s.radice)
-	ui.scheda(s.buttons, 772, 662, 150, 56, "PARTITE", "scheda:partite", s.scheda == "partite", s.radice)
+	ui.scheda(s.buttons, 400, 662, 150, 56, T.tab_sheet, "scheda:scheda", s.scheda == "scheda", s.radice)
+	ui.scheda(s.buttons, 586, 662, 206, 56, T.tab_stats, "scheda:statistiche", s.scheda == "statistiche", s.radice)
+	ui.scheda(s.buttons, 772, 662, 150, 56, T.tab_matches, "scheda:partite", s.scheda == "partite", s.radice)
 	-- level and experience at the top right
 	gui.set_visible(dx, false)
 	gui.set_xanchor(dx, gui.ANCHOR_RIGHT)
 	gui.set_yanchor(dx, gui.ANCHOR_TOP)
-	title("LIV " .. p.livello, 0, 0, 0.55, C.LIGHT, dx, gui.PIVOT_E)
+	title(T.level:format(p.livello), 0, 0, 0.55, C.LIGHT, dx, gui.PIVOT_E)
 	local b = ui.bar(-130, -24, 260, 8, s.colore, dx)
 	ui.bar_value(b, p.xp / profile.xp_level(p.livello))
-	txt(thousands(p.xp) .. " / " .. thousands(profile.xp_level(p.livello)) .. " XP", 0, -42, 0.5, C.OFF, dx, gui.PIVOT_E)
+	txt(T.xp:format(thousands(p.xp), thousands(profile.xp_level(p.livello))), 0, -42, 0.5, C.OFF, dx, gui.PIVOT_E)
 	if s.scheda == "statistiche" then
 		sheet_stats(s, s.radice)
 	elseif s.scheda == "partite" then

@@ -18,6 +18,8 @@
 --   fine_livello.destroy(f)
 
 local ui = require "ui.ui"
+local T = require("lang.text").level_end
+local common = require("lang.text").common
 
 local M = {}
 
@@ -36,7 +38,7 @@ function M.new(o, sound)
 	gui.set_visible(f.radice, false)
 	local c = ui.C
 	ui.indietro(f.buttons, "indietro", f.radice)
-	ui.testo("MISSIONE FATTA", 640, 640, 0.8, c.OFF, f.radice)
+	ui.testo(T.done, 640, 640, 0.8, c.OFF, f.radice)
 	ui.titolo(string.upper(o.titolo), 640, 585, 1, c.LIGHT, f.radice)
 	local criteria = o.criteria
 	for i = 1, 3 do
@@ -55,14 +57,14 @@ function M.new(o, sound)
 		end
 		ui.testo(criteria[i], x, M.Y - 100, 0.75, o.stelle[i] and c.TEXT or c.OFF, f.radice)
 	end
-	local under = o.vantaggio and "Punti di vantaggio: " .. o.vantaggio or ""
+	local under = o.vantaggio and T.lead:format(o.vantaggio) or ""
 	if o.record and o.record > n then
-		local record = "il tuo record: " .. o.record .. (o.record == 1 and " stella" or " stelle")
+		local record = (o.record == 1 and T.record_one or T.record):format(o.record)
 		under = under == "" and record or under .. "  -  " .. record
 	end
 	ui.testo(under, 640, 232, 0.8, c.OFF, f.radice)
-	ui.button(f.buttons, 640 - 180, 110, 300, 96, "RIPROVA", "riprova", nil, f.radice)
-	ui.button(f.buttons, 640 + 180, 110, 300, 96, o.avanti and "AVANTI" or "CAMPAGNA", "avanti",
+	ui.button(f.buttons, 640 - 180, 110, 300, 96, T.retry, "riprova", nil, f.radice)
+	ui.button(f.buttons, 640 + 180, 110, 300, 96, o.avanti and common.next or common.campaign, "avanti",
 		{ main = true }, f.radice)
 	return f
 end

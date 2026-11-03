@@ -19,6 +19,7 @@ local game = require "sim.game"
 local awards = require "sim.awards"
 local profile = require "menu.profile"
 local tag = require "ui.tag_card"
+local T = require("lang.text").podium
 
 local M = {}
 
@@ -32,7 +33,7 @@ M.SCORIA_H = 110                   -- the Scoria on the step, in pixels
 -- entrance timing: the steps rise one after the other, then the awards
 M.RISE, M.DELAY, M.REWARDS = 0.45, 0.18, 1.0
 
-local MODES_LIST = { ["1v1"] = "UNO CONTRO UNO", ["2v2"] = "DUE CONTRO DUE", ffa = "TUTTI CONTRO TUTTI" }
+local MODES_LIST = T.modes
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
@@ -57,7 +58,7 @@ local function stair(p, x, voice, i)
 	thread(0, top, M.WIDE, 4, g.colore, block)
 	ui.titolo(tostring(voice.place), 0, top - 42, 1.3, voice.place == 1 and c.BRACE or c.TEXT, block)
 	ui.testo(g.nome, 0, top - 82, 1, g.colore, block)
-	ui.testo(string.format("%d punti", voice.points or 0), 0, top - 106, 0.8, c.OFF, block)
+	ui.testo(T.points:format(voice.points or 0), 0, top - 106, 0.8, c.OFF, block)
 	gui.set_scale(base, vmath.vector3(1, 0.01, 1))
 	local delay = (i - 1) * M.DELAY
 	gui.animate(base, "scale.y", 1, gui.EASING_OUTBACK, M.RISE, delay)
@@ -88,17 +89,18 @@ end
 local function title(p, results, first)
 	local c = ui.C
 	local g = p.giocatori[first.robot] or { nome = "?", colore = c.TEXT }
-	local label, color = "PAREGGIO", c.TEXT
+	local label, color = T.tie, c.TEXT
 	if results.winner and p.me then
 		local my_team
 		for _, v in ipairs(results.ranking) do
 			if v.robot == p.me then my_team = v.team end
 		end
-		label = results.winner == my_team and "VITTORIA" or "SCONFITTA"
-		color = label == "VITTORIA" and c.BRACE or c.TEXT
+		local won = results.winner == my_team
+		label = won and T.victory or T.defeat
+		color = won and c.BRACE or c.TEXT
 	elseif results.winner then
 		-- in 2 vs 2 the team wins: the name without the teammate's number
-		label = "VINCE " .. string.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome)
+		label = T.wins:format(string.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome))
 		color = g.colore
 	end
 	ui.titolo(label, 640, 660, 1.4, color, p.radice)
@@ -122,13 +124,13 @@ end
 local function gain(p, g, prof)
 	local c = ui.C
 	local n = ui.pannello(1065, 105, 330, 120, p.radice)
-	ui.testo(string.format("LIVELLO %d", g.livello), -80, 34, 1, g.livello > g.level_before and c.BRACE or c.TEXT, n)
-	ui.testo(string.format("+%d esperienza", g.xp), 70, 34, 0.8, c.TEXT, n)
+	ui.testo(T.level:format(g.livello), -80, 34, 1, g.livello > g.level_before and c.BRACE or c.TEXT, n)
+	ui.testo(T.xp:format(g.xp), 70, 34, 0.8, c.TEXT, n)
 	local b = ui.bar(0, 4, 290, 12, c.BRACE, n)
 	ui.bar_value(b, 0)
 	p.bar, p.bar_end = b, prof.xp / profile.xp_level(prof.livello)
 	if g.livello > g.level_before then
-		ui.testo("nuovo punto abilità!", 0, -32, 0.9, c.BRACE, n)
+		ui.testo(T.skill_point, 0, -32, 0.9, c.BRACE, n)
 	end
 end
 
@@ -162,10 +164,10 @@ function M.new(results, giocatori, me, my_gain, prof, number)
 	if my_gain then gain(p, my_gain, prof) end
 	if number then
 		-- RIVEDI: straight to this match's replay (then back to the profile)
-		ui.button(p.buttons, 980, 205, 160, 60, "RIVEDI", "rivedi", nil, p.radice)
-		ui.button(p.buttons, 1150, 205, 160, 60, "CONTINUA", "continua", { main = true }, p.radice)
+		ui.button(p.buttons, 980, 205, 160, 60, T.replay, "rivedi", nil, p.radice)
+		ui.button(p.buttons, 1150, 205, 160, 60, T.go_on, "continua", { main = true }, p.radice)
 	else
-		ui.button(p.buttons, 1065, 205, 330, 60, "CONTINUA", "continua", { main = true }, p.radice)
+		ui.button(p.buttons, 1065, 205, 330, 60, T.go_on, "continua", { main = true }, p.radice)
 	end
 	return p
 end

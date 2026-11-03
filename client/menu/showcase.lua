@@ -19,13 +19,14 @@ local skills = require "sim.skills"
 local loadout = require "sim.loadout"
 local equip = require "sim.gear"
 local profile = require "menu.profile"
+local T = require("lang.text").showcase
 
 local M = {}
 
 -- the stats the tag reads
 M.KEYS = { "max_hp", "jump_height", "walk_speed", "air_speed", "teleports", "parachutes", "air_jumps" }
 -- the four bars: health in points, the others in percent of the base
-M.BARS = { { "max_hp", "VITA", "punti" }, { "jump_height", "SALTO" }, { "walk_speed", "CORSA" }, { "air_speed", "ARIA" } }
+M.BARS = { { "max_hp", T.health, "punti" }, { "jump_height", T.jump }, { "walk_speed", T.run }, { "air_speed", T.air } }
 -- how far a bar goes (full on one side): 10% above or below the base
 M.SCALE = 0.1
 

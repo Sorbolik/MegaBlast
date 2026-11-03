@@ -13,11 +13,11 @@
 
 local ui = require "ui.ui"
 local events = require "main.events"
+local T = require("lang.text").board
+local common = require("lang.text").common
 
 local M = {}
 
-local DAYS = { "dom", "lun", "mar", "mer", "gio", "ven", "sab" }
-local MONTHS = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" }
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
@@ -46,7 +46,7 @@ end
 -- "lun 16 nov"; with the time "lun 16 nov 10:00"
 local function day_n(t, hour_of)
 	local d = os.date("*t", t)
-	local s = DAYS[d.wday] .. " " .. d.day .. " " .. MONTHS[d.month]
+	local s = T.date:format(T.days[d.wday], d.day, T.months[d.month])
 	if hour_of then s = s .. string.format(" %02d:%02d", d.hour, d.min) end
 	return s
 end
@@ -68,10 +68,10 @@ end
 -- ORA: the cards of the running events
 local function hour_of(b, now)
 	local C = ui.C
-	riga("ORA", 48, 560, 0.6, C.OFF, b.radice)
+	riga(T.now, 48, 560, 0.6, C.OFF, b.radice)
 	local list_of = events.in_progress(now)
 	if #list_of == 0 then
-		riga("Nessun evento in corso", 48, 500, 0.75, C.TEXT, b.radice)
+		riga(T.no_event, 48, 500, 0.75, C.TEXT, b.radice)
 		return
 	end
 	local w, h = 560, 128
@@ -86,7 +86,7 @@ local function hour_of(b, now)
 		riga(events.tipo(o), x0, y0, 0.6, color(o), n)
 		to_right(events.quando(o, now), w / 2 - 24, y0, 0.6, C.OFF, n)
 		riga(o.nome, x0, y0 - 42, 0.95, C.TEXT, n)
-		local where = o.coda == o.modo and ("conta nelle partite " .. events.queue_name(o.coda)) or ("coda sua · " .. events.queue_name(o.modo))
+		local where = o.coda == o.modo and T.counts_in:format(events.queue_name(o.coda)) or T.own_queue:format(events.queue_name(o.modo))
 		riga(where, x0, -h / 2 + 24, 0.6, C.OFF, n)
 	end
 end
@@ -95,7 +95,7 @@ end
 local function upcoming(b, now)
 	local C = ui.C
 	local x0 = 680
-	riga("PROSSIMI", x0, 560, 0.6, C.OFF, b.radice)
+	riga(T.next, x0, 560, 0.6, C.OFF, b.radice)
 	local today = midnight(now)
 	local wday = os.date("*t", today).wday
 	-- this week's Monday (at noon: no surprises with daylight saving)
@@ -110,7 +110,7 @@ local function upcoming(b, now)
 			local n, border = ui.pannello(x, y, cw, ch, b.radice)
 			if t == today then gui.set_color(border, C.LIGHT) end
 			local d = os.date("*t", t)
-			ui.testo((s == 0 and DAYS[d.wday] .. " " or "") .. d.day, 0, ch / 2 - 16, 0.55, t < today and C.OFF or C.TEXT, n)
+			ui.testo((s == 0 and T.days[d.wday] .. " " or "") .. d.day, 0, ch / 2 - 16, 0.55, t < today and C.OFF or C.TEXT, n)
 			-- one small bar for each event of that day
 			local k = 0
 			for _, o in ipairs(events.lista) do
@@ -124,7 +124,7 @@ local function upcoming(b, now)
 	-- in a row: the upcoming ones starting (also those coming back)
 	local y = 300
 	local list_of = events.upcoming(now)
-	if #list_of == 0 then riga("Niente in programma", x0, y, 0.65, C.OFF, b.radice) end
+	if #list_of == 0 then riga(T.nothing_planned, x0, y, 0.65, C.OFF, b.radice) end
 	for i, o in ipairs(list_of) do
 		if i > 4 then break end
 		local w, h = 7 * (cw + gap) - gap, 52
@@ -143,21 +143,21 @@ local function detail(b, o, now)
 	gui.set_pivot(ui.titolo(o.nome, 48, 540, 0.9, C.LIGHT, b.radice), gui.PIVOT_W)
 	if o.riga and o.riga ~= "" then riga(o.riga, 48, 500, 0.65, C.TEXT, b.radice, 640) end
 
-	riga("COSA CAMBIA", 48, 410, 0.65, C.OFF, b.radice)
+	riga(T.what_changes, 48, 410, 0.65, C.OFF, b.radice)
 	for i, t in ipairs(events.what_changes(o, b.nomi)) do
 		if i > 4 then break end
 		local n = ui.pannello(48 + 300, 370 - (i - 1) * 52, 600, 44, b.radice)
 		riga(t, -300 + 20, 0, 0.7, C.TEXT, n)
 	end
-	local when = day_n(o.da, true) .. "  fino a  " .. day_n(o.a, true)
+	local when = T.from_to:format(day_n(o.da, true), day_n(o.a, true))
 	riga(when, 48, 130, 0.65, C.OFF, b.radice)
-	if o.torna then riga("torna " .. day_n(o.torna), 48, 96, 0.65, C.OFF, b.radice) end
+	if o.torna then riga(T.back_on:format(day_n(o.torna)), 48, 96, 0.65, C.OFF, b.radice) end
 
 	-- on the right: the prizes (the server hands them out once there are accounts)
 	local px, pw = 760, 472
-	riga("PREMI", px, 590, 0.65, C.OFF, b.radice)
+	riga(T.prizes, px, 590, 0.65, C.OFF, b.radice)
 	local premi = type(o.premi) == "table" and o.premi or {}
-	if #premi == 0 then riga("Solo per divertirsi", px, 550, 0.7, C.TEXT, b.radice) end
+	if #premi == 0 then riga(T.just_for_fun, px, 550, 0.7, C.TEXT, b.radice) end
 	for i, p in ipairs(premi) do
 		if i > 5 then break end
 		local n = ui.pannello(px + pw / 2, 550 - (i - 1) * 56, pw, 48, b.radice)
@@ -166,7 +166,7 @@ local function detail(b, o, now)
 	end
 	if o.da <= now then
 		-- an event on a normal queue is played in that queue
-		ui.button(b.buttons, 1280 - 48 - 170, 108, 340, 108, "GIOCA", "coda:" .. o.coda,
+		ui.button(b.buttons, 1280 - 48 - 170, 108, 340, 108, common.play, "coda:" .. o.coda,
 			{ main = true, colore = color(o) }, b.radice)
 	end
 end
@@ -192,9 +192,9 @@ local function build(b)
 		return
 	end
 	b.aperto = nil
-	ui.titolo("EVENTI", 640, 640, 1, ui.C.TEXT, b.radice)
+	ui.titolo(common.events, 640, 640, 1, ui.C.TEXT, b.radice)
 	if not events.loaded_ok then
-		ui.testo("Il server non risponde: gli eventi tornano appena c'è la rete", 640, 400, 0.75, ui.C.OFF, b.radice)
+		ui.testo(T.offline, 640, 400, 0.75, ui.C.OFF, b.radice)
 		return
 	end
 	hour_of(b, now)
