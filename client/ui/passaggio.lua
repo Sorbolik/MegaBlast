@@ -43,6 +43,8 @@ end
 
 local function inizia(p, r, g, a)
 	p.n = (p.n or 0) + 1
+	-- un passaggio nuovo riparte da schermo scoperto (anche se uno era in attesa)
+	fotogrammi.coperto = false
 	local c = p.colore
 	c.x, c.y, c.z, c.w = r, g, 0, a
 	gui.set_color(p.nodo, c)
@@ -53,6 +55,7 @@ end
 
 local function fine(p)
 	gui.set_enabled(p.nodo, false)
+	fotogrammi.coperto = false
 	p.n = nil
 end
 
