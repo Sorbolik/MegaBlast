@@ -3,8 +3,8 @@
 # i pezzi e li anima nel codice (client/battle/scoria.lua): niente fogli di
 # fotogrammi, l'atlante è piccolo e il movimento è fluido a qualsiasi frequenza.
 # Scrive:
-#   client/assets/diavoletto/<pezzo>.png        un pezzo (guarda a destra)
-#   client/assets/diavoletto/<pezzo>_tinta.png  le parti col colore della
+#   client/assets/devil/<pezzo>.png        un pezzo (guarda a destra)
+#   client/assets/devil/<pezzo>_tinta.png  le parti col colore della
 #                                               squadra (bianche e grigie, tinte nel codice)
 #   client/battle/devil.atlas
 #   client/battle/devil.lua             misure di ogni pezzo rispetto al suo
@@ -28,7 +28,7 @@ from PIL import Image
 QUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, QUI)
 RADICE = os.path.join(QUI, "..", "..")
-OUT = os.path.join(RADICE, "client", "assets", "diavoletto")
+OUT = os.path.join(RADICE, "client", "assets", "devil")
 LUA = os.path.join(RADICE, "client", "battle", "devil.lua")
 ATLAS = os.path.join(RADICE, "client", "battle", "devil.atlas")
 ANTEPRIMA = os.path.join(RADICE, "simulazione", "foto", "diavoletto_anteprima.png")
@@ -289,16 +289,16 @@ def main():
 
 def scrivi_atlante(immagini=None):
     """L'atlante del diavoletto: i pezzi di base (immagini; se manca, quelli che
-    ci sono già) e le pelli dello stampino (client/assets/pelli, le taglia
+    ci sono già) e le pelli dello stampino (client/assets/skins, le taglia
     strumenti/stampino/taglia.py). Tutto in un atlante solo, così il diavoletto
     si disegna in una volta anche vestito."""
     if immagini is None:
         with open(ATLAS) as f:
-            immagini = re.findall(r'"/assets/diavoletto/([a-z0-9_]+)\.png"', f.read())
-    pelli = os.path.join(RADICE, "client", "assets", "pelli")
-    righe = [f"/assets/diavoletto/{n}.png" for n in immagini]
+            immagini = re.findall(r'"/assets/devil/([a-z0-9_]+)\.png"', f.read())
+    pelli = os.path.join(RADICE, "client", "assets", "skins")
+    righe = [f"/assets/devil/{n}.png" for n in immagini]
     if os.path.isdir(pelli):
-        righe += [f"/assets/pelli/{n}" for n in sorted(os.listdir(pelli)) if n.endswith(".png")]
+        righe += [f"/assets/skins/{n}" for n in sorted(os.listdir(pelli)) if n.endswith(".png")]
     with open(ATLAS, "w") as f:
         for r in righe:
             f.write(f'images {{\n  image: "{r}"\n}}\n')

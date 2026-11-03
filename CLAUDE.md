@@ -9,9 +9,10 @@ dagli strumenti o dall'editor (`body.lua`, `animations.lua`, `skins.lua`, `pivot
 i nomi dei pezzi, dei posti, dei canali, delle clip e delle immagini restano italiani
 (sono id, vanno con le immagini). L'editor delle animazioni dentro resta italiano e
 traduce i campi quando legge e scrive i file.
-I nomi dei file e delle cartelle del client sono in inglese (`client/battle/`,
-`client/circles/`, ...) tranne `client/dipinti/` e `client/assets/`; gli strumenti
-restano in italiano finché non arriva la loro ondata.
+Le cartelle del client sono in inglese (`client/battle/`, `client/paintings/`,
+`client/assets/weapons/`, ...), e così i file di codice; i nomi delle immagini e dei
+suoni restano italiani (sono id). Gli strumenti restano in italiano finché non arriva
+la loro ondata.
 Un campo usato anche fuori dall'ondata o scritto come stringa (id, impostazioni, nodi
 della GUI) resta italiano per ora. Nei file in
 inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,

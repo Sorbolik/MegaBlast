@@ -1,4 +1,4 @@
-"""Il ticchettio dei punti (client/assets/suoni/punto.wav): un tic corto e chiaro,
+"""Il ticchettio dei punti (client/assets/sounds/punto.wav): un tic corto e chiaro,
 due sinusoidi che si spengono in 45 ms. Il gioco lo suona sempre più acuto
 (velocità) finché i punti salgono nel gettone (client/battle/score.lua).
 
@@ -10,7 +10,7 @@ import wave
 from pathlib import Path
 
 FREQ, DURATA = 22050, 0.045
-USCITA = Path(__file__).resolve().parents[2] / "client/assets/suoni/punto.wav"
+USCITA = Path(__file__).resolve().parents[2] / "client/assets/sounds/punto.wav"
 
 campioni = []
 for i in range(int(FREQ * DURATA)):

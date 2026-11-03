@@ -25,7 +25,7 @@ centro compare una riga:
 
 | Causa | Cosa vuol dire |
 |---|---|
-| `dipinto` | si è decodificato e caricato un dipinto di `client/dipinti` (terreno o sfondo) |
+| `dipinto` | si è decodificato e caricato un dipinto di `client/paintings` (terreno o sfondo) |
 | `maschera` | si è ridisegnata tutta la maschera del terreno (nuova mappa) |
 | `schermata NOME` | è cambiata la schermata (`local`, `menu`, `scelta`...) |
 | `gc` | è passato il raccoglitore della memoria di Lua |

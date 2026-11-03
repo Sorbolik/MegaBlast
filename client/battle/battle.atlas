@@ -1,8 +1,8 @@
 images {
-  image: "/assets/casse/cassa.png"
+  image: "/assets/crates/cassa.png"
 }
 images {
-  image: "/assets/casse/cassa_luce.png"
+  image: "/assets/crates/cassa_luce.png"
 }
 images {
   image: "/assets/fx/bagliore.png"
