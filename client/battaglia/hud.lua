@@ -365,7 +365,7 @@ end
 
 -- Perché il robot di turno non può usare w adesso, o nil se può. Sempre due
 -- parole semplici (Sergio, 30 ottobre): finiti, già usata, o non ora (lezioni,
--- paracadute a terra, scudo già su, globi in volo, primo turno)
+-- paracadute a terra, scudo già su, globi in volo)
 function M.motivo(g, w)
 	if g:can_use(w) then return nil end
 	local rb = g.robots[g.current]

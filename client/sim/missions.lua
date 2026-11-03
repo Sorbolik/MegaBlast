@@ -514,7 +514,6 @@ local function restore_snapshot(r, g)
 	local rb, s = g.robots[PLAYER], r.saved
 	if not rb.dead then rb.x, rb.y, rb.vx, rb.vy = s.x, s.y, 0, 0 end
 	rb.teleports_left = math.max(rb.teleports_left, s.globi)
-	if r.st.turni == s.turno then g.teleports = math.min(g.teleports, s.thrown) end
 end
 
 function M.evento(r, g, e, bots)
@@ -667,7 +666,7 @@ local function hold_still(r, g, p)
 	end
 	local n = steps_count(r.st)
 	if not r.saved or r.saved.steps_done ~= n then
-		r.saved = { steps_done = n, x = rb.x, y = rb.y, globi = rb.teleports_left, thrown = g.teleports, turno = r.st.turni }
+		r.saved = { steps_done = n, x = rb.x, y = rb.y, globi = rb.teleports_left }
 	end
 	local without = p and p.permesso and p.permesso("teleport") and not g:can_use("teleport")
 	if without then

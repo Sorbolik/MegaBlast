@@ -1,6 +1,6 @@
 # Toccare un pulsante sceglie sempre quella cosa (Sergio, 30 ottobre): TELE
 # toccato due volte resta in mano, non torna al Lanciarune. Quello che adesso
-# non si può usare fa no e dice perché (globi del primo turno, primaria già
+# non si può usare fa no e dice perché (globi finiti, primaria già
 # usata), e in mano resta quello che c'era. Quello che hai in
 # mano resta al turno dopo: sullo stesso telefono ognuno ritrova il suo.
 
@@ -14,12 +14,17 @@ tocca_bordo 100 62 basso destra                      # TELE di nuovo: resta il t
 aspetta 0.3
 foto 01_tele_ancora_in_mano
 mira 30 140 0.2
-aspetta_evento teleport 4
+aspetta_evento orb 2
+tocca_bordo 100 62 basso destra                      # il secondo globo di partenza: si lancia anche al primo turno
+mira -30 140 0.2
+aspetta_evento orb 2
 aspetta 0.3
-tocca_bordo 100 62 basso destra                      # al primo turno uno solo: NON ORA
+tocca_bordo 100 62 basso destra                      # globi finiti: GLOBI ESAURITI
 aspetta 0.15
 foto 02_tele_no
-aspetta 1.6
+aspetta_evento teleport 4
+aspetta_evento teleport 4
+aspetta 0.3
 mira 150 100 0.4                    # Lanciarune
 aspetta_evento fire 2
 aspetta 0.5

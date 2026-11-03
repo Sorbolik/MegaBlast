@@ -1,6 +1,6 @@
-# Teletrasporto: al primo turno se ne lancia uno solo, quindi Rosso spara un
-# missile (guadagna globi), Blu spara, e al secondo turno di Rosso due globi in volo
-# insieme, i due teletrasporti uno dopo l'altro e un fendente veloce.
+# Teletrasporto: Rosso spara un missile (guadagna globi), Blu spara, e al
+# secondo turno di Rosso due globi in volo insieme, i due teletrasporti uno
+# dopo l'altro e un fendente veloce.
 # In alto si vede il tempo rimasto della partita.
 
 aspetta 2
