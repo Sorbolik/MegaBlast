@@ -13,7 +13,9 @@
 --                                                 -- gear, which stays above (its wheel too)
 --   sala.giocatori(s, vetrine) -> true if someone new arrived (vetrine: menu/showcase.lua, in queue order)
 --   sala.bot_in(s, secs)                         -- the bots arrive in secs seconds (nil: no bots, events)
---   sala.exit_hit(s, x, y) -> true on ESCI DALLA CODA (x, y as gui.pick_node wants them)
+--   sala.exit_hit(s, x, y) -> "esci" on ESCI DALLA CODA, "menu" on TORNA AI MENU (the queue
+--                                stays alive: ui/pill.lua), nil elsewhere (x, y as gui.pick_node wants them)
+--   sala.since(s, secs)                          -- the queue started secs seconds ago (back from the menus)
 --   sala.update(s, dt)
 --   sala.wheel_open(s, open)                     -- the gear's wheel covers the title: it hides it
 --   sala.destroy(s)
@@ -27,6 +29,7 @@ local C = ui.C
 local TOP = 548          -- where a tag starts
 local STEP = 306
 M.TIP_EVERY = 8
+M.BOT_SHOWN = 15
 M.TIPS = {
 	"Il tempo che avanzi nel turno ti dà globi per il teletrasporto",
 	"Le armi si scelgono coperte: guarda i cartellini degli altri",
@@ -72,7 +75,8 @@ function M.new(of, title, parent_below)
 	ui.pannello(640, 110, w, 52, s.radice)
 	s.tip = ui.testo(M.TIPS[1], 640, 110, 0.8, C.TEXT, s.radice)
 	s.buttons = {}
-	s.exit = ui.button(s.buttons, 640, 44, 360, 52, "ESCI DALLA CODA", "esci", nil, s.radice)
+	s.back = ui.button(s.buttons, 440, 44, 380, 52, "TORNA AI MENU · RESTI IN CODA", "menu", { scala = 0.72 }, s.radice)
+	s.exit = ui.button(s.buttons, 860, 44, 380, 52, "ESCI DALLA CODA", "esci", { scala = 0.72 }, s.radice)
 	s.title = title
 	M.update(s, 0)
 	return s
@@ -108,7 +112,13 @@ function M.bot_in(s, secs)
 end
 
 function M.exit_hit(s, x, y)
-	return gui.pick_node(s.exit, x, y)
+	if gui.pick_node(s.exit, x, y) then return "esci" end
+	if gui.pick_node(s.back, x, y) then return "menu" end
+	return nil
+end
+
+function M.since(s, secs)
+	s.t = secs or 0
 end
 
 function M.update(s, dt)
@@ -117,7 +127,10 @@ function M.update(s, dt)
 	local bots = ""
 	if s.bot_left and s.n < s.of then
 		s.bot_left = math.max(0, s.bot_left - dt)
-		bots = s.bot_left > 0 and string.format("  ·  BOT TRA %d s", math.ceil(s.bot_left)) or "  ·  ARRIVANO I BOT"
+		-- the count shows only in the last BOT_SHOWN seconds, so at first it doesn't scare
+		if s.bot_left <= M.BOT_SHOWN then
+			bots = s.bot_left > 0 and string.format("  ·  BOT TRA %d s", math.ceil(s.bot_left)) or "  ·  ARRIVANO I BOT"
+		end
 	end
 	gui.set_text(s.riga, string.format("%s%d SU %d  ·  %d:%02d%s", s.title ~= "" and (s.title .. "  ·  ") or "",
 		s.n, s.of, math.floor(secs / 60), secs % 60, bots))

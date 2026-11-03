@@ -1,0 +1,38 @@
+# La coda che resta attiva nei menu (Sergio, 3 nov: "andare indietro senza
+# abbandonare la coda"): GIOCA, 2 contro 2, un giocatore finto; dalla sala
+# TORNA AI MENU. Nella home la pillola IN CODA in basso, GIOCA dice IN CODA...
+# e la CAMPAGNA è spenta. Si va in ARMERIA (la pillola resta sopra), si torna
+# alla sala toccando la pillola, poi di nuovo ai menu. I bot arrivano dopo
+# 14 s: la pillola dice PARTITA TROVATA e dopo 3 s si va allo schieramento.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server 2v2 1 bot_dopo=14s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 205 102 basso destra                     # GIOCA
+aspetta 0.5
+tocca_centro 368 300                      # 2 contro 2
+aspetta_stato modo=connecting 5
+aspetta 1
+foto 01_sala
+tocca_centro 440 44                       # TORNA AI MENU · RESTI IN CODA
+aspetta_stato modo=menu coda=si 3
+aspetta 1
+foto 02_home_in_coda               # pillola in basso, IN CODA..., CAMPAGNA spenta
+tocca 168 108                       # ARMERIA
+aspetta_stato modo=schermata 3
+aspetta 0.8
+foto 03_armeria_in_coda
+tocca_bordo 640 24 basso centro                # la pillola: si torna alla sala
+aspetta_stato modo=connecting 3
+aspetta 0.8
+foto 04_di_nuovo_nella_sala        # il tempo continua, BOT TRA
+tocca_centro 440 44                       # TORNA AI MENU
+aspetta_stato modo=menu coda=si 3
+aspetta_stato coda=trovata 15
+aspetta 0.5
+foto 05_partita_trovata
+aspetta_stato modo=scelta_online 6
+aspetta 0.5
+foto 06_schieramento
