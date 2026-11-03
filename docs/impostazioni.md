@@ -26,6 +26,7 @@ nel codice (se c'è già un interruttore).
 | Salto col controller su un tasto | SALTA su un tasto (per esempio A) invece della levetta sinistra in su; con un tasto la levetta non salta più | levetta in su | Sergio, 30 ott | **c'è**: la riga SALTA dei tasti del controller |
 | Togliere un tasto | Un comando del controller resta senza tasto (Y sulla riga) | — | Sergio, 30 ott | **c'è**: IMPOSTAZIONI |
 | Contatore FPS | In alto al centro FPS, frame peggiore, scatti dell'ultimo minuto e la loro causa; ogni scatto anche nella console ([prestazioni.md](prestazioni.md)) | spento | Sergio, 2 nov ("come facciamo a misurare gli FPS in maniera affidabile") | **c'è**: IMPOSTAZIONI (`fps`), `client/ui/fotogrammi.lua` |
+| Segui sempre il mio personaggio | Anche allo zoom massimo la camera resta sul tuo personaggio invece di mostrare tutto lo spazio di gioco | spenta | proposta di Claude a Sergio, 3 nov (zoom continuo, scelta C1) | — (`VERSO_SPAZIO` in `client/battaglia/camera.lua`) |
 | HUD sistemabile | Il giocatore sposta i pulsanti della battaglia | predefiniti | Sergio, 29 ott ([interfaccia](decisioni/interfaccia.md)) | — |
 
 Non ci saranno (decisioni di Sergio): qualità grafica a livelli. (La rimappatura dei tasti ora c'è, per il controller: Sergio, 30 ott.)

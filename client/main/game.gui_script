@@ -212,7 +212,7 @@ local K = game.DISEGNO_H / game.CORPO / 16
 local VK = vmath.vector3(K, K, 1)
 
 -- Camera: [megablast] zoom = 1, 2 o 3 sceglie il livello con cui si parte
--- (vicino, medio, tutta la mappa: battaglia/camera.lua)
+-- (vicino, medio, lo zoom massimo: battaglia/camera.lua)
 local ZOOM_INIZIO = tonumber(config_string("megablast.zoom", "")) or 1
 -- dopo un'esplosione la camera resta lì un attimo prima di tornare al robot
 local CAMERA_SOSTA = 0.7
@@ -726,6 +726,7 @@ local function new_match(self, seed, map, opts)
 	self.sent = {}
 	-- la camera parte già su chi tocca
 	local rb = self.g.robots[self.g.current]
+	camera.dal_terreno(self.cam, self.g.terrain, game.DISEGNO_H + 40)
 	camera.salta(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
 	self.cam_sosta = 0
 	self.fermo = 0
@@ -844,6 +845,131 @@ local RM = { fune = require "battaglia.fune", SOFFI = 5 }
 -- schieramento, statistiche di fine partita e replay. Le funzioni più giù,
 -- prima di start_local (usano new_match, show_menu e le altre)
 local CP = { conta = require "menu.conta", vetrina = require "menu.vetrina", cartellino = require "ui.cartellino" }
+
+-- Lo zoom (Sergio, 3 nov, scelta Z1): il pulsante in alto a destra mostra con un
+-- puntino dov'è lo zoom fra il più vicino (in alto) e il più lontano (in basso).
+-- Un tocco salta fra lo zoom scelto e lo zoom massimo; tenendolo premuto e
+-- trascinando compare accanto una guida, dal bordo alto dello schermo in giù, e
+-- il cursore della guida sta sotto il dito: in cima il più vicino, in fondo lo
+-- zoom massimo, e dove si è premuto lo zoom di adesso (così non salta). Giù
+-- allontana: il pulsante sta sul bordo alto, e sopra il dito non c'è spazio. La rotella
+-- del mouse fa passi piccoli, col controller si tiene il tasto dello zoom e si
+-- muove la levetta che mira.
+CP.ZM = {
+	PASSO = 0.12,        -- un tacco della rotella o un tasto, in parti dello zoom
+	CORSA = 230,         -- quanto è lunga la guida, in unità dello schermo
+	CIMA = 8,            -- la guida parte così sotto il bordo alto
+	MOSSO = 10,          -- oltre questo il dito trascina e non è più un tocco
+	LEVETTA = 0.9,       -- col controller: parti dello zoom al secondo a levetta piena
+	W = 44, H = 44,      -- il pulsante
+	SEGNO = 26,          -- la guida piccola dentro il pulsante
+}
+local ZM = CP.ZM
+
+function ZM.crea(self)
+	local scuro = vmath.vector4(0.05, 0.05, 0.07, 0.55)
+	self.btn_zoom = box(0, 0, ZM.W, ZM.H, scuro)
+	gui.set_position(self.btn_zoom, ZOOM_BTN)
+	gui.set_parent(box(0, 0, 3, ZM.SEGNO, vmath.vector4(1, 1, 1, 0.35)), self.btn_zoom)
+	self.zoom_punto = box(0, 0, 10, 10, ui.C.LUCE)
+	gui.set_parent(self.zoom_punto, self.btn_zoom)
+	-- la guida lunga, a sinistra del pulsante (il pollice copre il pulsante),
+	-- solo mentre si trascina; la si mette in posto premendo (ZM.premi)
+	self.zoom_guida = box(-ZM.W / 2 - 16, 0, 14, ZM.CORSA + 14, scuro)
+	gui.set_parent(self.zoom_guida, self.btn_zoom)
+	gui.set_parent(box(0, 0, 3, ZM.CORSA, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guida)
+	self.zoom_cursore = box(0, 0, 18, 18, ui.C.LUCE)
+	gui.set_parent(self.zoom_cursore, self.zoom_guida)
+	gui.set_enabled(self.zoom_guida, false)
+end
+
+-- a ogni frame: il puntino dentro il pulsante dov'è lo zoom (se è cambiato)
+ZM.PUNTO = vmath.vector3()
+function ZM.mostra(self)
+	local f = self.cam.f
+	if self.zoom_f == f then return end
+	self.zoom_f = f
+	ZM.PUNTO.y = (f - 0.5) * ZM.SEGNO
+	gui.set_position(self.zoom_punto, ZM.PUNTO)
+end
+
+-- y del dito sullo schermo; la guida va dalla cima (il più vicino) in giù
+function ZM.premi(self, y)
+	local cima = schermo.y1 - ZM.CIMA
+	self.zoom_dito = { y = y, f = self.cam.f, mosso = false, cima = cima, fondo = cima - ZM.CORSA }
+	gui.set_position(self.zoom_guida, vmath.vector3(-ZM.W / 2 - 16, cima - ZM.CORSA / 2 - ZOOM_BTN.y, 0))
+end
+
+function ZM.trascina(self, y)
+	local d = self.zoom_dito
+	if not d then return end
+	if not d.mosso and math.abs(y - d.y) > ZM.MOSSO then
+		d.mosso = true
+		gui.set_enabled(self.zoom_guida, true)
+	end
+	if not d.mosso then return end
+	y = math.max(d.fondo, math.min(d.cima, y))
+	-- sopra il punto premuto si va verso il più vicino, sotto verso il massimo
+	local f
+	if y >= d.y then
+		f = d.cima > d.y and d.f + (1 - d.f) * (y - d.y) / (d.cima - d.y) or 1
+	else
+		f = d.f * (y - d.fondo) / (d.y - d.fondo)
+	end
+	camera.trascina(self.cam, f)
+	gui.set_position(self.zoom_cursore, vmath.vector3(0, y - (d.cima + d.fondo) / 2, 0))
+end
+
+function ZM.lascia(self)
+	local d = self.zoom_dito
+	self.zoom_dito = nil
+	gui.set_enabled(self.zoom_guida, false)
+	if d and not d.mosso then camera.alterna(self.cam) end
+end
+
+-- I colpi usciti dallo schermo in alto (Sergio, 3 nov: «non mi interessa sapere
+-- quanto è in alto, ma in che punto tornerà sullo schermo», per i teletrasporti):
+-- una piccola freccia di ferro per colpo, con la brace del colore di chi ha
+-- tirato, sopra i punti, sulla x del colpo. Lo segue mentre è fuori, sparisce
+-- quando torna. Missile, uovo, cecchino, ogni globo, lo sciame (una per tutto)
+CP.TACCA = { W = 18, SOTTO = 10, LATO = 12, N = 4 }
+
+function CP.tacca_crea(self)
+	self.tacche = {}
+	for i = 1, CP.TACCA.N do
+		local f = targa.freccia()
+		local k = CP.TACCA.W / gui.get_size(f.ferro).x
+		gui.set_scale(f.radice, vmath.vector3(k, k, 1))
+		gui.set_color(f.cuore, vmath.vector4(1, 1, 1, 0.7))
+		f.pos = vmath.vector3()
+		self.tacche[i] = f
+	end
+	self.tacche_n = 0
+end
+
+-- a ogni frame: CP.tacca(self, x, y) per ogni colpo in volo (nel mondo), poi
+-- CP.tacche_fine(self, colore)
+function CP.tacca(self, x, y)
+	local sx, sy = camera.allo_schermo(self.cam, x, y)
+	if sy <= schermo.y1 or self.tacche_n >= CP.TACCA.N then return end
+	self.tacche_n = self.tacche_n + 1
+	local f = self.tacche[self.tacche_n]
+	f.pos.x = math.max(schermo.x0 + CP.TACCA.LATO, math.min(schermo.x1 - CP.TACCA.LATO, sx))
+	f.pos.y = schermo.y1 - CP.TACCA.SOTTO
+	gui.set_position(f.radice, f.pos)
+end
+
+function CP.tacche_fine(self, colore)
+	for i, f in ipairs(self.tacche) do
+		local su = i <= self.tacche_n
+		if su then gui.set_color(f.brace, colore) end
+		if su ~= f.acceso then
+			gui.set_enabled(f.radice, su)
+			f.acceso = su
+		end
+	end
+	self.tacche_n = 0
+end
 
 -- L'ingresso (Sergio, 1 nov): la home si apre solo quando il gioco ha dal
 -- server quello che le serve (oggi gli eventi, main/eventi.lua), così è sempre
@@ -1095,6 +1221,7 @@ local function handle_event(self, e)
 	elseif e.type == "recharge" then
 		-- la Lama ha colpito un nemico: un colpo della secondaria torna
 		targa.annuncio(self.robots[e.robot].targa, "+1 " .. (hud.NOMI[e.weapon] or string.upper(e.weapon)))
+		CP.ricarica(self, e)
 	elseif e.type == "crate" then
 		show_message(self, "Una cassa cade dal cielo!")
 	elseif e.type == "crate_pick" then
@@ -1591,7 +1718,7 @@ function CP.robot_sotto(self, x, y)
 		local v = self.view[i]
 		if v and not rb.dead and not rb.gone then
 			local rx, piedi = camera.allo_schermo(self.cam, v.x, v.y)
-			local cima = piedi + (scoria.altezza(self.robots[i].rig) + 3 + targa.SOPRA * s ^ -0.65) * s
+			local cima = piedi + (scoria.altezza(self.robots[i].rig) + 3 + 4 / s + targa.sopra(self.robots[i].targa) * targa.scala(self.cam)) * s
 			if math.abs(x - rx) <= math.max(40, 30 * s ^ 0.35) and y >= piedi - 10 and y <= cima + 10 then return i end
 		end
 	end
@@ -1910,10 +2037,7 @@ local function missione_update(self, dt)
 	end
 	-- il passo vuole vedere più lontano (l'isola): la camera si allarga
 	local z = missioni.zoom(r)
-	if z and self.cam.livello < z then
-		camera.cambia(self.cam, z - self.cam.livello)
-		gui.set_text(self.zoom_label, camera.NOMI[self.cam.livello])
-	end
+	if z then camera.allarga(self.cam, z) end
 	-- la bandierina a scacchi del passo da fare (battaglia/bandiera.lua), dietro ai diavoletti
 	local bx, by = missioni.bandiera(r)
 	if bx and not self.bandiera then self.bandiera = require("battaglia.bandiera").new(self.mondo, self.robots[1].rig.root) end
@@ -2360,12 +2484,71 @@ local function update_bar(self)
 	return scelto
 end
 
+-- Un colpo della secondaria che torna (la Lama ha colpito un nemico, Sergio 3
+-- nov: «un bel feedback»): l'icona dell'arma vola dal diavoletto al suo
+-- pulsante, che si gonfia con un lampo d'oro, e il telefono vibra appena
+CP.RICARICA = { VOLA = 0.45, D = 44, GONFIA = 1.35, TORNA = 0.4, LAMPO = 0.6 }
+
+function CP.ricarica_crea(self)
+	-- l'icona vola dentro un alone d'oro, così si vede anche quando è scura
+	local n = glow(0, 0, CP.RICARICA.D * 1.9, hud.GIALLO)
+	gui.set_parent(n, self.bar)
+	gui.set_enabled(n, false)
+	local icona = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(CP.RICARICA.D, CP.RICARICA.D, 0)))
+	gui.set_texture(icona, "armi")
+	gui.set_parent(icona, n)
+	self.ricarica, self.ricarica_icona = n, icona
+	self.ricarica_lampo = glow(0, 0, SLOT * 1.8, hud.GIALLO)
+	gui.set_parent(self.ricarica_lampo, self.bar)
+	gui.set_enabled(self.ricarica_lampo, false)
+end
+
+function CP.ricarica(self, e)
+	local rb = bar_robot(self)
+	if not rb or rb.id ~= e.robot or not self.controls_visible then return end
+	local sl
+	for _, s in ipairs(self.slots) do
+		if s.weapon == e.weapon and s.have then sl = s end
+	end
+	local v = self.view[e.robot]
+	if not sl or not sl.x or not v then return end
+	local R = CP.RICARICA
+	local n = self.ricarica
+	local x, y = camera.allo_schermo(self.cam, v.x, v.y + game.DISEGNO_H / 2)
+	gui.cancel_animations(n)
+	gui.play_flipbook(self.ricarica_icona, WEAPON_ICON[e.weapon])
+	gui.set_position(n, vmath.vector3(x, y, 0))
+	gui.set_scale(n, vmath.vector3(1.4, 1.4, 1))
+	gui.set_enabled(n, true)
+	gui.animate(n, "scale", vmath.vector3(0.8, 0.8, 1), gui.EASING_INQUAD, R.VOLA)
+	gui.animate(n, "position", vmath.vector3(sl.x, sl.y, 0), gui.EASING_INQUAD, R.VOLA, 0, function()
+		gui.set_enabled(n, false)
+		-- arrivata: il pulsante si gonfia e torna, con un lampo d'oro
+		local k = (sl.sc or 1)
+		gui.cancel_animations(sl.node, "scale")
+		gui.set_scale(sl.node, vmath.vector3(k * R.GONFIA, k * R.GONFIA, 1))
+		gui.animate(sl.node, "scale", vmath.vector3(k, k, 1), gui.EASING_OUTBACK, R.TORNA, 0, function()
+			sl.sc = nil   -- update_bar la rimette giusta, se nel frattempo è cambiata
+		end)
+		local l = self.ricarica_lampo
+		gui.cancel_animations(l)
+		gui.set_position(l, vmath.vector3(sl.x, sl.y, 0))
+		gui.set_color(l, hud.GIALLO)
+		gui.set_scale(l, vmath.vector3(0.6, 0.6, 1))
+		gui.set_enabled(l, true)
+		gui.animate(l, "scale", vmath.vector3(1.3, 1.3, 1), gui.EASING_OUTQUAD, R.LAMPO)
+		gui.animate(l, "color.w", 0, gui.EASING_INQUAD, R.LAMPO, 0, function() gui.set_enabled(l, false) end)
+		vibra_tocco()
+	end)
+end
+
 -- La camera sposta e ingrandisce il nodo "mondo" (tutti i nodi della battaglia)
 -- e la vista del render, dove si disegna la mesh del terreno. Scritte e freccia
 -- crescono meno del mondo, così da vicino non diventano enormi.
 local CAM_POS, CAM_SCALE, LABEL_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1), vmath.vector3(1, 1, 1)
 local function apply_camera(self)
 	local c = self.cam
+	if self.zoom_punto then ZM.mostra(self) end
 	local tx, ty = camera.spostamento(c)
 	tx, ty = tx + self.sc_ox, ty + self.sc_oy
 	if tx == self.cam_tx and ty == self.cam_ty and c.s == self.cam_s then return end
@@ -2437,9 +2620,14 @@ local function render(self, dt)
 			targa.stato(r.targa, testo)
 			v.stato = codice
 		end
-		-- chi mira ha sopra il cartellino della mira: la riga delle missioni sale
-		targa.update(r.targa, dt, v.x, v.y + scoria.altezza(r.rig) + 3, self.cam.s ^ -0.65, self.cam,
-			self.aiming and i == g.current and (self.tele_armed or not mira.MISCHIA[self.weapon]) and mira.CARTELLINO_H or 0)
+		-- la freccia di ferro sopra chi è di turno, finché la partita va avanti
+		-- (prima di targa.update, che la mette al suo posto)
+		if i == g.current then
+			local su = not rb.dead and not rb.gone and g.phase ~= "over" and gui.is_enabled(r.targa.barre)
+			targa.freccia_su(self.freccia, su and r.targa or nil)
+		end
+		-- sopra le corna: 3 nel mondo e 4 pixel dello schermo
+		targa.update(r.targa, dt, v.x, v.y + scoria.altezza(r.rig) + 3 + 4 / self.cam.s, targa.scala(self.cam), self.cam)
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -2616,6 +2804,8 @@ local function render(self, dt)
 		for _, node in ipairs(self.trail) do gui.set_enabled(node, false) end
 	end
 
+	if missile or egg then CP.tacca(self, self.fuoco_x, self.fuoco_y) end
+
 	-- Sciame di Schegge: piccoli bagliori col colore di chi spara
 	local n_shards, shard_x, shard_y = 0, 0, 0
 	for i = 1, game.SHARD_COUNT do
@@ -2633,6 +2823,7 @@ local function render(self, dt)
 			n_shards, shard_x, shard_y = n_shards + 1, shard_x + x, shard_y + y
 		end
 	end
+	if n_shards > 0 then CP.tacca(self, shard_x / n_shards, shard_y / n_shards) end
 	if self.shard_color ~= g.current then
 		for i = 1, game.SHARD_COUNT do
 			gui.set_color(self.shard_nodes[i], self.colors[g.current])
@@ -2679,11 +2870,15 @@ local function render(self, dt)
 		if on then
 			local ob = pb.o[i]
 			local o0 = find_orb(pa, ob.id) or ob
-			set_pos(node.root, o0.x + (ob.x - o0.x) * k, o0.y + (ob.y - o0.y) * k)
+			local x, y = o0.x + (ob.x - o0.x) * k, o0.y + (ob.y - o0.y) * k
+			set_pos(node.root, x, y)
+			CP.tacca(self, x, y)
 			gui.set_color(node.light, self.colors[g.current])
 			gui.set_color(node.glow, self.colors[g.current])
 		end
 	end
+
+	CP.tacche_fine(self, self.colors[g.current])
 
 	-- pulsanti: arma scelta e teletrasporto (anche con altri globi in volo)
 	local tele_ok = g:can_use("teleport") and my_turn(self)
@@ -2769,10 +2964,9 @@ local function render(self, dt)
 		local v, s = self.view[g.current], self.cam.s
 		local cy = v.y + game.DISEGNO_H / 2
 		-- lancetta o mirino, come dice l'impostazione "mira" (dalla rotellina)
-		mira[profilo.impostazione(self.profilo, "mira")](self.mira, v.x + math.cos(self.aim_angle) * game.MUZZLE,
-			cy + math.sin(self.aim_angle) * game.MUZZLE, self.aim_angle, s, self.aim_power, self.colors[g.current])
-		mira.cartellino(self.mira, v.x, v.y + scoria.altezza(self.robots[g.current].rig) + 3
-			+ targa.SOPRA * s ^ -0.65 + 4 / s, s, mira.gradi(self.aim_angle), self.aim_power, self.colors[g.current])
+		local bx, by = v.x + math.cos(self.aim_angle) * game.MUZZLE, cy + math.sin(self.aim_angle) * game.MUZZLE
+		mira[profilo.impostazione(self.profilo, "mira")](self.mira, bx, by, self.aim_angle, s, self.aim_power, self.colors[g.current])
+		mira.cartellino(self.mira, bx, by, self.aim_angle, s, mira.gradi(self.aim_angle), self.aim_power)
 		-- a ogni tacca di potenza una micro-vibrazione, se accesa
 		local tacca = mira.VIBRA_TACCHE and mira.tacca(self.aim_power)
 		if tacca and self.tacca and tacca ~= self.tacca then vibra_tocco() end
@@ -2839,7 +3033,7 @@ local function render(self, dt)
 	local v = self.view[g.current]
 	local c = self.cam
 	if self.mode == "menu" then
-		camera.segui(c, dt, game.WORLD_W / 2, game.WORLD_H / 2, camera.tutta(c))
+		camera.mappa(c, dt)
 	else
 		local rx, ry = v.x, v.y + game.DISEGNO_H / 2
 		local fx, fy, veloce = nil, nil, false
@@ -2931,7 +3125,7 @@ function init(self)
 	-- tutto quello che sta nel mondo è figlio di questo nodo, che la camera
 	-- sposta e ingrandisce (apply_camera)
 	self.cam = camera.new(W, H, game.WORLD_W, game.WORLD_H)
-	self.cam.livello = math.min(#camera.LIVELLI, math.max(1, ZOOM_INIZIO))
+	camera.livello(self.cam, ZOOM_INIZIO)
 	-- set_view_projection vuole anche id e projection; la proiezione resta quella
 	-- del render (stretch), che questa non cambia
 	self.cam_msg = { id = hash("camera"), view = vmath.matrix4(), projection = vmath.matrix4() }
@@ -3069,6 +3263,8 @@ function init(self)
 
 	local targhe = targa.nuove(TEAM_COLORS, TEAM_NAMES)
 	for i = 1, game.MAX_PLAYERS do self.robots[i].targa = targhe[i] end
+	-- la freccia di ferro sopra chi è di turno (una sola)
+	self.freccia = targa.freccia()
 	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
 	gui.set_enabled(self.cancel_label, false)
 
@@ -3092,8 +3288,10 @@ function init(self)
 		mondo[#mondo + 1] = b.anim
 		mondo[#mondo + 1] = b.flash
 	end
-	-- le targhe: prima tutte le barre, poi tutti i testi (due draw call in tutto)
+	-- le targhe: prima tutte le barre, poi la freccia, poi tutti i testi (tre draw
+	-- call in tutto; i nomi e gli annunci passano sopra la freccia)
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.barre end
+	mondo[#mondo + 1] = self.freccia.radice
 	for i = 1, game.MAX_PLAYERS do mondo[#mondo + 1] = self.robots[i].targa.testi end
 	mondo[#mondo + 1] = self.mira.cartello
 	mondo[#mondo + 1] = self.cancel_label
@@ -3128,10 +3326,9 @@ function init(self)
 	gui.set_enabled(self.btn_esci, false)
 	gui.set_enabled(self.btn_menu, false)
 
-	-- zoom: vicino, medio, tutta la mappa (anche rotella e tasto Z)
-	self.btn_zoom = box(ZOOM_BTN.x, ZOOM_BTN.y, 116, 44, vmath.vector4(0.05, 0.05, 0.07, 0.55))
-	self.zoom_label = label(0, 0, camera.NOMI[self.cam.livello], 0.75)
-	gui.set_parent(self.zoom_label, self.btn_zoom)
+	-- lo zoom (ZM): il pulsante che si trascina, con la sua guida
+	ZM.crea(self)
+	CP.tacca_crea(self)
 
 	-- levette del telefono
 	self.move_pad = new_pad(MOVE_PAD, MOVE_IDLE, true)
@@ -3181,6 +3378,7 @@ function init(self)
 	self.btn_tele = hud.tondo(TELE_DESK.x, TELE_DESK.y, TELE_D, "teleport", ui.C.VIOLA)
 	self.tele_key = label(-28, -30, "T", 0.6)
 	gui.set_parent(self.tele_key, self.btn_tele.nodo)
+	CP.ricarica_crea(self)
 	self.cartellino = hud.cartellino()
 	self.avviso = hud.avviso()
 	self.scambio = hud.scambio()
@@ -3443,10 +3641,10 @@ local function picked_slot(self, x, y)
 	return nil
 end
 
--- passo: +1 più lontano, -1 più vicino, nil il prossimo livello (il pulsante gira)
+-- passo: +1 più lontano, -1 più vicino (la rotella, un tacco alla volta), nil
+-- il tocco: dallo zoom scelto allo zoom massimo e ritorno
 local function change_zoom(self, passo)
-	if passo then camera.cambia(self.cam, passo) else camera.prossimo(self.cam) end
-	gui.set_text(self.zoom_label, camera.NOMI[self.cam.livello])
+	if passo then camera.passo(self.cam, -passo * ZM.PASSO) else camera.alterna(self.cam) end
 end
 
 -- Annulla la mira della levetta: torna a riposo e lasciandola non parte niente
@@ -3554,7 +3752,8 @@ local function pointer_down(self, id, px, py)
 		missioni.tocca(self.missione, "baratto")
 		self.fire = { angle = 0, power = 0, weapon = "swap" }
 	elseif gui.pick_node(self.btn_zoom, px, py) then
-		change_zoom(self)
+		self.pointers[id] = "zoom"
+		ZM.premi(self, y)
 	elseif self.tele_vede and gui.pick_node(self.btn_tele.nodo, px, py) then
 		choose_slot(self, "teleport")
 	elseif picked_slot(self, px, py) then
@@ -3590,6 +3789,8 @@ local function pointer_move(self, id, x, y)
 		aim_pad_drag(self, x, y)
 	elseif m == "aim" then
 		aim_from(self, x, y)
+	elseif m == "zoom" then
+		ZM.trascina(self, y)
 	end
 end
 
@@ -3597,7 +3798,9 @@ local function pointer_up(self, id, x, y)
 	x, y = schermo.da_tocco(x, y)
 	local m = self.pointers[id]
 	self.pointers[id] = nil
-	if m == "move" then
+	if m == "zoom" then
+		ZM.lascia(self)
+	elseif m == "move" then
 		move_pad_release(self)
 	elseif m == "pad_aim" then
 		aim_pad_release(self)
@@ -3695,6 +3898,7 @@ function PAD.riposo(self)
 		self.pad_mira, self.aiming = false, false
 	end
 	self.pad_cammina, self.pad_salta, self.pad_carica = 0, false, false
+	self.pad_zoom = nil
 end
 
 -- Un'impostazione del profilo (sparo, potenza: menu/impostazioni.lua)
@@ -3848,8 +4052,30 @@ PAD.COMANDI = {
 			self.fire = { angle = 0, power = 0, weapon = "swap" }
 		end
 	end,
-	zoom = function(self) change_zoom(self) end,
+	-- tenuto: la levetta che mira cambia lo zoom; lasciato senza muoverla, un
+	-- tocco (PAD.evento)
+	zoom = function(self)
+		if self.pad_mira then
+			levette.reset(self.pad_st)
+			self.pad_mira, self.aiming = false, false
+		end
+		self.pad_zoom = { t = self.clock }
+	end,
 }
+
+-- Col tasto dello zoom tenuto: la levetta che mira, giù allontana e su
+-- avvicina (come trascinare il pulsante), e intanto non mira. Il puntino nel
+-- pulsante dice dov'è lo zoom (la guida lunga è solo per il dito)
+function PAD.zoom(self)
+	local z = self.pad_zoom
+	local dt = self.clock - z.t
+	z.t = self.clock
+	local y = PAD.levetta(self, "mira").y
+	if math.abs(y) > 0.25 then
+		z.mosso = true
+		camera.trascina(self.cam, self.cam.f + y * ZM.LEVETTA * dt)
+	end
+end
 
 -- Ogni frame: una levetta cammina e salta, l'altra mira (PAD.levetta)
 -- I tasti del controller sull'HUD (ui/glifo.lua, Sergio 30 ott): col
@@ -3956,7 +4182,7 @@ function PAD.ogni_frame(self)
 	end
 	self.pad_cammina = st.moving and st.dir or 0
 	if not tasto_salto then self.pad_salta = st.jumping end
-	PAD.mira(self)
+	if self.pad_zoom then PAD.zoom(self) else PAD.mira(self) end
 	-- l'oggetto acceso (LT): se è finito, il primo della colonna
 	local l = PAD.oggetti(self)
 	local ok = false
@@ -3974,6 +4200,10 @@ function PAD.evento(self, e)
 		-- lasciati: SALTA smette di saltare, SPARA "lasciando" fa partire il colpo
 		local comando = PAD.lettore.comando(self.ctrl, e.nome)
 		if comando == "salta" then self.pad_salta = false end
+		if comando == "zoom" and self.pad_zoom then
+			if not self.pad_zoom.mosso then change_zoom(self) end
+			self.pad_zoom = nil
+		end
 		if comando == "spara" and self.pad_carica and PAD.imp(self, "potenza") ~= "grilletto" then
 			PAD.COMANDI.spara(self)
 		end

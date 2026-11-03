@@ -157,3 +157,31 @@ Style: same as the MegaBlast apprentice imp reference (attached image 1): cartoo
 Approvata da Claude, 2026-11-02. È una scelta reversibile: sono immagini di proposta e il gioco non
 cambia finché Sergio non sceglie. Le opzioni scartate senza immagine (alone, occhio di bue, gli altri
 sbiaditi, un'altra fiammella) sono nella richiesta della designer.
+
+## Consegna di Codex
+
+Eseguita il 2 nov sul ramo `design/WB-010`: 8 immagini in `art/WB-010/`, 18 generazioni in tutto,
+con il riferimento R1 senza la fiammella del 2 nov. Il resoconto completo è sul ramo. In breve:
+i fogli non hanno il magenta pieno `#FF00FF` e i fotogrammi cambiano un po' di forma l'uno
+dall'altro; nel sigillo le tacche sono 8 invece di 9.
+
+## Resoconto di Claude
+
+- **Scelta di Sergio (2 nov):** la proposta 2, la freccia di ferro battuto, sopra il nome di chi è di
+  turno con la brace che pulsa.
+- **Usate:** `p2_freccia_foglio.png`, il terzo fotogramma della riga blu (il più acceso), e
+  `p2_freccia_scena.png` come riferimento della scena. Le ho portate in `art/WB-010/` su `main`.
+  `strumenti/grafica/freccia.py` toglie il magenta (anche se non è pieno) e divide la freccia
+  in tre strati: il ferro, la brace in bianco (che il gioco tinge col colore di ognuna delle
+  quattro squadre) e il cuore bianco. Escono `client/assets/fx/freccia_*.png`.
+- **Scartati:**
+  - gli altri sette fotogrammi del foglio blu e tutto il foglio oro: le forme non coincidono e
+    la freccia tremerebbe, quindi il dondolio e la pulsazione li fa il codice;
+  - le proposte 1, 3 e 4, che Sergio non ha scelto.
+- **Verificato:**
+  - scenario `strumenti/simula/scenari/freccia.txt` a 2400x1080: freccia rossa sul turno di
+    Rosso e blu su quello di Blu, il cartellino della mira sopra la freccia, la freccia visibile
+    anche allo zoom MAPPA;
+  - nel ferro non restano pixel azzurri e attorno all'immagine non c'è un velo trasparente.
+- **Non verificato:** il telefono vero (c'è l'APK di prova da mandare a Sergio) e la freccia
+  sopra la Corona in una partita vera, che ho controllato solo con i numeri delle misure.

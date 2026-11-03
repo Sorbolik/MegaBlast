@@ -14,7 +14,6 @@ aspetta_evento explosion 8
 aspetta 0.8
 foto 02_cratere
 zoom 03_cratere_vicino 3
-premi z
-premi z
+premi z                             # zoom massimo
 aspetta 1.5
 foto 04_tutta_la_mappa

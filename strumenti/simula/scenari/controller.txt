@@ -79,3 +79,15 @@ foto 12_rotellina
 pad b                               # si richiude
 aspetta 0.3
 foto 13_chiusa
+# lo zoom: un tocco di Select va al massimo e torna; tenendolo, la levetta che
+# mira (di base la sinistra) cambia lo zoom: su avvicina, giù allontana
+pad select                          # zoom massimo
+aspetta 1
+foto 14_zoom_massimo
+pad select                          # e ritorno
+aspetta 0.5
+pad_tieni select
+pad sx_su 0.8                       # tenuto: la levetta su avvicina
+pad_lascia select
+aspetta 0.8
+foto 15_zoom_con_la_levetta
