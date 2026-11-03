@@ -2,9 +2,9 @@
 # per ogni mappa dipinta della campagna, il cielo, i tre gruppi di piani dello sfondo e il
 # terreno, messi insieme come li vede la camera a mappa intera, e rimpiccioliti.
 #
-# Scrive client/assets/mappe/miniature/<mappa>.png e client/ui/maps.atlas (la texture "mappe"
+# Scrive client/assets/maps/miniature/<mappa>.png e client/ui/maps.atlas (la texture "mappe"
 # di client/main/game.gui). Le mappe sono quelle dei gironi di client/sim/campaign.lua (non le
-# arene delle missioni), come le elenca training.lua, che hanno un'immagine in client/dipinti/mappe/.
+# arene delle missioni), come le elenca training.lua, che hanno un'immagine in client/paintings/mappe/.
 #
 #   python3 strumenti/grafica/miniature_mappe.py      (dalla cartella del repository, dopo
 #                                                      mappe_dipinte.py)
@@ -13,8 +13,8 @@ from PIL import Image
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
-DIPINTI = os.path.join(RADICE, "client", "dipinti")
-OUT = os.path.join(RADICE, "client", "assets", "mappe", "miniature")
+DIPINTI = os.path.join(RADICE, "client", "paintings")
+OUT = os.path.join(RADICE, "client", "assets", "maps", "miniature")
 ATLAS = os.path.join(RADICE, "client", "ui", "maps.atlas")
 
 # la cartolina sta in una carta di 378 x 212 della scena (1280 x 720): un po' di più per gli
@@ -54,14 +54,14 @@ def leggi():
 
 
 def cartolina(mappa, sfondo):
-    im = Image.open(os.path.join(DIPINTI, "sfondi", "%s_cielo_1.png" % mappa["sfondo"])).convert("RGBA")
+    im = Image.open(os.path.join(DIPINTI, "backgrounds", "%s_cielo_1.png" % mappa["sfondo"])).convert("RGBA")
     im = im.resize((SCENA_W, SCENA_H), Image.LANCZOS)
     for g in sfondo["groups"]:
-        piano = Image.open(os.path.join(DIPINTI, "sfondi", "%s_%s_1.png" % (mappa["sfondo"], g["name"]))).convert("RGBA")
+        piano = Image.open(os.path.join(DIPINTI, "backgrounds", "%s_%s_1.png" % (mappa["sfondo"], g["name"]))).convert("RGBA")
         w = round(piano.width * g["h"] / piano.height)
         piano = piano.resize((w, g["h"]), Image.LANCZOS).crop((0, 0, min(w, SCENA_W), g["h"]))
         im.alpha_composite(piano, (0, g["y0"]))
-    terreno = Image.open(os.path.join(DIPINTI, "mappe", "%s_1.png" % mappa["id"])).convert("RGBA")
+    terreno = Image.open(os.path.join(DIPINTI, "maps", "%s_1.png" % mappa["id"])).convert("RGBA")
     im.alpha_composite(terreno.resize((SCENA_W, SCENA_H), Image.LANCZOS))
     return im.resize((W, H), Image.LANCZOS)
 
@@ -73,7 +73,7 @@ def main():
     for m in dati["mappe"]:
         f = os.path.join(OUT, m["id"] + ".png")
         cartolina(m, dati["sfondi"][m["sfondo"]]).convert("RGB").save(f, optimize=True)
-        righe.append('images {\n  image: "/assets/mappe/miniature/%s.png"\n}\n' % m["id"])
+        righe.append('images {\n  image: "/assets/maps/miniature/%s.png"\n}\n' % m["id"])
         print("scritta", os.path.relpath(f, RADICE))
     with open(ATLAS, "w") as a:
         a.write("".join(righe) + "margin: 2\nextrude_borders: 2\ninner_padding: 0\n")

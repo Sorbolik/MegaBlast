@@ -1,4 +1,4 @@
-"""Il globo del teletrasporto che arriva nel pulsante (client/assets/suoni/globo.ogg):
+"""Il globo del teletrasporto che arriva nel pulsante (client/assets/sounds/globo.ogg):
 un "pling-ding" di vetro, due note a una quarta (come la moneta dei giochi
 classici) con una salita veloce all'attacco e un luccichio di parziali
 inarmoniche che si spegne prima della nota. Il gioco lo suona più acuto per
@@ -18,7 +18,7 @@ from pathlib import Path
 
 FREQ, DURATA = 22050, 0.42
 F0 = 988.0                 # si5; la seconda nota è mi6 (una quarta sopra)
-USCITA = Path(__file__).resolve().parents[2] / "client/assets/suoni/globo.ogg"
+USCITA = Path(__file__).resolve().parents[2] / "client/assets/sounds/globo.ogg"
 
 # (rapporto con la nota, ampiezza, tempo di spegnimento in s)
 PARZIALI = [(1, 0.55, 0.22), (2, 0.22, 0.10), (3, 0.10, 0.06), (4.17, 0.07, 0.035), (5.43, 0.05, 0.025)]

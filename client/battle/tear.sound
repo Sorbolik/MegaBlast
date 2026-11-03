@@ -1,4 +1,4 @@
-sound: "/assets/suoni/strappo.ogg"
+sound: "/assets/sounds/strappo.ogg"
 looping: 0
 group: "master"
 gain: 0.8

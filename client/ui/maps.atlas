@@ -1,8 +1,8 @@
 images {
-  image: "/assets/mappe/miniature/pavimento.png"
+  image: "/assets/maps/miniature/pavimento.png"
 }
 images {
-  image: "/assets/mappe/miniature/fossa.png"
+  image: "/assets/maps/miniature/fossa.png"
 }
 margin: 2
 extrude_borders: 2

@@ -1,5 +1,5 @@
 -- Made by strumenti/grafica/mappe_dipinte.py, do not edit by hand.
--- The painted images (client/dipinti, one per screen density) and the background
+-- The painted images (client/paintings, one per screen density) and the background
 -- numbers: for each group of planes where it sits in the 1280 x 720 scene (y0 from
 -- the top, h), how much it follows the camera (parallax) and how many scene pixels
 -- it scrolls per second.

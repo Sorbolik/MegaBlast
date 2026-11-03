@@ -13,7 +13,7 @@ caselle: un PNG trasparente (il livello di Procreate) o un'immagine su magenta
   python3 strumenti/stampino/taglia.py --ritocchi strumenti/stampino/ritocchi.json
   python3 strumenti/stampino/taglia.py FOGLIO.png --nome maschio_1 --categoria personaggio --allinea --senza ala,coda
 
-Scrive client/assets/pelli/<nome>_<posto>.png, strumenti/stampino/pelli/<nome>.json
+Scrive client/assets/skins/<nome>_<posto>.png, strumenti/stampino/pelli/<nome>.json
 (com'è fatta la pelle), e rifà client/battle/skins.lua da tutte le pelli e
 l'atlante del diavoletto, che le contiene insieme ai pezzi di base. --allinea sposta e scala ogni pezzo finché combacia col manichino: per
 i disegni di ChatGPT, che non rispetta mai al pixel le caselle. --ritocchi mette
@@ -35,7 +35,7 @@ RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
 sys.path.insert(0, QUI)
 import stampino as ST  # noqa: E402
 
-ASSETS = os.path.join(RADICE, "client", "assets", "pelli")
+ASSETS = os.path.join(RADICE, "client", "assets", "skins")
 JSON = os.path.join(QUI, "pelli")
 LUA = os.path.join(RADICE, "client", "battle", "skins.lua")
 

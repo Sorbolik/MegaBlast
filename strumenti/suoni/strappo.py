@@ -1,4 +1,4 @@
-"""La fune del Rampino che si spezza (client/assets/suoni/strappo.ogg): quando il
+"""La fune del Rampino che si spezza (client/assets/sounds/strappo.ogg): quando il
 nemico tirato resta appeso perché la fune è tutta riavvolta, uno schiocco secco
 come una frusta, il "twang" basso della fune che si allenta di colpo e il
 fruscio del filo che ricade. Il gioco lo suona all'evento hook_end con snap
@@ -18,7 +18,7 @@ import wave
 from pathlib import Path
 
 FREQ, DURATA = 22050, 0.5
-USCITA = Path(__file__).resolve().parents[2] / "client/assets/suoni/strappo.ogg"
+USCITA = Path(__file__).resolve().parents[2] / "client/assets/sounds/strappo.ogg"
 
 caso = random.Random(7)
 rumore = [caso.uniform(-1, 1) for _ in range(int(FREQ * DURATA))]

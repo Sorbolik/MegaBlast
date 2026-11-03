@@ -1,4 +1,4 @@
-image: "/assets/esplosioni/esplosione_base_12x256.png"
+image: "/assets/explosions/esplosione_base_12x256.png"
 tile_width: 256
 tile_height: 256
 tile_margin: 0

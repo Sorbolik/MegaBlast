@@ -1,7 +1,7 @@
 -- The map rectangle (a mesh with the terrain shader). The GUI creates the
 -- mask texture and sends us its path: here we bind it to the mesh, together
 -- with the map's paintings. Every map (battle/paintings.lua) has terrain and
--- background painted from SVG in client/dipinti, once per screen density:
+-- background painted from SVG in client/paintings, once per screen density:
 -- here only the one needed is loaded, when needed (so the big version is
 -- never in memory on a small phone).
 --
@@ -35,10 +35,10 @@ local function density()
 	return not WEB and (h or 0) >= 1000 and paintings.densities[2] or paintings.densities[1]
 end
 
--- A PNG from client/dipinti into a texture (always the same one for the same
+-- A PNG from client/paintings into a texture (always the same one for the same
 -- slot: changing map rewrites it)
 local function load_up(self, spot, file)
-	local payload = sys.load_resource("/dipinti/" .. file)
+	local payload = sys.load_resource("/paintings/" .. file)
 	if not payload then
 		print("ERROR: manca il dipinto " .. file)
 		return nil
@@ -54,7 +54,7 @@ local function load_up(self, spot, file)
 		resource.set_texture(resource_path, p, img.buffer)
 	else
 		if resource_path then resource.release(resource_path) end
-		resource_path = resource.create_texture("/dipinti/" .. spot .. self.n .. ".texturec", p, img.buffer)
+		resource_path = resource.create_texture("/paintings/" .. spot .. self.n .. ".texturec", p, img.buffer)
 		self.n = self.n + 1
 	end
 	self.texture[spot], self.misura[spot] = resource_path, img.width .. "x" .. img.height .. fmt
@@ -68,7 +68,7 @@ local function set_background(self, nome)
 	local d = density()
 	if self.sfondo ~= nome .. d then
 		for _, plan_def in ipairs(LAYERS) do
-			load_up(self, PLACE[plan_def], "sfondi/" .. nome .. "_" .. plan_def .. "_" .. d .. ".png")
+			load_up(self, PLACE[plan_def], "backgrounds/" .. nome .. "_" .. plan_def .. "_" .. d .. ".png")
 		end
 		self.sfondo = nome .. d
 	end
@@ -115,7 +115,7 @@ local function handle_message(self, message_id, message)
 		self.map_background = paintings.maps[map_name]
 		if not self.map_background then print("ERROR: la mappa " .. tostring(map_name) .. " non ha il dipinto") end
 		-- the same map as before (the mission is retried): the image is already there
-		local file = "mappe/" .. map_name .. "_" .. density() .. ".png"
+		local file = "maps/" .. map_name .. "_" .. density() .. ".png"
 		if self.terrain_file ~= file then
 			load_up(self, "texture0", file)
 			self.terrain_file = file
