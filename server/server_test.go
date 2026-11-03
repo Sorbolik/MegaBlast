@@ -44,7 +44,7 @@ func TestSimPicksMapFromSeed(t *testing.T) {
 }
 
 func TestSimFromEmbeddedLua(t *testing.T) {
-	sim := newTestSim(t, 42, "crogiolo")
+	sim := newTestSim(t, 42, "fossa")
 	for i := 0; i < 120; i++ {
 		if err := sim.Step(Input{}); err != nil {
 			t.Fatal(err)
@@ -90,7 +90,7 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 // On the first turn every orb can be thrown on the server too: both starting
 // orbs and then the two earned by attacking at once (Sergio, 3 November).
 func TestEarnedTeleportsFirstTurn(t *testing.T) {
-	sim := newTestSim(t, 42, "forgia")
+	sim := newTestSim(t, 42, "pavimento")
 	orbs := func() int {
 		var st struct {
 			O []json.RawMessage `json:"o"`
@@ -120,7 +120,7 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 // The Rampino hook flies: it's in the state while in flight (gs, gx, gy), so
 // online the client draws the rope getting longer; then the "hook" event arrives.
 func TestHookShotInSnapshot(t *testing.T) {
-	sim := newTestSim(t, 42, "forgia")
+	sim := newTestSim(t, 42, "pavimento")
 	for i := 0; i < 60; i++ {
 		sim.Step(Input{})
 	}
@@ -160,7 +160,7 @@ func TestHookShotInSnapshot(t *testing.T) {
 // Swapping the second attack for a teleport goes through the server like the
 // weapons (fire.w = "swap"): one more orb and the attacks closed in the state.
 func TestSwapSecondAttack(t *testing.T) {
-	sim := newTestSim(t, 42, "forgia")
+	sim := newTestSim(t, 42, "pavimento")
 	type state struct {
 		U int `json:"u"`
 		R []struct {
@@ -210,14 +210,14 @@ func TestEngineReuseIsDeterministic(t *testing.T) {
 		}
 		return sim.Snapshot()
 	}
-	fresh := play(newTestSim(t, 7, "forgia"))
+	fresh := play(newTestSim(t, 7, "pavimento"))
 	e, err := newEngine()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer e.L.Close()
 	for round := 0; round < 3; round++ {
-		sim, err := e.NewSim(7, "forgia", lua.LNil, nil)
+		sim, err := e.NewSim(7, "pavimento", lua.LNil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -572,7 +572,7 @@ func TestLeave(t *testing.T) {
 // after SCORE.crown_rounds rounds). Online the board of pending points and
 // the turn dots read them from here.
 func TestPairAndFinalRoundInSnapshot(t *testing.T) {
-	sim := newTestSim(t, 42, "forgia")
+	sim := newTestSim(t, 42, "pavimento")
 	type state struct {
 		AV int     `json:"av"`
 		AB float64 `json:"ab"`

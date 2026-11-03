@@ -554,10 +554,15 @@ def gioca(exe, out, scenario, video):
 
 
 # Il tetto del lavoro di Lua in un frame solo (docs/prestazioni.md): qui gli
-# script girano come su un PC, e il caso peggiore di oggi (entrare in una
-# missione) ne usa circa 60. Un telefono è 3-5 volte più lento. È tempo vero:
+# script girano come su un PC. Un telefono è 3-5 volte più lento. È tempo vero:
 # il margine è largo perché ffmpeg (il video) ruba la CPU al gioco.
 LUA_MAX = 150
+# Il tetto dei frame "(coperto)", sotto l'iride chiusa, che non si vedono:
+# entrare in una mappa dipinta grande (il pavimento, la fossa: un PNG di
+# 2880 x 1620 da decodificare) costa 105-125 ms, e col video fino a 162 (3 nov).
+# Con 150 lo scenario base falliva per caso; il doppio ferma ancora un
+# caricamento nuovo grosso.
+LUA_MAX_COPERTO = 300
 
 
 def fotogrammi(log, dove):
@@ -578,7 +583,7 @@ def fotogrammi(log, dove):
         m = re.match(r"SIMULA scatto ([\d.]+) ms .*lua ([\d.]+) ms\) causa: (.*)", l)
         if m:
             ms, lua, causa = float(m.group(1)), float(m.group(2)), m.group(3)
-            if lua > LUA_MAX:
+            if lua > (LUA_MAX_COPERTO if causa.endswith("(coperto)") else LUA_MAX):
                 troppo.append(f"{lua:.0f} ms ({causa})")
             n, top = cause.get(causa, (0, 0.0))
             cause[causa] = (n + 1, max(top, ms))
@@ -588,7 +593,7 @@ def fotogrammi(log, dove):
     info(f"fotogrammi: {sum(n for n, _ in cause.values())} scatti" + (f": {elenco}" if elenco else "")
          + f" (dettagli in {dove.relative_to(REPO)})")
     if troppo:
-        raise Fallito(f"Lua ha tenuto fermo un frame più di {LUA_MAX} ms: {', '.join(troppo)} (docs/prestazioni.md)")
+        raise Fallito(f"Lua ha tenuto fermo un frame più di {LUA_MAX} ms ({LUA_MAX_COPERTO} sotto l'iride): {', '.join(troppo)} (docs/prestazioni.md)")
 
 
 def riepilogo(cartella):

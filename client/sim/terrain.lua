@@ -1,9 +1,7 @@
 -- Destructible terrain: a grid of cells.
---   0 = empty, 1 = dirt (destructible), 2 = steel (indestructible, e.g. pipes)
+--   0 = empty, 1 = dirt (destructible), 2 = steel (indestructible)
 -- Each cell is CELL x CELL world units. The origin is bottom left and y grows
 -- upwards, as in Defold.
-
-local rng = require "sim.rng"
 
 local M = {}
 M.__index = M
@@ -56,42 +54,15 @@ end
 
 -- Shapes to draw maps (world coordinates) ---------------------------------------
 
--- Fills the cells whose center satisfies inside(px, py), within the given rectangle.
-local function fill(t, x0, y0, x1, y1, v, inside)
-	local c = t.cell
-	for cy = math.max(0, math.floor(y0 / c)), math.min(t.h - 1, math.floor(y1 / c)) do
-		local py = (cy + 0.5) * c
-		for cx = math.max(0, math.floor(x0 / c)), math.min(t.w - 1, math.floor(x1 / c)) do
-			if inside((cx + 0.5) * c, py) then
-				t.data[cy * t.w + cx + 1] = v
-			end
+-- Fills with v the cells whose center is inside the rectangle (the mission
+-- arenas, sim/missions.lua).
+function M:rect(x, y, w, h, v)
+	local c = self.cell
+	for cy = math.max(0, math.floor(y / c)), math.min(self.h - 1, math.floor((y + h) / c)) do
+		for cx = math.max(0, math.floor(x / c)), math.min(self.w - 1, math.floor((x + w) / c)) do
+			self.data[cy * self.w + cx + 1] = v
 		end
 	end
-end
-
-function M:rect(x, y, w, h, v)
-	fill(self, x, y, x + w, y + h, v, function() return true end)
-end
-
-function M:circle(x, y, r, v)
-	local r2 = r * r
-	fill(self, x - r, y - r, x + r, y + r, v, function(px, py)
-		local dx, dy = px - x, py - y
-		return dx * dx + dy * dy <= r2
-	end)
-end
-
--- A "pipe": segment from (x1, y1) to (x2, y2) with thickness r.
-function M:capsule(x1, y1, x2, y2, r, v)
-	local dx, dy = x2 - x1, y2 - y1
-	local len2 = dx * dx + dy * dy
-	local r2 = r * r
-	fill(self, math.min(x1, x2) - r, math.min(y1, y2) - r, math.max(x1, x2) + r, math.max(y1, y2) + r, v,
-		function(px, py)
-			local k = len2 > 0 and math.max(0, math.min(1, ((px - x1) * dx + (py - y1) * dy) / len2)) or 0
-			local qx, qy = x1 + dx * k - px, y1 + dy * k - py
-			return qx * qx + qy * qy <= r2
-		end)
 end
 
 -- Loads a hand-drawn mask: one string per row from the bottom, made of
@@ -108,31 +79,6 @@ function M:load(rows)
 				cx = cx + 1
 			end
 		end
-	end
-end
-
--- Random hills with a few caves, from a seed.
-function M:generate(seed)
-	local r = rng.new(seed)
-	local w, h = self.w, self.h
-	local waves = {}
-	for i = 1, 4 do
-		waves[i] = { amp = r:range(0.03, 0.12) / i, freq = r:range(1, 3) * i, phase = r:range(0, 6.283) }
-	end
-	for cx = 0, w - 1 do
-		local u = cx / w
-		local height = 0.38
-		for i = 1, #waves do
-			local wv = waves[i]
-			height = height + wv.amp * math.sin(u * wv.freq * 6.283 + wv.phase)
-		end
-		local top = math.floor(height * h)
-		for cy = 0, top do self:set(cx, cy, 1) end
-	end
-	for _ = 1, 3 do
-		local x = r:range(0.15, 0.85) * w * self.cell
-		local y = r:range(0.12, 0.25) * h * self.cell
-		self:carve(x, y, r:range(20, 40))
 	end
 end
 

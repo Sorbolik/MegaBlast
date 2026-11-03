@@ -29,7 +29,7 @@ file dell'area che tocca** e non spende token sul resto.
 | [arsenale.md](arsenale.md) | Armi primarie e secondarie, casse, oggetti tattici, rampino, valori decisi | Tocchi un'arma o un oggetto |
 | [progressione.md](progressione.md) | Albero, set, loadout, podio, XP, Torneo normalizzato, negozio ed eventi (principi) | Tocchi profilo, armeria, podio, premi |
 | [personaggio.md](personaggio.md) | Tutta la storia del personaggio: Scoria, greybox, diavoletto dipinto, Ludo, vettoriale, editor e stampino; strumenti scartati | Tocchi `scoria.lua`, animazioni, skin, editor |
-| [grafica.md](grafica.md) | Direzione artistica, analisi del gioco di riferimento, mappe (Forgia, Crogiolo, scala), armi vettoriali, casse, pipeline immagini con ChatGPT/Codex | Tocchi asset, mappe, prompt |
+| [grafica.md](grafica.md) | Direzione artistica, analisi del gioco di riferimento, mappe (Forgia, fossa, scala), armi vettoriali, casse, pipeline immagini con ChatGPT/Codex | Tocchi asset, mappe, prompt |
 | [interfaccia.md](interfaccia.md) | UI minimale stile Sagoma, home, comandi touch, regole "tranquilla ed essenziale" | Tocchi una schermata o l'HUD |
 | [architettura.md](architettura.md) | Defold, repo, server Go, protocollo, simulatore, build web, valutazione motori, Cloudflare, skill | Tocchi server, build, strumenti |
 | [designer.md](designer.md) | Come si lavora con Gabriella, il suo ramo, cosa ha provato | Parli con lei o tocchi i suoi file |

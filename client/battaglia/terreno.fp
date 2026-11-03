@@ -7,16 +7,12 @@
 // dal cratere più vicino (cerchi veri, non celle: game.gui_script, crateri).
 // Le texture sono a alfa premoltiplicato.
 //
-// Lo sfondo delle mappe vecchie non è un disegno: è un cielo con tre file di
-// guglie e colline sempre più vicine, poi braci che salgono. Ogni fila si sposta
-// con la camera meno della mappa (parallasse), così sembra lontana. Colori freddi
-// e spenti, il terreno davanti caldo e con un'ombra: si stacca dallo sfondo.
-//
-// Le mappe dell'apprendista (Sergio, 2 nov) hanno lo sfondo dipinto: un cielo e
-// tre strisce (lontano, medio, vicino) fatte da SVG (strumenti/grafica/mappe_dipinte.py),
-// ognuna larga un giro, che si ripetono di lato, seguono la camera in parallasse
-// e scorrono piano da sole (il «movimento calmo»). Lì un cratere mostra lo
-// sfondo, con un orlo bruciato sul terreno attorno.
+// Lo sfondo è dipinto (Sergio, 2 nov): un cielo e tre strisce (lontano, medio,
+// vicino) fatte da SVG (strumenti/grafica/mappe_dipinte.py), ognuna larga un
+// giro, che si ripetono di lato, seguono la camera in parallasse (si spostano
+// meno della mappa, così sembrano lontane) e scorrono piano da sole (il
+// «movimento calmo»), con braci che salgono. Un cratere mostra lo sfondo, con
+// un orlo bruciato sul terreno attorno; il terreno fa ombra sullo sfondo.
 
 in mediump vec2 var_uv;
 in highp vec2 var_schermo;
@@ -25,7 +21,6 @@ in highp float var_zoom;
 out vec4 out_fragColor;
 
 uniform mediump sampler2D terreno;
-uniform mediump sampler2D interno;
 uniform mediump sampler2D maschera;
 uniform mediump sampler2D cielo;
 uniform mediump sampler2D lontano;
@@ -34,12 +29,9 @@ uniform mediump sampler2D davanti;
 
 uniform fs_uniforms
 {
-    // x = 1 mappa dipinta, 0 mappa senza disegno; y = secondi; zw = quanto lo
-    // schermo è più largo e più alto di 16:9 (ui/schermo.lua: kx, ky)
+    // x = 1 solo lo sfondo (la home); y = secondi; zw = quanto lo schermo è
+    // più largo e più alto di 16:9 (ui/schermo.lua: kx, ky)
     mediump vec4 opzioni;
-    // x = 1 sfondo dipinto, y = 1 i crateri mostrano lo sfondo (con l'orlo
-    // bruciato), z = 1 solo lo sfondo (la home)
-    mediump vec4 stile;
     // per ogni striscia dello sfondo dipinto: dove comincia dall'alto e quanto è
     // alta (diviso 720), quanto segue la camera, quanto è già scorsa (pixel della scena)
     highp vec4 striscia1;
@@ -49,16 +41,10 @@ uniform fs_uniforms
 
 const mediump vec2 CELLA = vec2(1.0 / 640.0, 1.0 / 360.0);
 const mediump vec3 BRACE = vec3(1.0, 0.478, 0.102);
-const mediump vec3 BRACE_CHIARA = vec3(1.0, 0.769, 0.42);
-const mediump vec3 ROCCIA = vec3(0.23, 0.21, 0.26);
-const mediump vec3 OTTONE = vec3(0.86, 0.64, 0.32);
 
 // lo sfondo è misurato su una mappa di 1280 x 720 (var_zoom è già riportato lì)
 const highp vec2 MONDO = vec2(1280.0, 720.0);
 const highp vec2 CENTRO = vec2(640.0, 360.0);
-const mediump vec3 CIELO_ALTO = vec3(0.03, 0.035, 0.07);
-const mediump vec3 ORIZZONTE = vec3(0.22, 0.17, 0.27);
-const mediump vec3 BAGLIORE = vec3(0.6, 0.24, 0.09);
 // le braci dello sfondo dipinto: oro spento, il rosso acceso è dei personaggi
 const mediump vec3 BRACE_SPENTA = vec3(0.86, 0.66, 0.36);
 // l'orlo bruciato attorno ai crateri che mostrano lo sfondo
@@ -74,13 +60,6 @@ highp float caso(highp float n)
     n *= n + 33.33;
     n *= n + n;
     return fract(n);
-}
-
-highp float rumore(highp float x)
-{
-    highp float i = floor(x);
-    highp float f = fract(x);
-    return mix(caso(i), caso(i + 1.0), f * f * (3.0 - 2.0 * f));
 }
 
 // Dove si vede il punto di una fila lontana: con la camera si sposta di
@@ -99,30 +78,6 @@ highp float zoom()
 highp vec2 fila(highp vec2 camera, highp float quanto)
 {
     return CENTRO + (camera - CENTRO) * quanto + (schermo() - CENTRO) * pow(zoom(), -quanto);
-}
-
-// Profilo di una fila (0..~1.8): colline morbide e ogni tanto una guglia stretta
-highp float profilo(highp float x, highp float scala, highp float seme)
-{
-    highp float u = x / scala + seme;
-    highp float h = rumore(u) * 0.62 + rumore(u * 2.3 + 7.1) * 0.26 + rumore(u * 6.1 + 3.0) * 0.12;
-    highp float c = u * 1.3;
-    highp float r = caso(floor(c) + seme * 13.0);
-    highp float largo = 0.06 + 0.1 * caso(floor(c) + 5.0);
-    highp float guglia = step(0.62, r) * (0.7 + 2.5 * (r - 0.62)) * clamp(1.0 - abs(fract(c) - 0.5) / largo, 0.0, 1.0);
-    return max(h, h * 0.4 + guglia);
-}
-
-// Una fila sopra lo sfondo: colore pieno sotto il profilo e un po' di nebbia
-// in basso, che la separa dalla fila davanti
-mediump vec3 aggiungi_fila(mediump vec3 col, highp vec2 camera, highp float quanto, highp float base,
-    highp float alto, highp float scala, highp float seme, mediump vec3 colore)
-{
-    highp vec2 q = fila(camera, quanto);
-    highp float h = base + alto * profilo(q.x, scala, seme);
-    highp float bordo = 1.2 * pow(zoom(), -quanto);
-    col = mix(col, colore, clamp((h - q.y) / bordo + 0.5, 0.0, 1.0));
-    return mix(col, ORIZZONTE, smoothstep(base + alto * 0.3, base - 90.0, q.y) * 0.3);
 }
 
 // Braci che salgono piano, vicine (si spostano quasi come la mappa)
@@ -154,62 +109,15 @@ mediump vec3 sfondo()
 {
     // il punto del mondo al centro dello schermo
     highp vec2 camera = var_uv * MONDO - (schermo() - CENTRO) / zoom();
-    if (stile.x > 0.5) {
-        highp vec2 q = fila(camera, 0.02) / MONDO;
-        mediump vec3 col = texture(cielo, clamp(q, 0.0, 1.0)).rgb;
-        col = striscia(col, lontano, striscia1, camera);
-        col = striscia(col, medio, striscia2, camera);
-        col += BRACE_SPENTA * braci(camera, opzioni.y) * 0.45;
-        col = striscia(col, davanti, striscia3, camera);
-        highp vec2 v = (var_schermo - CENTRO) / CENTRO;
-        return col * (1.0 - 0.18 * dot(v, v));
-    }
-    highp vec2 q = fila(camera, 0.04);
-    mediump vec3 col = mix(ORIZZONTE, CIELO_ALTO, smoothstep(140.0, 700.0, q.y));
-    col += BAGLIORE * exp(-max(q.y, 0.0) / 110.0) * 0.5;
-    col = aggiungi_fila(col, camera, 0.12, 250.0, 200.0, 240.0, 1.7, vec3(0.18, 0.145, 0.225));
-    col = aggiungi_fila(col, camera, 0.28, 150.0, 230.0, 160.0, 4.3, vec3(0.125, 0.105, 0.165));
-    col = aggiungi_fila(col, camera, 0.5, 30.0, 220.0, 115.0, 9.1, vec3(0.06, 0.055, 0.085));
-    col += BRACE * braci(camera, opzioni.y) * 0.7;
+    highp vec2 q = fila(camera, 0.02) / MONDO;
+    mediump vec3 col = texture(cielo, clamp(q, 0.0, 1.0)).rgb;
+    col = striscia(col, lontano, striscia1, camera);
+    col = striscia(col, medio, striscia2, camera);
+    col += BRACE_SPENTA * braci(camera, opzioni.y) * 0.45;
+    col = striscia(col, davanti, striscia3, camera);
     // più scuro ai bordi dello schermo
     highp vec2 v = (var_schermo - CENTRO) / CENTRO;
-    return col * (1.0 - 0.22 * dot(v, v));
-}
-
-// quanto terreno c'è attorno a uv, a distanza r celle (8 direzioni)
-mediump float vicino(mediump vec2 uv, mediump float r)
-{
-    mediump vec2 d = CELLA * r;
-    mediump vec2 e = d * 0.7071;
-    mediump float n = texture(maschera, uv + vec2(d.x, 0.0)).r;
-    n = max(n, texture(maschera, uv - vec2(d.x, 0.0)).r);
-    n = max(n, texture(maschera, uv + vec2(0.0, d.y)).r);
-    n = max(n, texture(maschera, uv - vec2(0.0, d.y)).r);
-    n = max(n, texture(maschera, uv + e).r);
-    n = max(n, texture(maschera, uv - e).r);
-    n = max(n, texture(maschera, uv + vec2(e.x, -e.y)).r);
-    n = max(n, texture(maschera, uv + vec2(-e.x, e.y)).r);
-    return n;
-}
-
-// Conci di pietra col bordo scuro e la cima d'ottone, come le piattaforme
-// delle mappe dipinte: il Bastione e le mappe senza disegno
-mediump vec3 conci()
-{
-    mediump float pieno = min(
-        min(texture(maschera, var_uv + vec2(CELLA.x, 0.0)).r, texture(maschera, var_uv - vec2(CELLA.x, 0.0)).r),
-        min(texture(maschera, var_uv + vec2(0.0, CELLA.y)).r, texture(maschera, var_uv - vec2(0.0, CELLA.y)).r));
-    // i conci: file alte 2 celle, giunti ogni 8 celle sfalsati di 4
-    highp vec2 q = var_uv * vec2(640.0, 360.0);
-    highp float fila = floor(q.y * 0.5);
-    mediump float giunto = max(step(fract(q.y * 0.5), 0.12),
-        step(fract((q.x + mod(fila, 2.0) * 4.0) * 0.125), 0.045));
-    mediump vec3 pietra = ROCCIA * (1.6 + 0.3 * caso(fila * 7.0 + floor((q.x + mod(fila, 2.0) * 4.0) * 0.125)));
-    pietra = mix(pietra, ROCCIA * 0.7, giunto);
-    // bordo scuro tutto attorno, d'ottone sopra (come le cime delle piattaforme)
-    mediump float cima = 1.0 - texture(maschera, var_uv + vec2(0.0, CELLA.y)).r;
-    mediump vec3 c = mix(pietra, ROCCIA * 0.5, smoothstep(0.1, 0.65, 1.0 - pieno));
-    return mix(c, OTTONE, smoothstep(0.3, 0.8, cima));
+    return col * (1.0 - 0.18 * dot(v, v));
 }
 
 void main()
@@ -224,7 +132,7 @@ void main()
     mediump float aa = max(fwidth(dc) * 0.5, 0.01);
     // sotto la mappa (la camera ci scende perché l'HUD non copra il terreno):
     // il baratro, sempre più buio, con il bagliore della brace appena sotto il bordo
-    if (var_uv.y < 0.0 && stile.z < 0.5) {
+    if (var_uv.y < 0.0 && opzioni.x < 0.5) {
         highp float giu = -var_uv.y * 1080.0;
         mediump vec3 col = sfondo() * (1.0 - smoothstep(0.0, 160.0, giu) * 0.75);
         // il bagliore solo sotto la mappa, non sotto le bande ai lati
@@ -234,63 +142,35 @@ void main()
     }
     // la home, e le bande attorno alla mappa (che la camera mostra da lontano):
     // solo lo sfondo
-    if (stile.z > 0.5 || var_uv.x < 0.0 || var_uv.x > 1.0 || var_uv.y > 1.0) {
+    if (opzioni.x > 0.5 || var_uv.x < 0.0 || var_uv.x > 1.0 || var_uv.y > 1.0) {
         out_fragColor = vec4(sfondo(), 1.0);
         return;
     }
-    mediump vec4 ter;
-    if (opzioni.x > 0.5) {
-        ter = texture(terreno, var_uv);
-    } else {
-        // mappa senza disegno (le arene delle missioni): conci come le piattaforme
-        ter = vec4(conci(), 1.0) * smoothstep(0.35, 0.65, m.r);
-    }
+    mediump vec4 ter = texture(terreno, var_uv);
 
-    // costruito = adesso c'è terreno dove all'inizio non c'era (il Bastione):
-    // conci di pietra col bordo scuro e la cima d'ottone, come le piattaforme
-    mediump float costruito = clamp(m.r - m.g, 0.0, 1.0);
-    if (costruito > 0.0) {
-        ter = mix(ter, vec4(conci(), 1.0), costruito);
-    }
-
-    // scavato = c'era terreno all'inizio e adesso non c'è più
+    // il cratere è il cerchio dell'esplosione (b), che toglie anche il disegno che
+    // sporge sopra le celle piene (il contorno in cima al pavimento), più le celle
+    // scavate (g c'era terreno all'inizio, r adesso non più) di crateri che b non
+    // conosce (per sicurezza: un buco a celle, ristretto, che dentro un cerchio
+    // noto non si vede)
     mediump float scavato = clamp(m.g - m.r, 0.0, 1.0);
-    // mappe dipinte: il cratere è il cerchio dell'esplosione (b), che toglie anche
-    // il disegno che sporge sopra le celle piene (il contorno in cima al pavimento)
-    mediump float buco = 0.0;
-    if (stile.y > 0.5) {
-        // più le celle scavate di crateri che b non conosce (per sicurezza: un buco
-        // a celle, ristretto, che dentro un cerchio noto non si vede)
-        buco = max(1.0 - smoothstep(-aa, aa, dc), smoothstep(0.6, 0.9, scavato));
-        scavato = 0.0;
-    }
+    mediump float buco = max(1.0 - smoothstep(-aa, aa, dc), smoothstep(0.6, 0.9, scavato));
 
     // lo sfondo solo dove il terreno non lo copre tutto
     mediump vec3 col = vec3(0.0);
-    if (ter.a * (1.0 - scavato) * (1.0 - buco) < 0.999) {
+    if (ter.a * (1.0 - buco) < 0.999) {
         col = sfondo();
         // il terreno fa ombra sullo sfondo, in basso a destra: lo stacca
         mediump float ombra = texture(maschera, var_uv + vec2(-1.5, 2.5) * CELLA).r * 0.55
             + texture(maschera, var_uv + vec2(-3.5, 6.0) * CELLA).r * 0.3;
         col *= 1.0 - ombra * 0.7;
     }
-    if (stile.y > 0.5) {
-        // il cratere mostra lo sfondo; il terreno attorno ha l'orlo bruciato
-        if (dc < ORLO) {
-            mediump float orlo = 1.0 - smoothstep(ORLO * 0.35, ORLO, dc);
-            ter.rgb = mix(ter.rgb, BRUCIATO * ter.a, orlo * 0.92);
-        }
-        ter *= 1.0 - buco;
-    } else if (scavato > 0.0) {
-        mediump float n1 = vicino(var_uv, 1.5);
-        mediump float n2 = vicino(var_uv, 4.5);
-        mediump vec4 parete = texture(interno, var_uv);
-        mediump float a = scavato * max(n1, n2 * 0.75);
-        col = col * (1.0 - parete.a * a) + parete.rgb * a;
-        mediump float brace = scavato * n1;
-        col += mix(BRACE, BRACE_CHIARA, n1 * n1) * brace * 0.85;
-        ter *= 1.0 - scavato;
+    // il cratere mostra lo sfondo; il terreno attorno ha l'orlo bruciato
+    if (dc < ORLO) {
+        mediump float orlo = 1.0 - smoothstep(ORLO * 0.35, ORLO, dc);
+        ter.rgb = mix(ter.rgb, BRUCIATO * ter.a, orlo * 0.92);
     }
+    ter *= 1.0 - buco;
 
     col = col * (1.0 - ter.a) + ter.rgb;
     out_fragColor = vec4(col, 1.0);

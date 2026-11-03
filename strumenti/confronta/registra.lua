@@ -12,7 +12,7 @@
 --   luajit strumenti/confronta/registra.lua [--partite N] [--da K] [--ogni T] [--missioni 0|1]
 --
 -- Partite: la k-esima ha un seme suo, ruota modo (1v1, 2v2, tutti contro
--- tutti), mappa (tutte quelle di sim/maps.lua), grado del bot (1-10) e, una
+-- tutti), mappa (quelle delle partite vere, maps.ROTATION), grado del bot (1-10) e, una
 -- volta su due, set di equipaggiamento a caso. Con --missioni 1 aggiunge una
 -- partita per ogni missione dei gironi (sim/campaign.lua), col bot al posto
 -- del giocatore.
@@ -150,7 +150,7 @@ local MODI = { "1v1", "2v2", "ffa" }
 local function partita(k)
 	local seme = (k * 48271) % 2147483647
 	local modo = MODI[1 + k % #MODI]
-	local mappa = maps.order[1 + k % #maps.order]
+	local mappa = maps.ROTATION[1 + k % #maps.ROTATION]
 	local base = {}
 	for i, p in ipairs(config.MODES[modo]) do base[i] = { team = p.team } end
 	local d = draft.new(seme, base)

@@ -7,7 +7,6 @@
 local game = require "sim.game"
 local ui = require "ui.ui"
 local gconfig = require "sim.config"
-local maps = require "sim.maps"
 local scoria = require "battaglia.scoria"
 local plate = require "battaglia.targa"
 local home = require "menu.home"
@@ -293,9 +292,6 @@ end
 local MASK_PATH = "/battaglia/maschera_viva.texturec"
 local RGBA = hash("rgba")
 local MASK_FORMAT = { { name = RGBA, type = buffer.VALUE_TYPE_UINT8, count = 4 } }
--- maps that have their drawings in assets/mappe (the apprentice's have them
--- in client/dipinti, battaglia/dipinti.lua; the others use plain rock)
-local PAINTED = { forgia = true, crogiolo = true }
 
 -- the constants live in graphics (recent Defold) or in resource (old)
 local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
@@ -387,8 +383,7 @@ local function paint_terrain(self)
 	else
 		self.mask_tex = resource.create_texture(MASK_PATH, mask_params(TW, TH), buf)
 	end
-	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = self.g.map,
-		painted = PAINTED[self.g.map] == true })
+	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = self.g.map })
 end
 
 -- Updates the mask in the given rectangle (cell coordinates)
@@ -710,10 +705,9 @@ local function new_match(self, seed, map, opts)
 	msg.post("/terreno#script", "home", {})
 	gui.set_enabled(self.mondo, true)
 	-- if this intact map is already on screen (RIPROVA, the next mission) we don't redraw it
-	local key = self.g.map .. (maps.get(self.g.map).seeded and seed or "")
-	if key ~= self.drawn_map then
+	if self.g.map ~= self.drawn_map then
 		draw_terrain(self)
-		self.drawn_map = key
+		self.drawn_map = self.g.map
 	end
 	self.names, self.colors = names_colors(self.g.robots)
 	for i in pairs(self.bots) do self.names[i] = self.names[i] .. " (bot)" end
@@ -3505,8 +3499,8 @@ function init(self)
 	self.scelta = menu.scelta.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, self.comandi)
 
 	-- In real matches the map is picked by the seed (sim/maps.lua). In the test
-	-- scenarios it is fixed, so the photos repeat: forgia, or [megablast] prova_mappa.
-	self.mappa = SIMULATE and config_string("megablast.prova_mappa", "forgia") or nil
+	-- scenarios it is fixed, so the photos repeat: pavimento, or [megablast] prova_mappa.
+	self.mappa = SIMULATE and config_string("megablast.prova_mappa", "pavimento") or nil
 	show_menu(self)
 	CP.startup(self)
 end
