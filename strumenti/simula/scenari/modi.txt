@@ -6,7 +6,7 @@
 # finisce da solo, poi Rosso 1 sceglie e i bot pure), poi stesso telefono
 # 2 contro 2 (lo schieramento si chiude con un tocco). La campagna è in
 # scelta_forgia.txt, l'online in scelta_online.txt.
-# Allenamento: MODO 1v1 310 460, 2v2 640 460, ffa 970 460; GIOCA 640 140.
+# Allenamento: MODO 1v1 310 460, 2v2 640 460, ffa 970 460; AVANTI e poi GIOCA 640 140.
 # Con la striscia di quattro cartellini la rotellina della scelta scende (62 608).
 imposta prova_profilo 1
 imposta prova_scelta 1
@@ -35,6 +35,8 @@ aspetta 0.3
 tocca 408 658                       # ESCI: all'allenamento
 aspetta 1
 tocca 970 460                       # TUTTI CONTRO TUTTI
+tocca 640 140                       # AVANTI (la mappa resta A CASO)
+aspetta 0.3
 tocca 640 140                       # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.5
@@ -51,6 +53,8 @@ aspetta 0.3
 tocca 408 658
 aspetta 1
 tocca 310 460                       # 1 CONTRO 1
+tocca 640 140                       # AVANTI (la mappa resta A CASO)
+aspetta 0.3
 tocca 640 140                       # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.5
