@@ -141,19 +141,31 @@ o ci sono già spenti col lucchetto (proposta 1). L'Armeria col regalo va bene c
 
 Sergio (4 nov): all'inizio c'è **solo CAMPAGNA**, che deve essere molto bella; gli altri
 pulsanti appaiono a poco a poco; **i pulsanti già apparsi non cambiano mai aspetto né posto**;
-ogni sblocco ha una transizione elegante e soddisfacente. Proposta concreta (schizzi nella pagina):
+ogni sblocco ha una transizione elegante e soddisfacente. **L'ordine** (Sergio, 4 nov, 17:15):
+
+| Quando | Cosa appare |
+|---|---|
+| subito | **CAMPAGNA** (più il profilo toccando il diavoletto e la rotella delle impostazioni) |
+| finito il prologo (il cortile, l'Addestramento) | **ALLENAMENTO** |
+| finita la Forgia | **ARMERIA** (il Fabbro ti regala gli stivali) e, insieme, **i gironi** dentro CAMPAGNA |
+| battuto il primo custode del primo girone (Caronte, da confermare) | **GIOCA ONLINE** |
+| dopo un po' di partite online (proposta: 3 partite finite) | **EVENTI** |
+
+**Senza spoiler**: in home non c'è nessun lucchetto e nessun posto disegnato. Al massimo
+sull'anello del primo girone, nella mappa, una riga dice che apre le partite online.
+
+**Quando si vede l'animazione** (Sergio): la prima volta che torni in home dopo aver fatto
+la cosa che sblocca. Il gioco non ti porta in home apposta: se dalla fine della missione vai
+avanti alla missione dopo, l'animazione aspetta la prossima volta che apri la home.
+
+**Disposizione ancora aperta** (Sergio, 4 nov: «il tasto più importante è gioca online,
+quello la gente vorrà fare dopo poco»). Due varianti: il posto del pollice al portale della
+CAMPAGNA (negli schizzi) oppure a GIOCA ONLINE, con CAMPAGNA sopra; si sceglie dopo.
 
 **Posti fissi.** Ogni pulsante ha da subito il suo posto definitivo; un posto non ancora
-aperto è semplicemente vuoto (niente sagoma, niente lucchetto). Quando un pulsante arriva,
-occupa il suo posto e nessun altro si sposta. Colonna di destra, dal basso:
-
-| Posto | Pulsante | Quando appare |
-|---|---|---|
-| in basso, grande (340 × 160) | **CAMPAGNA**, il portale | subito |
-| sopra, grande dorato (340 × 100) | GIOCA ONLINE | battuto Caronte |
-| sopra (340 × 64) | ALLENAMENTO | finito l'Addestramento |
-
-A sinistra, dal basso: ARMERIA (il regalo del Fabbro) ed EVENTI (con l'online).
+aperto è semplicemente vuoto. Quando un pulsante arriva, occupa il suo posto e nessun altro
+si sposta. A destra, dal basso: CAMPAGNA (il portale, 340 × 160), GIOCA ONLINE (dorato,
+340 × 100), ALLENAMENTO (340 × 64). A sinistra, dal basso: ARMERIA, EVENTI.
 
 **CAMPAGNA, il portale.** Non è un pulsante come gli altri: è una carta grande nel posto
 più comodo per il pollice, con dentro l'illustrazione del capitolo in cui sei (il cortile, la
@@ -166,15 +178,17 @@ Alternativa (scartata per ora): CAMPAGNA in alto e il posto in basso libero per 
 ma allora all'inizio CAMPAGNA starebbe lontana dal pollice, sopra un vuoto.
 
 **La transizione dello sblocco** (una volta sola, circa 1,5 s, un tocco la salta):
-1. Torni in home dall'ultima schermata della missione che l'ha aperto; la home si scurisce un poco.
+1. La prima volta che torni in home dopo lo sblocco la home si scurisce un poco.
 2. Una scintilla parte dal portale della CAMPAGNA (lì l'hai guadagnato) e vola al posto vuoto.
 3. Il contorno del pulsante si disegna di brace, poi si riempie dal basso come metallo fuso,
    con un piccolo rimbalzo (1,08 → 1), il colpo di martello della forgia e una vibrazione breve.
-4. Resta la pastiglia NUOVO finché non lo tocchi la prima volta.
-Se arrivano due pulsanti insieme (GIOCA ONLINE ed EVENTI) vanno uno dopo l'altro.
+4. Il pulsante resta con un bagliore leggero finché non lo tocchi la prima volta (niente
+   pastiglia NUOVO: la roadmap vuole niente badge invadenti).
+Finita la Forgia arrivano due cose: prima ARMERIA, poi il disegno dentro il portale passa
+dalla bacheca della Forgia all'imbuto dei gironi (la tavola che si spacca, come nella storia).
 I pulsanti già presenti non si muovono: si abbassano solo un poco di luce per l'animazione.
 
-**Il regalo che apre l'Armeria: gli stivali** (Sergio, 4 nov: «Gli stivali vanno bene»). I guanti non sono sicuri (Sergio: corazza,
+**Il regalo che apre l'Armeria: gli stivali** (Sergio, 4 nov: «Gli stivali vanno bene»), alla fine della Forgia. I guanti non sono sicuri (Sergio: corazza,
 elmo e stivali sì; coi guanti non si sa come si tengono le armi). Consiglio gli **stivali da
 forgia**: il pezzo più semplice da capire (camminare sulla brace), si vede subito ai piedi e
 l'equipaggiamento cambia già la velocità a terra, quindi il bonus piccolo è naturale. Elmo e
