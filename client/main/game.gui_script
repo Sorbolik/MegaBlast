@@ -30,6 +30,8 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	eventi = require "main.events", regole = require "sim.rules",
 	-- the entry, the transitions between screens and the waiting flame
 	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting",
+	-- the mission's postcard before the flame (ui/postcard.lua)
+	postcard = require "ui.postcard",
 	-- the queue that stays alive outside the waiting room (Sergio, 3 Nov)
 	pill = require "ui.pill", playout = require "main.playout" }
 local missions = require "sim.missions"
@@ -2298,7 +2300,9 @@ end
 -- controls you have (PAD.TEXTS)
 function CP.mission_line(self, r)
 	local line = missions.line(r)
-	if not line then
+	-- while the entry's flame opens on the map, and a moment after, nobody
+	-- speaks: Favilla starts once you landed (CP.enter_mission)
+	if not line or self.landing then
 		self.vign:say(nil)
 		return
 	end
@@ -2306,10 +2310,8 @@ function CP.mission_line(self, r)
 	local chi = l.aspetta and "favilla" or "fabbro"
 	local txt = line.testo:gsub("{(%a+)}", PAD.texts(self))
 	if line.apertura or (line.highlight and l.aspetta and not line.subito and line.stops ~= false) then
-		local page = { chi = chi, faccia = "spiega", testo = txt, disegno = line.highlight }
-		-- the opening: first the mission's illustration with its title (WB-015)
-		local pages = { page }
-		if line.apertura then table.insert(pages, 1, { tavola = l.id, titolo = l.titolo }) end
+		-- (the mission's illustration came before, on its postcard: CP.enter_mission)
+		local pages = { { chi = chi, faccia = "spiega", testo = txt, disegno = line.highlight } }
 		if not self.vign_read[line.testo] then
 			self.vign_read[line.testo] = true
 			for _, pg in ipairs(pages) do self.vign_pages[#self.vign_pages + 1] = pg end
@@ -2514,11 +2516,52 @@ local function open_level_end(self)
 	}, function(v) sound.play("#punto", { speed = v }) end)
 end
 
+-- Into a campaign mission (Sergio, 4 Nov: half a second of hype, not crashing
+-- onto the map): its postcard opens in front of the screen as a zoom on the
+-- card you tapped (from: its picture, ui/postcard.lua), nothing loaded yet;
+-- AVANTI and the map loads under Favilla's flame, which then opens on it
+-- (ui/transition.lua, flame); Favilla speaks CP.LANDING seconds after. Without an
+-- illustration (or with the vignettes off in the scenarios) straight to the
+-- flame; INDIETRO on the postcard stays where you were. RIPROVA doesn't come
+-- here: you want to play again at once (the iris)
+CP.LANDING = 0.15
+function CP.enter_mission(self, id, from)
+	local function flame()
+		self.landing = true
+		menu.passaggio.flame(self.passaggio, function()
+			if self.cartolina then menu.postcard.destroy(self.cartolina); self.cartolina = nil end
+			close_screen(self)
+			start_mission(self, id)
+		end, function()
+			if self.landing then self.landing = CP.LANDING end
+		end)
+	end
+	local l = missions.trova(id)
+	self.cartolina = self.vign_on and l and menu.postcard.open(id, l.titolo, from)
+	if not self.cartolina then return flame() end
+	self.cartolina.go = flame
+end
+
+-- a tap or a controller button on the open postcard
+function CP.postcard_choice(self, choice)
+	local p = self.cartolina
+	if choice == "avanti" then
+		menu.postcard.leave(p, p.go)
+	elseif choice == "indietro" then
+		menu.postcard.back(p, function()
+			menu.postcard.destroy(p)
+			if self.cartolina == p then self.cartolina = nil end
+		end)
+	end
+end
+
 -- RIPROVA, AVANTI (the next mission; after the last one, the campaign) or the arrow (the campaign)
 local function after_level_end(self, end_of)
 	local id = self.missione_finita
 	local after_step = end_of == "riprova" and id or (end_of == "avanti" and missions.dopo(id))
-	-- leaving the finished battle: the iris, toward the new mission or the campaign
+	-- AVANTI: the next mission's postcard, then its flame
+	if end_of == "avanti" and after_step then return CP.enter_mission(self, after_step) end
+	-- leaving the finished battle: the iris, toward the mission again or the campaign
 	CP.iris(self, function()
 		close_screen(self)
 		if after_step then
@@ -2581,7 +2624,7 @@ function CP.startup(self)
 	if mission ~= "" then
 		CP.close_entry(self, true)
 		self.ritorno = "campagna"
-		start_mission(self, mission)
+		CP.enter_mission(self, mission)
 	end
 end
 
@@ -4005,6 +4048,11 @@ function update(self, dt)
 			menu.eventi.load_up(server_url(), function() home.eventi(self.home, menu.eventi.home_line()) end)
 		end
 	end
+	-- landed from the entry's flame: a moment later Favilla speaks (CP.enter_mission)
+	if type(self.landing) == "number" then
+		self.landing = self.landing - dt
+		if self.landing <= 0 then self.landing = nil end
+	end
 	if self.podium_t then
 		self.podium_t = self.podium_t - dt
 		if self.podium_t <= 0 then open_podium(self) end
@@ -4688,6 +4736,10 @@ end
 -- A controller button pressed or released (ui/controller.lua)
 function PAD.evento(self, e)
 	self.pad_on = true
+	if self.cartolina then
+		if e.nome and e.held_down then CP.postcard_choice(self, menu.postcard.pad(self.cartolina, e.nome)) end
+		return
+	end
 	-- on Android B also sends the phone's back key (PAD.every_frame)
 	if e.nome == "b" then self.pad_b_t = self.clock end
 	if self.touch_ui and COMMANDS == "" then set_touch_ui(self, false) end
@@ -4801,10 +4853,7 @@ function PAD.on_input(self, action_id, action)
 			end)
 		elseif type(end_of) == "table" and end_of.missione then
 			self.ritorno = "campagna"
-			CP.iris(self, function()
-				close_screen(self)
-				start_mission(self, end_of.missione)
-			end)
+			CP.enter_mission(self, end_of.missione, end_of.da)
 		elseif type(end_of) == "table" then
 			-- GIOCA in training against the bots (the choice stays for next time)
 			CP.iris(self, function()
@@ -4833,7 +4882,7 @@ function PAD.on_input(self, action_id, action)
 			-- for a new player GIOCA leads to the Training basics, until they finish
 			-- them (in the scenarios only with prova_nuovo 1: scenari/nuovo.txt)
 			self.ritorno = "home"
-			CP.iris(self, function() start_mission(self, profile.first_lesson(self.profilo)) end)
+			CP.enter_mission(self, profile.first_lesson(self.profilo))
 		elseif choice == "online" or choice == "eventi" then
 			-- DOVE GIOCHI? (menu/queue.lua) or the board (menu/board.lua): they are
 			-- redone as soon as the updated events arrive
@@ -4978,8 +5027,19 @@ function on_input(self, action_id, action)
 end
 
 function CP.on_input(self, action_id, action)
-	-- during the entry and the transitions nothing can be touched
-	if self.ingresso or menu.passaggio.is_active(self.passaggio) then return true end
+	-- during the entry and the transitions nothing can be touched (a tap
+	-- hurries the entry's flame to its burst)
+	if self.ingresso or menu.passaggio.is_active(self.passaggio) then
+		if action_id == ACTION.TOUCH and action.pressed then menu.passaggio.skip(self.passaggio) end
+		return true
+	end
+	-- the mission's postcard: AVANTI, or a tap outside goes back (CP.enter_mission)
+	if self.cartolina and action_id ~= ACTION.PAD then
+		if action_id == ACTION.TOUCH and action.pressed then
+			CP.postcard_choice(self, menu.postcard.premi(self.cartolina, action.x, action.y))
+		end
+		return true
+	end
 	-- the queue's pill: a tap goes back to the room (not in a match: the finger is playing)
 	if action_id == hash("touch") and action.pressed and CP.queue_tap(self, action.x, action.y) then return true end
 	local modo, obj = PAD.schermo(self)
