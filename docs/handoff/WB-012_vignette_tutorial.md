@@ -53,6 +53,7 @@ I fogli della fase 1 servono qualunque interfaccia Sergio scelga, quindi Claude 
 | R6 | `art/WB-012/scelti/apprendista.png` | il foglio dell'apprendista scelto in fase 1, con o senza fiammella secondo la scelta 6 (c'è solo dopo) |
 | R7 | `art/WB-012/scelti/favilla.png` | il foglio di Favilla scelto in fase 1 (c'è solo dopo) |
 | R8 | `art/WB-012/scelti/fabbro.png` | il foglio del Fabbro scelto in fase 1 (c'è solo dopo) |
+| R9 | `art/WB-012/riferimenti/R9_favilla_figura.png` | Favilla a figura intera ritagliata da R7: la **coda a cuore** (fase 2b) |
 
 ## Immagini da generare
 
@@ -74,8 +75,10 @@ primo è "image 1", il secondo "image 2" e così via. Sfondo **non** trasparente
 | 2 | `6_rapimento_a` | R7, R6, R3 | 1536×1024 | 1 |
 | 2 | `6_rapimento_b` | R7, R3 | 1024×1024 | 1 |
 | 2 | `6_rapimento_c` | R8, R6, R3 | 1536×1024 | 1 |
+| 2b | `4_arrivo_a` | R6, R7, R9, R3 | 1536×1024 | 2 |
+| 2b | `5_fabbro_b` | R7, R9, R6, R3 | 1024×1024 | 2 |
 
-Codex esegue solo le righe della fase chiesta («esegui WB-012 fase 1» o «fase 2»). Se un
+Codex esegue solo le righe della fase chiesta («esegui WB-012 fase 1», «fase 2» o «fase 2b»). Se un
 riferimento della fase non c'è, si ferma.
 
 ### `1_foglio_apprendista`
@@ -182,6 +185,32 @@ Image 1 is the model sheet of Favilla, image 2 the model sheet of the apprentice
 A square comic panel: Favilla leans toward the apprentice imp and whispers behind her hand with a mischievous grin; he listens, eyes turned toward her. Dark forge background, blurred. Leave the top third calm for a speech balloon the game adds. Style of image 3. No text, letters, speech balloons or signatures.
 ```
 
+### Fase 2b · `4_arrivo_a` (rifatta)
+
+In fase 2 la coda di Favilla è uscita a freccia in tutti i tentativi. Qui c'è in più R9, la sua
+figura intera, e la coda si dice due volte. Due varianti; se la coda resta a freccia, scartala
+come prima.
+
+```
+Image 1 is the model sheet of the apprentice imp, image 2 the model sheet of Favilla, image 3 Favilla's full figure, image 4 the illustration style. Copy both characters EXACTLY from their sheets (shapes, colors, flame, clothes); do not redesign them.
+
+IMPORTANT, the tails: the apprentice's tail ends in a small pointed arrow tip; Favilla's tail ends in a HEART shape, exactly as in image 3 (a rounded heart, two lobes, NOT an arrow, NOT a spade). Show Favilla's tail clearly, curling behind her.
+
+A wide comic panel: the courtyard of a hellish forge at its gate, chains, anvils, glowing lava cracks, sparks in the air. On the left the apprentice imp has just arrived, a small bundle tied to a stick over his shoulder, looking up. On the right Favilla is landing in front of him after jumping down from a balcony, knees bent, one hand on the ground, grinning, her white-blue flame hair streaming up. Leave the top-right quarter of the picture calm (dark wall) for a speech balloon the game adds. Style of image 4. No text, letters, speech balloons or signatures.
+```
+
+### Fase 2b · `5_fabbro_b` (rifatta)
+
+In fase 2: coda a freccia e un martello in mano all'apprendista. Due varianti.
+
+```
+Image 1 is the model sheet of Favilla, image 2 Favilla's full figure, image 3 the model sheet of the apprentice imp, image 4 the illustration style. Copy both EXACTLY from their sheets.
+
+IMPORTANT, the tails: Favilla's tail ends in a HEART shape, exactly as in image 2 (a rounded heart, two lobes, NOT an arrow, NOT a spade); the apprentice's tail ends in a small pointed arrow tip. Both hands of the apprentice are EMPTY: no hammer, no tool, nothing in his hands.
+
+A square comic panel: Favilla leans toward the apprentice imp and whispers behind her hand with a mischievous grin; he listens, eyes turned toward her, hands empty at his sides. Dark forge background, blurred. Leave the top third calm for a speech balloon the game adds. Style of image 4. No text, letters, speech balloons or signatures.
+```
+
 ### `6_rapimento_a`
 
 ```
@@ -230,6 +259,7 @@ A wide quiet comic panel: the Blacksmith and the apprentice imp kneel at the edg
 
 Fase 1 approvata da Claude il 2026-11-03 (reversibile: serve a qualunque interfaccia).
 Fase 2 approvata da Sergio il 2026-11-03 («sì a tutte»): apprendista con la fiammella, Favilla con salopette e stivali («quella con le scarpe»), Fabbro B.
+Fase 2b (le due scene scartate, rifatte con la coda a cuore detta meglio) approvata da Claude il 2026-11-04: è la stessa richiesta della fase 2, con un riferimento in più.
 
 ## Consegna di Codex
 
@@ -262,6 +292,40 @@ In `art/WB-012/`, sei PNG e sei `.txt` con prompt integrale e riferimenti nell'o
 - Non verificati: ritaglio automatico, resa nel gioco e approvazione dei modelli da parte di Sergio. I criteri di accettazione restano non spuntati per la revisione; non si dichiarano tutti soddisfatti.
 - La variante con fiammella è solo la proposta espressamente prevista qui per la scelta 6: non modifica lo standard senza fiammella deciso il 2 novembre.
 
+
+### Fase 2 · Consegna di Codex
+
+Eseguita la fase 2 approvata sulla scheda di `main` al commit `6d4b94f`, conservando la consegna della fase 1 e il resoconto di Claude. Usati solo i prompt delle otto righe di fase 2, senza modifiche, con i fogli scelti R6/R7/R8 e R3 nell'ordine indicato.
+
+Otto immagini generate: **sei da revisione e due scartate**. Gli scarti sono conservati soltanto in `art/WB-012/scartati/fase2/`, non fra i file proposti per l'integrazione. Ogni PNG ha accanto il `.txt` con prompt e riferimenti.
+
+| File relativo ad `art/WB-012/` | Misura effettiva | Tentativi completati | Esito |
+|---|---|---:|---|
+| `scartati/fase2/4_arrivo_a.png` | 1672×941 | 3 | SCARTATA |
+| `4_arrivo_b.png` | 1254×1254 | 1 | da revisione |
+| `4_arrivo_c.png` | 1254×1254 | 2 | da revisione |
+| `5_fabbro_a.png` | 1672×941 | 1 | da revisione |
+| `scartati/fase2/5_fabbro_b.png` | 1254×1254 | 3 | SCARTATA |
+| `6_rapimento_a.png` | 1536×1024 | 1 | da revisione |
+| `6_rapimento_b.png` | 1254×1254 | 3 | da revisione |
+| `6_rapimento_c.png` | 1536×1024 | 1 | da revisione |
+
+#### Controlli ed esiti
+
+- Guardata ogni immagine generata e confrontata con i fogli scelti. Nessuna scritta, lettera, fumetto o firma visibile. Controllati fiamme, corna, fazzoletto, abiti, code, guanti, comignolo, pose e spazio per il testo. Nessun ritocco, specchiatura, ridimensionamento o integrazione nel gioco.
+- **4_arrivo_a SCARTATA:** in tutti e tre i tentativi Favilla ha la coda a freccia invece che a cuore. Conservato il terzo solo come testimonianza del problema; manca una scena di arrivo conforme. L'arrivo, l'atterraggio, gli abiti e il muro scuro in alto a destra sono presenti.
+- **4_arrivo_b:** apprendista indignato, pugno alzato, fazzoletto blu e fiammella arancione. Lo spazio calmo in basso è più vicino a un quarto che al terzo richiesto; da verificare col testo effettivo.
+- **4_arrivo_c:** scartato il primo tentativo perché guardava a destra; il secondo guarda a sinistra e indica la forgia col pollice. Cornice inferiore calma presente; la fiamma ha una silhouette non identica al modello.
+- **5_fabbro_a:** Fabbro grande a sinistra e apprendista piccolo a destra, fornace accesa, braccia incrociate, spazio scuro in alto a destra. La forma delle corna e la fornace non sono copie geometriche esatte; verificare nella revisione il numero delle sbarre e le parti dei guanti nascoste dalle braccia.
+- **5_fabbro_b SCARTATA:** in tutti e tre i tentativi Favilla ha la coda a freccia invece che a cuore. Compare inoltre un martello in mano all'apprendista non richiesto dalla scena. Conservato il terzo soltanto come scarto; manca una scena del bisbiglio conforme.
+- **6_rapimento_a:** presa di ghiaccio intorno alla vita, Favilla con coda a cuore, salopette e stivali, apprendista che corre da sinistra. Il passaggio da arancione a blu è leggibile; non certificata l'identità esatta delle proporzioni rispetto ai modelli.
+- **6_rapimento_b:** primi due tentativi con punta della coda non conforme; scelto il terzo, con coda a cuore. Vista nel baratro, ghiaccio ai bordi e fiamma a scia presenti. La presa si sposta verso la gamba/stivale rispetto alla presa alla vita della scena precedente: continuità da rivedere.
+- **6_rapimento_c:** entrambi inginocchiati al bordo, pugni dell'apprendista serrati, brina su baffi e guanti, fornace attenuata, luce blu e spazio calmo in alto presenti. Forma delle corna del Fabbro e volto variano rispetto al foglio: da revisione, non dichiarata identità esatta.
+- **Misure non tutte conformi:** salvati gli originali nelle dimensioni native della tabella. I primi tre panoramici e i quadrati non rispettano esattamente 1536×1024 / 1024×1024. Nessuna deformazione per forzare le misure.
+- Il paragrafo generale della scheda indica pergamena, ma i prompt specifici della fase 2 chiedono forgia e baratro: eseguiti esattamente quei prompt, con sfondi dipinti opachi. Segnalata l'incoerenza senza modificare la scheda altrui.
+- Non verificati: impaginazione coi fumetti effettivi, leggibilità su telefono, continuità nel montaggio e resa nel gioco. I criteri restano non spuntati. I sei risultati da revisione non equivalgono a un'approvazione finale; i due scarti non vanno integrati.
+- Una chiamata per `6_rapimento_b` è stata interrotta senza produrre un file; non conteggiata fra i tre tentativi completati.
+
 ## Resoconto di Claude
 
 Fase 1 (2026-11-03). Guardati i sei fogli di Codex (518c3c2): tutti tengono il personaggio
@@ -277,3 +341,13 @@ Da sistemare quando c'è da rigenerare (solo quel busto): nell'apprendista «pre
 «triste» si somigliano; nel Fabbro «serio» e «approva» quasi uguali. Celle non esattamente
 quadrate (misure native del generatore): per i ritagli non conta. Colori non misurati al pixel
 (servono per gli SVG, non per le vignette). I ritratti si ritagliano nella PR del codice.
+
+Fase 2 (2026-11-04). Guardate le sei tavole di Codex (39f3496) e le due scartate. Le sei
+tengono i personaggi; si montano nella PR della storia. Da tenere d'occhio al montaggio:
+`6_rapimento_b` prende Favilla per lo stivale e non per la vita come `6_rapimento_a` (si legge
+come lo stesso artiglio che la trascina giù: va bene); in `4_arrivo_b` lo spazio calmo è un
+quarto, il fumetto sarà più basso. D'accordo con gli scarti di Codex: in `4_arrivo_a` la coda
+di Favilla finisce a freccia, in `5_fabbro_b` anche, più un martello non chiesto. Si rifanno
+nella fase 2b, con R9 (la sua figura intera) e la coda detta due volte. L'incoerenza segnalata
+da Codex (pergamena nel paragrafo generale, forgia nei prompt) è voluta: la pergamena vale per
+i fogli della fase 1, le tavole hanno lo sfondo della scena.

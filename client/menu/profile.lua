@@ -11,6 +11,7 @@ local skills = require "sim.skills"
 local loadout = require "sim.loadout"
 local equip = require "sim.gear"
 local milestones = require "menu.milestones"
+local common = require("lang.text").common
 
 local M = {}
 
@@ -102,8 +103,8 @@ end
 -- The stat groups, like the filters of the STATISTICHE tab. TUTTE isn't
 -- saved: it is summed (records with the max)
 M.GROUPS = { "2v2", "1v1", "torneo", "campagna", "tutte" }
-M.GROUP_NAMES = { ["2v2"] = "2 CONTRO 2", ["1v1"] = "1 CONTRO 1", torneo = "TORNEO", campagna = "CAMPAGNA",
-	ffa = "TUTTI CONTRO TUTTI", tutte = "TUTTE" }
+M.GROUP_NAMES = { ["2v2"] = common.modes["2v2"], ["1v1"] = common.modes["1v1"], torneo = common.tournament,
+	campagna = common.campaign, ffa = common.modes.ffa, tutte = common.all }
 -- the matches that are kept (with the replays of those played on this phone)
 M.MATCHES = 10
 

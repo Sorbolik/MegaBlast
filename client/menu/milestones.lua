@@ -8,22 +8,24 @@
 -- 10,000): each threshold passed is a badge grade (I..IV). The badge has a
 -- shape (which stat) and the grade's color.
 
+local T = require("lang.text").milestones
+
 local M = {}
 
 -- The stats, in the tab's order. id: the key in the profile; nome: how it
 -- reads; badge: the badge's name (nil: none); forma: cerchio, rombo, esagono
 -- or stella; thresholds: the grades; record: keep the max, not the sum.
 M.WHITELIST = {
-	{ id = "nel_vuoto", nome = "Abbattuti nel vuoto", badge = "BECCHINO", forma = "rombo", thresholds = { 10, 100, 1000, 10000 } },
-	{ id = "abbattuti", nome = "Abbattuti", badge = "CACCIATORE", forma = "esagono", thresholds = { 10, 100, 1000, 10000 } },
-	{ id = "a_segno", nome = "Colpi a segno", badge = "MIRA", forma = "cerchio", thresholds = { 10, 100, 1000, 10000 } },
-	{ id = "danno", nome = "Danno fatto", badge = "MARTELLO", forma = "stella", thresholds = { 1000, 10000, 100000, 1000000 } },
-	{ id = "globi", nome = "Globi guadagnati", badge = "FULMINE", forma = "esagono", thresholds = { 10, 100, 1000, 10000 } },
-	{ id = "colpo_lungo", nome = "Colpo più lungo", badge = "LONTANO", forma = "stella", thresholds = { 600, 900, 1200, 1500 },
+	{ id = "nel_vuoto", nome = T.names.nel_vuoto, badge = T.badges.nel_vuoto, forma = "rombo", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "abbattuti", nome = T.names.abbattuti, badge = T.badges.abbattuti, forma = "esagono", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "a_segno", nome = T.names.a_segno, badge = T.badges.a_segno, forma = "cerchio", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "danno", nome = T.names.danno, badge = T.badges.danno, forma = "stella", thresholds = { 1000, 10000, 100000, 1000000 } },
+	{ id = "globi", nome = T.names.globi, badge = T.badges.globi, forma = "esagono", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "colpo_lungo", nome = T.names.colpo_lungo, badge = T.badges.colpo_lungo, forma = "stella", thresholds = { 600, 900, 1200, 1500 },
 		record = true, unit = "px" },
-	{ id = "casse", nome = "Casse aperte", badge = "PREDONE", forma = "cerchio", thresholds = { 10, 100, 1000, 10000 } },
-	{ id = "vinte", nome = "Partite vinte", badge = "VINCITORE", forma = "rombo", thresholds = { 10, 100, 1000, 10000 } },
-	{ id = "cadute", nome = "Cadute" },
+	{ id = "casse", nome = T.names.casse, badge = T.badges.casse, forma = "cerchio", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "vinte", nome = T.names.vinte, badge = T.badges.vinte, forma = "rombo", thresholds = { 10, 100, 1000, 10000 } },
+	{ id = "cadute", nome = T.names.cadute },
 }
 M.BY_ID = {}
 for _, s in ipairs(M.WHITELIST) do M.BY_ID[s.id] = s end

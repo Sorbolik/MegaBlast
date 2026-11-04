@@ -23,6 +23,7 @@ aspetta 0.3
 foto 04_profilo_partite_vuoto
 tocca 62 658                        # indietro
 aspetta_stato modo=menu 3
+aspetta 0.5                         # la home arriva scorrendo: i tocchi contano a scorrimento finito
 
 tocca 1075 323                      # ALLENAMENTO
 aspetta 1

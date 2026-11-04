@@ -18,18 +18,20 @@ local skills = require "sim.skills"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local profile = require "menu.profile"
+local T = require("lang.text").armory
 
 local M = {}
 
 -- stats shown on the right, in this order: name and how the value is written
 M.STATISTICS = {
-	{ "max_hp", "Vita" }, { "walk_speed", "Corsa" }, { "jump_height", "Salto" }, { "air_speed", "In aria" },
-	{ "teleport_ticks", "Teletrasporto", "secondi" }, { "teleports", "Teletrasporti" },
-	{ "parachutes", "Paracadute" }, { "air_jumps", "Salti in aria" },
-	{ "fall_damage_mul", "Danno da caduta", "percento" }, { "knockback_mul", "Spinta subita", "percento" },
-	{ "trap_radius", "Raggio trappole" }, { "status_turns", "Turni degli effetti" },
-	{ "burning_blasts", "Colpi brucianti", "sì" },
+	{ "max_hp" }, { "walk_speed" }, { "jump_height" }, { "air_speed" },
+	{ "teleport_ticks", "seconds" }, { "teleports" },
+	{ "parachutes" }, { "air_jumps" },
+	{ "fall_damage_mul", "percent" }, { "knockback_mul", "percent" },
+	{ "trap_radius" }, { "status_turns" },
+	{ "burning_blasts", "yes_no" },
 }
+for _, s in ipairs(M.STATISTICS) do table.insert(s, 2, T.stats[s[1]]) end
 local ROMAN = { "I", "II", "III", "IV" }
 local STAT_NAMES = {}
 for _, s in ipairs(M.STATISTICS) do STAT_NAMES[s[1]] = string.lower(s[2]) end
@@ -41,10 +43,10 @@ local function base()
 end
 
 local function value(v, modo)
-	if type(v) ~= "number" then return v and "sì" or "no" end
-	if modo == "secondi" then return string.format("%.1f s", v / 60) end
-	if modo == "sì" then return v > 0 and "sì" or "no" end
-	if modo == "percento" then return string.format("%d%%", math.floor(v * 100 + 0.5)) end
+	if type(v) ~= "number" then return v and T.yes or T.no end
+	if modo == "seconds" then return T.seconds:format(v / 60) end
+	if modo == "yes_no" then return v > 0 and T.yes or T.no end
+	if modo == "percent" then return string.format("%d%%", math.floor(v * 100 + 0.5)) end
 	if v % 1 ~= 0 then return string.format("%.1f", v) end
 	return tostring(v)
 end
@@ -69,7 +71,7 @@ local function statistics(a, parent)
 	local b = base()
 	local st = loadout.stats(b, to_active(a), profile.tier(a.prof, to_active(a)))
 	local pan = ui.pannello(1135, 330, 250, 560, parent)
-	ui.titolo("STATISTICHE", 0, 255, 0.6, c.TEXT, pan)
+	ui.titolo(T.stats_title, 0, 255, 0.6, c.TEXT, pan)
 	local y = 215
 	for _, s in ipairs(M.STATISTICS) do
 		local k, nome, modo = s[1], s[2], s[3]
@@ -107,10 +109,10 @@ local function sheet_set(a, parent)
 			local x = 260 + (i - 1) * 138
 			local t = equip.tier(a.prof.mastery[set.id .. "_" .. slot.id])
 			ui.scheda(a.buttons, x, y + 8, 130, 46, set.name, "set:" .. slot.id .. ":" .. set.id, chosen, parent)
-			ui.testo("tier " .. ROMAN[t], x, y - 26, 0.55, chosen and c.BRACE or c.OFF, parent)
+			ui.testo(T.tier:format(ROMAN[t]), x, y - 26, 0.55, chosen and c.BRACE or c.OFF, parent)
 		end
 		local piece = equip.BY_ID[as.gear[slot.id] or ""]
-		local n = ui.testo(piece and effects(piece.pieces[slot.id]) or "nessun pezzo", 770, y, 0.6, c.OFF, parent)
+		local n = ui.testo(piece and effects(piece.pieces[slot.id]) or T.no_piece, 770, y, 0.6, c.OFF, parent)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
 
@@ -124,7 +126,7 @@ local function sheet_set(a, parent)
 		local y = 4 - (i - 1) * 40
 		local ok = v == "a" or top
 		ui.scheda(a.buttons, -420, y, 50, 34, string.upper(v), "variante:" .. v, as.variant == v and (v == "a" or top), pan)
-		local txt = set.bonus[v].desc .. (ok and "" or "  (tutti i pezzi al livello " .. equip.LIVELLO_MAX .. ")")
+		local txt = ok and set.bonus[v].desc or T.locked_bonus:format(set.bonus[v].desc, equip.LIVELLO_MAX)
 		local n = ui.testo(txt, -380, y, 0.62, ok and c.TEXT or c.OFF, pan)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
@@ -141,7 +143,7 @@ local function sheet_tree(a, parent)
 	for b, tree_branch in ipairs(skills.BRANCHES) do
 		local x = 510 + (b - (#skills.BRANCHES + 1) / 2) * step
 		ui.titolo(tree_branch.name, x, 575, 0.7, c.TEXT, parent)
-		ui.testo(string.format("%d punti", skills.spent(tree, tree_branch.id)), x, 548, 0.6, c.OFF, parent)
+		ui.testo(T.points:format(skills.spent(tree, tree_branch.id)), x, 548, 0.6, c.OFF, parent)
 		-- nodes per row
 		local lines = {}
 		for _, n in ipairs(skills.NODES) do
@@ -160,7 +162,7 @@ local function sheet_tree(a, parent)
 				local col = ok and c.TEXT or c.OFF
 				ui.testo(gui_node.name, 0, 22, 0.75, col, btn)
 				ui.testo(string.format("%d / %d", degrees, gui_node.ranks), 0, -4, 1.3, degrees > 0 and c.BRACE or col, btn)
-				ui.testo(gui_node.cost == 1 and "1 punto" or (gui_node.cost .. " punti"), 0, -28, 0.8, c.OFF, btn)
+				ui.testo((gui_node.cost == 1 and T.point or T.points):format(gui_node.cost), 0, -28, 0.8, c.OFF, btn)
 				if degrees > 0 and skills.can_remove(tree, gui_node.id) then
 					ui.button(a.buttons, 62, -26, 26, 26, "-", "togli:" .. gui_node.id, nil, btn)
 				end
@@ -169,14 +171,14 @@ local function sheet_tree(a, parent)
 	end
 	-- at the bottom: points, chosen node, rebuild
 	local pan = ui.pannello(510, 70, 940, 90, parent)
-	ui.testo(string.format("PUNTI %d / %d", skills.spent(tree), punti), -360, 18, 0.9, c.BRACE, pan)
-	ui.testo(string.format("livello %d", a.prof.livello), -360, -14, 0.55, c.OFF, pan)
+	ui.testo(T.points_spent:format(skills.spent(tree), punti), -360, 18, 0.9, c.BRACE, pan)
+	ui.testo(T.level:format(a.prof.livello), -360, -14, 0.55, c.OFF, pan)
 	local gui_node = skills.BY_ID[a.ultimo or ""]
 	if gui_node then
 		ui.testo(gui_node.name, 30, 18, 0.75, c.TEXT, pan)
-		ui.testo(gui_node.desc .. " per grado", 30, -12, 0.6, c.OFF, pan)
+		ui.testo(T.per_rank:format(gui_node.desc), 30, -12, 0.6, c.OFF, pan)
 	end
-	ui.button(a.buttons, 380, 0, 140, 50, "AZZERA", "azzera", nil, pan)
+	ui.button(a.buttons, 380, 0, 140, 50, T.reset, "azzera", nil, pan)
 end
 
 -- Screen -----------------------------------------------------------------------
@@ -188,10 +190,10 @@ local function build(a)
 	gui.set_visible(a.radice, false)
 	local c = ui.C
 	ui.indietro(a.buttons, "indietro", a.radice)
-	ui.titolo("ARMERIA", 220, 680, 1, c.TEXT, a.radice)
-	ui.scheda(a.buttons, 470, 622, 150, 48, "SET", "scheda:set", a.scheda == "set", a.radice)
-	ui.scheda(a.buttons, 630, 622, 150, 48, "ALBERO", "scheda:albero", a.scheda == "albero", a.radice)
-	ui.testo("ASSETTO", 900, 680, 0.7, c.OFF, a.radice)
+	ui.titolo(T.title, 220, 680, 1, c.TEXT, a.radice)
+	ui.scheda(a.buttons, 470, 622, 150, 48, T.tab_set, "scheda:set", a.scheda == "set", a.radice)
+	ui.scheda(a.buttons, 630, 622, 150, 48, T.tab_tree, "scheda:albero", a.scheda == "albero", a.radice)
+	ui.testo(T.loadout, 900, 680, 0.7, c.OFF, a.radice)
 	for i = 1, loadout.LOADOUTS do
 		ui.scheda(a.buttons, 940 + i * 70, 680, 60, 48, tostring(i), "assetto:" .. i, a.prof.is_active == i, a.radice)
 	end

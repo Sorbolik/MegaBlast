@@ -13,6 +13,8 @@
 local ui = require "ui.ui"
 local payload = require "sim.campaign"
 local missions = require "sim.missions"
+local T = require("lang.text").campaign
+local common = require("lang.text").common
 
 local M = {}
 
@@ -62,7 +64,7 @@ local function build(c)
 	gui.set_visible(c.radice, false)
 	local C = ui.C
 	ui.indietro(c.buttons, "indietro", c.radice)
-	ui.titolo("CAMPAGNA", 640, 640, 1, C.TEXT, c.radice)
+	ui.titolo(common.campaign, 640, 640, 1, C.TEXT, c.radice)
 	local n = #payload.CAPITOLI
 	local w = math.min(420, math.floor(1100 / n) - 20)
 	local chosen
@@ -76,8 +78,8 @@ local function build(c)
 		card_list(c, chosen)
 	else
 		local has_it = total(c.stelle)
-		ui.testo("Si apre con " .. chosen.serve .. " stelle: ne hai " .. has_it, 640, 400, 1, C.TEXT, c.radice)
-		ui.testo("Le stelle si prendono nelle missioni dei capitoli prima", 640, 350, 0.75, C.OFF, c.radice)
+		ui.testo(T.opens_with:format(chosen.serve, has_it), 640, 400, 1, C.TEXT, c.radice)
+		ui.testo(T.stars_hint, 640, 350, 0.75, C.OFF, c.radice)
 	end
 end
 

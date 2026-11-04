@@ -19,11 +19,13 @@
 local ui = require "ui.ui"
 local campaign = require "sim.campaign"
 local maps = require "sim.maps"
+local T = require("lang.text").training
+local common = require("lang.text").common
 
 local M = {}
 
-local MODES_LIST = { { "1v1", "1 CONTRO 1" }, { "2v2", "2 CONTRO 2" }, { "ffa", "TUTTI CONTRO TUTTI" } }
-local LEVELS = { { "facile", "FACILE" }, { "normale", "NORMALE" }, { "difficile", "DIFFICILE" } }
+local MODES_LIST = { { "1v1", common.modes["1v1"] }, { "2v2", common.modes["2v2"] }, { "ffa", common.modes.ffa } }
+local LEVELS = { { "facile", T.levels.facile }, { "normale", T.levels.normale }, { "difficile", T.levels.difficile } }
 local NAMES = {}
 for _, t in ipairs(MODES_LIST) do NAMES[t[1]] = t[2] end
 for _, t in ipairs(LEVELS) do NAMES[t[1]] = t[2] end
@@ -76,16 +78,16 @@ local function postcard(a, x, m)
 	if not open then gui.set_color(img, vmath.vector4(0.22, 0.2, 0.24, 1)) end
 	local name = ui.testo(maps.get(m.id).name, -CARD_W / 2 + 16, -CARD_H / 2 + 22, 0.85, open and ui.C.TEXT or ui.C.OFF, n)
 	gui.set_pivot(name, gui.PIVOT_W)
-	local circle = ui.testo("GIRONE " .. m.girone, -CARD_W / 2 + 18, CARD_H / 2 - 24, 0.55, ui.C.GOLD, n)
+	local circle = ui.testo(T.circle:format(m.girone), -CARD_W / 2 + 18, CARD_H / 2 - 24, 0.55, ui.C.GOLD, n)
 	gui.set_pivot(circle, gui.PIVOT_W)
 	if not open then
-		ui.testo("Si apre con " .. m.serve .. " stelle", 0, 18, 0.8, ui.C.TEXT, n)
+		ui.testo(common.opens_with:format(m.serve), 0, 18, 0.8, ui.C.TEXT, n)
 	end
 end
 
 local function build_maps(a)
-	ui.titolo("SCEGLI LA MAPPA", 640, 640, 1, ui.C.TEXT, a.radice)
-	ui.testo(NAMES[a.scelta.modo] .. "  ·  BOT " .. NAMES[a.scelta.livello], 640, 584, 0.6, ui.C.OFF, a.radice)
+	ui.titolo(T.pick_map, 640, 640, 1, ui.C.TEXT, a.radice)
+	ui.testo(T.mode_and_bot:format(NAMES[a.scelta.modo], NAMES[a.scelta.livello]), 640, 584, 0.6, ui.C.OFF, a.radice)
 	-- the row: A CASO and the maps from the first visible one
 	local cards = { { random = true } }
 	for _, m in ipairs(MAPS) do cards[#cards + 1] = m end
@@ -102,7 +104,7 @@ local function build_maps(a)
 			local n = ui.button(a.buttons, x + cw / 2, CARDS_Y, cw, CARD_H, "", "mappa:caso", nil, a.radice)
 			ui.sheet_active(a.buttons[#a.buttons], a.scelta.mappa == "caso")
 			ui.titolo("?", 0, 22, 2.2, ui.C.LIGHT, n)
-			ui.testo("A CASO", 0, -CARD_H / 2 + 22, 0.85, ui.C.TEXT, n)
+			ui.testo(T.random, 0, -CARD_H / 2 + 22, 0.85, ui.C.TEXT, n)
 		else
 			postcard(a, x + cw / 2, c)
 		end
@@ -110,21 +112,21 @@ local function build_maps(a)
 	end
 	if first > 1 then ui.button(a.buttons, 40, CARDS_Y, 56, 120, "<", "scorri:-1", nil, a.radice) end
 	if last < #cards then ui.button(a.buttons, 1240, CARDS_Y, 56, 120, ">", "scorri:1", nil, a.radice) end
-	ui.button(a.buttons, 640, 140, 340, 108, "GIOCA", "gioca", { main = true }, a.radice)
+	ui.button(a.buttons, 640, 140, 340, 108, common.play, "gioca", { main = true }, a.radice)
 end
 
 local function build_mode(a)
 	local c = ui.C
-	ui.titolo("ALLENAMENTO", 640, 640, 1, c.TEXT, a.radice)
-	ui.testo("MODO", 640, 520, 0.7, c.OFF, a.radice)
+	ui.titolo(T.title, 640, 640, 1, c.TEXT, a.radice)
+	ui.testo(T.mode, 640, 520, 0.7, c.OFF, a.radice)
 	for i, m in ipairs(MODES_LIST) do
 		ui.scheda(a.buttons, 640 + (i - 2) * 330, 460, 310, 64, m[2], "modo:" .. m[1], a.scelta.modo == m[1], a.radice)
 	end
-	ui.testo("BOT", 640, 360, 0.7, c.OFF, a.radice)
+	ui.testo(T.bot, 640, 360, 0.7, c.OFF, a.radice)
 	for i, l in ipairs(LEVELS) do
 		ui.scheda(a.buttons, 640 + (i - 2) * 250, 300, 230, 64, l[2], "livello:" .. l[1], a.scelta.livello == l[1], a.radice)
 	end
-	ui.button(a.buttons, 640, 140, 340, 108, "AVANTI", "avanti", { main = true }, a.radice)
+	ui.button(a.buttons, 640, 140, 340, 108, common.next, "avanti", { main = true }, a.radice)
 end
 
 local function build(a)

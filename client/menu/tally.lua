@@ -10,6 +10,8 @@
 --   conta.tick(c, g)                         -- after every step (the laps)
 --   local r = conta.fine(c, g, results, info) -- info: gruppo, mappa, quando, giocatori
 
+local T = require("lang.text").tally
+
 local M = {}
 
 -- from how many pixels a shot becomes a moment of the match
@@ -41,7 +43,7 @@ function M.nuova(g, me, name_list)
 end
 
 local function lap(c, g)
-	return g.final_round and "finale" or ("giro " .. (g.round or 1))
+	return g.final_round and T.final or T.round:format(g.round or 1)
 end
 
 local function moment(c, g, txt)
@@ -75,19 +77,19 @@ function M.evento(c, g, e)
 			local d = math.floor(math.sqrt((o.x - c.colpo.x) ^ 2 + (o.y - c.colpo.y) ^ 2) + 0.5)
 			if d > c.colpo_lungo then c.colpo_lungo = d end
 			if d >= M.LONG then
-				moment(c, g, string.format("Colpo da %d px su %s", d, c.nomi[e.robot] or "?"))
+				moment(c, g, T.long_shot:format(d, c.nomi[e.robot] or "?"))
 			end
 		end
 	elseif t == "death" then
 		if e.by == c.me and enemy(c, g, e.robot) then
-			moment(c, g, (e.env and "Butti nel vuoto " or "Abbatti ") .. (c.nomi[e.robot] or "?"))
+			moment(c, g, (e.env and T.you_drop or T.you_kill):format(c.nomi[e.robot] or "?"))
 		elseif e.robot == c.me and e.by and enemy(c, g, e.by) then
-			moment(c, g, (c.nomi[e.by] or "?") .. (e.env and " ti butta nel vuoto" or " ti abbatte"))
+			moment(c, g, (e.env and T.drops_you or T.kills_you):format(c.nomi[e.by] or "?"))
 		end
 	elseif (t == "teleports" or t == "swap") and e.robot == c.me then
 		c.globi = c.globi + (t == "swap" and 1 or (e.amount or 0))
 	elseif t == "final_round" then
-		moment(c, g, "Ultimo giro a punti doppi")
+		moment(c, g, T.double_points)
 	elseif t == "turn" then
 		c.colpo = nil
 	end

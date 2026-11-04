@@ -19,6 +19,7 @@ local ui = require "ui.ui"
 local screen = require "ui.screen"
 local config = require "sim.config"
 local tag = require "ui.tag_card"
+local T = require("lang.text").lineup
 
 local M = {}
 
@@ -68,7 +69,7 @@ function M.new(showcases, title)
 	gui.set_yanchor(top_left, gui.ANCHOR_TOP)
 	local t = ui.titolo(title, 0, 0, 0.75, C.LIGHT, top_left)
 	gui.set_pivot(t, gui.PIVOT_W)
-	local under = ui.testo("TOCCA PER SCEGLIERE LE ARMI", 2, -40, 0.75, C.OFF, top_left)
+	local under = ui.testo(T.tap_to_pick, 2, -40, 0.75, C.OFF, top_left)
 	gui.set_pivot(under, gui.PIVOT_W)
 	local top_right = gui.new_box_node(vec(W - 44 - 115, H - 52), vec(0, 0))
 	gui.set_visible(top_right, false)
@@ -78,7 +79,7 @@ function M.new(showcases, title)
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
 	ui.pannello(0, 0, 230, 58, top_right)
-	local armi = ui.testo("ARMI TRA", -24, 0, 0.85, C.OFF, top_right)
+	local armi = ui.testo(T.weapons_in, -24, 0, 0.85, C.OFF, top_right)
 	gui.set_pivot(armi, gui.PIVOT_E)
 	s.tally = ui.testo("", -12, 0, 0.95, C.LIGHT, top_right)
 	gui.set_pivot(s.tally, gui.PIVOT_W)
@@ -91,7 +92,7 @@ function M.new(showcases, title)
 		s.card_list[i] = tag.new(v, xs[i], TOP, { portrait = true, tu = v.tu }, s.radice)
 	end
 	if vs then
-		ui.titolo("VS", 640, TOP - 260, 0.75, C.OFF, s.radice)
+		ui.titolo(T.versus, 640, TOP - 260, 0.75, C.OFF, s.radice)
 		-- a line in each team's color above its tags
 		local per = {}
 		for i, v in ipairs(showcases) do
@@ -145,7 +146,7 @@ function M.strip(showcases)
 		gui.set_color(border, v.tu and col or with_alpha(col, 0.6))
 		local sx = -STRIP_W / 2 + 12
 		ui.ring_node(sx + 17, 0, 34, 2.5, col, n)
-		ui.testo(v.livello and tostring(v.livello) or v.bot and "BOT" or "–", sx + 17, 0, (v.livello or not v.bot) and 0.75 or 0.5, col, n)
+		ui.testo(v.livello and tostring(v.livello) or v.bot and T.bot or "–", sx + 17, 0, (v.livello or not v.bot) and 0.75 or 0.5, col, n)
 		local nome = ui.titolo(v.nome or "?", sx + 42, 8, 0.4, C.LIGHT, n)
 		gui.set_pivot(nome, gui.PIVOT_W)
 		-- the four pieces in small: a little square with the tier border and the level
@@ -167,7 +168,7 @@ function M.strip(showcases)
 		end
 		local abilities = #(v.abilities or {})
 		if abilities > 0 then
-			local t = ui.testo(abilities == 1 and "1 potere" or abilities .. " poteri", STRIP_W / 2 - 14, 10, 0.5, C.GOLD, n)
+			local t = ui.testo((abilities == 1 and T.power or T.powers):format(abilities), STRIP_W / 2 - 14, 10, 0.5, C.GOLD, n)
 			gui.set_pivot(t, gui.PIVOT_E)
 		end
 		st.mini[i] = n
