@@ -2254,8 +2254,8 @@ end
 -- in the lessons Favilla speaks, in the circles the Fabbro. What explains a
 -- control (in the lessons; not what comes mid-move: subito, in the air) and
 -- the opening line stop the game on the big
--- vignette the first time (profile.vignetta), then they stay in the strip at
--- the top; the rest is only in the strip. {salta}: how to jump with the
+-- vignette every time (Sergio, 4 Nov: also when you play the lesson again),
+-- then they stay in the strip at the top; the rest is only in the strip. {salta}: how to jump with the
 -- controls you have (PAD.TEXTS)
 function CP.mission_line(self, r)
 	local line = missions.line(r)
@@ -2274,8 +2274,7 @@ function CP.mission_line(self, r)
 		end
 		if self.vign_line ~= line and not self.carta then
 			self.vign_line = line
-			if self.vign_on and profile.vignetta(self.profilo, l.id .. ":" .. line.testo) then
-				profile.salva(self.profilo)
+			if self.vign_on then
 				self.carta = self.vign:open({ page }, PAD.comandi(self) == "controller")
 			end
 		end
