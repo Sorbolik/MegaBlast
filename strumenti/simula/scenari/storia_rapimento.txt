@@ -1,0 +1,25 @@
+# Il capitolo del rapimento (ui/story.lua), che nel gioco arriva vinta la
+# Battaglia della Forgia: qui lo fa uscire subito prova_storia rapimento,
+# aprendo la CAMPAGNA. Quattro tavole, la quarta (s_ghiaccio) arriva con WB-017.
+imposta prova_storia rapimento
+imposta prova_vignette no
+
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1.2
+foto 01_artiglio
+pad a
+aspetta 0.6
+foto 02_aiutami
+pad a
+aspetta 0.6
+foto 03_giu
+pad a
+aspetta 0.6
+foto 04_chi_era
+pad a
+aspetta 0.6
+foto 05_lucifero
+pad a
+aspetta 1.5
+foto 06_campagna

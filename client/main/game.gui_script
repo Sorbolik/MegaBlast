@@ -25,6 +25,7 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	training = require "menu.training", level_end = require "menu.level_end", campaign = require "menu.campaign",
 	settings = require "menu.settings", board = require "menu.board", queue = require "menu.queue",
 	lineup = require "menu.lineup", profile_tabs = require "menu.profile_tabs", lobby = require "menu.lobby",
+	story = require "menu.story",
 	-- not screens, here so as not to add local variables (limit of 200): the
 	-- server's events and their rules (start online)
 	eventi = require "main.events", regole = require "sim.rules",
@@ -846,7 +847,7 @@ local RM = { fune = require "battle.rope", GUSTS = 5 }
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
 local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card",
-	vignette = require "battle.vignette", favilla = require "battle.favilla" }
+	vignette = require "battle.vignette", favilla = require "battle.favilla", tale = require "ui.story" }
 
 -- The zoom (Sergio, 3 Nov, choice Z1; 4 Nov): one button, top right, that is
 -- both a switch and a slider. Inside it a small lens slides on a track with a
@@ -2398,7 +2399,34 @@ end
 -- The campaign, on the last mission's chapter
 local function open_campaign(self)
 	show_menu(self, true)
-	open_screen(self, menu.campaign, self.chosen_campaign, self.profilo.stelle)
+	-- a chapter of the story not seen yet comes first (ui/story.lua)
+	if CP.story(self, nil, function() open_campaign(self) end) then return end
+	open_screen(self, menu.campaign, self.chosen_campaign, self.profilo.stelle,
+		#CP.tale.read_again(self.profilo) > 0)
+end
+
+-- The campaign's story (ui/story.lua, menu/story.lua): the chapter due now
+-- (starting: the mission about to start, nil opening the CAMPAGNA), then
+-- after(). True when a chapter opened; false: nothing to tell, after() is for
+-- the caller. The first time it can't be skipped
+function CP.story(self, starting, after)
+	-- in the scenarios only with prova_storia si, or the id of a chapter to
+	-- show at once (scenari/storia.txt, storia_rapimento.txt)
+	local test = SIMULATE and config_string("megablast.prova_storia", "no") or "si"
+	if test == "no" then return false end
+	local id = CP.tale.pending(self.profilo, starting)
+	if test ~= "si" and not (self.profilo.storia or {})[test] then id = test end
+	if not id then return false end
+	close_screen(self)
+	home.hide(self.home)
+	self.story_id, self.story_next = id, after
+	open_screen(self, menu.story, CP.tale.pages(id), false)
+	return true
+end
+
+-- A mission starts: first its chapter of the story, if one is due
+function CP.start(self, id)
+	if not CP.story(self, id, function() start_mission(self, id) end) then start_mission(self, id) end
 end
 
 -- Every frame: the line above the devil and the goal under the points; done,
@@ -2522,7 +2550,7 @@ local function after_level_end(self, end_of)
 	CP.iris(self, function()
 		close_screen(self)
 		if after_step then
-			start_mission(self, after_step)
+			CP.start(self, after_step)
 		else
 			open_campaign(self)
 		end
@@ -4777,6 +4805,25 @@ function PAD.on_input(self, action_id, action)
 		local end_of = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
 		if end_of and self.schermata.mod == menu.level_end then
 			after_level_end(self, end_of)
+		elseif end_of and self.schermata.mod == menu.story then
+			-- the story is over: seen, then what was waiting for it (the CAMPAGNA or the mission)
+			if self.story_id then
+				CP.tale.seen(self.profilo, self.story_id)
+				profile.salva(self.profilo)
+			end
+			local after = self.story_next or function() open_campaign(self) end
+			self.story_id, self.story_next = nil, nil
+			CP.iris(self, function()
+				close_screen(self)
+				after()
+			end)
+		elseif end_of == "storia" and self.schermata.mod == menu.campaign then
+			-- LA STORIA in the CAMPAGNA: every chapter seen, and it can be skipped
+			CP.slide(self, 1, function()
+				close_screen(self)
+				self.story_id, self.story_next = nil, nil
+				open_screen(self, menu.story, CP.tale.read_again(self.profilo), true)
+			end)
 		elseif type(end_of) == "table" and end_of.coda then
 			-- DOVE GIOCHI? or GIOCA in an event's detail: the online match
 			CP.iris(self, function()
@@ -4803,7 +4850,7 @@ function PAD.on_input(self, action_id, action)
 			self.ritorno = "campagna"
 			CP.iris(self, function()
 				close_screen(self)
-				start_mission(self, end_of.missione)
+				CP.start(self, end_of.missione)
 			end)
 		elseif type(end_of) == "table" then
 			-- GIOCA in training against the bots (the choice stays for next time)
@@ -4833,7 +4880,7 @@ function PAD.on_input(self, action_id, action)
 			-- for a new player GIOCA leads to the Training basics, until they finish
 			-- them (in the scenarios only with prova_nuovo 1: scenari/nuovo.txt)
 			self.ritorno = "home"
-			CP.iris(self, function() start_mission(self, profile.first_lesson(self.profilo)) end)
+			CP.iris(self, function() CP.start(self, profile.first_lesson(self.profilo)) end)
 		elseif choice == "online" or choice == "eventi" then
 			-- DOVE GIOCHI? (menu/queue.lua) or the board (menu/board.lua): they are
 			-- redone as soon as the updated events arrive

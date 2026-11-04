@@ -5,9 +5,10 @@
 -- (chapter.serve): closed, it says how many are missing. Style in ui/ui.lua.
 --
 --   local campagna = require "menu.campaign"
---   local c = campagna.new(scelta, stelle)  -- scelta = { chapter } (the last one opened); stelle = id -> { true, false, true }
+--   local c = campagna.new(scelta, stelle, storia)  -- scelta = { chapter } (the last one opened); stelle = id -> { true, false, true };
+--     storia: some of the story was seen (ui/story.lua): LA STORIA, top right, reads it again
 --   local fine = campagna.on_input(c, action_id, action)
---     -- "indietro", { missione = id } to play it, or nil
+--     -- "indietro", { missione = id } to play it, "storia", or nil
 --   campagna.destroy(c)
 
 local ui = require "ui.ui"
@@ -15,6 +16,7 @@ local payload = require "sim.campaign"
 local missions = require "sim.missions"
 local ill = require "ui.illustrations"
 local T = require("lang.text").campaign
+local TS = require("lang.text").story
 local common = require("lang.text").common
 
 local M = {}
@@ -98,6 +100,7 @@ local function build(c)
 	-- the header (ui.header): CAMPAGNA, the pill's place, the chapters as tabs under it
 	ui.header_delete(c.head)
 	c.head = ui.header(c.buttons, common.campaign, "indietro")
+	if c.storia then ui.button(c.buttons, -ui.EDGE - 110, 0, 220, 64, TS.read_again, "storia", nil, c.head.right) end
 	local n = #payload.CAPITOLI
 	local w = math.min(420, math.floor(1100 / n) - 20)
 	local chosen, tabs, active = nil, {}, 1
@@ -115,8 +118,8 @@ local function build(c)
 	end
 end
 
-function M.new(choice, stars)
-	local c = { scelta = choice, stelle = stars or {} }
+function M.new(choice, stars, story)
+	local c = { scelta = choice, stelle = stars or {}, storia = story }
 	-- the first time, the last chapter opened
 	if not choice.chapter then
 		for _, cap in ipairs(payload.CAPITOLI) do
@@ -131,7 +134,7 @@ end
 function M.on_input(c, action_id, action)
 	local ui_action = ui.tocco(c.buttons, action_id, action)
 	if not ui_action then return nil end
-	if ui_action == "indietro" then return "indietro" end
+	if ui_action == "indietro" or ui_action == "storia" then return ui_action end
 	local kind, value = ui_action:match("^(%a+):(.*)$")
 	if kind == "missione" then return { missione = value } end
 	c.scelta.chapter = value
