@@ -1,0 +1,18 @@
+Image 1 is the model sheet of Favilla, a character of our game: copy her head EXACTLY (head shape, flame hair, horns, ears, eyelashes, muzzle). Image 2 is her full figure. Image 3 is another character of the same game drawn in the game's clean style: copy ONLY its rendering (flat colors, thick black outline).
+
+Draw an EXPRESSION SHEET: NINE copies of her head only (with a short neck stub, no body), all in three-quarter view facing right, all the same size, in a 3 by 3 grid, well apart from each other. The head outline, flame, horns and ears are IDENTICAL in all nine: only the eyes, eyebrows and mouth change (the ears may tilt slightly).
+Row 1: 1) SLY: her default face, a confident closed-mouth smile, one eyebrow slightly raised; 2) HIT: just hit and in pain, eyes squeezed shut like > <, mouth open in a jagged shape; 3) VICTORY: eyes closed in happy upside-down arcs, big open laughing mouth showing teeth.
+Row 2: 4) KNOCKED OUT: dizzy spiral pupils, wobbly wavy mouth, tongue slightly out; 5) AIMING: focused, near eye wide open and far eye squinting, lips pressed, tip of the tongue sticking out of the corner of the mouth; 6) ANGRY: eyebrows down in a V, teeth clenched in a snarl.
+Row 3: 7) DEFEATED: sad, eyebrows up in the middle, eyes looking down, small downturned mouth; 8) SCARED: eyes wide with tiny pupils, mouth a small open oval, eyebrows high; 9) TAUNT: one eye closed in a wink, tongue sticking out cheekily.
+
+Rendering rules, very strict, because these drawings will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Thick, clean, closed pure-black #000000 outline around each head, thinner black lines only for inner details. The bottom end of the neck stub has NO black outline: the outline gets thinner as it reaches the stub's lower end and stops, and the skin color runs right to the edge. The skin near the bottom of the neck stub is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there.
+- Use ONLY these colors: outline, eyelashes and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; horns #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A; flame white #FFFFFF and light blue #BFE9FF with golden tips #F2C45A, flame shadow #8CCFEF.
+- Flat pure white #FFFFFF background.
+- No text, numbers, labels, arrows or signatures. Square format.
+
+Riferimenti (ordine allegato):
+Image 1: art/WB-012/scelti/favilla.png
+Image 2: art/WB-012/riferimenti/R9_favilla_figura.png
+Image 3: art/WB-009/scelti/tre_quarti_gamba.png

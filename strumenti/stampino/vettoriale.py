@@ -16,7 +16,10 @@ contorno, sopra a tutto. Nell'SVG ci sono solo i colori della tavolozza, al
 codice esatto: lo controlla, e si ferma se ne trova un altro. Il PNG (su
 magenta, alla misura dello stampino) si dà a taglia.py.
 
-  python3 strumenti/stampino/vettoriale.py --tavolozza TAVOLOZZA.json FOGLIO.png USCITA.svg USCITA.png [RITOCCHI.json]
+  python3 strumenti/stampino/vettoriale.py --tavolozza TAVOLOZZA.json FOGLIO.png USCITA.svg USCITA.png [RITOCCHI.json] [--senza colore,colore]
+
+--senza toglie dei colori della tavolozza per quel foglio (in un foglio di teste
+non c'è la camicia: i toni del muso non ci finiscono dentro).
   python3 strumenti/stampino/vettoriale.py --controlla TAVOLOZZA.json FILE.svg...
 
 Serve potrace (apt install potrace), cairosvg e scipy.
@@ -63,15 +66,31 @@ def ricalca(maschera, colore):
 LATO = 3072         # il foglio a colori esce largo quanto lo stampino
 
 
+class Tavolozza(list):
+    """I colori (nome, codice) e l'area minima delle macchie, se c'è."""
+    macchie = 0         # area minima di una macchia di colore ("macchie_min")
+    macchie_ombra = 0   # e di un'ombra ("macchie_ombra_min")
+    righe = 110         # sotto questo canale più forte un pixel scuro può essere riga
+
+
 def leggi_tavolozza(f):
     import json
     with open(f) as fh:
-        colori = json.load(fh)["colori"]
-    return [(n, c.upper()) for n, c in colori]
+        d = json.load(fh)
+    tav = Tavolozza((n, c.upper()) for n, c in d["colori"])
+    tav.macchie = d.get("macchie_min", 0)
+    tav.macchie_ombra = d.get("macchie_ombra_min", tav.macchie)
+    tav.righe = d.get("righe_max", 110)
+    return tav
 
 
 def rgb(c):
     return np.array([int(c[i:i + 2], 16) for i in (1, 3, 5)], np.float32)
+
+
+def giallo(r, g, b):
+    """Il giallo saturo degli occhi (anche più scuro, in ombra)."""
+    return (r > 180) & (g > 0.72 * r) & (b < 0.45 * r)
 
 
 def classi(a, tav):
@@ -110,7 +129,10 @@ def classi(a, tav):
     # occhio, non crema né corna
     if "occhi" in nomi:
         r_, g_, b_ = px[..., 0], px[..., 1], px[..., 2]
-        gial = dentro & (r_ > 180) & (g_ > 0.72 * r_) & (b_ < 0.45 * r_)
+        gial = dentro & giallo(r_, g_, b_)
+        # un altro giallo della tavolozza (i bottoni, le punte della fiamma) resta suo
+        altri = [i for i, (n, c) in enumerate(tav) if n != "occhi" and giallo(*rgb(c))]
+        gial &= ~np.isin(lab, altri)
         # solo le macchie grandi: i bordi sfumati fra crema e pelle non sono occhi
         cc, n = ndimage.label(gial)
         if n:
@@ -127,7 +149,12 @@ def classi(a, tav):
     # grande (la bocca) sono riga nera; restano anche dopo la moda qui sotto
     # (scuro: quasi nero, non un colore scuro come l'ombra della pelle o la bocca)
     lum = px @ np.array([0.30, 0.59, 0.11], np.float32)
-    scuro = dentro & (lum < 115) & (px.max(-1) < 110)
+    scuro = dentro & (lum < 115) & (px.max(-1) < getattr(tav, "righe", 110))
+    # i colori scuri della tavolozza (stivali, ombra delle bretelle) non sono righe;
+    # la bocca sì, ai bordi (come per l'apprendista)
+    veri = [i for i, (n, c) in enumerate(tav) if n not in ("nero", "bocca")
+            and rgb(c).max() < 110 and rgb(c) @ np.array([0.30, 0.59, 0.11], np.float32) < 115]
+    scuro &= ~np.isin(lab, veri)
     pieno = ndimage.binary_opening(scuro, iterations=3)
     riga = scuro & ~pieno & (lab != nero)
     riga |= lab == nero
@@ -147,6 +174,25 @@ def classi(a, tav):
     if via.any():
         _, (iy, ix) = ndimage.distance_transform_edt(via, return_indices=True)
         lab = lab[iy, ix]
+    # le macchioline (meno di "macchie_min" pixel, se la tavolozza lo chiede):
+    # sfumature e granelli di ChatGPT, prendono il colore intorno. Non il nero e
+    # il bianco, che fanno righe e lucine piccole apposta
+    if getattr(tav, "macchie", 0):
+        via = np.zeros_like(dentro)
+        for i, n in enumerate(nomi):
+            if n in ("nero", "bianco"):
+                continue
+            cc, k = ndimage.label(lab == i)
+            if k:
+                area = ndimage.sum(lab == i, cc, range(1, k + 1))
+                minimo = tav.macchie_ombra if n.endswith("_ombra") else tav.macchie
+                via |= np.isin(cc, np.nonzero(area < minimo)[0] + 1)
+        via &= dentro
+        if via.any():
+            # il colore più vicino che non è contorno: una macchiolina fra due righe
+            # non diventa nera
+            _, (iy, ix) = ndimage.distance_transform_edt(via | (lab == nero) | ~dentro, return_indices=True)
+            lab = np.where(via, lab[iy, ix], lab)
     # moda su 5x5: via i pixel sparsi ai bordi fra due colori
     uno = np.stack([ndimage.uniform_filter((lab == i).astype(np.float32), 5) for i in range(len(tav))], -1)
     lab = uno.argmax(-1)
@@ -215,9 +261,9 @@ def svg_pezzo(a, tav, misura):
     return base, (testa + "\n".join(squadra) + "\n</svg>\n") if squadra else None
 
 
-def main_colori(tavolozza, foglio, uscita_svg, uscita_png, ritocchi=None):
-    from scipy import ndimage
+def main_colori(tavolozza, foglio, uscita_svg, uscita_png, ritocchi=None, senza=()):
     tav = leggi_tavolozza(tavolozza)
+    tav[:] = [c for c in tav if c[0] not in senza]
     im = Image.open(foglio).convert("RGBA")
     k = LATO / im.width
     im = im.resize((LATO, round(im.height * k)), Image.LANCZOS)
@@ -259,8 +305,14 @@ def main():
             controlla(open(f).read(), tav, f)
         print("OK: solo colori della tavolozza in", len(sys.argv) - 3, "file")
         return
-    if len(sys.argv) in (6, 7) and sys.argv[1] == "--tavolozza":
-        main_colori(*sys.argv[2:])
+    args = sys.argv[1:]
+    senza = ()
+    if "--senza" in args:
+        i = args.index("--senza")
+        senza = tuple(args[i + 1].split(","))
+        del args[i:i + 2]
+    if len(args) in (5, 6) and args[0] == "--tavolozza":
+        main_colori(*args[1:], senza=senza)
         return
     if len(sys.argv) != 4:
         sys.exit(__doc__)

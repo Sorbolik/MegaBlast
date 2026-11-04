@@ -37,7 +37,8 @@
 --     craters don't break the puzzle) and spawns (the player first)
 --   giocatori: opts.players of game.new (team, bot = level, carattere, dummy, pick,
 --     secondary, tool, stats); nome: what that robot is called (the keepers);
---     battute: who speaks for it (battle/quips.lua; without, its carattere)
+--     battute: who speaks for it (battle/quips.lua; without, its carattere);
+--     pelle: the skin it wears in this match (battle/skins.lua: Favilla), only drawn
 --   vedi = { "missile", "eagle", ... }: the lessons show only what's needed
 --     ("primarie", "secondarie": all the ones you have; "teleport": the button and
 --     the orbs from time; "parachute"; "tempo": the timer; "punti": the scores;
@@ -268,7 +269,7 @@ function M.partita(r, seed, picks, help)
 	for i, p in ipairs(l.giocatori) do
 		local q = {}
 		for k, v in pairs(p) do
-			if k ~= "nome" and k ~= "battute" then q[k] = v end
+			if k ~= "nome" and k ~= "battute" and k ~= "pelle" then q[k] = v end
 		end
 		if help and q.bot then q.bot = math.max(1, q.bot - 2) end
 		if picks and picks[i] then

@@ -1,9 +1,8 @@
 -- Favilla in the cortile and her spark (sim/missions.lua, guida and scintilla).
 -- Favilla is a puppet: the lesson says where she is every tick, here she's
--- drawn with the same rig as the robots (battle/scoria.lua) and is never hit.
--- Until her pieces arrive (WB-013) she wears the character in her light blue
--- (level plan, choice 1). The spark is a light blue glow that pulses in the
--- air, where a full jump reaches.
+-- drawn with the same rig as the robots (battle/scoria.lua), in her own pieces
+-- (WB-013, skin "favilla"), and is never hit. The spark is a light blue glow
+-- that pulses in the air, where a full jump reaches.
 --
 --   local favilla = require "battle.favilla"
 --   local f = favilla.new(world, under)   -- world: the world node; under: the node to stay behind
@@ -18,18 +17,20 @@ local T = require("lang.text").vignette
 
 local M = {}
 
+-- her pieces (battle/skins.lua)
+M.LOOK = { "favilla" }
+
 -- her light blue (WB-013, the shadow of her flame #8CCFEF)
 local COLOR = vmath.vector4(0.55, 0.81, 0.94, 1)
 local SPARK = vmath.vector4(0.75, 0.93, 1, 0.9)
 local SPARK_D = 26
--- her name above her head, in her light blue: until WB-013 she wears the
--- apprentice, so the name tells her apart (world units: it follows the zoom)
+-- her name above her head, in her light blue (world units: it follows the zoom)
 local NAME_Y, NAME_SCALE = 58, 0.15
 local V = vmath.vector3()
 
 function M.new(world, under)
 	local f = { st = { turno = false } }
-	f.rig = scoria.new(COLOR, scoria.PERSONAGGIO)
+	f.rig = scoria.new(COLOR, M.LOOK)
 	gui.set_parent(f.rig.root, world)
 	if under then gui.move_below(f.rig.root, under) end
 	scoria.set_weapon(f.rig, "missile")
