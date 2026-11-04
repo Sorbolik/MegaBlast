@@ -230,4 +230,21 @@ Eseguita la sola fase 1 approvata, da `main` al commit `fbc3c4a`, sul ramo `desi
 - Verificate intestazioni e dimensioni dei PNG e corrispondenza integrale dei prompt salvati con la scheda. Non verificati ricalco SVG, taglio, giunture animate, leggibilità a 90 px o resa nel gioco. Criteri lasciati non spuntati. Mancano risultati conformi da scegliere: raggiunto il limite di tre tentativi per ciascuna immagine.
 - La riga del 4 novembre in `DECISIONI.md` dice coda detta due volte, mentre i prompt approvati della scheda la richiamano una volta come il modello: segnalata la differenza, eseguiti i prompt senza modificarli.
 
+### Fase 1 · Seconda esecuzione richiesta da Sergio
+
+2026-11-04 · Riletto `main` aggiornato a `d50b7ea`: scheda APPROVATA, prompt e riferimenti della fase 1 invariati. Aggiornato `design/WB-013` con main preservando la consegna precedente. Nuova esecuzione con imagegen integrato, prompt integrali invariati e riferimenti nell'ordine della tabella.
+
+Nove generazioni completate: tre tentativi per ciascuno dei tre risultati richiesti. Guardate tutte; conservato il terzo tentativo di ogni risultato, senza sovrascrivere gli scarti della prima esecuzione. **Anche questa esecuzione non produce risultati conformi.**
+
+| File in `art/WB-013/scartati/fase1_ripetizione2/` | Misura effettiva | Tentativi | Esito |
+|---|---|---:|---|
+| `1_tre_quarti_1.png` e `1_tre_quarti_1.txt` | 1024×1536 | 3 | SCARTATA |
+| `1_tre_quarti_2.png` e `1_tre_quarti_2.txt` | 1024×1536 | 3 | SCARTATA |
+| `2_espressioni.png` e `2_espressioni.txt` | 1254×1254 | 3 | SCARTATA |
+
+- Tre quarti: figura intera verso destra, coda visibile con punta simile al modello, fiamma bianco-azzurra e oro, abiti pergamena, grembiule, stivali e mani vuote. Nessuna ala, scritta, firma, utensile o colore di squadra. Restano sfumature su pelle, fiamma e vestiti; corpo più slanciato di R3 e stivale a sinistra quasi frontale. Non rispettano tutti i vincoli di colori piatti e posa. Per la forma della punta della coda resta la valutazione di Claude prevista nella scheda.
+- Espressioni: nove teste separate, in griglia 3×3 e nell'ordine richiesto, fiamme intere, nessun testo o firma. Il primo tentativo aveva anche tratteggi; il terzo conserva sfumature e ombre sul collo, bordi laterali neri fino alla base e variazioni di sagoma/fiamma. Il collo non è uniforme e il bordo non si assottiglia come richiesto. Misura nativa 1254×1254 non prevista dalla tabella.
+- Controllati visivamente bordi, parti mancanti e tagli accidentali: nessun difetto macroscopico di quel tipo nei file conservati. Verificati intestazioni PNG, dimensioni e corrispondenza integrale dei prompt nei `.txt`. Originali opachi senza ritocchi, ricalchi, ritagli o ridimensionamenti.
+- Non certificati tavolozza, nero e bianco esatti al pixel; non verificati ricalco SVG, giunture animate, leggibilità a 90 px o resa nel gioco. Nessuna fase 2 eseguita. Criteri non spuntati e nessun modello conforme proposto per la scelta.
+
 ## Resoconto di Claude
