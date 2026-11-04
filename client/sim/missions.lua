@@ -74,8 +74,12 @@
 --     teleports the player starts with; vita, punti = { [robot] = n } at the start;
 --     regrow = { robot, ... }: every turn they come back with full life
 --   obiettivo: the steps (below), in order unless in_order = false
---   the mission fails if the match ends first
+--   the mission fails if the match ends first; al_tempo = "abbattimenti": when
+--     time runs out you win if you downed the others at least as many times as
+--     they downed you (the Duello: on a tie Favilla gives it to you)
 --   turni: past this many player turns it starts over
+--   al_posto: everyone respawns at their spawn, as in the lessons (the sniper
+--     knocked off its island comes back there, not within reach)
 --   stelle = { punti = 60, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } }
 --     (the second with at least that point lead over the opponents at the end:
 --     the circles, where points count; Sergio, 31 Oct: no longer turns) or
@@ -575,9 +579,9 @@ function M.evento(r, g, e, bots)
 	elseif e.type == "respawn" and l.riprova and e.robot == PLAYER and r.saved then
 		-- in the lessons the player respawns as they were at the last step done, orbs included
 		restore_snapshot(r, g)
-	elseif e.type == "respawn" and l.riprova and l.spawns and l.spawns[e.robot] then
-		-- in the lessons you respawn where you started, not at a random spot of the
-		-- arena (a random target would end up in the way)
+	elseif e.type == "respawn" and (l.riprova or l.al_posto) and l.spawns and l.spawns[e.robot] then
+		-- in the lessons (and with al_posto) you respawn where you started, not at a
+		-- random spot of the arena (a random target would end up in the way)
 		local rb, sp = g.robots[e.robot], l.spawns[e.robot]
 		rb.x, rb.y = sp.x, g.terrain:ground_below(sp.x, sp.from) or rb.y
 	elseif e.type == "damage" and e.robot == PLAYER then
@@ -614,7 +618,9 @@ function M.evento(r, g, e, bots)
 		if txt and not r.riga then show_line(r, { testo = txt, yields = true }) end
 	end
 	if e.type == "over" then
-		r.esito = "fallita"
+		local c = st.conta
+		local tied = l.al_tempo == "abbattimenti" and (c.abbattuti or 0) >= (c.morti or 0)
+		r.esito = tied and "fatta" or "fallita"
 	end
 end
 
