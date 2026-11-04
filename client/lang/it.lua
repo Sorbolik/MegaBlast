@@ -15,6 +15,11 @@ return {
 		events = "EVENTI",
 		tournament = "TORNEO",
 		all = "TUTTE",
+		bot = "BOT",
+		training = "ALLENAMENTO",
+		armory = "ARMERIA",
+		stats = "STATISTICHE",
+		replay = "RIVEDI",
 	},
 
 	-- menu/pick.lua: the weapon draft
@@ -44,9 +49,7 @@ return {
 
 	-- menu/training.lua: ALLENAMENTO, mode and bots, then the map
 	training = {
-		title = "ALLENAMENTO",
 		mode = "MODO",
-		bot = "BOT",
 		levels = { facile = "FACILE", normale = "NORMALE", difficile = "DIFFICILE" },
 		pick_map = "SCEGLI LA MAPPA",
 		mode_and_bot = "%s  ·  BOT %s",
@@ -65,7 +68,6 @@ return {
 		level = "LIVELLO %d",
 		xp = "+%d esperienza",
 		skill_point = "nuovo punto abilità!",
-		replay = "RIVEDI",
 		go_on = "CONTINUA",
 	},
 
@@ -143,7 +145,6 @@ return {
 		tap_to_pick = "TOCCA PER SCEGLIERE LE ARMI",
 		weapons_in = "ARMI TRA",
 		versus = "VS",
-		bot = "BOT",
 		power = "%s potere",
 		powers = "%s poteri",
 	},
@@ -183,11 +184,9 @@ return {
 
 	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
 	armory = {
-		title = "ARMERIA",
 		tab_set = "SET",
 		tab_tree = "ALBERO",
 		loadout = "ASSETTO",
-		stats_title = "STATISTICHE",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			max_hp = "Vita", walk_speed = "Corsa", jump_height = "Salto", air_speed = "In aria",
@@ -214,11 +213,9 @@ return {
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
 	profile_tabs = {
 		tab_sheet = "SCHEDA",
-		tab_stats = "STATISTICHE",
 		tab_matches = "PARTITE",
 		level = "LIV %s",
 		xp = "%s / %s XP",
-		bot = "BOT",
 		-- SCHEDA
 		you = "Tu",
 		loadout = "ASSETTO",
@@ -235,7 +232,6 @@ return {
 		all_steps = "tutti gli scatti presi",
 		no_piece = "nessun pezzo",
 		pick_in_armory = "sceglilo nell'ARMERIA",
-		armory = "ARMERIA",
 		-- STATISTICHE
 		matches = "PARTITE",
 		won = "VINTE",
@@ -266,7 +262,6 @@ return {
 		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
 		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
 		no_moments = "nessun momento da ricordare",
-		replay = "RIVEDI",
 		replay_local_only = "replay solo delle partite su questo telefono",
 		replay_missing = "replay non disponibile",
 	},
@@ -276,9 +271,7 @@ return {
 	home = {
 		your_profile = "IL TUO PROFILO",
 		leave_queue_first = "esci dalla coda per giocarla",
-		training = "ALLENAMENTO",
 		same_phone = "STESSO TELEFONO",
-		armory = "ARMERIA",
 	},
 
 	-- menu/queue.lua: DOVE GIOCHI?, the queues online
@@ -339,8 +332,6 @@ return {
 		-- the tree's three branches, short (skills.BRANCHES order)
 		branches = { "MOB", "DIF", "ARS" },
 		no_power = "nessun potere",
-		bot = "BOT",
-		stats = "STATISTICHE",
 		orb = "%s globo",
 		orbs = "%s globi",
 		parachutes = "%s paracad.",

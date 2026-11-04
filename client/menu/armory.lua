@@ -19,6 +19,7 @@ local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local profile = require "menu.profile"
 local T = require("lang.text").armory
+local common = require("lang.text").common
 
 local M = {}
 
@@ -71,7 +72,7 @@ local function statistics(a, parent)
 	local b = base()
 	local st = loadout.stats(b, to_active(a), profile.tier(a.prof, to_active(a)))
 	local pan = ui.pannello(1135, 330, 250, 560, parent)
-	ui.titolo(T.stats_title, 0, 255, 0.6, c.TEXT, pan)
+	ui.titolo(common.stats, 0, 255, 0.6, c.TEXT, pan)
 	local y = 215
 	for _, s in ipairs(M.STATISTICS) do
 		local k, nome, modo = s[1], s[2], s[3]
@@ -190,7 +191,7 @@ local function build(a)
 	gui.set_visible(a.radice, false)
 	local c = ui.C
 	ui.indietro(a.buttons, "indietro", a.radice)
-	ui.titolo(T.title, 220, 680, 1, c.TEXT, a.radice)
+	ui.titolo(common.armory, 220, 680, 1, c.TEXT, a.radice)
 	ui.scheda(a.buttons, 470, 622, 150, 48, T.tab_set, "scheda:set", a.scheda == "set", a.radice)
 	ui.scheda(a.buttons, 630, 622, 150, 48, T.tab_tree, "scheda:albero", a.scheda == "albero", a.radice)
 	ui.testo(T.loadout, 900, 680, 0.7, c.OFF, a.radice)

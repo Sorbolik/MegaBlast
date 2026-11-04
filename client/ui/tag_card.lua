@@ -190,7 +190,7 @@ function M.new(v, x, y, opt, parent)
 		txt(tostring(v.livello), sx + 22, cy - (v.torneo and 4 or 0), 0.95, col, c.root)
 		if v.torneo then txt(common.tournament, sx + 22, cy + 11, 0.3, col, c.root) end
 	else
-		txt(v.bot and T.bot or "–", sx + 22, cy, v.bot and 0.62 or 0.95, col, c.root)
+		txt(v.bot and common.bot or "–", sx + 22, cy, v.bot and 0.62 or 0.95, col, c.root)
 	end
 	local nome = ui.titolo(v.nome or "?", sx + 52, cy + 8, 0.5, C.LIGHT, c.root)
 	gui.set_pivot(nome, gui.PIVOT_W)
@@ -231,7 +231,7 @@ function M.new(v, x, y, opt, parent)
 	yy = yy - POWERS
 
 	-- the stats: bars from the center (the base is the same for everyone)
-	txt(T.stats, sx, yy - LABEL / 2, 0.42, C.OFF, c.root, gui.PIVOT_W)
+	txt(common.stats, sx, yy - LABEL / 2, 0.42, C.OFF, c.root, gui.PIVOT_W)
 	yy = yy - LABEL
 	local bx, bw = sx + 62, W - 2 * PAD - 62 - 50
 	for _, r in ipairs(showcase.righe(v)) do

@@ -92,14 +92,14 @@ function M.new(color)
 	h.campaign = h.buttons[#h.buttons]
 	h.campaign_note = ui.testo(T.leave_queue_first, 0, -24, 0.5, ui.C.OFF, campaign)
 	gui.set_enabled(h.campaign_note, false)
-	ui.button(h.buttons, 0, 256, 340, 72, T.training, "allenamento", nil, dx)
+	ui.button(h.buttons, 0, 256, 340, 72, common.training, "allenamento", nil, dx)
 	ui.button(h.buttons, 0, 168, 340, 72, T.same_phone, "local", nil, dx)
 	ui.button(h.buttons, 0, 60, 340, 108, common.play, "online", { main = true, colore = color }, dx)
 	h.play = h.buttons[#h.buttons]
 
 	-- bottom left: loadouts, tree and sets
 	local sx = angle_deg(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	ui.button(h.buttons, 0, 60, 240, 72, T.armory, "armeria", nil, sx)
+	ui.button(h.buttons, 0, 60, 240, 72, common.armory, "armeria", nil, sx)
 	-- above: the EVENTI (menu/board.lua), with what is happening now below
 	local ev = ui.button(h.buttons, 0, 160, 240, 96, "", "eventi", nil, sx)
 	ui.testo(common.events, 0, 14, 0.9, ui.C.TEXT, ev)
