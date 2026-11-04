@@ -165,9 +165,14 @@ end
 -- 20:9 screen stays in the middle. The header's nodes have no parent, so
 -- they stick to the real edges (ui/screen.lua);
 -- create it before the screen's root (the root's veils cover it) and delete
--- it with ui.header_delete.
+-- it with ui.header_delete. The screen's root (ui.radice) and the tabs follow
+-- the real top too: on a taller screen (4:3 tablet) the content stays the
+-- same distance under the header and the spare room goes to the bottom
+-- (report UI-001; before, the header went to the edge and the content stayed
+-- in the middle, 200 px below it).
 --
 --   local h = ui.header(list_of, "ARMERIA", "indietro")   -- nil action: no back button
+--   local radice = ui.radice()                             -- the content's root, in game coordinates
 --   ui.header_tabs(h, list_of, { { "SET", "scheda:set", 150 }, ... }, active_index)
 --   ...children of h.right at x < 0 (h.right is the right edge, y the header's center)
 M.EDGE = 30
@@ -188,6 +193,16 @@ local function corner(x, xanchor, yanchor)
 	return n
 end
 
+-- The root of a screen's content (no parent, invisible): as far under the
+-- real top as at 16:9. Moved by hand (screen.y1) and not with ANCHOR_TOP:
+-- Defold moves an anchored node at y = 0 toward the bottom, not the top.
+-- The screens build their root again every time they open.
+function M.radice()
+	local n = gui.new_box_node(vec(0, screen.y1 - 720), vec(0, 0))
+	gui.set_visible(n, false)
+	return n
+end
+
 function M.header(list_of, title, back_action)
 	local h = { left = corner(0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP), right = corner(1280, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP) }
 	if back_action then
@@ -204,7 +219,7 @@ end
 -- The tabs: { label, action, width } from the left edge; returns their nodes
 function M.header_tabs(h, list_of, tabs, active)
 	if h.tabs then gui.delete_node(h.tabs) end
-	h.tabs = corner(0, gui.ANCHOR_NONE, nil)
+	h.tabs = M.radice()
 	local x, nodes = M.EDGE, {}
 	for i, t in ipairs(tabs) do
 		nodes[i] = M.scheda(list_of, x + t[3] / 2, M.TABS_Y, t[3], M.TAB_H, t[1], t[2], i == active, h.tabs)

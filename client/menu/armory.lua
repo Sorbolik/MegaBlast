@@ -207,8 +207,7 @@ local function build(a)
 	end
 	local n = ui.testo(T.loadout, -ui.EDGE - 16 - loadout.LOADOUTS * 64, 0, 0.7, c.OFF, a.head.right)
 	gui.set_pivot(n, gui.PIVOT_E)
-	a.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
-	gui.set_visible(a.radice, false)
+	a.radice = ui.radice()
 	if a.scheda == "set" then sheet_set(a, a.radice) else sheet_tree(a, a.radice) end
 	statistics(a, a.radice)
 end
