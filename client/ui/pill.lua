@@ -47,7 +47,8 @@ function M.new()
 	-- stuck to the real screen's top edge, like the header (ui/screen.lua)
 	gui.set_yanchor(p.root, gui.ANCHOR_TOP)
 	p.panel, p.border = ui.pannello(0, 0, ui.SLOT_W, ui.SLOT_H, p.root)
-	p.head = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(30, 30, 0))
+	-- Favilla's logo (art/personaggi/favilla.svg, exported by strumenti/grafica/ingresso.py), as big as the pill allows
+	p.head = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(36, 36, 0))
 	gui.set_texture(p.head, "ui")
 	gui.play_flipbook(p.head, "favilla")
 	gui.set_color(p.head, CARD)
@@ -89,7 +90,7 @@ local function shape(p, chip)
 	V.x, V.y, V.z = p.w, ui.SLOT_H, 0
 	gui.set_size(p.panel, V)
 	gui.set_size(p.border, V)
-	V.x, V.y = -p.w / 2 + 24, 0
+	V.x, V.y = -p.w / 2 + 26, 0
 	gui.set_position(p.head, V)
 	gui.set_enabled(p.text, not chip)
 	gui.set_enabled(p.short, chip)
