@@ -219,8 +219,11 @@ function M.nuovo(palette, tick)
 	p.row_text = ui.testo("", 0, 0, SMALL, ui.C.LIGHT, p.riga)
 	p.line_ticks = 0
 	-- the mission goal, under the turn line
-	p.obiettivo = root_node(HALF, Y - GET_H / 2 - 64)
+	p.obiettivo = root_node(HALF + 215, Y)
 	p.objective_text = ui.testo("", 0, 0, CAPTION, ui.GOLD, p.obiettivo)
+	gui.set_pivot(p.objective_text, gui.PIVOT_W)
+	gui.set_line_break(p.objective_text, true)
+	gui.set_size(p.objective_text, vmath.vector3(300 / (CAPTION * 0.5), 100, 0))
 	p.goal_on = false
 	-- "+N PER PAREGGIARE" under the team that has to answer
 	p.tie = root_node(0, Y - BELOW_Y)
@@ -258,7 +261,7 @@ function M.cima(p, y1)
 	Y = y1 - TOP
 	position(p.fune, HALF, Y)
 	position(p.riga, HALF, Y - GET_H / 2 - 34)
-	position(p.obiettivo, HALF, Y - GET_H / 2 - 64)
+	position(p.obiettivo, HALF + 215, Y)
 	position(p.avviso, HALF, Y - GET_H / 2 - 62)
 	position(p.banner, HALF, y1 / 2 + 40)
 	for _, gt in ipairs(p.gettoni) do

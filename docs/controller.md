@@ -31,8 +31,8 @@ su Nintendo, allo stesso posto, B, A, Y e X.
 | Start | Rotellina (RIPROVA, ESCI, MIRA, RILEGGI nelle missioni): la croce sposta la luce, A conferma, B o Start la chiude *(scelta di Claude)* |
 
 Sulla vignetta grande delle lezioni (gioco fermo) A va avanti e B la chiude (come
-CHIUDI); sulla scheda di un'arma nuova A è PROVALA. Non sono comandi della
-battaglia: non si rimappano.
+CHIUDI). Le armi trovate non hanno più la scheda: l'icona vola al suo tasto. Non
+sono comandi della battaglia: non si rimappano.
 
 Come i pulsanti dell'HUD, LB, RB, A e X scelgono sempre; quello che ora non si
 può usare fa no e dice perché. LB e RB saltano le armi che nel tuo turno non

@@ -154,9 +154,11 @@ controlla); `node strumenti/eventi/prova.mjs` prova pagina e Worker.
 
 ## Vignette
 
-Niente scritte sopra le teste (Sergio, 3 nov): le righe delle missioni e le battute
-dei bot parlano nella striscia in alto col ritratto di chi parla, e quello che
-spiega un comando ferma il gioco sulla vignetta grande col disegno della mossa
+Le righe di chi ti guida (Favilla nel cortile, il Fabbro nei gironi) parlano nella
+striscia in alto, sotto il punteggio, col ritratto; le battute di tutti i bot sono
+testo semplice sopra la loro testa (`targa.battuta`, Sergio, 4 nov). Quello che
+spiega un comando ferma il gioco, ogni volta, sulla vignetta grande col disegno della mossa
+e va avanti solo col suo pulsante
 (`client/battle/vignette.lua`, piano dei livelli
 https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2). I ritratti si ritagliano dai
 fogli scelti di WB-012 con `python3 strumenti/ritratti/taglia.py`. Scenario

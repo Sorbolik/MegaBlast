@@ -307,7 +307,7 @@ function M.update(s, dt)
 	if s.pressed_f then
 		s.pressed_f.t = s.pressed_f.t + dt
 		if s.pressed_f.t >= HOLD then
-			s.carta = card.open_view(s.pressed_f.w, s.comandi and s.comandi(), true)
+			s.carta = card.open_view(s.pressed_f.w, s.comandi and s.comandi())
 			s.pressed_f = nil
 		end
 	end
@@ -359,7 +359,7 @@ local function controller(s, action)
 	elseif kind == "carta" and s.passo <= 2 then
 		local w = lane(s.d, s.passo)[i]
 		if w and u == "scheda" then
-			s.carta = card.open_view(w, s.comandi and s.comandi(), true)
+			s.carta = card.open_view(w, s.comandi and s.comandi())
 		elseif w then
 			choose(s, w)
 		end
