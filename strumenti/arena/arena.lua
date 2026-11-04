@@ -141,10 +141,10 @@ local function partita(k)
 		end
 	end
 	local d = draft.new(seme, base)
-	for i = 1, #base do bot.scegli(d, i, seme, individui[i] and POPOLAZIONE[individui[i]].armi) end
+	for i = 1, #base do bot.choose(d, i, seme, individui[i] and POPOLAZIONE[individui[i]].armi) end
 	local players = draft.finish(d)
 	for i, p in ipairs(players) do
-		p.bot = opt.livello == "misto" and bot.ORDINE[1 + math.floor(r0:next() * #bot.ORDINE)] or opt.livello
+		p.bot = opt.livello == "misto" and bot.ORDER[1 + math.floor(r0:next() * #bot.ORDER)] or opt.livello
 		if individui[i] then p.individuo, p.pesi = individui[i], POPOLAZIONE[individui[i]] end
 	end
 	-- i set con un altro generatore ancora, per lo stesso motivo
@@ -219,7 +219,7 @@ local function partita(k)
 				chiudi_turno()
 				if esempi then
 					fine_turno()
-					inizio = { chi = e.robot, ref = bot.mondo(g), m = margine(g.robots[e.robot].team) }
+					inizio = { chi = e.robot, ref = bot.world(g), m = margine(g.robots[e.robot].team) }
 				end
 				turno = { t = g.tick, chi = e.robot, mosse = {}, danno = 0, uccisioni = 0, ambientali = 0 }
 			elseif e.type == "damage" and turno then

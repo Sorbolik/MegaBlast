@@ -258,7 +258,7 @@ end
 
 -- seed, map and options of game.new. picks: the players out of the draft
 -- (menu/pick.lua), for the missions that have one
--- the silent help: bots go down two grades (sim/bot.lua M.GRADI) and start with less life
+-- the silent help: bots go down two grades (sim/bot.lua M.GRADES) and start with less life
 local HELP_HP = 0.75
 
 function M.partita(r, seed, picks, help)

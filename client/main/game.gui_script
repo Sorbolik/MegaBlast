@@ -2170,7 +2170,7 @@ local function start_local(self, against)
 	local d = draft.new(seed, opts.players)
 	-- the bots pick at once: only whoever plays stays in the draft
 	for i, p in ipairs(opts.players) do
-		if p.bot then bot.scegli(d, i, seed) end
+		if p.bot then bot.choose(d, i, seed) end
 	end
 	menu.pick.show(self.scelta, d, name_list, palette)
 	CP.open_lineup(self, CP.vetrine(self, opts.players, name_list, { me = 1 }), profile.GROUP_NAMES[modo] or "")
@@ -2286,7 +2286,7 @@ local function start_mission(self, id, picks)
 		-- they are among those offered (the Smith his Mallet)
 		for i, p in ipairs(players) do
 			if p.dummy or p.bot then
-				bot.scegli(d, i, 1)
+				bot.choose(d, i, 1)
 				if p.pick then draft.pick(d, i, p.pick) end
 				if p.secondary then draft.pick(d, i, p.secondary) end
 			end
@@ -3306,7 +3306,7 @@ local function render(self, dt)
 		b.attesa = (b.attesa or 0) - 1
 		if b.arma ~= aim_weapon or (b.gradi ~= degrees and b.attesa <= 7) or b.attesa <= 0 then
 			b.arma, b.gradi, b.attesa = aim_weapon, degrees, 10
-			b.n = bot.colpiti(g, aim_weapon, self.aim_angle, b.id)
+			b.n = bot.hits(g, aim_weapon, self.aim_angle, b.id)
 		end
 		local n = math.min(b.n, aim_name.RINGS)
 		for i = 1, n do

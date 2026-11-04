@@ -2,8 +2,9 @@
 
 Documenti, CLAUDE.md, messaggi di commit e PR in italiano. Il codice (nomi di file,
 funzioni, variabili e commenti) passa all'inglese a ondate (piano di Sergio, 2 nov):
-già in inglese i nomi e i commenti di tutto `client/` e `server/` e dei loro test,
-tranne il bot (`client/sim/bot.lua`, `rete.lua`, `tests/bot_test.lua`) e i file scritti
+già in inglese i nomi e i commenti di tutto `client/` e `server/` e dei loro test
+(il bot con la PR 8: le chiavi dei pesi, `M.PESI`, e i campi che leggono gli strumenti
+Python restano italiani, sono dati salvati dall'arena), e anche i file scritti
 dagli strumenti o dall'editor (`body.lua`, `animations.lua`, `skins.lua`, `pivots.lua`,
 `grips.lua`, `weapons.lua`, `devil.lua`, `paintings.lua`): i loro campi sono in inglese, ma
 i nomi dei pezzi, dei posti, dei canali, delle clip e delle immagini restano italiani
@@ -209,7 +210,7 @@ nel gioco non cambia niente").
 ## Bot e arena
 
 Il bot (`client/sim/bot.lua`) preme gli stessi tasti di un giocatore e pensa
-provando le mosse su copie della partita (`bot.mondo`, `game:advance`): se
+provando le mosse su copie della partita (`bot.world`, `game:advance`): se
 cambi la fisica il bot la segue da solo. Deve restare deterministico e uguale
 su LuaJIT e gopher-lua (`go test ./server/ -run TestBot`): niente tempo vero,
 niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio.

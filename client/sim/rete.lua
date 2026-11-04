@@ -1,51 +1,53 @@
--- Rete neurale piccola per il bot (sim/bot.lua): un percettrone a strati che
--- dalle caratteristiche di una posizione dà quanto vale. I pesi non si
--- allenano qui: li allena strumenti/arena/impara.py.
--- Solo somme, prodotti e max (ReLU): niente exp o tanh, che LuaJIT e
--- gopher-lua potrebbero calcolare con un'ultima cifra diversa, così il bot
--- resta identico sul telefono e sul server.
+-- Small neural net for the bot (sim/bot.lua): a layered perceptron that,
+-- from a position's features, gives what it is worth. The weights aren't
+-- trained here: strumenti/arena/impara.py trains them.
+-- Only sums, products and max (ReLU): no exp or tanh, which LuaJIT and
+-- gopher-lua might compute with a different last digit, so the bot stays
+-- identical on the phone and on the server.
+-- The file's name, valuta, quanti and the fields strati and w stay Italian:
+-- impara.py writes and reads them.
 --
 --   local rete = require "sim.rete"
---   local r = { strati = { 22, 16, 8, 1 }, w = { ... } }   -- pesi in fila, strato per strato
---   local v = rete.valuta(r, x)                             -- x: lista di #strati[1] numeri
---   rete.quanti(strati)                                     -- quanti pesi servono
+--   local r = { strati = { 22, 16, 8, 1 }, w = { ... } }   -- weights in a row, layer by layer
+--   local v = rete.valuta(r, x)                             -- x: list of #strati[1] numbers
+--   rete.quanti(strati)                                     -- how many weights are needed
 
 local M = {}
 
--- Per ogni strato: prima i pesi (uscita per uscita, una riga di ingressi
--- ciascuna), poi gli scarti
-function M.quanti(strati)
+-- For each layer: first the weights (output by output, one row of inputs
+-- each), then the biases
+function M.quanti(layers)
 	local n = 0
-	for k = 2, #strati do n = n + strati[k] * (strati[k - 1] + 1) end
+	for k = 2, #layers do n = n + layers[k] * (layers[k - 1] + 1) end
 	return n
 end
 
 local a, b = {}, {}
 
-function M.valuta(r, x)
-	local strati, w = r.strati, r.w
-	local ingresso, uscita = x, a
+function M.evaluate(r, x)
+	local layers, w = r.strati, r.w
+	local layer_in, layer_out = x, a
 	local p = 1
-	for k = 2, #strati do
-		local nin, nout = strati[k - 1], strati[k]
-		local ultimo = k == #strati
+	for k = 2, #layers do
+		local nin, nout = layers[k - 1], layers[k]
+		local last = k == #layers
 		for o = 1, nout do
 			local s = 0
 			for i = 1, nin do
-				s = s + w[p] * ingresso[i]
+				s = s + w[p] * layer_in[i]
 				p = p + 1
 			end
-			uscita[o] = s
+			layer_out[o] = s
 		end
 		for o = 1, nout do
-			local s = uscita[o] + w[p]
+			local s = layer_out[o] + w[p]
 			p = p + 1
-			uscita[o] = (ultimo or s > 0) and s or 0
+			layer_out[o] = (last or s > 0) and s or 0
 		end
-		ingresso = uscita
-		uscita = uscita == a and b or a
+		layer_in = layer_out
+		layer_out = layer_out == a and b or a
 	end
-	return ingresso[1]
+	return layer_in[1]
 end
 
 return M

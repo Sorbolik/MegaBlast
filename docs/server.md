@@ -58,8 +58,8 @@ mai), la stanza parte coi posti vuoti presi dai bot. Il `wait` ha allora anche
 `"bot_in":N`, i secondi che mancano (il gioco li conta da solo). Le persone
 prendono i posti di `config.MODES` nell'ordine, che alterna le squadre: due
 persone in un 2 contro 2 finiscono in squadre diverse. Il grado del bot
-(`sim/bot.lua`, `M.GRADI`) è 3 + il livello medio delle persone / 5, al massimo
-8 (`botGrade`). Nella scelta delle armi il bot sceglie subito (`bot.scegli`), il
+(`sim/bot.lua`, `M.GRADES`) è 3 + il livello medio delle persone / 5, al massimo
+8 (`botGrade`). Nella scelta delle armi il bot sceglie subito (`bot.choose`), il
 suo cartellino è `{"bot":true}` e in `players` ha `"bot":G`; in partita
 `N.step` usa i suoi tasti (`bot.input`). Sul server il bot pensa al massimo
 `N.WORK` = 100 tick simulati per tick (sul telefono 400): con 400 una stanza

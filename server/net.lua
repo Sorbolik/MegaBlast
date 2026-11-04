@@ -171,7 +171,7 @@ function N.draft_seconds()
 	return config.DRAFT_SECONDS + config.LINEUP_SECONDS
 end
 
--- bots: the grade (sim/bot.lua GRADI) of the robots that are bots, by robot;
+-- bots: the grade (sim/bot.lua GRADES) of the robots that are bots, by robot;
 -- they pick at once, like on the phone
 function N.draft_new(seed, mode, r, bots)
 	local players = {}
@@ -180,7 +180,7 @@ function N.draft_new(seed, mode, r, bots)
 	end
 	local d = draft.new(seed, players, rules.armi(r))
 	for i, p in ipairs(players) do
-		if p.bot then bot.scegli(d, i, seed) end
+		if p.bot then bot.choose(d, i, seed) end
 	end
 	return d
 end

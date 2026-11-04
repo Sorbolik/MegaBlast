@@ -89,7 +89,7 @@ va alla mediana dei punti di vantaggio del bot normale (31 ott: non più dei
 turni); il girone deve salire di difficoltà. Con `collaudo.senza` nella
 missione rifà la prova col bot senza la meccanica richiesta (deve vincere lo
 0%), con `collaudo.carattere` e `collaudo.piano` il bot gioca con quel
-carattere (`bot.CARATTERI`) o quel piano. Le lezioni no: le risolvono i copioni
+carattere (`bot.PERSONALITIES`) o quel piano. Le lezioni no: le risolvono i copioni
 di `tests/campaign_test.lua`.
 
 ## Cosa esce

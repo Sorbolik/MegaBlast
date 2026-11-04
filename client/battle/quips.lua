@@ -1,5 +1,5 @@
 -- Character quips: campaign bots with a personality (sim/bot.lua
--- M.CARATTERI) or a keeper speak in the strip at the top, with their face
+-- M.PERSONALITIES) or a keeper speak in the strip at the top, with their face
 -- (battle/vignette.lua quip), when something happens. Client only: they
 -- don't touch the match, so neither the server nor the recipes.
 --

@@ -133,6 +133,7 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 4 nov | Bug: dopo «Connessione persa» nella sala la coda restava a metà e i bot non arrivavano mai. Ora la coda si chiude con la connessione e GIOCA rientra davvero; il server toglie subito dalla coda chi esce. | #187 |
 | 4 nov | Testi di home, sala, coda, pillola della coda, interfaccia (cartellino, controller, contatore FPS) e battaglia (HUD, punteggio, guida) in `client/lang/it.lua` (PR 6b). Nel gioco non cambia niente. | #186 |
 | 4 nov | Zoom che segue quanto si muove il dito (non dove sta) e pulsante con la lentina sul binario; tenendolo premuto si apre la guida. | #189 |
-| 4 nov | Ultimi testi del client in `client/lang/it.lua` (PR 6c): messaggi e annunci della partita, battute dei personaggi, scheda delle armi, eventi. Nel gioco non cambia niente. | questa PR |
+| 4 nov | Ultimi testi del client in `client/lang/it.lua` (PR 6c): messaggi e annunci della partita, battute dei personaggi, scheda delle armi, eventi. Nel gioco non cambia niente. | #190 |
 | 4 nov | Testata uguale in tutti i menu (titolo a sinistra, posto della pillola al centro, comandi a destra, schede sotto) e gettone della coda accanto all'ingranaggio dentro la partita. | #191 |
-| 4 nov | Il cortile con Favilla: sette lezioni corte, lei corre avanti, butta la cassa, ti aspetta e ti sfida; la scintilla in aria e le medaglie facoltative al posto delle stelle. | questa PR |
+| 4 nov | Il cortile con Favilla: sette lezioni corte, lei corre avanti, butta la cassa, ti aspetta e ti sfida; la scintilla in aria e le medaglie facoltative al posto delle stelle. | #192 |
+| 4 nov | Il bot in inglese (nomi, commenti e test); le chiavi dei pesi salvati dall'arena restano italiane. Nel gioco non cambia niente: 200 partite di bot identiche a prima. | questa PR |
