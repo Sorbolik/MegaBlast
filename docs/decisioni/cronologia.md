@@ -131,3 +131,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 4 nov | Nelle lezioni la traiettoria prevista usa la mira di un attimo prima, come il colpo al rilascio della levetta: si vede quello che parte. | #188 |
 | 4 nov | Bug: dopo «Connessione persa» nella sala la coda restava a metà e i bot non arrivavano mai. Ora la coda si chiude con la connessione e GIOCA rientra davvero; il server toglie subito dalla coda chi esce. | #187 |
 | 4 nov | Testi di home, sala, coda, pillola della coda, interfaccia (cartellino, controller, contatore FPS) e battaglia (HUD, punteggio, guida) in `client/lang/it.lua` (PR 6b). Nel gioco non cambia niente. | #186 |
+| 4 nov | Ultimi testi del client in `client/lang/it.lua` (PR 6c): messaggi e annunci della partita, battute dei personaggi, scheda delle armi, eventi. Nel gioco non cambia niente. | questa PR |
