@@ -1,21 +1,22 @@
 # Il mio vecchio Lanciarune (computer): Favilla sul ballatoio butta giù la
-# cassa; la scheda del Lanciarune, la vignetta della mira; il primo tiro a
+# cassa; presa, l'arma vola al suo tasto (niente scheda), la vignetta della mira; il primo tiro a
 # vuoto e Ritenta nella striscia; il fantoccio vicino, poi quello sul ballatoio.
 imposta prova_missione lanciarune
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
 foto 01_vignetta                     # la vignetta grande d'apertura
-tocca 640 360                        # VAI!
+tocca 912 289                        # VAI! (vignetta senza disegno: in basso a destra)
 aspetta 0.6
 foto 01_inizio                       # la cassa che cade
-tieni destra 4                       # fino alla cassa: la scheda ferma il gioco
+tieni destra 4                       # fino alla cassa
 aspetta_evento crate_pick 10
-aspetta 0.8
-foto 02_scheda                       # la scheda del Lanciarune
-tocca 640 120                        # PROVALA
-aspetta 0.8
+aspetta 0.05
+foto 02_arma_vola                    # il Lanciarune vola al suo tasto
+aspetta 1.4                          # la vignetta aspetta che arrivi
 foto 03_vignetta_mira                # la vignetta della mira
-tocca 640 360
+tocca 640 360                        # fuori dal pulsante: non si chiude
+aspetta 0.3
+tocca 293 214                        # VAI! (sotto il ritratto)
 aspetta 0.6
 mira -100 30 1
 aspetta_evento explosion 6

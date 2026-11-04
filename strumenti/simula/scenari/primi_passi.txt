@@ -1,16 +1,16 @@
 # Stammi dietro (computer): la prima lezione del cortile, con le vignette
 # (battle/vignette.lua). Niente tempo, né turni, né armi. All'inizio la vignetta
-# grande di Favilla (gioco fermo, il diavoletto che cammina nel riquadro): un
-# tocco la chiude e la frase resta nella striscia in alto. Favilla corre avanti
+# grande di Favilla (gioco fermo, il diavoletto che cammina nel riquadro): VAI!
+# la chiude e resta l'obiettivo, a destra in alto. Favilla corre avanti
 # e si ferma al gradino; alla bandierina la vignetta del salto; sul gradino la
 # scintilla in aria: un salto tenuto fino in fondo la prende (la medaglia).
 imposta prova_missione primi_passi
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
 foto 01_vignetta                     # la vignetta grande: cammina
-tocca 640 360                        # VAI!
+tocca 293 214                        # VAI!
 aspetta 0.6
-foto 02_striscia                     # la frase nella striscia in alto, Favilla davanti
+foto 02_striscia                     # l'obiettivo in alto a destra, Favilla davanti
 cammina destra 700
 aspetta 0.2
 foto 03_favilla_corre                # Favilla corre avanti verso il gradino
@@ -18,7 +18,7 @@ cammina destra 900
 tieni destra 0.3                     # alla bandierina la vignetta ferma il gioco
 aspetta 1
 foto 04_vignetta_salto               # la vignetta del salto
-tocca 640 360
+tocca 293 214                        # VAI!
 aspetta 0.4
 cammina destra 1080 60
 tieni salta 0.35                     # sul gradino
