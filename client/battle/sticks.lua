@@ -100,4 +100,14 @@ function M.on_release(s, t)
 	return best or oldest
 end
 
+-- Angle and power the shot fires with if the finger lifts at instant t: the
+-- recorded aim of on_release when it was lit, otherwise (angle, power) as they
+-- are now. The lessons' trajectory shows this one too, so it doesn't follow
+-- the last instants of the finger that the shot ignores.
+function M.shot(s, t, angle, power)
+	local h = M.on_release(s, t)
+	if h and h.active then return h.angle, h.power end
+	return angle, power
+end
+
 return M
