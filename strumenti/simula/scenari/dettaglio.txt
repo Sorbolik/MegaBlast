@@ -1,6 +1,7 @@
 # Il dettaglio a ogni zoom (Sergio, 2 nov): il diavoletto e il pavimento allo
 # zoom più vicino e allo zoom massimo. Da provare a più risoluzioni, per esempio
 # --schermo 1920x1080, 2560x1600 e 2400x1080.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione il_fabbro
 
 aspetta_stato modo=local turno=1 fase=aim 8

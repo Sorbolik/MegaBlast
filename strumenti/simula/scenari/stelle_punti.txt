@@ -2,6 +2,7 @@
 # stesso turno sul bot che si rimette in sesto, poi la fine del livello con la
 # stella dei punti di vantaggio (non più dei turni) e sotto i punti fatti.
 # Barra: Lanciarune 1, Lama 2.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione due_mani
 aspetta_stato modo=local turno=1 fase=aim 30
 aspetta 1

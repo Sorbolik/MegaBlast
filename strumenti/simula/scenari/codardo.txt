@@ -1,6 +1,7 @@
 # Il codardo (imposta prova_missione il_codardo): a ogni turno attacca subito,
 # poi scappa col globo nella tana peggiore (coperta, dove nessuno lo vede) e
-# parla: la nuvoletta sopra la testa quando colpisce, scappa, lo colpiscono.
+# parla: la sua battuta nella striscia in alto quando colpisce, scappa, lo colpiscono.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione il_codardo
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 0.5

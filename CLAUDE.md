@@ -151,6 +151,17 @@ scarica con `-eventi https://…/eventi.json`. Se cambiano armi, punti o regole
 degli eventi, rifai `luajit strumenti/eventi/dati.lua` (`go test ./server/` lo
 controlla); `node strumenti/eventi/prova.mjs` prova pagina e Worker.
 
+## Vignette
+
+Niente scritte sopra le teste (Sergio, 3 nov): le righe delle missioni e le battute
+dei bot parlano nella striscia in alto col ritratto di chi parla, e quello che
+spiega un comando ferma il gioco sulla vignetta grande col disegno della mossa
+(`client/battle/vignette.lua`, piano dei livelli
+https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2). I ritratti si ritagliano dai
+fogli scelti di WB-012 con `python3 strumenti/ritratti/taglia.py`. Scenario
+`vignette.txt` (tutti i disegni); gli scenari che provano altro hanno
+`imposta prova_vignette no`.
+
 ## Pezzi nuovi del diavoletto (pelli)
 
 Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo

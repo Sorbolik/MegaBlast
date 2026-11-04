@@ -1,5 +1,6 @@
 # Primo sangue: una cassa vicino a te con l'Uovo, l'arma che l'Addestramento
 # non presenta; presa, si apre la sua scheda.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione primo_sangue
 
 aspetta_stato modo=local turno=1 fase=aim 8

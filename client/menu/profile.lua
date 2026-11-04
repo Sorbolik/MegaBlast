@@ -45,7 +45,7 @@ end
 
 function M.nuovo()
 	local p = { versione = M.VERSION, xp = 0, livello = 1, mastery = {}, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
-		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0 }
+		armi = {}, vignette = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0 }
 	for i = 1, loadout.LOADOUTS do p.loadouts[i] = loadout.new() end
 	return p
 end
@@ -254,6 +254,14 @@ end
 function M.new_weapon(p, w)
 	if p.armi[w] then return false end
 	p.armi[w] = true
+	return true
+end
+
+-- A big vignette (battle/vignette.lua): true only the first time, then it is
+-- seen and doesn't stop the game again (it can be reread from the pause wheel)
+function M.vignetta(p, key)
+	if p.vignette[key] then return false end
+	p.vignette[key] = true
 	return true
 end
 

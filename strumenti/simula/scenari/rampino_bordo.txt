@@ -1,6 +1,7 @@
 # Rampino in "Giù dal bordo": dal bordo della piattaforma l'uncino vola fino
 # allo scoglio di sinistra (gittata 400), aggancia il bersaglio, lo tira e lo
 # molla sopra il vuoto: la fune si spezza con uno schiocco. Poi un colpo a vuoto: l'uncino cade col filo e si dissolve.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione giu_dal_bordo
 imposta zoom 3
 

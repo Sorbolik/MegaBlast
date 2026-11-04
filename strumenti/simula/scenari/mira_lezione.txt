@@ -2,6 +2,7 @@
 # traiettoria fino al terreno (fuori dalle lezioni mai). Con la levetta del
 # telefono la traiettoria è quella del colpo che partirebbe lasciando ora:
 # la mira di un attimo prima (il ritardo del rilascio), non il dito di adesso.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione spostano
 imposta comandi telefono
 

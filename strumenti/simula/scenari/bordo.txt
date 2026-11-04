@@ -1,5 +1,6 @@
 # Missione "Giù dal bordo" (I girone): la piattaforma e i tre scogli d'acciaio,
 # con l'aspetto delle piattaforme costruite; l'obiettivo in alto.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione giu_dal_bordo
 imposta zoom 3
 

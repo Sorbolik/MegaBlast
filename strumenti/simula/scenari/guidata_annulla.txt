@@ -1,5 +1,6 @@
 # Prima partita sul telefono: appena si mira la riga dice come si annulla e il
 # dito tocca la metà destra dello schermo; il tempo aspetta che lo provi.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta comandi telefono
 imposta prova_missione guidata
 aspetta_stato modo=local turno=1 fase=aim 8

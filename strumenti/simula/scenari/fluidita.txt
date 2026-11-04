@@ -5,6 +5,7 @@
 # La home dipinta ferma, Primi passi (carica il terreno dipinto), la camminata,
 # fuori dalla partita e di nuovo la home, poi una partita contro il bot
 # (un'altra mappa, colpi che scavano, il bot che pensa).
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 
 aspetta 2
 tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
