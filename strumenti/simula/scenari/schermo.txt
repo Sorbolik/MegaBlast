@@ -22,6 +22,6 @@ aspetta 0.5
 levetta_mira -40 40 0.4 03_mira
 aspetta_evento explosion 6
 aspetta 2
-tocca_bordo 70 110 alto destra       # zoom: un tocco, tutto lo spazio di gioco
+tocca_bordo 70 90 alto destra       # zoom: un tocco, tutto lo spazio di gioco
 aspetta 1.5
 foto 04_mappa
