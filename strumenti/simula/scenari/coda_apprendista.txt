@@ -1,0 +1,10 @@
+# La coda dell'apprendista (la pelle porta lunghezze, angoli e radice sue):
+# nella home e in battaglia, da vicino.
+
+aspetta 1.5
+foto 01_home
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+zoom 02_fermo 4
+tieni destra 0.5 03_corsa 4

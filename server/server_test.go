@@ -674,6 +674,28 @@ func TestWaitingRoom(t *testing.T) {
 	}
 }
 
+// "leave" while queued takes you out at once (ESCI DALLA CODA, another
+// queue): the one behind moves up to first place, with the bots' clock
+// from when they joined, and the server closes the connection.
+func TestLeaveQueue(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":8,"mode":"2v2"}`)
+	a.waitFor(`"wait"`)
+	b := dial(t, ctx, url)
+	b.send(`{"t":"hello","v":8,"mode":"2v2"}`)
+	b.waitFor(`"you":2`)
+	a.send(`{"t":"leave"}`)
+	if w := b.waitFor(`"wait"`); w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
+		t.Fatalf("after leave: %v", w)
+	}
+	if !a.closed() {
+		t.Fatal("the server didn't close the connection of who left the queue")
+	}
+}
+
 // Bots fill the queue (lobby.go): two people in a 2 vs 2, after BotAfter
 // (here one second) the match starts with two bots, and the people are on
 // different teams.

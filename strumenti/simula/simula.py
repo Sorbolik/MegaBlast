@@ -338,10 +338,13 @@ def avvia_server(g, modo, n, eventi=None, bot_dopo=None):
             modo = e["id"] + "-" + e["da"][:10].replace("-", "")
     if bot_dopo:
         extra += ["-bot-dopo", bot_dopo]
-    log = open(g.out / "server.txt", "w")
+    # dopo server_ferma il log continua lo stesso file
+    log = open(g.out / "server.txt", "a" if getattr(g, "server_fermato", False) else "w")
     g.server.append(subprocess.Popen([str(bin / "server"), "-addr", f"127.0.0.1:{PORTA_SERVER}", *extra],
                                      stdout=log, stderr=subprocess.STDOUT))
     url = f"ws://127.0.0.1:{PORTA_SERVER}/ws"
+    if n == 0:
+        return
     # i finti entrano dopo un attimo: il giocatore vero, che entra subito, è il robot 1
     argomenti = ["-url", url, "-modo", modo, "-n", str(n), "-attesa", "3s"]
     g.server.append(subprocess.Popen([str(bin / "finti"), *argomenti], stdout=log, stderr=subprocess.STDOUT))
@@ -362,6 +365,14 @@ def comando(g, riga):
         chiavi = dict(x.split("=", 1) for x in a if "=" in x)
         a = [x for x in a if "=" not in x]
         avvia_server(g, a[0], int(num(1, 1)), a[2] if len(a) > 2 else None, chiavi.get("bot_dopo"))
+    elif c == "server_ferma":
+        # il server cade di colpo (e i finti con lui), senza salutare come
+        # quando si aggiorna: poi "server MODO 0" lo riaccende
+        for proc in g.server:
+            proc.kill()
+            proc.wait()
+        g.server.clear()
+        g.server_fermato = True
     elif c == "foto":
         g.scatta(a[0])
     elif c == "zoom":
