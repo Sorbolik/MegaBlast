@@ -8,6 +8,7 @@
 --
 --   local replay = require "sim.replay"
 --   local r = replay.nuova(seed, map, opts)      -- opts as in game.new; players[i].bot = "normale" for a bot (and carattere, pesi)
+--   r.bot_keys = true                            -- optional: the bots' keys go into the recipe too
 --   local g, bots = replay.partita(r)
 --   every tick:
 --     local input = replay.input(r, g, bots, player_input)
@@ -54,20 +55,30 @@ local function same_input(a, b)
 		and (a.jump or false) == (b.jump or false) and a.hold == b.hold
 end
 
--- This tick's input: the bot's if it is a bot's turn, otherwise the player's,
--- which is written into the recipe (only changes and shots)
-function M.input(r, g, bots, human)
-	local b = bots[g.current]
-	if b then return bot.input(b, g) end
-	human = human or {}
-	local first_one = r.ultimo or {}
-	if human.fire or not same_input(human, first_one) then
-		local f = human.fire
-		r.input[#r.input + 1] = { t = g.tick + 1, l = human.left or false, r = human.right or false,
-			j = human.jump or false, h = human.hold,
+-- Writes keys into the recipe (only changes and shots)
+local function write(r, g, keys)
+	if keys.fire or not same_input(keys, r.ultimo or {}) then
+		local f = keys.fire
+		r.input[#r.input + 1] = { t = g.tick + 1, l = keys.left or false, r = keys.right or false,
+			j = keys.jump or false, h = keys.hold,
 			f = f and { w = f.weapon, a = f.angle, p = f.power } or nil }
 	end
-	r.ultimo = human
+	r.ultimo = keys
+end
+
+-- This tick's input: the bot's if it is a bot's turn, otherwise the player's,
+-- which is written into the recipe. With r.bot_keys the bots' keys are written
+-- too: replaying it the bots don't think again, so the in-game replay jumps to
+-- a moment in milliseconds instead of seconds
+function M.input(r, g, bots, human)
+	local b = bots[g.current]
+	if b then
+		local keys = bot.input(b, g)
+		if r.bot_keys then write(r, g, keys) end
+		return keys
+	end
+	human = human or {}
+	write(r, g, human)
 	return human
 end
 
@@ -79,7 +90,7 @@ function M.dopo(r, g)
 end
 
 -- Reads a recipe back: the real players' keys tick by tick (bots think on
--- their own, as when it was played). Used by verifica and by the in-game
+-- their own, as when it was played, unless the recipe has their keys too). Used by verifica and by the in-game
 -- replay (MATCHES tab of the profile).
 function M.reader(r)
 	return { r = r, k = 1, cur = {} }
@@ -87,7 +98,7 @@ end
 
 -- The input of g's next step, read from the recipe
 function M.read_step(l, g, bots)
-	local b = bots[g.current]
+	local b = not l.r.bot_keys and bots[g.current]
 	-- the shot lasts one tick only
 	if l.cur.fire then l.cur = { left = l.cur.left, right = l.cur.right, jump = l.cur.jump, hold = l.cur.hold } end
 	if b then return bot.input(b, g) end

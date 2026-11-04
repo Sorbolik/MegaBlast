@@ -131,4 +131,52 @@ decisioni»). Fase 2 approvata da Sergio lo stesso giorno: «gli stivali vanno b
 
 ## Consegna di Codex
 
+### Fase 1 · 2026-11-04
+
+Eseguita da `main` aggiornato (`7741cc4`), ramo `design/WB-017`.
+Generazione con `image_gen` integrato, prompt integrali invariati e riferimenti
+nell'ordine prescritto; sfondi delle scene, non trasparenti. Fase 2 non eseguita.
+
+File in `art/WB-017/`, ciascuno con PNG e TXT contenente prompt e riferimenti:
+
+| Nome | Tentativi | Selezione |
+|---|---|---|
+| `s_viaggio` | 1 | primo |
+| `s_forgia_aperta` | 3 | secondo |
+| `s_insieme` | 1 | primo |
+| `s_ghiaccio` | 1 | primo |
+
+Guardate tutte le immagini prima del salvataggio: personaggi e abiti, fiamme,
+mani e arti, code senza tagli o duplicazioni visibili, contorni neri, assenza
+di scritte, numeri, fumetti e firme; spazio calmo negli angoli richiesti.
+Nel ghiaccio Favilla ha gli occhi chiusi ed è intera dentro il blocco; della
+creatura si vedono soltanto i due occhi, senza corpo, volto o corna.
+
+Per la Forgia, il primo tentativo aveva una posa poco coerente con le mani
+sulle due ante. Il secondo corregge la posa; fatto un terzo per il dubbio sul
+conteggio delle sbarre, ma una mano non raggiunge l'anta. Consegnato il secondo,
+il migliore per la scena richiesta. **La fornace sembra avere quattro sbarre
+interne anziché cinque: criterio non confermato, da rivedere da Claude.**
+Il Fabbro è senza martello e senza coda visibile, ma conserva il fumo del
+foglio R3: discrepanza con «niente fumo» di DECISIONI.md (WB-014). Il prompt
+prescrive la copia esatta del foglio e non esclude il fumo: non l'ho modificato.
+
+**Formato non conforme:** tutti e quattro i PNG originali sono **1672×941**,
+verificati sui file, anziché 1536×1024. Lo strumento non espone un parametro
+dimensioni; non aggiunte istruzioni ai prompt né applicati ritagli o deformazioni.
+Non verificati il montaggio dei fumetti, la resa nel client e sul telefono,
+né l'identità pixel per pixel rispetto ai fogli. Revisione e integrazione a Claude.
+
 ## Resoconto di Claude
+
+### Fase 1 · 2026-11-04
+
+Tenute tutte e quattro e messe nel gioco (#214): `s_viaggio` apre il Prologo, `s_forgia_aperta`
+e `s_insieme` sono i loro capitoli, `s_ghiaccio` chiude il rapimento. 1672 × 941 va bene: è la
+misura delle altre tavole e la cartolina della storia segue la forma della tavola, quindi niente
+ritagli. Gli angoli calmi tengono i fumetti senza coprire facce (foto del simulatore, scenari
+`storia*.txt`). Note accettate: in `s_insieme` sono fianco a fianco più che schiena a schiena
+(la battuta «Io e te, insieme» va bene lo stesso); in `s_forgia_aperta` il fumo della fornace è
+quello del foglio R3, ed è il Fabbro del foglio, mentre «niente fumo» vale per i pezzi dello
+stampino di WB-014; le sbarre della fornace sono quattro, non si notano. Fase 2 (`s_regalo`) da
+eseguire (Claude).

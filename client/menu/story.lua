@@ -1,6 +1,6 @@
 -- The story's comic (ui/story.lua): one panel at a time on the postcard of
 -- the mission illustrations (the parchment card on an opaque backdrop,
--- battle/vignette.lua), each panel with its own shape (wide or square), and
+-- ui/postcard.lua), each panel with its own shape (wide or square), and
 -- its lines one balloon at a time in the calm corner of the panel. AVANTI (or
 -- A) goes on; SALTA only when you have already read it (Sergio, 4 Nov: the
 -- first time the story is watched whole). Client only.
@@ -24,9 +24,9 @@ local PAPER, INK, INK_SOFT = c(0.95, 0.88, 0.75), c(0.12, 0.07, 0.05), c(0.12, 0
 local CAPTION = c(0.95, 0.77, 0.35)
 local BACKDROP = c(0.09, 0.07, 0.07)
 -- the picture's height, the parchment margin and the band under it with the
--- dots and the buttons: the missions' postcard's (battle/vignette.lua); the
+-- dots and the buttons: the missions' postcard's (ui/postcard.lua); the
 -- picture is at most this wide
-local POST = require("battle.vignette").POST
+local POST = require("ui.postcard").POST
 local PIC_H, MARGIN, BAND, CARD_Y = POST.h, POST.margin, POST.band, POST.y
 local PIC_MAX_W = 1100
 -- the balloon: at most this wide, its padding, its distance from the picture's edges

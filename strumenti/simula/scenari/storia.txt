@@ -9,28 +9,34 @@ imposta prova_vignette no
 aspetta 2
 tocca 1062 392                      # CAMPAGNA
 aspetta 1.2
-foto 01_arrivo
+foto 01_viaggio
 pad a
 aspetta 0.6
-foto 02_lui
+foto 02_viaggio_secondo
 pad a
 aspetta 0.6
-foto 03_lei
+foto 03_arrivo
 pad a
 aspetta 0.6
-foto 04_fabbro
+foto 04_lui
 pad a
 aspetta 0.6
-foto 05_fabbro_secondo
+foto 05_lei
 pad a
 aspetta 0.6
-foto 06_segreto
+foto 06_fabbro
+pad a
+aspetta 0.6
+foto 07_fabbro_secondo
+pad a
+aspetta 0.6
+foto 08_segreto
 pad a
 aspetta 1.5
-foto 07_campagna
+foto 09_campagna
 tocca 1140 658                      # LA STORIA
 aspetta 1.2
-foto 08_rileggi
+foto 10_rileggi
 tocca 290 115                       # SALTA
 aspetta 1.5
-foto 09_di_nuovo_campagna
+foto 11_di_nuovo_campagna

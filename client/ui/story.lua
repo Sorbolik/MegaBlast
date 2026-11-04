@@ -43,6 +43,8 @@ M.CHAPTERS = {
 M.PANELS = {
 	["4_arrivo_a"] = true, ["4_arrivo_b"] = true, ["4_arrivo_c"] = true, ["5_fabbro_a"] = true,
 	["5_fabbro_c_1"] = true, ["6_rapimento_a"] = true, ["6_rapimento_b"] = true, ["6_rapimento_c"] = true,
+	-- WB-017 fase 1
+	["s_viaggio"] = true, ["s_forgia_aperta"] = true, ["s_insieme"] = true, ["s_ghiaccio"] = true,
 }
 
 local by_id = {}

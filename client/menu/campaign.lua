@@ -8,7 +8,7 @@
 --   local c = campagna.new(scelta, stelle, storia)  -- scelta = { chapter } (the last one opened); stelle = id -> { true, false, true };
 --     storia: some of the story was seen (ui/story.lua): LA STORIA, top right, reads it again
 --   local fine = campagna.on_input(c, action_id, action)
---     -- "indietro", { missione = id } to play it, "storia", or nil
+--     -- "indietro", { missione = id, da } to play it (da: where its picture is), "storia", or nil
 --   campagna.destroy(c)
 
 local ui = require "ui.ui"
@@ -67,6 +67,8 @@ local function card_list(c, cap)
 		local tex = ill.texture(l.id, "carta")
 		if tex then
 			c.textures[#c.textures + 1] = l.id
+			-- where the picture is on the screen: the postcard zooms from here (ui/postcard.lua)
+			c.from[l.id] = { x = x - CARD_W / 2 + PAD + THUMB_W / 2, y = y + gui.get_position(c.radice).y, w = THUMB_W, h = THUMB_H }
 			local t = gui.new_box_node(vec(-CARD_W / 2 + PAD + THUMB_W / 2, 0), vec(THUMB_W, THUMB_H))
 			gui.set_texture(t, tex)
 			gui.set_adjust_mode(t, gui.ADJUST_FIT)
@@ -96,6 +98,7 @@ local function build(c)
 	release_textures(c)
 	c.buttons = {}
 	c.radice = ui.radice()
+	c.from = {}
 	local C = ui.C
 	-- the header (ui.header): CAMPAGNA, the pill's place, the chapters as tabs under it
 	ui.header_delete(c.head)
@@ -136,7 +139,7 @@ function M.on_input(c, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" or ui_action == "storia" then return ui_action end
 	local kind, value = ui_action:match("^(%a+):(.*)$")
-	if kind == "missione" then return { missione = value } end
+	if kind == "missione" then return { missione = value, da = c.from[value] } end
 	c.scelta.chapter = value
 	build(c)
 	return nil

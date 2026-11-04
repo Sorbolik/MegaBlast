@@ -1,0 +1,11 @@
+Image 1 is the model sheet of the Blacksmith, image 2 the model sheet of the apprentice imp, image 3 the illustration style. Copy both EXACTLY from their sheets; the Blacksmith has NO hammer in his hands.
+
+A wide comic panel: inside the courtyard of the hellish forge, the huge Blacksmith pushes open a giant iron double gate with both gloved hands; through the opening pours bright orange light from the great forge hall beyond, with anvils, chains and rivers of molten metal. The small apprentice imp stands in the light in front of the gate, amazed, mouth open, his shadow long behind him. Leave the top-right quarter calm (dark wall) for a speech balloon the game adds. Style of image 3. No text, letters, numbers, speech balloons or signatures.
+
+Riferimenti allegati (ordine):
+1. art/WB-012/scelti/fabbro.png
+2. art/WB-012/scelti/apprendista.png
+3. art/WB-012/4_arrivo_a.png
+
+Strumento: image_gen integrato. Sfondo della scena, non trasparente.
+
