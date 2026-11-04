@@ -63,7 +63,7 @@ function M.new(o, sound)
 		under = under == "" and record or under .. "  -  " .. record
 	end
 	ui.testo(under, 640, 232, 0.8, c.OFF, f.radice)
-	ui.button(f.buttons, 640 - 180, 110, 300, 96, T.retry, "riprova", nil, f.radice)
+	ui.button(f.buttons, 640 - 180, 110, 300, 96, common.retry, "riprova", nil, f.radice)
 	ui.button(f.buttons, 640 + 180, 110, 300, 96, o.avanti and common.next or common.campaign, "avanti",
 		{ main = true }, f.radice)
 	return f

@@ -12,6 +12,8 @@ local plate = require "battle.plate"
 local home = require "menu.home"
 local profile = require "menu.profile"
 local TP = require("lang.text").pill
+local TM = require("lang.text").match
+local common = require("lang.text").common
 local loadout = require "sim.loadout"
 local awards = require "sim.awards"
 local draft = require "sim.draft"
@@ -53,12 +55,6 @@ local PROTOCOL = 8
 -- If the connection drops in a match we retry for a while (the server keeps
 -- the seat for 20 seconds)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
-local SERVER_ERRORS = {
-	version = "C'è una versione nuova di MegaBlast:\naggiorna il gioco",
-	expired = "La partita è finita",
-	draining = "Il server si sta aggiornando,\nriprova tra poco",
-	evento = "L'evento è appena finito",
-}
 
 -- the input actions, in a single table (limit of 200 local variables)
 local ACTION = {
@@ -78,7 +74,7 @@ local PAD = { reader = require "ui.controller" }
 
 -- Teams: Crimson and Cobalt from the art bible, then Green and Gold for
 -- free-for-all. The palette lives only in ui/ui.lua
-local TEAM_NAMES = { "Rosso", "Blu", "Verde", "Oro" }
+local TEAM_NAMES = TM.team_names
 local TEAM_COLORS = ui.C.SQUADRA
 local WHITE = vmath.vector4(1, 1, 1, 1)
 
@@ -96,8 +92,7 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- other color.
 -- status effects: the label rising over the robot when they arrive and the
 -- name under its health, with the turns left (no accents: the font lacks them)
-local STATUS_TEXT = { burn = "BRUCIA!", slow = "RALLENTATO!", cracked = "ARMATURA INCRINATA!" }
-local STATUS_NAME = { { "burn", "BRUCIA" }, { "slow", "LENTO" }, { "cracked", "INCRINATO" } }
+local STATUS_NAME = { { "burn", TM.status_name.burn }, { "slow", TM.status_name.slow }, { "cracked", TM.status_name.cracked } }
 local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows",
 	"trap", "shield", "trampoline", "hook", "parachute" }
 -- border color of the four groups: primaries, secondaries, items, Grapple
@@ -112,21 +107,6 @@ for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword",
 	"trap", "shield", "trampoline", "parachute" }) do
 	WEAPON_ICON[w] = w .. "_icona"
 end
--- for the "Rosso trova ..." message when a crate opens
-local WEAPON_FOUND = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge", punch = "il Pugno del Titano",
-	sniper = "il Cecchino", eagle = "il Tonante", mallet = "il Maglio", lunge = "l'Affondo", bellows = "il Mantice",
-	hook = "il Rampino", parachute = "un Paracadute",
-	trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" }
--- weapon names in the match-start draft
-local WEAPON_NAME = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
-	sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino" }
--- and their effect, in the draft (no accents)
-local WEAPON_EFFECT = { grenade = "Rimbalza e scoppia dopo 5 s: cratere grande", shards = "Raffica di 8 schegge: rallenta",
-	punch = "Montante da vicino: lancia in alto e incrina l'armatura", sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
-	eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte", mallet = "Colpo ad arco dove miri; quando sbatte su qualcosa o qualcuno rimbalzi in alto",
-	lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
-	bellows = "Soffio della forgia: spinge via chi hai davanti",
-	hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita" }
 -- melee weapons: no aim line
 local SLOT, SLOT_GAP, BAR_Y = 84, 10, 64
 -- on the phone the slots are smaller (narrow with five primaries, so they
@@ -435,7 +415,7 @@ end
 local function announce_turn(self, robot)
 	local my_own = (self.mode == "online" and robot == self.me)
 		or (self.mode == "local" and (next(self.bots) or self.missione) and robot == 1)
-	gui.set_text(self.announcement, my_own and "IL TUO TURNO" or ("TURNO DI: " .. string.upper(self.names[robot])))
+	gui.set_text(self.announcement, my_own and TM.your_turn or TM.turn_of:format(string.upper(self.names[robot])))
 	gui.cancel_animations(self.announcement, "color")
 	local c = self.colors[robot]
 	gui.set_color(self.announcement, vmath.vector4(c.x, c.y, c.z, 1))
@@ -455,8 +435,8 @@ local function open_wheel(self, is_open)
 	gui.set_enabled(self.btn_retry, is_open and self.mode == "local")
 	gui.set_enabled(self.btn_quit, is_open)
 	gui.set_enabled(self.btn_aim, is_open)
-	gui.set_text(self.btn_aim_text, "MIRA: " .. string.upper(profile.setting(self.profilo, "mira")))
-	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and "ESCI DALLA RICERCA" or "ESCI DALLA PARTITA")
+	gui.set_text(self.btn_aim_text, TM.aim_mode:format(string.upper(profile.setting(self.profilo, "mira"))))
+	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and TM.quit_search or TM.quit_match)
 	if self.sala then menu.lobby.wheel_open(self.sala, is_open) end
 end
 
@@ -843,7 +823,7 @@ local function shock(self, x, y)
 end
 
 local function who_name(self, robot)
-	if self.mode == "online" and robot == self.me then return "Tu" end
+	if self.mode == "online" and robot == self.me then return common.you end
 	return self.names[robot]
 end
 
@@ -1044,7 +1024,7 @@ function CP.entry_update(self, dt)
 		CP.close_entry(self)
 	elseif t > 1.5 then
 		-- a real wait: say what is being done
-		menu.ingresso.riga(e, "Prendo gli eventi dal server...")
+		menu.ingresso.riga(e, TM.loading_events)
 	end
 end
 
@@ -1058,10 +1038,10 @@ function CP.open_room(self, m)
 		self.sala = menu.lobby.new(of, profile.GROUP_NAMES[self.coda] or "", self.btn_menu)
 	end
 	-- ours first, then the others in queue order
-	local list = { CP.vetrina.from_profile(self.profilo, "Tu", nil, "In coda") }
+	local list = { CP.vetrina.from_profile(self.profilo, common.you, nil, TM.in_queue) }
 	list[1].tu = true
 	for i = 1, math.min(#m.vetrine, of) do
-		if i ~= m.you then list[#list + 1] = CP.vetrina.from_net(m.vetrine[i], "Giocatore", nil, "In coda") end
+		if i ~= m.you then list[#list + 1] = CP.vetrina.from_net(m.vetrine[i], TM.player, nil, TM.in_queue) end
 	end
 	if menu.lobby.giocatori(self.sala, list) then sound.play("#punto") end
 	menu.lobby.bot_in(self.sala, m.bot_in)
@@ -1165,8 +1145,8 @@ local function handle_event(self, e)
 	elseif e.type == "teleports" or e.type == "swap" then
 		-- swapping the second attack gives an orb, which flies like the time ones
 		e.amount = e.amount or 1
-		show_message(self, e.type == "swap" and who_name(self, e.robot) .. " scambia il secondo attacco: +1 teletrasporto"
-			or string.format("%s +%d teletrasport%s", who_name(self, e.robot), e.amount, e.amount == 1 and "o" or "i"))
+		show_message(self, e.type == "swap" and TM.swap:format(who_name(self, e.robot))
+			or (e.amount == 1 and TM.orbs_one or TM.orbs_many):format(who_name(self, e.robot), e.amount))
 		-- they fly from the ring: ours to the teleport button, an opponent's onto
 		-- them (Sergio), silent
 		-- in the first turns of the guided match the orbs fly slowly, to be watched
@@ -1190,7 +1170,7 @@ local function handle_event(self, e)
 			sound.play("#globo", { speed = hud.ORB_TONES[math.min(i, #hud.ORB_TONES)] })
 		end)
 	elseif e.type == "trap" then
-		show_message(self, who_name(self, e.robot) .. " finisce in una trappola!")
+		show_message(self, TM.trapped:format(who_name(self, e.robot)))
 		shock(self, e.x, e.y)
 	elseif e.type == "eagle" then
 		-- straight shot: the white trace from the barrel to the point hit, fading in
@@ -1223,13 +1203,13 @@ local function handle_event(self, e)
 		end
 		if e.target then
 			self.shot_x, self.shot_y, self.shot_t = e.x0, e.y0, self.clock
-			plate.announcement(self.robots[e.target].plate, "AGGANCIATO!")
+			plate.announcement(self.robots[e.target].plate, TM.hooked)
 		end
 	elseif e.type == "hook_end" and e.snap then
 		-- the rope ran out before arriving: it snaps with a crack and falls with its
 		-- hook, the enemy stays there (over the void it falls)
 		sound.play("#strappo")
-		plate.announcement(self.robots[e.robot].plate, "STRAPPO!")
+		plate.announcement(self.robots[e.robot].plate, TM.snapped)
 		if self.rope == e.robot then
 			self.rope = nil
 			local x0, y0 = RM.rope_hand(self, e.by)
@@ -1242,7 +1222,7 @@ local function handle_event(self, e)
 		RM.gust(self, e.x, e.y, e.angle)
 	elseif e.type == "bellows_hit" then
 		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
-		plate.announcement(self.robots[e.target].plate, "SOFFIATO VIA!")
+		plate.announcement(self.robots[e.target].plate, TM.blown)
 	elseif e.type == "lunge" then
 		scoria.lunge(self.robots[e.robot].rig)
 	elseif e.type == "mallet" then
@@ -1252,7 +1232,7 @@ local function handle_event(self, e)
 		shock(self, e.x, e.y)
 		local by = self.g.robots[e.robot]
 		if e.target then self.shot_x, self.shot_y, self.shot_t = by.x, by.y + game.SWORD_PIVOT_Y, self.clock end
-		if e.bounce then plate.announcement(self.robots[e.robot].plate, "RIMBALZO!") end
+		if e.bounce then plate.announcement(self.robots[e.robot].plate, TM.bounce) end
 	elseif e.type == "lunge_hit" then
 		shock(self, e.x, e.y)
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
@@ -1261,16 +1241,16 @@ local function handle_event(self, e)
 		self.boing = self.clock
 	elseif e.type == "sniper_hit" then
 		shock(self, e.x, e.y)
-		plate.announcement(self.robots[e.target].plate, "SBALZATO!")
+		plate.announcement(self.robots[e.target].plate, TM.knocked)
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
 	elseif e.type == "final_round" then
 		score.last_lap(self.punti)
 	elseif e.type == "parachute" then
-		show_message(self, "Paracadute aperto!")
+		show_message(self, TM.parachute)
 	elseif e.type == "status" then
-		plate.announcement(self.robots[e.robot].plate, STATUS_TEXT[e.kind])
+		plate.announcement(self.robots[e.robot].plate, TM.status_shout[e.kind])
 	elseif e.type == "heal_spawn" then
-		show_message(self, "Un cerchio di cura: chi ci finisce il turno dentro si cura")
+		show_message(self, TM.heal_circle)
 	elseif e.type == "heal" then
 		plate.announcement(self.robots[e.robot].plate, "+" .. e.amount)
 	elseif e.type == "recharge" then
@@ -1278,10 +1258,10 @@ local function handle_event(self, e)
 		plate.announcement(self.robots[e.robot].plate, "+1 " .. (hud.NAMES[e.weapon] or string.upper(e.weapon)))
 		CP.recharge(self, e)
 	elseif e.type == "crate" then
-		show_message(self, "Una cassa cade dal cielo!")
+		show_message(self, TM.crate)
 	elseif e.type == "crate_pick" then
-		local verb = (self.mode == "online" and e.robot == self.me) and " hai trovato " or " trova "
-		show_message(self, who_name(self, e.robot) .. verb .. WEAPON_FOUND[e.weapon] .. "!")
+		local found = (self.mode == "online" and e.robot == self.me) and TM.you_found or TM.found
+		show_message(self, found:format(who_name(self, e.robot), TM.weapon_found[e.weapon]))
 		-- a new weapon locally: its card (battle/card.lua) stops the game until
 		-- you tap PROVALA. Always in the lessons, otherwise the first time
 		local l = self.missione and self.missione.l
@@ -1322,15 +1302,15 @@ local function handle_event(self, e)
 		local without = self.g.no_points
 		if e.own then
 			-- died alone on its own turn: the kill goes to whoever did it the most damage
-			local who = (self.mode == "online" and e.robot == self.me) and "Muori da solo" or self.names[e.robot] .. " muore da solo"
+			local who = (self.mode == "online" and e.robot == self.me) and TM.you_die_alone or TM.dies_alone:format(self.names[e.robot])
 			local penalty = gconfig.SCORE.death + gconfig.SCORE.self_death
 			show_message(self, without and who .. "!"
-				or e.by and string.format("%s! %d, +%d a %s", who, penalty, e.points, who_name(self, e.by))
-				or string.format("%s! %d", who, penalty))
+				or e.by and TM.dies_alone_given:format(who, penalty, e.points, who_name(self, e.by))
+				or TM.dies_alone_penalty:format(who, penalty))
 		elseif e.by then
-			local verb = e.env and " butta giù " or " elimina "
-			show_message(self, who_name(self, e.by) .. verb .. who_name(self, e.robot) .. "!"
-				.. (without and "" or string.format(" +%d", e.points)))
+			local verb = e.env and TM.pushes_off or TM.eliminates
+			show_message(self, verb:format(who_name(self, e.by), who_name(self, e.robot))
+				.. (without and "" or TM.points:format(e.points)))
 		end
 	elseif e.type == "gone" then
 		-- left the match: it vanishes and doesn't come back
@@ -1355,11 +1335,11 @@ local function handle_event(self, e)
 		local text
 		if self.mode == "online" then
 			local mine = self.g.robots[self.me].team
-			text = e.winner == mine and "Hai vinto!" or (e.winner and "Hai perso!" or "Pareggio!")
+			text = e.winner == mine and TM.you_won or (e.winner and TM.you_lost or TM.draw)
 		else
-			text = e.winner and ("Vince " .. TEAM_NAMES[e.winner] .. "!") or "Pareggio!"
+			text = e.winner and TM.team_wins:format(TEAM_NAMES[e.winner]) or TM.draw
 		end
-		if e.reason == "time" then text = "Tempo scaduto!\n" .. text end
+		if e.reason == "time" then text = TM.time_up:format(text) end
 		show_message(self, text, true)
 		self.online_end = self.mode == "online"
 		self.mode = "ended"
@@ -1381,7 +1361,7 @@ local function open_podium(self)
 	local res = self.risultati
 	local giocatori, me = {}, self.online_end and self.me or nil
 	for i in ipairs(self.g.robots) do
-		local nome = (self.online_end and i == self.me) and "Tu" or self.names[i]
+		local nome = (self.online_end and i == self.me) and common.you or self.names[i]
 		giocatori[i] = { nome = nome, colore = self.colors[i] }
 	end
 	local my_own = me or 1
@@ -1566,7 +1546,7 @@ local function on_server_message(self, m)
 		CP.inizio(self, m.you, m.vetrine or {}, nil, false)
 		self.mode = "online"
 		set_controls_visible(self, true)
-		show_message(self, m.resume and "Di nuovo in partita!" or ("Sei " .. self.names[m.you]))
+		show_message(self, m.resume and TM.back_in or TM.you_are:format(self.names[m.you]))
 	elseif m.t == "sync" and self.g then
 		local k = CR.lista(self)
 		for _, c in ipairs(m.x) do
@@ -1581,9 +1561,9 @@ local function on_server_message(self, m)
 	elseif m.t == "ev" and self.g then
 		handle_event(self, m)
 	elseif m.t == "away" then
-		show_message(self, "L'avversario ha perso la connessione...", true)
+		show_message(self, TM.opponent_away, true)
 	elseif m.t == "back" and m.robot ~= self.me then
-		show_message(self, "L'avversario è tornato")
+		show_message(self, TM.opponent_back)
 	elseif m.t == "left" then
 		-- whoever leaves doesn't come back; the server goes on while two teams remain
 		self.exited[m.robot] = true
@@ -1592,12 +1572,12 @@ local function on_server_message(self, m)
 			if not self.exited[i] and not seen_weapons[team] then seen_weapons[team], remain = true, remain + 1 end
 		end
 		if remain >= 2 then
-			show_message(self, (self.mode == "online" and self.names[m.robot] or "Un giocatore") .. " è uscito")
+			show_message(self, TM.left:format(self.mode == "online" and self.names[m.robot] or TM.someone))
 			return
 		end
 		menu.pick.hide(self.scelta)
 		self.mode = "ended"
-		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
+		show_message(self, TM.back_to_menu:format(TM.opponent_left), true)
 	elseif m.t == "error" and self.queue and self.mode ~= "connecting" then
 		self.queue.lost = true
 		disconnect(self)
@@ -1606,7 +1586,7 @@ local function on_server_message(self, m)
 		CP.close_room(self)
 		menu.pick.hide(self.scelta)
 		self.mode, self.tok = "ended", nil
-		show_message(self, (SERVER_ERRORS[m.e] or "Errore del server") .. "\nTocca per tornare al menu", true)
+		show_message(self, TM.back_to_menu:format(TM.server_errors[m.e] or TM.server_error), true)
 	end
 end
 
@@ -1624,7 +1604,7 @@ on_socket = function(self, conn, data)
 		if self.tok then
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
 		else
-			CP.aspetta(self, "Connesso, in attesa...")
+			CP.aspetta(self, TM.waiting)
 			-- the queue picked in DOVE GIOCHI? (menu/queue.lua): 2v2, 1v1 or an event,
 			-- and the tag: level and badges (menu/showcase.lua)
 			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
@@ -1641,7 +1621,7 @@ on_socket = function(self, conn, data)
 		if in_play and self.tok and self.tries < RECONNECT_TRIES then
 			-- in a match: we retry, the server keeps our seat
 			self.tries = self.tries + 1
-			CP.aspetta(self, "Connessione persa, mi riconnetto...")
+			CP.aspetta(self, TM.reconnecting)
 			timer.delay(RECONNECT_WAIT, false, function()
 				if (self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online") and not self.conn then connect(self) end
 			end)
@@ -1656,7 +1636,7 @@ on_socket = function(self, conn, data)
 			CP.close_room(self)
 			menu.pick.hide(self.scelta)
 			self.mode = "ended"
-			show_message(self, "Connessione persa\nTocca per tornare al menu", true)
+			show_message(self, TM.back_to_menu:format(TM.connection_lost), true)
 		end
 	end
 end
@@ -1679,7 +1659,7 @@ local function start_online(self, coda)
 	if not ws then
 		-- the extension is downloaded with Project -> Fetch Libraries
 		self.mode = "ended"
-		show_message(self, "Manca l'estensione WebSocket\nIn Defold: Project > Fetch Libraries\nTocca per tornare al menu", true)
+		show_message(self, TM.back_to_menu:format(TM.no_websocket), true)
 		return
 	end
 	self.mode, self.tok, self.tries = "connecting", nil, 0
@@ -1688,7 +1668,7 @@ local function start_online(self, coda)
 	self.queue = { mode = coda or "2v2", t = 0 }
 	-- while searching for the others you can leave, with the usual gear (Sergio, 3 Nov)
 	gui.set_enabled(self.btn_menu, true)
-	CP.aspetta(self, "Mi collego al server...")
+	CP.aspetta(self, TM.connecting)
 	connect(self)
 end
 
@@ -1759,7 +1739,7 @@ function CP.queue_open(self)
 				menu.lobby.bot_in(self.sala, q.bot_left)
 			end
 		else
-			CP.aspetta(self, "Connesso, in attesa...")
+			CP.aspetta(self, TM.waiting)
 		end
 	end)
 end
@@ -1844,7 +1824,7 @@ function CP.vetrine(self, players, name_list, opt)
 	local out = {}
 	local my_team = players[opt.me] and players[opt.me].team
 	for i, p in ipairs(players) do
-		local under = i == opt.me and "TU" or p.dummy and "BERSAGLIO" or p.team == my_team and "COMPAGNO" or "AVVERSARIO"
+		local under = i == opt.me and TM.roles.you or p.dummy and TM.roles.dummy or p.team == my_team and TM.roles.mate or TM.roles.opponent
 		local v
 		if opt.rete then
 			v = CP.vetrina.from_net(opt.rete[i], name_list[i], p.team, under)
@@ -1956,7 +1936,7 @@ function CP.open_card_g(self, i)
 	gui.set_yanchor(root_node, gui.ANCHOR_TOP)
 	v.verso = sx and 1 or -1
 	local c = CP.tag.new(v, 0, 0, { tu = v.tu }, root_node)
-	local note = ui.testo("tocca di nuovo e si chiude · il tempo corre", 0, -CP.tag.TALL({}) - 14, 0.6,
+	local note = ui.testo(TM.card_note, 0, -CP.tag.TALL({}) - 14, 0.6,
 		ui.C.OFF, root_node)
 	gui.set_outline(note, ui.C.SHADOW)
 	self.card_g = { c = c, radice = root_node, robot = i }
@@ -2035,7 +2015,7 @@ function CP.rivedi(self, number, from_pt)
 	local ok, payload = pcall(sys.load, CP.file_replay(number))
 	local r = ok and payload and payload.r
 	if not r or r.versione ~= replay.VERSION then
-		show_message(self, "Questo replay non si può più rivedere")
+		show_message(self, TM.replay_gone)
 		return
 	end
 	CP.iris(self, function() CP.start_replay(self, r, number, from_pt) end)
@@ -2059,7 +2039,7 @@ function CP.start_replay(self, r, number, from_pt)
 	set_controls_visible(self, false)
 	show_message(self, "", true)
 	-- at the bottom, while it lasts: it is a replay, and how to leave
-	local n = ui.titolo("REPLAY · TOCCA PER USCIRE", W / 2, 40, 0.5, ui.C.LIGHT)
+	local n = ui.titolo(TM.replay_banner, W / 2, 40, 0.5, ui.C.LIGHT)
 	gui.set_yanchor(n, gui.ANCHOR_BOTTOM)
 	gui.set_outline(n, ui.C.SHADOW)
 	self.replay_scritta = n
@@ -2092,7 +2072,7 @@ function CP.replay_end(self)
 		self.replay_scritta = nil
 		show_menu(self, true)
 		CP.open_profile(self, "partite", number)
-		if self.replay_rotto then show_message(self, "Il replay non torna più: il gioco è cambiato") end
+		if self.replay_rotto then show_message(self, TM.replay_broken) end
 		self.replay_rotto = nil
 	end)
 end
@@ -2338,7 +2318,7 @@ local function mission_update(self, dt)
 		profile.salva(self.profilo)
 		if not r.l.guidata then
 			-- a moment to see the shot, then (or at the first tap) the stars
-			show_message(self, "Fatta!", true)
+			show_message(self, TM.mission_done, true)
 			self.mode = "ended"
 			set_controls_visible(self, false)
 			self.end_t, self.record_end = PODIUM_WAIT, record
@@ -2346,7 +2326,7 @@ local function mission_update(self, dt)
 	elseif r.esito == "fallita" then
 		profile.fallita(self.profilo, r.l.id)
 		profile.salva(self.profilo)
-		show_message(self, "Riprova")
+		show_message(self, TM.mission_retry)
 		self.missione_attesa = 1.5
 	end
 end
@@ -3272,7 +3252,7 @@ local function render(self, dt)
 	-- match time left, above the ring; in the last lap (double points) the label
 	-- in its place, and the golden ring
 	local left = math.max(0, math.ceil(g.match_left / 60))
-	local clock = g.final_round and "×2 ULTIMO GIRO" or string.format("%d:%02d", math.floor(left / 60), left % 60)
+	local clock = g.final_round and TM.last_round or string.format("%d:%02d", math.floor(left / 60), left % 60)
 	hud.stopwatch_gold(self.chrono, g.final_round and g.phase ~= "over")
 	-- the ring tells the turn: white, yellow while the second attack is left, blue after
 	local stage, left_ones, total = nil, 0, 1
@@ -3546,7 +3526,7 @@ function init(self)
 	for i = 1, game.MAX_PLAYERS do self.robots[i].plate = plates[i] end
 	-- the iron arrow above whoever's turn it is (just one)
 	self.arrow = plate.arrow()
-	self.cancel_label = label(0, 0, "ANNULLA", 0.7)
+	self.cancel_label = label(0, 0, TM.cancel, 0.7)
 	gui.set_enabled(self.cancel_label, false)
 
 	-- in the world, in drawing order
@@ -3597,9 +3577,9 @@ function init(self)
 	self.btn_menu = ui.impostazioni({}, "menu")
 	-- (in a list, for the controller light)
 	self.rotellina = {}
-	self.btn_retry = ui.button(self.rotellina, 32 + 12 + 80, 0, 160, 64, "RIPROVA", "riprova", nil, self.btn_menu)
-	self.btn_quit = ui.button(self.rotellina, 32 + 12 + 160 + 12 + 130, 0, 260, 64, "ESCI DALLA PARTITA", "esci", nil, self.btn_menu)
-	self.btn_aim = ui.button(self.rotellina, 32 + 12 + 130, -76, 260, 64, "MIRA", "mira", nil, self.btn_menu)
+	self.btn_retry = ui.button(self.rotellina, 32 + 12 + 80, 0, 160, 64, common.retry, "riprova", nil, self.btn_menu)
+	self.btn_quit = ui.button(self.rotellina, 32 + 12 + 160 + 12 + 130, 0, 260, 64, TM.quit_match, "esci", nil, self.btn_menu)
+	self.btn_aim = ui.button(self.rotellina, 32 + 12 + 130, -76, 260, 64, TM.aim, "mira", nil, self.btn_menu)
 	self.btn_aim_text = self.rotellina[3].testo
 	gui.set_enabled(self.btn_aim, false)
 	gui.set_enabled(self.btn_retry, false)
@@ -3621,7 +3601,7 @@ function init(self)
 	-- the halo in your color behind what you hold
 	self.chosen_glow = glow(0, 0, SLOT * 1.7, WHITE)
 	gui.set_parent(self.chosen_glow, self.bar)
-	self.items_title = label(0, 0, "OGGETTI", 0.55)
+	self.items_title = label(0, 0, TM.items, 0.55)
 	gui.set_color(self.items_title, ui.C.MINT)
 	gui.set_parent(self.items_title, self.bar)
 	gui.set_enabled(self.items_title, false)
@@ -3674,7 +3654,7 @@ function init(self)
 	self.pill = menu.pill.new()
 	self.profilo = profile.load_up()
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.prova(self.profilo) end
-	self.scelta = menu.pick.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, self.comandi)
+	self.scelta = menu.pick.new(WEAPON_ICON, TM.draft_names, TM.draft_effects, self.comandi)
 
 	-- In real matches the map is picked by the seed (sim/maps.lua). In the test
 	-- scenarios it is fixed, so the photos repeat: pavimento, or [megablast] prova_mappa.
@@ -3943,7 +3923,7 @@ local function cancel_pad_aim(self)
 	sticks.reset(self.aim_st)
 	self.aiming = false
 	pad_release(self.aim_pad, AIM_IDLE)
-	show_message(self, "Mira annullata")
+	show_message(self, TM.aim_cancelled)
 	missions.tocca(self.missione, "annulla")
 end
 
@@ -4148,17 +4128,7 @@ function PAD.comandi(self)
 end
 
 -- {salta}, {annulla}, {cammina}, {mira} in the lessons' lines (sim/missions.lua)
-PAD.TEXTS = {
-	telefono = { salta = "spingi in su la levetta di sinistra", annulla = "tocca la metà destra dello schermo",
-		cammina = "sposta di lato la levetta di sinistra",
-		mira = "sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo" },
-	computer = { salta = "premi la barra spaziatrice", annulla = "riporta il mouse sul diavoletto e lascia",
-		cammina = "tieni premuto A o D (o le frecce)",
-		mira = "trascina dal diavoletto per sistemare la traiettoria, lascia per far partire il colpo" },
-	controller = { salta = "spingi in su la levetta di sinistra", annulla = "riporta al centro la levetta di destra",
-		cammina = "sposta di lato la levetta di sinistra",
-		mira = "" }, -- PAD.texts
-}
+PAD.TEXTS = { telefono = TM.gestures.telefono, computer = TM.gestures.computer, controller = {} } -- controller: PAD.texts
 
 -- The labels for the controls in use; with the controller, with its buttons' names
 function PAD.texts(self)
@@ -4168,14 +4138,12 @@ function PAD.texts(self)
 		local shoot, hop = PAD.reader.name_of("spara"), PAD.reader.name_of("salta")
 		local _, is_moving = PAD.levetta(self, "muove")
 		local _, aim_name = PAD.levetta(self, "mira")
-		t.mira = PAD.imp(self, "potenza") == "grilletto"
-			and ("muovi la levetta " .. aim_name .. " per la direzione, premi " .. shoot .. " per la potenza e lascialo per far partire il colpo")
-			or PAD.imp(self, "sparo") == "rilascio"
-			and ("muovi la levetta " .. aim_name .. " per sistemare la traiettoria, premi e lascia " .. shoot .. " per far partire il colpo")
-			or ("muovi la levetta " .. aim_name .. " per sistemare la traiettoria, premi " .. shoot .. " per far partire il colpo")
-		t.salta = hop ~= "" and ("premi " .. hop) or ("spingi in su la levetta " .. is_moving)
-		t.cammina = "sposta di lato la levetta " .. is_moving
-		t.annulla = "riporta al centro la levetta " .. aim_name
+		t.mira = (PAD.imp(self, "potenza") == "grilletto" and TM.pad_aim_trigger
+			or PAD.imp(self, "sparo") == "rilascio" and TM.pad_aim_release
+			or TM.pad_aim_press):format(aim_name, shoot)
+		t.salta = hop ~= "" and TM.pad_jump_button:format(hop) or TM.pad_jump_stick:format(is_moving)
+		t.cammina = TM.pad_walk:format(is_moving)
+		t.annulla = TM.pad_cancel:format(aim_name)
 	end
 	return t
 end
@@ -4222,7 +4190,7 @@ end
 function PAD.levetta(self, use)
 	PAD.reader.levette = PAD.imp(self, "levette")
 	local side_of = PAD.reader.lato(use)
-	return self.ctrl[side_of], side_of == "dx" and "di destra" or "di sinistra"
+	return self.ctrl[side_of], common.stick_side[side_of]
 end
 
 function PAD.imp(self, lookup_key)
