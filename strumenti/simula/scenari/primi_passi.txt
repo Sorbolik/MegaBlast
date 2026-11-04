@@ -1,35 +1,34 @@
-# Primi passi (computer): il percorso della prima lezione. Niente tempo né
-# turni né armi: cammini fino alla bandierina a scacchi, salti sul gradino,
-# prendi la cassa che cade (la scheda del Lanciarune ferma il gioco finché non
-# tocchi PROVALA), poi spari al bersaglio; il primo tiro a vuoto, e si ritenta subito.
+# Stammi dietro (computer): la prima lezione del cortile, con le vignette
+# (battle/vignette.lua). Niente tempo, né turni, né armi. All'inizio la vignetta
+# grande di Favilla (gioco fermo, il diavoletto che cammina nel riquadro): VAI!
+# la chiude e resta l'obiettivo, a destra in alto. Favilla corre avanti
+# e si ferma al gradino; alla bandierina la vignetta del salto; sul gradino la
+# scintilla in aria: un salto tenuto fino in fondo la prende (la medaglia).
 imposta prova_missione primi_passi
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
-foto 01_inizio                       # la bandierina, niente cronometro né punti né armi
-zoom 01_zoom 2
-cammina destra 730
-aspetta 0.8
-foto 02_bandierina                   # arrivato: ora il gradino
+foto 01_vignetta                     # la vignetta grande: cammina
+tocca 293 214                        # VAI!
+aspetta 0.6
+foto 02_striscia                     # l'obiettivo in alto a destra, Favilla davanti
+cammina destra 700
+aspetta 0.2
+foto 03_favilla_corre                # Favilla corre avanti verso il gradino
+cammina destra 900
+tieni destra 0.3                     # alla bandierina la vignetta ferma il gioco
+aspetta 1
+foto 04_vignetta_salto               # la vignetta del salto
+tocca 293 214                        # VAI!
+aspetta 0.4
 cammina destra 1080 60
-tieni salta 0.15
+tieni salta 0.35                     # sul gradino
 cammina destra 1180
-aspetta 0.5
-foto 03_gradino                      # la cassa cade dal cielo
-cammina destra 1215
-tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
-aspetta_evento crate_pick 10
+aspetta 0.6
+foto 05_scintilla                    # la scintilla in aria, la riga nella striscia
+cammina destra 1290
+tieni salta 0.6                      # salto pieno: presa
 aspetta 0.8
-foto 04_scheda                       # la scheda del Lanciarune
-tocca 640 120                        # PROVALA
-aspetta 0.8
-foto 05_lanciarune                   # il Lanciarune in mano, la riga su come si mira
-mira -100 30 1
-aspetta_evento explosion 6
-aspetta 2
-foto 06_ritenta                      # a vuoto: Ritenta, nello stesso turno
-mira 141 77 1 07_mira
-aspetta_evento damage 6
-aspetta 0.3
-foto 08_colpito
-aspetta 2
-foto 09_fatta
+foto 06_presa                        # "Presa!", Favilla fiera
+cammina destra 1460
+aspetta 2.5
+foto 07_fatta                        # fine: FATTA e la medaglia della scintilla

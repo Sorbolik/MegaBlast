@@ -1,10 +1,20 @@
 # La fine del I girone (imposta prova_missione battaglia_forgia): una partita
 # completa 2 contro 2, tu e il Compagno contro il Fabbro e il cecchino, che
-# parlano.
+# parlano. Prima la scelta delle armi guidata (come in scelta_forgia.txt).
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione battaglia_forgia
-aspetta_stato modo=local fase=aim 8
+aspetta_stato modo=scelta 8
+aspetta 0.5
+tocca 640 360                       # alle armi
+aspetta 0.4
+tocca 640 410                       # primaria
+aspetta 0.3
+tocca 320 410                       # secondaria
+aspetta 0.3
+tocca 640 70                        # GIOCA
+aspetta_stato modo=local fase=aim 10
 aspetta 1.5
 foto 01_inizio
-tocca_bordo 70 34 alto destra        # zoom: un tocco, tutto lo spazio di gioco
+tocca_bordo 70 110 alto destra        # zoom: un tocco, tutto lo spazio di gioco
 aspetta 6
 foto 02_mappa

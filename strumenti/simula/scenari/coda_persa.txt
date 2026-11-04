@@ -25,7 +25,7 @@ aspetta 0.5
 foto 01_coda_persa_nei_menu               # pillola CODA PERSA · TOCCA PER RIENTRARE
 server 2v2 0 bot_dopo=60s
 aspetta 1
-tocca_bordo 640 22 alto centro            # la pillola: si rientra in coda
+tocca_bordo 640 62 alto centro            # la pillola: si rientra in coda
 aspetta_stato modo=connecting coda=si 5
 aspetta 1
 foto 02_di_nuovo_in_coda                  # la sala, il tempo da capo

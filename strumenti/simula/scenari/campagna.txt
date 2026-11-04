@@ -1,37 +1,33 @@
 # Campagna: dalla home CAMPAGNA (1062 392) si apre l'Addestramento, le lezioni
 # in carte con le stelle e cosa serve per la prossima. Il I girone (scheda
 # 860 560) è chiuso finché non si hanno le stelle che servono. Sei lezioni: carte x 256 / 640 / 1024,
-# y 440 / 324 (Primi passi in alto a sinistra, la Prima partita 1024 324).
-# Primi passi fino in fondo, poi la fine del livello: le stelle una alla volta,
+# y 440 / 324 (Stammi dietro in alto a sinistra).
+# Stammi dietro fino al cancello, poi la fine del livello: Fatta e la medaglia,
 # RIPROVA 460 110, AVANTI 820 110, la freccia per la campagna 62 658.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 
 aspetta 2
 foto 00_home
 tocca 1062 392                      # CAMPAGNA
 aspetta 1
 foto 01_addestramento
-tocca 860 560                       # I girone: chiuso
+tocca 672 578                       # I girone: chiuso
 aspetta 0.5
 foto 01b_girone_chiuso
-tocca 420 560                       # di nuovo l'Addestramento
+tocca 240 578                       # di nuovo l'Addestramento
 aspetta 0.5
-tocca 256 440                       # Primi passi
+tocca 256 480                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.8
 foto 02_scopo
-cammina destra 730
-cammina destra 1080 60
-tieni salta 0.15
-cammina destra 1180
+cammina destra 700                   # dietro a Favilla (Stammi dietro: niente casse)
+cammina destra 900
+tieni destra 0.3
 aspetta 0.5
-cammina destra 1215
-tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
-aspetta_evento crate_pick 10
-aspetta 0.8
-tocca_centro 640 120                       # PROVALA
-aspetta 0.8
-mira 141 77 1
-aspetta_evento damage 6
+cammina destra 1080 60
+tieni salta 0.35                     # sul gradino
+cammina destra 1180
+cammina destra 1460                  # al cancello
 aspetta 0.6
 foto 04_fatta
 aspetta 1.6
@@ -41,8 +37,9 @@ foto 06_stelle_accese
 tocca 62 658                        # la freccia: si torna alla campagna
 aspetta 1
 foto 07_campagna
-tocca 640 440                       # Il turno
+tocca 640 480                       # Il mio vecchio Lanciarune
 aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
 tocca 62 658                        # la rotellina: ESCI DALLA PARTITA accanto, la missione e' ferma
 aspetta 0.5
 foto 08_rotellina

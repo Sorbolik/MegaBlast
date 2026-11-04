@@ -1,7 +1,9 @@
 # La scheda personaggio su altri schermi: da girare con --schermo 1600x720
 # (telefono 20:9) e --schermo 960x720 (tablet 4:3). Profilo, schieramento e
-# striscia restano al centro senza deformarsi; indietro, livello, titolo e
-# tempo dello schieramento si attaccano ai bordi veri. Tocchi in pixel del
+# striscia restano al centro senza deformarsi (il contenuto dei menu con la
+# testata sta sotto di lei, attaccato al bordo alto: tocca_bordo ... alto
+# centro); indietro, livello, titolo e tempo dello schieramento si attaccano
+# ai bordi veri. Tocchi in pixel del
 # gioco al centro (tocca_centro) o dai bordi (tocca_bordo). Con la striscia del
 # 2 contro 2 la rotellina scende sotto (62 112 dall'angolo) a 20:9, a 4:3 no.
 imposta prova_scelta 1
@@ -11,7 +13,7 @@ aspetta 1.5
 tocca_centro 400 300                # il diavoletto: il profilo
 aspetta 0.5
 foto 01_profilo_scheda
-tocca_centro 586 652                # STATISTICHE
+tocca_bordo 295 142 alto centro    # STATISTICHE (le schede stanno sotto la testata)
 aspetta 0.3
 foto 02_profilo_statistiche
 tocca_bordo 62 62 alto sinistra     # indietro
@@ -19,10 +21,10 @@ aspetta_stato modo=menu 3
 aspetta 0.3                         # lo scivolo finisce
 tocca_bordo 205 323 basso destra    # ALLENAMENTO
 aspetta 1
-tocca_centro 640 460                # 2 CONTRO 2 (la striscia va da un bordo all'altro)
-tocca_centro 640 140                # AVANTI (la mappa resta A CASO)
+tocca_bordo 640 260 alto centro    # 2 CONTRO 2 (la striscia va da un bordo all'altro)
+tocca_bordo 640 580 alto centro    # AVANTI (la mappa resta A CASO)
 aspetta 0.3
-tocca_centro 640 140                # GIOCA
+tocca_bordo 640 580 alto centro    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8
 foto 03_schieramento

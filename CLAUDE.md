@@ -2,8 +2,9 @@
 
 Documenti, CLAUDE.md, messaggi di commit e PR in italiano. Il codice (nomi di file,
 funzioni, variabili e commenti) passa all'inglese a ondate (piano di Sergio, 2 nov):
-già in inglese i nomi e i commenti di tutto `client/` e `server/` e dei loro test,
-tranne il bot (`client/sim/bot.lua`, `rete.lua`, `tests/bot_test.lua`) e i file scritti
+già in inglese i nomi e i commenti di tutto `client/` e `server/` e dei loro test
+(il bot con la PR 8: le chiavi dei pesi, `M.PESI`, e i campi che leggono gli strumenti
+Python restano italiani, sono dati salvati dall'arena), e anche i file scritti
 dagli strumenti o dall'editor (`body.lua`, `animations.lua`, `skins.lua`, `pivots.lua`,
 `grips.lua`, `weapons.lua`, `devil.lua`, `paintings.lua`): i loro campi sono in inglese, ma
 i nomi dei pezzi, dei posti, dei canali, delle clip e delle immagini restano italiani
@@ -18,8 +19,9 @@ della GUI) resta italiano per ora. Nei file in
 inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
 errori del server) restano in italiano. Si rinomina con `strumenti/rinomina/rinomina.py`.
 Le frasi del gioco stanno in `client/lang/it.lua` (un gruppo per schermata, come si usano
-in `client/lang/text.lua`; per ora i menu, il resto arriva con la PR 6b e 6c): una frase
-nuova di un menu va lì, non nel codice (`tests/lang_test.lua` controlla le chiavi).
+in `client/lang/text.lua`; ci sono tutte quelle del client, fuori restano solo i testi della
+simulazione: missioni, premi, campagna): una frase nuova va lì, non nel codice
+(`tests/lang_test.lua` controlla le chiavi).
 
 ## Controlli: veloci in locale, completi su main (Sergio, 3 nov)
 
@@ -150,6 +152,22 @@ scarica con `-eventi https://…/eventi.json`. Se cambiano armi, punti o regole
 degli eventi, rifai `luajit strumenti/eventi/dati.lua` (`go test ./server/` lo
 controlla); `node strumenti/eventi/prova.mjs` prova pagina e Worker.
 
+## Vignette
+
+Le righe di chi ti guida (Favilla nel cortile, il Fabbro nei gironi) parlano nella
+striscia in alto, sotto il punteggio, col ritratto; le battute di tutti i bot sono
+testo semplice sopra la loro testa (`targa.battuta`, Sergio, 4 nov). Quello che
+spiega un comando ferma il gioco, ogni volta, sulla vignetta grande col disegno della mossa
+e va avanti solo col suo pulsante
+(`client/battle/vignette.lua`, piano dei livelli
+https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2). I ritratti si ritagliano dai
+fogli scelti di WB-012 con `python3 strumenti/ritratti/taglia.py`. Scenario
+`vignette.txt` (tutti i disegni); gli scenari che provano altro hanno
+`imposta prova_vignette no`.
+Nel cortile Favilla è una comparsa su un percorso fisso (`guida` della lezione in
+`client/sim/campaign.lua`, disegnata da `client/battle/favilla.lua`), non un robot: non
+cambia la simulazione. Medaglie facoltative: `medaglia = { conta, at_least | at_most, testo }`.
+
 ## Pezzi nuovi del diavoletto (pelli)
 
 Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo
@@ -194,7 +212,7 @@ nel gioco non cambia niente").
 ## Bot e arena
 
 Il bot (`client/sim/bot.lua`) preme gli stessi tasti di un giocatore e pensa
-provando le mosse su copie della partita (`bot.mondo`, `game:advance`): se
+provando le mosse su copie della partita (`bot.world`, `game:advance`): se
 cambi la fisica il bot la segue da solo. Deve restare deterministico e uguale
 su LuaJIT e gopher-lua (`go test ./server/ -run TestBot`): niente tempo vero,
 niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio.

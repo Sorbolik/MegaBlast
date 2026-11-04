@@ -129,7 +129,7 @@ type seat struct {
 	away int     // ticks spent disconnected
 	gone bool    // not coming back
 	team int
-	bot  int // > 0: a bot of that grade (sim/bot.lua GRADI) that fills the queue, no connection
+	bot  int // > 0: a bot of that grade (sim/bot.lua GRADES) that fills the queue, no connection
 	in   held
 }
 

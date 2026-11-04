@@ -13,6 +13,7 @@
 local ui = require "ui.ui"
 local screen = require "ui.screen"
 local background = require "circles.background"
+local common = require("lang.text").common
 
 local M = {}
 
@@ -46,7 +47,7 @@ function M.new()
 	gui.play_flipbook(e.disco, "favilla")
 	gui.set_color(e.disco, CARD)
 	child(e.disco, e.centro)
-	local nome = child(ui.titolo("MEGABLAST", 0, -185, 1.2, ui.C.LIGHT), e.centro)
+	local nome = child(ui.titolo(common.game_name, 0, -185, 1.2, ui.C.LIGHT), e.centro)
 	gui.set_adjust_mode(nome, gui.ADJUST_FIT)
 	e.riga = child(ui.testo("", 0, -240, 0.75, ui.C.TEXT), e.centro)
 	M.update(e, 0)

@@ -3,6 +3,7 @@
 # GIOCA (640 70). Carte come in scelta.txt (x = 320, 640, 960; y = 410). La
 # rotellina in alto a sinistra (62 658) apre ESCI accanto (186 658).
 # Nel simulatore si offrono tutte le armi (nel gioco solo quelle già viste).
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione battaglia_forgia
 
 aspetta_stato modo=scelta 8

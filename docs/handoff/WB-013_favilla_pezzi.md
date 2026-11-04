@@ -72,6 +72,7 @@ Finché i pezzi non ci sono, nel gioco Favilla è l'apprendista con la fiamma bi
 | R5 | `art/WB-009/riferimenti/R3_manichino.png` | come si attaccano i pezzi |
 | R6 | `art/WB-013/scelti/tre_quarti.png` | il tre quarti scelto in fase 1 (c'è solo dopo) |
 | R7 | `art/WB-013/scelti/espressioni.png` | le espressioni scelte in fase 1 (c'è solo dopo) |
+| R8 | `art/WB-009/7_teste.png` | le nove teste dell'apprendista approvate: **solo il formato** da copiare (niente collo, contorno nero chiuso sotto il mento), non le facce |
 
 ## Immagini da generare
 
@@ -84,7 +85,7 @@ strumento di taglio.
 |---|---|---|---|---|
 | 1 | `1_tre_quarti` | R2, R1, R3 | 1024×1536 verticale | 2 |
 | 1 | `2_espressioni` | R1, R2, R3 | 1536×1536 (o 1024×1024) | 1 |
-| 2 | `3_teste` | R6, R7 | 1536×1536 (o 1024×1024) | 1 |
+| 2 | `3_teste` | R6, R7, R8 | 1536×1536 (o 1024×1024) | 1 |
 | 2 | `4_corpo` | R6, R4, R5 | 3:2 orizzontale, la più grande possibile (minimo 1536×1024) | 1 |
 | 2 | `5_braccia_chiuse` | R6, `art/WB-013/4_corpo.png` | 1536×1024 | 1 |
 
@@ -126,11 +127,11 @@ Rendering rules, very strict, because these drawings will be traced into vector 
 ### `3_teste`
 
 ```
-Image 1 is Favilla, a character of our game, in a three-quarter view facing right: copy her head exactly (shape, flame hair, horns, ears, eyelashes, muzzle, colors, flat style). Image 2 is her approved expression sheet: nine heads in a 3 by 3 grid.
+Image 1 is Favilla, a character of our game, in a three-quarter view facing right: copy her head exactly (shape, flame hair, horns, ears, eyelashes, muzzle, colors, flat style). Image 2 is her approved expression sheet: nine heads in a 3 by 3 grid. Image 3 is another character of the same game, a little imp apprentice: it shows ONLY the FORMAT to copy, nine heads cut out with no neck and a closed black outline under the chin. Do not copy its faces, horns or colors.
 
 Draw NINE heads of her in a 3 by 3 grid, all the same size, all facing right in three-quarter view, well apart from each other, the head outline, flame, horns and ears IDENTICAL in all nine. They are the nine expressions of image 2, in the same order, copied exactly. Row 1: 1) SLY (her default confident closed-mouth smile), 2) HIT (eyes squeezed shut > <, jagged open mouth), 3) VICTORY (happy closed eyes, big laughing mouth). Row 2: 4) KNOCKED OUT (spiral pupils, wavy mouth, tongue slightly out), 5) AIMING (near eye wide open looking right, far eye squeezed, tongue tip out of the corner of the mouth), 6) ANGRY (eyebrows in a V, clenched teeth). Row 3: 7) DEFEATED (sad, eyes down, downturned mouth), 8) SCARED (wide eyes, tiny pupils, small open mouth), 9) TAUNT (wink and tongue out).
 
-NO NECK AT ALL, very important: each head is drawn exactly as if it had been cut out of image 1 along the outline of the head. It ends at the chin and at the back of the jaw: nothing below them, no neck, no neck stub, no collar. The thick black #000000 outline is CLOSED all around each head, also under the chin, under the muzzle and under the back of the jaw, smooth and even. The flame stays whole on top of every head, inside the picture.
+NO NECK AT ALL, very important: each head is drawn exactly as if it had been cut out of image 1 along the outline of the head. It ends at the chin and at the back of the jaw: nothing below them, no neck, no neck stub, no collar. The thick black #000000 outline is CLOSED all around each head, also under the chin, under the muzzle and under the back of the jaw, smooth and even, exactly like the heads of image 3. The neck stubs of image 2 must NOT appear. The flame stays whole on top of every head, inside the picture.
 
 Rendering rules, very strict, because these heads will be traced into vector shapes:
 - FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
@@ -148,7 +149,7 @@ Image 2 is a layout sheet: grey placeholder parts on a flat magenta #FF00FF back
 
 Make the BODY PARTS SHEET of Favilla of image 1, cut apart like a paper puppet, on the same canvas as image 2 with the same flat magenta #FF00FF background. Leave the WHOLE FIRST ROW EMPTY (pure magenta, no heads: the heads are already done). Draw only these parts, each over its grey placeholder, well separated from each other, each COMPLETE even where other parts would hide it in image 1:
 Row 2: the TORSO of image 1 without head, arms, legs and tail: the same shape as in image 1, with her parchment shirt, the top of the overalls, the brown straps with the brass buttons and the small leather apron, and a short neck stub of skin on top. NO shoulder bumps and no stubby arms: at each shoulder the torso simply ends with a smooth, round, full edge of shirt. Then NOTHING where the grey wing is (leave that spot empty magenta: she has no wings). Then the WHOLE TAIL of image 1 in one piece, with the same curve, the same thickness and the same tip: one smooth continuous tube, thick at the root and thinner towards the tip, with no breaks, seams or joints along it.
-Row 3: the near arm and the far arm, copied from image 1 (rolled-up shirt sleeve at the top, bare red forearm, same open relaxed four-fingered hand), each straight and hanging down from a round shoulder end; the near leg and the far leg, copied from image 1 (rolled-up parchment overalls leg, brown boot pointing right), each straight, round at the hip end; one closed four-fingered fist, the size of the hands in image 1 (a small round piece, outlined all around).
+Row 3: the near arm and the far arm, copied from image 1 (rolled-up shirt sleeve at the top, bare red forearm, same open relaxed four-fingered hand), each straight and hanging down from a round shoulder end; the near leg and the far leg, copied from image 1 (rolled-up parchment overalls leg, brown boot), each straight, round at the hip end, and BOTH BOOTS POINTING TO THE RIGHT in side view, like the near boot of image 1 (in image 1 the far boot turns towards the viewer: here it must point right like the other); one closed four-fingered fist, the size of the hands in image 1 (a small round piece, outlined all around).
 
 OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends. At a joint end the black outline gets gradually thinner and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the neck stub and the two shoulder edges of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail. The color near every joint end must be PERFECTLY UNIFORM: plain shirt #E6D2A6 at the shoulders and at the top of the arms, plain overalls #E6D2A6 at the hips and at the top of the legs, plain skin #B8432A at the neck stub and at the root of the tail. No shadow, no highlight, no fold, no line, no color change in the last stretch before the joint, so that two overlapping parts blend into one surface with no visible seam. Keep shadow shapes well away from the joint ends.
 
@@ -190,13 +191,40 @@ Rendering rules, very strict, because these arms will be traced into vector shap
 
 ## Dopo le immagini (lo fa Claude)
 
-Come per l'apprendista ([PERSONAGGI.md](PERSONAGGI.md), "Dopo le immagini"): tavolozza
-`strumenti/stampino/tavolozze/favilla.json` coi colori qui sopra, ricalco in SVG coi colori
-esatti (`vettoriale.py`), taglio con `taglia.py --nome favilla --categoria personaggio
---allinea --senza ala --teste 3_teste_col.png`, poi `--aggiungi --pugni` per le braccia
-chiuse; editor ripubblicato; Sergio la prova animata. Nel gioco prende il posto della
-Favilla provvisoria nel cortile, nella Forgia e nel Duello; simulazione con
-`imposta prova_pelli favilla`.
+Come per l'apprendista ([PERSONAGGI.md](PERSONAGGI.md), "Dopo le immagini"), con **tutte** le
+tecniche di WB-009 (Sergio, 2026-11-04: «ricordiamoci tutte le tecniche di trasformazione in
+vettoriale e di resa di qualità usate per l'apprendista»):
+
+1. **Tavolozza** `strumenti/stampino/tavolozze/favilla.json` coi colori qui sopra.
+2. **Ricalco a strati, non a codice:** `vettoriale.py --tavolozza ... FOGLIO.png FOGLIO.svg
+   FOGLIO_col.png [RITOCCHI.json]`. Ogni pixel va al colore più vicino della tavolozza e ogni
+   colore si ricalca con potrace in uno strato; gli strati si impilano dal fondo al contorno.
+   Niente `vtracer` (sposta i colori e fa più nodi), niente SVG chiesti a ChatGPT.
+3. **Colori esatti ovunque** («è troppo importante», 2 nov): negli SVG ogni riempimento è un
+   codice della tavolozza. Il controllo si ferma su ogni colore fuori.
+4. **Colori vicini scelti per macchia,** come crema e corna dell'apprendista. Qui sono tre:
+   muso `#F1DFB0`, corna `#EFE3C8` e camicia/salopette `#E6D2A6`. Il muso sta dentro la pelle
+   della faccia, le corna sporgono dalla testa, la camicia sta sul corpo. Allo stesso modo il
+   bianco della fiamma, i denti e la lucina degli occhi si distinguono per posto. Se servono,
+   regole nuove in `vettoriale.py`.
+5. **Righe sottili:** le righe scure sottili diventano nere; i fili di un colore prendono
+   quello vicino.
+6. **Ritocchi a mano** in un JSON accanto all'SVG (poligoni col colore da mettere), per gli
+   errori di ChatGPT. Per esempio il nero alle spalle o un'ombra vicino a una giuntura (con
+   l'apprendista: le spalline del busto).
+7. **I PNG si fanno solo dagli SVG** (`_col.png`) e il taglio parte da lì.
+8. **Teste senza collo dal foglio `3_teste`:** `taglia.py --teste 3_teste_col.png`. Niente
+   taglio del collo a script: il collo è del busto.
+9. **Taglio** `taglia.py 4_corpo_col.png --nome favilla --categoria personaggio --allinea
+   --senza ala --teste 3_teste_col.png --tavolozza ...`, poi `--aggiungi --pugni
+   5_braccia_chiuse_col.png`. I pugni si portano all'altezza delle braccia aperte.
+   Ogni disegno è una versione numerata (busto_1, testa_colpita_1…) e nell'editor si sceglie
+   quale va in scena. La coda è divisa in segmenti, ognuno col suo SVG (bordo e colore).
+10. **Editor** ripubblicato coi pezzi in SVG; Sergio la prova animata (specchio, perni,
+    radice della coda tornano con "Manda a Claude" e `taglia.py --ritocchi`).
+11. **Simulazione** con `imposta prova_pelli favilla` e foto. Nel gioco prende il posto della
+    Favilla provvisoria (l'apprendista col nome azzurro) nel cortile, nella Forgia e nel
+    Duello.
 
 ---
 
@@ -209,6 +237,10 @@ Favilla (la targa basta); se in partita non si capisce di che squadra è, si agg
 dettaglio.
 
 ## Consegna di Codex
+
+Fase 1: due esecuzioni sul ramo `design/WB-013` (`cb7fb8b`, `9d3514f`), tutte e due scartate
+da Codex: secondo lui le sfumature, il corpo un po' più slanciato dell'apprendista e lo stivale
+lontano girato verso chi guarda erano difetti.
 
 ### Fase 1 · 2026-11-04
 
@@ -248,3 +280,20 @@ Nove generazioni completate: tre tentativi per ciascuno dei tre risultati richie
 - Non certificati tavolozza, nero e bianco esatti al pixel; non verificati ricalco SVG, giunture animate, leggibilità a 90 px o resa nel gioco. Nessuna fase 2 eseguita. Criteri non spuntati e nessun modello conforme proposto per la scelta.
 
 ## Resoconto di Claude
+
+### Fase 1 · scelte di Sergio (2026-11-04)
+
+- **Tre quarti: A**, cioè `scartati/fase1/1_tre_quarti_1.png` del ramo `design/WB-013`.
+  Pagina delle scelte: https://claude.ai/artifact/KN8ENwzwfcznhMJhBV2jNd. Salvato in
+  `art/WB-013/scelti/tre_quarti.png` (R6).
+  - Le sfumature spariscono nel ricalco coi colori fissi.
+  - Lo stivale lontano, girato verso chi guarda, si corregge nei pezzi: `4_corpo` chiede tutti
+    e due gli stivali a destra.
+  - Il corpo un po' più slanciato dell'apprendista va bene a Sergio.
+  - La coda è giusta: cuore capovolto come nel modello.
+- **Espressioni:** il foglio dello stesso giro, `scartati/fase1/2_espressioni.png`, salvato in
+  `art/WB-013/scelti/espressioni.png` (R7). È una scelta di Claude: i due fogli sono quasi
+  uguali e questo è dello stesso giro del tre quarti.
+- **Teste senza collo e col contorno chiuso** (Sergio): `3_teste` le rifà come le nove teste
+  dell'apprendista, con quelle (R8) come esempio del formato.
+- Fase 2 pronta: `esegui WB-013 fase 2`.

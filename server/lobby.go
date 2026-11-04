@@ -71,7 +71,7 @@ func (l *Lobby) fillLoop() {
 	}
 }
 
-// botGrade: the bots' grade (sim/bot.lua GRADI, 1-10) from the average level
+// botGrade: the bots' grade (sim/bot.lua GRADES, 1-10) from the average level
 // of the people in the match: 3 up to level 4, one more every 5 levels, at
 // most 8 (the two strongest stay for the arena).
 func botGrade(players []*Player) int {

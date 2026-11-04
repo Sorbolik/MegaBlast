@@ -38,7 +38,7 @@ local CHOICES = {
 -- the frame counter (ui/frames.lua, docs/prestazioni.md), at the top right
 local FPS = choice_of("fps", { "spento", "acceso" })
 -- the choice groups: distance between centers and width of each choice
-local GROUP, CHOICE_W = 312, 148
+local GROUP, CHOICE_W = 306, 145
 -- two columns of commands
 local ROW_W, ROW_H, ROW_STEP = 470, 48, 54
 local COLUMNS = { 395, 885 }
@@ -50,23 +50,23 @@ local function build(s)
 	lit = lit and lit.ui_action
 	if s.radice then gui.delete_node(s.radice) end
 	s.buttons, s.glyphs = {}, {}
-	s.radice = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(s.radice, false)
+	s.radice = ui.radice()
 	local C = ui.C
-	ui.indietro(s.buttons, "indietro", s.radice)
-	ui.titolo(T.title, 640, 650, 1, C.TEXT, s.radice)
+	-- the header (ui.header): IMPOSTAZIONI, the pill's place, the FPS counter on the right
+	ui.header_delete(s.head)
+	s.head = ui.header(s.buttons, T.title, "indietro")
 
-	local function choice(sc, cx, y, w)
-		ui.testo(sc[2], cx, y + 44, 0.5, C.OFF, s.radice)
+	local function choice(sc, cx, y, w, h, parent)
+		ui.testo(sc[2], cx, y + h / 2 + 18, 0.5, C.OFF, parent)
 		local v = profile.setting(s.p, sc[1])
 		for i, m in ipairs(sc[3]) do
-			ui.scheda(s.buttons, cx + (i - 1.5) * (w + 6), y, w, 52, m[2], sc[1] .. ":" .. m[1], v == m[1], s.radice)
+			ui.scheda(s.buttons, cx + (i - 1.5) * (w + 6), y, w, h, m[2], sc[1] .. ":" .. m[1], v == m[1], parent)
 		end
 	end
 	for k, sc in ipairs(CHOICES) do
-		choice(sc, 640 + (k - (#CHOICES + 1) / 2) * GROUP, 542, CHOICE_W)
+		choice(sc, 640 + (k - (#CHOICES + 1) / 2) * GROUP, ui.CONTENT_TOP - 56, CHOICE_W, 52, s.radice)
 	end
-	choice(FPS, 1110, 628, 118)
+	choice(FPS, -ui.EDGE - 121, -10, 118, 44, s.head.right)
 
 	ui.testo(T.controller_keys, 640, 488, 0.7, C.OFF, s.radice)
 	local n = #controller.COMMANDS
@@ -160,6 +160,7 @@ function M.on_input(s, action_id, action)
 end
 
 function M.destroy(s)
+	ui.header_delete(s.head)
 	gui.delete_node(s.radice)
 	gui.delete_node(s.fondo)
 end

@@ -33,24 +33,27 @@ local function is_opened(c, cap)
 	return total(c.stelle) >= cap.serve
 end
 
--- each star lit for its own criterion: also the first and third yes and the second no
-local function little_stars(picked, x, y, parent)
-	for i = 1, 3 do
-		ui.stella(x + (i - 2) * 28, y, 26, picked[i] and ui.GOLD or ui.C.LINE, parent)
+-- each star lit for its own criterion: also the first and third yes and the
+-- second no. The cortile: «Fatta» and Favilla's medal (or «Fatta» alone)
+local function little_stars(picked, count, medal, x, y, parent)
+	for i = 1, count do
+		local draw = medal and i == 2 and ui.medaglia or ui.stella
+		local lit = medal and i == 2 and ui.MEDAL or ui.GOLD
+		draw(x + (i - (count + 1) / 2) * 28, y, 26, picked[i] and lit or ui.C.LINE, parent)
 	end
 end
 
 local function card_list(c, cap)
 	for i, l in ipairs(cap.missioni) do
 		local col, riga = (i - 1) % COLUMNS, math.floor((i - 1) / COLUMNS)
-		local x, y = 640 + (col - 1) * (CARD_W + 24), 440 - riga * STEP_Y
+		local x, y = 640 + (col - 1) * (CARD_W + 24), ui.BODY_TOP - CARD_H / 2 - riga * STEP_Y
 		local n = ui.button(c.buttons, x, y, CARD_W, CARD_H, "", "missione:" .. l.id, nil, c.radice)
 		local picked = c.stelle[l.id] or {}
 		ui.testo(string.upper(l.titolo), 0, 26, 0.8, ui.C.TEXT, n)
-		little_stars(picked, 0, -2, n)
-		-- what is missing: the criteria of the unlit stars
 		local cr, missing = missions.criteria(l), {}
-		for i = 2, 3 do
+		little_stars(picked, #cr, l.medaglia ~= nil, 0, -2, n)
+		-- what is missing: the criteria of the unlit stars
+		for i = 2, #cr do
 			if not picked[i] then missing[#missing + 1] = cr[i] end
 		end
 		if #missing > 0 then ui.testo(table.concat(missing, "  -  "), 0, -32, 0.55, ui.C.OFF, n) end
@@ -60,20 +63,19 @@ end
 local function build(c)
 	if c.radice then gui.delete_node(c.radice) end
 	c.buttons = {}
-	c.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
-	gui.set_visible(c.radice, false)
+	c.radice = ui.radice()
 	local C = ui.C
-	ui.indietro(c.buttons, "indietro", c.radice)
-	ui.titolo(common.campaign, 640, 640, 1, C.TEXT, c.radice)
+	-- the header (ui.header): CAMPAGNA, the pill's place, the chapters as tabs under it
+	ui.header_delete(c.head)
+	c.head = ui.header(c.buttons, common.campaign, "indietro")
 	local n = #payload.CAPITOLI
 	local w = math.min(420, math.floor(1100 / n) - 20)
-	local chosen
+	local chosen, tabs, active = nil, {}, 1
 	for i, cap in ipairs(payload.CAPITOLI) do
-		local is_active = c.scelta.chapter == cap.id
-		if is_active then chosen = cap end
-		ui.scheda(c.buttons, 640 + (i - (n + 1) / 2) * (w + 20), 560, w, 56, string.upper(cap.titolo),
-			"capitolo:" .. cap.id, is_active, c.radice)
+		if c.scelta.chapter == cap.id then chosen, active = cap, i end
+		tabs[i] = { string.upper(cap.titolo), "capitolo:" .. cap.id, w }
 	end
+	ui.header_tabs(c.head, c.buttons, tabs, active)
 	if is_opened(c, chosen) then
 		card_list(c, chosen)
 	else
@@ -108,6 +110,7 @@ function M.on_input(c, action_id, action)
 end
 
 function M.destroy(c)
+	ui.header_delete(c.head)
 	gui.delete_node(c.radice)
 	gui.delete_node(c.fondo)
 end

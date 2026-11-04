@@ -19,6 +19,7 @@ local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local profile = require "menu.profile"
 local T = require("lang.text").armory
+local common = require("lang.text").common
 
 local M = {}
 
@@ -64,15 +65,21 @@ end
 
 local function to_active(a) return profile.active_loadout(a.prof) end
 
+-- the content left of the stats column: from the left margin to 30 before it
+local LEFT_W = 1280 - 2 * ui.EDGE - 250 - 30
+local LEFT_X = ui.EDGE + LEFT_W / 2
+
 -- Stats ------------------------------------------------------------------------
 
 local function statistics(a, parent)
 	local c = ui.C
 	local b = base()
 	local st = loadout.stats(b, to_active(a), profile.tier(a.prof, to_active(a)))
-	local pan = ui.pannello(1135, 330, 250, 560, parent)
-	ui.titolo(T.stats_title, 0, 255, 0.6, c.TEXT, pan)
-	local y = 215
+	-- the column on the right, from the content's top to the bottom margin
+	local h = ui.BODY_TOP - ui.EDGE
+	local pan = ui.pannello(1280 - ui.EDGE - 125, ui.EDGE + h / 2, 250, h, parent)
+	ui.titolo(common.stats, 0, h / 2 - 28, 0.6, c.TEXT, pan)
+	local y = h / 2 - 70
 	for _, s in ipairs(M.STATISTICS) do
 		local k, nome, modo = s[1], s[2], s[3]
 		if st[k] ~= nil then
@@ -102,8 +109,10 @@ local function sheet_set(a, parent)
 	local as = to_active(a)
 	local tiers = profile.tier(a.prof, as)
 	for r, slot in ipairs(equip.SLOTS) do
-		local y = 540 - (r - 1) * 92
-		ui.testo(slot.name, 110, y, 0.8, c.TEXT, parent)
+		-- the first row's buttons start at the content's top
+		local y = ui.BODY_TOP - 31 - (r - 1) * 88
+		local label = ui.testo(slot.name, ui.EDGE, y, 0.8, c.TEXT, parent)
+		gui.set_pivot(label, gui.PIVOT_W)
 		for i, set in ipairs(equip.SETS) do
 			local chosen = as.gear[slot.id] == set.id
 			local x = 260 + (i - 1) * 138
@@ -120,7 +129,7 @@ local function sheet_set(a, parent)
 	local id, top = equip.full_set(as.gear, tiers)
 	local set = id and equip.BY_ID[id]
 	if not (set and set.bonus) then return end
-	local pan = ui.pannello(510, 140, 940, 130, parent)
+	local pan = ui.pannello(LEFT_X, ui.EDGE + 65, LEFT_W, 130, parent)
 	ui.titolo(set.name .. " · " .. string.upper(set.style), -200, 38, 0.7, c.BRACE, pan)
 	for i, v in ipairs({ "a", "b" }) do
 		local y = 4 - (i - 1) * 40
@@ -139,11 +148,11 @@ local function sheet_tree(a, parent)
 	local tree = to_active(a).tree
 	local punti = profile.punti(a.prof)
 	-- branch columns in the space left of the stats
-	local step = math.min(440, 990 / #skills.BRANCHES)
+	local step = math.min(440, LEFT_W / #skills.BRANCHES)
 	for b, tree_branch in ipairs(skills.BRANCHES) do
-		local x = 510 + (b - (#skills.BRANCHES + 1) / 2) * step
-		ui.titolo(tree_branch.name, x, 575, 0.7, c.TEXT, parent)
-		ui.testo(T.points:format(skills.spent(tree, tree_branch.id)), x, 548, 0.6, c.OFF, parent)
+		local x = LEFT_X + (b - (#skills.BRANCHES + 1) / 2) * step
+		ui.titolo(tree_branch.name, x, ui.BODY_TOP - 12, 0.7, c.TEXT, parent)
+		ui.testo(T.points:format(skills.spent(tree, tree_branch.id)), x, ui.BODY_TOP - 38, 0.6, c.OFF, parent)
 		-- nodes per row
 		local lines = {}
 		for _, n in ipairs(skills.NODES) do
@@ -153,7 +162,7 @@ local function sheet_tree(a, parent)
 			end
 		end
 		for r, list_of in ipairs(lines) do
-			local y = 490 - (r - 1) * 100
+			local y = ui.BODY_TOP - 95 - (r - 1) * 100
 			for i, gui_node in ipairs(list_of) do
 				local nx = x + (i - (#list_of + 1) / 2) * 156
 				local degrees = tree[gui_node.id] or 0
@@ -170,7 +179,7 @@ local function sheet_tree(a, parent)
 		end
 	end
 	-- at the bottom: points, chosen node, rebuild
-	local pan = ui.pannello(510, 70, 940, 90, parent)
+	local pan = ui.pannello(LEFT_X, ui.EDGE + 45, LEFT_W, 90, parent)
 	ui.testo(T.points_spent:format(skills.spent(tree), punti), -360, 18, 0.9, c.BRACE, pan)
 	ui.testo(T.level:format(a.prof.livello), -360, -14, 0.55, c.OFF, pan)
 	local gui_node = skills.BY_ID[a.ultimo or ""]
@@ -185,18 +194,20 @@ end
 
 local function build(a)
 	if a.radice then gui.delete_node(a.radice) end
+	ui.header_delete(a.head)
 	a.buttons = {}
-	a.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
-	gui.set_visible(a.radice, false)
 	local c = ui.C
-	ui.indietro(a.buttons, "indietro", a.radice)
-	ui.titolo(T.title, 220, 680, 1, c.TEXT, a.radice)
-	ui.scheda(a.buttons, 470, 622, 150, 48, T.tab_set, "scheda:set", a.scheda == "set", a.radice)
-	ui.scheda(a.buttons, 630, 622, 150, 48, T.tab_tree, "scheda:albero", a.scheda == "albero", a.radice)
-	ui.testo(T.loadout, 900, 680, 0.7, c.OFF, a.radice)
+	-- the header (ui.header): ARMERIA, the pill's place, the loadouts on the right
+	a.head = ui.header(a.buttons, common.armory, "indietro")
+	ui.header_tabs(a.head, a.buttons, { { T.tab_set, "scheda:set", 150 }, { T.tab_tree, "scheda:albero", 150 } },
+		a.scheda == "set" and 1 or 2)
 	for i = 1, loadout.LOADOUTS do
-		ui.scheda(a.buttons, 940 + i * 70, 680, 60, 48, tostring(i), "assetto:" .. i, a.prof.is_active == i, a.radice)
+		ui.scheda(a.buttons, -ui.EDGE - 26 - (loadout.LOADOUTS - i) * 64, 0, 52, 48, tostring(i), "assetto:" .. i,
+			a.prof.is_active == i, a.head.right)
 	end
+	local n = ui.testo(T.loadout, -ui.EDGE - 16 - loadout.LOADOUTS * 64, 0, 0.7, c.OFF, a.head.right)
+	gui.set_pivot(n, gui.PIVOT_E)
+	a.radice = ui.radice()
 	if a.scheda == "set" then sheet_set(a, a.radice) else sheet_tree(a, a.radice) end
 	statistics(a, a.radice)
 end
@@ -246,6 +257,7 @@ function M.on_input(a, action_id, action)
 end
 
 function M.destroy(a)
+	ui.header_delete(a.head)
 	gui.delete_node(a.radice)
 	gui.delete_node(a.fondo)
 end

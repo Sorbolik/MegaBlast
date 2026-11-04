@@ -1,0 +1,61 @@
+# Le vignette: tutti i disegni delle mosse (battle/vignette.lua), una pagina
+# per disegno, a metà del movimento (imposta prova_vignette tutte). Solo
+# AVANTI gira pagina (un tocco fuori non fa niente); l'ultima chiude e la
+# lezione parte.
+imposta prova_vignette tutte
+imposta prova_missione primi_passi
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2
+foto 01_annulla
+tocca 900 300                        # fuori dal pulsante: resta la stessa pagina
+aspetta 0.5
+foto 01_fuori
+tocca 293 214                        # AVANTI                        # AVANTI
+aspetta 2
+foto 02_baratto
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 03_bellows
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 04_cammina
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 05_eagle
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 06_hook
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 07_lunge
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 08_mallet
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 09_mira
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 10_missile
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 11_parachute
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 12_primaria
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 13_punch
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 14_salta
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 15_secondaria
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 16_sword
+tocca 293 214                        # AVANTI
+aspetta 2
+foto 17_teleport
+tocca 293 214                        # AVANTI

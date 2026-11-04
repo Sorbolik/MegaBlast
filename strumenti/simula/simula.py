@@ -433,6 +433,10 @@ def comando(g, riga):
         for i in range(1, passi + 1):
             g.attendi(num(4, 0.5) / passi)
             g.punta(num(0) + (num(2) - num(0)) * i / passi, num(1) + (num(3) - num(1)) * i / passi)
+        if len(a) > 5:
+            # trascina ... S FOTO: la foto col dito ancora giù (la guida dello zoom)
+            g.attendi(0.15)
+            g.scatta(a[5])
         g.xdo("mouseup", 1)
     elif c == "tocca_robot":
         # tocco breve a (dx, dy) dal centro del robot di turno (la sua targa: il cartellino)

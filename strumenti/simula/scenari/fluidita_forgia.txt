@@ -1,0 +1,31 @@
+# Fluidità nella Battaglia della Forgia (Sergio, 4 nov: «scatti contro il
+# fabbro, da telefono»): scelta delle armi, poi tre giri di turni 2 contro 2
+# col Fabbro e il cecchino che parlano, lo zoom e i colpi che scavano. Meglio
+# con --senza-video; gli scatti vanno in simulazione/fotogrammi.txt.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+imposta prova_missione battaglia_forgia
+aspetta_stato modo=scelta 8
+aspetta 0.5
+tocca 640 360                       # alle armi
+aspetta 0.4
+tocca 640 410                       # primaria
+aspetta 0.3
+tocca 320 410                       # secondaria
+aspetta 0.3
+tocca 640 70                        # GIOCA
+aspetta_stato modo=local fase=aim 10
+aspetta 1.5
+foto 01_inizio
+cammina destra 600
+aspetta 1
+mira 150 100 0.5
+aspetta 8
+foto 02_dopo_il_colpo
+aspetta 30
+foto 03_i_bot
+tocca_bordo 70 110 alto destra       # zoom: tutto lo spazio di gioco
+aspetta 30
+foto 04_mappa
+tocca_bordo 70 110 alto destra       # zoom: di nuovo vicino
+aspetta 40
+foto 05_dopo

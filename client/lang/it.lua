@@ -5,6 +5,7 @@
 return {
 	-- shared by many screens
 	common = {
+		game_name = "MEGABLAST",
 		play = "GIOCA",
 		quit = "ESCI",
 		next = "AVANTI",
@@ -14,6 +15,27 @@ return {
 		events = "EVENTI",
 		tournament = "TORNEO",
 		all = "TUTTE",
+		you = "Tu",
+		retry = "RIPROVA",
+		-- the sticks' sides, in a sentence
+		stick_side = { dx = "di destra", sx = "di sinistra" },
+		bot = "BOT",
+		training = "ALLENAMENTO",
+		armory = "ARMERIA",
+		stats = "STATISTICHE",
+		replay = "RIVEDI",
+	},
+
+	-- battle/vignette.lua: who speaks and the buttons of the big vignette
+	vignette = {
+		favilla = "FAVILLA",
+		-- battle/favilla.lua: her name above her head in the cortile
+		favilla_name = "Favilla",
+		fabbro = "IL FABBRO",
+		apprendista = "APPRENDISTA",
+		go = "VAI!",
+		close = "CHIUDI",
+		close_pad = "B  CHIUDI",
 	},
 
 	-- menu/pick.lua: the weapon draft
@@ -43,9 +65,7 @@ return {
 
 	-- menu/training.lua: ALLENAMENTO, mode and bots, then the map
 	training = {
-		title = "ALLENAMENTO",
 		mode = "MODO",
-		bot = "BOT",
 		levels = { facile = "FACILE", normale = "NORMALE", difficile = "DIFFICILE" },
 		pick_map = "SCEGLI LA MAPPA",
 		mode_and_bot = "%s  ·  BOT %s",
@@ -64,7 +84,6 @@ return {
 		level = "LIVELLO %d",
 		xp = "+%d esperienza",
 		skill_point = "nuovo punto abilità!",
-		replay = "RIVEDI",
 		go_on = "CONTINUA",
 	},
 
@@ -108,7 +127,6 @@ return {
 		lead = "Punti di vantaggio: %s",
 		record_one = "il tuo record: %s stella",
 		record = "il tuo record: %s stelle",
-		retry = "RIPROVA",
 	},
 
 	-- menu/tally.lua: the moments of the match, in the profile's history
@@ -142,7 +160,6 @@ return {
 		tap_to_pick = "TOCCA PER SCEGLIERE LE ARMI",
 		weapons_in = "ARMI TRA",
 		versus = "VS",
-		bot = "BOT",
 		power = "%s potere",
 		powers = "%s poteri",
 	},
@@ -182,11 +199,9 @@ return {
 
 	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
 	armory = {
-		title = "ARMERIA",
 		tab_set = "SET",
 		tab_tree = "ALBERO",
 		loadout = "ASSETTO",
-		stats_title = "STATISTICHE",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			max_hp = "Vita", walk_speed = "Corsa", jump_height = "Salto", air_speed = "In aria",
@@ -212,14 +227,12 @@ return {
 
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
 	profile_tabs = {
+		title = "PROFILO",
 		tab_sheet = "SCHEDA",
-		tab_stats = "STATISTICHE",
 		tab_matches = "PARTITE",
 		level = "LIV %s",
 		xp = "%s / %s XP",
-		bot = "BOT",
 		-- SCHEDA
-		you = "Tu",
 		loadout = "ASSETTO",
 		loadout_n = "ASSETTO %s",
 		slot_level = "%s %s",
@@ -234,7 +247,6 @@ return {
 		all_steps = "tutti gli scatti presi",
 		no_piece = "nessun pezzo",
 		pick_in_armory = "sceglilo nell'ARMERIA",
-		armory = "ARMERIA",
 		-- STATISTICHE
 		matches = "PARTITE",
 		won = "VINTE",
@@ -265,8 +277,371 @@ return {
 		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
 		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
 		no_moments = "nessun momento da ricordare",
-		replay = "RIVEDI",
 		replay_local_only = "replay solo delle partite su questo telefono",
 		replay_missing = "replay non disponibile",
+	},
+
+
+	-- menu/home.lua: the home
+	home = {
+		your_profile = "IL TUO PROFILO",
+		leave_queue_first = "esci dalla coda per giocarla",
+		same_phone = "STESSO TELEFONO",
+	},
+
+	-- menu/queue.lua: DOVE GIOCHI?, the queues online
+	queue = {
+		title = "DOVE GIOCHI?",
+		usual_match = "LA PARTITA DI SEMPRE",
+		also_counts = "CONTA ANCHE PER",
+		event = "EVENTO · %s",
+	},
+
+	-- menu/lobby.lua: the waiting room online
+	lobby = {
+		-- one every few seconds under the cards
+		tips = {
+			"Il tempo che avanzi nel turno ti dà globi per il teletrasporto",
+			"Le armi si scelgono coperte: guarda i cartellini degli altri",
+			"La secondaria ha due colpi: un colpo di Lama te ne ridà uno",
+			"I punti sono la vita che togli agli avversari",
+			"Fuori dal tuo turno tocca la targa di un avversario per vedere il suo cartellino",
+			"Il Rampino ce l'hanno tutti: chi sta in alto colpisce meglio",
+		},
+		coming = "IN ARRIVO",
+		searching = "CERCO GIOCATORI",
+		back_to_menus = "TORNA AI MENU · RESTI IN CODA",
+		leave_queue = "ESCI DALLA CODA",
+		-- the line at the top: the queue's name, players, time, bots
+		title_sep = "%s  ·  ",
+		status = "%s%d SU %d  ·  %d:%02d%s",
+		bots_in = "  ·  BOT TRA %d s",
+		bots_coming = "  ·  ARRIVANO I BOT",
+	},
+
+	-- ui/pill.lua and game.gui_script: the queue's pill outside the waiting room
+	pill = {
+		in_queue = "IN CODA · %s · %d:%02d",
+		bots_in = " · BOT TRA %d s",
+		bots_coming = " · ARRIVANO I BOT",
+		found = "PARTITA TROVATA",
+		found_n = "PARTITA TROVATA · %s",
+		cancelled = "questa partita contro i bot si annulla",
+		lost = "CODA PERSA · TOCCA PER RIENTRARE",
+		-- the chip in a match (only head, dots and this)
+		short_lost = "PERSA",
+		short_bots = "BOT %d",
+	},
+
+
+	-- ui/controller.lua: the controller's buttons, by family, as written on them
+	controller = {
+		families = {
+			xbox = { a = "A", b = "B", x = "X", y = "Y", lb = "LB", rb = "RB", lt = "LT", rt = "RT", start = "MENU", select = "VISTA" },
+			playstation = { a = "X", b = "CERCHIO", x = "QUADRATO", y = "TRIANGOLO", lb = "L1", rb = "R1", lt = "L2", rt = "R2",
+				start = "OPTIONS", select = "CREATE" },
+			nintendo = { a = "B", b = "A", x = "Y", y = "X", lb = "L", rb = "R", lt = "ZL", rt = "ZR", start = "+", select = "-" },
+		},
+		cross = { su = "CROCE SU", giu = "CROCE GIÙ", sinistra = "CROCE SX", destra = "CROCE DX" },
+	},
+
+	-- ui/tag_card.lua: the player's tag
+	tag_card = {
+		-- the tree's three branches, short (skills.BRANCHES order)
+		branches = { "MOB", "DIF", "ARS" },
+		no_power = "nessun potere",
+		orb = "%s globo",
+		orbs = "%s globi",
+		parachutes = "%s paracad.",
+		air_jumps = "%s in aria",
+		tree = "ALBERO · %s PUNTI",
+	},
+
+	-- ui/frames.lua: the frame counter's line at the top (IMPOSTAZIONI > CONTATORE FPS)
+	frames = {
+		row = "%.0f FPS  PEGGIORE %.0f MS  99%% SOTTO %.0f  SCATTI %d/MIN",
+		last = "  ULTIMO: %s",
+	},
+
+
+	-- battle/hud.lua: the HUD in battle
+	hud = {
+		-- the weapons' names (on the tag, the card, crates)
+		weapons = {
+			missile = "LANCIARUNE", grenade = "UOVO DI FIAMMA", shards = "SCIAME DI SCHEGGE", punch = "PUGNO DEL TITANO",
+			sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", bellows = "MANTICE",
+			hook = "RAMPINO", teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO",
+		},
+		-- the turn's phases on the clock
+		second_attack = "SECONDO!",
+		take_cover = "RIPARATI",
+		-- why a button is off: always two plain words
+		not_now = "NON ORA",
+		no_orbs = "GLOBI ESAURITI",
+		used_m = "GIÀ USATO",
+		used_f = "GIÀ USATA",
+		no_ammo = "MUNIZIONI ESAURITE",
+		-- the swap button's two lines
+		swap_1 = "BARATTA IL SECONDO ATTACCO",
+		swap_2 = "CON UN TELETRASPORTO",
+	},
+
+	-- battle/score.lua: the score at the top
+	score = {
+		last_round_soon = "TRA POCO: ULTIMO GIRO ×2",
+		last_round = "ULTIMO GIRO",
+		double_points = "OGNI PUNTO VALE DOPPIO",
+		doubled = " ×2",
+		turn_of = "Turno di %s  %s",
+		to_tie = "+%d PER PAREGGIARE",
+		-- the gap under your token
+		tied_first = "pari col 1°",
+		ahead = "+%d sul 2°",
+		behind = "%d dal 1°",
+	},
+
+	-- battle/guide.lua: the gestures of the guided match; {muove} and {mira} are the sticks' sides
+	guide = {
+		keys = {
+			computer = { cammina = "A   D", salta = "SPAZIO" },
+			controller = { cammina = "LEVETTA {muove}", salta = "{muove} IN SU", mira = "LEVETTA {mira}", annulla = "{mira} AL CENTRO" },
+		},
+	},
+
+	-- battle/quips.lua: what the campaign characters say; the moments are ids (turno, colpisce, colpito, scappa, abbatte, muore)
+	quips = {
+		by_character = {
+		codardo = {
+			turno = { "Un colpo e via!", "Non guardarmi così...", "Stavolta non mi prendi!" },
+			colpisce = { "Preso! E ora scappo!", "Questo era gratis!", "Colpito e sparito!" },
+			colpito = { "Ahia! Non vale!", "Non in faccia!", "Mammaaa!" },
+			scappa = { "Prendimi, se ci riesci!", "Ciao ciao!", "Qui non mi trovi!", "Troppo lento!" },
+			abbatte = { "Ah ah! Ti ho fregato!", "Chi è il codardo adesso?" },
+			muore = { "Tornerò... di nascosto!", "Non era il mio giorno..." },
+		},
+		testa_calda = {
+			turno = { "Arrivo!", "Ora ti spacco!", "Fatti sotto!" },
+			colpisce = { "Prendi questa!", "BOOM!" },
+			colpito = { "Tutto qui?", "Non sento niente!" },
+			abbatte = { "Troppo facile!", "Il prossimo!" },
+			muore = { "Rivincita! Subito!", "Non è finita!" },
+		},
+		cecchino = {
+			turno = { "Respira... mira...", "Un colpo solo." },
+			colpisce = { "Centro.", "Bersaglio colpito." },
+			colpito = { "Questo non era previsto.", "Mi hai trovato..." },
+			abbatte = { "Pulito.", "Niente di personale." },
+			muore = { "Ricarico e torno.", "Ottima mira. La tua." },
+		},
+		spingitore = {
+			turno = { "Il vuoto ti chiama!", "Che bel bordo..." },
+			colpisce = { "Giù di sotto!", "Attento al bordo!" },
+			colpito = { "Spingi spingi...", "Ehi, piano!" },
+			abbatte = { "Il vuoto ti saluta!", "Volo libero!" },
+			muore = { "Ma chi mi ha spinto?" },
+		},
+		-- the duel of the cortile: she trains you, even when she beats you
+		favilla = {
+			turno = { "Tocca a me, nuovo!", "Guarda e impara!", "Stavolta miro meglio!" },
+			colpisce = { "Preso! Stai attento!", "Questo te lo ricordi!" },
+			colpito = { "Ahi! Bel colpo!", "Ehi, così si fa!" },
+			scappa = { "Di qua, lumaca!", "Prendimi!" },
+			abbatte = { "Rialzati, su!", "Uno a zero per me!" },
+			muore = { "Ahia! Bel colpo, apprendista!", "Va bene, va bene: torno subito!" },
+		},
+		fabbro = {
+			turno = { "Il ferro si batte finché è caldo!", "Sull'incudine!" },
+			colpisce = { "Martellata!", "Senti il Maglio?" },
+			colpito = { "Graffi.", "Il ferro non si piega!" },
+			abbatte = { "Un altro per la fornace!", "Forgiato!" },
+			muore = { "La Forgia non si spegne...", "Tornerò più duro!" },
+		},
+		},
+	},
+
+	-- battle/card.lua: the card of a new weapon
+	card = {
+		-- the label at the top of each kind, and the name of its third bar
+		kinds = { primaria = "PRIMARIA", secondaria = "SECONDARIA", movimento = "MOVIMENTO", oggetto = "OGGETTO" },
+		third_bar = { primaria = "Area", secondaria = "Spinta" },
+		bars = { "Danno", "Gittata" },
+		ok = "OK",
+		-- what each weapon does
+		what = {
+			missile = "Spara una runa che esplode dove tocca: fa danno a chi è vicino e scava il terreno",
+			grenade = "Un uovo che rimbalza e scoppia dopo 5 secondi: cratere grande",
+			shards = "Una raffica di 8 schegge: rallenta chi colpisce",
+			punch = "Un montante da vicino: lancia in alto e incrina l'armatura",
+			sniper = "Parte veloce e cala a poco a poco; rimbalza e sbalza chi colpisce",
+			sword = "Sempre con te: un colpo da vicino",
+			eagle = "Un colpo dritto e subito; il rinculo ti spinge dall'altra parte",
+			mallet = "Un colpo ad arco dove miri; quando sbatte su qualcosa o qualcuno rimbalzi in alto",
+			lunge = "Uno scatto che passa oltre chi hai davanti e lo colpisce",
+			bellows = "Il soffio della forgia: spinge via chi hai davanti",
+			hook = "Aggancia un bordo e ti arrampichi; su un nemico, lo tiri da te",
+			parachute = "Aprilo in aria: scendi piano e atterri senza farti male",
+			trap = "Posala a terra: scatta quando ci passa un nemico",
+			shield = "Ti ripara dai colpi fino al tuo prossimo turno",
+			trampoline = "Posalo a terra: chi ci salta sopra vola in alto",
+		},
+		-- how to use it, with the controls you have (%s: the buttons)
+		parachute_pad = "In aria premi %s",
+		item_pad = "Sceglilo fra gli OGGETTI con %s e usalo con %s",
+		item_pad_air = "In aria sceglilo fra gli OGGETTI con %s e usalo con %s",
+		item_touch = "Toccalo fra gli OGGETTI",
+		item_touch_air = "In aria toccalo fra gli OGGETTI",
+		aim_pad = "Muovi la levetta %s per sistemare la traiettoria, usa %s per far partire il colpo",
+		aim_phone = "Sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo",
+		aim_computer = "Trascina dal diavoletto per sistemare la traiettoria, lascia per far partire il colpo",
+	},
+
+	-- main/events.lua: the events in words
+	events = {
+		-- durations: 2g 3h, 3h 20m, 12m
+		days_hours = "%dg %dh",
+		days = "%dg",
+		hours_minutes = "%dh %dm",
+		hours = "%dh",
+		minutes = "%dm",
+		starts_in = "comincia tra %s",
+		ends_in = "finisce tra %s",
+		-- the line under EVENTI in the home
+		no_net = "senza rete",
+		running = "%d in corso",
+		next_in = "il prossimo tra %s",
+		none_planned = "nessuno in programma",
+		kinds = { mod = "MODIFICATORE", torneo = "TORNEO", sfida = "SFIDA", xp = "XP" },
+		-- the rules in words, one per line
+		weapons = "Armi: %s",
+		crate_every_turn = "Una cassa a ogni turno",
+		crates_every = "Casse ogni %d turni",
+		no_heals = "Niente cure",
+		same_level = "Tutti allo stesso livello",
+		other_points = "Punti diversi",
+		normal_matches = "Le partite normali %s",
+		normal_rules = "Regole normali",
+		level_cap = "Pezzi al massimo al livello %d",
+	},
+
+	-- main/game.gui_script: the match (messages, announcements, gear wheel, draft, lessons)
+	match = {
+		-- the teams; a player's name is the team's, with a number if there are two
+		team_names = { "Rosso", "Blu", "Verde", "Oro" },
+		-- after a local bot's name (taken off again on the cards)
+		bot_suffix = " (bot)",
+		-- the server's errors (server/room.go), then the line that closes them
+		server_errors = {
+			version = "C'è una versione nuova di MegaBlast:\naggiorna il gioco",
+			expired = "La partita è finita",
+			draining = "Il server si sta aggiornando,\nriprova tra poco",
+			evento = "L'evento è appena finito",
+		},
+		server_error = "Errore del server",
+		back_to_menu = "%s\nTocca per tornare al menu",
+		-- status effects: the shout over the robot and the name under its health (no accents: the font lacks them)
+		status_shout = { burn = "BRUCIA!", slow = "RALLENTATO!", cracked = "ARMATURA INCRINATA!" },
+		status_name = { burn = "BRUCIA", slow = "LENTO", cracked = "INCRINATO" },
+		-- "Rosso trova ..." when a crate opens
+		weapon_found = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge",
+			punch = "il Pugno del Titano", sniper = "il Cecchino", eagle = "il Tonante", mallet = "il Maglio",
+			lunge = "l'Affondo", bellows = "il Mantice", hook = "il Rampino", parachute = "un Paracadute",
+			trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" },
+		-- the weapons in the match-start draft, and their effect (no accents)
+		draft_names = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
+			sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino" },
+		draft_effects = {
+			grenade = "Rimbalza e scoppia dopo 5 s: cratere grande",
+			shards = "Raffica di 8 schegge: rallenta",
+			punch = "Montante da vicino: lancia in alto e incrina l'armatura",
+			sniper = "Parte veloce e cala a poco a poco; rimbalza come una palla e sbalza dove andava",
+			eagle = "Colpo dritto e subito; il rinculo ti spinge dall'altra parte",
+			mallet = "Colpo ad arco dove miri; quando sbatte su qualcosa o qualcuno rimbalzi in alto",
+			lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
+			bellows = "Soffio della forgia: spinge via chi hai davanti",
+			hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita",
+		},
+		your_turn = "IL TUO TURNO",
+		turn_of = "TURNO DI: %s",
+		-- the gear wheel
+		quit_match = "ESCI DALLA PARTITA",
+		quit_search = "ESCI DALLA RICERCA",
+		aim = "MIRA",
+		aim_mode = "MIRA: %s",
+		-- the lessons' vignettes, again (battle/vignette.lua)
+		reread = "RILEGGI",
+		cancel = "ANNULLA",
+		items = "OGGETTI",
+		-- entry and waiting room
+		loading_events = "Prendo gli eventi dal server...",
+		in_queue = "In coda",
+		player = "Giocatore",
+		connecting = "Mi collego al server...",
+		waiting = "Connesso, in attesa...",
+		reconnecting = "Connessione persa, mi riconnetto...",
+		connection_lost = "Connessione persa",
+		no_websocket = "Manca l'estensione WebSocket\nIn Defold: Project > Fetch Libraries",
+		-- under each player's card at the start
+		roles = { you = "TU", dummy = "BERSAGLIO", mate = "COMPAGNO", opponent = "AVVERSARIO" },
+		card_note = "tocca di nuovo e si chiude · il tempo corre",
+		-- the messages of the match
+		swap = "%s scambia il secondo attacco: +1 teletrasporto",
+		orbs_one = "%s +%d teletrasporto",
+		orbs_many = "%s +%d teletrasporti",
+		trapped = "%s finisce in una trappola!",
+		hooked = "AGGANCIATO!",
+		snapped = "STRAPPO!",
+		blown = "SOFFIATO VIA!",
+		bounce = "RIMBALZO!",
+		knocked = "SBALZATO!",
+		parachute = "Paracadute aperto!",
+		heal_circle = "Un cerchio di cura: chi ci finisce il turno dentro si cura",
+		crate = "Una cassa cade dal cielo!",
+		you_found = "%s hai trovato %s!",
+		found = "%s trova %s!",
+		you_die_alone = "Muori da solo",
+		dies_alone = "%s muore da solo",
+		dies_alone_given = "%s! %d, +%d a %s",
+		dies_alone_penalty = "%s! %d",
+		pushes_off = "%s butta giù %s!",
+		eliminates = "%s elimina %s!",
+		points = " +%d",
+		you_won = "Hai vinto!",
+		you_lost = "Hai perso!",
+		draw = "Pareggio!",
+		team_wins = "Vince %s!",
+		time_up = "Tempo scaduto!\n%s",
+		back_in = "Di nuovo in partita!",
+		you_are = "Sei %s",
+		opponent_away = "L'avversario ha perso la connessione...",
+		opponent_back = "L'avversario è tornato",
+		someone = "Un giocatore",
+		left = "%s è uscito",
+		opponent_left = "L'avversario è uscito",
+		last_round = "×2 ULTIMO GIRO",
+		aim_cancelled = "Mira annullata",
+		-- the campaign missions
+		mission_done = "Fatta!",
+		mission_retry = "Riprova",
+		-- replays
+		replay_gone = "Questo replay non si può più rivedere",
+		replay_banner = "REPLAY · TOCCA PER USCIRE",
+		replay_broken = "Il replay non torna più: il gioco è cambiato",
+		-- {salta}, {annulla}, {cammina}, {mira} in the lessons' lines (sim/missions.lua)
+		gestures = {
+			telefono = { salta = "spingi in su la levetta di sinistra", annulla = "tocca la metà destra dello schermo",
+				cammina = "sposta di lato la levetta di sinistra",
+				mira = "sposta l'analogico di destra per sistemare la traiettoria, rilascialo per far partire il colpo" },
+			computer = { salta = "premi la barra spaziatrice", annulla = "riporta il mouse sul diavoletto e lascia",
+				cammina = "tieni premuto A o D (o le frecce)",
+				mira = "trascina dal diavoletto per sistemare la traiettoria, lascia per far partire il colpo" },
+		},
+		-- with the controller, with its buttons and sticks (%s: the stick's side, then the button)
+		pad_aim_trigger = "muovi la levetta %s per la direzione, premi %s per la potenza e lascialo per far partire il colpo",
+		pad_aim_release = "muovi la levetta %s per sistemare la traiettoria, premi e lascia %s per far partire il colpo",
+		pad_aim_press = "muovi la levetta %s per sistemare la traiettoria, premi %s per far partire il colpo",
+		pad_jump_button = "premi %s",
+		pad_jump_stick = "spingi in su la levetta %s",
+		pad_walk = "sposta di lato la levetta %s",
+		pad_cancel = "riporta al centro la levetta %s",
 	},
 }

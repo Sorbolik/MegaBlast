@@ -2,7 +2,7 @@
 -- runs them). Chapter 0 is the Addestramento, the lessons: small puzzles that
 -- teach one thing only and can't be finished without using it. Then the
 -- circles (gironi): each circle a map and a mechanic, closed by its keeper (a
--- bot with a personality, sim/bot.lua M.CARATTERI). A chapter opens with the
+-- bot with a personality, sim/bot.lua M.PERSONALITIES). A chapter opens with the
 -- stars earned in the ones before (serve). Sergio's choices of 29 October 2026
 -- (https://claude.ai/artifact/DaLXhFApbxLpa1reyPtenC).
 --
@@ -11,7 +11,7 @@
 -- bot trial (strumenti/arena/collaudo.lua): the second star is at the median
 -- point lead of the normal bot playing in your place (Sergio, 31 Oct: in the
 -- circles points count, turns don't).
--- Circle opponents are grades (sim/bot.lua M.GRADI, 1 to 10): the Forgia goes
+-- Circle opponents are grades (sim/bot.lua M.GRADES, 1 to 10): the Forgia goes
 -- from 2 up to 5 and the ally in the Battaglia is a 7 (Sergio, 30 Oct).
 
 local M = {}
@@ -19,54 +19,105 @@ local M = {}
 local PLAYER = 1
 
 local TRAINING = {
-	-- the basics in a single course (Sergio, 29 Oct): walk to the flag, jump onto
-	-- the step, take the crate that drops with the Lanciarune (and its card) and
-	-- shoot the target. No timer and no turns: if you miss, you retry at once.
-	-- Nothing shows up before it's needed
+	-- The cortile of the Forgia (Sergio, 3 Nov: the level plan
+	-- https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2): seven short lessons
+	-- with Favilla, who trains you. No stars: «Fatta» and, where there's a real
+	-- challenge, her optional medal. Favilla is a puppet (guida): she runs and
+	-- jumps along a path and is never hit. Nothing shows up before it's needed.
+	-- 1 · Stammi dietro: walk after her, jump the step, reach her at the gate.
+	-- The medal: the spark above the step, taken only holding the jump to the end
 	{
 		id = "primi_passi",
-		titolo = "Primi passi",
-		goal_text = "Cammina fino alla bandierina: {cammina}",
+		titolo = "Stammi dietro",
+		goal_text = "Stammi dietro, nuovo! Ti aspetto al cancello: {cammina}",
 		highlight = "cammina",
 		-- a step higher than you can walk up, lower than the jump
 		arena = { { 240, 0, 1440, 150 }, { 1100, 150, 580, 30 } },
-		spawns = { { x = 480, from = 600 }, { x = 1560, from = 600 } },
+		spawns = { { x = 480, from = 600 }, { x = 300, from = 600 } },
+		-- the game wants two robots: the second isn't there (nascosti)
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
-		vedi = { "missile" },
+		nascosti = { 2 },
+		vedi = {},
 		no_weapons = true, without_time = true,
-		casse = { { dopo = 2, arma = "missile", x = 1260 } },
-		stelle = {
-			bonus = { conta = "misses", at_most = 2, testo = "AL MASSIMO 2 TIRI A VUOTO" },
-			bonus2 = { conta = "misses", at_most = 0, testo = "AL PRIMO TIRO" },
-		},
+		-- she runs ahead at your pace, waits at the step, then at the gate
+		guida = { parte = 0, percorso = {
+			{ x = 560, y = 150, t = 0 }, { x = 560, y = 150, t = 1.5 }, { x = 1040, y = 150, t = 13.9 },
+			{ x = 1140, y = 180, t = 14.6, salto = 25 }, { x = 1520, y = 180, t = 24.4 },
+		} },
+		-- a full jump from the step reaches it, a short one doesn't (the held jump, JUMP_CUT)
+		scintilla = { x = 1300, y = 216 },
+		medaglia = { conta = "scintille", at_least = 1, testo = "LA SCINTILLA" },
 		obiettivo = {
-			{ reach = { x = 720, y = 150 }, flag = true, testo = "Raggiungi la bandierina" },
+			{ reach = { x = 900, y = 150 }, testo = "Stai dietro a Favilla" },
 			{ reach = { x = 1100, y = 180 }, testo = "Salta sul gradino" },
-			{ prendi = "missile", testo = "Prendi la cassa" },
-			{ hit = 2, con = "missile", testo = "Colpisci il bersaglio" },
+			{ reach = { x = 1460, y = 180 }, testo = "Raggiungi Favilla al cancello" },
 		},
 		righe = {
 			{ testo = "Il gradino è troppo alto per camminarci sopra: {salta}", highlight = "salta",
 				quando = { passo = 1 }, fino = { passo = 2 } },
-			{ testo = "Una cassa cade dal cielo: prendila!", quando = { passo = 2 }, fino = { passo = 3 } },
-			{ testo = "Colpisci il bersaglio: {mira}", highlight = "mira", quando = { passo = 3 } },
-			-- while aiming: how to cancel
-			{ testo = "Più tiri lontano, più forte parte. Se cambi idea, {annulla}", highlight = "annulla",
-				subito = true, quando = function(st) return st.steps_done[3] and st.touched_cmds.mira end,
-				fino = function(st, g) return st.touched_cmds.annulla or g.used.primary end },
+			{ testo = "Vedi la scintilla lassù? Tieni premuto il salto fino in fondo e prendila!",
+				quando = { passo = 2 }, fino = { evento = "spark" } },
+			{ testo = "Presa! Più tieni premuto, più salti in alto", faccia = "fiera", quando = { evento = "spark" } },
 		},
 	},
-	-- The turn (Sergio, 30 Oct): the timer shows from here, and only the
-	-- Lanciarune and the Lama are used, the always-available weapons. Attacking
-	-- early gives orbs (time stops before you lose them), the Lama on the first
-	-- target, the orb carries you to the island of the second, which falls at the
-	-- first hit: the second attack isn't needed and is bartered for an orb, which
-	-- brings you back to the first.
-	-- Each step is done with what it says (only), the rest is disabled
+	-- 2 · Il mio vecchio Lanciarune: the crate she throws down, the near target
+	-- and the far one on the ledge, where she waits. No medal: no real challenge
+	{
+		id = "lanciarune",
+		titolo = "Il mio vecchio Lanciarune",
+		goal_text = "Ti butto giù il mio vecchio Lanciarune: prendilo!",
+		arena = { { 240, 0, 1440, 150 }, { 1300, 150, 380, 80 } },
+		spawns = { { x = 480, from = 600 }, { x = 860, from = 600 }, { x = 1580, from = 600 } },
+		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 2, dummy = true } },
+		vedi = { "missile" },
+		no_weapons = true, without_time = true,
+		guida = { parte = 0, percorso = { { x = 1400, y = 230, t = 0 } } },
+		casse = { { dopo = 0, arma = "missile", x = 640 } },
+		obiettivo = {
+			{ prendi = "missile", testo = "Prendi la cassa" },
+			{ hit = 2, con = "missile", testo = "Colpisci il fantoccio vicino" },
+			{ hit = 3, con = "missile", testo = "Colpisci il fantoccio sul ballatoio" },
+		},
+		righe = {
+			{ testo = "Colpisci il fantoccio: {mira}", highlight = "mira", quando = { passo = 1 } },
+			-- while aiming: how to cancel
+			{ testo = "Più tiri lontano, più forte parte. Se cambi idea, {annulla}", highlight = "annulla",
+				subito = true, quando = function(st) return st.steps_done[1] and st.touched_cmds.mira end,
+				fino = function(st, g) return st.touched_cmds.annulla or g.used.primary end },
+			{ testo = "Bel colpo! Ora quello quassù, vicino a me", faccia = "ride", quando = { passo = 2 } },
+		},
+	},
+	-- 3 · A turno: the timer shows from here, and the Lama. Two attacks in a turn:
+	-- the Lanciarune, then the Lama on the same target. No medal
 	{
 		id = "turno",
-		titolo = "Il turno",
-		goal_text = "Il cronometro in basso è il tuo turno. Attacca presto: guadagni globi",
+		titolo = "A turno",
+		goal_text = "Qui si gioca a turno: il cronometro in basso è il tuo. Colpisci il fantoccio",
+		highlight = "missile",
+		arena = { { 300, 0, 1300, 150 } },
+		spawns = { { x = 600, from = 600 }, { x = 900, from = 600 } },
+		giocatori = { { team = 1 }, { team = 2, dummy = true } },
+		vedi = { "missile", "sword", "tempo" },
+		globi = 0,
+		guida = { parte = 0, percorso = { { x = 420, y = 150, t = 0 } } },
+		cards = { { dopo = 1, arma = "sword" } },
+		obiettivo = {
+			{ hit = 2, con = "missile", only = { "missile" }, testo = "Colpisci il fantoccio col Lanciarune" },
+			{ hit = 2, con = "sword", only = { "sword" }, testo = "Secondo attacco: colpiscilo con la Lama" },
+		},
+		righe = {
+			{ testo = "Due attacchi a turno! Il secondo è la Lama: vai vicino e {mira}", highlight = "sword",
+				quando = { passo = 1 }, fino = { passo = 2 } },
+		},
+	},
+	-- 4 · Il tempo risparmiato: attacking early gives orbs (time stops before you
+	-- lose the first), the orb carries you to the island, whose target falls at
+	-- the first hit; the second attack isn't needed and is bartered for an orb,
+	-- which brings you back. The medal: two orbs in one turn
+	{
+		id = "tempo",
+		titolo = "Il tempo risparmiato",
+		goal_text = "Attacca presto: i secondi che avanzano diventano globi",
 		highlight = "missile",
 		-- your ground, the gap, and the island of the second target
 		arena = { { 300, 0, 600, 150 }, { 1200, 100, 320, 50 } },
@@ -76,41 +127,39 @@ local TRAINING = {
 		vita = { [3] = 10 },
 		vedi = { "missile", "sword", "teleport", "tempo", "baratto" },
 		globi = 0,
-		cards = { { dopo = 1, arma = "sword" } },
-		stelle = {
-			bonus = { conta = "misses", at_most = 2, testo = "AL MASSIMO 2 COLPI A VUOTO" },
-			bonus2 = { conta = "misses", at_most = 0, testo = "SENZA SBAGLIARE" },
-		},
+		guida = { parte = 0, percorso = { { x = 420, y = 150, t = 0 } } },
+		medaglia = { conta = "globi_turno", at_least = 2, testo = "DUE GLOBI IN UN TURNO" },
 		obiettivo = {
-			{ usa = "globi", globi = 2, only = { "missile" }, testo = "Spara col Lanciarune: guadagni globi" },
-			{ hit = 2, con = "sword", only = { "sword" }, testo = "Secondo attacco: colpisci con la Lama" },
+			{ usa = "globi", globi = 1, only = { "missile" }, testo = "Spara presto col Lanciarune: guadagni globi" },
 			{ reach = { x = 1200, y = 150 }, only = { "teleport" }, zoom = 2, testo = "Teletrasportati sull'isola" },
-			{ hit = 3, only = { "missile", "sword" }, testo = "Colpisci il bersaglio sull'isola" },
+			{ hit = 3, only = { "missile" }, testo = "Colpisci il fantoccio sull'isola" },
 			{ usa = "baratto", only = { "baratto" }, testo = "Baratta il secondo attacco con un globo" },
-			{ hit = 2, only = { "teleport", "missile", "sword" }, testo = "Torna dal primo bersaglio e colpiscilo" },
+			{ hit = 2, only = { "teleport", "missile", "sword" }, testo = "Torna dal primo fantoccio e colpiscilo" },
 		},
 		righe = {
-			{ testo = "Secondo attacco, la Lama: {mira}", highlight = "sword",
-				quando = { passo = 1 }, fino = { passo = 2 } },
 			{ testo = "Tocca il tasto viola, mira l'isola e lascia: arrivi dove cade il globo", highlight = "teleport",
-				quando = { passo = 2 }, fino = { evento = "teleport" } },
+				quando = { passo = 1 }, fino = { evento = "teleport" } },
 			{ testo = "Lanciarune e Lama non finiscono mai: le uniche armi coi colpi infiniti",
 				quando = { evento = "teleport" } },
 			{ testo = "Abbattuto: il secondo attacco non serve. Tocca le due frecce sopra il cronometro: diventa un globo",
-				highlight = "baratto", quando = { passo = 4 }, fino = { passo = 5 } },
-			{ testo = "Il prossimo turno torna col globo dal primo bersaglio e colpiscilo come vuoi",
-				quando = { passo = 5 } },
+				highlight = "baratto", quando = { passo = 3 }, fino = { passo = 4 } },
+			{ testo = "Il prossimo turno torna col globo dal primo fantoccio e colpiscilo come vuoi",
+				quando = { passo = 4 } },
 		},
 	},
-	-- Weapons that move you: the secondaries, one crate at a time. The Tonante
-	-- (kickback onto the first pillar), the Maglio (pogo onto the second), the
-	-- Affondo on the target. No timer: each attempt restarts at once
+	-- 5 · Arriva in cima prima di me: the secondaries, one crate at a time. The
+	-- Tonante (kickback onto the first pillar), the Maglio (pogo onto the second),
+	-- the Affondo on the target. No timer: each attempt restarts at once. Favilla
+	-- climbs her own lane on the left from the first crate: the medal is finishing
+	-- before she gets to the top
 	{
 		id = "spostano",
-		titolo = "Armi che ti muovono",
-		goal_text = "Prendi la cassa: dentro c'è un'arma che ti sposta",
-		-- the first pillar higher than the jump, the second higher than the kickback
-		arena = { { 300, 0, 1300, 150 }, { 1000, 150, 160, 110 }, { 1160, 150, 300, 310 } },
+		titolo = "Arriva in cima prima di me",
+		goal_text = "Una gara: arriva in cima prima di me! Prendi la cassa, dentro c'è un'arma che ti sposta",
+		-- the first pillar higher than the jump, the second higher than the kickback;
+		-- on the left Favilla's lane, two pillars of the same heights
+		arena = { { 300, 0, 1300, 150 }, { 1000, 150, 160, 110 }, { 1160, 150, 300, 310 },
+			{ 330, 150, 50, 110 }, { 300, 150, 30, 310 } },
 		spawns = { { x = 640, from = 600 }, { x = 1400, from = 1000 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true } },
 		vedi = { "missile", "sword" },
@@ -120,10 +169,12 @@ local TRAINING = {
 			{ dopo = 3, arma = "mallet", x = 1080 },
 			{ dopo = 6, arma = "lunge", x = 1240 },
 		},
-		stelle = {
-			bonus = { conta = "misses", at_most = 3, testo = "AL MASSIMO 3 TENTATIVI A VUOTO" },
-			bonus2 = { conta = "misses", at_most = 0, testo = "SENZA SBAGLIARE" },
-		},
+		-- her pace: at the top 32 seconds after your first crate (vignettes stop the clock)
+		guida = { parte = 1, gara = true, percorso = {
+			{ x = 430, y = 150, t = 0 }, { x = 430, y = 150, t = 12 }, { x = 355, y = 260, t = 14, salto = 40 },
+			{ x = 355, y = 260, t = 30 }, { x = 315, y = 460, t = 32.5, salto = 60 },
+		} },
+		medaglia = { conta = "prima", at_least = 1, testo = "PRIMA DI FAVILLA" },
 		obiettivo = {
 			{ prendi = "eagle", testo = "Prendi la cassa" },
 			{ usa = "kickback", testo = "Salta e spara col Tonante verso il basso" },
@@ -132,7 +183,7 @@ local TRAINING = {
 			{ usa = "pogo", testo = "Salta e colpisci il pilastro col Maglio" },
 			{ reach = { x = 1160, y = 460 }, testo = "Sali sul secondo pilastro" },
 			{ prendi = "lunge", testo = "Prendi la cassa" },
-			{ hit = 2, con = "lunge", testo = "Colpisci il bersaglio con l'Affondo" },
+			{ hit = 2, con = "lunge", testo = "Colpisci il fantoccio con l'Affondo" },
 		},
 		righe = {
 			{ testo = "Il Tonante ha il rinculo: ti spinge dall'altra parte del colpo. Toccalo",
@@ -144,16 +195,18 @@ local TRAINING = {
 			{ testo = "L'Affondo è uno scatto: passa oltre chi hai davanti e lo colpisce", highlight = "lunge",
 				quando = { passo = 7 }, fino = { tocca = "lunge" } },
 			{ testo = "Una secondaria a partita, oltre alla Lama: la scegli all'inizio", quando = { passo = 8 } },
+			{ testo = "Già in cima? Mi hai battuta!", faccia = "sorpresa",
+				quando = function(st) return st.conta.prima == 1 end },
 		},
 	},
-	-- Grapple and parachute (Sergio, 30 Oct): no crates, because they aren't found
+	-- 6 · Il burrone. Grapple and parachute (Sergio, 30 Oct): no crates, because they aren't found
 	-- there; after a few steps the card opens and the button lights up. The
 	-- grapple carries you onto the platform, with the parachute you go down past
 	-- the gap, and over there the Lama on the target. No timer
 	{
 		id = "attrezzi",
-		titolo = "Rampino e paracadute",
-		goal_text = "Il bersaglio è dall'altra parte del vuoto. Vai sotto la piattaforma",
+		titolo = "Il burrone",
+		goal_text = "Ti aspetto dall'altra parte del burrone! Vai sotto la piattaforma",
 		-- your ground, the platform jutting over the gap, the other side
 		arena = { { 200, 0, 900, 150 }, { 900, 300, 320, 30 }, { 1360, 0, 560, 150 } },
 		spawns = { { x = 640, from = 290 }, { x = 1520, from = 600 } },
@@ -161,17 +214,16 @@ local TRAINING = {
 		vedi = { "sword" },
 		without_time = true,
 		cards = { { dopo = 1, arma = "hook", give = true }, { dopo = 3, arma = "parachute", give = true } },
-		stelle = {
-			bonus = { conta = "misses", at_most = 3, testo = "AL MASSIMO 3 TENTATIVI A VUOTO" },
-			bonus2 = { conta = "misses", at_most = 0, testo = "SENZA SBAGLIARE" },
-		},
+		guida = { parte = 0, percorso = { { x = 1700, y = 150, t = 0 } } },
+		-- the medal: across without ever falling into the gap
+		medaglia = { conta = "morti", at_most = 0, testo = "PIEDI ASCIUTTI" },
 		obiettivo = {
 			{ reach = { x = 820, y = 150 }, flag = true, testo = "Vai sotto la piattaforma" },
 			{ usa = "rampino", only = { "hook" }, testo = "Aggancia il bordo col Rampino" },
 			{ reach = { x = 900, y = 330 }, testo = "Sali sulla piattaforma" },
 			{ usa = "paracadute", only = { "parachute" }, testo = "Salta nel vuoto e apri il paracadute" },
 			{ reach = { x = 1360, y = 150 }, only = { "parachute" }, testo = "Atterra dall'altra parte" },
-			{ hit = 2, con = "sword", only = { "sword" }, testo = "Colpisci il bersaglio con la Lama" },
+			{ hit = 2, con = "sword", only = { "sword" }, testo = "Colpisci il fantoccio con la Lama" },
 		},
 		righe = {
 			{ testo = "Il Rampino: toccalo, poi mira il bordo della piattaforma e lascia", highlight = "hook",
@@ -219,29 +271,33 @@ local TRAINING = {
 				quando = { passo = 3 }, fino = { tocca = "punch" } },
 		},
 	},
-	-- the chapter exam: a first real match, short, that puts everything into
-	-- practice (Sergio, 29 Oct: the last of the Addestramento, not the first)
+	-- 7 · Duello con Favilla, the chapter exam: a first real match, short, that
+	-- puts everything into practice (Sergio, 29 Oct: the last of the
+	-- Addestramento). You win by downing her twice; no points (they come in the
+	-- Forgia). The medal: without being downed
 	{
 		id = "guidata",
-		titolo = "Prima partita",
-		goal_text = "Trascina dal diavoletto per mirare, lascia per sparare",
+		titolo = "Duello con Favilla",
+		goal_text = "Duello! Abbattimi due volte. Trascina dal diavoletto per mirare, lascia per sparare",
 		guidata = true,
 		mappa = "pavimento",
 		giocatori = {
 			-- no draft (Sergio, 30 Oct): Lanciarune, Lama and Rampino; the other weapons,
 			-- if you want them, from crates, with their card
 			{ team = 1 },
-			{ team = 2, bot = 1, pick = "grenade", secondary = "mallet" },
+			{ team = 2, bot = 1, pick = "grenade", secondary = "mallet", nome = "Favilla", battute = "favilla" },
 		},
+		vedi = { "primarie", "secondarie", "teleport", "parachute", "tempo", "baratto", "hook" },
 		-- short match: 3 minutes
 		secondi = 180,
 		-- the bot shows in its turn what the player will do in the next turn
 		plans = { { due_attacchi = true }, { attacca_entro = 4, poi = "teletrasporto" } },
-		obiettivo = function(st) return st.finished end,
+		medaglia = { conta = "morti", at_most = 0, testo = "INTOCCABILE" },
+		obiettivo = { { down = 2, times = 2, testo = "Abbatti Favilla due volte" } },
 		righe = {
 			{ testo = "Hai 8 secondi: mettiti al riparo. Per saltare {salta}", highlight = "salta",
 				quando = function(st, g) return st.turni == 1 and g.current == PLAYER and g.window > 0 end },
-			{ testo = "Il bot fa due attacchi: una primaria e una secondaria", su = "bot",
+			{ testo = "Guarda: due attacchi, una primaria e una secondaria",
 				quando = function(st, g) return st.bot_turns == 1 and g.current ~= PLAYER end },
 			{ testo = "Due attacchi a turno. Prima la primaria, a sinistra del cronometro: toccala",
 				highlight = "primaria",
@@ -250,7 +306,7 @@ local TRAINING = {
 			{ testo = "Ora la secondaria, a destra del cronometro: toccala e colpisci", highlight = "secondaria",
 				quando = function(st, g) return st.turni == 2 and g.current == PLAYER and g.used.primary end,
 				fino = function(_, g) return g.used.secondary end },
-			{ testo = "Ha attaccato subito: i secondi che avanzano diventano globi", su = "bot",
+			{ testo = "Ho attaccato subito: i secondi che avanzano diventano globi",
 				quando = function(st, _, e) return st.bot_turns == 2 and e and e.type == "teleports" and e.robot ~= PLAYER end },
 			{ testo = "Attacca presto: prima delle tacche viola sull'anello guadagni globi",
 				quando = function(st, g) return st.turni == 3 and g.current == PLAYER end,
@@ -266,8 +322,6 @@ local TRAINING = {
 					return g.current == PLAYER and not rb.grounded and rb.vy < -220 and rb.parachutes_left > 0
 				end,
 				fino = { evento = "parachute" } },
-			{ testo = "Sei primo: chi ti colpisce prende i punti per 1,5",
-				quando = function(_, g) return g:leader() == g.robots[PLAYER] end },
 			{ testo = "Si rinasce subito, e il turno continua",
 				quando = function(_, _, e) return e and e.type == "death" and e.robot == PLAYER end },
 		},

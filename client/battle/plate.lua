@@ -10,16 +10,16 @@
 --
 --   local tt = targa.nuove(palette, name_list)  -- one plate per color, all together
 --   targa.vita(t, vita, maximum, scudo)   -- when it changes (scudo may be missing)
---   targa.update(t, dt, x, y, scale, cam) -- every frame: x, y is the bottom center (in
---                                          the world); cam (battle/camera.lua) for the line
+--   targa.update(t, dt, x, y, scale)      -- every frame: x, y is the bottom center (in
+--                                          the world)
 --   targa.scala(cam)                      -- the scale to give update: the plate stays
 --                                          -- the same size on screen at every zoom
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, txt)                   -- the effects on it, under the bar ("" = nothing)
 --   targa.announcement(t, txt)            -- a label that rises above the name and fades
---   targa.riga(t, txt)                    -- the missions' hint, above everything ("" = nothing)
---   targa.quip(t, txt)                    -- what the character says: a bubble that
---                                          -- stays a couple of seconds and fades
+--   targa.battuta(t, txt, strong)         -- a bot's comment over its head for a while
+--                                          (Sergio, 4 Nov: plain text, no strip); it
+--                                          doesn't cover one just said unless strong
 --   targa.posto(t, txt, crown)            -- the standings place left of the bar
 --                                          -- ("" = nothing) and the Crown beside the name
 --   targa.sopra(t)                        -- where the plate ends at the top (units at scale 1)
@@ -34,14 +34,12 @@
 -- Each plate has two roots, t.bars and t.texts, that move together. The GUI
 -- draws nodes in the order they are in: whoever puts them in the scene puts
 -- first the bars of all plates, then the arrow and then all the texts, so two
--- draw calls are enough for all of them: the battle atlas images (health, Crown,
--- quip background and arrow: the rectangles are targa_bianco tinted), then
+-- draw calls are enough for all of them: the battle atlas images (health, Crown
+-- and arrow: the rectangles are targa_bianco tinted), then
 -- the font. We don't use GUI layers because they would draw the plates above
 -- buttons and menus.
 
 local ui = require "ui.ui"
-local screen = require "ui.screen"
-local camera = require "battle.camera"
 
 local M = {}
 
@@ -56,6 +54,9 @@ local BAR_BG = vmath.vector4(0.04, 0.03, 0.05, 0.9)
 -- scale of the "titolo" font (scale 1 = about 40 px)
 local NAME_SCALE, NUMBER_SCALE, STATE_SCALE, BANNER_SCALE = 0.25, 0.2, 0.18, 0.3
 local STATE_Y, BANNER_Y, BANNER_RISE, BANNER_T = -(BASE + 4), 22, 14, 1.4
+-- a bot's comment: above the turn arrow, for QUIP_T seconds (the last
+-- QUIP_FADE fading); a new one covers it only after QUIP_KEEP seconds
+local QUIP_Y, QUIP_SCALE, QUIP_T, QUIP_FADE, QUIP_KEEP = 42, 0.38, 2.6, 0.4, 0.8
 -- The plate stays the same size on screen at every zoom (Sergio, 3 Nov: from
 -- far away it must not be bigger than the character): scale ON_SCREEN / zoom
 -- (0.85 until Sergio found it «ancora un po' piccolo», 3 Nov)
@@ -71,20 +72,6 @@ local NAME_TOP = NAME_Y + 6
 -- jolts with a hit, like the name); it bobs ARROW_BOB up and down every ARROW_T seconds
 local ARROW_W, ARROW_H, ARROW_BAR, ARROW_LEN, ARROW_EDGE = 18, 12, 3.5, 11, 3
 local ARROW_GAP, ARROW_BOB, ARROW_T = 3, 1.5, 1.4
--- the missions' line: above the Crown and the rising announcements, wrapping
--- past ROW_W; ROW_SCALE big on screen at every zoom (about 22 px: with the
--- camera far away it doesn't shrink like the rest of the plate). It doesn't
--- leave the sides of the screen: with the robot near an edge it moves toward the center
-local LINE_GAP, ROW_SCALE, ROW_W, ROW_SIDE = 13, 0.55, 1640, 16
--- and it doesn't climb up to the points and the goal at the top
--- (battle/score.lua): with the robot high up it comes down, above the robot
-local ROW_TOP = 130
--- the quip bubble: above the name, QUIP_SCALE big on screen at every zoom,
--- with the dark background around it (QUIP_BORDER px)
--- (QUIP_GAP above the name, or ARROW_ABOVE above the arrow)
-local QUIP_GAP, QUIP_SCALE, QUIP_BORDER, QUIP_T = 2, 0.42, 8, 2.6
-local ARROW_ABOVE = 2
-local CLOUD = vmath.vector4(0.06, 0.05, 0.08, 0.82)
 
 local TRAIL = ui.C.LIGHT
 local SHIELD = vmath.vector4(0.75, 0.86, 1, 1)
@@ -169,11 +156,6 @@ function M.nuove(palette, name_list)
 		t.full = piece(t, color)
 		t.crown = image(t.dentro, "targa_corona", 0, NAME_Y, CROWN_W, CROWN_H)
 		gui.set_enabled(t.crown, false)
-		-- the bubble background, with the shapes (outside the node that jolts)
-		t.nuvola = rect(t.bars, 0, 0, 0, 0, CLOUD)
-		gui.set_pivot(t.nuvola, gui.PIVOT_S)
-		gui.set_enabled(t.nuvola, false)
-		t.quip_t = 0
 		tt[i] = t
 	end
 	-- then the texts
@@ -187,14 +169,9 @@ function M.nuove(palette, name_list)
 		t.stato = txt(t.inside_texts, 0, STATE_Y, "", STATE_SCALE, ui.C.TEXT)
 		t.announcement = txt(t.inside_texts, 0, BANNER_Y, "", BANNER_SCALE, ui.C.LIGHT)
 		gui.set_enabled(t.announcement, false)
-		t.riga = txt(t.texts, 0, 0, "", ROW_SCALE, ui.C.LIGHT)
-		gui.set_pivot(t.riga, gui.PIVOT_S)
-		gui.set_line_break(t.riga, true)
-		gui.set_size(t.riga, vmath.vector3(ROW_W, 0, 0))
-		t.row_text, t.row_h = "", 0
-		t.quip = txt(t.texts, 0, 0, "", QUIP_SCALE, ui.C.TEXT)
-		gui.set_pivot(t.quip, gui.PIVOT_S)
+		t.quip = txt(t.inside_texts, 0, QUIP_Y, "", QUIP_SCALE, ui.C.LIGHT)
 		gui.set_enabled(t.quip, false)
+		t.quip_t = 0
 		M.vita(t, 1, 1)
 		crown_spot(t)
 	end
@@ -226,34 +203,22 @@ function M.posto(t, s, crown)
 end
 
 -- where the plate ends at the top, arrow included (units at scale 1, from the
--- bottom center): the quips and the line sit above it
+-- bottom center): the marker of the turn sits above it
 function M.sopra(t)
 	return max(NAME_TOP, t.arrow_top or 0)
-end
-
-function M.riga(t, s)
-	if t.row_text == s then return end
-	t.row_text = s
-	gui.set_text(t.riga, s)
-	local font = gui.get_font_resource(gui.get_font(t.riga))
-	local m = s ~= "" and resource.get_text_metrics(font, s, { width = ROW_W, line_break = true })
-	t.row_h, t.row_w = m and m.height or 0, m and m.width or 0
-end
-
-function M.quip(t, s)
-	gui.set_text(t.quip, s)
-	local font = gui.get_font_resource(gui.get_font(t.quip))
-	local m = resource.get_text_metrics(font, s)
-	t.quip_w, t.quip_h = m.width, m.height
-	t.quip_t = QUIP_T
-	gui.set_enabled(t.quip, true)
-	gui.set_enabled(t.nuvola, true)
 end
 
 function M.announcement(t, s)
 	gui.set_text(t.announcement, s)
 	gui.set_enabled(t.announcement, true)
 	t.banner_t = BANNER_T
+end
+
+function M.battuta(t, s, strong)
+	if t.quip_t > QUIP_T - QUIP_KEEP and not strong then return end
+	gui.set_text(t.quip, s)
+	gui.set_enabled(t.quip, true)
+	t.quip_t = QUIP_T
 end
 
 function M.set_enabled(t, on)
@@ -280,7 +245,7 @@ end
 
 local arrow_update -- further down, with the arrow
 
-function M.update(t, dt, x, y, scale, cam)
+function M.update(t, dt, x, y, scale)
 	t.t = t.t + dt
 	t.x, t.y, t.scala = x, y, scale
 	V.x, V.y, V.z = x, y, 0
@@ -289,46 +254,6 @@ function M.update(t, dt, x, y, scale, cam)
 	V.x, V.y, V.z = scale, scale, 1
 	gui.set_scale(t.bars, V)
 	gui.set_scale(t.texts, V)
-	if cam then
-		-- the world scale is cam.s: the line stays the same size on screen
-		local k = ROW_SCALE / (scale * cam.s)
-		V.x, V.y = k, k
-		gui.set_scale(t.riga, V)
-		local _, tetto = camera.to_world(cam, 0, screen.y1 - ROW_TOP - t.row_h * ROW_SCALE)
-		local sx = camera.to_screen(cam, x, y)
-		local half = (t.row_w or 0) * ROW_SCALE / 2 + ROW_SIDE
-		local cx = math.max(screen.x0 + half, math.min(screen.x1 - half, sx))
-		if screen.x1 - screen.x0 < 2 * half then cx = (screen.x0 + screen.x1) / 2 end
-		V.x = (camera.to_world(cam, cx, 0) - x) / scale
-		V.y = math.min(M.sopra(t) + LINE_GAP, (tetto - y) / scale)
-		gui.set_position(t.riga, V)
-	end
-
-	-- the bubble: same size on screen, fades in the last half second
-	if t.quip_t > 0 then
-		t.quip_t = t.quip_t - dt
-		local zoom = scale * (cam and cam.s or 1)
-		local k, border = QUIP_SCALE / zoom, QUIP_BORDER / zoom
-		V.x, V.y, V.z = k, k, 1
-		gui.set_scale(t.quip, V)
-		V.x, V.y, V.z = t.quip_w * k + 2 * border, t.quip_h * k + 2 * border, 0
-		gui.set_size(t.nuvola, V)
-		local y0 = M.sopra(t) + (t.arrow and ARROW_ABOVE or QUIP_GAP)
-		V.x, V.y = 0, y0
-		gui.set_position(t.nuvola, V)
-		V.y = y0 + border
-		gui.set_position(t.quip, V)
-		local a = math.min(1, t.quip_t * 2)
-		C.x, C.y, C.z, C.w = ui.C.TEXT.x, ui.C.TEXT.y, ui.C.TEXT.z, a
-		gui.set_color(t.quip, C)
-		C.x, C.y, C.z, C.w = CLOUD.x, CLOUD.y, CLOUD.z, CLOUD.w * a
-		gui.set_color(t.nuvola, C)
-		if t.quip_t <= 0 then
-			gui.set_enabled(t.quip, false)
-			gui.set_enabled(t.nuvola, false)
-		end
-	end
-
 	-- the trail waits a moment and then wears down to the health
 	if t.attesa > 0 then
 		t.attesa = t.attesa - dt
@@ -352,6 +277,14 @@ function M.update(t, dt, x, y, scale, cam)
 		C.x, C.y, C.z, C.w = ui.C.LIGHT.x, ui.C.LIGHT.y, ui.C.LIGHT.z, math.min(1, 3 * (1 - f))
 		gui.set_color(t.announcement, C)
 		if t.banner_t <= 0 then gui.set_enabled(t.announcement, false) end
+	end
+
+	-- the comment stays, then fades
+	if t.quip_t > 0 then
+		t.quip_t = t.quip_t - dt
+		C.x, C.y, C.z, C.w = ui.C.LIGHT.x, ui.C.LIGHT.y, ui.C.LIGHT.z, math.min(1, max(0, t.quip_t) / QUIP_FADE)
+		gui.set_color(t.quip, C)
+		if t.quip_t <= 0 then gui.set_enabled(t.quip, false) end
 	end
 
 	span(t.trail, 0, W * t.trail_f)

@@ -11,7 +11,7 @@
 --     stelle: which ones it took (each with its criterion); criteria: what each
 --     one takes (missions.criteria); vantaggio: the lead points made (nil where
 --     points don't count: the lessons); record: how many stars the mission
---     already had;
+--     already had; medaglia: the second is Favilla's medal (the cortile);
 --     avanti: there is a next level; sound(v): the tick, v = speed (pitch)
 --   fine_livello.update(f, dt)
 --   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro" or nil
@@ -41,18 +41,23 @@ function M.new(o, sound)
 	ui.testo(T.done, 640, 640, 0.8, c.OFF, f.radice)
 	ui.titolo(string.upper(o.titolo), 640, 585, 1, c.LIGHT, f.radice)
 	local criteria = o.criteria
-	for i = 1, 3 do
-		local big = i == 2 and 1.2 or 1
-		local x, y = 640 + (i - 2) * M.STEP, M.Y + (i == 2 and 18 or 0)
+	-- three stars; in the cortile «Fatta» and Favilla's medal, or «Fatta» alone
+	local count = #criteria
+	for i = 1, count do
+		local big = count == 3 and i == 2 and 1.2 or 1
+		local x, y = 640 + (i - (count + 1) / 2) * M.STEP, M.Y + (big > 1 and 18 or 0)
 		local side_of = M.LATO * big
+		local medal = o.medaglia and i == 2
+		local draw = medal and ui.medaglia or ui.stella
 		-- below, the unlit star; above, the golden one lighting up with its halo
-		ui.stella(x, y, side_of, c.LINE, f.radice)
+		draw(x, y, side_of, c.LINE, f.radice)
 		local s = { lato = side_of }
 		if o.stelle[i] then
 			n = n + 1
 			f.prese[n] = s
-			s.alone = ui.alone(x, y, side_of * 2.2, vmath.vector4(1, 0.8, 0.25, 0), f.radice)
-			s.nodo = ui.stella(x, y, side_of, ui.GOLD, f.radice)
+			local glow = medal and vmath.vector4(0.55, 0.81, 0.94, 0) or vmath.vector4(1, 0.8, 0.25, 0)
+			s.alone = ui.alone(x, y, side_of * 2.2, glow, f.radice)
+			s.nodo = draw(x, y, side_of, medal and ui.MEDAL or ui.GOLD, f.radice)
 			gui.set_scale(s.nodo, vec(0, 0))
 		end
 		ui.testo(criteria[i], x, M.Y - 100, 0.75, o.stelle[i] and c.TEXT or c.OFF, f.radice)
@@ -63,7 +68,7 @@ function M.new(o, sound)
 		under = under == "" and record or under .. "  -  " .. record
 	end
 	ui.testo(under, 640, 232, 0.8, c.OFF, f.radice)
-	ui.button(f.buttons, 640 - 180, 110, 300, 96, T.retry, "riprova", nil, f.radice)
+	ui.button(f.buttons, 640 - 180, 110, 300, 96, common.retry, "riprova", nil, f.radice)
 	ui.button(f.buttons, 640 + 180, 110, 300, 96, o.avanti and common.next or common.campaign, "avanti",
 		{ main = true }, f.radice)
 	return f

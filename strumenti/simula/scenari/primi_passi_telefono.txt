@@ -1,18 +1,13 @@
-# Primi passi sul telefono: il dito sulla levetta di sinistra, la bandierina,
-# la scheda del Lanciarune con le istruzioni per la levetta e poi la riga che
-# dice "sposta l'analogico... rilascialo". Da provare anche con --schermo 1600x720 e 960x720.
+# Stammi dietro sul telefono: il dito sulla levetta di sinistra per camminare,
+# in su per saltare sul gradino. Da provare anche con --schermo 1600x720 e 960x720.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta comandi telefono
 imposta prova_missione primi_passi
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
-foto 01_inizio                       # il dito va a destra, la bandierina
+foto 01_inizio                       # Favilla davanti, la levetta
+levetta 60 0 3 02_cammina            # il dito a destra sulla levetta
 cammina destra 1080 60
-tieni salta 0.15
-cammina destra 1215 15
-tieni destra 0.8                     # fino alla cassa: la scheda ferma il gioco
-aspetta_evento crate_pick 10
-aspetta 0.8
-foto 02_scheda                       # la scheda col testo per la levetta
-tocca_centro 640 120                 # PROVALA
-aspetta 0.8
-foto 03_mira                         # il dito sulla levetta di destra
+levetta 65 55 0.6 03_salta          # in su e a destra: salta sul gradino
+aspetta 1
+foto 04_gradino
