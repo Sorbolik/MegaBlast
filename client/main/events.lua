@@ -14,6 +14,9 @@
 -- An occurrence: { id, evento, tipo = mod|torneo|sfida|xp, nome, riga, da, a,
 -- torna, coda, modo, giocatori, regole, premi }. da, a, torna in Unix seconds.
 
+local T = require("lang.text").events
+local common = require("lang.text").common
+
 local M = {}
 
 M.lista = {}      -- the occurrences of the last answer
@@ -100,32 +103,32 @@ end
 function M.durata(s)
 	s = math.max(0, s)
 	local g, h, m = math.floor(s / 86400), math.floor(s % 86400 / 3600), math.floor(s % 3600 / 60)
-	if g > 0 then return h > 0 and (g .. "g " .. h .. "h") or (g .. "g") end
-	if h > 0 then return m > 0 and (h .. "h " .. m .. "m") or (h .. "h") end
-	return math.max(m, 1) .. "m"
+	if g > 0 then return h > 0 and T.days_hours:format(g, h) or T.days:format(g) end
+	if h > 0 then return m > 0 and T.hours_minutes:format(h, m) or T.hours:format(h) end
+	return T.minutes:format(math.max(m, 1))
 end
 
 function M.quando(o, now)
 	now = now or M.ora()
-	if o.da > now then return "comincia tra " .. M.durata(o.da - now) end
-	return "finisce tra " .. M.durata(o.a - now)
+	if o.da > now then return T.starts_in:format(M.durata(o.da - now)) end
+	return T.ends_in:format(M.durata(o.a - now))
 end
 
 -- The line under EVENTI in the home: no red numbers, only what is happening
 function M.home_line(now)
-	if not M.loaded_ok then return M.without_net and "senza rete" or "" end
+	if not M.loaded_ok then return M.without_net and T.no_net or "" end
 	local hour_of = M.in_progress(now)
 	if #hour_of == 1 then return hour_of[1].nome end
-	if #hour_of > 1 then return #hour_of .. " in corso" end
+	if #hour_of > 1 then return T.running:format(#hour_of) end
 	local after_step = M.upcoming(now)[1]
-	if after_step then return "il prossimo tra " .. M.durata(after_step.da - (now or M.ora())) end
-	return "nessuno in programma"
+	if after_step then return T.next_in:format(M.durata(after_step.da - (now or M.ora()))) end
+	return T.none_planned
 end
 
-local TYPES = { mod = "MODIFICATORE", torneo = "TORNEO", sfida = "SFIDA", xp = "XP" }
+local TYPES = T.kinds
 function M.tipo(o) return TYPES[o.tipo] or string.upper(o.tipo or "") end
 
-local CODE = { ["1v1"] = "1 CONTRO 1", ["2v2"] = "2 CONTRO 2", ffa = "TUTTI CONTRO TUTTI" }
+local CODE = common.modes
 function M.queue_name(modo) return CODE[modo] or modo end
 
 -- The rules in words, one per line (sim/rules.lua). name_list: weapon -> name (battle/hud.lua)
@@ -135,15 +138,15 @@ function M.what_changes(o, name_list)
 	if r.armi then
 		local n = {}
 		for i, w in ipairs(r.armi) do n[i] = (name_list and name_list[w]) or w end
-		out[#out + 1] = "Armi: " .. table.concat(n, ", ")
+		out[#out + 1] = T.weapons:format(table.concat(n, ", "))
 	end
-	if r.casse then out[#out + 1] = r.casse == 1 and "Una cassa a ogni turno" or ("Casse ogni " .. r.casse .. " turni") end
-	if r.cure == false then out[#out + 1] = "Niente cure" end
-	if r.livello == "fisso" then out[#out + 1] = "Tutti allo stesso livello" end
-	if r.punti then out[#out + 1] = "Punti diversi" end
-	if #out == 0 then out[1] = o.coda == o.modo and ("Le partite normali " .. M.queue_name(o.coda)) or "Regole normali" end
+	if r.casse then out[#out + 1] = r.casse == 1 and T.crate_every_turn or T.crates_every:format(r.casse) end
+	if r.cure == false then out[#out + 1] = T.no_heals end
+	if r.livello == "fisso" then out[#out + 1] = T.same_level end
+	if r.punti then out[#out + 1] = T.other_points end
+	if #out == 0 then out[1] = o.coda == o.modo and T.normal_matches:format(M.queue_name(o.coda)) or T.normal_rules end
 	-- the cap doesn't change the match: after the Tournament's "Le partite normali"
-	if r.tetto then out[#out + 1] = "Pezzi al massimo al livello " .. r.tetto end
+	if r.tetto then out[#out + 1] = T.level_cap:format(r.tetto) end
 	return out
 end
 

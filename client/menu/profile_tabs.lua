@@ -90,7 +90,7 @@ end
 
 local function sheet_sheet(s, parent)
 	local p = s.prof
-	local v = showcase.from_profile(p, T.you, 1, T.loadout_n:format(p.is_active))
+	local v = showcase.from_profile(p, common.you, 1, T.loadout_n:format(p.is_active))
 	v.tu = true
 	local col = s.colore
 	txt(T.loadout, ui.EDGE, TOP - 12, 0.7, C.OFF, parent, gui.PIVOT_W)
