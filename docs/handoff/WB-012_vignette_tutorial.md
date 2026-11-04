@@ -390,7 +390,7 @@ Fase 2b (2026-11-04). Guardate le quattro varianti di Codex (7439813). ~~Scelte 
 dalla punta e i lobi stanno in fuori, mentre nel modello (R9) la coda entra nell'incavo e la punta
 guarda in fuori. Colpa del prompt («a cuore, NON a freccia»). Riguardate con questo occhio anche
 le tavole: in `6_rapimento_a` e `6_rapimento_b` la coda è giusta. E si salva lo scarto della fase 2
-`4_arrivo_a` (in `scartati/fase2/`): la punta è un po' aguzza ma è quella del modello, la tavola
+`4_arrivo_a` (tornato da `scartati/fase2/` in `art/WB-012/`): la punta è un po' aguzza ma è quella del modello, la tavola
 torna buona (Claude, su indicazione di Sergio: «qualche coda di prima si salva»). Il bisbiglio di
 fase 2 resta scartato per il martello: si rifà nella fase 2c, col prompt della fase 2 e le mani
 vuote, senza insistere sulla coda. Le quattro varianti della 2b vanno in `scartati/fase2b/`.
