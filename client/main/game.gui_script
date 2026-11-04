@@ -509,6 +509,11 @@ end
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
 local function show_menu(self, without_veil)
 	close_screen(self)
+	-- a card still open (or waiting in line) goes away with its match: it
+	-- would stay in front of the home (the back button opens the wheel even
+	-- over a card)
+	if self.carta then self.carta:close_view(); self.carta = nil end
+	self.card_queue = nil
 	if self.sala then menu.lobby.destroy(self.sala); self.sala = nil end
 	self.podium_t = nil
 	-- in the queue the connection stays: you can go around the menus (ui/pill.lua)
@@ -705,6 +710,7 @@ local function new_match(self, seed, map, opts)
 	-- who speaks is said by the mission (start_mission), later
 	self.speak = nil
 	if self.carta then self.carta:close_view(); self.carta = nil end
+	self.card_queue = nil
 	self.ricetta = replay.nuova(seed, map, opts)
 	self.g, self.bots = replay.partita(self.ricetta)
 	-- the world shows only now that there is a match (show_menu)
@@ -1331,7 +1337,14 @@ local function handle_event(self, e)
 		if self.mode == "local" and e.robot == 1 and (l or next(self.bots))
 			and (profile.new_weapon(self.profilo, e.weapon) or (l and l.aspetta)) then
 			profile.salva(self.profilo)
-			self.carta = require("battle.card").open_view(e.weapon, PAD.comandi(self))
+			-- two crates in the same tick (or a card already open): the next card
+			-- waits its turn, so no card is left on screen without its button
+			if self.carta then
+				self.card_queue = self.card_queue or {}
+				self.card_queue[#self.card_queue + 1] = e.weapon
+			else
+				self.carta = require("battle.card").open_view(e.weapon, PAD.comandi(self))
+			end
 		end
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
@@ -2261,8 +2274,8 @@ end
 -- in the lessons Favilla speaks, in the circles the Fabbro. What explains a
 -- control (in the lessons; not what comes mid-move: subito, in the air) and
 -- the opening line stop the game on the big
--- vignette the first time (profile.vignetta), then they stay in the strip at
--- the top; the rest is only in the strip. {salta}: how to jump with the
+-- vignette every time (Sergio, 4 Nov: also when you play the lesson again),
+-- then they stay in the strip at the top; the rest is only in the strip. {salta}: how to jump with the
 -- controls you have (PAD.TEXTS)
 function CP.mission_line(self, r)
 	local line = missions.line(r)
@@ -2281,8 +2294,7 @@ function CP.mission_line(self, r)
 		end
 		if self.vign_line ~= line and not self.carta then
 			self.vign_line = line
-			if self.vign_on and profile.vignetta(self.profilo, l.id .. ":" .. line.testo) then
-				profile.salva(self.profilo)
+			if self.vign_on then
 				self.carta = self.vign:open({ page }, PAD.comandi(self) == "controller")
 			end
 		end
@@ -3689,7 +3701,9 @@ function init(self)
 	camera.margins(self.cam, 120, 90, SIZES.ring_y + hud.OUTSIDE + 40)
 	-- the points at the top center; the ticking is the game object's "punto" sound
 	self.punti = score.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
-	self.message = label(W / 2, H / 2 + 120, "", 1.6)
+	-- the messages ("Una cassa cade dal cielo!") just under the strip of the
+	-- vignettes (battle/vignette.lua, top center at 520, 96 tall), never behind it
+	self.message = label(W / 2, H / 2 + 78, "", 1.6)
 	self.announcement = label(W / 2, H / 2 - 150, "", 2.2)
 	gui.set_color(self.announcement, vmath.vector4(1, 1, 1, 0))
 	-- the wheel at the top left, in every match: next to it it opens RIPROVA (not
@@ -4292,6 +4306,8 @@ function PAD.close_card(self)
 	if w and (not game.TOOLS[w] or game.THROWN[w]) then self.weapon = w end
 	self.carta:close_view()
 	self.carta = nil
+	local q = self.card_queue
+	if q and #q > 0 then self.carta = require("battle.card").open_view(table.remove(q, 1), PAD.comandi(self)) end
 end
 
 -- A wheel button (nil: it just closes again). MIRA changes mode and the

@@ -86,7 +86,9 @@ local function panel(x, y, w, h, parent)
 end
 
 local function face(chi, faccia, x, y, s, parent)
+	-- no black frame around the portrait (Sergio, 4 Nov): the box only holds it
 	local frame = box(x, y, s + 8, s + 8, INK, parent)
+	gui.set_visible(frame, false)
 	local n = gui.new_box_node(vec(0, 0), vec(s, s))
 	gui.set_texture(n, "ritratti")
 	gui.set_parent(n, frame)

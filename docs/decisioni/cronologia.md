@@ -138,3 +138,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 4 nov | Il cortile con Favilla: sette lezioni corte, lei corre avanti, butta la cassa, ti aspetta e ti sfida; la scintilla in aria e le medaglie facoltative al posto delle stelle. | #192 |
 | 4 nov | Il bot in inglese (nomi, commenti e test); le chiavi dei pesi salvati dall'arena restano italiane. Nel gioco non cambia niente: 200 partite di bot identiche a prima. | #193 |
 | 4 nov | RIPROVA e Ritenta sulla stessa mappa non ridisegnano più tutta la maschera del terreno (155 ms sul telefono, senza iride): tornano solo i pezzi scavati. Misure della Forgia e di tutte le schermate da #159 a main: niente peggiorato. | questa PR |
+| 4 nov | Bug: la scheda di un'arma nuova poteva restare sullo schermo senza chiudersi (due casse prese insieme): ora le schede aspettano il loro turno. I messaggi come «Una cassa cade dal cielo!» stanno sotto la striscia delle vignette, non dietro. Ritratto della vignetta senza il riquadro nero. | #195 |
+| 4 nov | Le vignette grandi (apertura e spiegazioni delle lezioni) fermano il gioco ogni volta, non solo la prima (Sergio). | #195 |
