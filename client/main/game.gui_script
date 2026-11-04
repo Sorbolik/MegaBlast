@@ -2835,6 +2835,7 @@ local function update_bar(self)
 				if sl.tondo then
 					hud.round_number(sl.tondo, count > 0 and tostring(count) or "")
 				else
+					gui.set_enabled(sl.badge, count > 0)
 					gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
 				end
 				sl.count = count
@@ -3757,19 +3758,27 @@ function init(self)
 		local gr = bar_group(w)
 		local sl = { weapon = w, have = false, group = gr }
 		if gr >= 3 then
-			-- items and tool: round, with the small number
-			sl.tondo = hud.tondo(0, BAR_Y, gr == 3 and SIZES.oggetto or TELE_BTN_D, w, BAR_COLORS[gr], self.bar)
+			-- items and tool: tokens (hexagon, octagon), with the small number
+			sl.tondo = hud.tondo(0, BAR_Y, gr == 3 and SIZES.oggetto or TELE_BTN_D, w, BAR_COLORS[gr], self.bar,
+				gr == 3 and "oggetto" or "gettone")
 			sl.node, sl.bordo, sl.icon = sl.tondo.nodo, sl.tondo.bordo, sl.tondo.icon_img
 		else
-			local n, border = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar)
+			-- the weapon's slot (chamfered on top) and, at the top right, the
+			-- pill with the shots left (report UI-002)
+			local n, border = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar, "slot_arma")
 			fit(n)
-			local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
+			local icon = gui.new_box_node(vmath.vector3(0, -2, 0), vmath.vector3(62, 62, 0))
 			gui.set_texture(icon, "armi")
 			gui.play_flipbook(icon, WEAPON_ICON[w])
 			gui.set_parent(icon, n)
-			local count = label(22, -26, "", 0.7)
-			gui.set_parent(count, n)
-			sl.node, sl.bordo, sl.icon, sl.label = n, border, icon, count
+			local badge, badge_border = ui.pannello(SLOT / 2 - 14, SLOT / 2 - 2, 42, 26, n, "badge")
+			fit(badge)
+			fit(badge_border)
+			gui.set_color(badge_border, BAR_COLORS[gr])
+			gui.set_enabled(badge, false)
+			local count = label(0, 1, "", 0.8)
+			gui.set_parent(count, badge)
+			sl.node, sl.bordo, sl.icon, sl.label, sl.badge = n, border, icon, count, badge
 		end
 		gui.set_enabled(sl.node, false)
 		self.slots[i] = sl
@@ -3782,7 +3791,7 @@ function init(self)
 		end
 	end
 	-- teleport: round and purple like the tool, with the teleports left
-	self.btn_tele = hud.tondo(TELE_BTN_DESK.x, TELE_BTN_DESK.y, TELE_BTN_D, "teleport", ui.C.PURPLE)
+	self.btn_tele = hud.tondo(TELE_BTN_DESK.x, TELE_BTN_DESK.y, TELE_BTN_D, "teleport", ui.C.PURPLE, nil, "gettone")
 	self.tele_key = label(-28, -30, "T", 0.6)
 	gui.set_parent(self.tele_key, self.btn_tele.nodo)
 	CP.recharge_create(self)

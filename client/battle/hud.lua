@@ -12,7 +12,8 @@
 --   hud.round_flash(t)     -- the button lights up: a growing ring and the number jumps
 --     fase: "turno" (white), "secondo" (yellow, the second attack is left),
 --     "riparati" (blue, attacks used up) or nil (no turn to count)
---   local t = hud.tondo(x, y, d, icon_img, colore, parent)   -- icon_img: "<icon>_icona" of the weapons atlas
+--   local t = hud.tondo(x, y, d, icon_img, colore, parent, shape)   -- icon_img: "<icon>_icona" of the weapons atlas;
+--     shape "gettone" (octagon: teleport, Grapple, swap) or "oggetto" (hexagon: the items)
 --   hud.round_number(t, "2")
 --   local s = hud.scambio()     -- the button that swaps the second attack for a teleport
 --   hud.swap_update(s, is_visible, c) / if hud.swap_press(s, px, py) then ... end
@@ -256,11 +257,13 @@ function M.globi(c, n, pos, slowed, arrival)
 	end
 end
 
--- Round button: dark disc, border in its family's color, icon
-function M.tondo(x, y, d, icon_img, color, parent)
-	local t = { d = d, colore = color }
-	t.nodo = fit(ui.disco(x, y, d, ui.C.PANEL, parent))
-	t.bordo = fit(ui.ring_node(0, 0, d, 3, color, t.nodo))
+-- Token button: dark shape of its family (report UI-002: octagon for
+-- teleport, Grapple and swap, hexagon for the items), border in its
+-- family's color, icon
+function M.tondo(x, y, d, icon_img, color, parent, shape)
+	local t = { d = d, colore = color, shape = shape }
+	t.nodo = fit(ui.sagoma(shape .. "_forma", x, y, d, d, ui.C.PANEL, parent))
+	t.bordo = fit(ui.sagoma(shape .. "_bordo", 0, 0, d, d, color, t.nodo))
 	t.icon_img = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(d * 0.74, d * 0.74, 0)))
 	gui.set_texture(t.icon_img, "armi")
 	gui.play_flipbook(t.icon_img, icon_img .. "_icona")
@@ -284,7 +287,7 @@ end
 -- the small number jumps
 function M.round_flash(t)
 	if not t.lampo then
-		t.lampo = fit(ui.ring_node(0, 0, t.d, 5, ui.C.LIGHT, t.nodo))
+		t.lampo = fit(ui.sagoma(t.shape .. "_bordo", 0, 0, t.d, t.d, ui.C.LIGHT, t.nodo))
 		gui.set_enabled(t.lampo, false)
 	end
 	gui.cancel_animations(t.lampo, "scale")
@@ -418,7 +421,7 @@ function M.scambio()
 	local s = { on = true }
 	s.radice = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(s.radice, false)
-	s.tondo = M.tondo(0, 0, SWAP_D, "scambio", ui.C.PURPLE, s.radice)
+	s.tondo = M.tondo(0, 0, SWAP_D, "scambio", ui.C.PURPLE, s.radice, "gettone")
 	local x = SWAP_D / 2 + 10
 	for _, r in ipairs({ { T.swap_1, 8 }, { T.swap_2, -8 } }) do
 		local n = fit(ui.testo(r[1], x, r[2], 0.5, ui.C.TEXT, s.radice))

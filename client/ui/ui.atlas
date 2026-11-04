@@ -16,6 +16,36 @@ images {
 images {
   image: "/assets/ui/favilla.png"
 }
+images {
+  image: "/assets/ui/eroe_forma.png"
+}
+images {
+  image: "/assets/ui/eroe_bordo.png"
+}
+images {
+  image: "/assets/ui/slot_arma_forma.png"
+}
+images {
+  image: "/assets/ui/slot_arma_bordo.png"
+}
+images {
+  image: "/assets/ui/badge_forma.png"
+}
+images {
+  image: "/assets/ui/badge_bordo.png"
+}
+images {
+  image: "/assets/ui/gettone_forma.png"
+}
+images {
+  image: "/assets/ui/gettone_bordo.png"
+}
+images {
+  image: "/assets/ui/oggetto_forma.png"
+}
+images {
+  image: "/assets/ui/oggetto_bordo.png"
+}
 margin: 2
 extrude_borders: 2
 inner_padding: 0

@@ -1,7 +1,7 @@
 -- MegaBlast's minimal interface, in the Scoria's style: flat charcoal shapes
 -- with a light border (like the character's outline) and the Core's glow, in
 -- the team color, on what matters. No painted images: a few white shapes
--- (assets/ui/, strumenti/grafica/ui.py) colored from here.
+-- (assets/ui/, strumenti/grafica/ui.py; one shape per family of controls) colored from here.
 -- Pieces are added only when a screen needs them.
 --
 -- The .gui using it must have the "ui" texture (/ui/ui.atlas) and the
@@ -41,9 +41,13 @@ M.C = {
 }
 local C = M.C
 
-local BORDER_9 = vmath.vector4(16, 16, 16, 16)
--- the shapes that stretch in 9-slice (the others scale whole)
-local NINE = { forma = true, bordo = true }
+-- the shapes that stretch in 9-slice and their border (the others scale
+-- whole). One family per kind of control (style "Sagoma tattica", report
+-- UI-002): forma/bordo panels, tabs and the plain buttons; eroe the main
+-- button (chamfered); slot_arma the weapons of the bar; badge the ammo pill
+local B16, B12 = vmath.vector4(16, 16, 16, 16), vmath.vector4(12, 12, 12, 12)
+local NINE = { forma = B16, bordo = B16, eroe_forma = B16, eroe_bordo = B16,
+	slot_arma_forma = B16, slot_arma_bordo = B16, badge_forma = B12, badge_bordo = B12 }
 local V = vmath.vector3()
 local PRESSED, NORMAL = vmath.vector3(0.96, 0.96, 1), vmath.vector3(1, 1, 1)
 
@@ -54,12 +58,15 @@ local function gui_node(tex, x, y, w, h, color, parent)
 	if tex then
 		gui.set_texture(n, "ui")
 		gui.play_flipbook(n, tex)
-		if NINE[tex] then gui.set_slice9(n, BORDER_9) end
+		if NINE[tex] then gui.set_slice9(n, NINE[tex]) end
 	end
 	gui.set_color(n, color)
 	if parent then gui.set_parent(n, parent) end
 	return n
 end
+
+-- A white shape of the ui atlas, colored (9-slice if it is one of NINE)
+M.sagoma = gui_node
 
 local function write(font, t, x, y, scale, color, parent)
 	local n = gui.new_text_node(vec(x, y), t)
@@ -96,23 +103,32 @@ function M.sfondo(parent)
 end
 
 -- Panel: charcoal with a faint light border. Also returns the border node, to
--- light it (C.LIGHT) when the panel is selected
-function M.pannello(x, y, w, h, parent)
-	local n = gui_node("forma", x, y, w, h, C.PANEL, parent)
-	return n, gui_node("bordo", 0, 0, w, h, C.LINE, n)
+-- light it (C.LIGHT) when the panel is selected. shape: the family's prefix
+-- ("slot_arma", "badge"; nil the plain panel)
+function M.pannello(x, y, w, h, parent, shape)
+	local n = gui_node(shape and shape .. "_forma" or "forma", x, y, w, h, C.PANEL, parent)
+	return n, gui_node(shape and shape .. "_bordo" or "bordo", 0, 0, w, h, C.LINE, n)
 end
 
--- Button. opt: main (solid border and Core lit), colore (of the Core, usually
--- the team), spento (visible but not responding)
+-- Button. opt: main (the chamfered shape, solid border, Core lit and a thin
+-- line in its color at the bottom), colore (of the Core, usually the team),
+-- tacca (a colored notch on the left: the mode's color, in the home),
+-- spento (visible but not responding)
 function M.button(list_of, x, y, w, h, label, ui_action, opt, parent)
 	opt = opt or {}
-	local n = gui_node("forma", x, y, w, h, C.PANEL, parent)
+	local main = opt.main
+	local n = gui_node(main and "eroe_forma" or "forma", x, y, w, h, C.PANEL, parent)
 	local col = opt.colore or C.BRACE
 	local b = { nodo = n, ui_action = ui_action, spento = opt.spento, colore = col }
-	b.bordo = gui_node("bordo", 0, 0, w, h, opt.main and C.LIGHT or C.LINE, n)
+	b.bordo = gui_node(main and "eroe_bordo" or "bordo", 0, 0, w, h, main and C.LIGHT or C.LINE, n)
 	b.riposo = gui.get_color(b.bordo)
+	if opt.tacca then
+		gui_node(nil, -w / 2 + 12, 0, 5, h - 30, opt.spento and C.OFF or opt.tacca, n)
+	end
 	local tx = 0
-	if opt.main and not opt.spento then
+	if main and not opt.spento then
+		-- the accent at the bottom, between the two chamfers
+		gui_node(nil, 0, -h / 2 + 9, w - 56, 3, vmath.vector4(col.x, col.y, col.z, 0.8), n)
 		-- the Core: a lit dot with its halo, left of the label
 		local r = h * 0.5
 		b.luce = M.alone(-w / 2 + r, 0, h * 1.1, vmath.vector4(col.x, col.y, col.z, 0.55), n)

@@ -86,22 +86,24 @@ function M.new(color)
 	local nome = ui.titolo(common.game_name, 0, 0, 1.3, ui.C.LIGHT, top_left)
 	gui.set_pivot(nome, gui.PIVOT_W)
 
-	-- bottom right: the matches
+	-- bottom right: the matches. Each mode has its notch's color (report
+	-- UI-002): campaign gold, training steel, same phone purple, armory
+	-- ember, events red
 	local dx = angle_deg(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	local campaign = ui.button(h.buttons, 0, 344, 340, 72, common.campaign, "campagna", nil, dx)
+	local campaign = ui.button(h.buttons, 0, 344, 340, 72, common.campaign, "campagna", { tacca = ui.C.GOLD }, dx)
 	h.campaign = h.buttons[#h.buttons]
 	h.campaign_note = ui.testo(T.leave_queue_first, 0, -24, 0.5, ui.C.OFF, campaign)
 	gui.set_enabled(h.campaign_note, false)
-	ui.button(h.buttons, 0, 256, 340, 72, common.training, "allenamento", nil, dx)
-	ui.button(h.buttons, 0, 168, 340, 72, T.same_phone, "local", nil, dx)
+	ui.button(h.buttons, 0, 256, 340, 72, common.training, "allenamento", { tacca = ui.C.STEEL }, dx)
+	ui.button(h.buttons, 0, 168, 340, 72, T.same_phone, "local", { tacca = ui.C.PURPLE }, dx)
 	ui.button(h.buttons, 0, 60, 340, 108, common.play, "online", { main = true, colore = color }, dx)
 	h.play = h.buttons[#h.buttons]
 
 	-- bottom left: loadouts, tree and sets
 	local sx = angle_deg(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	ui.button(h.buttons, 0, 60, 240, 72, common.armory, "armeria", nil, sx)
+	ui.button(h.buttons, 0, 60, 240, 72, common.armory, "armeria", { tacca = ui.C.BRACE }, sx)
 	-- above: the EVENTI (menu/board.lua), with what is happening now below
-	local ev = ui.button(h.buttons, 0, 160, 240, 96, "", "eventi", nil, sx)
+	local ev = ui.button(h.buttons, 0, 160, 240, 96, "", "eventi", { tacca = ui.C.SQUADRA[1] }, sx)
 	ui.testo(common.events, 0, 14, 0.9, ui.C.TEXT, ev)
 	h.events_row = ui.testo("", 0, -22, 0.55, ui.C.OFF, ev)
 

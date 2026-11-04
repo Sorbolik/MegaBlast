@@ -5,6 +5,18 @@
 #   alone.png  alone morbido rotondo, da disegnare in additivo (il bagliore del Nucleo)
 #   stella.png stella a cinque punte, piena (le stelle delle lezioni e della campagna)
 #   ingranaggio.png  la rotellina delle impostazioni in partita
+# e le sagome di ogni famiglia di comandi (stile "Sagoma tattica", rapporto
+# UI-002 di Antigravity), forma piena e solo contorno:
+#   eroe_*      il pulsante principale (GIOCA, AVANTI): smussi a 45 gradi in
+#               alto a destra e in basso a sinistra (9-slice, bordo 16)
+#   slot_arma_* le armi della barra: smussi in alto, sotto arrotondato (9-slice, bordo 16)
+#   badge_*     la pillola dei colpi rimasti sullo slot (9-slice, bordo 12)
+#   gettone_*   teletrasporto, Rampino e baratto: ottagono (intero, non 9-slice)
+#   oggetto_*   paracadute, trappola, scudo, molla: esagono (intero)
+# Le forme 9-slice sono a densita' 1 (un pixel dell'immagine per pixel del
+# gioco nei bordi): in Defold il 9-slice usa gli stessi numeri per l'immagine e
+# per il nodo, quindi un'immagine piu' grande non rende i bordi piu' fini.
+# Ottagono ed esagono si scalano interi: sono a 128 px, nitidi anche a 1440p.
 # python3 strumenti/grafica/ui.py
 import os
 import numpy as np
@@ -71,4 +83,37 @@ r = np.hypot(x, y)
 dente = np.cos(np.arctan2(y, x) * 8) > 0.15
 pieno = ((r <= n / 2 - 1.5) & dente) | (r <= n / 2 - 9)
 salva((pieno & (r >= 8.5)).astype(float), n, "ingranaggio.png")
+
+
+def coppia(d, n, linea, nome):
+    # d: distanza con segno dal bordo (negativa dentro); forma piena e contorno
+    salva((d <= -0.5).astype(float), n, nome + "_forma.png")
+    salva(((d <= -0.5) & (d > -0.5 - linea)).astype(float), n, nome + "_bordo.png")
+
+
+R2 = np.sqrt(2)
+# pulsante principale: lo smusso sta tutto nell'angolo del 9-slice (16)
+n = LATO
+x, y = griglia(n)
+h = n / 2
+smusso = 13
+d = np.maximum(np.maximum(np.abs(x), np.abs(y)) - h,
+               np.maximum((x + y) / R2, (-x - y) / R2) - (2 * h - smusso) / R2)
+coppia(d, n, LINEA, "eroe")
+# slot delle armi: smussi in alto, angoli di sotto arrotondati
+d = np.maximum(distanza_rettangolo(n, 9), np.maximum((x + y) / R2, (-x + y) / R2) - (2 * h - 11) / R2)
+coppia(d, n, LINEA, "slot_arma")
+# pillola dei colpi: mezzo cerchio per lato
+n = 24
+coppia(distanza_rettangolo(n, 11), n, 2, "badge")
+# gettone ottagonale e oggetto esagonale, interi: il contorno è spesso come
+# i 3 px dei bottoni tondi di prima, alla misura in cui si disegnano (84 e 56)
+n = 128
+x, y = griglia(n)
+r = n / 2 - 2
+d = np.maximum(np.maximum(np.abs(x), np.abs(y)), (np.abs(x) + np.abs(y)) / R2) - r
+coppia(d, n, 3 * n / 84, "gettone")
+a = r * np.sqrt(3) / 2  # esagono con la punta in alto: lati dritti a destra e sinistra
+d = np.maximum(np.abs(x), np.abs(x) / 2 + np.abs(y) * np.sqrt(3) / 2) - a
+coppia(d, n, 3 * n / 56, "oggetto")
 print("ok", OUT)
