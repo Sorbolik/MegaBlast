@@ -1,5 +1,5 @@
 # Maglio: martello a due mani scelto all'inizio (prova_secondaria mallet, barra:
-# Lanciarune 432, Lama 546, Maglio 660, Rampino 754, Paracadute 848). Gira
+# Lanciarune 506, Lama 774, Maglio 868, Rampino 1084 62, Paracadute 1180 154). Gira
 # attorno alla spalla come la Lama: mirando dritto parte alto dietro la testa,
 # cala davanti e finisce sotto i piedi; l'arco gira con la mira. La testa si
 # ferma dove sbatte. Al primo urto, sul terreno o su un robot, a terra come in

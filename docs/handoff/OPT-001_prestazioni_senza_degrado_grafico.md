@@ -1,6 +1,6 @@
 # OPT-001 · Ottimizzazione Prestazioni Senza Degrado Grafico
 
-- **Stato:** PROPOSTA (per revisione ed esecuzione di Claude e Sergio)
+- **Stato:** ESEGUITA IN PARTE (4 nov, Claude: vedi il resoconto in fondo)
 - **Data:** 2026-11-04
 - **Autore:** Codex / Antigravity
 - **Destinatario:** Claude (Coordinatore del progetto MegaBlast) e Sergio (Direttore del gioco)
@@ -293,3 +293,51 @@ Questo report identifica le cause precise alla radice degli scatti rilevati su P
 Tutti gli interventi proposti rispettano rigorosamente il vincolo di Sergio: **nessun abbassamento di qualità grafica, nessun cambio di asset, nessuna perdita di fedeltà visiva**.
 
 Le modifiche sono modulari e possono essere affrontate in sequenza (ad esempio: prima GPU Shader OPT-A1/A2, poi Lua GC OPT-B1/B2/B3, infine Mask Buffer OPT-C1).
+
+---
+
+## Resoconto di Claude (4 nov)
+
+Ogni proposta controllata sul codice e, dove si poteva, misurata nel simulatore. Sul
+telefono di Sergio (contatore FPS, 4 nov) la home e la Forgia fanno già 116-120 FPS col
+99% dei frame sotto 9-10 ms: i guadagni veri sono per il PC a 165 Hz e per i telefoni
+economici.
+
+**Applicate** (nessuna differenza sullo schermo):
+
+- **A1** · niente `pow()` per pixel: `log2(zoom)` si calcola una volta in `sfondo()` e ogni
+  fila fa solo `exp2(-quanto * lz)`, che è la stessa formula (i driver fanno `pow` proprio
+  così). Più semplice del precalcolo su CPU proposto, che avrebbe chiesto lo zoom della
+  vista allo script del terreno e costanti anche nel vertex shader.
+- **A2** · braci: uscita anticipata se `r < 0.72` (stesso risultato di `step(0.72, r)`).
+  A1 + A2: la home ferma a 2560 x 1440 nel simulatore (scenario `home_ferma.txt`,
+  `--scala 2`, dove conta solo lo shader) passa da 60-61 a 51-52 ms per frame, il 15% in meno.
+- **B2** · `items.lua`: un vettore solo per `pos()`.
+- **E2** · `pose.azzera`: ciclo numerico su `CHANNELS` (le chiavi di `NEUTRAL` sono le stesse).
+
+**Già fatta:** **C1** per RIPROVA e Ritenta (#196, `CR.undig`). Il ridisegno intero
+resta solo entrando in una mappa nuova, sotto l'iride.
+
+**Scartate:**
+
+- **B1** (tabella `input` riusata): rompe le ricette. `replay.input` salva la tabella in
+  `r.ultimo` e al tick dopo la confronta con quella nuova per decidere se scrivere i tasti:
+  con la stessa tabella sarebbero sempre uguali e la ricetta perderebbe i tasti (replay e
+  partite rigiocate sbagliati). Una tabella a tick è poca roba.
+- **B3** (buffer riusato per i crateri): un buffer a esplosione, non a frame; e
+  `resource.set_texture` vuole un buffer della misura del rettangolo.
+- **B4** (`scoria.levels`): gira solo quando cambia l'ordine dei pezzi, non a frame.
+- **C1 template per mappa**: entrare in una mappa nuova succede sotto l'iride e la
+  prima volta va calcolata comunque; tenere 900 KB per mappa in memoria non serve.
+- **D1** (`plate.lua`, controllo prima di `span`): 36 chiamate a frame sono microsecondi;
+  in partita Lua lavora meno di 1 ms a frame.
+- **D2** (un atlas solo per corpo e armi): il profiler dice 72 chiamate di disegno in
+  tutto in una partita 2 contro 2, e il telefono fa 116-120 FPS; un atlas più grande
+  pesa in memoria e sui limiti delle texture dei telefoni. Da rivedere solo se il
+  contatore dice `motore` su un telefono.
+- **D3** (`flash.material` per tutti i pezzi): non è uguale a `pieces.fp`. `flash.fp` usa del
+  colore del nodo solo l'alfa (e il verde come quantità di lampo), mentre `pieces.fp`
+  moltiplica per tutto il colore: i pezzi tinti (le squadre) perderebbero la tinta.
+- **E1** (tangenti precalcolate): campionare le pose costa poco nel profilo di Lua e
+  cambierebbe l'ordine delle operazioni sui numeri delle animazioni, che oggi tornano
+  identiche all'editor.

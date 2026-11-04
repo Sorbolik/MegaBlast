@@ -90,8 +90,9 @@ il tasto `t`, armi coi tasti `1`-`9`. Con `imposta comandi telefono` ci sono le
 due levette (corsa 94 px) e TELE sta a `1208 257`.
 Attorno al cronometro in basso al centro (sul computer): primarie a sinistra
 (`y = 62`, Lanciarune `506`, poi `412`, `318`, `224`, `130`), secondarie a
-destra (Lama `774`, quella scelta `868`), oggetti tondi sopra le secondarie
-(`y = 148`: `760`, `826`, `892`, `958`, scorrono quando uno finisce), Rampino
+destra (Lama `774`, quella scelta `868`), oggetti tondi nella colonna OGGETTI
+sopra il TELE (`x = 1180`, dal basso `y = 154`, `222`, `290`, `358`: quando uno
+finisce, quelli sopra scendono), Rampino
 tondo accanto al TELE (`1084 62`; sul telefono `1112 257`). Quello
 in mano sale di 10 punti.
 Con `prova_armi` le posizioni sono nei commenti di `scenari/oggetti.txt`.
