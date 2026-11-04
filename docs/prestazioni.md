@@ -30,6 +30,7 @@ centro compare una riga:
 | `schermata NOME` | è cambiata la schermata (`local`, `menu`, `scelta`...) |
 | `gc` | è passato il raccoglitore della memoria di Lua |
 | `lua` | gli script hanno lavorato più della metà dello scatto (un calcolo lungo) |
+| `bot` | in quel frame un bot ha pensato (prova le mosse su copie della partita, `client/sim/bot.lua`): sul telefono può costare più di un giro di schermo |
 | `motore` | niente di quanto sopra: disegno, GPU, driver o sistema operativo |
 
 Sul PC, lanciando dall'editor di Defold, ogni scatto va anche nella console:

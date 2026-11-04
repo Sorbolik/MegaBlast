@@ -3820,6 +3820,8 @@ function update(self, dt)
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
 	if self.mode == "local" and not self.menu_open and not self.carta and not (self.queue and self.queue.found) then
 		self.acc = math.min(self.acc + dt_world, 0.25)
+		-- a bot that thinks in this frame (sim/bot.lua, work): the counter says BOT
+		local thought = bot.totale
 		while self.acc >= game.DT and self.mode == "local" and not self.carta do
 			local input = {
 				left = move_left(self),
@@ -3851,6 +3853,7 @@ function update(self, dt)
 			capture(self.pose_b, self.g)
 		end
 		self.pose_t, self.pose_dt = self.acc, game.DT
+		if bot.totale ~= thought then frames.segna("bot") end
 		if self.missione then
 			mission_update(self, dt)
 		end
