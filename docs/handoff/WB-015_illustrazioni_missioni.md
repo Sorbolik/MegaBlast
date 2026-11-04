@@ -212,4 +212,40 @@ le prime sette; come si vedono nella carta lo propone Claude con le foto.
 
 ## Consegna di Codex
 
+### Fase 1 · 2026-11-04
+
+Eseguita la fase 1 dal `main` aggiornato (`7f794b8`), sul ramo `design/WB-015`.
+Il comando generico «Esegui WB-015» è stato interpretato come avvio dalla fase 1:
+la fase 2 resta in attesa della revisione di Claude prevista sopra.
+
+File consegnati in `art/WB-015/` (per ciascuno PNG e TXT col prompt integrale e i riferimenti in ordine):
+
+| File (senza estensione) | Tentativi |
+|---|---|
+| `c1_stammi_dietro` | 1 |
+| `c2_lanciarune` | 1 |
+| `c3_a_turno` | 1 |
+| `c4_tempo` | 1 |
+| `c5_in_cima` | 1 |
+| `c6_burrone` | 1 |
+| `c7_duello` | 2 |
+
+Generazione con lo strumento integrato `image_gen`, prompt copiati senza modifiche,
+riferimenti R1, R2, R5, R4 allegati in questo ordine a ogni chiamata; sfondo della scena.
+Guardate tutte le immagini prima del salvataggio: personaggi, fiamme, abiti, code intere,
+contorni neri, mani e arti, azione della missione, assenza di scritte e firme.
+Il primo duello aveva tre braccia per Favilla: scartato e rigenerato col medesimo prompt;
+il secondo ha due braccia. Salvate solo le versioni selezionate.
+
+**Problema di formato:** tutti i PNG restituiti sono **1672×941**, verificati leggendo
+le dimensioni dei file, anziché 1536×1024 / 3:2. Lo strumento disponibile non espone
+un parametro per le dimensioni e i prompt sono stati mantenuti identici. Originali
+consegnati senza deformazioni, ritagli o ritocchi; il criterio 1536×1024 non è soddisfatto.
+In c2 e c5 la fiamma di Favilla è vicina al bordo superiore: attenzione al ritaglio della carta.
+In c4 la traiettoria mostra la sfera in due posizioni successive.
+
+Non verificati: resa effettiva a 300 px nella carta, ritaglio nel client, memoria sul telefono,
+confronto pixel per pixel dei personaggi. Nessuna contraddizione rilevata con DECISIONI.md.
+Restano a Claude la revisione finale e l'integrazione. Nessuna PR aperta né merge.
+
 ## Resoconto di Claude

@@ -1,0 +1,12 @@
+Image 1 is the model sheet of the apprentice imp, image 2 the model sheet of Favilla, image 3 Favilla's full figure (look at her tail there), image 4 the illustration style. Copy both characters EXACTLY from their sheets (shapes, colors, flame, clothes; Favilla's tail exactly as in image 3); do not redesign them.
+
+A wide comic illustration on the iron floor of a hellish forge hall, pillars and glowing furnaces behind. A friendly duel: the apprentice on the left and Favilla on the right face each other, a few steps apart, each holding a rune launcher, ready. Favilla grins and beckons him with two fingers; the apprentice is determined. Keep the action in the middle; nothing important near the edges. Style of image 4. No text, letters, numbers, speech balloons or signatures.
+
+Riferimenti (ordine allegato):
+1. art/WB-012/scelti/apprendista.png
+2. art/WB-012/scelti/favilla.png
+3. art/WB-012/riferimenti/R9_favilla_figura.png
+4. art/WB-012/4_arrivo_a.png
+
+Strumento: image_gen integrato; sfondo della scena, non trasparente.
+
