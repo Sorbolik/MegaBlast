@@ -23,6 +23,12 @@
 --   fotogrammi.fine()              -- at the bottom of the same update
 --   fotogrammi.segna("dipinto")    -- from whoever does heavy work (also from other scripts)
 --   fotogrammi.testo()             -- the line to show (nil if it hasn't changed)
+--   fotogrammi.rete(gap)           -- online: seconds between this state from the server and the previous one
+--
+-- Online the line also says RETE: the longest wait between two states from
+-- the server in the last 10 seconds (normally 33 ms). The drawing hides the
+-- waits up to four states (main/playout.lua); a longer one is a stop you see
+-- even if the FPS are fine.
 
 local T = require("lang.text").frames
 
@@ -60,7 +66,10 @@ local stutters, n_stutters = {}, 0
 local clock, computed = 0, 0
 local row_changed = false
 -- the summary for the simulator (since the last summary)
-local summary = { n = 0, scatti = 0, coperti = 0, worst = 0, worst_lua = 0, allocated = 0, t = 0 }
+local summary = { n = 0, scatti = 0, coperti = 0, worst = 0, worst_lua = 0, allocated = 0, t = 0, rete = 0 }
+-- online: the waits between states of the last 10 seconds (time, seconds), in a ring
+local gaps, n_gaps = {}, 0
+local GAPS = 512
 
 function M.segna(culprit)
 	cause = cause and (cause .. "+" .. culprit) or culprit
@@ -165,6 +174,22 @@ function M.lavoro(t)
 	lua_work = lua_work + now() - t
 end
 
+function M.rete(gap)
+	n_gaps = n_gaps % GAPS + 1
+	gaps[n_gaps] = { clock, gap }
+	if gap > summary.rete then summary.rete = gap end
+end
+
+-- the longest wait between states in the last 10 seconds, or nil
+local function worst_gap()
+	local w
+	for i = 1, #gaps do
+		local e = gaps[i]
+		if clock - e[1] <= 10 and (not w or e[2] > w) then w = e[2] end
+	end
+	return w
+end
+
 -- how many stutters in the last minute
 local function stutters_minute()
 	local n = 0
@@ -184,6 +209,8 @@ function M.testo()
 	for i = 1, n do seconds_left = seconds_left + durations[i] end
 	local riga = T.row:format(
 		n / seconds_left, sorted[n] * 1000, percentile(sorted, n, 0.99) * 1000, stutters_minute())
+	local net = worst_gap()
+	if net then riga = riga .. T.net:format(net * 1000) end
 	if M.ultimo then riga = riga .. T.last:format(string.upper(M.ultimo)) end
 	return riga
 end
@@ -194,10 +221,10 @@ function M.summary()
 	if r.n == 0 then return nil end
 	local n = recompute()
 	local riga = string.format(
-		"SIMULA fotogrammi n=%d fps=%.1f p50=%.1f p95=%.1f p99=%.1f max=%.1f scatti=%d coperti=%d lua_max=%.1f kb_frame=%.1f",
+		"SIMULA fotogrammi n=%d fps=%.1f p50=%.1f p95=%.1f p99=%.1f max=%.1f scatti=%d coperti=%d lua_max=%.1f kb_frame=%.1f rete_max=%.0f",
 		r.n, r.n / r.t, percentile(sorted, n, 0.5) * 1000, percentile(sorted, n, 0.95) * 1000,
-		percentile(sorted, n, 0.99) * 1000, r.worst * 1000, r.scatti, r.coperti, r.worst_lua * 1000, r.allocated / r.n)
-	summary = { n = 0, scatti = 0, coperti = 0, worst = 0, worst_lua = 0, allocated = 0, t = 0 }
+		percentile(sorted, n, 0.99) * 1000, r.worst * 1000, r.scatti, r.coperti, r.worst_lua * 1000, r.allocated / r.n, r.rete * 1000)
+	summary = { n = 0, scatti = 0, coperti = 0, worst = 0, worst_lua = 0, allocated = 0, t = 0, rete = 0 }
 	return riga
 end
 
