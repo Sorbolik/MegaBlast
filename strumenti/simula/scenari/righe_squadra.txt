@@ -1,0 +1,26 @@
+# Le righe del colore della squadra (Sergio, 4 nov): lo schieramento del
+# 2 contro 2 e il podio con i riconoscimenti, partita corta coi bot.
+imposta prova_vignette no
+imposta prova_profilo 1
+imposta prova_scelta 1
+imposta prova_durata 3
+imposta giocatori 2v2
+
+aspetta 1
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 640 460                       # 2 CONTRO 2
+tocca 640 140                       # AVANTI
+aspetta 0.3
+tocca 640 140                       # GIOCA
+aspetta_stato modo=scelta 5
+aspetta 0.8
+foto 01_schieramento
+aspetta 5
+tocca 320 410                       # primaria
+aspetta 0.3
+tocca 320 410                       # secondaria
+aspetta_stato modo=local 30
+aspetta_evento over 180
+aspetta 4
+foto 02_podio
