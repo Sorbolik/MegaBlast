@@ -22,8 +22,19 @@ local function is_live(c)
 	return false
 end
 
+-- "imposta prova_rete MS" (scenario rete_tele.txt): a WiFi that sometimes
+-- holds the messages back up to MS ms and then hands them over all together
+local JITTER = sys.get_config_int("megablast.prova_rete", 0) / 1000
+local held_until = 0
+
 local function evento(c, ev, txt)
-	c.eventi[#c.eventi + 1] = { event = ev, message = txt }
+	local at = 0
+	if JITTER > 0 then
+		local now = socket.gettime()
+		if math.random() < 0.08 then held_until = math.max(held_until, now + math.random() * JITTER) end
+		at = math.max(now, held_until)
+	end
+	c.eventi[#c.eventi + 1] = { event = ev, message = txt, at = at }
 end
 
 function M.connect(url, params, cb)
@@ -130,6 +141,7 @@ local function read_frame(c)
 end
 
 function M.poll(self)
+	local now = socket.gettime()
 	for _, c in ipairs({ unpack(live) }) do
 		if c.tcp then
 			local data, err, part = c.tcp:receive("*a")
@@ -139,9 +151,17 @@ function M.poll(self)
 		end
 		local events = c.eventi
 		c.eventi = {}
-		for _, e in ipairs(events) do c.cb(self, c, e) end
+		for i, e in ipairs(events) do
+			if e.at > now then
+				-- held back (prova_rete): it and those behind it wait for the next frames
+				for j = i, #events do c.eventi[#c.eventi + 1] = events[j] end
+				break
+			end
+			c.cb(self, c, e)
+		end
 		-- after its DISCONNECTED (or a failed connect) the handle goes back to the pool
-		if c.gone or (not c.tcp and #events > 0 and events[#events].event == M.EVENT_ERROR) then
+		local failed = not c.tcp and #events > 0 and events[#events].event == M.EVENT_ERROR
+		if #c.eventi == 0 and (c.gone or failed) then
 			for i, x in ipairs(live) do if x == c then table.remove(live, i) break end end
 			free[#free + 1] = c
 		end

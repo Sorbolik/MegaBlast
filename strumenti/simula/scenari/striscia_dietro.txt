@@ -1,0 +1,12 @@
+# La striscia delle vignette diventa trasparente quando un personaggio (dai
+# piedi alla targa) ci sta dietro, e torna piena quando se ne va. Arriva in
+# cima allo zoom massimo: il fantoccio sul pilastro alto sta dietro la striscia
+# e la striscia si vede appena.
+imposta prova_missione spostano
+imposta prova_vignette no
+imposta zoom 3
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+cammina destra 760 6                # la cassa del Tonante: Favilla parte
+aspetta 2
+foto 01_fantoccio_dietro_la_striscia

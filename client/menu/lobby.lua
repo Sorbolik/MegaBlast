@@ -32,6 +32,8 @@ local STEP = 306
 M.TIP_EVERY = 8
 M.BOT_SHOWN = 15
 M.TIPS = T.tips
+local TIP_BAND = vmath.vector4(0, 0, 0, 0.45)
+local TIP_TEXT = vmath.vector4(0.8, 0.9, 0.96, 1)
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
@@ -65,9 +67,13 @@ function M.new(of, title, parent_below)
 	ui.titolo(T.searching, 0, 22, 0.75, C.LIGHT, s.testa)
 	s.riga = ui.testo("", 0, -22, 0.85, C.OFF, s.testa)
 	s.xs = places(of)
+	-- the tip has its own look, not a button's (Sergio, 4 Nov): no border, a
+	-- soft dark band with round ends and Favilla's head on the left, who
+	-- gives the advice
 	local w = 980
-	ui.pannello(640, 110, w, 52, s.radice)
-	s.tip = ui.testo(M.TIPS[1], 640, 110, 0.8, C.TEXT, s.radice)
+	ui.sagoma("pillola_forma", 640, 110, w, 48, TIP_BAND, s.radice)
+	ui.medaglia(640 - w / 2 + 28, 110, 34, ui.MEDAL, s.radice)
+	s.tip = ui.testo(M.TIPS[1], 640 + 14, 110, 0.8, TIP_TEXT, s.radice)
 	s.buttons = {}
 	s.back = ui.button(s.buttons, 440, 44, 380, 52, T.back_to_menus, "menu", { scala = 0.72 }, s.radice)
 	s.exit = ui.button(s.buttons, 860, 44, 380, 52, T.leave_queue, "esci", { scala = 0.72 }, s.radice)
@@ -137,7 +143,7 @@ function M.update(s, dt)
 		s.tip_t = 0
 		s.tip_i = s.tip_i % #M.TIPS + 1
 		gui.set_text(s.tip, M.TIPS[s.tip_i])
-		gui.set_color(s.tip, with_alpha(C.TEXT, 0))
+		gui.set_color(s.tip, with_alpha(TIP_TEXT, 0))
 		gui.animate(s.tip, "color.w", 1, gui.EASING_OUTQUAD, 0.3)
 	end
 end

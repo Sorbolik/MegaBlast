@@ -361,6 +361,8 @@ return {
 	frames = {
 		row = "%.0f FPS  PEGGIORE %.0f MS  99%% SOTTO %.0f  SCATTI %d/MIN",
 		last = "  ULTIMO: %s",
+		-- online: the longest wait between two states from the server in the last 10 s
+		net = "  RETE %.0f MS",
 	},
 
 
