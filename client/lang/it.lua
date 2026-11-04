@@ -26,6 +26,16 @@ return {
 		replay = "RIVEDI",
 	},
 
+	-- battle/vignette.lua: who speaks and the buttons of the big vignette
+	vignette = {
+		favilla = "FAVILLA",
+		fabbro = "IL FABBRO",
+		apprendista = "APPRENDISTA",
+		go = "VAI!",
+		close = "CHIUDI",
+		close_pad = "B  CHIUDI",
+	},
+
 	-- menu/pick.lua: the weapon draft
 	pick = {
 		step_names = { "PRIMARIA", "SECONDARIA" },
@@ -542,6 +552,8 @@ return {
 		quit_search = "ESCI DALLA RICERCA",
 		aim = "MIRA",
 		aim_mode = "MIRA: %s",
+		-- the lessons' vignettes, again (battle/vignette.lua)
+		reread = "RILEGGI",
 		cancel = "ANNULLA",
 		items = "OGGETTI",
 		-- entry and waiting room

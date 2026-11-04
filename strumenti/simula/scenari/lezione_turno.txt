@@ -5,6 +5,7 @@
 # Sul bersaglio da colpire quattro angoli rossi; quello dell'isola, abbattuto,
 # non rinasce.
 # Barra: Lanciarune 506, Lama 774, TELE 1180 62 (tasto t).
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione turno
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 3

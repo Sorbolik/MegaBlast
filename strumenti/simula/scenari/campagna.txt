@@ -4,6 +4,7 @@
 # y 440 / 324 (Primi passi in alto a sinistra, la Prima partita 1024 324).
 # Primi passi fino in fondo, poi la fine del livello: le stelle una alla volta,
 # RIPROVA 460 110, AVANTI 820 110, la freccia per la campagna 62 658.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 
 aspetta 2
 foto 00_home

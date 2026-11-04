@@ -1,6 +1,7 @@
 # Le lezioni sul telefono (Armi che ti muovono): la scheda del Tonante dice
 # come si usa con la levetta, poi il Tonante in luce e il dito che spinge in su
 # la levetta di sinistra per saltare.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta comandi telefono
 imposta prova_missione spostano
 aspetta_stato modo=local turno=1 fase=aim 8

@@ -1,0 +1,75 @@
+images {
+  image: "/assets/portraits/apprendista_calma.png"
+}
+images {
+  image: "/assets/portraits/apprendista_ride.png"
+}
+images {
+  image: "/assets/portraits/apprendista_spiega.png"
+}
+images {
+  image: "/assets/portraits/apprendista_sorpresa.png"
+}
+images {
+  image: "/assets/portraits/apprendista_preoccupata.png"
+}
+images {
+  image: "/assets/portraits/apprendista_arrabbiata.png"
+}
+images {
+  image: "/assets/portraits/apprendista_fiera.png"
+}
+images {
+  image: "/assets/portraits/apprendista_triste.png"
+}
+images {
+  image: "/assets/portraits/favilla_calma.png"
+}
+images {
+  image: "/assets/portraits/favilla_ride.png"
+}
+images {
+  image: "/assets/portraits/favilla_spiega.png"
+}
+images {
+  image: "/assets/portraits/favilla_sorpresa.png"
+}
+images {
+  image: "/assets/portraits/favilla_preoccupata.png"
+}
+images {
+  image: "/assets/portraits/favilla_arrabbiata.png"
+}
+images {
+  image: "/assets/portraits/favilla_fiera.png"
+}
+images {
+  image: "/assets/portraits/favilla_triste.png"
+}
+images {
+  image: "/assets/portraits/fabbro_calma.png"
+}
+images {
+  image: "/assets/portraits/fabbro_ride.png"
+}
+images {
+  image: "/assets/portraits/fabbro_spiega.png"
+}
+images {
+  image: "/assets/portraits/fabbro_sorpresa.png"
+}
+images {
+  image: "/assets/portraits/fabbro_preoccupata.png"
+}
+images {
+  image: "/assets/portraits/fabbro_arrabbiata.png"
+}
+images {
+  image: "/assets/portraits/fabbro_fiera.png"
+}
+images {
+  image: "/assets/portraits/fabbro_triste.png"
+}
+margin: 2
+extrude_borders: 2
+inner_padding: 0

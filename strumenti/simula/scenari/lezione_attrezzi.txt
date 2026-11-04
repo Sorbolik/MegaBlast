@@ -1,6 +1,7 @@
 # Rampino e paracadute (imposta prova_missione attrezzi): niente casse. Sotto
 # la piattaforma si apre la scheda del Rampino e il suo tasto si accende;
 # l'aggancio al bordo, su, e la scheda del paracadute.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione attrezzi
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.5

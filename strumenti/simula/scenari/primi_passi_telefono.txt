@@ -1,6 +1,7 @@
 # Primi passi sul telefono: il dito sulla levetta di sinistra, la bandierina,
 # la scheda del Lanciarune con le istruzioni per la levetta e poi la riga che
 # dice "sposta l'analogico... rilascialo". Da provare anche con --schermo 1600x720 e 960x720.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta comandi telefono
 imposta prova_missione primi_passi
 aspetta_stato modo=local turno=1 fase=aim 8

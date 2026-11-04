@@ -1,5 +1,6 @@
 # Un giocatore nuovo (imposta prova_nuovo 1) tocca GIOCA: va alla prima delle
 # basi dell'Addestramento, Primi passi, e non online.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_nuovo 1
 
 aspetta 1.5

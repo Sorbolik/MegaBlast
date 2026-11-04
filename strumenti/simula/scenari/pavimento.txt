@@ -3,6 +3,7 @@
 # cratere si vede lo sfondo, con l'orlo bruciato. Poi tutta la mappa (zoom
 # MAPPA) con le bande attorno, e la home con lo sfondo dipinto e l'apprendista
 # fermo senza arma.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione il_fabbro
 
 aspetta_stato modo=local turno=1 fase=aim 8

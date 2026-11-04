@@ -19,7 +19,8 @@
 --   local i = missions.target_robot(r)              -- in the lessons, the robot to hit now (or nil)
 --   local w = missions.scheda(r)                    -- the weapon card to open now (once), or nil
 --   local z = missions.zoom(r)                      -- the camera level the step wants (once), or nil
---   local text, who = missions.riga(r)              -- the hint to show above robot who (or nil)
+--   local line = missions.line(r)                   -- the line of the moment (testo, faccia...) or nil:
+--                                                   -- the battle shows it in a vignette (battle/vignette.lua)
 --   local text = missions.obiettivo(r)              -- the remaining goal, always in view (or nil)
 --   missions.stelle(r)                              -- { true, false, true }: each star with its criterion
 --   missions.quante(stars)                          -- how many are lit
@@ -76,7 +77,7 @@
 --     the circles, where points count; Sergio, 31 Oct: no longer turns) or
 --     { bonus = { ... }, bonus2 = { ... } } (two bonuses: the lessons)
 --   collaudo = { carattere, piano, senza }: how strumenti/arena/collaudo.lua tests it
---   righe = { { testo, quando, fino, su = "bot", highlight, stops, subito } }: quando
+--   righe = { { testo, quando, fino, highlight, stops, subito } }: quando
 --     and fino are { evento = "crate_pick" }, { passo = 2 } (step 2 done),
 --     { turno = 2 }, { tocca = "mira" } (the player touched that, this turn) or
 --     functions(st, g, e) for cases the data can't express (the guided match).
@@ -310,7 +311,7 @@ function M.prepara(r, g)
 	-- the goal_text until the first thing is done
 	-- (in the lessons it gives way to the hints as soon as you touch the controls)
 	if l.goal_text then
-		r.coda[1] = { testo = l.goal_text, yields = l.aspetta, highlight = l.highlight,
+		r.coda[1] = { testo = l.goal_text, yields = l.aspetta, highlight = l.highlight, apertura = true,
 			fino = function(_, g2) return g2.used.primary or g2.used.secondary or g2.used.tool end }
 	end
 end
@@ -426,8 +427,7 @@ end
 -- A line highlighting a control, in the lessons, stops time until you touch it
 -- (if you haven't already touched it this turn).
 local function show_line(r, line)
-	r.riga, r.line_until, r.line_yields = line.testo, line.fino, line.yields
-	r.line_on = line.su == "bot" and 2 or PLAYER
+	r.riga, r.line_until, r.line_yields, r.line = line.testo, line.fino, line.yields, line
 	r.line_ticks = (line.fino and 2 or 1) * LINE_SECONDS * 60
 	r.luce = line.highlight
 	r.awaiting = nil
@@ -440,7 +440,7 @@ end
 -- The line goes away: if it was waiting for a control, time restarts
 local function clear_line(r)
 	if r.awaiting then r.attesa, r.awaiting, r.fermo = false, nil, nil end
-	r.riga, r.line_ticks, r.luce, r.line_yields = nil, nil, nil, nil
+	r.riga, r.line_ticks, r.luce, r.line_yields, r.line = nil, nil, nil, nil, nil
 end
 
 -- e = nil: the check every tick
@@ -649,7 +649,7 @@ local function attempt_over(r, g)
 	if missed then
 		count(r.st, "misses")
 		clear_line(r)
-		show_line(r, { testo = RETRY_TEXT })
+		show_line(r, { testo = RETRY_TEXT, faccia = "preoccupata" })
 	end
 end
 
@@ -680,7 +680,7 @@ local function hold_still(r, g, p)
 		restore_snapshot(r, g)
 		count(r.st, "misses")
 		clear_line(r)
-		show_line(r, { testo = RETRY_TEXT })
+		show_line(r, { testo = RETRY_TEXT, faccia = "preoccupata" })
 	end
 end
 
@@ -817,8 +817,10 @@ function M.zoom(r)
 end
 
 -- The line to show and above whom (the robot), or nil
-function M.riga(r)
-	return r.riga, r.line_on
+-- The line in view (battle/vignette.lua): testo, apertura (the goal_text),
+-- highlight, faccia (the face of who says it)
+function M.line(r)
+	return r.riga and r.line or nil
 end
 
 -- The goal always in view: the missing step, with a number if more than one
