@@ -116,9 +116,10 @@ function M.aggiorna(gd, what, where, commands, pads)
 	if where then
 		pos(gd.ring_node, where.x, where.y)
 		local d = where.d + 26
-		V.x, V.y, V.z = d, d, 0
-		gui.set_size(gd.ring_node, V)
-		gui.set_inner_radius(gd.ring_node, d / 2 - 7)
+		if gd.ring_d ~= d then
+			ui.anello(gd.ring_node, d, 7)
+			gd.ring_d = d
+		end
 	end
 end
 

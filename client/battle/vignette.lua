@@ -69,18 +69,9 @@ end
 
 -- the comic panel: parchment with an ink border
 local function panel(x, y, w, h, parent)
-	local n = gui.new_box_node(vec(x, y), vec(w, h))
-	gui.set_texture(n, "ui")
-	gui.play_flipbook(n, "forma")
-	gui.set_slice9(n, vmath.vector4(16, 16, 16, 16))
+	local n, b = ui.pannello(x, y, w, h, parent)
 	gui.set_color(n, PAPER)
-	if parent then gui.set_parent(n, parent) end
-	local b = gui.new_box_node(vec(0, 0), vec(w, h))
-	gui.set_texture(b, "ui")
-	gui.play_flipbook(b, "bordo")
-	gui.set_slice9(b, vmath.vector4(16, 16, 16, 16))
 	gui.set_color(b, INK)
-	gui.set_parent(b, n)
 	return n
 end
 

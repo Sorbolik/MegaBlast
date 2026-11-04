@@ -100,10 +100,21 @@ Gli asset generati sono retrocompatibili e pronti all'uso:
 ## 5. Verifica Interattiva nel Prototipo Figma
 
 Per provare con mano l'aspetto finale a schermo, cliccare sul file del prototipo interattivo:
-👉 [megablast_ui_figma_prototype.html](file:///C:/Users/sergi/.gemini/antigravity/brain/379830d3-f680-4872-8e28-502c38140007/megablast_ui_figma_prototype.html)
+👉 [UI-002_figma_prototype.html](UI-002_figma_prototype.html)
 
 Nel prototipo è possibile:
 - Cambiare risoluzione (16:9 standard, 20:9 telefono largo, 4:3 iPad tablet).
 - Navigare tra HUD di Battaglia, Home Menu, Armeria e Impostazioni.
 - Cambiare il colore della squadra in tempo reale (Rosso, Blu, Verde, Giallo/Corona).
 - Ispezionare ogni singolo pulsante con stati hover, active e disattivato.
+
+---
+
+## Resoconto di Claude (4 nov)
+
+Integrato in una PR di prova: le sagome per famiglia (eroe, slot delle armi con la pillola dei
+colpi, gettone ottagonale per teletrasporto, Rampino e baratto, oggetto esagonale) e la tacca
+colorata dei modi nella home. Il generatore è `strumenti/grafica/ui.py` (uno solo: `ui_nuova.py`
+tolto, le sagome «menu» e «sistema» erano il rettangolo di sempre e sono tolte). Le forme 9-slice
+restano a densità 1: in Defold un'immagine più grande non rende più fini i bordi del 9-slice.
+Scartato il resto, con i motivi, in [docs/decisioni/interfaccia.md](../decisioni/interfaccia.md).
