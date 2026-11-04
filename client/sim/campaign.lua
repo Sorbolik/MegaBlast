@@ -12,7 +12,8 @@
 -- point lead of the normal bot playing in your place (Sergio, 31 Oct: in the
 -- circles points count, turns don't).
 -- Circle opponents are grades (sim/bot.lua M.GRADES, 1 to 10): the Forgia goes
--- from 2 up to 5 and the ally in the Battaglia is a 7 (Sergio, 30 Oct).
+-- from 2 up to 5 (Sergio, 30 Oct); Favilla, your ally, is a 3 in the first
+-- two missions (level plan, 3 Nov) and a 5 in the Battaglia.
 
 local M = {}
 
@@ -234,43 +235,6 @@ local TRAINING = {
 			{ testo = "Il paracadute è uno a partita: atterri piano e senza farti male", quando = { passo = 4 } },
 		},
 	},
-	-- Points and Crown: points show from here. The Mantice throws into the void
-	-- (50 extra points), the Pugno cracks the armour, and whoever has the Crown
-	-- is worth more. No timer
-	{
-		id = "punti",
-		titolo = "Punti e Corona",
-		goal_text = "Prendi la cassa: dentro c'è un'arma che spinge",
-		arena = { { 240, 0, 1440, 150 } },
-		spawns = { { x = 520, from = 600 }, { x = 290, from = 600 }, { x = 1320, from = 600 }, { x = 1000, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 3, dummy = true }, { team = 4, dummy = true } },
-		vedi = { "missile", "sword", "punti" },
-		without_time = true,
-		-- the fourth target is first in the standings: it has the Crown
-		punti = { [2] = 40, [3] = 60, [4] = 200 },
-		vita = { [2] = 100, [3] = 100, [4] = 60 },
-		casse = { { dopo = 0, arma = "bellows", x = 600 }, { dopo = 2, arma = "punch", x = 760 } },
-		stelle = {
-			bonus = { conta = "misses", at_most = 3, testo = "AL MASSIMO 3 TENTATIVI A VUOTO" },
-			bonus2 = { conta = "misses", at_most = 0, testo = "SENZA SBAGLIARE" },
-		},
-		obiettivo = {
-			{ prendi = "bellows", testo = "Prendi la cassa" },
-			{ down = 2, come = "vuoto", testo = "Butta il bersaglio nel vuoto col Mantice" },
-			{ prendi = "punch", testo = "Prendi la cassa" },
-			{ hit = 4, con = "punch", testo = "Colpisci chi ha la Corona col Pugno" },
-			{ down = 4, testo = "Abbatti chi ha la Corona" },
-		},
-		righe = {
-			{ testo = "Il Mantice spinge via chi hai davanti: buttalo giù dal bordo", highlight = "bellows",
-				quando = { passo = 1 }, fino = { tocca = "bellows" } },
-			{ testo = "Danno = punti. Abbattere vale 50, buttare nel vuoto altri 50", quando = { passo = 2 } },
-			{ testo = "Chi ha la Corona è primo: i colpi su di lui valgono 1,5 e abbatterlo 25 in più",
-				quando = { passo = 3 } },
-			{ testo = "Il Pugno incrina l'armatura: il colpo dopo toglie di più", highlight = "punch",
-				quando = { passo = 3 }, fino = { tocca = "punch" } },
-		},
-	},
 	-- 7 · Duello con Favilla, the chapter exam: a first real match, short, that
 	-- puts everything into practice (Sergio, 29 Oct: the last of the
 	-- Addestramento). You win by downing her twice; no points (they come in the
@@ -288,8 +252,10 @@ local TRAINING = {
 			{ team = 2, bot = 1, pick = "grenade", secondary = "mallet", nome = "Favilla", battute = "favilla", pelle = "favilla" },
 		},
 		vedi = { "primarie", "secondarie", "teleport", "parachute", "tempo", "baratto", "hook" },
-		-- short match: 3 minutes
+		-- short match: 3 minutes; when time runs out the one who downed the other
+		-- more wins, and on a tie Favilla gives it to you (level plan)
 		secondi = 180,
+		al_tempo = "abbattimenti",
 		-- the bot shows in its turn what the player will do in the next turn
 		plans = { { due_attacchi = true }, { attacca_entro = 4, poi = "teletrasporto" } },
 		medaglia = { conta = "morti", at_most = 0, testo = "INTOCCABILE" },
@@ -336,11 +302,17 @@ local CIRCLE_1 = {
 		titolo = "Primo sangue",
 		goal_text = "Abbatti il bot: un'arma a sinistra e una a destra del cronometro",
 		mappa = "pavimento",
-		giocatori = { { team = 1 }, { team = 2, bot = 2 } },
+		-- 2 v 2 with Favilla from the first mission (level plan): two apprentices,
+		-- grades 2 and 1
+		giocatori = { { team = 1 }, { team = 2, bot = 2 }, { team = 1, bot = 3, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" }, { team = 2, bot = 1 } },
 		-- the weapons the Addestramento doesn't introduce are found in the circle (Claude)
+		-- the second apprentice is half-done: Favilla is a 3, two full bots would
+		-- be too much for the first mission (collaudo)
+		vita = { [4] = 50 },
 		casse = { { dopo = 0, arma = "grenade", x = 405 } },
 		turni = 7,
-		stelle = { punti = 110, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
+		-- ★★ at the median lead of the normal bot in 2 v 2 (collaudo, 4 Nov)
+		stelle = { punti = 280, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { down = 2, testo = "Abbatti il bot" } },
 		-- in the circles the hints highlight the control but the game doesn't stop
 		righe = {
@@ -356,12 +328,16 @@ local CIRCLE_1 = {
 		titolo = "Fuori portata",
 		goal_text = "Il cecchino sta sull'isola. Attacca presto per avere i globi, poi raggiungilo",
 		arena = { { 200, 0, 720, 150 }, { 1240, 120, 460, 50 } },
-		spawns = { { x = 500, from = 600 }, { x = 1520, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, bot = 2, carattere = "cecchino" } },
+		spawns = { { x = 500, from = 600 }, { x = 1520, from = 600 }, { x = 320, from = 600 }, { x = 1330, from = 600 } },
+		-- 2 v 2 with Favilla: the sniper and an apprentice on the island (an enemy
+		-- on the ground would draw all the shots, collaudo)
+		giocatori = { { team = 1 }, { team = 2, bot = 2, carattere = "cecchino" }, { team = 1, bot = 3, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" }, { team = 2, bot = 1 } },
 		globi = 0,
-		vita = { [2] = 55 },
+		-- Favilla can knock the sniper into the void: it comes back on its island
+		al_posto = true,
+		vita = { [2] = 55, [4] = 50 },
 		turni = 6,
-		stelle = { punti = 100, bonus = { conta = "teletrasporti", at_most = 1, testo = "CON UN SOLO GLOBO" } },
+		stelle = { punti = 290, bonus = { conta = "teletrasporti", at_most = 1, testo = "CON UN SOLO GLOBO" } },
 		obiettivo = {
 			{ usa = "globi", testo = "Attacca presto: guadagna un globo" },
 			{ down = 2, con = "sword", testo = "Finisci il cecchino con la Lama" },
@@ -406,6 +382,14 @@ local CIRCLE_1 = {
 		turni = 5,
 		stelle = { punti = 400, bonus = { conta = "morti", at_most = 0, testo = "SENZA CADERE" } },
 		obiettivo = { { down = "nemico", come = "vuoto", times = 3, testo = "Butta giù tre bersagli" } },
+		-- the points explained here, with the first void (level plan: the Punti e
+		-- Corona lesson moved from the cortile into the Forgia)
+		righe = {
+			{ testo = "Qui contano i punti: danno = punti, abbattere vale 50, buttare nel vuoto altri 50",
+				quando = function(st, g) return st.turni == 1 and g.current == PLAYER end },
+			{ testo = "Hai la Corona: sei primo. I colpi su chi è primo valgono 1,5 e abbatterlo 25 in più",
+				quando = function(_, g) local l = g:leader() return l ~= nil and l.id == PLAYER end },
+		},
 		-- the bot testing it looks for the void
 		collaudo = { carattere = "spingitore" },
 	},
@@ -415,6 +399,14 @@ local CIRCLE_1 = {
 		goal_text = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo col tuo",
 		mappa = "pavimento",
 		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
+		-- the Pugno, which cracks the armour, comes in the crate (it was taught in
+		-- the cortile's Punti e Corona lesson, now gone)
+		casse = { { dopo = 0, arma = "punch", x = 405 } },
+		righe = {
+			{ testo = "Il Pugno incrina l'armatura: il colpo dopo toglie di più", highlight = "punch",
+				quando = function(_, _, e) return e ~= nil and e.type == "crate_pick" and e.robot == PLAYER and e.weapon == "punch" end,
+				fino = { tocca = "punch" } },
+		},
 		turni = 7,
 		stelle = { punti = 120, bonus = { conta = "morti", at_most = 0, testo = "SENZA MORIRE" } },
 		obiettivo = { { down = 2, testo = "Abbatti il codardo" } },
@@ -440,7 +432,7 @@ local CIRCLE_1 = {
 	{
 		id = "battaglia_forgia",
 		titolo = "Battaglia della Forgia",
-		goal_text = "Una partita vera, 2 contro 2: tu e il tuo compagno contro il Fabbro e il cecchino",
+		goal_text = "Una partita vera, 2 contro 2: tu e Favilla contro il Fabbro e il cecchino",
 		mappa = "pavimento",
 		-- the first weapon draft, guided, with the weapons already seen (Sergio, 30 Oct)
 		draft = true,
@@ -448,12 +440,14 @@ local CIRCLE_1 = {
 			{ team = 1 },
 			{ team = 2, bot = 5, carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
 				battute = "fabbro" },
-			{ team = 1, bot = 7, nome = "Compagno" },
+			-- Favilla at your side (level plan: no more the nameless «Compagno»);
+			-- here she has grown to a 5, like the Fabbro (collaudo: a 3 loses half)
+			{ team = 1, bot = 5, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" },
 			{ team = 2, bot = 2, carattere = "cecchino" },
 		},
 		-- no turn limit: play until time runs out
-		stelle = { punti = 160, bonus = { conta = "abbattuti", at_least = 3, testo = "ABBATTINE 3" } },
-		obiettivo = { { win = true, testo = "Vinci la partita con il tuo compagno" } },
+		stelle = { punti = 215, bonus = { conta = "abbattuti", at_least = 3, testo = "ABBATTINE 3" } },
+		obiettivo = { { win = true, testo = "Vinci la partita con Favilla" } },
 	},
 }
 
