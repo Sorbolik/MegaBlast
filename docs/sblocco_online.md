@@ -80,7 +80,7 @@ ai gironi» (seconda porta).
 
 ### 2. La porta nascosta
 
-- **Prima**: l'online non c'è. In home CAMPAGNA grande, ALLENAMENTO e STESSO TELEFONO;
+- **Prima**: l'online non c'è. In home CAMPAGNA grande e ALLENAMENTO;
   niente EVENTI.
 - **Il segnale**: nella campagna, sull'anello del Limbo nella mappa, un sigillo
   piccolo: «Vincila e si aprono le partite online». È un'informazione, non una porta.
@@ -92,9 +92,9 @@ ai gironi» (seconda porta).
 ### 3. La home che cresce (scelta da Sergio il 4 nov, vedi sotto)
 
 - **Prima**: solo CAMPAGNA, grande, più il profilo e le impostazioni.
-- **Dopo l'Addestramento**: appaiono ALLENAMENTO e STESSO TELEFONO (sono offline, si usa
+- **Dopo l'Addestramento**: appare ALLENAMENTO (è offline, si usa
   quello che hai imparato). ARMERIA arriva col regalo del Fabbro (sotto).
-  La riga in fine livello: «Nuovo nella home: ALLENAMENTO e STESSO TELEFONO».
+  La riga in fine livello: «Nuovo nella home: ALLENAMENTO».
 - **Dopo Caronte**: GIOCA ONLINE (grande, dorato) ed EVENTI, come nella 1.
   Prima di allora un lucchetto piccolo sotto CAMPAGNA: «Gioca online: si apre nella campagna».
 - **Pro**: la home più pulita per chi comincia; ogni pulsante arriva quando ha senso.
@@ -117,7 +117,7 @@ regala il primo pezzo da mettere addosso**, un pezzo semplice. Vale per tutte le
 prima del regalo ARMERIA non c'è (negli schizzi è tolta).
 
 Una cosa da sapere: **in missione l'equipaggiamento è fisso** (29 ott), quindi il pezzo
-regalato in campagna non si sente in campagna, solo in Allenamento, Stesso telefono e online.
+regalato in campagna non si sente in campagna, solo in Allenamento e online.
 Per questo il regalo conviene vicino al momento in cui serve:
 
 - **A (consigliata): il Fabbro te lo regala quando lo batti** («Te lo sei guadagnato»), una
@@ -152,7 +152,6 @@ occupa il suo posto e nessun altro si sposta. Colonna di destra, dal basso:
 | in basso, grande (340 × 160) | **CAMPAGNA**, il portale | subito |
 | sopra, grande dorato (340 × 100) | GIOCA ONLINE | battuto Caronte |
 | sopra (340 × 64) | ALLENAMENTO | finito l'Addestramento |
-| sopra (340 × 64) | STESSO TELEFONO | finito l'Addestramento |
 
 A sinistra, dal basso: ARMERIA (il regalo del Fabbro) ed EVENTI (con l'online).
 
@@ -172,7 +171,7 @@ ma allora all'inizio CAMPAGNA starebbe lontana dal pollice, sopra un vuoto.
 3. Il contorno del pulsante si disegna di brace, poi si riempie dal basso come metallo fuso,
    con un piccolo rimbalzo (1,08 → 1), il colpo di martello della forgia e una vibrazione breve.
 4. Resta la pastiglia NUOVO finché non lo tocchi la prima volta.
-Se arrivano due pulsanti insieme (ALLENAMENTO e STESSO TELEFONO) vanno uno dopo l'altro.
+Se arrivano due pulsanti insieme (GIOCA ONLINE ed EVENTI) vanno uno dopo l'altro.
 I pulsanti già presenti non si muovono: si abbassano solo un poco di luce per l'animazione.
 
 **Il regalo che apre l'Armeria: gli stivali** (Sergio, 4 nov: «Gli stivali vanno bene»). I guanti non sono sicuri (Sergio: corazza,
@@ -204,4 +203,5 @@ corazza restano per dopo (la corazza è il pezzo più grande, meglio come premio
   non controlla lo sblocco; con gli account basta un campo e il server rifiuta la coda.
 - Per Sergio e per il simulatore serve un modo di avere l'online sempre aperto (come oggi
   `prova_nuovo` nei scenari).
-- L'Allenamento e lo Stesso telefono restano aperti nella 1, 2 e 4 (sono offline).
+- L'Allenamento resta aperto nella 1, 2 e 4 (è offline).
+- **STESSO TELEFONO non va nella home** (Sergio, 4 nov): è di nicchia, chi vuole giocare con un amico vicino userà le partite private. Tolto da tutte le proposte e dagli schizzi; se il modo resta, si decide altrove.
