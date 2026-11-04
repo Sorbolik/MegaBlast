@@ -27,7 +27,8 @@ const (
 //	                                    (the weapon tells the category; can change until time's up)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
 //	{"t":"leave"}                       I leave the match (in-match gear wheel): I don't come
-//	                                    back, the others know at once (also during the draft)
+//	                                    back, the others know at once (also during the draft);
+//	                                    still queued: out of the queue, the server closes
 //
 // "j" says whether jump is still held down: releasing it while rising makes the jump short.
 // "w" is the weapon: "missile" (if missing), "sword", "teleport", a secondary picked
