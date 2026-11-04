@@ -128,3 +128,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 3 nov | Cartelle delle immagini e dei suoni in inglese (`client/paintings/`, `client/assets/weapons/`, ...); i nomi delle immagini restano. Nel gioco non cambia niente. | #181 |
 | 3 nov | Tutorial con Favilla e vignette a fumetto (sì a tutte le scelte): fogli modello WB-012 scelti, fase 2 delle tavole approvata. | questa PR |
 | 3 nov | Testi dei menu in `client/lang/it.lua` (prima parte della PR 6): ogni schermata prende le sue frasi da lì. Nel gioco non cambia niente. | questa PR |
+| 4 nov | Nelle lezioni la traiettoria prevista usa la mira di un attimo prima, come il colpo al rilascio della levetta: si vede quello che parte. | questa PR |

@@ -1,8 +1,11 @@
 # Nelle lezioni dell'Addestramento la mira ha in più, come aiuto, tutta la
-# traiettoria fino al terreno (fuori dalle lezioni mai).
+# traiettoria fino al terreno (fuori dalle lezioni mai). Con la levetta del
+# telefono la traiettoria è quella del colpo che partirebbe lasciando ora:
+# la mira di un attimo prima (il ritardo del rilascio), non il dito di adesso.
 imposta prova_missione spostano
+imposta comandi telefono
 
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
-mira 200 120 0.6 01_aiuto_lezione
+levetta_mira 60 45 1 01_aiuto_levetta
 aspetta 1
