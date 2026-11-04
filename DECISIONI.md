@@ -28,3 +28,4 @@ Le più recenti in fondo.
 - 2026-11-03 · Targa più semplice (scelta di Sergio sulla pagina delle proposte): misure di Claude, vita 40 × 5 su fondo scuro, punta a V larga 18 fatta di due barre a 45 gradi, scala 1,1; tolte la lama, la freccia di ferro e i loro script (Claude).
 - 2026-11-03 · WB-012 fase 1 approvata: tre fogli modello (apprendista con la fiammella, Favilla B, Fabbro B) nello stile del trio, da cui si ritagliano tutti i ritratti delle vignette; la fase 2 (tavole) aspetta le scelte di Sergio (Claude).
 - 2026-11-03 · Tutorial con Favilla e vignette a fumetto: sì a tutte e dieci le scelte della proposta; apprendista con la fiammella nelle vignette, Favilla con salopette e stivali, Fabbro B (Sergio).
+- 2026-11-04 · WB-013 approvata: i pezzi di Favilla sullo stampino dal set di WB-009 (tre quarti ed espressioni, poi teste, corpo e pugni), coda a cuore detta due volte; niente colore della squadra su di lei, la targa basta (Claude).

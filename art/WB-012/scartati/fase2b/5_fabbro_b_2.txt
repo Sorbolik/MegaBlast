@@ -1,0 +1,11 @@
+Image 1 is the model sheet of Favilla, image 2 Favilla's full figure, image 3 the model sheet of the apprentice imp, image 4 the illustration style. Copy both EXACTLY from their sheets.
+
+IMPORTANT, the tails: Favilla's tail ends in a HEART shape, exactly as in image 2 (a rounded heart, two lobes, NOT an arrow, NOT a spade); the apprentice's tail ends in a small pointed arrow tip. Both hands of the apprentice are EMPTY: no hammer, no tool, nothing in his hands.
+
+A square comic panel: Favilla leans toward the apprentice imp and whispers behind her hand with a mischievous grin; he listens, eyes turned toward her, hands empty at his sides. Dark forge background, blurred. Leave the top third calm for a speech balloon the game adds. Style of image 4. No text, letters, speech balloons or signatures.
+
+Riferimenti (ordine allegato):
+Image 1: art/WB-012/scelti/favilla.png
+Image 2: art/WB-012/riferimenti/R9_favilla_figura.png
+Image 3: art/WB-012/scelti/apprendista.png
+Image 4: art/WB-008/13_trio.png
