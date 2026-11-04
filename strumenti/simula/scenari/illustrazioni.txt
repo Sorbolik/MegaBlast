@@ -1,0 +1,19 @@
+# Le illustrazioni delle missioni (WB-015): la finestrella sulle carte della
+# CAMPAGNA e, all'apertura della missione, la tavola a schermo intero col
+# titolo (AVANTI 1146 50), poi la vignetta che spiega (VAI! 293 214). Le
+# carte del I girone, ancora senza disegno.
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1
+foto 01_carte
+tocca 256 480                       # Stammi dietro (Primi passi)
+aspetta 2.5
+foto 02_tavola
+tocca 640 300                       # fuori dal pulsante: resta la tavola
+aspetta 0.5
+tocca 1146 50                       # AVANTI
+aspetta 1
+foto 03_vignetta
+tocca 293 214                       # VAI!
+aspetta 1.5
+foto 04_partita

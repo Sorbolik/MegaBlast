@@ -2307,16 +2307,19 @@ function CP.mission_line(self, r)
 	local txt = line.testo:gsub("{(%a+)}", PAD.texts(self))
 	if line.apertura or (line.highlight and l.aspetta and not line.subito and line.stops ~= false) then
 		local page = { chi = chi, faccia = "spiega", testo = txt, disegno = line.highlight }
+		-- the opening: first the mission's illustration with its title (WB-015)
+		local pages = { page }
+		if line.apertura then table.insert(pages, 1, { tavola = l.id, titolo = l.titolo }) end
 		if not self.vign_read[line.testo] then
 			self.vign_read[line.testo] = true
-			self.vign_pages[#self.vign_pages + 1] = page
+			for _, pg in ipairs(pages) do self.vign_pages[#self.vign_pages + 1] = pg end
 		end
 		-- not while a weapon found flies to its button: first you see where it goes
 		local flying = self.flights or (self.fly_until and self.clock < self.fly_until)
 		if self.vign_line ~= line and not self.carta and not flying then
 			self.vign_line = line
 			if self.vign_on then
-				self.carta = self.vign:open({ page }, PAD.comandi(self) == "controller")
+				self.carta = self.vign:open(pages, PAD.comandi(self) == "controller")
 			end
 		end
 	end
