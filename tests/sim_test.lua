@@ -2244,8 +2244,11 @@ do
 	for i = 0, 30 do sticks.registra(r, i / 60, i < 28 and 1.0 or 2.0, 0.7, i < 30) end
 	local h = sticks.on_release(r, 30 / 60)
 	check(h and h.angle == 1.0 and h.active, "aim: on release the aim of 50 ms earlier counts")
+	local sa, sp = sticks.shot(r, 30 / 60, 9, 9)
+	check(sa == h.angle and sp == h.power, "aim: the shot (and the lessons' trajectory) use the aim of 50 ms earlier")
 	sticks.reset(r)
 	check(sticks.on_release(r, 1) == nil, "aim: after reset no aim recorded")
+	check(select(1, sticks.shot(r, 1, 9, 9)) == 9, "aim: nothing recorded, the live aim")
 end
 
 do
