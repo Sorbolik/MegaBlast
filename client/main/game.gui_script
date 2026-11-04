@@ -702,6 +702,20 @@ local function names_colors(list)
 	return names, colors
 end
 
+-- robot i in another look (a lesson's pelle: Favilla in the Duello); the
+-- next match puts back everyone's (self.look). A new rig in the old one's place
+local function dress(self, i, look)
+	local r = self.robots[i]
+	if table.concat(r.look, ",") == table.concat(look, ",") then return end
+	local rig = scoria.new(TEAM_COLORS[i], look)
+	gui.set_parent(rig.root, self.mondo)
+	gui.move_above(rig.root, r.rig.root)
+	scoria.set_enabled(rig, gui.is_enabled(r.rig.root))
+	if self.colors and self.colors[i] then scoria.set_color(rig, self.colors[i]) end
+	gui.delete_node(r.rig.root)
+	r.rig, r.look = rig, look
+end
+
 -- The match starts from its recipe (sim/replay.lua): the bots are the
 -- players with bot = level, and the keys of whoever plays end up in it
 local function new_match(self, seed, map, opts)
@@ -729,6 +743,7 @@ local function new_match(self, seed, map, opts)
 	end
 	self.view = {}
 	for i, rb in ipairs(self.g.robots) do
+		dress(self, i, self.look)
 		scoria.set_color(self.robots[i].rig, self.colors[i])
 		scoria.set_enabled(self.robots[i].rig, true)
 		plate.colore(self.robots[i].plate, self.colors[i])
@@ -2332,6 +2347,7 @@ local function start_mission(self, id, picks)
 	-- the keepers and the opponents with their names, and who speaks
 	for i, p in ipairs(r.l.giocatori) do
 		if p.nome then self.names[i] = p.nome end
+		if p.pelle then dress(self, i, { p.pelle }) end
 		if p.bot and (p.battute or p.carattere) then
 			self.speak = self.speak or require("battle.quips").nuove()
 			self.speak.chi[i] = p.battute or p.carattere
@@ -3543,9 +3559,10 @@ function init(self)
 	local look = {}
 	for nome in config_string("megablast.prova_pelli", ""):gmatch("[%w_]+") do look[#look + 1] = nome end
 	if #look == 0 then look = scoria.PERSONAGGIO end
+	self.look = look
 	self.robots = {}
 	for i = 1, game.MAX_PLAYERS do
-		local r = { rig = scoria.new(TEAM_COLORS[i], look), st = {} }
+		local r = { rig = scoria.new(TEAM_COLORS[i], look), look = look, st = {} }
 		self.robots[i] = r
 	end
 

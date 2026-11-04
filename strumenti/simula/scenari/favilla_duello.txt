@@ -1,0 +1,17 @@
+# Favilla coi suoi pezzi (WB-013) nel Duello: l'avversaria vera, un bot che
+# gioca il suo turno (come guidata.txt: dopo il tiro il tempo aspetta il salto).
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+imposta prova_missione guidata
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+foto 01_duello
+mira 120 110 0.4
+aspetta 0.6
+premi space
+aspetta_stato turno=2 fase=aim 20
+aspetta 1
+zoom 02_turno_di_favilla 3
+aspetta_evento mallet 20
+aspetta 0.3
+zoom 03_favilla_col_maglio 3
