@@ -191,8 +191,8 @@ local function build(a)
 	local c = ui.C
 	ui.indietro(a.buttons, "indietro", a.radice)
 	ui.titolo(T.title, 220, 680, 1, c.TEXT, a.radice)
-	ui.scheda(a.buttons, 470, 680, 150, 48, T.tab_set, "scheda:set", a.scheda == "set", a.radice)
-	ui.scheda(a.buttons, 630, 680, 150, 48, T.tab_tree, "scheda:albero", a.scheda == "albero", a.radice)
+	ui.scheda(a.buttons, 470, 622, 150, 48, T.tab_set, "scheda:set", a.scheda == "set", a.radice)
+	ui.scheda(a.buttons, 630, 622, 150, 48, T.tab_tree, "scheda:albero", a.scheda == "albero", a.radice)
 	ui.testo(T.loadout, 900, 680, 0.7, c.OFF, a.radice)
 	for i = 1, loadout.LOADOUTS do
 		ui.scheda(a.buttons, 940 + i * 70, 680, 60, 48, tostring(i), "assetto:" .. i, a.prof.is_active == i, a.radice)
