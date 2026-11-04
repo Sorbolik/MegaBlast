@@ -30,6 +30,8 @@ local M = {}
 -- 4:3 too (960 wide)
 local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 268, 151, 34, 14, 12, 14
 local CARD_H, COLUMNS = 6 + PIC_H + BAND, 3
+-- the board's width with its frame (the tabs over it are as wide)
+local BOARD_OUTER = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X + 2 * BOARD_PAD + 12
 local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 56, 260, 44
 local function c4(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 local PAPER, INK, INK_SOFT = c4(0.95, 0.88, 0.75), c4(0.12, 0.07, 0.05), c4(0.12, 0.07, 0.05, 0.22)
@@ -193,14 +195,15 @@ local function build(c)
 	ui.header_delete(c.head)
 	c.head = ui.header(c.buttons, common.campaign, "indietro")
 	if c.storia then ui.button(c.buttons, -ui.EDGE - 110, 0, 220, 64, TS.read_again, "storia", nil, c.head.right) end
+	-- the chapters' tabs as wide as the board, over it (Sergio, 4 Nov)
 	local n = #payload.CAPITOLI
-	local w = math.min(420, math.floor(1100 / n) - 20)
+	local w = math.floor((BOARD_OUTER - 12 * (n - 1)) / n)
 	local chosen, tabs, active = nil, {}, 1
 	for i, cap in ipairs(payload.CAPITOLI) do
 		if c.scelta.chapter == cap.id then chosen, active = cap, i end
 		tabs[i] = { string.upper(cap.titolo), "capitolo:" .. cap.id, w }
 	end
-	ui.header_tabs(c.head, c.buttons, tabs, active)
+	ui.header_tabs(c.head, c.buttons, tabs, active, 640 - BOARD_OUTER / 2)
 	if is_opened(c, chosen) then
 		card_list(c, chosen)
 	else
