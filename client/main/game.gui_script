@@ -887,7 +887,7 @@ CP.ZM = {
 	TICKS = 24,         -- a micro-vibration every 1/TICKS of the zoom while dragging
 	DRAG_PX = 10,       -- past this the finger drags and it is no longer a tap
 	STICK_RATE = 0.9,   -- with the controller: shares of the zoom per second at full stick
-	W = 44, H = 44,     -- the button
+	W = 48, H = 48,     -- the button (round: W is its diameter)
 	MARK = 24,          -- the small track inside the button
 	LENS = 13,          -- the lens in the button (the one on the guide is bigger)
 }
@@ -910,16 +910,24 @@ end
 function ZM.make_ui(self)
 	local dark = vmath.vector4(0.05, 0.05, 0.07, 0.55)
 	local dim = vmath.vector4(1, 1, 1, 0.35)
-	self.btn_zoom = box(0, 0, ZM.W, ZM.H, dark)
+	-- round, with a thin pale rim (Sergio, 4 Nov: «in un contorno tondo, e fatto bene»)
+	self.btn_zoom = fit(ui.disco(0, 0, ZM.W, dark))
 	gui.set_position(self.btn_zoom, ZOOM_BTN)
+	fit(ui.ring_node(0, 0, ZM.W, 1.5, vmath.vector4(1, 1, 1, 0.5), self.btn_zoom))
 	gui.set_parent(box(0, 0, 2, ZM.MARK, dim), self.btn_zoom)
 	gui.set_parent(box(0, ZM.MARK / 2, 8, 2, dim), self.btn_zoom)
 	gui.set_parent(box(0, -ZM.MARK / 2, 8, 2, dim), self.btn_zoom)
 	self.zoom_point = ZM.lens(ZM.LENS, self.btn_zoom)
 	-- the long guide, left of the button (the thumb covers the button), only
 	-- while held; it is put in place under the finger (ZM.show_guide)
-	self.zoom_guide = box(-ZM.W / 2 - 18, 0, 18, ZM.RUN + 18, dark)
+	-- a capsule: the body and a round cap at each end
+	self.zoom_guide = box(-ZM.W / 2 - 18, 0, 20, ZM.RUN, dark)
 	gui.set_parent(self.zoom_guide, self.btn_zoom)
+	for _, side in ipairs({ 1, -1 }) do -- half discs, so nothing overlaps the body
+		local cap = fit(ui.disco(0, side * ZM.RUN / 2, 20, dark, self.zoom_guide))
+		gui.set_fill_angle(cap, 180)
+		if side < 0 then gui.set_rotation(cap, vmath.vector3(0, 0, 180)) end
+	end
 	gui.set_parent(box(0, 0, 2, ZM.RUN, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
 	gui.set_parent(box(0, ZM.RUN / 2, 10, 2, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
 	gui.set_parent(box(0, -ZM.RUN / 2, 10, 2, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
