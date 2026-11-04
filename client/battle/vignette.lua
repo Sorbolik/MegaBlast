@@ -21,7 +21,7 @@
 --   local view = v:open(pages)            -- pages: { { chi, faccia, testo, disegno } }:
 --                                         -- the big vignette (the battle keeps it as self.carta);
 --                                         -- a page { tavola = mission id, titolo } is the
---                                         -- mission's illustration full screen with its title (WB-015)
+--                                         -- mission's illustration on a postcard with its title (WB-015)
 --   view:premi(x, y) / view:pad(n)        -- a tap / a controller button: true when it is over
 --   v:update(dt)                          -- every frame, also while the game is stopped
 --   vignette.CHI.favilla                  -- name and color of who speaks
@@ -57,6 +57,11 @@ local STRIP_W, STRIP_H, STRIP_Y = 760, 96, 568
 local GHOST_A, GHOST_T = 0.25, 0.15
 M.STRIP = { x0 = 640 - STRIP_W / 2, y0 = STRIP_Y - STRIP_H / 2, x1 = 640 + STRIP_W / 2, y1 = STRIP_Y + STRIP_H / 2 }
 local FACE_S = 80
+-- the mission's postcard (WB-015): the picture at 880 x 495 (16:9), the
+-- parchment margin, the band with title and button. Straight: a tilted
+-- quad would show steps on its edges (no antialiasing on rotated nodes)
+local POST_W, POST_H, POST_M, POST_BAND, POST_Y = 880, 495, 18, 84, 12
+local BACKDROP = c(0.09, 0.07, 0.07)
 -- the big vignette
 local BIG_W, BIG_H = 980, 400
 local BIG_FACE = 230
@@ -600,7 +605,6 @@ function show_page(view)
 	if view.tav then
 		gui.set_enabled(view.tav, on_tav)
 		gui.set_enabled(view.paper, not on_tav)
-		gui.set_color(view.veil, vmath.vector4(0, 0, 0, on_tav and 0.9 or 0.6))
 	end
 	if on_tav then
 		gui.set_text(view.tav_title, string.upper(p.titolo or ""))
@@ -626,27 +630,37 @@ function M.open(v, pages, pad)
 	local veil = gui.new_box_node(vec(0, 0), vec(1280 * 4, 720 * 4))
 	gui.set_color(veil, c(0, 0, 0, 0.6))
 	gui.set_parent(veil, view.radice)
-	-- the mission's illustration, the whole 1280 x 720 (on wider screens the
-	-- veil around it goes darker), with the title and its button at the bottom:
-	-- the page of the story before the explanation
-	view.veil = veil
+	-- the mission's illustration as a postcard (Sergio, 4 Nov: smaller, well
+	-- packaged, and nothing of the map behind): an opaque backdrop on the whole
+	-- screen, the parchment card with its shadow, the picture
+	-- in an ink frame, the title and the button on the card's bottom band.
+	-- The page of the story before the explanation
 	for _, pg in ipairs(pages) do
 		local tex = pg.tavola and ill.texture(pg.tavola, "tavola")
 		if tex then
 			view.tavola = pg.tavola
-			view.tav = gui.new_box_node(vec(0, 0), vec(1280, 720))
-			gui.set_texture(view.tav, tex)
-			gui.set_adjust_mode(view.tav, gui.ADJUST_FIT)
+			view.tav = gui.new_box_node(vec(0, 0), vec(0, 0))
 			gui.set_parent(view.tav, view.radice)
-			local band = gui.new_box_node(vec(0, -360 + 50), vec(1280, 100))
-			gui.set_color(band, c(0, 0, 0, 0.55))
-			gui.set_parent(band, view.tav)
-			view.tav_title = ui.titolo("", -620, -360 + 50, 1, PAPER, view.tav)
+			local back = gui.new_box_node(vec(0, 0), vec(1280 * 4, 720 * 4))
+			gui.set_color(back, BACKDROP)
+			gui.set_parent(back, view.tav)
+			local card_h = POST_M + POST_H + POST_BAND
+			local shadow = box(10, POST_Y - 12, POST_W + 2 * POST_M, card_h, c(0, 0, 0, 0.45), view.tav)
+			local card = panel(0, POST_Y, POST_W + 2 * POST_M, card_h, view.tav)
+			local iy = card_h / 2 - POST_M - POST_H / 2
+			box(0, iy, POST_W + 6, POST_H + 6, INK, card)
+			local pic = gui.new_box_node(vec(0, iy), vec(POST_W, POST_H))
+			gui.set_texture(pic, tex)
+			gui.set_adjust_mode(pic, gui.ADJUST_FIT)
+			gui.set_parent(pic, card)
+			local by = -card_h / 2 + POST_BAND / 2
+			view.tav_title = ui.titolo("", -POST_W / 2, by, 0.9, INK, card)
+			gui.set_outline(view.tav_title, c(0, 0, 0, 0))
 			gui.set_pivot(view.tav_title, gui.PIVOT_W)
-			view.tav_next = box(640 - 24 - 110, -360 + 50, 220, 56, PAPER, view.tav)
+			view.tav_next = box(POST_W / 2 - 110, by, 220, 56, INK, card)
 			view.tav_next_text = gui.new_text_node(vec(0, 0), "")
 			gui.set_font(view.tav_next_text, "titolo")
-			gui.set_color(view.tav_next_text, INK)
+			gui.set_color(view.tav_next_text, PAPER)
 			gui.set_scale(view.tav_next_text, vmath.vector3(0.7, 0.7, 1))
 			gui.set_parent(view.tav_next_text, view.tav_next)
 			break

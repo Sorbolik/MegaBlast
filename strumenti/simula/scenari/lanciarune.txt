@@ -5,7 +5,7 @@ imposta prova_missione lanciarune
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
 foto 00_tavola                       # prima la tavola della missione (WB-015)
-tocca 1146 50                        # AVANTI
+tocca 970 116                        # AVANTI sulla cartolina
 aspetta 0.8
 foto 01_vignetta                     # la vignetta grande d'apertura
 tocca 912 289                        # VAI! (vignetta senza disegno: in basso a destra)
