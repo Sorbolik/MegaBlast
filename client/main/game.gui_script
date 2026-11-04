@@ -534,6 +534,7 @@ local function show_menu(self, without_veil)
 	self.missione, self.missione_attesa, self.end_t = nil, nil, nil
 	self.vetrine, self.conta, self.from_the_profile = nil, nil, nil
 	if self.flag then self.flag:display(nil) end
+	if self.favilla then require("battle.favilla").update(self.favilla, 0, 0, nil, nil) end
 	if self.signal then self.signal:display(nil) end
 	score.obiettivo(self.punti, nil)
 	self.vign:quiet()
@@ -868,7 +869,7 @@ local RM = { fune = require "battle.rope", GUSTS = 5 }
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
 local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card",
-	vignette = require "battle.vignette" }
+	vignette = require "battle.vignette", favilla = require "battle.favilla" }
 
 -- The zoom (Sergio, 3 Nov, choice Z1; 4 Nov): one button, top right, that is
 -- both a switch and a slider. Inside it a small lens slides on a track with a
@@ -1172,9 +1173,11 @@ local function handle_event(self, e)
 	if self.speak then
 		local i, s, strong, moment = self.speak:evento(e, self.g.current)
 		if s then
-			local fabbro = self.speak.chi[i] == "fabbro"
-			self.vign:quip(fabbro and "fabbro" or "apprendista", CP.vignette.QUIP_FACE[moment], s,
-				not fabbro and who_name(self, i) or nil, not fabbro and TEAM_COLORS[self.g.robots[i].team] or nil, strong)
+			-- the keepers with a portrait (the Fabbro, Favilla) speak with their face
+			local who = self.speak.chi[i]
+			local own = (who == "fabbro" or who == "favilla") and who or nil
+			self.vign:quip(own or "apprendista", CP.vignette.QUIP_FACE[moment], s,
+				not own and who_name(self, i) or nil, not own and TEAM_COLORS[self.g.robots[i].team] or nil, strong)
 		end
 	end
 	if e.type == "explosion" then
@@ -2391,6 +2394,13 @@ local function mission_update(self, dt)
 	local bx, by = missions.flag(r)
 	if bx and not self.flag then self.flag = require("battle.flag").new(self.mondo, self.robots[1].rig.root) end
 	if self.flag then self.flag:display(bx, by, self.clock) end
+	-- Favilla in the cortile and her spark (battle/favilla.lua)
+	local fav = missions.guida(r)
+	local sx, sy = missions.scintilla(r)
+	if (fav or sx) and not self.favilla then
+		self.favilla = CP.favilla.new(self.mondo, self.robots[1].rig.root)
+	end
+	if self.favilla then CP.favilla.update(self.favilla, dt, self.clock, fav, sx, sy) end
 	-- the marker on the target to hit now (battle/signal.lua)
 	local bi = missions.target_robot(r)
 	local brb = bi and self.g.robots[bi]
@@ -2442,6 +2452,7 @@ local function open_level_end(self)
 	self.vign:quiet()
 	open_screen(self, menu.level_end, {
 		titolo = r.l.titolo, stelle = missions.stelle(r), criteria = missions.criteria(r.l),
+		medaglia = r.l.medaglia ~= nil,
 		-- the lead points, where they count
 		vantaggio = missions.vantaggio(r),
 		record = self.record_end, avanti = missions.dopo(r.l.id) ~= nil,

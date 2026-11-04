@@ -46,6 +46,15 @@ local QUIPS = {
 		abbatte = { "Il vuoto ti saluta!", "Volo libero!" },
 		muore = { "Ma chi mi ha spinto?" },
 	},
+	-- the duel of the cortile: she trains you, even when she beats you
+	favilla = {
+		turno = { "Tocca a me, nuovo!", "Guarda e impara!", "Stavolta miro meglio!" },
+		colpisce = { "Preso! Stai attento!", "Questo te lo ricordi!" },
+		colpito = { "Ahi! Bel colpo!", "Ehi, così si fa!" },
+		scappa = { "Di qua, lumaca!", "Prendimi!" },
+		abbatte = { "Rialzati, su!", "Uno a zero per me!" },
+		muore = { "Ahia! Bel colpo, apprendista!", "Va bene, va bene: torno subito!" },
+	},
 	fabbro = {
 		turno = { "Il ferro si batte finché è caldo!", "Sull'incudine!" },
 		colpisce = { "Martellata!", "Senti il Maglio?" },

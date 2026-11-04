@@ -166,6 +166,12 @@ function M.stella(x, y, d, color, parent)
 	return gui_node("stella", x, y, d, d, color, parent)
 end
 
+-- Favilla's medal of the cortile (sim/missions.lua, medaglia): her head, the
+-- logo of Sergio's drawing; lit in her light blue (M.MEDAL)
+function M.medaglia(x, y, d, color, parent)
+	return gui_node("favilla", x, y, d, d, color, parent)
+end
+
 -- Disc and ring (pie nodes): sticks, round buttons, stopwatch. d is the
 -- diameter, thickness the ring's toward the inside
 function M.disco(x, y, d, color, parent)
@@ -198,6 +204,7 @@ end
 
 -- the gold of the Crown and of what counts double
 M.GOLD = c(1, 0.8, 0.25)
+M.MEDAL = c(0.55, 0.81, 0.94)
 
 -- Tap on the buttons of a list: pressed, released over it (the action) or
 -- outside. The last one added wins, which is drawn on top (a button inside a panel)

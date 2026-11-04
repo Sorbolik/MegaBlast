@@ -23,7 +23,7 @@
 --                                                   -- the battle shows it in a vignette (battle/vignette.lua)
 --   local text = missions.obiettivo(r)              -- the remaining goal, always in view (or nil)
 --   local f = missions.guida(r)                     -- where Favilla is in the cortile (l.guida), or nil:
---                                                   -- { x, y, vx, vy, grounded, facing } (battle/guide.lua draws her)
+--                                                   -- { x, y, vx, vy, grounded, facing } (battle/favilla.lua draws her)
 --   local x, y = missions.scintilla(r)              -- the spark still to take (l.scintilla), or nil
 --   missions.stelle(r)                              -- { true, false, true }: each star with its criterion
 --   missions.quante(stars)                          -- how many are lit

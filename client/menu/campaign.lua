@@ -33,10 +33,13 @@ local function is_opened(c, cap)
 	return total(c.stelle) >= cap.serve
 end
 
--- each star lit for its own criterion: also the first and third yes and the second no
-local function little_stars(picked, x, y, parent)
-	for i = 1, 3 do
-		ui.stella(x + (i - 2) * 28, y, 26, picked[i] and ui.GOLD or ui.C.LINE, parent)
+-- each star lit for its own criterion: also the first and third yes and the
+-- second no. The cortile: «Fatta» and Favilla's medal (or «Fatta» alone)
+local function little_stars(picked, count, medal, x, y, parent)
+	for i = 1, count do
+		local draw = medal and i == 2 and ui.medaglia or ui.stella
+		local lit = medal and i == 2 and ui.MEDAL or ui.GOLD
+		draw(x + (i - (count + 1) / 2) * 28, y, 26, picked[i] and lit or ui.C.LINE, parent)
 	end
 end
 
@@ -47,10 +50,10 @@ local function card_list(c, cap)
 		local n = ui.button(c.buttons, x, y, CARD_W, CARD_H, "", "missione:" .. l.id, nil, c.radice)
 		local picked = c.stelle[l.id] or {}
 		ui.testo(string.upper(l.titolo), 0, 26, 0.8, ui.C.TEXT, n)
-		little_stars(picked, 0, -2, n)
-		-- what is missing: the criteria of the unlit stars
 		local cr, missing = missions.criteria(l), {}
-		for i = 2, 3 do
+		little_stars(picked, #cr, l.medaglia ~= nil, 0, -2, n)
+		-- what is missing: the criteria of the unlit stars
+		for i = 2, #cr do
 			if not picked[i] then missing[#missing + 1] = cr[i] end
 		end
 		if #missing > 0 then ui.testo(table.concat(missing, "  -  "), 0, -32, 0.55, ui.C.OFF, n) end
