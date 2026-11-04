@@ -17,23 +17,26 @@ local ui = require "ui.ui"
 local glyph = require "ui.glyph"
 local controller = require "ui.controller"
 local profile = require "menu.profile"
+local T = require("lang.text").settings
 
 local M = {}
 
-local NAMES = {
-	spara = "SPARA", salta = "SALTA", primaria = "PRIMARIA DOPO", secondaria = "SECONDARIA DOPO", teletrasporto = "TELETRASPORTO",
-	rampino = "RAMPINO", paracadute = "PARACADUTE", oggetti = "OGGETTO DOPO", usa_oggetto = "USA L'OGGETTO",
-	baratto = "BARATTO", zoom = "ZOOM",
-}
+local NAMES = T.commands
+-- a setting with its values: { id, name, { { value, name }, ... } }
+local function choice_of(id, values)
+	local list = {}
+	for i, v in ipairs(values) do list[i] = { v, T.values[v] } end
+	return { id, T.choices[id], list }
+end
 -- the choices at the top, side by side (profilo.SETTINGS, docs/impostazioni.md)
 local CHOICES = {
-	{ "mira", "MIRA", { { "lancetta", "LANCETTA" }, { "mirino", "MIRINO" } } },
-	{ "sparo", "SPARO COL CONTROLLER", { { "pressione", "PREMENDO" }, { "rilascio", "LASCIANDO" } } },
-	{ "potenza", "POTENZA COL CONTROLLER", { { "levetta", "LEVETTA" }, { "grilletto", "GRILLETTO" } } },
-	{ "levette", "LEVETTA CHE MUOVE", { { "destra", "DESTRA" }, { "sinistra", "SINISTRA" } } },
+	choice_of("mira", { "lancetta", "mirino" }),
+	choice_of("sparo", { "pressione", "rilascio" }),
+	choice_of("potenza", { "levetta", "grilletto" }),
+	choice_of("levette", { "destra", "sinistra" }),
 }
 -- the frame counter (ui/frames.lua, docs/prestazioni.md), at the top right
-local FPS = { "fps", "CONTATORE FPS", { { "spento", "SPENTO" }, { "acceso", "ACCESO" } } }
+local FPS = choice_of("fps", { "spento", "acceso" })
 -- the choice groups: distance between centers and width of each choice
 local GROUP, CHOICE_W = 312, 148
 -- two columns of commands
@@ -51,7 +54,7 @@ local function build(s)
 	gui.set_visible(s.radice, false)
 	local C = ui.C
 	ui.indietro(s.buttons, "indietro", s.radice)
-	ui.titolo("IMPOSTAZIONI", 640, 650, 1, C.TEXT, s.radice)
+	ui.titolo(T.title, 640, 650, 1, C.TEXT, s.radice)
 
 	local function choice(sc, cx, y, w)
 		ui.testo(sc[2], cx, y + 44, 0.5, C.OFF, s.radice)
@@ -65,7 +68,7 @@ local function build(s)
 	end
 	choice(FPS, 1110, 628, 118)
 
-	ui.testo("TASTI DEL CONTROLLER", 640, 488, 0.7, C.OFF, s.radice)
+	ui.testo(T.controller_keys, 640, 488, 0.7, C.OFF, s.radice)
 	local n = #controller.COMMANDS
 	local per_column = math.ceil(n / 2)
 	for i, cmd in ipairs(controller.COMMANDS) do
@@ -76,7 +79,7 @@ local function build(s)
 		local nome = ui.testo(NAMES[cmd], -ROW_W / 2 + 22, 0, 0.8, C.TEXT, gui_node)
 		gui.set_pivot(nome, gui.PIVOT_W)
 		if s.attesa == cmd then
-			local premi = ui.testo("PREMI UN TASTO", ROW_W / 2 - 22, 0, 0.7, C.BRACE, gui_node)
+			local premi = ui.testo(T.press_a_key, ROW_W / 2 - 22, 0, 0.7, C.BRACE, gui_node)
 			gui.set_pivot(premi, gui.PIVOT_E)
 			ui.sheet_active(s.buttons[#s.buttons], true)
 		elseif controller.key_of(s.c, cmd) then
@@ -84,17 +87,17 @@ local function build(s)
 			glyph.display(g, s.c, controller.key_of(s.c, cmd))
 			gui.set_position(g.radice, vmath.vector3(ROW_W / 2 - 22 - glyph.largo(g) / 2, 0, 0))
 		else
-			local nobody = ui.testo(cmd == "salta" and ("LEVETTA " .. string.upper(controller.lato("muove")) .. " IN SU") or "NESSUN TASTO", ROW_W / 2 - 22, 0, 0.6,
+			local nobody = ui.testo(cmd == "salta" and T.stick_up:format(T.sides[controller.lato("muove")]) or T.no_key, ROW_W / 2 - 22, 0, 0.6,
 				C.OFF, gui_node)
 			gui.set_pivot(nobody, gui.PIVOT_E)
 		end
 	end
 
 	local riga = FIRST_ROW - per_column * ROW_STEP
-	ui.button(s.buttons, COLUMNS[2] + ROW_W / 2 - 150, riga - 4, 300, 56, "RIPRISTINA", "ripristina", nil, s.radice)
-	local help = s.attesa and (controller.nome(s.c, "start") .. " ANNULLA")
-		or (s.c.connected and (controller.nome(s.c, "a") .. " CAMBIA IL TASTO, " .. controller.nome(s.c, "y") .. " LO TOGLIE")
-		or "COLLEGA UN CONTROLLER PER CAMBIARE I TASTI")
+	ui.button(s.buttons, COLUMNS[2] + ROW_W / 2 - 150, riga - 4, 300, 56, T.reset, "ripristina", nil, s.radice)
+	local help = s.attesa and T.cancel:format(controller.nome(s.c, "start"))
+		or (s.c.connected and T.change_remove:format(controller.nome(s.c, "a"), controller.nome(s.c, "y"))
+		or T.connect)
 	local t = ui.testo(help, COLUMNS[1] - ROW_W / 2, riga - 4, 0.62, C.OFF, s.radice)
 	gui.set_pivot(t, gui.PIVOT_W)
 	for _, b in ipairs(s.buttons) do
