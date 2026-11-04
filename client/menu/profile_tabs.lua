@@ -37,6 +37,10 @@ local M = {}
 local C = ui.C
 local W, H = 1280, 720
 local TOUCH = hash("touch")
+-- the content, under the header and the tabs (ui.header), to the bottom margin
+local TOP = ui.BODY_TOP
+local BODY_H = TOP - ui.EDGE
+local BODY_Y = ui.EDGE + BODY_H / 2
 local ROMAN = { "I", "II", "III", "IV" }
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
@@ -89,9 +93,9 @@ local function sheet_sheet(s, parent)
 	local v = showcase.from_profile(p, T.you, 1, T.loadout_n:format(p.is_active))
 	v.tu = true
 	local col = s.colore
-	txt(T.loadout, 44, 612, 0.7, C.OFF, parent, gui.PIVOT_W)
+	txt(T.loadout, ui.EDGE, TOP - 12, 0.7, C.OFF, parent, gui.PIVOT_W)
 	for i = 1, #p.loadouts do
-		ui.scheda(s.buttons, 64 + (i - 1) * 50, 574, 42, 42, tostring(i), "assetto:" .. i, p.is_active == i, parent)
+		ui.scheda(s.buttons, ui.EDGE + 21 + (i - 1) * 50, TOP - 50, 42, 42, tostring(i), "assetto:" .. i, p.is_active == i, parent)
 	end
 	-- the big devil
 	local pose = box(245, 62, 0, 0, C.LIGHT, parent)
@@ -121,15 +125,16 @@ local function sheet_sheet(s, parent)
 		box(r[2] > 0 and 365 or 100, r[1], r[2] > 0 and 190 or 120, 2, C.LINE, parent)
 	end
 	-- how others see you
-	txt(T.how_others_see, 590, 612, 0.7, C.GOLD, parent, gui.PIVOT_W)
-	tag.new(v, 590 + tag.WIDE / 2, 594, { tu = true }, parent)
-	-- each piece's next upgrades
-	local pan = ui.pannello(1072, 318, 336, 588, parent)
-	title(T.next_steps, -146, 264, 0.55, C.LIGHT, pan, gui.PIVOT_W)
-	txt(T.steps_hint, -146, 236, 0.55, C.OFF, pan, gui.PIVOT_W)
+	txt(T.how_others_see, 590, TOP - 12, 0.7, C.GOLD, parent, gui.PIVOT_W)
+	tag.new(v, 590 + tag.WIDE / 2, TOP - 30, { tu = true }, parent)
+	-- each piece's next upgrades: the column on the right, from the content's
+	-- top to the bottom margin
+	local pan = ui.pannello(W - ui.EDGE - 168, BODY_Y, 336, BODY_H, parent)
+	title(T.next_steps, -146, BODY_H / 2 - 28, 0.55, C.LIGHT, pan, gui.PIVOT_W)
+	txt(T.steps_hint, -146, BODY_H / 2 - 56, 0.55, C.OFF, pan, gui.PIVOT_W)
 	for i, slot in ipairs(equip.SLOTS) do
 		local pz = v.pezzi[i]
-		local y = 180 - (i - 1) * 100
+		local y = BODY_H / 2 - 110 - (i - 1) * 82
 		tag.pezzo(pz, 1, -132, y, 56, pan)
 		txt(slot.name, -94, y + 24, 0.5, C.OFF, pan, gui.PIVOT_W)
 		if pz.set then
@@ -152,18 +157,18 @@ local function sheet_sheet(s, parent)
 			txt(T.pick_in_armory, -94, y - 18, 0.55, C.OFF, pan, gui.PIVOT_W)
 		end
 	end
-	ui.button(s.buttons, 0, -248, 296, 56, common.armory, "armeria", nil, pan)
+	ui.button(s.buttons, 0, -BODY_H / 2 + 40, 296, 56, common.armory, "armeria", nil, pan)
 end
 
 -- STATISTICHE tab -------------------------------------------------------------------
 
 local function sheet_stats(s, parent)
 	local p = s.prof
-	local x = 44
+	local x = ui.EDGE
 	for _, g in ipairs(profile.GROUPS) do
 		local nome = profile.GROUP_NAMES[g]
 		local w = 24 + #nome * 11
-		ui.scheda(s.buttons, x + w / 2, 604, w, 40, nome, "gruppo:" .. g, s.gruppo == g, parent)
+		ui.scheda(s.buttons, x + w / 2, TOP - 20, w, 40, nome, "gruppo:" .. g, s.gruppo == g, parent)
 		x = x + w + 8
 	end
 	local st = profile.statistiche(p, s.gruppo)
@@ -175,22 +180,24 @@ local function sheet_stats(s, parent)
 		{ tostring(st.serie or 0), T.best_streak },
 	}
 	for i, n in ipairs(numbers) do
-		local nx = 44 + (i - 1) * 150
-		title(n[1], nx, 548, 1, C.LIGHT, parent, gui.PIVOT_W)
-		txt(n[2], nx + 2, 516, 0.55, C.OFF, parent, gui.PIVOT_W)
+		local nx = ui.EDGE + (i - 1) * 150
+		title(n[1], nx, TOP - 72, 1, C.LIGHT, parent, gui.PIVOT_W)
+		txt(n[2], nx + 2, TOP - 104, 0.55, C.OFF, parent, gui.PIVOT_W)
 	end
-	txt(T.badge_hint:format(milestones.SHOWN), 1236, 516, 0.55,
+	txt(T.badge_hint:format(milestones.SHOWN), W - ui.EDGE, TOP - 104, 0.55,
 		C.OFF, parent, gui.PIVOT_E)
 
 	-- the stats with their badges
 	local all_f = profile.statistiche(p, "tutte")
 	local picked_ones = {}
 	for _, id in ipairs(p.badge) do picked_ones[id] = true end
-	local pan = ui.pannello(432, 252, 800, 456, parent)
+	-- the two panels from under the numbers to the bottom margin
+	local ph = TOP - 130 - ui.EDGE
+	local pan = ui.pannello(ui.EDGE + 400, ui.EDGE + ph / 2, 800, ph, parent)
 	for i, t in ipairs(milestones.WHITELIST) do
-		local y = 200 - (i - 1) * 49
+		local y = ph / 2 - 25 - (i - 1) * 40
 		local val = st[t.id] or 0
-		if i > 1 then box(0, y + 24, 760, 1.5, with_alpha(C.LIGHT, 0.1), pan) end
+		if i > 1 then box(0, y + 20, 760, 1.5, with_alpha(C.LIGHT, 0.1), pan) end
 		txt(t.nome, -380, y, 0.8, C.TEXT, pan, gui.PIVOT_W)
 		txt(thousands(val) .. (t.unit and (" " .. t.unit) or ""), -110, y, 0.8, C.LIGHT, pan, gui.PIVOT_E)
 		if t.thresholds then
@@ -199,7 +206,7 @@ local function sheet_stats(s, parent)
 			local g = milestones.grado(t, tot)
 			if g > 0 then
 				tag.badge({ id = t.id, grado = g }, -80, y, 28, pan)
-				zone(s, -80, y + 0, 760, 46, "badge:" .. t.id, pan)
+				zone(s, -80, y + 0, 760, 38, "badge:" .. t.id, pan)
 			end
 			local next_f, how_much = milestones.prossima(t, tot)
 			local b = ui.bar(70, y, 220, 8, C.GOLD, pan)
@@ -213,9 +220,9 @@ local function sheet_stats(s, parent)
 	end
 
 	-- the damage per weapon
-	local dan = ui.pannello(1050, 252, 396, 456, parent)
-	title(T.damage_by_weapon, -176, 196, 0.55, C.LIGHT, dan, gui.PIVOT_W)
-	txt(T.damage_hint, -176, 168, 0.55, C.OFF, dan, gui.PIVOT_W)
+	local dan = ui.pannello(W - ui.EDGE - 198, ui.EDGE + ph / 2, 396, ph, parent)
+	title(T.damage_by_weapon, -176, ph / 2 - 28, 0.55, C.LIGHT, dan, gui.PIVOT_W)
+	txt(T.damage_hint, -176, ph / 2 - 54, 0.55, C.OFF, dan, gui.PIVOT_W)
 	local armi, tot = {}, 0
 	for w, n in pairs(st.armi or {}) do
 		armi[#armi + 1] = { w = w, n = n }
@@ -225,11 +232,11 @@ local function sheet_stats(s, parent)
 		if a.n ~= b.n then return a.n > b.n end
 		return a.w < b.w
 	end)
-	if #armi == 0 then txt(T.nothing_yet, -176, 110, 0.7, C.OFF, dan, gui.PIVOT_W) end
+	if #armi == 0 then txt(T.nothing_yet, -176, ph / 2 - 100, 0.7, C.OFF, dan, gui.PIVOT_W) end
 	local first = armi[1] and armi[1].n or 1
 	for i, a in ipairs(armi) do
 		if i > 7 then break end
-		local y = 120 - (i - 1) * 50
+		local y = ph / 2 - 95 - (i - 1) * 40
 		txt(T.weapons[a.w] or a.w, -176, y, 0.8, C.TEXT, dan, gui.PIVOT_W)
 		local b = ui.bar(40, y, 160, 12, game.SECONDARY[a.w] and C.STEEL or C.BRACE, dan)
 		ui.bar_value(b, a.n / first)
@@ -294,7 +301,7 @@ end
 
 local function sheet_matches(s, parent)
 	local p = s.prof
-	txt(T.last_matches:format(profile.MATCHES), 44, 612, 0.6, C.OFF,
+	txt(T.last_matches:format(profile.MATCHES), ui.EDGE, TOP - 12, 0.6, C.OFF,
 		parent, gui.PIVOT_W)
 	if #p.partite == 0 then
 		txt(T.no_matches, 640, 360, 1, C.OFF, parent)
@@ -302,16 +309,16 @@ local function sheet_matches(s, parent)
 	end
 	s.scelta = math.min(s.scelta or 1, #p.partite)
 	for i, pa in ipairs(p.partite) do
-		local y = 568 - (i - 1) * 54
+		local y = TOP - 54 - (i - 1) * 46
 		local e = OUTCOME[pa.esito] or OUTCOME.P
 		local sel = i == s.scelta
-		local riga = box(302, y, 540, 50, sel and with_alpha(C.LIGHT, 0.06) or with_alpha(C.LIGHT, 0), parent)
+		local riga = box(ui.EDGE + 270, y, 540, 42, sel and with_alpha(C.LIGHT, 0.06) or with_alpha(C.LIGHT, 0), parent)
 		if sel then
-			local f, bo = ui.pannello(0, 0, 540, 50, riga)
+			local f, bo = ui.pannello(0, 0, 540, 42, riga)
 			gui.set_color(f, with_alpha(C.BOTTOM, 0))
 			gui.set_color(bo, C.LIGHT)
 		end
-		box(-266, 0, 6, 46, e[2], riga)
+		box(-266, 0, 6, 38, e[2], riga)
 		title(e[1], -252, 0, 0.5, e[2], riga, gui.PIVOT_W)
 		local map_name = maps.get(pa.mappa or "")
 		txt((map_name and map_name.name or "?") .. " · " .. (profile.GROUP_NAMES[pa.gruppo] or pa.gruppo or ""), -150, 9, 0.62,
@@ -323,36 +330,37 @@ local function sheet_matches(s, parent)
 		end
 		local diff = (pa.punti[1] or 0) - (pa.punti[2] or 0)
 		txt((diff > 0 and "+" or diff < 0 and "−" or "") .. thousands(math.abs(diff)), 258, 0, 0.75, C.LIGHT, riga, gui.PIVOT_E)
-		zone(s, 302, y, 540, 50, "partita:" .. i, parent)
+		zone(s, ui.EDGE + 270, y, 540, 42, "partita:" .. i, parent)
 	end
 
 	-- the chosen match
 	local pa = p.partite[s.scelta]
-	local pan = ui.pannello(920, 318, 656, 588, parent)
+	local pan = ui.pannello(W - ui.EDGE - 328, BODY_Y, 656, BODY_H, parent)
+	local top = BODY_H / 2
 	local e = OUTCOME[pa.esito] or OUTCOME.P
 	local my_own = C.SQUADRA[(pa.giocatori[pa.me or 1] or {}).squadra or 1] or C.SQUADRA[1]
 	local another = C.SQUADRA[2]
 	for _, g in ipairs(pa.giocatori or {}) do
 		if g.squadra ~= (pa.giocatori[pa.me or 1] or {}).squadra then another = C.SQUADRA[g.squadra] or another end
 	end
-	title(e[1], -306, 262, 0.75, e[2], pan, gui.PIVOT_W)
+	title(e[1], -306, top - 28, 0.75, e[2], pan, gui.PIVOT_W)
 	local map_name = maps.get(pa.mappa or "")
 	txt((map_name and map_name.name or "?") .. " · " .. (profile.GROUP_NAMES[pa.modo] or profile.GROUP_NAMES[pa.gruppo] or ""),
-		-180, 258, 0.8, C.LIGHT, pan, gui.PIVOT_W)
-	local pt = title(thousands(pa.punti[2] or 0), 306, 262, 0.6, another, pan, gui.PIVOT_E)
+		-180, top - 32, 0.8, C.LIGHT, pan, gui.PIVOT_W)
+	local pt = title(thousands(pa.punti[2] or 0), 306, top - 28, 0.6, another, pan, gui.PIVOT_E)
 	local wpt = resource.get_text_metrics(gui.get_font_resource(gui.get_font(pt)), gui.get_text(pt)).width * 0.6
-	txt("–", 306 - wpt - 12, 262, 0.8, C.OFF, pan)
-	title(thousands(pa.punti[1] or 0), 306 - wpt - 24, 262, 0.6, my_own, pan, gui.PIVOT_E)
-	txt(T.round_by_round, -306, 222, 0.55, C.OFF, pan, gui.PIVOT_W)
-	rope(pa.fune or { 0 }, 20, 120, 560, 160, pan, my_own, another)
-	txt(T.moments, -306, 6, 0.55, C.OFF, pan, gui.PIVOT_W)
+	txt("–", 306 - wpt - 12, top - 28, 0.8, C.OFF, pan)
+	title(thousands(pa.punti[1] or 0), 306 - wpt - 24, top - 28, 0.6, my_own, pan, gui.PIVOT_E)
+	txt(T.round_by_round, -306, top - 62, 0.55, C.OFF, pan, gui.PIVOT_W)
+	rope(pa.fune or { 0 }, 20, top - 150, 560, 130, pan, my_own, another)
+	txt(T.moments, -306, -6, 0.55, C.OFF, pan, gui.PIVOT_W)
 	local ok = s.replay_ok and s.replay_ok(pa.numero)
 	local moments = pa.moments or {}
-	if #moments == 0 then txt(T.no_moments, -306, -30, 0.65, C.OFF, pan, gui.PIVOT_W) end
+	if #moments == 0 then txt(T.no_moments, -306, -36, 0.65, C.OFF, pan, gui.PIVOT_W) end
 	for i, m in ipairs(moments) do
 		if i > 4 then break end
 		local mx = -156 + ((i - 1) % 2) * 316
-		local my = -34 - math.floor((i - 1) / 2) * 46
+		local my = -38 - math.floor((i - 1) / 2) * 44
 		local c, border = ui.pannello(mx, my, 304, 40, pan)
 		if not ok then gui.set_color(border, with_alpha(C.LIGHT, 0.12)) end
 		txt(m.giro, -140, 0, 0.5, C.OFF, c, gui.PIVOT_W)
@@ -366,17 +374,17 @@ local function sheet_matches(s, parent)
 	for k, g in ipairs(pa.giocatori or {}) do
 		if k > 4 then break end
 		local gx = -296 + (k - 1) * 150
-		face_icon(g, gx + 20, -158, 40, pan)
-		txt(g.nome or "?", gx + 46, -150, 0.55, C.TEXT, pan, gui.PIVOT_W)
-		txt(g.livello and T.level:format(g.livello) or (g.bot and common.bot or ""), gx + 46, -168, 0.45, C.OFF, pan,
+		face_icon(g, gx + 20, -146, 40, pan)
+		txt(g.nome or "?", gx + 46, -138, 0.55, C.TEXT, pan, gui.PIVOT_W)
+		txt(g.livello and T.level:format(g.livello) or (g.bot and common.bot or ""), gx + 46, -156, 0.45, C.OFF, pan,
 			gui.PIVOT_W)
-		zone(s, gx + 60, -158, 140, 46, "giocatore:" .. k, pan)
+		zone(s, gx + 60, -146, 140, 46, "giocatore:" .. k, pan)
 	end
 	if ok then
-		ui.button(s.buttons, 210, -246, 200, 58, common.replay, "rivedi", { main = true, colore = my_own }, pan)
+		ui.button(s.buttons, 210, -top + 40, 200, 58, common.replay, "rivedi", { main = true, colore = my_own }, pan)
 	else
 		txt(pa.online and T.replay_local_only or T.replay_missing,
-			306, -246, 0.6, C.OFF, pan, gui.PIVOT_E)
+			306, -top + 40, 0.6, C.OFF, pan, gui.PIVOT_E)
 	end
 end
 
@@ -384,28 +392,22 @@ end
 
 local function build(s)
 	if s.radice then gui.delete_node(s.radice) end
-	for _, n in ipairs(s.angoli or {}) do gui.delete_node(n) end
+	ui.header_delete(s.head)
 	s.buttons, s.figure = {}, nil
 	local p = s.prof
-	-- back and level stick to the real edges (ui/screen.lua): only a node
-	-- without a parent sticks, so they sit outside the root, and before it, so
-	-- the open tag's veil covers them
-	local back = ui.indietro(s.buttons, "indietro")
-	local dx = gui.new_box_node(vec(W - 44, 680), vec(0, 0))
-	s.angoli = { back, dx }
+	-- the header (ui.header), before the root so the open tag's veil covers it:
+	-- PROFILO, the pill's place, level and experience on the right
+	s.head = ui.header(s.buttons, T.title, "indietro")
+	local active = s.scheda == "statistiche" and 2 or s.scheda == "partite" and 3 or 1
+	ui.header_tabs(s.head, s.buttons, { { T.tab_sheet, "scheda:scheda", 150 },
+		{ common.stats, "scheda:statistiche", 206 }, { T.tab_matches, "scheda:partite", 150 } }, active)
+	local dx = s.head.right
+	title(T.level:format(p.livello), -ui.EDGE, 14, 0.55, C.LIGHT, dx, gui.PIVOT_E)
+	local b = ui.bar(-ui.EDGE - 130, -8, 260, 8, s.colore, dx)
+	ui.bar_value(b, p.xp / profile.xp_level(p.livello))
+	txt(T.xp:format(thousands(p.xp), thousands(profile.xp_level(p.livello))), -ui.EDGE, -24, 0.5, C.OFF, dx, gui.PIVOT_E)
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
-	ui.scheda(s.buttons, 400, 652, 150, 48, T.tab_sheet, "scheda:scheda", s.scheda == "scheda", s.radice)
-	ui.scheda(s.buttons, 586, 652, 206, 48, common.stats, "scheda:statistiche", s.scheda == "statistiche", s.radice)
-	ui.scheda(s.buttons, 772, 652, 150, 48, T.tab_matches, "scheda:partite", s.scheda == "partite", s.radice)
-	-- level and experience at the top right
-	gui.set_visible(dx, false)
-	gui.set_xanchor(dx, gui.ANCHOR_RIGHT)
-	gui.set_yanchor(dx, gui.ANCHOR_TOP)
-	title(T.level:format(p.livello), 0, 0, 0.55, C.LIGHT, dx, gui.PIVOT_E)
-	local b = ui.bar(-130, -24, 260, 8, s.colore, dx)
-	ui.bar_value(b, p.xp / profile.xp_level(p.livello))
-	txt(T.xp:format(thousands(p.xp), thousands(profile.xp_level(p.livello))), 0, -42, 0.5, C.OFF, dx, gui.PIVOT_E)
 	if s.scheda == "statistiche" then
 		sheet_stats(s, s.radice)
 	elseif s.scheda == "partite" then
@@ -492,7 +494,7 @@ function M.on_input(s, action_id, action)
 end
 
 function M.destroy(s)
-	for _, n in ipairs(s.angoli or {}) do gui.delete_node(n) end
+	ui.header_delete(s.head)
 	gui.delete_node(s.radice)
 	gui.delete_node(s.fondo)
 end

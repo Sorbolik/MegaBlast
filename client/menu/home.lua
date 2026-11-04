@@ -82,7 +82,7 @@ function M.new(color)
 	gui.set_inherit_alpha(label, true)
 
 	-- the name at the top left
-	local top_left = angle_deg(h, 48, H - 56, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
+	local top_left = angle_deg(h, ui.EDGE, ui.HEAD_Y, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	local nome = ui.titolo(common.game_name, 0, 0, 1.3, ui.C.LIGHT, top_left)
 	gui.set_pivot(nome, gui.PIVOT_W)
 

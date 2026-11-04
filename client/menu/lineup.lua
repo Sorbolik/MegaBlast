@@ -63,16 +63,17 @@ end
 function M.new(showcases, title)
 	local s = { vetrine = showcases, card_list = {}, t = config.LINEUP_SECONDS }
 	s.fondo = ui.sfondo()
-	-- title and time stick to the real edges: only a node without a parent sticks
-	local top_left = gui.new_box_node(vec(44, H - 34), vec(0, 0))
+	-- title and time stick to the real edges (only a node without a parent
+	-- sticks), on the header's row (ui.header): the pill's place stays free
+	local top_left = gui.new_box_node(vec(ui.EDGE, ui.HEAD_Y + 14), vec(0, 0))
 	gui.set_visible(top_left, false)
 	gui.set_xanchor(top_left, gui.ANCHOR_LEFT)
 	gui.set_yanchor(top_left, gui.ANCHOR_TOP)
 	local t = ui.titolo(title, 0, 0, 0.75, C.LIGHT, top_left)
 	gui.set_pivot(t, gui.PIVOT_W)
-	local under = ui.testo(T.tap_to_pick, 2, -40, 0.75, C.OFF, top_left)
+	local under = ui.testo(T.tap_to_pick, 2, -34, 0.75, C.OFF, top_left)
 	gui.set_pivot(under, gui.PIVOT_W)
-	local top_right = gui.new_box_node(vec(W - 44 - 115, H - 52), vec(0, 0))
+	local top_right = gui.new_box_node(vec(W - ui.EDGE - 115, ui.HEAD_Y), vec(0, 0))
 	gui.set_visible(top_right, false)
 	gui.set_xanchor(top_right, gui.ANCHOR_RIGHT)
 	gui.set_yanchor(top_right, gui.ANCHOR_TOP)

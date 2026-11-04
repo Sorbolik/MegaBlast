@@ -11,12 +11,12 @@ foto 00_home
 tocca 1062 392                      # CAMPAGNA
 aspetta 1
 foto 01_addestramento
-tocca 860 560                       # I girone: chiuso
+tocca 672 578                       # I girone: chiuso
 aspetta 0.5
 foto 01b_girone_chiuso
-tocca 420 560                       # di nuovo l'Addestramento
+tocca 240 578                       # di nuovo l'Addestramento
 aspetta 0.5
-tocca 256 440                       # Primi passi
+tocca 256 480                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.8
 foto 02_scopo
@@ -42,7 +42,7 @@ foto 06_stelle_accese
 tocca 62 658                        # la freccia: si torna alla campagna
 aspetta 1
 foto 07_campagna
-tocca 640 440                       # Il turno
+tocca 640 480                       # Il turno
 aspetta_stato modo=local turno=1 fase=aim 5
 tocca 62 658                        # la rotellina: ESCI DALLA PARTITA accanto, la missione e' ferma
 aspetta 0.5

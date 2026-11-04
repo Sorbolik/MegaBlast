@@ -11,7 +11,7 @@ aspetta 1.5
 tocca_centro 400 300                # il diavoletto: il profilo
 aspetta 0.5
 foto 01_profilo_scheda
-tocca_centro 586 652                # STATISTICHE
+tocca_centro 295 578                # STATISTICHE
 aspetta 0.3
 foto 02_profilo_statistiche
 tocca_bordo 62 62 alto sinistra     # indietro

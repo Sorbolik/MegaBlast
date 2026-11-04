@@ -13,7 +13,7 @@ aspetta 2
 tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
 aspetta 0.5
 foto 01_impostazioni
-tocca_centro 249 542                # MIRA: MIRINO
+tocca_centro 256 546                # MIRA: MIRINO
 tocca_centro 395 386                # SALTA: aspetta il tasto
 aspetta 0.3
 foto 02_premi_un_tasto
@@ -36,7 +36,7 @@ aspetta 0.3
 foto 05_tolto
 pad a                               # di nuovo: aspetta il tasto
 pad a                               # SALTA su A
-tocca_centro 873 542               # POTENZA: GRILLETTO
+tocca_centro 869 546               # POTENZA: GRILLETTO
 aspetta 0.3
 foto 06_grilletto
 pad b                               # B (CERCHIO) torna indietro
