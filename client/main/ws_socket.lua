@@ -4,13 +4,23 @@
 -- tested against a real server (the scenarios' "server" command). Same
 -- interface as the extension for what game.gui_script uses; events arrive from
 -- poll(self) every frame. Text only, ws:// only (no TLS).
+-- Like the extension, a closed connection's handle is reused by the next one
+-- (there it is the freed struct's address, a lightuserdata): a handle kept
+-- after its DISCONNECTED may be someone else's (Sergio, 4 Nov: in the queue,
+-- out, in again, "Connessione persa").
 
 local M = {
 	EVENT_CONNECTED = 0, EVENT_DISCONNECTED = 1, EVENT_MESSAGE = 2, EVENT_ERROR = 3,
 	DATA_TYPE_TEXT = 0,
 }
 
-local active_conn -- { tcp, cb, buf, eventi }
+local live = {}   -- the open connections, in order: { tcp, cb, buf, eventi }
+local free = {}   -- the handles of the closed ones, reused by connect
+
+local function is_live(c)
+	for _, x in ipairs(live) do if x == c then return true end end
+	return false
+end
 
 -- "imposta prova_rete MS" (scenario rete_tele.txt): a WiFi that sometimes
 -- holds the messages back up to MS ms and then hands them over all together
@@ -28,8 +38,9 @@ local function evento(c, ev, txt)
 end
 
 function M.connect(url, params, cb)
-	local c = { cb = cb, buf = "", eventi = {} }
-	active_conn = c
+	local c = table.remove(free) or {}
+	c.cb, c.buf, c.eventi, c.tcp, c.parte, c.gone = cb, "", {}, nil, nil, nil
+	live[#live + 1] = c
 	local host, port, path = url:match("^ws://([^:/]+):?(%d*)(.*)$")
 	local tcp = host and socket.tcp()
 	if not tcp then
@@ -81,21 +92,19 @@ local function frame(op, data)
 end
 
 function M.send(conn, data)
-	if conn.tcp then conn.tcp:send(frame(1, data)) end
-end
-
-function M.disconnect(conn)
-	if conn.tcp then
-		conn.tcp:close()
-		conn.tcp = nil
-	end
-	if active_conn == conn then active_conn = nil end
+	if is_live(conn) and conn.tcp then conn.tcp:send(frame(1, data)) end
 end
 
 local function closed(c)
-	c.tcp:close()
-	c.tcp = nil
+	if c.gone then return end
+	if c.tcp then c.tcp:close() end
+	c.tcp, c.gone = nil, true
 	evento(c, M.EVENT_DISCONNECTED)
+end
+
+-- As in the extension: only a live handle, and its DISCONNECTED arrives with the next poll
+function M.disconnect(conn)
+	if is_live(conn) then closed(conn) end
 end
 
 -- The complete frames in c.buf (from the server they aren't masked)
@@ -132,25 +141,30 @@ local function read_frame(c)
 end
 
 function M.poll(self)
-	local c = active_conn
-	if not c then return end
-	if c.tcp then
-		local data, err, part = c.tcp:receive("*a")
-		c.buf = c.buf .. (data or part or "")
-		read_frame(c)
-		if err == "closed" and c.tcp then closed(c) end
-	end
-	local events = c.eventi
-	c.eventi = {}
 	local now = socket.gettime()
-	for i, e in ipairs(events) do
-		if active_conn ~= c then return end
-		if e.at > now then
-			-- held back (prova_rete): it and those behind it wait for the next frames
-			for j = i, #events do c.eventi[#c.eventi + 1] = events[j] end
-			return
+	for _, c in ipairs({ unpack(live) }) do
+		if c.tcp then
+			local data, err, part = c.tcp:receive("*a")
+			c.buf = c.buf .. (data or part or "")
+			read_frame(c)
+			if err == "closed" and c.tcp then closed(c) end
 		end
-		c.cb(self, c, e)
+		local events = c.eventi
+		c.eventi = {}
+		for i, e in ipairs(events) do
+			if e.at > now then
+				-- held back (prova_rete): it and those behind it wait for the next frames
+				for j = i, #events do c.eventi[#c.eventi + 1] = events[j] end
+				break
+			end
+			c.cb(self, c, e)
+		end
+		-- after its DISCONNECTED (or a failed connect) the handle goes back to the pool
+		local failed = not c.tcp and #events > 0 and events[#events].event == M.EVENT_ERROR
+		if #c.eventi == 0 and (c.gone or failed) then
+			for i, x in ipairs(live) do if x == c then table.remove(live, i) break end end
+			free[#free + 1] = c
+		end
 	end
 end
 
