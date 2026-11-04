@@ -2,6 +2,8 @@ Image 1 is the model sheet of the apprentice imp, image 2 the model sheet of Fav
 
 A wide comic illustration on the iron floor of a hellish forge hall, pillars and glowing furnaces behind. A friendly duel: the apprentice on the left and Favilla on the right face each other, a few steps apart, each holding a rune launcher, ready. Favilla grins and beckons him with two fingers; the apprentice is determined. Keep the action in the middle; nothing important near the edges. Style of image 4. No text, letters, numbers, speech balloons or signatures.
 
+Very important: each character has exactly ONE tail. Favilla has ONE single tail, coming out from her lower back and curving behind her to the right; nothing else behind her looks like a tail. The apprentice has ONE single tail too.
+
 Riferimenti (ordine allegato):
 1. art/WB-012/scelti/apprendista.png
 2. art/WB-012/scelti/favilla.png
@@ -9,4 +11,3 @@ Riferimenti (ordine allegato):
 4. art/WB-012/4_arrivo_a.png
 
 Strumento: image_gen integrato; sfondo della scena, non trasparente.
-

@@ -228,6 +228,14 @@ le prime sette; come si vedono nella carta lo propone Claude con le foto.
 
 - Fase 1: ramo `design/WB-015`, commit `b644b94` (sette PNG 1672×941 con i loro `.txt`).
 
+### Fase 1b · 2026-11-04
+
+Sostituiti `art/WB-015/c7_duello.png` e `art/WB-015/c7_duello.txt` sul ramo `design/WB-015`, aggiornato con la scheda approvata di main (`8f4970f`). Generazione con `image_gen` integrato, prompt integrale della fase 1b senza modifiche e riferimenti R1, R2, R5, R4 allegati in ordine; sfondo della scena.
+
+Serviti **2 tentativi**: scartato il primo perché Favilla aveva tre braccia. Nel secondo, selezionato e guardato prima del salvataggio, ciascun personaggio ha una sola coda e due braccia; controllati code intere, mani, arti, contorni neri, fiamme, abiti, scena centrale e assenza di scritte, numeri, fumetti e firme. Nessun difetto visibile di arti duplicati o parti tagliate. Il Lanciarune di Favilla è rivolto verso destra, mentre lei guarda l'apprendista: da valutare nella revisione di Claude.
+
+**Formato non conforme:** PNG originale **1672×941**, anziché 1536×1024. Lo strumento non espone un parametro per imporre le dimensioni; mantenuti prompt esatto e originale senza ritaglio, deformazioni o ritocchi. Non verificati resa nella carta a 300 px, integrazione nel client, memoria sul telefono e corrispondenza pixel per pixel ai fogli. Nessuna contraddizione rilevata con DECISIONI.md. Revisione finale e integrazione a Claude; nessuna PR aperta né unione verso main.
+
 ## Resoconto di Claude
 
 Fase 1 (2026-11-04): tenute `c1`–`c6`, senza difetti visibili. Scartata `c7_duello`: Favilla ha
