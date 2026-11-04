@@ -10,14 +10,14 @@ imposta prova_vignette no             # le vignette hanno il loro scenario (vign
 aspetta 2
 tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
 aspetta 0.5
-tocca_centro 1172 628               # CONTATORE FPS: ACCESO
+tocca_bordo 89 72 alto destra       # CONTATORE FPS: ACCESO
 aspetta 0.5
 foto 00_impostazioni
 tocca 62 658                        # indietro
 aspetta 5                           # la home: lo sfondo dipinto che scorre
 tocca 1062 392                      # CAMPAGNA
 aspetta 2
-tocca 256 440                       # Primi passi
+tocca 256 480                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 2
 cammina destra 730

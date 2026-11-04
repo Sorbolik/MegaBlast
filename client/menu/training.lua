@@ -86,8 +86,9 @@ local function postcard(a, x, m)
 end
 
 local function build_maps(a)
-	ui.titolo(T.pick_map, 640, 640, 1, ui.C.TEXT, a.radice)
-	ui.testo(T.mode_and_bot:format(NAMES[a.scelta.modo], NAMES[a.scelta.livello]), 640, 584, 0.6, ui.C.OFF, a.radice)
+	local sub = ui.testo(T.mode_and_bot:format(NAMES[a.scelta.modo], NAMES[a.scelta.livello]), ui.EDGE, ui.CONTENT_TOP - 12,
+		0.6, ui.C.OFF, a.radice)
+	gui.set_pivot(sub, gui.PIVOT_W)
 	-- the row: A CASO and the maps from the first visible one
 	local cards = { { random = true } }
 	for _, m in ipairs(MAPS) do cards[#cards + 1] = m end
@@ -110,14 +111,13 @@ local function build_maps(a)
 		end
 		x = x + cw + GAP
 	end
-	if first > 1 then ui.button(a.buttons, 40, CARDS_Y, 56, 120, "<", "scorri:-1", nil, a.radice) end
-	if last < #cards then ui.button(a.buttons, 1240, CARDS_Y, 56, 120, ">", "scorri:1", nil, a.radice) end
+	if first > 1 then ui.button(a.buttons, ui.EDGE + 28, CARDS_Y, 56, 120, "<", "scorri:-1", nil, a.radice) end
+	if last < #cards then ui.button(a.buttons, 1280 - ui.EDGE - 28, CARDS_Y, 56, 120, ">", "scorri:1", nil, a.radice) end
 	ui.button(a.buttons, 640, 140, 340, 108, common.play, "gioca", { main = true }, a.radice)
 end
 
 local function build_mode(a)
 	local c = ui.C
-	ui.titolo(common.training, 640, 640, 1, c.TEXT, a.radice)
 	ui.testo(T.mode, 640, 520, 0.7, c.OFF, a.radice)
 	for i, m in ipairs(MODES_LIST) do
 		ui.scheda(a.buttons, 640 + (i - 2) * 330, 460, 310, 64, m[2], "modo:" .. m[1], a.scelta.modo == m[1], a.radice)
@@ -134,7 +134,9 @@ local function build(a)
 	a.buttons = {}
 	a.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(a.radice, false)
-	ui.indietro(a.buttons, "indietro", a.radice)
+	-- the header (ui.header): the page's title and the pill's place
+	ui.header_delete(a.head)
+	a.head = ui.header(a.buttons, a.pagina == "mappa" and T.pick_map or common.training, "indietro")
 	if a.pagina == "mappa" then build_maps(a) else build_mode(a) end
 end
 
@@ -176,6 +178,7 @@ function M.on_input(a, action_id, action)
 end
 
 function M.destroy(a)
+	ui.header_delete(a.head)
 	gui.delete_node(a.radice)
 	gui.delete_node(a.fondo)
 end

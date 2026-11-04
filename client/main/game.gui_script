@@ -1421,6 +1421,7 @@ local function open_podium(self)
 	-- first the screen, then the mode: if new breaks, no mode is left without a screen
 	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
 	self.mode = "schermata"
+	if self.pill then menu.pill.raise(self.pill) end
 end
 
 local function open_screen(self, mod, ...)
@@ -1820,34 +1821,45 @@ function CP.queue_update(self, dt)
 	end
 	q.t = q.t + dt
 	if q.bot_left then q.bot_left = math.max(0, q.bot_left - dt) end
-	local battle = self.mode == "local"
-	local on = self.mode ~= "connecting"
-	if on ~= p.on or battle ~= p.battle then
-		p.on, p.battle = on, battle
-		menu.pill.show(p, on, battle)
+	-- the pill in the menus (and over the lineup, laid out like a header);
+	-- in a match the chip, right of the gear, hidden while the gear is open
+	local m, beside, on = self.mode, nil, self.mode ~= "connecting"
+	if m == "local" then
+		beside, on = self.btn_menu, not self.menu_open
+	elseif (m == "scelta") and not self.schier then
+		beside, on = self.scelta.rotellina, not gui.is_enabled(self.scelta.esci)
+	elseif m == "ended" or (m == "schermata" and self.schermata.mod == menu.podium) then
+		-- the end of the match and the podium: the chip at the edge (no gear there)
+		beside = true
+	end
+	if on ~= p.on or beside ~= p.beside then
+		p.on = on
+		menu.pill.show(p, on, beside)
 		if on then menu.pill.raise(p) end
 	end
-	if not on then return end
-	local text
+	if not on and not q.found then return end
+	local text, short
+	local secs = math.floor(q.t)
+	short = string.format("%d:%02d", math.floor(secs / 60), secs % 60)
 	if q.found then
 		q.found.wait = q.found.wait - dt
 		local n = math.max(1, math.ceil(q.found.wait))
-		text = TP.found_n:format(n)
-		menu.pill.found(p, battle and n or nil)
+		text, short = TP.found_n:format(n), tostring(n)
+		menu.pill.found(p, m == "local" and n or nil)
 		if q.found.wait <= 0 and not q.going then
 			q.going = true
 			CP.queue_go(self, q)
 		end
 	elseif q.lost then
-		text = TP.lost
+		text, short = TP.lost, TP.short_lost
 	else
-		local secs = math.floor(q.t)
 		text = TP.in_queue:format(profile.GROUP_NAMES[q.mode] or "", math.floor(secs / 60), secs % 60)
 		if q.bot_left and q.bot_left <= menu.lobby.BOT_SHOWN and (q.n or 0) < (q.of or 0) then
 			text = text .. (q.bot_left > 0 and TP.bots_in:format(math.ceil(q.bot_left)) or TP.bots_coming)
+			short = TP.short_bots:format(math.ceil(q.bot_left))
 		end
 	end
-	menu.pill.set(p, text, q.found and (q.of or 0) or (q.n or 0), q.of or 0, q.found ~= nil)
+	menu.pill.set(p, text, short, q.found and (q.of or 0) or (q.n or 0), q.of or 0, q.found ~= nil)
 	menu.pill.update(p, dt)
 end
 
@@ -1900,6 +1912,8 @@ function CP.open_lineup(self, showcases, title, seconds_left)
 	end
 	self.schier = menu.lineup.new(showcases, title)
 	if seconds_left then self.schier.t = seconds_left end
+	-- the queue's pill above the lineup, in the middle of its top row
+	if self.pill then menu.pill.raise(self.pill) end
 end
 
 -- Every frame of the draft: true while the lineup covers it (locally the
