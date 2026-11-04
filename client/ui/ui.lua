@@ -1,7 +1,7 @@
 -- MegaBlast's minimal interface, in the Scoria's style: flat charcoal shapes
 -- with a light border (like the character's outline) and the Core's glow, in
 -- the team color, on what matters. No painted images: a few white shapes
--- (assets/ui/, strumenti/grafica/ui.py) colored from here.
+-- (assets/ui/, strumenti/grafica/ui.py; one shape per family of controls) colored from here.
 -- Pieces are added only when a screen needs them.
 --
 -- The .gui using it must have the "ui" texture (/ui/ui.atlas) and the
@@ -41,9 +41,15 @@ M.C = {
 }
 local C = M.C
 
-local BORDER_9 = vmath.vector4(16, 16, 16, 16)
--- the shapes that stretch in 9-slice (the others scale whole)
-local NINE = { forma = true, bordo = true }
+-- the shapes that stretch in 9-slice and their border (the others scale
+-- whole). One family per kind of control (style "Sagoma tattica", report
+-- UI-002): forma/bordo panels, tabs and the plain buttons; eroe the main
+-- button (chamfered); slot_arma the weapons of the bar; badge the ammo pill;
+-- pillola the queue's pill (round ends)
+local B16, B12 = vmath.vector4(16, 16, 16, 16), vmath.vector4(12, 12, 12, 12)
+local B24 = vmath.vector4(24, 24, 24, 24)
+local NINE = { forma = B16, bordo = B16, eroe_forma = B16, eroe_bordo = B16, pillola_forma = B24, pillola_bordo = B24,
+	slot_arma_forma = B16, slot_arma_bordo = B16, badge_forma = B12, badge_bordo = B12 }
 local V = vmath.vector3()
 local PRESSED, NORMAL = vmath.vector3(0.96, 0.96, 1), vmath.vector3(1, 1, 1)
 
@@ -54,12 +60,15 @@ local function gui_node(tex, x, y, w, h, color, parent)
 	if tex then
 		gui.set_texture(n, "ui")
 		gui.play_flipbook(n, tex)
-		if NINE[tex] then gui.set_slice9(n, BORDER_9) end
+		if NINE[tex] then gui.set_slice9(n, NINE[tex]) end
 	end
 	gui.set_color(n, color)
 	if parent then gui.set_parent(n, parent) end
 	return n
 end
+
+-- A white shape of the ui atlas, colored (9-slice if it is one of NINE)
+M.sagoma = gui_node
 
 local function write(font, t, x, y, scale, color, parent)
 	local n = gui.new_text_node(vec(x, y), t)
@@ -96,23 +105,32 @@ function M.sfondo(parent)
 end
 
 -- Panel: charcoal with a faint light border. Also returns the border node, to
--- light it (C.LIGHT) when the panel is selected
-function M.pannello(x, y, w, h, parent)
-	local n = gui_node("forma", x, y, w, h, C.PANEL, parent)
-	return n, gui_node("bordo", 0, 0, w, h, C.LINE, n)
+-- light it (C.LIGHT) when the panel is selected. shape: the family's prefix
+-- ("slot_arma", "badge"; nil the plain panel)
+function M.pannello(x, y, w, h, parent, shape)
+	local n = gui_node(shape and shape .. "_forma" or "forma", x, y, w, h, C.PANEL, parent)
+	return n, gui_node(shape and shape .. "_bordo" or "bordo", 0, 0, w, h, C.LINE, n)
 end
 
--- Button. opt: main (solid border and Core lit), colore (of the Core, usually
--- the team), spento (visible but not responding)
+-- Button. opt: main (the chamfered shape, solid border, Core lit and a thin
+-- line in its color at the bottom), colore (of the Core, usually the team),
+-- tacca (a colored notch on the left: the mode's color, in the home),
+-- spento (visible but not responding)
 function M.button(list_of, x, y, w, h, label, ui_action, opt, parent)
 	opt = opt or {}
-	local n = gui_node("forma", x, y, w, h, C.PANEL, parent)
+	local main = opt.main
+	local n = gui_node(main and "eroe_forma" or "forma", x, y, w, h, C.PANEL, parent)
 	local col = opt.colore or C.BRACE
 	local b = { nodo = n, ui_action = ui_action, spento = opt.spento, colore = col }
-	b.bordo = gui_node("bordo", 0, 0, w, h, opt.main and C.LIGHT or C.LINE, n)
+	b.bordo = gui_node(main and "eroe_bordo" or "bordo", 0, 0, w, h, main and C.LIGHT or C.LINE, n)
 	b.riposo = gui.get_color(b.bordo)
+	if opt.tacca then
+		gui_node(nil, -w / 2 + 12, 0, 5, h - 30, opt.spento and C.OFF or opt.tacca, n)
+	end
 	local tx = 0
-	if opt.main and not opt.spento then
+	if main and not opt.spento then
+		-- the accent at the bottom, between the two chamfers
+		gui_node(nil, 0, -h / 2 + 9, w - 56, 3, vmath.vector4(col.x, col.y, col.z, 0.8), n)
 		-- the Core: a lit dot with its halo, left of the label
 		local r = h * 0.5
 		b.luce = M.alone(-w / 2 + r, 0, h * 1.1, vmath.vector4(col.x, col.y, col.z, 0.55), n)
@@ -183,7 +201,7 @@ M.CONTENT_TOP = 720 - 118      -- the first row under the header (24 under it)
 M.TABS_Y = M.CONTENT_TOP - 24  -- center of the tabs, in that first row
 M.TAB_H = 48
 M.BODY_TOP = 720 - 190          -- on a screen with tabs the content starts under them
-M.SLOT_W, M.SLOT_H = 440, 44    -- the pill's place, in the middle of the header
+M.SLOT_W, M.SLOT_H = 440, 52    -- the pill's place, in the middle of the header
 
 local function corner(x, xanchor, yanchor)
 	local n = gui.new_box_node(vec(x, yanchor and M.HEAD_Y or 0), vec(0, 0))
@@ -246,30 +264,63 @@ function M.impostazioni(list_of, ui_action, parent, right)
 end
 
 -- Star of the lessons and of the campaign: d is the side
+-- (small ones from the 48 px image: the ui atlas has no mipmaps, and the big
+-- one shrunk a lot shows steps)
 function M.stella(x, y, d, color, parent)
-	return gui_node("stella", x, y, d, d, color, parent)
+	return gui_node(d <= 40 and "stella_p" or "stella", x, y, d, d, color, parent)
 end
 
 -- Favilla's medal of the cortile (sim/missions.lua, medaglia): her head, the
 -- logo of Sergio's drawing; lit in her light blue (M.MEDAL)
 function M.medaglia(x, y, d, color, parent)
-	return gui_node("favilla", x, y, d, d, color, parent)
+	return gui_node(d <= 64 and "favilla_p" or "favilla", x, y, d, d, color, parent)
 end
 
 -- Disc and ring (pie nodes): sticks, round buttons, stopwatch. d is the
--- diameter, thickness the ring's toward the inside
+-- diameter, thickness the ring's toward the inside. A pie polygon has no
+-- antialiasing and shows steps (Sergio, 4 Nov: "piene di scalini"), so the
+-- node draws a soft white image of the disc or ring (strumenti/grafica/ui.py)
+-- and its own polygon only cuts around it, in the clear part: the edges are
+-- the image's. The fill angle (the stopwatch's arc) still works.
+-- the rings' thickness / diameter, the same list as ui.py (ANELLI)
+local RINGS = { 0.014, 0.018, 0.023, 0.028, 0.034, 0.041, 0.05, 0.06, 0.071, 0.084,
+	0.1, 0.12, 0.14, 0.165, 0.2, 0.25 }
+local RING_IMG, RING_IMG_SMALL = {}, {}
+for i, k in ipairs(RINGS) do
+	RING_IMG[i] = string.format("anello_%03d", math.floor(k * 1000 + 0.5))
+	RING_IMG_SMALL[i] = RING_IMG[i] .. "_p"
+end
+-- under this diameter the 64 px images (the ui atlas has no mipmaps)
+local SMALL = 48
+
 function M.disco(x, y, d, color, parent)
 	local n = gui.new_pie_node(vec(x, y), vec(d, d))
 	gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
 	gui.set_perimeter_vertices(n, 64)
+	gui.set_texture(n, "ui")
+	gui.play_flipbook(n, d <= SMALL and "disco_p" or "disco")
 	gui.set_color(n, color)
 	if parent then gui.set_parent(n, parent) end
 	return n
 end
 
+-- Turns the pie node n into a ring d wide (h high: an ellipse), thickness
+-- toward the inside measured on d: the image with the nearest thickness, the
+-- polygon's hole a little inside the image's
+function M.anello(n, d, thickness, h)
+	local k, best = thickness / d, 1
+	for i = 2, #RINGS do
+		if math.abs(RINGS[i] - k) < math.abs(RINGS[best] - k) then best = i end
+	end
+	V.x, V.y, V.z = d, h or d, 0
+	gui.set_size(n, V)
+	gui.play_flipbook(n, d <= SMALL and RING_IMG_SMALL[best] or RING_IMG[best])
+	gui.set_inner_radius(n, math.max(0, d / 2 - RINGS[best] * d - 2))
+end
+
 function M.ring_node(x, y, d, thickness, color, parent)
 	local n = M.disco(x, y, d, color, parent)
-	gui.set_inner_radius(n, d / 2 - thickness)
+	M.anello(n, d, thickness)
 	return n
 end
 

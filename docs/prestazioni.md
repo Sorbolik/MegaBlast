@@ -16,6 +16,12 @@ centro compare una riga:
 60 FPS  PEGGIORE 34 MS  99% SOTTO 17  SCATTI 2/MIN  ULTIMO: DIPINTO 34 MS
 ```
 
+Online c'è anche **RETE 45 MS**: l'attesa più lunga fra due stati del server
+negli ultimi 10 secondi (normale 33 ms, il server ne manda 30 al secondo). Il
+disegno nasconde le attese fino a 4 stati (133 ms, `client/main/playout.lua`):
+uno scatto che si vede con gli FPS a posto e RETE sopra i 130-150 ms è la rete,
+non il telefono.
+
 - **FPS** e **99% SOTTO** sugli ultimi 10 secondi (a 60 Hz un frame è 16,7 ms;
   a 120 Hz 8,3 ms).
 - **SCATTO**: un frame lungo più di 1,5 volte il frame normale (la mediana
@@ -181,6 +187,20 @@ la stessa, rimette solo quelli dal terreno nuovo (`CR.undig`): nel simulatore lo
 scatto da 74 ms (61 di Lua) sparisce (scenario `riprova_mappa.txt`). Scartato
 mettere RIPROVA sotto l'iride: costa uno scatto nero ogni volta che si ritenta,
 mentre qui il lavoro si può proprio togliere.
+
+## Cosa si è trovato (4 nov, scatti online sul teletrasporto)
+
+Sergio: online, anche solo coi bot, «il primo sparo che faccio del teletrasporto
+scatta più volte, e a volte anche altre cose». Il server manda uno stato ogni 2
+tick (30 al secondo) e il client, a ogni stato arrivato, ripartiva da quello che
+c'era sullo schermo verso il nuovo in 33 ms esatti. Sul WiFi del telefono gli
+stati arrivano a mucchi: uno in ritardo (il globo si ferma) e poi due o tre
+insieme (il globo salta avanti). Il contatore FPS non lo vede, perché i frame
+sono tutti puntuali. Lo scenario `rete_tele.txt` fa la stessa cosa con una rete
+finta (`imposta prova_rete 120`: a volte trattiene i messaggi fino a 120 ms):
+prima il globo in volo restava fermo 2-3 frame di fila e poi faceva 10-13 px in
+un frame; con la coda (`client/main/playout.lua`) fa 5-6 px a ogni frame per
+tutto il volo. `tests/playout_test.lua` lo controlla con arrivi a mucchi.
 
 ## Da fare
 

@@ -16,6 +16,8 @@
 --
 --   local v = vignette.new()
 --   v:say(chi, faccia, testo, nome, colore)  -- the strip (testo nil: it goes away)
+--   v:ghost(behind)                       -- every frame: someone is behind the strip
+--                                         -- (in vignette.STRIP), it goes see-through
 --   local view = v:open(pages)            -- pages: { { chi, faccia, testo, disegno } }:
 --                                         -- the big vignette (the battle keeps it as self.carta)
 --   view:premi(x, y) / view:pad(n)        -- a tap / a controller button: true when it is over
@@ -47,6 +49,10 @@ M.FACCE = { calma = true, ride = true, spiega = true, sorpresa = true, preoccupa
 -- the strip: top center, 38 below the points board (room for the lines under
 -- it, «+N PER PAREGGIARE» and the turn balance); the goal is right of the board
 local STRIP_W, STRIP_H, STRIP_Y = 760, 96, 568
+-- someone behind it (Sergio, 4 Nov: «capita troppo spesso di essere dietro le
+-- etichette»): the strip stays where it is and goes see-through
+local GHOST_A, GHOST_T = 0.25, 0.15
+M.STRIP = { x0 = 640 - STRIP_W / 2, y0 = STRIP_Y - STRIP_H / 2, x1 = 640 + STRIP_W / 2, y1 = STRIP_Y + STRIP_H / 2 }
 local FACE_S = 80
 -- the big vignette
 local BIG_W, BIG_H = 980, 400
@@ -69,18 +75,10 @@ end
 
 -- the comic panel: parchment with an ink border
 local function panel(x, y, w, h, parent)
-	local n = gui.new_box_node(vec(x, y), vec(w, h))
-	gui.set_texture(n, "ui")
-	gui.play_flipbook(n, "forma")
-	gui.set_slice9(n, vmath.vector4(16, 16, 16, 16))
+	local n, b = ui.pannello(x, y, w, h, parent)
 	gui.set_color(n, PAPER)
-	if parent then gui.set_parent(n, parent) end
-	local b = gui.new_box_node(vec(0, 0), vec(w, h))
-	gui.set_texture(b, "ui")
-	gui.play_flipbook(b, "bordo")
-	gui.set_slice9(b, vmath.vector4(16, 16, 16, 16))
 	gui.set_color(b, INK)
-	gui.set_parent(b, n)
+	gui.set_inherit_alpha(b, true) -- the strip goes see-through whole (M.ghost)
 	return n
 end
 
@@ -132,6 +130,9 @@ function M.new()
 	local tx = fx + FACE_S / 2 + 18
 	v.strip_name = ink("", tx, STRIP_H / 2 - 10, 0.42, INK, nil, v.strip)
 	v.strip_text = ink("", tx, STRIP_H / 2 - 34, 0.5, INK, STRIP_W / 2 - tx - 14, v.strip)
+	for _, n in ipairs({ v.strip_frame, v.strip_face, v.strip_name, v.strip_text }) do
+		gui.set_inherit_alpha(n, true)
+	end
 	gui.set_enabled(v.strip, false)
 	return v
 end
@@ -141,6 +142,9 @@ local function show_strip(v, s)
 	if not s or v.view then
 		gui.set_enabled(v.strip, false)
 		v.shown = nil
+		v.behind = nil
+		gui.cancel_animations(v.strip, "color.w")
+		gui.set_color(v.strip, PAPER)
 		return
 	end
 	if v.shown == s then return end
@@ -174,6 +178,14 @@ end
 
 function M.update(v, dt)
 	if v.view then v.view:animate(dt) end
+end
+
+-- every frame: true when someone is behind the strip (M.STRIP)
+function M.ghost(v, behind)
+	behind = v.shown and behind or false
+	if behind == v.behind then return end
+	v.behind = behind
+	gui.animate(v.strip, "color.w", behind and GHOST_A or 1, gui.EASING_OUTQUAD, GHOST_T)
 end
 
 -- The drawings of the moves ----------------------------------------------------

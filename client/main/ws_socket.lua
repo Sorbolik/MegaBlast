@@ -12,8 +12,19 @@ local M = {
 
 local active_conn -- { tcp, cb, buf, eventi }
 
+-- "imposta prova_rete MS" (scenario rete_tele.txt): a WiFi that sometimes
+-- holds the messages back up to MS ms and then hands them over all together
+local JITTER = sys.get_config_int("megablast.prova_rete", 0) / 1000
+local held_until = 0
+
 local function evento(c, ev, txt)
-	c.eventi[#c.eventi + 1] = { event = ev, message = txt }
+	local at = 0
+	if JITTER > 0 then
+		local now = socket.gettime()
+		if math.random() < 0.08 then held_until = math.max(held_until, now + math.random() * JITTER) end
+		at = math.max(now, held_until)
+	end
+	c.eventi[#c.eventi + 1] = { event = ev, message = txt, at = at }
 end
 
 function M.connect(url, params, cb)
@@ -131,8 +142,14 @@ function M.poll(self)
 	end
 	local events = c.eventi
 	c.eventi = {}
-	for _, e in ipairs(events) do
+	local now = socket.gettime()
+	for i, e in ipairs(events) do
 		if active_conn ~= c then return end
+		if e.at > now then
+			-- held back (prova_rete): it and those behind it wait for the next frames
+			for j = i, #events do c.eventi[#c.eventi + 1] = events[j] end
+			return
+		end
 		c.cb(self, c, e)
 	end
 end

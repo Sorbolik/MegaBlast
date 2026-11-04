@@ -170,9 +170,9 @@ function M.nuova()
 	m.mir = root_node()
 	child(disc(RETICLE + 6, SHADOW), m.mir)
 	local trace = child(disc(RETICLE, TRACE_C), m.mir)
-	gui.set_inner_radius(trace, RETICLE / 2 - TRACE)
+	ui.anello(trace, RETICLE, TRACE)
 	m.full = child(disc(RETICLE + 2, LIGHT), m.mir)
-	gui.set_inner_radius(m.full, RETICLE / 2 + 1 - FULL)
+	ui.anello(m.full, RETICLE + 2, FULL)
 	child(disc(CENTER, LIGHT), m.mir)
 	m.nodi[#m.nodi + 1] = m.mir
 
@@ -215,11 +215,9 @@ function M.nuova()
 	for i = 1, M.RINGS do
 		local r = root_node()
 		local shadow = child(ui.disco(0, 0, 1, SHADOW), r)
-		gui.set_size(shadow, vmath.vector3(RING_W + 4, RING_H + 4, 0))
-		gui.set_inner_radius(shadow, RING_W / 2 - RING_S - 2)
+		ui.anello(shadow, RING_W + 4, RING_S + 4, RING_H + 4)
 		local c = child(ui.disco(0, 0, 1, LIGHT), r)
-		gui.set_size(c, vmath.vector3(RING_W, RING_H, 0))
-		gui.set_inner_radius(c, RING_W / 2 - RING_S)
+		ui.anello(c, RING_W, RING_S, RING_H)
 		for _, n in ipairs({ shadow, c }) do gui.set_adjust_mode(n, gui.ADJUST_FIT) end
 		m.anelli[i], m.rings_c[i] = r, c
 		m.nodi[#m.nodi + 1] = r

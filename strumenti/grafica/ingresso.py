@@ -31,3 +31,13 @@ out = disco.convert("RGBA")
 out.putalpha(maschera.resize((LATO, LATO), Image.LANCZOS))
 out.save(USCITA, optimize=True)
 print(USCITA)
+# la stessa testa piccola, per dove si disegna sotto i 48 px (la pillola della
+# coda, le medaglie delle carte): l'atlas dell'interfaccia non ha mipmap e la
+# grande rimpicciolita dieci volte fa gli scalini
+PICCOLA = 96
+grande = im.crop((int(cx - r), int(cy - r), int(cx + r), int(cy + r))).convert("RGBA")
+alfa = Image.new("L", (PICCOLA * 8, PICCOLA * 8), 0)
+ImageDraw.Draw(alfa).ellipse([4, 4, PICCOLA * 8 - 5, PICCOLA * 8 - 5], fill=255)
+piccola = grande.resize((PICCOLA, PICCOLA), Image.LANCZOS)
+piccola.putalpha(alfa.resize((PICCOLA, PICCOLA), Image.LANCZOS))
+piccola.save(USCITA.replace(".png", "_p.png"), optimize=True)
