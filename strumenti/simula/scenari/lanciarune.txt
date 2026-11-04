@@ -4,7 +4,10 @@
 imposta prova_missione lanciarune
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
-foto 01_inizio                       # Favilla sul ballatoio, la cassa che cade
+foto 01_vignetta                     # la vignetta grande d'apertura
+tocca 640 360                        # VAI!
+aspetta 0.6
+foto 01_inizio                       # la cassa che cade
 tieni destra 4                       # fino alla cassa: la scheda ferma il gioco
 aspetta_evento crate_pick 10
 aspetta 0.8
