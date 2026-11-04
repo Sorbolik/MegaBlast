@@ -438,6 +438,21 @@ def comando(g, riga):
             g.attendi(0.15)
             g.scatta(a[5])
         g.xdo("mouseup", 1)
+    elif c == "trascina_e_torna":
+        # trascina_e_torna X Y Y_GIU Y_SU S [FOTO]: il dito va da Y a Y_GIU e
+        # torna a Y_SU senza staccarsi (lo zoom che inverte la rotta)
+        x = num(0)
+        g.punta(x, num(1))
+        g.xdo("mousedown", 1)
+        passi = 10
+        for y0, y1 in ((num(1), num(2)), (num(2), num(3))):
+            for i in range(1, passi + 1):
+                g.attendi(num(4, 0.8) / passi / 2)
+                g.punta(x, y0 + (y1 - y0) * i / passi)
+        if len(a) > 5:
+            g.attendi(0.15)
+            g.scatta(a[5])
+        g.xdo("mouseup", 1)
     elif c == "tocca_robot":
         # tocco breve a (dx, dy) dal centro del robot di turno (la sua targa: il cartellino)
         x, y = g.robot()
