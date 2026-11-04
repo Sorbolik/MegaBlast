@@ -359,6 +359,21 @@ Otto immagini generate: **sei da revisione e due scartate**. Gli scarti sono con
 - Proporzioni, volto e silhouette della fiamma presentano le variazioni del disegno generativo: non certificata una copia geometrica esatta dei modelli, né la tavolozza al pixel. Il tratteggio dello scenario è più ricco di quello leggero richiesto nelle ombre. La decisione generale del 2 novembre toglie la fiammella dal gioco; qui si segue la scelta successiva del 3 novembre, esplicitamente approvata per le vignette.
 - Verificati intestazioni PNG, dimensioni e corrispondenza testuale dei prompt salvati con quelli della fase 2b. Non verificati montaggio, fumetti effettivi, resa su telefono o nel gioco. Criteri lasciati non spuntati per la revisione di Claude e Sergio.
 
+### Fase 2c · Consegna di Codex
+
+2026-11-04 · Eseguita la sola fase 2c approvata sulla scheda di `main` al commit `36101f7`, sul ramo `design/WB-012`. Generatore integrato imagegen; prompt integrale invariato, R7/R6/R3 allegati in quest'ordine. Nessuna enfasi aggiunta sulla coda.
+
+| File in `art/WB-012/` | Misura effettiva | Tentativi | Esito |
+|---|---|---:|---|
+| `5_fabbro_c_1.png` e `5_fabbro_c_1.txt` | 1254×1254 | 1 | da revisione |
+| `5_fabbro_c_2.png` e `5_fabbro_c_2.txt` | 1254×1254 | 1 | da revisione |
+
+- Guardate entrambe le immagini prima del salvataggio: Favilla inclinata verso l'apprendista, mano alla bocca e sorriso malizioso; apprendista rivolto verso di lei con entrambe le mani vuote ai fianchi. Nella prima è sorpreso, nella seconda sorride. Nessun martello o utensile nelle mani.
+- Controllati contorni neri, fazzoletto blu e fiammella arancione dell'apprendista, fiamma bianco-azzurra con punte dorate e abiti pergamena con grembiulino e stivali di Favilla. Nessuna scritta, fumetto, firma, giuntura evidente o parte accidentalmente tagliata sul bordo. Sfondo opaco della forgia sfocato e terzo superiore calmo presenti.
+- Code di Favilla con punta rivolta in fuori e attacco nell'incavo fra i lobi, visivamente simili al foglio; la prima è più arrotondata e inclinata, la seconda più aguzza. Consegnate entrambe alla valutazione di Claude, come richiesto nella fase 2c; non dichiarata identità geometrica esatta. Nessuna rigenerazione.
+- **Misura non conforme:** entrambe native a 1254×1254 anziché 1024×1024. Originali conservati senza ritocchi o ridimensionamenti. Verificate intestazioni PNG, dimensioni e corrispondenza integrale dei prompt salvati con la scheda.
+- Restano variazioni generative nella silhouette della fiamma e nei dettagli degli abiti; non certificata la tavolozza al pixel. Non verificati montaggio coi fumetti, leggibilità su telefono e resa nel gioco. Criteri non spuntati: serve la revisione finale di Claude e Sergio.
+
 ## Resoconto di Claude
 
 Fase 1 (2026-11-03). Guardati i sei fogli di Codex (518c3c2): tutti tengono il personaggio
