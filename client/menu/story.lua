@@ -23,9 +23,12 @@ local function c(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 local PAPER, INK, INK_SOFT = c(0.95, 0.88, 0.75), c(0.12, 0.07, 0.05), c(0.12, 0.07, 0.05, 0.4)
 local CAPTION = c(0.95, 0.77, 0.35)
 local BACKDROP = c(0.09, 0.07, 0.07)
--- the picture's height (as the missions' postcard), at most this wide; the
--- parchment margin and the band under it with the dots and the buttons
-local PIC_H, PIC_MAX_W, MARGIN, BAND, CARD_Y = 495, 1100, 18, 84, 12
+-- the picture's height, the parchment margin and the band under it with the
+-- dots and the buttons: the missions' postcard's (battle/vignette.lua); the
+-- picture is at most this wide
+local POST = require("battle.vignette").POST
+local PIC_H, MARGIN, BAND, CARD_Y = POST.h, POST.margin, POST.band, POST.y
+local PIC_MAX_W = 1100
 -- the balloon: at most this wide, its padding, its distance from the picture's edges
 local BALLOON_W, BALLOON_PAD, BALLOON_GAP, TEXT_K = 430, 18, 22, 0.56
 

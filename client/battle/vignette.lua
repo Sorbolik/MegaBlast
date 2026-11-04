@@ -61,6 +61,8 @@ local FACE_S = 80
 -- parchment margin, the band with title and button. Straight: a tilted
 -- quad would show steps on its edges (no antialiasing on rotated nodes)
 local POST_W, POST_H, POST_M, POST_BAND, POST_Y = 880, 495, 18, 84, 12
+-- the story's comic (menu/story.lua) uses the same postcard
+M.POST = { h = POST_H, margin = POST_M, band = POST_BAND, y = POST_Y }
 local BACKDROP = c(0.09, 0.07, 0.07)
 -- the big vignette
 local BIG_W, BIG_H = 980, 400
