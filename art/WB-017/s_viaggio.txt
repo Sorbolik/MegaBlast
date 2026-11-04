@@ -1,0 +1,10 @@
+Image 1 is the model sheet of the apprentice imp, image 2 the illustration style. Copy him EXACTLY from his sheet (shapes, colors, flame on his head, blue neckerchief, tail); do not redesign him.
+
+A wide comic panel, the opening of the story: a rocky path winding down a dark volcanic slope at dusk, red sky with ash. Far below and in the middle of the picture, the hellish Forge glows: a big stone and iron building with chimneys, lava light pouring from its gate. In the foreground on the left, seen from behind three-quarter, the small apprentice imp walks down the path with a little bundle tied to a stick over his shoulder, looking toward the Forge, excited. Leave the top-left quarter of the picture calm (dark red sky) for a speech balloon the game adds. Style of image 2. No text, letters, numbers, speech balloons or signatures.
+
+Riferimenti allegati (ordine):
+1. art/WB-012/scelti/apprendista.png
+2. art/WB-012/4_arrivo_a.png
+
+Strumento: image_gen integrato. Sfondo della scena, non trasparente.
+
