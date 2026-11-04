@@ -16,6 +16,16 @@ return {
 		all = "TUTTE",
 	},
 
+	-- battle/vignette.lua: who speaks and the buttons of the big vignette
+	vignette = {
+		favilla = "FAVILLA",
+		fabbro = "IL FABBRO",
+		apprendista = "APPRENDISTA",
+		go = "VAI!",
+		close = "CHIUDI",
+		close_pad = "B  CHIUDI",
+	},
+
 	-- menu/pick.lua: the weapon draft
 	pick = {
 		step_names = { "PRIMARIA", "SECONDARIA" },

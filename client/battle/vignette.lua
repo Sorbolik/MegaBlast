@@ -21,6 +21,8 @@
 --   vignette.CHI.favilla                  -- name and color of who speaks
 
 local ui = require "ui.ui"
+local T = require("lang.text").vignette
+local common = require("lang.text").common
 local scoria = require "battle.scoria"
 
 local M = {}
@@ -33,9 +35,9 @@ local GROUND, STEP = c(0.36, 0.37, 0.42), c(0.27, 0.28, 0.33)
 
 -- who speaks: the name over the line and its color
 M.CHI = {
-	favilla = { nome = "FAVILLA", colore = c(0.28, 0.44, 0.56) },
-	fabbro = { nome = "IL FABBRO", colore = c(0.72, 0.26, 0.16) },
-	apprendista = { nome = "APPRENDISTA", colore = c(0.72, 0.26, 0.16) },
+	favilla = { nome = T.favilla, colore = c(0.28, 0.44, 0.56) },
+	fabbro = { nome = T.fabbro, colore = c(0.72, 0.26, 0.16) },
+	apprendista = { nome = T.apprendista, colore = c(0.72, 0.26, 0.16) },
 }
 -- the face for each moment of the quips (battle/quips.lua)
 M.QUIP_FACE = { turno = "fiera", colpisce = "ride", colpito = "arrabbiata", scappa = "ride",
@@ -585,7 +587,7 @@ local function show_page(view)
 	gui.set_text(view.text, p.testo)
 	build_drawing(view, p.disegno)
 	local last = view.i == #view.pages
-	gui.set_text(view.next_text, last and "VAI!" or "AVANTI")
+	gui.set_text(view.next_text, last and T.go or common.next)
 	for k, n in ipairs(view.dots) do gui.set_color(n, k == view.i and INK or INK_SOFT) end
 end
 
@@ -608,7 +610,7 @@ function M.open(v, pages, pad)
 	-- the jump), AVANTI on the right
 	local by = -BIG_H / 2 + 44
 	view.skip = box(rx + 70, by, 160, 50, c(0, 0, 0, 0), view.paper)
-	ink(pad and "B  CHIUDI" or "CHIUDI", -60, 12, 0.55, INK_SOFT, nil, view.skip)
+	ink(pad and T.close_pad or T.close, -60, 12, 0.55, INK_SOFT, nil, view.skip)
 	gui.set_enabled(view.skip, #pages > 1)
 	view.next = box(BIG_W / 2 - 28 - 110, by, 220, 56, INK, view.paper)
 	view.next_text = gui.new_text_node(vec(0, 0), "")
