@@ -46,6 +46,120 @@ images {
 images {
   image: "/assets/ui/oggetto_bordo.png"
 }
+images {
+  image: "/assets/ui/disco.png"
+}
+images {
+  image: "/assets/ui/disco_p.png"
+}
+images {
+  image: "/assets/ui/anello_014.png"
+}
+images {
+  image: "/assets/ui/anello_018.png"
+}
+images {
+  image: "/assets/ui/anello_023.png"
+}
+images {
+  image: "/assets/ui/anello_028.png"
+}
+images {
+  image: "/assets/ui/anello_034.png"
+}
+images {
+  image: "/assets/ui/anello_041.png"
+}
+images {
+  image: "/assets/ui/anello_050.png"
+}
+images {
+  image: "/assets/ui/anello_060.png"
+}
+images {
+  image: "/assets/ui/anello_071.png"
+}
+images {
+  image: "/assets/ui/anello_084.png"
+}
+images {
+  image: "/assets/ui/anello_100.png"
+}
+images {
+  image: "/assets/ui/anello_120.png"
+}
+images {
+  image: "/assets/ui/anello_140.png"
+}
+images {
+  image: "/assets/ui/anello_165.png"
+}
+images {
+  image: "/assets/ui/anello_200.png"
+}
+images {
+  image: "/assets/ui/anello_250.png"
+}
+images {
+  image: "/assets/ui/anello_014_p.png"
+}
+images {
+  image: "/assets/ui/anello_018_p.png"
+}
+images {
+  image: "/assets/ui/anello_023_p.png"
+}
+images {
+  image: "/assets/ui/anello_028_p.png"
+}
+images {
+  image: "/assets/ui/anello_034_p.png"
+}
+images {
+  image: "/assets/ui/anello_041_p.png"
+}
+images {
+  image: "/assets/ui/anello_050_p.png"
+}
+images {
+  image: "/assets/ui/anello_060_p.png"
+}
+images {
+  image: "/assets/ui/anello_071_p.png"
+}
+images {
+  image: "/assets/ui/anello_084_p.png"
+}
+images {
+  image: "/assets/ui/anello_100_p.png"
+}
+images {
+  image: "/assets/ui/anello_120_p.png"
+}
+images {
+  image: "/assets/ui/anello_140_p.png"
+}
+images {
+  image: "/assets/ui/anello_165_p.png"
+}
+images {
+  image: "/assets/ui/anello_200_p.png"
+}
+images {
+  image: "/assets/ui/anello_250_p.png"
+}
+images {
+  image: "/assets/ui/pillola_forma.png"
+}
+images {
+  image: "/assets/ui/pillola_bordo.png"
+}
+images {
+  image: "/assets/ui/favilla_p.png"
+}
+images {
+  image: "/assets/ui/stella_p.png"
+}
 margin: 2
 extrude_borders: 2
 inner_padding: 0

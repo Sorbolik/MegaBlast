@@ -64,17 +64,18 @@ def griglia(n):
 
 
 # stella a cinque punte (raggio interno 0,45 dell'esterno), la punta in alto; 128
-# px perché si disegna anche grande (la fine della lezione)
-n = 128
-x, y = griglia(n)
-r = np.hypot(x, y)
-ang = (np.arctan2(x, y) + np.pi / 5) % (2 * np.pi / 5) - np.pi / 5  # 0 sulla punta
-R, RI = n / 2 - 2, (n / 2 - 2) * 0.45
-# ogni spicchio: dentro se sta dalla parte del centro rispetto al lato che va
-# dalla punta (R, 0) al vertice interno
-px, py = r * np.cos(ang), np.abs(r * np.sin(ang))
-ax, ay = RI * np.cos(np.pi / 5), RI * np.sin(np.pi / 5)
-salva(((ax - R) * py - ay * (px - R) >= 0).astype(float), n, "stella.png")
+# px perché si disegna anche grande (la fine della lezione), 48 per le stelline
+# delle carte (stella_p: senza mipmap la grande rimpicciolita fa gli scalini)
+for n, nome in ((128, "stella.png"), (48, "stella_p.png")):
+    x, y = griglia(n)
+    r = np.hypot(x, y)
+    ang = (np.arctan2(x, y) + np.pi / 5) % (2 * np.pi / 5) - np.pi / 5  # 0 sulla punta
+    R, RI = n / 2 - 2 * n / 128, (n / 2 - 2 * n / 128) * 0.45
+    # ogni spicchio: dentro se sta dalla parte del centro rispetto al lato che va
+    # dalla punta (R, 0) al vertice interno
+    px, py = r * np.cos(ang), np.abs(r * np.sin(ang))
+    ax, ay = RI * np.cos(np.pi / 5), RI * np.sin(np.pi / 5)
+    salva(((ax - R) * py - ay * (px - R) >= 0).astype(float), n, nome)
 
 # ingranaggio: otto denti e il foro al centro
 n = 64
@@ -103,6 +104,8 @@ coppia(d, n, LINEA, "eroe")
 # slot delle armi: smussi in alto, angoli di sotto arrotondati
 d = np.maximum(distanza_rettangolo(n, 9), np.maximum((x + y) / R2, (-x + y) / R2) - (2 * h - 11) / R2)
 coppia(d, n, LINEA, "slot_arma")
+# pillola della coda in testata: estremità a mezzo cerchio pieno (9-slice, bordo 24)
+coppia(distanza_rettangolo(LATO, 24), LATO, LINEA, "pillola")
 # pillola dei colpi: mezzo cerchio per lato
 n = 24
 coppia(distanza_rettangolo(n, 11), n, 2, "badge")
@@ -116,4 +119,21 @@ coppia(d, n, 3 * n / 84, "gettone")
 a = r * np.sqrt(3) / 2  # esagono con la punta in alto: lati dritti a destra e sinistra
 d = np.maximum(np.abs(x), np.abs(x) / 2 + np.abs(y) * np.sqrt(3) / 2) - a
 coppia(d, n, 3 * n / 56, "oggetto")
+
+
+# Dischi e anelli sfumati per i nodi tondi (ui.disco, ui.anello in client/ui/ui.lua):
+# un poligono senza antialiasing fa gli scalini, un'immagine sfumata no. Il bordo
+# esterno sta a mezzo pixel dal margine, cosi' il poligono del nodo lo contiene
+# tutto. Due misure: 256 px per i tondi grandi, 64 per quelli piccoli (sotto i 48
+# px del gioco), perche' l'atlas dell'interfaccia non ha mipmap. Ogni anello ha
+# lo spessore k volte il diametro (ANELLI, lo stesso elenco di ui.lua).
+ANELLI = [0.014, 0.018, 0.023, 0.028, 0.034, 0.041, 0.05, 0.06, 0.071, 0.084,
+          0.1, 0.12, 0.14, 0.165, 0.2, 0.25]
+for n, coda in ((256, ""), (64, "_p")):
+    x, y = griglia(n)
+    r = np.hypot(x, y)
+    R = n / 2 - 1
+    salva((r <= R).astype(float), n, "disco" + coda + ".png")
+    for k in ANELLI:
+        salva(((r <= R) & (r > R - k * 2 * R)).astype(float), n, "anello_%03d%s.png" % (round(k * 1000), coda))
 print("ok", OUT)
