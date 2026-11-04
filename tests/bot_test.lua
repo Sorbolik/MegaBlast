@@ -176,6 +176,35 @@ do
 	check(replay.verifica(r3), "recipe: player and bot, the replayed match is identical")
 end
 
+-- With bot_keys the bots' keys end up in the recipe too: replaying it, nobody
+-- thinks (the in-game replay of a moment gets there at once) and it is the same match
+do
+	local players = { { team = 1 }, { team = 2, bot = "difficile" }, { team = 1, bot = "normale" }, { team = 2, bot = "facile" } }
+	local r7 = replay.nuova(5, "pavimento", { players = players })
+	r7.bot_keys = true
+	local g7, bots = replay.partita(r7)
+	while g7.tick < 6000 and g7.phase ~= "over" do
+		local human = { right = g7.tick % 200 < 100, left = false, hold = true, jump = g7.tick % 150 == 0 }
+		if g7.current == 1 and g7.tick % 500 == 120 then human.fire = { weapon = "missile", angle = 0.6, power = 0.8 } end
+		g7:step(replay.input(r7, g7, bots, human))
+		replay.dopo(r7, g7)
+	end
+	check(#r7.input > 0 and #r7.input < g7.tick / 10, "bot keys: still only the key changes (" .. #r7.input .. ")")
+	check(replay.verifica(r7), "bot keys: the replayed match is identical")
+	-- without bots at all: the keys alone are enough
+	local g8 = replay.partita(r7)
+	local l, n, same = replay.reader(r7), 1, true
+	while g8.tick < g7.tick do
+		g8:step(replay.read_step(l, g8, {}))
+		local a = r7.impronte[n]
+		if a and a.t == g8.tick then
+			same = same and a.h == g8:impronta()
+			n = n + 1
+		end
+	end
+	check(same and n > 1, "bot keys: replayed without bots, the fingerprints all come back")
+end
+
 -- The bot thinks a little at a time: never too much work in one tick
 do
 	local g4 = game.new(2, "pavimento", { players = { { team = 1 }, { team = 2 } } })

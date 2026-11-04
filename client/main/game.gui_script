@@ -683,6 +683,8 @@ local function new_match(self, seed, map, opts)
 	if self.carta then self.carta:close_view(); self.carta = nil end
 	self.flights = nil
 	self.ricetta = replay.nuova(seed, map, opts)
+	-- the bots' keys too: the replay of a moment (profile, PARTITE) gets there at once
+	self.ricetta.bot_keys = true
 	self.g, self.bots = replay.partita(self.ricetta)
 	-- the world shows only now that there is a match (show_menu)
 	msg.post("/terreno#script", "home", {})
