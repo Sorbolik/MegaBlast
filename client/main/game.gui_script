@@ -1648,6 +1648,10 @@ on_socket = function(self, conn, data)
 			-- in the queue outside the room: the pill says so, a tap and you are back in
 			self.queue.lost = true
 		elseif self.mode ~= "menu" and self.mode ~= "ended" then
+			-- in the room (or still connecting) the queue goes with the connection:
+			-- kept, it would show IN CODA and GIOCA would reopen a room nobody
+			-- answers, past the bots' time forever (Sergio, 4 Nov)
+			self.queue = nil
 			CP.close_room(self)
 			menu.pick.hide(self.scelta)
 			self.mode = "ended"
@@ -1733,12 +1737,13 @@ function CP.queue_to_menu(self)
 	CP.iris(self, function() show_menu(self, true) end)
 end
 
--- Back to the room (the pill, GIOCA); with the queue lost, in again
+-- Back to the room (the pill, GIOCA); with the queue lost (or no connection
+-- left under it), in again
 function CP.queue_open(self)
 	local q = self.queue
 	CP.iris(self, function()
 		close_screen(self)
-		if q.lost then
+		if q.lost or not self.conn then
 			self.queue = nil
 			start_online(self, q.mode)
 			return
