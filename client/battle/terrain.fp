@@ -75,29 +75,33 @@ highp float zoom()
     return var_zoom * opzioni.z;
 }
 
-highp vec2 fila(highp vec2 camera, highp float quanto)
+// lz = log2(zoom()), uguale per tutto lo schermo: calcolato una volta in
+// sfondo(), così ogni fila fa solo un exp2 invece di un pow (OPT-001 A1)
+highp vec2 fila(highp vec2 camera, highp float quanto, highp float lz)
 {
-    return CENTRO + (camera - CENTRO) * quanto + (schermo() - CENTRO) * pow(zoom(), -quanto);
+    return CENTRO + (camera - CENTRO) * quanto + (schermo() - CENTRO) * exp2(-quanto * lz);
 }
 
 // Braci che salgono piano, vicine (si spostano quasi come la mappa)
-mediump float braci(highp vec2 camera, highp float t)
+mediump float braci(highp vec2 camera, highp float t, highp float lz)
 {
-    highp vec2 q = fila(camera, 0.8);
+    highp vec2 q = fila(camera, 0.8, lz);
     q.y -= t * 16.0;
     q.x += sin(t * 0.6 + q.y * 0.013) * 10.0;
     highp vec2 cella = floor(q / 52.0);
     highp float r = caso(cella.x * 7.31 + cella.y * 91.7);
+    // il 72% delle celle non ha brace: niente altro conto (OPT-001 A2)
+    if (r < 0.72) return 0.0;
     highp vec2 punto = (vec2(caso(r * 53.1 + 1.0), caso(r * 17.9 + 2.0)) * 0.8 + 0.1) * 52.0;
     highp float d = length(q - cella * 52.0 - punto);
-    return step(0.72, r) * smoothstep(2.4, 0.3, d) * (0.55 + 0.45 * sin(t * 2.7 + r * 40.0));
+    return smoothstep(2.4, 0.3, d) * (0.55 + 0.45 * sin(t * 2.7 + r * 40.0));
 }
 
 // Una striscia dello sfondo dipinto sopra col (alfa premoltiplicato): sotto il
 // suo fondo continua l'ultima riga, sopra non c'è niente
-mediump vec3 striscia(mediump vec3 col, mediump sampler2D img, highp vec4 s, highp vec2 camera)
+mediump vec3 striscia(mediump vec3 col, mediump sampler2D img, highp vec4 s, highp vec2 camera, highp float lz)
 {
-    highp vec2 q = fila(camera, s.z);
+    highp vec2 q = fila(camera, s.z, lz);
     highp float dall_alto = ((MONDO.y - q.y) / MONDO.y - s.x) / s.y;
     if (dall_alto < 0.0) return col;
     highp float u = fract((q.x + s.w) / GIRO);
@@ -109,12 +113,13 @@ mediump vec3 sfondo()
 {
     // il punto del mondo al centro dello schermo
     highp vec2 camera = var_uv * MONDO - (schermo() - CENTRO) / zoom();
-    highp vec2 q = fila(camera, 0.02) / MONDO;
+    highp float lz = log2(zoom());
+    highp vec2 q = fila(camera, 0.02, lz) / MONDO;
     mediump vec3 col = texture(cielo, clamp(q, 0.0, 1.0)).rgb;
-    col = striscia(col, lontano, striscia1, camera);
-    col = striscia(col, medio, striscia2, camera);
-    col += BRACE_SPENTA * braci(camera, opzioni.y) * 0.45;
-    col = striscia(col, davanti, striscia3, camera);
+    col = striscia(col, lontano, striscia1, camera, lz);
+    col = striscia(col, medio, striscia2, camera, lz);
+    col += BRACE_SPENTA * braci(camera, opzioni.y, lz) * 0.45;
+    col = striscia(col, davanti, striscia3, camera, lz);
     // più scuro ai bordi dello schermo
     highp vec2 v = (var_schermo - CENTRO) / CENTRO;
     return col * (1.0 - 0.18 * dot(v, v));
