@@ -160,7 +160,8 @@ A sinistra, dal basso: ARMERIA (il regalo del Fabbro) ed EVENTI (con l'online).
 più comodo per il pollice, con dentro l'illustrazione del capitolo in cui sei (il cortile, la
 Forgia, poi l'anello del girone) che respira piano, il bordo di brace e sotto una riga sola
 col punto in cui sei («LA FORGIA · 4/7»). Forma, posto e misura non cambiano mai; cambia solo
-il disegno dentro, quando cambi capitolo. Così è la cosa più bella della home all'inizio e
+il disegno dentro, quando cambi capitolo. Nel prologo il disegno è la bacheca della Forgia (cartoline di pergamena su tavola di legno,
+scelta da Sergio nel thread della storia il 4 nov), poi l'imbuto dei gironi. Così è la cosa più bella della home all'inizio e
 resta la porta della campagna anche quando arriva l'online, che le sta sopra, dorato.
 Alternativa (scartata per ora): CAMPAGNA in alto e il posto in basso libero per GIOCA ONLINE;
 ma allora all'inizio CAMPAGNA starebbe lontana dal pollice, sopra un vuoto.
