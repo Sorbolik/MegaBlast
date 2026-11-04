@@ -514,6 +514,8 @@ return {
 	match = {
 		-- the teams; a player's name is the team's, with a number if there are two
 		team_names = { "Rosso", "Blu", "Verde", "Oro" },
+		-- after a local bot's name (taken off again on the cards)
+		bot_suffix = " (bot)",
 		-- the server's errors (server/room.go), then the line that closes them
 		server_errors = {
 			version = "C'è una versione nuova di MegaBlast:\naggiorna il gioco",

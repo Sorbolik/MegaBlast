@@ -696,7 +696,7 @@ local function new_match(self, seed, map, opts)
 		self.drawn_map = self.g.map
 	end
 	self.names, self.colors = names_colors(self.g.robots)
-	for i in pairs(self.bots) do self.names[i] = self.names[i] .. " (bot)" end
+	for i in pairs(self.bots) do self.names[i] = self.names[i] .. TM.bot_suffix end
 	for i = #self.g.robots + 1, game.MAX_PLAYERS do
 		scoria.set_enabled(self.robots[i].rig, false)
 		plate.set_enabled(self.robots[i].plate, false)
@@ -1937,7 +1937,8 @@ function CP.inizio(self, me, net, cluster, replay_ok)
 	local name_list, players = {}, {}
 	local opt = self.ricetta.opzioni.players or {}
 	for i, rb in ipairs(self.g.robots) do
-		name_list[i] = (self.names[i]:gsub(" %(bot%)$", ""))
+		local n = self.names[i]
+		name_list[i] = n:sub(-#TM.bot_suffix) == TM.bot_suffix and n:sub(1, -#TM.bot_suffix - 1) or n
 		players[i] = { team = rb.team, bot = self.bots[i] and true or nil, dummy = (opt[i] or {}).dummy }
 	end
 	local v = self.vetrine
