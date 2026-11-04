@@ -1653,12 +1653,45 @@ end
 local on_socket
 
 local function connect(self)
+	-- the connections left behind still open are closed now, before the new
+	-- one can take the place of one of them (CP.let_go)
+	for conn, h in pairs(self.leaving or {}) do
+		timer.cancel(h)
+		ws.disconnect(conn)
+	end
+	self.leaving = {}
 	self.conn = ws.connect(server_url(), { timeout = 5000 }, on_socket)
 end
 
+-- A connection left behind (ESCI DALLA CODA, ESCI DALLA PARTITA, another
+-- queue): it says "leave" and the server closes it, after reading the message
+-- (closing it here at once it might not leave); if it doesn't, we do in a
+-- moment. The handle is good only until its DISCONNECTED: the extension frees
+-- the connection then and the next one gets the same address, so a late
+-- ws.disconnect closed the new queue ("Connessione persa", Sergio 4 Nov). The
+-- late close is cancelled by that event, and done at once by connect.
+function CP.let_go(self)
+	local conn = self.conn
+	send(self, { t = "leave" })
+	self.conn = nil
+	self.leaving = self.leaving or {}
+	self.leaving[conn] = timer.delay(2, false, function()
+		self.leaving[conn] = nil
+		ws.disconnect(conn)
+	end)
+end
+
 on_socket = function(self, conn, data)
-	-- the last events of a connection left behind (ESCI DALLA PARTITA) don't count
-	if conn ~= self.conn then return end
+	-- the last events of a connection left behind (CP.let_go) don't count; its
+	-- DISCONNECTED says its handle is no longer its own
+	if conn ~= self.conn then
+		local h = self.leaving and self.leaving[conn]
+		if h and (data.event == ws.EVENT_DISCONNECTED or data.event == ws.EVENT_ERROR) then
+			timer.cancel(h)
+			self.leaving[conn] = nil
+		end
+		return
+	end
 	if data.event == ws.EVENT_CONNECTED then
 		-- the first message states the version: in the queue, or back in the match
 		if self.tok then
@@ -1708,12 +1741,7 @@ end
 
 local function start_online(self, coda)
 	-- another queue while still in one (an event's GIOCA): the old one is left
-	if self.conn then
-		local conn = self.conn
-		send(self, { t = "leave" })
-		self.conn = nil
-		timer.delay(2, false, function() ws.disconnect(conn) end)
-	end
+	if self.conn then CP.let_go(self) end
 	self.coda = coda
 	hide_menu(self)
 	if not ws then
@@ -3833,7 +3861,7 @@ function update(self, dt)
 		self.wait_release = self.wait_release - dt
 		if self.wait_release <= 0 then self.wait_release = nil end
 	end
-	if self.conn and ws.poll then ws.poll(self) end
+	if ws.poll then ws.poll(self) end
 	PAD.every_frame(self)
 	-- hit-stop: the world stays still, the screen shakes anyway
 	local dt_world = dt
@@ -4110,12 +4138,8 @@ local function quit_match(self)
 	menu.pick.hide(self.scelta)
 	if online then self.queue = nil end
 	if online and self.conn then
-		-- the server closes the connection, after reading the message (closing it
-		-- here at once it might not leave); if it doesn't, we do in a moment
-		local conn = self.conn
-		send(self, { t = "leave" })
-		self.conn, self.tok = nil, nil
-		timer.delay(2, false, function() ws.disconnect(conn) end)
+		CP.let_go(self)
+		self.tok = nil
 	end
 	CP.iris(self, function()
 		if comeback == "campagna" then
