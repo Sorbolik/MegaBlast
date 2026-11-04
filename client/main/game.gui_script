@@ -868,48 +868,71 @@ local RM = { fune = require "battle.rope", GUSTS = 5 }
 -- start_local (they use new_match, show_menu and the others)
 local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card" }
 
--- The zoom (Sergio, 3 Nov, choice Z1): the button at the top right shows with a
--- dot where the zoom is between the nearest (top) and the farthest (bottom).
--- A tap jumps between the chosen zoom and the farthest; holding it and
--- dragging, a guide appears beside it, from the top edge of the screen down,
--- and the guide's cursor sits under the finger: the nearest at the top, the
--- farthest at the bottom, and the current zoom where you pressed (so it doesn't
--- jump). Down zooms out: the button sits on the top edge, and there is no room
--- above the finger. The mouse wheel takes small steps; with the controller you
--- hold the zoom button and move the aiming stick.
+-- The zoom (Sergio, 3 Nov, choice Z1; 4 Nov): one button, top right, that is
+-- both a switch and a slider. Inside it a small lens slides on a track with a
+-- notch at each end: the lens says "zoom", the track says "it slides", and the
+-- lens sits where the zoom is between the nearest (top) and the farthest
+-- (bottom). A quick tap jumps between the chosen zoom and the farthest.
+-- Holding it a moment (or dragging) opens the long guide beside it, with the
+-- same lens under the finger. From then on the zoom follows how much the
+-- finger moves, not where it is (Sergio, 4 Nov: «che continui a fare il suo
+-- dovere ovunque stai spostando il dito»): ZM.RUN units for the whole range,
+-- down zooms out, no stop at the guide's ends (it slides with the finger),
+-- and coming back from a limit works at once. The mouse wheel takes small
+-- steps; with the controller you hold the zoom button and move the aiming stick.
 CP.ZM = {
 	STEP = 0.12,        -- a wheel notch or a key, in shares of the zoom
-	RUN = 230,         -- how long the guide is, in screen units
-	TOP = 40,           -- the guide starts this far below the top edge (out of the
-	                    -- strip where the phone pulls down its notifications)
+	RUN = 230,          -- finger travel for the whole zoom, and the guide's length
+	HOLD = 0.22,        -- held this long without moving, the guide opens (no tap)
 	TICKS = 24,         -- a micro-vibration every 1/TICKS of the zoom while dragging
-	DRAG_PX = 10,          -- past this the finger drags and it is no longer a tap
-	STICK_RATE = 0.9,       -- with the controller: shares of the zoom per second at full stick
-	W = 44, H = 44,      -- the button
-	MARK = 26,          -- the small guide inside the button
+	DRAG_PX = 10,       -- past this the finger drags and it is no longer a tap
+	STICK_RATE = 0.9,   -- with the controller: shares of the zoom per second at full stick
+	W = 44, H = 44,     -- the button
+	MARK = 24,          -- the small track inside the button
+	LENS = 13,          -- the lens in the button (the one on the guide is bigger)
 }
 local ZM = CP.ZM
 
+-- a small lens (ring and handle) centred on the ring, d its diameter
+function ZM.lens(d, parent)
+	local n = box(0, 0, d, d, ui.C.LIGHT)
+	gui.set_visible(n, false) -- only a holder: its children show
+	gui.set_parent(n, parent)
+	local t = math.max(2, d * 0.17)
+	ui.disco(0, 0, d - t, vmath.vector4(0.05, 0.05, 0.07, 1), n) -- the glass hides the track
+	ui.ring_node(0, 0, d, t, ui.C.LIGHT, n)
+	local h = box(d * 0.42, -d * 0.42, t + 0.5, d * 0.45, ui.C.LIGHT)
+	gui.set_rotation(h, vmath.vector3(0, 0, 45))
+	gui.set_parent(h, n)
+	return n
+end
+
 function ZM.make_ui(self)
 	local dark = vmath.vector4(0.05, 0.05, 0.07, 0.55)
+	local dim = vmath.vector4(1, 1, 1, 0.35)
 	self.btn_zoom = box(0, 0, ZM.W, ZM.H, dark)
 	gui.set_position(self.btn_zoom, ZOOM_BTN)
-	gui.set_parent(box(0, 0, 3, ZM.MARK, vmath.vector4(1, 1, 1, 0.35)), self.btn_zoom)
-	self.zoom_point = box(0, 0, 10, 10, ui.C.LIGHT)
-	gui.set_parent(self.zoom_point, self.btn_zoom)
+	gui.set_parent(box(0, 0, 2, ZM.MARK, dim), self.btn_zoom)
+	gui.set_parent(box(0, ZM.MARK / 2, 8, 2, dim), self.btn_zoom)
+	gui.set_parent(box(0, -ZM.MARK / 2, 8, 2, dim), self.btn_zoom)
+	self.zoom_point = ZM.lens(ZM.LENS, self.btn_zoom)
 	-- the long guide, left of the button (the thumb covers the button), only
-	-- while dragging; it is put in place on press (ZM.premi)
-	self.zoom_guide = box(-ZM.W / 2 - 16, 0, 14, ZM.RUN + 14, dark)
+	-- while held; it is put in place under the finger (ZM.show_guide)
+	self.zoom_guide = box(-ZM.W / 2 - 18, 0, 18, ZM.RUN + 18, dark)
 	gui.set_parent(self.zoom_guide, self.btn_zoom)
-	gui.set_parent(box(0, 0, 3, ZM.RUN, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
-	self.zoom_cursor = box(0, 0, 18, 18, ui.C.LIGHT)
-	gui.set_parent(self.zoom_cursor, self.zoom_guide)
+	gui.set_parent(box(0, 0, 2, ZM.RUN, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
+	gui.set_parent(box(0, ZM.RUN / 2, 10, 2, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
+	gui.set_parent(box(0, -ZM.RUN / 2, 10, 2, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
+	self.zoom_cursor = ZM.lens(16, self.zoom_guide)
 	gui.set_enabled(self.zoom_guide, false)
 end
 
--- every frame: the dot inside the button where the zoom is (if it changed)
+-- every frame: the lens inside the button where the zoom is (if it changed),
+-- and the guide opening when the button is held
 ZM.POINT = vmath.vector3()
 function ZM.display(self)
+	local d = self.zoom_finger
+	if d and not d.open and self.clock - d.t >= ZM.HOLD then ZM.show_guide(self, d.y) end
 	local f = self.cam.f
 	if self.zoom_f == f then return end
 	self.zoom_f = f
@@ -917,42 +940,46 @@ function ZM.display(self)
 	gui.set_position(self.zoom_point, ZM.POINT)
 end
 
--- y of the finger on screen; the guide goes from the top (the nearest) down
+-- the guide slides so that its lens, at the zoom's place, is under the finger
+ZM.GUIDE, ZM.CURSOR = vmath.vector3(-ZM.W / 2 - 18, 0, 0), vmath.vector3()
+function ZM.show_guide(self, y)
+	local d = self.zoom_finger
+	d.open = true
+	gui.set_enabled(self.zoom_guide, true)
+	local k = (self.cam.f - 0.5) * ZM.RUN
+	ZM.GUIDE.y = y - ZOOM_BTN.y - k
+	ZM.CURSOR.y = k
+	gui.set_position(self.zoom_guide, ZM.GUIDE)
+	gui.set_position(self.zoom_cursor, ZM.CURSOR)
+end
+
+-- y of the finger on screen
 function ZM.premi(self, y)
-	local top = screen.y1 - ZM.TOP
-	self.zoom_finger = { y = y, f = self.cam.f, moved = false, cima = top, fondo = top - ZM.RUN }
-	gui.set_position(self.zoom_guide, vmath.vector3(-ZM.W / 2 - 16, top - ZM.RUN / 2 - ZOOM_BTN.y, 0))
+	self.zoom_finger = { y = y, last = y, t = self.clock, moved = false }
 end
 
 function ZM.trascina(self, y)
 	local d = self.zoom_finger
 	if not d then return end
-	if not d.moved and math.abs(y - d.y) > ZM.DRAG_PX then
-		d.moved = true
-		gui.set_enabled(self.zoom_guide, true)
-	end
+	if not d.moved and math.abs(y - d.y) > ZM.DRAG_PX then d.moved = true end
 	if not d.moved then return end
-	y = math.max(d.fondo, math.min(d.cima, y))
-	-- above the pressed point it goes toward the nearest, below toward the farthest
-	local f
-	if y >= d.y then
-		f = d.cima > d.y and d.f + (1 - d.f) * (y - d.y) / (d.cima - d.y) or 1
-	else
-		f = d.f * (y - d.fondo) / (d.y - d.fondo)
-	end
-	camera.trascina(self.cam, f)
+	-- relative: the zoom moves by how much the finger moved since last time
+	camera.trascina(self.cam, self.cam.f + (y - d.last) / ZM.RUN)
+	d.last = y
+	local f = self.cam.f
 	-- a micro-vibration at every notch (Sergio, 3 Nov: «un feedback di vibrazione granulare»)
 	local notch = math.floor(f * ZM.TICKS + 0.5)
 	if d.notch and notch ~= d.notch then CP.vibrate() end
 	d.notch = notch
-	gui.set_position(self.zoom_cursor, vmath.vector3(0, y - (d.cima + d.fondo) / 2, 0))
+	ZM.show_guide(self, y)
 end
 
+-- a tap only if it was quick and still; held to look, nothing changes
 function ZM.release(self)
 	local d = self.zoom_finger
 	self.zoom_finger = nil
 	gui.set_enabled(self.zoom_guide, false)
-	if d and not d.moved then camera.toggle(self.cam) end
+	if d and not d.moved and not d.open then camera.toggle(self.cam) end
 end
 
 -- Shots that left the screen at the top (Sergio, 3 Nov: «non mi interessa sapere
