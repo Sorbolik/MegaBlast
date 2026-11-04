@@ -1,45 +1,34 @@
-# Primi passi (computer): il percorso della prima lezione, con le vignette
-# (battle/vignette.lua). Niente tempo né turni né armi. All'inizio la vignetta
+# Stammi dietro (computer): la prima lezione del cortile, con le vignette
+# (battle/vignette.lua). Niente tempo, né turni, né armi. All'inizio la vignetta
 # grande di Favilla (gioco fermo, il diavoletto che cammina nel riquadro): un
-# tocco la chiude e la frase resta nella striscia in alto. Cammini fino alla
-# bandierina, la vignetta del salto; salti sul gradino, la cassa cade (striscia),
-# la scheda del Lanciarune, la vignetta della mira; il primo tiro a vuoto e
-# Ritenta nella striscia, con Favilla preoccupata.
+# tocco la chiude e la frase resta nella striscia in alto. Favilla corre avanti
+# e si ferma al gradino; alla bandierina la vignetta del salto; sul gradino la
+# scintilla in aria: un salto tenuto fino in fondo la prende (la medaglia).
 imposta prova_missione primi_passi
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
 foto 01_vignetta                     # la vignetta grande: cammina
 tocca 640 360                        # VAI!
 aspetta 0.6
-foto 02_striscia                     # la frase nella striscia in alto
+foto 02_striscia                     # la frase nella striscia in alto, Favilla davanti
 cammina destra 700
-tieni destra 0.5                     # alla bandierina la vignetta ferma il gioco
+aspetta 0.2
+foto 03_favilla_corre                # Favilla corre avanti verso il gradino
+cammina destra 900
+tieni destra 0.3                     # alla bandierina la vignetta ferma il gioco
 aspetta 1
-foto 03_vignetta_salto               # arrivato: la vignetta del salto
+foto 04_vignetta_salto               # la vignetta del salto
 tocca 640 360
 aspetta 0.4
 cammina destra 1080 60
-tieni salta 0.15
+tieni salta 0.35                     # sul gradino
 cammina destra 1180
-aspetta 0.5
-foto 04_cassa                        # la cassa cade dal cielo (striscia)
-cammina destra 1215
-tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
-aspetta_evento crate_pick 10
-aspetta 0.8
-foto 05_scheda                       # la scheda del Lanciarune
-tocca 640 120                        # PROVALA
-aspetta 0.8
-foto 06_vignetta_mira                # la vignetta della mira, il colpo nel riquadro
-tocca 640 360
 aspetta 0.6
-mira -100 30 1
-aspetta_evento explosion 6
-aspetta 2
-foto 07_ritenta                      # a vuoto: Ritenta nella striscia
-mira 141 77 1 08_mira
-aspetta_evento damage 6
-aspetta 0.3
-foto 09_colpito
-aspetta 2
-foto 10_fatta
+foto 05_scintilla                    # la scintilla in aria, la riga nella striscia
+cammina destra 1290
+tieni salta 0.6                      # salto pieno: presa
+aspetta 0.8
+foto 06_presa                        # "Presa!", Favilla fiera
+cammina destra 1460
+aspetta 2.5
+foto 07_fatta                        # fine: FATTA e la medaglia della scintilla
