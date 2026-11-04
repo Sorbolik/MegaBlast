@@ -77,8 +77,9 @@ primo è "image 1", il secondo "image 2" e così via. Sfondo **non** trasparente
 | 2 | `6_rapimento_c` | R8, R6, R3 | 1536×1024 | 1 |
 | 2b | `4_arrivo_a` | R6, R7, R9, R3 | 1536×1024 | 2 |
 | 2b | `5_fabbro_b` | R7, R9, R6, R3 | 1024×1024 | 2 |
+| 2c | `5_fabbro_c` | R7, R6, R3 | 1024×1024 | 2 |
 
-Codex esegue solo le righe della fase chiesta («esegui WB-012 fase 1», «fase 2» o «fase 2b»). Se un
+Codex esegue solo le righe della fase chiesta («esegui WB-012 fase 1», «fase 2», «fase 2b» o «fase 2c»). Se un
 riferimento della fase non c'è, si ferma.
 
 ### `1_foglio_apprendista`
@@ -211,6 +212,19 @@ IMPORTANT, the tails: Favilla's tail ends in a HEART shape, exactly as in image 
 A square comic panel: Favilla leans toward the apprentice imp and whispers behind her hand with a mischievous grin; he listens, eyes turned toward her, hands empty at his sides. Dark forge background, blurred. Leave the top third calm for a speech balloon the game adds. Style of image 4. No text, letters, speech balloons or signatures.
 ```
 
+### Fase 2c · `5_fabbro_c` (il bisbiglio, di nuovo)
+
+In fase 2b il cuore della coda è uscito capovolto rispetto al modello: nel modello la coda entra
+nell'incavo fra i lobi e la punta guarda in fuori. Era colpa del prompt, che insisteva troppo
+sulla coda. Qui torna il prompt della fase 2, con le mani vuote e la coda detta in una riga
+sola, senza enfasi. Due varianti. Non scartare per la coda se somiglia al foglio: decide Claude.
+
+```
+Image 1 is the model sheet of Favilla, image 2 the model sheet of the apprentice imp, image 3 the illustration style. Copy both EXACTLY from their sheets, tails included.
+
+A square comic panel: Favilla leans toward the apprentice imp and whispers behind her hand with a mischievous grin; he listens, eyes turned toward her, both hands empty at his sides. Dark forge background, blurred. Leave the top third calm for a speech balloon the game adds. Style of image 3. No text, letters, speech balloons or signatures.
+```
+
 ### `6_rapimento_a`
 
 ```
@@ -260,6 +274,7 @@ A wide quiet comic panel: the Blacksmith and the apprentice imp kneel at the edg
 Fase 1 approvata da Claude il 2026-11-03 (reversibile: serve a qualunque interfaccia).
 Fase 2 approvata da Sergio il 2026-11-03 («sì a tutte»): apprendista con la fiammella, Favilla con salopette e stivali («quella con le scarpe»), Fabbro B.
 Fase 2b (le due scene scartate, rifatte con la coda a cuore detta meglio) approvata da Claude il 2026-11-04: è la stessa richiesta della fase 2, con un riferimento in più.
+Fase 2c (solo il bisbiglio, prompt della fase 2 con le mani vuote) approvata da Claude il 2026-11-04 dopo la nota di Sergio: non far concentrare il generatore sulla coda.
 
 ## Consegna di Codex
 
@@ -370,10 +385,12 @@ nella fase 2b, con R9 (la sua figura intera) e la coda detta due volte. L'incoer
 da Codex (pergamena nel paragrafo generale, forgia nei prompt) è voluta: la pergamena vale per
 i fogli della fase 1, le tavole hanno lo sfondo della scena.
 
-Fase 2b (2026-11-04). Guardate le quattro varianti di Codex (7439813): tutte e quattro hanno la
-coda a cuore di Favilla e la punta a freccia dell'apprendista, mani vuote nel bisbiglio, niente
-martello. Scelte di Claude (si cambiano se Sergio preferisce l'altra): `4_arrivo_a_1` (l'atterraggio
-si legge meglio: una mano a terra davanti, l'altro braccio aperto; nella `_2` il braccio a terra
-esce fra le ginocchia) e `5_fabbro_b_1` (sfondo più calmo, più spazio in alto per il fumetto).
-Le misure native (1672×941 e 1254×1254) per il montaggio non contano. Con queste la fase 2 è
-completa: otto tavole per la PR della storia.
+Fase 2b (2026-11-04). Guardate le quattro varianti di Codex (7439813). ~~Scelte `4_arrivo_a_1` e
+`5_fabbro_b_1`.~~ Scartate tutte e quattro (Sergio): il cuore della coda è capovolto, la coda entra
+dalla punta e i lobi stanno in fuori, mentre nel modello (R9) la coda entra nell'incavo e la punta
+guarda in fuori. Colpa del prompt («a cuore, NON a freccia»). Riguardate con questo occhio anche
+le tavole: in `6_rapimento_a` e `6_rapimento_b` la coda è giusta. E si salva lo scarto della fase 2
+`4_arrivo_a` (in `scartati/fase2/`): la punta è un po' aguzza ma è quella del modello, la tavola
+torna buona (Claude, su indicazione di Sergio: «qualche coda di prima si salva»). Il bisbiglio di
+fase 2 resta scartato per il martello: si rifà nella fase 2c, col prompt della fase 2 e le mani
+vuote, senza insistere sulla coda. Le quattro varianti della 2b vanno in `scartati/fase2b/`.
