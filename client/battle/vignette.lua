@@ -20,8 +20,7 @@
 --                                         -- (in vignette.STRIP), it goes see-through
 --   local view = v:open(pages)            -- pages: { { chi, faccia, testo, disegno } }:
 --                                         -- the big vignette (the battle keeps it as self.carta);
---                                         -- a page { tavola = mission id, titolo } is the
---                                         -- mission's illustration on a postcard with its title (WB-015)
+--                                         -- the mission's postcard is before the battle (ui/postcard.lua)
 --   view:premi(x, y) / view:pad(n)        -- a tap / a controller button: true when it is over
 --   v:update(dt)                          -- every frame, also while the game is stopped
 --   vignette.CHI.favilla                  -- name and color of who speaks
@@ -30,7 +29,6 @@ local ui = require "ui.ui"
 local T = require("lang.text").vignette
 local common = require("lang.text").common
 local scoria = require "battle.scoria"
-local ill = require "ui.illustrations"
 
 local M = {}
 
@@ -57,11 +55,6 @@ local STRIP_W, STRIP_H, STRIP_Y = 760, 96, 568
 local GHOST_A, GHOST_T = 0.25, 0.15
 M.STRIP = { x0 = 640 - STRIP_W / 2, y0 = STRIP_Y - STRIP_H / 2, x1 = 640 + STRIP_W / 2, y1 = STRIP_Y + STRIP_H / 2 }
 local FACE_S = 80
--- the mission's postcard (WB-015): the picture at 880 x 495 (16:9), the
--- parchment margin, the band with title and button. Straight: a tilted
--- quad would show steps on its edges (no antialiasing on rotated nodes)
-local POST_W, POST_H, POST_M, POST_BAND, POST_Y = 880, 495, 18, 84, 12
-local BACKDROP = c(0.09, 0.07, 0.07)
 -- the big vignette
 local BIG_W, BIG_H = 980, 400
 local BIG_FACE = 230
@@ -589,29 +582,9 @@ local function build_drawing(view, name)
 	view.drawing = d
 end
 
-local show_page
--- a tavola page without its illustration: straight to the next page
-local function advance_past(view)
-	if view.i < #view.pages then
-		view.i = view.i + 1
-		return show_page(view)
-	end
-end
-
-function show_page(view)
+local function show_page(view)
 	local p = view.pages[view.i]
 	local last = view.i == #view.pages
-	local on_tav = p.tavola ~= nil and view.tav ~= nil
-	if view.tav then
-		gui.set_enabled(view.tav, on_tav)
-		gui.set_enabled(view.paper, not on_tav)
-	end
-	if on_tav then
-		gui.set_text(view.tav_title, string.upper(p.titolo or ""))
-		gui.set_text(view.tav_next_text, last and T.go or common.next)
-		return
-	end
-	if p.tavola then return advance_past(view) end
 	set_face(view.face, p.chi, p.faccia or "spiega")
 	local nome, colore = who(p.chi, p.nome, p.colore)
 	gui.set_text(view.name, nome)
@@ -619,9 +592,7 @@ function show_page(view)
 	gui.set_text(view.text, p.testo)
 	build_drawing(view, p.disegno)
 	gui.set_text(view.next_text, last and T.go or common.next)
-	-- the dots count the pages of the vignette, not the illustration before them
-	local shift = view.pages[1].tavola and 1 or 0
-	for k, n in ipairs(view.dots) do gui.set_color(n, k == view.i - shift and INK or INK_SOFT) end
+	for k, n in ipairs(view.dots) do gui.set_color(n, k == view.i and INK or INK_SOFT) end
 end
 
 function M.open(v, pages, pad)
@@ -630,42 +601,6 @@ function M.open(v, pages, pad)
 	local veil = gui.new_box_node(vec(0, 0), vec(1280 * 4, 720 * 4))
 	gui.set_color(veil, c(0, 0, 0, 0.6))
 	gui.set_parent(veil, view.radice)
-	-- the mission's illustration as a postcard (Sergio, 4 Nov: smaller, well
-	-- packaged, and nothing of the map behind): an opaque backdrop on the whole
-	-- screen, the parchment card with its shadow, the picture
-	-- in an ink frame, the title and the button on the card's bottom band.
-	-- The page of the story before the explanation
-	for _, pg in ipairs(pages) do
-		local tex = pg.tavola and ill.texture(pg.tavola, "tavola")
-		if tex then
-			view.tavola = pg.tavola
-			view.tav = gui.new_box_node(vec(0, 0), vec(0, 0))
-			gui.set_parent(view.tav, view.radice)
-			local back = gui.new_box_node(vec(0, 0), vec(1280 * 4, 720 * 4))
-			gui.set_color(back, BACKDROP)
-			gui.set_parent(back, view.tav)
-			local card_h = POST_M + POST_H + POST_BAND
-			local shadow = box(10, POST_Y - 12, POST_W + 2 * POST_M, card_h, c(0, 0, 0, 0.45), view.tav)
-			local card = panel(0, POST_Y, POST_W + 2 * POST_M, card_h, view.tav)
-			local iy = card_h / 2 - POST_M - POST_H / 2
-			box(0, iy, POST_W + 6, POST_H + 6, INK, card)
-			local pic = gui.new_box_node(vec(0, iy), vec(POST_W, POST_H))
-			gui.set_texture(pic, tex)
-			gui.set_adjust_mode(pic, gui.ADJUST_FIT)
-			gui.set_parent(pic, card)
-			local by = -card_h / 2 + POST_BAND / 2
-			view.tav_title = ui.titolo("", -POST_W / 2, by, 0.9, INK, card)
-			gui.set_outline(view.tav_title, c(0, 0, 0, 0))
-			gui.set_pivot(view.tav_title, gui.PIVOT_W)
-			view.tav_next = box(POST_W / 2 - 110, by, 220, 56, INK, card)
-			view.tav_next_text = gui.new_text_node(vec(0, 0), "")
-			gui.set_font(view.tav_next_text, "titolo")
-			gui.set_color(view.tav_next_text, PAPER)
-			gui.set_scale(view.tav_next_text, vmath.vector3(0.7, 0.7, 1))
-			gui.set_parent(view.tav_next_text, view.tav_next)
-			break
-		end
-	end
 	-- without a drawing the vignette is only the face and the line: smaller
 	local drawn = false
 	for _, pg in ipairs(pages) do if pg.disegno and DRAW[pg.disegno] then drawn = true end end
@@ -699,10 +634,7 @@ function M.open(v, pages, pad)
 	end
 	view.skip = box(sx, sy, 160, 40, c(0, 0, 0, 0), view.paper)
 	ink(pad and T.close_pad or T.close, -60, 12, 0.55, INK_SOFT, nil, view.skip)
-	-- CHIUDI with more pages, not counting the illustration's
-	local real = 0
-	for _, pg in ipairs(pages) do if not pg.tavola then real = real + 1 end end
-	gui.set_enabled(view.skip, real > 1)
+	gui.set_enabled(view.skip, #pages > 1)
 	view.next_text = gui.new_text_node(vec(0, 0), "")
 	gui.set_font(view.next_text, "titolo")
 	gui.set_color(view.next_text, PAPER)
@@ -713,8 +645,8 @@ function M.open(v, pages, pad)
 		gui.set_pivot(a, gui.PIVOT_NW)
 	end
 	-- the page dots, when there is more than one
-	if real > 1 then
-		for k = 1, real do
+	if #pages > 1 then
+		for k = 1, #pages do
 			view.dots[k] = ui.disco(dx + (k - 1) * step, dy, math.min(9, step - 2), INK_SOFT, view.paper)
 		end
 	end
@@ -750,9 +682,6 @@ end
 -- A tap: on CHIUDI it closes, on the button it goes on, elsewhere nothing
 -- (true: it's over)
 function View.premi(view, x, y)
-	if view.tav and gui.is_enabled(view.tav) then
-		return gui.pick_node(view.tav_next, x, y) and advance(view) or false
-	end
 	if gui.is_enabled(view.skip) and gui.pick_node(view.skip, x, y) then return true end
 	if gui.pick_node(view.next, x, y) then return advance(view) end
 	return false
@@ -767,7 +696,6 @@ end
 
 function View.close_view(view)
 	gui.delete_node(view.radice)
-	if view.tavola then ill.release(view.tavola, "tavola") end
 	if view.owner.view == view then view.owner.view = nil end
 	if view.owner.line then show_strip(view.owner, view.owner.line) end
 end
