@@ -30,8 +30,10 @@ M.CHAPTERS = {
 		{ "5_fabbro_a", "tr" }, { "5_fabbro_c_1", "t" },
 	} },
 	{ id = "forgia_aperta", after = "guidata", pages = { { "s_forgia_aperta", "tr" } } },
-	{ id = "regalo", after = "il_fabbro", pages = { { "s_regalo", "tr" } } },
 	{ id = "insieme", before = "battaglia_forgia", pages = { { "s_insieme", "tl" } } },
+	-- the Forge done: the Fabbro's boots (the ARMERIA) and then the kidnapping
+	-- (the gironi), together (Sergio, 4 Nov)
+	{ id = "regalo", after = "battaglia_forgia", pages = { { "s_regalo", "tr" } } },
 	{ id = "rapimento", after = "battaglia_forgia", pages = {
 		{ "6_rapimento_a", "tl" }, { "6_rapimento_b", "t" }, { "6_rapimento_c", "t" }, { "s_ghiaccio", "t" },
 	} },

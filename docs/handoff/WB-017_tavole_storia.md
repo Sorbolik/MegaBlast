@@ -17,8 +17,8 @@ nello spazio calmo di ogni tavola: nelle immagini niente scritte.
 |---|---|---|
 | 1 · Prologo | la prima volta che apri la CAMPAGNA | **`s_viaggio`**, poi `4_arrivo_a`, `4_arrivo_b`, `4_arrivo_c`, `5_fabbro_a`, `5_fabbro_c_1` |
 | 2 · La Forgia si apre | vinto il Duello con Favilla | **`s_forgia_aperta`** |
-| 3 · Il regalo | vinto il Fabbro: si apre l'ARMERIA | **`s_regalo`** (fase 2) |
-| 4 · Insieme | prima della Battaglia della Forgia | **`s_insieme`** |
+| 3 · Insieme | prima della Battaglia della Forgia | **`s_insieme`** |
+| 4 · Il regalo | vinta la Battaglia, prima del rapimento: si apre l'ARMERIA | **`s_regalo`** (fase 2) |
 | 5 · Il rapimento | vinta la Battaglia: si apre la mappa dei gironi | `6_rapimento_a`, `6_rapimento_b`, `6_rapimento_c`, **`s_ghiaccio`** |
 
 ## Due fasi, due comandi

@@ -35,6 +35,14 @@ check(story.pending(p, "battaglia_forgia") == "insieme", "Insieme arriva prima d
 check(story.pending(p, nil) == nil, "Insieme non arriva aprendo la CAMPAGNA")
 story.PANELS.s_insieme = had
 
+-- the Forge done: the boots first, then the kidnapping (Sergio, 4 Nov)
+local q = { stelle = { battaglia_forgia = { true } }, storia = { prologo = true } }
+story.PANELS.s_regalo = true
+check(story.pending(q, nil) == "regalo", "vinta la Battaglia prima il regalo")
+story.seen(q, "regalo")
+check(story.pending(q, nil) == "rapimento", "e subito dopo il rapimento")
+story.PANELS.s_regalo = nil
+
 -- reading it again: the chapters seen, in order
 local again = story.read_again(p)
 check(#again == #story.pages("prologo") + #story.pages("rapimento"), "LA STORIA rilegge i capitoli visti")
