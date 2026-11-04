@@ -1,6 +1,6 @@
 # WB-017 · Le tavole nuove della storia della campagna
 
-- **Stato:** APPROVATA (Claude, 2026-11-04: Sergio ha scelto la proposta B; la fase 2 aspetta il suo sì sugli stivali)
+- **Stato:** APPROVATA (Claude, 2026-11-04: Sergio ha scelto la proposta B; il 4 nov ha detto sì agli stivali, quindi anche la fase 2)
 - **Data:** 2026-11-04
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-017`
 
@@ -24,9 +24,8 @@ nello spazio calmo di ogni tavola: nelle immagini niente scritte.
 ## Due fasi, due comandi
 
 - **Fase 1**, `esegui WB-017 fase 1`: `s_viaggio`, `s_forgia_aperta`, `s_insieme`, `s_ghiaccio`.
-- **Fase 2**, `esegui WB-017 fase 2`: `s_regalo`, il Fabbro che regala gli stivali. Si dà dopo
-  che Sergio ha detto sì agli stivali come primo pezzo (se sceglie un altro pezzo, Claude
-  cambia il prompt qui prima).
+- **Fase 2**, `esegui WB-017 fase 2`: `s_regalo`, il Fabbro che regala gli stivali (Sergio, 4 nov:
+  «gli stivali vanno bene»). Si può dare insieme alla fase 1.
 - Codex esegue solo le righe della fase chiesta; se un riferimento della fase non c'è, si ferma.
 
 ## Cosa teniamo e cosa scartiamo
@@ -128,7 +127,7 @@ storia del gioco con le loro frasi, poi la simulazione e le foto a Sergio.
 ## Decisione
 
 Approvata da Claude il 4 nov 2026: Sergio ha scelto la proposta B («vanno bene tutte le
-decisioni»). La fase 2 (`s_regalo`) aspetta il suo sì sugli stivali come primo pezzo.
+decisioni»). Fase 2 approvata da Sergio lo stesso giorno: «gli stivali vanno bene».
 
 ## Consegna di Codex
 
