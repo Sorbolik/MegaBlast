@@ -11,6 +11,7 @@ local scoria = require "battle.scoria"
 local plate = require "battle.plate"
 local home = require "menu.home"
 local profile = require "menu.profile"
+local TP = require("lang.text").pill
 local loadout = require "sim.loadout"
 local awards = require "sim.awards"
 local draft = require "sim.draft"
@@ -1806,19 +1807,19 @@ function CP.queue_update(self, dt)
 	if q.found then
 		q.found.wait = q.found.wait - dt
 		local n = math.max(1, math.ceil(q.found.wait))
-		text = "PARTITA TROVATA · " .. n
+		text = TP.found_n:format(n)
 		menu.pill.found(p, battle and n or nil)
 		if q.found.wait <= 0 and not q.going then
 			q.going = true
 			CP.queue_go(self, q)
 		end
 	elseif q.lost then
-		text = "CODA PERSA · TOCCA PER RIENTRARE"
+		text = TP.lost
 	else
 		local secs = math.floor(q.t)
-		text = string.format("IN CODA · %s · %d:%02d", profile.GROUP_NAMES[q.mode] or "", math.floor(secs / 60), secs % 60)
+		text = TP.in_queue:format(profile.GROUP_NAMES[q.mode] or "", math.floor(secs / 60), secs % 60)
 		if q.bot_left and q.bot_left <= menu.lobby.BOT_SHOWN and (q.n or 0) < (q.of or 0) then
-			text = text .. (q.bot_left > 0 and string.format(" · BOT TRA %d s", math.ceil(q.bot_left)) or " · ARRIVANO I BOT")
+			text = text .. (q.bot_left > 0 and TP.bots_in:format(math.ceil(q.bot_left)) or TP.bots_coming)
 		end
 	end
 	menu.pill.set(p, text, q.found and (q.of or 0) or (q.n or 0), q.of or 0, q.found ~= nil)

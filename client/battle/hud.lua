@@ -26,15 +26,14 @@ local ui = require "ui.ui"
 local config = require "sim.config"
 local game = require "sim.game"
 local screen = require "ui.screen"
+local T = require("lang.text").hud
 
 local M = {}
 
 local max, min, ceil = math.max, math.min, math.ceil
 
 -- the tag's names
-M.NAMES = { missile = "LANCIARUNE", grenade = "UOVO DI FIAMMA", shards = "SCIAME DI SCHEGGE", punch = "PUGNO DEL TITANO",
-	sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", bellows = "MANTICE", hook = "RAMPINO",
-	teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO" }
+M.NAMES = T.weapons
 
 -- The colors of the turn phases, the ones of the old bar
 M.WHITE = vmath.vector4(0.92, 0.9, 0.86, 1)
@@ -42,8 +41,8 @@ M.YELLOW = vmath.vector4(1, 0.8, 0.2, 1)
 M.BLUE = vmath.vector4(0.3, 0.6, 1, 1)
 local PHASES = {
 	turno = { colore = M.WHITE },
-	secondo = { colore = M.YELLOW, word = "SECONDO!" },
-	riparati = { colore = M.BLUE, word = "RIPARATI" },
+	secondo = { colore = M.YELLOW, word = T.second_attack },
+	riparati = { colore = M.BLUE, word = T.take_cover },
 }
 
 -- Ring sizes: line radius, thickness; the dark disc behind and the thin
@@ -369,22 +368,22 @@ end
 function M.motivo(g, w)
 	if g:can_use(w) then return nil end
 	local rb = g.robots[g.current]
-	if g.permitted and not g.permitted(w) then return "NON ORA" end
+	if g.permitted and not g.permitted(w) then return T.not_now end
 	if w == "teleport" then
-		return rb.teleports_left <= 0 and "GLOBI ESAURITI" or "NON ORA"
+		return rb.teleports_left <= 0 and T.no_orbs or T.not_now
 	elseif w == "hook" then
-		return "GIÀ USATO"
+		return T.used_m
 	elseif w == "parachute" then
-		return rb.parachutes_left <= 0 and not rb.parachute and "MUNIZIONI ESAURITE" or "NON ORA"
+		return rb.parachutes_left <= 0 and not rb.parachute and T.no_ammo or T.not_now
 	elseif game.TOOLS[w] then
-		return rb.ammo[w] <= 0 and "MUNIZIONI ESAURITE" or "NON ORA"
+		return rb.ammo[w] <= 0 and T.no_ammo or T.not_now
 	elseif game.SECONDARY[w] then
-		if g.used.secondary then return "GIÀ USATA" end
-		return game.has_weapon(rb, w) and "NON ORA" or "MUNIZIONI ESAURITE"
+		if g.used.secondary then return T.used_f end
+		return game.has_weapon(rb, w) and T.not_now or T.no_ammo
 	elseif g.used.primary then
-		return "GIÀ USATA"
+		return T.used_f
 	end
-	return game.has_weapon(rb, w) and "NON ORA" or "MUNIZIONI ESAURITE"
+	return game.has_weapon(rb, w) and T.not_now or T.no_ammo
 end
 
 -- nodo: the button (at x, y, d wide, in the same parent as the notice)
@@ -421,7 +420,7 @@ function M.scambio()
 	gui.set_visible(s.radice, false)
 	s.tondo = M.tondo(0, 0, SWAP_D, "scambio", ui.C.PURPLE, s.radice)
 	local x = SWAP_D / 2 + 10
-	for _, r in ipairs({ { "BARATTA IL SECONDO ATTACCO", 8 }, { "CON UN TELETRASPORTO", -8 } }) do
+	for _, r in ipairs({ { T.swap_1, 8 }, { T.swap_2, -8 } }) do
 		local n = fit(ui.testo(r[1], x, r[2], 0.5, ui.C.TEXT, s.radice))
 		gui.set_pivot(n, gui.PIVOT_W)
 	end

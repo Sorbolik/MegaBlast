@@ -13,6 +13,8 @@
 
 local ui = require "ui.ui"
 local events = require "main.events"
+local T = require("lang.text").queue
+local common = require("lang.text").common
 
 local M = {}
 
@@ -47,7 +49,7 @@ local function build(c)
 	-- the arrow sits outside the root: only a node without a parent sticks to the edge
 	if c.arrow then gui.delete_node(c.arrow) end
 	c.arrow = ui.indietro(c.buttons, "indietro")
-	ui.titolo("DOVE GIOCHI?", 640, 640, 1, C.TEXT, c.radice)
+	ui.titolo(T.title, 640, 640, 1, C.TEXT, c.radice)
 
 	-- the 2 vs 2: the big card, with the light border
 	local W2, H2 = 640, 440
@@ -56,17 +58,17 @@ local function build(c)
 	b.riposo = C.LIGHT
 	gui.set_color(b.bordo, C.LIGHT)
 	local x0, y0 = -W2 / 2 + 36, H2 / 2 - 44
-	riga("LA PARTITA DI SEMPRE", x0, y0, 0.65, C.OFF, n)
-	gui.set_pivot(ui.titolo("2 CONTRO 2", x0, y0 - 64, 1.1, C.LIGHT, n), gui.PIVOT_W)
+	riga(T.usual_match, x0, y0, 0.65, C.OFF, n)
+	gui.set_pivot(ui.titolo(common.modes["2v2"], x0, y0 - 64, 1.1, C.LIGHT, n), gui.PIVOT_W)
 	local also = events.on_queue("2v2")
 	if #also > 0 then
-		riga("CONTA ANCHE PER", x0, y0 - 140, 0.65, C.OFF, n)
+		riga(T.also_counts, x0, y0 - 140, 0.65, C.OFF, n)
 		for i, o in ipairs(also) do
 			if i > 3 then break end
 			riga(o.nome, x0, y0 - 140 - i * 44, 0.75, C.TEXT, n)
 		end
 	end
-	to_right("GIOCA", W2 / 2 - 36, -H2 / 2 + 44, 1.3, C.LIGHT, n)
+	to_right(common.play, W2 / 2 - 36, -H2 / 2 + 44, 1.3, C.LIGHT, n)
 
 	-- on the right: the events with their own queue, then the 1 vs 1
 	local x, w = 48 + W2 + 32 + (1280 - 48 * 2 - W2 - 32) / 2, 1280 - 48 * 2 - W2 - 32
@@ -78,17 +80,17 @@ local function build(c)
 		gui.set_color(c.buttons[#c.buttons].bordo, C.BRACE)
 		c.buttons[#c.buttons].riposo = C.BRACE
 		local ex, ey = -w / 2 + 24, h / 2 - 26
-		riga("EVENTO · " .. events.queue_name(o.modo), ex, ey, 0.6, C.BRACE, e)
+		riga(T.event:format(events.queue_name(o.modo)), ex, ey, 0.6, C.BRACE, e)
 		to_right(events.quando(o), w / 2 - 24, ey, 0.6, C.OFF, e)
 		riga(o.nome, ex, ey - 40, 0.85, C.TEXT, e)
 		if o.riga and o.riga ~= "" then riga(o.riga, ex, ey - 64, 0.6, C.OFF, e, w - 150) end
-		to_right("GIOCA", w / 2 - 24, -h / 2 + 28, 0.9, C.BRACE, e)
+		to_right(common.play, w / 2 - 24, -h / 2 + 28, 0.9, C.BRACE, e)
 		y = y - h - 20
 	end
 	local h1 = 90
 	local u = ui.button(c.buttons, x, 300 - H2 / 2 + h1 / 2, w, h1, "", "coda:1v1", nil, c.radice)
-	riga("1 CONTRO 1", -w / 2 + 24, 0, 0.85, C.TEXT, u)
-	to_right("GIOCA", w / 2 - 24, 0, 0.9, C.OFF, u)
+	riga(common.modes["1v1"], -w / 2 + 24, 0, 0.85, C.TEXT, u)
+	to_right(common.play, w / 2 - 24, 0, 0.9, C.OFF, u)
 end
 
 function M.new()
