@@ -128,15 +128,16 @@ for _, l in ipairs(cap.missioni) do
 		local outcome, r, g = play_mission(l.id, function() end, nil, 60 * 30 * (l.turni or 2) + 600)
 		local fell = true
 		for _, rb in ipairs(g.robots) do
-			if rb.dead then fell = false end
+			if rb.dead and not rb.gone then fell = false end
 		end
 		check(fell, l.id .. ": nobody falls by themselves")
 		-- (and something says what to do: the line, or in the lessons the goal always in view)
 		local said = r.riga ~= nil or (l.riprova and missions.obiettivo(r) ~= nil)
 		check(outcome ~= "fatta" and said or outcome == "fallita", l.id .. ": doing nothing doesn't finish it")
 	end
-	-- each star says what it needs, and the goal can be read
-	check(#missions.criteria(l) == 3, l.id .. ": three star criteria")
+	-- each star says what it needs (the cortile: «Fatta» and Favilla's medal, if
+	-- there is one), and the goal can be read
+	check(#missions.criteria(l) == (l.medaglia and 2 or l.stelle and 3 or 1), l.id .. ": a criterion for each star")
 	if type(l.obiettivo) == "table" then
 		local r = missions.nuova(l.id)
 		check(missions.obiettivo(r) ~= nil, l.id .. ": the goal is visible")
@@ -155,15 +156,13 @@ do
 	check(#g.heals == 0 and g.turn_no >= 4, "lessons: no healing circles")
 end
 
--- Primi passi: flag, step, the crate with the Lanciarune, the target.
--- No timer or turns; without the crate you can't shoot; whoever misses retries at once
-local function to_target(c)
+-- Stammi dietro: walk after Favilla, jump the step, reach her at the gate. No
+-- timer, turns or weapons. The medal: the spark above the step, only with the
+-- jump held to the end
+local function to_step(c)
 	c.hold(RIGHT, until_x(1075))
 	c.hold({ right = true, jump = true }, 40)
 	c.hold(RIGHT, until_x(1180))
-	-- the crate drops on the step: go to meet it
-	c.hold(RIGHT, function(g) return g.robots[1].x >= 1260 or g.robots[1].disarmed == nil end)
-	c.hold(IDLE, function(g) return g.robots[1].disarmed == nil end)
 end
 do
 	local outcome, r, g = play_mission("primi_passi", function(c)
@@ -174,44 +173,140 @@ do
 	check(outcome == nil and r.st.steps_done[1] and not r.st.steps_done[2], "primi_passi: walking alone doesn't get you up the step")
 	check(g.turn_no == 1 and g.current == 1, "primi_passi: no turns, even after a minute")
 	check(not g.projectile and #g.crates == 0 and not game.has_weapon(g.robots[1], "missile") and not g:can_use("missile"),
-		"primi_passi: without the crate no weapons")
-end
-local ok, r, a, p = search("primi_passi", function(c, a, p)
-	to_target(c)
-	c.usa("missile", a, p)
-end, nil, { 0.1, 1.3, 0.05 }, powers(0.3, 1, 0.1))
-check(ok, "primi_passi: flag, step, crate and the target with the Lanciarune")
-if ok then
-	check(missions.vede(r, "missile") and missions.quante(missions.stelle(r)) == 3, "primi_passi: three stars at the first shot")
-	-- a missed shot (towards the sky behind you): retry at once, in the same turn
-	local outcome2, r3, g3 = play_mission("primi_passi", function(c)
-		to_target(c)
-		c.usa("missile", 2.6, 0.3)
-		c.hold(IDLE, function(gg) return not gg.used.primary end)
-		c.usa("missile", a, p)
+		"primi_passi: no weapons")
+	check(g.robots[2].gone and missions.guida(r).x > 1500, "primi_passi: only you and Favilla, who waits at the gate")
+	outcome, r = play_mission("primi_passi", function(c)
+		to_step(c)
+		c.hold(RIGHT, until_x(1470))
 	end)
-	check(outcome2 == "fatta" and r3.st.conta.misses == 1 and g3.turn_no == 1, "primi_passi: whoever misses retries at once")
-	check(missions.quante(missions.stelle(r3)) == 2, "primi_passi: one missed shot, two stars")
+	check(outcome == "fatta" and not missions.stelle(r)[2], "primi_passi: the step and Favilla at the gate, without the spark")
+	-- under the spark a short jump doesn't reach it, a held one does
+	outcome, r = play_mission("primi_passi", function(c)
+		to_step(c)
+		c.hold(RIGHT, until_x(1290))
+		c.hold({ jump = true }, 12)
+		c.hold({ hold = false }, 60)
+		c.hold(RIGHT, until_x(1470))
+	end)
+	check(outcome == "fatta" and not missions.stelle(r)[2], "primi_passi: a short jump misses the spark")
+	outcome, r = play_mission("primi_passi", function(c)
+		to_step(c)
+		c.hold(RIGHT, until_x(1290))
+		c.hold({ jump = true }, 60)
+		c.hold(RIGHT, until_x(1470))
+	end)
+	check(outcome == "fatta" and missions.stelle(r)[2] and missions.scintilla(r) == nil,
+		"primi_passi: the jump held to the end takes the spark: Favilla's medal")
 end
 
-local ok, r, a, p, outcome, g
--- Il turno: the Lanciarune at once (orbs), the Lama, the orb onto the island,
--- the target there falls at the first hit, the barter, and the next turn from
--- the first one again
+-- Il mio vecchio Lanciarune: the crate, the near target, then the one on the ledge.
+-- Whoever misses retries at once
+local near_a, near_p
+for p = 0.3, 1, 0.1 do
+	for a = 0.1, 1.3, 0.05 do
+		if not near_a then
+			local _, r = play_mission("lanciarune", function(c)
+				c.cassa("missile")
+				c.usa("missile", a, p)
+				c.hold(IDLE, 200)
+			end, nil, 60 * 30)
+			if r.st.steps_done[2] then near_a, near_p = a, p end
+		end
+	end
+end
+check(near_a ~= nil, "lanciarune: the crate and the near target")
+local ok, r, a, p
+if near_a then
+	ok, r = search("lanciarune", function(c, a, p)
+		c.cassa("missile")
+		c.usa("missile", near_a, near_p)
+		c.hold(IDLE, function() return c.r.st.steps_done[2] and not c.g.used.primary end)
+		c.usa("missile", a, p)
+	end, nil, { 0.1, 1.3, 0.05 }, powers(0.4, 1, 0.1))
+	check(ok, "lanciarune: then the target on the ledge")
+	-- a missed shot (towards the sky behind you): retry at once, in the same turn
+	local outcome2, r3, g3 = play_mission("lanciarune", function(c)
+		c.cassa("missile")
+		c.usa("missile", 2.6, 0.3)
+		c.hold(IDLE, function(gg) return not gg.used.primary end)
+		c.usa("missile", near_a, near_p)
+		c.hold(IDLE, 200)
+	end)
+	check(r3.st.steps_done[2] and r3.st.conta.misses == 1 and g3.turn_no == 1, "lanciarune: whoever misses retries at once")
+end
+
+local outcome, g
+-- A turno: the Lanciarune on the target, then the Lama on the same one
+local hit_a, hit_p
+for p = 0.3, 1, 0.1 do
+	for a = 0.05, 1.2, 0.05 do
+		if not hit_a then
+			local _, r = play_mission("turno", function(c)
+				c.usa("missile", a, p)
+				c.hold(IDLE, 200)
+			end, nil, 60 * 20)
+			if r.st.steps_done[1] then hit_a, hit_p = a, p end
+		end
+	end
+end
+check(hit_a ~= nil, "turno: the Lanciarune on the target")
+if hit_a then
+	outcome, r, g = play_mission("turno", function(c)
+		c.usa("missile", hit_a, hit_p)
+		c.hold(IDLE, function(g) return not g.projectile end)
+		c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[2].x - 50 end)
+		c.usa("sword", 0)
+		c.hold(IDLE, 60)
+	end)
+	check(outcome == "fatta" and g.turn_no == 1, "turno: two attacks in the same turn, Lanciarune and Lama")
+	-- before the right step everything else is disabled: no Lama
+	local _, r3, g3 = play_mission("turno", function(c)
+		c.usa("sword", 0)
+		c.hold(IDLE, 30)
+	end)
+	check(not r3.st.steps_done[1] and not g3.used.secondary, "turno: only what the step says can be used")
+	-- a missed Lama comes back at once, and you where you were: then it hits
+	local _, r4, g4 = play_mission("turno", function(c)
+		c.usa("missile", hit_a, hit_p)
+		c.hold(IDLE, function(g) return not g.projectile end)
+		c.hold(IDLE, 40)
+		c.hold(LEFT, 60)
+		c.usa("sword", math.pi)
+		c.hold(IDLE, function(g) return not g.used.secondary end)
+		c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[2].x - 50 end)
+		c.usa("sword", 0)
+		c.hold(IDLE, 30)
+	end)
+	check(r4.st.steps_done[2] and r4.st.conta.misses == 1 and g4.turn_no == 1, "turno: a missed Lama is retried in the same turn")
+	-- the Lama card waits for the missile to land, and a moment after
+	local early_attack, late
+	play_mission("turno", function(c)
+		c.usa("missile", hit_a, hit_p)
+		c.hold(IDLE, 2)
+		early_attack = c.r.opened[1]
+		c.hold(IDLE, function(g) return not g.projectile end)
+		c.hold(IDLE, 30)
+		late = c.r.opened[1]
+	end)
+	check(not early_attack and late, "turno: the Lama card after the missile has landed")
+end
+
+-- Il tempo risparmiato: the Lanciarune at once (orbs), the orb onto the island,
+-- the target there falls at the first hit (next turn), the barter, and the
+-- next turn back to the first one. The medal: two orbs in one turn
 local function island_turn(c)
 	c.usa("missile", 2.5, 0.3)
-	c.hold(IDLE, 20)
-	c.usa("sword", 0)
-	c.hold(IDLE, 60)
+	c.hold(IDLE, function(g) return not g.projectile end)
+	c.hold(IDLE, 30)
 	c.usa("teleport", 0.5, 0.6)
 	c.hold(IDLE, function(g) return g.robots[1].x > 1150 and g.robots[1].grounded end)
 end
-ok, r = search("turno", function(c, a, p)
+ok, r = search("tempo", function(c, a, p)
 	island_turn(c)
 	c.turno()
-	c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[3].x - 50 end)
-	c.usa("sword", 0)
-	c.hold(IDLE, function() return c.r.st.steps_done[4] end)
+	c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[3].x - 60 end)
+	c.usa("missile", 0.3, 0.3)
+	c.hold(IDLE, function() return c.r.st.steps_done[3] end)
 	c.usa("swap")
 	c.hold(IDLE, 20)
 	c.turno()
@@ -220,86 +315,62 @@ ok, r = search("turno", function(c, a, p)
 	c.hold(LEFT, function(g) return g.robots[1].x <= g.robots[2].x + 60 end)
 	c.usa("sword", math.pi)
 end, nil, { 0.3, 0.8, 0.1 }, powers(0.3, 1, 0.1))
-check(ok, "turno: orbs, the Lama, the island, the barter and back to the first")
+check(ok, "tempo: orbs, the island, the barter and back to the first")
 if ok then
-	check(missions.quante(missions.stelle(r)) == 3, "turno: without mistakes, three stars")
+	check(missions.stelle(r)[2], "tempo: attacking at once, two orbs in a turn: Favilla's medal")
 end
 do
-	-- without attacking time stops before you lose the two orbs
-	local _, r2, g2 = play_mission("turno", function(c)
+	-- without attacking time stops before you lose the first orb: no medal
+	local _, r2, g2 = play_mission("tempo", function(c)
 		c.hold(RIGHT, 1)
 		c.hold(IDLE, 60 * 30)
 		c.usa("missile", 2.5, 0.3)
 		c.hold(IDLE, 30)
 	end)
-	check(g2.turn_no == 1 and r2.st.conta.globi == 2, "turno: time waits for the first attack, with the two orbs")
+	check(g2.turn_no == 1 and r2.st.conta.globi == 1 and r2.st.conta.globi_turno == 1,
+		"tempo: time waits for the first attack, with one orb")
 	-- before the right step everything else is disabled: no teleport or Lama
-	local _, r3, g3 = play_mission("turno", function(c)
+	local _, r3, g3 = play_mission("tempo", function(c)
 		c.usa("teleport", 0.6, 0.8)
 		c.usa("sword", 0)
 		c.hold(IDLE, 30)
 	end)
-	check(not r3.st.steps_done[2] and #g3.orbs == 0 and not g3.used.secondary, "turno: only what the step says can be used")
-	-- a missed Lama comes back at once, and you where you were: then it hits
-	local outcome4, r4, g4 = play_mission("turno", function(c)
-		c.usa("missile", 2.5, 0.3)
-		c.hold(IDLE, function(g) return not g.projectile end)
-		c.hold(LEFT, 60)
-		c.usa("sword", math.pi)
-		c.hold(IDLE, function(g) return not g.used.secondary end)
-		c.hold(RIGHT, until_x(600))
-		c.usa("sword", 0)
-		c.hold(IDLE, 30)
-	end)
-	check(r4.st.steps_done[2] and r4.st.conta.misses == 1 and g4.turn_no == 1, "turno: a missed Lama is retried in the same turn")
-	-- the Lama card waits for the missile to land, and a moment after
-	local early_attack, late
-	play_mission("turno", function(c)
-		c.usa("missile", 2.5, 0.3)
-		c.hold(IDLE, 2)
-		early_attack = c.r.opened[1]
-		c.hold(IDLE, function(g) return not g.projectile end)
-		c.hold(IDLE, 30)
-		late = c.r.opened[1]
-	end)
-	check(not early_attack and late, "turno: the Lama card after the missile has landed")
+	check(not r3.st.steps_done[1] and #g3.orbs == 0 and not g3.used.secondary, "tempo: only what the step says can be used")
 	-- the downed island target doesn't respawn
-	local _, _, g5 = play_mission("turno", function(c)
+	local _, _, g5 = play_mission("tempo", function(c)
 		island_turn(c)
 		c.turno()
-		c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[3].x - 50 end)
-		c.usa("sword", 0)
+		c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[3].x - 60 end)
+		c.usa("missile", 0.3, 0.3)
 		c.hold(IDLE, 300)
 	end)
-	check(g5.robots[3].dead and g5.robots[3].gone and not g5.robots[2].dead, "turno: the downed island target doesn't respawn")
+	check(g5.robots[3].dead and g5.robots[3].gone and not g5.robots[2].dead, "tempo: the downed island target doesn't respawn")
 	-- wasted orbs come back: thrown into the void, you respawn as you were with your orbs
-	local _, r6, g6 = play_mission("turno", function(c)
+	local _, r6, g6 = play_mission("tempo", function(c)
 		c.usa("missile", 2.5, 0.3)
-		c.hold(IDLE, 20)
-		c.usa("sword", 0)
-		c.hold(IDLE, 60)
+		c.hold(IDLE, function(g) return not g.projectile end)
+		c.hold(IDLE, 30)
 		c.usa("teleport", math.pi - 0.3, 1)
 		c.hold(IDLE, function(g) return g.robots[1].dead end)
 		c.hold(IDLE, function(g) return not g.robots[1].dead end)
 		c.hold(IDLE, 10)
 	end)
 	local rb6 = g6.robots[1]
-	check(r6.st.steps_done[2] and not r6.st.steps_done[3] and rb6.teleports_left == 2 and g6:can_use("teleport")
-		and math.abs(rb6.x - r6.saved.x) < 2, "turno: fell with the orb, respawn as you were, with the orbs")
+	check(r6.st.steps_done[1] and not r6.st.steps_done[2] and rb6.teleports_left == 2 and g6:can_use("teleport")
+		and math.abs(rb6.x - r6.saved.x) < 2, "tempo: fell with the orb, respawn as you were, with the orbs")
 	-- and wasted without falling: Ritenta, and you're back as you were
-	local _, r7, g7 = play_mission("turno", function(c)
+	local _, r7, g7 = play_mission("tempo", function(c)
 		c.usa("missile", 2.5, 0.3)
-		c.hold(IDLE, 20)
-		c.usa("sword", 0)
-		c.hold(IDLE, 60)
+		c.hold(IDLE, function(g) return not g.projectile end)
+		c.hold(IDLE, 30)
 		for _ = 1, 2 do
 			c.usa("teleport", math.pi / 2, 0.2)
 			c.hold(IDLE, function(g) return #g.orbs == 0 and g.robots[1].grounded end)
 		end
 		c.hold(IDLE, 80)
 	end)
-	check(not r7.st.steps_done[3] and g7.robots[1].teleports_left == 2 and g7:can_use("teleport")
-		and r7.st.conta.misses == 1, "turno: without orbs for the island, Ritenta and they come back")
+	check(not r7.st.steps_done[2] and g7.robots[1].teleports_left == 2 and g7:can_use("teleport")
+		and r7.st.conta.misses == 1, "tempo: without orbs for the island, Ritenta and they come back")
 end
 
 -- Weapons that move you: the Tonante downwards carries you onto the first
@@ -322,7 +393,20 @@ ok, r = search("spostano", function(c, a, p)
 	c.usa("lunge", 0)
 end, nil, { 10, 30, 10 })
 check(ok, "spostano: Tonante, Maglio and Affondo carry you to the target")
-if ok then check(missions.quante(missions.stelle(r)) == 3, "spostano: without mistakes, three stars") end
+if ok then check(missions.stelle(r)[2] and missions.guida(r).x > 340, "spostano: at the top before Favilla: her medal") end
+-- slow: Favilla gets to the top first
+if ok then
+	outcome, r = play_mission("spostano", function(c)
+		c.cassa("eagle")
+		c.hold(IDLE, 60 * 40)
+		c.hold(RIGHT, until_x(975))
+		c.hold({ jump = true, right = true }, 30)
+		c.usa("eagle", -math.pi / 2 - 0.2)
+		c.hold(RIGHT, function(g) return g.robots[1].grounded end)
+	end, nil, 60 * 60)
+	local f = missions.guida(r)
+	check(f.x == 315 and f.y == 460 and r.guida_t > 60 * 33, "spostano: Favilla climbs her lane and stops at the top")
+end
 outcome = play_mission("spostano", function(c)
 	c.cassa("eagle")
 	c.hold(RIGHT, until_x(960))
@@ -350,7 +434,7 @@ ok, r = search("attrezzi", function(c, a)
 	c.usa("sword", a)
 end, nil, { 0, 0, 1 })
 check(ok, "attrezzi: Rampino and parachute carry you to the other side, the Lama on the target")
-if ok then check(missions.quante(missions.stelle(r)) == 3, "attrezzi: without mistakes, three stars") end
+if ok then check(missions.stelle(r)[2], "attrezzi: across without falling: Favilla's medal") end
 outcome, r, g = play_mission("attrezzi", function(c)
 	c.hold(RIGHT, until_x(860))
 	for _ = 1, 10 do
@@ -363,7 +447,8 @@ outcome, r, g = play_mission("attrezzi", function(c)
 	tools_on(c)
 	c.hold(RIGHT, 600)
 end)
-check(not r.st.steps_done[5] and g.robots[1].deaths > 0 and r.prese.parachute, "attrezzi: without opening the parachute you fall into the void")
+check(not r.st.steps_done[5] and g.robots[1].deaths > 0 and r.prese.parachute and r.st.conta.morti > 0,
+	"attrezzi: without opening the parachute you fall into the void (and the medal is lost)")
 
 -- Giù dal bordo: each of the three targets is knocked off its rock with a single missile
 for who = 2, 4 do
@@ -437,9 +522,10 @@ outcome, r = play_mission("punti", function(c)
 end)
 check(not r.st.steps_done[2], "punti: pushing on foot nobody falls")
 
--- The guided match: the timer waits for the controls to be touched, the
--- tutorial bot shows the two attacks and then the teleport in its first
--- turns, the match lasts 3 minutes. The player fires one missile per turn.
+-- The duel with Favilla: the timer waits for the controls to be touched,
+-- Favilla (the tutorial bot) shows the two attacks and then the teleport in
+-- her first turns, the match lasts 3 minutes. The player fires one missile per
+-- turn; no points (they come in the Forgia).
 do
 	local replay = require "sim.replay"
 	local r = missions.nuova("guidata")
@@ -472,7 +558,8 @@ do
 	check(seen["1swing"] or seen["1mallet"] or seen["1eagle"] or seen["1lunge"],
 		"guidata: on its first turn the bot also uses the secondary")
 	check(seen["2teleports"] and seen["2teleport"], "guidata: on its second turn the bot earns orbs and teleports")
-	check(outcome == "fatta" and g.phase == "over", "guidata: the short match ends")
+	check(outcome ~= nil and (outcome == "fatta" or g.phase == "over"), "guidata: the short match ends")
+	check(g.no_points, "guidata: no points in the duel")
 	check(ticks < 60 * 60 * 5, "guidata: lasts less than 5 minutes (" .. math.floor(ticks / 60) .. " s)")
 end
 
@@ -544,8 +631,8 @@ for _, l in ipairs(campaign.CAPITOLI[1].missioni) do
 	check((steps_count == 0) == without and (g.robots[1].points == 0) == without,
 		l.id .. ": downing " .. (without and "gives no points" or "gives points"))
 end
-check(missions.vede(missions.nuova("punti"), "punti") and missions.vede(missions.nuova("guidata"), "punti"),
-	"punti and guidata have points")
+check(missions.vede(missions.nuova("punti"), "punti") and not missions.vede(missions.nuova("guidata"), "punti"),
+	"punti has points, the duel with Favilla doesn't")
 
 -- The help after many losses: the Fabbro goes down a level and starts with
 -- less life, but with a full bar (it doesn't show)

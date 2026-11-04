@@ -29,6 +29,8 @@ return {
 	-- battle/vignette.lua: who speaks and the buttons of the big vignette
 	vignette = {
 		favilla = "FAVILLA",
+		-- battle/favilla.lua: her name above her head in the cortile
+		favilla_name = "Favilla",
 		fabbro = "IL FABBRO",
 		apprendista = "APPRENDISTA",
 		go = "VAI!",
@@ -437,6 +439,15 @@ return {
 			colpito = { "Spingi spingi...", "Ehi, piano!" },
 			abbatte = { "Il vuoto ti saluta!", "Volo libero!" },
 			muore = { "Ma chi mi ha spinto?" },
+		},
+		-- the duel of the cortile: she trains you, even when she beats you
+		favilla = {
+			turno = { "Tocca a me, nuovo!", "Guarda e impara!", "Stavolta miro meglio!" },
+			colpisce = { "Preso! Stai attento!", "Questo te lo ricordi!" },
+			colpito = { "Ahi! Bel colpo!", "Ehi, così si fa!" },
+			scappa = { "Di qua, lumaca!", "Prendimi!" },
+			abbatte = { "Rialzati, su!", "Uno a zero per me!" },
+			muore = { "Ahia! Bel colpo, apprendista!", "Va bene, va bene: torno subito!" },
 		},
 		fabbro = {
 			turno = { "Il ferro si batte finché è caldo!", "Sull'incudine!" },

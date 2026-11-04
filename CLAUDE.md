@@ -162,6 +162,9 @@ https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2). I ritratti si ritagliano dai
 fogli scelti di WB-012 con `python3 strumenti/ritratti/taglia.py`. Scenario
 `vignette.txt` (tutti i disegni); gli scenari che provano altro hanno
 `imposta prova_vignette no`.
+Nel cortile Favilla è una comparsa su un percorso fisso (`guida` della lezione in
+`client/sim/campaign.lua`, disegnata da `client/battle/favilla.lua`), non un robot: non
+cambia la simulazione. Medaglie facoltative: `medaglia = { conta, at_least | at_most, testo }`.
 
 ## Pezzi nuovi del diavoletto (pelli)
 
