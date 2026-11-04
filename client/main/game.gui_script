@@ -359,6 +359,7 @@ local function paint_terrain(self)
 	end
 	self.mask_stream = st
 	self.mask_buf = buf
+	self.mask_dug = {}
 	for _, k in ipairs(CR.lista(self)) do CR.dig(self, k.x, k.y, k.r) end
 	frames.segna("maschera")
 	if self.mask_tex then
@@ -369,13 +370,19 @@ local function paint_terrain(self)
 	msg.post("/terreno#script", "maschera", { path = self.mask_tex, mappa = self.g.map })
 end
 
--- Updates the mask in the given rectangle (cell coordinates)
-local function redraw_cells(self, cx0, cy0, cx1, cy1)
+-- Updates the mask in the given rectangle (cell coordinates); fresh: the
+-- same map from scratch (RIPROVA, Ritenta), no crater edge left (b = 255)
+local function redraw_cells(self, cx0, cy0, cx1, cy1, fresh)
 	-- the whole mask is already to be redone
 	if self.pending_terrain then return end
 	cx0, cy0 = math.max(0, cx0), math.max(0, cy0)
 	cx1, cy1 = math.min(TW - 1, cx1), math.min(TH - 1, cy1)
 	if cx1 < cx0 or cy1 < cy0 then return end
+	-- what was dug, to put back without redrawing the whole mask (CR.undig)
+	if not fresh then
+		local d = self.mask_dug
+		d[#d + 1] = { cx0, cy0, cx1, cy1 }
+	end
 	local w, h = cx1 - cx0 + 1, cy1 - cy0 + 1
 	local data, full = self.g.terrain.data, self.mask_stream
 	local buf = buffer.create(w * h, MASK_FORMAT)
@@ -387,11 +394,21 @@ local function redraw_cells(self, cx0, cy0, cx1, cy1)
 			local j = i * 4 - 3
 			local now = data[i] ~= 0 and 255 or 0
 			full[j] = now
+			if fresh then full[j + 2] = 255 end
 			st[k], st[k + 1], st[k + 2], st[k + 3] = now, full[j + 1], full[j + 2], 255
 			i, k = i + 1, k + 4
 		end
 	end
 	resource.set_texture(self.mask_tex, mask_params(w, h, cx0, cy0), buf)
+end
+
+-- The same map again (RIPROVA, Ritenta after a fall): only the dug
+-- rectangles go back, from the new match's terrain. The whole mask costs
+-- 155 ms on Sergio's phone (4 Nov) and here there is no iris to hide it
+function CR.undig(self)
+	local d = self.mask_dug or {}
+	self.mask_dug = {}
+	for _, r in ipairs(d) do redraw_cells(self, r[1], r[2], r[3], r[4], true) end
 end
 
 -- Messages and menus -------------------------------------------------------------
@@ -454,6 +471,8 @@ local function set_controls_visible(self, visible)
 	score.conceal(self.punti, not missions.vede(self.missione, "punti"))
 	if not visible then
 		hud.tag_away(self.tag)
+		-- render stops without a match: the swap button would stay on in the home
+		hud.swap_update(self.scambio, false)
 		gui.cancel_animations(self.announcement, "color.w")
 		gui.set_color(self.announcement, vmath.vector4(1, 1, 1, 0))
 		self.banner_wait = false
@@ -697,10 +716,12 @@ local function new_match(self, seed, map, opts)
 	-- the world shows only now that there is a match (show_menu)
 	msg.post("/terreno#script", "home", {})
 	gui.set_enabled(self.mondo, true)
-	-- if this intact map is already on screen (RIPROVA, the next mission) we don't redraw it
+	-- if this map is already on screen (RIPROVA, Ritenta) only what was dug goes back
 	if self.g.map ~= self.drawn_map then
 		draw_terrain(self)
 		self.drawn_map = self.g.map
+	else
+		CR.undig(self)
 	end
 	self.names, self.colors = names_colors(self.g.robots)
 	for i in pairs(self.bots) do self.names[i] = self.names[i] .. TM.bot_suffix end
@@ -1172,7 +1193,6 @@ local function handle_event(self, e)
 			-- online we dig the terrain ourselves, at the same point as the server
 			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
 		end
-		self.drawn_map = nil
 		local k = CR.lista(self)
 		k[#k + 1] = { x = e.x, y = e.y, r = e.r }
 		local cx0, cy0, cx1, cy1 = CR.dig(self, e.x, e.y, e.r)
@@ -2327,7 +2347,6 @@ local function start_mission(self, id, picks)
 		end
 	end
 	CP.inizio(self, 1, nil, "campagna", false)
-	draw_terrain(self)
 	reset_pose(self)
 	self.missione, self.missione_attesa = r, nil
 	self.vign_read, self.vign_pages, self.vign_line = {}, {}, nil
@@ -3817,6 +3836,8 @@ function update(self, dt)
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
 	if self.mode == "local" and not self.menu_open and not self.carta and not (self.queue and self.queue.found) then
 		self.acc = math.min(self.acc + dt_world, 0.25)
+		-- a bot that thinks in this frame (sim/bot.lua, work): the counter says BOT
+		local thought = bot.totale
 		while self.acc >= game.DT and self.mode == "local" and not self.carta do
 			local input = {
 				left = move_left(self),
@@ -3848,6 +3869,7 @@ function update(self, dt)
 			capture(self.pose_b, self.g)
 		end
 		self.pose_t, self.pose_dt = self.acc, game.DT
+		if bot.totale ~= thought then frames.segna("bot") end
 		if self.missione then
 			mission_update(self, dt)
 		end
