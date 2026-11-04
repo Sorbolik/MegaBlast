@@ -2821,9 +2821,10 @@ local function update_bar(self)
 			elseif gr == 2 then
 				x = W / 2 + from_pt + d / 2 + k * (d + gap)
 			elseif gr == 3 then
-				-- the items column above the teleport
+				-- the items column above the teleport: with all four its title
+				-- stays under the zoom button (y1 - 110, report UI-001)
 				d = SIZES.oggetto
-				x, y = tele.x, tele.y + TELE_BTN_D / 2 + 22 + d / 2 + k * (d + 12)
+				x, y = tele.x, tele.y + TELE_BTN_D / 2 + 16 + d / 2 + k * (d + 6)
 				ogg_top = y + d / 2
 			else
 				d = TELE_BTN_D
@@ -2863,7 +2864,7 @@ local function update_bar(self)
 		end
 	end
 	-- the column's title, above the last item
-	if ogg_top then set_pos(self.items_title, tele.x, ogg_top + 16) end
+	if ogg_top then set_pos(self.items_title, tele.x, ogg_top + 13) end
 	if self.items_on ~= (ogg_top ~= nil) then
 		self.items_on = ogg_top ~= nil
 		gui.set_enabled(self.items_title, self.items_on)

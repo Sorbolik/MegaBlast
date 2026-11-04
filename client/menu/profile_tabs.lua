@@ -406,8 +406,7 @@ local function build(s)
 	local b = ui.bar(-ui.EDGE - 130, -8, 260, 8, s.colore, dx)
 	ui.bar_value(b, p.xp / profile.xp_level(p.livello))
 	txt(T.xp:format(thousands(p.xp), thousands(profile.xp_level(p.livello))), -ui.EDGE, -24, 0.5, C.OFF, dx, gui.PIVOT_E)
-	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
-	gui.set_visible(s.radice, false)
+	s.radice = ui.radice()
 	if s.scheda == "statistiche" then
 		sheet_stats(s, s.radice)
 	elseif s.scheda == "partite" then
