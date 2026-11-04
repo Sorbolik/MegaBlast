@@ -1,7 +1,7 @@
 -- Campaign (the home's CAMPAGNA button): the chapters of sim/campaign.lua in
 -- tabs, the Training (the lessons) first. Each mission is a card with the
 -- title, the stars taken and what it takes to get them all, so you know
--- beforehand how to do better. A chapter opens with everyone's stars
+-- beforehand how to do better, and its illustration (ui/illustrations.lua). A chapter opens with everyone's stars
 -- (chapter.serve): closed, it says how many are missing. Style in ui/ui.lua.
 --
 --   local campagna = require "menu.campaign"
@@ -13,6 +13,7 @@
 local ui = require "ui.ui"
 local payload = require "sim.campaign"
 local missions = require "sim.missions"
+local ill = require "ui.illustrations"
 local T = require("lang.text").campaign
 local common = require("lang.text").common
 
@@ -20,6 +21,16 @@ local M = {}
 
 -- the missions in three columns
 local CARD_W, CARD_H, COLUMNS, STEP_Y = 360, 100, 3, 116
+-- the illustration's window on the left of the card (WB-015, 16:9), and the
+-- column of title and stars on its right
+local THUMB_W, THUMB_H, PAD = 148, 83, 9
+
+-- a text no wider than w: it shrinks (never deforms)
+local function fit(n, w)
+	local width = resource.get_text_metrics(gui.get_font_resource(gui.get_font(n)), gui.get_text(n)).width * gui.get_scale(n).x
+	if width > w then gui.set_scale(n, gui.get_scale(n) * (w / width)) end
+	return n
+end
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
@@ -49,19 +60,38 @@ local function card_list(c, cap)
 		local x, y = 640 + (col - 1) * (CARD_W + 24), ui.BODY_TOP - CARD_H / 2 - riga * STEP_Y
 		local n = ui.button(c.buttons, x, y, CARD_W, CARD_H, "", "missione:" .. l.id, nil, c.radice)
 		local picked = c.stelle[l.id] or {}
-		ui.testo(string.upper(l.titolo), 0, 26, 0.8, ui.C.TEXT, n)
+		-- with its illustration the texts go in the column on its right
+		local cx, cw = 0, CARD_W - 2 * PAD
+		local tex = ill.texture(l.id, "carta")
+		if tex then
+			c.textures[#c.textures + 1] = l.id
+			local t = gui.new_box_node(vec(-CARD_W / 2 + PAD + THUMB_W / 2, 0), vec(THUMB_W, THUMB_H))
+			gui.set_texture(t, tex)
+			gui.set_adjust_mode(t, gui.ADJUST_FIT)
+			gui.set_parent(t, n)
+			cw = CARD_W - THUMB_W - 3 * PAD
+			cx = CARD_W / 2 - PAD - cw / 2
+		end
+		fit(ui.testo(string.upper(l.titolo), cx, 26, 0.8, ui.C.TEXT, n), cw)
 		local cr, missing = missions.criteria(l), {}
-		little_stars(picked, #cr, l.medaglia ~= nil, 0, -2, n)
+		little_stars(picked, #cr, l.medaglia ~= nil, cx, -2, n)
 		-- what is missing: the criteria of the unlit stars
 		for i = 2, #cr do
 			if not picked[i] then missing[#missing + 1] = cr[i] end
 		end
-		if #missing > 0 then ui.testo(table.concat(missing, "  -  "), 0, -32, 0.55, ui.C.OFF, n) end
+		if #missing > 0 then fit(ui.testo(table.concat(missing, "  -  "), cx, -32, 0.55, ui.C.OFF, n), cw) end
 	end
+end
+
+-- the card illustrations of the chapter shown, given back to the GPU
+local function release_textures(c)
+	for _, id in ipairs(c.textures or {}) do ill.release(id, "carta") end
+	c.textures = {}
 end
 
 local function build(c)
 	if c.radice then gui.delete_node(c.radice) end
+	release_textures(c)
 	c.buttons = {}
 	c.radice = ui.radice()
 	local C = ui.C
@@ -112,6 +142,7 @@ end
 function M.destroy(c)
 	ui.header_delete(c.head)
 	gui.delete_node(c.radice)
+	release_textures(c)
 	gui.delete_node(c.fondo)
 end
 
