@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MegaBlast · Design System & Prototipo Interfaccia UI</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+
+    :root {
+      --bg-dark: #0d0c10;
+      --charcoal-panel: #141218;
+      --charcoal-surface: #1a1720;
+      --charcoal-elevated: #23202b;
+      --line-subtle: rgba(255, 226, 196, 0.18);
+      --line-light: #ffe2c4;
+      --text-main: #f2e8d9;
+      --text-muted: #8c8484;
+      --team-red: #ff3b4e;
+      --team-blue: #3d7bff;
+      --team-green: #2ebf70;
+      --team-gold: #f5c417;
+      --accent-brace: #ff6b2b;
+      --accent-steel: #9ec4e0;
+      --accent-purple: #c49cff;
+      --accent-mint: #5cdbc0;
+      --shadow-cut: 0 4px 14px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.8);
+      --inner-bevel: inset 0 1px 0 rgba(255, 226, 196, 0.25), inset 0 -1px 0 rgba(0,0,0,0.6);
+    }
+
+    body {
+      background-color: #08070a;
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .font-game {
+      font-family: 'Lilita One', cursive, sans-serif;
+      letter-spacing: 0.05em;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Tactile Chamfer Cuts (45° angle notches) */
+    .clip-chamfer-hero {
+      clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    }
+    .clip-chamfer-tr {
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    }
+    .clip-chamfer-bl {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+    .clip-slot-weapon {
+      clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%, 0 8px);
+    }
+    .clip-octagon {
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    }
+    .clip-hex {
+      clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    }
+
+    /* Reactive Spring Animations */
+    .tactile-btn {
+      transition: transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease, filter 0.12s ease;
+      cursor: pointer;
+    }
+    .tactile-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+    .tactile-btn:active {
+      transform: translateY(1.5px) scale(0.975);
+      filter: brightness(0.95);
+    }
+
+    /* Glow Pulses */
+    @keyframes core-pulse {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.12); }
+    }
+    .pulse-core {
+      animation: core-pulse 2.2s infinite ease-in-out;
+    }
+
+    /* Device Viewport Canvas */
+    .viewport-screen {
+      transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.25s ease;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.3);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 226, 196, 0.2);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 226, 196, 0.4);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#08070a] text-[#f2e8d9] overflow-x-hidden">
+
+  <!-- TOP APP BAR / FIGMA TOOLBAR -->
+  <header class="h-14 border-b border-white/10 bg-[#100e14] px-4 flex items-center justify-between sticky top-0 z-50">
+    <!-- Brand & Title -->
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded bg-gradient-to-br from-[#ff6b2b] to-[#ff3b4e] flex items-center justify-center font-game text-black text-lg shadow-md shadow-orange-500/20">
+        M
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-game tracking-wider text-base text-[#f2e8d9]">MEGABLAST UI LAB</span>
+          <span class="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-orange-500/20 text-[#ff6b2b] border border-orange-500/30">FIGMA PROTOTYPE</span>
+        </div>
+        <p class="text-[11px] text-white/40">Design System Sagoma Evoluto · Proposte Grafiche con Carattere</p>
+      </div>
+    </div>
+
+    <!-- Center Mode Switcher -->
+    <div class="flex items-center bg-[#17141d] p-1 rounded-lg border border-white/10 text-xs font-medium">
+      <button onclick="setScreenView('hud')" id="tab-hud" class="px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-all text-white bg-white/10 shadow-sm">
+        <svg class="w-3.5 h-3.5 text-[#ff6b2b]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>HUD Battaglia</span>
+      </button>
+      <button onclick="setScreenView('home')" id="tab-home" class="px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-all text-white/60 hover:text-white">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span>Home Menu</span>
+      </button>
+      <button onclick="setScreenView('armory')" id="tab-armory" class="px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-all text-white/60 hover:text-white">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <span>Armeria & Scheda</span>
+      </button>
+      <button onclick="setScreenView('settings')" id="tab-settings" class="px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-all text-white/60 hover:text-white">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Impostazioni</span>
+      </button>
+      <button onclick="setScreenView('kit')" id="tab-kit" class="px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-all text-white/60 hover:text-white">
+        <svg class="w-3.5 h-3.5 text-[#5cdbc0]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>Design System & Kit</span>
+      </button>
+    </div>
+
+    <!-- Right Controls: Aspect Ratio & Team Color -->
+    <div class="flex items-center space-x-4">
+      <!-- Team Color Tint Picker -->
+      <div class="flex items-center space-x-1 bg-[#17141d] p-1 rounded-lg border border-white/10">
+        <span class="text-[10px] text-white/40 px-1 font-mono uppercase">Squadra:</span>
+        <button onclick="setTeamColor('red')" id="btn-team-red" title="Squadra Rossa" class="w-5 h-5 rounded-full bg-[#ff3b4e] ring-2 ring-white/80 transition-all"></button>
+        <button onclick="setTeamColor('blue')" id="btn-team-blue" title="Squadra Blu" class="w-5 h-5 rounded-full bg-[#3d7bff] ring-1 ring-white/20 transition-all hover:scale-110"></button>
+        <button onclick="setTeamColor('green')" id="btn-team-green" title="Squadra Verde" class="w-5 h-5 rounded-full bg-[#2ebf70] ring-1 ring-white/20 transition-all hover:scale-110"></button>
+        <button onclick="setTeamColor('gold')" id="btn-team-gold" title="Squadra Gialla / Corona" class="w-5 h-5 rounded-full bg-[#f5c417] ring-1 ring-white/20 transition-all hover:scale-110"></button>
+      </div>
+
+      <!-- Aspect Ratio Switcher -->
+      <div class="flex items-center bg-[#17141d] p-1 rounded-lg border border-white/10 text-xs">
+        <button onclick="setDeviceRatio('phone')" id="ratio-phone" class="px-2.5 py-1 rounded text-white/50 hover:text-white transition-all font-mono">20:9 (Phone)</button>
+        <button onclick="setDeviceRatio('standard')" id="ratio-standard" class="px-2.5 py-1 rounded bg-white/15 text-white transition-all font-mono font-bold">16:9 (Std)</button>
+        <button onclick="setDeviceRatio('tablet')" id="ratio-tablet" class="px-2.5 py-1 rounded text-white/50 hover:text-white transition-all font-mono">4:3 (iPad)</button>
+      </div>
+
+      <!-- Zoom Slider -->
+      <div class="flex items-center space-x-1.5 text-xs text-white/60">
+        <span class="font-mono text-[11px]" id="zoom-label">85%</span>
+        <input type="range" min="50" max="150" value="85" class="w-20 accent-orange-500 cursor-pointer" oninput="setCanvasZoom(this.value)">
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN INTERACTIVE WORKSPACE -->
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- CANVAS CONTAINER (Centered Preview) -->
+    <div id="canvas-area" class="flex-1 overflow-auto flex items-center justify-center p-8 bg-[radial-gradient(#1c1824_1px,transparent_1px)] [background-size:20px_20px]">
+      
+      <!-- DEVICE FRAME -->
+      <div id="device-wrapper" class="transition-transform duration-200 origin-center" style="transform: scale(0.85);">
+        
+        <!-- THE PHYSICAL SCREEN BORDER -->
+        <div id="viewport-box" class="viewport-screen relative rounded-[28px] overflow-hidden border-[6px] border-[#221e29] bg-[#0d0c10] select-none" style="width: 1280px; height: 720px;">
+          
+          <!-- SCREEN 1: BATTLE HUD (REFINED ERGONOMIC ARCS & CHARACTER) -->
+          <div id="view-hud" class="screen-view absolute inset-0 block">
+            
+            <!-- In-game Dark Dynamic Arena Background -->
+            <div class="absolute inset-0 bg-[#0d0c10] overflow-hidden">
+              <!-- Molten Cave Texture & Ash particles -->
+              <div class="absolute inset-0 opacity-25" style="background: radial-gradient(circle at 50% 120%, rgba(255, 107, 43, 0.4), transparent 60%);"></div>
+              <!-- Floating Platforms (minimalist basalt cuts) -->
+              <div class="absolute left-[380px] bottom-[260px] w-[520px] h-[34px] bg-[#1a1722] border-t-2 border-[#ffe2c4]/40 rounded-sm shadow-xl flex items-center justify-between px-3">
+                <span class="w-2 h-2 rounded-full bg-orange-500/30"></span>
+                <span class="text-[10px] text-white/20 font-mono">PIATTAFORMA CENTRALE</span>
+                <span class="w-2 h-2 rounded-full bg-orange-500/30"></span>
+              </div>
+              <!-- Floor with Crater (dig cut) -->
+              <div class="absolute bottom-0 left-0 right-0 h-[110px] bg-[#131117] border-t border-[#ffe2c4]/20"></div>
+              <div class="absolute bottom-[40px] left-[520px] w-[240px] h-[90px] rounded-[50%] bg-[#08070a] border-t border-orange-500/20"></div>
+
+              <!-- Character Dummy (Sergio's Scoria Devil Silhouette) -->
+              <div class="absolute left-[620px] bottom-[110px] w-14 h-16 flex flex-col items-center">
+                <!-- Targa Personaggio Evoluta (Identica al game) -->
+                <div class="mb-1 flex items-center space-x-1 bg-[#141218]/90 border border-[#ffe2c4]/40 px-2 py-0.5 rounded shadow-md">
+                  <span class="w-2 h-2 rounded-full bg-[var(--team-current)]"></span>
+                  <span class="font-game text-xs text-[#ffe2c4]">DIAVOLETTO</span>
+                  <span class="font-mono text-[10px] text-white/60">100</span>
+                </div>
+                <!-- Character Body & Crown -->
+                <div class="relative w-11 h-11 bg-[#1c1924] rounded-full border-2 border-[#ffe2c4] flex items-center justify-center shadow-lg shadow-black/80">
+                  <span class="w-3 h-3 rounded-full bg-[var(--team-current)] pulse-core"></span>
+                  <!-- Horns -->
+                  <div class="absolute -top-2 -left-1 w-2.5 h-3.5 bg-[#1c1924] border-t-2 border-l-2 border-[#ffe2c4] rounded-tl-full"></div>
+                  <div class="absolute -top-2 -right-1 w-2.5 h-3.5 bg-[#1c1924] border-t-2 border-r-2 border-[#ffe2c4] rounded-tr-full"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TOP HUD BAR: Punteggi & Tiro alla Fune & Ingranaggio -->
+            <div class="absolute top-0 left-0 right-0 h-16 px-6 flex items-center justify-between pointer-events-auto">
+              <!-- Left: System Gear Button (Nuovo stile intagliato) -->
+              <div class="flex items-center space-x-3">
+                <button onclick="showToast('Aperto menu uscita / impostazioni')" class="tactile-btn w-12 h-12 bg-[#17141e] hover:bg-[#201c2a] border border-[#ffe2c4]/30 rounded-xl flex items-center justify-center shadow-lg group">
+                  <svg class="w-6 h-6 text-[#ffe2c4] group-hover:rotate-45 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+
+                <!-- ZOOM SLIDER SPOSTATO A SINISTRA (Risolve congestione pollice destro!) -->
+                <div class="flex items-center space-x-2 bg-[#17141e]/90 border border-[#ffe2c4]/25 px-3 py-1.5 rounded-xl shadow-md">
+                  <svg class="w-4 h-4 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                  <input type="range" min="1" max="3" step="0.1" value="1.8" class="w-16 accent-orange-500 cursor-pointer">
+                  <span class="text-[10px] font-mono text-white/50">ZOOM</span>
+                </div>
+              </div>
+
+              <!-- Center: Tabellone Tiro alla Fune con Corona -->
+              <div class="flex flex-col items-center">
+                <div class="flex items-center space-x-2 bg-[#14121a]/95 border border-[#ffe2c4]/30 px-5 py-1.5 rounded-2xl shadow-xl backdrop-blur-sm">
+                  <!-- Squadra Rossa -->
+                  <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#ff3b4e]"></span>
+                    <span class="font-game text-xl text-[#ff3b4e]">24</span>
+                  </div>
+                  <!-- Tiro alla fune bar -->
+                  <div class="w-36 h-3 bg-[#0a090e] rounded-full overflow-hidden border border-white/10 flex p-0.5">
+                    <div class="bg-[#ff3b4e] h-full rounded-l-full" style="width: 58%;"></div>
+                    <div class="bg-[#3d7bff] h-full rounded-r-full" style="width: 42%;"></div>
+                  </div>
+                  <!-- Squadra Blu -->
+                  <div class="flex items-center space-x-2">
+                    <span class="font-game text-xl text-[#3d7bff]">18</span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#3d7bff]"></span>
+                  </div>
+                </div>
+                <!-- Obiettivo Missione Discreto -->
+                <div class="text-[11px] text-[#f5c417] font-semibold mt-1 flex items-center space-x-1.5 tracking-wide">
+                  <span>★</span>
+                  <span>ELIMINA I DUE APPRENDISTI ENTRATRE 3 TURNI</span>
+                  <span class="text-white/40 font-mono">(1/3)</span>
+                </div>
+              </div>
+
+              <!-- Right: Turno & Match Timer -->
+              <div class="flex items-center space-x-3">
+                <div class="text-right">
+                  <div class="text-[10px] font-mono text-white/40 tracking-wider">TEMPO PARTITA</div>
+                  <div class="font-mono text-sm font-bold text-[#ffe2c4]">03:42</div>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-[#17141e] border border-[#ffe2c4]/30 flex items-center justify-center font-game text-[#f5c417] text-lg">
+                  II
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTROLLI TOUCH IN PARTITA: LEVETTA SINISTRA (MOVIMENTO & SALTO) -->
+            <div class="absolute left-8 bottom-8 pointer-events-auto">
+              <div class="relative w-36 h-36 rounded-full border-2 border-[#ffe2c4]/30 bg-[#121017]/80 backdrop-blur-sm flex items-center justify-center shadow-2xl">
+                <!-- Arc Jump Ticks (25° - 155°) -->
+                <svg class="absolute inset-0 w-full h-full text-orange-400/40" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="2 6" stroke-dashoffset="15"/>
+                </svg>
+                <div class="absolute top-2 text-[10px] font-game tracking-widest text-[#ffe2c4]/70">SALTA ↑</div>
+                <!-- Knob centrale -->
+                <div class="w-16 h-16 rounded-full bg-gradient-to-b from-[#252130] to-[#14121a] border-2 border-[#ffe2c4]/80 shadow-lg flex items-center justify-center">
+                  <div class="w-5 h-5 rounded-full bg-[var(--team-current)]/50 border border-[var(--team-current)]"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CENTRO BASSO: CRONOMETRO AD ANELLO CON BARATTO E TURNO -->
+            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto">
+              <!-- Pulsante BARATTO (Posizionato ergonomicamente sopra il tempo) -->
+              <button onclick="showToast('Barattato 2° attacco con Teletrasporto!')" class="tactile-btn mb-3 px-4 py-1.5 rounded-full bg-[#1e1929] hover:bg-[#282137] border border-[#c49cff]/50 shadow-lg flex items-center space-x-2 text-xs">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#f5c417] animate-ping"></span>
+                <span class="font-game text-[#ffe2c4]">BARATTA SECONDO ATTACCO</span>
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#c49cff]/20 text-[#c49cff] font-bold">+1 TP</span>
+              </button>
+
+              <!-- Main Round Timer Ring -->
+              <div class="relative w-28 h-28 flex items-center justify-center">
+                <!-- SVG Progress Ring -->
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="52" fill="#131118" stroke="#25212f" stroke-width="8"/>
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="var(--team-current)" stroke-width="8" stroke-dasharray="326" stroke-dashoffset="80" stroke-linecap="round"/>
+                  <!-- TP Token ticks at 9s and 17s -->
+                  <circle cx="98" cy="24" r="3.5" fill="#c49cff"/>
+                  <circle cx="112" cy="60" r="3.5" fill="#c49cff"/>
+                </svg>
+                <!-- Seconds Big Inside -->
+                <div class="absolute flex flex-col items-center">
+                  <span class="font-game text-3xl text-[#ffe2c4] leading-none">14</span>
+                  <span class="text-[9px] font-game uppercase tracking-wider text-[#f5c417] mt-0.5">SECONDO!</span>
+                </div>
+              </div>
+
+              <!-- DOCK DELLE ARMI: PRIMARIE (A SINISTRA DELL'ANELLO) E SECONDARIA (A DESTRA) -->
+              <div class="flex items-center space-x-3 mt-3">
+                <!-- SLOT PRIMARIA 1: Lanciarune (Brace) -->
+                <div class="tactile-btn relative w-16 h-16 bg-[#181521] border-2 border-[#ff6b2b] rounded-xl flex flex-col items-center justify-center shadow-lg group">
+                  <div class="absolute -top-1.5 right-1 px-1.5 py-0.2 bg-[#ff6b2b] text-black font-game text-[10px] rounded">x2</div>
+                  <svg class="w-8 h-8 text-[#ff6b2b]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 19h20L12 2zm0 4.5l6.5 11h-13L12 6.5z"/>
+                  </svg>
+                  <span class="text-[9px] font-game text-[#ffe2c4] mt-0.5">LANCIARUNE</span>
+                </div>
+
+                <!-- SLOT PRIMARIA 2: Uovo di Drago -->
+                <div class="tactile-btn relative w-16 h-16 bg-[#181521]/70 border border-white/20 hover:border-[#ff6b2b]/60 rounded-xl flex flex-col items-center justify-center shadow-md">
+                  <div class="absolute -top-1.5 right-1 px-1.5 py-0.2 bg-[#1e1c26] text-white/70 font-game text-[10px] rounded border border-white/10">x1</div>
+                  <div class="w-6 h-7 rounded-full border-2 border-white/40 flex items-center justify-center">
+                    <span class="w-2 h-2 rounded-full bg-white/40"></span>
+                  </div>
+                  <span class="text-[9px] font-game text-white/50 mt-0.5">UOVO</span>
+                </div>
+
+                <div class="w-1"></div> <!-- Separatore per anello -->
+
+                <!-- SLOT SECONDARIA: Rampino / Maglio (Acciaio) -->
+                <div class="tactile-btn relative w-16 h-16 bg-[#181521] border-2 border-[#9ec4e0] rounded-xl flex flex-col items-center justify-center shadow-lg">
+                  <svg class="w-7 h-7 text-[#9ec4e0]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  </svg>
+                  <span class="text-[9px] font-game text-[#9ec4e0] mt-0.5">RAMPINO</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTROLLI TOUCH A DESTRA: NUOVO ARCO ERGONOMICO DEGLI OGGETTI TATTICI! -->
+            <!-- Risolve la sovrapposizione: gli oggetti sono a raggio costante attorno al pollice -->
+            <div class="absolute right-8 bottom-8 pointer-events-auto">
+              
+              <!-- AIM PAD (LEVETTA DI MIRA & SPARO) -->
+              <div class="relative w-36 h-36 rounded-full border-2 border-[var(--team-current)] bg-[#121017]/90 backdrop-blur-sm flex items-center justify-center shadow-2xl">
+                <div class="absolute text-[10px] font-game tracking-widest text-[#ffe2c4]/70">MIRA & SPARA</div>
+                <!-- Knob di mira -->
+                <div class="w-16 h-16 rounded-full bg-gradient-to-b from-[#252130] to-[#14121a] border-2 border-[var(--team-current)] shadow-lg flex items-center justify-center">
+                  <svg class="w-6 h-6 text-[var(--team-current)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <circle cx="12" cy="12" r="6" stroke-width="2"/>
+                    <path stroke-width="2" d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- TELETRASPORTO TOUCH (Gettone Viola a Quota Naturale) -->
+              <button onclick="showToast('Teletrasporto selezionato!')" class="tactile-btn absolute -top-8 right-32 w-16 h-16 rounded-2xl bg-[#1c162b] border-2 border-[#c49cff] shadow-xl flex flex-col items-center justify-center">
+                <div class="absolute -top-2 -right-1 px-1.5 py-0.5 bg-[#c49cff] text-black font-game text-[10px] rounded-full">3</div>
+                <svg class="w-7 h-7 text-[#c49cff]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span class="text-[9px] font-game text-[#c49cff]">TELEPORT</span>
+              </button>
+
+              <!-- OGGETTI TATTICI (VENTAGLIO RADIALE ERGONOMICO attorno al pollice!) -->
+              <!-- Oggetto 1: Paracadute -->
+              <button onclick="showToast('Oggetto: Paracadute')" class="tactile-btn absolute -top-28 right-24 w-12 h-12 rounded-xl bg-[#131d1c] border border-[#5cdbc0] flex flex-col items-center justify-center shadow-md">
+                <span class="text-[10px] font-mono font-bold text-[#5cdbc0]">x2</span>
+                <span class="text-[8px] font-game text-white/70">ALA</span>
+              </button>
+
+              <!-- Oggetto 2: Scudo Runico -->
+              <button onclick="showToast('Oggetto: Scudo')" class="tactile-btn absolute -top-32 right-8 w-12 h-12 rounded-xl bg-[#131d1c] border border-[#5cdbc0] flex flex-col items-center justify-center shadow-md">
+                <span class="text-[10px] font-mono font-bold text-[#5cdbc0]">x1</span>
+                <span class="text-[8px] font-game text-white/70">SCUDO</span>
+              </button>
+
+              <!-- Oggetto 3: Trampolino -->
+              <button onclick="showToast('Oggetto: Trampolino')" class="tactile-btn absolute -top-20 -right-4 w-12 h-12 rounded-xl bg-[#131d1c] border border-[#5cdbc0] flex flex-col items-center justify-center shadow-md">
+                <span class="text-[10px] font-mono font-bold text-[#5cdbc0]">x1</span>
+                <span class="text-[8px] font-game text-white/70">MOLLA</span>
+              </button>
+
+              <!-- Etichetta di Categoria ad Arco -->
+              <div class="absolute -top-36 right-10 text-[9px] font-mono font-bold text-[#5cdbc0]/80 tracking-widest uppercase">
+                OGGETTI TATTICI
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- SCREEN 2: HOME MENU (BILANCIATA, PULSANTI EROE & CARATTERE) -->
+          <div id="view-home" class="screen-view absolute inset-0 hidden">
+            <!-- Background Layer -->
+            <div class="absolute inset-0 bg-[#0d0c10] flex items-center justify-center">
+              <div class="w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,107,43,0.15),transparent_70%)]"></div>
+            </div>
+
+            <!-- UNIFIED HEADER BAR -->
+            <div class="absolute top-0 left-0 right-0 h-16 px-8 flex items-center justify-between border-b border-white/5 bg-[#100e15]/80 backdrop-blur-md">
+              <div class="flex items-center space-x-3">
+                <span class="font-game text-2xl text-[#f2e8d9] tracking-wider">MEGABLAST</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-white/10 text-white/60 font-mono">v0.9.4</span>
+              </div>
+              <!-- Persistant Matchmaking Pill (Header Slot) -->
+              <div class="px-5 py-1.5 rounded-full bg-[#17141e] border border-[#ffe2c4]/20 flex items-center space-x-3 shadow-inner">
+                <span class="w-2 h-2 rounded-full bg-[#2ebf70] animate-pulse"></span>
+                <span class="text-xs font-mono text-[#ffe2c4]/80">4 GIOCATORI NELLA FORGIA</span>
+                <button onclick="showToast('Ingresso in coda')" class="text-xs font-game text-[#f5c417] hover:underline">ENTRA</button>
+              </div>
+              <!-- Header Right: Impostazioni -->
+              <button onclick="setScreenView('settings')" class="tactile-btn w-10 h-10 rounded-xl bg-[#17141e] border border-white/10 flex items-center justify-center text-white/70 hover:text-white">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+
+            <!-- HOME CONTENT GRID: Equilibrata per non sovrapporsi MAI a 4:3 -->
+            <div class="absolute inset-0 pt-20 pb-10 px-12 flex items-center justify-between">
+              
+              <!-- Left Column: Menu Strutturali (Nuovo stile piastra sagomata) -->
+              <div class="w-72 flex flex-col space-y-3.5 z-10">
+                
+                <!-- CAMPAGNA (Con sottotitolo esplicativo) -->
+                <button onclick="showToast('Aperta Campagna')" class="tactile-btn text-left p-4 rounded-xl bg-[#16131c] hover:bg-[#1d1926] border border-[#ffe2c4]/25 hover:border-[#ffe2c4]/60 shadow-lg relative overflow-hidden group">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#f5c417]"></div>
+                  <div class="flex items-center justify-between">
+                    <span class="font-game text-xl text-[#ffe2c4] tracking-wide">CAMPAGNA</span>
+                    <span class="text-xs text-[#f5c417] font-mono font-bold">12 ★</span>
+                  </div>
+                  <p class="text-[11px] text-white/50 mt-1">Storia e 8 lezioni di Favilla</p>
+                </button>
+
+                <!-- ALLENAMENTO -->
+                <button onclick="showToast('Aperto Allenamento Bot')" class="tactile-btn text-left p-4 rounded-xl bg-[#16131c] hover:bg-[#1d1926] border border-[#ffe2c4]/20 hover:border-[#ffe2c4]/50 shadow-lg relative overflow-hidden">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#3d7bff]"></div>
+                  <div class="flex items-center justify-between">
+                    <span class="font-game text-xl text-[#ffe2c4] tracking-wide">ALLENAMENTO</span>
+                    <span class="text-[10px] text-white/40 font-mono">VS BOT</span>
+                  </div>
+                  <p class="text-[11px] text-white/50 mt-1">Partita libera e prova mappe</p>
+                </button>
+
+                <!-- ARMERIA -->
+                <button onclick="setScreenView('armory')" class="tactile-btn text-left p-4 rounded-xl bg-[#16131c] hover:bg-[#1d1926] border border-[#ffe2c4]/20 hover:border-[#ffe2c4]/50 shadow-lg relative overflow-hidden">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#ff6b2b]"></div>
+                  <div class="flex items-center justify-between">
+                    <span class="font-game text-xl text-[#ffe2c4] tracking-wide">ARMERIA</span>
+                    <span class="text-[10px] text-[#ff6b2b] font-mono">SET I</span>
+                  </div>
+                  <p class="text-[11px] text-white/50 mt-1">Assetti, pezzi e statistiche</p>
+                </button>
+
+                <!-- EVENTI & CALENDARIO -->
+                <button onclick="showToast('Aperto Pannello Eventi')" class="tactile-btn text-left p-3.5 rounded-xl bg-[#16131c]/80 hover:bg-[#1d1926] border border-white/10 shadow-md flex items-center justify-between">
+                  <div>
+                    <span class="font-game text-base text-[#ffe2c4]/80">EVENTI</span>
+                    <p class="text-[10px] text-white/40">Torneo del Girone I attivo</p>
+                  </div>
+                  <span class="w-2 h-2 rounded-full bg-[#ff3b4e] animate-ping"></span>
+                </button>
+
+              </div>
+
+              <!-- Center Column: Diavoletto Protagonista (Safe Centering per iPad 4:3) -->
+              <div class="flex flex-col items-center justify-center relative cursor-pointer group" onclick="setScreenView('armory')">
+                <!-- Glowing Pedestal -->
+                <div class="w-64 h-16 rounded-[50%] bg-[#1c1826] border border-[#ffe2c4]/20 shadow-2xl flex items-center justify-center">
+                  <div class="w-48 h-8 rounded-[50%] bg-[var(--team-current)]/20 blur-md"></div>
+                </div>
+                <!-- Character Avatar Preview -->
+                <div class="absolute bottom-10 flex flex-col items-center">
+                  <div class="w-32 h-32 rounded-full bg-[#1b1724] border-4 border-[#ffe2c4] flex items-center justify-center shadow-2xl relative group-hover:scale-105 transition-transform">
+                    <span class="w-8 h-8 rounded-full bg-[var(--team-current)] pulse-core"></span>
+                    <div class="absolute -top-4 text-xs font-game bg-[#f5c417] text-black px-2 py-0.5 rounded-full shadow-md">LVL 4</div>
+                  </div>
+                  <!-- Name & Profile hint -->
+                  <div class="mt-3 text-center">
+                    <div class="font-game text-lg text-[#ffe2c4]">IL TUO DIAVOLETTO</div>
+                    <div class="text-[11px] text-[#f5c417] tracking-wider uppercase group-hover:underline">Tocca per modificare profilo →</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Hero Play Button & Online Queue -->
+              <div class="w-80 flex flex-col space-y-4 z-10">
+                
+                <!-- IL NUOVO PULSANTE EROE "GIOCA" (Smusso asimmetrico, Nucleo e Doppia Piastra) -->
+                <button onclick="setScreenView('hud')" class="tactile-btn relative p-6 rounded-2xl bg-gradient-to-r from-[#2a171d] via-[#1f1726] to-[#17141e] border-2 border-[var(--team-current)] shadow-[0_10px_30px_rgba(255,59,78,0.25)] overflow-hidden group">
+                  <!-- Tactical Chamfer Glow Corner -->
+                  <div class="absolute -top-10 -right-10 w-24 h-24 bg-[var(--team-current)]/30 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
+                  
+                  <div class="flex items-center space-x-4 relative z-10">
+                    <!-- Alive Core Light -->
+                    <div class="w-12 h-12 rounded-xl bg-[#14111a] border border-[var(--team-current)] flex items-center justify-center shadow-inner">
+                      <span class="w-4 h-4 rounded-full bg-[var(--team-current)] pulse-core"></span>
+                    </div>
+                    <div>
+                      <div class="font-game text-3xl text-white tracking-wider group-hover:text-[#ffe2c4] transition-colors">GIOCA</div>
+                      <div class="text-xs font-mono text-[var(--team-current)] font-bold tracking-widest">ONLINE 2V2 & TUTTI</div>
+                    </div>
+                  </div>
+
+                  <!-- Bottom Accent Bar -->
+                  <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[var(--team-current)] to-transparent"></div>
+                </button>
+
+                <!-- STESSO TELEFONO (Locale Hotseat) -->
+                <button onclick="setScreenView('hud')" class="tactile-btn p-4 rounded-xl bg-[#16131c] hover:bg-[#1d1926] border border-white/15 flex items-center justify-between shadow-md">
+                  <div>
+                    <span class="font-game text-lg text-[#ffe2c4]">STESSO TELEFONO</span>
+                    <p class="text-[11px] text-white/40">1v1 o 2v2 sullo stesso schermo</p>
+                  </div>
+                  <span class="text-white/40 font-game text-sm">→</span>
+                </button>
+
+                <!-- Cartellino Rapido Rating / Posizione -->
+                <div class="p-4 rounded-xl bg-[#141219]/90 border border-[#ffe2c4]/15 flex items-center justify-between text-xs font-mono">
+                  <div>
+                    <span class="text-white/40">GRADO STAGIONE:</span>
+                    <div class="font-game text-base text-[#ffe2c4]">ARGENTO II</div>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-white/40">VITTORIE:</span>
+                    <div class="font-game text-base text-[#2ebf70]">68%</div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- SCREEN 3: ARMERIA & SCHEDA (2-COLONNE FLUIDE A 20:9) -->
+          <div id="view-armory" class="screen-view absolute inset-0 hidden p-6 flex flex-col">
+            <!-- Header with Back -->
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+              <div class="flex items-center space-x-4">
+                <button onclick="setScreenView('home')" class="tactile-btn w-10 h-10 rounded-xl bg-[#181521] border border-[#ffe2c4]/30 flex items-center justify-center text-[#ffe2c4]">
+                  ←
+                </button>
+                <span class="font-game text-2xl text-[#ffe2c4]">ARMERIA & ASSETTI</span>
+              </div>
+              <!-- Tabs -->
+              <div class="flex items-center space-x-2 bg-[#17141f] p-1 rounded-xl border border-white/10">
+                <button class="px-4 py-1.5 rounded-lg bg-white/15 font-game text-xs text-white">SET ATTIVO</button>
+                <button class="px-4 py-1.5 rounded-lg font-game text-xs text-white/50 hover:text-white">ALBERO TALENTI</button>
+                <button class="px-4 py-1.5 rounded-lg font-game text-xs text-white/50 hover:text-white">PEZZI ESTETICI</button>
+              </div>
+            </div>
+
+            <!-- Two-Column Fluid Layout (Sfrutta i 1600px su 20:9 senza vuoti) -->
+            <div class="flex-1 grid grid-cols-12 gap-6 pt-5 overflow-hidden">
+              <!-- Left Col: Set Cards -->
+              <div class="col-span-7 flex flex-col space-y-4 overflow-y-auto pr-2">
+                <div class="text-xs font-mono text-[#ffe2c4]/60 tracking-wider">LE TUE ARMI PRINCIPALI:</div>
+                <div class="grid grid-cols-2 gap-4">
+                  <!-- Weapon Card 1 -->
+                  <div class="p-4 rounded-xl bg-[#15121b] border-2 border-[#ff6b2b] shadow-lg flex flex-col justify-between h-44">
+                    <div class="flex items-center justify-between">
+                      <span class="font-game text-lg text-[#ffe2c4]">LANCIARUNE</span>
+                      <span class="px-2 py-0.5 rounded bg-[#ff6b2b]/20 text-[#ff6b2b] text-[10px] font-mono font-bold">LVL 3</span>
+                    </div>
+                    <p class="text-xs text-white/50">Spara rune a rimbalzo con detonazione a tempo.</p>
+                    <div class="flex items-center justify-between text-xs font-mono text-white/40 pt-2 border-t border-white/10">
+                      <span>DANNO: 45</span>
+                      <span>MUNIZIONI: 2</span>
+                    </div>
+                  </div>
+                  <!-- Weapon Card 2 -->
+                  <div class="p-4 rounded-xl bg-[#15121b] border border-white/20 shadow-md flex flex-col justify-between h-44">
+                    <div class="flex items-center justify-between">
+                      <span class="font-game text-lg text-white/80">CECCHINO</span>
+                      <span class="px-2 py-0.5 rounded bg-white/10 text-white/60 text-[10px] font-mono font-bold">LVL 1</span>
+                    </div>
+                    <p class="text-xs text-white/50">Tiro teso istantaneo ad altissima gittata.</p>
+                    <div class="flex items-center justify-between text-xs font-mono text-white/40 pt-2 border-t border-white/10">
+                      <span>DANNO: 60</span>
+                      <span>MUNIZIONI: 1</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Col: Statistiche & Cartellino Visibile agli Avversari -->
+              <div class="col-span-5 bg-[#14121a] rounded-2xl border border-[#ffe2c4]/20 p-5 flex flex-col justify-between shadow-xl">
+                <div>
+                  <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                    <span class="font-game text-base text-[#ffe2c4]">SCHEDA PERSONAGGIO</span>
+                    <span class="text-xs font-mono text-[#f5c417]">LIVELLO 4</span>
+                  </div>
+                  <!-- Stat Bars -->
+                  <div class="space-y-3 mt-4">
+                    <div>
+                      <div class="flex justify-between text-xs font-mono text-white/60 mb-1">
+                        <span>VITA MASSIMA</span>
+                        <span>120 HP</span>
+                      </div>
+                      <div class="w-full h-2 rounded-full bg-black/60 overflow-hidden"><div class="w-[70%] h-full bg-[#2ebf70]"></div></div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-xs font-mono text-white/60 mb-1">
+                        <span>VELOCITÀ CORSA</span>
+                        <span>+15%</span>
+                      </div>
+                      <div class="w-full h-2 rounded-full bg-black/60 overflow-hidden"><div class="w-[55%] h-full bg-[#3d7bff]"></div></div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-xs font-mono text-white/60 mb-1">
+                        <span>RESISTENZA CRATERI</span>
+                        <span>BASE</span>
+                      </div>
+                      <div class="w-full h-2 rounded-full bg-black/60 overflow-hidden"><div class="w-[40%] h-full bg-[#ff6b2b]"></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <button onclick="showToast('Assetto salvato!')" class="tactile-btn w-full py-3 rounded-xl bg-gradient-to-r from-[#ff6b2b] to-[#ff3b4e] text-black font-game text-base shadow-lg">
+                  SALVA ASSETTO ATTIVO
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SCREEN 4: IMPOSTAZIONI (SENZA POPUP, TOGGLE TATTICI PULITI) -->
+          <div id="view-settings" class="screen-view absolute inset-0 hidden p-8 flex flex-col">
+            <div class="flex items-center space-x-4 border-b border-white/10 pb-4">
+              <button onclick="setScreenView('home')" class="tactile-btn w-10 h-10 rounded-xl bg-[#181521] border border-[#ffe2c4]/30 flex items-center justify-center text-[#ffe2c4]">
+                ←
+              </button>
+              <div>
+                <span class="font-game text-2xl text-[#ffe2c4]">IMPOSTAZIONI DI GIOCO</span>
+                <p class="text-xs text-white/40">Personalizzazione comandi, controller e feedback tattile</p>
+              </div>
+            </div>
+
+            <!-- Settings Options Grid -->
+            <div class="grid grid-cols-2 gap-6 pt-6">
+              
+              <!-- Opzione 1: Modalità Mira -->
+              <div class="p-5 rounded-2xl bg-[#14121a] border border-[#ffe2c4]/20 flex items-center justify-between shadow-lg">
+                <div>
+                  <div class="font-game text-lg text-[#ffe2c4]">STILE DI MIRA IN PARTITA</div>
+                  <p class="text-xs text-white/50">Scegli tra indicatore a lancetta o mirino concentrico</p>
+                </div>
+                <div class="flex bg-[#0a090e] p-1 rounded-xl border border-white/10 text-xs font-game">
+                  <button class="px-3 py-1.5 rounded-lg bg-orange-500 text-black">LANCETTA</button>
+                  <button class="px-3 py-1.5 rounded-lg text-white/50 hover:text-white">MIRINO</button>
+                </div>
+              </div>
+
+              <!-- Opzione 2: Micro-vibrazione al Salto -->
+              <div class="p-5 rounded-2xl bg-[#14121a] border border-[#ffe2c4]/20 flex items-center justify-between shadow-lg">
+                <div>
+                  <div class="font-game text-lg text-[#ffe2c4]">FEEDBACK APTICO (VIBRAZIONE)</div>
+                  <p class="text-xs text-white/50">Micro-vibrazione all'arco di salto e sgancio mira</p>
+                </div>
+                <button onclick="toggleSwitch(this)" class="w-12 h-7 bg-[#2ebf70] rounded-full p-1 flex items-center transition-colors shadow-inner">
+                  <div class="w-5 h-5 bg-black rounded-full shadow transform translate-x-5 transition-transform"></div>
+                </button>
+              </div>
+
+              <!-- Opzione 3: Controller Mappatura Rapida -->
+              <div class="p-5 rounded-2xl bg-[#14121a] border border-[#ffe2c4]/20 flex items-center justify-between shadow-lg">
+                <div>
+                  <div class="font-game text-lg text-[#ffe2c4]">SPARO CON IL CONTROLLER</div>
+                  <p class="text-xs text-white/50">Rilasciando la levetta (predefinito) o premendo grilletto</p>
+                </div>
+                <div class="flex bg-[#0a090e] p-1 rounded-xl border border-white/10 text-xs font-game">
+                  <button class="px-3 py-1.5 rounded-lg bg-white/20 text-white">RILASCIO</button>
+                  <button class="px-3 py-1.5 rounded-lg text-white/40">GRILLETTO</button>
+                </div>
+              </div>
+
+              <!-- Opzione 4: Zoom Predefinito -->
+              <div class="p-5 rounded-2xl bg-[#14121a] border border-[#ffe2c4]/20 flex items-center justify-between shadow-lg">
+                <div>
+                  <div class="font-game text-lg text-[#ffe2c4]">INIZIO PARTITA: ZOOM</div>
+                  <p class="text-xs text-white/50">Distanza iniziale telecamera all'avvio del turno</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-mono text-[#ffe2c4]">MEDIO</span>
+                  <input type="range" class="accent-orange-500 w-24">
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- SCREEN 5: DESIGN SYSTEM & COMPONENT KIT (FIGMA INSPECT) -->
+          <div id="view-kit" class="screen-view absolute inset-0 hidden p-6 overflow-y-auto">
+            <div class="border-b border-white/10 pb-3 mb-6 flex justify-between items-center">
+              <div>
+                <span class="font-game text-2xl text-[#ffe2c4]">CATALOGO COMPONENTI · DESIGN SYSTEM</span>
+                <p class="text-xs text-white/40">Ogni pulsante con la sua precisa identità tattile e funzionale</p>
+              </div>
+              <div class="text-xs font-mono text-[#2ebf70] px-3 py-1 rounded bg-[#2ebf70]/10 border border-[#2ebf70]/30">
+                PRODUZIONE: PRONTI PER 9-SLICE
+              </div>
+            </div>
+
+            <!-- Griglia dei componenti -->
+            <div class="grid grid-cols-3 gap-6">
+              
+              <!-- Card 1: Pulsante Eroe (Hero Primary) -->
+              <div class="p-5 rounded-2xl bg-[#121017] border border-white/10 flex flex-col space-y-3">
+                <span class="text-xs font-mono text-orange-400 font-bold uppercase">1. Pulsante Eroe (GIOCA, AVANTI)</span>
+                <p class="text-xs text-white/50">Doppia piastra con chamfer angolare, incavo per il Nucleo vivo e accento dinamico di squadra.</p>
+                <div class="py-4 flex justify-center">
+                  <button class="tactile-btn relative px-8 py-4 rounded-2xl bg-[#1b1522] border-2 border-[var(--team-current)] flex items-center space-x-3 shadow-xl">
+                    <span class="w-3.5 h-3.5 rounded-full bg-[var(--team-current)] pulse-core"></span>
+                    <span class="font-game text-2xl text-[#ffe2c4]">GIOCA</span>
+                  </button>
+                </div>
+                <div class="text-[10px] font-mono text-white/40">Slice-9: 24, 24, 24, 24 · Texture: hero.png</div>
+              </div>
+
+              <!-- Card 2: Pulsanti Menu Strutturali -->
+              <div class="p-5 rounded-2xl bg-[#121017] border border-white/10 flex flex-col space-y-3">
+                <span class="text-xs font-mono text-[#3d7bff] font-bold uppercase">2. Menu Strutturali (Campagna, Bot)</span>
+                <p class="text-xs text-white/50">Piastra a scanalatura laterale con micro-accento colorato e contrasto perfetto.</p>
+                <div class="py-4 flex justify-center">
+                  <button class="tactile-btn relative w-56 p-3 rounded-xl bg-[#16131c] border border-[#ffe2c4]/30 flex items-center justify-between shadow-lg">
+                    <div class="flex items-center space-x-2">
+                      <span class="w-1.5 h-4 bg-[#3d7bff] rounded-full"></span>
+                      <span class="font-game text-base text-[#ffe2c4]">ALLENAMENTO</span>
+                    </div>
+                    <span class="text-xs text-white/40 font-mono">→</span>
+                  </button>
+                </div>
+                <div class="text-[10px] font-mono text-white/40">Slice-9: 16, 16, 16, 16 · Texture: menu_box.png</div>
+              </div>
+
+              <!-- Card 3: Slot Armi Primarie (Combattimento Brace) -->
+              <div class="p-5 rounded-2xl bg-[#121017] border border-white/10 flex flex-col space-y-3">
+                <span class="text-xs font-mono text-[#ff6b2b] font-bold uppercase">3. Slot Primarie (Combattimento)</span>
+                <p class="text-xs text-white/50">Alloggiamento rinforzato con camera munizioni ad alto contrasto (evita errori in periferica).</p>
+                <div class="py-4 flex justify-center space-x-3">
+                  <div class="tactile-btn relative w-16 h-16 bg-[#181521] border-2 border-[#ff6b2b] rounded-xl flex flex-col items-center justify-center shadow-lg">
+                    <div class="absolute -top-2 right-1 px-1.5 py-0.2 bg-[#ff6b2b] text-black font-game text-[10px] rounded font-bold">x2</div>
+                    <span class="font-game text-xs text-[#ff6b2b]">RUNE</span>
+                  </div>
+                  <div class="tactile-btn relative w-16 h-16 bg-[#181521]/60 border border-white/20 rounded-xl flex flex-col items-center justify-center">
+                    <div class="absolute -top-2 right-1 px-1.5 py-0.2 bg-yellow-500 text-black font-game text-[10px] rounded font-bold animate-pulse">x1</div>
+                    <span class="font-game text-xs text-white/40">UOVO</span>
+                  </div>
+                </div>
+                <div class="text-[10px] font-mono text-white/40">Allerta 1 colpo: Badge dorato pulsante</div>
+              </div>
+
+              <!-- Card 4: Gettoni Mobilità & Teletrasporto (Viola) -->
+              <div class="p-5 rounded-2xl bg-[#121017] border border-white/10 flex flex-col space-y-3">
+                <span class="text-xs font-mono text-[#c49cff] font-bold uppercase">4. Gettoni Eterei (Teleport, Rampino)</span>
+                <p class="text-xs text-white/50">Profilo sagomato ad anello concentrico con gemma runica e numerino globi pronto.</p>
+                <div class="py-4 flex justify-center">
+                  <button class="tactile-btn relative w-16 h-16 rounded-2xl bg-[#1c162b] border-2 border-[#c49cff] flex flex-col items-center justify-center shadow-lg">
+                    <div class="absolute -top-2 -right-1 px-2 py-0.5 bg-[#c49cff] text-black font-game text-xs rounded-full font-bold">3</div>
+                    <span class="font-game text-xs text-[#c49cff]">TP</span>
+                  </button>
+                </div>
+                <div class="text-[10px] font-mono text-white/40">Doppio tap: Baratto rapido 2° attacco</div>
+              </div>
+
+              <!-- Card 5: Gettoni Oggetti Consumabili (Menta) -->
+              <div class="p-5 rounded-2xl bg-[#121017] border border-white/10 flex flex-col space-y-3">
+                <span class="text-xs font-mono text-[#5cdbc0] font-bold uppercase">5. Oggetti Tattici (Colore Menta)</span>
+                <p class="text-xs text-white/50">Gettoni compatti studiati per la disposizione radiale ad arco attorno al pollice destro.</p>
+                <div class="py-4 flex justify-center space-x-3">
+                  <div class="tactile-btn w-12 h-12 rounded-xl bg-[#131d1c] border-2 border-[#5cdbc0] flex flex-col items-center justify-center">
+                    <span class="text-[10px] font-mono text-[#5cdbc0] font-bold">x2</span>
+                    <span class="text-[8px] font-game text-white/80">ALA</span>
+                  </div>
+                  <div class="tactile-btn w-12 h-12 rounded-xl bg-[#131d1c] border border-[#5cdbc0]/40 flex flex-col items-center justify-center">
+                    <span class="text-[10px] font-mono text-white/40">x0</span>
+                    <span class="text-[8px] font-game text-white/30">SCUDO</span>
+                  </div>
+                </div>
+                <div class="text-[10px] font-mono text-white/40">Raggio arco: 140px dalla levetta di mira</div>
+              </div>
+
+              <!-- Card 6: Controlli di Sistema (Ingranaggio, Indietro, Zoom) -->
+              <div class="p-5 rounded-2xl bg-[#121017] border border-white/10 flex flex-col space-y-3">
+                <span class="text-xs font-mono text-white/60 font-bold uppercase">6. Controlli di Sistema</span>
+                <p class="text-xs text-white/50">Castoni metallici quadrati con angoli smussati e icone intagliate in negativo.</p>
+                <div class="py-4 flex justify-center space-x-3">
+                  <button class="tactile-btn w-12 h-12 bg-[#17141e] border border-[#ffe2c4]/40 rounded-xl flex items-center justify-center text-[#ffe2c4]">
+                    ←
+                  </button>
+                  <button class="tactile-btn w-12 h-12 bg-[#17141e] border border-[#ffe2c4]/40 rounded-xl flex items-center justify-center text-[#ffe2c4]">
+                    ⚙
+                  </button>
+                </div>
+                <div class="text-[10px] font-mono text-white/40">Nessuna interferenza con la mira</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- TOAST FEEDBACK FLOATER -->
+          <div id="toast-floater" class="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl bg-black/90 border border-orange-500/50 text-xs font-mono text-[#ffe2c4] shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-4 z-50">
+            Azione eseguita
+          </div>
+
+        </div> <!-- /viewport-box -->
+      </div> <!-- /device-wrapper -->
+
+    </div> <!-- /canvas-area -->
+
+  </main>
+
+  <!-- JAVASCRIPT LOGIC & STATE MACHINE -->
+  <script>
+    // State variables
+    let currentRatio = 'standard';
+    let currentScreen = 'hud';
+    let currentTeamColor = 'red';
+    let currentZoom = 0.85;
+
+    const teamColors = {
+      red: '#ff3b4e',
+      blue: '#3d7bff',
+      green: '#2ebf70',
+      gold: '#f5c417'
+    };
+
+    // Initialize root css variable for team color
+    document.documentElement.style.setProperty('--team-current', teamColors.red);
+
+    // Switch Screen Views
+    function setScreenView(viewId) {
+      currentScreen = viewId;
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.remove('block'));
+      
+      const target = document.getElementById('view-' + viewId);
+      if (target) {
+        target.classList.remove('hidden');
+        target.classList.add('block');
+      }
+
+      // Update Toolbar buttons
+      ['hud', 'home', 'armory', 'settings', 'kit'].forEach(id => {
+        const btn = document.getElementById('tab-' + id);
+        if (id === viewId) {
+          btn.className = "px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-all text-white bg-white/10 shadow-sm font-semibold";
+        } else {
+          btn.className = "px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-all text-white/60 hover:text-white";
+        }
+      });
+    }
+
+    // Switch Device Proportions
+    function setDeviceRatio(ratio) {
+      currentRatio = ratio;
+      const box = document.getElementById('viewport-box');
+
+      ['phone', 'standard', 'tablet'].forEach(r => {
+        const btn = document.getElementById('ratio-' + r);
+        if (r === ratio) {
+          btn.className = "px-2.5 py-1 rounded bg-white/15 text-white transition-all font-mono font-bold";
+        } else {
+          btn.className = "px-2.5 py-1 rounded text-white/50 hover:text-white transition-all font-mono";
+        }
+      });
+
+      if (ratio === 'phone') {
+        // 20:9 Ultrawide Phone (1600x720)
+        box.style.width = '1600px';
+        box.style.height = '720px';
+        showToast('Risoluzione: 20:9 Ultrawide (1600 × 720)');
+      } else if (ratio === 'standard') {
+        // 16:9 Standard Base (1280x720)
+        box.style.width = '1280px';
+        box.style.height = '720px';
+        showToast('Risoluzione: 16:9 Standard (1280 × 720)');
+      } else if (ratio === 'tablet') {
+        // 4:3 iPad Tablet (1280x960)
+        box.style.width = '1280px';
+        box.style.height = '960px';
+        showToast('Risoluzione: 4:3 iPad Tablet (1280 × 960)');
+      }
+    }
+
+    // Set Team Color in Real-Time
+    function setTeamColor(colorName) {
+      currentTeamColor = colorName;
+      document.documentElement.style.setProperty('--team-current', teamColors[colorName]);
+
+      ['red', 'blue', 'green', 'gold'].forEach(c => {
+        const btn = document.getElementById('btn-team-' + c);
+        if (c === colorName) {
+          btn.classList.add('ring-2', 'ring-white/90');
+          btn.classList.remove('ring-1', 'ring-white/20');
+        } else {
+          btn.classList.remove('ring-2', 'ring-white/90');
+          btn.classList.add('ring-1', 'ring-white/20');
+        }
+      });
+
+      showToast('Colore Squadra: ' + colorName.toUpperCase());
+    }
+
+    // Set Canvas Zoom
+    function setCanvasZoom(val) {
+      currentZoom = val / 100;
+      document.getElementById('device-wrapper').style.transform = `scale(${currentZoom})`;
+      document.getElementById('zoom-label').innerText = val + '%';
+    }
+
+    // Toast Feedback
+    function showToast(text) {
+      const toast = document.getElementById('toast-floater');
+      toast.innerText = text;
+      toast.classList.remove('opacity-0', 'translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 1800);
+    }
+
+    // Toggle Switch in settings
+    function toggleSwitch(btn) {
+      const knob = btn.firstElementChild;
+      const isGreen = btn.classList.contains('bg-[#2ebf70]');
+      if (isGreen) {
+        btn.classList.remove('bg-[#2ebf70]');
+        btn.classList.add('bg-white/20');
+        knob.classList.remove('translate-x-5');
+        knob.classList.add('translate-x-0');
+        showToast('Feedback aptico: DISATTIVATO');
+      } else {
+        btn.classList.add('bg-[#2ebf70]');
+        btn.classList.remove('bg-white/20');
+        knob.classList.add('translate-x-5');
+        knob.classList.remove('translate-x-0');
+        showToast('Feedback aptico: ATTIVATO');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -50,7 +50,11 @@ function M.nuova()
 end
 
 function M.azzera(p)
-	for c, v in pairs(M.NEUTRAL) do p[c] = v end
+	local neutral, channels = M.NEUTRAL, M.CHANNELS
+	for i = 1, #channels do
+		local c = channels[i]
+		p[c] = neutral[c]
+	end
 	p.face_name, p.face_weight = nil, 0
 	p.clip, p.clip_weight = nil, 0
 end

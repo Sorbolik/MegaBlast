@@ -43,8 +43,7 @@ end
 local function build(c)
 	if c.radice then gui.delete_node(c.radice) end
 	c.buttons = {}
-	c.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
-	gui.set_visible(c.radice, false)
+	c.radice = ui.radice()
 	local C = ui.C
 	-- the header (ui.header): the title and the pill's place
 	ui.header_delete(c.head)

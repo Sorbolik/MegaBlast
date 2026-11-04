@@ -1,5 +1,6 @@
 # APK Android firmato con la chiave di Sergio, mandato su Telegram a ogni push su
-# main (o a mano da Actions → "APK su Telegram" → Run workflow).
+# main (o a mano da Actions → "APK su Telegram" → Run workflow, anche da un ramo:
+# allora didascalia e messaggio cominciano con "🧪 PROVA, NON È MAIN").
 # Qui l'estensione WebSocket si compila sul build server di Defold, quindi l'online c'è.
 # Solo arm64 (tutti i telefoni da 2017 in poi): con anche armv7 l'APK pesa 70 MB e Telegram
 # ne accetta al massimo 50.
@@ -51,10 +52,12 @@ jobs:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
           PRIMA: ${{ github.event.before }}
+          RAMO: ${{ github.ref_name }}  # main o il ramo scelto in "Run workflow"
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          python3 strumenti/apk/novita.py "$PRIMA" | tee "$RUNNER_TEMP/novita.txt"
+          python3 strumenti/apk/novita.py "$PRIMA" "$RAMO" | tee "$RUNNER_TEMP/novita.txt"
+          python3 strumenti/apk/novita.py --didascalia "$RAMO" | tee "$RUNNER_TEMP/didascalia.txt"
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendDocument" \
-            -F "chat_id=$CHAT" -F "caption=MegaBlast $(git log -1 --format=%h)" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
+            -F "chat_id=$CHAT" -F "caption=<$RUNNER_TEMP/didascalia.txt" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
             -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/novita.txt"

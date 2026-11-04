@@ -1,5 +1,5 @@
 # Il diavoletto a pezzi (battle/scoria.lua): fermo di turno, corsa, salto,
-# paracadute (barra da 4: Paracadute a 801), mira in su, rinculo, la Lama in giù,
+# paracadute (nella colonna OGGETTI sopra il TELE: 1180 154), mira in su, rinculo, la Lama in giù,
 # poi l'altro di turno (chi aspetta fa le scenette) e il cerchio di cura, che
 # compare al turno 2. Da vicino: --scala 2.
 
@@ -19,7 +19,7 @@ zoom 04_salto_scende 4
 aspetta 1
 tieni salta 0.35                    # salto alto, e in aria il paracadute
 aspetta 0.05
-tocca 760 148                       # Paracadute (oggetto tondo sopra le secondarie)
+tocca 1180 154                      # Paracadute (l'unico oggetto, sopra il TELE)
 aspetta_evento parachute 2
 aspetta 0.25
 zoom 05_paracadute 4

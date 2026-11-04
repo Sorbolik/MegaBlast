@@ -1,0 +1,6 @@
+# La home dipinta ferma per 25 secondi: tutto lo schermo è lo sfondo dello
+# shader del terreno (terrain.fp). Con --scala 2 (2560 x 1440) il simulatore è
+# limitato dai pixel e misura lo shader: docs/prestazioni.md, OPT-001.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+aspetta 25
+foto 01_home

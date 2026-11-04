@@ -180,8 +180,7 @@ end
 local function build(b)
 	if b.radice then gui.delete_node(b.radice) end
 	b.buttons = {}
-	b.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
-	gui.set_visible(b.radice, false)
+	b.radice = ui.radice()
 	-- the header (ui.header): EVENTI and the pill's place
 	ui.header_delete(b.head)
 	b.head = ui.header(b.buttons, common.events, "indietro")

@@ -41,8 +41,11 @@ local function circle_shape(d, color, parent)
 	return n
 end
 
+-- one vector for every position: no new vector3 each frame (OPT-001 B2)
+local P = vmath.vector3()
 local function pos(n, x, y)
-	gui.set_position(n, vmath.vector3(x, y, 0))
+	P.x, P.y = x, y
+	gui.set_position(n, P)
 end
 
 -- Trap: a rhombus; springboard: a board on two legs

@@ -50,8 +50,7 @@ local function build(s)
 	lit = lit and lit.ui_action
 	if s.radice then gui.delete_node(s.radice) end
 	s.buttons, s.glyphs = {}, {}
-	s.radice = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(s.radice, false)
+	s.radice = ui.radice()
 	local C = ui.C
 	-- the header (ui.header): IMPOSTAZIONI, the pill's place, the FPS counter on the right
 	ui.header_delete(s.head)

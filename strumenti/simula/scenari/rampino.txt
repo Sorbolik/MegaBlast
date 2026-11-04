@@ -1,5 +1,5 @@
 # Rampino: oggetto, uno a turno, sempre nella barra con il
-# paracadute: Lanciarune 479, Lama 593, Rampino 707, Paracadute 801. Sparato al terreno, chi tira sale lungo la fune
+# paracadute: Lanciarune 506, Lama 774, Rampino 1084 62, Paracadute 1180 154. Sparato al terreno, chi tira sale lungo la fune
 # e si mette in piedi sopra la piattaforma colpita; su un robot, lo tira a sé.
 imposta zoom 2
 

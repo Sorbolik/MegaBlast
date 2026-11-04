@@ -132,8 +132,7 @@ end
 local function build(a)
 	if a.radice then gui.delete_node(a.radice) end
 	a.buttons = {}
-	a.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
-	gui.set_visible(a.radice, false)
+	a.radice = ui.radice()
 	-- the header (ui.header): the page's title and the pill's place
 	ui.header_delete(a.head)
 	a.head = ui.header(a.buttons, a.pagina == "mappa" and T.pick_map or common.training, "indietro")

@@ -1,8 +1,8 @@
 # Secondarie: la barra con i due gruppi colorati (brace e acciaio) e il Tonante,
 # la pistola pesante scelta all'inizio: colpo dritto e istantaneo con la traccia,
 # il rinculo spinge chi spara dalla parte opposta, uguale in tutte le direzioni. Con
-# prova_secondaria eagle la barra ha cinque slot: Lanciarune 432, Lama 546,
-# Tonante 660, Rampino 754, Paracadute 848.
+# prova_secondaria eagle: Lanciarune 506 a sinistra del cronometro, Lama 774 e
+# Tonante 868 a destra, Rampino 1084 62, Paracadute nella colonna OGGETTI (1180 154).
 imposta prova_secondaria eagle
 imposta zoom 2
 
