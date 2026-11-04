@@ -154,12 +154,12 @@ local function partita(k)
 	local base = {}
 	for i, p in ipairs(config.MODES[modo]) do base[i] = { team = p.team } end
 	local d = draft.new(seme, base)
-	for i = 1, #base do bot.scegli(d, i, seme) end
+	for i = 1, #base do bot.choose(d, i, seme) end
 	local players = draft.finish(d)
 	local r0 = rng.new((seme * 69621 + 777) % 2147483647)
 	for _ = 1, 4 do r0:next() end
 	for i, p in ipairs(players) do
-		p.bot = 1 + (k + i) % #bot.GRADI
+		p.bot = 1 + (k + i) % #bot.GRADES
 		local s = math.floor(r0:next() * (2 * #equip.SETS + 1))
 		if k % 2 == 0 and s > 0 then
 			local set, variant = equip.SETS[1 + (s - 1) % #equip.SETS].id, s > #equip.SETS and "b" or "a"

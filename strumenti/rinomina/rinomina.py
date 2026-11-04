@@ -223,11 +223,13 @@ def main():
         "client/battle/paintings.lua", "client/battle/grips.lua", "client/battle/skins.lua",
         "client/battle/pivots.lua", "client/sim/mapdata.lua"], help="file da lasciare fuori dall'ondata")
     ap.add_argument("--prova", action="store_true", help="dice cosa farebbe, senza cambiare niente")
+    ap.add_argument("--nomi", default="nomi_lua.txt",
+                    help="dizionario dei nomi Lua (PR 8, il bot: nomi_bot.txt con --dentro dei file del bot)")
     a = ap.parse_args()
 
     files = git_files()
     ondata = [f for f in files if nell_ondata(f, a.dentro, a.fuori)]
-    nomi = {".lua": leggi_dizionario("nomi_lua.txt"), ".go": leggi_dizionario("nomi_go.txt")}
+    nomi = {".lua": leggi_dizionario(a.nomi), ".go": leggi_dizionario("nomi_go.txt")}
     sposta = leggi_dizionario("file.txt")
 
     # chi usa i nomi fuori dall'ondata: lì non si rinominano

@@ -2,7 +2,7 @@
 -- runs them). Chapter 0 is the Addestramento, the lessons: small puzzles that
 -- teach one thing only and can't be finished without using it. Then the
 -- circles (gironi): each circle a map and a mechanic, closed by its keeper (a
--- bot with a personality, sim/bot.lua M.CARATTERI). A chapter opens with the
+-- bot with a personality, sim/bot.lua M.PERSONALITIES). A chapter opens with the
 -- stars earned in the ones before (serve). Sergio's choices of 29 October 2026
 -- (https://claude.ai/artifact/DaLXhFApbxLpa1reyPtenC).
 --
@@ -11,7 +11,7 @@
 -- bot trial (strumenti/arena/collaudo.lua): the second star is at the median
 -- point lead of the normal bot playing in your place (Sergio, 31 Oct: in the
 -- circles points count, turns don't).
--- Circle opponents are grades (sim/bot.lua M.GRADI, 1 to 10): the Forgia goes
+-- Circle opponents are grades (sim/bot.lua M.GRADES, 1 to 10): the Forgia goes
 -- from 2 up to 5 and the ally in the Battaglia is a 7 (Sergio, 30 Oct).
 
 local M = {}
