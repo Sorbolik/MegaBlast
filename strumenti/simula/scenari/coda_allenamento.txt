@@ -1,0 +1,33 @@
+# In coda si gioca l'allenamento (Sergio, 3 nov: "addirittura giocare
+# offline, con la consapevolezza che la partita si annullerà"): GIOCA, 2
+# contro 2, TORNA AI MENU, ALLENAMENTO contro i bot. I bot riempiono la coda
+# dopo 30 s: la partita si ferma sotto un velo con PARTITA TROVATA · 3 e si
+# annulla, poi lo schieramento della partita online.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server 2v2 1 bot_dopo=30s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 205 102 basso destra                     # GIOCA
+aspetta 0.5
+tocca_centro 368 300                      # 2 contro 2
+aspetta_stato modo=connecting 5
+aspetta 0.5
+tocca_centro 440 44                       # TORNA AI MENU
+aspetta_stato modo=menu coda=si 3
+aspetta 1
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 640 140                       # AVANTI
+aspetta 0.5
+tocca 640 140                       # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_allenamento_in_coda        # la pillola sotto i punti
+aspetta_stato coda=trovata 30
+aspetta 0.6
+foto 02_partita_trovata            # il velo col conto
+aspetta_stato modo=scelta_online 6
+aspetta 0.5
+foto 03_schieramento

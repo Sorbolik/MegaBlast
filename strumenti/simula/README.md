@@ -64,7 +64,7 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `zoom NOME [Z]` | foto ingrandita Z volte (2 se non si dice) attorno al robot di turno, contando lo zoom che la camera del gioco ha già (con la camera a 2,2 uno zoom 4 ingrandisce la foto di 1,8) |
 | `tocca X Y` | tocco breve (pulsanti, menu), in pixel dello schermo |
 | `tocca_centro X Y` | tocco in pixel del gioco a 16:9, che su ogni schermo stanno al centro (`ui/screen.lua`): uguale a `tocca` a 1280 x 720, giusto anche con `--schermo` |
-| `tocca_bordo DX DY alto\|basso sinistra\|destra` | tocco a DX, DY pixel del gioco da quell'angolo dello schermo: per quello che è attaccato ai bordi (levette, zoom, bottoni della home) |
+| `tocca_bordo DX DY alto\|basso sinistra\|destra\|centro` | tocco a DX, DY pixel del gioco da quell'angolo dello schermo: per quello che è attaccato ai bordi (levette, zoom, bottoni della home); con `centro` X è come in `tocca_centro` (la pillola della coda) |
 | `tocca_robot DX DY` | tocco breve a (DX, DY) pixel dello schermo dal centro del robot di turno: nel turno del bot, sulla sua targa si apre il suo cartellino (scenario `scenari/scheda.txt`) |
 | `cammina destra X [S]` | tiene premuto `destra` (o `sinistra`) finché il robot di turno passa X nel mondo: non dipende da quanto va veloce il gioco nel simulatore |
 | `tieni TASTO S [ZOOM] [Z]` | tiene premuto un tasto: `sinistra`, `destra`, `salta`, o un nome di xdotool; facoltativamente fa lo zoom ZOOM prima di lasciarlo |

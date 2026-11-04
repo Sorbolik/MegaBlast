@@ -369,13 +369,14 @@ def comando(g, riga):
     elif c in ("tocca", "tocca_centro", "tocca_bordo"):
         # tocca: pixel dello schermo; tocca_centro: pixel del gioco a 16:9, dove
         # stanno i menu, centrati su ogni schermo; tocca_bordo DX DY alto|basso
-        # sinistra|destra: a DX, DY pixel del gioco da quell'angolo (ui/screen.lua)
+        # sinistra|destra|centro: a DX, DY pixel del gioco da quell'angolo (ui/screen.lua;
+        # centro: X come in tocca_centro, attaccato al bordo alto o basso)
         u = min(W / 1280, H / 720)
         x, y = num(0), num(1)
         if c == "tocca_centro":
             x, y = (x - 640) * u + W / 2, (y - 360) * u + H / 2
         elif c == "tocca_bordo":
-            x = W - x * u if a[3] == "destra" else x * u
+            x = W - x * u if a[3] == "destra" else (x - 640) * u + W / 2 if a[3] == "centro" else x * u
             y = H - y * u if a[2] == "alto" else y * u
         g.punta(x, y)
         g.xdo("mousedown", 1)

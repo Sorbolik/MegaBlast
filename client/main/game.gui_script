@@ -26,7 +26,9 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	-- server's events and their rules (start online)
 	eventi = require "main.events", regole = require "sim.rules",
 	-- the entry, the transitions between screens and the waiting flame
-	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting" }
+	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting",
+	-- the queue that stays alive outside the waiting room (Sergio, 3 Nov)
+	pill = require "ui.pill" }
 local missions = require "sim.missions"
 local sticks = require "battle.sticks"
 local aim_name = require "battle.aim"
@@ -509,9 +511,11 @@ local function show_menu(self, without_veil)
 	close_screen(self)
 	if self.sala then menu.lobby.destroy(self.sala); self.sala = nil end
 	self.podium_t = nil
-	disconnect(self)
+	-- in the queue the connection stays: you can go around the menus (ui/pill.lua)
+	if not self.queue then disconnect(self) end
 	self.mode = "menu"
 	home.show(self.home, without_veil)
+	home.queued(self.home, self.queue ~= nil)
 	-- the server's events: the line under EVENTI (and the board, the queue)
 	self.events_t = 0
 	home.eventi(self.home, menu.eventi.home_line())
@@ -1407,6 +1411,8 @@ local function open_screen(self, mod, ...)
 	home.hide(self.home)
 	self.schermata = { mod = mod, obj = mod.new(...) }
 	self.mode = "schermata"
+	-- the queue's pill stays above the new screen
+	if self.pill then menu.pill.raise(self.pill) end
 end
 
 -- Online ------------------------------------------------------------------------
@@ -1503,13 +1509,18 @@ end
 
 local function on_server_message(self, m)
 	if m.t == "wait" then
-		CP.open_room(self, m)
+		CP.queue_wait(self, m)
+	elseif m.t == "draft" and self.queue and self.mode ~= "connecting" then
+		-- the queue filled while you were in the menus or training: three seconds
+		-- on the pill, then the lineup
+		CP.queue_found(self, m)
 	elseif m.t == "draft" then
 		-- weapon draft (menu/pick.lua): it arrives at every change, ours or the
 		-- others'. The token is already needed to come back if the connection drops now.
 		self.tok, self.tries = m.tok or self.tok, 0
 		local first = self.mode ~= "scelta_online"
 		if first then
+			self.queue = nil
 			CP.close_room(self)
 			show_message(self, "", true)
 			-- the players are found: the search's gear goes away (the match has its own)
@@ -1591,7 +1602,11 @@ local function on_server_message(self, m)
 		menu.pick.hide(self.scelta)
 		self.mode = "ended"
 		show_message(self, "L'avversario è uscito\nTocca per tornare al menu", true)
+	elseif m.t == "error" and self.queue and self.mode ~= "connecting" then
+		self.queue.lost = true
+		disconnect(self)
 	elseif m.t == "error" then
+		self.queue = nil
 		CP.close_room(self)
 		menu.pick.hide(self.scelta)
 		self.mode, self.tok = "ended", nil
@@ -1634,6 +1649,9 @@ on_socket = function(self, conn, data)
 			timer.delay(RECONNECT_WAIT, false, function()
 				if (self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online") and not self.conn then connect(self) end
 			end)
+		elseif self.queue and self.mode ~= "connecting" then
+			-- in the queue outside the room: the pill says so, a tap and you are back in
+			self.queue.lost = true
 		elseif self.mode ~= "menu" and self.mode ~= "ended" then
 			CP.close_room(self)
 			menu.pick.hide(self.scelta)
@@ -1649,6 +1667,13 @@ local function hide_menu(self)
 end
 
 local function start_online(self, coda)
+	-- another queue while still in one (an event's GIOCA): the old one is left
+	if self.conn then
+		local conn = self.conn
+		send(self, { t = "leave" })
+		self.conn = nil
+		timer.delay(2, false, function() ws.disconnect(conn) end)
+	end
 	self.coda = coda
 	hide_menu(self)
 	if not ws then
@@ -1659,10 +1684,150 @@ local function start_online(self, coda)
 	end
 	self.mode, self.tok, self.tries = "connecting", nil, 0
 	self.exited, self.online_teams = {}, nil
+	-- the queue: its mode, the time since you entered, the last "wait"
+	self.queue = { mode = coda or "2v2", t = 0 }
 	-- while searching for the others you can leave, with the usual gear (Sergio, 3 Nov)
 	gui.set_enabled(self.btn_menu, true)
 	CP.aspetta(self, "Mi collego al server...")
 	connect(self)
+end
+
+-- The queue outside the waiting room (Sergio, 3 Nov: "puoi stare a guardare i
+-- cartellini, oppure andare indietro senza abbandonare la coda, oppure uscire
+-- dalla coda"; plan https://claude.ai/artifact/DfaPTiKqa3MzqNC7kBMsLK).
+-- TORNA AI MENU leaves the room but not the queue: the connection stays and
+-- self.queue keeps its mode, its time and the last "wait". Meanwhile the pill
+-- (ui/pill.lua) says how it goes, and a tap on it or on GIOCA (which
+-- stays GIOCA, menu/home.lua) goes back to the room. When the queue fills (the "draft") outside the room,
+-- the pill says PARTITA TROVATA for CP.QUEUE_FOUND seconds (a training match
+-- stops, under a veil, and is cancelled: nothing goes into the profile), then
+-- the iris takes you to the lineup, with the time the countdown used taken
+-- off the draft. The campaign is off while queued (menu/home.lua).
+CP.QUEUE_FOUND = 3
+
+-- "wait": the room if it is open, otherwise the pill
+function CP.queue_wait(self, m)
+	local q = self.queue
+	if q then
+		local n = type(m.vetrine) == "table" and #m.vetrine or 0
+		-- someone arrived while you are around: a small jump and the tick
+		if q.n and n > q.n and self.mode ~= "connecting" then
+			menu.pill.flash(self.pill)
+			sound.play("#punto")
+		end
+		q.n, q.of, q.last, q.bot_left = n, tonumber(m.of) or 0, m, tonumber(m.bot_in)
+	end
+	if self.mode == "connecting" then CP.open_room(self, m) end
+end
+
+function CP.queue_found(self, m)
+	local q = self.queue
+	if not q.found then
+		q.found = { wait = CP.QUEUE_FOUND }
+		sound.play("#punto")
+		menu.pill.flash(self.pill)
+	end
+	-- the draft arrives at every pick: the last one counts, with when it came
+	q.found.m, q.found.at = m, q.t
+end
+
+-- TORNA AI MENU in the room
+function CP.queue_to_menu(self)
+	CP.close_room(self)
+	open_wheel(self, false)
+	CP.iris(self, function() show_menu(self, true) end)
+end
+
+-- Back to the room (the pill, GIOCA); with the queue lost, in again
+function CP.queue_open(self)
+	local q = self.queue
+	CP.iris(self, function()
+		close_screen(self)
+		if q.lost then
+			self.queue = nil
+			start_online(self, q.mode)
+			return
+		end
+		hide_menu(self)
+		self.mode = "connecting"
+		gui.set_enabled(self.btn_menu, true)
+		if q.last then
+			CP.open_room(self, q.last)
+			if self.sala then
+				menu.lobby.since(self.sala, q.t)
+				menu.lobby.bot_in(self.sala, q.bot_left)
+			end
+		else
+			CP.aspetta(self, "Connesso, in attesa...")
+		end
+	end)
+end
+
+function CP.queue_tap(self, x, y)
+	local m = self.mode
+	if not (self.queue and (m == "menu" or m == "schermata" or m == "ended")) then return false end
+	if not menu.pill.hit(self.pill, x, y) or self.queue.found then return false end
+	CP.queue_open(self)
+	return true
+end
+
+-- The full queue: the match outside the room ends, the lineup comes
+function CP.queue_go(self, q)
+	CP.iris(self, function()
+		local m = q.found.m
+		-- the seconds of the countdown are already gone from the draft
+		if m.left then m.left = math.max(0, m.left - math.floor((q.t - q.found.at) / game.DT)) end
+		-- the cancelled match (training) is let go without counting (show_menu
+		-- forgets the stats); the connection stays because the queue is still there
+		show_menu(self, true)
+		self.queue = nil
+		menu.pill.show(self.pill, false)
+		hide_menu(self)
+		self.mode = "connecting"
+		on_server_message(self, m)
+	end)
+end
+
+function CP.queue_update(self, dt)
+	local q, p = self.queue, self.pill
+	if not q then
+		if p and p.on then
+			p.on = false
+			menu.pill.show(p, false)
+		end
+		return
+	end
+	q.t = q.t + dt
+	if q.bot_left then q.bot_left = math.max(0, q.bot_left - dt) end
+	local battle = self.mode == "local"
+	local on = self.mode ~= "connecting"
+	if on ~= p.on or battle ~= p.battle then
+		p.on, p.battle = on, battle
+		menu.pill.show(p, on, battle)
+		if on then menu.pill.raise(p) end
+	end
+	if not on then return end
+	local text
+	if q.found then
+		q.found.wait = q.found.wait - dt
+		local n = math.max(1, math.ceil(q.found.wait))
+		text = "PARTITA TROVATA · " .. n
+		menu.pill.found(p, battle and n or nil)
+		if q.found.wait <= 0 and not q.going then
+			q.going = true
+			CP.queue_go(self, q)
+		end
+	elseif q.lost then
+		text = "CODA PERSA · TOCCA PER RIENTRARE"
+	else
+		local secs = math.floor(q.t)
+		text = string.format("IN CODA · %s · %d:%02d", profile.GROUP_NAMES[q.mode] or "", math.floor(secs / 60), secs % 60)
+		if q.bot_left and q.bot_left <= menu.lobby.BOT_SHOWN and (q.n or 0) < (q.of or 0) then
+			text = text .. (q.bot_left > 0 and string.format(" · BOT TRA %d s", math.ceil(q.bot_left)) or " · ARRIVANO I BOT")
+		end
+	end
+	menu.pill.set(p, text, q.found and (q.of or 0) or (q.n or 0), q.of or 0, q.found ~= nil)
+	menu.pill.update(p, dt)
 end
 
 -- Character sheet (Sergio, 31 Oct) ---------------------------------------------
@@ -3546,6 +3711,7 @@ function init(self)
 
 	-- the home last, so it sits above the battle
 	self.home = home.new(TEAM_COLORS[1])
+	self.pill = menu.pill.new()
 	self.profilo = profile.load_up()
 	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.prova(self.profilo) end
 	self.scelta = menu.pick.new(WEAPON_ICON, WEAPON_NAME, WEAPON_EFFECT, self.comandi)
@@ -3568,6 +3734,7 @@ function update(self, dt)
 	if self.ingresso then CP.entry_update(self, dt) end
 	menu.attesa.update(self.attesa, dt)
 	if self.sala then menu.lobby.update(self.sala, dt) end
+	CP.queue_update(self, dt)
 	if self.wait_release then
 		self.wait_release = self.wait_release - dt
 		if self.wait_release <= 0 then self.wait_release = nil end
@@ -3581,7 +3748,7 @@ function update(self, dt)
 		dt_world = 0
 	end
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
-	if self.mode == "local" and not self.menu_open and not self.carta then
+	if self.mode == "local" and not self.menu_open and not self.carta and not (self.queue and self.queue.found) then
 		self.acc = math.min(self.acc + dt_world, 0.25)
 		while self.acc >= game.DT and self.mode == "local" and not self.carta do
 			local input = {
@@ -3708,24 +3875,26 @@ function update(self, dt)
 	end
 
 	paint_terrain(self)
+	-- coda: the queue outside the room (no, si, trovata, persa), for the scenarios
+	local coda = SIMULATE and (not self.queue and "no" or self.queue.found and "trovata" or self.queue.lost and "persa" or "si")
 	if SIMULATE and self.g then
 		-- sx, sy: the robot's center on screen (where the mouse rests to aim)
 		local rb = current_robot(self)
 		-- (stretched over 1280 x 720 like taps: simula.py brings it back to real pixels)
 		local sx, sy = screen.on_touch(camera.to_screen(self.cam, rb.x, rb.y + game.DISEGNO_H / 2))
-		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f",
+		local line = string.format("SIMULA stato modo=%s turno=%d fase=%s x=%d y=%d sx=%d sy=%d zoom=%.2f coda=%s",
 			self.mode, self.g.current, self.g.phase, math.floor(rb.x), math.floor(rb.y),
-			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s)
+			math.floor(sx + 0.5), math.floor(sy + 0.5), self.cam.s, coda)
 		if line ~= self.simulate_line then
 			print(line)
 			self.simulate_line = line
 		end
-	elseif SIMULATE and self.mode ~= self.simulate_mode then
+	elseif SIMULATE and (self.mode ~= self.simulate_mode or coda ~= self.simulate_coda) then
 		-- no match (home, screens, connecting): only the mode
-		print("SIMULA stato modo=" .. tostring(self.mode))
+		print("SIMULA stato modo=" .. tostring(self.mode) .. " coda=" .. coda)
 		self.simulate_line = nil
 	end
-	self.simulate_mode = self.mode
+	self.simulate_mode, self.simulate_coda = self.mode, coda
 	CP.fotogrammi(self, dt)
 end
 
@@ -3842,6 +4011,7 @@ local function quit_match(self)
 	local online = self.mode == "online" or self.mode == "scelta_online" or self.mode == "connecting"
 	local comeback = online and "home" or self.ritorno
 	menu.pick.hide(self.scelta)
+	if online then self.queue = nil end
 	if online and self.conn then
 		-- the server closes the connection, after reading the message (closing it
 		-- here at once it might not leave); if it doesn't, we do in a moment
@@ -3885,8 +4055,13 @@ local function pointer_down(self, id, px, py)
 			PAD.rotellina(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci" or nil)
 		elseif gui.pick_node(self.btn_menu, px, py) then
 			open_wheel(self, true)
-		elseif self.sala and menu.lobby.exit_hit(self.sala, px, py) then
-			quit_match(self)
+		else
+			local hit = self.sala and menu.lobby.exit_hit(self.sala, px, py)
+			if hit == "esci" then
+				quit_match(self)
+			elseif hit == "menu" then
+				CP.queue_to_menu(self)
+			end
 		end
 		return
 	elseif self.mode ~= "local" and self.mode ~= "online" then
@@ -4418,6 +4593,10 @@ function PAD.evento(self, e)
 			local ui_action = ui.tocco(self.rotellina, ACTION.PAD, { pressed = true, ui = e.ui })
 			if ui_action then PAD.rotellina(self, ui_action) end
 		end
+	elseif command == "rotellina" and self.queue and not self.queue.found
+		and (self.mode == "menu" or self.mode == "schermata" or self.mode == "ended") then
+		-- the controller's way to the pill: the gear button goes back to the room
+		CP.queue_open(self)
 	elseif command == "rotellina" and (self.controls_visible or self.mode == "connecting") then
 		open_wheel(self, true)
 		ui.navigate(self.rotellina, "giu")
@@ -4510,6 +4689,9 @@ function PAD.on_input(self, action_id, action)
 		local choice = home.on_input(self.home, action_id, action)
 		if choice == "local" then
 			CP.iris(self, function() start_local(self) end)
+		elseif choice == "online" and self.queue then
+			-- GIOCA while queued: the matchmaking, i.e. the waiting room (Sergio wants both)
+			CP.queue_open(self)
 		elseif choice == "online" and profile.new_player(self.profilo)
 			and (not SIMULATE or config_int("megablast.prova_nuovo", 0) > 0) then
 			-- for a new player GIOCA leads to the Training basics, until they finish
@@ -4662,6 +4844,8 @@ end
 function CP.on_input(self, action_id, action)
 	-- during the entry and the transitions nothing can be touched
 	if self.ingresso or menu.passaggio.is_active(self.passaggio) then return true end
+	-- the queue's pill: a tap goes back to the room (not in a match: the finger is playing)
+	if action_id == hash("touch") and action.pressed and CP.queue_tap(self, action.x, action.y) then return true end
 	local modo, obj = PAD.schermo(self)
 	local r = PAD.on_input(self, action_id, action)
 	-- A finger that changes screen by touching down doesn't also touch the next

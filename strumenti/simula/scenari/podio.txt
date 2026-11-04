@@ -35,7 +35,7 @@ tocca 720 364
 tocca 720 272
 aspetta 0.3
 foto 04_armeria_vuoto
-tocca 630 680                       # scheda ALBERO
+tocca 630 622                       # scheda ALBERO
 aspetta 0.3
 tocca 102 490                       # Gambe di Titano
 aspetta 0.3

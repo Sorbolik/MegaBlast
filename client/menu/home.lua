@@ -14,6 +14,9 @@
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
 --                                                        -- "impostazioni", "profilo" (tapping the devil) or nil
 --   home.eventi(h, riga)                        -- the line under EVENTI
+--   home.queued(h, on)                          -- in the online queue (ui/pill.lua): GIOCA stays GIOCA and
+--                                               -- takes you to the room (Sergio: a button never changes its job)
+--                                               -- and the CAMPAGNA is off (a mission cut halfway loses its stars)
 
 local game = require "sim.game"
 local scoria = require "battle.scoria"
@@ -83,10 +86,14 @@ function M.new(color)
 
 	-- bottom right: the matches
 	local dx = angle_deg(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	ui.button(h.buttons, 0, 344, 340, 72, "CAMPAGNA", "campagna", nil, dx)
+	local campaign = ui.button(h.buttons, 0, 344, 340, 72, "CAMPAGNA", "campagna", nil, dx)
+	h.campaign = h.buttons[#h.buttons]
+	h.campaign_note = ui.testo("esci dalla coda per giocarla", 0, -24, 0.5, ui.C.OFF, campaign)
+	gui.set_enabled(h.campaign_note, false)
 	ui.button(h.buttons, 0, 256, 340, 72, "ALLENAMENTO", "allenamento", nil, dx)
 	ui.button(h.buttons, 0, 168, 340, 72, "STESSO TELEFONO", "local", nil, dx)
 	ui.button(h.buttons, 0, 60, 340, 108, "GIOCA", "online", { main = true, colore = color }, dx)
+	h.play = h.buttons[#h.buttons]
 
 	-- bottom left: loadouts, tree and sets
 	local sx = angle_deg(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
@@ -136,6 +143,13 @@ end
 -- The line under EVENTI (main/events.lua, home_line)
 function M.eventi(h, txt)
 	gui.set_text(h.events_row, txt)
+end
+
+function M.queued(h, on)
+	h.campaign.spento = on or nil
+	gui.set_color(h.campaign.testo, on and ui.C.OFF or ui.C.TEXT)
+	gui.set_position(h.campaign.testo, vmath.vector3(0, on and 10 or 0, 0))
+	gui.set_enabled(h.campaign_note, on)
 end
 
 function M.update(h, dt)
