@@ -454,6 +454,8 @@ local function set_controls_visible(self, visible)
 	score.conceal(self.punti, not missions.vede(self.missione, "punti"))
 	if not visible then
 		hud.tag_away(self.tag)
+		-- render stops without a match: the swap button would stay on in the home
+		hud.swap_update(self.scambio, false)
 		gui.cancel_animations(self.announcement, "color.w")
 		gui.set_color(self.announcement, vmath.vector4(1, 1, 1, 0))
 		self.banner_wait = false
