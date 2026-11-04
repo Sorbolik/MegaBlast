@@ -210,4 +210,24 @@ dettaglio.
 
 ## Consegna di Codex
 
+### Fase 1 · 2026-11-04
+
+Eseguita la sola fase 1 approvata, da `main` al commit `fbc3c4a`, sul ramo `design/WB-013`. Generatore integrato imagegen; prompt integrali invariati e riferimenti allegati nell'ordine della tabella. Nessun intervento su fase 2, ricalco, taglio o gioco.
+
+**Tre risultati non conformi**, conservati solo come scarti documentati in `art/WB-013/scartati/fase1/`; non sono modelli approvati da usare per la fase 2. Ogni PNG ha il `.txt` con prompt integrale e riferimenti.
+
+| File nella cartella degli scarti | Misura effettiva | Tentativi completati | Esito |
+|---|---|---:|---|
+| `1_tre_quarti_1.png`, `1_tre_quarti_1.txt` | 1024×1536 | 3 | SCARTATA |
+| `1_tre_quarti_2.png`, `1_tre_quarti_2.txt` | 1024×1536 | 3 | SCARTATA |
+| `2_espressioni.png`, `2_espressioni.txt` | 1254×1254 | 3 | SCARTATA |
+
+- Guardate tutte le generazioni. Per ogni risultato conservato il terzo tentativo, senza ritocchi, ridimensionamenti o modifiche al prompt. I tentativi precedenti mostravano gli stessi problemi di sfumature; una chiamata del secondo tre quarti è stata interrotta dall'utente, senza risultato mostrato, e non è conteggiata fra i tre tentativi completati.
+- **Tre quarti:** presenti fiamma bianco-azzurra con punte dorate, corna, ciglia, muso pergamena, camicia e salopette, grembiule, stivali, mani aperte vuote e coda intera. Assenti ali, utensili, colore di squadra, testo e firma. Nessun pezzo tagliato dal bordo. La punta della coda somiglia al modello, con attacco nell'incavo e punta in fuori: la valutazione finale della forma spetta a Claude.
+- **Difetti persistenti dei tre quarti:** sfumature su pelle, fiamma e abiti, più toni e riflessi oltre alle ombre nette ammesse; figura più slanciata del corpo tozzo di R3; il piede a sinistra nell'immagine resta quasi frontale anziché puntare chiaramente a destra. La gerarchia arto vicino/lontano non è una copia affidabile della vista richiesta. Non soddisfano i vincoli per il ricalco.
+- **Espressioni:** nove teste separate in griglia 3×3, verso destra, nell'ordine richiesto: sorriso, colpita, vittoria, stordita, mira, rabbia, sconfitta, paura, linguaccia. Nessun corpo, testo o firma; fiamme intere dentro il foglio. Restano sfumature, ombre sul moncone del collo e bordi neri laterali che arrivano al fondo anziché sparire gradualmente. Il collo non è uniforme come richiesto; sagoma e fiamma variano leggermente tra le teste. Non conforme anche dopo tre tentativi.
+- **Dimensioni:** tre quarti conformi a 1024×1536; espressioni native a 1254×1254 anziché 1536×1536 o 1024×1024. Sfondo visivamente bianco opaco; non certificato #FFFFFF uniforme al pixel, né esattezza della tavolozza o nero #000000 su tutti i contorni.
+- Verificate intestazioni e dimensioni dei PNG e corrispondenza integrale dei prompt salvati con la scheda. Non verificati ricalco SVG, taglio, giunture animate, leggibilità a 90 px o resa nel gioco. Criteri lasciati non spuntati. Mancano risultati conformi da scegliere: raggiunto il limite di tre tentativi per ciascuna immagine.
+- La riga del 4 novembre in `DECISIONI.md` dice coda detta due volte, mentre i prompt approvati della scheda la richiamano una volta come il modello: segnalata la differenza, eseguiti i prompt senza modificarli.
+
 ## Resoconto di Claude
