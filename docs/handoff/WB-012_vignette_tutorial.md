@@ -262,6 +262,40 @@ In `art/WB-012/`, sei PNG e sei `.txt` con prompt integrale e riferimenti nell'o
 - Non verificati: ritaglio automatico, resa nel gioco e approvazione dei modelli da parte di Sergio. I criteri di accettazione restano non spuntati per la revisione; non si dichiarano tutti soddisfatti.
 - La variante con fiammella è solo la proposta espressamente prevista qui per la scelta 6: non modifica lo standard senza fiammella deciso il 2 novembre.
 
+
+### Fase 2 · Consegna di Codex
+
+Eseguita la fase 2 approvata sulla scheda di `main` al commit `6d4b94f`, conservando la consegna della fase 1 e il resoconto di Claude. Usati solo i prompt delle otto righe di fase 2, senza modifiche, con i fogli scelti R6/R7/R8 e R3 nell'ordine indicato.
+
+Otto immagini generate: **sei da revisione e due scartate**. Gli scarti sono conservati soltanto in `art/WB-012/scartati/fase2/`, non fra i file proposti per l'integrazione. Ogni PNG ha accanto il `.txt` con prompt e riferimenti.
+
+| File relativo ad `art/WB-012/` | Misura effettiva | Tentativi completati | Esito |
+|---|---|---:|---|
+| `scartati/fase2/4_arrivo_a.png` | 1672×941 | 3 | SCARTATA |
+| `4_arrivo_b.png` | 1254×1254 | 1 | da revisione |
+| `4_arrivo_c.png` | 1254×1254 | 2 | da revisione |
+| `5_fabbro_a.png` | 1672×941 | 1 | da revisione |
+| `scartati/fase2/5_fabbro_b.png` | 1254×1254 | 3 | SCARTATA |
+| `6_rapimento_a.png` | 1536×1024 | 1 | da revisione |
+| `6_rapimento_b.png` | 1254×1254 | 3 | da revisione |
+| `6_rapimento_c.png` | 1536×1024 | 1 | da revisione |
+
+#### Controlli ed esiti
+
+- Guardata ogni immagine generata e confrontata con i fogli scelti. Nessuna scritta, lettera, fumetto o firma visibile. Controllati fiamme, corna, fazzoletto, abiti, code, guanti, comignolo, pose e spazio per il testo. Nessun ritocco, specchiatura, ridimensionamento o integrazione nel gioco.
+- **4_arrivo_a SCARTATA:** in tutti e tre i tentativi Favilla ha la coda a freccia invece che a cuore. Conservato il terzo solo come testimonianza del problema; manca una scena di arrivo conforme. L'arrivo, l'atterraggio, gli abiti e il muro scuro in alto a destra sono presenti.
+- **4_arrivo_b:** apprendista indignato, pugno alzato, fazzoletto blu e fiammella arancione. Lo spazio calmo in basso è più vicino a un quarto che al terzo richiesto; da verificare col testo effettivo.
+- **4_arrivo_c:** scartato il primo tentativo perché guardava a destra; il secondo guarda a sinistra e indica la forgia col pollice. Cornice inferiore calma presente; la fiamma ha una silhouette non identica al modello.
+- **5_fabbro_a:** Fabbro grande a sinistra e apprendista piccolo a destra, fornace accesa, braccia incrociate, spazio scuro in alto a destra. La forma delle corna e la fornace non sono copie geometriche esatte; verificare nella revisione il numero delle sbarre e le parti dei guanti nascoste dalle braccia.
+- **5_fabbro_b SCARTATA:** in tutti e tre i tentativi Favilla ha la coda a freccia invece che a cuore. Compare inoltre un martello in mano all'apprendista non richiesto dalla scena. Conservato il terzo soltanto come scarto; manca una scena del bisbiglio conforme.
+- **6_rapimento_a:** presa di ghiaccio intorno alla vita, Favilla con coda a cuore, salopette e stivali, apprendista che corre da sinistra. Il passaggio da arancione a blu è leggibile; non certificata l'identità esatta delle proporzioni rispetto ai modelli.
+- **6_rapimento_b:** primi due tentativi con punta della coda non conforme; scelto il terzo, con coda a cuore. Vista nel baratro, ghiaccio ai bordi e fiamma a scia presenti. La presa si sposta verso la gamba/stivale rispetto alla presa alla vita della scena precedente: continuità da rivedere.
+- **6_rapimento_c:** entrambi inginocchiati al bordo, pugni dell'apprendista serrati, brina su baffi e guanti, fornace attenuata, luce blu e spazio calmo in alto presenti. Forma delle corna del Fabbro e volto variano rispetto al foglio: da revisione, non dichiarata identità esatta.
+- **Misure non tutte conformi:** salvati gli originali nelle dimensioni native della tabella. I primi tre panoramici e i quadrati non rispettano esattamente 1536×1024 / 1024×1024. Nessuna deformazione per forzare le misure.
+- Il paragrafo generale della scheda indica pergamena, ma i prompt specifici della fase 2 chiedono forgia e baratro: eseguiti esattamente quei prompt, con sfondi dipinti opachi. Segnalata l'incoerenza senza modificare la scheda altrui.
+- Non verificati: impaginazione coi fumetti effettivi, leggibilità su telefono, continuità nel montaggio e resa nel gioco. I criteri restano non spuntati. I sei risultati da revisione non equivalgono a un'approvazione finale; i due scarti non vanno integrati.
+- Una chiamata per `6_rapimento_b` è stata interrotta senza produrre un file; non conteggiata fra i tre tentativi completati.
+
 ## Resoconto di Claude
 
 Fase 1 (2026-11-03). Guardati i sei fogli di Codex (518c3c2): tutti tengono il personaggio

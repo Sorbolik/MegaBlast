@@ -1,0 +1,8 @@
+Image 1 is the model sheet of the Blacksmith, image 2 the model sheet of the apprentice imp, image 3 the illustration style. Copy both EXACTLY from their sheets.
+
+A wide comic panel seen from low, inside the forge: the huge Blacksmith towers on the left, arms crossed, the furnace in his belly glowing bright, smoke from his shoulder chimney, looking down sternly. The tiny apprentice imp stands on the right, looking up at him, a bit intimidated but trying to look brave. Leave the top-right quarter calm for a speech balloon the game adds. Style of image 3. No text, letters, speech balloons or signatures.
+
+Riferimenti allegati in ordine:
+Image 1: R8 — art/WB-012/scelti/fabbro.png
+Image 2: R6 — art/WB-012/scelti/apprendista.png
+Image 3: R3 — art/WB-008/13_trio.png
