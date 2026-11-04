@@ -31,12 +31,31 @@ La campagna oggi: Addestramento (6 lezioni) → I girone, la Forgia (si apre con
 Nella proposta dei gironi dell'inferno la Forgia diventa il Prologo e il secondo custode è
 Caronte (I girone, Limbo).
 
-Consiglio: **si apre vincendo la Battaglia della Forgia**. È il primo custode («uno o due
-boss») ed è già un 2 contro 2 vero, la stessa partita che si gioca online: chi arriva
-online l'ha appena provata con un compagno. Il momento è un dato (l'id della missione che
-apre l'online), quindi quando esisterà Caronte si sposta lì cambiando una parola, se il
-primo custode sembra troppo presto. Non coincide con l'apertura di un capitolo (quelli si
-aprono a stelle), quindi niente bivio: chi arriva lì la campagna l'ha già giocata sul serio.
+**Aggiornato il 4 nov (Sergio): la fine della Forgia non apre l'online, apre i gironi**
+(«dopo la forgia ci sono tutti i gironi [...] lì sbloccherei i gironi», con la mappa ad anelli).
+
+Consiglio ora: **l'online si apre battendo Caronte, il custode del primo girone (il Limbo)**.
+È il secondo boss («uno o due boss»), arriva dopo che hai visto la mappa dei gironi e ci hai
+giocato un girone intero, e non coincide con nessun altro sblocco: la Forgia apre i gironi,
+Caronte apre l'online. Il momento è un dato (l'id della missione che apre l'online), quindi
+si sposta cambiando una parola. Alternativa più tardi: il custode del secondo girone (Minosse).
+
+**Finché il Limbo non c'è** il lucchetto non si fa: l'online resta aperto come oggi e il
+lucchetto arriva nella stessa PR del primo girone, così nessuno resta chiuso fuori.
+
+## Dove stanno i gironi
+
+Consiglio: **una porta sola, CAMPAGNA, che cambia faccia**. Prima della fine della Forgia
+CAMPAGNA apre i capitoli di oggi (Addestramento, Forgia). Vinta la Battaglia della Forgia,
+una vignetta della storia apre la porta dell'inferno e da lì in poi CAMPAGNA apre **la mappa
+ad anelli**: in cima, fuori dall'imbuto, la Forgia e l'Addestramento (si rigiocano per le
+stelle), sotto gli anelli dei gironi, quelli chiusi scuri. In home non cambia niente: il
+pulsante è lo stesso, e l'interfaccia diversa è dentro.
+
+Scartate: un pulsante GIRONI accanto a CAMPAGNA (due porte della stessa campagna, e la
+Forgia dove starebbe?); la mappa ad anelli fin dall'inizio con tutto scuro (spoiler di tutto
+l'inferno al primo tocco; si può valutare con la storia); un'opzione nella fine livello «vai
+ai gironi» (seconda porta).
 
 ## Le proposte
 
@@ -46,10 +65,10 @@ aprono a stelle), quindi niente bivio: chi arriva lì la campagna l'ha già gioc
   Sopra, al posto piccolo, **GIOCA ONLINE spento con un lucchetto** e sotto una riga:
   «Si apre nella campagna». EVENTI non c'è (un solo lucchetto in home, non due), ARMERIA neanche (arriva col regalo, sotto).
 - **Tocco sul lucchetto**: il pulsante trema e la riga diventa per 3 secondi
-  «Le partite online si aprono quando vinci la Battaglia della Forgia».
-  Senza spoiler: «Le partite online si aprono quando batti il primo custode della campagna».
+  «Le partite online si aprono quando batti Caronte».
+  Senza spoiler: «Le partite online si aprono quando batti il custode del primo girone».
   Nessun pulsante che porta alla campagna: la porta della campagna è una sola.
-- **Lo sblocco**: nella fine livello della Battaglia, sotto le stelle, una riga in più:
+- **Lo sblocco**: nella fine livello di Caronte, sotto le stelle, una riga in più:
   «PARTITE ONLINE APERTE. Sfida altri giocatori dalla home.» Niente pulsante «vai online»
   lì (sarebbe una seconda porta). Tornando in home il lucchetto si rompe una volta sola,
   GIOCA ONLINE scende al posto grande dorato, CAMPAGNA sale al suo posto ed EVENTI appare.
@@ -63,12 +82,12 @@ aprono a stelle), quindi niente bivio: chi arriva lì la campagna l'ha già gioc
 
 - **Prima**: l'online non c'è. In home CAMPAGNA grande, ALLENAMENTO e STESSO TELEFONO;
   niente EVENTI.
-- **Il segnale**: nella campagna, sulla carta della Battaglia della Forgia, un sigillo
+- **Il segnale**: nella campagna, sull'anello del Limbo nella mappa, un sigillo
   piccolo: «Vincila e si aprono le partite online». È un'informazione, non una porta.
 - **Lo sblocco**: come la 1, e in home il pulsante nuovo appare con la scritta NUOVO.
 - **Pro**: in home nessun pulsante morto, ed è una sorpresa.
-- **Contro**: chi ha scaricato il gioco per l'online non lo trova per 40-60 minuti (6 lezioni,
-  5 missioni, il Fabbro) e può pensare che non ci sia. Il sigillo lo vede solo chi apre la Forgia.
+- **Contro**: chi ha scaricato il gioco per l'online non lo trova per qualche ora (Addestramento,
+  Forgia e Limbo) e può pensare che non ci sia. Il sigillo lo vede solo chi arriva alla mappa.
 
 ### 3. La home che cresce
 
@@ -76,7 +95,7 @@ aprono a stelle), quindi niente bivio: chi arriva lì la campagna l'ha già gioc
 - **Dopo l'Addestramento**: appaiono ALLENAMENTO e STESSO TELEFONO (sono offline, si usa
   quello che hai imparato). ARMERIA arriva col regalo del Fabbro (sotto).
   La riga in fine livello: «Nuovo nella home: ALLENAMENTO e STESSO TELEFONO».
-- **Dopo la Battaglia della Forgia**: GIOCA ONLINE (grande, dorato) ed EVENTI, come nella 1.
+- **Dopo Caronte**: GIOCA ONLINE (grande, dorato) ed EVENTI, come nella 1.
   Prima di allora un lucchetto piccolo sotto CAMPAGNA: «Gioca online: si apre nella campagna».
 - **Pro**: la home più pulita per chi comincia; ogni pulsante arriva quando ha senso.
 - **Contro**: tre stati della home da provare invece di due; un bivio piccolo (offline) alla
@@ -102,8 +121,8 @@ regalato in campagna non si sente in campagna, solo in Allenamento, Stesso telef
 Per questo il regalo conviene vicino al momento in cui serve:
 
 - **A (consigliata): il Fabbro te lo regala quando lo batti** («Te lo sei guadagnato»), una
-  missione prima della Battaglia della Forgia che apre l'online. Due sblocchi vicini ma non
-  insieme: prima ARMERIA, poi GIOCA ONLINE, ognuno col suo momento.
+  missione prima della Battaglia della Forgia che apre i gironi. Tre sblocchi, ognuno col suo
+  momento: ARMERIA (Fabbro), i gironi (Battaglia), GIOCA ONLINE (Caronte).
 - B: il Fabbro te lo regala alla fine dell'Addestramento, come diploma. Serve subito solo in
   Allenamento; ARMERIA resta lì un'ora prima dell'online.
 - C: Favilla te lo regala nella storia d'ingresso, prima di essere rapita. È il momento più
