@@ -31,7 +31,7 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	-- the entry, the transitions between screens and the waiting flame
 	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting",
 	-- the queue that stays alive outside the waiting room (Sergio, 3 Nov)
-	pill = require "ui.pill" }
+	pill = require "ui.pill", playout = require "main.playout" }
 local missions = require "sim.missions"
 local sticks = require "battle.sticks"
 local aim_name = require "battle.aim"
@@ -619,57 +619,6 @@ local function pose_k(self)
 	return math.max(0, math.min(1, self.pose_t / self.pose_dt))
 end
 
-local ORB_TMP = {}
-for i = 1, game.MAX_ORBS do ORB_TMP[i] = { id = 0, x = 0, y = 0 } end
-
--- Moves pose a toward b by fraction k (a becomes what is on screen)
-local function advance_pose(a, b, k)
-	for i, rb in ipairs(b.r) do
-		local ra = a.r[i]
-		ra.x, ra.y, ra.g = ra.x + (rb.x - ra.x) * k, ra.y + (rb.y - ra.y) * k, rb.g
-		if rb.gs then
-			if not ra.gs then ra.gx, ra.gy = rb.gx, rb.gy end
-			ra.gx, ra.gy = ra.gx + (rb.gx - ra.gx) * k, ra.gy + (rb.gy - ra.gy) * k
-		end
-		ra.gs = rb.gs
-	end
-	if b.has_p then
-		if not a.has_p then a.p.x, a.p.y = b.p.x, b.p.y end
-		a.p.x, a.p.y = a.p.x + (b.p.x - a.p.x) * k, a.p.y + (b.p.y - a.p.y) * k
-	end
-	a.has_p = b.has_p
-	-- b's orbs, each starting from where it was in a (same number)
-	for i = 1, b.no do
-		local ob, s = b.o[i], ORB_TMP[i]
-		local oa = find_orb(a, ob.id) or ob
-		s.id, s.x, s.y = ob.id, oa.x + (ob.x - oa.x) * k, oa.y + (ob.y - oa.y) * k
-	end
-	for i = 1, b.no do
-		local s, d = ORB_TMP[i], a.o[i]
-		d.id, d.x, d.y = s.id, s.x, s.y
-	end
-	a.no = b.no
-	for i = 1, game.SHARD_COUNT do
-		local sa, sb = a.s[i], b.s[i]
-		if sb.on then
-			if not sa.on then sa.x, sa.y = sb.x, sb.y end
-			sa.x, sa.y = sa.x + (sb.x - sa.x) * k, sa.y + (sb.y - sa.y) * k
-		end
-		sa.on = sb.on
-	end
-	for id, cb in pairs(b.c) do
-		local ca = a.c[id]
-		if not ca then
-			ca = { x = cb.x, y = cb.y }
-			a.c[id] = ca
-		end
-		ca.x, ca.y, ca.landed = ca.x + (cb.x - ca.x) * k, ca.y + (cb.y - ca.y) * k, cb.landed
-	end
-	for id in pairs(a.c) do
-		if not b.c[id] then a.c[id] = nil end
-	end
-end
-
 -- After a teleport the robot must not slide from the old point to the new one
 local function snap_robot(self, i)
 	local ra, rb = self.pose_a.r[i], self.pose_b.r[i]
@@ -680,11 +629,16 @@ local function snap_robot(self, i)
 end
 
 local function reset_pose(self)
-	self.pose_a = self.pose_a or new_pose()
-	self.pose_b = self.pose_b or new_pose()
+	-- our own two (online the drawing takes them from the queue)
+	self.own_a, self.own_b = self.own_a or new_pose(), self.own_b or new_pose()
+	self.pose_a, self.pose_b = self.own_a, self.own_b
 	capture(self.pose_a, self.g)
 	capture(self.pose_b, self.g)
 	self.pose_t = 0
+	-- online the states are drawn from a queue (main/playout.lua)
+	local pl = menu.playout
+	self.playout = self.playout or pl.new(new_pose, capture, game.SNAPSHOT_TICKS * game.DT)
+	pl.reset(self.playout, self.g)
 end
 
 -- Match -----------------------------------------------------------------------
@@ -1532,15 +1486,12 @@ local function apply_state(self, s)
 		t.id, t.x, t.y, t.landed = c.i, c.x, c.y, c.l
 		list[i] = t
 	end
-	-- restart from where we are on screen toward the new state
-	advance_pose(self.pose_a, self.pose_b, pose_k(self))
-	capture(self.pose_b, g)
-	for i in pairs(self.snap) do
-		snap_robot(self, i)
-		self.snap[i] = nil
-	end
-	self.pose_t = 0
-	self.pose_dt = game.SNAPSHOT_TICKS * game.DT
+	-- into the queue, drawn at an even pace a little later (main/playout.lua)
+	local now = socket.gettime()
+	if self.playout.last_at then frames.rete(now - self.playout.last_at) end
+	local snaps = next(self.snap) and self.snap or nil
+	if snaps then self.snap = {} end
+	menu.playout.arrive(self.playout, g, now, snaps)
 end
 
 local function on_server_message(self, m)
@@ -3891,7 +3842,13 @@ function update(self, dt)
 			mission_update(self, dt)
 		end
 	elseif self.mode == "online" then
-		self.pose_t = self.pose_t + dt_world
+		-- a robot that reappears elsewhere doesn't slide there
+		self.snap_view = self.snap_view or function(i)
+			local v = self.view[i]
+			v.x, v.y, v.px = self.playout.q[1].pose.r[i].x, self.playout.q[1].pose.r[i].y, nil
+		end
+		self.pose_a, self.pose_b, self.pose_t = menu.playout.advance(self.playout, dt_world, socket.gettime(), self.snap_view)
+		self.pose_dt = 1
 		-- we send the server only the changes, and only on our turn
 		if my_turn(self) and self.g.phase == "aim" then
 			local l = move_left(self) or false
@@ -4012,7 +3969,8 @@ function CP.fotogrammi(self, dt)
 		if self.fps_mode then frames.segna("schermata " .. tostring(self.mode)) end
 		self.fps_mode = self.mode
 	end
-	frames.acceso = profile.setting(self.profilo, "fps") == "acceso"
+	-- in the simulator "imposta prova_fps 1" switches it on (scenario rete_tele.txt)
+	frames.acceso = profile.setting(self.profilo, "fps") == "acceso" or (SIMULATE and config_int("megablast.prova_fps", 0) > 0)
 	if SIMULATE then
 		frames.log = true
 		self.fps_summary = (self.fps_summary or 0) + dt

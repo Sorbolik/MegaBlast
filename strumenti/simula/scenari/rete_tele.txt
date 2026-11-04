@@ -1,0 +1,33 @@
+# Online su una rete che a volte trattiene i messaggi (come il WiFi del
+# telefono, Sergio 4 nov: "il primo sparo che faccio del teletrasporto scatta
+# più volte"): la rete finta li tiene fermi fino a 120 ms e poi li dà tutti
+# insieme. Il globo in volo e il diavoletto devono andare lisci lo stesso
+# (main/playout.lua), e il contatore dice RETE.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_rete 120
+imposta prova_fps 1
+aspetta 1
+server 2v2 0 bot_dopo=3s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 205 102 basso destra     # GIOCA
+aspetta 0.5
+tocca_centro 368 300                 # 2 contro 2
+aspetta_stato modo=scelta_online 15
+aspetta_stato modo=online 25
+aspetta_stato modo=online turno=1 fase=aim 20
+aspetta 1
+tieni salta 0.1
+tocca 1180 62                        # TELE in aria
+mira -40 140 0.2
+aspetta_evento orb 3
+aspetta 0.15
+foto 01_globo_in_volo
+aspetta_evento teleport 4
+aspetta 0.3
+foto 02_dopo_il_teletrasporto
+aspetta 1.5
+tocca 1180 62                        # TELE di nuovo
+mira 60 140 0.2
+aspetta 3
+foto 03_contatore_rete
