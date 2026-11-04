@@ -31,6 +31,8 @@
 --   c.valore.lt, c.valore.rt                      -- how far the triggers are pressed (0..1)
 --   controller.togli(c, comando)                  -- the command is left without a button
 
+local T = require("lang.text").controller
+
 local M = {}
 
 -- half of a stick: { stick, axis, sign }
@@ -78,13 +80,8 @@ M.FREE = { a = true, b = true, x = true, y = true, lb = true, rb = true, lt = tr
 -- The controller's family, from the name the system gives: buttons are named
 -- (and drawn) as on the real buttons. Nintendo has A on the right and B at
 -- the bottom: same place, another name.
-M.FAMILIES = {
-	xbox = { a = "A", b = "B", x = "X", y = "Y", lb = "LB", rb = "RB", lt = "LT", rt = "RT", start = "MENU", select = "VISTA" },
-	playstation = { a = "X", b = "CERCHIO", x = "QUADRATO", y = "TRIANGOLO", lb = "L1", rb = "R1", lt = "L2", rt = "R2",
-		start = "OPTIONS", select = "CREATE" },
-	nintendo = { a = "B", b = "A", x = "Y", y = "X", lb = "L", rb = "R", lt = "ZL", rt = "ZR", start = "+", select = "-" },
-}
-M.CROSS = { su = "CROCE SU", giu = "CROCE GIÙ", sinistra = "CROCE SX", destra = "CROCE DX" }
+M.FAMILIES = T.families
+M.CROSS = T.cross
 -- (in this order: "Xbox Wireless Controller" is Xbox, a bare "Wireless
 -- Controller" is the name Android gives the DualSense and the DualShock)
 local RECOGNIZE = {

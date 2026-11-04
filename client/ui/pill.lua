@@ -20,6 +20,7 @@
 
 local ui = require "ui.ui"
 local screen = require "ui.screen"
+local T = require("lang.text").pill
 
 local M = {}
 
@@ -51,9 +52,9 @@ function M.new()
 	p.veil = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
 	gui.set_adjust_mode(p.veil, gui.ADJUST_FIT)
 	gui.set_color(p.veil, vmath.vector4(0.04, 0.03, 0.05, 0.6))
-	ui.titolo("PARTITA TROVATA", 0, 90, 1.1, C.LIGHT, p.veil)
+	ui.titolo(T.found, 0, 90, 1.1, C.LIGHT, p.veil)
 	p.count = ui.titolo("3", 0, 0, 2.2, C.TEXT, p.veil)
-	ui.testo("questa partita contro i bot si annulla", 0, -80, 0.8, C.OFF, p.veil)
+	ui.testo(T.cancelled, 0, -80, 0.8, C.OFF, p.veil)
 	gui.set_enabled(p.veil, false)
 	gui.set_enabled(p.root, false)
 	return p

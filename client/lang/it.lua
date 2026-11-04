@@ -5,6 +5,7 @@
 return {
 	-- shared by many screens
 	common = {
+		game_name = "MEGABLAST",
 		play = "GIOCA",
 		quit = "ESCI",
 		next = "AVANTI",
@@ -14,6 +15,11 @@ return {
 		events = "EVENTI",
 		tournament = "TORNEO",
 		all = "TUTTE",
+		bot = "BOT",
+		training = "ALLENAMENTO",
+		armory = "ARMERIA",
+		stats = "STATISTICHE",
+		replay = "RIVEDI",
 	},
 
 	-- menu/pick.lua: the weapon draft
@@ -43,9 +49,7 @@ return {
 
 	-- menu/training.lua: ALLENAMENTO, mode and bots, then the map
 	training = {
-		title = "ALLENAMENTO",
 		mode = "MODO",
-		bot = "BOT",
 		levels = { facile = "FACILE", normale = "NORMALE", difficile = "DIFFICILE" },
 		pick_map = "SCEGLI LA MAPPA",
 		mode_and_bot = "%s  ·  BOT %s",
@@ -64,7 +68,6 @@ return {
 		level = "LIVELLO %d",
 		xp = "+%d esperienza",
 		skill_point = "nuovo punto abilità!",
-		replay = "RIVEDI",
 		go_on = "CONTINUA",
 	},
 
@@ -142,7 +145,6 @@ return {
 		tap_to_pick = "TOCCA PER SCEGLIERE LE ARMI",
 		weapons_in = "ARMI TRA",
 		versus = "VS",
-		bot = "BOT",
 		power = "%s potere",
 		powers = "%s poteri",
 	},
@@ -182,11 +184,9 @@ return {
 
 	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
 	armory = {
-		title = "ARMERIA",
 		tab_set = "SET",
 		tab_tree = "ALBERO",
 		loadout = "ASSETTO",
-		stats_title = "STATISTICHE",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			max_hp = "Vita", walk_speed = "Corsa", jump_height = "Salto", air_speed = "In aria",
@@ -213,11 +213,9 @@ return {
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
 	profile_tabs = {
 		tab_sheet = "SCHEDA",
-		tab_stats = "STATISTICHE",
 		tab_matches = "PARTITE",
 		level = "LIV %s",
 		xp = "%s / %s XP",
-		bot = "BOT",
 		-- SCHEDA
 		you = "Tu",
 		loadout = "ASSETTO",
@@ -234,7 +232,6 @@ return {
 		all_steps = "tutti gli scatti presi",
 		no_piece = "nessun pezzo",
 		pick_in_armory = "sceglilo nell'ARMERIA",
-		armory = "ARMERIA",
 		-- STATISTICHE
 		matches = "PARTITE",
 		won = "VINTE",
@@ -265,8 +262,131 @@ return {
 		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
 		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
 		no_moments = "nessun momento da ricordare",
-		replay = "RIVEDI",
 		replay_local_only = "replay solo delle partite su questo telefono",
 		replay_missing = "replay non disponibile",
+	},
+
+
+	-- menu/home.lua: the home
+	home = {
+		your_profile = "IL TUO PROFILO",
+		leave_queue_first = "esci dalla coda per giocarla",
+		same_phone = "STESSO TELEFONO",
+	},
+
+	-- menu/queue.lua: DOVE GIOCHI?, the queues online
+	queue = {
+		title = "DOVE GIOCHI?",
+		usual_match = "LA PARTITA DI SEMPRE",
+		also_counts = "CONTA ANCHE PER",
+		event = "EVENTO · %s",
+	},
+
+	-- menu/lobby.lua: the waiting room online
+	lobby = {
+		-- one every few seconds under the cards
+		tips = {
+			"Il tempo che avanzi nel turno ti dà globi per il teletrasporto",
+			"Le armi si scelgono coperte: guarda i cartellini degli altri",
+			"La secondaria ha due colpi: un colpo di Lama te ne ridà uno",
+			"I punti sono la vita che togli agli avversari",
+			"Fuori dal tuo turno tocca la targa di un avversario per vedere il suo cartellino",
+			"Il Rampino ce l'hanno tutti: chi sta in alto colpisce meglio",
+		},
+		coming = "IN ARRIVO",
+		searching = "CERCO GIOCATORI",
+		back_to_menus = "TORNA AI MENU · RESTI IN CODA",
+		leave_queue = "ESCI DALLA CODA",
+		-- the line at the top: the queue's name, players, time, bots
+		title_sep = "%s  ·  ",
+		status = "%s%d SU %d  ·  %d:%02d%s",
+		bots_in = "  ·  BOT TRA %d s",
+		bots_coming = "  ·  ARRIVANO I BOT",
+	},
+
+	-- ui/pill.lua and game.gui_script: the queue's pill outside the waiting room
+	pill = {
+		in_queue = "IN CODA · %s · %d:%02d",
+		bots_in = " · BOT TRA %d s",
+		bots_coming = " · ARRIVANO I BOT",
+		found = "PARTITA TROVATA",
+		found_n = "PARTITA TROVATA · %s",
+		cancelled = "questa partita contro i bot si annulla",
+		lost = "CODA PERSA · TOCCA PER RIENTRARE",
+	},
+
+
+	-- ui/controller.lua: the controller's buttons, by family, as written on them
+	controller = {
+		families = {
+			xbox = { a = "A", b = "B", x = "X", y = "Y", lb = "LB", rb = "RB", lt = "LT", rt = "RT", start = "MENU", select = "VISTA" },
+			playstation = { a = "X", b = "CERCHIO", x = "QUADRATO", y = "TRIANGOLO", lb = "L1", rb = "R1", lt = "L2", rt = "R2",
+				start = "OPTIONS", select = "CREATE" },
+			nintendo = { a = "B", b = "A", x = "Y", y = "X", lb = "L", rb = "R", lt = "ZL", rt = "ZR", start = "+", select = "-" },
+		},
+		cross = { su = "CROCE SU", giu = "CROCE GIÙ", sinistra = "CROCE SX", destra = "CROCE DX" },
+	},
+
+	-- ui/tag_card.lua: the player's tag
+	tag_card = {
+		-- the tree's three branches, short (skills.BRANCHES order)
+		branches = { "MOB", "DIF", "ARS" },
+		no_power = "nessun potere",
+		orb = "%s globo",
+		orbs = "%s globi",
+		parachutes = "%s paracad.",
+		air_jumps = "%s in aria",
+		tree = "ALBERO · %s PUNTI",
+	},
+
+	-- ui/frames.lua: the frame counter's line at the top (IMPOSTAZIONI > CONTATORE FPS)
+	frames = {
+		row = "%.0f FPS  PEGGIORE %.0f MS  99%% SOTTO %.0f  SCATTI %d/MIN",
+		last = "  ULTIMO: %s",
+	},
+
+
+	-- battle/hud.lua: the HUD in battle
+	hud = {
+		-- the weapons' names (on the tag, the card, crates)
+		weapons = {
+			missile = "LANCIARUNE", grenade = "UOVO DI FIAMMA", shards = "SCIAME DI SCHEGGE", punch = "PUGNO DEL TITANO",
+			sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", bellows = "MANTICE",
+			hook = "RAMPINO", teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO",
+		},
+		-- the turn's phases on the clock
+		second_attack = "SECONDO!",
+		take_cover = "RIPARATI",
+		-- why a button is off: always two plain words
+		not_now = "NON ORA",
+		no_orbs = "GLOBI ESAURITI",
+		used_m = "GIÀ USATO",
+		used_f = "GIÀ USATA",
+		no_ammo = "MUNIZIONI ESAURITE",
+		-- the swap button's two lines
+		swap_1 = "BARATTA IL SECONDO ATTACCO",
+		swap_2 = "CON UN TELETRASPORTO",
+	},
+
+	-- battle/score.lua: the score at the top
+	score = {
+		last_round_soon = "TRA POCO: ULTIMO GIRO ×2",
+		last_round = "ULTIMO GIRO",
+		double_points = "OGNI PUNTO VALE DOPPIO",
+		doubled = " ×2",
+		turn_of = "Turno di %s  %s",
+		to_tie = "+%d PER PAREGGIARE",
+		-- the gap under your token
+		tied_first = "pari col 1°",
+		ahead = "+%d sul 2°",
+		behind = "%d dal 1°",
+	},
+
+	-- battle/guide.lua: the gestures of the guided match; {muove} and {mira} are the sticks' sides
+	guide = {
+		keys = {
+			computer = { cammina = "A   D", salta = "SPAZIO" },
+			controller = { cammina = "LEVETTA {muove}", salta = "{muove} IN SU", mira = "LEVETTA {mira}", annulla = "{mira} AL CENTRO" },
+		},
 	},
 }

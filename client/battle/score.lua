@@ -38,6 +38,7 @@
 
 local ui = require "ui.ui"
 local plate = require "battle.plate"
+local T = require("lang.text").score
 
 local M = {}
 
@@ -227,7 +228,7 @@ function M.nuovo(palette, tick)
 	p.tie_s = ""
 	-- before the last lap, under the board
 	p.avviso = root_node(HALF, Y - GET_H / 2 - 62)
-	ui.testo("TRA POCO: ULTIMO GIRO ×2", 0, 0, SMALL, ui.GOLD, p.avviso)
+	ui.testo(T.last_round_soon, 0, 0, SMALL, ui.GOLD, p.avviso)
 	p.notice_on = false
 	gui.set_enabled(p.avviso, false)
 	-- the last-lap banner, in the middle of the screen
@@ -235,8 +236,8 @@ function M.nuovo(palette, tick)
 	box(p.banner, 0, 0, BANNER_W, BANNER_H, vmath.vector4(0.16, 0.1, 0.02, 0.9))
 	box(p.banner, 0, BANNER_H / 2, BANNER_W, 3, ui.GOLD)
 	box(p.banner, 0, -BANNER_H / 2, BANNER_W, 3, ui.GOLD)
-	ui.testo("ULTIMO GIRO", 0, 14, 2.4, ui.GOLD, p.banner)
-	ui.testo("OGNI PUNTO VALE DOPPIO", 0, -32, 0.9, ui.C.TEXT, p.banner)
+	ui.testo(T.last_round, 0, 14, 2.4, ui.GOLD, p.banner)
+	ui.testo(T.double_points, 0, -32, 0.9, ui.C.TEXT, p.banner)
 	p.banner_time = 0
 	gui.set_inherit_alpha(p.banner, true)
 	gui.set_enabled(p.banner, false)
@@ -361,7 +362,7 @@ function M.punti(p, e, x, y)
 	for _, n in ipairs(p.numeri) do
 		if n.is_active and n.fase == 1 and n.chi == r and n.altro == e.other then
 			n.punti, n.t = n.punti + e.amount, 0
-			gui.set_text(n.nodo, with_sign(n.punti) .. (n.doppio and " ×2" or ""))
+			gui.set_text(n.nodo, with_sign(n.punti) .. (n.doppio and T.doubled or ""))
 			return
 		end
 	end
@@ -389,7 +390,7 @@ function M.punti(p, e, x, y)
 			break
 		end
 	end
-	gui.set_text(n.nodo, with_sign(n.punti) .. (n.doppio and " ×2" or ""))
+	gui.set_text(n.nodo, with_sign(n.punti) .. (n.doppio and T.doubled or ""))
 	gui.set_enabled(n.nodo, p.on)
 end
 
@@ -408,7 +409,7 @@ function M.turno(p, g)
 	if t and p.inizio[t] then
 		local d = round_off(now_pts[t] - p.inizio[t])
 		if d ~= 0 then
-			gui.set_text(p.row_text, string.format("Turno di %s  %s", p.nomi[t], with_sign(d)))
+			gui.set_text(p.row_text, T.turn_of:format(p.nomi[t], with_sign(d)))
 			local c = p.gettoni[t].colore
 			p.row_color = p.row_color or vmath.vector4(1, 1, 1, 1)
 			p.row_color.x, p.row_color.y, p.row_color.z = c.x, c.y, c.z
@@ -650,7 +651,7 @@ function M.update(p, dt, g, my_own)
 	if waiting_t then
 		for _, t in ipairs(p.lista) do if t ~= waiting_t then other_one = t end end
 	end
-	local ps = other_one and string.format("+%d PER PAREGGIARE", waiting) or ""
+	local ps = other_one and T.to_tie:format(waiting) or ""
 	if p.tie_s ~= ps then
 		gui.set_text(p.tie_text, ps)
 		if other_one then gui.set_color(p.tie_text, p.gettoni[other_one].colore) end
@@ -693,9 +694,9 @@ function M.update(p, dt, g, my_own)
 			if p.rope_on then
 				s = with_sign(mine_v - another)
 			elseif mine_v == another then
-				s = "pari col 1°"
+				s = T.tied_first
 			else
-				s = pos[my_team] == 1 and string.format("+%d sul 2°", mine_v - another) or string.format("%d dal 1°", mine_v - another)
+				s = pos[my_team] == 1 and T.ahead:format(mine_v - another) or T.behind:format(mine_v - another)
 			end
 		end
 	end

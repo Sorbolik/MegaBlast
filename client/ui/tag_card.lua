@@ -22,6 +22,8 @@ local equip = require "sim.gear"
 local skins = require "battle.skins"
 local milestones = require "menu.milestones"
 local showcase = require "menu.showcase"
+local T = require("lang.text").tag_card
+local common = require("lang.text").common
 
 local M = {}
 
@@ -45,7 +47,7 @@ local SKIN = skins.skins.apprendista.pieces
 local PIECE_IMAGES = { mask = SKIN.testa, chest = SKIN.busto, cloak = require("battle.devil").pieces.ala, legs = SKIN.gamba }
 -- the colors of the tree branches, in the order of skills.BRANCHES
 local BRANCHES = { C.STEEL, C.MINT, C.BRACE }
-local ABBREVIATIONS = { "MOB", "DIF", "ARS" }
+local ABBREVIATIONS = T.branches
 local ROMAN = { "I", "II", "III", "IV" }
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
@@ -152,10 +154,10 @@ end
 -- the power pills: first the shapes, then the text (so it sits on top)
 local function pills(abilities, sx, y, space, parent)
 	if #abilities == 0 then
-		local w = wide("nessun potere", 0.58) + 16
+		local w = wide(T.no_power, 0.58) + 16
 		box(sx + w / 2, y, w + 2, 24, C.LINE, parent)
 		box(sx + w / 2, y, w, 22, C.PANEL, parent)
-		txt("nessun potere", sx + 8, y, 0.58, C.OFF, parent, gui.PIVOT_W)
+		txt(T.no_power, sx + 8, y, 0.58, C.OFF, parent, gui.PIVOT_W)
 		return
 	end
 	local x = sx
@@ -186,9 +188,9 @@ function M.new(v, x, y, opt, parent)
 	ui.ring_node(sx + 22, cy, 44, 3, col, c.root)
 	if v.livello then
 		txt(tostring(v.livello), sx + 22, cy - (v.torneo and 4 or 0), 0.95, col, c.root)
-		if v.torneo then txt("TORNEO", sx + 22, cy + 11, 0.3, col, c.root) end
+		if v.torneo then txt(common.tournament, sx + 22, cy + 11, 0.3, col, c.root) end
 	else
-		txt(v.bot and "BOT" or "–", sx + 22, cy, v.bot and 0.62 or 0.95, col, c.root)
+		txt(v.bot and common.bot or "–", sx + 22, cy, v.bot and 0.62 or 0.95, col, c.root)
 	end
 	local nome = ui.titolo(v.nome or "?", sx + 52, cy + 8, 0.5, C.LIGHT, c.root)
 	gui.set_pivot(nome, gui.PIVOT_W)
@@ -229,7 +231,7 @@ function M.new(v, x, y, opt, parent)
 	yy = yy - POWERS
 
 	-- the stats: bars from the center (the base is the same for everyone)
-	txt("STATISTICHE", sx, yy - LABEL / 2, 0.42, C.OFF, c.root, gui.PIVOT_W)
+	txt(common.stats, sx, yy - LABEL / 2, 0.42, C.OFF, c.root, gui.PIVOT_W)
 	yy = yy - LABEL
 	local bx, bw = sx + 62, W - 2 * PAD - 62 - 50
 	for _, r in ipairs(showcase.righe(v)) do
@@ -250,20 +252,20 @@ function M.new(v, x, y, opt, parent)
 	local rs = showcase.resources(v)
 	local ry = yy - RESOURCES / 2 - 2
 	local entries = {
-		{ rs.globi, rs.globi == 1 and "globo" or "globi", C.PURPLE },
-		{ rs.paracadute, "paracad.", C.MINT },
-		{ rs.aria, "in aria", C.STEEL, true },
+		{ (rs.globi == 1 and T.orb or T.orbs):format(rs.globi), C.PURPLE },
+		{ T.parachutes:format(rs.paracadute), C.MINT },
+		{ T.air_jumps:format(rs.aria), C.STEEL, true },
 	}
 	local x = sx
 	for _, vo in ipairs(entries) do
-		if vo[4] then ui.ring_node(x + 6, ry, 12, 2, vo[3], c.root) else ui.disco(x + 6, ry, 12, vo[3], c.root) end
-		local n = txt(vo[1] .. " " .. vo[2], x + 16, ry, 0.6, C.TEXT, c.root, gui.PIVOT_W)
+		if vo[3] then ui.ring_node(x + 6, ry, 12, 2, vo[2], c.root) else ui.disco(x + 6, ry, 12, vo[2], c.root) end
+		local n = txt(vo[1], x + 16, ry, 0.6, C.TEXT, c.root, gui.PIVOT_W)
 		x = x + 16 + text_width(n) + 12
 	end
 	yy = yy - RESOURCES
 
 	-- the tree: twenty colored ticks per branch
-	txt("ALBERO · " .. (v.punti or skills.POINTS_MAX) .. " PUNTI", sx, yy - LABEL / 2, 0.42, C.OFF, c.root, gui.PIVOT_W)
+	txt(T.tree:format(v.punti or skills.POINTS_MAX), sx, yy - LABEL / 2, 0.42, C.OFF, c.root, gui.PIVOT_W)
 	yy = yy - LABEL
 	local n, tw = skills.POINTS_MAX, (W - 2 * PAD - (skills.POINTS_MAX - 1) * 2) / skills.POINTS_MAX
 	local palette = {}

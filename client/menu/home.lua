@@ -22,6 +22,8 @@ local game = require "sim.game"
 local scoria = require "battle.scoria"
 local ui = require "ui.ui"
 local screen = require "ui.screen"
+local T = require("lang.text").home
+local common = require("lang.text").common
 
 local M = {}
 
@@ -74,33 +76,33 @@ function M.new(color)
 	gui.set_visible(zone, false)
 	h.tops[#h.tops + 1] = zone
 	h.buttons[#h.buttons + 1] = { nodo = zone, bordo = zone, ui_action = "profilo", colore = ui.C.LIGHT, riposo = ui.C.LIGHT }
-	local label = ui.testo("IL TUO PROFILO", 0, -34, 0.7, ui.C.TEXT, h.posa)
+	local label = ui.testo(T.your_profile, 0, -34, 0.7, ui.C.TEXT, h.posa)
 	-- on the painted background the label with a dark outline
 	gui.set_outline(label, ui.C.SHADOW)
 	gui.set_inherit_alpha(label, true)
 
 	-- the name at the top left
 	local top_left = angle_deg(h, 48, H - 56, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
-	local nome = ui.titolo("MEGABLAST", 0, 0, 1.3, ui.C.LIGHT, top_left)
+	local nome = ui.titolo(common.game_name, 0, 0, 1.3, ui.C.LIGHT, top_left)
 	gui.set_pivot(nome, gui.PIVOT_W)
 
 	-- bottom right: the matches
 	local dx = angle_deg(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	local campaign = ui.button(h.buttons, 0, 344, 340, 72, "CAMPAGNA", "campagna", nil, dx)
+	local campaign = ui.button(h.buttons, 0, 344, 340, 72, common.campaign, "campagna", nil, dx)
 	h.campaign = h.buttons[#h.buttons]
-	h.campaign_note = ui.testo("esci dalla coda per giocarla", 0, -24, 0.5, ui.C.OFF, campaign)
+	h.campaign_note = ui.testo(T.leave_queue_first, 0, -24, 0.5, ui.C.OFF, campaign)
 	gui.set_enabled(h.campaign_note, false)
-	ui.button(h.buttons, 0, 256, 340, 72, "ALLENAMENTO", "allenamento", nil, dx)
-	ui.button(h.buttons, 0, 168, 340, 72, "STESSO TELEFONO", "local", nil, dx)
-	ui.button(h.buttons, 0, 60, 340, 108, "GIOCA", "online", { main = true, colore = color }, dx)
+	ui.button(h.buttons, 0, 256, 340, 72, common.training, "allenamento", nil, dx)
+	ui.button(h.buttons, 0, 168, 340, 72, T.same_phone, "local", nil, dx)
+	ui.button(h.buttons, 0, 60, 340, 108, common.play, "online", { main = true, colore = color }, dx)
 	h.play = h.buttons[#h.buttons]
 
 	-- bottom left: loadouts, tree and sets
 	local sx = angle_deg(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	ui.button(h.buttons, 0, 60, 240, 72, "ARMERIA", "armeria", nil, sx)
+	ui.button(h.buttons, 0, 60, 240, 72, common.armory, "armeria", nil, sx)
 	-- above: the EVENTI (menu/board.lua), with what is happening now below
 	local ev = ui.button(h.buttons, 0, 160, 240, 96, "", "eventi", nil, sx)
-	ui.testo("EVENTI", 0, 14, 0.9, ui.C.TEXT, ev)
+	ui.testo(common.events, 0, 14, 0.9, ui.C.TEXT, ev)
 	h.events_row = ui.testo("", 0, -22, 0.55, ui.C.OFF, ev)
 
 	-- top right: the settings

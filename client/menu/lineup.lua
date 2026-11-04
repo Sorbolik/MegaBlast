@@ -20,6 +20,7 @@ local screen = require "ui.screen"
 local config = require "sim.config"
 local tag = require "ui.tag_card"
 local T = require("lang.text").lineup
+local common = require("lang.text").common
 
 local M = {}
 
@@ -146,7 +147,7 @@ function M.strip(showcases)
 		gui.set_color(border, v.tu and col or with_alpha(col, 0.6))
 		local sx = -STRIP_W / 2 + 12
 		ui.ring_node(sx + 17, 0, 34, 2.5, col, n)
-		ui.testo(v.livello and tostring(v.livello) or v.bot and T.bot or "–", sx + 17, 0, (v.livello or not v.bot) and 0.75 or 0.5, col, n)
+		ui.testo(v.livello and tostring(v.livello) or v.bot and common.bot or "–", sx + 17, 0, (v.livello or not v.bot) and 0.75 or 0.5, col, n)
 		local nome = ui.titolo(v.nome or "?", sx + 42, 8, 0.4, C.LIGHT, n)
 		gui.set_pivot(nome, gui.PIVOT_W)
 		-- the four pieces in small: a little square with the tier border and the level

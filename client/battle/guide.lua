@@ -14,6 +14,7 @@
 
 local ui = require "ui.ui"
 local controller = require "ui.controller"
+local T = require("lang.text").guide
 
 local M = {}
 
@@ -30,8 +31,7 @@ local GESTURES = {
 	mira = { pad = "mira", dx = 0.7, dy = 0.7 },
 }
 -- on the computer and with a controller, the keys
-local KEYS_LIST = { computer = { cammina = "A   D", salta = "SPAZIO" },
-	controller = { cammina = "LEVETTA {muove}", salta = "{muove} IN SU", mira = "LEVETTA {mira}", annulla = "{mira} AL CENTRO" } }
+local KEYS_LIST = T.keys
 local V = vmath.vector3(0, 0, 0)
 
 local function pos(n, x, y)
