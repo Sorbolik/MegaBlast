@@ -139,16 +139,85 @@ function M.sheet_active(b, activate)
 	gui.set_color(b.testo, activate and C.TEXT or C.OFF)
 end
 
+local function arrow(n)
+	for i = -1, 1, 2 do
+		local s = gui_node(nil, -2, i * 7, 22, 4, C.LIGHT, n)
+		gui.set_rotation(s, vmath.vector3(0, 0, i * 45))
+	end
+end
+
 -- Back: square with the arrow, stuck at the top left
 function M.indietro(list_of, ui_action, parent)
 	local n = M.button(list_of, 30 + 32, 720 - 30 - 32, 64, 64, "", ui_action, nil, parent)
 	gui.set_xanchor(n, gui.ANCHOR_LEFT)
 	gui.set_yanchor(n, gui.ANCHOR_TOP)
-	for i = -1, 1, 2 do
-		local s = gui_node(nil, -2, i * 7, 22, 4, C.LIGHT, n)
-		gui.set_rotation(s, vmath.vector3(0, 0, i * 45))
-	end
+	arrow(n)
 	return n
+end
+
+-- The header of the menu screens (Sergio, 4 Nov: "le interfacce non si
+-- devono spostare per lei, ma devono essere già pensate con lei in mente"):
+-- the same on every screen. One row EDGE from the real top: on the left the
+-- back button and the title, in the middle the queue's pill (ui/pill.lua, a
+-- SLOT_W x SLOT_H place nothing else ever uses), on the right the screen's
+-- own controls. The tabs go in the first row under it, at the content's left
+-- margin (EDGE in game coordinates): they belong to the content, which on a
+-- 20:9 screen stays in the middle. The header's nodes have no parent, so
+-- they stick to the real edges (ui/screen.lua);
+-- create it before the screen's root (the root's veils cover it) and delete
+-- it with ui.header_delete.
+--
+--   local h = ui.header(list_of, "ARMERIA", "indietro")   -- nil action: no back button
+--   ui.header_tabs(h, list_of, { { "SET", "scheda:set", 150 }, ... }, active_index)
+--   ...children of h.right at x < 0 (h.right is the right edge, y the header's center)
+M.EDGE = 30
+M.HEAD_Y = 720 - 62            -- center of the header row (of the back button)
+M.TITLE_X = 118                 -- where the title starts
+M.TITLE_SCALE = 0.85
+M.CONTENT_TOP = 720 - 118      -- the first row under the header (24 under it)
+M.TABS_Y = M.CONTENT_TOP - 24  -- center of the tabs, in that first row
+M.TAB_H = 48
+M.BODY_TOP = 720 - 190          -- on a screen with tabs the content starts under them
+M.SLOT_W, M.SLOT_H = 440, 44    -- the pill's place, in the middle of the header
+
+local function corner(x, xanchor, yanchor)
+	local n = gui.new_box_node(vec(x, yanchor and M.HEAD_Y or 0), vec(0, 0))
+	gui.set_visible(n, false)
+	gui.set_xanchor(n, xanchor)
+	if yanchor then gui.set_yanchor(n, yanchor) end
+	return n
+end
+
+function M.header(list_of, title, back_action)
+	local h = { left = corner(0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP), right = corner(1280, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP) }
+	if back_action then
+		h.back = M.button(list_of, M.EDGE + 32, 0, 64, 64, "", back_action, nil, h.left)
+		arrow(h.back)
+	end
+	if title then
+		h.title = M.titolo(title, M.TITLE_X, 0, M.TITLE_SCALE, C.TEXT, h.left)
+		gui.set_pivot(h.title, gui.PIVOT_W)
+	end
+	return h
+end
+
+-- The tabs: { label, action, width } from the left edge; returns their nodes
+function M.header_tabs(h, list_of, tabs, active)
+	if h.tabs then gui.delete_node(h.tabs) end
+	h.tabs = corner(0, gui.ANCHOR_NONE, nil)
+	local x, nodes = M.EDGE, {}
+	for i, t in ipairs(tabs) do
+		nodes[i] = M.scheda(list_of, x + t[3] / 2, M.TABS_Y, t[3], M.TAB_H, t[1], t[2], i == active, h.tabs)
+		x = x + t[3] + 12
+	end
+	return nodes
+end
+
+function M.header_delete(h)
+	if not h then return end
+	gui.delete_node(h.left)
+	gui.delete_node(h.right)
+	if h.tabs then gui.delete_node(h.tabs) end
 end
 
 -- Settings: the same square with the wheel, at the top left (in a match) or

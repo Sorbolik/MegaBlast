@@ -24,7 +24,7 @@ tocca 168 108                       # ARMERIA
 aspetta_stato modo=schermata 3
 aspetta 0.8
 foto 03_armeria_in_coda
-tocca_bordo 640 22 alto centro                 # la pillola: si torna alla sala
+tocca_bordo 640 62 alto centro                 # la pillola: si torna alla sala
 aspetta_stato modo=connecting 3
 aspetta 0.8
 foto 04_di_nuovo_nella_sala        # il tempo continua, BOT TRA

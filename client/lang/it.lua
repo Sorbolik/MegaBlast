@@ -227,6 +227,7 @@ return {
 
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
 	profile_tabs = {
+		title = "PROFILO",
 		tab_sheet = "SCHEDA",
 		tab_matches = "PARTITE",
 		level = "LIV %s",
@@ -327,6 +328,9 @@ return {
 		found_n = "PARTITA TROVATA · %s",
 		cancelled = "questa partita contro i bot si annulla",
 		lost = "CODA PERSA · TOCCA PER RIENTRARE",
+		-- the chip in a match (only head, dots and this)
+		short_lost = "PERSA",
+		short_bots = "BOT %d",
 	},
 
 

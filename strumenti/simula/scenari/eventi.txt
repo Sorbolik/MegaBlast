@@ -15,12 +15,12 @@ aspetta 1
 tocca_bordo 168 208 basso sinistra  # EVENTI
 aspetta 1.5
 foto 01_bacheca
-tocca_centro 328 456                       # la prima carta in corso: il Maglio
+tocca_centro 310 486                       # la prima carta in corso: il Maglio
 aspetta 0.5
 foto 02_dettaglio
 tocca_bordo 62 62 alto sinistra     # indietro: la bacheca
 aspetta 0.5
-tocca_centro 328 312                       # la seconda carta: il Torneo, col tetto ai livelli
+tocca_centro 310 342                       # la seconda carta: il Torneo, col tetto ai livelli
 aspetta 0.5
 foto 02_torneo
 tocca_bordo 62 62 alto sinistra     # indietro: la bacheca
@@ -32,7 +32,7 @@ foto 03_home
 tocca_bordo 205 102 basso destra    # GIOCA
 aspetta 1
 foto 04_dove_giochi
-tocca_centro 976 445                       # la carta del Maglio
+tocca_centro 976 527                       # la carta del Maglio
 aspetta_stato modo=scelta_online 20
 aspetta 1
 foto 05_scelta_maglio
