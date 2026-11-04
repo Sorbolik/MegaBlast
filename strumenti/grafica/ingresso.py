@@ -1,22 +1,30 @@
 """La testa di Favilla nel disco della schermata d'ingresso (client/ui/entry.lua).
 
-Dal disegno di Sergio (art/personaggi/favilla.png, 2328 x 2328): toglie pugni e
+Dal logo vettoriale (art/personaggi/favilla.svg, ricalcato dal disegno di Sergio da
+logo.py; senza cairosvg usa il PNG del disegno): lo disegna a 2328 x 2328, toglie pugni e
 vestito, ritaglia un cerchio attorno alla testa e lo salva a 400 x 400 con il
 bordo morbido in client/assets/ui/favilla.png. Il bianco del foglio resta: è
 la carta del disco (il gioco lo tinge appena).
 
     python3 strumenti/grafica/ingresso.py
 """
+import io
 import os
 from PIL import Image, ImageDraw
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.normpath(os.path.join(QUI, "..", ".."))
+VETTORIALE = os.path.join(RADICE, "art", "personaggi", "favilla.svg")
 ORIGINE = os.path.join(RADICE, "art", "personaggi", "favilla.png")
 USCITA = os.path.join(RADICE, "client", "assets", "ui", "favilla.png")
 LATO = 400
 
-im = Image.open(ORIGINE).convert("RGB")
+try:
+    import cairosvg
+    im = Image.open(io.BytesIO(cairosvg.svg2png(url=VETTORIALE))).convert("RGB")
+except ImportError:
+    print("cairosvg manca (pip install cairosvg): uso il PNG del disegno")
+    im = Image.open(ORIGINE).convert("RGB")
 s = im.width / 1932          # le misure sotto sono sul disegno a 1932 px
 d = ImageDraw.Draw(im)
 BIANCO = (255, 255, 255)
