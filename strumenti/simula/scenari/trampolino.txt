@@ -1,7 +1,7 @@
 # Trampolino: ci rimbalza tutto. Si lancia il trampolino e poi l'Uovo con la
 # stessa mira: volano uguali, quindi l'Uovo cade sulla tavola e rimbalza.
-# Barra con prova_armi 1: Trampolino 942; tolto il trampolino (barra da 10)
-# l'Uovo sta a 291 (posizioni nei commenti di scenari/oggetti.txt).
+# Con prova_armi 1 il Trampolino è il terzo della colonna OGGETTI (1180 290) e
+# l'Uovo sta a 412 (posizioni nei commenti di scenari/oggetti.txt).
 imposta prova_armi 1
 imposta zoom 2
 
@@ -9,7 +9,7 @@ aspetta 2
 tocca 1075 235                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
-tocca 892 148                       # Trampolino (il terzo oggetto, sopra le secondarie)
+tocca 1180 290                      # Trampolino (il terzo oggetto dal basso, sopra il TELE)
 aspetta 0.3
 mira -60 60 0.3                     # un lancio corto a sinistra
 aspetta_evento place 3
