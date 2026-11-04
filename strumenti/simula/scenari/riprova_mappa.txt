@@ -1,0 +1,26 @@
+# RIPROVA sulla stessa mappa (Sergio, 4 nov: «MASCHERA 155 MS» sul telefono):
+# un tiro a vuoto scava un cratere, poi la rotellina e RIPROVA. Tornano solo i
+# pezzi scavati, non tutta la maschera: nessuno scatto "maschera" scoperto in
+# simulazione/fotogrammi.txt, e il cratere non si vede più.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+imposta prova_missione lanciarune
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 0.6
+foto 01_inizio                       # la cassa che cade
+tieni destra 4                       # fino alla cassa: la scheda ferma il gioco
+aspetta_evento crate_pick 10
+aspetta 0.8
+foto 02_scheda                       # la scheda del Lanciarune
+tocca 640 120                        # PROVALA
+aspetta 0.8
+aspetta 0.6
+mira -100 30 1
+aspetta_evento explosion 6
+aspetta 2
+foto 03_cratere                      # il cratere del tiro a vuoto
+tocca 62 658                         # rotellina
+aspetta 0.3
+tocca 186 658                        # RIPROVA: la lezione ricomincia
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1.5
+foto 04_riprova                      # la stessa mappa, senza il cratere
