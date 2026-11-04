@@ -1,0 +1,20 @@
+Image 1 is Favilla, a character of our game, in a three-quarter view facing right. It is the EXACT model: every body part you draw must be COPIED from image 1, shape by shape, with the same proportions, the same thickness, the same clothes and the same contours. Do not invent, round off, fatten or simplify any part.
+
+Image 2 is a layout sheet: grey placeholder parts on a flat magenta #FF00FF background, in three rows. Use image 2 ONLY to know where each part goes on the sheet and roughly how big it is. Do NOT copy the grey parts' shapes. Image 3 shows how the grey parts attach to each other.
+
+Make the BODY PARTS SHEET of Favilla of image 1, cut apart like a paper puppet, on the same canvas as image 2 with the same flat magenta #FF00FF background. Leave the WHOLE FIRST ROW EMPTY (pure magenta, no heads: the heads are already done). Draw only these parts, each over its grey placeholder, well separated from each other, each COMPLETE even where other parts would hide it in image 1:
+Row 2: the TORSO of image 1 without head, arms, legs and tail: the same shape as in image 1, with her parchment shirt, the top of the overalls, the brown straps with the brass buttons and the small leather apron, and a short neck stub of skin on top. NO shoulder bumps and no stubby arms: at each shoulder the torso simply ends with a smooth, round, full edge of shirt. Then NOTHING where the grey wing is (leave that spot empty magenta: she has no wings). Then the WHOLE TAIL of image 1 in one piece, with the same curve, the same thickness and the same tip: one smooth continuous tube, thick at the root and thinner towards the tip, with no breaks, seams or joints along it.
+Row 3: the near arm and the far arm, copied from image 1 (rolled-up shirt sleeve at the top, bare red forearm, same open relaxed four-fingered hand), each straight and hanging down from a round shoulder end; the near leg and the far leg, copied from image 1 (rolled-up parchment overalls leg, brown boot), each straight, round at the hip end, and BOTH BOOTS POINTING TO THE RIGHT in side view, like the near boot of image 1 (in image 1 the far boot turns towards the viewer: here it must point right like the other); one closed four-fingered fist, the size of the hands in image 1 (a small round piece, outlined all around).
+
+OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends. At a joint end the black outline gets gradually thinner and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the neck stub and the two shoulder edges of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail. The color near every joint end must be PERFECTLY UNIFORM: plain shirt #E6D2A6 at the shoulders and at the top of the arms, plain overalls #E6D2A6 at the hips and at the top of the legs, plain skin #B8432A at the neck stub and at the root of the tail. No shadow, no highlight, no fold, no line, no color change in the last stretch before the joint, so that two overlapping parts blend into one surface with no visible seam. Keep shadow shapes well away from the joint ends.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline black #000000; skin #B8432A, skin shadow #8E2F1C; shirt and overalls #E6D2A6, their shadow #C4A977; straps and apron #7A4A2A, their shadow #5A341C; buttons #D9A441; boots #6B3F22, their shadow #4A2A15.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels or signatures. Landscape 3:2, as large as possible.
+
+Riferimenti (ordine allegato):
+Image 1: art/WB-013/scelti/tre_quarti.png
+Image 2: art/WB-009/riferimenti/R2_stampino_ai.png
+Image 3: art/WB-009/riferimenti/R3_manichino.png

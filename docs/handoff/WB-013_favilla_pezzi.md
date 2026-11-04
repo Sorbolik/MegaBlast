@@ -279,6 +279,25 @@ Nove generazioni completate: tre tentativi per ciascuno dei tre risultati richie
 - Controllati visivamente bordi, parti mancanti e tagli accidentali: nessun difetto macroscopico di quel tipo nei file conservati. Verificati intestazioni PNG, dimensioni e corrispondenza integrale dei prompt nei `.txt`. Originali opachi senza ritocchi, ricalchi, ritagli o ridimensionamenti.
 - Non certificati tavolozza, nero e bianco esatti al pixel; non verificati ricalco SVG, giunture animate, leggibilità a 90 px o resa nel gioco. Nessuna fase 2 eseguita. Criteri non spuntati e nessun modello conforme proposto per la scelta.
 
+### Fase 2 · Consegna di Codex
+
+2026-11-04 · Eseguita la fase 2 dalla scheda APPROVATA di `main` al commit `c4331fb`, con R6/R7 scelti e R8 aggiunto per il formato delle teste. Generatore integrato imagegen; tre prompt integrali invariati, riferimenti nell'ordine della tabella. `4_corpo.png` generato e salvato prima di allegarlo alle braccia chiuse.
+
+| File in `art/WB-013/` | Misura effettiva | Tentativi | Esito |
+|---|---|---:|---|
+| `3_teste.png` e `3_teste.txt` | 1254×1254 | 1 | da revisione |
+| `4_corpo.png` e `4_corpo.txt` | 1536×1024 | 1 | da revisione |
+| `5_braccia_chiuse.png` e `5_braccia_chiuse.txt` | 1536×1024 | 1 | da revisione |
+
+- Guardate tutte e tre le immagini prima del salvataggio. Nessuna scritta, firma, ala, utensile o parte accidentalmente tagliata dal bordo. Sfondo magenta opaco; nessun ritocco, ricalco, ridimensionamento o taglio effettuato da Codex.
+- **Teste:** nove teste separate in griglia 3×3, verso destra, senza collo o moncone, contorno nero chiuso sotto mento e mandibola. Espressioni nell'ordine richiesto, fiamme intere. Sagoma, fiamma e dettagli non sono geometricamente identici fra le celle. Misura nativa 1254×1254 invece di 1536×1536 o 1024×1024.
+- **Corpo:** prima riga vuota, torso e coda nella seconda, posto dell'ala vuoto; due braccia aperte, due gambe e pugno separato nella terza. Entrambi gli stivali puntano a destra. Coda continua, con punta simile a R6. Posizioni coerenti con i posti dello stampino, ma canvas a 1536×1024 anziché 3072×2048 di R4: soddisfa il minimo, non replica la risoluzione del riferimento. Non verificato l'allineamento esatto dei perni.
+- **Giunture del corpo:** apici di braccia, gambe e radice della coda con aperture del contorno; restano bordi neri ai lati e ombre vicine ad alcune estremità. Spalle del torso arrotondate, ancora sporgenti, con nero e ombre da rivedere; colore non certificato uniforme in tutte le aree di sovrapposizione. Segnalato per il passaggio di ricalco e ritocchi descritto nella scheda.
+- **Braccia chiuse:** due braccia complete affiancate, maniche arrotolate, pugni chiusi e nocche rivolte a destra. Apici delle spalle senza linea trasversale, con nero che termina lateralmente; restano sfumature sulle maniche e sugli avambracci. Le due sagome sono molto simili: distinzione vicino/lontano e dimensione rispetto alle braccia del corpo da verificare nel montaggio. Non certificate quattro dita anatomicamente distinguibili in ogni pugno.
+- Presenti sfumature e toni intermedi: consegnati gli originali alla revisione, seguendo il chiarimento di Claude sulle scelte di Sergio (le sfumature si eliminano nel ricalco a tavolozza fissa e le giunture si ritoccano nel passaggio successivo). Nessuna dichiarazione che tutti i vincoli di colori piatti e giunture siano soddisfatti. Nessuna rigenerazione per questi aspetti già demandati al ricalco.
+- Verificate intestazioni PNG, dimensioni e corrispondenza integrale dei prompt nei `.txt`. Non certificati #FF00FF uniforme, contorni #000000 e tavolozza al pixel; non verificati ricalco, taglio, perni, giunture animate, leggibilità a 90 px o resa nel gioco. Criteri lasciati non spuntati per Claude e Sergio.
+- Merge della scheda: conservati integralmente sia il riepilogo di Claude sia le precedenti consegne di Codex nella sezione di consegna; il resoconto e i prompt di Claude restano quelli aggiornati su main.
+
 ## Resoconto di Claude
 
 ### Fase 1 · scelte di Sergio (2026-11-04)
