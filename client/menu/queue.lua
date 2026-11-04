@@ -46,14 +46,15 @@ local function build(c)
 	c.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(c.radice, false)
 	local C = ui.C
-	-- the arrow sits outside the root: only a node without a parent sticks to the edge
-	if c.arrow then gui.delete_node(c.arrow) end
-	c.arrow = ui.indietro(c.buttons, "indietro")
-	ui.titolo(T.title, 640, 640, 1, C.TEXT, c.radice)
+	-- the header (ui.header): the title and the pill's place
+	ui.header_delete(c.head)
+	c.head = ui.header(c.buttons, T.title, "indietro")
 
 	-- the 2 vs 2: the big card, with the light border
 	local W2, H2 = 640, 440
-	local n = ui.button(c.buttons, 48 + W2 / 2, 300, W2, H2, "", "coda:2v2", { colore = C.LIGHT }, c.radice)
+	-- from the first row under the header (ui.header) down
+	local CY = ui.CONTENT_TOP - H2 / 2
+	local n = ui.button(c.buttons, ui.EDGE + W2 / 2, CY, W2, H2, "", "coda:2v2", { colore = C.LIGHT }, c.radice)
 	local b = c.buttons[#c.buttons]
 	b.riposo = C.LIGHT
 	gui.set_color(b.bordo, C.LIGHT)
@@ -71,8 +72,8 @@ local function build(c)
 	to_right(common.play, W2 / 2 - 36, -H2 / 2 + 44, 1.3, C.LIGHT, n)
 
 	-- on the right: the events with their own queue, then the 1 vs 1
-	local x, w = 48 + W2 + 32 + (1280 - 48 * 2 - W2 - 32) / 2, 1280 - 48 * 2 - W2 - 32
-	local y = 300 + H2 / 2
+	local x, w = ui.EDGE + W2 + 32 + (1280 - ui.EDGE * 2 - W2 - 32) / 2, 1280 - ui.EDGE * 2 - W2 - 32
+	local y = CY + H2 / 2
 	for i, o in ipairs(events.with_queue()) do
 		if i > MAX_EVENTS then break end
 		local h = 150
@@ -88,7 +89,7 @@ local function build(c)
 		y = y - h - 20
 	end
 	local h1 = 90
-	local u = ui.button(c.buttons, x, 300 - H2 / 2 + h1 / 2, w, h1, "", "coda:1v1", nil, c.radice)
+	local u = ui.button(c.buttons, x, CY - H2 / 2 + h1 / 2, w, h1, "", "coda:1v1", nil, c.radice)
 	riga(common.modes["1v1"], -w / 2 + 24, 0, 0.85, C.TEXT, u)
 	to_right(common.play, w / 2 - 24, 0, 0.9, C.OFF, u)
 end
@@ -114,7 +115,7 @@ end
 
 function M.destroy(c)
 	gui.delete_node(c.radice)
-	gui.delete_node(c.arrow)
+	ui.header_delete(c.head)
 	gui.delete_node(c.fondo)
 end
 

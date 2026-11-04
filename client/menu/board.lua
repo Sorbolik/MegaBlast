@@ -68,17 +68,17 @@ end
 -- ORA: the cards of the running events
 local function hour_of(b, now)
 	local C = ui.C
-	riga(T.now, 48, 560, 0.6, C.OFF, b.radice)
+	riga(T.now, ui.EDGE, ui.CONTENT_TOP - 12, 0.6, C.OFF, b.radice)
 	local list_of = events.in_progress(now)
 	if #list_of == 0 then
-		riga(T.no_event, 48, 500, 0.75, C.TEXT, b.radice)
+		riga(T.no_event, ui.EDGE, ui.CONTENT_TOP - 72, 0.75, C.TEXT, b.radice)
 		return
 	end
 	local w, h = 560, 128
 	for i, o in ipairs(list_of) do
 		if i > 3 then break end
-		local y = 520 - (i - 1) * (h + 16) - h / 2
-		local n = ui.button(b.buttons, 48 + w / 2, y, w, h, "", "evento:" .. o.id, nil, b.radice)
+		local y = ui.CONTENT_TOP - 52 - (i - 1) * (h + 16) - h / 2
+		local n = ui.button(b.buttons, ui.EDGE + w / 2, y, w, h, "", "evento:" .. o.id, nil, b.radice)
 		local bt = b.buttons[#b.buttons]
 		bt.riposo = color(o)
 		gui.set_color(bt.bordo, bt.riposo)
@@ -95,14 +95,14 @@ end
 local function upcoming(b, now)
 	local C = ui.C
 	local x0 = 680
-	riga(T.next, x0, 560, 0.6, C.OFF, b.radice)
+	riga(T.next, x0, ui.CONTENT_TOP - 12, 0.6, C.OFF, b.radice)
 	local today = midnight(now)
 	local wday = os.date("*t", today).wday
 	-- this week's Monday (at noon: no surprises with daylight saving)
 	local monday = today + 43200 - ((wday + 5) % 7) * 86400
 	local cw, ch, gap = 76, 70, 4
 	for s = 0, 1 do
-		local y = 490 - s * (ch + 30)
+		local y = ui.CONTENT_TOP - 82 - s * (ch + 30)
 		for g = 0, 6 do
 			local t = midnight(monday + (s * 7 + g) * 86400)
 			local end_of = midnight(t + 86400 + 43200)
@@ -138,35 +138,35 @@ end
 -- An event's detail
 local function detail(b, o, now)
 	local C = ui.C
-	riga(events.tipo(o), 48, 590, 0.6, color(o), b.radice)
-	riga(events.quando(o, now), 48 + 260, 590, 0.6, C.OFF, b.radice)
-	gui.set_pivot(ui.titolo(o.nome, 48, 540, 0.9, C.LIGHT, b.radice), gui.PIVOT_W)
-	if o.riga and o.riga ~= "" then riga(o.riga, 48, 500, 0.65, C.TEXT, b.radice, 640) end
+	riga(events.tipo(o), ui.EDGE, ui.CONTENT_TOP - 12, 0.6, color(o), b.radice)
+	riga(events.quando(o, now), ui.EDGE + 260, ui.CONTENT_TOP - 12, 0.6, C.OFF, b.radice)
+	gui.set_pivot(ui.titolo(o.nome, ui.EDGE, ui.CONTENT_TOP - 62, 0.9, C.LIGHT, b.radice), gui.PIVOT_W)
+	if o.riga and o.riga ~= "" then riga(o.riga, ui.EDGE, ui.CONTENT_TOP - 102, 0.65, C.TEXT, b.radice, 640) end
 
-	riga(T.what_changes, 48, 410, 0.65, C.OFF, b.radice)
+	riga(T.what_changes, ui.EDGE, ui.CONTENT_TOP - 192, 0.65, C.OFF, b.radice)
 	for i, t in ipairs(events.what_changes(o, b.nomi)) do
 		if i > 4 then break end
-		local n = ui.pannello(48 + 300, 370 - (i - 1) * 52, 600, 44, b.radice)
+		local n = ui.pannello(ui.EDGE + 300, ui.CONTENT_TOP - 232 - (i - 1) * 52, 600, 44, b.radice)
 		riga(t, -300 + 20, 0, 0.7, C.TEXT, n)
 	end
 	local when = T.from_to:format(day_n(o.da, true), day_n(o.a, true))
-	riga(when, 48, 130, 0.65, C.OFF, b.radice)
-	if o.torna then riga(T.back_on:format(day_n(o.torna)), 48, 96, 0.65, C.OFF, b.radice) end
+	riga(when, ui.EDGE, 130, 0.65, C.OFF, b.radice)
+	if o.torna then riga(T.back_on:format(day_n(o.torna)), ui.EDGE, 96, 0.65, C.OFF, b.radice) end
 
 	-- on the right: the prizes (the server hands them out once there are accounts)
 	local px, pw = 760, 472
-	riga(T.prizes, px, 590, 0.65, C.OFF, b.radice)
+	riga(T.prizes, px, ui.CONTENT_TOP - 12, 0.65, C.OFF, b.radice)
 	local premi = type(o.premi) == "table" and o.premi or {}
-	if #premi == 0 then riga(T.just_for_fun, px, 550, 0.7, C.TEXT, b.radice) end
+	if #premi == 0 then riga(T.just_for_fun, px, ui.CONTENT_TOP - 52, 0.7, C.TEXT, b.radice) end
 	for i, p in ipairs(premi) do
 		if i > 5 then break end
-		local n = ui.pannello(px + pw / 2, 550 - (i - 1) * 56, pw, 48, b.radice)
+		local n = ui.pannello(px + pw / 2, ui.CONTENT_TOP - 52 - (i - 1) * 56, pw, 48, b.radice)
 		riga(type(p) == "table" and (p.testo or "") or tostring(p), -pw / 2 + 20, 0, 0.7, C.TEXT, n)
 		if type(p) == "table" and p.chi then to_right(p.chi, pw / 2 - 20, 0, 0.6, ui.GOLD, n) end
 	end
 	if o.da <= now then
 		-- an event on a normal queue is played in that queue
-		ui.button(b.buttons, 1280 - 48 - 170, 108, 340, 108, common.play, "coda:" .. o.coda,
+		ui.button(b.buttons, 1280 - ui.EDGE - 170, ui.EDGE + 54, 340, 108, common.play, "coda:" .. o.coda,
 			{ main = true, colore = color(o) }, b.radice)
 	end
 end
@@ -182,9 +182,9 @@ local function build(b)
 	b.buttons = {}
 	b.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(b.radice, false)
-	-- the arrow sits outside the root: only a node without a parent sticks to the edge
-	if b.arrow then gui.delete_node(b.arrow) end
-	b.arrow = ui.indietro(b.buttons, "indietro")
+	-- the header (ui.header): EVENTI and the pill's place
+	ui.header_delete(b.head)
+	b.head = ui.header(b.buttons, common.events, "indietro")
 	local now = events.ora()
 	local o = b.aperto and find(b.aperto)
 	if o then
@@ -192,7 +192,6 @@ local function build(b)
 		return
 	end
 	b.aperto = nil
-	ui.titolo(common.events, 640, 640, 1, ui.C.TEXT, b.radice)
 	if not events.loaded_ok then
 		ui.testo(T.offline, 640, 400, 0.75, ui.C.OFF, b.radice)
 		return
@@ -240,7 +239,7 @@ end
 
 function M.destroy(b)
 	gui.delete_node(b.radice)
-	gui.delete_node(b.arrow)
+	ui.header_delete(b.head)
 	gui.delete_node(b.fondo)
 end
 
