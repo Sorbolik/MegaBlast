@@ -38,6 +38,58 @@ return {
 		close_pad = "B  CHIUDI",
 	},
 
+	-- menu/story.lua and ui/story.lua: the campaign's story, a comic in chapters.
+	-- Each panel (its image id) has its balloons in order: { who, line };
+	-- who: favilla, fabbro, apprendista, voce (from the dark) or didascalia (the caption box)
+	story = {
+		skip = "SALTA",
+		read_again = "LA STORIA",
+		voice = "???",
+		chapters = {
+			prologo = {
+				s_viaggio = {
+					{ "didascalia", "Sull'orlo dell'inferno c'è la Forgia, dove nascono le armi dei diavoli." },
+					{ "apprendista", "Eccola! Il Fabbro prende un solo apprendista all'anno. Stavolta tocca a me." },
+				},
+				["4_arrivo_a"] = { { "favilla", "Ehi, nuovo! Sei tu quello che vuole fare il fabbro?" } },
+				["4_arrivo_b"] = { { "apprendista", "Sì! E diventerò il più forte di tutti." } },
+				["4_arrivo_c"] = { { "favilla", "Ah sì? Io sono Favilla, l'apprendista più vecchia. Il più forte, qui, è chi mi sta dietro." } },
+				["5_fabbro_a"] = {
+					{ "fabbro", "Un altro. Favilla, insegnagli tu. Se impara, lo voglio nella Forgia." },
+					{ "apprendista", "(...è enorme.)" },
+				},
+				["5_fabbro_c_1"] = { { "favilla", "Psst. Brontola, ma la sua fornace tiene caldo tutto l'inferno. Vieni, ti faccio vedere il cortile!" } },
+			},
+			forgia_aperta = {
+				s_forgia_aperta = {
+					{ "fabbro", "Hai battuto Favilla. Non succede spesso." },
+					{ "fabbro", "Benvenuto nella Forgia, ragazzo. Qui si combatte davvero." },
+				},
+			},
+			regalo = {
+				s_regalo = {
+					{ "fabbro", "Te li sei guadagnati. Mettili, laggiù il pavimento brucia." },
+					{ "didascalia", "Gli stivali sono nell'ARMERIA." },
+				},
+			},
+			insieme = {
+				s_insieme = { { "favilla", "Io e te, insieme. Fammi vedere cosa ti ho insegnato!" } },
+			},
+			rapimento = {
+				["6_rapimento_a"] = {
+					{ "voce", "La fiamma più calda dell'inferno adesso è mia." },
+					{ "favilla", "Aiutami!" },
+				},
+				["6_rapimento_b"] = { { "didascalia", "Giù, sempre più giù, fino in fondo all'inferno." } },
+				["6_rapimento_c"] = {
+					{ "apprendista", "Chi era?!" },
+					{ "fabbro", "Lucifero. È finita giù, in fondo all'inferno. Ti ci porto io, un girone alla volta." },
+				},
+				s_ghiaccio = { { "didascalia", "In fondo all'ultimo girone, nel ghiaccio, Favilla aspetta." } },
+			},
+		},
+	},
+
 	-- menu/pick.lua: the weapon draft
 	pick = {
 		step_names = { "PRIMARIA", "SECONDARIA" },

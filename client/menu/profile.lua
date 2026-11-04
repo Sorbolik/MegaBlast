@@ -45,7 +45,9 @@ end
 
 function M.nuovo()
 	local p = { versione = M.VERSION, xp = 0, livello = 1, mastery = {}, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
-		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0 }
+		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0,
+		-- the story's chapters already seen (ui/story.lua)
+		storia = {} }
 	for i = 1, loadout.LOADOUTS do p.loadouts[i] = loadout.new() end
 	return p
 end

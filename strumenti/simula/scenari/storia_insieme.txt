@@ -1,0 +1,12 @@
+# Il capitolo Insieme (WB-017), che nel gioco arriva prima della Battaglia della Forgia: qui lo fa uscire subito
+# prova_storia insieme, aprendo la CAMPAGNA.
+imposta prova_storia insieme
+imposta prova_vignette no
+
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1.2
+foto 01_insieme
+pad a
+aspetta 1.5
+foto 99_campagna

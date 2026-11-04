@@ -1,0 +1,16 @@
+# Il capitolo La Forgia si apre (WB-017), che nel gioco arriva vinto il Duello con
+# Favilla: qui lo fa uscire subito
+# prova_storia forgia_aperta, aprendo la CAMPAGNA.
+imposta prova_storia forgia_aperta
+imposta prova_vignette no
+
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1.2
+foto 01_battuto
+pad a
+aspetta 0.6
+foto 02_benvenuto
+pad a
+aspetta 1.5
+foto 99_campagna

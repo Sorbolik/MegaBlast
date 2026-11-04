@@ -1,0 +1,42 @@
+# La storia della campagna (ui/story.lua, menu/story.lua): la prima volta che
+# si apre la CAMPAGNA arriva il Prologo, una tavola alla volta coi fumetti;
+# AVANTI (qui col tasto A del controller finto) va al fumetto dopo. Senza
+# SALTA la prima volta. Poi la CAMPAGNA con LA STORIA in alto a destra
+# (1140 658), che la rilegge con SALTA (290 115 sulle tavole larghe).
+imposta prova_storia si
+imposta prova_vignette no
+
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1.2
+foto 01_viaggio
+pad a
+aspetta 0.6
+foto 02_viaggio_secondo
+pad a
+aspetta 0.6
+foto 03_arrivo
+pad a
+aspetta 0.6
+foto 04_lui
+pad a
+aspetta 0.6
+foto 05_lei
+pad a
+aspetta 0.6
+foto 06_fabbro
+pad a
+aspetta 0.6
+foto 07_fabbro_secondo
+pad a
+aspetta 0.6
+foto 08_segreto
+pad a
+aspetta 1.5
+foto 09_campagna
+tocca 1140 658                      # LA STORIA
+aspetta 1.2
+foto 10_rileggi
+tocca 290 115                       # SALTA
+aspetta 1.5
+foto 11_di_nuovo_campagna
