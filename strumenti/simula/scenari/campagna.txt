@@ -26,10 +26,9 @@ tieni salta 0.15
 cammina destra 1180
 aspetta 0.5
 cammina destra 1215
-tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
+tieni destra 0.5                     # fino alla cassa: l'arma vola al suo tasto
 aspetta_evento crate_pick 10
 aspetta 0.8
-tocca_centro 640 120                       # PROVALA
 aspetta 0.8
 mira 141 77 1
 aspetta_evento damage 6

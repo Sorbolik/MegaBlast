@@ -1,19 +1,21 @@
 -- The vignettes (Sergio, 3 Nov; the level plan:
 -- https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2): no more writing above
 -- the heads. Who speaks does it with their face, in comic style:
---   - the strip at the top: a line that doesn't stop the game (what is left
---     to do, a character's quip);
+--   - the strip at the top, just under the points: a line of whoever guides
+--     you that doesn't stop the game (what to do now, Ritenta, Brava). The
+--     bots' comments are not here: plain text over their head (battle/plate.lua,
+--     Sergio, 4 Nov);
 --   - the big vignette: the game stops, the face, the line and a small
 --     drawing that shows the move with the real devil; it explains a thing
---     BEFORE you do it. A tap (or A) goes on, CHIUDI (or B) closes it.
+--     BEFORE you do it. Only the button goes on, VAI! or AVANTI (or A): a tap
+--     elsewhere does nothing (Sergio, 4 Nov: too easy to tap outside by
+--     mistake); CHIUDI (or B) closes it. Without a drawing it is smaller.
 -- The faces are cut from the chosen WB-012 sheets
 -- (strumenti/ritratti/taglia.py -> "ritratti" texture, ui/portraits.atlas).
 -- Client only: it doesn't touch the match.
 --
 --   local v = vignette.new()
 --   v:say(chi, faccia, testo, nome, colore)  -- the strip (testo nil: it goes away)
---   v:quip(chi, faccia, testo, nome, colore, strong) -- a quip in the strip for a while,
---                                         -- then the line comes back
 --   local view = v:open(pages)            -- pages: { { chi, faccia, testo, disegno } }:
 --                                         -- the big vignette (the battle keeps it as self.carta)
 --   view:premi(x, y) / view:pad(n)        -- a tap / a controller button: true when it is over
@@ -39,20 +41,17 @@ M.CHI = {
 	fabbro = { nome = T.fabbro, colore = c(0.72, 0.26, 0.16) },
 	apprendista = { nome = T.apprendista, colore = c(0.72, 0.26, 0.16) },
 }
--- the face for each moment of the quips (battle/quips.lua)
-M.QUIP_FACE = { turno = "fiera", colpisce = "ride", colpito = "arrabbiata", scappa = "ride",
-	abbatte = "fiera", muore = "triste" }
 M.FACCE = { calma = true, ride = true, spiega = true, sorpresa = true, preoccupata = true,
 	arrabbiata = true, fiera = true, triste = true }
 
--- the strip: top center, under the goal line
-local STRIP_W, STRIP_H, STRIP_Y = 760, 96, 520
+-- the strip: top center, 38 below the points board (room for the lines under
+-- it, «+N PER PAREGGIARE» and the turn balance); the goal is right of the board
+local STRIP_W, STRIP_H, STRIP_Y = 760, 96, 568
 local FACE_S = 80
-local QUIP_T = 2.6
 -- the big vignette
-local BIG_W, BIG_H = 980, 470
+local BIG_W, BIG_H = 980, 400
 local BIG_FACE = 230
-local DRAW_W, DRAW_H = 560, 232
+local DRAW_W, DRAW_H = 640, 262
 local DRAW_K = 2.3   -- the drawing's devil, times its size in the match
 
 local V3 = vmath.vector3()
@@ -125,7 +124,7 @@ local function who(chi, nome, colore)
 end
 
 function M.new()
-	local v = setmetatable({ quip_t = 0, line = nil }, { __index = M })
+	local v = setmetatable({ line = nil }, { __index = M })
 	-- the strip
 	v.strip = panel(640, STRIP_Y, STRIP_W, STRIP_H)
 	local fx = -STRIP_W / 2 + 12 + FACE_S / 2
@@ -138,7 +137,8 @@ function M.new()
 end
 
 local function show_strip(v, s)
-	if not s then
+	-- under the big vignette the strip doesn't show: it would say the same line
+	if not s or v.view then
 		gui.set_enabled(v.strip, false)
 		v.shown = nil
 		return
@@ -163,27 +163,16 @@ function M.say(v, chi, faccia, testo, nome, colore)
 	elseif not (v.line and v.line.testo == testo and v.line.chi == chi) then
 		v.line = { chi = chi, faccia = faccia, testo = testo, nome = nome, colore = colore }
 	end
-	if v.quip_t <= 0 then show_strip(v, v.line) end
-end
-
--- A quip: it doesn't cover one just said, unless it is strong
-function M.quip(v, chi, faccia, testo, nome, colore, strong)
-	if v.quip_t > QUIP_T - 1.8 and not strong then return end
-	v.quip_t = QUIP_T
-	show_strip(v, { chi = chi, faccia = faccia, testo = testo, nome = nome, colore = colore })
+	show_strip(v, v.line)
 end
 
 -- Nothing in the strip (the match ends, a menu opens)
 function M.quiet(v)
-	v.line, v.quip_t = nil, 0
+	v.line = nil
 	show_strip(v, nil)
 end
 
 function M.update(v, dt)
-	if v.quip_t > 0 then
-		v.quip_t = v.quip_t - dt
-		if v.quip_t <= 0 then show_strip(v, v.line) end
-	end
 	if v.view then v.view:animate(dt) end
 end
 
@@ -599,22 +588,40 @@ function M.open(v, pages, pad)
 	local veil = gui.new_box_node(vec(0, 0), vec(1280 * 4, 720 * 4))
 	gui.set_color(veil, c(0, 0, 0, 0.6))
 	gui.set_parent(veil, view.radice)
-	view.paper = panel(0, 10, BIG_W, BIG_H, view.radice)
-	local left = -BIG_W / 2 + 28 + BIG_FACE / 2
-	view.frame, view.face = face(nil, nil, left, 40, BIG_FACE, view.paper)
-	view.name = ink("", left - BIG_FACE / 2, 40 - BIG_FACE / 2 - 14, 0.6, INK, nil, view.paper)
-	local rx = left + BIG_FACE / 2 + 28
-	local rw = BIG_W / 2 - rx - 28
-	view.text = ink("", rx, BIG_H / 2 - 26, 0.62, INK, rw, view.paper)
-	view.draw_x, view.draw_y = rx + rw / 2, -BIG_H / 2 + 90 + DRAW_H / 2
-	-- the buttons: CHIUDI small on the left (only with more pages: one page
-	-- closes with VAI!; not SALTA, which in the jump vignette would read as
-	-- the jump), AVANTI on the right
-	local by = -BIG_H / 2 + 44
-	view.skip = box(rx + 70, by, 160, 50, c(0, 0, 0, 0), view.paper)
+	-- without a drawing the vignette is only the face and the line: smaller
+	local drawn = false
+	for _, pg in ipairs(pages) do if pg.disegno and DRAW[pg.disegno] then drawn = true end end
+	local bw, bh, bf = drawn and BIG_W or 820, drawn and BIG_H or 250, drawn and BIG_FACE or 150
+	view.paper = panel(0, 10, bw, bh, view.radice)
+	local left = -bw / 2 + 28 + bf / 2
+	local fy = bh / 2 - 28 - bf / 2
+	view.frame, view.face = face(nil, nil, left, fy, bf, view.paper)
+	view.name = ink("", left - bf / 2, fy - bf / 2 - 14, 0.6, INK, nil, view.paper)
+	local rx = left + bf / 2 + 28
+	local rw = bw / 2 - rx - 28
+	view.text = ink("", rx, bh / 2 - 26, drawn and 0.62 or 0.8, INK, rw, view.paper)
+	view.draw_x, view.draw_y = rx + rw / 2, -bh / 2 + 28 + DRAW_H / 2
+	-- the buttons (Sergio, 4 Nov: no empty space): with a drawing AVANTI goes
+	-- under the face, and CHIUDI with the page dots between the name and it;
+	-- without one AVANTI is bottom right and CHIUDI on its left. CHIUDI only
+	-- with more pages (one page closes with VAI!; not SALTA, which in the jump
+	-- vignette would read as the jump)
+	local by = -bh / 2 + 44
+	local sx, sy, dx, dy
+	-- the dots closer together when there are many (RILEGGI)
+	local step = math.min(18, 140 / math.max(1, #pages - 1))
+	if drawn then
+		view.next = box(left, by, bf, 56, INK, view.paper)
+		sx, sy = left - bf / 2 + 60, by + 44
+		dx, dy = left + bf / 2 - 5 - (#pages - 1) * step, sy
+	else
+		view.next = box(bw / 2 - 28 - 110, by, 220, 56, INK, view.paper)
+		sx, sy = bw / 2 - 28 - 220 - 100, by
+		dx, dy = rx + 9, by
+	end
+	view.skip = box(sx, sy, 160, 40, c(0, 0, 0, 0), view.paper)
 	ink(pad and T.close_pad or T.close, -60, 12, 0.55, INK_SOFT, nil, view.skip)
 	gui.set_enabled(view.skip, #pages > 1)
-	view.next = box(BIG_W / 2 - 28 - 110, by, 220, 56, INK, view.paper)
 	view.next_text = gui.new_text_node(vec(0, 0), "")
 	gui.set_font(view.next_text, "titolo")
 	gui.set_color(view.next_text, PAPER)
@@ -627,13 +634,14 @@ function M.open(v, pages, pad)
 	-- the page dots, when there is more than one
 	if #pages > 1 then
 		for k = 1, #pages do
-			view.dots[k] = ui.disco(rx + rw / 2 + (k - (#pages + 1) / 2) * 18, by, 9, INK_SOFT, view.paper)
+			view.dots[k] = ui.disco(dx + (k - 1) * step, dy, math.min(9, step - 2), INK_SOFT, view.paper)
 		end
 	end
 	show_page(view)
 	gui.set_scale(view.paper, vmath.vector3(0.7, 0.7, 1))
 	gui.animate(view.paper, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3)
 	v.view = view
+	show_strip(v, nil)
 	return view
 end
 
@@ -658,10 +666,12 @@ local function advance(view)
 	return false
 end
 
--- A tap: on SALTA it closes, elsewhere it turns the page (true: it's over)
+-- A tap: on CHIUDI it closes, on the button it goes on, elsewhere nothing
+-- (true: it's over)
 function View.premi(view, x, y)
 	if gui.is_enabled(view.skip) and gui.pick_node(view.skip, x, y) then return true end
-	return advance(view)
+	if gui.pick_node(view.next, x, y) then return advance(view) end
+	return false
 end
 
 -- A controller button: A goes on, B closes
@@ -674,6 +684,7 @@ end
 function View.close_view(view)
 	gui.delete_node(view.radice)
 	if view.owner.view == view then view.owner.view = nil end
+	if view.owner.line then show_strip(view.owner, view.owner.line) end
 end
 
 return M

@@ -17,6 +17,9 @@
 --   targa.set_enabled(t, on) / targa.nome(t, nome) / targa.colore(t, colore)
 --   targa.stato(t, txt)                   -- the effects on it, under the bar ("" = nothing)
 --   targa.announcement(t, txt)            -- a label that rises above the name and fades
+--   targa.battuta(t, txt, strong)         -- a bot's comment over its head for a while
+--                                          (Sergio, 4 Nov: plain text, no strip); it
+--                                          doesn't cover one just said unless strong
 --   targa.posto(t, txt, crown)            -- the standings place left of the bar
 --                                          -- ("" = nothing) and the Crown beside the name
 --   targa.sopra(t)                        -- where the plate ends at the top (units at scale 1)
@@ -51,6 +54,9 @@ local BAR_BG = vmath.vector4(0.04, 0.03, 0.05, 0.9)
 -- scale of the "titolo" font (scale 1 = about 40 px)
 local NAME_SCALE, NUMBER_SCALE, STATE_SCALE, BANNER_SCALE = 0.25, 0.2, 0.18, 0.3
 local STATE_Y, BANNER_Y, BANNER_RISE, BANNER_T = -(BASE + 4), 22, 14, 1.4
+-- a bot's comment: above the turn arrow, for QUIP_T seconds (the last
+-- QUIP_FADE fading); a new one covers it only after QUIP_KEEP seconds
+local QUIP_Y, QUIP_SCALE, QUIP_T, QUIP_FADE, QUIP_KEEP = 42, 0.38, 2.6, 0.4, 0.8
 -- The plate stays the same size on screen at every zoom (Sergio, 3 Nov: from
 -- far away it must not be bigger than the character): scale ON_SCREEN / zoom
 -- (0.85 until Sergio found it «ancora un po' piccolo», 3 Nov)
@@ -163,6 +169,9 @@ function M.nuove(palette, name_list)
 		t.stato = txt(t.inside_texts, 0, STATE_Y, "", STATE_SCALE, ui.C.TEXT)
 		t.announcement = txt(t.inside_texts, 0, BANNER_Y, "", BANNER_SCALE, ui.C.LIGHT)
 		gui.set_enabled(t.announcement, false)
+		t.quip = txt(t.inside_texts, 0, QUIP_Y, "", QUIP_SCALE, ui.C.LIGHT)
+		gui.set_enabled(t.quip, false)
+		t.quip_t = 0
 		M.vita(t, 1, 1)
 		crown_spot(t)
 	end
@@ -203,6 +212,13 @@ function M.announcement(t, s)
 	gui.set_text(t.announcement, s)
 	gui.set_enabled(t.announcement, true)
 	t.banner_t = BANNER_T
+end
+
+function M.battuta(t, s, strong)
+	if t.quip_t > QUIP_T - QUIP_KEEP and not strong then return end
+	gui.set_text(t.quip, s)
+	gui.set_enabled(t.quip, true)
+	t.quip_t = QUIP_T
 end
 
 function M.set_enabled(t, on)
@@ -261,6 +277,14 @@ function M.update(t, dt, x, y, scale)
 		C.x, C.y, C.z, C.w = ui.C.LIGHT.x, ui.C.LIGHT.y, ui.C.LIGHT.z, math.min(1, 3 * (1 - f))
 		gui.set_color(t.announcement, C)
 		if t.banner_t <= 0 then gui.set_enabled(t.announcement, false) end
+	end
+
+	-- the comment stays, then fades
+	if t.quip_t > 0 then
+		t.quip_t = t.quip_t - dt
+		C.x, C.y, C.z, C.w = ui.C.LIGHT.x, ui.C.LIGHT.y, ui.C.LIGHT.z, math.min(1, max(0, t.quip_t) / QUIP_FADE)
+		gui.set_color(t.quip, C)
+		if t.quip_t <= 0 then gui.set_enabled(t.quip, false) end
 	end
 
 	span(t.trail, 0, W * t.trail_f)

@@ -2,12 +2,11 @@
 -- https://claude.ai/artifact/8ARwTr2xjcdXZxq7UhgnMK): in the middle of the
 -- screen the icon, the name, a line on what it does, three dotted bars
 -- (damage, range and one that depends on the kind) and how to use it with the
--- controls you have. It closes with PROVALA. It knows nothing about the match:
--- the battle opens it when you find a new weapon, and the weapon draft and the
--- Armory will use it too.
+-- controls you have. It closes with OK. It knows nothing about the match: the
+-- weapon draft opens it (in battle a weapon found no longer has its card:
+-- Sergio, 4 Nov, its icon flies to its button), and the Armory will use it too.
 --
 --   local c = scheda.open_view("missile", commands)     -- commands: "telefono", "computer" or "controller" (how to use it)
---   local c = scheda.open_view("missile", commands, true) -- reviewed (weapon draft): no ARMA NUOVA, closes with OK
 --   if c:premi(x, y) then c:close_view() end            -- a tap: on the button? (x, y as in gui.pick_node)
 --   scheda.DATI.missile                            -- the kind and the bars, for whoever shows it elsewhere (what it does: lang/it.lua card.what)
 
@@ -79,7 +78,7 @@ local function riga(t, y, scale, color, parent)
 	return n
 end
 
-function M.open_view(weapon_name, commands, reviewed)
+function M.open_view(weapon_name, commands)
 	local d = assert(M.DATI[weapon_name], "scheda sconosciuta: " .. tostring(weapon_name))
 	local kind = TYPES[d.tipo]
 	local col = kind.colore
@@ -91,7 +90,7 @@ function M.open_view(weapon_name, commands, reviewed)
 	gui.set_parent(veil, c.radice)
 	local paper, border = ui.pannello(0, 0, W, H, c.radice)
 	gui.set_color(border, col)
-	ui.testo(reviewed and kind.nome or T.new_weapon:format(kind.nome), 0, 245, 0.8, col, paper)
+	ui.testo(kind.nome, 0, 245, 0.8, col, paper)
 	ui.alone(0, 150, 230, vmath.vector4(col.x, col.y, col.z, 0.4), paper)
 	local icon_img = gui.new_box_node(vmath.vector3(0, 150, 0), vmath.vector3(130, 130, 0))
 	gui.set_texture(icon_img, "armi")
@@ -111,7 +110,7 @@ function M.open_view(weapon_name, commands, reviewed)
 		end
 	end
 	riga(use(d, weapon_name, commands), d.bars and -188 or -110, 0.8, C.TEXT, paper)
-	c.prova = ui.button({}, 0, -240, 250, 64, reviewed and T.ok or T.try_it, nil, { main = true, colore = col }, paper)
+	c.prova = ui.button({}, 0, -240, 250, 64, T.ok, nil, { main = true, colore = col }, paper)
 	-- arrives with a small hop
 	gui.set_scale(paper, vmath.vector3(0.6, 0.6, 1))
 	gui.animate(paper, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.35)

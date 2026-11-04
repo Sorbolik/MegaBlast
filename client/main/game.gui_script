@@ -509,11 +509,9 @@ end
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
 local function show_menu(self, without_veil)
 	close_screen(self)
-	-- a card still open (or waiting in line) goes away with its match: it
-	-- would stay in front of the home (the back button opens the wheel even
-	-- over a card)
+	-- a big vignette still open goes away with its match: it would stay in
+	-- front of the home (the back button opens the wheel even over it)
 	if self.carta then self.carta:close_view(); self.carta = nil end
-	self.card_queue = nil
 	if self.sala then menu.lobby.destroy(self.sala); self.sala = nil end
 	self.podium_t = nil
 	-- in the queue the connection stays: you can go around the menus (ui/pill.lua)
@@ -710,7 +708,7 @@ local function new_match(self, seed, map, opts)
 	-- who speaks is said by the mission (start_mission), later
 	self.speak = nil
 	if self.carta then self.carta:close_view(); self.carta = nil end
-	self.card_queue = nil
+	self.flights = nil
 	self.ricetta = replay.nuova(seed, map, opts)
 	self.g, self.bots = replay.partita(self.ricetta)
 	-- the world shows only now that there is a match (show_menu)
@@ -1175,17 +1173,12 @@ end
 local function handle_event(self, e)
 	if SIMULATE then print("SIMULA evento " .. e.type) end
 	if self.conta then CP.conta.evento(self.conta, self.g, e) end
-	-- the campaign characters speak (battle/quips.lua); everyday quips
-	-- don't cover a quip just said
+	-- the bots with a character comment (battle/quips.lua): plain text over
+	-- their head, never the strip (Sergio, 4 Nov: the strip is for who guides
+	-- you); everyday quips don't cover a quip just said
 	if self.speak then
-		local i, s, strong, moment = self.speak:evento(e, self.g.current)
-		if s then
-			-- the keepers with a portrait (the Fabbro, Favilla) speak with their face
-			local who = self.speak.chi[i]
-			local own = (who == "fabbro" or who == "favilla") and who or nil
-			self.vign:quip(own or "apprendista", CP.vignette.QUIP_FACE[moment], s,
-				not own and who_name(self, i) or nil, not own and TEAM_COLORS[self.g.robots[i].team] or nil, strong)
-		end
+		local i, s, strong = self.speak:evento(e, self.g.current)
+		if s then plate.battuta(self.robots[i].plate, s, strong) end
 	end
 	if e.type == "explosion" then
 		local row_min, row_max = e.row_min, e.row_max
@@ -1331,21 +1324,11 @@ local function handle_event(self, e)
 	elseif e.type == "crate_pick" then
 		local found = (self.mode == "online" and e.robot == self.me) and TM.you_found or TM.found
 		show_message(self, found:format(who_name(self, e.robot), TM.weapon_found[e.weapon]))
-		-- a new weapon locally: its card (battle/card.lua) stops the game until
-		-- you tap PROVALA. Always in the lessons, otherwise the first time
-		local l = self.missione and self.missione.l
-		if self.mode == "local" and e.robot == 1 and (l or next(self.bots))
-			and (profile.new_weapon(self.profilo, e.weapon) or (l and l.aspetta)) then
-			profile.salva(self.profilo)
-			-- two crates in the same tick (or a card already open): the next card
-			-- waits its turn, so no card is left on screen without its button
-			if self.carta then
-				self.card_queue = self.card_queue or {}
-				self.card_queue[#self.card_queue + 1] = e.weapon
-			else
-				self.carta = require("battle.card").open_view(e.weapon, PAD.comandi(self))
-			end
-		end
+		-- no card (Sergio, 4 Nov: «sono brutte e nessuno le legge»): the icon
+		-- flies to its button like a shot the Blade gives back, and in the lessons
+		-- the new weapon goes in hand
+		if profile.new_weapon(self.profilo, e.weapon) then profile.salva(self.profilo) end
+		CP.give(self, e.robot, e.weapon, self.mode == "local" and e.robot == 1 and self.missione)
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
@@ -2292,12 +2275,20 @@ function CP.mission_line(self, r)
 			self.vign_read[line.testo] = true
 			self.vign_pages[#self.vign_pages + 1] = page
 		end
-		if self.vign_line ~= line and not self.carta then
+		-- not while a weapon found flies to its button: first you see where it goes
+		local flying = self.flights or (self.fly_until and self.clock < self.fly_until)
+		if self.vign_line ~= line and not self.carta and not flying then
 			self.vign_line = line
 			if self.vign_on then
 				self.carta = self.vign:open({ page }, PAD.comandi(self) == "controller")
 			end
 		end
+	end
+	-- the opening line, once read on the big vignette, doesn't stay in the strip:
+	-- what to do is in the goal (Sergio, 4 Nov)
+	if line.apertura and self.vign_line == line then
+		self.vign:say(nil)
+		return
 	end
 	self.vign:say(chi, line.faccia or "calma", txt)
 end
@@ -2403,15 +2394,12 @@ local function mission_update(self, dt)
 		if chosen then where = { x = chosen.x, y = chosen.y, d = chosen.d * (chosen.on == 2 and CHOSEN or 1) } end
 	end
 	self.guide:aggiorna(what, where, PAD.comandi(self), self.levette)
-	-- the cards of the weapons the lesson gives without a crate (the Blade, the
-	-- Grapple): like the crates' ones they stop the game until you tap PROVALA
-	if not self.carta then
-		local w = missions.scheda(r)
-		if w then
-			profile.new_weapon(self.profilo, w)
-			profile.salva(self.profilo)
-			self.carta = require("battle.card").open_view(w, PAD.comandi(self))
-		end
+	-- the weapons the lesson gives without a crate (the Blade, the Grapple):
+	-- they fly to their button like the crates' ones
+	local w = missions.scheda(r)
+	if w then
+		if profile.new_weapon(self.profilo, w) then profile.salva(self.profilo) end
+		CP.give(self, 1, w, true)
 	end
 	-- the step wants to see farther (the island): the camera widens
 	local z = missions.zoom(r)
@@ -2890,6 +2878,22 @@ function CP.recharge_create(self)
 	gui.set_enabled(self.recharge_flash, false)
 end
 
+-- A weapon found (a crate, or given by the lesson): its icon flies to its
+-- button once the bar has it (CP.fly_pending, after update_bar); in_hand: it
+-- also goes in hand, if it is something you aim (not an item used at once)
+function CP.give(self, robot, w, in_hand)
+	self.flights = self.flights or {}
+	self.flights[#self.flights + 1] = { robot = robot, weapon = w }
+	if in_hand and (not game.TOOLS[w] or game.THROWN[w]) then self.weapon = w end
+end
+
+function CP.fly_pending(self)
+	local l = self.flights
+	if not l then return end
+	self.flights = nil
+	for _, e in ipairs(l) do CP.recharge(self, e) end
+end
+
 function CP.recharge(self, e)
 	local rb = bar_robot(self)
 	if not rb or rb.id ~= e.robot or not self.controls_visible then return end
@@ -2901,6 +2905,7 @@ function CP.recharge(self, e)
 	if not sl or not sl.x or not v then return end
 	local R = CP.RECHARGE
 	local n = self.recharge
+	self.fly_until = self.clock + R.FLY + R.SETTLE
 	local x, y = camera.to_screen(self.cam, v.x, v.y + game.DISEGNO_H / 2)
 	gui.cancel_animations(n)
 	gui.play_flipbook(self.recharge_icon, WEAPON_ICON[e.weapon])
@@ -3275,6 +3280,7 @@ local function render(self, dt)
 	-- picked on the others' turn it stays in hand; on yours, with orbs used up, no
 	if self.tele_armed and not tele_ok and my_turn(self) and g.phase == "aim" then self.tele_armed = false end
 	local chosen = update_bar(self)
+	CP.fly_pending(self)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
 	local bt = self.btn_tele
 	-- in the lessons that don't talk about orbs the button isn't there
@@ -3702,8 +3708,9 @@ function init(self)
 	-- the points at the top center; the ticking is the game object's "punto" sound
 	self.punti = score.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	-- the messages ("Una cassa cade dal cielo!") just under the strip of the
-	-- vignettes (battle/vignette.lua, top center at 520, 96 tall), never behind it
-	self.message = label(W / 2, H / 2 + 78, "", 1.6)
+	-- vignettes (battle/vignette.lua, top center at 568, 96 tall), never behind it
+	-- and above the head of whoever plays (the bots comment over their heads)
+	self.message = label(W / 2, H / 2 + 140, "", 1.6)
 	self.announcement = label(W / 2, H / 2 - 150, "", 2.2)
 	gui.set_color(self.announcement, vmath.vector4(1, 1, 1, 0))
 	-- the wheel at the top left, in every match: next to it it opens RIPROVA (not
@@ -4156,7 +4163,7 @@ local function pointer_down(self, id, px, py)
 	elseif self.mode ~= "local" and self.mode ~= "online" then
 		return
 	end
-	-- a new weapon's card: it closes with PROVALA, and the weapon stays in hand
+	-- the big vignette: only its button goes on (battle/vignette.lua)
 	if self.carta then
 		if self.carta:premi(px, py) then PAD.close_card(self) end
 		self.pointers[id] = "cancelled"
@@ -4299,15 +4306,11 @@ function PAD.texts(self)
 	return t
 end
 
--- A new weapon's card closes with PROVALA (or A), and the weapon stays in hand
--- (the vignettes too sit in self.carta, without a weapon)
+-- The big vignette (battle/vignette.lua, kept in self.carta) closes with
+-- VAI! (or A)
 function PAD.close_card(self)
-	local w = self.carta.arma
-	if w and (not game.TOOLS[w] or game.THROWN[w]) then self.weapon = w end
 	self.carta:close_view()
 	self.carta = nil
-	local q = self.card_queue
-	if q and #q > 0 then self.carta = require("battle.card").open_view(table.remove(q, 1), PAD.comandi(self)) end
 end
 
 -- A wheel button (nil: it just closes again). MIRA changes mode and the
@@ -4661,7 +4664,7 @@ function PAD.evento(self, e)
 		if n == "a" or n == "start" then pointer_down(self, "pad", 0, 0) end
 	elseif self.carta then
 		-- the weapon's card closes with A; the vignettes go on with A and close with B
-		if (self.carta.pad and self.carta:pad(n)) or (not self.carta.pad and n == "a") then PAD.close_card(self) end
+		if self.carta:pad(n) then PAD.close_card(self) end
 	elseif self.menu_open then
 		-- the wheel: the d-pad moves the light, A confirms, B or Start closes it
 		if command == "rotellina" or e.ui == "indietro" then

@@ -465,9 +465,7 @@ return {
 		kinds = { primaria = "PRIMARIA", secondaria = "SECONDARIA", movimento = "MOVIMENTO", oggetto = "OGGETTO" },
 		third_bar = { primaria = "Area", secondaria = "Spinta" },
 		bars = { "Danno", "Gittata" },
-		new_weapon = "ARMA NUOVA  ·  %s",
 		ok = "OK",
-		try_it = "PROVALA",
 		-- what each weapon does
 		what = {
 			missile = "Spara una runa che esplode dove tocca: fa danno a chi è vicino e scava il terreno",

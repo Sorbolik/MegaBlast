@@ -1,6 +1,6 @@
 # Una lezione dell'Addestramento (imposta prova_missione spostano, Armi che ti
 # muovono): niente tempo né punti, nell'HUD solo Lanciarune e Lama. Cade la
-# cassa col Tonante: la sua scheda ferma il gioco finché non tocchi PROVALA, poi
+# cassa col Tonante: vola al suo tasto (niente scheda), poi
 # il Tonante prende il posto della Lama e la riga lo mette in luce; scelto, la
 # riga dice di saltare (sul computer pulsa il tasto SPAZIO).
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
@@ -9,11 +9,10 @@ aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.5
 foto 01_scopo                        # la cassa cade davanti, niente cronometro
 cammina destra 715
-tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
+tieni destra 0.5                     # fino alla cassa
 aspetta_evento crate_pick 10
-aspetta 0.8
-foto 02_scheda_tonante
-tocca_centro 640 120                        # PROVALA
+aspetta 0.2
+foto 02_tonante_vola                 # il Tonante vola al suo tasto
 aspetta 1
 foto 03_tonante_in_luce
 premi 3                              # il Tonante (dopo Lanciarune e Lama)
