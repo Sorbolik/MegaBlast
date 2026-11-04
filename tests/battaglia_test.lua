@@ -488,7 +488,8 @@ for i = 1, 5 do
 	coda["coda_" .. i] = pz("c" .. i, "replace")
 	coda["coda_" .. i .. "_bordo"] = pz("cb" .. i, "replace")
 end
-SKINS.skins.prova_coda = { category = "coda", pieces = coda }
+SKINS.skins.prova_coda = { category = "coda", pieces = coda, tail = { 11, 12, 13, 14, 15 },
+	tail_rest = { 2.5, 2.4, 2.3, 2.2, 2.1 }, tail_root = { 3, -4 } }
 SKINS.skins.prova_corpo = { category = "corpo", pieces = { braccio = pz("br", "replace"),
 	braccio_dietro = pz("bd", "replace") } }
 local function images(from_pt)
@@ -506,6 +507,11 @@ local im = images(first)
 check(im.t == 1 and im.e == 1 and im.eb == 1 and not im.testa, "skins: the head replaced, the helmet on top")
 check(im.c1 == 1 and im.cb5 == 1 and not im.coda_1 and not im.coda_5_bordo
 	and v.coda[1][1] ~= v.coda[1][2], "skins: the new segmented tail, borders and colors")
+check(v.tail_shape.l[1] == 11 and v.tail_shape.riposo[5] == 2.1 and v.tail_shape.radice[2] == -4,
+	"skins: the new tail brings its lengths, rest angles and root")
+local ap = scoria.new(vec(1, 0.2, 0.3, 1), { "apprendista" })
+check(ap.tail_shape.l == SKINS.skins.apprendista.tail and ap.tail_shape.riposo == SKINS.skins.apprendista.tail_rest,
+	"skins: the apprentice's tail has its own shape, not the base one")
 check(im.br == 1 and im.bd == 1 and not im.braccio and not im.braccio_dietro, "skins: the new arms, one per side")
 check(v.teste[2].parent == v.testa and v.teste[1].img == "t" and v.teste[2].img == "e", "skins: the helmet sits on the head")
 check(v.heads_t[1].enabled and v.heads_t[1].img == "t_tinta" and not v.heads_t[2].enabled,
