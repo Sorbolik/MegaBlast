@@ -409,3 +409,9 @@ le tavole: in `6_rapimento_a` e `6_rapimento_b` la coda è giusta. E si salva lo
 torna buona (Claude, su indicazione di Sergio: «qualche coda di prima si salva»). Il bisbiglio di
 fase 2 resta scartato per il martello: si rifà nella fase 2c, col prompt della fase 2 e le mani
 vuote, senza insistere sulla coda. Le quattro varianti della 2b vanno in `scartati/fase2b/`.
+
+Fase 2c (2026-11-04). Guardate le due varianti di Codex (4c61753): la coda di Favilla ora è
+quella del modello (entra nell'incavo, punta in fuori), mani vuote, niente martello. Scelta
+`5_fabbro_c_1` (l'apprendista ascolta a bocca aperta, si legge come un segreto; nella `_2`
+sorride e basta). Con questa le otto tavole della storia ci sono tutte: `4_arrivo_a`, `_b`, `_c`,
+`5_fabbro_a`, `5_fabbro_c_1`, `6_rapimento_a`, `_b`, `_c`.
