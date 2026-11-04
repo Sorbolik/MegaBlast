@@ -1,6 +1,7 @@
 # La fine del I girone (imposta prova_missione battaglia_forgia): una partita
 # completa 2 contro 2, tu e il Compagno contro il Fabbro e il cecchino, che
 # parlano.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione battaglia_forgia
 aspetta_stato modo=local fase=aim 8
 aspetta 1.5

@@ -8,6 +8,7 @@
 # scelta_forgia.txt, l'online in scelta_online.txt.
 # Allenamento: MODO 1v1 310 460, 2v2 640 460, ffa 970 460; AVANTI e poi GIOCA 640 140.
 # Con la striscia di quattro cartellini la rotellina della scelta scende (62 608).
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_profilo 1
 imposta prova_scelta 1
 imposta giocatori 2v2

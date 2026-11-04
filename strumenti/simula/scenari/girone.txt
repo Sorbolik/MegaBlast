@@ -1,6 +1,7 @@
 # Una missione del I girone contro un bot vero: il Fabbro, il custode, col suo
 # nome sopra la testa e l'obiettivo in alto. Il giocatore spara, poi il Fabbro
 # gioca il suo turno (testa calda: viene addosso col Maglio).
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione il_fabbro
 
 aspetta_stato modo=local turno=1 fase=aim 8

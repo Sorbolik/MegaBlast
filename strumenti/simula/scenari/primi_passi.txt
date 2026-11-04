@@ -1,35 +1,45 @@
-# Primi passi (computer): il percorso della prima lezione. Niente tempo né
-# turni né armi: cammini fino alla bandierina a scacchi, salti sul gradino,
-# prendi la cassa che cade (la scheda del Lanciarune ferma il gioco finché non
-# tocchi PROVALA), poi spari al bersaglio; il primo tiro a vuoto, e si ritenta subito.
+# Primi passi (computer): il percorso della prima lezione, con le vignette
+# (battle/vignette.lua). Niente tempo né turni né armi. All'inizio la vignetta
+# grande di Favilla (gioco fermo, il diavoletto che cammina nel riquadro): un
+# tocco la chiude e la frase resta nella striscia in alto. Cammini fino alla
+# bandierina, la vignetta del salto; salti sul gradino, la cassa cade (striscia),
+# la scheda del Lanciarune, la vignetta della mira; il primo tiro a vuoto e
+# Ritenta nella striscia, con Favilla preoccupata.
 imposta prova_missione primi_passi
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
-foto 01_inizio                       # la bandierina, niente cronometro né punti né armi
-zoom 01_zoom 2
-cammina destra 730
-aspetta 0.8
-foto 02_bandierina                   # arrivato: ora il gradino
+foto 01_vignetta                     # la vignetta grande: cammina
+tocca 640 360                        # VAI!
+aspetta 0.6
+foto 02_striscia                     # la frase nella striscia in alto
+cammina destra 700
+tieni destra 0.5                     # alla bandierina la vignetta ferma il gioco
+aspetta 1
+foto 03_vignetta_salto               # arrivato: la vignetta del salto
+tocca 640 360
+aspetta 0.4
 cammina destra 1080 60
 tieni salta 0.15
 cammina destra 1180
 aspetta 0.5
-foto 03_gradino                      # la cassa cade dal cielo
+foto 04_cassa                        # la cassa cade dal cielo (striscia)
 cammina destra 1215
 tieni destra 0.5                     # fino alla cassa: la scheda ferma il gioco
 aspetta_evento crate_pick 10
 aspetta 0.8
-foto 04_scheda                       # la scheda del Lanciarune
+foto 05_scheda                       # la scheda del Lanciarune
 tocca 640 120                        # PROVALA
 aspetta 0.8
-foto 05_lanciarune                   # il Lanciarune in mano, la riga su come si mira
+foto 06_vignetta_mira                # la vignetta della mira, il colpo nel riquadro
+tocca 640 360
+aspetta 0.6
 mira -100 30 1
 aspetta_evento explosion 6
 aspetta 2
-foto 06_ritenta                      # a vuoto: Ritenta, nello stesso turno
-mira 141 77 1 07_mira
+foto 07_ritenta                      # a vuoto: Ritenta nella striscia
+mira 141 77 1 08_mira
 aspetta_evento damage 6
 aspetta 0.3
-foto 08_colpito
+foto 09_colpito
 aspetta 2
-foto 09_fatta
+foto 10_fatta

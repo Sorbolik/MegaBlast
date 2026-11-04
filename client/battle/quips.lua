@@ -1,11 +1,11 @@
 -- Character quips: campaign bots with a personality (sim/bot.lua
--- M.CARATTERI) or a keeper speak in a speech bubble above their head
--- (battle/plate.lua quip) when something happens. Client only: they
+-- M.CARATTERI) or a keeper speak in the strip at the top, with their face
+-- (battle/vignette.lua quip), when something happens. Client only: they
 -- don't touch the match, so neither the server nor the recipes.
 --
 --   local p = battute.nuove()                    -- one per match
 --   p.chi[robot] = "codardo"                     -- who speaks: the personality or the keeper
---   local robot, testo, forte = p:evento(e, current_one)  -- for every match
+--   local robot, testo, forte, moment = p:evento(e, current_one)  -- for every match
 --     event (current_one: the robot whose turn it is): who says what, or nil;
 --     forte: a quip that may cover the previous one
 --   local testo = battute.di(chi, moment, n)     -- quip n of that moment
@@ -94,7 +94,7 @@ function M.evento(p, e, current_one)
 	-- at turn start, every other one
 	if m == "turno" and n % 2 == 1 then return nil end
 	local s = M.di(who, m, n)
-	return s and i, s, STRONG[m] == true
+	return s and i, s, STRONG[m] == true, m
 end
 
 return M

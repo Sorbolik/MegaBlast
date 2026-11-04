@@ -2,6 +2,7 @@
 # 3 nov: «mi si blocca il podio»). Vinta (prova_vince) dopo 10 secondi di
 # partita (prova_durata): dopo "Fatta!" solo le stelle, niente podio sotto;
 # CAMPAGNA porta alla campagna, la freccia alla home.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 imposta prova_missione battaglia_forgia
 imposta prova_durata 10
 imposta prova_vince 1

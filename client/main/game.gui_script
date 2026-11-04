@@ -452,6 +452,7 @@ local function open_wheel(self, is_open)
 	gui.set_enabled(self.btn_retry, is_open and self.mode == "local")
 	gui.set_enabled(self.btn_quit, is_open)
 	gui.set_enabled(self.btn_aim, is_open)
+	gui.set_enabled(self.btn_reread, is_open and self.mode == "local" and self.missione ~= nil and #self.vign_pages > 0)
 	gui.set_text(self.btn_aim_text, "MIRA: " .. string.upper(profile.setting(self.profilo, "mira")))
 	gui.set_text(self.rotellina[2].testo, self.mode == "connecting" and "ESCI DALLA RICERCA" or "ESCI DALLA PARTITA")
 	if self.sala then menu.lobby.wheel_open(self.sala, is_open) end
@@ -530,7 +531,7 @@ local function show_menu(self, without_veil)
 	if self.flag then self.flag:display(nil) end
 	if self.signal then self.signal:display(nil) end
 	score.obiettivo(self.punti, nil)
-	for _, r in ipairs(self.robots) do plate.riga(r.plate, "") end
+	self.vign:quiet()
 	-- the finished match is let go (Sergio, 3 Nov): nothing keeps it (the replay
 	-- is in the profile, RIPROVA starts a new one), so its terrain cells and the
 	-- bots (about 2 MB of Lua for a 1 vs 1, 4 for a 2 vs 2) go to the garbage
@@ -861,7 +862,8 @@ local RM = { fune = require "battle.rope", GUSTS = 5 }
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
-local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card" }
+local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card",
+	vignette = require "battle.vignette" }
 
 -- The zoom (Sergio, 3 Nov, choice Z1): the button at the top right shows with a
 -- dot where the zoom is between the nearest (top) and the farthest (bottom).
@@ -1128,9 +1130,12 @@ local function handle_event(self, e)
 	-- the campaign characters speak (battle/quips.lua); everyday quips
 	-- don't cover a quip just said
 	if self.speak then
-		local i, s, strong = self.speak:evento(e, self.g.current)
-		local t = i and self.robots[i].plate
-		if s and (strong or t.quip_t <= 0.8) then plate.quip(t, s) end
+		local i, s, strong, moment = self.speak:evento(e, self.g.current)
+		if s then
+			local fabbro = self.speak.chi[i] == "fabbro"
+			self.vign:quip(fabbro and "fabbro" or "apprendista", CP.vignette.QUIP_FACE[moment], s,
+				not fabbro and who_name(self, i) or nil, not fabbro and TEAM_COLORS[self.g.robots[i].team] or nil, strong)
+		end
 	end
 	if e.type == "explosion" then
 		local row_min, row_max = e.row_min, e.row_max
@@ -2028,6 +2033,39 @@ end
 -- Campaign missions, lessons and guided match (sim/missions.lua, CAMPAGNA
 -- screen). picks: the players coming out of the draft, for the missions that
 -- make you draft
+-- The mission's line of the moment, in the vignettes (battle/vignette.lua):
+-- in the lessons Favilla speaks, in the circles the Fabbro. What explains a
+-- control (in the lessons; not what comes mid-move: subito, in the air) and
+-- the opening line stop the game on the big
+-- vignette the first time (profile.vignetta), then they stay in the strip at
+-- the top; the rest is only in the strip. {salta}: how to jump with the
+-- controls you have (PAD.TEXTS)
+function CP.mission_line(self, r)
+	local line = missions.line(r)
+	if not line then
+		self.vign:say(nil)
+		return
+	end
+	local l = r.l
+	local chi = l.aspetta and "favilla" or "fabbro"
+	local txt = line.testo:gsub("{(%a+)}", PAD.texts(self))
+	if line.apertura or (line.highlight and l.aspetta and not line.subito and line.stops ~= false) then
+		local page = { chi = chi, faccia = "spiega", testo = txt, disegno = line.highlight }
+		if not self.vign_read[line.testo] then
+			self.vign_read[line.testo] = true
+			self.vign_pages[#self.vign_pages + 1] = page
+		end
+		if self.vign_line ~= line and not self.carta then
+			self.vign_line = line
+			if self.vign_on and profile.vignetta(self.profilo, l.id .. ":" .. line.testo) then
+				profile.salva(self.profilo)
+				self.carta = self.vign:open({ page }, PAD.comandi(self) == "controller")
+			end
+		end
+	end
+	self.vign:say(chi, line.faccia or "calma", txt)
+end
+
 local function start_mission(self, id, picks)
 	local r = missions.nuova(id)
 	hide_menu(self)
@@ -2076,6 +2114,15 @@ local function start_mission(self, id, picks)
 	draw_terrain(self)
 	reset_pose(self)
 	self.missione, self.missione_attesa = r, nil
+	self.vign_read, self.vign_pages, self.vign_line = {}, {}, nil
+	-- prova_vignette tutte: one page per drawing of the moves (scenari/vignette.txt)
+	if SIMULATE and config_string("megablast.prova_vignette", "si") == "tutte" then
+		local pages = {}
+		for _, name in ipairs(CP.vignette.DRAWINGS) do
+			pages[#pages + 1] = { chi = #pages % 2 == 0 and "favilla" or "fabbro", testo = name, disegno = name }
+		end
+		self.carta = self.vign:open(pages)
+	end
 	self.mode = "local"
 	set_controls_visible(self, true)
 	-- the first turn was already taken by missioni.prepara (without time there are no turns to announce)
@@ -2144,10 +2191,7 @@ local function mission_update(self, dt)
 	if brb and brb.dead then brb = nil end
 	if brb and not self.signal then self.signal = require("battle.signal").new(self.mondo) end
 	if self.signal then self.signal:display(brb and brb.x, brb and brb.y, game.ROBOT_H, game.ROBOT_HALF_W, self.clock) end
-	local txt, who = missions.riga(r)
-	-- {salta}: how to jump with the controls you have (PAD.TEXTS)
-	if txt then txt = txt:gsub("{(%a+)}", PAD.texts(self)) end
-	for i, rb in ipairs(self.robots) do plate.riga(rb.plate, i == who and txt or "") end
+	CP.mission_line(self, r)
 	score.obiettivo(self.punti, missions.obiettivo(r))
 	-- once the controls are touched, IL TUO TURNO fades
 	-- (even if now time waits for a precise command: the light says which)
@@ -2189,7 +2233,7 @@ local function open_level_end(self)
 	if self.g.phase == "over" then CP.registra(self, self.g:results()) else self.conta = nil end
 	show_message(self, "", true)
 	score.obiettivo(self.punti, nil)
-	for _, rb in ipairs(self.robots) do plate.riga(rb.plate, "") end
+	self.vign:quiet()
 	open_screen(self, menu.level_end, {
 		titolo = r.l.titolo, stelle = missions.stelle(r), criteria = missions.criteria(r.l),
 		-- the lead points, where they count
@@ -2730,7 +2774,7 @@ local function render(self, dt)
 			plate.arrow_up(self.arrow, above and r.plate or nil)
 		end
 		-- above the horns: 3 in the world and 4 screen pixels
-		plate.update(r.plate, dt, v.x, v.y + scoria.cima(r.rig) + CP.PLATE_GAP / self.cam.s, plate.scala(self.cam), self.cam)
+		plate.update(r.plate, dt, v.x, v.y + scoria.cima(r.rig) + CP.PLATE_GAP / self.cam.s, plate.scala(self.cam))
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -3424,6 +3468,14 @@ function init(self)
 	self.btn_quit = ui.button(self.rotellina, 32 + 12 + 160 + 12 + 130, 0, 260, 64, "ESCI DALLA PARTITA", "esci", nil, self.btn_menu)
 	self.btn_aim = ui.button(self.rotellina, 32 + 12 + 130, -76, 260, 64, "MIRA", "mira", nil, self.btn_menu)
 	self.btn_aim_text = self.rotellina[3].testo
+	-- RILEGGI: the big vignettes of this mission again (battle/vignette.lua)
+	self.btn_reread = ui.button(self.rotellina, 32 + 12 + 260 + 12 + 90, -76, 180, 64, "RILEGGI", "rileggi", nil, self.btn_menu)
+	gui.set_enabled(self.btn_reread, false)
+	-- the strip of the vignettes, above the match and its HUD
+	self.vign = CP.vignette.new()
+	self.vign_read, self.vign_pages = {}, {}
+	-- prova_vignette no: the scenarios that test something else don't stop on them
+	self.vign_on = not SIMULATE or config_string("megablast.prova_vignette", "si") ~= "no"
 	gui.set_enabled(self.btn_aim, false)
 	gui.set_enabled(self.btn_retry, false)
 	gui.set_enabled(self.btn_quit, false)
@@ -3512,6 +3564,7 @@ end
 function update(self, dt)
 	frames.inizio()
 	if screen.aggiorna() then arrange(self) end
+	self.vign:update(dt)
 	if self.ingresso then CP.entry_update(self, dt) end
 	menu.attesa.update(self.attesa, dt)
 	if self.sala then menu.lobby.update(self.sala, dt) end
@@ -3849,7 +3902,8 @@ local function pointer_down(self, id, px, py)
 	if self.menu_open then
 		self.pointers[id] = "cancelled"
 		PAD.rotellina(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci"
-			or self.mode ~= "online" and gui.pick_node(self.btn_retry, px, py) and "riprova" or nil)
+			or self.mode ~= "online" and gui.pick_node(self.btn_retry, px, py) and "riprova"
+			or gui.is_enabled(self.btn_reread) and gui.pick_node(self.btn_reread, px, py) and "rileggi" or nil)
 		return
 	elseif gui.pick_node(self.btn_menu, px, py) then
 		open_wheel(self, true)
@@ -3994,9 +4048,10 @@ function PAD.texts(self)
 end
 
 -- A new weapon's card closes with PROVALA (or A), and the weapon stays in hand
+-- (the vignettes too sit in self.carta, without a weapon)
 function PAD.close_card(self)
 	local w = self.carta.arma
-	if not game.TOOLS[w] or game.THROWN[w] then self.weapon = w end
+	if w and (not game.TOOLS[w] or game.THROWN[w]) then self.weapon = w end
 	self.carta:close_view()
 	self.carta = nil
 end
@@ -4011,7 +4066,9 @@ function PAD.rotellina(self, ui_action)
 		return
 	end
 	open_wheel(self, false)
-	if ui_action == "esci" then
+	if ui_action == "rileggi" then
+		self.carta = self.vign:open(self.vign_pages, PAD.comandi(self) == "controller")
+	elseif ui_action == "esci" then
 		quit_match(self)
 	elseif ui_action == "riprova" then
 		retry_match(self)
@@ -4351,7 +4408,8 @@ function PAD.evento(self, e)
 		-- the podium, the stars or the home, like a tap
 		if n == "a" or n == "start" then pointer_down(self, "pad", 0, 0) end
 	elseif self.carta then
-		if n == "a" then PAD.close_card(self) end
+		-- the weapon's card closes with A; the vignettes go on with A and close with B
+		if (self.carta.pad and self.carta:pad(n)) or (not self.carta.pad and n == "a") then PAD.close_card(self) end
 	elseif self.menu_open then
 		-- the wheel: the d-pad moves the light, A confirms, B or Start closes it
 		if command == "rotellina" or e.ui == "indietro" then

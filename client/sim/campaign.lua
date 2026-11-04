@@ -241,7 +241,7 @@ local TRAINING = {
 		righe = {
 			{ testo = "Hai 8 secondi: mettiti al riparo. Per saltare {salta}", highlight = "salta",
 				quando = function(st, g) return st.turni == 1 and g.current == PLAYER and g.window > 0 end },
-			{ testo = "Il bot fa due attacchi: una primaria e una secondaria", su = "bot",
+			{ testo = "Il bot fa due attacchi: una primaria e una secondaria",
 				quando = function(st, g) return st.bot_turns == 1 and g.current ~= PLAYER end },
 			{ testo = "Due attacchi a turno. Prima la primaria, a sinistra del cronometro: toccala",
 				highlight = "primaria",
@@ -250,7 +250,7 @@ local TRAINING = {
 			{ testo = "Ora la secondaria, a destra del cronometro: toccala e colpisci", highlight = "secondaria",
 				quando = function(st, g) return st.turni == 2 and g.current == PLAYER and g.used.primary end,
 				fino = function(_, g) return g.used.secondary end },
-			{ testo = "Ha attaccato subito: i secondi che avanzano diventano globi", su = "bot",
+			{ testo = "Ha attaccato subito: i secondi che avanzano diventano globi",
 				quando = function(st, _, e) return st.bot_turns == 2 and e and e.type == "teleports" and e.robot ~= PLAYER end },
 			{ testo = "Attacca presto: prima delle tacche viola sull'anello guadagni globi",
 				quando = function(st, g) return st.turni == 3 and g.current == PLAYER end,
