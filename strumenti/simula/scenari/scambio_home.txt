@@ -1,0 +1,17 @@
+# Uscendo dalla partita mentre c'e' il pulsante dello scambio (dopo il primo
+# attacco), nella home il pulsante non deve restare (Sergio, 4 nov).
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+mira 150 100 0.3
+aspetta_evento fire 2
+aspetta 2.5
+foto 01_pulsante_scambio            # il pulsante sopra il cronometro
+tocca 62 658                        # rotellina
+aspetta 0.3
+tocca 408 658                       # ESCI DALLA PARTITA
+aspetta_stato modo=menu 3
+aspetta 0.5
+foto 02_home_senza_pulsante
