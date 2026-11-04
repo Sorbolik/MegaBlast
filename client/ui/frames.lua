@@ -24,6 +24,8 @@
 --   fotogrammi.segna("dipinto")    -- from whoever does heavy work (also from other scripts)
 --   fotogrammi.testo()             -- the line to show (nil if it hasn't changed)
 
+local T = require("lang.text").frames
+
 local M = {}
 
 -- last 10 seconds at 60 Hz (at 120 Hz, 5 seconds)
@@ -180,9 +182,9 @@ function M.testo()
 	if n == 0 then return nil end
 	local seconds_left = 0
 	for i = 1, n do seconds_left = seconds_left + durations[i] end
-	local riga = string.format("%.0f FPS  PEGGIORE %.0f MS  99%% SOTTO %.0f  SCATTI %d/MIN",
+	local riga = T.row:format(
 		n / seconds_left, sorted[n] * 1000, percentile(sorted, n, 0.99) * 1000, stutters_minute())
-	if M.ultimo then riga = riga .. "  ULTIMO: " .. string.upper(M.ultimo) end
+	if M.ultimo then riga = riga .. T.last:format(string.upper(M.ultimo)) end
 	return riga
 end
 

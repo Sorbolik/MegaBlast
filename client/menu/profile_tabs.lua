@@ -30,6 +30,7 @@ local showcase = require "menu.showcase"
 local tag = require "ui.tag_card"
 local scoria = require "battle.scoria"
 local T = require("lang.text").profile_tabs
+local common = require("lang.text").common
 
 local M = {}
 
@@ -151,7 +152,7 @@ local function sheet_sheet(s, parent)
 			txt(T.pick_in_armory, -94, y - 18, 0.55, C.OFF, pan, gui.PIVOT_W)
 		end
 	end
-	ui.button(s.buttons, 0, -248, 296, 56, T.armory, "armeria", nil, pan)
+	ui.button(s.buttons, 0, -248, 296, 56, common.armory, "armeria", nil, pan)
 end
 
 -- STATISTICHE tab -------------------------------------------------------------------
@@ -367,12 +368,12 @@ local function sheet_matches(s, parent)
 		local gx = -296 + (k - 1) * 150
 		face_icon(g, gx + 20, -158, 40, pan)
 		txt(g.nome or "?", gx + 46, -150, 0.55, C.TEXT, pan, gui.PIVOT_W)
-		txt(g.livello and T.level:format(g.livello) or (g.bot and T.bot or ""), gx + 46, -168, 0.45, C.OFF, pan,
+		txt(g.livello and T.level:format(g.livello) or (g.bot and common.bot or ""), gx + 46, -168, 0.45, C.OFF, pan,
 			gui.PIVOT_W)
 		zone(s, gx + 60, -158, 140, 46, "giocatore:" .. k, pan)
 	end
 	if ok then
-		ui.button(s.buttons, 210, -246, 200, 58, T.replay, "rivedi", { main = true, colore = my_own }, pan)
+		ui.button(s.buttons, 210, -246, 200, 58, common.replay, "rivedi", { main = true, colore = my_own }, pan)
 	else
 		txt(pa.online and T.replay_local_only or T.replay_missing,
 			306, -246, 0.6, C.OFF, pan, gui.PIVOT_E)
@@ -395,7 +396,7 @@ local function build(s)
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
 	ui.scheda(s.buttons, 400, 652, 150, 48, T.tab_sheet, "scheda:scheda", s.scheda == "scheda", s.radice)
-	ui.scheda(s.buttons, 586, 652, 206, 48, T.tab_stats, "scheda:statistiche", s.scheda == "statistiche", s.radice)
+	ui.scheda(s.buttons, 586, 652, 206, 48, common.stats, "scheda:statistiche", s.scheda == "statistiche", s.radice)
 	ui.scheda(s.buttons, 772, 652, 150, 48, T.tab_matches, "scheda:partite", s.scheda == "partite", s.radice)
 	-- level and experience at the top right
 	gui.set_visible(dx, false)

@@ -117,12 +117,12 @@ end
 
 local function build_mode(a)
 	local c = ui.C
-	ui.titolo(T.title, 640, 640, 1, c.TEXT, a.radice)
+	ui.titolo(common.training, 640, 640, 1, c.TEXT, a.radice)
 	ui.testo(T.mode, 640, 520, 0.7, c.OFF, a.radice)
 	for i, m in ipairs(MODES_LIST) do
 		ui.scheda(a.buttons, 640 + (i - 2) * 330, 460, 310, 64, m[2], "modo:" .. m[1], a.scelta.modo == m[1], a.radice)
 	end
-	ui.testo(T.bot, 640, 360, 0.7, c.OFF, a.radice)
+	ui.testo(common.bot, 640, 360, 0.7, c.OFF, a.radice)
 	for i, l in ipairs(LEVELS) do
 		ui.scheda(a.buttons, 640 + (i - 2) * 250, 300, 230, 64, l[2], "livello:" .. l[1], a.scelta.livello == l[1], a.radice)
 	end

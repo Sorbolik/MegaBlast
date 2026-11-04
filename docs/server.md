@@ -91,7 +91,10 @@ rotellina in partita manda `{"t":"leave"}`: il server lo toglie subito (come chi
 non torna in tempo, senza aspettare), chiude la sua connessione e manda `left`
 agli altri; il suo robot sparisce dalla partita (`game:remove`: evento `gone`,
 `gn` nello stato, non rinasce e non ha più turni) e si continua finché restano
-almeno due squadre. Il client la
+almeno due squadre. Lo stesso `leave` mandato mentre si è ancora in coda
+(ESCI DALLA CODA, o un'altra coda) toglie subito dalla coda e chiude la
+connessione, così chi esce non resta primo della fila (l'orologio dei bot) né
+prende un posto nella partita dopo. Il client la
 mostra con la schermata dello stesso telefono (`client/menu/pick.lua`). Nello stato ogni robot
 porta la sua secondaria in `sw` (i suoi colpi in `ss`), l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto

@@ -175,6 +175,12 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		}
 		if ref := p.room.Load(); ref != nil {
 			ref.room.Post(roomMsg{slot: ref.slot, msg: msg})
+		} else if msg.T == "leave" {
+			// out of the queue (ESCI DALLA CODA, another queue): at once, not when
+			// the client closes, so a ghost can't hold first place (the bots'
+			// clock) or take a seat in the next match
+			s.lobby.Leave(p)
+			p.Close()
 		}
 	}
 }

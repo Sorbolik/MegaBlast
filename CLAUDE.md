@@ -18,8 +18,9 @@ della GUI) resta italiano per ora. Nei file in
 inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
 errori del server) restano in italiano. Si rinomina con `strumenti/rinomina/rinomina.py`.
 Le frasi del gioco stanno in `client/lang/it.lua` (un gruppo per schermata, come si usano
-in `client/lang/text.lua`; per ora i menu, il resto arriva con la PR 6b e 6c): una frase
-nuova di un menu va lì, non nel codice (`tests/lang_test.lua` controlla le chiavi).
+in `client/lang/text.lua`; già spostate quelle di menu, interfaccia e battaglia, quelle di
+`game.gui_script`, battute, scheda delle armi ed eventi arrivano con la PR 6c): una frase
+nuova va lì, non nel codice (`tests/lang_test.lua` controlla le chiavi).
 
 ## Controlli: veloci in locale, completi su main (Sergio, 3 nov)
 

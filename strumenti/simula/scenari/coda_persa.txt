@@ -1,0 +1,50 @@
+# La coda quando cade la connessione (Sergio, 4 nov: "la connessione al server
+# non c'era, poi rifaccio matchmaking e sfora i 25 secondi senza mettere i bot").
+# 1. In coda nei menu, il server cade: la pillola dice CODA PERSA; il server
+#    torna, un tocco sulla pillola rientra in coda (sala da capo).
+# 2. Nella sala il server cade: "Connessione persa", e la coda se ne va con la
+#    connessione (prima restava: GIOCA riapriva una sala che nessuno ascoltava
+#    e i bot non arrivavano mai).
+# 3. Il server torna: GIOCA rientra davvero e dopo 4 s arrivano i bot.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server 2v2 0 bot_dopo=60s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 205 102 basso destra          # GIOCA
+aspetta 0.5
+tocca_centro 368 300                      # 2 contro 2
+aspetta_stato modo=connecting 5
+aspetta 1
+tocca_centro 440 44                       # TORNA AI MENU · RESTI IN CODA
+aspetta_stato modo=menu coda=si 3
+server_ferma
+aspetta_stato coda=persa 8
+aspetta 0.5
+foto 01_coda_persa_nei_menu               # pillola CODA PERSA · TOCCA PER RIENTRARE
+server 2v2 0 bot_dopo=60s
+aspetta 1
+tocca_bordo 640 22 alto centro            # la pillola: si rientra in coda
+aspetta_stato modo=connecting coda=si 5
+aspetta 1
+foto 02_di_nuovo_in_coda                  # la sala, il tempo da capo
+server_ferma
+aspetta_stato modo=ended coda=no 8
+aspetta 0.5
+foto 03_connessione_persa_nella_sala
+tocca_centro 640 360                      # torna al menu
+aspetta_stato modo=menu coda=no 3
+aspetta 1
+foto 04_home_senza_coda                   # niente pillola: la coda non c'è più
+server 2v2 0 bot_dopo=4s
+aspetta 1
+tocca_bordo 205 102 basso destra          # GIOCA: DOVE GIOCHI?, non la sala vecchia
+aspetta 0.5
+tocca_centro 368 300                      # 2 contro 2
+aspetta_stato modo=connecting coda=si 5
+aspetta 1
+foto 05_sala_vera                         # BOT TRA 3 s
+aspetta_stato modo=scelta_online 10
+aspetta 0.5
+foto 06_arrivano_i_bot                    # lo schieramento coi bot

@@ -22,6 +22,7 @@
 
 local ui = require "ui.ui"
 local tag = require "ui.tag_card"
+local T = require("lang.text").lobby
 
 local M = {}
 
@@ -30,14 +31,7 @@ local TOP = 548          -- where a tag starts
 local STEP = 306
 M.TIP_EVERY = 8
 M.BOT_SHOWN = 15
-M.TIPS = {
-	"Il tempo che avanzi nel turno ti dà globi per il teletrasporto",
-	"Le armi si scelgono coperte: guarda i cartellini degli altri",
-	"La secondaria ha due colpi: un colpo di Lama te ne ridà uno",
-	"I punti sono la vita che togli agli avversari",
-	"Fuori dal tuo turno tocca la targa di un avversario per vedere il suo cartellino",
-	"Il Rampino ce l'hanno tutti: chi sta in alto colpisce meglio",
-}
+M.TIPS = T.tips
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
@@ -55,7 +49,7 @@ local function empty_place(x, parent)
 	gui.set_color(root, with_alpha(C.PANEL, 0.55))
 	gui.set_color(border, with_alpha(C.LINE, 0.5))
 	local ring = ui.ring_node(0, 30, 64, 3, with_alpha(C.LIGHT, 0.35), root)
-	local label = ui.testo("IN ARRIVO", 0, -30, 0.8, C.OFF, root)
+	local label = ui.testo(T.coming, 0, -30, 0.8, C.OFF, root)
 	return { root = root, ring = ring, label = label }
 end
 
@@ -68,15 +62,15 @@ function M.new(of, title, parent_below)
 	s.testa = gui.new_box_node(vec(640, 640), vec(0, 0))
 	gui.set_visible(s.testa, false)
 	gui.set_parent(s.testa, s.radice)
-	ui.titolo("CERCO GIOCATORI", 0, 22, 0.75, C.LIGHT, s.testa)
+	ui.titolo(T.searching, 0, 22, 0.75, C.LIGHT, s.testa)
 	s.riga = ui.testo("", 0, -22, 0.85, C.OFF, s.testa)
 	s.xs = places(of)
 	local w = 980
 	ui.pannello(640, 110, w, 52, s.radice)
 	s.tip = ui.testo(M.TIPS[1], 640, 110, 0.8, C.TEXT, s.radice)
 	s.buttons = {}
-	s.back = ui.button(s.buttons, 440, 44, 380, 52, "TORNA AI MENU · RESTI IN CODA", "menu", { scala = 0.72 }, s.radice)
-	s.exit = ui.button(s.buttons, 860, 44, 380, 52, "ESCI DALLA CODA", "esci", { scala = 0.72 }, s.radice)
+	s.back = ui.button(s.buttons, 440, 44, 380, 52, T.back_to_menus, "menu", { scala = 0.72 }, s.radice)
+	s.exit = ui.button(s.buttons, 860, 44, 380, 52, T.leave_queue, "esci", { scala = 0.72 }, s.radice)
 	s.title = title
 	M.update(s, 0)
 	return s
@@ -129,10 +123,10 @@ function M.update(s, dt)
 		s.bot_left = math.max(0, s.bot_left - dt)
 		-- the count shows only in the last BOT_SHOWN seconds, so at first it doesn't scare
 		if s.bot_left <= M.BOT_SHOWN then
-			bots = s.bot_left > 0 and string.format("  ·  BOT TRA %d s", math.ceil(s.bot_left)) or "  ·  ARRIVANO I BOT"
+			bots = s.bot_left > 0 and T.bots_in:format(math.ceil(s.bot_left)) or T.bots_coming
 		end
 	end
-	gui.set_text(s.riga, string.format("%s%d SU %d  ·  %d:%02d%s", s.title ~= "" and (s.title .. "  ·  ") or "",
+	gui.set_text(s.riga, T.status:format(s.title ~= "" and T.title_sep:format(s.title) or "",
 		s.n, s.of, math.floor(secs / 60), secs % 60, bots))
 	-- the empty rings breathe, all together
 	local a = 0.25 + 0.2 * (0.5 + 0.5 * math.sin(s.t * 3))

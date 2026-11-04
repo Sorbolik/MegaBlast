@@ -241,7 +241,7 @@ local function dress(look)
 	for _, categories in ipairs({ SKINS.replace, SKINS.over }) do
 		for _, c in ipairs(categories) do
 			local pz = per[c] and per[c].pieces
-			if per[c] and per[c].coda then
+			if per[c] and per[c].tail then
 				coda = { l = per[c].tail, riposo = per[c].tail_rest, radice = per[c].tail_root or IDLE }
 			end
 			if pz then

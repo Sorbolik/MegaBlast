@@ -20,6 +20,7 @@ local awards = require "sim.awards"
 local profile = require "menu.profile"
 local tag = require "ui.tag_card"
 local T = require("lang.text").podium
+local common = require("lang.text").common
 
 local M = {}
 
@@ -164,7 +165,7 @@ function M.new(results, giocatori, me, my_gain, prof, number)
 	if my_gain then gain(p, my_gain, prof) end
 	if number then
 		-- RIVEDI: straight to this match's replay (then back to the profile)
-		ui.button(p.buttons, 980, 205, 160, 60, T.replay, "rivedi", nil, p.radice)
+		ui.button(p.buttons, 980, 205, 160, 60, common.replay, "rivedi", nil, p.radice)
 		ui.button(p.buttons, 1150, 205, 160, 60, T.go_on, "continua", { main = true }, p.radice)
 	else
 		ui.button(p.buttons, 1065, 205, 330, 60, T.go_on, "continua", { main = true }, p.radice)
