@@ -2,11 +2,11 @@
 # cassa; presa, l'arma vola al suo tasto (niente scheda), la vignetta della mira; il primo tiro a
 # vuoto e Ritenta nella striscia; il fantoccio vicino, poi quello sul ballatoio.
 imposta prova_missione lanciarune
+aspetta 2.5
+foto 00_tavola                       # prima la cartolina della missione (WB-015), la mappa non c'è ancora
+tocca 970 116                        # AVANTI sulla cartolina: la fiammella, poi la mappa
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
-foto 00_tavola                       # prima la tavola della missione (WB-015)
-tocca 970 116                        # AVANTI sulla cartolina
-aspetta 0.8
 foto 01_vignetta                     # la vignetta grande d'apertura
 tocca 912 289                        # VAI! (vignetta senza disegno: in basso a destra)
 aspetta 0.6

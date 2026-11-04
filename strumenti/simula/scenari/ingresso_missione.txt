@@ -1,0 +1,29 @@
+# L'ingresso in una missione della campagna (Sergio, 4 nov): il tocco sulla carta
+# apre la cartolina come uno zoom dalla sua immagine (niente iride, la mappa non c'è
+# ancora); fuori dalla cartolina si torna alla campagna. AVANTI (970 116 del gioco):
+# la cartolina si chiude al centro, sul nero si carica la mappa, poi la fiammella di
+# Favilla si accende, si gonfia ed esplode aprendo la mappa; Favilla parla un attimo dopo.
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1
+tocca 256 480                       # Primi passi
+aspetta 0.08
+foto 01_zoom
+aspetta 0.5
+foto 02_cartolina
+tocca 640 20                        # fuori dalla cartolina: si torna alla campagna
+aspetta 0.5
+foto 03_indietro
+tocca 256 480                       # di nuovo
+aspetta 0.6
+tocca_centro 970 116                # AVANTI
+aspetta 0.1
+foto 04_chiude
+aspetta 0.25
+foto 05_fiammella
+aspetta 0.15
+foto 06_gonfia
+aspetta 0.12
+foto 07_scintille
+aspetta 0.5
+foto 08_favilla
