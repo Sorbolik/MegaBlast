@@ -369,3 +369,11 @@ di Favilla finisce a freccia, in `5_fabbro_b` anche, più un martello non chiest
 nella fase 2b, con R9 (la sua figura intera) e la coda detta due volte. L'incoerenza segnalata
 da Codex (pergamena nel paragrafo generale, forgia nei prompt) è voluta: la pergamena vale per
 i fogli della fase 1, le tavole hanno lo sfondo della scena.
+
+Fase 2b (2026-11-04). Guardate le quattro varianti di Codex (7439813): tutte e quattro hanno la
+coda a cuore di Favilla e la punta a freccia dell'apprendista, mani vuote nel bisbiglio, niente
+martello. Scelte di Claude (si cambiano se Sergio preferisce l'altra): `4_arrivo_a_1` (l'atterraggio
+si legge meglio: una mano a terra davanti, l'altro braccio aperto; nella `_2` il braccio a terra
+esce fra le ginocchia) e `5_fabbro_b_1` (sfondo più calmo, più spazio in alto per il fumetto).
+Le misure native (1672×941 e 1254×1254) per il montaggio non contano. Con queste la fase 2 è
+completa: otto tavole per la PR della storia.
