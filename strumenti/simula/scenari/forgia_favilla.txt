@@ -1,0 +1,12 @@
+# La Forgia con Favilla (PR 3 del piano dei livelli): in Primo sangue gioca al
+# tuo fianco, 2 contro 2, coi suoi pezzi e le sue battute sopra la testa.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+imposta prova_missione primo_sangue
+
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.5
+foto 01_due_contro_due
+aspetta 30                            # il tuo turno finisce, giocano i bot
+foto 02_turno_dei_bot
+aspetta 30
+foto 03_turno_di_favilla

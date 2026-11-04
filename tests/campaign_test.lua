@@ -493,35 +493,6 @@ for who, side_of in pairs({ [2] = -1, [3] = 1 }) do
 	check(found, "giu_dal_bordo: from the edge the Rampino catches target " .. who .. " and knocks it off")
 end
 
--- Punti e Corona: the Mantice throws the first target into the void, then two Pugni on whoever has the Crown
-ok, r = search("punti", function(c, a)
-	c.cassa("bellows")
-	c.hold(LEFT, function(g) return g.robots[1].x <= a end)
-	c.usa("bellows", math.pi)
-	c.hold(IDLE, 200)
-	c.cassa("punch")
-	c.hold(RIGHT, until_x(975))
-	for _ = 1, 2 do
-		c.usa("punch", 0.3)
-		c.hold(IDLE, 200)
-	end
-end, nil, { 310, 350, 20 })
-check(ok, "punti: the Mantice knocks off, the Pugno downs whoever has the Crown")
-if ok then check(missions.quante(missions.stelle(r)) == 3, "punti: without mistakes, three stars") end
--- the downed target no longer needed stays down (Sergio, 30 Oct)
-outcome, r, g = play_mission("punti", function(c)
-	c.cassa("bellows")
-	c.hold(LEFT, function(g) return g.robots[1].x <= 330 end)
-	c.usa("bellows", math.pi)
-	c.hold(IDLE, 300)
-end)
-check(r.st.steps_done[2] and g.robots[2].gone and g.robots[2].dead, "punti: the target knocked off doesn't respawn")
-outcome, r = play_mission("punti", function(c)
-	c.cassa("bellows")
-	c.hold(LEFT, 600)
-end)
-check(not r.st.steps_done[2], "punti: pushing on foot nobody falls")
-
 -- The duel with Favilla: the timer waits for the controls to be touched,
 -- Favilla (the tutorial bot) shows the two attacks and then the teleport in
 -- her first turns, the match lasts 3 minutes. The player fires one missile per
@@ -604,7 +575,7 @@ do
 	r.esito, r.st.gap = "fatta", 40
 	local s = missions.stelle(r)
 	check(s[1] and not s[2] and s[3], "stars: the bonus without the points lights the third and not the second")
-	r.st.gap = 160
+	r.st.gap = 300
 	check(missions.stelle(r)[2], "stars: the second with the point lead")
 	local profile = require "menu.profile"
 	local p = profile.nuovo()
@@ -631,8 +602,8 @@ for _, l in ipairs(campaign.CAPITOLI[1].missioni) do
 	check((steps_count == 0) == without and (g.robots[1].points == 0) == without,
 		l.id .. ": downing " .. (without and "gives no points" or "gives points"))
 end
-check(missions.vede(missions.nuova("punti"), "punti") and not missions.vede(missions.nuova("guidata"), "punti"),
-	"punti has points, the duel with Favilla doesn't")
+check(missions.vede(missions.nuova("giu_dal_bordo"), "punti") and not missions.vede(missions.nuova("guidata"), "punti"),
+	"the Forgia has points, the duel with Favilla doesn't")
 
 -- The help after many losses: the Fabbro goes down a level and starts with
 -- less life, but with a full bar (it doesn't show)

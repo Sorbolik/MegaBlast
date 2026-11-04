@@ -451,6 +451,15 @@ return {
 			abbatte = { "Rialzati, su!", "Uno a zero per me!" },
 			muore = { "Ahia! Bel colpo, apprendista!", "Va bene, va bene: torno subito!" },
 		},
+		-- Favilla at your side in the Forgia
+		favilla_compagna = {
+			turno = { "Tocca a me: copritemi!", "Guarda come si fa!" },
+			colpisce = { "Preso!", "Uno a zero per noi!" },
+			colpito = { "Ahi! Occhio a dove miri!", "Mi hanno presa!" },
+			scappa = { "Di qua!", "Arrivo!" },
+			abbatte = { "Giù! Avanti il prossimo!", "Bel lavoro di squadra!" },
+			muore = { "Torno subito, tienili tu!", "Ahia! Vendicami!" },
+		},
 		fabbro = {
 			turno = { "Il ferro si batte finché è caldo!", "Sull'incudine!" },
 			colpisce = { "Martellata!", "Senti il Maglio?" },

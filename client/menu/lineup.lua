@@ -95,19 +95,6 @@ function M.new(showcases, title)
 	end
 	if vs then
 		ui.titolo(T.versus, 640, TOP - 260, 0.75, C.OFF, s.radice)
-		-- a line in each team's color above its tags
-		local per = {}
-		for i, v in ipairs(showcases) do
-			local p = per[v.squadra] or { min = 9999, max = -9999 }
-			p.min, p.max = math.min(p.min, xs[i]), math.max(p.max, xs[i])
-			per[v.squadra] = p
-		end
-		for team, p in pairs(per) do
-			local w = p.max - p.min + tag.WIDE
-			local n = gui.new_box_node(vec((p.min + p.max) / 2, TOP + 10), vec(w, 3))
-			gui.set_color(n, C.SQUADRA[team] or C.LIGHT)
-			gui.set_parent(n, s.radice)
-		end
 	end
 	M.update(s, 0)
 	return s

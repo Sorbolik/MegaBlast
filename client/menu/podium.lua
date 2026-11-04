@@ -38,14 +38,6 @@ local MODES_LIST = T.modes
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
--- solid outline in the player's color
-local function thread(x, y, w, h, color, parent)
-	local n = gui.new_box_node(vec(x, y), vec(w, h))
-	gui.set_color(n, color)
-	gui.set_parent(n, parent)
-	return n
-end
-
 local function stair(p, x, voice, i)
 	local c = ui.C
 	local g = p.giocatori[voice.robot] or { nome = "?", colore = c.TEXT }
@@ -54,9 +46,10 @@ local function stair(p, x, voice, i)
 	local base = gui.new_box_node(vec(x, M.BASE_Y_POS), vec(0, 0))
 	gui.set_visible(base, false)
 	gui.set_parent(base, p.radice)
-	local block = ui.pannello(0, h / 2, M.WIDE, h, base)
+	-- the step's border in the team color, like the tags in the lineup
+	local block, edge = ui.pannello(0, h / 2, M.WIDE, h, base)
+	gui.set_color(edge, g.colore)
 	local top = h / 2
-	thread(0, top, M.WIDE, 4, g.colore, block)
 	ui.titolo(tostring(voice.place), 0, top - 42, 1.3, voice.place == 1 and c.BRACE or c.TEXT, block)
 	ui.testo(g.nome, 0, top - 82, 1, g.colore, block)
 	ui.testo(T.points:format(voice.points or 0), 0, top - 106, 0.8, c.OFF, block)
@@ -112,8 +105,8 @@ end
 local function prize(p, x, y, voice, i)
 	local c = ui.C
 	local g = p.giocatori[voice.robot] or { nome = "?", colore = c.TEXT }
-	local n = ui.pannello(x, y, 250, 92, p.radice)
-	thread(-121, 0, 4, 80, g.colore, n)
+	local n, edge = ui.pannello(x, y, 250, 92, p.radice)
+	gui.set_color(edge, vmath.vector4(g.colore.x, g.colore.y, g.colore.z, 0.6))
 	ui.titolo(voice.award.name, 0, 24, 0.6, c.BRACE, n)
 	ui.testo(g.nome, 0, -2, 0.9, g.colore, n)
 	ui.testo(voice.award.desc, 0, -26, 0.75, c.OFF, n)
