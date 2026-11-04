@@ -1,5 +1,5 @@
 """Illustrazioni delle missioni (WB-015): dai PNG scelti in art/WB-015/ ai JPEG
-del gioco in client/paintings/missions/: <id>.jpg a 1280 x 720 per l'apertura
+del gioco in client/paintings/missions/: <id>.jpg a 1672 x 941 (la misura di Codex) per la cartolina dell'apertura
 della missione, <id>_carta.jpg per la carta della CAMPAGNA. Le missioni con
 l'illustrazione vanno anche in client/ui/illustrations.lua (M.MISSIONS).
 
@@ -21,7 +21,7 @@ MISSIONI = {
     "c5_in_cima": "spostano",
     "c6_burrone": "attrezzi",
 }
-GRANDE = (1280, 720)
+GRANDE = (1672, 941)  # la misura di Codex: niente ingrandimenti (Sergio, 4 nov: «sgranata»)
 CARTA = (320, 180)  # disegnata a 148 x 83: il doppio per gli schermi grandi
 
 
@@ -45,7 +45,7 @@ def main():
             print("manca", src)
             continue
         img = Image.open(src).convert("RGB")
-        a_misura(img, *GRANDE).save(os.path.join(META, mid + ".jpg"), quality=85, optimize=True)
+        a_misura(img, *GRANDE).save(os.path.join(META, mid + ".jpg"), quality=92, optimize=True)
         a_misura(img, *CARTA).save(os.path.join(META, mid + "_carta.jpg"), quality=88, optimize=True)
         print("scritto", mid)
 
