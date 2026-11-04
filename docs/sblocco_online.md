@@ -174,7 +174,7 @@ ma allora all'inizio CAMPAGNA starebbe lontana dal pollice, sopra un vuoto.
 Se arrivano due pulsanti insieme (ALLENAMENTO e STESSO TELEFONO) vanno uno dopo l'altro.
 I pulsanti già presenti non si muovono: si abbassano solo un poco di luce per l'animazione.
 
-**Il regalo che apre l'Armeria: gli stivali.** I guanti non sono sicuri (Sergio: corazza,
+**Il regalo che apre l'Armeria: gli stivali** (Sergio, 4 nov: «Gli stivali vanno bene»). I guanti non sono sicuri (Sergio: corazza,
 elmo e stivali sì; coi guanti non si sa come si tengono le armi). Consiglio gli **stivali da
 forgia**: il pezzo più semplice da capire (camminare sulla brace), si vede subito ai piedi e
 l'equipaggiamento cambia già la velocità a terra, quindi il bonus piccolo è naturale. Elmo e
