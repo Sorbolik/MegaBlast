@@ -490,6 +490,11 @@ end
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
 local function show_menu(self, without_veil)
 	close_screen(self)
+	-- a card still open (or waiting in line) goes away with its match: it
+	-- would stay in front of the home (the back button opens the wheel even
+	-- over a card)
+	if self.carta then self.carta:close_view(); self.carta = nil end
+	self.card_queue = nil
 	if self.sala then menu.lobby.destroy(self.sala); self.sala = nil end
 	self.podium_t = nil
 	-- in the queue the connection stays: you can go around the menus (ui/pill.lua)
