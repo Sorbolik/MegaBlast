@@ -145,3 +145,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 4 nov | OPT-001: lo sfondo dipinto costa il 15% in meno alla GPU (niente pow per pixel, braci con uscita anticipata), meno allocazioni negli oggetti e nella posa; scartate le proposte che romperebbero le ricette o i colori. | questa PR |
 | 4 nov | Obiettivo a destra del punteggio e striscia subito sotto; vignetta grande più compatta, piccola senza disegno, va avanti solo con VAI!; battute dei bot sopra la testa; l'arma trovata vola al suo tasto, niente scheda. | #201 |
 | 4 nov | Online: il globo del teletrasporto e i diavoletti non scattano più quando il WiFi consegna gli stati a mucchi (coda degli stati disegnata a passo regolare); il contatore FPS dice anche RETE. | questa PR |
+| 4 nov | La guida dello zoom sta ferma sotto il pulsante e lo zoom inverte appena inverti il dito; la striscia delle vignette diventa trasparente quando ci sta dietro un personaggio (Sergio). | questa PR |

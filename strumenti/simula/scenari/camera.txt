@@ -1,8 +1,9 @@
 # Camera vicina che segue il robot di turno e sfondo in parallasse.
 # Zoom: pulsante in alto a destra (1210 610): un tocco va al massimo e torna,
 # tenuto premuto apre la guida, trascinato giù allontana di quanto si sposta il
-# dito (230 px tutta la corsa, anche oltre la guida); tasto z come il tocco,
-# rotella a passi.
+# dito (230 px tutta la corsa, anche oltre la guida, che resta ferma sotto il
+# pulsante; oltre il limite il dito non accumula: appena torna indietro lo zoom
+# torna); tasto z come il tocco, rotella a passi.
 
 aspetta 3
 tocca 1075 235                      # STESSO TELEFONO
@@ -43,6 +44,9 @@ foto 11_massimo_camminata
 premi z                             # di nuovo a metà
 aspetta 1.2
 foto 12_meta_di_nuovo
-trascina 1210 610 1100 250 0.8 13_oltre_la_guida  # il dito va oltre: la guida lo segue
+trascina 1210 610 1100 250 0.8 13_oltre_la_guida  # il dito va oltre: la guida resta ferma sotto il pulsante
 aspetta 1.2
 foto 14_lontano
+trascina_e_torna 1210 610 60 175 0.8 14b_inverte  # giù fino in fondo (oltre la corsa), poi su di mezza corsa: a metà
+aspetta 1.2
+foto 14c_meta_dopo_inversione
