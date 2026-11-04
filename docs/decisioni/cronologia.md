@@ -130,4 +130,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 3 nov | Testi dei menu in `client/lang/it.lua` (prima parte della PR 6): ogni schermata prende le sue frasi da lì. Nel gioco non cambia niente. | #183 |
 | 4 nov | Nelle lezioni la traiettoria prevista usa la mira di un attimo prima, come il colpo al rilascio della levetta: si vede quello che parte. | #188 |
 | 4 nov | Bug: dopo «Connessione persa» nella sala la coda restava a metà e i bot non arrivavano mai. Ora la coda si chiude con la connessione e GIOCA rientra davvero; il server toglie subito dalla coda chi esce. | #187 |
-| 4 nov | Testi di home, sala, coda, pillola della coda, interfaccia (cartellino, controller, contatore FPS) e battaglia (HUD, punteggio, guida) in `client/lang/it.lua` (PR 6b). Nel gioco non cambia niente. | questa PR |
+| 4 nov | Testi di home, sala, coda, pillola della coda, interfaccia (cartellino, controller, contatore FPS) e battaglia (HUD, punteggio, guida) in `client/lang/it.lua` (PR 6b). Nel gioco non cambia niente. | #186 |
