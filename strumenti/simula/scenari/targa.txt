@@ -17,9 +17,9 @@ aspetta 1.2
 zoom 04_scia_consumata 3
 aspetta_stato turno=2 fase=aim 15
 aspetta 0.5
-trascina 1210 610 1210 495 0.6      # zoom: il pulsante trascinato giù, a metà
+trascina 1210 630 1210 515 0.6      # zoom: il pulsante trascinato giù, a metà
 aspetta 0.8
 foto 05_zoom_medio
-tocca 1210 610                      # zoom: un tocco, tutto lo spazio di gioco
+tocca 1210 630                      # zoom: un tocco, tutto lo spazio di gioco
 aspetta 0.8
 foto 06_zoom_mappa

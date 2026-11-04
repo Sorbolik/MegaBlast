@@ -214,9 +214,11 @@ local DARK_EMBER = vmath.vector4(0.85, 0.3, 0.08, 1)
 -- The buttons stuck to the edges are written for 16:9: arrange() moves them
 -- onto the real screen edges.
 -- zoom button, at the top right
--- the zoom button: 110 below the top edge, so dragging it down does not pull the
--- phone's notifications (Sergio, 3 Nov; it was 34)
-local ZOOM_BTN = vmath.vector3(W - 70, H - 110, 0)
+-- the zoom button: 90 below the top edge, so dragging it down does not pull the
+-- phone's notifications (Sergio, 3 Nov; it was 34) and it stays clear of the
+-- match time above it (Sergio, 4 Nov: «più in alto [...] non lo appiccicare
+-- troppo al tempo della partita»; it was 110)
+local ZOOM_BTN = vmath.vector3(W - 70, H - 90, 0)
 
 -- Phone controls: two sticks, the logic is in battle/sticks.lua. The base
 -- goes where the thumb rests, within its zone, and goes back to its place
@@ -852,8 +854,9 @@ local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", ta
 -- lens sits where the zoom is between the nearest (top) and the farthest
 -- (bottom). A quick tap jumps between the chosen zoom and the farthest.
 -- Holding it a moment (or dragging) opens the long guide beside it, with the
--- lens showing the zoom. The guide stays still, right under the button and
--- on its x (Sergio, 4 Nov, 13:52); the zoom follows how much the finger moves,
+-- lens showing the zoom. The guide stays still and takes the button's place,
+-- from its top down, on its x (Sergio, 4 Nov, 13:52 and 14:58: «quando è
+-- espanso quello lungo sostituisce proprio quello piccolo»); the zoom follows how much the finger moves,
 -- not where it is (Sergio, 4 Nov: «che continui a fare il suo dovere ovunque
 -- stai spostando il dito»): ZM.RUN units for the whole range, down zooms out,
 -- and past a limit the finger's extra travel is lost, so the moment it turns
@@ -862,7 +865,7 @@ local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", ta
 CP.ZM = {
 	STEP = 0.12,        -- a wheel notch or a key, in shares of the zoom
 	RUN = 230,          -- finger travel for the whole zoom
-	LEN = 160,          -- the guide's length: it ends above OGGETTI on the phone
+	LEN = 160,          -- the guide's length (between its notches)
 	HOLD = 0.22,        -- held this long without moving, the guide opens (no tap)
 	TICKS = 24,         -- a micro-vibration every 1/TICKS of the zoom while dragging
 	DRAG_PX = 10,       -- past this the finger drags and it is no longer a tap
@@ -870,7 +873,6 @@ CP.ZM = {
 	W = 48, H = 48,     -- the button (round: W is its diameter)
 	MARK = 24,          -- the small track inside the button
 	LENS = 13,          -- the lens in the button (the one on the guide is bigger)
-	GAP = 6,            -- between the button and the top of the guide
 }
 local ZM = CP.ZM
 
@@ -894,14 +896,18 @@ function ZM.make_ui(self)
 	-- round, with a thin pale rim (Sergio, 4 Nov: «in un contorno tondo, e fatto bene»)
 	self.btn_zoom = fit(ui.disco(0, 0, ZM.W, dark))
 	gui.set_position(self.btn_zoom, ZOOM_BTN)
-	fit(ui.ring_node(0, 0, ZM.W, 1.5, vmath.vector4(1, 1, 1, 0.5), self.btn_zoom))
-	gui.set_parent(box(0, 0, 2, ZM.MARK, dim), self.btn_zoom)
-	gui.set_parent(box(0, ZM.MARK / 2, 8, 2, dim), self.btn_zoom)
-	gui.set_parent(box(0, -ZM.MARK / 2, 8, 2, dim), self.btn_zoom)
-	self.zoom_point = ZM.lens(ZM.LENS, self.btn_zoom)
-	-- the long guide, still, right under the button, only while held
+	-- what is drawn on it, in a holder: it goes away while the guide is open
+	self.zoom_face = box(0, 0, ZM.W, ZM.W, dim)
+	gui.set_visible(self.zoom_face, false) -- only a holder: its children show
+	gui.set_parent(self.zoom_face, self.btn_zoom)
+	fit(ui.ring_node(0, 0, ZM.W, 1.5, vmath.vector4(1, 1, 1, 0.5), self.zoom_face))
+	gui.set_parent(box(0, 0, 2, ZM.MARK, dim), self.zoom_face)
+	gui.set_parent(box(0, ZM.MARK / 2, 8, 2, dim), self.zoom_face)
+	gui.set_parent(box(0, -ZM.MARK / 2, 8, 2, dim), self.zoom_face)
+	self.zoom_point = ZM.lens(ZM.LENS, self.zoom_face)
+	-- the long guide, still, in the button's place from its top down, only while held
 	-- a capsule: the body and a round cap at each end
-	self.zoom_guide = box(0, -(ZM.W / 2 + ZM.GAP + 10 + ZM.LEN / 2), 20, ZM.LEN, dark)
+	self.zoom_guide = box(0, ZM.W / 2 - 10 - ZM.LEN / 2, 20, ZM.LEN, dark)
 	gui.set_parent(self.zoom_guide, self.btn_zoom)
 	for _, side in ipairs({ 1, -1 }) do -- half discs, so nothing overlaps the body
 		local cap = fit(ui.disco(0, side * ZM.LEN / 2, 20, dark, self.zoom_guide))
@@ -928,13 +934,20 @@ function ZM.display(self)
 	gui.set_position(self.zoom_point, ZM.POINT)
 end
 
--- the guide opens where it is; its lens goes to the zoom's place
+-- the guide opens in the button's place; its lens goes to the zoom's place
 ZM.CURSOR = vmath.vector3()
 function ZM.show_guide(self)
 	self.zoom_finger.open = true
-	gui.set_enabled(self.zoom_guide, true)
+	ZM.expand(self, true)
 	ZM.CURSOR.y = (self.cam.f - 0.5) * ZM.LEN
 	gui.set_position(self.zoom_cursor, ZM.CURSOR)
+end
+
+-- open, the long guide replaces the small button (it is not drawn twice)
+function ZM.expand(self, open)
+	gui.set_enabled(self.zoom_guide, open)
+	gui.set_enabled(self.zoom_face, not open)
+	gui.set_visible(self.btn_zoom, not open)
 end
 
 -- y of the finger on screen
@@ -962,7 +975,7 @@ end
 function ZM.release(self)
 	local d = self.zoom_finger
 	self.zoom_finger = nil
-	gui.set_enabled(self.zoom_guide, false)
+	ZM.expand(self, false)
 	if d and not d.moved and not d.open then camera.toggle(self.cam) end
 end
 
@@ -2835,7 +2848,7 @@ local function update_bar(self)
 				x = W / 2 + from_pt + d / 2 + k * (d + gap)
 			elseif gr == 3 then
 				-- the items column above the teleport: with all four its title
-				-- stays under the zoom button (y1 - 110, report UI-001)
+				-- stays under the zoom button (report UI-001)
 				d = SIZES.oggetto
 				x, y = tele.x, tele.y + TELE_BTN_D / 2 + 16 + d / 2 + k * (d + 6)
 				ogg_top = y + d / 2
@@ -3495,7 +3508,7 @@ end
 -- startup and when the window changes proportions
 local function arrange(self)
 	local x0, y0, x1, y1 = screen.x0, screen.y0, screen.x1, screen.y1
-	ZOOM_BTN.x, ZOOM_BTN.y = x1 - 70, y1 - 110
+	ZOOM_BTN.x, ZOOM_BTN.y = x1 - 70, y1 - 90
 	MOVE_PAD.x, MOVE_PAD.y = x0 + 115, y0 + 117
 	AIM_PAD.x, AIM_PAD.y = x1 - 115, y0 + 117
 	PAD_ZONE.sx, PAD_ZONE.dx, PAD_ZONE.y = x0 + (x1 - x0) * 0.4, x1 - (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.6

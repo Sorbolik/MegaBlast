@@ -23,9 +23,9 @@ aspetta 8
 foto 02_dopo_il_colpo
 aspetta 30
 foto 03_i_bot
-tocca_bordo 70 110 alto destra       # zoom: tutto lo spazio di gioco
+tocca_bordo 70 90 alto destra       # zoom: tutto lo spazio di gioco
 aspetta 30
 foto 04_mappa
-tocca_bordo 70 110 alto destra       # zoom: di nuovo vicino
+tocca_bordo 70 90 alto destra       # zoom: di nuovo vicino
 aspetta 40
 foto 05_dopo
