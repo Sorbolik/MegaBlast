@@ -2598,10 +2598,9 @@ end
 local function aim_pad_release(self)
 	local st = self.aim_st
 	local h = sticks.on_release(st, self.clock)
-	local live = h and h.active
-	if (live or st.active) and self.g:can_use(self.tele_armed and "teleport" or self.weapon) and my_turn(self) then
-		self.fire = { angle = live and h.angle or self.aim_angle, power = live and h.power or self.aim_power,
-			weapon = self.tele_armed and "teleport" or self.weapon }
+	if (h and h.active or st.active) and self.g:can_use(self.tele_armed and "teleport" or self.weapon) and my_turn(self) then
+		local a, p = sticks.shot(st, self.clock, self.aim_angle, self.aim_power)
+		self.fire = { angle = a, power = p, weapon = self.tele_armed and "teleport" or self.weapon }
 		self.tele_armed = false
 	end
 	sticks.reset(st)
@@ -3241,10 +3240,17 @@ local function render(self, dt)
 		local notch = aim_name.VIBRATE_TICKS and aim_name.notch(self.aim_power)
 		if notch and self.notch and notch ~= self.notch then vibrate_touch() end
 		self.notch = notch
-		-- in the Training lessons, as help, the whole trajectory down to the terrain
+		-- in the Training lessons, as help, the whole trajectory down to the terrain:
+		-- the one of the shot that would fire now, so with the aim from a moment
+		-- earlier like the release of the sticks (sticks.shot), not the live finger
 		if self.missione and self.missione.l.chapter == "addestramento" then
-			local n = HELP_POINTS
-			local pts = g:preview(self.aim_angle, self.aim_power, n, 4, self.preview_pts, aim_weapon)
+			local n, a, p = HELP_POINTS, self.aim_angle, self.aim_power
+			if self.aim_pad.id then
+				a, p = sticks.shot(self.aim_st, self.clock, a, p)
+			elseif self.pad_aim then
+				a, p = sticks.shot(self.pad_st, self.clock - (PAD.imp(self, "potenza") == "grilletto" and PAD.TRIGGER_RELEASE or 0), a, p)
+			end
+			local pts = g:preview(a, p, n, 4, self.preview_pts, aim_weapon)
 			for k = 1, n do
 				if g.terrain:solid(pts[k].x, pts[k].y) then n = k break end
 			end
@@ -4319,9 +4325,7 @@ PAD.COMMANDS = {
 		if self.pad_aim and my_turn(self) and self.g:can_use(w) then
 			-- as on the phone when the thumb lifts: the aim from a moment earlier
 			-- (levette.RELEASE), so pressing RT the sliding stick doesn't move the shot
-			local h = sticks.on_release(self.pad_st, self.clock - (first_one or 0))
-			local a, p = self.aim_angle, self.aim_power
-			if h and h.active then a, p = h.angle, h.power end
+			local a, p = sticks.shot(self.pad_st, self.clock - (first_one or 0), self.aim_angle, self.aim_power)
 			self.fire = { angle = a, power = p, weapon = w }
 			self.tele_armed = false
 			sticks.reset(self.pad_st)
