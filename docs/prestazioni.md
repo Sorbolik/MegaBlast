@@ -158,6 +158,29 @@ Misure nel simulatore, stesso scenario, prima (de591e4) e dopo la #147:
   lo riscrive per primo il thread di Gabvi (crateri nuovi), con l'idea del canale
   blu qui sotto; poi si rimisura col contatore.
 
+## Cosa si è trovato (4 nov, scatti contro il Fabbro)
+
+Sergio sentiva scatti sul telefono dopo i merge della notte (#184-#193). Nel
+simulatore, con lo scenario nuovo `fluidita_forgia.txt` (scelta delle armi e
+Battaglia della Forgia 2 contro 2 coi tre bot, colpi e zoom), rigiocato a #159,
+prima della notte, a ogni PR della notte e su main, il frame normale (14-16 ms),
+il Lua peggiore (6-8 ms ogni 5 secondi) e i KB per frame stanno nel rumore (lo
+stesso commit rigiocato cambia di 1 ms). Col profiler di Defold (`profiler.enable_ui`
+in una build del simulatore) le chiamate di disegno sono 72 contro 68 di #159 e i
+vertici della GUI 4412 contro 3830 (il pulsante tondo dello zoom); la memoria
+massima scende da 311 a 275 MB; entrare nella Forgia costa 280-370 ms sotto
+l'iride (a #159 509-713 ms, visibili).
+
+Il contatore sul telefono ha detto il resto: nella Forgia 116 FPS, il 99% dei
+frame sotto 9 ms, 0 scatti al minuto; nel cortile **MASCHERA 155 ms**. RIPROVA
+dalla rotellina e Ritenta dopo una lezione fallita ricominciano sulla stessa mappa
+senza iride, e `start_mission` ridisegnava ogni volta tutta la maschera (230 mila
+celle). Ora il gioco ricorda i rettangoli scavati nella partita e, se la mappa è
+la stessa, rimette solo quelli dal terreno nuovo (`CR.undig`): nel simulatore lo
+scatto da 74 ms (61 di Lua) sparisce (scenario `riprova_mappa.txt`). Scartato
+mettere RIPROVA sotto l'iride: costa uno scatto nero ogni volta che si ritenta,
+mentre qui il lavoro si può proprio togliere.
+
 ## Da fare
 
 - Sergio accende il contatore sul PC e gioca: se gli scatti sono `motore` con
