@@ -70,6 +70,7 @@ Un comando per riga, `#` per i commenti. Coordinate del gioco: 1280 x 720 con
 | `tieni TASTO S [ZOOM] [Z]` | tiene premuto un tasto: `sinistra`, `destra`, `salta`, o un nome di xdotool; facoltativamente fa lo zoom ZOOM prima di lasciarlo |
 | `premi TASTO` | pressione breve |
 | `trascina X1 Y1 X2 Y2 [S] [FOTO]` | trascina il dito in S secondi; con FOTO scatta la foto col dito ancora giù (la guida dello zoom) |
+| `trascina_e_torna X Y Y_GIU Y_SU [S] [FOTO]` | come `trascina` in verticale, ma il dito va a Y_GIU e torna a Y_SU senza staccarsi (lo zoom che inverte la rotta) |
 | `mira DX DY [S] [FOTO] [Z]` | tiene il dito a (DX, DY) pixel dello schermo dal robot di turno (la potenza dipende dai pixel dello schermo, a ogni zoom) per S secondi (la mira), facoltativamente scatta FOTO (con Z, uno zoom Z volte invece della foto intera), poi lascia: spara con l'arma scelta |
 | `pad TASTI [S]` | controller finto: tiene premuti insieme i tasti TASTI (`a`, `b`, `x`, `y`, `lb`, `rb`, `lt`, `rt`, `start`, `select`, la croce `su` `giu` `sinistra` `destra`, le levette fino in fondo `sx_destra`, `dx_su`... uniti da `+`) per S secondi (0,1 se non si dice). Nella build del simulatore ogni tasto del controller ha anche un tasto della tastiera (`PAD` in `simula.py`). Scenari `scenari/controller.txt` e `scenari/impostazioni.txt` (i tasti cambiati) |
 | `pad_tieni TASTI` / `pad_lascia TASTI` | come `pad`, ma i tasti restano premuti fra altri comandi (mirare con la levetta destra e premere `rt`) |
