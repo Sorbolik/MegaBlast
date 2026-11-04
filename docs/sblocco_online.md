@@ -89,7 +89,7 @@ ai gironi» (seconda porta).
 - **Contro**: chi ha scaricato il gioco per l'online non lo trova per qualche ora (Addestramento,
   Forgia e Limbo) e può pensare che non ci sia. Il sigillo lo vede solo chi arriva alla mappa.
 
-### 3. La home che cresce
+### 3. La home che cresce (scelta da Sergio il 4 nov, vedi sotto)
 
 - **Prima**: solo CAMPAGNA, grande, più il profilo e le impostazioni.
 - **Dopo l'Addestramento**: appaiono ALLENAMENTO e STESSO TELEFONO (sono offline, si usa
@@ -130,12 +130,55 @@ Per questo il regalo conviene vicino al momento in cui serve:
   ancora; si può tenere il regalo nella storia e aprire ARMERIA più tardi (il pezzo ti
   aspetta lì), ma sono due momenti per una cosa sola.
 
-Il pezzo: uno solo, semplice, che si vede addosso (per esempio i guanti da forgia), con un
+Il pezzo: uno solo, semplice, che si vede addosso (gli stivali da forgia, vedi sotto), con un
 bonus piccolo. La scena del regalo è una vignetta della storia (thread della storia
 illustrata).
 
 Ancora da decidere (Sergio, 4 nov): se gli altri pulsanti appaiono a poco a poco (proposta 3)
 o ci sono già spenti col lucchetto (proposta 1). L'Armeria col regalo va bene con tutte e due.
+
+## Deciso il 4 nov: i pulsanti appaiono a poco a poco
+
+Sergio (4 nov): all'inizio c'è **solo CAMPAGNA**, che deve essere molto bella; gli altri
+pulsanti appaiono a poco a poco; **i pulsanti già apparsi non cambiano mai aspetto né posto**;
+ogni sblocco ha una transizione elegante e soddisfacente. Proposta concreta (schizzi nella pagina):
+
+**Posti fissi.** Ogni pulsante ha da subito il suo posto definitivo; un posto non ancora
+aperto è semplicemente vuoto (niente sagoma, niente lucchetto). Quando un pulsante arriva,
+occupa il suo posto e nessun altro si sposta. Colonna di destra, dal basso:
+
+| Posto | Pulsante | Quando appare |
+|---|---|---|
+| in basso, grande (340 × 160) | **CAMPAGNA**, il portale | subito |
+| sopra, grande dorato (340 × 100) | GIOCA ONLINE | battuto Caronte |
+| sopra (340 × 64) | ALLENAMENTO | finito l'Addestramento |
+| sopra (340 × 64) | STESSO TELEFONO | finito l'Addestramento |
+
+A sinistra, dal basso: ARMERIA (il regalo del Fabbro) ed EVENTI (con l'online).
+
+**CAMPAGNA, il portale.** Non è un pulsante come gli altri: è una carta grande nel posto
+più comodo per il pollice, con dentro l'illustrazione del capitolo in cui sei (il cortile, la
+Forgia, poi l'anello del girone) che respira piano, il bordo di brace e sotto una riga sola
+col punto in cui sei («LA FORGIA · 4/7»). Forma, posto e misura non cambiano mai; cambia solo
+il disegno dentro, quando cambi capitolo. Così è la cosa più bella della home all'inizio e
+resta la porta della campagna anche quando arriva l'online, che le sta sopra, dorato.
+Alternativa (scartata per ora): CAMPAGNA in alto e il posto in basso libero per GIOCA ONLINE;
+ma allora all'inizio CAMPAGNA starebbe lontana dal pollice, sopra un vuoto.
+
+**La transizione dello sblocco** (una volta sola, circa 1,5 s, un tocco la salta):
+1. Torni in home dall'ultima schermata della missione che l'ha aperto; la home si scurisce un poco.
+2. Una scintilla parte dal portale della CAMPAGNA (lì l'hai guadagnato) e vola al posto vuoto.
+3. Il contorno del pulsante si disegna di brace, poi si riempie dal basso come metallo fuso,
+   con un piccolo rimbalzo (1,08 → 1), il colpo di martello della forgia e una vibrazione breve.
+4. Resta la pastiglia NUOVO finché non lo tocchi la prima volta.
+Se arrivano due pulsanti insieme (ALLENAMENTO e STESSO TELEFONO) vanno uno dopo l'altro.
+I pulsanti già presenti non si muovono: si abbassano solo un poco di luce per l'animazione.
+
+**Il regalo che apre l'Armeria: gli stivali.** I guanti non sono sicuri (Sergio: corazza,
+elmo e stivali sì; coi guanti non si sa come si tengono le armi). Consiglio gli **stivali da
+forgia**: il pezzo più semplice da capire (camminare sulla brace), si vede subito ai piedi e
+l'equipaggiamento cambia già la velocità a terra, quindi il bonus piccolo è naturale. Elmo e
+corazza restano per dopo (la corazza è il pezzo più grande, meglio come premio di un girone).
 
 ## Scartate
 
