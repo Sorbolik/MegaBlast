@@ -1,0 +1,29 @@
+{
+ "_": "La tavolozza di Favilla (docs/handoff/WB-013): i soli colori degli SVG, dal basso in alto. Il primo riempie tutta la sagoma, il nero è il contorno e va sopra a tutto. Le punte della fiamma hanno il giallo degli occhi: stanno prima degli occhi, così le macchie piccole restano fiamma. macchie_min: le macchioline più piccole (pixel del foglio largo 3072) prendono il colore intorno (le ombre fino a macchie_ombra_min); righe_max: i marroni scuri degli stivali non diventano righe nere.",
+ "macchie_min": 300,
+ "macchie_ombra_min": 1500,
+ "righe_max": 80,
+ "colori": [
+  ["pelle", "#B8432A"],
+  ["pelle_ombra", "#8E2F1C"],
+  ["crema", "#F1DFB0"],
+  ["crema_ombra", "#D6BC86"],
+  ["corna", "#EFE3C8"],
+  ["corna_ombra", "#C9B48E"],
+  ["camicia", "#E6D2A6"],
+  ["camicia_ombra", "#C4A977"],
+  ["cinghie", "#7A4A2A"],
+  ["cinghie_ombra", "#5A341C"],
+  ["bottoni", "#D9A441"],
+  ["stivali", "#8A5228"],
+  ["stivali_ombra", "#6B3F22"],
+  ["fiamma", "#BFE9FF"],
+  ["fiamma_ombra", "#8CCFEF"],
+  ["fiamma_oro", "#F2C45A"],
+  ["occhi", "#F2C45A"],
+  ["bocca", "#5A1A10"],
+  ["lingua", "#E0605A"],
+  ["bianco", "#FFFFFF"],
+  ["nero", "#000000"]
+ ]
+}

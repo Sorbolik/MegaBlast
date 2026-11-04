@@ -242,6 +242,62 @@ Fase 1: due esecuzioni sul ramo `design/WB-013` (`cb7fb8b`, `9d3514f`), tutte e 
 da Codex: secondo lui le sfumature, il corpo un po' più slanciato dell'apprendista e lo stivale
 lontano girato verso chi guarda erano difetti.
 
+### Fase 1 · 2026-11-04
+
+Eseguita la sola fase 1 approvata, da `main` al commit `fbc3c4a`, sul ramo `design/WB-013`. Generatore integrato imagegen; prompt integrali invariati e riferimenti allegati nell'ordine della tabella. Nessun intervento su fase 2, ricalco, taglio o gioco.
+
+**Tre risultati non conformi**, conservati solo come scarti documentati in `art/WB-013/scartati/fase1/`; non sono modelli approvati da usare per la fase 2. Ogni PNG ha il `.txt` con prompt integrale e riferimenti.
+
+| File nella cartella degli scarti | Misura effettiva | Tentativi completati | Esito |
+|---|---|---:|---|
+| `1_tre_quarti_1.png`, `1_tre_quarti_1.txt` | 1024×1536 | 3 | SCARTATA |
+| `1_tre_quarti_2.png`, `1_tre_quarti_2.txt` | 1024×1536 | 3 | SCARTATA |
+| `2_espressioni.png`, `2_espressioni.txt` | 1254×1254 | 3 | SCARTATA |
+
+- Guardate tutte le generazioni. Per ogni risultato conservato il terzo tentativo, senza ritocchi, ridimensionamenti o modifiche al prompt. I tentativi precedenti mostravano gli stessi problemi di sfumature; una chiamata del secondo tre quarti è stata interrotta dall'utente, senza risultato mostrato, e non è conteggiata fra i tre tentativi completati.
+- **Tre quarti:** presenti fiamma bianco-azzurra con punte dorate, corna, ciglia, muso pergamena, camicia e salopette, grembiule, stivali, mani aperte vuote e coda intera. Assenti ali, utensili, colore di squadra, testo e firma. Nessun pezzo tagliato dal bordo. La punta della coda somiglia al modello, con attacco nell'incavo e punta in fuori: la valutazione finale della forma spetta a Claude.
+- **Difetti persistenti dei tre quarti:** sfumature su pelle, fiamma e abiti, più toni e riflessi oltre alle ombre nette ammesse; figura più slanciata del corpo tozzo di R3; il piede a sinistra nell'immagine resta quasi frontale anziché puntare chiaramente a destra. La gerarchia arto vicino/lontano non è una copia affidabile della vista richiesta. Non soddisfano i vincoli per il ricalco.
+- **Espressioni:** nove teste separate in griglia 3×3, verso destra, nell'ordine richiesto: sorriso, colpita, vittoria, stordita, mira, rabbia, sconfitta, paura, linguaccia. Nessun corpo, testo o firma; fiamme intere dentro il foglio. Restano sfumature, ombre sul moncone del collo e bordi neri laterali che arrivano al fondo anziché sparire gradualmente. Il collo non è uniforme come richiesto; sagoma e fiamma variano leggermente tra le teste. Non conforme anche dopo tre tentativi.
+- **Dimensioni:** tre quarti conformi a 1024×1536; espressioni native a 1254×1254 anziché 1536×1536 o 1024×1024. Sfondo visivamente bianco opaco; non certificato #FFFFFF uniforme al pixel, né esattezza della tavolozza o nero #000000 su tutti i contorni.
+- Verificate intestazioni e dimensioni dei PNG e corrispondenza integrale dei prompt salvati con la scheda. Non verificati ricalco SVG, taglio, giunture animate, leggibilità a 90 px o resa nel gioco. Criteri lasciati non spuntati. Mancano risultati conformi da scegliere: raggiunto il limite di tre tentativi per ciascuna immagine.
+- La riga del 4 novembre in `DECISIONI.md` dice coda detta due volte, mentre i prompt approvati della scheda la richiamano una volta come il modello: segnalata la differenza, eseguiti i prompt senza modificarli.
+
+### Fase 1 · Seconda esecuzione richiesta da Sergio
+
+2026-11-04 · Riletto `main` aggiornato a `d50b7ea`: scheda APPROVATA, prompt e riferimenti della fase 1 invariati. Aggiornato `design/WB-013` con main preservando la consegna precedente. Nuova esecuzione con imagegen integrato, prompt integrali invariati e riferimenti nell'ordine della tabella.
+
+Nove generazioni completate: tre tentativi per ciascuno dei tre risultati richiesti. Guardate tutte; conservato il terzo tentativo di ogni risultato, senza sovrascrivere gli scarti della prima esecuzione. **Anche questa esecuzione non produce risultati conformi.**
+
+| File in `art/WB-013/scartati/fase1_ripetizione2/` | Misura effettiva | Tentativi | Esito |
+|---|---|---:|---|
+| `1_tre_quarti_1.png` e `1_tre_quarti_1.txt` | 1024×1536 | 3 | SCARTATA |
+| `1_tre_quarti_2.png` e `1_tre_quarti_2.txt` | 1024×1536 | 3 | SCARTATA |
+| `2_espressioni.png` e `2_espressioni.txt` | 1254×1254 | 3 | SCARTATA |
+
+- Tre quarti: figura intera verso destra, coda visibile con punta simile al modello, fiamma bianco-azzurra e oro, abiti pergamena, grembiule, stivali e mani vuote. Nessuna ala, scritta, firma, utensile o colore di squadra. Restano sfumature su pelle, fiamma e vestiti; corpo più slanciato di R3 e stivale a sinistra quasi frontale. Non rispettano tutti i vincoli di colori piatti e posa. Per la forma della punta della coda resta la valutazione di Claude prevista nella scheda.
+- Espressioni: nove teste separate, in griglia 3×3 e nell'ordine richiesto, fiamme intere, nessun testo o firma. Il primo tentativo aveva anche tratteggi; il terzo conserva sfumature e ombre sul collo, bordi laterali neri fino alla base e variazioni di sagoma/fiamma. Il collo non è uniforme e il bordo non si assottiglia come richiesto. Misura nativa 1254×1254 non prevista dalla tabella.
+- Controllati visivamente bordi, parti mancanti e tagli accidentali: nessun difetto macroscopico di quel tipo nei file conservati. Verificati intestazioni PNG, dimensioni e corrispondenza integrale dei prompt nei `.txt`. Originali opachi senza ritocchi, ricalchi, ritagli o ridimensionamenti.
+- Non certificati tavolozza, nero e bianco esatti al pixel; non verificati ricalco SVG, giunture animate, leggibilità a 90 px o resa nel gioco. Nessuna fase 2 eseguita. Criteri non spuntati e nessun modello conforme proposto per la scelta.
+
+### Fase 2 · Consegna di Codex
+
+2026-11-04 · Eseguita la fase 2 dalla scheda APPROVATA di `main` al commit `c4331fb`, con R6/R7 scelti e R8 aggiunto per il formato delle teste. Generatore integrato imagegen; tre prompt integrali invariati, riferimenti nell'ordine della tabella. `4_corpo.png` generato e salvato prima di allegarlo alle braccia chiuse.
+
+| File in `art/WB-013/` | Misura effettiva | Tentativi | Esito |
+|---|---|---:|---|
+| `3_teste.png` e `3_teste.txt` | 1254×1254 | 1 | da revisione |
+| `4_corpo.png` e `4_corpo.txt` | 1536×1024 | 1 | da revisione |
+| `5_braccia_chiuse.png` e `5_braccia_chiuse.txt` | 1536×1024 | 1 | da revisione |
+
+- Guardate tutte e tre le immagini prima del salvataggio. Nessuna scritta, firma, ala, utensile o parte accidentalmente tagliata dal bordo. Sfondo magenta opaco; nessun ritocco, ricalco, ridimensionamento o taglio effettuato da Codex.
+- **Teste:** nove teste separate in griglia 3×3, verso destra, senza collo o moncone, contorno nero chiuso sotto mento e mandibola. Espressioni nell'ordine richiesto, fiamme intere. Sagoma, fiamma e dettagli non sono geometricamente identici fra le celle. Misura nativa 1254×1254 invece di 1536×1536 o 1024×1024.
+- **Corpo:** prima riga vuota, torso e coda nella seconda, posto dell'ala vuoto; due braccia aperte, due gambe e pugno separato nella terza. Entrambi gli stivali puntano a destra. Coda continua, con punta simile a R6. Posizioni coerenti con i posti dello stampino, ma canvas a 1536×1024 anziché 3072×2048 di R4: soddisfa il minimo, non replica la risoluzione del riferimento. Non verificato l'allineamento esatto dei perni.
+- **Giunture del corpo:** apici di braccia, gambe e radice della coda con aperture del contorno; restano bordi neri ai lati e ombre vicine ad alcune estremità. Spalle del torso arrotondate, ancora sporgenti, con nero e ombre da rivedere; colore non certificato uniforme in tutte le aree di sovrapposizione. Segnalato per il passaggio di ricalco e ritocchi descritto nella scheda.
+- **Braccia chiuse:** due braccia complete affiancate, maniche arrotolate, pugni chiusi e nocche rivolte a destra. Apici delle spalle senza linea trasversale, con nero che termina lateralmente; restano sfumature sulle maniche e sugli avambracci. Le due sagome sono molto simili: distinzione vicino/lontano e dimensione rispetto alle braccia del corpo da verificare nel montaggio. Non certificate quattro dita anatomicamente distinguibili in ogni pugno.
+- Presenti sfumature e toni intermedi: consegnati gli originali alla revisione, seguendo il chiarimento di Claude sulle scelte di Sergio (le sfumature si eliminano nel ricalco a tavolozza fissa e le giunture si ritoccano nel passaggio successivo). Nessuna dichiarazione che tutti i vincoli di colori piatti e giunture siano soddisfatti. Nessuna rigenerazione per questi aspetti già demandati al ricalco.
+- Verificate intestazioni PNG, dimensioni e corrispondenza integrale dei prompt nei `.txt`. Non certificati #FF00FF uniforme, contorni #000000 e tavolozza al pixel; non verificati ricalco, taglio, perni, giunture animate, leggibilità a 90 px o resa nel gioco. Criteri lasciati non spuntati per Claude e Sergio.
+- Merge della scheda: conservati integralmente sia il riepilogo di Claude sia le precedenti consegne di Codex nella sezione di consegna; il resoconto e i prompt di Claude restano quelli aggiornati su main.
+
 ## Resoconto di Claude
 
 ### Fase 1 · scelte di Sergio (2026-11-04)
@@ -260,3 +316,46 @@ lontano girato verso chi guarda erano difetti.
 - **Teste senza collo e col contorno chiuso** (Sergio): `3_teste` le rifà come le nove teste
   dell'apprendista, con quelle (R8) come esempio del formato.
 - Fase 2 pronta: `esegui WB-013 fase 2`.
+
+### Fase 2 · revisione e taglio (2026-11-04)
+
+Guardati i tre fogli di `b535f6d`: **tutti e tre buoni**, nessuno scartato.
+
+- **Teste:** le nove espressioni giuste, nell'ordine giusto, senza collo e col contorno chiuso.
+  La fiamma cambia appena da una testa all'altra (i fogli non sono identici al pixel): cambiando
+  faccia si vede un piccolo guizzo della fiamma, che per una fiamma va bene. Tenute.
+- **Corpo:** busto, coda, braccia, gambe e pugno ai loro posti; stivali tutti e due a destra; la
+  coda col cuore capovolto come nel modello. Le spalle del busto sporgono un po' (sono le maniche
+  a sbuffo): coperte dal braccio davanti, quella dietro sta sotto il braccio dietro. Nessun
+  ritocco a mano per ora: si vede nelle foto e si decide con Sergio nell'editor.
+- **Braccia chiuse:** due braccia col pugno quasi uguali (davanti e dietro): vanno bene, nel gioco
+  quello dietro si scurisce.
+- **Sfumature e granelli** ovunque (pelle, camicia, stivali): li toglie il ricalco.
+
+Ricalco (`vettoriale.py`, tavolozza `strumenti/stampino/tavolozze/favilla.json`), con quattro
+regole nuove, tutte nella tavolozza o nella riga di comando, così l'apprendista resta com'è:
+
+1. `--senza`: i colori che in un foglio non ci sono. Nel foglio delle teste niente camicia,
+   bretelle, bottoni, stivali; nel corpo niente muso, corna, fiamma, occhi, bocca, bianco. Così i
+   toni del muso non diventano camicia e quelli della camicia non diventano muso o corna.
+2. `macchie_min` 300 e `macchie_ombra_min` 1500 (pixel del foglio largo 3072): le macchioline
+   prendono il colore intorno, mai il nero. Senza, gli stivali e la coda erano a chiazze.
+3. `righe_max` 80: i marroni scuri degli stivali e dell'ombra delle bretelle non diventano righe
+   nere (lo facevano con la soglia dell'apprendista, 110).
+4. Un giallo della tavolozza che non è l'occhio (bottoni, punte della fiamma) resta suo.
+
+**Colori degli stivali cambiati** (scelta di Claude): ChatGPT li ha disegnati più chiari della
+scheda (circa `#8A5028`); con `#6B3F22` diventavano una macchia scura. Ora `#8A5228`, ombra
+`#6B3F22`.
+
+Taglio: `taglia.py` come scritto sopra (`--teste`, poi `--aggiungi --pugni`). Pelle `favilla`:
+busto, braccia (aperte e col pugno), gambe, coda in cinque segmenti, pugno e nove facce, ognuno
+col suo SVG in `strumenti/stampino/pelli/svg/`; gli SVG dei fogli in `art/WB-013/svg/`. Trovato
+e corretto un errore di `taglia.py`: rifacendo la pelle `favilla` cancellava anche i file di
+`favilla_1` e `favilla_2` (le pelli a pezzi liberi), che cominciano con lo stesso nome.
+
+Nel gioco: Favilla veste i suoi pezzi nel cortile (la comparsa) e nel Duello (il robot
+avversario, con `pelle = "favilla"` nella missione: solo disegno, la simulazione non cambia). Il
+nome azzurro sopra la testa resta. Editor ripubblicato (versione 43) con la pelle `favilla`:
+https://claude.ai/artifact/YJeMenvfJLGmto89yAbKJ5 . Scenari `favilla.txt` (fermo, corsa,
+salto, mira, rinculo) e `favilla_duello.txt`.

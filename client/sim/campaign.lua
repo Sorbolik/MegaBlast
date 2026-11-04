@@ -285,7 +285,7 @@ local TRAINING = {
 			-- no draft (Sergio, 30 Oct): Lanciarune, Lama and Rampino; the other weapons,
 			-- if you want them, from crates, with their card
 			{ team = 1 },
-			{ team = 2, bot = 1, pick = "grenade", secondary = "mallet", nome = "Favilla", battute = "favilla" },
+			{ team = 2, bot = 1, pick = "grenade", secondary = "mallet", nome = "Favilla", battute = "favilla", pelle = "favilla" },
 		},
 		vedi = { "primarie", "secondarie", "teleport", "parachute", "tempo", "baratto", "hook" },
 		-- short match: 3 minutes

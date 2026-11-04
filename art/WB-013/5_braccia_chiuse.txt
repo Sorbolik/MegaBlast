@@ -1,0 +1,15 @@
+Image 1 is Favilla, a character of our game, in a three-quarter view facing right. Image 2 is her parts sheet: copy the arms of image 2 exactly (same length, thickness, rolled-up sleeve, contour, colors and flat style).
+
+Draw TWO ARMS of her side by side, left to right, the same size as the arms in image 2, well apart from each other, on a flat pure magenta #FF00FF background: 1) the NEAR arm, 2) the FAR arm. Each arm is straight and hangs down from a round shoulder end, exactly like in image 2, but the hand is CLOSED IN A FIST as if gripping the handle of a tool: four fingers curled, the thumb wrapped over them, the knuckles towards the right. The fist is the same size as the open hands of image 2.
+
+OUTLINE AND JOINTS, very important: each arm has a thick, clean pure-black #000000 outline, EXCEPT at the shoulder end at the top: there the outline gets gradually thinner and disappears completely, and the shirt color runs right to the edge, rounded and full, with no black line across it. The shirt near the shoulder end is PERFECTLY UNIFORM plain #E6D2A6: no shadow, no fold, no line there, so the arm blends into the torso with no visible seam. Keep shadow shapes well away from the shoulder end.
+
+Rendering rules, very strict, because these arms will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline black #000000; skin #B8432A, skin shadow #8E2F1C; shirt #E6D2A6, its shadow #C4A977.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the arms.
+- No text, numbers, labels or signatures. Landscape 3:2.
+
+Riferimenti (ordine allegato):
+Image 1: art/WB-013/scelti/tre_quarti.png
+Image 2: art/WB-013/4_corpo.png

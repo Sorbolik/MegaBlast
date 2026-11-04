@@ -87,6 +87,16 @@ catena e il colore della squadra, e scrive `client/assets/skins/<nome>_<posto>.p
 `strumenti/stampino/pelli/<nome>.json`, `client/battle/skins.lua` e l'atlante
 del diavoletto, che contiene base e pelli insieme (si disegna in una volta).
 
+## Le tavolozze
+
+Un personaggio a colori ha la sua tavolozza in `tavolozze/<nome>.json`: i colori, dal basso in
+alto, e qualche regola del ricalco quando i fogli di ChatGPT la chiedono (Favilla):
+`macchie_min` e `macchie_ombra_min` (le macchioline più piccole, in pixel del foglio largo
+3072, prendono il colore intorno), `righe_max` (sotto quale canale più forte un pixel scuro può
+diventare riga nera: più basso se il personaggio ha marroni scuri). Con `vettoriale.py ...
+--senza colore,colore` un foglio si ricalca senza i colori che non ha (il foglio delle teste
+senza la camicia), così due colori vicini non si scambiano.
+
 ## Fogli a pezzi liberi (personaggi a tre quarti)
 
 I fogli di maschio, femmina e Favilla (`art/pezzi_tre_quarti/`) non sono sullo

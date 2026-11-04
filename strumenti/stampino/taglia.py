@@ -439,6 +439,15 @@ def versione(pezzi, posto):
     return f"{posto}_{max(n, default=0) + 1}"
 
 
+def file_della_pelle(nome):
+    """I PNG e gli SVG della pelle, non quelli di un'altra che comincia col suo nome
+    (favilla e favilla_1)."""
+    altre = [os.path.basename(f)[:-5] for f in glob.glob(os.path.join(JSON, nome + "_*.json"))]
+    fuori = tuple(n + "_" for n in altre)
+    return [f for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")) + glob.glob(os.path.join(SVG, nome + "_*.svg"))
+            if not os.path.basename(f).startswith(fuori)]
+
+
 def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste=None, foglio_pugni=None, aggiungi=False):
     with open(ST.FOGLIO) as f:
         F = json.load(f)
@@ -453,7 +462,7 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
         pezzi = vecchia["pezzi"]
         forma = {k: vecchia[k] for k in ("coda", "coda_riposo", "coda_radice") if k in vecchia}
     else:
-        for f in glob.glob(os.path.join(ASSETS, nome + "_*.png")) + glob.glob(os.path.join(SVG, nome + "_*.svg")):
+        for f in file_della_pelle(nome):
             os.remove(f)
     if allinea_pezzi and not sopra:
         # ChatGPT: pezzi liberi, ognuno montato sullo scheletro; le facce con la scala della testa
@@ -740,7 +749,7 @@ def main():
     if a.ritocchi:
         ritocca(a.ritocchi)
     elif a.togli:
-        for f in glob.glob(os.path.join(ASSETS, a.togli + "_*.png")) + glob.glob(os.path.join(SVG, a.togli + "_*.svg")) + [os.path.join(JSON, a.togli + ".json")]:
+        for f in file_della_pelle(a.togli) + [os.path.join(JSON, a.togli + ".json")]:
             if os.path.exists(f):
                 os.remove(f)
     elif not a.rifai:

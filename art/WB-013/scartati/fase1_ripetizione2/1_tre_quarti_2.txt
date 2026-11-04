@@ -1,0 +1,17 @@
+Image 1 is Favilla, a character of our game, full figure: copy her EXACTLY (shapes, flame hair, horns, face, clothes, boots, tail). Image 2 is her model sheet: more views of the same character. Image 3 is another character of the same game, a little imp apprentice, drawn in the game's clean style: copy ONLY its rendering (flat colors, thick black outline), its body proportions and its three-quarter angle. Do not copy its face, horns, neckerchief or tail.
+
+Favilla is a little imp girl, a senior apprentice at a hellish forge: small and stocky like image 3, big round head (about one third of her height), two short bone-colored horns, pointed ears, eyelashes, big yellow eyes with black pupils, a confident smile, brick-red skin with a parchment-colored muzzle. Instead of hair she has a big FLAME, white in the middle and light blue outside, with golden tips, rising up from her head, always the same shape. She wears a parchment-colored shirt with the sleeves rolled up to the elbows, parchment-colored overalls with the legs rolled up, brown shoulder straps with round brass buttons, a small brown leather apron, and brown boots. Her tail is long and thin, with the same tip as in image 1.
+
+Draw her ONCE, full body, in a clean THREE-QUARTER VIEW FACING RIGHT, standing still in a neutral, relaxed pose: weight on both feet, legs slightly apart, BOTH FEET POINTING TO THE RIGHT, both arms hanging loosely a little away from the body with open relaxed four-fingered hands, the near arm and near leg (on the right of the picture) fully visible, the far arm and far leg (on the left) partly behind the body, the tail coming out from behind her lower back and curving up behind her on the left, fully visible from root to heart tip. The face is turned to the right in three-quarter view. No wings, no tools, nothing in her hands.
+
+Rendering rules, very strict, because this drawing will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no brush strokes, no soot, no noise, no soft shading, no glow (also no glow around the flame).
+- Thick, clean, closed pure-black #000000 outline of even weight around the whole figure, with thinner black lines only for inner details (eyes, eyelashes, mouth, fingers, clothes folds, buttons).
+- Use ONLY these colors: outline, eyelashes and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; horns #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF; flame white #FFFFFF and light blue #BFE9FF with golden tips #F2C45A, flame shadow #8CCFEF; shirt and overalls #E6D2A6, their shadow #C4A977; straps and apron #7A4A2A, their shadow #5A341C; buttons #D9A441; boots #6B3F22, their shadow #4A2A15.
+- Flat pure white #FFFFFF background, no ground, no shadow on the ground, nothing else in the picture.
+- No text, numbers, labels, arrows or signatures. Portrait format 2:3.
+
+Riferimenti (ordine allegato):
+Image 1: art/WB-012/riferimenti/R9_favilla_figura.png
+Image 2: art/WB-012/scelti/favilla.png
+Image 3: art/WB-009/scelti/tre_quarti_gamba.png

@@ -392,6 +392,90 @@ images {
   image: "/assets/skins/favilla_2_vett_testa.png"
 }
 images {
+  image: "/assets/skins/favilla_ala.png"
+}
+images {
+  image: "/assets/skins/favilla_braccio_1.png"
+}
+images {
+  image: "/assets/skins/favilla_braccio_2.png"
+}
+images {
+  image: "/assets/skins/favilla_braccio_dietro_1.png"
+}
+images {
+  image: "/assets/skins/favilla_braccio_dietro_2.png"
+}
+images {
+  image: "/assets/skins/favilla_busto_1.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_1.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_1_bordo.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_2.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_2_bordo.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_3.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_3_bordo.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_4.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_4_bordo.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_5.png"
+}
+images {
+  image: "/assets/skins/favilla_coda_5_bordo.png"
+}
+images {
+  image: "/assets/skins/favilla_gamba_1.png"
+}
+images {
+  image: "/assets/skins/favilla_gamba_dietro_1.png"
+}
+images {
+  image: "/assets/skins/favilla_pugno_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_arrabbiata_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_colpita_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_felice_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_ko_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_mira_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_paura_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_provocazione_1.png"
+}
+images {
+  image: "/assets/skins/favilla_testa_sconfitta_1.png"
+}
+images {
   image: "/assets/skins/femmina_1_ala.png"
 }
 images {
