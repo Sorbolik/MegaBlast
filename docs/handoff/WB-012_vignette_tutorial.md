@@ -326,6 +326,24 @@ Otto immagini generate: **sei da revisione e due scartate**. Gli scarti sono con
 - Non verificati: impaginazione coi fumetti effettivi, leggibilità su telefono, continuità nel montaggio e resa nel gioco. I criteri restano non spuntati. I sei risultati da revisione non equivalgono a un'approvazione finale; i due scarti non vanno integrati.
 - Una chiamata per `6_rapimento_b` è stata interrotta senza produrre un file; non conteggiata fra i tre tentativi completati.
 
+### Fase 2b · Consegna di Codex
+
+2026-11-04 · Eseguita la fase 2b approvata, da `main` aggiornato al commit `9121389`, sul ramo `design/WB-012`. Usato il generatore integrato imagegen, con i due prompt integrali invariati e i quattro riferimenti allegati nell'ordine della tabella. Due varianti per scena; nessuna modifica alle immagini precedenti.
+
+| File in `art/WB-012/` | Misura effettiva | Tentativi | Esito |
+|---|---|---:|---|
+| `4_arrivo_a_1.png` e `4_arrivo_a_1.txt` | 1672×941 | 1 | da revisione |
+| `4_arrivo_a_2.png` e `4_arrivo_a_2.txt` | 1672×941 | 1 | da revisione |
+| `5_fabbro_b_1.png` e `5_fabbro_b_1.txt` | 1254×1254 | 1 | da revisione |
+| `5_fabbro_b_2.png` e `5_fabbro_b_2.txt` | 1254×1254 | 1 | da revisione |
+
+- Guardate tutte e quattro le generazioni prima del salvataggio: Favilla ha una punta della coda a cuore con due lobi arrotondati, l'apprendista una punta a freccia. Nelle scene del bisbiglio entrambe le mani dell'apprendista sono visibili, vuote e ai fianchi; nessun martello o utensile.
+- Controllati: nessuna scritta, fumetto o firma visibile; contorni neri, corna, fazzoletto blu, fiammella arancione, fiamma bianco-azzurra con punte dorate, abiti pergamena, grembiulino e stivali di Favilla. Nessun pezzo accidentalmente tagliato sul bordo o giuntura evidente. Nell'arrivo: fagotto, atterraggio con ginocchia piegate e mano a terra, coda visibile dietro Favilla, muro scuro in alto a destra. Nel bisbiglio: mano alla bocca, sorriso malizioso, sguardo dell'apprendista verso Favilla e spazio calmo superiore.
+- Nessuna rigenerazione necessaria. Conservati gli originali opachi, senza ritocchi, ritagli o ridimensionamenti. Gli sfondi della forgia seguono i prompt e il chiarimento di Claude nel resoconto.
+- **Misure non conformi:** il generatore restituisce 1672×941 anziché 1536×1024 per l'arrivo e 1254×1254 anziché 1024×1024 per il bisbiglio. File lasciati nelle dimensioni native.
+- Proporzioni, volto e silhouette della fiamma presentano le variazioni del disegno generativo: non certificata una copia geometrica esatta dei modelli, né la tavolozza al pixel. Il tratteggio dello scenario è più ricco di quello leggero richiesto nelle ombre. La decisione generale del 2 novembre toglie la fiammella dal gioco; qui si segue la scelta successiva del 3 novembre, esplicitamente approvata per le vignette.
+- Verificati intestazioni PNG, dimensioni e corrispondenza testuale dei prompt salvati con quelli della fase 2b. Non verificati montaggio, fumetti effettivi, resa su telefono o nel gioco. Criteri lasciati non spuntati per la revisione di Claude e Sergio.
+
 ## Resoconto di Claude
 
 Fase 1 (2026-11-03). Guardati i sei fogli di Codex (518c3c2): tutti tengono il personaggio
