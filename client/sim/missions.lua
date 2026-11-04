@@ -22,6 +22,9 @@
 --   local line = missions.line(r)                   -- the line of the moment (testo, faccia...) or nil:
 --                                                   -- the battle shows it in a vignette (battle/vignette.lua)
 --   local text = missions.obiettivo(r)              -- the remaining goal, always in view (or nil)
+--   local f = missions.guida(r)                     -- where Favilla is in the cortile (l.guida), or nil:
+--                                                   -- { x, y, vx, vy, grounded, facing } (battle/guide.lua draws her)
+--   local x, y = missions.scintilla(r)              -- the spark still to take (l.scintilla), or nil
 --   missions.stelle(r)                              -- { true, false, true }: each star with its criterion
 --   missions.quante(stars)                          -- how many are lit
 --   missions.criteria(l)                            -- what each star needs: { "FATTA", "CON 60 PUNTI DI VANTAGGIO", ... }
@@ -76,6 +79,17 @@
 --     (the second with at least that point lead over the opponents at the end:
 --     the circles, where points count; Sergio, 31 Oct: no longer turns) or
 --     { bonus = { ... }, bonus2 = { ... } } (two bonuses: the lessons)
+--   medaglia = { conta = "scintille", at_least = 1, testo = "LA SCINTILLA" }: the lessons
+--     of the cortile have no three stars (Sergio, 3 Nov): «Fatta» and, where
+--     there's a real challenge, Favilla's optional medal (a bonus, below)
+--   guida = { parte = 1, gara = true, percorso = { { x =, y =, t = }, { x =, y =, t =, salto = 30 }, ... } }:
+--     Favilla in the cortile, a puppet drawn by the battle and never hit: from
+--     step parte done (0: at once) she follows the path, t in seconds of game
+--     (vignettes stop it), salto = the height of the arc to that point. gara:
+--     the medal counter "prima" if you finish before she arrives
+--   scintilla = { x =, y = }: a spark in the air, taken by passing your feet
+--     over that height there (counter "scintille"): the medal of a full jump
+--   nascosti = { 2 }: robots that aren't there (the game wants at least two)
 --   collaudo = { carattere, piano, senza }: how strumenti/arena/collaudo.lua tests it
 --   righe = { { testo, quando, fino, highlight, stops, subito } }: quando
 --     and fino are { evento = "crate_pick" }, { passo = 2 } (step 2 done),
@@ -103,7 +117,7 @@
 -- Other verbs (survive, protect...) come with the missions that use them.
 -- The counters for star bonuses: morti, teletrasporti, vuoto (your
 -- environmental kills), abbattuti, danni (taken by you), misses (without_time),
--- globi (earned).
+-- globi (earned), globi_turno (the most earned in one turn), scintille, prima.
 
 local game = require "sim.game"
 local config = require "sim.config"
@@ -124,8 +138,8 @@ local MISS_TICK = 45
 local CARD_DELAY = 24
 -- how high above the terrain mission crates drop from
 local CRATE_ABOVE = 280
--- the third star of the Prima partita: won with at least this point lead
-local GUIDED_POINTS = 100
+-- the spark is taken within this many pixels sideways
+local SPARK_REACH = 26
 local RETRY_TEXT = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
 
 -- Which weapon someone just used: the attack event -> weapon name
@@ -200,6 +214,8 @@ end
 
 -- What the mission shows in the HUD (l.vedi; without it, everything)
 local function category(w)
+	-- (the HUD pieces that aren't weapons, "punti", "tempo"..., only by name)
+	if not game.WEAPONS[w] then return nil end
 	if game.SECONDARY[w] then return "secondarie" end
 	if game.TOOLS[w] or w == "teleport" then return nil end
 	return "primarie"
@@ -303,6 +319,12 @@ function M.prepara(r, g)
 	if l.punti then g.round = math.max(g.round, (g.score.crown_rounds or 0) + 1) end
 	if l.no_weapons then g.robots[PLAYER].disarmed = true end
 	g:pop_events()
+	-- the robots that aren't there (the game wants two): they vanish at once
+	for _, i in ipairs(l.nascosti or {}) do
+		local rb = g.robots[i]
+		rb.gone, rb.dead, rb.hp, rb.respawn_in = true, true, 0, nil
+		g:emit({ type = "gone", robot = i })
+	end
 	if g.current == PLAYER then st.turni = 1 else st.bot_turns = 1 end
 	r.coda = {}
 	r.riga = nil
@@ -443,12 +465,19 @@ local function clear_line(r)
 	r.riga, r.line_ticks, r.luce, r.line_yields, r.line = nil, nil, nil, nil, nil
 end
 
+local function count(st, k)
+	st.conta[k] = (st.conta[k] or 0) + 1
+end
+
 -- e = nil: the check every tick
 local function check_event(r, g, e)
 	local l, st = r.l, r.st
 	if r.esito then return end
 	if goal(l, st, g, e) then
 		r.esito = "fatta"
+		-- the race with Favilla: you finished before she arrived
+		local gd = l.guida
+		if gd and gd.gara and (r.guida_t or 0) < gd.percorso[#gd.percorso].t * 60 then count(st, "prima") end
 		-- the hints aren't needed anymore (there's "Fatta!")
 		clear_line(r)
 		return
@@ -470,10 +499,6 @@ local function check_event(r, g, e)
 	-- the goal_text of a lesson, once read (you touched the controls), gives way
 	if r.riga and r.line_yields and not r.attesa and #r.coda > 0 then clear_line(r) end
 	if not r.riga and #r.coda > 0 then show_line(r, table.remove(r.coda, 1)) end
-end
-
-local function count(st, k)
-	st.conta[k] = (st.conta[k] or 0) + 1
 end
 
 -- How far along the goal is: the steps done and the counted times
@@ -544,6 +569,7 @@ function M.evento(r, g, e, bots)
 		count(st, "teletrasporti")
 	elseif e.type == "teleports" and e.robot == PLAYER then
 		st.conta.globi = (st.conta.globi or 0) + e.amount
+		st.conta.globi_turno = math.max(st.conta.globi_turno or 0, e.amount)
 	elseif e.type == "respawn" and l.riprova and e.robot == PLAYER and r.saved then
 		-- in the lessons the player respawns as they were at the last step done, orbs included
 		restore_snapshot(r, g)
@@ -585,7 +611,7 @@ function M.evento(r, g, e, bots)
 		-- (if the turn doesn't already have its own line to say)
 		if txt and not r.riga then show_line(r, { testo = txt, yields = true }) end
 	end
-	if e.type == "over" and not l.guidata then
+	if e.type == "over" then
 		r.esito = "fallita"
 	end
 end
@@ -791,6 +817,18 @@ function M.tick(r, g)
 		local f = r.fermo
 		g.timer, g.window, g.match_left = f.timer, f.window, f.match
 	end
+	-- Favilla's path runs from its step on; the spark is taken passing over it
+	local gd = l.guida
+	if gd and (r.guida_t or gd.parte == 0 or st.steps_done[gd.parte]) then r.guida_t = (r.guida_t or 0) + 1 end
+	local sp = l.scintilla
+	if sp and not r.scintilla_presa then
+		local me = g.robots[PLAYER]
+		if not me.dead and math.abs(me.x - sp.x) <= SPARK_REACH and me.y >= sp.y then
+			r.scintilla_presa = true
+			count(st, "scintille")
+			g:emit({ type = "spark", robot = PLAYER })
+		end
+	end
 	check_event(r, g, nil)
 	-- on the ground or not before the events of the next tick (the Tonante lifts you off the ground)
 	st.on_ground = g.robots[PLAYER].grounded
@@ -832,14 +870,50 @@ function M.obiettivo(r)
 	return n > 1 and (i .. "/" .. n .. "  " .. p.testo) or p.testo
 end
 
+-- Favilla on her path (l.guida), at tick r.guida_t: where she is and how she
+-- moves, for the drawing. Before her step, at the first point; at the end, still
+local GUIDE_STATE = {}
+function M.guida(r)
+	local gd = r and r.l.guida
+	if not gd then return nil end
+	local pts, s, f = gd.percorso, (r.guida_t or 0) / 60, GUIDE_STATE
+	local a, b = pts[1], pts[1]
+	for i = 2, #pts do
+		if s < pts[i].t then a, b = pts[i - 1], pts[i] break end
+		a, b = pts[i], pts[i]
+	end
+	if a == b then
+		f.x, f.y, f.vx, f.vy, f.grounded = a.x, a.y, 0, 0, true
+		f.facing = f.facing or 1
+		return f
+	end
+	local d = b.t - a.t
+	local u = (s - a.t) / d
+	local h = b.salto or 0
+	f.x = a.x + (b.x - a.x) * u
+	f.y = a.y + (b.y - a.y) * u + 4 * h * u * (1 - u)
+	f.vx = (b.x - a.x) / d
+	f.vy = (b.y - a.y) / d + 4 * h * (1 - 2 * u) / d
+	f.grounded = h == 0
+	if f.vx ~= 0 then f.facing = f.vx < 0 and -1 or 1 end
+	return f
+end
+
+-- The spark still to take (l.scintilla), or nil
+function M.scintilla(r)
+	local sp = r and r.l.scintilla
+	if sp and not r.scintilla_presa and not r.esito then return sp.x, sp.y end
+end
+
 local function lead_text(n)
 	return "CON " .. n .. " PUNTI DI VANTAGGIO"
 end
 
 -- What each star needs
 function M.criteria(l)
-	if l.guidata then return { "FINITA", "VINTA", lead_text(GUIDED_POINTS) } end
+	if l.medaglia then return { "FATTA", l.medaglia.testo } end
 	local s = l.stelle
+	if not s then return { "FATTA" } end
 	if s.bonus2 then return { "FATTA", s.bonus.testo, s.bonus2.testo } end
 	return { "FATTA", lead_text(s.punti), s.bonus.testo }
 end
@@ -847,7 +921,7 @@ end
 -- The point lead at the end of the mission (nil where there are no points)
 function M.vantaggio(r)
 	local l = r.l
-	if l.guidata or (l.stelle and l.stelle.punti) then return math.floor((r.st.gap or 0) + 0.5) end
+	if l.stelle and l.stelle.punti then return math.floor((r.st.gap or 0) + 0.5) end
 end
 
 local function bonus(b, st)
@@ -858,15 +932,14 @@ end
 
 -- Stars: one for completing it, then the point lead and the bonus (or two
 -- bonuses). Each counts on its own: you can have the third without the second.
--- In the guided match: finished, won, won with a 100 point lead.
+-- The cortile: «Fatta» and the medal (or nothing more).
 function M.stelle(r)
 	if r.esito ~= "fatta" then return { false, false, false } end
 	local l, st = r.l, r.st
 	local d = st.gap or 0
-	if l.guidata then
-		return { true, st.won == true, st.won == true and d >= GUIDED_POINTS }
-	end
+	if l.medaglia then return { true, bonus(l.medaglia, st), false } end
 	local s = l.stelle
+	if not s then return { true, false, false } end
 	if s.bonus2 then return { true, bonus(s.bonus, st), bonus(s.bonus2, st) } end
 	return { true, d >= s.punti, bonus(s.bonus, st) }
 end
