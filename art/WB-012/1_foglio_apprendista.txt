@@ -1,0 +1,16 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in three-quarter view facing right: it is the master reference. Image 2 shows his approved facial expressions. Image 3 shows the illustration style we want.
+
+Draw a CHARACTER MODEL SHEET of this exact character, as a 3 by 3 grid of equal square cells on a plain flat parchment background (#F3E7CF), with a thin clear gap between cells and nothing else in the picture.
+- Top-left cell: the full body, standing, three-quarter view facing right, relaxed, arms loose.
+- The other eight cells: head-and-shoulders BUSTS, all the same size and framing (head and top of the chest, the neckerchief visible), all in three-quarter view facing right, with these expressions in reading order: 1) calm sly smile, 2) laughing with mouth open, 3) explaining: one hand raised with the index finger up, 4) surprised, wide eyes, small open mouth, 5) worried, brows up, 6) angry, teeth clenched, 7) proud and cocky, chin up, 8) sad, eyes down.
+
+Keep EXACTLY his design from image 1 in every cell: small and stocky, big round head, two short bone-colored horns, pointed ears, big yellow eyes with black pupils, brick-red skin, parchment-colored belly and muzzle, four-fingered hands, bare three-toed feet, a long thin tail with an arrowhead tip, a BLUE neckerchief knotted at the neck. He has NO flame on his head and no wings. Same proportions, same colors, same face in all nine cells: only the expression changes.
+
+Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; belly and muzzle #F1DFB0, their shadow #D6BC86; horns and toenails #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A; neckerchief blue #6AA8C4, its shadow #487088.
+
+Style as in image 3: cartoon illustration, thick black outline, flat cel colors, light engraving-like hatching only in the shadows. No background scenery, no props, no other characters. No text, numbers, labels, speech balloons or signatures.
+
+Riferimenti allegati in ordine:
+Image 1: R1b — art/WB-009/riferimenti/R1b_apprendista_senza_fiammella.png
+Image 2: R2 — art/WB-009/scelti/espressioni.png
+Image 3: R3 — art/WB-008/13_trio.png

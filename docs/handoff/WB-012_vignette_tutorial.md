@@ -1,6 +1,6 @@
 # WB-012 · Vignette del tutorial: fogli modello e tavole
 
-- **Stato:** APPROVATA solo la fase 1 (Claude, 2026-11-03); fase 2 PROPOSTA, aspetta le scelte di Sergio
+- **Stato:** fase 1 IMPLEMENTATA (fogli scelti in `art/WB-012/scelti/`); fase 2 APPROVATA (Sergio, 2026-11-03)
 - **Data:** 2026-11-03
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-012`
 
@@ -22,7 +22,7 @@ fiammella). Per questo:
    niente scritte.
 
 I fogli della fase 1 servono qualunque interfaccia Sergio scelga, quindi Claude li approva
-(si buttano via senza danni). La fase 2 aspetta le scelte 1, 6, 7 e 8 della proposta.
+(si buttano via senza danni). Il 3 nov Sergio ha detto sì a tutte e dieci le scelte della proposta: la fase 2 si può eseguire.
 
 ## Cosa teniamo e cosa scartiamo
 
@@ -229,8 +229,51 @@ A wide quiet comic panel: the Blacksmith and the apprentice imp kneel at the edg
 ## Decisione
 
 Fase 1 approvata da Claude il 2026-11-03 (reversibile: serve a qualunque interfaccia).
-Fase 2 aspetta le scelte di Sergio sulla proposta.
+Fase 2 approvata da Sergio il 2026-11-03 («sì a tutte»): apprendista con la fiammella, Favilla con salopette e stivali («quella con le scarpe»), Fabbro B.
 
 ## Consegna di Codex
 
+
+2026-11-03 · **Fase 1 generata**, dal `main` aggiornato al commit `726b776`, sul ramo `design/WB-012`. Solo le righe di fase 1; nessuna tavola di fase 2, nessun ritaglio o integrazione nel gioco.
+
+### File
+
+In `art/WB-012/`, sei PNG e sei `.txt` con prompt integrale e riferimenti nell'ordine richiesto:
+
+| File | Misura effettiva | Tentativi |
+|---|---|---:|
+| `1_foglio_apprendista.png` | 1254×1254 | 1 |
+| `1_foglio_apprendista_fiamma.png` | 1254×1254 | 1 |
+| `2_foglio_favilla_1.png` | 1219×1290 | 1 |
+| `2_foglio_favilla_2.png` | 1199×1312 | 1 |
+| `3_foglio_fabbro_1.png` | 1218×1291 | 1 |
+| `3_foglio_fabbro_2.png` | 1216×1293 | 2 |
+
+### Controlli e problemi
+
+- Eseguiti i quattro prompt esattamente come scritti, ripetuti per le due varianti richieste di Favilla e Fabbro; riferimenti originali allegati in ordine. Sfondo opaco pergamena, come richiesto.
+- Guardata ogni generazione: nove celle, figura intera in alto a sinistra e otto busti, ordine delle espressioni, nessuna scritta/fumetto/firma, fazzoletto blu dell'apprendista, assenza della fiamma nel foglio standard e presenza arancione nel foglio `_fiamma`, abiti di Favilla, coda a cuore, guanti/comignolo/fornace del Fabbro.
+- Scartato il primo tentativo della seconda variante del Fabbro: aveva un martello aggiuntivo sopra la testa. Il secondo elimina il difetto; è quello consegnato.
+- **Dimensioni non conformi:** il generatore ha restituito le misure native riportate sopra, anziché 1536×1536 o 1024×1024. Favilla e Fabbro non sono perfettamente quadrati e le celle non sono quadrati esatti. Consegnati gli originali senza ridimensionarli o deformarli e senza cambiare i prompt.
+- **Uniformità da rivedere:** forma della fiamma, corna e inquadratura variano leggermente fra i busti. Il tratteggio è più presente di quello leggero richiesto. Lo sfondo presenta una lieve variazione tonale anziché un colore piatto certificato #F3E7CF; la tavolozza non è verificata al pixel.
+- Favilla: nella prima variante l'occhiolino della posa fiera non è netto; la seconda lo rappresenta chiaramente. La silhouette della fiamma non è identica in tutte le celle.
+- Fabbro: corna e orientamento non sono una copia geometrica esatta del riferimento. Il numero di sbarre visibili varia con inquadratura, bordo e braccia incrociate: non certificata la grata identica a cinque sbarre in ogni cella. Nella posa fiera le braccia coprono parte della fornace, nella posa triste il fuoco è attenuato.
+- Nessun elemento appare tagliato accidentalmente sul bordo esterno; i busti sono tagliati al torace come previsto. Verificati apertura e integrità dei sei PNG e corrispondenza testuale dei prompt con la scheda.
+- Non verificati: ritaglio automatico, resa nel gioco e approvazione dei modelli da parte di Sergio. I criteri di accettazione restano non spuntati per la revisione; non si dichiarano tutti soddisfatti.
+- La variante con fiammella è solo la proposta espressamente prevista qui per la scelta 6: non modifica lo standard senza fiammella deciso il 2 novembre.
+
 ## Resoconto di Claude
+
+Fase 1 (2026-11-03). Guardati i sei fogli di Codex (518c3c2): tutti tengono il personaggio
+uguale da una cella all'altra, nessun difetto che obbliga a rigenerare.
+
+| Scelto | File | Perché |
+|---|---|---|
+| apprendista | `scelti/apprendista.png` = `1_foglio_apprendista_fiamma.png` | Sergio: sì alla fiammella (scelta 6) |
+| Favilla | `scelti/favilla.png` = `2_foglio_favilla_2.png` | fiamma più costante, occhiolino netto (nella 1 non si capisce) |
+| Fabbro | `scelti/fabbro.png` = `3_foglio_fabbro_2.png` | grata, guanti e comignolo come R5, fornace spenta nella posa triste |
+
+Da sistemare quando c'è da rigenerare (solo quel busto): nell'apprendista «preoccupato» e
+«triste» si somigliano; nel Fabbro «serio» e «approva» quasi uguali. Celle non esattamente
+quadrate (misure native del generatore): per i ritagli non conta. Colori non misurati al pixel
+(servono per gli SVG, non per le vignette). I ritratti si ritagliano nella PR del codice.
