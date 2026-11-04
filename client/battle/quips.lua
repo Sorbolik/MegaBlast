@@ -14,46 +14,11 @@
 -- Moments: turno (their turn starts), colpisce (hurts someone on their turn),
 -- colpito (they get hurt), scappa (teleports), abbatte, muore.
 
+local T = require("lang.text").quips
+
 local M = {}
 
-local QUIPS = {
-	codardo = {
-		turno = { "Un colpo e via!", "Non guardarmi così...", "Stavolta non mi prendi!" },
-		colpisce = { "Preso! E ora scappo!", "Questo era gratis!", "Colpito e sparito!" },
-		colpito = { "Ahia! Non vale!", "Non in faccia!", "Mammaaa!" },
-		scappa = { "Prendimi, se ci riesci!", "Ciao ciao!", "Qui non mi trovi!", "Troppo lento!" },
-		abbatte = { "Ah ah! Ti ho fregato!", "Chi è il codardo adesso?" },
-		muore = { "Tornerò... di nascosto!", "Non era il mio giorno..." },
-	},
-	testa_calda = {
-		turno = { "Arrivo!", "Ora ti spacco!", "Fatti sotto!" },
-		colpisce = { "Prendi questa!", "BOOM!" },
-		colpito = { "Tutto qui?", "Non sento niente!" },
-		abbatte = { "Troppo facile!", "Il prossimo!" },
-		muore = { "Rivincita! Subito!", "Non è finita!" },
-	},
-	cecchino = {
-		turno = { "Respira... mira...", "Un colpo solo." },
-		colpisce = { "Centro.", "Bersaglio colpito." },
-		colpito = { "Questo non era previsto.", "Mi hai trovato..." },
-		abbatte = { "Pulito.", "Niente di personale." },
-		muore = { "Ricarico e torno.", "Ottima mira. La tua." },
-	},
-	spingitore = {
-		turno = { "Il vuoto ti chiama!", "Che bel bordo..." },
-		colpisce = { "Giù di sotto!", "Attento al bordo!" },
-		colpito = { "Spingi spingi...", "Ehi, piano!" },
-		abbatte = { "Il vuoto ti saluta!", "Volo libero!" },
-		muore = { "Ma chi mi ha spinto?" },
-	},
-	fabbro = {
-		turno = { "Il ferro si batte finché è caldo!", "Sull'incudine!" },
-		colpisce = { "Martellata!", "Senti il Maglio?" },
-		colpito = { "Graffi.", "Il ferro non si piega!" },
-		abbatte = { "Un altro per la fornace!", "Forgiato!" },
-		muore = { "La Forgia non si spegne...", "Tornerò più duro!" },
-	},
-}
+local QUIPS = T.by_character
 
 function M.di(who, moment, n)
 	local b = QUIPS[who]
