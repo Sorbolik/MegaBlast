@@ -29,6 +29,8 @@ return {
 	-- battle/vignette.lua: who speaks and the buttons of the big vignette
 	vignette = {
 		favilla = "FAVILLA",
+		-- battle/favilla.lua: her name above her head in the cortile
+		favilla_name = "Favilla",
 		fabbro = "IL FABBRO",
 		apprendista = "APPRENDISTA",
 		go = "VAI!",

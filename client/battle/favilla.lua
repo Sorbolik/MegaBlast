@@ -14,6 +14,7 @@
 
 local scoria = require "battle.scoria"
 local ui = require "ui.ui"
+local T = require("lang.text").vignette
 
 local M = {}
 
@@ -34,7 +35,7 @@ function M.new(world, under)
 	scoria.set_weapon(f.rig, "missile")
 	scoria.empty_hands(f.rig, true)
 	scoria.set_enabled(f.rig, false)
-	f.name = gui.new_text_node(vmath.vector3(0, 0, 0), "Favilla")
+	f.name = gui.new_text_node(vmath.vector3(0, 0, 0), T.favilla_name)
 	gui.set_parent(f.name, world)
 	gui.set_font(f.name, "titolo")
 	gui.set_color(f.name, COLOR)
