@@ -1,0 +1,213 @@
+# WB-013 · Favilla: tre quarti, espressioni e pezzi sullo stampino
+
+- **Stato:** APPROVATA
+- **Data:** 2026-11-04
+- **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-013`
+
+## Obiettivo
+
+Favilla entra nel campo (piano dei livelli, https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2,
+approvato da Sergio): ti mostra le mosse nel cortile, gioca in squadra con te nella Forgia, è
+l'avversaria del Duello. Serve il suo corpo a pezzi sullo **stampino**, come l'apprendista,
+così si muove con le stesse animazioni. Segue la procedura dei personaggi
+([PERSONAGGI.md](PERSONAGGI.md)) e parte dal set di prompt di WB-009, con le sue correzioni già
+dentro. Il modello è il foglio di Favilla scelto in WB-012 (salopette e stivali, «quella con
+le scarpe»).
+
+Finché i pezzi non ci sono, nel gioco Favilla è l'apprendista con la fiamma bianco-azzurra
+(scelta 1 del piano): questa scheda la sostituisce.
+
+## Due fasi, due comandi
+
+- **Fase 1**, `esegui WB-013 fase 1`: immagini 1 e 2. Sergio sceglie il tre quarti; Claude lo
+  salva in `art/WB-013/scelti/tre_quarti.png` (e le espressioni in
+  `art/WB-013/scelti/espressioni.png`) su main.
+- **Fase 2**, `esegui WB-013 fase 2`: immagini 3, 4 e 5, coi file scelti come riferimento.
+- Codex esegue solo le righe della fase chiesta; se un riferimento della fase non c'è, si ferma.
+
+## Cosa teniamo e cosa scartiamo
+
+| Teniamo | Perché |
+|---|---|
+| Lo stesso corpo dell'apprendista: piccola e tozza, testa grande, pelle rosso mattone, muso pergamena | è un'apprendista anche lei; stesso scheletro, stesse animazioni |
+| La fiamma bianco-azzurra con le punte dorate al posto dei capelli, sempre della stessa forma | è lei: si riconosce da lontano, anche a 90 px |
+| Corna corte color osso, orecchie a punta, ciglia, occhi gialli | il foglio di WB-012 |
+| Camicia pergamena con le maniche arrotolate, salopette pergamena, bretelle marroni coi bottoni d'ottone, grembiulino di cuoio marrone, stivali marroni | il foglio scelto di WB-012 (Sergio: «quella con le scarpe») |
+| Coda sottile con la punta **a cuore** | la sua sagoma; nelle tavole di WB-012 ChatGPT la sbagliava: la scheda lo dice due volte |
+| Tre quarti verso destra, tutti e due i piedi a destra | la vista dello stampino (lezione di WB-009) |
+
+| Scartiamo | Perché |
+|---|---|
+| Tratteggi, texture, sfumature, bagliori della fiamma | a misura di gioco sono rumore e il ricalco in SVG viene sporco |
+| Il colore della squadra su di lei | è un personaggio della storia, sempre uguale: la squadra la dice la targa (nome e barra nel colore della squadra). Si può aggiungere dopo, su un dettaglio, se in partita non si capisce |
+| Le ali | sono equipaggiamento: il posto dell'ala resta vuoto |
+| Le forme del manichino grigio | lo stampino dice solo dove va ogni pezzo e quanto è grande |
+| Chiedere l'SVG a ChatGPT | si ricalca il disegno buono |
+
+## La tavolozza (uguale in ogni prompt)
+
+| Parte | Colore | Ombra |
+|---|---|---|
+| contorno, ciglia, pupille | nero `#000000` | |
+| pelle | `#B8432A` | `#8E2F1C` |
+| muso | `#F1DFB0` | `#D6BC86` |
+| corna | `#EFE3C8` | `#C9B48E` |
+| occhi | `#F2C45A`, lucina `#FFFFFF` | |
+| bocca dentro | `#5A1A10`, denti `#FFFFFF`, lingua `#E0605A` | |
+| fiamma | bianco `#FFFFFF`, azzurro `#BFE9FF`, punte dorate `#F2C45A` | azzurro scuro `#8CCFEF` |
+| camicia e salopette | `#E6D2A6` | `#C4A977` |
+| bretelle, grembiule | `#7A4A2A` | `#5A341C` |
+| bottoni | `#D9A441` | |
+| stivali | `#6B3F22` | `#4A2A15` |
+| sfondo | bianco `#FFFFFF` (fase 1), magenta `#FF00FF` (fase 2) | |
+
+## Riferimenti da allegare
+
+| Codice | File | Cos'è |
+|---|---|---|
+| R1 | `art/WB-012/scelti/favilla.png` | il foglio modello di Favilla scelto (figura intera e otto busti, stile fumetto) |
+| R2 | `art/WB-012/riferimenti/R9_favilla_figura.png` | la sua figura intera ritagliata da R1: abiti, stivali, **coda a cuore** |
+| R3 | `art/WB-009/scelti/tre_quarti_gamba.png` | l'apprendista nello stile pulito del gioco: il tratto, i colori piatti e le proporzioni da copiare |
+| R4 | `art/WB-009/riferimenti/R2_stampino_ai.png` | lo stampino: dove va ogni pezzo (3072×2048) |
+| R5 | `art/WB-009/riferimenti/R3_manichino.png` | come si attaccano i pezzi |
+| R6 | `art/WB-013/scelti/tre_quarti.png` | il tre quarti scelto in fase 1 (c'è solo dopo) |
+| R7 | `art/WB-013/scelti/espressioni.png` | le espressioni scelte in fase 1 (c'è solo dopo) |
+
+## Immagini da generare
+
+Ogni prompt è completo e va usato così com'è. Allega i riferimenti nell'ordine scritto: il
+primo è "image 1", il secondo "image 2" e così via. Sfondo **non** trasparente (eccezione ad
+`AGENTS.md`): bianco pieno in fase 1, magenta pieno `#FF00FF` in fase 2, perché lo usa lo
+strumento di taglio.
+
+| Fase | Nome file | Riferimenti | Misura | Varianti |
+|---|---|---|---|---|
+| 1 | `1_tre_quarti` | R2, R1, R3 | 1024×1536 verticale | 2 |
+| 1 | `2_espressioni` | R1, R2, R3 | 1536×1536 (o 1024×1024) | 1 |
+| 2 | `3_teste` | R6, R7 | 1536×1536 (o 1024×1024) | 1 |
+| 2 | `4_corpo` | R6, R4, R5 | 3:2 orizzontale, la più grande possibile (minimo 1536×1024) | 1 |
+| 2 | `5_braccia_chiuse` | R6, `art/WB-013/4_corpo.png` | 1536×1024 | 1 |
+
+### `1_tre_quarti`
+
+```
+Image 1 is Favilla, a character of our game, full figure: copy her EXACTLY (shapes, flame hair, horns, face, clothes, boots, tail). Image 2 is her model sheet: more views of the same character. Image 3 is another character of the same game, a little imp apprentice, drawn in the game's clean style: copy ONLY its rendering (flat colors, thick black outline), its body proportions and its three-quarter angle. Do not copy its face, horns, neckerchief or tail.
+
+Favilla is a little imp girl, a senior apprentice at a hellish forge: small and stocky like image 3, big round head (about one third of her height), two short bone-colored horns, pointed ears, eyelashes, big yellow eyes with black pupils, a confident smile, brick-red skin with a parchment-colored muzzle. Instead of hair she has a big FLAME, white in the middle and light blue outside, with golden tips, rising up from her head, always the same shape. She wears a parchment-colored shirt with the sleeves rolled up to the elbows, parchment-colored overalls with the legs rolled up, brown shoulder straps with round brass buttons, a small brown leather apron, and brown boots. Her tail is long and thin and ends in a HEART shape (a rounded heart with two lobes, NOT an arrow, NOT a spade), exactly as in image 1.
+
+Draw her ONCE, full body, in a clean THREE-QUARTER VIEW FACING RIGHT, standing still in a neutral, relaxed pose: weight on both feet, legs slightly apart, BOTH FEET POINTING TO THE RIGHT, both arms hanging loosely a little away from the body with open relaxed four-fingered hands, the near arm and near leg (on the right of the picture) fully visible, the far arm and far leg (on the left) partly behind the body, the tail coming out from behind her lower back and curving up behind her on the left, fully visible from root to heart tip. The face is turned to the right in three-quarter view. No wings, no tools, nothing in her hands.
+
+Rendering rules, very strict, because this drawing will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no brush strokes, no soot, no noise, no soft shading, no glow (also no glow around the flame).
+- Thick, clean, closed pure-black #000000 outline of even weight around the whole figure, with thinner black lines only for inner details (eyes, eyelashes, mouth, fingers, clothes folds, buttons).
+- Use ONLY these colors: outline, eyelashes and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; horns #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF; flame white #FFFFFF and light blue #BFE9FF with golden tips #F2C45A, flame shadow #8CCFEF; shirt and overalls #E6D2A6, their shadow #C4A977; straps and apron #7A4A2A, their shadow #5A341C; buttons #D9A441; boots #6B3F22, their shadow #4A2A15.
+- Flat pure white #FFFFFF background, no ground, no shadow on the ground, nothing else in the picture.
+- No text, numbers, labels, arrows or signatures. Portrait format 2:3.
+```
+
+### `2_espressioni`
+
+```
+Image 1 is the model sheet of Favilla, a character of our game: copy her head EXACTLY (head shape, flame hair, horns, ears, eyelashes, muzzle). Image 2 is her full figure. Image 3 is another character of the same game drawn in the game's clean style: copy ONLY its rendering (flat colors, thick black outline).
+
+Draw an EXPRESSION SHEET: NINE copies of her head only (with a short neck stub, no body), all in three-quarter view facing right, all the same size, in a 3 by 3 grid, well apart from each other. The head outline, flame, horns and ears are IDENTICAL in all nine: only the eyes, eyebrows and mouth change (the ears may tilt slightly).
+Row 1: 1) SLY: her default face, a confident closed-mouth smile, one eyebrow slightly raised; 2) HIT: just hit and in pain, eyes squeezed shut like > <, mouth open in a jagged shape; 3) VICTORY: eyes closed in happy upside-down arcs, big open laughing mouth showing teeth.
+Row 2: 4) KNOCKED OUT: dizzy spiral pupils, wobbly wavy mouth, tongue slightly out; 5) AIMING: focused, near eye wide open and far eye squinting, lips pressed, tip of the tongue sticking out of the corner of the mouth; 6) ANGRY: eyebrows down in a V, teeth clenched in a snarl.
+Row 3: 7) DEFEATED: sad, eyebrows up in the middle, eyes looking down, small downturned mouth; 8) SCARED: eyes wide with tiny pupils, mouth a small open oval, eyebrows high; 9) TAUNT: one eye closed in a wink, tongue sticking out cheekily.
+
+Rendering rules, very strict, because these drawings will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Thick, clean, closed pure-black #000000 outline around each head, thinner black lines only for inner details. The bottom end of the neck stub has NO black outline: the outline gets thinner as it reaches the stub's lower end and stops, and the skin color runs right to the edge. The skin near the bottom of the neck stub is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there.
+- Use ONLY these colors: outline, eyelashes and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; horns #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A; flame white #FFFFFF and light blue #BFE9FF with golden tips #F2C45A, flame shadow #8CCFEF.
+- Flat pure white #FFFFFF background.
+- No text, numbers, labels, arrows or signatures. Square format.
+```
+
+### `3_teste`
+
+```
+Image 1 is Favilla, a character of our game, in a three-quarter view facing right: copy her head exactly (shape, flame hair, horns, ears, eyelashes, muzzle, colors, flat style). Image 2 is her approved expression sheet: nine heads in a 3 by 3 grid.
+
+Draw NINE heads of her in a 3 by 3 grid, all the same size, all facing right in three-quarter view, well apart from each other, the head outline, flame, horns and ears IDENTICAL in all nine. They are the nine expressions of image 2, in the same order, copied exactly. Row 1: 1) SLY (her default confident closed-mouth smile), 2) HIT (eyes squeezed shut > <, jagged open mouth), 3) VICTORY (happy closed eyes, big laughing mouth). Row 2: 4) KNOCKED OUT (spiral pupils, wavy mouth, tongue slightly out), 5) AIMING (near eye wide open looking right, far eye squeezed, tongue tip out of the corner of the mouth), 6) ANGRY (eyebrows in a V, clenched teeth). Row 3: 7) DEFEATED (sad, eyes down, downturned mouth), 8) SCARED (wide eyes, tiny pupils, small open mouth), 9) TAUNT (wink and tongue out).
+
+NO NECK AT ALL, very important: each head is drawn exactly as if it had been cut out of image 1 along the outline of the head. It ends at the chin and at the back of the jaw: nothing below them, no neck, no neck stub, no collar. The thick black #000000 outline is CLOSED all around each head, also under the chin, under the muzzle and under the back of the jaw, smooth and even. The flame stays whole on top of every head, inside the picture.
+
+Rendering rules, very strict, because these heads will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline, eyelashes and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; horns #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A; flame white #FFFFFF and light blue #BFE9FF with golden tips #F2C45A, flame shadow #8CCFEF.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the heads.
+- No text, numbers, labels, arrows or signatures. Square format.
+```
+
+### `4_corpo`
+
+```
+Image 1 is Favilla, a character of our game, in a three-quarter view facing right. It is the EXACT model: every body part you draw must be COPIED from image 1, shape by shape, with the same proportions, the same thickness, the same clothes and the same contours. Do not invent, round off, fatten or simplify any part.
+
+Image 2 is a layout sheet: grey placeholder parts on a flat magenta #FF00FF background, in three rows. Use image 2 ONLY to know where each part goes on the sheet and roughly how big it is. Do NOT copy the grey parts' shapes. Image 3 shows how the grey parts attach to each other.
+
+Make the BODY PARTS SHEET of Favilla of image 1, cut apart like a paper puppet, on the same canvas as image 2 with the same flat magenta #FF00FF background. Leave the WHOLE FIRST ROW EMPTY (pure magenta, no heads: the heads are already done). Draw only these parts, each over its grey placeholder, well separated from each other, each COMPLETE even where other parts would hide it in image 1:
+Row 2: the TORSO of image 1 without head, arms, legs and tail: the same shape as in image 1, with her parchment shirt, the top of the overalls, the brown straps with the brass buttons and the small leather apron, and a short neck stub of skin on top. NO shoulder bumps and no stubby arms: at each shoulder the torso simply ends with a smooth, round, full edge of shirt. Then NOTHING where the grey wing is (leave that spot empty magenta: she has no wings). Then the WHOLE TAIL of image 1 in one piece, with the same curve, the same thickness and the same HEART-SHAPED tip (a rounded heart with two lobes, NOT an arrow, NOT a spade): one smooth continuous tube, thick at the root and thinner towards the tip, with no breaks, seams or joints along it.
+Row 3: the near arm and the far arm, copied from image 1 (rolled-up shirt sleeve at the top, bare red forearm, same open relaxed four-fingered hand), each straight and hanging down from a round shoulder end; the near leg and the far leg, copied from image 1 (rolled-up parchment overalls leg, brown boot pointing right), each straight, round at the hip end; one closed four-fingered fist, the size of the hands in image 1 (a small round piece, outlined all around).
+
+OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends. At a joint end the black outline gets gradually thinner and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the neck stub and the two shoulder edges of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail. The color near every joint end must be PERFECTLY UNIFORM: plain shirt #E6D2A6 at the shoulders and at the top of the arms, plain overalls #E6D2A6 at the hips and at the top of the legs, plain skin #B8432A at the neck stub and at the root of the tail. No shadow, no highlight, no fold, no line, no color change in the last stretch before the joint, so that two overlapping parts blend into one surface with no visible seam. Keep shadow shapes well away from the joint ends.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline black #000000; skin #B8432A, skin shadow #8E2F1C; shirt and overalls #E6D2A6, their shadow #C4A977; straps and apron #7A4A2A, their shadow #5A341C; buttons #D9A441; boots #6B3F22, their shadow #4A2A15.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels or signatures. Landscape 3:2, as large as possible.
+```
+
+### `5_braccia_chiuse`
+
+```
+Image 1 is Favilla, a character of our game, in a three-quarter view facing right. Image 2 is her parts sheet: copy the arms of image 2 exactly (same length, thickness, rolled-up sleeve, contour, colors and flat style).
+
+Draw TWO ARMS of her side by side, left to right, the same size as the arms in image 2, well apart from each other, on a flat pure magenta #FF00FF background: 1) the NEAR arm, 2) the FAR arm. Each arm is straight and hangs down from a round shoulder end, exactly like in image 2, but the hand is CLOSED IN A FIST as if gripping the handle of a tool: four fingers curled, the thumb wrapped over them, the knuckles towards the right. The fist is the same size as the open hands of image 2.
+
+OUTLINE AND JOINTS, very important: each arm has a thick, clean pure-black #000000 outline, EXCEPT at the shoulder end at the top: there the outline gets gradually thinner and disappears completely, and the shirt color runs right to the edge, rounded and full, with no black line across it. The shirt near the shoulder end is PERFECTLY UNIFORM plain #E6D2A6: no shadow, no fold, no line there, so the arm blends into the torso with no visible seam. Keep shadow shapes well away from the shoulder end.
+
+Rendering rules, very strict, because these arms will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline black #000000; skin #B8432A, skin shadow #8E2F1C; shirt #E6D2A6, its shadow #C4A977.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the arms.
+- No text, numbers, labels or signatures. Landscape 3:2.
+```
+
+## Criteri di accettazione
+
+- [ ] è la Favilla di R1 e R2: fiamma bianco-azzurra con le punte dorate, corna, ciglia, abiti, stivali
+- [ ] **coda a cuore** (due lobi tondi), mai a freccia o a picca; se no l'immagine si scarta
+- [ ] solo colori piatti della tavolozza, al massimo un'ombra netta per colore; niente tratteggi, texture, bagliori
+- [ ] contorno nero spesso e chiuso, tranne alle estremità delle giunture, dove si assottiglia e sparisce
+- [ ] vicino alle giunture il colore è uniforme (camicia, salopette o pelle piena)
+- [ ] proporzioni dell'apprendista di R3 (stesso scheletro), tre quarti verso destra, tutti e due i piedi a destra
+- [ ] nelle teste la sagoma e la fiamma sono identiche, cambia solo l'espressione; fase 2: senza collo, contorno chiuso
+- [ ] fase 2: 11 pezzi sopra i 12 posti di R4 (posto dell'ala vuoto), prima riga vuota, sfondo magenta pieno senza aloni
+- [ ] nessun verde `#00FF00` (niente colore della squadra), nessuna ala, niente in mano
+- [ ] nessuna scritta, numero o firma
+
+## Dopo le immagini (lo fa Claude)
+
+Come per l'apprendista ([PERSONAGGI.md](PERSONAGGI.md), "Dopo le immagini"): tavolozza
+`strumenti/stampino/tavolozze/favilla.json` coi colori qui sopra, ricalco in SVG coi colori
+esatti (`vettoriale.py`), taglio con `taglia.py --nome favilla --categoria personaggio
+--allinea --senza ala --teste 3_teste_col.png`, poi `--aggiungi --pugni` per le braccia
+chiuse; editor ripubblicato; Sergio la prova animata. Nel gioco prende il posto della
+Favilla provvisoria nel cortile, nella Forgia e nel Duello; simulazione con
+`imposta prova_pelli favilla`.
+
+---
+
+## Decisione
+
+Approvata da Claude, 2026-11-04: è il passo «WB-013, i pezzi di Favilla sullo stampino» del
+piano dei livelli approvato da Sergio il 3 novembre («d'accordo con tutto»); reversibile (il
+gioco non cambia finché non si tagliano). Scelta di Claude: niente colore della squadra su
+Favilla (la targa basta); se in partita non si capisce di che squadra è, si aggiunge su un
+dettaglio.
+
+## Consegna di Codex
+
+## Resoconto di Claude

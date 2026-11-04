@@ -30,3 +30,4 @@ Le più recenti in fondo.
 - 2026-11-03 · Tutorial con Favilla e vignette a fumetto: sì a tutte e dieci le scelte della proposta; apprendista con la fiammella nelle vignette, Favilla con salopette e stivali, Fabbro B (Sergio).
 - 2026-11-03 · Vignette: il tasto per chiudere la vignetta grande si chiama CHIUDI (non SALTA, che nella vignetta del salto si confonde col salto) e c'è solo con più pagine; le righe che arrivano a mossa iniziata restano nella striscia; la tavola a pagina intera arriva con le immagini della storia (Claude).
 - 2026-11-03 · Cortile senza stelle: «Fatta» più una medaglia facoltativa di Favilla nelle lezioni 1, 4, 5, 6, 7 (Sergio).
+- 2026-11-04 · WB-013 approvata: i pezzi di Favilla sullo stampino dal set di WB-009 (tre quarti ed espressioni, poi teste, corpo e pugni), coda a cuore detta due volte; niente colore della squadra su di lei, la targa basta (Claude).
