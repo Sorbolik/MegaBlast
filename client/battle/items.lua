@@ -10,6 +10,7 @@
 
 local game = require "sim.game"
 local config = require "sim.config"
+local ui = require "ui.ui"
 
 local M = {}
 
@@ -34,10 +35,8 @@ local function gui_node(w, h, color, parent)
 end
 
 local function circle_shape(d, color, parent)
-	local n = gui.new_pie_node(vmath.vector3(0, 0, 0), vmath.vector3(d, d, 0))
+	local n = ui.disco(0, 0, d, color, parent)
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
-	gui.set_color(n, color)
-	if parent then gui.set_parent(n, parent) end
 	return n
 end
 
@@ -75,7 +74,7 @@ end
 -- Shield: a ring
 local function ring_node(d, color, parent)
 	local n = circle_shape(d, color, parent)
-	gui.set_inner_radius(n, d * 0.42)
+	ui.anello(n, d, d * 0.08)
 	return n
 end
 

@@ -12,7 +12,8 @@
 --   hud.round_flash(t)     -- the button lights up: a growing ring and the number jumps
 --     fase: "turno" (white), "secondo" (yellow, the second attack is left),
 --     "riparati" (blue, attacks used up) or nil (no turn to count)
---   local t = hud.tondo(x, y, d, icon_img, colore, parent)   -- icon_img: "<icon>_icona" of the weapons atlas
+--   local t = hud.tondo(x, y, d, icon_img, colore, parent, shape)   -- icon_img: "<icon>_icona" of the weapons atlas;
+--     shape "gettone" (octagon: teleport, Grapple, swap) or "oggetto" (hexagon: the items)
 --   hud.round_number(t, "2")
 --   local s = hud.scambio()     -- the button that swaps the second attack for a teleport
 --   hud.swap_update(s, is_visible, c) / if hud.swap_press(s, px, py) then ... end
@@ -52,6 +53,7 @@ M.OUTSIDE = M.RADIUS + M.THICKNESS * 0.55 + 2
 local BOTTOM = vmath.vector4(0.04, 0.035, 0.05, 0.72)
 local TRACK = vmath.vector4(1, 1, 1, 0.1)
 local NUMBER, WORD, CLOCK = 2.4, 0.6, 1.0   -- ui.testo scales
+M.CLOCK_TOP = 38   -- the match time from the real top: the row of the points (battle/score.lua)
 local NOTCH = vmath.vector4(0.04, 0.035, 0.05, 1)
 local ORBS, ORB_FLIGHT, ORB_AFTER = 6, 0.55, 0.09
 M.ORBS = ORBS   -- orbs flying together, at most
@@ -109,8 +111,9 @@ function M.stopwatch(x, y)
 	gui.set_euler(c.arco, vmath.vector3(0, 0, 90))
 	c.numero = fit(ui.testo("", 0, 2, NUMBER, ui.C.TEXT, c.radice))
 	c.word = fit(ui.testo("", 0, -M.RADIUS * 0.5, WORD, M.WHITE, c.radice))
-	-- the match time above, smaller and still
-	c.clock = fit(ui.testo("", x, y + M.OUTSIDE + 16, CLOCK, ui.C.TEXT))
+	-- the match time at the top right, on the points' row (report UI-002)
+	c.clock = fit(ui.testo("", 0, 0, CLOCK, ui.C.TEXT))
+	gui.set_pivot(c.clock, gui.PIVOT_E)
 	c.x, c.y, c.k = x, y, 1
 	return c
 end
@@ -119,7 +122,7 @@ end
 function M.stopwatch_move(c, x, y)
 	c.x, c.y = x, y
 	gui.set_position(c.radice, vmath.vector3(x, y, 0))
-	gui.set_position(c.clock, vmath.vector3(x, y + M.OUTSIDE + 16, 0))
+	gui.set_position(c.clock, vmath.vector3(screen.x1 - ui.EDGE, screen.y1 - M.CLOCK_TOP, 0))
 end
 
 function M.stopwatch_on(c, on)
@@ -186,29 +189,18 @@ function M.stopwatch_update(c, dt, stage, left_ones, total, team, clock)
 	end
 end
 
--- The orb ticks: where the tip of the arc will be at each threshold, a short
--- purple line on the ring and a purple dot outside, the orb you lose by
--- passing it (Sergio: a single dot per tick, two looked like something else)
+-- The orb ticks: where the tip of the arc will be at each threshold, a
+-- purple dot on the ring (report UI-002; before, a line on the ring and a dot
+-- outside), the orb you lose by passing it
 function M.stopwatch_ticks(c)
 	local thresholds, total = config.TELEPORT_THRESHOLDS, config.TURN_SECONDS
 	c.ticks = {}
 	for i, sec in ipairs(thresholds) do
 		local a = math.rad(90 + 360 * sec / total)
-		local cs, sn = math.cos(a), math.sin(a)
+		local r = M.RADIUS
 		local t = { sec = sec, on = true }
-		t.nodo = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
-		gui.set_parent(t.nodo, c.radice)
-		gui.set_visible(t.nodo, false)
-		-- a dark notch in the ring with the purple line inside
-		for _, s in ipairs({ { 8, M.THICKNESS + 2, NOTCH }, { 3, M.THICKNESS + 12, ui.C.PURPLE } }) do
-			local riga = fit(gui.new_box_node(vmath.vector3(cs * M.RADIUS, sn * M.RADIUS, 0), vmath.vector3(s[1], s[2], 0)))
-			gui.set_color(riga, s[3])
-			gui.set_euler(riga, vmath.vector3(0, 0, math.deg(a) - 90))
-			gui.set_parent(riga, t.nodo)
-		end
-		local r = M.OUTSIDE + 9
-		fit(ui.disco(cs * r, sn * r, 15, NOTCH, t.nodo))
-		fit(ui.disco(cs * r, sn * r, 11, ui.C.PURPLE, t.nodo))
+		t.nodo = fit(ui.disco(math.cos(a) * r, math.sin(a) * r, M.THICKNESS + 8, NOTCH, c.radice))
+		fit(ui.disco(0, 0, M.THICKNESS + 2, ui.C.PURPLE, t.nodo))
 		c.ticks[i] = t
 	end
 end
@@ -256,11 +248,13 @@ function M.globi(c, n, pos, slowed, arrival)
 	end
 end
 
--- Round button: dark disc, border in its family's color, icon
-function M.tondo(x, y, d, icon_img, color, parent)
-	local t = { d = d, colore = color }
-	t.nodo = fit(ui.disco(x, y, d, ui.C.PANEL, parent))
-	t.bordo = fit(ui.ring_node(0, 0, d, 3, color, t.nodo))
+-- Token button: dark shape of its family (report UI-002: octagon for
+-- teleport, Grapple and swap, hexagon for the items), border in its
+-- family's color, icon
+function M.tondo(x, y, d, icon_img, color, parent, shape)
+	local t = { d = d, colore = color, shape = shape }
+	t.nodo = fit(ui.sagoma(shape .. "_forma", x, y, d, d, ui.C.PANEL, parent))
+	t.bordo = fit(ui.sagoma(shape .. "_bordo", 0, 0, d, d, color, t.nodo))
 	t.icon_img = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(d * 0.74, d * 0.74, 0)))
 	gui.set_texture(t.icon_img, "armi")
 	gui.play_flipbook(t.icon_img, icon_img .. "_icona")
@@ -284,7 +278,7 @@ end
 -- the small number jumps
 function M.round_flash(t)
 	if not t.lampo then
-		t.lampo = fit(ui.ring_node(0, 0, t.d, 5, ui.C.LIGHT, t.nodo))
+		t.lampo = fit(ui.sagoma(t.shape .. "_bordo", 0, 0, t.d, t.d, ui.C.LIGHT, t.nodo))
 		gui.set_enabled(t.lampo, false)
 	end
 	gui.cancel_animations(t.lampo, "scale")
@@ -418,7 +412,7 @@ function M.scambio()
 	local s = { on = true }
 	s.radice = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(s.radice, false)
-	s.tondo = M.tondo(0, 0, SWAP_D, "scambio", ui.C.PURPLE, s.radice)
+	s.tondo = M.tondo(0, 0, SWAP_D, "scambio", ui.C.PURPLE, s.radice, "gettone")
 	local x = SWAP_D / 2 + 10
 	for _, r in ipairs({ { T.swap_1, 8 }, { T.swap_2, -8 } }) do
 		local n = fit(ui.testo(r[1], x, r[2], 0.5, ui.C.TEXT, s.radice))

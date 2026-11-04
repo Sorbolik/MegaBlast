@@ -22,6 +22,8 @@ Sergio prima del merge.
 - **Fase 1**, `esegui WB-015 fase 1`: le sette del cortile (`c1` … `c7`).
 - **Fase 2**, `esegui WB-015 fase 2`: le sette della Forgia (`f1` … `f7`). Si dà dopo che
   Claude ha guardato la fase 1 e, se serve, corretto i prompt qui.
+- **Fase 1b**, `esegui WB-015 fase 1b`: solo `c7_duello` di nuovo, col prompt «c7_duello (fase 1b)»
+  qui sotto (nella fase 1 Favilla aveva due code). Sovrascrive `art/WB-015/c7_duello.png`.
 - Codex esegue solo le righe della fase chiesta; se un riferimento della fase non c'è, si ferma.
 
 ## Cosa teniamo e cosa scartiamo
@@ -186,6 +188,18 @@ Image 1 is the model sheet of the apprentice imp, image 2 the model sheet of Fav
 A wide comic illustration, the great battle of the forge: on the left the apprentice and Favilla charge side by side; on the right the huge Fabbro with his big hammer and, beside him, a sniper imp in a grey hood with a long rifle. Explosions of sparks, chains, anvils and lava light all around. Keep the action in the middle; nothing important near the edges. Style of image 5. No text, letters, numbers, speech balloons or signatures.
 ```
 
+### `c7_duello` (fase 1b)
+
+Riferimenti R1, R2, R5, R4, come nella fase 1.
+
+```
+Image 1 is the model sheet of the apprentice imp, image 2 the model sheet of Favilla, image 3 Favilla's full figure (look at her tail there), image 4 the illustration style. Copy both characters EXACTLY from their sheets (shapes, colors, flame, clothes; Favilla's tail exactly as in image 3); do not redesign them.
+
+A wide comic illustration on the iron floor of a hellish forge hall, pillars and glowing furnaces behind. A friendly duel: the apprentice on the left and Favilla on the right face each other, a few steps apart, each holding a rune launcher, ready. Favilla grins and beckons him with two fingers; the apprentice is determined. Keep the action in the middle; nothing important near the edges. Style of image 4. No text, letters, numbers, speech balloons or signatures.
+
+Very important: each character has exactly ONE tail. Favilla has ONE single tail, coming out from her lower back and curving behind her to the right; nothing else behind her looks like a tail. The apprentice has ONE single tail too.
+```
+
 ## Criteri di accettazione
 
 - [ ] i personaggi sono quelli dei fogli: apprendista con la fiammella, Favilla con la fiamma bianco-azzurra, salopette e stivali, la coda come in R5; il Fabbro con la fornace a cinque sbarre
@@ -212,40 +226,12 @@ le prime sette; come si vedono nella carta lo propone Claude con le foto.
 
 ## Consegna di Codex
 
-### Fase 1 · 2026-11-04
-
-Eseguita la fase 1 dal `main` aggiornato (`7f794b8`), sul ramo `design/WB-015`.
-Il comando generico «Esegui WB-015» è stato interpretato come avvio dalla fase 1:
-la fase 2 resta in attesa della revisione di Claude prevista sopra.
-
-File consegnati in `art/WB-015/` (per ciascuno PNG e TXT col prompt integrale e i riferimenti in ordine):
-
-| File (senza estensione) | Tentativi |
-|---|---|
-| `c1_stammi_dietro` | 1 |
-| `c2_lanciarune` | 1 |
-| `c3_a_turno` | 1 |
-| `c4_tempo` | 1 |
-| `c5_in_cima` | 1 |
-| `c6_burrone` | 1 |
-| `c7_duello` | 2 |
-
-Generazione con lo strumento integrato `image_gen`, prompt copiati senza modifiche,
-riferimenti R1, R2, R5, R4 allegati in questo ordine a ogni chiamata; sfondo della scena.
-Guardate tutte le immagini prima del salvataggio: personaggi, fiamme, abiti, code intere,
-contorni neri, mani e arti, azione della missione, assenza di scritte e firme.
-Il primo duello aveva tre braccia per Favilla: scartato e rigenerato col medesimo prompt;
-il secondo ha due braccia. Salvate solo le versioni selezionate.
-
-**Problema di formato:** tutti i PNG restituiti sono **1672×941**, verificati leggendo
-le dimensioni dei file, anziché 1536×1024 / 3:2. Lo strumento disponibile non espone
-un parametro per le dimensioni e i prompt sono stati mantenuti identici. Originali
-consegnati senza deformazioni, ritagli o ritocchi; il criterio 1536×1024 non è soddisfatto.
-In c2 e c5 la fiamma di Favilla è vicina al bordo superiore: attenzione al ritaglio della carta.
-In c4 la traiettoria mostra la sfera in due posizioni successive.
-
-Non verificati: resa effettiva a 300 px nella carta, ritaglio nel client, memoria sul telefono,
-confronto pixel per pixel dei personaggi. Nessuna contraddizione rilevata con DECISIONI.md.
-Restano a Claude la revisione finale e l'integrazione. Nessuna PR aperta né merge.
+- Fase 1: ramo `design/WB-015`, commit `b644b94` (sette PNG 1672×941 con i loro `.txt`).
 
 ## Resoconto di Claude
+
+Fase 1 (2026-11-04): tenute `c1`–`c6`, senza difetti visibili. Scartata `c7_duello`: Favilla ha
+due code (una dietro la schiena, una a destra); il prompt della fase 1b lo dice esplicitamente.
+Scelta di Claude: nelle illustrazioni i fantocci sono spaventapasseri di paglia sul palo, in
+gioco saranno il sacco con le gambe di WB-016 (in gioco volano via); si tengono così, il palo
+nella scena va bene. Integrazione (carta e apertura della missione) in attesa della scelta di Sergio.

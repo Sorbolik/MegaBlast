@@ -173,8 +173,11 @@ local function box(parent, x, y, w, h, color)
 end
 local function circle_shape(parent, x, y, d, color)
 	local n = setup(gui.new_pie_node(vmath.vector3(x, y, 0), vmath.vector3(d, d, 0)), parent, color)
-	-- enough sides to stay round even when big, in the home
+	-- enough sides to stay round even when big, in the home; the soft disc
+	-- of the ui atlas draws the edge (ui.disco: a bare polygon shows steps)
 	gui.set_perimeter_vertices(n, 32)
+	gui.set_texture(n, "ui")
+	gui.play_flipbook(n, "disco")
 	return n
 end
 -- a joint: an empty node at (x, y) that the child pieces turn around

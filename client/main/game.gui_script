@@ -537,6 +537,7 @@ local function show_menu(self, without_veil)
 	self.vetrine, self.conta, self.from_the_profile = nil, nil, nil
 	if self.flag then self.flag:display(nil) end
 	if self.favilla then require("battle.favilla").update(self.favilla, 0, 0, nil, nil) end
+	self.favilla_at = nil
 	if self.signal then self.signal:display(nil) end
 	score.obiettivo(self.punti, nil)
 	self.vign:quiet()
@@ -836,15 +837,17 @@ local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", ta
 -- lens sits where the zoom is between the nearest (top) and the farthest
 -- (bottom). A quick tap jumps between the chosen zoom and the farthest.
 -- Holding it a moment (or dragging) opens the long guide beside it, with the
--- same lens under the finger. From then on the zoom follows how much the
--- finger moves, not where it is (Sergio, 4 Nov: «che continui a fare il suo
--- dovere ovunque stai spostando il dito»): ZM.RUN units for the whole range,
--- down zooms out, no stop at the guide's ends (it slides with the finger),
--- and coming back from a limit works at once. The mouse wheel takes small
+-- lens showing the zoom. The guide stays still, right under the button and
+-- on its x (Sergio, 4 Nov, 13:52); the zoom follows how much the finger moves,
+-- not where it is (Sergio, 4 Nov: «che continui a fare il suo dovere ovunque
+-- stai spostando il dito»): ZM.RUN units for the whole range, down zooms out,
+-- and past a limit the finger's extra travel is lost, so the moment it turns
+-- back the zoom turns back too. The mouse wheel takes small
 -- steps; with the controller you hold the zoom button and move the aiming stick.
 CP.ZM = {
 	STEP = 0.12,        -- a wheel notch or a key, in shares of the zoom
-	RUN = 230,          -- finger travel for the whole zoom, and the guide's length
+	RUN = 230,          -- finger travel for the whole zoom
+	LEN = 160,          -- the guide's length: it ends above OGGETTI on the phone
 	HOLD = 0.22,        -- held this long without moving, the guide opens (no tap)
 	TICKS = 24,         -- a micro-vibration every 1/TICKS of the zoom while dragging
 	DRAG_PX = 10,       -- past this the finger drags and it is no longer a tap
@@ -852,6 +855,7 @@ CP.ZM = {
 	W = 48, H = 48,     -- the button (round: W is its diameter)
 	MARK = 24,          -- the small track inside the button
 	LENS = 13,          -- the lens in the button (the one on the guide is bigger)
+	GAP = 6,            -- between the button and the top of the guide
 }
 local ZM = CP.ZM
 
@@ -880,19 +884,18 @@ function ZM.make_ui(self)
 	gui.set_parent(box(0, ZM.MARK / 2, 8, 2, dim), self.btn_zoom)
 	gui.set_parent(box(0, -ZM.MARK / 2, 8, 2, dim), self.btn_zoom)
 	self.zoom_point = ZM.lens(ZM.LENS, self.btn_zoom)
-	-- the long guide, left of the button (the thumb covers the button), only
-	-- while held; it is put in place under the finger (ZM.show_guide)
+	-- the long guide, still, right under the button, only while held
 	-- a capsule: the body and a round cap at each end
-	self.zoom_guide = box(-ZM.W / 2 - 18, 0, 20, ZM.RUN, dark)
+	self.zoom_guide = box(0, -(ZM.W / 2 + ZM.GAP + 10 + ZM.LEN / 2), 20, ZM.LEN, dark)
 	gui.set_parent(self.zoom_guide, self.btn_zoom)
 	for _, side in ipairs({ 1, -1 }) do -- half discs, so nothing overlaps the body
-		local cap = fit(ui.disco(0, side * ZM.RUN / 2, 20, dark, self.zoom_guide))
+		local cap = fit(ui.disco(0, side * ZM.LEN / 2, 20, dark, self.zoom_guide))
 		gui.set_fill_angle(cap, 180)
 		if side < 0 then gui.set_rotation(cap, vmath.vector3(0, 0, 180)) end
 	end
-	gui.set_parent(box(0, 0, 2, ZM.RUN, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
-	gui.set_parent(box(0, ZM.RUN / 2, 10, 2, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
-	gui.set_parent(box(0, -ZM.RUN / 2, 10, 2, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
+	gui.set_parent(box(0, 0, 2, ZM.LEN, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
+	gui.set_parent(box(0, ZM.LEN / 2, 10, 2, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
+	gui.set_parent(box(0, -ZM.LEN / 2, 10, 2, vmath.vector4(1, 1, 1, 0.45)), self.zoom_guide)
 	self.zoom_cursor = ZM.lens(16, self.zoom_guide)
 	gui.set_enabled(self.zoom_guide, false)
 end
@@ -902,7 +905,7 @@ end
 ZM.POINT = vmath.vector3()
 function ZM.display(self)
 	local d = self.zoom_finger
-	if d and not d.open and self.clock - d.t >= ZM.HOLD then ZM.show_guide(self, d.y) end
+	if d and not d.open and self.clock - d.t >= ZM.HOLD then ZM.show_guide(self) end
 	local f = self.cam.f
 	if self.zoom_f == f then return end
 	self.zoom_f = f
@@ -910,16 +913,12 @@ function ZM.display(self)
 	gui.set_position(self.zoom_point, ZM.POINT)
 end
 
--- the guide slides so that its lens, at the zoom's place, is under the finger
-ZM.GUIDE, ZM.CURSOR = vmath.vector3(-ZM.W / 2 - 18, 0, 0), vmath.vector3()
-function ZM.show_guide(self, y)
-	local d = self.zoom_finger
-	d.open = true
+-- the guide opens where it is; its lens goes to the zoom's place
+ZM.CURSOR = vmath.vector3()
+function ZM.show_guide(self)
+	self.zoom_finger.open = true
 	gui.set_enabled(self.zoom_guide, true)
-	local k = (self.cam.f - 0.5) * ZM.RUN
-	ZM.GUIDE.y = y - ZOOM_BTN.y - k
-	ZM.CURSOR.y = k
-	gui.set_position(self.zoom_guide, ZM.GUIDE)
+	ZM.CURSOR.y = (self.cam.f - 0.5) * ZM.LEN
 	gui.set_position(self.zoom_cursor, ZM.CURSOR)
 end
 
@@ -941,7 +940,7 @@ function ZM.trascina(self, y)
 	local notch = math.floor(f * ZM.TICKS + 0.5)
 	if d.notch and notch ~= d.notch then CP.vibrate() end
 	d.notch = notch
-	ZM.show_guide(self, y)
+	ZM.show_guide(self)
 end
 
 -- a tap only if it was quick and still; held to look, nothing changes
@@ -1968,17 +1967,47 @@ function CP.open_card_g(self, i)
 	if SIMULATE then print("SIMULA cartellino del robot " .. i) end
 end
 
--- The robot under screen point (x, y): from the plate to the feet
-function CP.robot_below(self, x, y)
+-- Where robot i is on the screen, from the plate to the feet: its x, the y
+-- of the feet and of the plate's top, its half width (nil if it is not there)
+function CP.robot_span(self, i)
+	local rb, v = self.g.robots[i], self.view[i]
+	if not v or rb.dead or rb.gone then return end
 	local s = self.cam.s
-	for i, rb in ipairs(self.g.robots) do
-		local v = self.view[i]
-		if v and not rb.dead and not rb.gone then
-			local rx, feet = camera.to_screen(self.cam, v.x, v.y)
-			local top = feet + (scoria.cima(self.robots[i].rig) + CP.PLATE_GAP / s + plate.sopra(self.robots[i].plate) * plate.scala(self.cam)) * s
-			if math.abs(x - rx) <= math.max(40, 30 * s ^ 0.35) and y >= feet - 10 and y <= top + 10 then return i end
+	local rx, feet = camera.to_screen(self.cam, v.x, v.y)
+	local top = feet + (scoria.cima(self.robots[i].rig) + CP.PLATE_GAP / s + plate.sopra(self.robots[i].plate) * plate.scala(self.cam)) * s
+	return rx, feet, top, math.max(40, 30 * s ^ 0.35)
+end
+
+-- The robot under screen point (x, y)
+function CP.robot_below(self, x, y)
+	for i = 1, #self.g.robots do
+		local rx, feet, top, half = CP.robot_span(self, i)
+		if rx and math.abs(x - rx) <= half and y >= feet - 10 and y <= top + 10 then return i end
+	end
+end
+
+-- The strip of the vignettes goes see-through when a robot (from the feet to
+-- the plate) is behind it (battle/vignette.lua, M.ghost)
+function CP.strip_covers(self)
+	if not self.vign.shown then return end
+	local r = CP.vignette.STRIP
+	local behind = false
+	for i = 1, #self.g.robots do
+		local rx, feet, top, half = CP.robot_span(self, i)
+		if rx and rx + half >= r.x0 and rx - half <= r.x1 and top >= r.y0 and feet <= r.y1 then
+			behind = true
+			break
 		end
 	end
+	-- Favilla in the cortile: a puppet, not a robot (battle/favilla.lua)
+	local fav = not behind and self.favilla_at
+	if fav then
+		local s = self.cam.s
+		local rx, feet = camera.to_screen(self.cam, fav.x, fav.y)
+		local top = feet + (scoria.cima(self.favilla.rig) + 20) * s
+		behind = rx + 40 >= r.x0 and rx - 40 <= r.x1 and top >= r.y0 and feet <= r.y1
+	end
+	self.vign:ghost(behind)
 end
 
 -- A tap in a match outside your turn: true if it was for the tag
@@ -2366,6 +2395,7 @@ local function mission_update(self, dt)
 		self.favilla = CP.favilla.new(self.mondo, self.robots[1].rig.root)
 	end
 	if self.favilla then CP.favilla.update(self.favilla, dt, self.clock, fav, sx, sy, self.g.robots[1].x) end
+	self.favilla_at = fav -- the strip goes see-through over her too (CP.strip_covers)
 	-- the marker on the target to hit now (battle/signal.lua)
 	local bi = missions.target_robot(r)
 	local brb = bi and self.g.robots[bi]
@@ -2774,6 +2804,7 @@ local function update_bar(self)
 				if sl.tondo then
 					hud.round_number(sl.tondo, count > 0 and tostring(count) or "")
 				else
+					gui.set_enabled(sl.badge, count > 0)
 					gui.set_text(sl.label, count > 0 and ("x" .. count) or "")
 				end
 				sl.count = count
@@ -3226,6 +3257,7 @@ local function render(self, dt)
 	end
 
 	CP.notches_end(self, self.colors[g.current])
+	CP.strip_covers(self)
 
 	-- buttons: picked weapon and teleport (also with other orbs in flight)
 	local tele_ok = g:can_use("teleport") and my_turn(self)
@@ -3715,19 +3747,27 @@ function init(self)
 		local gr = bar_group(w)
 		local sl = { weapon = w, have = false, group = gr }
 		if gr >= 3 then
-			-- items and tool: round, with the small number
-			sl.tondo = hud.tondo(0, BAR_Y, gr == 3 and SIZES.oggetto or TELE_BTN_D, w, BAR_COLORS[gr], self.bar)
+			-- items and tool: tokens (hexagon, octagon), with the small number
+			sl.tondo = hud.tondo(0, BAR_Y, gr == 3 and SIZES.oggetto or TELE_BTN_D, w, BAR_COLORS[gr], self.bar,
+				gr == 3 and "oggetto" or "gettone")
 			sl.node, sl.bordo, sl.icon = sl.tondo.nodo, sl.tondo.bordo, sl.tondo.icon_img
 		else
-			local n, border = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar)
+			-- the weapon's slot (chamfered on top) and, at the top right, the
+			-- pill with the shots left (report UI-002)
+			local n, border = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar, "slot_arma")
 			fit(n)
-			local icon = gui.new_box_node(vmath.vector3(0, 2, 0), vmath.vector3(62, 62, 0))
+			local icon = gui.new_box_node(vmath.vector3(0, -2, 0), vmath.vector3(62, 62, 0))
 			gui.set_texture(icon, "armi")
 			gui.play_flipbook(icon, WEAPON_ICON[w])
 			gui.set_parent(icon, n)
-			local count = label(22, -26, "", 0.7)
-			gui.set_parent(count, n)
-			sl.node, sl.bordo, sl.icon, sl.label = n, border, icon, count
+			local badge, badge_border = ui.pannello(SLOT / 2 - 14, SLOT / 2 - 2, 42, 26, n, "badge")
+			fit(badge)
+			fit(badge_border)
+			gui.set_color(badge_border, BAR_COLORS[gr])
+			gui.set_enabled(badge, false)
+			local count = label(0, 1, "", 0.8)
+			gui.set_parent(count, badge)
+			sl.node, sl.bordo, sl.icon, sl.label, sl.badge = n, border, icon, count, badge
 		end
 		gui.set_enabled(sl.node, false)
 		self.slots[i] = sl
@@ -3740,7 +3780,7 @@ function init(self)
 		end
 	end
 	-- teleport: round and purple like the tool, with the teleports left
-	self.btn_tele = hud.tondo(TELE_BTN_DESK.x, TELE_BTN_DESK.y, TELE_BTN_D, "teleport", ui.C.PURPLE)
+	self.btn_tele = hud.tondo(TELE_BTN_DESK.x, TELE_BTN_DESK.y, TELE_BTN_D, "teleport", ui.C.PURPLE, nil, "gettone")
 	self.tele_key = label(-28, -30, "T", 0.6)
 	gui.set_parent(self.tele_key, self.btn_tele.nodo)
 	CP.recharge_create(self)
