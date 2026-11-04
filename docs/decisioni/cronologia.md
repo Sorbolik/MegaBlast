@@ -138,3 +138,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 4 nov | Nelle lezioni la traiettoria prevista usa la mira di un attimo prima, come il colpo al rilascio della levetta: si vede quello che parte. | questa PR |
 | 4 nov | Bug: dopo «Connessione persa» nella sala la coda restava a metà e i bot non arrivavano mai. Ora la coda si chiude con la connessione e GIOCA rientra davvero; il server toglie subito dalla coda chi esce. | questa PR |
 | 4 nov | Zoom che segue quanto si muove il dito (non dove sta) e pulsante con la lentina sul binario; tenendolo premuto si apre la guida. | questa PR |
+| 4 nov | Il cortile con Favilla: sette lezioni corte, lei corre avanti, butta la cassa, ti aspetta e ti sfida; la scintilla in aria e le medaglie facoltative al posto delle stelle. | questa PR |

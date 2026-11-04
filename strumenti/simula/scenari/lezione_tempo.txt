@@ -1,0 +1,27 @@
+# Il tempo risparmiato (imposta prova_missione tempo): il Lanciarune presto dà
+# i globi (il tempo si ferma prima di perderli); poi la camera si allarga e il
+# teletrasporto si accende per l'isola. Il fantoccio dell'isola, abbattuto, non
+# rinasce; il baratto in luce. Barra: Lanciarune 506, TELE 1180 62 (tasto t).
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+imposta prova_missione tempo
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 3
+foto 01_tempo_fermo                  # dopo 3 s il cronometro è ancora pieno
+premi 1
+mira -120 80 0.5                     # il Lanciarune, lontano dal bersaglio: i globi
+aspetta_evento teleports 6
+aspetta_evento explosion 6
+aspetta 1.5
+foto 02_isola                        # la camera si allarga, il teletrasporto in luce
+premi t
+mira 170 90 0.5                      # il globo verso l'isola
+aspetta_evento teleport 6
+aspetta 2
+foto 03_isola_arrivato               # la riga dei colpi infiniti
+aspetta_evento turn 40
+aspetta 1
+premi 1
+mira 60 40 0.5                       # il Lanciarune sul fantoccio dell'isola
+aspetta_evento damage 6
+aspetta 3
+foto 04_baratto                      # abbattuto: non torna, il baratto in luce

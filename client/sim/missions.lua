@@ -496,7 +496,8 @@ local function check_event(r, g, e)
 			end
 		end
 	end
-	-- the goal_text of a lesson, once read (you touched the controls), gives way
+	-- the goal_text of a lesson, once read (you touched the controls), and
+	-- Ritenta give way to the next line
 	if r.riga and r.line_yields and not r.attesa and #r.coda > 0 then clear_line(r) end
 	if not r.riga and #r.coda > 0 then show_line(r, table.remove(r.coda, 1)) end
 end
@@ -675,7 +676,7 @@ local function attempt_over(r, g)
 	if missed then
 		count(r.st, "misses")
 		clear_line(r)
-		show_line(r, { testo = RETRY_TEXT, faccia = "preoccupata" })
+		show_line(r, { testo = RETRY_TEXT, faccia = "preoccupata", yields = true })
 	end
 end
 
@@ -706,7 +707,7 @@ local function hold_still(r, g, p)
 		restore_snapshot(r, g)
 		count(r.st, "misses")
 		clear_line(r)
-		show_line(r, { testo = RETRY_TEXT, faccia = "preoccupata" })
+		show_line(r, { testo = RETRY_TEXT, faccia = "preoccupata", yields = true })
 	end
 end
 
@@ -895,7 +896,7 @@ function M.guida(r)
 	f.vx = (b.x - a.x) / d
 	f.vy = (b.y - a.y) / d + 4 * h * (1 - 2 * u) / d
 	f.grounded = h == 0
-	if f.vx ~= 0 then f.facing = f.vx < 0 and -1 or 1 end
+	if f.vx ~= 0 then f.facing = f.vx < 0 and -1 or 1 else f.facing = f.facing or 1 end
 	return f
 end
 

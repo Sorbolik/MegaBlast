@@ -2245,7 +2245,7 @@ end
 -- The mission's line of the moment, in the vignettes (battle/vignette.lua):
 -- in the lessons Favilla speaks, in the circles the Fabbro. What explains a
 -- control (in the lessons; not what comes mid-move: subito, in the air) and
--- the opening line stop the game on the big
+-- the opening line, when it has a move to draw, stop the game on the big
 -- vignette the first time (profile.vignetta), then they stay in the strip at
 -- the top; the rest is only in the strip. {salta}: how to jump with the
 -- controls you have (PAD.TEXTS)
@@ -2258,7 +2258,7 @@ function CP.mission_line(self, r)
 	local l = r.l
 	local chi = l.aspetta and "favilla" or "fabbro"
 	local txt = line.testo:gsub("{(%a+)}", PAD.texts(self))
-	if line.apertura or (line.highlight and l.aspetta and not line.subito and line.stops ~= false) then
+	if (line.apertura and line.highlight) or (line.highlight and l.aspetta and not line.subito and line.stops ~= false) then
 		local page = { chi = chi, faccia = "spiega", testo = txt, disegno = line.highlight }
 		if not self.vign_read[line.testo] then
 			self.vign_read[line.testo] = true
@@ -2400,7 +2400,7 @@ local function mission_update(self, dt)
 	if (fav or sx) and not self.favilla then
 		self.favilla = CP.favilla.new(self.mondo, self.robots[1].rig.root)
 	end
-	if self.favilla then CP.favilla.update(self.favilla, dt, self.clock, fav, sx, sy) end
+	if self.favilla then CP.favilla.update(self.favilla, dt, self.clock, fav, sx, sy, self.g.robots[1].x) end
 	-- the marker on the target to hit now (battle/signal.lua)
 	local bi = missions.target_robot(r)
 	local brb = bi and self.g.robots[bi]
