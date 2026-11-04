@@ -44,7 +44,7 @@ aprono a stelle), quindi niente bivio: chi arriva lì la campagna l'ha già gioc
 
 - **Prima**: CAMPAGNA è il pulsante grande dorato in basso a destra (la cosa da fare adesso).
   Sopra, al posto piccolo, **GIOCA ONLINE spento con un lucchetto** e sotto una riga:
-  «Si apre nella campagna». EVENTI non c'è (un solo lucchetto in home, non due).
+  «Si apre nella campagna». EVENTI non c'è (un solo lucchetto in home, non due), ARMERIA neanche (arriva col regalo, sotto).
 - **Tocco sul lucchetto**: il pulsante trema e la riga diventa per 3 secondi
   «Le partite online si aprono quando vinci la Battaglia della Forgia».
   Senza spoiler: «Le partite online si aprono quando batti il primo custode della campagna».
@@ -73,8 +73,8 @@ aprono a stelle), quindi niente bivio: chi arriva lì la campagna l'ha già gioc
 ### 3. La home che cresce
 
 - **Prima**: solo CAMPAGNA, grande, più il profilo e le impostazioni.
-- **Dopo l'Addestramento**: appaiono ALLENAMENTO, STESSO TELEFONO e ARMERIA (sono offline, si
-  usa quello che hai imparato, e l'equipaggiamento conta lì perché in campagna è fisso).
+- **Dopo l'Addestramento**: appaiono ALLENAMENTO e STESSO TELEFONO (sono offline, si usa
+  quello che hai imparato). ARMERIA arriva col regalo del Fabbro (sotto).
   La riga in fine livello: «Nuovo nella home: ALLENAMENTO e STESSO TELEFONO».
 - **Dopo la Battaglia della Forgia**: GIOCA ONLINE (grande, dorato) ed EVENTI, come nella 1.
   Prima di allora un lucchetto piccolo sotto CAMPAGNA: «Gioca online: si apre nella campagna».
@@ -90,6 +90,33 @@ aprono a stelle), quindi niente bivio: chi arriva lì la campagna l'ha già gioc
 - **Pro**: la stessa regola dei capitoli, si vede quanto manca, niente spoiler.
 - **Contro**: si arriva rifacendo le missioni facili per le stelle invece di battere un custode;
   le stelle diventano la moneta per l'online, e quando daranno premi (fase 5) avranno due significati.
+
+## L'Armeria: si apre col primo regalo (Sergio, 4 nov)
+
+Punto fermo di Sergio: **ARMERIA appare quando un personaggio (il Fabbro o Favilla) ti
+regala il primo pezzo da mettere addosso**, un pezzo semplice. Vale per tutte le proposte:
+prima del regalo ARMERIA non c'è (negli schizzi è tolta).
+
+Una cosa da sapere: **in missione l'equipaggiamento è fisso** (29 ott), quindi il pezzo
+regalato in campagna non si sente in campagna, solo in Allenamento, Stesso telefono e online.
+Per questo il regalo conviene vicino al momento in cui serve:
+
+- **A (consigliata): il Fabbro te lo regala quando lo batti** («Te lo sei guadagnato»), una
+  missione prima della Battaglia della Forgia che apre l'online. Due sblocchi vicini ma non
+  insieme: prima ARMERIA, poi GIOCA ONLINE, ognuno col suo momento.
+- B: il Fabbro te lo regala alla fine dell'Addestramento, come diploma. Serve subito solo in
+  Allenamento; ARMERIA resta lì un'ora prima dell'online.
+- C: Favilla te lo regala nella storia d'ingresso, prima di essere rapita. È il momento più
+  forte per la storia, ma ARMERIA si aprirebbe subito, quando l'equipaggiamento non serve
+  ancora; si può tenere il regalo nella storia e aprire ARMERIA più tardi (il pezzo ti
+  aspetta lì), ma sono due momenti per una cosa sola.
+
+Il pezzo: uno solo, semplice, che si vede addosso (per esempio i guanti da forgia), con un
+bonus piccolo. La scena del regalo è una vignetta della storia (thread della storia
+illustrata).
+
+Ancora da decidere (Sergio, 4 nov): se gli altri pulsanti appaiono a poco a poco (proposta 3)
+o ci sono già spenti col lucchetto (proposta 1). L'Armeria col regalo va bene con tutte e due.
 
 ## Scartate
 
