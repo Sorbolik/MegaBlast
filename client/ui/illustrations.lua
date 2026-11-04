@@ -1,11 +1,12 @@
 -- The mission illustrations (WB-015, Sergio 4 Nov: on the mission card and
 -- full screen when the mission opens). JPEGs in /paintings/missions/ (custom
 -- resources, loaded only when they are shown, not kept in an atlas): <id>.jpg
--- at 1280 x 720 for the opening, <id>_carta.jpg for the card. A mission
--- without its files simply has no illustration. Client only.
+-- for the postcard, <id>_carta.jpg for the card on the CAMPAGNA's board,
+-- <id>_finale.jpg for the strip of a chapter's final. A mission without its
+-- files simply has no illustration. Client only.
 --
 --   local ill = require "ui.illustrations"
---   local tex = ill.texture(id, "carta" | "tavola")  -- the gui texture name, or nil
+--   local tex = ill.texture(id, "carta" | "tavola" | "finale")  -- the gui texture name, or nil
 --   ill.release(id, kind)                         -- when nothing shows it anymore
 --   local tex = ill.story(id)  /  ill.story_release(id)   -- a panel of the story
 
@@ -17,7 +18,7 @@ local made = {}
 local dims = {}
 
 local function name_of(id, kind)
-	return "ill_" .. id .. (kind == "carta" and "_carta" or "")
+	return "ill_" .. id .. ((kind == "carta" or kind == "finale") and "_" .. kind or "")
 end
 
 -- The missions that have one (strumenti/grafica/illustrazioni.py writes the files)
@@ -26,7 +27,12 @@ M.MISSIONS = {
 	attrezzi = true,
 }
 
-function M.has(id)
+-- The chapters' finals with their strip under the board (<id>_finale.jpg: a
+-- piece of a story panel)
+M.FINALS = { guidata = true, battaglia_forgia = true }
+
+function M.has(id, kind)
+	if kind == "finale" then return M.FINALS[id] == true end
 	return M.MISSIONS[id] == true
 end
 
@@ -56,7 +62,7 @@ local function release(key)
 end
 
 function M.texture(id, kind)
-	if not M.has(id) then return nil end
+	if not M.has(id, kind) then return nil end
 	local key = name_of(id, kind)
 	return load(key, "/paintings/missions/" .. key:sub(5) .. ".jpg")
 end

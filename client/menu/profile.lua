@@ -182,7 +182,8 @@ function M.registra(p, r)
 end
 
 -- Only in the scenarios (imposta prova_profilo 1, scenari/scheda.txt): a
--- profile that has already played, to see pieces, powers, badges and stats
+-- profile that has already played, to see pieces, powers, badges, stats and
+-- the campaign's stars
 function M.prova(p)
 	p.livello, p.xp = 23, 410
 	local a = p.loadouts[p.is_active]
@@ -195,6 +196,11 @@ function M.prova(p)
 	p.statistiche["1v1"] = { partite = 9, vinte = 4, colpi = 60, a_segno = 31, danno = 2100, abbattuti = 8, globi = 20,
 		colpo_lungo = 700, casse = 6, serie = 2, armi = { missile = 1200, sniper = 900 } }
 	p.serie, p.badge = 1, { "colpo_lungo" }
+	-- the campaign: the Training done, the Forge up to the Due mani (the board, scenari/bacheca.txt)
+	for _, id in ipairs({ "primi_passi", "lanciarune", "turno", "tempo", "spostano", "attrezzi", "guidata" }) do
+		p.stelle[id] = { true, id ~= "turno", id == "primi_passi" or id == "guidata" }
+	end
+	p.stelle.primo_sangue, p.stelle.fuori_portata = { true, true, false }, { true, false, false }
 end
 
 -- A match's replay file: one per slot, reused in rotation

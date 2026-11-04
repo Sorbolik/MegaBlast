@@ -1,0 +1,21 @@
+# La bacheca della Forgia (menu/campaign.lua): le sfide del capitolo appese come
+# cartoline, tre per riga, la prossima da fare col bordo d'oro e NUOVA, il finale
+# nella striscia larga sotto. Con prova_profilo 1 l'Addestramento è fatto e la
+# Forgia è aperta fino a Due mani: la CAMPAGNA si apre lì (le carte vuote
+# aspettano le illustrazioni di WB-015 fase 2). Nell'Addestramento la carta di
+# Stammi dietro (256 480) apre la cartolina; un tocco fuori torna alla bacheca.
+imposta prova_profilo 1
+
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1.2
+foto 01_forgia
+tocca 240 578                       # Addestramento
+aspetta 0.8
+foto 02_addestramento
+tocca 256 480                       # Stammi dietro
+aspetta 0.6
+foto 03_cartolina
+tocca 60 360                        # fuori dalla cartolina
+aspetta 0.6
+foto 04_di_nuovo_addestramento
