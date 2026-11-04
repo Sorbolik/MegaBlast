@@ -686,6 +686,7 @@ local function new_match(self, seed, map, opts)
 	-- who speaks is said by the mission (start_mission), later
 	self.speak = nil
 	if self.carta then self.carta:close_view(); self.carta = nil end
+	self.card_queue = nil
 	self.ricetta = replay.nuova(seed, map, opts)
 	self.g, self.bots = replay.partita(self.ricetta)
 	-- the world shows only now that there is a match (show_menu)
@@ -1311,7 +1312,14 @@ local function handle_event(self, e)
 		if self.mode == "local" and e.robot == 1 and (l or next(self.bots))
 			and (profile.new_weapon(self.profilo, e.weapon) or (l and l.aspetta)) then
 			profile.salva(self.profilo)
-			self.carta = require("battle.card").open_view(e.weapon, PAD.comandi(self))
+			-- two crates in the same tick (or a card already open): the next card
+			-- waits its turn, so no card is left on screen without its button
+			if self.carta then
+				self.card_queue = self.card_queue or {}
+				self.card_queue[#self.card_queue + 1] = e.weapon
+			else
+				self.carta = require("battle.card").open_view(e.weapon, PAD.comandi(self))
+			end
 		end
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
@@ -3670,7 +3678,9 @@ function init(self)
 	camera.margins(self.cam, 120, 90, SIZES.ring_y + hud.OUTSIDE + 40)
 	-- the points at the top center; the ticking is the game object's "punto" sound
 	self.punti = score.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
-	self.message = label(W / 2, H / 2 + 120, "", 1.6)
+	-- the messages ("Una cassa cade dal cielo!") just under the strip of the
+	-- vignettes (battle/vignette.lua, top center at 520, 96 tall), never behind it
+	self.message = label(W / 2, H / 2 + 78, "", 1.6)
 	self.announcement = label(W / 2, H / 2 - 150, "", 2.2)
 	gui.set_color(self.announcement, vmath.vector4(1, 1, 1, 0))
 	-- the wheel at the top left, in every match: next to it it opens RIPROVA (not
@@ -4270,6 +4280,8 @@ function PAD.close_card(self)
 	if w and (not game.TOOLS[w] or game.THROWN[w]) then self.weapon = w end
 	self.carta:close_view()
 	self.carta = nil
+	local q = self.card_queue
+	if q and #q > 0 then self.carta = require("battle.card").open_view(table.remove(q, 1), PAD.comandi(self)) end
 end
 
 -- A wheel button (nil: it just closes again). MIRA changes mode and the

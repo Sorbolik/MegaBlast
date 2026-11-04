@@ -137,3 +137,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 4 nov | Testata uguale in tutti i menu (titolo a sinistra, posto della pillola al centro, comandi a destra, schede sotto) e gettone della coda accanto all'ingranaggio dentro la partita. | #191 |
 | 4 nov | Il cortile con Favilla: sette lezioni corte, lei corre avanti, butta la cassa, ti aspetta e ti sfida; la scintilla in aria e le medaglie facoltative al posto delle stelle. | #192 |
 | 4 nov | Il bot in inglese (nomi, commenti e test); le chiavi dei pesi salvati dall'arena restano italiane. Nel gioco non cambia niente: 200 partite di bot identiche a prima. | questa PR |
+| 4 nov | Bug: la scheda di un'arma nuova poteva restare sullo schermo senza chiudersi (due casse prese insieme): ora le schede aspettano il loro turno. I messaggi come «Una cassa cade dal cielo!» stanno sotto la striscia delle vignette, non dietro. Ritratto della vignetta senza il riquadro nero. | questa PR |
