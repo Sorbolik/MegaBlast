@@ -402,6 +402,17 @@ def comando(g, riga):
             # zoom prima di lasciare il tasto (per vedere il movimento)
             g.zoom(a[2], num(3, 2))
         g.xdo("keyup", tasto)
+    elif c in ("giu", "su"):
+        # giu destra ... su destra: un tasto tenuto fra altri comandi (sparare
+        # tenendo destra, lasciarla nel turno di un altro: scenari/tasto_tenuto.txt)
+        g.xdo("keydown" if c == "giu" else "keyup", TASTI.get(a[0], a[0]))
+        g.attendi(0.05)
+    elif c == "fermo":
+        # fermo S [PX]: fallisce se in S secondi il robot di turno si sposta di più di PX (8)
+        x0 = float(g.stato["x"])
+        g.attendi(num(0))
+        if abs(float(g.stato["x"]) - x0) > num(1, 8):
+            raise Fallito(f"il robot si è mosso da x {x0:g} a {g.stato['x']}")
     elif c == "pad":
         # pad A+RT [S]: tiene premuti insieme quei tasti del controller finto per S secondi
         tasti = [PAD[n][1] for n in a[0].split("+")]

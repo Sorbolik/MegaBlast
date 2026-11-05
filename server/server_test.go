@@ -117,6 +117,26 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 	}
 }
 
+// Keys held at the end of a turn don't pass to the next one: the client sends
+// its releases only on its own turn, so the server lets them go itself.
+func TestTurnReleasesHeldKeys(t *testing.T) {
+	// two players away (p nil) who have all the time to come back
+	srv := &Server{cfg: Config{ReconnectTicks: 1 << 30}}
+	r := &Room{srv: srv, sim: newTestSim(t, 42, "pavimento"), seats: []*seat{{team: 1}, {team: 2}}}
+	r.seats[0].in = held{right: true, hold: true, fire: true, angle: 1.0, power: 0.6, weapon: "missile"}
+	for i := 0; i < 60*30 && r.sim.Current() == 1; i++ {
+		if !r.Tick() {
+			t.Fatal("the match ended")
+		}
+		if r.seats[0].in.right != (r.sim.Current() == 1) {
+			t.Fatalf("tick %d: right held %v on turn %d", i, r.seats[0].in.right, r.sim.Current())
+		}
+	}
+	if r.sim.Current() != 2 {
+		t.Fatal("the turn didn't pass")
+	}
+}
+
 // The Rampino hook flies: it's in the state while in flight (gs, gx, gy), so
 // online the client draws the rope getting longer; then the "hook" event arrives.
 func TestHookShotInSnapshot(t *testing.T) {

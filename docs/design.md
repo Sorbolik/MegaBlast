@@ -149,7 +149,7 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 | `{"t":"pick","w":"shards"}` / `{"t":"swap","to":3}` | C → S | scelgo un'arma (primaria, secondaria o attrezzo, lo dice l'arma) / propongo lo scambio al compagno (`"to":0` ritira la proposta) |
 | `{"t":"start","seed":…,"map":"forgia","you":1,"tok":…,"resume":false,"players":[{"team":1},…],"regole":null,"vetrine":[…]}` | S → C | la partita parte: mappa, seed, quale robot sei, le squadre, le regole dell'evento (o `null`), i cartellini di tutti e il gettone per tornare se cadi |
 | `{"t":"sync","x":[[x,y,r],…]}` | S → C | a chi torna: gli scavi fatti finora nel terreno |
-| `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano) |
+| `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano e a ogni inizio del proprio turno; il server li lascia a ogni cambio di turno) |
 | `{"t":"jump"}` | C → S | salto |
 | `{"t":"fire","a":1.2,"p":0.7}` | C → S | sparo: angolo in radianti e potenza da 0 a 1 |
 | `{"t":"state",…}` | S → C | fase, turno, timer, secondi dopo il primo attacco, ultimo giro, coppia di turni (squadra che l'ha aperta e i suoi punti allora), attacchi fatti (e attrezzo usato), teletrasporti, robot e missile (20 al secondo) |
