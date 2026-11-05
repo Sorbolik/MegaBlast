@@ -125,7 +125,14 @@ che valgono per ogni schermata nuova:
   vita; effetti di stato come segni sul robot e scritte che salgono, mai
   pannelli. Suggerimenti solo nelle partite contro bot.
 - **Transizioni brevi** (sotto i 200 ms) e mai bloccanti; effetti ridotti
-  disponibili nelle impostazioni.
+  disponibili nelle impostazioni. Unica eccezione, chiesta da Sergio (4 nov):
+  l'animazione dello sblocco di un pulsante della home, una volta sola e saltabile
+  con un tocco.
+- **La home cresce con la campagna** (Sergio, 4-5 nov, [sblocco_online.md](sblocco_online.md)):
+  all'inizio solo CAMPAGNA; ALLENAMENTO finito il prologo, ARMERIA e gironi finita la
+  Forgia, GIOCA ONLINE battuto Caronte, EVENTI dopo 3 partite online. I pulsanti già
+  apparsi non cambiano mai posto né aspetto; partite private, classifica e negozio non
+  hanno un pulsante loro (dentro GIOCA ONLINE, dentro EVENTI, alla prima moneta).
 - **Ogni schermata nuova passa dal simulatore** (foto nel riepilogo) e da
   Sergio prima del merge, come per il resto del client.
 
