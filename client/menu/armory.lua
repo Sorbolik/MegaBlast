@@ -13,6 +13,7 @@
 --      armeria.destroy(a)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local game = require "sim.game"
 local skills = require "sim.skills"
 local equip = require "sim.gear"
@@ -214,7 +215,7 @@ end
 
 function M.new(prof)
 	local a = { prof = prof, scheda = "set" }
-	a.fondo = ui.sfondo()
+	a.fondo = backdrop.new("fucina")
 	build(a)
 	return a
 end

@@ -21,6 +21,7 @@
 --   profilo_schede.destroy(s)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local game = require "sim.game"
 local equip = require "sim.gear"
 local maps = require "sim.maps"
@@ -437,7 +438,7 @@ function M.new(prof, card, color, replay_ok, number)
 	for i, pa in ipairs(prof.partite) do
 		if pa.numero == number then s.scelta = i end
 	end
-	s.fondo = ui.sfondo()
+	s.fondo = backdrop.new("camerino")
 	build(s)
 	return s
 end

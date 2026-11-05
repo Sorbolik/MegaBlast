@@ -159,3 +159,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 4 nov | Bug: rivedendo un momento di una partita dal profilo il gioco si fermava anche 1-2 secondi. I bot ripensavano tutte le mosse fino a quel punto; ora le loro mosse sono salvate nella ricetta e il replay ci arriva subito. | questa PR |
 | 4 nov | La CAMPAGNA diventa la bacheca della Forgia: sfide appese come cartoline 3 per riga, la prossima col bordo d'oro, il finale del capitolo nella striscia larga sotto (Sergio, proposta della bacheca). | questa PR |
 | 5 nov | La bacheca della Forgia prende tutto lo schermo: la parete di assi di legno su ogni proporzione, le carte al centro come prima. | questa PR |
+| 5 nov | Uno sfondo per ogni menu, nel colore della sua tacca (fucina, campo, arena, stendardi, banco, camerino, raggi, schieramento, legno anche a fine livello); testo spento più chiaro per i contrasti. | questa PR |

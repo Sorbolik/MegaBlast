@@ -12,6 +12,7 @@
 --   bacheca.destroy(b)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local events = require "main.events"
 local T = require("lang.text").board
 local common = require("lang.text").common
@@ -201,7 +202,7 @@ end
 
 function M.new(name_list)
 	local b = { nomi = name_list, t = 0 }
-	b.fondo = ui.sfondo()
+	b.fondo = backdrop.new("stendardi")
 	build(b)
 	return b
 end

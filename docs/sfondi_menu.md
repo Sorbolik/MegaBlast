@@ -3,8 +3,9 @@
 Proposta del 5 novembre (Sergio: «dare un'identità in maniera simile ad ogni
 schermata, quindi con un background semplice come quello della bacheca della
 campagna, ma con la sua identità [...] stiamo attenti ai contrasti con i
-testi»). La bacheca a tutto schermo è il primo tema (PR #218). Questo documento
-propone gli altri e **aspetta la scelta di Sergio**. Mockup fatti dalle foto vere
+testi»). La bacheca a tutto schermo è il primo tema (PR #218). **Approvate tutte**
+(Sergio, 5 nov: «mi piacciono tutte») e fatte nella stessa PR, in
+`client/ui/backdrop.lua`. Mockup fatti dalle foto vere
 del simulatore: https://claude.ai/artifact/W6LDT6WtVB2fmgJQuprvED .
 
 ## Cosa resta uguale su tutte le schermate
@@ -102,11 +103,12 @@ e la brace che illumina dal basso. Tacca della home: brace.
 
 - base `#1A1311`; giunte fra le lastre `#100B0A` (4 px); lastre 320 x 240;
 - un chiodo a ogni incrocio (disco 18 px `#2A201C` con il riflesso 8 px
-  `#3A2C25`) e uno a metà di ogni giunta orizzontale (disco 12 px `#2A201C`);
+  `#3A2C25`); nel mockup c'era anche un chiodo a metà delle giunte, tolto per stare
+  sotto i 200 nodi;
 - alone `C.BRACE` `#FF6B29` all'11% (additivo), 1600 px, centrato 120 px sotto il
   bordo vero in basso (`screen.y0`): più forte, il testo spento in basso scende
   sotto 4,5:1.
-- Nodi: 20 giunte + circa 150 dischi + 1 alone, sotto i 200.
+- Nodi: 16 giunte + 126 dischi + 1 alone.
 
 ### 3. ALLENAMENTO: «campo»
 
@@ -151,8 +153,8 @@ Il camerino del tuo diavoletto: carta da parati di velluto a righe e la luce del
 tuo Nucleo dietro di lui.
 
 - base `#17101C`; righe verticali larghe 24 px ogni 48 px `#1C1423`;
-- alone del colore della tua squadra al 16%, 700 px, dietro il diavoletto (300, 300);
-- nodi: circa 55.
+- l'alone del colore della tua squadra dietro il diavoletto c'è già nel profilo;
+- nodi: circa 27.
 
 ### 8. PODIO: «raggi»
 
@@ -188,8 +190,8 @@ colore scuro della prima e della seconda squadra, la riga in mezzo dove sta «VS
 - **Un'ombra ai bordi (vignetta)**: servirebbe un'immagine sfumata grande; l'alone
   che c'è già fa la stessa cosa dove serve (armeria, podio, profilo).
 
-## Ordine proposto per l'implementazione
+## Implementazione (fatta)
 
-Una PR sola, piccola: `C.OFF` a `#ACA4A0`, i temi in `backdrop.lua`, una riga in
+Nella #218: `C.OFF` a `#ACA4A0`, i temi in `backdrop.lua`, una riga in
 ogni schermata (`backdrop.new("tema")` al posto di `ui.sfondo()`), lo scenario
 `menu_schermi.txt` esteso a tutte le schermate, foto a 4:3, 16:9 e 20:9.

@@ -14,6 +14,7 @@
 --   podio.destroy(p)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local scoria = require "battle.scoria"
 local game = require "sim.game"
 local awards = require "sim.awards"
@@ -131,7 +132,7 @@ end
 function M.new(results, giocatori, me, my_gain, prof, number)
 	local p = { giocatori = giocatori, me = me, figure = {}, buttons = {}, t = 0, numero = number }
 	-- background stretched over the whole screen, the rest in a group that adapts (FIT)
-	p.fondo = ui.sfondo()
+	p.fondo = backdrop.new("raggi")
 	p.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(p.radice, false)
 	local ranking = results.ranking

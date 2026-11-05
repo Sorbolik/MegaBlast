@@ -16,6 +16,7 @@
 --   schieramento.destroy(st)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local screen = require "ui.screen"
 local config = require "sim.config"
 local tag = require "ui.tag_card"
@@ -60,9 +61,26 @@ function M.posti(squads)
 	return xs, false
 end
 
+-- The teams' colors from left to right, for the background (ui/backdrop.lua):
+-- one per team as the tags stand (in free-for-all one per tag)
+function M.side_colors(squads, xs)
+	local order = {}
+	for i = 1, #squads do order[i] = i end
+	table.sort(order, function(a, b) return xs[a] < xs[b] or (xs[a] == xs[b] and a < b) end)
+	local colors, last = {}, nil
+	for _, i in ipairs(order) do
+		if squads[i] ~= last then colors[#colors + 1] = C.SQUADRA[squads[i]] or C.LIGHT end
+		last = squads[i]
+	end
+	return colors
+end
+
 function M.new(showcases, title)
 	local s = { vetrine = showcases, card_list = {}, t = config.LINEUP_SECONDS }
-	s.fondo = ui.sfondo()
+	local squads = {}
+	for i, v in ipairs(showcases) do squads[i] = v.squadra end
+	local xs, vs = M.posti(squads)
+	s.fondo = backdrop.new("schieramento", nil, M.side_colors(squads, xs))
 	-- title and time stick to the real edges (only a node without a parent
 	-- sticks), on the header's row (ui.header): the pill's place stays free
 	local top_left = gui.new_box_node(vec(ui.EDGE, ui.HEAD_Y + 14), vec(0, 0))
@@ -86,9 +104,6 @@ function M.new(showcases, title)
 	s.tally = ui.testo("", -12, 0, 0.95, C.LIGHT, top_right)
 	gui.set_pivot(s.tally, gui.PIVOT_W)
 
-	local squads = {}
-	for i, v in ipairs(showcases) do squads[i] = v.squadra end
-	local xs, vs = M.posti(squads)
 	for i, v in ipairs(showcases) do
 		v.verso = xs[i] < 640 and 1 or -1
 		s.card_list[i] = tag.new(v, xs[i], TOP, { portrait = true, tu = v.tu }, s.radice)
