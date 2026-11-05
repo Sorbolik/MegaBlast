@@ -205,6 +205,9 @@ return {
 	campaign = {
 		opens_with = "Si apre con %s stelle: ne hai %s",
 		stars_hint = "Le stelle si prendono nelle missioni dei capitoli prima",
+		-- the board (Sergio, 4 Nov): the next challenge, and the chapter's final strip
+		new = "NUOVA",
+		final = "FINALE · %s",
 	},
 
 	-- menu/lineup.lua: the line-up before the match

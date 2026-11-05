@@ -1,7 +1,8 @@
 -- Campaign (the home's CAMPAGNA button): the chapters of sim/campaign.lua in
--- tabs, the Training (the lessons) first. Each mission is a card with the
--- title, the stars taken and what it takes to get them all, so you know
--- beforehand how to do better, and its illustration (ui/illustrations.lua). A chapter opens with everyone's stars
+-- tabs, the Training (the lessons) first. Each chapter is the board of the
+-- Forge: its missions pinned as postcards with the illustration
+-- (ui/illustrations.lua), the title and the stars taken, the final as the
+-- wide strip at the bottom. A chapter opens with everyone's stars
 -- (chapter.serve): closed, it says how many are missing. Style in ui/ui.lua.
 --
 --   local campagna = require "menu.campaign"
@@ -21,11 +22,22 @@ local common = require("lang.text").common
 
 local M = {}
 
--- the missions in three columns
-local CARD_W, CARD_H, COLUMNS, STEP_Y = 360, 100, 3, 116
--- the illustration's window on the left of the card (WB-015, 16:9), and the
--- column of title and stars on its right
-local THUMB_W, THUMB_H, PAD = 148, 83, 9
+-- The board of the Forge (Sergio, 4 Nov, «me gusta»): the chapter's
+-- challenges pinned on a wooden board as parchment postcards, three a row,
+-- the illustration filling the card and title and stars on the band under
+-- it; the next one to do framed in gold; the chapter's final as the wide
+-- strip at the bottom, with a piece of its story panel. Sized so it fits on
+-- 4:3 too (960 wide)
+local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 268, 151, 34, 14, 12, 14
+local CARD_H, COLUMNS = 6 + PIC_H + BAND, 3
+-- the board's width with its frame (the tabs over it are as wide)
+local BOARD_OUTER = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X + 2 * BOARD_PAD + 12
+local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 56, 260, 44
+local function c4(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
+local PAPER, INK, INK_SOFT = c4(0.95, 0.88, 0.75), c4(0.12, 0.07, 0.05), c4(0.12, 0.07, 0.05, 0.22)
+local WOOD, WOOD_DARK, PLANK = c4(0.29, 0.17, 0.09), c4(0.17, 0.10, 0.05), c4(0.23, 0.13, 0.07)
+local NAIL, NAIL_LIGHT, EMPTY = c4(0.20, 0.20, 0.22), c4(0.62, 0.62, 0.66), c4(0.16, 0.10, 0.07)
+local GOLD_INK = c4(0.72, 0.50, 0.08)
 
 -- a text no wider than w: it shrinks (never deforms)
 local function fit(n, w)
@@ -47,49 +59,128 @@ local function is_opened(c, cap)
 end
 
 -- each star lit for its own criterion: also the first and third yes and the
--- second no. The cortile: «Fatta» and Favilla's medal (or «Fatta» alone)
+-- second no. The cortile: «Fatta» and Favilla's medal (or «Fatta» alone).
+-- Right aligned at x
 local function little_stars(picked, count, medal, x, y, parent)
 	for i = 1, count do
 		local draw = medal and i == 2 and ui.medaglia or ui.stella
 		local lit = medal and i == 2 and ui.MEDAL or ui.GOLD
-		draw(x + (i - (count + 1) / 2) * 28, y, 26, picked[i] and lit or ui.C.LINE, parent)
+		draw(x - (count - i) * 22 - 10, y, 20, picked[i] and lit or INK_SOFT, parent)
 	end
 end
 
+local function box(x, y, w, h, color, parent)
+	local n = gui.new_box_node(vec(x, y), vec(w, h))
+	gui.set_color(n, color)
+	gui.set_adjust_mode(n, gui.ADJUST_FIT)
+	gui.set_parent(n, parent)
+	return n
+end
+
+-- ink text on the parchment, its left end at x
+local function ink(t, x, y, scale, color, parent)
+	local n = ui.testo(t, x, y, scale, color or INK, parent)
+	gui.set_pivot(n, gui.PIVOT_W)
+	gui.set_outline(n, c4(0, 0, 0, 0))
+	gui.set_shadow(n, c4(0, 0, 0, 0))
+	return n
+end
+
+-- a nail at the top of a card
+local function nail(x, y, parent)
+	ui.disco(x, y, 18, NAIL, parent)
+	ui.disco(x - 3, y + 3, 7, NAIL_LIGHT, parent)
+end
+
+-- a card of the board (a button: tap and controller light), parchment with
+-- the ink border; the picture (or its empty place) at x, y on the card
+local function card(c, l, x, y, w, h, kind, pic_x, pic_y, pic_w, pic_h)
+	local n = ui.button(c.buttons, x, y, w, h, "", "missione:" .. l.id, nil, c.board)
+	local b = c.buttons[#c.buttons]
+	gui.set_color(n, PAPER)
+	b.riposo = INK
+	gui.set_color(b.bordo, INK)
+	box(pic_x, pic_y, pic_w + 4, pic_h + 4, INK, n)
+	local tex = ill.texture(l.id, kind)
+	if tex then
+		c.textures[#c.textures + 1] = { l.id, kind }
+		local t = box(pic_x, pic_y, pic_w, pic_h, c4(1, 1, 1), n)
+		gui.set_texture(t, tex)
+		-- where the picture is on the screen: the postcard zooms from here (ui/postcard.lua)
+		local bp = gui.get_position(c.board)
+		c.from[l.id] = { x = bp.x + x + pic_x, y = bp.y + y + pic_y + gui.get_position(c.radice).y, w = pic_w, h = pic_h }
+	else
+		box(pic_x, pic_y, pic_w, pic_h, EMPTY, n)
+	end
+	return n
+end
+
+-- the stars, or NUOVA on the next one to do, right aligned at x
+local function state(c, l, is_next, x, y, n)
+	if is_next then
+		local t = ui.testo(T.new, x, y, 0.62, GOLD_INK, n)
+		gui.set_pivot(t, gui.PIVOT_E)
+		gui.set_outline(t, c4(0, 0, 0, 0))
+		gui.set_shadow(t, c4(0, 0, 0, 0))
+		return t
+	end
+	little_stars(c.stelle[l.id] or {}, #missions.criteria(l), l.medaglia ~= nil, x, y, n)
+end
+
+-- the gold frame of the next one, behind its card
+local function gold(x, y, w, h, parent)
+	box(x, y, w + 10, h + 10, ui.GOLD, parent)
+end
+
 local function card_list(c, cap)
-	for i, l in ipairs(cap.missioni) do
-		local col, riga = (i - 1) % COLUMNS, math.floor((i - 1) / COLUMNS)
-		local x, y = 640 + (col - 1) * (CARD_W + 24), ui.BODY_TOP - CARD_H / 2 - riga * STEP_Y
-		local n = ui.button(c.buttons, x, y, CARD_W, CARD_H, "", "missione:" .. l.id, nil, c.radice)
-		local picked = c.stelle[l.id] or {}
-		-- with its illustration the texts go in the column on its right
-		local cx, cw = 0, CARD_W - 2 * PAD
-		local tex = ill.texture(l.id, "carta")
-		if tex then
-			c.textures[#c.textures + 1] = l.id
-			-- where the picture is on the screen: the postcard zooms from here (ui/postcard.lua)
-			c.from[l.id] = { x = x - CARD_W / 2 + PAD + THUMB_W / 2, y = y + gui.get_position(c.radice).y, w = THUMB_W, h = THUMB_H }
-			local t = gui.new_box_node(vec(-CARD_W / 2 + PAD + THUMB_W / 2, 0), vec(THUMB_W, THUMB_H))
-			gui.set_texture(t, tex)
-			gui.set_adjust_mode(t, gui.ADJUST_FIT)
-			gui.set_parent(t, n)
-			cw = CARD_W - THUMB_W - 3 * PAD
-			cx = CARD_W / 2 - PAD - cw / 2
-		end
-		fit(ui.testo(string.upper(l.titolo), cx, 26, 0.8, ui.C.TEXT, n), cw)
-		local cr, missing = missions.criteria(l), {}
-		little_stars(picked, #cr, l.medaglia ~= nil, cx, -2, n)
-		-- what is missing: the criteria of the unlit stars
-		for i = 2, #cr do
-			if not picked[i] then missing[#missing + 1] = cr[i] end
-		end
-		if #missing > 0 then fit(ui.testo(table.concat(missing, "  -  "), cx, -32, 0.55, ui.C.OFF, n), cw) end
+	local list = cap.missioni
+	-- the final: the chapter's last mission; the others pinned on the board
+	local final = #list > 1 and list[#list] or nil
+	local pinned = #list - (final and 1 or 0)
+	local rows = math.ceil(pinned / COLUMNS)
+	local inner_w = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X
+	local board_w = inner_w + 2 * BOARD_PAD
+	local board_h = 2 * BOARD_PAD + rows * CARD_H + (rows - 1) * GAP_Y + (final and GAP_Y + FINAL_H or 0)
+	local top = ui.BODY_TOP - 6
+	-- the board: dark frame, the wood, its planks
+	c.board = box(640, top - board_h / 2, board_w + 12, board_h + 12, WOOD_DARK, c.radice)
+	box(0, 0, board_w, board_h, WOOD, c.board)
+	for py = board_h / 2 - 58, -board_h / 2 + 10, -58 do box(0, py, board_w, 3, PLANK, c.board) end
+	-- the next one to do: the first without «Fatta»
+	local next_id
+	for _, l in ipairs(list) do
+		if not (c.stelle[l.id] or {})[1] then next_id = l.id; break end
+	end
+	local y0 = board_h / 2 - BOARD_PAD
+	for i = 1, pinned do
+		local l = list[i]
+		local col, row = (i - 1) % COLUMNS, math.floor((i - 1) / COLUMNS)
+		local x = -inner_w / 2 + CARD_W / 2 + col * (CARD_W + GAP_X)
+		local y = y0 - CARD_H / 2 - row * (CARD_H + GAP_Y)
+		if l.id == next_id then gold(x, y, CARD_W, CARD_H, c.board) end
+		local n = card(c, l, x, y, CARD_W, CARD_H, "carta", 0, CARD_H / 2 - 6 - PIC_H / 2, PIC_W, PIC_H)
+		local by = -CARD_H / 2 + BAND / 2 + 1
+		local title = ink(string.upper(l.titolo), -CARD_W / 2 + 12, by, 0.62, INK, n)
+		fit(title, CARD_W - 24 - (l.id == next_id and 70 or 26 * #missions.criteria(l)))
+		state(c, l, l.id == next_id, CARD_W / 2 - 12, by, n)
+		nail(x, y + CARD_H / 2 - 2, c.board)
+	end
+	if final then
+		local y = -board_h / 2 + BOARD_PAD + FINAL_H / 2
+		if final.id == next_id then gold(0, y, inner_w, FINAL_H, c.board) end
+		local px = -inner_w / 2 + 6 + FINAL_PIC_W / 2
+		local n = card(c, final, 0, y, inner_w, FINAL_H, "finale", px, 0, FINAL_PIC_W, FINAL_PIC_H)
+		local tx = px + FINAL_PIC_W / 2 + 22
+		fit(ink(T.final:format(string.upper(final.titolo)), tx, 0, 0.8, INK, n), inner_w / 2 - tx - 120)
+		state(c, final, final.id == next_id, inner_w / 2 - 16, 0, n)
+		nail(-inner_w / 2 + 8, y + FINAL_H / 2 - 2, c.board)
+		nail(inner_w / 2 - 8, y + FINAL_H / 2 - 2, c.board)
 	end
 end
 
 -- the card illustrations of the chapter shown, given back to the GPU
 local function release_textures(c)
-	for _, id in ipairs(c.textures or {}) do ill.release(id, "carta") end
+	for _, t in ipairs(c.textures or {}) do ill.release(t[1], t[2]) end
 	c.textures = {}
 end
 
@@ -104,14 +195,15 @@ local function build(c)
 	ui.header_delete(c.head)
 	c.head = ui.header(c.buttons, common.campaign, "indietro")
 	if c.storia then ui.button(c.buttons, -ui.EDGE - 110, 0, 220, 64, TS.read_again, "storia", nil, c.head.right) end
+	-- the chapters' tabs as wide as the board, over it (Sergio, 4 Nov)
 	local n = #payload.CAPITOLI
-	local w = math.min(420, math.floor(1100 / n) - 20)
+	local w = math.floor((BOARD_OUTER - 12 * (n - 1)) / n)
 	local chosen, tabs, active = nil, {}, 1
 	for i, cap in ipairs(payload.CAPITOLI) do
 		if c.scelta.chapter == cap.id then chosen, active = cap, i end
 		tabs[i] = { string.upper(cap.titolo), "capitolo:" .. cap.id, w }
 	end
-	ui.header_tabs(c.head, c.buttons, tabs, active)
+	ui.header_tabs(c.head, c.buttons, tabs, active, 640 - BOARD_OUTER / 2)
 	if is_opened(c, chosen) then
 		card_list(c, chosen)
 	else

@@ -1,7 +1,8 @@
-# Campagna: dalla home CAMPAGNA (1062 392) si apre l'Addestramento, le lezioni
-# in carte con le stelle e cosa serve per la prossima. Il I girone (scheda
-# 860 560) è chiuso finché non si hanno le stelle che servono. Sei lezioni: carte x 256 / 640 / 1024,
-# y 440 / 324 (Stammi dietro in alto a sinistra).
+# Campagna: dalla home CAMPAGNA (1062 392) si apre l'Addestramento, la bacheca
+# con le lezioni appese come cartoline con le stelle (scenario bacheca.txt). Il I
+# girone (scheda 672 578) è chiuso finché non si hanno le stelle che servono. Sei
+# carte: x 346 / 640 / 934, y 414 / 211 (Stammi dietro in alto a sinistra), il
+# finale sotto (640 76).
 # Stammi dietro fino al cancello, poi la fine del livello: Fatta e la medaglia,
 # RIPROVA 460 110, AVANTI 820 110, la freccia per la campagna 62 658.
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
