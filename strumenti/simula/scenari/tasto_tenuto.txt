@@ -1,0 +1,34 @@
+# Un tasto tenuto alla fine del turno non fa camminare il turno dopo (Sergio,
+# 5 nov): online, 2 contro 2 con tre giocatori finti, teniamo destra, spariamo
+# e la lasciamo nel turno di un altro. Il client manda i tasti solo nel suo
+# turno, quindi il server la teneva ancora premuta: al nostro turno dopo il
+# robot partiva verso destra finché non si ritoccava D. Ora il server lascia
+# i tasti a ogni cambio di turno e il client rimanda il suo stato a inizio turno.
+imposta server_url ws://127.0.0.1:8090/ws
+
+aspetta 1
+server 2v2 3
+tocca 1075 102                      # GIOCA
+aspetta 0.5
+tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
+aspetta_stato modo=scelta_online 20
+aspetta 1
+tocca 640 360                       # un tocco: alle armi
+aspetta 0.4
+tocca 320 410                       # primaria
+aspetta 0.5
+tocca 640 410                       # secondaria
+aspetta_stato modo=online 25
+aspetta_stato turno=1 fase=aim 10
+aspetta 1
+giu destra                          # destra tenuta...
+aspetta 1
+foto 00_cammina
+mira 150 -120 0.4                   # ...anche mentre si spara
+aspetta_stato turno=2 30
+su destra                           # lasciata nel turno di un altro
+aspetta_stato turno=1 fase=aim 120
+aspetta 0.5
+foto 01_turno_dopo
+fermo 2                             # il nostro turno: il robot resta fermo
+foto 02_fermo

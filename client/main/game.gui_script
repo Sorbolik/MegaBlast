@@ -729,6 +729,7 @@ local function new_match(self, seed, map, opts)
 	for _, n in ipairs(self.crate_nodes) do n.id = nil; gui.set_enabled(n.node, false) end
 	self.acc = 0
 	self.sent = {}
+	PAD.release_controls(self, true)
 	-- the camera already starts on whoever's turn it is
 	local rb = self.g.robots[self.g.current]
 	camera.from_terrain(self.cam, self.g.terrain, game.DISEGNO_H + 40)
@@ -1338,6 +1339,7 @@ local function handle_event(self, e)
 			self.weapon, self.tele_armed = m and m[1] or "missile", m and m[2] or false
 			self.hand_of = who
 		end
+		PAD.release_controls(self)
 		announce_turn(self, e.robot)
 	elseif e.type == "death" then
 		-- collapses and fades by itself; after 1.5 s it reappears elsewhere, in the same turn
@@ -2843,15 +2845,52 @@ local function move_pad_release(self)
 	pad_release(self.move_pad, MOVE_IDLE)
 end
 
+-- The aim stick let go without a shot
+local function aim_pad_drop(self)
+	sticks.reset(self.aim_st)
+	self.aiming = false
+	pad_release(self.aim_pad, AIM_IDLE)
+end
+
+-- A stick whose finger lifted without us hearing it (Sergio, 5 Nov: the
+-- movement stick stayed stuck for the whole match): its finger no longer
+-- holds it (self.pointers), or isn't among those on the screen (touches: the
+-- list of a multitouch action, with all of them)
+local function lost_finger(self, pad, kind, touches)
+	local id = pad.id
+	if not id then return false end
+	if self.pointers[id] ~= kind then return true end
+	if not touches then return false end
+	for _, t in ipairs(touches) do
+		if t.id == id then return false end
+	end
+	self.pointers[id] = nil
+	return true
+end
+
+-- ...and it is let go (the aim without a shot)
+function PAD.drop_lost_sticks(self, touches)
+	if lost_finger(self, self.move_pad, "move", touches) then move_pad_release(self) end
+	if lost_finger(self, self.aim_pad, "pad_aim", touches) then aim_pad_drop(self) end
+end
+
+-- Keys and sticks let go: at every match start everything (a release lost
+-- in the menus or on the podium kept the stick held in the next match); at
+-- every turn start the walk and the jump, which a key or a finger really
+-- held turns back on at once (they arrive every frame)
+function PAD.release_controls(self, all)
+	self.keys, self.pad_jump = {}, false
+	sticks.reset(self.move_st)
+	if not all then return end
+	self.pointers = {}
+	PAD.drop_lost_sticks(self)
+end
+
 -- Sticks on (phone) or off (computer)
 local function set_touch_ui(self, on)
 	if self.touch_ui == on then return end
 	if self.move_pad.id then move_pad_release(self) end
-	if self.aim_pad.id then
-		sticks.reset(self.aim_st)
-		self.aiming = false
-		pad_release(self.aim_pad, AIM_IDLE)
-	end
+	if self.aim_pad.id then aim_pad_drop(self) end
 	self.touch_ui = on
 	gui.set_position(self.btn_tele.nodo, on and TELE_BTN_TOUCH or TELE_BTN_DESK)
 	self.tele_state = nil
@@ -4042,7 +4081,9 @@ function update(self, dt)
 				if self.conta then CP.conta.sparo(self.conta, self.g, self.fire.weapon) end
 			end
 		else
-			self.sent.l, self.sent.r, self.sent.j = false, false, false
+			-- unknown: at the next turn (or aim) the state is sent anyway, because the
+			-- server may still hold keys from before (Sergio, 5 Nov: the turn started walking)
+			self.sent.l, self.sent.r, self.sent.j = nil, nil, nil
 		end
 		self.jump_pressed = false
 		self.fire = nil
@@ -4222,9 +4263,7 @@ end
 -- Cancels the stick's aim: back to rest, and releasing it fires nothing
 local function cancel_pad_aim(self)
 	self.pointers[self.aim_pad.id] = "cancelled"
-	sticks.reset(self.aim_st)
-	self.aiming = false
-	pad_release(self.aim_pad, AIM_IDLE)
+	aim_pad_drop(self)
 	show_message(self, TM.aim_cancelled)
 	missions.tocca(self.missione, "annulla")
 end
@@ -4304,6 +4343,10 @@ local function pointer_down(self, id, px, py)
 	elseif self.mode ~= "local" and self.mode ~= "online" then
 		return
 	end
+	-- this finger is new: what it did before ended with a release we didn't
+	-- hear, and a stick it held is let go
+	self.pointers[id] = nil
+	PAD.drop_lost_sticks(self)
 	-- the big vignette: only its button goes on (battle/vignette.lua)
 	if self.carta then
 		if self.carta:premi(px, py) then PAD.close_card(self) end
@@ -4389,9 +4432,7 @@ local function pointer_up(self, id, x, y)
 	self.pointers[id] = nil
 	if not self.g and (m == "aim" or m == "pad_aim") then
 		-- a finger still down when the match was let go (show_menu): no shot
-		sticks.reset(self.aim_st)
-		self.aiming = false
-		pad_release(self.aim_pad, AIM_IDLE)
+		aim_pad_drop(self)
 	elseif m == "zoom" then
 		ZM.release(self)
 	elseif m == "move" then
@@ -5024,6 +5065,7 @@ function PAD.on_input(self, action_id, action)
 		end
 		-- a finger turns on the sticks (also after a key or the controller)
 		if not self.touch_ui and COMMANDS ~= "computer" then set_touch_ui(self, true) end
+		PAD.drop_lost_sticks(self, action.touch)
 		for _, t in ipairs(action.touch) do
 			if t.pressed then
 				pointer_down(self, t.id, t.x, t.y)
