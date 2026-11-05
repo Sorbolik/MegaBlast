@@ -333,9 +333,15 @@ func (r *Room) Tick() bool {
 		r.close()
 		return false
 	}
-	// jump and fire count for one tick only; held keys stay
+	// jump and fire count for one tick only; held keys stay, but not into the
+	// next turn: a release that arrives after the turn is over (the client sends
+	// only on its own turn) would make the next one start walking (Sergio, 5 Nov)
+	next := r.sim.Current() - 1
 	for _, s := range r.seats {
 		s.in.jump, s.in.fire = false, false
+		if next != cur {
+			s.in = held{}
+		}
 	}
 	for _, e := range r.sim.Events() {
 		r.broadcast(e)
