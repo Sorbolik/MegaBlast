@@ -13,6 +13,7 @@
 --   campagna.destroy(c)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local payload = require "sim.campaign"
 local missions = require "sim.missions"
 local ill = require "ui.illustrations"
@@ -27,7 +28,7 @@ local M = {}
 -- the illustration filling the card and title and stars on the band under
 -- it; the next one to do framed in gold; the chapter's final as the wide
 -- strip at the bottom, with a piece of its story panel. The wood is the whole
--- screen (wall()), the cards in the middle, sized so they fit on
+-- screen (ui/backdrop.lua), the cards in the middle, sized so they fit on
 -- 4:3 too (960 wide)
 local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 268, 151, 34, 14, 12, 14
 local CARD_H, COLUMNS = 6 + PIC_H + BAND, 3
@@ -36,17 +37,9 @@ local BOARD_OUTER = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X + 2 * BOARD_PAD + 1
 local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 56, 260, 44
 local function c4(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 local PAPER, INK, INK_SOFT = c4(0.95, 0.88, 0.75), c4(0.12, 0.07, 0.05), c4(0.12, 0.07, 0.05, 0.22)
-local WOOD, PLANK = c4(0.29, 0.17, 0.09), c4(0.23, 0.13, 0.07)
--- the wall of planks behind everything (Sergio, 5 Nov: the board fills the
--- whole screen): long planks PLANK_H tall, every other one a touch darker, the
--- seam between them, a few lines of grain and, rarely, a joint
-local PLANK_H, WOOD_ALT, GRAIN = 58, c4(0.265, 0.155, 0.08), c4(0.33, 0.20, 0.11)
--- the soft text on the wood (ui.C.OFF is 3.5:1 on it, this 5.5:1 at least)
+-- the soft text on the wood (ui.C.OFF is 3.5:1 on it, this 6.2:1): the
+-- parchment dimmed
 local HINT = c4(0.78, 0.70, 0.60)
--- the grain and the joints of each plank, from these numbers in turn (no
--- random: the same wall every time): { grain y, grain x, grain length, joint x }
-local PATTERN = { { 14, -420, 700, 610 }, { -12, 260, 900, -150 }, { 6, -760, 520, 980 },
-	{ -16, 120, 640, -820 }, { 10, -180, 980, 330 } }
 local NAIL, NAIL_LIGHT, EMPTY = c4(0.20, 0.20, 0.22), c4(0.62, 0.62, 0.66), c4(0.16, 0.10, 0.07)
 local GOLD_INK = c4(0.72, 0.50, 0.08)
 
@@ -153,7 +146,7 @@ local function card_list(c, cap)
 	local board_w = inner_w + 2 * BOARD_PAD
 	local board_h = 2 * BOARD_PAD + rows * CARD_H + (rows - 1) * GAP_Y + (final and GAP_Y + FINAL_H or 0)
 	local top = ui.BODY_TOP - 6
-	-- the board is the whole screen (wall()): here only where the cards hang
+	-- the board is the whole screen (ui/backdrop.lua): here only where the cards hang
 	c.board = box(640, top - board_h / 2, board_w + 12, board_h + 12, c4(0, 0, 0, 0), c.radice)
 	-- the next one to do: the first without «Fatta»
 	local next_id
@@ -187,25 +180,6 @@ local function card_list(c, cap)
 	end
 end
 
--- The wooden wall on the whole screen, on any proportion (ui/screen.lua): it
--- covers up to 2 times the 1280 x 720 frame each way (20:9, 4:3 and the
--- square foldables fit with room to spare). The cards stay in the middle
-local function wall()
-	local n = ui.sfondo()
-	gui.set_color(n, WOOD)
-	local rows = math.ceil(720 / PLANK_H)
-	for i = -rows, rows do
-		local y = i * PLANK_H
-		local mid = y + PLANK_H / 2
-		if i % 2 ~= 0 then box(0, mid, 1280 * 2, PLANK_H, WOOD_ALT, n) end
-		box(0, y, 1280 * 2, 3, PLANK, n)
-		local p = PATTERN[i % #PATTERN + 1]
-		box(p[2], mid + p[1], p[3], 2, GRAIN, n)
-		box(p[2] + 900, mid - p[1] / 2, p[3] / 2, 2, GRAIN, n)
-		box(p[4], mid, 3, PLANK_H, PLANK, n)
-	end
-	return n
-end
 
 -- the card illustrations of the chapter shown, given back to the GPU
 local function release_textures(c)
@@ -250,7 +224,7 @@ function M.new(choice, stars, story)
 			if is_opened(c, cap) then choice.chapter = cap.id end
 		end
 	end
-	c.fondo = wall()
+	c.fondo = backdrop.new("legno")
 	build(c)
 	return c
 end
