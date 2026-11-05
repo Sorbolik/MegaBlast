@@ -191,7 +191,7 @@ end
 --
 --   local h = ui.header(list_of, "ARMERIA", "indietro")   -- nil action: no back button
 --   local radice = ui.radice()                             -- the content's root, in game coordinates
---   ui.header_tabs(h, list_of, { { "SET", "scheda:set", 150 }, ... }, active_index)
+--   ui.header_tabs(h, list_of, { { "SET", "scheda:set", 150 }, ... }, active_index [, x0])
 --   ...children of h.right at x < 0 (h.right is the right edge, y the header's center)
 M.EDGE = 30
 M.HEAD_Y = 720 - 62            -- center of the header row (of the back button)
@@ -234,11 +234,11 @@ function M.header(list_of, title, back_action)
 	return h
 end
 
--- The tabs: { label, action, width } from the left edge; returns their nodes
-function M.header_tabs(h, list_of, tabs, active)
+-- The tabs: { label, action, width } from the left edge (or from x0); returns their nodes
+function M.header_tabs(h, list_of, tabs, active, x0)
 	if h.tabs then gui.delete_node(h.tabs) end
 	h.tabs = M.radice()
-	local x, nodes = M.EDGE, {}
+	local x, nodes = x0 or M.EDGE, {}
 	for i, t in ipairs(tabs) do
 		nodes[i] = M.scheda(list_of, x + t[3] / 2, M.TABS_Y, t[3], M.TAB_H, t[1], t[2], i == active, h.tabs)
 		x = x + t[3] + 12
