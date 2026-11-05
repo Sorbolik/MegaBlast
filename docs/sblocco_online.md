@@ -194,6 +194,16 @@ forgia**: il pezzo più semplice da capire (camminare sulla brace), si vede subi
 l'equipaggiamento cambia già la velocità a terra, quindi il bonus piccolo è naturale. Elmo e
 corazza restano per dopo (la corazza è il pezzo più grande, meglio come premio di un girone).
 
+## Confermato il 5 nov
+
+Sergio («3 ok»): EVENTI dopo 3 partite online finite; la carta della CAMPAGNA con la
+miniatura del capitolo; profilo e impostazioni da subito; partite private dentro GIOCA
+ONLINE, classifica dentro EVENTI, negozio alla prima moneta guadagnata; finita la Forgia
+prima ARMERIA e poi il disegno della CAMPAGNA che passa all'imbuto; niente pastiglia NUOVO
+(un bagliore leggero fino al primo tocco); un'impostazione nascosta che sblocca tutto
+([impostazioni.md](impostazioni.md)). **Ancora aperta: la disposizione** (il posto del
+pollice a CAMPAGNA o a GIOCA ONLINE).
+
 ## Scartate
 
 - **Fine dell'Addestramento**: è il bivio piatto che Sergio non vuole, la campagna non è ancora provata.

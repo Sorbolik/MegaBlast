@@ -28,6 +28,7 @@ nel codice (se c'è già un interruttore).
 | Togliere un tasto | Un comando del controller resta senza tasto (Y sulla riga) | — | Sergio, 30 ott | **c'è**: IMPOSTAZIONI |
 | Contatore FPS | In alto al centro FPS, frame peggiore, scatti dell'ultimo minuto e la loro causa; ogni scatto anche nella console ([prestazioni.md](prestazioni.md)) | spento | Sergio, 2 nov ("come facciamo a misurare gli FPS in maniera affidabile") | **c'è**: IMPOSTAZIONI (`fps`), `client/ui/frames.lua` |
 | Segui sempre il mio personaggio | Anche allo zoom massimo la camera resta sul tuo personaggio invece di mostrare tutto lo spazio di gioco | spenta | proposta di Claude a Sergio, 3 nov (zoom continuo, scelta C1) | — (`TOWARD_SPACE` in `client/battle/camera.lua`) |
+| Sblocca tutto (nascosta) | Apre subito tutti i pulsanti della home, per le prove di Sergio e per il simulatore; non si vede nella schermata delle impostazioni normale | spenta | Sergio, 5 nov («3 ok» alle proposte dello sblocco, [sblocco_online.md](sblocco_online.md)) | — (oggi la home non ha sblocchi) |
 | HUD sistemabile | Il giocatore sposta i pulsanti della battaglia | predefiniti | Sergio, 29 ott ([interfaccia](decisioni/interfaccia.md)) | — |
 
 Non ci saranno (decisioni di Sergio): qualità grafica a livelli. (La rimappatura dei tasti ora c'è, per il controller: Sergio, 30 ott.)
