@@ -158,3 +158,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 4 nov | Home che cresce (senza STESSO TELEFONO): all'inizio solo CAMPAGNA, gli altri pulsanti appaiono negli sblocchi della campagna senza spostare quelli vecchi; online battendo Caronte. | questa PR |
 | 4 nov | Bug: rivedendo un momento di una partita dal profilo il gioco si fermava anche 1-2 secondi. I bot ripensavano tutte le mosse fino a quel punto; ora le loro mosse sono salvate nella ricetta e il replay ci arriva subito. | questa PR |
 | 4 nov | La CAMPAGNA diventa la bacheca della Forgia: sfide appese come cartoline 3 per riga, la prossima col bordo d'oro, il finale del capitolo nella striscia larga sotto (Sergio, proposta della bacheca). | questa PR |
+| 5 nov | Sblocchi della home confermati: EVENTI dopo 3 partite online, partite private dentro GIOCA ONLINE, classifica dentro EVENTI, negozio alla prima moneta, niente NUOVO, impostazione nascosta che sblocca tutto. | questa PR |
