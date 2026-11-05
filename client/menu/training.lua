@@ -17,6 +17,7 @@
 --   allenamento.open_maps(stelle)  -- the ids of the maps that can be played (A CASO picks among these)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local campaign = require "sim.campaign"
 local maps = require "sim.maps"
 local T = require("lang.text").training
@@ -149,7 +150,7 @@ function M.new(choice, stars)
 	for i, m in ipairs(MAPS) do
 		if m.id == choice.mappa then a.da = math.max(1, i + 2 - VISIBLE) end
 	end
-	a.fondo = ui.sfondo()
+	a.fondo = backdrop.new("campo")
 	build(a)
 	return a
 end

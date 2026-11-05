@@ -13,6 +13,7 @@
 --   campagna.destroy(c)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local payload = require "sim.campaign"
 local missions = require "sim.missions"
 local ill = require "ui.illustrations"
@@ -26,7 +27,8 @@ local M = {}
 -- challenges pinned on a wooden board as parchment postcards, three a row,
 -- the illustration filling the card and title and stars on the band under
 -- it; the next one to do framed in gold; the chapter's final as the wide
--- strip at the bottom, with a piece of its story panel. Sized so it fits on
+-- strip at the bottom, with a piece of its story panel. The wood is the whole
+-- screen (ui/backdrop.lua), the cards in the middle, sized so they fit on
 -- 4:3 too (960 wide)
 local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 268, 151, 34, 14, 12, 14
 local CARD_H, COLUMNS = 6 + PIC_H + BAND, 3
@@ -35,7 +37,9 @@ local BOARD_OUTER = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X + 2 * BOARD_PAD + 1
 local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 56, 260, 44
 local function c4(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 local PAPER, INK, INK_SOFT = c4(0.95, 0.88, 0.75), c4(0.12, 0.07, 0.05), c4(0.12, 0.07, 0.05, 0.22)
-local WOOD, WOOD_DARK, PLANK = c4(0.29, 0.17, 0.09), c4(0.17, 0.10, 0.05), c4(0.23, 0.13, 0.07)
+-- the soft text on the wood (ui.C.OFF is 3.5:1 on it, this 6.2:1): the
+-- parchment dimmed
+local HINT = c4(0.78, 0.70, 0.60)
 local NAIL, NAIL_LIGHT, EMPTY = c4(0.20, 0.20, 0.22), c4(0.62, 0.62, 0.66), c4(0.16, 0.10, 0.07)
 local GOLD_INK = c4(0.72, 0.50, 0.08)
 
@@ -142,10 +146,8 @@ local function card_list(c, cap)
 	local board_w = inner_w + 2 * BOARD_PAD
 	local board_h = 2 * BOARD_PAD + rows * CARD_H + (rows - 1) * GAP_Y + (final and GAP_Y + FINAL_H or 0)
 	local top = ui.BODY_TOP - 6
-	-- the board: dark frame, the wood, its planks
-	c.board = box(640, top - board_h / 2, board_w + 12, board_h + 12, WOOD_DARK, c.radice)
-	box(0, 0, board_w, board_h, WOOD, c.board)
-	for py = board_h / 2 - 58, -board_h / 2 + 10, -58 do box(0, py, board_w, 3, PLANK, c.board) end
+	-- the board is the whole screen (ui/backdrop.lua): here only where the cards hang
+	c.board = box(640, top - board_h / 2, board_w + 12, board_h + 12, c4(0, 0, 0, 0), c.radice)
 	-- the next one to do: the first without «Fatta»
 	local next_id
 	for _, l in ipairs(list) do
@@ -178,6 +180,7 @@ local function card_list(c, cap)
 	end
 end
 
+
 -- the card illustrations of the chapter shown, given back to the GPU
 local function release_textures(c)
 	for _, t in ipairs(c.textures or {}) do ill.release(t[1], t[2]) end
@@ -209,7 +212,7 @@ local function build(c)
 	else
 		local has_it = total(c.stelle)
 		ui.testo(T.opens_with:format(chosen.serve, has_it), 640, 400, 1, C.TEXT, c.radice)
-		ui.testo(T.stars_hint, 640, 350, 0.75, C.OFF, c.radice)
+		ui.testo(T.stars_hint, 640, 350, 0.75, HINT, c.radice)
 	end
 end
 
@@ -221,7 +224,7 @@ function M.new(choice, stars, story)
 			if is_opened(c, cap) then choice.chapter = cap.id end
 		end
 	end
-	c.fondo = ui.sfondo()
+	c.fondo = backdrop.new("legno")
 	build(c)
 	return c
 end

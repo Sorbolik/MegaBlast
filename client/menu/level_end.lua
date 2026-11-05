@@ -18,6 +18,7 @@
 --   fine_livello.destroy(f)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local T = require("lang.text").level_end
 local common = require("lang.text").common
 
@@ -33,7 +34,7 @@ local function vec(x, y) return vmath.vector3(x, y, 0) end
 function M.new(o, sound)
 	local f = { buttons = {}, t = 0, sound = sound, lit_ones = 0, prese = {} }
 	local n = 0
-	f.fondo = ui.sfondo()
+	f.fondo = backdrop.new("legno")
 	f.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(f.radice, false)
 	local c = ui.C

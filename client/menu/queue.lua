@@ -12,6 +12,7 @@
 --   coda.destroy(c)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local events = require "main.events"
 local T = require("lang.text").queue
 local common = require("lang.text").common
@@ -95,7 +96,7 @@ end
 
 function M.new()
 	local c = {}
-	c.fondo = ui.sfondo()
+	c.fondo = backdrop.new("arena")
 	build(c)
 	return c
 end

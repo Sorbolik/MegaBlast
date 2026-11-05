@@ -14,6 +14,7 @@
 --   impostazioni.destroy(s)
 
 local ui = require "ui.ui"
+local backdrop = require "ui.backdrop"
 local glyph = require "ui.glyph"
 local controller = require "ui.controller"
 local profile = require "menu.profile"
@@ -108,7 +109,7 @@ end
 function M.new(p, c)
 	local s = { p = p, c = c }
 	controller.levette = profile.setting(p, "levette")
-	s.fondo = ui.sfondo()
+	s.fondo = backdrop.new("banco")
 	build(s)
 	return s
 end
