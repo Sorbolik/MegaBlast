@@ -158,9 +158,11 @@ sull'anello del primo girone, nella mappa, una riga dice che apre le partite onl
 la cosa che sblocca. Il gioco non ti porta in home apposta: se dalla fine della missione vai
 avanti alla missione dopo, l'animazione aspetta la prossima volta che apri la home.
 
-**Disposizione ancora aperta** (Sergio, 4 nov: «il tasto più importante è gioca online,
-quello la gente vorrà fare dopo poco»). Due varianti: il posto del pollice al portale della
-CAMPAGNA (negli schizzi) oppure a GIOCA ONLINE, con CAMPAGNA sopra; si sceglie dopo.
+**Disposizione** (fissata il 5 nov sull'«ok» di Sergio al riepilogo che la consigliava,
+reversibile): il posto del pollice va al **portale della CAMPAGNA** con la miniatura del
+capitolo, come negli schizzi; GIOCA ONLINE, il più importante quando arriva (Sergio, 4 nov),
+sta subito sopra, grande e dorato. Scartata per ora la variante col pollice a GIOCA ONLINE:
+all'inizio CAMPAGNA starebbe sopra un posto vuoto.
 
 **Posti fissi.** Ogni pulsante ha da subito il suo posto definitivo; un posto non ancora
 aperto è semplicemente vuoto. Quando un pulsante arriva, occupa il suo posto e nessun altro
@@ -201,8 +203,8 @@ miniatura del capitolo; profilo e impostazioni da subito; partite private dentro
 ONLINE, classifica dentro EVENTI, negozio alla prima moneta guadagnata; finita la Forgia
 prima ARMERIA e poi il disegno della CAMPAGNA che passa all'imbuto; niente pastiglia NUOVO
 (un bagliore leggero fino al primo tocco); un'impostazione nascosta che sblocca tutto
-([impostazioni.md](impostazioni.md)). **Ancora aperta: la disposizione** (il posto del
-pollice a CAMPAGNA o a GIOCA ONLINE).
+([impostazioni.md](impostazioni.md)). **La disposizione** è fissata così: il
+posto del pollice alla CAMPAGNA, GIOCA ONLINE sopra (reversibile).
 
 ## Scartate
 
