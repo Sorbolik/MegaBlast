@@ -13,7 +13,8 @@
 --   scoria.set_weapon(s, nome) / hit(s, dx) / fire(s, kind) / lunge(s) / die(s)
 --   scoria.set_color(s, color)     -- the team changes from one match to the next
 -- stato: x, y, facing, grounded, moving, aim (nil if not aiming), turno (it is their turn),
--- paracadute (hanging from the open parachute), vittoria (celebrates on the podium)
+-- paracadute (hanging from the open parachute), vittoria (celebrates on the podium),
+-- posa (a clip of battle/animations.lua played from the start, hands free: Favilla showing a move)
 --
 -- Pieces: head (with goggles and horns, in four faces), torso, two legs, two
 -- arms (a single piece per arm, with the fist), the wing, the tail in segments,
@@ -688,7 +689,12 @@ function M.update(s, dt, st)
 	-- straps) no
 	-- st.fermo: only idle, without weapon and without skits (the home)
 	if st.turno or st.aim ~= nil or st.fermo then s.holding_weapon = false end
-	local in_hand = (st.turno or st.aim ~= nil or s.holding_weapon) and not s.morte and not st.vittoria and not para
+	-- st.posa: a clip played once from the start (Favilla showing a move,
+	-- sim/missions.lua dimostra), hands free
+	local posing = st.posa and A[st.posa]
+	if st.posa ~= s.posa_name then s.posa_name, s.posa_t = st.posa, 0 end
+	if posing then s.posa_t = s.posa_t + dt end
+	local in_hand = (st.turno or st.aim ~= nil or s.holding_weapon) and not s.morte and not st.vittoria and not para and not posing
 	local aim_name = st.aim ~= nil and not s.morte and not para
 	-- the clips: with the weapon in hand the _arma ones, aiming while still mira
 	-- (the weapon's own if any)
@@ -735,6 +741,8 @@ function M.update(s, dt, st)
 		pose.aggiungi(po, clip.corsa, s.passo / (2 * pi) * clip.corsa.duration, c)
 	elseif st.vittoria then
 		pose.aggiungi(po, A.vittoria, s.t, 1)
+	elseif posing then
+		pose.aggiungi(po, posing, s.posa_t, 1)
 	elseif not st.turno and not aim_name and not st.fermo then
 		-- idle, not their turn: a skit now and then
 		waiting(s, dt)

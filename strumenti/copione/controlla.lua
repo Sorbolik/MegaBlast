@@ -51,7 +51,17 @@ local SEGNAPOSTO = insieme({ "salta", "cammina", "mira", "annulla" })
 local USATO = insieme({ "primaria", "secondaria", "attrezzo" })
 -- le chiavi di un quando / fino (client/sim/missions.lua, when)
 local CHIAVI = insieme({ "uno", "evento", "di", "arma", "passo", "turno", "turno_altri", "di_turno", "tocca",
-	"usato", "finestra", "in_caduta", "corona", "conta", "almeno" })
+	"usato", "finestra", "in_caduta", "corona", "conta", "almeno", "vicino" })
+-- le mosse di Favilla quando mostra (client/sim/missions.lua, dimostra): un verbo ciascuna
+local MOSSE = insieme({ "cammina", "salta", "arma", "aspetta", "dice", "posa" })
+local LATI = insieme({ "destra", "sinistra", "su" })
+-- le clip delle animazioni (client/battle/animations.lua) che Favilla può fare in posa
+local CLIP = {}
+do
+	local h = assert(io.open("client/battle/animations.lua"))
+	for nome in h:read("*a"):gmatch("\n\t([%w_]+) = { duration") do CLIP[nome] = true end
+	h:close()
+end
 local MAPPA_W, MAPPA_H = 1920, 1080
 
 -- niente funzioni, da nessuna parte
@@ -86,6 +96,7 @@ local function condizione(q, dove, passi)
 	if q.usato and not USATO[q.usato] then male(dove, "usato è primaria, secondaria o attrezzo") end
 	if q.corona and q.corona ~= "tu" then male(dove, "corona è tu") end
 	if q.almeno and not q.conta then male(dove, "almeno vale solo con conta") end
+	if q.vicino and not (type(q.vicino) == "number" and q.vicino > 0) then male(dove, "vicino è una distanza in pixel") end
 	for i, o in ipairs(q.uno or {}) do condizione(o, dove .. ".uno[" .. i .. "]", passi) end
 end
 
@@ -134,6 +145,46 @@ local function livello(l, cap)
 	if l.scintilla then dentro(l.scintilla.x, l.scintilla.y, dove .. ".scintilla") end
 	if l.guida then
 		for i, pt in ipairs(l.guida.percorso or {}) do dentro(pt.x, pt.y, dove .. ".guida[" .. i .. "]") end
+	end
+	-- Favilla che mostra le mosse: un giocatore con insegna, della tua squadra
+	local maestra = nil
+	for i, p in ipairs(l.giocatori or {}) do
+		if p.insegna then
+			if maestra then male(dove, "due giocatori con insegna") end
+			maestra = i
+			if i == 1 then male(dove, "insegna: il primo giocatore sei tu") end
+			if p.bot then male(dove, "insegna: Favilla non è un bot (si muove con le mosse di dimostra)") end
+			if l.giocatori[1] and p.team ~= l.giocatori[1].team then male(dove, "insegna: Favilla è della tua squadra") end
+		end
+	end
+	if l.dimostra and not maestra then male(dove, "dimostra senza un giocatore con insegna = true") end
+	if maestra and l.guida then male(dove, "Favilla vera (insegna) e la comparsa (guida) insieme") end
+	for i, d in ipairs(l.dimostra or {}) do
+		local dd = dove .. ".dimostra[" .. i .. "]"
+		if d.quando then condizione(d.quando, dd .. ".quando", passi) end
+		if type(d.mosse) ~= "table" or #d.mosse == 0 then male(dd, "nessuna mossa") end
+		for k, m in ipairs(d.mosse or {}) do
+			local dm = dd .. ".mosse[" .. k .. "]"
+			local n = 0
+			for verbo in pairs(m) do
+				if MOSSE[verbo] then n = n + 1 end
+			end
+			if n ~= 1 then male(dm, "ogni mossa ha un verbo solo (cammina, salta, arma, aspetta, dice, posa)") end
+			for campo in pairs(m) do
+				if not (MOSSE[campo] or campo == "angolo" or campo == "potenza" or campo == "secondi") then
+					male(dm, "campo sconosciuto " .. tostring(campo))
+				end
+			end
+			if m.cammina then dentro(m.cammina, nil, dm) end
+			if m.salta and not LATI[m.salta] then male(dm, "salta è destra, sinistra o su") end
+			if m.arma and not game.WEAPONS[m.arma] then male(dm, "arma sconosciuta " .. tostring(m.arma)) end
+			if m.potenza and not (type(m.potenza) == "number" and m.potenza > 0 and m.potenza <= 1) then
+				male(dm, "potenza da 0 a 1")
+			end
+			if m.aspetta and not (type(m.aspetta) == "number" and m.aspetta > 0) then male(dm, "aspetta: secondi") end
+			if m.dice then testo(m.dice, dm) end
+			if m.posa and not CLIP[m.posa] then male(dm, "posa: clip sconosciuta " .. tostring(m.posa)) end
+		end
 	end
 	for i, r in ipairs(l.righe or {}) do
 		local dr = dove .. ".righe[" .. i .. "]"

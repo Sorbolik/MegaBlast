@@ -14,13 +14,13 @@ local ORDINE = {}
 for i, k in ipairs({ "id", "titolo", "tipo", "goal_text", "highlight", "guidata", "mappa", "arena", "spawns",
 	"giocatori", "nascosti", "vita", "punti", "regrow", "vedi", "no_weapons", "without_time", "draft", "globi",
 	"secondi", "al_tempo", "al_posto", "plans", "casse", "cards", "guida", "scintilla", "turni", "stelle",
-	"medaglia", "obiettivo", "righe", "collaudo",
+	"medaglia", "obiettivo", "righe", "dimostra", "collaudo",
 	-- dentro: giocatori, passi, righe, casse, guida
-	"team", "bot", "dummy", "carattere", "pick", "secondary", "tool", "nome", "battute", "pelle",
+	"team", "bot", "dummy", "carattere", "pick", "secondary", "tool", "nome", "battute", "pelle", "insegna",
 	"x", "y", "from", "w", "h", "t", "salto", "parte", "gara", "percorso",
 	"reach", "flag", "prendi", "hit", "down", "usa", "win", "con", "come", "times", "globi", "only", "zoom",
 	"testo", "mostra", "faccia", "quando", "fino", "subito", "stops",
-	"dopo", "arma", "give" }) do
+	"dopo", "arma", "give", "mosse", "cammina", "salta", "angolo", "potenza", "aspetta", "dice", "posa", "secondi" }) do
 	ORDINE[k] = ORDINE[k] or i
 end
 
@@ -96,6 +96,14 @@ do
 	for nome in src:match("M%.FACCE = (%b{})"):gmatch("([%w_]+) = true") do facce[nome] = true end
 end
 
+-- le clip delle animazioni: le pose che Favilla può fare quando mostra (dimostra)
+local clip = {}
+do
+	local h = assert(io.open("client/battle/animations.lua"))
+	for nome in h:read("*a"):gmatch("\n\t([%w_]+) = { duration") do clip[nome] = true end
+	h:close()
+end
+
 local armi = {}
 for w in pairs(game.WEAPONS) do
 	armi[w] = { nome = it.hud.weapons[w] or w:upper(), secondaria = game.SECONDARY[w] or nil, attrezzo = game.TOOLS[w] or nil }
@@ -119,6 +127,7 @@ io.write(json({
 	capitoli = capitoli,
 	catalogo = {
 		armi = armi, eventi = insieme(eventi), disegni = insieme(disegni), facce = insieme(facce), mappe = mappe,
+		pose = insieme(clip),
 		gesti = it.match.gestures.telefono,
 		mondo = { w = 1920, h = 1080 },
 	},

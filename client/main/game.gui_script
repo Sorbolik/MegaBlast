@@ -1949,7 +1949,7 @@ function CP.vetrine(self, players, name_list, opt)
 	local out = {}
 	local my_team = players[opt.me] and players[opt.me].team
 	for i, p in ipairs(players) do
-		local under = i == opt.me and TM.roles.you or p.dummy and TM.roles.dummy or p.team == my_team and TM.roles.mate or TM.roles.opponent
+		local under = i == opt.me and TM.roles.you or (p.dummy and not p.insegna) and TM.roles.dummy or p.team == my_team and TM.roles.mate or TM.roles.opponent
 		local v
 		if opt.rete then
 			v = CP.vetrina.from_net(opt.rete[i], name_list[i], p.team, under)
@@ -2026,7 +2026,7 @@ function CP.inizio(self, me, net, cluster, replay_ok)
 	for i, rb in ipairs(self.g.robots) do
 		local n = self.names[i]
 		name_list[i] = n:sub(-#TM.bot_suffix) == TM.bot_suffix and n:sub(1, -#TM.bot_suffix - 1) or n
-		players[i] = { team = rb.team, bot = self.bots[i] and true or nil, dummy = (opt[i] or {}).dummy }
+		players[i] = { team = rb.team, bot = self.bots[i] and true or nil, dummy = (opt[i] or {}).dummy, insegna = (opt[i] or {}).insegna }
 	end
 	local v = self.vetrine
 	self.vetrine = nil
@@ -2420,7 +2420,7 @@ local function start_mission(self, id, picks)
 		self.g.match_left = duration * 60
 		self.ricetta.durata = self.g.match_left
 	end
-	missions.prepara(r, self.g)
+	missions.prepara(r, self.g, self.bots)
 	-- the keepers and the opponents with their names, and who speaks
 	for i, p in ipairs(r.l.giocatori) do
 		if p.nome then self.names[i] = p.nome end
@@ -2563,6 +2563,9 @@ local function mission_update(self, dt)
 	end
 	if self.favilla then CP.favilla.update(self.favilla, dt, self.clock, fav, sx, sy, self.g.robots[1].x) end
 	self.favilla_at = fav -- the strip goes see-through over her too (CP.strip_covers)
+	-- Favilla showing a move (insegna): what she says, over her head like the bots
+	local fi, said = missions.battuta(r)
+	if fi then plate.battuta(self.robots[fi].plate, said) end
 	-- the marker on the target to hit now (battle/signal.lua)
 	local bi = missions.target_robot(r)
 	local brb = bi and self.g.robots[bi]
@@ -3278,12 +3281,23 @@ local function render(self, dt)
 			st.aim = self.aim_angle
 			st.facing = math.cos(self.aim_angle) < 0 and -1 or 1
 		end
+		-- Favilla showing a move: her aim and her pose (sim/missions.lua, dimostra)
+		local shown = self.missione and missions.mira(self.missione)
+		if shown and shown.robot == i then
+			st.aim = shown.angle
+			st.facing = math.cos(shown.angle) < 0 and -1 or 1
+		end
+		local posing, clip = nil, nil
+		if self.missione then posing, clip = missions.posa(self.missione) end
+		st.posa = posing == i and clip or nil
 
 		-- in hand the equipped weapon: the one picked by whoever's turn it is (online
 		-- we know only ours), the Rune launcher for the others
 		local weapon = "missile"
 		if i == g.current and my_turn(self) then
 			weapon = self.tele_armed and "teleport" or self.weapon
+		elseif shown and shown.robot == i then
+			weapon = shown.weapon
 		end
 		-- aiming with the Blade or the Fist the weapon points where you aim: the hit starts there
 		-- Titan's Fist: the arm follows the uppercut, rotated on the aim
@@ -3622,6 +3636,26 @@ local function render(self, dt)
 			aim_name.trajectory(self.mira, pts, n, s)
 		else
 			aim_name.trajectory_off(self.mira)
+		end
+	elseif self.missione and missions.mira(self.missione) then
+		-- Favilla showing a move (sim/missions.lua, dimostra): her aim as yours,
+		-- with the whole trajectory, so you see what she's doing
+		local m = missions.mira(self.missione)
+		local v, s = self.view[m.robot], self.cam.s
+		local cy = v.y + game.DISEGNO_H / 2
+		local bx, by = v.x + math.cos(m.angle) * game.MUZZLE, cy + math.sin(m.angle) * game.MUZZLE
+		if aim_name.MELEE[m.weapon] then
+			aim_name.punta(self.mira, bx, by, m.angle, s, self.colors[m.robot])
+			aim_name.trajectory_off(self.mira)
+		else
+			aim_name[profile.setting(self.profilo, "mira")](self.mira, bx, by, m.angle, s, m.power, self.colors[m.robot])
+			aim_name.tag(self.mira, bx, by, m.angle, s, aim_name.gradi(m.angle), m.power)
+			local n = HELP_POINTS
+			local pts = g:preview(m.angle, m.power, n, 4, self.preview_pts, m.weapon)
+			for k = 1, n do
+				if g.terrain:solid(pts[k].x, pts[k].y) then n = k break end
+			end
+			aim_name.trajectory(self.mira, pts, n, s)
 		end
 	else
 		aim_name.via(self.mira)

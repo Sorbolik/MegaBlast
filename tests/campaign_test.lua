@@ -621,5 +621,66 @@ do
 	check(help_rb.hp < rb.hp and help_rb.hp == help_rb.max_hp, "help: less life, full bar")
 end
 
+-- Favilla shows the moves (insegna, dimostra): the turn passes to her, she
+-- walks, jumps, says her line, fires the Lanciarune with the real physics,
+-- then the turn comes back to the player as it was. Her hit doesn't do the
+-- player's step; a second demonstration waits for the player to come near
+do
+	local bot = require "sim.bot"
+	local l = {
+		id = "prova_favilla", titolo = "Prova", tipo = "bersagli",
+		arena = { { 0, 0, 1920, 150 } },
+		spawns = { { x = 300, from = 600 }, { x = 1100, from = 600 }, { x = 600, from = 600 } },
+		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 1, insegna = true, nome = "Favilla", pelle = "favilla" } },
+		vedi = { "missile" }, without_time = true,
+		dimostra = {
+			{ mosse = { { dice = "Guarda!" }, { cammina = 800 }, { salta = "destra" },
+				{ arma = "missile", angolo = 5, potenza = 0.7 }, { posa = "vittoria", secondi = 0.5 } } },
+			{ quando = { vicino = 250 }, mosse = { { arma = "hook", angolo = 70 } } },
+		},
+		obiettivo = { { hit = 2, testo = "Colpisci il bersaglio" } },
+	}
+	local r = missions.nuova(missions.prova(l, "addestramento"))
+	local seed, map_name, opts = missions.partita(r, 3)
+	local g = game.new(seed, map_name, opts)
+	local bots = {}
+	missions.prepara(r, g, bots)
+	check(bots[3] and opts.players[3].dummy, "Favilla: a robot moved by the demonstration, without turns of her own")
+	local seen, said, posed, hit_by_her, max_x = {}, nil, false, false, 0
+	local function run(ticks, input, stop)
+		for _ = 1, ticks do
+			local keys = bots[g.current] and bot.input(bots[g.current], g) or input or {}
+			g:step(keys)
+			for _, e in ipairs(g:pop_events()) do
+				seen[e.type .. ":" .. tostring(e.robot)] = true
+				if e.type == "damage" and e.robot == 2 and e.by == 3 then hit_by_her = true end
+				missions.evento(r, g, e, bots)
+			end
+			missions.tick(r, g)
+			local _, t = missions.battuta(r)
+			said = said or t
+			posed = posed or missions.posa(r) == 3
+			if g.current == 3 then max_x = math.max(max_x, g.robots[3].x) end
+			if stop and stop() then return end
+		end
+	end
+	run(2)
+	check(g.current == 3 and missions.dimostra(r), "Favilla: the demonstration starts at once, on her turn")
+	run(60 * 20, { fire = { weapon = "missile", angle = 0, power = 1 } }, function() return not missions.dimostra(r) end)
+	check(not missions.dimostra(r) and g.current == 1 and g.phase == "aim", "Favilla: the turn comes back to the player")
+	check(seen["demo:3"] and seen["fire:3"] and not seen["fire:1"], "Favilla fired, the player couldn't meanwhile")
+	check(said == "Guarda!" and posed and max_x > 790, "Favilla said her line, walked and struck her pose")
+	check(hit_by_her and not r.st.steps_done[1], "Favilla's hit doesn't do the player's step")
+	check(g.robots[3].hp == g.robots[3].max_hp, "Favilla doesn't get hurt")
+	-- the second waits for the player near her
+	run(120)
+	check(g.current == 1 and not r.shown[2], "Favilla waits for the player to come near")
+	run(60 * 10, { right = true }, function() return missions.dimostra(r) end)
+	check(missions.dimostra(r), "near her, the second demonstration starts")
+	run(60 * 15, nil, function() return not missions.dimostra(r) end)
+	check(seen["hook_shot:3"] or seen["hook:3"], "Favilla used the Rampino")
+	check(g.current == 1, "and the turn is the player's again")
+end
+
 print(failures == 0 and "\nall tests passed" or ("\n" .. failures .. " tests failed"))
 os.exit(failures == 0 and 0 or 1)

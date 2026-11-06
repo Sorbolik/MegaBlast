@@ -17,7 +17,7 @@ in `controlla.lua`, in questa pagina e nel Copione.
 | `id`, `titolo` | nome interno (non cambia mai: ci sono legate stelle e miniature) e nome che si legge |
 | `tipo` | corsa, bersagli, duello, squadra, orda, resistenza, bottino, custode: solo per la carta e la cartolina |
 | `mappa` oppure `arena` + `spawns` | una mappa del gioco, oppure i rettangoli d'acciaio `{ x, y, w, h }` e i punti di partenza `{ x, from }` (il primo è il tuo). Coordinate del mondo: 1920 x 1080, y verso l'alto |
-| `giocatori` | chi gioca: `team`, `bot` (grado 1-10), `dummy` (fantoccio), `carattere`, `pick`, `secondary`, `nome`, `battute`, `pelle` |
+| `giocatori` | chi gioca: `team`, `bot` (grado 1-10), `dummy` (fantoccio), `carattere`, `pick`, `secondary`, `nome`, `battute`, `pelle`, `insegna` (Favilla vera che mostra le mosse, sotto) |
 | `nascosti` | robot che non ci sono (il gioco ne vuole almeno due) |
 | `vedi` | cosa mostra l'HUD nelle lezioni (`missile`, `primarie`, `secondarie`, `teleport`, `parachute`, `tempo`, `punti`, `baratto`...) |
 | `no_weapons`, `without_time` | parti senza armi; niente cronometro né turni |
@@ -25,7 +25,8 @@ in `controlla.lua`, in questa pagina e nel Copione.
 | `obiettivo` | i passi, in ordine, ognuno col suo `testo` (la scritta d'oro) |
 | `righe` | quello che si dice durante il livello (sotto) |
 | `casse`, `cards` | `{ dopo = passo, arma, x }`: dopo quel passo (0: subito) cade la cassa lì, o si apre la carta dell'arma (`give`: e te la dà) |
-| `guida`, `scintilla` | Favilla nel cortile: da quale passo parte e il suo percorso `{ x, y, t, salto }`; la scintilla della medaglia |
+| `guida`, `scintilla` | Favilla comparsa nel cortile: da quale passo parte e il suo percorso `{ x, y, t, salto }` (corre mentre giochi: la gara); la scintilla della medaglia |
+| `dimostra` | Favilla vera che ti mostra le mosse facendole (sotto) |
 | `globi`, `vita`, `punti`, `regrow`, `al_posto`, `secondi`, `al_tempo`, `turni`, `plans` | regole della partita (vedi l'intestazione di `missions.lua`) |
 | `stelle`, `medaglia`, `collaudo` | stelle dei gironi, medaglia delle lezioni, come lo prova il bot |
 
@@ -73,6 +74,7 @@ ne vale una.
 | `in_caduta = true` | stai cadendo veloce e hai ancora il paracadute |
 | `corona = "tu"` | sei primo |
 | `conta = "prima"`, `almeno = 1` | un contatore della missione (morti, globi, scintille, prima...) |
+| `vicino = 250` | sei a meno di 250 pixel da Favilla (`insegna`): lei ti aspetta |
 
 Esempio, dal Duello con Favilla:
 
@@ -82,3 +84,43 @@ Esempio, dal Duello con Favilla:
 	quando = { turno = 2, di_turno = "tu", usato = "primaria" },
 	fino = { usato = "secondaria" } },
 ```
+
+## Favilla mostra le mosse (`insegna`, `dimostra`)
+
+Il principio di Sergio (6 nov): Favilla prima ti mostra una mossa facendola, poi la
+fai tu. Per questo è un robot vero della tua squadra: un giocatore con
+`insegna = true` (con `nome = "Favilla"`, `pelle = "favilla"` e un punto di partenza
+suo). Non gioca turni suoi, non si fa male e i suoi colpi non fanno i tuoi passi.
+
+`dimostra` è la lista delle sue dimostrazioni: `{ quando = {...}, mosse = {...} }`.
+Quando vale `quando` (come per le righe; senza: subito) e tu sei fermo nel tuo turno,
+il turno passa a lei: fa le mosse in ordine coi tasti e la fisica veri, la sua mira
+si vede come la tua, e poi il turno torna a te com'era (il tempo resta fermo). Ogni
+dimostrazione una volta sola. Dopo, le righe possono partire con
+`quando = { evento = "demo_end" }`.
+
+| Mossa | Cosa fa |
+|---|---|
+| `cammina = 900` | cammina fino a quella x (si ferma anche se cade da un bordo: dopo, il paracadute) |
+| `salta = "destra"`, `"sinistra"`, `"su"` | salta pieno da quella parte e aspetta di atterrare |
+| `arma = "missile"`, `angolo = 45`, `potenza = 0.7` | mira per un secondo (si vede) e spara; vale per ogni arma e attrezzo: `"sword"`, `"hook"` (rampino), `"teleport"` (globo), `"parachute"` (appena è in aria, senza mira), `"shield"`... Angolo in gradi: 0 a destra, 90 in su, 180 a sinistra; potenza da 0 a 1 (senza: 1). Poi aspetta che tutto sia fermo |
+| `aspetta = 1.5` | sta ferma tanti secondi |
+| `dice = "Guarda!"` | la battuta sopra la testa, come i bot |
+| `posa = "vittoria"`, `secondi = 1.5` | fa una clip delle animazioni (`vittoria`, `naso`, `sbadiglio`, `guarda_coda`, `colpito`...) |
+
+Esempio:
+
+```lua
+giocatori = { { team = 1 }, { team = 2, dummy = true },
+	{ team = 1, insegna = true, nome = "Favilla", pelle = "favilla" } },
+dimostra = {
+	{ quando = { vicino = 250 }, mosse = {
+		{ dice = "Guarda: miro e lascio andare!" },
+		{ arma = "missile", angolo = 30, potenza = 0.8 },
+		{ posa = "vittoria", secondi = 1 } } },
+},
+righe = { { testo = "Ora tu!", quando = { evento = "demo_end" } } },
+```
+
+La comparsa (`guida`) resta per le gare e per accompagnarti mentre giochi: un
+livello ha l'una o l'altra Favilla, non tutte e due.

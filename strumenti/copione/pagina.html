@@ -24,6 +24,7 @@
 	--rosso: #d9674b;        /* squadra 2 */
 	--grigio: #8e8478;       /* fantocci */
 	--viola: #a98ad8;        /* eventi senza posto */
+	--favilla: #8ccfef;      /* Favilla che mostra le mosse */
 	--verde: #7fbf7a;
 	--errore: #ff7a66;
 	--f-titolo: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
@@ -116,6 +117,12 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .gettone.grande { border-left-color: var(--brace); }
 .gettone.striscia { border-left-color: var(--blu); }
 .gettone.cassa { border-left-color: var(--verde); }
+.gettone.mostra { border-left-color: var(--favilla); }
+.mosse { display: flex; flex-direction: column; gap: 6px; }
+.mossa { border: 1px solid var(--riga); border-left: 3px solid var(--favilla); border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+.mossa .r { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.mossa .r select, .mossa .r input { flex: 1; min-width: 70px; }
+.mossa .n { font-family: var(--f-num); color: var(--favilla); font-weight: 700; }
 .gettone.sel { outline: 2px solid var(--brace); }
 .gettone .chi { font-size: 10.5px; color: var(--tenue); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; gap: 6px; }
 .gettone .q { display: block; margin-top: 3px; font-size: 11px; color: var(--viola); }
@@ -245,6 +252,7 @@ const NOMI_EVENTI = {
 	spark: "prende la scintilla", status: "subisce un effetto (fuoco, gelo...)", status_end: "un effetto finisce", swap: "scambia di posto",
 	swing: "si dondola col Rampino", sword_hit: "la Lama colpisce", teleport: "si teletrasporta", teleports: "si teletrasporta coi globi",
 	trap: "piazza la trappola", turn: "inizia un turno",
+	demo: "Favilla comincia a mostrare una mossa", demo_end: "Favilla ha finito di mostrare (tocca a te)",
 };
 const NOMI_COMANDI = { primaria: "l'attacco primario", secondaria: "l'attacco secondario", cammina: "camminare", salta: "saltare",
 	mira: "mirare", annulla: "annullare la mira", baratto: "il baratto (secondaria al posto del teletrasporto)", attrezzo: "l'attrezzo" };
@@ -258,6 +266,14 @@ const NOMI_VEDI = { primarie: "le armi primarie", secondarie: "le armi secondari
 const NOMI_CARATTERI = { codardo: "codardo (attacca e scappa)", testa_calda: "testa calda (va addosso)", cecchino: "cecchino (spara da lontano)", spingitore: "spingitore (butta giù)" };
 const NOMI_TIPI = { corsa: "corsa (arriva in fondo)", bersagli: "bersagli (colpisci i fantocci)", duello: "duello (uno contro uno)",
 	squadra: "squadra (2 contro 2)", orda: "orda (tanti nemici)", resistenza: "resistenza (sopravvivi)", bottino: "bottino (prendi le casse)", custode: "custode (il boss del girone)" };
+// Favilla che mostra le mosse (insegna, dimostra): i verbi delle mosse, in italiano
+const MOSSE_FAVILLA = [["cammina", "cammina fino a un punto"], ["salta", "salta"], ["arma", "usa un'arma o un attrezzo"],
+	["aspetta", "aspetta un momento"], ["dice", "dice una frase (sopra la testa)"], ["posa", "fa un gesto"]];
+const NOMI_LATI = { destra: "a destra", sinistra: "a sinistra", su: "in alto, sul posto" };
+const NOMI_POSE = { vittoria: "festeggia saltando", naso: "si gratta il naso", sbadiglio: "sbadiglia", guarda_coda: "si guarda la coda",
+	colpito: "fa finta di essere colpita", sconfitta: "cade all'indietro", mira: "prende la mira" };
+const POSE = Object.keys(NOMI_POSE).filter(k => (CAT.pose || []).includes(k));
+const SENZA_MIRA = ["parachute", "shield", "swap"];
 const nomeDi = (tab, k) => tab[k] || (CAT.armi[k] ? nomeArma(k) : k);
 const coppie = (lista, tab) => lista.map(k => [k, nomeDi(tab, k)]);
 const BASE = JSON.stringify(DATI.capitoli);
@@ -337,12 +353,14 @@ function nomeGiocatore(l, i) {
 	const g = (l.giocatori || [])[i] || {};
 	if (i === 0) return "Tu";
 	if (g.nome) return g.nome;
+	if (g.insegna) return "Favilla";
 	if (g.dummy) return "Fantoccio " + (i + 1);
 	if (g.bot) return "Bot " + g.bot + (g.carattere ? " " + g.carattere : "");
 	return "Giocatore " + (i + 1);
 }
 function coloreGiocatore(l, i) {
 	const g = (l.giocatori || [])[i] || {};
+	if (g.insegna) return "var(--favilla)";
 	if (g.dummy) return "var(--grigio)";
 	return g.team === 2 ? "var(--rosso)" : "var(--blu)";
 }
@@ -362,9 +380,29 @@ function frase(q) {
 	if (q.in_caduta) p.push("cadi veloce e hai il paracadute");
 	if (q.corona) p.push("sei primo in classifica");
 	if (q.conta) p.push(nomeDi(NOMI_CONTATORI, q.conta) + ": almeno " + (q.almeno || 1));
+	if (q.vicino != null) p.push("sei a meno di " + q.vicino + " pixel da Favilla");
 	if (q.uno) p.push("basta uno fra: " + q.uno.map(frase).join(" | "));
 	return p.join(" e ");
 }
+// Favilla che mostra: il suo giocatore (-1: non c'è), le sue mosse in parole
+function maestra(l) { return (l.giocatori || []).findIndex(g => g.insegna); }
+function verboMossa(m) { return MOSSE_FAVILLA.map(v => v[0]).find(v => v in m) || "aspetta"; }
+function mossaBase(v) {
+	return { cammina: { cammina: 900 }, salta: { salta: "destra" }, arma: { arma: "missile", angolo: 45, potenza: 0.8 },
+		aspetta: { aspetta: 1 }, dice: { dice: "Guarda!" }, posa: { posa: "vittoria", secondi: 1.5 } }[v];
+}
+function fraseMossa(m) {
+	const v = verboMossa(m);
+	if (v === "cammina") return "cammina fino a x " + m.cammina;
+	if (v === "salta") return "salta " + (NOMI_LATI[m.salta] || m.salta);
+	if (v === "arma") return m.arma === "parachute" ? "apre il paracadute" : "usa " + nomeArma(m.arma) +
+		(SENZA_MIRA.includes(m.arma) ? "" : " (" + (m.angolo || 0) + "°, forza " + Math.round((m.potenza == null ? 1 : m.potenza) * 100) + "%)");
+	if (v === "aspetta") return "aspetta " + m.aspetta + " s";
+	if (v === "dice") return "dice «" + m.dice + "»";
+	return nomeDi(NOMI_POSE, m.posa);
+}
+function fraseMosse(d) { return (d.mosse || []).map(fraseMossa).join(", poi ") || "nessuna mossa"; }
+function colonnaDimostra(d) { return d.quando ? colonnaDi(d.quando) : 0; }
 // la riga parte da un passo e basta: va nella colonna di quel passo
 function soloPasso(q) { return q && Object.keys(q).length === 1 && q.passo != null; }
 // la colonna della linea del tempo di una riga: 0 per "All'inizio" (il tuo primo turno),
@@ -424,7 +462,10 @@ function legatiA(l, k) {
 	(l.casse || []).forEach(c => { if (c.dopo === k) n.casse++; });
 	(l.cards || []).forEach(c => { if (c.dopo === k) n.carte++; });
 	if (l.guida && l.guida.parte === k) n.favilla++;
-	return [n.frasi && conta(n.frasi, "frase", "frasi"), n.casse && conta(n.casse, "cassa", "casse"), n.carte && conta(n.carte, "carta", "carte"), n.favilla && "la partenza di Favilla"].filter(Boolean);
+	let mostra = 0;
+	(l.dimostra || []).forEach(d => { if (d.quando && d.quando.passo === k) mostra++; });
+	return [n.frasi && conta(n.frasi, "frase", "frasi"), n.casse && conta(n.casse, "cassa", "casse"), n.carte && conta(n.carte, "carta", "carte"), n.favilla && "la partenza di Favilla",
+		mostra && conta(mostra, "mossa mostrata da Favilla", "mosse mostrate da Favilla")].filter(Boolean);
 }
 
 // ---------------------------------------------------------------- controllo (come strumenti/copione/controlla.lua)
@@ -455,6 +496,16 @@ function problemi(l, c) {
 	});
 	for (const k of ["casse", "cards"]) (l[k] || []).forEach((x, i) => { if (!okPasso(x.dopo)) out.push((k === "casse" ? "cassa " : "carta ") + (i + 1) + ": il passo " + x.dopo + " non c'è"); });
 	if (l.arena && (l.spawns || []).length < (l.giocatori || []).length) out.push("ci sono più giocatori che punti di partenza");
+	const mi = maestra(l);
+	if ((l.dimostra || []).length && mi < 0) out.push("Favilla deve mostrare delle mosse ma non c'è: aggiungila con «+ Favilla che mostra»");
+	if (mi >= 0 && l.guida) out.push("ci sono due Favilla, quella che mostra le mosse e quella che corre sul percorso: tienine una");
+	if (mi >= 0 && (l.giocatori || [])[0] && l.giocatori[mi].team !== l.giocatori[0].team) out.push("Favilla che mostra deve essere della tua squadra");
+	(l.dimostra || []).forEach((d, i) => {
+		const dd = "Favilla mostra " + (i + 1);
+		if (d.quando) cond(d.quando, dd + ", quando");
+		if (!(d.mosse || []).length) out.push(dd + ": nessuna mossa");
+		(d.mosse || []).forEach((m, k) => { if ("dice" in m) testo(m.dice, dd + ", mossa " + (k + 1)); });
+	});
 	return out;
 }
 function idDoppi() {
@@ -625,12 +676,27 @@ function barraStrumenti(l) {
 	agg("+ Passo", () => { const sel = stato.sel || {}; inserisciPasso(l, sel.k === "passo" ? sel.i + 1 : (l.obiettivo || []).length); }, "Una cosa nuova da fare: va dopo il passo scelto, o in fondo");
 	agg("+ Cassa", () => { l.casse = l.casse || []; l.casse.push({ dopo: 0, arma: "missile", x: snap(stato.cam.x + stato.cam.w / 2) }); stato.sel = { k: "cassa", i: l.casse.length - 1 }; }, "Una cassa con un'arma che cade dal cielo");
 	if (!l.scintilla) agg("+ Scintilla", () => { l.scintilla = { x: snap(stato.cam.x + stato.cam.w / 2), y: 300 }; stato.sel = { k: "scintilla" }; }, "Il premio facoltativo della medaglia");
-	agg(l.guida ? "+ Punto di Favilla" : "+ Favilla", () => {
+	const mi = maestra(l);
+	if (mi < 0) agg("+ Favilla che mostra", () => {
+		l.giocatori = l.giocatori || [];
+		l.giocatori.push({ team: (l.giocatori[0] || {}).team || 1, insegna: true, nome: "Favilla", pelle: "favilla" });
+		if (l.arena) { l.spawns = l.spawns || []; const t = l.spawns[0]; l.spawns.push({ x: snap(t ? t.x + 160 : stato.cam.x + stato.cam.w / 2), from: t ? t.from : 600 }); }
+		l.dimostra = l.dimostra || [];
+		l.dimostra.push({ mosse: [{ dice: "Guarda come si fa!" }, { arma: "missile", angolo: 45, potenza: 0.8 }] });
+		stato.sel = { k: "dimostra", i: l.dimostra.length - 1 };
+	}, "Favilla vera, della tua squadra: prima ti mostra una mossa facendola (cammina, salta, spara, rampino, paracadute...), poi la fai tu");
+	else agg("+ Favilla mostra", () => {
+		l.dimostra = l.dimostra || [];
+		const sel = stato.sel || {};
+		l.dimostra.push(sel.k === "passo" ? { quando: { passo: sel.i + 1 }, mosse: [{ dice: "Guarda!" }] } : { mosse: [{ dice: "Guarda!" }] });
+		stato.sel = { k: "dimostra", i: l.dimostra.length - 1 };
+	}, "Un'altra volta in cui Favilla ti mostra una mossa: parte finito il passo scelto, o all'inizio");
+	if (mi < 0) agg(l.guida ? "+ Punto di Favilla" : "+ Favilla che corre", () => {
 		l.guida = l.guida || { parte: 0, percorso: [] };
 		const pp = l.guida.percorso, ult = pp[pp.length - 1];
 		pp.push({ x: snap(ult ? ult.x + 200 : stato.cam.x + stato.cam.w / 2), y: ult ? ult.y : 150, t: ult ? ult.t + 3 : 0 });
 		stato.sel = { k: "guida", i: pp.length - 1 };
-	}, "Favilla che corre davanti al giocatore nel cortile: ogni punto è una tappa del suo percorso");
+	}, "Favilla comparsa che corre davanti al giocatore nel cortile (la gara): ogni punto è una tappa del suo percorso. Non spara: per mostrare le mosse c'è «+ Favilla che mostra»");
 	const tog = (testo, chiave, titolo) => b.append(el("button", { class: stato[chiave] ? "on" : "", title: titolo, onclick: () => { stato[chiave] = !stato[chiave]; disegna(); } }, testo));
 	tog("Disegno", "dipinto", "Mostra o nasconde il disegno della mappa");
 	tog("Piattaforme", "collisioni", "Mostra o nasconde i blocchi su cui si cammina");
@@ -670,6 +736,8 @@ function disegnaMappa() {
 			sv("path", { d: "M120 0H0V120", fill: "none", stroke: "#2a231d", "stroke-width": 2 })),
 		sv("marker", { id: "freccia", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse" },
 			sv("path", { d: "M0 0L10 5L0 10z", fill: "#a98ad8" })),
+		sv("marker", { id: "frecciaFav", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 5, markerHeight: 5, orient: "auto-start-reverse" },
+			sv("path", { d: "M0 0L10 5L0 10z", fill: "#8ccfef" })),
 		sv("marker", { id: "frecciaOro", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 5, markerHeight: 5, orient: "auto-start-reverse" },
 			sv("path", { d: "M0 0L10 5L0 10z", fill: "#e9c35a" })));
 	svg.append(defs, sv("rect", { x: -2000, y: -2000, width: W + 4000, height: H + 4000, fill: "#0d0b09", "data-sfondo": "1" }),
@@ -759,6 +827,8 @@ function disegnaMappa() {
 		const f = pp[0];
 		g.append(sv("image", { href: ritratto("favilla", "calma"), x: f.x - 45, y: Y(f.y + 150), width: 90, height: 90, "pointer-events": "none" }));
 	}
+	// Favilla che mostra: le mosse della dimostrazione scelta, dove le fa (più o meno)
+	if (sel.k === "dimostra" && (l.dimostra || [])[sel.i] && maestra(l) >= 0) disegnaMosse(g, l, l.dimostra[sel.i], k);
 	// scintilla
 	if (l.scintilla) {
 		const s = sel.k === "scintilla", x = l.scintilla.x, y = Y(l.scintilla.y), r = 22 * Math.max(1, k * 0.8);
@@ -794,6 +864,50 @@ function disegnaMappa() {
 		g.append(sv("path", { d: `M${bx} ${Y(by)}h${40 * k}v${28 * k}h${-26 * k}l${-10 * k} ${10 * k}v${-10 * k}h${-4 * k}z`,
 			fill: r.mostra === "grande" ? "#f2e1bf" : "#2a231d", stroke: s ? "#f0a640" : (r.mostra === "grande" ? "#f0a640" : "#6fa8d6"), "stroke-width": 2 * k, "data-drag": "selriga:" + i, style: "cursor:pointer" }));
 		g.append(sv("text", { x: bx + 20 * k, y: Y(by) + 19 * k, "font-size": 13 * k, "text-anchor": "middle", fill: r.mostra === "grande" ? "#1f120c" : "#efe4d3", "pointer-events": "none" }, r.mostra === "grande" ? "!" : "…"));
+	});
+}
+// la strada di Favilla in una dimostrazione: parte da dove atterra e segue le mosse
+// (camminando resta sulla piattaforma sotto; i salti sono stimati)
+const SALTO_X = 160;
+let origini = {}; // da dove parte la freccia di ogni mossa con la mira: per trascinarla
+function disegnaMosse(g, l, d, k) {
+	const col = "#8ccfef";
+	let p = doveAtterra(l, maestra(l));
+	if (!p) return;
+	origini = {};
+	const terra = (x, y) => l.arena ? terraSotto(l, x, y + 1) : y;
+	const num = (x, y, n) => g.append(sv("text", { x, y: Y(y), "font-size": 13 * k, fill: col, "font-weight": 700, "pointer-events": "none", stroke: "#0d0b09", "stroke-width": 4 * k, "paint-order": "stroke" }, String(n)));
+	(d.mosse || []).forEach((m, i) => {
+		const v = verboMossa(m);
+		if (v === "cammina") {
+			const x = Math.max(0, Math.min(W, m.cammina)), y = terra(x, p.y);
+			g.append(sv("line", { x1: p.x, y1: Y(p.y + 20), x2: x, y2: Y(p.y + 20), stroke: col, "stroke-width": 2.5 * k, "marker-end": "url(#frecciaFav)", "pointer-events": "none" }));
+			g.append(sv("circle", { cx: x, cy: Y(y + 20), r: 11 * Math.max(1, k * 0.7), fill: col, stroke: "#15120f", "stroke-width": 2 * k, "data-drag": "mossa:" + i, style: "cursor:ew-resize" },
+				sv("title", {}, "Mossa " + (i + 1) + ": Favilla cammina fin qui. Trascinalo di lato")));
+			num(x, y + 44, i + 1);
+			p = { x, y };
+		} else if (v === "salta") {
+			const dir = m.salta === "destra" ? 1 : m.salta === "sinistra" ? -1 : 0;
+			const x = Math.max(0, Math.min(W, p.x + dir * SALTO_X)), y = terra(x, p.y + 140);
+			g.append(sv("path", { d: `M${p.x} ${Y(p.y + 20)}Q${(p.x + x) / 2} ${Y(Math.max(p.y, y) + 260)} ${x} ${Y(y + 20)}`, fill: "none", stroke: col, "stroke-width": 2.5 * k,
+				"stroke-dasharray": (6 * k) + " " + (6 * k), "marker-end": "url(#frecciaFav)", "pointer-events": "none" }));
+			num((p.x + x) / 2, Math.max(p.y, y) + 150, i + 1);
+			p = { x, y };
+		} else if (v === "arma" && !SENZA_MIRA.includes(m.arma)) {
+			const a = (m.angolo || 0) * Math.PI / 180, f = m.potenza == null ? 1 : m.potenza;
+			const ox = p.x, oy = p.y + 45, len = 70 + 230 * f;
+			const tx = ox + Math.cos(a) * len, ty = oy + Math.sin(a) * len;
+			origini[i] = { x: ox, y: oy };
+			g.append(sv("line", { x1: ox, y1: Y(oy), x2: tx, y2: Y(ty), stroke: col, "stroke-width": 4 * k, "marker-end": "url(#frecciaFav)", "pointer-events": "none" }));
+			g.append(sv("circle", { cx: tx, cy: Y(ty), r: 12 * Math.max(1, k * 0.7), fill: "#0d0b09", stroke: col, "stroke-width": 3 * k, "data-drag": "mira:" + i, style: "cursor:move" },
+				sv("title", {}, "Mossa " + (i + 1) + ": la mira di Favilla. Trascina la punta: la direzione è l'angolo, la lunghezza la forza")));
+			if (IMMAGINI.armi[m.arma]) g.append(sv("image", { href: IMMAGINI.armi[m.arma], x: tx + 14 * k, y: Y(ty) - 20 * k, width: 40 * k, height: 40 * k, "pointer-events": "none" }));
+			g.append(etichetta(tx + 14 * k, ty - 30 * k, (i + 1) + ". " + nomeArma(m.arma) + " " + (m.angolo || 0) + "° · " + Math.round(f * 100) + "%", col, k));
+		} else {
+			// sul posto: un'etichetta sopra di lei
+			const t = v === "dice" ? "«" + String(m.dice || "").slice(0, 28) + "»" : v === "posa" ? nomeDi(NOMI_POSE, m.posa) : v === "aspetta" ? "aspetta " + m.aspetta + " s" : fraseMossa(m);
+			g.append(etichetta(p.x + 18 * k, p.y + 150 + i * 18 * k, (i + 1) + ". " + t, col, k));
+		}
 	});
 }
 function posPasso(l, p) {
@@ -839,8 +953,10 @@ function agganciaTela(svg) {
 		if (t) {
 			const [tipo, i] = t.getAttribute("data-drag").split(":");
 			presa = { tipo, i: +i, inizio: puntoMondo(ev), orig: JSON.stringify(liv()), mosso: false };
-			const kind = { rect: "rect", rectTR: "rect", rectBL: "rect", spawn: "spawn", selspawn: "spawn", cade: "spawn", passo: "passo", cassa: "cassa", guida: "guida", scintilla: "scintilla", selriga: "riga" }[tipo];
-			stato.sel = kind === "scintilla" ? { k: kind } : { k: kind, i: +i };
+			const kind = { rect: "rect", rectTR: "rect", rectBL: "rect", spawn: "spawn", selspawn: "spawn", cade: "spawn", passo: "passo", cassa: "cassa", guida: "guida", scintilla: "scintilla", selriga: "riga", mossa: "dimostra", mira: "dimostra" }[tipo];
+			// le mosse di Favilla: resta scelta la sua dimostrazione
+			if (kind !== "dimostra") stato.sel = kind === "scintilla" ? { k: kind } : { k: kind, i: +i };
+			presa.d = kind === "dimostra" ? stato.sel.i : null;
 			disegnaMappa(); disegnaPannello(); disegnaTempo();
 			presa.inizio = puntoMondo(ev); // il pannello può aver cambiato la misura della tela
 		} else {
@@ -878,6 +994,12 @@ function agganciaTela(svg) {
 			if (presa.tipo === "cassa") l.casse[i].x = Math.max(0, Math.min(W, o.casse[i].x + dx));
 			if (presa.tipo === "guida") { const q = o.guida.percorso[i]; l.guida.percorso[i].x = q.x + dx; l.guida.percorso[i].y = Math.max(0, q.y + dy); }
 			if (presa.tipo === "scintilla") { l.scintilla.x = o.scintilla.x + dx; l.scintilla.y = o.scintilla.y + dy; }
+			if (presa.tipo === "mossa") l.dimostra[presa.d].mosse[i].cammina = Math.max(0, Math.min(W, o.dimostra[presa.d].mosse[i].cammina + dx));
+			if (presa.tipo === "mira" && origini[i]) {
+				const m = l.dimostra[presa.d].mosse[i], ox = origini[i].x, oy = origini[i].y;
+				m.angolo = Math.round(Math.atan2(p.y - oy, p.x - ox) * 180 / Math.PI);
+				m.potenza = Math.max(0.1, Math.min(1, Math.round((Math.hypot(p.x - ox, p.y - oy) - 70) / 230 * 20) / 20));
+			}
 			disegnaMappa();
 			return;
 		}
@@ -948,6 +1070,11 @@ function disegnaTempo() {
 		const t = gettone({ k: "riga", i }, r.mostra === "grande" ? "grande" : "striscia", chiParla(c), r.mostra === "grande" ? "vignetta grande" : "striscia", r.testo, k != null && colonne[k] ? "" : frase(r.quando), sel.k === "riga" && sel.i === i);
 		if (k != null && colonne[k]) colonne[k].append(t); else altri.append(t);
 	});
+	(l.dimostra || []).forEach((d, i) => {
+		const k = colonnaDimostra(d);
+		const t = gettone({ k: "dimostra", i }, "mostra", "Favilla mostra", conta((d.mosse || []).length, "mossa", "mosse"), fraseMosse(d), k != null && colonne[k] ? "" : frase(d.quando), sel.k === "dimostra" && sel.i === i);
+		if (k != null && colonne[k]) colonne[k].append(t); else altri.append(t);
+	});
 	colonne.forEach((col, k) => col.append(el("button", { class: "piu", onclick: () => { segna(); l.righe = l.righe || []; l.righe.push({ testo: "Nuova riga", mostra: c.aspetta ? "grande" : undefined, quando: k ? { passo: k } : { turno: 1 } }); stato.sel = { k: "riga", i: l.righe.length - 1 }; cambiato(); } }, "+ frase qui")));
 	altri.append(el("button", { class: "piu", onclick: () => { segna(); l.righe = l.righe || []; l.righe.push({ testo: "Nuova riga", quando: { evento: "crate_pick" } }); stato.sel = { k: "riga", i: l.righe.length - 1 }; cambiato(); } }, "+ frase su un evento"));
 	// fra una colonna e l'altra la freccia: si va avanti solo finito il passo
@@ -999,6 +1126,7 @@ function spostaIn(chiave, k) {
 	if (tipo === "riga") l.righe[+i].quando = k === 0 ? { turno: 1 } : { passo: k };
 	if (tipo === "cassa") l.casse[+i].dopo = k;
 	if (tipo === "carta") l.cards[+i].dopo = k;
+	if (tipo === "dimostra") { if (k === 0) delete l.dimostra[+i].quando; else l.dimostra[+i].quando = { passo: k }; }
 	cambiato();
 }
 // la guida in alto nel pannello del livello: aperta la prima volta, poi come la lasci
@@ -1019,7 +1147,8 @@ function guida() {
 			el("li", {}, el("span", { class: "seg", style: "background:var(--oro)" }), "Bandierina e zona gialla: un passo «arriva qui». Il filo d'oro a puntini con la freccia va da un passo al successivo."),
 			el("li", {}, el("span", { class: "seg", style: "background:var(--pergamena)" }), "Fumetto: una frase che parte finito quel passo (! vignetta grande, … striscia)."),
 			el("li", {}, el("span", { class: "seg", style: "background:var(--verde)" }), "Cassa con la linea verde: dove cade una cassa."),
-			el("li", {}, el("span", { class: "seg", style: "background:#ffd36b" }), "Stella: la scintilla. Pallini azzurri: il percorso di Favilla.")));
+			el("li", {}, el("span", { class: "seg", style: "background:#ffd36b" }), "Stella: la scintilla. Pallini azzurri: il percorso di Favilla che corre."),
+			el("li", {}, el("span", { class: "seg", style: "background:var(--favilla)" }), "Favilla che mostra: tocca una sua dimostrazione nella sequenza e sulla mappa vedi dove cammina (pallino), dove salta (arco) e dove mira (freccia: trascina la punta per cambiare angolo e forza).")));
 	d.addEventListener("toggle", () => { try { localStorage.setItem("copione_guida", d.open ? "aperta" : "chiusa"); } catch (e) { /* niente */ } });
 	return d;
 }
@@ -1087,6 +1216,7 @@ const VERBI = [
 	["passo", "quando è finito il passo"], ["turno", "al tuo turno numero"], ["turno_altri", "al turno degli altri numero"], ["di_turno", "mentre tocca a"],
 	["evento", "quando nel gioco succede che"], ["tocca", "quando il giocatore tocca"], ["usato", "se in questo turno ha già usato"], ["finestra", "dopo il primo attacco del turno"],
 	["in_caduta", "mentre cade veloce col paracadute pronto"], ["corona", "mentre sei primo in classifica"], ["conta", "quando il contatore"],
+	["vicino", "quando sei vicino a Favilla, a meno di (pixel)"],
 ];
 function condizione(q, cambia, profondo) {
 	const box = el("div", { class: "cond" });
@@ -1117,12 +1247,12 @@ function condizione(q, cambia, profondo) {
 	return box;
 }
 function valoreBase(k) {
-	return { passo: 1, turno: 1, turno_altri: 1, di_turno: "tu", evento: "crate_pick", tocca: "mira", usato: "primaria", finestra: true, in_caduta: true, corona: "tu", conta: "prima" }[k];
+	return { passo: 1, turno: 1, turno_altri: 1, di_turno: "tu", evento: "crate_pick", tocca: "mira", usato: "primaria", finestra: true, in_caduta: true, corona: "tu", conta: "prima", vicino: 250 }[k];
 }
 function valoreIn(q, k, l) {
 	const n = (l.obiettivo || []).length;
 	if (k === "passo") return sceltaIn(q, k, Array.from({ length: n }, (_, i) => [i + 1, (i + 1) + ". " + (l.obiettivo[i].testo || "")]), { num: true });
-	if (k === "turno" || k === "turno_altri") return testoIn(q, k, { num: true });
+	if (k === "turno" || k === "turno_altri" || k === "vicino") return testoIn(q, k, { num: true });
 	if (k === "di_turno") return sceltaIn(q, k, [["tu", "te"], ["altri", "agli altri"]]);
 	if (k === "evento") return sceltaIn(q, k, coppie(CAT.eventi, NOMI_EVENTI).sort((a, b) => a[1].localeCompare(b[1], "it")));
 	if (k === "tocca") return sceltaIn(q, k, coppie(COMANDI, NOMI_COMANDI));
@@ -1162,7 +1292,7 @@ function disegnaPannello() {
 			el("div", { class: "scelte" }, ...SEGNAPOSTO.map(x => el("button", { class: "piccolo", title: CAT.gesti[x] || "", onclick: () => { segna(); r.testo = (r.testo || "") + " {" + x + "}"; rid(); } }, "+ come si fa a " + nomeDi(NOMI_COMANDI, x)))),
 			el("div", { class: "due" },
 				campo("Come appare", sceltaIn(r, "mostra", [["grande", "Vignetta grande"]], { vuoto: "Striscia in alto" }),
-					r.mostra === "grande" ? "Il gioco si ferma finché il giocatore non preme VAI." : "Scorre in alto mentre si gioca, senza fermare niente."),
+					r.mostra === "grande" ? "Il gioco si ferma finché il giocatore non preme VAI; dopo VAI la frase resta nella striscia in alto finché serve." : "Scorre in alto mentre si gioca, senza fermare niente."),
 				campo("Faccia", sceltaIn(r, "faccia", CAT.facce, { vuoto: "calma" }), "L'espressione del ritratto.")),
 			campo("Comando che lampeggia", sceltaIn(r, "highlight", coppie(COMANDI, NOMI_COMANDI), { vuoto: "nessuno" }),
 				"Il pulsante sullo schermo che si accende. Nelle lezioni il tempo resta fermo finché il giocatore non lo tocca."),
@@ -1231,9 +1361,24 @@ function disegnaPannello() {
 			sp ? spiega("All'inizio cade da quest'altezza e atterra sulla piattaforma sotto: sulla mappa lo vedi dove atterra, col puntino da dove cade. Trascinalo dove vuoi che parta.") : null);
 		if (s.i > 0) {
 			const ruolo = el("select", { id: "f-ruolo" });
-			for (const [v, t] of [["dummy", "Fantoccio (sta fermo)"], ["bot", "Bot (gioca da solo)"]]) ruolo.append(el("option", { value: v }, t));
-			ruolo.value = g.dummy ? "dummy" : "bot";
-			ruolo.addEventListener("change", () => { segna(); if (ruolo.value === "dummy") { g.dummy = true; delete g.bot; } else { delete g.dummy; g.bot = 3; } rid(); });
+			for (const [v, t] of [["dummy", "Fantoccio (sta fermo)"], ["bot", "Bot (gioca da solo)"], ["insegna", "Favilla che mostra le mosse"]]) ruolo.append(el("option", { value: v }, t));
+			ruolo.value = g.insegna ? "insegna" : g.dummy ? "dummy" : "bot";
+			ruolo.addEventListener("change", () => {
+				segna(); delete g.dummy; delete g.bot; delete g.insegna;
+				if (ruolo.value === "dummy") g.dummy = true;
+				else if (ruolo.value === "bot") g.bot = 3;
+				else { g.insegna = true; g.team = (l.giocatori[0] || {}).team || 1; g.nome = g.nome || "Favilla"; g.pelle = "favilla"; }
+				rid();
+			});
+			if (g.insegna) {
+				metti(p, campo("Chi è", ruolo), spiega("Favilla vera, della tua squadra: non gioca turni suoi, non si fa male. Quando arriva il momento di una sua dimostrazione il turno passa a lei, fa le mosse e poi torna a te."),
+					el("div", { class: "gruppo" }, el("b", { text: "Le sue dimostrazioni" }),
+						...(l.dimostra || []).map((d, i) => el("button", { class: "piccolo", style: "text-align:left", onclick: () => scegli({ k: "dimostra", i }) }, (i + 1) + ". " + fraseMosse(d))),
+						el("button", { class: "piccolo", onclick: () => { segna(); l.dimostra = l.dimostra || []; l.dimostra.push({ mosse: [{ dice: "Guarda!" }] }); stato.sel = { k: "dimostra", i: l.dimostra.length - 1 }; rid(); } }, "+ dimostrazione")),
+					togli("Togli Favilla", () => { l.giocatori.splice(s.i, 1); if (l.spawns) l.spawns.splice(s.i, 1); }));
+				if (s.k) p.prepend(el("button", { class: "piccolo", style: "align-self:flex-start", onclick: () => scegli(null) }, "← Il livello"));
+				return;
+			}
 			metti(p, el("div", { class: "due" }, campo("Chi è", ruolo), campo("Squadra", sceltaIn(g, "team", [[1, "con te"], [2, "contro di te"]], { num: true }))));
 			if (!g.dummy) metti(p, el("div", { class: "due" }, campo("Bravura (1-10)", testoIn(g, "bot", { num: true }), "1 scarso, 10 fortissimo."), campo("Carattere", sceltaIn(g, "carattere", coppie(["codardo", "testa_calda", "cecchino", "spingitore"], NOMI_CARATTERI), { vuoto: "normale" }))),
 				el("div", { class: "due" }, campo("Arma primaria", sceltaIn(g, "pick", coppie(ARMI.filter(w => !CAT.armi[w].secondaria && !CAT.armi[w].attrezzo), {}), { vuoto: "la sceglie lui" })), campo("Arma secondaria", sceltaIn(g, "secondary", coppie(ARMI.filter(w => CAT.armi[w].secondaria), {}), { vuoto: "la sceglie lui" }))));
@@ -1273,6 +1418,30 @@ function disegnaPannello() {
 			campo(s.k === "cassa" ? "Cade" : "Si apre", sceltaIn(x, "dopo", sceltePassi(l), { num: true })),
 			s.k === "cassa" ? campo("x (da sinistra)", testoIn(x, "x", { num: true })) : spunta(x, "give", "E gli dà l'arma, senza bisogno di una cassa"),
 			togli("Elimina", () => (s.k === "cassa" ? l.casse : l.cards).splice(s.i, 1)));
+	} else if (s.k === "dimostra" && l.dimostra && l.dimostra[s.i]) {
+		const d = l.dimostra[s.i];
+		d.mosse = d.mosse || [];
+		const lista = el("div", { class: "mosse" });
+		d.mosse.forEach((m, k) => lista.append(rigaMossa(d, m, k)));
+		const quando = d.quando ? el("div", {}, condizione(d.quando, rid),
+			el("button", { class: "piccolo", onclick: () => { segna(); delete d.quando; rid(); } }, "Subito, all'inizio del livello"))
+			: el("div", { class: "bottoni" }, el("span", { style: "color:var(--tenue);font-size:12.5px", text: "Subito, appena parte il livello." }),
+				el("button", { class: "piccolo", onclick: () => { segna(); d.quando = { passo: 1 }; rid(); } }, "+ finito un passo..."),
+				el("button", { class: "piccolo", onclick: () => { segna(); d.quando = { vicino: 250 }; rid(); } }, "+ quando le arrivi vicino"));
+		metti(p, el("span", { class: "tipo-sel", text: "Favilla mostra, " + (s.i + 1) + " di " + l.dimostra.length }), el("h3", { text: "Favilla ti mostra una mossa" }),
+			spiega("Prima lei fa vedere, poi tocca a te. Quando arriva il momento e il giocatore è fermo, il turno passa a Favilla: fa queste mosse in ordine, coi tasti e la fisica veri (la sua mira si vede come la tua), poi il turno torna al giocatore com'era, col tempo fermo. Ogni dimostrazione si vede una volta. I colpi di Favilla non fanno i passi del giocatore e lei non si fa male."),
+			el("div", { class: "gruppo" }, el("b", { text: "Le mosse, in ordine" }), lista,
+				el("div", { class: "bottoni" }, el("button", { class: "piccolo", onclick: () => { segna(); d.mosse.push(mossaBase("arma")); rid(); } }, "+ mossa in fondo")),
+				spiega("Sulla mappa: il pallino è dove arriva camminando, l'arco è il salto (più o meno), la freccia è la mira: trascina la punta per cambiare angolo e forza.")),
+			el("div", { class: "gruppo" }, el("b", { text: "Quando parte" }), spiega("Senza niente parte subito. «Quando le arrivi vicino»: Favilla ti aspetta e comincia quando sei a quella distanza."), quando),
+			el("div", { class: "gruppo" }, el("b", { text: "E dopo" }),
+				spiega("Quando ha finito, una frase può dire che tocca al giocatore: parte «quando nel gioco succede che» Favilla ha finito di mostrare."),
+				el("button", { class: "piccolo", style: "align-self:flex-start", onclick: () => { segna(); l.righe = l.righe || []; l.righe.push({ testo: "Ora prova tu!", quando: { evento: "demo_end" } }); stato.sel = { k: "riga", i: l.righe.length - 1 }; rid(); } }, "+ frase «Ora prova tu!» dopo la dimostrazione")),
+			el("div", { class: "bottoni" },
+				el("button", { class: "caldo", onclick: () => gioca(d.quando && d.quando.passo ? d.quando.passo : 0) }, "▶ GIOCA"),
+				el("button", { class: "piccolo", onclick: () => { segna(); l.dimostra.splice(s.i + 1, 0, clone(d)); stato.sel = { k: "dimostra", i: s.i + 1 }; rid(); } }, "Duplica"),
+				togli("Elimina la dimostrazione", () => { l.dimostra.splice(s.i, 1); if (!l.dimostra.length) delete l.dimostra; })));
+		if (maestra(l) < 0) metti(p, el("div", { class: "problemi" }, el("span", { text: "• Favilla non è nel livello: aggiungila con «+ Favilla che mostra»." })));
 	} else if (s.k === "guida" && l.guida && l.guida.percorso[s.i]) {
 		const q = l.guida.percorso[s.i];
 		metti(p, el("span", { class: "tipo-sel", text: "Favilla, punto " + (s.i + 1) + " di " + l.guida.percorso.length }), el("h3", { text: "Il percorso di Favilla" }),
@@ -1308,6 +1477,33 @@ function disegnaPannello() {
 	}
 	if (s.k) p.prepend(el("button", { class: "piccolo", style: "align-self:flex-start", onclick: () => scegli(null) }, "← Il livello"));
 }
+// una mossa di Favilla nel pannello: il verbo, i suoi valori, su, giù, togli
+function rigaMossa(d, m, k) {
+	const rid = () => cambiato();
+	const v = verboMossa(m);
+	const vs = el("select", { id: "f-mossa" + k });
+	for (const [x, t] of MOSSE_FAVILLA) vs.append(el("option", { value: x }, t));
+	vs.value = v;
+	vs.addEventListener("change", () => { segna(); for (const key of Object.keys(m)) delete m[key]; Object.assign(m, mossaBase(vs.value)); rid(); });
+	const r = el("div", { class: "mossa" }, el("div", { class: "r" }, el("span", { class: "n", text: String(k + 1) }), vs,
+		el("button", { class: "piccolo", title: "Prima", disabled: k === 0 || null, onclick: () => { segna(); [d.mosse[k - 1], d.mosse[k]] = [d.mosse[k], d.mosse[k - 1]]; rid(); } }, "↑"),
+		el("button", { class: "piccolo", title: "Dopo", disabled: k === d.mosse.length - 1 || null, onclick: () => { segna(); [d.mosse[k + 1], d.mosse[k]] = [d.mosse[k], d.mosse[k + 1]]; rid(); } }, "↓"),
+		el("button", { class: "piccolo", title: "Togli", onclick: () => { segna(); d.mosse.splice(k, 1); rid(); } }, "×")));
+	const id = "m" + k;
+	if (v === "cammina") r.append(campo("Fino a x (da sinistra)", testoIn(m, "cammina", { num: true, id }), "Cammina fin lì. Se cade da un bordo si ferma: dopo può aprire il paracadute."));
+	if (v === "salta") r.append(campo("Da che parte", sceltaIn(m, "salta", Object.entries(NOMI_LATI), { id })), spiega("Un salto pieno; aspetta di atterrare."));
+	if (v === "arma") {
+		r.append(campo("Cosa usa", sceltaIn(m, "arma", ARMI.map(w => [w, nomeArma(w)]), { id })));
+		if (SENZA_MIRA.includes(m.arma)) r.append(spiega(m.arma === "parachute" ? "Lo apre appena è in aria (per esempio dopo «cammina» oltre un bordo) e scende fino a terra." : "Si usa subito, senza mirare."));
+		else r.append(el("div", { class: "due" }, campo("Angolo (gradi)", testoIn(m, "angolo", { num: true, id }), "0 a destra, 90 in su, 180 a sinistra."),
+			campo("Forza (0-1)", testoIn(m, "potenza", { num: true, id }), "Vuoto: 1, la forza piena.")),
+			spiega("Mira un secondo, così si vede, poi spara e aspetta che tutto sia fermo."));
+	}
+	if (v === "aspetta") r.append(campo("Secondi", testoIn(m, "aspetta", { num: true, id })));
+	if (v === "dice") r.append(campo("Cosa dice", testoIn(m, "dice", { id }), "Esce sopra la sua testa, come le battute dei bot."));
+	if (v === "posa") r.append(el("div", { class: "due" }, campo("Gesto", sceltaIn(m, "posa", coppie(POSE, NOMI_POSE), { id })), campo("Secondi", testoIn(m, "secondi", { num: true, id }), "Vuoto: 1,5.")));
+	return r;
+}
 function sceltePassi(l) { return [[0, "subito, all'inizio"], ...(l.obiettivo || []).map((o, i) => [i + 1, "finito il passo " + (i + 1) + (o.testo ? ": " + o.testo : "")])]; }
 function scambiaPassi(l, a, b) {
 	[l.obiettivo[a], l.obiettivo[b]] = [l.obiettivo[b], l.obiettivo[a]];
@@ -1328,6 +1524,7 @@ function rinumera(l, m) {
 	(l.righe || []).forEach(r => { fix(r.quando, true); if (r.fino && !fix(r.fino, false)) delete r.fino; });
 	for (const k of ["casse", "cards"]) (l[k] || []).forEach(x => { x.dopo = Math.max(0, m(x.dopo)); });
 	if (l.guida && l.guida.parte) l.guida.parte = Math.max(0, m(l.guida.parte));
+	(l.dimostra || []).forEach(d => { if (d.quando && !fix(d.quando, false)) delete d.quando; });
 }
 // sposta il passo i davanti a quello che oggi è il passo k (k = quanti sono: in fondo);
 // si porta dietro quello che parte finito lui, come con «Sposta prima/dopo»
@@ -1386,6 +1583,7 @@ function scene(l, c) {
 		const dove = k === 0 ? "All'inizio" : "Finito il passo " + k;
 		(l.casse || []).forEach((x, i) => { if (x.dopo === k) out.push({ sel: { k: "cassa", i }, evento: "Cade una cassa: " + nomeArma(x.arma), arma: x.arma, ob: ob(k), dove: dove + " · una cassa" }); });
 		(l.cards || []).forEach((x, i) => { if (x.dopo === k) out.push({ sel: { k: "carta", i }, evento: "Si apre la carta: " + nomeArma(x.arma) + (x.give ? " (e te la dà)" : ""), arma: x.arma, ob: ob(k), dove: dove + " · la carta di un'arma" }); });
+		(l.dimostra || []).forEach((d, i) => { if (colonnaDimostra(d) === k) out.push({ sel: { k: "dimostra", i }, evento: "Favilla mostra: " + fraseMosse(d), ob: ob(k), dove: dove + " · Favilla mostra una mossa" }); });
 		righe.filter(x => x.k === k).forEach(({ r, i }) => out.push({ sel: { k: "riga", i }, grande: r.mostra === "grande", testo: r.testo, highlight: r.highlight, faccia: r.faccia, ob: ob(k), dove: dove + " · frase " + (i + 1) }));
 		if (k === passi.length && k > 0) out.push({ sel: null, evento: "Livello finito!", ob: "", dove: "Finito l'ultimo passo" });
 	}
@@ -1414,6 +1612,7 @@ function mostraScena() {
 	if (x.evento) sc.append(el("div", { class: "evento" }, IMMAGINI.armi[x.arma] ? el("img", { src: IMMAGINI.armi[x.arma], alt: "" }) : null, el("span", { text: x.evento })));
 	else sc.append(anteprima(x.testo, chiParla(c), x.faccia, x.grande, x.highlight));
 	document.getElementById("rivedi-dida").replaceChildren(el("b", { text: x.dove }), " — ",
+		x.sel && x.sel.k === "dimostra" ? "il turno passa a Favilla, che lo fa davvero; le sue frasi escono sopra la sua testa, poi tocca al giocatore." :
 		x.evento ? "succede nel gioco, senza parole." : x.grande ? "vignetta grande: il gioco si ferma finché il giocatore non preme VAI." : "striscia in alto: si legge mentre si gioca.");
 	document.getElementById("rivedi-dove").textContent = (l.titolo || l.id) + ": quello che legge il giocatore, in ordine";
 	document.getElementById("rivedi-conta").textContent = (j + 1) + " di " + lista.length;
@@ -1432,6 +1631,9 @@ function livelloDa(l, da) {
 	if (!da) return v;
 	v.righe = (v.righe || []).filter(r => !(r.quando && r.quando.passo != null && r.quando.passo < da));
 	(v.righe || []).forEach(r => { if (r.fino && r.fino.passo != null && r.fino.passo <= da) delete r.fino; });
+	// le mosse di Favilla dei passi già fatti (e quelle dell'inizio) non si rivedono
+	v.dimostra = (v.dimostra || []).filter(d => d.quando && !(d.quando.passo != null && d.quando.passo < da));
+	if (!v.dimostra.length) delete v.dimostra;
 	v.cards = (v.cards || []).filter(c => c.dopo >= da || c.give);
 	if (!v.cards.length) delete v.cards;
 	delete v.goal_text; delete v.highlight;
