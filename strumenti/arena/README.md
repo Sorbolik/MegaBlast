@@ -82,7 +82,7 @@ luajit strumenti/arena/collaudo.lua 10              # 10 semi per missione e liv
 luajit strumenti/arena/collaudo.lua 10 il_fabbro    # una missione sola
 ```
 
-Un bot gioca al posto tuo ogni missione dei gironi (`client/sim/campaign.lua`)
+Un bot gioca al posto tuo ogni missione dei gironi (`client/sim/levels.lua`)
 a ogni livello e scrive `simulazione/arena/collaudo.md`: quante ne vince, in
 quanti turni, con quanti punti di vantaggio, quante stelle. La seconda stella
 va alla mediana dei punti di vantaggio del bot normale (31 ott: non più dei

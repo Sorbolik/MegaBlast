@@ -299,7 +299,7 @@ def lava(x0, x1):
 
 
 # ---------------------------------------------------------------- le lezioni del cortile
-# che cosa è ogni rettangolo dell'arena (sim/campaign.lua), nell'ordine dell'arena
+# che cosa è ogni rettangolo dell'arena (sim/levels.lua), nell'ordine dell'arena
 LEZIONI = {
     "primi_passi": ["selciato", "selciato"],                                  # il pavimento, il gradino
     "lanciarune": ["selciato", "legno"],                                      # il ballatoio

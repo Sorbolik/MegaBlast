@@ -8,7 +8,7 @@ set -euo pipefail
 QUI="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$QUI/../.." && pwd)"
 CACHE="${MEGABLAST_CACHE:-$HOME/.cache/megablast}"
-JAVA=/usr/lib/jvm/java-25-openjdk-amd64/bin/java
+JAVA="${JAVA:-/usr/lib/jvm/java-25-openjdk-amd64/bin/java}"
 [ -f "$CACHE/bob.jar" ] && [ -x "$JAVA" ] || bash "$REPO/strumenti/simula/prepara.sh"
 
 OUT="$REPO/simulazione/web"

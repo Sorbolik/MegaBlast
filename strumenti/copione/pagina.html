@@ -1,0 +1,1160 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Copione di MegaBlast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+[hidden] { display: none !important; }
+/* Banco del fabbro: la mappa del livello al centro come un'incudine sotto la lampada,
+   strumenti attorno; la pergamena solo dove parla un personaggio (come nel gioco). */
+:root {
+	color-scheme: dark;
+	--fondo: #15120f;        /* la forgia spenta */
+	--banco: #1f1a16;        /* i pannelli */
+	--banco2: #2a231d;
+	--riga: #3b3129;
+	--testo: #efe4d3;
+	--tenue: #a8998a;
+	--brace: #f0a640;        /* accento: il metallo caldo */
+	--oro: #e9c35a;          /* il testo d'oro degli obiettivi */
+	--pergamena: #f2e1bf;
+	--inchiostro: #1f120c;
+	--blu: #6fa8d6;          /* squadra 1 */
+	--rosso: #d9674b;        /* squadra 2 */
+	--grigio: #8e8478;       /* fantocci */
+	--viola: #a98ad8;        /* eventi senza posto */
+	--verde: #7fbf7a;
+	--errore: #ff7a66;
+	--f-titolo: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
+	--f-testo: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+	--f-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+html, body { height: 100%; }
+body { background: var(--fondo); color: var(--testo); font-family: var(--f-testo); font-size: 14px;
+	padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+	padding-block: 0; display: flex; flex-direction: column; overflow-x: hidden; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: var(--banco2); border: 1px solid var(--riga); border-radius: 6px; padding: 6px 10px; }
+button:hover { border-color: var(--brace); }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--brace); outline-offset: 1px; }
+button.caldo { background: var(--brace); color: var(--inchiostro); border-color: var(--brace); font-weight: 700; }
+button.piccolo { padding: 3px 7px; font-size: 12px; }
+button[disabled] { opacity: .4; cursor: default; }
+select, input, textarea { background: var(--fondo); border: 1px solid var(--riga); border-radius: 5px; padding: 5px 7px; min-width: 0; }
+textarea { width: 100%; resize: vertical; }
+label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--tenue); }
+label.riga { flex-direction: row; align-items: center; gap: 6px; color: var(--testo); font-size: 13px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+header.barra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-block: 10px; border-bottom: 1px solid var(--riga); }
+header .marchio { font-family: var(--f-titolo); font-size: 22px; letter-spacing: .5px; color: var(--brace); cursor: pointer; }
+header .briciole { color: var(--tenue); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header .briciole b { color: var(--testo); font-weight: 700; }
+header .azioni { display: flex; flex-wrap: wrap; gap: 6px; }
+#avviso { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+	background: var(--banco2); border: 1px solid var(--brace); padding: 8px 14px; border-radius: 8px; z-index: 50; max-width: 90vw; }
+
+main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* Cruscotto */
+.cruscotto { padding-block: 16px; display: flex; flex-direction: column; gap: 22px; overflow: auto; }
+.capitolo h2 { font-family: var(--f-titolo); font-weight: 400; font-size: 20px; margin: 0; text-wrap: balance; }
+.capitolo .testa { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.capitolo .testa .info { color: var(--tenue); font-size: 13px; }
+.carte { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.carta { background: var(--banco); border: 1px solid var(--riga); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; text-align: left; padding: 0; }
+.carta:hover { border-color: var(--brace); }
+.carta .mini { aspect-ratio: 16 / 9; max-width: 100%; background: #0d0b09; display: block; }
+.carta .corpo { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 4px; }
+.carta .tit { font-weight: 700; font-size: 15px; }
+.carta .meta { display: flex; flex-wrap: wrap; gap: 5px; font-size: 11.5px; color: var(--tenue); }
+.pill { border: 1px solid var(--riga); border-radius: 99px; padding: 1px 7px; font-size: 11px; letter-spacing: .4px; text-transform: uppercase; }
+.pill.grande { border-color: var(--brace); color: var(--brace); }
+.pill.err { border-color: var(--errore); color: var(--errore); }
+.carta .mosse { display: flex; gap: 4px; padding: 0 10px 10px; }
+.nuova { border: 1px dashed var(--riga); border-radius: 8px; display: grid; place-items: center; min-height: 120px; color: var(--tenue); background: none; }
+
+/* Editor */
+.editor { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: minmax(0, 1fr) auto; gap: 0 12px; padding-block: 10px; }
+.tela { position: relative; background: #0d0b09; border: 1px solid var(--riga); border-radius: 8px; overflow: hidden; min-height: 300px; touch-action: none; }
+.tela svg { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-select: none; }
+.strumenti { position: absolute; left: 8px; top: 8px; display: flex; flex-wrap: wrap; gap: 5px; max-width: calc(100% - 16px); }
+.strumenti button { background: rgba(31, 26, 22, .9); font-size: 12px; padding: 4px 8px; }
+.strumenti button.on { border-color: var(--brace); color: var(--brace); }
+.nota-tela { position: absolute; right: 8px; bottom: 8px; background: rgba(31, 26, 22, .9); border: 1px solid var(--riga); border-radius: 6px; padding: 4px 8px; font-size: 12px; color: var(--tenue); max-width: 60%; }
+.pannello { grid-row: 1 / span 2; grid-column: 2; background: var(--banco); border: 1px solid var(--riga); border-radius: 8px; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.pannello h3 { font-family: var(--f-titolo); font-weight: 400; font-size: 17px; margin: 0; }
+.pannello .gruppo { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--riga); padding-top: 10px; }
+.pannello .due { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pannello .quattro { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.pannello .bottoni { display: flex; flex-wrap: wrap; gap: 6px; }
+.scelte { display: flex; flex-wrap: wrap; gap: 4px; }
+.scelte label { flex-direction: row; align-items: center; gap: 4px; border: 1px solid var(--riga); border-radius: 99px; padding: 2px 8px; color: var(--testo); font-size: 12px; }
+.cond { border: 1px solid var(--riga); border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+.cond .r { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.cond .r select, .cond .r input { flex: 1; min-width: 70px; }
+.cond .o { border-left: 3px solid var(--viola); padding-left: 6px; display: flex; flex-direction: column; gap: 5px; }
+.problemi { color: var(--errore); font-size: 12.5px; display: flex; flex-direction: column; gap: 2px; }
+
+/* striscia del tempo */
+.tempo { grid-column: 1; margin-top: 10px; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; max-height: 38vh; }
+.colonna { flex: 0 0 200px; background: var(--banco); border: 1px solid var(--riga); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.colonna.su { border-color: var(--brace); }
+.colonna .capo { font-size: 11.5px; color: var(--tenue); text-transform: uppercase; letter-spacing: .5px; }
+.colonna .obb { color: var(--oro); font-weight: 700; font-size: 13px; cursor: pointer; }
+.colonna .obb.sel { text-decoration: underline; }
+.gettone { background: var(--banco2); border: 1px solid var(--riga); border-left: 4px solid var(--tenue); border-radius: 6px; padding: 5px 7px; font-size: 12.5px; cursor: grab; text-align: left; }
+.gettone.grande { border-left-color: var(--brace); }
+.gettone.striscia { border-left-color: var(--blu); }
+.gettone.cassa { border-left-color: var(--verde); }
+.gettone.sel { outline: 2px solid var(--brace); }
+.gettone .chi { font-size: 10.5px; color: var(--tenue); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; gap: 6px; }
+.gettone .q { font-size: 11px; color: var(--viola); }
+.colonna .piu { font-size: 12px; color: var(--tenue); background: none; border-style: dashed; }
+
+/* vignetta come nel gioco */
+.vignetta { background: var(--pergamena); color: var(--inchiostro); border: 3px solid var(--inchiostro); border-radius: 8px; padding: 10px; display: grid; grid-template-columns: 74px 1fr; gap: 10px; }
+.vignetta img { width: 74px; height: 74px; object-fit: contain; }
+.vignetta .nome { font-family: var(--f-titolo); font-size: 13px; }
+.vignetta .frase { font-family: var(--f-titolo); font-size: 14px; line-height: 1.25; }
+.vignetta .disegno { grid-column: 1 / -1; background: #1c1820; color: var(--testo); border-radius: 4px; padding: 10px; display: flex; gap: 8px; align-items: center; font-size: 12px; }
+.vignetta .disegno img { width: 32px; height: 32px; }
+.vignetta .vai { grid-column: 1; background: var(--inchiostro); color: var(--pergamena); font-family: var(--f-titolo); text-align: center; border-radius: 3px; padding: 4px; }
+.striscia-ant { background: rgba(10, 9, 12, .85); border: 1px solid var(--riga); border-radius: 6px; padding: 6px 8px; display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.striscia-ant img { width: 40px; height: 40px; object-fit: contain; }
+
+/* GIOCA */
+#gioca { position: fixed; inset: 0; background: rgba(0, 0, 0, .92); z-index: 40; display: flex; flex-direction: column;
+	padding: calc(10px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); gap: 8px; }
+#gioca .su { display: flex; gap: 8px; align-items: center; }
+#gioca .su span { flex: 1; color: var(--tenue); }
+#gioca iframe { flex: 1; border: 0; width: 100%; background: #000; border-radius: 6px; }
+.conferma { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; color: var(--errore); font-size: 12.5px; }
+
+@media (max-width: 900px) {
+	html, body { height: auto; }
+	.editor { flex: none; grid-template-columns: minmax(0, 1fr); grid-template-rows: 60vh auto auto; }
+	.pannello { grid-row: 3; grid-column: 1; margin-top: 10px; overflow: visible; }
+	.tempo { grid-row: 2; max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header class="barra">
+	<span class="marchio" id="marchio" title="Torna al cruscotto">COPIONE</span>
+	<span class="briciole" id="briciole"></span>
+	<span class="azioni">
+		<button id="annulla" title="Annulla (Ctrl+Z)">↶</button>
+		<button id="rifai" title="Rifai (Ctrl+Shift+Z)">↷</button>
+		<button id="b-gioca" class="caldo">GIOCA</button>
+		<button id="b-manda">Manda a Claude</button>
+		<button id="b-copia">Copia il Lua</button>
+		<button id="b-ripristina" title="Butta le modifiche di questo browser">Ripristina</button>
+	</span>
+</header>
+<main id="main"></main>
+<div id="avviso" hidden></div>
+<div id="gioca" hidden>
+	<div class="su"><span id="gioca-nome"></span><button id="gioca-ancora">Ricomincia</button><button id="gioca-chiudi" class="caldo">Chiudi</button></div>
+	<iframe id="gioca-frame" title="Il livello nel gioco" allow="autoplay; fullscreen; gamepad"></iframe>
+</div>
+
+<script>
+/*DATI*/
+</script>
+<script>
+"use strict";
+// ---------------------------------------------------------------- dati
+const W = DATI.catalogo.mondo.w, H = DATI.catalogo.mondo.h;
+const CAT = DATI.catalogo;
+const ARMI = Object.keys(CAT.armi).sort();
+const COMANDI = ["primaria", "secondaria", "cammina", "salta", "mira", "annulla", "baratto", ...ARMI];
+const VEDI = ["primarie", "secondarie", "teleport", "parachute", "tempo", "punti", "baratto", ...ARMI.filter(w => w !== "teleport" && w !== "parachute")];
+const TIPI = ["corsa", "bersagli", "duello", "squadra", "orda", "resistenza", "bottino", "custode"];
+const USA = ["globi", "rampino", "pogo", "kickback", "paracadute", "baratto"];
+const SEGNAPOSTO = ["salta", "cammina", "mira", "annulla"];
+const CONTATORI = ["morti", "teletrasporti", "vuoto", "abbattuti", "danni", "misses", "globi", "globi_turno", "scintille", "prima"];
+const BASE = JSON.stringify(DATI.capitoli);
+const ORIGINALI = {};
+for (const c of DATI.capitoli) for (const l of c.livelli) ORIGINALI[l.id] = l;
+
+const clone = v => JSON.parse(JSON.stringify(v));
+let capitoli = clone(DATI.capitoli);
+let stato = { vista: "cruscotto", c: 0, l: 0, sel: null, cam: null, dipinto: true, collisioni: true };
+let passato = [], futuro = [];
+
+const BOZZA = "copione_bozza_v1";
+try {
+	const b = JSON.parse(localStorage.getItem(BOZZA) || "null");
+	if (b && b.base === BASE && Array.isArray(b.capitoli)) capitoli = b.capitoli;
+} catch (e) { /* senza memoria del browser si parte dal gioco */ }
+function conta(n, uno, tanti) { return n + " " + (n === 1 ? uno : tanti); }
+function salvaBozza() {
+	try { localStorage.setItem(BOZZA, JSON.stringify({ base: BASE, capitoli })); } catch (e) { /* niente */ }
+}
+
+const cap = () => capitoli[stato.c];
+const liv = () => cap().livelli[stato.l];
+
+function segna() { // prima di ogni modifica: per annullare
+	passato.push(JSON.stringify(capitoli));
+	if (passato.length > 200) passato.shift();
+	futuro = [];
+}
+function cambiato() { salvaBozza(); disegna(); }
+function annulla() { if (!passato.length) return; futuro.push(JSON.stringify(capitoli)); capitoli = JSON.parse(passato.pop()); stato.sel = null; aggiusta(); cambiato(); }
+function rifai() { if (!futuro.length) return; passato.push(JSON.stringify(capitoli)); capitoli = JSON.parse(futuro.pop()); stato.sel = null; aggiusta(); cambiato(); }
+function aggiusta() {
+	stato.c = Math.min(stato.c, capitoli.length - 1);
+	stato.l = Math.min(stato.l, Math.max(0, cap().livelli.length - 1));
+	if (!cap().livelli.length) stato.vista = "cruscotto";
+}
+
+function avviso(t) {
+	const a = document.getElementById("avviso");
+	a.textContent = t; a.hidden = false;
+	clearTimeout(avviso.t); avviso.t = setTimeout(() => { a.hidden = true; }, 3200);
+}
+
+// ---------------------------------------------------------------- piccoli aiuti
+function metti(n, ...figli) { n.append(...figli.flat().filter(f => f != null && f !== false)); return n; }
+function el(tag, props, ...figli) {
+	const n = document.createElement(tag);
+	for (const [k, v] of Object.entries(props || {})) {
+		if (v == null || v === false) continue;
+		if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+		else if (k === "class") n.className = v;
+		else if (k === "text") n.textContent = v;
+		else n.setAttribute(k, v === true ? "" : v);
+	}
+	for (const f of figli.flat()) if (f != null && f !== false) n.append(f.nodeType ? f : document.createTextNode(String(f)));
+	return n;
+}
+const NS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs, ...figli) {
+	const n = document.createElementNS(NS, tag);
+	for (const [k, v] of Object.entries(attrs || {})) if (v != null) n.setAttribute(k, v);
+	for (const f of figli.flat()) if (f != null) n.append(f.nodeType ? f : document.createTextNode(String(f)));
+	return n;
+}
+const snap = v => Math.round(v / 10) * 10;
+const Y = y => H - y;
+
+function nomeArma(w) { return (CAT.armi[w] && CAT.armi[w].nome) || w; }
+function chiParla(c) { return c.aspetta ? "favilla" : "fabbro"; }
+function ritratto(chi, faccia) {
+	return IMMAGINI.ritratti[chi + "_" + (faccia || "spiega")] || IMMAGINI.ritratti[chi + "_calma"] || "";
+}
+function conGesti(t) { return String(t || "").replace(/\{(\w+)\}/g, (m, k) => CAT.gesti[k] || m); }
+
+function nomeGiocatore(l, i) {
+	const g = (l.giocatori || [])[i] || {};
+	if (i === 0) return "Tu";
+	if (g.nome) return g.nome;
+	if (g.dummy) return "Fantoccio " + (i + 1);
+	if (g.bot) return "Bot " + g.bot + (g.carattere ? " " + g.carattere : "");
+	return "Giocatore " + (i + 1);
+}
+function coloreGiocatore(l, i) {
+	const g = (l.giocatori || [])[i] || {};
+	if (g.dummy) return "var(--grigio)";
+	return g.team === 2 ? "var(--rosso)" : "var(--blu)";
+}
+
+// un trigger in parole
+function frase(q) {
+	if (!q) return "";
+	const p = [];
+	if (q.passo != null) p.push("dopo il passo " + q.passo);
+	if (q.turno != null) p.push("tuo turno " + q.turno);
+	if (q.turno_altri != null) p.push("turno " + q.turno_altri + " degli altri");
+	if (q.di_turno) p.push(q.di_turno === "tu" ? "nel tuo turno" : "nel turno degli altri");
+	if (q.evento) p.push("evento " + q.evento + (q.di ? " (" + q.di + ")" : "") + (q.arma ? " con " + nomeArma(q.arma) : ""));
+	if (q.tocca) p.push("tocchi " + q.tocca);
+	if (q.usato) p.push("hai usato " + q.usato);
+	if (q.finestra) p.push("dopo il primo attacco");
+	if (q.in_caduta) p.push("cadi veloce");
+	if (q.corona) p.push("sei primo");
+	if (q.conta) p.push(q.conta + " ≥ " + (q.almeno || 1));
+	if (q.uno) p.push("uno fra: " + q.uno.map(frase).join(" | "));
+	return p.join(", ");
+}
+// la riga parte da un passo e basta: va nella colonna di quel passo
+function soloPasso(q) { return q && Object.keys(q).length === 1 && q.passo != null; }
+
+// ---------------------------------------------------------------- controllo (come strumenti/copione/controlla.lua)
+function problemi(l, c) {
+	const out = [];
+	const passi = (l.obiettivo || []).length;
+	const okPasso = n => n === 0 || (n >= 1 && n <= passi);
+	const testo = (t, dove) => {
+		if (!t) out.push(dove + ": manca il testo");
+		for (const m of String(t || "").matchAll(/\{(\w+)\}/g)) if (!SEGNAPOSTO.includes(m[1])) out.push(dove + ": segnaposto {" + m[1] + "}");
+	};
+	const cond = (q, dove) => {
+		if (!q || !Object.keys(q).length) { out.push(dove + ": condizione vuota"); return; }
+		if (q.passo != null && !(q.passo >= 1 && q.passo <= passi)) out.push(dove + ": il passo " + q.passo + " non c'è");
+		if (q.evento && !CAT.eventi.includes(q.evento)) out.push(dove + ": evento " + q.evento + " sconosciuto");
+		(q.uno || []).forEach((o, i) => cond(o, dove + " (oppure " + (i + 1) + ")"));
+	};
+	testo(l.titolo, "titolo");
+	if (!l.mappa && !l.arena) out.push("serve una mappa o un'arena");
+	(l.obiettivo || []).forEach((p, i) => testo(p.testo, "passo " + (i + 1)));
+	(l.righe || []).forEach((r, i) => {
+		const d = "riga " + (i + 1);
+		testo(r.testo, d); cond(r.quando, d + ", quando");
+		if (r.fino) cond(r.fino, d + ", fino");
+		if (r.mostra === "grande" && !c.aspetta) out.push(d + ": la vignetta grande è delle lezioni");
+		if (r.mostra === "grande" && r.highlight && !CAT.disegni.includes(r.highlight)) out.push(d + ": manca il disegno di " + r.highlight);
+	});
+	for (const k of ["casse", "cards"]) (l[k] || []).forEach((x, i) => { if (!okPasso(x.dopo)) out.push(k + " " + (i + 1) + ": il passo " + x.dopo + " non c'è"); });
+	if (l.arena && (l.spawns || []).length < (l.giocatori || []).length) out.push("meno punti di partenza che giocatori");
+	return out;
+}
+function idDoppi() {
+	const visti = {}, doppi = new Set();
+	for (const c of capitoli) for (const l of c.livelli) { if (visti[l.id]) doppi.add(l.id); visti[l.id] = true; }
+	return doppi;
+}
+
+// ---------------------------------------------------------------- Lua (levels.lua e il livello per GIOCA)
+const IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
+function luaStr(s) { return '"' + String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n") + '"'; }
+function luaChiave(k) { return /^\d+$/.test(k) ? "[" + k + "]" : IDENT.test(k) ? k : "[" + luaStr(k) + "]"; }
+function luaInline(v) {
+	if (Array.isArray(v)) return v.length ? "{ " + v.map(luaInline).join(", ") + " }" : "{}";
+	if (v && typeof v === "object") {
+		const ks = Object.keys(v);
+		return ks.length ? "{ " + ks.map(k => luaChiave(k) + " = " + luaInline(v[k])).join(", ") + " }" : "{}";
+	}
+	if (typeof v === "string") return luaStr(v);
+	return String(v);
+}
+function lua(v, ind) {
+	const una = luaInline(v);
+	if (una.length + ind.length <= 110 || !(v && typeof v === "object")) return una;
+	const dentro = ind + "\t";
+	if (Array.isArray(v)) return "{\n" + v.map(x => dentro + lua(x, dentro) + ",\n").join("") + ind + "}";
+	return "{\n" + Object.keys(v).map(k => dentro + luaChiave(k) + " = " + lua(v[k], dentro) + ",\n").join("") + ind + "}";
+}
+function levelsLua() {
+	let s = "-- The levels of the campaign, chapter by chapter: all data, the script of\n" +
+		"-- each level (sim/missions.lua runs it, docs/copione.md is the format). The\n" +
+		"-- Copione (strumenti/copione) shows and edits them.\n\nlocal M = {}\n";
+	for (const c of capitoli) s += "\nM." + c.id + " = " + lua(c.livelli, "") + "\n";
+	return s + "\nreturn M\n";
+}
+function campaignCapitoli() {
+	return "M.CAPITOLI = {\n" + capitoli.map(c => "\t" + luaInline({ id: c.id, titolo: c.titolo, serve: c.serve, missioni: "§" + c.id, aspetta: c.aspetta || null })
+		.replace('"§' + c.id + '"', "levels." + c.id).replace(", aspetta = null", "") + ",\n").join("") + "}\n";
+}
+function arenaCambiata(l) {
+	const o = ORIGINALI[l.id];
+	if (!o || !l.arena) return !!l.arena;
+	return JSON.stringify(o.arena) !== JSON.stringify(l.arena);
+}
+
+// ---------------------------------------------------------------- disegno generale
+function disegna() {
+	document.getElementById("annulla").disabled = !passato.length;
+	document.getElementById("rifai").disabled = !futuro.length;
+	const br = document.getElementById("briciole");
+	br.replaceChildren();
+	const main = document.getElementById("main");
+	main.replaceChildren();
+	document.getElementById("b-gioca").disabled = stato.vista !== "livello";
+	if (stato.vista === "cruscotto") {
+		br.append("Campagna: ", el("b", { text: capitoli.length + " capitoli, " + capitoli.reduce((n, c) => n + c.livelli.length, 0) + " livelli" }));
+		main.append(cruscotto());
+	} else {
+		br.append(cap().titolo + " › ", el("b", { text: liv().titolo || liv().id }));
+		main.append(editor());
+	}
+}
+
+// ---------------------------------------------------------------- cruscotto
+function cruscotto() {
+	const doppi = idDoppi();
+	const box = el("div", { class: "cruscotto" });
+	capitoli.forEach((c, ci) => {
+		const carte = el("div", { class: "carte" });
+		c.livelli.forEach((l, li) => {
+			const pr = problemi(l, c);
+			const grandi = (l.righe || []).filter(r => r.mostra === "grande").length + (l.goal_text ? 1 : 0);
+			const img = IMMAGINI.mappe[l.mappa || "missione_" + l.id];
+			const apri = () => { stato.vista = "livello"; stato.c = ci; stato.l = li; stato.sel = null; stato.cam = null; disegna(); };
+			const sposta = (d) => (e) => {
+				e.stopPropagation();
+				const j = li + d; if (j < 0 || j >= c.livelli.length) return;
+				segna(); [c.livelli[li], c.livelli[j]] = [c.livelli[j], c.livelli[li]]; cambiato();
+			};
+			carte.append(el("div", { class: "carta", role: "button", tabindex: "0", onclick: apri, onkeydown: e => { if (e.key === "Enter") apri(); } },
+				img ? el("img", { class: "mini", src: img, alt: "" }) : miniArena(l),
+				el("div", { class: "corpo" },
+					el("span", { class: "tit", text: (li + 1) + ". " + (l.titolo || l.id) }),
+					el("span", { class: "meta" },
+						el("span", { class: "pill", text: l.tipo || "?" }),
+						el("span", { class: "pill", text: conta((l.obiettivo || []).length, "passo", "passi") }),
+						el("span", { class: "pill grande", text: conta(grandi, "vignetta grande", "vignette grandi") }),
+						el("span", { class: "pill", text: conta((l.righe || []).length, "riga", "righe") }),
+						pr.length || doppi.has(l.id) ? el("span", { class: "pill err", text: (pr.length + (doppi.has(l.id) ? 1 : 0)) + " da sistemare" }) : null)),
+				el("div", { class: "mosse" },
+					el("button", { class: "piccolo", title: "Prima", onclick: sposta(-1) }, "←"),
+					el("button", { class: "piccolo", title: "Dopo", onclick: sposta(1) }, "→"),
+					el("button", { class: "piccolo", onclick: e => { e.stopPropagation(); segna(); const n = clone(l); n.id = nuovoId(l.id); n.titolo = (l.titolo || "") + " (copia)"; c.livelli.splice(li + 1, 0, n); cambiato(); } }, "Duplica"),
+					confermaBottone("Elimina", () => { segna(); c.livelli.splice(li, 1); cambiato(); }))));
+		});
+		carte.append(el("button", { class: "nuova", onclick: () => { segna(); c.livelli.push(livelloNuovo(c)); stato.vista = "livello"; stato.c = ci; stato.l = c.livelli.length - 1; stato.sel = null; stato.cam = null; cambiato(); } }, "+ Nuovo livello"));
+		box.append(el("section", { class: "capitolo" },
+			el("div", { class: "testa" },
+				el("h2", { text: c.titolo }),
+				el("span", { class: "info", text: (c.aspetta ? "Lezioni: il tempo aspetta te, vignette grandi" : "Missioni: la striscia non ferma il gioco") + " · si apre con " + c.serve + " stelle" })),
+			carte));
+	});
+	box.append(el("p", { class: "info", style: "color:var(--tenue);max-width:65ch" },
+		"Le modifiche restano in questo browser finché non le mandi a Claude. Un capitolo nuovo, una mappa nuova o un verbo nuovo si chiedono a Claude in chat."));
+	return box;
+}
+function nuovoId(base) {
+	const usati = new Set(capitoli.flatMap(c => c.livelli.map(l => l.id)));
+	let i = 2; while (usati.has(base + "_" + i)) i++;
+	return base + "_" + i;
+}
+function livelloNuovo(c) {
+	return {
+		id: nuovoId("nuovo"), titolo: "Livello nuovo", tipo: c.aspetta ? "corsa" : "duello",
+		goal_text: "Raggiungi la bandiera", arena: [[240, 0, 1440, 150]],
+		spawns: [{ x: 480, from: 600 }, { x: 1400, from: 600 }],
+		giocatori: [{ team: 1 }, { team: 2, dummy: true }],
+		without_time: c.aspetta ? true : undefined,
+		obiettivo: [{ reach: { x: 1300, y: 150 }, flag: true, testo: "Raggiungi la bandiera" }], righe: [],
+	};
+}
+function miniArena(l) {
+	const s = sv("svg", { viewBox: "0 0 " + W + " " + H, class: "mini", preserveAspectRatio: "xMidYMid meet" });
+	for (const r of l.arena || []) s.append(sv("rect", { x: r[0], y: Y(r[1] + r[3]), width: r[2], height: r[3], fill: "#5b5550" }));
+	return s;
+}
+function confermaBottone(testo, fai) {
+	const b = el("button", { class: "piccolo" }, testo);
+	b.addEventListener("click", e => {
+		e.stopPropagation();
+		const box = el("span", { class: "conferma" }, "Sicuro? ",
+			el("button", { class: "piccolo", onclick: ev => { ev.stopPropagation(); fai(); } }, "Sì"),
+			el("button", { class: "piccolo", onclick: ev => { ev.stopPropagation(); box.replaceWith(b); } }, "No"));
+		b.replaceWith(box);
+	});
+	return b;
+}
+
+// ---------------------------------------------------------------- editor del livello
+let tela = null; // { svg, box }
+function editor() {
+	const l = liv();
+	const box = el("div", { class: "editor" });
+	const t = el("div", { class: "tela" });
+	const svg = sv("svg", { "aria-label": "La mappa del livello" });
+	t.append(svg, barraStrumenti(l), el("div", { class: "nota-tela", id: "nota-tela" }));
+	box.append(t, el("div", { class: "pannello", id: "pannello" }), el("div", { class: "tempo", id: "tempo" }));
+	tela = { svg, box: t };
+	if (!stato.cam) stato.cam = { x: 0, y: 0, w: W, h: H };
+	requestAnimationFrame(() => { disegnaMappa(); });
+	agganciaTela(svg);
+	setTimeout(() => { disegnaTempo(); disegnaPannello(); });
+	return box;
+}
+
+function barraStrumenti(l) {
+	const b = el("div", { class: "strumenti" });
+	const agg = (testo, fai) => b.append(el("button", { onclick: () => { segna(); fai(); cambiato(); } }, testo));
+	if (l.arena) agg("+ Piattaforma", () => { l.arena.push([snap(stato.cam.x + stato.cam.w / 2 - 100), 300, 200, 30]); stato.sel = { k: "rect", i: l.arena.length - 1 }; });
+	agg("+ Giocatore", () => {
+		l.giocatori = l.giocatori || []; l.giocatori.push({ team: 2, dummy: true });
+		if (l.arena) { l.spawns = l.spawns || []; l.spawns.push({ x: snap(stato.cam.x + stato.cam.w / 2), from: 600 }); }
+		stato.sel = { k: "spawn", i: l.giocatori.length - 1 };
+	});
+	agg("+ Passo: arriva qui", () => { l.obiettivo = l.obiettivo || []; l.obiettivo.push({ reach: { x: snap(stato.cam.x + stato.cam.w / 2), y: 150 }, testo: "Arriva qui" }); stato.sel = { k: "passo", i: l.obiettivo.length - 1 }; });
+	agg("+ Cassa", () => { l.casse = l.casse || []; l.casse.push({ dopo: 0, arma: "missile", x: snap(stato.cam.x + stato.cam.w / 2) }); stato.sel = { k: "cassa", i: l.casse.length - 1 }; });
+	if (!l.scintilla) agg("+ Scintilla", () => { l.scintilla = { x: snap(stato.cam.x + stato.cam.w / 2), y: 300 }; stato.sel = { k: "scintilla" }; });
+	agg(l.guida ? "+ Punto di Favilla" : "+ Favilla", () => {
+		l.guida = l.guida || { parte: 0, percorso: [] };
+		const pp = l.guida.percorso, ult = pp[pp.length - 1];
+		pp.push({ x: snap(ult ? ult.x + 200 : stato.cam.x + stato.cam.w / 2), y: ult ? ult.y : 150, t: ult ? ult.t + 3 : 0 });
+		stato.sel = { k: "guida", i: pp.length - 1 };
+	});
+	const tog = (testo, chiave) => b.append(el("button", { class: stato[chiave] ? "on" : "", onclick: () => { stato[chiave] = !stato[chiave]; disegna(); } }, testo));
+	tog("Dipinto", "dipinto");
+	tog("Collisioni", "collisioni");
+	b.append(el("button", { onclick: () => { stato.cam = { x: 0, y: 0, w: W, h: H }; disegnaMappa(); } }, "Adatta"));
+	return b;
+}
+
+// la camera: viewBox in coordinate dello schermo SVG (y in giù)
+function viewBox() {
+	const r = tela.box.getBoundingClientRect();
+	const asp = r.width / Math.max(1, r.height);
+	let { x, y, w, h } = stato.cam;
+	if (w / h < asp) { const nw = h * asp; x -= (nw - w) / 2; w = nw; } else { const nh = w / asp; y -= (nh - h) / 2; h = nh; }
+	return [x, y, w, h];
+}
+function puntoMondo(ev) {
+	const p = tela.svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY;
+	const q = p.matrixTransform(tela.svg.getScreenCTM().inverse());
+	return { x: q.x, y: H - q.y };
+}
+
+function terraSotto(l, x, y) {
+	let best = 0;
+	for (const r of l.arena || []) if (x >= r[0] && x <= r[0] + r[2] && r[1] + r[3] <= y + 1) best = Math.max(best, r[1] + r[3]);
+	return best;
+}
+
+function disegnaMappa() {
+	if (!tela) return;
+	const l = liv(), svg = tela.svg, sel = stato.sel || {};
+	const [vx, vy, vw, vh] = viewBox();
+	svg.setAttribute("viewBox", vx + " " + vy + " " + vw + " " + vh);
+	svg.replaceChildren();
+	const k = vw / 1000; // dimensione di un "pixel" leggibile
+	const defs = sv("defs", {},
+		sv("pattern", { id: "griglia", width: 120, height: 120, patternUnits: "userSpaceOnUse" },
+			sv("path", { d: "M120 0H0V120", fill: "none", stroke: "#2a231d", "stroke-width": 2 })),
+		sv("marker", { id: "freccia", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse" },
+			sv("path", { d: "M0 0L10 5L0 10z", fill: "#a98ad8" })));
+	svg.append(defs, sv("rect", { x: -2000, y: -2000, width: W + 4000, height: H + 4000, fill: "#0d0b09", "data-sfondo": "1" }),
+		sv("rect", { x: 0, y: 0, width: W, height: H, fill: "url(#griglia)", "data-sfondo": "1" }),
+		sv("rect", { x: 0, y: 0, width: W, height: H, fill: "none", stroke: "#3b3129", "stroke-width": 3 * k, "data-sfondo": "1" }));
+	const nomeMappa = l.mappa || "missione_" + l.id;
+	const img = IMMAGINI.mappe[nomeMappa];
+	const vecchio = l.arena && arenaCambiata(l);
+	if (img && stato.dipinto) svg.append(sv("image", { href: img, x: 0, y: 0, width: W, height: H, opacity: vecchio ? 0.3 : 1, "data-sfondo": "1", "pointer-events": "none" }));
+	const nota = document.getElementById("nota-tela");
+	if (nota) nota.textContent = l.arena ? (vecchio ? "Arena cambiata: il dipinto è quello vecchio (Claude lo rifà). In GIOCA: senza dipinto." : "Trascina gli oggetti. Rotella o due dita: zoom. Trascina il fondo: scorri.")
+		: "Mappa del gioco (" + ((CAT.mappe[l.mappa] || {}).nome || l.mappa) + "): il terreno non si cambia qui.";
+
+	const g = sv("g", {});
+	svg.append(g);
+	// arena
+	if (l.arena && stato.collisioni) l.arena.forEach((r, i) => {
+		const s = sel.k === "rect" && sel.i === i;
+		g.append(sv("rect", { x: r[0], y: Y(r[1] + r[3]), width: r[2], height: r[3], fill: img && stato.dipinto && !vecchio ? "rgba(140,130,120,.18)" : "#5b5550",
+			stroke: s ? "#f0a640" : "#a8998a", "stroke-width": (s ? 3 : 1.5) * k, "data-drag": "rect:" + i, style: "cursor:move" }));
+		if (s) {
+			g.append(maniglia(r[0] + r[2], r[1] + r[3], "rectTR:" + i, k), maniglia(r[0], r[1], "rectBL:" + i, k));
+			g.append(sv("text", { x: r[0] + 6 * k, y: Y(r[1] + r[3]) - 8 * k, "font-size": 14 * k, fill: "#efe4d3", class: "num" }, r[0] + ", " + r[1] + "  " + r[2] + "×" + r[3]));
+		}
+	});
+	// passi
+	(l.obiettivo || []).forEach((p, i) => {
+		const s = sel.k === "passo" && sel.i === i;
+		if (p.reach) {
+			const x = p.reach.x, y = p.reach.y;
+			g.append(sv("rect", { x, y: Y(y + 260), width: Math.max(0, W - x), height: 260, fill: s ? "rgba(233,195,90,.22)" : "rgba(233,195,90,.10)", stroke: "#e9c35a", "stroke-dasharray": (8 * k) + " " + (6 * k), "stroke-width": 1.5 * k, "pointer-events": "none" }));
+			g.append(sv("line", { x1: x, y1: Y(y), x2: x, y2: Y(y + 90), stroke: "#e9c35a", "stroke-width": 3 * k }));
+			g.append(sv("path", { d: `M${x} ${Y(y + 90)}l${40 * k} ${12 * k}l${-40 * k} ${12 * k}z`, fill: p.flag ? "#efe4d3" : "#e9c35a" }));
+			g.append(bollino(x, y + 90, i + 1, "#e9c35a", "passo:" + i, k, s));
+		}
+		const chi = p.hit != null ? p.hit : p.down;
+		if (typeof chi === "number") {
+			const sp = puntoGiocatore(l, chi - 1);
+			if (sp) {
+				g.append(sv("circle", { cx: sp.x, cy: Y(sp.y + 40), r: 70 * Math.max(1, k * 0.6), fill: "none", stroke: "#e9c35a", "stroke-width": 2 * k, "stroke-dasharray": (10 * k) + " " + (6 * k) }));
+				g.append(bollino(sp.x + 60, sp.y + 100, i + 1, "#e9c35a", "passo:" + i, k, s));
+			}
+		}
+	});
+	// casse
+	(l.casse || []).forEach((c, i) => {
+		const s = sel.k === "cassa" && sel.i === i;
+		const yt = terraSotto(l, c.x, H);
+		g.append(sv("line", { x1: c.x, y1: Y(H - 60), x2: c.x, y2: Y(yt + 40), stroke: "#7fbf7a", "stroke-width": 2 * k, "stroke-dasharray": (6 * k) + " " + (6 * k) }));
+		g.append(sv("image", { href: IMMAGINI.cassa, x: c.x - 30, y: Y(yt + 60), width: 60, height: 60, "data-drag": "cassa:" + i, style: "cursor:ew-resize" }));
+		if (IMMAGINI.armi[c.arma]) g.append(sv("image", { href: IMMAGINI.armi[c.arma], x: c.x - 22, y: Y(H - 40), width: 44, height: 44, "pointer-events": "none" }));
+		g.append(sv("text", { x: c.x + 30 * k, y: Y(H - 70), "font-size": 14 * k, fill: s ? "#f0a640" : "#7fbf7a" }, nomeArma(c.arma) + " · dopo il passo " + c.dopo));
+		if (s) g.append(sv("rect", { x: c.x - 36, y: Y(yt + 66), width: 72, height: 72, fill: "none", stroke: "#f0a640", "stroke-width": 3 * k }));
+	});
+	// Favilla
+	if (l.guida && l.guida.percorso && l.guida.percorso.length) {
+		const pp = l.guida.percorso;
+		g.append(sv("polyline", { points: pp.map(p => p.x + "," + Y(p.y + 50)).join(" "), fill: "none", stroke: "#6fa8d6", "stroke-width": 3 * k, "stroke-dasharray": (12 * k) + " " + (8 * k) }));
+		pp.forEach((p, i) => {
+			const s = sel.k === "guida" && sel.i === i;
+			g.append(sv("circle", { cx: p.x, cy: Y(p.y + 50), r: (s ? 18 : 13) * k, fill: s ? "#f0a640" : "#6fa8d6", stroke: "#15120f", "stroke-width": 2 * k, "data-drag": "guida:" + i, style: "cursor:move" }));
+			g.append(sv("text", { x: p.x, y: Y(p.y + 50) - 22 * k, "font-size": 13 * k, fill: "#6fa8d6", "text-anchor": "middle", class: "num" }, p.t + " s" + (p.salto ? " ⤴" : "")));
+		});
+		const f = pp[0];
+		g.append(sv("image", { href: ritratto("favilla", "calma"), x: f.x - 45, y: Y(f.y + 150), width: 90, height: 90, "pointer-events": "none" }));
+	}
+	// scintilla
+	if (l.scintilla) {
+		const s = sel.k === "scintilla", x = l.scintilla.x, y = Y(l.scintilla.y), r = 22 * Math.max(1, k * 0.8);
+		const pts = []; for (let j = 0; j < 10; j++) { const a = Math.PI / 5 * j - Math.PI / 2, rr = j % 2 ? r * 0.45 : r; pts.push((x + Math.cos(a) * rr) + "," + (y + Math.sin(a) * rr)); }
+		g.append(sv("polygon", { points: pts.join(" "), fill: s ? "#f0a640" : "#ffd36b", stroke: "#15120f", "stroke-width": 2 * k, "data-drag": "scintilla:0", style: "cursor:move" }));
+	}
+	// giocatori
+	(l.giocatori || []).forEach((gi, i) => {
+		const sp = puntoGiocatore(l, i);
+		if (!sp) return;
+		const s = sel.k === "spawn" && sel.i === i, col = coloreGiocatore(l, i);
+		const nasc = (l.nascosti || []).includes(i + 1);
+		const yt = terraSotto(l, sp.x, sp.y);
+		g.append(sv("line", { x1: sp.x, y1: Y(sp.y), x2: sp.x, y2: Y(yt), stroke: col, "stroke-width": 2 * k, "stroke-dasharray": (4 * k) + " " + (5 * k), opacity: .7 }));
+		g.append(sv("ellipse", { cx: sp.x, cy: Y(yt), rx: 30, ry: 8, fill: col, opacity: .5 }));
+		g.append(sv("circle", { cx: sp.x, cy: Y(sp.y), r: (s ? 26 : 20) * Math.max(1, k * 0.7), fill: col, opacity: nasc ? .35 : 1, stroke: s ? "#f0a640" : "#15120f", "stroke-width": (s ? 4 : 2) * k, "data-drag": l.arena ? "spawn:" + i : "selspawn:" + i, style: "cursor:move" }));
+		g.append(sv("text", { x: sp.x, y: Y(sp.y) + 6 * k, "font-size": 16 * k, "text-anchor": "middle", fill: "#15120f", "font-weight": 700, "pointer-events": "none" }, String(i + 1)));
+		g.append(sv("text", { x: sp.x, y: Y(sp.y) - 32 * Math.max(1, k * 0.7), "font-size": 15 * k, "text-anchor": "middle", fill: col, "font-weight": 700, "pointer-events": "none" }, nomeGiocatore(l, i) + (nasc ? " (nascosto)" : "")));
+	});
+	// le righe agganciate ai passi con un posto
+	(l.righe || []).forEach((r, i) => {
+		if (!soloPasso(r.quando)) return;
+		const p = (l.obiettivo || [])[r.quando.passo - 1];
+		const pos = p && posPasso(l, p);
+		if (!pos) return;
+		const s = sel.k === "riga" && sel.i === i;
+		const n = (l.righe || []).slice(0, i).filter(x => soloPasso(x.quando) && x.quando.passo === r.quando.passo).length;
+		const bx = pos.x + 40 * k + n * 46 * k, by = pos.y + 140;
+		g.append(sv("path", { d: `M${bx} ${Y(by)}h${40 * k}v${28 * k}h${-26 * k}l${-10 * k} ${10 * k}v${-10 * k}h${-4 * k}z`,
+			fill: r.mostra === "grande" ? "#f2e1bf" : "#2a231d", stroke: s ? "#f0a640" : (r.mostra === "grande" ? "#f0a640" : "#6fa8d6"), "stroke-width": 2 * k, "data-drag": "selriga:" + i, style: "cursor:pointer" }));
+		g.append(sv("text", { x: bx + 20 * k, y: Y(by) + 19 * k, "font-size": 13 * k, "text-anchor": "middle", fill: r.mostra === "grande" ? "#1f120c" : "#efe4d3", "pointer-events": "none" }, r.mostra === "grande" ? "!" : "…"));
+	});
+}
+function posPasso(l, p) {
+	if (p.reach) return { x: p.reach.x, y: p.reach.y };
+	const chi = p.hit != null ? p.hit : p.down;
+	if (typeof chi === "number") return puntoGiocatore(l, chi - 1);
+	if (p.prendi) { const c = (l.casse || []).find(c => c.arma === p.prendi); if (c) return { x: c.x, y: terraSotto(l, c.x, H) }; }
+	return null;
+}
+function puntoGiocatore(l, i) {
+	const sp = (l.spawns || (CAT.mappe[l.mappa] || {}).spawns || [])[i];
+	return sp ? { x: sp.x, y: sp.from } : null;
+}
+function maniglia(x, y, chiave, k) {
+	return sv("rect", { x: x - 9 * k, y: Y(y) - 9 * k, width: 18 * k, height: 18 * k, fill: "#f0a640", stroke: "#15120f", "stroke-width": 2 * k, "data-drag": chiave, style: "cursor:nwse-resize" });
+}
+function bollino(x, y, n, col, chiave, k, s) {
+	const r = 15 * Math.max(1, k * 0.8);
+	return sv("g", { "data-drag": chiave, style: "cursor:move" },
+		sv("circle", { cx: x, cy: Y(y), r, fill: s ? "#f0a640" : col, stroke: "#15120f", "stroke-width": 2 * k }),
+		sv("text", { x, y: Y(y) + r * 0.38, "font-size": r * 1.1, "text-anchor": "middle", fill: "#15120f", "font-weight": 700, "pointer-events": "none" }, String(n)));
+}
+
+// trascinare, scorrere, ingrandire
+function agganciaTela(svg) {
+	const dita = new Map();
+	let presa = null; // { chiave, inizio, orig, segnato }
+	let pan = null, pinch = null;
+	svg.addEventListener("pointerdown", ev => {
+		svg.setPointerCapture(ev.pointerId);
+		dita.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+		if (dita.size === 2) { presa = null; pan = null; const [a, b] = [...dita.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), cam: { ...stato.cam } }; return; }
+		const t = ev.target.closest("[data-drag]");
+		if (t) {
+			const [tipo, i] = t.getAttribute("data-drag").split(":");
+			presa = { tipo, i: +i, inizio: puntoMondo(ev), orig: JSON.stringify(liv()), mosso: false };
+			const kind = { rect: "rect", rectTR: "rect", rectBL: "rect", spawn: "spawn", selspawn: "spawn", passo: "passo", cassa: "cassa", guida: "guida", scintilla: "scintilla", selriga: "riga" }[tipo];
+			stato.sel = kind === "scintilla" ? { k: kind } : { k: kind, i: +i };
+			disegnaMappa(); disegnaPannello(); disegnaTempo();
+			presa.inizio = puntoMondo(ev); // il pannello può aver cambiato la misura della tela
+		} else {
+			stato.sel = null;
+			pan = { x: ev.clientX, y: ev.clientY, cam: { ...stato.cam }, mosso: false };
+		}
+	});
+	svg.addEventListener("pointermove", ev => {
+		if (!dita.has(ev.pointerId)) return;
+		dita.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+		if (pinch && dita.size === 2) {
+			const [a, b] = [...dita.values()];
+			const f = pinch.d / Math.max(10, Math.hypot(a.x - b.x, a.y - b.y));
+			zoomA(pinch.cam, f, pinch.cam.x + pinch.cam.w / 2, pinch.cam.y + pinch.cam.h / 2);
+			return;
+		}
+		if (presa) {
+			const p = puntoMondo(ev), l = liv();
+			const dx = snap(p.x - presa.inizio.x), dy = snap(p.y - presa.inizio.y);
+			if (!presa.mosso && Math.abs(dx) + Math.abs(dy) === 0) return;
+			if (!presa.mosso) { passato.push(JSON.stringify(capitoli)); futuro = []; presa.mosso = true; }
+			const o = JSON.parse(presa.orig), i = presa.i;
+			if (presa.tipo === "rect") { l.arena[i][0] = o.arena[i][0] + dx; l.arena[i][1] = Math.max(0, o.arena[i][1] + dy); }
+			if (presa.tipo === "rectTR") { l.arena[i][2] = Math.max(10, o.arena[i][2] + dx); l.arena[i][3] = Math.max(10, o.arena[i][3] + dy); }
+			if (presa.tipo === "rectBL") {
+				const r = o.arena[i], nx = Math.min(r[0] + r[2] - 10, r[0] + dx), ny = Math.max(0, Math.min(r[1] + r[3] - 10, r[1] + dy));
+				l.arena[i] = [nx, ny, r[0] + r[2] - nx, r[1] + r[3] - ny];
+			}
+			if (presa.tipo === "spawn") { l.spawns[i].x = o.spawns[i].x + dx; l.spawns[i].from = Math.max(0, o.spawns[i].from + dy); }
+			if (presa.tipo === "passo") {
+				const pp = o.obiettivo[i];
+				if (pp.reach) { l.obiettivo[i].reach.x = pp.reach.x + dx; l.obiettivo[i].reach.y = Math.max(0, pp.reach.y + dy); }
+			}
+			if (presa.tipo === "cassa") l.casse[i].x = Math.max(0, Math.min(W, o.casse[i].x + dx));
+			if (presa.tipo === "guida") { const q = o.guida.percorso[i]; l.guida.percorso[i].x = q.x + dx; l.guida.percorso[i].y = Math.max(0, q.y + dy); }
+			if (presa.tipo === "scintilla") { l.scintilla.x = o.scintilla.x + dx; l.scintilla.y = o.scintilla.y + dy; }
+			disegnaMappa();
+			return;
+		}
+		if (pan) {
+			const r = tela.box.getBoundingClientRect();
+			const [, , vw] = viewBox();
+			const f = vw / r.width;
+			stato.cam.x = pan.cam.x - (ev.clientX - pan.x) * f;
+			stato.cam.y = pan.cam.y - (ev.clientY - pan.y) * f;
+			disegnaMappa();
+		}
+	});
+	const fine = ev => {
+		dita.delete(ev.pointerId);
+		if (presa && presa.mosso) {
+			salvaBozza(); disegnaPannello(); disegnaTempo();
+			document.getElementById("annulla").disabled = false; document.getElementById("rifai").disabled = true;
+		}
+		if (dita.size < 2) pinch = null;
+		if (pan && dita.size === 0) { disegnaPannello(); disegnaTempo(); }
+		presa = null; pan = null;
+	};
+	svg.addEventListener("pointerup", fine);
+	svg.addEventListener("pointercancel", fine);
+	svg.addEventListener("wheel", ev => {
+		ev.preventDefault();
+		const p = puntoMondo(ev);
+		zoomA(stato.cam, Math.exp(ev.deltaY * 0.0015), p.x, H - p.y);
+	}, { passive: false });
+}
+function zoomA(base, f, cx, cy) {
+	const w = Math.max(200, Math.min(W * 2.5, base.w * f)), h = w * base.h / base.w;
+	const fx = (cx - base.x) / base.w, fy = (cy - base.y) / base.h;
+	stato.cam = { x: cx - fx * w, y: cy - fy * h, w, h };
+	disegnaMappa();
+}
+
+// ---------------------------------------------------------------- la striscia del tempo
+function disegnaTempo() {
+	const box = document.getElementById("tempo");
+	if (!box) return;
+	box.replaceChildren();
+	const l = liv(), c = cap(), sel = stato.sel || {};
+	const passi = l.obiettivo || [];
+	const colonne = [];
+	for (let k = 0; k <= passi.length; k++) {
+		const col = el("div", { class: "colonna", "data-col": k });
+		col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("su"); });
+		col.addEventListener("dragleave", () => col.classList.remove("su"));
+		col.addEventListener("drop", e => { e.preventDefault(); col.classList.remove("su"); spostaIn(e.dataTransfer.getData("text/plain"), k); });
+		col.append(el("span", { class: "capo", text: k === 0 ? "All'inizio" : "Fatto il passo " + k }));
+		if (k < passi.length) col.append(el("span", { class: "obb" + (sel.k === "passo" && sel.i === k ? " sel" : ""), onclick: () => scegli({ k: "passo", i: k }) }, (k + 1) + ". " + (passi[k].testo || "?")));
+		else col.append(el("span", { class: "obb", style: "color:var(--verde)", text: "Fatta!" }));
+		colonne.push(col);
+	}
+	if (l.goal_text) colonne[0].append(gettone({ k: "apertura" }, "grande", chiParla(c), "apertura", l.goal_text, "", sel.k === "apertura"));
+	(l.casse || []).forEach((x, i) => { if (colonne[x.dopo]) colonne[x.dopo].append(gettone({ k: "cassa", i }, "cassa", "cassa", "cassa", nomeArma(x.arma), "", sel.k === "cassa" && sel.i === i)); });
+	(l.cards || []).forEach((x, i) => { if (colonne[x.dopo]) colonne[x.dopo].append(gettone({ k: "carta", i }, "cassa", "carta", "carta" + (x.give ? " + arma" : ""), nomeArma(x.arma), "", sel.k === "carta" && sel.i === i)); });
+	const altri = el("div", { class: "colonna", "data-col": "eventi" },
+		el("span", { class: "capo", text: "Quando succede" }),
+		el("span", { class: "obb", style: "color:var(--viola)", text: "Trigger senza posto" }));
+	(l.righe || []).forEach((r, i) => {
+		const t = gettone({ k: "riga", i }, r.mostra === "grande" ? "grande" : "striscia", chiParla(c), r.mostra === "grande" ? "vignetta grande" : "striscia", r.testo, soloPasso(r.quando) ? "" : frase(r.quando), sel.k === "riga" && sel.i === i);
+		if (soloPasso(r.quando) && colonne[r.quando.passo]) colonne[r.quando.passo].append(t); else altri.append(t);
+	});
+	colonne.forEach((col, k) => col.append(el("button", { class: "piu", onclick: () => { segna(); l.righe = l.righe || []; l.righe.push({ testo: "Nuova riga", mostra: c.aspetta ? "grande" : undefined, quando: k ? { passo: k } : { turno: 1 } }); stato.sel = { k: "riga", i: l.righe.length - 1 }; cambiato(); } }, "+ riga qui")));
+	altri.append(el("button", { class: "piu", onclick: () => { segna(); l.righe = l.righe || []; l.righe.push({ testo: "Nuova riga", quando: { evento: "crate_pick" } }); stato.sel = { k: "riga", i: l.righe.length - 1 }; cambiato(); } }, "+ riga su un evento"));
+	box.append(...colonne, altri);
+}
+function gettone(s, classe, chi, tipo, testo, q, scelto) {
+	const g = el("div", { class: "gettone " + classe + (scelto ? " sel" : ""), draggable: s.k !== "apertura" ? "true" : null, tabindex: "0", onclick: () => scegli(s), onkeydown: e => { if (e.key === "Enter") scegli(s); } },
+		el("span", { class: "chi" }, el("span", { text: chi }), el("span", { text: tipo })),
+		el("span", { text: conGesti(testo).slice(0, 110) }),
+		q ? el("span", { class: "q", text: q }) : null);
+	g.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", s.k + ":" + s.i));
+	return g;
+}
+function spostaIn(chiave, k) {
+	const [tipo, i] = chiave.split(":"); const l = liv();
+	segna();
+	if (tipo === "riga") l.righe[+i].quando = k === 0 ? { turno: 1 } : { passo: k };
+	if (tipo === "cassa") l.casse[+i].dopo = k;
+	if (tipo === "carta") l.cards[+i].dopo = k;
+	cambiato();
+}
+function scegli(s) { stato.sel = s; disegnaMappa(); disegnaTempo(); disegnaPannello(); }
+
+// ---------------------------------------------------------------- il pannello delle proprietà
+function campo(etichetta, input) { return el("label", {}, etichetta, input); }
+function testoIn(oggetto, chiave, opz = {}) {
+	const i = el(opz.area ? "textarea" : "input", { rows: opz.area ? 3 : null, type: opz.num ? "number" : "text", id: "f-" + chiave + (opz.id || "") });
+	i.value = oggetto[chiave] == null ? "" : oggetto[chiave];
+	i.addEventListener("change", () => {
+		segna();
+		const v = opz.num ? (i.value === "" ? undefined : +i.value) : i.value;
+		if (v === undefined || v === "") delete oggetto[chiave]; else oggetto[chiave] = v;
+		cambiato();
+	});
+	return i;
+}
+function sceltaIn(oggetto, chiave, opzioni, opz = {}) {
+	const s = el("select", { id: "f-" + chiave + (opz.id || "") });
+	if (opz.vuoto) s.append(el("option", { value: "" }, opz.vuoto));
+	for (const o of opzioni) { const [v, t] = Array.isArray(o) ? o : [o, o]; s.append(el("option", { value: v }, t)); }
+	s.value = oggetto[chiave] == null ? "" : String(oggetto[chiave]);
+	s.addEventListener("change", () => {
+		segna();
+		if (s.value === "") delete oggetto[chiave]; else oggetto[chiave] = opz.num ? +s.value : s.value;
+		cambiato();
+	});
+	return s;
+}
+function spunta(oggetto, chiave, testo) {
+	const c = el("input", { type: "checkbox", id: "f-" + chiave });
+	c.checked = !!oggetto[chiave];
+	c.addEventListener("change", () => { segna(); if (c.checked) oggetto[chiave] = true; else delete oggetto[chiave]; cambiato(); });
+	return el("label", { class: "riga" }, c, testo);
+}
+function multi(oggetto, chiave, opzioni, tieniVuoto) {
+	const box = el("div", { class: "scelte" });
+	const lista = v => Array.isArray(v) ? v : [];
+	const cur = new Set(lista(oggetto[chiave]));
+	for (const o of opzioni) {
+		const c = el("input", { type: "checkbox" }); c.checked = cur.has(o);
+		c.addEventListener("change", () => {
+			segna();
+			const s = new Set(lista(oggetto[chiave])); if (c.checked) s.add(o); else s.delete(o);
+			const v = opzioni.filter(x => s.has(x)); if (v.length || tieniVuoto) oggetto[chiave] = v; else delete oggetto[chiave];
+			cambiato();
+		});
+		box.append(el("label", {}, c, CAT.armi[o] ? nomeArma(o) : o));
+	}
+	return box;
+}
+function avanzato(oggetto, titolo, fatto) {
+	const ta = el("textarea", { rows: 8, class: "num", id: "f-json" });
+	ta.value = JSON.stringify(oggetto, null, 1);
+	const err = el("span", { class: "problemi" });
+	return el("details", {}, el("summary", { text: titolo }), ta, err,
+		el("button", { class: "piccolo", onclick: () => {
+			try { const v = JSON.parse(ta.value); segna(); fatto(v); cambiato(); } catch (e) { err.textContent = "Non è JSON valido: " + e.message; }
+		} }, "Applica"));
+}
+
+const VERBI = [
+	["passo", "dopo il passo"], ["turno", "tuo turno n."], ["turno_altri", "turno degli altri n."], ["di_turno", "di chi è il turno"],
+	["evento", "evento"], ["tocca", "tocchi il comando"], ["usato", "hai già usato"], ["finestra", "dopo il primo attacco"],
+	["in_caduta", "cadi veloce col paracadute"], ["corona", "sei primo"], ["conta", "contatore"],
+];
+function condizione(q, cambia, profondo) {
+	const box = el("div", { class: "cond" });
+	const chiavi = Object.keys(q).filter(k => VERBI.some(v => v[0] === k));
+	const l = liv();
+	for (const k of chiavi) {
+		const r = el("div", { class: "r" });
+		const sel = el("select", {});
+		for (const [v, t] of VERBI) sel.append(el("option", { value: v }, t));
+		sel.value = k;
+		sel.addEventListener("change", () => { segna(); delete q[k]; if (k === "evento") { delete q.di; delete q.arma; } if (k === "conta") delete q.almeno; q[sel.value] = valoreBase(sel.value); cambia(); });
+		r.append(sel, valoreIn(q, k, l));
+		r.append(el("button", { class: "piccolo", title: "Togli", onclick: () => { segna(); delete q[k]; if (k === "evento") { delete q.di; delete q.arma; } if (k === "conta") delete q.almeno; cambia(); } }, "×"));
+		box.append(r);
+		if (k === "evento") box.append(el("div", { class: "r" }, "di", sceltaIn(q, "di", [["tu", "tuo"], ["altri", "degli altri"]], { vuoto: "tuo o di nessuno" }), "con", sceltaIn(q, "arma", ARMI, { vuoto: "qualsiasi arma" })));
+		if (k === "conta") box.append(el("div", { class: "r" }, "almeno", testoIn(q, "almeno", { num: true })));
+	}
+	if (q.uno) {
+		const o = el("div", { class: "o" }, el("span", { class: "q", text: "Oppure, basta uno di questi:" }));
+		q.uno.forEach((x, i) => o.append(condizione(x, cambia, true), el("button", { class: "piccolo", onclick: () => { segna(); q.uno.splice(i, 1); if (!q.uno.length) delete q.uno; cambia(); } }, "Togli questo")));
+		o.append(el("button", { class: "piccolo", onclick: () => { segna(); q.uno.push({ turno: 1 }); cambia(); } }, "+ un altro"));
+		box.append(o);
+	}
+	const piu = el("div", { class: "r" });
+	piu.append(el("button", { class: "piccolo", onclick: () => { segna(); const libero = VERBI.find(v => !(v[0] in q)); if (libero) q[libero[0]] = valoreBase(libero[0]); cambia(); } }, "+ e anche"));
+	if (!profondo && !q.uno) piu.append(el("button", { class: "piccolo", onclick: () => { segna(); q.uno = [{ turno: 1 }, { turno: 2 }]; cambia(); } }, "+ oppure"));
+	box.append(piu);
+	return box;
+}
+function valoreBase(k) {
+	return { passo: 1, turno: 1, turno_altri: 1, di_turno: "tu", evento: "crate_pick", tocca: "mira", usato: "primaria", finestra: true, in_caduta: true, corona: "tu", conta: "prima" }[k];
+}
+function valoreIn(q, k, l) {
+	const n = (l.obiettivo || []).length;
+	if (k === "passo") return sceltaIn(q, k, Array.from({ length: n }, (_, i) => [i + 1, (i + 1) + ". " + (l.obiettivo[i].testo || "")]), { num: true });
+	if (k === "turno" || k === "turno_altri") return testoIn(q, k, { num: true });
+	if (k === "di_turno") return sceltaIn(q, k, [["tu", "tuo"], ["altri", "degli altri"]]);
+	if (k === "evento") return sceltaIn(q, k, CAT.eventi);
+	if (k === "tocca") return sceltaIn(q, k, COMANDI);
+	if (k === "usato") return sceltaIn(q, k, ["primaria", "secondaria", "attrezzo"]);
+	if (k === "corona") return el("span", { text: "tu" });
+	if (k === "conta") return sceltaIn(q, k, CONTATORI);
+	return el("span", { text: "sì" });
+}
+
+function anteprima(testo, chi, faccia, grande, highlight) {
+	const nome = { favilla: "FAVILLA", fabbro: "IL FABBRO", apprendista: "APPRENDISTA" }[chi] || chi;
+	if (!grande) return el("div", { class: "striscia-ant" }, el("img", { src: ritratto(chi, faccia || "calma"), alt: "" }), el("span", { text: conGesti(testo) }));
+	return el("div", { class: "vignetta" },
+		el("img", { src: ritratto(chi, faccia || "spiega"), alt: "" }),
+		el("div", {}, el("div", { class: "nome", text: nome }), el("div", { class: "frase", text: conGesti(testo) })),
+		highlight ? el("div", { class: "disegno" },
+			IMMAGINI.armi[highlight] ? el("img", { src: IMMAGINI.armi[highlight], alt: "" }) : null,
+			CAT.disegni.includes(highlight) ? "Il disegno della mossa: " + highlight : "Manca il disegno di " + highlight + ": vignetta senza disegno") : null,
+		el("div", { class: "vai", text: "VAI!" }));
+}
+
+function disegnaPannello() {
+	const p = document.getElementById("pannello");
+	if (!p) return;
+	p.replaceChildren();
+	const l = liv(), c = cap(), s = stato.sel || {};
+	const rid = () => { cambiato(); };
+	const togli = (testo, fai) => confermaBottone(testo, () => { segna(); fai(); stato.sel = null; cambiato(); });
+
+	if (s.k === "riga" && l.righe && l.righe[s.i]) {
+		const r = l.righe[s.i];
+		metti(p, el("h3", { text: "Riga " + (s.i + 1) }),
+			campo("Cosa dice " + (chiParla(c) === "favilla" ? "Favilla" : "il Fabbro"), testoIn(r, "testo", { area: true })),
+			el("div", { class: "scelte" }, ...SEGNAPOSTO.map(x => el("button", { class: "piccolo", onclick: () => { segna(); r.testo = (r.testo || "") + " {" + x + "}"; rid(); } }, "{" + x + "}"))),
+			el("div", { class: "due" },
+				campo("Come appare", sceltaIn(r, "mostra", [["grande", "Vignetta grande (ferma il gioco)"]], { vuoto: "Striscia in alto" })),
+				campo("Faccia", sceltaIn(r, "faccia", CAT.facce, { vuoto: "calma" }))),
+			campo("Comando che lampeggia", sceltaIn(r, "highlight", COMANDI, { vuoto: "nessuno" })),
+			el("div", { class: "bottoni" }, spunta(r, "subito", "Prende il posto della riga di prima"), spunta({ stops: r.stops === false }, "stops", "Non ferma il tempo")),
+			anteprima(r.testo, chiParla(c), r.faccia, r.mostra === "grande", r.highlight),
+			el("div", { class: "gruppo" }, el("b", { text: "Quando parte" }), condizione(r.quando = r.quando || { turno: 1 }, rid)),
+			el("div", { class: "gruppo" }, el("b", { text: "Fino a quando resta" }),
+				r.fino ? condizione(r.fino, rid) : el("span", { style: "color:var(--tenue);font-size:12.5px", text: "Qualche secondo, poi va via da sola." }),
+				r.fino ? el("button", { class: "piccolo", onclick: () => { segna(); delete r.fino; rid(); } }, "Senza fine: va via da sola")
+					: el("button", { class: "piccolo", onclick: () => { segna(); r.fino = { passo: 1 }; rid(); } }, "+ resta fino a...")),
+			el("div", { class: "bottoni" },
+				el("button", { class: "piccolo", onclick: () => { segna(); l.righe.splice(s.i + 1, 0, clone(r)); stato.sel = { k: "riga", i: s.i + 1 }; rid(); } }, "Duplica"),
+				togli("Elimina la riga", () => l.righe.splice(s.i, 1))));
+		// "Non ferma il tempo" scrive stops = false
+		const st = p.querySelector("#f-stops");
+		if (st) st.addEventListener("change", () => { if (st.checked) r.stops = false; else delete r.stops; salvaBozza(); });
+	} else if (s.k === "passo" && l.obiettivo && l.obiettivo[s.i]) {
+		const o = l.obiettivo[s.i];
+		const verbo = ["reach", "prendi", "hit", "down", "usa", "win"].find(v => v in o) || "reach";
+		const vs = el("select", { id: "f-verbo" });
+		for (const [v, t] of [["reach", "Arriva qui"], ["prendi", "Prendi la cassa"], ["hit", "Colpisci"], ["down", "Abbatti"], ["usa", "Usa una mossa"], ["win", "Vinci la partita"]]) vs.append(el("option", { value: v }, t));
+		vs.value = verbo;
+		vs.addEventListener("change", () => {
+			segna(); for (const v of ["reach", "prendi", "hit", "down", "usa", "win", "con", "come", "times", "flag"]) delete o[v];
+			o[vs.value] = { reach: { x: 900, y: 150 }, prendi: "missile", hit: 2, down: 2, usa: "globi", win: true }[vs.value]; rid();
+		});
+		const robot = (l.giocatori || []).map((_, i) => [i + 1, (i + 1) + ". " + nomeGiocatore(l, i)]).slice(1);
+		metti(p, el("h3", { text: "Passo " + (s.i + 1) }),
+			campo("La scritta d'oro", testoIn(o, "testo")),
+			campo("Si fa quando", vs));
+		if (verbo === "reach") metti(p, el("div", { class: "due" }, campo("x", testoIn(o.reach, "x", { num: true, id: "r" })), campo("y", testoIn(o.reach, "y", { num: true, id: "r" }))),
+			el("span", { style: "color:var(--tenue);font-size:12.5px", text: "Sei in piedi sopra quest'altezza, oltre questa x: trascina la bandierina." }), spunta(o, "flag", "Con la bandiera a scacchi"));
+		if (verbo === "prendi") metti(p, campo("Arma nella cassa", sceltaIn(o, "prendi", ARMI)));
+		if (verbo === "hit" || verbo === "down") metti(p, campo("Chi", sceltaIn(o, verbo, [...robot, ["nemico", "un nemico qualsiasi"]], { num: false })),
+			campo("Con", sceltaIn(o, "con", ["primaria", "secondaria", ...ARMI], { vuoto: "qualsiasi arma" })),
+			verbo === "down" ? el("div", { class: "due" }, campo("Come", sceltaIn(o, "come", [["vuoto", "nel vuoto"]], { vuoto: "comunque" })), campo("Volte", testoIn(o, "times", { num: true }))) : null);
+		if (verbo === "usa") metti(p, campo("Mossa", sceltaIn(o, "usa", USA)));
+		if (c.aspetta) metti(p, el("div", { class: "gruppo" }, el("b", { text: "Finché non è fatto si può usare solo" }), multi(o, "only", ["primaria", "secondaria", "baratto", "teleport", ...ARMI.filter(w => w !== "teleport")]),
+			campo("Zoom della camera", sceltaIn(o, "zoom", [[1, "vicino"], [2, "medio"], [3, "tutta la mappa"]], { vuoto: "come prima", num: true }))));
+		metti(p, el("div", { class: "bottoni" },
+			el("button", { class: "piccolo", disabled: s.i === 0 || null, onclick: () => { segna(); scambiaPassi(l, s.i, s.i - 1); stato.sel = { k: "passo", i: s.i - 1 }; rid(); } }, "Prima"),
+			el("button", { class: "piccolo", disabled: s.i === l.obiettivo.length - 1 || null, onclick: () => { segna(); scambiaPassi(l, s.i, s.i + 1); stato.sel = { k: "passo", i: s.i + 1 }; rid(); } }, "Dopo"),
+			togli("Elimina il passo", () => l.obiettivo.splice(s.i, 1))));
+		// hit/down: il robot è un numero
+		for (const id of ["f-hit", "f-down"]) { const x = p.querySelector("#" + id); if (x) x.addEventListener("change", () => { const v = x.value; o[id.slice(2)] = v === "nemico" ? v : +v; salvaBozza(); }); }
+	} else if (s.k === "spawn" && l.giocatori && l.giocatori[s.i]) {
+		const g = l.giocatori[s.i], sp = (l.spawns || [])[s.i];
+		const nasc = { v: (l.nascosti || []).includes(s.i + 1) };
+		metti(p, el("h3", { text: (s.i + 1) + ". " + nomeGiocatore(l, s.i) }),
+			sp ? el("div", { class: "due" }, campo("x", testoIn(sp, "x", { num: true, id: "s" })), campo("Cade da (y)", testoIn(sp, "from", { num: true, id: "s" }))) : el("span", { style: "color:var(--tenue)", text: "Mappa del gioco: parte da un punto sicuro a caso." }));
+		if (s.i > 0) {
+			const ruolo = el("select", { id: "f-ruolo" });
+			for (const [v, t] of [["dummy", "Fantoccio"], ["bot", "Bot"]]) ruolo.append(el("option", { value: v }, t));
+			ruolo.value = g.dummy ? "dummy" : "bot";
+			ruolo.addEventListener("change", () => { segna(); if (ruolo.value === "dummy") { g.dummy = true; delete g.bot; } else { delete g.dummy; g.bot = 3; } rid(); });
+			metti(p, el("div", { class: "due" }, campo("Chi è", ruolo), campo("Squadra", sceltaIn(g, "team", [[1, "con te"], [2, "contro"]], { num: true }))));
+			if (!g.dummy) metti(p, el("div", { class: "due" }, campo("Grado (1-10)", testoIn(g, "bot", { num: true })), campo("Carattere", sceltaIn(g, "carattere", ["codardo", "testa_calda", "cecchino", "spingitore"], { vuoto: "normale" }))),
+				el("div", { class: "due" }, campo("Primaria", sceltaIn(g, "pick", ARMI.filter(w => !CAT.armi[w].secondaria && !CAT.armi[w].attrezzo), { vuoto: "a scelta" })), campo("Secondaria", sceltaIn(g, "secondary", ARMI.filter(w => CAT.armi[w].secondaria), { vuoto: "a scelta" }))));
+			metti(p, el("div", { class: "due" }, campo("Nome", testoIn(g, "nome")), campo("Pelle", sceltaIn(g, "pelle", ["favilla"], { vuoto: "normale" }))));
+			const v = (l.vita || {})[String(s.i + 1)];
+			const vi = el("input", { type: "number", id: "f-vita", value: v == null ? "" : v });
+			vi.addEventListener("change", () => { segna(); l.vita = l.vita || {}; if (vi.value === "") delete l.vita[String(s.i + 1)]; else l.vita[String(s.i + 1)] = +vi.value; if (!Object.keys(l.vita).length) delete l.vita; rid(); });
+			metti(p, campo("Vita all'inizio (vuoto: 100)", vi), spunta(nasc, "v", "Nascosto (non c'è: il gioco vuole almeno due robot)"));
+			p.querySelector("#f-v").addEventListener("change", e => {
+				segna(); const set = new Set(l.nascosti || []); if (e.target.checked) set.add(s.i + 1); else set.delete(s.i + 1);
+				if (set.size) l.nascosti = [...set].sort(); else delete l.nascosti; rid();
+			});
+			metti(p, togli("Togli il giocatore", () => {
+				l.giocatori.splice(s.i, 1); if (l.spawns) l.spawns.splice(s.i, 1);
+				if (l.nascosti) l.nascosti = l.nascosti.filter(n => n !== s.i + 1).map(n => n > s.i + 1 ? n - 1 : n);
+			}));
+		} else {
+			metti(p, el("span", { style: "color:var(--tenue);font-size:12.5px", text: "Il giocatore 1 sei tu." }));
+		}
+	} else if (s.k === "rect" && l.arena && l.arena[s.i]) {
+		const r = l.arena[s.i];
+		const box = el("div", { class: "quattro" });
+		["x", "y", "larghezza", "altezza"].forEach((n, j) => {
+			const i = el("input", { type: "number", id: "f-r" + j, value: r[j] });
+			i.addEventListener("change", () => { segna(); r[j] = +i.value; rid(); });
+			box.append(campo(n, i));
+		});
+		metti(p, el("h3", { text: "Piattaforma " + (s.i + 1) }), box,
+			el("span", { style: "color:var(--tenue);font-size:12.5px", text: "D'acciaio: i crateri non la rompono. Trascina il centro per spostarla, i quadratini per allungarla." }),
+			togli("Elimina la piattaforma", () => l.arena.splice(s.i, 1)));
+	} else if ((s.k === "cassa" && l.casse && l.casse[s.i]) || (s.k === "carta" && l.cards && l.cards[s.i])) {
+		const x = s.k === "cassa" ? l.casse[s.i] : l.cards[s.i];
+		const passi = [[0, "subito"], ...(l.obiettivo || []).map((o, i) => [i + 1, "dopo il passo " + (i + 1)])];
+		metti(p, el("h3", { text: s.k === "cassa" ? "Cassa" : "Carta dell'arma" }),
+			campo("Arma", sceltaIn(x, "arma", ARMI.map(w => [w, nomeArma(w)]))),
+			campo("Quando", sceltaIn(x, "dopo", passi, { num: true })),
+			s.k === "cassa" ? campo("x (dove cade)", testoIn(x, "x", { num: true })) : spunta(x, "give", "E te la dà, senza cassa"),
+			togli("Elimina", () => (s.k === "cassa" ? l.casse : l.cards).splice(s.i, 1)));
+	} else if (s.k === "guida" && l.guida && l.guida.percorso[s.i]) {
+		const q = l.guida.percorso[s.i];
+		metti(p, el("h3", { text: "Favilla, punto " + (s.i + 1) }),
+			el("div", { class: "due" }, campo("x", testoIn(q, "x", { num: true, id: "g" })), campo("y", testoIn(q, "y", { num: true, id: "g" }))),
+			el("div", { class: "due" }, campo("Ci arriva al secondo", testoIn(q, "t", { num: true, id: "g" })), campo("Salto (altezza)", testoIn(q, "salto", { num: true, id: "g" }))),
+			el("div", { class: "gruppo" }, el("b", { text: "Tutto il percorso" }),
+				campo("Parte dopo il passo", sceltaIn(l.guida, "parte", [[0, "subito"], ...(l.obiettivo || []).map((o, i) => [i + 1, String(i + 1)])], { num: true })),
+				spunta(l.guida, "gara", "È una gara: la medaglia se arrivi prima di lei")),
+			togli("Togli il punto", () => { l.guida.percorso.splice(s.i, 1); if (!l.guida.percorso.length) delete l.guida; }));
+	} else if (s.k === "scintilla" && l.scintilla) {
+		metti(p, el("h3", { text: "Scintilla" }),
+			el("div", { class: "due" }, campo("x", testoIn(l.scintilla, "x", { num: true, id: "sc" })), campo("y", testoIn(l.scintilla, "y", { num: true, id: "sc" }))),
+			el("span", { style: "color:var(--tenue);font-size:12.5px", text: "Si prende passandoci sopra coi piedi: conta per la medaglia «scintille»." }),
+			togli("Togli la scintilla", () => { delete l.scintilla; }));
+	} else {
+		// il livello
+		const pr = problemi(l, c);
+		if (idDoppi().has(l.id)) pr.unshift("l'id " + l.id + " c'è due volte");
+		metti(p, el("h3", { text: "Il livello" }),
+			pr.length ? el("div", { class: "problemi" }, ...pr.map(t => el("span", { text: "• " + t }))) : null,
+			el("div", { class: "due" }, campo("Titolo", testoIn(l, "titolo")), campo("Tipo", sceltaIn(l, "tipo", TIPI))),
+			campo("Id (non cambiarlo per i livelli già giocati)", testoIn(l, "id")),
+			campo("Prima riga (vignetta grande all'inizio)", testoIn(l, "goal_text", { area: true })),
+			campo("Comando che lampeggia", sceltaIn(l, "highlight", COMANDI, { vuoto: "nessuno" })),
+			l.goal_text ? anteprima(l.goal_text, chiParla(c), "spiega", true, l.highlight) : null,
+			el("div", { class: "gruppo" }, el("b", { text: "La mappa" }), mappaIn(l)),
+			c.aspetta ? el("div", { class: "gruppo" }, el("b", { text: "Cosa si vede nell'HUD" }), multi(l, "vedi", VEDI, true)) : null,
+			el("div", { class: "gruppo" }, el("b", { text: "Regole" }),
+				el("div", { class: "bottoni" }, spunta(l, "no_weapons", "Parti senza armi"), spunta(l, "without_time", "Senza tempo né turni"), spunta(l, "al_posto", "Si rinasce al proprio posto")),
+				el("div", { class: "due" }, campo("Globi all'inizio", testoIn(l, "globi", { num: true })), campo("Turni massimi", testoIn(l, "turni", { num: true })))),
+			el("div", { class: "gruppo" }, avanzato(l, "Tutti i campi (JSON, per stelle, medaglia, collaudo, piani dei bot...)", v => { cap().livelli[stato.l] = v; })));
+	}
+	if (s.k) p.prepend(el("button", { class: "piccolo", style: "align-self:flex-start", onclick: () => scegli(null) }, "← Il livello"));
+}
+function scambiaPassi(l, a, b) {
+	[l.obiettivo[a], l.obiettivo[b]] = [l.obiettivo[b], l.obiettivo[a]];
+	const m = n => n === a + 1 ? b + 1 : n === b + 1 ? a + 1 : n;
+	const fix = q => { if (!q) return; if (q.passo != null) q.passo = m(q.passo); (q.uno || []).forEach(fix); };
+	(l.righe || []).forEach(r => { fix(r.quando); fix(r.fino); });
+	for (const k of ["casse", "cards"]) (l[k] || []).forEach(x => { x.dopo = m(x.dopo); });
+}
+function mappaIn(l) {
+	const s = el("select", { id: "f-mappa" });
+	s.append(el("option", { value: "" }, "Arena (piattaforme d'acciaio)"));
+	for (const [id, m] of Object.entries(CAT.mappe)) s.append(el("option", { value: id }, m.nome || id));
+	s.value = l.mappa || "";
+	s.addEventListener("change", () => {
+		segna();
+		if (s.value) { delete l.arena; delete l.spawns; l.mappa = s.value; }
+		else { delete l.mappa; l.arena = [[240, 0, 1440, 150]]; l.spawns = (l.giocatori || []).map((_, i) => ({ x: 400 + i * 300, from: 600 })); }
+		stato.cam = null; cambiato();
+	});
+	return s;
+}
+
+// ---------------------------------------------------------------- GIOCA, Manda a Claude
+function luaGioca() {
+	const l = liv();
+	const pulito = JSON.parse(JSON.stringify(l));
+	return "return " + lua({ capitolo: cap().id, dipinto: !arenaCambiata(l), livello: pulito }, "");
+}
+async function gioca() {
+	if (stato.vista !== "livello") return;
+	let c = 0;
+	try { const r = await fetch("game/megablast.html", { method: "HEAD" }); c = r.ok ? 1 : 0; } catch (e) { c = 0; }
+	if (!c) { avviso("La build del gioco non è pubblicata con questa pagina: chiedi a Claude di rifarla con --gioco."); return; }
+	document.getElementById("gioca-nome").textContent = "In prova: " + (liv().titolo || liv().id) + " (le modifiche non sono ancora nel gioco vero)";
+	document.getElementById("gioca").hidden = false;
+	carica();
+}
+function carica() {
+	const f = document.getElementById("gioca-frame");
+	f.src = "about:blank";
+	setTimeout(() => { f.src = "game/megablast.html?copione=" + Date.now() + "#" + encodeURIComponent(luaGioca()); f.focus(); }, 50);
+}
+function chiudiGioca() { document.getElementById("gioca-frame").src = "about:blank"; document.getElementById("gioca").hidden = true; }
+
+async function copia() {
+	const t = levelsLua();
+	try { await navigator.clipboard.writeText(t); avviso("Copiato: incollalo a Claude."); }
+	catch (e) {
+		const ta = el("textarea", { rows: 12, class: "num" }); ta.value = t;
+		document.getElementById("main").prepend(ta); ta.select(); avviso("Seleziona e copia il testo qui sopra.");
+	}
+}
+// "Manda a Claude": su claude.ai nel database della pagina (documento
+// copione/ultima); su Cloudflare (strumenti/copione/cloudflare) nel ramo
+// editor-ultima di GitHub, con la chiave che si scrive la prima volta
+function chiediChiave() {
+	return new Promise(fatto => {
+		const b = document.getElementById("b-manda");
+		const ip = el("input", { type: "password", placeholder: "La chiave", style: "width:9em", autocomplete: "current-password" });
+		const box = el("span", { class: "conferma", style: "color:var(--testo)" }, ip,
+			el("button", { class: "piccolo", onclick: () => { box.replaceWith(b); fatto(ip.value.trim() || null); } }, "Manda"),
+			el("button", { class: "piccolo", onclick: () => { box.replaceWith(b); fatto(null); } }, "No"));
+		ip.addEventListener("keydown", e => { if (e.key === "Enter") { box.replaceWith(b); fatto(ip.value.trim() || null); } });
+		b.replaceWith(box); ip.focus();
+	});
+}
+async function mandaCloudflare(corpo) {
+	let chiave = null;
+	try { chiave = localStorage.getItem("megablast-chiave"); } catch (e) { /* niente memoria del browser */ }
+	if (!chiave) chiave = await chiediChiave();
+	if (!chiave) throw new Error("senza chiave");
+	const r = await fetch("api/manda", { method: "POST", headers: { "Content-Type": "application/json", "X-Chiave": chiave }, body: JSON.stringify(corpo) });
+	if (r.status === 403) { try { localStorage.removeItem("megablast-chiave"); } catch (e) { /* niente */ } throw new Error("chiave sbagliata"); }
+	if (!r.ok) throw new Error(await r.text());
+	try { localStorage.setItem("megablast-chiave", chiave); } catch (e) { /* niente memoria del browser */ }
+}
+let suCloudflare = false;
+fetch("api/manda").then(r => { if (r.ok) suCloudflare = true; }).catch(() => {});
+async function manda() {
+	const b = document.getElementById("b-manda");
+	b.disabled = true;
+	try {
+		const corpo = { lua: levelsLua(), capitoli: campaignCapitoli(), json: JSON.stringify(capitoli), livello: stato.vista === "livello" ? liv().id : "", quando: new Date().toISOString() };
+		if (suCloudflare) {
+			await mandaCloudflare(corpo);
+		} else {
+			const db = window.claude && await window.claude.use("db");
+			if (!db) { avviso("Da qui non si manda: usa Copia il Lua e incollalo a Claude."); return; }
+			await db.doc("copione/ultima").set(corpo);
+		}
+		avviso("Mandato a Claude: digli di prendere il copione.");
+	} catch (e) {
+		avviso("Non è partito (" + ((e && (e.code || e.message)) || "errore") + "): usa Copia il Lua.");
+	} finally { b.disabled = false; }
+}
+
+// ---------------------------------------------------------------- avvio
+document.getElementById("marchio").addEventListener("click", () => { stato.vista = "cruscotto"; stato.sel = null; disegna(); });
+document.getElementById("annulla").addEventListener("click", annulla);
+document.getElementById("rifai").addEventListener("click", rifai);
+document.getElementById("b-gioca").addEventListener("click", gioca);
+document.getElementById("b-manda").addEventListener("click", manda);
+document.getElementById("b-copia").addEventListener("click", copia);
+document.getElementById("gioca-chiudi").addEventListener("click", chiudiGioca);
+document.getElementById("gioca-ancora").addEventListener("click", carica);
+(() => {
+	const b = document.getElementById("b-ripristina");
+	b.addEventListener("click", () => {
+		const box = el("span", { class: "conferma" }, "Buttare le modifiche? ",
+			el("button", { class: "piccolo", onclick: () => { segna(); capitoli = clone(DATI.capitoli); stato.sel = null; aggiusta(); cambiato(); box.replaceWith(b); avviso("Tornato al gioco di oggi."); } }, "Sì"),
+			el("button", { class: "piccolo", onclick: () => box.replaceWith(b) }, "No"));
+		b.replaceWith(box);
+	});
+})();
+document.addEventListener("keydown", e => {
+	if (e.target.closest("input, textarea, select")) return;
+	if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? rifai() : annulla(); }
+	if (e.key === "Escape" && !document.getElementById("gioca").hidden) chiudiGioca();
+});
+window.addEventListener("resize", () => { if (stato.vista === "livello") disegnaMappa(); });
+disegna();
+</script>

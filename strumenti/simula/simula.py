@@ -112,7 +112,11 @@ def impostazioni(scenario):
         if p and p[0] == "imposta":
             if len(p) != 3 or not re.fullmatch(r"[a-z_]+", p[1]):
                 raise Fallito(f"imposta vuole una chiave e un valore: {riga.strip()}")
-            righe.append(f"{p[1]} = {p[2]}\n")
+            valore = p[2]
+            # un file del repository (prova_copione): il gioco gira nella cartella della build
+            if p[1] == "prova_copione":
+                valore = str((REPO / valore).resolve())
+            righe.append(f"{p[1]} = {valore}\n")
     return "".join(righe)
 
 

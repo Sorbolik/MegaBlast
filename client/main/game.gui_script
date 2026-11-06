@@ -2299,12 +2299,11 @@ end
 -- screen). picks: the players coming out of the draft, for the missions that
 -- make you draft
 -- The mission's line of the moment, in the vignettes (battle/vignette.lua):
--- in the lessons Favilla speaks, in the circles the Fabbro. What explains a
--- control (in the lessons; not what comes mid-move: subito, in the air) and
--- the opening line stop the game on the big
--- vignette every time (Sergio, 4 Nov: also when you play the lesson again),
--- then they stay in the strip at the top; the rest is only in the strip. {salta}: how to jump with the
--- controls you have (PAD.TEXTS)
+-- in the lessons Favilla speaks, in the circles the Fabbro. The opening line
+-- and the lines with mostra = "grande" (the level script says so, sim/levels.lua)
+-- stop the game on the big vignette every time (Sergio, 4 Nov: also when you
+-- play the lesson again), then they stay in the strip at the top; the rest is
+-- only in the strip. {salta}: how to jump with the controls you have (PAD.TEXTS)
 function CP.mission_line(self, r)
 	local line = missions.line(r)
 	-- while the entry's flame opens on the map, and a moment after, nobody
@@ -2316,7 +2315,7 @@ function CP.mission_line(self, r)
 	local l = r.l
 	local chi = l.aspetta and "favilla" or "fabbro"
 	local txt = line.testo:gsub("{(%a+)}", PAD.texts(self))
-	if line.apertura or (line.highlight and l.aspetta and not line.subito and line.stops ~= false) then
+	if line.apertura or line.mostra == "grande" then
 		-- (the mission's illustration came before, on its postcard: CP.enter_mission)
 		local pages = { { chi = chi, faccia = "spiega", testo = txt, disegno = line.highlight } }
 		if not self.vign_read[line.testo] then
@@ -2402,6 +2401,33 @@ local function start_mission(self, id, picks)
 	set_controls_visible(self, true)
 	-- the first turn was already taken by missioni.prepara (without time there are no turns to announce)
 	if not r.l.without_time then announce_turn(self, self.g.current) end
+end
+
+-- The Copione's GIOCA (strumenti/copione, docs/copione.md): the web build
+-- opened by the page with ?copione=1 plays the level the page put after the
+-- # (Lua text: return { capitolo = id, dipinto = false?, livello = { ... } }),
+-- as it is being edited; in the simulator prova_copione FILE. Only data: the
+-- text runs with nothing in reach. true if a level started
+function CP.copione(self)
+	local src
+	if html5 and html5.run("new URLSearchParams(location.search).get('copione') || ''") ~= "" then
+		src = html5.run("decodeURIComponent(location.hash.slice(1))")
+	elseif SIMULATE then
+		local h = io.open(config_string("megablast.prova_copione", ""))
+		if h then src = h:read("*a") h:close() end
+	end
+	local chunk = src and src ~= "" and loadstring(src, "=copione")
+	if not chunk then return false end
+	setfenv(chunk, {})
+	local ok, p = pcall(chunk)
+	if not ok or type(p) ~= "table" or type(p.livello) ~= "table" or type(p.livello.id) ~= "string" then
+		print("copione: livello non valido", p)
+		return false
+	end
+	CP.close_entry(self, true)
+	self.ritorno = "campagna"
+	start_mission(self, missions.prova(p.livello, p.capitolo, p.dipinto))
+	return true
 end
 
 -- The campaign, on the last mission's chapter
@@ -2668,6 +2694,7 @@ function CP.startup(self)
 		self.ritorno = "campagna"
 		CP.enter_mission(self, mission)
 	end
+	CP.copione(self)
 end
 
 

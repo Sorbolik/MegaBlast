@@ -14,7 +14,7 @@
 -- Partite: la k-esima ha un seme suo, ruota modo (1v1, 2v2, tutti contro
 -- tutti), mappa (quelle delle partite vere, maps.ROTATION), grado del bot (1-10) e, una
 -- volta su due, set di equipaggiamento a caso. Con --missioni 1 aggiunge una
--- partita per ogni missione dei gironi (sim/campaign.lua), col bot al posto
+-- partita per ogni missione dei gironi (sim/levels.lua), col bot al posto
 -- del giocatore.
 package.path = "client/?.lua;" .. package.path
 
