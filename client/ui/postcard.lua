@@ -1,6 +1,9 @@
--- The mission's postcard (WB-015 illustrations; Sergio, 4 Nov): before a
--- campaign mission its illustration opens in front of the menu as a postcard,
--- with the title and AVANTI. It is only a zoom on the card you tapped: the map
+-- The mission's postcard (Sergio, 4 Nov; 6 Nov: the miniature of the map
+-- instead of a painting, and kept, it is needed going from one mission
+-- straight to the next): before a campaign mission the miniature of its map
+-- opens in front of the menu as a postcard, with the label of its kind (the
+-- first time you meet that kind, also the line that says what it is), the
+-- title and AVANTI. It is only a zoom on the card you tapped: the map
 -- is not loaded yet, it loads after AVANTI, under the entry's flame
 -- (ui/transition.lua, flame). Parchment card with its shadow, the picture in
 -- an ink frame, the title and the button on the bottom band, an opaque
@@ -8,8 +11,9 @@
 -- its edges (no antialiasing on rotated nodes).
 --
 --   local postcard = require "ui.postcard"
---   local p = postcard.open(id, titolo, from)  -- nil without an illustration; from:
---        -- { x, y, w, h } the picture on the card you tapped (it zooms from there)
+--   local p = postcard.open(id, titolo, from, tipo, line)  -- from: { x, y, w, h } the picture
+--        -- on the card you tapped (it zooms from there); tipo: the mission's kind
+--        -- (ui/level_types.lua); line: what that kind is, or nil
 --   postcard.premi(p, x, y)  -- "avanti" on the button, "indietro" outside the card, or nil
 --   postcard.pad(p, n)       -- controller: "a" avanti, "b" indietro
 --   postcard.leave(p, done)  -- AVANTI: it shrinks into the middle, the backdrop goes black
@@ -18,6 +22,7 @@
 
 local ui = require "ui.ui"
 local ill = require "ui.illustrations"
+local types = require "ui.level_types"
 local common = require("lang.text").common
 
 local M = {}
@@ -51,10 +56,9 @@ local function placed(from)
 	return vec(from.x, from.y - PIC_Y * k), vmath.vector3(k, k, 1)
 end
 
-function M.open(id, titolo, from)
+function M.open(id, titolo, from, tipo, line)
 	local tex = ill.texture(id, "tavola")
-	if not tex then return nil end
-	local p = { id = id, from = from }
+	local p = { id = id, from = from, tex = tex }
 	p.radice = gui.new_box_node(vec(640, 360), vec(0, 0))
 	gui.set_visible(p.radice, false)
 	p.back = gui.new_box_node(vec(0, 0), vec(1280 * 4, 720 * 4))
@@ -68,11 +72,23 @@ function M.open(id, titolo, from)
 	gui.set_color(paper, PAPER)
 	gui.set_color(border, INK)
 	p.paper = paper
-	box(0, PIC_Y, P.w + 6, P.h + 6, INK, paper)
+	box(0, PIC_Y, P.w + 8, P.h + 8, types.color(tipo) or INK, paper)
 	local pic = gui.new_box_node(vec(0, PIC_Y), vec(P.w, P.h))
-	gui.set_texture(pic, tex)
+	if tex then gui.set_texture(pic, tex) else gui.set_color(pic, c(0.16, 0.10, 0.07)) end
 	gui.set_adjust_mode(pic, gui.ADJUST_FIT)
 	gui.set_parent(pic, paper)
+	-- the kind in the picture's top left corner, its line under it
+	local lx, ly = -P.w / 2 + 18, PIC_Y + P.h / 2 - 42
+	types.label(tipo, lx, ly, 48, paper)
+	if line and types.color(tipo) then
+		local t = ui.testo(line, 0, 0, 0.8, INK)
+		gui.set_outline(t, c(0, 0, 0, 0))
+		gui.set_shadow(t, c(0, 0, 0, 0))
+		local w = resource.get_text_metrics(gui.get_font_resource(gui.get_font(t)), line).width * gui.get_scale(t).x
+		local strip = box(lx + (w + 32) / 2, ly - 56, w + 32, 46, c(0.95, 0.88, 0.75, 0.92), paper)
+		gui.set_parent(t, strip)
+		gui.set_position(t, vec(0, -1))
+	end
 	local by = -CARD_H / 2 + P.band / 2
 	local title = ui.titolo(string.upper(titolo or ""), -P.w / 2, by, 0.9, INK, paper)
 	gui.set_outline(title, c(0, 0, 0, 0))
@@ -142,7 +158,7 @@ end
 
 function M.destroy(p)
 	gui.delete_node(p.radice)
-	ill.release(p.id, "tavola")
+	if p.tex then ill.release(p.id, "tavola") end
 end
 
 return M

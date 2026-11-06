@@ -1,8 +1,8 @@
 -- Campaign (the home's CAMPAGNA button): the chapters of sim/campaign.lua in
 -- tabs, the Training (the lessons) first. Each chapter is the board of the
--- Forge: its missions pinned as postcards with the illustration
--- (ui/illustrations.lua), the title and the stars taken, the final as the
--- wide strip at the bottom. A chapter opens with everyone's stars
+-- Forge: its missions pinned as postcards with the miniature of their map
+-- (ui/illustrations.lua) and the label of their kind (ui/level_types.lua),
+-- the title and the stars taken, the final as the wide strip at the bottom. A chapter opens with everyone's stars
 -- (chapter.serve): closed, it says how many are missing. Style in ui/ui.lua.
 --
 --   local campagna = require "menu.campaign"
@@ -17,6 +17,7 @@ local backdrop = require "ui.backdrop"
 local payload = require "sim.campaign"
 local missions = require "sim.missions"
 local ill = require "ui.illustrations"
+local types = require "ui.level_types"
 local T = require("lang.text").campaign
 local TS = require("lang.text").story
 local common = require("lang.text").common
@@ -25,16 +26,19 @@ local M = {}
 
 -- The board of the Forge (Sergio, 4 Nov, «me gusta»): the chapter's
 -- challenges pinned on a wooden board as parchment postcards, three a row,
--- the illustration filling the card and title and stars on the band under
--- it; the next one to do framed in gold; the chapter's final as the wide
--- strip at the bottom, with a piece of its story panel. The wood is the whole
--- screen (ui/backdrop.lua), the cards in the middle, sized so they fit on
--- 4:3 too (960 wide)
-local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 268, 151, 34, 14, 12, 14
+-- the picture filling the card and title and stars on the band under it; the
+-- next one to do framed in gold; the chapter's final as the wide strip at the
+-- bottom. The wood is the whole screen (ui/backdrop.lua), the cards in the
+-- middle, sized so they fit on 4:3 too (960 wide). The pictures (Sergio,
+-- 6 Nov): no paintings, the minimal miniature of the level's map with its
+-- true colours, in a thin frame of its kind's colour, and the kind's label in
+-- the corner. The final taller (Sergio: «leggermente più alto»): 30 points
+-- taken from the cards' pictures (151 -> 137), the board as high as before
+local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 268, 137, 34, 14, 12, 14
 local CARD_H, COLUMNS = 6 + PIC_H + BAND, 3
 -- the board's width with its frame (the tabs over it are as wide)
 local BOARD_OUTER = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X + 2 * BOARD_PAD + 12
-local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 56, 260, 44
+local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 86, 340, 70
 local function c4(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 local PAPER, INK, INK_SOFT = c4(0.95, 0.88, 0.75), c4(0.12, 0.07, 0.05), c4(0.12, 0.07, 0.05, 0.22)
 -- the soft text on the wood (ui.C.OFF is 3.5:1 on it, this 6.2:1): the
@@ -97,25 +101,27 @@ local function nail(x, y, parent)
 end
 
 -- a card of the board (a button: tap and controller light), parchment with
--- the ink border; the picture (or its empty place) at x, y on the card
+-- the ink border; the picture (or its empty place) at x, y on the card, in
+-- the frame of its kind's colour, the kind's label in its top left corner
 local function card(c, l, x, y, w, h, kind, pic_x, pic_y, pic_w, pic_h)
 	local n = ui.button(c.buttons, x, y, w, h, "", "missione:" .. l.id, nil, c.board)
 	local b = c.buttons[#c.buttons]
 	gui.set_color(n, PAPER)
 	b.riposo = INK
 	gui.set_color(b.bordo, INK)
-	box(pic_x, pic_y, pic_w + 4, pic_h + 4, INK, n)
+	box(pic_x, pic_y, pic_w + 6, pic_h + 6, types.color(l.tipo) or INK, n)
 	local tex = ill.texture(l.id, kind)
 	if tex then
 		c.textures[#c.textures + 1] = { l.id, kind }
 		local t = box(pic_x, pic_y, pic_w, pic_h, c4(1, 1, 1), n)
 		gui.set_texture(t, tex)
-		-- where the picture is on the screen: the postcard zooms from here (ui/postcard.lua)
-		local bp = gui.get_position(c.board)
-		c.from[l.id] = { x = bp.x + x + pic_x, y = bp.y + y + pic_y + gui.get_position(c.radice).y, w = pic_w, h = pic_h }
 	else
 		box(pic_x, pic_y, pic_w, pic_h, EMPTY, n)
 	end
+	types.label(l.tipo, pic_x - pic_w / 2 + 6, pic_y + pic_h / 2 - 18, 24, n)
+	-- where the picture is on the screen: the postcard zooms from here (ui/postcard.lua)
+	local bp = gui.get_position(c.board)
+	c.from[l.id] = { x = bp.x + x + pic_x, y = bp.y + y + pic_y + gui.get_position(c.radice).y, w = pic_w, h = pic_h }
 	return n
 end
 
@@ -170,9 +176,9 @@ local function card_list(c, cap)
 	if final then
 		local y = -board_h / 2 + BOARD_PAD + FINAL_H / 2
 		if final.id == next_id then gold(0, y, inner_w, FINAL_H, c.board) end
-		local px = -inner_w / 2 + 6 + FINAL_PIC_W / 2
+		local px = -inner_w / 2 + 8 + FINAL_PIC_W / 2
 		local n = card(c, final, 0, y, inner_w, FINAL_H, "finale", px, 0, FINAL_PIC_W, FINAL_PIC_H)
-		local tx = px + FINAL_PIC_W / 2 + 22
+		local tx = px + FINAL_PIC_W / 2 + 24
 		fit(ink(T.final:format(string.upper(final.titolo)), tx, 0, 0.8, INK, n), inner_w / 2 - tx - 120)
 		state(c, final, final.id == next_id, inner_w / 2 - 16, 0, n)
 		nail(-inner_w / 2 + 8, y + FINAL_H / 2 - 2, c.board)
@@ -181,7 +187,7 @@ local function card_list(c, cap)
 end
 
 
--- the card illustrations of the chapter shown, given back to the GPU
+-- the card miniatures of the chapter shown, given back to the GPU
 local function release_textures(c)
 	for _, t in ipairs(c.textures or {}) do ill.release(t[1], t[2]) end
 	c.textures = {}

@@ -33,6 +33,8 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting",
 	-- the mission's postcard before the flame (ui/postcard.lua)
 	postcard = require "ui.postcard",
+	-- the kind of a mission: its postcard says it the first time (ui/level_types.lua)
+	level_types = require "ui.level_types",
 	-- the queue that stays alive outside the waiting room (Sergio, 3 Nov)
 	pill = require "ui.pill", playout = require "main.playout" }
 local missions = require "sim.missions"
@@ -2552,9 +2554,8 @@ end
 -- onto the map): its postcard opens in front of the screen as a zoom on the
 -- card you tapped (from: its picture, ui/postcard.lua), nothing loaded yet;
 -- AVANTI and the map loads under Favilla's flame, which then opens on it
--- (ui/transition.lua, flame); Favilla speaks CP.LANDING seconds after. Without an
--- illustration (or with the vignettes off in the scenarios) straight to the
--- flame; INDIETRO on the postcard stays where you were. RIPROVA doesn't come
+-- (ui/transition.lua, flame); Favilla speaks CP.LANDING seconds after. With
+-- the vignettes off in the scenarios straight to the flame; INDIETRO on the postcard stays where you were. RIPROVA doesn't come
 -- here: you want to play again at once (the iris)
 CP.LANDING = 0.15
 function CP.enter_mission(self, id, from, told)
@@ -2576,7 +2577,9 @@ function CP.enter_mission(self, id, from, told)
 		end)
 	end
 	local l = missions.trova(id)
-	self.cartolina = self.vign_on and l and menu.postcard.open(id, l.titolo, from)
+	local first = menu.level_types.first_time(id, self.profilo.stelle)
+	self.cartolina = self.vign_on and l and menu.postcard.open(id, l.titolo, from, l.tipo,
+		first and menu.level_types.line(l.tipo) or nil)
 	if not self.cartolina then return flame() end
 	self.cartolina.go = flame
 end

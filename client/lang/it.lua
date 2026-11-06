@@ -211,6 +211,27 @@ return {
 		final = "FINALE · %s",
 	},
 
+	-- ui/level_types.lua: what kind of level a mission is (Sergio, 6 Nov), on its
+	-- card and its postcard; the line says it the first time you meet the kind
+	level_types = {
+		corsa = "CORSA",
+		bersagli = "BERSAGLI",
+		duello = "DUELLO",
+		squadra = "SQUADRA",
+		orda = "ORDA",
+		resistenza = "RESISTENZA",
+		bottino = "BOTTINO",
+		custode = "CUSTODE",
+		corsa_line = "Arriva dove ti dico: la bandierina, il cancello, la cima.",
+		bersagli_line = "Fantocci da colpire o buttare giù, coi colpi che hai.",
+		duello_line = "Tu contro uno solo.",
+		squadra_line = "Due contro due: chi ti sta accanto gioca con te.",
+		orda_line = "Tu da solo contro tre.",
+		resistenza_line = "Resisti fino all'ultimo giro.",
+		bottino_line = "Prendi più del tuo avversario.",
+		custode_line = "Il guardiano del girone. Battilo e si scende.",
+	},
+
 	-- menu/lineup.lua: the line-up before the match
 	lineup = {
 		tap_to_pick = "TOCCA PER SCEGLIERE LE ARMI",

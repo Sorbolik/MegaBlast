@@ -1,4 +1,5 @@
-# La tavola dell'apertura (WB-015) da sola, per provarla sugli altri schermi
+# La cartolina dell'apertura da sola (la miniatura della mappa, l'etichetta del
+# tipo e la sua riga), per provarla sugli altri schermi
 # (--schermo 1600x720 o 960x720): la cartolina al centro, il fondo pieno
 # intorno (la mappa non è ancora caricata: si carica dopo AVANTI, ui/postcard.lua).
 imposta prova_missione primi_passi

@@ -160,6 +160,54 @@ images {
 images {
   image: "/assets/ui/stella_p.png"
 }
+images {
+  image: "/assets/ui/tipo_corsa.png"
+}
+images {
+  image: "/assets/ui/tipo_corsa_p.png"
+}
+images {
+  image: "/assets/ui/tipo_bersagli.png"
+}
+images {
+  image: "/assets/ui/tipo_bersagli_p.png"
+}
+images {
+  image: "/assets/ui/tipo_duello.png"
+}
+images {
+  image: "/assets/ui/tipo_duello_p.png"
+}
+images {
+  image: "/assets/ui/tipo_squadra.png"
+}
+images {
+  image: "/assets/ui/tipo_squadra_p.png"
+}
+images {
+  image: "/assets/ui/tipo_orda.png"
+}
+images {
+  image: "/assets/ui/tipo_orda_p.png"
+}
+images {
+  image: "/assets/ui/tipo_resistenza.png"
+}
+images {
+  image: "/assets/ui/tipo_resistenza_p.png"
+}
+images {
+  image: "/assets/ui/tipo_bottino.png"
+}
+images {
+  image: "/assets/ui/tipo_bottino_p.png"
+}
+images {
+  image: "/assets/ui/tipo_custode.png"
+}
+images {
+  image: "/assets/ui/tipo_custode_p.png"
+}
 margin: 2
 extrude_borders: 2
 inner_padding: 0

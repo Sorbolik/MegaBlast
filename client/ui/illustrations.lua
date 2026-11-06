@@ -1,12 +1,13 @@
--- The mission illustrations (WB-015, Sergio 4 Nov: on the mission card and
--- full screen when the mission opens). JPEGs in /paintings/missions/ (custom
--- resources, loaded only when they are shown, not kept in an atlas): <id>.jpg
--- for the postcard, <id>_carta.jpg for the card on the CAMPAGNA's board,
--- <id>_finale.jpg for the strip of a chapter's final. A mission without its
--- files simply has no illustration. Client only.
+-- The pictures of the CAMPAGNA, JPEGs in /paintings/ (custom resources,
+-- loaded only when they are shown, not kept in an atlas). The missions: the
+-- miniature of their map (Sergio, 6 Nov: no paintings on the missions, too
+-- much lava; strumenti/grafica/miniature_missioni.py writes them) in
+-- /paintings/missions/: <id>.jpg for the postcard, <id>_carta.jpg for the
+-- card on the CAMPAGNA's board, <id>_finale.jpg for the strip of a chapter's
+-- final. The story's panels are the only paintings. Client only.
 --
 --   local ill = require "ui.illustrations"
---   local tex = ill.texture(id, "carta" | "tavola" | "finale")  -- the gui texture name, or nil
+--   local tex = ill.texture(id, "carta" | "tavola" | "finale")  -- the gui texture name, or nil (no file)
 --   ill.release(id, kind)                         -- when nothing shows it anymore
 --   local tex = ill.story(id)  /  ill.story_release(id)   -- a panel of the story
 
@@ -19,21 +20,6 @@ local dims = {}
 
 local function name_of(id, kind)
 	return "ill_" .. id .. ((kind == "carta" or kind == "finale") and "_" .. kind or "")
-end
-
--- The missions that have one (strumenti/grafica/illustrazioni.py writes the files)
-M.MISSIONS = {
-	primi_passi = true, lanciarune = true, turno = true, tempo = true, spostano = true,
-	attrezzi = true,
-}
-
--- The chapters' finals with their strip under the board (<id>_finale.jpg: a
--- piece of a story panel)
-M.FINALS = { guidata = true, battaglia_forgia = true }
-
-function M.has(id, kind)
-	if kind == "finale" then return M.FINALS[id] == true end
-	return M.MISSIONS[id] == true
 end
 
 -- a JPEG of /paintings/ made a gui texture called key (shared: counted)
@@ -62,7 +48,6 @@ local function release(key)
 end
 
 function M.texture(id, kind)
-	if not M.has(id, kind) then return nil end
 	local key = name_of(id, kind)
 	return load(key, "/paintings/missions/" .. key:sub(5) .. ".jpg")
 end
