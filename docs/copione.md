@@ -29,6 +29,7 @@ in `controlla.lua`, in questa pagina e nel Copione.
 | `dimostra` | Favilla vera che ti mostra le mosse facendole (sotto) |
 | `globi`, `vita`, `punti`, `regrow`, `al_posto`, `secondi`, `al_tempo`, `turni`, `plans` | regole della partita (vedi l'intestazione di `missions.lua`) |
 | `stelle`, `medaglia`, `collaudo` | stelle dei gironi, medaglia delle lezioni, come lo prova il bot |
+| `bravo`, `bravo_faccia` | il «bravo» di Favilla quando l'ultimo passo è fatto (faccia: senza, `ride`) |
 
 ## I passi dell'obiettivo
 
@@ -43,6 +44,15 @@ in `controlla.lua`, in questa pagina e nel Copione.
 
 Nelle lezioni: `only` (cosa si può usare finché il passo non è fatto), `zoom`.
 
+`nuova = true`: in questo passo il giocatore impara una mossa nuova. Il principio di
+Sergio (6 nov) è **spiega, mostra, tocca a te, bravo**: prima del passo (fra la mossa
+nuova di prima e questa) ci devono essere una vignetta grande (o la frase d'apertura,
+per la prima) e una dimostrazione di Favilla (o la comparsa `guida`), e quando il passo
+è fatto una riga con la `faccia` che parte da lì (o `bravo` del livello, se è l'ultimo).
+`strumenti/copione/controlla.lua` fallisce se ne manca uno («mossa nuova senza
+«mostra»»), e il Copione lo segna in rosso sotto il passo. Le informazioni (una cosa
+da sapere, non da fare) restano nella striscia; un'arma da cassa ha la sua carta.
+
 ## Le righe
 
 Una riga: `testo` (con i segnaposto `{salta}`, `{cammina}`, `{mira}`, `{annulla}`,
@@ -55,7 +65,9 @@ che diventano il gesto dei comandi che hai), `quando` parte, `fino` a quando res
 - `highlight`: nelle lezioni il tempo resta fermo finché non tocchi quel comando
   (`stops = false`: solo la luce, per le righe che arrivano in aria).
 - `subito`: la riga prende il posto di quella che c'è (la mira è già partita).
-- `faccia`: calma, ride, spiega, sorpresa, preoccupata, arrabbiata, fiera, triste.
+- `faccia`: calma, ride, spiega, sorpresa, preoccupata, arrabbiata, fiera, triste. Una
+  riga con la faccia che parte finito un passo è il «bravo» di quel passo.
+- `secondi`: quanto resta nella striscia (senza: il tempo normale).
 
 ## I trigger (`quando`, `fino`)
 
@@ -90,10 +102,13 @@ Esempio, dal Duello con Favilla:
 Il principio di Sergio (6 nov): Favilla prima ti mostra una mossa facendola, poi la
 fai tu. Per questo è un robot vero della tua squadra: un giocatore con
 `insegna = true` (con `nome = "Favilla"`, `pelle = "favilla"` e un punto di partenza
-suo). Non gioca turni suoi, non si fa male e i suoi colpi non fanno i tuoi passi.
+suo). Non gioca turni suoi, non si fa male, i suoi colpi non fanno i tuoi passi e non è
+mai d'intralcio: passa attraverso gli altri robot e loro attraverso lei. Nelle lezioni
+senza globi non ne guadagna nemmeno lei.
 
 `dimostra` è la lista delle sue dimostrazioni: `{ quando = {...}, mosse = {...} }`.
-Quando vale `quando` (come per le righe; senza: subito) e tu sei fermo nel tuo turno,
+Quando vale `quando` (come per le righe; senza: subito), tu sei fermo nel tuo turno e la
+vignetta grande di quel momento è stata letta (VAI: prima spiega, poi mostra),
 il turno passa a lei: fa le mosse in ordine coi tasti e la fisica veri, la sua mira
 si vede come la tua, e poi il turno torna a te com'era (il tempo resta fermo). Ogni
 dimostrazione una volta sola. Dopo, le righe possono partire con
@@ -102,8 +117,8 @@ dimostrazione una volta sola. Dopo, le righe possono partire con
 | Mossa | Cosa fa |
 |---|---|
 | `cammina = 900` | cammina fino a quella x (si ferma anche se cade da un bordo: dopo, il paracadute) |
-| `salta = "destra"`, `"sinistra"`, `"su"` | salta pieno da quella parte e aspetta di atterrare |
-| `arma = "missile"`, `angolo = 45`, `potenza = 0.7` | mira per un secondo (si vede) e spara; vale per ogni arma e attrezzo: `"sword"`, `"hook"` (rampino), `"teleport"` (globo), `"parachute"` (appena è in aria, senza mira), `"shield"`... Angolo in gradi: 0 a destra, 90 in su, 180 a sinistra; potenza da 0 a 1 (senza: 1). Poi aspetta che tutto sia fermo |
+| `salta = "destra"`, `"sinistra"`, `"su"` | salta pieno da quella parte e aspetta di atterrare; con `in_aria = true` passa alla mossa dopo appena smette di salire (il Tonante o il Maglio in cima al salto) |
+| `arma = "missile"`, `angolo = 45`, `potenza = 0.7` | mira per un secondo (si vede) e spara; vale per ogni arma e attrezzo: `"sword"`, `"hook"` (rampino), `"teleport"` (globo), `"parachute"` (appena è in aria, senza mira), `"shield"`... Angolo in gradi: 0 a destra, 90 in su, 180 a sinistra; potenza da 0 a 1 (senza: 1). Poi aspetta che tutto sia fermo. `subito = true`: spara senza il secondo di mira (in aria). `verso = "destra"` o `"sinistra"`: intanto tiene premuto quel lato (col paracadute plana di lato, col Maglio sale sul pilastro), fino a `fino_a = x` se c'è |
 | `aspetta = 1.5` | sta ferma tanti secondi |
 | `dice = "Guarda!"` | la battuta sopra la testa, come i bot |
 | `posa = "vittoria"`, `secondi = 1.5` | fa una clip delle animazioni (`vittoria`, `naso`, `sbadiglio`, `guarda_coda`, `colpito`...) |
