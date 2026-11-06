@@ -38,13 +38,14 @@ local CARDS_Y = 380
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
--- The maps of the circles (the chapters girone_N of sim/campaign.lua), in
--- order, each once: not the lesson arenas, which are made for one exercise
+-- The maps of the chapters of sim/campaign.lua (the Addestramento's cortile,
+-- then the circles girone_N), in order, each once: not the lesson arenas,
+-- which are made for one exercise
 local MAPS = {}
 do
 	local seen = {}
 	for _, cap in ipairs(campaign.CAPITOLI) do
-		local n = tonumber(cap.id:match("^girone_(%d+)$"))
+		local n = cap.id == "addestramento" and 0 or tonumber(cap.id:match("^girone_(%d+)$"))
 		for _, l in ipairs(n and cap.missioni or {}) do
 			if l.mappa and not l.arena and not seen[l.mappa] then
 				seen[l.mappa] = true
@@ -79,7 +80,7 @@ local function postcard(a, x, m)
 	if not open then gui.set_color(img, vmath.vector4(0.22, 0.2, 0.24, 1)) end
 	local name = ui.testo(maps.get(m.id).name, -CARD_W / 2 + 16, -CARD_H / 2 + 22, 0.85, open and ui.C.TEXT or ui.C.OFF, n)
 	gui.set_pivot(name, gui.PIVOT_W)
-	local circle = ui.testo(T.circle:format(m.girone), -CARD_W / 2 + 18, CARD_H / 2 - 24, 0.55, ui.C.GOLD, n)
+	local circle = ui.testo(m.girone == 0 and T.training or T.circle:format(m.girone), -CARD_W / 2 + 18, CARD_H / 2 - 24, 0.55, ui.C.GOLD, n)
 	gui.set_pivot(circle, gui.PIVOT_W)
 	if not open then
 		ui.testo(common.opens_with:format(m.serve), 0, 18, 0.8, ui.C.TEXT, n)

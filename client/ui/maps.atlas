@@ -1,4 +1,7 @@
 images {
+  image: "/assets/maps/miniature/cortile.png"
+}
+images {
   image: "/assets/maps/miniature/pavimento.png"
 }
 images {

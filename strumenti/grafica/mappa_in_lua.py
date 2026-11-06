@@ -6,6 +6,7 @@ from PIL import Image
 MAPPE = [
     ('pavimento', 'strumenti/grafica/mappe/pavimento.png'),
     ('fossa', 'strumenti/grafica/mappe/fossa.png'),
+    ('cortile', 'strumenti/grafica/mappe/cortile.png'),
 ]
 
 def righe(path):

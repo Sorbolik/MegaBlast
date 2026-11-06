@@ -161,4 +161,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 5 nov | La bacheca della Forgia prende tutto lo schermo: la parete di assi di legno su ogni proporzione, le carte al centro come prima. | questa PR |
 | 5 nov | Uno sfondo per ogni menu, nel colore della sua tacca (fucina, campo, arena, stendardi, banco, camerino, raggi, schieramento, legno anche a fine livello); testo spento più chiaro per i contrasti. | questa PR |
 | 5 nov | Sblocchi della home confermati: EVENTI dopo 3 partite online, partite private dentro GIOCA ONLINE, classifica dentro EVENTI, negozio alla prima moneta, niente NUOVO, impostazione nascosta che sblocca tutto. | questa PR |
+| 6 nov | Il cortile: sfondo col muro del portone, le sei lezioni dipinte come il cortile (stessa forma), la mappa del Duello con l'incudine appesa (anche in ALLENAMENTO); niente più cerchio scuro sull'acciaio colpito. | questa PR |
 | 5 nov | Bug: il pad del movimento restava incastrato (a inizio turno il personaggio camminava da solo, sul telefono a volte per tutta la partita). Il server lascia i tasti a ogni turno, il client lascia levette e tasti persi. | questa PR |
