@@ -81,11 +81,11 @@ function M.open(id, titolo, from, tipo, line)
 	local lx, ly = -P.w / 2 + 18, PIC_Y + P.h / 2 - 42
 	types.label(tipo, lx, ly, 48, paper)
 	if line and types.color(tipo) then
-		local t = ui.testo(line, 0, 0, 0.62, INK)
+		local t = ui.testo(line, 0, 0, 0.8, INK)
 		gui.set_outline(t, c(0, 0, 0, 0))
 		gui.set_shadow(t, c(0, 0, 0, 0))
 		local w = resource.get_text_metrics(gui.get_font_resource(gui.get_font(t)), line).width * gui.get_scale(t).x
-		local strip = box(lx + (w + 32) / 2, ly - 52, w + 32, 40, c(0.95, 0.88, 0.75, 0.92), paper)
+		local strip = box(lx + (w + 32) / 2, ly - 56, w + 32, 46, c(0.95, 0.88, 0.75, 0.92), paper)
 		gui.set_parent(t, strip)
 		gui.set_position(t, vec(0, -1))
 	end
