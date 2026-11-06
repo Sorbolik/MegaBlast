@@ -17,7 +17,7 @@ for i, k in ipairs({ "id", "titolo", "tipo", "goal_text", "highlight", "guidata"
 	"medaglia", "obiettivo", "righe", "dimostra", "bravo", "bravo_faccia", "collaudo",
 	-- dentro: giocatori, passi, righe, casse, guida
 	"team", "bot", "dummy", "carattere", "pick", "secondary", "tool", "nome", "battute", "pelle", "insegna",
-	"x", "y", "from", "w", "h", "t", "salto", "parte", "gara", "percorso",
+	"x", "y", "from", "w", "h", "t", "salto", "parte", "percorso",
 	"reach", "flag", "prendi", "hit", "down", "usa", "win", "con", "come", "times", "globi", "only", "zoom", "nuova",
 	"testo", "mostra", "faccia", "quando", "fino", "subito", "stops",
 	"dopo", "arma", "give", "mosse", "cammina", "salta", "angolo", "potenza", "in_aria", "subito", "verso", "fino_a", "aspetta", "dice", "posa", "secondi" }) do

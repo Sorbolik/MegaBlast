@@ -25,7 +25,7 @@ in `controlla.lua`, in questa pagina e nel Copione.
 | `obiettivo` | i passi, in ordine, ognuno col suo `testo` (la scritta d'oro) |
 | `righe` | quello che si dice durante il livello (sotto) |
 | `casse`, `cards` | `{ dopo = passo, arma, x }`: dopo quel passo (0: subito) cade la cassa lì, o si apre la carta dell'arma (`give`: e te la dà) |
-| `guida`, `scintilla` | Favilla comparsa nel cortile: da quale passo parte e il suo percorso `{ x, y, t, salto }` (corre mentre giochi: la gara); la scintilla della medaglia |
+| `guida`, `scintilla` | Favilla comparsa nel cortile: da quale passo parte e il suo percorso `{ x, y, t, salto }` (corre mentre giochi); la scintilla della medaglia |
 | `dimostra` | Favilla vera che ti mostra le mosse facendole (sotto) |
 | `globi`, `vita`, `punti`, `regrow`, `al_posto`, `secondi`, `al_tempo`, `turni`, `plans` | regole della partita (vedi l'intestazione di `missions.lua`) |
 | `stelle`, `medaglia`, `collaudo` | stelle dei gironi, medaglia delle lezioni, come lo prova il bot |
@@ -85,7 +85,7 @@ ne vale una.
 | `finestra = true` | dopo il primo attacco, finché la sua finestra è aperta |
 | `in_caduta = true` | stai cadendo veloce e hai ancora il paracadute |
 | `corona = "tu"` | sei primo |
-| `conta = "prima"`, `almeno = 1` | un contatore della missione (morti, globi, scintille, prima...) |
+| `conta = "morti"`, `almeno = 1` | un contatore della missione (morti, globi, scintille, misses...) |
 | `vicino = 250` | sei a meno di 250 pixel da Favilla (`insegna`): lei ti aspetta |
 
 Esempio, dal Duello con Favilla:

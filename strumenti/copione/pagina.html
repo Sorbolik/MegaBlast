@@ -234,7 +234,7 @@ const VEDI = ["primarie", "secondarie", "teleport", "parachute", "tempo", "punti
 const TIPI = ["corsa", "bersagli", "duello", "squadra", "orda", "resistenza", "bottino", "custode"];
 const USA = ["globi", "rampino", "pogo", "kickback", "paracadute", "baratto"];
 const SEGNAPOSTO = ["salta", "cammina", "mira", "annulla"];
-const CONTATORI = ["morti", "teletrasporti", "vuoto", "abbattuti", "danni", "misses", "globi", "globi_turno", "scintille", "prima"];
+const CONTATORI = ["morti", "teletrasporti", "vuoto", "abbattuti", "danni", "misses", "globi", "globi_turno", "scintille"];
 // i nomi in italiano di quello che nei dati è un id (gli id restano quelli del gioco)
 const NOMI_EVENTI = {
 	air_jump: "salta in aria", bellows: "soffia col Mantice", bellows_hit: "il Mantice colpisce", bounce: "rimbalza su un trampolino",
@@ -725,7 +725,7 @@ function barraStrumenti(l) {
 		const pp = l.guida.percorso, ult = pp[pp.length - 1];
 		pp.push({ x: snap(ult ? ult.x + 200 : stato.cam.x + stato.cam.w / 2), y: ult ? ult.y : 150, t: ult ? ult.t + 3 : 0 });
 		stato.sel = { k: "guida", i: pp.length - 1 };
-	}, "Favilla comparsa che corre davanti al giocatore nel cortile (la gara): ogni punto è una tappa del suo percorso. Non spara: per mostrare le mosse c'è «+ Favilla che mostra»");
+	}, "Favilla comparsa che corre davanti al giocatore nel cortile: ogni punto è una tappa del suo percorso. Non spara: per mostrare le mosse c'è «+ Favilla che mostra»");
 	const tog = (testo, chiave, titolo) => b.append(el("button", { class: stato[chiave] ? "on" : "", title: titolo, onclick: () => { stato[chiave] = !stato[chiave]; disegna(); } }, testo));
 	tog("Disegno", "dipinto", "Mostra o nasconde il disegno della mappa");
 	tog("Piattaforme", "collisioni", "Mostra o nasconde i blocchi su cui si cammina");
@@ -1282,7 +1282,7 @@ function condizione(q, cambia, profondo) {
 	return box;
 }
 function valoreBase(k) {
-	return { passo: 1, turno: 1, turno_altri: 1, di_turno: "tu", evento: "crate_pick", tocca: "mira", usato: "primaria", finestra: true, in_caduta: true, corona: "tu", conta: "prima", vicino: 250 }[k];
+	return { passo: 1, turno: 1, turno_altri: 1, di_turno: "tu", evento: "crate_pick", tocca: "mira", usato: "primaria", finestra: true, in_caduta: true, corona: "tu", conta: "morti", vicino: 250 }[k];
 }
 function valoreIn(q, k, l) {
 	const n = (l.obiettivo || []).length;
@@ -1488,8 +1488,7 @@ function disegnaPannello() {
 			el("div", { class: "due" }, campo("x (da sinistra)", testoIn(q, "x", { num: true, id: "g" })), campo("y (altezza)", testoIn(q, "y", { num: true, id: "g" }))),
 			el("div", { class: "due" }, campo("Ci arriva dopo (secondi)", testoIn(q, "t", { num: true, id: "g" }), "Contando da quando parte."), campo("Salto", testoIn(q, "salto", { num: true, id: "g" }), "Quanto salta per arrivarci. Vuoto: corre e basta.")),
 			el("div", { class: "gruppo" }, el("b", { text: "Tutto il percorso" }),
-				campo("Parte", sceltaIn(l.guida, "parte", sceltePassi(l), { num: true })),
-				spunta(l.guida, "gara", "È una gara: la medaglia se arrivi prima di lei")),
+				campo("Parte", sceltaIn(l.guida, "parte", sceltePassi(l), { num: true }))),
 			togli("Togli questo punto", () => { l.guida.percorso.splice(s.i, 1); if (!l.guida.percorso.length) delete l.guida; }));
 	} else if (s.k === "scintilla" && l.scintilla) {
 		metti(p, el("h3", { text: "La scintilla" }),

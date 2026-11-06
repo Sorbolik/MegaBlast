@@ -95,11 +95,10 @@
 --   medaglia = { conta = "scintille", at_least = 1, testo = "LA SCINTILLA" }: the lessons
 --     of the cortile have no three stars (Sergio, 3 Nov): «Fatta» and, where
 --     there's a real challenge, Favilla's optional medal (a bonus, below)
---   guida = { parte = 1, gara = true, percorso = { { x =, y =, t = }, { x =, y =, t =, salto = 30 }, ... } }:
+--   guida = { parte = 1, percorso = { { x =, y =, t = }, { x =, y =, t =, salto = 30 }, ... } }:
 --     Favilla in the cortile, a puppet drawn by the battle and never hit: from
 --     step parte done (0: at once) she follows the path, t in seconds of game
---     (vignettes stop it), salto = the height of the arc to that point. gara:
---     the medal counter "prima" if you finish before she arrives
+--     (vignettes stop it), salto = the height of the arc to that point
 --   insegna = true (in giocatori, with nome and pelle): Favilla as a real robot of the
 --     player's team, who shows the moves by doing them (dimostra, below). She
 --     never plays a turn of her own and doesn't get hurt; her hits don't do the
@@ -137,7 +136,7 @@
 --       (the player touched that, this turn), usato = "primaria" | "secondaria" |
 --       "attrezzo" (already used this turn), finestra = true (after the first
 --       attack, while its window is open), in_caduta = true (you are falling fast
---       and still have the parachute), corona = "tu" (you are first), conta = "prima",
+--       and still have the parachute), corona = "tu" (you are first), conta = "morti",
 --       almeno = 1 (a counter, below); vicino = 250 (you are within that many
 --       pixels of Favilla, insegna: she waits for you); uno = { {...}, {...} }: one of them (or).
 --     Only data, never functions: the Copione (strumenti/copione) shows and
@@ -619,9 +618,6 @@ local function check_event(r, g, e)
 	if r.esito then return end
 	if goal(l, st, g, e) then
 		r.esito = "fatta"
-		-- the race with Favilla: you finished before she arrived
-		local gd = l.guida
-		if gd and gd.gara and (r.guida_t or 0) < gd.percorso[#gd.percorso].t * 60 then count(st, "prima") end
 		-- the hints aren't needed anymore (there's "Fatta!"); Favilla's «bravo» of the last step instead yes
 		clear_line(r)
 		if l.bravo then show_line(r, { testo = l.bravo, faccia = l.bravo_faccia or "ride" }) end
