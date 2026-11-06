@@ -234,7 +234,7 @@ const VEDI = ["primarie", "secondarie", "teleport", "parachute", "tempo", "punti
 const TIPI = ["corsa", "bersagli", "duello", "squadra", "orda", "resistenza", "bottino", "custode"];
 const USA = ["globi", "rampino", "pogo", "kickback", "paracadute", "baratto"];
 const SEGNAPOSTO = ["salta", "cammina", "mira", "annulla"];
-const CONTATORI = ["morti", "teletrasporti", "vuoto", "abbattuti", "danni", "misses", "globi", "globi_turno", "scintille", "prima"];
+const CONTATORI = ["morti", "teletrasporti", "vuoto", "abbattuti", "danni", "misses", "globi", "globi_turno", "scintille"];
 // i nomi in italiano di quello che nei dati è un id (gli id restano quelli del gioco)
 const NOMI_EVENTI = {
 	air_jump: "salta in aria", bellows: "soffia col Mantice", bellows_hit: "il Mantice colpisce", bounce: "rimbalza su un trampolino",
@@ -468,6 +468,34 @@ function legatiA(l, k) {
 		mostra && conta(mostra, "mossa mostrata da Favilla", "mosse mostrate da Favilla")].filter(Boolean);
 }
 
+// I quattro tempi di una mossa nuova (Sergio, 6 nov): Favilla spiega, mostra, tocca a te,
+// bravo. Per ogni passo con «nuova»: cosa c'è nella finestra dalla mossa nuova di prima
+// a questa (lo stesso conto di tempi() in strumenti/copione/controlla.lua)
+function tempi(l) {
+	const fuori = {}, passi = l.obiettivo || [];
+	let prima = 0;
+	const momento = q => q == null ? 0 : q.passo != null ? q.passo : q.turno === 1 ? 0 : null;
+	passi.forEach((p, k) => {
+		const i = k + 1;
+		if (!p.nuova) return;
+		const dentro = m => m != null && m >= prima && m <= i - 1;
+		const t = { fai: true };
+		if (prima === 0 && l.goal_text) t.spiega = true;
+		(l.righe || []).forEach(r => {
+			if (r.mostra === "grande" && dentro(momento(r.quando))) t.spiega = true;
+			if (r.faccia && r.quando && r.quando.passo === i) t.bravo = true;
+		});
+		if (i === passi.length && l.bravo) t.bravo = true;
+		if (l.guida) t.mostra = true;
+		(l.dimostra || []).forEach(d => { if (dentro(momento(d.quando))) t.mostra = true; });
+		fuori[k] = t;
+		prima = i;
+	});
+	return fuori;
+}
+const TEMPI = [["spiega", "spiega", "una vignetta grande prima del passo"], ["mostra", "mostra", "Favilla che fa la mossa prima del passo"],
+	["fai", "tocca a te", "il passo stesso"], ["bravo", "bravo", "una frase con la faccia quando il passo è fatto (o «Bravo finale» se è l'ultimo)"]];
+
 // ---------------------------------------------------------------- controllo (come strumenti/copione/controlla.lua)
 function problemi(l, c) {
 	const out = [];
@@ -487,6 +515,7 @@ function problemi(l, c) {
 	if (!l.mappa && !l.arena) out.push("manca la mappa");
 	(l.obiettivo || []).forEach((p, i) => testo(p.testo, "passo " + (i + 1)));
 	dipendenze(l).forEach((ds, i) => ds.forEach(d => { if (!d.ok) out.push("passo " + (i + 1) + ": " + d.testo + " " + d.perche); }));
+	for (const [k, t] of Object.entries(tempi(l))) for (const [c, nome] of TEMPI) if (!t[c]) out.push("passo " + (+k + 1) + ": mossa nuova senza «" + nome + "»");
 	(l.righe || []).forEach((r, i) => {
 		const d = "frase " + (i + 1);
 		testo(r.testo, d); cond(r.quando, d + ", quando");
@@ -696,7 +725,7 @@ function barraStrumenti(l) {
 		const pp = l.guida.percorso, ult = pp[pp.length - 1];
 		pp.push({ x: snap(ult ? ult.x + 200 : stato.cam.x + stato.cam.w / 2), y: ult ? ult.y : 150, t: ult ? ult.t + 3 : 0 });
 		stato.sel = { k: "guida", i: pp.length - 1 };
-	}, "Favilla comparsa che corre davanti al giocatore nel cortile (la gara): ogni punto è una tappa del suo percorso. Non spara: per mostrare le mosse c'è «+ Favilla che mostra»");
+	}, "Favilla comparsa che corre davanti al giocatore nel cortile: ogni punto è una tappa del suo percorso. Non spara: per mostrare le mosse c'è «+ Favilla che mostra»");
 	const tog = (testo, chiave, titolo) => b.append(el("button", { class: stato[chiave] ? "on" : "", title: titolo, onclick: () => { stato[chiave] = !stato[chiave]; disegna(); } }, testo));
 	tog("Disegno", "dipinto", "Mostra o nasconde il disegno della mappa");
 	tog("Piattaforme", "collisioni", "Mostra o nasconde i blocchi su cui si cammina");
@@ -1103,12 +1132,18 @@ function cartaPasso(l, k, ds, scelto) {
 		el("span", { class: "n", text: String(k + 1) }),
 		el("span", { class: "tp", text: o.testo || "?" }),
 		el("span", { class: "cosa", text: "Il giocatore " + riassunto(l, o) }),
+		o.nuova ? quattroTempi(tempi(l)[k]) : null,
 		ds.length ? el("span", { class: "dip" }, el("span", { class: "serve", text: "Serve:" }),
 			...ds.map(d => el("span", { class: "chip " + (d.ok ? "ok" : "no"), title: d.perche, text: (d.ok ? "✓ " : "✗ ") + d.testo + (d.ok ? "" : ": " + d.perche) }))) : null,
 		el("button", { class: "piccolo gioca-qui", title: "Prova il livello partendo da questo passo, come se i passi prima fossero già fatti", onclick: e => { e.stopPropagation(); gioca(k); } }, "▶ GIOCA da qui"));
 	c.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", "passo:" + k); document.getElementById("tempo").classList.add("trascino-passo"); });
 	c.addEventListener("dragend", () => { const t = document.getElementById("tempo"); if (t) t.classList.remove("trascino-passo"); });
 	return c;
+}
+// la riga dei quattro tempi sotto un passo con una mossa nuova: in rosso quello che manca
+function quattroTempi(t) {
+	return el("span", { class: "dip" }, el("span", { class: "serve", text: "Mossa nuova:" }),
+		...TEMPI.map(([c, nome, cosa]) => el("span", { class: "chip " + (t && t[c] ? "ok" : "no"), title: cosa, text: (t && t[c] ? "✓ " : "✗ ") + nome })));
 }
 function gettone(s, classe, chi, tipo, testo, q, scelto) {
 	const g = el("div", { class: "gettone " + classe + (scelto ? " sel" : ""), draggable: s.k !== "apertura" ? "true" : null, tabindex: "0",
@@ -1247,7 +1282,7 @@ function condizione(q, cambia, profondo) {
 	return box;
 }
 function valoreBase(k) {
-	return { passo: 1, turno: 1, turno_altri: 1, di_turno: "tu", evento: "crate_pick", tocca: "mira", usato: "primaria", finestra: true, in_caduta: true, corona: "tu", conta: "prima", vicino: 250 }[k];
+	return { passo: 1, turno: 1, turno_altri: 1, di_turno: "tu", evento: "crate_pick", tocca: "mira", usato: "primaria", finestra: true, in_caduta: true, corona: "tu", conta: "morti", vicino: 250 }[k];
 }
 function valoreIn(q, k, l) {
 	const n = (l.obiettivo || []).length;
@@ -1293,7 +1328,8 @@ function disegnaPannello() {
 			el("div", { class: "due" },
 				campo("Come appare", sceltaIn(r, "mostra", [["grande", "Vignetta grande"]], { vuoto: "Striscia in alto" }),
 					r.mostra === "grande" ? "Il gioco si ferma finché il giocatore non preme VAI; dopo VAI la frase resta nella striscia in alto finché serve." : "Scorre in alto mentre si gioca, senza fermare niente."),
-				campo("Faccia", sceltaIn(r, "faccia", CAT.facce, { vuoto: "calma" }), "L'espressione del ritratto.")),
+				campo("Faccia", sceltaIn(r, "faccia", CAT.facce, { vuoto: "calma" }), "L'espressione del ritratto. Una frase con la faccia che parte finito un passo è il «bravo» di quel passo.")),
+			campo("Secondi nella striscia", testoIn(r, "secondi", { num: true }), "Quanto resta in alto. Vuoto: il tempo normale."),
 			campo("Comando che lampeggia", sceltaIn(r, "highlight", coppie(COMANDI, NOMI_COMANDI), { vuoto: "nessuno" }),
 				"Il pulsante sullo schermo che si accende. Nelle lezioni il tempo resta fermo finché il giocatore non lo tocca."),
 			el("div", { class: "bottoni" }, spunta(r, "subito", "Sostituisce subito la frase che c'è"), spunta({ stops: r.stops === false }, "stops", "Solo la luce: il tempo non si ferma (per le frasi che arrivano in aria)")),
@@ -1324,7 +1360,10 @@ function disegnaPannello() {
 		metti(p, el("span", { class: "tipo-sel", text: "Passo " + (s.i + 1) + " di " + l.obiettivo.length }), el("h3", { text: o.testo || "Passo " + (s.i + 1) }),
 			spiega("Un passo è una cosa che il giocatore deve fare. I passi si fanno uno dopo l'altro: finito questo, parte il " + (s.i + 2 <= l.obiettivo.length ? "passo " + (s.i + 2) : "finale del livello") + "."),
 			campo("La scritta d'oro", testoIn(o, "testo"), "Quello che il giocatore legge in alto a destra finché non lo fa."),
-			campo("Il passo è fatto quando il giocatore", vs));
+			campo("Il passo è fatto quando il giocatore", vs),
+			el("div", { class: "gruppo" }, spunta(o, "nuova", "Qui il giocatore impara una mossa nuova"),
+				spiega("Una mossa nuova ha i suoi quattro tempi: Favilla la spiega (vignetta grande), la mostra facendola, poi tocca al giocatore, e quando ce la fa lei dice bravo. Il Copione li conta fra la mossa nuova di prima e questa, e segna in rosso quello che manca."),
+				o.nuova ? quattroTempi(tempi(l)[s.i]) : null));
 		if (verbo === "reach") metti(p, el("div", { class: "due" }, campo("x (da sinistra)", testoIn(o.reach, "x", { num: true, id: "r" })), campo("y (altezza)", testoIn(o.reach, "y", { num: true, id: "r" }))),
 			spiega("È fatto quando il giocatore sta in piedi più a destra di x e più in alto di y: sulla mappa è la zona gialla. Trascina la bandierina per spostarla."), spunta(o, "flag", "Mostra la bandiera a scacchi nel gioco"));
 		if (verbo === "prendi") metti(p, campo("Arma nella cassa", sceltaIn(o, "prendi", coppie(ARMI, {})), "Metti anche una cassa con quest'arma (+ Cassa), se no non c'è niente da prendere."));
@@ -1449,8 +1488,7 @@ function disegnaPannello() {
 			el("div", { class: "due" }, campo("x (da sinistra)", testoIn(q, "x", { num: true, id: "g" })), campo("y (altezza)", testoIn(q, "y", { num: true, id: "g" }))),
 			el("div", { class: "due" }, campo("Ci arriva dopo (secondi)", testoIn(q, "t", { num: true, id: "g" }), "Contando da quando parte."), campo("Salto", testoIn(q, "salto", { num: true, id: "g" }), "Quanto salta per arrivarci. Vuoto: corre e basta.")),
 			el("div", { class: "gruppo" }, el("b", { text: "Tutto il percorso" }),
-				campo("Parte", sceltaIn(l.guida, "parte", sceltePassi(l), { num: true })),
-				spunta(l.guida, "gara", "È una gara: la medaglia se arrivi prima di lei")),
+				campo("Parte", sceltaIn(l.guida, "parte", sceltePassi(l), { num: true }))),
 			togli("Togli questo punto", () => { l.guida.percorso.splice(s.i, 1); if (!l.guida.percorso.length) delete l.guida; }));
 	} else if (s.k === "scintilla" && l.scintilla) {
 		metti(p, el("h3", { text: "La scintilla" }),
@@ -1468,6 +1506,8 @@ function disegnaPannello() {
 			campo("Prima frase", testoIn(l, "goal_text", { area: true }), "La vignetta grande che apre il livello."),
 			campo("Comando che lampeggia con la prima frase", sceltaIn(l, "highlight", coppie(COMANDI, NOMI_COMANDI), { vuoto: "nessuno" })),
 			l.goal_text ? anteprima(l.goal_text, chiParla(c), "spiega", true, l.highlight) : null,
+			c.aspetta ? el("div", { class: "due" }, campo("Bravo finale", testoIn(l, "bravo"), "Quello che dice Favilla quando l'ultimo passo è fatto."),
+				campo("Faccia del bravo", sceltaIn(l, "bravo_faccia", CAT.facce, { vuoto: "ride" }))) : null,
 			el("div", { class: "gruppo" }, el("b", { text: "La mappa" }), spiega("Un'arena di piattaforme d'acciaio che disegni tu, oppure una mappa vera del gioco (lì il terreno non si cambia)."), mappaIn(l)),
 			c.aspetta ? el("div", { class: "gruppo" }, el("b", { text: "Cosa si vede sullo schermo" }), spiega("Nelle lezioni lo schermo mostra solo quello che spunti qui: il resto non c'è proprio. Un'arma presa da una cassa si vede da lì in poi."), multi(l, "vedi", VEDI, true, NOMI_VEDI)) : null,
 			el("div", { class: "gruppo" }, el("b", { text: "Regole" }),
@@ -1491,13 +1531,19 @@ function rigaMossa(d, m, k) {
 		el("button", { class: "piccolo", title: "Togli", onclick: () => { segna(); d.mosse.splice(k, 1); rid(); } }, "×")));
 	const id = "m" + k;
 	if (v === "cammina") r.append(campo("Fino a x (da sinistra)", testoIn(m, "cammina", { num: true, id }), "Cammina fin lì. Se cade da un bordo si ferma: dopo può aprire il paracadute."));
-	if (v === "salta") r.append(campo("Da che parte", sceltaIn(m, "salta", Object.entries(NOMI_LATI), { id })), spiega("Un salto pieno; aspetta di atterrare."));
+	if (v === "salta") r.append(campo("Da che parte", sceltaIn(m, "salta", Object.entries(NOMI_LATI), { id })),
+		spunta(m, "in_aria", "Solo il balzo: la mossa dopo parte in cima al salto (Tonante, Maglio)"),
+		spiega(m.in_aria ? "Salta e passa subito alla mossa dopo, quando smette di salire." : "Un salto pieno; aspetta di atterrare."));
 	if (v === "arma") {
 		r.append(campo("Cosa usa", sceltaIn(m, "arma", ARMI.map(w => [w, nomeArma(w)]), { id })));
-		if (SENZA_MIRA.includes(m.arma)) r.append(spiega(m.arma === "parachute" ? "Lo apre appena è in aria (per esempio dopo «cammina» oltre un bordo) e scende fino a terra." : "Si usa subito, senza mirare."));
+		if (SENZA_MIRA.includes(m.arma)) r.append(spiega(m.arma === "parachute" ? "Lo apre appena è in aria (per esempio dopo «cammina» oltre un bordo) e scende fino a terra." : "Si usa subito, senza mirare."),
+			m.arma === "parachute" ? campo("Intanto va", sceltaIn(m, "verso", Object.entries(NOMI_LATI).filter(([k]) => k !== "su"), { vuoto: "giù dritta", id }), "Plana di lato fino a terra.") : null);
 		else r.append(el("div", { class: "due" }, campo("Angolo (gradi)", testoIn(m, "angolo", { num: true, id }), "0 a destra, 90 in su, 180 a sinistra."),
 			campo("Forza (0-1)", testoIn(m, "potenza", { num: true, id }), "Vuoto: 1, la forza piena.")),
-			spiega("Mira un secondo, così si vede, poi spara e aspetta che tutto sia fermo."));
+			spunta(m, "subito", "Spara subito, senza mirare un secondo (in aria, dopo un balzo)"),
+			el("div", { class: "due" }, campo("Intanto va", sceltaIn(m, "verso", Object.entries(NOMI_LATI).filter(([k]) => k !== "su"), { vuoto: "da nessuna parte", id })),
+				campo("Fino a x", testoIn(m, "fino_a", { num: true, id }), "Vuoto: finché il colpo non è finito.")),
+			spiega((m.subito ? "Spara subito" : "Mira un secondo, così si vede, poi spara") + " e aspetta che tutto sia fermo." + (m.verso ? " Intanto tiene premuto " + NOMI_LATI[m.verso] + ": col paracadute plana di lato, col Maglio sale sul pilastro." : "")));
 	}
 	if (v === "aspetta") r.append(campo("Secondi", testoIn(m, "aspetta", { num: true, id })));
 	if (v === "dice") r.append(campo("Cosa dice", testoIn(m, "dice", { id }), "Esce sopra la sua testa, come le battute dei bot."));

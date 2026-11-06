@@ -1,21 +1,52 @@
-# Rampino e paracadute (imposta prova_missione attrezzi): niente casse. Sotto
-# la piattaforma il Rampino vola al suo tasto, che si accende;
-# l'aggancio al bordo, su, e il paracadute che vola fra gli OGGETTI.
-imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+# Il burrone (imposta prova_missione attrezzi): spiega, mostra, tocca a te, bravo.
+# La vignetta del Rampino, Favilla che si aggancia al bordo e sale, tu dopo di lei;
+# sulla piattaforma "Visto?" (bravo), la vignetta del paracadute, Favilla che si
+# butta e plana dall'altra parte, tu dopo di lei. Rampino 1084 62, paracadute fra
+# gli OGGETTI (1180 154).
 imposta prova_missione attrezzi
-aspetta_stato modo=local turno=1 fase=aim 8
-aspetta 1.5
-foto 01_scopo                        # solo la Lama, la bandierina sotto la piattaforma
-cammina destra 800
-tieni destra 1                       # sotto la piattaforma
+aspetta 2.5
+tocca 970 116                        # AVANTI sulla cartolina
+aspetta_stato modo=local fase=aim 8
+aspetta 1.2
+foto 01_vignetta                     # spiega: il Rampino
+tocca 912 289
 aspetta 0.3
-foto 02_rampino_vola                 # il Rampino vola al suo tasto
-aspetta 1
-foto 03_rampino_in_luce
+tocca 293 214
+aspetta 2
+foto 02_favilla_rampino              # mostra: Favilla mira il bordo
+aspetta_evento demo_end 15
+aspetta 0.3
+foto 03_favilla_su                   # è sulla piattaforma: "Su! Ora tu"
+aspetta_stato turno=1 fase=aim 10
 cammina destra 860
 tocca 1084 62                        # Rampino
 aspetta 0.3
 mira 65 100 0.3 04_mira
 aspetta_evento hook_end 4
-aspetta 1.5
-foto 05_paracadute                   # sulla piattaforma: il paracadute fra gli OGGETTI
+aspetta 1.2
+foto 05_bravo                        # bravo: "Visto? Il Rampino ti porta su"
+aspetta 2.5
+foto 06_vignetta_paracadute          # spiega: il paracadute
+tocca 912 289
+aspetta 0.3
+tocca 293 214
+aspetta 3
+foto 07_favilla_si_butta             # mostra: Favilla si butta
+aspetta_evento parachute 10
+aspetta 0.5
+foto 08_favilla_plana
+aspetta_evento demo_end 15
+aspetta_stato turno=1 fase=aim 10
+aspetta 0.5
+foto 09_tocca_a_te
+cammina destra 1215
+tieni destra 0.7                     # giù dal bordo
+tocca 1180 154                       # il paracadute, in aria
+aspetta_evento parachute 2
+aspetta 0.4
+foto 10_paracadute
+giu destra
+aspetta 4
+su destra
+aspetta 2
+foto 11_fatta                        # dall'altra parte: FATTA e PIEDI ASCIUTTI

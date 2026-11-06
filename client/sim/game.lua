@@ -422,10 +422,12 @@ M.ORB_NUDGE = 5.25
 M.ORB_R = 5.25           -- orb radius, for impacts
 M.GRENADE_R = 5.25       -- Uovo radius: it bounces on robots like the orb
 
--- The robot (other than me and alive) whose box overlaps the one with feet at (x, y)
+-- The robot (other than me and alive) whose box overlaps the one with feet at (x, y).
+-- A ghost (Favilla who shows the moves in a lesson) passes through and is passed through
 function M:robot_at(x, y, me)
+	if me and me.ghost then return nil end
 	for _, o in ipairs(self.robots) do
-		if o ~= me and not o.dead and math.abs(x - o.x) < 2 * M.ROBOT_HALF_W
+		if o ~= me and not o.dead and not o.ghost and math.abs(x - o.x) < 2 * M.ROBOT_HALF_W
 			and y < o.y + M.ROBOT_H and y + M.ROBOT_H > o.y then
 			return o
 		end

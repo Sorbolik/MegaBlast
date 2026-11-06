@@ -185,7 +185,9 @@ Nel cortile Favilla è una comparsa su un percorso fisso (`guida` della lezione 
 `client/sim/levels.lua`, disegnata da `client/battle/favilla.lua`), non un robot: non
 cambia la simulazione. Per mostrare una mossa facendola (poi la fai tu) Favilla è invece un
 giocatore vero con `insegna = true` e le sue `dimostra` (cammina, salta, arma con angolo e
-forza, aspetta, dice, posa): il turno passa a lei e torna a te (docs/copione.md, scenario
+forza, aspetta, dice, posa): dopo il VAI della vignetta grande il turno passa a lei e torna a te; passa
+attraverso gli altri robot. Ogni mossa nuova (`nuova = true` sul passo) ha i quattro tempi, spiega, mostra,
+tocca a te, bravo: li controlla `controlla.lua` (docs/copione.md, scenario
 `favilla_mostra.txt`). Medaglie facoltative: `medaglia = { conta, at_least | at_most, testo }`.
 
 ## Pezzi nuovi del diavoletto (pelli)

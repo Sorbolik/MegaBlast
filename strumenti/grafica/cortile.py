@@ -303,10 +303,11 @@ def lava(x0, x1):
 LEZIONI = {
     "primi_passi": ["selciato", "selciato"],                                  # il pavimento, il gradino
     "lanciarune": ["selciato", "legno"],                                      # il ballatoio
-    "turno": ["selciato"],
+    "turno": ["selciato", "pilastro"],                                        # il muretto del riparo
     "tempo": ["selciato", "appesa"],                                          # la lastra appesa alle catene
     "spostano": ["selciato", "pilastro", "pilastro", "legno", "legno"],       # la corsia di Favilla è di legno
     "attrezzi": ["selciato", "legno", "selciato"],                            # le due rive e la piattaforma
+    "sfida_burrone": ["selciato", "legno", "selciato"],                       # la sfida: le rive e la piattaforma
 }
 
 

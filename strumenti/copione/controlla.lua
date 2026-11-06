@@ -55,6 +55,8 @@ local CHIAVI = insieme({ "uno", "evento", "di", "arma", "passo", "turno", "turno
 -- le mosse di Favilla quando mostra (client/sim/missions.lua, dimostra): un verbo ciascuna
 local MOSSE = insieme({ "cammina", "salta", "arma", "aspetta", "dice", "posa" })
 local LATI = insieme({ "destra", "sinistra", "su" })
+-- i campi che accompagnano il verbo di una mossa
+local EXTRA = insieme({ "angolo", "potenza", "secondi", "in_aria", "subito", "verso", "fino_a" })
 -- le clip delle animazioni (client/battle/animations.lua) che Favilla può fare in posa
 local CLIP = {}
 do
@@ -103,6 +105,42 @@ end
 local function dentro(x, y, dove)
 	if type(x) ~= "number" or x < 0 or x > MAPPA_W then male(dove, "x fuori dalla mappa") end
 	if y ~= nil and (type(y) ~= "number" or y < 0 or y > MAPPA_H) then male(dove, "y fuori dalla mappa") end
+end
+
+-- I quattro tempi delle mosse nuove di un livello: { [passo] = { spiega, mostra, fai, bravo } }
+-- per ogni passo con nuova = true. Spiega: una vignetta grande (o l'apertura) da
+-- quando è finita la mossa nuova di prima; mostra: Favilla, la comparsa (guida) o
+-- una sua dimostrazione dallo stesso momento; bravo: una riga con la faccia quando
+-- il passo è fatto, o il bravo del livello se è l'ultimo passo.
+-- Lo stesso calcolo è in pagina.html (tempi), per il Copione.
+local M = {}
+function M.tempi(l)
+	local fuori, prima = {}, 0
+	local passi = l.obiettivo or {}
+	-- il momento di una condizione: il passo che aspetta (0: dall'inizio)
+	local function momento(q)
+		if q == nil then return 0 end
+		return q.passo or (q.turno == 1 and 0) or nil
+	end
+	for i, p in ipairs(passi) do
+		if p.nuova then
+			local t = { fai = true }
+			local function dentro_finestra(m) return m ~= nil and m >= prima and m <= i - 1 end
+			if prima == 0 and l.goal_text then t.spiega = true end
+			for _, r in ipairs(l.righe or {}) do
+				if r.mostra == "grande" and dentro_finestra(momento(r.quando)) then t.spiega = true end
+				if r.faccia and r.quando and r.quando.passo == i then t.bravo = true end
+			end
+			if i == #passi and l.bravo then t.bravo = true end
+			if l.guida then t.mostra = true end
+			for _, d in ipairs(l.dimostra or {}) do
+				if dentro_finestra(momento(d.quando)) then t.mostra = true end
+			end
+			fuori[i] = t
+			prima = i
+		end
+	end
+	return fuori
 end
 
 local function livello(l, cap)
@@ -171,7 +209,7 @@ local function livello(l, cap)
 			end
 			if n ~= 1 then male(dm, "ogni mossa ha un verbo solo (cammina, salta, arma, aspetta, dice, posa)") end
 			for campo in pairs(m) do
-				if not (MOSSE[campo] or campo == "angolo" or campo == "potenza" or campo == "secondi") then
+				if not (MOSSE[campo] or EXTRA[campo]) then
 					male(dm, "campo sconosciuto " .. tostring(campo))
 				end
 			end
@@ -184,6 +222,11 @@ local function livello(l, cap)
 			if m.aspetta and not (type(m.aspetta) == "number" and m.aspetta > 0) then male(dm, "aspetta: secondi") end
 			if m.dice then testo(m.dice, dm) end
 			if m.posa and not CLIP[m.posa] then male(dm, "posa: clip sconosciuta " .. tostring(m.posa)) end
+			if m.in_aria and not m.salta then male(dm, "in_aria vale solo con salta") end
+			if (m.subito or m.verso) and not m.arma then male(dm, "subito e verso valgono solo con arma") end
+			if m.verso and not LATI[m.verso] then male(dm, "verso è destra o sinistra") end
+			if m.fino_a and not m.verso then male(dm, "fino_a vale solo con verso") end
+			if m.fino_a then dentro(m.fino_a, nil, dm) end
 		end
 	end
 	for i, r in ipairs(l.righe or {}) do
@@ -200,6 +243,16 @@ local function livello(l, cap)
 		if r.mostra == "grande" and not cap.aspetta then male(dr, "vignetta grande fuori dalle lezioni") end
 		if r.mostra == "grande" and r.highlight and not DISEGNI[r.highlight] then
 			male(dr, "la vignetta grande non ha il disegno di " .. r.highlight .. " (client/battle/vignette.lua)")
+		end
+		if r.secondi ~= nil and not (type(r.secondi) == "number" and r.secondi > 0) then male(dr, "secondi: quanti") end
+	end
+	if l.bravo then testo(l.bravo, dove .. ".bravo") end
+	if l.bravo_faccia and not FACCE[l.bravo_faccia] then male(dove, "faccia sconosciuta " .. l.bravo_faccia) end
+	-- i quattro tempi di ogni mossa nuova (Sergio, 6 nov: Favilla spiega, la fa, la fai
+	-- tu, ti dice brava): per ogni passo con nuova = true, dopo la mossa nuova di prima
+	for i, t in pairs(M.tempi(l)) do
+		for _, nome in ipairs({ "spiega", "mostra", "bravo" }) do
+			if not t[nome] then male(dove .. ".obiettivo[" .. i .. "]", "mossa nuova senza «" .. nome .. "»") end
 		end
 	end
 end

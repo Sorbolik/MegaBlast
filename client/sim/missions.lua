@@ -95,11 +95,10 @@
 --   medaglia = { conta = "scintille", at_least = 1, testo = "LA SCINTILLA" }: the lessons
 --     of the cortile have no three stars (Sergio, 3 Nov): «Fatta» and, where
 --     there's a real challenge, Favilla's optional medal (a bonus, below)
---   guida = { parte = 1, gara = true, percorso = { { x =, y =, t = }, { x =, y =, t =, salto = 30 }, ... } }:
+--   guida = { parte = 1, percorso = { { x =, y =, t = }, { x =, y =, t =, salto = 30 }, ... } }:
 --     Favilla in the cortile, a puppet drawn by the battle and never hit: from
 --     step parte done (0: at once) she follows the path, t in seconds of game
---     (vignettes stop it), salto = the height of the arc to that point. gara:
---     the medal counter "prima" if you finish before she arrives
+--     (vignettes stop it), salto = the height of the arc to that point
 --   insegna = true (in giocatori, with nome and pelle): Favilla as a real robot of the
 --     player's team, who shows the moves by doing them (dimostra, below). She
 --     never plays a turn of her own and doesn't get hurt; her hits don't do the
@@ -117,7 +116,11 @@
 --       "sword", "hook", "parachute", "teleport"...) with angolo (degrees, 0
 --       right, 90 up) and potenza (0-1, default 1): she aims a second, showing
 --       it, then fires (the parachute and the shield as soon as they can be used)
---       and waits for everything to settle; aspetta = seconds; dice = "text"
+--       and waits for everything to settle (subito = true: fires at once,
+--       without showing the aim; verso = "destra" | "sinistra": steers that way
+--       meanwhile, the parachute across a gap; fino_a = x: until past that x);
+--       salta with in_aria = true: the
+--       next move starts at the top of the jump; aspetta = seconds; dice = "text"
 --       (over her head, like the bots); posa = "vittoria" (an animation clip,
 --       battle/animations.lua) for secondi (default 1.5)
 --   scintilla = { x =, y = }: a spark in the air, taken when your body touches it
@@ -133,7 +136,7 @@
 --       (the player touched that, this turn), usato = "primaria" | "secondaria" |
 --       "attrezzo" (already used this turn), finestra = true (after the first
 --       attack, while its window is open), in_caduta = true (you are falling fast
---       and still have the parachute), corona = "tu" (you are first), conta = "prima",
+--       and still have the parachute), corona = "tu" (you are first), conta = "morti",
 --       almeno = 1 (a counter, below); vicino = 250 (you are within that many
 --       pixels of Favilla, insegna: she waits for you); uno = { {...}, {...} }: one of them (or).
 --     Only data, never functions: the Copione (strumenti/copione) shows and
@@ -147,7 +150,15 @@
 --     mostra = "grande": the battle stops on the big vignette with the drawing
 --     of the highlight before showing it in the strip (only drawn, the
 --     simulation doesn't read it); without, only the strip. faccia: the face of
---     who says it (battle/vignette.lua FACCE)
+--     who says it (battle/vignette.lua FACCE); secondi: how long it stays (a short
+--     «bravo»: 2), without the usual 5 (10 with a fino)
+--   bravo = "Eccoti al cancello!" (bravo_faccia, default "ride"): Favilla's line when the
+--     lesson is done, the «bravo» of its last step (it stays under «Fatta»)
+--   Each step that closes a new move has nuova = true: then the lesson has the
+--   four beats of Sergio's rule (6 Nov) for it, which strumenti/copione/controlla.lua
+--   checks: spiega (a big line, or the opening, after the previous new move),
+--   mostra (Favilla: her path, guida, or a demonstration from that moment), fai
+--   (the step) and bravo (a line with a face when the step is done, or bravo)
 --
 -- The goal steps (testo: how it reads in the goal line). In addition, in the
 -- lessons: only = { "sword", "teleport", "baratto", "primaria", ... }: until
@@ -361,6 +372,13 @@ function M.partita(r, seed, picks, help)
 		if not M.vede(r, "teleport") then st.teleports, st.time_orbs = 0, 0 end
 		if not M.vede(r, "parachute") then st.parachutes = 0 end
 		players[PLAYER].stats = st
+		-- nor for Favilla who shows the moves: no "+2 teletrasporti" in a lesson without orbs
+		if l.maestra and not M.vede(r, "teleport") then
+			local fs = {}
+			for k, v in pairs(players[l.maestra].stats or {}) do fs[k] = v end
+			fs.teleports, fs.time_orbs = 0, 0
+			players[l.maestra].stats = fs
+		end
 	end
 	local opts = { players = players }
 	for k, v in pairs(l.regole or {}) do opts[k] = v end
@@ -380,6 +398,13 @@ function M.prepara(r, g, bots)
 	-- Favilla plays her demonstrations like a bot: the keys come from here
 	if l.maestra and bots then
 		bots[l.maestra] = { id = l.maestra, script = function(gg) return M.demo_keys(r, gg) end }
+		r.can_demo = true
+		-- she is never in your way, nor you in hers
+		g.robots[l.maestra].ghost = true
+	elseif l.maestra then
+		-- nobody to press her keys (the tests, the bot trial): she isn't there, not even in the way
+		local rb = g.robots[l.maestra]
+		rb.gone, rb.dead, rb.hp, rb.respawn_in = true, true, 0, nil
 	end
 	if l.secondi then g.match_left = l.secondi * 60 end
 	-- the mission's life is also the full one: regrow goes back there, not to 150
@@ -566,7 +591,9 @@ end
 -- (if you haven't already touched it this turn).
 local function show_line(r, line)
 	r.riga, r.line_until, r.line_yields, r.line = line.testo, line.fino, line.yields, line
-	r.line_ticks = (line.fino and 2 or 1) * LINE_SECONDS * 60
+	-- a big vignette: Favilla shows the move only once it has been read (M.letta)
+	r.big_unread = line.mostra == "grande" or nil
+	r.line_ticks = line.secondi and line.secondi * 60 or (line.fino and 2 or 1) * LINE_SECONDS * 60
 	r.luce = line.highlight
 	r.awaiting = nil
 	local e = line.highlight
@@ -578,7 +605,7 @@ end
 -- The line goes away: if it was waiting for a control, time restarts
 local function clear_line(r)
 	if r.awaiting then r.attesa, r.awaiting, r.fermo = false, nil, nil end
-	r.riga, r.line_ticks, r.luce, r.line_yields, r.line = nil, nil, nil, nil, nil
+	r.riga, r.line_ticks, r.luce, r.line_yields, r.line, r.big_unread = nil, nil, nil, nil, nil, nil
 end
 
 local function count(st, k)
@@ -591,11 +618,9 @@ local function check_event(r, g, e)
 	if r.esito then return end
 	if goal(l, st, g, e) then
 		r.esito = "fatta"
-		-- the race with Favilla: you finished before she arrived
-		local gd = l.guida
-		if gd and gd.gara and (r.guida_t or 0) < gd.percorso[#gd.percorso].t * 60 then count(st, "prima") end
-		-- the hints aren't needed anymore (there's "Fatta!")
+		-- the hints aren't needed anymore (there's "Fatta!"); Favilla's «bravo» of the last step instead yes
 		clear_line(r)
+		if l.bravo then show_line(r, { testo = l.bravo, faccia = l.bravo_faccia or "ride" }) end
 		return
 	end
 	if r.riga and r.line_until and when(r.line_until, st, g, e) then clear_line(r) end
@@ -848,7 +873,9 @@ end
 -- Lessons with time: as long as the step to do can be done (or a shot is in
 -- flight) time doesn't go below one second; for orbs, not past those
 local function hold_clock(r, g, p)
-	if not (r.shot or allowed(g, p)) then return end
+	-- (a place to reach on foot can always be reached: taking cover after the attacks)
+	local on_foot = p.reach and not p.only
+	if not (r.shot or on_foot or allowed(g, p)) then return end
 	local minimum = 60
 	if p.usa == "globi" and p.globi then
 		local thresholds = {}
@@ -936,7 +963,8 @@ function M.demo_keys(r, g)
 	elseif mv.salta then
 		local side = SIDES[mv.salta] or 0
 		if not rb.grounded then d.up = true end
-		if d.up and rb.grounded then
+		-- in_aria: the next move starts at the top of the jump (the Maglio, the Tonante in the air)
+		if (d.up and rb.grounded) or (mv.in_aria and d.up and rb.vy <= 0) then
 			finished = true
 		else
 			keys = { left = side < 0, right = side > 0, jump = d.t == 1, hold = true }
@@ -947,10 +975,16 @@ function M.demo_keys(r, g)
 		if d.shot then
 			d.still = settled(g, rb) and d.still + 1 or 0
 			finished = d.still >= DEMO_STILL
+			-- verso: she steers that way meanwhile (the parachute across a gap)
+			-- (fino_a = x: only until she gets past that x)
+			local side = SIDES[mv.verso]
+			local far = mv.fino_a == nil or (side or 0) * (mv.fino_a - rb.x) > 0
+			if side and side ~= 0 and far then keys = { left = side < 0, right = side > 0 } end
 		elseif g:can_use(w) then
 			local a, power = math.rad(mv.angolo or 0), mv.potenza or 1
 			d.aimed = d.aimed + 1
-			if NO_AIM[w] or d.aimed > DEMO_AIM then
+			-- subito: no aiming shown (a move in the middle of a jump)
+			if NO_AIM[w] or mv.subito or d.aimed > DEMO_AIM then
 				d.shot = true
 				keys = { fire = { weapon = w, angle = a, power = power } }
 			else
@@ -1001,7 +1035,13 @@ local function demonstrations(r, g)
 		end
 		return
 	end
-	if r.esito or g.current ~= PLAYER or g.phase ~= "aim" or not settled(g, g.robots[PLAYER]) then return end
+	-- (without someone pressing her keys, as in the bot trial, she shows nothing)
+	if not r.can_demo or r.esito or g.current ~= PLAYER or g.phase ~= "aim" or not settled(g, g.robots[PLAYER]) then return end
+	-- first she explains (the big vignette still to read or in the queue), then she shows
+	if r.big_unread then return end
+	for _, q in ipairs(r.coda) do
+		if q.mostra == "grande" then return end
+	end
 	for i in ipairs(l.dimostra or {}) do
 		if r.ready[i] and not r.shown[i] then
 			r.shown[i] = true
@@ -1137,6 +1177,12 @@ function M.tick(r, g)
 		if r.line_ticks <= 0 then clear_line(r) end
 	end
 	return r.esito
+end
+
+-- The big vignette of the line was read (closed with VAI): Favilla's demonstration
+-- waiting for it can start
+function M.letta(r)
+	if r then r.big_unread = nil end
 end
 
 -- The weapon card to open (mission cards), once

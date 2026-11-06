@@ -1,27 +1,44 @@
-# Il tempo risparmiato (imposta prova_missione tempo): il Lanciarune presto dà
-# i globi (il tempo si ferma prima di perderli); poi la camera si allarga e il
-# teletrasporto si accende per l'isola. Il fantoccio dell'isola, abbattuto, non
-# rinasce; il baratto in luce. Barra: Lanciarune 506, TELE 1180 62 (tasto t).
-imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+# I globi (imposta prova_missione tempo): spiega, mostra, tocca a te, bravo.
+# La vignetta dei globi; Favilla spara subito (globo!) e lancia il globo
+# sull'isola; tocca a te: il Lanciarune presto dà il globo, la camera si allarga,
+# il teletrasporto in luce, sull'isola "Eccoti!" (bravo); al turno dopo il
+# fantoccio dell'isola. Barra: Lanciarune 506, TELE 1180 62 (tasto t).
 imposta prova_missione tempo
-aspetta_stato modo=local turno=1 fase=aim 8
-aspetta 3
-foto 01_tempo_fermo                  # dopo 3 s il cronometro è ancora pieno
+aspetta 2.5
+tocca 970 116                        # AVANTI sulla cartolina
+aspetta_stato modo=local fase=aim 8
+aspetta 1.2
+foto 01_vignetta                     # spiega: i globi
+tocca 912 289
+aspetta 0.3
+tocca 293 214
+aspetta 2
+foto 02_favilla_spara                # mostra: Favilla spara subito
+aspetta_evento teleports 8
+aspetta 1
+foto 03_favilla_globo                # il globo guadagnato
+aspetta_evento teleport 10
+aspetta 0.5
+foto 04_favilla_isola                # Favilla sull'isola
+aspetta_evento demo_end 15
+aspetta_stato turno=1 fase=aim 10
+aspetta 1
+foto 05_tocca_a_te
 premi 1
-mira -120 80 0.5                     # il Lanciarune, lontano dal bersaglio: i globi
+mira -120 80 0.5                     # il Lanciarune, presto: il globo
 aspetta_evento teleports 6
 aspetta_evento explosion 6
 aspetta 1.5
-foto 02_isola                        # la camera si allarga, il teletrasporto in luce
+foto 06_isola                        # la camera si allarga, il teletrasporto in luce
 premi t
 mira 170 90 0.5                      # il globo verso l'isola
 aspetta_evento teleport 6
-aspetta 2
-foto 03_isola_arrivato               # la riga dei colpi infiniti
+aspetta 1.5
+foto 07_bravo                        # bravo: "Eccoti!"
 aspetta_evento turn 40
 aspetta 1
 premi 1
 mira 60 40 0.5                       # il Lanciarune sul fantoccio dell'isola
 aspetta_evento damage 6
 aspetta 3
-foto 04_baratto                      # abbattuto: non torna, il baratto in luce
+foto 08_fatta
