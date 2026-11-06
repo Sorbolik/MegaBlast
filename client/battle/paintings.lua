@@ -20,7 +20,7 @@ return {
 			groups = {
 				{ name = "lontano", y0 = 42, h = 678, parallax = 0.1, scroll = 0.0 },
 				{ name = "medio", y0 = 54, h = 666, parallax = 0.3, scroll = 0.0 },
-				{ name = "vicino", y0 = 528, h = 192, parallax = 0.6, scroll = 0.0 },
+				{ name = "vicino", y0 = 558, h = 162, parallax = 0.6, scroll = 0.0 },
 			},
 		},
 	},

@@ -32,13 +32,6 @@ def stendardo(x, y, w, h):
     return [(x, y), (x + w, y), (x + w, y + h), (x + w / 2, y + h - w * .45), (x, y + h)]
 
 
-def incudine(x, y, k=1.0):
-    """Un'incudine appoggiata a y, centrata in x."""
-    return [(x - 70 * k, y - 62 * k), (x + 46 * k, y - 62 * k), (x + 56 * k, y - 50 * k), (x + 22 * k, y - 46 * k),
-            (x + 14 * k, y - 22 * k), (x + 34 * k, y - 10 * k), (x + 34 * k, y), (x - 34 * k, y), (x - 34 * k, y - 10 * k),
-            (x - 14 * k, y - 22 * k), (x - 22 * k, y - 46 * k), (x - 40 * k, y - 50 * k)]
-
-
 def braciere(x, y, alto):
     """Palo con la coppa (sagome) e la sua fiamma."""
     s = [[(x - 5, y), (x - 5, y - alto), (x - 24, y - alto - 4), (x - 18, y - alto - 20), (x + 18, y - alto - 20),
@@ -47,15 +40,6 @@ def braciere(x, y, alto):
     f = [(x - 16, y - alto - 20), (x - 10, y - alto - 44), (x - 4, y - alto - 34), (x + 2, y - alto - 58),
          (x + 8, y - alto - 36), (x + 13, y - alto - 46), (x + 16, y - alto - 20)]
     return s, f
-
-
-def rastrelliera(x, y):
-    s = [[(x, y), (x, y - 70), (x + 6, y - 70), (x + 6, y)], [(x + 80, y), (x + 80, y - 70), (x + 86, y - 70), (x + 86, y)],
-         [(x - 4, y - 60), (x + 90, y - 60), (x + 90, y - 54), (x - 4, y - 54)]]
-    for i in range(5):
-        xx, d = x + 12 + i * 15, (i % 2) * 10
-        s.append([(xx, y - 4), (xx, y - 92 - d), (xx + 3, y - 100 - d), (xx + 6, y - 92 - d), (xx + 6, y - 4)])
-    return s
 
 
 def corna(gx, hy):
@@ -140,31 +124,8 @@ def emblemi(stendardi):
     return s
 
 
-def attrezzi(rng, y0):
-    """Il primo piano in controluce: incudini sui ceppi, bracieri spenti, rastrelliere, muretti.
-    Spenti: una fiamma accesa così in basso sembrava fuoco sul terreno (un pericolo)."""
-    sag, x, i = [], 40, 0
-    while x < T - 120:
-        k = i % 4
-        if k == 0:
-            sag.append([(x - 60, H + 40), (x - 60, y0 - 30), (x + 60, y0 - 30), (x + 60, H + 40)])
-            sag.append(incudine(x, y0 - 30, 1.1))
-        elif k == 1:
-            sag += braciere(x, y0, 150)[0]
-        elif k == 2:
-            sag += rastrelliera(x - 40, y0)
-        else:
-            sag.append([(x - 90, H + 40), (x - 90, y0 - 20), (x + 90, y0 - 20), (x + 90, H + 40)])
-            sag += braciere(x + 50, y0 - 20, 30)[0]
-        x += rng.uniform(260, 420)
-        i += 1
-    return sag + [[(0, H + 40), (0, y0), (T, y0), (T, H + 40)]]
-
-
-# il muro dello sfondo in scala, e dove poggia; il cortile basso sotto, coi suoi attrezzi
-K_MURO, BASE, Y_ATTREZZI = .72, 470, 700
-
-
+# il muro dello sfondo in scala e dove poggia; da dove sale il buio davanti al cortile basso
+K_MURO, BASE, Y_BUIO = .72, 470, 700
 # il portone non al centro del quadro ma un po' a sinistra: al centro, dietro la lava
 # delle lezioni, era triste (Sergio, 6 nov)
 SPOSTA = -320
@@ -200,6 +161,15 @@ def fughe():
           '<rect x="0" y="%g" width="%g" height="%g" fill="url(#%s)"/><rect x="0" y="%g" width="%g" height="60" fill="%s" opacity=".95"/>'
           % (gid, c(.08), c(.08), BASE + 20, T, H - BASE - 20, gid, H, T, c(.08)))
     return colora(s, "sfondo", P)
+
+
+def buio_davanti():
+    """Il primo piano: solo il buio che sale dal fondo, uguale su tutta la larghezza (niente
+    sagome: il loro bordo faceva una riga netta sotto le piattaforme, Sergio 6 nov)."""
+    gid = Id.new("buiod")
+    return ("<defs><linearGradient id='%s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#0e0504' stop-opacity='0'/>"
+            "<stop offset='1' stop-color='#0e0504' stop-opacity='.9'/></linearGradient></defs>"
+            '<rect x="0" y="%g" width="%g" height="%g" fill="url(#%s)"/>' % (gid, Y_BUIO - 140, T, H + 40 - Y_BUIO + 140, gid))
 
 
 def riflessi():
@@ -240,7 +210,7 @@ def sfondo():
                                                          + "".join(poly(p, c(.2)) for p in emblemi(stendardi))),
          in_scala(luce(aperture, .5, True) + luce(fiamme, .85)) + sposta(riflessi()),
          in_scala("".join(poly(p, c(.2)) for p in scuro)) + fughe()),
-        (.75, poligoni(attrezzi(rng, Y_ATTREZZI), "#0e0504"), "", ""),
+        (.75, buio_davanti(), "", ""),
     ]
     gruppi = {n: ([], []) for n, _, _ in GRUPPI}
     # la foschia calda dietro il muro: ferma, va col gruppo lontano (come in dipinto.piani)
@@ -309,12 +279,6 @@ def catena(x, y0, y1):
     return s
 
 
-def rune(x, y, w, h):
-    col = mix(P["luce"], "#cdbcff", .6)
-    return "".join('<path d="M%g,%g l8,10 l-8,10 l-8,-10 z M%g,%g v20" stroke="%s" stroke-width="2.5" fill="none" opacity=".7"/>'
-                   % (x + 30 + i * 60, y + h / 2 - 10, x + 30 + i * 60, y + h / 2 - 10, col) for i in range(int(w / 60)))
-
-
 def base(x0, x1):
     """La base sotto il blocco della lezione: una fascia di pietra più scura e un po' più
     larga, col bordo tutt'intorno, che chiude il blocco sul fondo del quadro."""
@@ -340,7 +304,7 @@ LEZIONI = {
     "primi_passi": ["selciato", "selciato"],                                  # il pavimento, il gradino
     "lanciarune": ["selciato", "legno"],                                      # il ballatoio
     "turno": ["selciato"],
-    "tempo": ["selciato", "appesa"],                                          # l'isola delle rune sulle catene
+    "tempo": ["selciato", "appesa"],                                          # la lastra appesa alle catene
     "spostano": ["selciato", "pilastro", "pilastro", "legno", "legno"],       # la corsia di Favilla è di legno
     "attrezzi": ["selciato", "legno", "selciato"],                            # le due rive e la piattaforma
 }
@@ -381,7 +345,7 @@ def lezione(mid, arena):
                 out += '<line x1="%g" y1="%g" x2="%g" y2="%g" stroke="%s" stroke-width="5" opacity=".5"/>' % (
                     x + 2, y + k * 40, x + w - 2, y + k * 40, M["bordo"])
         elif ru == "appesa":
-            out += rune(x, y, w, h) + catena(x + 14, 0, y) + catena(x + w - 14, 0, y)
+            out += catena(x + 14, 0, y) + catena(x + w - 14, 0, y)
         elif ru == "legno":
             out += legno(x, y, w, h)
     return out
