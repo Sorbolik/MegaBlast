@@ -323,15 +323,12 @@ def lezione(mid, arena):
     vasche = []
     for a, b in zip(rive, rive[1:]):
         if b[0] - (a[0] + a[2]) > 40 and a[1] + a[3] >= 700 and b[1] + b[3] >= 700:
-            # la parete di fondo della vasca, in ombra: il blocco resta pieno anche sopra la lava
-            x0, x1, y0 = a[0] + a[2], b[0], max(a[1], b[1])
-            out += '<rect x="%g" y="%g" width="%g" height="%g" fill="%s"/>' % (x0 - 1, y0, x1 - x0 + 2, 712 - y0, mix(M["corpo"], "#000", .55))
-            out += "".join('<line x1="%g" y1="%g" x2="%g" y2="%g" stroke="%s" stroke-width="2" opacity=".6"/>' % (
-                x0, yy, x1, yy, mix(M["bordo"], "#000", .3)) for yy in range(int(y0) + 22, 690, 22))
+            x0, x1 = a[0] + a[2], b[0]
             out += lava(x0, x1)
             vasche.append((a[0] + a[2] - 1, 706, b[0] - a[0] - a[2] + 2, 14))
     pietra = [blocco(*r, c=0) for r, ru in zip(rett, ruoli) if ru in ("selciato", "pilastro", "appesa")]
-    out += solido(pietra + [blocco(*v, c=0) for v in vasche], dict(M), g_dipinto(), rng)
+    # senza ombra portata: il quadro la tagliava sul fondo e faceva una riga netta (Sergio, 6 nov)
+    out += solido(pietra + [blocco(*v, c=0) for v in vasche], dict(M), g_dipinto(ombra=0), rng)
     a_terra = [r for r, ru in zip(rett, ruoli) if ru == "selciato" and r[1] + r[3] >= 700] + vasche
     if a_terra:
         out += base(min(r[0] for r in a_terra), max(r[0] + r[2] for r in a_terra))
