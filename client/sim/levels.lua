@@ -122,9 +122,10 @@ M.addestramento = {
 		tipo = "bersagli",
 		goal_text = "Qui si gioca a turno: il cronometro in basso è il tuo tempo. In un turno hai due attacchi, il Lanciarune e la Lama. Guarda me!",
 		highlight = "missile",
-		-- the ground and the low wall to take cover behind
-		arena = { { 300, 0, 1300, 150 }, { 1000, 150, 30, 30 } },
-		spawns = { { x = 600, from = 600 }, { x = 800, from = 600 }, { x = 950, from = 600 } },
+		-- the ground and the low wall to take cover behind; the target on the left, so
+		-- that hitting it pushes it away from the wall
+		arena = { { 150, 0, 1450, 150 }, { 700, 150, 30, 30 } },
+		spawns = { { x = 580, from = 600 }, { x = 430, from = 600 }, { x = 520, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, dummy = true },
 			{ team = 1, insegna = true, nome = "Favilla", pelle = "favilla" } },
 		vedi = { "missile", "sword", "tempo" },
@@ -133,22 +134,22 @@ M.addestramento = {
 		dimostra = {
 			{ mosse = {
 				{ dice = "Primo attacco: il Lanciarune" },
-				{ arma = "missile", angolo = 160, potenza = 0.4 },
-				{ cammina = 860 },
+				{ arma = "missile", angolo = 160, potenza = 0.35 },
+				{ cammina = 480 },
 				{ dice = "Secondo: la Lama" },
 				{ arma = "sword", angolo = 180 },
 			} },
 			{ quando = { passo = 2 }, mosse = {
 				{ dice = "Al riparo!" },
-				{ cammina = 950 },
+				{ cammina = 650 },
 				{ salta = "destra" },
-				{ cammina = 1100 },
+				{ cammina = 800 },
 			} },
 		},
 		obiettivo = {
 			{ hit = 2, con = "missile", only = { "missile" }, testo = "Colpisci il fantoccio col Lanciarune" },
 			{ hit = 2, con = "sword", only = { "sword" }, nuova = true, testo = "Secondo attacco: colpiscilo con la Lama" },
-			{ reach = { x = 1060, y = 150 }, nuova = true, testo = "Mettiti al riparo dietro il muretto" },
+			{ reach = { x = 760, y = 150 }, nuova = true, testo = "Mettiti al riparo dietro il muretto" },
 		},
 		righe = {
 			{ testo = "Ora il secondo attacco: vai vicino e colpiscilo con la Lama", highlight = "sword",

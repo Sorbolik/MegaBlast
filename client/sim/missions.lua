@@ -400,6 +400,8 @@ function M.prepara(r, g, bots)
 	if l.maestra and bots then
 		bots[l.maestra] = { id = l.maestra, script = function(gg) return M.demo_keys(r, gg) end }
 		r.can_demo = true
+		-- she is never in your way, nor you in hers
+		g.robots[l.maestra].ghost = true
 	elseif l.maestra then
 		-- nobody to press her keys (the tests, the bot trial): she isn't there, not even in the way
 		local rb = g.robots[l.maestra]
@@ -1037,6 +1039,10 @@ local function demonstrations(r, g)
 	end
 	-- (without someone pressing her keys, as in the bot trial, she shows nothing)
 	if not r.can_demo or r.esito or g.current ~= PLAYER or g.phase ~= "aim" or not settled(g, g.robots[PLAYER]) then return end
+	-- first she explains (the big vignette still in the queue), then she shows
+	for _, q in ipairs(r.coda) do
+		if q.mostra == "grande" then return end
+	end
 	for i in ipairs(l.dimostra or {}) do
 		if r.ready[i] and not r.shown[i] then
 			r.shown[i] = true

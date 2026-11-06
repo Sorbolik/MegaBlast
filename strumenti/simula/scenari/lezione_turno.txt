@@ -1,8 +1,9 @@
 # A turno (imposta prova_missione turno): spiega, mostra, tocca a te, bravo.
 # La vignetta d'apertura (il cronometro, due attacchi), poi Favilla gioca un turno
-# intero: Lanciarune, Lama. Tocca a te: Lanciarune, la scheda della Lama, la Lama,
-# "Due colpi in un turno" (bravo); poi la vignetta del riparo, Favilla salta dietro
-# il muretto e tu dopo di lei. Barra: Lanciarune 506, Lama 774.
+# intero: Lanciarune, Lama (ci passa attraverso: non è mai d'intralcio). Tocca a te:
+# Lanciarune, la Lama che vola al suo tasto, la Lama, "Due colpi in un turno"
+# (bravo); poi la vignetta del riparo, Favilla salta dietro il muretto e tu dopo
+# di lei. Il fantoccio è a sinistra: i colpi lo spingono lontano dal muretto.
 imposta prova_missione turno
 aspetta 2.5
 tocca 970 116                        # AVANTI sulla cartolina
@@ -12,7 +13,7 @@ foto 01_vignetta                     # spiega: il turno, due attacchi
 tocca 912 289                        # VAI! (senza disegno)
 aspetta 0.3
 tocca 293 214                        # VAI! (col disegno)
-aspetta 2
+aspetta 1.5
 foto 02_favilla_lanciarune           # mostra: Favilla, primo attacco
 aspetta_evento sword_hit 20
 aspetta 0.3
@@ -21,32 +22,31 @@ aspetta_stato turno=1 fase=aim 15
 aspetta 1
 foto 04_tocca_a_te
 premi 1
-mira 141 77 1 05_mira
+mira -141 77 1 05_mira
 aspetta_evento damage 6
 aspetta 1.5
-foto 06_scheda_lama                  # la scheda della Lama ferma il gioco
-tocca_centro 640 120                 # PROVALA
-aspetta 1
-cammina destra 765
+foto 06_lama_vola                    # la Lama vola al suo tasto, la riga del secondo attacco
+cammina sinistra 480
 premi 2
-mira 80 0 0.3 06b_lama                # la Lama sul fantoccio
+mira -80 0 0.3 07_lama               # la Lama sul fantoccio
 aspetta_evento sword_hit 4
 aspetta 1
-foto 07_bravo                        # bravo: "Due colpi in un turno"
-aspetta 1.5
-foto 08_vignetta_riparo              # spiega: il riparo
+foto 08_bravo                        # bravo: "Due colpi in un turno"
+aspetta 2.5
+foto 09_vignetta_riparo              # spiega: il riparo (Favilla aspetta che la chiudi)
 tocca 912 289
 aspetta 0.3
 tocca 293 214
-aspetta 3
-foto 09_favilla_riparo               # mostra: Favilla salta dietro il muretto
+aspetta 2.5
+foto 10_favilla_riparo               # mostra: Favilla salta dietro il muretto
 aspetta_evento demo_end 20
 aspetta_stato turno=1 fase=aim 10
 aspetta 0.5
-cammina destra 950
+foto 11_tocca_a_te
 giu destra
-tieni salta 0.35
-cammina destra 1100
+cammina destra 650
+tieni salta 0.35                     # oltre il muretto
+cammina destra 780
 su destra
 aspetta 2.5
-foto 10_fatta                        # al riparo: FATTA
+foto 12_fatta                        # al riparo: FATTA

@@ -240,7 +240,7 @@ local outcome, g
 -- behind the low wall before the turn ends
 local hit_a, hit_p
 for p = 0.3, 1, 0.1 do
-	for a = 0.05, 1.2, 0.05 do
+	for a = math.pi - 0.05, math.pi - 1.2, -0.05 do
 		if not hit_a then
 			local _, r = play_mission("turno", function(c)
 				c.usa("missile", a, p)
@@ -254,16 +254,16 @@ check(hit_a ~= nil, "turno: the Lanciarune on the target")
 local function two_attacks(c)
 	c.usa("missile", hit_a, hit_p)
 	c.hold(IDLE, function(g) return not g.projectile end)
-	c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[2].x - 50 end)
-	c.usa("sword", 0)
+	c.hold(LEFT, function(g) return g.robots[1].x <= g.robots[2].x + 50 end)
+	c.usa("sword", math.pi)
 	c.hold(IDLE, 60)
 end
 if hit_a then
 	outcome, r, g = play_mission("turno", function(c)
 		two_attacks(c)
-		c.hold(RIGHT, until_x(950))
+		c.hold(RIGHT, until_x(650))
 		c.hold({ right = true, jump = true }, 40)
-		c.hold(RIGHT, until_x(1080))
+		c.hold(RIGHT, until_x(780))
 		c.hold(IDLE, 30)
 	end)
 	check(outcome == "fatta" and g.turn_no == 1, "turno: two attacks in the same turn, then behind the wall")
@@ -285,11 +285,11 @@ if hit_a then
 		c.usa("missile", hit_a, hit_p)
 		c.hold(IDLE, function(g) return not g.projectile end)
 		c.hold(IDLE, 40)
-		c.hold(LEFT, 60)
-		c.usa("sword", math.pi)
-		c.hold(IDLE, function(g) return not g.used.secondary end)
-		c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[2].x - 50 end)
+		c.hold(RIGHT, 60)
 		c.usa("sword", 0)
+		c.hold(IDLE, function(g) return not g.used.secondary end)
+		c.hold(LEFT, function(g) return g.robots[1].x <= g.robots[2].x + 50 end)
+		c.usa("sword", math.pi)
 		c.hold(IDLE, 30)
 	end)
 	check(r4.st.steps_done[2] and r4.st.conta.misses == 1 and g4.turn_no == 1, "turno: a missed Lama is retried in the same turn")
@@ -438,7 +438,7 @@ do
 	-- what each demonstration must leave behind: Favilla's x, y (at least) and an event
 	local SHOWS = {
 		lanciarune = { { passi = 1, evento = "damage", su = 2 } },
-		turno = { { passi = 0, evento = "sword_hit" }, { passi = 2, x = 1040 } },
+		turno = { { passi = 0, evento = "sword_hit" }, { passi = 2, x = 740 } },
 		attrezzi = { { passi = 0, x = 880, y = 330 }, { passi = 2, da = { 905, 335 }, x = 1360, evento = "parachute" } },
 		spostano = { { passi = 1, y = 255 }, { passi = 4, y = 455 } },
 		tempo = { { passi = 0, x = 1200, y = 148, evento = "teleport" } },
@@ -455,6 +455,10 @@ do
 			for j = 1, k - 1 do r.shown[j] = true end
 			if want.da then g.robots[r.l.maestra].x, g.robots[r.l.maestra].y = want.da[1], want.da[2] end
 			local F, seen, ended = r.l.maestra, false, false
+			-- the lines of those steps have been read already (the big one too: she
+			-- shows only after explaining), as when you get there
+			missions.tick(r, g)
+			r.coda, r.riga, r.line_ticks = {}, nil, nil
 			for _ = 1, 60 * 30 do
 				missions.tocca(r)
 				local keys = bots[g.current] and bot.input(bots[g.current], g) or {}
