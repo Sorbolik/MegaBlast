@@ -251,7 +251,7 @@ local TRAINING = {
 		tipo = "duello",
 		goal_text = "Duello! Abbattimi due volte. Trascina dal diavoletto per mirare, lascia per sparare",
 		guidata = true,
-		mappa = "pavimento",
+		mappa = "cortile",
 		giocatori = {
 			-- no draft (Sergio, 30 Oct): Lanciarune, Lama and Rampino; the other weapons,
 			-- if you want them, from crates, with their card

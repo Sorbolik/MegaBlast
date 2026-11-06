@@ -298,8 +298,9 @@ function CR.lista(self)
 end
 
 -- Writes into the b channel (self.mask_stream) the distance from the crater
--- (x, y, r). Steel cells and those touching them stay out: steel isn't dug
--- and its outline isn't bitten
+-- (x, y, r). Steel cells and those touching them stay out: steel isn't dug,
+-- its outline isn't bitten and it isn't burnt (a burnt circle on steel looked
+-- like a hole that isn't there)
 function CR.dig(self, x, y, r)
 	local data, full, c = self.g.terrain.data, self.mask_stream, game.CELL
 	if not full then return 0, 0, 0, 0 end
@@ -307,7 +308,6 @@ function CR.dig(self, x, y, r)
 	local cx1 = math.min(TW - 1, math.floor((x + r) / c) + CR.CELLS)
 	local cy0 = math.max(0, math.floor((y - r) / c) - CR.CELLS)
 	local cy1 = math.min(TH - 1, math.floor((y + r) / c) + CR.CELLS)
-	local outside = CR.BORDER + CR.STEP * 2
 	for cy = cy0, cy1 do
 		local dy = (cy + 0.5) * c - y
 		for cx = cx0, cx1 do
@@ -315,9 +315,9 @@ function CR.dig(self, x, y, r)
 			local v = CR.BORDER + (math.sqrt(dx * dx + dy * dy) - r) * CR.STEP
 			v = math.floor(math.max(0, math.min(255, v)) + 0.5)
 			local i = cy * TW + cx + 1
-			if v < outside and (data[i] == 2 or (cx > 0 and data[i - 1] == 2)
+			if v < 255 and (data[i] == 2 or (cx > 0 and data[i - 1] == 2)
 				or (cx < TW - 1 and data[i + 1] == 2) or data[i - TW] == 2 or data[i + TW] == 2) then
-				v = outside
+				v = 255
 			end
 			local j = i * 4 - 1
 			if v < full[j] then full[j] = v end
