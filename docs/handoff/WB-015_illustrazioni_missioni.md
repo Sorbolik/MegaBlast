@@ -1,6 +1,6 @@
 # WB-015 · Le illustrazioni delle missioni della campagna
 
-- **Stato:** IMPLEMENTATA (fase 1, senza c7)
+- **Stato:** CHIUSA (6 nov: la fase 1 era nel gioco, la fase 2 è annullata e le illustrazioni delle missioni sono tolte dalle carte: Sergio vuole i dipinti solo nella STORIA, sulle carte va la miniatura della mappa col tipo del livello. Codex non esegue più niente di questa scheda)
 - **Data:** 2026-11-04
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-015`
 

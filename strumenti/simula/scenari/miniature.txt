@@ -1,0 +1,20 @@
+# Le miniature delle missioni (Sergio, 6 nov: niente dipinti, la mappa del livello
+# in piccolo coi suoi colori, nella cornice del colore del tipo e con l'etichetta
+# del tipo): le carte della CAMPAGNA e, all'apertura della missione, la cartolina
+# con la miniatura grande, l'etichetta e (la prima volta che incontri il tipo) la
+# riga che lo spiega, il titolo e AVANTI (970 116), poi la vignetta che spiega (VAI! 293 214).
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1
+foto 01_carte
+tocca 256 480                       # Stammi dietro (Primi passi)
+aspetta 2.5
+foto 02_tavola
+tocca 640 300                       # fuori dal pulsante: resta la tavola
+aspetta 0.5
+tocca 970 116                        # AVANTI sulla cartolina
+aspetta 1
+foto 03_vignetta
+tocca 293 214                       # VAI!
+aspetta 1.5
+foto 04_partita
