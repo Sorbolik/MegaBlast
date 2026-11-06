@@ -282,6 +282,13 @@ function frase(q) {
 }
 // la riga parte da un passo e basta: va nella colonna di quel passo
 function soloPasso(q) { return q && Object.keys(q).length === 1 && q.passo != null; }
+// la colonna della linea del tempo di una riga: 0 per "All'inizio" (il tuo primo turno),
+// k per "Fatto il passo k", null se il trigger non ha un posto (va in "Quando succede")
+function colonnaDi(q) {
+	if (soloPasso(q)) return q.passo;
+	if (q && Object.keys(q).length === 1 && q.turno === 1) return 0;
+	return null;
+}
 
 // ---------------------------------------------------------------- controllo (come strumenti/copione/controlla.lua)
 function problemi(l, c) {
@@ -753,8 +760,9 @@ function disegnaTempo() {
 		el("span", { class: "capo", text: "Quando succede" }),
 		el("span", { class: "obb", style: "color:var(--viola)", text: "Trigger senza posto" }));
 	(l.righe || []).forEach((r, i) => {
-		const t = gettone({ k: "riga", i }, r.mostra === "grande" ? "grande" : "striscia", chiParla(c), r.mostra === "grande" ? "vignetta grande" : "striscia", r.testo, soloPasso(r.quando) ? "" : frase(r.quando), sel.k === "riga" && sel.i === i);
-		if (soloPasso(r.quando) && colonne[r.quando.passo]) colonne[r.quando.passo].append(t); else altri.append(t);
+		const k = colonnaDi(r.quando);
+		const t = gettone({ k: "riga", i }, r.mostra === "grande" ? "grande" : "striscia", chiParla(c), r.mostra === "grande" ? "vignetta grande" : "striscia", r.testo, k != null && colonne[k] ? "" : frase(r.quando), sel.k === "riga" && sel.i === i);
+		if (k != null && colonne[k]) colonne[k].append(t); else altri.append(t);
 	});
 	colonne.forEach((col, k) => col.append(el("button", { class: "piu", onclick: () => { segna(); l.righe = l.righe || []; l.righe.push({ testo: "Nuova riga", mostra: c.aspetta ? "grande" : undefined, quando: k ? { passo: k } : { turno: 1 } }); stato.sel = { k: "riga", i: l.righe.length - 1 }; cambiato(); } }, "+ riga qui")));
 	altri.append(el("button", { class: "piu", onclick: () => { segna(); l.righe = l.righe || []; l.righe.push({ testo: "Nuova riga", quando: { evento: "crate_pick" } }); stato.sel = { k: "riga", i: l.righe.length - 1 }; cambiato(); } }, "+ riga su un evento"));
