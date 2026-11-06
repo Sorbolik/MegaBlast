@@ -22,7 +22,7 @@ aspetta_stato turno=1 fase=aim 15
 aspetta 1
 foto 04_tocca_a_te
 premi 1
-mira -141 77 1 05_mira
+mira -105 62 1 05_mira
 aspetta_evento damage 6
 aspetta 1.5
 foto 06_lama_vola                    # la Lama vola al suo tasto, la riga del secondo attacco
@@ -44,9 +44,9 @@ aspetta_stato turno=1 fase=aim 10
 aspetta 0.5
 foto 11_tocca_a_te
 giu destra
-cammina destra 650
+cammina destra 676
 tieni salta 0.35                     # oltre il muretto
-cammina destra 780
+cammina destra 762
 su destra
 aspetta 2.5
 foto 12_fatta                        # al riparo: FATTA
