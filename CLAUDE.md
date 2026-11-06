@@ -34,7 +34,7 @@ bash strumenti/controlli/tutti.sh
 ```
 
 Deve finire con `OK` (sintassi e globali del Lua, controlli dell'editor, tutti i
-test Lua, `go vet`, `gofmt`, `go test ./server/`). Lo stesso controllo gira su
+test Lua, le miniature delle missioni in pari con mappe e dipinti, `go vet`, `gofmt`, `go test ./server/`). Lo stesso controllo gira su
 GitHub dopo ogni merge su `main` (`.github/workflows/controlli.yml`); prima di una
 versione online si lancia a mano sul ramo (Actions > Controlli > Run workflow).
 Se diventa rosso su main, il thread che ha mergiato lo sistema subito.
