@@ -163,7 +163,10 @@ dashboard della campagna (`strumenti/copione/`, README): `python3 strumenti/copi
 scrive `simulazione/copione/`, che si pubblica come Artifact sempre allo stesso indirizzo
 (https://claude.ai/artifact/D4mVBtXrXMEzpghAb8Sukv , i file di `game/` come `files`, capacità `db`):
 ripubblicalo quando cambiano livelli, mappe, verbi o la build. "Manda a Claude" scrive il
-documento `copione/ultima` (campo `lua`: tutto `client/sim/levels.lua`). Il formato è in
+documento `copione/ultima` (campo `lua`: tutto `client/sim/levels.lua`). È anche su Cloudflare
+(Worker `megablast-copione`, lo pubblica `.github/workflows/copione.yml` dopo ogni merge su
+main): da lì "Manda a Claude" scrive `client/sim/levels.lua` e `copione/ultima.json` nel ramo
+`editor-ultima`. Il formato è in
 [docs/copione.md](docs/copione.md).
 
 ## Vignette

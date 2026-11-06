@@ -1,0 +1,54 @@
+# Il Copione su Cloudflare (Worker megablast-copione, strumenti/copione/cloudflare):
+# dopo ogni merge su main che tocca il gioco o il Copione rifà la pagina e la
+# build web per GIOCA e la pubblica. A mano: Actions > Copione > Run workflow.
+# Segreti del repository: CLOUDFLARE_API_TOKEN (modello "Edit Cloudflare Workers"),
+# CLOUDFLARE_ACCOUNT_ID, COPIONE_CHIAVE (la chiave di "Manda a Claude") e
+# COPIONE_GITHUB_TOKEN (fine-grained, Contents in scrittura solo su questo
+# repository): gli ultimi due diventano le variabili cifrate del Worker.
+name: Copione
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'client/**'
+      - 'strumenti/copione/**'
+      - 'strumenti/web/**'
+      - '.github/workflows/copione.yml'
+  workflow_dispatch:
+concurrency:
+  group: copione
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  copione:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: LuaJIT, Pillow e bob.jar
+        run: |
+          sudo apt-get install -y --no-install-recommends luajit
+          pip install --quiet pillow
+          mkdir -p "$RUNNER_TEMP/cache"
+          curl -fsSL --retry 4 -o "$RUNNER_TEMP/cache/bob.jar" https://github.com/defold/defold/releases/download/1.14.0/bob.jar
+      - name: Pagina e build web
+        env:
+          MEGABLAST_CACHE: ${{ runner.temp }}/cache
+        run: JAVA="$(command -v java)" sh strumenti/copione/cloudflare/costruisci.sh
+      - name: Pubblica su Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: strumenti/copione/cloudflare
+          secrets: |
+            COPIONE_CHIAVE
+            GITHUB_TOKEN
+        env:
+          COPIONE_CHIAVE: ${{ secrets.COPIONE_CHIAVE }}
+          GITHUB_TOKEN: ${{ secrets.COPIONE_GITHUB_TOKEN }}

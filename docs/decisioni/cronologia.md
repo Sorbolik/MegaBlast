@@ -169,3 +169,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 6 nov | Le miniature delle missioni si rifanno da sole quando si ridipingono le mappe, e il controllo veloce avvisa se una mappa o un'arena cambia senza rifarle. | questa PR |
 | 6 nov | Il Copione, PR 1: i livelli della campagna diventano solo dati in `client/sim/levels.lua` (eventi come verbi, la vignetta grande scritta nella riga) e un controllo nuovo li verifica; nel gioco non cambia niente. | questa PR |
 | 6 nov | Il Copione, PR 2: la pagina della campagna (cruscotto, editor grafico del livello, GIOCA nella build web, Manda a Claude); nel gioco solo l'ingresso per il livello di prova. | questa PR |
+| 6 nov | Il Copione anche su Cloudflare (Worker megablast-copione), pubblicato da GitHub Actions dopo ogni merge su main. | questa PR |

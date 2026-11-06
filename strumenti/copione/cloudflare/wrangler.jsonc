@@ -1,0 +1,9 @@
+// Il Copione su Cloudflare: la pagina e la build web in dist/ (costruisci.sh),
+// "Manda a Claude" in worker.js. Lo pubblica .github/workflows/copione.yml
+// (wrangler deploy) dopo ogni merge su main.
+{
+	"name": "megablast-copione",
+	"main": "worker.js",
+	"compatibility_date": "2026-10-01",
+	"assets": { "directory": "dist", "binding": "ASSETS" }
+}
