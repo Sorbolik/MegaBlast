@@ -335,6 +335,13 @@ func TestModesMatchConfig(t *testing.T) {
 		if err != nil || !ok || list.Len() != m.Players {
 			t.Fatalf("mode %s: %d players, config.MODES[%q] says %v", name, m.Players, m.Sim, v)
 		}
+		// and the teams of the private rooms (private.go, modeTeam)
+		for i := 0; i < m.Players; i++ {
+			team := list.RawGetInt(i + 1).(*lua.LTable).RawGetString("team")
+			if team != lua.LNumber(modeTeam(m.Sim, i)) {
+				t.Fatalf("mode %s seat %d: team %v in config.MODES, %d in modeTeam", name, i+1, team, modeTeam(m.Sim, i))
+			}
+		}
 	}
 }
 
@@ -771,5 +778,88 @@ assert(N.current(g) ~= 1, "the bot's turn didn't end")
 `)
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Private room (private.go): A opens it, B joins with the code and lands in
+// the first bot seat (the other team), moves to A's team; A sets the grade of
+// a bot and starts: the draft has the people and the bots where they sat.
+func TestPrivateRoom(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":8,"privata":"nuova","vetrina":{"liv":3}}`)
+	m := a.waitFor(`"privata"`)
+	code, _ := m["code"].(string)
+	if len(code) != 4 || m["mode"] != "2v2" || m["you"] != float64(1) || m["host"] != float64(1) || len(m["posti"].([]any)) != 4 {
+		t.Fatalf("new room: %v", m)
+	}
+	// a wrong code: error and closed
+	x := dial(t, ctx, url)
+	x.send(`{"t":"hello","v":8,"privata":"x"}`)
+	if e := x.waitFor(`"error"`); e["e"] != "codice" || !x.closed() {
+		t.Fatalf("wrong code: %v", e)
+	}
+	b := dial(t, ctx, url)
+	b.send(`{"t":"hello","v":8,"privata":"` + code + `"}`)
+	if m = b.waitFor(`"privata"`); m["you"] != float64(2) {
+		t.Fatalf("B must take seat 2: %v", m)
+	}
+	b.send(`{"t":"posto","i":3}`) // with A, team 1
+	b.waitFor(`"you":3`)
+	b.send(`{"t":"bot","i":2,"g":9}`) // not the host: nothing
+	a.send(`{"t":"bot","i":4,"g":9}`)
+	m = a.waitFor(`{"team":2,"bot":9}]`)
+	if p := m["posti"].([]any); p[1].(map[string]any)["bot"] != float64(3) {
+		t.Fatalf("seat 2 must stay a grade 3 bot: %v", p)
+	}
+	a.send(`{"t":"via"}`)
+	d := b.waitFor(`"draft"`)
+	players := d["players"].([]any)
+	want := []string{`{"team":1}`, `{"bot":3,"team":2}`, `{"team":1}`, `{"bot":9,"team":2}`}
+	for i, p := range players {
+		got, _ := json.Marshal(p)
+		if string(got) != want[i] {
+			t.Fatalf("seat %d: %s, want %s", i+1, got, want[i])
+		}
+	}
+	a.waitFor(`"draft"`)
+	a.waitFor(`"start"`)
+	b.waitFor(`"t":"state"`)
+}
+
+// The host changes mode (the people go first) and leaves: the next person
+// becomes host, their seat a bot; with nobody left the code no longer works.
+func TestPrivateRoomModeAndLeave(t *testing.T) {
+	url := testServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	a := dial(t, ctx, url)
+	a.send(`{"t":"hello","v":8,"privata":"nuova"}`)
+	code := a.waitFor(`"privata"`)["code"].(string)
+	b := dial(t, ctx, url)
+	b.send(`{"t":"hello","v":8,"privata":"` + code + `"}`)
+	b.waitFor(`"privata"`)
+	a.send(`{"t":"modo","mode":"1v1"}`)
+	if m := b.waitFor(`"1v1"`); len(m["posti"].([]any)) != 2 || m["you"] != float64(2) {
+		t.Fatalf("1 vs 1: %v", m)
+	}
+	// full of people: a third can't come in
+	c := dial(t, ctx, url)
+	c.send(`{"t":"hello","v":8,"privata":"` + code + `"}`)
+	if e := c.waitFor(`"error"`); e["e"] != "piena" {
+		t.Fatalf("full room: %v", e)
+	}
+	a.send(`{"t":"leave"}`)
+	if m := b.waitFor(`"host":2`); m["posti"].([]any)[0].(map[string]any)["bot"] == nil {
+		t.Fatalf("A's seat must be a bot: %v", m)
+	}
+	b.send(`{"t":"leave"}`)
+	b.closed()
+	d := dial(t, ctx, url)
+	d.send(`{"t":"hello","v":8,"privata":"` + code + `"}`)
+	if e := d.waitFor(`"error"`); e["e"] != "codice" {
+		t.Fatalf("the empty room must be gone: %v", e)
 	}
 }

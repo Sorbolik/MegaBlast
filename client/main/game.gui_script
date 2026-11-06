@@ -25,7 +25,7 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	training = require "menu.training", level_end = require "menu.level_end", campaign = require "menu.campaign",
 	settings = require "menu.settings", board = require "menu.board", queue = require "menu.queue",
 	lineup = require "menu.lineup", profile_tabs = require "menu.profile_tabs", lobby = require "menu.lobby",
-	story = require "menu.story",
+	story = require "menu.story", private = require "menu.private",
 	-- not screens, here so as not to add local variables (limit of 200): the
 	-- server's events and their rules (start online)
 	eventi = require "main.events", regole = require "sim.rules",
@@ -1533,6 +1533,13 @@ end
 local function on_server_message(self, m)
 	if m.t == "wait" then
 		CP.queue_wait(self, m)
+	elseif m.t == "privata" then
+		if CP.private_screen(self) then menu.private.stato(self.schermata.obj, m) end
+	elseif m.t == "error" and CP.private_screen(self) then
+		-- wrong code, room full: said on the keypad (the server closes)
+		self.privata = nil
+		disconnect(self)
+		menu.private.errore(self.schermata.obj, TM.server_errors[m.e] or TM.server_error)
 	elseif m.t == "draft" and self.queue and self.mode ~= "connecting" then
 		-- the queue filled while you were in the menus or training: three seconds
 		-- on the pill, then the lineup
@@ -1543,7 +1550,9 @@ local function on_server_message(self, m)
 		self.tok, self.tries = m.tok or self.tok, 0
 		local first = self.mode ~= "scelta_online"
 		if first then
-			self.queue = nil
+			-- from the private room (menu/private.lua) it closes now, under the lineup
+			if CP.private_screen(self) then close_screen(self) end
+			self.queue, self.privata = nil, nil
 			CP.close_room(self)
 			show_message(self, "", true)
 			-- the players are found: the search's gear goes away (the match has its own)
@@ -1683,6 +1692,10 @@ on_socket = function(self, conn, data)
 		-- the first message states the version: in the queue, or back in the match
 		if self.tok then
 			send(self, { t = "hello", v = PROTOCOL, tok = self.tok })
+		elseif self.privata then
+			-- the private match (menu/private.lua): a new room or a code
+			send(self, { t = "hello", v = PROTOCOL, privata = self.privata,
+				vetrina = CP.vetrina.per_rete(self.profilo) })
 		else
 			CP.aspetta(self, TM.waiting)
 			-- the queue picked in DOVE GIOCHI? (menu/queue.lua): 2v2, 1v1 or an event,
@@ -1705,6 +1718,10 @@ on_socket = function(self, conn, data)
 			timer.delay(RECONNECT_WAIT, false, function()
 				if (self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online") and not self.conn then connect(self) end
 			end)
+		elseif CP.private_screen(self) then
+			-- the private room is gone with the connection: back to the keypad
+			self.privata = nil
+			menu.private.errore(self.schermata.obj, TM.connection_lost)
 		elseif self.queue and self.mode ~= "connecting" then
 			-- in the queue outside the room: the pill says so, a tap and you are back in
 			self.queue.lost = true
@@ -1745,6 +1762,28 @@ local function start_online(self, coda)
 	gui.set_enabled(self.btn_menu, true)
 	CP.aspetta(self, TM.connecting)
 	connect(self)
+end
+
+-- The private match (menu/private.lua, server/private.go): the screen stays
+-- open while the room fills, the connection is the usual one; the "draft"
+-- closes it and goes on like a queue's match. code: "nuova" or the room's code
+function CP.private_connect(self, code)
+	local p = self.schermata.obj
+	if not ws then
+		menu.private.errore(p, TM.no_websocket)
+		return
+	end
+	-- a queue still alive (the pill) is left: one connection at a time
+	if self.conn then CP.let_go(self) end
+	self.queue, self.coda, self.privata = nil, nil, code
+	self.tok, self.tries = nil, 0
+	self.exited, self.online_teams = {}, nil
+	menu.private.busy(p)
+	connect(self)
+end
+
+function CP.private_screen(self)
+	return self.mode == "schermata" and self.schermata and self.schermata.mod == menu.private
 end
 
 -- The queue outside the waiting room (Sergio, 3 Nov: "puoi stare a guardare i
@@ -4955,6 +4994,24 @@ function PAD.on_input(self, action_id, action)
 				close_screen(self)
 				self.story_id, self.story_next = nil, nil
 				open_screen(self, menu.story, CP.tale.read_again(self.profilo), true)
+			end)
+		elseif end_of == "privata" then
+			-- DOVE GIOCHI?: PARTITA PRIVATA
+			CP.slide(self, 1, function()
+				close_screen(self)
+				open_screen(self, menu.private)
+			end)
+		elseif type(end_of) == "table" and end_of.privata then
+			CP.private_connect(self, end_of.privata)
+		elseif type(end_of) == "table" and end_of.invia then
+			send(self, end_of.invia)
+		elseif end_of == "indietro" and self.schermata.mod == menu.private then
+			-- out of the room (if in one), back to DOVE GIOCHI?
+			if self.conn then CP.let_go(self) end
+			self.privata = nil
+			CP.slide(self, -1, function()
+				close_screen(self)
+				open_screen(self, menu.queue)
 			end)
 		elseif type(end_of) == "table" and end_of.coda then
 			-- DOVE GIOCHI? or GIOCA in an event's detail: the online match

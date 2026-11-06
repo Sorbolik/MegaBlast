@@ -1,0 +1,55 @@
+# La partita privata (Sergio, 6 nov: "una modalità partita privata [...] si
+# deve poter scegliere il livello dei bot, se contro o con"): da DOVE GIOCHI?
+# PARTITA PRIVATA; un codice sbagliato, poi CREA UNA STANZA. Nella stanza
+# (2 contro 2, i bot negli altri posti) mi sposto in squadra con un bot
+# (QUI), alzo il livello di un bot avversario, provo 1 contro 1 e tutti
+# contro tutti, torno al 2 contro 2 e faccio partire: schieramento e partita.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_vignette no
+
+aspetta 1
+server 2v2 0
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 205 102 basso destra          # GIOCA
+aspetta 1
+foto 01_dove_giochi                        # in fondo PARTITA PRIVATA
+tocca_centro 640 100                       # PARTITA PRIVATA
+aspetta 1
+foto 02_tastierino
+tocca_centro 770 412                       # 1
+tocca_centro 936 412                       # 2
+tocca_centro 1102 412                      # 3
+tocca_centro 770 336                       # 4
+aspetta 0.3
+tocca_centro 1102 184                      # ENTRA
+aspetta 1.5
+foto 03_codice_sbagliato                   # Nessuna stanza con questo codice
+tocca_centro 310 382                       # CREA UNA STANZA
+aspetta 1.5
+foto 04_stanza_2v2                         # codice, io e tre bot
+tocca_centro 542 226                       # QUI: il posto 3, in squadra con me
+aspetta 1
+foto 05_spostato                           # io al posto 3 (squadra rossa, sotto), un bot al posto 1
+tocca_centro 776 383                       # + sul bot del posto 2
+aspetta 0.4
+tocca_centro 776 383                       # +
+aspetta 0.4
+tocca_centro 776 383                       # +
+aspetta 1
+foto 06_livello_bot
+tocca_centro 813 572                       # 1 CONTRO 1
+aspetta 1
+foto 07_uno_contro_uno
+tocca_centro 1090 572                      # TUTTI CONTRO TUTTI
+aspetta 1
+foto 08_tutti_contro_tutti
+tocca_centro 591 572                       # 2 CONTRO 2
+aspetta 1
+tocca_centro 1090 80                       # VIA
+aspetta_stato modo=scelta_online 10
+aspetta 1
+foto 09_schieramento
+aspetta_stato modo=online 30
+aspetta 2
+foto 10_partita
