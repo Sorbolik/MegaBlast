@@ -30,6 +30,7 @@ local TRAINING = {
 	{
 		id = "primi_passi",
 		titolo = "Stammi dietro",
+		tipo = "corsa",
 		goal_text = "Stammi dietro, nuovo! Ti aspetto al cancello: {cammina}",
 		highlight = "cammina",
 		-- a step higher than you can walk up, lower than the jump
@@ -66,6 +67,7 @@ local TRAINING = {
 	{
 		id = "lanciarune",
 		titolo = "Il mio vecchio Lanciarune",
+		tipo = "bersagli",
 		goal_text = "Ti butto giù il mio vecchio Lanciarune: prendilo!",
 		arena = { { 240, 0, 1440, 150 }, { 1300, 150, 380, 80 } },
 		spawns = { { x = 480, from = 600 }, { x = 860, from = 600 }, { x = 1580, from = 600 } },
@@ -93,6 +95,7 @@ local TRAINING = {
 	{
 		id = "turno",
 		titolo = "A turno",
+		tipo = "bersagli",
 		goal_text = "Qui si gioca a turno: il cronometro in basso è il tuo. Colpisci il fantoccio",
 		highlight = "missile",
 		arena = { { 300, 0, 1300, 150 } },
@@ -118,6 +121,7 @@ local TRAINING = {
 	{
 		id = "tempo",
 		titolo = "Il tempo risparmiato",
+		tipo = "bersagli",
 		goal_text = "Attacca presto: i secondi che avanzano diventano globi",
 		highlight = "missile",
 		-- your ground, the gap, and the island of the second target
@@ -156,6 +160,7 @@ local TRAINING = {
 	{
 		id = "spostano",
 		titolo = "Arriva in cima prima di me",
+		tipo = "corsa",
 		goal_text = "Una gara: arriva in cima prima di me! Prendi la cassa, dentro c'è un'arma che ti sposta",
 		-- the first pillar higher than the jump, the second higher than the kickback;
 		-- on the left Favilla's lane, two pillars of the same heights
@@ -207,6 +212,7 @@ local TRAINING = {
 	{
 		id = "attrezzi",
 		titolo = "Il burrone",
+		tipo = "corsa",
 		goal_text = "Ti aspetto dall'altra parte del burrone! Vai sotto la piattaforma",
 		-- your ground, the platform jutting over the gap, the other side
 		arena = { { 200, 0, 900, 150 }, { 900, 300, 320, 30 }, { 1360, 0, 560, 150 } },
@@ -242,6 +248,7 @@ local TRAINING = {
 	{
 		id = "guidata",
 		titolo = "Duello con Favilla",
+		tipo = "duello",
 		goal_text = "Duello! Abbattimi due volte. Trascina dal diavoletto per mirare, lascia per sparare",
 		guidata = true,
 		mappa = "pavimento",
@@ -300,6 +307,7 @@ local CIRCLE_1 = {
 	{
 		id = "primo_sangue",
 		titolo = "Primo sangue",
+		tipo = "squadra",
 		goal_text = "Abbatti il bot: un'arma a sinistra e una a destra del cronometro",
 		mappa = "pavimento",
 		-- 2 v 2 with Favilla from the first mission (level plan): two apprentices,
@@ -326,6 +334,7 @@ local CIRCLE_1 = {
 	{
 		id = "fuori_portata",
 		titolo = "Fuori portata",
+		tipo = "squadra",
 		goal_text = "Il cecchino sta sull'isola. Attacca presto per avere i globi, poi raggiungilo",
 		arena = { { 200, 0, 720, 150 }, { 1240, 120, 460, 50 } },
 		spawns = { { x = 500, from = 600 }, { x = 1520, from = 600 }, { x = 320, from = 600 }, { x = 1330, from = 600 } },
@@ -352,6 +361,7 @@ local CIRCLE_1 = {
 	{
 		id = "due_mani",
 		titolo = "Due mani",
+		tipo = "duello",
 		goal_text = "Il bot si rimette in sesto a ogni turno: serve la primaria e la Lama nello stesso turno",
 		arena = { { 240, 0, 1440, 150 } },
 		spawns = { { x = 760, from = 600 }, { x = 1160, from = 600 } },
@@ -368,6 +378,7 @@ local CIRCLE_1 = {
 	{
 		id = "giu_dal_bordo",
 		titolo = "Giù dal bordo",
+		tipo = "bersagli",
 		goal_text = "I bersagli non si feriscono: buttali giù dai loro scogli",
 		-- your platform and three narrow rocks over the void
 		arena = { { 760, 300, 400, 40 }, { 420, 420, 70, 24 }, { 1430, 420, 70, 24 }, { 925, 620, 70, 24 } },
@@ -396,6 +407,7 @@ local CIRCLE_1 = {
 	{
 		id = "il_codardo",
 		titolo = "Il codardo",
+		tipo = "duello",
 		goal_text = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo col tuo",
 		mappa = "pavimento",
 		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
@@ -414,6 +426,7 @@ local CIRCLE_1 = {
 	{
 		id = "il_fabbro",
 		titolo = "Il Fabbro",
+		tipo = "custode",
 		goal_text = "Il custode della Forgia: tanta vita e il Maglio. Buttarlo nella fossa di lava fa prima",
 		-- the lava pit in the middle of the floor: that's where you throw them (Sergio, 2 Nov)
 		mappa = "fossa",
@@ -432,6 +445,7 @@ local CIRCLE_1 = {
 	{
 		id = "battaglia_forgia",
 		titolo = "Battaglia della Forgia",
+		tipo = "squadra",
 		goal_text = "Una partita vera, 2 contro 2: tu e Favilla contro il Fabbro e il cecchino",
 		mappa = "pavimento",
 		-- the first weapon draft, guided, with the weapons already seen (Sergio, 30 Oct)

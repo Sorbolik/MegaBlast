@@ -33,6 +33,9 @@
 -- A mission (fields, all data except where stated):
 --   id, titolo, goal_text (the first line, until the first thing is done), highlight
 --     (the control the goal_text highlights, as in the lines below)
+--   tipo: what kind of level it is (corsa, bersagli, duello, squadra, orda,
+--     resistenza, bottino, custode): only shown, on its card in the CAMPAGNA and
+--     its postcard (ui/level_types.lua), the rules don't read it
 --   mappa (a game map) or arena = { { x, y, w, h }, ... } (steel rectangles:
 --     craters don't break the puzzle) and spawns (the player first)
 --   giocatori: opts.players of game.new (team, bot = level, carattere, dummy, pick,
