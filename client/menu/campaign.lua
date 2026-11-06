@@ -27,18 +27,21 @@ local M = {}
 -- The board of the Forge (Sergio, 4 Nov, «me gusta»): the chapter's
 -- challenges pinned on a wooden board as parchment postcards, three a row,
 -- the picture filling the card and title and stars on the band under it; the
--- next one to do framed in gold; the chapter's final as the wide strip at the
+-- next one to do says NUOVA (no gold frame: Sergio, 6 Nov); the chapter's final as the wide strip at the
 -- bottom. The wood is the whole screen (ui/backdrop.lua), the cards in the
 -- middle, sized so they fit on 4:3 too (960 wide). The pictures (Sergio,
 -- 6 Nov): no paintings, the minimal miniature of the level's map with its
 -- true colours, in a thin frame of its kind's colour, and the kind's label in
 -- the corner. The final taller (Sergio: «leggermente più alto»): 30 points
 -- taken from the cards' pictures (151 -> 137), the board as high as before
-local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 268, 137, 34, 14, 12, 14
-local CARD_H, COLUMNS = 6 + PIC_H + BAND, 3
+-- the picture's frame stays inside the card's rounded corners (Sergio, 6 Nov:
+-- «gli spigoli escono dalle card»): PIC_IN from the card's edge to the picture
+local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 260, 135, 34, 14, 12, 14
+local PIC_IN = 10
+local CARD_H, COLUMNS = (PIC_IN - 2) + PIC_H + BAND, 3
 -- the board's width with its frame (the tabs over it are as wide)
 local BOARD_OUTER = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X + 2 * BOARD_PAD + 12
-local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 86, 340, 70
+local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 86, 340, 66
 local function c4(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 local PAPER, INK, INK_SOFT = c4(0.95, 0.88, 0.75), c4(0.12, 0.07, 0.05), c4(0.12, 0.07, 0.05, 0.22)
 -- the soft text on the wood (ui.C.OFF is 3.5:1 on it, this 6.2:1): the
@@ -137,11 +140,6 @@ local function state(c, l, is_next, x, y, n)
 	little_stars(c.stelle[l.id] or {}, #missions.criteria(l), l.medaglia ~= nil, x, y, n)
 end
 
--- the gold frame of the next one, behind its card
-local function gold(x, y, w, h, parent)
-	box(x, y, w + 10, h + 10, ui.GOLD, parent)
-end
-
 local function card_list(c, cap)
 	local list = cap.missioni
 	-- the final: the chapter's last mission; the others pinned on the board
@@ -165,8 +163,7 @@ local function card_list(c, cap)
 		local col, row = (i - 1) % COLUMNS, math.floor((i - 1) / COLUMNS)
 		local x = -inner_w / 2 + CARD_W / 2 + col * (CARD_W + GAP_X)
 		local y = y0 - CARD_H / 2 - row * (CARD_H + GAP_Y)
-		if l.id == next_id then gold(x, y, CARD_W, CARD_H, c.board) end
-		local n = card(c, l, x, y, CARD_W, CARD_H, "carta", 0, CARD_H / 2 - 6 - PIC_H / 2, PIC_W, PIC_H)
+		local n = card(c, l, x, y, CARD_W, CARD_H, "carta", 0, CARD_H / 2 - PIC_IN - PIC_H / 2, PIC_W, PIC_H)
 		local by = -CARD_H / 2 + BAND / 2 + 1
 		local title = ink(string.upper(l.titolo), -CARD_W / 2 + 12, by, 0.62, INK, n)
 		fit(title, CARD_W - 24 - (l.id == next_id and 70 or 26 * #missions.criteria(l)))
@@ -175,8 +172,7 @@ local function card_list(c, cap)
 	end
 	if final then
 		local y = -board_h / 2 + BOARD_PAD + FINAL_H / 2
-		if final.id == next_id then gold(0, y, inner_w, FINAL_H, c.board) end
-		local px = -inner_w / 2 + 8 + FINAL_PIC_W / 2
+		local px = -inner_w / 2 + PIC_IN + FINAL_PIC_W / 2
 		local n = card(c, final, 0, y, inner_w, FINAL_H, "finale", px, 0, FINAL_PIC_W, FINAL_PIC_H)
 		local tx = px + FINAL_PIC_W / 2 + 24
 		fit(ink(T.final:format(string.upper(final.titolo)), tx, 0, 0.8, INK, n), inner_w / 2 - tx - 120)

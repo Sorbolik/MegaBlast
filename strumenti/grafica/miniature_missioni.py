@@ -2,11 +2,12 @@
 # dipinte, una rappresentazione minimale della mappa vera del livello, coi suoi colori).
 # Per ogni missione di client/sim/campaign.lua:
 #   terreno = la forma delle collisioni del livello (la griglia del gioco), lisciata e riempita
-#             coi colori del suo terreno dipinto ridotti a 4 macchie piatte, col filo chiaro
+#             coi colori del suo terreno dipinto ridotti a 6 macchie piatte, col filo chiaro
 #             sulle superfici dove si cammina
 #   lava    = i pixel di lava del terreno dipinto, un arancio piatto
-#   sfondo  = il cielo ridotto a 3 colori e i piani lontani (parallasse sotto 0,5) come sagome
-#             sfocate, ognuno coi suoi 3 colori
+#   sfondo  = il cielo ridotto a 5 colori e i piani lontani (parallasse sotto 0,5) come sagome
+#             appena sfocate, ognuno coi suoi 5 colori (Sergio, 6 nov: più sfocato il castello
+#             del cortile era «un ammasso di colori a caso»)
 # Le arene piccole delle lezioni si avvicinano (ritaglio sulla loro forma), le mappe intere
 # restano intere. Ogni missione ha la sua miniatura in client/paintings/missions/:
 #   <id>.jpg         la cartolina prima della missione (client/ui/postcard.lua)
@@ -28,10 +29,16 @@ OUT = os.path.join(DIPINTI, "missions")
 SW, SH, CELLA = 1920, 1080, 3
 SCENA_W, SCENA_H = 1280, 720
 # le misure nel gioco (al doppio, per gli schermi grandi): la cartolina 880 x 495
-# (ui/postcard.lua POST), la finestra della carta 268 x 137 e quella del finale 340 x 70
+# (ui/postcard.lua POST), la finestra della carta 260 x 135 e quella del finale 340 x 66
 # (menu/campaign.lua)
-FORMATI = {"": (1760, 990), "_carta": (536, 274), "_finale": (680, 140)}
+FORMATI = {"": (1760, 990), "_carta": (520, 270), "_finale": (680, 132)}
 LAVA = (255, 122, 42)
+# quello che conta è la forma del livello (Sergio, 6 nov): lo sfondo sta dietro un velo
+# scuro (VELO, da 0 a 1), il terreno ha un bordo scuro tutto intorno e il filo chiaro
+# sulle superfici, spesso FILO pixel della scena e acceso (FILO_LUCE, da 0 a 1)
+VELO, VELO_COL = 0.5, (24, 20, 30)
+BORDO = 6
+FILO, FILO_LUCE = 9, 0.8
 
 LUA = r"""
 package.path = "client/?.lua;" .. package.path
@@ -96,7 +103,7 @@ def poster(img, raggio, n):
     # i colori veri del dipinto ridotti a n macchie piatte: sfocato, poi sulla sua tavolozza
     rgb = img.convert("RGB").filter(ImageFilter.GaussianBlur(raggio))
     q = rgb.quantize(colors=n, method=Image.Quantize.MEDIANCUT).convert("RGB")
-    return q.filter(ImageFilter.ModeFilter(9))
+    return q.filter(ImageFilter.ModeFilter(5))
 
 
 def mischia(c, d, k):
@@ -108,7 +115,7 @@ def scena(m):
     sfondo = m["sfondo"]
     if sfondo:
         cielo = Image.open(os.path.join(DIPINTI, "backgrounds", "%s_cielo_1.png" % sfondo))
-        out = poster(cielo.resize((SW, SH)), 30, 3).convert("RGBA")
+        out = poster(cielo.resize((SW, SH)), 10, 5).convert("RGBA")
         lontani = [g for g in m["gruppi"] if g["parallax"] < 0.5]
         for i, g in enumerate(lontani):
             pl = Image.open(os.path.join(DIPINTI, "backgrounds", "%s_%s_1.png" % (sfondo, g["name"]))).convert("RGBA")
@@ -117,34 +124,38 @@ def scena(m):
             forma = Image.new("L", (SCENA_W, SCENA_H))
             forma.paste(pl.getchannel("A"), (0, g["y0"]))
             # i piani più lontani più lisci
-            maschera = semplifica(forma.resize((SW, SH)), 22 + 14 * (len(lontani) - 1 - i), 0.55)
+            maschera = semplifica(forma.resize((SW, SH)), 8 + 5 * (len(lontani) - 1 - i), 0.55)
             colori = Image.new("RGB", (SCENA_W, SCENA_H), media(pl))
             colori.paste(pl.convert("RGB"), (0, g["y0"]), pl)
-            lay = poster(colori.resize((SW, SH)), 14, 3).convert("RGBA")
+            lay = poster(colori.resize((SW, SH)), 5, 5).convert("RGBA")
             lay.putalpha(maschera)
             out.alpha_composite(lay)
     else:
         out = Image.new("RGBA", (SW, SH), (61, 58, 74, 255))
+    if VELO > 0:
+        out.alpha_composite(Image.new("RGBA", (SW, SH), VELO_COL + (round(VELO * 255),)))
     griglia = np.array([[c == "1" for c in r] for r in m["rows"]], dtype=np.uint8)
     pieno = Image.fromarray(griglia * 255).resize((SW, SH), Image.BILINEAR)
     pieno = semplifica(pieno, 1.5)
+    if BORDO > 0:
+        out.alpha_composite(piatto((14, 10, 12), pieno.filter(ImageFilter.MaxFilter(2 * BORDO + 1))))
     f = os.path.join(DIPINTI, "maps", "%s_1.png" % m["mappa"])
     terreno = Image.open(f).convert("RGBA") if os.path.exists(f) else None
     base = media(terreno) if terreno else (92, 84, 88)
     if terreno:
         tb = Image.new("RGB", terreno.size, base)
         tb.paste(terreno.convert("RGB"), (0, 0), terreno)
-        lay = poster(tb.resize((SW, SH)), 8, 4).convert("RGBA")
+        lay = poster(tb.resize((SW, SH)), 3, 6).convert("RGBA")
         lay.putalpha(pieno)
         out.alpha_composite(lay)
     else:
         out.alpha_composite(piatto(base, pieno))
     # il filo chiaro dove sopra c'è vuoto (le superfici su cui si cammina)
     s = np.asarray(pieno, dtype=float) / 255
-    sopra = np.roll(s, 7, axis=0)
-    sopra[:7] = 0
+    sopra = np.roll(s, FILO, axis=0)
+    sopra[:FILO] = 0
     filo = np.clip(s - sopra, 0, 1)
-    out.alpha_composite(piatto(mischia(base, (245, 238, 225), 0.6), Image.fromarray((filo * 255).astype(np.uint8))))
+    out.alpha_composite(piatto(mischia(base, (245, 238, 225), FILO_LUCE), Image.fromarray((filo * 255).astype(np.uint8))))
     if terreno:
         t = np.asarray(terreno.resize((SW, SH)), dtype=float)
         r, g, b, a = (t[..., i] for i in range(4))
