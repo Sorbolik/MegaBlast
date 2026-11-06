@@ -10,6 +10,7 @@
 --   bot.choose(d, i, seed, armi)            -- primary and secondary in the draft (sim/draft.lua)
 --   b.piano = { due_attacchi = true }       -- (optional, for the coming turn) primary and secondary
 --   b.piano = { attacca_entro = 4, poi = "teletrasporto" }  -- attacks once within 4 s, then teleports to cover
+--   { id = i, script = function(g) return keys end }  -- a robot moved by a script instead (sim/missions.lua)
 --
 -- How it thinks: it tries moves on copies of the match (bot.world), with the
 -- game's own physics (game:advance) but no craters, so it knows what really
@@ -1023,6 +1024,8 @@ end
 
 -- The bot's input for this tick (IDLE if it isn't its turn)
 function M.input(b, g)
+	-- a robot moved by a script (Favilla's demonstrations, sim/missions.lua)
+	if b.script then return b.script(g) end
 	local rb = g.robots[b.id]
 	if g.current ~= b.id or g.phase ~= "aim" or rb.dead then
 		b.turno = nil

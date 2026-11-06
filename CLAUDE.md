@@ -183,7 +183,10 @@ fogli scelti di WB-012 con `python3 strumenti/ritratti/taglia.py`. Scenario
 `imposta prova_vignette no`.
 Nel cortile Favilla è una comparsa su un percorso fisso (`guida` della lezione in
 `client/sim/levels.lua`, disegnata da `client/battle/favilla.lua`), non un robot: non
-cambia la simulazione. Medaglie facoltative: `medaglia = { conta, at_least | at_most, testo }`.
+cambia la simulazione. Per mostrare una mossa facendola (poi la fai tu) Favilla è invece un
+giocatore vero con `insegna = true` e le sue `dimostra` (cammina, salta, arma con angolo e
+forza, aspetta, dice, posa): il turno passa a lei e torna a te (docs/copione.md, scenario
+`favilla_mostra.txt`). Medaglie facoltative: `medaglia = { conta, at_least | at_most, testo }`.
 
 ## Pezzi nuovi del diavoletto (pelli)
 

@@ -8,7 +8,8 @@
 --   missions.prova(l, chapter_id, painted)          -- the Copione's GIOCA: that level as it is being edited (its id)
 --   local seed, map, opts = missions.partita(r, seed, picks, help)  -- for game.new (or replay.nuova);
 --                                                   help: after many losses, softer opponents
---   missions.prepara(r, g)                          -- right after, once
+--   missions.prepara(r, g, bots)                    -- right after, once (bots: replay.partita's; Favilla's
+--                                                   demonstrations play through it, like a bot)
 --   missions.evento(r, g, e, bots)                  -- for every simulation event (bots: from replay.partita)
 --   local outcome = missions.tick(r, g)             -- every tick: nil, "fatta" or "fallita"
 --   missions.tocca(r, what)                         -- the player touched the controls (lessons: time starts; r nil: nothing);
@@ -26,6 +27,9 @@
 --   local f = missions.guida(r)                     -- where Favilla is in the cortile (l.guida), or nil:
 --                                                   -- { x, y, vx, vy, grounded, facing } (battle/favilla.lua draws her)
 --   local x, y = missions.scintilla(r)              -- the spark still to take (l.scintilla), or nil
+--   local a = missions.mira(r)                      -- Favilla aiming in a demonstration: { robot, weapon, angle, power } or nil
+--   local i, clip = missions.posa(r)                -- Favilla striking a pose (an animation clip), or nil
+--   local i, text = missions.battuta(r)             -- what Favilla says over her head now (once), or nil
 --   missions.stelle(r)                              -- { true, false, true }: each star with its criterion
 --   missions.quante(stars)                          -- how many are lit
 --   missions.criteria(l)                            -- what each star needs: { "FATTA", "CON 60 PUNTI DI VANTAGGIO", ... }
@@ -96,6 +100,26 @@
 --     step parte done (0: at once) she follows the path, t in seconds of game
 --     (vignettes stop it), salto = the height of the arc to that point. gara:
 --     the medal counter "prima" if you finish before she arrives
+--   insegna = true (in giocatori, with nome and pelle): Favilla as a real robot of the
+--     player's team, who shows the moves by doing them (dimostra, below). She
+--     never plays a turn of her own and doesn't get hurt; her hits don't do the
+--     player's steps
+--   dimostra = { { quando = { passo = 1 }, mosse = { { cammina = 900 }, { salta = "destra" },
+--     { arma = "missile", angolo = 45, potenza = 0.7 }, ... } } }: Favilla's
+--     demonstrations (Sergio, 6 Nov: she shows a move by doing it, then you do
+--     it). When quando holds (as the lines; without: at once) and you are still
+--     on your turn, the turn passes to her: she does the moves in order with
+--     the real keys and physics, then the turn comes back to you as it was
+--     (time stopped meanwhile; her shots can push you but don't take your
+--     life). Once each. The moves (one verb each):
+--       cammina = x (walks there; ends also falling off an edge), salta =
+--       "destra" | "sinistra" | "su", arma = a weapon or tool ("missile",
+--       "sword", "hook", "parachute", "teleport"...) with angolo (degrees, 0
+--       right, 90 up) and potenza (0-1, default 1): she aims a second, showing
+--       it, then fires (the parachute and the shield as soon as they can be used)
+--       and waits for everything to settle; aspetta = seconds; dice = "text"
+--       (over her head, like the bots); posa = "vittoria" (an animation clip,
+--       battle/animations.lua) for secondi (default 1.5)
 --   scintilla = { x =, y = }: a spark in the air, taken when your body touches it
 --     over that height there (counter "scintille"): the medal of a full jump
 --   nascosti = { 2 }: robots that aren't there (the game wants at least two)
@@ -110,7 +134,8 @@
 --       "attrezzo" (already used this turn), finestra = true (after the first
 --       attack, while its window is open), in_caduta = true (you are falling fast
 --       and still have the parachute), corona = "tu" (you are first), conta = "prima",
---       almeno = 1 (a counter, below); uno = { {...}, {...} }: one of them (or).
+--       almeno = 1 (a counter, below); vicino = 250 (you are within that many
+--       pixels of Favilla, insegna: she waits for you); uno = { {...}, {...} }: one of them (or).
 --     Only data, never functions: the Copione (strumenti/copione) shows and
 --     edits them, and a level travels as text to the web build (docs/copione.md).
 --     highlight: the control the line suggests ("primaria", "secondaria", a
@@ -217,6 +242,11 @@ local function install(l, cap, map)
 			if p.only then p.permitted = allowed_fn(p.only) end
 		end
 	end
+	-- Favilla who shows the moves (insegna), if the level has her
+	l.maestra = nil
+	for i, p in ipairs(l.giocatori or {}) do
+		if p.insegna then l.maestra = i end
+	end
 	if l.arena then
 		l.mappa = map or "missione_" .. l.id
 		maps.registra(l.mappa, { name = l.titolo, spawns = l.spawns, build = function(t)
@@ -295,8 +325,9 @@ end
 -- The state of a running mission
 function M.nuova(id)
 	local l = assert(PER_ID[id], "missione sconosciuta: " .. tostring(id))
-	return { l = l, st = { turni = 0, bot_turns = 0, steps_done = {}, times = {}, conta = {}, touched_cmds = {} },
-		seen_weapons = {}, prese = {}, cadute = {}, opened = {}, waits = {}, cards = {}, giu = {}, riga = nil, esito = nil }
+	return { l = l, st = { turni = 0, bot_turns = 0, steps_done = {}, times = {}, conta = {}, touched_cmds = {}, maestra = l.maestra },
+		seen_weapons = {}, prese = {}, cadute = {}, opened = {}, waits = {}, cards = {}, giu = {}, riga = nil, esito = nil,
+		shown = {}, ready = {}, battute = {} }
 end
 
 -- seed, map and options of game.new. picks: the players out of the draft
@@ -314,6 +345,8 @@ function M.partita(r, seed, picks, help)
 			if k ~= "nome" and k ~= "battute" and k ~= "pelle" then q[k] = v end
 		end
 		if help and q.bot then q.bot = math.max(1, q.bot - 2) end
+		-- Favilla who shows the moves never plays a turn of her own
+		if q.insegna then q.dummy = true end
 		if picks and picks[i] then
 			q.pick, q.secondary = picks[i].pick, picks[i].secondary
 		end
@@ -342,8 +375,12 @@ end
 
 -- After game.new: match time, starting life and points, the first line.
 -- The events of the start (the first turn) are counted here and discarded.
-function M.prepara(r, g)
+function M.prepara(r, g, bots)
 	local l, st = r.l, r.st
+	-- Favilla plays her demonstrations like a bot: the keys come from here
+	if l.maestra and bots then
+		bots[l.maestra] = { id = l.maestra, script = function(gg) return M.demo_keys(r, gg) end }
+	end
 	if l.secondi then g.match_left = l.secondi * 60 end
 	-- the mission's life is also the full one: regrow goes back there, not to 150
 	for i, v in pairs(l.vita or {}) do
@@ -423,7 +460,7 @@ local function step_done(p, i, st, g, e)
 		return over_it(g, p.reach.x, p.reach.y)
 	elseif p.hit then
 		return e ~= nil and e.type == "damage" and e.amount > 0 and target(g, p.hit, e.robot)
-			and weapon_ok(p.con, st.arma)
+			and weapon_ok(p.con, st.arma) and not (st.maestra and e.by == st.maestra)
 	elseif p.prendi then
 		return e ~= nil and e.type == "crate_pick" and e.robot == PLAYER and e.weapon == p.prendi
 	elseif p.win then
@@ -513,6 +550,12 @@ local function when(q, st, g, e)
 		if l == nil or l.id ~= PLAYER then return false end
 	end
 	if q.conta and (st.conta[q.conta] or 0) < (q.almeno or 1) then return false end
+	if q.vicino then
+		local me, f = g.robots[PLAYER], st.maestra and g.robots[st.maestra]
+		if not f or me.dead or f.dead then return false end
+		local dx, dy = me.x - f.x, me.y - f.y
+		if dx * dx + dy * dy > q.vicino * q.vicino then return false end
+	end
 	return next(q) ~= nil
 end
 
@@ -568,6 +611,10 @@ local function check_event(r, g, e)
 				r.coda[#r.coda + 1] = line
 			end
 		end
+	end
+	-- Favilla's demonstrations whose moment has come (they start when you're still)
+	for i, d in ipairs(l.dimostra or {}) do
+		if not r.ready[i] and (d.quando == nil or when(d.quando, st, g, e)) then r.ready[i] = true end
 	end
 	-- the goal_text of a lesson, once read (you touched the controls), and
 	-- Ritenta give way to the next line
@@ -827,6 +874,170 @@ function M.flag(r)
 	if p and p.reach and p.flag then return p.reach.x, p.reach.y end
 end
 
+-- Favilla's demonstrations (l.dimostra) -------------------------------------------
+-- The turn passes to her, she presses the keys of each move (as a bot,
+-- sim/bot.lua b.script), then it comes back to the player as it was.
+
+local IDLE = {}
+-- how long she aims, showing it, before firing
+local DEMO_AIM = 60
+-- a move that can't end (stuck, fallen) gives up after this many ticks
+local DEMO_LIMIT = 8 * 60
+-- still ticks after a shot (and at the end) before going on
+local DEMO_STILL = 20
+local DEMO_POSE = 1.5
+local SIDES = { destra = 1, sinistra = -1, su = 0 }
+-- the tools used at once, without aiming
+local NO_AIM = { parachute = true, shield = true, swap = true }
+
+-- nothing flying and rb still on the ground
+local function settled(g, rb)
+	if g.projectile or g.burst or g:shards_flying() or #g.orbs > 0 then return false end
+	return rb.dead or rb.grounded and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch
+		or rb.lunge or rb.mallet or rb.recoil or rb.parachute)
+end
+
+-- she can always use the move she shows: the weapon, an orb, a parachute
+local function arm(g, rb, w)
+	g.used.primary, g.used.secondary, g.used.tool = false, false, false
+	if w == "teleport" then
+		rb.teleports_left = math.max(rb.teleports_left, 1)
+	elseif w == "parachute" then
+		rb.parachutes_left = math.max(rb.parachutes_left, 1)
+	elseif game.WEAPONS[w] and not game.FREE_WEAPONS[w] then
+		rb.ammo[w] = math.max(rb.ammo[w] or 0, 1)
+		if game.SECONDARY[w] then rb.secondary = w end
+	end
+	rb.disarmed = nil
+end
+
+-- The keys of Favilla's move, this tick (only on her turn, during a demonstration)
+function M.demo_keys(r, g)
+	local d = r.demo
+	if not d or g.current ~= d.who or g.phase ~= "aim" then return IDLE end
+	local mv = r.l.dimostra[d.i].mosse[d.k]
+	-- all done: she waits for everything to settle (demonstrations, below)
+	if not mv then return IDLE end
+	local rb = g.robots[d.who]
+	d.t = d.t + 1
+	d.aim, d.pose = nil, nil
+	local finished = false
+	local keys = IDLE
+	if d.t > DEMO_LIMIT then
+		finished = true
+	elseif mv.cammina then
+		local dx = mv.cammina - rb.x
+		-- arrived, or off an edge and falling (the next move: the parachute)
+		if math.abs(dx) <= 6 or (not rb.grounded and rb.vy < -150) then
+			finished = true
+		else
+			keys = { left = dx < 0, right = dx > 0 }
+		end
+	elseif mv.salta then
+		local side = SIDES[mv.salta] or 0
+		if not rb.grounded then d.up = true end
+		if d.up and rb.grounded then
+			finished = true
+		else
+			keys = { left = side < 0, right = side > 0, jump = d.t == 1, hold = true }
+		end
+	elseif mv.arma then
+		local w = mv.arma
+		if d.t == 1 then arm(g, rb, w) end
+		if d.shot then
+			d.still = settled(g, rb) and d.still + 1 or 0
+			finished = d.still >= DEMO_STILL
+		elseif g:can_use(w) then
+			local a, power = math.rad(mv.angolo or 0), mv.potenza or 1
+			d.aimed = d.aimed + 1
+			if NO_AIM[w] or d.aimed > DEMO_AIM then
+				d.shot = true
+				keys = { fire = { weapon = w, angle = a, power = power } }
+			else
+				d.aim = { robot = d.who, weapon = w, angle = a, power = power }
+			end
+		end
+	elseif mv.aspetta then
+		finished = d.t >= mv.aspetta * 60
+	elseif mv.dice then
+		r.battute[#r.battute + 1] = { robot = d.who, testo = mv.dice }
+		finished = true
+	elseif mv.posa then
+		d.pose = mv.posa
+		finished = d.t >= (mv.secondi or DEMO_POSE) * 60
+	else
+		finished = true
+	end
+	if finished then
+		d.k, d.t, d.shot, d.aimed, d.still, d.up, d.aim, d.pose = d.k + 1, 0, nil, 0, 0, nil, nil, nil
+	end
+	return keys
+end
+
+-- Starts the demonstration whose moment has come, when you're still on your
+-- turn; ends the running one when her moves are done and everything is still
+local function demonstrations(r, g)
+	local l, d = r.l, r.demo
+	local f = l.maestra and g.robots[l.maestra]
+	if not f then return end
+	-- she doesn't get hurt
+	if not f.dead then f.hp = f.max_hp end
+	if d then
+		-- her turn doesn't end and match time doesn't pass; her shots don't hurt you
+		g.timer, g.window, g.match_left = math.max(g.timer, 120), 0, d.saved.match
+		local me = g.robots[PLAYER]
+		if not me.dead and me.hp < d.saved.hp then me.hp = d.saved.hp end
+		local moves = l.dimostra[d.i].mosse
+		if d.k > #moves then
+			d.still = settled(g, f) and d.still + 1 or 0
+			if d.still >= DEMO_STILL or d.t > DEMO_LIMIT then
+				local s = d.saved
+				g.current, g.timer, g.window, g.used = PLAYER, s.timer, s.window, s.used
+				r.demo = nil
+				g:emit({ type = "demo_end", robot = PLAYER })
+			else
+				d.t = d.t + 1
+			end
+		end
+		return
+	end
+	if r.esito or g.current ~= PLAYER or g.phase ~= "aim" or not settled(g, g.robots[PLAYER]) then return end
+	for i in ipairs(l.dimostra or {}) do
+		if r.ready[i] and not r.shown[i] then
+			r.shown[i] = true
+			local u = g.used
+			r.demo = { i = i, k = 1, t = 0, who = f.id, aimed = 0, still = 0, saved = { timer = g.timer, hp = g.robots[PLAYER].hp,
+				window = g.window, match = g.match_left, used = { primary = u.primary, secondary = u.secondary, tool = u.tool } } }
+			g.current, g.window = f.id, 0
+			g.used = { primary = false, secondary = false, tool = false }
+			g:emit({ type = "demo", robot = f.id })
+			return
+		end
+	end
+end
+
+-- Favilla aiming in a demonstration, or nil
+function M.mira(r)
+	return r and r.demo and r.demo.aim or nil
+end
+
+-- Favilla striking a pose: her robot and the clip, or nil
+function M.posa(r)
+	local d = r and r.demo
+	if d and d.pose then return d.who, d.pose end
+end
+
+-- What Favilla says now (once): her robot and the text, or nil
+function M.battuta(r)
+	local b = r and table.remove(r.battute, 1)
+	if b then return b.robot, b.testo end
+end
+
+-- Is Favilla showing a move?
+function M.dimostra(r)
+	return r ~= nil and r.demo ~= nil
+end
+
 function M.tick(r, g)
 	local l, st = r.l, r.st
 	if l.without_time and g.current == PLAYER then without_time(r, g) end
@@ -916,6 +1127,9 @@ function M.tick(r, g)
 		end
 	end
 	check_event(r, g, nil)
+	demonstrations(r, g)
+	-- Favilla uses what she shows, not only what the step allows
+	if r.demo then g.permitted = nil end
 	-- on the ground or not before the events of the next tick (the Tonante lifts you off the ground)
 	st.on_ground = g.robots[PLAYER].grounded
 	if r.line_ticks and not r.attesa then
