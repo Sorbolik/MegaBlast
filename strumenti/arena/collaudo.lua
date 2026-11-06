@@ -1,5 +1,5 @@
 -- Collaudo delle missioni coi bot: un bot gioca al posto del giocatore ogni
--- missione dei gironi (sim/campaign.lua) con tanti semi e a ogni livello, e
+-- missione dei gironi (sim/levels.lua) con tanti semi e a ogni livello, e
 -- dice quante ne vince, in quanti turni, con quanti punti di vantaggio e con
 -- quante stelle. Così si vede se una missione si vince, se è troppo dura, dove
 -- mettere le soglie delle stelle (la seconda alla mediana dei punti di

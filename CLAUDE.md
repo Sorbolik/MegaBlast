@@ -152,6 +152,15 @@ scarica con `-eventi https://…/eventi.json`. Se cambiano armi, punti o regole
 degli eventi, rifai `luajit strumenti/eventi/dati.lua` (`go test ./server/` lo
 controlla); `node strumenti/eventi/prova.mjs` prova pagina e Worker.
 
+## Copione dei livelli (Sergio, 6 nov)
+
+Lo script di ogni livello della campagna (mappa o arena, spawn, passi dell'obiettivo,
+righe e vignette coi loro trigger, casse, carte, Favilla) sta solo come dati in
+`client/sim/levels.lua`; i capitoli in `client/sim/campaign.lua`. Niente funzioni nei
+livelli: i trigger sono i verbi di `client/sim/missions.lua` (un verbo nuovo va lì e in
+`strumenti/copione/controlla.lua`, che gira in `tutti.sh`). È la base del Copione, la
+dashboard della campagna (`strumenti/copione/`, vedi il README).
+
 ## Vignette
 
 Le righe di chi ti guida (Favilla nel cortile, il Fabbro nei gironi) parlano nella
@@ -165,7 +174,7 @@ fogli scelti di WB-012 con `python3 strumenti/ritratti/taglia.py`. Scenario
 `vignette.txt` (tutti i disegni); gli scenari che provano altro hanno
 `imposta prova_vignette no`.
 Nel cortile Favilla è una comparsa su un percorso fisso (`guida` della lezione in
-`client/sim/campaign.lua`, disegnata da `client/battle/favilla.lua`), non un robot: non
+`client/sim/levels.lua`, disegnata da `client/battle/favilla.lua`), non un robot: non
 cambia la simulazione. Medaglie facoltative: `medaglia = { conta, at_least | at_most, testo }`.
 
 ## Pezzi nuovi del diavoletto (pelli)
@@ -228,7 +237,7 @@ Stelle della campagna: dopo ogni merge su main che tocca `client/sim/` il contro
 della campagna" (`.github/workflows/stelle.yml`) rigioca le missioni coi bot (`collaudo.lua
 --vita 0.5,1,2`) e mette un avviso per ogni stella da guardare; su un ramo si lancia a mano
 da Actions, o in locale con `luajit strumenti/arena/collaudo.lua 12 --vita 0.5,1,2`. Se ci
-sono avvisi nuovi, ritara le soglie in `client/sim/campaign.lua` (nella stessa PR se l'hai
+sono avvisi nuovi, ritara le soglie in `client/sim/levels.lua` (nella stessa PR se l'hai
 lanciato prima, se no in una PR subito dopo).
 
 

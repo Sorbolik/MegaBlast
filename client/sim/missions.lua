@@ -1,4 +1,4 @@
--- Missions: the lessons (Chapter 0) and the campaign circles (sim/campaign.lua),
+-- Missions: the lessons (Chapter 0) and the campaign circles (sim/levels.lua),
 -- all in the same format. A mission is a real match with a goal written as
 -- data: a few verbs (below) instead of code, so one day the server can send
 -- them and they also serve the daily puzzle (docs/roadmap.md, area 3). Pure
@@ -99,16 +99,29 @@
 --     over that height there (counter "scintille"): the medal of a full jump
 --   nascosti = { 2 }: robots that aren't there (the game wants at least two)
 --   collaudo = { carattere, piano, senza }: how strumenti/arena/collaudo.lua tests it
---   righe = { { testo, quando, fino, highlight, stops, subito } }: quando
---     and fino are { evento = "crate_pick" }, { passo = 2 } (step 2 done),
---     { turno = 2 }, { tocca = "mira" } (the player touched that, this turn) or
---     functions(st, g, e) for cases the data can't express (the guided match).
+--   righe = { { testo, quando, fino, highlight, stops, subito, mostra, faccia } }:
+--     quando and fino are data, every key must hold (and):
+--       passo = 2 (step 2 done), turno = 2 (your 2nd turn), turno_altri = 2 (the
+--       others' 2nd turn), di_turno = "tu" | "altri" (whose turn it is now),
+--       evento = "crate_pick" (that simulation event; di = "tu" | "altri": whose,
+--       without: yours or nobody's; arma = "punch": with that weapon), tocca = "mira"
+--       (the player touched that, this turn), usato = "primaria" | "secondaria" |
+--       "attrezzo" (already used this turn), finestra = true (after the first
+--       attack, while its window is open), in_caduta = true (you are falling fast
+--       and still have the parachute), corona = "tu" (you are first), conta = "prima",
+--       almeno = 1 (a counter, below); uno = { {...}, {...} }: one of them (or).
+--     Functions(st, g, e) still work, but the Copione (strumenti/copione) can't
+--     show or change them: sim/levels.lua has none.
 --     highlight: the control the line suggests ("primaria", "secondaria", a
 --     weapon, "teleport", "cammina", "salta", "mira", "annulla"): the HUD
 --     highlights it and, in the lessons, time stays stopped until you touch it
 --     (stops = false: only the highlight, for lines that come while airborne).
 --     In the circles the highlight is there but the game never stops. subito:
---     the line replaces the current one (aiming has already started)
+--     the line replaces the current one (aiming has already started).
+--     mostra = "grande": the battle stops on the big vignette with the drawing
+--     of the highlight before showing it in the strip (only drawn, the
+--     simulation doesn't read it); without, only the strip. faccia: the face of
+--     who says it (battle/vignette.lua FACCE)
 --
 -- The goal steps (testo: how it reads in the goal line). In addition, in the
 -- lessons: only = { "sword", "teleport", "baratto", "primaria", ... }: until
@@ -436,19 +449,51 @@ local function next_one(l, st)
 	end
 end
 
--- The quando of a line: a function, or data
+-- What a line waits for, as data (the level script, strumenti/copione): every
+-- key of the table must hold (and), uno = { {...}, {...} } holds if one of them
+-- does (or). A function(st, g, e) is still accepted, but the Copione can't
+-- show or change it.
+local USED = { primaria = "primary", secondaria = "secondary", attrezzo = "tool" }
 local function when(q, st, g, e)
 	if type(q) == "function" then return q(st, g, e) end
-	if q.evento then
-		return e ~= nil and e.type == q.evento and (e.robot == nil or e.robot == PLAYER)
-	elseif q.passo then
-		return st.steps_done[q.passo] == true
-	elseif q.turno then
-		return st.turni == q.turno
-	elseif q.tocca then
-		return touched_cmd(st, q.tocca)
+	if q.uno then
+		local any = false
+		for _, o in ipairs(q.uno) do
+			if when(o, st, g, e) then any = true break end
+		end
+		if not any then return false end
 	end
-	return false
+	if q.evento then
+		if e == nil or e.type ~= q.evento then return false end
+		-- di: whose event ("tu", "altri"); without, yours or nobody's
+		if q.di == "tu" then
+			if e.robot ~= PLAYER then return false end
+		elseif q.di == "altri" then
+			if e.robot == PLAYER then return false end
+		elseif e.robot ~= nil and e.robot ~= PLAYER then
+			return false
+		end
+		if q.arma and e.weapon ~= q.arma then return false end
+	end
+	if q.passo and st.steps_done[q.passo] ~= true then return false end
+	if q.turno and st.turni ~= q.turno then return false end
+	if q.turno_altri and st.bot_turns ~= q.turno_altri then return false end
+	if q.di_turno == "tu" and g.current ~= PLAYER then return false end
+	if q.di_turno == "altri" and g.current == PLAYER then return false end
+	if q.tocca and not touched_cmd(st, q.tocca) then return false end
+	if q.usato and not g.used[USED[q.usato]] then return false end
+	-- after the first attack of the turn, while the hit window is open
+	if q.finestra and not (g.window > 0) then return false end
+	if q.in_caduta then
+		local rb = g.robots[PLAYER]
+		if rb.grounded or not (rb.vy < -220) or not (rb.parachutes_left > 0) then return false end
+	end
+	if q.corona == "tu" then
+		local l = g:leader()
+		if l == nil or l.id ~= PLAYER then return false end
+	end
+	if q.conta and (st.conta[q.conta] or 0) < (q.almeno or 1) then return false end
+	return next(q) ~= nil
 end
 
 -- One line at a time: the new one waits until the other is done or expired

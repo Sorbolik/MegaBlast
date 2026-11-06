@@ -3,7 +3,7 @@
 # workflow), i bot rigiocano le missioni dei gironi (strumenti/arena/collaudo.lua)
 # e dicono quali stelle non vanno più bene. La tabella va nel riepilogo del
 # controllo, le missioni da guardare come avvisi. Non blocca: le soglie si
-# cambiano in sim/campaign.lua. Sulle PR non gira più (Sergio, 3 nov).
+# cambiano in sim/levels.lua. Sulle PR non gira più (Sergio, 3 nov).
 name: Stelle della campagna
 
 on:

@@ -99,7 +99,7 @@ M.PESI = { vita_mia = 0.6, vita_compagno = 1, morte = 60, strada = 0.01, teletra
 
 -- Personalities: how a bot plays, besides its level (how good it is). They
 -- are only weights different from M.PESI, so the bot doesn't cheat: it always
--- presses a player's keys. The campaign uses them (sim/campaign.lua,
+-- presses a player's keys. The campaign uses them (sim/levels.lua,
 -- players[i].carattere) and so do the circles' keepers; their names are ids.
 -- codardo: every turn attacks at once (so it earns the orbs) and then flees
 -- with the orb to the worst den, covered and where nobody sees it (tana: how

@@ -3,7 +3,7 @@
 # terreno, messi insieme come li vede la camera a mappa intera, e rimpiccioliti.
 #
 # Scrive client/assets/maps/miniature/<mappa>.png e client/ui/maps.atlas (la texture "mappe"
-# di client/main/game.gui). Le mappe sono quelle dell'Addestramento e dei gironi di client/sim/campaign.lua (non le
+# di client/main/game.gui). Le mappe sono quelle dell'Addestramento e dei gironi di client/sim/levels.lua (non le
 # arene delle missioni), come le elenca training.lua, che hanno un'immagine in client/paintings/mappe/.
 #
 #   python3 strumenti/grafica/miniature_mappe.py      (dalla cartella del repository, dopo

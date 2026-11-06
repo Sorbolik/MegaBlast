@@ -1,4 +1,4 @@
--- Campaign tests (sim/campaign.lua, sim/missions.lua): each lesson can really
+-- Campaign tests (sim/levels.lua, sim/missions.lua): each lesson can really
 -- be solved with its mechanic, and not without it; each mission starts clean.
 -- How hard the circles are is measured by the bot trial
 -- (strumenti/arena/collaudo.lua). From the repository root:

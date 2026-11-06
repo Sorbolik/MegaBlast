@@ -29,6 +29,7 @@ passo "controlli dell'editor di Defold" python3 strumenti/simula/controlla.py cl
 for f in tests/*_test.lua; do
 	passo "$f" test_lua "$f"
 done
+passo "copione dei livelli" luajit strumenti/copione/controlla.lua
 passo "miniature delle missioni" python3 strumenti/grafica/miniature_missioni.py --controlla
 passo "go vet" go vet ./...
 passo "gofmt" bash -c 'f=$(gofmt -l server simfs.go); [ -z "$f" ] || { echo "da formattare con gofmt -w: $f"; false; }'

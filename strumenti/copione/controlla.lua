@@ -1,0 +1,166 @@
+-- Il controllo del Copione: legge i livelli della campagna (client/sim/levels.lua,
+-- capitoli in client/sim/campaign.lua) e controlla che lo script di ogni livello
+-- stia in piedi: niente funzioni (un livello deve poter viaggiare come JSON),
+-- passi, eventi, armi, comandi e facce che esistono, segnaposto noti, punti
+-- dentro la mappa. Gira in strumenti/controlli/tutti.sh. Dalla radice:
+--   luajit strumenti/copione/controlla.lua
+-- Finisce con "ok" o con un "FAIL" per ogni problema.
+package.path = "client/?.lua;" .. package.path
+
+local game = require "sim.game"
+local campaign = require "sim.campaign"
+
+local errori = 0
+local function male(dove, cosa)
+	errori = errori + 1
+	print("FAIL " .. dove .. ": " .. cosa)
+end
+
+local function insieme(lista)
+	local t = {}
+	for _, v in ipairs(lista) do t[v] = true end
+	return t
+end
+
+-- gli eventi della simulazione (game:emit) che una riga può aspettare
+local EVENTI = {}
+for f in io.popen("ls client/sim/*.lua"):lines() do
+	local h = assert(io.open(f))
+	for tipo in h:read("*a"):gmatch('emit%(%{ type = "([%w_]+)"') do EVENTI[tipo] = true end
+	h:close()
+end
+
+-- i comandi che si accendono (highlight) o si toccano (tocca): armi e oggetti,
+-- più i comandi dell'HUD
+local COMANDI = insieme({ "primaria", "secondaria", "cammina", "salta", "mira", "annulla", "baratto" })
+for w in pairs(game.WEAPONS) do COMANDI[w] = true end
+-- quello che una lezione mostra nell'HUD (vedi)
+local VEDI = insieme({ "primarie", "secondarie", "teleport", "parachute", "tempo", "punti", "baratto" })
+for w in pairs(game.WEAPONS) do VEDI[w] = true end
+-- i disegni della vignetta grande (client/battle/vignette.lua, DRAW.<nome>) e le facce
+local DISEGNI, FACCE = {}, {}
+do
+	local h = assert(io.open("client/battle/vignette.lua"))
+	local src = h:read("*a")
+	h:close()
+	for nome in src:gmatch("\nDRAW%.([%w_]+) =") do DISEGNI[nome] = true end
+	for nome in src:match("M%.FACCE = (%b{})"):gmatch("([%w_]+) = true") do FACCE[nome] = true end
+end
+-- i segnaposto dei testi ({salta}: come si salta coi comandi che hai, PAD.texts)
+local SEGNAPOSTO = insieme({ "salta", "cammina", "mira", "annulla" })
+local USATO = insieme({ "primaria", "secondaria", "attrezzo" })
+-- le chiavi di un quando / fino (client/sim/missions.lua, when)
+local CHIAVI = insieme({ "uno", "evento", "di", "arma", "passo", "turno", "turno_altri", "di_turno", "tocca",
+	"usato", "finestra", "in_caduta", "corona", "conta", "almeno" })
+local MAPPA_W, MAPPA_H = 1920, 1080
+
+-- niente funzioni, da nessuna parte
+local function senza_funzioni(v, dove)
+	if type(v) == "function" then
+		male(dove, "è una funzione: il Copione vuole solo dati (verbi in client/sim/missions.lua)")
+	elseif type(v) == "table" then
+		for k, x in pairs(v) do senza_funzioni(x, dove .. "." .. tostring(k)) end
+	end
+end
+
+local function testo(t, dove)
+	if type(t) ~= "string" or t == "" then return male(dove, "manca il testo") end
+	for nome in t:gmatch("{(%a+)}") do
+		if not SEGNAPOSTO[nome] then male(dove, "segnaposto sconosciuto {" .. nome .. "}") end
+	end
+end
+
+local function condizione(q, dove, passi)
+	if type(q) ~= "table" then return male(dove, "non è una condizione") end
+	if next(q) == nil then return male(dove, "condizione vuota") end
+	for k in pairs(q) do
+		if not CHIAVI[k] then male(dove, "chiave sconosciuta " .. tostring(k)) end
+	end
+	if q.evento and not EVENTI[q.evento] then male(dove, "evento sconosciuto " .. q.evento) end
+	if (q.di or q.arma) and not q.evento then male(dove, "di e arma valgono solo con evento") end
+	if q.di and q.di ~= "tu" and q.di ~= "altri" then male(dove, "di è tu o altri") end
+	if q.di_turno and q.di_turno ~= "tu" and q.di_turno ~= "altri" then male(dove, "di_turno è tu o altri") end
+	if q.arma and not game.WEAPONS[q.arma] then male(dove, "arma sconosciuta " .. q.arma) end
+	if q.passo and not (passi[q.passo]) then male(dove, "il passo " .. tostring(q.passo) .. " non c'è") end
+	if q.tocca and not COMANDI[q.tocca] then male(dove, "comando sconosciuto " .. q.tocca) end
+	if q.usato and not USATO[q.usato] then male(dove, "usato è primaria, secondaria o attrezzo") end
+	if q.corona and q.corona ~= "tu" then male(dove, "corona è tu") end
+	if q.almeno and not q.conta then male(dove, "almeno vale solo con conta") end
+	for i, o in ipairs(q.uno or {}) do condizione(o, dove .. ".uno[" .. i .. "]", passi) end
+end
+
+local function dentro(x, y, dove)
+	if type(x) ~= "number" or x < 0 or x > MAPPA_W then male(dove, "x fuori dalla mappa") end
+	if y ~= nil and (type(y) ~= "number" or y < 0 or y > MAPPA_H) then male(dove, "y fuori dalla mappa") end
+end
+
+local function livello(l, cap)
+	local dove = l.id or "?"
+	senza_funzioni(l, dove)
+	testo(l.titolo, dove .. ".titolo")
+	if l.goal_text then testo(l.goal_text, dove .. ".goal_text") end
+	if l.highlight and not COMANDI[l.highlight] then male(dove, "highlight sconosciuto " .. l.highlight) end
+	if not l.mappa and not l.arena then male(dove, "serve una mappa o un'arena") end
+	local passi = {}
+	for i, p in ipairs(l.obiettivo or {}) do
+		passi[i] = true
+		local dp = dove .. ".obiettivo[" .. i .. "]"
+		testo(p.testo, dp)
+		if p.reach then dentro(p.reach.x, p.reach.y, dp .. ".reach") end
+		if p.prendi and not game.WEAPONS[p.prendi] then male(dp, "arma sconosciuta " .. p.prendi) end
+		if p.con and not COMANDI[p.con] then male(dp, "arma sconosciuta " .. p.con) end
+		for _, o in ipairs(p.only or {}) do
+			if not COMANDI[o] then male(dp, "comando sconosciuto " .. o) end
+		end
+	end
+	for i, r in ipairs(l.arena or {}) do
+		local dr = dove .. ".arena[" .. i .. "]"
+		dentro(r[1], r[2], dr)
+		dentro(r[1] + r[3], r[2] + r[4], dr)
+	end
+	for i, s in ipairs(l.spawns or {}) do dentro(s.x, s.from, dove .. ".spawns[" .. i .. "]") end
+	if l.spawns and #l.spawns < #(l.giocatori or {}) then male(dove, "meno punti di partenza che giocatori") end
+	for _, nome in ipairs(l.vedi or {}) do
+		if not VEDI[nome] then male(dove, "vedi: sconosciuto " .. nome) end
+	end
+	for _, campo in ipairs({ "casse", "cards" }) do
+		for i, c in ipairs(l[campo] or {}) do
+			local dc = dove .. "." .. campo .. "[" .. i .. "]"
+			if not game.WEAPONS[c.arma] then male(dc, "arma sconosciuta " .. tostring(c.arma)) end
+			if c.dopo ~= 0 and not passi[c.dopo] then male(dc, "il passo " .. tostring(c.dopo) .. " non c'è") end
+			if c.x then dentro(c.x, nil, dc) end
+		end
+	end
+	if l.scintilla then dentro(l.scintilla.x, l.scintilla.y, dove .. ".scintilla") end
+	if l.guida then
+		for i, pt in ipairs(l.guida.percorso or {}) do dentro(pt.x, pt.y, dove .. ".guida[" .. i .. "]") end
+	end
+	for i, r in ipairs(l.righe or {}) do
+		local dr = dove .. ".righe[" .. i .. "]"
+		testo(r.testo, dr)
+		condizione(r.quando, dr .. ".quando", passi)
+		if r.fino then condizione(r.fino, dr .. ".fino", passi) end
+		if r.highlight and not COMANDI[r.highlight] then male(dr, "highlight sconosciuto " .. r.highlight) end
+		if r.faccia and not FACCE[r.faccia] then male(dr, "faccia sconosciuta " .. r.faccia) end
+		if r.mostra ~= nil and r.mostra ~= "grande" and r.mostra ~= "striscia" then
+			male(dr, "mostra è grande o striscia")
+		end
+		-- la vignetta grande ferma il gioco: si usa nelle lezioni, che aspettano te
+		if r.mostra == "grande" and not cap.aspetta then male(dr, "vignetta grande fuori dalle lezioni") end
+		if r.mostra == "grande" and r.highlight and not DISEGNI[r.highlight] then
+			male(dr, "la vignetta grande non ha il disegno di " .. r.highlight .. " (client/battle/vignette.lua)")
+		end
+	end
+end
+
+local visti, n = {}, 0
+for _, cap in ipairs(campaign.CAPITOLI) do
+	for _, l in ipairs(cap.missioni) do
+		if visti[l.id] then male(l.id or "?", "id ripetuto") end
+		visti[l.id] = true
+		livello(l, cap)
+		n = n + 1
+	end
+end
+if errori == 0 then print("ok   " .. n .. " livelli del copione") end
+os.exit(errori == 0 and 0 or 1)

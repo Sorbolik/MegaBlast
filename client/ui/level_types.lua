@@ -1,4 +1,4 @@
--- The kinds of level (Sergio, 6 Nov): each mission of sim/campaign.lua says
+-- The kinds of level (Sergio, 6 Nov): each mission of sim/levels.lua says
 -- what it is (tipo) and the CAMPAGNA shows it, instead of a painting, as a
 -- small label in the kind's pastel colour with its icon and name in dark ink,
 -- on the card's miniature (menu/campaign.lua) and on the postcard before the
