@@ -1,0 +1,23 @@
+# Prima sfida (imposta prova_missione prima_sfida): una partita breve contro Favilla
+# con solo quello che hai imparato, niente spiegazioni. L'apertura, il tuo primo
+# colpo, il turno di Favilla (bot), poi la mappa intera.
+imposta prova_missione prima_sfida
+aspetta 2.5
+foto 00_cartolina
+tocca 970 116                        # AVANTI sulla cartolina
+aspetta_stato modo=local fase=aim 8
+aspetta 1.2
+foto 01_apertura                     # la vignetta d'apertura
+tocca 912 289
+aspetta 0.3
+tocca 293 214
+aspetta 1
+foto 02_inizio                       # i comandi che hai: niente altro
+mira 120 110 0.4
+aspetta_evento explosion 8
+aspetta_stato turno=2 fase=aim 30
+aspetta 1.5
+foto 03_turno_favilla                # Favilla gioca il suo turno
+premi z
+aspetta 1.5
+foto 04_mappa                        # tutta la mappa
