@@ -50,8 +50,9 @@ M.addestramento = {
 			{ x = 560, y = 150, t = 0 }, { x = 560, y = 150, t = 1.5 }, { x = 1040, y = 150, t = 13.9 },
 			{ x = 1140, y = 180, t = 14.6, salto = 25 }, { x = 1520, y = 180, t = 24.4 },
 		} },
-		-- a full jump from the step reaches it, a short one doesn't (the held jump, JUMP_CUT)
-		scintilla = { x = 1300, y = 216 },
+		-- your body touches it at the top of a full jump from the step (feet up to ~223),
+		-- not at the top of a short one (~208) (the held jump, JUMP_CUT; sim/missions.lua)
+		scintilla = { x = 1300, y = 268 },
 		medaglia = { conta = "scintille", at_least = 1, testo = "LA SCINTILLA" },
 		obiettivo = {
 			{ reach = { x = 900, y = 150 }, testo = "Stai dietro a Favilla" },
