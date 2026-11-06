@@ -170,3 +170,5 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 6 nov | Il Copione, PR 1: i livelli della campagna diventano solo dati in `client/sim/levels.lua` (eventi come verbi, la vignetta grande scritta nella riga) e un controllo nuovo li verifica; nel gioco non cambia niente. | questa PR |
 | 6 nov | Il Copione, PR 2: la pagina della campagna (cruscotto, editor grafico del livello, GIOCA nella build web, Manda a Claude); nel gioco solo l'ingresso per il livello di prova. | questa PR |
 | 6 nov | Il Copione anche su Cloudflare (Worker megablast-copione), collegato al repository come gli altri strumenti, sul ramo copione-pubblica che GitHub Actions ricostruisce dopo ogni merge su main. | questa PR |
+| 6 nov | La scintilla di Stammi dietro si prende quando il corpo la tocca, e sta sopra la testa: la prende il salto pieno. | #227 |
+| 6 nov | Il Copione più facile da usare: tutto in italiano, spiegazioni su campi e mappa, giocatori dove atterrano, passi inseriti anche in mezzo. | #227 |

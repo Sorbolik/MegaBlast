@@ -96,7 +96,7 @@
 --     step parte done (0: at once) she follows the path, t in seconds of game
 --     (vignettes stop it), salto = the height of the arc to that point. gara:
 --     the medal counter "prima" if you finish before she arrives
---   scintilla = { x =, y = }: a spark in the air, taken by passing your feet
+--   scintilla = { x =, y = }: a spark in the air, taken when your body touches it
 --     over that height there (counter "scintille"): the medal of a full jump
 --   nascosti = { 2 }: robots that aren't there (the game wants at least two)
 --   collaudo = { carattere, piano, senza }: how strumenti/arena/collaudo.lua tests it
@@ -160,8 +160,9 @@ local MISS_TICK = 45
 local CARD_DELAY = 24
 -- how high above the terrain mission crates drop from
 local CRATE_ABOVE = 280
--- the spark is taken within this many pixels sideways
-local SPARK_REACH = 26
+-- the spark is a glow this wide around its point (battle/favilla.lua draws it
+-- the same size): it is taken when your hit circle touches it
+local SPARK_R = 13
 local RETRY_TEXT = "Ritenta! Prendi confidenza con i comandi, prenditi il tuo tempo: {mira}"
 
 -- Which weapon someone just used: the attack event -> weapon name
@@ -898,7 +899,17 @@ function M.tick(r, g)
 	local sp = l.scintilla
 	if sp and not r.scintilla_presa then
 		local me = g.robots[PLAYER]
-		if not me.dead and math.abs(me.x - sp.x) <= SPARK_REACH and me.y >= sp.y then
+		-- the body's hit circle from the last tick to this one, so a fast jump can't skip it
+		local cx, cy = me.x, me.y + game.HURT_Y
+		local px, py = r.spark_prev_x or cx, r.spark_prev_y or cy
+		r.spark_prev_x, r.spark_prev_y = cx, cy
+		local dx, dy = cx - px, cy - py
+		local t = 0
+		local len2 = dx * dx + dy * dy
+		if len2 > 0 then t = math.max(0, math.min(1, ((sp.x - px) * dx + (sp.y - py) * dy) / len2)) end
+		local qx, qy = px + dx * t - sp.x, py + dy * t - sp.y
+		local reach = game.HURT_R + SPARK_R
+		if not me.dead and qx * qx + qy * qy <= reach * reach then
 			r.scintilla_presa = true
 			count(st, "scintille")
 			g:emit({ type = "spark", robot = PLAYER })

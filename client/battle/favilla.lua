@@ -64,7 +64,7 @@ function M.update(f, dt, clock, pos, sx, sy, look_x)
 	gui.set_enabled(f.spark, sx ~= nil)
 	if sx then
 		-- it floats a little and breathes
-		V.x, V.y = sx, sy + 6 + math.sin(clock * 3) * 3
+		V.x, V.y = sx, sy + math.sin(clock * 3) * 3 -- centred where the simulation takes it
 		gui.set_position(f.spark, V)
 		local k = 1 + math.sin(clock * 7) * 0.15
 		V.x, V.y, V.z = k, k, 1

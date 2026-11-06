@@ -27,7 +27,12 @@ Si fa in tre PR:
    nuovo), editor del livello (mappa da scorrere e ingrandire, piattaforme,
    giocatori, passi, casse, Favilla e scintilla da trascinare; colonne del tempo
    con le righe agganciate ai passi; ispettore con l'anteprima della vignetta),
-   annulla e rifai, la bozza resta nel browser. Si rifà e si ripubblica così:
+   annulla e rifai, la bozza resta nel browser. Tutto quello che si legge è in italiano
+   (gli id del gioco, come gli eventi `crate_pick`, hanno il loro nome in `NOMI_EVENTI`
+   e vicini in `pagina.html`: un evento o un comando nuovo va anche lì), con «Come si usa»
+   e la legenda in cima al pannello. I passi si inseriscono anche in mezzo («+ passo
+   nuovo» nella sequenza, o prima/dopo quello scelto): frasi, casse, carte e Favilla
+   legate ai passi si rinumerano da sole (`rinumera`). Si rifà e si ripubblica così:
 
    ```bash
    python3 strumenti/copione/prepara.py --gioco
@@ -42,7 +47,7 @@ Si fa in tre PR:
      `imposta prova_copione FILE` (scenario `copione.txt`).
    - **Manda a Claude** scrive il documento `copione/ultima` del database
      dell'Artifact (campi `lua`: tutto `levels.lua`, `capitoli`: `M.CAPITOLI`,
-     `json`, `livello`, `quando`). **Copia il Lua** fa lo stesso negli appunti.
+     `json`, `livello`, `quando`). **Copia il testo** fa lo stesso negli appunti.
    - **Su Cloudflare** (Worker `megablast-copione`, `strumenti/copione/cloudflare/`),
      come l'editor e il pannello degli eventi: repository collegato, ma dal ramo
      `copione-pubblica`, già costruito (la build del gioco vuole Java, che la build
