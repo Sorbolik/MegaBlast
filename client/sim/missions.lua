@@ -5,6 +5,7 @@
 -- Lua: the gui_script shows the line, the goal and the stars.
 --
 --   local r = missions.nuova("attrezzi")
+--   missions.prova(l, chapter_id, painted)          -- the Copione's GIOCA: that level as it is being edited (its id)
 --   local seed, map, opts = missions.partita(r, seed, picks, help)  -- for game.new (or replay.nuova);
 --                                                   help: after many losses, softer opponents
 --   missions.prepara(r, g)                          -- right after, once
@@ -201,28 +202,48 @@ end
 -- Missions, by id and by chapter --------------------------------------------------
 
 local PER_ID, NEXT_ID = {}, {}
+-- A level ready to play: its chapter's rules, the permitted controls of its
+-- steps, its arena as a map (map: the map's id, missione_<id> unless said)
+local function install(l, cap, map)
+	PER_ID[l.id] = l
+	l.chapter = cap.id
+	-- in the lessons time waits for you to touch the controls (capitolo.aspetta)
+	l.aspetta = cap.aspetta
+	-- the nearly forced next action: the lessons, not the Prima partita
+	l.riprova = l.aspetta and not l.guidata
+	if type(l.obiettivo) == "table" then
+		for _, p in ipairs(l.obiettivo) do
+			if p.only then p.permitted = allowed_fn(p.only) end
+		end
+	end
+	if l.arena then
+		l.mappa = map or "missione_" .. l.id
+		maps.registra(l.mappa, { name = l.titolo, spawns = l.spawns, build = function(t)
+			for _, q in ipairs(l.arena) do t:rect(q[1], q[2], q[3], q[4], STEEL) end
+		end })
+	end
+end
+
 for _, cap in ipairs(campaign.CAPITOLI) do
 	for i, l in ipairs(cap.missioni) do
 		assert(not PER_ID[l.id], "missione doppia: " .. l.id)
-		PER_ID[l.id] = l
-		l.chapter = cap.id
-		-- in the lessons time waits for you to touch the controls (capitolo.aspetta)
-		l.aspetta = cap.aspetta
-		-- the nearly forced next action: the lessons, not the Prima partita
-		l.riprova = l.aspetta and not l.guidata
-		if type(l.obiettivo) == "table" then
-			for _, p in ipairs(l.obiettivo) do
-				if p.only then p.permitted = allowed_fn(p.only) end
-			end
-		end
+		install(l, cap)
 		NEXT_ID[l.id] = cap.missioni[i + 1] and cap.missioni[i + 1].id
-		if l.arena then
-			l.mappa = "missione_" .. l.id
-			maps.registra(l.mappa, { name = l.titolo, spawns = l.spawns, build = function(t)
-				for _, q in ipairs(l.arena) do t:rect(q[1], q[2], q[3], q[4], STEEL) end
-			end })
-		end
 	end
+end
+
+-- The Copione's GIOCA (strumenti/copione): a level as it is being edited, in
+-- place of the saved one with the same id (or a new one), in the chapter
+-- chapter_id; no next mission. painted = false: its arena changed, the
+-- painting of the saved one would lie (an unpainted map)
+function M.prova(l, chapter_id, painted)
+	local cap = campaign.CAPITOLI[1]
+	for _, c in ipairs(campaign.CAPITOLI) do
+		if c.id == chapter_id then cap = c end
+	end
+	install(l, cap, painted == false and "copione_" .. l.id or nil)
+	NEXT_ID[l.id] = nil
+	return l.id
 end
 
 function M.trova(id)

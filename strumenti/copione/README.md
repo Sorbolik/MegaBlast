@@ -21,6 +21,29 @@ Si fa in tre PR:
    Gira in `strumenti/controlli/tutti.sh`: niente funzioni, passi, eventi, armi,
    comandi, facce e segnaposto che esistono, disegno per ogni vignetta grande,
    punti dentro la mappa.
-2. **La pagina**: cruscotto, editor del livello, GIOCA, "Manda a Claude".
+2. **La pagina** (fatta): https://claude.ai/artifact/D4mVBtXrXMEzpghAb8Sukv ,
+   sempre allo stesso indirizzo. Cruscotto dei capitoli (carte dei livelli con
+   tipo, passi, vignette grandi, righe e problemi; sposta, duplica, elimina,
+   nuovo), editor del livello (mappa da scorrere e ingrandire, piattaforme,
+   giocatori, passi, casse, Favilla e scintilla da trascinare; colonne del tempo
+   con le righe agganciate ai passi; ispettore con l'anteprima della vignetta),
+   annulla e rifai, la bozza resta nel browser. Si rifà e si ripubblica così:
+
+   ```bash
+   python3 strumenti/copione/prepara.py --gioco
+   ```
+
+   poi si pubblica `simulazione/copione/index.html` all'indirizzo di sopra con
+   i file di `simulazione/copione/game/` (come `game/...`) e la capacità `db`.
+   - **GIOCA** apre `game/megablast.html?copione=1#<il livello in Lua>` in un
+     riquadro: il gioco (`CP.copione` in `client/main/game.gui_script`) legge il
+     livello e lo fa partire con `missions.prova`. Se l'arena è cambiata il
+     livello gira senza dipinto (il dipinto lo rifà Claude). In simulazione:
+     `imposta prova_copione FILE` (scenario `copione.txt`).
+   - **Manda a Claude** scrive il documento `copione/ultima` del database
+     dell'Artifact (campi `lua`: tutto `levels.lua`, `capitoli`: `M.CAPITOLI`,
+     `json`, `livello`, `quando`). **Copia il Lua** fa lo stesso negli appunti.
+   - I commenti di `levels.lua` la pagina non li vede: chi prende il copione
+     unisce a mano (o con `git diff`) e li tiene.
 3. **Il ritorno**: Claude scrive `levels.lua` da quello che arriva, rifà
    dipinti e miniature se è cambiata una mappa, gira la simulazione del livello.

@@ -168,3 +168,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 6 nov | Miniature delle missioni: sfondo più dettagliato ma dietro un velo scuro, la forma del livello col bordo scuro e il filo chiaro più spesso; la cornice del tipo dentro gli angoli della carta; tolto il bordo d'oro della prossima (resta NUOVA). | questa PR |
 | 6 nov | Le miniature delle missioni si rifanno da sole quando si ridipingono le mappe, e il controllo veloce avvisa se una mappa o un'arena cambia senza rifarle. | questa PR |
 | 6 nov | Il Copione, PR 1: i livelli della campagna diventano solo dati in `client/sim/levels.lua` (eventi come verbi, la vignetta grande scritta nella riga) e un controllo nuovo li verifica; nel gioco non cambia niente. | questa PR |
+| 6 nov | Il Copione, PR 2: la pagina della campagna (cruscotto, editor grafico del livello, GIOCA nella build web, Manda a Claude); nel gioco solo l'ingresso per il livello di prova. | questa PR |

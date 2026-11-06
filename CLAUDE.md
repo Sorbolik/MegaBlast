@@ -159,7 +159,12 @@ righe e vignette coi loro trigger, casse, carte, Favilla) sta solo come dati in
 `client/sim/levels.lua`; i capitoli in `client/sim/campaign.lua`. Niente funzioni nei
 livelli: i trigger sono i verbi di `client/sim/missions.lua` (un verbo nuovo va lì e in
 `strumenti/copione/controlla.lua`, che gira in `tutti.sh`). È la base del Copione, la
-dashboard della campagna (`strumenti/copione/`); il formato è in [docs/copione.md](docs/copione.md).
+dashboard della campagna (`strumenti/copione/`, README): `python3 strumenti/copione/prepara.py --gioco`
+scrive `simulazione/copione/`, che si pubblica come Artifact sempre allo stesso indirizzo
+(https://claude.ai/artifact/D4mVBtXrXMEzpghAb8Sukv , i file di `game/` come `files`, capacità `db`):
+ripubblicalo quando cambiano livelli, mappe, verbi o la build. "Manda a Claude" scrive il
+documento `copione/ultima` (campo `lua`: tutto `client/sim/levels.lua`). Il formato è in
+[docs/copione.md](docs/copione.md).
 
 ## Vignette
 

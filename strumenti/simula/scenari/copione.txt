@@ -1,0 +1,10 @@
+# Il GIOCA del Copione (strumenti/copione): il gioco parte dal livello che gli
+# passa la pagina (qui dal file, imposta prova_copione), senza cartolina, con
+# l'arena cambiata e senza il dipinto vecchio.
+imposta prova_copione strumenti/simula/scenari/copione_livello.lua
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.5
+foto 01_vignetta                     # la riga d'apertura cambiata
+tocca 293 214                        # VAI!
+aspetta 0.8
+foto 02_livello                      # il gradino nuovo, senza dipinto

@@ -2403,6 +2403,33 @@ local function start_mission(self, id, picks)
 	if not r.l.without_time then announce_turn(self, self.g.current) end
 end
 
+-- The Copione's GIOCA (strumenti/copione, docs/copione.md): the web build
+-- opened by the page with ?copione=1 plays the level the page put after the
+-- # (Lua text: return { capitolo = id, dipinto = false?, livello = { ... } }),
+-- as it is being edited; in the simulator prova_copione FILE. Only data: the
+-- text runs with nothing in reach. true if a level started
+function CP.copione(self)
+	local src
+	if html5 and html5.run("new URLSearchParams(location.search).get('copione') || ''") ~= "" then
+		src = html5.run("decodeURIComponent(location.hash.slice(1))")
+	elseif SIMULATE then
+		local h = io.open(config_string("megablast.prova_copione", ""))
+		if h then src = h:read("*a") h:close() end
+	end
+	local chunk = src and src ~= "" and loadstring(src, "=copione")
+	if not chunk then return false end
+	setfenv(chunk, {})
+	local ok, p = pcall(chunk)
+	if not ok or type(p) ~= "table" or type(p.livello) ~= "table" or type(p.livello.id) ~= "string" then
+		print("copione: livello non valido", p)
+		return false
+	end
+	CP.close_entry(self, true)
+	self.ritorno = "campagna"
+	start_mission(self, missions.prova(p.livello, p.capitolo, p.dipinto))
+	return true
+end
+
 -- The campaign, on the last mission's chapter
 local function open_campaign(self)
 	show_menu(self, true)
@@ -2667,6 +2694,7 @@ function CP.startup(self)
 		self.ritorno = "campagna"
 		CP.enter_mission(self, mission)
 	end
+	CP.copione(self)
 end
 
 
