@@ -110,8 +110,8 @@
 --       attack, while its window is open), in_caduta = true (you are falling fast
 --       and still have the parachute), corona = "tu" (you are first), conta = "prima",
 --       almeno = 1 (a counter, below); uno = { {...}, {...} }: one of them (or).
---     Functions(st, g, e) still work, but the Copione (strumenti/copione) can't
---     show or change them: sim/levels.lua has none.
+--     Only data, never functions: the Copione (strumenti/copione) shows and
+--     edits them, and a level travels as text to the web build (docs/copione.md).
 --     highlight: the control the line suggests ("primaria", "secondaria", a
 --     weapon, "teleport", "cammina", "salta", "mira", "annulla"): the HUD
 --     highlights it and, in the lessons, time stays stopped until you touch it
@@ -355,7 +355,7 @@ function M.prepara(r, g)
 	-- (in the lessons it gives way to the hints as soon as you touch the controls)
 	if l.goal_text then
 		r.coda[1] = { testo = l.goal_text, yields = l.aspetta, highlight = l.highlight, apertura = true,
-			fino = function(_, g2) return g2.used.primary or g2.used.secondary or g2.used.tool end }
+			fino = { uno = { { usato = "primaria" }, { usato = "secondaria" }, { usato = "attrezzo" } } } }
 	end
 end
 
@@ -449,13 +449,11 @@ local function next_one(l, st)
 	end
 end
 
--- What a line waits for, as data (the level script, strumenti/copione): every
--- key of the table must hold (and), uno = { {...}, {...} } holds if one of them
--- does (or). A function(st, g, e) is still accepted, but the Copione can't
--- show or change it.
+-- What a line waits for, as data only (the level script, strumenti/copione):
+-- every key of the table must hold (and), uno = { {...}, {...} } holds if one
+-- of them does (or)
 local USED = { primaria = "primary", secondaria = "secondary", attrezzo = "tool" }
 local function when(q, st, g, e)
-	if type(q) == "function" then return q(st, g, e) end
 	if q.uno then
 		local any = false
 		for _, o in ipairs(q.uno) do

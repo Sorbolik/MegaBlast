@@ -1,5 +1,7 @@
 # Il Copione
 
+Il formato dei livelli è in [docs/copione.md](../../docs/copione.md).
+
 La dashboard della campagna (Sergio, 6 nov 2026; proposta
 https://claude.ai/artifact/2EPgEANUbEMLYJhG2iaGBi): tutti i capitoli e i loro
 livelli, e per ogni livello un editor grafico (mappa da scorrere, spawn,

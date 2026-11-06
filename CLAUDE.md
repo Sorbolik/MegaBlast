@@ -159,7 +159,7 @@ righe e vignette coi loro trigger, casse, carte, Favilla) sta solo come dati in
 `client/sim/levels.lua`; i capitoli in `client/sim/campaign.lua`. Niente funzioni nei
 livelli: i trigger sono i verbi di `client/sim/missions.lua` (un verbo nuovo va lì e in
 `strumenti/copione/controlla.lua`, che gira in `tutti.sh`). È la base del Copione, la
-dashboard della campagna (`strumenti/copione/`, vedi il README).
+dashboard della campagna (`strumenti/copione/`); il formato è in [docs/copione.md](docs/copione.md).
 
 ## Vignette
 
