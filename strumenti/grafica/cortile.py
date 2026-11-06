@@ -78,16 +78,17 @@ def corna(gx, hy):
     return sag, occhi
 
 
-def muro(y_cima, y_base, portoni=2):
+def muro(y_cima, y_base, portoni=2, L=T, fondo=H + 40):
     """Il muro del cortile in un giro: merli, due ordini di arcate, il ballatoio con la
     balaustra, i portoni con la grata, le torrette coi bracieri, il teschio e gli stendardi.
+    L: quanto è largo (il giro, prima della scala); fondo: dove finisce in basso.
     -> sagome, aperture accese, fiamme, parti scure davanti (grata, occhi), stendardi"""
     sag, aperture, fiamme, scuro, stendardi = [], [], [], [], []
-    p = [(0, H + 40), (0, y_cima)]
-    for x in range(0, T, 44):
+    p = [(0, fondo), (0, y_cima)]
+    for x in range(0, int(L) + 44, 44):
         p += [(x, y_cima), (x, y_cima - 16), (x + 22, y_cima - 16), (x + 22, y_cima)]
-    sag.append(p + [(T, y_cima), (T, H + 40)])
-    passo = T / portoni
+    sag.append(p + [(L, y_cima), (L, fondo)])
+    passo = L / portoni
     for k in range(portoni):
         gx = k * passo + passo * .5
         for j in (-3, -2, -1, 1, 2, 3):
@@ -102,11 +103,11 @@ def muro(y_cima, y_base, portoni=2):
                 sag.append([(xx, y_base - 176), (xx, y_base - 200), (xx + 4, y_base - 200), (xx + 4, y_base - 176)])
         sag.append([(gx - 560, y_base - 203), (gx + 560, y_base - 203), (gx + 560, y_base - 198), (gx - 560, y_base - 198)])
         # la torre del portone e le due torrette coi bracieri accesi e gli stendardi
-        sag.append([(gx - 150, H + 40), (gx - 150, y_cima - 110), (gx + 150, y_cima - 110), (gx + 150, H + 40)])
+        sag.append([(gx - 150, fondo), (gx - 150, y_cima - 110), (gx + 150, y_cima - 110), (gx + 150, fondo)])
         for sx in (-1, 1):
             tx = gx + sx * 160 - 40
-            sag.append([(tx, H + 40), (tx, y_cima - 150), (tx - 8, y_cima - 150), (tx - 8, y_cima - 170), (tx + 88, y_cima - 170),
-                        (tx + 88, y_cima - 150), (tx + 80, y_cima - 150), (tx + 80, H + 40)])
+            sag.append([(tx, fondo), (tx, y_cima - 150), (tx - 8, y_cima - 150), (tx - 8, y_cima - 170), (tx + 88, y_cima - 170),
+                        (tx + 88, y_cima - 150), (tx + 80, y_cima - 150), (tx + 80, fondo)])
             s, f = braciere(tx + 40, y_cima - 170, 6)
             sag += s
             fiamme.append(f)
@@ -160,6 +161,48 @@ def attrezzi(rng, y0):
     return sag + [[(0, H + 40), (0, y0), (T, y0), (T, H + 40)]]
 
 
+# il muro dello sfondo in scala, e dove poggia; il cortile basso sotto, coi suoi attrezzi
+K_MURO, BASE, Y_ATTREZZI = .72, 470, 700
+
+
+def cortile_basso():
+    """Il selciato del cortile basso, dalla base del muro fino sotto il quadro."""
+    return [[(0, BASE - 2), (T, BASE - 2), (T, H + 40), (0, H + 40)]]
+
+
+def fughe():
+    """Le file del selciato, più fitte in alto (lontano) e più rade in basso, e il buio che sale
+    dal fondo: sotto il quadro lo shader continua l'ultima riga, che così è tutta uguale."""
+    s, y, k = "", BASE + 6, 7
+    while y < H - 20:
+        s += '<rect x="0" y="%g" width="%g" height="%g" fill="%s" opacity=".8"/>' % (y, T, 1 + k / 10, c(.12))
+        y += k
+        k *= 1.35
+    # le giunte che scappano verso il portone (il punto di fuga sta in alto, dietro il muro)
+    for gx in (T / 4, T * 3 / 4):
+        for i in range(-16, 17):
+            x0 = gx + i * 40
+            s += '<line x1="%g" y1="%g" x2="%g" y2="%g" stroke="%s" stroke-width="1.6" opacity=".6"/>' % (
+                x0, BASE, gx + i * 40 * 4.2, H + 40, c(.12))
+    gid = Id.new("buio")
+    s += ("<defs><linearGradient id='%s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%s' stop-opacity='0'/>"
+          "<stop offset='1' stop-color='%s' stop-opacity='.95'/></linearGradient></defs>"
+          '<rect x="0" y="%g" width="%g" height="%g" fill="url(#%s)"/><rect x="0" y="%g" width="%g" height="60" fill="%s" opacity=".95"/>'
+          % (gid, c(.08), c(.08), BASE + 20, T, H - BASE - 20, gid, H, T, c(.08)))
+    return colora(s, "sfondo", P)
+
+
+def riflessi():
+    """La luce delle arcate e del portone che cade sul selciato davanti al muro."""
+    s, passo = "", T / 2
+    for k in range(2):
+        gx = k * passo + passo * .5
+        for j, w, op in [(0, 150, .35)] + [(j, 70, .16) for j in (-3, -2, -1, 1, 2, 3)]:
+            x = gx + j * 150 * K_MURO
+            s += poly([(x - w * .4, BASE), (x + w * .4, BASE), (x + w * .75, BASE + 70), (x - w * .75, BASE + 70)], P["luce"], op * .5)
+    return s
+
+
 def luce(polys, op, dal_basso=False):
     """La luce della Forgia (arcate, portone, fiamme): nella tinta della luce, non delle ombre."""
     if not dal_basso:
@@ -175,14 +218,19 @@ def sfondo():
     i piani del cortile messi nei tre gruppi dello shader, già colorati nella tinta della Forgia."""
     rng = random.Random(11)
     LATO[0] = 1
-    sag, aperture, fiamme, scuro, stendardi = muro(300, 640)
+    # il muro più piccolo e più in alto (Sergio, 6 nov: sotto le piattaforme si vedeva la base
+    # del muro): sotto c'è il cortile basso, il selciato visto dall'alto che scende nel buio
+    sag, aperture, fiamme, scuro, stendardi = muro(300, 640, L=T / K_MURO, fondo=650)
+    in_scala = lambda svg: '<g transform="translate(0,%g) scale(%g)">%s</g>' % (BASE - 640 * K_MURO, K_MURO, svg)
     piani = [   # (velocità, sagome da sfumare, luce, parti scure davanti)
         (.04, nubi(rng, 10, "#120806", .35, (40, 200)), "", ""),
         (.08, poligoni(torri(rng, 330, 9, (40, 90), (80, 240)), c(.7)) + poligoni(creste(rng, 330, 60, 160), c(.7)), "", ""),
         (.15, poligoni(camini(rng, 360, 8), c(.58)), "", ""),
-        (.25, poligoni(sag, c(.3)) + "".join(poly(p, c(.42)) for p in stendardi) + "".join(poly(p, c(.2)) for p in emblemi(stendardi)),
-         luce(aperture, .5, True) + luce(fiamme, .85), "".join(poly(p, c(.2)) for p in scuro)),
-        (.75, poligoni(attrezzi(rng, 700), "#0e0504"), "", ""),
+        (.25, poligoni(cortile_basso(), c(.24)) + in_scala(poligoni(sag, c(.3)) + "".join(poly(p, c(.42)) for p in stendardi)
+                                                         + "".join(poly(p, c(.2)) for p in emblemi(stendardi))),
+         in_scala(luce(aperture, .5, True) + luce(fiamme, .85)) + riflessi(),
+         in_scala("".join(poly(p, c(.2)) for p in scuro)) + fughe()),
+        (.75, poligoni(attrezzi(rng, Y_ATTREZZI), "#0e0504"), "", ""),
     ]
     gruppi = {n: ([], []) for n, _, _ in GRUPPI}
     # la foschia calda dietro il muro: ferma, va col gruppo lontano (come in dipinto.piani)
