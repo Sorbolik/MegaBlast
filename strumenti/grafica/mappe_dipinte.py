@@ -271,6 +271,9 @@ def main():
     righe += ["\t},", "}", ""]
     open(LUA, "w").write("\n".join(righe))
     print("fatto:", len(lavori), "immagini")
+    # le miniature delle missioni della CAMPAGNA si rifanno dai dipinti nuovi
+    import miniature_missioni
+    miniature_missioni.main()
 
 
 if __name__ == "__main__":

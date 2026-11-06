@@ -13,12 +13,16 @@
 #   <id>.jpg         la cartolina prima della missione (client/ui/postcard.lua)
 #   <id>_carta.jpg   la carta sulla bacheca della CAMPAGNA (client/menu/campaign.lua)
 #   <id>_finale.jpg  la striscia del finale del capitolo (solo l'ultima missione)
-# Si rifà quando cambia una mappa, un'arena o un dipinto (dopo mappe_dipinte.py).
+# Si rifà da sola alla fine di mappe_dipinte.py (quando si ridipinge); se cambia una mappa
+# o un'arena senza ridipingere, il controllo veloce (tutti.sh, --controlla) dice di rilanciarla.
 #
-#   python3 strumenti/grafica/miniature_missioni.py      (dalla cartella del repository)
-import json, os, subprocess
-import numpy as np
-from PIL import Image, ImageFilter
+#   python3 strumenti/grafica/miniature_missioni.py               (dalla cartella del repository)
+#   python3 strumenti/grafica/miniature_missioni.py --controlla    (solo il controllo)
+import hashlib, json, os, subprocess, sys
+# il controllo (--controlla) gira anche dove non ci sono numpy e Pillow (GitHub)
+if "--controlla" not in sys.argv:
+    import numpy as np
+    from PIL import Image, ImageFilter
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
@@ -187,8 +191,41 @@ def ritaglio(griglia, w, h):
     return (int(left), int(top), int(left + bw), int(top + bh))
 
 
+# Le impronte di quello che fa ogni miniatura (la forma del livello, i dipinti che usa e
+# questo strumento): se cambia una mappa, un'arena o un dipinto e le miniature no, il
+# controllo veloce (strumenti/controlli/tutti.sh) lo dice
+IMPRONTE = os.path.join(QUI, "miniature_missioni.impronte.json")
+
+
+def impronta(m):
+    h = hashlib.sha1()
+    h.update(open(os.path.abspath(__file__), "rb").read())
+    h.update(json.dumps({k: m[k] for k in ("id", "mappa", "sfondo", "finale", "gruppi", "rows")}, sort_keys=True).encode())
+    file = [os.path.join(DIPINTI, "maps", "%s_1.png" % m["mappa"])]
+    if m["sfondo"]:
+        file.append(os.path.join(DIPINTI, "backgrounds", "%s_cielo_1.png" % m["sfondo"]))
+        file += [os.path.join(DIPINTI, "backgrounds", "%s_%s_1.png" % (m["sfondo"], g["name"])) for g in m["gruppi"]]
+    for f in file:
+        if os.path.exists(f):
+            h.update(open(f, "rb").read())
+    return h.hexdigest()
+
+
+def controlla():
+    """Il controllo veloce: le miniature sono quelle della mappa di oggi?"""
+    vecchie = json.load(open(IMPRONTE)) if os.path.exists(IMPRONTE) else {}
+    da_rifare = [m["id"] for m in leggi() if vecchie.get(m["id"]) != impronta(m)]
+    if da_rifare:
+        print("miniature delle missioni da rifare (%s): python3 strumenti/grafica/miniature_missioni.py"
+              % ", ".join(da_rifare))
+        return False
+    print("miniature delle missioni in pari con mappe e dipinti")
+    return True
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    impronte = {}
     for m in leggi():
         im, griglia = scena(m)
         for suffisso, (w, h) in FORMATI.items():
@@ -197,7 +234,13 @@ def main():
             f = os.path.join(OUT, m["id"] + suffisso + ".jpg")
             im.crop(ritaglio(griglia, w, h)).resize((w, h), Image.LANCZOS).save(f, quality=88, optimize=True)
             print("scritta", os.path.relpath(f, RADICE))
+        impronte[m["id"]] = impronta(m)
+    with open(IMPRONTE, "w") as f:
+        json.dump(impronte, f, indent=1, sort_keys=True)
+        f.write("\n")
 
 
 if __name__ == "__main__":
+    if "--controlla" in sys.argv:
+        sys.exit(0 if controlla() else 1)
     main()
