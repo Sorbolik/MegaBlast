@@ -40,7 +40,6 @@ uniform fs_uniforms
 };
 
 const mediump vec2 CELLA = vec2(1.0 / 640.0, 1.0 / 360.0);
-const mediump vec3 BRACE = vec3(1.0, 0.478, 0.102);
 
 // lo sfondo è misurato su una mappa di 1280 x 720 (var_zoom è già riportato lì)
 const highp vec2 MONDO = vec2(1280.0, 720.0);
@@ -136,12 +135,11 @@ void main()
     // (mai zero: smoothstep con i due bordi uguali non è definito)
     mediump float aa = max(fwidth(dc) * 0.5, 0.01);
     // sotto la mappa (la camera ci scende perché l'HUD non copra il terreno):
-    // il baratro, sempre più buio, con il bagliore della brace appena sotto il bordo
+    // il baratro, sempre più buio (niente bagliore: partiva di colpo dal fondo della mappa e
+    // faceva una riga netta, Sergio 6 nov)
     if (var_uv.y < 0.0 && opzioni.x < 0.5) {
         highp float giu = -var_uv.y * 1080.0;
         mediump vec3 col = sfondo() * (1.0 - smoothstep(0.0, 160.0, giu) * 0.75);
-        // il bagliore solo sotto la mappa, non sotto le bande ai lati
-        col += BRACE * exp(-giu / 45.0) * 0.18 * step(0.0, var_uv.x) * step(var_uv.x, 1.0);
         out_fragColor = vec4(col, 1.0);
         return;
     }
