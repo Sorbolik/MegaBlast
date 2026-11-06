@@ -165,6 +165,16 @@ def attrezzi(rng, y0):
 K_MURO, BASE, Y_ATTREZZI = .72, 470, 700
 
 
+# il portone non al centro del quadro ma un po' a sinistra: al centro, dietro la lava
+# delle lezioni, era triste (Sergio, 6 nov)
+SPOSTA = -320
+
+
+def sposta(svg):
+    """Il disegno spostato di lato, ripetuto un giro più in là perché il giro resti pieno."""
+    return "".join('<g transform="translate(%g,0)">%s</g>' % (dx, svg) for dx in (SPOSTA, SPOSTA + T))
+
+
 def cortile_basso():
     """Il selciato del cortile basso, dalla base del muro fino sotto il quadro."""
     return [[(0, BASE - 2), (T, BASE - 2), (T, H + 40), (0, H + 40)]]
@@ -221,14 +231,14 @@ def sfondo():
     # il muro più piccolo e più in alto (Sergio, 6 nov: sotto le piattaforme si vedeva la base
     # del muro): sotto c'è il cortile basso, il selciato visto dall'alto che scende nel buio
     sag, aperture, fiamme, scuro, stendardi = muro(300, 640, L=T / K_MURO, fondo=650)
-    in_scala = lambda svg: '<g transform="translate(0,%g) scale(%g)">%s</g>' % (BASE - 640 * K_MURO, K_MURO, svg)
+    in_scala = lambda svg: sposta('<g transform="translate(0,%g) scale(%g)">%s</g>' % (BASE - 640 * K_MURO, K_MURO, svg))
     piani = [   # (velocità, sagome da sfumare, luce, parti scure davanti)
         (.04, nubi(rng, 10, "#120806", .35, (40, 200)), "", ""),
         (.08, poligoni(torri(rng, 330, 9, (40, 90), (80, 240)), c(.7)) + poligoni(creste(rng, 330, 60, 160), c(.7)), "", ""),
         (.15, poligoni(camini(rng, 360, 8), c(.58)), "", ""),
         (.25, poligoni(cortile_basso(), c(.24)) + in_scala(poligoni(sag, c(.3)) + "".join(poly(p, c(.42)) for p in stendardi)
                                                          + "".join(poly(p, c(.2)) for p in emblemi(stendardi))),
-         in_scala(luce(aperture, .5, True) + luce(fiamme, .85)) + riflessi(),
+         in_scala(luce(aperture, .5, True) + luce(fiamme, .85)) + sposta(riflessi()),
          in_scala("".join(poly(p, c(.2)) for p in scuro)) + fughe()),
         (.75, poligoni(attrezzi(rng, Y_ATTREZZI), "#0e0504"), "", ""),
     ]
@@ -305,6 +315,15 @@ def rune(x, y, w, h):
                    % (x + 30 + i * 60, y + h / 2 - 10, x + 30 + i * 60, y + h / 2 - 10, col) for i in range(int(w / 60)))
 
 
+def base(x0, x1):
+    """La base sotto il blocco della lezione: una fascia di pietra più scura e un po' più
+    larga, col bordo tutt'intorno, che chiude il blocco sul fondo del quadro."""
+    return ('<rect x="%g" y="704" width="%g" height="14" fill="%s" stroke="%s" stroke-width="3"/>'
+            '<line x1="%g" y1="705.5" x2="%g" y2="705.5" stroke="%s" stroke-width="2"/>'
+            % (x0 - 8, x1 - x0 + 16, mix(M["corpo"], "#000", .35), M["bordo"],
+               x0 - 6, x1 + 6, mix(M["crosta"], M["luce"], .15)))
+
+
 def lava(x0, x1):
     """La lava in fondo al burrone: cadere è il pericolo, quindi resta accesa."""
     return ('<defs><linearGradient id="lavac" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc24a"/>'
@@ -334,11 +353,24 @@ def lezione(mid, arena):
     ruoli = LEZIONI[mid]
     out = ""
     rive = sorted(r for r, ru in zip(rett, ruoli) if ru == "selciato")
-    for a, b in zip(rive, rive[1:]):       # un burrone fra due rive allo stesso livello
+    # la lezione è un blocco solo (Sergio, 6 nov: si vede tutto sullo schermo, niente che
+    # s'interrompa di netto): fra due rive in fondo la lava sta in una vasca di pietra, e
+    # sotto tutto il blocco c'è la base, col suo bordo
+    vasche = []
+    for a, b in zip(rive, rive[1:]):
         if b[0] - (a[0] + a[2]) > 40 and a[1] + a[3] >= 700 and b[1] + b[3] >= 700:
-            out += lava(a[0] + a[2], b[0])
+            # la parete di fondo della vasca, in ombra: il blocco resta pieno anche sopra la lava
+            x0, x1, y0 = a[0] + a[2], b[0], max(a[1], b[1])
+            out += '<rect x="%g" y="%g" width="%g" height="%g" fill="%s"/>' % (x0 - 1, y0, x1 - x0 + 2, 712 - y0, mix(M["corpo"], "#000", .55))
+            out += "".join('<line x1="%g" y1="%g" x2="%g" y2="%g" stroke="%s" stroke-width="2" opacity=".6"/>' % (
+                x0, yy, x1, yy, mix(M["bordo"], "#000", .3)) for yy in range(int(y0) + 22, 690, 22))
+            out += lava(x0, x1)
+            vasche.append((a[0] + a[2] - 1, 706, b[0] - a[0] - a[2] + 2, 14))
     pietra = [blocco(*r, c=0) for r, ru in zip(rett, ruoli) if ru in ("selciato", "pilastro", "appesa")]
-    out += solido(pietra, dict(M), g_dipinto(), rng)
+    out += solido(pietra + [blocco(*v, c=0) for v in vasche], dict(M), g_dipinto(), rng)
+    a_terra = [r for r, ru in zip(rett, ruoli) if ru == "selciato" and r[1] + r[3] >= 700] + vasche
+    if a_terra:
+        out += base(min(r[0] for r in a_terra), max(r[0] + r[2] for r in a_terra))
     for (x, y, w, h), ru in zip(rett, ruoli):
         if ru == "selciato":
             out += selciato(x, y, w, rng)

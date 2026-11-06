@@ -140,8 +140,8 @@ void main()
     if (var_uv.y < 0.0 && opzioni.x < 0.5) {
         highp float giu = -var_uv.y * 1080.0;
         mediump vec3 col = sfondo() * (1.0 - smoothstep(0.0, 160.0, giu) * 0.75);
-        // il bagliore solo sotto la mappa, non sotto le bande ai lati
-        col += BRACE * exp(-giu / 45.0) * 0.18 * step(0.0, var_uv.x) * step(var_uv.x, 1.0);
+        // (sfumato verso i lati: un taglio netto dove finisce la mappa si vedeva)
+        col += BRACE * exp(-giu / 45.0) * 0.18 * smoothstep(-0.06, 0.06, var_uv.x) * smoothstep(1.06, 0.94, var_uv.x);
         out_fragColor = vec4(col, 1.0);
         return;
     }
