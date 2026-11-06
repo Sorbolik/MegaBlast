@@ -197,7 +197,7 @@ function M.prova(p)
 		colpo_lungo = 700, casse = 6, serie = 2, armi = { missile = 1200, sniper = 900 } }
 	p.serie, p.badge = 1, { "colpo_lungo" }
 	-- the campaign: the Training done, the Forge up to the Due mani (the board, scenari/bacheca.txt)
-	for _, id in ipairs({ "primi_passi", "lanciarune", "turno", "tempo", "spostano", "attrezzi", "guidata" }) do
+	for _, id in ipairs({ "primi_passi", "lanciarune", "turno", "prima_sfida", "attrezzi", "spostano", "sfida_burrone", "tempo", "guidata" }) do
 		p.stelle[id] = { true, id ~= "turno", id == "primi_passi" or id == "guidata" }
 	end
 	p.stelle.primo_sangue, p.stelle.fuori_portata = { true, true, false }, { true, false, false }

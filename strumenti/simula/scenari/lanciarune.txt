@@ -1,9 +1,10 @@
-# Il mio vecchio Lanciarune (computer): Favilla sul ballatoio butta giù la
-# cassa; presa, l'arma vola al suo tasto (niente scheda), la vignetta della mira; il primo tiro a
-# vuoto e Ritenta nella striscia; il fantoccio vicino, poi quello sul ballatoio.
+# Il mio vecchio Lanciarune (computer): spiega, mostra, tocca a te, bravo. Favilla
+# butta giù la cassa; presa, l'arma vola al suo tasto, la vignetta della mira
+# (spiega), poi il turno passa a lei: dal ballatoio tira sul fantoccio vicino
+# (mostra); poi tocca a te: il tiro a vuoto, il colpo, "Bel colpo!" (bravo).
 imposta prova_missione lanciarune
 aspetta 2.5
-foto 00_tavola                       # prima la cartolina della missione (WB-015), la mappa non c'è ancora
+foto 00_tavola                       # prima la cartolina della missione
 tocca 970 116                        # AVANTI sulla cartolina: la fiammella, poi la mappa
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
@@ -13,19 +14,21 @@ aspetta 0.6
 foto 01_inizio                       # la cassa che cade
 tieni destra 4                       # fino alla cassa
 aspetta_evento crate_pick 10
-aspetta 0.05
-foto 02_arma_vola                    # il Lanciarune vola al suo tasto
-aspetta 1.4                          # la vignetta aspetta che arrivi
-foto 03_vignetta_mira                # la vignetta della mira
-tocca 640 360                        # fuori dal pulsante: non si chiude
-aspetta 0.3
-tocca 293 214                        # VAI! (sotto il ritratto)
-aspetta 0.6
+aspetta 1.4                          # la vignetta aspetta che l'arma arrivi al tasto
+foto 02_vignetta_mira                # spiega: la vignetta della mira
+tocca 293 214                        # VAI!
+aspetta 1.5
+foto 03_favilla_dice                 # mostra: il turno passa a Favilla, la sua battuta
+aspetta_evento demo_end 15
+aspetta 0.2
+foto 04_favilla_posa                 # il fantoccio colpito, Favilla festeggia
+aspetta_stato turno=1 fase=aim 10
+aspetta 0.5
 mira -100 30 1
 aspetta_evento explosion 6
 aspetta 2
-foto 04_ritenta                      # a vuoto: Ritenta nella striscia
-mira 141 77 1 05_mira
+foto 05_ritenta                      # tocca a te: a vuoto, Ritenta
+mira 141 77 1 06_mira
 aspetta_evento damage 6
 aspetta 2
-foto 06_bel_colpo                    # "Bel colpo!", il fantoccio sul ballatoio
+foto 07_bel_colpo                    # bravo: "Bel colpo!"
