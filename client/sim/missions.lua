@@ -592,6 +592,8 @@ end
 -- (if you haven't already touched it this turn).
 local function show_line(r, line)
 	r.riga, r.line_until, r.line_yields, r.line = line.testo, line.fino, line.yields, line
+	-- a big vignette: Favilla shows the move only once it has been read (M.letta)
+	r.big_unread = line.mostra == "grande" or nil
 	r.line_ticks = line.secondi and line.secondi * 60 or (line.fino and 2 or 1) * LINE_SECONDS * 60
 	r.luce = line.highlight
 	r.awaiting = nil
@@ -604,7 +606,7 @@ end
 -- The line goes away: if it was waiting for a control, time restarts
 local function clear_line(r)
 	if r.awaiting then r.attesa, r.awaiting, r.fermo = false, nil, nil end
-	r.riga, r.line_ticks, r.luce, r.line_yields, r.line = nil, nil, nil, nil, nil
+	r.riga, r.line_ticks, r.luce, r.line_yields, r.line, r.big_unread = nil, nil, nil, nil, nil, nil
 end
 
 local function count(st, k)
@@ -1039,7 +1041,8 @@ local function demonstrations(r, g)
 	end
 	-- (without someone pressing her keys, as in the bot trial, she shows nothing)
 	if not r.can_demo or r.esito or g.current ~= PLAYER or g.phase ~= "aim" or not settled(g, g.robots[PLAYER]) then return end
-	-- first she explains (the big vignette still in the queue), then she shows
+	-- first she explains (the big vignette still to read or in the queue), then she shows
+	if r.big_unread then return end
 	for _, q in ipairs(r.coda) do
 		if q.mostra == "grande" then return end
 	end
@@ -1178,6 +1181,12 @@ function M.tick(r, g)
 		if r.line_ticks <= 0 then clear_line(r) end
 	end
 	return r.esito
+end
+
+-- The big vignette of the line was read (closed with VAI): Favilla's demonstration
+-- waiting for it can start
+function M.letta(r)
+	if r then r.big_unread = nil end
 end
 
 -- The weapon card to open (mission cards), once

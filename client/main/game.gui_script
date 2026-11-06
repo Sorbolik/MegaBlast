@@ -2370,6 +2370,10 @@ function CP.mission_line(self, r)
 			end
 		end
 	end
+	-- the big vignette read (VAI, or vignettes off): now Favilla can show the move
+	if line.mostra == "grande" and (not self.vign_on or (self.vign_line == line and not self.carta)) then
+		missions.letta(r)
+	end
 	-- a big vignette still waiting to open (a weapon found is flying to its
 	-- button): the strip waits too, it comes after VAI, not before (Sergio, 6 Nov)
 	if (line.apertura or line.mostra == "grande") and self.vign_on and self.vign_line ~= line then

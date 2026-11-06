@@ -1,20 +1,65 @@
-# Una lezione dell'Addestramento (imposta prova_missione spostano, Armi che ti
-# muovono): niente tempo né punti, nell'HUD solo Lanciarune e Lama. Cade la
-# cassa col Tonante: vola al suo tasto (niente scheda), poi
-# il Tonante prende il posto della Lama e la riga lo mette in luce; scelto, la
-# riga dice di saltare (sul computer pulsa il tasto SPAZIO).
-imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+# Arriva in cima (imposta prova_missione spostano): spiega, mostra, tocca a te,
+# bravo, due volte. La cassa col Tonante; la vignetta del rinculo; Favilla sulla
+# sua corsia salta e spara in basso, sale sul pilastro basso; tu sul tuo. "Su!
+# Adesso il Maglio" (bravo), la cassa col Maglio, la vignetta; Favilla rimbalza
+# sul pilastro alto; tu in cima: FATTA.
 imposta prova_missione spostano
-aspetta_stato modo=local turno=1 fase=aim 8
-aspetta 1.5
-foto 01_scopo                        # la cassa cade davanti, niente cronometro
+aspetta 2.5
+tocca 970 116                        # AVANTI sulla cartolina
+aspetta_stato modo=local fase=aim 8
+aspetta 1.2
+foto 01_vignetta                     # la vignetta d'apertura
+tocca 912 289
+aspetta 0.3
+tocca 293 214
+aspetta 1
 cammina destra 715
 tieni destra 0.5                     # fino alla cassa
 aspetta_evento crate_pick 10
-aspetta 0.2
-foto 02_tonante_vola                 # il Tonante vola al suo tasto
-aspetta 1
-foto 03_tonante_in_luce
-premi 3                              # il Tonante (dopo Lanciarune e Lama)
-aspetta 1
-foto 04_salta                        # SPAZIO che pulsa
+aspetta 1.5
+foto 02_vignetta_tonante             # spiega: il Tonante
+tocca 912 289
+aspetta 0.3
+tocca 293 214
+aspetta 2.5
+foto 03_favilla_tonante              # mostra: Favilla salta e spara in basso
+aspetta_evento demo_end 15
+aspetta 0.3
+foto 04_favilla_su
+aspetta_stato turno=1 fase=aim 10
+cammina destra 975
+premi 1
+aspetta 0.3
+foto 05_tonante_in_mano
+giu destra
+tieni salta 0.5
+mira -25 -120 0.05
+aspetta_evento eagle 2
+aspetta 1.5
+su destra
+aspetta 0.5
+foto 06_bravo                        # bravo: "Su! Adesso il Maglio"
+tieni destra 0.8                     # la cassa del Maglio
+aspetta_evento crate_pick 10
+aspetta 1.5
+foto 07_vignetta_maglio              # spiega: il Maglio
+tocca 912 289
+aspetta 0.3
+tocca 293 214
+aspetta 2.5
+foto 08_favilla_maglio               # mostra: Favilla rimbalza sul pilastro alto
+aspetta_evento demo_end 15
+aspetta 0.3
+foto 09_favilla_in_cima
+aspetta_stato turno=1 fase=aim 10
+cammina sinistra 1080
+premi 1
+tieni salta 0.3
+aspetta 0.3
+mira 120 0 0.05
+aspetta_evento mallet_hit 2
+giu destra
+aspetta 1.5
+su destra
+aspetta 2
+foto 10_fatta                        # in cima: FATTA e la medaglia
