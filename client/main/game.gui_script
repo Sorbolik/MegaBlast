@@ -2370,6 +2370,12 @@ function CP.mission_line(self, r)
 			end
 		end
 	end
+	-- a big vignette still waiting to open (a weapon found is flying to its
+	-- button): the strip waits too, it comes after VAI, not before (Sergio, 6 Nov)
+	if (line.apertura or line.mostra == "grande") and self.vign_on and self.vign_line ~= line then
+		self.vign:say(nil)
+		return
+	end
 	-- the opening line, once read on the big vignette, doesn't stay in the strip:
 	-- what to do is in the goal (Sergio, 4 Nov)
 	if line.apertura and self.vign_line == line then
