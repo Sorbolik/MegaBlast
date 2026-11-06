@@ -8,7 +8,7 @@
 --   local coda = require "menu.queue"
 --   local c = coda.new()
 --   local fine = coda.on_input(c, action_id, action)
---     -- "indietro", { coda = "2v2" | "1v1" | event id }, or nil
+--     -- "indietro", "privata" (menu/private.lua), { coda = "2v2" | "1v1" | event id }, or nil
 --   coda.destroy(c)
 
 local ui = require "ui.ui"
@@ -92,6 +92,14 @@ local function build(c)
 	local u = ui.button(c.buttons, x, CY - H2 / 2 + h1 / 2, w, h1, "", "coda:1v1", nil, c.radice)
 	riga(common.modes["1v1"], -w / 2 + 24, 0, 0.85, C.TEXT, u)
 	to_right(common.play, w / 2 - 24, 0, 0.9, C.OFF, u)
+
+	-- under everything, across: the private match (Sergio, 6 Nov; menu/private.lua)
+	local wp, hp = 1280 - ui.EDGE * 2, 76
+	local yp = CY - H2 / 2 - 24 - hp / 2
+	local pv = ui.button(c.buttons, 640, yp, wp, hp, "", "privata", nil, c.radice)
+	riga(T.private, -wp / 2 + 24, 0, 0.85, C.TEXT, pv)
+	riga(T.private_line, -wp / 2 + 330, 0, 0.7, C.OFF, pv)
+	to_right(common.play, wp / 2 - 24, 0, 0.9, C.OFF, pv)
 end
 
 function M.new()
@@ -109,7 +117,7 @@ end
 function M.on_input(c, action_id, action)
 	local ui_action = ui.tocco(c.buttons, action_id, action)
 	if not ui_action then return nil end
-	if ui_action == "indietro" then return "indietro" end
+	if ui_action == "indietro" or ui_action == "privata" then return ui_action end
 	return { coda = ui_action:match("^coda:(.*)$") }
 end
 

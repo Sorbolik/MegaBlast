@@ -101,6 +101,27 @@ corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: 
 `hx`, `hy`; `gs`: il suo uncino del Rampino è in volo, in `gx`, `gy`; `kn`: sbalzato da un colpo; `la`: direzione dello scatto
 dell'Affondo).
 
+## Partite private
+
+Per provare con gli amici o coi bot (Sergio, 6 nov; `server/private.go`, nel
+gioco PARTITA PRIVATA in DOVE GIOCHI?, `client/menu/private.lua`). Il `hello`
+con `"privata":"nuova"` apre una stanza e le dà un codice di 4 cifre; con
+`"privata":"4821"` si entra in quella stanza, al posto del primo bot (codice
+sbagliato: `{"t":"error","e":"codice"}`; stanza piena di persone: `"piena"`).
+La stanza ha un posto per ogni giocatore del modo (`config.MODES`, quindi le
+squadre), ognuno una persona o un bot di un grado da 1 a 10 (`sim/bot.lua`
+`GRADES`; all'inizio quello della coda, `botGrade`). A ogni cambio tutti
+ricevono
+`{"t":"privata","code":"4821","mode":"2v2","you":1,"host":1,"posti":[{"team":1,"vetrina":{…}},{"team":2,"bot":5},…]}`.
+Chi ha creato la stanza (`host`) manda `{"t":"modo","mode":"1v1"}` (le persone
+vanno nei primi posti), `{"t":"bot","i":3,"g":7}` e `{"t":"via"}`; tutti
+possono mandare `{"t":"posto","i":3}` per passare al posto di un bot (il bot
+prende il loro: così si sceglie la squadra, con o contro i bot) e
+`{"t":"leave"}`. Se l'host esce, lo diventa la prossima persona; una stanza
+vuota sparisce. Col `via` la stanza diventa una stanza normale (`newRoom` con
+i posti come sono, `seatSpec`): scelta delle armi, schieramento e partita come
+in coda; con dei bot gira sui worker dei bot.
+
 ## Eventi
 
 Il calendario lo fa Sergio nel **pannello degli eventi** (Worker di Cloudflare

@@ -112,6 +112,7 @@ type Player struct {
 	closeOnce sync.Once
 	showcase  []byte    // the card as JSON, checked (showcaseJSON): level and badges
 	joined    time.Time // when they entered the queue (bots after BotAfter, lobby.go)
+	private   *Private  // the private room they are in before the match (private.go; under the lobby's lock)
 }
 
 // Send never blocks the match. If the client doesn't drain its messages we
@@ -175,7 +176,10 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		}
 		if ref := p.room.Load(); ref != nil {
 			ref.room.Post(roomMsg{slot: ref.slot, msg: msg})
-		} else if msg.T == "leave" {
+		} else if msg.T != "leave" {
+			// in a private room: seats, bots, mode, start (private.go)
+			s.lobby.PrivateMsg(p, msg)
+		} else {
 			// out of the queue (ESCI DALLA CODA, another queue): at once, not when
 			// the client closes, so a ghost can't hold first place (the bots'
 			// clock) or take a seat in the next match
@@ -224,6 +228,13 @@ func (s *Server) hello(p *Player, m clientMsg) bool {
 		mode = modes["2v2"]
 	}
 	p.showcase = showcaseJSON(m.Showcase)
+	// a private room (private.go): "nuova" opens one, a code joins it
+	if m.Private == "nuova" {
+		s.lobby.NewPrivate(p)
+		return true
+	} else if m.Private != "" {
+		return s.lobby.JoinPrivate(p, m.Private)
+	}
 	s.lobby.Join(p, mode)
 	return true
 }

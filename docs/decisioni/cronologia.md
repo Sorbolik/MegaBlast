@@ -173,3 +173,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 6 nov | La scintilla di Stammi dietro si prende quando il corpo la tocca, e sta sopra la testa: la prende il salto pieno. | #227 |
 | 6 nov | Il Copione più facile da usare: tutto in italiano, spiegazioni su campi e mappa, giocatori dove atterrano, passi inseriti anche in mezzo. | #227 |
 | 6 nov | Copione: dipendenze fra i passi visibili, Rivedi le frasi, GIOCA da un passo, passi da trascinare. | prossima PR |
+| 6 nov | Partita privata online per le prove: stanza con codice, modo, livello di ogni bot, con o contro i bot, VIA. | prossima PR |

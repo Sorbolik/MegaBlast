@@ -34,10 +34,12 @@ type Lobby struct {
 	mu     sync.Mutex
 	queues map[string][]*Player
 	sizes  map[string]int // players a queue's match needs (also event queues)
+	// private rooms by code (private.go)
+	privates map[string]*Private
 }
 
 func NewLobby(srv *Server) *Lobby {
-	l := &Lobby{srv: srv, queues: map[string][]*Player{}, sizes: map[string]int{}}
+	l := &Lobby{srv: srv, queues: map[string][]*Player{}, sizes: map[string]int{}, privates: map[string]*Private{}}
 	if srv.cfg.BotAfter > 0 {
 		go l.fillLoop()
 	}
@@ -131,28 +133,40 @@ func (l *Lobby) announce(name string, q []*Player, of int) {
 }
 
 func (l *Lobby) start(mode Mode, players []*Player) {
-	r, err := newRoom(l.srv, mode, players, time.Now().UnixNano()%2147483646+1, botGrade(players))
+	l.open(mode, queueSeats(mode, players, botGrade(players)))
+}
+
+// open creates the room of a full queue or of a private room (private.go)
+func (l *Lobby) open(mode Mode, specs []seatSpec) {
+	r, err := newRoom(l.srv, mode, specs, time.Now().UnixNano()%2147483646+1)
 	if err != nil {
 		log.Printf("errore simulazione: %v", err)
-		for _, p := range players {
-			p.Send([]byte(`{"t":"error"}`))
-			p.Close()
+		for _, sp := range specs {
+			if sp.p != nil {
+				sp.p.Send([]byte(`{"t":"error"}`))
+				sp.p.Close()
+			}
 		}
 		return
 	}
 	// rooms with bots on their own workers: a bot thinking (peaks of 20 ms)
 	// must not slow down the matches between people
-	if len(players) < mode.Players {
+	bots := false
+	for _, sp := range specs {
+		bots = bots || sp.p == nil
+	}
+	if bots {
 		l.srv.botSched.Add(r)
 		return
 	}
 	l.srv.sched.Add(r)
 }
 
-// Leave removes from the queue whoever disconnects while waiting.
+// Leave removes from the queue (or from the private room) whoever disconnects while waiting.
 func (l *Lobby) Leave(p *Player) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	l.leavePrivate(p)
 	for name, q := range l.queues {
 		for i, x := range q {
 			if x == p {
@@ -175,6 +189,14 @@ func (l *Lobby) Drain() {
 			p.Close()
 		}
 		delete(l.queues, name)
+	}
+	for code, r := range l.privates {
+		for _, p := range r.people() {
+			p.private = nil
+			p.Send([]byte(`{"t":"error","e":"draining"}`))
+			p.Close()
+		}
+		delete(l.privates, code)
 	}
 }
 

@@ -23,6 +23,8 @@ const (
 //	                                    "2v2", "ffa" or the id of an event with its queue, GET /eventi)
 //	                                    and card (level and badges, the others see them)
 //	{"t":"hello","v":8,"tok":"..."}    or: I'm back in the match I dropped from
+//	{"t":"hello","v":8,"privata":"nuova"} or "privata":"4821": I open a private room,
+//	                                    or join the one with that code (private.go, with its messages)
 //	{"t":"pick","w":"shards"}           start-of-match draft: one primary and one secondary
 //	                                    (the weapon tells the category; can change until time's up)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
@@ -45,6 +47,10 @@ type clientMsg struct {
 	V    int     `json:"v"`
 	Mode string  `json:"mode"`
 	Tok  string  `json:"tok"`
+	// private rooms (private.go): "nuova" or the code in the hello; seat and bot grade
+	Private string `json:"privata"`
+	I       int    `json:"i"`
+	G       int    `json:"g"`
 	// with the greeting: level and badges of the card (menu/showcase.lua, per_rete)
 	// (raw: a wrong card must not make the greeting fail)
 	Showcase json.RawMessage `json:"vetrina"`
@@ -152,11 +158,33 @@ type Room struct {
 	showcases []byte     // the players' cards as JSON, [{"liv":12,"bdg":[...]},...]
 }
 
+// seatSpec says who takes a seat of a new room, in config.MODES order: a
+// person, or a bot of grade bot (sim/bot.lua GRADES) when p is nil.
+type seatSpec struct {
+	p   *Player
+	bot int
+}
+
+// queueSeats: the people of a queue in order, then bots of grade grade in the
+// empty seats (lobby.go fills a queue after BotAfter). In queue order the
+// people land on alternating teams (config.MODES), so two people in a 2 vs 2
+// play against each other.
+func queueSeats(mode Mode, players []*Player, grade int) []seatSpec {
+	specs := make([]seatSpec, mode.Players)
+	for i := range specs {
+		if i < len(players) {
+			specs[i].p = players[i]
+		} else {
+			specs[i].bot = grade
+		}
+	}
+	return specs
+}
+
 // newRoom prepares the match outside the workers and opens the weapon draft.
-// The seats past the players are bots of grade botGrade (lobby.go fills a
-// queue after BotAfter); in queue order the players land on alternating teams
-// (config.MODES), so two people in a 2 vs 2 play against each other.
-func newRoom(srv *Server, mode Mode, players []*Player, seed int64, botGrade int) (*Room, error) {
+// specs has one entry per seat of the mode: a queue's (queueSeats) or a
+// private room's (private.go), where people and bots sit where they chose.
+func newRoom(srv *Server, mode Mode, specs []seatSpec, seed int64) (*Room, error) {
 	r := &Room{srv: srv, mode: mode, seed: seed, in: make(chan roomMsg, 64*mode.Players)}
 	eng, err := newEngine()
 	if err != nil {
@@ -168,8 +196,10 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64, botGrade int
 		var rules lua.LValue
 		if rules, err = eng.fromJSON(mode.Rules); err == nil {
 			bots := eng.L.NewTable()
-			for i := len(players); i < mode.Players; i++ {
-				bots.RawSetInt(i+1, lua.LNumber(botGrade))
+			for i, sp := range specs {
+				if sp.p == nil {
+					bots.RawSetInt(i+1, lua.LNumber(sp.bot))
+				}
 			}
 			r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), rules, bots)
 		}
@@ -189,13 +219,13 @@ func newRoom(srv *Server, mode Mode, players []*Player, seed int64, botGrade int
 	teams, showcases := []string{}, []string{}
 	for i := 0; i < mode.Players; i++ {
 		team := int(list.(*lua.LTable).RawGetInt(i + 1).(*lua.LTable).RawGetString("team").(lua.LNumber))
-		if i >= len(players) {
+		p := specs[i].p
+		if p == nil {
 			showcases = append(showcases, `{"bot":true}`)
-			teams = append(teams, fmt.Sprintf(`{"team":%d,"bot":%d}`, team, botGrade))
-			r.seats = append(r.seats, &seat{team: team, bot: botGrade})
+			teams = append(teams, fmt.Sprintf(`{"team":%d,"bot":%d}`, team, specs[i].bot))
+			r.seats = append(r.seats, &seat{team: team, bot: specs[i].bot})
 			continue
 		}
-		p := players[i]
 		if p.showcase != nil {
 			showcases = append(showcases, string(p.showcase))
 		} else {
