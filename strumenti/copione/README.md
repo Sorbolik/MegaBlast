@@ -43,14 +43,17 @@ Si fa in tre PR:
    - **Manda a Claude** scrive il documento `copione/ultima` del database
      dell'Artifact (campi `lua`: tutto `levels.lua`, `capitoli`: `M.CAPITOLI`,
      `json`, `livello`, `quando`). **Copia il Lua** fa lo stesso negli appunti.
-   - **Su Cloudflare** (Worker `megablast-copione`, `strumenti/copione/cloudflare/`):
-     dopo ogni merge su main che tocca `client/`, il Copione o la build web,
-     `.github/workflows/copione.yml` rifà pagina e build (`costruisci.sh`) e la
-     pubblica con `wrangler deploy` (a mano: Actions > Copione > Run workflow).
-     Segreti del repository: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`,
-     `COPIONE_CHIAVE`, `COPIONE_GITHUB_TOKEN`. Da lì "Manda a Claude" chiede la
-     chiave la prima volta e scrive `client/sim/levels.lua` e `copione/ultima.json`
-     nel ramo `editor-ultima` (`worker.js`).
+   - **Su Cloudflare** (Worker `megablast-copione`, `strumenti/copione/cloudflare/`),
+     come l'editor e il pannello degli eventi: repository collegato, ma dal ramo
+     `copione-pubblica`, già costruito (la build del gioco vuole Java, che la build
+     di Cloudflare non ha). Dopo ogni merge su main che tocca `client/`, il Copione
+     o la build web, `.github/workflows/copione.yml` rifà pagina e build
+     (`costruisci.sh`) e riscrive quel ramo (a mano: Actions > Copione > Run
+     workflow). Nel pannello di Cloudflare: Import repository, ramo
+     `copione-pubblica`, niente comando di build, deploy `npx wrangler deploy`;
+     variabili cifrate `EDITOR_CHIAVE` e `GITHUB_TOKEN`, le stesse dell'editor. Da lì
+     "Manda a Claude" chiede la chiave la prima volta e scrive
+     `client/sim/levels.lua` e `copione/ultima.json` nel ramo `editor-ultima`.
    - I commenti di `levels.lua` la pagina non li vede: chi prende il copione
      unisce a mano (o con `git diff`) e li tiene.
 3. **Il ritorno**: Claude scrive `levels.lua` da quello che arriva, rifà

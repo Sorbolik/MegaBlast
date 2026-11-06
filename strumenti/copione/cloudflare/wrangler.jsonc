@@ -1,6 +1,7 @@
 // Il Copione su Cloudflare: la pagina e la build web in dist/ (costruisci.sh),
-// "Manda a Claude" in worker.js. Lo pubblica .github/workflows/copione.yml
-// (wrangler deploy) dopo ogni merge su main.
+// "Manda a Claude" in worker.js. .github/workflows/copione.yml lo mette già
+// costruito nel ramo copione-pubblica; Cloudflare (repository collegato, ramo
+// copione-pubblica, niente build, deploy npx wrangler deploy) lo pubblica da lì.
 {
 	"name": "megablast-copione",
 	"main": "worker.js",

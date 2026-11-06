@@ -1,11 +1,12 @@
 // Il Copione su Cloudflare (Worker "megablast-copione", wrangler.jsonc): la
-// pagina e la build web in dist/ (costruisci.sh, lanciato da
-// .github/workflows/copione.yml dopo ogni merge su main). POST /api/manda con
-// l'intestazione X-Chiave (= COPIONE_CHIAVE) è "Manda a Claude": scrive
+// pagina e la build web in dist/ (costruisci.sh; .github/workflows/copione.yml
+// dopo ogni merge su main mette tutto, già costruito, nel ramo copione-pubblica,
+// da cui Cloudflare lo pubblica). POST /api/manda con
+// l'intestazione X-Chiave (= EDITOR_CHIAVE, la stessa dell'editor) è "Manda a Claude": scrive
 // client/sim/levels.lua e copione/ultima.json (capitoli, JSON, livello aperto,
 // quando) nel ramo editor-ultima di GitHub, da dove Claude li prende.
-// Variabili cifrate del Worker (le mette il workflow dai segreti di GitHub):
-// COPIONE_CHIAVE e GITHUB_TOKEN (token fine-grained con Contents in scrittura
+// Variabili cifrate del Worker, come nell'editor delle animazioni:
+// EDITOR_CHIAVE e GITHUB_TOKEN (token fine-grained con Contents in scrittura
 // solo su Sorbolik/MegaBlast).
 const REPO = "Sorbolik/MegaBlast";
 const RAMO = "editor-ultima";
@@ -28,7 +29,7 @@ export default {
 };
 
 async function manda(request, env) {
-	if (!env.COPIONE_CHIAVE || request.headers.get("X-Chiave") !== env.COPIONE_CHIAVE) {
+	if (!env.EDITOR_CHIAVE || request.headers.get("X-Chiave") !== env.EDITOR_CHIAVE) {
 		return new Response("chiave sbagliata", { status: 403 });
 	}
 	let corpo;

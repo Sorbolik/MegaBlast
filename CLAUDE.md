@@ -164,8 +164,8 @@ scrive `simulazione/copione/`, che si pubblica come Artifact sempre allo stesso 
 (https://claude.ai/artifact/D4mVBtXrXMEzpghAb8Sukv , i file di `game/` come `files`, capacità `db`):
 ripubblicalo quando cambiano livelli, mappe, verbi o la build. "Manda a Claude" scrive il
 documento `copione/ultima` (campo `lua`: tutto `client/sim/levels.lua`). È anche su Cloudflare
-(Worker `megablast-copione`, lo pubblica `.github/workflows/copione.yml` dopo ogni merge su
-main): da lì "Manda a Claude" scrive `client/sim/levels.lua` e `copione/ultima.json` nel ramo
+(Worker `megablast-copione`, repository collegato al ramo `copione-pubblica`, che
+`.github/workflows/copione.yml` riscrive già costruito dopo ogni merge su main): da lì "Manda a Claude" scrive `client/sim/levels.lua` e `copione/ultima.json` nel ramo
 `editor-ultima`. Il formato è in
 [docs/copione.md](docs/copione.md).
 

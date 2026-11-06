@@ -1,10 +1,10 @@
-# Il Copione su Cloudflare (Worker megablast-copione, strumenti/copione/cloudflare):
-# dopo ogni merge su main che tocca il gioco o il Copione rifà la pagina e la
-# build web per GIOCA e la pubblica. A mano: Actions > Copione > Run workflow.
-# Segreti del repository: CLOUDFLARE_API_TOKEN (modello "Edit Cloudflare Workers"),
-# CLOUDFLARE_ACCOUNT_ID, COPIONE_CHIAVE (la chiave di "Manda a Claude") e
-# COPIONE_GITHUB_TOKEN (fine-grained, Contents in scrittura solo su questo
-# repository): gli ultimi due diventano le variabili cifrate del Worker.
+# Il Copione su Cloudflare (Worker megablast-copione, strumenti/copione/cloudflare).
+# Cloudflare lo pubblica come gli altri strumenti (repository collegato), ma dal
+# ramo copione-pubblica, già costruito: la build web del gioco per GIOCA vuole
+# Java e bob.jar, che la build di Cloudflare non ha. Questo workflow, dopo ogni
+# merge su main che tocca il gioco o il Copione, rifà pagina e build
+# (costruisci.sh) e riscrive il ramo copione-pubblica con un solo commit:
+# wrangler.jsonc, worker.js e dist/. A mano: Actions > Copione > Run workflow.
 name: Copione
 on:
   push:
@@ -19,7 +19,7 @@ concurrency:
   group: copione
   cancel-in-progress: true
 permissions:
-  contents: read
+  contents: write
 jobs:
   copione:
     runs-on: ubuntu-latest
@@ -40,15 +40,15 @@ jobs:
         env:
           MEGABLAST_CACHE: ${{ runner.temp }}/cache
         run: JAVA="$(command -v java)" sh strumenti/copione/cloudflare/costruisci.sh
-      - name: Pubblica su Cloudflare
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: strumenti/copione/cloudflare
-          secrets: |
-            COPIONE_CHIAVE
-            GITHUB_TOKEN
-        env:
-          COPIONE_CHIAVE: ${{ secrets.COPIONE_CHIAVE }}
-          GITHUB_TOKEN: ${{ secrets.COPIONE_GITHUB_TOKEN }}
+      - name: Ramo copione-pubblica
+        run: |
+          P="$RUNNER_TEMP/pubblica"
+          mkdir -p "$P"
+          cp -r strumenti/copione/cloudflare/wrangler.jsonc strumenti/copione/cloudflare/worker.js strumenti/copione/cloudflare/dist "$P/"
+          cd "$P"
+          git init -q -b copione-pubblica
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Copione costruito da main ${GITHUB_SHA::7}"
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" copione-pubblica
