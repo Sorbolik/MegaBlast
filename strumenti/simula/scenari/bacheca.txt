@@ -1,5 +1,5 @@
 # La bacheca della Forgia (menu/campaign.lua): le sfide del capitolo appese come
-# cartoline, tre per riga, la prossima da fare col bordo d'oro e NUOVA, il finale
+# cartoline, tre per riga, la prossima da fare con NUOVA, il finale
 # nella striscia larga sotto. Con prova_profilo 1 l'Addestramento è fatto e la
 # Forgia è aperta fino a Due mani: la CAMPAGNA si apre lì (ogni carta con la
 # miniatura della sua mappa e l'etichetta del tipo, il finale più alto). Nell'Addestramento la carta di
