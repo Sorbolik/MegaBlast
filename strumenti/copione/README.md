@@ -32,7 +32,13 @@ Si fa in tre PR:
    e vicini in `pagina.html`: un evento o un comando nuovo va anche lì), con «Come si usa»
    e la legenda in cima al pannello. I passi si inseriscono anche in mezzo («+ passo
    nuovo» nella sequenza, o prima/dopo quello scelto): frasi, casse, carte e Favilla
-   legate ai passi si rinumerano da sole (`rinumera`). Si rifà e si ripubblica così:
+   legate ai passi si rinumerano da sole (`rinumera`).
+   Ogni passo è una carta d'oro nella sequenza, con le frecce fra un momento e l'altro e
+   «Serve:» (`dipendenze`: la cassa da prendere, il robot da colpire, l'arma se si parte
+   senza), in rosso se arriva tardi; si trascina su un'altra colonna per spostarlo. Sulla
+   mappa un filo d'oro va da un passo al successivo. «▶ GIOCA da qui» prova il livello da
+   quel passo (`livelloDa`: i passi prima tolti, quello che partiva finiti loro arriva
+   subito); «Rivedi le frasi» mostra in fila tutto quello che legge il giocatore. Si rifà e si ripubblica così:
 
    ```bash
    python3 strumenti/copione/prepara.py --gioco
