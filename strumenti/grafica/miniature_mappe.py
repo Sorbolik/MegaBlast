@@ -3,7 +3,7 @@
 # terreno, messi insieme come li vede la camera a mappa intera, e rimpiccioliti.
 #
 # Scrive client/assets/maps/miniature/<mappa>.png e client/ui/maps.atlas (la texture "mappe"
-# di client/main/game.gui). Le mappe sono quelle dei gironi di client/sim/campaign.lua (non le
+# di client/main/game.gui). Le mappe sono quelle dell'Addestramento e dei gironi di client/sim/campaign.lua (non le
 # arene delle missioni), come le elenca training.lua, che hanno un'immagine in client/paintings/mappe/.
 #
 #   python3 strumenti/grafica/miniature_mappe.py      (dalla cartella del repository, dopo
@@ -37,7 +37,7 @@ local function enc(v)
 end
 local maps, seen = {}, {}
 for _, cap in ipairs(campaign.CAPITOLI) do
-  for _, l in ipairs(cap.id:match("^girone_") and cap.missioni or {}) do
+  for _, l in ipairs((cap.id == "addestramento" or cap.id:match("^girone_")) and cap.missioni or {}) do
     if l.mappa and not l.arena and not seen[l.mappa] and dipinti.maps[l.mappa] then
       seen[l.mappa] = true
       maps[#maps + 1] = { id = l.mappa, sfondo = dipinti.maps[l.mappa] }

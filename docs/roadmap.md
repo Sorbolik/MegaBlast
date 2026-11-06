@@ -162,6 +162,9 @@ Fatto dal 26 ottobre: batch di merge, diavoletto vettoriale, editor delle
 animazioni e stampino, skin armi, mappa Crogiolo con scelta casuale, punti in
 partita, Bastione, draft online. Resta: scelta della coda online nella home, vita
 dei robot e bilanciamento, audio di base, tutorial raggiungibile dalla home, mappe 4–6.
+Bilanciamento aperto (6 nov): in 1v1 chi gioca per secondo vince più spesso su tutte
+le mappe (arena, 80 partite: cortile 55-25, fossa 52-28, pavimento 46-34), è l'ordine
+dei turni e non la mappa; da decidere come compensarlo.
 **Uscita**: 4 telefoni sullo stesso Wi-Fi giocano 1v1, 2v2 e FFA fino al podio
 senza bug e senza scatti; Sergio approva l'aspetto. Lavoro L, 0 €.
 

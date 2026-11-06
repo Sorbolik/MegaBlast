@@ -36,6 +36,9 @@ add("pavimento", "La Forgia", { spawns = PAVIMENTO_SPAWNS,
 add("fossa", "La fossa del Fabbro", { spawns = PAVIMENTO_SPAWNS,
 	build = function(t) t:load(mapdata.fossa) end })
 
+add("cortile", "Il cortile", { spawns = { { x = 210, from = 450 }, { x = 1710, from = 450 }, { x = 600, from = 380 }, { x = 1320, from = 380 } },
+	build = function(t) t:load(mapdata.cortile) end })
+
 M.DEFAULT = "pavimento"
 
 -- The maps of real matches (online and on the same phone): if no map is asked

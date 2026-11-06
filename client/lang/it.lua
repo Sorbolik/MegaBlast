@@ -123,6 +123,7 @@ return {
 		mode_and_bot = "%s  ·  BOT %s",
 		random = "A CASO",
 		circle = "GIRONE %s",
+		training = "ADDESTRAMENTO",   -- the cortile map comes from the Addestramento (girone 0)
 	},
 
 	-- menu/podium.lua: the podium at the end of the match

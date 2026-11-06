@@ -8,8 +8,10 @@
 #   strumenti/grafica/mappe/<mappa>.png       la maschera di collisione (bianco terra, rosso
 #                                             acciaio), che mappa_in_lua.py porta in sim/mapdata.lua
 # Le mappe: il pavimento e la fossa del Fabbro (documento delle mappe dell'apprendista, layout A
-# e C, scelte di Sergio del 2 novembre) e le arene delle missioni, tutte d'acciaio, lette da
-# sim/campaign.lua con luajit.
+# e C, scelte di Sergio del 2 novembre), il cortile del Duello con Favilla (cortile.py) e le
+# arene delle missioni, lette da sim/campaign.lua con luajit: quelle del cortile dipinte come il
+# cortile (cortile.py), le altre d'acciaio.
+# Gli sfondi: la Forgia (tavole.py) e il cortile (cortile.py), con la stessa tinta.
 #
 #   python3 strumenti/grafica/mappe_dipinte.py      (dalla cartella del repository; serve node
 #                                                    con playwright, che disegna gli SVG)
@@ -25,6 +27,7 @@ from volume import forma                                       # noqa: E402
 from scena import mix, W, H                                    # noqa: E402
 from dipinto import piani, raggi, grade, DEFS, GRUPPI          # noqa: E402
 from temi import TEMI                                          # noqa: E402
+import cortile                                                 # noqa: E402
 
 OUT = os.path.join(RADICE, "client", "paintings")
 MASCHERE = os.path.join(QUI, "mappe")
@@ -67,6 +70,8 @@ MAPPE = {
     "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA, travi=TRAVI),
     "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava),
 }
+# le mappe disegnate a parte, col loro sfondo: terreno svg e maschera
+ALTRE = {"cortile": (cortile.mappa, cortile.maschera, "cortile")}
 
 
 # ---------------------------------------------------------------- le arene, tutte d'acciaio
@@ -149,16 +154,28 @@ def rendi(lavori, tmp):
     subprocess.run(["node", js, os.path.join(tmp, "lavori.json")], check=True)
 
 
-def maschera(g, nome):
+def maschera(g, nome, disegna=None):
     """640 x 360 celle (scena x 0,5): bianco la terra, rosso l'acciaio."""
     im = Image.new("RGB", (640, 360), "black")
-    d = ImageDraw.Draw(im)
-    for p in forma(g["isole"], g.get("stile")):
-        d.polygon([(x * .5, y * .5) for x, y in p], fill="white")
-    for x, y, w, h in g.get("travi", []):
-        d.rectangle([x * .5, y * .5, (x + w) * .5 - 1, (y + h) * .5 - 1], fill="red")
+    if disegna:
+        disegna(im)
+    else:
+        d = ImageDraw.Draw(im)
+        for p in forma(g["isole"], g.get("stile")):
+            d.polygon([(x * .5, y * .5) for x, y in p], fill="white")
+        for x, y, w, h in g.get("travi", []):
+            d.rectangle([x * .5, y * .5, (x + w) * .5 - 1, (y + h) * .5 - 1], fill="red")
     os.makedirs(MASCHERE, exist_ok=True)
     im.save(os.path.join(MASCHERE, nome + ".png"))
+
+
+def sfondi(P):
+    """{nome: (cielo svg, [(gruppo, svg largo un giro, velocità media)], scorre)}. Il cortile non
+    scorre da solo: si muove solo con la camera (un muro che scivola di lato sembra strano)."""
+    p = piani(FORGIA, P)
+    c = cortile.sfondo()
+    cielo_c = piani(dict(FORGIA, luce=c["luce"], piani=[], isole=[], travi=[]), P)["cielo"]
+    return {"forgia": (p["cielo"], p["gruppi"], True), "cortile": (cielo_c, c["gruppi"], False)}
 
 
 def main():
@@ -168,52 +185,65 @@ def main():
         for f in os.listdir(os.path.join(OUT, sotto)):
             os.remove(os.path.join(OUT, sotto, f))
     lavori, strisce = [], []
-    # lo sfondo della Forgia: il cielo (fermo, con il bagliore e i raggi) e i tre gruppi di piani
-    p = piani(FORGIA, P)
-    for d, k in DENSITA.items():
-        lavori.append((svg(p["cielo"] + '<g style="mix-blend-mode:screen">%s</g>' % raggi(FORGIA, P), (0, 0, W, H),
-                           round(W * k["cielo"]), round(H * k["cielo"])),
-                       os.path.join(OUT, "backgrounds", "forgia_cielo_%d.png" % d), round(W * k["cielo"]), round(H * k["cielo"])))
-        for nome, contenuto, vel in p["gruppi"]:
-            w = min(4096, round(2560 * k[nome]))
-            lavori.append((svg(contenuto, (0, 0, 2560, H), w, round(H * w / 2560)),
-                           os.path.join(OUT, "backgrounds", "forgia_%s_%d.png" % (nome, d)), w, round(H * w / 2560)))
-    for nome, contenuto, vel in p["gruppi"]:
-        strisce.append((nome, vel))
+    # gli sfondi: il cielo (fermo, con il bagliore e i raggi) e i tre gruppi di piani
+    SF = sfondi(P)
+    for sf, (cielo, gruppi, scorre) in SF.items():
+        for d, k in DENSITA.items():
+            lavori.append((svg(cielo + '<g style="mix-blend-mode:screen">%s</g>' % raggi(FORGIA, P), (0, 0, W, H),
+                               round(W * k["cielo"]), round(H * k["cielo"])),
+                           os.path.join(OUT, "backgrounds", "%s_cielo_%d.png" % (sf, d)), round(W * k["cielo"]), round(H * k["cielo"])))
+            for nome, contenuto, vel in gruppi:
+                w = min(4096, round(2560 * k[nome]))
+                lavori.append((svg(contenuto, (0, 0, 2560, H), w, round(H * w / 2560)),
+                               os.path.join(OUT, "backgrounds", "%s_%s_%d.png" % (sf, nome, d)), w, round(H * w / 2560)))
+        for nome, contenuto, vel in gruppi:
+            strisce.append((sf, nome, vel if scorre else 0))
+    sfondo_di = {}
     # il terreno delle mappe dipinte
     for nome, g in MAPPE.items():
         maschera(g, nome)
+        sfondo_di[nome] = "forgia"
         gioco = piani(g, P)["gioco"]
         for d, k in DENSITA.items():
             w, h = round(1920 * k["terreno"]), round(1080 * k["terreno"])
             lavori.append((svg(gioco, (0, 0, W, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
-    # le arene delle missioni: acciaio, in coordinate del mondo
-    m = {c: grade(v, "materiale", P) for c, v in FORGIA["mat"].items() if isinstance(v, str) and v.startswith("#")}
-    for mid, rett in arene().items():
-        corpo = "".join(acciaio(x, 1080 - y - h, w, h, m) for x, y, w, h in rett)
+    for nome, (disegno, collisione, sf) in ALTRE.items():
+        maschera(None, nome, collisione)
+        sfondo_di[nome] = sf
+        gioco = disegno()
         for d, k in DENSITA.items():
             w, h = round(1920 * k["terreno"]), round(1080 * k["terreno"])
-            lavori.append((svg(corpo, (0, 0, 1920, 1080), w, h), os.path.join(OUT, "maps", "missione_%s_%d.png" % (mid, d)), w, h))
+            lavori.append((svg(gioco, (0, 0, W, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
+    # le arene delle missioni: il cortile dipinto, le altre d'acciaio, in coordinate del mondo
+    m = {c: grade(v, "materiale", P) for c, v in FORGIA["mat"].items() if isinstance(v, str) and v.startswith("#")}
+    for mid, rett in arene().items():
+        if mid in cortile.LEZIONI:
+            corpo, vb, sfondo_di["missione_" + mid] = cortile.lezione(mid, rett), (0, 0, W, H), "cortile"
+        else:
+            corpo = "".join(acciaio(x, 1080 - y - h, w, h, m) for x, y, w, h in rett)
+            vb, sfondo_di["missione_" + mid] = (0, 0, 1920, 1080), "forgia"
+        for d, k in DENSITA.items():
+            w, h = round(1920 * k["terreno"]), round(1080 * k["terreno"])
+            lavori.append((svg(corpo, vb, w, h), os.path.join(OUT, "maps", "missione_%s_%d.png" % (mid, d)), w, h))
     with tempfile.TemporaryDirectory() as tmp:
         rendi(lavori, tmp)
     # i gruppi dello sfondo: si tiene solo la fascia che ha qualcosa (misure nella scena)
     fasce = {}
-    for nome, vel in strisce:
+    for sf, nome, vel in strisce:
         y0s, y1s = [], []
         for d in DENSITA:
-            f = os.path.join(OUT, "backgrounds", "forgia_%s_%d.png" % (nome, d))
-            im = Image.open(f)
+            im = Image.open(os.path.join(OUT, "backgrounds", "%s_%s_%d.png" % (sf, nome, d)))
             box = im.getchannel("A").getbbox()
             sc = im.width / 2560
             y0s.append(box[1] / sc)
             y1s.append(box[3] / sc)
         y0, y1 = max(0, int(min(y0s)) - 2), min(H, int(max(y1s)) + 3)
         for d in DENSITA:
-            f = os.path.join(OUT, "backgrounds", "forgia_%s_%d.png" % (nome, d))
+            f = os.path.join(OUT, "backgrounds", "%s_%s_%d.png" % (sf, nome, d))
             im = Image.open(f)
             sc = im.width / 2560
             im.crop((0, round(y0 * sc), im.width, round(y1 * sc))).save(f, optimize=True)
-        fasce[nome] = (y0, y1 - y0, vel)
+        fasce[sf, nome] = (y0, y1 - y0, vel)
     # i numeri per lo shader
     righe = ["-- Made by strumenti/grafica/mappe_dipinte.py, do not edit by hand.",
              "-- The painted images (client/paintings, one per screen density) and the background",
@@ -223,21 +253,21 @@ def main():
              "return {",
              "\tdensities = { %s }," % ", ".join(str(d) for d in DENSITA),
              "\twrap = 2560,",
-             "\tbackgrounds = {",
-             "\t\tforgia = {",
-             "\t\t\thaze = { %s }," % ", ".join("%.3f" % (v / 255) for v in Image.new("RGB", (1, 1), P["foschia"]).getpixel((0, 0))),
-             "\t\t\tgroups = {"]
-    for nome, _, _ in GRUPPI:
-        y0, h, vel = fasce[nome]
-        righe.append('\t\t\t\t{ name = "%s", y0 = %d, h = %d, parallax = %g, scroll = %.1f },'
-                     % (nome, y0, h, QUANTO[nome], CALMO * vel))
-    righe += ["\t\t\t},", "\t\t},", "\t},",
+             "\tbackgrounds = {"]
+    for sf in SF:
+        righe += ["\t\t%s = {" % sf,
+                  "\t\t\thaze = { %s }," % ", ".join("%.3f" % (v / 255) for v in Image.new("RGB", (1, 1), P["foschia"]).getpixel((0, 0))),
+                  "\t\t\tgroups = {"]
+        for nome, _, _ in GRUPPI:
+            y0, h, vel = fasce[sf, nome]
+            righe.append('\t\t\t\t{ name = "%s", y0 = %d, h = %d, parallax = %g, scroll = %.1f },'
+                         % (nome, y0, h, QUANTO[nome], CALMO * vel))
+        righe += ["\t\t\t},", "\t\t},"]
+    righe += ["\t},",
               "\t-- the maps with painted terrain and their background",
               "\tmaps = {"]
-    for nome in MAPPE:
-        righe.append('\t\t%s = "forgia",' % nome)
-    for mid in arene():
-        righe.append('\t\tmissione_%s = "forgia",' % mid)
+    for nome, sf in sfondo_di.items():
+        righe.append('\t\t%s = "%s",' % (nome, sf))
     righe += ["\t},", "}", ""]
     open(LUA, "w").write("\n".join(righe))
     print("fatto:", len(lavori), "immagini")
