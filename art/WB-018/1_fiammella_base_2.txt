@@ -1,0 +1,21 @@
+Image 1 is the original concept art of our game's main character, a little red imp blacksmith apprentice: look ONLY at the small fiery flame on top of his head between his horns in the first pose on the left.
+Image 2 is the official in-game character model: it shows the exact clean cartoon art style (thick black outline, flat cel colors, no gradients, no texture, no glow).
+
+Draw ONLY the FLAME piece from Image 1, completely isolated, centered in the image, as a cutout game asset ready to be placed on top of his head.
+The flame is lively, rising upward with sharp curling flame tongues, curving slightly to the right, exactly as seen in the left figure of Image 1.
+The base at the bottom of the flame is rounded and clean, with a closed black outline, so it can rest right between his horns on the crown of his skull. Do NOT draw the head, horns or body: draw ONLY the flame itself.
+
+Rendering rules, very strict, because this drawing will be traced into vector shapes:
+- FLAT CEL COLORS ONLY: every area is one solid pure color, plus at most one hard-edged shadow shape in a darker tone. Absolutely NO gradients, NO glow, NO blur, NO smoke, NO particle sparks, NO textures, NO soft shading.
+- Thick, clean, closed pure-black #000000 outline of even weight around the entire flame silhouette, with thinner inner black lines separating flame tongues.
+- Palette:
+  - Outline: pure black #000000
+  - Outer flame body: bright vibrant fiery orange #FF7A29 (or #E5532D)
+  - Inner core flame: bright warm yellow #FFF066 (or #F2C45A)
+  - Hard-edged shadow: dark red-orange #B8432A
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the flame.
+- No text, labels, arrows or signatures. Square format 1:1.
+
+Riferimenti allegati, in ordine:
+1. art/WB-018/riferimenti/R1_apprendista_concept.png
+2. art/WB-018/riferimenti/R2_apprendista_tre_quarti.png

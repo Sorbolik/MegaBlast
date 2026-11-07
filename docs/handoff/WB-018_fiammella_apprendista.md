@@ -94,4 +94,18 @@ Approvata da Claude su richiesta di Sergio (2026-11-08).
 
 ## Consegna di Codex
 
+2026-11-08 · Eseguita la scheda APPROVATA dal `main` aggiornato, sul ramo `design/WB-018`, con imagegen integrato. Prompt integrali invariati e riferimenti R1, R2 allegati in questo ordine. Sfondo magenta richiesto dalla scheda, non trasparente.
+
+File consegnati in `art/WB-018/`:
+- `1_fiammella_base_1.png` e `.txt`;
+- `1_fiammella_base_2.png` e `.txt`;
+- `2_foglio_fiammelle.png` e `.txt`.
+
+Controllo visivo effettuato su tutte le prove: solo fiamme, nessuna testa o corpo, nessuna scritta, contorni neri spessi e basi chiuse; le quattro pose del foglio sono distinte e separate. Tre generazioni complessive del prompt base: consegnate le prime due come varianti, terza scartata perché non migliora i difetti. Tre tentativi del foglio: consegnato il secondo, gli altri non migliorano le difformità. Nessun ritocco o ricalco.
+
+**Limiti: consegna non pienamente conforme ai criteri di accettazione.** Restano leggere variazioni/texture nei riempimenti, anziché colori perfettamente piatti; la punta principale delle basi curva a sinistra anziché a destra. Il foglio conserva una lingua secondaria staccata nella prima posa. Il generatore ha restituito basi di 1254×1254 e foglio di 2172×724, non le misure della scheda; originali conservati senza deformazioni. Anche lo sfondo non è magenta puro: pixel d'angolo RGB (243,14,241), (243,16,241) e (242,16,242) rispettivamente, anziché (255,0,255). Non è stata certificata l'uniformità di tutti i pixel o l'esattezza dell'intera palette. Da rivedere da Claude prima del ricalco e dell'integrazione.
+
+Non verificati montaggio sulla testa, resa alle dimensioni del gioco e animazione. Nessuna modifica al gioco. La scheda ripristina la fiammella mentre `DECISIONI.md` contiene ancora la rimozione del 2 novembre: discrepanza segnalata, documento lasciato invariato.
+
+
 ## Resoconto di Claude
