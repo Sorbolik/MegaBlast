@@ -39,7 +39,14 @@ gui = {
 	set_slice9 = function() end, PIVOT_W = 3, PIVOT_E = 7, PIVOT_S = 5, PIVOT_N = 1,
 	set_outer_bounds = function() end, PIEBOUNDS_ELLIPSE = 1, ADJUST_FIT = 0,
 	-- the order among siblings: move_above(n, r) puts it right above r, with nil on top of all
-	move_above = function(n, r) if r then fraction = fraction + 1e-4; n.ordine = r.ordine + fraction else ordering = ordering + 1; n.ordine = ordering end end,
+	move_above = function(n, r)
+		if r then
+			assert(n.parent == r.parent, "gui.move_above: i nodi devono avere lo stesso genitore")
+			fraction = fraction + 1e-4; n.ordine = r.ordine + fraction
+		else
+			ordering = ordering + 1; n.ordine = ordering
+		end
+	end,
 }
 
 -- the text sizes: 20 wide per letter, 40 tall

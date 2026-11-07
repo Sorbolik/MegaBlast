@@ -283,7 +283,7 @@ local TOWARD_D = atan2(HAND_BACK[2] - J.braccio_dietro[2], HAND_BACK[1] - J.brac
 
 -- The layers: the pieces from the back, what is in front of what. A clip can
 -- have its own order (layers), otherwise this one
-local LEVELS = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "fiamma", "arma",
+local LEVELS = { "coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma",
 	"braccio_a", "manina_a" }
 local function little_hand(s, point, k)
 	local g = joint(s.forma, (point[1] + shift("pugno")[1]) * k, (point[2] + shift("pugno")[2]) * k)
@@ -521,7 +521,7 @@ function M.new(color, look, weapon_only)
 	-- the nodes of each layer, in the order they were made (LEVELS)
 	s.level_nodes = { coda = { s.coda[1][1], s.coda[1][2] }, ala = { s.ala }, braccio_d = { s.braccio_d },
 		manina_d = { s.manina_d }, gamba_d = { s.gamba_d }, gamba_a = { s.gamba_a }, busto = { s.busto },
-		testa = { s.collo }, fiamma = { s.fiamma }, arma = { s.presa }, braccio_a = { s.braccio_a }, manina_a = { s.manina_a } }
+		testa = { s.collo }, arma = { s.presa }, braccio_a = { s.braccio_a }, manina_a = { s.manina_a } }
 	s.z_order = LEVELS
 	M.set_weapon(s, weapon_only or "missile")
 
