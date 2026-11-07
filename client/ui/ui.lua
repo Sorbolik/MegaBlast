@@ -276,6 +276,20 @@ function M.medaglia(x, y, d, color, parent)
 	return gui_node(d <= 64 and "favilla_p" or "favilla", x, y, d, d, color, parent)
 end
 
+-- Padlock of locked missions and chapters
+function M.lucchetto(x, y, d, color, parent)
+	local tex = d <= 48 and "lucchetto_p" or "lucchetto"
+	local ok, n = pcall(gui_node, tex, x, y, d, d, color, parent)
+	if ok then return n end
+	local base = gui.new_box_node(vec(x, y), vec(d, d))
+	gui.set_color(base, vmath.vector4(0, 0, 0, 0))
+	if parent then gui.set_parent(base, parent) end
+	M.sagoma("forma", 0, -d * 0.16, d * 0.58, d * 0.48, color, base)
+	local shackle_d = d * 0.42
+	M.ring_node(0, d * 0.12, shackle_d, shackle_d * 0.22, color, base)
+	return base
+end
+
 -- Disc and ring (pie nodes): sticks, round buttons, stopwatch. d is the
 -- diameter, thickness the ring's toward the inside. A pie polygon has no
 -- antialiasing and shows steps (Sergio, 4 Nov: "piene di scalini"), so the

@@ -85,6 +85,30 @@ dente = np.cos(np.arctan2(y, x) * 8) > 0.15
 pieno = ((r <= n / 2 - 1.5) & dente) | (r <= n / 2 - 9)
 salva((pieno & (r >= 8.5)).astype(float), n, "ingranaggio.png")
 
+# lucchetto: corpo arrotondato, archetto e toppa trasparente (missioni e capitoli bloccati)
+for n, coda in ((128, ""), (48, "_p")):
+    x, y = griglia(n)
+    s = n / 128.0
+    w_corpo, y_bot, y_top, r_corpo = 34 * s, -52 * s, 4 * s, 10 * s
+    dx = np.maximum(np.abs(x) - (w_corpo - r_corpo), 0)
+    h_corpo, y_c = (y_top - y_bot) / 2, (y_top + y_bot) / 2
+    dy = np.maximum(np.abs(y - y_c) - (h_corpo - r_corpo), 0)
+    corpo = (np.hypot(dx, dy) - r_corpo) <= 0
+    r_ext, r_int = 26 * s, 16 * s
+    r_shackle = np.hypot(x, y - 4 * s)
+    arco_sup = (y >= 4 * s) & (r_shackle <= r_ext) & (r_shackle >= r_int)
+    gambe = (y < 4 * s) & (y >= -8 * s) & (np.abs(x) <= r_ext) & (np.abs(x) >= r_int)
+    pieno = corpo | arco_sup | gambe
+    y_toppa_c, r_toppa = -20 * s, 5.5 * s
+    cerchio_toppa = np.hypot(x, y - y_toppa_c) <= r_toppa
+    y_fess_top, y_fess_bot = -20 * s, -36 * s
+    in_y_fess = (y >= y_fess_bot) & (y <= y_fess_top)
+    t_fess = (y - y_fess_bot) / (y_fess_top - y_fess_bot + 1e-6)
+    w_fess = (4.5 * (1 - t_fess) + 3.0 * t_fess) * s
+    fessura = in_y_fess & (np.abs(x) <= w_fess)
+    alfa = (pieno & (~(cerchio_toppa | fessura))).astype(float)
+    salva(alfa, n, "lucchetto" + coda + ".png")
+
 
 def coppia(d, n, linea, nome):
     # d: distanza con segno dal bordo (negativa dentro); forma piena e contorno

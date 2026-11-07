@@ -76,8 +76,29 @@ local function total(stars)
 	return n
 end
 
+local function chapter_completed(c, cap)
+	if not cap then return false end
+	for _, l in ipairs(cap.missioni) do
+		if not (c.stelle[l.id] or {})[1] then return false end
+	end
+	return true
+end
+
 local function is_opened(c, cap)
-	return total(c.stelle) >= cap.serve
+	if cap == payload.CAPITOLI[1] then return true end
+	local prev
+	for _, cp in ipairs(payload.CAPITOLI) do
+		if cp == cap then break end
+		prev = cp
+	end
+	if prev and not chapter_completed(c, prev) then return false end
+	return total(c.stelle) >= (cap.serve or 0)
+end
+
+local function is_mission_unlocked(c, list, i)
+	if i == 1 then return true end
+	local prev = list[i - 1]
+	return (c.stelle[prev.id] or {})[1] ~= nil
 end
 
 -- each star lit for its own criterion: also the first and third yes and the
@@ -117,13 +138,13 @@ end
 -- a card of the board (a button: tap and controller light), parchment with
 -- the ink border; the picture (or its empty place) at x, y on the card, in
 -- the frame of its kind's colour, the kind's label in its top left corner
-local function card(c, l, x, y, w, h, kind, pic_x, pic_y, pic_w, pic_h)
-	local n = ui.button(c.buttons, x, y, w, h, "", "missione:" .. l.id, nil, c.board)
+local function card(c, l, x, y, w, h, kind, pic_x, pic_y, pic_w, pic_h, locked)
+	local n = ui.button(c.buttons, x, y, w, h, "", locked and "" or ("missione:" .. l.id), { spento = locked }, c.board)
 	local b = c.buttons[#c.buttons]
-	gui.set_color(n, PAPER)
-	b.riposo = INK
-	gui.set_color(b.bordo, INK)
-	box(pic_x, pic_y, pic_w + 6, pic_h + 6, types.color(l.tipo) or INK, n)
+	gui.set_color(n, locked and c4(0.86, 0.80, 0.68) or PAPER)
+	b.riposo = locked and INK_SOFT or INK
+	gui.set_color(b.bordo, b.riposo)
+	box(pic_x, pic_y, pic_w + 6, pic_h + 6, locked and INK_SOFT or (types.color(l.tipo) or INK), n)
 	local tex = ill.texture(l.id, kind)
 	if tex then
 		c.textures[#c.textures + 1] = { l.id, kind }
@@ -133,6 +154,15 @@ local function card(c, l, x, y, w, h, kind, pic_x, pic_y, pic_w, pic_h)
 		box(pic_x, pic_y, pic_w, pic_h, EMPTY, n)
 	end
 	types.label(l.tipo, pic_x - pic_w / 2 + 6, pic_y + pic_h / 2 - 18, 24, n)
+	if locked then
+		-- dark overlay on the picture
+		box(pic_x, pic_y, pic_w, pic_h, c4(0.08, 0.05, 0.04, 0.65), n)
+		-- dark badge with padlock symbol centered on the picture
+		local ld = kind == "finale" and 36 or 46
+		local bd = kind == "finale" and 50 or 64
+		ui.disco(pic_x, pic_y, bd, c4(0.12, 0.08, 0.06, 0.88), n)
+		ui.lucchetto(pic_x, pic_y, ld, c4(0.92, 0.76, 0.35), n)
+	end
 	-- where the picture is on the screen: the postcard zooms from here (ui/postcard.lua)
 	local bp = gui.get_position(c.board)
 	c.from[l.id] = { x = bp.x + x + pic_x, y = bp.y + y + pic_y + gui.get_position(c.radice).y, w = pic_w, h = pic_h }
@@ -172,23 +202,29 @@ local function card_list(c, cap)
 	local y0 = board_h / 2 - BOARD_PAD
 	for i = 1, pinned do
 		local l = list[i]
+		local unlocked = is_mission_unlocked(c, list, i)
 		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
 		local x = -inner_w / 2 + CARD_W / 2 + col * (CARD_W + GAP_X)
 		local y = y0 - CARD_H / 2 - row * (CARD_H + GAP_Y)
-		local n = card(c, l, x, y, CARD_W, CARD_H, "carta", 0, CARD_H / 2 - PIC_IN - PIC_H / 2, PIC_W, PIC_H)
+		local n = card(c, l, x, y, CARD_W, CARD_H, "carta", 0, CARD_H / 2 - PIC_IN - PIC_H / 2, PIC_W, PIC_H, not unlocked)
 		local by = -CARD_H / 2 + BAND / 2 + 1
-		local title = ink(string.upper(l.titolo), -CARD_W / 2 + 12, by, 0.62, INK, n)
+		local title = ink(string.upper(l.titolo), -CARD_W / 2 + 12, by, 0.62, unlocked and INK or INK_SOFT, n)
 		fit(title, CARD_W - 24 - (l.id == next_id and 70 or 26 * #missions.criteria(l)))
-		state(c, l, l.id == next_id, CARD_W / 2 - 12, by, n)
+		if unlocked then
+			state(c, l, l.id == next_id, CARD_W / 2 - 12, by, n)
+		end
 		nail(x, y + CARD_H / 2 - 2, c.board)
 	end
 	if final then
+		local unlocked = is_mission_unlocked(c, list, #list)
 		local y = -board_h / 2 + BOARD_PAD + FINAL_H / 2
 		local px = -inner_w / 2 + PIC_IN + FINAL_PIC_W / 2
-		local n = card(c, final, 0, y, inner_w, FINAL_H, "finale", px, 0, FINAL_PIC_W, FINAL_PIC_H)
+		local n = card(c, final, 0, y, inner_w, FINAL_H, "finale", px, 0, FINAL_PIC_W, FINAL_PIC_H, not unlocked)
 		local tx = px + FINAL_PIC_W / 2 + 24
-		fit(ink(T.final:format(string.upper(final.titolo)), tx, 0, 0.8, INK, n), inner_w / 2 - tx - 120)
-		state(c, final, final.id == next_id, inner_w / 2 - 16, 0, n)
+		fit(ink(T.final:format(string.upper(final.titolo)), tx, 0, 0.8, unlocked and INK or INK_SOFT, n), inner_w / 2 - tx - 120)
+		if unlocked then
+			state(c, final, final.id == next_id, inner_w / 2 - 16, 0, n)
+		end
 		nail(-inner_w / 2 + 8, y + FINAL_H / 2 - 2, c.board)
 		nail(inner_w / 2 - 8, y + FINAL_H / 2 - 2, c.board)
 	end
@@ -229,9 +265,21 @@ local function build(c)
 	if is_opened(c, chosen) then
 		card_list(c, chosen)
 	else
-		local has_it = total(c.stelle)
-		ui.testo(T.opens_with:format(chosen.serve, has_it), 640, 400, 1, C.TEXT, c.radice)
-		ui.testo(T.stars_hint, 640, 350, 0.75, HINT, c.radice)
+		local prev
+		for _, cp in ipairs(payload.CAPITOLI) do
+			if cp == chosen then break end
+			prev = cp
+		end
+		local done, tot = 0, prev and #prev.missioni or 0
+		if prev then
+			for _, l in ipairs(prev.missioni) do
+				if (c.stelle[l.id] or {})[1] then done = done + 1 end
+			end
+		end
+		ui.disco(640, 420, 84, c4(0.12, 0.08, 0.06, 0.88), c.radice)
+		ui.lucchetto(640, 420, 52, c4(0.92, 0.76, 0.35), c.radice)
+		ui.testo(string.format("Si sblocca completando tutte le missioni di %s", prev and prev.titolo or "Addestramento"), 640, 345, 0.9, C.TEXT, c.radice)
+		ui.testo(string.format("Missioni completate: %d / %d", done, tot), 640, 305, 0.75, HINT, c.radice)
 	end
 end
 

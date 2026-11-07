@@ -208,6 +208,12 @@ images {
 images {
   image: "/assets/ui/tipo_custode_p.png"
 }
+images {
+  image: "/assets/ui/lucchetto.png"
+}
+images {
+  image: "/assets/ui/lucchetto_p.png"
+}
 margin: 2
 extrude_borders: 2
 inner_padding: 0

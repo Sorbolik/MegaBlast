@@ -9,7 +9,7 @@ local M = {}
 -- serve: the stars (from all chapters) needed to open the chapter
 M.CAPITOLI = {
 	{ id = "addestramento", titolo = "Addestramento", serve = 0, missioni = levels.addestramento, aspetta = true },
-	{ id = "girone_1", titolo = "I girone: la Forgia", serve = 8, missioni = levels.girone_1 },
+	{ id = "girone_1", titolo = "La Forgia", serve = 9, missioni = levels.girone_1 },
 }
 
 return M
