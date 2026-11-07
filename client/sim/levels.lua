@@ -236,25 +236,37 @@ M.addestramento = {
 	},
 	-- Prima sfida: a short match against Favilla with only what you know (Sergio,
 	-- 6 Nov: battles in between, to take the moves in hand). Lanciarune and Lama,
-	-- no orbs, no tools, no crates; two minutes, down her once. Nothing explained
+	-- down her once. Nothing explained
 	{
 		id = "prima_sfida",
 		titolo = "Prima sfida",
 		tipo = "duello",
 		goal_text = "Una sfida veloce, con quello che sai: Lanciarune e Lama. Abbattimi una volta!",
-		mappa = "cortile",
+		arena = {
+			{ 150, 0, 1450, 150 },
+			{ 1090, 150, 20, 180 },
+			{ 10, 0, 140, 380 },
+			{ 1600, 0, 80, 310 },
+		},
+		spawns = {
+			{ x = 460, from = 620 },
+			{ x = 1380, from = 630 },
+		},
 		giocatori = {
-			{ team = 1 },
-			{ team = 2, bot = 1, nome = "Favilla", battute = "favilla", pelle = "favilla",
-				stats = { parachutes = 0, teleports = 0, time_orbs = 0 } },
+			{ team = 1, stats = { teleports = 1, time_orbs = 0 } },
+			{ team = 2, nome = "Favilla", pelle = "favilla", bot = 4, carattere = "codardo" },
 		},
-		vedi = { "primarie", "teleport", "tempo", "missile", "sword" },
-		regole = { crate_every = 1000 },
-		obiettivo = { { down = 2, testo = "Abbatti Favilla" } },
+		vedi = { "missile", "sword", "teleport", "tempo" },
+		globi = 1,
+		cards = {},
+		obiettivo = {
+			{ testo = "Abbatti Favilla", down = 2, only = { "primaria", "teleport", "missile", "sword" } },
+		},
 		righe = {
-			{ testo = "Tocca a me! Primo attacco e secondo, poi mi riparo", quando = { turno_altri = 1, di_turno = "altri" } },
-			{ testo = "Si rinasce subito, e il turno continua", quando = { evento = "death", di = "tu" } },
+			{ testo = "Prova a prendermi!", quando = { evento = "teleport", di = "altri" } },
 		},
+		bravo = "Non pensavi ci riuscissi così in fretta",
+		bravo_faccia = "sorpresa",
 	},
 	-- 4 · Il burrone. Grapple and parachute (Sergio, 30 Oct): no crates, because
 	-- they aren't found there. She hooks the platform first, then you; she jumps

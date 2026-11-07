@@ -366,9 +366,9 @@ function M.new(seed, map_id, opts)
 			stats = st,
 		}
 		-- the primary taken in the start-of-match draft (sim/draft.lua)
-		if p.pick then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
+		if p.pick and g.robots[i].ammo[p.pick] then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
 		local sec = g.robots[i].secondary
-		if sec then g.robots[i].ammo[sec] = g.robots[i].ammo[sec] + C.SECONDARY_SHOTS.draft end
+		if sec and g.robots[i].ammo[sec] then g.robots[i].ammo[sec] = g.robots[i].ammo[sec] + C.SECONDARY_SHOTS.draft end
 	end
 	g.events = {}
 	g.tick = 0

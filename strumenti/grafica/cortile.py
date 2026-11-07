@@ -308,6 +308,7 @@ LEZIONI = {
     "spostano": ["selciato", "pilastro", "pilastro", "legno", "legno"],       # la corsia di Favilla è di legno
     "attrezzi": ["selciato", "legno", "selciato"],                            # le due rive e la piattaforma
     "sfida_burrone": ["selciato", "legno", "selciato"],                       # la sfida: le rive e la piattaforma
+    "prima_sfida": ["selciato", "pilastro", "pilastro", "pilastro"],          # il pavimento, il muretto e le pareti
 }
 
 
