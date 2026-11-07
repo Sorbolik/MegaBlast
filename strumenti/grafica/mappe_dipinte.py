@@ -151,7 +151,12 @@ def rendi(lavori, tmp):
         open(f, "w").write(contenuto)
         lista.append(dict(svg=f, png=png, w=w, h=h))
     open(os.path.join(tmp, "lavori.json"), "w").write(json.dumps(lista))
-    subprocess.run(["node", js, os.path.join(tmp, "lavori.json")], check=True)
+    env = os.environ.copy()
+    node_paths = [r"C:\nvm4w\nodejs\node_modules", os.path.expandvars(r"%LOCALAPPDATA%\npm-cache\_npx\e41f203b7505f1fb\node_modules")]
+    extra = [p for p in node_paths if os.path.exists(p)]
+    if extra:
+        env["NODE_PATH"] = os.pathsep.join(extra + ([env["NODE_PATH"]] if "NODE_PATH" in env else []))
+    subprocess.run(["node", js, os.path.join(tmp, "lavori.json")], env=env, check=True)
 
 
 def maschera(g, nome, disegna=None):
