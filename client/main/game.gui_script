@@ -1202,7 +1202,7 @@ local function handle_event(self, e)
 		-- them (Sergio), silent
 		-- in the first turns of the guided match the orbs fly slowly, to be watched
 		local r = self.missione
-		local slowed = r and r.l.guidata and r.st.turni <= 3 and 2.5 or nil
+		local slowed = r and (r.l.guidata or r.l.id == "guidata") and r.st.turni <= 3 and 2.5 or nil
 		-- if they are our orbs the small number waits for them to arrive: each one
 		-- raises it with a flash and a "pling" a bit higher than the previous one
 		-- (orbs leaving again before arriving no longer count: start from here)
@@ -2601,11 +2601,19 @@ local function mission_update(self, dt)
 			set_controls_visible(self, false)
 			self.end_t, self.record_end = PODIUM_WAIT, record
 		end
-	elseif r.esito == "fallita" then
+	elseif r.esito == "fallita" and not r.was_saved then
+		r.was_saved = true
 		profile.fallita(self.profilo, r.l.id)
 		profile.salva(self.profilo)
-		show_message(self, TM.mission_retry)
-		self.missione_attesa = 1.5
+		if self.g.phase == "over" then
+			show_message(self, TM.mission_retry, true)
+			self.mode = "ended"
+			set_controls_visible(self, false)
+			self.end_t, self.record_end = PODIUM_WAIT, 0
+		else
+			show_message(self, TM.mission_retry)
+			self.missione_attesa = 1.5
+		end
 	end
 end
 
@@ -2619,12 +2627,15 @@ local function open_level_end(self)
 	show_message(self, "", true)
 	score.obiettivo(self.punti, nil)
 	self.vign:quiet()
+	local won = r.esito == "fatta"
 	open_screen(self, menu.level_end, {
-		titolo = r.l.titolo, stelle = missions.stelle(r), criteria = missions.criteria(r.l),
+		titolo = r.l.titolo, stelle = won and missions.stelle(r) or { false, false, false },
+		criteria = missions.criteria(r.l),
 		medaglia = r.l.medaglia ~= nil,
 		-- the lead points, where they count
-		vantaggio = missions.vantaggio(r),
-		record = self.record_end, avanti = missions.dopo(r.l.id) ~= nil,
+		vantaggio = won and missions.vantaggio(r) or nil,
+		record = self.record_end, avanti = won and (missions.dopo(r.l.id) ~= nil),
+		fallita = not won,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 end
 

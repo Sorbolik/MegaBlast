@@ -39,7 +39,7 @@ function M.new(o, sound)
 	gui.set_visible(f.radice, false)
 	local c = ui.C
 	ui.indietro(f.buttons, "indietro", f.radice)
-	ui.testo(T.done, 640, 640, 0.8, c.OFF, f.radice)
+	ui.testo(o.fallita and (T.failed or "MISSIONE NON RIUSCITA") or T.done, 640, 640, 0.8, c.OFF, f.radice)
 	ui.titolo(string.upper(o.titolo), 640, 585, 1, c.LIGHT, f.radice)
 	local criteria = o.criteria
 	-- three stars; in the cortile «Fatta» and Favilla's medal, or «Fatta» alone

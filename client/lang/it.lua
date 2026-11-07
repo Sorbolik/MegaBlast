@@ -177,6 +177,7 @@ return {
 	-- menu/level_end.lua: the end of a campaign mission
 	level_end = {
 		done = "MISSIONE FATTA",
+		failed = "MISSIONE NON RIUSCITA",
 		lead = "Punti di vantaggio: %s",
 		record_one = "il tuo record: %s stella",
 		record = "il tuo record: %s stelle",
