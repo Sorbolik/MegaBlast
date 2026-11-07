@@ -11,6 +11,7 @@ return {
 	skins = {
 		apprendista = { category = "personaggio", tail = { 21.9, 27.1, 23.0, 25.3, 30.6 }, tail_rest = { 2.94, 2.844, 2.437, 1.919, 1.237 }, pieces = {
 			ala = { img = "apprendista_ala", tint = nil, x = 0.0, y = 0.0, w = 0.1, h = 0.1, mode = "replace" },
+			fiamma = { img = "apprendista_fiamma", tint = nil, x = 0.0, y = 27.0, w = 46.0, h = 54.0, mode = "replace" },
 			braccio = { img = "apprendista_braccio_2", tint = nil, x = 1.8, y = -23.9, w = 32.6, h = 67.4, mode = "replace" },
 			braccio_1 = { img = "apprendista_braccio_1", tint = nil, x = 2.0, y = -21.9, w = 35.4, h = 61.7, mode = "replace" },
 			braccio_2 = { img = "apprendista_braccio_2", tint = nil, x = 1.8, y = -23.9, w = 32.6, h = 67.4, mode = "replace" },

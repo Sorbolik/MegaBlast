@@ -19,13 +19,13 @@ local M = {}
 -- the channels and their neutral value; angles in radians, sizes in drawing
 -- units (battle/devil.lua, 200 from feet to head)
 M.CHANNELS = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "braccio_d",
-	"gamba_a", "gamba_d", "alza_a", "alza_d", "ala",
+	"gamba_a", "gamba_d", "alza_a", "alza_d", "ala", "fiamma",
 	-- the torso: turns around its pivot and moves (busto_x, busto_y); the
 	-- tail curls (coda) and turns as a whole around its pivot (coda_gira)
 	"busto", "coda", "coda_gira",
 	-- forward and back moves (x, toward where it faces) and up and down (y)
 	"corpo_x", "testa_x", "busto_x", "busto_y", "braccio_a_x", "braccio_a_y", "braccio_d_x", "braccio_d_y",
-	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y",
+	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y", "fiamma_x", "fiamma_y",
 	-- the weapon in hand: how much more it turns around its pivot when not
 	-- aiming, and the pivot's offset
 	"arma", "arma_x", "arma_y",
@@ -33,7 +33,7 @@ M.CHANNELS = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "
 	-- hanging arms end; they turn and move
 	"manina_a", "manina_d", "manina_a_x", "manina_a_y", "manina_d_x", "manina_d_y",
 	-- the pieces shown (1) or not (0): the editor's bucket puts and removes them
-	"mostra_testa", "mostra_busto", "mostra_braccio_a", "mostra_braccio_d", "mostra_gamba_a", "mostra_gamba_d",
+	"mostra_testa", "mostra_fiamma", "mostra_busto", "mostra_braccio_a", "mostra_braccio_d", "mostra_gamba_a", "mostra_gamba_d",
 	"mostra_ala", "mostra_coda", "mostra_manina_a", "mostra_manina_d", "mostra_arma" }
 M.NEUTRAL = { schiaccia = 1 }
 for _, c in ipairs(M.CHANNELS) do

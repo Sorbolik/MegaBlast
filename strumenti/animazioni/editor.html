@@ -479,6 +479,7 @@ const CANALI = [
 	{ id: "alza_a", nome: "Piede davanti, alza", tipo: "len" },
 	{ id: "alza_d", nome: "Piede dietro, alza", tipo: "len" },
 	{ id: "ala", nome: "Ala", tipo: "ang" },
+	{ id: "fiamma", nome: "Fiamma, inclina", tipo: "ang" },
 	{ id: "busto", nome: "Busto, gira", tipo: "ang" },
 	{ id: "coda", nome: "Coda, si arriccia", tipo: "ang" },
 	{ id: "coda_gira", nome: "Coda, gira tutta", tipo: "ang" },
@@ -486,6 +487,8 @@ const CANALI = [
 	// tempo e fra i canali compaiono quando hanno chiavi o sono scelti
 	{ id: "corpo_x", nome: "Corpo, avanti e indietro", tipo: "len", extra: true },
 	{ id: "testa_x", nome: "Testa, avanti e indietro", tipo: "len", extra: true },
+	{ id: "fiamma_x", nome: "Fiamma, avanti e indietro", tipo: "len", extra: true },
+	{ id: "fiamma_y", nome: "Fiamma, su e giù", tipo: "len", extra: true },
 	{ id: "busto_x", nome: "Busto, avanti e indietro", tipo: "len", extra: true },
 	{ id: "busto_y", nome: "Busto, su e giù", tipo: "len", extra: true },
 	{ id: "braccio_a_x", nome: "Braccio davanti, avanti e indietro", tipo: "len", extra: true },
@@ -513,6 +516,7 @@ const CANALI = [
 	{ id: "manina_d_y", nome: "Manina dietro, su e giù", tipo: "len", extra: true },
 	// i pezzi in scena (1) o nel secchio (0): li cambia il secchio, a scatto
 	{ id: "mostra_testa", nome: "In scena: testa", tipo: "vis" },
+	{ id: "mostra_fiamma", nome: "In scena: fiamma", tipo: "vis" },
 	{ id: "mostra_busto", nome: "In scena: busto", tipo: "vis" },
 	{ id: "mostra_braccio_a", nome: "In scena: braccio davanti", tipo: "vis" },
 	{ id: "mostra_braccio_d", nome: "In scena: braccio dietro", tipo: "vis" },
@@ -980,9 +984,9 @@ $("arma-scala").onchange = () => scalaArma((parseFloat($("arma-scala").value) ||
 // come nel gioco (vince la clip col peso più grande)
 const IMPUGNA = [["braccio_a", "braccio davanti"], ["braccio_d", "braccio dietro"], ["manina_a", "manina davanti"],
 	["manina_d", "manina dietro"], ["nessuno", "nessuno"]];
-const LIVELLI = ["coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "arma", "braccio_a", "manina_a"];
+const LIVELLI = ["coda", "ala", "braccio_d", "manina_d", "gamba_d", "gamba_a", "busto", "testa", "fiamma", "arma", "braccio_a", "manina_a"];
 const NOMI_LIVELLI = { coda: "coda", ala: "ala", braccio_d: "braccio dietro", manina_d: "manina dietro", gamba_d: "gamba dietro",
-	gamba_a: "gamba davanti", busto: "busto", testa: "testa", arma: "arma", braccio_a: "braccio davanti", manina_a: "manina davanti" };
+	gamba_a: "gamba davanti", busto: "busto", testa: "testa", fiamma: "fiamma", arma: "arma", braccio_a: "braccio davanti", manina_a: "manina davanti" };
 function clipDellaScena() {
 	const b = info(nome) && info(nome).base;
 	return b && clips[b] ? clips[b] : clip();
@@ -1209,6 +1213,11 @@ function disegna(dt) {
 	strati.testa = () => {
 		if (vede("mostra_testa")) vestePerno(collo, "testa", "testa", po.viso || "testa");
 	};
+	const mFiamma = giunto(collo, (PT.cima ? PT.cima[0] : 0) + po.fiamma_x, (PT.cima ? PT.cima[1] : 82) + po.fiamma_y, po.fiamma);
+	posti.fiamma = punto(mFiamma, 0, 0);
+	strati.fiamma = () => {
+		if (vede("mostra_fiamma")) vestePerno(mFiamma, "fiamma", "fiamma");
+	};
 	strati.arma = () => {
 		if (!armaM || !vede("mostra_arma")) return;
 		const pz = { x: arma.x / K, y: arma.y / K, w: arma.w / K, h: arma.h / K, tinta: arma.tinta && "armi/" + arma.tinta };
@@ -1332,8 +1341,9 @@ function pezzoSotto(px, py) {
 // trascinare un pezzo: ruota il suo canale attorno al giunto, o lo sposta
 // i canali [avanti e indietro, su e giù] di ogni pezzo
 const SPOSTABILI = {
-	busto: ["busto_x", "busto_y"], testa: ["testa_x", "testa_y"], braccio_a: ["braccio_a_x", "braccio_a_y"],
-	braccio_d: ["braccio_d_x", "braccio_d_y"], gamba_a: ["gamba_a_x", "alza_a"], gamba_d: ["gamba_d_x", "alza_d"],
+	busto: ["busto_x", "busto_y"], testa: ["testa_x", "testa_y"], fiamma: ["fiamma_x", "fiamma_y"],
+	braccio_a: ["braccio_a_x", "braccio_a_y"], braccio_d: ["braccio_d_x", "braccio_d_y"],
+	gamba_a: ["gamba_a_x", "alza_a"], gamba_d: ["gamba_d_x", "alza_d"],
 	ala: ["ala_x", "ala_y"], coda: ["coda_x", "coda_y"], manina_a: ["manina_a_x", "manina_a_y"],
 	manina_d: ["manina_d_x", "manina_d_y"], arma: ["arma_x", "arma_y"],
 };
@@ -1564,6 +1574,7 @@ $("impugna").onchange = () => {
 // lo lasci) e dal palco al secchio (esce di scena)
 const SECCHIO = [
 	{ nome: "testa", vis: "mostra_testa", posto: "testa", can: "testa" },
+	{ nome: "fiamma", vis: "mostra_fiamma", posto: "fiamma", can: "fiamma" },
 	{ nome: "busto", vis: "mostra_busto", posto: "busto", can: "busto" },
 	{ nome: "braccio davanti", vis: "mostra_braccio_a", posto: "braccio", can: "braccio_a" },
 	{ nome: "braccio dietro", vis: "mostra_braccio_d", posto: "braccio_dietro", can: "braccio_d" },
