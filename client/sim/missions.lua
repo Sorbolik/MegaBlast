@@ -247,7 +247,7 @@ local function install(l, cap, map)
 	-- in the lessons time waits for you to touch the controls (capitolo.aspetta)
 	l.aspetta = cap.aspetta
 	-- the nearly forced next action: the lessons, not the Prima partita
-	l.riprova = l.aspetta and not l.guidata
+	l.riprova = l.aspetta and not l.guidata and l.tipo ~= "duello"
 	if type(l.obiettivo) == "table" then
 		for _, p in ipairs(l.obiettivo) do
 			if p.only then p.permitted = allowed_fn(p.only) end

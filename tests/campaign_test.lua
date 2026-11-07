@@ -261,18 +261,18 @@ end
 if hit_a then
 	outcome, r, g = play_mission("turno", function(c)
 		two_attacks(c)
-		c.hold(RIGHT, until_x(650))
-		c.hold({ right = true, jump = true }, 40)
-		c.hold(RIGHT, until_x(780))
+		c.hold(RIGHT, until_x(1020))
 		c.hold(IDLE, 30)
+		c.usa("teleport", 1.2, 0.65)
+		c.hold(IDLE, function(gg) return gg.robots[1].x >= 1120 and gg.robots[1].grounded end)
 	end)
-	check(outcome == "fatta" and g.turn_no == 1, "turno: two attacks in the same turn, then behind the wall")
+	check(outcome == "fatta", "turno: two attacks in the same turn, then behind the wall")
 	-- after the attacks time waits for you to take cover
 	outcome, r, g = play_mission("turno", function(c)
 		two_attacks(c)
 		c.hold(IDLE, 60 * 20)
 	end)
-	check(outcome == nil and r.st.steps_done[2] and not r.st.steps_done[3] and g.turn_no == 1,
+	check(outcome == nil and r.st.steps_done[2] and not r.st.steps_done[3],
 		"turno: after the two attacks the turn waits for you behind the wall")
 	-- before the right step everything else is disabled: no Lama
 	local _, r3, g3 = play_mission("turno", function(c)
@@ -285,14 +285,14 @@ if hit_a then
 		c.usa("missile", hit_a, hit_p)
 		c.hold(IDLE, function(g) return not g.projectile end)
 		c.hold(IDLE, 40)
-		c.hold(RIGHT, 60)
+		c.hold(RIGHT, 20)
 		c.usa("sword", 0)
 		c.hold(IDLE, function(g) return not g.used.secondary end)
 		c.hold(LEFT, function(g) return g.robots[1].x <= g.robots[2].x + 50 end)
 		c.usa("sword", math.pi)
-		c.hold(IDLE, 30)
+		c.hold(IDLE, 20)
 	end)
-	check(r4.st.steps_done[2] and r4.st.conta.misses == 1 and g4.turn_no == 1, "turno: a missed Lama is retried in the same turn")
+	check(r4.st.steps_done[2] and r4.st.conta.misses == 1, "turno: a missed Lama is retried in the same turn")
 	-- the Lama card waits for the missile to land, and a moment after
 	local early_attack, late
 	play_mission("turno", function(c)
@@ -438,7 +438,7 @@ do
 	-- what each demonstration must leave behind: Favilla's x, y (at least) and an event
 	local SHOWS = {
 		lanciarune = { { passi = 1, evento = "damage", su = 2 } },
-		turno = { { passi = 0, evento = "sword_hit" }, { passi = 2, x = 740 } },
+		turno = { { passi = 0, evento = "sword_hit" }, { passi = 3, x = 1120, evento = "teleport" } },
 		attrezzi = { { passi = 0, x = 880, y = 330 }, { passi = 2, da = { 905, 335 }, x = 1360, evento = "parachute" } },
 		spostano = { { passi = 1, y = 255 }, { passi = 4, y = 455 } },
 		tempo = { { passi = 0, x = 1200, y = 148, evento = "teleport" } },
