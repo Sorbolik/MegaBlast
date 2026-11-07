@@ -65,6 +65,7 @@ local FROM = require("battle.weapons").weapons
 local HOOK_TIP = 15.2
 local pose = require "battle.pose"
 local A = require "battle.animations"
+local A_FAVILLA = require "battle.animations_favilla"
 local SKINS = require "battle.skins"
 local PIVOTS = require "battle.pivots"
 local GRIPS = require "battle.grips"
@@ -133,7 +134,7 @@ local STEP = 0.9
 -- the head looks where you aim, up to this angle (radians) up and down
 local HEAD_UP, HEAD_DOWN = 0.45, 0.3
 -- defeat: after the fall (the clip) it fades in this time
-local FALLS, FADES = A.sconfitta.duration, 0.6
+local FADES = 0.6
 -- idle, whoever's turn it isn't plays a random skit now and then: between one
 -- and the next from PAUSE_FROM to PAUSE_FROM + PAUSE_TO seconds (math.random:
 -- graphics only, the simulation has its own generator)
@@ -389,12 +390,49 @@ function M.uncino(s, on)
 	end
 end
 
+-- the clips with the weapon in hand, for each weapon: first the one just for
+-- it (fermo_arma_mallet, mira_mallet), then the _arma one, then the one without a weapon.
+-- Computed per character since each character has their own animation set.
+local function make_armed(anim)
+	local armed = {}
+	for name in pairs(FROM) do
+		local function with_weapon(nome)
+			return anim[nome .. "_arma_" .. name] or anim[nome .. "_arma"] or anim[nome]
+		end
+		armed[name] = {
+			fermo = with_weapon("fermo"),
+			corsa = with_weapon("corsa"),
+			aria = with_weapon("aria"),
+			sale = with_weapon("sale"),
+			scende = with_weapon("scende"),
+			mira = anim["mira_" .. name] or anim.mira,
+		}
+	end
+	return armed
+end
+
+local ANIMAZIONI_PERSONAGGIO = {
+	apprendista = { A = A, armed = make_armed(A) },
+	favilla = { A = A_FAVILLA, armed = make_armed(A_FAVILLA) },
+}
+
 function M.new(color, look, weapon_only)
 	local H = game.DISEGNO_H
 	-- three quarters of the height wide, like the starting capsule (sim/body.lua)
 	local Wd = H * 0.75
 	local k = H / D.height
+	local char_name = "apprendista"
+	if look then
+		for _, name in ipairs(look) do
+			if ANIMAZIONI_PERSONAGGIO[name] then
+				char_name = name
+				break
+			end
+		end
+	end
+	local anim_data = ANIMAZIONI_PERSONAGGIO[char_name] or ANIMAZIONI_PERSONAGGIO.apprendista
 	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, weapon_tints = {}, flashes = {},
+		personaggio = char_name, A = anim_data.A, armed = anim_data.armed,
 		teste = {}, heads_t = {}, facce = {}, vis = {},
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- this frame's pose from the clips and the angles (radians) of the hanging
@@ -576,17 +614,6 @@ end
 -- The waiting skits: non-looping clips, a random one now and then
 local SKITS = { "naso", "sbadiglio", "guarda_coda" }
 
--- the clips with the weapon in hand, for each weapon: first the one just for
--- it (fermo_arma_mallet, mira_mallet), then the _arma one, then the one without a weapon
-local ARMED = {}
-for name in pairs(FROM) do
-	local function with_weapon(nome)
-		return A[nome .. "_arma_" .. name] or A[nome .. "_arma"] or A[nome]
-	end
-	ARMED[name] = { fermo = with_weapon("fermo"), corsa = with_weapon("corsa"), aria = with_weapon("aria"),
-		sale = with_weapon("sale"), scende = with_weapon("scende"), mira = A["mira_" .. name] or A.mira }
-end
-
 -- whoever's turn it isn't randomly takes and puts down the weapon (never in
 -- the middle of a skit); with the weapon in hand no skits
 local function waiting(s, dt)
@@ -594,9 +621,9 @@ local function waiting(s, dt)
 	if s.weapon_t <= 0 and not s.skit then
 		s.holding_weapon, s.weapon_t = not s.holding_weapon, WEAPON_FROM + WEAPON_TO * math.random()
 	end
-	if s.holding_weapon then return pose.aggiungi(s.posa, ARMED[s.chosen_weapon].fermo, s.t, 1) end
+	if s.holding_weapon then return pose.aggiungi(s.posa, s.armed[s.chosen_weapon].fermo, s.t, 1) end
 	if s.skit then
-		local sc = A[s.skit]
+		local sc = s.A[s.skit]
 		s.skit_t = s.skit_t + dt
 		if s.skit_t < sc.duration then return pose.aggiungi(s.posa, sc, s.skit_t, 1) end
 		s.skit, s.paused = nil, PAUSE_FROM + PAUSE_TO * math.random()
@@ -606,7 +633,7 @@ local function waiting(s, dt)
 		s.skit, s.skit_t = SKITS[math.random(#SKITS)], 0
 		s.n_skits = s.n_skits + 1
 	end
-	pose.aggiungi(s.posa, A.fermo, s.t, 1)
+	pose.aggiungi(s.posa, s.A.fermo, s.t, 1)
 end
 
 -- the tail: a wave starting at the back and reaching the tip, plus the TAIL
@@ -634,8 +661,8 @@ end
 local function death(s, dt)
 	local t = s.morte + dt
 	s.morte = t
-	pose.aggiungi(s.posa, A.sconfitta, t, 1)
-	s.alpha.w = max(0, 1 - max(0, t - FALLS - 0.3) / FADES)
+	pose.aggiungi(s.posa, s.A.sconfitta, t, 1)
+	s.alpha.w = max(0, 1 - max(0, t - s.A.sconfitta.duration - 0.3) / FADES)
 	gui.set_color(s.root, s.alpha)
 	if s.alpha.w == 0 then
 		s.morto = true
@@ -691,15 +718,15 @@ function M.update(s, dt, st)
 	if st.turno or st.aim ~= nil or st.fermo then s.holding_weapon = false end
 	-- st.posa: a clip played once from the start (Favilla showing a move,
 	-- sim/missions.lua dimostra), hands free
-	local posing = st.posa and A[st.posa]
+	local posing = st.posa and s.A[st.posa]
 	if st.posa ~= s.posa_name then s.posa_name, s.posa_t = st.posa, 0 end
 	if posing then s.posa_t = s.posa_t + dt end
 	local in_hand = (st.turno or st.aim ~= nil or s.holding_weapon) and not s.morte and not st.vittoria and not para and not posing
 	local aim_name = st.aim ~= nil and not s.morte and not para
 	-- the clips: with the weapon in hand the _arma ones, aiming while still mira
 	-- (the weapon's own if any)
-	local armed = ARMED[s.chosen_weapon]
-	local clip = in_hand and armed or A
+	local armed = s.armed[s.chosen_weapon]
+	local clip = in_hand and armed or s.A
 	local frozen = aim_name and armed.mira or clip.fermo
 
 	-- the state's pose, from the clips; on top, what depends on the game: tilt
@@ -717,13 +744,13 @@ function M.update(s, dt, st)
 
 	if s.morte then
 		death(s, dt)
-	elseif s.ui_action == "colpito" and s.action_t < A.colpito.duration then
+	elseif s.ui_action == "colpito" and s.action_t < s.A.colpito.duration then
 		-- hit: hit face, arms up (if they don't hold the weapon)
-		pose.aggiungi(po, A.colpito, s.action_t, 1)
+		pose.aggiungi(po, s.A.colpito, s.action_t, 1)
 	elseif para then
 		-- hanging from the straps; parachute and body swing against the velocity
 		s.swing = s.swing + (-max(-0.35, min(0.35, s.vx / 400)) - s.swing) * min(1, dt * 4)
-		pose.aggiungi(po, A.paracadute, s.t, 1)
+		pose.aggiungi(po, s.A.paracadute, s.t, 1)
 		rot(s.para, s.swing * 0.6)
 		lean = s.swing * 0.5
 	elseif not ground then
@@ -740,7 +767,7 @@ function M.update(s, dt, st)
 		pose.aggiungi(po, frozen, s.t, 1 - c)
 		pose.aggiungi(po, clip.corsa, s.passo / (2 * pi) * clip.corsa.duration, c)
 	elseif st.vittoria then
-		pose.aggiungi(po, A.vittoria, s.t, 1)
+		pose.aggiungi(po, s.A.vittoria, s.t, 1)
 	elseif posing then
 		pose.aggiungi(po, posing, s.posa_t, 1)
 	elseif not st.turno and not aim_name and not st.fermo then

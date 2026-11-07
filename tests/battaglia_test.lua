@@ -238,6 +238,16 @@ for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute"
 	"scende_arma", "mira" }) do
 	check(A[nome] ~= nil, "animations: there is the clip " .. nome)
 end
+local A_fav = require "battle.animations_favilla"
+for _, nome in ipairs({ "fermo", "corsa", "aria", "sale", "scende", "paracadute", "colpito", "vittoria",
+	"sconfitta", "naso", "sbadiglio", "guarda_coda", "fermo_arma", "corsa_arma", "aria_arma", "sale_arma",
+	"scende_arma", "mira" }) do
+	check(A_fav[nome] ~= nil, "favilla animations: there is the clip " .. nome)
+end
+local rig_ap = scoria.new(vec(1, 0.2, 0.3, 1), { "apprendista" })
+local rig_fav = scoria.new(vec(0.5, 0.8, 0.9, 1), { "favilla" })
+check(rig_ap.personaggio == "apprendista" and rig_ap.A == A, "scoria: apprendista uses default animations")
+check(rig_fav.personaggio == "favilla" and rig_fav.A == A_fav, "scoria: favilla uses character-specific animations")
 
 -- the pieces' forward-back and up-down moves
 do

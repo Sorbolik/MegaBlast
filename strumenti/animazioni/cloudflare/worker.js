@@ -10,6 +10,7 @@ const REPO = "Sorbolik/MegaBlast";
 const RAMO = "editor-ultima";
 const FILE = {
 	animazioni: "client/battle/animations.lua",
+	animazioni_favilla: "client/battle/animations_favilla.lua",
 	corpo: "client/sim/body.lua",
 	perni: "client/battle/pivots.lua",
 	impugnature: "client/battle/grips.lua",

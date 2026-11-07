@@ -68,6 +68,7 @@ def main():
     dati = {
         "diavoletto": diavoletto,
         "animazioni": leggi("client/battle/animations.lua"),
+        "animazioni_favilla": leggi("client/battle/animations_favilla.lua"),
         "pelli": pelli,
         "perni": leggi("client/battle/pivots.lua"),
         "armi": armi,

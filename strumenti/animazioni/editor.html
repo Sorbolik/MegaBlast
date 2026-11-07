@@ -704,8 +704,57 @@ function posaNeutra() { const p = { viso: null, pesoViso: 0 }; for (const c of C
 
 // ---------------------------------------------------------------------------
 // Lo stato dell'editor
+const DEL_GIOCO_MAP = {
+	apprendista: DATI.animazioni,
+	favilla: DATI.animazioni_favilla || DATI.animazioni,
+};
+const SALVATO_MAP = {
+	apprendista: DEL_GIOCO_MAP.apprendista,
+	favilla: DEL_GIOCO_MAP.favilla,
+};
+const CLIPS_MAP = {};
+
+function personaggioAttivo() {
+	return (typeof addosso !== "undefined" && addosso && addosso.personaggio === "favilla") ? "favilla" : "apprendista";
+}
+function fileAnimazioniAttivo() {
+	return personaggioAttivo() === "favilla" ? "animations_favilla.lua" : "animations.lua";
+}
+function endpointAnimazioniAttivo() {
+	return personaggioAttivo() === "favilla" ? "animazioni_favilla" : "animazioni";
+}
+function animazioniOriginaliDelGioco() {
+	return DEL_GIOCO_MAP[personaggioAttivo()];
+}
+function rilevaPersonaggioDaLua(testo) {
+	if (!testo) return null;
+	if (/testa_y\s*=\s*\{\s*0,\s*(?:6\d|5\d)/.test(testo)) return "favilla";
+	return "apprendista";
+}
+function caricaBozzaPersonaggio(p) {
+	const def = DEL_GIOCO_MAP[p] || DATI.animazioni;
+	try {
+		const vecchia = localStorage.getItem("megablast-animazioni");
+		if (vecchia && !localStorage.getItem("megablast-animazioni-favilla")) {
+			if (rilevaPersonaggioDaLua(vecchia) === "favilla") {
+				localStorage.setItem("megablast-animazioni-favilla", vecchia);
+				localStorage.removeItem("megablast-animazioni");
+			}
+		}
+		const bozza = localStorage.getItem("megablast-animazioni-" + p) || (p === "apprendista" ? localStorage.getItem("megablast-animazioni") : null);
+		if (bozza && bozza.trim() && bozza.trim() !== def.trim()) {
+			return { clips: clipDaLua(bozza), bozza: true };
+		}
+	} catch (e) {}
+	return { clips: clipDaLua(def), bozza: false };
+}
+
 let clips = clipDaLua(DATI.animazioni);
 const DEL_GIOCO = clipInLua(clips);
+let salvato = DEL_GIOCO;
+CLIPS_MAP.apprendista = clips;
+SALVATO_MAP.apprendista = salvato;
+
 let nome = "fermo";
 let tempo = 0; // tempo dentro la clip
 let orologio = 0; // tempo che passa (coda, molle)
@@ -725,9 +774,43 @@ function messaggio(t) {
 	m.textContent = t; m.classList.add("si");
 	clearTimeout(messaggio.t); messaggio.t = setTimeout(() => m.classList.remove("si"), 2600);
 }
-let salvato = DEL_GIOCO;
 function memorizza() {
-	try { localStorage.setItem("megablast-animazioni", clipInLua(clips)); } catch (e) { /* senza memoria del browser si lavora lo stesso */ }
+	const p = personaggioAttivo();
+	const lua = clipInLua(clips);
+	try {
+		localStorage.setItem("megablast-animazioni-" + p, lua);
+		if (p === "apprendista") localStorage.setItem("megablast-animazioni", lua);
+	} catch (e) { /* senza memoria del browser si lavora lo stesso */ }
+}
+function cambiaPersonaggio(da, a) {
+	if (da === a) return;
+	CLIPS_MAP[da] = clips;
+	SALVATO_MAP[da] = salvato;
+	memorizza();
+
+	if (CLIPS_MAP[a]) {
+		clips = CLIPS_MAP[a];
+		salvato = SALVATO_MAP[a] || DEL_GIOCO_MAP[a];
+	} else {
+		const res = caricaBozzaPersonaggio(a);
+		clips = res.clips;
+		salvato = DEL_GIOCO_MAP[a];
+		CLIPS_MAP[a] = clips;
+		SALVATO_MAP[a] = salvato;
+		if (res.bozza) {
+			$("avviso-testo").textContent = "Ho riaperto il lavoro su " + a + " che avevi lasciato in questo browser.";
+			$("avviso").classList.add("si");
+		} else {
+			$("avviso").classList.remove("si");
+		}
+	}
+	if (!clips[nome]) nome = Object.keys(clips)[0];
+	chiaveScelta = null;
+	scelte = [];
+	indietro.length = 0;
+	avanti.length = 0;
+	costruisciClip();
+	messaggio("Passato ad animazioni di " + a + " (" + fileAnimazioniAttivo() + ")");
 }
 // prima di ogni modifica: per annullare
 function prima() {
@@ -1915,7 +1998,9 @@ function aggiorna() {
 	$("annulla").disabled = !indietro.length;
 	$("rifai").disabled = !avanti.length;
 	const modificato = clipInLua(clips) !== salvato;
-	$("salva").textContent = modificato ? "Salva animations.lua •" : "Salva animations.lua";
+	const fNome = fileAnimazioniAttivo();
+	$("salva").title = `Salva ${fNome} (Ctrl+S)`;
+	$("salva").textContent = modificato ? `Salva ${fNome} •` : `Salva ${fNome}`;
 	if (!suona) disegna(0);
 	disegnaTempo();
 	aggiornaSecchio();
@@ -2186,10 +2271,16 @@ async function scrivi(testo, nomeFile, cartella, f) {
 	messaggio(`Scaricato ${nomeFile}: mettilo in ${cartella}.`);
 	return true;
 }
-const fileAnimazioni = {}, fileCorpo = {}, filePerni = {}, filePrese = {};
+const fileAnimazioni = {}, fileAnimazioniFavilla = {}, fileCorpo = {}, filePerni = {}, filePrese = {};
 async function salva() {
+	const file = fileAnimazioniAttivo();
+	const fObj = personaggioAttivo() === "favilla" ? fileAnimazioniFavilla : fileAnimazioni;
 	const testo = clipInLua(clips);
-	if (await scrivi(testo, "animations.lua", "client/battle/", fileAnimazioni)) { salvato = testo; aggiorna(); }
+	if (await scrivi(testo, file, "client/battle/", fObj)) {
+		salvato = testo;
+		SALVATO_MAP[personaggioAttivo()] = testo;
+		aggiorna();
+	}
 }
 $("salva").onclick = salva;
 $("pn-salva").onclick = async () => {
@@ -2205,12 +2296,13 @@ $("hb-salva").onclick = async () => {
 	if (await scrivi(testo, "corpo.lua", "client/sim/", fileCorpo)) { corpoSalvato = testo; aggiorna(); }
 };
 $("copia").onclick = async () => {
+	const file = fileAnimazioniAttivo();
 	const testo = clipInLua(clips);
-	try { await navigator.clipboard.writeText(testo); messaggio("Copiato: incollalo in client/battle/animations.lua o in chat."); }
+	try { await navigator.clipboard.writeText(testo); messaggio("Copiato: incollalo in client/battle/" + file + " o in chat."); }
 	catch (e) {
 		const ta = document.createElement("textarea");
 		ta.value = testo; document.body.appendChild(ta); ta.select();
-		try { document.execCommand("copy"); messaggio("Copiato."); } catch (e2) { messaggio("Il browser non copia: usa Salva."); }
+		try { document.execCommand("copy"); messaggio("Copiato (" + file + ")."); } catch (e2) { messaggio("Il browser non copia: usa Salva."); }
 		ta.remove();
 	}
 };
@@ -2230,7 +2322,7 @@ $("file").onchange = async () => {
 	$("file").value = "";
 };
 // "Manda a Claude": su claude.ai nel database della pagina (documenti
-// animazioni/ultima, corpo/ultima, perni/ultima, impugnature/ultima,
+// animazioni/ultima, animazioni_favilla/ultima, corpo/ultima, perni/ultima, impugnature/ultima,
 // ritocchi/ultima; le richieste
 // degli strumenti in richieste/<nome>); su Cloudflare
 // (strumenti/animazioni/cloudflare) nel ramo editor-ultima di GitHub, con la
@@ -2252,7 +2344,12 @@ async function mandaCloudflare(corpo) {
 $("claude").onclick = async () => {
 	try {
 		const quando = new Date().toISOString();
-		await manda("animazioni", clipInLua(clips), quando);
+		const p = personaggioAttivo();
+		const endp = endpointAnimazioniAttivo();
+		const fNome = fileAnimazioniAttivo();
+		await manda(endp, clipInLua(clips), quando);
+		salvato = clipInLua(clips);
+		SALVATO_MAP[p] = salvato;
 		// le hitbox solo se cambiate: sono fisica, cambiano il gioco per tutti
 		const cl = corpoInLua(hb);
 		if (cl !== CORPO_DEL_GIOCO) { await manda("corpo", cl, quando); corpoSalvato = cl; }
@@ -2262,16 +2359,17 @@ $("claude").onclick = async () => {
 		if (prl !== PRESE_DEL_GIOCO) { await manda("impugnature", prl, quando); preseSalvate = prl; }
 		aggiorna();
 		const anche = [cl !== CORPO_DEL_GIOCO && "hitbox", pl !== PERNI_DEL_GIOCO && "perni", prl !== PRESE_DEL_GIOCO && "impugnature"].filter(Boolean);
-		messaggio("Mandate le animazioni" + (anche.length ? " con " + anche.join(", ").replace(/, ([^,]*)$/, " e $1") : "") + ": di' a Claude di prenderle dall'editor.");
+		messaggio("Mandate le animazioni (" + fNome + ")" + (anche.length ? " con " + anche.join(", ").replace(/, ([^,]*)$/, " e $1") : "") + ": di' a Claude di prenderle dall'editor.");
 	} catch (e) { messaggio("Non sono riuscito a mandarle: " + ((e && e.message) || "errore") + ". Usa Copia il testo."); }
 };
 $("ripristina").onclick = () => {
 	prima();
-	clips = clipDaLua(DATI.animazioni);
+	const def = animazioniOriginaliDelGioco();
+	clips = clipDaLua(def);
 	chiaveScelta = null;
 	$("avviso").classList.remove("si");
 	costruisciClip(); dopo();
-	messaggio("Tornate le animazioni del gioco (Annulla per riprendere le tue).");
+	messaggio("Tornate le animazioni del gioco per " + personaggioAttivo() + " (Annulla per riprendere le tue).");
 };
 
 // ---------------------------------------------------------------------------
@@ -2446,9 +2544,10 @@ $("rt-manda").onclick = async () => {
 // ---------------------------------------------------------------------------
 // Partenza: il lavoro non salvato di prima, se c'è
 try {
-	const bozza = localStorage.getItem("megablast-animazioni");
-	if (bozza && bozza !== DEL_GIOCO) {
-		clips = clipDaLua(bozza);
+	const res = caricaBozzaPersonaggio("apprendista");
+	if (res.bozza) {
+		clips = res.clips;
+		CLIPS_MAP.apprendista = clips;
 		$("avviso-testo").textContent = "Ho riaperto il lavoro che avevi lasciato in questo browser.";
 		$("avviso").classList.add("si");
 	}
@@ -2477,7 +2576,17 @@ for (const c of [...PL.sostituisce, ...PL.sopra]) {
 	l.textContent = c + " ";
 	const sel = document.createElement("select");
 	for (const n of ["", ...nomi]) sel.add(new Option(n || "—", n));
-	sel.onchange = () => { if (sel.value) addosso[c] = sel.value; else delete addosso[c]; vesti(); pezziRitocco(); costruisciSecchio(); aggiorna(); };
+	sel.onchange = () => {
+		const vecchioP = addosso["personaggio"] || "apprendista";
+		if (sel.value) addosso[c] = sel.value; else delete addosso[c];
+		if (c === "personaggio") {
+			const nuovoP = addosso["personaggio"] || "apprendista";
+			if (nuovoP !== vecchioP) {
+				cambiaPersonaggio(vecchioP, nuovoP);
+			}
+		}
+		vesti(); pezziRitocco(); costruisciSecchio(); aggiorna();
+	};
 	l.appendChild(sel);
 	$("pelli").appendChild(l);
 	// si parte col personaggio di tutti nel gioco (scoria.PERSONAGGIO)
