@@ -400,11 +400,18 @@ M.addestramento = {
 		-- two banks and the platform in the middle, over the lava
 		arena = { { 200, 0, 700, 150 }, { 1020, 260, 300, 30 }, { 1440, 0, 480, 150 } },
 		spawns = { { x = 500, from = 600 }, { x = 1680, from = 600 } },
-		regole = { crate_every = 1000 },
 		giocatori = {
 			{ team = 1, secondary = "eagle" },
-			{ team = 2, bot = 1, secondary = "mallet", nome = "Favilla", battute = "favilla", pelle = "favilla",
-				stats = { teleports = 0, time_orbs = 0 } },
+			{
+				team = 2,
+				bot = 3,
+				nome = "Favilla",
+				battute = "favilla",
+				pelle = "favilla",
+				stats = { teleports = 0, time_orbs = 0 },
+				secondary = "eagle",
+				pick = "missile",
+			},
 		},
 		vedi = { "primarie", "secondarie", "hook", "parachute", "tempo" },
 		secondi = 150,
@@ -413,6 +420,7 @@ M.addestramento = {
 		righe = {
 			{ testo = "Si rinasce subito, e il turno continua", quando = { evento = "death", di = "tu" } },
 		},
+		regole = { crate_every = 1000 },
 	},
 	-- Duello con Favilla, the third sfida and the chapter exam: a first real match,
 	-- short, with everything (Sergio, 29 Oct: the last of the Addestramento). No
