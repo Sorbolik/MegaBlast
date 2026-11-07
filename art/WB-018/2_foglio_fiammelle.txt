@@ -1,0 +1,22 @@
+Image 1 is the original concept art of our game's main character, a little red imp apprentice: look at the three different poses showing his head flame in different states of motion (pose 1: standing still; pose 2: running with flame trailing back; pose 3: leaping with vigorous flame).
+Image 2 is the official character model showing the clean graphic style (flat colors, thick black outline).
+
+Draw a SPRITE SHEET of FOUR distinct flame pieces side by side in a single horizontal row, well separated from each other, on a flat pure magenta #FF00FF background.
+All four flames are sized to fit on top of the character's head between the horns, seen in three-quarter angle pointing to the right:
+1) IDLE (fermo): upright lively flame with upward tongues and a small secondary tongue, confident and steady, as in pose 1 of Image 1.
+2) RUNNING (corsa): flame stretched and tilted back to the left at about 45 degrees, blown by the wind of his run, dynamic and sleek, as in pose 2 of Image 1.
+3) VIGOROUS / JUMP (salto): larger energetic roaring flame with multiple sharp crests, leaping upward, as in pose 3 of Image 1.
+4) SURPRISE / IMPACT (colpito): smaller compact flame or straight candle-like flame popping straight up.
+
+Each flame must be completely isolated, with a clean closed rounded base at the bottom where it connects to the skull. NO heads, horns or bodies drawn.
+
+Rendering rules, very strict:
+- FLAT CEL COLORS ONLY: solid pure colors with sharp shadow shapes. Absolutely NO gradients, NO glow halos, NO smoke trails, NO particles, NO soft shading.
+- Thick, clean, closed pure-black #000000 outline around each flame.
+- Palette: outline black #000000; outer flame fiery orange #FF7A29; inner flame bright warm yellow #FFF066; shadow red-orange #B8432A.
+- Background: flat pure magenta #FF00FF everywhere, no halos.
+- Landscape format, well spaced, no text, labels or numbers.
+
+Riferimenti allegati, in ordine:
+1. art/WB-018/riferimenti/R1_apprendista_concept.png
+2. art/WB-018/riferimenti/R2_apprendista_tre_quarti.png
