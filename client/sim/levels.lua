@@ -277,40 +277,62 @@ M.addestramento = {
 		tipo = "corsa",
 		goal_text = "Il Rampino ce l'hai sempre: toccalo, mira il bordo della piattaforma e lascia. Guarda me!",
 		highlight = "hook",
-		-- your ground, the platform jutting over the gap, the other side
-		arena = { { 200, 0, 900, 150 }, { 900, 300, 320, 30 }, { 1360, 0, 560, 150 } },
-		spawns = { { x = 640, from = 290 }, { x = 760, from = 290 } },
-		giocatori = { { team = 1 }, { team = 1, insegna = true, nome = "Favilla", pelle = "favilla" } },
+		arena = {
+			{ 0, 0, 770, 150 },
+			{ 900, 300, 320, 30 },
+			{ 1440, 10, 480, 140 },
+		},
+		spawns = {
+			{ x = 490, from = 290 },
+			{ x = 650, from = 300 },
+		},
+		giocatori = {
+			{ team = 1 },
+			{ team = 1, nome = "Favilla", pelle = "favilla", insegna = true },
+		},
 		vedi = {},
 		without_time = true,
-		cards = { { dopo = 0, arma = "hook", give = true }, { dopo = 2, arma = "parachute", give = true } },
-		dimostra = {
-			{ mosse = {
-				{ cammina = 850 },
-				{ arma = "hook", angolo = 70 },
-				{ dice = "Su! Ora tu" },
-			} },
-			{ quando = { passo = 2 }, mosse = {
-				{ dice = "Guarda: mi butto e apro" },
-				{ cammina = 1100 },
-				{ cammina = 1300 },
-				{ arma = "parachute", verso = "destra" },
-				{ cammina = 1480 },
-				{ dice = "Ora tu!" },
-			} },
+		cards = {
+			{ dopo = 0, arma = "hook", give = true },
+			{ dopo = 2, arma = "parachute", give = true },
 		},
-		-- the medal: across without ever falling into the gap
-		medaglia = { conta = "morti", at_most = 0, testo = "PIEDI ASCIUTTI" },
+		medaglia = { testo = "PIEDI ASCIUTTI", at_most = 0, conta = "morti" },
 		obiettivo = {
-			{ usa = "rampino", only = { "hook" }, testo = "Aggancia il bordo col Rampino" },
+			{ usa = "rampino", only = { "hook" }, testo = "Aggancia il bordo col Rampino", zoom = 3 },
 			{ reach = { x = 900, y = 330 }, nuova = true, testo = "Sali sulla piattaforma" },
 			{ usa = "paracadute", only = { "parachute" }, testo = "Salta nel vuoto e apri il paracadute" },
-			{ reach = { x = 1360, y = 150 }, only = { "parachute" }, nuova = true, testo = "Atterra dall'altra parte" },
+			{ reach = { x = 1490, y = 150 }, only = { "parachute" }, nuova = true, testo = "Atterra dall'altra parte" },
 		},
 		righe = {
-			{ testo = "Visto? Il Rampino ti porta su", faccia = "ride", secondi = 2, quando = { passo = 2 } },
-			{ testo = "Salta nel vuoto ({salta}) e in aria tocca il paracadute: atterri piano. Guarda me!",
-				mostra = "grande", highlight = "parachute", stops = false, quando = { passo = 2 } },
+			{ secondi = 2, testo = "Visto? Il Rampino ti porta su", faccia = "ride", quando = { passo = 2 } },
+			{
+				highlight = "parachute",
+				testo = "Salta nel vuoto ({salta}) e in aria tocca il paracadute: atterri piano. Guarda me!",
+				mostra = "grande",
+				quando = { passo = 2 },
+				stops = false,
+			},
+		},
+		dimostra = {
+			{
+				mosse = {
+					{ cammina = 760 },
+					{ arma = "hook", angolo = 23, potenza = 1 },
+					{ dice = "Su! Ora tu" },
+				},
+			},
+			{
+				quando = { passo = 2 },
+				mosse = {
+					{ dice = "Guarda: mi butto e apro" },
+					{ cammina = 1160 },
+					{ cammina = 1210 },
+					{ salta = "destra", in_aria = true },
+					{ arma = "parachute", verso = "destra" },
+					{ cammina = 1580 },
+					{ dice = "Ora tu!" },
+				},
+			},
 		},
 		bravo = "Piano piano, senza un graffio. Il paracadute è uno a partita: usalo bene",
 	},
