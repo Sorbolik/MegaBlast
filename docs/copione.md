@@ -27,7 +27,7 @@ in `controlla.lua`, in questa pagina e nel Copione.
 | `casse`, `cards` | `{ dopo = passo, arma, x }`: dopo quel passo (0: subito) cade la cassa lì, o si apre la carta dell'arma (`give`: e te la dà) |
 | `guida`, `scintilla` | Favilla comparsa nel cortile: da quale passo parte e il suo percorso `{ x, y, t, salto }` (corre mentre giochi); la scintilla della medaglia |
 | `dimostra` | Favilla vera che ti mostra le mosse facendole (sotto) |
-| `globi`, `vita`, `punti`, `regrow`, `al_posto`, `secondi`, `al_tempo`, `turni`, `plans` | regole della partita (vedi l'intestazione di `missions.lua`) |
+| `globi`, `globi_tempo`, `vita`, `punti`, `regrow`, `al_posto`, `secondi`, `al_tempo`, `turni`, `plans` | regole della partita (vedi l'intestazione di `missions.lua`; `globi_tempo`: i secondi risparmiati diventano globi) |
 | `stelle`, `medaglia`, `collaudo` | stelle dei gironi, medaglia delle lezioni, come lo prova il bot |
 | `bravo`, `bravo_faccia` | il «bravo» di Favilla quando l'ultimo passo è fatto (faccia: senza, `ride`) |
 

@@ -12,7 +12,7 @@ local it = require "lang.it"
 -- l'ordine dei campi, come si leggono in levels.lua; gli altri in ordine alfabetico
 local ORDINE = {}
 for i, k in ipairs({ "id", "titolo", "tipo", "goal_text", "highlight", "guidata", "mappa", "arena", "spawns",
-	"giocatori", "nascosti", "vita", "punti", "regrow", "vedi", "no_weapons", "without_time", "draft", "globi",
+	"giocatori", "nascosti", "vita", "punti", "regrow", "vedi", "no_weapons", "without_time", "draft", "globi", "globi_tempo",
 	"secondi", "al_tempo", "al_posto", "plans", "casse", "cards", "guida", "scintilla", "turni", "stelle",
 	"medaglia", "obiettivo", "righe", "dimostra", "bravo", "bravo_faccia", "collaudo",
 	-- dentro: giocatori, passi, righe, casse, guida

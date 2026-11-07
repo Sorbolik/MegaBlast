@@ -325,6 +325,7 @@ end
 function M.vede(r, w)
 	local l = r and r.l
 	if not l or not l.vedi then return true end
+	if w == "teleport" and l.globi_tempo then return true end
 	if r.prese and r.prese[w] then return true end
 	local c = category(w)
 	for _, v in ipairs(l.vedi) do
@@ -363,17 +364,32 @@ function M.partita(r, seed, picks, help)
 		end
 		players[i] = q
 	end
-	if l.globi or l.vedi then
+	if l.globi_tempo ~= nil then
+		for _, q in ipairs(players) do
+			if not q.insegna then
+				local qs = {}
+				for k, v in pairs(q.stats or {}) do qs[k] = v end
+				qs.time_orbs = l.globi_tempo and 1 or 0
+				q.stats = qs
+			end
+		end
+	end
+	if l.globi or l.vedi or l.globi_tempo ~= nil then
 		local st = {}
 		for k, v in pairs(players[PLAYER].stats or {}) do st[k] = v end
 		st.teleports = l.globi or st.teleports
 		-- what the lesson doesn't show isn't there: no orbs (not even from time), no
 		-- parachute
-		if not M.vede(r, "teleport") then st.teleports, st.time_orbs = 0, 0 end
+		if not M.vede(r, "teleport") and not l.globi_tempo then
+			st.teleports, st.time_orbs = 0, 0
+		end
 		if not M.vede(r, "parachute") then st.parachutes = 0 end
+		if l.globi_tempo ~= nil then
+			st.time_orbs = l.globi_tempo and 1 or 0
+		end
 		players[PLAYER].stats = st
 		-- nor for Favilla who shows the moves: no "+2 teletrasporti" in a lesson without orbs
-		if l.maestra and not M.vede(r, "teleport") then
+		if l.maestra and not M.vede(r, "teleport") and not l.globi_tempo then
 			local fs = {}
 			for k, v in pairs(players[l.maestra].stats or {}) do fs[k] = v end
 			fs.teleports, fs.time_orbs = 0, 0

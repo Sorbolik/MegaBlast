@@ -712,5 +712,32 @@ do
 	check(g.current == 1, "and the turn is the player's again")
 end
 
+-- globi_tempo: levels from 'a turno' onwards award orbs from leftover time
+for _, id in ipairs({ "turno", "tempo", "prima_sfida", "sfida_burrone", "guidata" }) do
+	local r = missions.nuova(id)
+	local _, _, opts = missions.partita(r, 1)
+	check(opts.players[1].stats.time_orbs == 1, id .. ": time_orbs == 1")
+	check(missions.vede(r, "teleport"), id .. ": teleport is visible")
+end
+for _, id in ipairs({ "primi_passi", "lanciarune" }) do
+	local r = missions.nuova(id)
+	local _, _, opts = missions.partita(r, 1)
+	check(opts.players[1].stats.time_orbs == 0, id .. ": time_orbs == 0")
+end
+
+-- custom mission with globi_tempo = false
+do
+	local l = {
+		id = "prova_senza_tempo", titolo = "Prova", tipo = "bersagli",
+		arena = { { 0, 0, 1920, 150 } }, spawns = { { x = 300, from = 600 }, { x = 1100, from = 600 } },
+		giocatori = { { team = 1 }, { team = 2, dummy = true } },
+		globi_tempo = false,
+		obiettivo = { { hit = 2, testo = "Colpisci" } },
+	}
+	local r = missions.nuova(missions.prova(l, "addestramento"))
+	local _, _, opts = missions.partita(r, 1)
+	check(opts.players[1].stats.time_orbs == 0, "globi_tempo = false forces time_orbs == 0")
+end
+
 print(failures == 0 and "\nall tests passed" or ("\n" .. failures .. " tests failed"))
 os.exit(failures == 0 and 0 or 1)

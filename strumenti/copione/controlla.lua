@@ -24,10 +24,15 @@ end
 
 -- gli eventi della simulazione (game:emit) che una riga può aspettare
 local EVENTI = {}
-for f in io.popen("ls client/sim/*.lua"):lines() do
-	local h = assert(io.open(f))
-	for tipo in h:read("*a"):gmatch('emit%(%{ type = "([%w_]+)"') do EVENTI[tipo] = true end
-	h:close()
+local is_win = package.config:sub(1, 1) == "\\"
+local cmd = is_win and "dir /b client\\sim\\*.lua" or "ls client/sim/*.lua"
+local pfx = is_win and "client/sim/" or ""
+for f in io.popen(cmd):lines() do
+	local h = io.open(pfx .. f)
+	if h then
+		for tipo in h:read("*a"):gmatch('emit%(%{ type = "([%w_]+)"') do EVENTI[tipo] = true end
+		h:close()
+	end
 end
 
 -- i comandi che si accendono (highlight) o si toccano (tocca): armi e oggetti,

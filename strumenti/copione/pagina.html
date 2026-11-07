@@ -1511,7 +1511,7 @@ function disegnaPannello() {
 			el("div", { class: "gruppo" }, el("b", { text: "La mappa" }), spiega("Un'arena di piattaforme d'acciaio che disegni tu, oppure una mappa vera del gioco (lì il terreno non si cambia)."), mappaIn(l)),
 			c.aspetta ? el("div", { class: "gruppo" }, el("b", { text: "Cosa si vede sullo schermo" }), spiega("Nelle lezioni lo schermo mostra solo quello che spunti qui: il resto non c'è proprio. Un'arma presa da una cassa si vede da lì in poi."), multi(l, "vedi", VEDI, true, NOMI_VEDI)) : null,
 			el("div", { class: "gruppo" }, el("b", { text: "Regole" }),
-				el("div", { class: "bottoni" }, spunta(l, "no_weapons", "Il giocatore parte senza armi"), spunta(l, "without_time", "Niente cronometro né turni: il turno è suo finché non finisce"), spunta(l, "al_posto", "Chi cade rinasce dove era partito")),
+				el("div", { class: "bottoni" }, spunta(l, "no_weapons", "Il giocatore parte senza armi"), spunta(l, "without_time", "Niente cronometro né turni: il turno è suo finché non finisce"), spunta(l, "globi_tempo", "I secondi che avanzano diventano globi teletrasporto"), spunta(l, "al_posto", "Chi cade rinasce dove era partito")),
 				el("div", { class: "due" }, campo("Globi all'inizio", testoIn(l, "globi", { num: true }), "Per teletrasportarsi."), campo("Turni massimi", testoIn(l, "turni", { num: true }), "Oltre, il livello ricomincia. Vuoto: senza limite."))),
 			el("div", { class: "gruppo" }, avanzato(l, "Tutti i campi, per esperti (stelle, medaglia, prova dei bot...)", v => { cap().livelli[stato.l] = v; })));
 	}

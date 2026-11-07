@@ -132,12 +132,13 @@ M.addestramento = {
 			{ x = 580, from = 620 },
 		},
 		giocatori = {
-			{ team = 1, stats = { teleports = 1, time_orbs = 0 } },
+			{ team = 1 },
 			{ team = 2, dummy = true },
 			{ team = 1, nome = "Favilla", pelle = "favilla", insegna = true },
 		},
 		vedi = { "missile", "sword", "teleport", "tempo" },
 		globi = 1,
+		globi_tempo = true,
 		cards = { { dopo = 1, arma = "sword" } },
 		dimostra = {
 			{ mosse = {
@@ -192,6 +193,7 @@ M.addestramento = {
 		vita = { [3] = 10 },
 		vedi = { "teleport", "tempo", "missile", "sword" },
 		globi = 0,
+		globi_tempo = true,
 		medaglia = { testo = "DUE GLOBI IN UN TURNO", at_least = 2, conta = "globi_turno" },
 		obiettivo = {
 			{
@@ -253,11 +255,12 @@ M.addestramento = {
 			{ x = 1380, from = 630 },
 		},
 		giocatori = {
-			{ team = 1, stats = { teleports = 1, time_orbs = 0 } },
+			{ team = 1 },
 			{ team = 2, nome = "Favilla", pelle = "favilla", bot = 4, carattere = "codardo" },
 		},
 		vedi = { "missile", "sword", "teleport", "tempo" },
 		globi = 1,
+		globi_tempo = true,
 		obiettivo = {
 			{ testo = "Abbatti Favilla", down = 2, only = { "primaria", "teleport", "missile", "sword" } },
 		},
@@ -408,12 +411,13 @@ M.addestramento = {
 				nome = "Favilla",
 				battute = "favilla",
 				pelle = "favilla",
-				stats = { teleports = 0, time_orbs = 0 },
 				secondary = "eagle",
 				pick = "missile",
 			},
 		},
-		vedi = { "primarie", "secondarie", "hook", "parachute", "tempo" },
+		vedi = { "primarie", "secondarie", "hook", "parachute", "teleport", "tempo" },
+		globi = 1,
+		globi_tempo = true,
 		secondi = 150,
 		al_tempo = "abbattimenti",
 		obiettivo = { { down = 2, testo = "Abbatti Favilla" } },
@@ -478,6 +482,7 @@ M.addestramento = {
 			},
 		},
 		globi = 2,
+		globi_tempo = true,
 		bravo = "Migliori in fretta!",
 		bravo_faccia = "fiera",
 	},
@@ -499,6 +504,7 @@ M.girone_1 = {
 		-- the second apprentice is half-done: Favilla is a 3, two full bots would
 		-- be too much for the first mission (collaudo)
 		vita = { [4] = 50 },
+		globi_tempo = true,
 		casse = { { dopo = 0, arma = "grenade", x = 405 } },
 		turni = 7,
 		-- ★★ at the median lead of the normal bot in 2 v 2 (collaudo, 4 Nov)
@@ -526,6 +532,7 @@ M.girone_1 = {
 		-- on the ground would draw all the shots, collaudo)
 		giocatori = { { team = 1 }, { team = 2, bot = 2, carattere = "cecchino" }, { team = 1, bot = 3, nome = "Favilla", battute = "favilla_compagna", pelle = "favilla" }, { team = 2, bot = 1 } },
 		globi = 0,
+		globi_tempo = true,
 		-- Favilla can knock the sniper into the void: it comes back on its island
 		al_posto = true,
 		vita = { [2] = 55, [4] = 50 },
@@ -555,6 +562,7 @@ M.girone_1 = {
 		spawns = { { x = 760, from = 600 }, { x = 1160, from = 600 } },
 		giocatori = { { team = 1 }, { team = 2, bot = 3 } },
 		vita = { [2] = 46 },
+		globi_tempo = true,
 		regrow = { 2 },
 		-- the Affondo comes here, with its card (it left the cortile, 6 Nov)
 		casse = { { dopo = 0, arma = "shards", x = 560 }, { dopo = 0, arma = "lunge", x = 1360 } },
@@ -579,6 +587,7 @@ M.girone_1 = {
 			{ team = 2, dummy = true }, { team = 2, dummy = true }, { team = 2, dummy = true },
 		},
 		vita = { [2] = 999, [3] = 999, [4] = 999 },
+		globi_tempo = true,
 		turni = 5,
 		stelle = { punti = 400, bonus = { conta = "morti", at_most = 0, testo = "SENZA CADERE" } },
 		obiettivo = { { down = "nemico", come = "vuoto", times = 3, testo = "Butta giù tre bersagli" } },
@@ -597,6 +606,7 @@ M.girone_1 = {
 		tipo = "duello",
 		goal_text = "Colpisce a ogni turno e scappa col globo nelle tane: stanalo col tuo",
 		mappa = "pavimento",
+		globi_tempo = true,
 		giocatori = { { team = 1 }, { team = 2, bot = 4, carattere = "codardo", nome = "Il codardo" } },
 		-- the Pugno, which cracks the armour, comes in the crate (it was taught in
 		-- the cortile's Punti e Corona lesson, now gone)
@@ -623,6 +633,7 @@ M.girone_1 = {
 				battute = "fabbro" },
 		},
 		vita = { [2] = 240 },
+		globi_tempo = true,
 		turni = 10,
 		stelle = { punti = 10, bonus = { conta = "vuoto", at_least = 1, testo = "BUTTALO NELLA FOSSA" } },
 		obiettivo = { { down = 2, testo = "Abbatti il Fabbro" } },
@@ -637,6 +648,7 @@ M.girone_1 = {
 		mappa = "pavimento",
 		-- the first weapon draft, guided, with the weapons already seen (Sergio, 30 Oct)
 		draft = true,
+		globi_tempo = true,
 		giocatori = {
 			{ team = 1 },
 			{ team = 2, bot = 5, carattere = "testa_calda", secondary = "mallet", nome = "Il Fabbro",
