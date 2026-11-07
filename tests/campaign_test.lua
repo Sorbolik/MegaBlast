@@ -317,10 +317,9 @@ local function island_turn(c)
 end
 outcome, r, g = play_mission("tempo", function(c)
 	island_turn(c)
-	c.turno()
-	c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[3].x - 60 end)
-	c.usa("missile", 0.3, 0.3)
-	c.hold(IDLE, 120)
+	c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[3].x - 40 end)
+	c.usa("sword", 0, 0.1)
+	c.hold(IDLE, 30)
 end)
 check(outcome == "fatta" and g.robots[3].dead, "tempo: orbs, the island, the target there")
 if outcome == "fatta" then

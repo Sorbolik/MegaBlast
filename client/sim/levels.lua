@@ -168,9 +168,71 @@ M.addestramento = {
 			{ testo = "Dopo l'attacco restano pochi secondi: mettiti al riparo dietro quel muro!",
 				quando = { passo = 2 }, fino = { passo = 3 } },
 			{ mostra = "grande", highlight = "teleport", faccia = "ride", quando = { passo = 3 },
-				testo = "Come dici? Impossibile? Grazie all'ultima trovata del Fabbro ci si arriva in un attimo. D'ora in poi riceverai dei globi teletrasporto ogni volta che risparmi tempo nel tuo turno. Ti mostro come si usano, guarda me!" },
+				testo = "Come dici? Impossibile? Grazie all'ultima trovata del Fabbro ci si arriva in un attimo. Riceverai dei globi teletrasporto ogni volta che risparmi tempo. Ti mostro come si usano, guarda me!" },
 		},
 		bravo = "Al sicuro. Così si gioca un turno!",
+	},
+	-- I globi: attacking early gives orbs, and an orb carries you where it
+	-- falls. She attacks at once and throws hers onto the island, then you; there
+	-- the target falls at the first hit. The medal: two orbs in one turn
+	{
+		id = "tempo",
+		titolo = "I globi",
+		tipo = "bersagli",
+		goal_text = "Attacca presto: i secondi che avanzano diventano un globo. Col tasto viola lo lanci e arrivi dove cade. Guarda me!",
+		highlight = "missile",
+		arena = { { 300, 0, 600, 150 }, { 1200, 100, 320, 50 } },
+		spawns = { { x = 600, from = 600 }, { x = 660, from = 600 }, { x = 1350, from = 610 }, { x = 820, from = 600 } },
+		giocatori = {
+			{ team = 1 },
+			{ team = 2, dummy = true },
+			{ team = 2, dummy = true },
+			{ team = 1, nome = "Favilla", pelle = "favilla", insegna = true },
+		},
+		vita = { [3] = 10 },
+		vedi = { "teleport", "tempo", "missile", "sword" },
+		globi = 0,
+		medaglia = { testo = "DUE GLOBI IN UN TURNO", at_least = 2, conta = "globi_turno" },
+		obiettivo = {
+			{
+				globi = 1,
+				usa = "globi",
+				only = { "missile" },
+				testo = "Spara presto col Lanciarune: guadagni un globo",
+				zoom = 3,
+			},
+			{
+				reach = { x = 1200, y = 150 },
+				only = { "teleport" },
+				zoom = 2,
+				nuova = true,
+				testo = "Lancia il globo sull'isola",
+			},
+			{ hit = 3, only = { "missile", "sword" }, testo = "Colpisci il fantoccio sull'isola" },
+		},
+		righe = {
+			{
+				highlight = "teleport",
+				testo = "Ora il tasto viola: mira l'isola e lascia, arrivi dove cade il globo",
+				quando = { passo = 1 },
+				fino = { evento = "teleport" },
+			},
+			{ secondi = 2, testo = "Eccoti! Ora finiscilo", faccia = "ride", quando = { passo = 2 } },
+		},
+		dimostra = {
+			{
+				mosse = {
+					{ dice = "Attacco subito..." },
+					{ arma = "missile", angolo = 180, potenza = 0.4 },
+					{ dice = "...globo! E lo lancio sull'isola" },
+					{ arma = "teleport", angolo = 46, potenza = 0.55 },
+					{ cammina = 1390 },
+					{ arma = "sword", angolo = 179, potenza = 0.1 },
+					{ dice = "Ora tu!" },
+				},
+			},
+		},
+		bravo = "Così si usano i globi!",
 	},
 	-- Prima sfida: a short match against Favilla with only what you know (Sergio,
 	-- 6 Nov: battles in between, to take the moves in hand). Lanciarune and Lama,
@@ -245,9 +307,9 @@ M.addestramento = {
 	-- with the real weapon first, then you. No timer
 	{
 		id = "spostano",
-		titolo = "Arriva in cima",
+		titolo = "Le secondarie",
 		tipo = "corsa",
-		goal_text = "Arriviamo in cima! Prendi la cassa: dentro c'è un'arma che ti sposta",
+		goal_text = "Arriviamo in cima! Prendi la cassa: dentro troverai un'arma secondaria che ti darà la possibilità di riuscirci",
 		-- the first pillar higher than the jump, the second higher than the kickback;
 		-- on the left Favilla's lane, two pillars of the same heights (the second
 		-- wider: her bounce carries her a bit further)
@@ -318,46 +380,6 @@ M.addestramento = {
 		righe = {
 			{ testo = "Si rinasce subito, e il turno continua", quando = { evento = "death", di = "tu" } },
 		},
-	},
-	-- 6 · I globi: attacking early gives orbs, and an orb carries you where it
-	-- falls. She attacks at once and throws hers onto the island, then you; there
-	-- the target falls at the first hit. The medal: two orbs in one turn
-	{
-		id = "tempo",
-		titolo = "I globi",
-		tipo = "bersagli",
-		goal_text = "Attacca presto: i secondi che avanzano diventano un globo. Col tasto viola lo lanci e arrivi dove cade. Guarda me!",
-		highlight = "missile",
-		-- your ground, the gap, and the island of the second target
-		arena = { { 300, 0, 600, 150 }, { 1200, 100, 320, 50 } },
-		spawns = { { x = 600, from = 600 }, { x = 660, from = 600 }, { x = 1440, from = 600 }, { x = 820, from = 600 } },
-		giocatori = { { team = 1 }, { team = 2, dummy = true }, { team = 2, dummy = true },
-			{ team = 1, insegna = true, nome = "Favilla", pelle = "favilla" } },
-		-- the one on the island falls at the first hit
-		vita = { [3] = 10 },
-		vedi = { "missile", "teleport", "tempo" },
-		globi = 0,
-		dimostra = {
-			{ mosse = {
-				{ dice = "Attacco subito..." },
-				{ arma = "missile", angolo = 180, potenza = 0.4 },
-				{ dice = "...globo! E lo lancio sull'isola" },
-				{ arma = "teleport", angolo = 40, potenza = 0.6 },
-				{ dice = "Ora tu!" },
-			} },
-		},
-		medaglia = { conta = "globi_turno", at_least = 2, testo = "DUE GLOBI IN UN TURNO" },
-		obiettivo = {
-			{ usa = "globi", globi = 1, only = { "missile" }, testo = "Spara presto col Lanciarune: guadagni un globo" },
-			{ reach = { x = 1200, y = 150 }, only = { "teleport" }, zoom = 2, nuova = true, testo = "Lancia il globo sull'isola" },
-			{ hit = 3, only = { "missile" }, testo = "Colpisci il fantoccio sull'isola" },
-		},
-		righe = {
-			{ testo = "Ora il tasto viola: mira l'isola e lascia, arrivi dove cade il globo", highlight = "teleport",
-				quando = { passo = 1 }, fino = { evento = "teleport" } },
-			{ testo = "Eccoti! Ora finiscilo", faccia = "ride", secondi = 2, quando = { passo = 2 } },
-		},
-		bravo = "Così si usano i globi!",
 	},
 	-- Duello con Favilla, the third sfida and the chapter exam: a first real match,
 	-- short, with everything (Sergio, 29 Oct: the last of the Addestramento). No
