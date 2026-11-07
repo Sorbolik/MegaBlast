@@ -26,6 +26,8 @@ M.CHANNELS = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "
 	-- forward and back moves (x, toward where it faces) and up and down (y)
 	"corpo_x", "testa_x", "busto_x", "busto_y", "braccio_a_x", "braccio_a_y", "braccio_d_x", "braccio_d_y",
 	"gamba_a_x", "gamba_d_x", "ala_x", "ala_y", "coda_x", "coda_y", "fiamma_x", "fiamma_y",
+	-- the flame squash and stretch
+	"fiamma_schiaccia", "fiamma_scala_x", "fiamma_scala_y",
 	-- the weapon in hand: how much more it turns around its pivot when not
 	-- aiming, and the pivot's offset
 	"arma", "arma_x", "arma_y",
@@ -35,7 +37,7 @@ M.CHANNELS = { "corpo", "salto", "schiaccia", "testa", "testa_y", "braccio_a", "
 	-- the pieces shown (1) or not (0): the editor's bucket puts and removes them
 	"mostra_testa", "mostra_fiamma", "mostra_busto", "mostra_braccio_a", "mostra_braccio_d", "mostra_gamba_a", "mostra_gamba_d",
 	"mostra_ala", "mostra_coda", "mostra_manina_a", "mostra_manina_d", "mostra_arma" }
-M.NEUTRAL = { schiaccia = 1 }
+M.NEUTRAL = { schiaccia = 1, fiamma_schiaccia = 1, fiamma_scala_x = 1, fiamma_scala_y = 1 }
 for _, c in ipairs(M.CHANNELS) do
 	if c:find("^mostra_") and c ~= "mostra_manina_a" and c ~= "mostra_manina_d" then M.NEUTRAL[c] = 1 end
 end

@@ -480,6 +480,7 @@ const CANALI = [
 	{ id: "alza_d", nome: "Piede dietro, alza", tipo: "len" },
 	{ id: "ala", nome: "Ala", tipo: "ang" },
 	{ id: "fiamma", nome: "Fiamma, inclina", tipo: "ang" },
+	{ id: "fiamma_schiaccia", nome: "Fiamma, schiaccia e allunga", tipo: "scala", limiti: [0.1, 4.0, 0.01] },
 	{ id: "busto", nome: "Busto, gira", tipo: "ang" },
 	{ id: "coda", nome: "Coda, si arriccia", tipo: "ang" },
 	{ id: "coda_gira", nome: "Coda, gira tutta", tipo: "ang" },
@@ -489,6 +490,8 @@ const CANALI = [
 	{ id: "testa_x", nome: "Testa, avanti e indietro", tipo: "len", extra: true },
 	{ id: "fiamma_x", nome: "Fiamma, avanti e indietro", tipo: "len", extra: true },
 	{ id: "fiamma_y", nome: "Fiamma, su e giù", tipo: "len", extra: true },
+	{ id: "fiamma_scala_x", nome: "Fiamma, larghezza", tipo: "scala", limiti: [0.1, 4.0, 0.01], extra: true },
+	{ id: "fiamma_scala_y", nome: "Fiamma, altezza", tipo: "scala", limiti: [0.1, 4.0, 0.01], extra: true },
 	{ id: "busto_x", nome: "Busto, avanti e indietro", tipo: "len", extra: true },
 	{ id: "busto_y", nome: "Busto, su e giù", tipo: "len", extra: true },
 	{ id: "braccio_a_x", nome: "Braccio davanti, avanti e indietro", tipo: "len", extra: true },
@@ -554,7 +557,7 @@ function visibile(ch, pannello) {
 }
 const TIPO = {};
 CANALI.forEach((c) => { TIPO[c.id] = c.tipo; });
-const NEUTRO = { schiaccia: 1 };
+const NEUTRO = { schiaccia: 1, fiamma_schiaccia: 1, fiamma_scala_x: 1, fiamma_scala_y: 1 };
 CANALI.forEach((c) => { if (c.tipo === "vis") NEUTRO[c.id] = /manina/.test(c.id) ? 0 : 1; });
 CANALI.forEach((c) => { if (NEUTRO[c.id] === undefined) NEUTRO[c.id] = 0; });
 const LIMITI = { ang: [-180, 180, 1], len: [-60, 60, 0.5], scala: [0.4, 1.6, 0.01], vis: [0, 1, 1] };
@@ -1213,7 +1216,10 @@ function disegna(dt) {
 	strati.testa = () => {
 		if (vede("mostra_testa")) vestePerno(collo, "testa", "testa", po.viso || "testa");
 	};
-	const mFiamma = giunto(collo, (PT.cima ? PT.cima[0] : 0) + po.fiamma_x, (PT.cima ? PT.cima[1] : 82) + po.fiamma_y, po.fiamma);
+	const sqFiamma = (po.fiamma_schiaccia !== undefined ? po.fiamma_schiaccia : 1);
+	const fx = (po.fiamma_scala_x !== undefined ? po.fiamma_scala_x : 1) / sqFiamma;
+	const fy = (po.fiamma_scala_y !== undefined ? po.fiamma_scala_y : 1) * sqFiamma;
+	const mFiamma = scala(giunto(collo, (PT.cima ? PT.cima[0] : 0) + po.fiamma_x, (PT.cima ? PT.cima[1] : 82) + po.fiamma_y, po.fiamma), fx, fy);
 	posti.fiamma = punto(mFiamma, 0, 0);
 	strati.fiamma = () => {
 		if (vede("mostra_fiamma")) vestePerno(mFiamma, "fiamma", "fiamma");
@@ -1903,7 +1909,7 @@ function costruisciCanali() {
 	const box = $("canali");
 	box.innerHTML = "<h2>Canali al tempo di adesso</h2>";
 	for (const ch of CANALI) {
-		const [lo, hi, st] = LIMITI[ch.tipo];
+		const [lo, hi, st] = ch.limiti || LIMITI[ch.tipo];
 		const r = document.createElement("div");
 		r.className = "canale"; r.dataset.canale = ch.id;
 		r.innerHTML = `<button class="k" title="Chiave qui (K)">◇</button><span class="nome">${ch.nome}</span><input type="range" min="${lo}" max="${hi}" step="${st}" id="r-${ch.id}" aria-label="${ch.nome}"><input type="number" step="${st}" id="n-${ch.id}" aria-label="${ch.nome}, valore">`;

@@ -854,6 +854,10 @@ function M.update(s, dt, st)
 	scale(s.collo, 1 / lx, 1 / q)
 	pos(s.fiamma, (PT.cima[1] + (po.fiamma_x or 0)) * s.k, (PT.cima[2] + (po.fiamma_y or 0)) * s.k)
 	rot(s.fiamma, po.fiamma or 0)
+	local sqf = po.fiamma_schiaccia or 1
+	local fx = (po.fiamma_scala_x or 1) / sqf
+	local fy = (po.fiamma_scala_y or 1) * sqf
+	scale(s.fiamma, fx, fy)
 
 	-- white hit flash
 	if s.flash > 0 then
