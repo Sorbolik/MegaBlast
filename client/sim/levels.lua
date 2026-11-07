@@ -422,32 +422,56 @@ M.addestramento = {
 		id = "guidata",
 		titolo = "Duello con Favilla",
 		tipo = "duello",
-		goal_text = "Duello! Fammi vedere cosa hai imparato: abbattimi due volte",
+		goal_text = "Un duello a punti! Fammi vedere cosa hai imparato, sarà una sfida entusiasmante!",
 		guidata = true,
 		mappa = "cortile",
 		giocatori = {
-			-- no draft (Sergio, 30 Oct): Lanciarune, Lama and Rampino; the other weapons,
-			-- if you want them, from crates, with their card
 			{ team = 1 },
-			{ team = 2, bot = 1, pick = "grenade", secondary = "mallet", nome = "Favilla", battute = "favilla", pelle = "favilla" },
+			{
+				team = 2,
+				bot = 4,
+				secondary = "mallet",
+				nome = "Favilla",
+				battute = "favilla",
+				pelle = "favilla",
+				carattere = "cecchino",
+			},
 		},
-		vedi = { "primarie", "secondarie", "teleport", "parachute", "tempo", "baratto", "hook" },
-		-- short match: 3 minutes; when time runs out the one who downed the other
-		-- more wins, and on a tie Favilla gives it to you (level plan)
+		vedi = {
+			"primarie",
+			"secondarie",
+			"teleport",
+			"parachute",
+			"tempo",
+			"punti",
+			"eagle",
+			"hook",
+			"mallet",
+			"missile",
+			"sword",
+		},
 		secondi = 180,
 		al_tempo = "abbattimenti",
-		-- the bot shows in its turn what the player will do in the next turn
 		plans = { { due_attacchi = true }, { attacca_entro = 4, poi = "teletrasporto" } },
 		medaglia = { conta = "morti", at_most = 0, testo = "INTOCCABILE" },
-		obiettivo = { { down = 2, times = 2, testo = "Abbatti Favilla due volte" } },
+		obiettivo = { { win = true, testo = "Vinci il duello con Favilla" } },
 		righe = {
-			{ testo = "Guarda: due attacchi, una primaria e una secondaria",
-				quando = { turno_altri = 1, di_turno = "altri" } },
-			{ testo = "Ho attaccato subito: i secondi che avanzano diventano globi",
-				quando = { turno_altri = 2, evento = "teleports", di = "altri" } },
-			{ testo = "Si rinasce subito, e il turno continua",
-				quando = { evento = "death", di = "tu" } },
+			{
+				testo = "Guarda: due attacchi, una primaria e una secondaria",
+				quando = { turno_altri = 1, di_turno = "altri" },
+			},
+			{
+				testo = "Ho attaccato subito: i secondi che avanzano diventano globi",
+				quando = { turno_altri = 2, evento = "teleports", di = "altri" },
+			},
+			{
+				testo = "Si rinasce subito, e il turno continua",
+				quando = { evento = "death", di = "tu" },
+			},
 		},
+		globi = 2,
+		bravo = "Migliori in fretta!",
+		bravo_faccia = "fiera",
 	},
 }
 

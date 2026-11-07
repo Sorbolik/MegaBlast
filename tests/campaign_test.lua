@@ -560,7 +560,7 @@ do
 		"guidata: on its first turn the bot also uses the secondary")
 	check(seen["2teleports"] and seen["2teleport"], "guidata: on its second turn the bot earns orbs and teleports")
 	check(outcome ~= nil and (outcome == "fatta" or g.phase == "over"), "guidata: the short match ends")
-	check(g.no_points, "guidata: no points in the duel")
+	check(not g.no_points, "guidata: points in the duel")
 	check(ticks < 60 * 60 * 5, "guidata: lasts less than 5 minutes (" .. math.floor(ticks / 60) .. " s)")
 end
 
@@ -632,8 +632,8 @@ for _, l in ipairs(campaign.CAPITOLI[1].missioni) do
 	check((steps_count == 0) == without and (g.robots[1].points == 0) == without,
 		l.id .. ": downing " .. (without and "gives no points" or "gives points"))
 end
-check(missions.vede(missions.nuova("giu_dal_bordo"), "punti") and not missions.vede(missions.nuova("guidata"), "punti"),
-	"the Forgia has points, the duel with Favilla doesn't")
+check(missions.vede(missions.nuova("guidata"), "punti") and not missions.vede(missions.nuova("prima_sfida"), "punti"),
+	"the duel with Favilla has points, the first duel doesn't")
 
 -- The help after many losses: the Fabbro goes down a level and starts with
 -- less life, but with a full bar (it doesn't show)

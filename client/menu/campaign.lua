@@ -38,10 +38,21 @@ local M = {}
 -- «gli spigoli escono dalle card»): PIC_IN from the card's edge to the picture
 local CARD_W, PIC_W, PIC_H, BAND, GAP_X, GAP_Y, BOARD_PAD = 280, 260, 135, 34, 14, 12, 14
 local PIC_IN = 10
-local CARD_H, COLUMNS = (PIC_IN - 2) + PIC_H + BAND, 3
--- the board's width with its frame (the tabs over it are as wide)
-local BOARD_OUTER = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X + 2 * BOARD_PAD + 12
+local CARD_H = (PIC_IN - 2) + PIC_H + BAND
 local FINAL_H, FINAL_PIC_W, FINAL_PIC_H = 86, 340, 66
+
+-- chapters with > 6 pinned missions (e.g. Addestramento with 8) use 4 columns (2 rows of 4);
+-- others (e.g. Girone 1 with 6) use 3 columns (2 rows of 3).
+local function chapter_cols(cap)
+	local pinned = #cap.missioni - (#cap.missioni > 1 and 1 or 0)
+	return pinned > 6 and 4 or 3
+end
+
+-- the board's width with its frame (the tabs over it are as wide)
+local function board_outer_w(cap)
+	local cols = chapter_cols(cap)
+	return cols * CARD_W + (cols - 1) * GAP_X + 2 * BOARD_PAD + 12
+end
 local function c4(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 local PAPER, INK, INK_SOFT = c4(0.95, 0.88, 0.75), c4(0.12, 0.07, 0.05), c4(0.12, 0.07, 0.05, 0.22)
 -- the soft text on the wood (ui.C.OFF is 3.5:1 on it, this 6.2:1): the
@@ -145,8 +156,9 @@ local function card_list(c, cap)
 	-- the final: the chapter's last mission; the others pinned on the board
 	local final = #list > 1 and list[#list] or nil
 	local pinned = #list - (final and 1 or 0)
-	local rows = math.ceil(pinned / COLUMNS)
-	local inner_w = COLUMNS * CARD_W + (COLUMNS - 1) * GAP_X
+	local cols = chapter_cols(cap)
+	local rows = math.ceil(pinned / cols)
+	local inner_w = cols * CARD_W + (cols - 1) * GAP_X
 	local board_w = inner_w + 2 * BOARD_PAD
 	local board_h = 2 * BOARD_PAD + rows * CARD_H + (rows - 1) * GAP_Y + (final and GAP_Y + FINAL_H or 0)
 	local top = ui.BODY_TOP - 6
@@ -160,7 +172,7 @@ local function card_list(c, cap)
 	local y0 = board_h / 2 - BOARD_PAD
 	for i = 1, pinned do
 		local l = list[i]
-		local col, row = (i - 1) % COLUMNS, math.floor((i - 1) / COLUMNS)
+		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
 		local x = -inner_w / 2 + CARD_W / 2 + col * (CARD_W + GAP_X)
 		local y = y0 - CARD_H / 2 - row * (CARD_H + GAP_Y)
 		local n = card(c, l, x, y, CARD_W, CARD_H, "carta", 0, CARD_H / 2 - PIC_IN - PIC_H / 2, PIC_W, PIC_H)
@@ -201,14 +213,19 @@ local function build(c)
 	c.head = ui.header(c.buttons, common.campaign, "indietro")
 	if c.storia then ui.button(c.buttons, -ui.EDGE - 110, 0, 220, 64, TS.read_again, "storia", nil, c.head.right) end
 	-- the chapters' tabs as wide as the board, over it (Sergio, 4 Nov)
-	local n = #payload.CAPITOLI
-	local w = math.floor((BOARD_OUTER - 12 * (n - 1)) / n)
-	local chosen, tabs, active = nil, {}, 1
+	local chosen, active = nil, 1
 	for i, cap in ipairs(payload.CAPITOLI) do
 		if c.scelta.chapter == cap.id then chosen, active = cap, i end
+	end
+	chosen = chosen or payload.CAPITOLI[1]
+	local board_outer = board_outer_w(chosen)
+	local n = #payload.CAPITOLI
+	local w = math.floor((board_outer - 12 * (n - 1)) / n)
+	local tabs = {}
+	for i, cap in ipairs(payload.CAPITOLI) do
 		tabs[i] = { string.upper(cap.titolo), "capitolo:" .. cap.id, w }
 	end
-	ui.header_tabs(c.head, c.buttons, tabs, active, 640 - BOARD_OUTER / 2)
+	ui.header_tabs(c.head, c.buttons, tabs, active, 640 - board_outer / 2)
 	if is_opened(c, chosen) then
 		card_list(c, chosen)
 	else
