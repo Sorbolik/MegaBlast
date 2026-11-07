@@ -53,7 +53,14 @@ local function stringa(s)
 	end) .. '"'
 end
 
-local function json(v)
+local LISTE = {
+	capitoli = true, livelli = true, spawns = true, giocatori = true, vedi = true,
+	casse = true, cards = true, obiettivo = true, righe = true, dimostra = true,
+	mosse = true, arena = true, draft = true, percorsi = true, stelle = true,
+	nascosti = true, only = true, uno = true,
+}
+
+local function json(v, k_parent)
 	local tv = type(v)
 	if tv == "table" then
 		local out = {}
@@ -61,8 +68,11 @@ local function json(v)
 			for _, x in ipairs(v) do out[#out + 1] = json(x) end
 			return "[" .. table.concat(out, ",") .. "]"
 		end
-		if next(v) == nil then return "{}" end
-		for _, k in ipairs(chiavi(v)) do out[#out + 1] = stringa(tostring(k)) .. ":" .. json(v[k]) end
+		if next(v) == nil then
+			if k_parent and LISTE[k_parent] then return "[]" end
+			return "{}"
+		end
+		for _, k in ipairs(chiavi(v)) do out[#out + 1] = stringa(tostring(k)) .. ":" .. json(v[k], k) end
 		return "{" .. table.concat(out, ",") .. "}"
 	elseif tv == "string" then
 		return stringa(v)

@@ -421,7 +421,7 @@ function arrivaArma(l, arma, i) {
 	// quando l'arma arriva al giocatore: il passo dopo cui cade la cassa o si apre la carta che la dà (-1: mai)
 	let primo = -1;
 	for (const c of l.casse || []) if (c.arma === arma && (primo < 0 || c.dopo < primo)) primo = c.dopo;
-	for (const c of l.cards || []) if (c.arma === arma && c.give && (primo < 0 || c.dopo < primo)) primo = c.dopo;
+	for (const c of (Array.isArray(l.cards) ? l.cards : [])) if (c.arma === arma && c.give && (primo < 0 || c.dopo < primo)) primo = c.dopo;
 	return primo;
 }
 function quandoArriva(n) { return n === 0 ? "all'inizio" : "finito il passo " + n; }
@@ -460,7 +460,7 @@ function legatiA(l, k) {
 	const n = { frasi: 0, casse: 0, carte: 0, favilla: 0 };
 	(l.righe || []).forEach(r => { if (r.quando && r.quando.passo === k) n.frasi++; });
 	(l.casse || []).forEach(c => { if (c.dopo === k) n.casse++; });
-	(l.cards || []).forEach(c => { if (c.dopo === k) n.carte++; });
+	(Array.isArray(l.cards) ? l.cards : []).forEach(c => { if (c.dopo === k) n.carte++; });
 	if (l.guida && l.guida.parte === k) n.favilla++;
 	let mostra = 0;
 	(l.dimostra || []).forEach(d => { if (d.quando && d.quando.passo === k) mostra++; });
@@ -523,7 +523,7 @@ function problemi(l, c) {
 		if (r.mostra === "grande" && !c.aspetta) out.push(d + ": la vignetta grande è delle lezioni");
 		if (r.mostra === "grande" && r.highlight && !CAT.disegni.includes(r.highlight)) out.push(d + ": manca il disegno di " + nomeDi(NOMI_COMANDI, r.highlight));
 	});
-	for (const k of ["casse", "cards"]) (l[k] || []).forEach((x, i) => { if (!okPasso(x.dopo)) out.push((k === "casse" ? "cassa " : "carta ") + (i + 1) + ": il passo " + x.dopo + " non c'è"); });
+	for (const k of ["casse", "cards"]) (Array.isArray(l[k]) ? l[k] : []).forEach((x, i) => { if (!okPasso(x.dopo)) out.push((k === "casse" ? "cassa " : "carta ") + (i + 1) + ": il passo " + x.dopo + " non c'è"); });
 	if (l.arena && (l.spawns || []).length < (l.giocatori || []).length) out.push("ci sono più giocatori che punti di partenza");
 	const mi = maestra(l);
 	if ((l.dimostra || []).length && mi < 0) out.push("Favilla deve mostrare delle mosse ma non c'è: aggiungila con «+ Favilla che mostra»");
@@ -1568,7 +1568,7 @@ function rinumera(l, m) {
 		return Object.keys(q).length ? q : null;
 	};
 	(l.righe || []).forEach(r => { fix(r.quando, true); if (r.fino && !fix(r.fino, false)) delete r.fino; });
-	for (const k of ["casse", "cards"]) (l[k] || []).forEach(x => { x.dopo = Math.max(0, m(x.dopo)); });
+	for (const k of ["casse", "cards"]) (Array.isArray(l[k]) ? l[k] : []).forEach(x => { x.dopo = Math.max(0, m(x.dopo)); });
 	if (l.guida && l.guida.parte) l.guida.parte = Math.max(0, m(l.guida.parte));
 	(l.dimostra || []).forEach(d => { if (d.quando && !fix(d.quando, false)) delete d.quando; });
 }

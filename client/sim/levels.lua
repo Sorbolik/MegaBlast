@@ -258,7 +258,6 @@ M.addestramento = {
 		},
 		vedi = { "missile", "sword", "teleport", "tempo" },
 		globi = 1,
-		cards = {},
 		obiettivo = {
 			{ testo = "Abbatti Favilla", down = 2, only = { "primaria", "teleport", "missile", "sword" } },
 		},
