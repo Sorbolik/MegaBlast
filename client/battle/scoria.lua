@@ -277,6 +277,16 @@ local function dress(look)
 	return layers, coda
 end
 
+-- The pieces of the head of whoever wears look, from the bottom (the head, then
+-- the helmet): the turn-order faces draw them (battle/score.lua)
+function M.head_pieces(look)
+	local out = {}
+	for _, p in ipairs(dress(look)("testa")) do
+		if p then out[#out + 1] = p end
+	end
+	return out
+end
+
 -- the pieces of a spot (dress) in the parent joint
 local function dresses(s, parent, spot, k)
 	for _, p in ipairs(s.strati(spot)) do
