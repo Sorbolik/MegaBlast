@@ -33,6 +33,8 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting",
 	-- the mission's postcard before the flame (ui/postcard.lua)
 	postcard = require "ui.postcard",
+	-- the opening shot of a level, after the flame (ui/intro.lua)
+	intro = require "ui.intro",
 	-- the kind of a mission: its postcard says it the first time (ui/level_types.lua)
 	level_types = require "ui.level_types",
 	-- the queue that stays alive outside the waiting room (Sergio, 3 Nov)
@@ -2386,7 +2388,7 @@ function CP.mission_line(self, r)
 	local line = missions.line(r)
 	-- while the entry's flame opens on the map, and a moment after, nobody
 	-- speaks: Favilla starts once you landed (CP.enter_mission)
-	if not line or self.landing then
+	if not line or self.landing or self.intro_on then
 		self.vign:say(nil)
 		return
 	end
@@ -2456,6 +2458,9 @@ local function start_mission(self, id, picks)
 		CP.open_lineup(self, CP.vetrine(self, players, name_list, { me = 1 }), r.l.titolo or "")
 		return
 	end
+	-- the opening shot only when coming from the flame (not on RIPROVA, not in the scenarios with the vignettes off)
+	local want_intro = self.want_intro
+	self.want_intro = nil
 	new_match(self, missions.partita(r, os.time(), picks, profile.help(self.profilo, id)))
 	-- prova_durata N also in the missions' battles (scenari/podio_forgia.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
@@ -2487,6 +2492,14 @@ local function start_mission(self, id, picks)
 	end
 	self.mode = "local"
 	set_controls_visible(self, true)
+	-- the opening shot: the game waits, no interface, Favilla silent (ui/intro.lua)
+	if want_intro and not self.carta then
+		set_controls_visible(self, false)
+		self.intro_on = true
+		self.landing = true
+		menu.intro.start(self.intro, string.upper(r.l.titolo or ""))
+		return
+	end
 	-- the first turn was already taken by missioni.prepara (without time there are no turns to announce)
 	if not r.l.without_time then announce_turn(self, self.g.current) end
 end
@@ -2699,6 +2712,7 @@ function CP.enter_mission(self, id, from, told)
 		menu.passaggio.flame(self.passaggio, function()
 			if self.cartolina then menu.postcard.destroy(self.cartolina); self.cartolina = nil end
 			close_screen(self)
+			self.want_intro = self.vign_on
 			start_mission(self, id)
 		end, function()
 			if self.landing then self.landing = CP.LANDING end
@@ -2778,6 +2792,7 @@ end
 function CP.startup(self)
 	self.attesa = menu.attesa.new()
 	self.passaggio = menu.passaggio.new()
+	self.intro = menu.intro.new()
 	self.ingresso = menu.ingresso.new()
 	if SIMULATE then
 		CP.ENTRY.min = 0
@@ -3801,6 +3816,12 @@ local function render(self, dt)
 		camera.mappa(c, dt)
 	else
 		local rx, ry = v.x, v.y + game.DISEGNO_H / 2
+		if self.intro_on then
+			-- the opening shot: from you at the nearest zoom to the whole level
+			camera.apertura(c, self.intro_k or 0, rx, ry)
+			apply_camera(self)
+			return
+		end
 		local fx, fy, fast = nil, nil, false
 		self.cam_pause = math.max(0, self.cam_pause - dt)
 		if missile or egg then
@@ -4220,7 +4241,7 @@ function update(self, dt)
 		dt_world = 0
 	end
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
-	if self.mode == "local" and not self.menu_open and not self.carta and not (self.queue and self.queue.found) then
+	if self.mode == "local" and not self.menu_open and not self.carta and not self.intro_on and not (self.queue and self.queue.found) then
 		self.acc = math.min(self.acc + dt_world, 0.25)
 		-- a bot that thinks in this frame (sim/bot.lua, work): the counter says BOT
 		local thought = bot.totale
@@ -4356,6 +4377,19 @@ function update(self, dt)
 		if self.events_t >= (menu.eventi.without_net and 5 or 60) then
 			self.events_t = 0
 			menu.eventi.load_up(server_url(), function() home.eventi(self.home, menu.eventi.home_line()) end)
+		end
+	end
+	-- the opening shot of the level (ui/intro.lua); when it lets go the interface comes in
+	if self.intro_on or menu.intro.active(self.intro) then
+		local k, holding = menu.intro.update(self.intro, dt)
+		self.intro_k = k
+		if self.intro_on and not holding then
+			self.intro_on = nil
+			self.landing = CP.LANDING
+			if self.missione and self.mode == "local" then
+				set_controls_visible(self, true)
+				if not self.missione.l.without_time then announce_turn(self, self.g.current) end
+			end
 		end
 	end
 	-- landed from the entry's flame: a moment later Favilla speaks (CP.enter_mission)
@@ -4545,6 +4579,12 @@ end
 -- everything else they are brought back to game coordinates (ui/screen.lua)
 local function pointer_down(self, id, px, py)
 	local x, y = screen.from_touch(px, py)
+	-- the opening shot of a level: a tap goes to its end
+	if self.intro_on then
+		menu.intro.skip(self.intro)
+		self.pointers[id] = "cancelled"
+		return
+	end
 	-- the replay: a tap goes back to the profile
 	if self.mode == "replay" then
 		CP.replay_end(self)

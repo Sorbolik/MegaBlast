@@ -191,3 +191,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 9 nov | Trampolino rifatto (la Molla: inclinata, spara di lato) e attrezzi fuori dalle casse, in un cubo di ferro con la loro icona; grafica nuova di trappola, Molla e scudo. | questa PR |
 | 9 nov | Server in LuaJIT: un processo `luajit` per worker accanto al Go, bot online che pensano come sul telefono, 4 volte meno CPU coi bot (~220 persone per server invece di 50). | #246 |
 | 9 nov | La trappola non lancia più: blocca i piedi fino alla fine del turno di chi ci cade (la tagliola chiusa sulla caviglia). | #247 |
+| 9 nov | Apertura dei livelli della campagna (Sergio sceglie la B fra tre proposte): barre nere, zoom massimo su di te, la camera si allarga sul livello col titolo, poi entrano interfaccia e Favilla; un tocco la salta, RIPROVA no. Scartate: A (dal livello intero all'obiettivo) e C (la scintilla che corre sull'obiettivo). | questa PR |

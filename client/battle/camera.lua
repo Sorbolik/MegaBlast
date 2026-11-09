@@ -188,6 +188,17 @@ function M.salta(c, x, y, s)
 	c.x, c.y = x, y
 end
 
+-- The opening shot of a level (ui/intro.lua): k 0 is the nearest zoom on (x, y),
+-- k 1 the farthest zoom on the play space, in between at an even pace
+function M.apertura(c, k, x, y)
+	local t = M.tutta(c)
+	local s = M.NEAR
+	if t < s then s = math.exp(math.log(s) + (math.log(t) - math.log(s)) * k) end
+	local bx, by = space_center(c, s)
+	local w = k * k * (3 - 2 * k)
+	M.salta(c, x + (bx - x) * w, y + (by - y) * w, s)
+end
+
 -- how far the center goes toward the play space: 0 while the chosen zoom is
 -- above TOWARD_SPACE, 1 at the farthest zoom
 local function toward_space(c)
