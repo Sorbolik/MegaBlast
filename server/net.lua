@@ -54,7 +54,7 @@ end
 -- players: like opts.players of game.new (teams and draft picks);
 -- r: the rules of the queue's event (sim/rules.lua), nil outside events
 function N.new(seed, map, players, r)
-	local g = game.new(seed, map, rules.opzioni(r, { players = players }))
+	local g = game.new(seed, map, rules.opzioni(r, { players = players, random_spawns = true }))
 	g:pop_events()
 	g.carves = {} -- terrain digs, for whoever reconnects
 	for i, p in ipairs(players or {}) do

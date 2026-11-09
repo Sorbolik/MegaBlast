@@ -1631,7 +1631,7 @@ local function on_server_message(self, m)
 		-- players: the robots' teams and their draft picks,
 		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
 		-- regole: those of the queue's event (sim/rules.lua), as on the server
-		local opts = m.players and { players = m.players }
+		local opts = { players = m.players, random_spawns = true }
 		if type(m.regole) == "table" then opts = menu.regole.opzioni(m.regole, opts or {}) end
 		new_match(self, m.seed, m.map, opts)
 		self.g:pop_events()
@@ -2347,6 +2347,9 @@ start_local_match = function(self, picked)
 	end
 	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.tier(self.profilo, my_own))
 	opts.players = players
+	-- random start points (sim/game.lua start_points); the simulator keeps the fixed
+	-- ones unless asked (imposta prova_spawn_casuali 1), so the old scenarios stay put
+	opts.random_spawns = not SIMULATE or config_int("megablast.prova_spawn_casuali", 0) > 0
 	new_match(self, os.time(), self.local_map or self.mappa, opts)
 	-- prova_durata N: the match lasts N seconds (scenari/podio.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
