@@ -14,10 +14,15 @@ local N = {}
 -- by robot. On the server a bot thinks at most WORK simulated ticks per game
 -- tick (on the phone 400, sim/bot.lua): a worker runs many rooms, and with 400
 -- a "normale" took 2.2 ms per tick with peaks of 50 ms on gopher-lua; with 100,
--- 1.6 ms and peaks of 21 ms (measured 3 Nov). It thinks over more ticks, so
--- its moves can differ from the phone's: fine, online the client only follows
--- the server's state and these matches are not replayed.
+-- 1.6 ms and peaks of 21 ms (measured 3 Nov). So it thinks over more ticks,
+-- and it stood still up to 8 s at the start of its turn, often firing at the
+-- last moment (Sergio, 9 Nov): after THINK_MAX ticks it plays the best move
+-- found so far. 250 when the worker is idle was tried (9 Nov): first attack
+-- 3.1 s on average instead of 3.4, but ticks up to 34 ms, so no. Its moves
+-- can differ from the phone's: fine, online the client only follows the
+-- server's state and these matches are not replayed.
 N.WORK = 100
+N.THINK_MAX = 120
 local BOTS = setmetatable({}, { __mode = "k" })
 
 -- Fixed maps are drawn only once per process: later matches copy the ready
@@ -44,7 +49,7 @@ function N.new(seed, map, players, r)
 	for i, p in ipairs(players or {}) do
 		if p.bot then
 			local b = bot.new(i, p.bot, seed)
-			b.liv = setmetatable({ lavoro = N.WORK }, { __index = b.liv })
+			b.liv = setmetatable({ lavoro = N.WORK, think_max = N.THINK_MAX }, { __index = b.liv })
 			BOTS[g] = BOTS[g] or {}
 			BOTS[g][i] = b
 		end
@@ -78,7 +83,9 @@ function N.over(g)
 	return g.phase == "over"
 end
 
-function N.snapshot(g)
+-- aim: the angle the player on turn is aiming at (room.go, the "aim" message), nil
+-- if they aren't aiming; a bot aims at its best move while it thinks
+function N.snapshot(g, aim)
 	local robots = {}
 	for i, rb in ipairs(g.robots) do
 		-- s: tick of the ongoing slash (0 if the robot isn't hitting), sd: its direction
@@ -135,12 +142,16 @@ function N.snapshot(g)
 	-- win: ticks left after the first attack; u: attacks done (1 primary, 2 secondary); tp: teleports
 	-- of the turn; te: orbs earned this turn; fr: last round (multiplied points);
 	-- av, ab: team that opened the pair of turns and its points then (game.ahead);
-	-- gr: the current round (the Crown only exists from SCORE.crown_rounds + 1)
+	-- gr: the current round (the Crown only exists from SCORE.crown_rounds + 1);
+	-- aim: where the robot on turn is aiming (absent if it isn't), the others see it
+	local b = BOTS[g] and BOTS[g][g.current]
+	if b then aim = bot.shown_aim(b) end
+	if g.phase ~= "aim" then aim = nil end
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, mt = g.match_left, fr = g.final_round, gr = g.round,
 		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
-		c = crates, pl = placed, hl = heals }
+		c = crates, pl = placed, hl = heals, aim = aim }
 end
 
 -- Events since the last tick (a list, empty if none happened)

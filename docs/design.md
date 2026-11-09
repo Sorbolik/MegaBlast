@@ -152,7 +152,8 @@ Per ora i messaggi sono **JSON** su WebSocket: sono facili da leggere e da fare 
 | `{"t":"in","l":true,"r":false}` | C → S | tasti sinistra/destra premuti (inviato solo quando cambiano e a ogni inizio del proprio turno; il server li lascia a ogni cambio di turno) |
 | `{"t":"jump"}` | C → S | salto |
 | `{"t":"fire","a":1.2,"p":0.7}` | C → S | sparo: angolo in radianti e potenza da 0 a 1 |
-| `{"t":"state",…}` | S → C | fase, turno, timer, secondi dopo il primo attacco, ultimo giro, coppia di turni (squadra che l'ha aperta e i suoi punti allora), attacchi fatti (e attrezzo usato), teletrasporti, robot e missile (20 al secondo) |
+| `{"t":"aim","a":1.2}` / `{"t":"aim_end"}` | C → S | sto mirando a quell'angolo (al più 10 al secondo, quando cambia) / ho smesso: gli altri lo vedono nello stato (`aim`), la potenza no |
+| `{"t":"state",…}` | S → C | fase, turno, timer, secondi dopo il primo attacco, ultimo giro, coppia di turni (squadra che l'ha aperta e i suoi punti allora), attacchi fatti (e attrezzo usato), teletrasporti, robot e missile (20 al secondo); `aim`: dove mira chi è di turno (manca se non mira; un bot mira alla mossa migliore mentre pensa) |
 | `{"t":"ev","type":…}` | S → C | eventi: `turn`, `fire`, `explosion` (x, y, raggio), `damage`, `death`, `miss`, `over` |
 | `{"t":"away","robot":2}` / `{"t":"back","robot":2}` | S → C | un giocatore ha perso la connessione / è tornato |
 | `{"t":"leave"}` | C → S | esco dalla partita (ESCI DALLA PARTITA della rotellina, anche durante la scelta): il posto non si tiene, il robot sparisce (evento `gone`, `gn` nello stato) |
