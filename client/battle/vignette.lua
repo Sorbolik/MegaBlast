@@ -48,19 +48,19 @@ M.CHI = {
 M.FACCE = { calma = true, ride = true, spiega = true, sorpresa = true, preoccupata = true,
 	arrabbiata = true, fiera = true, triste = true }
 
--- the strip (Sergio, 9 Nov): in the top band, ON PURPOSE over the points board and
--- the turn faces, but never over the gold goal on its right (score.lua puts it at
--- 640 + 215). Always the same width, whatever the level; the height grows with
--- the line (STRIP_MIN_H covers the board and the faces). Swipe up dismisses it.
-local STRIP_W, STRIP_MIN_H, STRIP_MAX_H = 570, 124, 220
-local STRIP_X = 640 + 215 - 12 - STRIP_W / 2   -- its right edge 12 left of the goal
+-- the strip (Sergio, 9 Nov): at the very top, centred, OVER everything (points, turn
+-- faces, goal). A maximum width, no minimum height: it is as tall as the portrait or
+-- the line needs and no more, so it covers as little as possible. Swipe up dismisses it.
+local STRIP_W, STRIP_MAX_H = 600, 190
+local FACE_S = 60
+local STRIP_MIN_H = FACE_S + 16                 -- the portrait and a margin
+local STRIP_X = 640
 local STRIP_TOP = 6                             -- gap from the top of the screen
 local SWIPE_UP = 40                             -- px a finger must go up to dismiss it
 -- someone behind it (Sergio, 4 Nov: «capita troppo spesso di essere dietro le
 -- etichette»): the strip stays where it is and goes see-through
 local GHOST_A, GHOST_T = 0.25, 0.15
 M.SWIPE_UP = SWIPE_UP
-local FACE_S = 80
 -- the big vignette
 local BIG_W, BIG_H = 980, 400
 local BIG_FACE = 230
@@ -136,8 +136,8 @@ function M.new()
 	local fx = -STRIP_W / 2 + 12 + FACE_S / 2
 	v.strip_frame, v.strip_face = face(nil, nil, fx, 0, FACE_S, v.strip)
 	local tx = fx + FACE_S / 2 + 18
-	v.strip_name = ink("", tx, STRIP_MIN_H / 2 - 14, 0.42, INK, nil, v.strip)
-	v.strip_text = ink("", tx, STRIP_MIN_H / 2 - 40, 0.5, INK, STRIP_W / 2 - tx - 14, v.strip)
+	v.strip_name = ink("", tx, STRIP_MIN_H / 2 - 12, 0.42, INK, nil, v.strip)
+	v.strip_text = ink("", tx, STRIP_MIN_H / 2 - 32, 0.5, INK, STRIP_W / 2 - tx - 14, v.strip)
 	for _, n in ipairs({ v.strip_frame, v.strip_face, v.strip_name, v.strip_text }) do
 		gui.set_inherit_alpha(n, true)
 	end
@@ -157,7 +157,7 @@ local function layout_strip(v, testo)
 		gui.set_scale(n, V3)
 		gui.set_size(n, vec(STRIP_TEXT_W / k, 400))
 		local m = resource.get_text_metrics(font, testo, { width = STRIP_TEXT_W / k, line_break = true })
-		h = math.max(STRIP_MIN_H, 40 + m.height * k + 14)
+		h = math.max(STRIP_MIN_H, 32 + m.height * k + 12)
 		if h <= STRIP_MAX_H then break end
 	end
 	h = math.min(h, STRIP_MAX_H)
@@ -165,8 +165,8 @@ local function layout_strip(v, testo)
 	gui.set_size(v.strip, vec(STRIP_W, h))
 	gui.set_size(v.strip_border, vec(STRIP_W, h))
 	local tx = gui.get_position(v.strip_name).x
-	gui.set_position(v.strip_name, vec(tx, h / 2 - 14))
-	gui.set_position(v.strip_text, vec(tx, h / 2 - 40))
+	gui.set_position(v.strip_name, vec(tx, h / 2 - 12))
+	gui.set_position(v.strip_text, vec(tx, h / 2 - 32))
 end
 
 -- where the strip sits (its center y) and the rectangle it covers (for the caller of M.ghost)
@@ -182,6 +182,9 @@ function M.cima(v, y1)
 	gui.cancel_animations(v.strip, "position.y")
 	gui.set_position(v.strip, vec(STRIP_X, strip_y(v)))
 end
+
+-- true while the strip is on screen
+function M.strip_on(v) return v.shown ~= nil and gui.is_enabled(v.strip) end
 
 -- true if a finger at (px, py) (raw touch) is on the strip
 function M.hit(v, px, py)

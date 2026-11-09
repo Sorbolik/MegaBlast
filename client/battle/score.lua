@@ -344,7 +344,15 @@ function M.obiettivo(p, txt)
 	p.goal_on = txt ~= nil
 	if txt and txt ~= p.goal_written then gui.set_text(p.objective_text, txt) end
 	p.goal_written = txt
-	gui.set_enabled(p.obiettivo, p.on and p.goal_on)
+	gui.set_enabled(p.obiettivo, p.on and p.goal_on and not p.goal_covered)
+end
+
+-- The vignettes' strip covers the top of the screen: the goal under it hides, or only
+-- its tail would peek out from behind the paper
+function M.cover_goal(p, covered)
+	if p.goal_covered == covered then return end
+	p.goal_covered = covered
+	gui.set_enabled(p.obiettivo, p.on and p.goal_on and not covered or false)
 end
 
 -- Lessons that haven't explained points yet don't show them (sim/missions.lua vedi)
@@ -363,7 +371,7 @@ function M.set_enabled(p, on)
 	gui.set_enabled(p.pronto, punti and p.ready_on or false)
 	gui.set_enabled(p.gap, punti)
 	gui.set_enabled(p.riga, punti and p.line_ticks > 0)
-	gui.set_enabled(p.obiettivo, on and p.goal_on)
+	gui.set_enabled(p.obiettivo, on and p.goal_on and not p.goal_covered)
 	gui.set_enabled(p.tie, punti and p.tie_s ~= "")
 	gui.set_enabled(p.avviso, punti and p.notice_on and not p.goal_on)
 	gui.set_enabled(p.banner, punti and p.banner_time > 0)
