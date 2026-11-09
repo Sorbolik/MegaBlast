@@ -138,6 +138,21 @@ function M.new()
 	return v
 end
 
+-- a long line shrinks until it fits the strip (Sergio's lines can be three
+-- sentences): it never spills out under the paper
+local STRIP_TEXT_W = STRIP_W - FACE_S - 44   -- as v.strip_text in M.new
+local STRIP_TEXT_ROOM = STRIP_H - 34 - 6
+local function fit_strip_text(n, testo)
+	local font = gui.get_font_resource(gui.get_font(n))
+	for _, k in ipairs({ 0.5, 0.45, 0.4, 0.36, 0.32 }) do
+		V3.x, V3.y, V3.z = k, k, 1
+		gui.set_scale(n, V3)
+		gui.set_size(n, vec(STRIP_TEXT_W / k, 400))
+		local m = resource.get_text_metrics(font, testo, { width = STRIP_TEXT_W / k, line_break = true })
+		if m.height * k <= STRIP_TEXT_ROOM then return end
+	end
+end
+
 local function show_strip(v, s)
 	-- under the big vignette the strip doesn't show: it would say the same line
 	if not s or v.view then
@@ -155,6 +170,7 @@ local function show_strip(v, s)
 	gui.set_text(v.strip_name, nome)
 	gui.set_color(v.strip_name, colore)
 	gui.set_text(v.strip_text, s.testo)
+	fit_strip_text(v.strip_text, s.testo)
 	gui.set_enabled(v.strip, true)
 	-- it comes in with a small drop
 	gui.set_position(v.strip, vec(640, STRIP_Y + 16))

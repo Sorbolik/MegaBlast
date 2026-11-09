@@ -258,6 +258,8 @@ local function two_attacks(c)
 	c.usa("sword", math.pi)
 	c.hold(IDLE, 60)
 end
+-- Favilla shows first (turn 1), then it's yours: everything happens in turn 2
+local YOURS = 2
 if hit_a then
 	outcome, r, g = play_mission("turno", function(c)
 		two_attacks(c)
@@ -266,13 +268,13 @@ if hit_a then
 		c.usa("teleport", 1.2, 0.65)
 		c.hold(IDLE, function(gg) return gg.robots[1].x >= 1120 and gg.robots[1].grounded end)
 	end)
-	check(outcome == "fatta", "turno: two attacks in the same turn, then behind the wall")
+	check(outcome == "fatta" and g.turn_no == YOURS, "turno: two attacks in the same turn, then behind the wall")
 	-- after the attacks time waits for you to take cover
 	outcome, r, g = play_mission("turno", function(c)
 		two_attacks(c)
 		c.hold(IDLE, 60 * 20)
 	end)
-	check(outcome == nil and r.st.steps_done[2] and not r.st.steps_done[3],
+	check(outcome == nil and r.st.steps_done[2] and not r.st.steps_done[3] and g.turn_no == YOURS,
 		"turno: after the two attacks the turn waits for you behind the wall")
 	-- before the right step everything else is disabled: no Lama
 	local _, r3, g3 = play_mission("turno", function(c)
@@ -292,7 +294,7 @@ if hit_a then
 		c.usa("sword", math.pi)
 		c.hold(IDLE, 20)
 	end)
-	check(r4.st.steps_done[2] and r4.st.conta.misses == 1, "turno: a missed Lama is retried in the same turn")
+	check(r4.st.steps_done[2] and r4.st.conta.misses == 1 and g4.turn_no == YOURS, "turno: a missed Lama is retried in the same turn")
 	-- the Lama card waits for the missile to land, and a moment after
 	local early_attack, late
 	play_mission("turno", function(c)

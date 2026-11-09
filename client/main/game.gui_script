@@ -1202,7 +1202,7 @@ local function handle_event(self, e)
 		-- them (Sergio), silent
 		-- in the first turns of the guided match the orbs fly slowly, to be watched
 		local r = self.missione
-		local slowed = r and (r.l.guidata or r.l.id == "guidata") and r.st.turni <= 3 and 2.5 or nil
+		local slowed = r and r.l.globi_lenti and r.st.turni <= 3 and 2.5 or nil
 		-- if they are our orbs the small number waits for them to arrive: each one
 		-- raises it with a flash and a "pling" a bit higher than the previous one
 		-- (orbs leaving again before arriving no longer count: start from here)
@@ -4141,6 +4141,8 @@ function update(self, dt)
 		self.acc = math.min(self.acc + dt_world, 0.25)
 		-- a bot that thinks in this frame (sim/bot.lua, work): the counter says BOT
 		local thought = bot.totale
+		-- the ticks of this frame, bots' thinking included (Defold's profiler)
+		frames.scope("simulazione")
 		while self.acc >= game.DT and self.mode == "local" and not self.carta do
 			local input = {
 				left = move_left(self),
@@ -4171,6 +4173,7 @@ function update(self, dt)
 			self.acc = self.acc - game.DT
 			capture(self.pose_b, self.g)
 		end
+		frames.scope_end()
 		self.pose_t, self.pose_dt = self.acc, game.DT
 		if bot.totale ~= thought then frames.segna("bot") end
 		if self.missione then
@@ -4238,8 +4241,10 @@ function update(self, dt)
 	smooth_aim(self, dt)
 	-- to fire with the aim from a moment before the thumb lifts
 	if self.aim_pad.id then sticks.registra(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
+	frames.scope("disegno")
 	render(self, dt_world)
 	move_debris(self, dt_world)
+	frames.scope_end()
 	if self.mode == "menu" then
 		home.update(self.home, dt)
 		-- every minute the events again (one starts, one ends); without network
@@ -4279,7 +4284,9 @@ function update(self, dt)
 		menu.pick.update(self.scelta, dt)
 	end
 
+	frames.scope("maschera")
 	paint_terrain(self)
+	frames.scope_end()
 	-- coda: the queue outside the room (no, si, trovata, persa), for the scenarios
 	local coda = SIMULATE and (not self.queue and "no" or self.queue.found and "trovata" or self.queue.lost and "persa" or "si")
 	if SIMULATE and self.g then

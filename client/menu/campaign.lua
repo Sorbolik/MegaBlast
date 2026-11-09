@@ -278,8 +278,8 @@ local function build(c)
 		end
 		ui.disco(640, 420, 84, c4(0.12, 0.08, 0.06, 0.88), c.radice)
 		ui.lucchetto(640, 420, 52, c4(0.92, 0.76, 0.35), c.radice)
-		ui.testo(string.format("Si sblocca completando tutte le missioni di %s", prev and prev.titolo or "Addestramento"), 640, 345, 0.9, C.TEXT, c.radice)
-		ui.testo(string.format("Missioni completate: %d / %d", done, tot), 640, 305, 0.75, HINT, c.radice)
+		ui.testo(T.locked:format(prev and prev.titolo or payload.CAPITOLI[1].titolo), 640, 345, 0.9, C.TEXT, c.radice)
+		ui.testo(T.done_count:format(done, tot), 640, 305, 0.75, HINT, c.radice)
 	end
 end
 

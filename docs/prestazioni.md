@@ -202,6 +202,60 @@ prima il globo in volo restava fermo 2-3 frame di fila e poi faceva 10-13 px in
 un frame; con la coda (`client/main/playout.lua`) fa 5-6 px a ogni frame per
 tutto il volo. `tests/playout_test.lua` lo controlla con arrivi a mucchi.
 
+## Il piano di ottimizzazione (9 nov)
+
+Sergio (8 nov): analizzare il client col manuale di Defold (`docs/llms-full.md`) e
+ottimizzare CPU, memoria e garbage collection senza toccare la qualità visiva.
+Il piano, con le violazioni trovate (V1-V13) e le fasi, è
+https://claude.ai/artifact/Ltr5MyxwvEd1pNQKHB3pUW . Ogni fase è una PR e si chiude
+con le misure qui sotto, rifatte sulla stessa macchina.
+
+### 4. Il banco della simulazione e del bot
+
+```bash
+luajit strumenti/prestazioni/banco.lua          # col JIT (Android, PC)
+luajit -joff strumenti/prestazioni/banco.lua    # senza JIT, come su iPhone
+```
+
+Gioca tre partite fra bot "difficile" senza disegno (240 secondi di gioco l'una)
+e misura per tick il tempo di `bot.input` + `game:step` e la memoria nuova,
+separata fra bot e simulazione (col raccoglitore fermo, così i KB sono veri).
+
+### Le etichette del profiler
+
+Nel profiler web di Defold (build di debug sul PC, http://localhost:8002) i lavori
+pesanti hanno una barra col loro nome (`fotogrammi.scope`, `client/ui/frames.lua`):
+`simulazione` (i tick del frame, bot compresi), `disegno` (robot, colpi, schegge),
+`maschera` (la maschera del terreno ridisegnata), `dipinto` (decodifica e upload di
+un dipinto). Nella build di release non fanno niente.
+
+### Punto di partenza (Fase 0, main c6b2cc3)
+
+Banco, CPU del cloud (sul telefono 3-5 volte di più):
+
+| Partita | JIT | Tick medio | 99% | Peggiore | KB/tick bot | KB/tick simulazione |
+|---|---|---|---|---|---|---|
+| 2v2 pavimento | acceso | 0,096 ms | 0,93 ms | 3,2 ms | 8,0 | 0,26 |
+| 2v2 fossa | acceso | 0,096 ms | 0,94 ms | 2,6 ms | 9,4 | 0,25 |
+| 1v1 pavimento | acceso | 0,083 ms | 0,92 ms | 6,9 ms | 4,6 | 0,28 |
+| 2v2 pavimento | spento | 0,277 ms | 2,28 ms | 7,6 ms | 6,7 | 0,07 |
+| 2v2 fossa | spento | 0,303 ms | 2,52 ms | 8,3 ms | 8,0 | 0,07 |
+| 1v1 pavimento | spento | 0,201 ms | 1,96 ms | 8,2 ms | 3,0 | 0,07 |
+
+Quasi tutta la memoria nuova è del bot (le copie della partita, V2): circa
+400-550 KB al secondo in 2v2.
+
+Simulatore (`--senza-video`, disegno su llvmpipe: valgono Lua, KB e cause, non i ms del disegno):
+
+| Scenario | Frame normale (mediana) | 99% (mediana) | KB per frame (mediana / max) | Scatti per causa |
+|---|---|---|---|---|
+| `fluidita.txt` | 14,0 ms | 22,1 ms | 2,7 / 14,7 | motore 135, **gc 81** (fino a 30 ms), bot 16 (fino a 23 ms) |
+| `fluidita_forgia.txt` | 13,8 ms | 19,9 ms | 3,1 / 18,4 | motore 54, **bot 13** (fino a 41 ms), lua 1 |
+
+Entrare in una missione sotto l'iride: 337 ms (cortile) e 268 ms (Forgia) di
+frame, coperti. Restano da aggiungere le misure di Sergio col contatore sul
+telefono e sul PC.
+
 ## Da fare
 
 - Sergio accende il contatore sul PC e gioca: se gli scatti sono `motore` con
