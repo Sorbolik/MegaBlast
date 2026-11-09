@@ -326,6 +326,23 @@ rischiano l'ordine di disegno, il caricamento asincrono delle texture toglie sol
 l'upload (1-6 ms) mentre la decodifica resta. In partita Lua usa 0,5-0,8 ms per
 frame (disegno 0,37, personaggi 0,15, simulazione 0,05): il resto è GPU.
 
+## I log dal telefono, senza cavo (9 nov)
+
+L'APK di tutti i giorni è "release": Defold lì non scrive log. Per le misure c'è
+l'APK coi log: Actions > "APK su Telegram" > Run workflow con **log** spuntato
+(arriva su Telegram con "📋 CON I LOG"). È la variante debug, stesso nome e stessa
+chiave: si installa sopra; dopo le prove si rimette quello normale.
+
+1. Sul telefono: Opzioni sviluppatore > **Debug wireless** acceso (Android 11+),
+   telefono e PC sulla stessa WiFi; "Associa dispositivo con codice" mostra
+   indirizzo, porta e codice.
+2. Sul PC (Android Platform-Tools): `adb pair IP:PORTA CODICE`, poi
+   `adb connect IP:PORTA` (la porta della schermata Debug wireless, non quella
+   dell'associazione).
+3. `adb logcat -c` e poi `adb logcat -s defold:* > log_telefono.txt` mentre si gioca
+   col CONTATORE FPS acceso (IMPOSTAZIONI): ogni scatto è una riga
+   `SCATTO 23.0 ms (normale 8.3, lua 0.6 ms) causa: ...`.
+
 ## Opzioni scartate e perché
 
 - **Solo il dt del motore** per misurare: dipende da come il motore lo
