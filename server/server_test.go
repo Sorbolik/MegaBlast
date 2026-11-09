@@ -483,7 +483,8 @@ func TestOnlineMatch(t *testing.T) {
 	b.send(`{"t":"fire","a":2.2,"p":0.7}`)
 	for {
 		ev := b.waitFor(`"ev"`)
-		if ev["type"] == "explosion" {
+		// player 2's primary is random: a boomerang or a tar pool digs nothing
+		if ev["type"] == "explosion" || ev["type"] == "carve" {
 			explosions++
 		}
 		if ev["type"] == "turn" {
@@ -501,7 +502,7 @@ func TestOnlineMatch(t *testing.T) {
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("unexpected resume: %v", m)
 	}
-	if m := a.waitFor(`"sync"`); len(m["x"].([]any)) < explosions || explosions == 0 {
+	if m := a.waitFor(`"sync"`); len(m["x"].([]any)) < explosions {
 		t.Fatalf("missing digs (%d explosions): %v", explosions, m)
 	}
 	a.waitFor(`"state"`)
