@@ -646,6 +646,7 @@ local function capture(pose, g)
 			pose.c[c.id] = pc
 		end
 		pc.x, pc.y, pc.landed, pc.seen = c.x, c.y, c.landed, true
+		pc.item = c.item and c.weapon or nil
 	end
 	for id, pc in pairs(pose.c) do
 		if not pc.seen then pose.c[id] = nil end
@@ -1257,6 +1258,7 @@ local function handle_event(self, e)
 	elseif e.type == "trap" then
 		show_message(self, TM.trapped:format(who_name(self, e.robot)))
 		shock(self, e.x, e.y)
+		items.snap(self.oggetti, e.x, e.y)
 	elseif e.type == "eagle" then
 		-- straight shot: the white trace from the barrel to the point hit, fading in
 		-- a quarter of a second
@@ -1343,7 +1345,7 @@ local function handle_event(self, e)
 		plate.announcement(self.robots[e.robot].plate, "+1 " .. (hud.NAMES[e.weapon] or string.upper(e.weapon)))
 		CP.recharge(self, e)
 	elseif e.type == "crate" then
-		show_message(self, TM.crate)
+		show_message(self, e.item and TM.item_drop:format(TM.weapon_found[e.item]) or TM.crate)
 	elseif e.type == "crate_pick" then
 		local found = (self.mode == "online" and e.robot == self.me) and TM.you_found or TM.found
 		show_message(self, found:format(who_name(self, e.robot), TM.weapon_found[e.weapon]))
@@ -1544,7 +1546,7 @@ local function apply_state(self, s)
 	-- placed traps and springboards
 	for i = #g.placed, 1, -1 do g.placed[i] = nil end
 	for i, o in ipairs(s.pl or {}) do
-		g.placed[i] = { id = o.i, kind = o.k, x = o.x, y = o.y, armed = o.a, team = o.tm, r = o.r, flying = o.v }
+		g.placed[i] = { id = o.i, kind = o.k, x = o.x, y = o.y, armed = o.a, team = o.tm, r = o.r, flying = o.v, dir = o.d }
 	end
 	-- healing circles
 	for i = #g.heals, 1, -1 do g.heals[i] = nil end
@@ -1555,7 +1557,7 @@ local function apply_state(self, s)
 	for i, c in ipairs(s.c or {}) do
 		local t = self.crate_tabs[c.i] or {}
 		self.crate_tabs[c.i] = t
-		t.id, t.x, t.y, t.landed = c.i, c.x, c.y, c.l
+		t.id, t.x, t.y, t.landed, t.item, t.weapon = c.i, c.x, c.y, c.l, c.w ~= nil or nil, c.w
 		list[i] = t
 	end
 	-- into the queue, drawn at an even pace a little later (main/playout.lua)
@@ -3575,6 +3577,16 @@ local function render(self, dt)
 			end
 		end
 		if n then
+			-- chest, or the iron cube with the item's icon (the node is reused:
+			-- change it only when needed)
+			if n.item ~= (cb.item or false) then
+				n.item = cb.item or false
+				gui.play_flipbook(n.node, n.item and "attrezzo_cubo" or "cassa")
+				gui.set_size(n.node, n.item and self.item_box or self.crate_box)
+				gui.set_enabled(n.light, not n.item)
+				gui.set_enabled(n.icon, n.item and true or false)
+				if n.item then gui.play_flipbook(n.icon, n.item .. "_icona") end
+			end
 			local ca = pa.c[id] or cb
 			set_pos(n.node, ca.x + (cb.x - ca.x) * k, ca.y + (cb.y - ca.y) * k + n.dy)
 			EULER.z = cb.landed and 0 or math.sin(self.clock * 3 + id) * 10
@@ -3964,12 +3976,15 @@ function init(self)
 	-- traps, springboards, healing circles and shields (battle/items.lua)
 	self.oggetti = items.new(TEAM_COLORS)
 
-	-- crates (at most CRATE_MAX are needed), with a glow above while falling:
-	-- Gabriella's chest (strumenti/grafica/cassa.py, 83 x 96 pixels), as tall as
-	-- the old crate and as wide as the drawing
+	-- crates (at most CRATE_MAX are needed, plus the items that drop visible),
+	-- with a glow above while falling: Gabriella's chest (strumenti/grafica/cassa.py,
+	-- 83 x 96 pixels), as tall as the old crate and as wide as the drawing; an
+	-- item is its icon
 	local crate_box = vmath.vector3(22.4 * 83 / 96, 22.4, 0)
+	-- the items' iron cube (strumenti/grafica/attrezzi.py) as tall as the chest
+	self.crate_box, self.item_box = crate_box, vmath.vector3(22.4, 22.4, 0)
 	self.crate_nodes = {}
-	for i = 1, game.CRATE_MAX do
+	for i = 1, game.CRATE_MAX + gconfig.ITEM_DROPS.max do
 		local n = fit(gui.new_box_node(vmath.vector3(0, 0, 0), crate_box))
 		gui.set_texture(n, "battaglia")
 		gui.play_flipbook(n, "cassa")
@@ -3980,10 +3995,15 @@ function init(self)
 		gui.play_flipbook(light, "cassa_luce")
 		gui.set_blend_mode(light, gui.BLEND_ADD)
 		gui.set_parent(light, n)
+		-- the item's icon on the cube's plate
+		local icon = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(14, 14, 0)))
+		gui.set_texture(icon, "armi")
+		gui.set_parent(icon, n)
+		gui.set_enabled(icon, false)
 		gui.set_enabled(n, false)
 		gui.set_scale(n, VK)
 		-- dy: from the center to the feet, which rest on the ground
-		self.crate_nodes[i] = { node = n, dy = crate_box.y * K / 2, chute = chute, light = light, light_col = vmath.vector4(BRACE) }
+		self.crate_nodes[i] = { node = n, dy = crate_box.y * K / 2, chute = chute, light = light, light_col = vmath.vector4(BRACE), item = false, icon = icon }
 	end
 
 	-- the Fist's shockwave

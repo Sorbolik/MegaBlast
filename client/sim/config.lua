@@ -78,11 +78,15 @@ C.KILL_CREDIT_SECONDS = 10
 C.RESPAWN_SECONDS = 1.5
 
 -- Crates: what's inside (hidden until opened), with a weight: the higher, the
--- more often it comes out. One-shot weapons and tactical items.
+-- more often it comes out. Only one-shot weapons (Sergio, 9 November 2026).
 C.CRATE_CONTENTS = {
 	{ "grenade", 2 }, { "shards", 2 }, { "punch", 2 }, { "sniper", 2 },
-	{ "trap", 2 }, { "shield", 1 }, { "trampoline", 1 },
 }
+-- Tactical items drop on the map on their own, visible (you see what it is
+-- before going to take it), half as often as crates (game.ITEM_CHANCE) and at
+-- most max at once. Same weight for all (Claude: the trampoline was the
+-- rarest and the least used).
+C.ITEM_DROPS = { max = 2, contents = { { "trap", 1 }, { "shield", 1 }, { "trampoline", 1 } } }
 
 -- Cecchino (crate weapon): a shot that starts fast (speed in sim/game.lua) and
 -- slows down (each second it keeps drag of its speed), while gravity grows
@@ -163,12 +167,16 @@ C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 400, lift = 
 -- Trap: placed at the feet and armed from the next turn; an opponent stepping
 -- on it is launched high and far (to throw them off the map).
 C.TRAP = { damage = 13, launch_vy = 220, push_vx = 160 }
--- Trampoline: thrown like the Uovo and stays where it lands (if it lands on a
--- robot, at its feet). Anything falling on it bounces up: robots, shots, Uova,
--- orbs, crates and items (the board is top pixels above the base). Staying on
--- it each bounce is lower (decay) until below min_vy you stop (shots then
--- touch the terrain below, and the missile explodes).
-C.TRAMPOLINE = { half_w = 18, top = 7, launch_vy = 300, decay = 0.6, min_vy = 80 }
+-- Trampoline ("Molla", Sergio, 9 November 2026): thrown like the Uovo and
+-- stays where it lands (if it lands on a robot, at its feet), tilted towards
+-- where it was thrown (dir). Anything falling on it bounces up: robots, shots,
+-- Uova, orbs, crates and items (the board is top pixels above the base); robots
+-- and shots also leave sideways at push_vx in its direction (about 400 px on
+-- flat ground). A robot launched like that doesn't steer until it touches
+-- ground or opens the parachute. Staying on it each bounce is lower (decay)
+-- until below min_vy you stop (shots then touch the terrain below, and the
+-- missile explodes).
+C.TRAMPOLINE = { half_w = 18, top = 7, launch_vy = 300, push_vx = 145, decay = 0.6, min_vy = 80 }
 -- Shield: absorbs hp damage and halves pushes until the start of the owner's next turn
 C.SHIELD = { hp = 40, knockback = 0.5 }
 -- Parachute: in your own turn, in the air, one tap opens it (if you have any

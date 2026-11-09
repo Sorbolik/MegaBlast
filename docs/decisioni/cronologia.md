@@ -188,3 +188,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 9 nov | Server: prova di carico coi bot, stato e raccoglitore più leggeri (-8% fra persone), carico medio per `/health`, stanze al worker meno carico, limite di messaggi per giocatore, rientro che non si perde. | #241 |
 | 9 nov | Prestazioni, Fase 3: la maschera del terreno si disegna a strisce (da 78 a 4 ms entrando in missione); il resto delle fasi 3 e 4 scartato dopo la misura (poco guadagno). | #243 |
 | 9 nov | APK coi log per le misure sul telefono (adb senza cavo); trovato nei log e corretto l'errore della mira corpo a corpo online con un globo in volo (i globi online arrivano senza proprietario). | #245 |
+| 9 nov | Trampolino rifatto (la Molla: inclinata, spara di lato) e attrezzi fuori dalle casse, in un cubo di ferro con la loro icona; grafica nuova di trappola, Molla e scudo. | questa PR |

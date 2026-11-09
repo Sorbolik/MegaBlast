@@ -137,19 +137,21 @@ function N.snapshot(g, aim)
 	-- o: the teleport orbs in flight (i = orb number, to follow it from one state to the next)
 	local orbs = {}
 	for i, ob in ipairs(g.orbs) do orbs[i] = { i = ob.id, x = ob.x, y = ob.y } end
-	-- shards in flight with their place in the burst, crates (the weapon inside stays secret)
+	-- shards in flight with their place in the burst, crates (the weapon inside stays
+	-- secret; w: the item, for the items that drop on the map visible)
 	local shards, crates = {}, {}
 	for i = 1, game.SHARD_COUNT do
 		local sh = g.shards[i]
 		if sh then shards[#shards + 1] = { i = i, x = sh.x, y = sh.y } end
 	end
 	for _, c in ipairs(g.crates) do
-		crates[#crates + 1] = { i = c.id, x = c.x, y = c.y, l = c.landed }
+		crates[#crates + 1] = { i = c.id, x = c.x, y = c.y, l = c.landed, w = c.item and c.weapon or nil }
 	end
-	-- pl: traps and trampolines (k: kind, a: armed, tm: team, r: half width, v: in flight)
+	-- pl: traps and trampolines (k: kind, a: armed, tm: team, r: half width, v: in flight,
+	-- d: the side the trampoline leans to, 1 or -1)
 	local placed = {}
 	for i, o in ipairs(g.placed) do
-		placed[i] = { i = o.id, k = o.kind, x = o.x, y = o.y, a = o.armed, tm = o.team, r = o.r, v = o.flying or false }
+		placed[i] = { i = o.id, k = o.kind, x = o.x, y = o.y, a = o.armed, tm = o.team, r = o.r, v = o.flying or false, d = o.dir }
 	end
 	-- hl: healing circles
 	local heals = {}
