@@ -567,6 +567,13 @@ check(math.abs(t.full.size.x - full_f * 0.6) < 0.5, "plate: health drops at once
 check(math.abs(t.trail.size.x - full_f) < 0.5, "plate: the lost piece stays a moment")
 for _ = 1, 120 do plate.update(t, 1 / 60, 0, 0, 1) end
 check(math.abs(t.trail.size.x - t.full.size.x) < 0.5, "plate: then it wears down to the health")
+plate.vita(t, 50, 100)
+for _ = 1, 30 do plate.update(t, 1 / 60, 0, 0, 1) end
+plate.vita(t, 30, 100)
+plate.update(t, 1 / 60, 0, 0, 1)
+check(math.abs(t.trail.size.x - full_f * 0.6) < 0.5, "plate: consecutive hits widen the white piece")
+for _ = 1, 120 do plate.update(t, 1 / 60, 0, 0, 1) end
+plate.vita(t, 60, 100)
 plate.vita(t, 60, 100, 20)
 plate.update(t, 1 / 60, 0, 0, 1)
 check(t.scudo.enabled and math.abs(t.scudo.pos.x - t.full.pos.x - t.full.size.x) < 0.5,
