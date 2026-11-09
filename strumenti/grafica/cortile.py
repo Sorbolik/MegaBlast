@@ -356,16 +356,16 @@ def assi_appese(*assi, h=22):
     return [(x, y, w, h) for x, y, w in assi], [q for x, y, w in assi for q in ((x + 12, 0, y), (x + w - 12, 0, y))]
 
 
-# Le assi ai lati, fuori dai muri (Sergio, 9 nov): appese alle catene, dove ci si salva se si cade
-# di lato o ci si teletrasporta troppo lontano (la griglia ha un margine per lato, sim/game.lua)
-_assi, _catene = assi_appese((250, 410, 110), (920, 410, 110), (380, 230, 100), (800, 230, 100),
-                             (-112, 440, 112), (1280, 440, 112), (-64, 320, 64), (1280, 320, 64))
+_assi, _catene = assi_appese((250, 410, 110), (920, 410, 110), (380, 230, 100), (800, 230, 100))
 # L'incudine appesa: terrazze ai muri con le rampe, il cortile piatto, al centro l'incudine di
 # ferro sulle catene (ci si passa sotto: 147 di mondo, il diavoletto è alto 39), ballatoi di
 # legno ai muri, assi appese, una trave in cima. Niente buchi: è la prima partita.
 CORTILE = dict(
+    # una sporgenza per lato fuori dai muri, in pietra come i muri (Sergio, 9 nov): dove ci si salva se si
+    # cade di lato o ci si teletrasporta troppo lontano (la griglia ha un margine per lato, sim/game.lua)
     pietra=[[(0, 300), (50, 300), (50, 500), (230, 500), (290, 560), (990, 560), (1050, 500), (1230, 500), (1230, 300),
-             (1280, 300), (1280, 760), (0, 760)]],
+             (1280, 300), (1280, 380), (1398, 380), (1398, 416), (1280, 416), (1280, 760), (0, 760),
+             (0, 416), (-118, 416), (-118, 380), (0, 380)]],
     ferro=[[(450, 362), (780, 362), (780, 380), (744, 396), (700, 404), (690, 440), (722, 462), (558, 462), (590, 440),
             (580, 404), (520, 392)]],
     legni=[(50, 330, 130, 24), (1100, 330, 130, 24)] + _assi,

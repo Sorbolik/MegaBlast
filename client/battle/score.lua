@@ -77,12 +77,13 @@ local NUMBERS = 8
 local TICK_EVERY, TICK_STEP = 0.045, 5  -- one tick every 5 points, never more often than this
 -- turn pairs: pending-points token next to the box
 local WAIT_W, WAIT_H, WAIT_GAP = 58, 24, 8
--- the turn order: a row of faces under the score (D: the playing one's diameter)
-local FACE_D, FACE_SMALL, FACE_STEP, FACE_Y = 42, 30, 62, 52
+-- the turn order: a row of faces left of the score bar (D: the playing one's diameter)
+local FACE_D, FACE_SMALL, FACE_STEP = 48, 34, 70
 local PLATE_H = FACE_D + 6        -- the pill's round ends (48 px image) and the face a 3 px margin inside
 local HEAD_W, HEAD_DX, HEAD_DY = 1.1, -2, 3   -- the head's width / the disc's, and how far it is moved to centre the face in the ring
 local HEAD_LAYERS = 3             -- head, helmet, one more
-local ROW_Y, NOTICE_Y = GET_H / 2 + 74, GET_H / 2 + 100   -- turn balance and last-lap warning, under the faces
+local FACES_GAP = 12             -- between the row of faces and the hourglass of the left team
+local ROW_Y, NOTICE_Y = GET_H / 2 + 14, GET_H / 2 + 38   -- turn balance and last-lap warning, just under the bar
 local BELOW_Y = ROW_Y                    -- "+N PER PAREGGIARE", at the same height, under its team
 local READY_W, READY_H, READY_X = 132, 48, 975              -- PREPARATI: right of the score
 -- last lap: the banner and the warning before it
@@ -265,9 +266,9 @@ function M.nuovo(palette, tick)
 	p.rope_sign = box(p.fune, 0, 0, 3, ROPE_H + 10, ui.C.LIGHT)
 	p.rope_f = 0.5
 
-	-- the turn order: a face per player, in a soft plate; PREPARATI to the right of the score
+	-- the turn order: a face per player, in a soft plate, left of the score; PREPARATI to the right of it
 	p.cerchi = root_node(HALF, Y)
-	p.cerchi_fondo, p.cerchi_bordo = ui.pannello(0, -FACE_Y, 100, PLATE_H, p.cerchi, "pillola")
+	p.cerchi_fondo, p.cerchi_bordo = ui.pannello(0, 0, 100, PLATE_H, p.cerchi, "pillola")
 	gui.set_enabled(p.cerchi_bordo, false)
 	gui.set_color(p.cerchi_fondo, vmath.vector4(0.08, 0.07, 0.1, 0.62))
 	p.facce = {}
@@ -332,7 +333,6 @@ function M.cima(p, y1)
 	position(p.riga, HALF, Y - ROW_Y)
 	position(p.obiettivo, HALF + 215, Y)
 	position(p.avviso, HALF, Y - NOTICE_Y)
-	position(p.cerchi, HALF, Y)
 	position(p.pronto, READY_X, Y)
 	position(p.banner, HALF, y1 / 2 + 40)
 	for _, gt in ipairs(p.gettoni) do
@@ -344,7 +344,15 @@ function M.obiettivo(p, txt)
 	p.goal_on = txt ~= nil
 	if txt and txt ~= p.goal_written then gui.set_text(p.objective_text, txt) end
 	p.goal_written = txt
-	gui.set_enabled(p.obiettivo, p.on and p.goal_on)
+	gui.set_enabled(p.obiettivo, p.on and p.goal_on and not p.goal_covered)
+end
+
+-- The vignettes' strip covers the top of the screen: the goal under it hides, or only
+-- its tail would peek out from behind the paper
+function M.cover_goal(p, covered)
+	if p.goal_covered == covered then return end
+	p.goal_covered = covered
+	gui.set_enabled(p.obiettivo, p.on and p.goal_on and not covered or false)
 end
 
 -- Lessons that haven't explained points yet don't show them (sim/missions.lua vedi)
@@ -363,7 +371,7 @@ function M.set_enabled(p, on)
 	gui.set_enabled(p.pronto, punti and p.ready_on or false)
 	gui.set_enabled(p.gap, punti)
 	gui.set_enabled(p.riga, punti and p.line_ticks > 0)
-	gui.set_enabled(p.obiettivo, on and p.goal_on)
+	gui.set_enabled(p.obiettivo, on and p.goal_on and not p.goal_covered)
 	gui.set_enabled(p.tie, punti and p.tie_s ~= "")
 	gui.set_enabled(p.avviso, punti and p.notice_on and not p.goal_on)
 	gui.set_enabled(p.banner, punti and p.banner_time > 0)
@@ -578,7 +586,7 @@ local function faces(p, g, human, looks)
 				local now = rb.id == playing
 				local c = p.gettoni[rb.team].colore
 				face_head(f, looks and looks[rb.id] and looks[rb.id].look)
-				position(f.radice, (i - (#who + 1) / 2) * FACE_STEP, -FACE_Y)
+				position(f.radice, (i - (#who + 1) / 2) * FACE_STEP, 0)
 				f.base = now and 1 or FACE_SMALL / FACE_D
 				f.now = now
 				scale(f.radice, f.base)
@@ -600,6 +608,8 @@ local function faces(p, g, human, looks)
 			end
 		end
 	end
+	-- the row ends just left of the hourglass of the first team, so it grows towards the gear
+	position(p.cerchi, p.x0 - WAIT_GAP - WAIT_W - FACES_GAP - ((#who - 1) * FACE_STEP + PLATE_H) / 2, Y)
 	local k = 1 + 0.05 * math.sin(p.ora * 5)
 	for i, f in ipairs(p.facce) do
 		if f.now and who[i] then scale(f.radice, k) end

@@ -3864,6 +3864,7 @@ local function render(self, dt)
 	for _, sl in ipairs(self.slots) do
 		if sl.glow then gui.set_enabled(sl.glow, blink and sl.have and g:can_use(sl.weapon)) end
 	end
+	score.cover_goal(self.punti, self.vign:strip_on())
 	score.update(self.punti, dt, g, self.mode == "online" and self.me or g.current,
 		self.mode == "online" and self.me or (self.mode == "local" and (next(self.bots) or self.missione) and 1) or nil, self.robots)
 	local n = bar_robot(self)
