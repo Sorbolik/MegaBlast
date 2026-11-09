@@ -96,7 +96,7 @@ M.BY_ID = {}
 for _, s in ipairs(M.SETS) do M.BY_ID[s.id] = s end
 
 -- level of a piece from the matches played with it
-function M.livello(matches)
+function M.level(matches)
 	return math.min(M.LIVELLO_MAX, matches or 0)
 end
 

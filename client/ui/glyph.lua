@@ -63,19 +63,19 @@ local function draw(r, family, button_key, d)
 	local C = ui.C
 	if FACE[button_key] then
 		local col = family == "xbox" and XBOX[button_key] or family == "playstation" and PS[button_key] or C.LIGHT
-		ui.disco(0, 0, d, C.PANEL, r)
+		ui.disc(0, 0, d, C.PANEL, r)
 		ui.ring_node(0, 0, d, 2, family == "nintendo" and C.LIGHT or col, r)
 		if family == "playstation" then
 			SYMBOLS[button_key](d * 0.44, math.max(2, d * 0.08), col, r)
 		else
-			ui.testo(controller.FAMILIES[family][button_key], 0, 1, d / 52, col, r)
+			ui.text(controller.FAMILIES[family][button_key], 0, 1, d / 52, col, r)
 		end
 		return d
 	end
 	if CROSS[button_key] then
 		-- the gray d-pad, with the button's arm lit
 		local b, t = d * 0.7, d * 0.24
-		ui.disco(0, 0, d, C.PANEL, r)
+		ui.disc(0, 0, d, C.PANEL, r)
 		ui.ring_node(0, 0, d, 2, C.LIGHT, r)
 		box(0, 0, b, t, GREY, nil, r)
 		box(0, 0, t, b, GREY, nil, r)
@@ -87,9 +87,9 @@ local function draw(r, family, button_key, d)
 	-- shoulders, Start and Select: a pill with the name
 	local nome = controller.FAMILIES[family][button_key] or string.upper(button_key)
 	local w = math.max(d, 12 + #nome * d * 0.42)
-	local _, border = ui.pannello(0, 0, w, d * 0.82, r)
+	local _, border = ui.panel(0, 0, w, d * 0.82, r)
 	gui.set_color(border, C.LIGHT)
-	ui.testo(nome, 0, 1, d / 44, C.TEXT, r)
+	ui.text(nome, 0, 1, d / 44, C.TEXT, r)
 	return w
 end
 
@@ -103,7 +103,7 @@ function M.new(parent, d)
 end
 
 -- The width of the drawn button (to put it next to something)
-function M.largo(g)
+function M.width(g)
 	return g.w
 end
 

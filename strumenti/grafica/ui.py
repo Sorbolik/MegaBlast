@@ -145,7 +145,7 @@ d = np.maximum(np.abs(x), np.abs(x) / 2 + np.abs(y) * np.sqrt(3) / 2) - a
 coppia(d, n, 3 * n / 56, "oggetto")
 
 
-# Dischi e anelli sfumati per i nodi tondi (ui.disco, ui.anello in client/ui/ui.lua):
+# Dischi e anelli sfumati per i nodi tondi (ui.disc, ui.ring in client/ui/ui.lua):
 # un poligono senza antialiasing fa gli scalini, un'immagine sfumata no. Il bordo
 # esterno sta a mezzo pixel dal margine, cosi' il poligono del nodo lo contiene
 # tutto. Due misure: 256 px per i tondi grandi, 64 per quelli piccoli (sotto i 48

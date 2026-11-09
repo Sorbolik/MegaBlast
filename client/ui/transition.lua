@@ -62,7 +62,7 @@ local function flame_nodes(p)
 	gui.play_flipbook(f.disco, "favilla")
 	gui.set_color(f.disco, FLAME_CARD)
 	gui.set_parent(f.disco, f.nodo)
-	for i = 1, M.SPARKS do f.sparks[i] = ui.disco(0, 0, 14, EMBER, f.nodo) end
+	for i = 1, M.SPARKS do f.sparks[i] = ui.disc(0, 0, 14, EMBER, f.nodo) end
 	gui.set_enabled(f.nodo, false)
 	p.flame = f
 	return f

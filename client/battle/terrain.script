@@ -47,7 +47,7 @@ local function load_up(self, spot, file)
 	end
 	-- decoding the PNG and uploading it to the GPU is the heaviest work of a map
 	-- change: the frame counter (ui/frames.lua) knows it
-	frames.segna("dipinto")
+	frames.mark("dipinto")
 	frames.scope("dipinto")
 	local img = image.load_buffer(payload, { premultiply_alpha = true, flip_vertically = true })
 	local fmt = img.type == image.TYPE_RGB and TEX_RGB or TEX_RGBA
@@ -141,5 +141,5 @@ end
 function on_message(self, message_id, message)
 	local t = frames.ora()
 	handle_message(self, message_id, message)
-	frames.lavoro(t)
+	frames.work(t)
 end

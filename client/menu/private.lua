@@ -33,13 +33,13 @@ local MODES = { { "2v2", 210 }, { "1v1", 210 }, { "ffa", 320 } }
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 local function riga(t, x, y, scale, color, parent)
-	local n = ui.testo(t, x, y, scale, color, parent)
+	local n = ui.text(t, x, y, scale, color, parent)
 	gui.set_pivot(n, gui.PIVOT_W)
 	return n
 end
 
 local function to_right(t, x, y, scale, color, parent)
-	local n = ui.testo(t, x, y, scale, color, parent)
+	local n = ui.text(t, x, y, scale, color, parent)
 	gui.set_pivot(n, gui.PIVOT_E)
 	return n
 end
@@ -55,7 +55,7 @@ local function build_choice(c)
 	gui.set_color(b.bordo, C.LIGHT)
 	local x0, y0 = -W / 2 + 36, H / 2 - 44
 	riga(T.new_room_over, x0, y0, 0.65, C.OFF, n)
-	gui.set_pivot(ui.titolo(T.new_room, x0, y0 - 64, 0.95, C.LIGHT, n), gui.PIVOT_W)
+	gui.set_pivot(ui.title(T.new_room, x0, y0 - 64, 0.95, C.LIGHT, n), gui.PIVOT_W)
 	for i, line in ipairs(T.new_room_lines) do
 		riga(line, x0, y0 - 130 - (i - 1) * 40, 0.7, C.TEXT, n)
 	end
@@ -63,12 +63,12 @@ local function build_choice(c)
 
 	-- the code: four boxes, then the keypad
 	local x = ui.EDGE + W + 32 + (1280 - ui.EDGE * 2 - W - 32) / 2
-	ui.testo(T.have_code, x, ui.CONTENT_TOP - 20, 0.7, C.OFF, c.radice)
+	ui.text(T.have_code, x, ui.CONTENT_TOP - 20, 0.7, C.OFF, c.radice)
 	for i = 1, M.DIGITS do
 		local bx = x + (i - (M.DIGITS + 1) / 2) * 92
-		local box, border = ui.pannello(bx, 505, 80, 84, c.radice)
+		local box, border = ui.panel(bx, 505, 80, 84, c.radice)
 		if i == #c.code + 1 and not c.busy then gui.set_color(border, C.LIGHT) end
-		ui.titolo(c.code:sub(i, i), 0, 0, 1.1, C.LIGHT, box)
+		ui.title(c.code:sub(i, i), 0, 0, 1.1, C.LIGHT, box)
 	end
 	local keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "canc", "0", "entra" }
 	for i, k in ipairs(keys) do
@@ -80,14 +80,14 @@ local function build_choice(c)
 		ui.button(c.buttons, kx, ky, 150, 64, label, k == "canc" and "canc" or k == "entra" and "entra" or "n:" .. k,
 			{ spento = off, scala = #k == 1 and 1.1 or 0.8 }, c.radice)
 	end
-	if c.msg then ui.testo(c.msg, 640, 100, 0.8, c.busy and C.OFF or C.BRACE, c.radice) end
+	if c.msg then ui.text(c.msg, 640, 100, 0.8, c.busy and C.OFF or C.BRACE, c.radice) end
 end
 
 -- One seat: the team's notch, who sits there and, for a bot, its level with
 -- - + (the host) and QUI (whoever wants that seat)
 local function seat(c, i, s, x, y, w, h)
 	local C, room = ui.C, c.room
-	local n = ui.pannello(x, y, w, h, c.radice)
+	local n = ui.panel(x, y, w, h, c.radice)
 	local col = C.SQUADRA[s.team] or C.LIGHT
 	local notch = gui.new_box_node(vec(-w / 2 + 12, 0), vec(5, h - 30))
 	gui.set_color(notch, col)
@@ -119,12 +119,12 @@ local function build_room(c)
 	local host = room.host == room.you
 	local top = ui.CONTENT_TOP - 30
 	riga(T.code, ui.EDGE, top + 2, 0.7, C.OFF, c.radice)
-	gui.set_pivot(ui.titolo(room.code or "", ui.EDGE + 120, top, 1.1, C.LIGHT, c.radice), gui.PIVOT_W)
+	gui.set_pivot(ui.title(room.code or "", ui.EDGE + 120, top, 1.1, C.LIGHT, c.radice), gui.PIVOT_W)
 	if host then
 		local x = 1280 - ui.EDGE
 		for k = #MODES, 1, -1 do
 			local m, w = MODES[k][1], MODES[k][2]
-			ui.scheda(c.buttons, x - w / 2, top, w, 48, common.modes[m], "modo:" .. m, room.mode == m, c.radice)
+			ui.tab(c.buttons, x - w / 2, top, w, 48, common.modes[m], "modo:" .. m, room.mode == m, c.radice)
 			gui.set_scale(c.buttons[#c.buttons].testo, vec(0.6, 0.6))
 			x = x - w - 12
 		end
@@ -150,7 +150,7 @@ local function build_room(c)
 	for k, team in ipairs(teams) do
 		local x = ui.EDGE + w / 2 + (k - 1) * (w + gap)
 		local name = TM.team_names[team] or ""
-		ui.testo(name:upper(), x, y0, 0.75, C.SQUADRA[team] or C.TEXT, c.radice)
+		ui.text(name:upper(), x, y0, 0.75, C.SQUADRA[team] or C.TEXT, c.radice)
 		local list = by_team[team]
 		local h = math.min(300, (y0 - 30 - y1 - (#list - 1) * 14) / #list)
 		for j, i in ipairs(list) do
@@ -169,7 +169,7 @@ end
 local function build(c)
 	if c.radice then gui.delete_node(c.radice) end
 	c.buttons = {}
-	c.radice = ui.radice()
+	c.radice = ui.root()
 	ui.header_delete(c.head)
 	c.head = ui.header(c.buttons, T.title, "indietro")
 	if c.room then build_room(c) else build_choice(c) end
@@ -187,18 +187,18 @@ function M.busy(c)
 	build(c)
 end
 
-function M.stato(c, m)
+function M.status(c, m)
 	c.busy, c.msg, c.room = nil, nil, m
 	build(c)
 end
 
-function M.errore(c, text)
+function M.error(c, text)
 	c.busy, c.msg, c.room = nil, text, nil
 	build(c)
 end
 
 function M.on_input(c, action_id, action)
-	local a = ui.tocco(c.buttons, action_id, action)
+	local a = ui.touch(c.buttons, action_id, action)
 	if not a then return nil end
 	if a == "indietro" then return "indietro" end
 	if c.busy then return nil end

@@ -138,7 +138,7 @@ check(not loadout.valid(a, 20), "an unknown set isn't valid")
 check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(20) == 3 and equip.tier(500) == equip.TIERS,
 	"tier from matches played, one per step")
 check(equip.tier(29) < equip.TIERS and equip.tier(30) == equip.TIERS, "variant B at 30 matches with each piece, as before")
-check(equip.livello(0) == 0 and equip.livello(12) == 12 and equip.livello(99) == equip.LIVELLO_MAX, "piece level")
+check(equip.level(0) == 0 and equip.level(12) == 12 and equip.level(99) == equip.LIVELLO_MAX, "piece level")
 check(equip.next_tier(12) == 20 and equip.next_tier(30) == nil, "next step")
 
 -- Awards
@@ -156,13 +156,13 @@ check(by[3] == nil, "whoever didn't play gets nothing")
 check(#list >= 3, "list of awards in order")
 
 -- Profile: experience, levels and mastery
-local p = profile.nuovo()
+local p = profile.new()
 check(#p.loadouts == loadout.LOADOUTS and p.livello == 1, "new profile: 3 loadouts, level 1")
 p.loadouts[1].gear = { mask = "vuoto" }
 local gu = profile.match_end(p, 1, { awards.LIST[1] })
 check(gu.xp == profile.XP_PLACE[1] + profile.XP_AWARD and p.livello == 2, "first place levels you up")
 check(p.mastery.vuoto_mask == 1, "a mastery match for the worn piece")
-check(profile.punti(p) == 4, "skill points from the level")
+check(profile.points(p) == 4, "skill points from the level")
 
 if failures > 0 then
 	print(failures .. " tests failed")

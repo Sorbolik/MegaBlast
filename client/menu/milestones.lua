@@ -37,7 +37,7 @@ M.OTHERS = { "partite", "serie", "colpi", "morti", "teletrasporti" }
 M.SHOWN = 3
 
 -- badge grade for value v (0: none)
-function M.grado(s, v)
+function M.grade(s, v)
 	local g = 0
 	for i, threshold in ipairs(s.thresholds or {}) do
 		if (v or 0) >= threshold then g = i end
@@ -46,7 +46,7 @@ function M.grado(s, v)
 end
 
 -- the next threshold and how far off it is, from 0 to 1 (from the previous threshold)
-function M.prossima(s, v)
+function M.next(s, v)
 	v = v or 0
 	local first_one = 0
 	for _, threshold in ipairs(s.thresholds or {}) do
@@ -58,10 +58,10 @@ end
 
 -- The badges earned with those values, from the highest grade (same grade in
 -- list order): { { id, grade }, ... }
-function M.presi(values)
+function M.earned(values)
 	local out = {}
 	for i, s in ipairs(M.WHITELIST) do
-		local g = M.grado(s, values[s.id])
+		local g = M.grade(s, values[s.id])
 		if g > 0 then out[#out + 1] = { id = s.id, grado = g, i = i } end
 	end
 	table.sort(out, function(a, b)
@@ -74,7 +74,7 @@ end
 
 -- The badges to show: the chosen ones (still earned), then the highest, up to SHOWN
 function M.shown(values, picked_ones)
-	local taken = M.presi(values)
+	local taken = M.earned(values)
 	local by_id = {}
 	for _, b in ipairs(taken) do by_id[b.id] = b end
 	local out, placed = {}, {}

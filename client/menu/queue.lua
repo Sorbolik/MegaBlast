@@ -26,7 +26,7 @@ local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 -- left-aligned text; w: wraps past that width
 local function riga(t, x, y, scale, color, parent, w)
-	local n = ui.testo(t, x, y, scale, color, parent)
+	local n = ui.text(t, x, y, scale, color, parent)
 	gui.set_pivot(n, w and gui.PIVOT_NW or gui.PIVOT_W)
 	if w then
 		gui.set_line_break(n, true)
@@ -36,7 +36,7 @@ local function riga(t, x, y, scale, color, parent, w)
 end
 
 local function to_right(t, x, y, scale, color, parent)
-	local n = ui.testo(t, x, y, scale, color, parent)
+	local n = ui.text(t, x, y, scale, color, parent)
 	gui.set_pivot(n, gui.PIVOT_E)
 	return n
 end
@@ -44,7 +44,7 @@ end
 local function build(c)
 	if c.radice then gui.delete_node(c.radice) end
 	c.buttons = {}
-	c.radice = ui.radice()
+	c.radice = ui.root()
 	local C = ui.C
 	-- the header (ui.header): the title and the pill's place
 	ui.header_delete(c.head)
@@ -60,7 +60,7 @@ local function build(c)
 	gui.set_color(b.bordo, C.LIGHT)
 	local x0, y0 = -W2 / 2 + 36, H2 / 2 - 44
 	riga(T.usual_match, x0, y0, 0.65, C.OFF, n)
-	gui.set_pivot(ui.titolo(common.modes["2v2"], x0, y0 - 64, 1.1, C.LIGHT, n), gui.PIVOT_W)
+	gui.set_pivot(ui.title(common.modes["2v2"], x0, y0 - 64, 1.1, C.LIGHT, n), gui.PIVOT_W)
 	local also = events.on_queue("2v2")
 	if #also > 0 then
 		riga(T.also_counts, x0, y0 - 140, 0.65, C.OFF, n)
@@ -82,7 +82,7 @@ local function build(c)
 		c.buttons[#c.buttons].riposo = C.BRACE
 		local ex, ey = -w / 2 + 24, h / 2 - 26
 		riga(T.event:format(events.queue_name(o.modo)), ex, ey, 0.6, C.BRACE, e)
-		to_right(events.quando(o), w / 2 - 24, ey, 0.6, C.OFF, e)
+		to_right(events.when(o), w / 2 - 24, ey, 0.6, C.OFF, e)
 		riga(o.nome, ex, ey - 40, 0.85, C.TEXT, e)
 		if o.riga and o.riga ~= "" then riga(o.riga, ex, ey - 64, 0.6, C.OFF, e, w - 150) end
 		to_right(common.play, w / 2 - 24, -h / 2 + 28, 0.9, C.BRACE, e)
@@ -115,7 +115,7 @@ function M.rebuild(x)
 end
 
 function M.on_input(c, action_id, action)
-	local ui_action = ui.tocco(c.buttons, action_id, action)
+	local ui_action = ui.touch(c.buttons, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" or ui_action == "privata" then return ui_action end
 	return { coda = ui_action:match("^coda:(.*)$") }

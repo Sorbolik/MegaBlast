@@ -5,7 +5,7 @@
 --
 --   local p = battute.nuove()                    -- one per match
 --   p.chi[robot] = "codardo"                     -- who speaks: the personality or the keeper
---   local robot, testo, forte, moment = p:evento(e, current_one)  -- for every match
+--   local robot, testo, forte, moment = p:event(e, current_one)  -- for every match
 --     event (current_one: the robot whose turn it is): who says what, or nil;
 --     forte: a quip that may cover the previous one
 --   local testo = battute.di(chi, moment, n)     -- quip n of that moment
@@ -20,14 +20,14 @@ local M = {}
 
 local QUIPS = T.by_character
 
-function M.di(who, moment, n)
+function M.of(who, moment, n)
 	local b = QUIPS[who]
 	local list_of = b and b[moment]
 	if not list_of then return nil end
 	return list_of[n % #list_of + 1]
 end
 
-function M.nuove()
+function M.new()
 	return setmetatable({ chi = {}, n = {} }, { __index = M })
 end
 
@@ -49,7 +49,7 @@ end
 
 local STRONG = { muore = true, abbatte = true, scappa = true }
 
-function M.evento(p, e, current_one)
+function M.event(p, e, current_one)
 	local i, m = moment(p.chi, e, current_one)
 	local who = i and p.chi[i]
 	if not who then return nil end
@@ -58,7 +58,7 @@ function M.evento(p, e, current_one)
 	p.n[k] = n + 1
 	-- at turn start, every other one
 	if m == "turno" and n % 2 == 1 then return nil end
-	local s = M.di(who, m, n)
+	local s = M.of(who, m, n)
 	return s and i, s, STRONG[m] == true, m
 end
 

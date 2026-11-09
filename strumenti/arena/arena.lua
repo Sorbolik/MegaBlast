@@ -162,8 +162,8 @@ local function partita(k)
 			end
 		end
 	end
-	local r = replay.nuova(seme, mappa, { players = players, score = PUNTEGGIO })
-	local g, bots = replay.partita(r)
+	local r = replay.new(seme, mappa, { players = players, score = PUNTEGGIO })
+	local g, bots = replay.match(r)
 
 	local ultima = {}       -- l'ultima arma usata da ogni robot
 	local stats = {}
@@ -201,7 +201,7 @@ local function partita(k)
 	end
 	while g.phase ~= "over" do
 		g:step(replay.input(r, g, bots))
-		replay.dopo(r, g)
+		replay.after(r, g)
 		for _, e in ipairs(g:pop_events()) do
 			local w = USO[e.type] or (e.type == "place" and e.kind) or nil
 			if w and e.robot then

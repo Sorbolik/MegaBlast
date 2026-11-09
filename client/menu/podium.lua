@@ -48,12 +48,12 @@ local function stair(p, x, voice, i)
 	gui.set_visible(base, false)
 	gui.set_parent(base, p.radice)
 	-- the step's border in the team color, like the tags in the lineup
-	local block, edge = ui.pannello(0, h / 2, M.WIDE, h, base)
+	local block, edge = ui.panel(0, h / 2, M.WIDE, h, base)
 	gui.set_color(edge, g.colore)
 	local top = h / 2
-	ui.titolo(tostring(voice.place), 0, top - 42, 1.3, voice.place == 1 and c.BRACE or c.TEXT, block)
-	ui.testo(g.nome, 0, top - 82, 1, g.colore, block)
-	ui.testo(T.points:format(voice.points or 0), 0, top - 106, 0.8, c.OFF, block)
+	ui.title(tostring(voice.place), 0, top - 42, 1.3, voice.place == 1 and c.BRACE or c.TEXT, block)
+	ui.text(g.nome, 0, top - 82, 1, g.colore, block)
+	ui.text(T.points:format(voice.points or 0), 0, top - 106, 0.8, c.OFF, block)
 	gui.set_scale(base, vmath.vector3(1, 0.01, 1))
 	local delay = (i - 1) * M.DELAY
 	gui.animate(base, "scale.y", 1, gui.EASING_OUTBACK, M.RISE, delay)
@@ -98,19 +98,19 @@ local function title(p, results, first)
 		label = T.wins:format(string.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome))
 		color = g.colore
 	end
-	ui.titolo(label, 640, 660, 1.4, color, p.radice)
-	ui.testo(MODES_LIST[results.mode] or "", 640, 618, 0.8, c.OFF, p.radice)
+	ui.title(label, 640, 660, 1.4, color, p.radice)
+	ui.text(MODES_LIST[results.mode] or "", 640, 618, 0.8, c.OFF, p.radice)
 end
 
 -- an award's card: name, who got it, why
 local function prize(p, x, y, voice, i)
 	local c = ui.C
 	local g = p.giocatori[voice.robot] or { nome = "?", colore = c.TEXT }
-	local n, edge = ui.pannello(x, y, 250, 92, p.radice)
+	local n, edge = ui.panel(x, y, 250, 92, p.radice)
 	gui.set_color(edge, vmath.vector4(g.colore.x, g.colore.y, g.colore.z, 0.6))
-	ui.titolo(voice.award.name, 0, 24, 0.6, c.BRACE, n)
-	ui.testo(g.nome, 0, -2, 0.9, g.colore, n)
-	ui.testo(voice.award.desc, 0, -26, 0.75, c.OFF, n)
+	ui.title(voice.award.name, 0, 24, 0.6, c.BRACE, n)
+	ui.text(g.nome, 0, -2, 0.9, g.colore, n)
+	ui.text(voice.award.desc, 0, -26, 0.75, c.OFF, n)
 	gui.set_scale(n, vmath.vector3(0.01, 0.01, 1))
 	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, M.REWARDS + i * 0.12)
 end
@@ -118,14 +118,14 @@ end
 -- experience and level gained by whoever plays on this phone
 local function gain(p, g, prof)
 	local c = ui.C
-	local n = ui.pannello(1065, 105, 330, 120, p.radice)
-	ui.testo(T.level:format(g.livello), -80, 34, 1, g.livello > g.level_before and c.BRACE or c.TEXT, n)
-	ui.testo(T.xp:format(g.xp), 70, 34, 0.8, c.TEXT, n)
+	local n = ui.panel(1065, 105, 330, 120, p.radice)
+	ui.text(T.level:format(g.livello), -80, 34, 1, g.livello > g.level_before and c.BRACE or c.TEXT, n)
+	ui.text(T.xp:format(g.xp), 70, 34, 0.8, c.TEXT, n)
 	local b = ui.bar(0, 4, 290, 12, c.BRACE, n)
 	ui.bar_value(b, 0)
 	p.bar, p.bar_end = b, prof.xp / profile.xp_level(prof.livello)
 	if g.livello > g.level_before then
-		ui.testo(T.skill_point, 0, -32, 0.9, c.BRACE, n)
+		ui.text(T.skill_point, 0, -32, 0.9, c.BRACE, n)
 	end
 end
 
@@ -188,7 +188,7 @@ function M.on_input(p, action_id, action)
 		if action.pressed and (action_id == ui.TOUCH or action_id == ui.PAD) then close_card(p) end
 		return nil
 	end
-	local ui_action = ui.tocco(p.buttons, action_id, action)
+	local ui_action = ui.touch(p.buttons, action_id, action)
 	if ui_action == "rivedi" then return { rivedi = p.numero } end
 	local robot = ui_action and tonumber(ui_action:match("^carta:(%d+)$"))
 	if robot then

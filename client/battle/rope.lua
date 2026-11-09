@@ -33,7 +33,7 @@ local function fit(n)
 	return n
 end
 
-function M.nuova(k)
+function M.new(k)
 	local f = { pezzi = {}, x = {}, y = {}, px = {}, py = {}, t = 0, spessore = 1.5 * k, col = vmath.vector4(STEEL),
 		col_img = vmath.vector4(1, 1, 1, 1) }
 	for i = 1, PIECES do
@@ -56,7 +56,7 @@ function M.nuova(k)
 	return f
 end
 
-function M.nodi(f)
+function M.nodes(f)
 	local out = {}
 	for i = 1, PIECES do out[i] = f.pezzi[i] end
 	out[#out + 1] = f.uncino
@@ -104,7 +104,7 @@ local function straight_ones(f, x0, y0, x1, y1)
 	end
 end
 
-function M.dritta(f, x0, y0, x1, y1)
+function M.straight(f, x0, y0, x1, y1)
 	f.stato = "dritta"
 	alpha(f, 1)
 	display(f, true)
@@ -114,14 +114,14 @@ function M.dritta(f, x0, y0, x1, y1)
 	draw(f)
 end
 
-function M.sfuma(f)
+function M.fade(f)
 	if f.stato ~= "dritta" then return end
 	f.stato, f.t = "sfuma", 0
 end
 
 -- The hook caught nothing: wire and hook fall together, the tip (heavier)
 -- keeps going a little in the direction it was flying
-function M.cade(f, x0, y0, x1, y1)
+function M.fall(f, x0, y0, x1, y1)
 	f.stato, f.t = "cade", 0
 	alpha(f, 1)
 	display(f, true)

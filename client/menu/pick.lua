@@ -5,7 +5,7 @@
 -- card down opens the weapon's card (battle/card.lua), the same as for
 -- crates; a tap closes it. With the controller the d-pad moves the light over
 -- cards, picks and buttons, A picks, Y opens the card and Start the wheel
--- (ui.tocco, ui/controller.lua).
+-- (ui.touch, ui/controller.lua).
 -- On the same phone players pick in turn, with the timer waiting for whoever
 -- reads a card. Online only whoever plays on this phone picks, until the
 -- server's time runs out: the picks go to the server (docs/server.md).
@@ -62,7 +62,7 @@ end
 
 -- a text that wraps within w
 local function riga(t, y, scale, w, parent)
-	local n = ui.testo(t, 0, y, scale, nil, parent)
+	local n = ui.text(t, 0, y, scale, nil, parent)
 	gui.set_line_break(n, true)
 	gui.set_size(n, vmath.vector3(w / (scale * 0.5), 200, 0))
 	return n
@@ -70,7 +70,7 @@ end
 
 -- a card (or a pick made): panel, icon, name and a line below
 local function paper(x, y, w, h, icon_d, parent)
-	local c, border = ui.pannello(x, y, w, h, parent)
+	local c, border = ui.panel(x, y, w, h, parent)
 	local icon_img = gui.new_box_node(vec(0, 0), vec(icon_d, icon_d))
 	gui.set_texture(icon_img, "armi")
 	gui.set_parent(icon_img, c)
@@ -78,17 +78,17 @@ local function paper(x, y, w, h, icon_d, parent)
 end
 
 function M.new(icons, name_list, effects, commands)
-	local s = { icons = icons, nomi = name_list, effects = effects, comandi = commands, card_list = {}, scelte = {} }
+	local s = { icons = icons, nomi = name_list, effects = effects, commands = commands, card_list = {}, scelte = {} }
 	-- what the controller light goes on: cards, picks made and buttons
 	s.luce = {}
 	s.root = gui_node(W / 2, H / 2, W * screen.FULL, H * screen.FULL, VEIL)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
-	s.titolo = ui.titolo("", 0, 232, 0.55, nil, s.root)
+	s.titolo = ui.title("", 0, 232, 0.55, nil, s.root)
 	s.sotto = riga("", 192, 0.6, 1000, s.root)
 	for i = 1, config.DRAFT_OFFER do
 		local c = paper(0, CARD_Y, CARD_W, CARD_H, 96, s.root)
 		gui.set_position(c.icon_img, vec(0, 40))
-		c.nome = ui.testo("", 0, -32, 0.7, nil, c.node)
+		c.nome = ui.text("", 0, -32, 0.7, nil, c.node)
 		c.effect = riga("", -70, 0.5, CARD_W - 24, c.node)
 		gui.set_color(c.effect, C.OFF)
 		s.card_list[i] = c
@@ -99,9 +99,9 @@ function M.new(icons, name_list, effects, commands)
 		local x = (step - 1.5) * (CHOICE_W + 30)
 		local c = paper(x, CHOICE_Y, CHOICE_W, CHOICE_H, 56, s.root)
 		gui.set_position(c.icon_img, vec(-CHOICE_W / 2 + 46, 0))
-		local kind = ui.testo(NAME_STEP[step], -CHOICE_W / 2 + 90, 16, 0.5, STEP_COLOR[step], c.node)
+		local kind = ui.text(NAME_STEP[step], -CHOICE_W / 2 + 90, 16, 0.5, STEP_COLOR[step], c.node)
 		gui.set_pivot(kind, gui.PIVOT_W)
-		c.nome = ui.testo("", -CHOICE_W / 2 + 90, -14, 0.65, nil, c.node)
+		c.nome = ui.text("", -CHOICE_W / 2 + 90, -14, 0.65, nil, c.node)
 		gui.set_pivot(c.nome, gui.PIVOT_W)
 		s.scelte[step] = c
 		c.colore, c.ui_action, c.nodo = C.LIGHT, "scelta:" .. step, c.node
@@ -111,7 +111,7 @@ function M.new(icons, name_list, effects, commands)
 	s.gioca = ui.button(s.buttons, 0, -290, 300, 70, common.play, "gioca", { main = true }, s.root)
 	s.bar = ui.bar(0, -300, BAR_W, 6, C.LIGHT, s.root)
 	-- the wheel: a tap opens ESCI next to it, another closes it again
-	s.rotellina = ui.impostazioni(s.buttons, "rotellina")
+	s.rotellina = ui.settings_button(s.buttons, "rotellina")
 	s.esci = ui.button(s.buttons, 32 + 12 + 80, 0, 160, 64, common.quit, "esci", nil, s.rotellina)
 	for _, b in ipairs(s.buttons) do s.luce[#s.luce + 1] = b end
 	gui.set_enabled(s.root, false)
@@ -159,7 +159,7 @@ local function texts(s)
 		under = guide and T.ready_guided or T.ready_text
 	end
 	-- with the controller the card opens with Y, and you pick with the d-pad
-	if s.comandi and s.comandi() == "controller" then
+	if s.commands and s.commands() == "controller" then
 		under = under:gsub(T.hold_card, T.press_on_card:format(controller.name_of("scheda")))
 			:gsub(T.tap_pick, T.back_to_pick)
 	end
@@ -307,7 +307,7 @@ function M.update(s, dt)
 	if s.pressed_f then
 		s.pressed_f.t = s.pressed_f.t + dt
 		if s.pressed_f.t >= HOLD then
-			s.carta = card.open_view(s.pressed_f.w, s.comandi and s.comandi())
+			s.carta = card.open_view(s.pressed_f.w, s.commands and s.commands())
 			s.pressed_f = nil
 		end
 	end
@@ -337,7 +337,7 @@ local function controller(s, action)
 	local u = action.ui
 	if u == "menu" or (u == "indietro" and gui.is_enabled(s.esci)) then
 		gui.set_enabled(s.esci, u == "menu" and not gui.is_enabled(s.esci))
-		if gui.is_enabled(s.esci) then ui.luce(s.luce, s.buttons[#s.buttons]) end
+		if gui.is_enabled(s.esci) then ui.light(s.luce, s.buttons[#s.buttons]) end
 		return
 	end
 	local lit = ui.lit_up(s.luce)
@@ -345,7 +345,7 @@ local function controller(s, action)
 	if u == "scheda" then
 		ui_action = lit and lit.ui_action
 	else
-		ui_action = ui.tocco(s.luce, ui.PAD, action)
+		ui_action = ui.touch(s.luce, ui.PAD, action)
 	end
 	if not ui_action then return end
 	local kind, i = ui_action:match("^(%a+):(%d)$")
@@ -359,7 +359,7 @@ local function controller(s, action)
 	elseif kind == "carta" and s.passo <= 2 then
 		local w = lane(s.d, s.passo)[i]
 		if w and u == "scheda" then
-			s.carta = card.open_view(w, s.comandi and s.comandi())
+			s.carta = card.open_view(w, s.commands and s.commands())
 		elseif w then
 			choose(s, w)
 		end
@@ -378,7 +378,7 @@ function M.on_input(s, action_id, action)
 		if action.pressed then close_sheet(s) end
 		return
 	end
-	local ui_action = ui.tocco(s.buttons, action_id, action)
+	local ui_action = ui.touch(s.buttons, action_id, action)
 	if ui_action == "rotellina" then
 		gui.set_enabled(s.esci, not gui.is_enabled(s.esci))
 		return

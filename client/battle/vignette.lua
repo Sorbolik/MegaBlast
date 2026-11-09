@@ -18,11 +18,11 @@
 --   v:say(chi, faccia, testo, nome, colore)  -- the strip (testo nil: it goes away)
 --   v:ghost(behind)                       -- every frame: someone is behind the strip
 --                                         -- (in v:rect()), it goes see-through
---   v:cima(y1) / v:hit(px, py) / v:dismiss()  -- the screen's top, a finger on it, swipe up
+--   v:top(y1) / v:hit(px, py) / v:dismiss()  -- the screen's top, a finger on it, swipe up
 --   local view = v:open(pages)            -- pages: { { chi, faccia, testo, disegno } }:
 --                                         -- the big vignette (the battle keeps it as self.carta);
 --                                         -- the mission's postcard is before the battle (ui/postcard.lua)
---   view:premi(x, y) / view:pad(n)        -- a tap / a controller button: true when it is over
+--   view:press(x, y) / view:pad(n)        -- a tap / a controller button: true when it is over
 --   v:update(dt)                          -- every frame, also while the game is stopped
 --   vignette.CHI.favilla                  -- name and color of who speaks
 
@@ -82,7 +82,7 @@ end
 
 -- the comic panel: parchment with an ink border
 local function panel(x, y, w, h, parent)
-	local n, b = ui.pannello(x, y, w, h, parent)
+	local n, b = ui.panel(x, y, w, h, parent)
 	gui.set_color(n, PAPER)
 	gui.set_color(b, INK)
 	gui.set_inherit_alpha(b, true) -- the strip goes see-through whole (M.ghost)
@@ -177,7 +177,7 @@ function M.rect(v)
 end
 
 -- The real top of the screen (ui/screen.lua: higher than 720 on a tablet)
-function M.cima(v, y1)
+function M.top(v, y1)
 	v.y1 = y1
 	gui.cancel_animations(v.strip, "position.y")
 	gui.set_position(v.strip, vec(STRIP_X, strip_y(v)))
@@ -300,14 +300,14 @@ end
 
 -- the finger on the screen: a light disc with a ring
 local function finger(d)
-	local n = ui.disco(0, 0, 9, c(1, 1, 1, 0.35), d.stage)
+	local n = ui.disc(0, 0, 9, c(1, 1, 1, 0.35), d.stage)
 	ui.ring_node(0, 0, 9, 1.2, c(1, 1, 1, 0.9), n)
 	return n
 end
 
 local function dots(d, n, color)
 	local list = {}
-	for i = 1, n do list[i] = ui.disco(0, 0, 2.2, color, d.stage) end
+	for i = 1, n do list[i] = ui.disc(0, 0, 2.2, color, d.stage) end
 	return list
 end
 
@@ -381,7 +381,7 @@ local function aim_draw(weapon, opts)
 		d.weapon = weapon
 		d.finger = finger(d)
 		d.arc = dots(d, 14, c(1, 1, 1, 0.5))
-		d.shot = ui.disco(0, 0, 5, ui.C.BRACE, d.stage)
+		d.shot = ui.disc(0, 0, 5, ui.C.BRACE, d.stage)
 		if opts.annulla then
 			d.cross = gui.new_text_node(vec(0, 0), "X")
 			gui.set_font(d.cross, "titolo")
@@ -720,7 +720,7 @@ function M.open(v, pages, pad)
 	-- the page dots, when there is more than one
 	if #pages > 1 then
 		for k = 1, #pages do
-			view.dots[k] = ui.disco(dx + (k - 1) * step, dy, math.min(9, step - 2), INK_SOFT, view.paper)
+			view.dots[k] = ui.disc(dx + (k - 1) * step, dy, math.min(9, step - 2), INK_SOFT, view.paper)
 		end
 	end
 	show_page(view)

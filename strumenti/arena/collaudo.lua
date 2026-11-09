@@ -80,18 +80,18 @@ end
 -- tolti (la meccanica che manca); vita: la vita degli avversari moltiplicata.
 -- Restituisce l'esito, i turni, i punti di vantaggio e le stelle (una per criterio)
 local function gioca(l, livello, seme, senza, vita)
-	local r = missioni.nuova(l.id)
-	local seed, mappa, opts = missioni.partita(r, seme)
+	local r = missioni.new(l.id)
+	local seed, mappa, opts = missioni.match(r, seme)
 	local c = l.collaudo or {}
 	opts.players[1].bot, opts.players[1].carattere = livello, c.carattere
-	local ric = replay.nuova(seed, mappa, opts)
-	local g, bots = replay.partita(ric)
+	local ric = replay.new(seed, mappa, opts)
+	local g, bots = replay.match(ric)
 	if senza then
 		local liv = copia(bots[1].liv)
 		for k, v in pairs(senza) do liv[k] = v end
 		bots[1].liv = liv
 	end
-	missioni.prepara(r, g)
+	missioni.prepare(r, g)
 	if vita and vita ~= 1 then
 		for _, rb in ipairs(g.robots) do
 			if rb.team ~= g.robots[missioni.GIOCATORE].team then
@@ -103,11 +103,11 @@ local function gioca(l, livello, seme, senza, vita)
 	for _ = 1, l.turni and TETTO or TETTO_PARTITA do
 		g:step(replay.input(ric, g, bots))
 		for _, e in ipairs(g:pop_events()) do
-			missioni.evento(r, g, e, bots)
+			missioni.event(r, g, e, bots)
 			if e.type == "turn" and e.robot == missioni.GIOCATORE then bots[1].piano = c.piano end
 		end
 		local esito = missioni.tick(r, g)
-		if esito then return esito, r.st.turni, missioni.vantaggio(r), missioni.stelle(r) end
+		if esito then return esito, r.st.turni, missioni.lead(r), missioni.stars(r) end
 	end
 	return "tetto", r.st.turni, nil, { false, false, false }
 end

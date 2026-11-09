@@ -29,7 +29,7 @@ local function color(o)
 end
 
 local function riga(t, x, y, scale, col, parent, w)
-	local n = ui.testo(t, x, y, scale, col, parent)
+	local n = ui.text(t, x, y, scale, col, parent)
 	gui.set_pivot(n, w and gui.PIVOT_NW or gui.PIVOT_W)
 	if w then
 		gui.set_line_break(n, true)
@@ -39,7 +39,7 @@ local function riga(t, x, y, scale, col, parent, w)
 end
 
 local function to_right(t, x, y, scale, col, parent)
-	local n = ui.testo(t, x, y, scale, col, parent)
+	local n = ui.text(t, x, y, scale, col, parent)
 	gui.set_pivot(n, gui.PIVOT_E)
 	return n
 end
@@ -84,8 +84,8 @@ local function hour_of(b, now)
 		bt.riposo = color(o)
 		gui.set_color(bt.bordo, bt.riposo)
 		local x0, y0 = -w / 2 + 24, h / 2 - 26
-		riga(events.tipo(o), x0, y0, 0.6, color(o), n)
-		to_right(events.quando(o, now), w / 2 - 24, y0, 0.6, C.OFF, n)
+		riga(events.kind(o), x0, y0, 0.6, color(o), n)
+		to_right(events.when(o, now), w / 2 - 24, y0, 0.6, C.OFF, n)
 		riga(o.nome, x0, y0 - 42, 0.95, C.TEXT, n)
 		local where = o.coda == o.modo and T.counts_in:format(events.queue_name(o.coda)) or T.own_queue:format(events.queue_name(o.modo))
 		riga(where, x0, -h / 2 + 24, 0.6, C.OFF, n)
@@ -108,10 +108,10 @@ local function upcoming(b, now)
 			local t = midnight(monday + (s * 7 + g) * 86400)
 			local end_of = midnight(t + 86400 + 43200)
 			local x = x0 + g * (cw + gap) + cw / 2
-			local n, border = ui.pannello(x, y, cw, ch, b.radice)
+			local n, border = ui.panel(x, y, cw, ch, b.radice)
 			if t == today then gui.set_color(border, C.LIGHT) end
 			local d = os.date("*t", t)
-			ui.testo((s == 0 and T.days[d.wday] .. " " or "") .. d.day, 0, ch / 2 - 16, 0.55, t < today and C.OFF or C.TEXT, n)
+			ui.text((s == 0 and T.days[d.wday] .. " " or "") .. d.day, 0, ch / 2 - 16, 0.55, t < today and C.OFF or C.TEXT, n)
 			-- one small bar for each event of that day
 			local k = 0
 			for _, o in ipairs(events.lista) do
@@ -139,15 +139,15 @@ end
 -- An event's detail
 local function detail(b, o, now)
 	local C = ui.C
-	riga(events.tipo(o), ui.EDGE, ui.CONTENT_TOP - 12, 0.6, color(o), b.radice)
-	riga(events.quando(o, now), ui.EDGE + 260, ui.CONTENT_TOP - 12, 0.6, C.OFF, b.radice)
-	gui.set_pivot(ui.titolo(o.nome, ui.EDGE, ui.CONTENT_TOP - 62, 0.9, C.LIGHT, b.radice), gui.PIVOT_W)
+	riga(events.kind(o), ui.EDGE, ui.CONTENT_TOP - 12, 0.6, color(o), b.radice)
+	riga(events.when(o, now), ui.EDGE + 260, ui.CONTENT_TOP - 12, 0.6, C.OFF, b.radice)
+	gui.set_pivot(ui.title(o.nome, ui.EDGE, ui.CONTENT_TOP - 62, 0.9, C.LIGHT, b.radice), gui.PIVOT_W)
 	if o.riga and o.riga ~= "" then riga(o.riga, ui.EDGE, ui.CONTENT_TOP - 102, 0.65, C.TEXT, b.radice, 640) end
 
 	riga(T.what_changes, ui.EDGE, ui.CONTENT_TOP - 192, 0.65, C.OFF, b.radice)
 	for i, t in ipairs(events.what_changes(o, b.nomi)) do
 		if i > 4 then break end
-		local n = ui.pannello(ui.EDGE + 300, ui.CONTENT_TOP - 232 - (i - 1) * 52, 600, 44, b.radice)
+		local n = ui.panel(ui.EDGE + 300, ui.CONTENT_TOP - 232 - (i - 1) * 52, 600, 44, b.radice)
 		riga(t, -300 + 20, 0, 0.7, C.TEXT, n)
 	end
 	local when = T.from_to:format(day_n(o.da, true), day_n(o.a, true))
@@ -161,7 +161,7 @@ local function detail(b, o, now)
 	if #premi == 0 then riga(T.just_for_fun, px, ui.CONTENT_TOP - 52, 0.7, C.TEXT, b.radice) end
 	for i, p in ipairs(premi) do
 		if i > 5 then break end
-		local n = ui.pannello(px + pw / 2, ui.CONTENT_TOP - 52 - (i - 1) * 56, pw, 48, b.radice)
+		local n = ui.panel(px + pw / 2, ui.CONTENT_TOP - 52 - (i - 1) * 56, pw, 48, b.radice)
 		riga(type(p) == "table" and (p.testo or "") or tostring(p), -pw / 2 + 20, 0, 0.7, C.TEXT, n)
 		if type(p) == "table" and p.chi then to_right(p.chi, pw / 2 - 20, 0, 0.6, ui.GOLD, n) end
 	end
@@ -181,11 +181,11 @@ end
 local function build(b)
 	if b.radice then gui.delete_node(b.radice) end
 	b.buttons = {}
-	b.radice = ui.radice()
+	b.radice = ui.root()
 	-- the header (ui.header): EVENTI and the pill's place
 	ui.header_delete(b.head)
 	b.head = ui.header(b.buttons, common.events, "indietro")
-	local now = events.ora()
+	local now = events.now()
 	local o = b.aperto and find(b.aperto)
 	if o then
 		detail(b, o, now)
@@ -193,7 +193,7 @@ local function build(b)
 	end
 	b.aperto = nil
 	if not events.loaded_ok then
-		ui.testo(T.offline, 640, 400, 0.75, ui.C.OFF, b.radice)
+		ui.text(T.offline, 640, 400, 0.75, ui.C.OFF, b.radice)
 		return
 	end
 	hour_of(b, now)
@@ -222,7 +222,7 @@ function M.rebuild(x)
 end
 
 function M.on_input(b, action_id, action)
-	local ui_action = ui.tocco(b.buttons, action_id, action)
+	local ui_action = ui.touch(b.buttons, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" then
 		if not b.aperto then return "indietro" end

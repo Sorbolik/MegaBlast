@@ -113,7 +113,7 @@ end
 
 -- the zoom at which the play space (or, with whole_map, the map) fits between
 -- the HUD at the top, the one at the bottom and the sides: the farthest the camera goes
-function M.tutta(c, whole_map)
+function M.whole(c, whole_map)
 	local x0, y0, x1, y1 = bounds(c, whole_map)
 	return math.min((c.w - 2 * M.LATO) / (x1 - x0), (c.h - M.BELOW - M.ABOVE) / (y1 - y0))
 end
@@ -127,13 +127,13 @@ end
 -- c.f (0 the farthest zoom, 1 NEAR) to zoom, and back: in between it goes at an
 -- even pace (logarithmic), so every stretch of the finger changes the zoom by the same share
 local function from_f(c, f)
-	local t = M.tutta(c)
+	local t = M.whole(c)
 	if t >= M.NEAR then return t end
 	return math.exp(math.log(t) + (math.log(M.NEAR) - math.log(t)) * f)
 end
 
 local function to_f(c, s)
-	local t = M.tutta(c)
+	local t = M.whole(c)
 	if t >= M.NEAR then return 1 end
 	return clamp((math.log(s) - math.log(t)) / (math.log(M.NEAR) - math.log(t)), 0, 1)
 end
@@ -142,7 +142,7 @@ end
 -- computed when needed, because it depends on the screen and the map.
 -- Until the player changes it, the level holds for every match: every new
 -- play space recomputes it
-function M.livello(c, n)
+function M.level(c, n)
 	c.level_n, c.requested_level = n, n
 end
 
@@ -160,14 +160,14 @@ function M.zoom(c)
 end
 
 -- dragging the button (Z1): the new c.f
-function M.trascina(c, f)
+function M.drag(c, f)
 	resolve(c)
 	c.f, c.level_n = clamp(f, 0, 1), nil
 end
 
 -- the wheel, the keys: positive d is closer
-function M.passo(c, d)
-	M.trascina(c, c.f + d)
+function M.step(c, d)
+	M.drag(c, c.f + d)
 end
 
 -- a tap on the button: from the chosen zoom to the farthest and back
@@ -182,27 +182,27 @@ function M.toggle(c)
 end
 
 -- a mission wants to see at least up to level n: the zoom widens
-function M.allarga(c, n)
+function M.widen(c, n)
 	resolve(c)
 	local f = n <= 1 and 1 or (n >= 3 and 0 or to_f(c, MEDIUM))
 	if f < c.f then c.f, c.level_n = f, nil end
 end
 
 -- Goes straight to the point, without chasing it (start of the match, menu)
-function M.salta(c, x, y, s)
+function M.jump(c, x, y, s)
 	c.s = s
 	c.x, c.y = x, y
 end
 
 -- The opening shot of a level (ui/intro.lua): k 0 is the nearest zoom on (x, y),
 -- k 1 the farthest zoom on the play space, in between at an even pace
-function M.apertura(c, k, x, y)
-	local t = M.tutta(c)
+function M.iris(c, k, x, y)
+	local t = M.whole(c)
 	local s = M.NEAR
 	if t < s then s = math.exp(math.log(s) + (math.log(t) - math.log(s)) * k) end
 	local bx, by = space_center(c, s)
 	local w = k * k * (3 - 2 * k)
-	M.salta(c, x + (bx - x) * w, y + (by - y) * w, s)
+	M.jump(c, x + (bx - x) * w, y + (by - y) * w, s)
 end
 
 -- how far the center goes toward the play space: 0 while the chosen zoom is
@@ -238,8 +238,8 @@ function M.follow(c, dt, x, y, s, fast)
 end
 
 -- In the menu: the whole map, still, in the middle
-function M.mappa(c, dt)
-	local s = M.tutta(c, true)
+function M.overview(c, dt)
+	local s = M.whole(c, true)
 	local x, y = space_center(c, s, true)
 	c.s = c.s + (s - c.s) * (1 - math.exp(-dt * ZOOM))
 	local k = 1 - math.exp(-dt * FOLLOW)
@@ -254,7 +254,7 @@ function M.frame_on(c, dt, ax, ay, bx, by, s)
 	local y0, y1 = math.max(0, math.min(ay, by)), math.min(c.mh, math.max(ay, by))
 	local needs = math.min((c.w - 2 * c.mx) / math.max(1, x1 - x0),
 		(c.h - c.msu - c.mgiu) / math.max(1, y1 - y0))
-	s = math.max(M.tutta(c), math.min(s, needs))
+	s = math.max(M.whole(c), math.min(s, needs))
 	toward(c, dt, (x0 + x1) / 2, (y0 + y1) / 2 - (c.mgiu - c.msu) / (2 * c.s), s,
 		s < c.s and ZOOM_OUT or ZOOM, FOLLOW_FAST)
 	-- the springs lag behind: if a point is about to leave, zoom out at once
@@ -265,20 +265,20 @@ function M.frame_on(c, dt, ax, ay, bx, by, s)
 		if dy > 0 then m = math.min(m, (c.h / 2 - c.msu) / dy) end
 		if dy < 0 then m = math.min(m, (c.h / 2 - c.mgiu) / -dy) end
 	end
-	if m < c.s then c.s = math.max(M.tutta(c), m) end
+	if m < c.s then c.s = math.max(M.whole(c), m) end
 end
 
-function M.spostamento(c)
+function M.shift(c)
 	return c.cx - c.x * c.s, c.cy - c.y * c.s
 end
 
 function M.to_world(c, sx, sy)
-	local tx, ty = M.spostamento(c)
+	local tx, ty = M.shift(c)
 	return (sx - tx) / c.s, (sy - ty) / c.s
 end
 
 function M.to_screen(c, x, y)
-	local tx, ty = M.spostamento(c)
+	local tx, ty = M.shift(c)
 	return x * c.s + tx, y * c.s + ty
 end
 
