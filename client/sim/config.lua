@@ -100,7 +100,7 @@ C.ITEM_DROPS = { max = 2, contents = { { "trap", 1 }, { "shield", 1 }, { "trampo
 -- Whoever is hit takes damage and is knocked in the direction of the shot at
 -- push pixels per second (plus lift upward, to get them off the ground). With
 -- a trampoline under their feet they fly away.
-C.SNIPER = { damage = 50, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
+C.SNIPER = { damage = 42, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
 	bounces = 6, bounce_normal = 0.5, bounce_tangent = 0.85, min_speed = 40 }
 
 -- The two categories (Sergio, 29 October 2026, replacing the rule of the 24th):
