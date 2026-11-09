@@ -170,12 +170,12 @@ C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 400, lift = 
 -- next one, if it was trapped in someone else's turn), but it can still shoot,
 -- use items and teleport. Explosions still push it. game.lua, rb.trapped.
 -- Trampoline ("Molla", Sergio, 9 November 2026): thrown like the Uovo and
--- stays where it lands (if it lands on a robot, at its feet), tilted towards
--- where it was thrown (dir). Anything falling on it bounces up: robots, shots,
+-- stays where it lands (if it lands on a robot, at its feet), launching towards
+-- where it was thrown (dir, a chevron on the board). Anything falling on it bounces up: robots, shots,
 -- Uova, orbs, crates and items (the board is top pixels above the base); robots
 -- and shots also leave sideways at push_vx in its direction (about 400 px on
--- flat ground). A robot launched like that doesn't steer until it touches
--- ground or opens the parachute. Staying on it each bounce is lower (decay)
+-- flat ground). A robot launched like that keeps the push until it touches
+-- ground or opens the parachute: the controls only add or take away its air speed. Staying on it each bounce is lower (decay)
 -- until below min_vy you stop (shots then touch the terrain below, and the
 -- missile explodes).
 C.TRAMPOLINE = { half_w = 18, top = 7, launch_vy = 300, push_vx = 145, decay = 0.6, min_vy = 80 }

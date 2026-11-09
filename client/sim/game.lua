@@ -898,7 +898,13 @@ function M:update_robot(rb, input, active)
 		-- no inertia, even right after being knocked; the robot on turn never moves
 		-- sideways faster than its run, except when the Molla throws it
 		local air = st.air_speed * move * chute
-		if dir ~= 0 and not rb.sprung then rb.vx = dir * air end
+		-- launched by the Molla: its push stays, and the controls add or take away
+		-- the air speed (you counter it a little, Sergio 9 November 2026)
+		if rb.sprung then
+			rb.vx = rb.sprung + dir * air
+		elseif dir ~= 0 then
+			rb.vx = dir * air
+		end
 		if active and not rb.sprung then
 			rb.vx = math.max(-air, math.min(air, rb.vx))
 		end
@@ -2303,7 +2309,10 @@ function M:bounce(rb, o)
 	if not vy then return end
 	rb.vy, rb.grounded, rb.rising, rb.knocked, rb.fall_top = vy, false, false, false, nil
 	-- the Molla throws it sideways: it doesn't steer until it lands or opens the parachute
-	rb.vx, rb.sprung = (o.dir or 0) * C.TRAMPOLINE.push_vx, true
+	-- the Molla throws it sideways (rb.sprung: the push, kept until it lands or
+	-- opens the parachute; the controls only correct it)
+	rb.vx = (o.dir or 0) * C.TRAMPOLINE.push_vx
+	rb.sprung = rb.vx
 	-- an opponent's trampoline launches you: if you fall the kill is theirs
 	self:credit(rb, self.robots[o.owner])
 	self:emit({ type = "bounce", id = o.id, robot = rb.id })

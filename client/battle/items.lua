@@ -59,7 +59,7 @@ end
 
 -- Trap: the open jaw trap lying on the ground (strumenti/grafica/attrezzi.py),
 -- with its plate lit in the team colour; springboard: the Molla, a padded
--- board on a spring, leaning the way it launches, with a chevron pointing there
+-- board on a spring, flat, with a chevron pointing the way it launches
 local TRAP_W, TRAP_H, TRAP_DY = 28, 8.6, 2.7
 local MOLLA_W, MOLLA_H, MOLLA_DY = 39.2, 15.4, 6.1
 local SNAP_W, SNAP_H, SNAP_DY = 20.8, 16.6, 6.7
@@ -218,10 +218,8 @@ function M.update(o, g, view, clock)
 				pos(p.root, it.x, it.y + TRAP_DY)
 			else
 				pos(p.root, it.x, it.y + MOLLA_DY)
-				-- leaning towards where it launches; in flight it spins flat
+				-- the chevron points where it launches (none while in flight)
 				local d = it.flying and 0 or (it.dir or 0)
-				o.rot.z = -16 * d
-				gui.set_euler(p.tramp, o.rot)
 				o.size.x, o.size.y, o.size.z = d < 0 and -1 or 1, 1, 1
 				gui.set_scale(p.arrow, o.size)
 				pos(p.arrow, d * MOLLA_W * 0.32, MOLLA_H * 0.5 + 4)

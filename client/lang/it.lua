@@ -602,7 +602,7 @@ return {
 			parachute = "Aprilo in aria: scendi piano e atterri senza farti male",
 			trap = "Posala a terra: chi ci passa resta coi piedi bloccati fino alla fine del suo turno",
 			shield = "Ti ripara dai colpi fino al tuo prossimo turno",
-			trampoline = "Lancialo: si posa inclinato e chi ci salta sopra vola lontano da quella parte",
+			trampoline = "Lancialo: chi ci salta sopra vola lontano dalla parte della freccia",
 		},
 		-- how to use it, with the controls you have (%s: the buttons)
 		parachute_pad = "In aria premi %s",

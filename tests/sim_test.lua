@@ -722,7 +722,7 @@ do
 	end
 	check(sprung_vx == config.TRAMPOLINE.push_vx and me.sprung, "on your own Molla you fly sideways faster than your run")
 	own:step({ left = true })
-	check(me.vx == config.TRAMPOLINE.push_vx, "and you don't steer while flying")
+	check(me.vx > 0 and me.vx < config.TRAMPOLINE.push_vx, "while flying the controls only counter the push a little")
 	own:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
 	own:step({ left = true })
 	check(not me.sprung and me.vx < 0, "the parachute gives control back")
