@@ -9,6 +9,7 @@ local ui = require "ui.ui"
 local gconfig = require "sim.config"
 local scoria = require "battle.scoria"
 local plate = require "battle.plate"
+local impact = require "battle.impact"
 local home = require "menu.home"
 local profile = require "menu.profile"
 local TP = require("lang.text").pill
@@ -213,8 +214,11 @@ local PODIUM_WAIT = 1.5
 -- Game feel (roadmap phase 5). When a shot lands the world stops for a moment
 -- (hit-stop, seconds with small and big damage) and the screen shakes in the
 -- hit direction, harder the more damage (pixels per point)
-local IDLE_MIN, IDLE_MAX = 0.05, 0.11
-local SHAKE_BASE, SHAKE_DAMAGE = 4, 0.45
+-- Three tiers of hit (battle/impact.lua): the stop, the shake and the zoom
+-- punch grow with the damage; the shake grows with its square, so small hits
+-- barely move the screen. The stop is only the drawing and the local clock
+-- standing still for that long: the match and its ticks are the same.
+local FEEL = { idle = { 0.04, 0.07, 0.11 }, idle_ko = 0.16, shake_base = 3, shake_max = 28, punch = { 0, 0.015, 0.035 } }
 -- explosion debris: few and big, they fly and fade
 local DEBRIS, DEBRIS_PER_SHOT, DEBRIS_LIFE = 15, 5, 0.9
 local STONE = vmath.vector4(0.16, 0.13, 0.15, 1)
@@ -777,6 +781,7 @@ local function new_match(self, seed, map, opts)
 	for i = 1, game.MAX_PLAYERS do plates[i] = self.robots[i].plate end
 	score.partita(self.punti, self.g, TEAM_NAMES, plates)
 	self.trail_n = 0
+	if self.fx then impact.reset(self.fx) end
 	self.pose_dt = game.DT
 	reset_pose(self)
 	self.aiming = false
@@ -807,27 +812,14 @@ end
 
 local EULER = vmath.vector3(0, 0, 0)
 
--- Explosion: a 12-frame flipbook plus an additive ember flash.
+-- Explosion: particles (battle/impact.lua) and, on top, rock and ember debris.
 -- The nodes are few and reused in rotation, so none are created during the match.
 local BRACE = vmath.vector4(1, 0.478, 0.102, 1)
 local function hide_node(_, node) gui.set_enabled(node, false) end
 
 local function explosion(self, x, y, r)
-	self.boom_i = self.boom_i % #self.booms + 1
-	local b = self.booms[self.boom_i]
-	local d = r * 3.6
-	gui.set_enabled(b.anim, true)
-	gui.set_position(b.anim, vmath.vector3(x, y, 0))
-	gui.set_size(b.anim, vmath.vector3(d, d, 0))
-	gui.set_euler(b.anim, vmath.vector3(0, 0, math.random(0, 359)))
-	gui.play_flipbook(b.anim, "esplosione", hide_node)
-
-	gui.set_enabled(b.flash, true)
-	gui.cancel_animations(b.flash)
-	gui.set_position(b.flash, vmath.vector3(x, y, 0))
-	gui.set_size(b.flash, vmath.vector3(r * 6, r * 6, 0))
-	gui.set_color(b.flash, BRACE)
-	gui.animate(b.flash, "color.w", 0, gui.EASING_OUTQUAD, 0.45, 0, hide_node)
+	impact.explosion(self.fx, x, y, r)
+	sound.play("#boom", { gain = 0.7 + 0.3 * math.min(1, r / 40), speed = 1.25 - math.min(0.45, r / 90) + math.random() * 0.1 })
 
 	-- debris: pieces of rock and ember thrown upward
 	for j = 1, DEBRIS_PER_SHOT do
@@ -846,6 +838,7 @@ local function explosion(self, x, y, r)
 	-- the screen jolts even if nobody is hit; we remember where a hit comes from
 	-- to push whoever is hit
 	camera.shake(self.cam, math.random() - 0.5, -1, 3 + r * 0.2)
+	camera.punch(self.cam, FEEL.punch[2] * math.min(1.5, r / 30))
 	self.shot_x, self.shot_y, self.shot_t = x, y, self.clock
 end
 
@@ -1405,6 +1398,8 @@ local function handle_event(self, e)
 	elseif e.type == "death" then
 		-- collapses and fades by itself; after 1.5 s it reappears elsewhere, in the same turn
 		scoria.die(self.robots[e.robot].rig)
+		sound.play("#ko", { gain = 0.9 })
+		self.fermo = math.max(self.fermo, FEEL.idle_ko)
 		plate.set_enabled(self.robots[e.robot].plate, false)
 		-- without points (the lessons that don't talk about them) only what happened
 		local without = self.g.no_points
@@ -3277,17 +3272,20 @@ local function apply_camera(self)
 	local c = self.cam
 	if self.zoom_point then ZM.display(self) end
 	local tx, ty = camera.spostamento(c)
-	tx, ty = tx + self.sc_ox, ty + self.sc_oy
-	if tx == self.cam_tx and ty == self.cam_ty and c.s == self.cam_s then return end
-	self.cam_tx, self.cam_ty, self.cam_s = tx, ty, c.s
+	-- the zoom punch scales about the center of the screen
+	local k = self.sc_k or 1
+	tx, ty = W / 2 + (tx - W / 2) * k + self.sc_ox, H / 2 + (ty - H / 2) * k + self.sc_oy
+	local cs = c.s * k
+	if tx == self.cam_tx and ty == self.cam_ty and cs == self.cam_s then return end
+	self.cam_tx, self.cam_ty, self.cam_s = tx, ty, cs
 	CAM_POS.x, CAM_POS.y = tx, ty
 	gui.set_position(self.mondo, CAM_POS)
-	CAM_SCALE.x, CAM_SCALE.y = c.s, c.s
+	CAM_SCALE.x, CAM_SCALE.y = cs, cs
 	gui.set_scale(self.mondo, CAM_SCALE)
 	-- the render stretches 1280 x 720 over the whole screen: the view compensates,
 	-- so the terrain has the same proportions as the nodes (ui/screen.lua)
 	local view, kx, ky = self.cam_msg.view, screen.kx, screen.ky
-	view.m00, view.m11 = c.s / kx, c.s / ky
+	view.m00, view.m11 = cs / kx, cs / ky
 	view.m03, view.m13 = W / 2 + (tx - W / 2) / kx, H / 2 + (ty - H / 2) / ky
 	msg.post("@render:", "set_view_projection", self.cam_msg)
 	local l = c.s ^ -0.65
@@ -3366,9 +3364,15 @@ local function render(self, dt)
 				local damage = v.hp - hp
 				local cx, cy = shot_from(self, i)
 				local dx, dy = v.x - cx, v.y + game.DISEGNO_H / 2 - cy
+				local tier = impact.tier(damage)
 				scoria.hit(r.rig, dx)
-				camera.shake(self.cam, dx, dy, SHAKE_BASE + damage * SHAKE_DAMAGE)
-				self.fermo = math.max(self.fermo, IDLE_MIN + (IDLE_MAX - IDLE_MIN) * math.min(1, damage / 50))
+				camera.shake(self.cam, dx, dy, FEEL.shake_base + FEEL.shake_max * math.min(1, damage / 50) ^ 2)
+				camera.punch(self.cam, FEEL.punch[tier])
+				self.fermo = math.max(self.fermo, FEEL.idle[tier])
+				-- sparks from the point of impact, the number above the head, the thud
+				impact.sparks(self.fx, v.x, v.y + game.DISEGNO_H / 2, dx, dy, tier)
+				impact.number(self.fx, v.x, v.y + scoria.altezza(r.rig), damage, tier)
+				sound.play("#colpo", { gain = 0.5 + 0.25 * tier, speed = 1.15 - 0.15 * tier + math.random() * 0.1 })
 			end
 			v.hp, v.scudo = hp, rb.shield
 			plate.vita(r.plate, hp, rb.max_hp, rb.shield)
@@ -3546,6 +3550,7 @@ local function render(self, dt)
 			gui.set_color(self.egg_light, self.colors[g.current])
 			self.egg_color = g.current
 		end
+		impact.trail(self.fx, dt, x, p0.y + (pb.p.y - p0.y) * k, 30)
 		local secs = math.max(1, math.ceil((g.projectile.fuse or 0) / 60))
 		if self.egg_secs ~= secs then
 			gui.set_text(self.egg_label, tostring(secs))
@@ -3586,6 +3591,7 @@ local function render(self, dt)
 			gui.set_scale(self.projectile, VK)
 			self.sniper_shape = false
 		end
+		impact.trail(self.fx, dt, x, y, 40)
 		local n = #self.trail
 		self.trail_i = self.trail_i % n + 1
 		local tp = self.trail_pos[self.trail_i]
@@ -3980,7 +3986,7 @@ function init(self)
 	-- render's (stretch), which this doesn't change
 	self.cam_msg = { id = hash("camera"), view = vmath.matrix4(), projection = vmath.matrix4() }
 	self.cam_pause = 0
-	self.fermo, self.sc_ox, self.sc_oy = 0, 0, 0
+	self.fermo, self.sc_ox, self.sc_oy, self.sc_k = 0, 0, 0, 1
 	self.mondo = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(self.mondo, false)
 
@@ -4100,17 +4106,8 @@ function init(self)
 	gui.set_enabled(self.tracer, false)
 	RM.nodi(self)
 
-	-- explosions reused in rotation
-	self.booms, self.boom_i = {}, 0
-	for i = 1, 10 do
-		local anim = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(100, 100, 0)))
-		gui.set_texture(anim, "esplosione")
-		gui.play_flipbook(anim, "esplosione")
-		gui.set_enabled(anim, false)
-		local flash = glow(0, 0, 100, BRACE)
-		gui.set_enabled(flash, false)
-		self.booms[i] = { anim = anim, flash = flash }
-	end
+	-- explosions, sparks and numbers: the particles' pools
+	self.fx = impact.new()
 
 	-- explosion debris, reused in rotation
 	self.debris, self.debris_i = {}, 0
@@ -4143,10 +4140,7 @@ function init(self)
 	for _, n in ipairs(self.rm_nodes) do world[#world + 1] = n end
 	-- the debris under the explosion: they come out while it fades
 	for _, d in ipairs(self.debris) do world[#world + 1] = d.node end
-	for _, b in ipairs(self.booms) do
-		world[#world + 1] = b.anim
-		world[#world + 1] = b.flash
-	end
+	for _, n in ipairs(impact.nodes(self.fx)) do world[#world + 1] = n end
 	-- the plates: first all the bars, then the arrow, then all the texts (three
 	-- draw calls in all; the names and the announcements pass over the arrow)
 	for i = 1, game.MAX_PLAYERS do world[#world + 1] = self.robots[i].plate.bars end
@@ -4320,6 +4314,7 @@ function update(self, dt)
 		dt_world = 0
 	end
 	self.sc_ox, self.sc_oy = camera.shake_frame(self.cam, dt)
+	self.sc_k = camera.punch_frame(self.cam, dt)
 	if self.mode == "local" and not self.menu_open and not self.carta and not self.intro_on and not (self.queue and self.queue.found) then
 		self.acc = math.min(self.acc + dt_world, 0.25)
 		-- a bot that thinks in this frame (sim/bot.lua, work): the counter says BOT
@@ -4447,6 +4442,7 @@ function update(self, dt)
 	frames.scope("disegno")
 	render(self, dt_world)
 	move_debris(self, dt_world)
+	impact.update(self.fx, dt_world, self.cam.s)
 	frames.scope_end()
 	if self.mode == "menu" then
 		home.update(self.home, dt)

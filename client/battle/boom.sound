@@ -1,0 +1,4 @@
+sound: "/assets/sounds/boom.ogg"
+looping: 0
+group: "master"
+gain: 0.7

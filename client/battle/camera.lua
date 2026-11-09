@@ -24,6 +24,8 @@
 --   local tx, ty = camera.spostamento(c)      -- screen = world * c.s + t
 --   camera.shake(c, dx, dy, force)            -- a hit: shake toward (dx, dy)
 --   local ox, oy = camera.shake_frame(c, dt)  -- every frame, pixels to add
+--   camera.punch(c, amount)                   -- a big hit: the zoom jumps in by amount (0.03 = 3%)
+--   local k = camera.punch_frame(c, dt)       -- every frame, the zoom factor (1 at rest)
 
 local M = {}
 
@@ -57,7 +59,7 @@ end
 function M.new(w, h, mw, mh, margin, reach)
 	local c = { w = w, h = h, cx = w / 2, cy = h / 2, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1,
 		margin = margin or 0, reach = reach or 0,
-		f = 1, f_before = nil, sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, mx = 120, msu = 90, mgiu = 170 }
+		f = 1, f_before = nil, sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, pu = 0, mx = 120, msu = 90, mgiu = 170 }
 	return c
 end
 
@@ -296,6 +298,18 @@ function M.shake(c, dx, dy, force)
 	local l = math.sqrt(dx * dx + dy * dy)
 	if l < 1e-6 then dx, dy, l = 0, -1, 1 end
 	c.sc_x, c.sc_y, c.sc_f, c.sc_t = dx / l, dy / l, force, 0
+end
+
+-- the zoom punch: it comes in and goes back in about a fifth of a second
+local PUNCH_DAMP = 14
+function M.punch(c, amount)
+	c.pu = math.max(c.pu, amount)
+end
+
+function M.punch_frame(c, dt)
+	if c.pu < 1e-4 then c.pu = 0; return 1 end
+	c.pu = c.pu * math.exp(-dt * PUNCH_DAMP)
+	return 1 + c.pu
 end
 
 function M.shake_frame(c, dt)
