@@ -1462,6 +1462,8 @@ local function apply_state(self, s)
 	local u = s.u or 0
 	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
 	g.match_left = s.mt or g.match_left
+	-- where whoever's turn it is aims (server/net.lua): we show it, power stays secret
+	self.remote_aim = s.aim
 	for i, r in ipairs(s.r) do
 		local rb = g.robots[i]
 		rb.x, rb.y, rb.hp, rb.facing, rb.dead, rb.grounded = r.x, r.y, r.hp, r.f, r.d, r.g
@@ -3311,6 +3313,15 @@ local function render(self, dt)
 		if aiming then
 			st.aim = self.aim_angle
 			st.facing = math.cos(self.aim_angle) < 0 and -1 or 1
+		elseif i == g.current and g.phase == "aim" and not my_turn(self) then
+			-- the others aim too (Sergio, 9 Nov: without it they looked frozen): online
+			-- what the server says, here the bot thinking about its move
+			local b = self.mode == "local" and self.bots and self.bots[i]
+			local other = self.mode == "online" and self.remote_aim or b and bot.shown_aim(b)
+			if other then
+				st.aim = other
+				st.facing = math.cos(other) < 0 and -1 or 1
+			end
 		end
 		-- Favilla showing a move: her aim and her pose (sim/missions.lua, dimostra)
 		local shown = self.missione and missions.mira(self.missione)
@@ -4234,6 +4245,17 @@ function update(self, dt)
 				self.jump_sent = true
 			end
 			if not grounded then self.jump_sent = false end
+			-- the aim (angle only, a few times a second): the others see us aim
+			local now = socket.gettime()
+			local aim = self.aiming and self.aim_angle or nil
+			if aim and (not self.sent.aim or (math.abs(aim - self.sent.aim) > 0.02 and now - self.sent.aim_at >= 0.1)) then
+				aim = math.floor(aim * 100 + 0.5) / 100
+				send(self, { t = "aim", a = aim })
+				self.sent.aim, self.sent.aim_at = aim, now
+			elseif not aim and self.sent.aim then
+				send(self, { t = "aim_end" })
+				self.sent.aim = nil
+			end
 			if self.fire then
 				send(self, { t = "fire", a = self.fire.angle, p = self.fire.power, w = self.fire.weapon })
 				if self.conta then CP.conta.sparo(self.conta, self.g, self.fire.weapon) end
@@ -4241,7 +4263,7 @@ function update(self, dt)
 		else
 			-- unknown: at the next turn (or aim) the state is sent anyway, because the
 			-- server may still hold keys from before (Sergio, 5 Nov: the turn started walking)
-			self.sent.l, self.sent.r, self.sent.j = nil, nil, nil
+			self.sent.l, self.sent.r, self.sent.j, self.sent.aim = nil, nil, nil, nil
 		end
 		self.jump_pressed = false
 		self.fire = nil

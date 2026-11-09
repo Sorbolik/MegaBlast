@@ -1,0 +1,33 @@
+# Online si vede chi mira (Sergio, 9 nov: "se no la gente sembra ferma"): in
+# una partita privata contro i bot del server, durante il turno di un bot il
+# diavoletto punta l'arma dove sta mirando mentre pensa, e dopo al massimo
+# 2 secondi di pensiero tira (server/net.lua THINK_MAX). Chi mira davvero
+# (una persona) manda l'angolo col messaggio "aim": lo prova go test.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_vignette no
+
+aspetta 1
+server 2v2 0
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 205 102 basso destra          # GIOCA
+aspetta 1
+tocca_centro 640 100                       # PARTITA PRIVATA
+aspetta 1
+tocca_centro 310 382                       # CREA UNA STANZA
+aspetta 1.5
+tocca_centro 1090 80                       # VIA
+aspetta_stato modo=scelta_online 10
+aspetta_stato modo=online 30
+aspetta_stato turno=2 fase=aim 40
+aspetta 0.8
+foto 01_bot_pensa_mira
+aspetta 0.7
+foto 02_bot_mira
+aspetta 0.7
+foto 03_bot_mira
+aspetta 1.2
+foto 04_bot_tira
+aspetta_stato turno=3 fase=aim 40
+aspetta 1
+foto 05_altro_bot_mira

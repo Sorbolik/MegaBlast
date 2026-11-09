@@ -144,8 +144,8 @@ func TestGoTerrainSameMatch(t *testing.T) {
 					t.Fatalf("%s tick %d: different event\n%s\n%s", m, tick, ea[i], eb[i])
 				}
 			}
-			if tick%10 == 0 && !sameJSON(a.Snapshot(), b.Snapshot()) {
-				t.Fatalf("%s tick %d: different state\n%s\n%s", m, tick, a.Snapshot(), b.Snapshot())
+			if tick%10 == 0 && !sameJSON(a.Snapshot(false, 0), b.Snapshot(false, 0)) {
+				t.Fatalf("%s tick %d: different state\n%s\n%s", m, tick, a.Snapshot(false, 0), b.Snapshot(false, 0))
 			}
 		}
 	}

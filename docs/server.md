@@ -64,7 +64,14 @@ suo cartellino è `{"bot":true}` e in `players` ha `"bot":G`; in partita
 `N.step` usa i suoi tasti (`bot.input`). Sul server il bot pensa al massimo
 `N.WORK` = 100 tick simulati per tick (sul telefono 400): con 400 una stanza
 da 4 bot "normale" costava 2,2 ms a tick con punte di 50 ms in gopher-lua, con
-100 1,6 ms e punte di 21 ms (misure del 3 nov). Le stanze coi bot girano su
+100 1,6 ms e punte di 21 ms (misure del 3 nov). Così pensava fino a 8 s fermo
+a inizio turno e spesso tirava allo scadere: dopo `N.THINK_MAX` = 120 tick
+(2 s) di pensiero gioca la mossa migliore trovata fino lì (`think_max` del
+livello in `sim/bot.lua`, che sul telefono non c'è). Primo attacco del turno
+in una 2v2 di bot grado 5: mediana da 5,3 a 2 s, il più lento da 18,6 a 8 s
+(9 nov). Dare al bot più lavoro (250) quando il worker è scarico è stato
+provato e scartato: 0,3 s in meno in media, tick fino a 34 ms. Mentre pensa
+il bot mostra dove mira (`aim` nello stato, `bot.shown_aim`). Le stanze coi bot girano su
 worker loro (`botSched`), così le punte non rallentano le partite fra persone;
 `/health` dice `bot_rooms` e `bot_late_ticks`. Una stanza resta aperta finché
 c'è almeno una persona. Le code degli eventi non hanno bot.
