@@ -4,8 +4,8 @@
 -- un livello di dettaglio che fa perdere il focus dal personaggio»; the steel
 -- blade of the same day is gone). The Crown is cut by strumenti/grafica/targa.py
 -- from the ChatGPT sheet; the font is the interface's (ui/ui.lua). Damage shows in two
--- steps: health drops at once, the lost piece stays white for a moment and then
--- wears away; the bar jolts and flashes. Below 30% health pulses. The shield,
+-- steps: health drops at once, the lost piece turns white, grows with every
+-- consecutive hit and wears away gradually once the hits stop; the bar jolts. Below 30% health pulses. The shield,
 -- if any, is a light stretch after the health.
 --
 --   local tt = targa.nuove(palette, name_list)  -- one plate per color, all together
@@ -73,7 +73,11 @@ local NAME_TOP = NAME_Y + 6
 local ARROW_W, ARROW_H, ARROW_BAR, ARROW_LEN, ARROW_EDGE = 18, 12, 3.5, 11, 3
 local ARROW_GAP, ARROW_BOB, ARROW_T = 3, 1.5, 1.4
 
-local TRAIL = ui.C.LIGHT
+-- the lost health: pure white from the first instant (Sergio, 9 Nov), it stays
+-- TRAIL_WAIT seconds after the last hit (each new hit restarts the wait and
+-- widens the white piece), then drains at TRAIL_SPEED of the bar per second
+local TRAIL = vmath.vector4(1, 1, 1, 1)
+local TRAIL_WAIT, TRAIL_SPEED = 0.7, 0.5
 local SHIELD = vmath.vector4(0.75, 0.86, 1, 1)
 
 local V = vmath.vector3(0, 0, 0)
@@ -234,7 +238,7 @@ function M.vita(t, hp_value, maximum, shield)
 	if f < t.hp_f - 1e-6 then
 		-- hit: the trail starts from where health was (if it wasn't already higher)
 		t.trail_f = max(t.trail_f, t.hp_f)
-		t.attesa = 0.45
+		t.attesa = TRAIL_WAIT
 		t.colpo = 1
 	elseif f > t.trail_f then
 		t.trail_f = f
@@ -258,7 +262,7 @@ function M.update(t, dt, x, y, scale)
 	if t.attesa > 0 then
 		t.attesa = t.attesa - dt
 	elseif t.trail_f > t.hp_f then
-		t.trail_f = max(t.hp_f, t.trail_f - dt * 0.9)
+		t.trail_f = max(t.hp_f, t.trail_f - dt * TRAIL_SPEED)
 	end
 	-- jolt of the hit
 	t.colpo = max(0, t.colpo - dt * 5)
