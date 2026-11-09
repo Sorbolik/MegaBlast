@@ -2,8 +2,8 @@
 # La vignetta d'apertura (il cronometro, due attacchi), poi Favilla gioca un turno
 # intero: Lanciarune, Lama (ci passa attraverso: non è mai d'intralcio). Tocca a te:
 # Lanciarune, la Lama che vola al suo tasto, la Lama, "Due colpi in un turno"
-# (bravo); poi la vignetta del riparo, Favilla salta dietro il muretto e tu dopo
-# di lei. Il fantoccio è a sinistra: i colpi lo spingono lontano dal muretto.
+# (bravo); poi il riparo dietro il muretto, la vignetta del teletrasporto, Favilla
+# lancia il globo oltre il muro e tu dopo di lei. Il fantoccio è a sinistra.
 imposta prova_missione turno
 aspetta 2.5
 tocca 970 116                        # AVANTI sulla cartolina
@@ -22,31 +22,33 @@ aspetta_stato turno=1 fase=aim 15
 aspetta 1
 foto 04_tocca_a_te
 premi 1
-mira -105 62 1 05_mira
+mira -120 70 1 05_mira
 aspetta_evento damage 6
 aspetta 1.5
 foto 06_lama_vola                    # la Lama vola al suo tasto, la riga del secondo attacco
-cammina sinistra 480
+cammina sinistra 800
 premi 2
 mira -80 0 0.3 07_lama               # la Lama sul fantoccio
 aspetta_evento sword_hit 4
 aspetta 1
 foto 08_bravo                        # bravo: "Due colpi in un turno"
-aspetta 2.5
-foto 09_vignetta_riparo              # spiega: il riparo (Favilla aspetta che la chiudi)
+aspetta 2
+cammina destra 1020                  # al riparo dietro il muretto
+aspetta 1.5
+foto 09_vignetta_globo               # spiega: il teletrasporto (Favilla aspetta che la chiudi)
 tocca 912 289
 aspetta 0.3
 tocca 293 214
 aspetta 2.5
-foto 10_favilla_riparo               # mostra: Favilla salta dietro il muretto
-aspetta_evento demo_end 20
+foto 10_favilla_globo                # mostra: Favilla lancia il globo oltre il muretto
+aspetta_evento demo_end 25
 aspetta_stato turno=1 fase=aim 10
 aspetta 0.5
 foto 11_tocca_a_te
-giu destra
-cammina destra 676
-tieni salta 0.35                     # oltre il muretto
-cammina destra 762
-su destra
+premi t
+mira 45 170 0.5 12_globo                   # il globo oltre il muretto
+aspetta_evento teleport 6
+aspetta 0.8
+foto 13_bravo                        # bravo: "Al sicuro"
 aspetta 2.5
-foto 12_fatta                        # al riparo: FATTA
+foto 14_fatta                        # FATTA
