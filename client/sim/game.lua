@@ -31,6 +31,19 @@ M.__index = M
 M.CELL = 3
 M.WORLD_W = 640 * M.CELL
 M.WORLD_H = 360 * M.CELL
+-- Beside the map (x from -MARGIN to WORLD_W + MARGIN) the terrain grid has room
+-- for platforms that jut out of the walls (Sergio, 9 Nov 2026); the world
+-- coordinates of everything else don't change.
+M.MARGIN_CELLS = 60
+M.MARGIN = M.MARGIN_CELLS * M.CELL
+M.GRID_W = 640 + 2 * M.MARGIN_CELLS
+-- Sideways you die a long way out (Sergio, 9 Nov 2026): whoever teleports or is
+-- thrown far off the side can still come back with the parachute. Below the map
+-- you die just under it, as before.
+M.KILL_SIDE = 1100
+function M.fallen(rb)
+	return rb.y < -20 or rb.x < -M.KILL_SIDE or rb.x > M.WORLD_W + M.KILL_SIDE
+end
 M.DT = 1 / 60
 
 -- Measures. Jumps, weapons, crates and explosions are measured on a robot
@@ -318,7 +331,7 @@ function M.new(seed, map_id, opts)
 	local map = maps.get(map_id or maps.pick(seed))
 	g.map = map.id
 	g.rng = rng.new(seed)
-	g.terrain = terrain.new(M.WORLD_W / M.CELL, M.WORLD_H / M.CELL, M.CELL)
+	g.terrain = terrain.new(M.GRID_W, M.WORLD_H / M.CELL, M.CELL, M.MARGIN_CELLS)
 	map.build(g.terrain, seed)
 	g.spawn_spots = M.find_spawn_spots(g.terrain)
 	local players = opts.players or C.MODES["1v1"]
@@ -1051,7 +1064,7 @@ function M:update_robot(rb, input, active)
 		rb.fall_top = nil
 	end
 
-	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then
+	if M.fallen(rb) then
 		self:kill(rb, "fell")
 	end
 end
@@ -1584,7 +1597,7 @@ function M:update_recoil(rb)
 		rb.vx, rb.vy = 0, 0
 		rb.recoil, rb.recoil_vx, rb.recoil_vy = nil, nil, nil
 	end
-	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
+	if M.fallen(rb) then self:kill(rb, "fell") end
 end
 
 local HOOK_LAND_DX = { 0, -8, 8, -16, 16 }
@@ -1681,7 +1694,7 @@ function M:update_hooked(rb)
 		-- stays there (over the void it falls): in the drawing it breaks
 		self:emit({ type = "hook_end", robot = rb.id, by = h.by, snap = by and not stopped or nil })
 	end
-	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
+	if M.fallen(rb) then self:kill(rb, "fell") end
 end
 
 -- The robot pulled by the rope hits terrain at (nx, ny): instead of stopping
@@ -2028,7 +2041,7 @@ function M:update_lunge(rb)
 		rb.lunge, rb.lunge_hit, rb.lunge_vx, rb.lunge_vy = nil, nil, nil, nil
 		rb.fall_top = nil
 	end
-	if rb.y < -20 or rb.x < -20 or rb.x > M.WORLD_W + 20 then self:kill(rb, "fell") end
+	if M.fallen(rb) then self:kill(rb, "fell") end
 end
 
 -- Melee hits (sim/melee.lua) --------------------------------------------

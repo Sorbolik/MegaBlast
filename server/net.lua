@@ -26,8 +26,8 @@ local BOTS = setmetatable({}, { __mode = "k" })
 -- so the array has one cell more and position 0 unused.
 local ffi = require "ffi"
 local terrain = require "sim.terrain"
-function terrain.new(w, h, cell)
-	return setmetatable({ w = w, h = h, cell = cell, data = ffi.new("uint8_t[?]", w * h + 1) }, terrain)
+function terrain.new(w, h, cell, ox)
+	return setmetatable({ w = w, h = h, cell = cell, ox = ox or 0, data = ffi.new("uint8_t[?]", w * h + 1) }, terrain)
 end
 
 -- Fixed maps are drawn only once per process: later matches copy the ready

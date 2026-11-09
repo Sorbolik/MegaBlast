@@ -7,7 +7,7 @@
 import math, random
 from PIL import ImageDraw
 from mondo import T, creste, torri, camini, nubi, poligoni, blocco, mat, LATO
-from scena import W, H, mix, poly, nebbia, Id, trave
+from scena import W, H, MARGINE, mix, poly, nebbia, Id, trave
 from dipinto import colora, sfuma_sagome, grade, GRUPPI
 from volume import solido
 from tavole import FORGIA, tinta
@@ -356,7 +356,10 @@ def assi_appese(*assi, h=22):
     return [(x, y, w, h) for x, y, w in assi], [q for x, y, w in assi for q in ((x + 12, 0, y), (x + w - 12, 0, y))]
 
 
-_assi, _catene = assi_appese((250, 410, 110), (920, 410, 110), (380, 230, 100), (800, 230, 100))
+# Le assi ai lati, fuori dai muri (Sergio, 9 nov): appese alle catene, dove ci si salva se si cade
+# di lato o ci si teletrasporta troppo lontano (la griglia ha un margine per lato, sim/game.lua)
+_assi, _catene = assi_appese((250, 410, 110), (920, 410, 110), (380, 230, 100), (800, 230, 100),
+                             (-112, 440, 112), (1280, 440, 112), (-64, 320, 64), (1280, 320, 64))
 # L'incudine appesa: terrazze ai muri con le rampe, il cortile piatto, al centro l'incudine di
 # ferro sulle catene (ci si passa sotto: 147 di mondo, il diavoletto è alto 39), ballatoi di
 # legno ai muri, assi appese, una trave in cima. Niente buchi: è la prima partita.
@@ -386,11 +389,12 @@ def mappa(L=CORTILE):
 def maschera(im, L=CORTILE):
     """Disegna la collisione su im (640 x 360): bianco la pietra e il legno, rosso il ferro."""
     d = ImageDraw.Draw(im)
+    o = MARGINE * .5  # la griglia ha un margine per lato: x del mondo 0 sta alla cella MARGINE / 2
     for p in L["pietra"]:
-        d.polygon([(x * .5, y * .5) for x, y in p], fill="white")
+        d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="white")
     for x, y, w, h in L["legni"]:
-        d.rectangle([x * .5, y * .5, (x + w) * .5 - 1, (y + h) * .5 - 1], fill="white")
+        d.rectangle([x * .5 + o, y * .5, (x + w) * .5 + o - 1, (y + h) * .5 - 1], fill="white")
     for p in L["ferro"]:
-        d.polygon([(x * .5, y * .5) for x, y in p], fill="red")
+        d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="red")
     for x, y, w, h in L["travi"]:
-        d.rectangle([x * .5, y * .5, (x + w) * .5 - 1, (y + h) * .5 - 1], fill="red")
+        d.rectangle([x * .5 + o, y * .5, (x + w) * .5 + o - 1, (y + h) * .5 - 1], fill="red")

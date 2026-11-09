@@ -2,7 +2,7 @@
 
 // Tutta la mappa in un solo rettangolo opaco: sfondo a strati, terreno dipinto
 // ritagliato dalla maschera di collisione, parete e brace dei crateri.
-// maschera: r = terreno adesso, g = terreno all'inizio (640 x 360 celle,
+// maschera: r = terreno adesso, g = terreno all'inizio (760 x 360 celle: la mappa con 60 celle di margine per lato,
 // filtro lineare, così i bordi escono morbidi invece che a scalini), b = distanza
 // dal cratere più vicino (cerchi veri, non celle: game.gui_script, crateri).
 // Le texture sono a alfa premoltiplicato.
@@ -39,7 +39,10 @@ uniform fs_uniforms
     highp vec4 striscia3;
 };
 
-const mediump vec2 CELLA = vec2(1.0 / 640.0, 1.0 / 360.0);
+const mediump vec2 CELLA = vec2(1.0 / 760.0, 1.0 / 360.0);
+// maschera e terreno dipinto coprono la mappa più un margine per lato (180 unità del
+// mondo su 1920): var_uv va da 0 a 1 sulla mappa, la texture da -MARGINE a 1 + MARGINE
+const mediump float MARGINE = 180.0 / 1920.0;
 
 // lo sfondo è misurato su una mappa di 1280 x 720 (var_zoom è già riportato lì)
 const highp vec2 MONDO = vec2(1280.0, 720.0);
@@ -130,7 +133,8 @@ void main()
     // mondo (8 livelli per unità, 128 sul bordo, negativa dentro). Interpolata fra
     // le celle resta un cerchio vero; fwidth: un pixel dello schermo, per un bordo
     // netto a ogni zoom. Letta prima dei ritorni, perché fwidth vuole tutti i pixel
-    mediump vec3 m = texture(maschera, var_uv).rgb;
+    mediump vec2 muv = vec2((var_uv.x + MARGINE) / (1.0 + 2.0 * MARGINE), var_uv.y);
+    mediump vec3 m = texture(maschera, muv).rgb;
     mediump float dc = (m.b * 255.0 - 128.0) * 0.125;
     // (mai zero: smoothstep con i due bordi uguali non è definito)
     mediump float aa = max(fwidth(dc) * 0.5, 0.01);
@@ -145,11 +149,11 @@ void main()
     }
     // la home, e le bande attorno alla mappa (che la camera mostra da lontano):
     // solo lo sfondo
-    if (opzioni.x > 0.5 || var_uv.x < 0.0 || var_uv.x > 1.0 || var_uv.y > 1.0) {
+    if (opzioni.x > 0.5 || muv.x < 0.0 || muv.x > 1.0 || var_uv.y > 1.0) {
         out_fragColor = vec4(sfondo(), 1.0);
         return;
     }
-    mediump vec4 ter = texture(terreno, var_uv);
+    mediump vec4 ter = texture(terreno, muv);
 
     // il cratere è il cerchio dell'esplosione (b), che toglie anche il disegno che
     // sporge sopra le celle piene (il contorno in cima al pavimento), più le celle
@@ -164,8 +168,8 @@ void main()
     if (ter.a * (1.0 - buco) < 0.999) {
         col = sfondo();
         // il terreno fa ombra sullo sfondo, in basso a destra: lo stacca
-        mediump float ombra = texture(maschera, var_uv + vec2(-1.5, 2.5) * CELLA).r * 0.55
-            + texture(maschera, var_uv + vec2(-3.5, 6.0) * CELLA).r * 0.3;
+        mediump float ombra = texture(maschera, muv + vec2(-1.5, 2.5) * CELLA).r * 0.55
+            + texture(maschera, muv + vec2(-3.5, 6.0) * CELLA).r * 0.3;
         col *= 1.0 - ombra * 0.7;
     }
     // il cratere mostra lo sfondo; il terreno attorno ha l'orlo bruciato
