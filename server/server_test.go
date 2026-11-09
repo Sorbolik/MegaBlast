@@ -11,21 +11,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	lua "github.com/yuin/gopher-lua"
 )
-
-func newTestSim(t testing.TB, seed int64, mapID string) *Sim {
-	e, err := newEngine()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(e.L.Close)
-	sim, err := e.NewSim(seed, mapID, lua.LNil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return sim
-}
 
 // Without a map the seed picks it among the match maps (maps.ROTATION): the
 // same seed always gives the same one, and all of them come out.
@@ -55,13 +41,7 @@ func TestAimInSnapshot(t *testing.T) {
 	if s := string(sim.Snapshot(false, 1.25)); strings.Contains(s, `"aim":`) {
 		t.Fatalf("aim without aiming: %s", s)
 	}
-	e, err := newEngine()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer e.L.Close()
-	e.L.SetGlobal("N", e.net)
-	err = e.L.DoString(`
+	luaEval(t, `
 local g = N.new(5, nil, { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
 local aimed, turn, from = false, nil, 0
 while g.tick < 3000 do
@@ -72,10 +52,7 @@ while g.tick < 3000 do
 	assert(acted or g.phase ~= "aim" or g.tick - from < 600, "a bot didn't attack within 10 s")
 end
 assert(aimed, "the bots never showed their aim")
-`)
-	if err != nil {
-		t.Fatal(err)
-	}
+`, nil)
 }
 
 func TestSimFromEmbeddedLua(t *testing.T) {
@@ -157,17 +134,24 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 func TestTurnReleasesHeldKeys(t *testing.T) {
 	// two players away (p nil) who have all the time to come back
 	srv := &Server{cfg: Config{ReconnectTicks: 1 << 30}}
-	r := &Room{srv: srv, sim: newTestSim(t, 42, "pavimento"), seats: []*seat{{team: 1}, {team: 2}}}
+	p := testProc(t)
+	sim := newTestSimOn(t, p, 42, "pavimento")
+	r := &Room{srv: srv, id: sim.id, opened: true, ready: true, started: true, seats: []*seat{{team: 1}, {team: 2}}}
 	r.seats[0].in = held{right: true, hold: true, fire: true, angle: 1.0, power: 0.6, weapon: "missile"}
-	for i := 0; i < 60*30 && r.sim.Current() == 1; i++ {
-		if !r.Tick() {
+	for i := 0; i < 60*30 && r.cur == 0; i++ {
+		b := &Batch{}
+		r.Tick(b)
+		if err := p.Run(b, &Batch{}); err != nil {
+			t.Fatal(err)
+		}
+		if r.ended.Load() {
 			t.Fatal("the match ended")
 		}
-		if r.seats[0].in.right != (r.sim.Current() == 1) {
-			t.Fatalf("tick %d: right held %v on turn %d", i, r.seats[0].in.right, r.sim.Current())
+		if r.seats[0].in.right != (r.cur == 0) {
+			t.Fatalf("tick %d: right held %v on turn %d", i, r.seats[0].in.right, r.cur+1)
 		}
 	}
-	if r.sim.Current() != 2 {
+	if sim.Current() != 2 {
 		t.Fatal("the turn didn't pass")
 	}
 }
@@ -249,8 +233,8 @@ func TestSwapSecondAttack(t *testing.T) {
 	}
 }
 
-// A reused Lua state must give the same match as a new one: the map copy in
-// net.lua must change nothing.
+// A process that has already played must give the same match as a new one:
+// the copy of the drawn map in net.lua must change nothing.
 func TestEngineReuseIsDeterministic(t *testing.T) {
 	play := func(sim *Sim) []byte {
 		for i := 0; i < 300; i++ {
@@ -265,17 +249,10 @@ func TestEngineReuseIsDeterministic(t *testing.T) {
 		}
 		return sim.Snapshot(false, 0)
 	}
-	fresh := play(newTestSim(t, 7, "pavimento"))
-	e, err := newEngine()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer e.L.Close()
+	fresh := play(newTestSimOn(t, testProc(t), 7, "pavimento"))
+	p := testProc(t)
 	for round := 0; round < 3; round++ {
-		sim, err := e.NewSim(7, "pavimento", lua.LNil, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
+		sim := newTestSimOn(t, p, 7, "pavimento")
 		if got := play(sim); !sameJSON(got, fresh) {
 			t.Fatalf("match %d on the reused state differs:\n%s\n%s", round, got, fresh)
 		}
@@ -359,22 +336,18 @@ func testServer(t *testing.T, change ...func(*Config)) string {
 
 // The players of each queue are those of config.MODES
 func TestModesMatchConfig(t *testing.T) {
-	e, err := newEngine()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer e.L.Close()
 	for name, m := range modes {
-		v, err := e.call("mode_players", lua.LString(m.Sim))
-		list, ok := v.(*lua.LTable)
-		if err != nil || !ok || list.Len() != m.Players {
-			t.Fatalf("mode %s: %d players, config.MODES[%q] says %v", name, m.Players, m.Sim, v)
+		var list []struct {
+			Team int `json:"team"`
 		}
-		// and the teams of the private rooms (private.go, modeTeam)
-		for i := 0; i < m.Players; i++ {
-			team := list.RawGetInt(i + 1).(*lua.LTable).RawGetString("team")
-			if team != lua.LNumber(modeTeam(m.Sim, i)) {
-				t.Fatalf("mode %s seat %d: team %v in config.MODES, %d in modeTeam", name, i+1, team, modeTeam(m.Sim, i))
+		luaEval(t, fmt.Sprintf("return N.mode_players(%q)", m.Sim), &list)
+		if len(list) != m.Players {
+			t.Fatalf("mode %s: %d players, config.MODES[%q] says %v", name, m.Players, m.Sim, list)
+		}
+		// and the teams of the rooms (room.go and private.go, modeTeam)
+		for i, p := range list {
+			if p.Team != modeTeam(m.Sim, i) {
+				t.Fatalf("mode %s seat %d: team %d in config.MODES, %d in modeTeam", name, i+1, p.Team, modeTeam(m.Sim, i))
 			}
 		}
 	}
@@ -793,15 +766,9 @@ func TestBotsFillQueue(t *testing.T) {
 
 // A bot seat in net.lua (N.new with players[i].bot) plays its turn by itself
 // on the server: it shoots and passes the turn on, with the server's work
-// budget (N.WORK).
+// budget, the same as on the phone.
 func TestNetBotPlays(t *testing.T) {
-	e, err := newEngine()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer e.L.Close()
-	e.L.SetGlobal("N", e.net)
-	err = e.L.DoString(`
+	luaEval(t, `
 local g = N.new(5, nil, { { team = 1, bot = 4 }, { team = 2, bot = 4 } })
 local shot = false
 while g.tick < 3000 and N.current(g) == 1 do
@@ -810,10 +777,7 @@ while g.tick < 3000 and N.current(g) == 1 do
 end
 assert(shot, "the bot didn't shoot")
 assert(N.current(g) ~= 1, "the bot's turn didn't end")
-`)
-	if err != nil {
-		t.Fatal(err)
-	}
+`, nil)
 }
 
 // Private room (private.go): A opens it, B joins with the code and lands in

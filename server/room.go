@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync/atomic"
-
-	lua "github.com/yuin/gopher-lua"
 )
 
 const (
@@ -143,25 +142,35 @@ type seat struct {
 	in   held
 }
 
-// Room is a match: the Lua simulation and its players.
+// Room is a match: its players here, its simulation (draft, then match) in
+// the LuaJIT process of its worker (proc.go, server/worker.lua), by id. The
+// room writes its commands into the worker's batch of the tick; the answers
+// come back in the callbacks, on the same worker, before the next tick.
 type Room struct {
 	srv   *Server
+	id    int64
 	mode  Mode
+	rules []byte // the event's rules as Lua (luaFromJSON), nil outside events
 	seed  int64
 	mapID string // the simulation picks it from the seed (maps.pick) when it starts
 	seats []*seat
 	in    chan roomMsg
 	back  chan roomMsg // reconnections: a channel of their own, a full in can't lose them
-	eng   *Engine
-	sim   *Sim // nil during the weapon draft
 	tick  int
 	ended atomic.Bool
 
-	draft     lua.LValue // state of sim/draft.lua while picking
-	draftLeft int        // tick at the end of the draft
-	players   []byte     // teams as JSON, [{"team":1},...]; from start also the draft picks
-	showcases []byte     // the players' cards as JSON, [{"liv":12,"bdg":[...]},...]
+	opened  bool // the draft has been created in the process
+	ready   bool // and its time is known (draftLeft)
+	started bool // the match has been created (after the draft)
+	cur     int  // seat on turn (from 0), from the last tick's answer
+
+	draftLeft int    // tick at the end of the draft
+	players   []byte // teams as JSON, [{"team":1},...]; from start also the draft picks
+	showcases []byte // the players' cards as JSON, [{"liv":12,"bdg":[...]},...]
 }
+
+// room ids, the same in Go and in the processes
+var roomIDs atomic.Int64
 
 // seatSpec says who takes a seat of a new room, in config.MODES order: a
 // person, or a bot of grade bot (sim/bot.lua GRADES) when p is nil.
@@ -186,44 +195,20 @@ func queueSeats(mode Mode, players []*Player, grade int) []seatSpec {
 	return specs
 }
 
-// newRoom prepares the match outside the workers and opens the weapon draft.
-// specs has one entry per seat of the mode: a queue's (queueSeats) or a
-// private room's (private.go), where people and bots sit where they chose.
+// newRoom prepares the room outside the workers: the weapon draft opens on
+// its first tick, in its worker's process. specs has one entry per seat of
+// the mode: a queue's (queueSeats) or a private room's (private.go), where
+// people and bots sit where they chose.
 func newRoom(srv *Server, mode Mode, specs []seatSpec, seed int64) (*Room, error) {
-	r := &Room{srv: srv, mode: mode, seed: seed, in: make(chan roomMsg, 64*mode.Players), back: make(chan roomMsg, 4*mode.Players)}
-	eng, err := newEngine()
+	rules, err := luaFromJSON(mode.Rules)
 	if err != nil {
 		return nil, err
 	}
-	r.eng = eng
-	list, err := eng.call("mode_players", lua.LString(mode.Sim))
-	if err == nil {
-		var rules lua.LValue
-		if rules, err = eng.fromJSON(mode.Rules); err == nil {
-			bots := eng.L.NewTable()
-			for i, sp := range specs {
-				if sp.p == nil {
-					bots.RawSetInt(i+1, lua.LNumber(sp.bot))
-				}
-			}
-			r.draft, err = eng.call("draft_new", lua.LNumber(seed), lua.LString(mode.Sim), rules, bots)
-		}
-	}
-	var secs lua.LValue
-	if err == nil {
-		secs, err = eng.call("draft_seconds")
-	}
-	if err != nil {
-		eng.L.Close()
-		return nil, err
-	}
-	r.draftLeft = int(secs.(lua.LNumber)) * tickRate
-	if srv.cfg.DraftTicks > 0 {
-		r.draftLeft = srv.cfg.DraftTicks
-	}
+	r := &Room{srv: srv, id: roomIDs.Add(1), mode: mode, rules: rules, seed: seed,
+		in: make(chan roomMsg, 64*mode.Players), back: make(chan roomMsg, 4*mode.Players)}
 	teams, showcases := []string{}, []string{}
 	for i := 0; i < mode.Players; i++ {
-		team := int(list.(*lua.LTable).RawGetInt(i + 1).(*lua.LTable).RawGetString("team").(lua.LNumber))
+		team := modeTeam(mode.Sim, i) // as in config.MODES (TestModesMatchConfig)
 		p := specs[i].p
 		if p == nil {
 			showcases = append(showcases, `{"bot":true}`)
@@ -244,10 +229,47 @@ func newRoom(srv *Server, mode Mode, specs []seatSpec, seed int64) (*Room, error
 	}
 	r.players = []byte("[" + strings.Join(teams, ",") + "]")
 	r.showcases = []byte("[" + strings.Join(showcases, ",") + "]")
-	for i := range r.seats {
-		r.sendDraft(i)
-	}
 	return r, nil
+}
+
+// open creates the draft in the process and sends it to everyone.
+func (r *Room) open(b *Batch) {
+	r.opened = true
+	b.Cmd("open", r.id, func(next *Batch, res Result) {
+		if r.ended.Load() {
+			return
+		}
+		var v struct {
+			Secs int `json:"secs"`
+		}
+		if res.Err == nil {
+			res.Err = json.Unmarshal(res.Head, &v)
+		}
+		if res.Err != nil {
+			r.fail(next, "errore nella scelta delle armi", res.Err)
+			return
+		}
+		r.draftLeft, r.ready = v.Secs*tickRate, true
+		if r.srv.cfg.DraftTicks > 0 {
+			r.draftLeft = r.srv.cfg.DraftTicks
+		}
+	}).Int("seed", r.seed).Str("mode", r.mode.Sim).Lit("rules", r.rules).Raw(",bots={")
+	for i, s := range r.seats {
+		if s.bot > 0 {
+			b.Raw("[" + strconv.Itoa(i+1) + "]=" + strconv.Itoa(s.bot) + ",")
+		}
+	}
+	b.Raw("}").End()
+	for i := range r.seats {
+		r.sendDraft(b, i)
+	}
+}
+
+// fail closes the room after an error of the simulation.
+func (r *Room) fail(b *Batch, what string, err error) {
+	log.Printf("%s: %v", what, err)
+	r.broadcast([]byte(`{"t":"error"}`))
+	r.close(b)
 }
 
 // seatRef says where a player is: room and seat.
@@ -305,111 +327,142 @@ func (r *Room) sendStart(slot int, resume bool) {
 // sendDraft sends a player the weapon draft: fans, their picks (p, p2: the
 // others' aren't shown), ticks left, and who they are (you, tok, players: also
 // needed to come back if they drop now).
-func (r *Room) sendDraft(slot int) {
-	st, err := r.eng.call("draft_state", r.draft, lua.LNumber(slot+1))
-	if err != nil {
+func (r *Room) sendDraft(b *Batch, slot int) {
+	b.Cmd("draft", r.id, func(_ *Batch, res Result) { r.draftAnswer(slot, res) }).Int("i", int64(slot+1)).End()
+}
+
+// draftAnswer sends the draft state that came from the process, if any.
+func (r *Room) draftAnswer(slot int, res Result) {
+	if r.ended.Load() || res.Err != nil || len(res.Raw) == 0 {
 		return
 	}
-	t := st.(*lua.LTable)
-	t.RawSetString("left", lua.LNumber(r.draftLeft))
-	t.RawSetString("you", lua.LNumber(slot+1))
-	t.RawSetString("tok", lua.LString(r.seats[slot].tok))
-	t.RawSetString("mode", lua.LString(r.mode.Name))
-	msg := appendJSON(nil, t)
-	// teams are already JSON: we append them at the end of the object
-	msg = append(append(append(msg[:len(msg)-1], `,"players":`...), r.players...), `,"vetrine":`...)
-	msg = append(append(msg, r.showcases...), '}')
-	r.send(slot, msg)
+	msg := res.Raw[0]
+	// who they are, and the teams already JSON: at the end of the object
+	msg = fmt.Appendf(msg[:len(msg)-1], `,"left":%d,"you":%d,"tok":%q,"mode":%q,"players":`,
+		r.draftLeft, slot+1, r.seats[slot].tok, r.mode.Name)
+	msg = append(append(append(msg, r.players...), `,"vetrine":`...), r.showcases...)
+	r.send(slot, append(msg, '}'))
 }
 
 // startMatch closes the weapon draft and creates the match.
-func (r *Room) startMatch() error {
-	players, err := r.eng.call("draft_finish", r.draft)
-	if err != nil {
-		return err
-	}
-	r.draft = nil
-	if r.sim, err = r.eng.NewSim(r.seed, "", players, r.mode.Rules); err != nil {
-		return err
-	}
-	list, err := r.eng.call("start_players", players)
-	if err != nil {
-		return err
-	}
-	r.players = appendJSON(nil, list)
-	r.mapID = r.sim.Map()
-	for i := range r.seats {
-		r.sendStart(i, false)
-	}
-	return nil
+func (r *Room) startMatch(b *Batch) {
+	r.started = true
+	b.Cmd("start", r.id, func(next *Batch, res Result) {
+		if r.ended.Load() {
+			return
+		}
+		var v struct {
+			Map string `json:"map"`
+			Cur int    `json:"cur"`
+		}
+		if res.Err == nil {
+			res.Err = json.Unmarshal(res.Head, &v)
+		}
+		if res.Err != nil || len(res.Raw) == 0 {
+			r.fail(next, "errore all'inizio della partita", res.Err)
+			return
+		}
+		r.players, r.mapID, r.cur = res.Raw[0], v.Map, v.Cur-1
+		for i := range r.seats {
+			r.sendStart(i, false)
+		}
+	}).End()
 }
 
-// Tick advances the match by one step. Returns false when it's over.
-func (r *Room) Tick() bool {
+// Tick writes into b what the room does in this tick: the players' messages,
+// then a step of the match (or of the draft's clock). Whether the room is over
+// is known after the answers (r.ended).
+func (r *Room) Tick(b *Batch) {
+	if !r.opened {
+		r.open(b)
+	}
 	for {
 		select {
 		case m := <-r.back:
-			r.handle(m)
+			r.handle(b, m)
 			continue
 		case m := <-r.in:
-			r.handle(m)
+			r.handle(b, m)
 			continue
 		default:
 		}
 		break
 	}
-	if !r.checkAway() {
-		r.close()
-		return false
+	if r.ended.Load() {
+		return
 	}
-	if r.sim == nil {
+	if !r.checkAway() {
+		r.close(b)
+		return
+	}
+	if !r.started {
+		if !r.ready {
+			return
+		}
 		if r.draftLeft--; r.draftLeft > 0 {
-			return true
+			return
 		}
-		if err := r.startMatch(); err != nil {
-			log.Printf("errore all'inizio della partita: %v", err)
-			r.broadcast([]byte(`{"t":"error"}`))
-			r.close()
-			return false
-		}
+		r.startMatch(b)
 	}
 
-	cur := r.sim.Current() - 1
-	h := r.seats[cur].in
-	err := r.sim.Step(Input{Left: h.left, Right: h.right, Jump: h.jump, Hold: h.hold, Fire: h.fire, Angle: h.angle, Power: h.power, Weapon: h.weapon})
-	if err != nil {
-		log.Printf("errore step: %v", err)
-		r.broadcast([]byte(`{"t":"error"}`))
-		r.close()
-		return false
+	// the keys of whoever is on turn (the others' don't count)
+	b.Cmd("tick", r.id, r.ticked).Bool("s", r.tick%snapshotEvery == 0)
+	if h := &r.seats[r.cur].in; *h != (held{}) {
+		b.Raw(",k={").Bool("l", h.left).Bool("r", h.right).Bool("j", h.jump).Bool("h", h.hold)
+		if h.fire {
+			b.Num("a", h.angle).Num("p", h.power).Str("w", h.weapon)
+		}
+		if h.aiming {
+			b.Num("m", h.aim)
+		}
+		b.Raw("}")
 	}
-	// jump and fire count for one tick only; held keys stay, but not into the
-	// next turn: a release that arrives after the turn is over (the client sends
-	// only on its own turn) would make the next one start walking (Sergio, 5 Nov)
-	next := r.sim.Current() - 1
+	b.End()
+	// jump and fire count for one tick only
 	for _, s := range r.seats {
 		s.in.jump, s.in.fire = false, false
-		if next != cur {
+	}
+	r.tick++
+}
+
+// ticked: the answer of a tick of the match (worker.lua, tick).
+func (r *Room) ticked(next *Batch, res Result) {
+	if r.ended.Load() {
+		return
+	}
+	var v [4]int // cur, now, over, st
+	if res.Err == nil {
+		if f := strings.Fields(string(res.Head)); len(f) == len(v) {
+			for i := range v {
+				v[i], res.Err = strconv.Atoi(f[i])
+			}
+		} else {
+			res.Err = fmt.Errorf("risposta %q", res.Head)
+		}
+	}
+	cur, now, over := v[0], v[1], v[2]
+	if res.Err != nil {
+		r.fail(next, "errore step", res.Err)
+		return
+	}
+	// held keys stay, but not into the next turn: a release that arrives
+	// after the turn is over (the client sends only on its own turn) would make
+	// the next one start walking (Sergio, 5 Nov)
+	if now != cur {
+		for _, s := range r.seats {
 			s.in = held{}
 		}
 	}
-	for _, e := range r.sim.Events() {
+	r.cur = now - 1
+	for _, e := range res.Raw {
 		r.broadcast(e)
 	}
-	over := r.sim.Over()
-	if r.tick%snapshotEvery == 0 || over {
-		a := r.seats[next].in
-		r.broadcast(r.sim.Snapshot(a.aiming, a.aim))
+	if over == 1 {
+		r.close(next)
 	}
-	r.tick++
-	if over {
-		r.close()
-		return false
-	}
-	return true
 }
 
-func (r *Room) handle(m roomMsg) {
+func (r *Room) handle(b *Batch, m roomMsg) {
 	s := r.seats[m.slot]
 	switch {
 	case m.attach != nil:
@@ -422,12 +475,20 @@ func (r *Room) handle(m roomMsg) {
 			s.p.Close() // the old connection isn't needed any more
 		}
 		s.p, s.away = m.attach, 0
-		if r.sim == nil {
-			r.sendDraft(m.slot)
+		if !r.started {
+			r.sendDraft(b, m.slot)
 		} else {
-			r.sendStart(m.slot, true)
-			r.send(m.slot, r.sim.Sync())
-			r.send(m.slot, r.sim.Snapshot(false, 0))
+			slot := m.slot
+			// start again, the digs so far and the state
+			b.Cmd("resume", r.id, func(_ *Batch, res Result) {
+				if r.ended.Load() || res.Err != nil {
+					return
+				}
+				r.sendStart(slot, true)
+				for _, msg := range res.Raw {
+					r.send(slot, msg)
+				}
+			}).End()
 		}
 		r.broadcast(fmt.Appendf(nil, `{"t":"back","robot":%d}`, m.slot+1))
 	default:
@@ -435,11 +496,11 @@ func (r *Room) handle(m roomMsg) {
 			return
 		}
 		if m.msg.T == "leave" {
-			r.leave(m.slot)
+			r.leave(b, m.slot)
 			return
 		}
-		if r.sim == nil {
-			r.handleDraft(m)
+		if !r.started {
+			r.handleDraft(b, m)
 			return
 		}
 		h := &s.in
@@ -461,13 +522,13 @@ func (r *Room) handle(m roomMsg) {
 
 // handleDraft: picks during the weapon draft. The others don't see them: the
 // confirmation goes back only to whoever picked.
-func (r *Room) handleDraft(m roomMsg) {
+func (r *Room) handleDraft(b *Batch, m roomMsg) {
 	if m.msg.T != "pick" {
 		return
 	}
-	if v, _ := r.eng.call("draft_pick", r.draft, lua.LNumber(m.slot+1), lua.LString(m.msg.W)); v == lua.LTrue {
-		r.sendDraft(m.slot)
-	}
+	slot := m.slot
+	b.Cmd("pick", r.id, func(_ *Batch, res Result) { r.draftAnswer(slot, res) }).
+		Int("i", int64(slot+1)).Str("w", m.msg.W).End()
 }
 
 // checkAway notices dropped connections and counts the time of whoever is
@@ -507,24 +568,32 @@ func (r *Room) checkAway() bool {
 // leave: the player of seat slot leaves by choice. Like someone who doesn't
 // come back in time, but at once: the seat isn't kept and the others receive
 // "left". The match goes on (checkAway) if at least two teams remain.
-func (r *Room) leave(slot int) {
+func (r *Room) leave(b *Batch, slot int) {
 	s := r.seats[slot]
 	s.p.room.Store(nil)
 	s.p.Close()
 	s.p, s.gone, s.in = nil, true, held{}
 	r.srv.sessions.Delete(s.tok)
 	// in the match their robot disappears at once (during the draft it doesn't exist yet)
-	if r.sim != nil {
-		if err := r.sim.Remove(slot + 1); err != nil {
-			log.Printf("errore remove: %v", err)
-		}
+	if r.started {
+		b.Cmd("remove", r.id, func(_ *Batch, res Result) {
+			if res.Err != nil {
+				log.Printf("errore remove: %v", res.Err)
+			}
+		}).Int("i", int64(slot+1)).End()
 	}
 	r.broadcast(fmt.Appendf(nil, `{"t":"left","robot":%d}`, slot+1))
 }
 
-// close closes the match and the connections (after sending the last messages).
-func (r *Room) close() {
-	r.ended.Store(true)
+// close closes the match and the connections (after sending the last
+// messages); its simulation is freed with b (nil: the process is gone).
+func (r *Room) close(b *Batch) {
+	if r.ended.Swap(true) {
+		return
+	}
+	if b != nil && r.opened {
+		b.Cmd("free", r.id, nil).End()
+	}
 	for {
 		select {
 		case m := <-r.back:
@@ -542,7 +611,4 @@ func (r *Room) close() {
 			s.p.Close()
 		}
 	}
-	r.sim = nil
-	r.eng.L.Close()
-	r.eng = nil
 }

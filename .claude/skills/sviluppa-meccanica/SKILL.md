@@ -11,7 +11,7 @@ server autoritativo e i telefoni restano d'accordo.
 ## 1. Simulazione (`client/sim/`)
 
 - Lua puro 5.1: niente API di Defold (`go.`, `gui.`, `vmath`, `msg`...), perché
-  la stessa simulazione gira nel server Go con gopher-lua.
+  la stessa simulazione gira nel server (Go, con LuaJIT).
 - Deterministica: numeri casuali solo da `sim/rng.lua` col seed della partita,
   mai `math.random` o l'ora. Niente `pairs` dove l'ordine cambia l'esito: usa
   `ipairs` o liste ordinate.

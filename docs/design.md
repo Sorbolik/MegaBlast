@@ -75,7 +75,7 @@ Dal secondo turno, a ogni turno può cadere dal cielo una cassa in un punto a ca
 │  - input touch       │                          │  - una goroutine     │
 │  - predizione locale │                          │    per partita       │
 │  - sim/ (Lua puro)   │                          │  - sim/ (stesso Lua  │
-└──────────────────────┘                          │    via gopher-lua)   │
+└──────────────────────┘                          │    in LuaJIT)        │
                                                   └──────────────────────┘
 ```
 
@@ -86,7 +86,7 @@ Il **server è autoritativo**: decide lui dove cade il colpo, i danni e le posiz
 La logica di gioco (fisica, collisioni col terreno, armi, danni) vive in `client/sim/`, scritta in **Lua puro** e senza API di Defold. Sta dentro il progetto Defold perché Defold può caricare solo moduli che si trovano nel progetto, e il server la legge da lì.
 
 - Il **client** Defold la usa direttamente.
-- Il **server** Go la esegue con [gopher-lua](https://github.com/yuin/gopher-lua), un interprete Lua 5.1 scritto in Go e senza dipendenze C.
+- Il **server** Go la esegue con LuaJIT, come il telefono: un processo `luajit` per worker accanto all'eseguibile Go (fino al 9 nov era [gopher-lua](https://github.com/yuin/gopher-lua), un interprete scritto in Go, 4-20 volte più lento).
 
 In questo modo client e server usano lo stesso identico codice e non serve riscrivere la fisica due volte. La simulazione gira a passo fisso di 60 tick al secondo.
 
@@ -123,14 +123,14 @@ Ce n'è una sola: [extension-websocket](https://github.com/defold/extension-webs
 ### Struttura
 
 - **Lobby e matchmaking**: una coda in memoria per modalità. Quando una coda ha abbastanza giocatori si crea una partita.
-- **Partita (stanza)**: un proprio stato Lua (gopher-lua). Le stanze girano su un worker per core che le fa avanzare tutte a ogni tick: niente lock nel ciclo di gioco.
+- **Partita (stanza)**: la sua simulazione sta nel processo LuaJIT del suo worker. Le stanze girano su un worker per core che le fa avanzare tutte a ogni tick, con un solo giro col processo: niente lock nel ciclo di gioco.
 - Architettura, riconnessione, numeri di carico e come crescere su più server: [server.md](server.md).
 - **Persistenza**: nessuna per l'MVP, perché le partite vivono in memoria. Quando serviranno account e classifiche si aggiunge SQLite: un file, zero amministrazione.
 
 ### Dipendenze del server
 
 - [coder/websocket](https://github.com/coder/websocket), una libreria WebSocket minimale.
-- [gopher-lua](https://github.com/yuin/gopher-lua).
+- [LuaJIT](https://luajit.org) installato accanto al server (`luajit` nel PATH).
 
 Alternativa per più avanti: **Nakama** (open source, in Go) ha già account, matchmaking, amici e classifiche, oltre a un client ufficiale Defold. È più pesante perché richiede un database PostgreSQL o CockroachDB, quindi lo valutiamo solo se quelle funzioni diventano necessarie.
 
@@ -177,7 +177,7 @@ Durante un turno di movimento il traffico è di pochi KB.
 ```
 client/        progetto Defold (game.project, main/, input/)
 client/sim/    simulazione condivisa in Lua puro (usata da client e server)
-server/        server Go (server.go, lobby.go, room.go, sched.go, sim.go, terrain.go, net.lua)
+server/        server Go (server.go, lobby.go, room.go, sched.go, proc.go, net.lua, worker.lua)
 go.mod         modulo Go (alla radice, così il server incorpora client/sim/)
 tests/         test della simulazione
 docs/          design e note di sviluppo

@@ -4,8 +4,8 @@ globali sconosciute.
 
 Una globale letta che non esiste è quasi sempre un nome sbagliato (vale nil e
 il gioco si rompe solo quando ci passa); una globale scritta è quasi sempre un
-`local` dimenticato, che nella simulazione può far divergere LuaJIT dal server
-(gopher-lua) o una partita dall'altra. Per saperlo basta il bytecode di LuaJIT
+`local` dimenticato, che nella simulazione può far divergere una partita
+dall'altra. Per saperlo basta il bytecode di LuaJIT
 (`luajit -bl`, istruzioni GGET e GSET): nessun programma in più da installare.
 
 Uso: python3 strumenti/controlli/globali.py     (dalla radice del repository)
@@ -34,9 +34,6 @@ font iac iap push webview websocket vibra""".split())
 # Le funzioni che Defold chiama in un .script / .gui_script / .render_script
 CICLO = set("init final update fixed_update late_update on_message on_input on_reload".split())
 
-# Globali che il server in Go mette a disposizione di server/net.lua (server/sim.go)
-SERVER = {"terrain_restore", "terrain_store"}
-
 ISTRUZIONE = re.compile(r'\b(GGET|GSET)\b.*; "([^"]+)"')
 
 
@@ -56,8 +53,6 @@ def controlla(f, errori):
     if f.suffix != ".lua":
         lette |= CICLO
         scritte |= CICLO
-    if rel == "server/net.lua":
-        lette |= SERVER
     if rel.startswith("tests/"):
         # i test fingono i moduli di Defold (vmath, gui, hash...) per provare il client
         scritte |= DEFOLD

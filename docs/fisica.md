@@ -177,7 +177,6 @@ turni (`opts.crate_every`).
 
 ## La rete
 
-Il server fa girare la stessa simulazione Lua dei client (gopher-lua) ed è
-lui a decidere: i client mandano i tasti, non le posizioni. Per questo la
-simulazione deve essere deterministica e uguale su LuaJIT e gopher-lua
-([server.md](server.md)).
+Il server fa girare la stessa simulazione Lua dei client (in LuaJIT anche lui)
+ed è lui a decidere: i client mandano i tasti, non le posizioni. Per questo la
+simulazione deve essere deterministica ([server.md](server.md)).
