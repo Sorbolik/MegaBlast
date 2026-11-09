@@ -59,7 +59,7 @@ end
 
 -- Trap: the open jaw trap lying on the ground (strumenti/grafica/attrezzi.py),
 -- with its plate lit in the team colour; springboard: the Molla, a padded
--- board on a spring, leaning the way it launches, with a chevron pointing there
+-- board on a spring, flat, with a chevron pointing the way it launches
 local TRAP_W, TRAP_H, TRAP_DY = 28, 8.6, 2.7
 local MOLLA_W, MOLLA_H, MOLLA_DY = 39.2, 15.4, 6.1
 local SNAP_W, SNAP_H, SNAP_DY = 20.8, 16.6, 6.7
@@ -91,7 +91,7 @@ end
 
 function M.new(palette)
 	local o = { colori = palette, posed_ones = {}, cure = {}, shields = {}, flames = {}, frosts = {}, crepe = {},
-		snaps = {}, snap_i = 0,
+		snaps = {}, snap_i = 0, locks = {},
 		col = vmath.vector4(), size = vmath.vector3(), rot = vmath.vector3() }
 	local h = game.DISEGNO_H
 	for i = 1, config.MAX_PLACED do
@@ -114,6 +114,10 @@ function M.new(palette)
 	end
 	for i = 1, game.MAX_PLAYERS do
 		-- the shield: a bubble with hexagon mesh, in the team colour
+		-- feet locked by a trap: the closed jaws at the ankles
+		local lock = image("attrezzo_tagliola_chiusa", SNAP_W * 0.75, SNAP_H * 0.75)
+		gui.set_enabled(lock, false)
+		o.locks[i] = lock
 		local s = image("attrezzo_bolla", h * 1.9, h * 1.9)
 		gui.set_enabled(s, false)
 		o.shields[i] = s
@@ -160,6 +164,7 @@ function M.nodi(o)
 	for _, c in ipairs(o.cure) do list[#list + 1] = c.root end
 	for _, p in ipairs(o.posed_ones) do list[#list + 1] = p.root end
 	for _, n in ipairs(o.snaps) do list[#list + 1] = n end
+	for _, n in ipairs(o.locks) do list[#list + 1] = n end
 	for _, n in ipairs(o.shields) do list[#list + 1] = n end
 	for _, n in ipairs(o.frosts) do list[#list + 1] = n end
 	for _, n in ipairs(o.crepe) do list[#list + 1] = n end
@@ -213,10 +218,8 @@ function M.update(o, g, view, clock)
 				pos(p.root, it.x, it.y + TRAP_DY)
 			else
 				pos(p.root, it.x, it.y + MOLLA_DY)
-				-- leaning towards where it launches; in flight it spins flat
+				-- the chevron points where it launches (none while in flight)
 				local d = it.flying and 0 or (it.dir or 0)
-				o.rot.z = -16 * d
-				gui.set_euler(p.tramp, o.rot)
 				o.size.x, o.size.y, o.size.z = d < 0 and -1 or 1, 1, 1
 				gui.set_scale(p.arrow, o.size)
 				pos(p.arrow, d * MOLLA_W * 0.32, MOLLA_H * 0.5 + 4)
@@ -224,9 +227,12 @@ function M.update(o, g, view, clock)
 			end
 		end
 	end
-	-- shield around the robot
+	-- shield around the robot, trap on its feet
 	for i = 1, game.MAX_PLAYERS do
 		local rb, v = g.robots[i], view[i]
+		local locked = rb ~= nil and not rb.dead and rb.trapped ~= nil
+		gui.set_enabled(o.locks[i], locked)
+		if locked then pos(o.locks[i], v.x, v.y + SNAP_DY * 0.5) end
 		local shield = rb ~= nil and not rb.dead and rb.shield ~= nil
 		gui.set_enabled(o.shields[i], shield)
 		if shield then

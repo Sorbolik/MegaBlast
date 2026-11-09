@@ -741,7 +741,7 @@ function M:respawn(rb)
 	local sp = maps.get(self.map).spawns[1]
 	rb.x = x or sp.x
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
-	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising, rb.sprung = 0, 0, false, false, false, nil
+	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising, rb.sprung, rb.trapped = 0, 0, false, false, false, nil, nil
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
 	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet, rb.mallet_stop, rb.recoil = nil, nil, nil, nil, nil, nil
 	rb.hook_shot = nil
@@ -828,14 +828,17 @@ function M:update_robot(rb, input, active)
 	local slow = rb.status.slow and C.STATUS.slow
 	local move, jump = slow and slow.move or 1, slow and slow.jump or 1
 	local dir = (input.right and 1 or 0) - (input.left and 1 or 0)
+	-- in a trap: feet locked, it doesn't walk or jump (it still turns, to aim)
+	local locked = rb.trapped
 	if dir ~= 0 then rb.facing = dir end
+	if locked then dir = 0 end
 
 	-- jump assists: the grace time after the edge and the jump asked in advance
 	rb.coyote = math.max(0, (rb.coyote or 0) - 1)
 	rb.jump_buf = math.max(0, (rb.jump_buf or 0) - 1)
-	local want_jump = input.jump
+	local want_jump = input.jump and not locked
 	-- jump just pressed (holding it you don't jump again in the air)
-	local pressed = input.jump and not rb.jump_held
+	local pressed = want_jump and not rb.jump_held
 	rb.jump_held = input.jump
 	if want_jump and not rb.grounded then
 		if rb.coyote > 0 then
@@ -895,7 +898,13 @@ function M:update_robot(rb, input, active)
 		-- no inertia, even right after being knocked; the robot on turn never moves
 		-- sideways faster than its run, except when the Molla throws it
 		local air = st.air_speed * move * chute
-		if dir ~= 0 and not rb.sprung then rb.vx = dir * air end
+		-- launched by the Molla: its push stays, and the controls add or take away
+		-- the air speed (you counter it a little, Sergio 9 November 2026)
+		if rb.sprung then
+			rb.vx = rb.sprung + dir * air
+		elseif dir ~= 0 then
+			rb.vx = dir * air
+		end
 		if active and not rb.sprung then
 			rb.vx = math.max(-air, math.min(air, rb.vx))
 		end
@@ -2300,7 +2309,10 @@ function M:bounce(rb, o)
 	if not vy then return end
 	rb.vy, rb.grounded, rb.rising, rb.knocked, rb.fall_top = vy, false, false, false, nil
 	-- the Molla throws it sideways: it doesn't steer until it lands or opens the parachute
-	rb.vx, rb.sprung = (o.dir or 0) * C.TRAMPOLINE.push_vx, true
+	-- the Molla throws it sideways (rb.sprung: the push, kept until it lands or
+	-- opens the parachute; the controls only correct it)
+	rb.vx = (o.dir or 0) * C.TRAMPOLINE.push_vx
+	rb.sprung = rb.vx
 	-- an opponent's trampoline launches you: if you fall the kill is theirs
 	self:credit(rb, self.robots[o.owner])
 	self:emit({ type = "bounce", id = o.id, robot = rb.id })
@@ -2342,16 +2354,11 @@ function M:update_placed()
 				if o.kind == "trampoline" then
 					self:bounce(rb, o)
 				elseif o.armed and rb.team ~= o.team then
-					-- the trap launches high and away from its centre, then disappears
-					local dir = rb.x > o.x and 1 or (rb.x < o.x and -1 or -rb.facing)
-					local k = self:knock_mul(rb)
-					rb.vx, rb.vy = dir * C.TRAP.push_vx * k, C.TRAP.launch_vy * k
-					rb.grounded, rb.knocked, rb.fall_top = false, true, nil
+					-- the trap snaps shut on the feet (config.TRAP) and leaves the ground
+					rb.trapped, rb.vx = true, 0
 					self:emit({ type = "trap", id = o.id, robot = rb.id, x = o.x, y = o.y })
 					local owner = self.robots[o.owner]
-					if self:hurt(rb, C.TRAP.damage, owner) > 0 and owner and enemies(owner, rb) then
-						self:add_points(owner, self.score.trap, "trap", rb)
-					end
+					if owner and enemies(owner, rb) then self:add_points(owner, self.score.trap, "trap", rb) end
 					gone = true
 				end
 			end
@@ -2571,7 +2578,7 @@ function M:can_use(weapon)
 		if rb.grounded then return false end
 		return rb.parachute or rb.parachutes_left > 0
 	elseif weapon == "hook" then
-		return not self.used.tool
+		return not self.used.tool and not rb.trapped
 	elseif weapon == "shield" then
 		return not rb.shield and rb.ammo.shield > 0
 	elseif M.TOOLS[weapon] then
@@ -2750,6 +2757,11 @@ function M:end_turn()
 	self:apply_heals()
 	local rb = self.robots[self.current]
 	self:age_status(rb)
+	-- the trap lets go at the end of the trapped robot's own turn
+	if rb.trapped then
+		rb.trapped = nil
+		self:emit({ type = "trap_free", robot = rb.id })
+	end
 	rb.round_done = true
 	local next_pos = self.order_pos % #self.order + 1
 	if next_pos == 1 then

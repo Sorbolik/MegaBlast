@@ -115,7 +115,7 @@ function N.snapshot(g, aim)
 		-- pl: parachutes left; st: turns left of the effects (burn + 10 x slow + 100 x cracked armour)
 		-- sw: the secondary picked at the start (besides the Lama, "" if none), ss: its shots;
 		-- lu: ticks left of the Affondo, la: angle of its dash;
-		-- kn: knocked by a hit (doesn't run by itself);
+		-- kn: knocked by a hit (doesn't run by itself); tr: feet locked by a trap;
 		-- hk: who's pulling it with the Rampino (0 nobody, -1 if hanging from the terrain at hx, hy);
 		-- gs: its Rampino hook is in flight, at gx, gy; ml: tick of the Maglio swing,
 		-- ms: tick (with fraction) when its head stopped on terrain (0 if still swinging), md: its side;
@@ -140,6 +140,7 @@ function N.snapshot(g, aim)
 		r.hx, r.hy, r.ml = hooked and hooked.x or 0, hooked and hooked.y or 0, rb.mallet or 0
 		r.gs, r.gx, r.gy = hook ~= nil, hook and hook.x or 0, hook and hook.y or 0
 		r.ms, r.md, r.mb, r.kn = rb.mallet_stop or 0, rb.mallet_dir or 0, rb.mallet_base or 0, rb.knocked
+		r.tr = rb.trapped or false
 		r.la, r.gn = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, rb.gone or false
 		r.gd = rb.round_done
 	end
