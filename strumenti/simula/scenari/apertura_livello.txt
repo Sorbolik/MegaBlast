@@ -1,0 +1,20 @@
+# L'apertura di un livello della campagna (Sergio, 9 nov): dopo AVANTI e la fiammella,
+# barre nere e il tuo diavoletto a zoom massimo, la camera si allarga sul livello col
+# titolo nella barra in basso, le barre escono, entra l'interfaccia e solo allora parla
+# Favilla. Un tocco la salta.
+aspetta 2
+tocca 1062 392                      # CAMPAGNA
+aspetta 1
+tocca 256 480                       # Primi passi
+aspetta 0.6
+tocca_centro 970 116                # AVANTI
+aspetta 0.9
+foto 01_vicino
+aspetta 0.6
+foto 02_si_allarga
+aspetta 0.5
+foto 03_livello_col_titolo
+aspetta 0.4
+foto 04_barre_via
+aspetta 0.6
+foto 05_favilla
