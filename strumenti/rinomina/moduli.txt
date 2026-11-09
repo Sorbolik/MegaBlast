@@ -8,6 +8,7 @@ ui.frames fine finish
 ui.frames lavoro work
 ui.frames rete net
 ui.frames testo text
+ui.frames ora now
 ui.postcard premi press
 ui.ui testo text
 ui.ui titolo title

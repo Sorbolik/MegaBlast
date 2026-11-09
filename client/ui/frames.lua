@@ -181,8 +181,8 @@ function M.finish()
 	lua_work = lua_work + now() - lua_start
 end
 
--- work done outside the update (on_input, messages): t = M.ora() at the start
-M.ora = now
+-- work done outside the update (on_input, messages): t = M.now() at the start
+M.now = now
 
 -- Named scopes for Defold's profiler (debug builds, http://localhost:8002 on
 -- the PC): the heavy work shows up as its own bar. Every scope must close in

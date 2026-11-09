@@ -754,7 +754,7 @@ end
 
 -- A tap: on CHIUDI it closes, on the button it goes on, elsewhere nothing
 -- (true: it's over)
-function View.premi(view, x, y)
+function View.press(view, x, y)
 	if gui.is_enabled(view.skip) and gui.pick_node(view.skip, x, y) then return true end
 	if gui.pick_node(view.next, x, y) then return advance(view) end
 	return false

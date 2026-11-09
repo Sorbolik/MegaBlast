@@ -139,7 +139,7 @@ end
 
 -- the messages' work counts in the frame counter (ui/frames.lua)
 function on_message(self, message_id, message)
-	local t = frames.ora()
+	local t = frames.now()
 	handle_message(self, message_id, message)
 	frames.work(t)
 end

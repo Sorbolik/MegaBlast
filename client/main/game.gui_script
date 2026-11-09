@@ -5166,7 +5166,7 @@ function PAD.every_frame(self)
 	-- the settings' mapping, once the profile is loaded
 	if not self.read_keys and self.profilo then
 		self.read_keys = true
-		reader.usa(c, profile.setting(self.profilo, "tasti"))
+		reader.use(c, profile.setting(self.profilo, "tasti"))
 	end
 	reader.levette = PAD.setting(self, "levette")
 	-- Esc or back (PAD.on_input), if it wasn't the controller's B
@@ -5177,7 +5177,7 @@ function PAD.every_frame(self)
 			open_wheel(self, not self.menu_open)
 		end
 	end
-	if not self.pad_on and (reader.spinta(c.sx) or reader.spinta(c.dx)) then PAD.event(self, {}) end
+	if not self.pad_on and (reader.pushed(c.sx) or reader.pushed(c.dx)) then PAD.event(self, {}) end
 	local play_mission = (self.mode == "local" or self.mode == "online") and self.controls_visible
 		and not self.menu_open and not self.carta
 	if not play_mission then
@@ -5537,7 +5537,7 @@ end
 
 -- on_input's work counts in the frame counter too
 function on_input(self, action_id, action)
-	local t = frames.ora()
+	local t = frames.now()
 	local r = CP.on_input(self, action_id, action)
 	frames.work(t)
 	return r
