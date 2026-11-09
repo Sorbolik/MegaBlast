@@ -2377,10 +2377,10 @@ do
 	local m = game.new(42, "pavimento")
 	local t = m.terrain
 	check(t.ox == game.MARGIN_CELLS and t.w == game.GRID_W, "the grid has a margin beside the map")
-	check(t:solid(-60, 410),
-		"pavimento: a platform juts out of the left wall")
-	check(t:solid(game.WORLD_W + 60, 410),
-		"pavimento: a platform juts out of the right wall")
+	check(t:solid(-60, 480),
+		"pavimento: a stone ledge juts out of the left wall")
+	check(t:solid(game.WORLD_W + 60, 480),
+		"pavimento: a stone ledge juts out of the right wall")
 	local rb = m.robots[1]
 	rb.x, rb.y, rb.vy, rb.grounded = -500, 800, 0, false
 	m:step()
