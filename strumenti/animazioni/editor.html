@@ -733,21 +733,11 @@ function endpointAnimazioniAttivo() {
 function animazioniOriginaliDelGioco() {
 	return DEL_GIOCO_MAP[personaggioAttivo()];
 }
-function rilevaPersonaggioDaLua(testo) {
-	if (!testo) return null;
-	if (/testa_y\s*=\s*\{\s*0,\s*(?:6\d|5\d)/.test(testo)) return "favilla";
-	return "apprendista";
-}
+// la bozza nel browser è una per personaggio ("megablast-animazioni-<p>"); la chiave
+// vecchia senza personaggio vale per l'apprendista
 function caricaBozzaPersonaggio(p) {
 	const def = DEL_GIOCO_MAP[p] || DATI.animazioni;
 	try {
-		const vecchia = localStorage.getItem("megablast-animazioni");
-		if (vecchia && !localStorage.getItem("megablast-animazioni-favilla")) {
-			if (rilevaPersonaggioDaLua(vecchia) === "favilla") {
-				localStorage.setItem("megablast-animazioni-favilla", vecchia);
-				localStorage.removeItem("megablast-animazioni");
-			}
-		}
 		const bozza = localStorage.getItem("megablast-animazioni-" + p) || (p === "apprendista" ? localStorage.getItem("megablast-animazioni") : null);
 		if (bozza && bozza.trim() && bozza.trim() !== def.trim()) {
 			return { clips: clipDaLua(bozza), bozza: true };
@@ -786,7 +776,7 @@ function memorizza() {
 	const lua = clipInLua(clips);
 	try {
 		localStorage.setItem("megablast-animazioni-" + p, lua);
-		if (p === "apprendista") localStorage.setItem("megablast-animazioni", lua);
+		if (p === "apprendista") localStorage.removeItem("megablast-animazioni");
 	} catch (e) { /* senza memoria del browser si lavora lo stesso */ }
 }
 function cambiaPersonaggio(da, a) {
