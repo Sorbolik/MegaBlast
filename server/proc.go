@@ -218,7 +218,9 @@ func (p *Proc) roundTrip(b *Batch) error {
 	return nil
 }
 
-// twoInts reads "a b\n" or "a\n" (b is then 0).
+// twoInts reads "a b\n" or "a\n" (b is then 0). On Windows luajit writes
+// stdout in text mode, so lines end in "\r\n": the \r is skipped (the
+// messages are JSON, they never hold a real newline).
 func twoInts(line []byte) (a, b int, ok bool) {
 	n, cur := 0, &a
 	for _, c := range line {
@@ -228,6 +230,7 @@ func twoInts(line []byte) (a, b int, ok bool) {
 			n++
 		case c == ' ' && cur == &a && n > 0:
 			cur, n = &b, 0
+		case c == '\r':
 		case c == '\n':
 			return a, b, n > 0
 		default:

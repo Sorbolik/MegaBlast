@@ -146,3 +146,17 @@ func luaEval(t testing.TB, code string, v any) {
 		}
 	}
 }
+
+// The answer headers are read with or without \r (luajit on Windows writes
+// "\r\n").
+func TestAnswerHeaderLines(t *testing.T) {
+	for line, want := range map[string][3]int{
+		"0 11\n": {0, 11, 1}, "0 11\r\n": {0, 11, 1}, "840\r\n": {840, 0, 1}, "840\n": {840, 0, 1},
+		"x\n": {0, 0, 0}, "\r\n": {0, 0, 0},
+	} {
+		a, b, ok := twoInts([]byte(line))
+		if a != want[0] || b != want[1] || ok != (want[2] == 1) {
+			t.Fatalf("%q: %d %d %v", line, a, b, ok)
+		}
+	}
+}

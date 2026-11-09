@@ -12,6 +12,10 @@
 -- already in JSON that Go sends to the players as they are (events, state,
 -- draft). A command that fails answers {"err":"..."} and the others go on.
 -- stdout is only for the answers: print writes to stderr (the server's log).
+-- On Windows stdin and stdout are in text mode: "\n" goes out as "\r\n" (Go
+-- skips the \r) and a byte 26 would end the input; neither can happen inside
+-- the data, because Go escapes every control byte of the commands and the
+-- JSON of the answers escapes them too.
 
 local dir = arg[1] or "."
 package.path = dir .. "/?.lua;" .. package.path
