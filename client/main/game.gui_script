@@ -3858,7 +3858,7 @@ local function render(self, dt)
 		if sl.glow then gui.set_enabled(sl.glow, blink and sl.have and g:can_use(sl.weapon)) end
 	end
 	score.update(self.punti, dt, g, self.mode == "online" and self.me or g.current,
-		self.mode == "online" and self.me or (self.mode == "local" and (next(self.bots) or self.missione) and 1) or nil)
+		self.mode == "online" and self.me or (self.mode == "local" and (next(self.bots) or self.missione) and 1) or nil, self.robots)
 	local n = bar_robot(self)
 	local tele = n and math.max(0, n.teleports_left - self.orbs_wait) or 0
 	if self.tele_n ~= tele then
@@ -4172,8 +4172,10 @@ function init(self)
 	gui.set_visible(self.count_root, false)
 	gui.set_color(self.count_root, vmath.vector4(1, 1, 1, 0))
 	self.count_alone = ui.alone(0, 0, 400, vmath.vector4(1, 1, 1, 0.55), self.count_root)
-	ui.disco(0, 0, 176, vmath.vector4(0.06, 0.05, 0.09, 0.78), self.count_root)
+	local disc = ui.disco(0, 0, 176, vmath.vector4(0.06, 0.05, 0.09, 0.78), self.count_root)
 	self.count_ring = ui.ring_node(0, 0, 176, 5, vmath.vector4(1, 1, 1, 1), self.count_root)
+	-- the root's alpha must reach them, or the disc and the ring stay on screen for ever
+	for _, node in ipairs({ self.count_alone, disc, self.count_ring }) do gui.set_inherit_alpha(node, true) end
 	self.countdown = label(0, 0, "", 10.5)
 	gui.set_parent(self.countdown, self.count_root)
 	gui.set_inherit_alpha(self.countdown, true)

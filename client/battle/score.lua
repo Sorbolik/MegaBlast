@@ -42,6 +42,7 @@
 
 local ui = require "ui.ui"
 local plate = require "battle.plate"
+local scoria = require "battle.scoria"
 local T = require("lang.text").score
 
 local M = {}
@@ -78,9 +79,12 @@ local TICK_EVERY, TICK_STEP = 0.045, 5  -- one tick every 5 points, never more o
 local WAIT_W, WAIT_H, WAIT_GAP = 58, 24, 8
 -- the turn order: a row of faces under the score (D: the playing one's diameter)
 local FACE_D, FACE_SMALL, FACE_STEP, FACE_Y = 42, 30, 62, 52
+local PLATE_H = FACE_D + 6        -- the pill's round ends (48 px image) and the face a 3 px margin inside
+local HEAD_W, HEAD_DX, HEAD_DY = 1.2, -2, -4   -- the head's width / the disc's, and how far it is moved to centre the face in the ring
+local HEAD_LAYERS = 3             -- head, helmet, one more
 local ROW_Y, NOTICE_Y = GET_H / 2 + 74, GET_H / 2 + 100   -- turn balance and last-lap warning, under the faces
 local BELOW_Y = ROW_Y                    -- "+N PER PAREGGIARE", at the same height, under its team
-local READY_W, READY_H, READY_X = 98, 26, 955              -- PREPARATI: right of the score
+local READY_W, READY_H, READY_X = 132, 48, 975              -- PREPARATI: right of the score
 -- last lap: the banner and the warning before it
 local BANNER_DURATION, BANNER_W, BANNER_H = 2.6, 760, 112
 local NOTICE_BEFORE = 60 * 60                -- game ticks before the last lap
@@ -125,6 +129,26 @@ local function with_sign(v)
 	return (v > 0 and "+" or "") .. v
 end
 
+-- Draws in face f the head (and helmet) of the look: the first piece sets the size
+-- (HEAD_W discs wide), the others sit round it as in the devil
+local function face_head(f, look)
+	local key = look and table.concat(look, ",") or ""
+	if f.look_key == key then return end
+	f.look_key = key
+	local pieces = scoria.head_pieces(look or scoria.PERSONAGGIO)
+	local base = pieces[1]
+	local k = base and FACE_D * HEAD_W / base.w or 1
+	for i, n in ipairs(f.pezzi) do
+		local pz = pieces[i]
+		gui.set_enabled(n, pz ~= nil)
+		if pz then
+			position(n, (pz.x - base.x) * k + HEAD_DX, (pz.y - base.y) * k + HEAD_DY)
+			size(n, pz.w * k, pz.h * k)
+			gui.play_flipbook(n, pz.img)
+		end
+	end
+end
+
 -- A face of the turn order, drawn at the playing size and scaled: halo, cream ring
 -- (the one playing), the head clipped to a disc, a ring in the team color (gold in the
 -- last lap, with a thin team ring inside it), a veil (already played), TU (yours)
@@ -135,14 +159,19 @@ local function face_token(parent)
 	gui.set_inherit_alpha(f.radice, true)
 	gui.set_visible(f.radice, false)
 	f.alone = ui.alone(0, 0, FACE_D * 3, vmath.vector4(1, 1, 1, 1), f.radice)
-	f.crema = ui.ring_node(0, 0, FACE_D + 8, 2, ui.C.LIGHT, f.radice)
+	f.crema = ui.ring_node(0, 0, FACE_D + 4, 2, ui.C.LIGHT, f.radice)
 	f.fondo = ui.disco(0, 0, FACE_D, ui.C.PANEL, f.radice)
-	gui.set_clipping_mode(f.fondo, gui.CLIPPING_MODE_STENCIL)
-	f.testa = gui.new_box_node(vmath.vector3(0, -2, 0), vmath.vector3(FACE_D * 1.15 * 146 / 175, FACE_D * 1.15, 0))
-	gui.set_texture(f.testa, "diavoletto")
-	gui.play_flipbook(f.testa, "testa")
-	gui.set_parent(f.testa, f.fondo)
-	gui.set_inherit_alpha(f.testa, true)
+	-- the head of whoever plays (and its helmet): not clipped to the disc, it
+	-- may stick out of it; the pieces are set by face_head
+	f.pezzi = {}
+	for i = 1, HEAD_LAYERS do
+		local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 0))
+		gui.set_texture(n, "diavoletto")
+		gui.set_parent(n, f.radice)
+		gui.set_inherit_alpha(n, true)
+		gui.set_enabled(n, false)
+		f.pezzi[i] = n
+	end
 	f.velo = ui.disco(0, 0, FACE_D, vmath.vector4(0.06, 0.05, 0.08, 0.6), f.radice)
 	f.anello = ui.ring_node(0, 0, FACE_D, 3, vmath.vector4(1, 1, 1, 1), f.radice)
 	f.interno = ui.ring_node(0, 0, FACE_D - 6, 1.5, vmath.vector4(1, 1, 1, 1), f.radice)
@@ -238,16 +267,17 @@ function M.nuovo(palette, tick)
 
 	-- the turn order: a face per player, in a soft plate; PREPARATI to the right of the score
 	p.cerchi = root_node(HALF, Y)
-	p.cerchi_fondo, p.cerchi_bordo = ui.pannello(0, -FACE_Y, 100, FACE_D + 14, p.cerchi)
+	p.cerchi_fondo, p.cerchi_bordo = ui.pannello(0, -FACE_Y, 100, PLATE_H, p.cerchi, "pillola")
 	gui.set_enabled(p.cerchi_bordo, false)
 	gui.set_color(p.cerchi_fondo, vmath.vector4(0.08, 0.07, 0.1, 0.62))
 	p.facce = {}
 	for i = 1, 4 do p.facce[i] = face_token(p.cerchi) end
 	p.pronto = root_node(READY_X, Y)
-	local pill, pill_border = ui.pannello(0, 0, READY_W, READY_H, p.pronto)
-	gui.set_color(pill, ui.GOLD)
+	-- dark pill with a gold edge and light letters (dark letters on the gold were hard to read)
+	local pill, pill_border = ui.pannello(0, 0, READY_W, READY_H, p.pronto, "pillola")
+	gui.set_color(pill, vmath.vector4(0.1, 0.08, 0.04, 0.92))
 	gui.set_color(pill_border, ui.GOLD)
-	ui.testo(T.get_ready, 0, 0, SMALL * 1.1, vmath.vector4(0.12, 0.09, 0.02, 1), pill)
+	ui.testo(T.get_ready, 0, 0, SMALL * 1.45, ui.C.TEXT, pill)
 	gui.set_enabled(p.pronto, false)
 	p.faces_key = nil
 
@@ -523,7 +553,7 @@ end
 -- The turn order: a face per player in turn order. The one playing is big, with a halo
 -- and a cream ring that breathe; those who already played this lap are veiled; yours has
 -- TU. Golden in the last lap (the thin team ring inside keeps the teams apart).
-local function faces(p, g, human)
+local function faces(p, g, human, looks)
 	local who = {}
 	for _, id in ipairs(g.order) do
 		local rb = g.robots[id]
@@ -534,11 +564,11 @@ local function faces(p, g, human)
 	for _, rb in ipairs(who) do key = key .. (rb.round_done and "1" or "0") end
 	if p.faces_key ~= key then
 		p.faces_key = key
-		local w = #who * FACE_STEP + 18
-		size(p.cerchi_fondo, w, FACE_D + 14)
+		local w = (#who - 1) * FACE_STEP + PLATE_H
+		size(p.cerchi_fondo, w, PLATE_H)
 		gui.set_enabled(p.cerchi_fondo, #who > 0)
 		-- the last lap: a golden edge round the plate
-		size(p.cerchi_bordo, w, FACE_D + 14)
+		size(p.cerchi_bordo, w, PLATE_H)
 		gui.set_color(p.cerchi_bordo, ui.GOLD)
 		gui.set_enabled(p.cerchi_bordo, p.ultimo or false)
 		for i, f in ipairs(p.facce) do
@@ -547,6 +577,7 @@ local function faces(p, g, human)
 			if rb then
 				local now = rb.id == playing
 				local c = p.gettoni[rb.team].colore
+				face_head(f, looks and looks[rb.id] and looks[rb.id].look)
 				position(f.radice, (i - (#who + 1) / 2) * FACE_STEP, -FACE_Y)
 				f.base = now and 1 or FACE_SMALL / FACE_D
 				f.now = now
@@ -585,7 +616,7 @@ local function places(p, v)
 	return out
 end
 
-function M.update(p, dt, g, my_own, human)
+function M.update(p, dt, g, my_own, human, looks)
 	if not p.squadre or not p.on or p.nascosti then return end
 	p.ora = (p.ora or 0) + dt
 	numbers(p, dt, g)
@@ -662,7 +693,7 @@ function M.update(p, dt, g, my_own, human)
 		gui.set_enabled(gt.crown, pos[t] == 1 and firsts == 1 and (g.round or 1) > (g.score.crown_rounds or 0))
 	end
 
-	faces(p, g, human)
+	faces(p, g, human, looks)
 	-- PREPARATI: the turn before yours, to the right of the score (not over a lesson's goal)
 	local nxt = g.order[g.order_pos % #g.order + 1]
 	local ready = human ~= nil and g.phase ~= "over" and g.current ~= human and nxt == human and not p.goal_on
