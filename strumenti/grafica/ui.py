@@ -77,6 +77,21 @@ for n, nome in ((128, "stella.png"), (48, "stella_p.png")):
     ax, ay = RI * np.cos(np.pi / 5), RI * np.sin(np.pi / 5)
     salva(((ax - R) * py - ay * (px - R) >= 0).astype(float), n, nome)
 
+# fiamma geometrica (la tacca del punteggio nel gioco, battle/score.lua): una
+# sagoma di lati dritti con un rombo vuoto al centro; 48 px, si disegna piccola
+# (fiamma_p: l'atlas non ha mipmap)
+from PIL import ImageDraw
+n = 48
+im = Image.new("L", (n * SS, n * SS), 0)
+dr = ImageDraw.Draw(im)
+def pt(v):  # da (-1..1, -1..1) con y in su ai pixel
+    return ((v[0] * 0.46 + 0.5) * n * SS, (0.5 - v[1] * 0.46) * n * SS)
+fuori = [(0.15, 1.0), (0.62, 0.15), (0.58, -0.45), (0, -1.0), (-0.58, -0.45), (-0.62, 0.05), (-0.28, 0.3), (-0.22, 0.62)]
+dentro = [(0, -0.05), (0.26, -0.42), (0, -0.72), (-0.26, -0.42)]
+dr.polygon([pt(v) for v in fuori], fill=255)
+dr.polygon([pt(v) for v in dentro], fill=0)
+salva(np.asarray(im, float) / 255, n, "fiamma_p.png")
+
 # ingranaggio: otto denti e il foro al centro
 n = 64
 x, y = griglia(n)
