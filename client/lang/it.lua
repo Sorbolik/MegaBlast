@@ -205,8 +205,9 @@ return {
 
 	-- menu/campaign.lua: CAMPAGNA, chapters and missions
 	campaign = {
-		opens_with = "Si apre con %s stelle: ne hai %s",
-		stars_hint = "Le stelle si prendono nelle missioni dei capitoli prima",
+		-- a chapter still locked: the one before must be finished (Sergio, 7 Nov)
+		locked = "Si sblocca completando tutte le missioni di %s",
+		done_count = "Missioni completate: %s / %s",
 		-- the board (Sergio, 4 Nov): the next challenge, and the chapter's final strip
 		new = "NUOVA",
 		final = "FINALE · %s",

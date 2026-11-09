@@ -69,6 +69,7 @@ local A_FAVILLA = require "battle.animations_favilla"
 local SKINS = require "battle.skins"
 local PIVOTS = require "battle.pivots"
 local GRIPS = require "battle.grips"
+local FLAME = require "battle.flame"
 
 local M = {}
 
@@ -122,8 +123,8 @@ function M.altezza()
 	return HEAD_TOP
 end
 
--- the top of the head image, horns included (they stick out above altezza): the
--- plate goes above this, so up close it never covers the horns
+-- the top of the head image, horns and flame included (they stick out above
+-- altezza): the plate goes above this, so up close it never covers them
 function M.cima(s)
 	return s.cima
 end
@@ -192,10 +193,26 @@ end
 -- a drawn piece (p of devil.lua), k world units per drawing unit, in the
 -- parent joint moved opposite to pivot d; with the hit flash if it isn't
 -- tinted (or if flash_fx)
+-- a live flame piece (battle/flame.lua): its own texture, bent by the fiamma
+-- material; the update gives it time and flash through its color. False if
+-- the image isn't a live one
+local function live(s, n, p, x, y, k)
+	local key = FLAME.texture(p.img)
+	if not key then return false end
+	local ox, oy, w, h = FLAME.frame(p.img, p)
+	gui.set_texture(n, key)
+	gui.set_material(n, "fiamma")
+	pos(n, x + ox * k, y + oy * k)
+	size(n, w * k, h * k)
+	if not s.fire[n] then s.fire_nodes[#s.fire_nodes + 1] = n end
+	s.fire[n] = p.img
+	return true
+end
 local function piece(s, parent, p, k, flash_fx, d)
 	d = d or IDLE
 	local x, y = (p.x - d[1]) * k, (p.y - d[2]) * k
 	local n = box(parent, x, y, p.w * k, p.h * k)
+	if live(s, n, p, x, y, k) then return n end
 	gui.set_texture(n, "diavoletto")
 	gui.play_flipbook(n, p.img)
 	if p.tint then
@@ -432,6 +449,7 @@ function M.new(color, look, weapon_only)
 	end
 	local anim_data = ANIMAZIONI_PERSONAGGIO[char_name] or ANIMAZIONI_PERSONAGGIO.apprendista
 	local s = { color = color, h = H, w = Wd, k = k, armi = {}, tinte = {}, weapon_tints = {}, flashes = {},
+		fire = {}, fire_nodes = {}, fire_col = vmath.vector4(1, 1, 1, 1), white = 0,
 		personaggio = char_name, A = anim_data.A, armed = anim_data.armed,
 		teste = {}, heads_t = {}, facce = {}, vis = {},
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
@@ -505,6 +523,13 @@ function M.new(color, look, weapon_only)
 	end
 	s.fiamma = joint(s.collo, PT.cima[1] * k, PT.cima[2] * k)
 	dresses(s, s.fiamma, "fiamma", k)
+	-- the plate goes above the flame too (it breathes up to 9% taller, battle/flame.fp)
+	for _, p in ipairs(s.strati("fiamma")) do
+		if p then s.cima = max(s.cima, (PT.collo[2] + PT.cima[2] + p.y + p.h * 0.59) * k) end
+	end
+	-- and above where the idle clip holds the head (each character lifts it its own way)
+	local lift = s.A.fermo and s.A.fermo.tracks.testa_y
+	if lift then s.cima = s.cima + lift[2] * k end
 	-- the weapon: above the body and the head, below the front arm. The grip sits
 	-- on the weapon's shoulder and undoes the shape's squash, the inner turn turns
 	-- the weapon around the pivot (turned and then squashed it would skew)
@@ -542,6 +567,7 @@ end
 -- the hit flash: the pieces turn white, fading. The lampo material does it
 -- (battle/flash.fp): the color's green says how white
 local function flash_fx(s, q)
+	s.white = FLASH * q
 	local c = s.flash_col
 	c.y = 1 - FLASH * q
 	for i = 1, #s.flashes do gui.set_color(s.flashes[i], c) end
@@ -555,7 +581,9 @@ local function face_img(s, nome)
 			local n, t, p = s.teste[i], s.heads_t[i], f[i]
 			gui.set_enabled(n, p ~= nil)
 			gui.set_enabled(t, p ~= nil and p.tint ~= nil)
-			if p then
+			if p and s.fire[n] then
+				live(s, n, p, (p.x - d[1]) * k, (p.y - d[2]) * k, k)
+			elseif p then
 				gui.play_flipbook(n, p.img)
 				pos(n, (p.x - d[1]) * k, (p.y - d[2]) * k)
 				size(n, p.w * k, p.h * k)
@@ -863,6 +891,11 @@ function M.update(s, dt, st)
 	if s.flash > 0 then
 		s.flash = max(0, s.flash - dt * 6)
 		flash_fx(s, min(1, s.flash * 1.5))
+	end
+	-- the live flames: their time and the flash
+	for i = 1, #s.fire_nodes do
+		local n = s.fire_nodes[i]
+		gui.set_color(n, FLAME.color(s.fire_col, s.t, s.fire[n], s.white))
 	end
 
 	visible(s, s.presa, in_hand and po.mostra_arma > 0.5)

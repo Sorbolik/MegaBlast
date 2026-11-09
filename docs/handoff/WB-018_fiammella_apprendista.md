@@ -127,3 +127,5 @@ Non verificati montaggio sulla testa, resa alle dimensioni del gioco e animazion
      - `fiamma_scala_y`: controllo indipendente dell'altezza (valori da 0.1 a 4.0, neutro 1);
    - Il giunto `s.fiamma` scala dal perno alla base sulla testa, permettendo di allungare, appiattire e far pulsare la fiammella frame per frame;
    - Editor ricompilato tramite `prepara.py`.
+
+2026-11-09 · Fiammella viva (Claude). Il ricalco Potrace di sopra veniva quasi tutto rosso mattone (lo strato d'ombra copriva l'arancio): rifatta direttamente da `1_fiammella_base_2.png` (scontorno del magenta col bordo antialias, nessun alone), in `client/paintings/flame/apprendista.png` (256 x 256, con spazio per ondeggiare) per lo shader `client/battle/flame.fp` e ritagliata in `apprendista_fiamma.png` per l'editor (pezzo 38,3 x 54, le proporzioni del disegno). Nessuna immagine nuova da chiedere a Codex.
