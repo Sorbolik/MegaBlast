@@ -1,8 +1,8 @@
 # Campagna: dalla home CAMPAGNA (1062 392) si apre l'Addestramento, la bacheca
 # con le lezioni appese come cartoline con le stelle (scenario bacheca.txt). Il I
-# girone (scheda 672 578) è chiuso finché non si hanno le stelle che servono. Sei
-# carte: x 346 / 640 / 934, y 414 / 211 (Stammi dietro in alto a sinistra), il
-# finale sotto (640 76).
+# girone (scheda 868 580) è chiuso finché non si finiscono tutte le lezioni. Otto
+# carte su quattro colonne: x 200 / 494 / 788 / 1082, y 424 / 268 (Stammi dietro in
+# alto a sinistra), il finale sotto.
 # Stammi dietro fino al cancello, poi la fine del livello: Fatta e la medaglia,
 # RIPROVA 460 110, AVANTI 820 110, la freccia per la campagna 62 658.
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
@@ -12,12 +12,12 @@ foto 00_home
 tocca 1062 392                      # CAMPAGNA
 aspetta 1
 foto 01_addestramento
-tocca 672 578                       # I girone: chiuso
+tocca 868 580                       # La Forgia: chiusa
 aspetta 0.5
 foto 01b_girone_chiuso
-tocca 240 578                       # di nuovo l'Addestramento
+tocca 408 580                       # di nuovo l'Addestramento
 aspetta 0.5
-tocca 256 480                       # Primi passi
+tocca 200 424                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.8
 foto 02_scopo
@@ -38,7 +38,7 @@ foto 06_stelle_accese
 tocca 62 658                        # la freccia: si torna alla campagna
 aspetta 1
 foto 07_campagna
-tocca 640 480                       # Il mio vecchio Lanciarune
+tocca 494 424                       # Il mio vecchio Lanciarune
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 tocca 62 658                        # la rotellina: ESCI DALLA PARTITA accanto, la missione e' ferma

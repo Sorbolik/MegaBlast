@@ -435,6 +435,8 @@ M.addestramento = {
 		tipo = "duello",
 		goal_text = "Un duello a punti! Fammi vedere cosa hai imparato, sarà una sfida entusiasmante!",
 		mappa = "cortile",
+		-- in the first turns the orbs fly slowly, to be watched
+		globi_lenti = true,
 		giocatori = {
 			{ team = 1, secondary = "lunge" },
 			{

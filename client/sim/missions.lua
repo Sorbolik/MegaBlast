@@ -641,7 +641,16 @@ local function check_event(r, g, e)
 	end
 	if r.riga and r.line_until and when(r.line_until, st, g, e) then clear_line(r) end
 	-- a new turn: the previous turn's lines aren't needed anymore
-	if e and e.type == "turn" then clear_line(r); r.coda = {} end
+	-- (not a big vignette: it explains a move, Favilla waits for it to be read)
+	if e and e.type == "turn" then
+		local keep = {}
+		if r.line and r.big_unread then keep[1] = r.line end
+		for _, q in ipairs(r.coda) do
+			if q.mostra == "grande" then keep[#keep + 1] = q end
+		end
+		clear_line(r)
+		r.coda = keep
+	end
 	for i, line in ipairs(l.righe or {}) do
 		if not r.seen_weapons[i] and when(line.quando, st, g, e) then
 			r.seen_weapons[i] = true
@@ -659,7 +668,10 @@ local function check_event(r, g, e)
 	end
 	-- the goal_text of a lesson, once read (you touched the controls), and
 	-- Ritenta give way to the next line
-	if r.riga and r.line_yields and not r.attesa and #r.coda > 0 then clear_line(r) end
+	-- (a big vignette doesn't wait for you to touch the controls: it stops the game itself)
+	if r.riga and r.line_yields and #r.coda > 0 and (not r.attesa or r.coda[1].mostra == "grande") then
+		clear_line(r)
+	end
 	if not r.riga and #r.coda > 0 then show_line(r, table.remove(r.coda, 1)) end
 end
 
