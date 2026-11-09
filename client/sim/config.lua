@@ -178,31 +178,31 @@ C.BOOMERANG = { damage = 18, speed = 450, range = 400, back_speed = 520, radius 
 -- on the spot. Whoever stands in the pool (radius pixels around the spot) when
 -- it appears, or walks in later, is set alight (status burn, once per turn).
 -- It lasts turns turns (the thrower's and the next); only one pool per team.
-C.TAR = { damage = 12, radius = 40, turns = 2, fuse = 4 * 60 }
+C.TAR = { damage = 45, radius = 60, turns = 3, fuse = 4 * 60 }
 -- Trapano (primary, drill): flies like the rocket until it touches terrain, then
 -- bores straight on, digging a tunnel of radius pixels at speed px/s for at most
 -- dig pixels. If it comes out into the open or touches a robot it blows up there
 -- (damage, slow); if the dig runs out inside the terrain it blows up weakly.
 C.DRILL = { speed = 560, dig_speed = 300, dig = 220, radius = 7,
-	blast = { r = 14, damage_r = 24, damage = 30, impulse = 30 },
-	inner = { r = 10, damage_r = 18, damage = 15, impulse = 20 } }
+	blast = { r = 14, damage_r = 24, damage = 60, impulse = 30 },
+	inner = { r = 10, damage_r = 18, damage = 32, impulse = 20 } }
 -- Calamita (secondary, magnet): instant pulse centred distance pixels from the
 -- user along the aim: every robot (the user too) within radius slides to the
 -- centre in ticks ticks, for a little damage (not to the user). Nothing happens
 -- if there is no ground within drop pixels under the centre (nobody is pulled
 -- over a pit: no killing with a teleport + magnet) or the centre is in terrain.
-C.MAGNET = { distance = 120, radius = 150, ticks = 30, damage = 3, drop = 120 }
+C.MAGNET = { distance = 120, radius = 150, ticks = 30, damage = 40, drop = 120 }
 -- Cannonata (secondary, cannon): the user is launched as a ballistic body at
 -- speed * power (at least min_power) with gravity times the robots', no control.
 -- It passes through robots hitting each once (damage, and pushes them away at
 -- push) and stops against terrain. Past an edge it just falls: whoever lands
 -- in the void dies, the parachute and the air jumps still work after it ends.
-C.CANNON = { speed = 640, min_power = 0.35, gravity = 0.8, damage = 25, push = 320, lift = 160 }
+C.CANNON = { speed = 640, min_power = 0.35, gravity = 0.8, damage = 40, push = 320, lift = 160 }
 -- Petardo (secondary, petard): a small bomb thrown like the Uovo that bounces and
 -- blows up on touching a robot (not the thrower in the first moments) or after
 -- fuse ticks: damage, no crater, and everyone within radius (the thrower too, for
 -- jumping) is pushed away from the centre at push, plus lift.
-C.PETARD = { damage = 8, radius = 60, push = 450, lift = 120, fuse = 90 }
+C.PETARD = { damage = 28, radius = 60, push = 450, lift = 120, fuse = 90 }
 
 -- Tactical items: usable at any moment of your own turn, repositioning
 -- included, and they don't count as attacks. Speeds in pixels per second.
