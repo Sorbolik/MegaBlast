@@ -504,6 +504,8 @@ return {
 		double_points = "OGNI PUNTO VALE DOPPIO",
 		doubled = " ×2",
 		turn_of = "Turno di %s  %s",
+		me = "TU",
+		get_ready = "PREPARATI",
 		to_tie = "+%d PER PAREGGIARE",
 		-- the gap under your token
 		tied_first = "pari col 1°",
@@ -683,7 +685,6 @@ return {
 			hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita",
 		},
 		go = "VIA!",
-		get_ready = "PREPARATI: POI TOCCA A TE",
 		your_turn = "IL TUO TURNO",
 		turn_of = "TURNO DI: %s",
 		-- the gear wheel
