@@ -196,3 +196,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 9 nov | Successione dei turni con le faccine sotto il punteggio (dorata all'ultimo giro), PREPARATI a destra del punteggio, 3-2-1 più piccolo in un cerchio con alone. | questa PR |
 | 9 nov | Faccine dei turni: la testa vera degli apprendisti che giocano (con l'elmo, in futuro), che esce dal cerchietto; targhetta a pillola come quella del matchmaking; PREPARATI scuro con bordo oro e scritta chiara. Corretto il cerchio del 3-2-1 che restava sempre sullo schermo. | questa PR |
 | 9 nov | Faccine dei turni: il cerchio sta dietro la testa e sotto resta sempre visibile; la testa parte dal cerchio e può uscire solo passando sopra (Sergio). | questa PR |
+| 9 nov | Faccine dei turni: chi ha già giocato è oscurato per intero, anche corna e orecchie che escono dal cerchio (Sergio). | questa PR |
