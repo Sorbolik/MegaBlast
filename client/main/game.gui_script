@@ -3369,9 +3369,8 @@ local function render(self, dt)
 				camera.shake(self.cam, dx, dy, FEEL.shake_base + FEEL.shake_max * math.min(1, damage / 50) ^ 2)
 				camera.punch(self.cam, FEEL.punch[tier])
 				self.fermo = math.max(self.fermo, FEEL.idle[tier])
-				-- sparks from the point of impact, the number above the head, the thud
+				-- sparks from the point of impact and the thud (the damage number is the score's: battle/score.lua)
 				impact.sparks(self.fx, v.x, v.y + game.DISEGNO_H / 2, dx, dy, tier)
-				impact.number(self.fx, v.x, v.y + scoria.altezza(r.rig), damage, tier)
 				sound.play("#colpo", { gain = 0.5 + 0.25 * tier, speed = 1.15 - 0.15 * tier + math.random() * 0.1 })
 			end
 			v.hp, v.scudo = hp, rb.shield
@@ -4442,7 +4441,7 @@ function update(self, dt)
 	frames.scope("disegno")
 	render(self, dt_world)
 	move_debris(self, dt_world)
-	impact.update(self.fx, dt_world, self.cam.s)
+	impact.update(self.fx, dt_world)
 	frames.scope_end()
 	if self.mode == "menu" then
 		home.update(self.home, dt)

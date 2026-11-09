@@ -8,23 +8,19 @@
 --   impact.nodes(s)                         -- the nodes in drawing order
 --   impact.explosion(s, x, y, r)            -- an explosion of radius r
 --   impact.sparks(s, x, y, dx, dy, tier)    -- a hit, thrown toward (dx, dy)
---   impact.number(s, x, y, damage, tier)    -- the damage, above whoever is hit
 --   impact.trail(s, dt, x, y, rate)         -- the embers a shot sheds (every frame)
---   impact.update(s, dt, cam_s)             -- every frame
+--   impact.update(s, dt)                    -- every frame
 --   impact.tier(damage)                     -- 1 small, 2 medium, 3 big
 --   impact.reset(s)                         -- new match
-local ui = require "ui.ui"
-
 local M = {}
 
 local rand, cos, sin, sqrt, exp, min, max = math.random, math.cos, math.sin, math.sqrt, math.exp, math.min, math.max
 
 -- the world's gravity (same as the debris'), in world units per second squared
 local GRAVITY = 900
-local NUMBER_LIFE = 0.9
 
 -- the size of the pool of each kind: smoke below, fire and sparks above
-local SMOKE_N, FX_N, NUMBER_N = 20, 90, 6
+local SMOKE_N, FX_N = 20, 90
 
 local FIRE0 = { 1.0, 0.95, 0.7 }    -- the core of the fire: almost white
 local FIRE1 = { 1.0, 0.35, 0.05 }   -- cooling: orange, then red
@@ -76,12 +72,7 @@ local function fill(q, x, y, vx, vy, life, s0, s1, c0, c1, a, grav, drag)
 end
 
 function M.new()
-	local s = { smoke = pool(SMOKE_N, false), fx = pool(FX_N, true), numbers = {}, number_i = 0, ember_t = 0 }
-	for k = 1, NUMBER_N do
-		local n = ui.testo("", 0, 0, 0.8)
-		gui.set_enabled(n, false)
-		s.numbers[k] = { node = n, on = false, t = 0, x = 0, y = 0, tier = 1, col = vmath.vector4(1, 1, 1, 1), pos = vmath.vector3(0, 0, 0), sc = vmath.vector3(1, 1, 1) }
-	end
+	local s = { smoke = pool(SMOKE_N, false), fx = pool(FX_N, true), ember_t = 0 }
 	return s
 end
 
@@ -89,7 +80,6 @@ function M.nodes(s)
 	local out = {}
 	for _, q in ipairs(s.smoke.list) do out[#out + 1] = q.node end
 	for _, q in ipairs(s.fx.list) do out[#out + 1] = q.node end
-	for _, q in ipairs(s.numbers) do out[#out + 1] = q.node end
 	return out
 end
 
@@ -98,7 +88,6 @@ function M.reset(s)
 		for _, q in ipairs(p.list) do q.on = false; gui.set_enabled(q.node, false) end
 		p.live = 0
 	end
-	for _, q in ipairs(s.numbers) do q.on = false; gui.set_enabled(q.node, false) end
 end
 
 -- An explosion: a fireball that blooms and cools, sparks that fly out and fall,
@@ -144,19 +133,6 @@ function M.sparks(s, x, y, dx, dy, tier)
 	end
 end
 
--- The damage over the head: it pops (overshoot), rises and fades; bigger and
--- hotter with the tier.
-function M.number(s, x, y, damage, tier)
-	s.number_i = s.number_i % NUMBER_N + 1
-	local q = s.numbers[s.number_i]
-	q.on, q.t, q.x, q.y, q.tier = true, 0, x + (rand() * 2 - 1) * 6, y, tier
-	gui.set_text(q.node, tostring(math.floor(damage + 0.5)))
-	local c = tier == 3 and FIRE1 or (tier == 2 and SPARK or FIRE0)
-	q.col.x, q.col.y, q.col.z, q.col.w = c[1], c[2], c[3], 1
-	gui.set_color(q.node, q.col)
-	gui.set_enabled(q.node, true)
-end
-
 -- The embers a shot sheds in flight (rate per second, the same at any frame
 -- rate): small, they fall behind slowly and go out.
 function M.trail(s, dt, x, y, rate)
@@ -199,31 +175,9 @@ local function advance(p, dt)
 	end
 end
 
--- cam_s: the camera's zoom, so the numbers keep the same size on screen
-function M.update(s, dt, cam_s)
+function M.update(s, dt)
 	advance(s.smoke, dt)
 	advance(s.fx, dt)
-	cam_s = cam_s or 1
-	for _, q in ipairs(s.numbers) do
-		if q.on then
-			q.t = q.t + dt
-			if q.t >= NUMBER_LIFE then
-				q.on = false
-				gui.set_enabled(q.node, false)
-			else
-				local u = q.t / NUMBER_LIFE
-				-- the pop: it comes in big and settles (the first 0.15 s), then rises
-				local pop = u < 0.17 and (1.5 - 0.5 * (u / 0.17)) or 1
-				local size = (0.8 + 0.25 * q.tier) * pop / cam_s
-				q.sc.x, q.sc.y, q.sc.z = size, size, 1
-				q.pos.x, q.pos.y = q.x, q.y + (30 + 50 * (1 - exp(-3 * u))) / cam_s
-				q.col.w = u < 0.6 and 1 or (1 - u) / 0.4
-				gui.set_position(q.node, q.pos)
-				gui.set_scale(q.node, q.sc)
-				gui.set_color(q.node, q.col)
-			end
-		end
-	end
 end
 
 return M
