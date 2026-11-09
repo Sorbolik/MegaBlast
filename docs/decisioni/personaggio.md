@@ -150,3 +150,5 @@ sbavature; le **particelle** di scintille per ora (si possono aggiungere dopo);
 la **mesh** con più vertici (in GUI un nodo ha 4 vertici, e la piega nel frammento
 basta); staccare i capelli di Favilla in un pezzo a parte (servirebbero 9 teste
 rifatte).
+
+9 nov, dopo #233: sul telefono di Sergio su Favilla si muoveva il viso e non i capelli. Causa probabile: l'immagine caricata a parte arriva con le coordinate verticali al contrario rispetto al PC, e il basso diventa l'alto. Lo shader ora lo chiede all'immagine (un punto pieno vicino al fondo e vuoto alla stessa altezza dall'alto) e funziona nei due versi. Sul PC non cambia niente.

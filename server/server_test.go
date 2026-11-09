@@ -43,6 +43,41 @@ func TestSimPicksMapFromSeed(t *testing.T) {
 	}
 }
 
+// The aim of whoever's on turn goes in the state (only while aiming): the
+// others see them aim (Sergio, 9 Nov). A bot aims at its best move while it
+// thinks, and after THINK_MAX ticks of thinking it moves (net.lua).
+func TestAimInSnapshot(t *testing.T) {
+	sim := newTestSim(t, 42, "fossa")
+	sim.Step(Input{})
+	if s := string(sim.Snapshot(true, 1.25)); !strings.Contains(s, `"aim":1.25`) {
+		t.Fatalf("no aim in the state: %s", s)
+	}
+	if s := string(sim.Snapshot(false, 1.25)); strings.Contains(s, `"aim":`) {
+		t.Fatalf("aim without aiming: %s", s)
+	}
+	e, err := newEngine()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.L.Close()
+	e.L.SetGlobal("N", e.net)
+	err = e.L.DoString(`
+local g = N.new(5, nil, { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
+local aimed, turn, from = false, nil, 0
+while g.tick < 3000 do
+	N.step(g, false, false, false, false)
+	aimed = aimed or N.snapshot(g).aim ~= nil
+	if g.turn_no ~= turn then turn, from = g.turn_no, g.tick end
+	local acted = g.used.primary or g.used.secondary or g.used.tool
+	assert(acted or g.phase ~= "aim" or g.tick - from < 600, "a bot didn't attack within 10 s")
+end
+assert(aimed, "the bots never showed their aim")
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSimFromEmbeddedLua(t *testing.T) {
 	sim := newTestSim(t, 42, "fossa")
 	for i := 0; i < 120; i++ {
@@ -60,8 +95,8 @@ func TestSimFromEmbeddedLua(t *testing.T) {
 			G    bool `json:"g"`
 		} `json:"r"`
 	}
-	if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
-		t.Fatalf("snapshot is not valid JSON: %v\n%s", err, sim.Snapshot())
+	if err := json.Unmarshal(sim.Snapshot(false, 0), &st); err != nil {
+		t.Fatalf("snapshot is not valid JSON: %v\n%s", err, sim.Snapshot(false, 0))
 	}
 	if st.Phase != "aim" || st.Cur != 1 || len(st.R) != 2 || !st.R[0].G || st.R[0].HP != st.R[0].MH || st.R[0].MH == 0 {
 		t.Fatalf("unexpected state: %+v", st)
@@ -95,7 +130,7 @@ func TestEarnedTeleportsFirstTurn(t *testing.T) {
 		var st struct {
 			O []json.RawMessage `json:"o"`
 		}
-		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
+		if err := json.Unmarshal(sim.Snapshot(false, 0), &st); err != nil {
 			t.Fatal(err)
 		}
 		return len(st.O)
@@ -157,7 +192,7 @@ func TestHookShotInSnapshot(t *testing.T) {
 	}
 	flying, ended := 0, false
 	for i := 0; i < 60 && !ended; i++ {
-		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
+		if err := json.Unmarshal(sim.Snapshot(false, 0), &st); err != nil {
 			t.Fatal(err)
 		}
 		if st.R[0].GS && st.R[0].GY != 0 {
@@ -189,7 +224,7 @@ func TestSwapSecondAttack(t *testing.T) {
 	}
 	read := func() state {
 		var st state
-		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
+		if err := json.Unmarshal(sim.Snapshot(false, 0), &st); err != nil {
 			t.Fatal(err)
 		}
 		return st
@@ -228,7 +263,7 @@ func TestEngineReuseIsDeterministic(t *testing.T) {
 			}
 			sim.Events()
 		}
-		return sim.Snapshot()
+		return sim.Snapshot(false, 0)
 	}
 	fresh := play(newTestSim(t, 7, "pavimento"))
 	e, err := newEngine()
@@ -611,7 +646,7 @@ func TestPairAndFinalRoundInSnapshot(t *testing.T) {
 	}
 	read := func() state {
 		var st state
-		if err := json.Unmarshal(sim.Snapshot(), &st); err != nil {
+		if err := json.Unmarshal(sim.Snapshot(false, 0), &st); err != nil {
 			t.Fatal(err)
 		}
 		return st
