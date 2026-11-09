@@ -176,6 +176,13 @@ Per provarli sul PC: `python3 strumenti/simula/eventi_prova.py` scrive
 `simulazione/eventi.json` col calendario di prova alle date di oggi, poi
 `go run ./server -eventi simulazione/eventi.json`.
 
+## Spawn casuali e conto 3-2-1 (9 nov)
+
+`N.new` (server/net.lua) passa a `game.new` `random_spawns = true` e `intro = game.INTRO_TICKS`
+(180 tick): i punti di partenza li sceglie la simulazione dal seme, uguali sul client, che
+passa le stesse opzioni nello `start`. Nello stato c'è `ai` (tick di conto rimasti, assente a conto finito):
+il client lo mette in `g.intro` per mostrare 3-2-1 e fermare i comandi.
+
 ## Server in pari con main
 
 Regola permanente di Sergio (29 ottobre): il server è sempre in pari con

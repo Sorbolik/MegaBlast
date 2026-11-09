@@ -442,12 +442,13 @@ func TestOnlineMatch(t *testing.T) {
 	if r0["sw"] != w2 || r1["sw"] != d["offer2"].([]any)[0].(string) {
 		t.Fatalf("wrong picked secondaries: %v %v", r0["sw"], r1["sw"])
 	}
-	// walking is slow (5 U, 38.8 px/s): one second is enough
+	// the 3-2-1 first (3 s, game.INTRO_TICKS), then walking is slow (5 U, 38.8 px/s): one second is enough
+	time.Sleep(3200 * time.Millisecond)
 	a.send(`{"t":"in","l":false,"r":true}`)
 	time.Sleep(1000 * time.Millisecond)
 	a.send(`{"t":"in","l":false,"r":false}`)
 	moved := false
-	for i := 0; i < 40 && !moved; i++ {
+	for i := 0; i < 600 && !moved; i++ {
 		st := b.waitFor(`"state"`)
 		x := st["r"].([]any)[0].(map[string]any)["x"].(float64)
 		moved = x > x0+10

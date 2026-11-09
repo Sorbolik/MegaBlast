@@ -54,7 +54,7 @@ end
 -- players: like opts.players of game.new (teams and draft picks);
 -- r: the rules of the queue's event (sim/rules.lua), nil outside events
 function N.new(seed, map, players, r)
-	local g = game.new(seed, map, rules.opzioni(r, { players = players, random_spawns = true }))
+	local g = game.new(seed, map, rules.opzioni(r, { players = players, random_spawns = true, intro = game.INTRO_TICKS }))
 	g:pop_events()
 	g.carves = {} -- terrain digs, for whoever reconnects
 	for i, p in ipairs(players or {}) do
@@ -178,7 +178,7 @@ function N.snapshot(g, aim)
 	if g.phase ~= "aim" then aim = nil end
 	local used = (g.used.primary and 1 or 0) + (g.used.secondary and 2 or 0) + (g.used.tool and 4 or 0)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
-		u = used, mt = g.match_left, fr = g.final_round, gr = g.round,
+		u = used, mt = g.match_left, ai = g.intro > 0 and g.intro or nil, fr = g.final_round, gr = g.round,
 		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
 		c = crates, pl = placed, hl = heals, aim = aim }
 end

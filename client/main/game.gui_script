@@ -466,10 +466,31 @@ end
 -- you all play). In the lessons it stays until you touch the controls
 -- (sim/missions.lua, attesa), then fades.
 local function announce_turn(self, robot)
+	-- during the 3-2-1 nobody is on turn yet: VIA! announces it (CR.countdown)
+	if self.g and self.g.intro and self.g.intro > 0 then return end
 	local my_own = (self.mode == "online" and robot == self.me)
 		or (self.mode == "local" and (next(self.bots) or self.missione) and robot == 1)
-	gui.set_text(self.announcement, my_own and TM.your_turn or TM.turn_of:format(string.upper(self.names[robot])))
+	local text = my_own and TM.your_turn or TM.turn_of:format(string.upper(self.names[robot]))
+	-- the turn before yours: a warning under the name of whoever plays
+	local g = self.g
+	local nxt = g.order[g.order_pos % #g.order + 1]
+	if not my_own and nxt ~= robot and ((self.mode == "online" and nxt == self.me)
+		or (self.mode == "local" and (next(self.bots) or self.missione) and nxt == 1)) then
+		text = text .. "\n" .. TM.get_ready
+	end
+	gui.set_text(self.announcement, text)
 	gui.cancel_animations(self.announcement, "color")
+	-- your own turn is the only one that bursts: bigger, lands with a bump, shakes the phone
+	-- and ticks (Sergio, 9 Nov: "spesso inizia il tuo turno e nemmeno te ne accorgi")
+	gui.cancel_animations(self.announcement, "scale")
+	if my_own then
+		local big = self.announce_scale * 1.8
+		gui.set_scale(self.announcement, big * 1.6)
+		gui.animate(self.announcement, "scale", big, gui.EASING_OUTBACK, 0.3)
+		sound.play("#punto", { speed = 0.5 })
+	else
+		gui.set_scale(self.announcement, self.announce_scale)
+	end
 	local c = self.colors[robot]
 	gui.set_color(self.announcement, vmath.vector4(c.x, c.y, c.z, 1))
 	self.banner_wait = my_own and self.missione ~= nil and self.missione.attesa
@@ -478,6 +499,7 @@ local function announce_turn(self, robot)
 	end
 	-- once it has vanished (the swap button sits above it and waits)
 	self.banner_end = self.clock + 2
+	return my_own
 end
 
 -- The wheel open or closed: RIPROVA (not online), ESCI DALLA PARTITA and,
@@ -511,6 +533,11 @@ local function set_controls_visible(self, visible)
 		hud.swap_update(self.scambio, false)
 		gui.cancel_animations(self.announcement, "color.w")
 		gui.set_color(self.announcement, vmath.vector4(1, 1, 1, 0))
+		if self.countdown then
+			gui.cancel_animations(self.countdown, "color.w")
+			gui.set_color(self.countdown, vmath.vector4(1, 1, 1, 0))
+		end
+		self.count_n = nil
 		self.banner_wait = false
 	end
 	gui.set_enabled(self.chosen_glow, false)
@@ -1378,7 +1405,7 @@ local function handle_event(self, e)
 			self.hand_of = who
 		end
 		PAD.release_controls(self)
-		announce_turn(self, e.robot)
+		if announce_turn(self, e.robot) and not self.missione then CP.vibrate() end
 	elseif e.type == "death" then
 		-- collapses and fades by itself; after 1.5 s it reappears elsewhere, in the same turn
 		scoria.die(self.robots[e.robot].rig)
@@ -1493,6 +1520,7 @@ local function apply_state(self, s)
 	local u = s.u or 0
 	g.used.primary, g.used.secondary, g.used.tool = u % 2 == 1, u % 4 >= 2, u >= 4
 	g.match_left = s.mt or g.match_left
+	g.intro = s.ai or 0
 	-- where whoever's turn it is aims (server/net.lua): we show it, power stays secret
 	self.remote_aim = s.aim
 	for i, r in ipairs(s.r) do
@@ -1631,7 +1659,7 @@ local function on_server_message(self, m)
 		-- players: the robots' teams and their draft picks,
 		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
 		-- regole: those of the queue's event (sim/rules.lua), as on the server
-		local opts = { players = m.players, random_spawns = true }
+		local opts = { players = m.players, random_spawns = true, intro = game.INTRO_TICKS }
 		if type(m.regole) == "table" then opts = menu.regole.opzioni(m.regole, opts or {}) end
 		new_match(self, m.seed, m.map, opts)
 		self.g:pop_events()
@@ -2350,6 +2378,7 @@ start_local_match = function(self, picked)
 	-- random start points (sim/game.lua start_points); the simulator keeps the fixed
 	-- ones unless asked (imposta prova_spawn_casuali 1), so the old scenarios stay put
 	opts.random_spawns = not SIMULATE or config_int("megablast.prova_spawn_casuali", 0) > 0
+	opts.intro = not SIMULATE and game.INTRO_TICKS or config_int("megablast.prova_conto", 0) > 0 and game.INTRO_TICKS or nil
 	new_match(self, os.time(), self.local_map or self.mappa, opts)
 	-- prova_durata N: the match lasts N seconds (scenari/podio.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
@@ -3268,11 +3297,41 @@ local function show(node, on)
 	end
 end
 
+-- The 3-2-1 before the first turn (sim/game.lua intro): a huge digit in the colour of
+-- whoever is on the phone that lands with a bump at every second, then VIA! and, at once,
+-- the IL TUO TURNO banner (Sergio, 9 Nov: "nemmeno un secondo per capire che è iniziata")
+function CR.countdown(self, dt)
+	local g = self.g
+	local n = g.intro > 0 and math.ceil(g.intro / 60) or 0
+	local c = self.colors[bar_robot(self).id]
+	if n ~= self.count_n then
+		local was = self.count_n or 0
+		self.count_n = n
+		if n > 0 or was > 0 then
+			gui.set_text(self.countdown, n > 0 and tostring(n) or TM.go)
+			local k = n > 0 and 1 or 0.6
+			gui.cancel_animations(self.countdown, "scale")
+			gui.cancel_animations(self.countdown, "color.w")
+			gui.set_color(self.countdown, vmath.vector4(c.x, c.y, c.z, 1))
+			gui.set_scale(self.countdown, self.count_scale * k * 1.5)
+			gui.animate(self.countdown, "scale", self.count_scale * k, gui.EASING_OUTBACK, 0.35)
+			if n == 0 then
+				gui.animate(self.countdown, "color.w", 0, gui.EASING_INCUBIC, 0.5, 0.35)
+				announce_turn(self, g.current)
+				CP.vibrate()
+			else
+				sound.play("#punto", { speed = 0.6 + 0.2 * (3 - n) })
+			end
+		end
+	end
+end
+
 local function render(self, dt)
 	self.clock = self.clock + dt
 	local g = self.g
 	-- no match (home, screens, connecting): nothing to move
 	if not g then return end
+	if g.intro and (g.intro > 0 or self.count_n) then CR.countdown(self, dt) end
 	local k, pa, pb = pose_k(self), self.pose_a, self.pose_b
 	for i, rb in ipairs(g.robots) do
 		local v, r, ra, rb2 = self.view[i], self.robots[i], pa.r[i], pb.r[i]
@@ -4086,6 +4145,10 @@ function init(self)
 	-- and above the head of whoever plays (the bots comment over their heads)
 	self.message = label(W / 2, H / 2 + 140, "", 1.6)
 	self.announcement = label(W / 2, H / 2 - 150, "", 2.2)
+	self.announce_scale = gui.get_scale(self.announcement)
+	self.countdown = label(W / 2, H / 2 + 20, "", 36)
+	gui.set_color(self.countdown, vmath.vector4(1, 1, 1, 0))
+	self.count_scale = gui.get_scale(self.countdown)
 	gui.set_color(self.announcement, vmath.vector4(1, 1, 1, 0))
 	-- the wheel at the top left, in every match: next to it it opens RIPROVA (not
 	-- online) and ESCI DALLA PARTITA, which close by tapping elsewhere (no windows

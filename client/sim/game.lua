@@ -303,6 +303,7 @@ end
 
 -- opts.ammo = { grenade = 2, ... } starting shots of crate weapons (for tests)
 -- opts.crate_every = turns between one crate and the next (without: CRATE_CHANCE each turn)
+-- opts.intro = ticks of the 3-2-1 before the first turn (M.INTRO_TICKS in the real matches); step does nothing until it runs out
 -- opts.random_spawns = true: random start points (M.start_points); the real matches, not the campaign
 -- opts.heals = false: no healing circles (the lessons)
 -- opts.hp = starting life (stats.max_hp if missing; for tests)
@@ -411,6 +412,7 @@ function M.new(seed, map_id, opts)
 	g.crate_chance = not opts.crate_every and M.CRATE_CHANCE or nil
 	g.turn_no = 0
 	g.order_pos = 1
+	g.intro = opts.intro or 0
 	g:start_turn(g.order[1])
 	return g
 end
@@ -749,6 +751,7 @@ end
 -- START_ENEMY px from every enemy and START_MATE px from a teammate (the distances
 -- shrink by 20% when a draw finds no room). Of START_TRIES draws the one with the most
 -- even lonely-ness between teams is kept. Drawn from the seed: client and server agree.
+M.INTRO_TICKS = 180
 M.START_ENEMY, M.START_MATE, M.START_TRIES, M.START_SKY = 400, 300, 8, 240
 
 function M.find_start_spots(t)
@@ -2918,6 +2921,11 @@ function M:step(input)
 	if self.phase == "over" then return end
 	input = input or NO_INPUT
 	self.tick = self.tick + 1
+	-- the 3-2-1 before the first turn (opts.intro): nothing moves, nothing counts
+	if self.intro > 0 then
+		self.intro = self.intro - 1
+		return
+	end
 	-- match time only goes down during turns: while waiting for shots and robots
 	-- to settle it's stopped (Sergio, 30 Oct)
 	if self.match_left > 0 and self.phase ~= "settle" then
