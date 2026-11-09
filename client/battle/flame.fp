@@ -63,8 +63,15 @@ void main()
     mediump float hair = step(127.5, sec);
     highp float t = sec - hair * 128.0 + var_color.r / a;
 
+    // Dov'è il basso nell'immagine: sul PC le coordinate scendono, sul telefono
+    // l'immagine caricata a parte può arrivare con le coordinate che salgono (9 nov:
+    // su Favilla si muoveva il viso e non i capelli). Lo si chiede all'immagine:
+    // un punto pieno vicino al fondo e vuoto alla stessa altezza dall'alto.
+    highp vec2 probe = hair < 0.5 ? vec2(0.5, 0.03) : vec2(0.35, 0.08);
+    mediump float down = step(texture(texture_sampler, vec2(probe.x, probe.y)).a,
+                              texture(texture_sampler, vec2(probe.x, 1.0 - probe.y)).a);
     // y da 0 (giù) a 1 (su)
-    highp vec2 p = vec2(var_texcoord0.x, 1.0 - var_texcoord0.y);
+    highp vec2 p = vec2(var_texcoord0.x, mix(var_texcoord0.y, 1.0 - var_texcoord0.y, down));
 
     mediump float w;
     highp vec2 d;
@@ -90,7 +97,7 @@ void main()
     }
 
     highp vec2 q = p - d;
-    mediump vec4 c = texture(texture_sampler, vec2(q.x, 1.0 - q.y), -0.5);
+    mediump vec4 c = texture(texture_sampler, vec2(q.x, mix(q.y, 1.0 - q.y, down)), -0.5);
     // fuori dall'immagine non c'è niente (i bordi sono trasparenti)
     c *= step(0.0, q.x) * step(q.x, 1.0) * step(0.0, q.y) * step(q.y, 1.0);
     mediump float white = 1.0 - var_color.b / a;
