@@ -18,7 +18,7 @@ import (
 // Protocol version: change it together with PROTOCOL in
 // client/main/game.gui_script every time the messages change in a way an old
 // client wouldn't understand.
-const protocolVersion = 8
+const protocolVersion = 9
 
 type Config struct {
 	Node           string // node name, goes into tokens: a load balancer can send whoever comes back to the right node

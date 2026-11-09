@@ -17,12 +17,12 @@ const (
 
 // Message from a client:
 //
-//	{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}
+//	{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2}]}}
 //	                                    first message: protocol version, queue ("1v1",
 //	                                    "2v2", "ffa" or the id of an event with its queue, GET /eventi)
 //	                                    and card (level and badges, the others see them)
-//	{"t":"hello","v":8,"tok":"..."}    or: I'm back in the match I dropped from
-//	{"t":"hello","v":8,"privata":"nuova"} or "privata":"4821": I open a private room,
+//	{"t":"hello","v":9,"tok":"..."}    or: I'm back in the match I dropped from
+//	{"t":"hello","v":9,"privata":"nuova"} or "privata":"4821": I open a private room,
 //	                                    or join the one with that code (private.go, with its messages)
 //	{"t":"pick","w":"shards"}           start-of-match draft: one primary and one secondary
 //	                                    (the weapon tells the category; can change until time's up)
@@ -35,8 +35,8 @@ const (
 //
 // "j" says whether jump is still held down: releasing it while rising makes the jump short.
 // "w" is the weapon: "missile" (if missing), "sword", "teleport", a secondary picked
-// at the start ("eagle", "mallet", "lunge", "bellows") or a crate weapon ("grenade",
-// "shards", "punch", "sniper": the simulation only uses it if the robot has shots).
+// at the start ("eagle", "mallet", "lunge", "bellows", "magnet", "cannon", "petard") or a crate
+// weapon ("grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill"): the simulation only uses it if the robot has shots.
 type clientMsg struct {
 	T    string  `json:"t"`
 	L    bool    `json:"l"`

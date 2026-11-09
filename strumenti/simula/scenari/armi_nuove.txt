@@ -1,0 +1,45 @@
+# Le tre primarie nuove (Falcetto, Pozza di Pece, Trapano) e il Petardo, la
+# secondaria. Con prova_nuove 1 e prova_secondaria petard la barra ha Lanciarune
+# 506, Falcetto 412, Pozza di Pece 318, Trapano 224 a sinistra e Lama 774,
+# Petardo 868 a destra (si toccano nella barra).
+imposta prova_nuove 1
+imposta prova_secondaria petard
+imposta zoom 2
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_barra
+tocca 412 62                        # Falcetto
+annulla 120 60 02_falcetto_in_mano
+mira 150 0 0.4                      # Falcetto dritto verso il nemico
+aspetta 0.3
+aspetta 0.4
+foto 03_falcetto_in_volo
+tocca 868 62                        # Petardo
+annulla 120 60 04_petardo_in_mano
+mira 120 90 0.3                     # Petardo
+aspetta 0.3
+aspetta 0.5
+foto 05_petardo_in_volo
+aspetta_stato turno=2 fase=aim 30
+aspetta 0.5
+tocca 318 62                        # Pozza di Pece
+annulla 120 60 06_pozza_in_mano
+aspetta 0.6
+mira 120 100 0.3                    # Pozza di Pece
+aspetta 0.3
+aspetta 1.6
+foto 07_pozza
+aspetta_stato turno=1 fase=aim 30
+aspetta 0.5
+tocca 224 62                        # Trapano
+annulla 120 60 08_trapano_in_mano
+aspetta 0.6
+mira 150 20 0.4                     # Trapano: nel terreno scava
+aspetta 0.3
+aspetta 0.3
+foto 09_trapano_scava
+aspetta_stato turno=2 fase=aim 30
+foto 10_dopo

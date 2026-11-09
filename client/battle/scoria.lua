@@ -332,6 +332,7 @@ end
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
 	punch = -0.9, eagle = -0.6, hook = -0.4, bellows = -0.3,
+	boomerang = -0.5, tar = -0.5, drill = -0.3, magnet = -0.4, cannon = -0.3, petard = -0.5,
 	mallet = 2,  -- on the shoulder: as long as it is, pointing down it would go into the terrain
 	lunge = 1.3,  -- straight up: pointing down it would go into the terrain
 }

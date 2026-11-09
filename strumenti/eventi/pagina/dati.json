@@ -8,21 +8,27 @@
 	},
 	"nomi": {
 		"bellows": "MANTICE",
+		"boomerang": "FALCETTO",
+		"cannon": "CANNONATA",
+		"drill": "TRAPANO",
 		"eagle": "TONANTE",
 		"grenade": "UOVO DI FIAMMA",
 		"hook": "RAMPINO",
 		"lunge": "AFFONDO",
+		"magnet": "CALAMITA",
 		"mallet": "MAGLIO",
 		"missile": "LANCIARUNE",
 		"parachute": "PARACADUTE",
+		"petard": "PETARDO",
 		"punch": "PUGNO DEL TITANO",
 		"shards": "SCIAME DI SCHEGGE",
 		"sniper": "CECCHINO",
 		"sword": "LAMA",
+		"tar": "POZZA DI PECE",
 		"teleport": "TELETRASPORTO",
 		"trampoline": "TRAMPOLINO"
 	},
-	"primarie": ["grenade", "shards", "punch", "sniper"],
+	"primarie": ["grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill"],
 	"punti": {
 		"crown": 25,
 		"crown_rounds": 1,
@@ -37,7 +43,7 @@
 		"self_death": -30,
 		"trap": 10
 	},
-	"secondarie": ["eagle", "mallet", "lunge", "bellows"],
+	"secondarie": ["eagle", "mallet", "lunge", "bellows", "magnet", "cannon", "petard"],
 	"sempre": ["missile", "sword"],
 	"tetto_max": 29
 }

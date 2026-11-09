@@ -830,7 +830,7 @@ local function attempt_over(r, g)
 	if not t or r.esito then return end
 	local rb = g.robots[PLAYER]
 	local frozen = not (g.projectile or g:shards_flying() or #g.orbs > 0) and (rb.dead or rb.grounded
-		and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch or rb.lunge or rb.mallet or rb.recoil))
+		and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch or rb.lunge or rb.mallet or rb.recoil or rb.cannon or rb.pull))
 	t.t = frozen and t.t + 1 or 0
 	if t.t < MISS_TICK then return end
 	r.shot = nil
@@ -949,7 +949,7 @@ local NO_AIM = { parachute = true, shield = true, swap = true }
 local function settled(g, rb)
 	if g.projectile or g.burst or g:shards_flying() or #g.orbs > 0 then return false end
 	return rb.dead or rb.grounded and not (rb.hooked or rb.hook_shot or rb.swing or rb.punch
-		or rb.lunge or rb.mallet or rb.recoil or rb.parachute)
+		or rb.lunge or rb.mallet or rb.recoil or rb.cannon or rb.pull or rb.parachute)
 end
 
 -- she can always use the move she shows: the weapon, an orb, a parachute
