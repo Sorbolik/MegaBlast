@@ -37,7 +37,7 @@ Nelle sessioni cloud `curl` verso defold.com è bloccato: apri i link con WebFet
 ## Skill gamedev generali
 
 Skill in inglese prese da [awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills)
-(licenza Apache-2.0), installate il 9 nov con
+(licenza Apache-2.0, testo e NOTICE in [licenze/](licenze/)), installate il 9 nov con
 `npx skills add gamedev-skills/awesome-gamedev-agent-skills -a claude-code --copy`
 (`skills-lock.json` alla radice: `npx skills update -p` le aggiorna). Sono tecniche
 generali: gli esempi sono in GDScript, C# o GLSL, vanno tradotti in Lua e Defold. Se
