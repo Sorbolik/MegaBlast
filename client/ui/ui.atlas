@@ -158,9 +158,6 @@ images {
   image: "/assets/ui/favilla_p.png"
 }
 images {
-  image: "/assets/ui/fiamma_p.png"
-}
-images {
   image: "/assets/ui/stella_p.png"
 }
 images {

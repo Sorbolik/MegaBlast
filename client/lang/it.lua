@@ -504,7 +504,6 @@ return {
 		double_points = "OGNI PUNTO VALE DOPPIO",
 		doubled = " ×2",
 		turn_of = "Turno di %s  %s",
-		me = "TU",
 		get_ready = "PREPARATI",
 		turn_row = "TURNO:",
 		to_tie = "+%d PER PAREGGIARE",
