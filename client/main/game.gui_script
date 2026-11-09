@@ -3820,7 +3820,8 @@ local function render(self, dt)
 		local cy = v.y + game.DISEGNO_H / 2
 		-- gauge or reticle, as the "mira" setting says (from the wheel)
 		local bx, by = v.x + math.cos(self.aim_angle) * game.MUZZLE, cy + math.sin(self.aim_angle) * game.MUZZLE
-		aim_name[profile.setting(self.profilo, "mira")](self.mira, bx, by, self.aim_angle, s, self.aim_power, self.colors[g.current])
+		local draw = profile.setting(self.profilo, "mira") == "mirino" and aim_name.crosshair or aim_name.needle
+		draw(self.mira, bx, by, self.aim_angle, s, self.aim_power, self.colors[g.current])
 		aim_name.tag(self.mira, bx, by, self.aim_angle, s, aim_name.degrees(self.aim_angle), self.aim_power)
 		-- a micro-vibration at every power tick, if on
 		local notch = aim_name.VIBRATE_TICKS and aim_name.notch(self.aim_power)
@@ -3855,7 +3856,8 @@ local function render(self, dt)
 			aim_name.tip(self.mira, bx, by, m.angle, s, self.colors[m.robot])
 			aim_name.trajectory_off(self.mira)
 		else
-			aim_name[profile.setting(self.profilo, "mira")](self.mira, bx, by, m.angle, s, m.power, self.colors[m.robot])
+			local draw = profile.setting(self.profilo, "mira") == "mirino" and aim_name.crosshair or aim_name.needle
+			draw(self.mira, bx, by, m.angle, s, m.power, self.colors[m.robot])
 			aim_name.tag(self.mira, bx, by, m.angle, s, aim_name.degrees(m.angle), m.power)
 			local n = HELP_POINTS
 			local pts = g:preview(m.angle, m.power, n, 4, self.preview_pts, m.weapon)
