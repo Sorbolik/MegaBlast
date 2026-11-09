@@ -265,10 +265,19 @@ local function touch_device()
 end
 
 local function server_url()
+	local u
 	if sys.get_config_string then
-		return sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
+		u = sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
+	else
+		u = sys.get_config("megablast.server_url", DEFAULT_SERVER)
 	end
-	return sys.get_config("megablast.server_url", DEFAULT_SERVER)
+	if html5 then
+		local h = html5.run("window.location.hostname")
+		if h and h ~= "" and h ~= "127.0.0.1" and h ~= "localhost" then
+			u = u:gsub("127%.0%.0%.1", h):gsub("localhost", h)
+		end
+	end
+	return u
 end
 
 -- Terrain -----------------------------------------------------------------------
@@ -359,10 +368,15 @@ local function paint_terrain(self)
 	local buf = self.mask_buf or buffer.create(TW * TH, MASK_FORMAT)
 	local st = buffer.get_stream(buf, RGBA)
 	-- buffer.create doesn't clear the memory: we write every cell
+	-- alpha is always 255: written only in a new buffer (buffer.create doesn't
+	-- clear the memory); r, g and b (the crater edge) every time
+	if not self.mask_buf then
+		for j = 4, TW * TH * 4, 4 do st[j] = 255 end
+	end
 	for i = 1, TW * TH do
 		local v = data[i] ~= 0 and 255 or 0
 		local j = i * 4 - 3
-		st[j], st[j + 1], st[j + 2], st[j + 3] = v, v, 255, 255
+		st[j], st[j + 1], st[j + 2] = v, v, 255
 	end
 	self.mask_stream = st
 	self.mask_buf = buf
@@ -5341,7 +5355,7 @@ function CP.on_input(self, action_id, action)
 		return true
 	end
 	-- the queue's pill: a tap goes back to the room (not in a match: the finger is playing)
-	if action_id == hash("touch") and action.pressed and CP.queue_tap(self, action.x, action.y) then return true end
+	if action_id == ACTION.TOUCH and action.pressed and CP.queue_tap(self, action.x, action.y) then return true end
 	local modo, obj = PAD.schermo(self)
 	local r = PAD.on_input(self, action_id, action)
 	-- A finger that changes screen by touching down doesn't also touch the next

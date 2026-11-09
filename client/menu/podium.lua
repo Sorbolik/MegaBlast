@@ -185,7 +185,7 @@ end
 function M.on_input(p, action_id, action)
 	-- the tag is open: a tap (or a button) closes it
 	if p.carta then
-		if action.pressed and (action_id == hash("touch") or action_id == ui.PAD) then close_card(p) end
+		if action.pressed and (action_id == ui.TOUCH or action_id == ui.PAD) then close_card(p) end
 		return nil
 	end
 	local ui_action = ui.tocco(p.buttons, action_id, action)

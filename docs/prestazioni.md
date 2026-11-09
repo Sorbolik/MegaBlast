@@ -273,6 +273,28 @@ lavora 1-3 ms: è il disegno di llvmpipe in un frame in cui un bot ha pensato. I
 lavoro di Lua più lungo nella Forgia scende del 40%. Il banco non cambia (la
 simulazione e il bot non sono toccati).
 
+### Fase 2: la memoria (9 nov)
+
+- Il bot riusa le sue copie della partita (`bot.world(g, into)`, una per ogni punto
+  del ragionamento in `b.worlds`; `bot.hits`, che il client chiama a ogni frame
+  mirando con le armi da mischia, ne ha una sola). Prima ogni copia era una tabella
+  nuova da circa 10 KB, centinaia al secondo.
+- Hash e indirizzo della mesh calcolati una volta in `terrain.script`; `hash("touch")`
+  non più a ogni input (`ui.TOUCH`).
+- La maschera intera non riscrive più il canale alfa (sempre 255) se il buffer c'è già.
+
+| Banco, 2v2 pavimento | KB/tick bot prima | dopo | Tick medio prima | dopo |
+|---|---|---|---|---|
+| JIT spento | 6,7 | **1,0** | 0,277 ms | 0,275 ms |
+| JIT acceso | 8,0 | **2,2** | 0,10-0,11 ms | 0,10 ms |
+
+Nella Forgia del simulatore gli scatti segnati `bot` scendono da 25 a 5 e il Lua
+peggiore fra quelli da 7,5 a 2,7 ms; gli scatti `gc` restano 1-2 in tutti e due gli
+scenari. `confronta.py`: 207 partite identiche a main.
+Non toccati: la tabella dei tasti a ogni tick (la ricetta la conserva in `r.ultimo`:
+riusarla rompe le ricette, già visto il 4 nov) e la lista degli eventi della
+simulazione (pochi byte, e gira anche sul server).
+
 ## Da fare
 
 - Sergio accende il contatore sul PC e gioca: se gli scatti sono `motore` con
