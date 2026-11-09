@@ -181,6 +181,6 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 9 nov | Piano di ottimizzazione del client in fasi (misura, update, memoria, struttura, GPU), confrontato col manuale di Defold; Fase 0: banco del bot e misure di partenza. | #235 |
 | 9 nov | Fiammella viva senza fogli di animazione: lo shader piega il disegno (base ferma, punta che ondeggia, rumore che sale, altezza che respira) sulla fiamma dell'Apprendista e sulle ciocche di Favilla (viso e corna fermi); la targa sta sopra la fiamma e sopra la testa com'è nella posa da fermo. | #233 |
 | 9 nov | Online i bot pensano al massimo 2 secondi poi tirano; chi mira (persona o bot) si vede mirare. | #236 |
-| 9 nov | Fiammella viva sul telefono: lo shader capisce da solo dov'è il basso dell'immagine (su Favilla si muoveva il viso invece dei capelli). | #238 |
+| 9 nov | Fiammella viva sul telefono: lo shader capisce da solo dov'è il basso dell'immagine (su Favilla si muoveva il viso invece dei capelli). | #241 |
 | 9 nov | Prestazioni, Fase 1: col bot che pensa al massimo 4 tick di recupero per frame, disegno dei colpi senza chiamate inutili, raccoglitore a piccoli passi, accelerometro spento. | #237 |
-| 9 nov | Server: prova di carico coi bot, stato e raccoglitore più leggeri (-8% fra persone), carico medio per `/health`, stanze al worker meno carico, limite di messaggi per giocatore, rientro che non si perde. | #238 |
+| 9 nov | Server: prova di carico coi bot, stato e raccoglitore più leggeri (-8% fra persone), carico medio per `/health`, stanze al worker meno carico, limite di messaggi per giocatore, rientro che non si perde. | #241 |
