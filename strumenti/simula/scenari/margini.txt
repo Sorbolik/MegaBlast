@@ -1,0 +1,10 @@
+# Le piattaforme che escono dai muri (Sergio, 9 nov): la mappa tutta, a zoom massimo, con
+# le assi appese fuori dai muri del cortile e lo spazio di gioco un po' più largo.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+imposta prova_missione guidata
+imposta zoom 3
+aspetta 2.5
+tocca 970 116                         # AVANTI sulla cartolina
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2
+foto 01_cortile

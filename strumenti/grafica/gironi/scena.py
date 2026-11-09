@@ -3,6 +3,9 @@
 import math, random
 
 W, H = 1280, 720
+# il terreno dipinto e la maschera hanno un margine per lato (pixel della scena): vi stanno le
+# piattaforme che escono dai muri; sim/game.lua: MARGIN, 180 unità del mondo = 120 della scena
+MARGINE = 120
 
 
 def hx(c):

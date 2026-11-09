@@ -56,7 +56,7 @@ local out = {}
 for _, cap in ipairs(campaign.CAPITOLI) do
   for i, l in ipairs(cap.missioni) do
     local id = l.mappa or ("missione_" .. l.id)
-    local t = terrain.new(640, 360, 3)
+    local t = terrain.new(760, 360, 3, 60)
     maps.get(id).build(t)
     local rows = {}
     for cy = 359, 0, -1 do

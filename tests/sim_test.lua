@@ -1507,7 +1507,7 @@ do
 	run(ge, 60)
 	local ea, eb = ge.robots[1], ge.robots[2]
 	ge:hurt(eb, 5, ea)
-	eb.x, eb.y = -40, 300
+	eb.x, eb.y = -game.KILL_SIDE - 40, 300
 	ge:step()
 	check(eb.dead and ea.env_kills == 1 and eb.falls == 1, "whoever knocks someone off the map makes an environmental kill")
 	check(ea.points == 5 + config.SCORE.kill + config.SCORE.env_kill, "which is worth more than a kill by hits (" .. ea.points .. ")")
@@ -1527,7 +1527,7 @@ do
 	gs:hurt(s1, 10, s3)
 	gs.tick = gs.tick + config.KILL_CREDIT_SECONDS * 60 + 1
 	gs:pop_events()
-	s1.x, s1.y = -40, 300
+	s1.x, s1.y = -game.KILL_SIDE - 40, 300
 	gs:step()
 	local sd
 	for _, e in ipairs(gs:pop_events()) do if e.type == "death" then sd = e end end
@@ -2369,6 +2369,25 @@ do
 	end
 	local fixed = game.new(5, "pavimento", { players = config.MODES["2v2"] })
 	check(fixed.robots[1].x == 225, "random start: without the option the map's points stay (campaign)")
+end
+
+-- Wide side limits (Sergio, 9 Nov 2026): beside the map there is room for platforms and
+-- you die a long way out, so the parachute can still save you
+do
+	local m = game.new(42, "pavimento")
+	local t = m.terrain
+	check(t.ox == game.MARGIN_CELLS and t.w == game.GRID_W, "the grid has a margin beside the map")
+	check(t:solid(-60, 410),
+		"pavimento: a platform juts out of the left wall")
+	check(t:solid(game.WORLD_W + 60, 410),
+		"pavimento: a platform juts out of the right wall")
+	local rb = m.robots[1]
+	rb.x, rb.y, rb.vy, rb.grounded = -500, 800, 0, false
+	m:step()
+	check(not rb.dead, "500 units beside the map you are still alive")
+	rb.x = -game.KILL_SIDE - 10
+	m:step()
+	check(rb.dead, "far beyond the side limit you die")
 end
 
 if failures > 0 then

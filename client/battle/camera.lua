@@ -51,9 +51,12 @@ local function clamp(v, a, b)
 	return math.min(math.max(v, a), b)
 end
 
--- w, h: the screen; mw, mh: the map
-function M.new(w, h, mw, mh)
+-- w, h: the screen; mw, mh: the map; margin: the terrain beside it (platforms
+-- jutting out of the walls); reach: how far sideways a point can still be
+-- framed (where you die)
+function M.new(w, h, mw, mh, margin, reach)
 	local c = { w = w, h = h, cx = w / 2, cy = h / 2, mw = mw, mh = mh, x = mw / 2, y = mh / 2, s = 1,
+		margin = margin or 0, reach = reach or 0,
 		f = 1, f_before = nil, sc_x = 0, sc_y = 0, sc_f = 0, sc_t = 0, mx = 120, msu = 90, mgiu = 170 }
 	return c
 end
@@ -83,14 +86,15 @@ function M.from_terrain(c, t, over_it)
 			local i = cy * w + cx + 1
 			if data[i] ~= 0 and data[i + w] == 0 then
 				local y = (cy + 1) * t.cell
-				x0, x1 = x0 or cx * t.cell, cx * t.cell
+				local x = (cx - t.ox) * t.cell
+				x0, x1 = x0 or x, x
 				low, high = math.min(low or y, y), math.max(high or y, y)
 			end
 		end
 	end
 	if not x0 then return M.space(c, nil) end
-	M.space(c, math.max(0, x0 - SIDES), math.max(0, low - BELOW_TERRAIN),
-		math.min(c.mw, x1 + SIDES), math.min(c.mh, high + over_it))
+	M.space(c, math.max(-c.margin, x0 - SIDES), math.max(0, low - BELOW_TERRAIN),
+		math.min(c.mw + c.margin, x1 + SIDES), math.min(c.mh, high + over_it))
 end
 
 -- screen pixels that framing two points leaves free at the edges (sides,
@@ -102,7 +106,7 @@ end
 local function bounds(c, whole_map)
 	local sp = not whole_map and c.space
 	if sp then return sp.x0, sp.y0, sp.x1, sp.y1 end
-	return 0, 0, c.mw, c.mh
+	return -c.margin, 0, c.mw + c.margin, c.mh
 end
 
 -- the zoom at which the play space (or, with whole_map, the map) fits between
@@ -244,7 +248,7 @@ end
 -- they fit, otherwise zooms out just enough (at most the farthest zoom).
 -- The center sits in the part of the screen not covered by the HUD.
 function M.frame_on(c, dt, ax, ay, bx, by, s)
-	local x0, x1 = math.max(0, math.min(ax, bx)), math.min(c.mw, math.max(ax, bx))
+	local x0, x1 = math.max(-c.reach, math.min(ax, bx)), math.min(c.mw + c.reach, math.max(ax, bx))
 	local y0, y1 = math.max(0, math.min(ay, by)), math.min(c.mh, math.max(ay, by))
 	local needs = math.min((c.w - 2 * c.mx) / math.max(1, x1 - x0),
 		(c.h - c.msu - c.mgiu) / math.max(1, y1 - y0))

@@ -1,0 +1,8 @@
+# Le piattaforme che escono dai muri sulla Forgia (pavimento) e a zoom massimo.
+imposta prova_vignette no
+imposta zoom 3
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2
+foto 01_forgia

@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(QUI, "gironi"))
 from tavole import FORGIA                                      # noqa: E402
 from mondo import blocco, scheggia, fungo, arco                # noqa: E402
 from volume import forma                                       # noqa: E402
-from scena import mix, W, H                                    # noqa: E402
+from scena import mix, W, H, MARGINE                                    # noqa: E402
 from dipinto import piani, raggi, grade, DEFS, GRUPPI          # noqa: E402
 from temi import TEMI                                          # noqa: E402
 import cortile                                                 # noqa: E402
@@ -50,6 +50,10 @@ SUOLO = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (62
          (1236, 500), (1236, 330), (1280, 330), (1280, 760), (0, 760)]
 SOPRA = [scheggia(110, 300, 130, 50), blocco(300, 180, 90, 28), fungo(380, 330, 180, 26, 170, 22),
          scheggia(590, 250, 110, 44), scheggia(690, 410, 100, 40), blocco(960, 230, 140, 38), arco(960, 370, 230, 130, 30, 40)]
+# le piattaforme che escono dai muri, fuori dalla mappa (Sergio, 9 nov): dove ci si salva dopo
+# una caduta di lato o un teletrasporto sbagliato; sono nel margine della maschera e del dipinto
+FUORI = [blocco(-110, 430, 110, 34), scheggia(-70, 310, 70, 34),
+         blocco(1280, 430, 110, 34), scheggia(1280, 310, 70, 34)]
 TRAVI = [(400, 140, 140, 16), (740, 330, 130, 16)]
 SX = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680, 760), (0, 760)]
 DX = [(790, 560), (860, 560), (920, 500), (1236, 500), (1236, 330), (1280, 330), (1280, 760), (790, 760)]
@@ -67,8 +71,8 @@ def lava(r):
 
 
 MAPPE = {
-    "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA, travi=TRAVI),
-    "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava),
+    "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA + FUORI, travi=TRAVI),
+    "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA + FUORI, travi=TRAVI, sotto=lava),
 }
 # le mappe disegnate a parte, col loro sfondo: terreno svg e maschera
 ALTRE = {"cortile": (cortile.mappa, cortile.maschera, "cortile")}
@@ -165,16 +169,17 @@ def rendi(lavori, tmp):
 
 
 def maschera(g, nome, disegna=None):
-    """640 x 360 celle (scena x 0,5): bianco la terra, rosso l'acciaio."""
-    im = Image.new("RGB", (640, 360), "black")
+    """760 x 360 celle (scena x 0,5, più il margine per lato): bianco la terra, rosso l'acciaio."""
+    im = Image.new("RGB", (640 + MARGINE, 360), "black")
+    o = MARGINE * .5
     if disegna:
         disegna(im)
     else:
         d = ImageDraw.Draw(im)
         for p in forma(g["isole"], g.get("stile")):
-            d.polygon([(x * .5, y * .5) for x, y in p], fill="white")
+            d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="white")
         for x, y, w, h in g.get("travi", []):
-            d.rectangle([x * .5, y * .5, (x + w) * .5 - 1, (y + h) * .5 - 1], fill="red")
+            d.rectangle([x * .5 + o, y * .5, (x + w) * .5 + o - 1, (y + h) * .5 - 1], fill="red")
     os.makedirs(MASCHERE, exist_ok=True)
     im.save(os.path.join(MASCHERE, nome + ".png"))
 
@@ -215,25 +220,25 @@ def main():
         sfondo_di[nome] = "forgia"
         gioco = piani(g, P)["gioco"]
         for d, k in DENSITA.items():
-            w, h = round(1920 * k["terreno"]), round(1080 * k["terreno"])
-            lavori.append((svg(gioco, (0, 0, W, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
+            w, h = round((1920 + 3 * MARGINE) * k["terreno"]), round(1080 * k["terreno"])
+            lavori.append((svg(gioco, (-MARGINE, 0, W + 2 * MARGINE, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
     for nome, (disegno, collisione, sf) in ALTRE.items():
         maschera(None, nome, collisione)
         sfondo_di[nome] = sf
         gioco = disegno()
         for d, k in DENSITA.items():
-            w, h = round(1920 * k["terreno"]), round(1080 * k["terreno"])
-            lavori.append((svg(gioco, (0, 0, W, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
+            w, h = round((1920 + 3 * MARGINE) * k["terreno"]), round(1080 * k["terreno"])
+            lavori.append((svg(gioco, (-MARGINE, 0, W + 2 * MARGINE, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
     # le arene delle missioni: il cortile dipinto, le altre d'acciaio, in coordinate del mondo
     m = {c: grade(v, "materiale", P) for c, v in FORGIA["mat"].items() if isinstance(v, str) and v.startswith("#")}
     for mid, rett in arene().items():
         if mid in cortile.LEZIONI:
-            corpo, vb, sfondo_di["missione_" + mid] = cortile.lezione(mid, rett), (0, 0, W, H), "cortile"
+            corpo, vb, sfondo_di["missione_" + mid] = cortile.lezione(mid, rett), (-MARGINE, 0, W + 2 * MARGINE, H), "cortile"
         else:
             corpo = "".join(acciaio(x, 1080 - y - h, w, h, m) for x, y, w, h in rett)
-            vb, sfondo_di["missione_" + mid] = (0, 0, 1920, 1080), "forgia"
+            vb, sfondo_di["missione_" + mid] = (-1.5 * MARGINE, 0, 1920 + 3 * MARGINE, 1080), "forgia"
         for d, k in DENSITA.items():
-            w, h = round(1920 * k["terreno"]), round(1080 * k["terreno"])
+            w, h = round((1920 + 3 * MARGINE) * k["terreno"]), round(1080 * k["terreno"])
             lavori.append((svg(corpo, vb, w, h), os.path.join(OUT, "maps", "missione_%s_%d.png" % (mid, d)), w, h))
     with tempfile.TemporaryDirectory() as tmp:
         rendi(lavori, tmp)

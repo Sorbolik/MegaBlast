@@ -54,7 +54,8 @@ local ws = websocket or (html5 and require "main.ws_browser")
 -- W, H: the game screen (16:9; on other proportions the real screen goes from
 -- schermo.x0 to x1 and from y0 to y1, ui/screen.lua); the map is game.WORLD_W x game.WORLD_H
 local W, H = screen.W, screen.H
-local TW, TH = game.WORLD_W / game.CELL, game.WORLD_H / game.CELL
+-- the mask covers the grid, the margins beside the map too (CR.OX: where world x 0 sits)
+local TW, TH = game.GRID_W, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Protocol version, equal to protocolVersion in server/server.go
@@ -301,7 +302,7 @@ local TEX_RGBA = graphics and graphics.TEXTURE_FORMAT_RGBA or resource.TEXTURE_F
 -- b: 128 on the crater's edge, 8 levels per world unit (from -16 to +16),
 -- 255 far from all of them; terrain.fp reads it this way
 -- (in a table: the script is close to the limit of 200 local variables)
-local CR = { BORDER = 128, STEP = 8, CELLS = 7 } -- CELLS: past the radius, 16 units (a cell is 3)
+local CR = { BORDER = 128, STEP = 8, CELLS = 7, OX = game.MARGIN_CELLS } -- OX: where world x 0 sits in the mask; CELLS: past the radius, 16 units (a cell is 3)
 
 -- Every crater of the match (x, y, r), to redo the b channel if the whole
 -- mask is redrawn: the list is valid for one match (self.g)
@@ -317,14 +318,14 @@ end
 function CR.dig(self, x, y, r)
 	local data, full, c = self.g.terrain.data, self.mask_stream, game.CELL
 	if not full then return 0, 0, 0, 0 end
-	local cx0 = math.max(0, math.floor((x - r) / c) - CR.CELLS)
-	local cx1 = math.min(TW - 1, math.floor((x + r) / c) + CR.CELLS)
+	local cx0 = math.max(0, math.floor((x - r) / c) + CR.OX - CR.CELLS)
+	local cx1 = math.min(TW - 1, math.floor((x + r) / c) + CR.OX + CR.CELLS)
 	local cy0 = math.max(0, math.floor((y - r) / c) - CR.CELLS)
 	local cy1 = math.min(TH - 1, math.floor((y + r) / c) + CR.CELLS)
 	for cy = cy0, cy1 do
 		local dy = (cy + 0.5) * c - y
 		for cx = cx0, cx1 do
-			local dx = (cx + 0.5) * c - x
+			local dx = (cx - CR.OX + 0.5) * c - x
 			local v = CR.BORDER + (math.sqrt(dx * dx + dy * dy) - r) * CR.STEP
 			v = math.floor(math.max(0, math.min(255, v)) + 0.5)
 			local i = cy * TW + cx + 1
@@ -1235,8 +1236,8 @@ local function handle_event(self, e)
 		local k = CR.lista(self)
 		k[#k + 1] = { x = e.x, y = e.y, r = e.r }
 		local cx0, cy0, cx1, cy1 = CR.dig(self, e.x, e.y, e.r)
-		redraw_cells(self, math.min(cx0, math.floor((e.x - e.r) / game.CELL) - 1), math.min(cy0, row_min - 1),
-			math.max(cx1, math.floor((e.x + e.r) / game.CELL) + 1), math.max(cy1, row_max + 1))
+		redraw_cells(self, math.min(cx0, math.floor((e.x - e.r) / game.CELL) + CR.OX - 1), math.min(cy0, row_min - 1),
+			math.max(cx1, math.floor((e.x + e.r) / game.CELL) + CR.OX + 1), math.max(cy1, row_max + 1))
 		explosion(self, e.x, e.y, e.r)
 		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
@@ -3972,7 +3973,7 @@ function init(self)
 
 	-- everything in the world is a child of this node, which the camera moves and
 	-- scales (apply_camera)
-	self.cam = camera.new(W, H, game.WORLD_W, game.WORLD_H)
+	self.cam = camera.new(W, H, game.WORLD_W, game.WORLD_H, game.MARGIN, game.KILL_SIDE)
 	camera.livello(self.cam, ZOOM_START)
 	-- set_view_projection also wants id and projection; the projection stays the
 	-- render's (stretch), which this doesn't change
