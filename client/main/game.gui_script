@@ -1521,6 +1521,7 @@ local function apply_state(self, s)
 		rb.lunge_vx = rb.lunge and math.cos(r.la or 0) or nil
 		rb.lunge_vy = rb.lunge and math.sin(r.la or 0) or nil
 		rb.knocked = r.kn or false
+		rb.trapped = r.tr or nil
 		rb.hooked = (r.hk or 0) > 0 and { by = r.hk } or (r.hk or 0) < 0 and { x = r.hx, y = r.hy } or nil
 		rb.hook_shot = r.gs and { x = r.gx, y = r.gy } or nil
 		rb.mallet = (r.ml or 0) > 0 and r.ml or nil
