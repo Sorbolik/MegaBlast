@@ -179,8 +179,14 @@ func (s *Sim) Over() bool {
 // JSON messages come back as new []byte: they're sent as they are to all the
 // players in the room, and nobody modifies them any more.
 
-func (s *Sim) Snapshot() []byte {
-	v, _ := s.e.call("snapshot", s.g)
+// Snapshot: the state; aiming says whether the player on turn is aiming, at
+// angle (the others see it: without it people looked frozen, Sergio 9 Nov).
+func (s *Sim) Snapshot(aiming bool, angle float64) []byte {
+	aim := lua.LValue(lua.LNil)
+	if aiming {
+		aim = lua.LNumber(angle)
+	}
+	v, _ := s.e.call("snapshot", s.g, aim)
 	return appendJSON(make([]byte, 0, 1024), v)
 }
 

@@ -28,6 +28,8 @@ const (
 //	{"t":"pick","w":"shards"}           start-of-match draft: one primary and one secondary
 //	                                    (the weapon tells the category; can change until time's up)
 //	{"t":"in","l":true,"r":false,"j":true} | {"t":"jump"} | {"t":"fire","a":1.2,"p":0.7,"w":"missile"}
+//	{"t":"aim","a":1.2} | {"t":"aim_end"}  I'm aiming at that angle (at most a few per second) | I stopped:
+//	                                    the others see it in the state ("aim"), without the power
 //	{"t":"leave"}                       I leave the match (in-match gear wheel): I don't come
 //	                                    back, the others know at once (also during the draft);
 //	                                    still queued: out of the queue, the server closes
@@ -126,6 +128,8 @@ type held struct {
 	left, right, jump, hold, fire bool
 	angle, power                  float64
 	weapon                        string
+	aiming                        bool    // aiming now ("aim"): the others see it in the state
+	aim                           float64 // at which angle
 }
 
 // seat is a place in the room: robot slot+1.
@@ -378,7 +382,8 @@ func (r *Room) Tick() bool {
 	}
 	over := r.sim.Over()
 	if r.tick%snapshotEvery == 0 || over {
-		r.broadcast(r.sim.Snapshot())
+		a := r.seats[next].in
+		r.broadcast(r.sim.Snapshot(a.aiming, a.aim))
 	}
 	r.tick++
 	if over {
@@ -406,7 +411,7 @@ func (r *Room) handle(m roomMsg) {
 		} else {
 			r.sendStart(m.slot, true)
 			r.send(m.slot, r.sim.Sync())
-			r.send(m.slot, r.sim.Snapshot())
+			r.send(m.slot, r.sim.Snapshot(false, 0))
 		}
 		r.broadcast(fmt.Appendf(nil, `{"t":"back","robot":%d}`, m.slot+1))
 	default:
@@ -429,6 +434,11 @@ func (r *Room) handle(m roomMsg) {
 			h.jump, h.hold = true, true
 		case "fire":
 			h.fire, h.angle, h.power, h.weapon = true, m.msg.A, m.msg.P, m.msg.W
+			h.aiming = false
+		case "aim":
+			h.aiming, h.aim = true, m.msg.A
+		case "aim_end":
+			h.aiming = false
 		}
 	}
 }
