@@ -18,6 +18,18 @@ embedded_instances {
   "  id: \"strappo\"\n"
   "  component: \"/battle/tear.sound\"\n"
   "}\n"
+  "components {\n"
+  "  id: \"colpo\"\n"
+  "  component: \"/battle/colpo.sound\"\n"
+  "}\n"
+  "components {\n"
+  "  id: \"boom\"\n"
+  "  component: \"/battle/boom.sound\"\n"
+  "}\n"
+  "components {\n"
+  "  id: \"ko\"\n"
+  "  component: \"/battle/ko.sound\"\n"
+  "}\n"
   ""
   position {
     x: 0.0

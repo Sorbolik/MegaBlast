@@ -55,9 +55,9 @@ local TEAMS = 4
 local TOP = 38
 local Y, HALF = 720 - TOP, 640
 local GET_W, GET_H, GET_GAP = 104, 30, 6
-local STRIP, BORDER_MINE = 6, 3
+local STRIP, BORDER_MINE = 22, 3   -- the notch in the team colour, wide enough for the flame
 -- two teams: two point tokens and the rope in between
-local VAL_W, ROPE_W, ROPE_H, ROPE_GAP = 60, 250, 12, 8
+local VAL_W, ROPE_W, ROPE_H, ROPE_GAP = 66, 250, 12, 8
 local BAND_W, BAND_STEP, BAND_V = 4, 10, 16  -- stripes of the pending points: width, spacing, px/s
 local SOFT = 60                    -- with the first points the rope moves little
 local CAPTION, SMALL = 0.8, 0.6     -- ui.testo scales
@@ -77,14 +77,17 @@ local NUMBERS = 8
 local TICK_EVERY, TICK_STEP = 0.045, 5  -- one tick every 5 points, never more often than this
 -- turn pairs: pending-points token next to the box
 local WAIT_W, WAIT_H, WAIT_GAP = 58, 24, 8
--- the turn order: a row of faces under the score (D: the playing one's diameter)
-local FACE_D, FACE_SMALL, FACE_STEP, FACE_Y = 42, 30, 62, 52
-local PLATE_H = FACE_D + 6        -- the pill's round ends (48 px image) and the face a 3 px margin inside
+-- the turn order (Sergio, 9 Nov): the faces of the red team left of the score bar and
+-- those of the blue team right of it, each next to the hourglass of its team (D: the playing
+-- one's diameter); under the bar, in the middle, "TURNO:" and a dot per player in turn order
+local FACE_D, FACE_SMALL, FACE_STEP = 48, 34, 70
 local HEAD_W, HEAD_DX, HEAD_DY = 1.1, -2, 3   -- the head's width / the disc's, and how far it is moved to centre the face in the ring
 local HEAD_LAYERS = 3             -- head, helmet, one more
-local ROW_Y, NOTICE_Y = GET_H / 2 + 74, GET_H / 2 + 100   -- turn balance and last-lap warning, under the faces
-local BELOW_Y = ROW_Y                    -- "+N PER PAREGGIARE", at the same height, under its team
-local READY_W, READY_H, READY_X = 132, 48, 975              -- PREPARATI: right of the score
+local FACES_GAP = 12             -- between the faces and the hourglass of their team
+local DOT_D, DOT_STEP, DOT_LABEL_W = 12, 18, 54   -- the turn dots
+local BELOW_Y = GET_H / 2 + 14           -- the dots and "+N PER PAREGGIARE", just under the bar
+local ROW_Y, NOTICE_Y = GET_H / 2 + 36, GET_H / 2 + 60   -- turn balance and last-lap warning, under the dots
+local READY_W, READY_H, READY_X = 132, 48, 975              -- PREPARATI: right of the blue faces (READY_X: without them)
 -- last lap: the banner and the warning before it
 local BANNER_DURATION, BANNER_W, BANNER_H = 2.6, 760, 112
 local NOTICE_BEFORE = 60 * 60                -- game ticks before the last lap
@@ -190,6 +193,13 @@ local function token(color)
 	gt.bordo = box(gt.dentro, 0, 0, GET_W + 2 * BORDER_MINE, GET_H + 2 * BORDER_MINE, ui.C.LIGHT)
 	gt.fondo = box(gt.dentro, 0, 0, GET_W, GET_H, ui.C.PANEL)
 	gt.strip = box(gt.dentro, -GET_W / 2 + STRIP / 2, 0, STRIP, GET_H, color)
+	-- the geometric flame in the notch (Sergio, 9 Nov; ui/fiamma_p.png from strumenti/grafica/ui.py)
+	gt.fiamma = gui.new_box_node(vmath.vector3(-GET_W / 2 + STRIP / 2, 0, 0), vmath.vector3(18, 18, 0))
+	gui.set_texture(gt.fiamma, "ui")
+	gui.play_flipbook(gt.fiamma, "fiamma_p")
+	gui.set_parent(gt.fiamma, gt.dentro)
+	gui.set_inherit_alpha(gt.fiamma, true)
+	gui.set_color(gt.fiamma, vmath.vector4(1, 1, 1, 0.95))
 	gt.posto = ui.testo("", -GET_W / 2 + STRIP + 6, 0, CAPTION, color, gt.dentro)
 	gui.set_pivot(gt.posto, gui.PIVOT_W)
 	-- the first one's Crown: big, resting on the token's top border
@@ -228,6 +238,7 @@ local function shape(gt, w, right)
 	gt.mio = nil
 	size(gt.fondo, w, GET_H)
 	position(gt.strip, (right and 1 or -1) * (w / 2 - STRIP / 2), 0)
+	position(gt.fiamma, (right and 1 or -1) * (w / 2 - STRIP / 2), 0)
 	if w == GET_W then
 		position(gt.valore, w / 2 - 8, 0)
 		gui.set_pivot(gt.valore, gui.PIVOT_E)
@@ -265,13 +276,23 @@ function M.nuovo(palette, tick)
 	p.rope_sign = box(p.fune, 0, 0, 3, ROPE_H + 10, ui.C.LIGHT)
 	p.rope_f = 0.5
 
-	-- the turn order: a face per player, in a soft plate; PREPARATI to the right of the score
-	p.cerchi = root_node(HALF, Y)
-	p.cerchi_fondo, p.cerchi_bordo = ui.pannello(0, -FACE_Y, 100, PLATE_H, p.cerchi, "pillola")
-	gui.set_enabled(p.cerchi_bordo, false)
-	gui.set_color(p.cerchi_fondo, vmath.vector4(0.08, 0.07, 0.1, 0.62))
+	-- the turn order: a face per player (no plate), red left and blue right of the bar
+	p.cerchi = root_node(0, Y)
 	p.facce = {}
 	for i = 1, 4 do p.facce[i] = face_token(p.cerchi) end
+	-- under the bar, in the middle: TURNO: and a dot per player in turn order, the one playing ringed in white
+	p.turni = root_node(HALF, Y - BELOW_Y)
+	p.turni_label = ui.testo(T.turn_row, 0, 0, SMALL, ui.C.LIGHT, p.turni)
+	gui.set_pivot(p.turni_label, gui.PIVOT_E)
+	p.puntini = {}
+	for i = 1, 4 do
+		local d = {}
+		d.disco = ui.disco(0, 0, DOT_D, vmath.vector4(1, 1, 1, 1), p.turni)
+		d.anello = ui.ring_node(0, 0, DOT_D + 6, 2, vmath.vector4(1, 1, 1, 1), p.turni)
+		gui.set_enabled(d.disco, false)
+		gui.set_enabled(d.anello, false)
+		p.puntini[i] = d
+	end
 	p.pronto = root_node(READY_X, Y)
 	-- dark pill with a gold edge and light letters (dark letters on the gold were hard to read)
 	local pill, pill_border = ui.pannello(0, 0, READY_W, READY_H, p.pronto, "pillola")
@@ -332,8 +353,6 @@ function M.cima(p, y1)
 	position(p.riga, HALF, Y - ROW_Y)
 	position(p.obiettivo, HALF + 215, Y)
 	position(p.avviso, HALF, Y - NOTICE_Y)
-	position(p.cerchi, HALF, Y)
-	position(p.pronto, READY_X, Y)
 	position(p.banner, HALF, y1 / 2 + 40)
 	for _, gt in ipairs(p.gettoni) do
 		if gt.x then position(gt.radice, gt.x, Y) end
@@ -344,7 +363,15 @@ function M.obiettivo(p, txt)
 	p.goal_on = txt ~= nil
 	if txt and txt ~= p.goal_written then gui.set_text(p.objective_text, txt) end
 	p.goal_written = txt
-	gui.set_enabled(p.obiettivo, p.on and p.goal_on)
+	gui.set_enabled(p.obiettivo, p.on and p.goal_on and not p.goal_covered)
+end
+
+-- The vignettes' strip covers the top of the screen: the goal under it hides, or only
+-- its tail would peek out from behind the paper
+function M.cover_goal(p, covered)
+	if p.goal_covered == covered then return end
+	p.goal_covered = covered
+	gui.set_enabled(p.obiettivo, p.on and p.goal_on and not covered or false)
 end
 
 -- Lessons that haven't explained points yet don't show them (sim/missions.lua vedi)
@@ -360,10 +387,11 @@ function M.set_enabled(p, on)
 	for t, gt in ipairs(p.gettoni) do gui.set_enabled(gt.radice, punti and p.squadre and p.squadre[t] or false) end
 	gui.set_enabled(p.fune, punti and p.rope_on or false)
 	gui.set_enabled(p.cerchi, punti)
+	gui.set_enabled(p.turni, punti)
 	gui.set_enabled(p.pronto, punti and p.ready_on or false)
 	gui.set_enabled(p.gap, punti)
 	gui.set_enabled(p.riga, punti and p.line_ticks > 0)
-	gui.set_enabled(p.obiettivo, on and p.goal_on)
+	gui.set_enabled(p.obiettivo, on and p.goal_on and not p.goal_covered)
 	gui.set_enabled(p.tie, punti and p.tie_s ~= "")
 	gui.set_enabled(p.avviso, punti and p.notice_on and not p.goal_on)
 	gui.set_enabled(p.banner, punti and p.banner_time > 0)
@@ -560,17 +588,18 @@ local function faces(p, g, human, looks)
 		if rb and not rb.gone and #who < #p.facce then who[#who + 1] = rb end
 	end
 	local playing = g.phase ~= "over" and g.current or nil
-	local key = (p.ultimo and "u" or "") .. #who .. (human or "-") .. (playing or "-")
-	for _, rb in ipairs(who) do key = key .. (rb.round_done and "1" or "0") end
+	local key = (p.rope_on and "r" or "f") .. (p.ultimo and "u" or "") .. #who .. (human or "-") .. (playing or "-")
+	for _, rb in ipairs(who) do key = key .. rb.team .. (rb.round_done and "1" or "0") end
+	-- the two groups: with two teams the first team's faces go left of the bar, the second's
+	-- right of it; otherwise all of them left, in turn order
+	local left, right = {}, {}
+	for i, rb in ipairs(who) do
+		if p.rope_on and rb.team == p.lista[2] then right[#right + 1] = i else left[#left + 1] = i end
+	end
+	local edge_l = p.x0 - FACES_GAP - (p.rope_on and (WAIT_GAP + WAIT_W) or 0)
+	local edge_r = p.x0 + 2 * VAL_W + 2 * ROPE_GAP + ROPE_W + WAIT_GAP + WAIT_W + FACES_GAP
 	if p.faces_key ~= key then
 		p.faces_key = key
-		local w = (#who - 1) * FACE_STEP + PLATE_H
-		size(p.cerchi_fondo, w, PLATE_H)
-		gui.set_enabled(p.cerchi_fondo, #who > 0)
-		-- the last lap: a golden edge round the plate
-		size(p.cerchi_bordo, w, PLATE_H)
-		gui.set_color(p.cerchi_bordo, ui.GOLD)
-		gui.set_enabled(p.cerchi_bordo, p.ultimo or false)
 		for i, f in ipairs(p.facce) do
 			local rb = who[i]
 			gui.set_enabled(f.radice, rb ~= nil)
@@ -578,7 +607,6 @@ local function faces(p, g, human, looks)
 				local now = rb.id == playing
 				local c = p.gettoni[rb.team].colore
 				face_head(f, looks and looks[rb.id] and looks[rb.id].look)
-				position(f.radice, (i - (#who + 1) / 2) * FACE_STEP, -FACE_Y)
 				f.base = now and 1 or FACE_SMALL / FACE_D
 				f.now = now
 				scale(f.radice, f.base)
@@ -599,7 +627,37 @@ local function faces(p, g, human, looks)
 				gui.set_enabled(f.tu, human == rb.id)
 			end
 		end
+		-- the dots under the bar: team colour, dimmed once played, ringed in white if playing
+		local total = DOT_LABEL_W + 8 + #who * DOT_STEP
+		position(p.turni_label, -total / 2 + DOT_LABEL_W, 0)
+		for i, d in ipairs(p.puntini) do
+			local rb = who[i]
+			gui.set_enabled(d.disco, rb ~= nil)
+			gui.set_enabled(d.anello, rb ~= nil and rb.id == playing)
+			if rb then
+				local c = p.gettoni[rb.team].colore
+				local x = -total / 2 + DOT_LABEL_W + 8 + (i - 0.5) * DOT_STEP
+				position(d.disco, x, 0)
+				position(d.anello, x, 0)
+				C.x, C.y, C.z, C.w = c.x, c.y, c.z, (rb.id ~= playing and rb.round_done) and 0.4 or 1
+				gui.set_color(d.disco, C)
+			end
+		end
 	end
+	for j, i in ipairs(left) do
+		position(p.facce[i].radice, edge_l - FACE_D / 2 - (#left - j) * FACE_STEP, 0)
+	end
+	for j, i in ipairs(right) do
+		position(p.facce[i].radice, edge_r + FACE_D / 2 + (j - 1) * FACE_STEP, 0)
+	end
+	-- PREPARATI sits right of the blue faces
+	local ready_x = READY_X
+	if p.rope_on then
+		ready_x = edge_r + (#right > 0 and ((#right - 1) * FACE_STEP + FACE_D) or 0) + 10 + READY_W / 2
+	end
+	position(p.pronto, ready_x, Y)
+	position(p.cerchi, 0, Y)
+	position(p.turni, HALF, Y - BELOW_Y)
 	local k = 1 + 0.05 * math.sin(p.ora * 5)
 	for i, f in ipairs(p.facce) do
 		if f.now and who[i] then scale(f.radice, k) end

@@ -16,10 +16,6 @@ textures {
   texture: "/battle/devil.atlas"
 }
 textures {
-  name: "esplosione"
-  texture: "/battle/explosion.tilesource"
-}
-textures {
   name: "ui"
   texture: "/ui/ui.atlas"
 }

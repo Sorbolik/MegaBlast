@@ -46,17 +46,16 @@ QUANTO = dict(lontano=0.1, medio=0.3, vicino=0.6)
 CALMO = 20 / 0.75
 
 # ---------------------------------------------------------------- i layout (scena 1280 x 720)
+# Una sporgenza per lato fuori dai muri, in pietra come i muri (Sergio, 9 nov): dove ci si salva
+# dopo una caduta di lato o un teletrasporto sbagliato; sta nel margine della maschera e del dipinto
 SUOLO = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 560), (860, 560), (920, 500),
-         (1236, 500), (1236, 330), (1280, 330), (1280, 760), (0, 760)]
+         (1236, 500), (1236, 330), (1280, 330), 
+         (1280, 380), (1398, 380), (1398, 416), (1280, 416), (1280, 760), (0, 760), (0, 416), (-118, 416), (-118, 380), (0, 380)]
 SOPRA = [scheggia(110, 300, 130, 50), blocco(300, 180, 90, 28), fungo(380, 330, 180, 26, 170, 22),
          scheggia(590, 250, 110, 44), scheggia(690, 410, 100, 40), blocco(960, 230, 140, 38), arco(960, 370, 230, 130, 30, 40)]
-# le piattaforme che escono dai muri, fuori dalla mappa (Sergio, 9 nov): dove ci si salva dopo
-# una caduta di lato o un teletrasporto sbagliato; sono nel margine della maschera e del dipinto
-FUORI = [blocco(-110, 430, 110, 34), scheggia(-70, 310, 70, 34),
-         blocco(1280, 430, 110, 34), scheggia(1280, 310, 70, 34)]
 TRAVI = [(400, 140, 140, 16), (740, 330, 130, 16)]
-SX = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680, 760), (0, 760)]
-DX = [(790, 560), (860, 560), (920, 500), (1236, 500), (1236, 330), (1280, 330), (1280, 760), (790, 760)]
+SX = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680, 760), (0, 760), (0, 416), (-118, 416), (-118, 380), (0, 380)]
+DX = [(790, 560), (860, 560), (920, 500), (1236, 500), (1236, 330), (1280, 330), (1280, 380), (1398, 380), (1398, 416), (1280, 416), (1280, 760), (790, 760)]
 
 
 def lava(r):
@@ -71,8 +70,8 @@ def lava(r):
 
 
 MAPPE = {
-    "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA + FUORI, travi=TRAVI),
-    "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA + FUORI, travi=TRAVI, sotto=lava),
+    "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA, travi=TRAVI),
+    "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava),
 }
 # le mappe disegnate a parte, col loro sfondo: terreno svg e maschera
 ALTRE = {"cortile": (cortile.mappa, cortile.maschera, "cortile")}
