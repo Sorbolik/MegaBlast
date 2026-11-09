@@ -64,6 +64,13 @@
       "computedHash": "7f5eaad7b37357830f326dc59dd050ae6257acf13582a4862e1a25adcca2d867",
       "installMode": "copy"
     },
+    "prototype-fast": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/workflows/prototype-fast/SKILL.md",
+      "computedHash": "164ddd65f1af2cd47e4c5ffd2bceaef4e429878654c869a5bbb66d8eaf09aa8f",
+      "installMode": "copy"
+    },
     "shader-programming": {
       "source": "gamedev-skills/awesome-gamedev-agent-skills",
       "sourceType": "github",

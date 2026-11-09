@@ -57,8 +57,9 @@ di `defold-core`; i livelli si scrivono nel Copione).
 | [game-ui-ux](game-ui-ux/SKILL.md) | HUD e menu su ogni schermo, ancore, zone sicure, navigazione col controller. |
 | [level-design](level-design/SKILL.md) | Misure del giocatore, ritmo tensione e pausa, percorso critico dei livelli. |
 | [audio-design](audio-design/SKILL.md) | Bus e volumi in decibel, musica che si abbassa sotto le voci, varianti dei suoni. |
+| [prototype-fast](prototype-fast/SKILL.md) | Provare una meccanica nuova in un'ora con una sola domanda e criteri scritti per tenerla o buttarla. Da noi la prova si fa con uno scenario di `strumenti/simula/scenari/` su un ramo a parte, non in una cartella `prototypes/`. |
 
-Tolte (67 skill e il router): tutte quelle per Godot, Unity, Unreal, Roblox, Bevy,
+Tolte (66 skill e il router): tutte quelle per Godot, Unity, Unreal, Roblox, Bevy,
 Phaser, PixiJS, three.js, pygame, LÖVE ed Ebitengine (non usiamo quei motori); il
 router (sceglie fra motori e skill che non abbiamo, le skill partono già dalla loro
 descrizione); i generi (platform, roguelike, RPG, carte, ecc.: MegaBlast è un gioco
@@ -67,7 +68,7 @@ di artiglieria a turni, il design sta in `docs/game_design_competitivo.md`);
 script Python con dipendenze); `procedural-gen` (mappe disegnate a mano);
 `game-ai` e `ai-behavior-trees-utility-ai` (il bot pensa provando le mosse sulla
 simulazione); `dialogue-systems` (le righe stanno nel Copione); `save-systems`;
-i flussi per game jam, itch, Steam e prototipi. Tolto anche il file per Codex
+i flussi per game jam, itch e Steam. Tolto anche il file per Codex
 `defold-core/agents/openai.yaml`.
 
 Controllo di sicurezza: solo testo, nessun hook; l'unico script
