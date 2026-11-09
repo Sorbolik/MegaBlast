@@ -120,3 +120,33 @@ Cloudflare dal main.
 - Quanto può spingersi il vettoriale: tutto ciò che è piatto con gradienti
   semplici, niente texture pittoriche (risposta data, 26 ott).
 - Ritocchi dei pezzi di base (non delle pelli): ora solo le pelli.
+
+## Fiammella viva (9 nov, Claude)
+
+Sergio (8 nov) chiede la fiammella animata «senza spritesheet» con le tecniche
+dei giochi (rumore che scorre, erosione, punta che oscilla, base ancorata) e
+lo stesso per i capelli di fuoco di Favilla. Fatto così (`client/battle/flame.fp`,
+`client/battle/flame.lua`):
+
+- La fiamma dell'Apprendista è un pezzo a parte (opzione A): il disegno
+  `art/WB-018/1_fiammella_base_2.png` (la più vicina al concept, colori pieni),
+  scontornato pulito, in `client/paintings/flame/apprendista.png` con spazio
+  attorno per ondeggiare. Lo shader piega l'immagine: la base resta ferma, più si
+  sale più si muove (due onde che salgono e un rumore morbido che scorre verso
+  l'alto), l'altezza respira del 6-9%. Tutto torna uguale ogni 16 s (niente salti).
+- Favilla: lo stesso shader sulla testa intera, con un peso che è zero su viso,
+  orecchie e corna e cresce verso le ciocche di fuori: si muovono le punte dei
+  capelli, il viso no. Niente immagini nuove: le sue nove teste vanno bene così.
+- Le immagini vive si caricano a parte (non nell'atlante), così lo shader sa dove
+  è dentro l'immagine; il tempo e il lampo del colpo arrivano dal colore del nodo,
+  come negli altri shader del gioco.
+- La targa (nome e vita) ora sta sopra la fiamma e sopra la testa com'è nella posa
+  da fermo: con le animazioni per personaggio del 7 nov copriva la fiamma e i
+  capelli di Favilla.
+
+Scartati: l'**erosione** (il rumore che buca la fiamma) e i colori a temperatura
+(blu-bianco al centro): rompono il contorno nero e il colore piatto dello stile,
+sbavature; le **particelle** di scintille per ora (si possono aggiungere dopo);
+la **mesh** con più vertici (in GUI un nodo ha 4 vertici, e la piega nel frammento
+basta); staccare i capelli di Favilla in un pezzo a parte (servirebbero 9 teste
+rifatte).

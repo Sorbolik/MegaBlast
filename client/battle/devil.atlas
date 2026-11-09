@@ -176,9 +176,6 @@ images {
   image: "/assets/skins/apprendista_testa_sconfitta_1.png"
 }
 images {
-  image: "/assets/skins/apprendista_fiamma.png"
-}
-images {
   image: "/assets/skins/favilla_ala.png"
 }
 images {

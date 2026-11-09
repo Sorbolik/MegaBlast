@@ -1,0 +1,23 @@
+# La fiammella viva (battle/flame.fp): le ciocche di Favilla e la fiamma
+# dell'Apprendista si piegano da sole, la base resta ferma sulla testa. Foto di
+# fila a pochi decimi di secondo: la forma cambia da una all'altra (meglio con
+# --scala 2). Il livello è quello di Favilla che mostra (favilla_mostra.txt).
+imposta prova_copione strumenti/simula/scenari/favilla_mostra_livello.lua
+imposta prova_vignette no
+aspetta_stato modo=local 8
+aspetta 1.2
+foto 01_favilla
+aspetta 0.2
+foto 02_favilla
+aspetta 0.2
+foto 03_favilla
+aspetta 0.2
+foto 04_favilla
+aspetta 14
+foto 05_apprendista
+aspetta 0.2
+foto 06_apprendista
+aspetta 0.2
+foto 07_apprendista
+aspetta 0.2
+foto 08_apprendista
