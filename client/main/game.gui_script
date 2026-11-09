@@ -1202,7 +1202,7 @@ local function handle_event(self, e)
 		-- them (Sergio), silent
 		-- in the first turns of the guided match the orbs fly slowly, to be watched
 		local r = self.missione
-		local slowed = r and (r.l.guidata or r.l.id == "guidata") and r.st.turni <= 3 and 2.5 or nil
+		local slowed = r and r.l.globi_lenti and r.st.turni <= 3 and 2.5 or nil
 		-- if they are our orbs the small number waits for them to arrive: each one
 		-- raises it with a flash and a "pling" a bit higher than the previous one
 		-- (orbs leaving again before arriving no longer count: start from here)
