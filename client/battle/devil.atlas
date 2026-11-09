@@ -68,9 +68,6 @@ images {
   image: "/assets/devil/coda_5_bordo.png"
 }
 images {
-  image: "/assets/devil/fiamma.png"
-}
-images {
   image: "/assets/skins/apprendista_ala.png"
 }
 images {
@@ -177,9 +174,6 @@ images {
 }
 images {
   image: "/assets/skins/apprendista_testa_sconfitta_1.png"
-}
-images {
-  image: "/assets/skins/apprendista_fiamma.png"
 }
 images {
   image: "/assets/skins/favilla_1_ala.png"
