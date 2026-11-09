@@ -15,7 +15,7 @@ tocca 1180 154                      # Trappola, ai piedi
 aspetta 0.5
 zoom 01_trappola_posata 3
 tieni destra 0.6
-aspetta_stato turno=2 fase=aim 15   # turno di Blu
+aspetta_stato turno=2 fase=aim 35   # turno di Blu (Rosso non attacca: aspetta il tempo)
 aspetta 0.5
 tocca 1180 222                      # Scudo
 aspetta 0.5
@@ -32,8 +32,10 @@ aspetta 0.4
 foto 04_lanciato
 aspetta 0.6
 foto 05_ancora_in_volo
-aspetta_stato turno=3 fase=aim 40
+aspetta_stato turno=1 fase=aim 45
 aspetta 1
 zoom 06_trappola_armata 3
-aspetta 2.5
+aspetta 4
+tocca 1210 630                      # zoom: tutta la mappa, si vedono cassa e cubo a terra
+aspetta 1
 foto 07_cubo_attrezzo
