@@ -21,7 +21,9 @@ local rand, cos, sin, sqrt, exp, min, max = math.random, math.cos, math.sin, mat
 
 -- the world's gravity (same as the debris'), in world units per second squared
 local GRAVITY = 900
-local NUMBER_LIFE = 0.9
+-- the damage number: gone before the points are born (battle/score.lua, 0.45 s)
+local NUMBER_LIFE = 0.7
+local CREAM = { 0.96, 0.92, 0.84 }   -- always cream: the team's color is for the points
 
 -- the size of the pool of each kind: smoke below, fire and sparks above
 local SMOKE_N, FX_N, NUMBER_N = 20, 90, 6
@@ -151,8 +153,7 @@ function M.number(s, x, y, damage, tier)
 	local q = s.numbers[s.number_i]
 	q.on, q.t, q.x, q.y, q.tier = true, 0, x + (rand() * 2 - 1) * 6, y, tier
 	gui.set_text(q.node, tostring(math.floor(damage + 0.5)))
-	local c = tier == 3 and FIRE1 or (tier == 2 and SPARK or FIRE0)
-	q.col.x, q.col.y, q.col.z, q.col.w = c[1], c[2], c[3], 1
+	q.col.x, q.col.y, q.col.z, q.col.w = CREAM[1], CREAM[2], CREAM[3], 1
 	gui.set_color(q.node, q.col)
 	gui.set_enabled(q.node, true)
 end
@@ -213,11 +214,12 @@ function M.update(s, dt, cam_s)
 			else
 				local u = q.t / NUMBER_LIFE
 				-- the pop: it comes in big and settles (the first 0.15 s), then rises
-				local pop = u < 0.17 and (1.5 - 0.5 * (u / 0.17)) or 1
-				local size = (0.8 + 0.25 * q.tier) * pop / cam_s
+				local pop = u < 0.17 and (1.35 - 0.35 * (u / 0.17)) or 1
+				local size = (0.55 + 0.12 * q.tier) * pop / cam_s
 				q.sc.x, q.sc.y, q.sc.z = size, size, 1
-				q.pos.x, q.pos.y = q.x, q.y + (30 + 50 * (1 - exp(-3 * u))) / cam_s
-				q.col.w = u < 0.6 and 1 or (1 - u) / 0.4
+				-- to the left of the head, the points are born to the right
+				q.pos.x, q.pos.y = q.x - 26 / cam_s, q.y + (28 + 30 * (1 - exp(-3 * u))) / cam_s
+				q.col.w = u < 0.5 and 1 or (1 - u) / 0.5
 				gui.set_position(q.node, q.pos)
 				gui.set_scale(q.node, q.sc)
 				gui.set_color(q.node, q.col)
