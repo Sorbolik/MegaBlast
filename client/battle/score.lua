@@ -591,6 +591,11 @@ local function faces(p, g, human, looks)
 				gui.set_color(f.crema, p.ultimo and ui.GOLD or ui.C.LIGHT)
 				gui.set_enabled(f.crema, now)
 				gui.set_enabled(f.velo, not now and rb.round_done or false)
+				-- already played: the head is darkened as well as the disc, or horns and ear
+				-- would stick out of the veil (Sergio, 9 Nov)
+				local dark = not now and rb.round_done
+				C.x, C.y, C.z, C.w = dark and 0.4 or 1, dark and 0.4 or 1, dark and 0.42 or 1, 1
+				for _, n in ipairs(f.pezzi) do gui.set_color(n, C) end
 				gui.set_enabled(f.tu, human == rb.id)
 			end
 		end
