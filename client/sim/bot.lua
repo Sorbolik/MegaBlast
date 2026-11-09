@@ -31,7 +31,9 @@ local M = {}
 -- cammino: path ticks tried per side; potenze: how many powers it tries for
 -- arc shots; teletrasporto, rampino, oggetti: whether it uses them; lavoro:
 -- simulation ticks tried per game tick; manca: every other attack misses on
--- purpose (aim tried on the copy so that it doesn't hit).
+-- purpose (aim tried on the copy so that it doesn't hit); think_max (none
+-- here, the server sets it, server/net.lua): game ticks of thinking after
+-- which it plays the best move found so far instead of standing still.
 -- tutorial: the guided match's "teacher" bot, which must be beaten.
 M.LEVELS = {
 	tutorial = { reaction = 90, mira = 0.02, potenza = 0.02, sbaglia = 0, walk_ticks = 200, powers = 2,
@@ -987,6 +989,7 @@ end
 local function rethink(b, wait, how)
 	b.stato, b.attesa, b.scelta, b.passo = "pensa", wait, nil, 0
 	b.co = coroutine.create(how or think)
+	b.think_from = nil
 end
 
 -- Nothing left to attack: once per turn it looks for cover, then stays still
@@ -1022,6 +1025,12 @@ local function rescue(b, g, rb)
 	return nil
 end
 
+-- Where the bot is aiming, to show it (not the simulation): at the best move
+-- found while it thinks, nil otherwise
+function M.shown_aim(b)
+	return b.stato == "pensa" and b.scelta and b.scelta.ang or nil
+end
+
 -- The bot's input for this tick (IDLE if it isn't its turn)
 function M.input(b, g)
 	-- a robot moved by a script (Favilla's demonstrations, sim/missions.lua)
@@ -1044,12 +1053,15 @@ function M.input(b, g)
 		b.attesa = b.attesa - 1
 		if coroutine.status(b.co) ~= "dead" then
 			b.lavoro = 0
+			b.think_from = b.think_from or g.tick
 			local ok, err = coroutine.resume(b.co, b, g)
 			if not ok then error(err) end
 			-- time is short: use the best move found so far
 			local within = b.piano and b.piano.attacca_entro and not (g.used.primary or g.used.secondary)
 				and g.tick - b.inizio >= b.piano.attacca_entro * 60 - 30
-			if coroutine.status(b.co) ~= "dead" and (g.window > 0 and g.window or g.timer) > 45 and not within then return IDLE end
+			local long = b.liv.think_max and b.scelta and g.tick - b.think_from >= b.liv.think_max
+			if coroutine.status(b.co) ~= "dead" and (g.window > 0 and g.window or g.timer) > 45 and not within
+				and not long then return IDLE end
 		end
 		if b.attesa > 0 then return IDLE end
 		if not b.scelta then
