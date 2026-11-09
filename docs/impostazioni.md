@@ -30,5 +30,6 @@ nel codice (se c'è già un interruttore).
 | Segui sempre il mio personaggio | Anche allo zoom massimo la camera resta sul tuo personaggio invece di mostrare tutto lo spazio di gioco | spenta | proposta di Claude a Sergio, 3 nov (zoom continuo, scelta C1) | — (`TOWARD_SPACE` in `client/battle/camera.lua`) |
 | Sblocca tutto (nascosta) | Apre subito tutti i pulsanti della home, per le prove di Sergio e per il simulatore; non si vede nella schermata delle impostazioni normale | spenta | Sergio, 5 nov («3 ok» alle proposte dello sblocco, [sblocco_online.md](sblocco_online.md)) | — (oggi la home non ha sblocchi) |
 | HUD sistemabile | Il giocatore sposta i pulsanti della battaglia | predefiniti | Sergio, 29 ott ([interfaccia](decisioni/interfaccia.md)) | — |
+| Vibrazione e suono del tuo turno | Quando inizia il tuo turno il telefono vibra e fa un tic (e VIA! dopo il conto 3-2-1) | accesa | Sergio, 9 nov («ho bisogno che ti faccia capire all'istante quando è il tuo turno») ([interfaccia](decisioni/interfaccia.md)) | — |
 
 Non ci saranno (decisioni di Sergio): qualità grafica a livelli. (La rimappatura dei tasti ora c'è, per il controller: Sergio, 30 ott.)

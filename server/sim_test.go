@@ -50,6 +50,12 @@ func newTestSimOn(t testing.TB, p *Proc, seed int64, mapID string) *Sim {
 	if _, err := s.call(b); err != nil {
 		t.Fatal(err)
 	}
+	// the 3-2-1 before the first turn (game.INTRO_TICKS): the tests start after it
+	for i := 0; i < 180; i++ {
+		if err := s.Step(Input{}); err != nil {
+			t.Fatal(err)
+		}
+	}
 	t.Cleanup(func() {
 		b := s.cmd("free")
 		b.End()

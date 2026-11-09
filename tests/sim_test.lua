@@ -2345,6 +2345,32 @@ do
 	check(rules.armi({ casse = 2 }) == nil, "rules: without weapons the draft stays the usual one")
 end
 
+-- random start points (real matches, not the campaign): far from enemies and teammates,
+-- on the ground, never under a ceiling, the same for the same seed
+do
+	for _, map in ipairs({ "pavimento", "fossa" }) do
+		for seed = 1, 60 do
+			local g = game.new(seed, map, { players = config.MODES["2v2"], random_spawns = true })
+			local g2 = game.new(seed, map, { players = config.MODES["2v2"], random_spawns = true })
+			local ok = true
+			for i, a in ipairs(g.robots) do
+				local b = g2.robots[i]
+				ok = ok and a.x == b.x and a.y == b.y and g.terrain:ground_below(a.x, a.y + 2) == a.y
+					and not g.terrain:any_solid(math.floor(a.x / 3), math.floor(a.x / 3),
+						math.floor(a.y / 3) + 1 + 40, math.floor(a.y / 3) + 80)
+				for j = i + 1, #g.robots do
+					local o = g.robots[j]
+					local d = math.sqrt((a.x - o.x) ^ 2 + (a.y - o.y) ^ 2)
+					ok = ok and d >= (a.team == o.team and 190 or 250)
+				end
+			end
+			check(ok, "random start: " .. map .. " seed " .. seed)
+		end
+	end
+	local fixed = game.new(5, "pavimento", { players = config.MODES["2v2"] })
+	check(fixed.robots[1].x == 225, "random start: without the option the map's points stay (campaign)")
+end
+
 if failures > 0 then
 	print(failures .. " tests failed")
 	os.exit(1)

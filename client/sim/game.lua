@@ -303,6 +303,8 @@ end
 
 -- opts.ammo = { grenade = 2, ... } starting shots of crate weapons (for tests)
 -- opts.crate_every = turns between one crate and the next (without: CRATE_CHANCE each turn)
+-- opts.intro = ticks of the 3-2-1 before the first turn (M.INTRO_TICKS in the real matches); step does nothing until it runs out
+-- opts.random_spawns = true: random start points (M.start_points); the real matches, not the campaign
 -- opts.heals = false: no healing circles (the lessons)
 -- opts.hp = starting life (stats.max_hp if missing; for tests)
 -- opts.score = match points different from config.SCORE, only the fields that change (the arena tries variants);
@@ -338,9 +340,16 @@ function M.new(seed, map_id, opts)
 	for i, p in ipairs(players) do
 		if p.dummy then placing[#placing + 1] = i end
 	end
+	local start
+	if opts.random_spawns then
+		local teams = {}
+		for k, i in ipairs(placing) do teams[k] = players[i].team end
+		start = M.start_points(g.terrain, seed, teams)
+	end
 	for k, i in ipairs(placing) do
 		local p = players[i]
 		local sp = map.spawns[k]
+		if start then sp = { x = start[k].x, from = start[k].y + 2 } end
 		local st = make_stats(not opts.normalize and p.stats or nil)
 		g.robots[i] = {
 			id = i, team = p.team, x = sp.x, y = g.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2,
@@ -403,6 +412,7 @@ function M.new(seed, map_id, opts)
 	g.crate_chance = not opts.crate_every and M.CRATE_CHANCE or nil
 	g.turn_no = 0
 	g.order_pos = 1
+	g.intro = opts.intro or 0
 	g:start_turn(g.order[1])
 	return g
 end
@@ -732,6 +742,100 @@ function M:spawn_spot(rb)
 	end
 	local s = #ok > 0 and ok[1 + math.floor(self.rng:next() * #ok)] or best
 	if s then return s.x, s.y end
+end
+
+-- Start-of-match points of the real matches (training, same phone, online, private
+-- match; not the campaign): Sergio, 9 Nov 2026, "lo spawn dei giocatori deve essere
+-- casuale". Every flat piece of ground with a good stretch of open sky above (so never
+-- under an arch or a ceiling) is a candidate; each robot takes a random one at least
+-- START_ENEMY px from every enemy and START_MATE px from a teammate (the distances
+-- shrink by 20% when a draw finds no room). Of START_TRIES draws the one with the most
+-- even lonely-ness between teams is kept. Drawn from the seed: client and server agree.
+M.INTRO_TICKS = 180
+M.START_ENEMY, M.START_MATE, M.START_TRIES, M.START_SKY = 400, 300, 8, 240
+
+function M.find_start_spots(t)
+	local head = math.ceil(M.ROBOT_H / t.cell)
+	local half = math.ceil(M.ROBOT_HALF_W / t.cell)
+	local sky = math.ceil(M.START_SKY / t.cell)
+	local side = math.ceil(48 / t.cell)
+	local out = {}
+	for x = 60, M.WORLD_W - 60, M.SPAWN_STEP do
+		local cx = math.floor(x / t.cell)
+		for cy = 0, t.h - 2 do
+			if t:get(cx, cy) ~= 0 and t:get(cx - half, cy) ~= 0 and t:get(cx + half, cy) ~= 0
+				and t:get(cx, cy + 1) == 0
+				and not t:any_solid(cx - half, cx + half, cy + 1, math.min(t.h - 1, cy + head + sky)) then
+				local y = (cy + 1) * t.cell
+				local l = t:ground_below(x - 48, y + 24)
+				local r = t:ground_below(x + 48, y + 24)
+				if l and r and math.abs(l - y) < 40 and math.abs(r - y) < 40 then
+					out[#out + 1] = { x = x, y = y }
+				end
+			end
+		end
+	end
+	return out
+end
+
+local function start_draw(spots, r, teams)
+	local placed = {}
+	for k, team in ipairs(teams) do
+		local e, m, pick = M.START_ENEMY, M.START_MATE, nil
+		for _ = 1, 6 do
+			local ok = {}
+			for _, s in ipairs(spots) do
+				local good = true
+				for _, p in ipairs(placed) do
+					local dx, dy = s.x - p.x, s.y - p.y
+					local d = math.sqrt(dx * dx + dy * dy)
+					if d < (p.team == team and m or e) then good = false break end
+				end
+				if good then ok[#ok + 1] = s end
+			end
+			if #ok > 0 then pick = ok[1 + math.floor(r:next() * #ok)] break end
+			e, m = e * 0.8, m * 0.8
+		end
+		if not pick then return nil end
+		placed[k] = { x = pick.x, y = pick.y, team = team }
+	end
+	return placed
+end
+
+-- unevenness: gap between the teams' average distance to the nearest enemy
+local function start_unevenness(placed)
+	local sum, n = {}, {}
+	for _, p in ipairs(placed) do
+		local best = math.huge
+		for _, o in ipairs(placed) do
+			if o.team ~= p.team then
+				best = math.min(best, math.sqrt((p.x - o.x) ^ 2 + (p.y - o.y) ^ 2))
+			end
+		end
+		sum[p.team], n[p.team] = (sum[p.team] or 0) + best, (n[p.team] or 0) + 1
+	end
+	local lo, hi = math.huge, -math.huge
+	for team, v in pairs(sum) do
+		local a = v / n[team]
+		lo, hi = math.min(lo, a), math.max(hi, a)
+	end
+	return hi - lo
+end
+
+-- teams: the team of each robot in placing order -> the points in the same order, or nil
+function M.start_points(t, seed, teams)
+	local spots = M.find_start_spots(t)
+	if #spots < #teams then return nil end
+	local r = rng.new(seed * 2 + 1)
+	local best, best_u
+	for _ = 1, M.START_TRIES do
+		local placed = start_draw(spots, r, teams)
+		if placed then
+			local u = start_unevenness(placed)
+			if not best or u < best_u then best, best_u = placed, u end
+		end
+	end
+	return best
 end
 
 -- On death you start again with full life at a respawn point (spawn_spot).
@@ -2817,6 +2921,11 @@ function M:step(input)
 	if self.phase == "over" then return end
 	input = input or NO_INPUT
 	self.tick = self.tick + 1
+	-- the 3-2-1 before the first turn (opts.intro): nothing moves, nothing counts
+	if self.intro > 0 then
+		self.intro = self.intro - 1
+		return
+	end
 	-- match time only goes down during turns: while waiting for shots and robots
 	-- to settle it's stopped (Sergio, 30 Oct)
 	if self.match_left > 0 and self.phase ~= "settle" then

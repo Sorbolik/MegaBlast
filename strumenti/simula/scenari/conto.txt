@@ -1,0 +1,45 @@
+# Il conto 3-2-1 prima del primo turno, spawn casuali e "TOCCA A TE": allenamento 2 contro 2
+# coi bot (imposta prova_conto: negli scenari il conto e gli spawn casuali sono spenti).
+imposta prova_vignette no
+imposta prova_profilo 1
+imposta prova_scelta 1
+imposta giocatori 2v2
+imposta prova_conto 1
+imposta prova_spawn_casuali 1
+
+aspetta 1.5
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 640 460                       # 2 CONTRO 2
+tocca 640 140                       # AVANTI
+aspetta 0.3
+tocca 640 140                       # GIOCA
+aspetta_stato modo=scelta 8
+aspetta 5
+tocca 320 410                       # primaria
+aspetta 0.3
+tocca 320 410                       # secondaria
+aspetta_stato modo=local 30
+foto 00_inizio
+aspetta 0.2
+foto 01_conto_3
+aspetta 1
+foto 02_conto_2
+aspetta 1
+foto 03_conto_1
+aspetta 0.9
+foto 04_via
+aspetta 0.8
+foto 05_il_tuo_turno
+aspetta_stato turno=2 fase=aim 40
+aspetta 0.2
+foto 06_turno_bot
+aspetta_stato turno=3 fase=aim 40
+aspetta 0.3
+foto 07_preparati
+aspetta_stato turno=4 fase=aim 40
+aspetta 0.3
+foto 07b_preparati_il_turno_prima
+aspetta_stato turno=1 fase=aim 40
+aspetta 0.3
+foto 08_di_nuovo_tuo

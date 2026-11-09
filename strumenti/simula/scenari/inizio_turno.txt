@@ -1,0 +1,34 @@
+# Inizio partita e cambio di turno come sono oggi (proposta "inizio e turno
+# chiari"): allenamento 2 contro 2 coi bot, dalla scelta delle armi ai primi
+# istanti della partita, poi il passaggio del turno ai bot e il ritorno a te.
+imposta prova_vignette no
+imposta giocatori 2v2
+imposta prova_profilo 1
+
+aspetta 1.5
+foto 00_home
+tocca 1060 415                      # ALLENAMENTO
+aspetta 1
+tocca 640 460                       # 2 CONTRO 2
+tocca 640 140                       # AVANTI
+aspetta 0.3
+tocca 640 140                       # GIOCA
+foto 00_allenamento
+aspetta_stato modo=local 30
+foto 01_inizio_0s
+aspetta 0.4
+foto 02_inizio_04s
+aspetta 0.8
+foto 03_inizio_12s
+aspetta 1.5
+foto 04_inizio_27s
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 25
+aspetta 0.2
+foto 05_turno_bot
+aspetta_stato turno=1 fase=aim 90
+foto 06_di_nuovo_tuo_0s
+aspetta 0.6
+foto 07_di_nuovo_tuo_06s
+aspetta 1.2
+foto 08_di_nuovo_tuo_18s
