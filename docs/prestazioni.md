@@ -256,6 +256,23 @@ Entrare in una missione sotto l'iride: 337 ms (cortile) e 268 ms (Forgia) di
 frame, coperti. Restano da aggiungere le misure di Sergio col contatore sul
 telefono e sul PC.
 
+### Fase 1: il ciclo di update (9 nov)
+
+- Col bot che pensa, al massimo 4 tick di recupero per frame (`CATCHUP_BOT`).
+- `render()`: uovo, missile, scia e schegge accesi, spenti e colorati solo quando cambiano.
+- Il raccoglitore fa un passo da 8 KB a ogni frame (`fotogrammi.GC_STEP`, in `fotogrammi.fine`).
+- Accelerometro spento (`use_accelerometer = 0`).
+
+| Scenario | Scatti `gc` prima / dopo | Lua peggiore negli scatti `bot` prima / dopo | Frame normale prima / dopo |
+|---|---|---|---|
+| `fluidita.txt` | 81 (fino a 30 ms) / **5** (fino a 23 ms) | 4,3 / 6,9 ms | 14,0 / 13,3 ms |
+| `fluidita_forgia.txt` | 0 / 1 | 12,4 / **7,5** ms | 13,8 / 14,6 ms |
+
+Gli scatti segnati `bot` sono di più (16 → 25, 13 → 25), ma in quasi tutti Lua
+lavora 1-3 ms: è il disegno di llvmpipe in un frame in cui un bot ha pensato. Il
+lavoro di Lua più lungo nella Forgia scende del 40%. Il banco non cambia (la
+simulazione e il bot non sono toccati).
+
 ## Da fare
 
 - Sergio accende il contatore sul PC e gioca: se gli scatti sono `motore` con

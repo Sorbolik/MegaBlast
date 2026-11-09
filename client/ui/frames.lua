@@ -20,7 +20,7 @@
 --
 --   local fotogrammi = require "ui.frames"
 --   fotogrammi.inizio()            -- at the top of the GUI update, every frame
---   fotogrammi.fine()              -- at the bottom of the same update
+--   fotogrammi.fine()              -- at the bottom of the same update (also a small collector step)
 --   fotogrammi.segna("dipinto")    -- from whoever does heavy work (also from other scripts)
 --   fotogrammi.testo()             -- the line to show (nil if it hasn't changed)
 --   fotogrammi.rete(gap)           -- online: seconds between this state from the server and the previous one
@@ -162,8 +162,21 @@ function M.inizio()
 	lua_work = 0
 end
 
+-- Lua's collector a little at every frame (the Defold manual, "Lua in Defold":
+-- «run the collector for a short time every frame with a low step value»), so
+-- it keeps up with the garbage instead of stopping a frame now and then. What
+-- our step frees doesn't count as "gc" in the counter: only the collector's own
+-- runs do. KB of work per frame (collectgarbage "step"); docs/prestazioni.md, Fase 1
+M.GC_STEP = 8
+local function gc_step()
+	local before = collectgarbage("count")
+	collectgarbage("step", M.GC_STEP)
+	if memory then memory = memory - (before - collectgarbage("count")) end
+end
+
 -- at the bottom of the GUI update: how much the scripts worked
 function M.fine()
+	gc_step()
 	if not lua_start then return end
 	lua_work = lua_work + now() - lua_start
 end
