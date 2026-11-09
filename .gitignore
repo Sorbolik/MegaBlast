@@ -2,3 +2,4 @@
 /simulazione/
 __pycache__/
 strumenti/*/cloudflare/dist/
+*.exe

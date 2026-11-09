@@ -265,10 +265,19 @@ local function touch_device()
 end
 
 local function server_url()
+	local u
 	if sys.get_config_string then
-		return sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
+		u = sys.get_config_string("megablast.server_url", DEFAULT_SERVER)
+	else
+		u = sys.get_config("megablast.server_url", DEFAULT_SERVER)
 	end
-	return sys.get_config("megablast.server_url", DEFAULT_SERVER)
+	if html5 then
+		local h = html5.run("window.location.hostname")
+		if h and h ~= "" and h ~= "127.0.0.1" and h ~= "localhost" then
+			u = u:gsub("127%.0%.0%.1", h):gsub("localhost", h)
+		end
+	end
+	return u
 end
 
 -- Terrain -----------------------------------------------------------------------
