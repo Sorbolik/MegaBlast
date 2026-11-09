@@ -15,8 +15,6 @@ import (
 	"sync"
 	"time"
 	_ "time/tzdata" // event times are Rome times even on a server without time zones
-
-	lua "github.com/yuin/gopher-lua"
 )
 
 // The event calendar (docs/server.md, "Eventi"): Sergio makes it in the
@@ -247,12 +245,6 @@ func readEvents(data []byte) ([]Event, error) {
 		return nil, err
 	}
 	seen := map[string]bool{}
-	var eng *Engine
-	defer func() {
-		if eng != nil {
-			eng.L.Close()
-		}
-	}()
 	for i := range f.EventList {
 		e := &f.EventList[i]
 		if err := e.check(); err != nil {
@@ -263,18 +255,9 @@ func readEvents(data []byte) ([]Event, error) {
 		}
 		seen[e.ID] = true
 		if len(e.Rules) > 0 {
-			if eng == nil {
-				var err error
-				if eng, err = newEngine(); err != nil {
-					return nil, err
-				}
-			}
-			r, err := eng.fromJSON(e.Rules)
-			if err == nil {
-				var v interface{ String() string }
-				if v, err = eng.call("rules_valid", r, lua.LBool(e.Teams == "")); err == nil && v.String() != "" {
-					err = fmt.Errorf("regole: %s", v.String())
-				}
+			msg, err := rulesValid(e.Rules, e.Teams == "")
+			if err == nil && msg != "" {
+				err = fmt.Errorf("regole: %s", msg)
 			}
 			if err != nil {
 				return nil, fmt.Errorf("evento %q: %w", e.ID, err)

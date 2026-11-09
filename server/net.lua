@@ -1,6 +1,6 @@
--- Glue between the Go server and the simulation: passes inputs to the game and
--- prepares state and events as simple Lua tables. The JSON is written by the
--- server in Go (server/luajson.go), much faster than string.format here.
+-- Glue between the server and the simulation: passes inputs to the game and
+-- prepares state and events as simple Lua tables, which server/worker.lua
+-- writes as JSON. It runs in the server's LuaJIT processes (server/proc.go).
 local game = require "sim.game"
 local maps = require "sim.maps"
 local config = require "sim.config"
@@ -11,31 +11,42 @@ local bot = require "sim.bot"
 local N = {}
 
 -- The bots that fill a queue (lobby.go, after BotAfter): those of each match,
--- by robot. On the server a bot thinks at most WORK simulated ticks per game
--- tick (on the phone 400, sim/bot.lua): a worker runs many rooms, and with 400
--- a "normale" took 2.2 ms per tick with peaks of 50 ms on gopher-lua; with 100,
--- 1.6 ms and peaks of 21 ms (measured 3 Nov). So it thinks over more ticks,
--- and it stood still up to 8 s at the start of its turn, often firing at the
--- last moment (Sergio, 9 Nov): after THINK_MAX ticks it plays the best move
--- found so far. 250 when the worker is idle was tried (9 Nov): first attack
--- 3.1 s on average instead of 3.4, but ticks up to 34 ms, so no. Its moves
--- can differ from the phone's: fine, online the client only follows the
--- server's state and these matches are not replayed.
-N.WORK = 100
+-- by robot. Since the server runs the simulation in LuaJIT (proc.go, 9 Nov) a
+-- bot thinks like on the phone (400 simulated ticks per game tick, sim/bot.lua):
+-- on gopher-lua it had 100 and thought over more ticks. After THINK_MAX ticks
+-- of thinking it plays the best move found so far, so it never stands still
+-- for long (Sergio, 9 Nov). Its moves can differ from the phone's: fine, online
+-- the client only follows the server's state and these matches are not replayed.
 N.THINK_MAX = 120
 local BOTS = setmetatable({}, { __mode = "k" })
 
+-- Terrain cells in a byte array (LuaJIT FFI) instead of a table of 230,400
+-- numbers: 230 KB per match instead of 3.7 MB. The simulation reads and writes
+-- t.data[i] with i from 1 to w * h, always inside the grid (sim/terrain.lua),
+-- so the array has one cell more and position 0 unused.
+local ffi = require "ffi"
+local terrain = require "sim.terrain"
+function terrain.new(w, h, cell)
+	return setmetatable({ w = w, h = h, cell = cell, data = ffi.new("uint8_t[?]", w * h + 1) }, terrain)
+end
+
 -- Fixed maps are drawn only once per process: later matches copy the ready
--- cells (server/terrain.go), instead of drawing them again (over 100 ms in
--- gopher-lua).
+-- cells instead of drawing them again.
+local DRAWN = {}
 for id, def in pairs(maps.maps) do
 	if not def.seeded then
 		local build = def.build
 		def.build = function(t, seed)
-			if not terrain_restore(t, id) then
-				build(t, seed)
-				terrain_store(t, id)
+			local size = t.w * t.h + 1
+			local cells = DRAWN[id]
+			if cells then
+				ffi.copy(t.data, cells, size)
+				return
 			end
+			build(t, seed)
+			cells = ffi.new("uint8_t[?]", size)
+			ffi.copy(cells, t.data, size)
+			DRAWN[id] = cells
 		end
 	end
 end
@@ -49,7 +60,7 @@ function N.new(seed, map, players, r)
 	for i, p in ipairs(players or {}) do
 		if p.bot then
 			local b = bot.new(i, p.bot, seed)
-			b.liv = setmetatable({ lavoro = N.WORK, think_max = N.THINK_MAX }, { __index = b.liv })
+			b.liv = setmetatable({ think_max = N.THINK_MAX }, { __index = b.liv })
 			BOTS[g] = BOTS[g] or {}
 			BOTS[g][i] = b
 		end

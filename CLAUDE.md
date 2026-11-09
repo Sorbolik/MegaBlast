@@ -101,12 +101,12 @@ controlla ogni volta la lista in [docs/server.md](docs/server.md#server-in-pari-
 manda solo in locale, test in `server/server_test.go`) e prova l'online nel
 simulatore (`strumenti/simula/scenari/scelta_online.txt`, server vero e giocatori finti).
 
-Il server usa un terreno suo in Go (`server/terrain.go`) per le funzioni di
-`client/sim/terrain.lua` che toccano le celle: `new`, `get`, `set`, `solid`,
-`any_solid`, `carve`, `ground_below`, `surface_y`. Se ne cambi una in Lua,
-cambiala anche in Go: `go test ./server/` le confronta e fallisce se
-divergono. Le funzioni nuove scritte in Lua con `get`/`set`/`t.data` vanno sul
-server senza toccare il Go.
+Il server fa girare la simulazione in LuaJIT, come il telefono (9 nov): il Go tiene
+connessioni, code e stanze, e ogni worker ha un processo `luajit` con le partite
+delle sue stanze (`server/proc.go`, `server/worker.lua`). Serve `luajit` nel PATH
+(o `-luajit PERCORSO`). Sul server le celle del terreno stanno in un array di byte
+(FFI, `server/net.lua`): la simulazione deve leggere e scrivere `t.data[i]` solo
+dentro la griglia (da 1 a `w * h`), come fa `client/sim/terrain.lua`.
 
 ## Animazioni del diavoletto
 
@@ -235,8 +235,7 @@ nel gioco non cambia niente").
 
 Il bot (`client/sim/bot.lua`) preme gli stessi tasti di un giocatore e pensa
 provando le mosse su copie della partita (`bot.world`, `game:advance`): se
-cambi la fisica il bot la segue da solo. Deve restare deterministico e uguale
-su LuaJIT e gopher-lua (`go test ./server/ -run TestBot`): niente tempo vero,
+cambi la fisica il bot la segue da solo. Deve restare deterministico: niente tempo vero,
 niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio.
 Ogni partita ha la sua ricetta (`client/sim/replay.lua`) con le impronte dello
 stato: rigiocandola devono tornare tutte. L'arena (`strumenti/arena/`, vedi il
