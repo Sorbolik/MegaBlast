@@ -64,7 +64,11 @@ local CAPTION, SMALL = 0.8, 0.6     -- ui.testo scales
 -- the first one's Crown: the gold one of the plates (fx/targa_corona.png, 108 x 59)
 local CROWN_W = 25
 local CROWN_Y = GET_H / 2 + 1 + CROWN_W * 59 / 108 / 2
-local FLIGHT_SCALE, ARRIVAL_SCALE = 1.7, 0.8
+local FLIGHT_SCALE, ARRIVAL_SCALE = 1.25, 0.8
+-- the points are born a moment after the hit, when the damage number over the head
+-- has already gone (they're not always damage: they have their own time), and in flight
+-- they are a little paler than the token they land in, which lights up at full color
+local BORN_WAIT, FLIGHT_PALE = 0.45, 0.3
 local SPAWN_T, FLIGHT_T, SALE = 0.5, 0.45, 24
 -- two numbers born in the same spot (the Swarm, an egg on two close robots)
 -- don't cover each other (Sergio, 3 Nov): the new one is born in the first free
@@ -94,6 +98,7 @@ local NOTICE_BEFORE = 60 * 60                -- game ticks before the last lap
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(1, 1, 1, 1)
+local PALE = vmath.vector4(1, 1, 1, 1)
 
 local function root_node(x, y)
 	local r = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(0, 0, 0))
@@ -337,7 +342,7 @@ function M.nuovo(palette, tick)
 
 	-- the flying numbers, on top of everything else
 	for i = 1, NUMBERS do
-		local n = { nodo = ui.testo("", 0, 0, FLIGHT_SCALE, ui.C.TEXT), colore = vmath.vector4(1, 1, 1, 1) }
+		local n = { nodo = ui.testo("", 0, 0, FLIGHT_SCALE, ui.C.TEXT), colore = vmath.vector4(1, 1, 1, 1), wait = 0 }
 		gui.set_adjust_mode(n.nodo, gui.ADJUST_FIT)
 		gui.set_enabled(n.nodo, false)
 		p.numeri[i] = n
@@ -457,6 +462,13 @@ function M.partita(p, g, name_list, plates)
 	M.set_enabled(p, p.on)
 end
 
+-- what a number says: while it still waits and it is the damage of a hit, the damage
+-- itself in cream ("-27"); then, and for the other points, the points ("+27")
+local function shown(n)
+	if n.cream and n.wait > 0 then return "-" .. math.floor(n.dmg + 0.5) end
+	return with_sign(n.punti) .. (n.doppio and T.doubled or "")
+end
+
 -- a number is born at x, y (screen); if the same robot has one just born
 -- from the same hit (damage and kill together) it adds to that one
 function M.punti(p, e, x, y)
@@ -465,8 +477,10 @@ function M.punti(p, e, x, y)
 	p.volo[r] = (p.volo[r] or 0) + e.amount
 	for _, n in ipairs(p.numeri) do
 		if n.is_active and n.fase == 1 and n.chi == r and n.altro == e.other then
-			n.punti, n.t = n.punti + e.amount, 0
-			gui.set_text(n.nodo, with_sign(n.punti) .. (n.doppio and T.doubled or ""))
+			n.punti = n.punti + e.amount
+			if e.reason == "damage" then n.dmg = n.dmg + e.amount end
+			if n.wait <= 0 then n.t = 0 end
+			gui.set_text(n.nodo, shown(n))
 			return
 		end
 	end
@@ -480,9 +494,12 @@ function M.punti(p, e, x, y)
 		for _, m in ipairs(p.numeri) do if m.born < n.born then n = m end end
 		p.volo[n.chi] = p.volo[n.chi] - n.punti
 	end
-	n.is_active, n.fase, n.t, n.chi, n.altro, n.punti, n.born = true, 1, 0, r, e.other, e.amount, (p.born or 0) + 1
+	n.is_active, n.fase, n.t, n.chi, n.altro, n.punti, n.born, n.wait = true, 1, 0, r, e.other, e.amount, (p.born or 0) + 1, BORN_WAIT
 	n.doppio = p.ultimo
 	p.born = n.born
+	-- the damage of a hit is shown first, over the head, and turns into the points
+	n.cream = e.reason == "damage" and e.amount > 0
+	n.dmg = n.cream and e.amount or 0
 	n.x, n.y = x, y
 	for _, q in ipairs(STACK) do
 		local px, py, free_spot = x + q[1] * STACK_X, y + q[2] * STACK_Y, true
@@ -494,8 +511,8 @@ function M.punti(p, e, x, y)
 			break
 		end
 	end
-	gui.set_text(n.nodo, with_sign(n.punti) .. (n.doppio and T.doubled or ""))
-	gui.set_enabled(n.nodo, p.on)
+	gui.set_text(n.nodo, shown(n))
+	gui.set_enabled(n.nodo, n.cream and p.on or false)   -- the others appear when their wait is over
 end
 
 -- The last lap starts: the golden banner
@@ -544,11 +561,32 @@ end
 
 local function numbers(p, dt, g)
 	for _, n in ipairs(p.numeri) do
-		if n.is_active then
+		if n.is_active and n.wait > 0 then
+			n.wait = n.wait - dt
+			if n.cream then
+				-- the damage: it pops cream over the head, and when the wait is over
+				-- the same number changes into the points (color and sign)
+				local u = 1 - max(0, n.wait) / BORN_WAIT
+				position(n.nodo, n.x, n.y + 10 * u)
+				scale(n.nodo, FLIGHT_SCALE * 0.5 * 0.75 * (1 + 0.4 * max(0, 1 - u * 6)))
+				C.x, C.y, C.z, C.w = 0.96, 0.92, 0.84, 1
+				gui.set_color(n.nodo, C)
+				if n.wait <= 0 then gui.set_text(n.nodo, shown(n)) end
+			elseif n.wait <= 0 then
+				gui.set_enabled(n.nodo, p.on)
+			end
+		elseif n.is_active then
 			n.t = n.t + dt
 			local rb = g.robots[n.chi]
 			local c = rb and p.gettoni[rb.team] and p.gettoni[rb.team].colore or ui.C.TEXT
-			if n.punti < 0 then c = ui.C.OFF elseif n.doppio then c = ui.GOLD end
+			if n.punti < 0 then c = ui.C.OFF
+			elseif n.doppio then c = ui.GOLD
+			else
+				-- paler in flight: the full color is for the token it lands in
+				local grey = 0.3 * c.x + 0.59 * c.y + 0.11 * c.z
+				PALE.x, PALE.y, PALE.z = c.x + (grey - c.x) * FLIGHT_PALE, c.y + (grey - c.y) * FLIGHT_PALE, c.z + (grey - c.z) * FLIGHT_PALE
+				c = PALE
+			end
 			local s, x, y
 			if n.fase == 1 then
 				-- born: pops out big and rises a little
