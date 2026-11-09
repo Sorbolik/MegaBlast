@@ -24,6 +24,7 @@
 --   fotogrammi.segna("dipinto")    -- from whoever does heavy work (also from other scripts)
 --   fotogrammi.testo()             -- the line to show (nil if it hasn't changed)
 --   fotogrammi.rete(gap)           -- online: seconds between this state from the server and the previous one
+--   fotogrammi.scope("bot") ... fotogrammi.scope_end()   -- a named bar in Defold's web profiler
 --
 -- Online the line also says RETE: the longest wait between two states from
 -- the server in the last 10 seconds (normally 33 ms). The drawing hides the
@@ -169,6 +170,14 @@ end
 
 -- work done outside the update (on_input, messages): t = M.ora() at the start
 M.ora = now
+
+-- Named scopes for Defold's profiler (debug builds, http://localhost:8002 on
+-- the PC): the heavy work shows up as its own bar. Every scope must close in
+-- the same frame. Where there is no profiler (release builds, the tests) they do nothing.
+local profiler = rawget(_G, "profiler")
+local nothing = function() end
+M.scope = profiler and profiler.scope_begin or nothing
+M.scope_end = profiler and profiler.scope_end or nothing
 function M.lavoro(t)
 	if not first_one then return end
 	lua_work = lua_work + now() - t
