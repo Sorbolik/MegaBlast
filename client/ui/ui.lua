@@ -365,6 +365,7 @@ end
 -- may also hold pieces that aren't buttons (the draft's cards), as long as
 -- they have nodo, bordo, colore and riposo.
 M.PAD = hash("pad")
+M.TOUCH = hash("touch")
 local LIGHT_SCALE = vmath.vector3(1.06, 1.06, 1)
 -- the action of the last button confirmed: when the screen is rebuilt, the
 -- light goes back on it
@@ -463,7 +464,7 @@ function M.tocco(list_of, action_id, action)
 		end
 		return nil
 	end
-	if action_id ~= hash("touch") then return nil end
+	if action_id ~= M.TOUCH then return nil end
 	if action.pressed then
 		list_of.held_down = under(list_of, action.x, action.y)
 		if list_of.held_down then premi(list_of.held_down, true) end
