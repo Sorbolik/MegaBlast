@@ -135,15 +135,41 @@ local function copy(t)
 	return o
 end
 
-local function clone(rb)
-	local c = copy(rb)
-	c.ammo = copy(rb.ammo)
-	c.life_damage = copy(rb.life_damage)
-	local st = {}
-	for k, s in pairs(rb.status) do st[k] = copy(s) end
+-- dst becomes a copy of src (its old keys go): reusing dst instead of a new
+-- table, the thinking doesn't fill Lua's memory with garbage (about 10 KB per
+-- copy of the match, hundreds of copies per second; docs/prestazioni.md, Fase 2)
+local function refill(dst, src)
+	for k in pairs(dst) do dst[k] = nil end
+	for k, v in pairs(src) do dst[k] = v end
+	return dst
+end
+
+-- The tables a reused copy owns (lists, the robots' sub-tables), kept beside
+-- it so the copy itself has exactly the fields of the original
+local OWN = setmetatable({}, { __mode = "k" })
+local function own(t, fresh)
+	local o = OWN[t]
+	if not o then
+		o = fresh()
+		OWN[t] = o
+	end
+	return o
+end
+local function robot_parts() return { ammo = {}, life_damage = {}, status = {}, hooked = {}, hook_shot = {} } end
+
+-- A robot's copy; into: a copy made before, to overwrite
+local function clone(rb, into)
+	local c = into or {}
+	local o = own(c, robot_parts)
+	refill(c, rb)
+	c.ammo = refill(o.ammo, rb.ammo)
+	c.life_damage = refill(o.life_damage, rb.life_damage)
+	local st = o.status
+	for k in pairs(st) do st[k] = nil end
+	for k, v in pairs(rb.status) do st[k] = copy(v) end
 	c.status = st
-	if rb.hooked then c.hooked = copy(rb.hooked) end
-	if rb.hook_shot then c.hook_shot = copy(rb.hook_shot) end
+	if rb.hooked then c.hooked = refill(o.hooked, rb.hooked) end
+	if rb.hook_shot then c.hook_shot = refill(o.hook_shot, rb.hook_shot) end
 	return c
 end
 
@@ -154,33 +180,72 @@ local function no_crater(self, x, y, owner, blast, weapon)
 	self:blast(x, y, owner, blast, weapon)
 end
 
+local function world_parts()
+	return { robots = {}, orbs = {}, placed = {}, shards = {}, crates = {}, events = {}, used = {}, rng = rng.new(1) }
+end
+
+-- a list of copies of src's items, in the reused list dst
+local function copies(dst, src)
+	for i = #dst, #src + 1, -1 do dst[i] = nil end
+	for i, v in ipairs(src) do dst[i] = copy(v) end
+	return dst
+end
+
 -- A copy of the match to try moves on: robots, shots, items, crates and
 -- generator are copied, the terrain is shared but never touched. The turn
 -- rules (end of turn, new crates, heals) don't run: it uses game:advance.
 -- The copied crates hold nothing ("hook": game.dai gives nothing), because
--- the bot mustn't know what they contain.
-function M.world(g)
-	local w = setmetatable({}, game)
+-- the bot mustn't know what they contain. into: a copy made before (by the
+-- same caller, no longer used), overwritten instead of making a new one.
+function M.world(g, into)
+	local w = into or setmetatable({}, game)
+	local o = own(w, world_parts)
+	for k in pairs(w) do w[k] = nil end
 	w.terrain, w.map, w.tick, w.mode, w.normalized = g.terrain, g.map, g.tick, g.mode, g.normalized
 	w.current, w.phase, w.timer, w.window = g.current, g.phase, g.timer, g.window
 	w.match_left, w.final_round, w.round, w.order, w.order_pos, w.turn_no = g.match_left, g.final_round, g.round, g.order, g.order_pos, g.turn_no
 	w.orb_seq, w.placed_id, w.heals, w.score = g.orb_seq, g.placed_id, g.heals, g.score
-	w.rng = rng.new(g.rng.state)
-	w.used = copy(g.used)
-	w.events, w.crates = {}, {}
+	o.rng.state = g.rng.state
+	w.rng = o.rng
+	w.used = refill(o.used, g.used)
+	local events = o.events
+	for i = #events, 1, -1 do events[i] = nil end
+	w.events = events
+	local crates = o.crates
+	for i = #crates, #g.crates + 1, -1 do crates[i] = nil end
 	for i, c in ipairs(g.crates) do
-		w.crates[i] = { id = c.id, x = c.x, y = c.y, vy = c.vy, landed = c.landed, weapon = "hook" }
+		local k = crates[i] or {}
+		k.id, k.x, k.y, k.vy, k.landed, k.weapon = c.id, c.x, c.y, c.vy, c.landed, "hook"
+		crates[i] = k
 	end
-	w.robots, w.orbs, w.placed, w.shards = {}, {}, {}, {}
-	for i, rb in ipairs(g.robots) do w.robots[i] = clone(rb) end
-	for i, o in ipairs(g.orbs) do w.orbs[i] = copy(o) end
-	for i, o in ipairs(g.placed) do w.placed[i] = copy(o) end
+	w.crates = crates
+	local robots = o.robots
+	for i = #robots, #g.robots + 1, -1 do robots[i] = nil end
+	for i, rb in ipairs(g.robots) do robots[i] = clone(rb, robots[i]) end
+	w.robots = robots
+	w.orbs = copies(o.orbs, g.orbs)
+	w.placed = copies(o.placed, g.placed)
+	local shards = o.shards
 	for i = 1, game.SHARD_COUNT do
-		if g.shards[i] then w.shards[i] = copy(g.shards[i]) end
+		shards[i] = g.shards[i] and copy(g.shards[i]) or nil
 	end
+	w.shards = shards
 	w.projectile = g.projectile and copy(g.projectile)
 	w.burst = g.burst and copy(g.burst)
 	w.explode = no_crater
+	return w
+end
+
+-- The copy of the match a bot reuses at one place of its thinking (slot):
+-- each place has its own, and none outlives the function that asked for it
+local function scratch(b, slot, g)
+	local ws = b.worlds
+	if not ws then
+		ws = {}
+		b.worlds = ws
+	end
+	local w = M.world(g, ws[slot])
+	ws[slot] = w
 	return w
 end
 
@@ -415,8 +480,11 @@ end
 -- copy of the match until the shot ends. out[1..k] = ids of the robots hit,
 -- returns k. For the melee weapons' aim (battle/aim.lua).
 local HIT_EVENTS = { sword_hit = true, punch_hit = true, mallet_hit = true, lunge_hit = true, bellows_hit = true }
+local HITS_WORLD
 function M.hits(g, wpn, ang, out)
-	local w = M.world(g)
+	-- the client asks it at every frame of aiming: always the same copy
+	local w = M.world(g, HITS_WORLD)
+	HITS_WORLD = w
 	w:attack(wpn, { weapon = wpn, angle = ang, power = 1 })
 	local rb = w.robots[w.current]
 	for _ = 1, 4 * 60 do
@@ -437,7 +505,7 @@ end
 -- Tries an attack from the spot. fino: "volo" (only the shots) or "tutto"
 -- (until everything is still). Returns the score.
 local function try_move(b, g, spot, wpn, ang, pow, fino)
-	local w = M.world(g)
+	local w = scratch(b, "move", g)
 	w.score = b.pesi.punteggio or g.score
 	work(b, 20)
 	local c = at_spot(w, b.id, spot)
@@ -463,7 +531,7 @@ end
 -- The Grapple on enemy number who, then the best shot with the weapons in
 -- list (straight at it, full power): what it is all worth together
 local function try_hook(b, g, spot, ang, who, list)
-	local w = M.world(g)
+	local w = scratch(b, "hook", g)
 	w.score = b.pesi.punteggio or g.score
 	work(b, 20)
 	local c = at_spot(w, b.id, spot)
@@ -475,7 +543,7 @@ local function try_hook(b, g, spot, ang, who, list)
 	local a = math.atan2(o.y + game.HURT_Y - (c.y + game.DISEGNO_H / 2), o.x - c.x)
 	for _, wpn in ipairs(list) do
 		if w:can_use(wpn) then
-			local w2 = M.world(w)
+			local w2 = scratch(b, "hook_then", w)
 			work(b, 20)
 			w2:attack(wpn, { weapon = wpn, angle = a, power = 1 })
 			until_quiet(b, w2, 4 * 60)
@@ -652,12 +720,11 @@ local function spots_on_foot(b, g, max)
 	local me = g.robots[b.id]
 	local spots = { { x = me.x, y = me.y, facing = me.facing, n = 0 } }
 	if max <= 0 or not me.grounded then return spots end
-	local w = M.world(g)
+	local w = scratch(b, "on_foot", g)
 	local hw = game.ROBOT_HALF_W
 	for _, d in ipairs({ -1, 1 }) do
 		for _, hop_edges in ipairs({ true, false }) do
-			local c = clone(me)
-			w.robots[b.id] = c
+			local c = clone(me, w.robots[b.id])
 			local dirs, hops = {}, {}
 			local road = { dirs = dirs, hops = hops }
 			local input = { left = d < 0, right = d > 0, jump = false, hold = true }
@@ -707,7 +774,7 @@ end
 
 -- The spot a teleport orb thrown now with (a, p) leads to, or nil
 local function teleport_spot(b, g, a, p)
-	local w = M.world(g)
+	local w = scratch(b, "orb", g)
 	local c = w.robots[b.id]
 	w:throw_orb(a, p)
 	local t = 0
@@ -732,7 +799,7 @@ end
 -- copy), for the level that misses on purpose
 local function missing_angle(b, g, m)
 	for _, d in ipairs({ 0.3, -0.3, 0.5, -0.5, 0.8, -0.8 }) do
-		local w = M.world(g)
+		local w = scratch(b, "miss", g)
 		work(b, 20)
 		at_spot(w, b.id, m.posto)
 		w:attack(m.arma, { weapon = m.arma, angle = m.ang + d, power = m.potenza })
@@ -905,7 +972,7 @@ local function take_cover(b, g)
 			for _, p in ipairs(b.pesi.den and DEN_THROWS or THROWS) do
 				local spot = teleport_spot(b, g, math.rad(a), p)
 				if spot then
-					local w = M.world(g)
+					local w = scratch(b, "shelter", g)
 					at_spot(w, b.id, spot)
 					local s = shelter(b, g, w)
 					if not best_move or s > best_move.punti then
@@ -923,7 +990,7 @@ local function take_cover(b, g)
 	local spots = spots_on_foot(b, g, math.min(b.liv.walk_ticks, remaining - 30))
 	local best_move
 	for _, spot in ipairs(spots) do
-		local w = M.world(g)
+		local w = scratch(b, "shelter", g)
 		at_spot(w, b.id, spot)
 		work(b, 20)
 		local s = shelter(b, g, w) - (spot.n or 0) * b.pesi.strada
@@ -932,7 +999,7 @@ local function take_cover(b, g)
 	if b.liv.rampino and g:can_use("hook") and remaining > 3 * 60 then
 		for grades = 15, 165, 25 do
 			local a = math.rad(grades)
-			local w = M.world(g)
+			local w = scratch(b, "shelter", g)
 			work(b, 20)
 			w:use_tool("hook", { weapon = "hook", angle = a, power = 1 })
 			until_quiet(b, w, 3 * 60)

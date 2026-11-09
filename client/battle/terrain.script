@@ -14,6 +14,8 @@ local frames = require "ui.frames"
 local MSG_MASK = hash("maschera")
 local MSG_HOME = hash("home")
 local MSG_SCREEN = hash("schermo")
+-- prehashed, and the mesh's address made once (Defold manual, "Prefer and cache URLs")
+local OPTIONS = hash("opzioni")
 
 local TEX_2D = graphics and graphics.TEXTURE_TYPE_2D or resource.TEXTURE_TYPE_2D
 local TEX_RGBA = graphics and graphics.TEXTURE_FORMAT_RGBA or resource.TEXTURE_FORMAT_RGBA
@@ -21,7 +23,7 @@ local TEX_RGB = graphics and graphics.TEXTURE_FORMAT_RGB or resource.TEXTURE_FOR
 -- the background strips and their slots in the mesh (texture2..5, as in terrain.material)
 local LAYERS = { "cielo", "lontano", "medio", "vicino" }
 local PLACE = { cielo = "texture2", lontano = "texture3", medio = "texture4", vicino = "texture5" }
-local STRIP = { lontano = "striscia1", medio = "striscia2", vicino = "striscia3" }
+local STRIP = { lontano = hash("striscia1"), medio = hash("striscia2"), vicino = hash("striscia3") }
 
 -- the images' density: 2 (1.5 times bigger, about 55 MB of video memory
 -- instead of 25) from screens 1000 real pixels tall (phones and PCs at 1080
@@ -87,18 +89,19 @@ function init(self)
 	-- zw = screen proportions (ui/screen.lua: kx, ky)
 	self.opzioni = vmath.vector4(0, 0, 1, 1)
 	self.texture, self.misura, self.n = {}, {}, 0
+	self.mesh = msg.url("#mesh")
 end
 
 function update(self, dt)
 	-- after an hour it starts over, so the shader's float stays precise
 	self.opzioni.y = (self.opzioni.y + dt) % 3600
-	go.set("#mesh", "opzioni", self.opzioni)
+	go.set(self.mesh, OPTIONS, self.opzioni)
 	-- we count each strip's scrolling here, wrapped: in the shader a mediump time
 	-- would stutter, and it would jump when the hour wraps
 	if self.strips then
 		for _, st in ipairs(self.strips) do
 			st.v.w = (st.v.w + dt * st.scorre) % paintings.wrap
-			go.set("#mesh", st.nome, st.v)
+			go.set(self.mesh, st.nome, st.v)
 		end
 	end
 end
