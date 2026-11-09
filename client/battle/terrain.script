@@ -46,6 +46,7 @@ local function load_up(self, spot, file)
 	-- decoding the PNG and uploading it to the GPU is the heaviest work of a map
 	-- change: the frame counter (ui/frames.lua) knows it
 	frames.segna("dipinto")
+	frames.scope("dipinto")
 	local img = image.load_buffer(payload, { premultiply_alpha = true, flip_vertically = true })
 	local fmt = img.type == image.TYPE_RGB and TEX_RGB or TEX_RGBA
 	local p = { type = TEX_2D, format = fmt, width = img.width, height = img.height }
@@ -59,6 +60,7 @@ local function load_up(self, spot, file)
 	end
 	self.texture[spot], self.misura[spot] = resource_path, img.width .. "x" .. img.height .. fmt
 	go.set("#mesh", spot, resource_path)
+	frames.scope_end()
 	return resource_path
 end
 
