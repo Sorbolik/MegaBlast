@@ -176,3 +176,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 6 nov | Partita privata online per le prove: stanza con codice, modo, livello di ogni bot, con o contro i bot, VIA. | prossima PR |
 | 6 nov | Favilla vera che mostra le mosse facendole (cammina, salta, spara, rampino, paracadute...), poi tocca a te; si scrivono nel Copione. La striscia non arriva più prima della vignetta grande. | prossima PR |
 | 6 nov | I primi livelli rifatti: Favilla spiega, mostra, tocca a te, bravo; due sfide brevi in mezzo; baratto, punti e Affondo nella Forgia. | prossima PR |
+| 9 nov | Fiammella viva senza fogli di animazione: lo shader piega il disegno (base ferma, punta che ondeggia, rumore che sale, altezza che respira) sulla fiamma dell'Apprendista e sulle ciocche di Favilla (viso e corna fermi); la targa sta sopra la fiamma e sopra la testa com'è nella posa da fermo. | questa PR |

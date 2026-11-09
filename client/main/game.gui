@@ -54,5 +54,9 @@ materials {
   name: "passaggio"
   material: "/ui/transition.material"
 }
+materials {
+  name: "fiamma"
+  material: "/battle/flame.material"
+}
 adjust_reference: ADJUST_REFERENCE_PARENT
 max_nodes: 4096
