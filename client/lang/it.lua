@@ -602,7 +602,7 @@ return {
 			parachute = "Aprilo in aria: scendi piano e atterri senza farti male",
 			trap = "Posala a terra: scatta quando ci passa un nemico",
 			shield = "Ti ripara dai colpi fino al tuo prossimo turno",
-			trampoline = "Posalo a terra: chi ci salta sopra vola in alto",
+			trampoline = "Lancialo: si posa inclinato e chi ci salta sopra vola lontano da quella parte",
 		},
 		-- how to use it, with the controls you have (%s: the buttons)
 		parachute_pad = "In aria premi %s",
@@ -718,6 +718,7 @@ return {
 		parachute = "Paracadute aperto!",
 		heal_circle = "Un cerchio di cura: chi ci finisce il turno dentro si cura",
 		crate = "Una cassa cade dal cielo!",
+		item_drop = "Cade dal cielo %s: chi lo tocca lo prende!",
 		you_found = "%s hai trovato %s!",
 		found = "%s trova %s!",
 		you_die_alone = "Muori da solo",

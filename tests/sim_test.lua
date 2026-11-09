@@ -553,15 +553,23 @@ end
 
 -- Tactical items: traps, shields, trampolines, parachutes, healing circles -------------
 do
-	-- crates also contain items
+	-- crates contain only weapons; items drop on their own, visible
 	local mix = game.new(5, "pavimento")
-	local seen = {}
+	local seen, items = {}, {}
 	for _ = 1, 60 do
 		mix.crates = {}
 		local c = mix:spawn_crate()
 		if c then seen[c.weapon] = true end
+		local it = mix:spawn_crate(nil, nil, true)
+		if it and it.item then items[it.weapon] = true end
 	end
-	check(seen.trap and seen.shield and seen.trampoline, "crates contain traps, shields and trampolines")
+	check(not seen.trap and not seen.shield and not seen.trampoline and seen.grenade, "crates contain only weapons")
+	check(items.trap and items.shield and items.trampoline, "items drop on the map: traps, shields and trampolines")
+	mix.crates = {}
+	mix:spawn_crate(nil, nil, true)
+	mix:spawn_crate(nil, nil, true)
+	check(mix:spawn_crate(nil, nil, true) == nil and mix:spawn_crate() ~= nil,
+		"at most " .. config.ITEM_DROPS.max .. " items on the map, crates counted apart")
 
 	-- items can also be used while repositioning and aren't attacks
 	local q = game.new(42, "pavimento", { ammo = { trap = 1, shield = 1 } })
@@ -612,8 +620,8 @@ do
 	t2:step()
 	check(#t2.placed == 1 and mate.vy <= 0, "the teammate doesn't set off the trap")
 
-	-- trampoline: it's thrown; thrown at a robot it lands at its feet and makes it
-	-- bounce, always; staying on it the bounces shrink until stopping
+	-- trampoline (Molla): it's thrown; thrown at a robot it lands at its feet,
+	-- leaning the way it was thrown, and launches it far that way
 	local tb = game.new(42, "pavimento", { ammo = { trampoline = 1 } })
 	run(tb, 60)
 	local a, b = tb.robots[1], tb.robots[2]
@@ -621,80 +629,97 @@ do
 	run(tb, 5)
 	tb:step({ fire = { angle = math.rad(10), power = 0.4, weapon = "trampoline" } })
 	local tramp = tb.placed[1]
-	check(tramp and tramp.flying and a.ammo.trampoline == 0, "the trampoline is thrown")
-	local bounces, first_vy = 0, nil
+	check(tramp and tramp.flying and a.ammo.trampoline == 0 and tramp.dir == 1, "the trampoline is thrown, leaning right")
+	local first_vy, first_vx, start_x, landed_at
 	for _ = 1, 600 do
 		tb:step()
 		for _, e in ipairs(tb:pop_events()) do
-			if e.type == "bounce" and e.robot == 2 then
-				bounces = bounces + 1
-				first_vy = first_vy or b.vy
+			if e.type == "bounce" and e.robot == 2 and not first_vy then
+				first_vy, first_vx, start_x = b.vy, b.vx, b.x
+				check(math.abs(tramp.x - b.x) <= tramp.r + game.ROBOT_HALF_W, "thrown at a robot it lands at its feet")
 			end
 		end
+		if first_vy and b.grounded and not landed_at then landed_at = b.x end
 	end
-	check(not tramp.flying and math.abs(tramp.x - b.x) <= tramp.r + game.ROBOT_HALF_W,
-		"thrown at a robot it lands at its feet")
-	check(bounces >= 2 and first_vy == config.TRAMPOLINE.launch_vy, "and makes it bounce (" .. bounces .. ")")
-	check(b.grounded and b.vy == 0, "staying on it the bounces shrink and you stop")
-	-- stepped off and back on, you bounce high again
-	b.x = tramp.x + 60
-	run(tb, 30)
-	b.x, b.y = tramp.x, tramp.y
-	b.vy = 0
+	check(first_vy == config.TRAMPOLINE.launch_vy and first_vx == config.TRAMPOLINE.push_vx,
+		"and launches it up and sideways")
+	check(landed_at and landed_at - start_x >= 350, "far away: " .. tostring(landed_at and math.floor(landed_at - start_x)) .. " px")
+	check(b.last_hit == 1, "an opponent's Molla gives the kill if you fall")
+	-- stepping on it again you are launched again
+	b.x, b.y, b.vy = tramp.x, tramp.y, 0
 	local again
 	for _ = 1, 5 do
 		tb:step()
 		for _, e in ipairs(tb:pop_events()) do if e.type == "bounce" then again = b.vy end end
 	end
 	check(again == config.TRAMPOLINE.launch_vy, "stepping back on it you bounce high again")
+	run(tb, 400)
 
 	-- everything bounces on the trampoline: missile, Uovo, shards, Cecchino, orb, crate.
-	-- Each body falls straight onto the board and must go back up at the bounce speed.
+	-- Each body falls straight onto the board and must go back up at the bounce
+	-- speed; shots also leave sideways, crates fall straight
 	local top = tramp.y + config.TRAMPOLINE.top
-	b.x = tramp.x + 80
-	run(tb, 30)
 	local function falls_on(body, advance)
-		body.x, body.y, body.vx, body.vy = tramp.x + tramp.r - 1, top + 3, 0, -200
+		body.x, body.y, body.vy = tramp.x + tramp.r - 1, top + 3, -200
+		if body.vx then body.vx = 0 end
 		for _ = 1, 3 do
 			advance()
 			if body.vy > 0 then return body.vy end
 		end
 	end
 	local bodies = {
-		missile = { kind = "missile", owner = 1, age = 100 },
-		grenade = { kind = "grenade", owner = 1, age = 100, fuse = 600 },
-		sniper = { kind = "sniper", owner = 1, age = 100, bounces = 0 },
+		missile = { kind = "missile", owner = 1, age = 100, vx = 0 },
+		grenade = { kind = "grenade", owner = 1, age = 100, fuse = 600, vx = 0 },
+		sniper = { kind = "sniper", owner = 1, age = 100, bounces = 0, vx = 0 },
 	}
-	for kind, body in pairs(bodies) do
+	for _, kind in ipairs({ "missile", "grenade", "sniper" }) do
+		local body = bodies[kind]
 		tb.projectile = body
 		local vy = falls_on(body, function() tb:update_projectile() end)
-		check(tb.projectile == body and vy == config.TRAMPOLINE.launch_vy, "bounces on the trampoline: " .. kind)
+		check(tb.projectile == body and vy == config.TRAMPOLINE.launch_vy and body.vx > 0,
+			"bounces on the trampoline and leaves sideways: " .. kind)
 	end
 	tb.projectile = nil
-	local shard = { owner = 1, age = 100 }
+	local shard = { owner = 1, age = 100, vx = 0 }
 	tb.shards[1] = shard
 	check(falls_on(shard, function() tb:update_shards() end) == config.TRAMPOLINE.launch_vy and tb.shards[1] == shard,
 		"bounces on the trampoline: shard")
 	tb.shards[1] = nil
-	local orb = { id = 99, owner = 1, age = 100, timer = 600 }
+	local orb = { id = 99, owner = 1, age = 100, timer = 600, vx = 0 }
 	check(falls_on(orb, function() tb:update_orb(orb) end) == config.TRAMPOLINE.launch_vy,
 		"bounces on the trampoline: orb")
 	local crate = { id = 99, weapon = "grenade", landed = false }
 	check(falls_on(crate, function() tb:fall(crate, game.CRATE_HALF_W, game.CRATE_FALL) end)
 		== config.TRAMPOLINE.launch_vy, "bounces on the trampoline: crate")
-	-- the Uovo left on it bounces less and less and then settles
-	local egg = { kind = "grenade", owner = 1, age = 100, fuse = 100000, x = tramp.x, y = top + 20, vx = 0, vy = 0 }
-	tb.projectile = egg
+	-- a crate left on it bounces less and less and then settles
+	crate.x, crate.y, crate.vy = tramp.x, top + 20, 0
 	tb:pop_events()
-	local egg_bounces = 0
+	local crate_bounces = 0
 	for _ = 1, 900 do
-		tb:update_projectile()
+		tb:fall(crate, game.CRATE_HALF_W, game.CRATE_FALL)
 		for _, e in ipairs(tb:pop_events()) do
-			if e.type == "bounce" and not e.robot then egg_bounces = egg_bounces + 1 end
+			if e.type == "bounce" and not e.robot then crate_bounces = crate_bounces + 1 end
 		end
 	end
-	check(egg_bounces == 3 and egg.vy == 0 and egg.y < top, "the Uovo bounces lower and lower and settles (" .. egg_bounces .. ")")
-	tb.projectile = nil
+	check(crate_bounces >= 2 and crate.vy == 0, "a crate bounces lower and lower and settles (" .. crate_bounces .. ")")
+
+	-- your own Molla carries you past your run, and the parachute gives control back
+	local own = game.new(42, "pavimento", { ammo = { trampoline = 1 } })
+	run(own, 60)
+	local me = own.robots[1]
+	own.placed[1] = { id = 1, kind = "trampoline", x = me.x + 30, y = me.y, vy = 0, owner = 1, team = me.team,
+		r = config.TRAMPOLINE.half_w, age = 0, dir = 1 }
+	local sprung_vx
+	for _ = 1, 60 do
+		own:step({ right = true })
+		if me.sprung and not sprung_vx then sprung_vx = me.vx end
+	end
+	check(sprung_vx == config.TRAMPOLINE.push_vx and me.sprung, "on your own Molla you fly sideways faster than your run")
+	own:step({ left = true })
+	check(me.vx == config.TRAMPOLINE.push_vx, "and you don't steer while flying")
+	own:step({ fire = { angle = 0, power = 1, weapon = "parachute" } })
+	own:step({ left = true })
+	check(not me.sprung and me.vx < 0, "the parachute gives control back")
 
 	-- an explosion takes away what's placed
 	tb:explode(tramp.x, tramp.y + 4)
@@ -1836,8 +1861,13 @@ local _, cs2 = crate_turns(42)
 check(cs2[1] and cs2[1].x == cs[1].x and cs2[2].x == cs[2].x, "same seed, crates at the same points")
 local _, cs3 = crate_turns(7)
 check(cs3[1] and cs3[1].x ~= cs[1].x, "with another seed crates drop elsewhere")
-local c1, c2 = cq.crates[1], cq.crates[2]
-check(#cq.crates == 2 and c2.y > game.WORLD_H, "the new crate drops from the sky")
+local weapon_crates, item_drops = {}, {}
+for _, k in ipairs(cq.crates) do
+	if k.item then item_drops[#item_drops + 1] = k else weapon_crates[#weapon_crates + 1] = k end
+end
+local c1, c2 = weapon_crates[1], weapon_crates[2]
+check(#weapon_crates == 2 and c2.y > game.WORLD_H, "the new crate drops from the sky")
+check(#item_drops == 1 and game.ITEM_SET[item_drops[1].weapon], "an item drops every 6 turns, visible")
 check(c1.landed and math.abs(c1.y - cs[1].y) <= game.CELL, "the crate settles on the surface")
 check(c1.x >= 40 and c1.x <= game.WORLD_W - 40 and c2.x >= 40 and c2.x <= game.WORLD_W - 40, "crates are inside the map")
 

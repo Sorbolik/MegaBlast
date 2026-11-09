@@ -1,0 +1,39 @@
+# La Molla e gli attrezzi nuovi: trappola posata (grigia) e armata (accesa nel
+# colore della squadra), scudo a bolla addosso, la Molla inclinata verso dove
+# l'hai lanciata che ti spara lontano da quella parte, e il cubo di ferro con
+# l'icona dell'attrezzo che cade sulla mappa (con prova_casse 1 casse ogni
+# turno e attrezzi ogni 2). Posizioni dei pulsanti come in scenari/oggetti.txt.
+imposta prova_armi 1
+imposta prova_casse 1
+imposta zoom 2
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+tocca 1180 154                      # Trappola, ai piedi
+aspetta 0.5
+zoom 01_trappola_posata 3
+tieni destra 0.6
+aspetta_stato turno=2 fase=aim 15   # turno di Blu
+aspetta 0.5
+tocca 1180 222                      # Scudo
+aspetta 0.5
+zoom 02_scudo 3
+tocca 1180 222                      # Molla (lo scudo usato sparisce, quelli sopra scendono)
+aspetta 0.3
+mira -30 20 0.3                     # un lancio corto a sinistra: si posa inclinata a sinistra
+aspetta_evento place 3
+aspetta 0.3
+zoom 03_molla_inclinata 3
+tieni sinistra 0.8                  # ci va sopra: vola lontano a sinistra
+aspetta_evento bounce 3
+aspetta 0.4
+foto 04_lanciato
+aspetta 0.6
+foto 05_ancora_in_volo
+aspetta_stato turno=3 fase=aim 40
+aspetta 1
+zoom 06_trappola_armata 3
+aspetta 2.5
+foto 07_cubo_attrezzo

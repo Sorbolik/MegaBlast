@@ -5,6 +5,24 @@ images {
   image: "/assets/crates/cassa_luce.png"
 }
 images {
+  image: "/assets/fx/attrezzo_bolla.png"
+}
+images {
+  image: "/assets/fx/attrezzo_cubo.png"
+}
+images {
+  image: "/assets/fx/attrezzo_molla.png"
+}
+images {
+  image: "/assets/fx/attrezzo_tagliola.png"
+}
+images {
+  image: "/assets/fx/attrezzo_tagliola_chiusa.png"
+}
+images {
+  image: "/assets/fx/attrezzo_tagliola_luce.png"
+}
+images {
   image: "/assets/fx/bagliore.png"
 }
 images {

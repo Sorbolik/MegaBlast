@@ -185,3 +185,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 9 nov | Prestazioni, Fase 1: col bot che pensa al massimo 4 tick di recupero per frame, disegno dei colpi senza chiamate inutili, raccoglitore a piccoli passi, accelerometro spento. | #237 |
 | 9 nov | Skill gamedev generali in `.claude/skills/` (11 delle 77 di awesome-gamedev-agent-skills: prestazioni, shader, Defold e altre); scartate quelle di altri motori, i generi e il router. | #239 |
 | 9 nov | Prestazioni, Fase 2: il bot riusa le copie della partita (spazzatura −85%), hash e indirizzi precalcolati, maschera senza il canale fisso. | #240 |
+| 9 nov | Trampolino rifatto (la Molla: inclinata, spara di lato) e attrezzi fuori dalle casse, in un cubo di ferro con la loro icona; grafica nuova di trappola, Molla e scudo. | questa PR |
