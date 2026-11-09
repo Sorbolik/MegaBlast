@@ -137,9 +137,9 @@ M.GRENADE_BOUNCE = 0.4   -- how much speed is left after a bounce
 M.GRENADE_FRICTION = 1   -- friction when touching ground
 M.GRENADE_GRAVITY = 1.3
 M.GRENADE_DAMPING = 1    -- slowdown per second after the first impact (like Box2D's linear damping)
--- damage 80 at the centre and 25 at the edges (bot arena, 29 October 2026: the
--- Uovo was the weakest weapon; Sergio: "non ti dico che si deve oneshottare")
-M.GRENADE_BLAST = { r = 5.5 * M.U, damage_r = 10 * M.U, damage = 80, damage_min = 25, impulse = 15 }
+-- damage 65 at the centre and 20 at the edges (9 Nov 2026: weapon duels showed it too strong, lowered
+-- from 80/25; 80/25 came from the bot arena of 29 October 2026, when the Uovo was the weakest weapon)
+M.GRENADE_BLAST = { r = 5.5 * M.U, damage_r = 10 * M.U, damage = 65, damage_min = 20, impulse = 15 }
 
 -- Sciame di Schegge (machine gun): a burst of straight, fast shards, each with
 -- a tiny explosion
@@ -148,7 +148,7 @@ M.SHARD_EVERY = 4        -- ticks between one shard and the next
 M.SHARD_SPEED = 1662.5   -- power doesn't count: they always leave at the same speed
 M.SHARD_GRAVITY = 0.2    -- gravity barely bends them
 M.SHARD_SPREAD = math.rad(3)
-M.SHARD_BLAST = { r = 12.25, damage_r = 21, damage = 11, impulse = 30 }
+M.SHARD_BLAST = { r = 12.25, damage_r = 21, damage = 6, impulse = 30 }
 
 -- Cecchino: shot speed (power doesn't count) and its maximum lifetime; damage,
 -- push, drop and bounces in config.SNIPER
