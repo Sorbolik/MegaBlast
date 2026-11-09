@@ -2156,7 +2156,7 @@ end
 -- the plate) is behind it (battle/vignette.lua, M.ghost)
 function CP.strip_covers(self)
 	if not self.vign.shown then return end
-	local r = CP.vignette.STRIP
+	local r = self.vign:rect()
 	local behind = false
 	for i = 1, #self.g.robots do
 		local rx, feet, top, half = CP.robot_span(self, i)
@@ -3927,6 +3927,7 @@ local function arrange(self)
 	for _, sl in ipairs(self.slots) do sl.x = nil end
 	hud.stopwatch_move(self.chrono, W / 2, y0 + SIZES.ring_y)
 	score.cima(self.punti, y1)
+	if self.vign then self.vign:cima(y1) end
 	camera.viewport(self.cam, x0, y0, x1, y1)
 	self.cam_s = nil
 	msg.post("/terreno#script", "schermo", { kx = screen.kx, ky = screen.ky })
@@ -4161,7 +4162,7 @@ function init(self)
 	-- the points at the top center; the ticking is the game object's "punto" sound
 	self.punti = score.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	-- the messages ("Una cassa cade dal cielo!") just under the strip of the
-	-- vignettes (battle/vignette.lua, top center at 568, 96 tall), never behind it
+	-- vignettes (battle/vignette.lua, now in the top band, 6 px under the top), never behind it
 	-- and above the head of whoever plays (the bots comment over their heads)
 	self.message = label(W / 2, H / 2 + 140, "", 1.6)
 	self.announcement = label(W / 2, H / 2 - 150, "", 2.2)
@@ -4703,6 +4704,12 @@ local function pointer_down(self, id, px, py)
 		self.pointers[id] = "cancelled"
 		return
 	end
+	-- the strip of the vignettes: a swipe up sends it away (it also goes by itself, timed)
+	if self.vign and self.vign:hit(px, py) then
+		self.pointers[id] = "strip"
+		self.strip_swipe_y = y
+		return
+	end
 	-- the wheel: open, a tap on ESCI leaves, elsewhere it just closes it again
 	if self.menu_open then
 		self.pointers[id] = "cancelled"
@@ -4773,6 +4780,9 @@ local function pointer_move(self, id, x, y)
 		aim_from(self, x, y)
 	elseif m == "zoom" then
 		ZM.trascina(self, y)
+	elseif m == "strip" and y - self.strip_swipe_y >= CP.vignette.SWIPE_UP then
+		self.vign:dismiss()
+		self.pointers[id] = "cancelled"
 	end
 end
 

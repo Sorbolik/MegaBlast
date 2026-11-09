@@ -1,0 +1,11 @@
+# La striscia delle vignette in alto (Sergio, 9 nov): sopra punteggio e facce, accanto all'obiettivo
+# dorato, sempre della stessa larghezza; l'altezza segue il testo; si toglie con lo swipe verso l'alto.
+imposta prova_vignette no
+imposta prova_copione strumenti/simula/scenari/striscia_alto_livello.lua
+aspetta_stato modo=local 8
+aspetta 1
+foto 01_lunga                         # tre righe: la striscia cresce
+foto 02_lunga
+trascina 440 640 440 700 0.3
+aspetta 0.6
+foto 03_swipe_su                      # sparita
