@@ -255,7 +255,9 @@ bot). Misure del 9 nov, 4 core, `-carico 30 -durata 20s -modo 2v2 -bot`:
 | --- | --- | --- | --- |
 | 2v2, una persona e 3 bot | circa 1.200 µs | circa 14 | 8–9% con 30 partite |
 
-Una partita coi bot costa quasi 5 volte una fra persone: è il bot che pensa
+Rifatta dopo #240 (il bot riusa le copie della partita: sul telefono molta meno
+spazzatura): sul server uguale, circa 1.250 µs, perché in gopher-lua il tempo
+non va nel creare le copie ma nel farle avanzare. Una partita coi bot costa quasi 5 volte una fra persone: è il bot che pensa
 provando le mosse su copie della partita (`sim/bot.lua`), in gopher-lua. Finché
 online si è in pochi quasi ogni partita ha bot, quindi un server da 4 core regge
 circa **50 persone** che giocano contro i bot. Le leve sono nel bot (meno copie,
