@@ -16,9 +16,15 @@ type Scheduler struct {
 type worker struct {
 	add   chan *Room
 	rooms atomic.Int32 // rooms in this worker
-	busy  atomic.Int64 // duration of the last tick in nanoseconds
-	late  atomic.Int64 // ticks that went over 16.6 ms (slowed matches)
+	// average duration of a tick in nanoseconds, over about half a second: a
+	// single slow tick (a bot thinking) doesn't make /health answer 503
+	avg  atomic.Int64
+	late atomic.Int64 // ticks that went over 16.6 ms (slowed matches)
 }
+
+// roomCost is what a new room is assumed to cost until the worker measures it
+// (a 1 v 1 between people, docs/server.md)
+const roomCost = 250 * time.Microsecond
 
 func NewScheduler(n int) *Scheduler {
 	s := &Scheduler{}
@@ -30,14 +36,17 @@ func NewScheduler(n int) *Scheduler {
 	return s
 }
 
-// Add puts the room on the worker with the fewest rooms.
+// Add puts the room on the least loaded worker: by measured time, not by
+// number of rooms (a room with three bots costs as much as four without). The
+// room's cost is counted at once, so rooms created together spread out.
 func (s *Scheduler) Add(r *Room) {
 	best := s.workers[0]
 	for _, w := range s.workers[1:] {
-		if w.rooms.Load() < best.rooms.Load() {
+		if w.avg.Load() < best.avg.Load() {
 			best = w
 		}
 	}
+	best.avg.Add(int64(roomCost))
 	best.rooms.Add(1)
 	best.add <- r
 }
@@ -64,7 +73,13 @@ func (w *worker) run() {
 			clear(rooms[len(live):]) // finished rooms can be released
 			rooms = live
 			d := time.Since(start)
-			w.busy.Store(int64(d))
+			// moving average over 32 ticks (Add may have raised it meanwhile)
+			for {
+				old := w.avg.Load()
+				if w.avg.CompareAndSwap(old, old+(int64(d)-old)/32) {
+					break
+				}
+			}
 			if d > period {
 				w.late.Add(1)
 			}
@@ -72,13 +87,24 @@ func (w *worker) run() {
 	}
 }
 
-// Load is the fraction of the tick used by the busiest worker (1 = full).
+// Load is the fraction of the tick used by the busiest worker, on average
+// over the last half second (1 = full).
 func (s *Scheduler) Load() float64 {
 	var top int64
 	for _, w := range s.workers {
-		top = max(top, w.busy.Load())
+		top = max(top, w.avg.Load())
 	}
 	return float64(top) / float64(time.Second/tickRate)
+}
+
+// Mean is the fraction of the tick used by the workers on average: the CPU
+// the rooms take (Load says how close the busiest one is to being late).
+func (s *Scheduler) Mean() float64 {
+	var sum int64
+	for _, w := range s.workers {
+		sum += w.avg.Load()
+	}
+	return float64(sum) / float64(len(s.workers)) / float64(time.Second/tickRate)
 }
 
 func (s *Scheduler) Rooms() int {

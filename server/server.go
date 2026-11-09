@@ -156,10 +156,14 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	defer s.lobby.Leave(p)
 
 	hello := true
+	var limit rateLimit
 	for {
 		_, data, err := conn.Read(ctx)
 		if err != nil {
 			return
+		}
+		if !limit.allow(time.Now()) {
+			continue
 		}
 		msg, err := parseClientMsg(data)
 		if err != nil {
@@ -187,6 +191,35 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 			p.Close()
 		}
 	}
+}
+
+// rateLimit: at most msgRate messages a second per connection, with bursts
+// up to msgBurst; the rest is dropped before it's even read. A client sends a
+// few a second (keys when they change, the aim at most 10, the shot), so only
+// a broken or hostile client hits it: it can't fill its room's queue and make
+// the others' keys get lost.
+type rateLimit struct {
+	tokens float64
+	last   time.Time
+}
+
+const (
+	msgRate  = 30
+	msgBurst = 60
+)
+
+func (l *rateLimit) allow(now time.Time) bool {
+	if l.last.IsZero() {
+		l.tokens = msgBurst
+	} else {
+		l.tokens = min(msgBurst, l.tokens+now.Sub(l.last).Seconds()*msgRate)
+	}
+	l.last = now
+	if l.tokens < 1 {
+		return false
+	}
+	l.tokens--
+	return true
 }
 
 // hello checks the version and puts the player in the queue or in their match.
