@@ -1,7 +1,7 @@
 -- The vignettes (Sergio, 3 Nov; the level plan:
 -- https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2): no more writing above
 -- the heads. Who speaks does it with their face, in comic style:
---   - the strip at the top, just under the points: a line of whoever guides
+--   - the strip at the top, over the points and the turn faces: a line of whoever guides
 --     you that doesn't stop the game (what to do now, Ritenta, Brava). The
 --     bots' comments are not here: plain text over their head (battle/plate.lua,
 --     Sergio, 4 Nov);
@@ -17,7 +17,8 @@
 --   local v = vignette.new()
 --   v:say(chi, faccia, testo, nome, colore)  -- the strip (testo nil: it goes away)
 --   v:ghost(behind)                       -- every frame: someone is behind the strip
---                                         -- (in vignette.STRIP), it goes see-through
+--                                         -- (in v:rect()), it goes see-through
+--   v:cima(y1) / v:hit(px, py) / v:dismiss()  -- the screen's top, a finger on it, swipe up
 --   local view = v:open(pages)            -- pages: { { chi, faccia, testo, disegno } }:
 --                                         -- the big vignette (the battle keeps it as self.carta);
 --                                         -- the mission's postcard is before the battle (ui/postcard.lua)
@@ -47,13 +48,18 @@ M.CHI = {
 M.FACCE = { calma = true, ride = true, spiega = true, sorpresa = true, preoccupata = true,
 	arrabbiata = true, fiera = true, triste = true }
 
--- the strip: top center, 38 below the points board (room for the lines under
--- it, «+N PER PAREGGIARE» and the turn balance); the goal is right of the board
-local STRIP_W, STRIP_H, STRIP_Y = 760, 96, 568
+-- the strip (Sergio, 9 Nov): in the top band, ON PURPOSE over the points board and
+-- the turn faces, but never over the gold goal on its right (score.lua puts it at
+-- 640 + 215). Always the same width, whatever the level; the height grows with
+-- the line (STRIP_MIN_H covers the board and the faces). Swipe up dismisses it.
+local STRIP_W, STRIP_MIN_H, STRIP_MAX_H = 570, 124, 220
+local STRIP_X = 640 + 215 - 12 - STRIP_W / 2   -- its right edge 12 left of the goal
+local STRIP_TOP = 6                             -- gap from the top of the screen
+local SWIPE_UP = 40                             -- px a finger must go up to dismiss it
 -- someone behind it (Sergio, 4 Nov: «capita troppo spesso di essere dietro le
 -- etichette»): the strip stays where it is and goes see-through
 local GHOST_A, GHOST_T = 0.25, 0.15
-M.STRIP = { x0 = 640 - STRIP_W / 2, y0 = STRIP_Y - STRIP_H / 2, x1 = 640 + STRIP_W / 2, y1 = STRIP_Y + STRIP_H / 2 }
+M.SWIPE_UP = SWIPE_UP
 local FACE_S = 80
 -- the big vignette
 local BIG_W, BIG_H = 980, 400
@@ -80,7 +86,7 @@ local function panel(x, y, w, h, parent)
 	gui.set_color(n, PAPER)
 	gui.set_color(b, INK)
 	gui.set_inherit_alpha(b, true) -- the strip goes see-through whole (M.ghost)
-	return n
+	return n, b
 end
 
 local function face(chi, faccia, x, y, s, parent)
@@ -125,12 +131,13 @@ end
 function M.new()
 	local v = setmetatable({ line = nil }, { __index = M })
 	-- the strip
-	v.strip = panel(640, STRIP_Y, STRIP_W, STRIP_H)
+	v.y1 = 720
+	v.strip, v.strip_border = panel(STRIP_X, 720 - STRIP_TOP - STRIP_MIN_H / 2, STRIP_W, STRIP_MIN_H)
 	local fx = -STRIP_W / 2 + 12 + FACE_S / 2
 	v.strip_frame, v.strip_face = face(nil, nil, fx, 0, FACE_S, v.strip)
 	local tx = fx + FACE_S / 2 + 18
-	v.strip_name = ink("", tx, STRIP_H / 2 - 10, 0.42, INK, nil, v.strip)
-	v.strip_text = ink("", tx, STRIP_H / 2 - 34, 0.5, INK, STRIP_W / 2 - tx - 14, v.strip)
+	v.strip_name = ink("", tx, STRIP_MIN_H / 2 - 14, 0.42, INK, nil, v.strip)
+	v.strip_text = ink("", tx, STRIP_MIN_H / 2 - 40, 0.5, INK, STRIP_W / 2 - tx - 14, v.strip)
 	for _, n in ipairs({ v.strip_frame, v.strip_face, v.strip_name, v.strip_text }) do
 		gui.set_inherit_alpha(n, true)
 	end
@@ -138,19 +145,60 @@ function M.new()
 	return v
 end
 
--- a long line shrinks until it fits the strip (Sergio's lines can be three
--- sentences): it never spills out under the paper
+-- The height follows the line: it grows with the text (up to STRIP_MAX_H, then the
+-- text shrinks): it never spills out under the paper
 local STRIP_TEXT_W = STRIP_W - FACE_S - 44   -- as v.strip_text in M.new
-local STRIP_TEXT_ROOM = STRIP_H - 34 - 6
-local function fit_strip_text(n, testo)
+local function layout_strip(v, testo)
+	local n = v.strip_text
 	local font = gui.get_font_resource(gui.get_font(n))
+	local h = STRIP_MIN_H
 	for _, k in ipairs({ 0.5, 0.45, 0.4, 0.36, 0.32 }) do
 		V3.x, V3.y, V3.z = k, k, 1
 		gui.set_scale(n, V3)
 		gui.set_size(n, vec(STRIP_TEXT_W / k, 400))
 		local m = resource.get_text_metrics(font, testo, { width = STRIP_TEXT_W / k, line_break = true })
-		if m.height * k <= STRIP_TEXT_ROOM then return end
+		h = math.max(STRIP_MIN_H, 40 + m.height * k + 14)
+		if h <= STRIP_MAX_H then break end
 	end
+	h = math.min(h, STRIP_MAX_H)
+	v.strip_h = h
+	gui.set_size(v.strip, vec(STRIP_W, h))
+	gui.set_size(v.strip_border, vec(STRIP_W, h))
+	local tx = gui.get_position(v.strip_name).x
+	gui.set_position(v.strip_name, vec(tx, h / 2 - 14))
+	gui.set_position(v.strip_text, vec(tx, h / 2 - 40))
+end
+
+-- where the strip sits (its center y) and the rectangle it covers (for the caller of M.ghost)
+local function strip_y(v) return v.y1 - STRIP_TOP - (v.strip_h or STRIP_MIN_H) / 2 end
+function M.rect(v)
+	local h = v.strip_h or STRIP_MIN_H
+	return { x0 = STRIP_X - STRIP_W / 2, x1 = STRIP_X + STRIP_W / 2, y1 = v.y1 - STRIP_TOP, y0 = v.y1 - STRIP_TOP - h }
+end
+
+-- The real top of the screen (ui/screen.lua: higher than 720 on a tablet)
+function M.cima(v, y1)
+	v.y1 = y1
+	gui.cancel_animations(v.strip, "position.y")
+	gui.set_position(v.strip, vec(STRIP_X, strip_y(v)))
+end
+
+-- true if a finger at (px, py) (raw touch) is on the strip
+function M.hit(v, px, py)
+	return v.shown ~= nil and gui.is_enabled(v.strip) and gui.pick_node(v.strip, px, py)
+end
+
+-- A swipe up: the strip goes away and stays away for this line
+function M.dismiss(v)
+	if not v.shown then return end
+	v.dismissed = v.shown.testo
+	v.line = nil
+	gui.cancel_animations(v.strip, "position.y")
+	v.shown = nil
+	v.behind = nil
+	gui.animate(v.strip, "position.y", strip_y(v) + STRIP_MAX_H, gui.EASING_INQUAD, 0.2, 0, function()
+		if not v.shown then gui.set_enabled(v.strip, false) end
+	end)
 end
 
 local function show_strip(v, s)
@@ -170,18 +218,23 @@ local function show_strip(v, s)
 	gui.set_text(v.strip_name, nome)
 	gui.set_color(v.strip_name, colore)
 	gui.set_text(v.strip_text, s.testo)
-	fit_strip_text(v.strip_text, s.testo)
+	layout_strip(v, s.testo)
 	gui.set_enabled(v.strip, true)
-	-- it comes in with a small drop
-	gui.set_position(v.strip, vec(640, STRIP_Y + 16))
-	gui.animate(v.strip, "position.y", STRIP_Y, gui.EASING_OUTBACK, 0.25)
+	-- it comes in with a small drop from the top
+	gui.cancel_animations(v.strip, "position.y")
+	gui.set_position(v.strip, vec(STRIP_X, strip_y(v) + 24))
+	gui.animate(v.strip, "position.y", strip_y(v), gui.EASING_OUTBACK, 0.25)
 end
 
 -- The line of the moment (nil: nothing)
 function M.say(v, chi, faccia, testo, nome, colore)
 	if not testo or testo == "" then
 		v.line = nil
+	elseif v.dismissed == testo then
+		-- swiped away: it stays away while the same line goes on
+		v.line = nil
 	elseif not (v.line and v.line.testo == testo and v.line.chi == chi) then
+		v.dismissed = nil
 		v.line = { chi = chi, faccia = faccia, testo = testo, nome = nome, colore = colore }
 	end
 	show_strip(v, v.line)
@@ -190,6 +243,7 @@ end
 -- Nothing in the strip (the match ends, a menu opens)
 function M.quiet(v)
 	v.line = nil
+	v.dismissed = nil
 	show_strip(v, nil)
 end
 
