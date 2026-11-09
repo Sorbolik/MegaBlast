@@ -4,6 +4,8 @@
 # Qui l'estensione WebSocket si compila sul build server di Defold, quindi l'online c'è.
 # Solo arm64 (tutti i telefoni da 2017 in poi): con anche armv7 l'APK pesa 70 MB e Telegram
 # ne accetta al massimo 50.
+# Con "log" spuntato l'APK è la variante debug: il motore scrive i log (le righe
+# SCATTO del contatore FPS), che si leggono senza cavo con adb (docs/prestazioni.md).
 # Segreti: ANDROID_KEYSTORE (keystore in base64), ANDROID_KEYSTORE_PASS,
 # TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID. Variabile facoltativa: SERVER_URL.
 name: APK su Telegram
@@ -11,6 +13,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      log:
+        description: "APK coi log (variante debug, per leggere gli scatti con adb logcat)"
+        type: boolean
+        default: false
 permissions:
   contents: read
   pull-requests: read  # novita.py legge la sezione "Per Telegram" delle PR
@@ -34,6 +41,7 @@ jobs:
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
           KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
           SERVER_URL: ${{ vars.SERVER_URL }}
+          VARIANTE: ${{ inputs.log && 'debug' || 'release' }}
         run: |
           curl -fsSL --retry 4 -o "$RUNNER_TEMP/bob.jar" https://github.com/defold/defold/releases/download/1.14.0/bob.jar
           echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/chiave.keystore"
@@ -42,7 +50,7 @@ jobs:
           [ -n "$SERVER_URL" ] && printf '[megablast]\nserver_url = %s\n' "$SERVER_URL" > "$RUNNER_TEMP/apk.ini"
           java -jar "$RUNNER_TEMP/bob.jar" --root client --settings "$RUNNER_TEMP/apk.ini" \
             --platform arm64-android --architectures arm64-android --strip-executable \
-            --bundle-format apk --variant release --archive --texture-compression true \
+            --bundle-format apk --variant "$VARIANTE" --archive --texture-compression true \
             --keystore "$RUNNER_TEMP/chiave.keystore" --keystore-pass "$RUNNER_TEMP/chiave.pass" \
             --bundle-output "$RUNNER_TEMP/bundle" resolve build bundle
           find "$RUNNER_TEMP/bundle" -name '*.apk' -exec mv {} "$RUNNER_TEMP/MegaBlast.apk" \;
@@ -54,9 +62,12 @@ jobs:
           PRIMA: ${{ github.event.before }}
           RAMO: ${{ github.ref_name }}  # main o il ramo scelto in "Run workflow"
           GITHUB_TOKEN: ${{ github.token }}
+          LOG: ${{ inputs.log }}
         run: |
           python3 strumenti/apk/novita.py "$PRIMA" "$RAMO" | tee "$RUNNER_TEMP/novita.txt"
-          python3 strumenti/apk/novita.py --didascalia "$RAMO" | tee "$RUNNER_TEMP/didascalia.txt"
+          python3 strumenti/apk/novita.py --didascalia "$RAMO" > "$RUNNER_TEMP/didascalia.txt"
+          if [ "$LOG" = "true" ]; then sed -i '1s/^/📋 CON I LOG (debug, solo per le misure) · /' "$RUNNER_TEMP/didascalia.txt"; fi
+          cat "$RUNNER_TEMP/didascalia.txt"
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendDocument" \
             -F "chat_id=$CHAT" -F "caption=<$RUNNER_TEMP/didascalia.txt" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \

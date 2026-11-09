@@ -277,6 +277,21 @@ do
 		"melee aim: the Mantice hits who is in front, not behind, and the match doesn't change")
 end
 
+-- Online the client's orbs have only id and position (server/net.lua): the
+-- melee aim must not fly them (it crashed in update_orb, owner nil)
+do
+	local g7 = game.new(3, "pavimento", { players = { { team = 1 }, { team = 2 } } })
+	for _ = 1, 120 do g7:step() end
+	local a = g7.robots[g7.current]
+	g7.orbs = { { id = 1, x = a.x + 30, y = a.y - 40 } }
+	local res = {}
+	for _, wpn in ipairs({ "sword", "mallet", "lunge" }) do
+		local ok, err = pcall(bot.hits, g7, wpn, 0, {})
+		if not ok then res[#res + 1] = wpn .. ": " .. tostring(err) end
+	end
+	check(#res == 0, "melee aim online with an orb in flight (only id and position): no error " .. table.concat(res, "; "))
+end
+
 if failures > 0 then
 	print(failures .. " tests failed")
 	os.exit(1)

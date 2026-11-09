@@ -485,6 +485,17 @@ function M.hits(g, wpn, ang, out)
 	-- the client asks it at every frame of aiming: always the same copy
 	local w = M.world(g, HITS_WORLD)
 	HITS_WORLD = w
+	-- online the client's orbs come from the server with only id and position
+	-- (no owner, speed or age): they can't fly in the copy, and the melee
+	-- shot doesn't need them
+	local orbs, n = w.orbs, 0
+	for i = 1, #orbs do
+		if orbs[i].owner then
+			n = n + 1
+			orbs[n] = orbs[i]
+		end
+	end
+	for i = #orbs, n + 1, -1 do orbs[i] = nil end
 	w:attack(wpn, { weapon = wpn, angle = ang, power = 1 })
 	local rb = w.robots[w.current]
 	for _ = 1, 4 * 60 do
