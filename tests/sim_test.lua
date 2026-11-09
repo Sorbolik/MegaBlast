@@ -590,22 +590,28 @@ do
 	check(r1.hp == r1.max_hp and r1.shield == config.SHIELD.hp - 20, "the shield absorbs the damage")
 	check(q:knock_mul(r1) < 1, "with the shield you get pushed less")
 
-	-- on the next turn the trap is armed: the opponent stepping on it flies away
+	-- on the next turn the trap is armed: the opponent stepping on it gets its
+	-- feet locked (no damage, no launch) until the end of its turn
 	for _ = 1, 3000 do
 		q:step()
 		if q.current == 2 then break end
 	end
 	check(trap.armed and r1.shield, "on the next turn the trap is armed and the shield is still there")
+	r1.x = trap.x + 150
 	r2.x, r2.y, r2.vx, r2.vy, r2.grounded = trap.x, trap.y, 0, 0, true
-	local hp2 = r2.hp
+	local hp2, pts1 = r2.hp, r1.points
 	q:step()
-	check(r2.vy > 0 and math.abs(r2.vx) > 0 and r2.hp == hp2 - config.TRAP.damage and #q.placed == 0,
-		"the trap launches the opponent and disappears")
-	check(r2.last_hit == 1, "and whoever placed it gets the kill if they fall")
+	check(r2.trapped and r2.hp == hp2 and #q.placed == 0 and r1.points > pts1,
+		"the trap locks the opponent's feet, without damage, and gives points to whoever placed it")
+	local x2 = r2.x
+	for _ = 1, 60 do q:step({ right = true, jump = true }) end
+	check(r2.x == x2 and r2.grounded, "with locked feet it doesn't walk or jump")
+	check(not q:can_use("hook") and q:can_use("missile"), "nor use the Rampino, but it can still shoot")
 	for _ = 1, 3000 do
 		q:step()
 		if q.current == 1 then break end
 	end
+	check(not r2.trapped, "the trap lets go at the end of its turn")
 	check(r1.shield == nil, "the shield ends at the start of the owner's turn")
 
 	-- a teammate doesn't set off the trap

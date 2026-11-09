@@ -91,7 +91,7 @@ end
 
 function M.new(palette)
 	local o = { colori = palette, posed_ones = {}, cure = {}, shields = {}, flames = {}, frosts = {}, crepe = {},
-		snaps = {}, snap_i = 0,
+		snaps = {}, snap_i = 0, locks = {},
 		col = vmath.vector4(), size = vmath.vector3(), rot = vmath.vector3() }
 	local h = game.DISEGNO_H
 	for i = 1, config.MAX_PLACED do
@@ -114,6 +114,10 @@ function M.new(palette)
 	end
 	for i = 1, game.MAX_PLAYERS do
 		-- the shield: a bubble with hexagon mesh, in the team colour
+		-- feet locked by a trap: the closed jaws at the ankles
+		local lock = image("attrezzo_tagliola_chiusa", SNAP_W * 0.75, SNAP_H * 0.75)
+		gui.set_enabled(lock, false)
+		o.locks[i] = lock
 		local s = image("attrezzo_bolla", h * 1.9, h * 1.9)
 		gui.set_enabled(s, false)
 		o.shields[i] = s
@@ -160,6 +164,7 @@ function M.nodi(o)
 	for _, c in ipairs(o.cure) do list[#list + 1] = c.root end
 	for _, p in ipairs(o.posed_ones) do list[#list + 1] = p.root end
 	for _, n in ipairs(o.snaps) do list[#list + 1] = n end
+	for _, n in ipairs(o.locks) do list[#list + 1] = n end
 	for _, n in ipairs(o.shields) do list[#list + 1] = n end
 	for _, n in ipairs(o.frosts) do list[#list + 1] = n end
 	for _, n in ipairs(o.crepe) do list[#list + 1] = n end
@@ -224,9 +229,12 @@ function M.update(o, g, view, clock)
 			end
 		end
 	end
-	-- shield around the robot
+	-- shield around the robot, trap on its feet
 	for i = 1, game.MAX_PLAYERS do
 		local rb, v = g.robots[i], view[i]
+		local locked = rb ~= nil and not rb.dead and rb.trapped ~= nil
+		gui.set_enabled(o.locks[i], locked)
+		if locked then pos(o.locks[i], v.x, v.y + SNAP_DY * 0.5) end
 		local shield = rb ~= nil and not rb.dead and rb.shield ~= nil
 		gui.set_enabled(o.shields[i], shield)
 		if shield then

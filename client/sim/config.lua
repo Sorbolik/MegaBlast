@@ -165,8 +165,10 @@ C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 400, lift = 
 -- Tactical items: usable at any moment of your own turn, repositioning
 -- included, and they don't count as attacks. Speeds in pixels per second.
 -- Trap: placed at the feet and armed from the next turn; an opponent stepping
--- on it is launched high and far (to throw them off the map).
-C.TRAP = { damage = 13, launch_vy = 220, push_vx = 160 }
+-- on it gets its feet locked (Sergio, 9 November 2026: no damage, no launch):
+-- it can't walk, jump or use the Rampino until the end of its own turn (the
+-- next one, if it was trapped in someone else's turn), but it can still shoot,
+-- use items and teleport. Explosions still push it. game.lua, rb.trapped.
 -- Trampoline ("Molla", Sergio, 9 November 2026): thrown like the Uovo and
 -- stays where it lands (if it lands on a robot, at its feet), tilted towards
 -- where it was thrown (dir). Anything falling on it bounces up: robots, shots,
