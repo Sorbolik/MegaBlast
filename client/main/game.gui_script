@@ -3866,7 +3866,7 @@ local function render(self, dt)
 	end
 	score.cover_goal(self.punti, self.vign:strip_on())
 	score.update(self.punti, dt, g, self.mode == "online" and self.me or g.current,
-		self.mode == "online" and self.me or (self.mode == "local" and (next(self.bots) or self.missione) and 1) or nil, self.robots)
+		self.mode == "online" and self.me or (self.mode == "local" and (next(self.bots) or self.missione) and 1) or nil, self.robots, self.view)
 	local n = bar_robot(self)
 	local tele = n and math.max(0, n.teleports_left - self.orbs_wait) or 0
 	if self.tele_n ~= tele then
