@@ -113,7 +113,9 @@ mostra con la schermata dello stesso telefono (`client/menu/pick.lua`). Nello st
 porta la sua secondaria in `sw` (i suoi colpi in `ss`), l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
 `hx`, `hy`; `gs`: il suo uncino del Rampino è in volo, in `gx`, `gy`; `kn`: sbalzato da un colpo; `la`: direzione dello scatto
-dell'Affondo).
+dell'Affondo). Nelle casse (`c`) il contenuto resta segreto, tranne per gli attrezzi che cadono sulla mappa
+(trappola, scudo, Molla, dal 9 nov): `w` è l'attrezzo, e l'evento `crate` lo porta in `item`. Ogni trampolino posato
+(`pl`) porta in `d` il lato verso cui è inclinato (1 destra, -1 sinistra).
 
 ## Partite private
 

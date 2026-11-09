@@ -307,8 +307,41 @@ simulazione (pochi byte, e gira anche sul server).
   mappa cambia (Sergio, 2 nov: "senza perdere il livello di dettaglio delle
   mappe"). Si fa dopo la misura sul PC e insieme al thread di Gabvi, che tocca
   lo stesso shader.
-- La maschera intera costa ancora ~30 ms di Lua (230 mila celle scritte una per
-  una nel buffer): si può dimezzare scrivendo solo il canale che cambia.
+- ~~La maschera intera costa ancora ~30 ms di Lua~~ fatto in #243 (sotto).
+
+## Fase 3: la maschera a strisce (9 nov)
+
+Misura nel simulatore (`fluidita.txt`, JIT spento come sul telefono): entrando in
+una missione la maschera intera costava 77,6 ms di Lua, la voce più grossa del
+caricamento (i dipinti 2-18 ms l'uno). Ora ogni striscia di celle uguali di una
+riga (piene o vuote) è una sola copia (`buffer.copy_stream`) da una riga già
+pronta, invece di tre scritture per cella: **3,2-3,9 ms**, byte per byte uguale
+alla maschera di prima (controllato su tutte le celle nel simulatore). Nessun
+dettaglio cambia, la partita neanche.
+
+Il resto della Fase 3 e la Fase 4 non valgono la pena, misurato: i contatori dei
+componenti sono già esatti (niente factory), lo shader legge già la maschera una
+volta sola (#157), un nodo padre per l'HUD e i layer della GUI danno poco e
+rischiano l'ordine di disegno, il caricamento asincrono delle texture toglie solo
+l'upload (1-6 ms) mentre la decodifica resta. In partita Lua usa 0,5-0,8 ms per
+frame (disegno 0,37, personaggi 0,15, simulazione 0,05): il resto è GPU.
+
+## I log dal telefono, senza cavo (9 nov)
+
+L'APK di tutti i giorni è "release": Defold lì non scrive log. Per le misure c'è
+l'APK coi log: Actions > "APK su Telegram" > Run workflow con **log** spuntato
+(arriva su Telegram con "📋 CON I LOG"). È la variante debug, stesso nome e stessa
+chiave: si installa sopra; dopo le prove si rimette quello normale.
+
+1. Sul telefono: Opzioni sviluppatore > **Debug wireless** acceso (Android 11+),
+   telefono e PC sulla stessa WiFi; "Associa dispositivo con codice" mostra
+   indirizzo, porta e codice.
+2. Sul PC (Android Platform-Tools): `adb pair IP:PORTA CODICE`, poi
+   `adb connect IP:PORTA` (la porta della schermata Debug wireless, non quella
+   dell'associazione).
+3. `adb logcat -c` e poi `adb logcat -s defold:* > log_telefono.txt` mentre si gioca
+   col CONTATORE FPS acceso (IMPOSTAZIONI): ogni scatto è una riga
+   `SCATTO 23.0 ms (normale 8.3, lua 0.6 ms) causa: ...`.
 
 ## Opzioni scartate e perché
 

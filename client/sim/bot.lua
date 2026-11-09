@@ -485,6 +485,17 @@ function M.hits(g, wpn, ang, out)
 	-- the client asks it at every frame of aiming: always the same copy
 	local w = M.world(g, HITS_WORLD)
 	HITS_WORLD = w
+	-- online the client's orbs come from the server with only id and position
+	-- (no owner, speed or age): they can't fly in the copy, and the melee
+	-- shot doesn't need them
+	local orbs, n = w.orbs, 0
+	for i = 1, #orbs do
+		if orbs[i].owner then
+			n = n + 1
+			orbs[n] = orbs[i]
+		end
+	end
+	for i = #orbs, n + 1, -1 do orbs[i] = nil end
 	w:attack(wpn, { weapon = wpn, angle = ang, power = 1 })
 	local rb = w.robots[w.current]
 	for _ = 1, 4 * 60 do
@@ -503,7 +514,8 @@ function M.hits(g, wpn, ang, out)
 end
 
 -- Tries an attack from the spot. fino: "volo" (only the shots) or "tutto"
--- (until everything is still). Returns the score.
+-- (until everything is still). Returns the score, and whether it changed
+-- anything that counts (points, crates, robots moved: value ~= 0).
 local function try_move(b, g, spot, wpn, ang, pow, fino)
 	local w = scratch(b, "move", g)
 	w.score = b.pesi.punteggio or g.score
@@ -518,6 +530,7 @@ local function try_move(b, g, spot, wpn, ang, pow, fino)
 		until_quiet(b, w, fino == "volo" and 90 or 5 * 60)
 	end
 	local s = value(b, g, w)
+	local counts = s ~= 0
 	if s == 0 and not b.pesi.rete then
 		-- nothing hit: what counts is where it burst
 		for _, e in ipairs(w.events) do
@@ -525,7 +538,7 @@ local function try_move(b, g, spot, wpn, ang, pow, fino)
 		end
 		s = nearness(g, g.robots[b.id], px, py)
 	end
-	return s
+	return s, counts
 end
 
 -- The Grapple on enemy number who, then the best shot with the weapons in
@@ -576,6 +589,7 @@ end
 local ARC_WEAPONS = {
 	missile = function() return game.MISSILE_SPEED, game.GRAVITY * game.MISSILE_GRAVITY end,
 	grenade = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
+	trampoline = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
 }
 
 -- The living opponents, nearest to the spot first
@@ -621,7 +635,10 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 	local cy = y + game.DISEGNO_H / 2
 	local targets = enemies(g, me, x, y)
 	local function add(wpn, a, p, fino)
-		local s = taste(b, wpn, try_move(b, g, spot, wpn, a, p, fino))
+		local s, counts = try_move(b, g, spot, wpn, a, p, fino)
+		-- the Molla only if it does something (it isn't an attack: no aiming at nothing)
+		if wpn == "trampoline" and not (counts and s > 0) then return end
+		s = taste(b, wpn, s)
 		moves[#moves + 1] = { posto = spot, arma = wpn, ang = a, potenza = p, punti = s - (spot.n or 0) * b.pesi.strada,
 			k = #moves + 1 }
 	end
@@ -636,7 +653,10 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 			if arc then
 				local v, gr = arc()
 				local aim = { oy }
-				if wpn == "grenade" then aim = { o.y + 2 } end
+				-- the Uovo and the Molla at the feet; the Molla is tried to the end
+				-- (where the robot it launches lands)
+				if wpn == "grenade" or wpn == "trampoline" then aim = { o.y + 2 } end
+				local fino = wpn == "trampoline" and "tutto" or "volo"
 				for n = 1, b.liv.powers do
 					local p = POWER_STEPS[n]
 					for _, ty in ipairs(aim) do
@@ -649,7 +669,7 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 							arcs(ox - x - mx, ty - cy - my, v * p, gr, right_ones)
 							-- of the two arcs, the one on the same side (low or high)
 							local g2 = right_ones[a == angles[1] and 1 or 2]
-							if g2 then add(wpn, g2, p, "volo") end
+							if g2 then add(wpn, g2, p, fino) end
 						end
 					end
 				end
@@ -835,6 +855,10 @@ local function think(b, g)
 	local spots = spots_on_foot(b, g, walk_ticks)
 	for _, spot in ipairs(spots) do
 		if #list > 0 then moves_from_spot(b, g, spot, list, moves) end
+	end
+	-- the Molla under an enemy, only from where it stands (each try goes to the end)
+	if overrides.oggetti and g:can_use("trampoline") then
+		moves_from_spot(b, g, spots[1], { "trampoline" }, moves)
 	end
 	table.sort(moves, ranks_before)
 	b.scelta = moves[1]

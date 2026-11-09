@@ -1,12 +1,14 @@
 -- Tactical items in battle: placed traps and springboards, healing circles,
 -- robots' shield and status effects, and the item icons in the bar. The
--- healing circle is vector-drawn (strumenti/grafica/cura.py, battle atlas);
--- the rest are shapes. The open parachute is drawn by the devil
--- (battle/scoria.lua).
+-- healing circle (strumenti/grafica/cura.py), traps, springboards and the
+-- shield bubble (strumenti/grafica/attrezzi.py) are vector-drawn in the battle
+-- atlas; the status effects are shapes. The open parachute is drawn by the
+-- devil (battle/scoria.lua).
 --
 --   local o = oggetti.new(colori)             -- colori[team]
 --   oggetti.nodi(o)                            -- to put in the "mondo" node
 --   oggetti.update(o, g, view, clock)          -- every frame, no allocation
+--   oggetti.snap(o, x, y)                      -- a trap snapped shut there
 
 local game = require "sim.game"
 local config = require "sim.config"
@@ -47,28 +49,37 @@ local function pos(n, x, y)
 	gui.set_position(n, P)
 end
 
--- Trap: a rhombus; springboard: a board on two legs
-local function trap_name(r, parent)
-	local n = gui_node(r * 1.2, r * 1.2, WHITE, parent)
-	gui.set_euler(n, vmath.vector3(0, 0, 45))
-	return n
-end
-
-local function springboard(hw, parent)
-	local n = gui_node(hw * 2, 3, AMBER, parent)
-	local a = gui_node(2, 5, AMBER, n)
-	pos(a, -hw * 0.6, -4)
-	local b = gui_node(2, 5, AMBER, n)
-	pos(b, hw * 0.6, -4)
-	return n
-end
-
 -- an image from the battle atlas, as big as in the world
 local function image(nome, w, h, parent)
 	local n = gui_node(w, h, OPAQUE, parent)
 	gui.set_texture(n, "battaglia")
 	gui.play_flipbook(n, nome)
 	return n
+end
+
+-- Trap: the open jaw trap lying on the ground (strumenti/grafica/attrezzi.py),
+-- with its plate lit in the team colour; springboard: the Molla, a padded
+-- board on a spring, leaning the way it launches, with a chevron pointing there
+local TRAP_W, TRAP_H, TRAP_DY = 28, 8.6, 2.7
+local MOLLA_W, MOLLA_H, MOLLA_DY = 39.2, 15.4, 6.1
+local SNAP_W, SNAP_H, SNAP_DY = 20.8, 16.6, 6.7
+local SNAPS = 2
+
+local function trap_name(parent)
+	local n = image("attrezzo_tagliola", TRAP_W, TRAP_H, parent)
+	local light = image("attrezzo_tagliola_luce", TRAP_W, TRAP_H, n)
+	return n, light
+end
+
+local function springboard(parent)
+	local n = image("attrezzo_molla", MOLLA_W, MOLLA_H, parent)
+	local arrow = gui_node(0, 0, AMBER, n)
+	for k, z in ipairs({ 40, -40 }) do
+		local s = gui_node(7, 2, AMBER, arrow)
+		pos(s, 0, k == 1 and 2 or -2)
+		gui.set_euler(s, vmath.vector3(0, 0, -z))
+	end
+	return n, arrow
 end
 
 -- Shield: a ring
@@ -80,15 +91,16 @@ end
 
 function M.new(palette)
 	local o = { colori = palette, posed_ones = {}, cure = {}, shields = {}, flames = {}, frosts = {}, crepe = {},
+		snaps = {}, snap_i = 0,
 		col = vmath.vector4(), size = vmath.vector3(), rot = vmath.vector3() }
 	local h = game.DISEGNO_H
 	for i = 1, config.MAX_PLACED do
 		local root = gui_node(0, 0, WHITE)
-		local t = trap_name(config.STATS.trap_radius, root)
-		local b = springboard(config.TRAMPOLINE.half_w, root)
+		local t, light = trap_name(root)
+		local b, arrow = springboard(root)
 		gui.set_visible(root, false)
 		gui.set_enabled(root, false)
-		o.posed_ones[i] = { root = root, trap = t, tramp = b, id = nil }
+		o.posed_ones[i] = { root = root, trap = t, light = light, tramp = b, arrow = arrow, id = nil }
 	end
 	for i = 1, config.HEAL.max do
 		local root = gui_node(0, 0, OPAQUE)
@@ -101,7 +113,8 @@ function M.new(palette)
 		o.cure[i] = { root = root, ring_node = a, cuore = heart, sparks = sparks }
 	end
 	for i = 1, game.MAX_PLAYERS do
-		local s = ring_node(h * 1.9, WHITE)
+		-- the shield: a bubble with hexagon mesh, in the team colour
+		local s = image("attrezzo_bolla", h * 1.9, h * 1.9)
 		gui.set_enabled(s, false)
 		o.shields[i] = s
 		local f = circle_shape(h * 0.5, FIRE)
@@ -117,7 +130,28 @@ function M.new(palette)
 		gui.set_enabled(c, false)
 		o.crepe[i] = c
 	end
+	-- the trap that snaps shut (it disappears from the simulation at once)
+	for i = 1, SNAPS do
+		local n = image("attrezzo_tagliola_chiusa", SNAP_W, SNAP_H)
+		gui.set_enabled(n, false)
+		o.snaps[i] = n
+	end
 	return o
+end
+
+local function hide(n) gui.set_enabled(n, false) end
+
+-- A trap snapped at (x, y): the closed jaws pop up, stay a moment and fade
+function M.snap(o, x, y)
+	o.snap_i = o.snap_i % SNAPS + 1
+	local n = o.snaps[o.snap_i]
+	gui.cancel_animations(n)
+	gui.set_enabled(n, true)
+	pos(n, x, y + SNAP_DY)
+	gui.set_color(n, OPAQUE)
+	gui.set_scale(n, vmath.vector3(0.5, 0.5, 1))
+	gui.animate(n, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.18)
+	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, 0.5, 0.7, hide)
 end
 
 -- The nodes to put in the world, in drawing order
@@ -125,6 +159,7 @@ function M.nodi(o)
 	local list = {}
 	for _, c in ipairs(o.cure) do list[#list + 1] = c.root end
 	for _, p in ipairs(o.posed_ones) do list[#list + 1] = p.root end
+	for _, n in ipairs(o.snaps) do list[#list + 1] = n end
 	for _, n in ipairs(o.shields) do list[#list + 1] = n end
 	for _, n in ipairs(o.frosts) do list[#list + 1] = n end
 	for _, n in ipairs(o.crepe) do list[#list + 1] = n end
@@ -167,13 +202,25 @@ function M.update(o, g, view, clock)
 			gui.set_enabled(p.trap, it.kind == "trap")
 			gui.set_enabled(p.tramp, it.kind == "trampoline")
 			if it.kind == "trap" then
+				-- not armed yet: grey plate; armed: the plate glows in the team colour
 				local c = o.colori[it.team]
-				o.col.x, o.col.y, o.col.z = c.x, c.y, c.z
-				o.col.w = it.armed and (0.6 + 0.4 * math.sin(clock * 6 + i)) or 0.35
-				gui.set_color(p.trap, o.col)
-				pos(p.root, it.x, it.y + it.r * 0.5)
+				if it.armed then
+					o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 0.75 + 0.25 * math.sin(clock * 6 + i)
+				else
+					o.col.x, o.col.y, o.col.z, o.col.w = 0.5, 0.5, 0.5, 0.8
+				end
+				gui.set_color(p.light, o.col)
+				pos(p.root, it.x, it.y + TRAP_DY)
 			else
-				pos(p.root, it.x, it.y + 6)
+				pos(p.root, it.x, it.y + MOLLA_DY)
+				-- leaning towards where it launches; in flight it spins flat
+				local d = it.flying and 0 or (it.dir or 0)
+				o.rot.z = -16 * d
+				gui.set_euler(p.tramp, o.rot)
+				o.size.x, o.size.y, o.size.z = d < 0 and -1 or 1, 1, 1
+				gui.set_scale(p.arrow, o.size)
+				pos(p.arrow, d * MOLLA_W * 0.32, MOLLA_H * 0.5 + 4)
+				gui.set_enabled(p.arrow, d ~= 0)
 			end
 		end
 	end
@@ -184,7 +231,8 @@ function M.update(o, g, view, clock)
 		gui.set_enabled(o.shields[i], shield)
 		if shield then
 			local c = o.colori[rb.team]
-			o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 0.35 + 0.25 * rb.shield / config.SHIELD.hp
+			o.col.x, o.col.y, o.col.z, o.col.w = c.x, c.y, c.z, 0.3 + 0.3 * rb.shield / config.SHIELD.hp
+				+ 0.05 * math.sin(clock * 3 + i)
 			gui.set_color(o.shields[i], o.col)
 			pos(o.shields[i], v.x, v.y + game.DISEGNO_H / 2)
 		end

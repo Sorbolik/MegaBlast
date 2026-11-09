@@ -5,7 +5,6 @@ Chi deve decidere: **S** = Sergio, **G** = Gabriella, **C** = Claude in autonomi
 
 | Dal | Cosa | Chi | Area |
 |---|---|---|---|
-| 24 ott | Pesi di trappola, scudo, trampolino nelle casse (sembrano rari) | S | gameplay |
 | 24 ott | Accorciare il turno sotto i 25 s | S, dopo le prime partite vere | gameplay |
 | 26 ott | Cassa di Gabriella (PR #49): mergiare | S | grafica |
 | 26 ott | Altre correzioni al personaggio che Sergio deve ancora descrivere | S | personaggio |

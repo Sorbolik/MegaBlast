@@ -179,7 +179,8 @@ for _, w in ipairs(M.DRAFT_SECONDARIES) do M.WEAPONS[w] = true end
 for w in pairs(M.TOOLS) do M.WEAPONS[w] = true end
 
 -- Crates: they drop from the sky at a random spot (CRATE_CHANCE below).
--- Whoever touches one finds a shot of a weapon or an item (config.CRATE_CONTENTS).
+-- Whoever touches one finds a shot of a weapon (config.CRATE_CONTENTS). Items
+-- drop the same way but visible (c.item, config.ITEM_DROPS), half as often.
 -- CRATE_EVERY: the rate the events panel proposes for events with a crate
 -- every so many turns (sim/rules.lua, casse).
 M.CRATE_EVERY = 3
@@ -191,6 +192,10 @@ M.CRATE_FALL = 192.5     -- maximum fall speed (it comes down slowly, with a par
 -- ({ with 0, with 1, with 2, ... }). With opts.crate_every (event rules,
 -- missions, tests) instead one crate every so many turns.
 M.CRATE_CHANCE = { 0.9, 0.5, 0.3, 0.1 }
+-- the same for items: half (with crate_every: every 2 * crate_every turns)
+M.ITEM_CHANCE = { 0.45, 0.25 }
+M.ITEM_SET = {}
+for _, w in ipairs(M.ITEMS) do M.ITEM_SET[w] = true end
 
 -- Turns: durations are in sim/config.lua, here in ticks
 M.MATCH_TICKS = C.MATCH_SECONDS * 60
@@ -736,7 +741,7 @@ function M:respawn(rb)
 	local sp = maps.get(self.map).spawns[1]
 	rb.x = x or sp.x
 	rb.y = y or self.terrain:ground_below(sp.x, sp.from) or M.WORLD_H / 2
-	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising = 0, 0, false, false, false
+	rb.vx, rb.vy, rb.grounded, rb.knocked, rb.rising, rb.sprung = 0, 0, false, false, false, nil
 	rb.swing, rb.swing_hit, rb.swing_dir, rb.punch, rb.punch_dir, rb.fall_top = nil, nil, nil, nil, nil, nil
 	rb.lunge, rb.lunge_hit, rb.hooked, rb.mallet, rb.mallet_stop, rb.recoil = nil, nil, nil, nil, nil, nil
 	rb.hook_shot = nil
@@ -845,7 +850,7 @@ function M:update_robot(rb, input, active)
 			rb.jump_buf = M.JUMP_BUFFER_TICKS
 		end
 	end
-	if rb.grounded then rb.air_left = st.air_jumps end
+	if rb.grounded then rb.air_left, rb.sprung = st.air_jumps, nil end
 	if rb.grounded and rb.jump_buf > 0 then want_jump = true end
 
 	if rb.grounded then
@@ -886,12 +891,12 @@ function M:update_robot(rb, input, active)
 		end
 		-- with the parachute you move a bit faster, even right after being knocked
 		local chute = rb.parachute and C.PARACHUTE.air_mul or 1
-		if rb.parachute and active then rb.knocked = false end
+		if rb.parachute and active then rb.knocked, rb.sprung = false, nil end
 		-- no inertia, even right after being knocked; the robot on turn never moves
-		-- sideways faster than its run
+		-- sideways faster than its run, except when the Molla throws it
 		local air = st.air_speed * move * chute
-		if dir ~= 0 then rb.vx = dir * air end
-		if active then
+		if dir ~= 0 and not rb.sprung then rb.vx = dir * air end
+		if active and not rb.sprung then
 			rb.vx = math.max(-air, math.min(air, rb.vx))
 		end
 		rb.vy = rb.vy - M.GRAVITY * M.DT
@@ -2039,23 +2044,37 @@ end
 -- Crates --------------------------------------------------------------------------
 
 -- What's in the crate: random according to the weights of config.CRATE_CONTENTS
-function M:crate_content()
+-- (or of list, { { name, weight }, ... })
+function M:crate_content(list)
+	list = list or C.CRATE_CONTENTS
 	local total = 0
-	for _, c in ipairs(C.CRATE_CONTENTS) do total = total + c[2] end
+	for _, c in ipairs(list) do total = total + c[2] end
 	local r = self.rng:next() * total
-	for _, c in ipairs(C.CRATE_CONTENTS) do
+	for _, c in ipairs(list) do
 		r = r - c[2]
 		if r < 0 then return c[1] end
 	end
-	return C.CRATE_CONTENTS[#C.CRATE_CONTENTS][1]
+	return list[#list][1]
+end
+
+-- How many crates (item false) or items (item true) are on the map
+function M:count_crates(item)
+	local n = 0
+	for _, c in ipairs(self.crates) do
+		if (c.item or false) == item then n = n + 1 end
+	end
+	return n
 end
 
 -- Picks a random point on the surface, far from robots and other crates, and
 -- drops a crate from the sky there. It uses the match generator, so server and
 -- client put it in the same place. weapon and x: that crate right there (the
--- lessons, sim/missions.lua casse)
-function M:spawn_crate(weapon, x)
-	if #self.crates >= M.CRATE_MAX then return nil end
+-- lessons, sim/missions.lua casse). An item (game.ITEMS) drops visible, and
+-- item = true drops a random one (config.ITEM_DROPS)
+function M:spawn_crate(weapon, x, item)
+	if item then weapon = weapon or self:crate_content(C.ITEM_DROPS.contents) end
+	item = M.ITEM_SET[weapon] or false
+	if self:count_crates(item) >= (item and C.ITEM_DROPS.max or M.CRATE_MAX) then return nil end
 	weapon = weapon or self:crate_content()
 	local hw = M.CRATE_HALF_W
 	-- far from robots and other crates
@@ -2079,9 +2098,9 @@ function M:spawn_crate(weapon, x)
 	end
 	if not x then return nil end
 	self.crate_id = self.crate_id + 1
-	local c = { id = self.crate_id, x = x, y = M.WORLD_H + 20, vy = 0, landed = false, weapon = weapon }
+	local c = { id = self.crate_id, x = x, y = M.WORLD_H + 20, vy = 0, landed = false, weapon = weapon, item = item or nil }
 	self.crates[#self.crates + 1] = c
-	self:emit({ type = "crate", id = c.id, x = x, y = gy })
+	self:emit({ type = "crate", id = c.id, x = x, y = gy, item = item and weapon or nil })
 	return c
 end
 
@@ -2220,6 +2239,8 @@ function M:use_tool(kind, fire)
 		o.x, o.y = muzzle(rb, fire.angle)
 		o.vx, o.vy = launch_velocity(fire.angle, fire.power, M.GRENADE_SPEED)
 		o.flying = true
+		-- the Molla leans towards where it was thrown (straight up: where you look)
+		o.dir = o.vx > 0 and 1 or (o.vx < 0 and -1 or rb.facing)
 	end
 	self.placed[#self.placed + 1] = o
 	if #self.placed > C.MAX_PLACED then
@@ -2278,6 +2299,8 @@ function M:bounce(rb, o)
 	local vy = spring_vy(rb, o)
 	if not vy then return end
 	rb.vy, rb.grounded, rb.rising, rb.knocked, rb.fall_top = vy, false, false, false, nil
+	-- the Molla throws it sideways: it doesn't steer until it lands or opens the parachute
+	rb.vx, rb.sprung = (o.dir or 0) * C.TRAMPOLINE.push_vx, true
 	-- an opponent's trampoline launches you: if you fall the kill is theirs
 	self:credit(rb, self.robots[o.owner])
 	self:emit({ type = "bounce", id = o.id, robot = rb.id })
@@ -2295,6 +2318,8 @@ function M:spring(b, ny, r)
 			local vy = spring_vy(b, o)
 			if not vy then return false end
 			b.y, b.vy = o.y + top, vy
+			-- shots leave sideways too (crates and items fall straight)
+			if b.vx then b.vx = (o.dir or 0) * C.TRAMPOLINE.push_vx end
 			self:emit({ type = "bounce", id = o.id, x = b.x, y = b.y })
 			return true
 		end
@@ -2518,10 +2543,13 @@ function M:start_turn(player)
 	self.turn_no = self.turn_no + 1
 	if self.turn_no > 1 then
 		if self.crate_chance then
-			local chance = self.crate_chance[#self.crates + 1] or 0
+			local chance = self.crate_chance[self:count_crates(false) + 1] or 0
 			if self.rng:next() < chance then self:spawn_crate() end
-		elseif (self.turn_no - 1) % self.crate_every == 0 then
-			self:spawn_crate()
+			chance = M.ITEM_CHANCE[self:count_crates(true) + 1] or 0
+			if self.rng:next() < chance then self:spawn_crate(nil, nil, true) end
+		else
+			if (self.turn_no - 1) % self.crate_every == 0 then self:spawn_crate() end
+			if (self.turn_no - 1) % (2 * self.crate_every) == 0 then self:spawn_crate(nil, nil, true) end
 		end
 	end
 	if self.heals_on and self.turn_no % C.HEAL.every == 0 then self:spawn_heal() end
