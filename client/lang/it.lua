@@ -506,6 +506,7 @@ return {
 		turn_of = "Turno di %s  %s",
 		me = "TU",
 		get_ready = "PREPARATI",
+		turn_row = "TURNO:",
 		to_tie = "+%d PER PAREGGIARE",
 		-- the gap under your token
 		tied_first = "pari col 1°",
