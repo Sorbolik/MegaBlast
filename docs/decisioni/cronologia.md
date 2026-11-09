@@ -186,3 +186,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 9 nov | Skill gamedev generali in `.claude/skills/` (11 delle 77 di awesome-gamedev-agent-skills: prestazioni, shader, Defold e altre); scartate quelle di altri motori, i generi e il router. | #239 |
 | 9 nov | Prestazioni, Fase 2: il bot riusa le copie della partita (spazzatura −85%), hash e indirizzi precalcolati, maschera senza il canale fisso. | #240 |
 | 9 nov | Server: prova di carico coi bot, stato e raccoglitore più leggeri (-8% fra persone), carico medio per `/health`, stanze al worker meno carico, limite di messaggi per giocatore, rientro che non si perde. | #241 |
+| 9 nov | Prestazioni, Fase 3: la maschera del terreno si disegna a strisce (da 78 a 4 ms entrando in missione); il resto delle fasi 3 e 4 scartato dopo la misura (poco guadagno). | #243 |
