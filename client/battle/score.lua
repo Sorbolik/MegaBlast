@@ -80,7 +80,7 @@ local WAIT_W, WAIT_H, WAIT_GAP = 58, 24, 8
 -- the turn order: a row of faces under the score (D: the playing one's diameter)
 local FACE_D, FACE_SMALL, FACE_STEP, FACE_Y = 42, 30, 62, 52
 local PLATE_H = FACE_D + 6        -- the pill's round ends (48 px image) and the face a 3 px margin inside
-local HEAD_W, HEAD_DX, HEAD_DY = 1.2, -2, -4   -- the head's width / the disc's, and how far it is moved to centre the face in the ring
+local HEAD_W, HEAD_DX, HEAD_DY = 1.1, -2, 3   -- the head's width / the disc's, and how far it is moved to centre the face in the ring
 local HEAD_LAYERS = 3             -- head, helmet, one more
 local ROW_Y, NOTICE_Y = GET_H / 2 + 74, GET_H / 2 + 100   -- turn balance and last-lap warning, under the faces
 local BELOW_Y = ROW_Y                    -- "+N PER PAREGGIARE", at the same height, under its team
@@ -142,7 +142,7 @@ local function face_head(f, look)
 		local pz = pieces[i]
 		gui.set_enabled(n, pz ~= nil)
 		if pz then
-			position(n, (pz.x - base.x) * k + HEAD_DX, (pz.y - base.y) * k + HEAD_DY)
+			position(n, (pz.x - base.x) * k + HEAD_DX, (pz.y - base.y) * k + HEAD_DY + (-FACE_D / 2 + base.h * k / 2))
 			size(n, pz.w * k, pz.h * k)
 			gui.play_flipbook(n, pz.img)
 		end
@@ -150,8 +150,8 @@ local function face_head(f, look)
 end
 
 -- A face of the turn order, drawn at the playing size and scaled: halo, cream ring
--- (the one playing), the head clipped to a disc, a ring in the team color (gold in the
--- last lap, with a thin team ring inside it), a veil (already played), TU (yours)
+-- (the one playing), a ring in the team color (gold in the last lap, with a thin team
+-- ring inside it), the head over it (it starts from the disc and may stick out), a veil (already played), TU (yours)
 local function face_token(parent)
 	local f = {}
 	f.radice = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
@@ -161,8 +161,10 @@ local function face_token(parent)
 	f.alone = ui.alone(0, 0, FACE_D * 3, vmath.vector4(1, 1, 1, 1), f.radice)
 	f.crema = ui.ring_node(0, 0, FACE_D + 4, 2, ui.C.LIGHT, f.radice)
 	f.fondo = ui.disco(0, 0, FACE_D, ui.C.PANEL, f.radice)
-	-- the head of whoever plays (and its helmet): not clipped to the disc, it
-	-- may stick out of it; the pieces are set by face_head
+	f.anello = ui.ring_node(0, 0, FACE_D, 3, vmath.vector4(1, 1, 1, 1), f.radice)
+	f.interno = ui.ring_node(0, 0, FACE_D - 6, 1.5, vmath.vector4(1, 1, 1, 1), f.radice)
+	-- the head of whoever plays (and its helmet): over the rings: it starts from the disc and may stick out of it,
+	-- passing above the ring (Sergio, 9 Nov); the pieces are set by face_head
 	f.pezzi = {}
 	for i = 1, HEAD_LAYERS do
 		local n = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 0))
@@ -173,8 +175,6 @@ local function face_token(parent)
 		f.pezzi[i] = n
 	end
 	f.velo = ui.disco(0, 0, FACE_D, vmath.vector4(0.06, 0.05, 0.08, 0.6), f.radice)
-	f.anello = ui.ring_node(0, 0, FACE_D, 3, vmath.vector4(1, 1, 1, 1), f.radice)
-	f.interno = ui.ring_node(0, 0, FACE_D - 6, 1.5, vmath.vector4(1, 1, 1, 1), f.radice)
 	f.tu = ui.testo(T.me, 0, -(FACE_D / 2 + 9), 0.5, ui.GOLD, f.radice)
 	gui.set_enabled(f.radice, false)
 	return f
