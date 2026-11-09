@@ -1,0 +1,20 @@
+# Calamita: un impulso tira i robot vicini verso un punto davanti a te.
+# Con prova_secondaria magnet la Calamita sta a 868 (y = 62), (si tocca nella barra).
+imposta prova_secondaria magnet
+imposta prova_vicino 200
+imposta zoom 2
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_barra
+tocca 868 62
+annulla 120 0 02_calamita_in_mano
+mira 140 0 0.4 03_mira_calamita
+aspetta 0.3
+aspetta 0.2
+foto 04_impulso
+aspetta 0.7
+foto 05_dopo_la_tirata
+aspetta_stato turno=2 fase=aim 30

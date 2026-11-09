@@ -241,7 +241,7 @@ do
 	-- with a taste for weapons (pesi.armi) it takes the ones it likes, if offered
 	local d2 = draft.new(9, { { team = 1 }, { team = 2 } })
 	bot.choose(d2, 1, 9, { punch = 3, mallet = 3 })
-	local has = function(offer, w) for _, x in ipairs(offer) do if x == w then return true end end end
+	local has = function(offer, w) for _, x in ipairs(offer) do if x == w then return true end end return false end
 	check((d2.picks[1] == "punch") == has(d2.offer, "punch") and (d2.picks2[1] == "mallet") == has(d2.offer2, "mallet"),
 		"draft: with a taste for weapons it takes Pugno and Maglio")
 end

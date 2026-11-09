@@ -60,7 +60,7 @@ local TW, TH = game.GRID_W, game.WORLD_H / game.CELL
 
 local DEFAULT_SERVER = "ws://127.0.0.1:8080/ws"
 -- Protocol version, equal to protocolVersion in server/server.go
-local PROTOCOL = 8
+local PROTOCOL = 9
 -- If the connection drops in a match we retry for a while (the server keeps
 -- the seat for 20 seconds)
 local RECONNECT_TRIES, RECONNECT_WAIT = 12, 1.5
@@ -102,7 +102,8 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- status effects: the label rising over the robot when they arrive and the
 -- name under its health, with the turns left (no accents: the font lacks them)
 local STATUS_NAME = { { "burn", TM.status_name.burn }, { "slow", TM.status_name.slow }, { "cracked", TM.status_name.cracked } }
-local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows",
+local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill", "sword", "eagle", "mallet",
+	"lunge", "bellows", "magnet", "cannon", "petard",
 	"trap", "shield", "trampoline", "hook", "parachute" }
 -- border color of the four groups: primaries, secondaries, items, Grapple
 local BAR_COLORS = { ui.C.BRACE, ui.C.STEEL, ui.C.MINT, ui.C.PURPLE }
@@ -113,6 +114,7 @@ end
 -- icons of the bar and of the draft (weapons atlas, strumenti/grafica/armi.py)
 local WEAPON_ICON = {}
 for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "bellows", "hook",
+	"boomerang", "tar", "drill", "magnet", "cannon", "petard",
 	"trap", "shield", "trampoline", "parachute" }) do
 	WEAPON_ICON[w] = w .. "_icona"
 end
@@ -349,7 +351,7 @@ end
 function CR.remember(self, events)
 	local k = CR.lista(self)
 	for _, e in ipairs(events) do
-		if e.type == "explosion" then k[#k + 1] = { x = e.x, y = e.y, r = e.r } end
+		if e.type == "explosion" or e.type == "carve" then k[#k + 1] = { x = e.x, y = e.y, r = e.r } end
 	end
 end
 
@@ -900,7 +902,9 @@ end
 
 -- Grapple and Bellows as drawn, in a single table: the file is close to the
 -- 200 locals Lua allows
-local RM = { fune = require "battle.rope", GUSTS = 5 }
+local RM = { fune = require "battle.rope", GUSTS = 5,
+	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
+	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo" } }
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
@@ -1220,7 +1224,7 @@ local function handle_event(self, e)
 		local i, s, strong = self.speak:evento(e, self.g.current)
 		if s then plate.battuta(self.robots[i].plate, s, strong) end
 	end
-	if e.type == "explosion" then
+	if e.type == "explosion" or e.type == "carve" then
 		local row_min, row_max = e.row_min, e.row_max
 		if self.mode == "online" then
 			-- online we dig the terrain ourselves, at the same point as the server
@@ -1231,8 +1235,11 @@ local function handle_event(self, e)
 		local cx0, cy0, cx1, cy1 = CR.dig(self, e.x, e.y, e.r)
 		redraw_cells(self, math.min(cx0, math.floor((e.x - e.r) / game.CELL) + CR.OX - 1), math.min(cy0, row_min - 1),
 			math.max(cx1, math.floor((e.x + e.r) / game.CELL) + CR.OX + 1), math.max(cy1, row_max + 1))
-		explosion(self, e.x, e.y, e.r)
-		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
+		-- the Trapano's tunnel ("carve") digs without the blast
+		if e.type == "explosion" then
+			explosion(self, e.x, e.y, e.r)
+			self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
+		end
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- recoil of the Rune launcher (and of the sniper), throw momentum, shard burst
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
@@ -1326,8 +1333,17 @@ local function handle_event(self, e)
 	elseif e.type == "bellows_hit" then
 		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
 		plate.announcement(self.robots[e.target].plate, TM.blown)
-	elseif e.type == "lunge" then
+	elseif e.type == "lunge" or e.type == "cannon" then
 		scoria.lunge(self.robots[e.robot].rig)
+	elseif e.type == "boomerang" or e.type == "magnet" then
+		scoria.fire(self.robots[e.robot].rig, "throw")
+		-- the pulse of the Calamita: a ring on its centre (a short puff if there is no ground)
+		if e.type == "magnet" and e.ok then shock(self, e.x, e.y) end
+	elseif e.type == "petard_blast" or e.type == "cannon_land" or e.type == "tar_break" or e.type == "boomerang_turn" then
+		shock(self, e.x, e.y)
+	elseif e.type == "boomerang_hit" or e.type == "cannon_hit" then
+		self.shot_x, self.shot_y, self.shot_t = self.g.robots[e.robot].x, self.g.robots[e.robot].y + game.DISEGNO_H / 2, self.clock
+		shock(self, e.x, e.y)
 	elseif e.type == "mallet" then
 		scoria.fire(self.robots[e.robot].rig, "throw")
 	elseif e.type == "mallet_hit" then
@@ -1533,6 +1549,7 @@ local function apply_state(self, s)
 		rb.swing_base, rb.punch_base = r.sb or 0, r.pb or 0
 		rb.ammo.grenade, rb.ammo.shards, rb.ammo.punch = r.ag or 0, r.as or 0, r.ap or 0
 		rb.ammo.sniper = r.ac or 0
+		rb.ammo.boomerang, rb.ammo.tar, rb.ammo.drill = r.ab or 0, r.at or 0, r.ar or 0
 		rb.secondary = (r.sw or "") ~= "" and r.sw or nil
 		for _, w in ipairs(game.DRAFT_SECONDARIES) do rb.ammo[w] = w == rb.secondary and (r.ss or 0) or 0 end
 		rb.lunge = (r.lu or 0) > 0 and r.lu or nil
@@ -1568,6 +1585,9 @@ local function apply_state(self, s)
 	for i, o in ipairs(s.pl or {}) do
 		g.placed[i] = { id = o.i, kind = o.k, x = o.x, y = o.y, armed = o.a, team = o.tm, r = o.r, flying = o.v, dir = o.d }
 	end
+	-- pools of burning pitch
+	for i = #g.pools, 1, -1 do g.pools[i] = nil end
+	for i, o in ipairs(s.pp or {}) do g.pools[i] = { id = o.i, x = o.x, y = o.y, r = o.r, turns = o.tn } end
 	-- healing circles
 	for i = #g.heals, 1, -1 do g.heals[i] = nil end
 	for i, h in ipairs(s.hl or {}) do g.heals[i] = { id = h.i, x = h.x, y = h.y } end
@@ -2346,7 +2366,10 @@ start_local_match = function(self, picked)
 		local ammo_n = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local hp_value = config_int("megablast.prova_vita", 0)
-		-- prova_secondaria = eagle | mallet | lunge | bellows: everyone has that secondary
+		-- prova_nuove N: N shots of the three new primaries too (Falcetto, Pozza di Pece, Trapano),
+		-- apart from prova_armi so the old scenarios' bar stays the same
+		local new_n = config_int("megablast.prova_nuove", 0)
+		-- prova_secondaria = eagle | mallet | lunge | bellows | magnet | cannon | petard: everyone has that secondary
 		local secondary_weapon = config_string("megablast.prova_secondaria", "")
 		opts = {
 			players = opts.players,
@@ -2356,6 +2379,10 @@ start_local_match = function(self, picked)
 				trap = ammo_n, shield = ammo_n, trampoline = ammo_n } or nil,
 			crate_every = ogni > 0 and ogni or nil,
 		}
+		if new_n > 0 then
+			opts.ammo = opts.ammo or {}
+			opts.ammo.boomerang, opts.ammo.tar, opts.ammo.drill = new_n, new_n, new_n
+		end
 	end
 	-- the first robot plays with the profile's active loadout (a copy: MODES isn't touched)
 	local my_own = profile.active_loadout(self.profilo)
@@ -3569,15 +3596,24 @@ local function render(self, dt)
 			gui.set_color(self.projectile_glow, self.colors[g.current])
 			gui.set_color(self.razzo_tinta, self.colors[g.current])
 			gui.set_color(self.palla_tinta, self.colors[g.current])
+			for _, tint in pairs(self.shots_new_tint) do gui.set_color(tint, self.colors[g.current]) end
 			self.missile_color = g.current
 		end
 		-- rocket and ball point the way they go
 		local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
 		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
 		gui.set_euler(self.projectile, SNIPER_EULER)
-		local sniper = g.projectile and g.projectile.kind == "sniper"
-		show(self.razzo, not sniper)
+		local kind = g.projectile and g.projectile.kind
+		local sniper = kind == "sniper"
+		local newer = RM.NEW_SHOTS[kind] ~= nil
+		for k, n in pairs(self.shots_new) do show(n, k == kind) end
+		show(self.razzo, not sniper and not newer)
 		show(self.palla, sniper)
+		-- the Falcetto spins instead of pointing the way it goes
+		if kind == "boomerang" then
+			SNIPER_EULER.z = self.clock * 900
+			gui.set_euler(self.projectile, SNIPER_EULER)
+		end
 		if sniper then
 			-- sniper: stretched the way it goes; at every bounce it squashes and wobbles
 			-- like jelly, then goes back to how it was
@@ -4021,6 +4057,14 @@ function init(self)
 	gui.set_parent(self.razzo, self.projectile)
 	self.palla, self.palla_tinta = hit_def("palla", 1 / K)
 	gui.set_parent(self.palla, self.projectile)
+	-- the new shots: only the one of the kind in flight is visible
+	self.shots_new, self.shots_new_tint = {}, {}
+	for kind, img in pairs(RM.NEW_SHOTS) do
+		local n, tint = hit_def(img, 1 / K)
+		gui.set_parent(n, self.projectile)
+		gui.set_enabled(n, false)
+		self.shots_new[kind], self.shots_new_tint[kind] = n, tint
+	end
 	gui.set_scale(self.projectile, VK)
 
 	-- teleport orb: small and round
