@@ -4,6 +4,7 @@
 //	go run ./server -addr :9000 -node eu1
 //	go run ./server -eventi https://…/eventi.json   (event calendar from the panel, events.go)
 //	go run ./server -eventi eventi.json             (or from a file)
+//	go run ./server -luajit C:\LuaJIT\luajit.exe     (if luajit is not on the PATH)
 //
 // Architecture and load numbers: docs/server.md.
 package main
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	_ "net/http/pprof" // profiles on -pprof only (http.DefaultServeMux, not the game's address)
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"syscall"
@@ -28,12 +30,13 @@ func main() {
 	flag.IntVar(&cfg.Workers, "workers", cfg.Workers, "worker che fanno girare le stanze (di solito uno per core)")
 	flag.StringVar(&cfg.EventList, "eventi", cfg.EventList, "calendario degli eventi: l'indirizzo del pannello (https://…/eventi.json) o un file JSON (si rilegge quando cambia)")
 	flag.DurationVar(&cfg.BotAfter, "bot-dopo", cfg.BotAfter, "dopo quanto i bot riempiono una coda normale (0 = mai)")
+	flag.StringVar(&LuaJIT, "luajit", LuaJIT, "l'eseguibile di LuaJIT che fa girare la simulazione (di solito nel PATH)")
 	profile := flag.String("pprof", "", "indirizzo dei profili di Go, solo in locale (es. 127.0.0.1:6060; vuoto = spenti)")
 	flag.Parse()
 
-	// The garbage is mostly the Lua tables of every tick: with the heap growing
-	// to 3 times what is alive instead of 2 the collector runs half as often
-	// (measured 9 Nov, docs/server.md). GOGC in the environment wins.
+	// With the heap growing to 3 times what is alive instead of 2 the collector
+	// runs half as often (measured 9 Nov with gopher-lua, docs/server.md).
+	// GOGC in the environment wins.
 	if os.Getenv("GOGC") == "" {
 		debug.SetGCPercent(200)
 	}
@@ -44,6 +47,10 @@ func main() {
 		}()
 	}
 
+	// without LuaJIT no match can start: better to say it at once
+	if _, err := exec.LookPath(LuaJIT); err != nil {
+		log.Fatalf("manca LuaJIT (%s): installalo o passa -luajit PERCORSO", LuaJIT)
+	}
 	srv := NewServer(cfg)
 	hs := &http.Server{Addr: *addr, Handler: srv.Handler()}
 	go func() {

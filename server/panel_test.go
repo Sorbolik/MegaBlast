@@ -16,23 +16,15 @@ func TestPanelData(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	eng, err := newEngine()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer eng.L.Close()
-	err = eng.L.DoString(`
+	code := `
 		local C, game = require "sim.config", require "sim.game"
 		local regole, equip = require "sim.rules", require "sim.gear"
 		local modi, normale = {}, {}
 		for m, p in pairs(C.MODES) do modi[m] = #p end
 		for k in pairs(regole.CODA_NORMALE) do normale[#normale + 1] = k end
 		table.sort(normale)
-		dati_pannello = { primarie = game.CRATE_WEAPONS, secondarie = game.DRAFT_SECONDARIES, punti = C.SCORE,
-			casse = game.CRATE_EVERY, tetto_max = equip.LIVELLO_MAX - 1, modi = modi, coda_normale = normale }`)
-	if err != nil {
-		t.Fatal(err)
-	}
+		return { primarie = game.CRATE_WEAPONS, secondarie = game.DRAFT_SECONDARIES, punti = C.SCORE,
+			casse = game.CRATE_EVERY, tetto_max = equip.LIVELLO_MAX - 1, modi = modi, coda_normale = normale }`
 	type data struct {
 		Primaries   []string           `json:"primarie"`
 		Secondaries []string           `json:"secondarie"`
@@ -46,9 +38,7 @@ func TestPanelData(t *testing.T) {
 	if err := json.Unmarshal(file, &inPanel); err != nil {
 		t.Fatal(err)
 	}
-	if err := json.Unmarshal(appendJSON(nil, eng.L.GetGlobal("dati_pannello")), &nellaSim); err != nil {
-		t.Fatal(err)
-	}
+	luaEval(t, code, &nellaSim)
 	if !reflect.DeepEqual(inPanel, nellaSim) {
 		t.Fatalf("strumenti/eventi/pagina/dati.json is out of sync with the simulation: luajit strumenti/eventi/dati.lua\npanel %+v\nsimulation %+v", inPanel, nellaSim)
 	}

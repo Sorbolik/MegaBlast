@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync/atomic"
 	"time"
 )
@@ -8,7 +9,9 @@ import (
 // Scheduler runs rooms on one worker per core. Each worker has a single 60 Hz
 // ticker and on every tick advances all its rooms, one after another: with a
 // thousand rooms that's 4 wake-ups per tick instead of a thousand, and a room
-// always lives on the same worker, so its match needs no lock.
+// always lives on the same worker, so its match needs no lock. Each worker has
+// its LuaJIT process (proc.go) with the simulations of its rooms: one round
+// trip per tick for all of them.
 type Scheduler struct {
 	workers []*worker
 }
@@ -56,18 +59,49 @@ func (w *worker) run() {
 	ticker := time.NewTicker(period)
 	defer ticker.Stop()
 	var rooms []*Room
+	var proc *Proc
+	b, next := &Batch{}, &Batch{}
 	for {
 		select {
 		case r := <-w.add:
 			rooms = append(rooms, r)
 		case <-ticker.C:
 			start := time.Now()
+			// the rooms write their commands after those left by the last
+			// tick's answers (rooms that closed), then one round trip
+			for _, r := range rooms {
+				r.Tick(b)
+			}
+			if b.Len() > 0 {
+				err := error(nil)
+				if proc == nil {
+					proc, err = startProc()
+				}
+				if err == nil {
+					err = proc.Run(b, next)
+				}
+				if err != nil {
+					// the process is gone with all its matches: they close
+					// with an error, a new process for the next rooms
+					log.Printf("simulazione: %v", err)
+					for _, r := range rooms {
+						if !r.ended.Load() {
+							r.broadcast([]byte(`{"t":"error"}`))
+							r.close(nil)
+						}
+					}
+					proc = nil
+					next.Reset()
+				}
+			}
+			b.Reset()
+			b, next = next, b
 			live := rooms[:0]
 			for _, r := range rooms {
-				if r.Tick() {
-					live = append(live, r)
-				} else {
+				if r.ended.Load() {
 					w.rooms.Add(-1)
+				} else {
+					live = append(live, r)
 				}
 			}
 			clear(rooms[len(live):]) // finished rooms can be released

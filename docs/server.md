@@ -1,8 +1,10 @@
 # Server di MegaBlast
 
-Un nodo è un solo eseguibile Go (`go run ./server`). Accetta i giocatori via
-WebSocket, li mette in coda per modalità e fa girare le partite con la
-simulazione Lua di `client/sim/`, la stessa del client.
+Un nodo è un eseguibile Go (`go run ./server`) con accanto un processo `luajit`
+per worker. Accetta i giocatori via WebSocket, li mette in coda per modalità e
+fa girare le partite con la simulazione Lua di `client/sim/`, la stessa del
+client, in LuaJIT come sul telefono. Serve `luajit` nel PATH (Windows:
+`luajit.exe`), oppure `-luajit PERCORSO`.
 
 ## Come è fatto
 
@@ -20,19 +22,28 @@ connessione (goroutine) ──hello──► Lobby (una coda per modalità)
   ticker che fa avanzare tutte le sue stanze. Una stanza vive sempre sullo
   stesso worker, quindi la sua partita non ha lock; le connessioni le passano
   gli input con un canale. Le stanze nuove vanno al worker più scarico.
-- **Uno stato Lua per stanza** (`sim.go`): il codice Lua si compila una volta
-  per processo e gli stati lo condividono. Tutti i moduli di `client/sim/` si
-  caricano da soli: chi ne aggiunge uno non tocca il server.
-- **Terreno in Go** (`terrain.go`): le celle stanno in un `[]byte` invece che in
-  una tabella Lua da 230.400 valori, e le funzioni che leggono o scrivono le
-  celle (collisioni, scavi) girano in Go. Le mappe fisse si disegnano una volta
-  per processo e ogni partita copia le celle. Il resto di `terrain.lua` resta
-  Lua. `TestGoTerrainMatchesLua` e `TestGoTerrainSameMatch` confrontano cella per
-  cella e tick per tick con il terreno Lua puro: se `terrain.lua` cambia e il Go
-  non lo segue, i test lo dicono.
-- **JSON in Go** (`luajson.go`): `net.lua` prepara stato ed eventi come tabelle,
-  il server le scrive in JSON. In gopher-lua `string.format` era la parte più
-  lenta di tutto il tick.
+- **Simulazione in LuaJIT** (`proc.go`, `worker.lua`, dal 9 nov): ogni worker ha
+  un processo `luajit` con le partite (e le scelte delle armi) delle sue stanze,
+  per id. A ogni tick le stanze scrivono i loro comandi in un solo pacchetto
+  (`open`, `draft`, `pick`, `start`, `tick`, `resume`, `remove`, `free`: tabelle
+  Lua, una riga ogni 200 comandi), il worker lo manda al processo e legge le
+  risposte: un solo giro per worker e tick, non uno per stanza. Ogni risposta ha
+  una testa piccola che legge il Go (chi è di turno, se è finita) e i messaggi già
+  in JSON (eventi, stato, scelta), che il Go manda ai giocatori così come sono. Le
+  risposte arrivano nelle callback delle stanze, sullo stesso worker, prima del
+  tick dopo: niente lock. Se il processo muore le partite del worker si chiudono
+  con `error` e il tick dopo ne parte un altro. Un processo a parte (con lock)
+  serve agli eventi (`rules_valid`) e ai test. I file Lua (`client/sim/`
+  incorporata nell'eseguibile, `net.lua`, `worker.lua`) vanno in una cartella
+  temporanea all'avvio: tutti i moduli di `client/sim/` si caricano da soli, chi
+  ne aggiunge uno non tocca il server.
+- **Terreno in byte** (`net.lua`): le celle stanno in un array FFI di `uint8_t`
+  invece che in una tabella da 230.400 numeri (230 KB a partita invece di 3,7
+  MB); la simulazione usa `t.data[i]` come sempre. Le mappe fisse si disegnano
+  una volta per processo e ogni partita copia le celle (`ffi.copy`).
+  `TestEngineReuseIsDeterministic` controlla che la copia non cambi la partita.
+- **JSON in Lua** (`worker.lua`): lo stesso JSON di prima (interi come interi,
+  gli altri numeri con due decimali, una tabella vuota è `[]`).
 - **Messaggi**: ogni messaggio si costruisce una volta e va a tutti i giocatori
   della stanza. La coda di uscita di un giocatore non blocca mai la partita: se
   si riempie (client che non legge) la connessione si chiude e il client torna
@@ -61,16 +72,12 @@ persone in un 2 contro 2 finiscono in squadre diverse. Il grado del bot
 (`sim/bot.lua`, `M.GRADES`) è 3 + il livello medio delle persone / 5, al massimo
 8 (`botGrade`). Nella scelta delle armi il bot sceglie subito (`bot.choose`), il
 suo cartellino è `{"bot":true}` e in `players` ha `"bot":G`; in partita
-`N.step` usa i suoi tasti (`bot.input`). Sul server il bot pensa al massimo
-`N.WORK` = 100 tick simulati per tick (sul telefono 400): con 400 una stanza
-da 4 bot "normale" costava 2,2 ms a tick con punte di 50 ms in gopher-lua, con
-100 1,6 ms e punte di 21 ms (misure del 3 nov). Così pensava fino a 8 s fermo
-a inizio turno e spesso tirava allo scadere: dopo `N.THINK_MAX` = 120 tick
-(2 s) di pensiero gioca la mossa migliore trovata fino lì (`think_max` del
-livello in `sim/bot.lua`, che sul telefono non c'è). Primo attacco del turno
-in una 2v2 di bot grado 5: mediana da 5,3 a 2 s, il più lento da 18,6 a 8 s
-(9 nov). Dare al bot più lavoro (250) quando il worker è scarico è stato
-provato e scartato: 0,3 s in meno in media, tick fino a 34 ms. Mentre pensa
+`N.step` usa i suoi tasti (`bot.input`). Dal 9 nov (LuaJIT) il bot pensa come
+sul telefono, 400 tick simulati per tick; in gopher-lua ne aveva 100 (con 400
+una stanza da 4 bot costava 2,2 ms a tick con punte di 50 ms), pensava fino a
+8 s fermo e online giocava peggio. Dopo `N.THINK_MAX` = 120 tick (2 s) di
+pensiero gioca comunque la mossa migliore trovata fino lì (`think_max` del
+livello in `sim/bot.lua`, che sul telefono non c'è). Mentre pensa
 il bot mostra dove mira (`aim` nello stato, `bot.shown_aim`). Le stanze coi bot girano su
 worker loro (`botSched`), così le punte non rallentano le partite fra persone;
 `/health` dice `bot_rooms` e `bot_late_ticks`. Una stanza resta aperta finché
@@ -244,10 +251,11 @@ stato, partite che finiscono solo a tempo):
 | 1v1 | 220 µs | circa 75 | circa 150 |
 | Tutti contro tutti (4) | 320 µs | circa 50 | circa 200 |
 
-Un server da 4 core regge circa 300 partite 1v1 o 200 partite a 4, cioè
-600–800 giocatori. Il collo di bottiglia ora è la
+Un server da 4 core reggeva circa 300 partite 1v1 o 200 partite a 4, cioè
+600–800 giocatori. Il collo di bottiglia era la
 simulazione stessa in gopher-lua (lettura delle costanti del modulo e
-chiamate di funzione): metà del tempo del tick va lì.
+chiamate di funzione): metà del tempo del tick andava lì. Per questo dal 9 nov
+la simulazione gira in LuaJIT (sotto).
 
 **Partite con i bot** (`-bot`: una persona per partita, i bot della coda negli
 altri posti, come online quando si è in pochi; le partite girano sui worker dei
@@ -279,6 +287,21 @@ Il 9 nov (analisi https://claude.ai/artifact/Ru2WqL6KzafQbuYYzkBY1e):
 - `-pprof 127.0.0.1:6060` accende i profili di Go sul server vero (solo in
   locale: `go tool pprof http://127.0.0.1:6060/debug/pprof/profile`).
 
+**Con LuaJIT** (9 nov, stessa macchina, processi `luajit` accanto al Go; il
+tempo misurato è quello del worker, giro col processo compreso):
+
+| Prova | gopher-lua | LuaJIT |
+| --- | --- | --- |
+| 1v1, `-carico 100 -durata 15s` | circa 245 µs | **70 µs** (circa 230 partite per core) |
+| 2v2 coi bot, `-carico 30 -durata 20s -modo 2v2 -bot` | circa 1.250 µs, bot con 100 | **280–300 µs** con bot a 400 (circa 55 partite per core) |
+
+Coi bot il server fa 4 volte il lavoro di prima (il pensiero del telefono) con
+meno di un quarto della CPU: un server da 4 core regge circa 220 partite coi bot,
+cioè circa **220 persone** contro i bot invece di 50, e circa 900 partite 1v1
+fra persone. La memoria del Go è quasi solo connessioni (0,1–0,2 MB a partita);
+nei processi `luajit` una 2v2 coi bot sta in circa 1 MB (34 MB in tutto i
+quattro processi con 30 partite).
+
 ## Crescere
 
 - **Più core**: i worker sono uno per core (`-workers`), basta una macchina più
@@ -293,6 +316,5 @@ Il 9 nov (analisi https://claude.ai/artifact/Ru2WqL6KzafQbuYYzkBY1e):
 - **Aggiornare senza interrompere**: con SIGTERM il nodo smette di prendere
   partite (chi è in coda riceve `draining` e cerca un altro nodo) e si spegne
   quando le partite in corso sono finite.
-- **Se servisse ancora più CPU**: far girare la simulazione con LuaJIT invece di
-  gopher-lua (via cgo). È molto più veloce, ma il server non sarebbe più un
-  eseguibile Go puro.
+- **LuaJIT** (fatto il 9 nov): processi accanto al Go invece di cgo, così
+  l'eseguibile resta Go puro e si compila ovunque; basta `luajit` installato.
