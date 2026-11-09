@@ -177,3 +177,4 @@ Un rigo per giorno e per PR. I dettagli stanno nei file delle aree.
 | 6 nov | Favilla vera che mostra le mosse facendole (cammina, salta, spara, rampino, paracadute...), poi tocca a te; si scrivono nel Copione. La striscia non arriva più prima della vignetta grande. | prossima PR |
 | 6 nov | I primi livelli rifatti: Favilla spiega, mostra, tocca a te, bravo; due sfide brevi in mezzo; baratto, punti e Affondo nella Forgia. | prossima PR |
 | 9 nov | Piano di ottimizzazione del client in fasi (misura, update, memoria, struttura, GPU), confrontato col manuale di Defold; Fase 0: banco del bot e misure di partenza. | prossima PR |
+| 9 nov | Prestazioni, Fase 1: col bot che pensa al massimo 4 tick di recupero per frame, disegno dei colpi senza chiamate inutili, raccoglitore a piccoli passi, accelerometro spento. | prossima PR |

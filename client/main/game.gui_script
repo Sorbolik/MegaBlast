@@ -623,6 +623,9 @@ local function capture(pose, g)
 	end
 end
 
+-- ticks per frame while a bot thinks (update, the local match loop)
+local CATCHUP_BOT = 4
+
 local function pose_k(self)
 	return math.max(0, math.min(1, self.pose_t / self.pose_dt))
 end
@@ -700,6 +703,8 @@ local function new_match(self, seed, map, opts)
 		CR.undig(self)
 	end
 	self.names, self.colors = names_colors(self.g.robots)
+	-- the colors are new: render() paints shards, missile and egg again
+	self.shard_color, self.missile_color, self.egg_color = nil, nil, nil
 	for i in pairs(self.bots) do self.names[i] = self.names[i] .. TM.bot_suffix end
 	for i = #self.g.robots + 1, game.MAX_PLAYERS do
 		scoria.set_enabled(self.robots[i].rig, false)
@@ -3215,6 +3220,17 @@ local function apply_camera(self)
 	gui.set_scale(self.cancel_label, LABEL_SCALE)
 end
 
+-- Nodes that only render() switches on and off: the GUI is called only when
+-- the state changes (hundreds of Lua -> C calls per frame less; without JIT,
+-- on iPhone, they are the drawing's biggest fixed cost). docs/prestazioni.md, Fase 1
+local shown = setmetatable({}, { __mode = "k" })
+local function show(node, on)
+	if shown[node] ~= on then
+		shown[node] = on
+		gui.set_enabled(node, on)
+	end
+end
+
 local function render(self, dt)
 	self.clock = self.clock + dt
 	local g = self.g
@@ -3399,7 +3415,7 @@ local function render(self, dt)
 
 	-- Flame Egg: rolls while flying, with the seconds left to the blast above
 	local egg = pb.has_p and g.projectile and g.projectile.kind == "grenade"
-	gui.set_enabled(self.egg, egg)
+	show(self.egg, egg)
 	if egg then
 		local p0 = pa.has_p and pa.p or pb.p
 		local x = p0.x + (pb.p.x - p0.x) * k
@@ -3407,7 +3423,10 @@ local function render(self, dt)
 		self.focus_x, self.focus_y = x, p0.y + (pb.p.y - p0.y) * k
 		EULER.z = -x * 4
 		gui.set_euler(self.egg_spin, EULER)
-		gui.set_color(self.egg_light, self.colors[g.current])
+		if self.egg_color ~= g.current then
+			gui.set_color(self.egg_light, self.colors[g.current])
+			self.egg_color = g.current
+		end
 		local secs = math.max(1, math.ceil((g.projectile.fuse or 0) / 60))
 		if self.egg_secs ~= secs then
 			gui.set_text(self.egg_label, tostring(secs))
@@ -3417,22 +3436,25 @@ local function render(self, dt)
 
 	-- missile: glow in the shooter's color and a trail fading out
 	local missile = pb.has_p and not egg
-	gui.set_enabled(self.projectile, missile)
+	show(self.projectile, missile)
 	if missile then
 		local p0 = pa.has_p and pa.p or pb.p
 		local x, y = p0.x + (pb.p.x - p0.x) * k, p0.y + (pb.p.y - p0.y) * k
 		set_pos(self.projectile, x, y)
 		self.focus_x, self.focus_y = x, y
-		gui.set_color(self.projectile_glow, self.colors[g.current])
-		gui.set_color(self.razzo_tinta, self.colors[g.current])
-		gui.set_color(self.palla_tinta, self.colors[g.current])
+		if self.missile_color ~= g.current then
+			gui.set_color(self.projectile_glow, self.colors[g.current])
+			gui.set_color(self.razzo_tinta, self.colors[g.current])
+			gui.set_color(self.palla_tinta, self.colors[g.current])
+			self.missile_color = g.current
+		end
 		-- rocket and ball point the way they go
 		local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
 		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
 		gui.set_euler(self.projectile, SNIPER_EULER)
 		local sniper = g.projectile and g.projectile.kind == "sniper"
-		gui.set_enabled(self.razzo, not sniper)
-		gui.set_enabled(self.palla, sniper)
+		show(self.razzo, not sniper)
+		show(self.palla, sniper)
 		if sniper then
 			-- sniper: stretched the way it goes; at every bounce it squashes and wobbles
 			-- like jelly, then goes back to how it was
@@ -3454,15 +3476,15 @@ local function render(self, dt)
 			local node = self.trail[j]
 			if j <= self.trail_n then
 				local q = self.trail_pos[(self.trail_i - j) % n + 1]
-				gui.set_enabled(node, true)
+				show(node, true)
 				set_pos(node, q.x, q.y)
 			else
-				gui.set_enabled(node, false)
+				show(node, false)
 			end
 		end
 	else
 		self.trail_n = 0
-		for _, node in ipairs(self.trail) do gui.set_enabled(node, false) end
+		for _, node in ipairs(self.trail) do show(node, false) end
 	end
 
 	if missile or egg then CP.notch(self, self.focus_x, self.focus_y) end
@@ -3471,7 +3493,7 @@ local function render(self, dt)
 	local n_shards, shard_x, shard_y = 0, 0, 0
 	for i = 1, game.SHARD_COUNT do
 		local sb, node = pb.s[i], self.shard_nodes[i]
-		gui.set_enabled(node, sb.on)
+		show(node, sb.on)
 		if sb.on then
 			local sa = pa.s[i].on and pa.s[i] or sb
 			local x, y = sa.x + (sb.x - sa.x) * k, sa.y + (sb.y - sa.y) * k
@@ -4143,7 +4165,16 @@ function update(self, dt)
 		local thought = bot.totale
 		-- the ticks of this frame, bots' thinking included (Defold's profiler)
 		frames.scope("simulazione")
+		local ticks = 0
 		while self.acc >= game.DT and self.mode == "local" and not self.carta do
+			-- after a long frame the loop catches up several ticks: with a bot thinking
+			-- that is its work cap times the ticks, and one stutter makes the next one.
+			-- So while a bot thinks at most CATCHUP_BOT ticks per frame: the rest waits
+			-- for the next frames (or is dropped by the 0.25 s cap), the game slows a
+			-- moment instead of stuttering. Ticks and keys are the same: the match
+			-- doesn't change (docs/prestazioni.md, Fase 1)
+			if ticks >= CATCHUP_BOT and bot.totale ~= thought then break end
+			ticks = ticks + 1
 			local input = {
 				left = move_left(self),
 				right = move_right(self),
