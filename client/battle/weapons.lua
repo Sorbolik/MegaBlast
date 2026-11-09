@@ -26,5 +26,6 @@ return {
 		uovo = { img = "uovo", tint = "uovo_tinta", x = 0.00, y = 0.00, w = 17.60, h = 24.00 },
 		scheggia = { img = "scheggia", tint = "scheggia_tinta", x = 0.40, y = 0.00, w = 15.20, h = 9.60 },
 		globo = { img = "globo", tint = "globo_tinta", x = 0.00, y = 0.00, w = 16.00, h = 16.00 },
+		giano = { img = "giano", tint = "giano_tinta", x = 0.00, y = 0.00, w = 16.00, h = 16.00 },
 	},
 }

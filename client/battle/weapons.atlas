@@ -107,6 +107,9 @@ images {
   image: "/assets/weapons/scambio_icona.png"
 }
 images {
+  image: "/assets/weapons/janus_icona.png"
+}
+images {
   image: "/assets/weapons/teleport_icona.png"
 }
 images {
@@ -153,6 +156,12 @@ images {
 }
 images {
   image: "/assets/weapons/globo_tinta.png"
+}
+images {
+  image: "/assets/weapons/giano.png"
+}
+images {
+  image: "/assets/weapons/giano_tinta.png"
 }
 margin: 0
 extrude_borders: 2

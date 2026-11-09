@@ -481,7 +481,7 @@ return {
 		weapons = {
 			missile = "LANCIARUNE", grenade = "UOVO DI FIAMMA", shards = "SCIAME DI SCHEGGE", punch = "PUGNO DEL TITANO",
 			sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", bellows = "MANTICE",
-			hook = "RAMPINO", teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO",
+			hook = "RAMPINO", janus = "GIANO", teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO",
 		},
 		-- the turn's phases on the clock
 		second_attack = "SECONDO!",
@@ -601,6 +601,7 @@ return {
 			lunge = "Uno scatto che passa oltre chi hai davanti e lo colpisce",
 			bellows = "Il soffio della forgia: spinge via chi hai davanti",
 			hook = "Aggancia un bordo e ti arrampichi; su un nemico, lo tiri da te",
+			janus = "La moneta a due facce: il primo che tocca, amico o nemico, si scambia di posto con te",
 			parachute = "Aprilo in aria: scendi piano e atterri senza farti male",
 			trap = "Posala a terra: chi ci passa resta coi piedi bloccati fino alla fine del suo turno",
 			shield = "Ti ripara dai colpi fino al tuo prossimo turno",
@@ -668,7 +669,7 @@ return {
 		-- "Rosso trova ..." when a crate opens
 		weapon_found = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge",
 			punch = "il Pugno del Titano", sniper = "il Cecchino", eagle = "il Tonante", mallet = "il Maglio",
-			lunge = "l'Affondo", bellows = "il Mantice", hook = "il Rampino", parachute = "un Paracadute",
+			lunge = "l'Affondo", bellows = "il Mantice", hook = "il Rampino", janus = "il Giano", parachute = "un Paracadute",
 			trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" },
 		-- the weapons in the match-start draft, and their effect (no accents)
 		draft_names = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
@@ -714,6 +715,7 @@ return {
 		orbs_many = "%s +%d teletrasporti",
 		trapped = "%s finisce in una trappola: piedi bloccati!",
 		hooked = "AGGANCIATO!",
+		swapped = "SCAMBIO!",
 		snapped = "STRAPPO!",
 		blown = "SOFFIATO VIA!",
 		bounce = "RIMBALZO!",

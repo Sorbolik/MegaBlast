@@ -102,11 +102,11 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 -- name under its health, with the turns left (no accents: the font lacks them)
 local STATUS_NAME = { { "burn", TM.status_name.burn }, { "slow", TM.status_name.slow }, { "cracked", TM.status_name.cracked } }
 local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "sword", "eagle", "mallet", "lunge", "bellows",
-	"trap", "shield", "trampoline", "hook", "parachute" }
+	"trap", "shield", "trampoline", "hook", "janus", "parachute" }
 -- border color of the four groups: primaries, secondaries, items, Grapple
 local BAR_COLORS = { ui.C.BRACE, ui.C.STEEL, ui.C.MINT, ui.C.PURPLE }
 local function bar_group(w)
-	if w == "hook" then return 4 end
+	if w == "hook" or w == "janus" then return 4 end
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
 end
 -- icons of the bar and of the draft (weapons atlas, strumenti/grafica/armi.py)
@@ -1244,6 +1244,28 @@ local function handle_event(self, e)
 		-- recoil of the Rune launcher (and of the sniper), throw momentum, shard burst
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
 		scoria.fire(self.robots[e.robot].rig, kind)
+	elseif e.type == "janus" then
+		scoria.fire(self.robots[e.robot].rig, "throw")
+	elseif e.type == "janus_swap" then
+		-- the two trade places: the view jumps (like a teleport), each gets a flash and a word
+		for _, id in ipairs({ e.a, e.b }) do
+			if self.mode == "online" then self.snap[id] = true else snap_robot(self, id) end
+			plate.announcement(self.robots[id].plate, TM.swapped)
+		end
+		-- a ring of the color of whoever arrives opens at each spot, with gold around it
+		for _, sp in ipairs({ { e.ax, e.ay, e.b }, { e.bx, e.by, e.a } }) do
+			self.boom_i = self.boom_i % #self.booms + 1
+			local f = self.booms[self.boom_i].flash
+			gui.cancel_animations(f)
+			gui.set_enabled(f, true)
+			gui.set_position(f, vmath.vector3(sp[1], sp[2] + game.DISEGNO_H / 2, 0))
+			gui.set_size(f, vmath.vector3(30, 30, 0))
+			gui.set_color(f, self.colors[sp[3]])
+			gui.animate(f, "size", vmath.vector3(230, 230, 0), gui.EASING_OUTQUAD, 0.45)
+			gui.animate(f, "color.w", 0, gui.EASING_INQUAD, 0.45, 0, hide_node)
+		end
+		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.bx, e.by
+		sound.play("#globo", { speed = 1.5 })
 	elseif e.type == "teleport" then
 		if self.mode == "online" then
 			-- the state with the robot in its new position arrives right after the event
@@ -3081,7 +3103,7 @@ local function slot_have(rb, w, r)
 	if not missions.vede(r, w) then return false end
 	if w == "parachute" then
 		return rb.parachute or rb.parachutes_left > 0
-	elseif w == "hook" or (w == rb.secondary and not rb.disarmed) then
+	elseif w == "hook" or w == "janus" or (w == rb.secondary and not rb.disarmed) then
 		return true
 	end
 	return game.has_weapon(rb, w)
@@ -3093,7 +3115,7 @@ local function update_bar(self)
 	local g = self.g
 	local l = self.missione
 	-- shots used up (or the turn's Grapple fired) it goes back to the Rune launcher
-	if not slot_have(rb, self.weapon, l) or (self.weapon == "hook" and g.used.tool and rb.id == g.current) then
+	if not slot_have(rb, self.weapon, l) or ((self.weapon == "hook" or self.weapon == "janus") and g.used.tool and rb.id == g.current) then
 		self.weapon = "missile"
 		-- a lesson without the Rune launcher: the first visible weapon
 		if not slot_have(rb, "missile", l) then
@@ -3148,8 +3170,9 @@ local function update_bar(self)
 				x, y = tele.x, tele.y + TELE_BTN_D / 2 + 16 + d / 2 + k * (d + 6)
 				ogg_top = y + d / 2
 			else
+				-- Rampino and Giano, side by side to the left of the teleport
 				d = TELE_BTN_D
-				x, y = tele.x - TELE_BTN_D - 12, tele.y
+				x, y = tele.x - (k + 1) * (TELE_BTN_D + 12), tele.y
 			end
 			local count = sl.weapon == "parachute" and rb.parachutes_left or rb.ammo[sl.weapon] or 0
 			if sl.count ~= count then
@@ -3570,10 +3593,30 @@ local function render(self, dt)
 		-- rocket and ball point the way they go
 		local dx, dy = pb.p.x - p0.x, pb.p.y - p0.y
 		if dx * dx + dy * dy > 0.01 then SNIPER_EULER.z = math.deg(math.atan2(dy, dx)) end
+		-- Giano: the coin doesn't point anywhere, it flips on itself
+		local coin = g.projectile and g.projectile.kind == "janus"
+		if coin then SNIPER_EULER.z = 0 end
 		gui.set_euler(self.projectile, SNIPER_EULER)
 		local sniper = g.projectile and g.projectile.kind == "sniper"
-		show(self.razzo, not sniper)
+		show(self.razzo, not sniper and not coin)
 		show(self.palla, sniper)
+		show(self.giano, coin)
+		if coin then
+			-- the two faces: the shooter's color and gold; the trail alternates them too
+			local c = math.cos(self.clock * 16)
+			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (0.18 + 0.82 * math.abs(c)), VK.y
+			gui.set_scale(self.projectile, SNIPER_SCALE)
+			self.sniper_shape = true
+			gui.set_color(self.giano_tinta, c >= 0 and self.colors[g.current] or hud.YELLOW)
+			for j, node in ipairs(self.trail) do
+				local col = j % 2 == 0 and self.colors[g.current] or hud.YELLOW
+				gui.set_color(node, vmath.vector4(col.x, col.y, col.z, 0.6 - j * 0.06))
+			end
+			self.janus_trail = true
+		elseif self.janus_trail then
+			for j, node in ipairs(self.trail) do gui.set_color(node, vmath.vector4(1, 0.6, 0.3, 0.55 - j * 0.06)) end
+			self.janus_trail = false
+		end
 		if sniper then
 			-- sniper: stretched the way it goes; at every bounce it squashes and wobbles
 			-- like jelly, then goes back to how it was
@@ -4015,6 +4058,9 @@ function init(self)
 	gui.set_parent(self.razzo, self.projectile)
 	self.palla, self.palla_tinta = hit_def("palla", 1 / K)
 	gui.set_parent(self.palla, self.projectile)
+	self.giano, self.giano_tinta = hit_def("giano", 1 / K)
+	gui.set_parent(self.giano, self.projectile)
+	gui.set_enabled(self.giano, false)
 	gui.set_scale(self.projectile, VK)
 
 	-- teleport orb: small and round

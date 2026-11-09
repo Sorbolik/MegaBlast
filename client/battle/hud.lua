@@ -365,7 +365,7 @@ function M.motivo(g, w)
 	if g.permitted and not g.permitted(w) then return T.not_now end
 	if w == "teleport" then
 		return rb.teleports_left <= 0 and T.no_orbs or T.not_now
-	elseif w == "hook" then
+	elseif w == "hook" or w == "janus" then
 		return T.used_m
 	elseif w == "parachute" then
 		return rb.parachutes_left <= 0 and not rb.parachute and T.no_ammo or T.not_now
