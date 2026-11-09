@@ -247,13 +247,43 @@ Un server da 4 core regge circa 300 partite 1v1 o 200 partite a 4, cioè
 simulazione stessa in gopher-lua (lettura delle costanti del modulo e
 chiamate di funzione): metà del tempo del tick va lì.
 
+**Partite con i bot** (`-bot`: una persona per partita, i bot della coda negli
+altri posti, come online quando si è in pochi; le partite girano sui worker dei
+bot). Misure del 9 nov, 4 core, `-carico 30 -durata 20s -modo 2v2 -bot`:
+
+| | CPU per partita e tick | Partite per core | Tick in ritardo |
+| --- | --- | --- | --- |
+| 2v2, una persona e 3 bot | circa 1.200 µs | circa 14 | 8–9% con 30 partite |
+
+Rifatta dopo #240 (il bot riusa le copie della partita: sul telefono molta meno
+spazzatura): sul server uguale, circa 1.250 µs, perché in gopher-lua il tempo
+non va nel creare le copie ma nel farle avanzare. Una partita coi bot costa quasi 5 volte una fra persone: è il bot che pensa
+provando le mosse su copie della partita (`sim/bot.lua`), in gopher-lua. Finché
+online si è in pochi quasi ogni partita ha bot, quindi un server da 4 core regge
+circa **50 persone** che giocano contro i bot. Le leve sono nel bot (meno copie,
+ricerca più corta: le condivide col telefono) o LuaJIT (sotto, «Crescere»).
+
+Il 9 nov (analisi https://claude.ai/artifact/Ru2WqL6KzafQbuYYzkBY1e):
+- lo stato riusa le tabelle dei robot (`net.lua`, stesso JSON di prima) e il
+  raccoglitore di Go parte con `GOGC` = 200 (`main.go`, se non è nell'ambiente):
+  1v1 da circa 265 a 245 µs per tick (-8%); con i bot non si vede, è tutto pensiero;
+- il carico di un worker è la media degli ultimi 32 tick, non l'ultimo: un bot
+  che pensa 30 ms in un tick non fa più rispondere 503 a `/health`; le stanze
+  nuove vanno al worker meno carico per tempo misurato, non per numero di stanze
+  (una partita con 3 bot ne vale 5 senza);
+- al più 30 messaggi al secondo per connessione (60 di fila), il resto si butta:
+  un client rotto non riempie la coda della stanza facendo perdere i tasti agli
+  altri; il rientro di chi si riconnette ha una coda sua e non si perde più;
+- `-pprof 127.0.0.1:6060` accende i profili di Go sul server vero (solo in
+  locale: `go tool pprof http://127.0.0.1:6060/debug/pprof/profile`).
+
 ## Crescere
 
 - **Più core**: i worker sono uno per core (`-workers`), basta una macchina più
   grande.
 - **Più server**: ogni nodo è indipendente, non condivide stato con gli altri.
   Si mettono N nodi dietro un bilanciatore: `/health` risponde 503 quando il
-  nodo è pieno (worker oltre l'80% del tick) o si sta spegnendo, `/stats` dà
+  nodo è pieno (worker oltre l'80% del tick, in media sugli ultimi 32 tick) o si sta spegnendo, `/stats` dà
   giocatori, coda, stanze e carico. Il gettone di riconnessione comincia col
   nome del nodo (`-node eu1`), così il bilanciatore può rimandare chi torna al
   nodo giusto. Quando i nodi saranno tanti, la coda passa a un matchmaker
