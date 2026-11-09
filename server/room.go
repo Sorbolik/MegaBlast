@@ -151,6 +151,7 @@ type Room struct {
 	mapID string // the simulation picks it from the seed (maps.pick) when it starts
 	seats []*seat
 	in    chan roomMsg
+	back  chan roomMsg // reconnections: a channel of their own, a full in can't lose them
 	eng   *Engine
 	sim   *Sim // nil during the weapon draft
 	tick  int
@@ -189,7 +190,7 @@ func queueSeats(mode Mode, players []*Player, grade int) []seatSpec {
 // specs has one entry per seat of the mode: a queue's (queueSeats) or a
 // private room's (private.go), where people and bots sit where they chose.
 func newRoom(srv *Server, mode Mode, specs []seatSpec, seed int64) (*Room, error) {
-	r := &Room{srv: srv, mode: mode, seed: seed, in: make(chan roomMsg, 64*mode.Players)}
+	r := &Room{srv: srv, mode: mode, seed: seed, in: make(chan roomMsg, 64*mode.Players), back: make(chan roomMsg, 4*mode.Players)}
 	eng, err := newEngine()
 	if err != nil {
 		return nil, err
@@ -256,8 +257,20 @@ type seatRef struct {
 }
 
 // Post delivers a message to the room without ever blocking the sender: if
-// the queue is full (a client flooding messages) the message is lost.
+// the queue is full (clients flooding messages, which the rate limit of
+// server.go prevents) the message is lost. A reconnection goes in its own
+// queue; if even that is full (four reconnections per seat in one tick) the
+// player is told to come back.
 func (r *Room) Post(m roomMsg) {
+	if m.attach != nil {
+		select {
+		case r.back <- m:
+		default:
+			m.attach.Send([]byte(`{"t":"error","e":"expired"}`))
+			m.attach.Close()
+		}
+		return
+	}
 	select {
 	case r.in <- m:
 	default:
@@ -335,6 +348,9 @@ func (r *Room) startMatch() error {
 func (r *Room) Tick() bool {
 	for {
 		select {
+		case m := <-r.back:
+			r.handle(m)
+			continue
 		case m := <-r.in:
 			r.handle(m)
 			continue
@@ -511,11 +527,9 @@ func (r *Room) close() {
 	r.ended.Store(true)
 	for {
 		select {
-		case m := <-r.in:
-			if m.attach != nil {
-				m.attach.Send([]byte(`{"t":"error","e":"expired"}`))
-				m.attach.Close()
-			}
+		case m := <-r.back:
+			m.attach.Send([]byte(`{"t":"error","e":"expired"}`))
+			m.attach.Close()
 			continue
 		default:
 		}

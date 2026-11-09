@@ -898,3 +898,29 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 		t.Fatalf("the empty room must be gone: %v", e)
 	}
 }
+
+// The rate limit (server.go): a burst gets through, a flood doesn't, and the
+// tokens come back with time.
+func TestRateLimit(t *testing.T) {
+	var l rateLimit
+	now := time.Unix(1000, 0)
+	ok := 0
+	for i := 0; i < 200; i++ {
+		if l.allow(now) {
+			ok++
+		}
+	}
+	if ok != msgBurst {
+		t.Fatalf("burst: %d messages through, want %d", ok, msgBurst)
+	}
+	now = now.Add(time.Second)
+	ok = 0
+	for i := 0; i < 200; i++ {
+		if l.allow(now) {
+			ok++
+		}
+	}
+	if ok != msgRate {
+		t.Fatalf("after a second: %d messages through, want %d", ok, msgRate)
+	}
+}
