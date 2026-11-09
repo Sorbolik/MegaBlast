@@ -367,16 +367,31 @@ local function paint_terrain(self)
 	-- the same buffer for every map: no new 900 KB to collect
 	local buf = self.mask_buf or buffer.create(TW * TH, MASK_FORMAT)
 	local st = buffer.get_stream(buf, RGBA)
-	-- buffer.create doesn't clear the memory: we write every cell
-	-- alpha is always 255: written only in a new buffer (buffer.create doesn't
-	-- clear the memory); r, g and b (the crater edge) every time
-	if not self.mask_buf then
-		for j = 4, TW * TH * 4, 4 do st[j] = 255 end
+	-- every cell is written (buffer.create doesn't clear the memory), by runs:
+	-- each run of solid or empty cells is one copy from a row already filled
+	-- (one C call per run instead of three per cell: 230 thousand cells)
+	-- self.mask_rows: one row of solid and one of empty cells, the sources
+	-- (a field: the script is at the limit of 200 locals)
+	if not self.mask_rows then
+		self.mask_rows = {}
+		for k, v in pairs({ solid = 255, empty = 0 }) do
+			local row = buffer.create(TW, MASK_FORMAT)
+			local rs = buffer.get_stream(row, RGBA)
+			for j = 1, TW * 4, 4 do rs[j], rs[j + 1], rs[j + 2], rs[j + 3] = v, v, 255, 255 end
+			self.mask_rows[k] = rs
+		end
 	end
-	for i = 1, TW * TH do
-		local v = data[i] ~= 0 and 255 or 0
-		local j = i * 4 - 3
-		st[j], st[j + 1], st[j + 2] = v, v, 255
+	local solid, empty = self.mask_rows.solid, self.mask_rows.empty
+	for cy = 0, TH - 1 do
+		local base = cy * TW
+		local cx = 0
+		while cx < TW do
+			local on = data[base + cx + 1] ~= 0
+			local e = cx + 1
+			while e < TW and (data[base + e + 1] ~= 0) == on do e = e + 1 end
+			buffer.copy_stream(st, (base + cx) * 4, on and solid or empty, cx * 4, (e - cx) * 4)
+			cx = e
+		end
 	end
 	self.mask_stream = st
 	self.mask_buf = buf

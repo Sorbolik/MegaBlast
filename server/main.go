@@ -13,8 +13,10 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // profiles on -pprof only (http.DefaultServeMux, not the game's address)
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 )
@@ -26,7 +28,21 @@ func main() {
 	flag.IntVar(&cfg.Workers, "workers", cfg.Workers, "worker che fanno girare le stanze (di solito uno per core)")
 	flag.StringVar(&cfg.EventList, "eventi", cfg.EventList, "calendario degli eventi: l'indirizzo del pannello (https://…/eventi.json) o un file JSON (si rilegge quando cambia)")
 	flag.DurationVar(&cfg.BotAfter, "bot-dopo", cfg.BotAfter, "dopo quanto i bot riempiono una coda normale (0 = mai)")
+	profile := flag.String("pprof", "", "indirizzo dei profili di Go, solo in locale (es. 127.0.0.1:6060; vuoto = spenti)")
 	flag.Parse()
+
+	// The garbage is mostly the Lua tables of every tick: with the heap growing
+	// to 3 times what is alive instead of 2 the collector runs half as often
+	// (measured 9 Nov, docs/server.md). GOGC in the environment wins.
+	if os.Getenv("GOGC") == "" {
+		debug.SetGCPercent(200)
+	}
+	if *profile != "" {
+		go func() {
+			log.Printf("profili su http://%s/debug/pprof/", *profile)
+			log.Println(http.ListenAndServe(*profile, nil))
+		}()
+	}
 
 	srv := NewServer(cfg)
 	hs := &http.Server{Addr: *addr, Handler: srv.Handler()}

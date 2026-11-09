@@ -83,10 +83,18 @@ function N.over(g)
 	return g.phase == "over"
 end
 
+-- The robots' tables are reused from one state to the next (30 a second per
+-- match: less garbage for the collector); every field is written each time
+local ROBOTS = setmetatable({}, { __mode = "k" })
+
 -- aim: the angle the player on turn is aiming at (room.go, the "aim" message), nil
 -- if they aren't aiming; a bot aims at its best move while it thinks
 function N.snapshot(g, aim)
-	local robots = {}
+	local robots = ROBOTS[g]
+	if not robots then
+		robots = {}
+		ROBOTS[g] = robots
+	end
 	for i, rb in ipairs(g.robots) do
 		-- s: tick of the ongoing slash (0 if the robot isn't hitting), sd: its direction
 		-- pu, pd: the same for the Pugno del Titano; ag, as, ap, ac: shots of Uovo, Schegge, Pugno and Cecchino
@@ -101,21 +109,28 @@ function N.snapshot(g, aim)
 		-- gs: its Rampino hook is in flight, at gx, gy; ml: tick of the Maglio swing,
 		-- ms: tick (with fraction) when its head stopped on terrain (0 if still swinging), md: its side;
 		-- gn: left the match (gone, won't come back); gd: has already played in this round
-		robots[i] = { x = rb.x, y = rb.y, hp = math.floor(rb.hp), f = rb.facing, d = rb.dead, g = rb.grounded,
-			tl = rb.teleports_left, mh = rb.max_hp, tu = rb.turns, pt = math.floor(rb.points + 0.5),
-			ak = rb.ammo.trap, ad = rb.ammo.shield, am = rb.ammo.trampoline, sh = rb.shield or 0, pl = rb.parachutes_left,
-			pa = rb.parachute,
-			st = (rb.status.burn and rb.status.burn.turns or 0) + 10 * (rb.status.slow and rb.status.slow.turns or 0)
-				+ 100 * (rb.status.cracked and rb.status.cracked.turns or 0),
-			s = rb.swing or 0, sd = rb.swing_dir or 0, pu = rb.punch or 0, pd = rb.punch_dir or 0,
-			sb = rb.swing_base or 0, pb = rb.punch_base or 0,
-			ag = rb.ammo.grenade, as = rb.ammo.shards, ap = rb.ammo.punch, ac = rb.ammo.sniper,
-			sw = rb.secondary or "", ss = rb.secondary and rb.ammo[rb.secondary] or 0, lu = rb.lunge or 0, hk = rb.hooked and (rb.hooked.by or -1) or 0,
-			hx = rb.hooked and rb.hooked.x or 0, hy = rb.hooked and rb.hooked.y or 0, ml = rb.mallet or 0,
-			gs = rb.hook_shot ~= nil, gx = rb.hook_shot and rb.hook_shot.x or 0, gy = rb.hook_shot and rb.hook_shot.y or 0,
-			ms = rb.mallet_stop or 0, md = rb.mallet_dir or 0, mb = rb.mallet_base or 0, kn = rb.knocked,
-			la = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, gn = rb.gone or false,
-			gd = rb.round_done }
+		local r = robots[i]
+		if not r then
+			r = {}
+			robots[i] = r
+		end
+		local ammo, status, hooked, hook = rb.ammo, rb.status, rb.hooked, rb.hook_shot
+		r.x, r.y, r.hp, r.f, r.d, r.g = rb.x, rb.y, math.floor(rb.hp), rb.facing, rb.dead, rb.grounded
+		r.tl, r.mh, r.tu, r.pt = rb.teleports_left, rb.max_hp, rb.turns, math.floor(rb.points + 0.5)
+		r.ak, r.ad, r.am, r.sh, r.pl = ammo.trap, ammo.shield, ammo.trampoline, rb.shield or 0, rb.parachutes_left
+		r.pa = rb.parachute
+		r.st = (status.burn and status.burn.turns or 0) + 10 * (status.slow and status.slow.turns or 0)
+			+ 100 * (status.cracked and status.cracked.turns or 0)
+		r.s, r.sd, r.pu, r.pd = rb.swing or 0, rb.swing_dir or 0, rb.punch or 0, rb.punch_dir or 0
+		r.sb, r.pb = rb.swing_base or 0, rb.punch_base or 0
+		r.ag, r.as, r.ap, r.ac = ammo.grenade, ammo.shards, ammo.punch, ammo.sniper
+		r.sw, r.ss, r.lu = rb.secondary or "", rb.secondary and ammo[rb.secondary] or 0, rb.lunge or 0
+		r.hk = hooked and (hooked.by or -1) or 0
+		r.hx, r.hy, r.ml = hooked and hooked.x or 0, hooked and hooked.y or 0, rb.mallet or 0
+		r.gs, r.gx, r.gy = hook ~= nil, hook and hook.x or 0, hook and hook.y or 0
+		r.ms, r.md, r.mb, r.kn = rb.mallet_stop or 0, rb.mallet_dir or 0, rb.mallet_base or 0, rb.knocked
+		r.la, r.gn = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, rb.gone or false
+		r.gd = rb.round_done
 	end
 	-- k: "missile", "grenade" or "sniper", fu: ticks before the Uovo blows up
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
