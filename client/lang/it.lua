@@ -120,11 +120,14 @@ return {
 	training = {
 		mode = "MODO",
 		levels = { facile = "FACILE", normale = "NORMALE", difficile = "DIFFICILE" },
-		pick_map = "SCEGLI LA MAPPA",
-		mode_and_bot = "%s  ·  BOT %s",
+		who = "CHI C'È",
+		vs_bots = "CONTRO I BOT",
+		same_phone = "STESSO TELEFONO",
+		offline = "SENZA RETE",
+		map = "MAPPA",
+		mode_and_bot = "%s · BOT %s",
+		mode_same = "%s · STESSO TELEFONO",
 		random = "A CASO",
-		circle = "GIRONE %s",
-		training = "ADDESTRAMENTO",   -- the cortile map comes from the Addestramento (girone 0)
 	},
 
 	-- menu/podium.lua: the podium at the end of the match
@@ -440,17 +443,19 @@ return {
 		training_sub = "CONTRO I BOT",
 	},
 
-	-- menu/queue.lua: DOVE GIOCHI?, the queues online
+	-- menu/queue.lua: GIOCA ONLINE, the queues online
 	queue = {
-		title = "DOVE GIOCHI?",
+		title = "GIOCA ONLINE",
+		online = "IN RETE",
+		search = "CERCA",
 		usual_match = "LA PARTITA DI SEMPRE",
-		also_counts = "CONTA ANCHE PER",
+		also_counts = "CONTA ANCHE PER: %s",
 		event = "EVENTO · %s",
 		private = "PARTITA PRIVATA",
 		private_line = "Una stanza con un codice: amici e bot dove vuoi tu",
 	},
 
-	-- menu/private.lua: the private match (from DOVE GIOCHI?)
+	-- menu/private.lua: the private match (from GIOCA ONLINE)
 	private = {
 		title = "PARTITA PRIVATA",
 		new_room_over = "CON GLI AMICI O CONTRO I BOT",

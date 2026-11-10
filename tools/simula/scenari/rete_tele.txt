@@ -12,7 +12,7 @@ aspetta_stato modo=menu 5
 aspetta 1.5
 tocca_bordo 244 400 mezzo destra     # GIOCA
 aspetta 0.5
-tocca_centro 368 300                 # 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=scelta_online 15
 aspetta_stato modo=online 25
 aspetta_stato modo=online turno=1 fase=aim 20

@@ -1,0 +1,19 @@
+# L'ALLENAMENTO nello stile Raggi (Figma 16): una pagina sola. CHI C'È (CONTRO
+# I BOT 550 558, STESSO TELEFONO 770 558), MODO (547/761/975 470), BOT
+# (520/680/840 382), le mappe (533/739/945/1151 249), GIOCA in basso a destra.
+imposta prova_profilo 1
+imposta prova_vignette no
+aspetta 1.5
+tocca 254 346                       # ALLENAMENTO
+aspetta 0.8
+foto 01_allenamento
+tocca 761 470                       # 2 CONTRO 2
+tocca 840 382                       # DIFFICILE
+tocca 739 249                       # la prima mappa
+aspetta 0.3
+foto 02_scelte
+tocca 770 558                       # STESSO TELEFONO
+aspetta 0.3
+foto 03_stesso_telefono
+tocca 36 60                         # indietro
+aspetta_stato modo=menu 3

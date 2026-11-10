@@ -1813,7 +1813,7 @@ on_socket = function(self, conn, data)
 				vetrina = CP.vetrina.for_net(self.profilo) })
 		else
 			CP.wait(self, TM.waiting)
-			-- the queue picked in DOVE GIOCHI? (menu/queue.lua): 2v2, 1v1 or an event,
+			-- the queue picked in GIOCA ONLINE (menu/queue.lua): 2v2, 1v1 or an event,
 			-- and the tag: level and badges (menu/showcase.lua)
 			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
 				vetrina = CP.vetrina.for_net(self.profilo) })
@@ -2423,7 +2423,7 @@ local function start_local(self, against)
 	local opts = { players = {} }
 	for i, p in ipairs(gconfig.MODES[modo]) do
 		-- against the bots the player is the first robot, the others are bots
-		opts.players[i] = { team = p.team, bot = (against and i > 1) and against.livello or nil }
+		opts.players[i] = { team = p.team, bot = (against and not against.stesso and i > 1) and against.livello or nil }
 	end
 	self.local_opts = opts
 	-- in the test scenarios the draft is there only with prova_scelta 1 (scenario scelta.txt)
@@ -4779,7 +4779,7 @@ local function retry_match(self)
 	elseif self.ritorno == "allenamento" then
 		-- the same map, also when it came out A CASO
 		local against = self.against_bot
-		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa })
+		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa, stesso = against.stesso })
 	else
 		start_local(self, nil)
 	end
@@ -5448,7 +5448,7 @@ function PAD.on_input(self, action_id, action)
 				open_screen(self, menu.story, CP.tale.read_again(self.profilo), true)
 			end)
 		elseif end_of == "privata" then
-			-- DOVE GIOCHI?: PARTITA PRIVATA
+			-- GIOCA ONLINE: PARTITA PRIVATA
 			CP.slide(self, 1, function()
 				close_screen(self)
 				open_screen(self, menu.private)
@@ -5458,7 +5458,7 @@ function PAD.on_input(self, action_id, action)
 		elseif type(end_of) == "table" and end_of.invia then
 			send(self, end_of.invia)
 		elseif end_of == "indietro" and self.schermata.mod == menu.private then
-			-- out of the room (if in one), back to DOVE GIOCHI?
+			-- out of the room (if in one), back to GIOCA ONLINE
 			if self.conn then CP.let_go(self) end
 			self.privata = nil
 			CP.slide(self, -1, function()
@@ -5466,7 +5466,7 @@ function PAD.on_input(self, action_id, action)
 				open_screen(self, menu.queue)
 			end)
 		elseif type(end_of) == "table" and end_of.coda then
-			-- DOVE GIOCHI? or GIOCA in an event's detail: the online match
+			-- GIOCA ONLINE or GIOCA in an event's detail: the online match
 			CP.iris(self, function()
 				close_screen(self)
 				start_online(self, end_of.coda)
@@ -5520,7 +5520,7 @@ function PAD.on_input(self, action_id, action)
 			self.ritorno = "home"
 			CP.enter_mission(self, profile.first_lesson(self.profilo))
 		elseif choice == "online" or choice == "eventi" then
-			-- DOVE GIOCHI? (menu/queue.lua) or the board (menu/board.lua): they are
+			-- GIOCA ONLINE (menu/queue.lua) or the board (menu/board.lua): they are
 			-- redone as soon as the updated events arrive
 			local mod = choice == "online" and menu.queue or menu.board
 			CP.slide(self, 1, function() open_screen(self, mod, hud.NAMES) end)

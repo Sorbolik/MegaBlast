@@ -1,6 +1,6 @@
 -- The private match (Sergio, 6 Nov: "una modalità partita privata [...] si
 -- deve poter scegliere il livello dei bot, se contro o con, tutto quello che
--- serve per una lobby privata online"), from DOVE GIOCHI? (menu/queue.lua).
+-- serve per una lobby privata online"), from GIOCA ONLINE (menu/queue.lua).
 -- First CREA UNA STANZA or a 4 digit code typed on the keypad; then the room
 -- the server describes (server/private.go): its code, the mode, one card per
 -- seat in its team's column, a person or a bot. Whoever created it (the

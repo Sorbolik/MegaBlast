@@ -4,11 +4,10 @@
 aspetta 2
 tocca 254 346                      # ALLENAMENTO
 aspetta 1
-tocca 310 460                       # 1 CONTRO 1
-tocca 890 300                       # DIFFICILE
-tocca 640 140                       # AVANTI (la mappa resta A CASO)
+tocca 547 470                       # 1 CONTRO 1
+tocca 840 382                       # DIFFICILE
 aspetta 0.3
-tocca 640 140                       # GIOCA
+tocca_bordo 215 118 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
 mira 150 100 0.3
 aspetta_evento fire 2

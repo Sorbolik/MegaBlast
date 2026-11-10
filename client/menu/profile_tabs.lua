@@ -94,8 +94,9 @@ local function piece_name(set, slot)
 end
 
 -- The devil on the left and under it its plate, level and experience: on every
--- tab here and in the armory. s: prof, colore, radice, low
-function M.devil(s)
+-- tab here and in the armory. s: prof, colore, radice, low. line: instead of
+-- the profile's plate, a light one with this line (the training)
+function M.devil(s, line)
 	local p = s.prof
 	local pose = box(250, 104, 0, 0, C.LIGHT, s.radice)
 	gui.set_visible(pose, false)
@@ -109,6 +110,12 @@ function M.devil(s)
 	gui.set_scale(ground, vmath.vector3(1, 0.14, 1))
 	gui.set_parent(s.figure.root, pose)
 	scoria.set_enabled(s.figure, true)
+	if line then
+		-- no profile here: a light plate that says what the place is
+		kit.sand(s.low, 80, 630, 340, 62, s.accent or KC.STAR, { sk = 22 })
+		kit.text(s.low, line, 250, 668, 22, KC.INK, "middle", 1)
+		return
+	end
 	local lv = (p.braci or 0) > 0 and T.level_braci:format(p.livello, p.braci) or T.level:format(p.livello)
 	kit.nameplate(s.low, 80, 630, T.your_devil, lv .. " · " .. thousands(p.xp) .. "/" .. thousands(profile.xp_level(p.livello)),
 		p.xp / profile.xp_level(p.livello), KC.PURPLE)

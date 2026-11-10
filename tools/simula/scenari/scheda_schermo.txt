@@ -21,10 +21,9 @@ aspetta_stato modo=menu 3
 aspetta 0.3                         # lo scivolo finisce
 tocca_bordo 254 346 mezzo sinistra    # ALLENAMENTO
 aspetta 1
-tocca_bordo 640 260 alto centro    # 2 CONTRO 2 (la striscia va da un bordo all'altro)
-tocca_bordo 640 580 alto centro    # AVANTI (la mappa resta A CASO)
+tocca_bordo 761 250 alto centro    # 2 CONTRO 2 (la striscia va da un bordo all'altro)
 aspetta 0.3
-tocca_bordo 640 580 alto centro    # GIOCA
+tocca_bordo 215 118 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8
 foto 03_schieramento

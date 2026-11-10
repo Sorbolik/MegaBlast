@@ -1,21 +1,14 @@
-# La scelta della mappa in ALLENAMENTO (Sergio, 3 nov): dopo modo e livello, AVANTI apre
-# le cartoline (A CASO, il cortile dell'Addestramento, poi le mappe dei gironi); si sceglie
+# La scelta della mappa in ALLENAMENTO (Sergio, 3 nov): sotto modo e livello ci sono
+# le carte delle mappe (A CASO, il cortile dell'Addestramento, poi le mappe dei gironi); si sceglie
 # il cortile e si gioca lì. Va su ogni schermo: provalo anche con --schermo 1600x720 e 960x720.
 aspetta 2
 tocca_bordo 254 346 mezzo sinistra    # ALLENAMENTO
 aspetta 1
-tocca_centro 640 140                # AVANTI
-aspetta 0.5
 foto 01_scegli_la_mappa
-tocca_centro 580 380                # IL CORTILE
+tocca_bordo 739 471 alto centro     # IL CORTILE
 aspetta 0.3
 foto 02_cortile_scelto
-tocca_centro 62 658                 # indietro: si torna a modo e livello
-aspetta 0.3
-foto 03_indietro
-tocca_centro 640 140                # AVANTI: il cortile è ancora scelto
-aspetta 0.3
-tocca_centro 640 140                # GIOCA
+tocca_bordo 215 118 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 premi z                             # tutta la mappa: è il cortile

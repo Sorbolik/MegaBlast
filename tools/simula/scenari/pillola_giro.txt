@@ -16,7 +16,7 @@ aspetta_stato modo=menu 5
 aspetta 1.5
 tocca_bordo 244 400 mezzo destra                     # GIOCA
 aspetta 0.5
-tocca_centro 368 300                      # 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1
 foto 01_sala
@@ -60,10 +60,9 @@ aspetta 0.5
 tocca_bordo 254 346 mezzo sinistra    # ALLENAMENTO
 aspetta 1
 foto 10_allenamento
-tocca_centro 640 140                       # AVANTI
 aspetta 0.5
 foto 11_allenamento_mappa
-tocca_centro 640 140                       # GIOCA
+tocca_bordo 215 118 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8
 foto 12_schieramento

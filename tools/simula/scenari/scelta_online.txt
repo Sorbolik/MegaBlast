@@ -9,7 +9,7 @@ aspetta 1
 server 2v2 3
 tocca 1036 400                      # GIOCA
 aspetta 0.5
-tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=scelta_online 20
 aspetta 1
 foto 00_schieramento                # i cartellini di tutti: livello e badge dal server

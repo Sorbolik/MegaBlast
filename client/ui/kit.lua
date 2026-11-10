@@ -384,6 +384,22 @@ function M.tabs(g, list_of, x, y, tabs, active, accent)
 	return cx
 end
 
+-- CHOICES: a small label and the options in a row on a thin line, the sand
+-- blade behind the chosen one. opts: { { label, ui_action }, ... }; w: an
+-- option's width; off: dim, nothing to tap
+function M.choice(g, list_of, x, y, label, opts, active, w, off)
+	local h = 44
+	M.text(g, label, x + 6, y - 10, 14, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
+	M.rect(g, x, y + h - 2, #opts * w, 2, with_alpha(C.LINE, 0.6))
+	for i, o in ipairs(opts) do
+		local ox = x + (i - 1) * w
+		local on = i == active and not off
+		if on then M.para(g, ox, y, w - 12, h, 12, C.SAND) end
+		M.text(g, o[1], ox + w / 2, y + h / 2 + 6, #o[1] > 14 and 14 or 18, on and C.INK or with_alpha(C.MUTE, off and 0.4 or 1), "middle")
+		if not off then M.zone(g, list_of, ox, y - 6, w, h + 12, o[2]) end
+	end
+end
+
 -- CARDS: a cut corner at the top right and a frame in the card's color.
 -- opt: sel (chosen: sand frame and a glow), off (dim). Returns { node, g }
 function M.card(g, x, y, w, h, color, opt)
