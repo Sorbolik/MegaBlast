@@ -1,0 +1,95 @@
+# Tutte le schermate dei menu, una foto per una, per le reference del Figma
+# dell'interfaccia (docs/figma.md): home, profilo e le sue schede, armeria,
+# campagna, allenamento, impostazioni, eventi, DOVE GIOCHI?, partita privata,
+# HUD della battaglia e podio. Da girare anche con --scala 2 (foto a 2560x1440).
+imposta prova_profilo 1
+imposta prova_vignette no
+imposta prova_durata 3
+
+aspetta 2
+foto 01_home
+tocca_centro 400 300                # il diavoletto: il profilo
+aspetta 0.8
+foto 02_profilo_scheda
+tocca_bordo 267 142 alto sinistra   # SIGILLI
+aspetta 0.5
+foto 03_profilo_sigilli
+tocca_bordo 457 142 alto sinistra   # STATISTICHE
+aspetta 0.5
+foto 04_profilo_statistiche
+tocca_bordo 647 142 alto sinistra   # PARTITE
+aspetta 0.5
+foto 05_profilo_partite
+tocca_bordo 62 62 alto sinistra     # indietro
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 168 108 basso sinistra  # ARMERIA
+aspetta 0.8
+foto 06_armeria
+tocca_bordo 62 62 alto sinistra
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 218 392 basso destra    # CAMPAGNA
+aspetta 1.2
+foto 07_campagna_forgia
+tocca_bordo 240 142 alto centro     # Addestramento
+aspetta 0.8
+foto 08_campagna_addestramento
+tocca_bordo 256 240 alto centro     # una cartolina
+aspetta 0.8
+foto 09_cartolina
+tocca_centro 60 360                 # GIOCA della cartolina: la missione
+aspetta_stato modo=local 8
+aspetta 1.5
+foto 09b_missione
+tocca_bordo 62 62 alto sinistra     # la rotellina della partita
+aspetta 0.6
+foto 09c_rotellina
+tocca_bordo 408 62 alto sinistra    # ESCI DALLA PARTITA
+aspetta 2
+foto 09d_dopo_esci
+tocca_bordo 62 62 alto sinistra
+aspetta_stato modo=menu 4
+aspetta 0.5
+tocca_bordo 218 304 basso destra    # ALLENAMENTO
+aspetta 0.8
+foto 10_allenamento
+tocca_centro 640 140                # AVANTI
+aspetta 0.8
+foto 11_allenamento_mappa
+tocca_bordo 62 62 alto sinistra
+aspetta 0.8
+tocca_bordo 62 62 alto sinistra
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 62 62 alto destra       # IMPOSTAZIONI
+aspetta 0.8
+foto 12_impostazioni
+tocca_bordo 62 62 alto sinistra
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 168 208 basso sinistra  # EVENTI
+aspetta 1.2
+foto 13_eventi
+tocca_bordo 62 62 alto sinistra
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 218 108 basso destra    # GIOCA
+aspetta 1.2
+foto 14_dove_giochi
+tocca_centro 640 100                # PARTITA PRIVATA
+aspetta 1
+foto 15_partita_privata
+tocca_bordo 62 62 alto sinistra
+aspetta 1
+tocca_bordo 62 62 alto sinistra
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 218 216 basso destra    # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1.2
+foto 16_battaglia_hud
+mira 150 100 0.4
+aspetta_evento over 60
+aspetta 4
+foto 17_podio

@@ -1,0 +1,38 @@
+{
+  "nota": "Specchio delle variabili del Figma 'MegaBlast · Interfaccia' (collezioni 'Colori ui C' e 'Misure ui lua'). Colori r, g, b, a da 0 a 1. Si applica con python3 tools/figma/applica.py (docs/figma.md).",
+  "colori": {
+    "BOTTOM": [0.051, 0.047, 0.063, 1],
+    "PANEL": [0.078, 0.071, 0.094, 1],
+    "LINE": [1, 0.886, 0.769, 0.28],
+    "LIGHT": [1, 0.886, 0.769, 1],
+    "TEXT": [0.95, 0.91, 0.85, 1],
+    "OFF": [0.675, 0.643, 0.627, 1],
+    "BRACE": [1, 0.42, 0.16, 1],
+    "STEEL": [0.62, 0.77, 0.88, 1],
+    "PURPLE": [0.77, 0.61, 1, 1],
+    "MINT": [0.36, 0.86, 0.72, 1],
+    "SHADOW": [0, 0, 0, 0.6],
+    "GOLD": [0.96, 0.77, 0.09, 1],
+    "OBSIDIAN": [1, 0.44, 0.82, 1],
+    "SQUADRA/1 Rosso": [1, 0.231, 0.306, 1],
+    "SQUADRA/2 Blu": [0.239, 0.482, 1, 1],
+    "SQUADRA/3 Verde": [0.18, 0.75, 0.44, 1],
+    "SQUADRA/4 Oro": [0.96, 0.77, 0.09, 1],
+    "GRADI/1 Bronzo": [0.79, 0.54, 0.35, 1],
+    "GRADI/2 Argento": [0.79, 0.83, 0.86, 1],
+    "GRADI/3 Oro": [0.96, 0.77, 0.09, 1],
+    "GRADI/4 Brace": [1, 0.42, 0.16, 1],
+    "EXTRA/CORONA": [1, 0.8, 0.25, 1],
+    "EXTRA/MEDAGLIA": [0.55, 0.81, 0.94, 1]
+  },
+  "forme": {
+    "forma/raggio": 14,
+    "forma/bordo": 3,
+    "eroe/smusso": 13,
+    "slot_arma/raggio": 9,
+    "slot_arma/smusso": 11,
+    "pillola/raggio": 24,
+    "badge/raggio": 11,
+    "badge/bordo": 2
+  }
+}

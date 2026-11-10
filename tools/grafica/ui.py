@@ -18,13 +18,16 @@
 # per il nodo, quindi un'immagine piu' grande non rende i bordi piu' fini.
 # Ottagono ed esagono si scalano interi: sono a 128 px, nitidi anche a 1440p.
 # python3 tools/grafica/ui.py
+import json
 import os
 import numpy as np
 from PIL import Image
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "client", "assets", "ui")
 SS = 4  # sovracampionamento per bordi lisci
-LATO, RAGGIO, LINEA = 48, 14, 3
+# le misure delle forme vengono dal Figma dell'interfaccia (tools/figma/interfaccia.json)
+FORME = json.load(open(os.path.join(os.path.dirname(__file__), "..", "figma", "interfaccia.json")))["forme"]
+LATO, RAGGIO, LINEA = 48, FORME["forma/raggio"], FORME["forma/bordo"]
 
 
 def distanza_rettangolo(n, r):
@@ -121,18 +124,19 @@ R2 = np.sqrt(2)
 n = LATO
 x, y = griglia(n)
 h = n / 2
-smusso = 13
+smusso = FORME["eroe/smusso"]
 d = np.maximum(np.maximum(np.abs(x), np.abs(y)) - h,
                np.maximum((x + y) / R2, (-x - y) / R2) - (2 * h - smusso) / R2)
 coppia(d, n, LINEA, "eroe")
 # slot delle armi: smussi in alto, angoli di sotto arrotondati
-d = np.maximum(distanza_rettangolo(n, 9), np.maximum((x + y) / R2, (-x + y) / R2) - (2 * h - 11) / R2)
+d = np.maximum(distanza_rettangolo(n, FORME["slot_arma/raggio"]),
+               np.maximum((x + y) / R2, (-x + y) / R2) - (2 * h - FORME["slot_arma/smusso"]) / R2)
 coppia(d, n, LINEA, "slot_arma")
 # pillola della coda in testata: estremità a mezzo cerchio pieno (9-slice, bordo 24)
-coppia(distanza_rettangolo(LATO, 24), LATO, LINEA, "pillola")
+coppia(distanza_rettangolo(LATO, FORME["pillola/raggio"]), LATO, LINEA, "pillola")
 # pillola dei colpi: mezzo cerchio per lato
 n = 24
-coppia(distanza_rettangolo(n, 11), n, 2, "badge")
+coppia(distanza_rettangolo(n, FORME["badge/raggio"]), n, FORME["badge/bordo"], "badge")
 # gettone ottagonale e oggetto esagonale, interi: il contorno è spesso come
 # i 3 px dei bottoni tondi di prima, alla misura in cui si disegnano (84 e 56)
 n = 128

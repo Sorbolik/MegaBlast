@@ -1,0 +1,50 @@
+# Le schermate online per le reference del Figma (docs/figma.md): la bacheca
+# degli eventi col dettaglio, la sala d'attesa, la home in coda con la
+# pillola, lo schieramento, la scelta delle armi e la partita online.
+imposta server_url ws://127.0.0.1:8090/ws
+imposta prova_profilo 1
+imposta prova_vignette no
+
+aspetta 1
+server 2v2 1 eventi_prova.json bot_dopo=10s
+aspetta_stato modo=menu 5
+aspetta 1.5
+tocca_bordo 168 208 basso sinistra  # EVENTI
+aspetta 1.5
+foto 20_eventi
+tocca_centro 310 486                # la prima carta in corso
+aspetta 0.6
+foto 21_evento_dettaglio
+tocca_bordo 62 62 alto sinistra
+aspetta 0.5
+tocca_bordo 62 62 alto sinistra
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 218 108 basso destra    # GIOCA
+aspetta 0.8
+tocca_centro 368 300                # 2 contro 2
+aspetta_stato modo=connecting 5
+aspetta 1
+foto 22_sala_attesa
+tocca_centro 440 44                 # TORNA AI MENU · RESTI IN CODA
+aspetta_stato modo=menu coda=si 3
+aspetta 1
+foto 23_home_in_coda
+aspetta_stato coda=trovata 15
+aspetta 0.3
+foto 24_partita_trovata
+aspetta_stato modo=scelta_online 8
+aspetta 1
+foto 25_schieramento
+tocca_centro 640 360                # alle armi
+aspetta 0.6
+foto 26_scelta_primaria
+tocca_centro 320 410
+aspetta 0.5
+foto 27_scelta_secondaria
+tocca_centro 640 410
+aspetta 0.5
+foto 28_pronto
+aspetta_stato modo=online 25
+aspetta 2
+foto 29_partita_online
