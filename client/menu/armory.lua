@@ -194,9 +194,7 @@ local function run_cmd(a, ui_action)
 			local set = equip.BY_ID[step.set]
 			local slot_name = ""
 			for _, sl in ipairs(equip.SLOTS) do if sl.id == step.slot then slot_name = sl.name end end
-			a.scene = step_scene.new(slot_name, set.name, step.level, function()
-				sound.play("#martello", { speed = 0.9 + 0.1 * math.random() })
-			end)
+			a.step = { slot_name, set.name, step.level }
 		elseif kind == "potenzia" then
 			sound.play("#scaglia")
 		end
@@ -214,6 +212,13 @@ local function run_cmd(a, ui_action)
 	end
 	profile.save(a.prof)
 	build(a)
+	-- the scene goes above the rebuilt screen
+	if a.step then
+		a.scene = step_scene.new(a.step[1], a.step[2], a.step[3], function()
+			sound.play("#martello", { speed = 0.9 + 0.1 * math.random() })
+		end)
+		a.step = nil
+	end
 end
 
 function M.update(a, dt)

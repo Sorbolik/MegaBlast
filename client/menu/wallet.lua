@@ -138,6 +138,41 @@ function M.match(p, r, today)
 	return rows
 end
 
+-- The match seen by whoever plays on this phone, for M.match: res is the
+-- sim's g:results() ({ mode, winner, ranking = { { robot, team, place, points } } }),
+-- me their robot, awards those they took; online: an online match (otherwise
+-- against bots or on the same phone: half, like the training).
+-- The MVP: the most points of all, even in the losing team (first in the
+-- ranking on a tie).
+function M.result(res, me, awards, online)
+	local r = { awards = awards or {}, bots = not online }
+	local mine, best
+	for _, v in ipairs(res.ranking) do
+		if v.robot == me then mine = v end
+		if not best or (v.points or 0) > (best.points or 0) then best = v end
+	end
+	if not mine then return r end
+	r.points = mine.points or 0
+	if res.winner ~= nil then r.won = res.winner == mine.team end
+	r.second = res.mode == "ffa" and mine.place == 2 or nil
+	r.mvp = best == mine and r.points > 0 or nil
+	return r
+end
+
+-- how many campaign chapters have all their missions done (the Ossidiana of
+-- a finished chapter): chapters = sim/campaign.lua's CAPITOLI
+function M.chapters_done(p, chapters)
+	local n = 0
+	for _, cap in ipairs(chapters) do
+		local all = #cap.missioni > 0
+		for _, l in ipairs(cap.missioni) do
+			if not (p.stelle[l.id] and p.stelle[l.id][1]) then all = false end
+		end
+		if all then n = n + 1 end
+	end
+	return n
+end
+
 -- Scaglie of a campaign mission: first time (or a replay) and the new stars
 function M.mission(first, new_stars)
 	local rows = { { key = first and "done" or "replay", scaglie = first and M.MISSION or M.REPLAY } }

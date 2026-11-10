@@ -86,10 +86,10 @@ local function track(level, x0, w, y, parent)
 		local on = l <= level
 		local step = equip.PROOF[l]
 		if step then
-			diamond(x, y, 20, on and grade_color(l) or ui.C.BOTTOM, on and grade_color(l) or ui.C.LINE, parent)
+			diamond(x, y, 24, on and grade_color(l) or ui.C.BOTTOM, on and grade_color(l) or ui.C.LINE, parent)
 			ui.text(tostring(l), x, y - 26, 0.5, ui.C.OFF, parent)
 		else
-			ui.sagoma("forma", x, y, 8, 14, on and grade_color(level) or ui.C.PANEL, parent)
+			ui.sagoma(nil, x, y, 8, 14, on and grade_color(level) or ui.C.LINE, parent)
 		end
 	end
 end

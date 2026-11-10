@@ -178,8 +178,8 @@ function M.sample(p)
 	local a = p.loadouts[p.is_active]
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
 	a.tree = { jump = 2, walk = 1, air_jump = 1, hp = 1, teleport = 1, trap_wide = 2 }
-	p.pezzi.corvo_mask, p.pezzi.fornace_chest, p.pezzi.corvo_cloak, p.pezzi.leviatano_legs = 24, 18, 9, 30
-	p.prova.corvo_cloak = 2
+	p.pezzi.corvo_mask, p.pezzi.fornace_chest, p.pezzi.corvo_cloak, p.pezzi.leviatano_legs = 24, 19, 9, 30
+	p.prova.corvo_cloak, p.prova.fornace_chest = 2, 5
 	p.scaglie, p.ossidiana = 1240, 35
 	p.statistiche["2v2"] = { partite = 48, vinte = 27, colpi = 310, a_segno = 190, danno = 14500, abbattuti = 60,
 		nel_vuoto = 23, globi = 140, colpo_lungo = 1180, casse = 35, cadute = 12, morti = 30, serie = 4,

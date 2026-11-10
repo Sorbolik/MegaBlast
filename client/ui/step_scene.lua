@@ -42,9 +42,9 @@ function M.new(slot_name, set_name, level, on_blow)
 	gui.animate(sc.piece, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, M.RISE, M.DARK)
 	-- the words, lit after the third blow
 	sc.title = ui.title(T.step_title:format(level), 0, 220, 1.4, ui.C.GOLD, sc.root)
-	sc.name = ui.title(T.step_grade:format(slot_name, set_name, ROMAN[tier], T.grades[tier]), 0, -160, 0.8, ui.C.TEXT, sc.root)
+	sc.name = ui.title(T.step_grade:format(slot_name, set_name, ROMAN[tier], string.upper(T.grades[tier])), 0, -160, 0.8, ui.C.TEXT, sc.root)
 	sc.note = ui.text(level >= equip.LIVELLO_MAX and T.step_top or T.step_look, 0, -200, 0.7, ui.C.GRADI[tier], sc.root)
-	ui.text(T.skip, 0, -300, 0.55, ui.C.OFF, sc.root)
+	ui.text(T.skip, 0, -250, 0.6, ui.C.OFF, sc.root)
 	for _, n in ipairs({ sc.title, sc.name, sc.note }) do gui.set_color(n, vmath.vector4(1, 1, 1, 0)) end
 	sc.flash = gui.new_box_node(vec(0, 0), vec(W * screen.FULL, H * screen.FULL))
 	gui.set_color(sc.flash, vmath.vector4(1, 1, 1, 0))

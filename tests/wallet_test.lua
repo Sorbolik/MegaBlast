@@ -49,6 +49,22 @@ check(sum(wallet.obsidian({}, {}, 3, 4), "ossidiana") == 0, "no badge and no fif
 local sc, ob = wallet.apply(p, { { scaglie = 30 }, { ossidiana = 5 } })
 check(sc == 30 and ob == 5 and p.ossidiana == 5, "apply adds to the balance")
 
+-- The match seen from this phone, and the chapters --------------------------------
+local res = { mode = "2v2", winner = 2, ranking = { { robot = 3, team = 2, place = 1, points = 90 },
+	{ robot = 4, team = 2, place = 1, points = 40 }, { robot = 1, team = 1, place = 2, points = 150 },
+	{ robot = 2, team = 1, place = 2, points = 10 } } }
+local r1 = wallet.result(res, 1, { {} }, true)
+check(r1.won == false and r1.mvp and r1.points == 150 and not r1.bots, "result: lost, but the MVP of the match")
+local r3 = wallet.result(res, 3, {}, false)
+check(r3.won == true and not r3.mvp and r3.bots, "result: won, not the MVP, against bots")
+res.winner = nil
+check(wallet.result(res, 3, {}, true).won == nil, "result: a tie is neither won nor lost")
+local ffa = { mode = "ffa", winner = 1, ranking = { { robot = 2, team = 1, place = 1, points = 50 }, { robot = 1, team = 2, place = 2, points = 30 } } }
+check(wallet.result(ffa, 1, {}, true).second, "result: 2nd in free for all")
+local q = wallet.init({ stelle = { a = { true }, b = { false } } })
+local chapters = { { missioni = { { id = "a" } } }, { missioni = { { id = "a" }, { id = "b" } } } }
+check(wallet.chapters_done(q, chapters) == 1, "chapters: done when every mission is")
+
 -- Levels ----------------------------------------------------------------------------
 p = wallet.init({})
 p.scaglie = 10000
