@@ -24,6 +24,7 @@
 local ui = require "ui.ui"
 local backdrop = require "ui.backdrop"
 local game = require "sim.game"
+local score = require "battle.score"
 local equip = require "sim.gear"
 local maps = require "sim.maps"
 local profile = require "menu.profile"
@@ -265,14 +266,7 @@ end
 local OUTCOME = { V = { T.outcome_won, C.MINT }, S = { T.outcome_lost, C.BRACE }, P = { T.outcome_tie, C.LIGHT } }
 
 local function face_icon(v, x, y, d, parent)
-	local col = C.SQUADRA[v.squadra] or C.LIGHT
-	ui.disc(x, y, d, C.BOTTOM, parent)
-	local img = require("battle.skins").skins.apprendista.pieces.testa
-	local k = (d * 1.1) / img.h
-	local n = box(x, y - d * 0.08, img.w * k, img.h * k, vmath.vector4(1, 1, 1, 1), parent)
-	gui.set_texture(n, "diavoletto")
-	gui.play_flipbook(n, img.img)
-	ui.ring_node(x, y, d, 2.5, col, parent)
+	score.face(parent, x, y, d, C.SQUADRA[v.squadra] or C.LIGHT, v.look)
 end
 
 -- the rope: your team's lead at every lap
