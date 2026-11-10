@@ -2535,7 +2535,7 @@ local function start_mission(self, id, picks)
 		if p.nome then self.names[i] = p.nome end
 		if p.pelle then dress(self, i, { p.pelle }) end
 		if p.bot and (p.battute or p.carattere) then
-			self.speak = self.speak or require("battle.quips").nuove()
+			self.speak = self.speak or require("battle.quips").new()
 			self.speak.chi[i] = p.battute or p.carattere
 		end
 	end
