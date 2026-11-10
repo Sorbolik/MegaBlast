@@ -147,6 +147,7 @@ codice. Regole della roadmap: [../roadmap.md](../roadmap.md) area 21.
 
 ## Aperte
 
+- **Interfaccia ripensata da zero** (10 nov, proposta, non ancora nel gioco): direzione approvata da Sergio («mi stanno bene i punti di prima, forse io distinguerei gioca online con altro»): home con poche porte (GIOCA solo online; ALLENAMENTO con bot e STESSO TELEFONO, senza rete), PROFILO e ARMERIA in un posto solo, scheletro uguale per ogni menu con l'azione principale in basso a destra, elenco a sinistra e dettaglio a destra. Sergio vuole anche misure da desktop oltre a quelle da telefono, se è semplice. Schermate, confronto con oggi, piano a PR piccole e quattro scelte aperte in [docs/interfaccia_da_zero.md](../interfaccia_da_zero.md). Scelte di Claude dopo il confronto: restano di oggi la griglia della CAMPAGNA, le vie dei SIGILLI, il podio coi gradini, l'HUD e le forme già approvate; scartato dalla proposta l'elenco a tre livelli dei Sigilli, i cartellini fermi sul podio e la campagna a elenco (perdeva le miniature).
 - Scelta della coda online (1v1, 2v2, tutti contro tutti) nella home: oggi la
   dice `[megablast] giocatori` nella build. Serve per l'uscita della fase 0.
 - Icone delle armi: vettoriali dal 26 ott; idea "sagome piatte" superata.
