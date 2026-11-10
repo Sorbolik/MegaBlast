@@ -1,0 +1,22 @@
+# Il salto di livello sul podio (Sergio, 10 nov): profilo di prova a 20 XP dal
+# livello 24, la partita ne dà 55 e le scintille di esperienza riempiono la barra,
+# l'ultima scoppia in un anello d'oro. La foto, a cose fatte, mostra il livello
+# nuovo e i punti da mettere.
+imposta prova_profilo 2
+imposta prova_durata 3
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_stato turno=1 fase=aim 40     # l'ultimo giro ×2: un altro colpo a testa
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
+aspetta 5
+foto 01_livello

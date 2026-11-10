@@ -14,7 +14,7 @@
 --     already had; medaglia: the second is Favilla's medal (the cortile);
 --     avanti: there is a next level; sound(v): the tick, v = speed (pitch);
 --     gain: profile.missione's experience and coins (the receipt on the right, ui/receipt.lua), prof: the profile;
---     coin(kind, i): the sound of a coin landing in the wallet pill
+--     coin(kind, i): the sound of a coin landing in the wallet pill; xp(i, n, level_up): a spark landing in the bar
 --   fine_livello.update(f, dt)
 --   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro", "sigilli" or nil
 --   fine_livello.destroy(f)
@@ -86,7 +86,7 @@ end
 -- back, the halo lights up and settles
 function M.update(f, dt)
 	f.t = f.t + dt
-	if f.receipt then receipt.update(f.receipt, dt, f.sound and function(i) f.sound(1 + 0.08 * i) end, f.coin) end
+	if f.receipt then receipt.update(f.receipt, dt, f.sound and function(i) f.sound(1 + 0.08 * i) end, f.coin, f.xp) end
 	local i = f.lit_ones + 1
 	if i > #f.prese or f.t < M.FIRST + (i - 1) * M.RHYTHM then return end
 	f.lit_ones = i

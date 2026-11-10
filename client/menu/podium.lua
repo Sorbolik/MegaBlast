@@ -14,6 +14,7 @@
 --     numero: the match in the profile, if it has the replay (there is RIVEDI)
 --   p.tick = function(i) ... end   -- optional: the sound of the receipt's i-th line
 --   p.coin = function(kind, i) ... end  -- optional: a coin landing in the wallet pill
+--   p.xp = function(i, n, level_up) ... end  -- optional: a spark of experience landing in the bar
 --   podio.update(p, dt) ; podio.on_input(p, action_id, action) -> "continua", "sigilli", { rivedi = numero } or nil
 --   tapping a player on the podium opens their tag (ui/tag_card.lua); a tap closes it
 --   podio.destroy(p)
@@ -170,7 +171,7 @@ function M.update(p, dt)
 	p.t = p.t + dt
 	for _, s in ipairs(p.figure) do scoria.update(s.s, dt, s.st) end
 	if p.carta then tag.update(p.carta, dt) end
-	if p.receipt then receipt.update(p.receipt, dt, p.tick, p.coin) end
+	if p.receipt then receipt.update(p.receipt, dt, p.tick, p.coin, p.xp) end
 end
 
 local function close_card(p)
