@@ -1,8 +1,8 @@
 -- Armory: the pieces of the player's loadouts (docs/game_design_competitivo.md:
--- free rebuild outside the match, 3 saved loadouts). A Titan set for each
--- piece (sidegrade), tier from mastery, full-set bonus and variant B with
--- pieces at level 30. The Sigilli (the skill points) are in the profile
--- (menu/seals.lua, Sergio 10 Nov). On the right the resulting stats,
+-- free rebuild outside the match, 3 saved loadouts): the four pieces worn,
+-- their levels bought with Scaglie and the step's scene (menu/pieces.lua),
+-- full-set bonus and variant B. The Sigilli (the skill points) are in the
+-- profile (menu/seals.lua, Sergio 10 Nov). On the right the resulting stats,
 -- compared to the base.
 --
 -- The screen is rebuilt from scratch at every tap: few nodes, only when
@@ -17,6 +17,9 @@ local game = require "sim.game"
 local equip = require "sim.gear"
 local loadout = require "sim.loadout"
 local profile = require "menu.profile"
+local pieces = require "menu.pieces"
+local coins = require "ui.coins"
+local step_scene = require "ui.step_scene"
 local T = require("lang.text").armory
 local common = require("lang.text").common
 
@@ -32,9 +35,6 @@ M.STATISTICS = {
 	{ "burning_blasts", "yes_no" },
 }
 for _, s in ipairs(M.STATISTICS) do table.insert(s, 2, T.stats[s[1]]) end
-local ROMAN = { "I", "II", "III", "IV" }
-local STAT_NAMES = {}
-for _, s in ipairs(M.STATISTICS) do STAT_NAMES[s[1]] = string.lower(s[2]) end
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
@@ -49,17 +49,6 @@ local function value(v, modo)
 	if modo == "percent" then return string.format("%d%%", math.floor(v * 100 + 0.5)) end
 	if v % 1 ~= 0 then return string.format("%.1f", v) end
 	return tostring(v)
-end
-
--- "+3 salto, -2 vita": a piece's effects in short
-local function effects(list_of)
-	local t = {}
-	for _, e in ipairs(list_of) do
-		local n = e.add or e.mul
-		local s = e.add and string.format("%+g", n) or string.format("%+d%%", math.floor((n - 1) * 100 + 0.5))
-		t[#t + 1] = s .. " " .. (STAT_NAMES[e.stat] or e.stat)
-	end
-	return table.concat(t, ", ")
 end
 
 local function to_active(a) return profile.active_loadout(a.prof) end
@@ -101,43 +90,11 @@ local function statistics(a, parent)
 	end
 end
 
--- SET tab ----------------------------------------------------------------------
+-- PEZZI tab: the pieces and their levels in Scaglie (menu/pieces.lua) -----------
 
-local function sheet_set(a, parent)
-	local c = ui.C
-	local as = to_active(a)
-	local tiers = profile.tier(a.prof, as)
-	for r, slot in ipairs(equip.SLOTS) do
-		-- the first row's buttons start at the content's top
-		local y = ui.BODY_TOP - 31 - (r - 1) * 88
-		local label = ui.text(slot.name, ui.EDGE, y, 0.8, c.TEXT, parent)
-		gui.set_pivot(label, gui.PIVOT_W)
-		for i, set in ipairs(equip.SETS) do
-			local chosen = as.gear[slot.id] == set.id
-			local x = 260 + (i - 1) * 138
-			local t = equip.tier(a.prof.mastery[set.id .. "_" .. slot.id])
-			ui.tab(a.buttons, x, y + 8, 130, 46, set.name, "set:" .. slot.id .. ":" .. set.id, chosen, parent)
-			ui.text(T.tier:format(ROMAN[t]), x, y - 26, 0.55, chosen and c.BRACE or c.OFF, parent)
-		end
-		local piece = equip.BY_ID[as.gear[slot.id] or ""]
-		local n = ui.text(piece and effects(piece.pieces[slot.id]) or T.no_piece, 770, y, 0.6, c.OFF, parent)
-		gui.set_pivot(n, gui.PIVOT_W)
-	end
-
-	-- full-set bonus, if that set has one
-	local id, top = equip.full_set(as.gear, tiers)
-	local set = id and equip.BY_ID[id]
-	if not (set and set.bonus) then return end
-	local pan = ui.panel(LEFT_X, ui.EDGE + 65, LEFT_W, 130, parent)
-	ui.title(set.name .. " · " .. string.upper(set.style), -200, 38, 0.7, c.BRACE, pan)
-	for i, v in ipairs({ "a", "b" }) do
-		local y = 4 - (i - 1) * 40
-		local ok = v == "a" or top
-		ui.tab(a.buttons, -420, y, 50, 34, string.upper(v), "variante:" .. v, as.variant == v and (v == "a" or top), pan)
-		local txt = ok and set.bonus[v].desc or T.locked_bonus:format(set.bonus[v].desc, equip.LIVELLO_MAX)
-		local n = ui.text(txt, -380, y, 0.62, ok and c.TEXT or c.OFF, pan)
-		gui.set_pivot(n, gui.PIVOT_W)
-	end
+local function sheet_pieces(a, parent)
+	a.pieces.prof, a.pieces.buttons, a.pieces.w = a.prof, a.buttons, LEFT_W
+	pieces.build(a.pieces, parent)
 end
 
 -- Screen -----------------------------------------------------------------------
@@ -147,23 +104,26 @@ local function build(a)
 	ui.header_delete(a.head)
 	a.buttons = {}
 	local c = ui.C
-	-- the header (ui.header): ARMERIA, the pill's place, the loadouts on the right
+	-- the header (ui.header): ARMERIA, the pill's place, the wallet on the right
+	-- (ui/coins.lua); the loadouts in the tabs' row, over the stats
 	a.head = ui.header(a.buttons, common.armory, "indietro")
+	ui.header_tabs(a.head, a.buttons, {})
 	for i = 1, loadout.LOADOUTS do
 		if loadout.open(i, a.prof.livello) then
-			ui.tab(a.buttons, -ui.EDGE - 26 - (loadout.LOADOUTS - i) * 64, 0, 52, 48, tostring(i), "assetto:" .. i,
-				a.prof.is_active == i, a.head.right)
+			ui.tab(a.buttons, 1280 - ui.EDGE - 26 - (loadout.LOADOUTS - i) * 64, ui.TABS_Y, 52, 48, tostring(i), "assetto:" .. i,
+				a.prof.is_active == i, a.head.tabs)
 		end
 	end
-	local n = ui.text(T.loadout, -ui.EDGE - 16 - loadout.LOADOUTS * 64, 0, 0.7, c.OFF, a.head.right)
+	local n = ui.text(T.loadout, 1280 - ui.EDGE - 16 - loadout.LOADOUTS * 64, ui.TABS_Y, 0.7, c.OFF, a.head.tabs)
 	gui.set_pivot(n, gui.PIVOT_E)
+	a.wallet = coins.wallet(a.prof.scaglie, a.prof.ossidiana, a.head.right, -ui.EDGE - coins.W / 2, 0)
 	a.radice = ui.root()
-	sheet_set(a, a.radice)
+	sheet_pieces(a, a.radice)
 	statistics(a, a.radice)
 end
 
 function M.new(prof)
-	local a = { prof = prof }
+	local a = { prof = prof, pieces = {} }
 	a.fondo = backdrop.new("fucina")
 	build(a)
 	return a
@@ -171,22 +131,45 @@ end
 
 -- button actions: "kind:argument[:other]"
 local function run_cmd(a, ui_action)
-	local kind, x, y = ui_action:match("^(%a+):?([^:]*):?(.*)$")
-	local as = to_active(a)
+	local kind, x = ui_action:match("^(%a+):?([^:]*)")
 	if kind == "assetto" then
 		a.prof.is_active = tonumber(x)
-	elseif kind == "set" then
-		-- tapping the set already chosen removes it
-		as.gear[x] = as.gear[x] ~= y and y or nil
-	elseif kind == "variante" then
-		local _, top = equip.full_set(as.gear, profile.tier(a.prof, as))
-		if x == "a" or top then as.variant = x end
+	elseif kind == "pezzo" or kind == "indossa" or kind == "variante" or kind == "potenzia" then
+		local _, step = pieces.run(a.pieces, kind, x)
+		-- a step bought: its scene, with the hammer's blows
+		if step then
+			local set = equip.BY_ID[step.set]
+			local slot_name = ""
+			for _, sl in ipairs(equip.SLOTS) do if sl.id == step.slot then slot_name = sl.name end end
+			a.step = { slot_name, set.name, step.level }
+		elseif kind == "potenzia" then
+			sound.play("#scaglia")
+		end
 	end
 	profile.save(a.prof)
 	build(a)
+	-- the scene goes above the rebuilt screen
+	if a.step then
+		a.scene = step_scene.new(a.step[1], a.step[2], a.step[3], function()
+			sound.play("#martello", { speed = 0.9 + 0.1 * math.random() })
+		end)
+		a.step = nil
+	end
+end
+
+function M.update(a, dt)
+	if a.scene and not step_scene.update(a.scene, dt) then
+		step_scene.delete(a.scene)
+		a.scene = nil
+	end
 end
 
 function M.on_input(a, action_id, action)
+	-- the step's scene: a tap skips it
+	if a.scene then
+		if action_id == ui.TOUCH and action.pressed then step_scene.skip(a.scene) end
+		return nil
+	end
 	local ui_action = ui.touch(a.buttons, action_id, action)
 	if ui_action == "indietro" then return "indietro" end
 	if ui_action then run_cmd(a, ui_action) end
@@ -194,6 +177,7 @@ function M.on_input(a, action_id, action)
 end
 
 function M.destroy(a)
+	if a.scene then step_scene.delete(a.scene) end
 	ui.header_delete(a.head)
 	gui.delete_node(a.radice)
 	gui.delete_node(a.fondo)

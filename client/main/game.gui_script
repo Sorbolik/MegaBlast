@@ -584,6 +584,7 @@ local function show_menu(self, without_veil)
 	self.mode = "menu"
 	home.show(self.home, without_veil)
 	home.queued(self.home, self.queue ~= nil)
+	home.wallet(self.home, self.profilo.scaglie, self.profilo.ossidiana)
 	-- the server's events: the line under EVENTI (and the board, the queue)
 	self.events_t = 0
 	home.events(self.home, menu.eventi.home_line())
@@ -909,7 +910,9 @@ local RM = { fune = require "battle.rope", GUSTS = 5,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
 local CP = { conta = require "menu.tally", vetrina = require "menu.showcase", tag = require "ui.tag_card",
-	vignette = require "battle.vignette", favilla = require "battle.favilla", tale = require "ui.story" }
+	vignette = require "battle.vignette", favilla = require "battle.favilla", tale = require "ui.story",
+	-- Scaglie and Ossidiana (menu/wallet.lua) and the campaign's chapters (a finished one gives Ossidiana)
+	wallet = require "menu.wallet", chapters = require("sim.campaign").CAPITOLI }
 
 -- The zoom (Sergio, 3 Nov, choice Z1; 4 Nov): one button, top right, that is
 -- both a switch and a slider. Inside it a small lens slides on a track with a
@@ -1516,17 +1519,21 @@ local function open_podium(self)
 	local mvp = awards.mvp(res.ranking)
 	local won = nil
 	if res.winner then won = res.winner == mine.team end
-	local gain = profile.match_end(self.profilo, { points = mine.points, won = won,
-		second = res.mode == "ffa" and mine.place == 2, mvp = mvp == my_own, awards = per_robot[my_own] })
+	local r = { points = mine.points, won = won, second = res.mode == "ffa" and mine.place == 2,
+		mvp = mvp == my_own, awards = per_robot[my_own] }
+	local stats_before = profile.statistics(self.profilo, "tutte")
+	local gain = profile.match_end(self.profilo, r)
 	profile.save(self.profilo)
 	-- the stats and the match into the profile (also saves the replay)
 	local number = CP.record(self, res)
+	gain.coins = CP.match_coins(self, r, stats_before, gain)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
 	show_message(self, "", true)
 	set_controls_visible(self, false)
 	-- first the screen, then the mode: if new breaks, no mode is left without a screen
 	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
 	self.schermata.obj.tick = function(i) sound.play("#punto", { speed = 1 + 0.08 * i }) end
+	self.schermata.obj.coin = CP.coin_sound
 	self.mode = "schermata"
 	if self.pill then menu.pill.raise(self.pill) end
 end
@@ -2259,6 +2266,48 @@ function CP.record(self, res)
 	return pa.replay and pa.numero or nil
 end
 
+-- Scaglie and Ossidiana of a match (menu/wallet.lua): the rows go to the
+-- podium's receipt. Online the full price; against bots and on the same
+-- phone half, and only the first ones of the day
+function CP.match_coins(self, r, stats_before, gain)
+	local W = CP.wallet
+	local p = self.profilo
+	-- against bots or on the same phone: half, like the training
+	r.bots = not self.online_end
+	local rows = W.match(p, r, W.today())
+	local obs = W.obsidian(stats_before, profile.statistics(p, "tutte"), gain.level_before, gain.livello)
+	W.apply(p, rows)
+	W.apply(p, obs)
+	profile.save(p)
+	return { rows = rows, obsidian = obs }
+end
+
+-- a coin landing in the wallet pill: a semitone higher at each Scaglia, the
+-- Ossidiana lower
+function CP.coin_sound(kind, i)
+	local speed = kind == "ossidiana" and 0.75 * 2 ^ ((i - 1) / 12) or 2 ^ ((i - 1) / 12)
+	sound.play("#scaglia", { speed = speed })
+end
+
+-- Scaglie of a mission done, from its experience lines (profile.mission): the
+-- first time or a replay, the new stars; chapters: the chapters done before
+function CP.mission_coins(self, gain, chapters)
+	local W = CP.wallet
+	local p = self.profilo
+	local first, new = false, 0
+	for _, l in ipairs(gain.lines) do
+		if l.key == "done" then first = true end
+		if l.key == "stars" then new = l.n end
+	end
+	local rows = W.mission(first, new)
+	-- Ossidiana: every 5 levels of the devil, a chapter finished
+	local obs = W.obsidian({}, {}, gain.level_before, gain.livello)
+	if W.chapters_done(p, CP.chapters) > chapters then obs[#obs + 1] = W.chapter()[1] end
+	W.apply(p, rows)
+	W.apply(p, obs)
+	return { rows = rows, obsidian = obs }
+end
+
 -- Can the match with number numero be rewatched?
 function CP.replay_ok(self, number)
 	for _, pa in ipairs(self.profilo.partite) do
@@ -2720,7 +2769,9 @@ local function mission_update(self, dt)
 	if r.esito == "fatta" and not r.was_saved then
 		r.was_saved = true
 		local record = missions.count(self.profilo.stelle[r.l.id] or {})
+		local chapters = CP.wallet.chapters_done(self.profilo, CP.chapters)
 		self.mission_gain = profile.mission(self.profilo, r.l.id, missions.stars(r))
+		self.mission_gain.coins = CP.mission_coins(self, self.mission_gain, chapters)
 		profile.save(self.profilo)
 		if not r.l.guidata then
 			-- a moment to see the shot, then (or at the first tap) the stars
@@ -2763,7 +2814,7 @@ local function open_level_end(self)
 		-- the lead points, where they count
 		vantaggio = won and missions.lead(r) or nil,
 		record = self.record_end, avanti = won and (missions.after(r.l.id) ~= nil),
-		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo,
+		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo, coin = CP.coin_sound,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 	self.mission_gain = nil
 end

@@ -140,18 +140,22 @@ return {
 
 	-- ui/receipt.lua: what a match or a level gave, line by line
 	receipt = {
-		title = "ESPERIENZA",
+		title = "GUADAGNI",
+		xp = "XP",
 		lines = { match = "Partita", win = "Vittoria", second = "Secondo posto", mvp = "MVP",
-			done = "Prima volta", replay = "Rigiocata" },
-		points = "Punti %s",
+			done = "Prima volta", replay = "Rigiocata", daily = "Prima vittoria di oggi",
+			level = "Ogni 5 livelli", chapter = "Capitolo finito" },
+		points_line = "Punti %s",
 		award = "Premio %s",
 		stars = "Stelle nuove ×%s",
+		-- a badge going up a grade: its name and the grade
+		badge = "%s %s",
 		plus = "+%s",
 		total = "TOTALE",
 		level = "LIVELLO %s",
 		level_up = "SALI AL LIVELLO %s",
-		point = "+%s punto da mettere nei Sigilli",
-		points = "+%s punti da mettere nei Sigilli",
+		seal_point = "+%s punto da mettere nei Sigilli",
+		seal_points = "+%s punti da mettere nei Sigilli",
 		place_points = "METTI I PUNTI",
 		brace = "+%s brace accanto al livello",
 		braci = "+%s braci accanto al livello",
@@ -306,12 +310,42 @@ return {
 		yes = "sì",
 		no = "no",
 		seconds = "%.1f s",
-		tier = "tier %s",
-		no_piece = "nessun pezzo",
 		-- a set bonus not unlocked yet: the bonus, then the level the pieces need
 		locked_bonus = "%s  (tutti i pezzi al livello %s)",
 	},
 
+
+	-- menu/pieces.lua and ui/step_scene.lua: the pieces' levels in Scaglie
+	pieces = {
+		empty = "nessuno",
+		level = "livello %d",
+		-- no piece in the chosen slot (the slot in lowercase)
+		choose = "Scegli qui sotto un %s da indossare",
+		-- slot and set: "ELMO · CORVO"
+		piece = "%s · %s",
+		of_max = "%d / %d",
+		-- grade in roman numbers, its name, the piece's effects
+		grade = "grado %s · %s · %s",
+		grades = { "bronzo", "argento", "oro", "brace" },
+		at_max = "AL MASSIMO",
+		next_level = "LIVELLO %d",
+		next_step = "SCATTO %d · GRADO %s, %s",
+		-- the Proof of a step: matches played wearing the piece
+		proof = "Prova: %d / %d partite con il pezzo addosso",
+		upgrade = "POTENZIA",
+		missing = "mancano %s",
+		-- the Smith's hand, with the full price
+		smith_hand = "Mano del Fabbro: un pezzo di questo posto è al 30, costa il 30%% in meno (era %s)",
+		set_bonus = "BONUS DEL SET %s",
+		others = "INDOSSA",
+		set_level = "%s · %d",
+		step_title = "SCATTO %d",
+		-- slot, set, grade in roman numbers, its name
+		step_grade = "%s · %s · GRADO %s, %s",
+		step_look = "Aspetto nuovo",
+		step_top = "Al massimo: con tutti e quattro i pezzi al 30 il set sblocca la variante B",
+		skip = "tocca per saltare",
+	},
 
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
 	profile_tabs = {

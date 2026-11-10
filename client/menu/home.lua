@@ -13,6 +13,7 @@
 --   home.update(h, dt)                          -- every frame while visible
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
 --                                                        -- "impostazioni", "profilo" (tapping the devil) or nil
+--   home.wallet(h, scaglie, ossidiana)          -- the balance in the pill at the top right
 --   home.eventi(h, riga)                        -- the line under EVENTI
 --   home.queued(h, on)                          -- in the online queue (ui/pill.lua): GIOCA stays GIOCA and
 --                                               -- takes you to the room (Sergio: a button never changes its job)
@@ -22,6 +23,7 @@ local game = require "sim.game"
 local scoria = require "battle.scoria"
 local ui = require "ui.ui"
 local screen = require "ui.screen"
+local coins = require "ui.coins"
 local T = require("lang.text").home
 local common = require("lang.text").common
 
@@ -107,8 +109,11 @@ function M.new(color)
 	ui.text(common.events, 0, 14, 0.9, ui.C.TEXT, ev)
 	h.events_row = ui.text("", 0, -22, 0.55, ui.C.OFF, ev)
 
-	-- top right: the settings
+	-- top right: the settings, and left of them the wallet (ui/coins.lua),
+	-- hidden until the first coin
 	h.tops[#h.tops + 1] = ui.settings_button(h.buttons, "impostazioni", nil, true)
+	local wr = angle_deg(h, W - ui.EDGE - 64 - 16 - coins.W / 2, ui.HEAD_Y, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
+	h.wallet = coins.wallet(0, 0, wr, 0, 0)
 
 	-- black veil dissolving when the home appears
 	h.veil = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
@@ -142,6 +147,11 @@ function M.hide(h)
 	gui.cancel_animations(h.veil, "color.w")
 	gui.set_enabled(h.veil, false)
 	h.is_visible = false
+end
+
+-- The balance in the wallet pill (menu/wallet.lua)
+function M.wallet(h, scaglie, ossidiana)
+	coins.set(h.wallet, scaglie, ossidiana)
 end
 
 -- The line under EVENTI (main/events.lua, home_line)

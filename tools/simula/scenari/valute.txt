@@ -1,0 +1,34 @@
+# Scaglie e Ossidiana (Sergio, 10 nov): la pillola del portafoglio in home, la
+# scheda PEZZI dell'armeria con POTENZIA, la Prova, lo scatto col martello e la
+# mano del Fabbro. Il profilo di prova ha 1.240 Scaglie e 35 Ossidiana; elmo
+# Corvo al 24, corazza Fornace al 19 con la Prova fatta, mantello Corvo al 9
+# (Prova 2 su 3), stivali Leviatano al 30.
+imposta prova_profilo 1
+
+aspetta 1.5
+foto 01_home_portafoglio
+tocca_bordo 168 108 basso sinistra  # ARMERIA
+aspetta 0.6
+foto 02_pezzi_elmo
+tocca 414 308                       # POTENZIA: elmo al 25
+aspetta 0.3
+foto 03_elmo_potenziato
+tocca 135 380                       # CORAZZA
+aspetta 0.3
+foto 04_corazza_scatto_pronto
+tocca 414 308                       # POTENZIA: lo scatto 20
+aspetta 0.55
+foto 05_scatto_colpi
+aspetta 0.6
+foto 06_scatto_fatto
+aspetta 1.6
+foto 07_corazza_al_20
+tocca 135 276                       # MANTELLO: la Prova
+aspetta 0.3
+foto 08_mantello_prova
+tocca 135 172                       # STIVALI al massimo
+aspetta 0.3
+foto 09_stivali_massimo
+tocca 872 60                        # gli stivali del Vuoto: la mano del Fabbro
+aspetta 0.3
+foto 10_mano_del_fabbro

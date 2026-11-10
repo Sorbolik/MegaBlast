@@ -127,12 +127,17 @@ check(loadout.valid(a, 20), "valid loadout")
 a.gear.mask = "drago"
 check(not loadout.valid(a, 20), "an unknown set isn't valid")
 
--- Tier from mastery
-check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(20) == 3 and equip.tier(500) == equip.TIERS,
-	"tier from matches played, one per step")
-check(equip.tier(29) < equip.TIERS and equip.tier(30) == equip.TIERS, "variant B at 30 matches with each piece, as before")
-check(equip.level(0) == 0 and equip.level(12) == 12 and equip.level(99) == equip.LIVELLO_MAX, "piece level")
+-- Tier from the piece's level, and the price list (page "Scaglie e Ossidiana")
+check(equip.tier(1) == 1 and equip.tier(10) == 2 and equip.tier(20) == 3 and equip.tier(30) == equip.TIERS,
+	"tier from the level, one per step")
+check(equip.tier(29) < equip.TIERS, "variant B only at 30")
 check(equip.next_tier(12) == 20 and equip.next_tier(30) == nil, "next step")
+local total = 0
+for l = 2, equip.LIVELLO_MAX do total = total + equip.cost(l) end
+check(total == 3050 and equip.cost(2) == 15 and equip.cost(10) == 150 and equip.cost(30) == 450 and equip.cost(31) == nil,
+	"a piece at 30 costs 3,050 Scaglie")
+check(equip.cost(10, true) == 105 and equip.cost(2, true) == 10, "the Smith's hand: 30% off, rounded to 5")
+check(equip.proof(10) == 3 and equip.proof(20) == 5 and equip.proof(30) == 8 and equip.proof(11) == 0, "the steps ask for a Proof")
 
 -- Awards
 local ranking = {
@@ -148,15 +153,16 @@ check(by[2] and by[2][1].id == "martello", "Martello to whoever does the most da
 check(by[3] == nil, "whoever didn't play gets nothing")
 check(#list >= 3, "list of awards in order")
 
--- Profile: experience, levels and mastery
+-- Profile: experience, levels and the Proof of the pieces
 local p = profile.new()
 check(#p.loadouts == loadout.LOADOUTS and p.livello == 1, "new profile: 3 loadouts, level 1")
-p.loadouts[1].gear = { mask = "vuoto" }
+p.loadouts[1].gear = { mask = "vuoto", chest = "corvo" }
+p.pezzi.vuoto_mask = 9
 local gu = profile.match_end(p, { points = 148, won = true, mvp = true, awards = { awards.LIST[1] } })
 local x = profile.XP
 check(gu.xp == x.match + 74 + x.win + x.mvp + x.award and #gu.lines == 5, "receipt: match, points 148 -> 74, win, MVP, award")
 check(p.livello == 2 and gu.level_before == 1 and gu.livello == 2, "a good win levels you up")
-check(p.mastery.vuoto_mask == 1, "a mastery match for the worn piece")
+check(p.prova.vuoto_mask == 1 and p.prova.corvo_chest == nil, "a match for the Proof of the piece one level below a step")
 check(profile.points(p) == 2, "a Sigilli point per level")
 gu = profile.match_end(p, { points = 1000, won = false })
 check(gu.lines[2].xp == x.points_max and #gu.lines == 2, "the points give at most " .. x.points_max)

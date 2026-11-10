@@ -10,3 +10,8 @@ ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=0.9*sin(2*PI*(55*t+ (140*(0.07))
 ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=0.8*sin(2*PI*(38*t+ (90*(0.12))*(1-exp(-t/0.12)) ))*exp(-t/0.22)+0.9*(random(0)*2-1)*exp(-t/0.09):d=1.0:s=44100" -af "lowpass=f=1800,highpass=f=30,alimiter=limit=0.9" $Q "$OUT/boom.ogg"
 # ko: tonfo lungo che affonda
 ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=0.9*sin(2*PI*(90*t-60*t*t))*exp(-t/0.25)+0.3*(random(0)*2-1)*exp(-t/0.03):d=0.7:s=44100" $Q "$OUT/ko.ogg"
+# scaglia: tintinnio d'ottone corto (parziali di campanella 1 / 2,76 / 5,4), una moneta che arriva
+# nel portafoglio; il gioco lo suona un semitono più alto a ogni scaglia, più basso per l'Ossidiana
+ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=(0.6*sin(2*PI*2093*t)*exp(-t/0.09)+0.3*sin(2*PI*2093*2.76*t)*exp(-t/0.04)+0.15*sin(2*PI*2093*5.4*t)*exp(-t/0.02))*min(1\,t/0.002):d=0.25:s=44100" -af "alimiter=limit=0.8" $Q "$OUT/scaglia.ogg"
+# martello: il colpo sull'incudine dello scatto di un pezzo (tonfo, schiocco e una nota di metallo)
+ffmpeg -y -loglevel error -f lavfi -i "aevalsrc=0.7*sin(2*PI*(70*t+12*(1-exp(-t/0.05))))*exp(-t/0.08)+0.5*(random(0)*2-1)*exp(-t/0.01)+0.35*sin(2*PI*1320*t)*exp(-t/0.18)+0.2*sin(2*PI*1320*2.4*t)*exp(-t/0.08):d=0.5:s=44100" -af "alimiter=limit=0.9" $Q "$OUT/martello.ogg"

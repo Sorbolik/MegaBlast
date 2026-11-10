@@ -13,24 +13,47 @@
 local M = {}
 
 M.SLOTS = {
-	{ id = "mask", name = "MASCHERA", art = "maschera" },
+	{ id = "mask", name = "ELMO", art = "maschera" },
 	{ id = "chest", name = "CORAZZA", art = "corazza" },
 	{ id = "cloak", name = "MANTELLO", art = "mantello" },
-	{ id = "legs", name = "GAMBALI", art = "gambali_davanti" },
+	{ id = "legs", name = "STIVALI", art = "gambali_davanti" },
 }
--- Level of a piece: matches played with it, up to LIVELLO_MAX. Every SCATTI
--- levels the piece goes up a tier (Sergio, 31 Oct, still a hypothesis:
--- "ogni pezzo uppato 20 o 30 volte, e agli scatti di 10 livelli poteri o
--- cose particolari e graficamente più figo"). Today the tier only changes the
--- look (once armour is visible on the character), and with all four pieces of
--- a set maxed you pick variant B of the bonus: as before, at 30 matches.
+-- Level of a piece: from 1 to LIVELLO_MAX, bought with Scaglie (Sergio, 10
+-- Nov, page "Scaglie e Ossidiana", choices 4A-6A). Every TIER_LEVELS level is a
+-- step ("scatto"): the piece goes up a tier (look I..IV) and, with all four
+-- pieces of a set at the last tier, you pick variant B of the set bonus.
 M.LIVELLO_MAX = 30
 M.TIER_LEVELS = { 10, 20, 30 }
 M.TIERS = #M.TIER_LEVELS + 1
 -- pieces of the same set needed for the bonus
 M.SET_PIECES = 4
--- matches played with a piece to raise its tier (set mastery)
-M.TIER_MATCHES = { 0, M.TIER_LEVELS[1], M.TIER_LEVELS[2], M.TIER_LEVELS[3] }
+
+-- Scaglie to go up TO each level (2..30): the normal levels rise slowly,
+-- the steps cost about three normal levels. 3,050 for a piece at 30.
+M.COSTS = { [10] = 150, [20] = 300, [30] = 450 }
+for l = 2, 9 do M.COSTS[l] = 15 + 5 * (l - 2) end
+for l = 11, 19 do M.COSTS[l] = 60 + 5 * (l - 11) end
+for l = 21, 29 do M.COSTS[l] = 110 + 5 * (l - 21) end
+-- the Proof of a step: matches played wearing the piece at the level just
+-- below it (9, 19, 29) before you can buy the step
+M.PROOF = { [10] = 3, [20] = 5, [30] = 8 }
+-- the Smith's hand: once a piece of a slot is at 30, every other piece of
+-- that slot costs this much (30% off)
+M.SMITH_HAND = 0.7
+
+-- Scaglie to go up to level l (nil past the last); discounted: the Smith's
+-- hand. Rounded to 5, like the price list.
+function M.cost(l, discounted)
+	local c = M.COSTS[l]
+	if not c then return nil end
+	if discounted then c = math.floor(c * M.SMITH_HAND / 5 + 0.5) * 5 end
+	return c
+end
+
+-- matches with the piece needed before going up to level l (0: none)
+function M.proof(l)
+	return M.PROOF[l] or 0
+end
 
 -- Pieces: for each set and slot one plus and one minus, as a percentage of the
 -- base (movement stats start from sim/game.lua, DEFAULT_STATS). Bonus: full set.
@@ -95,11 +118,6 @@ M.SETS = {
 M.BY_ID = {}
 for _, s in ipairs(M.SETS) do M.BY_ID[s.id] = s end
 
--- level of a piece from the matches played with it
-function M.level(matches)
-	return math.min(M.LIVELLO_MAX, matches or 0)
-end
-
 -- the next step of a piece at that level (nil: it has reached all of them)
 function M.next_tier(level)
 	for _, s in ipairs(M.TIER_LEVELS) do
@@ -107,11 +125,11 @@ function M.next_tier(level)
 	end
 end
 
--- tier of a piece from the matches played with it
-function M.tier(matches)
+-- tier of a piece at that level: 1 below the first step, then one per step
+function M.tier(level)
 	local t = 1
-	for i, n in ipairs(M.TIER_MATCHES) do
-		if (matches or 0) >= n then t = i end
+	for i, n in ipairs(M.TIER_LEVELS) do
+		if (level or 1) >= n then t = i + 1 end
 	end
 	return t
 end

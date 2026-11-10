@@ -3,7 +3,7 @@
 -- Scoria in their team color, place, name, match points (the sim's
 -- g:results()) and under it the awards they took (sim/awards.lua); the MVP has
 -- a gold tag over the head. On the right the receipt of whoever plays on this
--- phone (ui/receipt.lua): every line of the experience, the total, the level
+-- phone (ui/receipt.lua): every line of the experience and the coins, the totals, the level
 -- and, with a new level, METTI I PUNTI that takes you to the Sigilli.
 --
 -- Use (from the gui_script):
@@ -13,6 +13,7 @@
 --     gain: profile.match_end(...) of whoever plays on this phone, or nil; prof: the profile
 --     numero: the match in the profile, if it has the replay (there is RIVEDI)
 --   p.tick = function(i) ... end   -- optional: the sound of the receipt's i-th line
+--   p.coin = function(kind, i) ... end  -- optional: a coin landing in the wallet pill
 --   podio.update(p, dt) ; podio.on_input(p, action_id, action) -> "continua", "sigilli", { rivedi = numero } or nil
 --   tapping a player on the podium opens their tag (ui/tag_card.lua); a tap closes it
 --   podio.destroy(p)
@@ -37,7 +38,7 @@ M.WIDE, M.STEP = 152, 164         -- step width and distance between centers
 M.CENTER_X = 420                  -- the middle of the podium (the receipt is on the right)
 M.BASE_Y_POS = 120                -- where the steps rest (under them the awards)
 M.SCORIA_H = 104                  -- the Scoria on the step, in pixels
-M.RECEIPT_X, M.RECEIPT_TOP = 1040, 676
+M.RECEIPT_X, M.RECEIPT_TOP = 1040, 616   -- under the wallet pill
 -- entrance timing: the steps rise one after the other, then the awards
 M.RISE, M.DELAY, M.REWARDS = 0.45, 0.18, 1.0
 
@@ -169,7 +170,7 @@ function M.update(p, dt)
 	p.t = p.t + dt
 	for _, s in ipairs(p.figure) do scoria.update(s.s, dt, s.st) end
 	if p.carta then tag.update(p.carta, dt) end
-	if p.receipt then receipt.update(p.receipt, dt, p.tick) end
+	if p.receipt then receipt.update(p.receipt, dt, p.tick, p.coin) end
 end
 
 local function close_card(p)
@@ -203,6 +204,7 @@ end
 
 function M.destroy(p)
 	if p.carta then tag.destroy(p.carta) end
+	if p.receipt then receipt.delete(p.receipt) end
 	gui.delete_node(p.radice)
 	gui.delete_node(p.fondo)
 end
