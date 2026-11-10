@@ -300,7 +300,6 @@ return {
 
 	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
 	armory = {
-		loadout = "ASSETTO",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			max_hp = "Vita", walk_speed = "Corsa", jump_height = "Salto", air_speed = "In aria",
