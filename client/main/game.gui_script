@@ -2249,12 +2249,12 @@ function CP.file_replay(number)
 end
 
 -- Log APK only (release builds don't log): the recipe of a match played here goes
--- to the log in chunks, one line each ("RICETTA numero parte/totale testo"), so
+-- to the log in chunks (Defold cuts a printed line near 1000 characters), one line each ("RICETTA numero parte/totale testo"), so
 -- tools/arena/ricevi_partite.py can collect the matches over adb logcat
 function CP.log_recipe(recipe, number)
 	local ok, text = pcall(json.encode, recipe)
 	if not ok or not text then return end
-	local size = 3000
+	local size = 800
 	local total = math.ceil(#text / size)
 	local id = tostring(os.time())
 	for k = 1, total do
