@@ -82,8 +82,8 @@ do
 	local n = pool.turns
 	q:age_pools()
 	check(pool.turns == n - 1, "the pool loses a turn")
-	q:age_pools()
-	check(#q.pools == before, "after two turns the pool is gone")
+	for _ = 2, config.TAR.turns do q:age_pools() end
+	check(#q.pools == before, "after config.TAR.turns turns the pool is gone")
 end
 
 -- Trapano: bores a tunnel through a wall and blows up on the other side
