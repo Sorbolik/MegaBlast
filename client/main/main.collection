@@ -30,6 +30,14 @@ embedded_instances {
   "  id: \"ko\"\n"
   "  component: \"/battle/ko.sound\"\n"
   "}\n"
+  "components {\n"
+  "  id: \"scaglia\"\n"
+  "  component: \"/menu/scaglia.sound\"\n"
+  "}\n"
+  "components {\n"
+  "  id: \"martello\"\n"
+  "  component: \"/menu/martello.sound\"\n"
+  "}\n"
   ""
   position {
     x: 0.0

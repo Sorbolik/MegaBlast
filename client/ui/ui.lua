@@ -37,7 +37,8 @@ M.C = {
 	SQUADRA = { c(1, 0.231, 0.306), c(0.239, 0.482, 1), c(0.18, 0.75, 0.44), c(0.96, 0.77, 0.09) },
 	-- the grades of badges (I..IV) and of pieces (ui/tag_card.lua): bronze, silver, gold, ember
 	GRADI = { c(0.79, 0.54, 0.35), c(0.79, 0.83, 0.86), c(0.96, 0.77, 0.09), c(1, 0.42, 0.16) },
-	GOLD = c(0.96, 0.77, 0.09),            -- the powers and the pieces' upgrades
+	GOLD = c(0.96, 0.77, 0.09),            -- the powers and the pieces' upgrades, the Scaglie
+	OBSIDIAN = c(1, 0.44, 0.82),          -- the Ossidiana and the elite pieces (fuoco fatuo)
 }
 local C = M.C
 

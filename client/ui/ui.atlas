@@ -214,6 +214,60 @@ images {
 images {
   image: "/assets/ui/lucchetto_p.png"
 }
+images {
+  image: "/assets/ui/moneta_ossidiana_corpo.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_corpo_p.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_filo.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_filo_p.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_luce.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_luce_p.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_taglio_a.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_taglio_a_p.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_taglio_b.png"
+}
+images {
+  image: "/assets/ui/moneta_ossidiana_taglio_b_p.png"
+}
+images {
+  image: "/assets/ui/moneta_scaglia_faccia.png"
+}
+images {
+  image: "/assets/ui/moneta_scaglia_faccia_p.png"
+}
+images {
+  image: "/assets/ui/moneta_scaglia_luce.png"
+}
+images {
+  image: "/assets/ui/moneta_scaglia_luce_p.png"
+}
+images {
+  image: "/assets/ui/moneta_scaglia_sagoma.png"
+}
+images {
+  image: "/assets/ui/moneta_scaglia_sagoma_p.png"
+}
+images {
+  image: "/assets/ui/moneta_scaglia_segno.png"
+}
+images {
+  image: "/assets/ui/moneta_scaglia_segno_p.png"
+}
 margin: 2
 extrude_borders: 2
 inner_padding: 0

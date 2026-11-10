@@ -134,12 +134,17 @@ check(loadout.valid(a, 20), "valid loadout")
 a.gear.mask = "drago"
 check(not loadout.valid(a, 20), "an unknown set isn't valid")
 
--- Tier from mastery
-check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(20) == 3 and equip.tier(500) == equip.TIERS,
-	"tier from matches played, one per step")
-check(equip.tier(29) < equip.TIERS and equip.tier(30) == equip.TIERS, "variant B at 30 matches with each piece, as before")
-check(equip.level(0) == 0 and equip.level(12) == 12 and equip.level(99) == equip.LIVELLO_MAX, "piece level")
+-- Tier from the piece's level, and the price list (page "Scaglie e Ossidiana")
+check(equip.tier(1) == 1 and equip.tier(10) == 2 and equip.tier(20) == 3 and equip.tier(30) == equip.TIERS,
+	"tier from the level, one per step")
+check(equip.tier(29) < equip.TIERS, "variant B only at 30")
 check(equip.next_tier(12) == 20 and equip.next_tier(30) == nil, "next step")
+local total = 0
+for l = 2, equip.LIVELLO_MAX do total = total + equip.cost(l) end
+check(total == 3050 and equip.cost(2) == 15 and equip.cost(10) == 150 and equip.cost(30) == 450 and equip.cost(31) == nil,
+	"a piece at 30 costs 3,050 Scaglie")
+check(equip.cost(10, true) == 105 and equip.cost(2, true) == 10, "the Smith's hand: 30% off, rounded to 5")
+check(equip.proof(10) == 3 and equip.proof(20) == 5 and equip.proof(30) == 8 and equip.proof(11) == 0, "the steps ask for a Proof")
 
 -- Awards
 local ranking = {
