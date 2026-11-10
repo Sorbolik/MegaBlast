@@ -46,7 +46,7 @@ go test ./server/
 
 - Controlla i nomi delle API su defold.com/ref per la 1.14 (es.
   `gui.cancel_animations` è plurale). `bob.jar` accetta cose che l'editor
-  rifiuta: le regole note sono in `strumenti/simula/controlla.py`.
+  rifiuta: le regole note sono in `tools/simula/controlla.py`.
 - Fluidità prima di tutto: niente allocazioni in `update` (riusa tabelle e
   `vmath.vector3`), disegno interpolato tra i tick, nessun lavoro per pixel
   sul terreno fuori dal rettangolo toccato.
@@ -55,11 +55,11 @@ go test ./server/
 
 ## 5. Guarda il gioco
 
-Scrivi uno scenario per la meccanica in `strumenti/simula/scenari/` (comandi
-in [strumenti/simula/README.md](../../../strumenti/simula/README.md)), poi:
+Scrivi uno scenario per la meccanica in `tools/simula/scenari/` (comandi
+in [tools/simula/README.md](../../../tools/simula/README.md)), poi:
 
 ```bash
-python3 strumenti/simula/simula.py
+python3 tools/simula/simula.py
 ```
 
 Deve finire con `OK`. Guarda `simulazione/foto/riepilogo.png` e le foto della

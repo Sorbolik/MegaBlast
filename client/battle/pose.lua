@@ -1,5 +1,5 @@
 -- The devil's animation clips (battle/animations.lua, made with the
--- editor strumenti/animazioni/editor.html): keyframes per channel, sampled at
+-- editor tools/animazioni/editor.html): keyframes per channel, sampled at
 -- any time, so motion is smooth at every frame rate.
 --
 -- A clip: { duration = seconds, loop = true if it loops, tracks = { channel =

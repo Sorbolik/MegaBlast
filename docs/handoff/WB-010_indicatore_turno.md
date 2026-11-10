@@ -171,7 +171,7 @@ dall'altro; nel sigillo le tacche sono 8 invece di 9.
   turno con la brace che pulsa.
 - **Usate:** `p2_freccia_foglio.png`, il terzo fotogramma della riga blu (il più acceso), e
   `p2_freccia_scena.png` come riferimento della scena. Le ho portate in `art/WB-010/` su `main`.
-  `strumenti/grafica/freccia.py` toglie il magenta (anche se non è pieno) e divide la freccia
+  `tools/grafica/freccia.py` toglie il magenta (anche se non è pieno) e divide la freccia
   in tre strati: il ferro, la brace in bianco (che il gioco tinge col colore di ognuna delle
   quattro squadre) e il cuore bianco. Escono `client/assets/fx/freccia_*.png`.
 - **Scartati:**
@@ -179,11 +179,11 @@ dall'altro; nel sigillo le tacche sono 8 invece di 9.
     la freccia tremerebbe, quindi il dondolio e la pulsazione li fa il codice;
   - le proposte 1, 3 e 4, che Sergio non ha scelto.
 - **Verificato:**
-  - scenario `strumenti/simula/scenari/freccia.txt` a 2400x1080: freccia rossa sul turno di
+  - scenario `tools/simula/scenari/freccia.txt` a 2400x1080: freccia rossa sul turno di
     Rosso e blu su quello di Blu, il cartellino della mira sopra la freccia, la freccia visibile
     anche allo zoom MAPPA;
   - nel ferro non restano pixel azzurri e attorno all'immagine non c'è un velo trasparente.
 - **Non verificato:** il telefono vero (c'è l'APK di prova da mandare a Sergio) e la freccia
   sopra la Corona in una partita vera, che ho controllato solo con i numeri delle misure.
 
-2026-11-03, più tardi · Sergio ha chiesto una freccia più semplice: la freccia di ferro è sostituita da una punta a V del colore della squadra disegnata dal codice; `strumenti/grafica/freccia.py` e le sue immagini sono tolti (le immagini di ChatGPT restano in `art/WB-010/`).
+2026-11-03, più tardi · Sergio ha chiesto una freccia più semplice: la freccia di ferro è sostituita da una punta a V del colore della squadra disegnata dal codice; `tools/grafica/freccia.py` e le sue immagini sono tolti (le immagini di ChatGPT restano in `art/WB-010/`).

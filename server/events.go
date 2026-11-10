@@ -18,7 +18,7 @@ import (
 )
 
 // The event calendar (docs/server.md, "Eventi"): Sergio makes it in the
-// events panel (strumenti/eventi, a Cloudflare Worker) and the server
+// events panel (tools/eventi, a Cloudflare Worker) and the server
 // downloads it every 30 seconds (go run ./server -eventi https://…/eventi.json),
 // or reads it from a JSON file (-eventi eventi.json) that it reloads by itself
 // when it changes. An event is a template with its window and, optionally, a

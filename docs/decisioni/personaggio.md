@@ -1,9 +1,9 @@
 # Il personaggio: storia, decisioni, strumenti scartati
 
 Stato attuale (28 ott): **diavoletto vettoriale** disegnato da
-`strumenti/grafica/diavoletto.py` e animato in codice in
+`tools/grafica/diavoletto.py` e animato in codice in
 `client/battle/scoria.lua` (molle + clip dell'**editor delle animazioni**),
-con **skin sullo stampino** (`strumenti/stampino/`, `client/battle/skins.lua`).
+con **skin sullo stampino** (`tools/stampino/`, `client/battle/skins.lua`).
 Editor: https://claude.ai/artifact/YJeMenvfJLGmto89yAbKJ5 e come Worker
 Cloudflare dal main.
 
@@ -83,7 +83,7 @@ Cloudflare dal main.
 | 2 nov | **L'apprendista è il personaggio principale** (Sergio: "ho appena completato le animazioni, mettile in gioco, il personaggio principale adesso è ufficialmente l'apprendista"): `scoria.PERSONAGGIO = { "apprendista" }` in home, battaglia, podio, schede e cartellini (icone dell'equipaggiamento con i suoi pezzi; il mantello con l'ala di base, l'apprendista non ha le ali). Clip, hitbox, perni e impugnature sono quelli mandati da Sergio dall'editor. Le pelli `gabriella` e `gabriella_squadra` sono tolte dal gioco (superate; restano nella storia di git e nei file di Gabriella). | questa PR |
 | 2 nov | **Via la fiammella** sopra la testa, dalla home e dal gioco (Sergio: "togli la fiammella... ci dobbiamo inventare un altro modo per indicare il giocatore attivo"): tolti la clip, i canali, i disegni, il pezzo nell'editor e il codice. Il nuovo indicatore del giocatore di turno è da scegliere: proposte con le immagini di ChatGPT (scheda WB-010). | questa PR |
 | 3 nov | **Freccia di ferro sopra chi è di turno** (Sergio ha scelto la proposta 2 della scheda WB-010, https://claude.ai/artifact/TQ2Y2jyLQFTjRfkSAJJwYU: sopra il nome, con la brace che pulsa). Una sola freccia, sopra il nome o sopra la Corona di chi è primo, che dondola piano; la brace ha il colore della squadra ed è più accesa quando la freccia è in basso, come nel foglio di ChatGPT. Mirando, il cartellino coi gradi, le battute e la riga delle missioni stanno sopra la freccia. Scelte di Claude: dal foglio un solo fotogramma (il più acceso) diviso in tre strati (ferro, brace bianca tinta dal gioco, cuore bianco), così vale per le quattro squadre e non solo per blu e oro; il dondolio e la pulsazione li fa il codice (i fotogrammi del foglio non hanno la stessa forma); larga 28 unità della targa (circa come il nome, si legge anche da lontano); sobbalza con la targa quando arriva un colpo, come il nome e la Corona, così non li copre. Scartate: i quattro fotogrammi del foglio (forme diverse, la freccia tremerebbe), il disegno vettoriale nuovo (Sergio vuole le immagini di ChatGPT). | questa PR |
-| 4 nov | **Favilla coi suoi pezzi** (WB-013 fase 2, pelle `favilla`): i tre fogli di Codex tenuti tutti, ricalcati con la tavolozza di Favilla e tagliati sullo stampino come l'apprendista; la vestono la comparsa del cortile e l'avversaria del Duello (campo `pelle` della missione, solo disegno), col nome azzurro sopra. Scelte di Claude: stivali `#8A5228`/`#6B3F22` (ChatGPT li ha fatti più chiari della scheda); regole nuove del ricalco (colori tolti per foglio, macchioline, marroni che non diventano righe) solo nella tavolozza di Favilla, così l'apprendista non cambia; niente ritocco a mano alle spalle a sbuffo finché Sergio non le vede nell'editor. | `strumenti/stampino/`, `client/battle/favilla.lua`, questa PR |
+| 4 nov | **Favilla coi suoi pezzi** (WB-013 fase 2, pelle `favilla`): i tre fogli di Codex tenuti tutti, ricalcati con la tavolozza di Favilla e tagliati sullo stampino come l'apprendista; la vestono la comparsa del cortile e l'avversaria del Duello (campo `pelle` della missione, solo disegno), col nome azzurro sopra. Scelte di Claude: stivali `#8A5228`/`#6B3F22` (ChatGPT li ha fatti più chiari della scheda); regole nuove del ricalco (colori tolti per foglio, macchioline, marroni che non diventano righe) solo nella tavolozza di Favilla, così l'apprendista non cambia; niente ritocco a mano alle spalle a sbuffo finché Sergio non le vede nell'editor. | `tools/stampino/`, `client/battle/favilla.lua`, questa PR |
 
 ## Scartate, con il motivo
 

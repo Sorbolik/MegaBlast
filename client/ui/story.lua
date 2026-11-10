@@ -5,7 +5,7 @@
 -- A chapter comes once, at the first chance after its moment: the Prologue the
 -- first time you open the CAMPAGNA, the others after (or before) their
 -- mission. The panels are the WB-012 and WB-017 ones (JPEGs in
--- /paintings/story/, strumenti/grafica/illustrazioni.py): a panel not there
+-- /paintings/story/, tools/grafica/illustrazioni.py): a panel not there
 -- yet is skipped, a chapter without panels doesn't come. Client only, pure
 -- Lua (tests/story_test.lua).
 --

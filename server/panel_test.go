@@ -7,12 +7,12 @@ import (
 	"testing"
 )
 
-// The events panel (strumenti/eventi) checks events with the data in
+// The events panel (tools/eventi) checks events with the data in
 // pagina/dati.json: it must match the simulation, otherwise the panel lets
 // through an event the server rejects. If it fails:
-// luajit strumenti/eventi/dati.lua
+// luajit tools/eventi/dati.lua
 func TestPanelData(t *testing.T) {
-	file, err := os.ReadFile("../strumenti/eventi/pagina/dati.json")
+	file, err := os.ReadFile("../tools/eventi/pagina/dati.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,6 +40,6 @@ func TestPanelData(t *testing.T) {
 	}
 	luaEval(t, code, &nellaSim)
 	if !reflect.DeepEqual(inPanel, nellaSim) {
-		t.Fatalf("strumenti/eventi/pagina/dati.json is out of sync with the simulation: luajit strumenti/eventi/dati.lua\npanel %+v\nsimulation %+v", inPanel, nellaSim)
+		t.Fatalf("tools/eventi/pagina/dati.json is out of sync with the simulation: luajit tools/eventi/dati.lua\npanel %+v\nsimulation %+v", inPanel, nellaSim)
 	}
 }

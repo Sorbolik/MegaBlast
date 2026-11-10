@@ -11,7 +11,7 @@
 --     elsewhere does nothing (Sergio, 4 Nov: too easy to tap outside by
 --     mistake); CHIUDI (or B) closes it. Without a drawing it is smaller.
 -- The faces are cut from the chosen WB-012 sheets
--- (strumenti/ritratti/taglia.py -> "ritratti" texture, ui/portraits.atlas).
+-- (tools/ritratti/taglia.py -> "ritratti" texture, ui/portraits.atlas).
 -- Client only: it doesn't touch the match.
 --
 --   local v = vignette.new()

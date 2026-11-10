@@ -1,5 +1,5 @@
 -- The campaign: chapters of missions. The levels themselves, all data, are in
--- sim/levels.lua (the Copione, strumenti/copione, edits them); here the
+-- sim/levels.lua (the Copione, tools/copione, edits them); here the
 -- chapters, in order, and what opens them.
 
 local levels = require "sim.levels"

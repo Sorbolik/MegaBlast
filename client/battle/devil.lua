@@ -1,4 +1,4 @@
--- Made by strumenti/grafica/diavoletto.py, do not edit by hand.
+-- Made by tools/grafica/diavoletto.py, do not edit by hand.
 -- The devil in pieces, in drawing units (height from the feet to the top
 -- of the head, y up, facing right). For each piece: image (tint: the part
 -- in the team color), center (x, y) relative to its pivot and size (w, h).

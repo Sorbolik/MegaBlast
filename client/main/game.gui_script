@@ -111,7 +111,7 @@ local function bar_group(w)
 	if w == "hook" or w == "janus" then return 4 end
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
 end
--- icons of the bar and of the draft (weapons atlas, strumenti/grafica/armi.py)
+-- icons of the bar and of the draft (weapons atlas, tools/grafica/armi.py)
 local WEAPON_ICON = {}
 for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "bellows", "hook",
 	"boomerang", "tar", "drill", "magnet", "cannon", "petard",
@@ -183,7 +183,7 @@ local function label(x, y, text, scale)
 	return fit(ui.text(text, x, y, (scale or 1) * FONT_K * 2))
 end
 
--- Simulation (strumenti/simula): with megablast.simula = 1 the game writes to
+-- Simulation (tools/simula): with megablast.simula = 1 the game writes to
 -- the log the events and where the robot whose turn it is stands, so a script
 -- can drive it.
 local function config_int(key, default)
@@ -2390,7 +2390,7 @@ start_local_match = function(self, picked)
 		opts = { players = picked }
 	end
 	if SIMULATE then
-		-- only for the test scenarios (the "imposta" command in strumenti/simula)
+		-- only for the test scenarios (the "imposta" command in tools/simula)
 		local ammo_n = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local hp_value = config_int("megablast.prova_vita", 0)
@@ -2580,7 +2580,7 @@ local function start_mission(self, id, picks)
 	if not r.l.without_time then announce_turn(self, self.g.current) end
 end
 
--- The Copione's GIOCA (strumenti/copione, docs/copione.md): the web build
+-- The Copione's GIOCA (tools/copione, docs/copione.md): the web build
 -- opened by the page with ?copione=1 plays the level the page put after the
 -- # (Lua text: return { capitolo = id, dipinto = false?, livello = { ... } }),
 -- as it is being edited; in the simulator prova_copione FILE. Only data: the
@@ -4163,11 +4163,11 @@ function init(self)
 	self.oggetti = items.new(TEAM_COLORS)
 
 	-- crates (at most CRATE_MAX are needed, plus the items that drop visible),
-	-- with a glow above while falling: Gabriella's chest (strumenti/grafica/cassa.py,
+	-- with a glow above while falling: Gabriella's chest (tools/grafica/cassa.py,
 	-- 83 x 96 pixels), as tall as the old crate and as wide as the drawing; an
 	-- item is its icon
 	local crate_box = vmath.vector3(22.4 * 83 / 96, 22.4, 0)
-	-- the items' iron cube (strumenti/grafica/attrezzi.py) as tall as the chest
+	-- the items' iron cube (tools/grafica/attrezzi.py) as tall as the chest
 	self.crate_box, self.item_box = crate_box, vmath.vector3(22.4, 22.4, 0)
 	self.crate_nodes = {}
 	for i = 1, game.CRATE_MAX + gconfig.ITEM_DROPS.max do
