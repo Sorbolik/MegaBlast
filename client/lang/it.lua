@@ -342,6 +342,7 @@ return {
 		weapons = {
 			missile = "Lanciarune", grenade = "Uovo", shards = "Schegge", punch = "Pugno", sniper = "Cecchino",
 			sword = "Lama", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice",
+			boomerang = "Falcetto", tar = "Pece", drill = "Trapano", magnet = "Calamita", cannon = "Cannonata", petard = "Petardo",
 		},
 		-- PARTITE (os.date formats)
 		today = "oggi %H:%M",
@@ -481,6 +482,7 @@ return {
 		weapons = {
 			missile = "LANCIARUNE", grenade = "UOVO DI FIAMMA", shards = "SCIAME DI SCHEGGE", punch = "PUGNO DEL TITANO",
 			sniper = "CECCHINO", sword = "LAMA", eagle = "TONANTE", mallet = "MAGLIO", lunge = "AFFONDO", bellows = "MANTICE",
+			boomerang = "FALCETTO", tar = "POZZA DI PECE", drill = "TRAPANO", magnet = "CALAMITA", cannon = "CANNONATA", petard = "PETARDO",
 			hook = "RAMPINO", janus = "GIANO", teleport = "TELETRASPORTO", parachute = "PARACADUTE", trampoline = "TRAMPOLINO",
 		},
 		-- the turn's phases on the clock
@@ -504,8 +506,8 @@ return {
 		double_points = "OGNI PUNTO VALE DOPPIO",
 		doubled = " ×2",
 		turn_of = "Turno di %s  %s",
-		me = "TU",
 		get_ready = "PREPARATI",
+		turn_row = "TURNO:",
 		to_tie = "+%d PER PAREGGIARE",
 		-- the gap under your token
 		tied_first = "pari col 1°",
@@ -600,6 +602,12 @@ return {
 			mallet = "Un colpo ad arco dove miri; quando sbatte su qualcosa o qualcuno rimbalzi in alto",
 			lunge = "Uno scatto che passa oltre chi hai davanti e lo colpisce",
 			bellows = "Il soffio della forgia: spinge via chi hai davanti",
+			boomerang = "Una falce che va, gira e torna: colpisce due volte, al ritorno incrina l'armatura",
+			tar = "Un fiasco che lascia una pozza di pece: chi ci sta brucia, per due turni",
+			drill = "Scava una galleria nel terreno e scoppia dall'altra parte: rallenta",
+			magnet = "Tira verso un punto davanti a te tutti i robot vicini",
+			cannon = "Ti lanci come una palla di cannone: chi trovi sulla strada prende l'urto",
+			petard = "Una bomba che rimbalza e spinge via, senza scavare",
 			hook = "Aggancia un bordo e ti arrampichi; su un nemico, lo tiri da te",
 			janus = "La moneta a due facce: il primo che tocca, amico o nemico, si scambia di posto con te",
 			parachute = "Aprilo in aria: scendi piano e atterri senza farti male",
@@ -669,11 +677,13 @@ return {
 		-- "Rosso trova ..." when a crate opens
 		weapon_found = { missile = "il Lanciarune", grenade = "l'Uovo di Fiamma", shards = "lo Sciame di Schegge",
 			punch = "il Pugno del Titano", sniper = "il Cecchino", eagle = "il Tonante", mallet = "il Maglio",
-			lunge = "l'Affondo", bellows = "il Mantice", hook = "il Rampino", janus = "il Giano", parachute = "un Paracadute",
+			lunge = "l'Affondo", bellows = "il Mantice", boomerang = "il Falcetto", tar = "la Pozza di Pece",
+			drill = "il Trapano", magnet = "la Calamita", cannon = "la Cannonata", petard = "il Petardo", hook = "il Rampino", janus = "il Giano", parachute = "un Paracadute",
 			trap = "una Trappola", shield = "uno Scudo", trampoline = "un Trampolino" },
 		-- the weapons in the match-start draft, and their effect (no accents)
 		draft_names = { grenade = "Uovo di Fiamma", shards = "Sciame di Schegge", punch = "Pugno del Titano",
-			sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino" },
+			sniper = "Cecchino", eagle = "Tonante", mallet = "Maglio", lunge = "Affondo", bellows = "Mantice", hook = "Rampino",
+			boomerang = "Falcetto", tar = "Pozza di Pece", drill = "Trapano", magnet = "Calamita", cannon = "Cannonata", petard = "Petardo" },
 		draft_effects = {
 			grenade = "Rimbalza e scoppia dopo 5 s: cratere grande",
 			shards = "Raffica di 8 schegge: rallenta",
@@ -683,6 +693,12 @@ return {
 			mallet = "Colpo ad arco dove miri; quando sbatte su qualcosa o qualcuno rimbalzi in alto",
 			lunge = "Scatto che passa oltre chi hai davanti e lo colpisce",
 			bellows = "Soffio della forgia: spinge via chi hai davanti",
+			boomerang = "Va, gira e torna: colpisce due volte e al ritorno incrina l'armatura",
+			tar = "Pozza di pece che brucia chi ci sta, per due turni",
+			drill = "Scava una galleria e scoppia dall'altra parte: rallenta",
+			magnet = "Tira a un punto davanti a te chi e vicino",
+			cannon = "Ti lanci in aria: chi trovi sulla strada prende l'urto",
+			petard = "Bomba che rimbalza e spinge via, senza scavare",
 			hook = "Tira a te il nemico (da lontano lo molla a meta strada), o ti porta sulla piattaforma colpita",
 		},
 		go = "VIA!",

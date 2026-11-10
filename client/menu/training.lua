@@ -78,17 +78,17 @@ local function postcard(a, x, m)
 	gui.set_parent(img, n)
 	gui.move_below(img, b.bordo)
 	if not open then gui.set_color(img, vmath.vector4(0.22, 0.2, 0.24, 1)) end
-	local name = ui.testo(maps.get(m.id).name, -CARD_W / 2 + 16, -CARD_H / 2 + 22, 0.85, open and ui.C.TEXT or ui.C.OFF, n)
+	local name = ui.text(maps.get(m.id).name, -CARD_W / 2 + 16, -CARD_H / 2 + 22, 0.85, open and ui.C.TEXT or ui.C.OFF, n)
 	gui.set_pivot(name, gui.PIVOT_W)
-	local circle = ui.testo(m.girone == 0 and T.training or T.circle:format(m.girone), -CARD_W / 2 + 18, CARD_H / 2 - 24, 0.55, ui.C.GOLD, n)
+	local circle = ui.text(m.girone == 0 and T.training or T.circle:format(m.girone), -CARD_W / 2 + 18, CARD_H / 2 - 24, 0.55, ui.C.GOLD, n)
 	gui.set_pivot(circle, gui.PIVOT_W)
 	if not open then
-		ui.testo(common.opens_with:format(m.serve), 0, 18, 0.8, ui.C.TEXT, n)
+		ui.text(common.opens_with:format(m.serve), 0, 18, 0.8, ui.C.TEXT, n)
 	end
 end
 
 local function build_maps(a)
-	local sub = ui.testo(T.mode_and_bot:format(NAMES[a.scelta.modo], NAMES[a.scelta.livello]), ui.EDGE, ui.CONTENT_TOP - 12,
+	local sub = ui.text(T.mode_and_bot:format(NAMES[a.scelta.modo], NAMES[a.scelta.livello]), ui.EDGE, ui.CONTENT_TOP - 12,
 		0.6, ui.C.OFF, a.radice)
 	gui.set_pivot(sub, gui.PIVOT_W)
 	-- the row: A CASO and the maps from the first visible one
@@ -106,8 +106,8 @@ local function build_maps(a)
 		if c.random then
 			local n = ui.button(a.buttons, x + cw / 2, CARDS_Y, cw, CARD_H, "", "mappa:caso", nil, a.radice)
 			ui.sheet_active(a.buttons[#a.buttons], a.scelta.mappa == "caso")
-			ui.titolo("?", 0, 22, 2.2, ui.C.LIGHT, n)
-			ui.testo(T.random, 0, -CARD_H / 2 + 22, 0.85, ui.C.TEXT, n)
+			ui.title("?", 0, 22, 2.2, ui.C.LIGHT, n)
+			ui.text(T.random, 0, -CARD_H / 2 + 22, 0.85, ui.C.TEXT, n)
 		else
 			postcard(a, x + cw / 2, c)
 		end
@@ -120,13 +120,13 @@ end
 
 local function build_mode(a)
 	local c = ui.C
-	ui.testo(T.mode, 640, 520, 0.7, c.OFF, a.radice)
+	ui.text(T.mode, 640, 520, 0.7, c.OFF, a.radice)
 	for i, m in ipairs(MODES_LIST) do
-		ui.scheda(a.buttons, 640 + (i - 2) * 330, 460, 310, 64, m[2], "modo:" .. m[1], a.scelta.modo == m[1], a.radice)
+		ui.tab(a.buttons, 640 + (i - 2) * 330, 460, 310, 64, m[2], "modo:" .. m[1], a.scelta.modo == m[1], a.radice)
 	end
-	ui.testo(common.bot, 640, 360, 0.7, c.OFF, a.radice)
+	ui.text(common.bot, 640, 360, 0.7, c.OFF, a.radice)
 	for i, l in ipairs(LEVELS) do
-		ui.scheda(a.buttons, 640 + (i - 2) * 250, 300, 230, 64, l[2], "livello:" .. l[1], a.scelta.livello == l[1], a.radice)
+		ui.tab(a.buttons, 640 + (i - 2) * 250, 300, 230, 64, l[2], "livello:" .. l[1], a.scelta.livello == l[1], a.radice)
 	end
 	ui.button(a.buttons, 640, 140, 340, 108, common.next, "avanti", { main = true }, a.radice)
 end
@@ -134,7 +134,7 @@ end
 local function build(a)
 	if a.radice then gui.delete_node(a.radice) end
 	a.buttons = {}
-	a.radice = ui.radice()
+	a.radice = ui.root()
 	-- the header (ui.header): the page's title and the pill's place
 	ui.header_delete(a.head)
 	a.head = ui.header(a.buttons, a.pagina == "mappa" and T.pick_map or common.training, "indietro")
@@ -157,7 +157,7 @@ function M.new(choice, stars)
 end
 
 function M.on_input(a, action_id, action)
-	local ui_action = ui.tocco(a.buttons, action_id, action)
+	local ui_action = ui.touch(a.buttons, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" then
 		if a.pagina == "modo" then return "indietro" end

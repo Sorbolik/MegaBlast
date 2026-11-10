@@ -81,6 +81,7 @@ C.RESPAWN_SECONDS = 1.5
 -- more often it comes out. Only one-shot weapons (Sergio, 9 November 2026).
 C.CRATE_CONTENTS = {
 	{ "grenade", 2 }, { "shards", 2 }, { "punch", 2 }, { "sniper", 2 },
+	{ "boomerang", 2 }, { "tar", 2 }, { "drill", 2 },
 }
 -- Tactical items drop on the map on their own, visible (you see what it is
 -- before going to take it), half as often as crates (game.ITEM_CHANCE) and at
@@ -99,7 +100,7 @@ C.ITEM_DROPS = { max = 2, contents = { { "trap", 1 }, { "shield", 1 }, { "trampo
 -- Whoever is hit takes damage and is knocked in the direction of the shot at
 -- push pixels per second (plus lift upward, to get them off the ground). With
 -- a trampoline under their feet they fly away.
-C.SNIPER = { damage = 50, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
+C.SNIPER = { damage = 42, push = 280, lift = 80, drag = 0.7, drop = 1, drop_ramp = 0.8,
 	bounces = 6, bounce_normal = 0.5, bounce_tangent = 0.85, min_speed = 40 }
 
 -- The two categories (Sergio, 29 October 2026, replacing the rule of the 24th):
@@ -170,6 +171,47 @@ C.LUNGE = { damage = 45, speed = 520, ticks = 18, keep = 0.35, reach = 40, climb
 -- one tenth
 C.BELLOWS = { damage = 10, range = 170, cone = math.rad(35), push = 400, lift = 100, far = 0.35 }
 
+-- New weapons (Sergio, 9 November 2026: "integrale tutte"), the six of the page
+-- "Armi nuove della Forgia" (https://claude.ai/artifact/3cSDdonHszZBPpayb3jSxG).
+-- Numbers are Claude's first guess (autonomous): to tune in play.
+--
+-- Falcetto (primary, boomerang): a sickle that flies straight for up to range
+-- pixels (or until terrain), turns round and comes back to whoever threw it,
+-- flying over terrain. It hits each robot once going out (damage) and once
+-- coming back (damage, and the armour cracks). It never digs. Allies are hit
+-- too, like the Lanciarune.
+C.BOOMERANG = { damage = 18, speed = 450, range = 400, back_speed = 520, radius = 14, life = 4 * 60 }
+-- Pozza di Pece (primary, tar): a flask lobbed like the Uovo that breaks on the
+-- first thing it touches: damage to whoever it hits and a pool of burning pitch
+-- on the spot. Whoever stands in the pool (radius pixels around the spot) when
+-- it appears, or walks in later, is set alight (status burn, once per turn).
+-- It lasts turns turns (the thrower's and the next); only one pool per team.
+C.TAR = { damage = 45, radius = 60, turns = 3, fuse = 4 * 60 }
+-- Trapano (primary, drill): flies like the rocket until it touches terrain, then
+-- bores straight on, digging a tunnel of radius pixels at speed px/s for at most
+-- dig pixels. If it comes out into the open or touches a robot it blows up there
+-- (damage, slow); if the dig runs out inside the terrain it blows up weakly.
+C.DRILL = { speed = 560, dig_speed = 300, dig = 220, radius = 7,
+	blast = { r = 14, damage_r = 24, damage = 60, impulse = 30 },
+	inner = { r = 10, damage_r = 18, damage = 32, impulse = 20 } }
+-- Calamita (secondary, magnet): instant pulse centred distance pixels from the
+-- user along the aim: every robot (the user too) within radius slides to the
+-- centre in ticks ticks, for a little damage (not to the user). Nothing happens
+-- if there is no ground within drop pixels under the centre (nobody is pulled
+-- over a pit: no killing with a teleport + magnet) or the centre is in terrain.
+C.MAGNET = { distance = 120, radius = 150, ticks = 30, damage = 40, drop = 120 }
+-- Cannonata (secondary, cannon): the user is launched as a ballistic body at
+-- speed * power (at least min_power) with gravity times the robots', no control.
+-- It passes through robots hitting each once (damage, and pushes them away at
+-- push) and stops against terrain. Past an edge it just falls: whoever lands
+-- in the void dies, the parachute and the air jumps still work after it ends.
+C.CANNON = { speed = 640, min_power = 0.35, gravity = 0.8, damage = 40, push = 320, lift = 160 }
+-- Petardo (secondary, petard): a small bomb thrown like the Uovo that bounces and
+-- blows up on touching a robot (not the thrower in the first moments) or after
+-- fuse ticks: damage, no crater, and everyone within radius (the thrower too, for
+-- jumping) is pushed away from the centre at push, plus lift.
+C.PETARD = { damage = 28, radius = 60, push = 450, lift = 120, fuse = 90 }
+
 -- Tactical items: usable at any moment of your own turn, repositioning
 -- included, and they don't count as attacks. Speeds in pixels per second.
 -- Trap: placed at the feet and armed from the next turn; an opponent stepping
@@ -234,7 +276,7 @@ C.STATUS = {
 }
 -- Which weapon gives which effect (our choice). Burn comes from the Uova of
 -- whoever has stats.burning_blasts (the Fornace set).
-C.WEAPON_STATUS = { shards = "slow", punch = "cracked" }
+C.WEAPON_STATUS = { shards = "slow", punch = "cracked", boomerang = "cracked", tar = "burn", drill = "slow" }
 
 -- Stats of each robot that aren't physics. Changed by the skill tree and gear
 -- (opts.players[i].stats in game.new); run, jump and air speed come from

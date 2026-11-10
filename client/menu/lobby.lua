@@ -47,11 +47,11 @@ end
 -- An empty place: the tag's outline, faint, with a ring that breathes
 local function empty_place(x, parent)
 	local h = tag.TALL()
-	local root, border = ui.pannello(x, TOP - h / 2, tag.WIDE, h, parent)
+	local root, border = ui.panel(x, TOP - h / 2, tag.WIDE, h, parent)
 	gui.set_color(root, with_alpha(C.PANEL, 0.55))
 	gui.set_color(border, with_alpha(C.LINE, 0.5))
 	local ring = ui.ring_node(0, 30, 64, 3, with_alpha(C.LIGHT, 0.35), root)
-	local label = ui.testo(T.coming, 0, -30, 0.8, C.OFF, root)
+	local label = ui.text(T.coming, 0, -30, 0.8, C.OFF, root)
 	return { root = root, ring = ring, label = label }
 end
 
@@ -64,16 +64,16 @@ function M.new(of, title, parent_below)
 	s.testa = gui.new_box_node(vec(640, 640), vec(0, 0))
 	gui.set_visible(s.testa, false)
 	gui.set_parent(s.testa, s.radice)
-	ui.titolo(T.searching, 0, 22, 0.75, C.LIGHT, s.testa)
-	s.riga = ui.testo("", 0, -22, 0.85, C.OFF, s.testa)
+	ui.title(T.searching, 0, 22, 0.75, C.LIGHT, s.testa)
+	s.riga = ui.text("", 0, -22, 0.85, C.OFF, s.testa)
 	s.xs = places(of)
 	-- the tip has its own look, not a button's (Sergio, 4 Nov): no border, a
 	-- soft dark band with round ends and Favilla's head on the left, who
 	-- gives the advice
 	local w = 980
 	ui.sagoma("pillola_forma", 640, 110, w, 48, TIP_BAND, s.radice)
-	ui.medaglia(640 - w / 2 + 28, 110, 34, ui.MEDAL, s.radice)
-	s.tip = ui.testo(M.TIPS[1], 640 + 14, 110, 0.8, TIP_TEXT, s.radice)
+	ui.medal(640 - w / 2 + 28, 110, 34, ui.MEDAL, s.radice)
+	s.tip = ui.text(M.TIPS[1], 640 + 14, 110, 0.8, TIP_TEXT, s.radice)
 	s.buttons = {}
 	s.back = ui.button(s.buttons, 440, 44, 380, 52, T.back_to_menus, "menu", { scala = 0.72 }, s.radice)
 	s.exit = ui.button(s.buttons, 860, 44, 380, 52, T.leave_queue, "esci", { scala = 0.72 }, s.radice)
@@ -83,7 +83,7 @@ function M.new(of, title, parent_below)
 end
 
 -- Rebuilds the places: few nodes and rare (one join or leave), the simplest way
-function M.giocatori(s, showcases)
+function M.players(s, showcases)
 	for _, c in ipairs(s.card_list) do tag.destroy(c) end
 	for _, e in ipairs(s.empty) do gui.delete_node(e.root) end
 	s.card_list, s.empty = {}, {}

@@ -29,7 +29,7 @@ function M.new()
 	gui.play_flipbook(a.disco, "favilla")
 	gui.set_color(a.disco, CARD)
 	gui.set_parent(a.disco, a.nodo)
-	a.riga = ui.testo("", 0, -100, 0.8, ui.C.TEXT, a.nodo)
+	a.riga = ui.text("", 0, -100, 0.8, ui.C.TEXT, a.nodo)
 	gui.set_enabled(a.nodo, false)
 	return a
 end
@@ -42,7 +42,7 @@ function M.display(a, txt)
 	a.close_view = nil
 end
 
-function M.via(a)
+function M.skip(a)
 	if not a.requested then return end
 	if a.visto and a.visto < M.AT_LEAST then
 		a.close_view = true
@@ -63,7 +63,7 @@ function M.update(a, dt)
 	if not a.visto then return end
 	a.visto = a.visto + dt
 	if a.close_view and a.visto >= M.AT_LEAST then
-		M.via(a)
+		M.skip(a)
 		return
 	end
 	-- burning: breathes fast, the ember pulses

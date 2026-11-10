@@ -63,7 +63,7 @@ function M.label(tipo, x, y, size, parent)
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_scale(n, vmath.vector3(size / H, size / H, 1))
 	if parent then gui.set_parent(n, parent) end
-	local t = ui.testo(k.name, 0, 0, 1, M.INK)
+	local t = ui.text(k.name, 0, 0, 1, M.INK)
 	gui.set_outline(t, vmath.vector4(0, 0, 0, 0))
 	gui.set_shadow(t, vmath.vector4(0, 0, 0, 0))
 	local tw = resource.get_text_metrics(gui.get_font_resource(gui.get_font(t)), k.name).width * gui.get_scale(t).x

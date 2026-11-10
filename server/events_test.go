@@ -147,7 +147,7 @@ func TestEventOnline(t *testing.T) {
 	defer cancel()
 	url := "ws" + strings.TrimPrefix(srv.URL, "http") + "/ws"
 	finished := dial(t, ctx, url)
-	finished.send(`{"t":"hello","v":8,"mode":"maglio-20261116"}`)
+	finished.send(`{"t":"hello","v":9,"mode":"maglio-20261116"}`)
 	if m := finished.waitFor(`"error"`); m["e"] != "evento" {
 		t.Fatalf("queue of an event not running: %v", m)
 	}
@@ -155,7 +155,7 @@ func TestEventOnline(t *testing.T) {
 	c := make([]*testClient, 4)
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":8,"mode":"maglio-20261102"}`)
+		c[i].send(`{"t":"hello","v":9,"mode":"maglio-20261102"}`)
 	}
 	d := c[0].waitFor(`"draft"`)
 	for _, row := range []string{"offer", "offer2"} {

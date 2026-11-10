@@ -1,0 +1,21 @@
+# Cannonata: ti lanci come una palla di cannone; la traiettoria si vede mirando.
+# Con prova_secondaria cannon la Cannonata sta a 868 (y = 62), (si tocca nella barra).
+imposta prova_secondaria cannon
+imposta zoom 2
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+foto 01_barra
+tocca 868 62
+annulla 120 60 02_cannone_in_mano
+mira 140 90 0.6 03_mira_cannonata   # in alto a destra, a piena forza
+aspetta 0.3
+aspetta 0.3
+foto 04_in_volo
+aspetta 0.3
+aspetta 0.3
+foto 05_atterrato
+aspetta_stato turno=2 fase=aim 30
+foto 06_dopo

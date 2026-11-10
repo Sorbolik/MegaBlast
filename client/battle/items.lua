@@ -23,6 +23,10 @@ local OPAQUE = vmath.vector4(1, 1, 1, 1)
 local FIRE = vmath.vector4(1, 0.45, 0.1, 0.7)
 local FROST = vmath.vector4(0.45, 0.8, 1, 0.8)
 local CRACK = vmath.vector4(1, 1, 1, 0.75)
+-- pool of burning pitch (Pozza di Pece): a dark flattened pool with flames flickering over it
+local POOLS, FLAMES = 4, 8
+local PITCH = vmath.vector4(0.09, 0.06, 0.05, 0.92)
+local EMBER = vmath.vector4(1, 0.78, 0.2, 0.85)
 -- healing circle: a stone ring on the ground with glowing runes (cura.py, 6
 -- pixels per unit), a heart floating above and sparks rising
 local HEAL_PX = 6
@@ -37,7 +41,7 @@ local function gui_node(w, h, color, parent)
 end
 
 local function circle_shape(d, color, parent)
-	local n = ui.disco(0, 0, d, color, parent)
+	local n = ui.disc(0, 0, d, color, parent)
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	return n
 end
@@ -85,12 +89,12 @@ end
 -- Shield: a ring
 local function ring_node(d, color, parent)
 	local n = circle_shape(d, color, parent)
-	ui.anello(n, d, d * 0.08)
+	ui.ring(n, d, d * 0.08)
 	return n
 end
 
 function M.new(palette)
-	local o = { colori = palette, posed_ones = {}, cure = {}, shields = {}, flames = {}, frosts = {}, crepe = {},
+	local o = { colori = palette, posed_ones = {}, cure = {}, pools = {}, shields = {}, flames = {}, frosts = {}, crepe = {},
 		snaps = {}, snap_i = 0, locks = {},
 		col = vmath.vector4(), size = vmath.vector3(), rot = vmath.vector3() }
 	local h = game.DISEGNO_H
@@ -111,6 +115,14 @@ function M.new(palette)
 		local heart = image("cura_cuore", 20, 21, root)
 		gui.set_enabled(root, false)
 		o.cure[i] = { root = root, ring_node = a, cuore = heart, sparks = sparks }
+	end
+	for i = 1, POOLS do
+		local root = gui_node(0, 0, WHITE)
+		gui.set_enabled(root, false)
+		local base = circle_shape(2, PITCH, root)
+		local fl = {}
+		for j = 1, FLAMES do fl[j] = circle_shape(9, j % 2 == 0 and EMBER or FIRE, root) end
+		o.pools[i] = { root = root, base = base, flames = fl }
 	end
 	for i = 1, game.MAX_PLAYERS do
 		-- the shield: a bubble with hexagon mesh, in the team colour
@@ -159,9 +171,10 @@ function M.snap(o, x, y)
 end
 
 -- The nodes to put in the world, in drawing order
-function M.nodi(o)
+function M.nodes(o)
 	local list = {}
 	for _, c in ipairs(o.cure) do list[#list + 1] = c.root end
+	for _, p in ipairs(o.pools) do list[#list + 1] = p.root end
 	for _, p in ipairs(o.posed_ones) do list[#list + 1] = p.root end
 	for _, n in ipairs(o.snaps) do list[#list + 1] = n end
 	for _, n in ipairs(o.locks) do list[#list + 1] = n end
@@ -196,6 +209,23 @@ function M.update(o, g, view, clock)
 				gui.set_color(sc, o.col)
 				o.size.x, o.size.y = 0.5 + 0.6 * a, 0.5 + 0.6 * a
 				gui.set_scale(sc, o.size)
+			end
+		end
+	end
+	-- pools of pitch: the flattened pool and flames dancing over it
+	for i, pl in ipairs(o.pools) do
+		local pool = g.pools[i]
+		gui.set_enabled(pl.root, pool ~= nil)
+		if pool then
+			pos(pl.root, pool.x, pool.y)
+			o.size.x, o.size.y, o.size.z = pool.r, pool.r * 0.16, 1
+			gui.set_scale(pl.base, o.size)
+			for j, f in ipairs(pl.flames) do
+				local k = (j - 0.5) / FLAMES * 2 - 1
+				local h = 0.55 + 0.45 * math.abs(math.sin(clock * 7 + j * 1.9 + i))
+				pos(f, k * pool.r * 0.9, 5 + h * 7)
+				o.size.x, o.size.y, o.size.z = 0.6 + 0.3 * h, 1.2 + h * 1.5, 1
+				gui.set_scale(f, o.size)
 			end
 		end
 	end

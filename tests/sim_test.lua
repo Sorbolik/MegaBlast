@@ -2248,36 +2248,36 @@ print(string.format("info 600 ticks + 20 craters in %.1f ms", (os.clock() - t) *
 do
 	local sticks = require "battle.sticks"
 	local s = sticks.new()
-	sticks.muovi(s, 0.1, 0)
+	sticks.move(s, 0.1, 0)
 	check(not s.moving, "stick: at 10% sideways it doesn't walk")
-	sticks.muovi(s, 0.5, 0)
+	sticks.move(s, 0.5, 0)
 	check(s.moving and s.dir == 1, "stick: sideways it walks right")
-	local jumped = sticks.muovi(s, 0.5, 0.5)
+	local jumped = sticks.move(s, 0.5, 0.5)
 	check(s.moving and s.jumping and jumped, "stick: diagonally it walks and jumps")
-	check(not sticks.muovi(s, 0.5, 0.55), "stick: the jump starts only once")
-	sticks.muovi(s, 0.05, 0.6)
+	check(not sticks.move(s, 0.5, 0.55), "stick: the jump starts only once")
+	sticks.move(s, 0.05, 0.6)
 	check(not s.moving and s.jumping, "stick: straight up it jumps in place")
-	sticks.muovi(s, -0.6, -0.1)
+	sticks.move(s, -0.6, -0.1)
 	check(s.moving and s.dir == -1 and not s.jumping, "stick: down left it walks and doesn't jump")
-	sticks.muovi(s, -0.05, 0)
+	sticks.move(s, -0.05, 0)
 	check(not s.moving, "stick: back at the centre it stops")
-	sticks.muovi(s, 0.2, -0.6)
+	sticks.move(s, 0.2, -0.6)
 	check(not s.moving, "stick: downwards 25% sideways is needed")
 
 	local a = sticks.new()
-	sticks.mira(a, 0.15, 0)
+	sticks.aim(a, 0.15, 0)
 	check(not a.active, "aim: below 20% off")
-	sticks.mira(a, 0, -0.6)
+	sticks.aim(a, 0, -0.6)
 	check(a.active and math.abs(a.angle + math.pi / 2) < 1e-6 and math.abs(a.f - 0.5) < 1e-6,
 		"aim: on, downwards, power 0.5 at 60%")
-	sticks.mira(a, 0.15, 0)
+	sticks.aim(a, 0.15, 0)
 	check(a.active, "aim: between 10% and 20% it stays on")
-	sticks.mira(a, 0.05, 0)
+	sticks.aim(a, 0.05, 0)
 	check(not a.active, "aim: below 10% it turns off")
 
 	-- the thumb slipping at the last instant doesn't count
 	local r = sticks.new()
-	for i = 0, 30 do sticks.registra(r, i / 60, i < 28 and 1.0 or 2.0, 0.7, i < 30) end
+	for i = 0, 30 do sticks.record(r, i / 60, i < 28 and 1.0 or 2.0, 0.7, i < 30) end
 	local h = sticks.on_release(r, 30 / 60)
 	check(h and h.angle == 1.0 and h.active, "aim: on release the aim of 50 ms earlier counts")
 	local sa, sp = sticks.shot(r, 30 / 60, 9, 9)
@@ -2336,13 +2336,13 @@ do
 	check(rules.validate({ tetto = 15 }, true) and not rules.validate({ tetto = 30 }) and not rules.validate({ tetto = 0 }),
 		"rules: the level cap goes from 1 to below the maximum")
 	check(not rules.validate({ casse = 2 }, true), "rules: on a normal queue only the cap")
-	local opts = rules.opzioni({ casse = 2, cure = false, punti = { kill = 80 } }, {})
+	local opts = rules.options({ casse = 2, cure = false, punti = { kill = 80 } }, {})
 	local g = game.new(7, "pavimento", opts)
 	check(g.crate_every == 2 and not g.heals_on and g.score.kill == 80 and g.score.damage == config.SCORE.damage,
 		"rules: crates, heals and points reach the match")
-	local d = draft.new(7, config.MODES["2v2"], rules.armi({ armi = { "punch", "mallet", "eagle" } }))
+	local d = draft.new(7, config.MODES["2v2"], rules.weapons({ armi = { "punch", "mallet", "eagle" } }))
 	check(#d.offer == 1 and d.offer[1] == "punch" and #d.offer2 == 2, "rules: the draft offers only the event's weapons")
-	check(rules.armi({ casse = 2 }) == nil, "rules: without weapons the draft stays the usual one")
+	check(rules.weapons({ casse = 2 }) == nil, "rules: without weapons the draft stays the usual one")
 end
 
 -- random start points (real matches, not the campaign): far from enemies and teammates,
@@ -2377,10 +2377,10 @@ do
 	local m = game.new(42, "pavimento")
 	local t = m.terrain
 	check(t.ox == game.MARGIN_CELLS and t.w == game.GRID_W, "the grid has a margin beside the map")
-	check(t:solid(-60, 410),
-		"pavimento: a platform juts out of the left wall")
-	check(t:solid(game.WORLD_W + 60, 410),
-		"pavimento: a platform juts out of the right wall")
+	check(t:solid(-60, 480),
+		"pavimento: a stone ledge juts out of the left wall")
+	check(t:solid(game.WORLD_W + 60, 480),
+		"pavimento: a stone ledge juts out of the right wall")
 	local rb = m.robots[1]
 	rb.x, rb.y, rb.vy, rb.grounded = -500, 800, 0, false
 	m:step()

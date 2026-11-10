@@ -375,7 +375,7 @@ func TestResumeUnknownToken(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":8,"tok":"n1.inventato"}`)
+	c.send(`{"t":"hello","v":9,"tok":"n1.inventato"}`)
 	if m := c.waitFor(`"error"`); m["e"] != "expired" || !c.closed() {
 		t.Fatalf("unexpected answer: %v", m)
 	}
@@ -386,7 +386,7 @@ func TestOnlineMatch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	hello := `{"t":"hello","v":8,"mode":"1v1"}`
+	hello := `{"t":"hello","v":9,"mode":"1v1"}`
 	a := dial(t, ctx, url)
 	a.send(hello)
 	a.waitFor(`"wait"`)
@@ -427,12 +427,12 @@ func TestOnlineMatch(t *testing.T) {
 	// (config.DRAFT_SHOTS, 2) of the picked primary and their secondary
 	r1 := first["r"].([]any)[1].(map[string]any)
 	shots := func(r map[string]any) (n float64) {
-		for _, k := range []string{"ag", "as", "ap", "ac"} {
+		for _, k := range []string{"ag", "as", "ap", "ac", "ab", "at", "ar"} {
 			n += r[k].(float64)
 		}
 		return
 	}
-	key := map[string]string{"grenade": "ag", "shards": "as", "punch": "ap", "sniper": "ac"}[w]
+	key := map[string]string{"grenade": "ag", "shards": "as", "punch": "ap", "sniper": "ac", "boomerang": "ab", "tar": "at", "drill": "ar"}[w]
 	if _, ok := first["c"].([]any); !ok || r0[key] != 2.0 || shots(r0) != 2 || shots(r1) != 2 {
 		t.Fatalf("state without crates or picked shots: %v", first)
 	}
@@ -483,7 +483,8 @@ func TestOnlineMatch(t *testing.T) {
 	b.send(`{"t":"fire","a":2.2,"p":0.7}`)
 	for {
 		ev := b.waitFor(`"ev"`)
-		if ev["type"] == "explosion" {
+		// player 2's primary is random: a boomerang or a tar pool digs nothing
+		if ev["type"] == "explosion" || ev["type"] == "carve" {
 			explosions++
 		}
 		if ev["type"] == "turn" {
@@ -497,11 +498,11 @@ func TestOnlineMatch(t *testing.T) {
 		t.Fatalf("unexpected away: %v", m)
 	}
 	a = dial(t, ctx, url)
-	a.send(fmt.Sprintf(`{"t":"hello","v":8,"tok":%q}`, sa["tok"]))
+	a.send(fmt.Sprintf(`{"t":"hello","v":9,"tok":%q}`, sa["tok"]))
 	if m := a.waitFor(`"start"`); m["resume"] != true || m["you"].(float64) != 1 {
 		t.Fatalf("unexpected resume: %v", m)
 	}
-	if m := a.waitFor(`"sync"`); len(m["x"].([]any)) < explosions || explosions == 0 {
+	if m := a.waitFor(`"sync"`); len(m["x"].([]any)) < explosions {
 		t.Fatalf("missing digs (%d explosions): %v", explosions, m)
 	}
 	a.waitFor(`"state"`)
@@ -524,7 +525,7 @@ func TestTeamDraft(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":8,"mode":"2v2"}`)
+		c[i].send(`{"t":"hello","v":9,"mode":"2v2"}`)
 	}
 	you := map[float64]*testClient{}
 	var offer, offer2 []any
@@ -574,7 +575,7 @@ func TestLeave(t *testing.T) {
 	var c [4]*testClient
 	for i := range c {
 		c[i] = dial(t, ctx, url)
-		c[i].send(`{"t":"hello","v":8,"mode":"ffa"}`)
+		c[i].send(`{"t":"hello","v":9,"mode":"ffa"}`)
 	}
 	you := map[float64]*testClient{}
 	for _, x := range c {
@@ -664,12 +665,12 @@ func TestShowcases(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":8,"mode":"1v1","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2},` +
+	a.send(`{"t":"hello","v":9,"mode":"1v1","vetrina":{"liv":12,"bdg":[{"id":"mira","grado":2},` +
 		`{"id":"<script>","grado":1},{"id":"danno","grado":9},{"id":"globi","grado":4},{"id":"casse","grado":1},{"id":"vinte","grado":1}]}}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
 	// an empty Lua table arrives as an object: the greeting still counts
-	b.send(`{"t":"hello","v":8,"mode":"1v1","vetrina":{"liv":100000,"bdg":{}}}`)
+	b.send(`{"t":"hello","v":9,"mode":"1v1","vetrina":{"liv":100000,"bdg":{}}}`)
 	showcases := func(m map[string]any) string {
 		j, _ := json.Marshal(m["vetrine"])
 		return string(j)
@@ -690,13 +691,13 @@ func TestWaitingRoom(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":3}}`)
+	a.send(`{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":3}}`)
 	w := a.waitFor(`"wait"`)
 	if w["of"] != float64(4) || w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
 		t.Fatalf("first wait: %v", w)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":5}}`)
+	b.send(`{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":5}}`)
 	w = b.waitFor(`"wait"`)
 	cards := w["vetrine"].([]any)
 	if w["you"] != float64(2) || len(cards) != 2 || cards[0].(map[string]any)["liv"] != float64(3) {
@@ -721,10 +722,10 @@ func TestLeaveQueue(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":8,"mode":"2v2"}`)
+	a.send(`{"t":"hello","v":9,"mode":"2v2"}`)
 	a.waitFor(`"wait"`)
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":8,"mode":"2v2"}`)
+	b.send(`{"t":"hello","v":9,"mode":"2v2"}`)
 	b.waitFor(`"you":2`)
 	a.send(`{"t":"leave"}`)
 	if w := b.waitFor(`"wait"`); w["you"] != float64(1) || len(w["vetrine"].([]any)) != 1 {
@@ -743,12 +744,12 @@ func TestBotsFillQueue(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":8,"mode":"2v2","vetrina":{"liv":12}}`)
+	a.send(`{"t":"hello","v":9,"mode":"2v2","vetrina":{"liv":12}}`)
 	if w := a.waitFor(`"wait"`); w["bot_in"] == nil {
 		t.Fatalf("no bot_in in a normal queue: %v", w)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":8,"mode":"2v2"}`)
+	b.send(`{"t":"hello","v":9,"mode":"2v2"}`)
 	d := a.waitFor(`"draft"`)
 	players := d["players"].([]any)
 	cards := d["vetrine"].([]any)
@@ -792,7 +793,7 @@ func TestPrivateRoom(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":8,"privata":"nuova","vetrina":{"liv":3}}`)
+	a.send(`{"t":"hello","v":9,"privata":"nuova","vetrina":{"liv":3}}`)
 	m := a.waitFor(`"privata"`)
 	code, _ := m["code"].(string)
 	if len(code) != 4 || m["mode"] != "2v2" || m["you"] != float64(1) || m["host"] != float64(1) || len(m["posti"].([]any)) != 4 {
@@ -800,12 +801,12 @@ func TestPrivateRoom(t *testing.T) {
 	}
 	// a wrong code: error and closed
 	x := dial(t, ctx, url)
-	x.send(`{"t":"hello","v":8,"privata":"x"}`)
+	x.send(`{"t":"hello","v":9,"privata":"x"}`)
 	if e := x.waitFor(`"error"`); e["e"] != "codice" || !x.closed() {
 		t.Fatalf("wrong code: %v", e)
 	}
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":8,"privata":"` + code + `"}`)
+	b.send(`{"t":"hello","v":9,"privata":"` + code + `"}`)
 	if m = b.waitFor(`"privata"`); m["you"] != float64(2) {
 		t.Fatalf("B must take seat 2: %v", m)
 	}
@@ -839,10 +840,10 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := dial(t, ctx, url)
-	a.send(`{"t":"hello","v":8,"privata":"nuova"}`)
+	a.send(`{"t":"hello","v":9,"privata":"nuova"}`)
 	code := a.waitFor(`"privata"`)["code"].(string)
 	b := dial(t, ctx, url)
-	b.send(`{"t":"hello","v":8,"privata":"` + code + `"}`)
+	b.send(`{"t":"hello","v":9,"privata":"` + code + `"}`)
 	b.waitFor(`"privata"`)
 	a.send(`{"t":"modo","mode":"1v1"}`)
 	if m := b.waitFor(`"1v1"`); len(m["posti"].([]any)) != 2 || m["you"] != float64(2) {
@@ -850,7 +851,7 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	}
 	// full of people: a third can't come in
 	c := dial(t, ctx, url)
-	c.send(`{"t":"hello","v":8,"privata":"` + code + `"}`)
+	c.send(`{"t":"hello","v":9,"privata":"` + code + `"}`)
 	if e := c.waitFor(`"error"`); e["e"] != "piena" {
 		t.Fatalf("full room: %v", e)
 	}
@@ -861,7 +862,7 @@ func TestPrivateRoomModeAndLeave(t *testing.T) {
 	b.send(`{"t":"leave"}`)
 	b.closed()
 	d := dial(t, ctx, url)
-	d.send(`{"t":"hello","v":8,"privata":"` + code + `"}`)
+	d.send(`{"t":"hello","v":9,"privata":"` + code + `"}`)
 	if e := d.waitFor(`"error"`); e["e"] != "codice" {
 		t.Fatalf("the empty room must be gone: %v", e)
 	}

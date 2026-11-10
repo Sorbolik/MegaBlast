@@ -78,8 +78,8 @@ local function statistics(a, parent)
 	local st = loadout.stats(b, to_active(a), profile.tier(a.prof, to_active(a)))
 	-- the column on the right, from the content's top to the bottom margin
 	local h = ui.BODY_TOP - ui.EDGE
-	local pan = ui.pannello(1280 - ui.EDGE - 125, ui.EDGE + h / 2, 250, h, parent)
-	ui.titolo(common.stats, 0, h / 2 - 28, 0.6, c.TEXT, pan)
+	local pan = ui.panel(1280 - ui.EDGE - 125, ui.EDGE + h / 2, 250, h, parent)
+	ui.title(common.stats, 0, h / 2 - 28, 0.6, c.TEXT, pan)
 	local y = h / 2 - 70
 	for _, s in ipairs(M.STATISTICS) do
 		local k, nome, modo = s[1], s[2], s[3]
@@ -94,9 +94,9 @@ local function statistics(a, parent)
 				end
 				col = better and c.BRACE or c.TEXT
 			end
-			local n = ui.testo(nome, -110, y, 0.7, c.OFF, pan)
+			local n = ui.text(nome, -110, y, 0.7, c.OFF, pan)
 			gui.set_pivot(n, gui.PIVOT_W)
-			local v = ui.testo(value(st[k], modo), 110, y, 0.75, col, pan)
+			local v = ui.text(value(st[k], modo), 110, y, 0.75, col, pan)
 			gui.set_pivot(v, gui.PIVOT_E)
 			y = y - 30
 		end
@@ -112,17 +112,17 @@ local function sheet_set(a, parent)
 	for r, slot in ipairs(equip.SLOTS) do
 		-- the first row's buttons start at the content's top
 		local y = ui.BODY_TOP - 31 - (r - 1) * 88
-		local label = ui.testo(slot.name, ui.EDGE, y, 0.8, c.TEXT, parent)
+		local label = ui.text(slot.name, ui.EDGE, y, 0.8, c.TEXT, parent)
 		gui.set_pivot(label, gui.PIVOT_W)
 		for i, set in ipairs(equip.SETS) do
 			local chosen = as.gear[slot.id] == set.id
 			local x = 260 + (i - 1) * 138
 			local t = equip.tier(a.prof.mastery[set.id .. "_" .. slot.id])
-			ui.scheda(a.buttons, x, y + 8, 130, 46, set.name, "set:" .. slot.id .. ":" .. set.id, chosen, parent)
-			ui.testo(T.tier:format(ROMAN[t]), x, y - 26, 0.55, chosen and c.BRACE or c.OFF, parent)
+			ui.tab(a.buttons, x, y + 8, 130, 46, set.name, "set:" .. slot.id .. ":" .. set.id, chosen, parent)
+			ui.text(T.tier:format(ROMAN[t]), x, y - 26, 0.55, chosen and c.BRACE or c.OFF, parent)
 		end
 		local piece = equip.BY_ID[as.gear[slot.id] or ""]
-		local n = ui.testo(piece and effects(piece.pieces[slot.id]) or T.no_piece, 770, y, 0.6, c.OFF, parent)
+		local n = ui.text(piece and effects(piece.pieces[slot.id]) or T.no_piece, 770, y, 0.6, c.OFF, parent)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
 
@@ -130,14 +130,14 @@ local function sheet_set(a, parent)
 	local id, top = equip.full_set(as.gear, tiers)
 	local set = id and equip.BY_ID[id]
 	if not (set and set.bonus) then return end
-	local pan = ui.pannello(LEFT_X, ui.EDGE + 65, LEFT_W, 130, parent)
-	ui.titolo(set.name .. " · " .. string.upper(set.style), -200, 38, 0.7, c.BRACE, pan)
+	local pan = ui.panel(LEFT_X, ui.EDGE + 65, LEFT_W, 130, parent)
+	ui.title(set.name .. " · " .. string.upper(set.style), -200, 38, 0.7, c.BRACE, pan)
 	for i, v in ipairs({ "a", "b" }) do
 		local y = 4 - (i - 1) * 40
 		local ok = v == "a" or top
-		ui.scheda(a.buttons, -420, y, 50, 34, string.upper(v), "variante:" .. v, as.variant == v and (v == "a" or top), pan)
+		ui.tab(a.buttons, -420, y, 50, 34, string.upper(v), "variante:" .. v, as.variant == v and (v == "a" or top), pan)
 		local txt = ok and set.bonus[v].desc or T.locked_bonus:format(set.bonus[v].desc, equip.LIVELLO_MAX)
-		local n = ui.testo(txt, -380, y, 0.62, ok and c.TEXT or c.OFF, pan)
+		local n = ui.text(txt, -380, y, 0.62, ok and c.TEXT or c.OFF, pan)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
 end
@@ -147,13 +147,13 @@ end
 local function sheet_tree(a, parent)
 	local c = ui.C
 	local tree = to_active(a).tree
-	local punti = profile.punti(a.prof)
+	local punti = profile.points(a.prof)
 	-- branch columns in the space left of the stats
 	local step = math.min(440, LEFT_W / #skills.BRANCHES)
 	for b, tree_branch in ipairs(skills.BRANCHES) do
 		local x = LEFT_X + (b - (#skills.BRANCHES + 1) / 2) * step
-		ui.titolo(tree_branch.name, x, ui.BODY_TOP - 12, 0.7, c.TEXT, parent)
-		ui.testo(T.points:format(skills.spent(tree, tree_branch.id)), x, ui.BODY_TOP - 38, 0.6, c.OFF, parent)
+		ui.title(tree_branch.name, x, ui.BODY_TOP - 12, 0.7, c.TEXT, parent)
+		ui.text(T.points:format(skills.spent(tree, tree_branch.id)), x, ui.BODY_TOP - 38, 0.6, c.OFF, parent)
 		-- nodes per row
 		local lines = {}
 		for _, n in ipairs(skills.NODES) do
@@ -168,11 +168,11 @@ local function sheet_tree(a, parent)
 				local nx = x + (i - (#list_of + 1) / 2) * 156
 				local degrees = tree[gui_node.id] or 0
 				local ok = degrees > 0 or skills.can_add(tree, gui_node.id, punti)
-				local btn = ui.scheda(a.buttons, nx, y, 150, 80, "", "nodo:" .. gui_node.id, degrees > 0, parent)
+				local btn = ui.tab(a.buttons, nx, y, 150, 80, "", "nodo:" .. gui_node.id, degrees > 0, parent)
 				local col = ok and c.TEXT or c.OFF
-				ui.testo(gui_node.name, 0, 22, 0.75, col, btn)
-				ui.testo(string.format("%d / %d", degrees, gui_node.ranks), 0, -4, 1.3, degrees > 0 and c.BRACE or col, btn)
-				ui.testo((gui_node.cost == 1 and T.point or T.points):format(gui_node.cost), 0, -28, 0.8, c.OFF, btn)
+				ui.text(gui_node.name, 0, 22, 0.75, col, btn)
+				ui.text(string.format("%d / %d", degrees, gui_node.ranks), 0, -4, 1.3, degrees > 0 and c.BRACE or col, btn)
+				ui.text((gui_node.cost == 1 and T.point or T.points):format(gui_node.cost), 0, -28, 0.8, c.OFF, btn)
 				if degrees > 0 and skills.can_remove(tree, gui_node.id) then
 					ui.button(a.buttons, 62, -26, 26, 26, "-", "togli:" .. gui_node.id, nil, btn)
 				end
@@ -180,13 +180,13 @@ local function sheet_tree(a, parent)
 		end
 	end
 	-- at the bottom: points, chosen node, rebuild
-	local pan = ui.pannello(LEFT_X, ui.EDGE + 45, LEFT_W, 90, parent)
-	ui.testo(T.points_spent:format(skills.spent(tree), punti), -360, 18, 0.9, c.BRACE, pan)
-	ui.testo(T.level:format(a.prof.livello), -360, -14, 0.55, c.OFF, pan)
+	local pan = ui.panel(LEFT_X, ui.EDGE + 45, LEFT_W, 90, parent)
+	ui.text(T.points_spent:format(skills.spent(tree), punti), -360, 18, 0.9, c.BRACE, pan)
+	ui.text(T.level:format(a.prof.livello), -360, -14, 0.55, c.OFF, pan)
 	local gui_node = skills.BY_ID[a.ultimo or ""]
 	if gui_node then
-		ui.testo(gui_node.name, 30, 18, 0.75, c.TEXT, pan)
-		ui.testo(T.per_rank:format(gui_node.desc), 30, -12, 0.6, c.OFF, pan)
+		ui.text(gui_node.name, 30, 18, 0.75, c.TEXT, pan)
+		ui.text(T.per_rank:format(gui_node.desc), 30, -12, 0.6, c.OFF, pan)
 	end
 	ui.button(a.buttons, 380, 0, 140, 50, T.reset, "azzera", nil, pan)
 end
@@ -203,12 +203,12 @@ local function build(a)
 	ui.header_tabs(a.head, a.buttons, { { T.tab_set, "scheda:set", 150 }, { T.tab_tree, "scheda:albero", 150 } },
 		a.scheda == "set" and 1 or 2)
 	for i = 1, loadout.LOADOUTS do
-		ui.scheda(a.buttons, -ui.EDGE - 26 - (loadout.LOADOUTS - i) * 64, 0, 52, 48, tostring(i), "assetto:" .. i,
+		ui.tab(a.buttons, -ui.EDGE - 26 - (loadout.LOADOUTS - i) * 64, 0, 52, 48, tostring(i), "assetto:" .. i,
 			a.prof.is_active == i, a.head.right)
 	end
-	local n = ui.testo(T.loadout, -ui.EDGE - 16 - loadout.LOADOUTS * 64, 0, 0.7, c.OFF, a.head.right)
+	local n = ui.text(T.loadout, -ui.EDGE - 16 - loadout.LOADOUTS * 64, 0, 0.7, c.OFF, a.head.right)
 	gui.set_pivot(n, gui.PIVOT_E)
-	a.radice = ui.radice()
+	a.radice = ui.root()
 	if a.scheda == "set" then sheet_set(a, a.radice) else sheet_tree(a, a.radice) end
 	statistics(a, a.radice)
 end
@@ -236,7 +236,7 @@ local function run_cmd(a, ui_action)
 		if x == "a" or top then as.variant = x end
 	elseif kind == "nodo" then
 		a.ultimo = x
-		if skills.can_add(as.tree, x, profile.punti(a.prof)) then as.tree[x] = (as.tree[x] or 0) + 1 end
+		if skills.can_add(as.tree, x, profile.points(a.prof)) then as.tree[x] = (as.tree[x] or 0) + 1 end
 	elseif kind == "togli" then
 		a.ultimo = x
 		if skills.can_remove(as.tree, x) then
@@ -246,12 +246,12 @@ local function run_cmd(a, ui_action)
 	elseif kind == "azzera" then
 		as.tree = {}
 	end
-	profile.salva(a.prof)
+	profile.save(a.prof)
 	build(a)
 end
 
 function M.on_input(a, action_id, action)
-	local ui_action = ui.tocco(a.buttons, action_id, action)
+	local ui_action = ui.touch(a.buttons, action_id, action)
 	if ui_action == "indietro" then return "indietro" end
 	if ui_action then run_cmd(a, ui_action) end
 	return nil

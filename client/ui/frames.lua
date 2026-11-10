@@ -6,7 +6,7 @@
 -- not the engine's dt) and compares it with the normal frame (the median of
 -- the last 10 seconds): a STUTTER is a frame longer than 1.5 times the normal
 -- one (at 60 Hz, a missed vsync). For each stutter it gives the most likely cause:
---   - the one marked by whoever did heavy work (M.segna: "dipinto",
+--   - the one marked by whoever did heavy work (M.mark: "dipinto",
 --     "maschera", "schermata ..."), in the previous frame or in this one;
 --   - "gc" if Lua's memory went down (the collector ran);
 --   - "lua" if in the previous frame the scripts worked more than half the stutter;
@@ -72,7 +72,7 @@ local summary = { n = 0, scatti = 0, coperti = 0, worst = 0, worst_lua = 0, allo
 local gaps, n_gaps = {}, 0
 local GAPS = 512
 
-function M.segna(culprit)
+function M.mark(culprit)
 	cause = cause and (cause .. "+" .. culprit) or culprit
 end
 
@@ -90,7 +90,7 @@ local function recompute()
 end
 
 -- at the top of the GUI update: closes the previous frame
-function M.inizio()
+function M.begin()
 	-- off: no work (switched back on, it starts from zero)
 	if not (M.acceso or M.log) then
 		first_one, lua_start, lua_work = nil, nil, 0
@@ -175,14 +175,14 @@ local function gc_step()
 end
 
 -- at the bottom of the GUI update: how much the scripts worked
-function M.fine()
+function M.finish()
 	gc_step()
 	if not lua_start then return end
 	lua_work = lua_work + now() - lua_start
 end
 
--- work done outside the update (on_input, messages): t = M.ora() at the start
-M.ora = now
+-- work done outside the update (on_input, messages): t = M.now() at the start
+M.now = now
 
 -- Named scopes for Defold's profiler (debug builds, http://localhost:8002 on
 -- the PC): the heavy work shows up as its own bar. Every scope must close in
@@ -191,12 +191,12 @@ local profiler = rawget(_G, "profiler")
 local nothing = function() end
 M.scope = profiler and profiler.scope_begin or nothing
 M.scope_end = profiler and profiler.scope_end or nothing
-function M.lavoro(t)
+function M.work(t)
 	if not first_one then return end
 	lua_work = lua_work + now() - t
 end
 
-function M.rete(gap)
+function M.net(gap)
 	n_gaps = n_gaps % GAPS + 1
 	gaps[n_gaps] = { clock, gap }
 	if gap > summary.rete then summary.rete = gap end
@@ -222,7 +222,7 @@ local function stutters_minute()
 end
 
 -- The on-screen line, 4 times a second (nil if there is nothing new)
-function M.testo()
+function M.text()
 	if not row_changed then return nil end
 	row_changed = false
 	local n = #sorted

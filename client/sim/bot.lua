@@ -181,7 +181,7 @@ local function no_crater(self, x, y, owner, blast, weapon)
 end
 
 local function world_parts()
-	return { robots = {}, orbs = {}, placed = {}, shards = {}, crates = {}, events = {}, used = {}, rng = rng.new(1) }
+	return { robots = {}, orbs = {}, placed = {}, pools = {}, shards = {}, crates = {}, events = {}, used = {}, rng = rng.new(1) }
 end
 
 -- a list of copies of src's items, in the reused list dst
@@ -225,6 +225,8 @@ function M.world(g, into)
 	w.robots = robots
 	w.orbs = copies(o.orbs, g.orbs)
 	w.placed = copies(o.placed, g.placed)
+	w.pools = copies(o.pools, g.pools)
+	w.pool_id = g.pool_id
 	local shards = o.shards
 	for i = 1, game.SHARD_COUNT do
 		shards[i] = g.shards[i] and copy(g.shards[i]) or nil
@@ -233,6 +235,8 @@ function M.world(g, into)
 	w.projectile = g.projectile and copy(g.projectile)
 	w.burst = g.burst and copy(g.burst)
 	w.explode = no_crater
+	-- the Trapano's tunnel doesn't dig either
+	w.dig = function() return 0, 0 end
 	return w
 end
 
@@ -256,7 +260,8 @@ local function quiet(w)
 		if w.shards[i] then return false end
 	end
 	for _, rb in ipairs(w.robots) do
-		if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet) then
+		if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet
+			or rb.cannon or rb.pull) then
 			return false
 		end
 	end
@@ -589,6 +594,9 @@ end
 local ARC_WEAPONS = {
 	missile = function() return game.MISSILE_SPEED, game.GRAVITY * game.MISSILE_GRAVITY end,
 	grenade = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
+	tar = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
+	petard = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
+	drill = function() return game.MISSILE_SPEED, game.GRAVITY * game.MISSILE_GRAVITY end,
 	trampoline = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
 }
 
@@ -655,7 +663,7 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 				local aim = { oy }
 				-- the Uovo and the Molla at the feet; the Molla is tried to the end
 				-- (where the robot it launches lands)
-				if wpn == "grenade" or wpn == "trampoline" then aim = { o.y + 2 } end
+				if wpn == "grenade" or wpn == "trampoline" or wpn == "tar" or wpn == "petard" then aim = { o.y + 2 } end
 				local fino = wpn == "trampoline" and "tutto" or "volo"
 				for n = 1, b.liv.powers do
 					local p = POWER_STEPS[n]
@@ -695,6 +703,17 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 				if dist < C.BELLOWS.range then
 					add(wpn, straight, 1, "tutto")
 					add(wpn, straight + (dx < 0 and -0.35 or 0.35), 1, "tutto")
+				end
+			elseif wpn == "boomerang" then
+				if dist < C.BOOMERANG.range + 40 then add(wpn, straight, 1, "volo") end
+			elseif wpn == "magnet" then
+				-- the centre is C.MAGNET.distance along the aim: aim so that the enemy is inside the pulse
+				if dist < C.MAGNET.distance + C.MAGNET.radius then add(wpn, straight, 1, "tutto") end
+			elseif wpn == "cannon" then
+				-- the flight at full power, towards the enemy or a bit above it
+				if dist < 600 then
+					add(wpn, straight, 1, "tutto")
+					add(wpn, straight + (dx < 0 and -0.3 or 0.3), 1, "tutto")
 				end
 			elseif wpn == "mallet" then
 				if math.abs(dx) < C.MALLET.reach + 30 and math.abs(dy) < C.MALLET.reach + 30 then

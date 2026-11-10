@@ -104,6 +104,60 @@ images {
   image: "/assets/weapons/bellows_icona.png"
 }
 images {
+  image: "/assets/weapons/boomerang.png"
+}
+images {
+  image: "/assets/weapons/boomerang_tinta.png"
+}
+images {
+  image: "/assets/weapons/boomerang_icona.png"
+}
+images {
+  image: "/assets/weapons/tar.png"
+}
+images {
+  image: "/assets/weapons/tar_tinta.png"
+}
+images {
+  image: "/assets/weapons/tar_icona.png"
+}
+images {
+  image: "/assets/weapons/drill.png"
+}
+images {
+  image: "/assets/weapons/drill_tinta.png"
+}
+images {
+  image: "/assets/weapons/drill_icona.png"
+}
+images {
+  image: "/assets/weapons/magnet.png"
+}
+images {
+  image: "/assets/weapons/magnet_tinta.png"
+}
+images {
+  image: "/assets/weapons/magnet_icona.png"
+}
+images {
+  image: "/assets/weapons/cannon.png"
+}
+images {
+  image: "/assets/weapons/cannon_tinta.png"
+}
+images {
+  image: "/assets/weapons/cannon_icona.png"
+}
+images {
+  image: "/assets/weapons/petard.png"
+}
+images {
+  image: "/assets/weapons/petard_tinta.png"
+}
+images {
+  image: "/assets/weapons/petard_icona.png"
+}
+images {
   image: "/assets/weapons/scambio_icona.png"
 }
 images {
@@ -162,6 +216,30 @@ images {
 }
 images {
   image: "/assets/weapons/giano_tinta.png"
+}
+images {
+  image: "/assets/weapons/falce.png"
+}
+images {
+  image: "/assets/weapons/falce_tinta.png"
+}
+images {
+  image: "/assets/weapons/fiasco.png"
+}
+images {
+  image: "/assets/weapons/fiasco_tinta.png"
+}
+images {
+  image: "/assets/weapons/punta.png"
+}
+images {
+  image: "/assets/weapons/punta_tinta.png"
+}
+images {
+  image: "/assets/weapons/petardo_volo.png"
+}
+images {
+  image: "/assets/weapons/petardo_volo_tinta.png"
 }
 margin: 0
 extrude_borders: 2

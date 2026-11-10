@@ -16,6 +16,12 @@ return {
 		mallet = { img = "mallet", tint = "mallet_tinta", x = 20.25, y = -0.25, w = 52.50, h = 17.82 },
 		lunge = { img = "lunge", tint = "lunge_tinta", x = 16.50, y = 0.00, w = 52.00, h = 15.00 },
 		bellows = { img = "bellows", tint = "bellows_tinta", x = 6.25, y = 0.00, w = 28.50, h = 15.00 },
+		boomerang = { img = "boomerang", tint = "boomerang_tinta", x = 5.50, y = 3.50, w = 28.00, h = 16.00 },
+		tar = { img = "tar", tint = "tar_tinta", x = 4.25, y = 3.25, w = 11.50, h = 15.50 },
+		drill = { img = "drill", tint = "drill_tinta", x = 5.50, y = -0.75, w = 34.00, h = 14.50 },
+		magnet = { img = "magnet", tint = "magnet_tinta", x = 0.00, y = 1.25, w = 22.00, h = 13.50 },
+		cannon = { img = "cannon", tint = "cannon_tinta", x = 2.25, y = -1.00, w = 27.50, h = 15.00 },
+		petard = { img = "petard", tint = "petard_tinta", x = 4.25, y = 3.25, w = 11.50, h = 15.50 },
 	},
 	pieces = {
 		uncino = { img = "uncino", tint = nil, x = 5.25, y = 0.00, w = 14.50, h = 16.00 },
@@ -27,5 +33,9 @@ return {
 		scheggia = { img = "scheggia", tint = "scheggia_tinta", x = 0.40, y = 0.00, w = 15.20, h = 9.60 },
 		globo = { img = "globo", tint = "globo_tinta", x = 0.00, y = 0.00, w = 16.00, h = 16.00 },
 		giano = { img = "giano", tint = "giano_tinta", x = 0.00, y = 0.00, w = 16.00, h = 16.00 },
+		falce = { img = "falce", tint = "falce_tinta", x = 0.40, y = -0.80, w = 20.00, h = 17.60 },
+		fiasco = { img = "fiasco", tint = "fiasco_tinta", x = 0.00, y = 0.00, w = 17.60, h = 24.00 },
+		punta = { img = "punta", tint = "punta_tinta", x = 2.00, y = 0.00, w = 23.20, h = 14.40 },
+		petardo_volo = { img = "petardo_volo", tint = "petardo_volo_tinta", x = 0.00, y = 0.80, w = 16.00, h = 19.20 },
 	},
 }

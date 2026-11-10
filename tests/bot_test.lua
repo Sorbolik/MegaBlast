@@ -22,12 +22,12 @@ end
 local function match(seed_n, modo, livello, map_id)
 	local players = {}
 	for i, p in ipairs(config.MODES[modo]) do players[i] = { team = p.team, bot = livello } end
-	local r = replay.nuova(seed_n, map_id, { players = players })
-	local g, bots = replay.partita(r)
+	local r = replay.new(seed_n, map_id, { players = players })
+	local g, bots = replay.match(r)
 	local evs = {}
 	while g.phase ~= "over" do
 		g:step(replay.input(r, g, bots))
-		replay.dopo(r, g)
+		replay.after(r, g)
 		for _, e in ipairs(g:pop_events()) do evs[e.type] = (evs[e.type] or 0) + 1 end
 	end
 	return g, r, evs
@@ -46,11 +46,11 @@ for _, rb in ipairs(g.robots) do
 end
 
 -- The recipe replays the same match: all the fingerprints match
-local ok, tick = replay.verifica(r)
+local ok, tick = replay.verify(r)
 check(ok, "recipe: the replayed match is identical" .. (ok and "" or " (diverges at tick " .. tostring(tick) .. ")"))
 -- a tampered recipe doesn't hold
 r.seme = r.seme + 1
-local ok2 = replay.verifica(r, 1200)
+local ok2 = replay.verify(r, 1200)
 check(not ok2, "recipe: with a different seed the fingerprints don't match")
 
 -- 2 vs 2 and free-for-all, on the other map
@@ -65,18 +65,18 @@ end
 do
 	local function prints(weights)
 		local players = { { team = 1, bot = "normale", pesi = weights }, { team = 2, bot = "normale" } }
-		local r5 = replay.nuova(6, "pavimento", { players = players })
-		local g5, bots = replay.partita(r5)
+		local r5 = replay.new(6, "pavimento", { players = players })
+		local g5, bots = replay.match(r5)
 		while g5.tick < 2400 do
 			g5:step(replay.input(r5, g5, bots))
-			replay.dopo(r5, g5)
+			replay.after(r5, g5)
 		end
-		return r5, g5:impronta()
+		return r5, g5:fingerprint()
 	end
 	local _, h0 = prints(nil)
 	local r5, h1 = prints({ globo_riparo = 1000, strada = 0.1 })
 	check(h0 ~= h1, "weights: a bot with other weights plays another match")
-	check(replay.verifica(r5), "weights: the recipe with the weights replays the same match")
+	check(replay.verify(r5), "weights: the recipe with the weights replays the same match")
 
 	-- a random neural net instead of the weights: it plays, and the recipe replays the same
 	local net = require "sim.rete"
@@ -88,7 +88,7 @@ do
 	end
 	local r6, h2 = prints({ rete = { strati = layers, w = w } })
 	check(h2 ~= h0, "net: a bot with the net plays another match")
-	check(replay.verifica(r6), "net: the recipe with the net replays the same match")
+	check(replay.verify(r6), "net: the recipe with the net replays the same match")
 end
 
 -- The tutorial bot and the turn plan set from outside (guided match)
@@ -164,41 +164,41 @@ end
 -- A real player and a bot: the player's keys end up in the recipe and replay it
 do
 	local players = { { team = 1 }, { team = 2, bot = "facile" } }
-	local r3 = replay.nuova(4, "pavimento", { players = players })
-	local g3, bots = replay.partita(r3)
+	local r3 = replay.new(4, "pavimento", { players = players })
+	local g3, bots = replay.match(r3)
 	while g3.tick < 3600 and g3.phase ~= "over" do
 		local human = { right = g3.tick % 200 < 100, left = false, hold = true, jump = g3.tick % 150 == 0 }
 		if g3.current == 1 and g3.tick % 500 == 120 then human.fire = { weapon = "missile", angle = 0.6, power = 0.8 } end
 		g3:step(replay.input(r3, g3, bots, human))
-		replay.dopo(r3, g3)
+		replay.after(r3, g3)
 	end
 	check(#r3.input > 0 and #r3.input < g3.tick / 10, "recipe: only the key changes (" .. #r3.input .. ")")
-	check(replay.verifica(r3), "recipe: player and bot, the replayed match is identical")
+	check(replay.verify(r3), "recipe: player and bot, the replayed match is identical")
 end
 
 -- With bot_keys the bots' keys end up in the recipe too: replaying it, nobody
 -- thinks (the in-game replay of a moment gets there at once) and it is the same match
 do
 	local players = { { team = 1 }, { team = 2, bot = "difficile" }, { team = 1, bot = "normale" }, { team = 2, bot = "facile" } }
-	local r7 = replay.nuova(5, "pavimento", { players = players })
+	local r7 = replay.new(5, "pavimento", { players = players })
 	r7.bot_keys = true
-	local g7, bots = replay.partita(r7)
+	local g7, bots = replay.match(r7)
 	while g7.tick < 6000 and g7.phase ~= "over" do
 		local human = { right = g7.tick % 200 < 100, left = false, hold = true, jump = g7.tick % 150 == 0 }
 		if g7.current == 1 and g7.tick % 500 == 120 then human.fire = { weapon = "missile", angle = 0.6, power = 0.8 } end
 		g7:step(replay.input(r7, g7, bots, human))
-		replay.dopo(r7, g7)
+		replay.after(r7, g7)
 	end
 	check(#r7.input > 0 and #r7.input < g7.tick / 10, "bot keys: still only the key changes (" .. #r7.input .. ")")
-	check(replay.verifica(r7), "bot keys: the replayed match is identical")
+	check(replay.verify(r7), "bot keys: the replayed match is identical")
 	-- without bots at all: the keys alone are enough
-	local g8 = replay.partita(r7)
+	local g8 = replay.match(r7)
 	local l, n, same = replay.reader(r7), 1, true
 	while g8.tick < g7.tick do
 		g8:step(replay.read_step(l, g8, {}))
 		local a = r7.impronte[n]
 		if a and a.t == g8.tick then
-			same = same and a.h == g8:impronta()
+			same = same and a.h == g8:fingerprint()
 			n = n + 1
 		end
 	end
@@ -241,7 +241,7 @@ do
 	-- with a taste for weapons (pesi.armi) it takes the ones it likes, if offered
 	local d2 = draft.new(9, { { team = 1 }, { team = 2 } })
 	bot.choose(d2, 1, 9, { punch = 3, mallet = 3 })
-	local has = function(offer, w) for _, x in ipairs(offer) do if x == w then return true end end end
+	local has = function(offer, w) for _, x in ipairs(offer) do if x == w then return true end end return false end
 	check((d2.picks[1] == "punch") == has(d2.offer, "punch") and (d2.picks2[1] == "mallet") == has(d2.offer2, "mallet"),
 		"draft: with a taste for weapons it takes Pugno and Maglio")
 end
@@ -250,7 +250,7 @@ end
 do
 	local g5 = game.new(3, "pavimento")
 	for _ = 1, 120 do g5:step() end
-	local before = g5:impronta()
+	local before = g5:fingerprint()
 	local cells = 0
 	for i = 1, #g5.terrain.data do cells = cells + g5.terrain.data[i] end
 	local w = bot.world(g5)
@@ -258,7 +258,7 @@ do
 	for _ = 1, 200 do w:advance({}, true) end
 	local after = 0
 	for i = 1, #g5.terrain.data do after = after + g5.terrain.data[i] end
-	check(g5:impronta() == before and cells == after, "the bot's tries change neither the match nor the terrain")
+	check(g5:fingerprint() == before and cells == after, "the bot's tries change neither the match nor the terrain")
 end
 
 -- The melee aim: who would take the shot, without touching the match
@@ -269,11 +269,11 @@ do
 	for _, r in ipairs(g6.robots) do if r ~= a then b = r end end
 	b.x, b.y = a.x + 50, a.y
 	a.secondary = "bellows"
-	local before, out = g6:impronta(), {}
+	local before, out = g6:fingerprint(), {}
 	local toward = bot.hits(g6, "bellows", 0, out)
 	local got = out[1]
 	local away = bot.hits(g6, "bellows", math.pi, out)
-	check(toward == 1 and got == b.id and away == 0 and g6:impronta() == before,
+	check(toward == 1 and got == b.id and away == 0 and g6:fingerprint() == before,
 		"melee aim: the Mantice hits who is in front, not behind, and the match doesn't change")
 end
 

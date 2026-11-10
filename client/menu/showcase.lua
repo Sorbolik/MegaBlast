@@ -63,11 +63,11 @@ function M.from_profile(p, nome, team, under, tournament)
 	local tiers = profile.tier(p, a)
 	local v = { nome = nome, squadra = team, sotto = under, livello = p.livello, torneo = tournament,
 		badge = profile.badge(p), pezzi = {}, abilities = M.abilities(a, tiers), albero = {},
-		punti = profile.punti(p, tournament) }
+		punti = profile.points(p, tournament) }
 	for i, s in ipairs(equip.SLOTS) do
 		local set = a.gear[s.id]
 		local n = set and (p.mastery[set .. "_" .. s.id] or 0) or 0
-		v.pezzi[i] = { slot = s.id, set = set, livello = set and equip.livello(n) or 0, tier = tiers[s.id] or 1 }
+		v.pezzi[i] = { slot = s.id, set = set, livello = set and equip.level(n) or 0, tier = tiers[s.id] or 1 }
 	end
 	for i, r in ipairs(skills.BRANCHES) do v.albero[i] = skills.spent(a.tree or {}, r.id) end
 	v.stats = copy_stats(loadout.stats(game.base_stats(), a, tiers))
@@ -92,7 +92,7 @@ end
 local function round_off(x) return math.floor(x + 0.5) end
 
 -- The four bars: name, written value and offset from the base (-1..1 = ±SCALE)
-function M.righe(v, base)
+function M.rows(v, base)
 	base = base or game.base_stats()
 	local out = {}
 	for i, b in ipairs(M.BARS) do
@@ -134,7 +134,7 @@ function M.from_net(t, nome, team, under)
 end
 
 -- What is sent to the server with the greeting (hello): level and badges
-function M.per_rete(p)
+function M.for_net(p)
 	local bdg = {}
 	for _, b in ipairs(profile.badge(p)) do bdg[#bdg + 1] = { id = b.id, grado = b.grado } end
 	-- (no badges, no bdg: the empty table would be an object in JSON)

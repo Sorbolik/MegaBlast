@@ -119,13 +119,13 @@ local SPRING_Z = { 0.3, 0.45, 0.5, 0.45, 0.28, 0.25 }
 
 -- the devil's height from the feet to the top of the head, to put the plate above
 local HEAD_TOP = (PT.collo[2] + PT.cima[2]) * game.DISEGNO_H / D.height
-function M.altezza()
+function M.height()
 	return HEAD_TOP
 end
 
 -- the top of the head image, horns and flame included (they stick out above
 -- altezza): the plate goes above this, so up close it never covers them
-function M.cima(s)
+function M.top(s)
 	return s.cima
 end
 
@@ -332,6 +332,7 @@ end
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
 	punch = -0.9, eagle = -0.6, hook = -0.4, bellows = -0.3,
+	boomerang = -0.5, tar = -0.5, drill = -0.3, magnet = -0.4, cannon = -0.3, petard = -0.5,
 	mallet = 2,  -- on the shoulder: as long as it is, pointing down it would go into the terrain
 	lunge = 1.3,  -- straight up: pointing down it would go into the terrain
 }
@@ -410,7 +411,7 @@ local function weapon_name(s, name, color)
 end
 
 -- The hook is in the barrel (on) or has left with the wire
-function M.uncino(s, on)
+function M.hook(s, on)
 	if s.hook_on ~= on then
 		s.hook_on = on
 		gui.set_enabled(s.uncino, on)
@@ -465,7 +466,7 @@ function M.new(color, look, weapon_only)
 		x = {}, v = {}, goal = {}, coda = {}, coda_a = {},
 		-- this frame's pose from the clips and the angles (radians) of the hanging
 		-- arms and legs, which chase it
-		posa = pose.nuova(), braccia = { 0, 0 }, gambe = { 0, 0 } }
+		posa = pose.new(), braccia = { 0, 0 }, gambe = { 0, 0 } }
 	s.strati, s.tail_shape = dress(look)
 	s.root = joint(nil, 0, 0)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
@@ -661,11 +662,11 @@ local function waiting(s, dt)
 	if s.weapon_t <= 0 and not s.skit then
 		s.holding_weapon, s.weapon_t = not s.holding_weapon, WEAPON_FROM + WEAPON_TO * math.random()
 	end
-	if s.holding_weapon then return pose.aggiungi(s.posa, s.armed[s.chosen_weapon].fermo, s.t, 1) end
+	if s.holding_weapon then return pose.add(s.posa, s.armed[s.chosen_weapon].fermo, s.t, 1) end
 	if s.skit then
 		local sc = s.A[s.skit]
 		s.skit_t = s.skit_t + dt
-		if s.skit_t < sc.duration then return pose.aggiungi(s.posa, sc, s.skit_t, 1) end
+		if s.skit_t < sc.duration then return pose.add(s.posa, sc, s.skit_t, 1) end
 		s.skit, s.paused = nil, PAUSE_FROM + PAUSE_TO * math.random()
 	end
 	s.paused = s.paused - dt
@@ -673,7 +674,7 @@ local function waiting(s, dt)
 		s.skit, s.skit_t = SKITS[math.random(#SKITS)], 0
 		s.n_skits = s.n_skits + 1
 	end
-	pose.aggiungi(s.posa, s.A.fermo, s.t, 1)
+	pose.add(s.posa, s.A.fermo, s.t, 1)
 end
 
 -- the tail: a wave starting at the back and reaching the tip, plus the TAIL
@@ -701,7 +702,7 @@ end
 local function death(s, dt)
 	local t = s.morte + dt
 	s.morte = t
-	pose.aggiungi(s.posa, s.A.sconfitta, t, 1)
+	pose.add(s.posa, s.A.sconfitta, t, 1)
 	s.alpha.w = max(0, 1 - max(0, t - s.A.sconfitta.duration - 0.3) / FADES)
 	gui.set_color(s.root, s.alpha)
 	if s.alpha.w == 0 then
@@ -772,7 +773,7 @@ function M.update(s, dt, st)
 	-- the state's pose, from the clips; on top, what depends on the game: tilt
 	-- and tail with speed, the aim
 	local po = s.posa
-	pose.azzera(po)
+	pose.reset(po)
 	local forward = st.moving * face
 	local lean = -0.22 * max(-1, min(1, forward / 70)) * s.cammina
 	local sq = 0
@@ -786,35 +787,35 @@ function M.update(s, dt, st)
 		death(s, dt)
 	elseif s.ui_action == "colpito" and s.action_t < s.A.colpito.duration then
 		-- hit: hit face, arms up (if they don't hold the weapon)
-		pose.aggiungi(po, s.A.colpito, s.action_t, 1)
+		pose.add(po, s.A.colpito, s.action_t, 1)
 	elseif para then
 		-- hanging from the straps; parachute and body swing against the velocity
 		s.swing = s.swing + (-max(-0.35, min(0.35, s.vx / 400)) - s.swing) * min(1, dt * 4)
-		pose.aggiungi(po, s.A.paracadute, s.t, 1)
+		pose.add(po, s.A.paracadute, s.t, 1)
 		rot(s.para, s.swing * 0.6)
 		lean = s.swing * 0.5
 	elseif not ground then
 		-- in the air: going up the sale pose, going down the scende one, and it
 		-- stretches with speed
 		local above = max(-1, min(1, s.vy / JUMP_V))
-		pose.aggiungi(po, clip.aria, s.t, 1)
-		pose.aggiungi(po, clip.sale, 0, above)
-		pose.aggiungi(po, clip.scende, 0, -above)
+		pose.add(po, clip.aria, s.t, 1)
+		pose.add(po, clip.sale, 0, above)
+		pose.add(po, clip.scende, 0, -above)
 		sq = min(0.2, abs(s.vy) / 900)
 	elseif runs or s.cammina > 0.05 then
 		-- the run: one loop of the clip per step, fading into idle
 		local c = s.cammina
-		pose.aggiungi(po, frozen, s.t, 1 - c)
-		pose.aggiungi(po, clip.corsa, s.passo / (2 * pi) * clip.corsa.duration, c)
+		pose.add(po, frozen, s.t, 1 - c)
+		pose.add(po, clip.corsa, s.passo / (2 * pi) * clip.corsa.duration, c)
 	elseif st.vittoria then
-		pose.aggiungi(po, s.A.vittoria, s.t, 1)
+		pose.add(po, s.A.vittoria, s.t, 1)
 	elseif posing then
-		pose.aggiungi(po, posing, s.posa_t, 1)
+		pose.add(po, posing, s.posa_t, 1)
 	elseif not st.turno and not aim_name and not st.fermo then
 		-- idle, not their turn: a skit now and then
 		waiting(s, dt)
 	else
-		pose.aggiungi(po, frozen, s.t, 1)
+		pose.add(po, frozen, s.t, 1)
 	end
 	-- aiming, the head looks where you aim
 	local head = po.testa

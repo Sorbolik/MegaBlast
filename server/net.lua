@@ -54,7 +54,7 @@ end
 -- players: like opts.players of game.new (teams and draft picks);
 -- r: the rules of the queue's event (sim/rules.lua), nil outside events
 function N.new(seed, map, players, r)
-	local g = game.new(seed, map, rules.opzioni(r, { players = players, random_spawns = true, intro = game.INTRO_TICKS }))
+	local g = game.new(seed, map, rules.options(r, { players = players, random_spawns = true, intro = game.INTRO_TICKS }))
 	g:pop_events()
 	g.carves = {} -- terrain digs, for whoever reconnects
 	for i, p in ipairs(players or {}) do
@@ -108,7 +108,8 @@ function N.snapshot(g, aim)
 	end
 	for i, rb in ipairs(g.robots) do
 		-- s: tick of the ongoing slash (0 if the robot isn't hitting), sd: its direction
-		-- pu, pd: the same for the Pugno del Titano; ag, as, ap, ac: shots of Uovo, Schegge, Pugno and Cecchino
+		-- pu, pd: the same for the Pugno del Titano; ag, as, ap, ac: shots of Uovo, Schegge, Pugno and Cecchino;
+		-- ab, at, ar: shots of Falcetto, Pozza di Pece and Trapano
 		-- sb, pb: aim angle of the slash and the punch (the hit rotates with the aim)
 		-- tl: teleports in hand, mh: max life, tu: turns played, pt: points
 		-- ak, ad, am: traps, shields and trampolines; sh: shield left; pa: parachute open;
@@ -135,6 +136,7 @@ function N.snapshot(g, aim)
 		r.s, r.sd, r.pu, r.pd = rb.swing or 0, rb.swing_dir or 0, rb.punch or 0, rb.punch_dir or 0
 		r.sb, r.pb = rb.swing_base or 0, rb.punch_base or 0
 		r.ag, r.as, r.ap, r.ac = ammo.grenade, ammo.shards, ammo.punch, ammo.sniper
+		r.ab, r.at, r.ar = ammo.boomerang, ammo.tar, ammo.drill
 		r.sw, r.ss, r.lu = rb.secondary or "", rb.secondary and ammo[rb.secondary] or 0, rb.lunge or 0
 		r.hk = hooked and (hooked.by or -1) or 0
 		r.hx, r.hy, r.ml = hooked and hooked.x or 0, hooked and hooked.y or 0, rb.mallet or 0
@@ -144,7 +146,7 @@ function N.snapshot(g, aim)
 		r.la, r.gn = rb.lunge_vx and math.atan2(rb.lunge_vy, rb.lunge_vx) or 0, rb.gone or false
 		r.gd = rb.round_done
 	end
-	-- k: "missile", "grenade" or "sniper", fu: ticks before the Uovo blows up
+	-- k: "missile", "grenade", "sniper", "boomerang", "drill", "tar" or "petard", fu: ticks before the Uovo blows up
 	local p = g.projectile and { x = g.projectile.x, y = g.projectile.y, k = g.projectile.kind, fu = g.projectile.fuse or 0 }
 	-- o: the teleport orbs in flight (i = orb number, to follow it from one state to the next)
 	local orbs = {}
@@ -165,6 +167,9 @@ function N.snapshot(g, aim)
 	for i, o in ipairs(g.placed) do
 		placed[i] = { i = o.id, k = o.kind, x = o.x, y = o.y, a = o.armed, tm = o.team, r = o.r, v = o.flying or false, d = o.dir }
 	end
+	-- pp: pools of burning pitch (Pozza di Pece; r: radius, tn: turns left)
+	local pools = {}
+	for i, pool in ipairs(g.pools) do pools[i] = { i = pool.id, x = pool.x, y = pool.y, r = pool.r, tn = pool.turns } end
 	-- hl: healing circles
 	local heals = {}
 	for i, h in ipairs(g.heals) do heals[i] = { i = h.id, x = h.x, y = h.y } end
@@ -180,7 +185,7 @@ function N.snapshot(g, aim)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, mt = g.match_left, ai = g.intro > 0 and g.intro or nil, fr = g.final_round, gr = g.round,
 		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
-		c = crates, pl = placed, hl = heals, aim = aim }
+		c = crates, pl = placed, hl = heals, pp = pools, aim = aim }
 end
 
 -- Events since the last tick (a list, empty if none happened)
@@ -188,7 +193,7 @@ function N.events(g)
 	local list = g:pop_events()
 	for _, e in ipairs(list) do
 		e.t = "ev"
-		if e.type == "explosion" then g.carves[#g.carves + 1] = { e.x, e.y, e.r } end
+		if e.type == "explosion" or e.type == "carve" then g.carves[#g.carves + 1] = { e.x, e.y, e.r } end
 	end
 	return list
 end
@@ -218,7 +223,7 @@ function N.draft_new(seed, mode, r, bots)
 	for i, p in ipairs(config.MODES[mode]) do
 		players[i] = { team = p.team, bot = bots and bots[i] or nil }
 	end
-	local d = draft.new(seed, players, rules.armi(r))
+	local d = draft.new(seed, players, rules.weapons(r))
 	for i, p in ipairs(players) do
 		if p.bot then bot.choose(d, i, seed) end
 	end

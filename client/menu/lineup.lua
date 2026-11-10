@@ -36,7 +36,7 @@ local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
 
 -- The tags' x: two teams on the sides of the center (in free-for-all in a
 -- row). squads: each robot's team
-function M.posti(squads)
+function M.seats(squads)
 	local n = #squads
 	local teams = {}
 	for _, t in ipairs(squads) do teams[t] = true end
@@ -79,7 +79,7 @@ function M.new(showcases, title)
 	local s = { vetrine = showcases, card_list = {}, t = config.LINEUP_SECONDS }
 	local squads = {}
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
-	local xs, vs = M.posti(squads)
+	local xs, vs = M.seats(squads)
 	s.fondo = backdrop.new("schieramento", nil, M.side_colors(squads, xs))
 	-- title and time stick to the real edges (only a node without a parent
 	-- sticks), on the header's row (ui.header): the pill's place stays free
@@ -87,9 +87,9 @@ function M.new(showcases, title)
 	gui.set_visible(top_left, false)
 	gui.set_xanchor(top_left, gui.ANCHOR_LEFT)
 	gui.set_yanchor(top_left, gui.ANCHOR_TOP)
-	local t = ui.titolo(title, 0, 0, 0.75, C.LIGHT, top_left)
+	local t = ui.title(title, 0, 0, 0.75, C.LIGHT, top_left)
 	gui.set_pivot(t, gui.PIVOT_W)
-	local under = ui.testo(T.tap_to_pick, 2, -34, 0.75, C.OFF, top_left)
+	local under = ui.text(T.tap_to_pick, 2, -34, 0.75, C.OFF, top_left)
 	gui.set_pivot(under, gui.PIVOT_W)
 	local top_right = gui.new_box_node(vec(W - ui.EDGE - 115, ui.HEAD_Y), vec(0, 0))
 	gui.set_visible(top_right, false)
@@ -98,10 +98,10 @@ function M.new(showcases, title)
 	s.angoli = { top_left, top_right }
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
-	ui.pannello(0, 0, 230, 58, top_right)
-	local armi = ui.testo(T.weapons_in, -24, 0, 0.85, C.OFF, top_right)
+	ui.panel(0, 0, 230, 58, top_right)
+	local armi = ui.text(T.weapons_in, -24, 0, 0.85, C.OFF, top_right)
 	gui.set_pivot(armi, gui.PIVOT_E)
-	s.tally = ui.testo("", -12, 0, 0.95, C.LIGHT, top_right)
+	s.tally = ui.text("", -12, 0, 0.95, C.LIGHT, top_right)
 	gui.set_pivot(s.tally, gui.PIVOT_W)
 
 	for i, v in ipairs(showcases) do
@@ -109,7 +109,7 @@ function M.new(showcases, title)
 		s.card_list[i] = tag.new(v, xs[i], TOP, { portrait = true, tu = v.tu }, s.radice)
 	end
 	if vs then
-		ui.titolo(T.versus, 640, TOP - 260, 0.75, C.OFF, s.radice)
+		ui.title(T.versus, 640, TOP - 260, 0.75, C.OFF, s.radice)
 	end
 	M.update(s, 0)
 	return s
@@ -136,7 +136,7 @@ function M.strip(showcases)
 	gui.set_visible(st.radice, false)
 	local squads = {}
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
-	local xs = M.posti(squads)
+	local xs = M.seats(squads)
 	for i, v in ipairs(showcases) do
 		-- the draft's wheel (64 x 64 at 30 from the top left corner of the real
 		-- screen) with ESCI next to it (160 wide): with four tags at 16:9 and at 20:9
@@ -146,12 +146,12 @@ function M.strip(showcases)
 			st.covers_corner = true
 		end
 		local col = C.SQUADRA[v.squadra] or C.LIGHT
-		local n, border = ui.pannello(xs[i], STRIP_Y, STRIP_W, STRIP_H, st.radice)
+		local n, border = ui.panel(xs[i], STRIP_Y, STRIP_W, STRIP_H, st.radice)
 		gui.set_color(border, v.tu and col or with_alpha(col, 0.6))
 		local sx = -STRIP_W / 2 + 12
 		ui.ring_node(sx + 17, 0, 34, 2.5, col, n)
-		ui.testo(v.livello and tostring(v.livello) or v.bot and common.bot or "–", sx + 17, 0, (v.livello or not v.bot) and 0.75 or 0.5, col, n)
-		local nome = ui.titolo(v.nome or "?", sx + 42, 8, 0.4, C.LIGHT, n)
+		ui.text(v.livello and tostring(v.livello) or v.bot and common.bot or "–", sx + 17, 0, (v.livello or not v.bot) and 0.75 or 0.5, col, n)
+		local nome = ui.title(v.nome or "?", sx + 42, 8, 0.4, C.LIGHT, n)
 		gui.set_pivot(nome, gui.PIVOT_W)
 		-- the four pieces in small: a little square with the tier border and the level
 		for k, p in ipairs(v.pezzi or {}) do
@@ -163,7 +163,7 @@ function M.strip(showcases)
 			local d = gui.new_box_node(vec(0, 0), vec(16, 16))
 			gui.set_color(d, C.BOTTOM)
 			gui.set_parent(d, q)
-			if p.set then ui.testo(tostring(p.livello), 0, 0, 0.5, C.LIGHT, q) end
+			if p.set then ui.text(tostring(p.livello), 0, 0, 0.5, C.LIGHT, q) end
 		end
 		local bx = STRIP_W / 2 - 14
 		for k = #(v.badge or {}), 1, -1 do
@@ -172,7 +172,7 @@ function M.strip(showcases)
 		end
 		local abilities = #(v.abilities or {})
 		if abilities > 0 then
-			local t = ui.testo((abilities == 1 and T.power or T.powers):format(abilities), STRIP_W / 2 - 14, 10, 0.5, C.GOLD, n)
+			local t = ui.text((abilities == 1 and T.power or T.powers):format(abilities), STRIP_W / 2 - 14, 10, 0.5, C.GOLD, n)
 			gui.set_pivot(t, gui.PIVOT_E)
 		end
 		st.mini[i] = n

@@ -298,6 +298,115 @@ def mantice(d):
     return dict(box=(-8, -7.5, 20.5, 7.5))
 
 
+# Le armi nuove (9 novembre 2026): tre primarie e tre secondarie.
+
+def falcetto(d):
+    # Falcetto: una falce di ferro con la lama curva (parti tinte nel dorso) e il manico di legno
+    d.rect(-6, -1.0, 8, 2.0, "legno", r=0.8)                                          # manico
+    d.rect(1.4, -1.6, 1.6, 3.2, "ottone", r=0.4)                                      # ghiera
+    d.path("M2.4,1.4 Q9,10.5 17.5,6.4 Q12,6.6 8.2,1.2 Z", "acciaio")                  # lama
+    d.path("M3.4,1.6 Q9,8.4 15.2,6.0 Q10.4,5.2 7.4,1.6 Z", "bianco", tinta=True, contorno=False)  # dorso tinto
+    d.riga("M3.6,2.2 Q9,7.4 15.4,6.2", COL["acciaio"][2], 0.4)
+    return dict(box=(-8.5, -4.5, 19.5, 11.5))
+
+
+def fiasco_in_mano(d):
+    # fiasco di pece: ampolla tonda con il collo, tappo di sughero e la pece che gorgoglia
+    fiasco(d, 4.4, 1.6)
+    return dict(box=(-1.5, -4.5, 10, 11))
+
+
+def fiasco(d, cx=0.0, cy=0.0):
+    d.cerchio(cx, cy, 3.6, "ferro")
+    d.path(f"M{cx - 3.4},{cy - 0.4} Q{cx},{cy + 1.2} {cx + 3.4},{cy - 0.4} Q{cx + 3.2},{cy - 2.8} {cx},{cy - 3.4} "
+           f"Q{cx - 3.2},{cy - 2.8} {cx - 3.4},{cy - 0.4} Z", "bianco", tinta=True, contorno=False)  # la pece, tinta
+    d.rect(cx - 1.2, cy + 3.0, 2.4, 2.8, "ferro", r=0.4)                                # collo
+    d.rect(cx - 1.5, cy + 5.4, 3.0, 1.6, "legno", r=0.5)                                # tappo
+    d.riga(f"M{cx - 2.2},{cy + 1.8} Q{cx - 1.6},{cy + 2.6} {cx - 0.6},{cy + 2.8}", COL["ferro"][2], 0.5)
+
+
+def trapano(d):
+    # lanciatrivella: tubo di ferro con la punta a spirale d'ottone davanti
+    L = MUZZLE
+    d.poli([(-7.5, -2.2), (-9.5, -3.2), (-9.5, 3.2), (-7.5, 2.2)], "ferro")           # scarico
+    d.rect(-7.5, -2.8, L - 4 + 7.5, 5.6, "ferro", r=1.2)                              # tubo
+    d.rect(-4.0, -1.0, 8.0, 2.0, "bianco", r=1.0, tinta=True)                          # rune
+    d.rect(-6.2, -3.2, 1.6, 6.4, "ottone", r=0.5)
+    d.rect(4.6, -3.2, 1.6, 6.4, "ottone", r=0.5)
+    d.poli([(L - 4.5, -2.6), (L + 7.0, 0), (L - 4.5, 2.6)], "ottone")                 # punta
+    d.riga(f"M{L - 3},-2.0 L{L - 1},1.8 M{L},-1.4 L{L + 1.8},1.0 M{L + 2.6},-0.8 L{L + 4},0.5", COL["ottone"][0], 0.45)
+    d.poli([(1.0, -2.8), (3.6, -2.8), (2.6, -6.2), (0.6, -6.0)], "cuoio")             # impugnatura
+    return dict(box=(-11.5, -8, L + 8.5, 6.5))
+
+
+def punta(d):
+    # la punta del Trapano in volo: cono d'ottone a spirale, coda rossa
+    d.poli([(-4.2, -2.2), (-2.0, -1.0), (-2.0, 1.0), (-4.2, 2.2)], "rosso")
+    d.rect(-3.2, -1.7, 3.6, 3.4, "ferro", r=0.8)
+    d.poli([(0.2, -2.1), (6.6, 0), (0.2, 2.1)], "ottone")
+    d.riga("M1.2,-1.6 L2.2,1.6 M3.0,-1.1 L3.8,1.1", COL["ottone"][0], 0.4)
+    d.rect(-2.2, -0.5, 2.0, 1.0, "bianco", r=0.5, tinta=True)
+    return dict(box=(-6, -4.5, 8.5, 4.5))
+
+
+def calamita(d):
+    # Calamita: un ferro di cavallo rosso con i poli bianchi (tinti), tenuto per la curva
+    d.path("M-3,-3 Q-8,-3 -8,2 L-8,5 L-4.8,5 L-4.8,2 Q-4.8,-0.4 -3,-0.4 L3.4,-0.4 Q5.2,-0.4 5.2,2 L5.2,5 "
+           "L8.4,5 L8.4,2 Q8.4,-3 3.4,-3 Z", "rosso")
+    d.rect(-8, 3.2, 3.2, 3.0, "bianco", r=0.3, tinta=True)
+    d.rect(5.2, 3.2, 3.2, 3.0, "bianco", r=0.3, tinta=True)
+    d.riga("M-3,-1.9 L3.4,-1.9", COL["rosso"][2], 0.5)
+    d.riga("M-6.8,4.2 L-5.2,4.2 M5.6,4.2 L7.4,4.2", INK, 0.35)
+    return dict(box=(-11, -5.5, 11, 8))
+
+
+def cannonata(d):
+    # Cannonata: un mortaio corto di ferro con la bocca larga e il fondo a sfera
+    L = MUZZLE
+    d.cerchio(-6, 0, 3.8, "ferro")                                                    # culatta
+    d.poli([(-4, -3.0), (L - 3, -4.6), (L - 3, 4.6), (-4, 3.0)], "ferro")             # canna
+    d.rect(L - 4.5, -5.4, 3.4, 10.8, "ottone", r=0.8)                                 # bocca
+    d.rect(-0.8, -3.4, 1.8, 6.8, "ottone", r=0.5)
+    d.rect(5.6, -4.0, 1.8, 8.0, "ottone", r=0.5)
+    d.cerchio(2.6, 0, 1.0, "bianco", tinta=True)
+    d.poli([(-1.5, -3.0), (1.0, -3.0), (0.2, -6.6), (-2.2, -6.2)], "cuoio")           # impugnatura
+    d.riga(f"M-3,2 L{L - 4},3.2", COL["ferro"][2], 0.45)
+    return dict(box=(-11.5, -8.5, L + 2, 6.5))
+
+
+def petardo_in_mano(d):
+    petardo(d, 4.4, 1.6)
+    return dict(box=(-1.5, -4.5, 10, 11))
+
+
+def petardo(d, cx=0.0, cy=0.0):
+    # petardo: bomba nera tonda con la fascia tinta e la miccia accesa
+    d.cerchio(cx, cy, 3.2, "ferro")
+    d.rect(cx - 3.2, cy - 0.8, 6.4, 1.6, "bianco", tinta=True, contorno=False)
+    d.rect(cx - 1.0, cy + 2.8, 2.0, 1.2, "ottone", r=0.3)
+    d.riga(f"M{cx},{cy + 4.0} Q{cx + 1.2},{cy + 5.2} {cx + 0.6},{cy + 6.0}", INK, 0.45)
+    d.cerchio(cx + 0.7, cy + 6.1, 0.8, "fuoco")
+    d.riga(f"M{cx - 2.2},{cy + 1.4} Q{cx - 1.6},{cy + 2.2} {cx - 0.6},{cy + 2.4}", COL["ferro"][2], 0.5)
+
+
+def falce_volo(d):
+    # la falce che gira in volo: mezzaluna d'acciaio con il dorso tinto
+    d.path("M-4.6,2.4 Q-0.4,-5.4 5.2,-3.0 Q1.2,-3.0 -1.6,2.6 Z", "acciaio")
+    d.path("M-3.4,2.0 Q-0.2,-3.6 3.6,-2.8 Q0.4,-2.2 -2.0,2.2 Z", "bianco", tinta=True, contorno=False)
+    d.rect(-2.2, 1.6, 2.6, 1.6, "legno", r=0.5)
+    return dict(box=(-6, -6, 6.5, 5))
+
+
+def fiasco_volo(d):
+    fiasco(d, 0, -1.4)
+    return dict(box=(-5.5, -7.5, 5.5, 7.5))
+
+
+def petardo_volo(d):
+    petardo(d, 0, -1.4)
+    return dict(box=(-5.0, -5.5, 5.0, 6.5))
+
+
 # I colpi in volo: origine nel centro, x nel verso in cui vanno
 
 def razzo(d):
@@ -351,6 +460,12 @@ ARMI = {
     "mallet": (maglio, 45),
     "lunge": (affondo, 45),
     "bellows": (mantice, 30),
+    "boomerang": (falcetto, 30),
+    "tar": (fiasco_in_mano, 0),
+    "drill": (trapano, 35),
+    "magnet": (calamita, 20),
+    "cannon": (cannonata, 30),
+    "petard": (petardo_in_mano, 0),
 }
 # pezzi che non si impugnano, grandi come in mano: l'uncino del Rampino (in
 # canna e in volo, battle/rope.lua)
@@ -366,6 +481,10 @@ COLPI = {
     "scheggia": scheggia,
     "globo": globo_volo,
     "giano": giano_volo,
+    "falce": falce_volo,
+    "fiasco": fiasco_volo,
+    "punta": punta,
+    "petardo_volo": petardo_volo,
 }
 
 

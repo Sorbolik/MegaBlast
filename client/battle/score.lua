@@ -50,7 +50,7 @@ local M = {}
 local max, min, floor, abs = math.max, math.min, math.floor, math.abs
 
 local TEAMS = 4
--- center of the row, centered on screen (M.cima); low enough to leave room
+-- center of the row, centered on screen (M.top); low enough to leave room
 -- above for the Crown
 local TOP = 38
 local Y, HALF = 720 - TOP, 640
@@ -60,11 +60,15 @@ local STRIP, BORDER_MINE = 6, 3
 local VAL_W, ROPE_W, ROPE_H, ROPE_GAP = 60, 250, 12, 8
 local BAND_W, BAND_STEP, BAND_V = 4, 10, 16  -- stripes of the pending points: width, spacing, px/s
 local SOFT = 60                    -- with the first points the rope moves little
-local CAPTION, SMALL = 0.8, 0.6     -- ui.testo scales
+local CAPTION, SMALL = 0.8, 0.6     -- ui.text scales
 -- the first one's Crown: the gold one of the plates (fx/targa_corona.png, 108 x 59)
 local CROWN_W = 25
 local CROWN_Y = GET_H / 2 + 1 + CROWN_W * 59 / 108 / 2
-local FLIGHT_SCALE, ARRIVAL_SCALE = 1.7, 0.8
+local FLIGHT_SCALE, ARRIVAL_SCALE = 1.25, 0.8
+-- the points are born a moment after the hit, when the damage number over the head
+-- has already gone (they're not always damage: they have their own time), and in flight
+-- they are a little paler than the token they land in, which lights up at full color
+local BORN_WAIT, FLIGHT_PALE = 0.45, 0.3
 local SPAWN_T, FLIGHT_T, SALE = 0.5, 0.45, 24
 -- two numbers born in the same spot (the Swarm, an egg on two close robots)
 -- don't cover each other (Sergio, 3 Nov): the new one is born in the first free
@@ -77,20 +81,24 @@ local NUMBERS = 8
 local TICK_EVERY, TICK_STEP = 0.045, 5  -- one tick every 5 points, never more often than this
 -- turn pairs: pending-points token next to the box
 local WAIT_W, WAIT_H, WAIT_GAP = 58, 24, 8
--- the turn order: a row of faces under the score (D: the playing one's diameter)
-local FACE_D, FACE_SMALL, FACE_STEP, FACE_Y = 42, 30, 62, 52
-local PLATE_H = FACE_D + 6        -- the pill's round ends (48 px image) and the face a 3 px margin inside
+-- the turn order (Sergio, 9 Nov): the faces of the red team left of the score bar and
+-- those of the blue team right of it, each next to the hourglass of its team (D: the playing
+-- one's diameter); under the bar, in the middle, "TURNO:" and a dot per player in turn order
+local FACE_D, FACE_SMALL, FACE_STEP = 48, 34, 70
 local HEAD_W, HEAD_DX, HEAD_DY = 1.1, -2, 3   -- the head's width / the disc's, and how far it is moved to centre the face in the ring
 local HEAD_LAYERS = 3             -- head, helmet, one more
-local ROW_Y, NOTICE_Y = GET_H / 2 + 74, GET_H / 2 + 100   -- turn balance and last-lap warning, under the faces
-local BELOW_Y = ROW_Y                    -- "+N PER PAREGGIARE", at the same height, under its team
-local READY_W, READY_H, READY_X = 132, 48, 975              -- PREPARATI: right of the score
+local FACES_GAP = 12             -- between the faces and the hourglass of their team
+local DOT_D, DOT_STEP = 12, 18   -- the turn dots
+local BELOW_Y = GET_H / 2 + 14           -- the dots and "+N PER PAREGGIARE", just under the bar
+local ROW_Y, NOTICE_Y = GET_H / 2 + 36, GET_H / 2 + 60   -- turn balance and last-lap warning, under the dots
+local READY_W, READY_H = 132, 48              -- PREPARATI: right of the right-hand faces
 -- last lap: the banner and the warning before it
 local BANNER_DURATION, BANNER_W, BANNER_H = 2.6, 760, 112
 local NOTICE_BEFORE = 60 * 60                -- game ticks before the last lap
 
 local V = vmath.vector3(0, 0, 0)
 local C = vmath.vector4(1, 1, 1, 1)
+local PALE = vmath.vector4(1, 1, 1, 1)
 
 local function root_node(x, y)
 	local r = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(0, 0, 0))
@@ -160,7 +168,7 @@ local function face_token(parent)
 	gui.set_visible(f.radice, false)
 	f.alone = ui.alone(0, 0, FACE_D * 3, vmath.vector4(1, 1, 1, 1), f.radice)
 	f.crema = ui.ring_node(0, 0, FACE_D + 4, 2, ui.C.LIGHT, f.radice)
-	f.fondo = ui.disco(0, 0, FACE_D, ui.C.PANEL, f.radice)
+	f.fondo = ui.disc(0, 0, FACE_D, ui.C.PANEL, f.radice)
 	f.anello = ui.ring_node(0, 0, FACE_D, 3, vmath.vector4(1, 1, 1, 1), f.radice)
 	f.interno = ui.ring_node(0, 0, FACE_D - 6, 1.5, vmath.vector4(1, 1, 1, 1), f.radice)
 	-- the head of whoever plays (and its helmet): over the rings: it starts from the disc and may stick out of it,
@@ -174,8 +182,9 @@ local function face_token(parent)
 		gui.set_enabled(n, false)
 		f.pezzi[i] = n
 	end
-	f.velo = ui.disco(0, 0, FACE_D, vmath.vector4(0.06, 0.05, 0.08, 0.6), f.radice)
-	f.tu = ui.testo(T.me, 0, -(FACE_D / 2 + 9), 0.5, ui.GOLD, f.radice)
+	f.velo = ui.disc(0, 0, FACE_D, vmath.vector4(0.06, 0.05, 0.08, 0.6), f.radice)
+	-- the player's name under the face (yours in gold)
+	f.nome = ui.text("", 0, -(FACE_D / 2 + 9), 1.1, ui.C.LIGHT, f.radice)
 	gui.set_enabled(f.radice, false)
 	return f
 end
@@ -190,7 +199,7 @@ local function token(color)
 	gt.bordo = box(gt.dentro, 0, 0, GET_W + 2 * BORDER_MINE, GET_H + 2 * BORDER_MINE, ui.C.LIGHT)
 	gt.fondo = box(gt.dentro, 0, 0, GET_W, GET_H, ui.C.PANEL)
 	gt.strip = box(gt.dentro, -GET_W / 2 + STRIP / 2, 0, STRIP, GET_H, color)
-	gt.posto = ui.testo("", -GET_W / 2 + STRIP + 6, 0, CAPTION, color, gt.dentro)
+	gt.posto = ui.text("", -GET_W / 2 + STRIP + 6, 0, CAPTION, color, gt.dentro)
 	gui.set_pivot(gt.posto, gui.PIVOT_W)
 	-- the first one's Crown: big, resting on the token's top border
 	gt.crown = gui.new_box_node(vmath.vector3(0, CROWN_Y, 0), vmath.vector3(CROWN_W, CROWN_W * 59 / 108, 0))
@@ -199,14 +208,14 @@ local function token(color)
 	gui.set_adjust_mode(gt.crown, gui.ADJUST_FIT)
 	gui.set_parent(gt.crown, gt.dentro)
 	gui.set_inherit_alpha(gt.crown, true)
-	gt.valore = ui.testo("0", GET_W / 2 - 8, 0, CAPTION, ui.C.TEXT, gt.dentro)
+	gt.valore = ui.text("0", GET_W / 2 - 8, 0, CAPTION, ui.C.TEXT, gt.dentro)
 	gui.set_pivot(gt.valore, gui.PIVOT_E)
 	-- the pending points: a dashed token... in our own way, border in the team
 	-- color, an hourglass (two bars and an X) and the number
 	gt.attesa = root_node(0, 0)
 	gui.set_parent(gt.attesa, gt.radice)
 	gui.set_visible(gt.attesa, false)
-	local bottom, border = ui.pannello(0, 0, WAIT_W, WAIT_H, gt.attesa)
+	local bottom, border = ui.panel(0, 0, WAIT_W, WAIT_H, gt.attesa)
 	gui.set_color(bottom, ui.C.PANEL)
 	gui.set_color(border, color)
 	local cx = -WAIT_W / 2 + 12
@@ -216,7 +225,7 @@ local function token(color)
 		local x = box(gt.attesa, cx, 0, 2, 11, color)
 		gui.set_euler(x, vmath.vector3(0, 0, a))
 	end
-	gt.waiting_text = ui.testo("", 6, 0, SMALL, ui.C.TEXT, gt.attesa)
+	gt.waiting_text = ui.text("", 6, 0, SMALL, ui.C.TEXT, gt.attesa)
 	gt.waiting_on = false
 	gui.set_enabled(gt.attesa, false)
 	return gt
@@ -238,7 +247,7 @@ local function shape(gt, w, right)
 	end
 end
 
-function M.nuovo(palette, tick)
+function M.new(palette, tick)
 	local p = { gettoni = {}, numeri = {}, tick = tick, tick_t = 0, tick_n = 0, on = true }
 	for t = 1, TEAMS do p.gettoni[t] = token(palette[t]) end
 
@@ -265,42 +274,52 @@ function M.nuovo(palette, tick)
 	p.rope_sign = box(p.fune, 0, 0, 3, ROPE_H + 10, ui.C.LIGHT)
 	p.rope_f = 0.5
 
-	-- the turn order: a face per player, in a soft plate; PREPARATI to the right of the score
-	p.cerchi = root_node(HALF, Y)
-	p.cerchi_fondo, p.cerchi_bordo = ui.pannello(0, -FACE_Y, 100, PLATE_H, p.cerchi, "pillola")
-	gui.set_enabled(p.cerchi_bordo, false)
-	gui.set_color(p.cerchi_fondo, vmath.vector4(0.08, 0.07, 0.1, 0.62))
+	-- the turn order: a face per player (no plate), red left and blue right of the bar
+	p.cerchi = root_node(0, Y)
 	p.facce = {}
 	for i = 1, 4 do p.facce[i] = face_token(p.cerchi) end
-	p.pronto = root_node(READY_X, Y)
+	-- under the bar, in the middle: TURNO: and a dot per player in turn order, the one playing ringed in white
+	p.turni = root_node(HALF, Y - BELOW_Y)
+	p.turni_label = ui.text(T.turn_row, 0, 0, SMALL, ui.C.LIGHT, p.turni)
+	gui.set_pivot(p.turni_label, gui.PIVOT_E)
+	p.puntini = {}
+	for i = 1, 4 do
+		local d = {}
+		d.disco = ui.disc(0, 0, DOT_D, vmath.vector4(1, 1, 1, 1), p.turni)
+		d.anello = ui.ring_node(0, 0, DOT_D + 6, 2, vmath.vector4(1, 1, 1, 1), p.turni)
+		gui.set_enabled(d.disco, false)
+		gui.set_enabled(d.anello, false)
+		p.puntini[i] = d
+	end
+	p.pronto = root_node(0, Y)
 	-- dark pill with a gold edge and light letters (dark letters on the gold were hard to read)
-	local pill, pill_border = ui.pannello(0, 0, READY_W, READY_H, p.pronto, "pillola")
+	local pill, pill_border = ui.panel(0, 0, READY_W, READY_H, p.pronto, "pillola")
 	gui.set_color(pill, vmath.vector4(0.1, 0.08, 0.04, 0.92))
 	gui.set_color(pill_border, ui.GOLD)
-	ui.testo(T.get_ready, 0, 0, SMALL * 1.45, ui.C.TEXT, pill)
+	ui.text(T.get_ready, 0, 0, SMALL * 1.45, ui.C.TEXT, pill)
 	gui.set_enabled(p.pronto, false)
 	p.faces_key = nil
 
 	-- gap under your token, turn balance under the row
 	p.gap = root_node(0, Y - GET_H / 2 - 12)
-	p.gap_text = ui.testo("", 0, 0, SMALL, ui.C.TEXT, p.gap)
+	p.gap_text = ui.text("", 0, 0, SMALL, ui.C.TEXT, p.gap)
 	p.riga = root_node(HALF, Y - ROW_Y)
-	p.row_text = ui.testo("", 0, 0, SMALL, ui.C.LIGHT, p.riga)
+	p.row_text = ui.text("", 0, 0, SMALL, ui.C.LIGHT, p.riga)
 	p.line_ticks = 0
 	-- the mission goal, under the turn line
 	p.obiettivo = root_node(HALF + 215, Y)
-	p.objective_text = ui.testo("", 0, 0, CAPTION, ui.GOLD, p.obiettivo)
+	p.objective_text = ui.text("", 0, 0, CAPTION, ui.GOLD, p.obiettivo)
 	gui.set_pivot(p.objective_text, gui.PIVOT_W)
 	gui.set_line_break(p.objective_text, true)
 	gui.set_size(p.objective_text, vmath.vector3(300 / (CAPTION * 0.5), 100, 0))
 	p.goal_on = false
 	-- "+N PER PAREGGIARE" under the team that has to answer
 	p.tie = root_node(0, Y - BELOW_Y)
-	p.tie_text = ui.testo("", 0, 0, SMALL, ui.C.TEXT, p.tie)
+	p.tie_text = ui.text("", 0, 0, SMALL, ui.C.TEXT, p.tie)
 	p.tie_s = ""
 	-- before the last lap, under the board
 	p.avviso = root_node(HALF, Y - NOTICE_Y)
-	ui.testo(T.last_round_soon, 0, 0, SMALL, ui.GOLD, p.avviso)
+	ui.text(T.last_round_soon, 0, 0, SMALL, ui.GOLD, p.avviso)
 	p.notice_on = false
 	gui.set_enabled(p.avviso, false)
 	-- the last-lap banner, in the middle of the screen
@@ -308,15 +327,15 @@ function M.nuovo(palette, tick)
 	box(p.banner, 0, 0, BANNER_W, BANNER_H, vmath.vector4(0.16, 0.1, 0.02, 0.9))
 	box(p.banner, 0, BANNER_H / 2, BANNER_W, 3, ui.GOLD)
 	box(p.banner, 0, -BANNER_H / 2, BANNER_W, 3, ui.GOLD)
-	ui.testo(T.last_round, 0, 14, 2.4, ui.GOLD, p.banner)
-	ui.testo(T.double_points, 0, -32, 0.9, ui.C.TEXT, p.banner)
+	ui.text(T.last_round, 0, 14, 2.4, ui.GOLD, p.banner)
+	ui.text(T.double_points, 0, -32, 0.9, ui.C.TEXT, p.banner)
 	p.banner_time = 0
 	gui.set_inherit_alpha(p.banner, true)
 	gui.set_enabled(p.banner, false)
 
 	-- the flying numbers, on top of everything else
 	for i = 1, NUMBERS do
-		local n = { nodo = ui.testo("", 0, 0, FLIGHT_SCALE, ui.C.TEXT), colore = vmath.vector4(1, 1, 1, 1) }
+		local n = { nodo = ui.text("", 0, 0, FLIGHT_SCALE, ui.C.TEXT), colore = vmath.vector4(1, 1, 1, 1), wait = 0 }
 		gui.set_adjust_mode(n.nodo, gui.ADJUST_FIT)
 		gui.set_enabled(n.nodo, false)
 		p.numeri[i] = n
@@ -326,25 +345,31 @@ function M.nuovo(palette, tick)
 end
 
 -- The real top of the screen (ui/screen.lua: higher than 720 on a tablet)
-function M.cima(p, y1)
+function M.top(p, y1)
 	Y = y1 - TOP
 	position(p.fune, HALF, Y)
 	position(p.riga, HALF, Y - ROW_Y)
 	position(p.obiettivo, HALF + 215, Y)
 	position(p.avviso, HALF, Y - NOTICE_Y)
-	position(p.cerchi, HALF, Y)
-	position(p.pronto, READY_X, Y)
 	position(p.banner, HALF, y1 / 2 + 40)
 	for _, gt in ipairs(p.gettoni) do
 		if gt.x then position(gt.radice, gt.x, Y) end
 	end
 end
 
-function M.obiettivo(p, txt)
+function M.goal(p, txt)
 	p.goal_on = txt ~= nil
 	if txt and txt ~= p.goal_written then gui.set_text(p.objective_text, txt) end
 	p.goal_written = txt
-	gui.set_enabled(p.obiettivo, p.on and p.goal_on)
+	gui.set_enabled(p.obiettivo, p.on and p.goal_on and not p.goal_covered)
+end
+
+-- The vignettes' strip covers the top of the screen: the goal under it hides, or only
+-- its tail would peek out from behind the paper
+function M.cover_goal(p, covered)
+	if p.goal_covered == covered then return end
+	p.goal_covered = covered
+	gui.set_enabled(p.obiettivo, p.on and p.goal_on and not covered or false)
 end
 
 -- Lessons that haven't explained points yet don't show them (sim/missions.lua vedi)
@@ -360,10 +385,11 @@ function M.set_enabled(p, on)
 	for t, gt in ipairs(p.gettoni) do gui.set_enabled(gt.radice, punti and p.squadre and p.squadre[t] or false) end
 	gui.set_enabled(p.fune, punti and p.rope_on or false)
 	gui.set_enabled(p.cerchi, punti)
+	gui.set_enabled(p.turni, punti)
 	gui.set_enabled(p.pronto, punti and p.ready_on or false)
 	gui.set_enabled(p.gap, punti)
 	gui.set_enabled(p.riga, punti and p.line_ticks > 0)
-	gui.set_enabled(p.obiettivo, on and p.goal_on)
+	gui.set_enabled(p.obiettivo, on and p.goal_on and not p.goal_covered)
 	gui.set_enabled(p.tie, punti and p.tie_s ~= "")
 	gui.set_enabled(p.avviso, punti and p.notice_on and not p.goal_on)
 	gui.set_enabled(p.banner, punti and p.banner_time > 0)
@@ -380,7 +406,7 @@ local function team_points(p, g, flight)
 	return s
 end
 
-function M.partita(p, g, name_list, plates)
+function M.match(p, g, name_list, plates)
 	p.nomi, p.plates, p.volo = name_list, plates, {}
 	p.squadre, p.lista = {}, {}
 	for _, rb in ipairs(g.robots) do
@@ -424,21 +450,30 @@ function M.partita(p, g, name_list, plates)
 	p.faces_key = nil
 	p.inizio = team_points(p, g)
 	p.in_order_now = g.robots[g.current] and g.robots[g.current].team
-	for i in ipairs(g.robots) do plate.posto(plates[i], "", false) end
+	for i in ipairs(g.robots) do plate.rank(plates[i], "", false) end
 	p.posti = {}
 	M.set_enabled(p, p.on)
 end
 
+-- what a number says: while it still waits and it is the damage of a hit, the damage
+-- itself in cream ("-27"); then, and for the other points, the points ("+27")
+local function shown(n)
+	if n.cream and n.wait > 0 then return "-" .. math.floor(n.dmg + 0.5) end
+	return with_sign(n.punti) .. (n.doppio and T.doubled or "")
+end
+
 -- a number is born at x, y (screen); if the same robot has one just born
 -- from the same hit (damage and kill together) it adds to that one
-function M.punti(p, e, x, y)
+function M.points(p, e, x, y)
 	if not p.squadre or p.nascosti or e.amount == 0 then return end
 	local r = e.robot
 	p.volo[r] = (p.volo[r] or 0) + e.amount
 	for _, n in ipairs(p.numeri) do
 		if n.is_active and n.fase == 1 and n.chi == r and n.altro == e.other then
-			n.punti, n.t = n.punti + e.amount, 0
-			gui.set_text(n.nodo, with_sign(n.punti) .. (n.doppio and T.doubled or ""))
+			n.punti = n.punti + e.amount
+			if e.reason == "damage" then n.dmg = n.dmg + e.amount end
+			if n.wait <= 0 then n.t = 0 end
+			gui.set_text(n.nodo, shown(n))
 			return
 		end
 	end
@@ -452,9 +487,12 @@ function M.punti(p, e, x, y)
 		for _, m in ipairs(p.numeri) do if m.born < n.born then n = m end end
 		p.volo[n.chi] = p.volo[n.chi] - n.punti
 	end
-	n.is_active, n.fase, n.t, n.chi, n.altro, n.punti, n.born = true, 1, 0, r, e.other, e.amount, (p.born or 0) + 1
+	n.is_active, n.fase, n.t, n.chi, n.altro, n.punti, n.born, n.wait = true, 1, 0, r, e.other, e.amount, (p.born or 0) + 1, BORN_WAIT
 	n.doppio = p.ultimo
 	p.born = n.born
+	-- the damage of a hit is shown first, over the head, and turns into the points
+	n.cream = e.reason == "damage" and e.amount > 0
+	n.dmg = n.cream and e.amount or 0
 	n.x, n.y = x, y
 	for _, q in ipairs(STACK) do
 		local px, py, free_spot = x + q[1] * STACK_X, y + q[2] * STACK_Y, true
@@ -466,8 +504,8 @@ function M.punti(p, e, x, y)
 			break
 		end
 	end
-	gui.set_text(n.nodo, with_sign(n.punti) .. (n.doppio and T.doubled or ""))
-	gui.set_enabled(n.nodo, p.on)
+	gui.set_text(n.nodo, shown(n))
+	gui.set_enabled(n.nodo, n.cream and p.on or false)   -- the others appear when their wait is over
 end
 
 -- The last lap starts: the golden banner
@@ -478,7 +516,7 @@ function M.last_lap(p)
 end
 
 -- at every new turn, the balance of the one just ended
-function M.turno(p, g)
+function M.turn(p, g)
 	if not p.squadre or p.nascosti then return end
 	local now_pts = team_points(p, g)
 	local t = p.in_order_now
@@ -516,11 +554,32 @@ end
 
 local function numbers(p, dt, g)
 	for _, n in ipairs(p.numeri) do
-		if n.is_active then
+		if n.is_active and n.wait > 0 then
+			n.wait = n.wait - dt
+			if n.cream then
+				-- the damage: it pops cream over the head, and when the wait is over
+				-- the same number changes into the points (color and sign)
+				local u = 1 - max(0, n.wait) / BORN_WAIT
+				position(n.nodo, n.x, n.y + 10 * u)
+				scale(n.nodo, FLIGHT_SCALE * 0.5 * 0.75 * (1 + 0.4 * max(0, 1 - u * 6)))
+				C.x, C.y, C.z, C.w = 0.96, 0.92, 0.84, 1
+				gui.set_color(n.nodo, C)
+				if n.wait <= 0 then gui.set_text(n.nodo, shown(n)) end
+			elseif n.wait <= 0 then
+				gui.set_enabled(n.nodo, p.on)
+			end
+		elseif n.is_active then
 			n.t = n.t + dt
 			local rb = g.robots[n.chi]
 			local c = rb and p.gettoni[rb.team] and p.gettoni[rb.team].colore or ui.C.TEXT
-			if n.punti < 0 then c = ui.C.OFF elseif n.doppio then c = ui.GOLD end
+			if n.punti < 0 then c = ui.C.OFF
+			elseif n.doppio then c = ui.GOLD
+			else
+				-- paler in flight: the full color is for the token it lands in
+				local grey = 0.3 * c.x + 0.59 * c.y + 0.11 * c.z
+				PALE.x, PALE.y, PALE.z = c.x + (grey - c.x) * FLIGHT_PALE, c.y + (grey - c.y) * FLIGHT_PALE, c.z + (grey - c.z) * FLIGHT_PALE
+				c = PALE
+			end
 			local s, x, y
 			if n.fase == 1 then
 				-- born: pops out big and rises a little
@@ -553,24 +612,33 @@ end
 -- The turn order: a face per player in turn order. The one playing is big, with a halo
 -- and a cream ring that breathe; those who already played this lap are veiled; yours has
 -- TU. Golden in the last lap (the thin team ring inside keeps the teams apart).
-local function faces(p, g, human, looks)
+local function faces(p, g, human, looks, views)
 	local who = {}
 	for _, id in ipairs(g.order) do
 		local rb = g.robots[id]
 		if rb and not rb.gone and #who < #p.facce then who[#who + 1] = rb end
 	end
 	local playing = g.phase ~= "over" and g.current or nil
-	local key = (p.ultimo and "u" or "") .. #who .. (human or "-") .. (playing or "-")
-	for _, rb in ipairs(who) do key = key .. (rb.round_done and "1" or "0") end
+	local key = (p.rope_on and "r" or "f") .. (p.ultimo and "u" or "") .. #who .. (human or "-") .. (playing or "-")
+	for _, rb in ipairs(who) do key = key .. rb.team .. (rb.round_done and "1" or "0") end
+	-- the two groups: with two teams the first team's faces go left of the bar, the second's
+	-- right of it; otherwise all of them left, in turn order
+	local left, right = {}, {}
+	for i, rb in ipairs(who) do
+		-- two teams: by team; free-for-all: the first half of the turn order left, the rest right
+		local to_right = p.rope_on and rb.team == p.lista[2] or (not p.rope_on and i > math.ceil(#who / 2))
+		if to_right then right[#right + 1] = i else left[#left + 1] = i end
+	end
+	local edge_l = p.x0 - FACES_GAP - (p.rope_on and (WAIT_GAP + WAIT_W) or 0)
+	local edge_r
+	if p.rope_on then
+		edge_r = p.x0 + 2 * VAL_W + 2 * ROPE_GAP + ROPE_W + WAIT_GAP + WAIT_W + FACES_GAP
+	else
+		local n = #p.lista
+		edge_r = p.x0 + n * GET_W + (n - 1) * GET_GAP + FACES_GAP
+	end
 	if p.faces_key ~= key then
 		p.faces_key = key
-		local w = (#who - 1) * FACE_STEP + PLATE_H
-		size(p.cerchi_fondo, w, PLATE_H)
-		gui.set_enabled(p.cerchi_fondo, #who > 0)
-		-- the last lap: a golden edge round the plate
-		size(p.cerchi_bordo, w, PLATE_H)
-		gui.set_color(p.cerchi_bordo, ui.GOLD)
-		gui.set_enabled(p.cerchi_bordo, p.ultimo or false)
 		for i, f in ipairs(p.facce) do
 			local rb = who[i]
 			gui.set_enabled(f.radice, rb ~= nil)
@@ -578,7 +646,6 @@ local function faces(p, g, human, looks)
 				local now = rb.id == playing
 				local c = p.gettoni[rb.team].colore
 				face_head(f, looks and looks[rb.id] and looks[rb.id].look)
-				position(f.radice, (i - (#who + 1) / 2) * FACE_STEP, -FACE_Y)
 				f.base = now and 1 or FACE_SMALL / FACE_D
 				f.now = now
 				scale(f.radice, f.base)
@@ -596,12 +663,47 @@ local function faces(p, g, human, looks)
 				local dark = not now and rb.round_done
 				C.x, C.y, C.z, C.w = dark and 0.4 or 1, dark and 0.4 or 1, dark and 0.42 or 1, 1
 				for _, n in ipairs(f.pezzi) do gui.set_color(n, C) end
-				gui.set_enabled(f.tu, human == rb.id)
+				gui.set_color(f.nome, human == rb.id and ui.GOLD or ui.C.LIGHT)
+			end
+		end
+		-- the dots under the bar: team colour, dimmed once played, ringed in white if playing
+		-- the dots are centred, "TURNO:" sits left of them
+		local total = #who * DOT_STEP
+		position(p.turni_label, -total / 2 - 8, 0)
+		for i, d in ipairs(p.puntini) do
+			local rb = who[i]
+			gui.set_enabled(d.disco, rb ~= nil)
+			gui.set_enabled(d.anello, rb ~= nil and rb.id == playing)
+			if rb then
+				local c = p.gettoni[rb.team].colore
+				local x = -total / 2 + (i - 0.5) * DOT_STEP
+				position(d.disco, x, 0)
+				position(d.anello, x, 0)
+				C.x, C.y, C.z, C.w = c.x, c.y, c.z, (rb.id ~= playing and rb.round_done) and 0.4 or 1
+				gui.set_color(d.disco, C)
 			end
 		end
 	end
+	for j, i in ipairs(left) do
+		position(p.facce[i].radice, edge_l - FACE_D / 2 - (#left - j) * FACE_STEP, 0)
+	end
+	for j, i in ipairs(right) do
+		position(p.facce[i].radice, edge_r + FACE_D / 2 + (j - 1) * FACE_STEP, 0)
+	end
+	-- PREPARATI sits right of the blue faces
+	local ready_x = edge_r + (#right > 0 and ((#right - 1) * FACE_STEP + FACE_D) or 0) + 10 + READY_W / 2
+	position(p.pronto, ready_x, Y)
+	position(p.cerchi, 0, Y)
+	position(p.turni, HALF, Y - BELOW_Y)
 	local k = 1 + 0.05 * math.sin(p.ora * 5)
 	for i, f in ipairs(p.facce) do
+		-- the name (online it is known only after the start): written when it changes
+		local nome = who[i] and views and views[who[i].id] and views[who[i].id].nome or ""
+		if f.nome_s ~= nome then
+			f.nome_s = nome
+			-- without "(bot)": the names under neighbouring faces must not touch
+			gui.set_text(f.nome, (nome:gsub("%s*%(bot%)", "")))
+		end
 		if f.now and who[i] then scale(f.radice, k) end
 	end
 end
@@ -621,7 +723,7 @@ local function places(p, v)
 	return out
 end
 
-function M.update(p, dt, g, my_own, human, looks)
+function M.update(p, dt, g, my_own, human, looks, views)
 	if not p.squadre or not p.on or p.nascosti then return end
 	p.ora = (p.ora or 0) + dt
 	numbers(p, dt, g)
@@ -698,7 +800,7 @@ function M.update(p, dt, g, my_own, human, looks)
 		gui.set_enabled(gt.crown, pos[t] == 1 and firsts == 1 and (g.round or 1) > (g.score.crown_rounds or 0))
 	end
 
-	faces(p, g, human, looks)
+	faces(p, g, human, looks, views)
 	-- PREPARATI: the turn before yours, to the right of the score (not over a lesson's goal)
 	local nxt = g.order[g.order_pos % #g.order + 1]
 	local ready = human ~= nil and g.phase ~= "over" and g.current ~= human and nxt == human and not p.goal_on
@@ -829,7 +931,7 @@ function M.update(p, dt, g, my_own, human, looks)
 		local crown = head_end == rb
 		local key = txt .. (crown and "c" or "")
 		if p.posti[i] ~= key then
-			plate.posto(p.plates[i], txt, crown)
+			plate.rank(p.plates[i], txt, crown)
 			p.posti[i] = key
 		end
 	end

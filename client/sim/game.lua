@@ -137,9 +137,9 @@ M.GRENADE_BOUNCE = 0.4   -- how much speed is left after a bounce
 M.GRENADE_FRICTION = 1   -- friction when touching ground
 M.GRENADE_GRAVITY = 1.3
 M.GRENADE_DAMPING = 1    -- slowdown per second after the first impact (like Box2D's linear damping)
--- damage 80 at the centre and 25 at the edges (bot arena, 29 October 2026: the
--- Uovo was the weakest weapon; Sergio: "non ti dico che si deve oneshottare")
-M.GRENADE_BLAST = { r = 5.5 * M.U, damage_r = 10 * M.U, damage = 80, damage_min = 25, impulse = 15 }
+-- damage 65 at the centre and 20 at the edges (9 Nov 2026: weapon duels showed it too strong, lowered
+-- from 80/25; 80/25 came from the bot arena of 29 October 2026, when the Uovo was the weakest weapon)
+M.GRENADE_BLAST = { r = 5.5 * M.U, damage_r = 10 * M.U, damage = 65, damage_min = 20, impulse = 15 }
 
 -- Sciame di Schegge (machine gun): a burst of straight, fast shards, each with
 -- a tiny explosion
@@ -148,7 +148,7 @@ M.SHARD_EVERY = 4        -- ticks between one shard and the next
 M.SHARD_SPEED = 1662.5   -- power doesn't count: they always leave at the same speed
 M.SHARD_GRAVITY = 0.2    -- gravity barely bends them
 M.SHARD_SPREAD = math.rad(3)
-M.SHARD_BLAST = { r = 12.25, damage_r = 21, damage = 11, impulse = 30 }
+M.SHARD_BLAST = { r = 12.25, damage_r = 21, damage = 6, impulse = 30 }
 
 -- Cecchino: shot speed (power doesn't count) and its maximum lifetime; damage,
 -- push, drop and bounces in config.SNIPER
@@ -173,11 +173,12 @@ M.PUNCH_HOP = 15 * M.U      -- the attacker rises a little with the uppercut
 -- match (rb.secondary, sim/draft.lua) and has counted shots in rb.ammo, which
 -- come back by hitting an enemy with the Lama (config.SECONDARY_SHOTS; Sergio,
 -- 31 October 2026).
-M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true }
-M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows" }
+M.SECONDARY = { sword = true, eagle = true, mallet = true, lunge = true, bellows = true,
+	magnet = true, cannon = true, petard = true }
+M.DRAFT_SECONDARIES = { "eagle", "mallet", "lunge", "bellows", "magnet", "cannon", "petard" }
 -- weapons that don't use up shots
 M.FREE_WEAPONS = { missile = true, sword = true, teleport = true }
-M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper" }
+M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill" }
 -- Tactical items from crates (also in rb.ammo), the parachute (one per match)
 -- and the Rampino (one per turn, for everyone): they aren't attacks (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
@@ -419,6 +420,8 @@ function M.new(seed, map_id, opts)
 	g.heals = {}             -- healing circles { id, x, y }
 	g.heals_on = opts.heals ~= false
 	g.heal_id = 0
+	g.pools = {}             -- pools of burning pitch { id, x, y, r, turns, owner, team, lit }
+	g.pool_id = 0
 	g.crate_id = 0
 	g.crate_every = opts.crate_every or M.CRATE_EVERY
 	-- with an explicit crate_every that one is always used (tests need it)
@@ -925,6 +928,7 @@ function M:update_robot(rb, input, active)
 	-- during the Affondo the dash drives the movement, in the Tonante's recoil the
 	-- push; hanging from the Rampino, the rope
 	if rb.lunge then return self:update_lunge(rb) end
+	if rb.cannon then return self:update_cannon(rb) end
 	if rb.recoil then return self:update_recoil(rb) end
 	if rb.hooked then return self:update_hooked(rb) end
 
@@ -1153,13 +1157,17 @@ end
 
 -- Uovo di Fiamma ----------------------------------------------------------------
 
-function M:throw_grenade(angle, power)
+-- kind: "grenade" (the Uovo), "tar" (Pozza di Pece) or "petard": they all fly and
+-- bounce the same way, what changes is the fuse and what happens at the end
+local FUSES = { grenade = M.GRENADE_FUSE, tar = C.TAR.fuse, petard = C.PETARD.fuse }
+function M:throw_grenade(angle, power, kind)
+	kind = kind or "grenade"
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	local speed = M.GRENADE_SPEED * math.max(0.1, math.min(1, power))
-	self.projectile = { kind = "grenade", x = x, y = y, vx = math.cos(angle) * speed, vy = math.sin(angle) * speed,
-		owner = rb.id, age = 0, fuse = M.GRENADE_FUSE }
-	self:emit({ type = "grenade", robot = rb.id })
+	self.projectile = { kind = kind, x = x, y = y, vx = math.cos(angle) * speed, vy = math.sin(angle) * speed,
+		owner = rb.id, age = 0, fuse = FUSES[kind] }
+	self:emit({ type = "grenade", robot = rb.id, kind = kind })
 end
 
 -- It bounces on terrain moving one axis at a time: simple and stable on the
@@ -1179,12 +1187,26 @@ function M:update_grenade(p)
 	for _ = 1, steps do
 		local hit = self:body_hits_robot(p, p.x + sx, p.y + sy, M.GRENADE_R)
 		if hit then
+			if p.kind == "petard" then
+				self:petard_blast(p)
+				self.projectile = nil
+				return
+			elseif p.kind == "tar" then
+				self:break_tar(p, hit)
+				self.projectile = nil
+				return
+			end
 			self:bounce_on_robot(p, hit, M.GRENADE_BOUNCE, M.GRENADE_FRICTION)
 			break
 		end
 		if self:spring(p, p.y + sy, M.GRENADE_R) then break end
 		if sx ~= 0 then
 			if t:solid(p.x + sx, p.y) then
+				if p.kind == "tar" then
+					self:break_tar(p)
+					self.projectile = nil
+					return
+				end
 				p.vx, sx = -p.vx * M.GRENADE_BOUNCE, 0
 				p.touched = true
 			else
@@ -1193,6 +1215,11 @@ function M:update_grenade(p)
 		end
 		if sy ~= 0 then
 			if t:solid(p.x, p.y + sy) then
+				if p.kind == "tar" then
+					self:break_tar(p)
+					self.projectile = nil
+					return
+				end
 				if sy < 0 then p.vx = p.vx * M.GRENADE_FRICTION end
 				p.touched = true
 				p.vy = -p.vy * M.GRENADE_BOUNCE
@@ -1205,7 +1232,13 @@ function M:update_grenade(p)
 		end
 	end
 	if p.fuse <= 0 then
-		self:explode(p.x, p.y, p.owner, M.GRENADE_BLAST, "grenade")
+		if p.kind == "petard" then
+			self:petard_blast(p)
+		elseif p.kind == "tar" then
+			self:break_tar(p)
+		else
+			self:explode(p.x, p.y, p.owner, M.GRENADE_BLAST, "grenade")
+		end
 		self.projectile = nil
 	elseif p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300 then
 		self:emit({ type = "miss" })
@@ -1837,6 +1870,310 @@ function M:fire_bellows(angle)
 				self:credit(o, rb)
 				self:hurt(o, s.damage, rb)
 			end
+		end
+	end
+end
+
+-- Calamita (config.MAGNET) --------------------------------------------------------
+-- An instant pulse: its centre is distance pixels along the aim (stopping at
+-- terrain). Every robot within radius slides to the centre in ticks ticks
+-- (rb.pull, update_pull); the user too, with no damage. If the centre has no
+-- ground within drop pixels below it nothing is pulled: no throwing people into
+-- a pit with a teleport and the Calamita.
+
+function M:fire_magnet(angle)
+	local rb = self.robots[self.current]
+	local s = C.MAGNET
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	local cx, cy = rb.x, rb.y + M.DISEGNO_H / 2
+	local px, py = cx, cy
+	local ux, uy = math.cos(angle), math.sin(angle)
+	for _ = 1, math.ceil(s.distance / M.CELL) do
+		local nx, ny = px + ux * M.CELL, py + uy * M.CELL
+		if self.terrain:solid(nx, ny) then break end
+		px, py = nx, ny
+	end
+	local gb = self.terrain:ground_below(px, py)
+	local ok = gb ~= nil and py - gb <= s.drop
+	self:emit({ type = "magnet", robot = rb.id, x = px, y = py, r = s.radius, ok = ok })
+	if not ok then return end
+	for _, o in ipairs(self.robots) do
+		if not o.dead then
+			local ox, oy = o.x, o.y + M.HURT_Y
+			local dx, dy = ox - px, oy - py
+			if dx * dx + dy * dy <= s.radius * s.radius and not self:terrain_between(px, py, ox, oy) then
+				o.pull = { x = px, ticks = s.ticks }
+				o.hooked = nil
+				if o ~= rb then
+					self:credit(o, rb)
+					self:hurt(o, s.damage, rb)
+				end
+			end
+		end
+	end
+end
+
+-- One tick of the slide: the horizontal part, climbing small steps; against a
+-- wall it stops. Gravity goes on as usual.
+function M:update_pull(rb)
+	local pl = rb.pull
+	local nx = rb.x + (pl.x - rb.x) / pl.ticks
+	pl.ticks = pl.ticks - 1
+	if pl.ticks <= 0 then
+		rb.x, rb.pull = pl.x, nil
+		return
+	end
+	if not self:terrain_collides(nx, rb.y) then
+		rb.x = nx
+	else
+		local up
+		for d = 1, M.MAX_CLIMB do
+			if not self:terrain_collides(nx, rb.y + d) then
+				up = d
+				break
+			end
+		end
+		if up then rb.x, rb.y = nx, rb.y + up else rb.pull = nil end
+	end
+end
+
+-- Cannonata (config.CANNON) -----------------------------------------------------
+-- The user flies as a ballistic body, in place of the normal physics
+-- (update_robot), through the robots (each hit once) and stops against terrain.
+
+function M:start_cannon(angle, power)
+	local rb = self.robots[self.current]
+	local s = C.CANNON
+	local speed = s.speed * math.max(s.min_power, math.min(1, power or 1))
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	rb.cannon = { vx = math.cos(angle) * speed, vy = math.sin(angle) * speed, hit = {} }
+	rb.vx, rb.vy = 0, 0
+	rb.y = rb.y + 1
+	rb.grounded, rb.knocked, rb.fall_top, rb.pull = false, false, nil, nil
+	self:emit({ type = "cannon", robot = rb.id, angle = angle })
+end
+
+function M:update_cannon(rb)
+	local c = rb.cannon
+	local s = C.CANNON
+	c.vy = c.vy - M.GRAVITY * s.gravity * M.DT
+	local mx, my = c.vx * M.DT, c.vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
+	local stopped = false
+	for _ = 1, steps do
+		local nx, ny = rb.x + mx / steps, rb.y + my / steps
+		if self:terrain_collides(nx, ny) then
+			stopped = true
+			break
+		end
+		rb.x, rb.y = nx, ny
+		for _, o in ipairs(self.robots) do
+			if o ~= rb and not o.dead and not c.hit[o.id] and not o.ghost then
+				local dx, dy = o.x - rb.x, o.y - rb.y
+				if math.abs(dx) < 2 * M.ROBOT_HALF_W and math.abs(dy) < M.ROBOT_H then
+					c.hit[o.id] = true
+					local k = self:knock_mul(o)
+					o.vx, o.vy = (c.vx < 0 and -1 or 1) * s.push * k, s.lift * k
+					o.hooked = nil
+					o.grounded, o.knocked, o.fall_top = false, true, nil
+					self:emit({ type = "cannon_hit", robot = rb.id, target = o.id, x = o.x, y = o.y + M.HURT_Y })
+					self:credit(o, rb)
+					self:hurt(o, s.damage, rb)
+				end
+			end
+		end
+	end
+	if M.fallen(rb) then
+		rb.cannon = nil
+		return self:kill(rb, "fell")
+	end
+	if stopped then
+		rb.cannon, rb.vx, rb.vy, rb.fall_top = nil, 0, 0, nil
+		self:emit({ type = "cannon_land", robot = rb.id, x = rb.x, y = rb.y })
+	end
+end
+
+-- Petardo (config.PETARD) -------------------------------------------------------
+-- Thrown like the Uovo (throw_grenade); it blows up on touching a robot or when
+-- the fuse ends. No crater: damage to whoever is within radius (not the
+-- thrower) and a push away from the centre, less the further they are, for
+-- everyone including the thrower.
+
+function M:petard_blast(p)
+	local s = C.PETARD
+	local owner = self.robots[p.owner]
+	self:emit({ type = "petard_blast", x = p.x, y = p.y, r = s.radius })
+	for _, rb in ipairs(self.robots) do
+		if not rb.dead then
+			local dx, dy = rb.x - p.x, rb.y + M.HURT_Y - p.y
+			local d = math.sqrt(dx * dx + dy * dy)
+			if d <= s.radius then
+				local f = (1 - 0.5 * d / s.radius) * self:knock_mul(rb)
+				local ux, uy = 0, 1
+				if d > 0.5 then ux, uy = dx / d, dy / d end
+				rb.vx, rb.vy = ux * s.push * f, (uy * s.push + s.lift) * f
+				rb.hooked, rb.pull = nil, nil
+				rb.grounded, rb.knocked, rb.fall_top = false, true, nil
+				if rb ~= owner then
+					self:credit(rb, owner)
+					self:hurt(rb, s.damage, owner)
+				end
+			end
+		end
+	end
+end
+
+-- Falcetto (config.BOOMERANG) -----------------------------------------------------
+
+function M:fire_boomerang(angle)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local s = C.BOOMERANG
+	rb.facing = math.cos(angle) < 0 and -1 or 1
+	self.projectile = { kind = "boomerang", x = x, y = y, vx = math.cos(angle) * s.speed, vy = math.sin(angle) * s.speed,
+		owner = rb.id, age = 0, dist = 0, back = false, hit = {} }
+	self:emit({ type = "boomerang", robot = rb.id })
+end
+
+local function boomerang_turn(g, p)
+	p.back, p.hit = true, {}
+	g:emit({ type = "boomerang_turn", x = p.x, y = p.y })
+end
+
+function M:update_boomerang(p)
+	local s = C.BOOMERANG
+	local owner = self.robots[p.owner]
+	p.age = p.age + 1
+	if not p.back then
+		local mx, my = p.vx * M.DT, p.vy * M.DT
+		local len = math.sqrt(mx * mx + my * my)
+		local n = math.max(1, math.ceil(len / M.CELL))
+		for _ = 1, n do
+			local nx, ny = p.x + mx / n, p.y + my / n
+			if self.terrain:solid(nx, ny) then
+				boomerang_turn(self, p)
+				break
+			end
+			p.x, p.y = nx, ny
+			p.dist = p.dist + len / n
+		end
+		if not p.back and p.dist >= s.range then boomerang_turn(self, p) end
+	else
+		-- back to the thrower, over terrain too
+		local tx, ty = owner.x, owner.y + M.HURT_Y
+		local dx, dy = tx - p.x, ty - p.y
+		local d = math.sqrt(dx * dx + dy * dy)
+		local step = s.back_speed * M.DT
+		if owner.dead or d <= step + 12 or p.age > s.life then
+			self:emit({ type = "boomerang_end", x = p.x, y = p.y })
+			self.projectile = nil
+			return
+		end
+		p.x, p.y = p.x + dx / d * step, p.y + dy / d * step
+	end
+	for _, o in ipairs(self.robots) do
+		if o ~= owner and not o.dead and not p.hit[o.id] and M.hurt_at(o, p.x, p.y, s.radius) then
+			p.hit[o.id] = true
+			self:emit({ type = "boomerang_hit", robot = p.owner, target = o.id, x = p.x, y = p.y, back = p.back })
+			self:credit(o, owner)
+			-- the armour cracks on the way back only
+			if self:hurt(o, s.damage, owner) > 0 and p.back then self:hit_status(o, "boomerang", owner) end
+		end
+	end
+	if p.age > s.life or p.y < -50 or p.y > M.WORLD_H + 300 or p.x < -300 or p.x > M.WORLD_W + 300 then
+		self:emit({ type = "miss" })
+		self.projectile = nil
+	end
+end
+
+-- Trapano (config.DRILL) ---------------------------------------------------------
+
+function M:fire_drill(angle, power)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	-- same flight as the rocket (the aim line is the rocket's)
+	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
+	self.projectile = { kind = "drill", x = x, y = y, vx = vx, vy = vy, owner = rb.id, age = 0 }
+	self:emit({ type = "fire", robot = rb.id })
+end
+
+-- Digs the circle (the bot's copies of the match don't: the terrain is shared)
+function M:dig(x, y, r)
+	return self.terrain:carve(x, y, r)
+end
+
+-- One tick of boring: it carves a circle at its head, straight on. Out in the
+-- open (the terrain ahead of the head is free), or against a robot, it blows
+-- up; if the dig runs out it blows up weakly under the terrain.
+function M:update_drill(p)
+	local s = C.DRILL
+	p.age = p.age + 1
+	local step = s.dig_speed * M.DT
+	p.x, p.y = p.x + p.ux * step, p.y + p.uy * step
+	p.left = p.left - step
+	local r0, r1 = self:dig(p.x, p.y, s.radius)
+	self:emit({ type = "carve", x = p.x, y = p.y, r = s.radius, row_min = r0, row_max = r1 })
+	if self:hits_robot(p.x, p.y, p.owner, p.age) then
+		self:explode(p.x, p.y, p.owner, s.blast, "drill")
+		self.projectile = nil
+	elseif not self.terrain:solid(p.x + p.ux * (s.radius + 3), p.y + p.uy * (s.radius + 3)) then
+		self:explode(p.x, p.y, p.owner, s.blast, "drill")
+		self.projectile = nil
+	elseif p.left <= 0 then
+		self:explode(p.x, p.y, p.owner, s.inner, nil)
+		self.projectile = nil
+	elseif p.x < -300 or p.x > M.WORLD_W + 300 or p.y < -50 or p.y > M.WORLD_H + 300 then
+		self:emit({ type = "miss" })
+		self.projectile = nil
+	end
+end
+
+-- Pozza di Pece (config.TAR) -----------------------------------------------------
+
+-- The flask breaks at p (against a robot, hit): damage and burn to it, and the pool
+-- on the ground below
+function M:break_tar(p, hit)
+	local s = C.TAR
+	local owner = self.robots[p.owner]
+	self:emit({ type = "tar_break", x = p.x, y = p.y })
+	if hit then
+		if self:hurt(hit, s.damage, owner) > 0 and owner ~= hit then self:hit_status(hit, "tar", owner) end
+	end
+	local gy = self.terrain:ground_below(p.x, p.y) or p.y
+	-- one pool per team: the old one dies
+	for i = #self.pools, 1, -1 do
+		if self.pools[i].team == owner.team then
+			self:emit({ type = "pool_gone", id = self.pools[i].id })
+			table.remove(self.pools, i)
+		end
+	end
+	self.pool_id = self.pool_id + 1
+	local pool = { id = self.pool_id, x = p.x, y = gy, r = s.radius, turns = s.turns, owner = owner.id, team = owner.team, lit = {} }
+	self.pools[#self.pools + 1] = pool
+	self:emit({ type = "pool", id = pool.id, x = pool.x, y = pool.y, r = pool.r })
+end
+
+-- Whoever stands in a pool is set alight, once per turn (the owner's status_turns count)
+function M:update_pools()
+	for _, pool in ipairs(self.pools) do
+		for _, rb in ipairs(self.robots) do
+			if not rb.dead and math.abs(rb.x - pool.x) <= pool.r and rb.y >= pool.y - 12 and rb.y <= pool.y + 30
+				and pool.lit[rb.id] ~= self.turn_no then
+				pool.lit[rb.id] = self.turn_no
+				self:add_status(rb, "burn", self.robots[pool.owner])
+			end
+		end
+	end
+end
+
+-- At the end of each turn the pools lose one
+function M:age_pools()
+	for i = #self.pools, 1, -1 do
+		local pool = self.pools[i]
+		pool.turns = pool.turns - 1
+		if pool.turns <= 0 then
+			self:emit({ type = "pool_gone", id = pool.id })
+			table.remove(self.pools, i)
 		end
 	end
 end
@@ -2584,7 +2921,7 @@ function M:preview(angle, power, count, every, pts, weapon)
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
 	local gravity = M.GRAVITY * M.MISSILE_GRAVITY
-	if weapon == "grenade" or weapon == "trampoline" then
+	if weapon == "grenade" or weapon == "trampoline" or weapon == "tar" or weapon == "petard" then
 		vx, vy = launch_velocity(angle, power, M.GRENADE_SPEED)
 		gravity = M.GRAVITY * M.GRENADE_GRAVITY
 	elseif weapon == "teleport" then
@@ -2595,9 +2932,18 @@ function M:preview(angle, power, count, every, pts, weapon)
 		gravity = M.GRAVITY * M.SHARD_GRAVITY
 	elseif weapon == "sniper" then
 		return self:sniper_preview(x, y, angle, count, pts)
-	elseif weapon == "eagle" or weapon == "hook" or weapon == "bellows" then
-		local range = (weapon == "eagle" and C.EAGLE or weapon == "hook" and C.HOOK or C.BELLOWS).range
+	elseif weapon == "eagle" or weapon == "hook" or weapon == "bellows" or weapon == "boomerang" then
+		local range = (weapon == "eagle" and C.EAGLE or weapon == "hook" and C.HOOK or weapon == "boomerang" and C.BOOMERANG
+			or C.BELLOWS).range
 		return self:ray_preview(x, y, angle, range, count, pts)
+	elseif weapon == "magnet" then
+		-- the centre of the pulse, not a shot: the line goes up to it
+		return self:ray_preview(rb.x, rb.y + M.DISEGNO_H / 2, angle, C.MAGNET.distance, count, pts)
+	elseif weapon == "cannon" then
+		-- the flight of the Cannonata: from the robot's centre, like the real thing
+		x, y = rb.x, rb.y + M.DISEGNO_H / 2
+		vx, vy = launch_velocity(angle, math.max(C.CANNON.min_power, power), C.CANNON.speed)
+		gravity = M.GRAVITY * C.CANNON.gravity
 	elseif weapon == "lunge" then
 		-- the dash: from the robot's centre, as long as the Affondo
 		return self:ray_preview(rb.x, rb.y + M.DISEGNO_H / 2, angle, C.LUNGE.speed * C.LUNGE.ticks / 60, count, pts)
@@ -2685,9 +3031,11 @@ end
 
 function M:update_projectile()
 	local p = self.projectile
-	if p.kind == "grenade" then return self:update_grenade(p) end
+	if p.kind == "grenade" or p.kind == "tar" or p.kind == "petard" then return self:update_grenade(p) end
 	if p.kind == "sniper" then return self:update_sniper(p) end
 	if p.kind == "janus" then return self:update_janus(p) end
+	if p.kind == "boomerang" then return self:update_boomerang(p) end
+	if p.digging then return self:update_drill(p) end
 	p.age = p.age + 1
 	p.vy = p.vy - M.GRAVITY * M.MISSILE_GRAVITY * M.DT
 	local mx, my = p.vx * M.DT, p.vy * M.DT
@@ -2696,8 +3044,20 @@ function M:update_projectile()
 		if self:spring(p, p.y + my / steps, 0) then break end
 		p.x = p.x + mx / steps
 		p.y = p.y + my / steps
-		if self.terrain:solid(p.x, p.y) or self:hits_robot(p.x, p.y, p.owner, p.age) then
-			self:explode(p.x, p.y, p.owner, nil, "missile")
+		local hit_robot = self:hits_robot(p.x, p.y, p.owner, p.age)
+		if self.terrain:solid(p.x, p.y) or hit_robot then
+			if p.kind == "drill" and not hit_robot then
+				-- it bores into the terrain, straight on at the speed it came in
+				local sp = math.sqrt(p.vx * p.vx + p.vy * p.vy)
+				p.digging, p.ux, p.uy, p.left = true, p.vx / sp, p.vy / sp, C.DRILL.dig
+				self:emit({ type = "drill_in", x = p.x, y = p.y })
+				return
+			end
+			if p.kind == "drill" then
+				self:explode(p.x, p.y, p.owner, C.DRILL.blast, "drill")
+			else
+				self:explode(p.x, p.y, p.owner, nil, "missile")
+			end
 			self.projectile = nil
 			return
 		end
@@ -2816,11 +3176,21 @@ function M:attack(weapon, fire)
 		self:start_lunge(fire.angle)
 	elseif weapon == "bellows" then
 		self:fire_bellows(fire.angle)
+	elseif weapon == "magnet" then
+		self:fire_magnet(fire.angle)
+	elseif weapon == "cannon" then
+		self:start_cannon(fire.angle, fire.power)
+	elseif weapon == "petard" then
+		self:throw_grenade(fire.angle, fire.power, "petard")
 	else
 		if weapon == "punch" then
 			self:start_punch(fire.angle)
-		elseif weapon == "grenade" then
-			self:throw_grenade(fire.angle, fire.power)
+		elseif weapon == "grenade" or weapon == "tar" then
+			self:throw_grenade(fire.angle, fire.power, weapon)
+		elseif weapon == "boomerang" then
+			self:fire_boomerang(fire.angle)
+		elseif weapon == "drill" then
+			self:fire_drill(fire.angle, fire.power)
 		elseif weapon == "shards" then
 			self:fire_shards(fire.angle)
 		elseif weapon == "sniper" then
@@ -2889,7 +3259,7 @@ local FINGERPRINT_MOD = 2147483629
 local function shuffle(h, v)
 	return (h * 31 + math.floor(v) % FINGERPRINT_MOD) % FINGERPRINT_MOD
 end
-function M:impronta()
+function M:fingerprint()
 	local h = shuffle(shuffle(shuffle(7, self.tick), self.current), self.rng.state)
 	for _, rb in ipairs(self.robots) do
 		h = shuffle(h, rb.x * 16)
@@ -2948,6 +3318,7 @@ function M:end_turn()
 		rb.trapped = nil
 		self:emit({ type = "trap_free", robot = rb.id })
 	end
+	self:age_pools()
 	rb.round_done = true
 	local next_pos = self.order_pos % #self.order + 1
 	if next_pos == 1 then
@@ -2990,6 +3361,8 @@ function M:advance(input, can_move)
 			if rb.dead then rb.mallet, rb.mallet_dir, rb.mallet_stop = nil, nil, nil else self:update_mallet(rb) end
 		end
 		if rb.dead then rb.lunge, rb.lunge_hit, rb.hooked, rb.recoil, rb.hook_shot = nil, nil, nil, nil, nil end
+		if rb.dead then rb.cannon, rb.pull = nil, nil end
+		if rb.pull then self:update_pull(rb) end
 		if rb.hook_shot then self:update_hook_shot(rb) end
 	end
 	if self.projectile then self:update_projectile() end
@@ -2997,6 +3370,7 @@ function M:advance(input, can_move)
 	self:update_shards()
 	if #self.crates > 0 then self:update_crates() end
 	if #self.placed > 0 then self:update_placed() end
+	if #self.pools > 0 then self:update_pools() end
 end
 
 function M:step(input)
@@ -3062,7 +3436,8 @@ function M:step(input)
 			if o.flying then still = false end
 		end
 		for _, rb in ipairs(self.robots) do
-			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet) then still = false end
+			if not rb.dead and (not rb.grounded or rb.swing or rb.punch or rb.lunge or rb.recoil or rb.hooked or rb.hook_shot or rb.mallet
+				or rb.cannon or rb.pull) then still = false end
 		end
 		self.settle = still and self.settle + 1 or 0
 		if self.settle >= M.SETTLE_TICKS or self.settle_total >= M.MAX_SETTLE_TICKS then

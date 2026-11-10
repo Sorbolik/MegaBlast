@@ -82,11 +82,11 @@ local function write(font, t, x, y, scale, color, parent)
 end
 
 -- Normal text and title (today the same font, bigger)
-function M.testo(t, x, y, scale, color, parent)
+function M.text(t, x, y, scale, color, parent)
 	return write("titolo", t, x, y, (scale or 1) * 0.5, color, parent)
 end
 
-function M.titolo(t, x, y, scale, color, parent)
+function M.title(t, x, y, scale, color, parent)
 	return write("titolo", t, x, y, scale or 1, color or C.LIGHT, parent)
 end
 
@@ -98,7 +98,7 @@ function M.alone(x, y, d, color, parent)
 end
 
 -- Full-screen solid background, on any proportion (ui/screen.lua)
-function M.sfondo(parent)
+function M.background(parent)
 	local n = gui_node(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, C.BOTTOM, parent)
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	return n
@@ -107,7 +107,7 @@ end
 -- Panel: charcoal with a faint light border. Also returns the border node, to
 -- light it (C.LIGHT) when the panel is selected. shape: the family's prefix
 -- ("slot_arma", "badge"; nil the plain panel)
-function M.pannello(x, y, w, h, parent, shape)
+function M.panel(x, y, w, h, parent, shape)
 	local n = gui_node(shape and shape .. "_forma" or "forma", x, y, w, h, C.PANEL, parent)
 	return n, gui_node(shape and shape .. "_bordo" or "bordo", 0, 0, w, h, C.LINE, n)
 end
@@ -138,14 +138,14 @@ function M.button(list_of, x, y, w, h, label, ui_action, opt, parent)
 		M.alone(-w / 2 + r, 0, h * 0.18, C.LIGHT, n)
 		tx = h * 0.3
 	end
-	b.testo = M.testo(label, tx, 0, opt.scala or (h >= 90 and 1.6 or 0.9),
+	b.testo = M.text(label, tx, 0, opt.scala or (h >= 90 and 1.6 or 0.9),
 		opt.spento and C.OFF or C.TEXT, n)
 	list_of[#list_of + 1] = b
 	return n
 end
 
 -- Tab: like a button, the active one has the light border and lit text
-function M.scheda(list_of, x, y, w, h, label, ui_action, activate, parent)
+function M.tab(list_of, x, y, w, h, label, ui_action, activate, parent)
 	local n = M.button(list_of, x, y, w, h, label, ui_action, nil, parent)
 	M.sheet_active(list_of[#list_of], activate)
 	return n
@@ -165,7 +165,7 @@ local function arrow(n)
 end
 
 -- Back: square with the arrow, stuck at the top left
-function M.indietro(list_of, ui_action, parent)
+function M.back(list_of, ui_action, parent)
 	local n = M.button(list_of, 30 + 32, 720 - 30 - 32, 64, 64, "", ui_action, nil, parent)
 	gui.set_xanchor(n, gui.ANCHOR_LEFT)
 	gui.set_yanchor(n, gui.ANCHOR_TOP)
@@ -215,7 +215,7 @@ end
 -- real top as at 16:9. Moved by hand (screen.y1) and not with ANCHOR_TOP:
 -- Defold moves an anchored node at y = 0 toward the bottom, not the top.
 -- The screens build their root again every time they open.
-function M.radice()
+function M.root()
 	local n = gui.new_box_node(vec(0, screen.y1 - 720), vec(0, 0))
 	gui.set_visible(n, false)
 	return n
@@ -228,7 +228,7 @@ function M.header(list_of, title, back_action)
 		arrow(h.back)
 	end
 	if title then
-		h.title = M.titolo(title, M.TITLE_X, 0, M.TITLE_SCALE, C.TEXT, h.left)
+		h.title = M.title(title, M.TITLE_X, 0, M.TITLE_SCALE, C.TEXT, h.left)
 		gui.set_pivot(h.title, gui.PIVOT_W)
 	end
 	return h
@@ -237,10 +237,10 @@ end
 -- The tabs: { label, action, width } from the left edge (or from x0); returns their nodes
 function M.header_tabs(h, list_of, tabs, active, x0)
 	if h.tabs then gui.delete_node(h.tabs) end
-	h.tabs = M.radice()
+	h.tabs = M.root()
 	local x, nodes = x0 or M.EDGE, {}
 	for i, t in ipairs(tabs) do
-		nodes[i] = M.scheda(list_of, x + t[3] / 2, M.TABS_Y, t[3], M.TAB_H, t[1], t[2], i == active, h.tabs)
+		nodes[i] = M.tab(list_of, x + t[3] / 2, M.TABS_Y, t[3], M.TAB_H, t[1], t[2], i == active, h.tabs)
 		x = x + t[3] + 12
 	end
 	return nodes
@@ -255,7 +255,7 @@ end
 
 -- Settings: the same square with the wheel, at the top left (in a match) or
 -- right (in the home)
-function M.impostazioni(list_of, ui_action, parent, right)
+function M.settings_button(list_of, ui_action, parent, right)
 	local n = M.button(list_of, right and 1280 - 30 - 32 or 30 + 32, 720 - 30 - 32, 64, 64, "", ui_action, nil, parent)
 	gui.set_xanchor(n, right and gui.ANCHOR_RIGHT or gui.ANCHOR_LEFT)
 	gui.set_yanchor(n, gui.ANCHOR_TOP)
@@ -266,18 +266,18 @@ end
 -- Star of the lessons and of the campaign: d is the side
 -- (small ones from the 48 px image: the ui atlas has no mipmaps, and the big
 -- one shrunk a lot shows steps)
-function M.stella(x, y, d, color, parent)
+function M.star(x, y, d, color, parent)
 	return gui_node(d <= 40 and "stella_p" or "stella", x, y, d, d, color, parent)
 end
 
 -- Favilla's medal of the cortile (sim/missions.lua, medaglia): her head, the
 -- logo of Sergio's drawing; lit in her light blue (M.MEDAL)
-function M.medaglia(x, y, d, color, parent)
+function M.medal(x, y, d, color, parent)
 	return gui_node(d <= 64 and "favilla_p" or "favilla", x, y, d, d, color, parent)
 end
 
 -- Padlock of locked missions and chapters
-function M.lucchetto(x, y, d, color, parent)
+function M.padlock(x, y, d, color, parent)
 	return gui_node(d <= 48 and "lucchetto_p" or "lucchetto", x, y, d, d, color, parent)
 end
 
@@ -298,7 +298,7 @@ end
 -- under this diameter the 64 px images (the ui atlas has no mipmaps)
 local SMALL = 48
 
-function M.disco(x, y, d, color, parent)
+function M.disc(x, y, d, color, parent)
 	local n = gui.new_pie_node(vec(x, y), vec(d, d))
 	gui.set_outer_bounds(n, gui.PIEBOUNDS_ELLIPSE)
 	gui.set_perimeter_vertices(n, 64)
@@ -312,7 +312,7 @@ end
 -- Turns the pie node n into a ring d wide (h high: an ellipse), thickness
 -- toward the inside measured on d: the image with the nearest thickness, the
 -- polygon's hole a little inside the image's
-function M.anello(n, d, thickness, h)
+function M.ring(n, d, thickness, h)
 	local k, best = thickness / d, 1
 	for i = 2, #RINGS do
 		if math.abs(RINGS[i] - k) < math.abs(RINGS[best] - k) then best = i end
@@ -324,8 +324,8 @@ function M.anello(n, d, thickness, h)
 end
 
 function M.ring_node(x, y, d, thickness, color, parent)
-	local n = M.disco(x, y, d, color, parent)
-	M.anello(n, d, thickness)
+	local n = M.disc(x, y, d, color, parent)
+	M.ring(n, d, thickness)
 	return n
 end
 
@@ -376,7 +376,7 @@ local function usable(b)
 end
 
 -- The light on b (nil: off)
-function M.luce(list_of, b)
+function M.light(list_of, b)
 	local first_one = list_of.luce
 	if first_one and first_one ~= b then
 		gui.set_scale(first_one.nodo, NORMAL)
@@ -392,7 +392,7 @@ end
 -- The light again where it was, after the screen recolored the borders
 function M.relight(list_of)
 	local b = list_of.luce
-	if b and usable(b) then M.luce(list_of, b) elseif b then M.luce(list_of, nil) end
+	if b and usable(b) then M.light(list_of, b) elseif b then M.light(list_of, nil) end
 end
 
 -- Where the light starts: the last confirmed, the main one, or the first
@@ -416,7 +416,7 @@ local DIR_NODE = { su = { 0, 1 }, giu = { 0, -1 }, sinistra = { -1, 0 }, destra 
 function M.navigate(list_of, toward)
 	local b = list_of.luce
 	if not (b and usable(b)) then
-		M.luce(list_of, first(list_of))
+		M.light(list_of, first(list_of))
 		return
 	end
 	local d = DIR_NODE[toward]
@@ -434,7 +434,7 @@ function M.navigate(list_of, toward)
 			end
 		end
 	end
-	if better then M.luce(list_of, better) end
+	if better then M.light(list_of, better) end
 end
 
 -- The button with the light (or nil)
@@ -443,7 +443,7 @@ function M.lit_up(list_of)
 	return b and usable(b) and b or nil
 end
 
-function M.tocco(list_of, action_id, action)
+function M.touch(list_of, action_id, action)
 	if action_id == M.PAD then
 		if not action.pressed then return nil end
 		local u = action.ui
@@ -452,7 +452,7 @@ function M.tocco(list_of, action_id, action)
 		elseif u == "conferma" then
 			local b = M.lit_up(list_of)
 			if not b then
-				M.luce(list_of, first(list_of))
+				M.light(list_of, first(list_of))
 				return nil
 			end
 			if not ANGLE[b.ui_action] then remember = b.ui_action end

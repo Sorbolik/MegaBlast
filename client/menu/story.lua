@@ -155,7 +155,7 @@ function M.new(pages, can_skip)
 	s.radice = gui.new_box_node(vec(640, 360 + CARD_Y), vec(0, 0))
 	gui.set_visible(s.radice, false)
 	s.shadow = box(10, -12, 100, 100, c(0, 0, 0, 0.45), s.radice)
-	s.card, s.card_line = ui.pannello(0, 0, 100, 100, s.radice)
+	s.card, s.card_line = ui.panel(0, 0, 100, 100, s.radice)
 	gui.set_color(s.card, PAPER)
 	gui.set_color(s.card_line, INK)
 	local iy = (MARGIN + PIC_H + BAND) / 2 - MARGIN - PIC_H / 2
@@ -177,12 +177,12 @@ function M.new(pages, can_skip)
 	if #pages > 1 then
 		local step = math.min(18, 90 / (#pages - 1))
 		for k = 1, #pages do
-			s.dots[k] = ui.disco((k - (#pages + 1) / 2) * step, 0, math.min(10, step - 3), INK_SOFT, s.dots_root)
+			s.dots[k] = ui.disc((k - (#pages + 1) / 2) * step, 0, math.min(10, step - 3), INK_SOFT, s.dots_root)
 		end
 	end
 	show_page(s)
 	-- the light on AVANTI for the controller
-	ui.luce(s.buttons, s.buttons[1])
+	ui.light(s.buttons, s.buttons[1])
 	return s
 end
 
@@ -201,7 +201,7 @@ local function advance(s)
 end
 
 function M.on_input(s, action_id, action)
-	local what = ui.tocco(s.buttons, action_id, action)
+	local what = ui.touch(s.buttons, action_id, action)
 	if what == "avanti" then
 		return advance(s) and "fine" or nil
 	elseif what == "salta" then

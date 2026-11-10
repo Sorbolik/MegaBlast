@@ -1,7 +1,7 @@
 -- Match recipe: the little data needed to replay it identically (the
 -- simulation is deterministic). Seed, map, game.new options (with the players,
 -- and the level for bots), the real players' keys only when they change, and
--- the state fingerprints (game:impronta) every EVERY ticks and at the end:
+-- the state fingerprints (game:fingerprint) every EVERY ticks and at the end:
 -- whoever replays it must find them all the same, otherwise the match is not
 -- valid (different version, changed code, tampered data).
 -- Used by the bot arena (strumenti/arena), by replays and by server checks.
@@ -32,13 +32,13 @@ local function copy(t)
 	return o
 end
 
-function M.nuova(seed_value, map_name, opts)
+function M.new(seed_value, map_name, opts)
 	return { versione = M.VERSION, seme = seed_value, mappa = map_name,
 		opzioni = copy(opts or {}), input = {}, impronte = {} }
 end
 
 -- The recipe's match and bots, at the start
-function M.partita(r)
+function M.match(r)
 	local g = game.new(r.seme, r.mappa, copy(r.opzioni))
 	-- durata: the match shortened by hand (in scenarios, prova_durata)
 	if r.durata then g.match_left = r.durata end
@@ -83,9 +83,9 @@ function M.input(r, g, bots, human)
 end
 
 -- After g:step: the fingerprint, every EVERY ticks and at the end
-function M.dopo(r, g)
+function M.after(r, g)
 	if g.tick % M.EVERY == 0 or g.phase == "over" then
-		r.impronte[#r.impronte + 1] = { t = g.tick, h = g:impronta() }
+		r.impronte[#r.impronte + 1] = { t = g.tick, h = g:fingerprint() }
 	end
 end
 
@@ -114,8 +114,8 @@ end
 
 -- Replays the recipe and compares fingerprints. Returns true, or false and
 -- the tick of the first different (or missing) fingerprint.
-function M.verifica(r, max_tick)
-	local g, bots = M.partita(r)
+function M.verify(r, max_tick)
+	local g, bots = M.match(r)
 	local l = M.reader(r)
 	local n = 1
 	local waits = r.impronte
@@ -124,7 +124,7 @@ function M.verifica(r, max_tick)
 		g:step(M.read_step(l, g, bots))
 		local a = waits[n]
 		if a and a.t == g.tick then
-			if a.h ~= g:impronta() then return false, g.tick end
+			if a.h ~= g:fingerprint() then return false, g.tick end
 			n = n + 1
 		end
 	end

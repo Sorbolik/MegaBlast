@@ -147,7 +147,7 @@ local function crown_spot(t)
 	gui.set_position(t.crown, V)
 end
 
-function M.nuove(palette, name_list)
+function M.create(palette, name_list)
 	local tt = {}
 	-- first the bars of all plates
 	for i, color in ipairs(palette) do
@@ -176,39 +176,39 @@ function M.nuove(palette, name_list)
 		t.quip = txt(t.inside_texts, 0, QUIP_Y, "", QUIP_SCALE, ui.C.LIGHT)
 		gui.set_enabled(t.quip, false)
 		t.quip_t = 0
-		M.vita(t, 1, 1)
+		M.hp(t, 1, 1)
 		crown_spot(t)
 	end
 	return tt
 end
 
-function M.nome(t, nome)
+function M.name(t, nome)
 	gui.set_text(t.nome, nome)
 	crown_spot(t)
 end
 
-function M.scala(cam)
+function M.scale(cam)
 	return ON_SCREEN / cam.s
 end
 
 -- the team color (changes from one match to the next)
-function M.colore(t, color)
+function M.color(t, color)
 	t.colore.x, t.colore.y, t.colore.z = color.x, color.y, color.z
 	gui.set_color(t.nome, t.colore)
 end
 
-function M.stato(t, s)
+function M.status(t, s)
 	gui.set_text(t.stato, s)
 end
 
-function M.posto(t, s, crown)
+function M.rank(t, s, crown)
 	gui.set_text(t.posto, s)
 	gui.set_enabled(t.crown, crown)
 end
 
 -- where the plate ends at the top, arrow included (units at scale 1, from the
 -- bottom center): the marker of the turn sits above it
-function M.sopra(t)
+function M.above(t)
 	return max(NAME_TOP, t.arrow_top or 0)
 end
 
@@ -218,7 +218,7 @@ function M.announcement(t, s)
 	t.banner_t = BANNER_T
 end
 
-function M.battuta(t, s, strong)
+function M.quip(t, s, strong)
 	if t.quip_t > QUIP_T - QUIP_KEEP and not strong then return end
 	gui.set_text(t.quip, s)
 	gui.set_enabled(t.quip, true)
@@ -231,7 +231,7 @@ function M.set_enabled(t, on)
 end
 
 -- health and shield in points; the bar counts up to maximum, or to health + shield if more
-function M.vita(t, hp_value, maximum, shield)
+function M.hp(t, hp_value, maximum, shield)
 	hp_value, shield = max(0, hp_value), max(0, shield or 0)
 	local tot = max(maximum, hp_value + shield)
 	local f = hp_value / tot
