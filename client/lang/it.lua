@@ -140,18 +140,22 @@ return {
 
 	-- ui/receipt.lua: what a match or a level gave, line by line
 	receipt = {
-		title = "ESPERIENZA",
+		title = "GUADAGNI",
+		xp = "XP",
 		lines = { match = "Partita", win = "Vittoria", second = "Secondo posto", mvp = "MVP",
-			done = "Prima volta", replay = "Rigiocata" },
-		points = "Punti %s",
+			done = "Prima volta", replay = "Rigiocata", daily = "Prima vittoria di oggi",
+			level = "Ogni 5 livelli", chapter = "Capitolo finito" },
+		points_line = "Punti %s",
 		award = "Premio %s",
 		stars = "Stelle nuove ×%s",
+		-- a badge going up a grade: its name and the grade
+		badge = "%s %s",
 		plus = "+%s",
 		total = "TOTALE",
 		level = "LIVELLO %s",
 		level_up = "SALI AL LIVELLO %s",
-		point = "+%s punto da mettere nei Sigilli",
-		points = "+%s punti da mettere nei Sigilli",
+		seal_point = "+%s punto da mettere nei Sigilli",
+		seal_points = "+%s punti da mettere nei Sigilli",
 		place_points = "METTI I PUNTI",
 		brace = "+%s brace accanto al livello",
 		braci = "+%s braci accanto al livello",

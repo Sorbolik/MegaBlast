@@ -2,7 +2,8 @@
 # colpo a testa: il turno finisce col tempo); il secondo giro è l'ultimo (×2),
 # un altro colpo a testa e la partita finisce; dopo un attimo sale il podio con
 # i premi sotto i gradini, l'MVP e a destra lo scontrino dell'esperienza (le
-# righe una alla volta, il totale, il livello). Poi l'armeria dalla home: set
+# righe una alla volta con XP e Scaglie, i totali, il livello, poi le monete
+# volano nella pillola del portafoglio). Poi l'armeria dalla home: set
 # del Vuoto completo.
 imposta prova_durata 3
 
@@ -23,6 +24,8 @@ aspetta 1.8
 foto 01_podio_sale
 aspetta 2
 foto 02_podio
+aspetta 1.5
+foto 02b_podio_monete               # le Scaglie volate nella pillola in alto a destra
 tocca 1130 52                       # CONTINUA
 aspetta_stato modo=menu 3
 aspetta 0.5

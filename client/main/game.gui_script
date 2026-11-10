@@ -1533,6 +1533,7 @@ local function open_podium(self)
 	-- first the screen, then the mode: if new breaks, no mode is left without a screen
 	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
 	self.schermata.obj.tick = function(i) sound.play("#punto", { speed = 1 + 0.08 * i }) end
+	self.schermata.obj.coin = CP.coin_sound
 	self.mode = "schermata"
 	if self.pill then menu.pill.raise(self.pill) end
 end
@@ -2281,6 +2282,13 @@ function CP.match_coins(self, r, stats_before, gain)
 	return { rows = rows, obsidian = obs }
 end
 
+-- a coin landing in the wallet pill: a semitone higher at each Scaglia, the
+-- Ossidiana lower
+function CP.coin_sound(kind, i)
+	local speed = kind == "ossidiana" and 0.75 * 2 ^ ((i - 1) / 12) or 2 ^ ((i - 1) / 12)
+	sound.play("#scaglia", { speed = speed })
+end
+
 -- Scaglie of a mission done, from its experience lines (profile.mission): the
 -- first time or a replay, the new stars; chapters: the chapters done before
 function CP.mission_coins(self, gain, chapters)
@@ -2806,7 +2814,7 @@ local function open_level_end(self)
 		-- the lead points, where they count
 		vantaggio = won and missions.lead(r) or nil,
 		record = self.record_end, avanti = won and (missions.after(r.l.id) ~= nil),
-		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo,
+		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo, coin = CP.coin_sound,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 	self.mission_gain = nil
 end

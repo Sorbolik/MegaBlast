@@ -13,7 +13,8 @@
 --     points don't count: the lessons); record: how many stars the mission
 --     already had; medaglia: the second is Favilla's medal (the cortile);
 --     avanti: there is a next level; sound(v): the tick, v = speed (pitch);
---     gain: profile.missione's experience (the receipt on the right, ui/receipt.lua), prof: the profile
+--     gain: profile.missione's experience and coins (the receipt on the right, ui/receipt.lua), prof: the profile;
+--     coin(kind, i): the sound of a coin landing in the wallet pill
 --   fine_livello.update(f, dt)
 --   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro", "sigilli" or nil
 --   fine_livello.destroy(f)
@@ -34,7 +35,7 @@ M.RHYTHM, M.FIRST, M.SHOT = 0.3, 0.25, 0.18
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 function M.new(o, sound)
-	local f = { buttons = {}, t = 0, sound = sound, lit_ones = 0, prese = {} }
+	local f = { buttons = {}, t = 0, sound = sound, coin = o.coin, lit_ones = 0, prese = {} }
 	local n = 0
 	f.fondo = backdrop.new("legno")
 	f.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
@@ -77,7 +78,7 @@ function M.new(o, sound)
 	ui.button(f.buttons, cx - bw / 2 - 20, 110, bw, 96, common.retry, "riprova", nil, f.radice)
 	ui.button(f.buttons, cx + bw / 2 + 20, 110, bw, 96, o.avanti and common.next or common.campaign, "avanti",
 		{ main = true }, f.radice)
-	if o.gain then f.receipt = receipt.new(o.gain, o.prof, 1040, 676, f.buttons, f.radice) end
+	if o.gain then f.receipt = receipt.new(o.gain, o.prof, 1040, 616, f.buttons, f.radice) end
 	return f
 end
 
@@ -85,7 +86,7 @@ end
 -- back, the halo lights up and settles
 function M.update(f, dt)
 	f.t = f.t + dt
-	if f.receipt then receipt.update(f.receipt, dt, f.sound and function(i) f.sound(1 + 0.08 * i) end) end
+	if f.receipt then receipt.update(f.receipt, dt, f.sound and function(i) f.sound(1 + 0.08 * i) end, f.coin) end
 	local i = f.lit_ones + 1
 	if i > #f.prese or f.t < M.FIRST + (i - 1) * M.RHYTHM then return end
 	f.lit_ones = i
@@ -98,10 +99,14 @@ function M.update(f, dt)
 end
 
 function M.on_input(f, action_id, action)
-	return ui.touch(f.buttons, action_id, action)
+	local ui_action = ui.touch(f.buttons, action_id, action)
+	-- a tap elsewhere while the receipt counts or the coins fly: everything at once
+	if not ui_action and f.receipt and action.pressed and action_id == ui.TOUCH then receipt.skip(f.receipt) end
+	return ui_action
 end
 
 function M.destroy(f)
+	if f.receipt then receipt.delete(f.receipt) end
 	gui.delete_node(f.radice)
 	gui.delete_node(f.fondo)
 end
