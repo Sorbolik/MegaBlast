@@ -41,6 +41,7 @@
 -- with the state) and locally you see the same thing.
 
 local ui = require "ui.ui"
+local screen = require "ui.screen"
 local plate = require "battle.plate"
 local scoria = require "battle.scoria"
 local T = require("lang.text").score
@@ -91,6 +92,7 @@ local FACES_GAP = 12             -- between the faces and the hourglass of their
 local DOT_D, DOT_STEP = 12, 18   -- the turn dots
 local BELOW_Y = GET_H / 2 + 14           -- the dots and "+N PER PAREGGIARE", just under the bar
 local ROW_Y, NOTICE_Y = GET_H / 2 + 36, GET_H / 2 + 60   -- turn balance and last-lap warning, under the dots
+local GOAL_GAP, GOAL_W, GOAL_MIN_W, GOAL_RIGHT = 14, 300, 120, 90   -- the mission goal: gap from the faces, width, minimum, room left for the clock
 local READY_W, READY_H = 132, 48              -- PREPARATI: right of the right-hand faces
 -- last lap: the banner and the warning before it
 local BANNER_DURATION, BANNER_W, BANNER_H = 2.6, 760, 112
@@ -307,7 +309,7 @@ function M.new(palette, tick)
 	p.row_text = ui.text("", 0, 0, SMALL, ui.C.LIGHT, p.riga)
 	p.line_ticks = 0
 	-- the mission goal, under the turn line
-	p.obiettivo = root_node(HALF + 215, Y)
+	p.obiettivo = root_node(HALF + 330, Y)
 	p.objective_text = ui.text("", 0, 0, CAPTION, ui.GOLD, p.obiettivo)
 	gui.set_pivot(p.objective_text, gui.PIVOT_W)
 	gui.set_line_break(p.objective_text, true)
@@ -349,7 +351,7 @@ function M.top(p, y1)
 	Y = y1 - TOP
 	position(p.fune, HALF, Y)
 	position(p.riga, HALF, Y - ROW_Y)
-	position(p.obiettivo, HALF + 215, Y)
+	position(p.obiettivo, p.goal_x or HALF + 330, Y)
 	position(p.avviso, HALF, Y - NOTICE_Y)
 	position(p.banner, HALF, y1 / 2 + 40)
 	for _, gt in ipairs(p.gettoni) do
@@ -693,6 +695,17 @@ local function faces(p, g, human, looks, views)
 	-- PREPARATI sits right of the blue faces
 	local ready_x = edge_r + (#right > 0 and ((#right - 1) * FACE_STEP + FACE_D) or 0) + 10 + READY_W / 2
 	position(p.pronto, ready_x, Y)
+	-- the mission goal sits right of the last face (and of PREPARATI while it shows): that
+	-- space is for the faces, in every mode, also 2 vs 2 (Sergio, 10 Nov)
+	local faces_end = edge_r + (#right > 0 and ((#right - 1) * FACE_STEP + FACE_D) or 0)
+	local goal_x = (p.ready_on and ready_x + READY_W / 2 or faces_end) + GOAL_GAP
+	if p.goal_x ~= goal_x or p.goal_x1 ~= screen.x1 then
+		p.goal_x, p.goal_x1 = goal_x, screen.x1
+		position(p.obiettivo, goal_x, Y)
+		-- up to the clock at the right edge
+		local w = max(GOAL_MIN_W, min(GOAL_W, screen.x1 - GOAL_RIGHT - goal_x))
+		gui.set_size(p.objective_text, vmath.vector3(w / (CAPTION * 0.5), 100, 0))
+	end
 	position(p.cerchi, 0, Y)
 	position(p.turni, HALF, Y - BELOW_Y)
 	local k = 1 + 0.05 * math.sin(p.ora * 5)
