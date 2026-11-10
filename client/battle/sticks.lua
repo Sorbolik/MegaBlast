@@ -42,7 +42,7 @@ end
 
 -- The movement stick's finger is at (x, y). Returns true when a jump starts
 -- (the repeated jump while the stick stays up is done by the simulation).
-function M.muovi(s, x, y)
+function M.move(s, x, y)
 	local mag = math.sqrt(x * x + y * y)
 	local up = mag > 0 and y / mag or 0
 	if s.moving and ((up > sin(M.MOVE_STOP_ANGLE) and mag > M.MOVE_STOP) or mag < M.MOVE_CENTER) then
@@ -64,7 +64,7 @@ function M.muovi(s, x, y)
 end
 
 -- The aim stick's finger is at (x, y): direction and power (0..1)
-function M.mira(s, x, y)
+function M.aim(s, x, y)
 	local mag = math.sqrt(x * x + y * y)
 	if not s.active and mag > M.AIM_ON then
 		s.active = true
@@ -77,7 +77,7 @@ end
 
 -- Every frame: what the aim was at instant t (in seconds)
 local HIST = 24
-function M.registra(s, t, angle, power, active)
+function M.record(s, t, angle, power, active)
 	s.hist_i = s.hist_i % HIST + 1
 	local h = s.hist[s.hist_i]
 	if not h then

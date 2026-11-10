@@ -61,7 +61,7 @@ local function box(x, y, w, h, color, parent)
 end
 
 local function txt(t, x, y, scale, color, parent, pivot)
-	local n = ui.testo(t, x, y, scale, color, parent)
+	local n = ui.text(t, x, y, scale, color, parent)
 	if pivot then gui.set_pivot(n, pivot) end
 	return n
 end
@@ -86,12 +86,12 @@ function M.badge(b, x, y, d, parent)
 	local function shape(k, color)
 		local n
 		if s.forma == "cerchio" then
-			n = ui.disco(0, 0, d * k, color, root_node)
+			n = ui.disc(0, 0, d * k, color, root_node)
 		elseif s.forma == "esagono" then
-			n = ui.disco(0, 0, d * k, color, root_node)
+			n = ui.disc(0, 0, d * k, color, root_node)
 			gui.set_perimeter_vertices(n, 6)
 		elseif s.forma == "stella" then
-			n = ui.stella(0, 0, d * 1.15 * k, color, root_node)
+			n = ui.star(0, 0, d * 1.15 * k, color, root_node)
 		else
 			n = box(0, 0, d * 0.72 * k, d * 0.72 * k, color, root_node)
 			gui.set_euler(n, vmath.vector3(0, 0, 45))
@@ -106,12 +106,12 @@ end
 
 -- A piece: the box with the tier border, the image, the level and the upgrade
 -- ticks. p = { slot, set, livello, tier }
-function M.pezzo(p, team, x, y, d, parent)
+function M.piece(p, team, x, y, d, parent)
 	local col = C.SQUADRA[team] or C.LIGHT
 	local empty = not p.set
 	local border_col = empty and C.LINE or p.tier >= 3 and C.GOLD or p.tier == 2 and C.STEEL
 		or with_alpha(C.LIGHT, 0.5)
-	local outside, border = ui.pannello(x, y, d, d, parent)
+	local outside, border = ui.panel(x, y, d, d, parent)
 	gui.set_color(border, border_col)
 	if p.tier and p.tier >= equip.TIERS and not empty then
 		local a = ui.alone(0, 0, d * 1.6, with_alpha(C.GOLD, 0.35), outside)
@@ -146,7 +146,7 @@ function M.pezzo(p, team, x, y, d, parent)
 end
 
 -- A golden pill per power; sx: the left edge
--- how wide a ui.testo text is at that scale, without creating it
+-- how wide a ui.text text is at that scale, without creating it
 local function wide(t, scale)
 	return resource.get_text_metrics(gui.get_font_resource(hash("titolo")), t).width * scale * 0.5
 end
@@ -178,7 +178,7 @@ function M.new(v, x, y, opt, parent)
 	local col = C.SQUADRA[v.squadra] or C.LIGHT
 	c.alto = H
 	-- the border in the team color: solid for whoever plays here
-	c.root, c.bordo = ui.pannello(x, y - H / 2, W, H, parent)
+	c.root, c.bordo = ui.panel(x, y - H / 2, W, H, parent)
 	gui.set_color(c.bordo, opt.tu and col or with_alpha(col, 0.6))
 	local sx, dx = -W / 2 + PAD, W / 2 - PAD
 	local top = H / 2 - PAD
@@ -192,7 +192,7 @@ function M.new(v, x, y, opt, parent)
 	else
 		txt(v.bot and common.bot or "–", sx + 22, cy, v.bot and 0.62 or 0.95, col, c.root)
 	end
-	local nome = ui.titolo(v.nome or "?", sx + 52, cy + 8, 0.5, C.LIGHT, c.root)
+	local nome = ui.title(v.nome or "?", sx + 52, cy + 8, 0.5, C.LIGHT, c.root)
 	gui.set_pivot(nome, gui.PIVOT_W)
 	txt(string.upper(v.sotto or ""), sx + 52, cy - 13, 0.52, C.OFF, c.root, gui.PIVOT_W)
 	for i, b in ipairs(v.badge or {}) do
@@ -222,7 +222,7 @@ function M.new(v, x, y, opt, parent)
 
 	-- the pieces
 	for i, p in ipairs(v.pezzi or {}) do
-		M.pezzo(p, v.squadra, sx + PIECE / 2 + (i - 1) * (PIECE + PIECE_GAP) + 1, yy - PIECE / 2, PIECE, c.root)
+		M.piece(p, v.squadra, sx + PIECE / 2 + (i - 1) * (PIECE + PIECE_GAP) + 1, yy - PIECE / 2, PIECE, c.root)
 	end
 	yy = yy - PIECE - 10
 
@@ -234,7 +234,7 @@ function M.new(v, x, y, opt, parent)
 	txt(common.stats, sx, yy - LABEL / 2, 0.42, C.OFF, c.root, gui.PIVOT_W)
 	yy = yy - LABEL
 	local bx, bw = sx + 62, W - 2 * PAD - 62 - 50
-	for _, r in ipairs(showcase.righe(v)) do
+	for _, r in ipairs(showcase.rows(v)) do
 		local ry = yy - ROW / 2
 		txt(r.nome, sx, ry, 0.62, C.TEXT, c.root, gui.PIVOT_W)
 		box(bx + bw / 2, ry, bw, 10, with_alpha(C.LIGHT, 0.08), c.root)
@@ -258,7 +258,7 @@ function M.new(v, x, y, opt, parent)
 	}
 	local x = sx
 	for _, vo in ipairs(entries) do
-		if vo[3] then ui.ring_node(x + 6, ry, 12, 2, vo[2], c.root) else ui.disco(x + 6, ry, 12, vo[2], c.root) end
+		if vo[3] then ui.ring_node(x + 6, ry, 12, 2, vo[2], c.root) else ui.disc(x + 6, ry, 12, vo[2], c.root) end
 		local n = txt(vo[1], x + 16, ry, 0.6, C.TEXT, c.root, gui.PIVOT_W)
 		x = x + 16 + text_width(n) + 12
 	end

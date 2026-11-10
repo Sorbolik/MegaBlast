@@ -43,12 +43,12 @@ function M.setting(p, lookup_key)
 	return v
 end
 
-function M.imposta(p, lookup_key, value)
+function M.set(p, lookup_key, value)
 	p.impostazioni = p.impostazioni or {}
 	p.impostazioni[lookup_key] = value
 end
 
-function M.nuovo()
+function M.new()
 	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, mastery = {}, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
 		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0,
 		-- the story's chapters already seen (ui/story.lua)
@@ -62,7 +62,7 @@ function M.xp_level(n)
 	return M.XP_BASE + M.XP_STEP * (math.min(n, M.LEVEL_MAX) - 1)
 end
 
-function M.punti(p)
+function M.points(p)
 	return skills.points(p.livello)
 end
 
@@ -137,7 +137,7 @@ M.GROUP_NAMES = { ["2v2"] = common.modes["2v2"], ["1v1"] = common.modes["1v1"], 
 M.MATCHES = 10
 
 -- The values of a group ({} if missing); "tutte" sums them
-function M.statistiche(p, cluster)
+function M.statistics(p, cluster)
 	if cluster ~= "tutte" then return p.statistiche[cluster] or {} end
 	local tot = {}
 	for _, g in pairs(p.statistiche) do
@@ -161,7 +161,7 @@ end
 
 -- The badges next to the name: the chosen ones, then the highest (menu/milestones.lua)
 function M.badge(p)
-	return milestones.shown(M.statistiche(p, "tutte"), p.badge)
+	return milestones.shown(M.statistics(p, "tutte"), p.badge)
 end
 
 -- Tap a badge on the sheet: if it is among the chosen ones it is removed,
@@ -182,7 +182,7 @@ end
 -- won, partita). Adds the stats to the group, keeps the win streak and puts
 -- the match at the top of the list (the oldest drop out). Returns the saved
 -- match, with its number (for the replay file).
-function M.registra(p, r)
+function M.record(p, r)
 	local g = p.statistiche[r.gruppo] or {}
 	p.statistiche[r.gruppo] = g
 	for k, v in pairs(r.valori) do
@@ -210,7 +210,7 @@ end
 -- Only in the scenarios (imposta prova_profilo 1, scenari/scheda.txt): a
 -- profile that has already played, to see pieces, powers, badges, stats and
 -- the campaign's stars
-function M.prova(p)
+function M.sample(p)
 	p.livello, p.xp = 23, 410
 	local a = p.loadouts[p.is_active]
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
@@ -238,7 +238,7 @@ end
 -- stars { true, false, true }: saves them (each one once taken stays, even
 -- across different matches) and returns the experience gained (add_xp):
 -- XP_MISSION.done the first time, star for each new star, replay if nothing is new
-function M.missione(p, id, stars)
+function M.mission(p, id, stars)
 	local picked = p.stelle[id] or { false, false, false }
 	local first = not picked[1]
 	local new = 0
@@ -258,7 +258,7 @@ end
 -- A lost mission: from the third in a row the opponents ease off
 -- (sim/missions.lua, help), without saying so
 M.HELP_AFTER = 3
-function M.fallita(p, id)
+function M.failed(p, id)
 	p.failed_ones[id] = (p.failed_ones[id] or 0) + 1
 end
 
@@ -327,10 +327,10 @@ end
 
 function M.load_up()
 	local ok, p = pcall(sys.load, file())
-	if not ok or type(p) ~= "table" or p.versione ~= M.VERSION then return M.nuovo() end
+	if not ok or type(p) ~= "table" or p.versione ~= M.VERSION then return M.new() end
 	-- a field added to nuovo() later is missing from older saves of the same
 	-- version: it starts empty, without resetting the profile
-	for k, v in pairs(M.nuovo()) do
+	for k, v in pairs(M.new()) do
 		if p[k] == nil then p[k] = v end
 	end
 	-- the old skill tree (nodes, before the Sigilli of 10 Nov): it starts empty,
@@ -342,7 +342,7 @@ function M.load_up()
 	return p
 end
 
-function M.salva(p)
+function M.save(p)
 	sys.save(file(), p)
 end
 

@@ -31,7 +31,7 @@ M.COLOR = { wings = C.PURPLE, armor = C.STEEL, forge = C.BRACE }
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 local function txt(t, x, y, scale, color, parent, pivot)
-	local n = ui.testo(t, x, y, scale, color, parent)
+	local n = ui.text(t, x, y, scale, color, parent)
 	if pivot then gui.set_pivot(n, pivot) end
 	return n
 end
@@ -92,9 +92,9 @@ local function row(s, i, p, parent)
 		local pick = skills.pick(t, p.id, k)
 		local d = k == skills.STEPS and 40 or 30
 		if sp == p.id and sk == k then ui.alone(x, y, d * 2.2, vmath.vector4(1, 0.8, 0.25, 0.35), parent) end
-		ui.disco(x, y, d, C.BOTTOM, parent)
+		ui.disc(x, y, d, C.BOTTOM, parent)
 		if reached and pick then
-			ui.disco(x, y, d - 6, C.GOLD, parent)
+			ui.disc(x, y, d - 6, C.GOLD, parent)
 			txt(string.upper(p.steps[k][pick].name), x, y - 34, 0.5, C.TEXT, parent)
 		elseif reached then
 			ui.ring_node(x, y, d - 4, 4, C.GOLD, parent)
@@ -119,9 +119,9 @@ local function panel(s, parent)
 	local path, k = selected(s)
 	local p = skills.BY_ID[path]
 	local h = TOP - 60 - 110
-	local pan = ui.pannello(M.PANEL_X, 110 + h / 2, M.PANEL_W, h, parent)
+	local pan = ui.panel(M.PANEL_X, 110 + h / 2, M.PANEL_W, h, parent)
 	local top = h / 2
-	ui.titolo(T.threshold:format(p.name, k * skills.STEP), 0, top - 30, 0.5, M.COLOR[p.id] or C.TEXT, pan)
+	ui.title(T.threshold:format(p.name, k * skills.STEP), 0, top - 30, 0.5, M.COLOR[p.id] or C.TEXT, pan)
 	local need = k * skills.STEP - skills.spent(t, path)
 	local free = skills.points(s.prof.livello) - skills.spent(t)
 	local status = need <= 0 and (skills.pick(t, path, k) and T.taken or T.choose_now)
@@ -132,8 +132,8 @@ local function panel(s, parent)
 	for w = 1, 2 do
 		local pw = p.steps[k][w]
 		local cy = top - 128 - (w - 1) * 108
-		local b = ui.scheda(s.buttons, 0, cy, M.PANEL_W - 30, 98, "", "scegli:" .. path .. ":" .. k .. ":" .. w, pick == w, pan)
-		ui.titolo(string.upper(pw.name), 0, 24, 0.5, pick == w and C.GOLD or C.TEXT, b)
+		local b = ui.tab(s.buttons, 0, cy, M.PANEL_W - 30, 98, "", "scegli:" .. path .. ":" .. k .. ":" .. w, pick == w, pan)
+		ui.title(string.upper(pw.name), 0, 24, 0.5, pick == w and C.GOLD or C.TEXT, b)
 		-- the description in at most two lines, cut at a space near the middle
 		local d = pw.desc
 		local a, z = d, nil
@@ -163,7 +163,7 @@ local function summary(s, parent)
 	local names = {}
 	for _, w in ipairs(skills.powers(t)) do names[#names + 1] = string.lower(w.power.name) end
 	local w = M.PANEL_X - M.PANEL_W / 2 - ui.EDGE - 20
-	local pan = ui.pannello(ui.EDGE + w / 2, 70, w, 80, parent)
+	local pan = ui.panel(ui.EDGE + w / 2, 70, w, 80, parent)
 	txt(T.in_match, -w / 2 + 18, 16, 0.6, C.OFF, pan, gui.PIVOT_W)
 	txt(#parts > 0 and table.concat(parts, " · ") or T.nothing, -w / 2 + 140, 16, 0.6, C.TEXT, pan, gui.PIVOT_W)
 	txt(#names > 0 and table.concat(names, " · ") or T.no_power, -w / 2 + 140, -16, 0.6, C.GOLD, pan, gui.PIVOT_W)
@@ -173,7 +173,7 @@ function M.build(s, parent)
 	local t = tree(s)
 	local p = s.prof
 	local pts = skills.points(p.livello)
-	local n = ui.titolo(T.points:format(skills.spent(t), pts), ui.EDGE, TOP - 22, 0.7, C.GOLD, parent)
+	local n = ui.title(T.points:format(skills.spent(t), pts), ui.EDGE, TOP - 22, 0.7, C.GOLD, parent)
 	gui.set_pivot(n, gui.PIVOT_W)
 	ui.button(s.buttons, 330, TOP - 22, 130, 44, T.reset, "azzera", { spento = skills.spent(t) == 0 }, parent)
 	-- the loadouts: the closed ones say from which level
@@ -216,7 +216,7 @@ function M.run(s, kind, x)
 	else
 		return false
 	end
-	profile.salva(s.prof)
+	profile.save(s.prof)
 	return true
 end
 

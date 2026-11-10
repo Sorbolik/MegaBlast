@@ -26,26 +26,26 @@ local RIGHT = { right = true }
 local LEFT = { left = true }
 
 -- Plays the lesson with the script: script(c) calls c.hold(input, tick or
--- condition), c.usa(weapon, angle, power), c.turno() (waits for the player's
+-- condition), c.use(weapon, angle, power), c.turn() (waits for the player's
 -- next turn). Returns the outcome, the lesson and the match.
 -- The test player touches what the lesson highlights (time is stopped until
 -- it does) and, before using a weapon, selects it
 local function obey(r, input)
 	local a = r.awaiting
-	if a then missions.tocca(r, a == "primaria" and "missile" or a == "secondaria" and "sword" or a) end
+	if a then missions.touch(r, a == "primaria" and "missile" or a == "secondaria" and "sword" or a) end
 	if input and input.fire then
-		missions.tocca(r, input.fire.weapon)
-		missions.tocca(r, "mira")
+		missions.touch(r, input.fire.weapon)
+		missions.touch(r, "mira")
 	end
-	if input and input.jump then missions.tocca(r, "salta") end
-	if input and (input.left or input.right) then missions.tocca(r, "cammina") end
+	if input and input.jump then missions.touch(r, "salta") end
+	if input and (input.left or input.right) then missions.touch(r, "cammina") end
 end
 
 local function play_mission(id, script, picks, limit)
-	local r = missions.nuova(id)
-	local seed, map_name, opts = missions.partita(r, 3, picks)
+	local r = missions.new(id)
+	local seed, map_name, opts = missions.match(r, 3, picks)
 	local g = game.new(seed, map_name, opts)
-	missions.prepara(r, g)
+	missions.prepare(r, g)
 	local co = coroutine.wrap(function(c)
 		script(c)
 		while true do coroutine.yield(IDLE) end
@@ -63,7 +63,7 @@ local function play_mission(id, script, picks, limit)
 			coroutine.yield(input)
 		end
 	end
-	function c.usa(weapon_name, angle_deg, strength)
+	function c.use(weapon_name, angle_deg, strength)
 		coroutine.yield({ fire = { weapon = weapon_name, angle = angle_deg, power = strength or 1 } })
 	end
 	-- walks towards the crate with that weapon until it picks it up (waits for it to drop)
@@ -82,7 +82,7 @@ local function play_mission(id, script, picks, limit)
 		end
 		c.hold(IDLE, 2)
 	end
-	function c.turno()
+	function c.turn()
 		local turns_played = r.st.turni
 		c.hold(IDLE, function() return r.st.turni > turns_played and g.phase == "aim" end)
 	end
@@ -93,9 +93,9 @@ local function play_mission(id, script, picks, limit)
 		first = false
 		-- any key: in the lessons time starts from here
 		obey(r, input)
-		if next(input) then missions.tocca(r) end
+		if next(input) then missions.touch(r) end
 		g:step(input)
-		for _, e in ipairs(g:pop_events()) do missions.evento(r, g, e) end
+		for _, e in ipairs(g:pop_events()) do missions.event(r, g, e) end
 		local outcome = missions.tick(r, g)
 		if outcome then return outcome, r, g end
 	end
@@ -132,15 +132,15 @@ for _, l in ipairs(cap.missioni) do
 		end
 		check(fell, l.id .. ": nobody falls by themselves")
 		-- (and something says what to do: the line, or in the lessons the goal always in view)
-		local said = r.riga ~= nil or (l.riprova and missions.obiettivo(r) ~= nil)
+		local said = r.riga ~= nil or (l.riprova and missions.goal(r) ~= nil)
 		check(outcome ~= "fatta" and said or outcome == "fallita", l.id .. ": doing nothing doesn't finish it")
 	end
 	-- each star says what it needs (the cortile: «Fatta» and Favilla's medal, if
 	-- there is one), and the goal can be read
 	check(#missions.criteria(l) == (l.medaglia and 2 or l.stelle and 3 or 1), l.id .. ": a criterion for each star")
 	if type(l.obiettivo) == "table" then
-		local r = missions.nuova(l.id)
-		check(missions.obiettivo(r) ~= nil, l.id .. ": the goal is visible")
+		local r = missions.new(l.id)
+		check(missions.goal(r) ~= nil, l.id .. ": the goal is visible")
 	end
 end
 end
@@ -150,7 +150,7 @@ do
 	local _, _, g = play_mission("guidata", function(c)
 		for _ = 1, 3 do
 			c.hold(RIGHT, 1)
-			c.turno()
+			c.turn()
 		end
 	end, nil, 60 * 30 * 12)
 	check(#g.heals == 0 and g.turn_no >= 4, "lessons: no healing circles")
@@ -167,19 +167,19 @@ end
 do
 	local outcome, r, g = play_mission("primi_passi", function(c)
 		c.hold(RIGHT, until_x(1000))
-		c.usa("missile", 0.5, 0.6)
+		c.use("missile", 0.5, 0.6)
 		c.hold(IDLE, 60 * 60)
 	end)
 	check(outcome == nil and r.st.steps_done[1] and not r.st.steps_done[2], "primi_passi: walking alone doesn't get you up the step")
 	check(g.turn_no == 1 and g.current == 1, "primi_passi: no turns, even after a minute")
 	check(not g.projectile and #g.crates == 0 and not game.has_weapon(g.robots[1], "missile") and not g:can_use("missile"),
 		"primi_passi: no weapons")
-	check(g.robots[2].gone and missions.guida(r).x > 1500, "primi_passi: only you and Favilla, who waits at the gate")
+	check(g.robots[2].gone and missions.guide(r).x > 1500, "primi_passi: only you and Favilla, who waits at the gate")
 	outcome, r = play_mission("primi_passi", function(c)
 		to_step(c)
 		c.hold(RIGHT, until_x(1470))
 	end)
-	check(outcome == "fatta" and not missions.stelle(r)[2], "primi_passi: the step and Favilla at the gate, without the spark")
+	check(outcome == "fatta" and not missions.stars(r)[2], "primi_passi: the step and Favilla at the gate, without the spark")
 	-- under the spark a short jump doesn't reach it, a held one does
 	outcome, r = play_mission("primi_passi", function(c)
 		to_step(c)
@@ -188,14 +188,14 @@ do
 		c.hold({ hold = false }, 60)
 		c.hold(RIGHT, until_x(1470))
 	end)
-	check(outcome == "fatta" and not missions.stelle(r)[2], "primi_passi: a short jump misses the spark")
+	check(outcome == "fatta" and not missions.stars(r)[2], "primi_passi: a short jump misses the spark")
 	outcome, r = play_mission("primi_passi", function(c)
 		to_step(c)
 		c.hold(RIGHT, until_x(1290))
 		c.hold({ jump = true }, 60)
 		c.hold(RIGHT, until_x(1470))
 	end)
-	check(outcome == "fatta" and missions.stelle(r)[2] and missions.scintilla(r) == nil,
+	check(outcome == "fatta" and missions.stars(r)[2] and missions.spark(r) == nil,
 		"primi_passi: the jump held to the end takes the spark: Favilla's medal")
 end
 
@@ -207,7 +207,7 @@ for p = 0.3, 1, 0.1 do
 		if not near_a then
 			local _, r = play_mission("lanciarune", function(c)
 				c.cassa("missile")
-				c.usa("missile", a, p)
+				c.use("missile", a, p)
 				c.hold(IDLE, 200)
 			end, nil, 60 * 30)
 			if r.st.steps_done[2] then near_a, near_p = a, p end
@@ -219,17 +219,17 @@ local ok, r, a, p
 if near_a then
 	ok, r = search("lanciarune", function(c, a, p)
 		c.cassa("missile")
-		c.usa("missile", near_a, near_p)
+		c.use("missile", near_a, near_p)
 		c.hold(IDLE, function() return c.r.st.steps_done[2] and not c.g.used.primary end)
-		c.usa("missile", a, p)
+		c.use("missile", a, p)
 	end, nil, { 0.1, 1.3, 0.05 }, powers(0.4, 1, 0.1))
 	check(ok, "lanciarune: then the target on the ledge")
 	-- a missed shot (towards the sky behind you): retry at once, in the same turn
 	local outcome2, r3, g3 = play_mission("lanciarune", function(c)
 		c.cassa("missile")
-		c.usa("missile", 2.6, 0.3)
+		c.use("missile", 2.6, 0.3)
 		c.hold(IDLE, function(gg) return not gg.used.primary end)
-		c.usa("missile", near_a, near_p)
+		c.use("missile", near_a, near_p)
 		c.hold(IDLE, 200)
 	end)
 	check(r3.st.steps_done[2] and r3.st.conta.misses == 1 and g3.turn_no == 1, "lanciarune: whoever misses retries at once")
@@ -243,7 +243,7 @@ for p = 0.3, 1, 0.1 do
 	for a = math.pi - 0.05, math.pi - 1.2, -0.05 do
 		if not hit_a then
 			local _, r = play_mission("turno", function(c)
-				c.usa("missile", a, p)
+				c.use("missile", a, p)
 				c.hold(IDLE, 200)
 			end, nil, 60 * 20)
 			if r.st.steps_done[1] then hit_a, hit_p = a, p end
@@ -252,10 +252,10 @@ for p = 0.3, 1, 0.1 do
 end
 check(hit_a ~= nil, "turno: the Lanciarune on the target")
 local function two_attacks(c)
-	c.usa("missile", hit_a, hit_p)
+	c.use("missile", hit_a, hit_p)
 	c.hold(IDLE, function(g) return not g.projectile end)
 	c.hold(LEFT, function(g) return g.robots[1].x <= g.robots[2].x + 50 end)
-	c.usa("sword", math.pi)
+	c.use("sword", math.pi)
 	c.hold(IDLE, 60)
 end
 -- Favilla shows first (turn 1), then it's yours: everything happens in turn 2
@@ -265,7 +265,7 @@ if hit_a then
 		two_attacks(c)
 		c.hold(RIGHT, until_x(1020))
 		c.hold(IDLE, 30)
-		c.usa("teleport", 1.2, 0.65)
+		c.use("teleport", 1.2, 0.65)
 		c.hold(IDLE, function(gg) return gg.robots[1].x >= 1120 and gg.robots[1].grounded end)
 	end)
 	check(outcome == "fatta" and g.turn_no == YOURS, "turno: two attacks in the same turn, then behind the wall")
@@ -278,27 +278,27 @@ if hit_a then
 		"turno: after the two attacks the turn waits for you behind the wall")
 	-- before the right step everything else is disabled: no Lama
 	local _, r3, g3 = play_mission("turno", function(c)
-		c.usa("sword", 0)
+		c.use("sword", 0)
 		c.hold(IDLE, 30)
 	end)
 	check(not r3.st.steps_done[1] and not g3.used.secondary, "turno: only what the step says can be used")
 	-- a missed Lama comes back at once, and you where you were: then it hits
 	local _, r4, g4 = play_mission("turno", function(c)
-		c.usa("missile", hit_a, hit_p)
+		c.use("missile", hit_a, hit_p)
 		c.hold(IDLE, function(g) return not g.projectile end)
 		c.hold(IDLE, 40)
 		c.hold(RIGHT, 20)
-		c.usa("sword", 0)
+		c.use("sword", 0)
 		c.hold(IDLE, function(g) return not g.used.secondary end)
 		c.hold(LEFT, function(g) return g.robots[1].x <= g.robots[2].x + 50 end)
-		c.usa("sword", math.pi)
+		c.use("sword", math.pi)
 		c.hold(IDLE, 20)
 	end)
 	check(r4.st.steps_done[2] and r4.st.conta.misses == 1 and g4.turn_no == YOURS, "turno: a missed Lama is retried in the same turn")
 	-- the Lama card waits for the missile to land, and a moment after
 	local early_attack, late
 	play_mission("turno", function(c)
-		c.usa("missile", hit_a, hit_p)
+		c.use("missile", hit_a, hit_p)
 		c.hold(IDLE, 2)
 		early_attack = c.r.opened[1]
 		c.hold(IDLE, function(g) return not g.projectile end)
@@ -311,44 +311,44 @@ end
 -- I globi: the Lanciarune at once (orbs), the orb onto the island, the target
 -- there falls at the first hit. The medal: two orbs in one turn
 local function island_turn(c)
-	c.usa("missile", 2.5, 0.3)
+	c.use("missile", 2.5, 0.3)
 	c.hold(IDLE, function(g) return not g.projectile end)
 	c.hold(IDLE, 30)
-	c.usa("teleport", 0.5, 0.6)
+	c.use("teleport", 0.5, 0.6)
 	c.hold(IDLE, function(g) return g.robots[1].x > 1150 and g.robots[1].grounded end)
 end
 outcome, r, g = play_mission("tempo", function(c)
 	island_turn(c)
 	c.hold(RIGHT, function(g) return g.robots[1].x >= g.robots[3].x - 40 end)
-	c.usa("sword", 0, 0.1)
+	c.use("sword", 0, 0.1)
 	c.hold(IDLE, 30)
 end)
 check(outcome == "fatta" and g.robots[3].dead, "tempo: orbs, the island, the target there")
 if outcome == "fatta" then
-	check(missions.stelle(r)[2], "tempo: attacking at once, two orbs in a turn: Favilla's medal")
+	check(missions.stars(r)[2], "tempo: attacking at once, two orbs in a turn: Favilla's medal")
 end
 do
 	-- without attacking time stops before you lose the first orb: no medal
 	local _, r2, g2 = play_mission("tempo", function(c)
 		c.hold(RIGHT, 1)
 		c.hold(IDLE, 60 * 30)
-		c.usa("missile", 2.5, 0.3)
+		c.use("missile", 2.5, 0.3)
 		c.hold(IDLE, 30)
 	end)
 	check(g2.turn_no == 1 and r2.st.conta.globi == 1 and r2.st.conta.globi_turno == 1,
 		"tempo: time waits for the first attack, with one orb")
 	-- before the right step everything else is disabled: no teleport
 	local _, r3, g3 = play_mission("tempo", function(c)
-		c.usa("teleport", 0.6, 0.8)
+		c.use("teleport", 0.6, 0.8)
 		c.hold(IDLE, 30)
 	end)
 	check(not r3.st.steps_done[1] and #g3.orbs == 0, "tempo: only what the step says can be used")
 	-- wasted orbs come back: thrown into the void, you respawn as you were with your orbs
 	local _, r6, g6 = play_mission("tempo", function(c)
-		c.usa("missile", 2.5, 0.3)
+		c.use("missile", 2.5, 0.3)
 		c.hold(IDLE, function(g) return not g.projectile end)
 		c.hold(IDLE, 30)
-		c.usa("teleport", math.pi - 0.3, 1)
+		c.use("teleport", math.pi - 0.3, 1)
 		c.hold(IDLE, function(g) return g.robots[1].dead end)
 		c.hold(IDLE, function(g) return not g.robots[1].dead end)
 		c.hold(IDLE, 10)
@@ -358,11 +358,11 @@ do
 		and math.abs(rb6.x - r6.saved.x) < 2, "tempo: fell with the orb, respawn as you were, with the orbs")
 	-- and wasted without falling: Ritenta, and you're back as you were
 	local _, r7, g7 = play_mission("tempo", function(c)
-		c.usa("missile", 2.5, 0.3)
+		c.use("missile", 2.5, 0.3)
 		c.hold(IDLE, function(g) return not g.projectile end)
 		c.hold(IDLE, 30)
 		for _ = 1, 2 do
-			c.usa("teleport", math.pi / 2, 0.2)
+			c.use("teleport", math.pi / 2, 0.2)
 			c.hold(IDLE, function(g) return #g.orbs == 0 and g.robots[1].grounded end)
 		end
 		c.hold(IDLE, 80)
@@ -377,19 +377,19 @@ ok, r = search("spostano", function(c, a, p)
 	c.cassa("eagle")
 	c.hold(RIGHT, until_x(975))
 	c.hold({ jump = true, right = true }, 30)
-	c.usa("eagle", -math.pi / 2 - 0.2)
+	c.use("eagle", -math.pi / 2 - 0.2)
 	c.hold(RIGHT, function(g) return g.robots[1].grounded end)
 	c.hold(IDLE, 10)
 	c.cassa("mallet")
 	c.hold(LEFT, function(g) return g.robots[1].x <= 1080 end)
 	c.hold({ jump = true }, 10)
 	c.hold(IDLE, function(g) return g.robots[1].vy < 0 and g.robots[1].y < 263 + a end)
-	c.usa("mallet", 0)
+	c.use("mallet", 0)
 	c.hold(RIGHT, function(g) return g.robots[1].grounded and g.robots[1].y > 400 end)
 	c.hold(IDLE, 10)
 end, nil, { 10, 30, 10 })
 check(ok, "spostano: the Tonante and the Maglio carry you to the top")
-if ok then check(missions.stelle(r)[2], "spostano: without a wasted shot: Favilla's medal") end
+if ok then check(missions.stars(r)[2], "spostano: without a wasted shot: Favilla's medal") end
 outcome = play_mission("spostano", function(c)
 	c.cassa("eagle")
 	c.hold(RIGHT, until_x(960))
@@ -404,7 +404,7 @@ check(outcome ~= "fatta", "spostano: just jumping doesn't get you up")
 local function tools_on(c)
 	c.hold(RIGHT, until_x(760))
 	c.hold(IDLE, 10)
-	c.usa("hook", 32, 1)
+	c.use("hook", 32, 1)
 	c.hold(IDLE, function(g) return g.robots[1].grounded and g.robots[1].y > 300 end)
 	c.hold(IDLE, 10)
 end
@@ -412,13 +412,13 @@ outcome, r = play_mission("attrezzi", function(c)
 	tools_on(c)
 	c.hold(RIGHT, until_x(1200))
 	c.hold({ right = true, jump = true }, 15)
-	c.usa("parachute", 0, 1)
+	c.use("parachute", 0, 1)
 	c.hold(RIGHT, function(g) return g.robots[1].grounded end)
 	c.hold(RIGHT, until_x(1500))
 	c.hold(IDLE, 30)
 end)
 check(outcome == "fatta", "attrezzi: Rampino and parachute carry you to the other side")
-if outcome == "fatta" then check(missions.stelle(r)[2], "attrezzi: across without falling: Favilla's medal") end
+if outcome == "fatta" then check(missions.stars(r)[2], "attrezzi: across without falling: Favilla's medal") end
 outcome, r, g = play_mission("attrezzi", function(c)
 	c.hold(RIGHT, until_x(750))
 	for _ = 1, 10 do
@@ -448,11 +448,11 @@ do
 	}
 	for id, list in pairs(SHOWS) do
 		for k, want in ipairs(list) do
-			local r = missions.nuova(id)
-			local seed, map_name, opts = missions.partita(r, 3)
+			local r = missions.new(id)
+			local seed, map_name, opts = missions.match(r, 3)
 			local g = game.new(seed, map_name, opts)
 			local bots = {}
-			missions.prepara(r, g, bots)
+			missions.prepare(r, g, bots)
 			for i = 1, want.passi do r.st.steps_done[i] = true end
 			-- the earlier demonstrations are done already (as when you get there)
 			for j = 1, k - 1 do r.shown[j] = true end
@@ -463,13 +463,13 @@ do
 			missions.tick(r, g)
 			r.coda, r.riga, r.line_ticks = {}, nil, nil
 			for _ = 1, 60 * 30 do
-				missions.tocca(r)
+				missions.touch(r)
 				local keys = bots[g.current] and bot.input(bots[g.current], g) or {}
 				g:step(keys)
 				for _, e in ipairs(g:pop_events()) do
 					if e.type == want.evento and (want.su == nil or e.robot == want.su) and (e.robot == F or e.by == F) then seen = true end
 					if e.type == "demo_end" then ended = true end
-					missions.evento(r, g, e, bots)
+					missions.event(r, g, e, bots)
 				end
 				missions.tick(r, g)
 				if ended then break end
@@ -489,7 +489,7 @@ for who = 2, 4 do
 		for p = 0.2, 1, 0.05 do
 			if not found then
 				local _, r, g = play_mission("giu_dal_bordo", function(c)
-					c.usa("missile", a, p)
+					c.use("missile", a, p)
 					c.hold(IDLE, 400)
 				end, nil, 420)
 				found = g.robots[1].env_kills > 0 and g.robots[who].deaths > 0
@@ -516,7 +516,7 @@ for who, side_of in pairs({ [2] = -1, [3] = 1 }) do
 					return side_of < 0 and x <= 775 or side_of > 0 and x >= 1145
 				end)
 				c.hold(IDLE, 10)
-				c.usa("hook", angle_deg)
+				c.use("hook", angle_deg)
 				c.hold(IDLE, 300)
 			end, nil, 900)
 			found = g.robots[1].env_kills > 0 and g.robots[who].deaths > 0
@@ -531,11 +531,11 @@ end
 -- turn; no points (they come in the Forgia).
 do
 	local replay = require "sim.replay"
-	local r = missions.nuova("guidata")
-	local seed, map_name, opts = missions.partita(r, 5)
-	local ric = replay.nuova(seed, map_name, opts)
-	local g, bots = replay.partita(ric)
-	missions.prepara(r, g)
+	local r = missions.new("guidata")
+	local seed, map_name, opts = missions.match(r, 5)
+	local ric = replay.new(seed, map_name, opts)
+	local g, bots = replay.match(ric)
+	missions.prepare(r, g)
 	local seen, ticks, outcome, frozen = {}, 0, nil, nil
 	while not outcome and ticks < 60 * 60 * 6 do
 		ticks = ticks + 1
@@ -546,13 +546,13 @@ do
 				frozen = g.timer
 			else
 				input = { fire = { weapon = "missile", angle = 0.6, power = 0.8 } }
-				missions.tocca(r)
+				missions.touch(r)
 			end
 		end
 		if not (r.st.turni == 1 and ticks < 1800) then obey(r, input) end
 		g:step(replay.input(ric, g, bots, input))
 		for _, e in ipairs(g:pop_events()) do
-			missions.evento(r, g, e, bots)
+			missions.event(r, g, e, bots)
 			if e.robot == 2 then seen[r.st.bot_turns .. e.type] = true end
 		end
 		outcome = missions.tick(r, g)
@@ -569,13 +569,13 @@ end
 -- Due mani: after a failed first turn the bot goes back to its mission life
 -- (28), not to 150: it can still be finished
 do
-	local r = missions.nuova("due_mani")
-	local seed, map_name, opts = missions.partita(r, 3)
+	local r = missions.new("due_mani")
+	local seed, map_name, opts = missions.match(r, 3)
 	local g = game.new(seed, map_name, opts)
-	missions.prepara(r, g)
+	missions.prepare(r, g)
 	local rb = g.robots[2]
 	rb.hp = 10
-	missions.evento(r, g, { type = "turn", robot = 2 })
+	missions.event(r, g, { type = "turn", robot = 2 })
 	check(rb.hp == 46 and rb.max_hp == 46, "due_mani: the bot recovers to 46, not to normal life")
 end
 -- The weapons the Addestramento doesn't introduce: in Primo sangue the Uovo,
@@ -589,10 +589,10 @@ end
 -- and whoever respawns does so with the mission life (Fuori portata: 40)
 for _, l in ipairs(campaign.CAPITOLI[2].missioni) do
 	if l.vita then
-		local r = missions.nuova(l.id)
-		local seed, map_name, opts = missions.partita(r, 3)
+		local r = missions.new(l.id)
+		local seed, map_name, opts = missions.match(r, 3)
 		local g = game.new(seed, map_name, opts)
-		missions.prepara(r, g)
+		missions.prepare(r, g)
 		for i, v in pairs(l.vita) do
 			check(g.robots[i].max_hp == v, l.id .. ": full life (and respawn life) is the mission's")
 		end
@@ -603,16 +603,16 @@ end
 -- they are the first and third, not the second (and in the profile each star
 -- earned stays)
 do
-	local r = missions.nuova("primo_sangue")
+	local r = missions.new("primo_sangue")
 	r.esito, r.st.gap = "fatta", 40
-	local s = missions.stelle(r)
+	local s = missions.stars(r)
 	check(s[1] and not s[2] and s[3], "stars: the bonus without the points lights the third and not the second")
 	r.st.gap = 300
-	check(missions.stelle(r)[2], "stars: the second with the point lead")
+	check(missions.stars(r)[2], "stars: the second with the point lead")
 	local profile = require "menu.profile"
-	local p = profile.nuovo()
-	profile.missione(p, "primo_sangue", s)
-	profile.missione(p, "primo_sangue", { true, true, false })
+	local p = profile.new()
+	profile.mission(p, "primo_sangue", s)
+	profile.mission(p, "primo_sangue", { true, true, false })
 	check(profile.total_stars(p) == 3, "stars: in the profile each one earned stays")
 end
 
@@ -620,11 +620,11 @@ end
 -- distract from the exercise): nobody scores, not even by downing. Punti e
 -- Corona and the Prima partita have them
 for _, l in ipairs(campaign.CAPITOLI[1].missioni) do
-	local r = missions.nuova(l.id)
-	local seed, map_name, opts = missions.partita(r, 3)
+	local r = missions.new(l.id)
+	local seed, map_name, opts = missions.match(r, 3)
 	local g = game.new(seed, map_name, opts)
-	missions.prepara(r, g)
-	local without = not missions.vede(r, "punti")
+	missions.prepare(r, g)
+	local without = not missions.sees(r, "punti")
 	check(g.no_points == without, l.id .. (without and ": no points" or ": with points"))
 	g:hurt(g.robots[2], 999, g.robots[1], 0)
 	local steps_count = 0
@@ -634,17 +634,17 @@ for _, l in ipairs(campaign.CAPITOLI[1].missioni) do
 	check((steps_count == 0) == without and (g.robots[1].points == 0) == without,
 		l.id .. ": downing " .. (without and "gives no points" or "gives points"))
 end
-check(missions.vede(missions.nuova("guidata"), "punti") and not missions.vede(missions.nuova("prima_sfida"), "punti"),
+check(missions.sees(missions.new("guidata"), "punti") and not missions.sees(missions.new("prima_sfida"), "punti"),
 	"the duel with Favilla has points, the first duel doesn't")
 
 -- The help after many losses: the Fabbro goes down a level and starts with
 -- less life, but with a full bar (it doesn't show)
 do
 	local function smith(help)
-		local r = missions.nuova("il_fabbro")
-		local seed, map_name, opts = missions.partita(r, 7, nil, help)
+		local r = missions.new("il_fabbro")
+		local seed, map_name, opts = missions.match(r, 7, nil, help)
 		local g = game.new(seed, map_name, opts)
-		missions.prepara(r, g)
+		missions.prepare(r, g)
 		return opts.players[2].bot, g.robots[2]
 	end
 	local liv, rb = smith(false)
@@ -672,11 +672,11 @@ do
 		},
 		obiettivo = { { hit = 2, testo = "Colpisci il bersaglio" } },
 	}
-	local r = missions.nuova(missions.prova(l, "addestramento"))
-	local seed, map_name, opts = missions.partita(r, 3)
+	local r = missions.new(missions.custom(l, "addestramento"))
+	local seed, map_name, opts = missions.match(r, 3)
 	local g = game.new(seed, map_name, opts)
 	local bots = {}
-	missions.prepara(r, g, bots)
+	missions.prepare(r, g, bots)
 	check(bots[3] and opts.players[3].dummy, "Favilla: a robot moved by the demonstration, without turns of her own")
 	local seen, said, posed, hit_by_her, max_x = {}, nil, false, false, 0
 	local function run(ticks, input, stop)
@@ -686,20 +686,20 @@ do
 			for _, e in ipairs(g:pop_events()) do
 				seen[e.type .. ":" .. tostring(e.robot)] = true
 				if e.type == "damage" and e.robot == 2 and e.by == 3 then hit_by_her = true end
-				missions.evento(r, g, e, bots)
+				missions.event(r, g, e, bots)
 			end
 			missions.tick(r, g)
-			local _, t = missions.battuta(r)
+			local _, t = missions.quip(r)
 			said = said or t
-			posed = posed or missions.posa(r) == 3
+			posed = posed or missions.pose(r) == 3
 			if g.current == 3 then max_x = math.max(max_x, g.robots[3].x) end
 			if stop and stop() then return end
 		end
 	end
 	run(2)
-	check(g.current == 3 and missions.dimostra(r), "Favilla: the demonstration starts at once, on her turn")
-	run(60 * 20, { fire = { weapon = "missile", angle = 0, power = 1 } }, function() return not missions.dimostra(r) end)
-	check(not missions.dimostra(r) and g.current == 1 and g.phase == "aim", "Favilla: the turn comes back to the player")
+	check(g.current == 3 and missions.demo(r), "Favilla: the demonstration starts at once, on her turn")
+	run(60 * 20, { fire = { weapon = "missile", angle = 0, power = 1 } }, function() return not missions.demo(r) end)
+	check(not missions.demo(r) and g.current == 1 and g.phase == "aim", "Favilla: the turn comes back to the player")
 	check(seen["demo:3"] and seen["fire:3"] and not seen["fire:1"], "Favilla fired, the player couldn't meanwhile")
 	check(said == "Guarda!" and posed and max_x > 790, "Favilla said her line, walked and struck her pose")
 	check(hit_by_her and not r.st.steps_done[1], "Favilla's hit doesn't do the player's step")
@@ -707,23 +707,23 @@ do
 	-- the second waits for the player near her
 	run(120)
 	check(g.current == 1 and not r.shown[2], "Favilla waits for the player to come near")
-	run(60 * 10, { right = true }, function() return missions.dimostra(r) end)
-	check(missions.dimostra(r), "near her, the second demonstration starts")
-	run(60 * 15, nil, function() return not missions.dimostra(r) end)
+	run(60 * 10, { right = true }, function() return missions.demo(r) end)
+	check(missions.demo(r), "near her, the second demonstration starts")
+	run(60 * 15, nil, function() return not missions.demo(r) end)
 	check(seen["hook_shot:3"] or seen["hook:3"], "Favilla used the Rampino")
 	check(g.current == 1, "and the turn is the player's again")
 end
 
 -- globi_tempo: levels from 'a turno' onwards award orbs from leftover time
 for _, id in ipairs({ "turno", "tempo", "prima_sfida", "sfida_burrone", "guidata" }) do
-	local r = missions.nuova(id)
-	local _, _, opts = missions.partita(r, 1)
+	local r = missions.new(id)
+	local _, _, opts = missions.match(r, 1)
 	check(opts.players[1].stats.time_orbs == 1, id .. ": time_orbs == 1")
-	check(missions.vede(r, "teleport"), id .. ": teleport is visible")
+	check(missions.sees(r, "teleport"), id .. ": teleport is visible")
 end
 for _, id in ipairs({ "primi_passi", "lanciarune" }) do
-	local r = missions.nuova(id)
-	local _, _, opts = missions.partita(r, 1)
+	local r = missions.new(id)
+	local _, _, opts = missions.match(r, 1)
 	check(opts.players[1].stats.time_orbs == 0, id .. ": time_orbs == 0")
 end
 
@@ -736,8 +736,8 @@ do
 		globi_tempo = false,
 		obiettivo = { { hit = 2, testo = "Colpisci" } },
 	}
-	local r = missions.nuova(missions.prova(l, "addestramento"))
-	local _, _, opts = missions.partita(r, 1)
+	local r = missions.new(missions.custom(l, "addestramento"))
+	local _, _, opts = missions.match(r, 1)
 	check(opts.players[1].stats.time_orbs == 0, "globi_tempo = false forces time_orbs == 0")
 end
 

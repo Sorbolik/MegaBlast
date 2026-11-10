@@ -24,17 +24,17 @@ del simulatore: https://claude.ai/artifact/W6LDT6WtVB2fmgJQuprvED .
   movimento (il Limbo vivo resta solo dietro la home).
 - **Su ogni proporzione**: lo sfondo copre 2 volte il quadro 1280 x 720 per lato
   (20:9, 4:3, pieghevoli quadrati). Quello che deve stare al bordo vero (l'alone
-  in basso dell'armeria) si piazza con `screen.y0`, come `ui.radice` usa `screen.y1`.
+  in basso dell'armeria) si piazza con `screen.y0`, come `ui.root` usa `screen.y1`.
 
 ## Come si costruisce
 
 Un tema per schermata in `client/ui/backdrop.lua` (c'è già, col tema `legno`):
 
 ```lua
-a.fondo = backdrop.new("fucina")   -- al posto di ui.sfondo()
+a.fondo = backdrop.new("fucina")   -- al posto di ui.background()
 ```
 
-Ogni tema colora la base di `ui.sfondo()` e aggiunge le sue forme una volta,
+Ogni tema colora la base di `ui.background()` e aggiunge le sue forme una volta,
 alla creazione della schermata. Regole del modulo:
 
 - **al massimo 200 nodi** per tema e **2 draw call**: prima tutti i rettangoli
@@ -74,7 +74,7 @@ ogni sfondo** (alone compresi), coi colori veri del testo di `ui.C`:
 
 ## Le schermate e il loro sfondo
 
-Elenco preso dal codice (`client/menu/`): ogni modulo che chiama `ui.sfondo()`.
+Elenco preso dal codice (`client/menu/`): ogni modulo che chiama `ui.background()`.
 
 ### Restano come sono
 
@@ -193,5 +193,5 @@ colore scuro della prima e della seconda squadra, la riga in mezzo dove sta «VS
 ## Implementazione (fatta)
 
 Nella #218: `C.OFF` a `#ACA4A0`, i temi in `backdrop.lua`, una riga in
-ogni schermata (`backdrop.new("tema")` al posto di `ui.sfondo()`), lo scenario
+ogni schermata (`backdrop.new("tema")` al posto di `ui.background()`), lo scenario
 `menu_schermi.txt` esteso a tutte le schermate, foto a 4:3, 16:9 e 20:9.

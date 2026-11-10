@@ -131,7 +131,7 @@ check(not loadout.valid(a, 20), "an unknown set isn't valid")
 check(equip.tier(0) == 1 and equip.tier(10) == 2 and equip.tier(20) == 3 and equip.tier(500) == equip.TIERS,
 	"tier from matches played, one per step")
 check(equip.tier(29) < equip.TIERS and equip.tier(30) == equip.TIERS, "variant B at 30 matches with each piece, as before")
-check(equip.livello(0) == 0 and equip.livello(12) == 12 and equip.livello(99) == equip.LIVELLO_MAX, "piece level")
+check(equip.level(0) == 0 and equip.level(12) == 12 and equip.level(99) == equip.LIVELLO_MAX, "piece level")
 check(equip.next_tier(12) == 20 and equip.next_tier(30) == nil, "next step")
 
 -- Awards
@@ -149,7 +149,7 @@ check(by[3] == nil, "whoever didn't play gets nothing")
 check(#list >= 3, "list of awards in order")
 
 -- Profile: experience, levels and mastery
-local p = profile.nuovo()
+local p = profile.new()
 check(#p.loadouts == loadout.LOADOUTS and p.livello == 1, "new profile: 3 loadouts, level 1")
 p.loadouts[1].gear = { mask = "vuoto" }
 local gu = profile.match_end(p, { points = 148, won = true, mvp = true, awards = { awards.LIST[1] } })
@@ -157,7 +157,7 @@ local x = profile.XP
 check(gu.xp == x.match + 74 + x.win + x.mvp + x.award and #gu.lines == 5, "receipt: match, points 148 -> 74, win, MVP, award")
 check(p.livello == 2 and gu.level_before == 1 and gu.livello == 2, "a good win levels you up")
 check(p.mastery.vuoto_mask == 1, "a mastery match for the worn piece")
-check(profile.punti(p) == 2, "a Sigilli point per level")
+check(profile.points(p) == 2, "a Sigilli point per level")
 gu = profile.match_end(p, { points = 1000, won = false })
 check(gu.lines[2].xp == x.points_max and #gu.lines == 2, "the points give at most " .. x.points_max)
 gu = profile.match_end(p, { points = 0, second = true })
@@ -169,12 +169,12 @@ gu = profile.match_end(p, { points = 240, won = true, mvp = true })
 for _ = 1, 4 do gu = profile.match_end(p, { points = 240, won = true, mvp = true }) end
 check(p.livello == profile.LEVEL_MAX and p.braci >= 1, "past level " .. profile.LEVEL_MAX .. " the bar gives braci")
 -- campaign levels: first time, new stars, replay
-p = profile.nuovo()
-gu = profile.missione(p, "primo_sangue", { true, true, false })
+p = profile.new()
+gu = profile.mission(p, "primo_sangue", { true, true, false })
 check(gu.xp == profile.XP_MISSION.done + 2 * profile.XP_MISSION.star, "first time with two stars")
-gu = profile.missione(p, "primo_sangue", { true, false, true })
+gu = profile.mission(p, "primo_sangue", { true, false, true })
 check(gu.xp == profile.XP_MISSION.star, "one new star")
-gu = profile.missione(p, "primo_sangue", { true, true, true })
+gu = profile.mission(p, "primo_sangue", { true, true, true })
 check(gu.xp == profile.XP_MISSION.replay and gu.lines[1].key == "replay", "nothing new: replay")
 -- loadouts open with the level
 check(loadout.open(1, 1) and not loadout.open(2, 14) and loadout.open(2, 15) and not loadout.open(3, 29)

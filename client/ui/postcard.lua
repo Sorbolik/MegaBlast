@@ -68,7 +68,7 @@ function M.open(id, titolo, from, tipo, line)
 	gui.set_visible(p.card, false)
 	gui.set_parent(p.card, p.radice)
 	box(10, -12, CARD_W, CARD_H, c(0, 0, 0, 0.45), p.card)
-	local paper, border = ui.pannello(0, 0, CARD_W, CARD_H, p.card)
+	local paper, border = ui.panel(0, 0, CARD_W, CARD_H, p.card)
 	gui.set_color(paper, PAPER)
 	gui.set_color(border, INK)
 	p.paper = paper
@@ -81,7 +81,7 @@ function M.open(id, titolo, from, tipo, line)
 	local lx, ly = -P.w / 2 + 18, PIC_Y + P.h / 2 - 42
 	types.label(tipo, lx, ly, 48, paper)
 	if line and types.color(tipo) then
-		local t = ui.testo(line, 0, 0, 0.8, INK)
+		local t = ui.text(line, 0, 0, 0.8, INK)
 		gui.set_outline(t, c(0, 0, 0, 0))
 		gui.set_shadow(t, c(0, 0, 0, 0))
 		local w = resource.get_text_metrics(gui.get_font_resource(gui.get_font(t)), line).width * gui.get_scale(t).x
@@ -90,7 +90,7 @@ function M.open(id, titolo, from, tipo, line)
 		gui.set_position(t, vec(0, -1))
 	end
 	local by = -CARD_H / 2 + P.band / 2
-	local title = ui.titolo(string.upper(titolo or ""), -P.w / 2, by, 0.9, INK, paper)
+	local title = ui.title(string.upper(titolo or ""), -P.w / 2, by, 0.9, INK, paper)
 	gui.set_outline(title, c(0, 0, 0, 0))
 	gui.set_pivot(title, gui.PIVOT_W)
 	p.next = box(P.w / 2 - 110, by, 220, 56, INK, paper)
@@ -118,7 +118,7 @@ function M.open(id, titolo, from, tipo, line)
 	return p
 end
 
-function M.premi(p, x, y)
+function M.press(p, x, y)
 	if p.going then return nil end
 	if gui.pick_node(p.next, x, y) then return "avanti" end
 	if not gui.pick_node(p.paper, x, y) then return "indietro" end

@@ -40,11 +40,11 @@ function M.new(o, sound)
 	f.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(f.radice, false)
 	local c = ui.C
-	ui.indietro(f.buttons, "indietro", f.radice)
+	ui.back(f.buttons, "indietro", f.radice)
 	-- with the receipt on the right, the stars move to the left
 	local cx = o.gain and 440 or 640
-	ui.testo(o.fallita and T.failed or T.done, cx, 640, 0.8, c.OFF, f.radice)
-	ui.titolo(string.upper(o.titolo), cx, 585, 1, c.LIGHT, f.radice)
+	ui.text(o.fallita and T.failed or T.done, cx, 640, 0.8, c.OFF, f.radice)
+	ui.title(string.upper(o.titolo), cx, 585, 1, c.LIGHT, f.radice)
 	local criteria = o.criteria
 	-- three stars; in the cortile «Fatta» and Favilla's medal, or «Fatta» alone
 	local count = #criteria
@@ -53,7 +53,7 @@ function M.new(o, sound)
 		local x, y = cx + (i - (count + 1) / 2) * M.STEP, M.Y + (big > 1 and 18 or 0)
 		local side_of = M.LATO * big
 		local medal = o.medaglia and i == 2
-		local draw = medal and ui.medaglia or ui.stella
+		local draw = medal and ui.medal or ui.star
 		-- below, the unlit star; above, the golden one lighting up with its halo
 		draw(x, y, side_of, c.LINE, f.radice)
 		local s = { lato = side_of }
@@ -65,14 +65,14 @@ function M.new(o, sound)
 			s.nodo = draw(x, y, side_of, medal and ui.MEDAL or ui.GOLD, f.radice)
 			gui.set_scale(s.nodo, vec(0, 0))
 		end
-		ui.testo(criteria[i], x, M.Y - 100, 0.75, o.stelle[i] and c.TEXT or c.OFF, f.radice)
+		ui.text(criteria[i], x, M.Y - 100, 0.75, o.stelle[i] and c.TEXT or c.OFF, f.radice)
 	end
 	local under = o.vantaggio and T.lead:format(o.vantaggio) or ""
 	if o.record and o.record > n then
 		local record = (o.record == 1 and T.record_one or T.record):format(o.record)
 		under = under == "" and record or under .. "  -  " .. record
 	end
-	ui.testo(under, cx, 232, 0.8, c.OFF, f.radice)
+	ui.text(under, cx, 232, 0.8, c.OFF, f.radice)
 	local bw = o.gain and 260 or 300
 	ui.button(f.buttons, cx - bw / 2 - 20, 110, bw, 96, common.retry, "riprova", nil, f.radice)
 	ui.button(f.buttons, cx + bw / 2 + 20, 110, bw, 96, o.avanti and common.next or common.campaign, "avanti",
@@ -98,7 +98,7 @@ function M.update(f, dt)
 end
 
 function M.on_input(f, action_id, action)
-	return ui.tocco(f.buttons, action_id, action)
+	return ui.touch(f.buttons, action_id, action)
 end
 
 function M.destroy(f)

@@ -54,12 +54,12 @@ local function stair(p, x, voice, i, prizes, mvp)
 	gui.set_visible(base, false)
 	gui.set_parent(base, p.radice)
 	-- the step's border in the team color, like the tags in the lineup
-	local block, edge = ui.pannello(0, h / 2, M.WIDE, h, base)
+	local block, edge = ui.panel(0, h / 2, M.WIDE, h, base)
 	gui.set_color(edge, g.colore)
 	local top = h / 2
-	ui.titolo(tostring(voice.place), 0, top - 30, 0.9, voice.place == 1 and c.GOLD or c.TEXT, block)
-	ui.testo(g.nome, 0, top - 60, 0.85, g.colore, block)
-	ui.testo(T.points:format(voice.points or 0), 0, top - 82, 0.7, c.OFF, block)
+	ui.title(tostring(voice.place), 0, top - 30, 0.9, voice.place == 1 and c.GOLD or c.TEXT, block)
+	ui.text(g.nome, 0, top - 60, 0.85, g.colore, block)
+	ui.text(T.points:format(voice.points or 0), 0, top - 82, 0.7, c.OFF, block)
 	gui.set_scale(base, vmath.vector3(1, 0.01, 1))
 	local delay = (i - 1) * M.DELAY
 	gui.animate(base, "scale.y", 1, gui.EASING_OUTBACK, M.RISE, delay)
@@ -80,7 +80,7 @@ local function stair(p, x, voice, i, prizes, mvp)
 		local n = gui.new_box_node(vec(x, land + M.SCORIA_H + 34), vec(84, 30))
 		gui.set_color(n, c.GOLD)
 		gui.set_parent(n, p.radice)
-		ui.titolo(T.mvp, 0, 0, 0.5, c.BOTTOM, n)
+		ui.title(T.mvp, 0, 0, 0.5, c.BOTTOM, n)
 		gui.set_scale(n, vec(0.01, 0.01))
 		gui.animate(n, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.3, M.REWARDS)
 	end
@@ -90,7 +90,7 @@ local function stair(p, x, voice, i, prizes, mvp)
 		local n = gui.new_box_node(vec(x, M.BASE_Y_POS - 22 - (j - 1) * 26), vec(0, 0))
 		gui.set_visible(n, false)
 		gui.set_parent(n, p.radice)
-		ui.testo(aw.name, 0, 0, 0.7, c.GOLD, n)
+		ui.text(aw.name, 0, 0, 0.7, c.GOLD, n)
 		gui.set_scale(n, vec(0.01, 0.01))
 		gui.animate(n, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.3, M.REWARDS + 0.1 * j)
 	end
@@ -124,8 +124,8 @@ local function title(p, results, first)
 		label = T.wins:format(string.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome))
 		color = g.colore
 	end
-	ui.titolo(label, M.CENTER_X, 650, 1.3, color, p.radice)
-	ui.testo(MODES_LIST[results.mode] or "", M.CENTER_X, 606, 0.8, c.OFF, p.radice)
+	ui.title(label, M.CENTER_X, 650, 1.3, color, p.radice)
+	ui.text(MODES_LIST[results.mode] or "", M.CENTER_X, 606, 0.8, c.OFF, p.radice)
 end
 
 function M.new(results, giocatori, me, my_gain, prof, number)
@@ -184,7 +184,7 @@ function M.on_input(p, action_id, action)
 		if action.pressed and (action_id == ui.TOUCH or action_id == ui.PAD) then close_card(p) end
 		return nil
 	end
-	local ui_action = ui.tocco(p.buttons, action_id, action)
+	local ui_action = ui.touch(p.buttons, action_id, action)
 	if ui_action == "rivedi" then return { rivedi = p.numero } end
 	local robot = ui_action and tonumber(ui_action:match("^carta:(%d+)$"))
 	if robot then

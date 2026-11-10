@@ -72,7 +72,7 @@ local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 local function total(stars)
 	local n = 0
-	for _, v in pairs(stars) do n = n + missions.quante(v) end
+	for _, v in pairs(stars) do n = n + missions.count(v) end
 	return n
 end
 
@@ -106,7 +106,7 @@ end
 -- Right aligned at x
 local function little_stars(picked, count, medal, x, y, parent)
 	for i = 1, count do
-		local draw = medal and i == 2 and ui.medaglia or ui.stella
+		local draw = medal and i == 2 and ui.medal or ui.star
 		local lit = medal and i == 2 and ui.MEDAL or ui.GOLD
 		draw(x - (count - i) * 22 - 10, y, 20, picked[i] and lit or INK_SOFT, parent)
 	end
@@ -122,7 +122,7 @@ end
 
 -- ink text on the parchment, its left end at x
 local function ink(t, x, y, scale, color, parent)
-	local n = ui.testo(t, x, y, scale, color or INK, parent)
+	local n = ui.text(t, x, y, scale, color or INK, parent)
 	gui.set_pivot(n, gui.PIVOT_W)
 	gui.set_outline(n, c4(0, 0, 0, 0))
 	gui.set_shadow(n, c4(0, 0, 0, 0))
@@ -131,8 +131,8 @@ end
 
 -- a nail at the top of a card
 local function nail(x, y, parent)
-	ui.disco(x, y, 18, NAIL, parent)
-	ui.disco(x - 3, y + 3, 7, NAIL_LIGHT, parent)
+	ui.disc(x, y, 18, NAIL, parent)
+	ui.disc(x - 3, y + 3, 7, NAIL_LIGHT, parent)
 end
 
 -- a card of the board (a button: tap and controller light), parchment with
@@ -160,8 +160,8 @@ local function card(c, l, x, y, w, h, kind, pic_x, pic_y, pic_w, pic_h, locked)
 		-- dark badge with padlock symbol centered on the picture
 		local ld = kind == "finale" and 36 or 46
 		local bd = kind == "finale" and 50 or 64
-		ui.disco(pic_x, pic_y, bd, c4(0.12, 0.08, 0.06, 0.88), n)
-		ui.lucchetto(pic_x, pic_y, ld, c4(0.92, 0.76, 0.35), n)
+		ui.disc(pic_x, pic_y, bd, c4(0.12, 0.08, 0.06, 0.88), n)
+		ui.padlock(pic_x, pic_y, ld, c4(0.92, 0.76, 0.35), n)
 	end
 	-- where the picture is on the screen: the postcard zooms from here (ui/postcard.lua)
 	local bp = gui.get_position(c.board)
@@ -172,7 +172,7 @@ end
 -- the stars, or NUOVA on the next one to do, right aligned at x
 local function state(c, l, is_next, x, y, n)
 	if is_next then
-		local t = ui.testo(T.new, x, y, 0.62, GOLD_INK, n)
+		local t = ui.text(T.new, x, y, 0.62, GOLD_INK, n)
 		gui.set_pivot(t, gui.PIVOT_E)
 		gui.set_outline(t, c4(0, 0, 0, 0))
 		gui.set_shadow(t, c4(0, 0, 0, 0))
@@ -241,7 +241,7 @@ local function build(c)
 	if c.radice then gui.delete_node(c.radice) end
 	release_textures(c)
 	c.buttons = {}
-	c.radice = ui.radice()
+	c.radice = ui.root()
 	c.from = {}
 	local C = ui.C
 	-- the header (ui.header): CAMPAGNA, the pill's place, the chapters as tabs under it
@@ -276,10 +276,10 @@ local function build(c)
 				if (c.stelle[l.id] or {})[1] then done = done + 1 end
 			end
 		end
-		ui.disco(640, 420, 84, c4(0.12, 0.08, 0.06, 0.88), c.radice)
-		ui.lucchetto(640, 420, 52, c4(0.92, 0.76, 0.35), c.radice)
-		ui.testo(T.locked:format(prev and prev.titolo or payload.CAPITOLI[1].titolo), 640, 345, 0.9, C.TEXT, c.radice)
-		ui.testo(T.done_count:format(done, tot), 640, 305, 0.75, HINT, c.radice)
+		ui.disc(640, 420, 84, c4(0.12, 0.08, 0.06, 0.88), c.radice)
+		ui.padlock(640, 420, 52, c4(0.92, 0.76, 0.35), c.radice)
+		ui.text(T.locked:format(prev and prev.titolo or payload.CAPITOLI[1].titolo), 640, 345, 0.9, C.TEXT, c.radice)
+		ui.text(T.done_count:format(done, tot), 640, 305, 0.75, HINT, c.radice)
 	end
 end
 
@@ -297,7 +297,7 @@ function M.new(choice, stars, story)
 end
 
 function M.on_input(c, action_id, action)
-	local ui_action = ui.tocco(c.buttons, action_id, action)
+	local ui_action = ui.touch(c.buttons, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" or ui_action == "storia" then return ui_action end
 	local kind, value = ui_action:match("^(%a+):(.*)$")

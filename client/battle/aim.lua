@@ -75,7 +75,7 @@ local V, S = vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 1)
 local E = vmath.vector3(0, 0, 0)
 
 -- Whole degrees as the player reads them
-function M.gradi(a)
+function M.degrees(a)
 	local g = deg(a)
 	if math.cos(a) < 0 then g = 180 - g end
 	g = (g + 180) % 360 - 180
@@ -89,7 +89,7 @@ end
 -- Where the dots go along the line pts[1..n], one every step (in the world),
 -- at most max: out[i] = { x, y }; returns how many there are. The line starts
 -- at the muzzle, one step before pts[1].
-function M.posa(pts, n, step, maxn, out)
+function M.lay_dots(pts, n, step, maxn, out)
 	if n < 2 then return 0 end
 	-- the muzzle: one step before the first point
 	local px, py = 2 * pts[1].x - pts[2].x, 2 * pts[1].y - pts[2].y
@@ -124,7 +124,7 @@ function M.posa(pts, n, step, maxn, out)
 end
 
 local function disc(d, color)
-	local n = ui.disco(0, 0, d, color)
+	local n = ui.disc(0, 0, d, color)
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	gui.set_enabled(n, false)
 	return n
@@ -144,7 +144,7 @@ local function child(n, parent)
 	return n
 end
 
-function M.nuova()
+function M.new()
 	local m = { nodi = {}, shadows = {}, lights = {}, out = {} }
 	for i = 1, M.POINTS do
 		m.shadows[i] = disc(DOT_BORDER, SHADOW)
@@ -170,9 +170,9 @@ function M.nuova()
 	m.mir = root_node()
 	child(disc(RETICLE + 6, SHADOW), m.mir)
 	local trace = child(disc(RETICLE, TRACE_C), m.mir)
-	ui.anello(trace, RETICLE, TRACE)
+	ui.ring(trace, RETICLE, TRACE)
 	m.full = child(disc(RETICLE + 2, LIGHT), m.mir)
-	ui.anello(m.full, RETICLE + 2, FULL)
+	ui.ring(m.full, RETICLE + 2, FULL)
 	child(disc(CENTER, LIGHT), m.mir)
 	m.nodi[#m.nodi + 1] = m.mir
 
@@ -214,10 +214,10 @@ function M.nuova()
 	m.anelli, m.rings_c = {}, {}
 	for i = 1, M.RINGS do
 		local r = root_node()
-		local shadow = child(ui.disco(0, 0, 1, SHADOW), r)
-		ui.anello(shadow, RING_W + 4, RING_S + 4, RING_H + 4)
-		local c = child(ui.disco(0, 0, 1, LIGHT), r)
-		ui.anello(c, RING_W, RING_S, RING_H)
+		local shadow = child(ui.disc(0, 0, 1, SHADOW), r)
+		ui.ring(shadow, RING_W + 4, RING_S + 4, RING_H + 4)
+		local c = child(ui.disc(0, 0, 1, LIGHT), r)
+		ui.ring(c, RING_W, RING_S, RING_H)
 		for _, n in ipairs({ shadow, c }) do gui.set_adjust_mode(n, gui.ADJUST_FIT) end
 		m.anelli[i], m.rings_c[i] = r, c
 		m.nodi[#m.nodi + 1] = r
@@ -226,7 +226,7 @@ function M.nuova()
 	-- the numbers at the tip
 	local c = {}
 	c.radice = root_node()
-	c.text_n = ui.titolo("", 0, 0, NUMBERS_SCALE, LIGHT, c.radice)
+	c.text_n = ui.title("", 0, 0, NUMBERS_SCALE, LIGHT, c.radice)
 	gui.set_adjust_mode(c.text_n, gui.ADJUST_FIT)
 	m.c = c
 	m.sign = c.radice
@@ -241,7 +241,7 @@ local function move(n, x, y, scale)
 end
 
 function M.trajectory(m, pts, n, s)
-	local k = M.posa(pts, n, M.STEP / s, M.POINTS, m.out)
+	local k = M.lay_dots(pts, n, M.STEP / s, M.POINTS, m.out)
 	local scale = 1 / s
 	for i = 1, M.POINTS do
 		local on = i <= k
@@ -255,7 +255,7 @@ function M.trajectory(m, pts, n, s)
 	end
 end
 
-function M.mirino(m, x, y, angle_deg, s, strength, color)
+function M.crosshair(m, x, y, angle_deg, s, strength, color)
 	local d = M.RETICLE_D / s
 	move(m.mir, x + cos(angle_deg) * d, y + sin(angle_deg) * d, 1 / s)
 	-- the pie fills counterclockwise from the right: turned like this it starts
@@ -281,7 +281,7 @@ function M.mirino(m, x, y, angle_deg, s, strength, color)
 	end
 end
 
-function M.lancetta(m, x, y, angle_deg, s, strength, color)
+function M.needle(m, x, y, angle_deg, s, strength, color)
 	move(m.lanc, x, y, 1 / s)
 	E.z = deg(angle_deg)
 	gui.set_euler(m.lanc, E)
@@ -295,7 +295,7 @@ function M.lancetta(m, x, y, angle_deg, s, strength, color)
 	for _, n in ipairs(m.segments) do gui.set_enabled(n, false) end
 end
 
-function M.punta(m, x, y, angle_deg, s, color)
+function M.tip(m, x, y, angle_deg, s, color)
 	local d = TIP_D / s
 	move(m.punta, x + cos(angle_deg) * d, y + sin(angle_deg) * d, 1 / s)
 	E.z = deg(angle_deg)
@@ -308,7 +308,7 @@ function M.punta(m, x, y, angle_deg, s, color)
 	gui.set_enabled(m.c.radice, false)
 end
 
-function M.bersagli(m, pos, n, s, color)
+function M.targets(m, pos, n, s, color)
 	for i = 1, M.RINGS do
 		local on = i <= n
 		gui.set_enabled(m.anelli[i], on)
@@ -353,14 +353,14 @@ function M.trajectory_off(m)
 	end
 end
 
-function M.via(m)
+function M.clear(m)
 	M.trajectory_off(m)
 	gui.set_enabled(m.mir, false)
 	gui.set_enabled(m.lanc, false)
 	gui.set_enabled(m.punta, false)
 	for _, n in ipairs(m.segments) do gui.set_enabled(n, false) end
 	gui.set_enabled(m.c.radice, false)
-	M.bersagli(m, nil, 0)
+	M.targets(m, nil, 0)
 end
 
 return M

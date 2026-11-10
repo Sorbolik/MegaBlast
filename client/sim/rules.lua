@@ -85,7 +85,7 @@ function M.validate(r, normal)
 	return true
 end
 
-function M.opzioni(r, opts)
+function M.options(r, opts)
 	if not r then return opts end
 	if r.casse then opts.crate_every = r.casse end
 	if r.cure == false then opts.heals = false end
@@ -94,7 +94,7 @@ function M.opzioni(r, opts)
 	return opts
 end
 
-function M.armi(r)
+function M.weapons(r)
 	if not (r and r.armi) then return nil end
 	local seen_weapons = {}
 	for _, w in ipairs(r.armi) do seen_weapons[w] = true end

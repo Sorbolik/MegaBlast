@@ -212,20 +212,20 @@ local function near(a, b) return math.abs(a - b) < 1e-6 end
 local clip = { duration = 1, loop = true, tracks = { testa = { 0, 0, 0, 0.5, 1, 1, 0.75, 2, 2 } },
 	face = { 0.2, "testa_felice", 0.6, "testa_ko" } }
 local tr = clip.tracks.testa
-check(near(pose.valore(tr, 0, 1, true), 0) and near(pose.valore(tr, 0.5, 1, true), 1),
+check(near(pose.value(tr, 0, 1, true), 0) and near(pose.value(tr, 0.5, 1, true), 1),
 	"poses: on the keys the key's value")
-check(near(pose.valore(tr, 0.625, 1, true), 1.5), "poses: linear curve halfway")
-check(near(pose.valore(tr, 0.9, 1, true), 2), "poses: step curve holds the value")
-local p = pose.nuova()
-pose.aggiungi(p, clip, 3.5, 0.5)
+check(near(pose.value(tr, 0.625, 1, true), 1.5), "poses: linear curve halfway")
+check(near(pose.value(tr, 0.9, 1, true), 2), "poses: step curve holds the value")
+local p = pose.new()
+pose.add(p, clip, 3.5, 0.5)
 check(near(p.testa, 0.5) and near(p.schiaccia, 1) and near(p.braccio_a, 0),
 	"poses: looping, time wraps, the weight scales, missing channels stay neutral")
 check(p.face_name == "testa_felice", "poses: the face steps")
-pose.azzera(p)
-pose.aggiungi(p, clip, 0.1, 1)
+pose.reset(p)
+pose.add(p, clip, 0.1, 1)
 check(p.face_name == "testa_ko", "poses: before the first face, looping, the last one")
 local end_of = { duration = 1, loop = false, tracks = { corpo = { 0, 0, 0, 1, 2, 0 } } }
-check(near(pose.valore(end_of.tracks.corpo, 0.5, 1, false), 1) and near(pose.valore(end_of.tracks.corpo, 1, 1, false), 2),
+check(near(pose.value(end_of.tracks.corpo, 0.5, 1, false), 1) and near(pose.value(end_of.tracks.corpo, 1, 1, false), 2),
 	"poses: a non-looping clip starts and arrives gently and stops at the end")
 local name_list = {}
 for _, c in ipairs(pose.CHANNELS) do name_list[c] = true end
@@ -549,7 +549,7 @@ end
 -- Plate ------------------------------------------------------------------------
 
 local first = #nodes + 1
-local tt = plate.nuove({ vec(1, 0.2, 0.3, 1), vec(0.2, 0.5, 1, 1) }, { "Rosso", "Blu" })
+local tt = plate.create({ vec(1, 0.2, 0.3, 1), vec(0.2, 0.5, 1, 1) }, { "Rosso", "Blu" })
 local first_text, last_shape = math.huge, 0
 for k = first, #nodes do
 	if nodes[k].text then first_text = math.min(first_text, k)
@@ -557,31 +557,31 @@ for k = first, #nodes do
 end
 check(last_shape < first_text, "plates: first all the bars, then all the texts (two draw calls)")
 local t = tt[1]
-plate.vita(t, 100, 100)
+plate.hp(t, 100, 100)
 plate.update(t, 1 / 60, 0, 0, 1)
 local full_f = t.full.size.x
-plate.vita(t, 60, 100)
+plate.hp(t, 60, 100)
 plate.update(t, 1 / 60, 0, 0, 1)
 check(t.numero.text == "60", "plate: the number is the health")
 check(math.abs(t.full.size.x - full_f * 0.6) < 0.5, "plate: health drops at once")
 check(math.abs(t.trail.size.x - full_f) < 0.5, "plate: the lost piece stays a moment")
 for _ = 1, 120 do plate.update(t, 1 / 60, 0, 0, 1) end
 check(math.abs(t.trail.size.x - t.full.size.x) < 0.5, "plate: then it wears down to the health")
-plate.vita(t, 50, 100)
+plate.hp(t, 50, 100)
 for _ = 1, 30 do plate.update(t, 1 / 60, 0, 0, 1) end
-plate.vita(t, 30, 100)
+plate.hp(t, 30, 100)
 plate.update(t, 1 / 60, 0, 0, 1)
 check(math.abs(t.trail.size.x - full_f * 0.6) < 0.5, "plate: consecutive hits widen the white piece")
 for _ = 1, 120 do plate.update(t, 1 / 60, 0, 0, 1) end
-plate.vita(t, 60, 100)
-plate.vita(t, 60, 100, 20)
+plate.hp(t, 60, 100)
+plate.hp(t, 60, 100, 20)
 plate.update(t, 1 / 60, 0, 0, 1)
 check(t.scudo.enabled and math.abs(t.scudo.pos.x - t.full.pos.x - t.full.size.x) < 0.5,
 	"plate: the shield starts where health ends")
-plate.vita(t, 100, 100, 50)
+plate.hp(t, 100, 100, 50)
 plate.update(t, 1 / 60, 0, 0, 1)
 check(t.full.size.x + t.scudo.size.x <= full_f + 0.5, "plate: health plus shield fit in the frame")
-plate.vita(t, 0, 100)
+plate.hp(t, 0, 100)
 plate.update(t, 1 / 60, 0, 0, 1)
 check(not t.full.enabled and everything_done(), "plate: at zero health vanishes, finite values")
 
@@ -589,25 +589,25 @@ check(not t.full.enabled and everything_done(), "plate: at zero health vanishes,
 
 local c = camera.new(1280, 720, 1920, 1080)
 -- the continuous zoom: 0 the farthest zoom (the whole play space), 1 NEAR
-camera.trascina(c, 0)
-check(math.abs(camera.zoom(c) - camera.tutta(c)) < 1e-9, "zoom at 0: the whole play space")
-camera.trascina(c, 1)
+camera.drag(c, 0)
+check(math.abs(camera.zoom(c) - camera.whole(c)) < 1e-9, "zoom at 0: the whole play space")
+camera.drag(c, 1)
 check(math.abs(camera.zoom(c) - camera.NEAR) < 1e-9, "zoom at 1: the nearest")
-camera.trascina(c, 0.5)
+camera.drag(c, 0.5)
 local z5 = camera.zoom(c)
-check(z5 > camera.tutta(c) and z5 < camera.NEAR, "zoom at half: in between")
-camera.passo(c, 0.1)
+check(z5 > camera.whole(c) and z5 < camera.NEAR, "zoom at half: in between")
+camera.step(c, 0.1)
 check(camera.zoom(c) > z5, "a step forward zooms in")
-camera.trascina(c, 7)
+camera.drag(c, 7)
 check(c.f == 1, "the zoom doesn't go past the nearest")
-camera.livello(c, 2)
+camera.level(c, 2)
 check(math.abs(camera.zoom(c) - 1) < 1e-9, "the old MEDIO level is zoom 1")
-camera.trascina(c, 0.6)
+camera.drag(c, 0.6)
 camera.toggle(c)
 check(c.f == 0, "a tap on the button: the farthest zoom")
 camera.toggle(c)
 check(math.abs(c.f - 0.6) < 1e-9, "another tap: back to the zoom from before")
-camera.allarga(c, 3)
+camera.widen(c, 3)
 check(c.f == 0, "a mission that wants to see everything widens the zoom")
 
 -- the play space measured on the terrain: the floor under a platform counts
@@ -625,9 +625,9 @@ end
 -- the play space: at the farthest zoom it all fits between the HUD at the
 -- bottom, the one at the top and the sides, and no character is in the center
 camera.space(c, 0, 230, 1920, 960)
-check(camera.tutta(c) > camera.tutta(c, true), "the play space is closer than the whole map")
-camera.trascina(c, 0)
-camera.salta(c, 300, 300, camera.zoom(c))
+check(camera.whole(c) > camera.whole(c, true), "the play space is closer than the whole map")
+camera.drag(c, 0)
+camera.jump(c, 300, 300, camera.zoom(c))
 for _ = 1, 600 do camera.follow(c, 1 / 60, 300, 300, camera.zoom(c)) end
 local sx0, bottom = camera.to_screen(c, 0, 230)
 local sx1, top = camera.to_screen(c, 1920, 960)
@@ -639,8 +639,8 @@ for _ = 1, 600 do camera.follow(c, 1 / 60, 900, 120, camera.zoom(c)) end
 local _, fell = camera.to_screen(c, 900, 120)
 check(fell >= camera.BELOW - 0.5, "farthest zoom: whoever is below the play space doesn't end up under the HUD")
 
-camera.trascina(c, 1)
-camera.salta(c, 640, 360, 2.2)
+camera.drag(c, 1)
+camera.jump(c, 640, 360, 2.2)
 local px, py = camera.to_screen(c, 700, 400)
 local wx, wy = camera.to_world(c, px, py)
 check(math.abs(wx - 700) < 1e-9 and math.abs(wy - 400) < 1e-9, "from world to screen and back")
@@ -654,21 +654,21 @@ check(math.abs(px - 640) < 0.5 and math.abs(py - 360) < 0.5, "in the corner the 
 -- 20:9 phone (ui/screen.lua): the real screen goes from x = -160 to 1440
 local l = camera.new(1280, 720, 1920, 1080)
 camera.viewport(l, -160, 0, 1440, 720)
-camera.salta(l, 1000, 500, 1)
+camera.jump(l, 1000, 500, 1)
 px, py = camera.to_screen(l, 1000, 500)
 check(px == 640 and py == 360, "wide screen: the followed point is in the center")
 camera.space(l, 0, 230, 1920, 960)
-check(camera.tutta(l) > camera.tutta(c), "wide screen: the farthest zoom is closer")
+check(camera.whole(l) > camera.whole(c), "wide screen: the farthest zoom is closer")
 -- 4:3 tablet: the real screen goes from y = -120 to 840: the width decides
 local t43 = camera.new(1280, 720, 1920, 1080)
 camera.viewport(t43, 0, -120, 1280, 840)
-check(math.abs(camera.tutta(t43, true) - (1280 - 2 * camera.LATO) / 1920) < 1e-9,
+check(math.abs(camera.whole(t43, true) - (1280 - 2 * camera.LATO) / 1920) < 1e-9,
 	"tablet: the whole map as wide as the screen minus the sides")
 
 -- following doesn't depend on the screen's frame rate
 local a, b = camera.new(1280, 720, 1920, 1080), camera.new(1280, 720, 1920, 1080)
-camera.salta(a, 400, 300, 2.2)
-camera.salta(b, 400, 300, 2.2)
+camera.jump(a, 400, 300, 2.2)
+camera.jump(b, 400, 300, 2.2)
 for _ = 1, 30 do camera.follow(a, 1 / 60, 800, 420, 2.2) end
 for _ = 1, 60 do camera.follow(b, 1 / 120, 800, 420, 2.2) end
 check(math.abs(a.x - b.x) < 0.01 and math.abs(a.y - b.y) < 0.01,
@@ -683,21 +683,21 @@ local function inside(cam, x, y)
 	return sx >= 0 and sx <= cam.w and sy >= 150 and sy <= cam.h
 end
 local q = camera.new(1280, 720, 1920, 1080)
-camera.salta(q, 300, 400, 2.2)
+camera.jump(q, 300, 400, 2.2)
 local all_inside = true
 for i = 1, 90 do
 	camera.frame_on(q, 1 / 60, 300, 400, 300 + i * 16, 400 + i * 5, 2.2)
 	all_inside = all_inside and inside(q, 300, 400) and inside(q, 300 + i * 16, 400 + i * 5)
 end
 check(all_inside, "framing: shooter and shot always stay on screen")
-check(q.s < 2.2 and q.s >= camera.tutta(q), "framing: it zooms out, but not beyond the farthest zoom")
+check(q.s < 2.2 and q.s >= camera.whole(q), "framing: it zooms out, but not beyond the farthest zoom")
 for _ = 1, 600 do camera.frame_on(q, 1 / 60, 300, 400, 330, 410, 2.2) end
 check(math.abs(q.s - 2.2) < 0.01, "framing: with the shot close it goes back to the chosen zoom")
 local q2 = camera.new(1280, 720, 1920, 1080)
-camera.salta(q2, 300, 400, 2.2)
+camera.jump(q2, 300, 400, 2.2)
 for _ = 1, 60 do camera.frame_on(q2, 1 / 60, 300, 400, 1700, 900, 2.2) end
 local q3 = camera.new(1280, 720, 1920, 1080)
-camera.salta(q3, 300, 400, 2.2)
+camera.jump(q3, 300, 400, 2.2)
 for _ = 1, 120 do camera.frame_on(q3, 1 / 120, 300, 400, 1700, 900, 2.2) end
 check(math.abs(q2.s - q3.s) < 0.01 and math.abs(q2.x - q3.x) < 0.5,
 	"framing: the same at 60 and 120 Hz")
@@ -719,38 +719,38 @@ check(ox == 0, "shake: after a moment it stops")
 -- The aim (battle/aim.lua): degrees equal right and left, power ticks,
 -- dots at the same distance and tip on the last point
 local aim_name = require "battle.aim"
-check(aim_name.gradi(math.rad(40)) == 40 and aim_name.gradi(math.rad(140)) == 40, "aim: 40° right and left")
-check(aim_name.gradi(math.rad(-30)) == -30 and aim_name.gradi(math.rad(-150)) == -30, "aim: pointing down the degrees are negative")
-check(aim_name.gradi(math.rad(90)) == 90, "aim: straight up 90°")
+check(aim_name.degrees(math.rad(40)) == 40 and aim_name.degrees(math.rad(140)) == 40, "aim: 40° right and left")
+check(aim_name.degrees(math.rad(-30)) == -30 and aim_name.degrees(math.rad(-150)) == -30, "aim: pointing down the degrees are negative")
+check(aim_name.degrees(math.rad(90)) == 90, "aim: straight up 90°")
 check(aim_name.notch(0.94) == 18 and aim_name.notch(0.95) == 19 and aim_name.notch(1) == 20, "aim: one tick every 5%")
 local segment = {}
 for i = 1, 4 do segment[i] = { x = 40 * i, y = 0 } end
 local out = {}
-local k = aim_name.posa(segment, 4, 15, 40, out)
+local k = aim_name.lay_dots(segment, 4, 15, 40, out)
 check(k == 11 and out[1].x == 7.5 and math.abs(out[2].x - out[1].x - 15) < 1e-9 and out[k].x <= 160,
 	"aim: one dot every 15 from the muzzle to the end")
-k = aim_name.posa(segment, 4, 1, 40, out)
+k = aim_name.lay_dots(segment, 4, 1, 40, out)
 check(k <= 40 and k >= 38, "aim: no more than 40 dots, they spread out")
-local m = aim_name.nuova()
+local m = aim_name.new()
 check(#m.nodi == 2 * aim_name.POINTS + 5 + aim_name.RINGS and m.sign, "aim: dots, line, reticle, gauge, tip, rings and tag")
-aim_name.lancetta(m, 0, 0, 0, 2, 0.94, vec(1, 0, 0, 1))
+aim_name.needle(m, 0, 0, 0, 2, 0.94, vec(1, 0, 0, 1))
 aim_name.tag(m, 0, 0, 0, 2, 40, 0.94)
 check(m.c.gradi == 40 and m.c.p == 94 and m.c.radice.scale.x == 0.5 and m.c.radice.pos.x > 50,
 	"aim: degrees and power past the gauge's tip, the same size at every zoom")
-aim_name.mirino(m, 100, 50, 0, 2, 0.5, vec(1, 0, 0, 1))
+aim_name.crosshair(m, 100, 50, 0, 2, 0.5, vec(1, 0, 0, 1))
 check(m.mir.enabled and m.mir.scale.x == 0.5 and math.abs(m.mir.pos.x - (100 + aim_name.RETICLE_D / 2)) < 1e-9 and m.mir.pos.y == 50,
 	"aim: the reticle at a fixed on-screen distance in the aim direction")
 check(m.segments[2].enabled and m.segments[2].pos.x == 100 and m.segments[2].size.x < aim_name.RETICLE_D / 2, "aim: the line from the muzzle to the reticle")
-aim_name.lancetta(m, 100, 50, math.rad(30), 2, 0.5, vec(1, 0, 0, 1))
+aim_name.needle(m, 100, 50, math.rad(30), 2, 0.5, vec(1, 0, 0, 1))
 check(m.lanc.enabled and not m.mir.enabled and not m.segments[2].enabled and math.abs(m.lanc.euler.z - 30) < 1e-6 and m.lanc.scale.x == 0.5,
 	"aim: the gauge turned like the aim takes the reticle's place")
-aim_name.punta(m, 100, 50, math.pi, 2, vec(1, 0, 0, 1))
+aim_name.tip(m, 100, 50, math.pi, 2, vec(1, 0, 0, 1))
 check(m.punta.enabled and not m.lanc.enabled and not m.c.radice.enabled and m.punta.pos.x < 100 and m.punta.scale.x == 0.5,
 	"aim: close-range weapons only have the tip, without gauge or tag")
-aim_name.bersagli(m, { { x = 10, y = 20 }, { x = 30, y = 40 } }, 2, 2, vec(1, 0, 0, 1))
+aim_name.targets(m, { { x = 10, y = 20 }, { x = 30, y = 40 } }, 2, 2, vec(1, 0, 0, 1))
 check(m.anelli[1].enabled and m.anelli[2].enabled and not m.anelli[3].enabled and m.anelli[2].pos.x == 30,
 	"aim: a ring at the feet of each target")
-aim_name.via(m)
+aim_name.clear(m)
 check(not m.lanc.enabled and not m.mir.enabled and not m.c.radice.enabled and not m.segments[2].enabled
 	and not m.punta.enabled and not m.anelli[1].enabled, "aim: via turns everything off")
 
@@ -855,24 +855,24 @@ local seq2 = { rt2(0.6), rt2(1, { pressed = true }), rt2(0.85, { released = true
 check(table.concat(seq2, ",") == "+rt,,,,,-rt,", "controller: the trigger coming back up is released only once, below 20%")
 -- the settings: the buttons to change (menu/settings.lua)
 local m = controller.new("Windows")
-check(controller.assegna(m, "spara", "b") and m.tasti.b == "spara" and m.tasti.rt == "baratto",
+check(controller.assign(m, "spara", "b") and m.tasti.b == "spara" and m.tasti.rt == "baratto",
 	"controller: SPARA on B, the swap takes RT")
-check(not controller.assegna(m, "spara", "start") and m.tasti.start == "rotellina", "controller: Start stays on the wheel")
+check(not controller.assign(m, "spara", "start") and m.tasti.start == "rotellina", "controller: Start stays on the wheel")
 local saved_ones = controller.to_save(m)
 check(saved_ones.start == nil and saved_ones.b == "spara", "controller: saved without Start")
 local m2 = controller.new("Windows")
-check(controller.usa(m2, saved_ones) and m2.tasti.b == "spara" and m2.tasti.start == "rotellina", "controller: the saved mapping is taken back")
-check(controller.usa(m2, { a = "spara" }) and m2.tasti.a == "spara" and controller.key_of(m2, "baratto") == nil,
+check(controller.use(m2, saved_ones) and m2.tasti.b == "spara" and m2.tasti.start == "rotellina", "controller: the saved mapping is taken back")
+check(controller.use(m2, { a = "spara" }) and m2.tasti.a == "spara" and controller.key_of(m2, "baratto") == nil,
 	"controller: a mapping with commands without a button is taken")
-check(not controller.usa(m2, { a = "vola" }) and not controller.usa(m2, { a = "spara", b = "spara" }),
+check(not controller.use(m2, { a = "vola" }) and not controller.use(m2, { a = "spara", b = "spara" }),
 	"controller: unknown or duplicate commands are not")
 controller.base(m2)
 check(controller.key_of(m2, "salta") == nil, "controller: by default you jump with the stick")
-check(controller.assegna(m2, "salta", "a") and m2.tasti.a == "salta" and m2.tasti.su == "teletrasporto",
+check(controller.assign(m2, "salta", "a") and m2.tasti.a == "salta" and m2.tasti.su == "teletrasporto",
 	"controller: SALTA on A, the teleport goes to the first free button (d-pad up)")
-controller.togli(m2, "teletrasporto")
+controller.remove(m2, "teletrasporto")
 check(controller.key_of(m2, "teletrasporto") == nil and m2.tasti.su == nil, "controller: Y removes the button")
-controller.togli(m2, "rotellina")
+controller.remove(m2, "rotellina")
 check(m2.tasti.start == "rotellina", "controller: Start can't be removed")
 local mv = controller.new("Windows")
 controller.input(mv, hash("pad_rt"), { value = 0.3 })
@@ -886,7 +886,7 @@ check(controller.family("Sony Interactive Entertainment Wireless Controller") ==
 	and controller.family("Xbox Wireless Controller") == "xbox" and controller.family("Wireless Controller") == "playstation" and controller.family("8BitDo SN30") == "xbox",
 	"controller: the family from the name")
 m2.family = "nintendo"
-check(controller.nome(m2, "a") == "B" and controller.nome(m2, "rt") == "ZR" and controller.nome(m2, "giu") == "CROCE GIÙ",
+check(controller.name(m2, "a") == "B" and controller.name(m2, "rt") == "ZR" and controller.name(m2, "giu") == "CROCE GIÙ",
 	"controller: on Nintendo the bottom button is called B")
 
 if failures > 0 then

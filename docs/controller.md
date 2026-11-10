@@ -127,7 +127,7 @@ e le stelle si passano con A.
   carica oltre il 15%, parte sotto il 6%): senza questo margine un grilletto
   tenuto a metà poteva tremare fra premuto e lasciato. Un tasto
   lasciato conta solo dal controller in uso.
-- `client/ui/ui.lua`: la luce sui bottoni (`ui.tocco` con `ui.PAD`).
+- `client/ui/ui.lua`: la luce sui bottoni (`ui.touch` con `ui.PAD`).
 - `client/ui/glyph.lua`: il disegno dei tasti; `client/menu/settings.lua`: la schermata.
 - `client/main/game.gui_script`, tabella `PAD`: cosa fanno i tasti in battaglia.
 - Simulatore: il controller finto (comandi `pad`, `pad_tieni`, `pad_lascia`,

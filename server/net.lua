@@ -54,7 +54,7 @@ end
 -- players: like opts.players of game.new (teams and draft picks);
 -- r: the rules of the queue's event (sim/rules.lua), nil outside events
 function N.new(seed, map, players, r)
-	local g = game.new(seed, map, rules.opzioni(r, { players = players, random_spawns = true, intro = game.INTRO_TICKS }))
+	local g = game.new(seed, map, rules.options(r, { players = players, random_spawns = true, intro = game.INTRO_TICKS }))
 	g:pop_events()
 	g.carves = {} -- terrain digs, for whoever reconnects
 	for i, p in ipairs(players or {}) do
@@ -223,7 +223,7 @@ function N.draft_new(seed, mode, r, bots)
 	for i, p in ipairs(config.MODES[mode]) do
 		players[i] = { team = p.team, bot = bots and bots[i] or nil }
 	end
-	local d = draft.new(seed, players, rules.armi(r))
+	local d = draft.new(seed, players, rules.weapons(r))
 	for i, p in ipairs(players) do
 		if p.bot then bot.choose(d, i, seed) end
 	end

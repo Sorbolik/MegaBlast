@@ -17,7 +17,7 @@ local M = { W = 1280, H = 720, kx = 1, ky = 1, x0 = 0, x1 = 1280, y0 = 0, y1 = 7
 M.FULL = 4
 
 -- Reads the window again; true if the proportions changed
-function M.aggiorna()
+function M.update()
 	local w, h = window.get_size()
 	if w <= 0 or h <= 0 then return false end
 	local sx, sy = w / M.W, h / M.H
@@ -31,8 +31,8 @@ function M.aggiorna()
 end
 
 -- real width and height of the screen, in game pixels
-function M.largo() return M.x1 - M.x0 end
-function M.alto() return M.y1 - M.y0 end
+function M.width() return M.x1 - M.x0 end
+function M.height() return M.y1 - M.y0 end
 
 function M.from_touch(x, y)
 	return M.W / 2 + (x - M.W / 2) * M.kx, M.H / 2 + (y - M.H / 2) * M.ky

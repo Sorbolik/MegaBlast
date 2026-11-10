@@ -76,8 +76,8 @@ local function statistics(a, parent)
 	local st = loadout.stats(b, to_active(a), profile.tier(a.prof, to_active(a)))
 	-- the column on the right, from the content's top to the bottom margin
 	local h = ui.BODY_TOP - ui.EDGE
-	local pan = ui.pannello(1280 - ui.EDGE - 125, ui.EDGE + h / 2, 250, h, parent)
-	ui.titolo(common.stats, 0, h / 2 - 28, 0.6, c.TEXT, pan)
+	local pan = ui.panel(1280 - ui.EDGE - 125, ui.EDGE + h / 2, 250, h, parent)
+	ui.title(common.stats, 0, h / 2 - 28, 0.6, c.TEXT, pan)
 	local y = h / 2 - 70
 	for _, s in ipairs(M.STATISTICS) do
 		local k, nome, modo = s[1], s[2], s[3]
@@ -92,9 +92,9 @@ local function statistics(a, parent)
 				end
 				col = better and c.BRACE or c.TEXT
 			end
-			local n = ui.testo(nome, -110, y, 0.7, c.OFF, pan)
+			local n = ui.text(nome, -110, y, 0.7, c.OFF, pan)
 			gui.set_pivot(n, gui.PIVOT_W)
-			local v = ui.testo(value(st[k], modo), 110, y, 0.75, col, pan)
+			local v = ui.text(value(st[k], modo), 110, y, 0.75, col, pan)
 			gui.set_pivot(v, gui.PIVOT_E)
 			y = y - 30
 		end
@@ -110,17 +110,17 @@ local function sheet_set(a, parent)
 	for r, slot in ipairs(equip.SLOTS) do
 		-- the first row's buttons start at the content's top
 		local y = ui.BODY_TOP - 31 - (r - 1) * 88
-		local label = ui.testo(slot.name, ui.EDGE, y, 0.8, c.TEXT, parent)
+		local label = ui.text(slot.name, ui.EDGE, y, 0.8, c.TEXT, parent)
 		gui.set_pivot(label, gui.PIVOT_W)
 		for i, set in ipairs(equip.SETS) do
 			local chosen = as.gear[slot.id] == set.id
 			local x = 260 + (i - 1) * 138
 			local t = equip.tier(a.prof.mastery[set.id .. "_" .. slot.id])
-			ui.scheda(a.buttons, x, y + 8, 130, 46, set.name, "set:" .. slot.id .. ":" .. set.id, chosen, parent)
-			ui.testo(T.tier:format(ROMAN[t]), x, y - 26, 0.55, chosen and c.BRACE or c.OFF, parent)
+			ui.tab(a.buttons, x, y + 8, 130, 46, set.name, "set:" .. slot.id .. ":" .. set.id, chosen, parent)
+			ui.text(T.tier:format(ROMAN[t]), x, y - 26, 0.55, chosen and c.BRACE or c.OFF, parent)
 		end
 		local piece = equip.BY_ID[as.gear[slot.id] or ""]
-		local n = ui.testo(piece and effects(piece.pieces[slot.id]) or T.no_piece, 770, y, 0.6, c.OFF, parent)
+		local n = ui.text(piece and effects(piece.pieces[slot.id]) or T.no_piece, 770, y, 0.6, c.OFF, parent)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
 
@@ -128,14 +128,14 @@ local function sheet_set(a, parent)
 	local id, top = equip.full_set(as.gear, tiers)
 	local set = id and equip.BY_ID[id]
 	if not (set and set.bonus) then return end
-	local pan = ui.pannello(LEFT_X, ui.EDGE + 65, LEFT_W, 130, parent)
-	ui.titolo(set.name .. " · " .. string.upper(set.style), -200, 38, 0.7, c.BRACE, pan)
+	local pan = ui.panel(LEFT_X, ui.EDGE + 65, LEFT_W, 130, parent)
+	ui.title(set.name .. " · " .. string.upper(set.style), -200, 38, 0.7, c.BRACE, pan)
 	for i, v in ipairs({ "a", "b" }) do
 		local y = 4 - (i - 1) * 40
 		local ok = v == "a" or top
-		ui.scheda(a.buttons, -420, y, 50, 34, string.upper(v), "variante:" .. v, as.variant == v and (v == "a" or top), pan)
+		ui.tab(a.buttons, -420, y, 50, 34, string.upper(v), "variante:" .. v, as.variant == v and (v == "a" or top), pan)
 		local txt = ok and set.bonus[v].desc or T.locked_bonus:format(set.bonus[v].desc, equip.LIVELLO_MAX)
-		local n = ui.testo(txt, -380, y, 0.62, ok and c.TEXT or c.OFF, pan)
+		local n = ui.text(txt, -380, y, 0.62, ok and c.TEXT or c.OFF, pan)
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
 end
@@ -151,13 +151,13 @@ local function build(a)
 	a.head = ui.header(a.buttons, common.armory, "indietro")
 	for i = 1, loadout.LOADOUTS do
 		if loadout.open(i, a.prof.livello) then
-			ui.scheda(a.buttons, -ui.EDGE - 26 - (loadout.LOADOUTS - i) * 64, 0, 52, 48, tostring(i), "assetto:" .. i,
+			ui.tab(a.buttons, -ui.EDGE - 26 - (loadout.LOADOUTS - i) * 64, 0, 52, 48, tostring(i), "assetto:" .. i,
 				a.prof.is_active == i, a.head.right)
 		end
 	end
-	local n = ui.testo(T.loadout, -ui.EDGE - 16 - loadout.LOADOUTS * 64, 0, 0.7, c.OFF, a.head.right)
+	local n = ui.text(T.loadout, -ui.EDGE - 16 - loadout.LOADOUTS * 64, 0, 0.7, c.OFF, a.head.right)
 	gui.set_pivot(n, gui.PIVOT_E)
-	a.radice = ui.radice()
+	a.radice = ui.root()
 	sheet_set(a, a.radice)
 	statistics(a, a.radice)
 end
@@ -182,12 +182,12 @@ local function run_cmd(a, ui_action)
 		local _, top = equip.full_set(as.gear, profile.tier(a.prof, as))
 		if x == "a" or top then as.variant = x end
 	end
-	profile.salva(a.prof)
+	profile.save(a.prof)
 	build(a)
 end
 
 function M.on_input(a, action_id, action)
-	local ui_action = ui.tocco(a.buttons, action_id, action)
+	local ui_action = ui.touch(a.buttons, action_id, action)
 	if ui_action == "indietro" then return "indietro" end
 	if ui_action then run_cmd(a, ui_action) end
 	return nil

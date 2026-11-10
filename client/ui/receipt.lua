@@ -9,7 +9,7 @@
 -- more value, the panel is already wide enough for two.
 --
 --   local r = receipt.new(gain, prof, x, y, buttons, parent)
---     gain: profile.match_end or profile.missione (lines, xp, level_before, livello, braci...)
+--     gain: profile.match_end or profile.mission (lines, xp, level_before, livello, braci...)
 --     buttons: the screen's list, METTI I PUNTI goes there with the action "sigilli"
 --   receipt.update(r, dt, tick)   -- tick(i): the sound of a line, i from 1
 --   receipt.skip(r)               -- everything at once (a tap during the count)
@@ -48,16 +48,16 @@ function M.new(gain, prof, x, y, buttons, parent)
 	local h = 196 + #lines * M.LINE_H + (level_up and 132 or braci > 0 and 50 or 0)
 	local r = { t = 0, shown = 0, rows = {}, gain = gain, prof = prof }
 	local top = h / 2
-	r.panel = ui.pannello(x, y - h / 2, M.W, h, parent)
+	r.panel = ui.panel(x, y - h / 2, M.W, h, parent)
 	local p = r.panel
 	local left, right = -M.W / 2 + 26, M.W / 2 - 26
-	local t = ui.titolo(T.title, left, top - 34, 0.6, C.TEXT, p)
+	local t = ui.title(T.title, left, top - 34, 0.6, C.TEXT, p)
 	gui.set_pivot(t, gui.PIVOT_W)
 	local ly = top - 82
 	for i, l in ipairs(lines) do
-		local a = ui.testo(label(l), left, ly, 0.8, C.TEXT, p)
+		local a = ui.text(label(l), left, ly, 0.8, C.TEXT, p)
 		gui.set_pivot(a, gui.PIVOT_W)
-		local b = ui.testo(T.plus:format(l.xp), right, ly, 0.85, C.GOLD, p)
+		local b = ui.text(T.plus:format(l.xp), right, ly, 0.85, C.GOLD, p)
 		gui.set_pivot(b, gui.PIVOT_E)
 		alpha(a, 0)
 		alpha(b, 0)
@@ -69,14 +69,14 @@ function M.new(gain, prof, x, y, buttons, parent)
 	gui.set_color(line, C.LINE)
 	gui.set_parent(line, p)
 	ly = ly - 18
-	local tl = ui.titolo(T.total, left, ly, 0.55, C.TEXT, p)
+	local tl = ui.title(T.total, left, ly, 0.55, C.TEXT, p)
 	gui.set_pivot(tl, gui.PIVOT_W)
-	r.total = ui.titolo(T.plus:format(0), right, ly, 0.7, C.GOLD, p)
+	r.total = ui.title(T.plus:format(0), right, ly, 0.7, C.GOLD, p)
 	gui.set_pivot(r.total, gui.PIVOT_E)
 	-- the level and its bar
 	ly = ly - 46
 	local lv = level_up and T.level_up:format(gain.livello) or T.level:format(gain.livello)
-	r.level = ui.titolo(lv, left, ly, 0.5, level_up and C.BRACE or C.TEXT, p)
+	r.level = ui.title(lv, left, ly, 0.5, level_up and C.BRACE or C.TEXT, p)
 	gui.set_pivot(r.level, gui.PIVOT_W)
 	alpha(r.level, 0)
 	ly = ly - 26
@@ -98,12 +98,12 @@ function M.new(gain, prof, x, y, buttons, parent)
 	if level_up then
 		ly = ly - 36
 		local n = math.min(profile.LEVEL_MAX, gain.livello) - gain.level_before
-		ui.testo((n == 1 and T.point or T.points):format(n), 0, 0, 0.8, C.GOLD, holder(ly))
+		ui.text((n == 1 and T.point or T.points):format(n), 0, 0, 0.8, C.GOLD, holder(ly))
 		ly = ly - 50
 		ui.button(buttons, 0, 0, M.W - 52, 56, T.place_points, "sigilli", { main = true, colore = C.GOLD }, holder(ly))
 	elseif braci > 0 then
 		ly = ly - 36
-		ui.testo((braci == 1 and T.brace or T.braci):format(braci), 0, 0, 0.8, C.GOLD, holder(ly))
+		ui.text((braci == 1 and T.brace or T.braci):format(braci), 0, 0, 0.8, C.GOLD, holder(ly))
 	end
 	for _, n in ipairs(r.after) do gui.set_scale(n, vec(0.01, 0.01)) end
 	r.h = h

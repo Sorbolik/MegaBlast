@@ -52,7 +52,7 @@ end
 
 -- Maps out of rotation and out of M.order (the mission arenas,
 -- sim/missions.lua): they are played only when asked for by name.
-function M.registra(id, def)
+function M.register(id, def)
 	def.id, def.name = id, def.name or id
 	M.maps[id] = def
 end

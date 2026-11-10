@@ -3236,7 +3236,7 @@ local FINGERPRINT_MOD = 2147483629
 local function shuffle(h, v)
 	return (h * 31 + math.floor(v) % FINGERPRINT_MOD) % FINGERPRINT_MOD
 end
-function M:impronta()
+function M:fingerprint()
 	local h = shuffle(shuffle(shuffle(7, self.tick), self.current), self.rng.state)
 	for _, rb in ipairs(self.robots) do
 		h = shuffle(h, rb.x * 16)

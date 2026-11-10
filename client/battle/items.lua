@@ -41,7 +41,7 @@ local function gui_node(w, h, color, parent)
 end
 
 local function circle_shape(d, color, parent)
-	local n = ui.disco(0, 0, d, color, parent)
+	local n = ui.disc(0, 0, d, color, parent)
 	gui.set_adjust_mode(n, gui.ADJUST_FIT)
 	return n
 end
@@ -89,7 +89,7 @@ end
 -- Shield: a ring
 local function ring_node(d, color, parent)
 	local n = circle_shape(d, color, parent)
-	ui.anello(n, d, d * 0.08)
+	ui.ring(n, d, d * 0.08)
 	return n
 end
 
@@ -171,7 +171,7 @@ function M.snap(o, x, y)
 end
 
 -- The nodes to put in the world, in drawing order
-function M.nodi(o)
+function M.nodes(o)
 	local list = {}
 	for _, c in ipairs(o.cure) do list[#list + 1] = c.root end
 	for _, p in ipairs(o.pools) do list[#list + 1] = p.root end

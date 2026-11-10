@@ -26,10 +26,22 @@ do
 end
 
 local SHOTS = 99
+-- --ritocchi file.lua: function(config, game) that changes the numbers (try a retune without touching the game)
+if opt.ritocchi then dofile(opt.ritocchi)(config, game) end
+
+-- Two pure kits, to balance the free weapons against each other: "lama" (only the Lama) and
+-- "missilino" (only the missile). Every other kit keeps the free weapons (missile, Lama, teleport).
+local PURE = { lama = { sword = true, teleport = true }, missilino = { missile = true, teleport = true } }
+local has_weapon = game.has_weapon
+game.has_weapon = function(rb, weapon)
+	local kit = rb.kit
+	if kit and game.FREE_WEAPONS[weapon] and not kit[weapon] then return false end
+	return has_weapon(rb, weapon)
+end
 
 -- the weapons: Lama, secondaries, primaries
 local function all_weapons()
-	local list = { "sword" }
+	local list = { "sword", "lama", "missilino" }
 	for _, w in ipairs(game.DRAFT_SECONDARIES) do list[#list + 1] = w end
 	for _, w in ipairs(game.CRATE_WEAPONS) do list[#list + 1] = w end
 	return list
@@ -40,21 +52,24 @@ local function match(j, w1, w2)
 	local mappa = opt.mappa or maps.pick(seme)
 	local players = {}
 	for i, p in ipairs(config.MODES["1v1"]) do players[i] = { team = p.team, bot = opt.livello } end
-	local r = replay.nuova(seme, mappa, { players = players })
-	local g, bots = replay.partita(r)
+	local r = replay.new(seme, mappa, { players = players })
+	local g, bots = replay.match(r)
 	g.crate_every, g.crate_chance = 1e9, nil
 	for i, w in ipairs({ w1, w2 }) do
 		local rb = g.robots[i]
 		for k in pairs(rb.ammo) do rb.ammo[k] = 0 end
 		rb.secondary = nil
-		if w ~= "sword" then
+		rb.kit = PURE[w]
+		if PURE[w] then
+			-- nothing else
+		elseif w ~= "sword" then
 			if game.SECONDARY[w] then rb.secondary = w end
 			rb.ammo[w] = SHOTS
 		end
 	end
 	while g.phase ~= "over" do
 		g:step(replay.input(r, g, bots))
-		replay.dopo(r, g)
+		replay.after(r, g)
 		g:pop_events()
 	end
 	local res = g:results()

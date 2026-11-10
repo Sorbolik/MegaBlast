@@ -159,7 +159,7 @@ function M.new(fix)
 	return c
 end
 
-function M.comando(c, button_key)
+function M.command(c, button_key)
 	return c.tasti[button_key]
 end
 
@@ -174,7 +174,7 @@ end
 -- Gives the button to the command; the command that had it takes the button
 -- left free or, if the command had none, the first button nobody uses (the
 -- d-pad, by default), so putting Jump on A doesn't take away the teleport
-function M.assegna(c, command, button_key)
+function M.assign(c, command, button_key)
 	if not M.FREE[button_key] then return false end
 	local first_one, another = M.key_of(c, command), c.tasti[button_key]
 	if first_one then c.tasti[first_one] = nil end
@@ -190,7 +190,7 @@ function M.assegna(c, command, button_key)
 end
 
 -- Removes the command's button (Y in the settings): it is left without
-function M.togli(c, command)
+function M.remove(c, command)
 	local t = M.key_of(c, command)
 	if t and M.FREE[t] then c.tasti[t] = nil end
 end
@@ -200,7 +200,7 @@ end
 -- have no buttons); Start stays on the wheel
 local REAL_ONES = {}
 for _, cmd in ipairs(M.COMMANDS) do REAL_ONES[cmd] = true end
-function M.usa(c, keys)
+function M.use(c, keys)
 	if type(keys) ~= "table" then return false end
 	local seen = {}
 	for t, cmd in pairs(keys) do
@@ -226,7 +226,7 @@ function M.base(c)
 	for t, cmd in pairs(M.BATTLE) do c.tasti[t] = cmd end
 end
 
-function M.nome(c, button_key)
+function M.name(c, button_key)
 	return M.CROSS[button_key] or M.FAMILIES[c.family][button_key] or string.upper(button_key or "")
 end
 
@@ -236,12 +236,12 @@ M.current_value = nil
 function M.name_of(command)
 	local c = M.current_value
 	if not c then return "" end
-	return M.nome(c, M.UI_FIXED[command] or M.key_of(c, command))
+	return M.name(c, M.UI_FIXED[command] or M.key_of(c, command))
 end
 -- Which stick moves (the "levette" setting: "destra", by default, or
 -- "sinistra"; game.gui_script puts it here) and the side of each use, "dx" or "sx"
 M.levette = "destra"
-function M.lato(use)
+function M.side(use)
 	return ((M.levette == "destra") == (use == "muove")) and "dx" or "sx"
 end
 -- the menus' fixed buttons
@@ -396,7 +396,7 @@ function M.input(c, action_id, action)
 end
 
 -- Is the stick pushed? (to know whether the controller is in use)
-function M.spinta(l, threshold)
+function M.pushed(l, threshold)
 	return l.x * l.x + l.y * l.y > (threshold or 0.3) ^ 2
 end
 

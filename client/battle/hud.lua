@@ -52,7 +52,7 @@ M.RADIUS, M.THICKNESS = 54, 11
 M.OUTSIDE = M.RADIUS + M.THICKNESS * 0.55 + 2
 local BOTTOM = vmath.vector4(0.04, 0.035, 0.05, 0.72)
 local TRACK = vmath.vector4(1, 1, 1, 0.1)
-local NUMBER, WORD, CLOCK = 2.4, 0.6, 1.0   -- ui.testo scales
+local NUMBER, WORD, CLOCK = 2.4, 0.6, 1.0   -- ui.text scales
 M.CLOCK_TOP = 38   -- the match time from the real top: the row of the points (battle/score.lua)
 local NOTCH = vmath.vector4(0.04, 0.035, 0.05, 1)
 local ORBS, ORB_FLIGHT, ORB_AFTER = 6, 0.55, 0.09
@@ -102,17 +102,17 @@ function M.stopwatch(x, y)
 	c.gold_ring = fit(ui.ring_node(0, 0, 2 * M.OUTSIDE + 12, 4, ui.GOLD, c.radice))
 	gui.set_enabled(c.gold_halo, false)
 	gui.set_enabled(c.gold_ring, false)
-	fit(ui.disco(0, 0, 2 * M.OUTSIDE, BOTTOM, c.radice))
+	fit(ui.disc(0, 0, 2 * M.OUTSIDE, BOTTOM, c.radice))
 	c.squadra = fit(ui.ring_node(0, 0, 2 * M.OUTSIDE, 3, ui.C.LIGHT, c.radice))
 	local d = 2 * M.RADIUS + M.THICKNESS
 	fit(ui.ring_node(0, 0, d, M.THICKNESS, TRACK, c.radice))
 	-- the arc starts at noon and wears away clockwise
 	c.arco = fit(ui.ring_node(0, 0, d, M.THICKNESS, M.WHITE, c.radice))
 	gui.set_euler(c.arco, vmath.vector3(0, 0, 90))
-	c.numero = fit(ui.testo("", 0, 2, NUMBER, ui.C.TEXT, c.radice))
-	c.word = fit(ui.testo("", 0, -M.RADIUS * 0.5, WORD, M.WHITE, c.radice))
+	c.numero = fit(ui.text("", 0, 2, NUMBER, ui.C.TEXT, c.radice))
+	c.word = fit(ui.text("", 0, -M.RADIUS * 0.5, WORD, M.WHITE, c.radice))
 	-- the match time at the top right, on the points' row (report UI-002)
-	c.clock = fit(ui.testo("", 0, 0, CLOCK, ui.C.TEXT))
+	c.clock = fit(ui.text("", 0, 0, CLOCK, ui.C.TEXT))
 	gui.set_pivot(c.clock, gui.PIVOT_E)
 	c.x, c.y, c.k = x, y, 1
 	return c
@@ -199,8 +199,8 @@ function M.stopwatch_ticks(c)
 		local a = math.rad(90 + 360 * sec / total)
 		local r = M.RADIUS
 		local t = { sec = sec, on = true }
-		t.nodo = fit(ui.disco(math.cos(a) * r, math.sin(a) * r, M.THICKNESS + 8, NOTCH, c.radice))
-		fit(ui.disco(0, 0, M.THICKNESS + 2, ui.C.PURPLE, t.nodo))
+		t.nodo = fit(ui.disc(math.cos(a) * r, math.sin(a) * r, M.THICKNESS + 8, NOTCH, c.radice))
+		fit(ui.disc(0, 0, M.THICKNESS + 2, ui.C.PURPLE, t.nodo))
 		c.ticks[i] = t
 	end
 end
@@ -215,16 +215,16 @@ local ALONE = vmath.vector4(ui.C.PURPLE.x, ui.C.PURPLE.y, ui.C.PURPLE.z, 0.35)
 function M.orbs_nodes(c)
 	c.globi = {}
 	for i = 1, ORBS do
-		local g = fit(ui.disco(c.x, c.y, 26, ui.C.PURPLE))
-		fit(ui.disco(0, 0, 42, ALONE, g))
-		fit(ui.disco(0, 0, 11, ui.C.LIGHT, g))
+		local g = fit(ui.disc(c.x, c.y, 26, ui.C.PURPLE))
+		fit(ui.disc(0, 0, 42, ALONE, g))
+		fit(ui.disc(0, 0, 11, ui.C.LIGHT, g))
 		gui.set_enabled(g, false)
 		c.globi[i] = g
 	end
 end
 
 -- slowed: how many times slower (the guided match makes you watch them)
-function M.globi(c, n, pos, slowed, arrival)
+function M.orbs(c, n, pos, slowed, arrival)
 	slowed = slowed or 1
 	local a0 = math.rad(90 - 360 * c.k)
 	for i = 1, min(n, ORBS) do
@@ -251,7 +251,7 @@ end
 -- Token button: dark shape of its family (report UI-002: octagon for
 -- teleport, Grapple and swap, hexagon for the items), border in its
 -- family's color, icon
-function M.tondo(x, y, d, icon_img, color, parent, shape)
+function M.token(x, y, d, icon_img, color, parent, shape)
 	local t = { d = d, colore = color, shape = shape }
 	t.nodo = fit(ui.sagoma(shape .. "_forma", x, y, d, d, ui.C.PANEL, parent))
 	t.bordo = fit(ui.sagoma(shape .. "_bordo", 0, 0, d, d, color, t.nodo))
@@ -266,8 +266,8 @@ end
 function M.round_number(t, txt)
 	if not t.num then
 		local r = t.d * 0.36
-		t.num = fit(ui.disco(r, r, t.d * 0.36, t.colore, t.nodo))
-		t.num_t = fit(ui.testo("", 0, 1, t.d / 84 * 0.8, ui.C.BOTTOM, t.num))
+		t.num = fit(ui.disc(r, r, t.d * 0.36, t.colore, t.nodo))
+		t.num_t = fit(ui.text("", 0, 1, t.d / 84 * 0.8, ui.C.BOTTOM, t.num))
 		gui.set_outline(t.num_t, vmath.vector4(0, 0, 0, 0))
 	end
 	gui.set_enabled(t.num, txt ~= "")
@@ -298,7 +298,7 @@ end
 -- The light tag with the name, pointing down
 function M.tag()
 	local k = {}
-	k.nodo, k.bordo = ui.pannello(0, 0, 100, 26)
+	k.nodo, k.bordo = ui.panel(0, 0, 100, 26)
 	fit(k.nodo)
 	gui.set_color(k.nodo, ui.C.LIGHT)
 	gui.set_color(k.bordo, ui.C.BOTTOM)
@@ -306,7 +306,7 @@ function M.tag()
 	gui.set_color(k.punta, ui.C.LIGHT)
 	gui.set_euler(k.punta, vmath.vector3(0, 0, 45))
 	gui.set_parent(k.punta, k.nodo)
-	k.testo = fit(ui.testo("", 0, 1, 0.8, ui.C.BOTTOM, k.nodo))
+	k.testo = fit(ui.text("", 0, 1, 0.8, ui.C.BOTTOM, k.nodo))
 	gui.set_outline(k.testo, vmath.vector4(0, 0, 0, 0))
 	gui.set_enabled(k.nodo, false)
 	return k
@@ -341,13 +341,13 @@ end
 local NOTICE_H, NOTICE_LIFE = 26, 1.1
 local SHAKE = vmath.vector({ 0, 1, -1, 0.8, -0.6, 0.3, 0 })
 
-function M.avviso()
+function M.notice()
 	local a = {}
-	a.nodo, a.bordo = ui.pannello(0, 0, 100, NOTICE_H)
+	a.nodo, a.bordo = ui.panel(0, 0, 100, NOTICE_H)
 	fit(a.nodo)
 	gui.set_color(a.nodo, ui.C.PANEL)
 	gui.set_color(a.bordo, ui.C.BRACE)
-	a.testo = fit(ui.testo("", 0, 1, 0.7, ui.C.TEXT, a.nodo))
+	a.testo = fit(ui.text("", 0, 1, 0.7, ui.C.TEXT, a.nodo))
 	gui.set_outline(a.testo, vmath.vector4(0, 0, 0, 0))
 	-- everything fades together
 	gui.set_inherit_alpha(a.bordo, true)
@@ -359,7 +359,7 @@ end
 -- Why the robot whose turn it is can't use w now, or nil if it can. Always
 -- two plain words (Sergio, 30 October): used up, already used, or not now
 -- (lessons, parachute on the ground, shield already up, orbs in flight)
-function M.motivo(g, w)
+function M.reason(g, w)
 	if g:can_use(w) then return nil end
 	local rb = g.robots[g.current]
 	if g.permitted and not g.permitted(w) then return T.not_now end
@@ -381,7 +381,7 @@ function M.motivo(g, w)
 end
 
 -- nodo: the button (at x, y, d wide, in the same parent as the notice)
-function M.rifiuta(a, gui_node, x, y, d, txt)
+function M.refuse(a, gui_node, x, y, d, txt)
 	gui.cancel_animations(gui_node, "position.x")
 	V.x, V.y, V.z = x, y, 0
 	gui.set_position(gui_node, V)
@@ -408,14 +408,14 @@ end
 -- you had to hold it).
 local SWAP_D = 54
 
-function M.scambio()
+function M.swap()
 	local s = { on = true }
 	s.radice = fit(gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0)))
 	gui.set_visible(s.radice, false)
-	s.tondo = M.tondo(0, 0, SWAP_D, "scambio", ui.C.PURPLE, s.radice, "gettone")
+	s.tondo = M.token(0, 0, SWAP_D, "scambio", ui.C.PURPLE, s.radice, "gettone")
 	local x = SWAP_D / 2 + 10
 	for _, r in ipairs({ { T.swap_1, 8 }, { T.swap_2, -8 } }) do
-		local n = fit(ui.testo(r[1], x, r[2], 0.5, ui.C.TEXT, s.radice))
+		local n = fit(ui.text(r[1], x, r[2], 0.5, ui.C.TEXT, s.radice))
 		gui.set_pivot(n, gui.PIVOT_W)
 	end
 	M.swap_update(s, false)

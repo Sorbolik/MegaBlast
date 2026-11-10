@@ -3,7 +3,7 @@
 -- controller buttons in battle (Sergio, 30 Oct: "la rimappatura dei pulsanti
 -- me la metti nelle impostazioni"). You pick a command (by tapping or with the
 -- controller light and A), then press the new button: the command that had it
--- takes the one left free (controller.assegna). Y on the lit row removes the
+-- takes the one left free (controller.assign). Y on the lit row removes the
 -- button; Start cancels and stays on the wheel; RIPRISTINA goes back to
 -- Sergio's mapping. Everything is saved to the profile at once.
 --
@@ -51,17 +51,17 @@ local function build(s)
 	lit = lit and lit.ui_action
 	if s.radice then gui.delete_node(s.radice) end
 	s.buttons, s.glyphs = {}, {}
-	s.radice = ui.radice()
+	s.radice = ui.root()
 	local C = ui.C
 	-- the header (ui.header): IMPOSTAZIONI, the pill's place, the FPS counter on the right
 	ui.header_delete(s.head)
 	s.head = ui.header(s.buttons, T.title, "indietro")
 
 	local function choice(sc, cx, y, w, h, parent)
-		ui.testo(sc[2], cx, y + h / 2 + 18, 0.5, C.OFF, parent)
+		ui.text(sc[2], cx, y + h / 2 + 18, 0.5, C.OFF, parent)
 		local v = profile.setting(s.p, sc[1])
 		for i, m in ipairs(sc[3]) do
-			ui.scheda(s.buttons, cx + (i - 1.5) * (w + 6), y, w, h, m[2], sc[1] .. ":" .. m[1], v == m[1], parent)
+			ui.tab(s.buttons, cx + (i - 1.5) * (w + 6), y, w, h, m[2], sc[1] .. ":" .. m[1], v == m[1], parent)
 		end
 	end
 	for k, sc in ipairs(CHOICES) do
@@ -69,7 +69,7 @@ local function build(s)
 	end
 	choice(FPS, -ui.EDGE - 121, -10, 118, 44, s.head.right)
 
-	ui.testo(T.controller_keys, 640, 488, 0.7, C.OFF, s.radice)
+	ui.text(T.controller_keys, 640, 488, 0.7, C.OFF, s.radice)
 	local n = #controller.COMMANDS
 	local per_column = math.ceil(n / 2)
 	for i, cmd in ipairs(controller.COMMANDS) do
@@ -77,18 +77,18 @@ local function build(s)
 		local riga = (i - 1) % per_column
 		local x, y = COLUMNS[col], FIRST_ROW - riga * ROW_STEP
 		local gui_node = ui.button(s.buttons, x, y, ROW_W, ROW_H, "", "tasto:" .. cmd, nil, s.radice)
-		local nome = ui.testo(NAMES[cmd], -ROW_W / 2 + 22, 0, 0.8, C.TEXT, gui_node)
+		local nome = ui.text(NAMES[cmd], -ROW_W / 2 + 22, 0, 0.8, C.TEXT, gui_node)
 		gui.set_pivot(nome, gui.PIVOT_W)
 		if s.attesa == cmd then
-			local premi = ui.testo(T.press_a_key, ROW_W / 2 - 22, 0, 0.7, C.BRACE, gui_node)
+			local premi = ui.text(T.press_a_key, ROW_W / 2 - 22, 0, 0.7, C.BRACE, gui_node)
 			gui.set_pivot(premi, gui.PIVOT_E)
 			ui.sheet_active(s.buttons[#s.buttons], true)
 		elseif controller.key_of(s.c, cmd) then
 			local g = glyph.new(gui_node, 30)
 			glyph.display(g, s.c, controller.key_of(s.c, cmd))
-			gui.set_position(g.radice, vmath.vector3(ROW_W / 2 - 22 - glyph.largo(g) / 2, 0, 0))
+			gui.set_position(g.radice, vmath.vector3(ROW_W / 2 - 22 - glyph.width(g) / 2, 0, 0))
 		else
-			local nobody = ui.testo(cmd == "salta" and T.stick_up:format(T.sides[controller.lato("muove")]) or T.no_key, ROW_W / 2 - 22, 0, 0.6,
+			local nobody = ui.text(cmd == "salta" and T.stick_up:format(T.sides[controller.side("muove")]) or T.no_key, ROW_W / 2 - 22, 0, 0.6,
 				C.OFF, gui_node)
 			gui.set_pivot(nobody, gui.PIVOT_E)
 		end
@@ -96,13 +96,13 @@ local function build(s)
 
 	local riga = FIRST_ROW - per_column * ROW_STEP
 	ui.button(s.buttons, COLUMNS[2] + ROW_W / 2 - 150, riga - 4, 300, 56, T.reset, "ripristina", nil, s.radice)
-	local help = s.attesa and T.cancel:format(controller.nome(s.c, "start"))
-		or (s.c.connected and T.change_remove:format(controller.nome(s.c, "a"), controller.nome(s.c, "y"))
+	local help = s.attesa and T.cancel:format(controller.name(s.c, "start"))
+		or (s.c.connected and T.change_remove:format(controller.name(s.c, "a"), controller.name(s.c, "y"))
 		or T.connect)
-	local t = ui.testo(help, COLUMNS[1] - ROW_W / 2, riga - 4, 0.62, C.OFF, s.radice)
+	local t = ui.text(help, COLUMNS[1] - ROW_W / 2, riga - 4, 0.62, C.OFF, s.radice)
 	gui.set_pivot(t, gui.PIVOT_W)
 	for _, b in ipairs(s.buttons) do
-		if b.ui_action == lit then ui.luce(s.buttons, b) end
+		if b.ui_action == lit then ui.light(s.buttons, b) end
 	end
 end
 
@@ -115,15 +115,15 @@ function M.new(p, c)
 end
 
 local function save(s)
-	profile.imposta(s.p, "tasti", controller.to_save(s.c))
-	profile.salva(s.p)
+	profile.set(s.p, "tasti", controller.to_save(s.c))
+	profile.save(s.p)
 end
 
 function M.on_input(s, action_id, action)
 	-- waiting for the new button: the controller's first button (not the sticks)
 	if s.attesa and action_id == ui.PAD then
 		if not (action.pressed and action.nome) or action.levetta then return nil end
-		if action.nome ~= "start" and controller.assegna(s.c, s.attesa, action.nome) then save(s) end
+		if action.nome ~= "start" and controller.assign(s.c, s.attesa, action.nome) then save(s) end
 		s.attesa = nil
 		build(s)
 		return nil
@@ -133,13 +133,13 @@ function M.on_input(s, action_id, action)
 		local b = ui.lit_up(s.buttons)
 		local cmd = b and b.ui_action:match("^tasto:(.*)$")
 		if cmd then
-			controller.togli(s.c, cmd)
+			controller.remove(s.c, cmd)
 			save(s)
 			build(s)
 		end
 		return nil
 	end
-	local ui_action = ui.tocco(s.buttons, action_id, action)
+	local ui_action = ui.touch(s.buttons, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" then return "indietro" end
 	if ui_action == "ripristina" then
@@ -151,8 +151,8 @@ function M.on_input(s, action_id, action)
 		if kind == "tasto" then
 			s.attesa = s.attesa ~= value and value or nil
 		else
-			profile.imposta(s.p, kind, value)
-			profile.salva(s.p)
+			profile.set(s.p, kind, value)
+			profile.save(s.p)
 		end
 	end
 	controller.levette = profile.setting(s.p, "levette")

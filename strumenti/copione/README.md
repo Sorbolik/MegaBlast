@@ -48,7 +48,7 @@ Si fa in tre PR:
    i file di `simulazione/copione/game/` (come `game/...`) e la capacità `db`.
    - **GIOCA** apre `game/megablast.html?copione=1#<il livello in Lua>` in un
      riquadro: il gioco (`CP.copione` in `client/main/game.gui_script`) legge il
-     livello e lo fa partire con `missions.prova`. Se l'arena è cambiata il
+     livello e lo fa partire con `missions.custom`. Se l'arena è cambiata il
      livello gira senza dipinto (il dipinto lo rifà Claude). In simulazione:
      `imposta prova_copione FILE` (scenario `copione.txt`).
    - **Manda a Claude** scrive il documento `copione/ultima` del database
