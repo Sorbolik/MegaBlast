@@ -267,22 +267,22 @@ La regola di Sergio del 19 ottobre stabilisce: *"niente allocazioni a ogni frame
 Prima del merge di ciascun intervento:
 1. **Controlli Sintassi e Globali:**
    ```bash
-   python3 strumenti/controlli/globali.py
-   python3 strumenti/simula/controlla.py client
+   python3 tools/controlli/globali.py
+   python3 tools/simula/controlla.py client
    ```
 2. **Suite di Test Deterministica (Lua & Go):**
    ```bash
-   bash strumenti/controlli/tutti.sh
+   bash tools/controlli/tutti.sh
    ```
 3. **Confronto Impronte Partite Bot (`confronta.py`):**
    Per gli interventi su simulazione o logica, verificare che 200 partite bot producano impronte tick per tick identiche:
    ```bash
-   python3 strumenti/confronta/confronta.py --partite 200
+   python3 tools/confronta/confronta.py --partite 200
    ```
 4. **Misurazione Scatti con Contatore FPS:**
    Lanciare lo scenario di fluidità per confermare la riduzione del tempo peggiore e l'azzeramento degli scatti:
    ```bash
-   python3 strumenti/simula/simula.py -s strumenti/simula/scenari/fluidita.txt --senza-video
+   python3 tools/simula/simula.py -s tools/simula/scenari/fluidita.txt --senza-video
    ```
 
 ---

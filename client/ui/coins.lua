@@ -1,6 +1,6 @@
 -- The two coins drawn in code (Scaglie and Ossidiana, page "Scaglie e
 -- Ossidiana", choices 1A and 12A): white layers of the ui atlas
--- (strumenti/grafica/monete.py) colored here, and the wallet pill at the top
+-- (tools/grafica/monete.py) colored here, and the wallet pill at the top
 -- right of the menus, with the coins flying into it (choice 10A, game-feel).
 --
 --   local coins = require "ui.coins"

@@ -1,4 +1,4 @@
--- Browser WebSocket for the HTML5 build without the extension (strumenti/web/build.sh:
+-- Browser WebSocket for the HTML5 build without the extension (tools/web/build.sh:
 -- the extension compiles on Defold's build server, which can't be reached from the cloud).
 -- Same interface as the extension for what game.gui_script uses; events
 -- arrive from a JavaScript queue that poll(self) empties every frame.

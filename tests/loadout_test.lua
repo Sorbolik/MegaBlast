@@ -21,13 +21,21 @@ end
 local game = require "sim.game"
 local BASE = game.base_stats()
 
--- Rule 1: the tree costs at least twice the maximum points
-local total = 0
-for _, n in ipairs(skills.NODES) do total = total + n.ranks * n.cost end
-check(total >= 2 * skills.POINTS_MAX, "the tree costs " .. total .. " points, at least twice " .. skills.POINTS_MAX)
--- every key touched by tree and sets exists in the sim stats
-for _, n in ipairs(skills.NODES) do
-	for _, e in ipairs(n.effects) do check(BASE[e.stat] ~= nil, "tree: " .. n.id .. " touches " .. e.stat) end
+-- Rule 1: three paths of PATH_MAX for POINTS_MAX points: you can't fill them all
+check(#skills.PATHS * skills.PATH_MAX > skills.POINTS_MAX, "the paths hold " .. #skills.PATHS * skills.PATH_MAX
+	.. " points, more than the " .. skills.POINTS_MAX .. " you get")
+check(skills.POINTS_MAX == skills.LEVEL_MAX and skills.points(1) == 1 and skills.points(99) == skills.POINTS_MAX,
+	"one point per level, up to the maximum")
+-- every path has a pair of powers at each threshold, every key exists in the sim stats
+for _, p in ipairs(skills.PATHS) do
+	check(#p.steps == skills.STEPS, p.id .. ": a threshold every " .. skills.STEP .. " points")
+	for _, e in ipairs(p.per_point) do check(BASE[e.stat] ~= nil, p.id .. " per point touches " .. e.stat) end
+	for k, pair in ipairs(p.steps) do
+		check(#pair == 2, p.id .. " threshold " .. k .. ": two powers")
+		for _, w in ipairs(pair) do
+			for _, e in ipairs(w.effects) do check(BASE[e.stat] ~= nil, p.id .. ": " .. w.name .. " touches " .. e.stat) end
+		end
+	end
 end
 for _, s in ipairs(equip.SETS) do
 	for slot, eff in pairs(s.pieces) do
@@ -38,58 +46,43 @@ for _, s in ipairs(equip.SETS) do
 	end
 end
 
--- Points per level
-check(skills.points(5) == 10 and skills.points(99) == skills.POINTS_MAX, "points: two per level up to the maximum")
-
--- Rows: row 2 opens after ROW_GATE points in the branch
+-- Points: they go in and out of a path, never over the path or the level
 local t = {}
-check(skills.can_add(t, "jump", 5), "a first row node can be taken")
-check(not skills.can_add(t, "air", 5), "the second row is closed at the start")
-t.jump = 2
-check(skills.can_add(t, "air", 6), "with 4 points in the branch the second row opens")
-t.air = 1
-check(not skills.can_remove(t, "jump"), "a rank that closes a used row can't be removed")
-check(skills.can_remove(t, "air"), "the last node can be removed")
-check(not skills.can_add({ jump = 3 }, "jump", 20), "a maxed node doesn't go up")
-check(not skills.can_add({ walk = 2 }, "hp", 5), "without points nothing can be taken")
-check(not skills.valid({ air = 1 }, 20), "a tree with a skipped row isn't valid")
-check(not skills.valid({ jump = 4 }, 20), "a tree with too many ranks isn't valid")
+check(skills.move(t, "wings", 3, 10) == 3 and t.wings == 3, "three points in ALI")
+check(skills.move(t, "armor", 20, 10) == 7 and skills.spent(t) == 10, "no more points than the level gives")
+check(skills.move(t, "wings", 30, 50) == 22 and t.wings == skills.PATH_MAX, "a path stops at " .. skills.PATH_MAX)
+check(not skills.can_add(t, "wings", 50) and skills.can_add(t, "forge", 50), "a full path takes no more")
+check(skills.move(t, "armor", -9, 50) == 7 and t.armor == nil, "points come out down to zero")
+check(skills.reached(t, "wings") == skills.STEPS and skills.to_choose(t) == "wings", "a reached threshold asks to choose")
+skills.choose(t, "wings", 1, 2)
+check(skills.pick(t, "wings", 1) == 2 and select(2, skills.to_choose(t)) == 2, "the choice is kept, the next one asks")
+check(skills.valid(t, 50) and not skills.valid(t, 20), "the tree is valid only with enough points")
+check(not skills.valid({ wings = 26 }, 50) and not skills.valid({ nodo = 1 }, 50)
+	and not skills.valid({ pick = { wings = { 3 } } }, 50), "too many points, unknown paths, wrong picks aren't valid")
 
--- Stats: tree and sets add to the base
+-- Stats: points and powers add to the base; a pick counts only on its reached threshold
 local a = loadout.new()
-a.tree = { hp = 2 }
+a.tree = { armor = 10 }
 local st = loadout.stats(BASE, a)
-check(st.max_hp == BASE.max_hp + 4, "the tree raises life")
-a.tree = { jump = 3 }
+check(st.max_hp == BASE.max_hp + 4, "10 CORAZZA points: life +4")
+a.tree = { armor = 10, pick = { armor = { 1, 2 } } }
 st = loadout.stats(BASE, a)
-check(st.jump_height > BASE.jump_height, "the tree raises the jump")
-check(BASE.jump_height == game.base_stats().jump_height, "the base doesn't change")
+check(st.max_hp == BASE.max_hp + 9 and st.start_shields == 1, "Crosta and Scudo pronto")
+a.tree = { armor = 4, pick = { armor = { 1 } } }
+st = loadout.stats(BASE, a)
+check(st.max_hp == BASE.max_hp + 2, "a pick before its threshold gives nothing")
+a.tree = { wings = 25 }
+st = loadout.stats(BASE, a)
+check(st.jump_height > BASE.jump_height and BASE.jump_height == game.base_stats().jump_height, "ALI raises the jump, the base doesn't change")
 
--- Rule 3: with all points, in any valid tree, no stat changes more than 10%
--- (up or, for those where less is better, down)
-local function all_done(nodes, i, tree, out)
-	if i > #nodes then
-		if skills.valid(tree, skills.POINTS_MAX) then out[#out + 1] = tree end
-		return
-	end
-	for r = 0, nodes[i].ranks do
-		local t2 = {}
-		for k, v in pairs(tree) do t2[k] = v end
-		t2[nodes[i].id] = r > 0 and r or nil
-		all_done(nodes, i + 1, t2, out)
+-- Rule 3: all the points of a path raise its stat 10% at most, without powers
+for _, p in ipairs(skills.PATHS) do
+	local s2 = loadout.stats(BASE, { tree = { [p.id] = skills.PATH_MAX }, gear = {}, variant = "a" })
+	for _, e in ipairs(p.per_point) do
+		local d = math.abs(s2[e.stat] / BASE[e.stat] - 1)
+		check(d <= 0.1 + 1e-9, string.format("%s full: %s %+.1f%%", p.id, e.stat, d * 100))
 	end
 end
-local trees = {}
-all_done(skills.NODES, 1, {}, trees)
-local peggio = 0
-for _, tree in ipairs(trees) do
-	local s2 = loadout.stats(BASE, { tree = tree, gear = {}, variant = "a" })
-	for _, k in ipairs({ "walk_speed", "jump_height", "air_speed", "max_hp", "trap_radius",
-			"teleport_ticks", "knockback_mul", "fall_damage_mul" }) do
-		peggio = math.max(peggio, math.abs(s2[k] / BASE[k] - 1))
-	end
-end
-check(#trees > 100 and peggio <= 0.1, string.format("%d valid trees: at most %.1f%% on one stat", #trees, peggio * 100))
 
 -- Sets: the full Vuoto has the bonus, variant B only at tier III
 a = loadout.new()
@@ -106,7 +99,7 @@ a.variant = "a"
 st = loadout.stats(BASE, a)
 check(st.knockback_mul < 0.7 and st.fall_damage_mul == 0.5 and st.walk_speed < BASE.walk_speed,
 	"full Leviatano set: less push, half fall damage, slower")
-a.tree = { fall = 2, anchor = 1, hp = 2, parachute = 1 }
+a.tree = { wings = 10, armor = 5, pick = { wings = { 1, 2 }, armor = { 2 } } }
 st = loadout.stats(BASE, a)
 check(st.parachutes == BASE.parachutes + 1 and st.fall_damage_mul < 0.5, "tree: one more parachute and lighter falls")
 a.tree = {}
@@ -124,7 +117,7 @@ a.variant = "b"
 st = loadout.stats(BASE, a, { mask = equip.TIERS, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
 check(st.air_jumps == 2, "tier III: two air jumps")
 a.variant = "a"
-a.tree = { hp = 2, fall = 2, anchor = 1, teleport = 1 }
+a.tree = { wings = 15, pick = { wings = { 1, 1, 2 } } }
 st = loadout.stats(BASE, a)
 check(st.teleports == BASE.teleports + 1, "tree: one more teleport")
 a.tree = {}
@@ -165,10 +158,36 @@ local p = profile.new()
 check(#p.loadouts == loadout.LOADOUTS and p.livello == 1, "new profile: 3 loadouts, level 1")
 p.loadouts[1].gear = { mask = "vuoto", chest = "corvo" }
 p.pezzi.vuoto_mask = 9
-local gu = profile.match_end(p, 1, { awards.LIST[1] })
-check(gu.xp == profile.XP_PLACE[1] + profile.XP_AWARD and p.livello == 2, "first place levels you up")
+local gu = profile.match_end(p, { points = 148, won = true, mvp = true, awards = { awards.LIST[1] } })
+local x = profile.XP
+check(gu.xp == x.match + 74 + x.win + x.mvp + x.award and #gu.lines == 5, "receipt: match, points 148 -> 74, win, MVP, award")
+check(p.livello == 2 and gu.level_before == 1 and gu.livello == 2, "a good win levels you up")
 check(p.prova.vuoto_mask == 1 and p.prova.corvo_chest == nil, "a match for the Proof of the piece one level below a step")
-check(profile.points(p) == 4, "skill points from the level")
+check(profile.points(p) == 2, "a Sigilli point per level")
+gu = profile.match_end(p, { points = 1000, won = false })
+check(gu.lines[2].xp == x.points_max and #gu.lines == 2, "the points give at most " .. x.points_max)
+gu = profile.match_end(p, { points = 0, second = true })
+check(#gu.lines == 2 and gu.lines[2].key == "second", "second in free for all")
+-- after the last level: braci
+p.livello, p.xp = profile.LEVEL_MAX, 0
+gu = profile.match_end(p, { points = 240, won = true, mvp = true })
+gu = profile.match_end(p, { points = 240, won = true, mvp = true })
+for _ = 1, 4 do gu = profile.match_end(p, { points = 240, won = true, mvp = true }) end
+check(p.livello == profile.LEVEL_MAX and p.braci >= 1, "past level " .. profile.LEVEL_MAX .. " the bar gives braci")
+-- campaign levels: first time, new stars, replay
+p = profile.new()
+gu = profile.mission(p, "primo_sangue", { true, true, false })
+check(gu.xp == profile.XP_MISSION.done + 2 * profile.XP_MISSION.star, "first time with two stars")
+gu = profile.mission(p, "primo_sangue", { true, false, true })
+check(gu.xp == profile.XP_MISSION.star, "one new star")
+gu = profile.mission(p, "primo_sangue", { true, true, true })
+check(gu.xp == profile.XP_MISSION.replay and gu.lines[1].key == "replay", "nothing new: replay")
+-- loadouts open with the level
+check(loadout.open(1, 1) and not loadout.open(2, 14) and loadout.open(2, 15) and not loadout.open(3, 29)
+	and loadout.open(3, 30), "loadouts 2 and 3 at levels 15 and 30")
+-- MVP: most points, even losing
+check(awards.mvp({ { robot = 1, points = 80 }, { robot = 2, points = 120 } }) == 2
+	and awards.mvp({ { robot = 1, points = 0 } }) == nil, "MVP: most points, nobody without points")
 
 if failures > 0 then
 	print(failures .. " tests failed")

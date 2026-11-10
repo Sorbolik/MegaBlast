@@ -15,7 +15,7 @@ leggibile. Questa scheda produce:
 2. la camminata di prova, per vedere che il tre quarti regge in movimento;
 3. le espressioni;
 4. il foglio dei pezzi sullo **stampino** (lo scheletro a ossa del diavoletto di inizio
-   progetto, `strumenti/stampino/`), da tagliare con `taglia.py --allinea`;
+   progetto, `tools/stampino/`), da tagliare con `taglia.py --allinea`;
 5. le teste in più, per le espressioni che lo stampino non ha ancora.
 
 Poi Claude ricalca i pezzi in **SVG** e da lì fa i PNG della misura giusta per ogni schermo
@@ -295,9 +295,9 @@ Rendering rules, very strict, because these arms will be traced into vector shap
 
 ## Dopo le immagini (lo fa Claude)
 
-1. **Taglio.** `python3 strumenti/stampino/taglia.py art/WB-009/4_foglio_pezzi.png --nome apprendista --categoria personaggio --allinea --senza ala`:
+1. **Taglio.** `python3 tools/stampino/taglia.py art/WB-009/4_foglio_pezzi.png --nome apprendista --categoria personaggio --allinea --senza ala`:
    pezzi sullo scheletro, coda divisa in segmenti, fazzoletto nel colore della squadra.
-2. **Vettoriale.** `strumenti/stampino/vettoriale.py` oggi ricalca solo il bianco e nero. Va
+2. **Vettoriale.** `tools/stampino/vettoriale.py` oggi ricalca solo il bianco e nero. Va
    esteso ai colori: ogni pixel va al colore più vicino della tavolozza qui sopra, ogni colore
    si ricalca con potrace in uno strato SVG, e gli strati si impilano dal fondo al contorno.
    Esce un SVG per pezzo, accanto al foglio. **Colori giusti ovunque (Sergio, 2026-11-02:
@@ -600,7 +600,7 @@ Guardati `4_foglio_pezzi.png` e `5_teste_extra.png`.
   --allinea --senza ala,collo --facce art/WB-009/5_teste_extra.png` monta tutti i pezzi e le
   nove teste (le cinque in più alte quanto la testa, sul suo perno); `collo` toglie il
   moncherino del collo a tutte le teste, come ha chiesto Sergio (il collo è del busto); la pelle si prova con
-  `imposta prova_pelli apprendista` (scenario `strumenti/simula/scenari/apprendista.txt`,
+  `imposta prova_pelli apprendista` (scenario `tools/simula/scenari/apprendista.txt`,
   foto in `art/WB-009/prova_simulazione.png`): fermo, corsa, salto, mira e Lama tengono.
   Nel gioco di tutti non cambia niente finché la pelle non diventa il personaggio di base.
 - **Editor delle animazioni** ripubblicato (versione 26) con la pelle `apprendista` e le
@@ -613,7 +613,7 @@ Guardati `4_foglio_pezzi.png` e `5_teste_extra.png`.
 
 ### Fase 2 · ricalco in SVG coi colori esatti (2026-11-02)
 
-- `strumenti/stampino/vettoriale.py --tavolozza strumenti/stampino/tavolozze/apprendista.json`
+- `tools/stampino/vettoriale.py --tavolozza tools/stampino/tavolozze/apprendista.json`
   ricalca i due fogli in `art/WB-009/svg/4_foglio_pezzi.svg` e `5_teste_extra.svg`: un
   strato per colore, solo i 13 codici della tavolozza (controllo con `--controlla`, si ferma
   su ogni colore fuori). Crema e corna, quasi uguali, si scelgono per macchia: dentro la pelle

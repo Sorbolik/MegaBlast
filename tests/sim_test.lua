@@ -2390,6 +2390,86 @@ do
 	check(rb.dead, "far beyond the side limit you die")
 end
 
+
+-- The Sigilli's powers (sim/skills.lua): each one does what it says, and with
+-- the base stats nothing changes
+do
+	local function duel(st)
+		return game.new(42, "pavimento", { players = { { team = 1, stats = st, secondary = "eagle" }, { team = 2, secondary = "eagle" } } })
+	end
+	local m = duel({ last_stand = 1, burn_immune = 1, start_shields = 1, extra_secondary = 1 })
+	local a, b = m.robots[1], m.robots[2]
+	check(a.ammo.shield == b.ammo.shield + 1 and a.ammo.eagle == b.ammo.eagle + 1, "Scudo pronto and Tasca in più")
+	m:hurt(a, 500, b)
+	check(not a.dead and a.hp == 1, "Ultimo respiro: 1 hp instead of dying")
+	m:hurt(a, 5, b)
+	check(a.dead, "Ultimo respiro only once")
+	m = duel({ burn_immune = 1 })
+	m:add_status(m.robots[1], "burn", m.robots[2])
+	check(not m.robots[1].status.burn, "Pelle di brace: no burning")
+	m = duel({ crate_bonus = 1, double_traps = 1 })
+	a = m.robots[1]
+	local g0, t0 = a.ammo.grenade, a.ammo.trap
+	game.give(a, "grenade")
+	game.give(a, "trap")
+	check(a.ammo.grenade == g0 + 2 and a.ammo.trap == t0 + 2, "Cassa piena and Trappola doppia")
+	m = duel({ phoenix = 1 })
+	a, b = m.robots[1], m.robots[2]
+	b.x, b.y = a.x + 20, a.y
+	local hp = b.hp
+	m:hurt(a, 500, b)
+	check(a.dead and b.hp < hp, "Fenice: dying you hurt who is near")
+	m = duel({ extra_hooks = 1 })
+	m:start_turn(1)
+	m.used.tool = true
+	check(m:can_use("hook"), "Doppio Rampino: a second Rampino")
+	m:use_tool("hook", { angle = 1 })
+	check(not m:can_use("hook"), "but not a third")
+	m = duel({})
+	m:start_turn(1)
+	m.used.tool = true
+	check(not m:can_use("hook"), "without powers one Rampino per turn")
+end
+
+-- Giano: a coin thrown like the missile; the first robot it touches (not the
+-- thrower) trades places and movement with the thrower. No damage, no credit.
+do
+	local j = game.new(42, "pavimento")
+	run(j, 60)
+	local ja, jb = j.robots[1], j.robots[2]
+	local sy = sky_spot(j, 640, 120)
+	j.terrain:rect(400, sy - 60, 700, 140, 0)
+	place(ja, 500, sy)
+	place(jb, 700, sy)
+	local hp, ax, bx = jb.hp, ja.x, jb.x
+	check(j:can_use("janus"), "Giano is a tool, usable without shots")
+	j:step({ fire = { angle = 0, power = 1, weapon = "janus" } })
+	check(j.projectile and j.projectile.kind == "janus" and j.used.tool and not j.used.primary and not j:can_use("hook"),
+		"Giano flies as a projectile, uses the tool of the turn and is not an attack")
+	local swapped
+	for _ = 1, 120 do
+		j:step()
+		for _, e in ipairs(j:pop_events()) do if e.type == "janus_swap" then swapped = e end end
+		if swapped then break end
+	end
+	check(swapped and swapped.a == 1 and swapped.b == 2 and ja.x == bx and jb.x == ax and not j.projectile,
+		"the first robot it touches trades places with the thrower")
+	check(jb.hp == hp and not jb.last_hit, "the swap does no damage and gives no credit")
+	-- terrain stops it: nobody moves
+	local k = game.new(42, "pavimento")
+	run(k, 60)
+	local ka, kb = k.robots[1], k.robots[2]
+	local x0 = ka.x
+	k:step({ fire = { angle = math.rad(-90), power = 1, weapon = "janus" } })
+	local fizzle
+	for _ = 1, 120 do
+		k:step()
+		for _, e in ipairs(k:pop_events()) do if e.type == "janus_fizzle" then fizzle = e end end
+		if not k.projectile then break end
+	end
+	check(fizzle and ka.x == x0 and not k.projectile, "terrain stops Giano without a swap")
+end
+
 if failures > 0 then
 	print(failures .. " tests failed")
 	os.exit(1)

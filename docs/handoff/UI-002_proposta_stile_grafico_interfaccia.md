@@ -6,7 +6,7 @@
 - **Destinatari:** Sergio (Direttore del gioco) e Claude (Coordinatore del progetto MegaBlast)
 - **Riferimenti:** [docs/decisioni/interfaccia.md](../decisioni/interfaccia.md), [docs/handoff/UI-001_analisi_interfacce_hud_user_experience.md](UI-001_analisi_interfacce_hud_user_experience.md)
 - **Prototipo Figma Interattivo:** [UI-002_figma_prototype.html](UI-002_figma_prototype.html) (apribile in qualsiasi browser)
-- **Generatore Asset Hi-DPI:** `strumenti/grafica/ui_nuova.py` (senza dipendenze, supersampling subpixel 8x SDF)
+- **Generatore Asset Hi-DPI:** `tools/grafica/ui_nuova.py` (senza dipendenze, supersampling subpixel 8x SDF)
 
 ---
 
@@ -114,7 +114,7 @@ Nel prototipo è possibile:
 
 Integrato in una PR di prova: le sagome per famiglia (eroe, slot delle armi con la pillola dei
 colpi, gettone ottagonale per teletrasporto, Rampino e baratto, oggetto esagonale) e la tacca
-colorata dei modi nella home. Il generatore è `strumenti/grafica/ui.py` (uno solo: `ui_nuova.py`
+colorata dei modi nella home. Il generatore è `tools/grafica/ui.py` (uno solo: `ui_nuova.py`
 tolto, le sagome «menu» e «sistema» erano il rettangolo di sempre e sono tolte). Le forme 9-slice
 restano a densità 1: in Defold un'immagine più grande non rende più fini i bordi del 9-slice.
 Scartato il resto, con i motivi, in [docs/decisioni/interfaccia.md](../decisioni/interfaccia.md).

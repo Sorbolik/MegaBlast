@@ -4,7 +4,7 @@
 -- the state fingerprints (game:fingerprint) every EVERY ticks and at the end:
 -- whoever replays it must find them all the same, otherwise the match is not
 -- valid (different version, changed code, tampered data).
--- Used by the bot arena (strumenti/arena), by replays and by server checks.
+-- Used by the bot arena (tools/arena), by replays and by server checks.
 --
 --   local replay = require "sim.replay"
 --   local r = replay.nuova(seed, map, opts)      -- opts as in game.new; players[i].bot = "normale" for a bot (and carattere, pesi)

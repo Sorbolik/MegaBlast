@@ -116,6 +116,18 @@ function M.explosion(s, x, y, r)
 	end
 end
 
+-- Giano's swap, at each of the two spots: a ring-like bloom in the color of whoever
+-- arrives (c = { r, g, b }) and gold sparks flying out
+local GOLD = { 1, 0.8, 0.25 }
+function M.swap(s, x, y, c)
+	fill(take(s.fx), x, y, 0, 0, 0.45, 24, 200, c, c, 0.9)
+	fill(take(s.fx), x, y, 0, 0, 0.14, 30, 90, FIRE0, FIRE0, 0.9)
+	for k = 1, 8 do
+		local a = k / 8 * 6.283 + rand() * 0.4
+		fill(take(s.fx), x, y, cos(a) * 170, sin(a) * 170, 0.4 + rand() * 0.2, 9, 2, GOLD, c, 1, 0, 2.5)
+	end
+end
+
 -- Sparks on whoever is hit: they leave the point of impact along the push (dx, dy
 -- need not be normalized). Tier 1 a handful, tier 3 a burst with a white flash.
 function M.sparks(s, x, y, dx, dy, tier)

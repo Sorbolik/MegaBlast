@@ -40,7 +40,7 @@ Sergio ti dice solo quale scheda eseguire (es. "esegui WB-001").
 ## Cosa puoi toccare
 
 - Scrivi solo in `art/WB-xxx/` e nella sezione "Consegna di Codex" della scheda.
-- Non tocchi mai: `client/`, `server/`, `strumenti/`, `tests/`, `CLAUDE.md`, `AGENTS.md`,
+- Non tocchi mai: `client/`, `server/`, `tools/`, `tests/`, `CLAUDE.md`, `AGENTS.md`,
   `DECISIONI.md`, gli altri documenti, le parti della scheda scritte da altri.
 - Puoi leggere tutto. Lo stile e le decisioni sono in [DECISIONI.md](DECISIONI.md): se la
   scheda e le decisioni si contraddicono, segnalalo nella consegna, non scegliere tu.

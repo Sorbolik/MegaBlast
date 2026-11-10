@@ -1,0 +1,40 @@
+# Rivedere un momento dal profilo (Sergio, 4 nov: «si blocca quasi sempre qui,
+# a volte per più di 1-2 secondi»). Una partita 1 contro 1 col bot, poi
+# RIVEDI dal podio, poi PROFILO > PARTITE > il momento «finale»: il replay ripassa la partita fino a lì
+# senza disegnarla. Con i tasti del bot nella ricetta il bot non ripensa le sue
+# mosse e ci arriva subito (simulazione/fotogrammi.txt: niente lavoro Lua lungo).
+imposta prova_vignette no
+imposta prova_durata 40
+
+aspetta 1.5
+tocca 1075 323                      # ALLENAMENTO
+aspetta 1
+tocca 310 460                       # 1 CONTRO 1
+tocca 640 140                       # AVANTI
+aspetta 0.3
+tocca 640 140                       # GIOCA
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 1
+mira 150 100 0.4
+aspetta_stato turno=1 fase=aim 60
+aspetta 1
+mira 150 100 0.4
+aspetta_stato turno=1 fase=aim 60
+aspetta 1
+mira 150 100 0.4
+aspetta_evento over 90
+aspetta 4
+foto 01_podio
+tocca 920 52                        # RIVEDI
+aspetta_stato modo=replay 5
+aspetta 1
+tocca 640 360                       # fine: il profilo, sulla partita
+aspetta 0.8
+foto 02_profilo_partite
+tocca 765 242                       # il momento «finale»: il replay parte da poco prima
+aspetta_stato modo=replay 5
+aspetta 1
+foto 03_replay_momento
+tocca 640 360                       # fine: di nuovo il profilo
+aspetta 0.8
+foto 04_profilo_di_nuovo

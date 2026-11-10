@@ -127,6 +127,8 @@ M.MAX_ORBS = 6           -- orbs in flight together, at most
 -- Explosions: crater radius, damage radius, damage at centre and at edge,
 -- push impulse
 M.MISSILE_BLAST = { r = 5 * M.U, damage_r = 9 * M.U, damage = 25, damage_min = 12.5, impulse = 10 }
+-- Fenice (sim/skills.lua): whoever dies with stats.phoenix explodes, without a crater
+M.PHOENIX_BLAST = { r = 0, damage_r = 12 * M.U, damage = 20, damage_min = 8, impulse = 10 }
 
 -- Uovo di Fiamma (grenade): bounces (0.4, slowdown 1 per second after the
 -- first impact) and blows up after GRENADE_FUSE ticks, with a bigger explosion
@@ -182,9 +184,11 @@ M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper", "boomerang", "tar", 
 -- Tactical items from crates (also in rb.ammo), the parachute (one per match)
 -- and the Rampino (one per turn, for everyone): they aren't attacks (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
-M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true }
+local CRATE_WEAPON = {}
+for _, w in ipairs(M.CRATE_WEAPONS) do CRATE_WEAPON[w] = true end
+M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true, janus = true }
 -- items thrown by aiming (the others are used with a tap)
-M.THROWN = { trampoline = true, hook = true }
+M.THROWN = { trampoline = true, hook = true, janus = true }
 -- all the valid names of fire.weapon
 M.WEAPONS = { teleport = true, swap = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
@@ -389,6 +393,7 @@ function M.new(seed, map_id, opts)
 			hooked = nil,  -- hanging from the Rampino's rope: { by = who pulls, left = rope to reel in }
 			hook_shot = nil, -- its hook in flight: { x, y, angle, left = cells remaining }
 			ammo = make_ammo(opts.ammo),
+			last_stand_left = st.last_stand, -- Ultimo respiro left (sim/skills.lua)
 			-- the secondary picked at the start of the match, besides the Lama (sim/draft.lua)
 			secondary = p.secondary or opts.secondary,
 			stats = st,
@@ -396,7 +401,8 @@ function M.new(seed, map_id, opts)
 		-- the primary taken in the start-of-match draft (sim/draft.lua)
 		if p.pick and g.robots[i].ammo[p.pick] then g.robots[i].ammo[p.pick] = g.robots[i].ammo[p.pick] + C.DRAFT_SHOTS end
 		local sec = g.robots[i].secondary
-		if sec and g.robots[i].ammo[sec] then g.robots[i].ammo[sec] = g.robots[i].ammo[sec] + C.SECONDARY_SHOTS.draft end
+		if sec and g.robots[i].ammo[sec] then g.robots[i].ammo[sec] = g.robots[i].ammo[sec] + C.SECONDARY_SHOTS.draft + st.extra_secondary end
+		g.robots[i].ammo.shield = g.robots[i].ammo.shield + st.start_shields
 	end
 	g.events = {}
 	g.tick = 0
@@ -595,6 +601,13 @@ function M:hurt(rb, amount, by, reason)
 		if rb.shield <= 0 then rb.shield = nil end
 		if amount <= 0 then return 0 end
 	end
+	-- Ultimo respiro: the hit that would kill leaves 1 hp, once per match
+	if amount >= rb.hp and rb.last_stand_left > 0 then
+		rb.last_stand_left = rb.last_stand_left - 1
+		amount = rb.hp - 1
+		self:emit({ type = "last_stand", robot = rb.id })
+		if amount <= 0 then return 0 end
+	end
 	local score = self.score
 	local mult = rb == self:leader() and score.leader or 1
 	-- for points only the life that was really there counts
@@ -619,6 +632,7 @@ end
 
 function M:add_status(rb, kind, by)
 	if rb.dead then return end
+	if kind == "burn" and rb.stats.burn_immune > 0 then return end
 	local turns = by and by.stats.status_turns or 1
 	local s = rb.status[kind]
 	if s then
@@ -699,6 +713,12 @@ function M:kill(rb, reason, was_leader)
 	rb.last_hit = nil
 	rb.respawn_in = M.RESPAWN_TICKS
 	self:emit({ type = "death", robot = rb.id, reason = reason, by = killer and killer.id, env = env, points = points, own = own })
+	-- Fenice: whoever dies on the map explodes
+	if rb.stats.phoenix > 0 and reason ~= "fell" then
+		local x, y = rb.x, rb.y + M.HURT_Y
+		self:emit({ type = "phoenix", robot = rb.id, x = x, y = y, r = M.PHOENIX_BLAST.damage_r })
+		self:blast(x, y, rb.id, M.PHOENIX_BLAST)
+	end
 end
 
 -- Respawn points: on steel, which can't be destroyed, so there's always ground
@@ -1092,6 +1112,69 @@ function M:fire(angle, power)
 	self:emit({ type = "fire", robot = rb.id })
 end
 
+-- Giano -------------------------------------------------------------------------
+
+function M:throw_janus(angle, power)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
+	self.projectile = { kind = "janus", x = x, y = y, vx = vx, vy = vy, owner = rb.id, age = 0 }
+	self:emit({ type = "janus", robot = rb.id })
+end
+
+-- The robot the coin touches (not the thrower), or nil
+function M:touched_by_coin(x, y, owner)
+	for _, rb in ipairs(self.robots) do
+		if not rb.dead and rb.id ~= owner and M.hurt_at(rb, x, y, 0) then return rb end
+	end
+end
+
+-- a and b trade places and movement; nobody is hit, nobody gets the credit
+function M:janus_swap(a, b)
+	local ax, ay, bx, by = a.x, a.y, b.x, b.y
+	a.x, a.y, b.x, b.y = bx, by, ax, ay
+	a.vx, b.vx = b.vx, a.vx
+	a.vy, b.vy = b.vy, a.vy
+	a.grounded, b.grounded = b.grounded, a.grounded
+	a.knocked, b.knocked = b.knocked, a.knocked
+	a.fall_top, b.fall_top = b.fall_top, a.fall_top
+	self:emit({ type = "janus_swap", a = a.id, b = b.id, ax = ax, ay = ay, bx = bx, by = by })
+end
+
+-- Flies like the missile; the first robot it touches trades places with the
+-- thrower, terrain or the edge of the map stops it
+function M:update_janus(p)
+	p.age = p.age + 1
+	p.vy = p.vy - M.GRAVITY * M.MISSILE_GRAVITY * M.DT
+	local mx, my = p.vx * M.DT, p.vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
+	for _ = 1, steps do
+		if self:spring(p, p.y + my / steps, 0) then break end
+		p.x = p.x + mx / steps
+		p.y = p.y + my / steps
+		local target = self:touched_by_coin(p.x, p.y, p.owner)
+		if target then
+			local me = self.robots[p.owner]
+			self.projectile = nil
+			if me.dead then return end
+			if C.JANUS.need_ground and not (me.grounded and target.grounded) then
+				self:emit({ type = "janus_fizzle", x = p.x, y = p.y })
+			else
+				self:janus_swap(me, target)
+			end
+			return
+		elseif self.terrain:solid(p.x, p.y) then
+			self:emit({ type = "janus_fizzle", x = p.x, y = p.y })
+			self.projectile = nil
+			return
+		end
+	end
+	if p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300 then
+		self:emit({ type = "miss" })
+		self.projectile = nil
+	end
+end
+
 -- Uovo di Fiamma ----------------------------------------------------------------
 
 -- kind: "grenade" (the Uovo), "tar" (Pozza di Pece) or "petard": they all fly and
@@ -1299,6 +1382,12 @@ function M:teleport(rb, x, y)
 	rb.grounded = false
 	rb.fall_top = nil
 	self:emit({ type = "teleport", robot = rb.id, from_x = fx, from_y = fy, x = tx, y = ty })
+	-- Scia d'ombra (sim/skills.lua): before attacking, a teleport gives turn time
+	if rb.stats.orb_time > 0 and rb.id == self.current and self.phase == "aim" and self.window == 0 then
+		self.timer = self.timer + rb.stats.orb_time
+		self.turn_bonus = self.turn_bonus + rb.stats.orb_time
+		self:emit({ type = "orb_time", robot = rb.id, ticks = rb.stats.orb_time })
+	end
 end
 
 -- Orb bounce and roll
@@ -1647,7 +1736,7 @@ function M:fire_hook(angle)
 	local x, y = muzzle(rb, angle)
 	rb.facing = math.cos(angle) < 0 and -1 or 1
 	-- left: cells still to travel, like the instant ray
-	rb.hook_shot = { x = x, y = y, x0 = x, y0 = y, angle = angle, left = math.ceil(C.HOOK.range / M.CELL) }
+	rb.hook_shot = { x = x, y = y, x0 = x, y0 = y, angle = angle, left = math.ceil(C.HOOK.range * rb.stats.hook_range / M.CELL) }
 	self:emit({ type = "hook_shot", robot = rb.id, x0 = x, y0 = y, angle = angle })
 end
 
@@ -1672,7 +1761,7 @@ function M:update_hook_shot(rb)
 		hit.grounded, hit.knocked, hit.fall_top = false, true, nil
 	elseif anchor then
 		-- the rope hooks inside the full cell, so we know where to climb from
-		rb.hooked = { x = ex + dx, y = ey + dy, left = C.HOOK.range }
+		rb.hooked = { x = ex + dx, y = ey + dy, left = C.HOOK.range * rb.stats.hook_range }
 		rb.vx, rb.vy = 0, 0
 		rb.grounded, rb.knocked, rb.fall_top = false, false, nil
 	end
@@ -2039,12 +2128,30 @@ function M:dig(x, y, r)
 	return self.terrain:carve(x, y, r)
 end
 
--- One tick of boring: it carves a circle at its head, straight on. Out in the
--- open (the terrain ahead of the head is free), or against a robot, it blows
--- up; if the dig runs out it blows up weakly under the terrain.
+-- One tick of boring: it carves a circle at its head, straight on. Against a robot
+-- it blows up; out in the open (the terrain ahead of the head is free) it flies on
+-- for config.DRILL.after pixels; if the dig runs out it blows up weakly under the terrain.
 function M:update_drill(p)
 	local s = C.DRILL
 	p.age = p.age + 1
+	if p.out then
+		-- out in the open: it flies straight on for s.after more pixels, blowing up on the
+		-- first robot, at the end of the run, or if it meets terrain again (then it bores on)
+		local step = s.fly_speed * M.DT
+		p.x, p.y = p.x + p.ux * step, p.y + p.uy * step
+		p.out = p.out - step
+		if self:hits_robot(p.x, p.y, p.owner, p.age) or p.out <= 0 then
+			self:explode(p.x, p.y, p.owner, s.blast, "drill")
+			self.projectile = nil
+		elseif self.terrain:solid(p.x, p.y) then
+			p.out, p.left = nil, math.min(p.left, s.dig)
+			self:emit({ type = "drill_in", x = p.x, y = p.y })
+		elseif p.x < -300 or p.x > M.WORLD_W + 300 or p.y < -50 or p.y > M.WORLD_H + 300 then
+			self:emit({ type = "miss" })
+			self.projectile = nil
+		end
+		return
+	end
 	local step = s.dig_speed * M.DT
 	p.x, p.y = p.x + p.ux * step, p.y + p.uy * step
 	p.left = p.left - step
@@ -2054,8 +2161,10 @@ function M:update_drill(p)
 		self:explode(p.x, p.y, p.owner, s.blast, "drill")
 		self.projectile = nil
 	elseif not self.terrain:solid(p.x + p.ux * (s.radius + 3), p.y + p.uy * (s.radius + 3)) then
-		self:explode(p.x, p.y, p.owner, s.blast, "drill")
-		self.projectile = nil
+		-- it comes out into the open: it keeps going (see above)
+		p.out = s.after
+		p.vx, p.vy = p.ux * s.fly_speed, p.uy * s.fly_speed
+		self:emit({ type = "drill_out", x = p.x, y = p.y })
 	elseif p.left <= 0 then
 		self:explode(p.x, p.y, p.owner, s.inner, nil)
 		self.projectile = nil
@@ -2583,7 +2692,12 @@ function M.give(rb, w)
 	elseif w == "parachute" then
 		rb.parachutes_left = rb.parachutes_left + 1
 	else
-		rb.ammo[w] = rb.ammo[w] + 1
+		-- the Fucina's powers (sim/skills.lua): more from the crates
+		local st, more = rb.stats, 0
+		if CRATE_WEAPON[w] then more = st.crate_bonus
+		elseif w == "trap" then more = st.double_traps
+		elseif w == "trampoline" then more = st.double_springs end
+		rb.ammo[w] = rb.ammo[w] + 1 + more
 	end
 end
 
@@ -2651,7 +2765,7 @@ function M:apply_heals()
 		for _, rb in ipairs(self.robots) do
 			local dx, dy = rb.x - h.x, rb.y - h.y
 			if not rb.dead and dx * dx + dy * dy <= r2 and rb.hp < rb.max_hp then
-				local amount = math.min(C.HEAL.hp, rb.max_hp - rb.hp)
+				local amount = math.min(math.floor(C.HEAL.hp * rb.stats.heal_mul + 0.5), rb.max_hp - rb.hp)
 				rb.hp = rb.hp + amount
 				used = true
 				self:emit({ type = "heal", id = h.id, robot = rb.id, amount = amount })
@@ -2683,21 +2797,27 @@ function M:use_tool(kind, fire)
 		return
 	end
 	if kind == "hook" then
-		-- one Rampino per turn
+		-- one Rampino per turn (more with the Doppio Rampino)
+		if self.used.tool then rb.hooks_spare = rb.hooks_spare - 1 end
 		self.used.tool = true
 		self:fire_hook(fire.angle)
+		return
+	elseif kind == "janus" then
+		self.used.tool = true
+		self:throw_janus(fire.angle, fire.power)
 		return
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
-		rb.shield, rb.parried = C.SHIELD.hp, 0
+		rb.shield, rb.parried = math.floor(C.SHIELD.hp * rb.stats.shield_mul + 0.5), 0
 		self:emit({ type = "shield", robot = rb.id })
 		return
 	end
 	-- the trap is placed at the feet, the trampoline is thrown like the Uovo
 	self.placed_id = self.placed_id + 1
 	local o = { id = self.placed_id, kind = kind, x = rb.x, y = rb.y, vy = 0, owner = rb.id, team = rb.team,
-		armed = false, r = kind == "trap" and rb.stats.trap_radius or C.TRAMPOLINE.half_w, age = 0 }
+		armed = false, r = kind == "trap" and rb.stats.trap_radius or C.TRAMPOLINE.half_w, age = 0,
+		power = rb.stats.trampoline_mul }
 	if kind == "trampoline" then
 		o.x, o.y = muzzle(rb, fire.angle)
 		o.vx, o.vy = launch_velocity(fire.angle, fire.power, M.GRENADE_SPEED)
@@ -2751,7 +2871,7 @@ end
 local function spring_vy(b, o)
 	local tr = C.TRAMPOLINE
 	local chain = b.bounced_on == o.id and (b.bounces or 0) or 0
-	local vy = tr.launch_vy * tr.decay ^ chain
+	local vy = tr.launch_vy * (o.power or 1) * tr.decay ^ chain
 	if vy < tr.min_vy then return nil end
 	b.bounced_on, b.bounces = o.id, chain + 1
 	return vy
@@ -2959,6 +3079,12 @@ function M:blast_on(rb, x, y, blast, owner)
 	dmg = math.floor(dmg + 0.5)
 	-- the velocity is replaced
 	local imp = blast.impulse * self:knock_mul(rb)
+	-- the shooter's Fucina: Sigilli points and Colpo di grazia (sim/skills.lua)
+	local by = owner and owner ~= rb.id and self.robots[owner]
+	if by then
+		imp = imp * by.stats.blast_push
+		if by.stats.finisher > 0 and rb.hp < C.FINISHER_HP then imp = imp * 2 end
+	end
 	return dmg, dx * imp * f, dy * imp * f
 end
 
@@ -2966,6 +3092,7 @@ function M:update_projectile()
 	local p = self.projectile
 	if p.kind == "grenade" or p.kind == "tar" or p.kind == "petard" then return self:update_grenade(p) end
 	if p.kind == "sniper" then return self:update_sniper(p) end
+	if p.kind == "janus" then return self:update_janus(p) end
 	if p.kind == "boomerang" then return self:update_boomerang(p) end
 	if p.digging then return self:update_drill(p) end
 	p.age = p.age + 1
@@ -3006,11 +3133,13 @@ function M:start_turn(player)
 	self.current = player
 	self.phase = "aim"
 	self.timer = M.TURN_TICKS
+	self.turn_bonus = 0      -- ticks added by the Scia d'ombra
 	self.window = 0
 	-- attacks already done this turn (at most a weapon and a sword hit) and the tool, one per turn
 	self.used = { primary = false, secondary = false, tool = false }
 	local rb = self.robots[player]
 	rb.turns = rb.turns + 1
+	rb.hooks_spare = rb.stats.extra_hooks
 	self:pair_start(rb)
 	-- the shield lasts until the start of the owner's next turn
 	if rb.shield then
@@ -3022,7 +3151,10 @@ function M:start_turn(player)
 	self:emit({ type = "turn", robot = player })
 	-- whoever is burning takes damage at the start of the turn (the kill goes to whoever burned them)
 	local burn = rb.status.burn
-	if burn then self:hurt(rb, C.STATUS.burn.damage, burn.by and self.robots[burn.by], "burn") end
+	if burn then
+		local by = burn.by and self.robots[burn.by]
+		self:hurt(rb, math.floor(C.STATUS.burn.damage * (by and by.stats.burn_mul or 1) + 0.5), by, "burn")
+	end
 	-- every crate_every turns a crate drops
 	self.turn_no = self.turn_no + 1
 	if self.turn_no > 1 then
@@ -3055,6 +3187,9 @@ function M:can_use(weapon)
 		if rb.grounded then return false end
 		return rb.parachute or rb.parachutes_left > 0
 	elseif weapon == "hook" then
+		return (not self.used.tool or (rb.hooks_spare or 0) > 0) and not rb.trapped
+	elseif weapon == "janus" then
+		-- one tool per turn (Rampino or Giano); both move you, so not with trapped feet
 		return not self.used.tool and not rb.trapped
 	elseif weapon == "shield" then
 		return not rb.shield and rb.ammo.shield > 0
@@ -3131,10 +3266,12 @@ function M:attack(weapon, fire)
 		end
 	end
 	if first then
-		rb.attack_ticks = rb.attack_ticks + M.TURN_TICKS - self.timer
+		-- the time the turn took (without the Scia d'ombra's bonus)
+		local took = M.TURN_TICKS + self.turn_bonus - self.timer
+		rb.attack_ticks = rb.attack_ticks + took
 		rb.attack_turns = rb.attack_turns + 1
 		-- attacking early gives teleport orbs, one per threshold not passed
-		local gain = rb.stats.time_orbs > 0 and M.orbs_for(M.TURN_TICKS - self.timer) or 0
+		local gain = rb.stats.time_orbs > 0 and M.orbs_for(took) or 0
 		if gain > 0 then
 			rb.teleports_left = rb.teleports_left + gain
 			self:emit({ type = "teleports", robot = rb.id, amount = gain, total = rb.teleports_left })

@@ -1,0 +1,28 @@
+# Campi che NON si rinominano in questa ondata, anche se la simulazione è
+# l'unica a usarli: sono chiavi dei dati salvati fuori dal codice.
+# - eventi del pannello (KV di Cloudflare, sim/rules.lua): li converte l'ondata degli strumenti
+casse
+cure
+livello
+armi
+tetto
+punti
+giocatori
+coda
+evento
+obiettivo
+nome
+riga
+premi
+regole
+ogni
+fino
+modo
+# - nomi che tools/animazioni/prepara.py cerca con una regex (local ARMI e
+#   M.PERSONAGGIO in battle/scoria.lua, SQUADRA in ui/ui.lua): vanno con la PR 5b
+ARMI
+PERSONAGGIO
+SQUADRA
+# - l'estensione nativa client/vibra (globale vibra, funzione vibra.tocco): si
+#   compila solo sul build server di Defold, si traduce a parte
+vibra

@@ -1,6 +1,6 @@
 # Controlli su main (dopo ogni merge) e a mano (Actions > Controlli > Run
 # workflow, anche su un ramo prima di una versione online): gli stessi di
-# strumenti/controlli/tutti.sh (sintassi e globali del Lua, controlli
+# tools/controlli/tutti.sh (sintassi e globali del Lua, controlli
 # dell'editor di Defold, tutti i test Lua, go vet, gofmt, go test). Sulle PR
 # non girano più, per non rallentare lo sviluppo (Sergio, 3 nov).
 name: Controlli
@@ -25,4 +25,4 @@ jobs:
       - name: LuaJIT
         run: sudo apt-get install -y --no-install-recommends luajit
       - name: Controlli
-        run: bash strumenti/controlli/tutti.sh
+        run: bash tools/controlli/tutti.sh

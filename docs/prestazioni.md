@@ -67,7 +67,7 @@ release (l'APK di Telegram) il profiler non c'è: lì resta il contatore.
 ### 3. Il simulatore (ripetibile, nel cloud)
 
 ```bash
-python3 strumenti/simula/simula.py -s strumenti/simula/scenari/fluidita.txt --senza-video
+python3 tools/simula/simula.py -s tools/simula/scenari/fluidita.txt --senza-video
 ```
 
 Lo scenario `fluidita.txt` accende il contatore dalle impostazioni, resta nella
@@ -213,8 +213,8 @@ con le misure qui sotto, rifatte sulla stessa macchina.
 ### 4. Il banco della simulazione e del bot
 
 ```bash
-luajit strumenti/prestazioni/banco.lua          # col JIT (Android, PC)
-luajit -joff strumenti/prestazioni/banco.lua    # senza JIT, come su iPhone
+luajit tools/prestazioni/banco.lua          # col JIT (Android, PC)
+luajit -joff tools/prestazioni/banco.lua    # senza JIT, come su iPhone
 ```
 
 Gioca tre partite fra bot "difficile" senza disegno (240 secondi di gioco l'una)

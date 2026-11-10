@@ -8,7 +8,7 @@
 
 Rimettere nel gioco il diavoletto di Gabriella **così com'è disegnato** (R1: forme,
 proporzioni, faccia, colori, stile dipinto e contorno nero), smontato nei pezzi dello
-stampino (regole in `strumenti/stampino/README.md` della PR #55), così si monta sullo
+stampino (regole in `tools/stampino/README.md` della PR #55), così si monta sullo
 scheletro e si muove con le animazioni che ci sono già. Lo stampino dice solo **dove** va
 ogni pezzo e quanto è grande, non com'è fatto.
 
@@ -146,7 +146,7 @@ la decisione sulla coda a segmenti riguarda il montaggio nel gioco.
 faccia, stile dipinto, contorno nero), quattro espressioni, coda continua col tridente.
 Lo sfondo non è #FF00FF esatto (~250,3,250): il taglio lo accetta lo stesso.
 
-- Taglio: `strumenti/stampino/taglia.py --categoria personaggio --allinea`, pelli `gabriella`
+- Taglio: `tools/stampino/taglia.py --categoria personaggio --allinea`, pelli `gabriella`
   e `gabriella_squadra`, sul ramo della PR #55 (commit 06b998a). Il primo taglio montava male
   (braccio fin sulla bocca, coda minuscola o staccata, ala spostata, busto piccolo): il thread
   dell'editor ha rifatto `--allinea` per i pezzi che sostituiscono (ogni pezzo alla casella

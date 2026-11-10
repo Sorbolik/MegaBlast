@@ -113,7 +113,7 @@ mostra con la schermata dello stesso telefono (`client/menu/pick.lua`). Nello st
 porta la sua secondaria in `sw` (i suoi colpi in `ss`), l'attrezzo in `at` (e `lu`, `ml`: tick di Affondo e Maglio in
 corso, `ms` e `md`: dove si è fermata la testa del Maglio e il suo lato; `hk`: chi lo tira col Rampino, o -1 se è appeso al terreno nel punto
 `hx`, `hy`; `gs`: il suo uncino del Rampino è in volo, in `gx`, `gy`; `kn`: sbalzato da un colpo; `tr`: piedi bloccati da una trappola; `la`: direzione dello scatto
-dell'Affondo). Nelle casse (`c`) il contenuto resta segreto, tranne per gli attrezzi che cadono sulla mappa
+dell'Affondo). Il Giano (attrezzo di scambio, `fire.weapon = "janus"`) non ha campi suoi: in volo è il proiettile `p` con `k = "janus"`, lo scambio arriva come evento `janus_swap` e le posizioni nello stato dopo. Nelle casse (`c`) il contenuto resta segreto, tranne per gli attrezzi che cadono sulla mappa
 (trappola, scudo, Molla, dal 9 nov): `w` è l'attrezzo, e l'evento `crate` lo porta in `item`. Ogni trampolino posato
 (`pl`) porta in `d` il lato verso cui è inclinato (1 destra, -1 sinistra).
 
@@ -141,7 +141,7 @@ in coda; con dei bot gira sui worker dei bot.
 ## Eventi
 
 Il calendario lo fa Sergio nel **pannello degli eventi** (Worker di Cloudflare
-`megablast-eventi`, [strumenti/eventi](../strumenti/eventi/README.md)): il
+`megablast-eventi`, [tools/eventi](../tools/eventi/README.md)): il
 server lo scarica ogni 30 secondi
 (`go run ./server -eventi https://megablast-eventi.….workers.dev/eventi.json`,
 con l'ETag) e nella domanda dice quale versione ha preso e, se l'ha rifiutata,
@@ -172,7 +172,7 @@ home. La risposta ha `Cache-Control: no-store`: mai una copia vecchia. Un
 Una partita conta per tutti gli eventi della sua coda (classifiche e premi col
 passo 2, quando ci sono gli account).
 
-Per provarli sul PC: `python3 strumenti/simula/eventi_prova.py` scrive
+Per provarli sul PC: `python3 tools/simula/eventi_prova.py` scrive
 `simulazione/eventi.json` col calendario di prova alle date di oggi, poi
 `go run ./server -eventi simulazione/eventi.json`.
 
@@ -205,7 +205,7 @@ server nella stessa PR. La simulazione la incorpora da solo (tutti i moduli di
    fase 1 della roadmap; del cartellino arrivano solo livello e badge, e il
    cartellino online mostra le statistiche che valgono davvero, quelle di base).
 4. **Prove**: un test in `server/server_test.go` per il comportamento nuovo e
-   l'online nel simulatore (`strumenti/simula/scenari/scelta_online.txt`:
+   l'online nel simulatore (`tools/simula/scenari/scelta_online.txt`:
    server vero e giocatori finti).
 5. **Versione**: se un client vecchio non capirebbe i messaggi nuovi, si alza
    `protocolVersion` (e `PROTOCOL` nel client).

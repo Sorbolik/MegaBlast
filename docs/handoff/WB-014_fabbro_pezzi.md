@@ -201,7 +201,7 @@ Rendering rules, very strict, because these arms will be traced into vector shap
 Come per Favilla (WB-013, «Dopo le immagini» e il resoconto della fase 2), con tutte le
 tecniche di WB-009:
 
-1. Tavolozza `strumenti/stampino/tavolozze/fabbro.json` coi colori qui sopra (con
+1. Tavolozza `tools/stampino/tavolozze/fabbro.json` coi colori qui sopra (con
    `macchie_min`, `macchie_ombra_min` e un `righe_max` basso per guanti, stivali e ferro).
 2. Ricalco a strati con `vettoriale.py --tavolozza ... [--senza ...]`: nel foglio delle teste
    niente ferro, ottone, fuoco, guanti, grembiule, pantaloni; nel corpo niente baffi, corna,

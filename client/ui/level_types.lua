@@ -5,7 +5,7 @@
 -- mission (ui/postcard.lua). The eight kinds are the hell's types of the
 -- campaign plan: corsa, bersagli, duello, squadra, orda, resistenza, bottino,
 -- custode. The icons are white shapes of the ui atlas (tipo_<kind>, made by
--- strumenti/grafica/icone_tipi.py), inked by the code. Only shown: the rules
+-- tools/grafica/icone_tipi.py), inked by the code. Only shown: the rules
 -- never read the kind.
 --
 --   local types = require "ui.level_types"

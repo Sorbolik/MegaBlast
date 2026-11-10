@@ -126,7 +126,7 @@
 --   scintilla = { x =, y = }: a spark in the air, taken when your body touches it
 --     over that height there (counter "scintille"): the medal of a full jump
 --   nascosti = { 2 }: robots that aren't there (the game wants at least two)
---   collaudo = { carattere, piano, senza }: how strumenti/arena/collaudo.lua tests it
+--   collaudo = { carattere, piano, senza }: how tools/arena/collaudo.lua tests it
 --   righe = { { testo, quando, fino, highlight, stops, subito, mostra, faccia } }:
 --     quando and fino are data, every key must hold (and):
 --       passo = 2 (step 2 done), turno = 2 (your 2nd turn), turno_altri = 2 (the
@@ -139,7 +139,7 @@
 --       and still have the parachute), corona = "tu" (you are first), conta = "morti",
 --       almeno = 1 (a counter, below); vicino = 250 (you are within that many
 --       pixels of Favilla, insegna: she waits for you); uno = { {...}, {...} }: one of them (or).
---     Only data, never functions: the Copione (strumenti/copione) shows and
+--     Only data, never functions: the Copione (tools/copione) shows and
 --     edits them, and a level travels as text to the web build (docs/copione.md).
 --     highlight: the control the line suggests ("primaria", "secondaria", a
 --     weapon, "teleport", "cammina", "salta", "mira", "annulla"): the HUD
@@ -155,7 +155,7 @@
 --   bravo = "Eccoti al cancello!" (bravo_faccia, default "ride"): Favilla's line when the
 --     lesson is done, the «bravo» of its last step (it stays under «Fatta»)
 --   Each step that closes a new move has nuova = true: then the lesson has the
---   four beats of Sergio's rule (6 Nov) for it, which strumenti/copione/controlla.lua
+--   four beats of Sergio's rule (6 Nov) for it, which tools/copione/controlla.lua
 --   checks: spiega (a big line, or the opening, after the previous new move),
 --   mostra (Favilla: her path, guida, or a demonstration from that moment), fai
 --   (the step) and bravo (a line with a face when the step is done, or bravo)
@@ -274,7 +274,7 @@ for _, cap in ipairs(campaign.CAPITOLI) do
 	end
 end
 
--- The Copione's GIOCA (strumenti/copione): a level as it is being edited, in
+-- The Copione's GIOCA (tools/copione): a level as it is being edited, in
 -- place of the saved one with the same id (or a new one), in the chapter
 -- chapter_id; no next mission. painted = false: its arena changed, the
 -- painting of the saved one would lie (an unpainted map)
@@ -549,7 +549,7 @@ local function next_one(l, st)
 	end
 end
 
--- What a line waits for, as data only (the level script, strumenti/copione):
+-- What a line waits for, as data only (the level script, tools/copione):
 -- every key of the table must hold (and), uno = { {...}, {...} } holds if one
 -- of them does (or)
 local USED = { primaria = "primary", secondaria = "secondary", attrezzo = "tool" }

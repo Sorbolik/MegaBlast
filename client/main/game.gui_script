@@ -104,14 +104,14 @@ local WHITE = vmath.vector4(1, 1, 1, 1)
 local STATUS_NAME = { { "burn", TM.status_name.burn }, { "slow", TM.status_name.slow }, { "cracked", TM.status_name.cracked } }
 local BAR_WEAPONS = { "missile", "grenade", "shards", "punch", "sniper", "boomerang", "tar", "drill", "sword", "eagle", "mallet",
 	"lunge", "bellows", "magnet", "cannon", "petard",
-	"trap", "shield", "trampoline", "hook", "parachute" }
+	"trap", "shield", "trampoline", "hook", "janus", "parachute" }
 -- border color of the four groups: primaries, secondaries, items, Grapple
 local BAR_COLORS = { ui.C.BRACE, ui.C.STEEL, ui.C.MINT, ui.C.PURPLE }
 local function bar_group(w)
-	if w == "hook" then return 4 end
+	if w == "hook" or w == "janus" then return 4 end
 	return game.SECONDARY[w] and 2 or (game.TOOLS[w] and 3 or 1)
 end
--- icons of the bar and of the draft (weapons atlas, strumenti/grafica/armi.py)
+-- icons of the bar and of the draft (weapons atlas, tools/grafica/armi.py)
 local WEAPON_ICON = {}
 for _, w in ipairs({ "missile", "sniper", "grenade", "shards", "punch", "sword", "eagle", "mallet", "lunge", "bellows", "hook",
 	"boomerang", "tar", "drill", "magnet", "cannon", "petard",
@@ -183,7 +183,7 @@ local function label(x, y, text, scale)
 	return fit(ui.text(text, x, y, (scale or 1) * FONT_K * 2))
 end
 
--- Simulation (strumenti/simula): with megablast.simula = 1 the game writes to
+-- Simulation (tools/simula): with megablast.simula = 1 the game writes to
 -- the log the events and where the robot whose turn it is stands, so a script
 -- can drive it.
 local function config_int(key, default)
@@ -905,7 +905,7 @@ end
 -- 200 locals Lua allows
 local RM = { fune = require "battle.rope", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
-	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo" } }
+	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano" } }
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
 -- end-of-match stats and replay. The functions further down, before
 -- start_local (they use new_match, show_menu and the others)
@@ -1243,10 +1243,34 @@ local function handle_event(self, e)
 			explosion(self, e.x, e.y, e.r)
 			self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
 		end
+	elseif e.type == "phoenix" then
+		-- the Sigilli's Fenice: the blast without a crater, and who it was
+		explosion(self, e.x, e.y, e.r * 0.5)
+		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
+		show_message(self, TM.phoenix:format(who_name(self, e.robot)))
+	elseif e.type == "last_stand" then
+		show_message(self, TM.last_stand:format(who_name(self, e.robot)))
+	elseif e.type == "orb_time" then
+		show_message(self, TM.orb_time:format(who_name(self, e.robot), math.floor(e.ticks / 60 + 0.5)))
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- recoil of the Rune launcher (and of the sniper), throw momentum, shard burst
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
 		scoria.fire(self.robots[e.robot].rig, kind)
+	elseif e.type == "janus" then
+		scoria.fire(self.robots[e.robot].rig, "throw")
+	elseif e.type == "janus_swap" then
+		-- the two trade places: the view jumps (like a teleport), each gets a flash and a word
+		for _, id in ipairs({ e.a, e.b }) do
+			if self.mode == "online" then self.snap[id] = true else snap_robot(self, id) end
+			plate.announcement(self.robots[id].plate, TM.swapped)
+		end
+		-- a bloom of the color of whoever arrives opens at each spot, with gold sparks
+		for _, sp in ipairs({ { e.ax, e.ay, e.b }, { e.bx, e.by, e.a } }) do
+			local col = self.colors[sp[3]]
+			impact.swap(self.fx, sp[1], sp[2] + game.DISEGNO_H / 2, { col.x, col.y, col.z })
+		end
+		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.bx, e.by
+		sound.play("#globo", { speed = 1.5 })
 	elseif e.type == "teleport" then
 		if self.mode == "online" then
 			-- the state with the robot in its new position arrives right after the event
@@ -1487,23 +1511,28 @@ local function open_podium(self)
 		giocatori[i] = { nome = nome, colore = self.colors[i] }
 	end
 	local my_own = me or 1
-	local spot, taken = #res.ranking, {}
+	local mine = res.ranking[1]
 	for _, v in ipairs(res.ranking) do
-		if v.robot == my_own then spot = v.place end
+		if v.robot == my_own then mine = v end
 	end
 	local per_robot = awards.assign(res.ranking)
-	taken = per_robot[my_own] or taken
+	local mvp = awards.mvp(res.ranking)
+	local won = nil
+	if res.winner then won = res.winner == mine.team end
+	local r = { points = mine.points, won = won, second = res.mode == "ffa" and mine.place == 2,
+		mvp = mvp == my_own, awards = per_robot[my_own] }
 	local stats_before = profile.statistics(self.profilo, "tutte")
-	local gain = profile.match_end(self.profilo, spot, taken)
+	local gain = profile.match_end(self.profilo, r)
 	profile.save(self.profilo)
 	-- the stats and the match into the profile (also saves the replay)
 	local number = CP.record(self, res)
-	gain.coins = CP.match_coins(self, res, my_own, taken, stats_before, gain)
+	gain.coins = CP.match_coins(self, r, stats_before, gain)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
 	show_message(self, "", true)
 	set_controls_visible(self, false)
 	-- first the screen, then the mode: if new breaks, no mode is left without a screen
 	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
+	self.schermata.obj.tick = function(i) sound.play("#punto", { speed = 1 + 0.08 * i }) end
 	self.mode = "schermata"
 	if self.pill then menu.pill.raise(self.pill) end
 end
@@ -2239,10 +2268,12 @@ end
 -- Scaglie and Ossidiana of a match (menu/wallet.lua): the rows go to the
 -- podium's receipt. Online the full price; against bots and on the same
 -- phone half, and only the first ones of the day
-function CP.match_coins(self, res, me, taken, stats_before, gain)
+function CP.match_coins(self, r, stats_before, gain)
 	local W = CP.wallet
 	local p = self.profilo
-	local rows = W.match(p, W.result(res, me, taken, self.online_end), W.today())
+	-- against bots or on the same phone: half, like the training
+	r.bots = not self.online_end
+	local rows = W.match(p, r, W.today())
 	local obs = W.obsidian(stats_before, profile.statistics(p, "tutte"), gain.level_before, gain.livello)
 	W.apply(p, rows)
 	W.apply(p, obs)
@@ -2250,21 +2281,23 @@ function CP.match_coins(self, res, me, taken, stats_before, gain)
 	return { rows = rows, obsidian = obs }
 end
 
--- Scaglie of a mission done: the first time or a replay, the new stars;
--- had: its stars before, chapters: the chapters done before
-function CP.mission_coins(self, id, had, chapters)
+-- Scaglie of a mission done, from its experience lines (profile.mission): the
+-- first time or a replay, the new stars; chapters: the chapters done before
+function CP.mission_coins(self, gain, chapters)
 	local W = CP.wallet
 	local p = self.profilo
-	local now, new = p.stelle[id], 0
-	for i = 1, 3 do
-		if now[i] and not (had and had[i]) then new = new + 1 end
+	local first, new = false, 0
+	for _, l in ipairs(gain.lines) do
+		if l.key == "done" then first = true end
+		if l.key == "stars" then new = l.n end
 	end
-	local rows = W.mission(not (had and had[1]), new)
-	if W.chapters_done(p, CP.chapters) > chapters then
-		for _, o in ipairs(W.chapter()) do rows[#rows + 1] = o end
-	end
+	local rows = W.mission(first, new)
+	-- Ossidiana: every 5 levels of the devil, a chapter finished
+	local obs = W.obsidian({}, {}, gain.level_before, gain.livello)
+	if W.chapters_done(p, CP.chapters) > chapters then obs[#obs + 1] = W.chapter()[1] end
 	W.apply(p, rows)
-	self.mission_coins = rows
+	W.apply(p, obs)
+	return { rows = rows, obsidian = obs }
 end
 
 -- Can the match with number numero be rewatched?
@@ -2398,7 +2431,7 @@ start_local_match = function(self, picked)
 		opts = { players = picked }
 	end
 	if SIMULATE then
-		-- only for the test scenarios (the "imposta" command in strumenti/simula)
+		-- only for the test scenarios (the "imposta" command in tools/simula)
 		local ammo_n = config_int("megablast.prova_armi", 0)
 		local ogni = config_int("megablast.prova_casse", 0)
 		local hp_value = config_int("megablast.prova_vita", 0)
@@ -2558,7 +2591,7 @@ local function start_mission(self, id, picks)
 		if p.nome then self.names[i] = p.nome end
 		if p.pelle then dress(self, i, { p.pelle }) end
 		if p.bot and (p.battute or p.carattere) then
-			self.speak = self.speak or require("battle.quips").nuove()
+			self.speak = self.speak or require("battle.quips").new()
 			self.speak.chi[i] = p.battute or p.carattere
 		end
 	end
@@ -2588,7 +2621,7 @@ local function start_mission(self, id, picks)
 	if not r.l.without_time then announce_turn(self, self.g.current) end
 end
 
--- The Copione's GIOCA (strumenti/copione, docs/copione.md): the web build
+-- The Copione's GIOCA (tools/copione, docs/copione.md): the web build
 -- opened by the page with ?copione=1 plays the level the page put after the
 -- # (Lua text: return { capitolo = id, dipinto = false?, livello = { ... } }),
 -- as it is being edited; in the simulator prova_copione FILE. Only data: the
@@ -2728,10 +2761,9 @@ local function mission_update(self, dt)
 	if r.esito == "fatta" and not r.was_saved then
 		r.was_saved = true
 		local record = missions.count(self.profilo.stelle[r.l.id] or {})
-		local had = self.profilo.stelle[r.l.id]
 		local chapters = CP.wallet.chapters_done(self.profilo, CP.chapters)
-		profile.mission(self.profilo, r.l.id, missions.stars(r))
-		CP.mission_coins(self, r.l.id, had, chapters)
+		self.mission_gain = profile.mission(self.profilo, r.l.id, missions.stars(r))
+		self.mission_gain.coins = CP.mission_coins(self, self.mission_gain, chapters)
 		profile.save(self.profilo)
 		if not r.l.guidata then
 			-- a moment to see the shot, then (or at the first tap) the stars
@@ -2774,8 +2806,9 @@ local function open_level_end(self)
 		-- the lead points, where they count
 		vantaggio = won and missions.lead(r) or nil,
 		record = self.record_end, avanti = won and (missions.after(r.l.id) ~= nil),
-		fallita = not won,
+		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo,
 	}, function(v) sound.play("#punto", { speed = v }) end)
+	self.mission_gain = nil
 end
 
 -- Into a campaign mission (Sergio, 4 Nov: half a second of hype, not crashing
@@ -3142,7 +3175,7 @@ local function slot_have(rb, w, r)
 	if not missions.sees(r, w) then return false end
 	if w == "parachute" then
 		return rb.parachute or rb.parachutes_left > 0
-	elseif w == "hook" or (w == rb.secondary and not rb.disarmed) then
+	elseif w == "hook" or w == "janus" or (w == rb.secondary and not rb.disarmed) then
 		return true
 	end
 	return game.has_weapon(rb, w)
@@ -3154,7 +3187,7 @@ local function update_bar(self)
 	local g = self.g
 	local l = self.missione
 	-- shots used up (or the turn's Grapple fired) it goes back to the Rune launcher
-	if not slot_have(rb, self.weapon, l) or (self.weapon == "hook" and g.used.tool and rb.id == g.current) then
+	if not slot_have(rb, self.weapon, l) or (((self.weapon == "hook" and (rb.hooks_spare or 0) <= 0) or self.weapon == "janus") and g.used.tool and rb.id == g.current) then
 		self.weapon = "missile"
 		-- a lesson without the Rune launcher: the first visible weapon
 		if not slot_have(rb, "missile", l) then
@@ -3209,8 +3242,9 @@ local function update_bar(self)
 				x, y = tele.x, tele.y + TELE_BTN_D / 2 + 16 + d / 2 + k * (d + 6)
 				ogg_top = y + d / 2
 			else
+				-- Rampino and Giano, side by side to the left of the teleport
 				d = TELE_BTN_D
-				x, y = tele.x - TELE_BTN_D - 12, tele.y
+				x, y = tele.x - (k + 1) * (TELE_BTN_D + 12), tele.y
 			end
 			local count = sl.weapon == "parachute" and rb.parachutes_left or rb.ammo[sl.weapon] or 0
 			if sl.count ~= count then
@@ -3652,6 +3686,25 @@ local function render(self, dt)
 		if kind == "boomerang" then
 			SNIPER_EULER.z = self.clock * 900
 			gui.set_euler(self.projectile, SNIPER_EULER)
+		end
+		-- Giano: the coin doesn't point anywhere, it flips on itself; two faces (the
+		-- shooter's color and gold) and a trail that alternates them
+		if kind == "janus" then
+			SNIPER_EULER.z = 0
+			gui.set_euler(self.projectile, SNIPER_EULER)
+			local c = math.cos(self.clock * 16)
+			SNIPER_SCALE.x, SNIPER_SCALE.y = VK.x * (0.18 + 0.82 * math.abs(c)), VK.y
+			gui.set_scale(self.projectile, SNIPER_SCALE)
+			self.sniper_shape = true
+			gui.set_color(self.shots_new_tint.janus, c >= 0 and self.colors[g.current] or hud.YELLOW)
+			for j, node in ipairs(self.trail) do
+				local col = j % 2 == 0 and self.colors[g.current] or hud.YELLOW
+				gui.set_color(node, vmath.vector4(col.x, col.y, col.z, 0.6 - j * 0.06))
+			end
+			self.janus_trail = true
+		elseif self.janus_trail then
+			for j, node in ipairs(self.trail) do gui.set_color(node, vmath.vector4(1, 0.6, 0.3, 0.55 - j * 0.06)) end
+			self.janus_trail = false
 		end
 		if sniper then
 			-- sniper: stretched the way it goes; at every bounce it squashes and wobbles
@@ -4153,11 +4206,11 @@ function init(self)
 	self.oggetti = items.new(TEAM_COLORS)
 
 	-- crates (at most CRATE_MAX are needed, plus the items that drop visible),
-	-- with a glow above while falling: Gabriella's chest (strumenti/grafica/cassa.py,
+	-- with a glow above while falling: Gabriella's chest (tools/grafica/cassa.py,
 	-- 83 x 96 pixels), as tall as the old crate and as wide as the drawing; an
 	-- item is its icon
 	local crate_box = vmath.vector3(22.4 * 83 / 96, 22.4, 0)
-	-- the items' iron cube (strumenti/grafica/attrezzi.py) as tall as the chest
+	-- the items' iron cube (tools/grafica/attrezzi.py) as tall as the chest
 	self.crate_box, self.item_box = crate_box, vmath.vector3(22.4, 22.4, 0)
 	self.crate_nodes = {}
 	for i = 1, game.CRATE_MAX + gconfig.ITEM_DROPS.max do
@@ -5347,7 +5400,13 @@ function PAD.on_input(self, action_id, action)
 	end
 	if self.mode == "schermata" then
 		local end_of = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
-		if end_of and self.schermata.mod == menu.level_end then
+		if end_of == "sigilli" then
+			-- METTI I PUNTI on the receipt (podium or end of level): the profile's SIGILLI
+			CP.iris(self, function()
+				close_screen(self)
+				CP.open_profile(self, "sigilli")
+			end)
+		elseif end_of and self.schermata.mod == menu.level_end then
 			after_level_end(self, end_of)
 		elseif end_of and self.schermata.mod == menu.story then
 			-- the story is over: seen, then what was waiting for it (the CAMPAGNA or the mission)

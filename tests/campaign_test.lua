@@ -1,7 +1,7 @@
 -- Campaign tests (sim/levels.lua, sim/missions.lua): each lesson can really
 -- be solved with its mechanic, and not without it; each mission starts clean.
 -- How hard the circles are is measured by the bot trial
--- (strumenti/arena/collaudo.lua). From the repository root:
+-- (tools/arena/collaudo.lua). From the repository root:
 --   luajit tests/campaign_test.lua
 -- Solutions are scripts of key presses; where an aim is needed, the test
 -- searches a grid of angles and powers, as a person trying would.

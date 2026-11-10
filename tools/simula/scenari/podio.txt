@@ -1,0 +1,61 @@
+# Fine partita, podio e armeria: partita da 3 secondi, Rosso e Blu sparano (un
+# colpo a testa: il turno finisce col tempo); il secondo giro è l'ultimo (×2),
+# un altro colpo a testa e la partita finisce; dopo un attimo sale il podio con
+# i premi sotto i gradini, l'MVP e a destra lo scontrino dell'esperienza (le
+# righe una alla volta, il totale, il livello). Poi l'armeria dalla home: set
+# del Vuoto completo.
+imposta prova_durata 3
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_stato turno=1 fase=aim 40     # l'ultimo giro ×2: un altro colpo a testa
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
+aspetta 1.8
+foto 01_podio_sale
+aspetta 2
+foto 02_podio
+tocca 1130 52                       # CONTINUA
+aspetta_stato modo=menu 3
+aspetta 0.5
+
+tocca 168 108                       # ARMERIA
+aspetta 0.5
+foto 03_armeria_vuota
+tocca 720 548                       # maschera, corazza, mantello e gambali del Vuoto
+tocca 720 456
+tocca 720 364
+tocca 720 272
+aspetta 0.3
+foto 04_armeria_vuoto
+tocca 62 658                        # indietro
+aspetta_stato modo=menu 3
+
+# di nuovo armeria e una seconda partita: i nodi delle schermate chiuse si liberano
+tocca 168 108                       # ARMERIA
+aspetta 0.5
+tocca 62 658                        # indietro
+aspetta_stato modo=menu 3
+aspetta 0.3                         # lo scivolo finisce
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_stato turno=1 fase=aim 40     # l'ultimo giro ×2: un altro colpo a testa
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
+aspetta 4
+foto 06_secondo_podio

@@ -1,4 +1,4 @@
--- Made by strumenti/grafica/armi.py, do not edit by hand.
+-- Made by tools/grafica/armi.py, do not edit by hand.
 -- The weapons in world units (shots from their center), x forward and
 -- y up. For each one: image (tint: the parts in the team color), center
 -- (x, y) and size (w, h). Where the hand holds them: battle/grips.lua.
@@ -32,6 +32,7 @@ return {
 		uovo = { img = "uovo", tint = "uovo_tinta", x = 0.00, y = 0.00, w = 17.60, h = 24.00 },
 		scheggia = { img = "scheggia", tint = "scheggia_tinta", x = 0.40, y = 0.00, w = 15.20, h = 9.60 },
 		globo = { img = "globo", tint = "globo_tinta", x = 0.00, y = 0.00, w = 16.00, h = 16.00 },
+		giano = { img = "giano", tint = "giano_tinta", x = 0.00, y = 0.00, w = 16.00, h = 16.00 },
 		falce = { img = "falce", tint = "falce_tinta", x = 0.40, y = -0.80, w = 20.00, h = 17.60 },
 		fiasco = { img = "fiasco", tint = "fiasco_tinta", x = 0.00, y = 0.00, w = 17.60, h = 24.00 },
 		punta = { img = "punta", tint = "punta_tinta", x = 2.00, y = 0.00, w = 23.20, h = 14.40 },

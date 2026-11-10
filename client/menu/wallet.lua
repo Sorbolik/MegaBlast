@@ -108,7 +108,8 @@ function M.wear(p, a)
 end
 
 -- Scaglie of a match: r = { points, won = true|false|nil, second, mvp,
--- awards = { ... }, bots = true (training) , quit = true }; today: "2026-11-10".
+-- awards = { ... }, bots = true (training or the same phone), quit = true }
+-- (the r of profile.match_end); today: "2026-11-10".
 -- Returns the rows { { key, scaglie } } (nothing when quit) and does not touch
 -- the profile except for the day of the bonus and the bots' count: apply
 -- adds them.
@@ -130,33 +131,13 @@ function M.match(p, r, today)
 	add("points", math.min(M.POINTS_MAX, math.floor((r.points or 0) / M.POINTS_EACH)))
 	if r.won then add("win", M.WIN) elseif r.second then add("second", M.SECOND) end
 	if r.mvp then add("mvp", M.MVP) end
-	add("award", M.AWARD * math.min(M.AWARDS_MAX, #(r.awards or {})))
+	-- one row per award, like the receipt's lines
+	for i = 1, math.min(M.AWARDS_MAX, #(r.awards or {})) do add("award", M.AWARD) end
 	if r.won and not r.bots and p.giorno ~= today then
 		p.giorno = today
 		add("daily", M.DAILY)
 	end
 	return rows
-end
-
--- The match seen by whoever plays on this phone, for M.match: res is the
--- sim's g:results() ({ mode, winner, ranking = { { robot, team, place, points } } }),
--- me their robot, awards those they took; online: an online match (otherwise
--- against bots or on the same phone: half, like the training).
--- The MVP: the most points of all, even in the losing team (first in the
--- ranking on a tie).
-function M.result(res, me, awards, online)
-	local r = { awards = awards or {}, bots = not online }
-	local mine, best
-	for _, v in ipairs(res.ranking) do
-		if v.robot == me then mine = v end
-		if not best or (v.points or 0) > (best.points or 0) then best = v end
-	end
-	if not mine then return r end
-	r.points = mine.points or 0
-	if res.winner ~= nil then r.won = res.winner == mine.team end
-	r.second = res.mode == "ffa" and mine.place == 2 or nil
-	r.mvp = best == mine and r.points > 0 or nil
-	return r
 end
 
 -- how many campaign chapters have all their missions done (the Ossidiana of

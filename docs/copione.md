@@ -2,9 +2,9 @@
 
 Ogni livello della campagna è **solo dati** in `client/sim/levels.lua` (i capitoli,
 in ordine e con le stelle che li aprono, in `client/sim/campaign.lua`). Il motore
-che li fa girare è `client/sim/missions.lua`; il Copione (`strumenti/copione/`) è la
+che li fa girare è `client/sim/missions.lua`; il Copione (`tools/copione/`) è la
 dashboard che li mostra e li cambia. Niente funzioni: un livello deve poter viaggiare
-come testo verso la build web e verso la pagina. `luajit strumenti/copione/controlla.lua`
+come testo verso la build web e verso la pagina. `luajit tools/copione/controlla.lua`
 (dentro `tutti.sh`) controlla che tutto quello che segue stia in piedi.
 
 Un verbo nuovo (un trigger, un obiettivo) si aggiunge una volta: in `missions.lua`,
@@ -49,7 +49,7 @@ Sergio (6 nov) è **spiega, mostra, tocca a te, bravo**: prima del passo (fra la
 nuova di prima e questa) ci devono essere una vignetta grande (o la frase d'apertura,
 per la prima) e una dimostrazione di Favilla (o la comparsa `guida`), e quando il passo
 è fatto una riga con la `faccia` che parte da lì (o `bravo` del livello, se è l'ultimo).
-`strumenti/copione/controlla.lua` fallisce se ne manca uno («mossa nuova senza
+`tools/copione/controlla.lua` fallisce se ne manca uno («mossa nuova senza
 «mostra»»), e il Copione lo segna in rosso sotto il passo. Le informazioni (una cosa
 da sapere, non da fare) restano nella striscia; un'arma da cassa ha la sua carta.
 

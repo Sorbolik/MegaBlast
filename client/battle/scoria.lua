@@ -1,5 +1,5 @@
 -- The devil: the character of the battle, the home and the podium. It is made
--- of vector-drawn pieces (strumenti/grafica/diavoletto.py ->
+-- of vector-drawn pieces (tools/grafica/diavoletto.py ->
 -- battle/devil.lua) animated here in code: no frames, so motion is
 -- smooth at any frame rate and the atlas stays light. From the feet to the top
 -- of the head it is as tall as the simulation's body (DISEGNO_H); horns and
@@ -27,7 +27,7 @@
 -- Motion is made of springs (squash and stretch, tilt, hit push, recoil, head,
 -- tail) and of poses per state, which are keyframe clips
 -- (battle/animations.lua, made with the editor
--- strumenti/animazioni/editor.html; sampled by battle/pose.lua) giving the
+-- tools/animazioni/editor.html; sampled by battle/pose.lua) giving the
 -- targets to the springs and limbs. The states, in order: defeat (falls
 -- backward and fades), hit (white flash, hit face, arms up), parachute
 -- (hanging from the straps, legs together swinging), air (the wing flaps, legs
@@ -37,7 +37,7 @@
 -- now and then: naso, sbadiglio, guarda_coda). What depends on the game stays
 -- in code: tilt and tail with speed, the parachute swing, the aim. Pushed or
 -- dragged without input it doesn't run: it stays idle.
--- The skins (battle/skins.lua, drawn on the stencil: strumenti/stampino)
+-- The skins (battle/skins.lua, drawn on the stencil: tools/stampino)
 -- replace pieces or go on top of them, in the same joints: they move with the
 -- same animations. A new head without its own faces makes all of them; a new
 -- tail has separate border and color like the base one; the parts with the
@@ -61,7 +61,7 @@
 local game = require "sim.game"
 local D = require "battle.devil"
 local FROM = require("battle.weapons").weapons
--- where the hook sits on the grapple launcher (HOOK_TIP of strumenti/grafica/armi.py)
+-- where the hook sits on the grapple launcher (HOOK_TIP of tools/grafica/armi.py)
 local HOOK_TIP = 15.2
 local pose = require "battle.pose"
 local A = require "battle.animations"
@@ -328,7 +328,7 @@ end
 
 -- The weapons in hand: rest angle (radians) around the pivot, 0 facing
 -- forward. Images and sizes are in battle/weapons.lua
--- (strumenti/grafica/armi.py), grip, pivot and shoulder in battle/grips.lua
+-- (tools/grafica/armi.py), grip, pivot and shoulder in battle/grips.lua
 local ARMI = {
 	missile = -0.35, sniper = -0.3, sword = -1.9, teleport = -0.5, grenade = -0.5, shards = -0.3,
 	punch = -0.9, eagle = -0.6, hook = -0.4, bellows = -0.3,

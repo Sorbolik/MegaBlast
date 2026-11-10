@@ -34,7 +34,7 @@ Ancora aperti: zone del Titano (strada 1), turni che si accorciano (I), cosa far
 
 ## Insegnare il turno: la prima partita
 
-Niente passi prima di giocare: **la prima partita insegna**. È una partita vera contro un bot che sbaglia un colpo su due; nel primo turno il tempo è fermo finché non attacchi, e una riga alla volta sopra il diavoletto spiega quello che serve in quel momento (due attacchi, i globi dai secondi avanzati, la cassa, il paracadute, la Corona, la rinascita), mentre l'elemento dell'HUD di cui si parla pulsa. Le altre meccaniche sono **lezioni da 3 stelle** nell'Addestramento, il primo capitolo della CAMPAGNA, ognuna risolvibile solo con la meccanica che insegna. Poi i gironi: missioni contro bot con un carattere (il codardo, il Fabbro custode del girone) che chiedono le meccaniche imparate. Dati e controlli: `client/sim/levels.lua` (le missioni), `client/sim/missions.lua` (il motore), `tests/campaign_test.lua`, `strumenti/arena/collaudo.lua`.
+Niente passi prima di giocare: **la prima partita insegna**. È una partita vera contro un bot che sbaglia un colpo su due; nel primo turno il tempo è fermo finché non attacchi, e una riga alla volta sopra il diavoletto spiega quello che serve in quel momento (due attacchi, i globi dai secondi avanzati, la cassa, il paracadute, la Corona, la rinascita), mentre l'elemento dell'HUD di cui si parla pulsa. Le altre meccaniche sono **lezioni da 3 stelle** nell'Addestramento, il primo capitolo della CAMPAGNA, ognuna risolvibile solo con la meccanica che insegna. Poi i gironi: missioni contro bot con un carattere (il codardo, il Fabbro custode del girone) che chiedono le meccaniche imparate. Dati e controlli: `client/sim/levels.lua` (le missioni), `client/sim/missions.lua` (il motore), `tests/campaign_test.lua`, `tools/arena/collaudo.lua`.
 
 ## Albero di abilità: può funzionare
 
@@ -44,6 +44,8 @@ Sì, e si sposa bene con il Torneo: **in Torneo tutti hanno tutti i punti**, qui
 2. **Nodi misti.** Statistiche da potenziare a piacere (salto, velocità) e nodi di abilità: un ramo Mobilità (teletrasporto che scatta prima, un globo in più a inizio partita), un ramo Difesa (scudo più economico, paracadute più economico), un ramo Arsenale (trappole più grandi, effetti di stato più lunghi).
 3. **Una differenza che si sente, ma che si colma con la strategia.** Nelle partite normali chi è al massimo è più forte, ma trappole, cerchi di cura, trampolini, paracadute e scudi permettono a chi gioca meglio di vincere lo stesso. Nei primi livelli si incontrano avversari di livello simile.
 4. **Ricostruzione gratuita fuori dalla partita**, con 3 assetti salvati (albero più equipaggiamento) da scegliere prima del ventaglio d'armi.
+
+**Oggi (10 novembre 2026): i Sigilli.** L'albero è diventato tre vie, ALI, CORAZZA e FUCINA, da 0 a 25 punti ciascuna, con un punto per livello fino al 50 (50 punti per 75 di vie). Ogni punto dà un poco della statistica della via (+0,4%), ogni 5 punti una soglia dove si sceglie uno fra due poteri, a 25 il potere grande: la profondità si premia, e non si può riempire tutto. Gli assetti 2 e 3 si aprono al livello 15 e al 30. Le quattro regole qui sopra restano: con una via piena la sua statistica sale al massimo del 10%, i poteri sono scambi o situazionali. Dettagli e numeri in `client/sim/skills.lua` e in `docs/decisioni/progressione.md`.
 
 Per non far sovrapporre le due crescite: l'equipaggiamento dà l'aspetto e il carattere del set, l'albero il tuo assetto personale e come usi teletrasporti e oggetti.
 

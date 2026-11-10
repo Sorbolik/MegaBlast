@@ -1,7 +1,7 @@
 -- Opponent bot: it plays a robot's turn by pressing the same keys as a
 -- player (game:step's input), so it doesn't cheat and works online too.
 -- Pure, deterministic Lua (randomness comes from its own generator): the
--- phone uses it (matches against bots), so do the arena (strumenti/arena)
+-- phone uses it (matches against bots), so do the arena (tools/arena)
 -- and the server, to fill the queues.
 --
 --   local bot = require "sim.bot"
@@ -78,7 +78,7 @@ M.GRADES = {
 }
 
 -- The bot's weights: what a move's outcome is worth besides match points.
--- The keys stay Italian: the arena saves them (strumenti/arena, specialists' JSON).
+-- The keys stay Italian: the arena saves them (tools/arena, specialists' JSON).
 -- vita_mia, vita_compagno: per hit point lost; morte: on top of the score, if
 -- it or a teammate dies; strada: what a path tick costs (for the same shot,
 -- the nearer one); teletrasporto: below this score from the path on foot it
@@ -88,11 +88,11 @@ M.GRADES = {
 -- if it is worth at least this much more; punteggio (if set): the points the
 -- bot judges moves by, instead of the match's; armi (if set): the taste for
 -- each weapon (multiplies the shots that pay and guides the match-start
--- draft, M.choose). The arena evolves them (strumenti/arena/evolvi.py) and a
+-- draft, M.choose). The arena evolves them (tools/arena/evolvi.py) and a
 -- match can give each bot others (players[i].pesi, only the fields that
 -- change). rete (if set): a neural net (sim/rete.lua) that judges moves
 -- instead of these weights, from the features of the position after the move
--- (M.caratteristiche); strumenti/arena/impara.py trains it;
+-- (M.caratteristiche); tools/arena/impara.py trains it;
 -- esplora: chance of picking on purpose one of the moves after the best;
 -- cassa: what taking a crate is worth (in match points), plus cassa_fame
 -- for each shot that robot is short of HUNGER (crate primaries and chosen
@@ -202,7 +202,7 @@ function M.world(g, into)
 	local o = own(w, world_parts)
 	for k in pairs(w) do w[k] = nil end
 	w.terrain, w.map, w.tick, w.mode, w.normalized = g.terrain, g.map, g.tick, g.mode, g.normalized
-	w.current, w.phase, w.timer, w.window = g.current, g.phase, g.timer, g.window
+	w.current, w.phase, w.timer, w.window, w.turn_bonus = g.current, g.phase, g.timer, g.window, g.turn_bonus
 	w.match_left, w.final_round, w.round, w.order, w.order_pos, w.turn_no = g.match_left, g.final_round, g.round, g.order, g.order_pos, g.turn_no
 	w.orb_seq, w.placed_id, w.heals, w.score = g.orb_seq, g.placed_id, g.heals, g.score
 	o.rng.state = g.rng.state
@@ -941,7 +941,7 @@ local function think(b, g)
 
 	-- sometimes (low levels) a worse move, but not one that hurts itself or
 	-- its teammate (points below zero when the best isn't). esplora: the same
-	-- for the learning bots (strumenti/arena/impara.py), so they also see
+	-- for the learning bots (tools/arena/impara.py), so they also see
 	-- moves they wouldn't pick
 	local mistake = b.pesi.esplora or overrides.sbaglia
 	if mistake > 0 and #moves > 1 and b.rng:next() < mistake then

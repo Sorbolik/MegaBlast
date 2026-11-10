@@ -45,8 +45,8 @@ local LEGEND = 18
 -- and, for the cloak, the base wing (the apprentice has no wings)
 local SKIN = skins.skins.apprendista.pieces
 local PIECE_IMAGES = { mask = SKIN.testa, chest = SKIN.busto, cloak = require("battle.devil").pieces.ala, legs = SKIN.gamba }
--- the colors of the tree branches, in the order of skills.BRANCHES
-local BRANCHES = { C.STEEL, C.MINT, C.BRACE }
+-- the colors of the Sigilli, in the order of skills.PATHS (as in menu/seals.lua)
+local BRANCHES = { C.PURPLE, C.STEEL, C.BRACE }
 local ABBREVIATIONS = T.branches
 local ROMAN = { "I", "II", "III", "IV" }
 
@@ -264,16 +264,19 @@ function M.new(v, x, y, opt, parent)
 	end
 	yy = yy - RESOURCES
 
-	-- the tree: twenty colored ticks per branch
+	-- the Sigilli: one bar of POINTS_MAX, a stretch in each path's color
 	txt(T.tree:format(v.punti or skills.POINTS_MAX), sx, yy - LABEL / 2, 0.42, C.OFF, c.root, gui.PIVOT_W)
 	yy = yy - LABEL
-	local n, tw = skills.POINTS_MAX, (W - 2 * PAD - (skills.POINTS_MAX - 1) * 2) / skills.POINTS_MAX
-	local palette = {}
+	local bw = W - 2 * PAD
+	box(sx + bw / 2, yy - TREE / 2, bw, 9, with_alpha(C.LIGHT, 0.1), c.root)
+	local bx = sx
 	for i, punti in ipairs(v.albero or {}) do
-		for _ = 1, punti do palette[#palette + 1] = BRANCHES[i] end
-	end
-	for i = 1, n do
-		box(sx + tw / 2 + (i - 1) * (tw + 2), yy - TREE / 2, tw, 9, palette[i] or with_alpha(C.LIGHT, 0.1), c.root)
+		local w = bw * punti / skills.POINTS_MAX
+		if w > 0 then
+			local b = box(bx, yy - TREE / 2, w - 2, 9, BRANCHES[i] or C.LIGHT, c.root)
+			gui.set_pivot(b, gui.PIVOT_W)
+		end
+		bx = bx + w
 	end
 	yy = yy - TREE
 	local ly = yy - LEGEND / 2 - 2
