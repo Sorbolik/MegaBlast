@@ -57,7 +57,7 @@ foto 09_impostazioni
 tocca_bordo 62 62 alto sinistra
 aspetta_stato modo=menu 3
 aspetta 0.5
-tocca_bordo 205 304 basso destra    # ALLENAMENTO
+tocca_bordo 254 346 basso sinistra    # ALLENAMENTO
 aspetta 1
 foto 10_allenamento
 tocca_centro 640 140                       # AVANTI

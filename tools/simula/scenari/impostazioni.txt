@@ -42,7 +42,7 @@ foto 06_grilletto
 pad b                               # B (CERCHIO) torna indietro
 aspetta_stato modo=menu 3
 aspetta 0.5
-tocca_bordo 218 216 basso destra    # STESSO TELEFONO
+tocca_bordo 222 148 basso sinistra    # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 pad dx_su 0.4                       # la levetta in su non salta più
