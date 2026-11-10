@@ -1,8 +1,9 @@
 -- The PROFILO (character sheet, Sergio 31 Oct): it opens by tapping your own
--- devil in the home. Three tabs, one thing per tab:
+-- devil in the home. Four tabs, one thing per tab:
 --   SCHEDA       the big devil with its pieces labeled, the tag as others see
 --                it ("COSÌ TI VEDONO"), each piece's next upgrade and the
 --                ARMERIA; at the top the three loadouts (others see the active one)
+--   SIGILLI      the three paths of points and their powers (menu/seals.lua)
 --   STATISTICHE  four numbers at the top and each stat with its badge on the
 --                same row (tapping it puts the badge next to the name); on the
 --                right the damage per weapon. Filter by mode, from 2 vs 2
@@ -13,7 +14,7 @@
 -- stuff, and from the podium RIVEDI goes straight to the replay (Sergio's
 -- decision, 31 Oct). The screen is rebuilt at every tap, like the armory.
 --
---   local s = profilo_schede.new(prof, scheda, colore, replay_ok, numero)  -- scheda: "scheda" (default), "statistiche", "partite"
+--   local s = profilo_schede.new(prof, scheda, colore, replay_ok, numero)  -- scheda: "scheda" (default), "sigilli", "statistiche", "partite"
 --                                                      -- replay_ok(numero): is there that match's replay?
 --                                                      -- numero: the match to show in PARTITE
 --   profilo_schede.update(s, dt)
@@ -28,6 +29,8 @@ local maps = require "sim.maps"
 local profile = require "menu.profile"
 local milestones = require "menu.milestones"
 local showcase = require "menu.showcase"
+local seals = require "menu.seals"
+local loadout = require "sim.loadout"
 local tag = require "ui.tag_card"
 local scoria = require "battle.scoria"
 local T = require("lang.text").profile_tabs
@@ -96,7 +99,9 @@ local function sheet_sheet(s, parent)
 	local col = s.colore
 	txt(T.loadout, ui.EDGE, TOP - 12, 0.7, C.OFF, parent, gui.PIVOT_W)
 	for i = 1, #p.loadouts do
-		ui.scheda(s.buttons, ui.EDGE + 21 + (i - 1) * 50, TOP - 50, 42, 42, tostring(i), "assetto:" .. i, p.is_active == i, parent)
+		if loadout.open(i, p.livello) then
+			ui.scheda(s.buttons, ui.EDGE + 21 + (i - 1) * 50, TOP - 50, 42, 42, tostring(i), "assetto:" .. i, p.is_active == i, parent)
+		end
 	end
 	-- the big devil
 	local pose = box(245, 62, 0, 0, C.LIGHT, parent)
@@ -399,16 +404,19 @@ local function build(s)
 	-- the header (ui.header), before the root so the open tag's veil covers it:
 	-- PROFILO, the pill's place, level and experience on the right
 	s.head = ui.header(s.buttons, T.title, "indietro")
-	local active = s.scheda == "statistiche" and 2 or s.scheda == "partite" and 3 or 1
-	ui.header_tabs(s.head, s.buttons, { { T.tab_sheet, "scheda:scheda", 150 },
+	local active = s.scheda == "sigilli" and 2 or s.scheda == "statistiche" and 3 or s.scheda == "partite" and 4 or 1
+	ui.header_tabs(s.head, s.buttons, { { T.tab_sheet, "scheda:scheda", 150 }, { T.tab_seals, "scheda:sigilli", 150 },
 		{ common.stats, "scheda:statistiche", 206 }, { T.tab_matches, "scheda:partite", 150 } }, active)
 	local dx = s.head.right
-	title(T.level:format(p.livello), -ui.EDGE, 14, 0.55, C.LIGHT, dx, gui.PIVOT_E)
+	local lv = (p.braci or 0) > 0 and T.level_braci:format(p.livello, p.braci) or T.level:format(p.livello)
+	title(lv, -ui.EDGE, 14, 0.55, C.LIGHT, dx, gui.PIVOT_E)
 	local b = ui.bar(-ui.EDGE - 130, -8, 260, 8, s.colore, dx)
 	ui.bar_value(b, p.xp / profile.xp_level(p.livello))
 	txt(T.xp:format(thousands(p.xp), thousands(profile.xp_level(p.livello))), -ui.EDGE, -24, 0.5, C.OFF, dx, gui.PIVOT_E)
 	s.radice = ui.radice()
-	if s.scheda == "statistiche" then
+	if s.scheda == "sigilli" then
+		seals.build(s, s.radice)
+	elseif s.scheda == "statistiche" then
 		sheet_stats(s, s.radice)
 	elseif s.scheda == "partite" then
 		sheet_matches(s, s.radice)
@@ -451,7 +459,9 @@ end
 local function run_cmd(s, ui_action)
 	local kind, x = ui_action:match("^(%a+):?(.*)$")
 	local p = s.prof
-	if kind == "scheda" then
+	if seals.run(s, kind, x) then
+		-- the SIGILLI's actions (menu/seals.lua)
+	elseif kind == "scheda" then
 		s.scheda = x
 	elseif kind == "assetto" then
 		p.is_active = tonumber(x)

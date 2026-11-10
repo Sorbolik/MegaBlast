@@ -134,10 +134,27 @@ return {
 		victory = "VITTORIA",
 		defeat = "SCONFITTA",
 		wins = "VINCE %s",
-		level = "LIVELLO %d",
-		xp = "+%d esperienza",
-		skill_point = "nuovo punto abilità!",
+		mvp = "MVP",
 		go_on = "CONTINUA",
+	},
+
+	-- ui/receipt.lua: what a match or a level gave, line by line
+	receipt = {
+		title = "ESPERIENZA",
+		lines = { match = "Partita", win = "Vittoria", second = "Secondo posto", mvp = "MVP",
+			done = "Prima volta", replay = "Rigiocata" },
+		points = "Punti %s",
+		award = "Premio %s",
+		stars = "Stelle nuove ×%s",
+		plus = "+%s",
+		total = "TOTALE",
+		level = "LIVELLO %s",
+		level_up = "SALI AL LIVELLO %s",
+		point = "+%s punto da mettere nei Sigilli",
+		points = "+%s punti da mettere nei Sigilli",
+		place_points = "METTI I PUNTI",
+		brace = "+%s brace accanto al livello",
+		braci = "+%s braci accanto al livello",
 	},
 
 	-- menu/milestones.lua: the stats (by id) and their badges
@@ -278,8 +295,6 @@ return {
 
 	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
 	armory = {
-		tab_set = "SET",
-		tab_tree = "ALBERO",
 		loadout = "ASSETTO",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
@@ -295,12 +310,6 @@ return {
 		no_piece = "nessun pezzo",
 		-- a set bonus not unlocked yet: the bonus, then the level the pieces need
 		locked_bonus = "%s  (tutti i pezzi al livello %s)",
-		point = "%s punto",
-		points = "%s punti",
-		points_spent = "PUNTI %d / %d",
-		level = "livello %d",
-		per_rank = "%s per grado",
-		reset = "AZZERA",
 	},
 
 
@@ -308,8 +317,10 @@ return {
 	profile_tabs = {
 		title = "PROFILO",
 		tab_sheet = "SCHEDA",
+		tab_seals = "SIGILLI",
 		tab_matches = "PARTITE",
 		level = "LIV %s",
+		level_braci = "LIV %s · %s BRACI",
 		xp = "%s / %s XP",
 		-- SCHEDA
 		loadout = "ASSETTO",
@@ -361,6 +372,29 @@ return {
 		replay_missing = "replay non disponibile",
 	},
 
+
+	-- menu/seals.lua: the profile's SIGILLI tab (the paths of sim/skills.lua)
+	seals = {
+		points = "%s / %s PUNTI",
+		reset = "AZZERA",
+		loadout = "ASSETTO",
+		-- a closed loadout: its number and the level that opens it
+		locked = "%s · LIV %s",
+		of = "%s / %s",
+		choose = "SCEGLI",
+		threshold = "%s · SOGLIA %s",
+		taken = "potere preso",
+		choose_now = "scegli il potere",
+		missing_one = "manca %s punto",
+		missing = "mancano %s punti",
+		-- points the threshold needs, free points: not enough
+		missing_free = "servono %s punti, liberi %s",
+		bring_here = "PORTA QUI",
+		change_any_time = "cambi quando vuoi, fuori dalla partita",
+		in_match = "IN PARTITA",
+		nothing = "ancora niente: metti un punto con +",
+		no_power = "nessun potere ancora",
+	},
 
 	-- menu/home.lua: the home
 	home = {
@@ -457,14 +491,14 @@ return {
 
 	-- ui/tag_card.lua: the player's tag
 	tag_card = {
-		-- the tree's three branches, short (skills.BRANCHES order)
-		branches = { "MOB", "DIF", "ARS" },
+		-- the three Sigilli, short (skills.PATHS order)
+		branches = { "ALI", "COR", "FUC" },
 		no_power = "nessun potere",
 		orb = "%s globo",
 		orbs = "%s globi",
 		parachutes = "%s paracad.",
 		air_jumps = "%s in aria",
-		tree = "ALBERO · %s PUNTI",
+		tree = "SIGILLI · %s PUNTI",
 	},
 
 	-- ui/frames.lua: the frame counter's line at the top (IMPOSTAZIONI > CONTATORE FPS)
@@ -726,6 +760,10 @@ return {
 		card_note = "tocca di nuovo e si chiude · il tempo corre",
 		-- the messages of the match
 		swap = "%s scambia il secondo attacco: +1 teletrasporto",
+		-- the Sigilli's powers that fire in a match (sim/skills.lua)
+		phoenix = "FENICE! %s esplode",
+		last_stand = "ULTIMO RESPIRO! %s resta in piedi",
+		orb_time = "SCIA D'OMBRA: %s ha %s secondi in più",
 		orbs_one = "%s +%d teletrasporto",
 		orbs_many = "%s +%d teletrasporti",
 		trapped = "%s finisce in una trappola: piedi bloccati!",

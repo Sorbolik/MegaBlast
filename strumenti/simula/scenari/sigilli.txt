@@ -1,0 +1,30 @@
+# I Sigilli nel profilo (Sergio, 10 nov). Profilo di prova (livello 23: ALI 12
+# con Salto lungo e Balzo nel vuoto, CORAZZA 6 con Crosta, FUCINA 3). Dalla
+# home il diavoletto, poi la scheda SIGILLI (267 578): tre barre, i dischi delle
+# soglie, il pannello a destra con la prossima scelta (la soglia 15 di ALI
+# chiede 3 punti, ne restano 2: PORTA QUI spento). Si tocca la soglia 5 di
+# FUCINA, PORTA QUI la riempie, si sceglie il secondo potere; poi un punto in
+# ALI col + (non ce ne sono più: niente) e AZZERA.
+imposta prova_profilo 1
+
+aspetta 1.5
+tocca 400 300                       # il diavoletto: il profilo
+aspetta 0.5
+tocca 267 578                       # SIGILLI
+aspetta 0.3
+foto 01_sigilli
+tocca 328 180                       # FUCINA, soglia 5
+aspetta 0.2
+tocca 1085 150                      # PORTA QUI
+aspetta 0.2
+tocca 1085 234                      # il secondo potere
+aspetta 0.2
+foto 02_sigilli_soglia
+tocca 870 420                       # + in ALI
+aspetta 0.3
+foto 03_sigilli_piu
+tocca 330 508                       # AZZERA
+aspetta 0.3
+foto 04_sigilli_azzerate
+tocca 62 658                        # indietro
+aspetta_stato modo=menu 3

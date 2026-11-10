@@ -2,8 +2,9 @@
 -- Pure Lua: the client sends it to the server, which checks it with valid()
 -- and passes stats() to the match (opts.stats[i]).
 --
--- A loadout: { tree = { [node] = ranks }, gear = { mask = "corvo", ... }, variant = "a" | "b" }
--- It can be rebuilt for free outside a match; each player keeps LOADOUTS of them.
+-- A loadout: { tree = { wings = 18, ..., pick = ... } (sim/skills.lua), gear = { mask = "corvo", ... }, variant = "a" | "b" }
+-- It can be rebuilt for free outside a match; each player keeps LOADOUTS of them,
+-- the second and third open at the levels of LOADOUT_LEVELS.
 
 local skills = require "sim.skills"
 local equip = require "sim.gear"
@@ -11,6 +12,12 @@ local equip = require "sim.gear"
 local M = {}
 
 M.LOADOUTS = 3
+M.LOADOUT_LEVELS = { 1, 15, 30 }
+
+-- is loadout i open at this player level?
+function M.open(i, level)
+	return (level or 1) >= (M.LOADOUT_LEVELS[i] or math.huge)
+end
 
 -- stat limits after tree and sets
 M.MIN = { max_hp = 1, teleport_ticks = 30, teleports = 0, parachutes = 0 }

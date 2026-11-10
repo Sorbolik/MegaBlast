@@ -25,7 +25,7 @@ mira 150 100 0.4
 aspetta_evento over 90
 aspetta 4
 foto 01_podio
-tocca 980 205                       # RIVEDI
+tocca 920 52                        # RIVEDI
 aspetta_stato modo=replay 5
 aspetta 1
 tocca 640 360                       # fine: il profilo, sulla partita

@@ -12,13 +12,15 @@
 --     one takes (missions.criteria); vantaggio: the lead points made (nil where
 --     points don't count: the lessons); record: how many stars the mission
 --     already had; medaglia: the second is Favilla's medal (the cortile);
---     avanti: there is a next level; sound(v): the tick, v = speed (pitch)
+--     avanti: there is a next level; sound(v): the tick, v = speed (pitch);
+--     gain: profile.missione's experience (the receipt on the right, ui/receipt.lua), prof: the profile
 --   fine_livello.update(f, dt)
---   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro" or nil
+--   fine_livello.on_input(f, action_id, action) -> "riprova", "avanti", "indietro", "sigilli" or nil
 --   fine_livello.destroy(f)
 
 local ui = require "ui.ui"
 local backdrop = require "ui.backdrop"
+local receipt = require "ui.receipt"
 local T = require("lang.text").level_end
 local common = require("lang.text").common
 
@@ -39,14 +41,16 @@ function M.new(o, sound)
 	gui.set_visible(f.radice, false)
 	local c = ui.C
 	ui.indietro(f.buttons, "indietro", f.radice)
-	ui.testo(o.fallita and T.failed or T.done, 640, 640, 0.8, c.OFF, f.radice)
-	ui.titolo(string.upper(o.titolo), 640, 585, 1, c.LIGHT, f.radice)
+	-- with the receipt on the right, the stars move to the left
+	local cx = o.gain and 440 or 640
+	ui.testo(o.fallita and T.failed or T.done, cx, 640, 0.8, c.OFF, f.radice)
+	ui.titolo(string.upper(o.titolo), cx, 585, 1, c.LIGHT, f.radice)
 	local criteria = o.criteria
 	-- three stars; in the cortile «Fatta» and Favilla's medal, or «Fatta» alone
 	local count = #criteria
 	for i = 1, count do
 		local big = count == 3 and i == 2 and 1.2 or 1
-		local x, y = 640 + (i - (count + 1) / 2) * M.STEP, M.Y + (big > 1 and 18 or 0)
+		local x, y = cx + (i - (count + 1) / 2) * M.STEP, M.Y + (big > 1 and 18 or 0)
 		local side_of = M.LATO * big
 		local medal = o.medaglia and i == 2
 		local draw = medal and ui.medaglia or ui.stella
@@ -68,10 +72,12 @@ function M.new(o, sound)
 		local record = (o.record == 1 and T.record_one or T.record):format(o.record)
 		under = under == "" and record or under .. "  -  " .. record
 	end
-	ui.testo(under, 640, 232, 0.8, c.OFF, f.radice)
-	ui.button(f.buttons, 640 - 180, 110, 300, 96, common.retry, "riprova", nil, f.radice)
-	ui.button(f.buttons, 640 + 180, 110, 300, 96, o.avanti and common.next or common.campaign, "avanti",
+	ui.testo(under, cx, 232, 0.8, c.OFF, f.radice)
+	local bw = o.gain and 260 or 300
+	ui.button(f.buttons, cx - bw / 2 - 20, 110, bw, 96, common.retry, "riprova", nil, f.radice)
+	ui.button(f.buttons, cx + bw / 2 + 20, 110, bw, 96, o.avanti and common.next or common.campaign, "avanti",
 		{ main = true }, f.radice)
+	if o.gain then f.receipt = receipt.new(o.gain, o.prof, 1040, 676, f.buttons, f.radice) end
 	return f
 end
 
@@ -79,6 +85,7 @@ end
 -- back, the halo lights up and settles
 function M.update(f, dt)
 	f.t = f.t + dt
+	if f.receipt then receipt.update(f.receipt, dt, f.sound and function(i) f.sound(1 + 0.08 * i) end) end
 	local i = f.lit_ones + 1
 	if i > #f.prese or f.t < M.FIRST + (i - 1) * M.RHYTHM then return end
 	f.lit_ones = i

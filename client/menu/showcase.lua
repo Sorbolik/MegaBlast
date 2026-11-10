@@ -42,8 +42,7 @@ local function empty_pieces()
 	return out
 end
 
--- A loadout's powers: the full-set bonus and the tree nodes that give
--- something new
+-- A loadout's powers: the full-set bonus and those taken in the Sigilli
 function M.abilities(a, tiers)
 	local out = {}
 	local id, top = equip.full_set(a.gear or {}, tiers)
@@ -52,8 +51,8 @@ function M.abilities(a, tiers)
 		local b = set.bonus[(a.variant == "b" and top) and "b" or "a"]
 		out[#out + 1] = b.power_name
 	end
-	for _, n in ipairs(skills.NODES) do
-		if n.power_name and (a.tree or {})[n.id] then out[#out + 1] = n.power_name end
+	for _, w in ipairs(skills.powers(a.tree or {})) do
+		if w.power.power_name then out[#out + 1] = w.power.power_name end
 	end
 	return out
 end
@@ -69,7 +68,7 @@ function M.from_profile(p, nome, team, under, tournament)
 		local n = set and (p.mastery[set .. "_" .. s.id] or 0) or 0
 		v.pezzi[i] = { slot = s.id, set = set, livello = set and equip.livello(n) or 0, tier = tiers[s.id] or 1 }
 	end
-	for i, r in ipairs(skills.BRANCHES) do v.albero[i] = skills.spent(a.tree or {}, r.id) end
+	for i, r in ipairs(skills.PATHS) do v.albero[i] = skills.spent(a.tree or {}, r.id) end
 	v.stats = copy_stats(loadout.stats(game.base_stats(), a, tiers))
 	return v
 end
@@ -77,7 +76,7 @@ end
 function M.simple(nome, team, under, livello, badge)
 	local v = { nome = nome, squadra = team, sotto = under, livello = livello, badge = badge or {},
 		pezzi = empty_pieces(), abilities = {}, albero = {}, punti = 0 }
-	for i in ipairs(skills.BRANCHES) do v.albero[i] = 0 end
+	for i in ipairs(skills.PATHS) do v.albero[i] = 0 end
 	v.stats = copy_stats(game.base_stats())
 	return v
 end

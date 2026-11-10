@@ -27,10 +27,10 @@ foto 02_home
 tocca_centro 400 300                       # il diavoletto: il profilo
 aspetta 0.6
 foto 03_profilo_scheda
-tocca_centro 295 578                       # STATISTICHE
+tocca_centro 457 578                       # STATISTICHE
 aspetta 0.3
 foto 04_profilo_statistiche
-tocca_centro 485 578                       # PARTITE
+tocca_centro 647 578                       # PARTITE
 aspetta 0.3
 foto 05_profilo_partite
 tocca_bordo 62 62 alto sinistra     # indietro
