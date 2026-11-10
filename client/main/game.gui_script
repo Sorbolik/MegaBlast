@@ -2248,6 +2248,20 @@ function CP.file_replay(number)
 	return sys.get_save_file("megablast", "replay_" .. profile.replay_place(number))
 end
 
+-- Log APK only (release builds don't log): the recipe of a match played here goes
+-- to the log in chunks, one line each ("RICETTA numero parte/totale testo"), so
+-- tools/arena/ricevi_partite.py can collect the matches over adb logcat
+function CP.log_recipe(recipe, number)
+	local ok, text = pcall(json.encode, recipe)
+	if not ok or not text then return end
+	local size = 3000
+	local total = math.ceil(#text / size)
+	local id = tostring(os.time())
+	for k = 1, total do
+		print(string.format("RICETTA %s_%d %d/%d %s", id, number or 0, k, total, text:sub((k - 1) * size + 1, k * size)))
+	end
+end
+
 -- End of match: the stats and the match into the profile, and its replay if
 -- it was played here. Returns the match number if it can be rewatched
 function CP.record(self, res)
@@ -2259,6 +2273,7 @@ function CP.record(self, res)
 	local pa = profile.record(self.profilo, r)
 	if self.cp_replay then
 		pa.replay = pcall(sys.save, CP.file_replay(pa.numero), { r = self.ricetta }) or nil
+		CP.log_recipe(self.ricetta, pa.numero)
 	else
 		pa.online = self.online_end or nil
 	end
