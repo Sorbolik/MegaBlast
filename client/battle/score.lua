@@ -50,7 +50,7 @@ local M = {}
 local max, min, floor, abs = math.max, math.min, math.floor, math.abs
 
 local TEAMS = 4
--- center of the row, centered on screen (M.cima); low enough to leave room
+-- center of the row, centered on screen (M.top); low enough to leave room
 -- above for the Crown
 local TOP = 38
 local Y, HALF = 720 - TOP, 640
@@ -60,7 +60,7 @@ local STRIP, BORDER_MINE = 6, 3
 local VAL_W, ROPE_W, ROPE_H, ROPE_GAP = 60, 250, 12, 8
 local BAND_W, BAND_STEP, BAND_V = 4, 10, 16  -- stripes of the pending points: width, spacing, px/s
 local SOFT = 60                    -- with the first points the rope moves little
-local CAPTION, SMALL = 0.8, 0.6     -- ui.testo scales
+local CAPTION, SMALL = 0.8, 0.6     -- ui.text scales
 -- the first one's Crown: the gold one of the plates (fx/targa_corona.png, 108 x 59)
 local CROWN_W = 25
 local CROWN_Y = GET_H / 2 + 1 + CROWN_W * 59 / 108 / 2
@@ -168,7 +168,7 @@ local function face_token(parent)
 	gui.set_visible(f.radice, false)
 	f.alone = ui.alone(0, 0, FACE_D * 3, vmath.vector4(1, 1, 1, 1), f.radice)
 	f.crema = ui.ring_node(0, 0, FACE_D + 4, 2, ui.C.LIGHT, f.radice)
-	f.fondo = ui.disco(0, 0, FACE_D, ui.C.PANEL, f.radice)
+	f.fondo = ui.disc(0, 0, FACE_D, ui.C.PANEL, f.radice)
 	f.anello = ui.ring_node(0, 0, FACE_D, 3, vmath.vector4(1, 1, 1, 1), f.radice)
 	f.interno = ui.ring_node(0, 0, FACE_D - 6, 1.5, vmath.vector4(1, 1, 1, 1), f.radice)
 	-- the head of whoever plays (and its helmet): over the rings: it starts from the disc and may stick out of it,
@@ -182,9 +182,9 @@ local function face_token(parent)
 		gui.set_enabled(n, false)
 		f.pezzi[i] = n
 	end
-	f.velo = ui.disco(0, 0, FACE_D, vmath.vector4(0.06, 0.05, 0.08, 0.6), f.radice)
+	f.velo = ui.disc(0, 0, FACE_D, vmath.vector4(0.06, 0.05, 0.08, 0.6), f.radice)
 	-- the player's name under the face (yours in gold)
-	f.nome = ui.testo("", 0, -(FACE_D / 2 + 9), 1.1, ui.C.LIGHT, f.radice)
+	f.nome = ui.text("", 0, -(FACE_D / 2 + 9), 1.1, ui.C.LIGHT, f.radice)
 	gui.set_enabled(f.radice, false)
 	return f
 end
@@ -199,7 +199,7 @@ local function token(color)
 	gt.bordo = box(gt.dentro, 0, 0, GET_W + 2 * BORDER_MINE, GET_H + 2 * BORDER_MINE, ui.C.LIGHT)
 	gt.fondo = box(gt.dentro, 0, 0, GET_W, GET_H, ui.C.PANEL)
 	gt.strip = box(gt.dentro, -GET_W / 2 + STRIP / 2, 0, STRIP, GET_H, color)
-	gt.posto = ui.testo("", -GET_W / 2 + STRIP + 6, 0, CAPTION, color, gt.dentro)
+	gt.posto = ui.text("", -GET_W / 2 + STRIP + 6, 0, CAPTION, color, gt.dentro)
 	gui.set_pivot(gt.posto, gui.PIVOT_W)
 	-- the first one's Crown: big, resting on the token's top border
 	gt.crown = gui.new_box_node(vmath.vector3(0, CROWN_Y, 0), vmath.vector3(CROWN_W, CROWN_W * 59 / 108, 0))
@@ -208,14 +208,14 @@ local function token(color)
 	gui.set_adjust_mode(gt.crown, gui.ADJUST_FIT)
 	gui.set_parent(gt.crown, gt.dentro)
 	gui.set_inherit_alpha(gt.crown, true)
-	gt.valore = ui.testo("0", GET_W / 2 - 8, 0, CAPTION, ui.C.TEXT, gt.dentro)
+	gt.valore = ui.text("0", GET_W / 2 - 8, 0, CAPTION, ui.C.TEXT, gt.dentro)
 	gui.set_pivot(gt.valore, gui.PIVOT_E)
 	-- the pending points: a dashed token... in our own way, border in the team
 	-- color, an hourglass (two bars and an X) and the number
 	gt.attesa = root_node(0, 0)
 	gui.set_parent(gt.attesa, gt.radice)
 	gui.set_visible(gt.attesa, false)
-	local bottom, border = ui.pannello(0, 0, WAIT_W, WAIT_H, gt.attesa)
+	local bottom, border = ui.panel(0, 0, WAIT_W, WAIT_H, gt.attesa)
 	gui.set_color(bottom, ui.C.PANEL)
 	gui.set_color(border, color)
 	local cx = -WAIT_W / 2 + 12
@@ -225,7 +225,7 @@ local function token(color)
 		local x = box(gt.attesa, cx, 0, 2, 11, color)
 		gui.set_euler(x, vmath.vector3(0, 0, a))
 	end
-	gt.waiting_text = ui.testo("", 6, 0, SMALL, ui.C.TEXT, gt.attesa)
+	gt.waiting_text = ui.text("", 6, 0, SMALL, ui.C.TEXT, gt.attesa)
 	gt.waiting_on = false
 	gui.set_enabled(gt.attesa, false)
 	return gt
@@ -247,7 +247,7 @@ local function shape(gt, w, right)
 	end
 end
 
-function M.nuovo(palette, tick)
+function M.new(palette, tick)
 	local p = { gettoni = {}, numeri = {}, tick = tick, tick_t = 0, tick_n = 0, on = true }
 	for t = 1, TEAMS do p.gettoni[t] = token(palette[t]) end
 
@@ -280,12 +280,12 @@ function M.nuovo(palette, tick)
 	for i = 1, 4 do p.facce[i] = face_token(p.cerchi) end
 	-- under the bar, in the middle: TURNO: and a dot per player in turn order, the one playing ringed in white
 	p.turni = root_node(HALF, Y - BELOW_Y)
-	p.turni_label = ui.testo(T.turn_row, 0, 0, SMALL, ui.C.LIGHT, p.turni)
+	p.turni_label = ui.text(T.turn_row, 0, 0, SMALL, ui.C.LIGHT, p.turni)
 	gui.set_pivot(p.turni_label, gui.PIVOT_E)
 	p.puntini = {}
 	for i = 1, 4 do
 		local d = {}
-		d.disco = ui.disco(0, 0, DOT_D, vmath.vector4(1, 1, 1, 1), p.turni)
+		d.disco = ui.disc(0, 0, DOT_D, vmath.vector4(1, 1, 1, 1), p.turni)
 		d.anello = ui.ring_node(0, 0, DOT_D + 6, 2, vmath.vector4(1, 1, 1, 1), p.turni)
 		gui.set_enabled(d.disco, false)
 		gui.set_enabled(d.anello, false)
@@ -293,33 +293,33 @@ function M.nuovo(palette, tick)
 	end
 	p.pronto = root_node(0, Y)
 	-- dark pill with a gold edge and light letters (dark letters on the gold were hard to read)
-	local pill, pill_border = ui.pannello(0, 0, READY_W, READY_H, p.pronto, "pillola")
+	local pill, pill_border = ui.panel(0, 0, READY_W, READY_H, p.pronto, "pillola")
 	gui.set_color(pill, vmath.vector4(0.1, 0.08, 0.04, 0.92))
 	gui.set_color(pill_border, ui.GOLD)
-	ui.testo(T.get_ready, 0, 0, SMALL * 1.45, ui.C.TEXT, pill)
+	ui.text(T.get_ready, 0, 0, SMALL * 1.45, ui.C.TEXT, pill)
 	gui.set_enabled(p.pronto, false)
 	p.faces_key = nil
 
 	-- gap under your token, turn balance under the row
 	p.gap = root_node(0, Y - GET_H / 2 - 12)
-	p.gap_text = ui.testo("", 0, 0, SMALL, ui.C.TEXT, p.gap)
+	p.gap_text = ui.text("", 0, 0, SMALL, ui.C.TEXT, p.gap)
 	p.riga = root_node(HALF, Y - ROW_Y)
-	p.row_text = ui.testo("", 0, 0, SMALL, ui.C.LIGHT, p.riga)
+	p.row_text = ui.text("", 0, 0, SMALL, ui.C.LIGHT, p.riga)
 	p.line_ticks = 0
 	-- the mission goal, under the turn line
 	p.obiettivo = root_node(HALF + 215, Y)
-	p.objective_text = ui.testo("", 0, 0, CAPTION, ui.GOLD, p.obiettivo)
+	p.objective_text = ui.text("", 0, 0, CAPTION, ui.GOLD, p.obiettivo)
 	gui.set_pivot(p.objective_text, gui.PIVOT_W)
 	gui.set_line_break(p.objective_text, true)
 	gui.set_size(p.objective_text, vmath.vector3(300 / (CAPTION * 0.5), 100, 0))
 	p.goal_on = false
 	-- "+N PER PAREGGIARE" under the team that has to answer
 	p.tie = root_node(0, Y - BELOW_Y)
-	p.tie_text = ui.testo("", 0, 0, SMALL, ui.C.TEXT, p.tie)
+	p.tie_text = ui.text("", 0, 0, SMALL, ui.C.TEXT, p.tie)
 	p.tie_s = ""
 	-- before the last lap, under the board
 	p.avviso = root_node(HALF, Y - NOTICE_Y)
-	ui.testo(T.last_round_soon, 0, 0, SMALL, ui.GOLD, p.avviso)
+	ui.text(T.last_round_soon, 0, 0, SMALL, ui.GOLD, p.avviso)
 	p.notice_on = false
 	gui.set_enabled(p.avviso, false)
 	-- the last-lap banner, in the middle of the screen
@@ -327,15 +327,15 @@ function M.nuovo(palette, tick)
 	box(p.banner, 0, 0, BANNER_W, BANNER_H, vmath.vector4(0.16, 0.1, 0.02, 0.9))
 	box(p.banner, 0, BANNER_H / 2, BANNER_W, 3, ui.GOLD)
 	box(p.banner, 0, -BANNER_H / 2, BANNER_W, 3, ui.GOLD)
-	ui.testo(T.last_round, 0, 14, 2.4, ui.GOLD, p.banner)
-	ui.testo(T.double_points, 0, -32, 0.9, ui.C.TEXT, p.banner)
+	ui.text(T.last_round, 0, 14, 2.4, ui.GOLD, p.banner)
+	ui.text(T.double_points, 0, -32, 0.9, ui.C.TEXT, p.banner)
 	p.banner_time = 0
 	gui.set_inherit_alpha(p.banner, true)
 	gui.set_enabled(p.banner, false)
 
 	-- the flying numbers, on top of everything else
 	for i = 1, NUMBERS do
-		local n = { nodo = ui.testo("", 0, 0, FLIGHT_SCALE, ui.C.TEXT), colore = vmath.vector4(1, 1, 1, 1), wait = 0 }
+		local n = { nodo = ui.text("", 0, 0, FLIGHT_SCALE, ui.C.TEXT), colore = vmath.vector4(1, 1, 1, 1), wait = 0 }
 		gui.set_adjust_mode(n.nodo, gui.ADJUST_FIT)
 		gui.set_enabled(n.nodo, false)
 		p.numeri[i] = n
@@ -345,7 +345,7 @@ function M.nuovo(palette, tick)
 end
 
 -- The real top of the screen (ui/screen.lua: higher than 720 on a tablet)
-function M.cima(p, y1)
+function M.top(p, y1)
 	Y = y1 - TOP
 	position(p.fune, HALF, Y)
 	position(p.riga, HALF, Y - ROW_Y)
@@ -357,7 +357,7 @@ function M.cima(p, y1)
 	end
 end
 
-function M.obiettivo(p, txt)
+function M.goal(p, txt)
 	p.goal_on = txt ~= nil
 	if txt and txt ~= p.goal_written then gui.set_text(p.objective_text, txt) end
 	p.goal_written = txt
@@ -406,7 +406,7 @@ local function team_points(p, g, flight)
 	return s
 end
 
-function M.partita(p, g, name_list, plates)
+function M.match(p, g, name_list, plates)
 	p.nomi, p.plates, p.volo = name_list, plates, {}
 	p.squadre, p.lista = {}, {}
 	for _, rb in ipairs(g.robots) do
@@ -450,7 +450,7 @@ function M.partita(p, g, name_list, plates)
 	p.faces_key = nil
 	p.inizio = team_points(p, g)
 	p.in_order_now = g.robots[g.current] and g.robots[g.current].team
-	for i in ipairs(g.robots) do plate.posto(plates[i], "", false) end
+	for i in ipairs(g.robots) do plate.rank(plates[i], "", false) end
 	p.posti = {}
 	M.set_enabled(p, p.on)
 end
@@ -464,7 +464,7 @@ end
 
 -- a number is born at x, y (screen); if the same robot has one just born
 -- from the same hit (damage and kill together) it adds to that one
-function M.punti(p, e, x, y)
+function M.points(p, e, x, y)
 	if not p.squadre or p.nascosti or e.amount == 0 then return end
 	local r = e.robot
 	p.volo[r] = (p.volo[r] or 0) + e.amount
@@ -516,7 +516,7 @@ function M.last_lap(p)
 end
 
 -- at every new turn, the balance of the one just ended
-function M.turno(p, g)
+function M.turn(p, g)
 	if not p.squadre or p.nascosti then return end
 	local now_pts = team_points(p, g)
 	local t = p.in_order_now
@@ -931,7 +931,7 @@ function M.update(p, dt, g, my_own, human, looks, views)
 		local crown = head_end == rb
 		local key = txt .. (crown and "c" or "")
 		if p.posti[i] ~= key then
-			plate.posto(p.plates[i], txt, crown)
+			plate.rank(p.plates[i], txt, crown)
 			p.posti[i] = key
 		end
 	end

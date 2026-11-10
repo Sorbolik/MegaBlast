@@ -45,13 +45,13 @@ for _, c in ipairs(M.CHANNELS) do M.NEUTRAL[c] = M.NEUTRAL[c] or 0 end
 
 local floor = math.floor
 
-function M.nuova()
+function M.new()
 	local p = { face_name = nil, face_weight = 0 }
-	M.azzera(p)
+	M.reset(p)
 	return p
 end
 
-function M.azzera(p)
+function M.reset(p)
 	local neutral, channels = M.NEUTRAL, M.CHANNELS
 	for i = 1, #channels do
 		local c = channels[i]
@@ -92,7 +92,7 @@ local function slope(tr, i, n, d, cycle)
 end
 
 -- the value of a track at time t (already inside the clip)
-function M.valore(tr, t, d, cycle)
+function M.value(tr, t, d, cycle)
 	local n = #tr / 3
 	if n == 1 then return tr[2] end
 	-- the key before t (i, from 0) and the one after (j); looping, before the
@@ -125,12 +125,12 @@ function M.valore(tr, t, d, cycle)
 end
 
 -- adds the clip at time t to the pose, with its weight
-function M.aggiungi(p, clip, t, weight)
+function M.add(p, clip, t, weight)
 	if weight <= 0 then return end
 	t = inside(clip, t)
 	local d, cycle = clip.duration, clip.loop
 	for c, tr in pairs(clip.tracks) do
-		p[c] = p[c] + weight * (M.valore(tr, t, d, cycle) - M.NEUTRAL[c])
+		p[c] = p[c] + weight * (M.value(tr, t, d, cycle) - M.NEUTRAL[c])
 	end
 	if weight > p.clip_weight then p.clip, p.clip_weight = clip, weight end
 	local visage = clip.face

@@ -205,7 +205,7 @@ in battaglia di base sta solo in `controller.BATTLE` (`client/ui/controller.lua`
 ognuno la cambia nelle IMPOSTAZIONI della home); un comando nuovo dell'HUD va
 aggiunto anche lì, in `controller.COMMANDS`, in `PAD.COMMANDS` e, se ha un pulsante, in `PAD.GLYPHS`
 (dove si vede il suo tasto sull'HUD, `client/main/game.gui_script`). Una
-schermata nuova con `ui.tocco` ha già la luce del controller. Si prova col
+schermata nuova con `ui.touch` ha già la luce del controller. Si prova col
 controller finto: scenari `strumenti/simula/scenari/controller.txt` e
 `impostazioni.txt` (con `imposta prova_pad playstation` o `nintendo`).
 

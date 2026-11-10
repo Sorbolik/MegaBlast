@@ -260,7 +260,7 @@ local function install(l, cap, map)
 	end
 	if l.arena then
 		l.mappa = map or "missione_" .. l.id
-		maps.registra(l.mappa, { name = l.titolo, spawns = l.spawns, build = function(t)
+		maps.register(l.mappa, { name = l.titolo, spawns = l.spawns, build = function(t)
 			for _, q in ipairs(l.arena) do t:rect(q[1], q[2], q[3], q[4], STEEL) end
 		end })
 	end
@@ -278,7 +278,7 @@ end
 -- place of the saved one with the same id (or a new one), in the chapter
 -- chapter_id; no next mission. painted = false: its arena changed, the
 -- painting of the saved one would lie (an unpainted map)
-function M.prova(l, chapter_id, painted)
+function M.custom(l, chapter_id, painted)
 	local cap = campaign.CAPITOLI[1]
 	for _, c in ipairs(campaign.CAPITOLI) do
 		if c.id == chapter_id then cap = c end
@@ -288,11 +288,11 @@ function M.prova(l, chapter_id, painted)
 	return l.id
 end
 
-function M.trova(id)
+function M.find(id)
 	return PER_ID[id]
 end
 
-function M.dopo(id)
+function M.after(id)
 	return NEXT_ID[id]
 end
 
@@ -322,7 +322,7 @@ local function touched_cmd(st, att)
 	return false
 end
 
-function M.vede(r, w)
+function M.sees(r, w)
 	local l = r and r.l
 	if not l or not l.vedi then return true end
 	if w == "teleport" and l.globi_tempo then return true end
@@ -335,7 +335,7 @@ function M.vede(r, w)
 end
 
 -- The state of a running mission
-function M.nuova(id)
+function M.new(id)
 	local l = assert(PER_ID[id], "missione sconosciuta: " .. tostring(id))
 	return { l = l, st = { turni = 0, bot_turns = 0, steps_done = {}, times = {}, conta = {}, touched_cmds = {}, maestra = l.maestra },
 		seen_weapons = {}, prese = {}, cadute = {}, opened = {}, waits = {}, cards = {}, giu = {}, riga = nil, esito = nil,
@@ -347,7 +347,7 @@ end
 -- the silent help: bots go down two grades (sim/bot.lua M.GRADES) and start with less life
 local HELP_HP = 0.75
 
-function M.partita(r, seed, picks, help)
+function M.match(r, seed, picks, help)
 	local l = r.l
 	local players = {}
 	r.help = help
@@ -380,16 +380,16 @@ function M.partita(r, seed, picks, help)
 		st.teleports = l.globi or st.teleports
 		-- what the lesson doesn't show isn't there: no orbs (not even from time), no
 		-- parachute
-		if not M.vede(r, "teleport") and not l.globi_tempo then
+		if not M.sees(r, "teleport") and not l.globi_tempo then
 			st.teleports, st.time_orbs = 0, 0
 		end
-		if not M.vede(r, "parachute") then st.parachutes = 0 end
+		if not M.sees(r, "parachute") then st.parachutes = 0 end
 		if l.globi_tempo ~= nil then
 			st.time_orbs = l.globi_tempo and 1 or 0
 		end
 		players[PLAYER].stats = st
 		-- nor for Favilla who shows the moves: no "+2 teletrasporti" in a lesson without orbs
-		if l.maestra and not M.vede(r, "teleport") and not l.globi_tempo then
+		if l.maestra and not M.sees(r, "teleport") and not l.globi_tempo then
 			local fs = {}
 			for k, v in pairs(players[l.maestra].stats or {}) do fs[k] = v end
 			fs.teleports, fs.time_orbs = 0, 0
@@ -403,13 +403,13 @@ function M.partita(r, seed, picks, help)
 	-- in the lessons no healing circles popping up at random (Sergio, 29 Oct)
 	if l.aspetta then opts.heals = false end
 	-- and no points where the lesson doesn't talk about them (Sergio, 31 Oct)
-	if not M.vede(r, "punti") then opts.score = false end
+	if not M.sees(r, "punti") then opts.score = false end
 	return seed or 1, l.mappa, opts
 end
 
 -- After game.new: match time, starting life and points, the first line.
 -- The events of the start (the first turn) are counted here and discarded.
-function M.prepara(r, g, bots)
+function M.prepare(r, g, bots)
 	local l, st = r.l, r.st
 	-- Favilla plays her demonstrations like a bot: the keys come from here
 	if l.maestra and bots then
@@ -607,7 +607,7 @@ end
 -- (if you haven't already touched it this turn).
 local function show_line(r, line)
 	r.riga, r.line_until, r.line_yields, r.line = line.testo, line.fino, line.yields, line
-	-- a big vignette: Favilla shows the move only once it has been read (M.letta)
+	-- a big vignette: Favilla shows the move only once it has been read (M.line_read)
 	r.big_unread = line.mostra == "grande" or nil
 	r.line_ticks = line.secondi and line.secondi * 60 or (line.fino and 2 or 1) * LINE_SECONDS * 60
 	r.luce = line.highlight
@@ -715,7 +715,7 @@ local function restore_snapshot(r, g)
 	rb.teleports_left = math.max(rb.teleports_left, s.globi)
 end
 
-function M.evento(r, g, e, bots)
+function M.event(r, g, e, bots)
 	local l, st = r.l, r.st
 	if ATTACKS[e.type] and e.robot == PLAYER then
 		st.arma = ATTACKS[e.type]
@@ -795,7 +795,7 @@ end
 -- The player touched the controls (what: the chosen weapon, "salta", "mira",
 -- "annulla" or nil): time restarts, but if the line waits for one control only
 -- when you touch that one
-function M.tocca(r, what)
+function M.touch(r, what)
 	if not r then return end
 	if what then r.st.touched_cmds[what] = true end
 	if r.awaiting then
@@ -1085,24 +1085,24 @@ local function demonstrations(r, g)
 end
 
 -- Favilla aiming in a demonstration, or nil
-function M.mira(r)
+function M.aim(r)
 	return r and r.demo and r.demo.aim or nil
 end
 
 -- Favilla striking a pose: her robot and the clip, or nil
-function M.posa(r)
+function M.pose(r)
 	local d = r and r.demo
 	if d and d.pose then return d.who, d.pose end
 end
 
 -- What Favilla says now (once): her robot and the text, or nil
-function M.battuta(r)
+function M.quip(r)
 	local b = r and table.remove(r.battute, 1)
 	if b then return b.robot, b.testo end
 end
 
 -- Is Favilla showing a move?
-function M.dimostra(r)
+function M.demo(r)
 	return r ~= nil and r.demo ~= nil
 end
 
@@ -1209,12 +1209,12 @@ end
 
 -- The big vignette of the line was read (closed with VAI): Favilla's demonstration
 -- waiting for it can start
-function M.letta(r)
+function M.line_read(r)
 	if r then r.big_unread = nil end
 end
 
 -- The weapon card to open (mission cards), once
-function M.scheda(r)
+function M.card(r)
 	return r and table.remove(r.cards, 1)
 end
 
@@ -1236,7 +1236,7 @@ function M.line(r)
 end
 
 -- The goal always in view: the missing step, with a number if more than one
-function M.obiettivo(r)
+function M.goal(r)
 	local l = r.l
 	local i, p = next_one(l, r.st)
 	if not i or r.esito then return nil end
@@ -1247,7 +1247,7 @@ end
 -- Favilla on her path (l.guida), at tick r.guida_t: where she is and how she
 -- moves, for the drawing. Before her step, at the first point; at the end, still
 local GUIDE_STATE = {}
-function M.guida(r)
+function M.guide(r)
 	local gd = r and r.l.guida
 	if not gd then return nil end
 	local pts, s, f = gd.percorso, (r.guida_t or 0) / 60, GUIDE_STATE
@@ -1274,7 +1274,7 @@ function M.guida(r)
 end
 
 -- The spark still to take (l.scintilla), or nil
-function M.scintilla(r)
+function M.spark(r)
 	local sp = r and r.l.scintilla
 	if sp and not r.scintilla_presa and not r.esito then return sp.x, sp.y end
 end
@@ -1293,7 +1293,7 @@ function M.criteria(l)
 end
 
 -- The point lead at the end of the mission (nil where there are no points)
-function M.vantaggio(r)
+function M.lead(r)
 	local l = r.l
 	if l.stelle and l.stelle.punti then return math.floor((r.st.gap or 0) + 0.5) end
 end
@@ -1307,7 +1307,7 @@ end
 -- Stars: one for completing it, then the point lead and the bonus (or two
 -- bonuses). Each counts on its own: you can have the third without the second.
 -- The cortile: «Fatta» and the medal (or nothing more).
-function M.stelle(r)
+function M.stars(r)
 	if r.esito ~= "fatta" then return { false, false, false } end
 	local l, st = r.l, r.st
 	local d = st.gap or 0
@@ -1318,7 +1318,7 @@ function M.stelle(r)
 	return { true, d >= s.punti, bonus(s.bonus, st) }
 end
 
-function M.quante(stars)
+function M.count(stars)
 	local n = 0
 	for i = 1, 3 do
 		if stars[i] then n = n + 1 end

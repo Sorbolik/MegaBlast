@@ -168,11 +168,11 @@ local function partita(k)
 			p.stats = assetto.stats(game.base_stats(), { tree = {}, gear = gear, variant = variant }, tiers)
 		end
 	end
-	local r = replay.nuova(seme, mappa, { players = players })
-	local g, bots = replay.partita(r)
+	local r = replay.new(seme, mappa, { players = players })
+	local g, bots = replay.match(r)
 	return gioca(g, function()
 		g:step(replay.input(r, g, bots))
-		replay.dopo(r, g)
+		replay.after(r, g)
 	end, function() return g.phase == "over" end)
 end
 
@@ -181,18 +181,18 @@ end
 local TETTO = 8 * 60 * 60
 
 local function missione(l)
-	local r = missioni.nuova(l.id)
-	local seed, mappa, opts = missioni.partita(r, 101)
+	local r = missioni.new(l.id)
+	local seed, mappa, opts = missioni.match(r, 101)
 	opts.players[1].bot = "normale"
-	local ric = replay.nuova(seed, mappa, opts)
-	local g, bots = replay.partita(ric)
-	missioni.prepara(r, g)
+	local ric = replay.new(seed, mappa, opts)
+	local g, bots = replay.match(ric)
+	missioni.prepare(r, g)
 	local esito
 	return gioca(g, function()
 		g:step(replay.input(ric, g, bots))
 		-- gli eventi li guarda prima la missione, poi tornano in coda per gioca
 		local ev = g:pop_events()
-		for _, e in ipairs(ev) do missioni.evento(r, g, e, bots) end
+		for _, e in ipairs(ev) do missioni.event(r, g, e, bots) end
 		for _, e in ipairs(g.events) do ev[#ev + 1] = e end
 		g.events = ev
 		esito = missioni.tick(r, g)

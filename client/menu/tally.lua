@@ -35,7 +35,7 @@ local function lead_text(c, g)
 	return math.floor(my_own - (another or 0) + 0.5), math.floor(my_own + 0.5), math.floor((another or 0) + 0.5)
 end
 
-function M.nuova(g, me, name_list)
+function M.new(g, me, name_list)
 	local c = { me = me, team = g.robots[me].team, nomi = name_list or {}, armi = {}, moments = {},
 		fune = { 0 }, giro = g.round or 1,
 		colpi = 0, a_segno = 0, globi = 0, colpo_lungo = 0 }
@@ -52,7 +52,7 @@ local function moment(c, g, txt)
 end
 
 -- The robot me attacks with arma (also the swap for an orb, which doesn't count)
-function M.sparo(c, g, weapon_name)
+function M.shot(c, g, weapon_name)
 	if weapon_name == "swap" or weapon_name == "teleport" then return end
 	local rb = g.robots[c.me]
 	c.arma = weapon_name
@@ -65,7 +65,7 @@ local function enemy(c, g, i)
 	return rb and rb.team ~= c.team
 end
 
-function M.evento(c, g, e)
+function M.event(c, g, e)
 	local t = e.type
 	if t == "damage" and e.by == c.me and enemy(c, g, e.robot) and c.colpo then
 		-- real: the health really taken away (like the standings' damage)
@@ -108,7 +108,7 @@ end
 -- tools and the bot read them too): gruppo (2v2, 1v1, torneo,
 -- campagna...), mappa (the name), quando (os.time()), giocatori ({ nome,
 -- squadra, vetrina } per robot)
-function M.fine(c, g, results, info)
+function M.finish(c, g, results, info)
 	local my_team
 	for _, v in ipairs(results.ranking) do
 		if v.robot == c.me then my_team = v end

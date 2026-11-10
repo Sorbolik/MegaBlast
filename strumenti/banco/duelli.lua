@@ -52,8 +52,8 @@ local function match(j, w1, w2)
 	local mappa = opt.mappa or maps.pick(seme)
 	local players = {}
 	for i, p in ipairs(config.MODES["1v1"]) do players[i] = { team = p.team, bot = opt.livello } end
-	local r = replay.nuova(seme, mappa, { players = players })
-	local g, bots = replay.partita(r)
+	local r = replay.new(seme, mappa, { players = players })
+	local g, bots = replay.match(r)
 	g.crate_every, g.crate_chance = 1e9, nil
 	for i, w in ipairs({ w1, w2 }) do
 		local rb = g.robots[i]
@@ -69,7 +69,7 @@ local function match(j, w1, w2)
 	end
 	while g.phase ~= "over" do
 		g:step(replay.input(r, g, bots))
-		replay.dopo(r, g)
+		replay.after(r, g)
 		g:pop_events()
 	end
 	local res = g:results()

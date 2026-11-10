@@ -25,7 +25,7 @@ M.loaded_ok = false
 M.without_net = false  -- the last request got no answer
 
 -- The server's time (the phone's clock may be ahead or behind)
-function M.ora()
+function M.now()
 	return os.time() + M.offset
 end
 
@@ -63,7 +63,7 @@ function M.load_up(ws_url, done, went_wrong)
 end
 
 function M.in_progress(now)
-	now = now or M.ora()
+	now = now or M.now()
 	local out = {}
 	for _, o in ipairs(M.lista) do
 		if o.da <= now and now < o.a then out[#out + 1] = o end
@@ -72,7 +72,7 @@ function M.in_progress(now)
 end
 
 function M.upcoming(now)
-	now = now or M.ora()
+	now = now or M.now()
 	local out = {}
 	for _, o in ipairs(M.lista) do
 		if o.da > now then out[#out + 1] = o end
@@ -100,7 +100,7 @@ function M.with_queue(now)
 end
 
 -- 2g 3h, 3h 20m, 12m
-function M.durata(s)
+function M.duration(s)
 	s = math.max(0, s)
 	local g, h, m = math.floor(s / 86400), math.floor(s % 86400 / 3600), math.floor(s % 3600 / 60)
 	if g > 0 then return h > 0 and T.days_hours:format(g, h) or T.days:format(g) end
@@ -108,10 +108,10 @@ function M.durata(s)
 	return T.minutes:format(math.max(m, 1))
 end
 
-function M.quando(o, now)
-	now = now or M.ora()
-	if o.da > now then return T.starts_in:format(M.durata(o.da - now)) end
-	return T.ends_in:format(M.durata(o.a - now))
+function M.when(o, now)
+	now = now or M.now()
+	if o.da > now then return T.starts_in:format(M.duration(o.da - now)) end
+	return T.ends_in:format(M.duration(o.a - now))
 end
 
 -- The line under EVENTI in the home: no red numbers, only what is happening
@@ -121,12 +121,12 @@ function M.home_line(now)
 	if #hour_of == 1 then return hour_of[1].nome end
 	if #hour_of > 1 then return T.running:format(#hour_of) end
 	local after_step = M.upcoming(now)[1]
-	if after_step then return T.next_in:format(M.durata(after_step.da - (now or M.ora()))) end
+	if after_step then return T.next_in:format(M.duration(after_step.da - (now or M.now()))) end
 	return T.none_planned
 end
 
 local TYPES = T.kinds
-function M.tipo(o) return TYPES[o.tipo] or string.upper(o.tipo or "") end
+function M.kind(o) return TYPES[o.tipo] or string.upper(o.tipo or "") end
 
 local CODE = common.modes
 function M.queue_name(modo) return CODE[modo] or modo end

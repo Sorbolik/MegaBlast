@@ -76,14 +76,14 @@ function M.new(color)
 	gui.set_visible(zone, false)
 	h.tops[#h.tops + 1] = zone
 	h.buttons[#h.buttons + 1] = { nodo = zone, bordo = zone, ui_action = "profilo", colore = ui.C.LIGHT, riposo = ui.C.LIGHT }
-	local label = ui.testo(T.your_profile, 0, -34, 0.7, ui.C.TEXT, h.posa)
+	local label = ui.text(T.your_profile, 0, -34, 0.7, ui.C.TEXT, h.posa)
 	-- on the painted background the label with a dark outline
 	gui.set_outline(label, ui.C.SHADOW)
 	gui.set_inherit_alpha(label, true)
 
 	-- the name at the top left
 	local top_left = angle_deg(h, ui.EDGE, ui.HEAD_Y, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
-	local nome = ui.titolo(common.game_name, 0, 0, 1.3, ui.C.LIGHT, top_left)
+	local nome = ui.title(common.game_name, 0, 0, 1.3, ui.C.LIGHT, top_left)
 	gui.set_pivot(nome, gui.PIVOT_W)
 
 	-- bottom right: the matches. Each mode has its notch's color (report
@@ -92,7 +92,7 @@ function M.new(color)
 	local dx = angle_deg(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	local campaign = ui.button(h.buttons, 0, 344, 340, 72, common.campaign, "campagna", { tacca = ui.C.GOLD }, dx)
 	h.campaign = h.buttons[#h.buttons]
-	h.campaign_note = ui.testo(T.leave_queue_first, 0, -24, 0.5, ui.C.OFF, campaign)
+	h.campaign_note = ui.text(T.leave_queue_first, 0, -24, 0.5, ui.C.OFF, campaign)
 	gui.set_enabled(h.campaign_note, false)
 	ui.button(h.buttons, 0, 256, 340, 72, common.training, "allenamento", { tacca = ui.C.STEEL }, dx)
 	ui.button(h.buttons, 0, 168, 340, 72, T.same_phone, "local", { tacca = ui.C.PURPLE }, dx)
@@ -104,11 +104,11 @@ function M.new(color)
 	ui.button(h.buttons, 0, 60, 240, 72, common.armory, "armeria", { tacca = ui.C.BRACE }, sx)
 	-- above: the EVENTI (menu/board.lua), with what is happening now below
 	local ev = ui.button(h.buttons, 0, 160, 240, 96, "", "eventi", { tacca = ui.C.SQUADRA[1] }, sx)
-	ui.testo(common.events, 0, 14, 0.9, ui.C.TEXT, ev)
-	h.events_row = ui.testo("", 0, -22, 0.55, ui.C.OFF, ev)
+	ui.text(common.events, 0, 14, 0.9, ui.C.TEXT, ev)
+	h.events_row = ui.text("", 0, -22, 0.55, ui.C.OFF, ev)
 
 	-- top right: the settings
-	h.tops[#h.tops + 1] = ui.impostazioni(h.buttons, "impostazioni", nil, true)
+	h.tops[#h.tops + 1] = ui.settings_button(h.buttons, "impostazioni", nil, true)
 
 	-- black veil dissolving when the home appears
 	h.veil = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
@@ -145,7 +145,7 @@ function M.hide(h)
 end
 
 -- The line under EVENTI (main/events.lua, home_line)
-function M.eventi(h, txt)
+function M.events(h, txt)
 	gui.set_text(h.events_row, txt)
 end
 
@@ -166,7 +166,7 @@ end
 
 function M.on_input(h, action_id, action)
 	if not h.is_visible then return nil end
-	return ui.tocco(h.buttons, action_id, action)
+	return ui.touch(h.buttons, action_id, action)
 end
 
 return M

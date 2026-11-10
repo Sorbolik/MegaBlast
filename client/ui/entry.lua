@@ -47,9 +47,9 @@ function M.new()
 	gui.play_flipbook(e.disco, "favilla")
 	gui.set_color(e.disco, CARD)
 	child(e.disco, e.centro)
-	local nome = child(ui.titolo(common.game_name, 0, -185, 1.2, ui.C.LIGHT), e.centro)
+	local nome = child(ui.title(common.game_name, 0, -185, 1.2, ui.C.LIGHT), e.centro)
 	gui.set_adjust_mode(nome, gui.ADJUST_FIT)
-	e.riga = child(ui.testo("", 0, -240, 0.75, ui.C.TEXT), e.centro)
+	e.riga = child(ui.text("", 0, -240, 0.75, ui.C.TEXT), e.centro)
 	M.update(e, 0)
 	return e
 end
@@ -65,7 +65,7 @@ function M.update(e, dt)
 	gui.set_color(e.alone, vmath.vector4(c.x, c.y, c.z, 0.32 + 0.1 * math.sin(e.t * 2.1)))
 end
 
-function M.riga(e, txt)
+function M.line(e, txt)
 	gui.set_text(e.riga, txt)
 end
 
@@ -79,7 +79,7 @@ function M.close_view(e, done)
 end
 
 -- at once, without fading (the scenarios that start already in a match)
-function M.via(e)
+function M.skip(e)
 	if e.closed then return end
 	e.closed = true
 	gui.delete_node(e.radice)

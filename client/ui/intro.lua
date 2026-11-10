@@ -46,7 +46,7 @@ end
 function M.start(p, title)
 	if not p.top then
 		p.top, p.bot = bar(true), bar(false)
-		p.title = ui.titolo("", 640, 0, 0.7, GOLD)
+		p.title = ui.title("", 640, 0, 0.7, GOLD)
 	end
 	p.t = 0
 	gui.set_enabled(p.top, true)

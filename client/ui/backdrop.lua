@@ -2,7 +2,7 @@
 -- (Sergio, 5 Nov: «mi piacciono tutte», proposals in docs/sfondi_menu.md),
 -- made of flat shapes (no painted images: the UI is code, 23 Oct) on any
 -- proportion (ui/screen.lua). A theme draws on the plain background of
--- ui.sfondo, colors it and adds its shapes once, when the screen opens. Each
+-- ui.background, colors it and adds its shapes once, when the screen opens. Each
 -- screen takes the color of its notch in the home (UI-002): the campaign the
 -- wood, the armory the embers, the training steel, the events red.
 --
@@ -19,7 +19,7 @@
 -- Themes: legno (campaign and the end of a level), fucina (armory), campo
 -- (training), arena (where do you play?), stendardi (events), banco
 -- (settings), camerino (profile), raggi (podium), schieramento (lineup).
--- Anything else is the plain dark of ui.sfondo.
+-- Anything else is the plain dark of ui.background.
 
 local ui = require "ui.ui"
 local screen = require "ui.screen"
@@ -101,8 +101,8 @@ function THEMES.fucina(n)
 	for j = -4, 4 do box(j * 320, 0, 4, HALF_H * 2, seam, n) end
 	for i = -3, 3 do
 		for j = -4, 4 do
-			ui.disco(j * 320, i * 240 + 120, 18, rivet, n)
-			ui.disco(j * 320 - 2, i * 240 + 122, 8, shine, n)
+			ui.disc(j * 320, i * 240 + 120, 18, rivet, n)
+			ui.disc(j * 320 - 2, i * 240 + 122, 8, shine, n)
 		end
 	end
 	ui.alone(0, floor_y() - 120, 1600, vmath.vector4(1, 0.42, 0.16, 0.11), n)
@@ -115,7 +115,7 @@ function THEMES.campo(n)
 	grid(n, 40, 4, hex("1A2330"), hex("1F2A39"), 2, 3)
 	local target = hex("223042")
 	for _, d in ipairs({ 660, 480, 300, 120 }) do ui.ring_node(400, -60, d, 6, target, n) end
-	ui.disco(400, -60, 36, target, n)
+	ui.disc(400, -60, 36, target, n)
 end
 
 -- GIOCA ONLINE (where do you play?): the floor of the arena seen from above,
@@ -127,7 +127,7 @@ function THEMES.arena(n)
 	local ring, ring_alt = hex("1C1826"), hex("17141F")
 	local i = 0
 	for r = 1300, 200, -110 do
-		ui.disco(0, cy, r * 2, i % 2 == 0 and ring or ring_alt, n)
+		ui.disc(0, cy, r * 2, i % 2 == 0 and ring or ring_alt, n)
 		i = i + 1
 	end
 	for k, col in ipairs(ui.C.SQUADRA) do
@@ -199,7 +199,7 @@ function THEMES.schieramento(n, colors)
 end
 
 function M.new(theme, parent, extra)
-	local n = ui.sfondo(parent)
+	local n = ui.background(parent)
 	if THEMES[theme] then THEMES[theme](n, extra) end
 	return n
 end

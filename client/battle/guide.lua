@@ -6,7 +6,7 @@
 -- controller the sticks. A few nodes made once: every frame they only move.
 --
 --   local gd = guida.new()                          -- after the HUD, so it sits on top
---   gd:aggiorna(cosa, where, commands, pads)        -- every frame; cosa nil: nothing
+--   gd:update(cosa, where, commands, pads)        -- every frame; cosa nil: nothing
 --   gd.gesture(cosa)                                -- a gesture (jump, aim...), not a button
 --     where = { x, y, d }: the control to circle (or nil); pads = { muovi, mira }:
 --     the centers of the sticks; commands: "telefono" (finger gestures),
@@ -42,11 +42,11 @@ end
 function M.new()
 	local gd = setmetatable({ cosa = nil }, { __index = M })
 	gd.ring_node = ui.ring_node(0, 0, 100, 7, YELLOW)
-	gd.finger = ui.disco(0, 0, 48, FINGER)
+	gd.finger = ui.disc(0, 0, 48, FINGER)
 	gd.wave = ui.ring_node(0, 0, 48, 5, WAVE)
-	gd.arrow = ui.titolo("^", 0, 0, 1.6, YELLOW)
-	gd.tasto = ui.pannello(0, 0, 170, 58)
-	gd.key_label = ui.titolo("", 0, 2, 0.75, ui.C.LIGHT, gd.tasto)
+	gd.arrow = ui.title("^", 0, 0, 1.6, YELLOW)
+	gd.tasto = ui.panel(0, 0, 170, 58)
+	gd.key_label = ui.title("", 0, 2, 0.75, ui.C.LIGHT, gd.tasto)
 	for _, n in ipairs({ gd.ring_node, gd.finger, gd.wave, gd.arrow, gd.tasto }) do gui.set_enabled(n, false) end
 	return gd
 end
@@ -87,7 +87,7 @@ local function soul(gd, what, commands, pads)
 	elseif keys[what] then
 		-- with jump on a key (settings) that key is shown
 		local jump_name = commands == "controller" and what == "salta" and controller.name_of("salta") or ""
-		local sides = { muove = string.upper(controller.lato("muove")), mira = string.upper(controller.lato("mira")) }
+		local sides = { muove = string.upper(controller.side("muove")), mira = string.upper(controller.side("mira")) }
 		gui.set_text(gd.key_label, jump_name ~= "" and jump_name or (keys[what]:gsub("{(%a+)}", sides)))
 		pos(gd.tasto, pads.muovi.x, pads.muovi.y)
 		gui.animate(gd.tasto, "scale", vmath.vector3(1.12, 1.12, 1), gui.EASING_INOUTSINE, 0.45, 0, nil,
@@ -100,7 +100,7 @@ function M.gesture(what)
 	return GESTURES[what] ~= nil or what == "annulla"
 end
 
-function M.aggiorna(gd, what, where, commands, pads)
+function M.update(gd, what, where, commands, pads)
 	local lookup_key = what and (what .. commands) or nil
 	local phone, keys = commands == "telefono", KEYS_LIST[commands] or {}
 	if lookup_key ~= gd.cosa then
@@ -117,7 +117,7 @@ function M.aggiorna(gd, what, where, commands, pads)
 		pos(gd.ring_node, where.x, where.y)
 		local d = where.d + 26
 		if gd.ring_d ~= d then
-			ui.anello(gd.ring_node, d, 7)
+			ui.ring(gd.ring_node, d, 7)
 			gd.ring_d = d
 		end
 	end

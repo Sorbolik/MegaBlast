@@ -7,7 +7,7 @@
 -- Sergio, 4 Nov, its icon flies to its button), and the Armory will use it too.
 --
 --   local c = scheda.open_view("missile", commands)     -- commands: "telefono", "computer" or "controller" (how to use it)
---   if c:premi(x, y) then c:close_view() end            -- a tap: on the button? (x, y as in gui.pick_node)
+--   if c:press(x, y) then c:close_view() end            -- a tap: on the button? (x, y as in gui.pick_node)
 --   scheda.DATI.missile                            -- the kind and the bars, for whoever shows it elsewhere (what it does: lang/it.lua card.what)
 
 local ui = require "ui.ui"
@@ -69,7 +69,7 @@ local function use(d, weapon_name, commands)
 		return d.in_air and T.item_touch_air or T.item_touch
 	end
 	if commands == "controller" then
-		return T.aim_pad:format(controller.lato("mira") == "dx" and common.stick_side.dx or common.stick_side.sx, button_key("spara"))
+		return T.aim_pad:format(controller.side("mira") == "dx" and common.stick_side.dx or common.stick_side.sx, button_key("spara"))
 	elseif commands == "telefono" then
 		return T.aim_phone
 	end
@@ -78,7 +78,7 @@ end
 
 -- a text that wraps within WIDE
 local function riga(t, y, scale, color, parent)
-	local n = ui.testo(t, 0, y, scale, color, parent)
+	local n = ui.text(t, 0, y, scale, color, parent)
 	gui.set_line_break(n, true)
 	gui.set_size(n, vmath.vector3(WIDE / (scale * 0.5), 200, 0))
 	return n
@@ -94,23 +94,23 @@ function M.open_view(weapon_name, commands)
 	local veil = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(1280 * screen.FULL, 720 * screen.FULL, 0))
 	gui.set_color(veil, vmath.vector4(0, 0, 0, 0.62))
 	gui.set_parent(veil, c.radice)
-	local paper, border = ui.pannello(0, 0, W, H, c.radice)
+	local paper, border = ui.panel(0, 0, W, H, c.radice)
 	gui.set_color(border, col)
-	ui.testo(kind.nome, 0, 245, 0.8, col, paper)
+	ui.text(kind.nome, 0, 245, 0.8, col, paper)
 	ui.alone(0, 150, 230, vmath.vector4(col.x, col.y, col.z, 0.4), paper)
 	local icon_img = gui.new_box_node(vmath.vector3(0, 150, 0), vmath.vector3(130, 130, 0))
 	gui.set_texture(icon_img, "armi")
 	gui.play_flipbook(icon_img, weapon_name .. "_icona")
 	gui.set_parent(icon_img, paper)
-	ui.titolo(hud.NAMES[weapon_name] or string.upper(weapon_name), 0, 58, 0.9, C.LIGHT, paper)
+	ui.title(hud.NAMES[weapon_name] or string.upper(weapon_name), 0, 58, 0.9, C.LIGHT, paper)
 	riga(T.what[weapon_name], 2, 0.9, C.TEXT, paper)
 	local y = -62
 	if d.bars then
 		for i, v in ipairs(d.bars) do
-			local nome = ui.testo(BAR_NAMES[i] or kind.terza, -190, y, 0.8, C.OFF, paper)
+			local nome = ui.text(BAR_NAMES[i] or kind.terza, -190, y, 0.8, C.OFF, paper)
 			gui.set_pivot(nome, gui.PIVOT_W)
 			for k = 1, 5 do
-				ui.disco(40 + (k - 1) * 34, y, 20, k <= v and col or OFF, paper)
+				ui.disc(40 + (k - 1) * 34, y, 20, k <= v and col or OFF, paper)
 			end
 			y = y - 36
 		end
@@ -123,7 +123,7 @@ function M.open_view(weapon_name, commands)
 	return c
 end
 
-function M.premi(c, x, y)
+function M.press(c, x, y)
 	return gui.pick_node(c.prova, x, y)
 end
 

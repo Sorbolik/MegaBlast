@@ -74,7 +74,7 @@ local ACTION = {
 	WEAPON = {},
 }
 for i = 1, 9 do ACTION.WEAPON[hash("arma" .. i)] = i end
--- the controller's buttons reach the menus as ACTION.PAD (ui.tocco)
+-- the controller's buttons reach the menus as ACTION.PAD (ui.touch)
 ACTION.PAD = ui.PAD
 
 -- Controller (ui/controller.lua, docs/controller.md): reading the buttons and,
@@ -180,7 +180,7 @@ local function hit_def(nome, sc)
 end
 
 local function label(x, y, text, scale)
-	return fit(ui.testo(text, x, y, (scale or 1) * FONT_K * 2))
+	return fit(ui.text(text, x, y, (scale or 1) * FONT_K * 2))
 end
 
 -- Simulation (strumenti/simula): with megablast.simula = 1 the game writes to
@@ -312,7 +312,7 @@ local CR = { BORDER = 128, STEP = 8, CELLS = 7, OX = game.MARGIN_CELLS } -- OX: 
 
 -- Every crater of the match (x, y, r), to redo the b channel if the whole
 -- mask is redrawn: the list is valid for one match (self.g)
-function CR.lista(self)
+function CR.list(self)
 	if self.craters_g ~= self.g then self.craters, self.craters_g = {}, self.g end
 	return self.craters
 end
@@ -349,7 +349,7 @@ end
 -- The explosion craters in a list of skipped events (replay, recipe): so
 -- when the mask is redrawn they are there too
 function CR.remember(self, events)
-	local k = CR.lista(self)
+	local k = CR.list(self)
 	for _, e in ipairs(events) do
 		if e.type == "explosion" or e.type == "carve" then k[#k + 1] = { x = e.x, y = e.y, r = e.r } end
 	end
@@ -405,8 +405,8 @@ local function paint_terrain(self)
 	self.mask_stream = st
 	self.mask_buf = buf
 	self.mask_dug = {}
-	for _, k in ipairs(CR.lista(self)) do CR.dig(self, k.x, k.y, k.r) end
-	frames.segna("maschera")
+	for _, k in ipairs(CR.list(self)) do CR.dig(self, k.x, k.y, k.r) end
+	frames.mark("maschera")
 	if self.mask_tex then
 		resource.set_texture(self.mask_tex, mask_params(TW, TH), buf)
 	else
@@ -460,7 +460,7 @@ end
 
 local function show_message(self, text, keep)
 	-- a message takes the waiting flame's place
-	if self.attesa then menu.attesa.via(self.attesa) end
+	if self.attesa then menu.attesa.skip(self.attesa) end
 	gui.set_text(self.message, text)
 	gui.cancel_animations(self.message, "color.w")
 	gui.set_color(self.message, WHITE)
@@ -508,7 +508,7 @@ end
 -- below, the first setting: the gauge or reticle aim
 local function open_wheel(self, is_open)
 	self.menu_open = is_open
-	if self.rotellina then ui.luce(self.rotellina, nil) end
+	if self.rotellina then ui.light(self.rotellina, nil) end
 	gui.set_enabled(self.btn_retry, is_open and self.mode == "local")
 	gui.set_enabled(self.btn_quit, is_open)
 	gui.set_enabled(self.btn_aim, is_open)
@@ -524,11 +524,11 @@ local function set_controls_visible(self, visible)
 	gui.set_enabled(self.aim_pad.base, visible and self.touch_ui)
 	gui.set_enabled(self.bar, visible)
 	gui.set_enabled(self.btn_tele.nodo, visible)
-	if not visible and self.guide then self.guide:aggiorna(nil) end
+	if not visible and self.guide then self.guide:update(nil) end
 	self.tele_sees = visible
 	-- the lessons show time and points only once they explain them (sim/missions.lua vedi)
-	hud.stopwatch_on(self.chrono, visible and missions.vede(self.missione, "tempo"))
-	score.conceal(self.punti, not missions.vede(self.missione, "punti"))
+	hud.stopwatch_on(self.chrono, visible and missions.sees(self.missione, "tempo"))
+	score.conceal(self.punti, not missions.sees(self.missione, "punti"))
 	if not visible then
 		hud.tag_away(self.tag)
 		-- render stops without a match: the swap button would stay on in the home
@@ -586,11 +586,11 @@ local function show_menu(self, without_veil)
 	home.queued(self.home, self.queue ~= nil)
 	-- the server's events: the line under EVENTI (and the board, the queue)
 	self.events_t = 0
-	home.eventi(self.home, menu.eventi.home_line())
+	home.events(self.home, menu.eventi.home_line())
 	-- going back to the home they are refreshed (at startup the entry asks for
-	-- them, CP.entra, which is born after the first home)
+	-- them, CP.enter, which is born after the first home)
 	if self.ingresso == nil and self.passaggio then
-		menu.eventi.load_up(server_url(), function() home.eventi(self.home, menu.eventi.home_line()) end)
+		menu.eventi.load_up(server_url(), function() home.events(self.home, menu.eventi.home_line()) end)
 	end
 	-- behind the home only the Forge's painted background, scrolling slowly
 	-- (Sergio, 2 Nov): the terrain mesh draws it without the map, the world isn't visible
@@ -604,7 +604,7 @@ local function show_menu(self, without_veil)
 	if self.favilla then require("battle.favilla").update(self.favilla, 0, 0, nil, nil) end
 	self.favilla_at = nil
 	if self.signal then self.signal:display(nil) end
-	score.obiettivo(self.punti, nil)
+	score.goal(self.punti, nil)
 	self.vign:quiet()
 	-- the finished match is let go (Sergio, 3 Nov): nothing keeps it (the replay
 	-- is in the profile, RIPROVA starts a new one), so its terrain cells and the
@@ -747,10 +747,10 @@ local function new_match(self, seed, map, opts)
 	self.speak = nil
 	if self.carta then self.carta:close_view(); self.carta = nil end
 	self.flights = nil
-	self.ricetta = replay.nuova(seed, map, opts)
+	self.ricetta = replay.new(seed, map, opts)
 	-- the bots' keys too: the replay of a moment (profile, PARTITE) gets there at once
 	self.ricetta.bot_keys = true
-	self.g, self.bots = replay.partita(self.ricetta)
+	self.g, self.bots = replay.match(self.ricetta)
 	-- the world shows only now that there is a match (show_menu)
 	msg.post("/terreno#script", "home", {})
 	gui.set_enabled(self.mondo, true)
@@ -774,14 +774,14 @@ local function new_match(self, seed, map, opts)
 		dress(self, i, self.look)
 		scoria.set_color(self.robots[i].rig, self.colors[i])
 		scoria.set_enabled(self.robots[i].rig, true)
-		plate.colore(self.robots[i].plate, self.colors[i])
+		plate.color(self.robots[i].plate, self.colors[i])
 		plate.set_enabled(self.robots[i].plate, true)
-		plate.vita(self.robots[i].plate, rb.hp, rb.max_hp, rb.shield)
+		plate.hp(self.robots[i].plate, rb.hp, rb.max_hp, rb.shield)
 		self.view[i] = { x = rb.x, y = rb.y, hp = rb.hp, scudo = rb.shield }
 	end
 	local plates = {}
 	for i = 1, game.MAX_PLAYERS do plates[i] = self.robots[i].plate end
-	score.partita(self.punti, self.g, TEAM_NAMES, plates)
+	score.match(self.punti, self.g, TEAM_NAMES, plates)
 	self.trail_n = 0
 	if self.fx then impact.reset(self.fx) end
 	self.pose_dt = game.DT
@@ -800,7 +800,7 @@ local function new_match(self, seed, map, opts)
 	-- the camera already starts on whoever's turn it is
 	local rb = self.g.robots[self.g.current]
 	camera.from_terrain(self.cam, self.g.terrain, game.DISEGNO_H + 40)
-	camera.salta(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
+	camera.jump(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
 	self.cam_pause = 0
 	self.fermo = 0
 end
@@ -945,7 +945,7 @@ function ZM.lens(d, parent)
 	gui.set_visible(n, false) -- only a holder: its children show
 	gui.set_parent(n, parent)
 	local t = math.max(2, d * 0.17)
-	ui.disco(0, 0, d - t, vmath.vector4(0.05, 0.05, 0.07, 1), n) -- the glass hides the track
+	ui.disc(0, 0, d - t, vmath.vector4(0.05, 0.05, 0.07, 1), n) -- the glass hides the track
 	ui.ring_node(0, 0, d, t, ui.C.LIGHT, n)
 	local h = box(d * 0.42, -d * 0.42, t + 0.5, d * 0.45, ui.C.LIGHT)
 	gui.set_rotation(h, vmath.vector3(0, 0, 45))
@@ -957,7 +957,7 @@ function ZM.make_ui(self)
 	local dark = vmath.vector4(0.05, 0.05, 0.07, 0.55)
 	local dim = vmath.vector4(1, 1, 1, 0.35)
 	-- round, with a thin pale rim (Sergio, 4 Nov: «in un contorno tondo, e fatto bene»)
-	self.btn_zoom = fit(ui.disco(0, 0, ZM.W, dark))
+	self.btn_zoom = fit(ui.disc(0, 0, ZM.W, dark))
 	gui.set_position(self.btn_zoom, ZOOM_BTN)
 	-- what is drawn on it, in a holder: it goes away while the guide is open
 	self.zoom_face = box(0, 0, ZM.W, ZM.W, dim)
@@ -973,7 +973,7 @@ function ZM.make_ui(self)
 	self.zoom_guide = box(0, ZM.W / 2 - 10 - ZM.LEN / 2, 20, ZM.LEN, dark)
 	gui.set_parent(self.zoom_guide, self.btn_zoom)
 	for _, side in ipairs({ 1, -1 }) do -- half discs, so nothing overlaps the body
-		local cap = fit(ui.disco(0, side * ZM.LEN / 2, 20, dark, self.zoom_guide))
+		local cap = fit(ui.disc(0, side * ZM.LEN / 2, 20, dark, self.zoom_guide))
 		gui.set_fill_angle(cap, 180)
 		if side < 0 then gui.set_rotation(cap, vmath.vector3(0, 0, 180)) end
 	end
@@ -1014,17 +1014,17 @@ function ZM.expand(self, open)
 end
 
 -- y of the finger on screen
-function ZM.premi(self, y)
+function ZM.press(self, y)
 	self.zoom_finger = { y = y, last = y, t = self.clock, moved = false }
 end
 
-function ZM.trascina(self, y)
+function ZM.drag(self, y)
 	local d = self.zoom_finger
 	if not d then return end
 	if not d.moved and math.abs(y - d.y) > ZM.DRAG_PX then d.moved = true end
 	if not d.moved then return end
 	-- relative: the zoom moves by how much the finger moved since last time
-	camera.trascina(self.cam, self.cam.f + (y - d.last) / ZM.RUN)
+	camera.drag(self.cam, self.cam.f + (y - d.last) / ZM.RUN)
 	d.last = y
 	local f = self.cam.f
 	-- a micro-vibration at every notch (Sergio, 3 Nov: «un feedback di vibrazione granulare»)
@@ -1098,7 +1098,7 @@ end
 -- seconds (scenari/ingresso.txt)
 CP.ENTRY = { min = 0.5, max = 4, pause = { 0.5, 1, 2 } }
 
-function CP.entra(self)
+function CP.enter(self)
 	self.entry_t, self.entry_ready = 0, false
 	local attempts = 0
 	local function try_it()
@@ -1118,8 +1118,8 @@ function CP.close_entry(self, at_once)
 	local e = self.ingresso
 	if not e then return end
 	self.ingresso = nil
-	home.eventi(self.home, menu.eventi.home_line())
-	if at_once then menu.ingresso.via(e) else menu.ingresso.close_view(e) end
+	home.events(self.home, menu.eventi.home_line())
+	if at_once then menu.ingresso.skip(e) else menu.ingresso.close_view(e) end
 end
 
 function CP.entry_update(self, dt)
@@ -1131,14 +1131,14 @@ function CP.entry_update(self, dt)
 		CP.close_entry(self)
 	elseif t > 1.5 then
 		-- a real wait: say what is being done
-		menu.ingresso.riga(e, TM.loading_events)
+		menu.ingresso.line(e, TM.loading_events)
 	end
 end
 
 -- The waiting room (menu/lobby.lua): the server's "wait" says who is in the
 -- queue, in order (vetrine: level and badges) and our place (you)
 function CP.open_room(self, m)
-	menu.attesa.via(self.attesa)
+	menu.attesa.skip(self.attesa)
 	local of = tonumber(m.of) or 0
 	if of < 1 or of > game.MAX_PLAYERS or type(m.vetrine) ~= "table" then return end
 	if not self.sala then
@@ -1150,7 +1150,7 @@ function CP.open_room(self, m)
 	for i = 1, math.min(#m.vetrine, of) do
 		if i ~= m.you then list[#list + 1] = CP.vetrina.from_net(m.vetrine[i], TM.player, nil, TM.in_queue) end
 	end
-	if menu.lobby.giocatori(self.sala, list) then sound.play("#punto") end
+	if menu.lobby.players(self.sala, list) then sound.play("#punto") end
 	menu.lobby.bot_in(self.sala, m.bot_in)
 end
 
@@ -1160,15 +1160,15 @@ function CP.close_room(self)
 end
 
 -- The waiting flame (ui/waiting.lua) instead of a fixed message
-function CP.aspetta(self, txt)
+function CP.wait(self, txt)
 	gui.cancel_animations(self.message, "color.w")
 	gui.set_text(self.message, "")
 	menu.attesa.display(self.attesa, txt)
 end
 
 -- The transitions (ui/transition.lua): the slider between menus, the iris
--- between menus and battle. CP.radici: the root nodes of what is visible now
-function CP.radici(self)
+-- between menus and battle. CP.roots: the root nodes of what is visible now
+function CP.roots(self)
 	if self.mode == "menu" then return self.home.tops end
 	local o = self.schermata and self.schermata.obj
 	local r = o and (o.radice or o.root)
@@ -1177,9 +1177,9 @@ end
 
 -- toward: 1 forward (the new one arrives from the right), -1 back
 function CP.slide(self, toward, change)
-	menu.passaggio.slider(self.passaggio, CP.radici(self), function()
+	menu.passaggio.slider(self.passaggio, CP.roots(self), function()
 		change()
-		return CP.radici(self)
+		return CP.roots(self)
 	end, toward)
 end
 
@@ -1216,13 +1216,13 @@ end
 
 local function handle_event(self, e)
 	if SIMULATE then print("SIMULA evento " .. e.type) end
-	if self.conta then CP.conta.evento(self.conta, self.g, e) end
+	if self.conta then CP.conta.event(self.conta, self.g, e) end
 	-- the bots with a character comment (battle/quips.lua): plain text over
 	-- their head, never the strip (Sergio, 4 Nov: the strip is for who guides
 	-- you); everyday quips don't cover a quip just said
 	if self.speak then
-		local i, s, strong = self.speak:evento(e, self.g.current)
-		if s then plate.battuta(self.robots[i].plate, s, strong) end
+		local i, s, strong = self.speak:event(e, self.g.current)
+		if s then plate.quip(self.robots[i].plate, s, strong) end
 	end
 	if e.type == "explosion" or e.type == "carve" then
 		local row_min, row_max = e.row_min, e.row_max
@@ -1230,7 +1230,7 @@ local function handle_event(self, e)
 			-- online we dig the terrain ourselves, at the same point as the server
 			row_min, row_max = self.g.terrain:carve(e.x, e.y, e.r)
 		end
-		local k = CR.lista(self)
+		local k = CR.list(self)
 		k[#k + 1] = { x = e.x, y = e.y, r = e.r }
 		local cx0, cy0, cx1, cy1 = CR.dig(self, e.x, e.y, e.r)
 		redraw_cells(self, math.min(cx0, math.floor((e.x - e.r) / game.CELL) + CR.OX - 1), math.min(cy0, row_min - 1),
@@ -1273,7 +1273,7 @@ local function handle_event(self, e)
 			local x, y = camera.to_screen(self.cam, v.x, v.y + game.DISEGNO_H / 2)
 			where = vmath.vector3(x, y, 0)
 		end
-		hud.globi(self.chrono, e.amount, where, slowed, my_own and function(i)
+		hud.orbs(self.chrono, e.amount, where, slowed, my_own and function(i)
 			self.orbs_wait = math.max(0, self.orbs_wait - 1)
 			hud.round_flash(self.btn_tele)
 			sound.play("#globo", { speed = hud.ORB_TONES[math.min(i, #hud.ORB_TONES)] })
@@ -1301,7 +1301,7 @@ local function handle_event(self, e)
 	elseif e.type == "hook_shot" then
 		-- the hook leaves: it leaves the barrel and the rope stretches behind it (render)
 		scoria.fire(self.robots[e.robot].rig, "shards")
-		scoria.uncino(self.robots[e.robot].rig, false)
+		scoria.hook(self.robots[e.robot].rig, false)
 		self.rope_who, self.rope = e.robot, nil
 	elseif e.type == "hook" then
 		-- the rope stays taut while it pulls (rope): to the hooked robot, or to the
@@ -1309,7 +1309,7 @@ local function handle_event(self, e)
 		self.rope = e.target or e.anchor and e.robot or nil
 		if not self.rope then
 			local x0, y0 = RM.rope_hand(self, e.robot)
-			RM.fune.cade(self.fune, x0, y0, e.x1, e.y1)
+			RM.fune.fall(self.fune, x0, y0, e.x1, e.y1)
 		end
 		if e.target then
 			self.shot_x, self.shot_y, self.shot_t = e.x0, e.y0, self.clock
@@ -1324,7 +1324,7 @@ local function handle_event(self, e)
 			self.rope = nil
 			local x0, y0 = RM.rope_hand(self, e.by)
 			local v = self.view[e.robot]
-			RM.fune.cade(self.fune, x0, y0, v.x, v.y + game.DISEGNO_H / 2)
+			RM.fune.fall(self.fune, x0, y0, v.x, v.y + game.DISEGNO_H / 2)
 		end
 	elseif e.type == "bellows" then
 		-- the gust: the bellows squash and a fan of air leaves the nozzle
@@ -1384,7 +1384,7 @@ local function handle_event(self, e)
 		-- no card (Sergio, 4 Nov: «sono brutte e nessuno le legge»): the icon
 		-- flies to its button like a shot the Blade gives back, and in the lessons
 		-- the new weapon goes in hand
-		if profile.new_weapon(self.profilo, e.weapon) then profile.salva(self.profilo) end
+		if profile.new_weapon(self.profilo, e.weapon) then profile.save(self.profilo) end
 		CP.give(self, e.robot, e.weapon, self.mode == "local" and e.robot == 1 and self.missione)
 	elseif e.type == "punch_hit" then
 		shock(self, e.x, e.y)
@@ -1395,10 +1395,10 @@ local function handle_event(self, e)
 		local from_pt = (e.amount < 0 or e.reason == "parry" or not e.other) and e.robot or e.other
 		local v, s = self.view[from_pt], self.cam_s or 1
 		if v then
-			score.punti(self.punti, e, v.x * s + (self.cam_tx or 0), (v.y + scoria.altezza(self.robots[from_pt].rig)) * s + (self.cam_ty or 0))
+			score.points(self.punti, e, v.x * s + (self.cam_tx or 0), (v.y + scoria.height(self.robots[from_pt].rig)) * s + (self.cam_ty or 0))
 		end
 	elseif e.type == "turn" then
-		score.turno(self.punti, self.g)
+		score.turn(self.punti, self.g)
 		-- what you hold stays from one turn to the next, even if you picked it on the
 		-- others' turn (Sergio, 30 October); on the same phone each one finds their
 		-- own again (at the start the Rune launcher)
@@ -1491,9 +1491,9 @@ local function open_podium(self)
 	local per_robot = awards.assign(res.ranking)
 	taken = per_robot[my_own] or taken
 	local gain = profile.match_end(self.profilo, spot, taken)
-	profile.salva(self.profilo)
+	profile.save(self.profilo)
 	-- the stats and the match into the profile (also saves the replay)
-	local number = CP.registra(self, res)
+	local number = CP.record(self, res)
 	for i, g in ipairs(giocatori) do g.vetrina = self.match_showcases and self.match_showcases[i] end
 	show_message(self, "", true)
 	set_controls_visible(self, false)
@@ -1602,7 +1602,7 @@ local function apply_state(self, s)
 	end
 	-- into the queue, drawn at an even pace a little later (main/playout.lua)
 	local now = socket.gettime()
-	if self.playout.last_at then frames.rete(now - self.playout.last_at) end
+	if self.playout.last_at then frames.net(now - self.playout.last_at) end
 	local snaps = next(self.snap) and self.snap or nil
 	if snaps then self.snap = {} end
 	menu.playout.arrive(self.playout, g, now, snaps)
@@ -1612,12 +1612,12 @@ local function on_server_message(self, m)
 	if m.t == "wait" then
 		CP.queue_wait(self, m)
 	elseif m.t == "privata" then
-		if CP.private_screen(self) then menu.private.stato(self.schermata.obj, m) end
+		if CP.private_screen(self) then menu.private.status(self.schermata.obj, m) end
 	elseif m.t == "error" and CP.private_screen(self) then
 		-- wrong code, room full: said on the keypad (the server closes)
 		self.privata = nil
 		disconnect(self)
-		menu.private.errore(self.schermata.obj, TM.server_errors[m.e] or TM.server_error)
+		menu.private.error(self.schermata.obj, TM.server_errors[m.e] or TM.server_error)
 	elseif m.t == "draft" and self.queue and self.mode ~= "connecting" then
 		-- the queue filled while you were in the menus or training: three seconds
 		-- on the pill, then the lineup
@@ -1646,7 +1646,7 @@ local function on_server_message(self, m)
 			-- the lineup: the server also gives the draft its time
 			-- (config.LINEUP_SECONDS); coming back halfway, only the strip
 			local stays = math.min(gconfig.LINEUP_SECONDS, (m.left or 0) * game.DT - gconfig.DRAFT_SECONDS)
-			CP.open_lineup(self, CP.vetrine(self, m.players, name_list, { me = m.you, rete = m.vetrine or {} }),
+			CP.open_lineup(self, CP.showcases(self, m.players, name_list, { me = m.you, rete = m.vetrine or {} }),
 				profile.GROUP_NAMES[m.mode] or "", stays)
 		end
 	elseif m.t == "start" and not self.online_iris then
@@ -1671,18 +1671,18 @@ local function on_server_message(self, m)
 		-- [{"team":1,"pick":"shards","secondary":"eagle","tool":"hook"},...]
 		-- regole: those of the queue's event (sim/rules.lua), as on the server
 		local opts = { players = m.players, random_spawns = true, intro = game.INTRO_TICKS }
-		if type(m.regole) == "table" then opts = menu.regole.opzioni(m.regole, opts or {}) end
+		if type(m.regole) == "table" then opts = menu.regole.options(m.regole, opts or {}) end
 		new_match(self, m.seed, m.map, opts)
 		self.g:pop_events()
 		self.online_teams = {}
 		for i, rb in ipairs(self.g.robots) do self.online_teams[i] = rb.team end
 		self.me, self.tok, self.tries = m.you, m.tok, 0
-		CP.inizio(self, m.you, m.vetrine or {}, nil, false)
+		CP.begin(self, m.you, m.vetrine or {}, nil, false)
 		self.mode = "online"
 		set_controls_visible(self, true)
 		show_message(self, m.resume and TM.back_in or TM.you_are:format(self.names[m.you]))
 	elseif m.t == "sync" and self.g then
-		local k = CR.lista(self)
+		local k = CR.list(self)
 		for _, c in ipairs(m.x) do
 			self.g.terrain:carve(c[1], c[2], c[3])
 			k[#k + 1] = { x = c[1], y = c[2], r = c[3] }
@@ -1773,18 +1773,18 @@ on_socket = function(self, conn, data)
 		elseif self.privata then
 			-- the private match (menu/private.lua): a new room or a code
 			send(self, { t = "hello", v = PROTOCOL, privata = self.privata,
-				vetrina = CP.vetrina.per_rete(self.profilo) })
+				vetrina = CP.vetrina.for_net(self.profilo) })
 		else
-			CP.aspetta(self, TM.waiting)
+			CP.wait(self, TM.waiting)
 			-- the queue picked in DOVE GIOCHI? (menu/queue.lua): 2v2, 1v1 or an event,
 			-- and the tag: level and badges (menu/showcase.lua)
 			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
-				vetrina = CP.vetrina.per_rete(self.profilo) })
+				vetrina = CP.vetrina.for_net(self.profilo) })
 		end
 	elseif data.event == ws.EVENT_MESSAGE then
 		local ok, m = pcall(json.decode, data.message)
 		-- any answer other than "aspetta" closes the waiting flame
-		if ok and m and m.t ~= "wait" then menu.attesa.via(self.attesa) end
+		if ok and m and m.t ~= "wait" then menu.attesa.skip(self.attesa) end
 		if ok and m then on_server_message(self, m) end
 	elseif data.event == ws.EVENT_DISCONNECTED or data.event == ws.EVENT_ERROR then
 		self.conn = nil
@@ -1792,14 +1792,14 @@ on_socket = function(self, conn, data)
 		if in_play and self.tok and self.tries < RECONNECT_TRIES then
 			-- in a match: we retry, the server keeps our seat
 			self.tries = self.tries + 1
-			CP.aspetta(self, TM.reconnecting)
+			CP.wait(self, TM.reconnecting)
 			timer.delay(RECONNECT_WAIT, false, function()
 				if (self.mode == "online" or self.mode == "connecting" or self.mode == "scelta_online") and not self.conn then connect(self) end
 			end)
 		elseif CP.private_screen(self) then
 			-- the private room is gone with the connection: back to the keypad
 			self.privata = nil
-			menu.private.errore(self.schermata.obj, TM.connection_lost)
+			menu.private.error(self.schermata.obj, TM.connection_lost)
 		elseif self.queue and self.mode ~= "connecting" then
 			-- in the queue outside the room: the pill says so, a tap and you are back in
 			self.queue.lost = true
@@ -1838,7 +1838,7 @@ local function start_online(self, coda)
 	self.queue = { mode = coda or "2v2", t = 0 }
 	-- while searching for the others you can leave, with the usual gear (Sergio, 3 Nov)
 	gui.set_enabled(self.btn_menu, true)
-	CP.aspetta(self, TM.connecting)
+	CP.wait(self, TM.connecting)
 	connect(self)
 end
 
@@ -1848,7 +1848,7 @@ end
 function CP.private_connect(self, code)
 	local p = self.schermata.obj
 	if not ws then
-		menu.private.errore(p, TM.no_websocket)
+		menu.private.error(p, TM.no_websocket)
 		return
 	end
 	-- a queue still alive (the pill) is left: one connection at a time
@@ -1931,7 +1931,7 @@ function CP.queue_open(self)
 				menu.lobby.bot_in(self.sala, q.bot_left)
 			end
 		else
-			CP.aspetta(self, TM.waiting)
+			CP.wait(self, TM.waiting)
 		end
 	end)
 end
@@ -2023,7 +2023,7 @@ end
 -- The players' showcases (menu/showcase.lua): whoever plays here with their
 -- profile, the others with just the name. opt: me (the robot of whoever
 -- plays here), rete (online: everyone's level and badges, from the server)
-function CP.vetrine(self, players, name_list, opt)
+function CP.showcases(self, players, name_list, opt)
 	local out = {}
 	local my_team = players[opt.me] and players[opt.me].team
 	for i, p in ipairs(players) do
@@ -2097,7 +2097,7 @@ end
 -- whoever plays here. me: their robot; rete: the showcases from the server
 -- (online); gruppo: "campagna" for the missions (otherwise the mode); replay:
 -- the match can be rewatched
-function CP.inizio(self, me, net, cluster, replay_ok)
+function CP.begin(self, me, net, cluster, replay_ok)
 	CP.close_card_g(self)
 	local name_list, players = {}, {}
 	local opt = self.ricetta.opzioni.players or {}
@@ -2108,13 +2108,13 @@ function CP.inizio(self, me, net, cluster, replay_ok)
 	end
 	local v = self.vetrine
 	self.vetrine = nil
-	if net or not v or #v ~= #self.g.robots then v = CP.vetrine(self, players, name_list, { me = me, rete = net }) end
+	if net or not v or #v ~= #self.g.robots then v = CP.showcases(self, players, name_list, { me = me, rete = net }) end
 	for i, rb in ipairs(self.g.robots) do
 		v[i].nome = name_list[i]
 		CP.vetrina.with_stats(v[i], rb.stats)
 	end
 	self.match_showcases = v
-	self.conta = me and CP.conta.nuova(self.g, me, name_list) or nil
+	self.conta = me and CP.conta.new(self.g, me, name_list) or nil
 	self.cp_group, self.cp_replay = cluster, replay_ok
 end
 
@@ -2142,7 +2142,7 @@ function CP.open_card_g(self, i)
 	gui.set_yanchor(root_node, gui.ANCHOR_TOP)
 	v.verso = sx and 1 or -1
 	local c = CP.tag.new(v, 0, 0, { tu = v.tu }, root_node)
-	local note = ui.testo(TM.card_note, 0, -CP.tag.TALL({}) - 14, 0.6,
+	local note = ui.text(TM.card_note, 0, -CP.tag.TALL({}) - 14, 0.6,
 		ui.C.OFF, root_node)
 	gui.set_outline(note, ui.C.SHADOW)
 	self.card_g = { c = c, radice = root_node, robot = i }
@@ -2156,7 +2156,7 @@ function CP.robot_span(self, i)
 	if not v or rb.dead or rb.gone then return end
 	local s = self.cam.s
 	local rx, feet = camera.to_screen(self.cam, v.x, v.y)
-	local top = feet + (scoria.cima(self.robots[i].rig) + CP.PLATE_GAP / s + plate.sopra(self.robots[i].plate) * plate.scala(self.cam)) * s
+	local top = feet + (scoria.top(self.robots[i].rig) + CP.PLATE_GAP / s + plate.above(self.robots[i].plate) * plate.scale(self.cam)) * s
 	return rx, feet, top, math.max(40, 30 * s ^ 0.35)
 end
 
@@ -2186,7 +2186,7 @@ function CP.strip_covers(self)
 	if fav then
 		local s = self.cam.s
 		local rx, feet = camera.to_screen(self.cam, fav.x, fav.y)
-		local top = feet + (scoria.cima(self.favilla.rig) + 20) * s
+		local top = feet + (scoria.top(self.favilla.rig) + 20) * s
 		behind = rx + 40 >= r.x0 and rx - 40 <= r.x1 and top >= r.y0 and feet <= r.y1
 	end
 	self.vign:ghost(behind)
@@ -2215,19 +2215,19 @@ end
 
 -- End of match: the stats and the match into the profile, and its replay if
 -- it was played here. Returns the match number if it can be rewatched
-function CP.registra(self, res)
+function CP.record(self, res)
 	local c = self.conta
 	self.conta = nil
 	if not c or not res then return nil end
-	local r = CP.conta.fine(c, self.g, res, { gruppo = self.cp_group or res.mode, mappa = self.g.map,
+	local r = CP.conta.finish(c, self.g, res, { gruppo = self.cp_group or res.mode, mappa = self.g.map,
 		quando = os.time(), giocatori = self.match_showcases })
-	local pa = profile.registra(self.profilo, r)
+	local pa = profile.record(self.profilo, r)
 	if self.cp_replay then
 		pa.replay = pcall(sys.save, CP.file_replay(pa.numero), { r = self.ricetta }) or nil
 	else
 		pa.online = self.online_end or nil
 	end
-	profile.salva(self.profilo)
+	profile.save(self.profilo)
 	return pa.replay and pa.numero or nil
 end
 
@@ -2247,7 +2247,7 @@ end
 
 -- Rewatches match numero from tick da: it is replayed from the saved recipe
 -- without drawing it up to da, then watched. A tap goes back to the profile.
-function CP.rivedi(self, number, from_pt)
+function CP.rewatch(self, number, from_pt)
 	local ok, payload = pcall(sys.load, CP.file_replay(number))
 	local r = ok and payload and payload.r
 	if not r or r.versione ~= replay.VERSION then
@@ -2269,13 +2269,13 @@ function CP.start_replay(self, r, number, from_pt)
 	draw_terrain(self)
 	reset_pose(self)
 	local rb = self.g.robots[self.g.current]
-	camera.salta(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
+	camera.jump(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
 	self.mode = "replay"
 	self.acc = 0
 	set_controls_visible(self, false)
 	show_message(self, "", true)
 	-- at the bottom, while it lasts: it is a replay, and how to leave
-	local n = ui.titolo(TM.replay_banner, W / 2, 40, 0.5, ui.C.LIGHT)
+	local n = ui.title(TM.replay_banner, W / 2, 40, 0.5, ui.C.LIGHT)
 	gui.set_yanchor(n, gui.ANCHOR_BOTTOM)
 	gui.set_outline(n, ui.C.SHADOW)
 	self.replay_scritta = n
@@ -2288,7 +2288,7 @@ function CP.replay_step(self)
 	local a = self.reader.r.impronte[self.impronta]
 	if a and a.t == g.tick then
 		self.impronta = self.impronta + 1
-		if a.h ~= g:impronta() then
+		if a.h ~= g:fingerprint() then
 			self.replay_rotto = true
 			return false
 		end
@@ -2351,7 +2351,7 @@ local function start_local(self, against)
 		if p.bot then bot.choose(d, i, seed) end
 	end
 	menu.pick.show(self.scelta, d, name_list, palette)
-	CP.open_lineup(self, CP.vetrine(self, opts.players, name_list, { me = 1 }), profile.GROUP_NAMES[modo] or "")
+	CP.open_lineup(self, CP.showcases(self, opts.players, name_list, { me = 1 }), profile.GROUP_NAMES[modo] or "")
 end
 
 -- The match on the same phone, with the players coming out of the draft (nil: no draft)
@@ -2418,7 +2418,7 @@ start_local_match = function(self, picked)
 		local y = self.g.terrain:ground_below(a.x + near, a.y + 3 * game.ROBOT_H)
 		if y then b.x, b.y, b.grounded = a.x + near, y, true end
 	end
-	CP.inizio(self, 1, nil, nil, true)
+	CP.begin(self, 1, nil, nil, true)
 	self.mode = "local"
 	set_controls_visible(self, true)
 end
@@ -2455,13 +2455,13 @@ function CP.mission_line(self, r)
 		if self.vign_line ~= line and not self.carta and not flying then
 			self.vign_line = line
 			if self.vign_on then
-				self.carta = self.vign:open(pages, PAD.comandi(self) == "controller")
+				self.carta = self.vign:open(pages, PAD.commands(self) == "controller")
 			end
 		end
 	end
 	-- the big vignette read (VAI, or vignettes off): now Favilla can show the move
 	if line.mostra == "grande" and (not self.vign_on or (self.vign_line == line and not self.carta)) then
-		missions.letta(r)
+		missions.line_read(r)
 	end
 	-- a big vignette still waiting to open (a weapon found is flying to its
 	-- button): the strip waits too, it comes after VAI, not before (Sergio, 6 Nov)
@@ -2479,7 +2479,7 @@ function CP.mission_line(self, r)
 end
 
 local function start_mission(self, id, picks)
-	local r = missions.nuova(id)
+	local r = missions.new(id)
 	hide_menu(self)
 	if r.l.draft and not picks then
 		self.missione = r
@@ -2503,20 +2503,20 @@ local function start_mission(self, id, picks)
 		-- in the campaign the draft is guided: no timer, it explains more, it ends with GIOCA
 		menu.pick.show(self.scelta, d, name_list, palette, true)
 		for i, p in ipairs(players) do name_list[i] = p.nome or name_list[i] end
-		CP.open_lineup(self, CP.vetrine(self, players, name_list, { me = 1 }), r.l.titolo or "")
+		CP.open_lineup(self, CP.showcases(self, players, name_list, { me = 1 }), r.l.titolo or "")
 		return
 	end
 	-- the opening shot only when coming from the flame (not on RIPROVA, not in the scenarios with the vignettes off)
 	local want_intro = self.want_intro
 	self.want_intro = nil
-	new_match(self, missions.partita(r, os.time(), picks, profile.help(self.profilo, id)))
+	new_match(self, missions.match(r, os.time(), picks, profile.help(self.profilo, id)))
 	-- prova_durata N also in the missions' battles (scenari/podio_forgia.txt)
 	local duration = SIMULATE and config_int("megablast.prova_durata", 0) or 0
 	if duration > 0 then
 		self.g.match_left = duration * 60
 		self.ricetta.durata = self.g.match_left
 	end
-	missions.prepara(r, self.g, self.bots)
+	missions.prepare(r, self.g, self.bots)
 	-- the keepers and the opponents with their names, and who speaks
 	for i, p in ipairs(r.l.giocatori) do
 		if p.nome then self.names[i] = p.nome end
@@ -2526,7 +2526,7 @@ local function start_mission(self, id, picks)
 			self.speak.chi[i] = p.battute or p.carattere
 		end
 	end
-	CP.inizio(self, 1, nil, "campagna", false)
+	CP.begin(self, 1, nil, "campagna", false)
 	reset_pose(self)
 	self.missione, self.missione_attesa = r, nil
 	self.vign_read, self.vign_pages, self.vign_line = {}, {}, nil
@@ -2575,7 +2575,7 @@ function CP.copione(self)
 	end
 	CP.close_entry(self, true)
 	self.ritorno = "campagna"
-	start_mission(self, missions.prova(p.livello, p.capitolo, p.dipinto))
+	start_mission(self, missions.custom(p.livello, p.capitolo, p.dipinto))
 	return true
 end
 
@@ -2644,32 +2644,32 @@ local function mission_update(self, dt)
 		end
 		if chosen then where = { x = chosen.x, y = chosen.y, d = chosen.d * (chosen.on == 2 and CHOSEN or 1) } end
 	end
-	self.guide:aggiorna(what, where, PAD.comandi(self), self.levette)
+	self.guide:update(what, where, PAD.commands(self), self.levette)
 	-- the weapons the lesson gives without a crate (the Blade, the Grapple):
 	-- they fly to their button like the crates' ones
-	local w = missions.scheda(r)
+	local w = missions.card(r)
 	if w then
-		if profile.new_weapon(self.profilo, w) then profile.salva(self.profilo) end
+		if profile.new_weapon(self.profilo, w) then profile.save(self.profilo) end
 		CP.give(self, 1, w, true)
 	end
 	-- the step wants to see farther (the island): the camera widens
 	local z = missions.zoom(r)
-	if z then camera.allarga(self.cam, z) end
+	if z then camera.widen(self.cam, z) end
 	-- the checkered flag of the step to do (battle/flag.lua), behind the devils
 	local bx, by = missions.flag(r)
 	if bx and not self.flag then self.flag = require("battle.flag").new(self.mondo, self.robots[1].rig.root) end
 	if self.flag then self.flag:display(bx, by, self.clock) end
 	-- Favilla in the cortile and her spark (battle/favilla.lua)
-	local fav = missions.guida(r)
-	local sx, sy = missions.scintilla(r)
+	local fav = missions.guide(r)
+	local sx, sy = missions.spark(r)
 	if (fav or sx) and not self.favilla then
 		self.favilla = CP.favilla.new(self.mondo, self.robots[1].rig.root)
 	end
 	if self.favilla then CP.favilla.update(self.favilla, dt, self.clock, fav, sx, sy, self.g.robots[1].x) end
 	self.favilla_at = fav -- the strip goes see-through over her too (CP.strip_covers)
 	-- Favilla showing a move (insegna): what she says, over her head like the bots
-	local fi, said = missions.battuta(r)
-	if fi then plate.battuta(self.robots[fi].plate, said) end
+	local fi, said = missions.quip(r)
+	if fi then plate.quip(self.robots[fi].plate, said) end
 	-- the marker on the target to hit now (battle/signal.lua)
 	local bi = missions.target_robot(r)
 	local brb = bi and self.g.robots[bi]
@@ -2677,7 +2677,7 @@ local function mission_update(self, dt)
 	if brb and not self.signal then self.signal = require("battle.signal").new(self.mondo) end
 	if self.signal then self.signal:display(brb and brb.x, brb and brb.y, game.ROBOT_H, game.ROBOT_HALF_W, self.clock) end
 	CP.mission_line(self, r)
-	score.obiettivo(self.punti, missions.obiettivo(r))
+	score.goal(self.punti, missions.goal(r))
 	-- once the controls are touched, IL TUO TURNO fades
 	-- (even if now time waits for a precise command: the light says which)
 	if self.banner_wait and (not r.attesa or r.awaiting) then
@@ -2691,9 +2691,9 @@ local function mission_update(self, dt)
 	end
 	if r.esito == "fatta" and not r.was_saved then
 		r.was_saved = true
-		local record = missions.quante(self.profilo.stelle[r.l.id] or {})
-		profile.missione(self.profilo, r.l.id, missions.stelle(r))
-		profile.salva(self.profilo)
+		local record = missions.count(self.profilo.stelle[r.l.id] or {})
+		profile.mission(self.profilo, r.l.id, missions.stars(r))
+		profile.save(self.profilo)
 		if not r.l.guidata then
 			-- a moment to see the shot, then (or at the first tap) the stars
 			show_message(self, TM.mission_done, true)
@@ -2703,8 +2703,8 @@ local function mission_update(self, dt)
 		end
 	elseif r.esito == "fallita" and not r.was_saved then
 		r.was_saved = true
-		profile.fallita(self.profilo, r.l.id)
-		profile.salva(self.profilo)
+		profile.failed(self.profilo, r.l.id)
+		profile.save(self.profilo)
 		if self.g.phase == "over" then
 			show_message(self, TM.mission_retry, true)
 			self.mode = "ended"
@@ -2723,18 +2723,18 @@ local function open_level_end(self)
 	self.end_t, self.missione = nil, nil
 	self.missione_finita = r.l.id
 	-- battles (really finished) go into the stats, lessons don't
-	if self.g.phase == "over" then CP.registra(self, self.g:results()) else self.conta = nil end
+	if self.g.phase == "over" then CP.record(self, self.g:results()) else self.conta = nil end
 	show_message(self, "", true)
-	score.obiettivo(self.punti, nil)
+	score.goal(self.punti, nil)
 	self.vign:quiet()
 	local won = r.esito == "fatta"
 	open_screen(self, menu.level_end, {
-		titolo = r.l.titolo, stelle = won and missions.stelle(r) or { false, false, false },
+		titolo = r.l.titolo, stelle = won and missions.stars(r) or { false, false, false },
 		criteria = missions.criteria(r.l),
 		medaglia = r.l.medaglia ~= nil,
 		-- the lead points, where they count
-		vantaggio = won and missions.vantaggio(r) or nil,
-		record = self.record_end, avanti = won and (missions.dopo(r.l.id) ~= nil),
+		vantaggio = won and missions.lead(r) or nil,
+		record = self.record_end, avanti = won and (missions.after(r.l.id) ~= nil),
 		fallita = not won,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 end
@@ -2766,7 +2766,7 @@ function CP.enter_mission(self, id, from, told)
 			if self.landing then self.landing = CP.LANDING end
 		end)
 	end
-	local l = missions.trova(id)
+	local l = missions.find(id)
 	local first = menu.level_types.first_time(id, self.profilo.stelle)
 	self.cartolina = self.vign_on and l and menu.postcard.open(id, l.titolo, from, l.tipo,
 		first and menu.level_types.line(l.tipo) or nil)
@@ -2790,7 +2790,7 @@ end
 -- RIPROVA, AVANTI (the next mission; after the last one, the campaign) or the arrow (the campaign)
 local function after_level_end(self, end_of)
 	local id = self.missione_finita
-	local after_step = end_of == "riprova" and id or (end_of == "avanti" and missions.dopo(id))
+	local after_step = end_of == "riprova" and id or (end_of == "avanti" and missions.after(id))
 	-- AVANTI: the next mission's postcard, then its flame
 	if end_of == "avanti" and after_step then return CP.enter_mission(self, after_step) end
 	-- leaving the finished battle: the iris, toward the mission again or the campaign
@@ -2816,7 +2816,7 @@ local function start_recipe(self, path, from_pt)
 	new_match(self, r.seme, r.mappa, r.opzioni)
 	while self.g.tick < from_pt and self.g.phase ~= "over" do
 		self.g:step(replay.input(self.ricetta, self.g, self.bots))
-		replay.dopo(self.ricetta, self.g)
+		replay.after(self.ricetta, self.g)
 		CR.remember(self, self.g:pop_events())
 	end
 	for i, h in ipairs(self.ricetta.impronte) do
@@ -2829,13 +2829,13 @@ local function start_recipe(self, path, from_pt)
 	draw_terrain(self)
 	reset_pose(self)
 	local rb = self.g.robots[self.g.current]
-	camera.salta(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
+	camera.jump(self.cam, rb.x, rb.y + game.DISEGNO_H / 2, camera.zoom(self.cam))
 	self.mode = "local"
 	set_controls_visible(self, true)
 end
 
 -- The end of init: on top of everything the waiting flame, the transitions'
--- veil and the entry, which stays until the events arrive (CP.entra). In the
+-- veil and the entry, which stays until the events arrive (CP.enter). In the
 -- scenarios you can start from a recipe or from a mission
 function CP.startup(self)
 	self.attesa = menu.attesa.new()
@@ -2846,7 +2846,7 @@ function CP.startup(self)
 		CP.ENTRY.min = 0
 		CP.ENTRY.max = tonumber(config_string("megablast.prova_ingresso", "0")) or 0
 	end
-	CP.entra(self)
+	CP.enter(self)
 	local recipe = SIMULATE and config_string("megablast.ricetta", "") or ""
 	if recipe ~= "" then
 		CP.close_entry(self, true)
@@ -2914,7 +2914,7 @@ local PAD_POS = vmath.vector3(0, 0, 0)
 -- two ends; they light up while jumping
 local function new_pad(rest, ring_color, jump_name)
 	local pad = { rest = rest }
-	pad.base = fit(ui.disco(rest.x, rest.y, PAD_D, PAD_BOTTOM[1]))
+	pad.base = fit(ui.disc(rest.x, rest.y, PAD_D, PAD_BOTTOM[1]))
 	pad.ring = fit(ui.ring_node(0, 0, PAD_D, 3, ring_color, pad.base))
 	if jump_name then
 		pad.ticks, pad.tick_off, pad.tick_on = {}, vmath.vector4(1, 1, 1, 0.4), vmath.vector4(1, 0.85, 0.55, 1)
@@ -2931,7 +2931,7 @@ local function new_pad(rest, ring_color, jump_name)
 			pad.ticks[#pad.ticks + 1] = t
 		end
 	end
-	pad.knob = fit(ui.disco(0, 0, KNOB_D, PAD_BOTTOM[2], pad.base))
+	pad.knob = fit(ui.disc(0, 0, KNOB_D, PAD_BOTTOM[2], pad.base))
 	pad.knob_ring = fit(ui.ring_node(0, 0, KNOB_D, 3, ring_color, pad.knob))
 	return pad
 end
@@ -2993,10 +2993,10 @@ CP.vibrate = vibrate_touch -- for the blocks above it (the zoom)
 
 local function move_pad_drag(self, x, y)
 	local nx, ny = pad_drag(self.move_pad, x, y)
-	if math.abs(nx) > 0.3 then missions.tocca(self.missione, "cammina") end
-	if sticks.muovi(self.move_st, nx, ny) then
+	if math.abs(nx) > 0.3 then missions.touch(self.missione, "cammina") end
+	if sticks.move(self.move_st, nx, ny) then
 		self.jump_pressed = true
-		missions.tocca(self.missione, "salta")
+		missions.touch(self.missione, "salta")
 		-- the thumb just entered the jump arc: a micro-vibration
 		vibrate_touch()
 	end
@@ -3007,7 +3007,7 @@ end
 local function aim_pad_drag(self, x, y)
 	local st = self.aim_st
 	local was = st.active
-	sticks.mira(st, pad_drag(self.aim_pad, x, y))
+	sticks.aim(st, pad_drag(self.aim_pad, x, y))
 	self.aim_target = st.angle
 	-- as soon as it lights up the aim jumps onto the stick, then chases it
 	if (st.active and not was) or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
@@ -3100,7 +3100,7 @@ end
 -- Blade gives them back). In the lessons only what the lesson uses (r: the
 -- mission, sim/missions.lua vedi).
 local function slot_have(rb, w, r)
-	if not missions.vede(r, w) then return false end
+	if not missions.sees(r, w) then return false end
 	if w == "parachute" then
 		return rb.parachute or rb.parachutes_left > 0
 	elseif w == "hook" or (w == rb.secondary and not rb.disarmed) then
@@ -3298,7 +3298,7 @@ local CAM_POS, CAM_SCALE, LABEL_SCALE = vmath.vector3(0, 0, 0), vmath.vector3(1,
 local function apply_camera(self)
 	local c = self.cam
 	if self.zoom_point then ZM.display(self) end
-	local tx, ty = camera.spostamento(c)
+	local tx, ty = camera.shift(c)
 	-- the zoom punch scales about the center of the screen
 	local k = self.sc_k or 1
 	tx, ty = W / 2 + (tx - W / 2) * k + self.sc_ox, H / 2 + (ty - H / 2) * k + self.sc_oy
@@ -3401,12 +3401,12 @@ local function render(self, dt)
 				sound.play("#colpo", { gain = 0.5 + 0.25 * tier, speed = 1.15 - 0.15 * tier + math.random() * 0.1 })
 			end
 			v.hp, v.scudo = hp, rb.shield
-			plate.vita(r.plate, hp, rb.max_hp, rb.shield)
+			plate.hp(r.plate, hp, rb.max_hp, rb.shield)
 		end
 		-- the plate above the horns; online the name is known only after the start
 		local nome = who_name(self, i)
 		if v.nome ~= nome then
-			plate.nome(r.plate, nome)
+			plate.name(r.plate, nome)
 			v.nome = nome
 		end
 		-- the effects on it with the turns left (numeric code so the string isn't
@@ -3422,7 +3422,7 @@ local function render(self, dt)
 				local s = rb.status[sn[1]]
 				if s then txt = txt .. (txt == "" and "" or "  ") .. sn[2] .. " " .. s.turns end
 			end
-			plate.stato(r.plate, txt)
+			plate.status(r.plate, txt)
 			v.stato = code
 		end
 		-- the iron arrow above whoever's turn it is, while the match goes on
@@ -3432,7 +3432,7 @@ local function render(self, dt)
 			plate.arrow_up(self.arrow, above and r.plate or nil)
 		end
 		-- above the horns: 3 in the world and 4 screen pixels
-		plate.update(r.plate, dt, v.x, v.y + scoria.cima(r.rig) + CP.PLATE_GAP / self.cam.s, plate.scala(self.cam))
+		plate.update(r.plate, dt, v.x, v.y + scoria.top(r.rig) + CP.PLATE_GAP / self.cam.s, plate.scale(self.cam))
 		local vx = v.px and (v.x - v.px) / math.max(dt, 1e-4) or 0
 		v.px = v.x
 
@@ -3462,13 +3462,13 @@ local function render(self, dt)
 			end
 		end
 		-- Favilla showing a move: her aim and her pose (sim/missions.lua, dimostra)
-		local shown = self.missione and missions.mira(self.missione)
+		local shown = self.missione and missions.aim(self.missione)
 		if shown and shown.robot == i then
 			st.aim = shown.angle
 			st.facing = math.cos(shown.angle) < 0 and -1 or 1
 		end
 		local posing, clip = nil, nil
-		if self.missione then posing, clip = missions.posa(self.missione) end
+		if self.missione then posing, clip = missions.pose(self.missione) end
 		st.posa = posing == i and clip or nil
 
 		-- in hand the equipped weapon: the one picked by whoever's turn it is (online
@@ -3540,25 +3540,25 @@ local function render(self, dt)
 		local tx, ty = rb2.gx or flight.x, rb2.gy or flight.y
 		if ra.gs then tx, ty = ra.gx + (tx - ra.gx) * k, ra.gy + (ty - ra.gy) * k end
 		local x0, y0 = RM.rope_hand(self, who)
-		RM.fune.dritta(self.fune, x0, y0, tx, ty)
+		RM.fune.straight(self.fune, x0, y0, tx, ty)
 	elseif self.rope then
 		local rb = g.robots[self.rope]
 		if rb.hooked and not rb.dead then
 			local x0, y0 = RM.rope_hand(self, rb.hooked.by or self.rope)
 			local x1, y1 = rb.hooked.x, rb.hooked.y
 			if rb.hooked.by then x1, y1 = self.view[self.rope].x, self.view[self.rope].y + game.DISEGNO_H / 2 end
-			RM.fune.dritta(self.fune, x0, y0, x1, y1)
+			RM.fune.straight(self.fune, x0, y0, x1, y1)
 		else
 			self.rope = nil
-			RM.fune.sfuma(self.fune)
+			RM.fune.fade(self.fune)
 		end
 	elseif self.fune.stato == "dritta" then
 		-- the hook vanished in flight (the puller died): it fades too
-		RM.fune.sfuma(self.fune)
+		RM.fune.fade(self.fune)
 	end
 	if not RM.fune.update(self.fune, dt, self.is_solid) and who then
 		-- all over: the hook goes back into the barrel
-		scoria.uncino(self.robots[who].rig, true)
+		scoria.hook(self.robots[who].rig, true)
 		self.rope_who = nil
 	end
 
@@ -3743,7 +3743,7 @@ local function render(self, dt)
 	local tele_state = self.tele_armed and 2 or (tele_ok and 1 or 0)
 	local bt = self.btn_tele
 	-- in the lessons that don't talk about orbs the button isn't there
-	local tele_sees = self.controls_visible and missions.vede(self.missione, "teleport")
+	local tele_sees = self.controls_visible and missions.sees(self.missione, "teleport")
 	if self.tele_sees ~= tele_sees then
 		gui.set_enabled(bt.nodo, tele_sees)
 		self.tele_sees = tele_sees
@@ -3793,7 +3793,7 @@ local function render(self, dt)
 		local v, s = self.view[g.current], self.cam.s
 		local cy = v.y + game.DISEGNO_H / 2
 		local a = self.aim_angle
-		aim_name.punta(self.mira, v.x + math.cos(a) * game.MUZZLE, cy + math.sin(a) * game.MUZZLE, a, s, self.colors[g.current])
+		aim_name.tip(self.mira, v.x + math.cos(a) * game.MUZZLE, cy + math.sin(a) * game.MUZZLE, a, s, self.colors[g.current])
 		-- who would be hit, tried on a copy of the match (under a millisecond): again
 		-- when the aim turns, at most every 3 frames, and anyway every 10 (the others
 		-- move too)
@@ -3811,17 +3811,18 @@ local function render(self, dt)
 			p.x, p.y = vt.x, vt.y
 			b.pos[i] = p
 		end
-		aim_name.bersagli(self.mira, b.pos, n, s, self.colors[g.current])
+		aim_name.targets(self.mira, b.pos, n, s, self.colors[g.current])
 		aim_name.trajectory_off(self.mira)
 	elseif self.aiming and can_aim and not cancel then
 		self.bersagli.arma = nil
-		aim_name.bersagli(self.mira, nil, 0)
+		aim_name.targets(self.mira, nil, 0)
 		local v, s = self.view[g.current], self.cam.s
 		local cy = v.y + game.DISEGNO_H / 2
 		-- gauge or reticle, as the "mira" setting says (from the wheel)
 		local bx, by = v.x + math.cos(self.aim_angle) * game.MUZZLE, cy + math.sin(self.aim_angle) * game.MUZZLE
-		aim_name[profile.setting(self.profilo, "mira")](self.mira, bx, by, self.aim_angle, s, self.aim_power, self.colors[g.current])
-		aim_name.tag(self.mira, bx, by, self.aim_angle, s, aim_name.gradi(self.aim_angle), self.aim_power)
+		local draw = profile.setting(self.profilo, "mira") == "mirino" and aim_name.crosshair or aim_name.needle
+		draw(self.mira, bx, by, self.aim_angle, s, self.aim_power, self.colors[g.current])
+		aim_name.tag(self.mira, bx, by, self.aim_angle, s, aim_name.degrees(self.aim_angle), self.aim_power)
 		-- a micro-vibration at every power tick, if on
 		local notch = aim_name.VIBRATE_TICKS and aim_name.notch(self.aim_power)
 		if notch and self.notch and notch ~= self.notch then vibrate_touch() end
@@ -3834,7 +3835,7 @@ local function render(self, dt)
 			if self.aim_pad.id then
 				a, p = sticks.shot(self.aim_st, self.clock, a, p)
 			elseif self.pad_aim then
-				a, p = sticks.shot(self.pad_st, self.clock - (PAD.imp(self, "potenza") == "grilletto" and PAD.TRIGGER_RELEASE or 0), a, p)
+				a, p = sticks.shot(self.pad_st, self.clock - (PAD.setting(self, "potenza") == "grilletto" and PAD.TRIGGER_RELEASE or 0), a, p)
 			end
 			local pts = g:preview(a, p, n, 4, self.preview_pts, aim_weapon)
 			for k = 1, n do
@@ -3844,19 +3845,20 @@ local function render(self, dt)
 		else
 			aim_name.trajectory_off(self.mira)
 		end
-	elseif self.missione and missions.mira(self.missione) then
+	elseif self.missione and missions.aim(self.missione) then
 		-- Favilla showing a move (sim/missions.lua, dimostra): her aim as yours,
 		-- with the whole trajectory, so you see what she's doing
-		local m = missions.mira(self.missione)
+		local m = missions.aim(self.missione)
 		local v, s = self.view[m.robot], self.cam.s
 		local cy = v.y + game.DISEGNO_H / 2
 		local bx, by = v.x + math.cos(m.angle) * game.MUZZLE, cy + math.sin(m.angle) * game.MUZZLE
 		if aim_name.MELEE[m.weapon] then
-			aim_name.punta(self.mira, bx, by, m.angle, s, self.colors[m.robot])
+			aim_name.tip(self.mira, bx, by, m.angle, s, self.colors[m.robot])
 			aim_name.trajectory_off(self.mira)
 		else
-			aim_name[profile.setting(self.profilo, "mira")](self.mira, bx, by, m.angle, s, m.power, self.colors[m.robot])
-			aim_name.tag(self.mira, bx, by, m.angle, s, aim_name.gradi(m.angle), m.power)
+			local draw = profile.setting(self.profilo, "mira") == "mirino" and aim_name.crosshair or aim_name.needle
+			draw(self.mira, bx, by, m.angle, s, m.power, self.colors[m.robot])
+			aim_name.tag(self.mira, bx, by, m.angle, s, aim_name.degrees(m.angle), m.power)
 			local n = HELP_POINTS
 			local pts = g:preview(m.angle, m.power, n, 4, self.preview_pts, m.weapon)
 			for k = 1, n do
@@ -3865,7 +3867,7 @@ local function render(self, dt)
 			aim_name.trajectory(self.mira, pts, n, s)
 		end
 	else
-		aim_name.via(self.mira)
+		aim_name.clear(self.mira)
 		self.notch = nil
 		self.bersagli.arma = nil
 	end
@@ -3891,7 +3893,7 @@ local function render(self, dt)
 	-- swapping the second attack for a teleport: one tap
 	-- (after the turn announcement has vanished: they would overlap)
 	local swap_sees = self.tele_sees and my_turn(self) and g:can_use("swap")
-		and missions.vede(self.missione, "baratto")
+		and missions.sees(self.missione, "baratto")
 		and not self.banner_wait and self.clock >= (self.banner_end or 0)
 	hud.swap_update(self.scambio, swap_sees, self.chrono)
 	-- while waiting for the second attack the secondaries blink, if they are what's left
@@ -3917,12 +3919,12 @@ local function render(self, dt)
 	local v = self.view[g.current]
 	local c = self.cam
 	if self.mode == "menu" then
-		camera.mappa(c, dt)
+		camera.overview(c, dt)
 	else
 		local rx, ry = v.x, v.y + game.DISEGNO_H / 2
 		if self.intro_on then
 			-- the opening shot: from you at the nearest zoom to the whole level
-			camera.apertura(c, self.intro_k or 0, rx, ry)
+			camera.iris(c, self.intro_k or 0, rx, ry)
 			apply_camera(self)
 			return
 		end
@@ -3969,8 +3971,8 @@ local function arrange(self)
 	self.tele_state = nil
 	for _, sl in ipairs(self.slots) do sl.x = nil end
 	hud.stopwatch_move(self.chrono, W / 2, y0 + SIZES.ring_y)
-	score.cima(self.punti, y1)
-	if self.vign then self.vign:cima(y1) end
+	score.top(self.punti, y1)
+	if self.vign then self.vign:top(y1) end
 	camera.viewport(self.cam, x0, y0, x1, y1)
 	self.cam_s = nil
 	msg.post("/terreno#script", "schermo", { kx = screen.kx, ky = screen.ky })
@@ -3979,8 +3981,8 @@ end
 -- The Grapple's rope with the hook (battle/rope.lua) and the Bellows' gust;
 -- self.rm_nodes: their nodes, to put in the world (outside init, which already
 -- has almost all of the 60 upvalues Lua allows)
-function RM.nodi(self)
-	self.fune = RM.fune.nuova(K)
+function RM.nodes(self)
+	self.fune = RM.fune.new(K)
 	-- the falling rope rests on the match's terrain
 	self.is_solid = function(x, y) return self.g ~= nil and self.g.terrain:solid(x, y) end
 	self.gusts = {}
@@ -3988,13 +3990,13 @@ function RM.nodi(self)
 		self.gusts[i] = box(0, 0, 1, 1, WHITE)
 		gui.set_enabled(self.gusts[i], false)
 	end
-	self.rm_nodes = RM.fune.nodi(self.fune)
+	self.rm_nodes = RM.fune.nodes(self.fune)
 	for _, n in ipairs(self.gusts) do self.rm_nodes[#self.rm_nodes + 1] = n end
 	-- the controller: buttons and sticks (ui/controller.lua), its aim and its
 	-- walking (here and not in init, which already has almost 60 upvalues)
 	self.ctrl, self.pad_st, self.pad_move = PAD.reader.new(sys.get_sys_info().system_name), sticks.new(), sticks.new()
 	self.pad_walk, self.pad_jump = 0, false
-	self.comandi = function() return PAD.comandi(self) end
+	self.comandi = function() return PAD.commands(self) end
 	PAD.reader.current_value = self.ctrl
 	-- in the scenarios the other controllers' graphics are tested too (prova_pad playstation)
 	if SIMULATE then self.ctrl.family = config_string("megablast.prova_pad", "xbox") end
@@ -4016,7 +4018,7 @@ function init(self)
 	-- everything in the world is a child of this node, which the camera moves and
 	-- scales (apply_camera)
 	self.cam = camera.new(W, H, game.WORLD_W, game.WORLD_H, game.MARGIN, game.KILL_SIDE)
-	camera.livello(self.cam, ZOOM_START)
+	camera.level(self.cam, ZOOM_START)
 	-- set_view_projection also wants id and projection; the projection stays the
 	-- render's (stretch), which this doesn't change
 	self.cam_msg = { id = hash("camera"), view = vmath.matrix4(), projection = vmath.matrix4() }
@@ -4038,7 +4040,7 @@ function init(self)
 	end
 
 	-- the aim: the reticle, the degrees tag, the lessons' help (battle/aim.lua)
-	self.mira = aim_name.nuova()
+	self.mira = aim_name.new()
 	-- whom the close-range weapon in hand would hit: robot ids and where to draw the ring
 	self.bersagli = { id = {}, pos = {}, n = 0 }
 
@@ -4147,7 +4149,7 @@ function init(self)
 	-- trace of straight shots (Thunderer, Grapple)
 	self.tracer = box(0, 0, 1, 1, WHITE)
 	gui.set_enabled(self.tracer, false)
-	RM.nodi(self)
+	RM.nodes(self)
 
 	-- explosions, sparks and numbers: the particles' pools
 	self.fx = impact.new()
@@ -4160,7 +4162,7 @@ function init(self)
 		self.debris[i] = { node = n, x = 0, y = 0, vx = 0, vy = 0, a = 0, va = 0, t = DEBRIS_LIFE, col = vmath.vector4(STONE) }
 	end
 
-	local plates = plate.nuove(TEAM_COLORS, TEAM_NAMES)
+	local plates = plate.create(TEAM_COLORS, TEAM_NAMES)
 	for i = 1, game.MAX_PLAYERS do self.robots[i].plate = plates[i] end
 	-- the iron arrow above whoever's turn it is (just one)
 	self.arrow = plate.arrow()
@@ -4177,7 +4179,7 @@ function init(self)
 	world[#world + 1] = self.egg
 	for _, n in ipairs(self.shard_nodes) do world[#world + 1] = n end
 	for _, c in ipairs(self.crate_nodes) do world[#world + 1] = c.node end
-	for _, n in ipairs(items.nodi(self.oggetti)) do world[#world + 1] = n end
+	for _, n in ipairs(items.nodes(self.oggetti)) do world[#world + 1] = n end
 	world[#world + 1] = self.shock
 	world[#world + 1] = self.tracer
 	for _, n in ipairs(self.rm_nodes) do world[#world + 1] = n end
@@ -4199,7 +4201,7 @@ function init(self)
 	-- the framing of the shooter and the shot stays above the ring and the match time
 	camera.margins(self.cam, 120, 90, SIZES.ring_y + hud.OUTSIDE + 40)
 	-- the points at the top center; the ticking is the game object's "punto" sound
-	self.punti = score.nuovo(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
+	self.punti = score.new(TEAM_COLORS, function(v) sound.play("#punto", { speed = v }) end)
 	-- the messages ("Una cassa cade dal cielo!") just under the strip of the
 	-- vignettes (battle/vignette.lua, now in the top band, 6 px under the top), never behind it
 	-- and above the head of whoever plays (the bots comment over their heads)
@@ -4212,7 +4214,7 @@ function init(self)
 	gui.set_visible(self.count_root, false)
 	gui.set_color(self.count_root, vmath.vector4(1, 1, 1, 0))
 	self.count_alone = ui.alone(0, 0, 400, vmath.vector4(1, 1, 1, 0.55), self.count_root)
-	local disc = ui.disco(0, 0, 176, vmath.vector4(0.06, 0.05, 0.09, 0.78), self.count_root)
+	local disc = ui.disc(0, 0, 176, vmath.vector4(0.06, 0.05, 0.09, 0.78), self.count_root)
 	self.count_ring = ui.ring_node(0, 0, 176, 5, vmath.vector4(1, 1, 1, 1), self.count_root)
 	-- the root's alpha must reach them, or the disc and the ring stay on screen for ever
 	for _, node in ipairs({ self.count_alone, disc, self.count_ring }) do gui.set_inherit_alpha(node, true) end
@@ -4227,7 +4229,7 @@ function init(self)
 	-- MIRA: LANCETTA / MIRINO changes the aim mode (the first setting, in the
 	-- profile). The buttons are children of the wheel: the anchor to the edge
 	-- widens distances on wide screens, so they stay close
-	self.btn_menu = ui.impostazioni({}, "menu")
+	self.btn_menu = ui.settings_button({}, "menu")
 	-- (in a list, for the controller light)
 	self.rotellina = {}
 	self.btn_retry = ui.button(self.rotellina, 32 + 12 + 80, 0, 160, 64, common.retry, "riprova", nil, self.btn_menu)
@@ -4272,19 +4274,19 @@ function init(self)
 		local sl = { weapon = w, have = false, group = gr }
 		if gr >= 3 then
 			-- items and tool: tokens (hexagon, octagon), with the small number
-			sl.tondo = hud.tondo(0, BAR_Y, gr == 3 and SIZES.oggetto or TELE_BTN_D, w, BAR_COLORS[gr], self.bar,
+			sl.tondo = hud.token(0, BAR_Y, gr == 3 and SIZES.oggetto or TELE_BTN_D, w, BAR_COLORS[gr], self.bar,
 				gr == 3 and "oggetto" or "gettone")
 			sl.node, sl.bordo, sl.icon = sl.tondo.nodo, sl.tondo.bordo, sl.tondo.icon_img
 		else
 			-- the weapon's slot (chamfered on top) and, at the top right, the
 			-- pill with the shots left (report UI-002)
-			local n, border = ui.pannello(0, BAR_Y, SLOT, SLOT, self.bar, "slot_arma")
+			local n, border = ui.panel(0, BAR_Y, SLOT, SLOT, self.bar, "slot_arma")
 			fit(n)
 			local icon = gui.new_box_node(vmath.vector3(0, -2, 0), vmath.vector3(62, 62, 0))
 			gui.set_texture(icon, "armi")
 			gui.play_flipbook(icon, WEAPON_ICON[w])
 			gui.set_parent(icon, n)
-			local badge, badge_border = ui.pannello(SLOT / 2 - 14, SLOT / 2 - 2, 42, 26, n, "badge")
+			local badge, badge_border = ui.panel(SLOT / 2 - 14, SLOT / 2 - 2, 42, 26, n, "badge")
 			fit(badge)
 			fit(badge_border)
 			gui.set_color(badge_border, BAR_COLORS[gr])
@@ -4304,25 +4306,25 @@ function init(self)
 		end
 	end
 	-- teleport: round and purple like the tool, with the teleports left
-	self.btn_tele = hud.tondo(TELE_BTN_DESK.x, TELE_BTN_DESK.y, TELE_BTN_D, "teleport", ui.C.PURPLE, nil, "gettone")
+	self.btn_tele = hud.token(TELE_BTN_DESK.x, TELE_BTN_DESK.y, TELE_BTN_D, "teleport", ui.C.PURPLE, nil, "gettone")
 	self.tele_key = label(-28, -30, "T", 0.6)
 	gui.set_parent(self.tele_key, self.btn_tele.nodo)
 	CP.recharge_create(self)
 	self.tag = hud.tag()
-	self.avviso = hud.avviso()
-	self.scambio = hud.scambio()
+	self.avviso = hud.notice()
+	self.scambio = hud.swap()
 	hud.orbs_nodes(self.chrono)
 	self.pointers = {}
 	set_touch_ui(self, touch_device())
 	set_controls_visible(self, false)
-	screen.aggiorna()
+	screen.update()
 	arrange(self)
 
 	-- the home last, so it sits above the battle
 	self.home = home.new(TEAM_COLORS[1])
 	self.pill = menu.pill.new()
 	self.profilo = profile.load_up()
-	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.prova(self.profilo) end
+	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo) end
 	self.scelta = menu.pick.new(WEAPON_ICON, TM.draft_names, TM.draft_effects, self.comandi)
 
 	-- In real matches the map is picked by the seed (sim/maps.lua). In the test
@@ -4337,8 +4339,8 @@ function final(self)
 end
 
 function update(self, dt)
-	frames.inizio()
-	if screen.aggiorna() then arrange(self) end
+	frames.begin()
+	if screen.update() then arrange(self) end
 	self.vign:update(dt)
 	if self.ingresso then CP.entry_update(self, dt) end
 	menu.attesa.update(self.attesa, dt)
@@ -4390,13 +4392,13 @@ function update(self, dt)
 			input = replay.input(self.ricetta, self.g, self.bots, input)
 			-- the shots of whoever plays here, for the stats
 			if self.conta and input.fire and self.g.current == self.conta.me then
-				CP.conta.sparo(self.conta, self.g, input.fire.weapon)
+				CP.conta.shot(self.conta, self.g, input.fire.weapon)
 			end
 			self.g:step(input)
-			replay.dopo(self.ricetta, self.g)
+			replay.after(self.ricetta, self.g)
 			for _, e in ipairs(self.g:pop_events()) do
 				handle_event(self, e)
-				if self.missione then missions.evento(self.missione, self.g, e, self.bots) end
+				if self.missione then missions.event(self.missione, self.g, e, self.bots) end
 			end
 			if self.conta then CP.conta.tick(self.conta, self.g) end
 			if self.missione then missions.tick(self.missione, self.g) end
@@ -4405,7 +4407,7 @@ function update(self, dt)
 		end
 		frames.scope_end()
 		self.pose_t, self.pose_dt = self.acc, game.DT
-		if bot.totale ~= thought then frames.segna("bot") end
+		if bot.totale ~= thought then frames.mark("bot") end
 		if self.missione then
 			mission_update(self, dt)
 		end
@@ -4446,7 +4448,7 @@ function update(self, dt)
 			end
 			if self.fire then
 				send(self, { t = "fire", a = self.fire.angle, p = self.fire.power, w = self.fire.weapon })
-				if self.conta then CP.conta.sparo(self.conta, self.g, self.fire.weapon) end
+				if self.conta then CP.conta.shot(self.conta, self.g, self.fire.weapon) end
 			end
 		else
 			-- unknown: at the next turn (or aim) the state is sent anyway, because the
@@ -4481,7 +4483,7 @@ function update(self, dt)
 	if self.pointers.mouse == "aim" and self.aim_left then aim_from(self, self.aim_left, self.aim_sy) end
 	smooth_aim(self, dt)
 	-- to fire with the aim from a moment before the thumb lifts
-	if self.aim_pad.id then sticks.registra(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
+	if self.aim_pad.id then sticks.record(self.aim_st, self.clock, self.aim_angle, self.aim_power, self.aiming) end
 	frames.scope("disegno")
 	render(self, dt_world)
 	move_debris(self, dt_world)
@@ -4494,7 +4496,7 @@ function update(self, dt)
 		self.events_t = (self.events_t or 0) + dt
 		if self.events_t >= (menu.eventi.without_net and 5 or 60) then
 			self.events_t = 0
-			menu.eventi.load_up(server_url(), function() home.eventi(self.home, menu.eventi.home_line()) end)
+			menu.eventi.load_up(server_url(), function() home.events(self.home, menu.eventi.home_line()) end)
 		end
 	end
 	-- the opening shot of the level (ui/intro.lua); when it lets go the interface comes in
@@ -4562,15 +4564,15 @@ function update(self, dt)
 		self.simulate_line = nil
 	end
 	self.simulate_mode, self.simulate_coda = self.mode, coda
-	CP.fotogrammi(self, dt)
+	CP.frames(self, dt)
 end
 
 -- The frame counter (ui/frames.lua, docs/prestazioni.md): a new screen is
 -- a possible cause of stutter; the line at the top center only if it is on in
 -- the IMPOSTAZIONI. In the simulator it is always on, in the log.
-function CP.fotogrammi(self, dt)
+function CP.frames(self, dt)
 	if self.mode ~= self.fps_mode then
-		if self.fps_mode then frames.segna("schermata " .. tostring(self.mode)) end
+		if self.fps_mode then frames.mark("schermata " .. tostring(self.mode)) end
 		self.fps_mode = self.mode
 	end
 	-- in the simulator "imposta prova_fps 1" switches it on (scenario rete_tele.txt)
@@ -4586,18 +4588,18 @@ function CP.fotogrammi(self, dt)
 	end
 	if frames.acceso then
 		if not self.fps_text then
-			self.fps_text = fit(ui.testo("", 640, 716, 0.6, ui.C.TEXT))
+			self.fps_text = fit(ui.text("", 640, 716, 0.6, ui.C.TEXT))
 			gui.set_yanchor(self.fps_text, gui.ANCHOR_TOP)
 			gui.set_pivot(self.fps_text, gui.PIVOT_N)
 		end
-		local riga = frames.testo()
+		local riga = frames.text()
 		if riga then gui.set_text(self.fps_text, riga) end
 		gui.set_enabled(self.fps_text, true)
 		gui.move_above(self.fps_text, nil)
 	elseif self.fps_text then
 		gui.set_enabled(self.fps_text, false)
 	end
-	frames.fine()
+	frames.finish()
 end
 
 -- A HUD button (a weapon, an item or the teleport) always selects that thing,
@@ -4608,16 +4610,16 @@ end
 local function choose_slot(self, w)
 	-- the hidden teleport (lessons that don't talk about orbs) doesn't respond
 	if w == "teleport" and not self.tele_sees then return end
-	missions.tocca(self.missione, w)
+	missions.touch(self.missione, w)
 	local g = self.g
-	local why = my_turn(self) and g.phase == "aim" and hud.motivo(g, w)
+	local why = my_turn(self) and g.phase == "aim" and hud.reason(g, w)
 	if why then
 		if w == "teleport" then
 			local p = self.touch_ui and TELE_BTN_TOUCH or TELE_BTN_DESK
-			hud.rifiuta(self.avviso, self.btn_tele.nodo, p.x, p.y, TELE_BTN_D, why)
+			hud.refuse(self.avviso, self.btn_tele.nodo, p.x, p.y, TELE_BTN_D, why)
 		else
 			for _, sl in ipairs(self.slots) do
-				if sl.weapon == w then hud.rifiuta(self.avviso, sl.node, sl.x, sl.y, sl.d, why) end
+				if sl.weapon == w then hud.refuse(self.avviso, sl.node, sl.x, sl.y, sl.d, why) end
 			end
 		end
 		vibrate_touch()
@@ -4643,7 +4645,7 @@ end
 -- step: +1 farther, -1 closer (the wheel, one notch at a time), nil the
 -- tap: from the chosen zoom to the farthest and back
 local function change_zoom(self, step)
-	if step then camera.passo(self.cam, -step * ZM.STEP) else camera.toggle(self.cam) end
+	if step then camera.step(self.cam, -step * ZM.STEP) else camera.toggle(self.cam) end
 end
 
 -- Cancels the stick's aim: back to rest, and releasing it fires nothing
@@ -4651,7 +4653,7 @@ local function cancel_pad_aim(self)
 	self.pointers[self.aim_pad.id] = "cancelled"
 	aim_pad_drop(self)
 	show_message(self, TM.aim_cancelled)
-	missions.tocca(self.missione, "annulla")
+	missions.touch(self.missione, "annulla")
 end
 
 -- ESCI DALLA PARTITA: online the server knows at once (the seat isn't kept,
@@ -4720,7 +4722,7 @@ local function pointer_down(self, id, px, py)
 	elseif self.mode == "connecting" then
 		-- searching for players: only the gear, with ESCI
 		if self.menu_open then
-			PAD.rotellina(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci" or nil)
+			PAD.wheel(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci" or nil)
 		elseif gui.pick_node(self.btn_menu, px, py) then
 			open_wheel(self, true)
 		else
@@ -4741,7 +4743,7 @@ local function pointer_down(self, id, px, py)
 	PAD.drop_lost_sticks(self)
 	-- the big vignette: only its button goes on (battle/vignette.lua)
 	if self.carta then
-		if self.carta:premi(px, py) then PAD.close_card(self) end
+		if self.carta:press(px, py) then PAD.close_card(self) end
 		self.pointers[id] = "cancelled"
 		return
 	end
@@ -4754,7 +4756,7 @@ local function pointer_down(self, id, px, py)
 	-- the wheel: open, a tap on ESCI leaves, elsewhere it just closes it again
 	if self.menu_open then
 		self.pointers[id] = "cancelled"
-		PAD.rotellina(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci"
+		PAD.wheel(self, gui.pick_node(self.btn_aim, px, py) and "mira" or gui.pick_node(self.btn_quit, px, py) and "esci"
 			or self.mode ~= "online" and gui.pick_node(self.btn_retry, px, py) and "riprova"
 			or gui.is_enabled(self.btn_reread) and gui.pick_node(self.btn_reread, px, py) and "rileggi" or nil)
 		return
@@ -4769,7 +4771,7 @@ local function pointer_down(self, id, px, py)
 		return
 	end
 	-- in the lessons time starts when you touch the controls
-	if self.missione then missions.tocca(self.missione) end
+	if self.missione then missions.touch(self.missione) end
 	-- on the phone bringing the stick back to zero is awkward: while aiming, a
 	-- tap on the right half of the screen cancels the aim (and does nothing
 	-- else); the left half stays with the walking hand
@@ -4779,11 +4781,11 @@ local function pointer_down(self, id, px, py)
 		return
 	end
 	if hud.swap_press(self.scambio, px, py) then
-		missions.tocca(self.missione, "baratto")
+		missions.touch(self.missione, "baratto")
 		self.fire = { angle = 0, power = 0, weapon = "swap" }
 	elseif gui.pick_node(self.btn_zoom, px, py) then
 		self.pointers[id] = "zoom"
-		ZM.premi(self, y)
+		ZM.press(self, y)
 	elseif self.tele_sees and gui.pick_node(self.btn_tele.nodo, px, py) then
 		choose_slot(self, "teleport")
 	elseif picked_slot(self, px, py) then
@@ -4797,14 +4799,14 @@ local function pointer_down(self, id, px, py)
 			-- with something to throw (at the start of the first lesson you have no weapons)
 			and self.g:can_use(self.tele_armed and "teleport" or self.weapon) then
 			self.pointers[id] = "pad_aim"
-			missions.tocca(self.missione, "mira")
+			missions.touch(self.missione, "mira")
 			pad_press(self.aim_pad, id, x, y)
 			aim_pad_drag(self, x, y)
 		end
 	elseif my_turn(self) and self.g:can_use(self.tele_armed and "teleport" or self.weapon) then
 		-- on the computer you aim from the robot with the mouse
 		self.pointers[id] = "aim"
-		missions.tocca(self.missione, "mira")
+		missions.touch(self.missione, "mira")
 		self.aiming = true
 		aim_from(self, x, y, true)
 	end
@@ -4820,7 +4822,7 @@ local function pointer_move(self, id, x, y)
 	elseif m == "aim" then
 		aim_from(self, x, y)
 	elseif m == "zoom" then
-		ZM.trascina(self, y)
+		ZM.drag(self, y)
 	elseif m == "strip" and y - self.strip_swipe_y >= CP.vignette.SWIPE_UP then
 		self.vign:dismiss()
 		self.pointers[id] = "cancelled"
@@ -4848,7 +4850,7 @@ local function pointer_up(self, id, x, y)
 				weapon = self.tele_armed and "teleport" or self.weapon }
 			self.tele_armed = false
 		elseif self.aim_dist <= CANCEL_R then
-			missions.tocca(self.missione, "annulla")
+			missions.touch(self.missione, "annulla")
 		end
 		self.aiming = false
 	end
@@ -4861,10 +4863,10 @@ end
 -- the left one walks and, pushed up, jumps; the right one aims, and you fire
 -- with RT while it is lit (brought back to the center it goes off: no shot).
 -- In the menus and in the weapon draft the d-pad moves the light and A
--- confirms (ui.tocco).
+-- confirms (ui.touch).
 
 -- The controls being played with: for the labels of the lessons and of the cards
-function PAD.comandi(self)
+function PAD.commands(self)
 	return self.pad_on and "controller" or (self.touch_ui and "telefono" or "computer")
 end
 
@@ -4873,14 +4875,14 @@ PAD.TEXTS = { telefono = TM.gestures.telefono, computer = TM.gestures.computer, 
 
 -- The labels for the controls in use; with the controller, with its buttons' names
 function PAD.texts(self)
-	local c = PAD.comandi(self)
+	local c = PAD.commands(self)
 	local t = PAD.TEXTS[c]
 	if c == "controller" then
 		local shoot, hop = PAD.reader.name_of("spara"), PAD.reader.name_of("salta")
-		local _, is_moving = PAD.levetta(self, "muove")
-		local _, aim_name = PAD.levetta(self, "mira")
-		t.mira = (PAD.imp(self, "potenza") == "grilletto" and TM.pad_aim_trigger
-			or PAD.imp(self, "sparo") == "rilascio" and TM.pad_aim_release
+		local _, is_moving = PAD.stick(self, "muove")
+		local _, aim_name = PAD.stick(self, "mira")
+		t.mira = (PAD.setting(self, "potenza") == "grilletto" and TM.pad_aim_trigger
+			or PAD.setting(self, "sparo") == "rilascio" and TM.pad_aim_release
 			or TM.pad_aim_press):format(aim_name, shoot)
 		t.salta = hop ~= "" and TM.pad_jump_button:format(hop) or TM.pad_jump_stick:format(is_moving)
 		t.cammina = TM.pad_walk:format(is_moving)
@@ -4898,16 +4900,16 @@ end
 
 -- A wheel button (nil: it just closes again). MIRA changes mode and the
 -- wheel stays open, so the new one shows
-function PAD.rotellina(self, ui_action)
+function PAD.wheel(self, ui_action)
 	if ui_action == "mira" then
-		profile.imposta(self.profilo, "mira", profile.setting(self.profilo, "mira") == "lancetta" and "mirino" or "lancetta")
-		profile.salva(self.profilo)
+		profile.set(self.profilo, "mira", profile.setting(self.profilo, "mira") == "lancetta" and "mirino" or "lancetta")
+		profile.save(self.profilo)
 		open_wheel(self, true)
 		return
 	end
 	open_wheel(self, false)
 	if ui_action == "rileggi" then
-		self.carta = self.vign:open(self.vign_pages, PAD.comandi(self) == "controller")
+		self.carta = self.vign:open(self.vign_pages, PAD.commands(self) == "controller")
 	elseif ui_action == "esci" then
 		quit_match(self)
 	elseif ui_action == "riprova" then
@@ -4916,7 +4918,7 @@ function PAD.rotellina(self, ui_action)
 end
 
 -- The sticks at rest (outside your turn, in the menus, after the shot)
-function PAD.riposo(self)
+function PAD.rest(self)
 	sticks.reset(self.pad_move)
 	if self.pad_aim then
 		sticks.reset(self.pad_st)
@@ -4929,18 +4931,18 @@ end
 -- A profile setting (sparo, potenza: menu/settings.lua)
 -- Which stick moves and which aims (the "levette" setting, Sergio 30 Oct: by
 -- default the right one moves and the left one aims); and its name for the labels
-function PAD.levetta(self, use)
-	PAD.reader.levette = PAD.imp(self, "levette")
-	local side_of = PAD.reader.lato(use)
+function PAD.stick(self, use)
+	PAD.reader.levette = PAD.setting(self, "levette")
+	local side_of = PAD.reader.side(use)
 	return self.ctrl[side_of], common.stick_side[side_of]
 end
 
-function PAD.imp(self, lookup_key)
+function PAD.setting(self, lookup_key)
 	return profile.setting(self.profilo, lookup_key)
 end
 
 -- How far the SPARA button is pressed (0..1): triggers by half, the others all or nothing
-function PAD.grilletto(self)
+function PAD.trigger(self)
 	local c = self.ctrl
 	local t = PAD.reader.key_of(c, "spara")
 	if not t then return 0 end
@@ -4949,8 +4951,8 @@ end
 
 -- Every frame the right stick aims, like the phone's: lit past 20% of the
 -- travel, off below 10% (sticks.lua)
-function PAD.mira(self)
-	local st, l = self.pad_st, PAD.levetta(self, "mira")
+function PAD.aim(self)
+	local st, l = self.pad_st, PAD.stick(self, "mira")
 	if not (my_turn(self) and self.g.phase == "aim" and self.g:can_use(self.tele_armed and "teleport" or self.weapon)) then
 		if self.pad_aim then
 			sticks.reset(st)
@@ -4959,24 +4961,24 @@ function PAD.mira(self)
 		return
 	end
 	local previous = st.active
-	sticks.mira(st, l.x, l.y)
+	sticks.aim(st, l.x, l.y)
 	-- "grilletto" power (settings): the stick gives only the direction, the
 	-- power is how far you press the SPARA button, and releasing it fires the shot
-	local trigger = PAD.imp(self, "potenza") == "grilletto"
+	local trigger = PAD.setting(self, "potenza") == "grilletto"
 	if st.active then
-		if not previous then missions.tocca(self.missione, "mira") end
+		if not previous then missions.touch(self.missione, "mira") end
 		self.pad_aim, self.aiming = true, true
 		self.aim_target = st.angle
 		if not previous or game.AIM_SMOOTH >= 1 or not self.aim_angle then self.aim_angle = st.angle end
 		local f = st.f
-		if trigger then f = math.max(0, math.min(1, (PAD.grilletto(self) - PAD.THRESHOLD) / (0.95 - PAD.THRESHOLD))) end
+		if trigger then f = math.max(0, math.min(1, (PAD.trigger(self) - PAD.THRESHOLD) / (0.95 - PAD.THRESHOLD))) end
 		self.aim_power = math.max(0.1, f ^ game.AIM_EXPONENT)
 		self.aim_dist = math.huge
 		-- to fire with the aim from a moment earlier (PAD.COMMANDS.spara)
-		sticks.registra(st, self.clock, self.aim_angle, self.aim_power, true)
+		sticks.record(st, self.clock, self.aim_angle, self.aim_power, true)
 		if trigger then
 			-- pressed: it charges; released (below the threshold): it fires
-			local v = PAD.grilletto(self)
+			local v = PAD.trigger(self)
 			if v > (self.pad_charge and PAD.THRESHOLD or PAD.CHARGE) then
 				self.pad_charge = true
 			elseif self.pad_charge then
@@ -4986,7 +4988,7 @@ function PAD.mira(self)
 	elseif previous then
 		-- brought back to the center: the aim goes off and nothing fires
 		self.pad_aim, self.aiming, self.pad_charge = false, false, false
-		missions.tocca(self.missione, "annulla")
+		missions.touch(self.missione, "annulla")
 	end
 end
 -- the trigger charges past CHARGE and fires when it comes back below
@@ -4996,7 +4998,7 @@ end
 PAD.THRESHOLD, PAD.CHARGE, PAD.TRIGGER_RELEASE = 0.06, 0.15, 0.08
 
 -- The visible OGGETTI, from the bottom of the column
-function PAD.oggetti(self)
+function PAD.items(self)
 	local l = {}
 	for _, sl in ipairs(self.slots) do
 		if sl.have and sl.group == 3 then l[#l + 1] = sl end
@@ -5008,7 +5010,7 @@ end
 -- cycling in bar order (from the stopwatch outward); if something else is in
 -- hand, the first. Those that can't be used now are skipped; if none can, the
 -- next one says why (choose_slot)
-function PAD.giro(self, cluster)
+function PAD.cycle(self, cluster)
 	local l = {}
 	for _, sl in ipairs(self.slots) do
 		if sl.have and sl.group == cluster then l[#l + 1] = sl end
@@ -5022,7 +5024,7 @@ function PAD.giro(self, cluster)
 	local g = self.g
 	for k = 1, n do
 		local w = l[(i0 - 1 + k) % n + 1].weapon
-		if (w ~= self.weapon or self.tele_armed) and not (my_turn(self) and g.phase == "aim" and hud.motivo(g, w)) then
+		if (w ~= self.weapon or self.tele_armed) and not (my_turn(self) and g.phase == "aim" and hud.reason(g, w)) then
 			choose_slot(self, w)
 			return
 		end
@@ -5032,8 +5034,8 @@ end
 
 -- The battle commands of the buttons (PAD.reader.BATTLE, or those picked in the settings)
 PAD.COMMANDS = {
-	primaria = function(self) PAD.giro(self, 1) end,
-	secondaria = function(self) PAD.giro(self, 2) end,
+	primaria = function(self) PAD.cycle(self, 1) end,
+	secondaria = function(self) PAD.cycle(self, 2) end,
 	spara = function(self, first_one)
 		local w = self.tele_armed and "teleport" or self.weapon
 		self.pad_charge = false
@@ -5050,13 +5052,13 @@ PAD.COMMANDS = {
 	-- SALTA on a button (settings): jumps while held, like the stick pushed up
 	salta = function(self)
 		self.jump_pressed, self.pad_jump = true, true
-		missions.tocca(self.missione, "salta")
+		missions.touch(self.missione, "salta")
 	end,
 	teletrasporto = function(self) choose_slot(self, "teleport") end,
 	rampino = function(self) choose_slot(self, "hook") end,
 	paracadute = function(self) choose_slot(self, "parachute") end,
 	oggetti = function(self)
-		local l = PAD.oggetti(self)
+		local l = PAD.items(self)
 		local i = 0
 		for k, sl in ipairs(l) do
 			if sl.weapon == self.pad_item then i = k end
@@ -5069,13 +5071,13 @@ PAD.COMMANDS = {
 	-- the swap: the second attack becomes a teleport (like the button above the
 	-- stopwatch, which is there when possible)
 	baratto = function(self)
-		if my_turn(self) and self.g.phase == "aim" and self.g:can_use("swap") and missions.vede(self.missione, "baratto") then
-			missions.tocca(self.missione, "baratto")
+		if my_turn(self) and self.g.phase == "aim" and self.g:can_use("swap") and missions.sees(self.missione, "baratto") then
+			missions.touch(self.missione, "baratto")
 			self.fire = { angle = 0, power = 0, weapon = "swap" }
 		end
 	end,
 	-- held: the aiming stick changes the zoom; released without moving it, a
-	-- tap (PAD.evento)
+	-- tap (PAD.event)
 	zoom = function(self)
 		if self.pad_aim then
 			sticks.reset(self.pad_st)
@@ -5092,14 +5094,14 @@ function PAD.zoom(self)
 	local z = self.pad_zoom
 	local dt = self.clock - z.t
 	z.t = self.clock
-	local y = PAD.levetta(self, "mira").y
+	local y = PAD.stick(self, "mira").y
 	if math.abs(y) > 0.25 then
 		z.moved = true
-		camera.trascina(self.cam, self.cam.f + y * ZM.STICK_RATE * dt)
+		camera.drag(self.cam, self.cam.f + y * ZM.STICK_RATE * dt)
 	end
 end
 
--- Every frame: one stick walks and jumps, the other aims (PAD.levetta)
+-- Every frame: one stick walks and jumps, the other aims (PAD.stick)
 -- The controller's buttons on the HUD (ui/glyph.lua, Sergio 30 Oct): with the
 -- controller in hand each button shows its key, drawn as on the controller in
 -- use and as it is now in the settings. For each command: which node it sits
@@ -5110,7 +5112,7 @@ PAD.GLYPHS = {
 	teletrasporto = { -0.75, 0.75 }, baratto = { -0.75, 0.75 }, usa_oggetto = { 1.3, 0 }, oggetti = { -1.3, 0 },
 	zoom = { -1.35, 0 }, rotellina = { 1, -1 }, spara = { -0.7, 0.7 },
 }
-function PAD.sopra(self, cmd)
+function PAD.over(self, cmd)
 	if cmd == "teletrasporto" then return self.btn_tele.nodo end
 	if cmd == "baratto" then return self.scambio.tondo.nodo end
 	if cmd == "zoom" then return self.btn_zoom end
@@ -5142,7 +5144,7 @@ function PAD.glyphs(self)
 			self.glyphs[cmd] = g
 		end
 		local gui_node, side_of = nil, nil
-		if on then gui_node, side_of = PAD.sopra(self, cmd) end
+		if on then gui_node, side_of = PAD.over(self, cmd) end
 		local button_key = gui_node and (cmd == "rotellina" and "start" or PAD.reader.key_of(self.ctrl, cmd))
 		if button_key then
 			if g.su ~= gui_node then
@@ -5166,9 +5168,9 @@ function PAD.every_frame(self)
 	-- the settings' mapping, once the profile is loaded
 	if not self.read_keys and self.profilo then
 		self.read_keys = true
-		reader.usa(c, profile.setting(self.profilo, "tasti"))
+		reader.use(c, profile.setting(self.profilo, "tasti"))
 	end
-	reader.levette = PAD.imp(self, "levette")
+	reader.levette = PAD.setting(self, "levette")
 	-- Esc or back (PAD.on_input), if it wasn't the controller's B
 	if self.menu_requested then
 		self.menu_requested = nil
@@ -5177,11 +5179,11 @@ function PAD.every_frame(self)
 			open_wheel(self, not self.menu_open)
 		end
 	end
-	if not self.pad_on and (reader.spinta(c.sx) or reader.spinta(c.dx)) then PAD.evento(self, {}) end
+	if not self.pad_on and (reader.pushed(c.sx) or reader.pushed(c.dx)) then PAD.event(self, {}) end
 	local play_mission = (self.mode == "local" or self.mode == "online") and self.controls_visible
 		and not self.menu_open and not self.carta
 	if not play_mission then
-		PAD.riposo(self)
+		PAD.rest(self)
 		return
 	end
 	local st = self.pad_move
@@ -5189,31 +5191,31 @@ function PAD.every_frame(self)
 	local jump_key = reader.key_of(c, "salta")
 	if jump_key then
 		-- with jump on a button the left stick only walks: only sideways counts
-		local x = PAD.levetta(self, "muove").x
+		local x = PAD.stick(self, "muove").x
 		st.moving = math.abs(x) > (st.moving and sticks.MOVE_CENTER or sticks.LATERAL_DEAD)
 		if st.moving then st.dir = x < 0 and -1 or 1 end
 		self.pad_jump = self.pad_jump and c.giu[jump_key] or false
-	elseif sticks.muovi(st, PAD.levetta(self, "muove").x, PAD.levetta(self, "muove").y) then
+	elseif sticks.move(st, PAD.stick(self, "muove").x, PAD.stick(self, "muove").y) then
 		self.jump_pressed = true
-		missions.tocca(self.missione)
-		missions.tocca(self.missione, "salta")
+		missions.touch(self.missione)
+		missions.touch(self.missione, "salta")
 	end
 	if st.moving and not previous then
-		missions.tocca(self.missione)
-		missions.tocca(self.missione, "cammina")
+		missions.touch(self.missione)
+		missions.touch(self.missione, "cammina")
 	end
 	self.pad_walk = st.moving and st.dir or 0
 	if not jump_key then self.pad_jump = st.jumping end
-	if self.pad_zoom then PAD.zoom(self) else PAD.mira(self) end
+	if self.pad_zoom then PAD.zoom(self) else PAD.aim(self) end
 	-- the lit item (LT): if it ran out, the column's first
-	local l = PAD.oggetti(self)
+	local l = PAD.items(self)
 	local ok = false
 	for _, sl in ipairs(l) do ok = ok or sl.weapon == self.pad_item end
 	if not ok then self.pad_item = l[1] and l[1].weapon end
 end
 
 -- A controller button pressed or released (ui/controller.lua)
-function PAD.evento(self, e)
+function PAD.event(self, e)
 	self.pad_on = true
 	if self.cartolina then
 		if e.nome and e.held_down then CP.postcard_choice(self, menu.postcard.pad(self.cartolina, e.nome)) end
@@ -5224,20 +5226,20 @@ function PAD.evento(self, e)
 	if self.touch_ui and COMMANDS == "" then set_touch_ui(self, false) end
 	if e.nome and not e.held_down and not e.levetta and (self.mode == "local" or self.mode == "online") then
 		-- released: SALTA stops jumping, SPARA "lasciando" fires the shot
-		local command = PAD.reader.comando(self.ctrl, e.nome)
+		local command = PAD.reader.command(self.ctrl, e.nome)
 		if command == "salta" then self.pad_jump = false end
 		if command == "zoom" and self.pad_zoom then
 			if not self.pad_zoom.moved then change_zoom(self) end
 			self.pad_zoom = nil
 		end
-		if command == "spara" and self.pad_charge and PAD.imp(self, "potenza") ~= "grilletto" then
+		if command == "spara" and self.pad_charge and PAD.setting(self, "potenza") ~= "grilletto" then
 			PAD.COMMANDS.spara(self)
 		end
 	end
 	if not (e.nome and e.held_down) then return end
 	local battle = self.mode == "local" or self.mode == "online" or self.mode == "ended" or self.mode == "connecting"
 	if not battle then
-		-- menus, screens and weapon draft: like taps (ui.tocco)
+		-- menus, screens and weapon draft: like taps (ui.touch)
 		-- (with the button's name, for the settings that change it)
 		if e.ui or self.mode == "schermata" then
 			PAD.on_input(self, ACTION.PAD, { pressed = true, ui = e.ui, nome = e.nome, levetta = e.levetta })
@@ -5245,7 +5247,7 @@ function PAD.evento(self, e)
 		return
 	end
 	local n = e.nome
-	local command = not e.levetta and PAD.reader.comando(self.ctrl, n)
+	local command = not e.levetta and PAD.reader.command(self.ctrl, n)
 	if self.mode == "ended" then
 		-- the podium, the stars or the home, like a tap
 		if n == "a" or n == "start" then pointer_down(self, "pad", 0, 0) end
@@ -5257,8 +5259,8 @@ function PAD.evento(self, e)
 		if command == "rotellina" or e.ui == "indietro" then
 			open_wheel(self, false)
 		elseif e.ui then
-			local ui_action = ui.tocco(self.rotellina, ACTION.PAD, { pressed = true, ui = e.ui })
-			if ui_action then PAD.rotellina(self, ui_action) end
+			local ui_action = ui.touch(self.rotellina, ACTION.PAD, { pressed = true, ui = e.ui })
+			if ui_action then PAD.wheel(self, ui_action) end
 		end
 	elseif command == "rotellina" and self.queue and not self.queue.found
 		and (self.mode == "menu" or self.mode == "schermata" or self.mode == "ended") then
@@ -5269,26 +5271,26 @@ function PAD.evento(self, e)
 		ui.navigate(self.rotellina, "giu")
 	elseif command == "spara" and self.controls_visible then
 		-- pressing fires at once; "lasciando" (settings) charges and fires on
-		-- release; with power from the trigger PAD.mira takes care of it
-		missions.tocca(self.missione)
-		if PAD.imp(self, "potenza") == "grilletto" then return end
-		if PAD.imp(self, "sparo") == "rilascio" then
+		-- release; with power from the trigger PAD.aim takes care of it
+		missions.touch(self.missione)
+		if PAD.setting(self, "potenza") == "grilletto" then return end
+		if PAD.setting(self, "sparo") == "rilascio" then
 			self.pad_charge = self.pad_aim
 		else
 			PAD.COMMANDS.spara(self)
 		end
 	elseif command and self.controls_visible then
-		missions.tocca(self.missione)
+		missions.touch(self.missione)
 		PAD.COMMANDS[command](self)
 	end
 end
 
 -- (in PAD because the controller's buttons pass through here too, as ACTION.PAD)
 function PAD.on_input(self, action_id, action)
-	-- the controller: its buttons go to PAD.evento, one at a time
+	-- the controller: its buttons go to PAD.event, one at a time
 	local pad = PAD.reader.input(self.ctrl, action_id, action)
 	if pad then
-		for _, e in ipairs(pad) do PAD.evento(self, e) end
+		for _, e in ipairs(pad) do PAD.event(self, e) end
 		return true
 	end
 	-- a key, the mouse or a finger: no longer playing with the controller
@@ -5312,7 +5314,7 @@ function PAD.on_input(self, action_id, action)
 			-- the story is over: seen, then what was waiting for it (the CAMPAGNA or the mission)
 			if self.story_id then
 				CP.tale.seen(self.profilo, self.story_id)
-				profile.salva(self.profilo)
+				profile.save(self.profilo)
 			end
 			local after = self.story_next or function() open_campaign(self) end
 			self.story_id, self.story_next = nil, nil
@@ -5353,7 +5355,7 @@ function PAD.on_input(self, action_id, action)
 			end)
 		elseif type(end_of) == "table" and end_of.rivedi then
 			-- RIVEDI on the podium or in the profile
-			CP.rivedi(self, end_of.rivedi, end_of.da)
+			CP.rewatch(self, end_of.rivedi, end_of.da)
 		elseif end_of == "armeria" and self.schermata.mod == menu.profile_tabs then
 			-- the armory from the profile: closing it goes back there
 			CP.slide(self, 1, function()
@@ -5439,10 +5441,10 @@ function PAD.on_input(self, action_id, action)
 	end
 	if self.missione and action.pressed and (action_id == ACTION.LEFT or action_id == ACTION.RIGHT
 		or action_id == ACTION.JUMP or action_id == ACTION.TELE_BTN or ACTION.WEAPON[action_id]) then
-		missions.tocca(self.missione)
+		missions.touch(self.missione)
 	end
 	if (action_id == ACTION.LEFT or action_id == ACTION.RIGHT) and action.pressed then
-		missions.tocca(self.missione, "cammina")
+		missions.touch(self.missione, "cammina")
 	end
 	if action_id == ACTION.LEFT then
 		self.keys.left = not action.released
@@ -5451,7 +5453,7 @@ function PAD.on_input(self, action_id, action)
 	elseif action_id == ACTION.JUMP then
 		if action.pressed then
 			self.jump_pressed = true
-			missions.tocca(self.missione, "salta")
+			missions.touch(self.missione, "salta")
 		end
 		self.keys.jump = not action.released
 	elseif action_id == ACTION.TELE_BTN then
@@ -5521,7 +5523,7 @@ function PAD.on_input(self, action_id, action)
 end
 
 -- The screen you are on (for PAD.finger)
-function PAD.schermo(self)
+function PAD.screen(self)
 	return self.mode, self.schermata and self.schermata.obj
 end
 
@@ -5537,9 +5539,9 @@ end
 
 -- on_input's work counts in the frame counter too
 function on_input(self, action_id, action)
-	local t = frames.ora()
+	local t = frames.now()
 	local r = CP.on_input(self, action_id, action)
-	frames.lavoro(t)
+	frames.work(t)
 	return r
 end
 
@@ -5553,19 +5555,19 @@ function CP.on_input(self, action_id, action)
 	-- the mission's postcard: AVANTI, or a tap outside goes back (CP.enter_mission)
 	if self.cartolina and action_id ~= ACTION.PAD then
 		if action_id == ACTION.TOUCH and action.pressed then
-			CP.postcard_choice(self, menu.postcard.premi(self.cartolina, action.x, action.y))
+			CP.postcard_choice(self, menu.postcard.press(self.cartolina, action.x, action.y))
 		end
 		return true
 	end
 	-- the queue's pill: a tap goes back to the room (not in a match: the finger is playing)
 	if action_id == ACTION.TOUCH and action.pressed and CP.queue_tap(self, action.x, action.y) then return true end
-	local modo, obj = PAD.schermo(self)
+	local modo, obj = PAD.screen(self)
 	local r = PAD.on_input(self, action_id, action)
 	-- A finger that changes screen by touching down doesn't also touch the next
 	-- one (Sergio, 30 Oct: leaving online a tap pressed the home button under
 	-- the finger, because the same finger arrives twice, with the mouse and with
 	-- the real fingers): until it lifts (at most half a second) the rest doesn't feel it
-	local m2, o2 = PAD.schermo(self)
+	local m2, o2 = PAD.screen(self)
 	if (m2 ~= modo or o2 ~= obj) and PAD.finger(action_id, action) then self.wait_release = 0.5 end
 	return r
 end
