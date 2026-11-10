@@ -102,6 +102,26 @@ do
 	check(q.projectile == nil, "the Trapano's shot ends")
 end
 
+-- Trapano: out of the wall it keeps flying and hits who is behind it, up to config.DRILL.after
+do
+	local function behind(dx)
+		local q, a, b = arena("drill", 400, 900, function(q2) q2.terrain:rect(600, 100, 60, 120, 1) end)
+		place(b, 660 + dx, 100)
+		local hp, out = b.hp, false
+		fire(q, "drill", 0.02, 1)
+		for _ = 1, 600 do
+			q:step()
+			for _, e in ipairs(q:pop_events()) do if e.type == "drill_out" then out = true end end
+			if not q.projectile then break end
+		end
+		return hp - b.hp, out
+	end
+	local dmg, out = behind(100)
+	check(out and dmg > 0, "the Trapano out of the wall hits who is 100 px behind it")
+	local far = behind(config.DRILL.after + 150)
+	check(far == 0, "past config.DRILL.after pixels it hits nobody")
+end
+
 -- Calamita: pulls near robots to the centre, nothing over a pit
 do
 	local q, a, b = arena("magnet", 600, 600 + 120 + 90)

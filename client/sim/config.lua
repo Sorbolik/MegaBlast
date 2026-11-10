@@ -181,11 +181,13 @@ C.BOOMERANG = { damage = 18, speed = 450, range = 400, back_speed = 520, radius 
 C.TAR = { damage = 45, radius = 60, turns = 3, fuse = 4 * 60 }
 -- Trapano (primary, drill): flies like the rocket until it touches terrain, then
 -- bores straight on, digging a tunnel of radius pixels at speed px/s for at most
--- dig pixels. If it comes out into the open or touches a robot it blows up there
--- (damage, slow); if the dig runs out inside the terrain it blows up weakly.
-C.DRILL = { speed = 560, dig_speed = 300, dig = 220, radius = 7,
-	blast = { r = 14, damage_r = 24, damage = 60, impulse = 30 },
-	inner = { r = 10, damage_r = 18, damage = 32, impulse = 20 } }
+-- dig pixels. If it touches a robot it blows up there (damage, slow); if it comes
+-- out into the open it keeps flying straight for after pixels at fly_speed (it hits
+-- whoever is behind the wall) and blows up on the first robot or at the end of the
+-- run; if the dig runs out inside the terrain it blows up weakly.
+C.DRILL = { speed = 560, dig_speed = 300, dig = 220, radius = 7, after = 200, fly_speed = 560,
+	blast = { r = 14, damage_r = 24, damage = 48, impulse = 30 },
+	inner = { r = 10, damage_r = 18, damage = 24, impulse = 20 } }
 -- Calamita (secondary, magnet): instant pulse centred distance pixels from the
 -- user along the aim: every robot (the user too) within radius slides to the
 -- centre in ticks ticks, for a little damage (not to the user). Nothing happens
