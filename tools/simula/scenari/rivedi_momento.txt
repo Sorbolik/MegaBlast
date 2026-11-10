@@ -31,7 +31,7 @@ aspetta 1
 tocca 640 360                       # fine: il profilo, sulla partita
 aspetta 0.8
 foto 02_profilo_partite
-tocca 765 242                       # il momento «finale»: il replay parte da poco prima
+tocca 950 264                       # il momento «finale»: il replay parte da poco prima
 aspetta_stato modo=replay 5
 aspetta 1
 foto 03_replay_momento

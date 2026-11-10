@@ -67,22 +67,20 @@ function M.wallet(scaglie, ossidiana, parent, x, y, plates)
 	w.at = {}
 	w.text = {}
 	if plates then
-		-- the "Raggi" wallet (ui/kit.lua, Figma): two small dark plates side by side
+		-- the "Raggi" wallet (ui/kit.lua, Figma): one dark strip to read, no
+		-- frame and no shadow (it is not two buttons), a thin cut between the balances
 		local g = { node = w.root, ox = 1110, oy = 44 }
-		local line = kit.with_alpha(kit.C.SAND, 0.3)
-		kit.para(g, 1000, 26, 112, 36, 10, kit.with_alpha(kit.C.INK, 0.8))
-		kit.outline(g, 1000, 26, 112, 36, 10, 2, line)
-		kit.para(g, 1122, 26, 88, 36, 10, kit.with_alpha(kit.C.INK, 0.8))
-		kit.outline(g, 1122, 26, 88, 36, 10, 2, line)
+		kit.para(g, 966, 26, 204, 36, 10, kit.with_alpha(kit.C.INK, 0.8))
+		kit.line(g, 1085, 31, 1079, 57, 2, kit.with_alpha(kit.C.SAND, 0.3))
 		w.border = gui.new_box_node(vec(0, 0), vec(0, 0))
 		gui.set_visible(w.border, false)
 		gui.set_parent(w.border, w.root)
-		w.at.scaglia = vec(-84, 0)
-		w.at.ossidiana = vec(38, 0)
-		M.icon("scaglia", -84, 0, 22, w.root)
-		M.icon("ossidiana", 38, 0, 22, w.root)
-		w.text.scaglia = kit.text(g, "", 1042, 51, 18, kit.C.SAND)
-		w.text.ossidiana = kit.text(g, "", 1164, 51, 18, kit.C.SAND)
+		w.at.scaglia = vec(-118, 0)
+		w.at.ossidiana = vec(-6, 0)
+		M.icon("scaglia", -118, 0, 22, w.root)
+		M.icon("ossidiana", -6, 0, 22, w.root)
+		w.text.scaglia = kit.text(g, "", 1008, 51, 18, kit.C.SAND)
+		w.text.ossidiana = kit.text(g, "", 1120, 51, 18, kit.C.SAND)
 	else
 		w.panel, w.border = ui.panel(0, 0, M.W, M.H, w.root, "pillola")
 		w.at.scaglia = vec(-M.W / 2 + 30, 0)

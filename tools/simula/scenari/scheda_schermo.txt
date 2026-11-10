@@ -13,10 +13,10 @@ aspetta 1.5
 tocca_centro 400 300                # il diavoletto: il profilo
 aspetta 0.5
 foto 01_profilo_scheda
-tocca_bordo 457 142 alto centro    # STATISTICHE (le schede stanno sotto la testata)
+tocca_centro 802 596              # STATISTICHE (le schede stanno sotto la testata)
 aspetta 0.3
 foto 02_profilo_statistiche
-tocca_bordo 62 62 alto sinistra     # indietro
+tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.3                         # lo scivolo finisce
 tocca_bordo 254 346 basso sinistra    # ALLENAMENTO

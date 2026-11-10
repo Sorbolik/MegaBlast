@@ -16,6 +16,7 @@ return {
 		tournament = "TORNEO",
 		all = "TUTTE",
 		you = "Tu",
+		home = "HOME",
 		retry = "RIPROVA",
 		-- the sticks' sides, in a sentence
 		stick_side = { dx = "di destra", sx = "di sinistra" },
@@ -349,27 +350,25 @@ return {
 
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
 	profile_tabs = {
-		title = "PROFILO",
+		title = "IL TUO DIAVOLETTO",
+		your_devil = "DIAVOLETTO",
+		no_piece_short = "VUOTO",
+		loadout_locked = "%s: LIV %s",
 		tab_sheet = "SCHEDA",
 		tab_seals = "SIGILLI",
 		tab_matches = "PARTITE",
 		level = "LIV %s",
 		level_braci = "LIV %s · %s BRACI",
-		xp = "%s / %s XP",
 		-- SCHEDA
 		loadout = "ASSETTO",
 		loadout_n = "ASSETTO %s",
-		slot_level = "%s %s",
-		slot_empty = "%s · VUOTO",
 		how_others_see = "COSÌ TI VEDONO",
 		next_steps = "PROSSIMI SCATTI",
-		steps_hint = "ogni 10 livelli un aspetto nuovo, al 30 la variante B",
 		-- "Maschera del Corvo": the piece, then the set
 		piece_of = { default = "%s del %s", fornace = "%s della %s" },
 		next_look = "al %s: aspetto %s",
 		next_look_b = "al %s: aspetto %s e variante B",
 		all_steps = "tutti gli scatti presi",
-		no_piece = "nessun pezzo",
 		pick_in_armory = "sceglilo nell'ARMERIA",
 		-- STATISTICHE
 		matches = "PARTITE",
@@ -382,7 +381,6 @@ return {
 		badge_grade = "%s %s",
 		no_badge = "senza badge",
 		damage_by_weapon = "DANNO PER ARMA",
-		damage_hint = "quanto del tuo danno, arma per arma",
 		nothing_yet = "ancora niente: gioca una partita",
 		weapons = {
 			missile = "Lanciarune", grenade = "Uovo", shards = "Schegge", punch = "Pugno", sniper = "Cecchino",
@@ -395,9 +393,6 @@ return {
 		outcome_won = "VINTA",
 		outcome_lost = "PERSA",
 		outcome_tie = "PARI",
-		chart_end = "FINE",
-		chart_round = "giro %s",
-		last_matches = "LE ULTIME %s · I REPLAY DI QUELLE GIOCATE SU QUESTO TELEFONO",
 		no_matches = "Nessuna partita ancora: gioca, e la ritrovi qui.",
 		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
 		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
@@ -409,13 +404,11 @@ return {
 
 	-- menu/seals.lua: the profile's SIGILLI tab (the paths of sim/skills.lua)
 	seals = {
-		points = "%s / %s PUNTI",
+		points_of = "/ %s PUNTI",
+		free = "%s LIBERI",
 		reset = "AZZERA",
-		loadout = "ASSETTO",
 		-- a closed loadout: its number and the level that opens it
-		locked = "%s · LIV %s",
 		of = "%s / %s",
-		choose = "SCEGLI",
 		threshold = "%s · SOGLIA %s",
 		taken = "potere preso",
 		choose_now = "scegli il potere",
@@ -424,7 +417,6 @@ return {
 		-- points the threshold needs, free points: not enough
 		missing_free = "servono %s punti, liberi %s",
 		bring_here = "PORTA QUI",
-		change_any_time = "cambi quando vuoi, fuori dalla partita",
 		in_match = "IN PARTITA",
 		nothing = "ancora niente: metti un punto con +",
 		no_power = "nessun potere ancora",

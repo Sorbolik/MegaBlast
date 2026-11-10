@@ -20,6 +20,7 @@
 -- colored here; colors are the "Inferno" palette.
 
 local screen = require "ui.screen"
+local ui = require "ui.ui"
 
 local M = {}
 
@@ -225,6 +226,18 @@ function M.text(g, t, x, y, size, color, anchor, spacing)
 	return n
 end
 
+-- Capitals, the accented letters too (string.upper leaves them small)
+local ACCENTS = { ["à"] = "À", ["è"] = "È", ["é"] = "É", ["ì"] = "Ì", ["ò"] = "Ò", ["ù"] = "Ù" }
+function M.upper(t)
+	return (string.upper(t):gsub("\195[\160-\191]", ACCENTS))
+end
+
+-- How wide a text node is, in pixels
+function M.width(n)
+	local m = resource.get_text_metrics(gui.get_font_resource(gui.get_font(n)), gui.get_text(n))
+	return m.width * gui.get_scale(n).x
+end
+
 -- ---------------------------------------------------------------- progress
 
 -- n small slanted notches, the first `lit` in color
@@ -254,11 +267,24 @@ function M.button(list_of, p, ui_action, opt)
 end
 
 -- The main action: the glowing plate with the sand shadow and, under it, a
--- dark tag saying what it starts. opt: size (of the label), sub
+-- dark tag saying what it starts. opt: size (of the label), sub, off (it
+-- can't be done now: dark, and the tag says why)
 function M.action(g, label, x, y, w, h, opt)
 	opt = opt or {}
 	local sk = 46
 	local cx, cy = x + (w + sk) / 2, y + h / 2
+	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
+	if opt.off then
+		-- not now: a dark plate, and the tag says what is missing
+		local p = M.plate(g, x, y, w, h, C.LINE, { sk = sk, d = 14 })
+		p.label = M.text(p.g, label, x + w / 2 + 23, y + h / 2 + size * 0.36, size, with_alpha(C.MUTE, 0.7), "middle")
+		gui.set_parent(p.label, p.face_node, true)
+		if opt.sub then
+			p.tag = M.para(g, x + 14, y + h + 16, w - 28, 40, 14, C.INK)
+			p.sub = M.text(p.tag.g, opt.sub, x + w / 2 + 10, y + h + 43, 16, C.HOT_TOP, "middle", 1.2)
+		end
+		return p
+	end
 	local glow = shape("alone", cx - g.ox, g.oy - cy, (w + sk) * 1.5, h * 2.6, with_alpha(C.HOT, 0.5), g.node)
 	gui.set_blend_mode(glow, gui.BLEND_ADD)
 	local p = M.plate(g, x, y, w, h, C.SAND, { sk = sk, d = 14, fill = C.HOT_BOTTOM })
@@ -266,7 +292,6 @@ function M.action(g, label, x, y, w, h, opt)
 	p.glow = glow
 	p.rim = M.outline(p.g, x + 12, y + 10, w - 24, h - 20, 40, 2, vmath.vector4(1, 1, 1, 0.35))
 	for i = 1, 4 do gui.set_parent(p.rim[i], p.face_node, true) end
-	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
 	p.label = M.text(p.g, label, x + w / 2 + 23, y + h / 2 + size * 0.36, size, C.INK, "middle")
 	gui.set_parent(p.label, p.face_node, true)
 	if opt.sub then
@@ -291,6 +316,171 @@ function M.title(g, label, accent, x, y, size)
 	return { M.text(g, label, x + 4, y + 4, size, accent or C.HOT, "start", 1), M.text(g, label, x, y, size, C.SAND, "start", 1) }
 end
 
+-- The way back: a small plate at the bottom left, on the seam, with where it
+-- goes written under it (Sergio, 10 Nov: the title and the way back are two
+-- different things). Returns the header: h.tops its top-level nodes
+function M.header(list_of, label, accent, back_action, from)
+	local h = { tops = {} }
+	local tl = M.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
+	h.tops[#h.tops + 1] = tl.node
+	h.title = M.title(tl, label, accent)
+	h.top_left = tl
+	if back_action then
+		local bl = M.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
+		h.tops[#h.tops + 1] = bl.node
+		h.back = M.plate(bl, 8, 636, 52, 48, accent or C.HOT, { sk = 12, d = 5 })
+		gui.set_parent(M.line(h.back.g, 35, 650, 24, 660, 5, C.SAND), h.back.face_node, true)
+		gui.set_parent(M.line(h.back.g, 24, 660, 35, 670, 5, C.SAND), h.back.face_node, true)
+		M.text(bl, from or "", 36, 704, 10, M.with_alpha(C.SAND, 0.8), "middle", 1)
+		-- a generous zone around the small plate
+		local zone = empty(40, 46, 96, 92, bl.node)
+		list_of[#list_of + 1] = { nodo = zone, bordo = zone, colore = CLEAR, riposo = CLEAR, ui_action = back_action, piastra = h.back }
+	end
+	local tr = M.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
+	h.tops[#h.tops + 1] = tr.node
+	h.top_right = tr
+	return h
+end
+
+function M.header_delete(h)
+	for _, n in ipairs(h.tops) do gui.delete_node(n) end
+end
+
+-- ---------------------------------------------------------------- categories
+
+function M.rect(g, x, y, w, h, color)
+	return shape(nil, x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, color, g.node)
+end
+
+-- An invisible zone that takes the taps of list_of
+function M.zone(g, list_of, x, y, w, h, ui_action)
+	local n = empty(x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
+	local b = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = ui_action }
+	list_of[#list_of + 1] = b
+	return b
+end
+
+-- TABS: trapezoids standing on a rail; the active one is sand.
+-- tabs: { { label, ui_action }, ... }
+function M.tabs(g, list_of, x, y, tabs, active, accent)
+	local h, cx = 40, x
+	for i, tab in ipairs(tabs) do
+		local w = #tab[1] * 13 + 44
+		local on = i == active
+		local color = on and C.SAND or C.CARD_TOP
+		local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
+		shape("taglio_sx", -w / 2 + 6, 0, 12, h, color, n)
+		shape(nil, 0, 0, w - 24 + 1, h, color, n)
+		local r = shape("taglio_dx", w / 2 - 6, 0, h, 12, color, n)
+		V.x, V.y, V.z = 0, 0, 90
+		gui.set_rotation(r, V)
+		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2 }, tab[1], cx + w / 2, y + 27, 19,
+			on and C.INK or M.with_alpha(C.SAND, 0.8), "middle", 0.5)
+		list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
+		cx = cx + w + 6
+	end
+	M.rect(g, x - 14, y + h, cx - x + 22, 5, C.SAND)
+	M.rect(g, x - 14, y + h + 5, cx - x + 22, 3, accent or C.HOT)
+	return cx
+end
+
+-- CARDS: a cut corner at the top right and a frame in the card's color.
+-- opt: sel (chosen: sand frame and a glow), off (dim). Returns { node, g }
+function M.card(g, x, y, w, h, color, opt)
+	opt = opt or {}
+	local c = math.min(24, h * 0.34)
+	local cx, cy = x + w / 2, y + h / 2
+	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	if opt.sel then
+		local glow = shape("alone", 0, 0, w * 1.5, h * 1.6, with_alpha(C.HOT, 0.45), n)
+		gui.set_blend_mode(glow, gui.BLEND_ADD)
+	end
+	local fa = opt.off and 0.75 or 1
+	local bottom, top = with_alpha(C.CARD_BOTTOM, fa), with_alpha(C.CARD_TOP, fa)
+	-- the face: everything but the cut corner
+	shape(nil, -c / 2, 0, w - c, h, bottom, n)
+	shape(nil, w / 2 - c / 2, -c / 2, c, h - c, bottom, n)
+	local tri = shape("taglio_dx", w / 2 - c / 2, h / 2 - c / 2, c, c, top, n)
+	V.x, V.y, V.z = 0, 0, 90
+	gui.set_rotation(tri, V)
+	shape("sfuma", -c / 2, 0, w - c, h, top, n)
+	shape("sfuma", w / 2 - c / 2, -c / 2, c, h - c, with_alpha(C.CARD_TOP, fa * (1 - c / h)), n)
+	-- the frame
+	local col = opt.sel and C.SAND or with_alpha(color, opt.off and 0.4 or 1)
+	local t = opt.sel and 4 or 3
+	k.frame = {
+		M.line(k.g, x, y, x + w - c, y, t, col), M.line(k.g, x + w - c, y, x + w, y + c, t, col),
+		M.line(k.g, x + w, y + c, x + w, y + h, t, col), M.line(k.g, x + w, y + h, x, y + h, t, col),
+		M.line(k.g, x, y + h, x, y, t, col),
+	}
+	local tip = shape("taglio_dx", w / 2 - (c - 7) / 2, h / 2 - (c - 7) / 2, c - 7, c - 7, col, n)
+	V.z = -90
+	gui.set_rotation(tip, V)
+	return k
+end
+
+-- INFORMATION: a dark row with a spine of color, no shadow: it is read, not pressed
+function M.info(g, x, y, w, h, color)
+	M.rect(g, x, y, w, h, with_alpha(C.INK, 0.5))
+	return M.rect(g, x, y, 5, h, color)
+end
+
+-- LABELS: a small blade and the name in color
+function M.label(g, x, y, t, color, backed)
+	if backed then M.para(g, x - 6, y, #t * 9 + 30, 22, 6, with_alpha(C.INK, 0.8)) end
+	M.para(g, x, y + 3, 7, 16, 4, color)
+	return M.text(g, t, x + 16, y + 17, 13, color, "start", 1.2)
+end
+
+-- A section's small heading
+function M.heading(g, t, x, y, color)
+	return M.text(g, t, x, y, 14, color or C.HOT_TOP, "start", 1.5)
+end
+
+-- MEASURES: round seals on the thresholds of a bar. state: "got" (full, in
+-- color), "cur" (the one you are looking at: bigger, sand ring, a glow),
+-- "todo" (dark, a ring in color)
+function M.seal(g, cx, cy, t, state, color)
+	local r = state == "cur" and 22 or 16
+	local x, y = cx - g.ox, g.oy - cy
+	if state == "cur" then
+		local glow = shape("alone", x, y, r * 4.4, r * 4.4, with_alpha(color, 0.7), g.node)
+		gui.set_blend_mode(glow, gui.BLEND_ADD)
+	end
+	ui.disc(x, y, r * 2 + 3, state == "cur" and C.SAND or color, g.node)
+	ui.disc(x, y, r * 2 - 3, state == "got" and color or C.INK, g.node)
+	ui.ring_node(x, y, (r - 4) * 2, 2, state == "got" and C.INK or color, g.node)
+	return M.text(g, t, cx, cy + 5, state == "cur" and 16 or 13, state == "got" and C.INK or C.SAND, "middle")
+end
+
+-- REGULATORS: the small controls inside a screen are round, not plates: the
+-- capsule "- +" (Sergio, 10 Nov). off_minus, off_plus: that side can't be used
+function M.stepper(g, list_of, x, y, minus, plus, off_minus, off_plus)
+	local w, h = 92, 36
+	local n, border = ui.panel(x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node, "pillola")
+	gui.set_color(n, with_alpha(C.INK, 0.85))
+	gui.set_color(border, with_alpha(C.SAND, 0.3))
+	local sg = { node = n, ox = x + w / 2, oy = y + h / 2 }
+	M.text(sg, "−", x + 22, y + 26, 24, off_minus and C.LINE or C.SAND, "middle")
+	M.text(sg, "+", x + w - 22, y + 26, 24, off_plus and C.LINE or C.SAND, "middle")
+	M.rect(sg, x + w / 2 - 1, y + 8, 2, 20, with_alpha(C.SAND, 0.2))
+	local a = M.zone(sg, list_of, x - 4, y - 6, w / 2 + 4, h + 12, minus)
+	a.spento = off_minus or nil
+	local b = M.zone(sg, list_of, x + w / 2, y - 6, w / 2 + 4, h + 12, plus)
+	b.spento = off_plus or nil
+	return n
+end
+
+-- The player's plate: name (or what it is), a line on the right, the bar
+function M.nameplate(g, x, y, name, right, f, accent)
+	local p = M.sand(g, x, y, 340, 62, accent or C.HOT, { sk = 22 })
+	p.name = M.text(p.g, name, x + 36, y + 39, 22, C.INK)
+	p.right = M.text(p.g, right, x + 330, y + 26, 18, with_alpha(C.INK, 0.75), "end", 1)
+	p.bar = M.bar(p.g, x + 176, y + 40, 150, 7, f, C.HOT_BOTTOM, C.SAND_SHADOW)
+	return p
+end
+
 -- ---------------------------------------------------------------- scene
 
 local RAYS = 18
@@ -308,8 +498,10 @@ function M.scene(fx, fy, opt)
 		s.tops[#s.tops + 1] = n
 		return n
 	end
-	full(with_alpha(C.TINT, 0.5))
-	full(with_alpha(C.INK, opt.dim or 0.5))
+	-- opt.world: the game world behind stays the main thing, the rays just a hint
+	local world = opt.world or M.WORLD
+	full(with_alpha(C.TINT, world and 0.22 or 0.5))
+	full(with_alpha(C.INK, world and 0.22 or opt.dim or 0.5))
 	-- the rays
 	local hub = M.anchor(fx, fy)
 	s.tops[#s.tops + 1] = hub.node
@@ -319,7 +511,7 @@ function M.scene(fx, fy, opt)
 	for i = 0, RAYS - 1 do
 		local a = i / RAYS * math.pi * 2 + 0.07
 		local wide = 0.09 + (i % 3) * 0.03
-		local n = shape("taglio_sx", 0, 0, 1800, 1800 * math.tan(wide), with_alpha(C.RAY, 0.4), spin)
+		local n = shape("taglio_sx", 0, 0, 1800, 1800 * math.tan(wide), with_alpha(C.RAY, world and 0.2 or 0.4), spin)
 		gui.set_pivot(n, gui.PIVOT_SW)
 		V.x, V.y, V.z = 0, 0, -math.deg(a + wide)
 		gui.set_rotation(n, V)

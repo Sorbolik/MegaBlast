@@ -1,6 +1,6 @@
 # La scheda personaggio (Sergio, 31 ott). Dalla home, toccando il diavoletto,
-# il PROFILO con le quattro schede (SCHEDA 105 578, SIGILLI 267 578, STATISTICHE
-# 457 578, PARTITE 647 578; indietro 62 658). Poi una partita contro un bot: lo schieramento
+# il PROFILO con le quattro schede (SCHEDA 501 596, SIGILLI 635 596, STATISTICHE
+# 802 596, PARTITE 969 596; indietro 36 60). Poi una partita contro un bot: lo schieramento
 # dei cartellini prima della scelta (un tocco lo chiude), la striscia in alto
 # durante la scelta (un tocco su un cartellino lo apre, un altro lo chiude), in
 # partita il cartellino del bot toccando la sua targa nel suo turno. Partita da
@@ -15,13 +15,13 @@ foto 01_home
 tocca 640 330                       # il diavoletto: il profilo
 aspetta 0.5
 foto 02_profilo_scheda
-tocca 457 578                       # STATISTICHE
+tocca 802 596                       # STATISTICHE
 aspetta 0.3
 foto 03_profilo_statistiche
-tocca 647 578                       # PARTITE (ancora nessuna)
+tocca 969 596                       # PARTITE (ancora nessuna)
 aspetta 0.3
 foto 04_profilo_partite_vuoto
-tocca 62 658                        # indietro
+tocca 36 60                         # indietro
 aspetta_stato modo=menu 3
 aspetta 0.5                         # la home arriva scorrendo: i tocchi contano a scorrimento finito
 
@@ -71,11 +71,11 @@ foto 11_replay
 tocca 640 360                       # fine: il profilo, sulla partita
 aspetta 0.5
 foto 12_profilo_partite
-tocca 457 578                       # STATISTICHE
+tocca 802 596                       # STATISTICHE
 aspetta 0.3
 foto 13_profilo_statistiche
-tocca 105 578                       # SCHEDA
+tocca 501 596                       # SCHEDA
 aspetta 0.3
 foto 14_profilo_scheda
-tocca 62 658                        # indietro
+tocca 36 60                         # indietro
 aspetta_stato modo=menu 3

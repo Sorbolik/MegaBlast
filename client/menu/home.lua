@@ -118,16 +118,17 @@ function M.new(color)
 	h.play = kit.action(right, common.play, 836, 250, 354, 140, { size = 104, sub = T.play_sub })
 	h.play_b = kit.button(h.buttons, h.play, "online", { main = true })
 
-	-- top right: the wallet's two plates (ui/coins.lua, hidden until the
+	-- top right: the wallet's strip (ui/coins.lua, hidden until the
 	-- first coin) and the settings wheel
 	local top_right = kit.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = top_right.node
 	local wr = kit.group(top_right, 1110, 44)
 	h.wallet = coins.wallet(0, 0, wr.node, 0, 0, true)
-	local wheel = kit.group(top_right, 1238, 44)
-	ui.ring_node(0, 0, 38, 2, kit.with_alpha(C.SAND, 0.6), wheel.node)
-	ui.sagoma("ingranaggio", 0, 0, 24, 24, C.SAND, wheel.node)
-	local wz = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(60, 60, 0))
+	local wheel = kit.group(top_right, 1230, 44)
+	gui.set_blend_mode(ui.disc(0, 0, 52, kit.with_alpha(C.INK, 0.8), wheel.node), gui.BLEND_ALPHA)
+	ui.ring_node(0, 0, 52, 2.5, kit.with_alpha(C.SAND, 0.75), wheel.node)
+	ui.sagoma("ingranaggio", 0, 0, 34, 34, C.SAND, wheel.node)
+	local wz = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(72, 72, 0))
 	gui.set_visible(wz, false)
 	gui.set_parent(wz, wheel.node)
 	h.buttons[#h.buttons + 1] = { nodo = wz, bordo = wz, ui_action = "impostazioni", colore = ui.C.LIGHT, riposo = ui.C.LIGHT }
