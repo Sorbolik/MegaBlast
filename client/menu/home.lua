@@ -118,15 +118,19 @@ function M.new(color)
 	h.play = kit.action(right, common.play, 836, 250, 354, 140, { size = 104, sub = T.play_sub })
 	h.play_b = kit.button(h.buttons, h.play, "online", { main = true })
 
-	-- top right: the settings, and left of them the wallet (ui/coins.lua),
-	-- hidden until the first coin
-	h.tops[#h.tops + 1] = ui.settings_button(h.buttons, "impostazioni", nil, true)
-	local wr = gui.new_box_node(vmath.vector3(W - ui.EDGE - 64 - 16 - coins.W / 2, ui.HEAD_Y, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(wr, false)
-	gui.set_xanchor(wr, gui.ANCHOR_RIGHT)
-	gui.set_yanchor(wr, gui.ANCHOR_TOP)
-	h.tops[#h.tops + 1] = wr
-	h.wallet = coins.wallet(0, 0, wr, 0, 0)
+	-- top right: the wallet's two plates (ui/coins.lua, hidden until the
+	-- first coin) and the settings wheel
+	local top_right = kit.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
+	h.tops[#h.tops + 1] = top_right.node
+	local wr = kit.group(top_right, 1110, 44)
+	h.wallet = coins.wallet(0, 0, wr.node, 0, 0, true)
+	local wheel = kit.group(top_right, 1238, 44)
+	ui.ring_node(0, 0, 38, 2, kit.with_alpha(C.SAND, 0.6), wheel.node)
+	ui.sagoma("ingranaggio", 0, 0, 24, 24, C.SAND, wheel.node)
+	local wz = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(60, 60, 0))
+	gui.set_visible(wz, false)
+	gui.set_parent(wz, wheel.node)
+	h.buttons[#h.buttons + 1] = { nodo = wz, bordo = wz, ui_action = "impostazioni", colore = ui.C.LIGHT, riposo = ui.C.LIGHT }
 
 	-- black veil dissolving when the home appears
 	h.veil = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))

@@ -5,7 +5,8 @@
 --
 --   local coins = require "ui.coins"
 --   coins.icon("scaglia" | "ossidiana", x, y, d, parent) -> node
---   local w = coins.wallet(scaglie, ossidiana, parent, x, y)  -- the pill (hidden until the first coin)
+--   local w = coins.wallet(scaglie, ossidiana, parent, x, y [, true])  -- the pill (hidden until the first coin);
+--                                                    -- true: the two plates of the new menus (ui/kit.lua)
 --   coins.set(w, scaglie, ossidiana)
 --   coins.fly(w, kind, from, n, amount, on_arrive)  -- n coins from from (a vector3 in w's
 --                                                    -- parent's space) carry amount into the pill;
@@ -16,6 +17,7 @@
 --   coins.format(n) -> "1.240"
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 
 local M = {}
 
@@ -56,22 +58,41 @@ function M.format(n)
 	return (out:gsub("^%.", ""))
 end
 
-function M.wallet(scaglie, ossidiana, parent, x, y)
+function M.wallet(scaglie, ossidiana, parent, x, y, plates)
 	local w = { shown = { scaglie = scaglie, ossidiana = ossidiana }, real = { scaglie = scaglie, ossidiana = ossidiana },
 		flights = {}, t = 0 }
 	w.root = gui.new_box_node(vec(x, y), vec(0, 0))
 	gui.set_visible(w.root, false)
 	if parent then gui.set_parent(w.root, parent) end
-	w.panel, w.border = ui.panel(0, 0, M.W, M.H, w.root, "pillola")
 	w.at = {}
-	w.at.scaglia = vec(-M.W / 2 + 30, 0)
-	w.at.ossidiana = vec(M.W / 2 - 100, 0)
-	M.icon("scaglia", w.at.scaglia.x, 0, ICON, w.root)
-	M.icon("ossidiana", w.at.ossidiana.x, 0, ICON, w.root)
 	w.text = {}
-	w.text.scaglia = ui.title("", w.at.scaglia.x + 24, 0, 0.6, ui.C.TEXT, w.root)
-	w.text.ossidiana = ui.title("", w.at.ossidiana.x + 24, 0, 0.6, ui.C.TEXT, w.root)
-	for _, n in pairs(w.text) do gui.set_pivot(n, gui.PIVOT_W) end
+	if plates then
+		-- the "Raggi" wallet (ui/kit.lua, Figma): two small dark plates side by side
+		local g = { node = w.root, ox = 1110, oy = 44 }
+		local line = kit.with_alpha(kit.C.SAND, 0.3)
+		kit.para(g, 1000, 26, 112, 36, 10, kit.with_alpha(kit.C.INK, 0.8))
+		kit.outline(g, 1000, 26, 112, 36, 10, 2, line)
+		kit.para(g, 1122, 26, 88, 36, 10, kit.with_alpha(kit.C.INK, 0.8))
+		kit.outline(g, 1122, 26, 88, 36, 10, 2, line)
+		w.border = gui.new_box_node(vec(0, 0), vec(0, 0))
+		gui.set_visible(w.border, false)
+		gui.set_parent(w.border, w.root)
+		w.at.scaglia = vec(-84, 0)
+		w.at.ossidiana = vec(38, 0)
+		M.icon("scaglia", -84, 0, 22, w.root)
+		M.icon("ossidiana", 38, 0, 22, w.root)
+		w.text.scaglia = kit.text(g, "", 1042, 51, 18, kit.C.SAND)
+		w.text.ossidiana = kit.text(g, "", 1164, 51, 18, kit.C.SAND)
+	else
+		w.panel, w.border = ui.panel(0, 0, M.W, M.H, w.root, "pillola")
+		w.at.scaglia = vec(-M.W / 2 + 30, 0)
+		w.at.ossidiana = vec(M.W / 2 - 100, 0)
+		M.icon("scaglia", w.at.scaglia.x, 0, ICON, w.root)
+		M.icon("ossidiana", w.at.ossidiana.x, 0, ICON, w.root)
+		w.text.scaglia = ui.title("", w.at.scaglia.x + 24, 0, 0.6, ui.C.TEXT, w.root)
+		w.text.ossidiana = ui.title("", w.at.ossidiana.x + 24, 0, 0.6, ui.C.TEXT, w.root)
+		for _, n in pairs(w.text) do gui.set_pivot(n, gui.PIVOT_W) end
+	end
 	M.set(w, scaglie, ossidiana)
 	return w
 end
