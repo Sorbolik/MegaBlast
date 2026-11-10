@@ -9,8 +9,8 @@
 
 local skills = require "sim.skills"
 local loadout = require "sim.loadout"
-local equip = require "sim.gear"
 local milestones = require "menu.milestones"
+local wallet = require "menu.wallet"
 local common = require("lang.text").common
 
 local M = {}
@@ -44,12 +44,13 @@ function M.set(p, lookup_key, value)
 end
 
 function M.new()
-	local p = { versione = M.VERSION, xp = 0, livello = 1, mastery = {}, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
+	local p = { versione = M.VERSION, xp = 0, livello = 1, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
 		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0,
 		-- the story's chapters already seen (ui/story.lua)
 		storia = {} }
 	for i = 1, loadout.LOADOUTS do p.loadouts[i] = loadout.new() end
-	return p
+	-- Scaglie, Ossidiana and the pieces' levels (menu/wallet.lua)
+	return wallet.init(p)
 end
 
 -- experience needed to go up from level n
@@ -61,14 +62,9 @@ function M.points(p)
 	return skills.points(p.livello)
 end
 
--- tier of the pieces worn by a loadout: { mask = 1..3, ... }
+-- tier of the pieces worn by a loadout: { mask = 1..4, ... }, from their levels
 function M.tier(p, a)
-	local t = {}
-	for _, s in ipairs(equip.SLOTS) do
-		local set = a.gear[s.id]
-		t[s.id] = set and equip.tier(p.mastery[set .. "_" .. s.id]) or 1
-	end
-	return t
+	return wallet.tiers(p, a)
 end
 
 function M.active_loadout(p)
@@ -88,15 +84,8 @@ function M.match_end(p, spot, awards)
 		p.livello = p.livello + 1
 	end
 	g.livello = p.livello
-	-- mastery: one more match for each piece worn
-	local a = M.active_loadout(p)
-	for _, s in ipairs(equip.SLOTS) do
-		local set = a.gear[s.id]
-		if set then
-			local k = set .. "_" .. s.id
-			p.mastery[k] = (p.mastery[k] or 0) + 1
-		end
-	end
+	-- the Proof of the steps: one more match for each piece worn
+	wallet.wear(p, M.active_loadout(p))
 	return g
 end
 
@@ -189,7 +178,9 @@ function M.sample(p)
 	local a = p.loadouts[p.is_active]
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
 	a.tree = { jump = 2, walk = 1, air_jump = 1, hp = 1, teleport = 1, trap_wide = 2 }
-	p.mastery.corvo_mask, p.mastery.fornace_chest, p.mastery.corvo_cloak, p.mastery.leviatano_legs = 24, 18, 11, 6
+	p.pezzi.corvo_mask, p.pezzi.fornace_chest, p.pezzi.corvo_cloak, p.pezzi.leviatano_legs = 24, 18, 9, 30
+	p.prova.corvo_cloak = 2
+	p.scaglie, p.ossidiana = 1240, 35
 	p.statistiche["2v2"] = { partite = 48, vinte = 27, colpi = 310, a_segno = 190, danno = 14500, abbattuti = 60,
 		nel_vuoto = 23, globi = 140, colpo_lungo = 1180, casse = 35, cadute = 12, morti = 30, serie = 4,
 		armi = { missile = 5200, grenade = 3100, eagle = 2600, sword = 1800, mallet = 1300, shards = 500 } }
@@ -296,6 +287,8 @@ function M.load_up()
 	for k, v in pairs(M.new()) do
 		if p[k] == nil then p[k] = v end
 	end
+	-- the matches per piece of before the Scaglie (10 Nov): the levels start from 1
+	p.mastery = nil
 	return p
 end
 

@@ -68,9 +68,9 @@ check(profile.choose_badge(p, "danno") == false and p.badge[1] == "vinte", "prof
 local q = profile.new()
 local a = profile.active_loadout(q)
 for _, s in ipairs(equip.SLOTS) do a.gear[s.id] = "corvo" end
-q.mastery["corvo_" .. equip.SLOTS[1].id] = 25
+q.pezzi["corvo_" .. equip.SLOTS[1].id] = 25
 local v = showcase.from_profile(q, "Rosso", 1, "TU")
-check(v.pezzi[1].livello == 25 and v.pezzi[1].tier == 3 and v.pezzi[2].livello == 0,
+check(v.pezzi[1].livello == 25 and v.pezzi[1].tier == 3 and v.pezzi[2].livello == 1,
 	"showcase: each piece with its level and the upgrade tier at 10, 20, 30")
 check(#v.abilities >= 1 and v.abilities[1] == "doppio salto", "showcase: the full set gives its power")
 local lines = showcase.rows(v)

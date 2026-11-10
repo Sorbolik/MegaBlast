@@ -160,13 +160,14 @@ check(by[2] and by[2][1].id == "martello", "Martello to whoever does the most da
 check(by[3] == nil, "whoever didn't play gets nothing")
 check(#list >= 3, "list of awards in order")
 
--- Profile: experience, levels and mastery
+-- Profile: experience, levels and the Proof of the pieces
 local p = profile.new()
 check(#p.loadouts == loadout.LOADOUTS and p.livello == 1, "new profile: 3 loadouts, level 1")
-p.loadouts[1].gear = { mask = "vuoto" }
+p.loadouts[1].gear = { mask = "vuoto", chest = "corvo" }
+p.pezzi.vuoto_mask = 9
 local gu = profile.match_end(p, 1, { awards.LIST[1] })
 check(gu.xp == profile.XP_PLACE[1] + profile.XP_AWARD and p.livello == 2, "first place levels you up")
-check(p.mastery.vuoto_mask == 1, "a mastery match for the worn piece")
+check(p.prova.vuoto_mask == 1 and p.prova.corvo_chest == nil, "a match for the Proof of the piece one level below a step")
 check(profile.points(p) == 4, "skill points from the level")
 
 if failures > 0 then

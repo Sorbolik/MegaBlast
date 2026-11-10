@@ -62,15 +62,15 @@ function M.wallet(scaglie, ossidiana, parent, x, y)
 	w.root = gui.new_box_node(vec(x, y), vec(0, 0))
 	gui.set_visible(w.root, false)
 	if parent then gui.set_parent(w.root, parent) end
-	w.panel, w.border = ui.pannello(0, 0, M.W, M.H, w.root, "pillola")
+	w.panel, w.border = ui.panel(0, 0, M.W, M.H, w.root, "pillola")
 	w.at = {}
 	w.at.scaglia = vec(-M.W / 2 + 30, 0)
 	w.at.ossidiana = vec(M.W / 2 - 100, 0)
 	M.icon("scaglia", w.at.scaglia.x, 0, ICON, w.root)
 	M.icon("ossidiana", w.at.ossidiana.x, 0, ICON, w.root)
 	w.text = {}
-	w.text.scaglia = ui.titolo("", w.at.scaglia.x + 24, 0, 0.6, ui.C.TEXT, w.root)
-	w.text.ossidiana = ui.titolo("", w.at.ossidiana.x + 24, 0, 0.6, ui.C.TEXT, w.root)
+	w.text.scaglia = ui.title("", w.at.scaglia.x + 24, 0, 0.6, ui.C.TEXT, w.root)
+	w.text.ossidiana = ui.title("", w.at.ossidiana.x + 24, 0, 0.6, ui.C.TEXT, w.root)
 	for _, n in pairs(w.text) do gui.set_pivot(n, gui.PIVOT_W) end
 	M.set(w, scaglie, ossidiana)
 	return w

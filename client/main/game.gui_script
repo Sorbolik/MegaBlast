@@ -584,6 +584,7 @@ local function show_menu(self, without_veil)
 	self.mode = "menu"
 	home.show(self.home, without_veil)
 	home.queued(self.home, self.queue ~= nil)
+	home.wallet(self.home, self.profilo.scaglie, self.profilo.ossidiana)
 	-- the server's events: the line under EVENTI (and the board, the queue)
 	self.events_t = 0
 	home.events(self.home, menu.eventi.home_line())

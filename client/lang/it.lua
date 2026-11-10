@@ -278,7 +278,7 @@ return {
 
 	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
 	armory = {
-		tab_set = "SET",
+		tab_set = "PEZZI",
 		tab_tree = "ALBERO",
 		loadout = "ASSETTO",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
@@ -291,8 +291,6 @@ return {
 		yes = "sì",
 		no = "no",
 		seconds = "%.1f s",
-		tier = "tier %s",
-		no_piece = "nessun pezzo",
 		-- a set bonus not unlocked yet: the bonus, then the level the pieces need
 		locked_bonus = "%s  (tutti i pezzi al livello %s)",
 		point = "%s punto",

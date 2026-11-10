@@ -62,18 +62,18 @@ local function slots(s, parent)
 		local y = ui.BODY_TOP - CARD_H / 2 - (i - 1) * (CARD_H + CARD_GAP)
 		local set = a.gear[slot.id]
 		local level = set and wallet.level(s.prof, set, slot.id)
-		local n = ui.scheda(s.buttons, ui.EDGE + CARD_W / 2, y, CARD_W, CARD_H, "", "pezzo:" .. slot.id, s.slot == slot.id, parent)
+		local n = ui.tab(s.buttons, ui.EDGE + CARD_W / 2, y, CARD_W, CARD_H, "", "pezzo:" .. slot.id, s.slot == slot.id, parent)
 		local b = s.buttons[#s.buttons]
 		if set then
 			b.riposo = s.slot == slot.id and ui.C.LIGHT or grade_color(level)
 			gui.set_color(b.bordo, b.riposo)
 		end
-		local t = ui.testo(slot.name, -CARD_W / 2 + 16, 24, 0.55, ui.C.OFF, n)
+		local t = ui.text(slot.name, -CARD_W / 2 + 16, 24, 0.55, ui.C.OFF, n)
 		gui.set_pivot(t, gui.PIVOT_W)
-		t = ui.titolo(set and equip.BY_ID[set].name or T.empty, -CARD_W / 2 + 16, 0, 0.6, set and ui.C.TEXT or ui.C.OFF, n)
+		t = ui.title(set and equip.BY_ID[set].name or T.empty, -CARD_W / 2 + 16, 0, 0.6, set and ui.C.TEXT or ui.C.OFF, n)
 		gui.set_pivot(t, gui.PIVOT_W)
 		if set then
-			t = ui.testo(T.level:format(level), -CARD_W / 2 + 16, -26, 0.6, grade_color(level), n)
+			t = ui.text(T.level:format(level), -CARD_W / 2 + 16, -26, 0.6, grade_color(level), n)
 			gui.set_pivot(t, gui.PIVOT_W)
 		end
 	end
@@ -87,7 +87,7 @@ local function track(level, x0, w, y, parent)
 		local step = equip.PROOF[l]
 		if step then
 			diamond(x, y, 20, on and grade_color(l) or ui.C.BOTTOM, on and grade_color(l) or ui.C.LINE, parent)
-			ui.testo(tostring(l), x, y - 26, 0.5, ui.C.OFF, parent)
+			ui.text(tostring(l), x, y - 26, 0.5, ui.C.OFF, parent)
 		else
 			ui.sagoma("forma", x, y, 8, 14, on and grade_color(level) or ui.C.PANEL, parent)
 		end
@@ -103,19 +103,19 @@ local function detail(s, parent)
 	local x0 = ui.EDGE + CARD_W + 24
 	local w = s.w - CARD_W - 24
 	local h = 4 * CARD_H + 3 * CARD_GAP
-	local pan = ui.pannello(x0 + w / 2, ui.BODY_TOP - h / 2, w, h, parent)
+	local pan = ui.panel(x0 + w / 2, ui.BODY_TOP - h / 2, w, h, parent)
 	local left, top = -w / 2 + 20, h / 2
 	if not set then
-		ui.testo(T.choose:format(string.lower(slot.name)), 0, 0, 0.8, ui.C.OFF, pan)
+		ui.text(T.choose:format(string.lower(slot.name)), 0, 0, 0.8, ui.C.OFF, pan)
 		return
 	end
 	local info = equip.BY_ID[set]
 	local level = wallet.level(s.prof, set, slot.id)
-	local t = ui.titolo(T.piece:format(slot.name, info.name), left, top - 32, 0.75, ui.C.TEXT, pan)
+	local t = ui.title(T.piece:format(slot.name, info.name), left, top - 32, 0.75, ui.C.TEXT, pan)
 	gui.set_pivot(t, gui.PIVOT_W)
-	t = ui.titolo(T.of_max:format(level, equip.LIVELLO_MAX), w / 2 - 20, top - 32, 0.85, grade_color(level), pan)
+	t = ui.title(T.of_max:format(level, equip.LIVELLO_MAX), w / 2 - 20, top - 32, 0.85, grade_color(level), pan)
 	gui.set_pivot(t, gui.PIVOT_E)
-	t = ui.testo(T.grade:format(ROMAN[equip.tier(level)], T.grades[equip.tier(level)], effects(info.pieces[slot.id])),
+	t = ui.text(T.grade:format(ROMAN[equip.tier(level)], T.grades[equip.tier(level)], effects(info.pieces[slot.id])),
 		left, top - 64, 0.6, grade_color(level), pan)
 	gui.set_pivot(t, gui.PIVOT_W)
 	track(level, left + 10, w - 60, top - 108, pan)
@@ -124,35 +124,35 @@ local function detail(s, parent)
 	local n = wallet.next(s.prof, set, slot.id)
 	local y = top - 200
 	if not n then
-		t = ui.titolo(T.at_max, left, y, 0.7, ui.C.BRACE, pan)
+		t = ui.title(T.at_max, left, y, 0.7, ui.C.BRACE, pan)
 		gui.set_pivot(t, gui.PIVOT_W)
 	else
 		local step = n.proof > 0
-		t = ui.testo(step and T.next_step:format(n.level, ROMAN[equip.tier(n.level)], T.grades[equip.tier(n.level)])
+		t = ui.text(step and T.next_step:format(n.level, ROMAN[equip.tier(n.level)], T.grades[equip.tier(n.level)])
 			or T.next_level:format(n.level), left, y + 26, 0.6, step and ui.C.GOLD or ui.C.OFF, pan)
 		gui.set_pivot(t, gui.PIVOT_W)
 		local ready = n.proof_done >= n.proof
 		local enough = s.prof.scaglie >= n.cost
 		if step and not ready then
 			-- the Proof: matches still to play wearing the piece
-			t = ui.testo(T.proof:format(n.proof_done, n.proof), left, y - 8, 0.65, ui.C.TEXT, pan)
+			t = ui.text(T.proof:format(n.proof_done, n.proof), left, y - 8, 0.65, ui.C.TEXT, pan)
 			gui.set_pivot(t, gui.PIVOT_W)
 			local bar = ui.bar(left + 150, y - 36, 300, 8, ui.C.GOLD, pan)
 			ui.bar_value(bar, n.proof_done / n.proof)
 		else
 			local bw = 260
 			local b = ui.button(s.buttons, left + bw / 2, y - 22, bw, 60, "", "potenzia", { spento = not enough }, pan)
-			ui.titolo(T.upgrade, -28, 0, 0.7, enough and ui.C.TEXT or ui.C.OFF, b)
+			ui.title(T.upgrade, -28, 0, 0.7, enough and ui.C.TEXT or ui.C.OFF, b)
 			coins.icon("scaglia", 62, 0, 28, b)
-			t = ui.titolo(coins.format(n.cost), 80, 0, 0.7, enough and ui.C.GOLD or ui.C.OFF, b)
+			t = ui.title(coins.format(n.cost), 80, 0, 0.7, enough and ui.C.GOLD or ui.C.OFF, b)
 			gui.set_pivot(t, gui.PIVOT_W)
 			if not enough then
-				t = ui.testo(T.missing:format(coins.format(n.cost - s.prof.scaglie)), left + bw + 20, y - 22, 0.6, ui.C.OFF, pan)
+				t = ui.text(T.missing:format(coins.format(n.cost - s.prof.scaglie)), left + bw + 20, y - 22, 0.6, ui.C.OFF, pan)
 				gui.set_pivot(t, gui.PIVOT_W)
 			end
 		end
 		if n.cost < n.full_cost then
-			t = ui.testo(T.smith_hand:format(coins.format(n.full_cost)), left, y - 70, 0.55, ui.C.OFF, pan)
+			t = ui.text(T.smith_hand:format(coins.format(n.full_cost)), left, y - 70, 0.55, ui.C.OFF, pan)
 			gui.set_pivot(t, gui.PIVOT_W)
 		end
 	end
@@ -162,13 +162,13 @@ local function detail(s, parent)
 	local bonus = id and equip.BY_ID[id].bonus
 	if bonus then
 		local by = -h / 2 + 62
-		t = ui.titolo(T.set_bonus:format(equip.BY_ID[id].name), left, by + 30, 0.55, ui.C.BRACE, pan)
+		t = ui.title(T.set_bonus:format(equip.BY_ID[id].name), left, by + 30, 0.55, ui.C.BRACE, pan)
 		gui.set_pivot(t, gui.PIVOT_W)
 		for i, v in ipairs({ "a", "b" }) do
 			local yy = by - (i - 1) * 36
 			local ok = v == "a" or top_all
-			ui.scheda(s.buttons, left + 22, yy - 4, 44, 32, string.upper(v), "variante:" .. v, a.variant == v and ok, pan)
-			t = ui.testo(ok and bonus[v].desc or TA.locked_bonus:format(bonus[v].desc, equip.LIVELLO_MAX), left + 56, yy - 4, 0.55,
+			ui.tab(s.buttons, left + 22, yy - 4, 44, 32, string.upper(v), "variante:" .. v, a.variant == v and ok, pan)
+			t = ui.text(ok and bonus[v].desc or TA.locked_bonus:format(bonus[v].desc, equip.LIVELLO_MAX), left + 56, yy - 4, 0.55,
 				ok and ui.C.TEXT or ui.C.OFF, pan)
 			gui.set_pivot(t, gui.PIVOT_W)
 		end
@@ -181,13 +181,13 @@ local function others(s, parent)
 	local slot = s.slot
 	local y = ui.EDGE + 30
 	local x = ui.EDGE
-	local t = ui.testo(T.others, x, y, 0.6, ui.C.OFF, parent)
+	local t = ui.text(T.others, x, y, 0.6, ui.C.OFF, parent)
 	gui.set_pivot(t, gui.PIVOT_W)
 	x = x + 130
 	local bw = (s.w - 130 - 3 * 10) / #equip.SETS
 	for _, set in ipairs(equip.SETS) do
 		local level = wallet.level(s.prof, set.id, slot)
-		ui.scheda(s.buttons, x + bw / 2, y, bw, 48, T.set_level:format(set.name, level), "indossa:" .. set.id,
+		ui.tab(s.buttons, x + bw / 2, y, bw, 48, T.set_level:format(set.name, level), "indossa:" .. set.id,
 			a.gear[slot] == set.id, parent)
 		x = x + bw + 10
 	end

@@ -152,7 +152,7 @@ function M.obsidian(stats_before, stats_after, level_before, level_after)
 	local rows = {}
 	for _, s in ipairs(milestones.WHITELIST) do
 		if s.thresholds then
-			local g0, g1 = milestones.grado(s, stats_before[s.id] or 0), milestones.grado(s, stats_after[s.id] or 0)
+			local g0, g1 = milestones.grade(s, stats_before[s.id] or 0), milestones.grade(s, stats_after[s.id] or 0)
 			for g = g0 + 1, g1 do rows[#rows + 1] = { key = "badge", ossidiana = M.OBS_BADGE[g], id = s.id, grade = g } end
 		end
 	end
