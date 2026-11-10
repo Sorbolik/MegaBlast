@@ -93,11 +93,32 @@ local function piece_name(set, slot)
 	return (T.piece_of[set] or T.piece_of.default):format(nome, n)
 end
 
+-- The devil on the left and under it its plate, level and experience: on every
+-- tab here and in the armory. s: prof, colore, radice, low
+function M.devil(s)
+	local p = s.prof
+	local pose = box(250, 104, 0, 0, C.LIGHT, s.radice)
+	gui.set_visible(pose, false)
+	s.figure = scoria.new(s.colore, scoria.PERSONAGGIO)
+	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
+	scoria.update(s.figure, 0, s.st)
+	local k = 265 / game.DISEGNO_H
+	gui.set_scale(pose, vmath.vector3(k, k, 1))
+	local ground = ui.alone(0, 0, 230 / k, C.SHADOW, pose)
+	gui.set_blend_mode(ground, gui.BLEND_ALPHA)
+	gui.set_scale(ground, vmath.vector3(1, 0.14, 1))
+	gui.set_parent(s.figure.root, pose)
+	scoria.set_enabled(s.figure, true)
+	local lv = (p.braci or 0) > 0 and T.level_braci:format(p.livello, p.braci) or T.level:format(p.livello)
+	kit.nameplate(s.low, 80, 630, T.your_devil, lv .. " · " .. thousands(p.xp) .. "/" .. thousands(profile.xp_level(p.livello)),
+		p.xp / profile.xp_level(p.livello), KC.PURPLE)
+end
+
 -- SCHEDA tab ------------------------------------------------------------------------
 
 -- the loadouts (SCHEDA and SIGILLI): a choice, the sand blade behind the active
 -- one; a closed one says from which level
-local function loadouts(s)
+function M.loadouts(s)
 	local p = s.prof
 	local g = s.kg
 	kit.text(g, T.loadout, 46, 112, 14, KC.MUTE, "start", 1.5)
@@ -376,23 +397,8 @@ local function build(s)
 	s.kg = { node = s.radice, ox = 0, oy = 720 }
 	kit.tabs(s.kg, s.buttons, 440, 104, { { T.tab_sheet, "scheda:scheda" }, { T.tab_seals, "scheda:sigilli" },
 		{ common.stats, "scheda:statistiche" }, { T.tab_matches, "scheda:partite" } }, active, KC.PURPLE)
-	-- the devil on the left of every tab, and under it its plate: level and experience
-	local pose = box(250, 104, 0, 0, C.LIGHT, s.radice)
-	gui.set_visible(pose, false)
-	s.figure = scoria.new(s.colore, scoria.PERSONAGGIO)
-	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
-	scoria.update(s.figure, 0, s.st)
-	local k = 265 / game.DISEGNO_H
-	gui.set_scale(pose, vmath.vector3(k, k, 1))
-	local ground = ui.alone(0, 0, 230 / k, C.SHADOW, pose)
-	gui.set_blend_mode(ground, gui.BLEND_ALPHA)
-	gui.set_scale(ground, vmath.vector3(1, 0.14, 1))
-	gui.set_parent(s.figure.root, pose)
-	scoria.set_enabled(s.figure, true)
-	local lv = (p.braci or 0) > 0 and T.level_braci:format(p.livello, p.braci) or T.level:format(p.livello)
-	kit.nameplate(s.low, 80, 630, T.your_devil, lv .. " · " .. thousands(p.xp) .. "/" .. thousands(profile.xp_level(p.livello)),
-		p.xp / profile.xp_level(p.livello), KC.PURPLE)
-	if s.scheda == "scheda" or s.scheda == "sigilli" then loadouts(s) end
+	M.devil(s)
+	if s.scheda == "scheda" or s.scheda == "sigilli" then M.loadouts(s) end
 	if s.scheda == "sigilli" then
 		seals.build(s)
 	elseif s.scheda == "statistiche" then

@@ -311,17 +311,14 @@ return {
 		yes = "sì",
 		no = "no",
 		seconds = "%.1f s",
-		-- a set bonus not unlocked yet: the bonus, then the level the pieces need
-		locked_bonus = "%s  (tutti i pezzi al livello %s)",
 	},
 
 
 	-- menu/pieces.lua and ui/step_scene.lua: the pieces' levels in Scaglie
 	pieces = {
 		empty = "nessuno",
-		level = "livello %d",
 		-- no piece in the chosen slot (the slot in lowercase)
-		choose = "Scegli qui sotto un %s da indossare",
+		choose = "scegli qui sotto cosa indossare: %s",
 		-- slot and set: "ELMO · CORVO"
 		piece = "%s · %s",
 		of_max = "%d / %d",
@@ -332,13 +329,20 @@ return {
 		next_level = "LIVELLO %d",
 		next_step = "SCATTO %d · GRADO %s, %s",
 		-- the Proof of a step: matches played wearing the piece
-		proof = "Prova: %d / %d partite con il pezzo addosso",
+		proof_name = "PROVA",
+		proof = "%d / %d partite col pezzo addosso",
+		proof_first = "prima la prova",
+		-- on the action: the price and the level it buys
+		price = "%s SCAGLIE · LIVELLO %d",
+		variant = "VARIANTE",
+		at_level = "AL %d",
 		upgrade = "POTENZIA",
 		missing = "mancano %s",
 		-- the Smith's hand, with the full price
-		smith_hand = "Mano del Fabbro: un pezzo di questo posto è al 30, costa il 30%% in meno (era %s)",
+		smith_name = "MANO DEL FABBRO",
+		smith_hand = "costa il 30%% in meno (era %s)",
 		set_bonus = "BONUS DEL SET %s",
-		others = "INDOSSA",
+		others = "INDOSSA IL SET",
 		set_level = "%s · %d",
 		step_title = "SCATTO %d",
 		-- slot, set, grade in roman numbers, its name

@@ -5479,7 +5479,7 @@ function PAD.on_input(self, action_id, action)
 			CP.slide(self, 1, function()
 				close_screen(self)
 				self.from_the_profile = true
-				open_screen(self, menu.armory, self.profilo)
+				open_screen(self, menu.armory, self.profilo, require("lang.text").profile_tabs.your_devil)
 			end)
 		elseif end_of and self.from_the_profile and self.schermata.mod == menu.armory then
 			CP.slide(self, -1, function()
