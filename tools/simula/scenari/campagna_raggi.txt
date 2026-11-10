@@ -1,0 +1,17 @@
+# La CAMPAGNA nello stile Raggi (Figma 09-10): la guida a sinistra, i capitoli
+# sulla guida (ADDESTRAMENTO 546 596, LA FORGIA 740 596), le missioni come
+# carte, GIOCA in basso a destra gioca la prossima.
+imposta prova_vignette no
+imposta prova_profilo 1
+aspetta 1.5
+tocca 234 450                       # CAMPAGNA
+aspetta 0.8
+foto 01_addestramento
+tocca 740 596                       # LA FORGIA
+aspetta 0.4
+foto 02_forgia
+tocca 546 596                       # ADDESTRAMENTO
+aspetta 0.4
+foto 03_addestramento
+tocca 36 60                         # indietro
+aspetta_stato modo=menu 3

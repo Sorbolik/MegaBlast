@@ -17,7 +17,7 @@ tocca 62 658                        # indietro
 aspetta 5                           # la home: lo sfondo dipinto che scorre
 tocca 234 450                      # CAMPAGNA
 aspetta 2
-tocca 256 480                       # Primi passi
+tocca 532 484                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 2
 cammina destra 730
@@ -27,7 +27,7 @@ tocca 62 658                        # la rotellina
 aspetta 1
 tocca 408 658                       # ESCI DALLA PARTITA
 aspetta 3
-tocca 62 658                        # indietro alla home
+tocca 36 60                         # indietro alla home
 aspetta 4
 foto 02_home
 tocca 254 346                      # ALLENAMENTO

@@ -8,7 +8,7 @@ imposta prova_armi 2
 imposta comandi telefono
 
 aspetta 3
-tocca_bordo 222 148 basso sinistra    # STESSO TELEFONO
+tocca_bordo 222 148 mezzo sinistra    # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 2
 

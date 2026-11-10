@@ -2,7 +2,7 @@
 # le cartoline (A CASO, il cortile dell'Addestramento, poi le mappe dei gironi); si sceglie
 # il cortile e si gioca lì. Va su ogni schermo: provalo anche con --schermo 1600x720 e 960x720.
 aspetta 2
-tocca_bordo 254 346 basso sinistra    # ALLENAMENTO
+tocca_bordo 254 346 mezzo sinistra    # ALLENAMENTO
 aspetta 1
 tocca_centro 640 140                # AVANTI
 aspetta 0.5

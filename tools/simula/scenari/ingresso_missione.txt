@@ -6,7 +6,7 @@
 aspetta 2
 tocca 234 450                      # CAMPAGNA
 aspetta 1
-tocca 256 480                       # Primi passi
+tocca 532 484                       # Primi passi
 aspetta 0.08
 foto 01_zoom
 aspetta 0.5
@@ -14,7 +14,7 @@ foto 02_cartolina
 tocca 640 20                        # fuori dalla cartolina: si torna alla campagna
 aspetta 0.5
 foto 03_indietro
-tocca 256 480                       # di nuovo
+tocca 532 484                       # di nuovo
 aspetta 0.6
 tocca_centro 970 116                # AVANTI
 aspetta 0.1

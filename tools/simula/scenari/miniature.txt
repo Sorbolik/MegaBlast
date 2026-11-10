@@ -7,7 +7,7 @@ aspetta 2
 tocca 234 450                      # CAMPAGNA
 aspetta 1
 foto 01_carte
-tocca 256 480                       # Stammi dietro (Primi passi)
+tocca 532 484                       # Stammi dietro (Primi passi)
 aspetta 2.5
 foto 02_tavola
 tocca 640 300                       # fuori dal pulsante: resta la tavola

@@ -420,6 +420,42 @@ function M.card(g, x, y, w, h, color, opt)
 	return k
 end
 
+-- A picture at the top of a card, `tall` pixels, cut to the card's corner
+-- (two clippers, like M.thumb). The picture covers the place keeping its
+-- shape (ratio: its width over its height). dim: how bright (a closed card)
+function M.card_picture(k, texture, tall, ratio, dim)
+	local w, h = k.w, k.h
+	local c = math.min(24, h * 0.34)
+	local ay = h / 2 - 4 - tall / 2
+	local band = gui.new_box_node(vec(0, ay), vec(w - 8, tall))
+	gui.set_clipping_mode(band, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(band, false)
+	gui.set_parent(band, k.node)
+	-- a big square turned 45 degrees, its top right side along the cut
+	local big = 1200
+	local r = math.sqrt(2) / 2
+	local px, py = w / 2 - c / 2 - 3 - big / 2 * r, h / 2 - c / 2 - 3 - big / 2 * r - ay
+	local cut = gui.new_box_node(vec(px, py), vec(big, big))
+	gui.set_clipping_mode(cut, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(cut, false)
+	gui.set_parent(cut, band)
+	-- a square at 45 degrees clips like a diamond: its side toward (1, 1) is the cut
+	V.x, V.y, V.z = 0, 0, 45
+	gui.set_rotation(cut, V)
+	local iw, ih = w - 8, tall
+	ratio = ratio or 16 / 9
+	if iw / ih > ratio then ih = iw / ratio else iw = ih * ratio end
+	-- back to the band's middle, in the turned square's own axes
+	local dx, dy = -px, -py
+	local img = gui.new_box_node(vec((dx + dy) * r, (dy - dx) * r), vec(iw, ih))
+	gui.set_texture(img, texture)
+	V.z = -45
+	gui.set_rotation(img, V)
+	gui.set_color(img, vmath.vector4(dim or 1, dim or 1, dim or 1, 1))
+	gui.set_parent(img, cut)
+	return img
+end
+
 -- INFORMATION: a dark row with a spine of color, no shadow: it is read, not pressed
 function M.info(g, x, y, w, h, color)
 	M.rect(g, x, y, w, h, with_alpha(C.INK, 0.5))

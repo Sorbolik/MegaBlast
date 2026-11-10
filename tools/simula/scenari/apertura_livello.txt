@@ -5,7 +5,7 @@
 aspetta 2
 tocca 234 450                      # CAMPAGNA
 aspetta 1
-tocca 256 480                       # Primi passi
+tocca 532 484                       # Primi passi
 aspetta 0.6
 tocca_centro 970 116                # AVANTI
 aspetta 0.9

@@ -233,6 +233,11 @@ return {
 		-- the board (Sergio, 4 Nov): the next challenge, and the chapter's final strip
 		new = "NUOVA",
 		final = "FINALE · %s",
+		-- under the guide: missions done of the chapter's, stars taken
+		progress = "%d DI %d MISSIONI · %d STELLE",
+		-- under GIOCA: the next mission, or the final again
+		play_new = "%s · NUOVA",
+		replay_final = "RIGIOCA IL FINALE",
 	},
 
 	-- ui/level_types.lua: what kind of level a mission is (Sergio, 6 Nov), on its

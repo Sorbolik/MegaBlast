@@ -1,32 +1,33 @@
 # Home, profilo, armeria e campagna su altri schermi (report UI-001): da girare
 # con --schermo 1600x720 (telefono 20:9) e --schermo 960x720 (tablet 4:3).
-# La testata (indietro, titolo, pillola) sta al bordo vero; le schede e il
-# contenuto restano attaccati sotto la testata, non al centro.
+# Il titolo sta in alto a sinistra e il ritorno in basso a sinistra, ai bordi
+# veri; l'azione in basso a destra; schede e contenuto al centro.
 imposta prova_profilo 1
 
 aspetta 1.5
 foto 01_home
-tocca_centro 400 300                # il diavoletto: il profilo
+tocca_centro 640 330                # il diavoletto: il suo posto
 aspetta 0.6
 foto 02_profilo
-tocca_bordo 457 142 alto centro     # STATISTICHE
+tocca_bordo 802 124 alto centro     # STATISTICHE
 aspetta 0.3
 foto 02b_statistiche
-tocca_bordo 62 62 alto sinistra     # indietro
-aspetta_stato modo=menu 3
-aspetta 0.4
-tocca_bordo 168 108 basso sinistra  # ARMERIA
-aspetta 0.6
+tocca_bordo 501 124 alto centro     # SCHEDA
+aspetta 0.3
+tocca_bordo 215 118 basso destra    # ARMERIA
+aspetta 0.8
 foto 03_armeria
-tocca_bordo 62 62 alto sinistra     # indietro
+tocca_bordo 36 60 basso sinistra    # indietro: il diavoletto
+aspetta 1.5
+tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta_stato modo=menu 3
 aspetta 0.4
-tocca_bordo 234 450 basso sinistra    # CAMPAGNA
+tocca_bordo 234 450 mezzo sinistra    # CAMPAGNA
 aspetta 0.8
 foto 04_campagna
-tocca_bordo 62 62 alto sinistra     # indietro
+tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.4
-tocca_bordo 254 346 basso sinistra    # ALLENAMENTO
+tocca_bordo 254 346 mezzo sinistra    # ALLENAMENTO
 aspetta 0.8
 foto 05_allenamento

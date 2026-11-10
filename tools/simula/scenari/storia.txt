@@ -34,7 +34,7 @@ foto 08_segreto
 pad a
 aspetta 1.5
 foto 09_campagna
-tocca 1140 658                      # LA STORIA
+tocca 946 598                       # LA STORIA
 aspetta 1.2
 foto 10_rileggi
 tocca 290 115                       # SALTA

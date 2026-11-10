@@ -14,7 +14,7 @@ aspetta 1
 server 2v2 1 bot_dopo=300s
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 244 400 basso destra                     # GIOCA
+tocca_bordo 244 400 mezzo destra                     # GIOCA
 aspetta 0.5
 tocca_centro 368 300                      # 2 contro 2
 aspetta_stato modo=connecting 5
@@ -45,7 +45,7 @@ foto 07_armeria_albero
 tocca_bordo 62 62 alto sinistra
 aspetta_stato modo=menu 3
 aspetta 0.5
-tocca_bordo 274 242 basso sinistra                       # EVENTI
+tocca_bordo 274 242 mezzo sinistra                       # EVENTI
 aspetta 0.8
 foto 08_eventi
 tocca_bordo 62 62 alto sinistra
@@ -57,7 +57,7 @@ foto 09_impostazioni
 tocca_bordo 62 62 alto sinistra
 aspetta_stato modo=menu 3
 aspetta 0.5
-tocca_bordo 254 346 basso sinistra    # ALLENAMENTO
+tocca_bordo 254 346 mezzo sinistra    # ALLENAMENTO
 aspetta 1
 foto 10_allenamento
 tocca_centro 640 140                       # AVANTI
