@@ -199,8 +199,8 @@ end
 -- Only in the scenarios (imposta prova_profilo 1, scenari/scheda.txt): a
 -- profile that has already played, to see pieces, powers, badges, stats and
 -- the campaign's stars
-function M.sample(p)
-	p.livello, p.xp = 23, 410
+function M.sample(p, near_level_up)
+	p.livello, p.xp = 23, near_level_up and M.xp_level(23) - 20 or 410
 	local a = p.loadouts[p.is_active]
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
 	a.tree = { wings = 12, armor = 6, forge = 3, pick = { wings = { 2, 1 }, armor = { 1 } } }

@@ -9,13 +9,19 @@
 -- other empty. The Ossidiana comes last, in its color. When the total has
 -- counted, the coins fly from it into the wallet pill at the top right
 -- (ui/coins.lua), which shows the balance before the match until they land.
+-- The experience goes first: after the count, sparks fly from its total into
+-- the level bar, which fills a step and swells at each one (the sound rises
+-- by a semitone); with a new level the last one bursts in a gold ring.
 --
 --   local r = receipt.new(gain, prof, x, y, buttons, parent)
 --     gain: profile.match_end or profile.mission (lines, xp, level_before, livello, braci...)
 --       gain.coins = { rows, obsidian } (menu/wallet.lua), already in the profile
 --     buttons: the screen's list, METTI I PUNTI goes there with the action "sigilli"
---   receipt.update(r, dt, tick, coin)  -- tick(i): the sound of a line, i from 1;
---                                      -- coin(kind, i): a coin landing in the pill
+--   receipt.update(r, dt, tick, coin, xp)  -- tick(i): the sound of a line, i from 1;
+--                                          -- coin(kind, i): a coin landing in the pill;
+--                                          -- xp(i, n, level_up): a spark of experience landing
+--                                          -- in the bar, the last one (i == n) with level_up true
+--                                          -- when it brings a new level
 --   receipt.skip(r)               -- everything at once (a tap during the count or the flight)
 
 local ui = require "ui.ui"
@@ -35,6 +41,8 @@ M.OBS_H = 34      -- the Ossidiana's total, under the other one
 local XP_COL, COIN_COL, COIN_ICON = -128, -30, -10
 -- when the first line comes, the rhythm of the others, how long the total counts
 M.FIRST, M.RHYTHM, M.COUNT = 0.9, 0.22, 0.6
+-- the sparks of experience: one every GAP seconds, each FLIGHT long
+M.XP_GAP, M.XP_FLIGHT = 0.07, 0.38
 
 local C = ui.C
 
@@ -132,6 +140,7 @@ function M.new(gain, prof, x, y, buttons, parent)
 	gui.set_pivot(tl, gui.PIVOT_W)
 	r.total = ui.title(T.plus:format(0), right + XP_COL, ly, 0.7, C.GOLD, p)
 	gui.set_pivot(r.total, gui.PIVOT_E)
+	r.spark_from = vec(right + XP_COL - 24, ly)
 	-- the coins' totals: where they fly from (in the parent's space)
 	local base = vmath.vector3(x, y - h / 2, 0)
 	r.coin_total = { scaglia = ui.title(T.plus:format(0), right + COIN_COL, ly, 0.7, coins.COLOR.scaglia, p) }
@@ -153,6 +162,7 @@ function M.new(gain, prof, x, y, buttons, parent)
 	alpha(r.level, 0)
 	ly = ly - 26
 	r.bar = ui.bar(0, ly, M.W - 52, 10, C.BRACE, p)
+	r.level_up, r.bar_y = level_up, ly
 	local before = (prof.xp - gain.xp) / profile.xp_level(gain.level_before)
 	if level_up or braci > 0 then before = 0 end
 	r.bar_from, r.bar_to = math.max(0, before), prof.xp / profile.xp_level(prof.livello)
@@ -184,6 +194,25 @@ function M.new(gain, prof, x, y, buttons, parent)
 	return r
 end
 
+-- a ring that opens from (x, y) in the panel and fades
+local function burst(r, x, y, d0, d1, color, secs)
+	local n = ui.ring_node(x, y, d0, 3, color, r.panel)
+	gui.animate(n, "size.x", d1, gui.EASING_OUTQUAD, secs)
+	gui.animate(n, "size.y", d1, gui.EASING_OUTQUAD, secs)
+	gui.animate(n, "color.w", 0, gui.EASING_INQUAD, secs, 0, function() gui.delete_node(n) end)
+end
+
+-- the bar swells and flashes white at each spark
+local function pulse(r, strong)
+	local b = r.bar
+	gui.cancel_animations(b.nodo, "scale")
+	gui.set_scale(b.nodo, vec(1, strong and 2.6 or 1.9))
+	gui.animate(b.nodo, "scale", vec(1, 1), gui.EASING_OUTQUAD, strong and 0.4 or 0.18)
+	gui.cancel_animations(b.full, "color")
+	gui.set_color(b.full, vmath.vector4(1, 0.95, 0.8, 1))
+	gui.animate(b.full, "color", C.BRACE, gui.EASING_INQUAD, strong and 0.5 or 0.25)
+end
+
 -- the coins leave the totals for the pill: some Scaglie, then the Ossidiana
 -- (fewer, bigger and slower)
 local function fly(r, coin)
@@ -208,7 +237,60 @@ local function show_after(r)
 	end
 end
 
-function M.update(r, dt, tick, coin)
+-- the last spark is in: the new level lights up, then the coins fly
+local function sparks_done(r, coin)
+	if r.sparks_ended then return end
+	r.sparks_ended = true
+	show_after(r)
+	fly(r, coin)
+end
+
+local function spark_land(r, f, i, xp, coin, quiet)
+	if f.landed[i] then return end
+	f.landed[i] = true
+	if f.nodes[i] then gui.delete_node(f.nodes[i]); f.nodes[i] = nil end
+	local frac = r.bar_from + (r.bar_to - r.bar_from) * i / f.n
+	ui.bar_value(r.bar, frac)
+	local last = i == f.n
+	if quiet then
+		if last then sparks_done(r, coin) end
+		return
+	end
+	local hx = -r.bar.w / 2 + r.bar.w * frac
+	pulse(r, last and r.level_up)
+	burst(r, hx, r.bar_y, 8, last and r.level_up and 150 or 34, last and r.level_up and C.GOLD or C.LIGHT,
+		last and r.level_up and 0.55 or 0.25)
+	if xp then xp(i, f.n, last and r.level_up) end
+	if last then sparks_done(r, coin) end
+end
+
+-- the sparks of experience leave the total for the bar, in an arc
+local function sparks(r, coin, xp)
+	if r.sparks then return end
+	local n = math.min(10, math.max(3, math.ceil(r.gain.xp / 10)))
+	local f = { n = n, nodes = {}, landed = {} }
+	r.sparks = f
+	if r.gain.xp <= 0 then
+		f.n = 1
+		spark_land(r, f, 1, nil, coin, true)
+		return
+	end
+	for i = 1, n do
+		local node = ui.disc(r.spark_from.x, r.spark_from.y, 14, C.GOLD, r.panel)
+		gui.set_scale(node, vec(0.01, 0.01))
+		local frac = r.bar_from + (r.bar_to - r.bar_from) * i / n
+		local hx = -r.bar.w / 2 + r.bar.w * frac
+		local delay = (i - 1) * M.XP_GAP
+		gui.animate(node, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.1, delay)
+		gui.animate(node, "position.x", hx, gui.EASING_OUTQUAD, M.XP_FLIGHT, delay + 0.06)
+		gui.animate(node, "position.y", r.bar_y, gui.EASING_INQUAD, M.XP_FLIGHT, delay + 0.06, function()
+			spark_land(r, f, i, xp, coin)
+		end)
+		f.nodes[i] = node
+	end
+end
+
+function M.update(r, dt, tick, coin, xp)
 	r.t = r.t + dt
 	-- the lines, one at a time
 	while r.shown < #r.rows and r.t >= M.FIRST + r.shown * M.RHYTHM do
@@ -218,24 +300,32 @@ function M.update(r, dt, tick, coin)
 		if row.icon then gui.set_enabled(row.icon, true) end
 		if tick then tick(r.shown) end
 	end
-	-- then the total counts and the bar fills
+	-- then the totals count; when they are done the sparks fly into the bar
 	local t0 = M.FIRST + #r.rows * M.RHYTHM
 	if r.t >= t0 then
 		local k = math.min(1, (r.t - t0) / M.COUNT)
 		gui.set_text(r.total, T.plus:format(math.floor(r.gain.xp * k + 0.5)))
 		gui.set_text(r.coin_total.scaglia, T.plus:format(coins.format(r.sc * k + 0.5)))
 		if r.coin_total.ossidiana then gui.set_text(r.coin_total.ossidiana, T.plus:format(coins.format(r.ob * k + 0.5))) end
-		ui.bar_value(r.bar, r.bar_from + (r.bar_to - r.bar_from) * k)
 		if k >= 1 then
-			show_after(r)
-			fly(r, coin)
+			r.coin_cb = coin
+			sparks(r, coin, xp)
 		end
 	end
 end
 
+-- a tap: the count ends; another one: the sparks and the coins land at once
 function M.skip(r)
 	local done = M.FIRST + #r.rows * M.RHYTHM + M.COUNT
-	if r.t < done then r.t = done else coins.finish(r.wallet) end
+	if r.t < done then
+		r.t = done
+		return
+	end
+	local f = r.sparks
+	if f then
+		for i = 1, f.n do spark_land(r, f, i, nil, r.coin_cb, true) end
+	end
+	coins.finish(r.wallet)
 end
 
 function M.delete(r)

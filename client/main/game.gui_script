@@ -1534,6 +1534,7 @@ local function open_podium(self)
 	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
 	self.schermata.obj.tick = function(i) sound.play("#punto", { speed = 1 + 0.08 * i }) end
 	self.schermata.obj.coin = CP.coin_sound
+	self.schermata.obj.xp = CP.xp_sound
 	self.mode = "schermata"
 	if self.pill then menu.pill.raise(self.pill) end
 end
@@ -2289,6 +2290,16 @@ function CP.coin_sound(kind, i)
 	sound.play("#scaglia", { speed = speed })
 end
 
+-- a spark of experience landing in the bar: a semitone higher at each one;
+-- the last one of a new level is the chord instead
+function CP.xp_sound(i, n, level_up)
+	if level_up then
+		sound.play("#livello")
+	else
+		sound.play("#xp", { speed = 2 ^ ((i - 1) / 12) })
+	end
+end
+
 -- Scaglie of a mission done, from its experience lines (profile.mission): the
 -- first time or a replay, the new stars; chapters: the chapters done before
 function CP.mission_coins(self, gain, chapters)
@@ -2814,7 +2825,7 @@ local function open_level_end(self)
 		-- the lead points, where they count
 		vantaggio = won and missions.lead(r) or nil,
 		record = self.record_end, avanti = won and (missions.after(r.l.id) ~= nil),
-		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo, coin = CP.coin_sound,
+		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo, coin = CP.coin_sound, xp = CP.xp_sound,
 	}, function(v) sound.play("#punto", { speed = v }) end)
 	self.mission_gain = nil
 end
@@ -4424,7 +4435,7 @@ function init(self)
 	self.home = home.new(TEAM_COLORS[1])
 	self.pill = menu.pill.new()
 	self.profilo = profile.load_up()
-	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo) end
+	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2) end
 	self.scelta = menu.pick.new(WEAPON_ICON, TM.draft_names, TM.draft_effects, self.comandi)
 
 	-- In real matches the map is picked by the seed (sim/maps.lua). In the test

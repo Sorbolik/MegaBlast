@@ -38,6 +38,14 @@ embedded_instances {
   "  id: \"martello\"\n"
   "  component: \"/menu/martello.sound\"\n"
   "}\n"
+  "components {\n"
+  "  id: \"xp\"\n"
+  "  component: \"/menu/xp.sound\"\n"
+  "}\n"
+  "components {\n"
+  "  id: \"livello\"\n"
+  "  component: \"/menu/livello.sound\"\n"
+  "}\n"
   ""
   position {
     x: 0.0
