@@ -2431,6 +2431,45 @@ do
 	check(not m:can_use("hook"), "without powers one Rampino per turn")
 end
 
+-- Giano: a coin thrown like the missile; the first robot it touches (not the
+-- thrower) trades places and movement with the thrower. No damage, no credit.
+do
+	local j = game.new(42, "pavimento")
+	run(j, 60)
+	local ja, jb = j.robots[1], j.robots[2]
+	local sy = sky_spot(j, 640, 120)
+	j.terrain:rect(400, sy - 60, 700, 140, 0)
+	place(ja, 500, sy)
+	place(jb, 700, sy)
+	local hp, ax, bx = jb.hp, ja.x, jb.x
+	check(j:can_use("janus"), "Giano is a tool, usable without shots")
+	j:step({ fire = { angle = 0, power = 1, weapon = "janus" } })
+	check(j.projectile and j.projectile.kind == "janus" and j.used.tool and not j.used.primary and not j:can_use("hook"),
+		"Giano flies as a projectile, uses the tool of the turn and is not an attack")
+	local swapped
+	for _ = 1, 120 do
+		j:step()
+		for _, e in ipairs(j:pop_events()) do if e.type == "janus_swap" then swapped = e end end
+		if swapped then break end
+	end
+	check(swapped and swapped.a == 1 and swapped.b == 2 and ja.x == bx and jb.x == ax and not j.projectile,
+		"the first robot it touches trades places with the thrower")
+	check(jb.hp == hp and not jb.last_hit, "the swap does no damage and gives no credit")
+	-- terrain stops it: nobody moves
+	local k = game.new(42, "pavimento")
+	run(k, 60)
+	local ka, kb = k.robots[1], k.robots[2]
+	local x0 = ka.x
+	k:step({ fire = { angle = math.rad(-90), power = 1, weapon = "janus" } })
+	local fizzle
+	for _ = 1, 120 do
+		k:step()
+		for _, e in ipairs(k:pop_events()) do if e.type == "janus_fizzle" then fizzle = e end end
+		if not k.projectile then break end
+	end
+	check(fizzle and ka.x == x0 and not k.projectile, "terrain stops Giano without a swap")
+end
+
 if failures > 0 then
 	print(failures .. " tests failed")
 	os.exit(1)
