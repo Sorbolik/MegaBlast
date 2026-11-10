@@ -7,7 +7,7 @@ imposta prova_vignette no
 imposta prova_durata 40
 
 aspetta 1.5
-tocca 1075 323                      # ALLENAMENTO
+tocca 254 346                      # ALLENAMENTO
 aspetta 1
 tocca 310 460                       # 1 CONTRO 1
 tocca 640 140                       # AVANTI

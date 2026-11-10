@@ -9,7 +9,7 @@ imposta prova_vignette no             # le vignette hanno il loro scenario (vign
 
 aspetta 2
 foto 00_home
-tocca 1062 392                      # CAMPAGNA
+tocca 234 450                      # CAMPAGNA
 aspetta 1
 foto 01_addestramento
 tocca 868 580                       # La Forgia: chiusa

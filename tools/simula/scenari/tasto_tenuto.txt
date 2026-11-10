@@ -8,7 +8,7 @@ imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 3
-tocca 1075 102                      # GIOCA
+tocca 1036 400                      # GIOCA
 aspetta 0.5
 tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
 aspetta_stato modo=scelta_online 20

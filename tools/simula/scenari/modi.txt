@@ -14,7 +14,7 @@ imposta prova_scelta 1
 imposta giocatori 2v2
 
 aspetta 1
-tocca 1075 323                      # ALLENAMENTO
+tocca 254 346                      # ALLENAMENTO
 aspetta 1
 tocca 640 460                       # 2 CONTRO 2
 tocca 640 140                       # AVANTI (la mappa resta A CASO)
@@ -74,7 +74,7 @@ aspetta 1
 tocca 62 658                        # indietro: alla home
 aspetta_stato modo=menu 3
 aspetta 0.5
-tocca 1075 235                      # STESSO TELEFONO (2 contro 2)
+tocca 222 148                      # STESSO TELEFONO (2 contro 2)
 aspetta_stato modo=scelta 5
 aspetta 0.5
 foto 08_schieramento_2v2

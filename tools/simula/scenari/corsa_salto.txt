@@ -3,7 +3,7 @@
 imposta zoom 1
 
 aspetta 1
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 tieni destra 0.5 01_corsa_turno 3

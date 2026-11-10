@@ -7,7 +7,7 @@ imposta prova_durata 3
 imposta giocatori 2v2
 
 aspetta 1
-tocca 1075 323                      # ALLENAMENTO
+tocca 254 346                      # ALLENAMENTO
 aspetta 1
 tocca 640 460                       # 2 CONTRO 2
 tocca 640 140                       # AVANTI

@@ -21,7 +21,7 @@ foto 03_armeria
 tocca_bordo 62 62 alto sinistra     # indietro
 aspetta_stato modo=menu 3
 aspetta 0.4
-tocca_bordo 218 392 basso destra    # CAMPAGNA
+tocca_bordo 234 450 basso sinistra    # CAMPAGNA
 aspetta 0.8
 foto 04_campagna
 tocca_bordo 62 62 alto sinistra     # indietro

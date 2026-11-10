@@ -6,7 +6,7 @@
 # torna); tasto z come il tocco, rotella a passi.
 
 aspetta 3
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1.2
 foto 01_vicino

@@ -8,7 +8,7 @@ imposta prova_conto 1
 imposta prova_spawn_casuali 1
 
 aspetta 1.5
-tocca 1075 323                      # ALLENAMENTO
+tocca 254 346                      # ALLENAMENTO
 aspetta 1
 tocca 640 460                       # 2 CONTRO 2
 tocca 640 140                       # AVANTI

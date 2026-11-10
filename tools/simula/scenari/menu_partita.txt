@@ -5,7 +5,7 @@
 # RIPROVA ricomincia la stessa partita (online non c'e').
 
 aspetta 1.5
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 tocca 62 658                        # rotellina
@@ -21,7 +21,7 @@ tocca 408 658                       # ESCI DALLA PARTITA
 aspetta_stato modo=menu 3
 aspetta 0.5
 foto 04_home
-tocca 1075 323                      # ALLENAMENTO
+tocca 254 346                      # ALLENAMENTO
 aspetta 1
 tocca 640 140                       # AVANTI (la mappa resta A CASO)
 aspetta 0.3

@@ -10,7 +10,7 @@ aspetta 1.2
 foto 02_ingresso_dopo
 aspetta 3
 foto 03_home
-tocca 1075 102                      # GIOCA: lo scivolo
+tocca 1036 400                      # GIOCA: lo scivolo
 aspetta 0.06
 foto 04_scivolo
 aspetta 0.6
@@ -23,7 +23,7 @@ aspetta 0.12
 foto 06_iride
 aspetta_stato modo=menu 3
 aspetta 0.6
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 07_partita

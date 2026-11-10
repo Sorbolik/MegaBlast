@@ -432,9 +432,12 @@ return {
 
 	-- menu/home.lua: the home
 	home = {
-		your_profile = "IL TUO PROFILO",
 		leave_queue_first = "esci dalla coda per giocarla",
 		same_phone = "STESSO TELEFONO",
+		your_devil = "DIAVOLETTO",
+		level = "LIV %d",
+		play_sub = "2 CONTRO 2",
+		training_sub = "CONTRO I BOT",
 	},
 
 	-- menu/queue.lua: DOVE GIOCHI?, the queues online

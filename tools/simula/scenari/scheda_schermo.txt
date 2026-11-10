@@ -19,7 +19,7 @@ foto 02_profilo_statistiche
 tocca_bordo 62 62 alto sinistra     # indietro
 aspetta_stato modo=menu 3
 aspetta 0.3                         # lo scivolo finisce
-tocca_bordo 205 323 basso destra    # ALLENAMENTO
+tocca_bordo 254 346 basso sinistra    # ALLENAMENTO
 aspetta 1
 tocca_bordo 640 260 alto centro    # 2 CONTRO 2 (la striscia va da un bordo all'altro)
 tocca_bordo 640 580 alto centro    # AVANTI (la mappa resta A CASO)

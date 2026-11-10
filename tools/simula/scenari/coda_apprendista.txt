@@ -3,7 +3,7 @@
 
 aspetta 1.5
 foto 01_home
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 zoom 02_fermo 4

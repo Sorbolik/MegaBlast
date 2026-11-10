@@ -8,7 +8,7 @@
 imposta prova_profilo 1
 
 aspetta 1.5
-tocca 400 300                       # il diavoletto: il profilo
+tocca 640 330                       # il diavoletto: il profilo
 aspetta 0.5
 tocca 267 578                       # SIGILLI
 aspetta 0.3

@@ -1,20 +1,20 @@
--- The home (main menu): behind it the painted Forge background scrolling
--- slowly (drawn by the terrain mesh, battle/terrain.script; Sergio 2 Nov),
--- the apprentice standing still without a weapon with the Core's glow behind
--- (tapping it opens the PROFILO), the game's name and only the buttons needed
--- today: GIOCA (online match), CAMPAGNA, ALLENAMENTO, STESSO TELEFONO, ARMERIA,
--- EVENTI and, at the top right, the IMPOSTAZIONI wheel (menu/settings.lua).
--- New screens add their button here once they exist (style in ui/ui.lua).
+-- The home (main menu), in the "Raggi" style (ui/kit.lua; Figma frame 01,
+-- Sergio 10 Nov): behind it the painted Forge scrolling slowly, darkened
+-- (battle/terrain.script), the rays around the apprentice standing in the
+-- middle (tapping it, or its name plate below, opens IL TUO DIAVOLETTO), on
+-- the left the doors that carry their progress (CAMPAGNA, ALLENAMENTO,
+-- EVENTI) and STESSO TELEFONO, alone on the right the action: GIOCA (online).
 --
 -- Use (from the gui_script, which has the ui texture and the titolo font):
 --   local home = require "menu.home"
 --   local h = home.new(colore)                  -- creates the nodes, hidden
 --   home.show(h, without_veil) / home.hide(h)
 --   home.update(h, dt)                          -- every frame while visible
---   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "armeria", "eventi",
---                                                        -- "impostazioni", "profilo" (tapping the devil) or nil
+--   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "eventi",
+--                                                        -- "impostazioni", "profilo" (the devil or its plate) or nil
 --   home.wallet(h, scaglie, ossidiana)          -- the balance in the pill at the top right
---   home.eventi(h, riga)                        -- the line under EVENTI
+--   home.events(h, riga)                        -- the line under EVENTI
+--   home.profile(h, profilo)                    -- level, experience and campaign progress on the plates
 --   home.queued(h, on)                          -- in the online queue (ui/pill.lua): GIOCA stays GIOCA and
 --                                               -- takes you to the room (Sergio: a button never changes its job)
 --                                               -- and the CAMPAGNA is off (a mission cut halfway loses its stars)
@@ -22,49 +22,58 @@
 local game = require "sim.game"
 local scoria = require "battle.scoria"
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 local screen = require "ui.screen"
 local coins = require "ui.coins"
+local campaign = require "sim.campaign"
 local T = require("lang.text").home
 local common = require("lang.text").common
 
 local M = {}
 
 local W, H = 1280, 720
--- the Scoria (game.DISEGNO_H tall) about 220 px tall, feet here
-local BODY_X, BODY_Y = 400, 200
-local BODY_K = 220 / game.DISEGNO_H
+local C = kit.C
+-- the apprentice: feet at the Figma point (640, 600), about 540 px tall with the flame
+local BODY_X, BODY_Y = 640, 600
+local BODY_K = 380 / game.DISEGNO_H
 
 local V = vmath.vector3()
 
-local function empty(x, y, parent)
-	local n = gui.new_box_node(vmath.vector3(x, y, 0), vmath.vector3(0, 0, 0))
-	gui.set_visible(n, false)
-	if parent then gui.set_parent(n, parent) end
-	return n
+-- A door: a dark plate with its name, a line under it and, on the right, the
+-- notches of its progress, on the left the miniature of a map. hot: lit in the action's color (something is on now)
+local function door(h, g, x, y, name, ui_action, map, hot)
+	local p = kit.plate(g, x, y, 380, 88, hot and C.HOT or C.ROSE, { sk = 28, d = 10 })
+	local d = { p = p, x = x, y = y, hot = hot, pips = {} }
+	d.img = kit.thumb(p, "mappe", map, 68, hot and C.HOT_EDGE or C.ROSE)
+	d.name = kit.text(p.g, name, x + 120, y + 40, 27, C.SAND)
+	d.sub = kit.text(p.g, "", x + 120, y + 66, 14, hot and C.HOT_TOP or C.MUTE, "start", 1.5)
+	d.b = kit.button(h.buttons, p, ui_action)
+	h.doors[#h.doors + 1] = d
+	return d
 end
 
--- group stuck to a screen edge
-local function angle_deg(h, x, y, xa, ya)
-	local n = empty(x, y)
-	gui.set_xanchor(n, xa)
-	gui.set_yanchor(n, ya)
-	h.tops[#h.tops + 1] = n
-	return n
+-- n notches on a door, the first lit ones in color (0: none)
+local function set_pips(d, n, lit)
+	for _, q in ipairs(d.pips) do gui.delete_node(q.node) end
+	d.pips = n > 0 and kit.pips(d.p.g, d.x + 380 - 14 - n * 15, d.y + 52, n, lit, d.hot and C.HOT_EDGE or C.SAND) or {}
 end
 
 function M.new(color)
-	local h = { tops = {}, buttons = {}, t = 0, colore = color }
+	local h = { tops = {}, buttons = {}, doors = {}, t = 0, colore = color }
 
-	-- the Core's glow behind the Scoria, breathing
-	h.posa = empty(BODY_X, BODY_Y)
-	h.tops[#h.tops + 1] = h.posa
-	h.luce = ui.alone(0, 110, 620, color, h.posa)
-	-- a veil of shadow under the feet: the ground that isn't there
-	local ground = ui.alone(0, 0, 260, ui.C.SHADOW, h.posa)
+	h.scene = kit.scene(BODY_X, 350)
+
+	-- the apprentice, in the middle
+	local mid = kit.anchor(BODY_X, BODY_Y)
+	h.tops[#h.tops + 1] = mid.node
+	h.posa = mid.node
+	local ground = ui.alone(0, 0, 330, ui.C.SHADOW, mid.node)
 	gui.set_blend_mode(ground, gui.BLEND_ALPHA)
-	V.x, V.y, V.z = 1, 0.16, 1
+	V.x, V.y, V.z = 1, 0.14, 1
 	gui.set_scale(ground, V)
-	local body_shape = empty(0, 0, h.posa)
+	local body_shape = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(body_shape, false)
+	gui.set_parent(body_shape, mid.node)
 	V.x, V.y, V.z = BODY_K, BODY_K, 1
 	gui.set_scale(body_shape, V)
 	h.corpo = scoria.new(color, scoria.PERSONAGGIO)
@@ -72,47 +81,51 @@ function M.new(color)
 	scoria.set_enabled(h.corpo, true)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
-	-- tapping the devil opens the profile (menu/profile_tabs.lua): an invisible
-	-- zone over it, and a discreet label under the feet
-	local zone = gui.new_box_node(vmath.vector3(BODY_X, BODY_Y + 120, 0), vmath.vector3(260, 320, 0))
+	-- tapping the devil opens its place: an invisible zone over it
+	local zone = gui.new_box_node(vmath.vector3(0, 230, 0), vmath.vector3(300, 460, 0))
 	gui.set_visible(zone, false)
-	h.tops[#h.tops + 1] = zone
+	gui.set_parent(zone, mid.node)
 	h.buttons[#h.buttons + 1] = { nodo = zone, bordo = zone, ui_action = "profilo", colore = ui.C.LIGHT, riposo = ui.C.LIGHT }
-	local label = ui.text(T.your_profile, 0, -34, 0.7, ui.C.TEXT, h.posa)
-	-- on the painted background the label with a dark outline
-	gui.set_outline(label, ui.C.SHADOW)
-	gui.set_inherit_alpha(label, true)
 
-	-- the name at the top left
-	local top_left = angle_deg(h, ui.EDGE, ui.HEAD_Y, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
-	local nome = ui.title(common.game_name, 0, 0, 1.3, ui.C.LIGHT, top_left)
-	gui.set_pivot(nome, gui.PIVOT_W)
+	-- the name plate under the feet: level and experience
+	local low = kit.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
+	h.tops[#h.tops + 1] = low.node
+	h.plate = kit.sand(low, 470, 630, 340, 62, C.HOT, { sk = 22 })
+	kit.text(h.plate.g, T.your_devil, 506, 669, 22, C.INK)
+	h.level = kit.text(h.plate.g, "", 800, 656, 18, kit.with_alpha(C.INK, 0.75), "end", 1)
+	h.xp_g = h.plate.g
+	kit.button(h.buttons, h.plate, "profilo")
 
-	-- bottom right: the matches. Each mode has its notch's color (report
-	-- UI-002): campaign gold, training steel, same phone purple, armory
-	-- ember, events red
-	local dx = angle_deg(h, W - 48 - 170, 48, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
-	local campaign = ui.button(h.buttons, 0, 344, 340, 72, common.campaign, "campagna", { tacca = ui.C.GOLD }, dx)
-	h.campaign = h.buttons[#h.buttons]
-	h.campaign_note = ui.text(T.leave_queue_first, 0, -24, 0.5, ui.C.OFF, campaign)
-	gui.set_enabled(h.campaign_note, false)
-	ui.button(h.buttons, 0, 256, 340, 72, common.training, "allenamento", { tacca = ui.C.STEEL }, dx)
-	ui.button(h.buttons, 0, 168, 340, 72, T.same_phone, "local", { tacca = ui.C.PURPLE }, dx)
-	ui.button(h.buttons, 0, 60, 340, 108, common.play, "online", { main = true, colore = color }, dx)
-	h.play = h.buttons[#h.buttons]
+	-- top left: the game's name, written as the logo
+	local top_left = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
+	h.tops[#h.tops + 1] = top_left.node
+	h.logo = kit.title(top_left, common.game_name, C.HOT, 30, 62, 36)
 
-	-- bottom left: loadouts, tree and sets
-	local sx = angle_deg(h, 48 + 120, 48, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	ui.button(h.buttons, 0, 60, 240, 72, common.armory, "armeria", { tacca = ui.C.BRACE }, sx)
-	-- above: the EVENTI (menu/board.lua), with what is happening now below
-	local ev = ui.button(h.buttons, 0, 160, 240, 96, "", "eventi", { tacca = ui.C.SQUADRA[1] }, sx)
-	ui.text(common.events, 0, 14, 0.9, ui.C.TEXT, ev)
-	h.events_row = ui.text("", 0, -22, 0.55, ui.C.OFF, ev)
+	-- left: the doors, staggered, and STESSO TELEFONO under them
+	local left = kit.anchor(0, 360, gui.ANCHOR_LEFT)
+	h.tops[#h.tops + 1] = left.node
+	h.campaign = door(h, left, 30, 226, common.campaign, "campagna", "cortile")
+	h.training = door(h, left, 50, 330, common.training, "allenamento", "fossa")
+	gui.set_text(h.training.sub, T.training_sub)
+	h.events_door = door(h, left, 70, 434, common.events, "eventi", "pavimento", true)
+	h.phone = kit.plate(left, 90, 548, 250, 48, C.ROSE, { sk = 14, d = 5 })
+	kit.text(h.phone.g, T.same_phone, 222, 580, 18, kit.with_alpha(C.SAND, 0.9), "middle", 0.5)
+	kit.button(h.buttons, h.phone, "local")
+
+	-- right: the action, alone
+	local right = kit.anchor(1280, 360, gui.ANCHOR_RIGHT)
+	h.tops[#h.tops + 1] = right.node
+	h.play = kit.action(right, common.play, 836, 250, 354, 140, { size = 104, sub = T.play_sub })
+	h.play_b = kit.button(h.buttons, h.play, "online", { main = true })
 
 	-- top right: the settings, and left of them the wallet (ui/coins.lua),
 	-- hidden until the first coin
 	h.tops[#h.tops + 1] = ui.settings_button(h.buttons, "impostazioni", nil, true)
-	local wr = angle_deg(h, W - ui.EDGE - 64 - 16 - coins.W / 2, ui.HEAD_Y, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
+	local wr = gui.new_box_node(vmath.vector3(W - ui.EDGE - 64 - 16 - coins.W / 2, ui.HEAD_Y, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(wr, false)
+	gui.set_xanchor(wr, gui.ANCHOR_RIGHT)
+	gui.set_yanchor(wr, gui.ANCHOR_TOP)
+	h.tops[#h.tops + 1] = wr
 	h.wallet = coins.wallet(0, 0, wr, 0, 0)
 
 	-- black veil dissolving when the home appears
@@ -120,15 +133,39 @@ function M.new(color)
 	gui.set_adjust_mode(h.veil, gui.ADJUST_FIT)
 	gui.set_color(h.veil, vmath.vector4(0, 0, 0, 1))
 
+	-- where every piece rests, for the entrance
+	h.rest = {}
+	for _, d in ipairs(h.doors) do h.rest[d.p.node] = gui.get_position(d.p.node) end
+	for _, p in ipairs({ h.phone, h.play, h.plate }) do h.rest[p.node] = gui.get_position(p.node) end
+
 	M.hide(h)
 	return h
+end
+
+-- The entrance: the doors slide in from the left one after the other, the
+-- action lands from the right, the plate rises, the apprentice pops
+local function enter(h, wait)
+	local function from(node, dx, dy, delay)
+		local p = h.rest[node]
+		gui.cancel_animations(node, "position")
+		gui.set_position(node, vmath.vector3(p.x + dx, p.y + dy, 0))
+		gui.animate(node, "position", p, gui.EASING_OUTBACK, 0.34, wait + delay)
+	end
+	for i, d in ipairs(h.doors) do from(d.p.node, -460, 0, 0.05 + 0.06 * (i - 1)) end
+	from(h.phone.node, -460, 0, 0.26)
+	from(h.play.node, 520, 0, 0.12)
+	from(h.plate.node, 0, -120, 0.2)
+	kit.pop(h.posa, wait + 0.02, 0.36, 0.9)
 end
 
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
 function M.show(h, without_veil)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
+	kit.scene_show(h.scene, true)
 	h.buttons.held_down = nil
 	h.is_visible = true
+	-- under the black veil nothing would be seen: the pieces wait for it
+	enter(h, without_veil and 0 or 0.2)
 	if without_veil then
 		gui.cancel_animations(h.veil, "color.w")
 		gui.set_enabled(h.veil, false)
@@ -139,11 +176,11 @@ function M.show(h, without_veil)
 	gui.animate(h.veil, "color.w", 0, gui.EASING_OUTQUAD, 0.35, 0, function()
 		gui.set_enabled(h.veil, false)
 	end)
-	h.is_visible = true
 end
 
 function M.hide(h)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, false) end
+	kit.scene_show(h.scene, false)
 	gui.cancel_animations(h.veil, "color.w")
 	gui.set_enabled(h.veil, false)
 	h.is_visible = false
@@ -156,22 +193,51 @@ end
 
 -- The line under EVENTI (main/events.lua, home_line)
 function M.events(h, txt)
-	gui.set_text(h.events_row, txt)
+	gui.set_text(h.events_door.sub, string.upper(txt or ""))
+end
+
+-- Level and experience on the name plate, the chapter you are in on CAMPAGNA
+function M.profile(h, p)
+	local profile = require "menu.profile"
+	gui.set_text(h.level, T.level:format(p.livello or 1))
+	if h.xp then gui.delete_node(h.xp.back.node); if h.xp.front then gui.delete_node(h.xp.front.node) end end
+	local f = math.min(1, (p.xp or 0) / profile.xp_level(p.livello or 1))
+	h.xp = kit.bar(h.xp_g, 646, 670, 150, 7, f, C.HOT_BOTTOM, C.SAND_SHADOW)
+	-- the first chapter with a mission still to win, and how far you are in it
+	local stars = p.stelle or {}
+	local chapter, done
+	for _, cap in ipairs(campaign.CAPITOLI) do
+		chapter, done = cap, 0
+		for _, l in ipairs(cap.missioni) do
+			if (stars[l.id] or {})[1] then done = done + 1 end
+		end
+		if done < #cap.missioni then break end
+	end
+	h.chapter = string.upper(chapter.titolo)
+	if not h.in_queue then gui.set_text(h.campaign.sub, h.chapter) end
+	set_pips(h.campaign, #chapter.missioni, done)
+	gui.play_flipbook(h.campaign.img, chapter.id == "addestramento" and "cortile" or "pavimento")
 end
 
 function M.queued(h, on)
-	h.campaign.spento = on or nil
-	gui.set_color(h.campaign.testo, on and ui.C.OFF or ui.C.TEXT)
-	gui.set_position(h.campaign.testo, vmath.vector3(0, on and 10 or 0, 0))
-	gui.set_enabled(h.campaign_note, on)
+	h.in_queue = on
+	h.campaign.b.spento = on or nil
+	gui.set_color(h.campaign.name, on and C.MUTE or C.SAND)
+	gui.set_text(h.campaign.sub, on and string.upper(T.leave_queue_first) or (h.chapter or ""))
 end
 
 function M.update(h, dt)
 	if not h.is_visible then return end
 	h.t = h.t + dt
 	scoria.update(h.corpo, dt, h.st)
-	local c = h.colore
-	gui.set_color(h.luce, vmath.vector4(c.x, c.y, c.z, 0.22 + 0.08 * math.sin(h.t * 1.7)))
+	kit.scene_fit(h.scene)
+	-- a pressed plate goes down onto its shadow
+	local held = h.buttons.held_down
+	if held ~= h.held then
+		if h.held and h.held.piastra then kit.press(h.held.piastra, false) end
+		if held and held.piastra then kit.press(held.piastra, true) end
+		h.held = held
+	end
 end
 
 function M.on_input(h, action_id, action)

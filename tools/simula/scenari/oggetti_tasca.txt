@@ -2,7 +2,7 @@
 # colonna menta sopra il teletrasporto, col titolo OGGETTI: anche col telefono.
 imposta prova_armi 1
 aspetta 2
-tocca_bordo 205 235 basso destra    # STESSO TELEFONO (attaccato all'angolo)
+tocca_bordo 222 148 basso sinistra    # STESSO TELEFONO (attaccato all'angolo)
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 01_oggetti

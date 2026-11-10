@@ -12,7 +12,7 @@ aspetta 1
 server 2v2 0 bot_dopo=60s
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 205 102 basso destra          # GIOCA
+tocca_bordo 244 400 basso destra          # GIOCA
 aspetta 0.5
 tocca_centro 368 300                      # 2 contro 2
 aspetta_stato modo=connecting 5
@@ -39,7 +39,7 @@ aspetta 1
 foto 04_home_senza_coda                   # niente pillola: la coda non c'è più
 server 2v2 0 bot_dopo=4s
 aspetta 1
-tocca_bordo 205 102 basso destra          # GIOCA: DOVE GIOCHI?, non la sala vecchia
+tocca_bordo 244 400 basso destra          # GIOCA: DOVE GIOCHI?, non la sala vecchia
 aspetta 0.5
 tocca_centro 368 300                      # 2 contro 2
 aspetta_stato modo=connecting coda=si 5

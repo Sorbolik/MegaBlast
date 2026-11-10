@@ -11,7 +11,7 @@ aspetta 1
 server 2v2 0
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 205 102 basso destra          # GIOCA
+tocca_bordo 244 400 basso destra          # GIOCA
 aspetta 1
 foto 01_dove_giochi                        # in fondo PARTITA PRIVATA
 tocca_centro 640 100                       # PARTITA PRIVATA

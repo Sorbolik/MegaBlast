@@ -1,0 +1,7 @@
+# La home nuova (stile Raggi, Figma 01): entrata animata, profilo pieno,
+# poi le porte e l'azione. Le foto si confrontano col Figma.
+imposta prova_profilo 1
+aspetta 0.25
+foto 01_entrata
+aspetta 1.5
+foto 02_home

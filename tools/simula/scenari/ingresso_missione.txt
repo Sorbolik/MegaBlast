@@ -4,7 +4,7 @@
 # la cartolina si chiude al centro, sul nero si carica la mappa, poi la fiammella di
 # Favilla si accende, si gonfia ed esplode aprendo la mappa; Favilla parla un attimo dopo.
 aspetta 2
-tocca 1062 392                      # CAMPAGNA
+tocca 234 450                      # CAMPAGNA
 aspetta 1
 tocca 256 480                       # Primi passi
 aspetta 0.08
