@@ -1,10 +1,9 @@
 # Tutte le schermate dei menu, una foto per una, per le reference del Figma
 # dell'interfaccia (docs/figma.md): home, profilo e le sue schede, armeria,
 # campagna, allenamento, impostazioni, eventi, DOVE GIOCHI?, partita privata,
-# HUD della battaglia e podio. Da girare anche con --scala 2 (foto a 2560x1440).
+# e HUD della battaglia (il podio e la storia: figma_fine.txt; l'online: figma_online.txt). Da girare anche con --scala 2 (foto a 2560x1440).
 imposta prova_profilo 1
 imposta prova_vignette no
-imposta prova_durata 3
 
 aspetta 2
 foto 01_home
@@ -89,7 +88,3 @@ tocca_bordo 218 216 basso destra    # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1.2
 foto 16_battaglia_hud
-mira 150 100 0.4
-aspetta_evento over 60
-aspetta 4
-foto 17_podio
