@@ -113,6 +113,6 @@ Approvata da Claude, 2026-11-01: scelta reversibile (sono solo immagini da gener
 non cambia finché non vengono tagliate). Richiesta dal thread delle animazioni dopo che Sergio
 ha bocciato il montaggio dei pezzi liberi di P-007. Sergio genera i fogli in ChatGPT (Codex
 non è installato sul PC) e li porta nel thread; li taglia il thread delle animazioni con
-`strumenti/stampino/taglia.py --allinea`.
+`tools/stampino/taglia.py --allinea`.
 
 Aggiornata da Claude, 2026-11-01 14:15, su richiesta di Sergio ("le mani devono essere anche aperte"): le braccia appese finiscono con la mano aperta, il pugno chiuso resta nella sua casella. Così ci sono tutte e due.

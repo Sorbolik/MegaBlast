@@ -1,0 +1,18 @@
+# Il cortile (Sergio, 6 nov): il Duello con Favilla sulla mappa del cortile, l'incudine
+# appesa, con lo sfondo del muro del portone (tools/grafica/cortile.py). Il colpo scava
+# la pietra e nel cratere si vede lo sfondo; poi tutta la mappa. Le lezioni del cortile hanno
+# i loro scenari (primi_passi.txt, lanciarune.txt, lezione_*.txt): stessa forma, disegno nuovo.
+imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
+imposta prova_missione guidata
+aspetta 2.5
+tocca 970 116                         # AVANTI sulla cartolina
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2
+foto 01_terrazza                      # la partenza sulla terrazza, il ballatoio di legno
+mira 120 110 0.4
+aspetta_evento explosion 8
+aspetta 1
+foto 02_cratere                       # la pietra scavata mostra lo sfondo
+premi z
+aspetta 1.5
+foto 03_tutta_la_mappa                # l'incudine sulle catene, le assi appese

@@ -1,4 +1,4 @@
--- Made by strumenti/stampino/taglia.py, do not edit by hand.
+-- Made by tools/stampino/taglia.py, do not edit by hand.
 -- The skins: the devil's new pieces drawn on the stencil. Each piece goes
 -- in a slot of the skeleton (like the pieces of battle/devil.lua: image,
 -- center relative to the pivot, size) and replaces the base piece or is

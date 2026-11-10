@@ -215,4 +215,4 @@ due code (una dietro la schiena, una a destra). Poi (4 nov) la fase 1b è stata 
 prende la fascia dalla sua tavola della storia.
 Scelta di Claude: nelle illustrazioni i fantocci sono spaventapasseri di paglia sul palo, in
 gioco saranno il sacco con le gambe di WB-016 (in gioco volano via); si tengono così, il palo
-nella scena va bene. Integrazione: Sergio ha scelto «carta e apertura». `python3 strumenti/grafica/illustrazioni.py` fa i JPEG in `client/paintings/missions/` (1672 × 941 e 320 × 180); finestrella sulla carta, cartolina col titolo su fondo pieno prima della vignetta che spiega (`client/ui/illustrations.lua`, `battle/vignette.lua`). Scenari `illustrazioni.txt` e `illustrazioni_tavola.txt` (anche 1600 × 720 e 960 × 720).
+nella scena va bene. Integrazione: Sergio ha scelto «carta e apertura». `python3 tools/grafica/illustrazioni.py` fa i JPEG in `client/paintings/missions/` (1672 × 941 e 320 × 180); finestrella sulla carta, cartolina col titolo su fondo pieno prima della vignetta che spiega (`client/ui/illustrations.lua`, `battle/vignette.lua`). Scenari `illustrazioni.txt` e `illustrazioni_tavola.txt` (anche 1600 × 720 e 960 × 720).

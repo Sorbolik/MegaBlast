@@ -1,5 +1,5 @@
 -- Favilla's animations (battle/scoria.lua): made with the editor
--- strumenti/animazioni/editor.html, which opens them and saves them here. No
+-- tools/animazioni/editor.html, which opens them and saves them here. No
 -- need to edit them by hand. The format, and how they are sampled: battle/pose.lua.
 return {
 	fermo = { duration = 2.618, loop = true,

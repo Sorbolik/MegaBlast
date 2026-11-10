@@ -1,7 +1,7 @@
 -- Tactical items in battle: placed traps and springboards, healing circles,
 -- robots' shield and status effects, and the item icons in the bar. The
--- healing circle (strumenti/grafica/cura.py), traps, springboards and the
--- shield bubble (strumenti/grafica/attrezzi.py) are vector-drawn in the battle
+-- healing circle (tools/grafica/cura.py), traps, springboards and the
+-- shield bubble (tools/grafica/attrezzi.py) are vector-drawn in the battle
 -- atlas; the status effects are shapes. The open parachute is drawn by the
 -- devil (battle/scoria.lua).
 --
@@ -61,7 +61,7 @@ local function image(nome, w, h, parent)
 	return n
 end
 
--- Trap: the open jaw trap lying on the ground (strumenti/grafica/attrezzi.py),
+-- Trap: the open jaw trap lying on the ground (tools/grafica/attrezzi.py),
 -- with its plate lit in the team colour; springboard: the Molla, a padded
 -- board on a spring, flat, with a chevron pointing the way it launches
 local TRAP_W, TRAP_H, TRAP_DY = 28, 8.6, 2.7

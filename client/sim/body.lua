@@ -1,5 +1,5 @@
 -- The imp's body in the simulation, in world pixels measured from the center
--- of the feet. The animation editor writes it (strumenti/animazioni), but it
+-- of the feet. The animation editor writes it (tools/animazioni), but it
 -- is physics: changing it changes the game for everyone, server included, not
 -- the drawing (which is game.DISEGNO_H tall).
 return {

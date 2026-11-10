@@ -2,7 +2,7 @@
 -- plain bar of health in the team color on a dark background, and the golden
 -- Crown of card WB-011 (Sergio, 3 Nov: «ancora più minimali e leggibili ... hanno
 -- un livello di dettaglio che fa perdere il focus dal personaggio»; the steel
--- blade of the same day is gone). The Crown is cut by strumenti/grafica/targa.py
+-- blade of the same day is gone). The Crown is cut by tools/grafica/targa.py
 -- from the ChatGPT sheet; the font is the interface's (ui/ui.lua). Damage shows in two
 -- steps: health drops at once, the lost piece turns white, grows with every
 -- consecutive hit and wears away gradually once the hits stop; the bar jolts. Below 30% health pulses. The shield,

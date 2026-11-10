@@ -57,7 +57,7 @@ di `defold-core`; i livelli si scrivono nel Copione).
 | [game-ui-ux](game-ui-ux/SKILL.md) | HUD e menu su ogni schermo, ancore, zone sicure, navigazione col controller. |
 | [level-design](level-design/SKILL.md) | Misure del giocatore, ritmo tensione e pausa, percorso critico dei livelli. |
 | [audio-design](audio-design/SKILL.md) | Bus e volumi in decibel, musica che si abbassa sotto le voci, varianti dei suoni. |
-| [prototype-fast](prototype-fast/SKILL.md) | Provare una meccanica nuova in un'ora con una sola domanda e criteri scritti per tenerla o buttarla. Da noi la prova si fa con uno scenario di `strumenti/simula/scenari/` su un ramo a parte, non in una cartella `prototypes/`. |
+| [prototype-fast](prototype-fast/SKILL.md) | Provare una meccanica nuova in un'ora con una sola domanda e criteri scritti per tenerla o buttarla. Da noi la prova si fa con uno scenario di `tools/simula/scenari/` su un ramo a parte, non in una cartella `prototypes/`. |
 
 Tolte (66 skill e il router): tutte quelle per Godot, Unity, Unreal, Roblox, Bevy,
 Phaser, PixiJS, three.js, pygame, LÖVE ed Ebitengine (non usiamo quei motori); il

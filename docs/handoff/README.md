@@ -33,7 +33,7 @@ Ogni personaggio segue la procedura standard di [PERSONAGGI.md](PERSONAGGI.md).
 
 ## Fogli sullo stampino
 
-Per i pezzi del personaggio (`strumenti/stampino/`, taglio con `taglia.py --allinea`): un
+Per i pezzi del personaggio (`tools/stampino/`, taglio con `taglia.py --allinea`): un
 pezzo per casella, nell'ordine dello stampino, staccati fra loro, sfondo magenta; la coda
 intera con la radice più spessa della punta; il verde #00FF00 solo per il colore della
 squadra. Il disegno di riferimento va allegato per primo e il prompt deve dire che lo

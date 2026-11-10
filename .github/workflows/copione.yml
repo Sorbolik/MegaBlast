@@ -1,4 +1,4 @@
-# Il Copione su Cloudflare (Worker megablast-copione, strumenti/copione/cloudflare).
+# Il Copione su Cloudflare (Worker megablast-copione, tools/copione/cloudflare).
 # Cloudflare lo pubblica come gli altri strumenti (repository collegato), ma dal
 # ramo copione-pubblica, già costruito: la build web del gioco per GIOCA vuole
 # Java e bob.jar, che la build di Cloudflare non ha. Questo workflow, dopo ogni
@@ -11,8 +11,8 @@ on:
     branches: [main]
     paths:
       - 'client/**'
-      - 'strumenti/copione/**'
-      - 'strumenti/web/**'
+      - 'tools/copione/**'
+      - 'tools/web/**'
       - '.github/workflows/copione.yml'
   workflow_dispatch:
 concurrency:
@@ -39,12 +39,12 @@ jobs:
       - name: Pagina e build web
         env:
           MEGABLAST_CACHE: ${{ runner.temp }}/cache
-        run: JAVA="$(command -v java)" sh strumenti/copione/cloudflare/costruisci.sh
+        run: JAVA="$(command -v java)" sh tools/copione/cloudflare/costruisci.sh
       - name: Ramo copione-pubblica
         run: |
           P="$RUNNER_TEMP/pubblica"
           mkdir -p "$P"
-          cp -r strumenti/copione/cloudflare/wrangler.jsonc strumenti/copione/cloudflare/worker.js strumenti/copione/cloudflare/dist "$P/"
+          cp -r tools/copione/cloudflare/wrangler.jsonc tools/copione/cloudflare/worker.js tools/copione/cloudflare/dist "$P/"
           cd "$P"
           git init -q -b copione-pubblica
           git config user.name "github-actions[bot]"

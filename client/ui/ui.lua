@@ -1,7 +1,7 @@
 -- MegaBlast's minimal interface, in the Scoria's style: flat charcoal shapes
 -- with a light border (like the character's outline) and the Core's glow, in
 -- the team color, on what matters. No painted images: a few white shapes
--- (assets/ui/, strumenti/grafica/ui.py; one shape per family of controls) colored from here.
+-- (assets/ui/, tools/grafica/ui.py; one shape per family of controls) colored from here.
 -- Pieces are added only when a screen needs them.
 --
 -- The .gui using it must have the "ui" texture (/ui/ui.atlas) and the
@@ -284,7 +284,7 @@ end
 -- Disc and ring (pie nodes): sticks, round buttons, stopwatch. d is the
 -- diameter, thickness the ring's toward the inside. A pie polygon has no
 -- antialiasing and shows steps (Sergio, 4 Nov: "piene di scalini"), so the
--- node draws a soft white image of the disc or ring (strumenti/grafica/ui.py)
+-- node draws a soft white image of the disc or ring (tools/grafica/ui.py)
 -- and its own polygon only cuts around it, in the clear part: the edges are
 -- the image's. The fill angle (the stopwatch's arc) still works.
 -- the rings' thickness / diameter, the same list as ui.py (ANELLI)
