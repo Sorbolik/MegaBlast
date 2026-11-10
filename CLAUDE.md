@@ -108,6 +108,15 @@ delle sue stanze (`server/proc.go`, `server/worker.lua`). Serve `luajit` nel PAT
 (FFI, `server/net.lua`): la simulazione deve leggere e scrivere `t.data[i]` solo
 dentro la griglia (da 1 a `w * h`), come fa `client/sim/terrain.lua`.
 
+## Figma dell'interfaccia (Sergio, 10 nov)
+
+Tutta l'interfaccia sta nel Figma «MegaBlast · Interfaccia»
+(https://www.figma.com/design/i7CjXyRO8X6NQOk7ntONZh): variabili = `ui.C` e misure di
+`ui.lua`, componenti generici, le schermate di oggi (foto vere del simulatore + ricostruzione)
+e le proposte; la mappa dei passaggi fra menu nella lavagna FigJam. Una PR che cambia
+l'interfaccia aggiorna anche il Figma; un cambio deciso nel Figma arriva nel gioco con
+`tools/figma/leggi.js` e `python3 tools/figma/applica.py`. Come in [docs/figma.md](docs/figma.md).
+
 ## Animazioni del diavoletto
 
 Le pose del diavoletto (fermo, corsa, aria, paracadute, colpito, vittoria,

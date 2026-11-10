@@ -1,0 +1,30 @@
+# Fine partita e storia per le reference del Figma (docs/figma.md): il podio
+# con lo scontrino, poi la storia della campagna.
+imposta prova_durata 3
+imposta prova_vignette no
+imposta prova_storia si
+
+aspetta 2
+tocca_bordo 218 216 basso destra    # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+mira 150 100 0.4
+aspetta_evento fire 5
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_stato turno=1 fase=aim 40
+mira 150 100 0.4
+aspetta_stato turno=2 fase=aim 40
+mira -150 100 0.4
+aspetta_evento over 60
+aspetta 5
+foto 30_podio
+tocca_centro 1130 52                # CONTINUA
+aspetta_stato modo=menu 3
+aspetta 0.8
+tocca_bordo 218 392 basso destra    # CAMPAGNA: la storia
+aspetta 1.5
+foto 31_storia
+pad a
+aspetta 0.8
+foto 32_storia_seconda
