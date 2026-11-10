@@ -45,6 +45,8 @@ Sì, e si sposa bene con il Torneo: **in Torneo tutti hanno tutti i punti**, qui
 3. **Una differenza che si sente, ma che si colma con la strategia.** Nelle partite normali chi è al massimo è più forte, ma trappole, cerchi di cura, trampolini, paracadute e scudi permettono a chi gioca meglio di vincere lo stesso. Nei primi livelli si incontrano avversari di livello simile.
 4. **Ricostruzione gratuita fuori dalla partita**, con 3 assetti salvati (albero più equipaggiamento) da scegliere prima del ventaglio d'armi.
 
+**Oggi (10 novembre 2026): i Sigilli.** L'albero è diventato tre vie, ALI, CORAZZA e FUCINA, da 0 a 25 punti ciascuna, con un punto per livello fino al 50 (50 punti per 75 di vie). Ogni punto dà un poco della statistica della via (+0,4%), ogni 5 punti una soglia dove si sceglie uno fra due poteri, a 25 il potere grande: la profondità si premia, e non si può riempire tutto. Gli assetti 2 e 3 si aprono al livello 15 e al 30. Le quattro regole qui sopra restano: con una via piena la sua statistica sale al massimo del 10%, i poteri sono scambi o situazionali. Dettagli e numeri in `client/sim/skills.lua` e in `docs/decisioni/progressione.md`.
+
 Per non far sovrapporre le due crescite: l'equipaggiamento dà l'aspetto e il carattere del set, l'albero il tuo assetto personale e come usi teletrasporti e oggetti.
 
 ## In breve

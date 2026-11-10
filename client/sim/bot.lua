@@ -202,7 +202,7 @@ function M.world(g, into)
 	local o = own(w, world_parts)
 	for k in pairs(w) do w[k] = nil end
 	w.terrain, w.map, w.tick, w.mode, w.normalized = g.terrain, g.map, g.tick, g.mode, g.normalized
-	w.current, w.phase, w.timer, w.window = g.current, g.phase, g.timer, g.window
+	w.current, w.phase, w.timer, w.window, w.turn_bonus = g.current, g.phase, g.timer, g.window, g.turn_bonus
 	w.match_left, w.final_round, w.round, w.order, w.order_pos, w.turn_no = g.match_left, g.final_round, g.round, g.order, g.order_pos, g.turn_no
 	w.orb_seq, w.placed_id, w.heals, w.score = g.orb_seq, g.placed_id, g.heals, g.score
 	o.rng.state = g.rng.state

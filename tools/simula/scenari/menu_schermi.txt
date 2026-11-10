@@ -9,7 +9,7 @@ foto 01_home
 tocca_centro 400 300                # il diavoletto: il profilo
 aspetta 0.6
 foto 02_profilo
-tocca_bordo 295 142 alto centro     # STATISTICHE
+tocca_bordo 457 142 alto centro     # STATISTICHE
 aspetta 0.3
 foto 02b_statistiche
 tocca_bordo 62 62 alto sinistra     # indietro

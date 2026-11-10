@@ -1,10 +1,10 @@
 # La scheda personaggio (Sergio, 31 ott). Dalla home, toccando il diavoletto,
-# il PROFILO con le tre schede (SCHEDA 105 578, STATISTICHE 295 578, PARTITE
-# 485 578; indietro 62 658). Poi una partita contro un bot: lo schieramento
+# il PROFILO con le quattro schede (SCHEDA 105 578, SIGILLI 267 578, STATISTICHE
+# 457 578, PARTITE 647 578; indietro 62 658). Poi una partita contro un bot: lo schieramento
 # dei cartellini prima della scelta (un tocco lo chiude), la striscia in alto
 # durante la scelta (un tocco su un cartellino lo apre, un altro lo chiude), in
 # partita il cartellino del bot toccando la sua targa nel suo turno. Partita da
-# 3 secondi: il podio ha RIVEDI (980 205); toccando un giocatore sul podio il
+# 3 secondi: il podio ha RIVEDI (920 52); toccando un giocatore sul podio il
 # suo cartellino. Il replay, un tocco e si torna al profilo, sulla partita.
 imposta prova_scelta 1
 imposta prova_durata 3
@@ -15,10 +15,10 @@ foto 01_home
 tocca 400 300                       # il diavoletto: il profilo
 aspetta 0.5
 foto 02_profilo_scheda
-tocca 295 578                       # STATISTICHE
+tocca 457 578                       # STATISTICHE
 aspetta 0.3
 foto 03_profilo_statistiche
-tocca 485 578                       # PARTITE (ancora nessuna)
+tocca 647 578                       # PARTITE (ancora nessuna)
 aspetta 0.3
 foto 04_profilo_partite_vuoto
 tocca 62 658                        # indietro
@@ -59,19 +59,19 @@ mira 150 100 0.4
 aspetta_evento over 60
 aspetta 4
 foto 09_podio
-tocca 742 400                       # il primo sul podio: il suo cartellino
+tocca 502 300                       # il primo sul podio: il suo cartellino
 aspetta 0.4
 foto 10_podio_cartellino
 tocca 640 360                       # lo chiude
 aspetta 0.3
-tocca 980 205                       # RIVEDI
+tocca 920 52                        # RIVEDI
 aspetta_stato modo=replay 5
 aspetta 1.5
 foto 11_replay
 tocca 640 360                       # fine: il profilo, sulla partita
 aspetta 0.5
 foto 12_profilo_partite
-tocca 295 578                       # STATISTICHE
+tocca 457 578                       # STATISTICHE
 aspetta 0.3
 foto 13_profilo_statistiche
 tocca 105 578                       # SCHEDA

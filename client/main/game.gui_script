@@ -1240,6 +1240,15 @@ local function handle_event(self, e)
 			explosion(self, e.x, e.y, e.r)
 			self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
 		end
+	elseif e.type == "phoenix" then
+		-- the Sigilli's Fenice: the blast without a crater, and who it was
+		explosion(self, e.x, e.y, e.r * 0.5)
+		self.cam_pause, self.pause_x, self.pause_y = CAMERA_HOLD, e.x, e.y
+		show_message(self, TM.phoenix:format(who_name(self, e.robot)))
+	elseif e.type == "last_stand" then
+		show_message(self, TM.last_stand:format(who_name(self, e.robot)))
+	elseif e.type == "orb_time" then
+		show_message(self, TM.orb_time:format(who_name(self, e.robot), math.floor(e.ticks / 60 + 0.5)))
 	elseif e.type == "fire" or e.type == "sniper" or e.type == "grenade" or e.type == "orb" or e.type == "shards" then
 		-- recoil of the Rune launcher (and of the sniper), throw momentum, shard burst
 		local kind = (e.type == "fire" or e.type == "sniper") and "missile" or (e.type == "shards" and "shards" or "throw")
@@ -1499,13 +1508,16 @@ local function open_podium(self)
 		giocatori[i] = { nome = nome, colore = self.colors[i] }
 	end
 	local my_own = me or 1
-	local spot, taken = #res.ranking, {}
+	local mine = res.ranking[1]
 	for _, v in ipairs(res.ranking) do
-		if v.robot == my_own then spot = v.place end
+		if v.robot == my_own then mine = v end
 	end
 	local per_robot = awards.assign(res.ranking)
-	taken = per_robot[my_own] or taken
-	local gain = profile.match_end(self.profilo, spot, taken)
+	local mvp = awards.mvp(res.ranking)
+	local won = nil
+	if res.winner then won = res.winner == mine.team end
+	local gain = profile.match_end(self.profilo, { points = mine.points, won = won,
+		second = res.mode == "ffa" and mine.place == 2, mvp = mvp == my_own, awards = per_robot[my_own] })
 	profile.save(self.profilo)
 	-- the stats and the match into the profile (also saves the replay)
 	local number = CP.record(self, res)
@@ -1514,6 +1526,7 @@ local function open_podium(self)
 	set_controls_visible(self, false)
 	-- first the screen, then the mode: if new breaks, no mode is left without a screen
 	self.schermata = { mod = menu.podium, obj = menu.podium.new(res, giocatori, me, gain, self.profilo, number) }
+	self.schermata.obj.tick = function(i) sound.play("#punto", { speed = 1 + 0.08 * i }) end
 	self.mode = "schermata"
 	if self.pill then menu.pill.raise(self.pill) end
 end
@@ -2537,7 +2550,7 @@ local function start_mission(self, id, picks)
 		if p.nome then self.names[i] = p.nome end
 		if p.pelle then dress(self, i, { p.pelle }) end
 		if p.bot and (p.battute or p.carattere) then
-			self.speak = self.speak or require("battle.quips").nuove()
+			self.speak = self.speak or require("battle.quips").new()
 			self.speak.chi[i] = p.battute or p.carattere
 		end
 	end
@@ -2707,7 +2720,7 @@ local function mission_update(self, dt)
 	if r.esito == "fatta" and not r.was_saved then
 		r.was_saved = true
 		local record = missions.count(self.profilo.stelle[r.l.id] or {})
-		profile.mission(self.profilo, r.l.id, missions.stars(r))
+		self.mission_gain = profile.mission(self.profilo, r.l.id, missions.stars(r))
 		profile.save(self.profilo)
 		if not r.l.guidata then
 			-- a moment to see the shot, then (or at the first tap) the stars
@@ -2750,8 +2763,9 @@ local function open_level_end(self)
 		-- the lead points, where they count
 		vantaggio = won and missions.lead(r) or nil,
 		record = self.record_end, avanti = won and (missions.after(r.l.id) ~= nil),
-		fallita = not won,
+		fallita = not won, gain = won and self.mission_gain or nil, prof = self.profilo,
 	}, function(v) sound.play("#punto", { speed = v }) end)
+	self.mission_gain = nil
 end
 
 -- Into a campaign mission (Sergio, 4 Nov: half a second of hype, not crashing
@@ -3130,7 +3144,7 @@ local function update_bar(self)
 	local g = self.g
 	local l = self.missione
 	-- shots used up (or the turn's Grapple fired) it goes back to the Rune launcher
-	if not slot_have(rb, self.weapon, l) or ((self.weapon == "hook" or self.weapon == "janus") and g.used.tool and rb.id == g.current) then
+	if not slot_have(rb, self.weapon, l) or (((self.weapon == "hook" and (rb.hooks_spare or 0) <= 0) or self.weapon == "janus") and g.used.tool and rb.id == g.current) then
 		self.weapon = "missile"
 		-- a lesson without the Rune launcher: the first visible weapon
 		if not slot_have(rb, "missile", l) then
@@ -5343,7 +5357,13 @@ function PAD.on_input(self, action_id, action)
 	end
 	if self.mode == "schermata" then
 		local end_of = self.schermata.mod.on_input(self.schermata.obj, action_id, action)
-		if end_of and self.schermata.mod == menu.level_end then
+		if end_of == "sigilli" then
+			-- METTI I PUNTI on the receipt (podium or end of level): the profile's SIGILLI
+			CP.iris(self, function()
+				close_screen(self)
+				CP.open_profile(self, "sigilli")
+			end)
+		elseif end_of and self.schermata.mod == menu.level_end then
 			after_level_end(self, end_of)
 		elseif end_of and self.schermata.mod == menu.story then
 			-- the story is over: seen, then what was waiting for it (the CAMPAGNA or the mission)

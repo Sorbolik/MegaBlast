@@ -300,6 +300,26 @@ C.STATS = {
 	air_jumps = 0,           -- air jumps before touching the ground (Mobilità branch, Corvo set)
 	burning_blasts = 0,      -- 1: the Uovo burns whoever it hits (Fornace set)
 	status_turns = 1,        -- for how many turns a status effect given by this robot lasts
+	-- the powers of the Sigilli (sim/skills.lua); these values change nothing
+	hook_range = 1,          -- how far the Rampino reaches, relative to HOOK.range
+	extra_hooks = 0,         -- Rampini per turn beyond the first
+	orb_time = 0,            -- ticks added to the turn by a teleport before attacking
+	start_shields = 0,       -- shields in hand at the start
+	heal_mul = 1,            -- how much the healing circles heal you
+	burn_immune = 0,         -- 1: burning doesn't hurt you
+	last_stand = 0,          -- times per match a hit leaves you at 1 hp instead of killing you
+	phoenix = 0,             -- 1: dying you explode (PHOENIX_BLAST)
+	shield_mul = 1,          -- how much your shields absorb, relative to SHIELD.hp
+	blast_push = 1,          -- how far your explosions push
+	trampoline_mul = 1,      -- how high your trampolines throw
+	extra_secondary = 0,     -- more shots of the draft secondary
+	crate_bonus = 0,         -- more shots of each crate weapon you pick up
+	double_traps = 0,        -- 1: a trap from a crate counts two
+	double_springs = 0,      -- 1: a trampoline from a crate counts two
+	finisher = 0,            -- 1: your explosions push twice as far whoever has less than FINISHER_HP
+	burn_mul = 1,            -- how much the burning you give takes
 }
+-- Colpo di grazia (sim/skills.lua): below this life your explosions push twice as far
+C.FINISHER_HP = 20
 
 return C

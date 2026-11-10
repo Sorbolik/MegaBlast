@@ -43,4 +43,14 @@ function M.assign(ranking)
 	return by_robot, list
 end
 
+-- The MVP: whoever made the most points of the match, even in the losing team
+-- (Sergio, 10 Nov); on a tie whoever ranks higher. nil if nobody made points.
+function M.mvp(ranking)
+	local best
+	for _, p in ipairs(ranking) do
+		if (p.points or 0) > 0 and (not best or p.points > best.points) then best = p end
+	end
+	return best and best.robot
+end
+
 return M

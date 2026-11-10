@@ -3,8 +3,10 @@
 -- accounts it is saved locally (sys.save); the logic is pure Lua and is tested.
 --
 -- Progression (docs/game_design_competitivo.md, "Più avanti: reward e
--- progressione"): every match gives experience (even when lost, more on the
--- podium); the level gives the tree points; playing with a piece raises its tier.
+-- progressione"; numbers from the Sigilli proposal, Sergio 10 Nov): every match
+-- gives experience, more for points, the win and the MVP; every level up to
+-- skills.LEVEL_MAX gives a point of the Sigilli, after it the bar goes on and
+-- gives braci (only a sign next to the level); playing with a piece raises its tier.
 -- Scorie (the Forge's material) will come with the Forge.
 
 local skills = require "sim.skills"
@@ -19,11 +21,14 @@ local M = {}
 -- starts over (2: the code's names went to English, Sergio 2 Nov, choice 7b)
 M.VERSION = 2
 
--- experience per place (1st, 2nd, 3rd, 4th) and per award
-M.XP_PLACE = { 120, 80, 60, 50 }
-M.XP_AWARD = 25
+-- experience of a match: played, half the points (at most points_max), win
+-- (in free for all the 2nd takes second), MVP, each award
+M.XP = { match = 40, points_share = 0.5, points_max = 120, win = 60, second = 30, mvp = 40, award = 15 }
+-- of a campaign level: the first time it's done, each new star, played again with nothing new
+M.XP_MISSION = { done = 40, star = 60, replay = 20 }
 -- experience to go from level n to n + 1: XP_BASE + XP_STEP * (n - 1)
-M.XP_BASE, M.XP_STEP = 100, 25
+M.XP_BASE, M.XP_STEP = 150, 25
+M.LEVEL_MAX = skills.LEVEL_MAX
 
 -- The settings and their defaults (docs/impostazioni.md)
 -- (tasti: the remapped controller buttons, button -> command; nil is the default mapping, ui/controller.lua)
@@ -44,7 +49,7 @@ function M.set(p, lookup_key, value)
 end
 
 function M.new()
-	local p = { versione = M.VERSION, xp = 0, livello = 1, mastery = {}, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
+	local p = { versione = M.VERSION, xp = 0, livello = 1, braci = 0, mastery = {}, loadouts = {}, is_active = 1, stelle = {}, failed_ones = {},
 		armi = {}, impostazioni = {}, statistiche = {}, partite = {}, badge = {}, serie = 0, numero = 0,
 		-- the story's chapters already seen (ui/story.lua)
 		storia = {} }
@@ -52,9 +57,9 @@ function M.new()
 	return p
 end
 
--- experience needed to go up from level n
+-- experience needed to go up from level n (after the last, the same as the last: one brace)
 function M.xp_level(n)
-	return M.XP_BASE + M.XP_STEP * (n - 1)
+	return M.XP_BASE + M.XP_STEP * (math.min(n, M.LEVEL_MAX) - 1)
 end
 
 function M.points(p)
@@ -75,19 +80,40 @@ function M.active_loadout(p)
 	return p.loadouts[p.is_active]
 end
 
--- End of match: place (1..4) and awards taken. Updates the profile and
--- returns what was gained { xp, level_before, livello }.
-function M.match_end(p, spot, awards)
-	local g = {
-		xp = (M.XP_PLACE[spot] or M.XP_PLACE[#M.XP_PLACE]) + M.XP_AWARD * #(awards or {}),
-		level_before = p.livello,
-	}
+-- Adds the experience lines { { key, xp, ... } } to the profile and returns
+-- the gain: { lines, xp = total, level_before, livello, braci_before, braci }
+local function add_xp(p, lines)
+	local g = { lines = lines, xp = 0, level_before = p.livello, braci_before = p.braci or 0 }
+	for _, l in ipairs(lines) do g.xp = g.xp + l.xp end
 	p.xp = p.xp + g.xp
+	p.braci = p.braci or 0
 	while p.xp >= M.xp_level(p.livello) do
 		p.xp = p.xp - M.xp_level(p.livello)
-		p.livello = p.livello + 1
+		if p.livello < M.LEVEL_MAX then p.livello = p.livello + 1 else p.braci = p.braci + 1 end
 	end
-	g.livello = p.livello
+	g.livello, g.braci = p.livello, p.braci
+	return g
+end
+
+-- The experience of a match, line by line. r = { points, won = true | false |
+-- nil (tie), second = true (2nd in free for all), mvp = true, awards = { award } }
+function M.match_xp(r)
+	local x = M.XP
+	local lines = { { key = "match", xp = x.match } }
+	local pts = math.max(0, math.floor((r.points or 0) + 0.5))
+	if pts > 0 then
+		lines[#lines + 1] = { key = "points", n = pts, xp = math.min(x.points_max, math.floor(pts * x.points_share + 0.5)) }
+	end
+	if r.won then lines[#lines + 1] = { key = "win", xp = x.win }
+	elseif r.second then lines[#lines + 1] = { key = "second", xp = x.second } end
+	if r.mvp then lines[#lines + 1] = { key = "mvp", xp = x.mvp } end
+	for _, a in ipairs(r.awards or {}) do lines[#lines + 1] = { key = "award", name = a.name, xp = x.award } end
+	return lines
+end
+
+-- End of match (see match_xp). Updates the profile and returns the gain (add_xp).
+function M.match_end(p, r)
+	local g = add_xp(p, M.match_xp(r))
 	-- mastery: one more match for each piece worn
 	local a = M.active_loadout(p)
 	for _, s in ipairs(equip.SLOTS) do
@@ -188,7 +214,7 @@ function M.sample(p)
 	p.livello, p.xp = 23, 410
 	local a = p.loadouts[p.is_active]
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
-	a.tree = { jump = 2, walk = 1, air_jump = 1, hp = 1, teleport = 1, trap_wide = 2 }
+	a.tree = { wings = 12, armor = 6, forge = 3, pick = { wings = { 2, 1 }, armor = { 1 } } }
 	p.mastery.corvo_mask, p.mastery.fornace_chest, p.mastery.corvo_cloak, p.mastery.leviatano_legs = 24, 18, 11, 6
 	p.statistiche["2v2"] = { partite = 48, vinte = 27, colpi = 310, a_segno = 190, danno = 14500, abbattuti = 60,
 		nel_vuoto = 23, globi = 140, colpo_lungo = 1180, casse = 35, cadute = 12, morti = 30, serie = 4,
@@ -209,13 +235,24 @@ function M.replay_place(number)
 end
 
 -- Campaign missions and lessons (sim/campaign.lua): for each one the three
--- stars { true, false, true }, each one once taken stays (even across
--- different matches)
+-- stars { true, false, true }: saves them (each one once taken stays, even
+-- across different matches) and returns the experience gained (add_xp):
+-- XP_MISSION.done the first time, star for each new star, replay if nothing is new
 function M.mission(p, id, stars)
 	local picked = p.stelle[id] or { false, false, false }
-	for i = 1, 3 do picked[i] = picked[i] or stars[i] == true end
+	local first = not picked[1]
+	local new = 0
+	for i = 1, 3 do
+		if stars[i] == true and not picked[i] then new = new + 1 end
+		picked[i] = picked[i] or stars[i] == true
+	end
 	p.stelle[id] = picked
 	p.failed_ones[id] = nil
+	local x, lines = M.XP_MISSION, {}
+	if first then lines[#lines + 1] = { key = "done", xp = x.done } end
+	if new > 0 then lines[#lines + 1] = { key = "stars", n = new, xp = x.star * new } end
+	if #lines == 0 then lines[1] = { key = "replay", xp = x.replay } end
+	return add_xp(p, lines)
 end
 
 -- A lost mission: from the third in a row the opponents ease off
@@ -296,6 +333,12 @@ function M.load_up()
 	for k, v in pairs(M.new()) do
 		if p[k] == nil then p[k] = v end
 	end
+	-- the old skill tree (nodes, before the Sigilli of 10 Nov): it starts empty,
+	-- the level stays (at most the new maximum)
+	for _, a in ipairs(p.loadouts) do
+		if not skills.valid(a.tree or {}, math.huge) then a.tree = {} end
+	end
+	p.livello = math.min(p.livello, M.LEVEL_MAX)
 	return p
 end
 
