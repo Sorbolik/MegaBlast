@@ -145,6 +145,14 @@ C.MALLET = { damage = 57, reach = 44, from = math.rad(115), to = math.rad(-100),
 -- fall). If the climb stops against terrain (from below, diagonally) being
 -- within grab pixels of the point (from the robot's centre) is enough to get up.
 C.HOOK = { range = 400, shot_speed = 1500, reel = 220, speed = 300, climb_speed = 420, climb = 96, grab = 80 }
+-- Giano (swap tool, Sergio 9 November 2026, a prototype): a two-faced coin
+-- thrown like the missile, that swaps places with the first robot it touches
+-- (ally or enemy, never the thrower) and stops at terrain. The two trade
+-- position and movement (speed, fall); nothing else changes: no damage, no hit
+-- credit (a fall after the swap is nobody's kill), no trap goes off on arrival.
+-- need_ground: swap only if both stand (off for now: a thrower falling into the
+-- void who swaps with someone is the skill check Sergio wants to try).
+C.JANUS = { need_ground = false }
 -- Affondo: dash in the aim direction at speed for ticks ticks, passing through
 -- robots (damage once to each). It hits whoever it touches with the body or
 -- with the spear, reach long from the body centre. Steps and bumps up to climb

@@ -165,6 +165,24 @@ def globo_in_mano(d):
     return dict(box=(-0.5, -4.5, 10.5, 7))
 
 
+def giano(d, cx=0.0, cy=0.0, r=4.6):
+    # Giano, la moneta a due facce dell'attrezzo di scambio: l'ottone da un lato
+    # e la metà tinta (il colore di chi la lancia) dall'altro, con due frecce
+    # opposte (uno scambio) sul davanti
+    d.cerchio(cx, cy, r, "ottone")
+    d.cerchio(cx, cy, r * 0.66, "ferro", contorno=False)
+    ro, ri = r * 0.86, r * 0.62
+    d.path(f"M{cx},{cy - ro} A{ro},{ro} 0 0 0 {cx},{cy + ro} L{cx},{cy + ri} A{ri},{ri} 0 0 1 {cx},{cy - ri} Z",
+           "bianco", tinta=True, contorno=False)
+    for lato in (-1, 1):
+        # lato 1: la freccia in alto va a destra; -1: quella in basso va a sinistra
+        y = cy + lato * r * 0.25
+        t = r * 0.09
+        x0, x1, x2 = cx - lato * r * 0.4, cx + lato * r * 0.14, cx + lato * r * 0.42
+        d.poli([(x0, y + t), (x1, y + t), (x1, y + r * 0.2), (x2, y), (x1, y - r * 0.2), (x1, y - t), (x0, y - t)],
+               "ottone", contorno=False)
+
+
 def tonante(d):
     # pistolone: canna grossa d'acciaio, tamburo d'ottone, cane a corno, calcio rosso
     d.path("M0.4,-1.0 L3.6,-1.0 L2.6,-6.2 L-0.6,-5.8 Z", "rosso")                    # calcio
@@ -422,6 +440,11 @@ def globo_volo(d):
     return dict(box=(-5, -5, 5, 5))
 
 
+def giano_volo(d):
+    giano(d, 0, 0, 3.4)
+    return dict(box=(-5, -5, 5, 5))
+
+
 # nome nel gioco: disegno, angolo dell'icona (gradi, verso l'alto a destra;
 # None: senza icona)
 ARMI = {
@@ -457,6 +480,7 @@ COLPI = {
     "uovo": uovo_volo,
     "scheggia": scheggia,
     "globo": globo_volo,
+    "giano": giano_volo,
     "falce": falce_volo,
     "fiasco": fiasco_volo,
     "punta": punta,
@@ -548,8 +572,14 @@ def scambio(d):
     return dict(box=(-7.6, -7.6, 7.6, 7.6))
 
 
+def giano_icona(d):
+    giano(d, 0, 0, 6.6)
+    return dict(box=(-7.6, -7.6, 7.6, 7.6))
+
+
 ICONE = {
     "scambio": scambio,
+    "janus": giano_icona,
     "teleport": portale,
     "trap": tagliola,
     "shield": scudo,

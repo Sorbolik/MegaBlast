@@ -182,9 +182,9 @@ M.CRATE_WEAPONS = { "grenade", "shards", "punch", "sniper", "boomerang", "tar", 
 -- Tactical items from crates (also in rb.ammo), the parachute (one per match)
 -- and the Rampino (one per turn, for everyone): they aren't attacks (config.lua)
 M.ITEMS = { "trap", "shield", "trampoline" }
-M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true }
+M.TOOLS = { trap = true, shield = true, trampoline = true, parachute = true, hook = true, janus = true }
 -- items thrown by aiming (the others are used with a tap)
-M.THROWN = { trampoline = true, hook = true }
+M.THROWN = { trampoline = true, hook = true, janus = true }
 -- all the valid names of fire.weapon
 M.WEAPONS = { teleport = true, swap = true }
 for w in pairs(M.FREE_WEAPONS) do M.WEAPONS[w] = true end
@@ -1090,6 +1090,69 @@ function M:fire(angle, power)
 	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
 	self.projectile = { kind = "missile", x = x, y = y, vx = vx, vy = vy, owner = rb.id, age = 0 }
 	self:emit({ type = "fire", robot = rb.id })
+end
+
+-- Giano -------------------------------------------------------------------------
+
+function M:throw_janus(angle, power)
+	local rb = self.robots[self.current]
+	local x, y = muzzle(rb, angle)
+	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
+	self.projectile = { kind = "janus", x = x, y = y, vx = vx, vy = vy, owner = rb.id, age = 0 }
+	self:emit({ type = "janus", robot = rb.id })
+end
+
+-- The robot the coin touches (not the thrower), or nil
+function M:touched_by_coin(x, y, owner)
+	for _, rb in ipairs(self.robots) do
+		if not rb.dead and rb.id ~= owner and M.hurt_at(rb, x, y, 0) then return rb end
+	end
+end
+
+-- a and b trade places and movement; nobody is hit, nobody gets the credit
+function M:janus_swap(a, b)
+	local ax, ay, bx, by = a.x, a.y, b.x, b.y
+	a.x, a.y, b.x, b.y = bx, by, ax, ay
+	a.vx, b.vx = b.vx, a.vx
+	a.vy, b.vy = b.vy, a.vy
+	a.grounded, b.grounded = b.grounded, a.grounded
+	a.knocked, b.knocked = b.knocked, a.knocked
+	a.fall_top, b.fall_top = b.fall_top, a.fall_top
+	self:emit({ type = "janus_swap", a = a.id, b = b.id, ax = ax, ay = ay, bx = bx, by = by })
+end
+
+-- Flies like the missile; the first robot it touches trades places with the
+-- thrower, terrain or the edge of the map stops it
+function M:update_janus(p)
+	p.age = p.age + 1
+	p.vy = p.vy - M.GRAVITY * M.MISSILE_GRAVITY * M.DT
+	local mx, my = p.vx * M.DT, p.vy * M.DT
+	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
+	for _ = 1, steps do
+		if self:spring(p, p.y + my / steps, 0) then break end
+		p.x = p.x + mx / steps
+		p.y = p.y + my / steps
+		local target = self:touched_by_coin(p.x, p.y, p.owner)
+		if target then
+			local me = self.robots[p.owner]
+			self.projectile = nil
+			if me.dead then return end
+			if C.JANUS.need_ground and not (me.grounded and target.grounded) then
+				self:emit({ type = "janus_fizzle", x = p.x, y = p.y })
+			else
+				self:janus_swap(me, target)
+			end
+			return
+		elseif self.terrain:solid(p.x, p.y) then
+			self:emit({ type = "janus_fizzle", x = p.x, y = p.y })
+			self.projectile = nil
+			return
+		end
+	end
+	if p.y < -50 or p.x < -300 or p.x > M.WORLD_W + 300 then
+		self:emit({ type = "miss" })
+		self.projectile = nil
+	end
 end
 
 -- Uovo di Fiamma ----------------------------------------------------------------
@@ -2687,6 +2750,10 @@ function M:use_tool(kind, fire)
 		self.used.tool = true
 		self:fire_hook(fire.angle)
 		return
+	elseif kind == "janus" then
+		self.used.tool = true
+		self:throw_janus(fire.angle, fire.power)
+		return
 	end
 	rb.ammo[kind] = rb.ammo[kind] - 1
 	if kind == "shield" then
@@ -2966,6 +3033,7 @@ function M:update_projectile()
 	local p = self.projectile
 	if p.kind == "grenade" or p.kind == "tar" or p.kind == "petard" then return self:update_grenade(p) end
 	if p.kind == "sniper" then return self:update_sniper(p) end
+	if p.kind == "janus" then return self:update_janus(p) end
 	if p.kind == "boomerang" then return self:update_boomerang(p) end
 	if p.digging then return self:update_drill(p) end
 	p.age = p.age + 1
@@ -3054,7 +3122,8 @@ function M:can_use(weapon)
 		-- only in the air
 		if rb.grounded then return false end
 		return rb.parachute or rb.parachutes_left > 0
-	elseif weapon == "hook" then
+	elseif weapon == "hook" or weapon == "janus" then
+		-- one tool per turn (Rampino or Giano); both move you, so not with trapped feet
 		return not self.used.tool and not rb.trapped
 	elseif weapon == "shield" then
 		return not rb.shield and rb.ammo.shield > 0

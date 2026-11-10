@@ -1,0 +1,22 @@
+# Giano: la moneta a due facce dell'attrezzo di scambio. Sta nella barra accanto al Rampino
+# (Rampino 1084 62, Giano 988 62): il primo robot che tocca si scambia di posto con chi la lancia.
+# Il secondo robot sta a 200 px a destra, a terra.
+imposta zoom 2
+imposta prova_vicino 200
+
+aspetta 2
+tocca 1075 235                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 0.5
+tocca 988 62                        # Giano
+aspetta 0.4
+zoom 01_giano_in_mano
+mira 280 100 0.1 02_mira             # un arco verso l altro robot
+aspetta_evento janus 2
+aspetta 0.08
+zoom 03_in_volo
+aspetta_evento janus_swap 4
+aspetta 0.05
+zoom 04_scambiati
+aspetta 1
+foto 05_dopo                        # Giano spento per il turno (come il Rampino), attacchi intatti
