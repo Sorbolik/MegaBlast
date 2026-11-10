@@ -67,7 +67,7 @@ ritirata, allo scadere del turno o della partita, con più oggetti in volo.
 
 ### Come si verifica
 Criteri misurabili, ognuno controllabile con un test in `tests/sim_test.lua` o
-uno scenario in `strumenti/simula/scenari/`. "È divertente" non è un criterio;
+uno scenario in `tools/simula/scenari/`. "È divertente" non è un criterio;
 "il secondo colpo arriva entro 20 tick dal teletrasporto" sì.
 ```
 

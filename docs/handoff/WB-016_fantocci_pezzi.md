@@ -193,7 +193,7 @@ Rendering rules, very strict, because these arms will be traced into vector shap
 
 Come per Favilla (WB-013) e il Fabbro (WB-014):
 
-1. Tavolozza `strumenti/stampino/tavolozze/fantoccio.json` coi colori qui sopra (con
+1. Tavolozza `tools/stampino/tavolozze/fantoccio.json` coi colori qui sopra (con
    `macchie_min`, `macchie_ombra_min` e un `righe_max` basso per corda e legno).
 2. Ricalco a strati con `vettoriale.py --tavolozza ...`, colori esatti, ritocchi in JSON se
    servono; i PNG solo dagli SVG; teste dal foglio `3_teste` senza collo.

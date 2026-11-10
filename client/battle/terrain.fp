@@ -8,7 +8,7 @@
 // Le texture sono a alfa premoltiplicato.
 //
 // Lo sfondo è dipinto (Sergio, 2 nov): un cielo e tre strisce (lontano, medio,
-// vicino) fatte da SVG (strumenti/grafica/mappe_dipinte.py), ognuna larga un
+// vicino) fatte da SVG (tools/grafica/mappe_dipinte.py), ognuna larga un
 // giro, che si ripetono di lato, seguono la camera in parallasse (si spostano
 // meno della mappa, così sembrano lontane) e scorrono piano da sole (il
 // «movimento calmo»), con braci che salgono. Un cratere mostra lo sfondo, con

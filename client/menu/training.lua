@@ -7,7 +7,7 @@
 -- a second page of postcards, A CASO first, then the official maps of the
 -- campaign circles in order. The maps of a circle not reached yet are dark
 -- with the padlock; those of the first circle are always open. The
--- postcards are the "mappe" texture (strumenti/grafica/miniature_mappe.py).
+-- postcards are the "mappe" texture (tools/grafica/miniature_mappe.py).
 --
 --   local allenamento = require "menu.training"
 --   local a = allenamento.new(scelta, stelle)  -- scelta = { modo, livello, mappa } (the last one); stelle = all stars taken

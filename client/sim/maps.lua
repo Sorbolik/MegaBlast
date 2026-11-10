@@ -5,7 +5,7 @@
 -- and 4 on the right, so in 2v2 teammates start on the same side. from is the
 -- height from which the ground below is searched.
 --
--- To add a map: draw it with strumenti/grafica/mappe_dipinte.py (painting and
+-- To add a map: draw it with tools/grafica/mappe_dipinte.py (painting and
 -- mask), bring the mask into sim/mapdata.lua (mappa_in_lua.py) and add it
 -- below. World coordinates: 1920 x 1080, y up.
 
@@ -22,7 +22,7 @@ local function add(id, name, def)
 	M.order[#M.order + 1] = id
 end
 
--- The painted campaign maps (strumenti/grafica/mappe_dipinte.py, the
+-- The painted campaign maps (tools/grafica/mappe_dipinte.py, the
 -- apprentice maps document): the floor, a single wall-to-wall ground with the
 -- islands above, where you cannot fall (the free missions of Training and of
 -- the Forge), and the pit, the same floor with a lava pit in the middle (the

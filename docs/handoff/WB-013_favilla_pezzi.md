@@ -195,7 +195,7 @@ Come per l'apprendista ([PERSONAGGI.md](PERSONAGGI.md), "Dopo le immagini"), con
 tecniche di WB-009 (Sergio, 2026-11-04: «ricordiamoci tutte le tecniche di trasformazione in
 vettoriale e di resa di qualità usate per l'apprendista»):
 
-1. **Tavolozza** `strumenti/stampino/tavolozze/favilla.json` coi colori qui sopra.
+1. **Tavolozza** `tools/stampino/tavolozze/favilla.json` coi colori qui sopra.
 2. **Ricalco a strati, non a codice:** `vettoriale.py --tavolozza ... FOGLIO.png FOGLIO.svg
    FOGLIO_col.png [RITOCCHI.json]`. Ogni pixel va al colore più vicino della tavolozza e ogni
    colore si ricalca con potrace in uno strato; gli strati si impilano dal fondo al contorno.
@@ -332,7 +332,7 @@ Guardati i tre fogli di `b535f6d`: **tutti e tre buoni**, nessuno scartato.
   quello dietro si scurisce.
 - **Sfumature e granelli** ovunque (pelle, camicia, stivali): li toglie il ricalco.
 
-Ricalco (`vettoriale.py`, tavolozza `strumenti/stampino/tavolozze/favilla.json`), con quattro
+Ricalco (`vettoriale.py`, tavolozza `tools/stampino/tavolozze/favilla.json`), con quattro
 regole nuove, tutte nella tavolozza o nella riga di comando, così l'apprendista resta com'è:
 
 1. `--senza`: i colori che in un foglio non ci sono. Nel foglio delle teste niente camicia,
@@ -350,7 +350,7 @@ scheda (circa `#8A5028`); con `#6B3F22` diventavano una macchia scura. Ora `#8A5
 
 Taglio: `taglia.py` come scritto sopra (`--teste`, poi `--aggiungi --pugni`). Pelle `favilla`:
 busto, braccia (aperte e col pugno), gambe, coda in cinque segmenti, pugno e nove facce, ognuno
-col suo SVG in `strumenti/stampino/pelli/svg/`; gli SVG dei fogli in `art/WB-013/svg/`. Trovato
+col suo SVG in `tools/stampino/pelli/svg/`; gli SVG dei fogli in `art/WB-013/svg/`. Trovato
 e corretto un errore di `taglia.py`: rifacendo la pelle `favilla` cancellava anche i file di
 `favilla_1` e `favilla_2` (le pelli a pezzi liberi), che cominciano con lo stesso nome.
 

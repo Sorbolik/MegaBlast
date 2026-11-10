@@ -48,7 +48,7 @@ function M.new()
 	gui.set_yanchor(p.root, gui.ANCHOR_TOP)
 	-- round ends, like Android's pills (Sergio, 4 Nov: "leggermente più alta ed ovale")
 	p.panel, p.border = ui.panel(0, 0, ui.SLOT_W, ui.SLOT_H, p.root, "pillola")
-	-- Favilla's logo (art/personaggi/favilla.svg, exported by strumenti/grafica/ingresso.py),
+	-- Favilla's logo (art/personaggi/favilla.svg, exported by tools/grafica/ingresso.py),
 	-- with air around it, at the center of the left end; the small image (no steps)
 	p.head = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(36, 36, 0))
 	gui.set_texture(p.head, "ui")

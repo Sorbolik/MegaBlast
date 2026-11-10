@@ -131,7 +131,7 @@ e le stelle si passano con A.
 - `client/ui/glyph.lua`: il disegno dei tasti; `client/menu/settings.lua`: la schermata.
 - `client/main/game.gui_script`, tabella `PAD`: cosa fanno i tasti in battaglia.
 - Simulatore: il controller finto (comandi `pad`, `pad_tieni`, `pad_lascia`,
-  scenari `strumenti/simula/scenari/controller.txt` e `impostazioni.txt`).
+  scenari `tools/simula/scenari/controller.txt` e `impostazioni.txt`).
 
 Scartate: leggere tutti i controller dall'azione grezza (sul computer l'ordine
 dei tasti cambia da un controller all'altro, e i noti funzionano già meglio

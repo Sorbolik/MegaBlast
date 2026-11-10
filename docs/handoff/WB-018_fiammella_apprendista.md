@@ -117,11 +117,11 @@ Non verificati montaggio sulla testa, resa alle dimensioni del gioco e animazion
    - Come segnalato da Codex, la punta principale curvava a sinistra; specchiando orizzontalmente `1_fiammella_base_1` si ottiene l'orientamento esatto del concept originale R1 (punta che curva leggermente verso destra/indietro rispetto al verso di marcia a tre quarti).
 2. **Ricalco vettoriale e asset di gioco**:
    - Sfondo magenta rimosso con soglia pulita;
-   - Tracciamento delle curve con Potrace (`strumenti/stampino/pelli/svg/apprendista_fiamma.svg`) a quattro strati sovrapposti: sagoma corpo arancione fuoco (`#FF7A29`), ombra rosso mattone (`#B8432A`), nucleo giallo caldo (`#FFF066`) e contorno nero continuo (`#000000`);
+   - Tracciamento delle curve con Potrace (`tools/stampino/pelli/svg/apprendista_fiamma.svg`) a quattro strati sovrapposti: sagoma corpo arancione fuoco (`#FF7A29`), ombra rosso mattone (`#B8432A`), nucleo giallo caldo (`#FFF066`) e contorno nero continuo (`#000000`);
    - Renderizzato l'asset raster pulito `client/assets/skins/apprendista_fiamma.png` (95×111 px) per Defold e registrato in `client/battle/devil.atlas`;
-   - Registrato il pezzo `fiamma` in `strumenti/stampino/pelli/apprendista.json`.
+   - Registrato il pezzo `fiamma` in `tools/stampino/pelli/apprendista.json`.
 3. **Editor animazioni e schiaccia/allunga per effetto fuoco**:
-   - Aggiunti canali di animazione in `client/battle/pose.lua`, `client/battle/scoria.lua` e `strumenti/animazioni/editor.html`:
+   - Aggiunti canali di animazione in `client/battle/pose.lua`, `client/battle/scoria.lua` e `tools/animazioni/editor.html`:
      - `fiamma_schiaccia`: controllo rapido schiaccia/allunga mantenendo il volume (valori da 0.1 a 4.0, neutro 1);
      - `fiamma_scala_x`: controllo indipendente della larghezza (valori da 0.1 a 4.0, neutro 1);
      - `fiamma_scala_y`: controllo indipendente dell'altezza (valori da 0.1 a 4.0, neutro 1);

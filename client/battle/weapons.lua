@@ -1,4 +1,4 @@
--- Made by strumenti/grafica/armi.py, do not edit by hand.
+-- Made by tools/grafica/armi.py, do not edit by hand.
 -- The weapons in world units (shots from their center), x forward and
 -- y up. For each one: image (tint: the parts in the team color), center
 -- (x, y) and size (w, h). Where the hand holds them: battle/grips.lua.

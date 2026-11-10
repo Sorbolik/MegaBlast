@@ -1,5 +1,5 @@
-# risultati di strumenti/simula/simula.py
+# risultati di tools/simula/simula.py
 /simulazione/
 __pycache__/
-strumenti/*/cloudflare/dist/
+tools/*/cloudflare/dist/
 *.exe

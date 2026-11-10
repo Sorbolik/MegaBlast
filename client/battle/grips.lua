@@ -1,4 +1,4 @@
--- The weapons in hand, made in the animation editor (strumenti/animazioni).
+-- The weapons in hand, made in the animation editor (tools/animazioni).
 -- For each weapon:
 --   grip: where whoever holds it holds it (the clip chooses who: an arm, which
 --         turns toward the grip, or a little hand, which sits on it);

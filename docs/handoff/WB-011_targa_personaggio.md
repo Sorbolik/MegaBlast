@@ -183,7 +183,7 @@ rifare per la scelta: i difetti stanno nei colori delle scene (A arancione) e ne
 - **Scelta di Sergio: C, con la sua Corona**, e il nome senza targhetta sopra la vita. Claude
   consigliava A (più vicina alla freccia di ferro); B scartata perché da lontano la vita si legge a
   scatti di 20.
-- **Integrati** da `c_lama_foglio.png` con `strumenti/grafica/targa.py`: la lama (manico, un pezzetto
+- **Integrati** da `c_lama_foglio.png` con `tools/grafica/targa.py`: la lama (manico, un pezzetto
   di mezzo senza graffi che il gioco allunga, la punta) e la Corona. La riga chiara del foglio non
   serve: la vita è un rettangolo tinto dentro la scanalatura, che si accorcia senza deformare punte
   tonde. Il magenta non pieno si toglie come per la freccia; nessun alone visibile.

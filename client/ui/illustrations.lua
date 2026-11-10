@@ -1,7 +1,7 @@
 -- The pictures of the CAMPAGNA, JPEGs in /paintings/ (custom resources,
 -- loaded only when they are shown, not kept in an atlas). The missions: the
 -- miniature of their map (Sergio, 6 Nov: no paintings on the missions, too
--- much lava; strumenti/grafica/miniature_missioni.py writes them) in
+-- much lava; tools/grafica/miniature_missioni.py writes them) in
 -- /paintings/missions/: <id>.jpg for the postcard, <id>_carta.jpg for the
 -- card on the CAMPAGNA's board, <id>_finale.jpg for the strip of a chapter's
 -- final. The story's panels are the only paintings. Client only.

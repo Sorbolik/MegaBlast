@@ -1,6 +1,6 @@
 -- Small neural net for the bot (sim/bot.lua): a layered perceptron that,
 -- from a position's features, gives what it is worth. The weights aren't
--- trained here: strumenti/arena/impara.py trains them.
+-- trained here: tools/arena/impara.py trains them.
 -- Only sums, products and max (ReLU): no exp or tanh, which LuaJIT and
 -- gopher-lua might compute with a different last digit, so the bot stays
 -- identical on the phone and on the server.

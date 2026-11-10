@@ -64,8 +64,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           LOG: ${{ inputs.log }}
         run: |
-          python3 strumenti/apk/novita.py "$PRIMA" "$RAMO" | tee "$RUNNER_TEMP/novita.txt"
-          python3 strumenti/apk/novita.py --didascalia "$RAMO" > "$RUNNER_TEMP/didascalia.txt"
+          python3 tools/apk/novita.py "$PRIMA" "$RAMO" | tee "$RUNNER_TEMP/novita.txt"
+          python3 tools/apk/novita.py --didascalia "$RAMO" > "$RUNNER_TEMP/didascalia.txt"
           if [ "$LOG" = "true" ]; then sed -i '1s/^/📋 CON I LOG (debug, solo per le misure) · /' "$RUNNER_TEMP/didascalia.txt"; fi
           cat "$RUNNER_TEMP/didascalia.txt"
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendDocument" \

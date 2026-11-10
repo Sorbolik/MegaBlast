@@ -1,5 +1,5 @@
 -- The Grapple's rope as drawn: a steel wire in pieces with the hook at the
--- tip (strumenti/grafica/armi.py). It flies straight from the hand to the hook
+-- tip (tools/grafica/armi.py). It flies straight from the hand to the hook
 -- while it stretches, stays taut while it pulls, fades when it lets go; if the
 -- hook catches nothing, hook and wire fall together (point rope, Verlet) and
 -- dissolve. Graphics only: the Grapple's physics is in sim/game.lua.

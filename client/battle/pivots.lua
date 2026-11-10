@@ -1,4 +1,4 @@
--- The pivots moved in the animation editor (strumenti/animazioni), in drawing
+-- The pivots moved in the animation editor (tools/animazioni), in drawing
 -- units: per slot, how far the point the piece turns around moves relative to
 -- the skeleton (battle/devil.lua). The slot's pieces, base and skins, move the
 -- opposite way: still, they stay where they are.

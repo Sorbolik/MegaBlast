@@ -1,4 +1,4 @@
--- WebSocket over LuaSocket for the simulator (strumenti/simula): the
+-- WebSocket over LuaSocket for the simulator (tools/simula): the
 -- simulator build doesn't have the WebSocket extension (it compiles on
 -- Defold's build server, which can't be reached from the cloud), so online is
 -- tested against a real server (the scenarios' "server" command). Same

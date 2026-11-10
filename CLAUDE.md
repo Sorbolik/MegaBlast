@@ -12,12 +12,12 @@ i nomi dei pezzi, dei posti, dei canali, delle clip e delle immagini restano ita
 traduce i campi quando legge e scrive i file.
 Le cartelle del client sono in inglese (`client/battle/`, `client/paintings/`,
 `client/assets/weapons/`, ...), e così i file di codice; i nomi delle immagini e dei
-suoni restano italiani (sono id). Gli strumenti restano in italiano finché non arriva
-la loro ondata.
+suoni restano italiani (sono id). Gli strumenti stanno in `tools/` (PR 7 della pulizia,
+10 nov) ma dentro restano in italiano: nomi dei file, funzioni e commenti.
 Un campo usato anche fuori dall'ondata o scritto come stringa (id, impostazioni, nodi
 della GUI) resta italiano per ora. Nei file in
 inglese si scrive in inglese; i testi del gioco e i messaggi che legge Sergio (log,
-errori del server) restano in italiano. Si rinomina con `strumenti/rinomina/rinomina.py`.
+errori del server) restano in italiano. Si rinomina con `tools/rinomina/rinomina.py`.
 Le frasi del gioco stanno in `client/lang/it.lua` (un gruppo per schermata, come si usano
 in `client/lang/text.lua`; ci sono tutte quelle del client, fuori restano solo i testi della
 simulazione: missioni, premi, campagna): una frase nuova va lì, non nel codice
@@ -30,7 +30,7 @@ di aprire o aggiornare una PR è consigliato (non obbligatorio) il controllo
 veloce in locale, circa un minuto:
 
 ```bash
-bash strumenti/controlli/tutti.sh
+bash tools/controlli/tutti.sh
 ```
 
 Deve finire con `OK` (sintassi e globali del Lua, controlli dell'editor, tutti i
@@ -40,7 +40,7 @@ versione online si lancia a mano sul ramo (Actions > Controlli > Run workflow).
 Se diventa rosso su main, il thread che ha mergiato lo sistema subito.
 `/code-review` non è più obbligatorio: si usa sulle PR grandi o delicate.
 Se una PR che cambia regole o simulazione (`client/sim/`) non deve cambiare il
-gioco, dimostralo con `python3 strumenti/confronta/confronta.py` (200 partite di
+gioco, dimostralo con `python3 tools/confronta/confronta.py` (200 partite di
 bot e le missioni, identiche a main tick per tick) e scrivi il risultato nella PR;
 per pulizie e rinomi fuori da `client/sim/` basta `tutti.sh`.
 
@@ -50,16 +50,16 @@ Se la PR cambia quello che si vede o le regole, simula il gioco e guarda le foto
 prima di aprirla (per rinomi e pulizie che non cambiano niente sullo schermo non serve):
 
 ```bash
-python3 strumenti/simula/simula.py
+python3 tools/simula/simula.py
 ```
 
 Deve finire con `OK`. Poi guarda `simulazione/foto/riepilogo.png` (e le foto
 singole se serve) per controllare che quello che hai cambiato si veda davvero.
-Per provare una funzione nuova scrivi uno scenario in `strumenti/simula/scenari/`.
+Per provare una funzione nuova scrivi uno scenario in `tools/simula/scenari/`.
 La simulazione conta anche i frame (`simulazione/fotogrammi.txt`) e fallisce se Lua
 tiene fermo un frame più di 150 ms (300 sotto l'iride): misure, contatore FPS nel gioco e regole in
 [docs/prestazioni.md](docs/prestazioni.md).
-Dettagli e comandi degli scenari: [strumenti/simula/README.md](strumenti/simula/README.md).
+Dettagli e comandi degli scenari: [tools/simula/README.md](tools/simula/README.md).
 
 Niente si deve mai deformare (Sergio, 29 ott): ogni nodo GUI è `gui.ADJUST_FIT`, mai
 `ADJUST_STRETCH` (lo controlla `controlla.py`). Il gioco è disegnato a 1280 x 720 al
@@ -69,12 +69,12 @@ l'HUD o i menu prova anche `--schermo 1600x720` e `--schermo 960x720` (scenario 
 
 Le estensioni native del client (cartelle con `ext.manifest`, per ora `client/vibra`:
 la micro-vibrazione) si compilano solo sul build server di Defold: simulazione e build
-web nel cloud compilano una copia del client senza (`strumenti/simula/senza_estensioni.py`),
+web nel cloud compilano una copia del client senza (`tools/simula/senza_estensioni.py`),
 e la build di prova dell'APK (`.github/workflows/build-pr.yml`, da lanciare a mano sul
 ramo da Actions quando si tocca un'estensione o il manifest del motore) dice se compilano.
 
 `simula.py` ripete anche i controlli che fa l'editor di Defold ma `bob.jar` no
-(`strumenti/simula/controlla.py`). Se Sergio vede nell'editor un errore che la
+(`tools/simula/controlla.py`). Se Sergio vede nell'editor un errore che la
 simulazione non ha trovato, aggiungi lì la regola.
 
 Le scelte di game design (tempo del turno, strategia, equipaggiamento,
@@ -99,7 +99,7 @@ cambia regole, simulazione (`client/sim/`) o protocollo aggiorna anche il server
 controlla ogni volta la lista in [docs/server.md](docs/server.md#server-in-pari-con-main)
 (campi nuovi in `server/net.lua`, messaggi in `server/room.go`, dati che il client
 manda solo in locale, test in `server/server_test.go`) e prova l'online nel
-simulatore (`strumenti/simula/scenari/scelta_online.txt`, server vero e giocatori finti).
+simulatore (`tools/simula/scenari/scelta_online.txt`, server vero e giocatori finti).
 
 Il server fa girare la simulazione in LuaJIT, come il telefono (9 nov): il Go tiene
 connessioni, code e stanze, e ogni worker ha un processo `luajit` con le partite
@@ -113,7 +113,7 @@ dentro la griglia (da 1 a `w * h`), come fa `client/sim/terrain.lua`.
 Le pose del diavoletto (fermo, corsa, aria, paracadute, colpito, vittoria,
 sconfitta, scenette) sono clip in `client/battle/animations.lua`, campionate da
 `client/battle/pose.lua` sotto le molle e la mira di `scoria.lua`. Si fanno con
-l'editor `strumenti/animazioni/editor.html`: `python3 strumenti/animazioni/prepara.py`
+l'editor `tools/animazioni/editor.html`: `python3 tools/animazioni/prepara.py`
 scrive `simulazione/animazioni/editor.html` (pezzi e animazioni dentro), che si
 apre nel browser e si pubblica come Artifact sempre allo stesso indirizzo:
 https://claude.ai/artifact/YJeMenvfJLGmto89yAbKJ5 . Se cambiano i pezzi o le animazioni,
@@ -136,21 +136,21 @@ personaggi nuovi (immagine e note; su claude.ai documento `richieste/<nome>` con
 l'immagine fra gli asset dell'Artifact, su Cloudflare `richieste/<nome>.json` e
 `.png` nel ramo `editor-ultima`): da lì Claude scrive la scheda per Codex in
 `docs/handoff/`. E i ritocchi ai pezzi dello stampino (documento `ritocchi/ultima`
-o `strumenti/stampino/ritocchi.json`): si applicano con
-`python3 strumenti/stampino/taglia.py --ritocchi FILE`.
+o `tools/stampino/ritocchi.json`): si applicano con
+`python3 tools/stampino/taglia.py --ritocchi FILE`.
 
 L'editor è anche su Cloudflare (Worker `megablast`, repository collegato: a ogni
-push su main lo ricostruisce con `strumenti/animazioni/cloudflare/costruisci.sh`
+push su main lo ricostruisce con `tools/animazioni/cloudflare/costruisci.sh`
 e `wrangler.jsonc`). Da lì "Manda a Claude" (`worker.js`) scrive i file nel ramo
 `editor-ultima` di GitHub: si prendono da lì.
 
 ## Pannello degli eventi
 
 Sergio programma gli eventi dal pannello su Cloudflare (Worker `megablast-eventi`,
-`strumenti/eventi`, vedi il README): modelli, calendario, versioni. Il server lo
+`tools/eventi`, vedi il README): modelli, calendario, versioni. Il server lo
 scarica con `-eventi https://…/eventi.json`. Se cambiano armi, punti o regole
-degli eventi, rifai `luajit strumenti/eventi/dati.lua` (`go test ./server/` lo
-controlla); `node strumenti/eventi/prova.mjs` prova pagina e Worker.
+degli eventi, rifai `luajit tools/eventi/dati.lua` (`go test ./server/` lo
+controlla); `node tools/eventi/prova.mjs` prova pagina e Worker.
 
 ## Copione dei livelli (Sergio, 6 nov)
 
@@ -158,8 +158,8 @@ Lo script di ogni livello della campagna (mappa o arena, spawn, passi dell'obiet
 righe e vignette coi loro trigger, casse, carte, Favilla) sta solo come dati in
 `client/sim/levels.lua`; i capitoli in `client/sim/campaign.lua`. Niente funzioni nei
 livelli: i trigger sono i verbi di `client/sim/missions.lua` (un verbo nuovo va lì e in
-`strumenti/copione/controlla.lua`, che gira in `tutti.sh`). È la base del Copione, la
-dashboard della campagna (`strumenti/copione/`, README): `python3 strumenti/copione/prepara.py --gioco`
+`tools/copione/controlla.lua`, che gira in `tutti.sh`). È la base del Copione, la
+dashboard della campagna (`tools/copione/`, README): `python3 tools/copione/prepara.py --gioco`
 scrive `simulazione/copione/`, che si pubblica come Artifact sempre allo stesso indirizzo
 (https://claude.ai/artifact/D4mVBtXrXMEzpghAb8Sukv , i file di `game/` come `files`, capacità `db`):
 ripubblicalo quando cambiano livelli, mappe, verbi o la build. "Manda a Claude" scrive il
@@ -178,7 +178,7 @@ spiega un comando ferma il gioco, ogni volta, sulla vignetta grande col disegno 
 e va avanti solo col suo pulsante
 (`client/battle/vignette.lua`, piano dei livelli
 https://claude.ai/artifact/12CRugbQCR2oB32LHt6aS2). I ritratti si ritagliano dai
-fogli scelti di WB-012 con `python3 strumenti/ritratti/taglia.py`. Scenario
+fogli scelti di WB-012 con `python3 tools/ritratti/taglia.py`. Scenario
 `vignette.txt` (tutti i disegni); gli scenari che provano altro hanno
 `imposta prova_vignette no`.
 Nel cortile Favilla è una comparsa su un percorso fisso (`guida` della lezione in
@@ -193,8 +193,8 @@ tocca a te, bravo: li controlla `controlla.lua` (docs/copione.md, scenario
 ## Pezzi nuovi del diavoletto (pelli)
 
 Teste, corazze, maglie, ali, elmi o un personaggio intero si disegnano sullo
-stampino e si tagliano con `strumenti/stampino/taglia.py`: regole e comandi in
-[strumenti/stampino/README.md](strumenti/stampino/README.md). Il gioco li monta
+stampino e si tagliano con `tools/stampino/taglia.py`: regole e comandi in
+[tools/stampino/README.md](tools/stampino/README.md). Il gioco li monta
 con `scoria.new(colore, look)` (`client/battle/skins.lua`, generato).
 
 ## Controller
@@ -206,25 +206,25 @@ ognuno la cambia nelle IMPOSTAZIONI della home); un comando nuovo dell'HUD va
 aggiunto anche lì, in `controller.COMMANDS`, in `PAD.COMMANDS` e, se ha un pulsante, in `PAD.GLYPHS`
 (dove si vede il suo tasto sull'HUD, `client/main/game.gui_script`). Una
 schermata nuova con `ui.touch` ha già la luce del controller. Si prova col
-controller finto: scenari `strumenti/simula/scenari/controller.txt` e
+controller finto: scenari `tools/simula/scenari/controller.txt` e
 `impostazioni.txt` (con `imposta prova_pad playstation` o `nintendo`).
 
 ## Provare il gioco su iPhone
 
-Su iPhone si prova la build HTML5 in Safari: `bash strumenti/web/build.sh` prepara
+Su iPhone si prova la build HTML5 in Safari: `bash tools/web/build.sh` prepara
 `simulazione/web/`, che si pubblica come Artifact di claude.ai (pagina
 `megablast.html`, gli altri file come `files`) sempre allo stesso indirizzo:
 https://claude.ai/artifact/WeHdWjA9HzabJJpfKKhH5G . Senza l'estensione WebSocket:
 l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla pagina
 su claude.ai le connessioni verso altri siti sono bloccate.
 
-I test (tutti insieme in `strumenti/controlli/tutti.sh`): `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
-`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campaign_test.lua` (missioni della campagna e partita guidata), `luajit tests/events_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit tests/lang_test.lua` (testi del gioco), `luajit strumenti/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
+I test (tutti insieme in `tools/controlli/tutti.sh`): `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
+`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campaign_test.lua` (missioni della campagna e partita guidata), `luajit tests/events_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit tests/lang_test.lua` (testi del gioco), `luajit tools/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
 
 ## Sezione "Per Telegram" in ogni PR (Sergio, 29 ott)
 
 A ogni push su main GitHub Actions manda a Sergio l'APK su Telegram con un
-messaggio sulle novità (`strumenti/apk/novita.py`). Per ogni PR il messaggio
+messaggio sulle novità (`tools/apk/novita.py`). Per ogni PR il messaggio
 prende la sezione `## Per Telegram` del corpo: **scrivila sempre**, 2-4 righe in
 italiano semplice per una persona, non per un programmatore: cosa cambia nel
 gioco, cosa si vede, cosa provare sul telefono. Niente nomi di file o funzioni.
@@ -238,17 +238,17 @@ provando le mosse su copie della partita (`bot.world`, `game:advance`): se
 cambi la fisica il bot la segue da solo. Deve restare deterministico: niente tempo vero,
 niente `pairs` dove conta l'ordine, `table.sort` sempre con lo spareggio.
 Ogni partita ha la sua ricetta (`client/sim/replay.lua`) con le impronte dello
-stato: rigiocandola devono tornare tutte. L'arena (`strumenti/arena/`, vedi il
+stato: rigiocandola devono tornare tutte. L'arena (`tools/arena/`, vedi il
 README) fa giocare i bot tra loro su tutti i core e scrive il rapporto per il
 bilanciamento e gli highlight.
-`strumenti/arena/evolvi.py` fa evolvere i numeri di cinque bot specialisti (sul PC di Sergio, di
-notte; da rifare con `--nuova` quando cambiano le regole) e `strumenti/arena/trovate.py` fa la
+`tools/arena/evolvi.py` fa evolvere i numeri di cinque bot specialisti (sul PC di Sergio, di
+notte; da rifare con `--nuova` quando cambiano le regole) e `tools/arena/trovate.py` fa la
 pagina coi video delle trovate dei bot (i turni rari che fanno tanti punti).
 
 Stelle della campagna: dopo ogni merge su main che tocca `client/sim/` il controllo "Stelle
 della campagna" (`.github/workflows/stelle.yml`) rigioca le missioni coi bot (`collaudo.lua
 --vita 0.5,1,2`) e mette un avviso per ogni stella da guardare; su un ramo si lancia a mano
-da Actions, o in locale con `luajit strumenti/arena/collaudo.lua 12 --vita 0.5,1,2`. Se ci
+da Actions, o in locale con `luajit tools/arena/collaudo.lua 12 --vita 0.5,1,2`. Se ci
 sono avvisi nuovi, ritara le soglie in `client/sim/levels.lua` (nella stessa PR se l'hai
 lanciato prima, se no in una PR subito dopo).
 

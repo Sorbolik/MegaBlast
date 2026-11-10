@@ -42,7 +42,7 @@ Claude non ridisegna mai un personaggio col proprio codice: si ricalca il disegn
   scelto per il personaggio (l'apprendista: il fazzoletto). Il verde non si usa per altro.
 - **Niente fiammella** da nessuna parte (tolta dal gioco il 2 nov, PR #147) e **niente equipaggiamento** nel
   corpo base (vestiti, ali, elmi sono pezzi a parte).
-- **Stampino** rifatto ogni volta con `python3 strumenti/stampino/stampino.py`
+- **Stampino** rifatto ogni volta con `python3 tools/stampino/stampino.py`
   (`simulazione/stampino/stampino_ai.png` + `manichino.png`, copiati fra i riferimenti della scheda) solo per
   posizione e misura dei pezzi: il prompt dice di non copiarne le forme.
 - **Sfondo**: bianco pieno in fase 1, magenta pieno `#FF00FF` in fase 2.
@@ -86,7 +86,7 @@ Lezioni di WB-009, da tenere nei prompt:
 
 ## Dopo le immagini
 
-1. `vettoriale.py --tavolozza strumenti/stampino/tavolozze/<nome>.json FOGLIO.png FOGLIO.svg
+1. `vettoriale.py --tavolozza tools/stampino/tavolozze/<nome>.json FOGLIO.png FOGLIO.svg
    FOGLIO_col.png [RITOCCHI.json]`: ricalco a strati coi soli colori della tavolozza (si
    ferma se ne trova un altro). I ritocchi a mano (JSON accanto all'SVG, poligoni con il colore
    da cambiare) correggono gli errori di ChatGPT, per esempio il nero sulle spalle.
@@ -94,14 +94,14 @@ Lezioni di WB-009, da tenere nei prompt:
    pelle (busto_1, busto_2, braccio_3...) e il posto prende l'ultima; nell'editor si sceglie
    quale versione va in scena, per ogni posto e per ogni faccia:
    - il primo foglio del corpo: `taglia.py FOGLIO_col.png --nome <nome> --categoria personaggio
-     --allinea --senza ala --teste TESTE_col.png --tavolozza strumenti/stampino/tavolozze/<nome>.json`
+     --allinea --senza ala --teste TESTE_col.png --tavolozza tools/stampino/tavolozze/<nome>.json`
      (le nove teste del foglio 3×3 senza collo prendono il posto di quelle del foglio);
    - gli altri fogli del corpo: lo stesso con `--aggiungi` (e senza `--teste`);
    - le braccia col pugno: `taglia.py --nome <nome> --categoria personaggio --allinea --aggiungi
      --pugni PUGNI_col.png --tavolozza ...` (versioni in più delle braccia, il posto resta al
      braccio aperto).
    Escono i pezzi del gioco e un SVG per disegno, anche ogni segmento della coda
-   (`strumenti/stampino/pelli/svg/`); la coda è una sola (l'ultima).
+   (`tools/stampino/pelli/svg/`); la coda è una sola (l'ultima).
 3. `prepara.py` e l'editor ripubblicato: la cassetta dei pezzi in SVG del personaggio.
    Nell'editor ogni pezzo ha il suo perno (busto, testa, braccia, manine, gambe, ala, coda,
    arma) e i suoi canali: anche il busto si sposta e gira da solo, la coda gira tutta intera
@@ -109,6 +109,6 @@ Lezioni di WB-009, da tenere nei prompt:
    Le scelte di Sergio (disegno per posto, specchio, spostamenti, grandezza e radice della coda)
    tornano con "Manda a Claude" e si applicano con `taglia.py --ritocchi`.
 
-4. Simulazione con `imposta prova_pelli <nome>` (come `strumenti/simula/scenari/apprendista.txt`).
+4. Simulazione con `imposta prova_pelli <nome>` (come `tools/simula/scenari/apprendista.txt`).
 
 Ancora da fare nel codice: i PNG alla densità di ogni schermo fatti dagli SVG.

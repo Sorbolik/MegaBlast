@@ -1,7 +1,7 @@
 -- The levels of the campaign, chapter by chapter: all data, the script of
 -- each level (sim/missions.lua defines the format and runs it). The Copione
--- (strumenti/copione, the campaign's dashboard) shows them, edits them and
--- writes them back here: nothing in here may be a function (strumenti/copione/
+-- (tools/copione, the campaign's dashboard) shows them, edits them and
+-- writes them back here: nothing in here may be a function (tools/copione/
 -- controlla.lua checks it), so a level can travel as JSON to the web build
 -- and be played before it is saved.
 --
@@ -14,7 +14,7 @@
 --
 -- World coordinates (1920 x 1080, y up). Arenas are steel, so craters don't
 -- break the puzzle. The circle numbers (life, turns, stars) are checked by the
--- bot trial (strumenti/arena/collaudo.lua): the second star is at the median
+-- bot trial (tools/arena/collaudo.lua): the second star is at the median
 -- point lead of the normal bot playing in your place (Sergio, 31 Oct: in the
 -- circles points count, turns don't).
 -- Circle opponents are grades (sim/bot.lua M.GRADES, 1 to 10): the Forgia goes
