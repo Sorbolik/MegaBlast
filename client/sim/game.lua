@@ -2102,12 +2102,30 @@ function M:dig(x, y, r)
 	return self.terrain:carve(x, y, r)
 end
 
--- One tick of boring: it carves a circle at its head, straight on. Out in the
--- open (the terrain ahead of the head is free), or against a robot, it blows
--- up; if the dig runs out it blows up weakly under the terrain.
+-- One tick of boring: it carves a circle at its head, straight on. Against a robot
+-- it blows up; out in the open (the terrain ahead of the head is free) it flies on
+-- for config.DRILL.after pixels; if the dig runs out it blows up weakly under the terrain.
 function M:update_drill(p)
 	local s = C.DRILL
 	p.age = p.age + 1
+	if p.out then
+		-- out in the open: it flies straight on for s.after more pixels, blowing up on the
+		-- first robot, at the end of the run, or if it meets terrain again (then it bores on)
+		local step = s.fly_speed * M.DT
+		p.x, p.y = p.x + p.ux * step, p.y + p.uy * step
+		p.out = p.out - step
+		if self:hits_robot(p.x, p.y, p.owner, p.age) or p.out <= 0 then
+			self:explode(p.x, p.y, p.owner, s.blast, "drill")
+			self.projectile = nil
+		elseif self.terrain:solid(p.x, p.y) then
+			p.out, p.left = nil, math.min(p.left, s.dig)
+			self:emit({ type = "drill_in", x = p.x, y = p.y })
+		elseif p.x < -300 or p.x > M.WORLD_W + 300 or p.y < -50 or p.y > M.WORLD_H + 300 then
+			self:emit({ type = "miss" })
+			self.projectile = nil
+		end
+		return
+	end
 	local step = s.dig_speed * M.DT
 	p.x, p.y = p.x + p.ux * step, p.y + p.uy * step
 	p.left = p.left - step
@@ -2117,8 +2135,10 @@ function M:update_drill(p)
 		self:explode(p.x, p.y, p.owner, s.blast, "drill")
 		self.projectile = nil
 	elseif not self.terrain:solid(p.x + p.ux * (s.radius + 3), p.y + p.uy * (s.radius + 3)) then
-		self:explode(p.x, p.y, p.owner, s.blast, "drill")
-		self.projectile = nil
+		-- it comes out into the open: it keeps going (see above)
+		p.out = s.after
+		p.vx, p.vy = p.ux * s.fly_speed, p.uy * s.fly_speed
+		self:emit({ type = "drill_out", x = p.x, y = p.y })
 	elseif p.left <= 0 then
 		self:explode(p.x, p.y, p.owner, s.inner, nil)
 		self.projectile = nil
