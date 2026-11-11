@@ -18,7 +18,9 @@ local backdrop = require "ui.backdrop"
 local glyph = require "ui.glyph"
 local controller = require "ui.controller"
 local profile = require "menu.profile"
+local kit = require "ui.kit"
 local T = require("lang.text").settings
+local common = require("lang.text").common
 
 local M = {}
 
@@ -29,78 +31,74 @@ local function choice_of(id, values)
 	for i, v in ipairs(values) do list[i] = { v, T.values[v] } end
 	return { id, T.choices[id], list }
 end
--- the choices at the top, side by side (profilo.SETTINGS, docs/impostazioni.md)
+-- the choices on the left, one under the other (profilo.SETTINGS,
+-- docs/impostazioni.md); the last is the frame counter (ui/frames.lua, docs/prestazioni.md)
 local CHOICES = {
 	choice_of("mira", { "lancetta", "mirino" }),
 	choice_of("sparo", { "pressione", "rilascio" }),
 	choice_of("potenza", { "levetta", "grilletto" }),
-	choice_of("levette", { "destra", "sinistra" }),
+	choice_of("levette", { "sinistra", "destra" }),
+	choice_of("fps", { "spento", "acceso" }),
 }
--- the frame counter (ui/frames.lua, docs/prestazioni.md), at the top right
-local FPS = choice_of("fps", { "spento", "acceso" })
--- the choice groups: distance between centers and width of each choice
-local GROUP, CHOICE_W = 306, 145
--- two columns of commands
-local ROW_W, ROW_H, ROW_STEP = 470, 48, 54
-local COLUMNS = { 395, 885 }
-local FIRST_ROW = 440
+local KC = kit.C
 
 local function build(s)
 	-- the controller light stays on the same button
 	local lit = s.buttons and ui.lit_up(s.buttons)
 	lit = lit and lit.ui_action
 	if s.radice then gui.delete_node(s.radice) end
+	if s.head then kit.header_delete(s.head) end
 	s.buttons, s.glyphs = {}, {}
+	s.head = kit.header(s.buttons, T.title, KC.STEEL, "indietro", common.home)
 	s.radice = ui.root()
-	local C = ui.C
-	-- the header (ui.header): IMPOSTAZIONI, the pill's place, the FPS counter on the right
-	ui.header_delete(s.head)
-	s.head = ui.header(s.buttons, T.title, "indietro")
+	local g = { node = s.radice, ox = 0, oy = 720 }
 
-	local function choice(sc, cx, y, w, h, parent)
-		ui.text(sc[2], cx, y + h / 2 + 18, 0.5, C.OFF, parent)
+	for i, sc in ipairs(CHOICES) do
 		local v = profile.setting(s.p, sc[1])
-		for i, m in ipairs(sc[3]) do
-			ui.tab(s.buttons, cx + (i - 1.5) * (w + 6), y, w, h, m[2], sc[1] .. ":" .. m[1], v == m[1], parent)
+		local opts, on = {}, 1
+		for k, m in ipairs(sc[3]) do
+			opts[k] = { m[2], sc[1] .. ":" .. m[1] }
+			if v == m[1] then on = k end
 		end
+		kit.choice(g, s.buttons, 60 + (i - 1) * 6, 150 + (i - 1) * 88, sc[2], opts, on, 170)
 	end
-	for k, sc in ipairs(CHOICES) do
-		choice(sc, 640 + (k - (#CHOICES + 1) / 2) * GROUP, ui.CONTENT_TOP - 56, CHOICE_W, 52, s.radice)
-	end
-	choice(FPS, -ui.EDGE - 121, -10, 118, 44, s.head.right)
 
-	ui.text(T.controller_keys, 640, 488, 0.7, C.OFF, s.radice)
+	-- the controller's buttons: two columns of commands
+	kit.text(g, T.controller_keys, 520, 128, 14, KC.HOT_TOP, "start", 1.5)
 	local n = #controller.COMMANDS
 	local per_column = math.ceil(n / 2)
 	for i, cmd in ipairs(controller.COMMANDS) do
-		local col = i <= per_column and 1 or 2
-		local riga = (i - 1) % per_column
-		local x, y = COLUMNS[col], FIRST_ROW - riga * ROW_STEP
-		local gui_node = ui.button(s.buttons, x, y, ROW_W, ROW_H, "", "tasto:" .. cmd, nil, s.radice)
-		local nome = ui.text(NAMES[cmd], -ROW_W / 2 + 22, 0, 0.8, C.TEXT, gui_node)
-		gui.set_pivot(nome, gui.PIVOT_W)
-		if s.attesa == cmd then
-			local premi = ui.text(T.press_a_key, ROW_W / 2 - 22, 0, 0.7, C.BRACE, gui_node)
-			gui.set_pivot(premi, gui.PIVOT_E)
-			ui.sheet_active(s.buttons[#s.buttons], true)
+		local col = i <= per_column and 0 or 1
+		local row = (i - 1) % per_column
+		local x, y = 520 + col * 366 - row * 4, 146 + row * 58
+		local cur = s.attesa == cmd
+		local k = kit.card(g, x, y, 340, 44, cur and KC.HOT or KC.PURPLE, { sel = cur })
+		kit.text(k.g, NAMES[cmd], x + 26, y + 29, 16, KC.SAND)
+		if cur then
+			kit.text(k.g, T.press_a_key, x + 316, y + 28, 12, KC.HOT_TOP, "end", 1)
 		elseif controller.key_of(s.c, cmd) then
-			local g = glyph.new(gui_node, 30)
-			glyph.display(g, s.c, controller.key_of(s.c, cmd))
-			gui.set_position(g.radice, vmath.vector3(ROW_W / 2 - 22 - glyph.width(g) / 2, 0, 0))
+			local gl = glyph.new(k.node, 30)
+			glyph.display(gl, s.c, controller.key_of(s.c, cmd))
+			gui.set_position(gl.radice, vmath.vector3(340 / 2 - 24 - glyph.width(gl) / 2, 0, 0))
 		else
-			local nobody = ui.text(cmd == "salta" and T.stick_up:format(T.sides[controller.side("muove")]) or T.no_key, ROW_W / 2 - 22, 0, 0.6,
-				C.OFF, gui_node)
-			gui.set_pivot(nobody, gui.PIVOT_E)
+			kit.text(k.g, cmd == "salta" and T.stick_up:format(T.sides[controller.side("muove")]) or T.no_key,
+				x + 316, y + 28, 11, KC.MUTE, "end", 1)
 		end
+		kit.button(s.buttons, k, "tasto:" .. cmd)
 	end
 
-	local riga = FIRST_ROW - per_column * ROW_STEP
-	ui.button(s.buttons, COLUMNS[2] + ROW_W / 2 - 150, riga - 4, 300, 56, T.reset, "ripristina", nil, s.radice)
 	local help = s.attesa and T.cancel:format(controller.name(s.c, "start"))
 		or (s.c.connected and T.change_remove:format(controller.name(s.c, "a"), controller.name(s.c, "y"))
 		or T.connect)
-	local t = ui.text(help, COLUMNS[1] - ROW_W / 2, riga - 4, 0.62, C.OFF, s.radice)
-	gui.set_pivot(t, gui.PIVOT_W)
+	local t = kit.text(g, help, 876, 470, 12, KC.MUTE, "start", 1)
+	local wide = kit.width(t)
+	if wide > 350 then
+		local sc = gui.get_scale(t)
+		gui.set_scale(t, vmath.vector3(sc.x * 350 / wide, sc.y * 350 / wide, 1))
+	end
+	local reset = kit.plate(g, 864, 490, 220, 48, KC.ROSE, { sk = 14, d = 6 })
+	kit.text(reset.g, T.reset, 864 + 117, 490 + 31, 17, KC.SAND, "middle", 0.5)
+	kit.button(s.buttons, reset, "ripristina")
 	for _, b in ipairs(s.buttons) do
 		if b.ui_action == lit then ui.light(s.buttons, b) end
 	end
@@ -109,7 +107,8 @@ end
 function M.new(p, c)
 	local s = { p = p, c = c }
 	controller.levette = profile.setting(p, "levette")
-	s.fondo = backdrop.new("banco")
+	s.fondo = backdrop.new()
+	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL })
 	build(s)
 	return s
 end
@@ -161,8 +160,9 @@ function M.on_input(s, action_id, action)
 end
 
 function M.destroy(s)
-	ui.header_delete(s.head)
+	kit.header_delete(s.head)
 	gui.delete_node(s.radice)
+	for _, n in ipairs(s.scene.tops) do gui.delete_node(n) end
 	gui.delete_node(s.fondo)
 end
 
