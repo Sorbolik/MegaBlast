@@ -16,6 +16,7 @@ return {
 		tournament = "TORNEO",
 		all = "TUTTE",
 		you = "Tu",
+		home = "HOME",
 		retry = "RIPROVA",
 		-- the sticks' sides, in a sentence
 		stick_side = { dx = "di destra", sx = "di sinistra" },
@@ -92,6 +93,16 @@ return {
 
 	-- menu/pick.lua: the weapon draft
 	pick = {
+		title = "ARMI",
+		yours = "LE TUE ARMI",
+		everyone = "LE HANNO TUTTI",
+		shots_label = "COLPI",
+		chosen = "SCELTA",
+		time = "TEMPO",
+		ready_action = "PRONTO",
+		missing_two = "MANCANO 2 ARMI",
+		missing_one = "MANCA LA %s",
+		starts_at_time = "SI PARTE A FINE TEMPO",
 		step_names = { "PRIMARIA", "SECONDARIA" },
 		shot = "%s colpo",
 		shots = "%s colpi",
@@ -119,17 +130,19 @@ return {
 	training = {
 		mode = "MODO",
 		levels = { facile = "FACILE", normale = "NORMALE", difficile = "DIFFICILE" },
-		pick_map = "SCEGLI LA MAPPA",
-		mode_and_bot = "%s  ·  BOT %s",
+		who = "CHI C'È",
+		vs_bots = "CONTRO I BOT",
+		same_phone = "STESSO TELEFONO",
+		offline = "SENZA RETE",
+		map = "MAPPA",
+		mode_and_bot = "%s · BOT %s",
+		mode_same = "%s · STESSO TELEFONO",
 		random = "A CASO",
-		circle = "GIRONE %s",
-		training = "ADDESTRAMENTO",   -- the cortile map comes from the Addestramento (girone 0)
 	},
 
 	-- menu/podium.lua: the podium at the end of the match
 	podium = {
 		modes = { ["1v1"] = "UNO CONTRO UNO", ["2v2"] = "DUE CONTRO DUE", ffa = "TUTTI CONTRO TUTTI" },
-		points = "%d punti",
 		tie = "PAREGGIO",
 		victory = "VITTORIA",
 		defeat = "SCONFITTA",
@@ -182,13 +195,14 @@ return {
 		-- "lun 16 nov": day of the week, day, month
 		date = "%s %s %s",
 		now = "ORA",
+		plate = "OGNI SETTIMANA",
 		no_event = "Nessun evento in corso",
 		counts_in = "conta nelle partite %s",
 		own_queue = "coda sua · %s",
-		next = "PROSSIMI",
+		next = "PROSSIMI · DUE SETTIMANE",
 		nothing_planned = "Niente in programma",
 		what_changes = "COSA CAMBIA",
-		from_to = "%s  fino a  %s",
+		from_to = "%s fino a %s",
 		back_on = "torna %s",
 		prizes = "PREMI",
 		just_for_fun = "Solo per divertirsi",
@@ -232,6 +246,31 @@ return {
 		-- the board (Sergio, 4 Nov): the next challenge, and the chapter's final strip
 		new = "NUOVA",
 		final = "FINALE · %s",
+		-- under the guide: missions done of the chapter's, stars taken
+		progress = "%d DI %d MISSIONI · %d STELLE",
+		-- under GIOCA: the next mission, or the final again
+		play_new = "%s · NUOVA",
+		replay_final = "RIGIOCA IL FINALE",
+		-- the map of the circles (after the kidnapping, Sergio 11 Nov): the Cortile
+		-- and the Forge on the top floor, the nine circles going down to Favilla.
+		-- The circles are placeholders until their levels are written:
+		-- { numeral, name, keeper }
+		rings = {
+			{ "I", "LIMBO", "CARONTE" }, { "II", "LUSSURIA", "MINOSSE" }, { "III", "GOLA", "CERBERO" },
+			{ "IV", "AVARIZIA", "PLUTONE" }, { "V", "IRA", "FLEGIÀS" }, { "VI", "ERESIA", "MEDUSA" },
+			{ "VII", "VIOLENZA", "MINOTAURO" }, { "VIII", "FRODE", "MALACODA" }, { "IX", "TRADIMENTO", "LUCIFERO" },
+		},
+		ring_name = "%s · %s",
+		ring_locked = "%s · SI APRE BATTENDO %s",
+		ring_stars = "%d / %d",
+		ring_sub = "GIRONE · %s",
+		tap_ring = "TOCCA UN GIRONE PER ENTRARCI",
+		coming = "IN ARRIVO",
+		coming_line = "I LIVELLI DI QUESTO GIRONE ARRIVANO PRESTO",
+		coming_sub = "%s · IN ARRIVO",
+		rings_back = "GIRONI",
+		cortile = "IL CORTILE",
+		fabbro_line = { "«Ti ci porto io,", "un girone alla volta.»" },
 	},
 
 	-- ui/level_types.lua: what kind of level a mission is (Sergio, 6 Nov), on its
@@ -258,10 +297,9 @@ return {
 	-- menu/lineup.lua: the line-up before the match
 	lineup = {
 		tap_to_pick = "TOCCA PER SCEGLIERE LE ARMI",
-		weapons_in = "ARMI TRA",
+		weapons = "ARMI",
+		weapons_in = "ARMI TRA %d:%02d",
 		versus = "VS",
-		power = "%s potere",
-		powers = "%s poteri",
 	},
 
 
@@ -299,7 +337,6 @@ return {
 
 	-- menu/armory.lua: ARMERIA, gear sets and the skill tree
 	armory = {
-		loadout = "ASSETTO",
 		-- the stats on the right (the effects of the pieces use them in lowercase)
 		stats = {
 			max_hp = "Vita", walk_speed = "Corsa", jump_height = "Salto", air_speed = "In aria",
@@ -310,17 +347,14 @@ return {
 		yes = "sì",
 		no = "no",
 		seconds = "%.1f s",
-		-- a set bonus not unlocked yet: the bonus, then the level the pieces need
-		locked_bonus = "%s  (tutti i pezzi al livello %s)",
 	},
 
 
 	-- menu/pieces.lua and ui/step_scene.lua: the pieces' levels in Scaglie
 	pieces = {
 		empty = "nessuno",
-		level = "livello %d",
 		-- no piece in the chosen slot (the slot in lowercase)
-		choose = "Scegli qui sotto un %s da indossare",
+		choose = "scegli qui sotto cosa indossare: %s",
 		-- slot and set: "ELMO · CORVO"
 		piece = "%s · %s",
 		of_max = "%d / %d",
@@ -331,45 +365,50 @@ return {
 		next_level = "LIVELLO %d",
 		next_step = "SCATTO %d · GRADO %s, %s",
 		-- the Proof of a step: matches played wearing the piece
-		proof = "Prova: %d / %d partite con il pezzo addosso",
+		proof_name = "PROVA",
+		proof = "%d / %d partite col pezzo addosso",
+		proof_first = "prima la prova",
+		-- on the action: the price and the level it buys
+		price = "%s SCAGLIE · LIVELLO %d",
+		variant = "VARIANTE",
+		at_level = "AL %d",
 		upgrade = "POTENZIA",
 		missing = "mancano %s",
 		-- the Smith's hand, with the full price
-		smith_hand = "Mano del Fabbro: un pezzo di questo posto è al 30, costa il 30%% in meno (era %s)",
+		smith_name = "MANO DEL FABBRO",
+		smith_hand = "costa il 30%% in meno (era %s)",
 		set_bonus = "BONUS DEL SET %s",
-		others = "INDOSSA",
+		others = "INDOSSA IL SET",
 		set_level = "%s · %d",
-		step_title = "SCATTO %d",
-		-- slot, set, grade in roman numbers, its name
-		step_grade = "%s · %s · GRADO %s, %s",
+		step_title = "SCATTO!",
+		step_new = "NUOVO",
+		-- the grade in roman numbers, its name
+		step_grade = "GRADO %s · %s",
 		step_look = "Aspetto nuovo",
-		step_top = "Al massimo: con tutti e quattro i pezzi al 30 il set sblocca la variante B",
-		skip = "tocca per saltare",
+		step_top = "Al massimo: verso la variante B",
 	},
 
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
 	profile_tabs = {
-		title = "PROFILO",
+		title = "IL TUO DIAVOLETTO",
+		your_devil = "DIAVOLETTO",
+		no_piece_short = "VUOTO",
+		loadout_locked = "%s: LIV %s",
 		tab_sheet = "SCHEDA",
 		tab_seals = "SIGILLI",
 		tab_matches = "PARTITE",
 		level = "LIV %s",
 		level_braci = "LIV %s · %s BRACI",
-		xp = "%s / %s XP",
 		-- SCHEDA
 		loadout = "ASSETTO",
 		loadout_n = "ASSETTO %s",
-		slot_level = "%s %s",
-		slot_empty = "%s · VUOTO",
 		how_others_see = "COSÌ TI VEDONO",
 		next_steps = "PROSSIMI SCATTI",
-		steps_hint = "ogni 10 livelli un aspetto nuovo, al 30 la variante B",
 		-- "Maschera del Corvo": the piece, then the set
 		piece_of = { default = "%s del %s", fornace = "%s della %s" },
 		next_look = "al %s: aspetto %s",
 		next_look_b = "al %s: aspetto %s e variante B",
 		all_steps = "tutti gli scatti presi",
-		no_piece = "nessun pezzo",
 		pick_in_armory = "sceglilo nell'ARMERIA",
 		-- STATISTICHE
 		matches = "PARTITE",
@@ -382,7 +421,6 @@ return {
 		badge_grade = "%s %s",
 		no_badge = "senza badge",
 		damage_by_weapon = "DANNO PER ARMA",
-		damage_hint = "quanto del tuo danno, arma per arma",
 		nothing_yet = "ancora niente: gioca una partita",
 		weapons = {
 			missile = "Lanciarune", grenade = "Uovo", shards = "Schegge", punch = "Pugno", sniper = "Cecchino",
@@ -395,9 +433,6 @@ return {
 		outcome_won = "VINTA",
 		outcome_lost = "PERSA",
 		outcome_tie = "PARI",
-		chart_end = "FINE",
-		chart_round = "giro %s",
-		last_matches = "LE ULTIME %s · I REPLAY DI QUELLE GIOCATE SU QUESTO TELEFONO",
 		no_matches = "Nessuna partita ancora: gioca, e la ritrovi qui.",
 		round_by_round = "COM'È ANDATA, GIRO PER GIRO",
 		moments = "MOMENTI · TOCCA PER RIVEDERLO DA LÌ",
@@ -409,13 +444,11 @@ return {
 
 	-- menu/seals.lua: the profile's SIGILLI tab (the paths of sim/skills.lua)
 	seals = {
-		points = "%s / %s PUNTI",
+		points_of = "/ %s PUNTI",
+		free = "%s LIBERI",
 		reset = "AZZERA",
-		loadout = "ASSETTO",
 		-- a closed loadout: its number and the level that opens it
-		locked = "%s · LIV %s",
 		of = "%s / %s",
-		choose = "SCEGLI",
 		threshold = "%s · SOGLIA %s",
 		taken = "potere preso",
 		choose_now = "scegli il potere",
@@ -424,7 +457,6 @@ return {
 		-- points the threshold needs, free points: not enough
 		missing_free = "servono %s punti, liberi %s",
 		bring_here = "PORTA QUI",
-		change_any_time = "cambi quando vuoi, fuori dalla partita",
 		in_match = "IN PARTITA",
 		nothing = "ancora niente: metti un punto con +",
 		no_power = "nessun potere ancora",
@@ -432,24 +464,37 @@ return {
 
 	-- menu/home.lua: the home
 	home = {
-		your_profile = "IL TUO PROFILO",
 		leave_queue_first = "esci dalla coda per giocarla",
 		same_phone = "STESSO TELEFONO",
+		your_devil = "DIAVOLETTO",
+		level = "LIV %d",
+		play_sub = "2 CONTRO 2",
+		training_sub = "CONTRO I BOT",
 	},
 
-	-- menu/queue.lua: DOVE GIOCHI?, the queues online
+	-- menu/queue.lua: GIOCA ONLINE, the queues online
 	queue = {
-		title = "DOVE GIOCHI?",
+		title = "GIOCA ONLINE",
+		online = "IN RETE",
+		search = "CERCA",
 		usual_match = "LA PARTITA DI SEMPRE",
-		also_counts = "CONTA ANCHE PER",
+		also_counts = "CONTA ANCHE PER: %s",
 		event = "EVENTO · %s",
 		private = "PARTITA PRIVATA",
 		private_line = "Una stanza con un codice: amici e bot dove vuoi tu",
 	},
 
-	-- menu/private.lua: the private match (from DOVE GIOCHI?)
+	-- menu/private.lua: the private match (from GIOCA ONLINE)
 	private = {
 		title = "PARTITA PRIVATA",
+		title_short = "CON UN CODICE",
+		mode = "MODO",
+		modes_short = { ["1v1"] = "1 C 1", ["2v2"] = "2 C 2", ffa = "TUTTI" },
+		versus = "VS",
+		missing = "MANCANO %d CIFRE",
+		missing_one = "MANCA 1 CIFRA",
+		-- under VIA: the mode and how many bots
+		go_sub = "%s · %d BOT",
 		new_room_over = "CON GLI AMICI O CONTRO I BOT",
 		new_room = "CREA UNA STANZA",
 		new_room_lines = {
@@ -471,8 +516,7 @@ return {
 		host = "HA CREATO LA STANZA",
 		here = "QUI",
 		go = "VIA",
-		host_hint = "QUI sposta te in quel posto, - e + cambiano il livello del bot",
-		wait_host = "Aspetta: chi ha creato la stanza sceglie e fa partire",
+		wait_host = "aspetta chi ha creato la stanza",
 	},
 
 	-- menu/lobby.lua: the waiting room online
@@ -487,6 +531,7 @@ return {
 			"Il Rampino ce l'hanno tutti: chi sta in alto colpisce meglio",
 		},
 		coming = "IN ARRIVO",
+		tip = "CONSIGLIO",
 		searching = "CERCO GIOCATORI",
 		back_to_menus = "TORNA AI MENU · RESTI IN CODA",
 		leave_queue = "ESCI DALLA CODA",

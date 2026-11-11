@@ -1,5 +1,10 @@
 # Sfondi dei menu: una identità per ogni schermata
 
+> **Superato l'11 nov** dall'interfaccia «Raggi» ([interfaccia_da_zero.md](interfaccia_da_zero.md)):
+> ogni menu ora ha la scena coi raggi e il suo colore (`kit.scene`), e i temi qui sotto sono
+> stati tolti da `client/ui/backdrop.lua`, che tiene solo il fondo pieno. Resta come storia;
+> le regole sui contrasti valgono ancora.
+
 Proposta del 5 novembre (Sergio: «dare un'identità in maniera simile ad ogni
 schermata, quindi con un background semplice come quello della bacheca della
 campagna, ma con la sua identità [...] stiamo attenti ai contrasti con i

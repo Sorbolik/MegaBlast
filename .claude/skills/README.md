@@ -74,3 +74,16 @@ i flussi per game jam, itch e Steam. Tolto anche il file per Codex
 Controllo di sicurezza: solo testo, nessun hook; l'unico script
 (`defold-core/scripts/check_defold_project.py`) usa solo la libreria standard di
 Python, legge i file del progetto e non scrive, non lancia comandi e non va in rete.
+
+## Skill per il design dell'interfaccia
+
+[game-ui-design](game-ui-design/SKILL.md): disegnare e criticare schermate, menu e HUD
+(il compito del giocatore prima del layout, niente sottotitoli e testi di troppo, stati
+e comportamento di ogni comando, verifica). Presa da
+[parodyband/game-ui-ux](https://github.com/parodyband/game-ui-ux) (licenza MIT,
+© 2026 Austin Crane, testo in [licenze/](licenze/parodyband-game-ui-ux.LICENSE),
+commit `f36ba36`), installata il 10 nov. Cambiato solo il `name` del frontmatter, da
+`game-ui-ux` a `game-ui-design`, perché `game-ui-ux` è già la skill di
+awesome-gamedev (ancore, zone sicure, controller): le due si sommano, questa decide
+cosa mettere in una schermata, quella come si adatta agli schermi. Solo testo, nessuno
+script né hook. Le regole di Sergio e di `docs/decisioni/` vincono sulla skill.

@@ -1,10 +1,10 @@
 # La scheda personaggio (Sergio, 31 ott). Dalla home, toccando il diavoletto,
-# il PROFILO con le quattro schede (SCHEDA 105 578, SIGILLI 267 578, STATISTICHE
-# 457 578, PARTITE 647 578; indietro 62 658). Poi una partita contro un bot: lo schieramento
+# il PROFILO con le quattro schede (SCHEDA 501 596, SIGILLI 635 596, STATISTICHE
+# 802 596, PARTITE 969 596; indietro 36 60). Poi una partita contro un bot: lo schieramento
 # dei cartellini prima della scelta (un tocco lo chiude), la striscia in alto
 # durante la scelta (un tocco su un cartellino lo apre, un altro lo chiude), in
 # partita il cartellino del bot toccando la sua targa nel suo turno. Partita da
-# 3 secondi: il podio ha RIVEDI (920 52); toccando un giocatore sul podio il
+# 3 secondi: il podio ha RIVEDI (in basso a destra); toccando un giocatore sul podio il
 # suo cartellino. Il replay, un tocco e si torna al profilo, sulla partita.
 imposta prova_scelta 1
 imposta prova_durata 3
@@ -12,25 +12,24 @@ imposta prova_profilo 1             # un profilo che ha già giocato: pezzi, pot
 
 aspetta 1.5
 foto 01_home
-tocca 400 300                       # il diavoletto: il profilo
+tocca 640 330                       # il diavoletto: il profilo
 aspetta 0.5
 foto 02_profilo_scheda
-tocca 457 578                       # STATISTICHE
+tocca 802 596                       # STATISTICHE
 aspetta 0.3
 foto 03_profilo_statistiche
-tocca 647 578                       # PARTITE (ancora nessuna)
+tocca 969 596                       # PARTITE (ancora nessuna)
 aspetta 0.3
 foto 04_profilo_partite_vuoto
-tocca 62 658                        # indietro
+tocca 36 60                         # indietro
 aspetta_stato modo=menu 3
 aspetta 0.5                         # la home arriva scorrendo: i tocchi contano a scorrimento finito
 
-tocca 1075 323                      # ALLENAMENTO
+tocca 254 346                      # ALLENAMENTO
 aspetta 1
-tocca 310 460                       # 1 CONTRO 1
-tocca 640 140                       # AVANTI (la mappa resta A CASO)
+tocca 547 470                       # 1 CONTRO 1
 aspetta 0.3
-tocca 640 140                       # GIOCA
+tocca_bordo 215 118 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8
 foto 05_schieramento
@@ -42,9 +41,9 @@ aspetta 0.4
 foto 07_striscia_aperta
 tocca 640 360                       # lo chiude
 aspetta 0.3
-tocca 320 410                       # primaria
+tocca 559 410                       # primaria
 aspetta 0.3
-tocca 960 410                       # secondaria: si parte
+tocca 1071 410                       # secondaria: si parte
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 mira 150 100 0.4
@@ -59,23 +58,23 @@ mira 150 100 0.4
 aspetta_evento over 60
 aspetta 4
 foto 09_podio
-tocca 502 300                       # il primo sul podio: il suo cartellino
+tocca 260 340                       # il primo sul podio: il suo cartellino
 aspetta 0.4
 foto 10_podio_cartellino
 tocca 640 360                       # lo chiude
 aspetta 0.3
-tocca 920 52                        # RIVEDI
+tocca_bordo 453 108 basso destra                      # RIVEDI
 aspetta_stato modo=replay 5
 aspetta 1.5
 foto 11_replay
 tocca 640 360                       # fine: il profilo, sulla partita
 aspetta 0.5
 foto 12_profilo_partite
-tocca 457 578                       # STATISTICHE
+tocca 802 596                       # STATISTICHE
 aspetta 0.3
 foto 13_profilo_statistiche
-tocca 105 578                       # SCHEDA
+tocca 501 596                       # SCHEDA
 aspetta 0.3
 foto 14_profilo_scheda
-tocca 62 658                        # indietro
+tocca 36 60                         # indietro
 aspetta_stato modo=menu 3

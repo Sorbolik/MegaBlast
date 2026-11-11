@@ -4,7 +4,7 @@ imposta prova_vignette no             # le vignette hanno il loro scenario (vign
 imposta prova_missione guidata
 imposta zoom 3
 aspetta 2.5
-tocca 970 116                         # AVANTI sulla cartolina
+tocca_bordo 240 420 mezzo destra                         # AVANTI sulla cartolina
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 2
 foto 01_cortile

@@ -199,7 +199,7 @@ end
 -- Only in the scenarios (imposta prova_profilo 1, scenari/scheda.txt): a
 -- profile that has already played, to see pieces, powers, badges, stats and
 -- the campaign's stars
-function M.sample(p, near_level_up)
+function M.sample(p, near_level_up, campaign_done)
 	p.livello, p.xp = 23, near_level_up and M.xp_level(23) - 20 or 410
 	local a = p.loadouts[p.is_active]
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
@@ -218,6 +218,12 @@ function M.sample(p, near_level_up)
 		p.stelle[id] = { true, id ~= "turno", id == "primi_passi" or id == "guidata" }
 	end
 	p.stelle.primo_sangue, p.stelle.fuori_portata = { true, true, false }, { true, false, false }
+	-- prova_profilo 3: the Forge done too, the map of the circles (scenari/gironi.txt)
+	if campaign_done then
+		for _, cap in ipairs(require("sim.campaign").CAPITOLI) do
+			for _, l in ipairs(cap.missioni) do p.stelle[l.id] = p.stelle[l.id] or { true, true, false } end
+		end
+	end
 end
 
 -- A match's replay file: one per slot, reused in rotation

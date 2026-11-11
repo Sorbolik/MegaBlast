@@ -2,7 +2,7 @@
 # 2 nov): sopra il nome, o sopra la Corona di chi è primo, dondola e la brace del
 # colore della squadra pulsa. Mirando, il cartellino sta sopra la freccia.
 aspetta 3
-tocca_bordo 205 235 basso destra    # STESSO TELEFONO
+tocca_bordo 222 148 mezzo sinistra    # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1.2
 foto 01_rosso

@@ -6,7 +6,7 @@ imposta zoom 2
 imposta prova_vicino 50
 
 aspetta 2
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 01_quattro_pari

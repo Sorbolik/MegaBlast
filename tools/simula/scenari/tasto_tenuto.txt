@@ -8,16 +8,16 @@ imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 3
-tocca 1075 102                      # GIOCA
+tocca 1036 400                      # GIOCA
 aspetta 0.5
-tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=scelta_online 20
 aspetta 1
 tocca 640 360                       # un tocco: alle armi
 aspetta 0.4
-tocca 320 410                       # primaria
+tocca 559 410                       # primaria
 aspetta 0.5
-tocca 640 410                       # secondaria
+tocca 815 410                       # secondaria
 aspetta_stato modo=online 25
 aspetta_stato turno=1 fase=aim 10
 aspetta 1

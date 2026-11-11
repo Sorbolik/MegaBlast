@@ -10,17 +10,17 @@
 --   schieramento.on_input(s, action_id, action)
 --   schieramento.destroy(s)
 --
---   local st = schieramento.strip(vetrine)       -- the strip at the top during the draft (st.covers_corner:
---                                                -- it reaches over the wheel, menu/pick.lua under_strip)
+--   local st = schieramento.strip(vetrine)       -- the strip at the top during the draft
 --   schieramento.strip_touch(st, action_id, action) -> true if the tap was its own
 --   schieramento.destroy(st)
 
 local ui = require "ui.ui"
-local backdrop = require "ui.backdrop"
 local screen = require "ui.screen"
 local config = require "sim.config"
 local tag = require "ui.tag_card"
+local kit = require "ui.kit"
 local T = require("lang.text").lineup
+local NO_POWER = require("lang.text").tag_card.no_power
 local common = require("lang.text").common
 
 local M = {}
@@ -28,8 +28,8 @@ local M = {}
 local C = ui.C
 local W, H = 1280, 720
 local TOUCH = hash("touch")
-local TOP = 616          -- where a tag starts
-local STRIP_Y, STRIP_W, STRIP_H = 680, 284, 56
+local KC = kit.C
+local TAG_W, TAG_H = 236, 340
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
@@ -61,55 +61,53 @@ function M.seats(squads)
 	return xs, false
 end
 
--- The teams' colors from left to right, for the background (ui/backdrop.lua):
--- one per team as the tags stand (in free-for-all one per tag)
-function M.side_colors(squads, xs)
-	local order = {}
-	for i = 1, #squads do order[i] = i end
-	table.sort(order, function(a, b) return xs[a] < xs[b] or (xs[a] == xs[b] and a < b) end)
-	local colors, last = {}, nil
-	for _, i in ipairs(order) do
-		if squads[i] ~= last then colors[#colors + 1] = C.SQUADRA[squads[i]] or C.LIGHT end
-		last = squads[i]
-	end
-	return colors
-end
+-- Where the short tags stand, in the same order as the strip's places: two
+-- and two around the VS, or in a row
+local SHORT = { [2] = { 380, 900 }, [4] = { 174, 418, 838, 1082 } }
 
 function M.new(showcases, title)
 	local s = { vetrine = showcases, card_list = {}, t = config.LINEUP_SECONDS }
 	local squads = {}
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
 	local xs, vs = M.seats(squads)
-	s.fondo = backdrop.new("schieramento", nil, M.side_colors(squads, xs))
-	-- title and time stick to the real edges (only a node without a parent
-	-- sticks), on the header's row (ui.header): the pill's place stays free
-	local top_left = gui.new_box_node(vec(ui.EDGE, ui.HEAD_Y + 14), vec(0, 0))
-	gui.set_visible(top_left, false)
-	gui.set_xanchor(top_left, gui.ANCHOR_LEFT)
-	gui.set_yanchor(top_left, gui.ANCHOR_TOP)
-	local t = ui.title(title, 0, 0, 0.75, C.LIGHT, top_left)
-	gui.set_pivot(t, gui.PIVOT_W)
-	local under = ui.text(T.tap_to_pick, 2, -34, 0.75, C.OFF, top_left)
-	gui.set_pivot(under, gui.PIVOT_W)
-	local top_right = gui.new_box_node(vec(W - ui.EDGE - 115, ui.HEAD_Y), vec(0, 0))
-	gui.set_visible(top_right, false)
-	gui.set_xanchor(top_right, gui.ANCHOR_RIGHT)
-	gui.set_yanchor(top_right, gui.ANCHOR_TOP)
-	s.angoli = { top_left, top_right }
+	-- a dark sheet over the draft, and the rays on it
+	s.scene = kit.scene(640, 360, { dim = 0.72 })
+	-- the match's name on a light plate that comes out of the real left edge
+	local top_left = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
+	kit.sand(top_left, -20, 30, 330, 58, KC.HOT, { sk = 22 })
+	local name = kit.text(top_left, title, 40, 71, 32, KC.INK)
+	local wide = kit.width(name)
+	if wide > 270 then
+		local sc = gui.get_scale(name)
+		gui.set_scale(name, vec(sc.x * 270 / wide, sc.y * 270 / wide))
+	end
+	local low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
+	kit.text(low, T.tap_to_pick, 80, 640, 15, KC.MUTE, "start", 1.5)
+	local right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
+	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { size = 54, sub = T.weapons_in:format(0, 0) })
+	s.tally = go.sub
+	s.angoli = { top_left.node, low.node, right.node }
 	s.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.radice, false)
-	ui.panel(0, 0, 230, 58, top_right)
-	local armi = ui.text(T.weapons_in, -24, 0, 0.85, C.OFF, top_right)
-	gui.set_pivot(armi, gui.PIVOT_E)
-	s.tally = ui.text("", -12, 0, 0.95, C.LIGHT, top_right)
-	gui.set_pivot(s.tally, gui.PIVOT_W)
+	local g = { node = s.radice, ox = 0, oy = 720 }
 
-	for i, v in ipairs(showcases) do
+	-- the tags: from left to right one up and one down
+	local order = {}
+	for i = 1, #showcases do order[i] = i end
+	table.sort(order, function(a, b) return xs[a] < xs[b] or (xs[a] == xs[b] and a < b) end)
+	local short = vs and SHORT[#order]
+	for rank, i in ipairs(order) do
+		local v = showcases[i]
+		if short then xs[i] = short[rank] else xs[i] = 640 + (rank - (#order + 1) / 2) * 246 end
 		v.verso = xs[i] < 640 and 1 or -1
-		s.card_list[i] = tag.new(v, xs[i], TOP, { portrait = true, tu = v.tu }, s.radice)
+		local power = (v.abilities or {})[1]
+		s.card_list[i] = tag.small(g, v, xs[i] - TAG_W / 2, 150 + ((rank - 1) % 2) * 26, TAG_W, TAG_H,
+			{ sel = v.tu, role = power or NO_POWER })
+		kit.pop(s.card_list[i].root, 0.05 + rank * 0.07, 0.25)
 	end
 	if vs then
-		ui.title(T.versus, 640, TOP - 260, 0.75, C.OFF, s.radice)
+		kit.text(g, T.versus, 634, 360, 84, KC.SAND, "middle")
+		kit.text(g, T.versus, 630, 356, 84, KC.HOT, "middle")
 	end
 	M.update(s, 0)
 	return s
@@ -119,7 +117,8 @@ function M.update(s, dt)
 	for _, c in ipairs(s.card_list or {}) do tag.update(c, dt) end
 	if not s.t then return false end
 	s.t = s.t - dt
-	if s.tally then gui.set_text(s.tally, string.format("0:%02d", math.max(0, math.ceil(s.t)))) end
+	local left = math.max(0, math.ceil(s.t))
+	if s.tally then gui.set_text(s.tally, T.weapons_in:format(math.floor(left / 60), left % 60)) end
 	return s.t <= 0 or s.touched
 end
 
@@ -129,53 +128,30 @@ function M.on_input(s, action_id, action)
 	end
 end
 
--- The strip at the top during the draft: a small tag per robot
+-- The strip at the top during the draft: a small plate per robot, its name on
+-- the team's color, the two teams apart
 function M.strip(showcases)
 	local st = { vetrine = showcases, mini = {} }
 	st.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(st.radice, false)
+	local g = { node = st.radice, ox = 0, oy = 720 }
 	local squads = {}
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
-	local xs = M.seats(squads)
-	for i, v in ipairs(showcases) do
-		-- the draft's wheel (64 x 64 at 30 from the top left corner of the real
-		-- screen) with ESCI next to it (160 wide): with four tags at 16:9 and at 20:9
-		-- the strip reaches over it, at 4:3 it stays below
-		if xs[i] - STRIP_W / 2 < screen.x0 + 30 + 64 + 12 + 160 + 8
-			and STRIP_Y + STRIP_H / 2 > screen.y1 - 30 - 64 - 8 then
-			st.covers_corner = true
+	local xs, vs = M.seats(squads)
+	local order = {}
+	for i = 1, #showcases do order[i] = i end
+	table.sort(order, function(a, b) return xs[a] < xs[b] or (xs[a] == xs[b] and a < b) end)
+	for rank, i in ipairs(order) do
+		local v = showcases[i]
+		local x = 330 + (rank - 1) * 170 + (vs and rank > #order / 2 and 40 or 0)
+		st.mini[i] = kit.rect(g, x, 26, 150, 38, with_alpha(KC.INK, 0.5))
+		kit.rect(g, x, 26, 5, 38, C.SQUADRA[v.squadra] or C.LIGHT)
+		local name = kit.text(g, kit.upper(v.nome or "?"), x + 22, 52, 16, KC.SAND)
+		local wide = kit.width(name)
+		if wide > 118 then
+			local sc = gui.get_scale(name)
+			gui.set_scale(name, vec(sc.x * 118 / wide, sc.y * 118 / wide))
 		end
-		local col = C.SQUADRA[v.squadra] or C.LIGHT
-		local n, border = ui.panel(xs[i], STRIP_Y, STRIP_W, STRIP_H, st.radice)
-		gui.set_color(border, v.tu and col or with_alpha(col, 0.6))
-		local sx = -STRIP_W / 2 + 12
-		ui.ring_node(sx + 17, 0, 34, 2.5, col, n)
-		ui.text(v.livello and tostring(v.livello) or v.bot and common.bot or "–", sx + 17, 0, (v.livello or not v.bot) and 0.75 or 0.5, col, n)
-		local nome = ui.title(v.nome or "?", sx + 42, 8, 0.4, C.LIGHT, n)
-		gui.set_pivot(nome, gui.PIVOT_W)
-		-- the four pieces in small: a little square with the tier border and the level
-		for k, p in ipairs(v.pezzi or {}) do
-			local x = sx + 50 + (k - 1) * 24
-			local q = gui.new_box_node(vec(x, -12), vec(20, 20))
-			gui.set_color(q, not p.set and with_alpha(C.LIGHT, 0.12) or p.tier >= 3 and C.GOLD or p.tier == 2 and C.STEEL
-				or with_alpha(C.LIGHT, 0.5))
-			gui.set_parent(q, n)
-			local d = gui.new_box_node(vec(0, 0), vec(16, 16))
-			gui.set_color(d, C.BOTTOM)
-			gui.set_parent(d, q)
-			if p.set then ui.text(tostring(p.livello), 0, 0, 0.5, C.LIGHT, q) end
-		end
-		local bx = STRIP_W / 2 - 14
-		for k = #(v.badge or {}), 1, -1 do
-			tag.badge(v.badge[k], bx, -12, 18, n)
-			bx = bx - 22
-		end
-		local abilities = #(v.abilities or {})
-		if abilities > 0 then
-			local t = ui.text((abilities == 1 and T.power or T.powers):format(abilities), STRIP_W / 2 - 14, 10, 0.5, C.GOLD, n)
-			gui.set_pivot(t, gui.PIVOT_E)
-		end
-		st.mini[i] = n
 	end
 	return st
 end
@@ -222,8 +198,9 @@ function M.destroy(s)
 	for _, n in ipairs(s.angoli or {}) do gui.delete_node(n) end
 	s.angoli = nil
 	if s.radice then gui.delete_node(s.radice) end
-	if s.fondo then gui.delete_node(s.fondo) end
-	s.radice, s.fondo, s.aperto = nil, nil, nil
+	if s.scene then kit.scene_drop(s.scene) end
+	s.scene = nil
+	s.radice, s.aperto = nil, nil
 end
 
 return M

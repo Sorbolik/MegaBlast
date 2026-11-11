@@ -1,6 +1,6 @@
 -- The server's events (GET /eventi, server/events.go): the game asks for them
 -- on the entry screen, before opening the home (ui/entry.lua), then every
--- minute while the home is visible and every time the board and DOVE GIOCHI?
+-- minute while the home is visible and every time the board and GIOCA ONLINE
 -- open. Only data and words here; the screens are menu/board.lua and
 -- menu/queue.lua.
 --

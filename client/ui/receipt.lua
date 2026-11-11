@@ -13,7 +13,9 @@
 -- the level bar, which fills a step and swells at each one (the sound rises
 -- by a semitone); with a new level the last one bursts in a gold ring.
 --
---   local r = receipt.new(gain, prof, x, y, buttons, parent)
+--   local r = receipt.new(gain, prof, top, buttons, parent)
+--     top: where GUADAGNI is written (ui/kit.lua coordinates: 1280 x 720, y from the top);
+--       the rows go down from there, on the right; parent: a node at the screen's bottom left
 --     gain: profile.match_end or profile.mission (lines, xp, level_before, livello, braci...)
 --       gain.coins = { rows, obsidian } (menu/wallet.lua), already in the profile
 --     buttons: the screen's list, METTI I PUNTI goes there with the action "sigilli"
@@ -25,6 +27,7 @@
 --   receipt.skip(r)               -- everything at once (a tap during the count or the flight)
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 local coins = require "ui.coins"
 local profile = require "menu.profile"
 local T = require("lang.text").receipt
@@ -32,19 +35,17 @@ local TM = require("lang.text").milestones
 
 local M = {}
 
-M.W = 400
-M.LINE_H = 40
+M.LINE_H = 46
 M.LINE_MIN = 28   -- with many lines they get closer, down to this
-M.BOTTOM = 100    -- the panel stays above this (the screens' buttons)
-M.OBS_H = 34      -- the Ossidiana's total, under the other one
--- the columns' right edges, from the panel's right inner edge: experience, coins
-local XP_COL, COIN_COL, COIN_ICON = -128, -30, -10
+M.BOTTOM = 546    -- everything stays above this (the screens' buttons)
 -- when the first line comes, the rhythm of the others, how long the total counts
 M.FIRST, M.RHYTHM, M.COUNT = 0.9, 0.22, 0.6
 -- the sparks of experience: one every GAP seconds, each FLIGHT long
 M.XP_GAP, M.XP_FLIGHT = 0.07, 0.38
 
 local C = ui.C
+local KC = kit.C
+local BAR = KC.HOT
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function alpha(n, a)
@@ -52,6 +53,7 @@ local function alpha(n, a)
 	c.w = a
 	gui.set_color(n, c)
 end
+local function xp_text(n) return T.plus:format(n) .. " " .. T.xp end
 
 local ROMAN = { "I", "II", "III", "IV" }
 
@@ -86,111 +88,111 @@ function M.merge(lines, c)
 	return out
 end
 
--- a coin's amount in its column, with the coin after it
-local function coin_cell(kind, n, x, y, parent)
-	local t = ui.text(T.plus:format(coins.format(n)), x + COIN_COL, y, 0.85, coins.COLOR[kind], parent)
-	gui.set_pivot(t, gui.PIVOT_E)
-	local icon = coins.icon(kind, x + COIN_ICON, y, 20, parent)
-	return t, icon
-end
-
-function M.new(gain, prof, x, y, buttons, parent)
+function M.new(gain, prof, top, buttons, parent)
 	local lines = M.merge(gain.lines or {}, gain.coins)
 	local level_up = gain.livello > gain.level_before
 	local braci = (gain.braci or 0) - (gain.braci_before or 0)
 	local sc, ob = 0, 0
 	for _, l in ipairs(lines) do sc, ob = sc + (l.scaglie or 0), ob + (l.ossidiana or 0) end
-	local fixed = 196 + (ob > 0 and M.OBS_H or 0) + (level_up and 132 or braci > 0 and 50 or 0)
-	local line_h = math.max(M.LINE_MIN, math.min(M.LINE_H, (y - M.BOTTOM - fixed) / math.max(1, #lines)))
-	local h = fixed + #lines * line_h
 	local r = { t = 0, shown = 0, rows = {}, gain = gain, prof = prof, sc = sc, ob = ob }
-	local top = h / 2
-	r.panel = ui.panel(x, y - h / 2, M.W, h, parent)
+	-- everything in a node at the parent's origin: kit coordinates inside
+	r.panel = gui.new_box_node(vec(0, 0), vec(0, 0))
+	gui.set_visible(r.panel, false)
+	gui.set_parent(r.panel, parent)
 	local p = r.panel
-	local left, right = -M.W / 2 + 26, M.W / 2 - 26
-	local t = ui.title(T.title, left, top - 34, 0.6, C.TEXT, p)
-	gui.set_pivot(t, gui.PIVOT_W)
-	-- the columns' heads: XP and the Scaglia
-	t = ui.text(T.xp, right + XP_COL, top - 34, 0.7, C.OFF, p)
-	gui.set_pivot(t, gui.PIVOT_E)
-	coins.icon("scaglia", right + COIN_ICON, top - 34, 24, p)
-	local ly = top - 82
+	local g = { node = p, ox = 0, oy = 720 }
+	local first = top + 14
+	-- the total, the Ossidiana's, the level, what the level gives
+	local fixed = 46 + (ob > 0 and 46 or 0) + 78 + ((level_up or braci > 0) and 66 or 0)
+	local step = math.max(M.LINE_MIN, math.min(M.LINE_H, (M.BOTTOM - first - fixed) / math.max(1, #lines)))
+	local tall = math.min(36, step - 4)
+	-- the rows lean like everything else: lower is more to the left
+	local function lean(y) return 810 - (y - first) * 4 / 46 end
+	-- a coin's amount at the row's end, with the coin before it
+	local function coin_cell(kind, n, x, y, size)
+		local t = kit.text(g, T.plus:format(coins.format(n)), x + 414, y, size, kind == "scaglia" and KC.SAND or coins.COLOR[kind], "end")
+		local icon = coins.icon(kind, x + 342, 720 - y + size * 0.36, 16, p)
+		return t, icon
+	end
+	kit.text(g, T.title, 820, top, 14, KC.HOT_TOP, "start", 1.5)
+	local y = first
 	for i, l in ipairs(lines) do
-		local row = { ui.text(label(l), left, ly, 0.8, C.TEXT, p) }
-		gui.set_pivot(row[1], gui.PIVOT_W)
-		if l.xp then
-			row[2] = ui.text(T.plus:format(l.xp), right + XP_COL, ly, 0.85, C.GOLD, p)
-			gui.set_pivot(row[2], gui.PIVOT_E)
+		local x = lean(y)
+		kit.info(g, x, y, 430, tall, KC.ROSE)
+		local base = y + tall / 2 + 5
+		local name = kit.text(g, kit.upper(label(l)), x + 24, base, 14, KC.SAND)
+		local wide = kit.width(name)
+		if wide > 220 then
+			local sca = gui.get_scale(name)
+			gui.set_scale(name, vec(sca.x * 220 / wide, sca.y * 220 / wide))
 		end
+		local row = { name }
+		if l.xp then row[2] = kit.text(g, xp_text(l.xp), x + 314, base, 15, KC.MINT, "end") end
 		if l.scaglie or l.ossidiana then
-			local a, b = coin_cell(l.ossidiana and "ossidiana" or "scaglia", l.scaglie or l.ossidiana, right, ly, p)
+			local a, b = coin_cell(l.ossidiana and "ossidiana" or "scaglia", l.scaglie or l.ossidiana, x, base, 15)
 			row[#row + 1], row.icon = a, b
 			gui.set_enabled(b, false)
 		end
 		for _, n in ipairs(row) do alpha(n, 0) end
 		r.rows[i] = row
-		ly = ly - line_h
+		y = y + step
 	end
-	-- the line and the total
-	local line = gui.new_box_node(vec(0, ly + 16), vec(M.W - 52, 2))
-	gui.set_color(line, C.LINE)
-	gui.set_parent(line, p)
-	ly = ly - 18
-	local tl = ui.title(T.total, left, ly, 0.55, C.TEXT, p)
-	gui.set_pivot(tl, gui.PIVOT_W)
-	r.total = ui.title(T.plus:format(0), right + XP_COL, ly, 0.7, C.GOLD, p)
-	gui.set_pivot(r.total, gui.PIVOT_E)
-	r.spark_from = vec(right + XP_COL - 24, ly)
+	-- the total
+	local x = lean(y)
+	kit.info(g, x, y, 430, 36, KC.SAND)
+	kit.text(g, T.total, x + 24, y + 25, 18, KC.SAND)
+	r.total = kit.text(g, xp_text(0), x + 314, y + 25, 16, KC.MINT, "end")
+	r.spark_from = vec(x + 270, 720 - (y + 18))
 	-- the coins' totals: where they fly from (in the parent's space)
-	local base = vmath.vector3(x, y - h / 2, 0)
-	r.coin_total = { scaglia = ui.title(T.plus:format(0), right + COIN_COL, ly, 0.7, coins.COLOR.scaglia, p) }
-	gui.set_pivot(r.coin_total.scaglia, gui.PIVOT_E)
-	coins.icon("scaglia", right + COIN_ICON, ly, 24, p)
-	r.from = { scaglia = base + vec(right + COIN_ICON, ly) }
+	r.coin_total = { scaglia = coin_cell("scaglia", 0, x, y + 25, 16) }
+	r.from = { scaglia = vec(x + 342, 720 - (y + 18)) }
 	if ob > 0 then
-		ly = ly - M.OBS_H
-		r.coin_total.ossidiana = ui.title(T.plus:format(0), right + COIN_COL, ly, 0.7, coins.COLOR.ossidiana, p)
-		gui.set_pivot(r.coin_total.ossidiana, gui.PIVOT_E)
-		coins.icon("ossidiana", right + COIN_ICON, ly, 24, p)
-		r.from.ossidiana = base + vec(right + COIN_ICON, ly)
+		y = y + 46
+		x = lean(y)
+		kit.info(g, x, y, 430, 36, coins.COLOR.ossidiana)
+		r.coin_total.ossidiana = coin_cell("ossidiana", 0, x, y + 25, 16)
+		r.from.ossidiana = vec(x + 342, 720 - (y + 18))
 	end
 	-- the level and its bar
-	ly = ly - 46
+	y = y + 56
+	kit.info(g, 786, y, 440, 58, KC.HOT)
 	local lv = level_up and T.level_up:format(gain.livello) or T.level:format(gain.livello)
-	r.level = ui.title(lv, left, ly, 0.5, level_up and C.BRACE or C.TEXT, p)
-	gui.set_pivot(r.level, gui.PIVOT_W)
+	r.level = kit.text(g, lv, 812, y + 28, 22, KC.HOT)
 	alpha(r.level, 0)
-	ly = ly - 26
-	r.bar = ui.bar(0, ly, M.W - 52, 10, C.BRACE, p)
-	r.level_up, r.bar_y = level_up, ly
+	r.bar = ui.bar(960, 720 - (y + 42), 300, 8, BAR, p)
+	gui.set_color(r.bar.nodo, KC.TRACK)
+	r.level_up, r.bar_x, r.bar_y = level_up, 960, 720 - (y + 42)
+	kit.text(g, math.floor(prof.xp) .. " / " .. profile.xp_level(prof.livello), 1206, y + 46, 11, KC.MUTE, "end", 1)
 	local before = (prof.xp - gain.xp) / profile.xp_level(gain.level_before)
 	if level_up or braci > 0 then before = 0 end
 	r.bar_from, r.bar_to = math.max(0, before), prof.xp / profile.xp_level(prof.livello)
 	ui.bar_value(r.bar, r.bar_from)
-	-- what the new level gives
+	-- what the new level gives: a row in an empty node of its own (the pop animates that)
 	r.after = {}
-	-- each one in an empty node of its own: the pop animates that, not the text's scale
-	local function holder(y)
-		local n = gui.new_box_node(vec(0, y), vec(0, 0))
+	y = y + 72
+	local function holder()
+		local n = gui.new_box_node(vec(996, 720 - (y + 26)), vec(0, 0))
 		gui.set_visible(n, false)
 		gui.set_parent(n, p)
+		gui.set_scale(n, vec(0.01, 0.01))
 		r.after[#r.after + 1] = n
-		return n
+		return { node = n, ox = 996, oy = y + 26 }
 	end
 	if level_up then
-		ly = ly - 36
 		local n = math.min(profile.LEVEL_MAX, gain.livello) - gain.level_before
-		ui.text((n == 1 and T.seal_point or T.seal_points):format(n), 0, 0, 0.8, C.GOLD, holder(ly))
-		ly = ly - 50
-		ui.button(buttons, 0, 0, M.W - 52, 56, T.place_points, "sigilli", { main = true, colore = C.GOLD }, holder(ly))
+		local h = holder()
+		kit.info(h, 776, y, 440, 52, KC.PURPLE)
+		kit.text(h, kit.upper((n == 1 and T.seal_point or T.seal_points):format(n)), 800, y + 32, 13, KC.SAND)
+		local go = kit.sand(h, 1050, y + 8, 150, 36, KC.HOT, { sk = 9, d = 4 })
+		kit.text(go.g, T.place_points, 1130, y + 32, 13, KC.INK, "middle")
+		kit.button(buttons, go, "sigilli")
 	elseif braci > 0 then
-		ly = ly - 36
-		ui.text((braci == 1 and T.brace or T.braci):format(braci), 0, 0, 0.8, C.GOLD, holder(ly))
+		local h = holder()
+		kit.info(h, 776, y, 440, 52, KC.PURPLE)
+		kit.text(h, kit.upper((braci == 1 and T.brace or T.braci):format(braci)), 800, y + 32, 13, KC.SAND)
 	end
-	for _, n in ipairs(r.after) do gui.set_scale(n, vec(0.01, 0.01)) end
-	r.h = h
 	-- the wallet pill at the top right, with the balance before these coins
-	r.wallet = coins.wallet(prof.scaglie - sc, prof.ossidiana - ob, parent, 1280 - ui.EDGE - coins.W / 2, 720 - 30 - coins.H / 2)
+	r.wallet = coins.wallet(prof.scaglie - sc, prof.ossidiana - ob, parent, 1110, 720 - 44)
 	return r
 end
 
@@ -210,7 +212,7 @@ local function pulse(r, strong)
 	gui.animate(b.nodo, "scale", vec(1, 1), gui.EASING_OUTQUAD, strong and 0.4 or 0.18)
 	gui.cancel_animations(b.full, "color")
 	gui.set_color(b.full, vmath.vector4(1, 0.95, 0.8, 1))
-	gui.animate(b.full, "color", C.BRACE, gui.EASING_INQUAD, strong and 0.5 or 0.25)
+	gui.animate(b.full, "color", BAR, gui.EASING_INQUAD, strong and 0.5 or 0.25)
 end
 
 -- the coins leave the totals for the pill: some Scaglie, then the Ossidiana
@@ -256,7 +258,7 @@ local function spark_land(r, f, i, xp, coin, quiet)
 		if last then sparks_done(r, coin) end
 		return
 	end
-	local hx = -r.bar.w / 2 + r.bar.w * frac
+	local hx = r.bar_x - r.bar.w / 2 + r.bar.w * frac
 	pulse(r, last and r.level_up)
 	burst(r, hx, r.bar_y, 8, last and r.level_up and 150 or 34, last and r.level_up and C.GOLD or C.LIGHT,
 		last and r.level_up and 0.55 or 0.25)
@@ -279,7 +281,7 @@ local function sparks(r, coin, xp)
 		local node = ui.disc(r.spark_from.x, r.spark_from.y, 14, C.GOLD, r.panel)
 		gui.set_scale(node, vec(0.01, 0.01))
 		local frac = r.bar_from + (r.bar_to - r.bar_from) * i / n
-		local hx = -r.bar.w / 2 + r.bar.w * frac
+		local hx = r.bar_x - r.bar.w / 2 + r.bar.w * frac
 		local delay = (i - 1) * M.XP_GAP
 		gui.animate(node, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.1, delay)
 		gui.animate(node, "position.x", hx, gui.EASING_OUTQUAD, M.XP_FLIGHT, delay + 0.06)
@@ -304,7 +306,7 @@ function M.update(r, dt, tick, coin, xp)
 	local t0 = M.FIRST + #r.rows * M.RHYTHM
 	if r.t >= t0 then
 		local k = math.min(1, (r.t - t0) / M.COUNT)
-		gui.set_text(r.total, T.plus:format(math.floor(r.gain.xp * k + 0.5)))
+		gui.set_text(r.total, xp_text(math.floor(r.gain.xp * k + 0.5)))
 		gui.set_text(r.coin_total.scaglia, T.plus:format(coins.format(r.sc * k + 0.5)))
 		if r.coin_total.ossidiana then gui.set_text(r.coin_total.ossidiana, T.plus:format(coins.format(r.ob * k + 0.5))) end
 		if k >= 1 then

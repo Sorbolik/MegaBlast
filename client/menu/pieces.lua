@@ -1,16 +1,17 @@
--- The PEZZI sheet: the four pieces worn, the chosen one with its 30 levels and
--- the POTENZIA button in Scaglie (page "Scaglie e Ossidiana", choices 4A-6A
--- and the drawn screen "Potenziare un pezzo"). Pure layout on a parent, so the
--- screen that hosts it (today ARMERIA, menu/armory.lua) keeps its header and
--- stats. The screen is rebuilt at every tap, like the armory.
+-- The pieces of the armory (Figma 08): the four pieces worn as cards, the
+-- chosen one with its 30 levels, the Proof, the variant, the sets to wear, and
+-- as the screen's action POTENZIA in Scaglie (page "Scaglie e Ossidiana",
+-- choices 4A-6A). Pure layout with ui/kit.lua, so the screen that hosts it
+-- (menu/armory.lua) keeps its frame and stats. Rebuilt at every tap.
 --
 --   local pieces = require "menu.pieces"
---   pieces.build(s, parent)  -- s = { prof, buttons, slot = "mask", w = width of the sheet }
+--   pieces.build(s)  -- s = { prof, buttons, kg (the kit group), right (the action's anchor), slot = "mask" }
 --   pieces.run(s, kind, arg) -> handled, step  -- step: { slot, set, level } when a step was bought
 --
 -- Actions on the buttons: "pezzo:<slot>", "indossa:<set>", "potenzia", "variante:a|b".
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 local coins = require "ui.coins"
 local equip = require "sim.gear"
 local profile = require "menu.profile"
@@ -20,10 +21,9 @@ local TA = require("lang.text").armory
 
 local M = {}
 
-local CARD_W, CARD_H, CARD_GAP = 210, 92, 12
+local KC = kit.C
 local ROMAN = { "I", "II", "III", "IV" }
 
-local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function active(s) return profile.active_loadout(s.prof) end
 
 -- a level's grade color: bronze, silver, gold, ember
@@ -37,167 +37,125 @@ local function effects(list_of)
 	for _, e in ipairs(list_of) do
 		local n = e.add or e.mul
 		local v = e.add and string.format("%+g", n) or string.format("%+d%%", math.floor((n - 1) * 100 + 0.5))
-		t[#t + 1] = v .. " " .. string.lower(TA.stats[e.stat] or e.stat)
+		t[#t + 1] = v .. " " .. (TA.stats[e.stat] or e.stat)
 	end
 	return table.concat(t, ", ")
 end
 
--- a diamond of the steps: the rounded square turned 45 degrees (its edges are
--- the image's, no steps)
-local function diamond(x, y, d, fill, edge, parent)
-	local n = ui.sagoma("forma", x, y, d, d, fill, parent)
-	gui.set_slice9(n, vmath.vector4(d / 4, d / 4, d / 4, d / 4))
-	gui.set_rotation(n, vmath.vector3(0, 0, 45))
-	if edge then
-		local b = ui.sagoma("bordo", 0, 0, d, d, edge, n)
-		gui.set_slice9(b, vmath.vector4(d / 4, d / 4, d / 4, d / 4))
-	end
-	return n
-end
-
--- the four slots on the left, each with the piece worn and its level
-local function slots(s, parent)
+-- the four pieces worn: one card each, staggered; the chosen one lit
+local function slots(s)
 	local a = active(s)
 	for i, slot in ipairs(equip.SLOTS) do
-		local y = ui.BODY_TOP - CARD_H / 2 - (i - 1) * (CARD_H + CARD_GAP)
+		local x, y = 440 + (i - 1) * 10, 112 + (i - 1) * 84
 		local set = a.gear[slot.id]
 		local level = set and wallet.level(s.prof, set, slot.id)
-		local n = ui.tab(s.buttons, ui.EDGE + CARD_W / 2, y, CARD_W, CARD_H, "", "pezzo:" .. slot.id, s.slot == slot.id, parent)
-		local b = s.buttons[#s.buttons]
-		if set then
-			b.riposo = s.slot == slot.id and ui.C.LIGHT or grade_color(level)
-			gui.set_color(b.bordo, b.riposo)
-		end
-		local t = ui.text(slot.name, -CARD_W / 2 + 16, 24, 0.55, ui.C.OFF, n)
-		gui.set_pivot(t, gui.PIVOT_W)
-		t = ui.title(set and equip.BY_ID[set].name or T.empty, -CARD_W / 2 + 16, 0, 0.6, set and ui.C.TEXT or ui.C.OFF, n)
-		gui.set_pivot(t, gui.PIVOT_W)
-		if set then
-			t = ui.text(T.level:format(level), -CARD_W / 2 + 16, -26, 0.6, grade_color(level), n)
-			gui.set_pivot(t, gui.PIVOT_W)
-		end
+		local full = level == equip.LIVELLO_MAX
+		local k = kit.card(s.kg, x, y, 220, 70, full and KC.STAR or KC.ROSE, { sel = s.slot == slot.id })
+		kit.text(k.g, slot.name, x + 30, y + 25, 12, KC.MUTE, "start", 1.5)
+		kit.text(k.g, set and equip.BY_ID[set].name or kit.upper(T.empty), x + 26, y + 54, 24, set and KC.SAND or KC.MUTE)
+		if set then kit.text(k.g, tostring(level), x + 206, y + 44, 26, full and KC.STAR or KC.SAND, "end") end
+		kit.zone(s.kg, s.buttons, x, y - 6, 220, 82, "pezzo:" .. slot.id)
 	end
 end
 
--- the 30 levels: a notch per level, a diamond at each step
-local function track(level, x0, w, y, parent)
-	for l = 1, equip.LIVELLO_MAX do
-		local x = x0 + (l - 1) * w / (equip.LIVELLO_MAX - 1)
-		local on = l <= level
-		local step = equip.PROOF[l]
-		if step then
-			diamond(x, y, 24, on and grade_color(l) or ui.C.BOTTOM, on and grade_color(l) or ui.C.LINE, parent)
-			ui.text(tostring(l), x, y - 26, 0.5, ui.C.OFF, parent)
-		else
-			ui.sagoma(nil, x, y, 8, 14, on and grade_color(level) or ui.C.LINE, parent)
-		end
-	end
-end
-
--- the chosen piece: name, level, effects, track, next level and the button
-local function detail(s, parent)
+-- the chosen piece: name, level, effects, the 30 notches, the next level
+local function detail(s)
+	local g = s.kg
 	local a = active(s)
 	local slot = equip.SLOTS[1]
 	for _, sl in ipairs(equip.SLOTS) do if sl.id == s.slot then slot = sl end end
 	local set = a.gear[slot.id]
-	local x0 = ui.EDGE + CARD_W + 24
-	local w = s.w - CARD_W - 24
-	local h = 4 * CARD_H + 3 * CARD_GAP
-	local pan = ui.panel(x0 + w / 2, ui.BODY_TOP - h / 2, w, h, parent)
-	local left, top = -w / 2 + 20, h / 2
+	local act = { label = T.upgrade, off = true }
 	if not set then
-		ui.text(T.choose:format(string.lower(slot.name)), 0, 0, 0.8, ui.C.OFF, pan)
-		return
+		kit.text(g, slot.name, 716, 138, 34, KC.MUTE)
+		kit.text(g, kit.upper(T.choose:format(slot.name)), 718, 162, 12, KC.MUTE, "start", 1.2)
+		act.sub = kit.upper(T.empty)
+		return act
 	end
 	local info = equip.BY_ID[set]
 	local level = wallet.level(s.prof, set, slot.id)
-	local t = ui.title(T.piece:format(slot.name, info.name), left, top - 32, 0.75, ui.C.TEXT, pan)
-	gui.set_pivot(t, gui.PIVOT_W)
-	t = ui.title(T.of_max:format(level, equip.LIVELLO_MAX), w / 2 - 20, top - 32, 0.85, grade_color(level), pan)
-	gui.set_pivot(t, gui.PIVOT_E)
-	t = ui.text(T.grade:format(ROMAN[equip.tier(level)], T.grades[equip.tier(level)], effects(info.pieces[slot.id])),
-		left, top - 64, 0.6, grade_color(level), pan)
-	gui.set_pivot(t, gui.PIVOT_W)
-	track(level, left + 10, w - 60, top - 108, pan)
+	local name = kit.text(g, T.piece:format(slot.name, info.name), 716, 138, 34, KC.SAND)
+	-- a long name shrinks: the stats column starts right after
+	local wide = kit.width(name)
+	if wide > 268 then gui.set_scale(name, gui.get_scale(name) * (268 / wide)) end
+	kit.text(g, kit.upper(T.grade:format(ROMAN[equip.tier(level)], T.grades[equip.tier(level)], effects(info.pieces[slot.id]))),
+		718, 162, 12, KC.MUTE, "start", 1.2)
+	for l = 1, equip.LIVELLO_MAX do
+		local big = equip.PROOF[l] ~= nil
+		kit.para(g, 716 + (l - 1) * 7.6, big and 176 or 180, 5, big and 24 or 16, 3, l <= level and grade_color(level) or KC.TRACK)
+	end
+	kit.text(g, T.of_max:format(level, equip.LIVELLO_MAX), 950, 196, 15, grade_color(level))
 
-	-- the next level
+	-- the next level: what it is, the Proof if it is a step, the price on the action
 	local n = wallet.next(s.prof, set, slot.id)
-	local y = top - 200
 	if not n then
-		t = ui.title(T.at_max, left, y, 0.7, ui.C.BRACE, pan)
-		gui.set_pivot(t, gui.PIVOT_W)
+		kit.text(g, T.at_max, 718, 224, 12, KC.HOT_TOP, "start", 1.2)
+		act.sub = T.at_max
 	else
 		local step = n.proof > 0
-		t = ui.text(step and T.next_step:format(n.level, ROMAN[equip.tier(n.level)], T.grades[equip.tier(n.level)])
-			or T.next_level:format(n.level), left, y + 26, 0.6, step and ui.C.GOLD or ui.C.OFF, pan)
-		gui.set_pivot(t, gui.PIVOT_W)
+		kit.text(g, kit.upper(step and T.next_step:format(n.level, ROMAN[equip.tier(n.level)], T.grades[equip.tier(n.level)])
+			or T.next_level:format(n.level)), 718, 224, 12, step and KC.HOT_TOP or KC.MUTE, "start", 1.2)
 		local ready = n.proof_done >= n.proof
 		local enough = s.prof.scaglie >= n.cost
-		if step and not ready then
-			-- the Proof: matches still to play wearing the piece
-			t = ui.text(T.proof:format(n.proof_done, n.proof), left, y - 8, 0.65, ui.C.TEXT, pan)
-			gui.set_pivot(t, gui.PIVOT_W)
-			local bar = ui.bar(left + 150, y - 36, 300, 8, ui.C.GOLD, pan)
-			ui.bar_value(bar, n.proof_done / n.proof)
-		else
-			local bw = 260
-			local b = ui.button(s.buttons, left + bw / 2, y - 22, bw, 60, "", "potenzia", { spento = not enough }, pan)
-			ui.title(T.upgrade, -28, 0, 0.7, enough and ui.C.TEXT or ui.C.OFF, b)
-			coins.icon("scaglia", 62, 0, 28, b)
-			t = ui.title(coins.format(n.cost), 80, 0, 0.7, enough and ui.C.GOLD or ui.C.OFF, b)
-			gui.set_pivot(t, gui.PIVOT_W)
-			if not enough then
-				t = ui.text(T.missing:format(coins.format(n.cost - s.prof.scaglie)), left + bw + 20, y - 22, 0.6, ui.C.OFF, pan)
-				gui.set_pivot(t, gui.PIVOT_W)
-			end
+		if step then
+			kit.info(g, 716, 244, 270, 54, KC.PURPLE)
+			kit.text(g, T.proof_name, 740, 266, 12, KC.MUTE, "start", 1.5)
+			kit.text(g, kit.upper(T.proof:format(n.proof_done, n.proof)), 738, 286, 11, KC.SAND, "start", 0.5)
+			kit.bar(g, 880, 258, 90, 8, math.min(1, n.proof_done / n.proof), KC.MINT)
+		elseif n.cost < n.full_cost then
+			kit.info(g, 716, 244, 270, 54, KC.HOT)
+			kit.text(g, T.smith_name, 740, 266, 12, KC.MUTE, "start", 1.5)
+			kit.text(g, kit.upper(T.smith_hand:format(coins.format(n.full_cost))), 738, 286, 11, KC.SAND, "start", 0.5)
 		end
-		if n.cost < n.full_cost then
-			t = ui.text(T.smith_hand:format(coins.format(n.full_cost)), left, y - 70, 0.55, ui.C.OFF, pan)
-			gui.set_pivot(t, gui.PIVOT_W)
-		end
+		act.off = not (ready and enough)
+		act.sub = not ready and kit.upper(T.proof_first) or not enough and kit.upper(T.missing:format(coins.format(n.cost - s.prof.scaglie)))
+			or T.price:format(coins.format(n.cost), n.level)
 	end
 
 	-- the set bonus with all four pieces, variant B with all of them at 30
 	local id, top_all = equip.full_set(a.gear, wallet.tiers(s.prof, a))
 	local bonus = id and equip.BY_ID[id].bonus
 	if bonus then
-		local by = -h / 2 + 62
-		t = ui.title(T.set_bonus:format(equip.BY_ID[id].name), left, by + 30, 0.55, ui.C.BRACE, pan)
-		gui.set_pivot(t, gui.PIVOT_W)
+		kit.text(g, T.variant, 718, 330, 12, KC.MUTE, "start", 1.5)
 		for i, v in ipairs({ "a", "b" }) do
-			local yy = by - (i - 1) * 36
+			local x = 790 + (i - 1) * 62
 			local ok = v == "a" or top_all
-			ui.tab(s.buttons, left + 22, yy - 4, 44, 32, string.upper(v), "variante:" .. v, a.variant == v and ok, pan)
-			t = ui.text(ok and bonus[v].desc or TA.locked_bonus:format(bonus[v].desc, equip.LIVELLO_MAX), left + 56, yy - 4, 0.55,
-				ok and ui.C.TEXT or ui.C.OFF, pan)
-			gui.set_pivot(t, gui.PIVOT_W)
+			local on = a.variant == v and ok
+			if on then kit.para(g, x, 310, 48, 36, 10, KC.SAND) end
+			kit.text(g, string.upper(v), x + 28, 335, 18, on and KC.INK or kit.with_alpha(KC.SAND, ok and 0.85 or 0.4), "middle")
+			kit.zone(g, s.buttons, x, 304, 58, 48, "variante:" .. v)
 		end
+		if not top_all then kit.text(g, T.at_level:format(equip.LIVELLO_MAX), 912, 334, 11, KC.MUTE, "start", 1) end
+		local v = (a.variant == "b" and top_all) and "b" or "a"
+		kit.text(g, kit.upper(T.set_bonus:format(equip.BY_ID[id].name) .. ": " .. bonus[v].desc), 712, 512, 11, KC.MUTE, "start", 1)
 	end
+	return act
 end
 
--- at the bottom, the sets for the chosen slot: tap to wear (tap again: take off)
-local function others(s, parent)
+-- the sets for the chosen slot: a choice, tap to wear (tap again: take off)
+local function others(s)
+	local g = s.kg
 	local a = active(s)
-	local slot = s.slot
-	local y = ui.EDGE + 30
-	local x = ui.EDGE
-	local t = ui.text(T.others, x, y, 0.6, ui.C.OFF, parent)
-	gui.set_pivot(t, gui.PIVOT_W)
-	x = x + 130
-	local bw = (s.w - 130 - 3 * 10) / #equip.SETS
-	for _, set in ipairs(equip.SETS) do
-		local level = wallet.level(s.prof, set.id, slot)
-		ui.tab(s.buttons, x + bw / 2, y, bw, 48, T.set_level:format(set.name, level), "indossa:" .. set.id,
-			a.gear[slot] == set.id, parent)
-		x = x + bw + 10
+	kit.text(g, T.others, 718, 378, 12, KC.MUTE, "start", 1.5)
+	for i, set in ipairs(equip.SETS) do
+		local col, line = (i - 1) % 2, math.floor((i - 1) / 2)
+		local x, y = 716 + col * 140 - line * 6, 390 + line * 52
+		local level = wallet.level(s.prof, set.id, s.slot)
+		local on = a.gear[s.slot] == set.id
+		if on then kit.para(g, x, y, 126, 40, 12, KC.SAND) end
+		kit.text(g, T.set_level:format(set.name, level), x + 68, y + 27, 14, on and KC.INK or kit.with_alpha(KC.SAND, 0.85), "middle")
+		kit.zone(g, s.buttons, x, y - 6, 138, 52, "indossa:" .. set.id)
 	end
 end
 
-function M.build(s, parent)
+function M.build(s)
 	s.slot = s.slot or equip.SLOTS[1].id
-	slots(s, parent)
-	detail(s, parent)
-	others(s, parent)
+	slots(s)
+	local act = detail(s)
+	others(s)
+	-- the one action: POTENZIA, with the price under it (or what is missing)
+	s.action = kit.action(s.right, act.label, 930, 560, 270, 84, { size = 44, off = act.off, sub = act.sub })
+	kit.button(s.buttons, s.action, "potenzia", { main = true, spento = act.off })
 end
 
 function M.run(s, kind, arg)

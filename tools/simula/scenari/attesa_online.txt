@@ -8,7 +8,7 @@ imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 1
-tocca_bordo 205 235 basso destra                     # STESSO TELEFONO
+tocca_bordo 222 148 mezzo sinistra                     # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 00_partita_prima
@@ -17,9 +17,9 @@ aspetta 0.3
 tocca_bordo 408 62 alto sinistra                      # ESCI DALLA PARTITA
 aspetta_stato modo=menu 3
 aspetta 1
-tocca_bordo 205 102 basso destra                     # GIOCA
+tocca_bordo 244 400 mezzo destra                     # GIOCA
 aspetta 0.5
-tocca_centro 368 300                      # DOVE GIOCHI?: 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 4                           # il finto è entrato: due cartellini su quattro
 foto 01_ricerca                     # la sala: il mio cartellino, quello del finto, due posti IN ARRIVO
@@ -31,13 +31,13 @@ aspetta_stato modo=menu 3
 aspetta 1
 foto 03_home
 # di nuovo in coda, e si esce col bottone ESCI DALLA CODA in basso
-tocca_bordo 205 102 basso destra                     # GIOCA
+tocca_bordo 244 400 mezzo destra                     # GIOCA
 aspetta 0.5
-tocca_centro 368 300                      # 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1.5
 foto 04_ricerca_di_nuovo
-tocca_centro 860 44                       # ESCI DALLA CODA
+tocca_centro 1127 79                       # ESCI DALLA CODA
 aspetta_stato modo=menu 3
 aspetta 1
 foto 05_home_dal_bottone

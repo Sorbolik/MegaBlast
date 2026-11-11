@@ -7,12 +7,11 @@ imposta prova_profilo 1
 
 aspetta 1.5
 foto 00_home
-tocca 1060 415                      # ALLENAMENTO
+tocca 254 346                      # ALLENAMENTO
 aspetta 1
-tocca 640 460                       # 2 CONTRO 2
-tocca 640 140                       # AVANTI
+tocca 761 470                       # 2 CONTRO 2
 aspetta 0.3
-tocca 640 140                       # GIOCA
+tocca_bordo 215 118 basso destra    # GIOCA
 foto 00_allenamento
 aspetta_stato modo=local 30
 foto 01_inizio_0s

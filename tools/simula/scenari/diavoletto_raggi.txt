@@ -1,0 +1,19 @@
+# IL TUO DIAVOLETTO nello stile Raggi (Figma 04-07): dalla home toccando il
+# diavoletto. Schede sulla guida: SCHEDA 501 596, SIGILLI 635 596,
+# STATISTICHE 802 596, PARTITE 969 596; indietro in basso a sinistra (36 60).
+imposta prova_profilo 1
+aspetta 1.5
+tocca_centro 640 330                       # il diavoletto
+aspetta 0.8
+foto 01_scheda
+tocca_centro 635 596                       # SIGILLI
+aspetta 0.4
+foto 02_sigilli
+tocca_centro 802 596                       # STATISTICHE
+aspetta 0.4
+foto 03_statistiche
+tocca_centro 969 596                       # PARTITE
+aspetta 0.4
+foto 04_partite
+tocca_bordo 36 60 basso sinistra                     # indietro
+aspetta_stato modo=menu 3

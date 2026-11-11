@@ -13,16 +13,16 @@ aspetta 2
 tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
 aspetta 0.5
 foto 01_impostazioni
-tocca_centro 256 546                # MIRA: MIRINO
-tocca_centro 395 386                # SALTA: aspetta il tasto
+tocca_centro 315 548                # MIRA: MIRINO
+tocca_centro 686 494                # SALTA: aspetta il tasto
 aspetta 0.3
 foto 02_premi_un_tasto
 pad a                               # SALTA su CROCE (A), il teletrasporto va su CROCE SU
 aspetta 0.3
-tocca_centro 395 440                # SPARA
+tocca_centro 690 552                # SPARA
 pad b                               # SPARA su CERCHIO, il BARATTO prende R2
 aspetta 0.3
-tocca_centro 395 332                # PRIMARIA DOPO
+tocca_centro 682 436                # PRIMARIA DOPO
 pad start                           # Start annulla: resta L1
 aspetta 0.3
 foto 03_salta_e_spara
@@ -36,13 +36,13 @@ aspetta 0.3
 foto 05_tolto
 pad a                               # di nuovo: aspetta il tasto
 pad a                               # SALTA su A
-tocca_centro 869 546               # POTENZA: GRILLETTO
+tocca_centro 327 372               # POTENZA: GRILLETTO
 aspetta 0.3
 foto 06_grilletto
 pad b                               # B (CERCHIO) torna indietro
 aspetta_stato modo=menu 3
 aspetta 0.5
-tocca_bordo 218 216 basso destra    # STESSO TELEFONO
+tocca_bordo 222 148 mezzo sinistra    # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 pad dx_su 0.4                       # la levetta in su non salta più

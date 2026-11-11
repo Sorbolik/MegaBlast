@@ -7,9 +7,9 @@
 --           the map loads, then Favilla's flame (the entry's paper disc) flickers,
 --           swells and bursts into sparks, and the hole opens on the map from it
 --           (about 0.55 s after the load). A tap jumps to the burst
---   slide   between menus: the old screen slides 7% to the left and fades
---           into the charcoal, the new one comes from the right (80 + 80 ms);
---           the other way round when going back
+--   tent    between menus: a slanted yellow panel with a sand edge crosses the
+--           screen in front of everything (240 + 300 ms) and behind it the scene
+--           changes; from the other side when going back
 -- While a transition runs the game doesn't listen to taps (is_active).
 -- After the scene change the veil stays closed HOLD_FRAMES more frames: the change
 -- frame (paintings, mask, the new screen's nodes) is long, and often the one
@@ -21,8 +21,7 @@
 --   passaggio.iris(p, change)                      -- change(): the new scene
 --   passaggio.flame(p, change, done)               -- done(): the map is uncovered
 --   passaggio.skip(p)                              -- a tap during the flame
---   passaggio.slider(p, old_ones, change, toward)  -- old_ones: the root nodes of the
---        current screen; change() returns the new one's; toward 1 forward, -1 back
+--   passaggio.tent(p, change, toward)              -- toward 1 forward, -1 back
 --   passaggio.is_active(p)
 
 local screen = require "ui.screen"
@@ -33,8 +32,7 @@ local M = {}
 
 local W, H = 1280, 720
 M.IRIS = 0.15           -- seconds to close, and to open again
-M.SLIDE = 0.08          -- half of the slide
-M.SHIFT = W * 0.07      -- how far a screen slides
+M.TENT_IN, M.TENT_OUT = 0.24, 0.3   -- the tent covers the screen, then leaves
 M.HOLD_FRAMES = 3       -- frames with the screen covered after the scene change
 -- the flame: it lights (from small, with a flicker), swells, bursts while the hole opens
 M.FLAME_IN, M.FLAME_SWELL, M.FLAME_OPEN = 0.16, 0.14, 0.24
@@ -42,6 +40,9 @@ M.FLAME_D = 140         -- the disc's diameter
 M.SPARKS = 10
 local FLAME_CARD = vmath.vector4(0.94, 0.9, 0.82, 1)
 local EMBER = vmath.vector4(1, 0.55, 0.16, 1)
+local TENT = vmath.vector4(1, 0.74, 0.1, 1)             -- #ffbd1a, the action's yellow (ui/kit.lua)
+local TENT_EDGE = vmath.vector4(0.96, 0.89, 0.75, 1)    -- sand
+local TENT_DARK = vmath.vector4(0.09, 0.043, 0.047, 0.55)
 
 function M.new()
 	local n = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(W * screen.FULL, H * screen.FULL, 0))
@@ -68,17 +69,20 @@ local function flame_nodes(p)
 	return f
 end
 
+-- (while the tent leaves, the new screen is there and listens already)
 function M.is_active(p)
-	return p.n ~= nil
+	return p.n ~= nil and not p.leaving
 end
 
 -- on top of everything, even of the nodes created just now
 local function over_it(p)
 	gui.move_above(p.nodo, nil)
+	if p.tent and gui.is_enabled(p.tent.nodo) then gui.move_above(p.tent.nodo, nil) end
 end
 
 local function begin(p, r, g, a)
 	p.n = (p.n or 0) + 1
+	p.leaving = nil
 	-- a new transition starts from an uncovered screen (even if one was waiting)
 	frames.covered = false
 	local c = p.colore
@@ -90,6 +94,7 @@ local function begin(p, r, g, a)
 end
 
 local function end_of(p)
+	p.leaving = nil
 	gui.set_enabled(p.nodo, false)
 	frames.covered = false
 	p.n = nil
@@ -192,49 +197,57 @@ function M.skip(p)
 	if p.on_skip then p.on_skip() end
 end
 
--- moves the nodes by dx (with an animation lasting t) and returns where they were
-local function move(nodes, dx, t, easing)
-	local was = {}
-	for i, n in ipairs(nodes) do
-		local x = gui.get_position(n).x
-		was[i] = x
-		if t > 0 then
-			gui.animate(n, "position.x", x + dx, easing, t)
-		else
-			local pos = gui.get_position(n)
-			pos.x = x + dx
-			gui.set_position(n, pos)
-		end
+local TENT_W = 2100     -- covers the widest screen, slanted
+-- the tent's nodes, made the first time it is used: a slanted panel in the
+-- action's color with a sand edge on both sides and a dark line inside
+local function tent_nodes(p)
+	if p.tent then return p.tent end
+	local t = {}
+	t.nodo = gui.new_box_node(vmath.vector3(W / 2, H / 2, 0), vmath.vector3(0, 0, 0))
+	gui.set_visible(t.nodo, false)
+	gui.set_adjust_mode(t.nodo, gui.ADJUST_FIT)
+	local tall = H * 2.2
+	local function band(x, w, color)
+		local n = gui.new_box_node(vmath.vector3(x, 0, 0), vmath.vector3(w, tall, 0))
+		gui.set_color(n, color)
+		gui.set_parent(n, t.nodo)
+		return n
 	end
-	return was
+	-- wide enough for every screen (the real one may be wider than 1280)
+	local wide = TENT_W
+	band(0, wide, TENT)
+	for _, side in ipairs({ -1, 1 }) do
+		band(side * (wide / 2 - 70), 14, TENT_DARK)
+		band(side * (wide / 2 + 13), 26, TENT_EDGE)
+	end
+	gui.set_rotation(t.nodo, vmath.vector3(0, 0, -14))
+	gui.set_enabled(t.nodo, false)
+	p.tent = t
+	return t
 end
 
-local function put_back(nodes, was)
-	for i, n in ipairs(nodes) do
-		gui.cancel_animations(n, "position.x")
-		local pos = gui.get_position(n)
-		pos.x = was[i]
-		gui.set_position(n, pos)
-	end
-end
-
-function M.slider(p, old_ones, change, toward)
+-- Between two menus (Sergio, 11 Nov: «transizioni fighe, soprattutto questa con
+-- l'overlay che passa davanti»): the tent crosses the screen, and behind it the
+-- scene changes. toward 1: from left to right; -1 (going back): the other way
+function M.tent(p, change, toward)
 	toward = toward or 1
+	local t = tent_nodes(p)
 	begin(p, 0, 1, 0)
-	local was = move(old_ones, -toward * M.SHIFT, M.SLIDE, gui.EASING_INQUAD)
-	gui.animate(p.nodo, "color.w", 1, gui.EASING_INQUAD, M.SLIDE, 0, function()
-		-- the old nodes go back in place (the home is reused), then the scene changes
-		put_back(old_ones, was)
-		-- here too the new screen arrives three frames later, under the full veil
-		covered(p, function()
-			local news = change() or {}
-			return { news, move(news, toward * M.SHIFT, 0) }
-		end, function(n)
-			for i, gui_node in ipairs(n[1]) do
-				gui.animate(gui_node, "position.x", n[2][i], gui.EASING_OUTQUAD, M.SLIDE)
-			end
-			gui.animate(p.nodo, "color.w", 0, gui.EASING_OUTQUAD, M.SLIDE, 0, function()
-				end_of(p)
+	gui.set_enabled(t.nodo, true)
+	gui.move_above(t.nodo, nil)
+	gui.cancel_animations(t.nodo, "position.x")
+	local pos = gui.get_position(t.nodo)
+	local far = TENT_W / 2 + screen.width() / 2 + 240
+	pos.x = W / 2 - toward * far
+	gui.set_position(t.nodo, pos)
+	gui.animate(t.nodo, "position.x", W / 2, gui.EASING_INSINE, M.TENT_IN, 0, function()
+		covered(p, change, function()
+			local k = p.n
+			p.leaving = true
+			gui.animate(t.nodo, "position.x", W / 2 + toward * far, gui.EASING_OUTSINE, M.TENT_OUT, 0, function()
+				gui.set_enabled(t.nodo, false)
+				-- (unless another transition started meanwhile: that one ends it)
+				if p.n == k then end_of(p) end
 			end)
 		end)
 	end)

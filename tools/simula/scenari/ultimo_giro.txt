@@ -10,7 +10,7 @@ imposta prova_vicino 50
 imposta prova_durata 30
 
 aspetta 2
-tocca_bordo 205 235 basso destra    # STESSO TELEFONO (attaccato all'angolo)
+tocca_bordo 222 148 mezzo sinistra    # STESSO TELEFONO (attaccato all'angolo)
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 01_inizio_avviso

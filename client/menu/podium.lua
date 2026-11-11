@@ -1,10 +1,11 @@
 -- End-of-match podium (redone 10 Nov, Sergio: "del podio di oggi puoi rifare
--- tutto"). On the left the result and the steps: on each one the player's
--- Scoria in their team color, place, name, match points (the sim's
--- g:results()) and under it the awards they took (sim/awards.lua); the MVP has
--- a gold tag over the head. On the right the receipt of whoever plays on this
--- phone (ui/receipt.lua): every line of the experience and the coins, the totals, the level
--- and, with a new level, METTI I PUNTI that takes you to the Sigilli.
+-- tutto"; drawn with ui/kit.lua, Figma coordinates). On the left the result on
+-- a light plate and the steps, one per team (in free-for-all one per player):
+-- on each the devils of that team with their names, the points and the awards
+-- they took (sim/awards.lua); the MVP has a gold tag over the head. On the
+-- right the receipt of whoever plays on this phone (ui/receipt.lua): every line
+-- of the experience and the coins, the totals, the level and, with a new
+-- level, METTI I PUNTI that takes you to the Sigilli.
 --
 -- Use (from the gui_script):
 --   local p = podio.new(results, giocatori, me, gain, prof, numero)
@@ -20,7 +21,7 @@
 --   podio.destroy(p)
 
 local ui = require "ui.ui"
-local backdrop = require "ui.backdrop"
+local kit = require "ui.kit"
 local scoria = require "battle.scoria"
 local game = require "sim.game"
 local awards = require "sim.awards"
@@ -31,139 +32,176 @@ local common = require("lang.text").common
 
 local M = {}
 
--- steps from left to right, by standings position: 2nd, 1st, 3rd, 4th
--- (in 2 vs 2 teammates share the place: the winning pair is in the middle)
-M.ORDINE = { 2, 1, 3, 4 }
-M.HEIGHT = { 150, 112, 88, 68 }   -- height of each place
-M.WIDE, M.STEP = 152, 164         -- step width and distance between centers
-M.CENTER_X = 420                  -- the middle of the podium (the receipt is on the right)
-M.BASE_Y_POS = 120                -- where the steps rest (under them the awards)
-M.SCORIA_H = 104                  -- the Scoria on the step, in pixels
-M.RECEIPT_X, M.RECEIPT_TOP = 1040, 616   -- under the wallet pill
+local KC = kit.C
+-- how tall a step is by place (two steps: the second lower), where they rest
+M.HEIGHT = { 221, 171, 131, 101 }
+M.HEIGHT_TWO = { 221, 141 }
+M.FLOOR = 661
 -- entrance timing: the steps rise one after the other, then the awards
 M.RISE, M.DELAY, M.REWARDS = 0.45, 0.18, 1.0
+local CHIP_COLORS = { KC.HOT, KC.PURPLE, KC.STEEL, KC.MINT }
 
 local MODES_LIST = T.modes
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
-local function stair(p, x, voice, i, prizes, mvp)
-	local c = ui.C
-	local g = p.giocatori[voice.robot] or { nome = "?", colore = c.TEXT }
-	local h = M.HEIGHT[voice.place] or M.HEIGHT[#M.HEIGHT]
-	-- the step grows from the bottom: it sits in an empty node at the base, which stretches
-	local base = gui.new_box_node(vec(x, M.BASE_Y_POS), vec(0, 0))
-	gui.set_visible(base, false)
-	gui.set_parent(base, p.radice)
-	-- the step's border in the team color, like the tags in the lineup
-	local block, edge = ui.panel(0, h / 2, M.WIDE, h, base)
-	gui.set_color(edge, g.colore)
-	local top = h / 2
-	ui.title(tostring(voice.place), 0, top - 30, 0.9, voice.place == 1 and c.GOLD or c.TEXT, block)
-	ui.text(g.nome, 0, top - 60, 0.85, g.colore, block)
-	ui.text(T.points:format(voice.points or 0), 0, top - 82, 0.7, c.OFF, block)
-	gui.set_scale(base, vmath.vector3(1, 0.01, 1))
-	local delay = (i - 1) * M.DELAY
-	gui.animate(base, "scale.y", 1, gui.EASING_OUTBACK, M.RISE, delay)
+-- an empty node at (x, y) of the kit, with its group: what is drawn in it
+-- scales and pops around that point
+local function holder(p, x, y)
+	local n = gui.new_box_node(vec(x, 720 - y), vec(0, 0))
+	gui.set_visible(n, false)
+	gui.set_parent(n, p.radice)
+	return { node = n, ox = x, oy = y }
+end
 
-	-- the Scoria drops onto the step once it has risen
-	local land = M.BASE_Y_POS + h
-	local pose = gui.new_box_node(vec(x, land + 260), vec(0, 0))
-	gui.set_visible(pose, false)
-	gui.set_parent(pose, p.radice)
-	local k = M.SCORIA_H / game.DISEGNO_H
-	gui.set_scale(pose, vmath.vector3(k, k, 1))
-	gui.animate(pose, "position.y", land, gui.EASING_INQUAD, 0.3, delay + M.RISE * 0.7)
-	local s = scoria.new(g.colore, scoria.PERSONAGGIO)
-	gui.set_parent(s.root, pose)
-	scoria.set_enabled(s, true)
-	-- the MVP's tag over the head, once everyone is up
-	if mvp then
-		local n = gui.new_box_node(vec(x, land + M.SCORIA_H + 34), vec(84, 30))
-		gui.set_color(n, c.GOLD)
-		gui.set_parent(n, p.radice)
-		ui.title(T.mvp, 0, 0, 0.5, c.BOTTOM, n)
-		gui.set_scale(n, vec(0.01, 0.01))
-		gui.animate(n, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.3, M.REWARDS)
+local function pop(n, delay)
+	gui.set_scale(n, vec(0.01, 0.01))
+	gui.animate(n, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.3, delay)
+end
+
+-- A step: block = { members (ranking rows), points, place }; x, w, h in the kit
+local function stair(p, block, i, count, x, w, h, per_robot, mvp, team_mode)
+	local y = M.FLOOR - h
+	local first_one = p.giocatori[block.members[1].robot] or { nome = "?", colore = KC.SAND }
+	local color = first_one.colore
+	local delay = (count - i) * M.DELAY
+	-- the step grows from the floor
+	local base = holder(p, x + w / 2, M.FLOOR)
+	kit.plate(base, x, y, w, h, color, { sk = 0, d = 10 })
+	local size = h >= 200 and 84 or h >= 140 and 54 or 40
+	local line = h >= 200 and y + 100 or h >= 140 and y + 60 or y + 48
+	kit.text(base, tostring(block.points), x + w / 2, line, size, KC.SAND, "middle")
+	local name = team_mode and first_one.nome:gsub(" %d$", "") or first_one.nome
+	local under = kit.text(base, kit.upper(name), x + w / 2, line + (h >= 200 and 34 or h >= 140 and 24 or 20),
+		h >= 200 and 16 or 13, color, "middle", 2)
+	local wide = kit.width(under)
+	if wide > w - 24 then
+		local sc = gui.get_scale(under)
+		gui.set_scale(under, vec(sc.x * (w - 24) / wide, sc.y * (w - 24) / wide))
 	end
-	-- the awards under the step
-	for j, aw in ipairs(prizes or {}) do
-		-- in an empty node: the pop animates that, not the text's own scale
-		local n = gui.new_box_node(vec(x, M.BASE_Y_POS - 22 - (j - 1) * 26), vec(0, 0))
-		gui.set_visible(n, false)
-		gui.set_parent(n, p.radice)
-		ui.text(aw.name, 0, 0, 0.7, c.GOLD, n)
-		gui.set_scale(n, vec(0.01, 0.01))
-		gui.animate(n, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.3, M.REWARDS + 0.1 * j)
+	gui.set_scale(base.node, vmath.vector3(1, 0.01, 1))
+	gui.animate(base.node, "scale.y", 1, gui.EASING_OUTBACK, M.RISE, delay)
+
+	-- the devils drop onto the step once it has risen
+	local n = #block.members
+	local tall = (i == 1 and 143 or 126) * (w < 200 and 0.85 or 1)
+	local chips = {}
+	for k, voice in ipairs(block.members) do
+		local g = p.giocatori[voice.robot] or { nome = "?", colore = KC.SAND }
+		local cx = x + w * (2 * k - 1) / (2 * n) - (n > 1 and 6 or 0)
+		local land = 720 - y - 4
+		local pose = gui.new_box_node(vec(cx, land + 260), vec(0, 0))
+		gui.set_visible(pose, false)
+		gui.set_parent(pose, p.radice)
+		local sc = tall / game.DISEGNO_H
+		gui.set_scale(pose, vmath.vector3(sc, sc, 1))
+		gui.animate(pose, "position.y", land, gui.EASING_INQUAD, 0.3, delay + M.RISE * 0.7)
+		local s = scoria.new(g.colore, scoria.PERSONAGGIO)
+		gui.set_parent(s.root, pose)
+		scoria.set_enabled(s, true)
+		p.figure[#p.figure + 1] = { s = s, posa = pose,
+			st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, turno = true, vittoria = block.place == 1 } }
+		-- over the head the name (a team's step has its name on it) and the MVP's tag
+		local head = y - tall * 1.32
+		local is_mvp = voice.robot == mvp
+		if team_mode or is_mvp then
+			local over = holder(p, cx, head - 14)
+			if is_mvp then
+				kit.para(over, cx - 46, head - 18, 84, 26, 8, KC.HOT)
+				kit.text(over, T.mvp, cx, head + 1, 15, KC.INK, "middle", 1.5)
+			end
+			if team_mode then kit.text(over, kit.upper(g.nome), cx, head - (is_mvp and 26 or 8), 13, KC.SAND, "middle", 1) end
+			pop(over.node, M.REWARDS)
+		end
+		for _, aw in ipairs(per_robot[voice.robot] or {}) do chips[#chips + 1] = aw.name end
+		-- tapping the devil, their tag
+		if g.vetrina then kit.zone({ node = p.radice, ox = 0, oy = 720 }, p.buttons, cx - 56, head, 112, tall * 1.32 + 30, "carta:" .. voice.robot) end
 	end
-	-- tapping step or devil, their tag
-	if g.vetrina then
-		local zone = gui.new_box_node(vec(x, M.BASE_Y_POS + (h + M.SCORIA_H + 30) / 2), vec(M.WIDE, h + M.SCORIA_H + 30))
-		gui.set_visible(zone, false)
-		gui.set_parent(zone, p.radice)
-		p.buttons[#p.buttons + 1] = { nodo = zone, bordo = zone, ui_action = "carta:" .. voice.robot, colore = c.LIGHT, riposo = c.LIGHT }
+
+	-- the awards on the step, as many as fit
+	local cx, cy = x + 20, line + (h >= 200 and 60 or 40)
+	for j, t in ipairs(chips) do
+		local wide_chip = #t * 9 + 34
+		if cx + wide_chip > x + w and cx > x + 20 then cx, cy = x + 20, cy + 28 end
+		if cy + 24 > M.FLOOR - 4 then break end
+		local c = holder(p, cx + wide_chip / 2, cy + 11)
+		kit.label(c, cx, cy, t, CHIP_COLORS[(j - 1) % #CHIP_COLORS + 1], true)
+		pop(c.node, M.REWARDS + 0.1 * j)
+		cx = cx + wide_chip
 	end
-	p.figure[#p.figure + 1] = { s = s, posa = pose,
-		st = { x = 0, y = 0, facing = x < M.CENTER_X and 1 or -1, grounded = true, moving = 0, turno = true,
-			vittoria = voice.place == 1 } }
 end
 
 -- results.winner: the winning team, nil on a tie
 local function title(p, results, first)
-	local c = ui.C
-	local g = p.giocatori[first.robot] or { nome = "?", colore = c.TEXT }
-	local label, color = T.tie, c.TEXT
+	local g = p.giocatori[first.robot] or { nome = "?" }
+	local label = T.tie
 	if results.winner and p.me then
 		local my_team
 		for _, v in ipairs(results.ranking) do
 			if v.robot == p.me then my_team = v.team end
 		end
-		local won = results.winner == my_team
-		label = won and T.victory or T.defeat
-		color = won and c.GOLD or c.TEXT
+		label = results.winner == my_team and T.victory or T.defeat
 	elseif results.winner then
 		-- in 2 vs 2 the team wins: the name without the teammate's number
-		label = T.wins:format(string.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome))
-		color = g.colore
+		label = T.wins:format(kit.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome))
 	end
-	ui.title(label, M.CENTER_X, 650, 1.3, color, p.radice)
-	ui.text(MODES_LIST[results.mode] or "", M.CENTER_X, 606, 0.8, c.OFF, p.radice)
+	local gg = { node = p.radice, ox = 0, oy = 720 }
+	kit.sand(gg, 30, 36, 420, 104, KC.HOT, { sk = 34, d = 14 })
+	local t = kit.text(gg, label, 64, 116, 74, KC.INK)
+	local wide = kit.width(t)
+	if wide > 372 then
+		local sc = gui.get_scale(t)
+		gui.set_scale(t, vec(sc.x * 372 / wide, sc.y * 372 / wide))
+	end
+	kit.info(gg, 70, 156, 300, 36, KC.HOT)
+	kit.text(gg, MODES_LIST[results.mode] or "", 220, 181, 16, KC.SAND, "middle", 1)
 end
 
 function M.new(results, giocatori, me, my_gain, prof, number)
 	local p = { giocatori = giocatori, me = me, figure = {}, buttons = {}, t = 0, numero = number }
-	-- background stretched over the whole screen, the rest in a group that adapts (FIT)
-	p.fondo = backdrop.new("raggi")
+	-- a dark sheet and the rays, the rest in a group that adapts (FIT)
+	p.scene = kit.scene(330, 330, { dim = 0.72 })
 	p.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(p.radice, false)
 	local ranking = results.ranking
 	title(p, results, ranking[1])
 
-	-- steps in the order 2nd, 1st, 3rd, 4th, centered by how many there are
-	local lane = {}
-	for _, k in ipairs(M.ORDINE) do
-		if ranking[k] then lane[#lane + 1] = ranking[k] end
+	-- one step per team, in the order of the standings
+	local blocks = {}
+	for _, v in ipairs(ranking) do
+		local last = blocks[#blocks]
+		if last and last.team == v.team then
+			last.members[#last.members + 1] = v
+			last.points = last.points + (v.points or 0)
+		else
+			blocks[#blocks + 1] = { team = v.team, place = v.place, points = v.points or 0, members = { v } }
+		end
 	end
 	local per_robot = awards.assign(ranking)
 	local mvp = awards.mvp(ranking)
-	local x0 = M.CENTER_X - (#lane - 1) * M.STEP / 2
-	for i, v in ipairs(lane) do
-		-- they rise by place: the 4th first, the 1st last
-		stair(p, x0 + (i - 1) * M.STEP, v, #ranking - v.place + 1, per_robot[v.robot], v.robot == mvp)
+	local count = #blocks
+	local team_mode = #ranking > count
+	local heights = count <= 2 and M.HEIGHT_TWO or M.HEIGHT
+	local x = count <= 2 and 110 or 60
+	for i, b in ipairs(blocks) do
+		local w = count <= 2 and (i == 1 and 300 or 270) or count == 3 and 200 or 156
+		stair(p, b, i, count, x, w, heights[b.place] or heights[#heights], per_robot, mvp, team_mode)
+		x = x + w + (count <= 2 and 30 or 14)
 	end
 
 	-- on the right the receipt, under it the buttons
 	if my_gain then
-		p.receipt = receipt.new(my_gain, prof, M.RECEIPT_X, M.RECEIPT_TOP, p.buttons, p.radice)
+		p.receipt = receipt.new(my_gain, prof, 130, p.buttons, p.radice)
 	end
-	local half = receipt.W / 2
+	p.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	if number then
 		-- RIVEDI: straight to this match's replay (then back to the profile)
-		ui.button(p.buttons, M.RECEIPT_X - half + 80, 52, 160, 60, common.replay, "rivedi", nil, p.radice)
-		ui.button(p.buttons, M.RECEIPT_X + 90, 52, half * 2 - 180, 60, T.go_on, "continua", { main = true }, p.radice)
-	else
-		ui.button(p.buttons, M.RECEIPT_X, 52, half * 2, 60, T.go_on, "continua", { main = true }, p.radice)
+		local again = kit.plate(p.right, 740, 584, 160, 56, KC.ROSE, { sk = 14, d = 6 })
+		kit.text(again.g, common.replay, 740 + 87, 584 + 36, 18, KC.SAND, "middle", 0.5)
+		kit.button(p.buttons, again, "rivedi")
 	end
+	local go = kit.action(p.right, T.go_on, 930, 560, 270, 84, { size = 44 })
+	kit.button(p.buttons, go, "continua", { main = true })
 	return p
 end
 
@@ -207,7 +245,8 @@ function M.destroy(p)
 	if p.carta then tag.destroy(p.carta) end
 	if p.receipt then receipt.delete(p.receipt) end
 	gui.delete_node(p.radice)
-	gui.delete_node(p.fondo)
+	gui.delete_node(p.right.node)
+	kit.scene_drop(p.scene)
 end
 
 return M

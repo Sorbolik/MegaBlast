@@ -2,7 +2,7 @@
 # sua x; il dito va giù fino in fondo e appena torna su lo zoom torna (a metà).
 imposta comandi telefono
 aspetta 3
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1.2
 trascina 1210 630 1210 630 0.6 01_tenuto   # tenuto fermo: la guida al posto del pulsante

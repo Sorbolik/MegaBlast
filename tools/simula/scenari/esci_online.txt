@@ -6,9 +6,9 @@ imposta server_url ws://127.0.0.1:8090/ws
 
 aspetta 1
 server 2v2 3
-tocca 1075 102                      # GIOCA
+tocca 1036 400                      # GIOCA
 aspetta 0.5
-tocca 368 300                       # DOVE GIOCHI?: 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=online 30
 aspetta 2
 tocca 62 658                        # rotellina: online la partita non si ferma

@@ -5,7 +5,7 @@
 --
 --   local coins = require "ui.coins"
 --   coins.icon("scaglia" | "ossidiana", x, y, d, parent) -> node
---   local w = coins.wallet(scaglie, ossidiana, parent, x, y)  -- the pill (hidden until the first coin)
+--   local w = coins.wallet(scaglie, ossidiana, parent, x, y)  -- the pill (hidden until the first coin);
 --   coins.set(w, scaglie, ossidiana)
 --   coins.fly(w, kind, from, n, amount, on_arrive)  -- n coins from from (a vector3 in w's
 --                                                    -- parent's space) carry amount into the pill;
@@ -16,6 +16,7 @@
 --   coins.format(n) -> "1.240"
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 
 local M = {}
 
@@ -31,8 +32,6 @@ M.LAYERS = {
 M.COLOR = { scaglia = ui.C.GOLD, ossidiana = ui.C.OBSIDIAN }
 
 -- the wallet pill: as tall as the queue's, the two balances side by side
-M.W, M.H = 250, 52
-local ICON = 30
 -- the flight: one coin every GAP seconds, each FLIGHT long
 M.GAP, M.FLIGHT = 0.04, 0.45
 
@@ -62,16 +61,22 @@ function M.wallet(scaglie, ossidiana, parent, x, y)
 	w.root = gui.new_box_node(vec(x, y), vec(0, 0))
 	gui.set_visible(w.root, false)
 	if parent then gui.set_parent(w.root, parent) end
-	w.panel, w.border = ui.panel(0, 0, M.W, M.H, w.root, "pillola")
 	w.at = {}
-	w.at.scaglia = vec(-M.W / 2 + 30, 0)
-	w.at.ossidiana = vec(M.W / 2 - 100, 0)
-	M.icon("scaglia", w.at.scaglia.x, 0, ICON, w.root)
-	M.icon("ossidiana", w.at.ossidiana.x, 0, ICON, w.root)
 	w.text = {}
-	w.text.scaglia = ui.title("", w.at.scaglia.x + 24, 0, 0.6, ui.C.TEXT, w.root)
-	w.text.ossidiana = ui.title("", w.at.ossidiana.x + 24, 0, 0.6, ui.C.TEXT, w.root)
-	for _, n in pairs(w.text) do gui.set_pivot(n, gui.PIVOT_W) end
+	-- the "Raggi" wallet (ui/kit.lua, Figma): one dark strip to read, no
+	-- frame and no shadow (it is not two buttons), a thin cut between the balances
+	local g = { node = w.root, ox = 1110, oy = 44 }
+	kit.para(g, 966, 26, 204, 36, 10, kit.with_alpha(kit.C.INK, 0.8))
+	kit.line(g, 1085, 31, 1079, 57, 2, kit.with_alpha(kit.C.SAND, 0.3))
+	w.border = gui.new_box_node(vec(0, 0), vec(0, 0))
+	gui.set_visible(w.border, false)
+	gui.set_parent(w.border, w.root)
+	w.at.scaglia = vec(-118, 0)
+	w.at.ossidiana = vec(-6, 0)
+	M.icon("scaglia", -118, 0, 22, w.root)
+	M.icon("ossidiana", -6, 0, 22, w.root)
+	w.text.scaglia = kit.text(g, "", 1008, 51, 18, kit.C.SAND)
+	w.text.ossidiana = kit.text(g, "", 1120, 51, 18, kit.C.SAND)
 	M.set(w, scaglie, ossidiana)
 	return w
 end

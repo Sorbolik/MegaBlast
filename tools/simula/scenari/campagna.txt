@@ -9,15 +9,15 @@ imposta prova_vignette no             # le vignette hanno il loro scenario (vign
 
 aspetta 2
 foto 00_home
-tocca 1062 392                      # CAMPAGNA
+tocca 234 450                      # CAMPAGNA
 aspetta 1
 foto 01_addestramento
-tocca 868 580                       # La Forgia: chiusa
+tocca 740 596                       # La Forgia: chiusa
 aspetta 0.5
 foto 01b_girone_chiuso
-tocca 408 580                       # di nuovo l'Addestramento
+tocca 546 596                       # di nuovo l'Addestramento
 aspetta 0.5
-tocca 200 424                       # Primi passi
+tocca 532 484                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.8
 foto 02_scopo
@@ -35,10 +35,10 @@ aspetta 1.6
 foto 05_fine_livello                # le stelle si accendono
 aspetta 1
 foto 06_stelle_accese
-tocca 62 658                        # la freccia: si torna alla campagna
+tocca_bordo 352 82 basso sinistra   # CAMPAGNA: si torna alla campagna
 aspetta 1
 foto 07_campagna
-tocca 494 424                       # Il mio vecchio Lanciarune
+tocca 736 484                       # Il mio vecchio Lanciarune
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 tocca 62 658                        # la rotellina: ESCI DALLA PARTITA accanto, la missione e' ferma

@@ -22,37 +22,61 @@
 
 local ui = require "ui.ui"
 local tag = require "ui.tag_card"
+local kit = require "ui.kit"
+local game = require "sim.game"
 local T = require("lang.text").lobby
 
 local M = {}
 
-local C = ui.C
-local TOP = 548          -- where a tag starts
-local STEP = 306
 M.TIP_EVERY = 8
 M.BOT_SHOWN = 15
 M.TIPS = T.tips
-local TIP_BAND = vmath.vector4(0, 0, 0, 0.45)
-local TIP_TEXT = vmath.vector4(0.8, 0.9, 0.96, 1)
+local KC = kit.C
+local TEAMS = ui.C.SQUADRA
+local TIP_WIDE = 566
+local TAG_W, TAG_H = 230, 330
+local EMPTY_W, EMPTY_H = 220, 300
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
 
+-- Where each place starts (its left side): four as drawn, a different number in a row at the center
 local function places(n)
 	local xs = {}
-	for i = 1, n do xs[i] = 640 + (i - (n + 1) / 2) * STEP end
+	local x0 = n == 4 and 100 or 640 - (n * 244 + 26) / 2
+	for i = 1, n do xs[i] = i == 1 and x0 or x0 + 26 + (i - 1) * 244 end
 	return xs
 end
 
--- An empty place: the tag's outline, faint, with a ring that breathes
-local function empty_place(x, parent)
-	local h = tag.TALL()
-	local root, border = ui.panel(x, TOP - h / 2, tag.WIDE, h, parent)
-	gui.set_color(root, with_alpha(C.PANEL, 0.55))
-	gui.set_color(border, with_alpha(C.LINE, 0.5))
-	local ring = ui.ring_node(0, 30, 64, 3, with_alpha(C.LIGHT, 0.35), root)
-	local label = ui.text(T.coming, 0, -30, 0.8, C.OFF, root)
-	return { root = root, ring = ring, label = label }
+-- the place's color: the first half of the queue on one side, the rest on the other
+local function side(s, i)
+	return TEAMS[i <= math.ceil(s.of / 2) and 1 or 2]
+end
+
+-- the tip never leaves its row: a long one shrinks
+local function fit_tip(s)
+	gui.set_scale(s.tip, s.tip_scale)
+	local wide = kit.width(s.tip)
+	if wide > TIP_WIDE then gui.set_scale(s.tip, s.tip_scale * (TIP_WIDE / wide)) end
+end
+
+-- An empty place: a dim card with the shadow of who will come and three
+-- notches that light up in turn
+local function empty_place(s, i)
+	local x, y = s.xs[i], 290 + ((i - 1) % 2) * 14
+	local k = kit.card(s.g, x, y, EMPTY_W, EMPTY_H, side(s, i), { sk = 16, off = true })
+	local scoria = require "battle.scoria"
+	local pose = gui.new_box_node(vec(4, EMPTY_H / 2 - 236), vec(0, 0))
+	gui.set_color(pose, vmath.vector4(0, 0, 0, 0.16))
+	gui.set_parent(pose, k.node)
+	local figure = scoria.new(vmath.vector4(0, 0, 0, 1), scoria.PERSONAGGIO)
+	scoria.update(figure, 0, { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true })
+	local sc = 128 / game.DISEGNO_H
+	gui.set_scale(pose, vmath.vector3(sc, sc, 1))
+	gui.set_parent(figure.root, pose)
+	scoria.set_enabled(figure, true)
+	kit.text(k.g, T.coming, x + 118, y + 270, 18, KC.MUTE, "middle", 1.5)
+	return { root = k.node, pips = kit.pips(k.g, x + 96, y + 26, 3, 0, KC.SAND) }
 end
 
 function M.new(of, title, parent_below)
@@ -61,22 +85,39 @@ function M.new(of, title, parent_below)
 	gui.set_visible(s.radice, false)
 	-- the gear and its wheel stay above the room
 	if parent_below then gui.move_below(s.radice, parent_below) end
-	s.testa = gui.new_box_node(vec(640, 640), vec(0, 0))
+	-- the rays behind everything, in the color of the online game
+	s.scene = kit.scene(640, 380, { accent = KC.RED })
+	kit.scene_place(s.scene, "below", s.radice)
+	local g = { node = s.radice, ox = 0, oy = 720 }
+	s.g = g
+	-- what you are doing on a light plate, and under it how it is going
+	s.testa = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(s.testa, false)
 	gui.set_parent(s.testa, s.radice)
-	ui.title(T.searching, 0, 22, 0.75, C.LIGHT, s.testa)
-	s.riga = ui.text("", 0, -22, 0.85, C.OFF, s.testa)
+	local tg = { node = s.testa, ox = 0, oy = 720 }
+	kit.sand(tg, 60, 120, 470, 84, KC.RED, { sk = 26, d = 12 })
+	kit.text(tg, T.searching, 92, 178, 48, KC.INK)
+	kit.info(tg, 90, 222, 440, 38, KC.HOT)
+	s.riga = kit.text(tg, "", 114, 248, 17, KC.SAND, "start", 1)
+	-- the screen's name, next to the gear (it sticks to the real corner like it)
+	s.top = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
+	gui.move_above(s.top.node, s.radice)
+	kit.title(s.top, require("lang.text").queue.title, KC.RED, 112, 76)
 	s.xs = places(of)
-	-- the tip has its own look, not a button's (Sergio, 4 Nov): no border, a
-	-- soft dark band with round ends and Favilla's head on the left, who
-	-- gives the advice
-	local w = 980
-	ui.sagoma("pillola_forma", 640, 110, w, 48, TIP_BAND, s.radice)
-	ui.medal(640 - w / 2 + 28, 110, 34, ui.MEDAL, s.radice)
-	s.tip = ui.text(M.TIPS[1], 640 + 14, 110, 0.8, TIP_TEXT, s.radice)
+	-- the tip: a row to read, next to the plate
+	kit.info(g, 600, 120, 620, 70, KC.PURPLE)
+	kit.text(g, T.tip, 632, 146, 12, KC.HOT_TOP, "start", 1.5)
+	s.tip = kit.text(g, M.TIPS[1], 630, 172, 16, KC.SAND)
+	s.tip_scale = gui.get_scale(s.tip)
+	fit_tip(s)
 	s.buttons = {}
-	s.back = ui.button(s.buttons, 440, 44, 380, 52, T.back_to_menus, "menu", { scala = 0.72 }, s.radice)
-	s.exit = ui.button(s.buttons, 860, 44, 380, 52, T.leave_queue, "esci", { scala = 0.72 }, s.radice)
+	local back = kit.plate(g, 640, 620, 330, 52, KC.ROSE, { sk = 14, d = 6 })
+	kit.text(back.g, T.back_to_menus, 640 + 172, 620 + 32, 16, KC.SAND, "middle", 0.5)
+	kit.button(s.buttons, back, "menu")
+	local exit = kit.plate(g, 1000, 620, 230, 52, KC.ROSE, { sk = 14, d = 6 })
+	kit.text(exit.g, T.leave_queue, 1000 + 122, 620 + 32, 16, KC.SAND, "middle", 0.5)
+	kit.button(s.buttons, exit, "esci")
+	s.back, s.exit = back.node, exit.node
 	s.title = title
 	M.update(s, 0)
 	return s
@@ -90,7 +131,7 @@ function M.players(s, showcases)
 	for i = 1, s.of do
 		local v = showcases[i]
 		if v then
-			local c = tag.new(v, s.xs[i], TOP, { tu = v.tu }, s.radice)
+			local c = tag.small(s.g, v, s.xs[i], 290, TAG_W, TAG_H, { color = side(s, i), sel = false })
 			s.card_list[#s.card_list + 1] = c
 			-- whoever just arrived comes in with a small jump
 			if i > s.n then
@@ -98,7 +139,7 @@ function M.players(s, showcases)
 				gui.animate(c.root, "scale", vec(1, 1), gui.EASING_OUTBACK, 0.25)
 			end
 		else
-			s.empty[#s.empty + 1] = empty_place(s.xs[i], s.radice)
+			s.empty[#s.empty + 1] = empty_place(s, i)
 		end
 	end
 	local arrived = #showcases > s.n and s.n > 0
@@ -134,26 +175,34 @@ function M.update(s, dt)
 	end
 	gui.set_text(s.riga, T.status:format(s.title ~= "" and T.title_sep:format(s.title) or "",
 		s.n, s.of, math.floor(secs / 60), secs % 60, bots))
-	-- the empty rings breathe, all together
-	local a = 0.25 + 0.2 * (0.5 + 0.5 * math.sin(s.t * 3))
-	for _, e in ipairs(s.empty) do gui.set_color(e.ring, with_alpha(C.LIGHT, a)) end
+	-- the notches of the empty places light up one after the other
+	local lit = math.floor(s.t * 2) % 4
+	for _, e in ipairs(s.empty) do
+		for i, n in ipairs(e.pips) do kit.tint(n.parts, i <= lit and KC.SAND or KC.LINE) end
+	end
 	for _, c in ipairs(s.card_list) do tag.update(c, dt) end
 	s.tip_t = s.tip_t + dt
 	if s.tip_t >= M.TIP_EVERY then
 		s.tip_t = 0
 		s.tip_i = s.tip_i % #M.TIPS + 1
 		gui.set_text(s.tip, M.TIPS[s.tip_i])
-		gui.set_color(s.tip, with_alpha(TIP_TEXT, 0))
+		fit_tip(s)
+		gui.set_color(s.tip, with_alpha(KC.SAND, 0))
 		gui.animate(s.tip, "color.w", 1, gui.EASING_OUTQUAD, 0.3)
 	end
 end
 
 function M.wheel_open(s, open)
 	gui.set_enabled(s.testa, not open)
+	gui.set_enabled(s.top.node, not open)
 end
 
 function M.destroy(s)
 	if s.radice then gui.delete_node(s.radice) end
+	if s.scene then kit.scene_drop(s.scene) end
+	s.scene = nil
+	if s.top then gui.delete_node(s.top.node) end
+	s.top = nil
 	s.radice = nil
 end
 

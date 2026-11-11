@@ -33,7 +33,7 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	-- the entry, the transitions between screens and the waiting flame
 	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting",
 	-- the mission's postcard before the flame (ui/postcard.lua)
-	postcard = require "ui.postcard",
+	postcard = require "ui.postcard", kit = require "ui.kit",
 	-- the opening shot of a level, after the flame (ui/intro.lua)
 	intro = require "ui.intro",
 	-- the kind of a mission: its postcard says it the first time (ui/level_types.lua)
@@ -585,6 +585,7 @@ local function show_menu(self, without_veil)
 	home.show(self.home, without_veil)
 	home.queued(self.home, self.queue ~= nil)
 	home.wallet(self.home, self.profilo.scaglie, self.profilo.ossidiana)
+	home.profile(self.home, self.profilo)
 	-- the server's events: the line under EVENTI (and the board, the queue)
 	self.events_t = 0
 	home.events(self.home, menu.eventi.home_line())
@@ -1123,6 +1124,8 @@ function CP.close_entry(self, at_once)
 	self.ingresso = nil
 	home.events(self.home, menu.eventi.home_line())
 	if at_once then menu.ingresso.skip(e) else menu.ingresso.close_view(e) end
+	-- the home makes its entrance now that it is seen
+	if self.mode == "menu" then home.arrive(self.home) end
 end
 
 function CP.entry_update(self, dt)
@@ -1169,20 +1172,15 @@ function CP.wait(self, txt)
 	menu.attesa.display(self.attesa, txt)
 end
 
--- The transitions (ui/transition.lua): the slider between menus, the iris
--- between menus and battle. CP.roots: the root nodes of what is visible now
-function CP.roots(self)
-	if self.mode == "menu" then return self.home.tops end
-	local o = self.schermata and self.schermata.obj
-	local r = o and (o.radice or o.root)
-	return { r }
-end
-
--- toward: 1 forward (the new one arrives from the right), -1 back
+-- The transitions (ui/transition.lua): the tent between menus, the iris
+-- between menus and battle. The new menu's pieces arrive by themselves
+-- (ui/kit.lua, enter_begin) while the tent leaves.
+-- toward: 1 forward (the tent crosses from the left), -1 back
 function CP.slide(self, toward, change)
-	menu.passaggio.slider(self.passaggio, CP.roots(self), function()
+	menu.passaggio.tent(self.passaggio, function()
+		menu.kit.enter_begin(0)
 		change()
-		return CP.roots(self)
+		menu.kit.enter_end()
 	end, toward)
 end
 
@@ -1812,7 +1810,7 @@ on_socket = function(self, conn, data)
 				vetrina = CP.vetrina.for_net(self.profilo) })
 		else
 			CP.wait(self, TM.waiting)
-			-- the queue picked in DOVE GIOCHI? (menu/queue.lua): 2v2, 1v1 or an event,
+			-- the queue picked in GIOCA ONLINE (menu/queue.lua): 2v2, 1v1 or an event,
 			-- and the tag: level and badges (menu/showcase.lua)
 			send(self, { t = "hello", v = PROTOCOL, mode = self.coda or "2v2",
 				vetrina = CP.vetrina.for_net(self.profilo) })
@@ -2094,7 +2092,6 @@ function CP.open_lineup(self, showcases, title, seconds_left)
 	self.vetrine = showcases
 	if seconds_left and seconds_left <= 0 then
 		self.strip = menu.lineup.strip(showcases)
-		menu.pick.under_strip(self.scelta, self.strip.covers_corner)
 		return
 	end
 	self.schier = menu.lineup.new(showcases, title)
@@ -2112,7 +2109,6 @@ function CP.update_choice(self, dt)
 		self.schier = nil
 		if self.vetrine then
 			self.strip = menu.lineup.strip(self.vetrine)
-			menu.pick.under_strip(self.scelta, self.strip.covers_corner)
 		end
 		return false
 	end
@@ -2422,7 +2418,7 @@ local function start_local(self, against)
 	local opts = { players = {} }
 	for i, p in ipairs(gconfig.MODES[modo]) do
 		-- against the bots the player is the first robot, the others are bots
-		opts.players[i] = { team = p.team, bot = (against and i > 1) and against.livello or nil }
+		opts.players[i] = { team = p.team, bot = (against and not against.stesso and i > 1) and against.livello or nil }
 	end
 	self.local_opts = opts
 	-- in the test scenarios the draft is there only with prova_scelta 1 (scenario scelta.txt)
@@ -2859,8 +2855,10 @@ function CP.enter_mission(self, id, from, told)
 	end
 	local l = missions.find(id)
 	local first = menu.level_types.first_time(id, self.profilo.stelle)
+	local got = {}
+	for i, taken in ipairs(self.profilo.stelle[id] or {}) do got[i] = taken and true or false end
 	self.cartolina = self.vign_on and l and menu.postcard.open(id, l.titolo, from, l.tipo,
-		first and menu.level_types.line(l.tipo) or nil)
+		first and menu.level_types.line(l.tipo) or nil, { criteria = missions.criteria(l), stars = got })
 	if not self.cartolina then return flame() end
 	self.cartolina.go = flame
 end
@@ -4435,7 +4433,7 @@ function init(self)
 	self.home = home.new(TEAM_COLORS[1])
 	self.pill = menu.pill.new()
 	self.profilo = profile.load_up()
-	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2) end
+	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2, config_int("megablast.prova_profilo", 0) == 3) end
 	self.scelta = menu.pick.new(WEAPON_ICON, TM.draft_names, TM.draft_effects, self.comandi)
 
 	-- In real matches the map is picked by the seed (sim/maps.lua). In the test
@@ -4778,7 +4776,7 @@ local function retry_match(self)
 	elseif self.ritorno == "allenamento" then
 		-- the same map, also when it came out A CASO
 		local against = self.against_bot
-		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa })
+		start_local(self, { modo = against.modo, livello = against.livello, mappa = self.local_map or against.mappa, stesso = against.stesso })
 	else
 		start_local(self, nil)
 	end
@@ -5447,7 +5445,7 @@ function PAD.on_input(self, action_id, action)
 				open_screen(self, menu.story, CP.tale.read_again(self.profilo), true)
 			end)
 		elseif end_of == "privata" then
-			-- DOVE GIOCHI?: PARTITA PRIVATA
+			-- GIOCA ONLINE: PARTITA PRIVATA
 			CP.slide(self, 1, function()
 				close_screen(self)
 				open_screen(self, menu.private)
@@ -5457,7 +5455,7 @@ function PAD.on_input(self, action_id, action)
 		elseif type(end_of) == "table" and end_of.invia then
 			send(self, end_of.invia)
 		elseif end_of == "indietro" and self.schermata.mod == menu.private then
-			-- out of the room (if in one), back to DOVE GIOCHI?
+			-- out of the room (if in one), back to GIOCA ONLINE
 			if self.conn then CP.let_go(self) end
 			self.privata = nil
 			CP.slide(self, -1, function()
@@ -5465,7 +5463,7 @@ function PAD.on_input(self, action_id, action)
 				open_screen(self, menu.queue)
 			end)
 		elseif type(end_of) == "table" and end_of.coda then
-			-- DOVE GIOCHI? or GIOCA in an event's detail: the online match
+			-- GIOCA ONLINE or GIOCA in an event's detail: the online match
 			CP.iris(self, function()
 				close_screen(self)
 				start_online(self, end_of.coda)
@@ -5478,7 +5476,7 @@ function PAD.on_input(self, action_id, action)
 			CP.slide(self, 1, function()
 				close_screen(self)
 				self.from_the_profile = true
-				open_screen(self, menu.armory, self.profilo)
+				open_screen(self, menu.armory, self.profilo, require("lang.text").profile_tabs.your_devil)
 			end)
 		elseif end_of and self.from_the_profile and self.schermata.mod == menu.armory then
 			CP.slide(self, -1, function()
@@ -5519,7 +5517,7 @@ function PAD.on_input(self, action_id, action)
 			self.ritorno = "home"
 			CP.enter_mission(self, profile.first_lesson(self.profilo))
 		elseif choice == "online" or choice == "eventi" then
-			-- DOVE GIOCHI? (menu/queue.lua) or the board (menu/board.lua): they are
+			-- GIOCA ONLINE (menu/queue.lua) or the board (menu/board.lua): they are
 			-- redone as soon as the updated events arrive
 			local mod = choice == "online" and menu.queue or menu.board
 			CP.slide(self, 1, function() open_screen(self, mod, hud.NAMES) end)

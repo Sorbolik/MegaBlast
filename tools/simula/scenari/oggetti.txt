@@ -9,7 +9,7 @@ imposta prova_armi 1
 imposta zoom 2
 
 aspetta 2
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 01_barra_oggetti

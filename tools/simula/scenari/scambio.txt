@@ -3,7 +3,7 @@
 # dà un globo, poi niente secondo attacco.
 
 aspetta 2
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 01_prima_dell_attacco          # niente pulsante

@@ -12,10 +12,13 @@
 --   cartellino.update(c, dt)                         -- if it has the devil, makes it breathe
 --   cartellino.destroy(c)
 --   cartellino.TALL(opt) / cartellino.WIDE           -- how big it is
+--   cartellino.small(g, v, x, y, w, h, opt)          -- the short tag of the waiting room and the lineup
+--                                                    -- (ui/kit.lua coordinates): update and destroy as above
 --   cartellino.badge(b, x, y, d, parent)             -- a badge alone (STATISTICHE tab)
 --   cartellino.pezzo(p, squadra, x, y, d, parent)    -- a piece alone (SCHEDA tab)
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 local game = require "sim.game"
 local skills = require "sim.skills"
 local equip = require "sim.gear"
@@ -285,6 +288,55 @@ function M.new(v, x, y, opt, parent)
 		box(lx + 4, ly, 8, 8, BRANCHES[i], c.root)
 		txt(ABBREVIATIONS[i] .. " " .. ((v.albero or {})[i] or 0), lx + 13, ly, 0.55, C.OFF, c.root, gui.PIVOT_W)
 	end
+	return c
+end
+
+-- The short tag (waiting room, lineup): a card in the team's color with level,
+-- name, the devil, the four stats as bars and what he carries. g, x, y, w, h as
+-- in ui/kit.lua (top left corner). opt: color, sel, role (the line under the
+-- name, else the showcase's), facing
+function M.small(g, v, x, y, w, h, opt)
+	opt = opt or {}
+	local KC = kit.C
+	local col = opt.color or C.SQUADRA[v.squadra] or KC.ROSE
+	local k = kit.card(g, x, y, w, h, col, { sel = opt.sel })
+	local c = { v = v, root = k.node, card = k }
+	local cx, cy = x + w / 2, y + h / 2
+	ui.disc(x + 48 - cx, cy - (y + 36), 38, KC.INK, k.node)
+	ui.ring_node(x + 48 - cx, cy - (y + 36), 38, 3, col, k.node)
+	local level = v.livello and tostring(v.livello) or v.bot and common.bot or "–"
+	kit.text(k.g, level, x + 48, y + 43 - (#level > 2 and 2 or 0), #level > 2 and 11 or 18, KC.SAND, "middle")
+	local name = kit.text(k.g, kit.upper(v.nome or "?"), x + 76, y + 36, 22, KC.SAND)
+	local wide_name = kit.width(name)
+	if wide_name > w - 106 then
+		local sc = gui.get_scale(name)
+		gui.set_scale(name, vec(sc.x * (w - 106) / wide_name, sc.y * (w - 106) / wide_name))
+	end
+	kit.text(k.g, kit.upper(opt.role or v.sotto or ""), x + 76, y + 54, 11, KC.MUTE, "start", 1.5)
+	-- the devil, his feet above the bars
+	local scoria = require "battle.scoria"
+	local pose = box(4, cy - (y + 212), 0, 0, C.LIGHT, k.node)
+	gui.set_visible(pose, false)
+	c.figure = scoria.new(C.SQUADRA[v.squadra] or col, scoria.PERSONAGGIO)
+	c.st = { x = 0, y = 0, facing = opt.facing or v.verso or 1, grounded = true, moving = 0, fermo = true }
+	scoria.update(c.figure, 0, c.st)
+	local sc = 102 / game.DISEGNO_H
+	gui.set_scale(pose, vmath.vector3(sc, sc, 1))
+	local ground = ui.alone(0, 0, 96 / sc, with_alpha(KC.INK, 0.6), pose)
+	gui.set_scale(ground, vmath.vector3(1, 0.14, 1))
+	gui.set_parent(c.figure.root, pose)
+	scoria.set_enabled(c.figure, true)
+	-- the stats: a bar each, the base in the middle
+	local y0 = y + 226
+	for i, r in ipairs(showcase.rows(v)) do
+		local d = (i - 1) * 1.5
+		kit.text(k.g, r.nome, x + 22 - d, y0 + (i - 1) * 17 + 9, 10, KC.MUTE, "start", 1)
+		kit.bar(k.g, x + 74 - d, y0 + (i - 1) * 17, w - 118, 8, math.max(0.15, math.min(1, 0.6 + 0.4 * r.offset)),
+			r.offset < 0 and KC.ROSE or KC.MINT)
+	end
+	local rs = showcase.resources(v)
+	kit.text(k.g, kit.upper((rs.globi == 1 and T.orb or T.orbs):format(rs.globi) .. " · " .. T.parachutes:format(rs.paracadute)),
+		x + 14, y + h - 14, 10, KC.SAND, "start", 1)
 	return c
 end
 

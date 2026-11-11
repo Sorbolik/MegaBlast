@@ -7,13 +7,13 @@
 imposta prova_profilo 1
 
 aspetta 2
-tocca_bordo 218 392 basso destra    # CAMPAGNA
+tocca_bordo 234 450 mezzo sinistra    # CAMPAGNA
 aspetta 1.2
 foto 01_forgia
-tocca_bordo 240 142 alto centro     # Addestramento
+tocca_centro 546 596              # Addestramento
 aspetta 0.8
 foto 02_addestramento
-tocca_bordo 256 240 alto centro     # Stammi dietro
+tocca_centro 532 484              # Stammi dietro
 aspetta 0.6
 foto 03_cartolina
 tocca_centro 60 360                 # fuori dalla cartolina

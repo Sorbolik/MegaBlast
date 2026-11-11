@@ -4,15 +4,15 @@
 # con la miniatura grande, l'etichetta e (la prima volta che incontri il tipo) la
 # riga che lo spiega, il titolo e AVANTI (970 116), poi la vignetta che spiega (VAI! 293 214).
 aspetta 2
-tocca 1062 392                      # CAMPAGNA
+tocca 234 450                      # CAMPAGNA
 aspetta 1
 foto 01_carte
-tocca 256 480                       # Stammi dietro (Primi passi)
+tocca 532 484                       # Stammi dietro (Primi passi)
 aspetta 2.5
 foto 02_tavola
 tocca 640 300                       # fuori dal pulsante: resta la tavola
 aspetta 0.5
-tocca 970 116                        # AVANTI sulla cartolina
+tocca_bordo 240 420 mezzo destra                        # AVANTI sulla cartolina
 aspetta 1
 foto 03_vignetta
 tocca 293 214                       # VAI!

@@ -3,7 +3,7 @@
 -- small bar per event, and the upcoming ones in a row below. A tap on an event
 -- opens the detail: what changes, where it is played, when it comes back, the
 -- prizes and GIOCA (if running). No red numbers or windows on top: you just
--- look. Style in ui/ui.lua, events from main/events.lua (server/events.go).
+-- look. GIOCA, the screen's action, plays the event shown. Style in ui/kit.lua, events from main/events.lua (server/events.go).
 --
 --   local bacheca = require "menu.board"
 --   local b = bacheca.new(nomi)   -- nomi: weapon -> name (battle/hud.lua)
@@ -12,7 +12,9 @@
 --   bacheca.destroy(b)
 
 local ui = require "ui.ui"
-local backdrop = require "ui.backdrop"
+local kit = require "ui.kit"
+local scoria = require "battle.scoria"
+local profile_tabs = require "menu.profile_tabs"
 local events = require "main.events"
 local T = require("lang.text").board
 local common = require("lang.text").common
@@ -20,27 +22,17 @@ local common = require("lang.text").common
 local M = {}
 
 
-local function vec(x, y) return vmath.vector3(x, y, 0) end
+local KC = kit.C
 
 -- the color of each event kind
 local function color(o)
-	local C = ui.C
-	return ({ mod = C.BRACE, torneo = ui.GOLD, sfida = C.STEEL, xp = C.MINT })[o.tipo] or C.LIGHT
+	return ({ mod = KC.RED, torneo = KC.HOT, sfida = KC.STEEL, xp = KC.MINT })[o.tipo] or KC.SAND
 end
 
-local function riga(t, x, y, scale, col, parent, w)
-	local n = ui.text(t, x, y, scale, col, parent)
-	gui.set_pivot(n, w and gui.PIVOT_NW or gui.PIVOT_W)
-	if w then
-		gui.set_line_break(n, true)
-		gui.set_size(n, vec(w / (scale * 0.5), 300))
-	end
-	return n
-end
-
-local function to_right(t, x, y, scale, col, parent)
-	local n = ui.text(t, x, y, scale, col, parent)
-	gui.set_pivot(n, gui.PIVOT_E)
+-- a text no wider than w: it shrinks (never deforms)
+local function fit(n, w)
+	local wide = kit.width(n)
+	if wide > w then gui.set_scale(n, gui.get_scale(n) * (w / wide)) end
 	return n
 end
 
@@ -59,117 +51,103 @@ local function midnight(t)
 	return os.time(d)
 end
 
-local function bar(x, y, w, h, col, parent)
-	local n = gui.new_box_node(vec(x, y), vec(w, h))
-	gui.set_color(n, col)
-	gui.set_parent(n, parent)
-	return n
+local function where(o)
+	return o.coda == o.modo and T.counts_in:format(events.queue_name(o.coda)) or T.own_queue:format(events.queue_name(o.modo))
 end
 
--- ORA: the cards of the running events
+-- ORA: the cards of the running events, staggered; the first is the one GIOCA plays
 local function hour_of(b, now)
-	local C = ui.C
-	riga(T.now, ui.EDGE, ui.CONTENT_TOP - 12, 0.6, C.OFF, b.radice)
+	local g = b.kg
+	kit.heading(g, T.now, 446, 150)
 	local list_of = events.in_progress(now)
 	if #list_of == 0 then
-		riga(T.no_event, ui.EDGE, ui.CONTENT_TOP - 72, 0.75, C.TEXT, b.radice)
-		return
+		kit.text(g, kit.upper(T.no_event), 446, 196, 14, KC.MUTE, "start", 0.5)
+		return nil
 	end
-	local w, h = 560, 128
 	for i, o in ipairs(list_of) do
 		if i > 3 then break end
-		local y = ui.CONTENT_TOP - 52 - (i - 1) * (h + 16) - h / 2
-		local n = ui.button(b.buttons, ui.EDGE + w / 2, y, w, h, "", "evento:" .. o.id, nil, b.radice)
-		local bt = b.buttons[#b.buttons]
-		bt.riposo = color(o)
-		gui.set_color(bt.bordo, bt.riposo)
-		local x0, y0 = -w / 2 + 24, h / 2 - 26
-		riga(events.kind(o), x0, y0, 0.6, color(o), n)
-		to_right(events.when(o, now), w / 2 - 24, y0, 0.6, C.OFF, n)
-		riga(o.nome, x0, y0 - 42, 0.95, C.TEXT, n)
-		local where = o.coda == o.modo and T.counts_in:format(events.queue_name(o.coda)) or T.own_queue:format(events.queue_name(o.modo))
-		riga(where, x0, -h / 2 + 24, 0.6, C.OFF, n)
+		local x, y = 440 + (i - 1) * 14, 170 + (i - 1) * 124
+		local k = kit.card(g, x, y, 380, 104, color(o), { sel = i == 1 })
+		kit.text(k.g, kit.upper(events.kind(o)), x + 34, y + 28, 11, color(o), "start", 1.5)
+		kit.text(k.g, kit.upper(events.when(o, now)), x + 356, y + 28, 11, KC.MUTE, "end", 1)
+		fit(kit.text(k.g, kit.upper(o.nome), x + 30, y + 64, 26, KC.SAND), 330)
+		kit.text(k.g, kit.upper(where(o)), x + 28, y + 86, 11, KC.MUTE, "start", 1)
+		kit.zone(g, b.buttons, x, y, 380, 104, "evento:" .. o.id)
 	end
+	return list_of[1]
 end
 
 -- PROSSIMI: two weeks from Monday, then the upcoming ones in a row
 local function upcoming(b, now)
-	local C = ui.C
-	local x0 = 680
-	riga(T.next, x0, ui.CONTENT_TOP - 12, 0.6, C.OFF, b.radice)
+	local g = b.kg
+	kit.heading(g, T.next, 880 + kit.air(), 150)
 	local today = midnight(now)
 	local wday = os.date("*t", today).wday
 	-- this week's Monday (at noon: no surprises with daylight saving)
 	local monday = today + 43200 - ((wday + 5) % 7) * 86400
-	local cw, ch, gap = 76, 70, 4
-	for s = 0, 1 do
-		local y = ui.CONTENT_TOP - 82 - s * (ch + 30)
-		for g = 0, 6 do
-			local t = midnight(monday + (s * 7 + g) * 86400)
-			local end_of = midnight(t + 86400 + 43200)
-			local x = x0 + g * (cw + gap) + cw / 2
-			local n, border = ui.panel(x, y, cw, ch, b.radice)
-			if t == today then gui.set_color(border, C.LIGHT) end
-			local d = os.date("*t", t)
-			ui.text((s == 0 and T.days[d.wday] .. " " or "") .. d.day, 0, ch / 2 - 16, 0.55, t < today and C.OFF or C.TEXT, n)
-			-- one small bar for each event of that day
-			local k = 0
-			for _, o in ipairs(events.lista) do
-				if o.da < end_of and o.a > t and k < 3 then
-					bar(0, ch / 2 - 38 - k * 10, cw - 16, 6, color(o), n)
-					k = k + 1
-				end
+	for i = 0, 13 do
+		local col, row = i % 7, math.floor(i / 7)
+		local x, y = 876 + kit.air() + col * 52 - row * 4, 164 + row * 58
+		local t = midnight(monday + i * 86400)
+		local end_of = midnight(t + 86400 + 43200)
+		local k = kit.card(g, x, y, 44, 46, KC.ROSE, { sel = t == today, off = t < today })
+		kit.text(k.g, tostring(os.date("*t", t).day), x + 22, y + 22, 14, t < today and KC.MUTE or KC.SAND, "middle")
+		-- one small bar for each event of that day
+		local n = 0
+		for _, o in ipairs(events.lista) do
+			if o.da < end_of and o.a > t and n < 2 then
+				kit.para(k.g, x + 7, y + 30 + n * 6, 28, 4, 2, color(o))
+				n = n + 1
 			end
 		end
 	end
 	-- in a row: the upcoming ones starting (also those coming back)
-	local y = 300
 	local list_of = events.upcoming(now)
-	if #list_of == 0 then riga(T.nothing_planned, x0, y, 0.65, C.OFF, b.radice) end
+	if #list_of == 0 then kit.text(g, kit.upper(T.nothing_planned), 880 + kit.air(), 326, 12, KC.MUTE, "start", 1) end
 	for i, o in ipairs(list_of) do
 		if i > 4 then break end
-		local w, h = 7 * (cw + gap) - gap, 52
-		local n = ui.button(b.buttons, x0 + w / 2, y - (i - 1) * (h + 10), w, h, "", "evento:" .. o.id, nil, b.radice)
-		bar(-w / 2 + 14, 0, 8, h - 20, color(o), n)
-		riga(o.nome, -w / 2 + 32, 0, 0.7, C.TEXT, n)
-		to_right(day_n(o.da, true), w / 2 - 16, 0, 0.6, C.OFF, n)
+		local x, y = 870 + kit.air() - (i - 1) * 4, 300 + (i - 1) * 50
+		kit.info(g, x, y, 370, 38, color(o))
+		fit(kit.text(g, kit.upper(o.nome), x + 24, y + 25, 13, KC.SAND), 210)
+		kit.text(g, kit.upper(day_n(o.da, true)), x + 360, y + 25, 11, KC.MUTE, "end", 1)
+		kit.zone(g, b.buttons, x, y - 6, 370, 50, "evento:" .. o.id)
 	end
 end
 
--- An event's detail
+-- An event's detail (Figma 22)
 local function detail(b, o, now)
-	local C = ui.C
-	riga(events.kind(o), ui.EDGE, ui.CONTENT_TOP - 12, 0.6, color(o), b.radice)
-	riga(events.when(o, now), ui.EDGE + 260, ui.CONTENT_TOP - 12, 0.6, C.OFF, b.radice)
-	gui.set_pivot(ui.title(o.nome, ui.EDGE, ui.CONTENT_TOP - 62, 0.9, C.LIGHT, b.radice), gui.PIVOT_W)
-	if o.riga and o.riga ~= "" then riga(o.riga, ui.EDGE, ui.CONTENT_TOP - 102, 0.65, C.TEXT, b.radice, 640) end
-
-	riga(T.what_changes, ui.EDGE, ui.CONTENT_TOP - 192, 0.65, C.OFF, b.radice)
+	local g = b.kg
+	local lab = kit.label(g, 444, 118, kit.upper(events.kind(o)), color(o))
+	kit.text(g, kit.upper(events.when(o, now)), 444 + 16 + kit.width(lab) + 30, 134, 12, KC.MUTE, "start", 1.5)
+	fit(kit.text(g, kit.upper(o.nome), 440, 196, 54, KC.SAND), 780)
+	if o.riga and o.riga ~= "" then fit(kit.text(g, o.riga, 442, 226, 16, KC.MUTE), 780) end
+	kit.heading(g, T.what_changes, 446, 270)
+	local n = 0
 	for i, t in ipairs(events.what_changes(o, b.nomi)) do
 		if i > 4 then break end
-		local n = ui.panel(ui.EDGE + 300, ui.CONTENT_TOP - 232 - (i - 1) * 52, 600, 44, b.radice)
-		riga(t, -300 + 20, 0, 0.7, C.TEXT, n)
+		local x, y = 440 + (i - 1) * 10, 284 + (i - 1) * 52
+		kit.info(g, x, y, 400, 40, KC.PURPLE)
+		fit(kit.text(g, kit.upper(t), x + 26, y + 27, 14, KC.SAND), 360)
+		n = i
 	end
 	local when = T.from_to:format(day_n(o.da, true), day_n(o.a, true))
-	riga(when, ui.EDGE, 130, 0.65, C.OFF, b.radice)
-	if o.torna then riga(T.back_on:format(day_n(o.torna)), ui.EDGE, 96, 0.65, C.OFF, b.radice) end
+	if o.torna then when = when .. " · " .. T.back_on:format(day_n(o.torna)) end
+	kit.text(g, kit.upper(when), 446, 284 + n * 52 + 22, 11, KC.MUTE, "start", 1)
 
 	-- on the right: the prizes (the server hands them out once there are accounts)
-	local px, pw = 760, 472
-	riga(T.prizes, px, ui.CONTENT_TOP - 12, 0.65, C.OFF, b.radice)
+	kit.heading(g, T.prizes, 926 + kit.air(), 270)
 	local premi = type(o.premi) == "table" and o.premi or {}
-	if #premi == 0 then riga(T.just_for_fun, px, ui.CONTENT_TOP - 52, 0.7, C.TEXT, b.radice) end
+	if #premi == 0 then kit.text(g, kit.upper(T.just_for_fun), 926 + kit.air(), 306, 12, KC.MUTE, "start", 1) end
 	for i, p in ipairs(premi) do
-		if i > 5 then break end
-		local n = ui.panel(px + pw / 2, ui.CONTENT_TOP - 52 - (i - 1) * 56, pw, 48, b.radice)
-		riga(type(p) == "table" and (p.testo or "") or tostring(p), -pw / 2 + 20, 0, 0.7, C.TEXT, n)
-		if type(p) == "table" and p.chi then to_right(p.chi, pw / 2 - 20, 0, 0.6, ui.GOLD, n) end
+		if i > 4 then break end
+		local x, y = 920 + kit.air() - (i - 1) * 5, 284 + (i - 1) * 52
+		local who = type(p) == "table" and p.chi
+		kit.info(g, x, y, 310, 40, who and KC.HOT or KC.PURPLE)
+		fit(kit.text(g, kit.upper(type(p) == "table" and (p.testo or "") or tostring(p)), x + 26, y + 27, 14, KC.SAND), who and 190 or 270)
+		if who then kit.text(g, kit.upper(who), x + 300, y + 27, 11, KC.HOT_TOP, "end", 1) end
 	end
-	if o.da <= now then
-		-- an event on a normal queue is played in that queue
-		ui.button(b.buttons, 1280 - ui.EDGE - 170, ui.EDGE + 54, 340, 108, common.play, "coda:" .. o.coda,
-			{ main = true, colore = color(o) }, b.radice)
-	end
+	-- an event on a normal queue is played in that queue
+	return o.da <= now and o or nil
 end
 
 local function find(id)
@@ -180,35 +158,47 @@ end
 
 local function build(b)
 	if b.radice then gui.delete_node(b.radice) end
+	if b.head then kit.header_delete(b.head) end
+	if b.right then gui.delete_node(b.right.node) end
+	if b.low then gui.delete_node(b.low.node) end
 	b.buttons = {}
-	b.radice = ui.root()
-	-- the header (ui.header): EVENTI and the pill's place
-	ui.header_delete(b.head)
-	b.head = ui.header(b.buttons, common.events, "indietro")
 	local now = events.now()
 	local o = b.aperto and find(b.aperto)
+	if not o then b.aperto = nil end
+	-- the frame (ui/kit.lua): the title, the way back (from a detail, to the board), the devil
+	b.head = kit.header(b.buttons, common.events, KC.HOT, "indietro", o and common.events or common.home)
+	b.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
+	b.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
+	b.radice = ui.root()
+	b.kg = { node = b.radice, ox = 0, oy = 720 }
+	profile_tabs.devil(b, T.plate)
+	local play
 	if o then
-		detail(b, o, now)
-		return
+		play = detail(b, o, now)
+	elseif not events.loaded_ok then
+		kit.text(b.kg, kit.upper(T.offline), 446, 196, 13, KC.MUTE, "start", 0.5)
+	else
+		play = hour_of(b, now)
+		upcoming(b, now)
 	end
-	b.aperto = nil
-	if not events.loaded_ok then
-		ui.text(T.offline, 640, 400, 0.75, ui.C.OFF, b.radice)
-		return
-	end
-	hour_of(b, now)
-	upcoming(b, now)
+	-- the one action: GIOCA, the event shown (on the board, the first running)
+	b.play = play and play.coda
+	local sub = play and (o and kit.upper(where(play)) or kit.upper(play.nome)) or kit.upper(T.no_event)
+	b.action = kit.action(b.right, common.play, 930, 560, 270, 84, { size = 54, off = not play, sub = sub })
+	kit.button(b.buttons, b.action, "gioca", { main = true, spento = not play })
 end
 
 function M.new(name_list)
-	local b = { nomi = name_list, t = 0 }
-	b.fondo = backdrop.new("stendardi")
+	local b = { nomi = name_list, t = 0, colore = ui.C.SQUADRA[1], accent = KC.HOT }
+	-- the game world darkened behind, the rays from the devil
+	b.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, {})
 	build(b)
 	return b
 end
 
 -- every half minute it is redone (times go down, an event starts)
 function M.update(b, dt)
+	if b.figure then scoria.update(b.figure, dt, b.st) end
 	b.t = b.t + dt
 	if b.t >= 30 then
 		b.t = 0
@@ -230,17 +220,19 @@ function M.on_input(b, action_id, action)
 		build(b)
 		return nil
 	end
+	if ui_action == "gioca" then return b.play and { coda = b.play } or nil end
 	local kind, value = ui_action:match("^(%a+):(.*)$")
-	if kind == "coda" then return { coda = value } end
 	b.aperto = value
 	build(b)
 	return nil
 end
 
 function M.destroy(b)
+	kit.header_delete(b.head)
+	gui.delete_node(b.right.node)
+	gui.delete_node(b.low.node)
 	gui.delete_node(b.radice)
-	ui.header_delete(b.head)
-	gui.delete_node(b.fondo)
+	kit.scene_drop(b.scene)
 end
 
 return M

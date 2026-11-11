@@ -9,9 +9,9 @@ aspetta 1
 server 2v2 1 bot_dopo=6s
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 205 102 basso destra                     # GIOCA
+tocca_bordo 244 400 mezzo destra                     # GIOCA
 aspetta 0.5
-tocca_centro 368 300                      # DOVE GIOCHI?: 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 3.5                         # il finto è entrato
 foto 01_sala_bot_tra                # due cartellini, BOT TRA 2 s

@@ -7,7 +7,7 @@ imposta prova_storia si
 imposta prova_vignette no
 
 aspetta 2
-tocca 1062 392                      # CAMPAGNA
+tocca 234 450                      # CAMPAGNA
 aspetta 1.2
 foto 01_viaggio
 pad a
@@ -34,9 +34,9 @@ foto 08_segreto
 pad a
 aspetta 1.5
 foto 09_campagna
-tocca 1140 658                      # LA STORIA
+tocca 946 598                       # LA STORIA
 aspetta 1.2
 foto 10_rileggi
-tocca 290 115                       # SALTA
+tocca_bordo 142 60 basso sinistra   # SALTA
 aspetta 1.5
 foto 11_di_nuovo_campagna

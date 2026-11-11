@@ -3,10 +3,10 @@
 
 aspetta 1.5
 foto 01_home
-tocca 1075 102                      # GIOCA
+tocca 1036 400                      # GIOCA
 aspetta 0.5
 foto 02_dove_giochi
-tocca 368 300                       # 2 contro 2
+tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=ended 3
 aspetta 0.5
 foto 03_online
@@ -14,7 +14,7 @@ tocca 640 360                       # torna alla home
 aspetta_stato modo=menu 3
 aspetta 0.6
 foto 04_di_nuovo_home
-tocca 1075 235                      # STESSO TELEFONO
+tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 0.5
 foto 05_partita
