@@ -1,0 +1,22 @@
+# I menu col diavoletto a sinistra (allenamento, GIOCA ONLINE, armeria): su uno
+# schermo più largo di 16:9 il diavoletto sta sopra la sua targa, sul bordo vero,
+# coi raggi centrati su di lui. Da provare con --schermo 1600x720 e 960x720.
+imposta prova_profilo 1
+aspetta 1.5
+tocca_bordo 254 346 mezzo sinistra  # ALLENAMENTO
+aspetta 1
+foto 01_allenamento
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta_stato modo=menu 3
+aspetta 0.8
+tocca_bordo 244 400 mezzo destra    # GIOCA
+aspetta 1
+foto 02_gioca_online
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta_stato modo=menu 3
+aspetta 0.8
+tocca_centro 640 330                # il diavoletto
+aspetta 1
+tocca_bordo 215 118 basso destra    # ARMERIA
+aspetta 1
+foto 03_armeria

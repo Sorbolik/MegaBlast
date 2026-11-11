@@ -22,6 +22,7 @@
 --   profilo_schede.destroy(s)
 
 local ui = require "ui.ui"
+local screen = require "ui.screen"
 local kit = require "ui.kit"
 local coins = require "ui.coins"
 local game = require "sim.game"
@@ -93,12 +94,35 @@ local function piece_name(set, slot)
 	return (T.piece_of[set] or T.piece_of.default):format(nome, n)
 end
 
+-- Where there is room at the sides (a screen wider than 16:9) the devil's
+-- side goes left with the real edge, above its plate, and the rest breathes
+-- (Sergio, 11 Nov: «spostalo più a sinistra dove c'è spazio, centrandolo
+-- sempre coi raggi, dai più spazio alle cose»). side(): how far left;
+-- devil_x(): where the devil and its rays are, in Figma coordinates;
+-- spread(x): a column of the content, pushed right in proportion (the content
+-- goes from 440 to 1250)
+local function side()
+	return math.min(220, math.max(0, (screen.width() - 1280) / 2))
+end
+function M.devil_x() return 250 - side() end
+M.DEVIL_Y = 380    -- the rays' height
+function M.spread(x)
+	return x + math.min(70, side() * 0.45) * (x - 440) / 810
+end
+-- a group like g, moved with the devil's side
+function M.left_of(g)
+	local n = box(-side(), 0, 0, 0, C.LIGHT, g.node)
+	gui.set_visible(n, false)
+	return { node = n, ox = g.ox, oy = g.oy }
+end
+
 -- The devil on the left and under it its plate, level and experience: on every
 -- tab here and in the armory. s: prof, colore, radice, low. line: instead of
 -- the profile's plate, a light one with this line (the training)
 function M.devil(s, line)
 	local p = s.prof
-	local pose = box(250, 104, 0, 0, C.LIGHT, s.radice)
+	-- (a little higher than its plate: Sergio, 11 Nov)
+	local pose = box(M.devil_x(), 126, 0, 0, C.LIGHT, s.radice)
 	gui.set_visible(pose, false)
 	s.figure = scoria.new(s.colore, scoria.PERSONAGGIO)
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
@@ -127,7 +151,7 @@ end
 -- one; a closed one says from which level
 function M.loadouts(s)
 	local p = s.prof
-	local g = s.kg
+	local g = M.left_of(s.kg)
 	kit.text(g, T.loadout, 46, 112, 14, KC.MUTE, "start", 1.5)
 	local n = 0
 	for i = 1, #p.loadouts do
@@ -169,13 +193,15 @@ local function sheet_sheet(s, parent)
 		end
 	end
 	-- how others see you (ui/tag_card.lua)
-	kit.heading(g, T.how_others_see, 736, 168)
-	tag.new(v, 726 + tag.WIDE / 2, 720 - 180, { tu = true }, parent)
+	local mid = M.spread(726)
+	kit.heading(g, T.how_others_see, mid + 10, 168)
+	tag.new(v, mid + tag.WIDE / 2, 720 - 180, { tu = true }, parent)
 	-- the next upgrade of each piece: rows to read
-	kit.heading(g, T.next_steps, 1040, 168)
+	local last = M.spread(1034)
+	kit.heading(g, T.next_steps, last + 6, 168)
 	for i, slot in ipairs(equip.SLOTS) do
 		local pz = v.pezzi[i]
-		local y, x = 184 + (i - 1) * 76, 1034 - (i - 1) * 5
+		local y, x = 184 + (i - 1) * 76, last - (i - 1) * 5
 		local next_one = pz.set and equip.next_tier(pz.livello)
 		kit.info(g, x, y, 216, 62, (pz.set and not next_one) and KC.STAR or KC.ROSE)
 		if pz.set then
@@ -245,7 +271,7 @@ local function sheet_stats(s)
 		kit.text(k.g, kit.upper(thousands(val) .. (t.unit and (" " .. t.unit) or "")), x + 250, y + 21, 14, KC.SAND, "end")
 		if t.thresholds then
 			if grade > 0 then
-				tag.badge({ id = t.id, grado = grade }, x + 274, 720 - (y + 15), 22, s.radice)
+				tag.badge({ id = t.id, grado = grade }, x + 274, 720 - (y + 15), 27, s.radice)
 				kit.zone(g, s.buttons, x, y - 3, 500, 36, "badge:" .. t.id)
 			end
 			local next_f, how_much = milestones.next(t, tot)
@@ -262,7 +288,8 @@ local function sheet_stats(s)
 		312 + #milestones.WHITELIST * 36 + 14, 11, KC.MUTE, "start", 1)
 
 	-- the damage per weapon: rows to read
-	kit.heading(g, T.damage_by_weapon, 1010, 226)
+	local wx = M.spread(1000)
+	kit.heading(g, T.damage_by_weapon, wx + 10, 226)
 	local armi, tot = {}, 0
 	for w, n in pairs(st.armi or {}) do
 		armi[#armi + 1] = { w = w, n = n }
@@ -272,11 +299,11 @@ local function sheet_stats(s)
 		if a.n ~= b.n then return a.n > b.n end
 		return a.w < b.w
 	end)
-	if #armi == 0 then kit.text(g, kit.upper(T.nothing_yet), 1010, 262, 11, KC.MUTE, "start", 1) end
+	if #armi == 0 then kit.text(g, kit.upper(T.nothing_yet), wx + 10, 262, 11, KC.MUTE, "start", 1) end
 	local first = armi[1] and armi[1].n or 1
 	for i, a in ipairs(armi) do
 		if i > 7 then break end
-		local x, y = 1000 - (i - 1) * 4, 242 + (i - 1) * 48
+		local x, y = wx - (i - 1) * 4, 242 + (i - 1) * 48
 		local c = game.SECONDARY[a.w] and KC.STEEL or KC.HOT
 		kit.info(g, x, y, 240, 38, c)
 		kit.text(g, kit.upper(T.weapons[a.w] or a.w), x + 22, y + 26, 14, KC.SAND)
@@ -439,7 +466,7 @@ function M.new(prof, card, color, replay_ok, number)
 		if pa.numero == number then s.scelta = i end
 	end
 	-- the game world darkened behind, the rays from the devil, in its place's color
-	s.scene = kit.scene(250, 360, { accent = KC.PURPLE })
+	s.scene = kit.scene(M.devil_x(), M.DEVIL_Y, { accent = KC.PURPLE })
 	build(s)
 	return s
 end

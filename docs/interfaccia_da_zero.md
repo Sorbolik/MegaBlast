@@ -62,13 +62,22 @@ parte, non un figlio del velo.
   attraversa lo schermo e dietro cambia la schermata (`ui/transition.lua`, `tent`); tornando
   indietro passa dall'altra parte. Fra menu e partita resta l'iride.
 - **I pezzi arrivano da soli** mentre la tendina esce: il titolo e il ritorno da sinistra, le
-  carte da destra una dopo l'altra, l'azione scatta con le sue scintille (`kit.enter_begin`).
+  carte da destra una dopo l'altra, l'azione scatta (`kit.enter_begin`). Niente scintille
+  agli ingressi: sono solo del tocco.
 - **La home quando si apre il gioco**: i raggi crescono, il diavoletto cade dall'alto e
   atterra schiacciato con un colpo, le porte volano dentro e le loro
   tacche scattano una a una, GIOCA sbatte con un colpo. Parte quando la schermata del logo si
   apre; niente scintille qui (Sergio: «sembrano fuochi d'artificio»).
 - **Al tocco**: scintille sotto il dito, la piastra rimbalza, l'azione principale fa il lampo;
   nella home il diavoletto si piega verso quello che tocchi. Solo nei menu: l'HUD non cambia.
+
+## I menu col diavoletto a sinistra (Sergio, 11 nov)
+
+Allenamento, GIOCA ONLINE, partita privata, eventi, IL TUO DIAVOLETTO e armeria usano
+`profile_tabs.devil`. Su uno schermo più largo di 16:9 il diavoletto (e l'assetto) va a
+sinistra col bordo vero, sopra la sua targa, un po' più in alto di prima, e i raggi partono
+da lui (`profile_tabs.devil_x()`); le colonne di IL TUO DIAVOLETTO si allontanano fra loro
+(`profile_tabs.spread`). A 16:9 cambia solo l'altezza.
 
 ## Schermate fatte
 

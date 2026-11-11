@@ -110,7 +110,7 @@ end
 function M.new()
 	local c = { sel = "2v2", colore = ui.C.SQUADRA[1], accent = KC.HOT }
 	-- the game world darkened behind, the rays from the devil
-	c.scene = kit.scene(250, 360, {})
+	c.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, {})
 	build(c)
 	return c
 end

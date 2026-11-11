@@ -3,17 +3,17 @@
 # STATISTICHE 802 596, PARTITE 969 596; indietro in basso a sinistra (36 60).
 imposta prova_profilo 1
 aspetta 1.5
-tocca 640 330                       # il diavoletto
+tocca_centro 640 330                       # il diavoletto
 aspetta 0.8
 foto 01_scheda
-tocca 635 596                       # SIGILLI
+tocca_centro 635 596                       # SIGILLI
 aspetta 0.4
 foto 02_sigilli
-tocca 802 596                       # STATISTICHE
+tocca_centro 802 596                       # STATISTICHE
 aspetta 0.4
 foto 03_statistiche
-tocca 969 596                       # PARTITE
+tocca_centro 969 596                       # PARTITE
 aspetta 0.4
 foto 04_partite
-tocca 36 60                         # indietro
+tocca_bordo 36 60 basso sinistra                     # indietro
 aspetta_stato modo=menu 3

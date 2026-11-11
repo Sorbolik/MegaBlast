@@ -115,7 +115,7 @@ end
 function M.new(prof, from)
 	local a = { prof = prof, pieces = {}, colore = ui.C.SQUADRA[1], from = from }
 	-- the game world darkened behind, the rays from the devil, in its place's color
-	a.back = kit.scene(250, 360, { accent = KC.PURPLE })
+	a.back = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.PURPLE })
 	build(a)
 	return a
 end

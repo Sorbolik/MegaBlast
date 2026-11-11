@@ -751,7 +751,7 @@ end
 -- While a screen is being made after a transition (M.entering: the
 -- gui_script sets it around the change) its pieces arrive by themselves: the
 -- title from the left, the cards from the right one after the other, the
--- action pops with its sparks; quickly, so that a tap finds them in place.
+-- action pops; quickly, so that a tap finds them in place.
 -- M.wait: seconds before they move
 M.entering, M.wait = false, 0
 local auto = {}        -- node -> where it rests, for the pieces already sent in
@@ -791,11 +791,12 @@ function card_in(node)
 	stagger = stagger + 1
 end
 
--- the title and the way back, from the left; the action pops with its sparks
+-- the title and the way back, from the left; the action pops (no sparks:
+-- Sergio, 11 Nov, «sembrano fuochi d'artificio»; they are for the touch)
 function piece_in(node, kind)
 	if not M.entering then return end
 	if kind == "action" then
-		M.pop(node, 0.08, 0.3, 0.7, function() M.burst_at(node, 12) end)
+		M.pop(node, 0.08, 0.3, 0.7)
 	else
 		M.arrive(node, -460, 0, kind == "back" and 0.05 or 0, 0.28)
 	end

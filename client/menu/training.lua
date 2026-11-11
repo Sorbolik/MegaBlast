@@ -159,7 +159,7 @@ function M.new(choice, stars)
 		if m.id == choice.mappa then a.da = math.max(1, i + 2 - VISIBLE) end
 	end
 	-- the game world darkened behind, the rays from the devil
-	a.scene = kit.scene(250, 360, { accent = KC.MINT })
+	a.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.MINT })
 	build(a)
 	return a
 end
