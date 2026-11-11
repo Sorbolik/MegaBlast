@@ -167,13 +167,13 @@ local function enter(h, wait, grand)
 		gui.animate(node, "position", p, gui.EASING_OUTBACK, time or (grand and 0.4 or 0.28), wait + delay, done)
 	end
 	-- coming back from a menu everything is there at once: a tap must find it
-	local late = grand and 0.1 or 0
+	local late = 0
 	for i, d in ipairs(h.doors) do
-		local at = late + (grand and 0.08 or 0.04) * (i - 1)
+		local at = late + (grand and 0.06 or 0.04) * (i - 1)
 		from(d.p.node, -520, 0, at)
 		for j, q in ipairs(d.pips) do kit.pop(q.node, wait + at + 0.3 + 0.07 * j, 0.2, 0.01) end
 	end
-	from(h.phone.node, -520, 0, grand and 0.3 or 0.12)
+	from(h.phone.node, -520, 0, 0.12, 0.28)
 	from(h.plate.node, 0, -110, late + 0.1)
 	from(h.logo_g.node, 0, 100, grand and 0.1 or 0)
 	from(h.top_right.node, 0, 100, grand and 0.1 or 0)
