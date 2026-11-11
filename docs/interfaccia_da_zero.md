@@ -61,9 +61,9 @@ scelta delle armi, podio, fine del livello, impostazioni, scatto del pezzo, port
 
 ## Cosa manca
 
-- **Mappa a imbuto della campagna** (dopo il rapimento): nel gioco oggi ci sono solo
-  l'Addestramento e il I girone, e i disegni dei luoghi esistono solo come bozze nel Figma.
-  Scelta di Sergio: farla ora con quello che c'è o quando ci sono i gironi veri.
+- **Mappa a imbuto della campagna** (dopo il rapimento): si fa quando ci sono i gironi veri
+  dopo la Forgia e i disegni dei luoghi (Sergio, 11 nov: «aspetta i gironi veri»). Fino ad
+  allora la campagna resta la bacheca.
 - **Sfondo della home**: raggi forti o mondo del livello forte (Sergio deve scegliere).
 - Il cartellino grande (si apre toccando quello piccolo) e la pillola della coda hanno
   ancora le forme di prima.
