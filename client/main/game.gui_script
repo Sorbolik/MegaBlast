@@ -1392,6 +1392,12 @@ local function handle_event(self, e)
 		show_message(self, TM.gust)
 	elseif e.type == "hail" then
 		show_message(self, TM.hail)
+	elseif e.type == "boulders" then
+		show_message(self, TM.boulders)
+	elseif e.type == "water" then
+		show_message(self, TM.water)
+	elseif e.type == "tombs" then
+		show_message(self, TM.tombs)
 	elseif e.type == "final_round" then
 		score.last_lap(self.punti)
 	elseif e.type == "parachute" then

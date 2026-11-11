@@ -16,6 +16,15 @@ images {
 images {
   image: "/assets/maps/miniature/gola.png"
 }
+images {
+  image: "/assets/maps/miniature/avarizia.png"
+}
+images {
+  image: "/assets/maps/miniature/ira.png"
+}
+images {
+  image: "/assets/maps/miniature/eresia.png"
+}
 margin: 2
 extrude_borders: 2
 inner_padding: 0

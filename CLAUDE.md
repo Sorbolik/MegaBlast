@@ -93,8 +93,8 @@ in [.claude/skills/](.claude/skills/README.md).
 
 ## Pericoli delle mappe
 
-Le mappe dei gironi (Limbo, Lussuria, Gola...) hanno un pericolo ciascuna, anche online:
-gravità, fango, bufera, grandine. Si scrive come dati sulla mappa più `client/sim/hazards.lua`,
+Le mappe dei gironi (Limbo, Lussuria, Gola, Avarizia, Ira, Eresia...) hanno un pericolo ciascuna, anche online:
+gravità, fango, bufera, grandine, massi, acqua che sale, tombe. Si scrive come dati sulla mappa più `client/sim/hazards.lua`,
 il server porta `hz` nello stato, il client lo disegna in `client/battle/hazards.lua`:
 la ricetta per aggiungerne uno è in [docs/pericoli_mappe.md](docs/pericoli_mappe.md).
 

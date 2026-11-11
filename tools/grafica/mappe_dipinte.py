@@ -12,7 +12,7 @@
 # arene delle missioni, lette da sim/levels.lua con luajit: quelle del cortile dipinte come il
 # cortile (cortile.py), le altre d'acciaio.
 # I gironi (docs/campagna_gironi.md): una mappa e uno sfondo per girone, nella tinta di temi.py, divisi
-# fra i suoi livelli come la Forgia: per ora il Limbo, la Lussuria e la Gola (layout qui sotto, scene
+# fra i suoi livelli come la Forgia: per ora dal Limbo all'Eresia (layout qui sotto, scene
 # di tavole.py). Il pericolo di ogni girone sta in client/sim/maps.lua e hazards.lua.
 # Gli sfondi: la Forgia (tavole.py) e il cortile (cortile.py), con la stessa tinta.
 #
@@ -24,7 +24,7 @@ from PIL import Image, ImageDraw
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
 sys.path.insert(0, os.path.join(QUI, "gironi"))
-from tavole import FORGIA, LIMBO, LUSSURIA, GOLA               # noqa: E402
+from tavole import FORGIA, LIMBO, LUSSURIA, GOLA, AVARIZIA, IRA, ERESIA  # noqa: E402
 from mondo import blocco, scheggia, fungo, arco                # noqa: E402
 from scena import acqua                                        # noqa: E402
 from volume import forma, solido                               # noqa: E402
@@ -113,6 +113,50 @@ def spuntoni(g, P):
     ferro = dict(m, corpo=mix(m["acciaio"], "#000000", .25), crosta=mix(m["acciaio"], m["acciaio_luce"], .35), motivo="venature")
     return solido(g["acciaio"], ferro, dict(g, ombra=0), random.Random(3))
 
+# IV · Avarizia, la valle dei massi: due pendii a 45 gradi che scendono a un piano in mezzo; in cima
+# a ogni pendio parte un masso a fine giro (client/sim/maps.lua: rocks); monete d'oro sul piano
+AVAR_SUOLO = ([(0, 330), (44, 330), (44, 360), (150, 360), (350, 560), (930, 560), (1130, 360), (1236, 360),
+               (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX)
+AVAR_SOPRA = [blocco(540, 410, 200, 26), scheggia(250, 230, 130, 48), scheggia(900, 230, 130, 48), blocco(560, 270, 160, 26)]
+AVAR_TRAVI = [(570, 140, 140, 16)]
+
+
+def monete(r):
+    """Gemme d'oro sul piano della valle e un mucchietto in fondo."""
+    s = "".join('<rect x="%d" y="%d" width="9" height="9" fill="#ffd25a" stroke="#5a3a10" stroke-width="2" transform="rotate(45 %d %d)"/>'
+                % (x, 546, x, 550) for x in (420, 470, 540, 610, 680, 750, 820, 880))
+    s += '<polygon points="%s" fill="#a7782d" stroke="#2a1b08" stroke-width="3"/>' % " ".join("%g,%g" % p for p in [(900, 560), (915, 540), (940, 530), (960, 545), (975, 560)])
+    return s
+
+
+# V · Ira, la palude Stige: cinque isolotti bassi che l'acqua sale a coprire (dipinta nel gioco, non qui:
+# sim/hazards.lua water) e le palafitte alte dove si resta all'asciutto
+IRA_ISOLE = ([blocco(10, 590, 200, 150), blocco(270, 615, 170, 125), blocco(520, 600, 240, 140), blocco(830, 615, 170, 125),
+              blocco(1070, 590, 200, 150), fungo(150, 400, 160, 24, 250, 14), fungo(560, 360, 160, 24, 260, 14),
+              fungo(970, 400, 160, 24, 250, 14), scheggia(370, 270, 110, 40), scheggia(800, 250, 110, 40), blocco(600, 170, 90, 26)])
+
+# VI · Eresia, la città di Dite: il pavimento con quattro tombe scavate (basse: si esce camminando; a giri
+# alterni due sono aperte e bruciano: client/sim/maps.lua tombs), travi di ferro in alto
+ERES_TOMBE = [(170, 270), (430, 530), (750, 850), (1010, 1110)]      # x0, x1 delle tombe sulla scena
+ERES_PAVIMENTO, ERES_FONDO = 540, 552
+_s = [(0, 330), (44, 330), (44, ERES_PAVIMENTO)]
+for _a, _b in ERES_TOMBE:
+    _s += [(_a, ERES_PAVIMENTO), (_a, ERES_FONDO), (_b, ERES_FONDO), (_b, ERES_PAVIMENTO)]
+ERES_SUOLO = _s + [(1236, ERES_PAVIMENTO), (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX
+ERES_SOPRA = [blocco(100, 380, 150, 28), scheggia(560, 330, 160, 56), blocco(1030, 380, 150, 28)]
+ERES_TRAVI = [(250, 420, 160, 16), (870, 420, 160, 16), (560, 230, 160, 16)]
+
+
+def tombe(r):
+    """Il vano scuro di ogni tomba, con la pietra del bordo; le fiamme e il coperchio sono nel gioco."""
+    s = ""
+    for a, b in ERES_TOMBE:
+        s += ('<rect x="%g" y="%g" width="%g" height="%g" fill="#140605" stroke="#0c0504" stroke-width="3"/>'
+              '<rect x="%g" y="%g" width="%g" height="3" fill="#7a2e1a" opacity=".8"/>'
+              % (a, ERES_PAVIMENTO + 1, b - a, ERES_FONDO - ERES_PAVIMENTO + 6, a + 4, ERES_FONDO - 4, b - a - 8))
+    return s
+
+
 def lava(r):
     return ('<defs><linearGradient id="lava" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc24a"/>'
             '<stop offset=".18" stop-color="#ff6a1f"/><stop offset="1" stop-color="#b8321a"/></linearGradient>'
@@ -130,9 +174,12 @@ MAPPE = {
     "limbo": dict(LIMBO, isole=[LIMBO_SUOLO] + LIMBO_SOPRA, travi=[(250, 190, 110, 14), (920, 190, 110, 14)]),
     "lussuria": dict(LUSSURIA, isole=[LUSS_SX, LUSS_DX] + LUSS_SOPRA, travi=[], sopra=None, acciaio=LUSS_SPUNTONI),
     "gola": dict(GOLA, isole=[GOLA_SUOLO] + GOLA_SOPRA, travi=[(700, 420, 100, 16)], sopra=pozze),
+    "avarizia": dict(AVARIZIA, isole=[AVAR_SUOLO] + AVAR_SOPRA, travi=AVAR_TRAVI, sopra=monete),
+    "ira": dict(IRA, isole=IRA_ISOLE, travi=[(380, 470, 100, 14), (790, 460, 100, 14)], sotto=None),
+    "eresia": dict(ERESIA, isole=[ERES_SUOLO] + ERES_SOPRA, travi=ERES_TRAVI, sopra=tombe),
 }
 # il tema (temi.py) di ogni mappa dei gironi: colori dello sfondo e del terreno; le altre hanno quello della Forgia
-TEMA = {"limbo": "limbo", "lussuria": "lussuria", "gola": "gola"}
+TEMA = {"limbo": "limbo", "lussuria": "lussuria", "gola": "gola", "avarizia": "avarizia", "ira": "ira", "eresia": "eresia"}
 # le mappe disegnate a parte, col loro sfondo: terreno svg e maschera
 ALTRE = {"cortile": (cortile.mappa, cortile.maschera, "cortile")}
 

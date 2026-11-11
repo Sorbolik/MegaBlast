@@ -58,17 +58,35 @@ add("gola", "La piova eterna", { hazard = "hail", mud = { { 660, 810, 270, 300 }
 	spawns = { { x = 180, from = 570 }, { x = 1725, from = 480 }, { x = 550, from = 430 }, { x = 960, from = 400 } },
 	build = function(t) t:load(mapdata.gola) end })
 
+-- Avarizia: at the end of each round a boulder starts from the top of each slope and rolls
+-- down towards the middle (rocks: where it starts, which way it goes).
+add("avarizia", "La valle dei massi", { hazard = "boulders", rocks = { { x = 247, dir = 1 }, { x = 1672, dir = -1 } },
+	spawns = { { x = 135, from = 620 }, { x = 1785, from = 620 }, { x = 750, from = 400 }, { x = 1170, from = 400 } },
+	build = function(t) t:load(mapdata.avarizia) end })
+-- Ira: from the third round the water of the swamp rises at the end of every round (water.y is
+-- where it starts, config.lua WATER): whoever it reaches drowns.
+add("ira", "La palude Stige", { hazard = "water", water = { y = 90 },
+	spawns = { { x = 165, from = 330 }, { x = 1755, from = 330 }, { x = 532, from = 330 }, { x = 1380, from = 330 } },
+	build = function(t) t:load(mapdata.ira) end })
+-- Eresia: the four tombs (world rectangles x0, x1, y0, y1 of the hollow in the floor, as painted by
+-- tools/grafica/mappe_dipinte.py ERES_TOMBE) open and close two by two, round after round; an open one
+-- sets alight whoever is in it.
+add("eresia", "La città di Dite", { hazard = "tombs",
+	tombs = { { 267, 393, 245, 285 }, { 657, 783, 245, 285 }, { 1137, 1263, 245, 285 }, { 1527, 1653, 245, 285 } },
+	spawns = { { x = 105, from = 380 }, { x = 1800, from = 380 }, { x = 525, from = 380 }, { x = 1395, from = 380 } },
+	build = function(t) t:load(mapdata.eresia) end })
+
 -- The circles' maps Training shows even though no campaign level plays them yet, in
 -- the order of the circles (Sergio, 11 Nov: all visible for now; they will open as the
 -- campaign meets them: menu/training.lua)
-M.CIRCLES = { "limbo", "lussuria", "gola" }
+M.CIRCLES = { "limbo", "lussuria", "gola", "avarizia", "ira", "eresia" }
 
 M.DEFAULT = "pavimento"
 
 -- The maps of real matches (online and on the same phone): if no map is asked
 -- for, the match seed picks it, so server and client (which share the seed)
 -- play on the same one.
-M.ROTATION = { "pavimento", "fossa", "limbo", "lussuria", "gola" }
+M.ROTATION = { "pavimento", "fossa", "limbo", "lussuria", "gola", "avarizia", "ira", "eresia" }
 
 function M.pick(seed)
 	return M.ROTATION[math.floor(seed) % #M.ROTATION + 1]
