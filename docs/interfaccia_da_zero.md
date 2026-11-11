@@ -64,8 +64,9 @@ parte, non un figlio del velo.
 - **I pezzi arrivano da soli** mentre la tendina esce: il titolo e il ritorno da sinistra, le
   carte da destra una dopo l'altra, l'azione scatta con le sue scintille (`kit.enter_begin`).
 - **La home quando si apre il gioco**: i raggi crescono, il diavoletto cade dall'alto e
-  atterra schiacciato con un colpo e le scintille ai piedi, le porte volano dentro e le loro
-  tacche scattano una a una, GIOCA sbatte col lampo.
+  atterra schiacciato con un colpo, le porte volano dentro e le loro
+  tacche scattano una a una, GIOCA sbatte con un colpo. Parte quando la schermata del logo si
+  apre; niente scintille qui (Sergio: «sembrano fuochi d'artificio»).
 - **Al tocco**: scintille sotto il dito, la piastra rimbalza, l'azione principale fa il lampo;
   nella home il diavoletto si piega verso quello che tocchi. Solo nei menu: l'HUD non cambia.
 

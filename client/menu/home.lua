@@ -9,6 +9,7 @@
 --   local home = require "menu.home"
 --   local h = home.new(colore)                  -- creates the nodes, hidden
 --   home.show(h, without_veil) / home.hide(h)
+--   home.arrive(h)                              -- the grand entrance (the logo's screen has gone)
 --   home.update(h, dt)                          -- every frame while visible
 --   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "eventi",
 --                                                        -- "impostazioni", "profilo" (the devil or its plate) or nil
@@ -157,8 +158,8 @@ end
 -- in from the left one after the other and their notches pop one by one, the
 -- name plate rises, the logo and the wallet come down, GIOCA arrives from the
 -- right. grand (when the game opens): the rays grow, the apprentice drops from
--- above and lands squashed with a thud and sparks at its feet, and GIOCA slams
--- in with a flash
+-- above and lands squashed with a thud, and GIOCA slams
+-- in with a thud
 local function enter(h, wait, grand)
 	local function from(node, dx, dy, delay, time, done)
 		local p = h.rest[node]
@@ -173,7 +174,7 @@ local function enter(h, wait, grand)
 		from(d.p.node, -520, 0, at)
 		for j, q in ipairs(d.pips) do kit.pop(q.node, wait + at + 0.3 + 0.07 * j, 0.2, 0.01) end
 	end
-	from(h.phone.node, -520, 0, 0.12, 0.28)
+	from(h.phone.node, -520, 0, grand and 0 or 0.12, 0.25)
 	from(h.plate.node, 0, -110, late + 0.1)
 	from(h.logo_g.node, 0, 100, grand and 0.1 or 0)
 	from(h.top_right.node, 0, 100, grand and 0.1 or 0)
@@ -194,13 +195,15 @@ local function enter(h, wait, grand)
 		gui.set_scale(h.posa, vmath.vector3(1.1, 0.86, 1))
 		gui.animate(h.posa, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.32)
 		kit.shake(h.shaken, 7)
-		kit.burst_at(h.posa, 14)
 	end)
-	from(h.play_g.node, 620, 0, 0.5, 0.36, function()
-		kit.shake(h.shaken, 6)
-		kit.flash(0.22)
-		kit.burst_at(h.play.node, 16)
-	end)
+	-- (no sparks here: Sergio, 11 Nov, «sembrano fuochi d'artificio, toglile»)
+	from(h.play_g.node, 620, 0, 0.5, 0.36, function() kit.shake(h.shaken, 6) end)
+end
+
+-- The grand entrance, when the logo's screen (ui/entry.lua) uncovers the
+-- home: under it nothing would be seen
+function M.arrive(h)
+	if h.is_visible then enter(h, 0, true) end
 end
 
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
@@ -212,7 +215,7 @@ function M.show(h, without_veil)
 	h.buttons.held_down = nil
 	h.is_visible = true
 	-- under the black veil nothing would be seen: the pieces wait for it
-	enter(h, without_veil and kit.wait or 0.2, not without_veil)
+	enter(h, without_veil and kit.wait or 0.2, false)
 	if without_veil then
 		gui.cancel_animations(h.veil, "color.w")
 		gui.set_enabled(h.veil, false)

@@ -1124,6 +1124,8 @@ function CP.close_entry(self, at_once)
 	self.ingresso = nil
 	home.events(self.home, menu.eventi.home_line())
 	if at_once then menu.ingresso.skip(e) else menu.ingresso.close_view(e) end
+	-- the home makes its entrance now that it is seen
+	if self.mode == "menu" then home.arrive(self.home) end
 end
 
 function CP.entry_update(self, dt)
