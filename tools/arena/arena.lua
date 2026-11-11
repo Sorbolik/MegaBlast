@@ -7,7 +7,7 @@
 --          [--punteggio variante.lua]   -- una tabella come config.SCORE (opts.score), per provare varianti
 --          [--ritocchi armi.lua]       -- function(config, game) che cambia i numeri delle armi (solo arena:
 --                                         la ricetta non li contiene, si rigioca con lo stesso file)
---          [--set misto]               -- ogni robot un set completo a caso (o nessuno), variante a o b
+--          [--set misto]               -- ogni robot una famiglia intera al 30 a caso (o nessuna)
 --          [--pesi popolazione.lua]     -- una lista di pesi del bot (bot.PESI, anche con la rete): ogni robot ne prende uno a caso
 --          [--impara 1]                -- scrive anche gli esempi per impara.py: a ogni fine turno le
 --                                         caratteristiche della posizione (bot.caratteristiche) e quanto
