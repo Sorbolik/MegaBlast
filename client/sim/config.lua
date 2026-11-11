@@ -284,10 +284,19 @@ C.STATUS = {
 C.WIND = { step = 66 }
 C.HAIL = { count = 3, margin = 260, gap = 340, r = 12, speed = 480,
 	blast = { r = 30, damage_r = 62, damage = 35, damage_min = 15, impulse = 10 } }
+-- Fire rain (Violenza's Sabbione): the hail, more stones and each one sets alight (status burn).
+C.FIRE_RAIN = { count = 4, margin = 200, gap = 280, r = 12, speed = 480,
+	blast = { r = 30, damage_r = 62, damage = 30, damage_min = 12, impulse = 10 } }
+-- False bridges (Frode): once a robot steps on one, or a shot hits it, it falls after delay
+-- ticks (the crumbling is announced: 150 ticks are about two thirds of its way across).
+C.BRIDGE = { delay = 150 }
+-- Ice (Tradimento, Lucifero's lake): whoever stops walking on it keeps sliding, the speed
+-- (world units per tick, at most max) shrinking by decay at every tick.
+C.ICE = { decay = 0.97, max = 1.2, min = 0.05 }
 
 -- Which weapon gives which effect (our choice). Burn comes from the Uova of
 -- whoever has stats.burning_blasts (the Fornace set).
-C.WEAPON_STATUS = { shards = "slow", punch = "cracked", boomerang = "cracked", tar = "burn", drill = "slow" }
+C.WEAPON_STATUS = { shards = "slow", punch = "cracked", boomerang = "cracked", tar = "burn", drill = "slow", fire_rain = "burn" }
 
 -- Stats of each robot that aren't physics. Changed by the skill tree and gear
 -- (opts.players[i].stats in game.new); run, jump and air speed come from

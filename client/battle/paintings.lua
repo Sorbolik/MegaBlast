@@ -47,6 +47,30 @@ return {
 				{ name = "vicino", y0 = 529, h = 191, parallax = 0.6, scroll = 16.0 },
 			},
 		},
+		violenza = {
+			haze = { 0.306, 0.227, 0.298 },
+			groups = {
+				{ name = "lontano", y0 = 0, h = 720, parallax = 0.1, scroll = 2.5 },
+				{ name = "medio", y0 = 308, h = 412, parallax = 0.3, scroll = 8.7 },
+				{ name = "vicino", y0 = 0, h = 720, parallax = 0.6, scroll = 17.3 },
+			},
+		},
+		frode = {
+			haze = { 0.204, 0.224, 0.169 },
+			groups = {
+				{ name = "lontano", y0 = 10, h = 710, parallax = 0.1, scroll = 1.5 },
+				{ name = "medio", y0 = 0, h = 720, parallax = 0.3, scroll = 7.3 },
+				{ name = "vicino", y0 = 0, h = 720, parallax = 0.6, scroll = 17.3 },
+			},
+		},
+		tradimento = {
+			haze = { 0.243, 0.365, 0.471 },
+			groups = {
+				{ name = "lontano", y0 = 8, h = 712, parallax = 0.1, scroll = 2.1 },
+				{ name = "medio", y0 = 388, h = 332, parallax = 0.3, scroll = 8.7 },
+				{ name = "vicino", y0 = 0, h = 720, parallax = 0.6, scroll = 17.3 },
+			},
+		},
 	},
 	-- the maps with painted terrain and their background
 	maps = {
@@ -55,6 +79,11 @@ return {
 		limbo = "limbo",
 		lussuria = "lussuria",
 		gola = "gola",
+		flegetonte = "violenza",
+		sabbione = "violenza",
+		malebolge = "frode",
+		cocito = "tradimento",
+		lucifero = "tradimento",
 		cortile = "cortile",
 		missione_primi_passi = "cortile",
 		missione_lanciarune = "cortile",

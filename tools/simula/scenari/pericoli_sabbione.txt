@@ -1,0 +1,9 @@
+# La mappa sabbione (docs/pericoli_mappe.md): foto della mappa con i robot sul posto.
+imposta prova_vignette no
+imposta prova_mappa sabbione
+imposta zoom 1
+aspetta 2
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2.5
+foto 01_sabbione

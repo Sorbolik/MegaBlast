@@ -2,7 +2,11 @@
 -- (sim/maps.lua) asks for them with plain data:
 --   gravity = 0.55                   the gravity of the whole match, times the usual one
 --   mud = { { x0, x1, y0, y1 } }     world rectangles: a robot standing on the ground inside one is slowed
---   hazard = "wind" | "hail"         a hazard of the rounds (KINDS below)
+--   blood = { { x0, x1, y0, y1 } }   the same, but it sets the robot alight (status burn)
+--   hazard = "wind" | "hail" | "fire_rain" | "bridges" | "ice"   a hazard of the rounds (KINDS below)
+--   bridges = { { x0, x1, y0, y1 } } (hazard "bridges") the false bridges: the world rectangle of each
+--   ice = true | { rects }           (hazard "ice") where it slides: everywhere, or in these rectangles
+--   wings = true                     (hazard "ice") the end of the round pushes everyone away from the centre
 -- The state of a hazard of the rounds lives only in g.hz, a table of numbers and
 -- lists: the server sends it as it is (state field "hz", server/net.lua) and the
 -- client copies it back, so whoever draws it (battle/hazards.lua) reads g.hz and
@@ -73,53 +77,177 @@ KINDS.wind = {
 
 -- The hail (Gola): hz.marks are the places where the stones will fall when the round
 -- ends (a shadow shows them all round long); hz.stones the ones falling now, each
--- blows up on the first terrain or robot it meets
-local function new_marks(g)
-	local h = C.HAIL
-	return pick_columns(g, h.count, h.margin, h.gap)
+-- blows up on the first terrain or robot it meets. The fire rain (Violenza) is the same
+-- with its own numbers (C.FIRE_RAIN) and the blast sets alight (weapon "fire_rain").
+local function hail_kind(cfg, weapon, fire)
+	local function new_marks(g)
+		return pick_columns(g, cfg.count, cfg.margin, cfg.gap)
+	end
+	return {
+		setup = function(g, hz)
+			hz.marks, hz.stones = new_marks(g), {}
+		end,
+		round_end = function(g, hz)
+			for _, x in ipairs(hz.marks) do
+				hz.stones[#hz.stones + 1] = { x = x, y = g.terrain.h * g.terrain.cell + cfg.r * 2 }
+			end
+			hz.marks = new_marks(g)
+			g:emit({ type = "hail", fire = fire })
+		end,
+		tick = function(g, hz)
+			local stones, cell = hz.stones, g.terrain.cell
+			local i = 1
+			while i <= #stones do
+				local s, hit = stones[i], false
+				local dy = cfg.speed / 60
+				for _ = 1, math.ceil(dy / cell) do
+					s.y = s.y - dy / math.ceil(dy / cell)
+					if g.terrain:solid(s.x, s.y - cfg.r) then hit = true end
+					for _, rb in ipairs(g.robots) do
+						if not rb.dead and g.hurt_at(rb, s.x, s.y, cfg.r) then hit = true end
+					end
+					if hit then break end
+				end
+				if hit then
+					table.remove(stones, i)
+					g:explode(s.x, s.y, nil, cfg.blast, weapon)
+				else
+					i = i + 1
+				end
+			end
+		end,
+		busy = function(g, hz)
+			return #hz.stones > 0
+		end,
+	}
 end
 
-KINDS.hail = {
-	setup = function(g, hz)
-		hz.marks, hz.stones = new_marks(g), {}
-	end,
-	round_end = function(g, hz)
-		for _, x in ipairs(hz.marks) do
-			hz.stones[#hz.stones + 1] = { x = x, y = g.terrain.h * g.terrain.cell + C.HAIL.r * 2 }
+KINDS.hail = hail_kind(C.HAIL, nil, false)
+KINDS.fire_rain = hail_kind(C.FIRE_RAIN, "fire_rain", true)
+
+-- The false bridges (Frode): hz.t[i] is the ticks left before bridge i falls (0 = quiet, -1 =
+-- fallen), hz.solid[i] how many cells it had. It starts to crumble when a robot stands on it
+-- or when something has taken cells off it (a shot); the fall carves its rectangle out,
+-- in small circles ("carve" events: the client digs the same circles).
+local function bridge_cells(g, b)
+	local c, n = g.terrain.cell, 0
+	for cy = math.floor(b[3] / c), math.floor((b[4] - 1) / c) do
+		for cx = math.floor(b[1] / c), math.floor((b[2] - 1) / c) do
+			if g.terrain:get(cx, cy) ~= 0 then n = n + 1 end
 		end
-		hz.marks = new_marks(g)
-		g:emit({ type = "hail" })
+	end
+	return n
+end
+
+local function bridge_stood(g, b)
+	for _, rb in ipairs(g.robots) do
+		if rb.grounded and not rb.dead and rb.x >= b[1] and rb.x <= b[2] and rb.y >= b[4] - 2 and rb.y <= b[4] + 6 then return true end
+	end
+	return false
+end
+
+KINDS.bridges = {
+	setup = function(g, hz)
+		hz.t, hz.solid = {}, {}
+		for i, b in ipairs(g.bridges) do
+			hz.t[i], hz.solid[i] = 0, bridge_cells(g, b)
+		end
 	end,
 	tick = function(g, hz)
-		local h, stones, cell = C.HAIL, hz.stones, g.terrain.cell
-		local i = 1
-		while i <= #stones do
-			local s, hit = stones[i], false
-			local dy = h.speed / 60
-			for _ = 1, math.ceil(dy / cell) do
-				s.y = s.y - dy / math.ceil(dy / cell)
-				if g.terrain:solid(s.x, s.y - h.r) then hit = true end
-				for _, rb in ipairs(g.robots) do
-					if not rb.dead and g.hurt_at(rb, s.x, s.y, h.r) then hit = true end
+		for i, b in ipairs(g.bridges) do
+			local t = hz.t[i]
+			if t == 0 then
+				if bridge_stood(g, b) or bridge_cells(g, b) < hz.solid[i] then
+					hz.t[i] = C.BRIDGE.delay
+					g:emit({ type = "bridge_shaking", bridge = i })
 				end
-				if hit then break end
-			end
-			if hit then
-				table.remove(stones, i)
-				g:explode(s.x, s.y, nil, h.blast)
-			else
-				i = i + 1
+			elseif t > 0 then
+				if t > 1 then
+					hz.t[i] = t - 1
+				else
+					hz.t[i] = -1
+					-- two rows of small circles, together a bit taller than the bridge (its underside is
+					-- toothed): the client digs the same circles
+					local r = 9
+					for _, y in ipairs({ b[3] - 1, b[4] - 6 }) do
+						local x = b[1] + r * 0.5
+						while x < b[2] - r * 0.4 do
+							local r0, r1 = g.terrain:carve(x, y, r)
+							g:emit({ type = "carve", x = x, y = y, r = r, row_min = r0, row_max = r1 })
+							x = x + r
+						end
+					end
+					g:emit({ type = "collapse", bridge = i })
+				end
 			end
 		end
 	end,
-	busy = function(g, hz)
-		return #hz.stones > 0
+}
+
+-- The ice (Tradimento): whoever is on the ground on it and stops walking keeps sliding
+-- (hz.vel[robot], world units per tick, shrinking; hz.prev[robot] where it was last tick, to
+-- tell walking from sliding). A wall or another robot stops the slide.
+-- With g.wings (Lucifero's six wings) the end of every round also pushes everyone away from
+-- the middle of the map, a step, stopping at walls: that is the wind of the storm but outward.
+local function on_ice(g, rb)
+	if g.ice == true then return true end
+	for _, m in ipairs(g.ice) do
+		if rb.x >= m[1] and rb.x <= m[2] and rb.y >= m[3] and rb.y <= m[4] then return true end
+	end
+	return false
+end
+
+KINDS.ice = {
+	setup = function(g, hz)
+		hz.vel, hz.prev = {}, {}
+		for i, rb in ipairs(g.robots) do hz.vel[i], hz.prev[i] = 0, rb.x end
+	end,
+	tick = function(g, hz)
+		local I = C.ICE
+		for i, rb in ipairs(g.robots) do
+			local v = 0
+			if rb.grounded and not rb.dead and not rb.gone and not rb.trapped and on_ice(g, rb) then
+				local dx = rb.x - hz.prev[i]
+				if math.abs(dx) > I.max * 1.3 then
+					v = 0   -- carried by something else (the Rampino, a blast, a teleport), not walking
+				elseif math.abs(dx) > 0.01 then
+					v = dx
+				else
+					v = hz.vel[i] * I.decay
+				end
+				if math.abs(v) < I.min then v = 0 end
+				if v ~= 0 and not g:shove(rb, v) then v = 0 end
+			end
+			hz.vel[i], hz.prev[i] = v, rb.x
+		end
+	end,
+	round_end = function(g, hz)
+		if not g.wings then return end
+		local mid, list = g.terrain.cell * (g.terrain.w - 2 * g.terrain.ox) / 2, {}
+		for _, rb in ipairs(g.robots) do
+			if not rb.dead and not rb.gone and not rb.trapped then list[#list + 1] = rb end
+		end
+		-- the outermost first, so nobody is blocked by the one in front of them
+		table.sort(list, function(a, b)
+			local da, db = math.abs(a.x - mid), math.abs(b.x - mid)
+			if da ~= db then return da > db end
+			return a.id < b.id
+		end)
+		for _, rb in ipairs(list) do
+			local dir = rb.x < mid and -1 or 1
+			for _ = 1, C.WIND.step / g.terrain.cell do
+				if not g:shove(rb, dir * g.terrain.cell) then break end
+			end
+			hz.prev[rb.id] = rb.x
+		end
+		g:emit({ type = "wings" })
 	end,
 }
 
 function M.setup(g, map)
 	g.gravity = g.gravity * (map.gravity or 1)
-	g.mud = map.mud
+	g.mud, g.blood = map.mud, map.blood
+	g.bridges, g.ice, g.wings = map.bridges, map.ice, map.wings
 	g.hazard = map.hazard
 	if map.hazard then
 		g.hz = {}
@@ -127,15 +255,23 @@ function M.setup(g, map)
 	end
 end
 
--- Whoever stands in the mud is slowed (until the end of their next turn, like any
--- slow): once on entering, the status is not given again while they have it
-local function mud(g)
+-- Whoever stands in the mud is slowed, whoever stands in the blood is set alight (until the
+-- end of their next turn, like any status): once on entering, the status is not given again
+-- while they have it
+local ZONES = { { "mud", "slow" }, { "blood", "burn" } }
+
+local function zones(g)
 	for _, rb in ipairs(g.robots) do
-		if rb.grounded and not rb.dead and not rb.status.slow then
-			for _, m in ipairs(g.mud) do
-				if rb.x >= m[1] and rb.x <= m[2] and rb.y >= m[3] and rb.y <= m[4] then
-					g:add_status(rb, "slow")
-					break
+		if rb.grounded and not rb.dead then
+			for _, z in ipairs(ZONES) do
+				local list = g[z[1]]
+				if list and not rb.status[z[2]] then
+					for _, m in ipairs(list) do
+						if rb.x >= m[1] and rb.x <= m[2] and rb.y >= m[3] and rb.y <= m[4] then
+							g:add_status(rb, z[2])
+							break
+						end
+					end
 				end
 			end
 		end
@@ -143,7 +279,7 @@ local function mud(g)
 end
 
 function M.tick(g)
-	if g.mud then mud(g) end
+	if g.mud or g.blood then zones(g) end
 	local hz = g.hz
 	if hz then
 		local k = KINDS[g.hazard]

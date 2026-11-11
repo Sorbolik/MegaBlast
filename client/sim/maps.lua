@@ -58,17 +58,43 @@ add("gola", "La piova eterna", { hazard = "hail", mud = { { 660, 810, 270, 300 }
 	spawns = { { x = 180, from = 570 }, { x = 1725, from = 480 }, { x = 550, from = 430 }, { x = 960, from = 400 } },
 	build = function(t) t:load(mapdata.gola) end })
 
+-- Violenza: the Flegetonte (the river of blood kills, three stones to cross it, the dead trunks stop
+-- the shots until you break them, two pools of blood burn: blood, world rectangles like the mud,
+-- tools/grafica/mappe_dipinte.py FLEG_SANGUE) and the Sabbione (flat, no cover, the fire rain).
+add("flegetonte", "Il Flegetonte", { blood = { { 600, 720, 270, 300 }, { 1200, 1305, 255, 285 } },
+	spawns = { { x = 120, from = 560 }, { x = 1740, from = 500 }, { x = 390, from = 450 }, { x = 1395, from = 420 } },
+	build = function(t) t:load(mapdata.flegetonte) end })
+add("sabbione", "Il Sabbione", { hazard = "fire_rain",
+	spawns = { { x = 150, from = 400 }, { x = 1740, from = 400 }, { x = 560, from = 400 }, { x = 1360, from = 400 } },
+	build = function(t) t:load(mapdata.sabbione) end })
+-- Frode: the Malebolge, two pits of pitch crossed by cracked bridges that fall (bridges: world
+-- rectangle of each, x0, x1, y0, y1; BOLGE_PONTI in tools/grafica/mappe_dipinte.py)
+add("malebolge", "Le Malebolge", { hazard = "bridges", bridges = { { 504, 585, 312, 330 }, { 1335, 1416, 312, 330 } },
+	spawns = { { x = 150, from = 420 }, { x = 1770, from = 420 }, { x = 400, from = 420 }, { x = 1530, from = 420 } },
+	build = function(t) t:load(mapdata.malebolge) end })
+-- Tradimento: the Cocito, thin slabs of ice over the cold water: everyone slides, the blasts break them
+add("cocito", "Il Cocito", { hazard = "ice", ice = true,
+	spawns = { { x = 150, from = 380 }, { x = 1770, from = 380 }, { x = 450, from = 380 }, { x = 1470, from = 380 } },
+	build = function(t) t:load(mapdata.cocito) end })
+-- Lucifero's arena (three phases, a mission): the lake with the well in the middle; the ice slides and the
+-- six wings push everyone away from the middle at the end of each round. Not in the rotation.
+add("lucifero", "Il lago di Lucifero", { hazard = "ice", ice = true, wings = true,
+	spawns = { { x = 150, from = 380 }, { x = 1770, from = 380 }, { x = 450, from = 380 }, { x = 1470, from = 380 } },
+	build = function(t) t:load(mapdata.lucifero) end })
+
 -- The circles' maps Training shows even though no campaign level plays them yet, in
 -- the order of the circles (Sergio, 11 Nov: all visible for now; they will open as the
 -- campaign meets them: menu/training.lua)
-M.CIRCLES = { "limbo", "lussuria", "gola" }
+M.CIRCLES = { "limbo", "lussuria", "gola", "flegetonte", "sabbione", "malebolge", "cocito", "lucifero" }
+-- the ones that are not in the online rotation (arenas of a single level)
+M.OFFLINE = { lucifero = true }
 
 M.DEFAULT = "pavimento"
 
 -- The maps of real matches (online and on the same phone): if no map is asked
 -- for, the match seed picks it, so server and client (which share the seed)
 -- play on the same one.
-M.ROTATION = { "pavimento", "fossa", "limbo", "lussuria", "gola" }
+M.ROTATION = { "pavimento", "fossa", "limbo", "lussuria", "gola", "flegetonte", "sabbione", "malebolge", "cocito" }
 
 function M.pick(seed)
 	return M.ROTATION[math.floor(seed) % #M.ROTATION + 1]

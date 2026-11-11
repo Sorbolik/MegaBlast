@@ -205,7 +205,7 @@ function M.world(g, into)
 	w.current, w.phase, w.timer, w.window, w.turn_bonus = g.current, g.phase, g.timer, g.window, g.turn_bonus
 	w.match_left, w.final_round, w.round, w.order, w.order_pos, w.turn_no = g.match_left, g.final_round, g.round, g.order, g.order_pos, g.turn_no
 	w.orb_seq, w.placed_id, w.heals, w.score = g.orb_seq, g.placed_id, g.heals, g.score
-	w.gravity, w.mud = g.gravity, g.mud
+	w.gravity, w.mud, w.blood = g.gravity, g.mud, g.blood
 	o.rng.state = g.rng.state
 	w.rng = o.rng
 	w.used = refill(o.used, g.used)

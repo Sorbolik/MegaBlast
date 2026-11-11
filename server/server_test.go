@@ -17,7 +17,7 @@ import (
 // same seed always gives the same one, and all of them come out.
 func TestSimPicksMapFromSeed(t *testing.T) {
 	// maps.ROTATION (sim/maps.lua): the first circles' maps are in it too
-	rotation := []string{"pavimento", "fossa", "limbo", "lussuria", "gola"}
+	rotation := []string{"pavimento", "fossa", "limbo", "lussuria", "gola", "flegetonte", "sabbione", "malebolge", "cocito"}
 	seen := map[string]bool{}
 	for seed := int64(1); seed <= int64(len(rotation)); seed++ {
 		m := newTestSim(t, seed, "").Map()
@@ -46,7 +46,7 @@ func TestAimInSnapshot(t *testing.T) {
 		t.Fatalf("aim without aiming: %s", s)
 	}
 	luaEval(t, `
-local g = N.new(5, nil, { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
+local g = N.new(5, "pavimento", { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
 local aimed, turn, from, turns, lazy, flagged = false, nil, 0, 0, 0, false
 while g.tick < 3000 do
 	N.step(g, false, false, false, false)

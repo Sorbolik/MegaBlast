@@ -1391,7 +1391,13 @@ local function handle_event(self, e)
 		RM.hazards.gust(self.pericoli)
 		show_message(self, TM.gust)
 	elseif e.type == "hail" then
-		show_message(self, TM.hail)
+		show_message(self, e.fire and TM.fire_rain or TM.hail)
+	elseif e.type == "bridge_shaking" then
+		show_message(self, TM.bridge_shaking)
+	elseif e.type == "collapse" then
+		show_message(self, TM.collapse)
+	elseif e.type == "wings" then
+		show_message(self, TM.wings)
 	elseif e.type == "final_round" then
 		score.last_lap(self.punti)
 	elseif e.type == "parachute" then

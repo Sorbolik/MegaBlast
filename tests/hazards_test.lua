@@ -34,7 +34,7 @@ for _, id in ipairs(maps.CIRCLES) do
 	check(maps.maps[id] ~= nil, id .. ": is a map")
 	local in_rotation = false
 	for _, r in ipairs(maps.ROTATION) do in_rotation = in_rotation or r == id end
-	check(in_rotation, id .. ": is in the online rotation")
+	check(in_rotation or maps.OFFLINE[id], id .. ": is in the online rotation (or an arena of a single level)")
 	local ok = true
 	for seed = 1, 6 do
 		for _, players in ipairs({ C.MODES["1v1"], C.MODES["2v2"] }) do
@@ -174,6 +174,102 @@ do
 	run(g, 3)
 	check(rb.status.slow ~= nil, "gola: a robot in the mud is slowed")
 	check(free.status.slow == nil, "gola: a robot on the hill is not")
+end
+
+-- Flegetonte: the pools of blood set alight, once
+do
+	local g = started(5, "flegetonte")
+	local rb, free = g.robots[1], g.robots[2]
+	for i, m in ipairs(maps.get("flegetonte").blood) do
+		local cx = (m[1] + m[2]) / 2
+		local ground = g.terrain:ground_below(cx, m[4] + 30)
+		check(ground and ground >= m[3] and ground <= m[4], "flegetonte: pool " .. i .. " has its ground inside the rectangle")
+	end
+	local m = maps.get("flegetonte").blood[1]
+	rb.x, rb.y = (m[1] + m[2]) / 2, g.terrain:ground_below((m[1] + m[2]) / 2, m[4] + 30)
+	rb.vx, rb.vy, rb.grounded = 0, 0, true
+	run(g, 3)
+	check(rb.status.burn ~= nil, "flegetonte: a robot in the blood burns")
+	check(free.status.burn == nil, "flegetonte: one on the bank does not")
+end
+
+-- Sabbione: the fire rain
+do
+	local g = started(5, "sabbione")
+	local hz = g.hz
+	check(#hz.marks == C.FIRE_RAIN.count, "sabbione: four shadows announce the rain")
+	local victim = g.robots[1]
+	hz.stones = { { x = victim.x, y = victim.y + 200 } }
+	hz.marks = {}
+	run(g, 120)
+	check(#hz.stones == 0 and victim.status.burn ~= nil and victim.hp < 100, "sabbione: a stone that hits a robot hurts and sets it alight")
+	g.order_pos = #g.order
+	g.current = g.order[#g.order]
+	g:pop_events()
+	g:end_turn()
+	local fire
+	for _, e in ipairs(g:pop_events()) do if e.type == "hail" then fire = e.fire end end
+	check(fire == true, "sabbione: the event says it is fire")
+end
+
+-- Malebolge: the cracked bridges crumble under a robot, and under a shot
+do
+	local g = started(5, "malebolge")
+	local br = maps.get("malebolge").bridges
+	local hz = g.hz
+	check(#hz.t == 2 and hz.t[1] == 0 and hz.t[2] == 0, "malebolge: two quiet bridges at the start")
+	for i, b in ipairs(br) do
+		local cx = (b[1] + b[2]) / 2
+		check(g.terrain:solid(cx, b[4] - 3) and not g.terrain:solid(cx, b[3] - 12), "malebolge: bridge " .. i .. " is in the mask and nothing is under it")
+	end
+	local b = br[1]
+	local rb = g.robots[1]
+	rb.x, rb.y, rb.vx, rb.vy, rb.grounded = (b[1] + b[2]) / 2, b[4], 0, 0, true
+	run(g, 3)
+	check(hz.t[1] > 0 and hz.t[2] == 0, "malebolge: stepping on a bridge starts only its crumbling")
+	run(g, C.BRIDGE.delay + 2)
+	check(hz.t[1] == -1 and not g.terrain:solid((b[1] + b[2]) / 2, b[4] - 3), "malebolge: the bridge falls")
+	run(g, 120)
+	check(rb.dead or rb.y < b[3], "malebolge: whoever was on it falls")
+	-- a shot that takes cells off the second bridge
+	local c = br[2]
+	g.terrain:carve((c[1] + c[2]) / 2, (c[3] + c[4]) / 2, 8)
+	run(g, 3)
+	check(hz.t[2] > 0, "malebolge: a shot makes the bridge tremble")
+end
+
+-- Cocito: the ice slides
+do
+	local g = started(5, "cocito")
+	local p = started(5, "pavimento")
+	local function slide(game_)
+		local rb = game_.robots[game_.current]
+		for _ = 1, 40 do game_:step({ right = true, hold = true }) end
+		local x = rb.x
+		for _ = 1, 60 do game_:step() end
+		return rb.x - x
+	end
+	local on_ice, on_floor = slide(g), slide(p)
+	check(on_ice > 10 and on_floor < 1, string.format("cocito: whoever stops keeps sliding (%.0f against %.0f)", on_ice, on_floor))
+	check(on_ice < 80, "cocito: and the slide dies out")
+end
+
+-- Lucifero: the wings push away from the middle
+do
+	local g = started(5, "lucifero", { players = C.MODES["2v2"] })
+	local mid = 960
+	local before = {}
+	for i, rb in ipairs(g.robots) do before[i] = math.abs(rb.x - mid) end
+	g.order_pos = #g.order
+	g.current = g.order[#g.order]
+	g:pop_events()
+	g:end_turn()
+	local wings
+	for _, e in ipairs(g:pop_events()) do wings = wings or e.type == "wings" end
+	local ok = true
+	for i, rb in ipairs(g.robots) do ok = ok and math.abs(rb.x - mid) >= before[i] - 0.01 end
+	check(wings and ok, "lucifero: the wings push everyone away from the middle")
+	check(maps.OFFLINE.lucifero, "lucifero: not in the online rotation")
 end
 
 if failures > 0 then

@@ -10,6 +10,11 @@ MAPPE = [
     ('limbo', 'tools/grafica/mappe/limbo.png'),
     ('lussuria', 'tools/grafica/mappe/lussuria.png'),
     ('gola', 'tools/grafica/mappe/gola.png'),
+    ('flegetonte', 'tools/grafica/mappe/flegetonte.png'),
+    ('sabbione', 'tools/grafica/mappe/sabbione.png'),
+    ('malebolge', 'tools/grafica/mappe/malebolge.png'),
+    ('cocito', 'tools/grafica/mappe/cocito.png'),
+    ('lucifero', 'tools/grafica/mappe/lucifero.png'),
 ]
 
 def righe(path):

@@ -12,7 +12,8 @@
 # arene delle missioni, lette da sim/levels.lua con luajit: quelle del cortile dipinte come il
 # cortile (cortile.py), le altre d'acciaio.
 # I gironi (docs/campagna_gironi.md): una mappa e uno sfondo per girone, nella tinta di temi.py, divisi
-# fra i suoi livelli come la Forgia: per ora il Limbo, la Lussuria e la Gola (layout qui sotto, scene
+# fra i suoi livelli come la Forgia: il Limbo, la Lussuria, la Gola, la Violenza (il Flegetonte e il
+# Sabbione), la Frode (le Malebolge), il Tradimento (il Cocito) e l'arena di Lucifero (layout qui sotto, scene
 # di tavole.py). Il pericolo di ogni girone sta in client/sim/maps.lua e hazards.lua.
 # Gli sfondi: la Forgia (tavole.py) e il cortile (cortile.py), con la stessa tinta.
 #
@@ -24,7 +25,7 @@ from PIL import Image, ImageDraw
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
 sys.path.insert(0, os.path.join(QUI, "gironi"))
-from tavole import FORGIA, LIMBO, LUSSURIA, GOLA               # noqa: E402
+from tavole import FORGIA, LIMBO, LUSSURIA, GOLA, VIOLENZA, FRODE, TRADIMENTO, tronco   # noqa: E402
 from mondo import blocco, scheggia, fungo, arco                # noqa: E402
 from scena import acqua                                        # noqa: E402
 from volume import forma, solido                               # noqa: E402
@@ -96,6 +97,72 @@ GOLA_SOPRA = [scheggia(540, 330, 150, 52), blocco(950, 290, 130, 30), scheggia(3
 GOLA_POZZE = [(440, 530, 100), (740, 530, 100)]        # x, y della superficie, larghezza
 
 
+# VII · Violenza. Il Flegetonte: due rive col fiume di sangue in mezzo (cadere è morire), tre sassi per
+# attraversare, tronchi morti che fermano i colpi finché non li spezzi e due pozze di sangue che
+# bruciano (stessi numeri in client/sim/maps.lua: blood)
+FLEG_SX = ([(0, 330), (44, 330), (44, 430), (190, 430), (250, 490), (330, 490), (380, 530), (500, 530),
+            (500, 760), (0, 760)] + SPORGE_SX)
+FLEG_DX = ([(780, 760), (780, 540), (870, 540), (910, 500), (1010, 500), (1050, 450), (1236, 450),
+            (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760)])
+FLEG_SOPRA = [blocco(525, 540, 65, 22), blocco(615, 530, 65, 22), blocco(705, 540, 60, 22),
+              tronco(170, 250, 34, [(330, "dx", 100), (400, "dx", 60)], fondo=430),
+              tronco(325, 330, 30, [(400, "dx", 70)], fondo=490),
+              tronco(1000, 330, 34, [(410, "sx", 80)], fondo=500),
+              tronco(1105, 260, 34, [(340, "sx", 100)], fondo=450),
+              scheggia(560, 330, 120, 40)]
+FLEG_SANGUE = [(400, 530, 80), (800, 540, 70)]        # x, y della superficie, larghezza
+
+# Il Sabbione: piatto, due dune dolci, nessun riparo; sopra piove fuoco
+SABBIA = ([(0, 330), (44, 330), (44, 520), (260, 520), (320, 480), (480, 480), (540, 520), (740, 520), (800, 480),
+           (960, 480), (1020, 520), (1236, 520), (1236, 330), (1280, 330)]
+          + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX)
+
+# VIII · Frode, le Malebolge: tre terrazze e due fosse di pece larghe 54, ognuna con un ponte
+# crepato che crolla (client/sim/maps.lua: bridges; stessi numeri qui)
+BOLGE_PONTI = [(336, 500, 54, 12), (890, 500, 54, 12)]
+BOLGE_SUOLO = ([(0, 330), (44, 330), (44, 500), (336, 500), (346, 640), (380, 640), (390, 500), (890, 500),
+                (900, 640), (934, 640), (944, 500), (1236, 500), (1236, 330), (1280, 330)]
+               + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX)
+BOLGE_SOPRA = [fungo(565, 330, 150, 22, 190, 14), scheggia(150, 330, 110, 40), scheggia(1020, 330, 110, 40),
+               blocco(300, 400, 70, 20), blocco(910, 400, 70, 20)]
+
+# IX · Tradimento, il Cocito: lastre di ghiaccio sottili sull'acqua gelata, separate da crepe (28), dove
+# si scivola e le esplosioni bucano; sotto cadere è morire
+COC_SX = [(0, 330), (44, 330), (44, 520), (400, 520), (400, 560), (44, 560), (44, 760), (0, 760)] + SPORGE_SX
+COC_DX = [(880, 520), (1236, 520), (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760), (1236, 760), (1236, 560), (880, 560)]
+COC_SOPRA = [blocco(428, 500, 424, 40), blocco(100, 360, 120, 26), blocco(1060, 360, 120, 26), scheggia(590, 330, 110, 50)]
+
+# L'arena di Lucifero: il lago largo, il pozzo in mezzo (160) con due lastre per passarlo, due piattaforme alte
+LUC_SX = [(0, 330), (44, 330), (44, 530), (560, 530), (560, 570), (44, 570), (44, 760), (0, 760)] + SPORGE_SX
+LUC_DX = [(720, 530), (1236, 530), (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760), (1236, 760), (1236, 570), (720, 570)]
+LUC_SOPRA = [blocco(582, 530, 44, 20), blocco(654, 530, 44, 20), blocco(150, 400, 150, 26), blocco(980, 400, 150, 26)]
+
+
+def sangue(r):
+    """Il sangue bollente delle pozze del Flegetonte: rosso scuro con un velo lucido e bolle."""
+    s = ""
+    for x, y, w in FLEG_SANGUE:
+        s += ('<rect x="%g" y="%g" width="%g" height="14" rx="6" fill="#5a0f14"/><rect x="%g" y="%g" width="%g" height="4" rx="2" fill="#e0524a" opacity=".7"/>'
+              % (x, y - 4, w, x + 8, y - 2, w - 16))
+        for k in range(1, 4):
+            s += '<circle class="pulsa" cx="%g" cy="%g" r="%g" fill="none" stroke="#ffb08a" stroke-width="1.5" opacity=".7"/>' % (x + k * w / 4, y + 1, 3 + k % 2)
+    return s
+
+
+def ponti_crepati(r):
+    """Il legno scuro dei ponti che crollano, con le crepe, e la pece nelle fosse."""
+    s = ""
+    for x, y, w, h in BOLGE_PONTI:
+        s += '<rect x="%g" y="%g" width="%g" height="%g" fill="#4a3d2c" stroke="#1a1208" stroke-width="2"/>' % (x, y, w, h)
+        s += '<polyline points="%g,%g %g,%g %g,%g %g,%g" fill="none" stroke="#0d0a05" stroke-width="2"/>' % (
+            x + w * .3, y, x + w * .38, y + h * .5, x + w * .3, y + h * .7, x + w * .42, y + h)
+        s += '<polyline points="%g,%g %g,%g %g,%g" fill="none" stroke="#ffb03a" stroke-width="1.5" opacity=".8"/>' % (
+            x + w * .7, y, x + w * .64, y + h * .5, x + w * .72, y + h)
+        s += '<polygon points="%g,%d %g,%d %g,%d %g,%d" fill="#050505" stroke="#2a3a10" stroke-width="2"/>' % (
+            x + 6, y + h, x + w - 6, y + h, x + w - 14, 636, x + 14, 636)
+    return s
+
+
 def pozze(r):
     """Fango scuro con un velo lucido, nelle pozze della Gola."""
     s = ""
@@ -130,9 +197,16 @@ MAPPE = {
     "limbo": dict(LIMBO, isole=[LIMBO_SUOLO] + LIMBO_SOPRA, travi=[(250, 190, 110, 14), (920, 190, 110, 14)]),
     "lussuria": dict(LUSSURIA, isole=[LUSS_SX, LUSS_DX] + LUSS_SOPRA, travi=[], sopra=None, acciaio=LUSS_SPUNTONI),
     "gola": dict(GOLA, isole=[GOLA_SUOLO] + GOLA_SOPRA, travi=[(700, 420, 100, 16)], sopra=pozze),
+    "flegetonte": dict(VIOLENZA, isole=[FLEG_SX, FLEG_DX] + FLEG_SOPRA, travi=[], sopra=sangue),
+    "sabbione": dict(VIOLENZA, isole=[SABBIA], travi=[], sotto=None),
+    "malebolge": dict(FRODE, isole=[BOLGE_SUOLO] + BOLGE_SOPRA + [[(x, y), (x + w, y), (x + w, y + h), (x, y + h)] for x, y, w, h in BOLGE_PONTI],
+                      travi=[], sopra=ponti_crepati),
+    "cocito": dict(TRADIMENTO, isole=[COC_SX, COC_DX] + COC_SOPRA, travi=[], sopra=None),
+    "lucifero": dict(TRADIMENTO, isole=[LUC_SX, LUC_DX] + LUC_SOPRA, travi=[], sopra=None),
 }
 # il tema (temi.py) di ogni mappa dei gironi: colori dello sfondo e del terreno; le altre hanno quello della Forgia
-TEMA = {"limbo": "limbo", "lussuria": "lussuria", "gola": "gola"}
+TEMA = {"limbo": "limbo", "lussuria": "lussuria", "gola": "gola", "flegetonte": "violenza", "sabbione": "violenza",
+        "malebolge": "frode", "cocito": "tradimento", "lucifero": "tradimento"}
 # le mappe disegnate a parte, col loro sfondo: terreno svg e maschera
 ALTRE = {"cortile": (cortile.mappa, cortile.maschera, "cortile")}
 

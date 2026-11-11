@@ -15,7 +15,10 @@ Si scrivono come dati nella mappa (`client/sim/maps.lua`) e le fa `client/sim/ha
 |---|---|---|
 | `gravity = 0.6` | la gravità di tutta la partita, per il valore: salti e tiri vanno più lontano | Limbo |
 | `mud = { { x0, x1, y0, y1 } }` | rettangoli del mondo: chi sta a terra dentro prende lo stato «lento» (fino a fine del suo prossimo turno) | le pozze della Gola |
-| `hazard = "wind"` o `"hail"` | un pericolo dei giri: la tabella `KINDS` di `hazards.lua` | Lussuria, Gola |
+| `blood = { { x0, x1, y0, y1 } }` | come il fango ma dà lo stato «bruciatura» | le pozze del Flegetonte |
+| `hazard = "wind"`, `"hail"`, `"fire_rain"`, `"bridges"` o `"ice"` | un pericolo dei giri: la tabella `KINDS` di `hazards.lua` | Lussuria, Gola, Sabbione, Malebolge, Cocito e Lucifero |
+| `bridges = { { x0, x1, y0, y1 } }` | con `bridges`: il rettangolo del mondo di ogni ponte che crolla | Malebolge |
+| `ice = true` (o rettangoli), `wings = true` | con `ice`: dove si scivola; con `wings` a fine giro le ali spingono tutti lontano dal centro | Cocito, Lucifero |
 
 Un pericolo dei giri ha quattro punti d'ingresso, tutti facoltativi tranne `setup`:
 `setup(g, hz)` all'inizio, `round_end(g, hz)` quando l'ultimo turno del giro è finito
@@ -57,3 +60,20 @@ cambia le fasi della partita, quindi né il server né il client); i chicchi cad
 primo turno del giro dopo, come le casse, e il turno non finisce finché cadono; il fango è lo
 stato «lento» che c'era già; il bot non vede la grandine né la raffica. Non fatto: l'Uovo che
 nel fango non rimbalza (Gola, scheda della campagna).
+
+## Violenza, Frode, Tradimento e Lucifero (terzo blocco)
+
+| Mappa | Pericolo | Numeri (`config.lua` e `maps.lua`) |
+|---|---|---|
+| Flegetonte | il fiume di sangue uccide (si cade, come nelle altre gole); tre sassi per passare; i tronchi morti sono terreno che si spezza e fermano i colpi finché non li rompi; due pozze di sangue (`blood`) bruciano | stato «bruciatura» già esistente |
+| Sabbione | pioggia di fuoco: la grandine con `FIRE_RAIN` (4 chicchi, 30 di danno al centro) e ogni chicco dà bruciatura; piatto, senza ripari | `C.FIRE_RAIN` |
+| Malebolge | due fosse di pece larghe 54 con un ponte crepato ciascuna: quando un robot ci sale, o un colpo gli toglie celle, trema (rettangolo arancione) e dopo `BRIDGE.delay` = 150 tick cade (`carve` a cerchietti, così il client online scava uguale) | `C.BRIDGE`, `hz.t`, `hz.solid` |
+| Cocito | lastre di ghiaccio sottili sull'acqua gelata, separate da crepe di 28; chi smette di camminare scivola (`ICE`: decade del 3% a tick, al massimo 1,2 per tick); le esplosioni bucano e sotto si muore | `C.ICE`, `hz.vel`, `hz.prev` |
+| Lucifero (arena, non online) | il lago largo col pozzo in mezzo (160) e due lastre per passarlo; ghiaccio che scivola e `wings`: a fine giro ognuno è spinto di `WIND.step` lontano dal centro, fermandosi ai muri; la sua battaglia in tre fasi è una missione (Copione), non c'è ancora | `maps.OFFLINE` |
+
+Scelte di Claude (11 nov): i ponti falsi sono quelli dipinti crepati (tutti crollano, nessuno a caso:
+si vedono); quanto è largo il ponte (54 = 81 unità del mondo) e `delay` sono fatti perché lo
+si attraversi di corsa senza fermarsi (si cammina a circa 0,65 unità per tick) e non se ci si
+ferma; la scivolata è un attrito, non una fisica nuova: resta in `hz`, quindi niente campi nei
+robot; il bot non vede ponti, ghiaccio, ali né pioggia (copia della partita senza `hz`);
+Lucifero ha una mappa propria fuori dalla rotazione perché la sua battaglia è una missione.
