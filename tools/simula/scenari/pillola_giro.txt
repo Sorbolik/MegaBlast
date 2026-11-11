@@ -46,7 +46,7 @@ aspetta 0.5
 tocca_bordo 274 242 mezzo sinistra                       # EVENTI
 aspetta 0.8
 foto 08_eventi
-tocca_bordo 62 62 alto sinistra
+tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta_stato modo=menu 3
 aspetta 0.5
 tocca_bordo 62 62 alto destra       # IMPOSTAZIONI
