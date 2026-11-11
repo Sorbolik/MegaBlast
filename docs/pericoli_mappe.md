@@ -58,6 +58,8 @@ primo turno del giro dopo, come le casse, e il turno non finisce finché cadono;
 stato «lento» che c'era già; il bot non vede la grandine né la raffica. Non fatto: l'Uovo che
 nel fango non rimbalza (Gola, scheda della campagna).
 
+Niente muretti ai lati (Sergio, 11 nov): il suolo arriva al bordo e oltre si cade; i muri di lato restano solo nel cortile. Le mappe dei gironi sono asimmetriche, ma tengono l'assetto che serve ai loro pericoli.
+
 ## Il secondo blocco
 
 | Mappa | Pericolo | Numeri (`config.lua` e `maps.lua`) |

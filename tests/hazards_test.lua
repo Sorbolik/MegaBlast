@@ -101,15 +101,15 @@ do
 	check(moved1 > 0 or moved3 > 0, "lussuria: somebody got moved")
 	check(not g:terrain_collides(a.x, a.y) and not g:terrain_collides(b.x, b.y), "lussuria: nobody ends inside a wall")
 	check(g.hz.dir == 1 or g.hz.dir == -1, "lussuria: the next gust has its direction")
-	-- against a wall the gust stops: robot 1 at the left edge pushed to the left
+	-- no wall at the edge: a gust to the left carries a robot standing near it out of the map
 	local h = started(3, "lussuria", { players = C.MODES["2v2"] })
 	local rb = h.robots[1]
-	rb.x = 100
-	rb.y = h.terrain:ground_below(100, 600)
+	rb.x = 40
+	rb.y = h.terrain:ground_below(40, 700)
 	h.hz.dir = -1
 	h.order_pos = #h.order
 	h:end_turn()
-	check(rb.x >= 44 * 1.5 + game.ROBOT_HALF_W - 1 and not h:terrain_collides(rb.x, rb.y), "lussuria: a wall stops the gust")
+	check(rb.x < 40 and not h:terrain_collides(rb.x, rb.y), "lussuria: no wall at the edge, the gust carries on")
 	-- the other maps have no hazard and no gust
 	local p = started(3, "pavimento")
 	p.order_pos = #p.order
