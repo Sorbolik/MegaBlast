@@ -1,7 +1,7 @@
 # La mappa malebolge (docs/pericoli_mappe.md): foto della mappa con i robot sul posto.
 imposta prova_vignette no
 imposta prova_mappa malebolge
-imposta zoom 1
+imposta zoom 3
 aspetta 2
 tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 8
