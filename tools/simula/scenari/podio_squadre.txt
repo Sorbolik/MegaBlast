@@ -14,6 +14,15 @@ aspetta_stato turno=3 fase=aim 20
 mira 150 100 0.3
 aspetta_stato turno=4 fase=aim 20
 mira -150 100 0.3
+# 0 a 0: si gioca l'ultimo giro, sparano di nuovo tutti
+aspetta_stato turno=1 fase=aim 20
+mira 120 80 0.4
+aspetta_stato turno=2 fase=aim 20
+mira -150 100 0.3
+aspetta_stato turno=3 fase=aim 20
+mira 150 100 0.3
+aspetta_stato turno=4 fase=aim 20
+mira -150 100 0.3
 aspetta_evento over 30
 aspetta 4
 foto podio_2v2
