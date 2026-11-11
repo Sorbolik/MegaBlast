@@ -143,7 +143,7 @@ local function run_cmd(a, ui_action)
 	if a.step then
 		a.scene = step_scene.new(a.step[1], a.step[2], a.step[3], function()
 			sound.play("#martello", { speed = 0.9 + 0.1 * math.random() })
-		end)
+		end, a.colore)
 		a.step = nil
 	end
 end
@@ -159,7 +159,7 @@ end
 function M.on_input(a, action_id, action)
 	-- the step's scene: a tap skips it
 	if a.scene then
-		if action_id == ui.TOUCH and action.pressed then step_scene.skip(a.scene) end
+		if (action_id == ui.TOUCH or action_id == ui.PAD) and action.pressed then step_scene.skip(a.scene) end
 		return nil
 	end
 	local ui_action = ui.touch(a.buttons, action_id, action)

@@ -360,12 +360,12 @@ return {
 		set_bonus = "BONUS DEL SET %s",
 		others = "INDOSSA IL SET",
 		set_level = "%s · %d",
-		step_title = "SCATTO %d",
-		-- slot, set, grade in roman numbers, its name
-		step_grade = "%s · %s · GRADO %s, %s",
+		step_title = "SCATTO!",
+		step_new = "NUOVO",
+		-- the grade in roman numbers, its name
+		step_grade = "GRADO %s · %s",
 		step_look = "Aspetto nuovo",
-		step_top = "Al massimo: con tutti e quattro i pezzi al 30 il set sblocca la variante B",
-		skip = "tocca per saltare",
+		step_top = "Al massimo: verso la variante B",
 	},
 
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs
