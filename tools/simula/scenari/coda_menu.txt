@@ -20,10 +20,10 @@ tocca_centro 440 44                       # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 aspetta 1
 foto 02_home_in_coda               # pillola in alto, GIOCA, CAMPAGNA spenta
-tocca 168 108                       # ARMERIA
+tocca_centro 640 330                # il diavoletto: il suo posto
 aspetta_stato modo=schermata 3
 aspetta 0.8
-foto 03_armeria_in_coda
+foto 03_diavoletto_in_coda
 tocca_bordo 640 62 alto centro                 # la pillola: si torna alla sala
 aspetta_stato modo=connecting 3
 aspetta 0.8

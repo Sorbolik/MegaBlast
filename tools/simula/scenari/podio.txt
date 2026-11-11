@@ -30,7 +30,7 @@ tocca 1130 52                       # CONTINUA
 aspetta_stato modo=menu 3
 aspetta 0.5
 
-tocca 168 108                       # ARMERIA
+tocca_centro 640 330                # il diavoletto: il suo posto
 aspetta 0.5
 foto 03_armeria_vuota
 tocca 720 548                       # maschera, corazza, mantello e gambali del Vuoto
@@ -43,7 +43,7 @@ tocca 62 658                        # indietro
 aspetta_stato modo=menu 3
 
 # di nuovo armeria e una seconda partita: i nodi delle schermate chiuse si liberano
-tocca 168 108                       # ARMERIA
+tocca_centro 640 330                # il diavoletto: il suo posto
 aspetta 0.5
 tocca 62 658                        # indietro
 aspetta_stato modo=menu 3
