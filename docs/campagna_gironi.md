@@ -23,9 +23,16 @@ Le decisioni sono in [decisioni/progressione.md](decisioni/progressione.md); que
    (Sergio, 11 nov). Più avanti si sbloccheranno in Allenamento man mano che le vedi in
    campagna, ma finché non si decide si vedono tutte.
 4. **Il girone dopo si apre battendo il custode**, non con le stelle: le stelle danno premi.
-5. Il Cortile (l'Addestramento) è l'antinferno; la Forgia viene dopo. Sull'imbuto
+5. **La campagna non dà più pezzi** (Sergio, 11 nov, 18:10, scelte 22-25 di
+   https://claude.ai/artifact/F5TiCLHXAqgPe7XUBi138A): i custodi non lasciano cadere l'elmo, le
+   stelle dei gironi non danno stivali né sbloccano famiglie (stanno tutte nel negozio da
+   subito; i custodi le indossano solo per figura). La campagna dà invece un **Buono del
+   Fabbro**, che vale un pezzo a scelta: uno per la Battaglia della Forgia (insieme agli
+   stivali del Fabbro e all'apertura dell'ARMERIA) e uno per la finale di ogni girone. Le
+   stelle restano premi, ma senza pezzi.
+6. Il Cortile (l'Addestramento) è l'antinferno; la Forgia viene dopo. Sull'imbuto
    stanno in alto, sopra i nove gironi.
-6. Niente bot che barano: la difficoltà sale con i gradi del bot (1-10, `bot.GRADES`)
+7. Niente bot che barano: la difficoltà sale con i gradi del bot (1-10, `bot.GRADES`)
    e con regole che si vedono (più nemici, pericoli più forti, custodi con più vita).
    L'aiuto silenzioso dopo tre sconfitte resta.
 
