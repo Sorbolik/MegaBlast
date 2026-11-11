@@ -3,6 +3,7 @@
 -- and passes stats() to the match (opts.stats[i]).
 --
 -- A loadout: { tree = { wings = 18, ..., pick = ... } (sim/skills.lua), gear = { mask = "corvo", ... }, variant = "a" | "b" }
+-- (variant: of the four-piece style, which comes with the next PR)
 -- It can be rebuilt for free outside a match; each player keeps LOADOUTS of them,
 -- the second and third open at the levels of LOADOUT_LEVELS.
 
@@ -41,16 +42,19 @@ local function apply(st, mods)
 	return st
 end
 
--- Final stats. base: the sim's game.base_stats(). tiers: tiers of the worn
--- pieces ({ mask = 1..3, ... }), only needed for variant B.
--- Integer values (hp, ticks) stay integers.
-function M.stats(base, a, tiers)
+-- Final stats. base: the sim's game.base_stats(). levels: levels of the worn
+-- pieces ({ mask = 1..30, ... }, missing: 1). First the Sigilli, then the
+-- pieces with their caps (sim/gear.lua). Integer values (hp, ticks) stay integers.
+function M.stats(base, a, levels)
 	local st = {}
 	for k, v in pairs(base) do st[k] = v end
 	local mods = {}
 	skills.mods(a.tree or {}, mods)
-	equip.mods(a.gear or {}, tiers, a.variant, mods)
 	apply(st, mods)
+	equip.apply(st, base, a.gear or {}, levels)
+	for k, v in pairs(M.MIN) do
+		if type(st[k]) == "number" and st[k] < v then st[k] = v end
+	end
 	for _, k in ipairs({ "max_hp", "teleport_ticks" }) do
 		if type(st[k]) == "number" then st[k] = math.floor(st[k] + 0.5) end
 	end

@@ -1,0 +1,34 @@
+# I pezzi si comprano e si regalano (Sergio, 11 nov, pagina «I Pezzi della Forgia»,
+# scelte 22A-25A): ARMERIA con le schede ARMADIO, BOTTEGA e CATALOGO. Il profilo
+# di prova ha 1.240 Scaglie, 2 buoni del Fabbro e sei pezzi suoi (elmo Corvo al 24,
+# corazza Fornace al 19, mantello Corvo al 9, stivali Leviatano al 30, stivali del
+# Fabbro, elmo del Vuoto).
+imposta prova_profilo 1
+
+aspetta 1.5
+tocca 640 330                       # il diavoletto
+aspetta 0.6
+tocca_bordo 215 118 basso destra    # ARMERIA, dalla scheda
+aspetta 0.6
+foto 01_armadio_elmo
+tocca 580 296                       # STIVALI: Leviatano e Fabbro nell'armadio
+aspetta 0.3
+foto 02_armadio_stivali
+tocca 648 596                       # BOTTEGA
+aspetta 0.4
+foto 03_bottega
+tocca 573 496                       # il primo pezzo del giorno
+aspetta 0.3
+foto 04_bottega_scelto
+tocca_bordo 215 118 basso destra    # COMPRA
+aspetta 0.5
+foto 05_comprato_nell_armadio
+tocca 796 596                       # CATALOGO
+aspetta 0.4
+foto 06_catalogo
+tocca 911 430                       # stivali della Fornace
+aspetta 0.3
+foto 07_catalogo_scelto
+tocca 885 204                       # USA UN BUONO
+aspetta 0.5
+foto 08_buono_usato

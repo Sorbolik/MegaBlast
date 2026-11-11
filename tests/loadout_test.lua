@@ -37,15 +37,17 @@ for _, p in ipairs(skills.PATHS) do
 		end
 	end
 end
-for _, s in ipairs(equip.SETS) do
-	for slot, eff in pairs(s.pieces) do
-		for _, e in ipairs(eff) do check(BASE[e.stat] ~= nil, "set: " .. s.id .. "." .. slot .. " touches " .. e.stat) end
+-- Families (page "I Pezzi della Forgia"): every plus from its slot's job, every stat known
+for _, f in ipairs(equip.SETS) do
+	for _, sl in ipairs(equip.SLOTS) do
+		local pc = f.pieces[sl.id]
+		local job = false
+		for _, j in ipairs(equip.JOBS[sl.id]) do job = job or j == pc[1] end
+		check(job and equip.STATS[pc[1]] and equip.STATS[pc[2]] and BASE[pc[1]] ~= nil and BASE[pc[2]] ~= nil and pc[1] ~= pc[2],
+			"family " .. f.id .. "." .. sl.id .. ": plus from the slot's job, minus elsewhere")
 	end
-	for v, b in pairs(s.bonus or {}) do
-		for _, e in ipairs(b.effects) do check(BASE[e.stat] ~= nil, "bonus: " .. s.id .. "." .. v .. " touches " .. e.stat) end
-	end
+	check(BASE[f.pair.stat] ~= nil and equip.STATS[f.pair.stat] ~= nil, "family " .. f.id .. ": pair bonus on a known stat")
 end
-
 -- Points: they go in and out of a path, never over the path or the level
 local t = {}
 check(skills.move(t, "wings", 3, 10) == 3 and t.wings == 3, "three points in ALI")
@@ -84,43 +86,50 @@ for _, p in ipairs(skills.PATHS) do
 	end
 end
 
--- Sets: the full Vuoto has the bonus, variant B only at tier III
+-- Pieces: the plus grows with the level, the minus halves at 20 and is gone at 30
+check(math.abs(equip.plus("walk_speed", 1) - 0.02) < 1e-9 and math.abs(equip.plus("walk_speed", 30) - 0.049) < 1e-9,
+	"plus from +2% to +4.9%")
+check(equip.plus("max_hp", 1) == 2 and equip.plus("max_hp", 30) == 5, "life from +2 to +5")
+check(equip.minus("walk_speed", 19) == 0.02 and equip.minus("walk_speed", 20) == 0.01 and equip.minus("walk_speed", 30) == 0,
+	"minus -2%, -1% from 20, nothing at 30")
 a = loadout.new()
-a.gear = { mask = "vuoto", chest = "vuoto", cloak = "vuoto", legs = "vuoto" }
+a.gear = { legs = "fabbro" }
 st = loadout.stats(BASE, a)
-check(st.teleport_ticks < BASE.teleport_ticks * 0.75 and st.max_hp < BASE.max_hp, "full Vuoto set: faster teleport, less life")
-a.variant = "b"
-st = loadout.stats(BASE, a, { mask = 1, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
-check(st.teleports == BASE.teleports, "variant B needs all pieces at tier III")
-st = loadout.stats(BASE, a, { mask = equip.TIERS, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
-check(st.teleports == BASE.teleports + 1, "tier III: Vuoto variant B, one more teleport")
-a.gear = { mask = "leviatano", chest = "leviatano", cloak = "leviatano", legs = "leviatano" }
-a.variant = "a"
+check(math.abs(st.walk_speed / BASE.walk_speed - 1.02) < 1e-9 and math.abs(st.jump_height / BASE.jump_height - 0.98) < 1e-9,
+	"Fabbro boots at 1: run +2%, jump -2%")
+st = loadout.stats(BASE, a, { legs = 30 })
+check(math.abs(st.walk_speed / BASE.walk_speed - 1.049) < 1e-9 and st.jump_height == BASE.jump_height,
+	"Fabbro boots at 30: run +4.9%, no minus")
+a.gear = { mask = "corvo" }
 st = loadout.stats(BASE, a)
-check(st.knockback_mul < 0.7 and st.fall_damage_mul == 0.5 and st.walk_speed < BASE.walk_speed,
-	"full Leviatano set: less push, half fall damage, slower")
-a.tree = { wings = 10, armor = 5, pick = { wings = { 1, 2 }, armor = { 2 } } }
-st = loadout.stats(BASE, a)
-check(st.parachutes == BASE.parachutes + 1 and st.fall_damage_mul < 0.5, "tree: one more parachute and lighter falls")
+check(st.teleport_ticks < BASE.teleport_ticks and st.max_hp == BASE.max_hp - 2, "Corvo helmet: faster orb, life -2")
+a.gear = { mask = "leviatano", chest = "leviatano" }
+st = loadout.stats(BASE, a, { mask = 19, chest = 19 })
+check(st.knockback_mul > 0.96 + 1e-9, "two Leviatano pieces under 20: no family bonus")
+st = loadout.stats(BASE, a, { mask = 20, chest = 20 })
+check(math.abs(st.knockback_mul - (1 - 0.039 - 0.04)) < 1e-9, "two gold Leviatano pieces: their bonus, push -4% more")
+check(#equip.pairs_on({ mask = "corvo", chest = "corvo", cloak = "vuoto", legs = "vuoto" },
+	{ mask = 20, chest = 25, cloak = 30, legs = 20 }) == 2, "two plus two: two family bonuses")
+-- the caps: pieces +10% at most, pieces and Sigilli +20% at most
+a.gear = { mask = "fabbro", chest = "fabbro", cloak = "fabbro", legs = "fabbro" }
+st = loadout.stats(BASE, a, { mask = 30, chest = 30, cloak = 30, legs = 30 })
+check(st.max_hp == BASE.max_hp + 5 + 3, "Fabbro at 30: life +5 and the pair +3")
+a.gear = { mask = "fornace", chest = "fornace" }
+st = loadout.stats(BASE, a, { mask = 30, chest = 30 })
+check(st.max_hp == BASE.max_hp + 10, "life +5 +5: exactly the cap of +10")
+a.gear = { mask = "fornace", chest = "fornace", legs = "fabbro", cloak = "fabbro" }
+st = loadout.stats(BASE, a, { mask = 30, chest = 30, legs = 30, cloak = 30 })
+check(st.max_hp == BASE.max_hp + 10, "pieces never give more than +10 life")
+a.gear = { legs = "fabbro" }
+a.tree = { wings = 25 }
+local sig = loadout.stats(BASE, { tree = a.tree, gear = {} })
+st = loadout.stats(BASE, a, { legs = 30 })
+check(st.walk_speed >= sig.walk_speed and st.walk_speed <= math.max(sig.walk_speed, BASE.walk_speed * 1.2) + 1e-9,
+	"pieces and Sigilli together: +20% at most")
 a.tree = {}
-a.gear = { mask = "fornace", chest = "fornace", cloak = "fornace", legs = "fornace" }
-st = loadout.stats(BASE, a)
-check(st.burning_blasts == 1 and st.status_turns == BASE.status_turns, "full Fornace set: burning shots")
-a.variant = "b"
-st = loadout.stats(BASE, a, { mask = equip.TIERS, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
-check(st.burning_blasts == 1 and st.status_turns == BASE.status_turns + 1, "tier III: Fornace variant B")
-a.variant = "a"
-a.gear = { mask = "corvo", chest = "corvo", cloak = "corvo", legs = "corvo" }
-st = loadout.stats(BASE, a)
-check(st.air_jumps == 1 and st.fall_damage_mul == 0, "full Corvo set: double jump and fall without damage")
-a.variant = "b"
-st = loadout.stats(BASE, a, { mask = equip.TIERS, chest = equip.TIERS, cloak = equip.TIERS, legs = equip.TIERS })
-check(st.air_jumps == 2, "tier III: two air jumps")
-a.variant = "a"
-a.tree = { wings = 15, pick = { wings = { 1, 1, 2 } } }
-st = loadout.stats(BASE, a)
-check(st.teleports == BASE.teleports + 1, "tree: one more teleport")
-a.tree = {}
+a.gear = { mask = "fabbro", cloak = "corvo" }
+st = loadout.stats(BASE, a, { cloak = 30 })
+check(st.max_hp == BASE.max_hp + 2 and math.abs(st.knockback_mul - 1) < 1e-9, "Corvo cape at 30: no minus left")
 
 a.gear = { mask = "vuoto", chest = "corvo" }
 check(loadout.valid(a, 20), "valid loadout")

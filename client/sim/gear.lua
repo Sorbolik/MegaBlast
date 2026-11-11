@@ -1,14 +1,19 @@
--- Gear: the four Titan sets (art bible "Le Scorie").
+-- Gear: the pieces of the Forge (Sergio, 10-11 Nov, page "I Pezzi della Forgia"
+-- https://claude.ai/artifact/F5TiCLHXAqgPe7XUBi138A, choices 1-25).
 -- Pure Lua, like sim/skills.lua.
 --
--- From the game design document: a mix of sidegrades (each piece gives
--- something and takes something away) and tiers that change look and variants.
--- Tiers do not make you stronger: with all four pieces of a set at the last
--- tier you pick variant B of the set bonus instead of A. Tiers will change the
--- look once armour is visible on the Scoria. potere: the short name of the
--- bonus, shown on the card (ui/tag_card.lua).
+-- The Sigilli say what you can do, the pieces say how you do it and who you
+-- are: a piece never gives a power of the Sigilli. Four slots, each with its
+-- job (choice 3A); five families that go sideways, never stronger (6A, 14A).
+-- A piece has one plus from its slot's job and one minus (2A): the plus grows
+-- from +2% at level 1 to +4.9% at 30 (life from +2 to +5), the minus is -2%,
+-- halves at the step 20 and is gone at 30. Two gold pieces (level 20 or more)
+-- of the same family give the family's small bonus (5A); the four-piece style,
+-- the traits of the step 10 and variant B are new rules and come in the next
+-- PR (they are written here as text only). Pieces add at most +10% to a stat,
+-- pieces and Sigilli together at most +20% (8A).
 --
--- Effects as in skills.lua: { stat, add } | { stat, mul }.
+-- A loadout's gear: { mask = family id, ... }; levels: { mask = 1..30, ... }.
 
 local M = {}
 
@@ -20,13 +25,12 @@ M.SLOTS = {
 }
 -- Level of a piece: from 1 to LIVELLO_MAX, bought with Scaglie (Sergio, 10
 -- Nov, page "Scaglie e Ossidiana", choices 4A-6A). Every TIER_LEVELS level is a
--- step ("scatto"): the piece goes up a tier (look I..IV) and, with all four
--- pieces of a set at the last tier, you pick variant B of the set bonus.
+-- step ("scatto"): the grade goes up (bronze, silver, gold, ember).
 M.LIVELLO_MAX = 30
 M.TIER_LEVELS = { 10, 20, 30 }
 M.TIERS = #M.TIER_LEVELS + 1
--- pieces of the same set needed for the bonus
-M.SET_PIECES = 4
+-- the level from which a piece is "gold": it counts for its family's bonus
+M.GOLD = 20
 
 -- Scaglie to go up TO each level (2..30): the normal levels rise slowly,
 -- the steps cost about three normal levels. 3,050 for a piece at 30.
@@ -38,7 +42,7 @@ for l = 21, 29 do M.COSTS[l] = 110 + 5 * (l - 21) end
 -- below it (9, 19, 29) before you can buy the step
 M.PROOF = { [10] = 3, [20] = 5, [30] = 8 }
 -- the Smith's hand: once a piece of a slot is at 30, every other piece of
--- that slot costs this much (30% off)
+-- that slot costs this much (30% off), to buy and to level up
 M.SMITH_HAND = 0.7
 
 -- Scaglie to go up to level l (nil past the last); discounted: the Smith's
@@ -55,64 +59,67 @@ function M.proof(l)
 	return M.PROOF[l] or 0
 end
 
--- Pieces: for each set and slot one plus and one minus, as a percentage of the
--- base (movement stats start from sim/game.lua, DEFAULT_STATS). Bonus: full set.
+-- The stats the pieces touch. less: lower is better (a plus lowers them).
+-- hp: counted in points of life, not in percent.
+M.STATS = {
+	max_hp = { hp = true },
+	walk_speed = {}, jump_height = {}, air_speed = {}, blast_push = {},
+	teleport_ticks = { less = true }, knockback_mul = { less = true }, fall_damage_mul = { less = true },
+}
+-- what each slot's plus can come from (choice 3A); the minus can be any stat
+M.JOBS = {
+	mask = { "max_hp", "teleport_ticks" },
+	chest = { "max_hp", "knockback_mul" },
+	legs = { "walk_speed", "jump_height" },
+	cloak = { "air_speed", "fall_damage_mul" },
+}
+-- the caps of choice 8A, as a share of the base (life: of 100 points)
+M.CAP_PIECES, M.CAP_ALL = 0.10, 0.20
+
+-- Families: for each slot the stat of its plus and of its minus; pair: the
+-- bonus of two gold pieces ({ stat, pct } or { stat, hp }); style: the four
+-- gold pieces (new rules, next PR: text only for now).
 M.SETS = {
-	{ id = "corvo", name = "CORVO", style = "Agilità",
+	{ id = "fabbro", name = "FABBRO", style_name = "Equilibrio",
 		pieces = {
-			mask = { { stat = "jump_height", mul = 1.03 }, { stat = "max_hp", add = -2 } },
-			chest = { { stat = "air_speed", mul = 1.03 }, { stat = "max_hp", add = -2 } },
-			cloak = { { stat = "air_speed", mul = 1.03 }, { stat = "walk_speed", mul = 0.98 } },
-			legs = { { stat = "jump_height", mul = 1.03 }, { stat = "walk_speed", mul = 0.98 } },
+			mask = { "max_hp", "teleport_ticks" }, chest = { "knockback_mul", "air_speed" },
+			legs = { "walk_speed", "jump_height" }, cloak = { "air_speed", "walk_speed" },
 		},
-		bonus = {
-			a = { desc = "Doppio salto e caduta senza danno, vita -10%", power_name = "doppio salto",
-				effects = { { stat = "air_jumps", add = 1 }, { stat = "fall_damage_mul", mul = 0 },
-					{ stat = "max_hp", mul = 0.9 } } },
-			b = { desc = "Due salti in aria, vita -10%", power_name = "due salti in aria",
-				effects = { { stat = "air_jumps", add = 2 }, { stat = "max_hp", mul = 0.9 } } },
-		} },
-	{ id = "fornace", name = "FORNACE", style = "Territorio",
+		pair = { stat = "max_hp", hp = 3 },
+		style = { a = "Mestiere: la prima cassa che apri ti dà un colpo in più di quell'arma, salto -5%",
+			b = "Mano pesante: la Lama spinge il 15% in più, salto -5%" } },
+	{ id = "corvo", name = "CORVO", style_name = "Aria",
 		pieces = {
-			mask = { { stat = "max_hp", add = 2 }, { stat = "jump_height", mul = 0.98 } },
-			chest = { { stat = "max_hp", add = 3 }, { stat = "air_speed", mul = 0.97 } },
-			cloak = { { stat = "teleports", add = 1 }, { stat = "jump_height", mul = 0.95 } },
-			legs = { { stat = "max_hp", add = 2 }, { stat = "walk_speed", mul = 0.98 } },
+			mask = { "teleport_ticks", "max_hp" }, chest = { "max_hp", "walk_speed" },
+			legs = { "jump_height", "walk_speed" }, cloak = { "air_speed", "knockback_mul" },
 		},
-		bonus = {
-			a = { desc = "L'Uovo brucia chi colpisce, salto -10%", power_name = "uovo che brucia",
-				effects = { { stat = "burning_blasts", add = 1 }, { stat = "jump_height", mul = 0.9 } } },
-			b = { desc = "L'Uovo brucia, gli effetti durano un turno in più, vita -10%", power_name = "brace lunga",
-				effects = { { stat = "burning_blasts", add = 1 }, { stat = "status_turns", add = 1 },
-					{ stat = "max_hp", mul = 0.9 } } },
-		} },
-	{ id = "leviatano", name = "LEVIATANO", style = "Resistenza",
+		pair = { stat = "air_speed", pct = 0.04 },
+		style = { a = "Picchiata: cadendo su un nemico da più di 150 px gli fai 10 di danno e lo spingi, vita -5",
+			b = "Volo radente: aria +10%, vita -5" } },
+	{ id = "fornace", name = "FORNACE", style_name = "Territorio",
 		pieces = {
-			mask = { { stat = "max_hp", add = 3 }, { stat = "jump_height", mul = 0.97 } },
-			chest = { { stat = "max_hp", add = 4 }, { stat = "walk_speed", mul = 0.96 } },
-			cloak = { { stat = "knockback_mul", mul = 0.95 }, { stat = "air_speed", mul = 0.97 } },
-			legs = { { stat = "max_hp", add = 3 }, { stat = "walk_speed", mul = 0.97 } },
+			mask = { "max_hp", "jump_height" }, chest = { "max_hp", "air_speed" },
+			legs = { "jump_height", "walk_speed" }, cloak = { "fall_damage_mul", "jump_height" },
 		},
-		bonus = {
-			a = { desc = "Spinta subita -30%, metà danno da caduta, corsa -10%", power_name = "radici",
-				effects = { { stat = "knockback_mul", mul = 0.7 }, { stat = "fall_damage_mul", mul = 0.5 },
-					{ stat = "walk_speed", mul = 0.9 } } },
-			b = { desc = "Spinta subita dimezzata, salto -10%", power_name = "radici profonde",
-				effects = { { stat = "knockback_mul", mul = 0.5 }, { stat = "jump_height", mul = 0.9 } } },
-		} },
-	{ id = "vuoto", name = "VUOTO", style = "Inganno",
+		pair = { stat = "blast_push", pct = 0.03 },
+		style = { a = "Terra rovente: le tue esplosioni lasciano braci per un turno, chi ci finisce il turno perde 5, salto -5%",
+			b = "Brace lunga: braci per due turni, 3 a turno, salto -5%" } },
+	{ id = "leviatano", name = "LEVIATANO", style_name = "Resistenza",
 		pieces = {
-			mask = { { stat = "teleport_ticks", mul = 0.96 }, { stat = "max_hp", add = -2 } },
-			chest = { { stat = "walk_speed", mul = 1.03 }, { stat = "max_hp", add = -2 } },
-			cloak = { { stat = "teleport_ticks", mul = 0.96 }, { stat = "jump_height", mul = 0.98 } },
-			legs = { { stat = "walk_speed", mul = 1.03 }, { stat = "air_speed", mul = 0.98 } },
+			mask = { "max_hp", "teleport_ticks" }, chest = { "knockback_mul", "walk_speed" },
+			legs = { "walk_speed", "jump_height" }, cloak = { "fall_damage_mul", "air_speed" },
 		},
-		bonus = {
-			a = { desc = "Il teletrasporto scatta il 25% prima, vita -10%", power_name = "globo lesto",
-				effects = { { stat = "teleport_ticks", mul = 0.75 }, { stat = "max_hp", mul = 0.9 } } },
-			b = { desc = "Un teletrasporto in più, vita -10%", power_name = "globo in più",
-				effects = { { stat = "teleports", add = 1 }, { stat = "max_hp", mul = 0.9 } } },
-		} },
+		pair = { stat = "knockback_mul", pct = 0.04 },
+		style = { a = "Ancora: se finisci il turno senza muoverti prendi metà spinta fino al tuo turno, corsa -5%",
+			b = "Scaglie dure: il primo colpo di ogni turno nemico ti fa 3 in meno, corsa -5%" } },
+	{ id = "vuoto", name = "VUOTO", style_name = "Inganno",
+		pieces = {
+			mask = { "teleport_ticks", "max_hp" }, chest = { "knockback_mul", "max_hp" },
+			legs = { "walk_speed", "knockback_mul" }, cloak = { "air_speed", "max_hp" },
+		},
+		pair = { stat = "teleport_ticks", pct = 0.05 },
+		style = { a = "Senza scia: gli avversari non vedono la tua mira né dove va il globo, vita -5",
+			b = "Passo nel vuoto: dopo un teletrasporto il primo colpo che prendi spinge la metà, vita -5" } },
 }
 
 M.BY_ID = {}
@@ -134,32 +141,96 @@ function M.tier(level)
 	return t
 end
 
--- the set giving the bonus, if any: set id and allowed variant ("b" only with all pieces at the last tier)
--- gear = { mask = set id, ... }, tiers = { mask = 1..3, ... }
-function M.full_set(gear, tiers)
-	local id, n, top = nil, 0, true
-	for _, s in ipairs(M.SLOTS) do
-		local g = gear[s.id]
-		if g and (id == nil or g == id) then
-			id, n = g, n + 1
-			if (tiers and tiers[s.id] or 1) < M.TIERS then top = false end
-		end
-	end
-	if n < M.SET_PIECES then return nil end
-	return id, top
+-- The plus of a piece at that level: a share (0.02 .. 0.049) or, for life,
+-- points (2 .. 5)
+function M.plus(stat, level)
+	level = math.max(1, math.min(M.LIVELLO_MAX, level or 1))
+	if M.STATS[stat].hp then return 2 + math.floor(3 * (level - 1) / (M.LIVELLO_MAX - 1) + 0.5) end
+	return (20 + (level - 1)) / 1000
 end
 
--- adds to mods the effects of the pieces and of the bonus, one group per piece
--- and one for the bonus; variant "b" only if allowed
-function M.mods(gear, tiers, variant, mods)
+-- The minus at that level: -2% (life -2), halved at the step 20, gone at 30
+function M.minus(stat, level)
+	level = level or 1
+	local n = level >= M.LIVELLO_MAX and 0 or level >= M.GOLD and 1 or 2
+	if M.STATS[stat].hp then return n end
+	return n / 100
+end
+
+-- A piece's effects at a level: { { stat, good = share or points }, ... }
+-- (good > 0 helps, < 0 hurts; for life it is in points)
+function M.piece(set, slot, level)
+	local f = M.BY_ID[set]
+	local p = f and f.pieces[slot]
+	if not p then return {} end
+	local out = { { stat = p[1], good = M.plus(p[1], level) } }
+	local m = M.minus(p[2], level)
+	if m > 0 then out[2] = { stat = p[2], good = -m } end
+	return out
+end
+
+-- the families with two gold pieces worn (in the order of SETS)
+function M.pairs_on(gear, levels)
+	local n = {}
 	for _, s in ipairs(M.SLOTS) do
-		local set = M.BY_ID[gear[s.id] or ""]
-		if set then mods[#mods + 1] = set.pieces[s.id] end
+		local g = gear[s.id]
+		if g and M.BY_ID[g] and (levels and levels[s.id] or 1) >= M.GOLD then n[g] = (n[g] or 0) + 1 end
 	end
-	local id, top = M.full_set(gear, tiers)
-	local bonus = id and M.BY_ID[id].bonus
-	if bonus then mods[#mods + 1] = bonus[(variant == "b" and top) and "b" or "a"].effects end
-	return mods
+	local out = {}
+	for _, f in ipairs(M.SETS) do
+		if (n[f.id] or 0) >= 2 then out[#out + 1] = f.id end
+	end
+	return out
+end
+
+-- The pieces' effect on each stat, already capped at CAP_PIECES (the pluses
+-- and the pairs; the minuses are never capped): { stat = good }
+function M.goods(gear, levels)
+	local plus, minus = {}, {}
+	local function add(stat, good)
+		if good >= 0 then plus[stat] = (plus[stat] or 0) + good else minus[stat] = (minus[stat] or 0) + good end
+	end
+	for _, s in ipairs(M.SLOTS) do
+		local g = gear[s.id]
+		if g then
+			for _, e in ipairs(M.piece(g, s.id, levels and levels[s.id] or 1)) do add(e.stat, e.good) end
+		end
+	end
+	for _, id in ipairs(M.pairs_on(gear, levels)) do
+		local b = M.BY_ID[id].pair
+		add(b.stat, b.hp or b.pct)
+	end
+	local out = {}
+	for stat, info in pairs(M.STATS) do
+		local cap = info.hp and M.CAP_PIECES * 100 or M.CAP_PIECES
+		local v = math.min(plus[stat] or 0, cap) + (minus[stat] or 0)
+		if v ~= 0 then out[stat] = v end
+	end
+	return out
+end
+
+-- Applies the pieces to stats st (after the Sigilli); base: the stats with
+-- nothing. A plus never takes a stat past CAP_ALL from the base, unless the
+-- Sigilli alone already did (then the pieces add nothing to it).
+function M.apply(st, base, gear, levels)
+	for stat, good in pairs(M.goods(gear, levels)) do
+		local info, b, v = M.STATS[stat], base[stat], st[stat]
+		if type(b) == "number" and type(v) == "number" then
+			local new
+			if info.hp then
+				new = v + good
+				if good > 0 then new = math.min(new, math.max(v, b + M.CAP_ALL * 100)) end
+			elseif info.less then
+				new = v * (1 - good)
+				if good > 0 then new = math.max(new, math.min(v, b * (1 - M.CAP_ALL))) end
+			else
+				new = v * (1 + good)
+				if good > 0 then new = math.min(new, math.max(v, b * (1 + M.CAP_ALL))) end
+			end
+			st[stat] = new
+		end
+	end
+	return st
 end
 
 return M
