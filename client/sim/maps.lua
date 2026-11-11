@@ -23,10 +23,10 @@ local function add(id, name, def)
 end
 
 -- The painted campaign maps (tools/grafica/mappe_dipinte.py, the
--- apprentice maps document): the floor, a single wall-to-wall ground with the
--- islands above, where you cannot fall (the free missions of Training and of
--- the Forge), and the pit, the same floor with a lava pit in the middle (the
--- Smith). Sergio's choices, 2 November 2026; the only maps of real matches
+-- apprentice maps document): the floor, a single ground with the islands
+-- above, and the pit, the same floor with a lava pit in the middle (the
+-- Smith). No side walls: you can fall off the edges (Sergio, 11 Nov: the
+-- walls stay only in the courtyard). Sergio's choices, 2 November 2026; the only maps of real matches
 -- since 3 November (the old ones are gone), chosen in Training
 -- (menu/training.lua).
 local PAVIMENTO_SPAWNS = { { x = 225, from = 300 }, { x = 1650, from = 585 }, { x = 630, from = 390 }, { x = 1260, from = 300 } }
@@ -44,12 +44,12 @@ add("cortile", "Il cortile", { spawns = { { x = 210, from = 450 }, { x = 1710, f
 -- too, so they also bring variety online (Sergio, 11 Nov).
 -- Limbo: less gravity: you jump higher and farther and the shots fly longer.
 add("limbo", "Il Limbo", { gravity = 0.6,
-	spawns = { { x = 240, from = 480 }, { x = 1680, from = 480 }, { x = 630, from = 300 }, { x = 1290, from = 300 } },
+	spawns = { { x = 180, from = 600 }, { x = 1740, from = 520 }, { x = 630, from = 400 }, { x = 1230, from = 300 } },
 	build = function(t) t:load(mapdata.limbo) end })
 -- Lussuria: the storm moves everyone a step at the end of each round; the steel spikes are
 -- for the Rampino, the gorge in the middle kills.
 add("lussuria", "La bufera", { hazard = "wind",
-	spawns = { { x = 150, from = 520 }, { x = 1740, from = 450 }, { x = 336, from = 420 }, { x = 1485, from = 360 } },
+	spawns = { { x = 150, from = 600 }, { x = 1665, from = 550 }, { x = 285, from = 480 }, { x = 1340, from = 300 } },
 	build = function(t) t:load(mapdata.lussuria) end })
 -- Gola: the hail falls where a shadow announced it a round before; the two pools of mud
 -- (world rectangles x0, x1, y0, y1 around the ground of the pool, as painted by

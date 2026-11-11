@@ -50,49 +50,44 @@ QUANTO = dict(lontano=0.1, medio=0.3, vicino=0.6)
 CALMO = 20 / 0.75
 
 # ---------------------------------------------------------------- i layout (scena 1280 x 720)
-# Una sporgenza per lato fuori dai muri, in pietra come i muri (Sergio, 9 nov): dove ci si salva
-# dopo una caduta di lato o un teletrasporto sbagliato; sta nel margine della maschera e del dipinto
-SUOLO = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 560), (860, 560), (920, 500),
-         (1236, 500), (1236, 330), (1280, 330), 
-         (1280, 380), (1398, 380), (1398, 416), (1280, 416), (1280, 760), (0, 760), (0, 416), (-118, 416), (-118, 380), (0, 380)]
+# Niente muretti ai lati (Sergio, 11 nov): il suolo arriva al bordo e oltre si cade; i muri di lato
+# restano solo nel cortile (cortile.py)
+SUOLO = [(0, 560), (250, 560), (310, 500), (560, 500), (620, 560), (860, 560), (920, 500), (1280, 500),
+         (1280, 760), (0, 760)]
 SOPRA = [scheggia(110, 300, 130, 50), blocco(300, 180, 90, 28), fungo(380, 330, 180, 26, 170, 22),
          scheggia(590, 250, 110, 44), scheggia(690, 410, 100, 40), blocco(960, 230, 140, 38), arco(960, 370, 230, 130, 30, 40)]
 TRAVI = [(400, 140, 140, 16), (740, 330, 130, 16)]
-SX = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680, 760), (0, 760), (0, 416), (-118, 416), (-118, 380), (0, 380)]
-DX = [(790, 560), (860, 560), (920, 500), (1236, 500), (1236, 330), (1280, 330), (1280, 380), (1398, 380), (1398, 416), (1280, 416), (1280, 760), (790, 760)]
+SX = [(0, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680, 760), (0, 760)]
+DX = [(790, 560), (860, 560), (920, 500), (1280, 500), (1280, 760), (790, 760)]
 
 
 # ---------------------------------------------------------------- i gironi (scena 1280 x 720)
-SPORGE_SX = [(0, 416), (-118, 416), (-118, 380), (0, 380)]
-SPORGE_DX = [(1280, 380), (1398, 380), (1398, 416), (1280, 416)]
+# I · Limbo, il castello dei sette muri: terrazza alta a sinistra, gradoni che scendono verso il centro
+# con tre monconi di colonne spezzate, la riva bassa a destra che si rialza in fondo; rovine e colonne
+# sospese (gravità ridotta: si salta il doppio). Nessun muro di lato.
+LIMBO_SUOLO = [(0, 400), (140, 400), (200, 460), (290, 460), (350, 520), (440, 520), (440, 480), (480, 480), (480, 520),
+               (560, 520), (620, 570), (700, 570), (700, 530), (760, 530), (760, 570), (860, 570), (900, 540),
+               (980, 540), (1030, 500), (1090, 500), (1130, 440), (1160, 440), (1200, 480), (1280, 480),
+               (1280, 760), (0, 760)]
+LIMBO_SOPRA = [fungo(230, 330, 150, 24, 90, 22), fungo(800, 330, 150, 24, 90, 22), scheggia(520, 210, 170, 56),
+               blocco(60, 250, 110, 26), blocco(1010, 300, 100, 26), scheggia(390, 400, 110, 40), scheggia(960, 170, 120, 40)]
 
-# I · Limbo, il castello dei sette muri: cortile a gradoni quasi simmetrico, rampe a 45 gradi, tre
-# monconi di colonne spezzate sul fondo, rovine e colonne sospese (gravità ridotta: si salta il doppio)
-LIMBO_SUOLO = ([(0, 330), (44, 330), (44, 440), (190, 440), (250, 500), (330, 500), (390, 560),
-                (470, 560), (470, 520), (510, 520), (510, 560), (610, 560), (610, 500), (670, 500), (670, 560),
-                (770, 560), (770, 520), (810, 520), (810, 560),
-                (890, 560), (950, 500), (1030, 500), (1090, 440), (1236, 440), (1236, 330), (1280, 330)]
-               + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX)
-LIMBO_SOPRA = [fungo(250, 330, 170, 24, 100, 22), fungo(860, 330, 170, 24, 100, 22), scheggia(560, 230, 160, 56),
-               blocco(80, 270, 110, 26), blocco(1090, 270, 110, 26), scheggia(420, 410, 110, 40), scheggia(750, 410, 110, 40)]
-
-# II · Lussuria, la bufera: due scogliere a zig-zag con la gola in mezzo (cadere è morire), schegge
-# nel vuoto e spuntoni d'acciaio dove aggrapparsi col Rampino
-LUSS_SX = ([(0, 330), (44, 330), (44, 420), (150, 420), (210, 480), (300, 480), (340, 540), (430, 540), (470, 580),
-            (500, 580), (500, 760), (0, 760)] + SPORGE_SX)
-LUSS_DX = ([(780, 760), (780, 610), (810, 610), (850, 570), (940, 570), (980, 520), (1070, 520), (1110, 470), (1236, 470),
-            (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760)])
-LUSS_SOPRA = [scheggia(590, 470, 100, 42), scheggia(580, 330, 120, 46), scheggia(110, 300, 130, 48), scheggia(1050, 300, 130, 48)]
+# II · Lussuria, la bufera: due scogliere a zig-zag diverse (larga a sinistra, stretta e alta a destra)
+# con la gola in mezzo (cadere è morire), schegge nel vuoto e spuntoni d'acciaio dove aggrapparsi col Rampino
+LUSS_SX = [(0, 400), (110, 400), (170, 460), (300, 460), (340, 540), (430, 540), (470, 580), (500, 580), (500, 760), (0, 760)]
+LUSS_DX = [(780, 760), (780, 610), (810, 610), (850, 570), (930, 570), (970, 520), (1040, 520), (1080, 440), (1150, 440),
+           (1190, 380), (1280, 380), (1280, 760)]
+LUSS_SOPRA = [scheggia(590, 470, 100, 42), scheggia(560, 320, 120, 46), scheggia(80, 280, 130, 48), scheggia(1090, 250, 130, 48)]
 LUSS_SPUNTONI = [[(500, 610), (590, 622), (500, 640)], [(500, 675), (570, 685), (500, 700)],
                  [(780, 640), (700, 652), (780, 668)], [(780, 700), (710, 710), (780, 722)],
-                 [(250, 480), (275, 428), (300, 480)], [(1020, 520), (1045, 468), (1070, 520)]]
+                 [(230, 460), (255, 408), (280, 460)], [(985, 520), (1010, 468), (1035, 520)]]
 
-# III · Gola, la conca di fango: la sporgenza alta a sinistra, tre collinette, due pozze che rallentano
-# (stessi numeri in client/sim/maps.lua: mud)
-GOLA_SUOLO = ([(0, 330), (44, 330), (44, 380), (250, 380), (330, 470), (400, 470), (440, 530), (540, 530), (580, 490),
-               (700, 490), (740, 530), (840, 530), (880, 490), (930, 490), (1010, 490), (1060, 440), (1236, 440),
-               (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX)
-GOLA_SOPRA = [scheggia(540, 330, 150, 52), blocco(950, 290, 130, 30), scheggia(330, 270, 110, 42), blocco(1100, 240, 100, 26)]
+# III · Gola, la conca di fango: la sporgenza alta a sinistra, collinette, due pozze che rallentano
+# (stessi numeri in client/sim/maps.lua: mud) e a destra un gradino che sale e un ripiano basso
+GOLA_SUOLO = [(0, 380), (250, 380), (330, 470), (400, 470), (440, 530), (540, 530), (580, 490),
+              (700, 490), (740, 530), (840, 530), (880, 490), (950, 490), (1000, 430), (1090, 430), (1130, 500),
+              (1280, 500), (1280, 760), (0, 760)]
+GOLA_SOPRA = [scheggia(540, 330, 150, 52), blocco(950, 290, 130, 30), scheggia(330, 270, 110, 42), blocco(1110, 330, 100, 26)]
 GOLA_POZZE = [(440, 530, 100), (740, 530, 100)]        # x, y della superficie, larghezza
 
 
