@@ -176,10 +176,11 @@ end
 -- ---------------------------------------------------------------- the map
 
 -- After the kidnapping (the last chapter done) the campaign is the funnel of
--- hell (Sergio, 10-11 Nov): the Cortile and the Forge on the top floor, the
--- nine circles under it, smaller and smaller, down to Favilla. The circles
--- are placeholders for now: names and keepers (lang, campaign.rings), five
--- levels and the keeper each, all still to come.
+-- hell (Sergio, 10-11 Nov): on the top floor the Cortile (the antinferno) and
+-- the Forge, under it the circle you are on, and under that one barely the
+-- next: then only dark. Who plays must not know how much is left (the page of
+-- the circles, choice 4). The circles are placeholders for now: names and
+-- keepers (lang, campaign.rings), five levels and the keeper each.
 -- { top, side }: the colors of each floor
 local FLOOR = { kit.hex("3d2c20"), kit.hex("8b4f2b") }
 local RING_COLORS = {
@@ -188,8 +189,10 @@ local RING_COLORS = {
 	{ kit.hex("3c1220"), kit.hex("8e2038") }, { kit.hex("1a2636"), kit.hex("2f5078") }, { kit.hex("26384a"), kit.hex("6aa2c4") },
 }
 local RING_LEVELS = 5
--- the rings on the map: width, and the Figma y of their top face
-local RING_W = { 744, 610, 490, 390, 305, 235, 180, 135, 100 }
+-- the circle you are on (the levels are still to come: always the first), and
+-- on the map its width and the width of the one that shows under it
+local RING_AT = 1
+local OPEN_W, NEXT_W = 744, 610
 local RING_H, RING_THICK = 0.105, 0.045
 local MAP_X = 520
 
@@ -251,41 +254,29 @@ end
 local function build_map(c)
 	local g = c.kg
 	c.head = kit.header(c.buttons, common.campaign, KC.HOT, "indietro", common.home)
-	-- from the bottom up: each floor covers the back of the one under it
-	local ys, y = {}, 312
-	for i, w in ipairs(RING_W) do
-		ys[i] = y
-		if RING_W[i + 1] then y = y + w * RING_THICK + RING_W[i + 1] * RING_H * 0.55 end
+	-- from the bottom up: each floor covers the back of the one under it.
+	-- The next circle: a dark rim going down into the dark, no name on it
+	local y1 = 312
+	local y2 = y1 + OPEN_W * RING_THICK + NEXT_W * RING_H * 0.55
+	local nc = RING_COLORS[RING_AT + 1]
+	if nc then
+		floor(g, MAP_X, y2, NEXT_W, NEXT_W * RING_H, NEXT_W * RING_THICK, { toward_ink(nc[1], 0.7), toward_ink(nc[2], 0.75) }, false)
+		for _, d in ipairs({ { 1.7, 300, 110 }, { 1.2, 170, 62 } }) do
+			gui.play_flipbook(ellipse(g, MAP_X, y2 + d[3], NEXT_W * d[1], d[2], KC.INK), "alone")
+		end
 	end
-	local last = #RING_W
-	for i = last, 1, -1 do
-		local w = RING_W[i]
-		local col = RING_COLORS[i]
-		if i > 1 then col = { toward_ink(col[1], 0.5), toward_ink(col[2], 0.55) } end
-		floor(g, MAP_X, ys[i], w, w * RING_H, w * RING_THICK, col, i == 1)
-		kit.zone(g, c.buttons, MAP_X - w / 2, ys[i] - w * RING_H / 2, w, w * (RING_H + RING_THICK), "girone:" .. i)
-	end
-	-- the first circle: where you are. Its levels as dots, its name on a plate
-	local r = T.rings[1]
-	for k, pt in ipairs(arc(MAP_X, ys[1], RING_W[1], RING_W[1] * RING_H, RING_LEVELS + 1)) do
+	-- the circle you are on: its levels as dots, its name on a plate
+	local r = T.rings[RING_AT]
+	floor(g, MAP_X, y1, OPEN_W, OPEN_W * RING_H, OPEN_W * RING_THICK, RING_COLORS[RING_AT], true)
+	kit.zone(g, c.buttons, MAP_X - OPEN_W / 2, y1 - OPEN_W * RING_H / 2, OPEN_W, OPEN_W * (RING_H + RING_THICK), "girone:" .. RING_AT)
+	for k, pt in ipairs(arc(MAP_X, y1, OPEN_W, OPEN_W * RING_H, RING_LEVELS + 1)) do
 		ellipse(g, pt[1], pt[2] - 4, 12, 9, k == 1 and KC.HOT or kit.with_alpha(KC.SAND, 0.35))
 	end
-	local name = T.ring_name:format(r[1], r[2])
-	local p = kit.sand(g, MAP_X - 118, ys[1] + 30, 236, 34, RING_COLORS[1][2], { sk = 10, d = 5 })
-	kit.text(p.g, name, MAP_X, ys[1] + 54, 18, KC.INK, "middle", 1)
+	local p = kit.sand(g, MAP_X - 118, y1 + 30, 236, 34, RING_COLORS[RING_AT][2], { sk = 10, d = 5 })
+	kit.text(p.g, T.ring_name:format(r[1], r[2]), MAP_X, y1 + 54, 18, KC.INK, "middle", 1)
 	kit.pop(p.node, 0.25)
-	-- the next one: closed, and what opens it
-	local r2 = T.rings[2]
-	ui.padlock(MAP_X - 150 - g.ox, g.oy - (ys[2] + 22), 16, KC.MUTE, g.node)
-	kit.text(g, T.ring_locked:format(r2[1], r[3]), MAP_X - 132, ys[2] + 26, 10, KC.MUTE, "start", 1)
-	-- Favilla, at the bottom of it all
-	local fy = ys[last] + 24
-	local halo = ui.disc(MAP_X - g.ox, g.oy - fy, 150, kit.with_alpha(KC.STEEL, 0.28), g.node)
-	gui.play_flipbook(halo, "alone")
-	gui.set_blend_mode(halo, gui.BLEND_ADD)
-	gui.animate(halo, "color.w", 0.12, gui.EASING_INOUTSINE, 1.8, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
-	ellipse(g, MAP_X, fy, 9, 9, KC.STAR)
-	kit.text(g, TV.favilla, MAP_X, fy + 22, 9, kit.with_alpha(KC.STEEL, 0.8), "middle", 2)
+	-- what opens the way down
+	if nc then kit.text(g, T.ring_locked:format(r[3]), MAP_X, y2 + 30, 10, KC.MUTE, "middle", 1) end
 	-- the top floor: the two chapters done, each with the picture of its place
 	floor(g, MAP_X, 208, 860, 96, 52, FLOOR, false)
 	local places = { { payload.CAPITOLI[1], T.cortile, 390 }, { payload.CAPITOLI[2], kit.upper(payload.CAPITOLI[2].titolo), 690 } }
@@ -332,14 +323,11 @@ local function build_ring(c, i)
 	kit.text(tl, T.ring_sub:format(T.coming), 30 + 16 + #r[1] * 12, 114, 11, KC.MUTE, "start", 1)
 	local cx, cy, w, h = 560, 370, 1080, 300
 	floor(g, cx, cy, w, h, 60, col, true)
-	-- the circle under it, down in the hole
-	local under = T.rings[i + 1]
-	if under then
-		local uc = RING_COLORS[i + 1]
-		ellipse(g, cx, cy + 34, 420, 62, toward_ink(uc[2], 0.6))
+	-- the circle under it, down in the hole: barely a rim, no name
+	local uc = RING_COLORS[i + 1]
+	if uc then
+		ellipse(g, cx, cy + 34, 420, 62, toward_ink(uc[2], 0.75))
 		ellipse(g, cx, cy + 36, 210, 30, KC.INK)
-		ui.padlock(cx - g.ox, g.oy - (cy + 22), 22, KC.MUTE, g.node)
-		kit.text(g, T.ring_name:format(under[1], under[2]), cx, cy + 60, 10, KC.MUTE, "middle", 1)
 	end
 	local pts = arc(cx, cy, w, h, RING_LEVELS + 1)
 	for k = 1, #pts - 1 do
