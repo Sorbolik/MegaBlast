@@ -27,6 +27,6 @@ pad a
 aspetta 0.6
 aspetta 1
 foto 02_cartolina
-tocca 60 360                        # fuori dalla cartolina
+tocca_bordo 36 60 basso sinistra    # indietro dalla cartolina
 aspetta 1
 foto 03_campagna

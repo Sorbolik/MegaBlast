@@ -44,26 +44,6 @@ local function placed(from)
 	return vec(from.x, from.y), vmath.vector3(k, k, 1)
 end
 
--- the picture cut to the slant: a band as tall as the picture, a leaning box in it
-local function picture(parent, tex)
-	local w, h, sk = P.pic_w, P.pic_h, P.pic_sk
-	local band = gui.new_box_node(vec(0, 0), vec(w + sk, h))
-	gui.set_clipping_mode(band, gui.CLIPPING_MODE_STENCIL)
-	gui.set_clipping_visible(band, false)
-	gui.set_parent(band, parent)
-	local lean = math.atan2(sk, h)
-	local cut = gui.new_box_node(vec(0, 0), vec(w * math.cos(lean), h / math.cos(lean) + sk + 2 * w * math.sin(lean)))
-	gui.set_clipping_mode(cut, gui.CLIPPING_MODE_STENCIL)
-	gui.set_clipping_visible(cut, false)
-	gui.set_rotation(cut, vmath.vector3(0, 0, -math.deg(lean)))
-	gui.set_parent(cut, band)
-	local tall = math.max(h, (w + sk) * 9 / 16) + 4
-	local img = gui.new_box_node(vec(0, 0), vec(tall * 16 / 9, tall))
-	if tex then gui.set_texture(img, tex) else gui.set_color(img, KC.CARD_BOTTOM) end
-	gui.set_rotation(img, vmath.vector3(0, 0, math.deg(lean)))
-	gui.set_parent(img, cut)
-end
-
 function M.open(id, titolo, from, tipo, line, o)
 	o = o or {}
 	local tex = ill.texture(id, "tavola")
@@ -117,7 +97,7 @@ function M.open(id, titolo, from, tipo, line, o)
 	local cg = { node = p.card, ox = CX, oy = CY }
 	local plate = kit.plate(cg, P.x, P.y, P.w, P.h, KC.HOT, { sk = P.sk, fill = KC.SAND, d = 12 })
 	p.paper = plate.node
-	picture(p.card, tex)
+	kit.picture(p.card, tex, P.pic_w, P.pic_h, P.pic_sk)
 	types.label(tipo, -P.pic_w / 2 + 14, P.pic_h / 2 - 34, 40, p.card)
 	-- black over everything when it leaves
 	p.veil = top(gui.new_box_node(vec(640, 360), vec(1280 * 4, 720 * 4)))

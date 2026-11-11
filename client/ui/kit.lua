@@ -203,6 +203,32 @@ function M.thumb(p, texture, image, wide, edge)
 	return img
 end
 
+-- A picture cut to a slant, centered on parent: w wide at the base and h
+-- tall, its top sk to the right (a band as tall as the picture, a leaning box
+-- in it). The picture covers the place keeping its shape (ratio: its width
+-- over its height). Without a texture, a dark plate
+function M.picture(parent, texture, w, h, sk, ratio)
+	local band = gui.new_box_node(vec(0, 0), vec(w + sk, h))
+	gui.set_clipping_mode(band, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(band, false)
+	gui.set_parent(band, parent)
+	local lean = math.atan2(sk, h)
+	local cut = gui.new_box_node(vec(0, 0), vec(w * math.cos(lean), h / math.cos(lean) + sk + 2 * w * math.sin(lean)))
+	gui.set_clipping_mode(cut, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(cut, false)
+	V.x, V.y, V.z = 0, 0, -math.deg(lean)
+	gui.set_rotation(cut, V)
+	gui.set_parent(cut, band)
+	ratio = ratio or 16 / 9
+	local tall = math.max(h, (w + sk) / ratio) + 4
+	local img = gui.new_box_node(vec(0, 0), vec(tall * ratio, tall))
+	if texture then gui.set_texture(img, texture) else gui.set_color(img, C.CARD_BOTTOM) end
+	V.z = math.deg(lean)
+	gui.set_rotation(img, V)
+	gui.set_parent(img, cut)
+	return img
+end
+
 -- ---------------------------------------------------------------- text
 
 local FONT_SIZE = 40
