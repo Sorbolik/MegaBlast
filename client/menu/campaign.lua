@@ -177,9 +177,11 @@ end
 
 -- After the kidnapping (the last chapter done) the campaign is the funnel of
 -- hell (Sergio, 10-11 Nov): on the top floor the Cortile (the antinferno) and
--- the Forge, under it the circle you are on, and under that one the
--- next, closed: then only dark. Who plays must not know how much is left (the page of
--- the circles, choice 4). The circles are placeholders for now: names and
+-- the Forge, under it the nine circles, smaller and smaller, down to Favilla.
+-- Only the circles reached open (Sergio, 11 Nov): the next one has its padlock,
+-- the ones under it are off. The map looks at one circle at a time, always as
+-- wide (the ones at the bottom would be too small to touch): touching another
+-- circle, or dragging up and down, the camera goes there. The circles are placeholders for now: names and
 -- keepers (lang, campaign.rings), five levels and the keeper each.
 -- { top, side }: the colors of each floor
 local FLOOR = { kit.hex("3d2c20"), kit.hex("8b4f2b") }
@@ -189,10 +191,19 @@ local RING_COLORS = {
 	{ kit.hex("3c1220"), kit.hex("8e2038") }, { kit.hex("1a2636"), kit.hex("2f5078") }, { kit.hex("26384a"), kit.hex("6aa2c4") },
 }
 local RING_LEVELS = 5
--- the circle you are on (the levels are still to come: always the first), and
--- on the map its width and the width of the one that shows under it
+-- the circle you are on (the levels are still to come: always the first)
 local RING_AT = 1
-local OPEN_W, NEXT_W = 744, 610
+-- the rings on the map: their widths, from the first down
+local RING_W = { 744, 610, 490, 390, 305, 235, 180, 135, 100 }
+-- how far a circle goes toward the dark: the next one, and the ones under it
+local NEXT_DIM, OFF_DIM = 0.3, 0.72
+-- the circle the map looks at: how wide on the screen and where (Figma y), and
+-- how long the camera takes to get to another one
+local LOOK_W, LOOK_Y, LOOK_TIME = 744, 312, 0.28
+-- a drag this long (pixels of the 720 high screen) moves the camera
+local DRAG = 60
+-- the plate of the story shown at the bottom of the funnel
+local PRISON = "s_ghiaccio"
 local RING_H, RING_THICK = 0.105, 0.045
 local MAP_X = 520
 
@@ -202,11 +213,19 @@ local function toward_ink(col, k)
 end
 
 local function ellipse(g, cx, cy, w, h, color)
-	-- a box with the disc's image, not a pie node: the polygon of a wide
-	-- ellipse would cut the image's soft edge into steps
+	-- a box with an image, not a pie node (its polygon has no antialiasing).
+	-- The flat ones have their own images, drawn already flat and in three
+	-- sizes: a round disc pulled eight times wider shows steps on the curves
+	-- (Sergio, 11 Nov), and the atlas has no mipmaps
 	local n = gui.new_box_node(vmath.vector3(cx - g.ox, g.oy - cy, 0), vmath.vector3(w, h, 0))
 	gui.set_texture(n, "ui")
-	gui.play_flipbook(n, w <= 48 and "disco_p" or "disco")
+	local image = "disco_p"
+	if w > 48 then
+		-- g.k: the scale of the group (the map), the size it shows at
+		local shown = w * (g.k or 1)
+		image = h > w * 0.2 and "ellisse_a" or shown >= 560 and "ellisse_g" or shown >= 230 and "ellisse_m" or "ellisse_p"
+	end
+	gui.play_flipbook(n, image)
 	gui.set_color(n, color)
 	gui.set_parent(n, g.node)
 	return n
@@ -216,7 +235,8 @@ end
 -- hole. outline: a sand rim (the one you are on)
 local function floor(g, cx, cy, w, h, thick, colors, outline)
 	ellipse(g, cx, cy + thick, w, h, colors[2])
-	kit.rect(g, cx - w / 2 + w * 0.004, cy, w * 0.992, thick, colors[2])
+	-- as wide as the ellipse in its image (a pixel of margin each side)
+	kit.rect(g, cx - w / 2 + w * 0.0008, cy, w * 0.9984, thick, colors[2])
 	if outline then ellipse(g, cx, cy, w + 8, h + 8, KC.SAND) end
 	ellipse(g, cx, cy, w, h, colors[1])
 	ellipse(g, cx, cy - h * 0.04, w * 0.56, h * 0.5, KC.INK)
@@ -251,38 +271,113 @@ local function arc(cx, cy, w, h, n)
 	return out
 end
 
+-- the Figma y of each ring's top face on the whole funnel
+local RING_Y = {}
+do
+	local y = LOOK_Y
+	for i, w in ipairs(RING_W) do
+		RING_Y[i] = y
+		if RING_W[i + 1] then y = y + w * RING_THICK + RING_W[i + 1] * RING_H * 0.55 end
+	end
+end
+
 local function build_map(c)
 	local g = c.kg
 	c.head = kit.header(c.buttons, common.campaign, KC.HOT, "indietro", common.home)
-	-- from the bottom up: each floor covers the back of the one under it.
-	-- The next circle, closed, and under it only the dark
-	local y1 = 312
-	local y2 = y1 + OPEN_W * RING_THICK + NEXT_W * RING_H * 0.55
-	local nc = RING_COLORS[RING_AT + 1]
-	if nc then
-		floor(g, MAP_X, y2, NEXT_W, NEXT_W * RING_H, NEXT_W * RING_THICK, { toward_ink(nc[1], 0.5), toward_ink(nc[2], 0.55) }, false)
-		for _, d in ipairs({ { 1.7, 300, 110 }, { 1.2, 170, 62 } }) do
-			gui.play_flipbook(ellipse(g, MAP_X, y2 + d[3], NEXT_W * d[1], d[2], KC.INK), "alone")
+	local last = #RING_W
+	local look = math.max(1, math.min(last, c.scelta.look or RING_AT))
+	local from = c.look_from or look
+	c.scelta.look, c.look_from = look, nil
+	-- the funnel in its own group, scaled around the ring looked at
+	local scale = LOOK_W / RING_W[look]
+	local m = gui.new_box_node(vmath.vector3(MAP_X, 720 - LOOK_Y, 0), vmath.vector3(1, 1, 0))
+	gui.set_visible(m, false)
+	gui.set_parent(m, g.node)
+	gui.set_scale(m, vmath.vector3(scale, scale, 1))
+	local mg = { node = m, ox = MAP_X, oy = RING_Y[look], k = scale }
+	-- where a ring is on the screen, and how wide
+	local function on_screen(i)
+		return LOOK_Y + (RING_Y[i] - RING_Y[look]) * scale, RING_W[i] * scale
+	end
+	-- Favilla, at the bottom of it all
+	local fy = RING_Y[last] + 24
+	local halo = ui.disc(0, RING_Y[look] - fy, 150, kit.with_alpha(KC.STEEL, 0.28), m)
+	gui.play_flipbook(halo, "alone")
+	gui.set_blend_mode(halo, gui.BLEND_ADD)
+	gui.animate(halo, "color.w", 0.12, gui.EASING_INOUTSINE, 1.8, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+	ui.disc(0, RING_Y[look] - fy, 9, KC.STAR, m)
+	-- from the bottom up: each floor covers the back of the one under it. Above
+	-- the ring looked at only the one before it (or the top floor)
+	for i = last, math.max(1, look - 1), -1 do
+		local w = RING_W[i]
+		local col = RING_COLORS[i]
+		if i > RING_AT then
+			local k = i == RING_AT + 1 and NEXT_DIM or OFF_DIM
+			col = { toward_ink(col[1], k + 0.1), toward_ink(col[2], k) }
+		end
+		floor(mg, MAP_X, RING_Y[i], w, w * RING_H, w * RING_THICK, col, i == look)
+		-- the front of the ring, the part the one above leaves in sight
+		local top = RING_Y[i] - w * RING_H / 2
+		if i > look - 1 and i > 1 then top = RING_Y[i - 1] + RING_W[i - 1] * (RING_H / 2 + RING_THICK) end
+		kit.zone(mg, c.buttons, MAP_X - w / 2, top, w, RING_Y[i] + w * (RING_H / 2 + RING_THICK) - top, "girone:" .. i)
+	end
+	if look == 1 then floor(mg, MAP_X, 208, 860, 96, 52, FLOOR, false) end
+	-- names and padlocks: not scaled, in their own group (hidden while the camera moves)
+	local lab = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(1, 1, 0))
+	gui.set_visible(lab, false)
+	gui.set_parent(lab, g.node)
+	local lg = { node = lab, ox = g.ox, oy = g.oy }
+	if from ~= look then
+		-- the camera comes from the ring it was looking at
+		local s0 = LOOK_W / RING_W[from]
+		gui.set_scale(m, vmath.vector3(s0, s0, 1))
+		gui.set_position(m, vmath.vector3(MAP_X, 720 - LOOK_Y + (RING_Y[look] - RING_Y[from]) * s0, 0))
+		gui.set_enabled(lab, false)
+		gui.animate(m, "scale", vmath.vector3(scale, scale, 1), gui.EASING_OUTCUBIC, LOOK_TIME)
+		gui.animate(m, "position", vmath.vector3(MAP_X, 720 - LOOK_Y, 0), gui.EASING_OUTCUBIC, LOOK_TIME, 0, function()
+			gui.set_enabled(lab, true)
+		end)
+	end
+	-- the ring looked at: its name on a plate; yours has its levels as dots
+	local r = T.rings[look]
+	local at = T.rings[RING_AT]
+	if look == RING_AT then
+		for k, pt in ipairs(arc(MAP_X, LOOK_Y, LOOK_W, LOOK_W * RING_H, RING_LEVELS + 1)) do
+			ellipse(lg, pt[1], pt[2] - 4, 12, 9, k == 1 and KC.HOT or kit.with_alpha(KC.SAND, 0.35))
 		end
 	end
-	-- the circle you are on: its levels as dots, its name on a plate
-	local r = T.rings[RING_AT]
-	floor(g, MAP_X, y1, OPEN_W, OPEN_W * RING_H, OPEN_W * RING_THICK, RING_COLORS[RING_AT], true)
-	kit.zone(g, c.buttons, MAP_X - OPEN_W / 2, y1 - OPEN_W * RING_H / 2, OPEN_W, OPEN_W * (RING_H + RING_THICK), "girone:" .. RING_AT)
-	for k, pt in ipairs(arc(MAP_X, y1, OPEN_W, OPEN_W * RING_H, RING_LEVELS + 1)) do
-		ellipse(g, pt[1], pt[2] - 4, 12, 9, k == 1 and KC.HOT or kit.with_alpha(KC.SAND, 0.35))
+	local pc = RING_COLORS[look][2]
+	local p = kit.sand(lg, MAP_X - 118, LOOK_Y + 30, 236, 34, look > RING_AT and toward_ink(pc, 0.4) or pc, { sk = 10, d = 5 })
+	kit.text(p.g, T.ring_name:format(r[1], r[2]), MAP_X, LOOK_Y + 54, 18, KC.INK, "middle", 1)
+	if from == look then kit.pop(p.node, 0.25) end
+	-- the closed ones: a padlock inside, on the right; the next one says what opens it
+	for i = math.max(RING_AT + 1, look - 1), last do
+		local y, w = on_screen(i)
+		if w >= 180 and y < 600 then
+			local d = math.max(14, math.min(26, w * 0.036))
+			ui.padlock(MAP_X + w * 0.43 - g.ox, g.oy - (y + w * RING_H * 0.3), d, i == RING_AT + 1 and KC.SAND or KC.MUTE, lab)
+		end
+		if i == RING_AT + 1 and i <= look + 1 then
+			local line = i == look and T.ring_opens:format(at[3]) or T.ring_locked:format(T.rings[i][1], T.rings[i][2], at[3])
+			kit.text(lg, line, MAP_X, i == look and LOOK_Y + LOOK_W * (RING_H / 2 + RING_THICK) + 20 or y + w * RING_H * 0.42, 10, KC.SAND, "middle", 1)
+		end
 	end
-	local p = kit.sand(g, MAP_X - 118, y1 + 30, 236, 34, RING_COLORS[RING_AT][2], { sk = 10, d = 5 })
-	kit.text(p.g, T.ring_name:format(r[1], r[2]), MAP_X, y1 + 54, 18, KC.INK, "middle", 1)
-	kit.pop(p.node, 0.25)
-	-- the next one: its name, and what opens it
-	if nc then
-		ui.padlock(MAP_X - 150 - g.ox, g.oy - (y2 + 22), 16, KC.MUTE, g.node)
-		kit.text(g, T.ring_locked:format(T.rings[RING_AT + 1][1], T.rings[RING_AT + 1][2], r[3]), MAP_X - 132, y2 + 26, 10, KC.MUTE, "start", 1)
+	local fsy = LOOK_Y + (fy - RING_Y[look]) * scale
+	if look == last then
+		-- at the very bottom: Favilla in the ice, the plate of the kidnapping (Sergio, 11 Nov)
+		local tex, size = ill.story(PRISON)
+		local k = kit.card(lg, MAP_X - 160, 404, 320, 188, KC.STEEL, {})
+		if tex then
+			c.prison = true
+			kit.card_picture(k, tex, 180, size.w / size.h, 1)
+		end
+		kit.pop(k.node, from == look and 0.15 or 0)
+	elseif fsy < 610 then
+		kit.text(lg, TV.favilla, MAP_X, fsy + 22, 9, kit.with_alpha(KC.STEEL, 0.8), "middle", 2)
 	end
 	-- the top floor: the two chapters done, each with the picture of its place
-	floor(g, MAP_X, 208, 860, 96, 52, FLOOR, false)
 	local places = { { payload.CAPITOLI[1], T.cortile, 390 }, { payload.CAPITOLI[2], kit.upper(payload.CAPITOLI[2].titolo), 690 } }
+	if look > 1 then places = {} end
 	for _, pl in ipairs(places) do
 		local cap, x = pl[1], pl[3]
 		local first = cap.missioni[#cap.missioni]
@@ -311,7 +406,7 @@ local function build_map(c)
 	kit.text(k.g, T.fabbro_line[2], 1100, 164, 10, KC.MUTE)
 	kit.text(c.right, T.tap_ring, 1090, 470, 10, KC.MUTE, "middle", 1)
 	c.play = nil
-	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { size = 54, sub = T.coming_sub:format(r[2]), off = true })
+	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { size = 54, sub = T.coming_sub:format(at[2]), off = true })
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = true })
 end
 
@@ -326,7 +421,7 @@ local function build_ring(c, i)
 	kit.text(tl, T.ring_sub:format(T.coming), 30 + 16 + #r[1] * 12, 114, 11, KC.MUTE, "start", 1)
 	local cx, cy, w, h = 560, 370, 1080, 300
 	floor(g, cx, cy, w, h, 60, col, true)
-	-- the circle under it, down in the hole: closed, and nothing under it
+	-- the circle under it, down in the hole: closed
 	local under = T.rings[i + 1]
 	if under then
 		ellipse(g, cx, cy + 34, 420, 62, toward_ink(RING_COLORS[i + 1][2], 0.6))
@@ -367,6 +462,8 @@ end
 local function release_textures(c)
 	for _, t in ipairs(c.textures or {}) do ill.release(t[1], t[2]) end
 	c.textures = {}
+	if c.prison then ill.story_release(PRISON) end
+	c.prison = nil
 end
 
 local function build(c)
@@ -389,6 +486,7 @@ local function build(c)
 	local on_map = map and c.scelta.view ~= "board"
 	-- the rays: from the guide on a board, from the middle of the funnel on the map
 	kit.scene_focus(c.scene, on_map and 540 or 225, 360)
+	c.on_map = on_map and type(c.scelta.view) ~= "number"
 	if on_map then
 		if type(c.scelta.view) == "number" then return build_ring(c, c.scelta.view) end
 		return build_map(c)
@@ -459,6 +557,21 @@ function M.new(choice, stars, story)
 end
 
 function M.on_input(c, action_id, action)
+	-- on the map a drag up or down moves the camera one ring
+	if action_id == ui.TOUCH and c.on_map then
+		if action.pressed then
+			c.drag_y = action.y
+		elseif action.released and c.drag_y then
+			local dy = action.y - c.drag_y
+			c.drag_y = nil
+			local look = c.scelta.look + (dy > DRAG and 1 or dy < -DRAG and -1 or 0)
+			if look ~= c.scelta.look and look >= 1 and look <= #RING_W then
+				c.look_from, c.scelta.look = c.scelta.look, look
+				build(c)
+				return nil
+			end
+		end
+	end
 	local ui_action = ui.touch(c.buttons, action_id, action)
 	if not ui_action then return nil end
 	if ui_action == "indietro" or ui_action == "storia" then return ui_action end
@@ -468,7 +581,15 @@ function M.on_input(c, action_id, action)
 	if ui_action == "mappa" then
 		c.scelta.view = nil
 	elseif kind == "girone" then
-		c.scelta.view = tonumber(value)
+		-- the ring the map looks at opens (if reached); another one calls the camera
+		local i = tonumber(value)
+		if i ~= c.scelta.look then
+			c.look_from, c.scelta.look = c.scelta.look, i
+		elseif i <= RING_AT then
+			c.scelta.view = i
+		else
+			return nil
+		end
 	else
 		c.scelta.chapter = value
 		if funnel_on(c) then c.scelta.view = "board" end
