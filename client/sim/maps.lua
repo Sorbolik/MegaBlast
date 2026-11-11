@@ -51,11 +51,14 @@ add("limbo", "Il Limbo", { gravity = 0.6,
 add("lussuria", "La bufera", { hazard = "wind",
 	spawns = { { x = 150, from = 600 }, { x = 1665, from = 550 }, { x = 285, from = 480 }, { x = 1340, from = 300 } },
 	build = function(t) t:load(mapdata.lussuria) end })
+-- Gola, Sabbione and Cocito are a little smaller than the others (the same drawing narrowed by 0.8
+-- around the middle, tools/grafica/mappe_dipinte.py PICCOLA): a trial to see the whole map better
+-- (Sergio, 11 Nov); the camera frames the terrain, so at the farthest zoom it shows it bigger.
 -- Gola: the hail falls where a shadow announced it a round before; the two pools of mud
 -- (world rectangles x0, x1, y0, y1 around the ground of the pool, as painted by
 -- tools/grafica/mappe_dipinte.py GOLA_POZZE) slow whoever stands in them.
-add("gola", "La piova eterna", { hazard = "hail", mud = { { 660, 810, 270, 300 }, { 1110, 1260, 270, 300 } },
-	spawns = { { x = 180, from = 570 }, { x = 1725, from = 480 }, { x = 550, from = 430 }, { x = 960, from = 400 } },
+add("gola", "La piova eterna", { hazard = "hail", mud = { { 720, 840, 279, 309 }, { 1080, 1200, 279, 309 } },
+	spawns = { { x = 336, from = 522 }, { x = 1572, from = 450 }, { x = 632, from = 410 }, { x = 960, from = 386 } },
 	build = function(t) t:load(mapdata.gola) end })
 
 -- Avarizia: at the end of each round a boulder starts from the top of each slope and rolls
@@ -82,7 +85,7 @@ add("flegetonte", "Il Flegetonte", { blood = { { 600, 720, 285, 315 }, { 1200, 1
 	spawns = { { x = 150, from = 560 }, { x = 1800, from = 590 }, { x = 465, from = 450 }, { x = 1440, from = 420 } },
 	build = function(t) t:load(mapdata.flegetonte) end })
 add("sabbione", "Il Sabbione", { hazard = "fire_rain",
-	spawns = { { x = 150, from = 410 }, { x = 1800, from = 500 }, { x = 560, from = 490 }, { x = 1545, from = 410 } },
+	spawns = { { x = 312, from = 394 }, { x = 1632, from = 466 }, { x = 640, from = 458 }, { x = 1428, from = 394 } },
 	build = function(t) t:load(mapdata.sabbione) end })
 -- Frode: the Malebolge, two pits of pitch crossed by cracked bridges that fall (bridges: world
 -- rectangle of each, x0, x1, y0, y1; BOLGE_PONTI in tools/grafica/mappe_dipinte.py)
@@ -91,7 +94,7 @@ add("malebolge", "Le Malebolge", { hazard = "bridges", bridges = { { 495, 576, 3
 	build = function(t) t:load(mapdata.malebolge) end })
 -- Tradimento: the Cocito, thin slabs of ice over the cold water: everyone slides, the blasts break them
 add("cocito", "Il Cocito", { hazard = "ice", ice = true,
-	spawns = { { x = 150, from = 380 }, { x = 1770, from = 410 }, { x = 450, from = 380 }, { x = 1350, from = 350 } },
+	spawns = { { x = 312, from = 370 }, { x = 1608, from = 394 }, { x = 552, from = 370 }, { x = 1272, from = 346 } },
 	build = function(t) t:load(mapdata.cocito) end })
 -- Lucifero's arena (three phases, a mission): the lake with the well in the middle; the ice slides and the
 -- six wings push everyone away from the middle at the end of each round. Not in the rotation.

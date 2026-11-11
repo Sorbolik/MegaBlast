@@ -33,6 +33,7 @@ from scena import mix, W, H, MARGINE                                    # noqa: 
 from dipinto import piani, raggi, grade, DEFS, GRUPPI          # noqa: E402
 from temi import TEMI                                          # noqa: E402
 import cortile                                                 # noqa: E402
+import sfondi as sfondi_gironi                                 # noqa: E402
 
 OUT = os.path.join(RADICE, "client", "paintings")
 MASCHERE = os.path.join(QUI, "mappe")
@@ -62,6 +63,25 @@ SX = [(0, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680
 DX = [(790, 560), (860, 560), (920, 500), (1280, 500), (1280, 760), (790, 760)]
 
 
+
+# Le mappe un po' più piccole (Sergio, 11 nov: «più piccola vuol dire che vediamo un po' meglio la
+# mappa»): lo stesso disegno stretto attorno al centro del gioco, i personaggi restano grandi uguali;
+# la camera inquadra il terreno (camera.from_terrain), quindi a zoom lontano lo mostra più grande.
+# Il fondo del terreno (y >= 740) resta sotto il quadro. Gli stessi numeri in client/sim/maps.lua.
+PICCOLA, PICCOLA_C = .8, (640, 500)
+
+
+def stringi(ps):
+    """Punti [(x, y)] della scena stretti di PICCOLA attorno a PICCOLA_C."""
+    cx, cy = PICCOLA_C
+    return [(cx + (x - cx) * PICCOLA, 760 if y >= 740 else cy + (y - cy) * PICCOLA) for x, y in ps]
+
+
+def stringi_rett(x, y, w, h):
+    (x0, y0), = stringi([(x, y)])
+    return (x0, y0, w * PICCOLA, h * PICCOLA)
+
+
 # ---------------------------------------------------------------- i gironi (scena 1280 x 720)
 # I · Limbo, il castello dei sette muri: terrazza alta a sinistra, gradoni che scendono verso il centro
 # con tre monconi di colonne spezzate, la riva bassa a destra che si rialza in fondo; rovine e colonne
@@ -85,11 +105,13 @@ LUSS_SPUNTONI = [[(500, 610), (590, 622), (500, 640)], [(500, 675), (570, 685), 
 
 # III · Gola, la conca di fango: la sporgenza alta a sinistra, collinette, due pozze che rallentano
 # (stessi numeri in client/sim/maps.lua: mud) e a destra un gradino che sale e un ripiano basso
-GOLA_SUOLO = [(0, 380), (250, 380), (330, 470), (400, 470), (440, 530), (540, 530), (580, 490),
+GOLA_SUOLO = stringi([(0, 380), (250, 380), (330, 470), (400, 470), (440, 530), (540, 530), (580, 490),
               (700, 490), (740, 530), (840, 530), (880, 490), (950, 490), (1000, 430), (1090, 430), (1130, 500),
-              (1280, 500), (1280, 760), (0, 760)]
-GOLA_SOPRA = [scheggia(540, 330, 150, 52), blocco(950, 290, 130, 30), scheggia(330, 270, 110, 42), blocco(1110, 330, 100, 26)]
-GOLA_POZZE = [(440, 530, 100), (740, 530, 100)]        # x, y della superficie, larghezza
+              (1280, 500), (1280, 760), (0, 760)])
+GOLA_SOPRA = [stringi(p) for p in (scheggia(540, 330, 150, 52), blocco(950, 290, 130, 30), scheggia(330, 270, 110, 42), blocco(1110, 330, 100, 26))]
+# x, y della superficie, larghezza (strette come la mappa: 480 e 720 a 524, larghe 80)
+GOLA_POZZE = [(x, y, w * PICCOLA) for (x, y), w in ((stringi([(440, 530)])[0], 100), (stringi([(740, 530)])[0], 100))]
+GOLA_TRAVI = [stringi_rett(700, 420, 100, 16)]
 
 
 # Niente muretti di lato né sporgenze (Sergio, 11 nov: solo il cortile li tiene) e le mappe sono
@@ -108,8 +130,8 @@ FLEG_SOPRA = [blocco(525, 535, 65, 22), blocco(612, 520, 65, 22), blocco(700, 54
 FLEG_SANGUE = [(400, 520, 80), (800, 560, 50)]        # x, y della superficie, larghezza
 
 # Il Sabbione: piatto, dune di altezze diverse, nessun riparo; sopra piove fuoco, ai lati il vuoto
-SABBIA = [(40, 500), (220, 500), (300, 450), (420, 450), (500, 520), (700, 520), (780, 560), (900, 560), (960, 500),
-          (1100, 500), (1160, 440), (1240, 440), (1240, 760), (40, 760)]
+SABBIA = stringi([(40, 500), (220, 500), (300, 450), (420, 450), (500, 520), (700, 520), (780, 560), (900, 560), (960, 500),
+          (1100, 500), (1160, 440), (1240, 440), (1240, 760), (40, 760)])
 
 # VIII · Frode, le Malebolge: tre terrazze a quote diverse e due fosse di pece larghe 54, ognuna con
 # un ponte crepato che crolla (client/sim/maps.lua: bridges; stessi numeri qui)
@@ -120,8 +142,8 @@ BOLGE_SOPRA = [scheggia(140, 330, 110, 40), blocco(560, 400, 90, 20), blocco(100
 
 # IX · Tradimento, il Cocito: lastre di ghiaccio sottili sull'acqua gelata, a quote diverse, separate da
 # crepe di 28, dove si scivola e le esplosioni bucano; sotto e di lato cadere è morire
-COC_SOPRA = [blocco(60, 520, 340, 40), blocco(428, 490, 372, 40), blocco(828, 540, 172, 40), blocco(1028, 500, 212, 40),
-             blocco(120, 370, 120, 26), scheggia(640, 320, 110, 50), blocco(1080, 390, 100, 24)]
+COC_SOPRA = [stringi(p) for p in (blocco(60, 520, 340, 40), blocco(428, 490, 372, 40), blocco(828, 540, 172, 40), blocco(1028, 500, 212, 40),
+             blocco(120, 370, 120, 26), scheggia(640, 320, 110, 50), blocco(1080, 390, 100, 24))]
 
 # L'arena di Lucifero: il lago largo, il pozzo in mezzo (160) con due lastre per passarlo, rive a quote
 # diverse e due piattaforme alte; le ali spingono ai bordi, che sono il vuoto
@@ -237,7 +259,7 @@ MAPPE = {
     "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava),
     "limbo": dict(LIMBO, isole=[LIMBO_SUOLO] + LIMBO_SOPRA, travi=[(250, 190, 110, 14), (920, 190, 110, 14)]),
     "lussuria": dict(LUSSURIA, isole=[LUSS_SX, LUSS_DX] + LUSS_SOPRA, travi=[], sopra=None, acciaio=LUSS_SPUNTONI),
-    "gola": dict(GOLA, isole=[GOLA_SUOLO] + GOLA_SOPRA, travi=[(700, 420, 100, 16)], sopra=pozze),
+    "gola": dict(GOLA, isole=[GOLA_SUOLO] + GOLA_SOPRA, travi=GOLA_TRAVI, sopra=pozze),
     "avarizia": dict(AVARIZIA, isole=[AVAR_SUOLO] + AVAR_SOPRA, travi=AVAR_TRAVI, sopra=monete),
     "ira": dict(IRA, isole=IRA_ISOLE, travi=[(380, 470, 100, 14), (790, 460, 100, 14)], sotto=None),
     "eresia": dict(ERESIA, isole=[ERES_SUOLO] + ERES_SOPRA, travi=ERES_TRAVI, sopra=tombe),
@@ -371,9 +393,14 @@ def sfondi():
     c = cortile.sfondo()
     cielo_c = piani(dict(FORGIA, luce=c["luce"], piani=[], isole=[], travi=[]), P)["cielo"]
     out = {"forgia": (p["cielo"], p["gruppi"], True, FORGIA, P), "cortile": (cielo_c, c["gruppi"], False, FORGIA, P)}
+    # i gironi: il cielo dal loro tema, i piani dalle scene fatte a mano (gironi/sfondi.py)
     for nome, tema in TEMA.items():
-        q = piani(MAPPE[nome], TEMI[tema])
-        out[tema] = (q["cielo"], q["gruppi"], True, MAPPE[nome], TEMI[tema])
+        if tema in out:
+            continue
+        sc = sfondi_gironi.sfondo(tema, TEMI[tema])
+        g = dict(MAPPE[nome], luce=sc["luce"])
+        q = piani(dict(g, piani=[], isole=[], travi=[]), TEMI[tema])
+        out[tema] = (q["cielo"], sc["gruppi"], True, g, TEMI[tema])
     return out
 
 
