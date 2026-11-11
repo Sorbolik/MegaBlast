@@ -5,6 +5,7 @@ package.path = "client/?.lua;" .. package.path
 local game = require "sim.game"
 local config = require "sim.config"
 local maps = require "sim.maps"
+local hazards = require "sim.hazards"
 local C = config
 
 local failures = 0
@@ -371,6 +372,75 @@ do
 	local seen
 	for _, e in ipairs(g:pop_events()) do seen = seen or e.type == "tombs" end
 	check(seen, "eresia: the swap is announced")
+end
+
+-- The risk of each hazard (hazards.risk): what the bots see of it
+do
+	local function risk_of(id, seed)
+		local g = started(seed or 1, id)
+		return g, hazards.risk(g)
+	end
+	local g, f = risk_of("pavimento")
+	check(f == nil, "risk: a map without a hazard has none")
+	local function put(g, rb, x, y)
+		rb.x, rb.y = x, y or g.terrain:ground_below(x, g.terrain.h * g.terrain.cell - 1)
+		rb.facing = 1
+		return rb
+	end
+	-- hail: under a mark it hurts, far from every mark it does not
+	g, f = risk_of("gola")
+	local mark = g.hz.marks[1]
+	local under = put(g, g.robots[1], mark)
+	check(f(under) >= C.HAIL.blast.damage_min, "risk: gola: under a shadow of the hail it hurts")
+	local free
+	for x = 300, 1500, 20 do
+		local far = true
+		for _, m in ipairs(g.hz.marks) do far = far and math.abs(m - x) > 120 end
+		if far and g.terrain:ground_below(x, g.terrain.h * g.terrain.cell - 1) then free = x break end
+	end
+	check(f(put(g, g.robots[2], free)) == 0, "risk: gola: away from the shadows nothing")
+	-- water: under the next surface it kills
+	g, f = risk_of("ira")
+	check(f({ x = 800, y = g.hz.level - 5, facing = 1 }) >= hazards.DEATH, "risk: ira: under the water it kills")
+	check(f({ x = 800, y = g.hz.level + C.WATER.step * 4, facing = 1 }) == 0, "risk: ira: high above it is safe")
+	-- tombs: standing in one burns
+	g, f = risk_of("eresia")
+	local t = g.tombs[1]
+	check(f({ x = (t[1] + t[2]) / 2, y = (t[3] + t[4]) / 2 }) == C.STATUS.burn.damage, "risk: eresia: a tomb burns")
+	-- bridges: on a bridge that stands it kills, once fallen it does not
+	g, f = risk_of("malebolge")
+	local b = g.bridges[1]
+	local on = { x = (b[1] + b[2]) / 2, y = b[4], facing = 1 }
+	check(f(on) >= hazards.DEATH, "risk: malebolge: on a bridge it kills")
+	-- boulders: on the way of the rock it hurts, far from it not
+	g, f = risk_of("avarizia")
+	local r0 = g.rocks[1]
+	local y0 = g.terrain:ground_below(r0.x, g.terrain.h * g.terrain.cell - 1)
+	check(f({ x = r0.x + r0.dir * 100, y = y0, facing = 1 }) == C.BOULDER.damage, "risk: avarizia: on the way of a rock it hurts")
+	-- wind: the void at the edge in the way of the gust kills; the same spot against the gust does not
+	g, f = risk_of("lussuria")
+	local mid = g.terrain.cell * (g.terrain.w - 2 * g.terrain.ox) / 2
+	local function risks_at(x)
+		local y = g.terrain:ground_below(x, g.terrain.h * g.terrain.cell - 1)
+		return y and f({ x = x, y = y, facing = 1 }) or 0
+	end
+	check(risks_at(mid) < hazards.DEATH, "risk: lussuria: the middle of the map is safe")
+	-- ice with wings: the push away from the middle kills at the edge of the lake
+	g, f = risk_of("lucifero")
+	local died = false
+	for x = 0, g.terrain.cell * (g.terrain.w - 2 * g.terrain.ox), 12 do
+		local y = g.terrain:ground_below(x, g.terrain.h * g.terrain.cell - 1)
+		if y and f({ x = x, y = y, facing = 1 }) >= hazards.DEATH then died = true end
+	end
+	check(died, "risk: lucifero: somewhere the ice or the wings kill")
+end
+
+-- The bots mind it more or less according to their level
+do
+	local bot = require "sim.bot"
+	check(bot.new(1, 9, 1).liv.pericolo == 1, "bot: the hard levels mind the hazard in full")
+	local easy = bot.new(1, 1, 1).liv.pericolo
+	check(easy < 1 and easy >= 0, "bot: the easy levels mind it less")
 end
 
 if failures > 0 then

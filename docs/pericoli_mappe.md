@@ -26,7 +26,7 @@ Un pericolo dei giri ha quattro punti d'ingresso, tutti facoltativi tranne `setu
 (vero finché qualcosa è in aria: il turno non finisce sotto). Il suo stato sta **solo** in
 `g.hz`, una tabella di numeri e liste; tutto il casuale usa il generatore della partita
 (`g.rng`), così server e client sorteggiano uguale. Nei tentativi del bot (`bot.world`)
-`g.hz` non c'è: il bot non vede il pericolo (la gravità e il fango sì).
+`g.hz` non c'è: la copia del bot non simula il pericolo (la gravità e il fango sì); il bot lo vede dal rischio, vedi sotto.
 
 ## Server
 
@@ -58,7 +58,7 @@ Scelte di Claude (11 nov): gravità 0,6 e non 0,5 (con 0,5 ogni tiro attraversav
 mappa); la raffica sposta subito i robot a fine giro invece di aprire un turno apposta (non
 cambia le fasi della partita, quindi né il server né il client); i chicchi cadono durante il
 primo turno del giro dopo, come le casse, e il turno non finisce finché cadono; il fango è lo
-stato «lento» che c'era già; il bot non vede la grandine né la raffica. Non fatto: l'Uovo che
+stato «lento» che c'era già. Non fatto: l'Uovo che
 nel fango non rimbalza (Gola, scheda della campagna).
 
 ## Violenza, Frode, Tradimento e Lucifero (terzo blocco)
@@ -75,7 +75,7 @@ Scelte di Claude (11 nov): i ponti falsi sono quelli dipinti crepati (tutti crol
 si vedono); quanto è largo il ponte (54 = 81 unità del mondo) e `delay` sono fatti perché lo
 si attraversi di corsa senza fermarsi (si cammina a circa 0,65 unità per tick) e non se ci si
 ferma; la scivolata è un attrito, non una fisica nuova: resta in `hz`, quindi niente campi nei
-robot; il bot non vede ponti, ghiaccio, ali né pioggia (copia della partita senza `hz`);
+robot;
 Lucifero ha una mappa propria fuori dalla rotazione perché la sua battaglia è una missione.
 
 Niente muretti ai lati (Sergio, 11 nov): il suolo arriva al bordo e oltre si cade; i muri di lato restano solo nel cortile. Le mappe dei gironi sono asimmetriche, ma tengono l'assetto che serve ai loro pericoli.
@@ -92,8 +92,7 @@ Scelte di Claude (11 nov): niente terreno aggiunto dai pericoli (il server manda
 scavati, quindi un masso fermo non resta come riparo: si sbriciola, e le tombe chiuse sono un
 coperchio disegnato, non un muro; il vano basso fa già da riparo dai colpi); le tombe sono basse
 (18 unità) per non intrappolare chi ci cade; l'acqua è disegnata dal gioco e non dipinta nella
-mappa, così sale; il bot non vede massi, acqua né tombe (può restare su un isolotto che
-affoga). Non fatto: i globi del teletrasporto dell'Ira e le torri con le fiaccole (sono dei livelli).
+mappa, così sale. Non fatto: i globi del teletrasporto dell'Ira e le torri con le fiaccole (sono dei livelli).
 Forma delle mappe (Sergio, 11 nov): niente muretti ai lati (restano solo nel Cortile) e i bordi possono essere mortali; più asimmetria. Avarizia ha un pendio lungo a sinistra e uno corto con gradino a destra, l'Ira isolotti di larghezze diverse, l'Eresia un terrazzo a sinistra, una rampa e un gradino in giù a destra.
 
 ## Lo sfondo
@@ -103,3 +102,28 @@ più piani, con le luci accese e il buio che sale dal fondo, come il cortile): u
 la sua scena. Una mappa più piccola si fa con `stringi` di `mappe_dipinte.py` (Gola, Sabbione, Cocito),
 e i suoi numeri in `client/sim/maps.lua` (spawn, rettangoli dei pericoli) vanno stretti uguali.
 
+
+## Il bot e i pericoli (rischio)
+
+Un pericolo dei giri può avere `risk(g, hz)` in `KINDS`: restituisce `f(rb)`, i punti vita
+che quel robot perderebbe se restasse dov'è fino al prossimo fine giro (`hazards.DEATH`: muore).
+È l'unica cosa del pericolo che vede il bot (`hazards.risk(g)`, nil se la mappa non ne ha):
+niente casi per mappa. Ogni pericolo nuovo con un `risk` è subito evitato dai bot.
+
+| Pericolo | Rischio |
+|---|---|
+| bufera, ali | muore se la spinta (`WIND.step`) lo porta nel vuoto |
+| ghiaccio | muore se la scivolata nel verso in cui guarda lo porta nel vuoto |
+| grandine, pioggia di fuoco | il danno dei chicchi annunciati o in volo, dal punto dove atterrano (sotto un tetto è meno) |
+| ponti | muore sopra un ponte che regge |
+| massi | il danno se è sulla strada di un masso che rotola o che partirà (`roll_on`, provato da solo) |
+| acqua | muore sotto la superficie del prossimo giro, 8 se è a meno di un passo sopra |
+| tombe | 17 (la bruciatura) in qualunque tomba |
+
+In `bot.lua` (`peril`): per la squadra del bot il rischio è una perdita come un colpo (e la morte
+pesa `morte`), per gli avversari un quarto è un guadagno (un colpo che li lascia sulla strada
+dell'acqua vale di più). Per scegliere da dove attaccare conta il 40% (si può lasciare il
+posto dopo), per il riparo del tutto. Il grado conta: `pericolo` in `M.LEVELS` (tutorial 0,
+facile 0,5, normale 0,8, difficile 1): i gradi bassi cadono ancora ogni tanto in acqua.
+Non fatto: percorso (il bot controlla dove finisce, non cosa attraversa), ghiaccio per chi non
+cammina, ponti che stanno già tremando in base ai tick rimasti.
