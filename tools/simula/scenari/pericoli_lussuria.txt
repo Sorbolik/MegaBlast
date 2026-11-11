@@ -1,0 +1,18 @@
+# La Lussuria (docs/pericoli_mappe.md): la pillola BUFERA con la freccia della prossima raffica, e la
+# raffica a fine giro, che sposta tutti di un passo. Due turni brevi (un colpo ciascuno) chiudono il giro.
+imposta prova_vignette no
+imposta prova_mappa lussuria
+imposta zoom 3
+aspetta 2
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2.5
+foto 01_pillola_bufera
+premi 1
+mira 60 -60 0.3
+aspetta_stato modo=local turno=2 fase=aim 30
+premi 1
+mira -60 -60 0.3
+aspetta_evento gust 40
+aspetta 1.2
+foto 02_dopo_la_raffica

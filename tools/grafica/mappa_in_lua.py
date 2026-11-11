@@ -7,6 +7,17 @@ MAPPE = [
     ('pavimento', 'tools/grafica/mappe/pavimento.png'),
     ('fossa', 'tools/grafica/mappe/fossa.png'),
     ('cortile', 'tools/grafica/mappe/cortile.png'),
+    ('limbo', 'tools/grafica/mappe/limbo.png'),
+    ('lussuria', 'tools/grafica/mappe/lussuria.png'),
+    ('gola', 'tools/grafica/mappe/gola.png'),
+    ('avarizia', 'tools/grafica/mappe/avarizia.png'),
+    ('ira', 'tools/grafica/mappe/ira.png'),
+    ('eresia', 'tools/grafica/mappe/eresia.png'),
+    ('flegetonte', 'tools/grafica/mappe/flegetonte.png'),
+    ('sabbione', 'tools/grafica/mappe/sabbione.png'),
+    ('malebolge', 'tools/grafica/mappe/malebolge.png'),
+    ('cocito', 'tools/grafica/mappe/cocito.png'),
+    ('lucifero', 'tools/grafica/mappe/lucifero.png'),
 ]
 
 def righe(path):

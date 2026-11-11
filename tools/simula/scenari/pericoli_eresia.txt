@@ -1,0 +1,19 @@
+# Le tombe: a fine giro si scambiano le aperte e le chiuse (docs/pericoli_mappe.md)
+imposta prova_vignette no
+imposta prova_mappa eresia
+imposta zoom 3
+aspetta 2
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2.5
+foto 01_inizio
+premi 1
+mira 60 -60 0.3
+aspetta_stato modo=local turno=2 fase=aim 30
+premi 1
+mira -60 -60 0.3
+aspetta_evento tombs 40
+aspetta 0.8
+foto 02_tombe_scambiate
+aspetta 3
+foto 03_dopo

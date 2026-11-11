@@ -1,0 +1,12 @@
+# Il Limbo (docs/pericoli_mappe.md): gravità ridotta, si salta il doppio e il tiro vola più lontano.
+imposta prova_vignette no
+imposta prova_mappa limbo
+imposta zoom 3
+aspetta 2
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2.5
+foto 01_limbo
+tieni salta 0.35
+foto 02_in_aria
+aspetta 2

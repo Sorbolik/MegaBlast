@@ -7,6 +7,39 @@ images {
 images {
   image: "/assets/maps/miniature/fossa.png"
 }
+images {
+  image: "/assets/maps/miniature/limbo.png"
+}
+images {
+  image: "/assets/maps/miniature/lussuria.png"
+}
+images {
+  image: "/assets/maps/miniature/gola.png"
+}
+images {
+  image: "/assets/maps/miniature/avarizia.png"
+}
+images {
+  image: "/assets/maps/miniature/ira.png"
+}
+images {
+  image: "/assets/maps/miniature/eresia.png"
+}
+images {
+  image: "/assets/maps/miniature/flegetonte.png"
+}
+images {
+  image: "/assets/maps/miniature/sabbione.png"
+}
+images {
+  image: "/assets/maps/miniature/malebolge.png"
+}
+images {
+  image: "/assets/maps/miniature/cocito.png"
+}
+images {
+  image: "/assets/maps/miniature/lucifero.png"
+}
 margin: 2
 extrude_borders: 2
 inner_padding: 0

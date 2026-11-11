@@ -41,7 +41,7 @@ end
 -- Real matches: without a map the seed picks it, among those of maps.ROTATION
 do
 	local seen = {}
-	for seed = 1, 4 do
+	for seed = 1, #maps.ROTATION do
 		local id = game.new(seed).map
 		check(id == game.new(seed).map, "same seed, same map")
 		seen[id] = true
@@ -2377,10 +2377,9 @@ do
 	local m = game.new(42, "pavimento")
 	local t = m.terrain
 	check(t.ox == game.MARGIN_CELLS and t.w == game.GRID_W, "the grid has a margin beside the map")
-	check(t:solid(-60, 480),
-		"pavimento: a stone ledge juts out of the left wall")
-	check(t:solid(game.WORLD_W + 60, 480),
-		"pavimento: a stone ledge juts out of the right wall")
+	-- no side walls or ledges on the Forge any more (Sergio, 11 Nov): only the courtyard has them
+	check(not t:solid(-60, 480) and not t:solid(game.WORLD_W + 60, 480),
+		"pavimento: nothing beside the map")
 	local rb = m.robots[1]
 	rb.x, rb.y, rb.vy, rb.grounded = -500, 800, 0, false
 	m:step()

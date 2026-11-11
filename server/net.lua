@@ -177,6 +177,8 @@ function N.snapshot(g, aim)
 	-- of the turn; te: orbs earned this turn; fr: last round (multiplied points);
 	-- av, ab: team that opened the pair of turns and its points then (game.ahead);
 	-- gr: the current round (the Crown only exists from SCORE.crown_rounds + 1);
+	-- hz: the state of the map's hazard (sim/hazards.lua: the storm's dir, the hail's marks and
+	-- stones), as it is, nil on the maps without one;
 	-- aim: where the robot on turn is aiming (absent if it isn't), the others see it
 	local b = BOTS[g] and BOTS[g][g.current]
 	if b then aim = bot.shown_aim(b) end
@@ -185,7 +187,7 @@ function N.snapshot(g, aim)
 	return { t = "state", phase = g.phase, cur = g.current, timer = g.timer, win = g.window,
 		u = used, mt = g.match_left, ai = g.intro > 0 and g.intro or nil, fr = g.final_round, gr = g.round,
 		av = g.ahead, ab = g.ahead_base, r = robots, p = p, o = orbs, s = shards,
-		c = crates, pl = placed, hl = heals, pp = pools, aim = aim }
+		c = crates, pl = placed, hl = heals, pp = pools, hz = g.hz, aim = aim }
 end
 
 -- Events since the last tick (a list, empty if none happened)
