@@ -18,6 +18,7 @@ local rng = require "sim.rng"
 local terrain = require "sim.terrain"
 local maps = require "sim.maps"
 local melee = require "sim.melee"
+local hazards = require "sim.hazards"
 local C = require "sim.config"
 local BODY_SCALE = require "sim.body"
 
@@ -335,6 +336,7 @@ function M.new(seed, map_id, opts)
 	-- without a map the seed picks it (maps.ROTATION)
 	local map = maps.get(map_id or maps.pick(seed))
 	g.map = map.id
+	g.gravity = M.GRAVITY
 	g.rng = rng.new(seed)
 	g.terrain = terrain.new(M.GRID_W, M.WORLD_H / M.CELL, M.CELL, M.MARGIN_CELLS)
 	map.build(g.terrain, seed)
@@ -435,6 +437,7 @@ function M.new(seed, map_id, opts)
 	g.turn_no = 0
 	g.order_pos = 1
 	g.intro = opts.intro or 0
+	hazards.setup(g, map)    -- the gravity, the mud and the hazard of the map (sim/hazards.lua)
 	g:start_turn(g.order[1])
 	return g
 end
@@ -532,6 +535,12 @@ end
 
 local function walk(g, rb, dx)
 	if not step_x(g, rb, dx) then g:push(rb, dx) end
+end
+
+-- Moves rb sideways by dx (a gust: sim/hazards.lua), climbing small steps; false
+-- if a wall or a robot stops it
+function M:shove(rb, dx)
+	return step_x(self, rb, dx)
 end
 
 -- Match points ------------------------------------------------------------------
@@ -1049,7 +1058,7 @@ function M:update_robot(rb, input, active)
 		if active and not rb.sprung then
 			rb.vx = math.max(-air, math.min(air, rb.vx))
 		end
-		rb.vy = rb.vy - M.GRAVITY * M.DT
+		rb.vy = rb.vy - self.gravity * M.DT
 		if rb.parachute then rb.vy = math.max(rb.vy, -C.PARACHUTE.fall_speed) end
 		if rb.vy < 0 and not rb.fall_top then rb.fall_top = rb.y end
 		local landed = false
@@ -1145,7 +1154,7 @@ end
 -- thrower, terrain or the edge of the map stops it
 function M:update_janus(p)
 	p.age = p.age + 1
-	p.vy = p.vy - M.GRAVITY * M.MISSILE_GRAVITY * M.DT
+	p.vy = p.vy - self.gravity * M.MISSILE_GRAVITY * M.DT
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	for _ = 1, steps do
@@ -1195,7 +1204,7 @@ end
 function M:update_grenade(p)
 	p.age = p.age + 1
 	p.fuse = p.fuse - 1
-	p.vy = p.vy - M.GRAVITY * M.GRENADE_GRAVITY * M.DT
+	p.vy = p.vy - self.gravity * M.GRENADE_GRAVITY * M.DT
 	if p.touched and M.GRENADE_DAMPING > 0 then
 		local k = 1 / (1 + M.DT * M.GRENADE_DAMPING)
 		p.vx, p.vy = p.vx * k, p.vy * k
@@ -1298,7 +1307,7 @@ function M:update_shards()
 		local p = self.shards[i]
 		if p then
 			p.age = p.age + 1
-			p.vy = p.vy - M.GRAVITY * M.SHARD_GRAVITY * M.DT
+			p.vy = p.vy - self.gravity * M.SHARD_GRAVITY * M.DT
 			local mx, my = p.vx * M.DT, p.vy * M.DT
 			local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 			for _ = 1, steps do
@@ -1451,7 +1460,7 @@ function M:update_orb(o)
 	-- flies like the missile; when it touches terrain it bounces and rolls.
 	-- If it leaves the map it keeps falling: the teleport takes you there anyway.
 	local t = self.terrain
-	o.vy = o.vy - M.GRAVITY * M.ORB_GRAVITY * M.DT
+	o.vy = o.vy - self.gravity * M.ORB_GRAVITY * M.DT
 	if o.touched and M.ORB_DAMPING > 0 then
 		local k = 1 / (1 + M.DT * M.ORB_DAMPING)
 		o.vx, o.vy = o.vx * k, o.vy * k
@@ -1553,16 +1562,16 @@ end
 -- One tick of flight: it starts fast and slows down (drag), gravity grows
 -- little by little up to drop times the robots' gravity in drop_ramp seconds,
 -- so at first it goes almost straight and then drops more and more
-local function sniper_step(vx, vy, age)
+local function sniper_step(gravity, vx, vy, age)
 	local s = C.SNIPER
-	local g = M.GRAVITY * s.drop * math.min(1, age / (s.drop_ramp * 60))
+	local g = gravity * s.drop * math.min(1, age / (s.drop_ramp * 60))
 	local k = s.drag ^ M.DT
 	return vx * k, (vy - g * M.DT) * k
 end
 
 function M:update_sniper(p)
 	p.age = p.age + 1
-	p.vx, p.vy = sniper_step(p.vx, p.vy, p.age)
+	p.vx, p.vy = sniper_step(self.gravity, p.vx, p.vy, p.age)
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	local t = self.terrain
@@ -1617,7 +1626,7 @@ function M:sniper_preview(x, y, angle, count, pts)
 	local t, n, after = self.terrain, 0, nil
 	local shown = M.SNIPER_PREVIEW_TICKS
 	for i = 1, shown do
-		vx, vy = sniper_step(vx, vy, i)
+		vx, vy = sniper_step(self.gravity, vx, vy, i)
 		local nx, ny = x + vx * M.DT, y + vy * M.DT
 		if t:solid(nx, ny) then
 			if after then break end
@@ -1982,7 +1991,7 @@ end
 function M:update_cannon(rb)
 	local c = rb.cannon
 	local s = C.CANNON
-	c.vy = c.vy - M.GRAVITY * s.gravity * M.DT
+	c.vy = c.vy - self.gravity * s.gravity * M.DT
 	local mx, my = c.vx * M.DT, c.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my))))
 	local stopped = false
@@ -2590,7 +2599,7 @@ function M:fall(o, hw, max_fall)
 		o.vy = 0
 		return true
 	end
-	o.vy = math.max(o.vy - M.GRAVITY * M.DT, -max_fall)
+	o.vy = math.max(o.vy - self.gravity * M.DT, -max_fall)
 	local my = o.vy * M.DT
 	local steps = math.max(1, math.ceil(-my / M.CELL))
 	for _ = 1, steps do
@@ -2843,7 +2852,7 @@ end
 -- or at the feet of the robot it hits
 function M:fly_placed(o)
 	o.age = o.age + 1
-	o.vy = o.vy - M.GRAVITY * M.GRENADE_GRAVITY * M.DT
+	o.vy = o.vy - self.gravity * M.GRENADE_GRAVITY * M.DT
 	local mx, my = o.vx * M.DT, o.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	for _ = 1, steps do
@@ -2973,16 +2982,16 @@ function M:preview(angle, power, count, every, pts, weapon)
 	local rb = self.robots[self.current]
 	local x, y = muzzle(rb, angle)
 	local vx, vy = launch_velocity(angle, power, M.MISSILE_SPEED)
-	local gravity = M.GRAVITY * M.MISSILE_GRAVITY
+	local gravity = self.gravity * M.MISSILE_GRAVITY
 	if weapon == "grenade" or weapon == "trampoline" or weapon == "tar" or weapon == "petard" then
 		vx, vy = launch_velocity(angle, power, M.GRENADE_SPEED)
-		gravity = M.GRAVITY * M.GRENADE_GRAVITY
+		gravity = self.gravity * M.GRENADE_GRAVITY
 	elseif weapon == "teleport" then
 		vx, vy = launch_velocity(angle, power, M.ORB_SPEED)
-		gravity = M.GRAVITY * M.ORB_GRAVITY
+		gravity = self.gravity * M.ORB_GRAVITY
 	elseif weapon == "shards" then
 		vx, vy = math.cos(angle) * M.SHARD_SPEED, math.sin(angle) * M.SHARD_SPEED
-		gravity = M.GRAVITY * M.SHARD_GRAVITY
+		gravity = self.gravity * M.SHARD_GRAVITY
 	elseif weapon == "sniper" then
 		return self:sniper_preview(x, y, angle, count, pts)
 	elseif weapon == "eagle" or weapon == "hook" or weapon == "bellows" or weapon == "boomerang" then
@@ -2996,7 +3005,7 @@ function M:preview(angle, power, count, every, pts, weapon)
 		-- the flight of the Cannonata: from the robot's centre, like the real thing
 		x, y = rb.x, rb.y + M.DISEGNO_H / 2
 		vx, vy = launch_velocity(angle, math.max(C.CANNON.min_power, power), C.CANNON.speed)
-		gravity = M.GRAVITY * C.CANNON.gravity
+		gravity = self.gravity * C.CANNON.gravity
 	elseif weapon == "lunge" then
 		-- the dash: from the robot's centre, as long as the Affondo
 		return self:ray_preview(rb.x, rb.y + M.DISEGNO_H / 2, angle, C.LUNGE.speed * C.LUNGE.ticks / 60, count, pts)
@@ -3096,7 +3105,7 @@ function M:update_projectile()
 	if p.kind == "boomerang" then return self:update_boomerang(p) end
 	if p.digging then return self:update_drill(p) end
 	p.age = p.age + 1
-	p.vy = p.vy - M.GRAVITY * M.MISSILE_GRAVITY * M.DT
+	p.vy = p.vy - self.gravity * M.MISSILE_GRAVITY * M.DT
 	local mx, my = p.vx * M.DT, p.vy * M.DT
 	local steps = math.max(1, math.ceil(math.max(math.abs(mx), math.abs(my)) / M.CELL))
 	for _ = 1, steps do
@@ -3403,6 +3412,7 @@ function M:end_turn()
 			self.final_round = true
 			self:emit({ type = "final_round" })
 		end
+		hazards.round_end(self)
 	end
 	self.order_pos = next_pos
 	self:start_turn(self.order[self.order_pos])
@@ -3439,6 +3449,7 @@ function M:advance(input, can_move)
 	if #self.crates > 0 then self:update_crates() end
 	if #self.placed > 0 then self:update_placed() end
 	if #self.pools > 0 then self:update_pools() end
+	hazards.tick(self)
 end
 
 function M:step(input)
@@ -3499,7 +3510,7 @@ function M:step(input)
 	elseif self.phase == "settle" then
 		-- wait for shots, orbs and robots to settle
 		self.settle_total = self.settle_total + 1
-		local still = #self.orbs == 0 and not self.projectile and not self:shards_flying()
+		local still = #self.orbs == 0 and not self.projectile and not self:shards_flying() and not hazards.busy(self)
 		for _, o in ipairs(self.placed) do
 			if o.flying then still = false end
 		end

@@ -904,7 +904,7 @@ end
 
 -- Grapple and Bellows as drawn, in a single table: the file is close to the
 -- 200 locals Lua allows
-local RM = { fune = require "battle.rope", GUSTS = 5,
+local RM = { fune = require "battle.rope", hazards = require "battle.hazards", GUSTS = 5,
 	-- the images of the new shots in flight (battle/weapons.lua, shots), by projectile kind
 	NEW_SHOTS = { boomerang = "falce", tar = "fiasco", drill = "punta", petard = "petardo_volo", janus = "giano" } }
 -- The character sheet (Sergio, 31 Oct) in a single table: tags, lineup,
@@ -1387,6 +1387,11 @@ local function handle_event(self, e)
 		shock(self, e.x, e.y)
 		plate.announcement(self.robots[e.target].plate, TM.knocked)
 		self.shot_x, self.shot_y, self.shot_t = e.x, e.y, self.clock
+	elseif e.type == "gust" then
+		RM.hazards.gust(self.pericoli)
+		show_message(self, TM.gust)
+	elseif e.type == "hail" then
+		show_message(self, TM.hail)
 	elseif e.type == "final_round" then
 		score.last_lap(self.punti)
 	elseif e.type == "parachute" then
@@ -1622,6 +1627,8 @@ local function apply_state(self, s)
 	-- pools of burning pitch
 	for i = #g.pools, 1, -1 do g.pools[i] = nil end
 	for i, o in ipairs(s.pp or {}) do g.pools[i] = { id = o.i, x = o.x, y = o.y, r = o.r, turns = o.tn } end
+	-- the map's hazard (sim/hazards.lua): the server sends all its state as it is
+	g.hz = s.hz
 	-- healing circles
 	for i = #g.heals, 1, -1 do g.heals[i] = nil end
 	for i, h in ipairs(s.hl or {}) do g.heals[i] = { id = h.i, x = h.x, y = h.y } end
@@ -3785,6 +3792,7 @@ local function render(self, dt)
 	end
 
 	items.update(self.oggetti, g, self.view, self.clock)
+	RM.hazards.update(self.pericoli, g, self.clock)
 
 	-- crates: they fall swaying, lock and teeth pulse
 	for _, n in ipairs(self.crate_nodes) do
@@ -4081,6 +4089,7 @@ local function arrange(self)
 	for _, sl in ipairs(self.slots) do sl.x = nil end
 	hud.stopwatch_move(self.chrono, W / 2, y0 + SIZES.ring_y)
 	score.top(self.punti, y1)
+	RM.hazards.place(self.pericoli, x0 + 130, y1 - 118)
 	if self.vign then self.vign:top(y1) end
 	camera.viewport(self.cam, x0, y0, x1, y1)
 	self.cam_s = nil
@@ -4221,6 +4230,8 @@ function init(self)
 
 	-- traps, springboards, healing circles and shields (battle/items.lua)
 	self.oggetti = items.new(TEAM_COLORS)
+	-- the map's hazards: the hail's shadows and stones, the storm's pill (battle/hazards.lua)
+	self.pericoli = RM.hazards.new()
 
 	-- crates (at most CRATE_MAX are needed, plus the items that drop visible),
 	-- with a glow above while falling: Gabriella's chest (tools/grafica/cassa.py,
@@ -4289,6 +4300,7 @@ function init(self)
 	for _, n in ipairs(self.shard_nodes) do world[#world + 1] = n end
 	for _, c in ipairs(self.crate_nodes) do world[#world + 1] = c.node end
 	for _, n in ipairs(items.nodes(self.oggetti)) do world[#world + 1] = n end
+	for _, n in ipairs(RM.hazards.nodes(self.pericoli)) do world[#world + 1] = n end
 	world[#world + 1] = self.shock
 	world[#world + 1] = self.tracer
 	for _, n in ipairs(self.rm_nodes) do world[#world + 1] = n end

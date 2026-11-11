@@ -41,7 +41,7 @@ end
 -- Real matches: without a map the seed picks it, among those of maps.ROTATION
 do
 	local seen = {}
-	for seed = 1, 4 do
+	for seed = 1, #maps.ROTATION do
 		local id = game.new(seed).map
 		check(id == game.new(seed).map, "same seed, same map")
 		seen[id] = true

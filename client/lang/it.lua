@@ -857,6 +857,10 @@ return {
 		heal_circle = "Un cerchio di cura: chi ci finisce il turno dentro si cura",
 		crate = "Una cassa cade dal cielo!",
 		item_drop = "Cade dal cielo %s: chi lo tocca lo prende!",
+		-- the map hazards (battle/hazards.lua): the storm's pill and the messages at the end of the round
+		storm = "BUFERA",
+		gust = "Una raffica di bufera!",
+		hail = "Arriva la grandine!",
 		you_found = "%s hai trovato %s!",
 		found = "%s trova %s!",
 		you_die_alone = "Muori da solo",

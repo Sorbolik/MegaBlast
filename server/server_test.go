@@ -16,16 +16,20 @@ import (
 // Without a map the seed picks it among the match maps (maps.ROTATION): the
 // same seed always gives the same one, and all of them come out.
 func TestSimPicksMapFromSeed(t *testing.T) {
+	// maps.ROTATION (sim/maps.lua): the first circles' maps are in it too
+	rotation := []string{"pavimento", "fossa", "limbo", "lussuria", "gola"}
 	seen := map[string]bool{}
-	for seed := int64(1); seed <= 4; seed++ {
+	for seed := int64(1); seed <= int64(len(rotation)); seed++ {
 		m := newTestSim(t, seed, "").Map()
 		if m != newTestSim(t, seed, "").Map() {
 			t.Fatalf("seed %d: different map for the same seed", seed)
 		}
 		seen[m] = true
 	}
-	if !seen["pavimento"] || !seen["fossa"] {
-		t.Fatalf("maps that came out: %v", seen)
+	for _, id := range rotation {
+		if !seen[id] {
+			t.Fatalf("maps that came out: %v (missing %s)", seen, id)
+		}
 	}
 }
 

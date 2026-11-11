@@ -11,19 +11,23 @@
 # e C, scelte di Sergio del 2 novembre), il cortile del Duello con Favilla (cortile.py) e le
 # arene delle missioni, lette da sim/levels.lua con luajit: quelle del cortile dipinte come il
 # cortile (cortile.py), le altre d'acciaio.
+# I gironi (docs/campagna_gironi.md): una mappa e uno sfondo per girone, nella tinta di temi.py, divisi
+# fra i suoi livelli come la Forgia: per ora il Limbo, la Lussuria e la Gola (layout qui sotto, scene
+# di tavole.py). Il pericolo di ogni girone sta in client/sim/maps.lua e hazards.lua.
 # Gli sfondi: la Forgia (tavole.py) e il cortile (cortile.py), con la stessa tinta.
 #
 #   python3 tools/grafica/mappe_dipinte.py      (dalla cartella del repository; serve node
 #                                                    con playwright, che disegna gli SVG)
-import json, os, subprocess, sys, tempfile
+import json, os, random, subprocess, sys, tempfile
 from PIL import Image, ImageDraw
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
 sys.path.insert(0, os.path.join(QUI, "gironi"))
-from tavole import FORGIA                                      # noqa: E402
+from tavole import FORGIA, LIMBO, LUSSURIA, GOLA               # noqa: E402
 from mondo import blocco, scheggia, fungo, arco                # noqa: E402
-from volume import forma                                       # noqa: E402
+from scena import acqua                                        # noqa: E402
+from volume import forma, solido                               # noqa: E402
 from scena import mix, W, H, MARGINE                                    # noqa: E402
 from dipinto import piani, raggi, grade, DEFS, GRUPPI          # noqa: E402
 from temi import TEMI                                          # noqa: E402
@@ -58,6 +62,57 @@ SX = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 
 DX = [(790, 560), (860, 560), (920, 500), (1236, 500), (1236, 330), (1280, 330), (1280, 380), (1398, 380), (1398, 416), (1280, 416), (1280, 760), (790, 760)]
 
 
+# ---------------------------------------------------------------- i gironi (scena 1280 x 720)
+SPORGE_SX = [(0, 416), (-118, 416), (-118, 380), (0, 380)]
+SPORGE_DX = [(1280, 380), (1398, 380), (1398, 416), (1280, 416)]
+
+# I · Limbo, il castello dei sette muri: cortile a gradoni quasi simmetrico, rampe a 45 gradi, tre
+# monconi di colonne spezzate sul fondo, rovine e colonne sospese (gravità ridotta: si salta il doppio)
+LIMBO_SUOLO = ([(0, 330), (44, 330), (44, 440), (190, 440), (250, 500), (330, 500), (390, 560),
+                (470, 560), (470, 520), (510, 520), (510, 560), (610, 560), (610, 500), (670, 500), (670, 560),
+                (770, 560), (770, 520), (810, 520), (810, 560),
+                (890, 560), (950, 500), (1030, 500), (1090, 440), (1236, 440), (1236, 330), (1280, 330)]
+               + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX)
+LIMBO_SOPRA = [fungo(250, 330, 170, 24, 100, 22), fungo(860, 330, 170, 24, 100, 22), scheggia(560, 230, 160, 56),
+               blocco(80, 270, 110, 26), blocco(1090, 270, 110, 26), scheggia(420, 410, 110, 40), scheggia(750, 410, 110, 40)]
+
+# II · Lussuria, la bufera: due scogliere a zig-zag con la gola in mezzo (cadere è morire), schegge
+# nel vuoto e spuntoni d'acciaio dove aggrapparsi col Rampino
+LUSS_SX = ([(0, 330), (44, 330), (44, 420), (150, 420), (210, 480), (300, 480), (340, 540), (430, 540), (470, 580),
+            (500, 580), (500, 760), (0, 760)] + SPORGE_SX)
+LUSS_DX = ([(780, 760), (780, 610), (810, 610), (850, 570), (940, 570), (980, 520), (1070, 520), (1110, 470), (1236, 470),
+            (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760)])
+LUSS_SOPRA = [scheggia(590, 470, 100, 42), scheggia(580, 330, 120, 46), scheggia(110, 300, 130, 48), scheggia(1050, 300, 130, 48)]
+LUSS_SPUNTONI = [[(500, 610), (590, 622), (500, 640)], [(500, 675), (570, 685), (500, 700)],
+                 [(780, 640), (700, 652), (780, 668)], [(780, 700), (710, 710), (780, 722)],
+                 [(250, 480), (275, 428), (300, 480)], [(1020, 520), (1045, 468), (1070, 520)]]
+
+# III · Gola, la conca di fango: la sporgenza alta a sinistra, tre collinette, due pozze che rallentano
+# (stessi numeri in client/sim/maps.lua: mud)
+GOLA_SUOLO = ([(0, 330), (44, 330), (44, 380), (250, 380), (330, 470), (400, 470), (440, 530), (540, 530), (580, 490),
+               (700, 490), (740, 530), (840, 530), (880, 490), (930, 490), (1010, 490), (1060, 440), (1236, 440),
+               (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX)
+GOLA_SOPRA = [scheggia(540, 330, 150, 52), blocco(950, 290, 130, 30), scheggia(330, 270, 110, 42), blocco(1100, 240, 100, 26)]
+GOLA_POZZE = [(440, 530, 100), (740, 530, 100)]        # x, y della superficie, larghezza
+
+
+def pozze(r):
+    """Fango scuro con un velo lucido, nelle pozze della Gola."""
+    s = ""
+    for x, y, w in GOLA_POZZE:
+        s += ('<rect x="%g" y="%g" width="%g" height="14" rx="6" fill="#3b3623"/><rect x="%g" y="%g" width="%g" height="4" rx="2" fill="#8d8a5e" opacity=".7"/>'
+              % (x, y - 4, w, x + 8, y - 2, w - 16))
+        for k in range(1, 5):
+            s += '<ellipse cx="%g" cy="%g" rx="7" ry="2.5" fill="#6e6a43" opacity=".55"/>' % (x + k * w / 5 + (k % 2) * 4, y + 3)
+    return s
+
+
+def spuntoni(g, P):
+    """I spuntoni d'acciaio (indistruttibili) di una mappa, disegnati come il ferro del cortile."""
+    m = {k: (grade(v, "materiale", P) if isinstance(v, str) and v.startswith("#") and len(v) == 7 else v) for k, v in g["mat"].items()}
+    ferro = dict(m, corpo=mix(m["acciaio"], "#000000", .25), crosta=mix(m["acciaio"], m["acciaio_luce"], .35), motivo="venature")
+    return solido(g["acciaio"], ferro, dict(g, ombra=0), random.Random(3))
+
 def lava(r):
     return ('<defs><linearGradient id="lava" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc24a"/>'
             '<stop offset=".18" stop-color="#ff6a1f"/><stop offset="1" stop-color="#b8321a"/></linearGradient>'
@@ -72,7 +127,12 @@ def lava(r):
 MAPPE = {
     "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA, travi=TRAVI),
     "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava),
+    "limbo": dict(LIMBO, isole=[LIMBO_SUOLO] + LIMBO_SOPRA, travi=[(250, 190, 110, 14), (920, 190, 110, 14)]),
+    "lussuria": dict(LUSSURIA, isole=[LUSS_SX, LUSS_DX] + LUSS_SOPRA, travi=[], sopra=None, acciaio=LUSS_SPUNTONI),
+    "gola": dict(GOLA, isole=[GOLA_SUOLO] + GOLA_SOPRA, travi=[(700, 420, 100, 16)], sopra=pozze),
 }
+# il tema (temi.py) di ogni mappa dei gironi: colori dello sfondo e del terreno; le altre hanno quello della Forgia
+TEMA = {"limbo": "limbo", "lussuria": "lussuria", "gola": "gola"}
 # le mappe disegnate a parte, col loro sfondo: terreno svg e maschera
 ALTRE = {"cortile": (cortile.mappa, cortile.maschera, "cortile")}
 
@@ -179,17 +239,24 @@ def maschera(g, nome, disegna=None):
             d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="white")
         for x, y, w, h in g.get("travi", []):
             d.rectangle([x * .5 + o, y * .5, (x + w) * .5 + o - 1, (y + h) * .5 - 1], fill="red")
+        for p in g.get("acciaio", []):
+            d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="red")
     os.makedirs(MASCHERE, exist_ok=True)
     im.save(os.path.join(MASCHERE, nome + ".png"))
 
 
-def sfondi(P):
-    """{nome: (cielo svg, [(gruppo, svg largo un giro, velocità media)], scorre)}. Il cortile non
+def sfondi():
+    """{nome: (cielo svg, [(gruppo, svg largo un giro, velocità media)], scorre, scena, tema)}. Il cortile non
     scorre da solo: si muove solo con la camera (un muro che scivola di lato sembra strano)."""
+    P = TEMI["forgia"]
     p = piani(FORGIA, P)
     c = cortile.sfondo()
     cielo_c = piani(dict(FORGIA, luce=c["luce"], piani=[], isole=[], travi=[]), P)["cielo"]
-    return {"forgia": (p["cielo"], p["gruppi"], True), "cortile": (cielo_c, c["gruppi"], False)}
+    out = {"forgia": (p["cielo"], p["gruppi"], True, FORGIA, P), "cortile": (cielo_c, c["gruppi"], False, FORGIA, P)}
+    for nome, tema in TEMA.items():
+        q = piani(MAPPE[nome], TEMI[tema])
+        out[tema] = (q["cielo"], q["gruppi"], True, MAPPE[nome], TEMI[tema])
+    return out
 
 
 def main():
@@ -200,10 +267,10 @@ def main():
             os.remove(os.path.join(OUT, sotto, f))
     lavori, strisce = [], []
     # gli sfondi: il cielo (fermo, con il bagliore e i raggi) e i tre gruppi di piani
-    SF = sfondi(P)
-    for sf, (cielo, gruppi, scorre) in SF.items():
+    SF = sfondi()
+    for sf, (cielo, gruppi, scorre, scena, tema) in SF.items():
         for d, k in DENSITA.items():
-            lavori.append((svg(cielo + '<g style="mix-blend-mode:screen">%s</g>' % raggi(FORGIA, P), (0, 0, W, H),
+            lavori.append((svg(cielo + '<g style="mix-blend-mode:screen">%s</g>' % raggi(scena, tema), (0, 0, W, H),
                                round(W * k["cielo"]), round(H * k["cielo"])),
                            os.path.join(OUT, "backgrounds", "%s_cielo_%d.png" % (sf, d)), round(W * k["cielo"]), round(H * k["cielo"])))
             for nome, contenuto, vel in gruppi:
@@ -216,8 +283,9 @@ def main():
     # il terreno delle mappe dipinte
     for nome, g in MAPPE.items():
         maschera(g, nome)
-        sfondo_di[nome] = "forgia"
-        gioco = piani(g, P)["gioco"]
+        sfondo_di[nome] = TEMA.get(nome, "forgia")
+        Pm = TEMI[sfondo_di[nome]]
+        gioco = piani(g, Pm)["gioco"] + (spuntoni(g, Pm) if g.get("acciaio") else "")
         for d, k in DENSITA.items():
             w, h = round((1920 + 3 * MARGINE) * k["terreno"]), round(1080 * k["terreno"])
             lavori.append((svg(gioco, (-MARGINE, 0, W + 2 * MARGINE, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
@@ -270,7 +338,7 @@ def main():
              "\tbackgrounds = {"]
     for sf in SF:
         righe += ["\t\t%s = {" % sf,
-                  "\t\t\thaze = { %s }," % ", ".join("%.3f" % (v / 255) for v in Image.new("RGB", (1, 1), P["foschia"]).getpixel((0, 0))),
+                  "\t\t\thaze = { %s }," % ", ".join("%.3f" % (v / 255) for v in Image.new("RGB", (1, 1), SF[sf][4]["foschia"]).getpixel((0, 0))),
                   "\t\t\tgroups = {"]
         for nome, _, _ in GRUPPI:
             y0, h, vel = fasce[sf, nome]

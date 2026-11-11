@@ -23,11 +23,38 @@ return {
 				{ name = "vicino", y0 = 558, h = 162, parallax = 0.6, scroll = 0.0 },
 			},
 		},
+		limbo = {
+			haze = { 0.655, 0.706, 0.675 },
+			groups = {
+				{ name = "lontano", y0 = 70, h = 650, parallax = 0.1, scroll = 2.1 },
+				{ name = "medio", y0 = 388, h = 332, parallax = 0.3, scroll = 8.7 },
+				{ name = "vicino", y0 = 489, h = 231, parallax = 0.6, scroll = 20.0 },
+			},
+		},
+		lussuria = {
+			haze = { 0.357, 0.290, 0.478 },
+			groups = {
+				{ name = "lontano", y0 = 22, h = 698, parallax = 0.1, scroll = 2.3 },
+				{ name = "medio", y0 = 318, h = 402, parallax = 0.3, scroll = 7.5 },
+				{ name = "vicino", y0 = 76, h = 644, parallax = 0.6, scroll = 16.4 },
+			},
+		},
+		gola = {
+			haze = { 0.420, 0.431, 0.361 },
+			groups = {
+				{ name = "lontano", y0 = 6, h = 714, parallax = 0.1, scroll = 2.2 },
+				{ name = "medio", y0 = 0, h = 720, parallax = 0.3, scroll = 8.0 },
+				{ name = "vicino", y0 = 529, h = 191, parallax = 0.6, scroll = 16.0 },
+			},
+		},
 	},
 	-- the maps with painted terrain and their background
 	maps = {
 		pavimento = "forgia",
 		fossa = "forgia",
+		limbo = "limbo",
+		lussuria = "lussuria",
+		gola = "gola",
 		cortile = "cortile",
 		missione_primi_passi = "cortile",
 		missione_lanciarune = "cortile",

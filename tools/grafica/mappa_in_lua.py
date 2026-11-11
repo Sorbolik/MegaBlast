@@ -7,6 +7,9 @@ MAPPE = [
     ('pavimento', 'tools/grafica/mappe/pavimento.png'),
     ('fossa', 'tools/grafica/mappe/fossa.png'),
     ('cortile', 'tools/grafica/mappe/cortile.png'),
+    ('limbo', 'tools/grafica/mappe/limbo.png'),
+    ('lussuria', 'tools/grafica/mappe/lussuria.png'),
+    ('gola', 'tools/grafica/mappe/gola.png'),
 ]
 
 def righe(path):

@@ -276,6 +276,15 @@ C.STATUS = {
 	slow = { move = 0.6, jump = 0.8 },
 	cracked = { damage = 1.25 },
 }
+-- Map hazards (sim/hazards.lua; the maps ask for them in sim/maps.lua).
+-- Storm: the gust at the end of a round moves every robot by step world units.
+-- Hail: count stones per round fall on columns at least gap apart (margin from the
+-- sides), r is the stone's radius, speed its fall in units per second, blast its
+-- explosion (the same fields as game.MISSILE_BLAST: a missile does 25).
+C.WIND = { step = 66 }
+C.HAIL = { count = 3, margin = 260, gap = 340, r = 12, speed = 480,
+	blast = { r = 30, damage_r = 62, damage = 35, damage_min = 15, impulse = 10 } }
+
 -- Which weapon gives which effect (our choice). Burn comes from the Uova of
 -- whoever has stats.burning_blasts (the Fornace set).
 C.WEAPON_STATUS = { shards = "slow", punch = "cracked", boomerang = "cracked", tar = "burn", drill = "slow" }

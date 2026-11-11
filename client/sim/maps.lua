@@ -39,12 +39,36 @@ add("fossa", "La fossa del Fabbro", { spawns = PAVIMENTO_SPAWNS,
 add("cortile", "Il cortile", { spawns = { { x = 210, from = 450 }, { x = 1710, from = 450 }, { x = 600, from = 380 }, { x = 1320, from = 380 } },
 	build = function(t) t:load(mapdata.cortile) end })
 
+-- The first circles of the campaign (docs/campagna_gironi.md): one map for each, shared by its
+-- levels, with the circle's hazard (sim/hazards.lua, docs/pericoli_mappe.md). In the rotation
+-- too, so they also bring variety online (Sergio, 11 Nov).
+-- Limbo: less gravity: you jump higher and farther and the shots fly longer.
+add("limbo", "Il Limbo", { gravity = 0.6,
+	spawns = { { x = 240, from = 480 }, { x = 1680, from = 480 }, { x = 630, from = 300 }, { x = 1290, from = 300 } },
+	build = function(t) t:load(mapdata.limbo) end })
+-- Lussuria: the storm moves everyone a step at the end of each round; the steel spikes are
+-- for the Rampino, the gorge in the middle kills.
+add("lussuria", "La bufera", { hazard = "wind",
+	spawns = { { x = 150, from = 520 }, { x = 1740, from = 450 }, { x = 336, from = 420 }, { x = 1485, from = 360 } },
+	build = function(t) t:load(mapdata.lussuria) end })
+-- Gola: the hail falls where a shadow announced it a round before; the two pools of mud
+-- (world rectangles x0, x1, y0, y1 around the ground of the pool, as painted by
+-- tools/grafica/mappe_dipinte.py GOLA_POZZE) slow whoever stands in them.
+add("gola", "La piova eterna", { hazard = "hail", mud = { { 660, 810, 270, 300 }, { 1110, 1260, 270, 300 } },
+	spawns = { { x = 180, from = 570 }, { x = 1725, from = 480 }, { x = 550, from = 430 }, { x = 960, from = 400 } },
+	build = function(t) t:load(mapdata.gola) end })
+
+-- The circles' maps Training shows even though no campaign level plays them yet, in
+-- the order of the circles (Sergio, 11 Nov: all visible for now; they will open as the
+-- campaign meets them: menu/training.lua)
+M.CIRCLES = { "limbo", "lussuria", "gola" }
+
 M.DEFAULT = "pavimento"
 
 -- The maps of real matches (online and on the same phone): if no map is asked
 -- for, the match seed picks it, so server and client (which share the seed)
 -- play on the same one.
-M.ROTATION = { "pavimento", "fossa" }
+M.ROTATION = { "pavimento", "fossa", "limbo", "lussuria", "gola" }
 
 function M.pick(seed)
 	return M.ROTATION[math.floor(seed) % #M.ROTATION + 1]
