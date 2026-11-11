@@ -113,47 +113,52 @@ def spuntoni(g, P):
     ferro = dict(m, corpo=mix(m["acciaio"], "#000000", .25), crosta=mix(m["acciaio"], m["acciaio_luce"], .35), motivo="venature")
     return solido(g["acciaio"], ferro, dict(g, ombra=0), random.Random(3))
 
-# IV · Avarizia, la valle dei massi: due pendii a 45 gradi che scendono a un piano in mezzo; in cima
-# a ogni pendio parte un masso a fine giro (client/sim/maps.lua: rocks); monete d'oro sul piano
-AVAR_SUOLO = ([(0, 330), (44, 330), (44, 360), (150, 360), (350, 560), (930, 560), (1130, 360), (1236, 360),
-               (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX)
-AVAR_SOPRA = [blocco(540, 410, 200, 26), scheggia(250, 230, 130, 48), scheggia(900, 230, 130, 48), blocco(560, 270, 160, 26)]
-AVAR_TRAVI = [(570, 140, 140, 16)]
+# IV · Avarizia, la valle dei massi: un pendio lungo e alto a sinistra, uno corto a destra con un gradino, un
+# piano in mezzo; in cima a ogni pendio parte un masso a fine giro (client/sim/maps.lua: rocks); monete d'oro
+# sul piano. Niente muretti ai lati: i bordi sono mortali (Sergio, 11 nov)
+AVAR_SUOLO = [(-100, 300), (120, 300), (380, 560), (760, 560), (900, 420), (1040, 420), (1100, 360), (1380, 360), (1380, 760), (-100, 760)]
+AVAR_SOPRA = [blocco(520, 400, 180, 26), scheggia(230, 200, 130, 48), scheggia(1000, 200, 150, 48), blocco(700, 290, 140, 26)]
+AVAR_TRAVI = [(600, 150, 140, 16)]
 
 
 def monete(r):
-    """Gemme d'oro sul piano della valle e un mucchietto in fondo."""
+    """Gemme d'oro sul piano della valle e un mucchietto contro il pendio corto."""
     s = "".join('<rect x="%d" y="%d" width="9" height="9" fill="#ffd25a" stroke="#5a3a10" stroke-width="2" transform="rotate(45 %d %d)"/>'
-                % (x, 546, x, 550) for x in (420, 470, 540, 610, 680, 750, 820, 880))
-    s += '<polygon points="%s" fill="#a7782d" stroke="#2a1b08" stroke-width="3"/>' % " ".join("%g,%g" % p for p in [(900, 560), (915, 540), (940, 530), (960, 545), (975, 560)])
+                % (x, 546, x, 550) for x in (420, 470, 540, 610, 680))
+    s += '<polygon points="%s" fill="#a7782d" stroke="#2a1b08" stroke-width="3"/>' % " ".join("%g,%g" % p for p in [(700, 560), (715, 540), (740, 530), (760, 545), (775, 560)])
     return s
 
 
-# V · Ira, la palude Stige: cinque isolotti bassi che l'acqua sale a coprire (dipinta nel gioco, non qui:
-# sim/hazards.lua water) e le palafitte alte dove si resta all'asciutto
-IRA_ISOLE = ([blocco(10, 590, 200, 150), blocco(270, 615, 170, 125), blocco(520, 600, 240, 140), blocco(830, 615, 170, 125),
-              blocco(1070, 590, 200, 150), fungo(150, 400, 160, 24, 250, 14), fungo(560, 360, 160, 24, 260, 14),
-              fungo(970, 400, 160, 24, 250, 14), scheggia(370, 270, 110, 40), scheggia(800, 250, 110, 40), blocco(600, 170, 90, 26)])
+# V · Ira, la palude Stige: isolotti bassi di larghezze diverse che l'acqua sale a coprire (dipinta nel gioco,
+# non qui: sim/hazards.lua water), il primo e l'ultimo oltre il bordo, e le palafitte alte dove si resta all'asciutto
+IRA_ISOLE = ([blocco(-60, 600, 230, 140), blocco(250, 630, 140, 110), blocco(470, 590, 210, 150), blocco(740, 640, 120, 100),
+              blocco(930, 600, 330, 140), fungo(60, 420, 170, 24, 250, 14), fungo(520, 340, 150, 24, 260, 14),
+              fungo(1050, 380, 200, 24, 260, 14), scheggia(330, 260, 110, 40), blocco(760, 310, 100, 26),
+              scheggia(900, 200, 120, 44), blocco(200, 190, 100, 26)])
 
-# VI · Eresia, la città di Dite: il pavimento con quattro tombe scavate (basse: si esce camminando; a giri
-# alterni due sono aperte e bruciano: client/sim/maps.lua tombs), travi di ferro in alto
-ERES_TOMBE = [(170, 270), (430, 530), (750, 850), (1010, 1110)]      # x0, x1 delle tombe sulla scena
-ERES_PAVIMENTO, ERES_FONDO = 540, 552
-_s = [(0, 330), (44, 330), (44, ERES_PAVIMENTO)]
-for _a, _b in ERES_TOMBE:
-    _s += [(_a, ERES_PAVIMENTO), (_a, ERES_FONDO), (_b, ERES_FONDO), (_b, ERES_PAVIMENTO)]
-ERES_SUOLO = _s + [(1236, ERES_PAVIMENTO), (1236, 330), (1280, 330)] + SPORGE_DX + [(1280, 760), (0, 760)] + SPORGE_SX
-ERES_SOPRA = [blocco(100, 380, 150, 28), scheggia(560, 330, 160, 56), blocco(1030, 380, 150, 28)]
-ERES_TRAVI = [(250, 420, 160, 16), (870, 420, 160, 16), (560, 230, 160, 16)]
+# VI · Eresia, la città di Dite: un terrazzo a sinistra con una tomba, una rampa, il pavimento con tre tombe e
+# un gradino in giù a destra (le tombe sono basse: si esce camminando; a giri alterni due sono aperte e
+# bruciano: client/sim/maps.lua tombs); travi di ferro in alto
+ERES_FONDO = 12                                                      # quanto sono profonde le tombe
+ERES_TOMBE = [(150, 250, 470), (450, 550, 540), (640, 740, 540), (860, 960, 540)]   # x0, x1, pavimento sulla scena
+_s = [(-100, 470)]
+for _a, _b, _y in ERES_TOMBE[:1]:
+    _s += [(_a, _y), (_a, _y + ERES_FONDO), (_b, _y + ERES_FONDO), (_b, _y)]
+_s += [(300, 470), (370, 540)]
+for _a, _b, _y in ERES_TOMBE[1:]:
+    _s += [(_a, _y), (_a, _y + ERES_FONDO), (_b, _y + ERES_FONDO), (_b, _y)]
+ERES_SUOLO = _s + [(1000, 540), (1060, 600), (1380, 600), (1380, 760), (-100, 760)]
+ERES_SOPRA = [scheggia(380, 250, 140, 50), blocco(1080, 420, 160, 28), scheggia(700, 160, 120, 44)]
+ERES_TRAVI = [(120, 350, 170, 16), (600, 380, 160, 16), (900, 300, 150, 16)]
 
 
 def tombe(r):
     """Il vano scuro di ogni tomba, con la pietra del bordo; le fiamme e il coperchio sono nel gioco."""
     s = ""
-    for a, b in ERES_TOMBE:
+    for a, b, y in ERES_TOMBE:
         s += ('<rect x="%g" y="%g" width="%g" height="%g" fill="#140605" stroke="#0c0504" stroke-width="3"/>'
               '<rect x="%g" y="%g" width="%g" height="3" fill="#7a2e1a" opacity=".8"/>'
-              % (a, ERES_PAVIMENTO + 1, b - a, ERES_FONDO - ERES_PAVIMENTO + 6, a + 4, ERES_FONDO - 4, b - a - 8))
+              % (a, y + 1, b - a, ERES_FONDO + 6, a + 4, y + ERES_FONDO - 4, b - a - 8))
     return s
 
 

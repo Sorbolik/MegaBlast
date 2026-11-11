@@ -60,20 +60,20 @@ add("gola", "La piova eterna", { hazard = "hail", mud = { { 660, 810, 270, 300 }
 
 -- Avarizia: at the end of each round a boulder starts from the top of each slope and rolls
 -- down towards the middle (rocks: where it starts, which way it goes).
-add("avarizia", "La valle dei massi", { hazard = "boulders", rocks = { { x = 247, dir = 1 }, { x = 1672, dir = -1 } },
-	spawns = { { x = 135, from = 620 }, { x = 1785, from = 620 }, { x = 750, from = 400 }, { x = 1170, from = 400 } },
+add("avarizia", "La valle dei massi", { hazard = "boulders", rocks = { { x = 195, dir = 1 }, { x = 1620, dir = -1 } },
+	spawns = { { x = 90, from = 720 }, { x = 1800, from = 620 }, { x = 750, from = 400 }, { x = 1500, from = 540 } },
 	build = function(t) t:load(mapdata.avarizia) end })
 -- Ira: from the third round the water of the swamp rises at the end of every round (water.y is
 -- where it starts, config.lua WATER): whoever it reaches drowns.
 add("ira", "La palude Stige", { hazard = "water", water = { y = 90 },
-	spawns = { { x = 165, from = 330 }, { x = 1755, from = 330 }, { x = 532, from = 330 }, { x = 1380, from = 330 } },
+	spawns = { { x = 90, from = 290 }, { x = 1800, from = 290 }, { x = 810, from = 290 }, { x = 1500, from = 290 } },
 	build = function(t) t:load(mapdata.ira) end })
 -- Eresia: the four tombs (world rectangles x0, x1, y0, y1 of the hollow in the floor, as painted by
 -- tools/grafica/mappe_dipinte.py ERES_TOMBE) open and close two by two, round after round; an open one
 -- sets alight whoever is in it.
 add("eresia", "La città di Dite", { hazard = "tombs",
-	tombs = { { 267, 393, 245, 285 }, { 657, 783, 245, 285 }, { 1137, 1263, 245, 285 }, { 1527, 1653, 245, 285 } },
-	spawns = { { x = 105, from = 380 }, { x = 1800, from = 380 }, { x = 525, from = 380 }, { x = 1395, from = 380 } },
+	tombs = { { 237, 363, 350, 390 }, { 687, 813, 245, 285 }, { 972, 1098, 245, 285 }, { 1302, 1428, 245, 285 } },
+	spawns = { { x = 105, from = 470 }, { x = 1875, from = 330 }, { x = 892, from = 380 }, { x = 1650, from = 330 } },
 	build = function(t) t:load(mapdata.eresia) end })
 
 -- The circles' maps Training shows even though no campaign level plays them yet, in

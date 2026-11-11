@@ -72,3 +72,4 @@ coperchio disegnato, non un muro; il vano basso fa già da riparo dai colpi); le
 (18 unità) per non intrappolare chi ci cade; l'acqua è disegnata dal gioco e non dipinta nella
 mappa, così sale; il bot non vede massi, acqua né tombe (può restare su un isolotto che
 affoga). Non fatto: i globi del teletrasporto dell'Ira e le torri con le fiaccole (sono dei livelli).
+Forma delle mappe (Sergio, 11 nov): niente muretti ai lati (restano solo nel Cortile) e i bordi possono essere mortali; più asimmetria. Avarizia ha un pendio lungo a sinistra e uno corto con gradino a destra, l'Ira isolotti di larghezze diverse, l'Eresia un terrazzo a sinistra, una rampa e un gradino in giù a destra.
