@@ -25,6 +25,7 @@ SCENA_W, SCENA_H = 1280, 720
 LUA = r"""
 package.path = "client/?.lua;" .. package.path
 local campaign = require "sim.campaign"
+local sim_maps = require "sim.maps"
 local dipinti = require "battle.paintings"
 local function enc(v)
   if type(v) == "table" then
@@ -42,6 +43,13 @@ for _, cap in ipairs(campaign.CAPITOLI) do
       seen[l.mappa] = true
       maps[#maps + 1] = { id = l.mappa, sfondo = dipinti.maps[l.mappa] }
     end
+  end
+end
+-- i gironi che la campagna non gioca ancora (sim/maps.lua CIRCLES), come in training.lua
+for _, id in ipairs(sim_maps.CIRCLES) do
+  if not seen[id] and dipinti.maps[id] then
+    seen[id] = true
+    maps[#maps + 1] = { id = id, sfondo = dipinti.maps[id] }
   end
 end
 print(enc({ mappe = maps, sfondi = dipinti.backgrounds }))

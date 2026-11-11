@@ -91,6 +91,13 @@ decidi o scarti qualcosa, aggiorna quel file e `cronologia.md` nella stessa PR.
 Per progettare, valutare, bilanciare e implementare meccaniche ci sono le skill
 in [.claude/skills/](.claude/skills/README.md).
 
+## Pericoli delle mappe
+
+Le mappe dei gironi (Limbo, Lussuria, Gola, Avarizia, Ira, Eresia...) hanno un pericolo ciascuna, anche online:
+gravità, fango, bufera, grandine, massi, acqua che sale, tombe. Si scrive come dati sulla mappa più `client/sim/hazards.lua`,
+il server porta `hz` nello stato, il client lo disegna in `client/battle/hazards.lua`:
+la ricetta per aggiungerne uno è in [docs/pericoli_mappe.md](docs/pericoli_mappe.md).
+
 ## Server sempre in pari con main (Sergio, 29 ott)
 
 Il server deve essere **sempre** in pari con quello che va su `main`: ogni PR che
@@ -219,7 +226,7 @@ l'online usa la WebSocket del browser (`client/main/ws_browser.lua`), ma dalla p
 su claude.ai le connessioni verso altri siti sono bloccate.
 
 I test (tutti insieme in `tools/controlli/tutti.sh`): `luajit tests/sim_test.lua` (simulazione), `luajit tests/battaglia_test.lua` (personaggio e camera),
-`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campaign_test.lua` (missioni della campagna e partita guidata), `luajit tests/events_test.lua` (eventi nel gioco), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit tests/lang_test.lua` (testi del gioco), `luajit tools/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
+`luajit tests/bot_test.lua` (bot e ricette), `luajit tests/campaign_test.lua` (missioni della campagna e partita guidata), `luajit tests/events_test.lua` (eventi nel gioco), `luajit tests/hazards_test.lua` (pericoli delle mappe dei gironi), `luajit tests/scheda_test.lua` (scheda personaggio: badge, statistiche, cartellini, replay), `luajit tests/lang_test.lua` (testi del gioco), `luajit tools/arena/collaudo.lua` (i bot giocano le missioni dei gironi), `go test ./server/` (server).
 
 ## Sezione "Per Telegram" in ogni PR (Sergio, 29 ott)
 

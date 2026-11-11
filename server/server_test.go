@@ -16,16 +16,32 @@ import (
 // Without a map the seed picks it among the match maps (maps.ROTATION): the
 // same seed always gives the same one, and all of them come out.
 func TestSimPicksMapFromSeed(t *testing.T) {
+	// maps.ROTATION (sim/maps.lua): the first circles' maps are in it too
+	rotation := []string{"pavimento", "fossa", "limbo", "lussuria", "gola", "avarizia", "ira", "eresia", "flegetonte", "sabbione", "malebolge", "cocito"}
 	seen := map[string]bool{}
-	for seed := int64(1); seed <= 4; seed++ {
+	for seed := int64(1); seed <= int64(len(rotation)); seed++ {
 		m := newTestSim(t, seed, "").Map()
 		if m != newTestSim(t, seed, "").Map() {
 			t.Fatalf("seed %d: different map for the same seed", seed)
 		}
 		seen[m] = true
 	}
-	if !seen["pavimento"] || !seen["fossa"] {
-		t.Fatalf("maps that came out: %v", seen)
+	for _, id := range rotation {
+		if !seen[id] {
+			t.Fatalf("maps that came out: %v (missing %s)", seen, id)
+		}
+	}
+}
+
+// The map's hazard goes in the state as it is (hz, sim/hazards.lua): the boulders of
+// Avarizia, the level of Ira's water, the phase of Eresia's tombs.
+func TestHazardInSnapshot(t *testing.T) {
+	for id, field := range map[string]string{"avarizia": `"rocks"`, "ira": `"level"`, "eresia": `"phase"`} {
+		sim := newTestSim(t, 7, id)
+		sim.Step(Input{})
+		if s := string(sim.Snapshot(false, 0)); !strings.Contains(s, `"hz":`) || !strings.Contains(s, field) {
+			t.Fatalf("%s: no %s in the state: %s", id, field, s)
+		}
 	}
 }
 
@@ -42,7 +58,7 @@ func TestAimInSnapshot(t *testing.T) {
 		t.Fatalf("aim without aiming: %s", s)
 	}
 	luaEval(t, `
-local g = N.new(5, nil, { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
+local g = N.new(5, "pavimento", { { team = 1, bot = 5 }, { team = 2, bot = 5 } })
 local aimed, turn, from, turns, lazy, flagged = false, nil, 0, 0, 0, false
 while g.tick < 3000 do
 	N.step(g, false, false, false, false)

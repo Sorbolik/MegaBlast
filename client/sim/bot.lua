@@ -205,6 +205,7 @@ function M.world(g, into)
 	w.current, w.phase, w.timer, w.window, w.turn_bonus = g.current, g.phase, g.timer, g.window, g.turn_bonus
 	w.match_left, w.final_round, w.round, w.order, w.order_pos, w.turn_no = g.match_left, g.final_round, g.round, g.order, g.order_pos, g.turn_no
 	w.orb_seq, w.placed_id, w.heals, w.score = g.orb_seq, g.placed_id, g.heals, g.score
+	w.gravity, w.mud, w.blood = g.gravity, g.mud, g.blood
 	o.rng.state = g.rng.state
 	w.rng = o.rng
 	w.used = refill(o.used, g.used)
@@ -592,12 +593,12 @@ end
 
 -- The arc weapons: top speed, gravity, aims at the centre or the feet
 local ARC_WEAPONS = {
-	missile = function() return game.MISSILE_SPEED, game.GRAVITY * game.MISSILE_GRAVITY end,
-	grenade = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
-	tar = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
-	petard = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
-	drill = function() return game.MISSILE_SPEED, game.GRAVITY * game.MISSILE_GRAVITY end,
-	trampoline = function() return game.GRENADE_SPEED, game.GRAVITY * game.GRENADE_GRAVITY end,
+	missile = function(g) return game.MISSILE_SPEED, g.gravity * game.MISSILE_GRAVITY end,
+	grenade = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
+	tar = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
+	petard = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
+	drill = function(g) return game.MISSILE_SPEED, g.gravity * game.MISSILE_GRAVITY end,
+	trampoline = function(g) return game.GRENADE_SPEED, g.gravity * game.GRENADE_GRAVITY end,
 }
 
 -- The living opponents, nearest to the spot first
@@ -659,7 +660,7 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 		for _, wpn in ipairs(weapon_list) do
 			local arc = ARC_WEAPONS[wpn]
 			if arc then
-				local v, gr = arc()
+				local v, gr = arc(g)
 				local aim = { oy }
 				-- the Uovo and the Molla at the feet; the Molla is tried to the end
 				-- (where the robot it launches lands)
@@ -683,7 +684,7 @@ local function moves_from_spot(b, g, spot, weapon_list, moves)
 				end
 			elseif wpn == "shards" then
 				local angles = {}
-				arcs(dx, dy, game.SHARD_SPEED, game.GRAVITY * game.SHARD_GRAVITY, angles)
+				arcs(dx, dy, game.SHARD_SPEED, g.gravity * game.SHARD_GRAVITY, angles)
 				if angles[1] then add(wpn, angles[1], 1, "volo") end
 			elseif wpn == "sniper" then
 				if dist < 900 then

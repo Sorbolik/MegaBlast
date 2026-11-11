@@ -11,23 +11,29 @@
 # e C, scelte di Sergio del 2 novembre), il cortile del Duello con Favilla (cortile.py) e le
 # arene delle missioni, lette da sim/levels.lua con luajit: quelle del cortile dipinte come il
 # cortile (cortile.py), le altre d'acciaio.
+# I gironi (docs/campagna_gironi.md): una mappa e uno sfondo per girone, nella tinta di temi.py, divisi
+# fra i suoi livelli come la Forgia: il Limbo, la Lussuria, la Gola, l'Avarizia, l'Ira, l'Eresia, la Violenza (il
+# Flegetonte e il Sabbione), la Frode (le Malebolge), il Tradimento (il Cocito) e l'arena di Lucifero (layout qui sotto, scene
+# di tavole.py). Il pericolo di ogni girone sta in client/sim/maps.lua e hazards.lua.
 # Gli sfondi: la Forgia (tavole.py) e il cortile (cortile.py), con la stessa tinta.
 #
 #   python3 tools/grafica/mappe_dipinte.py      (dalla cartella del repository; serve node
 #                                                    con playwright, che disegna gli SVG)
-import json, os, subprocess, sys, tempfile
+import json, os, random, subprocess, sys, tempfile
 from PIL import Image, ImageDraw
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 RADICE = os.path.abspath(os.path.join(QUI, "..", ".."))
 sys.path.insert(0, os.path.join(QUI, "gironi"))
-from tavole import FORGIA                                      # noqa: E402
+from tavole import FORGIA, LIMBO, LUSSURIA, GOLA, AVARIZIA, IRA, ERESIA, VIOLENZA, FRODE, TRADIMENTO, tronco   # noqa: E402
 from mondo import blocco, scheggia, fungo, arco                # noqa: E402
-from volume import forma                                       # noqa: E402
+from scena import acqua                                        # noqa: E402
+from volume import forma, solido                               # noqa: E402
 from scena import mix, W, H, MARGINE                                    # noqa: E402
 from dipinto import piani, raggi, grade, DEFS, GRUPPI          # noqa: E402
 from temi import TEMI                                          # noqa: E402
 import cortile                                                 # noqa: E402
+import sfondi as sfondi_gironi                                 # noqa: E402
 
 OUT = os.path.join(RADICE, "client", "paintings")
 MASCHERE = os.path.join(QUI, "mappe")
@@ -46,16 +52,195 @@ QUANTO = dict(lontano=0.1, medio=0.3, vicino=0.6)
 CALMO = 20 / 0.75
 
 # ---------------------------------------------------------------- i layout (scena 1280 x 720)
-# Una sporgenza per lato fuori dai muri, in pietra come i muri (Sergio, 9 nov): dove ci si salva
-# dopo una caduta di lato o un teletrasporto sbagliato; sta nel margine della maschera e del dipinto
-SUOLO = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 560), (860, 560), (920, 500),
-         (1236, 500), (1236, 330), (1280, 330), 
-         (1280, 380), (1398, 380), (1398, 416), (1280, 416), (1280, 760), (0, 760), (0, 416), (-118, 416), (-118, 380), (0, 380)]
+# Niente muretti ai lati (Sergio, 11 nov): il suolo arriva al bordo e oltre si cade; i muri di lato
+# restano solo nel cortile (cortile.py)
+SUOLO = [(0, 560), (250, 560), (310, 500), (560, 500), (620, 560), (860, 560), (920, 500), (1280, 500),
+         (1280, 760), (0, 760)]
 SOPRA = [scheggia(110, 300, 130, 50), blocco(300, 180, 90, 28), fungo(380, 330, 180, 26, 170, 22),
          scheggia(590, 250, 110, 44), scheggia(690, 410, 100, 40), blocco(960, 230, 140, 38), arco(960, 370, 230, 130, 30, 40)]
 TRAVI = [(400, 140, 140, 16), (740, 330, 130, 16)]
-SX = [(0, 330), (44, 330), (44, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680, 760), (0, 760), (0, 416), (-118, 416), (-118, 380), (0, 380)]
-DX = [(790, 560), (860, 560), (920, 500), (1236, 500), (1236, 330), (1280, 330), (1280, 380), (1398, 380), (1398, 416), (1280, 416), (1280, 760), (790, 760)]
+SX = [(0, 560), (250, 560), (310, 500), (560, 500), (620, 560), (680, 560), (680, 760), (0, 760)]
+DX = [(790, 560), (860, 560), (920, 500), (1280, 500), (1280, 760), (790, 760)]
+
+
+
+# Le mappe un po' più piccole (Sergio, 11 nov: «più piccola vuol dire che vediamo un po' meglio la
+# mappa»): lo stesso disegno stretto attorno al centro del gioco, i personaggi restano grandi uguali;
+# la camera inquadra il terreno (camera.from_terrain), quindi a zoom lontano lo mostra più grande.
+# Il fondo del terreno (y >= 740) resta sotto il quadro. Gli stessi numeri in client/sim/maps.lua.
+PICCOLA, PICCOLA_C = .8, (640, 500)
+
+
+def stringi(ps):
+    """Punti [(x, y)] della scena stretti di PICCOLA attorno a PICCOLA_C."""
+    cx, cy = PICCOLA_C
+    return [(cx + (x - cx) * PICCOLA, 760 if y >= 740 else cy + (y - cy) * PICCOLA) for x, y in ps]
+
+
+def stringi_rett(x, y, w, h):
+    (x0, y0), = stringi([(x, y)])
+    return (x0, y0, w * PICCOLA, h * PICCOLA)
+
+
+# ---------------------------------------------------------------- i gironi (scena 1280 x 720)
+# I · Limbo, il castello dei sette muri: terrazza alta a sinistra, gradoni che scendono verso il centro
+# con tre monconi di colonne spezzate, la riva bassa a destra che si rialza in fondo; rovine e colonne
+# sospese (gravità ridotta: si salta il doppio). Nessun muro di lato.
+LIMBO_SUOLO = [(0, 400), (140, 400), (200, 460), (290, 460), (350, 520), (440, 520), (440, 480), (480, 480), (480, 520),
+               (560, 520), (620, 570), (700, 570), (700, 530), (760, 530), (760, 570), (860, 570), (900, 540),
+               (980, 540), (1030, 500), (1090, 500), (1130, 440), (1160, 440), (1200, 480), (1280, 480),
+               (1280, 760), (0, 760)]
+LIMBO_SOPRA = [fungo(230, 330, 150, 24, 90, 22), fungo(800, 330, 150, 24, 90, 22), scheggia(520, 210, 170, 56),
+               blocco(60, 250, 110, 26), blocco(1010, 300, 100, 26), scheggia(390, 400, 110, 40), scheggia(960, 170, 120, 40)]
+
+# II · Lussuria, la bufera: due scogliere a zig-zag diverse (larga a sinistra, stretta e alta a destra)
+# con la gola in mezzo (cadere è morire), schegge nel vuoto e spuntoni d'acciaio dove aggrapparsi col Rampino
+LUSS_SX = [(0, 400), (110, 400), (170, 460), (300, 460), (340, 540), (430, 540), (470, 580), (500, 580), (500, 760), (0, 760)]
+LUSS_DX = [(780, 760), (780, 610), (810, 610), (850, 570), (930, 570), (970, 520), (1040, 520), (1080, 440), (1150, 440),
+           (1190, 380), (1280, 380), (1280, 760)]
+LUSS_SOPRA = [scheggia(590, 470, 100, 42), scheggia(560, 320, 120, 46), scheggia(80, 280, 130, 48), scheggia(1090, 250, 130, 48)]
+LUSS_SPUNTONI = [[(500, 610), (590, 622), (500, 640)], [(500, 675), (570, 685), (500, 700)],
+                 [(780, 640), (700, 652), (780, 668)], [(780, 700), (710, 710), (780, 722)],
+                 [(230, 460), (255, 408), (280, 460)], [(985, 520), (1010, 468), (1035, 520)]]
+
+# III · Gola, la conca di fango: la sporgenza alta a sinistra, collinette, due pozze che rallentano
+# (stessi numeri in client/sim/maps.lua: mud) e a destra un gradino che sale e un ripiano basso
+GOLA_SUOLO = stringi([(0, 380), (250, 380), (330, 470), (400, 470), (440, 530), (540, 530), (580, 490),
+              (700, 490), (740, 530), (840, 530), (880, 490), (950, 490), (1000, 430), (1090, 430), (1130, 500),
+              (1280, 500), (1280, 760), (0, 760)])
+GOLA_SOPRA = [stringi(p) for p in (scheggia(540, 330, 150, 52), blocco(950, 290, 130, 30), scheggia(330, 270, 110, 42), blocco(1110, 330, 100, 26))]
+# x, y della superficie, larghezza (strette come la mappa: 480 e 720 a 524, larghe 80)
+GOLA_POZZE = [(x, y, w * PICCOLA) for (x, y), w in ((stringi([(440, 530)])[0], 100), (stringi([(740, 530)])[0], 100))]
+GOLA_TRAVI = [stringi_rett(700, 420, 100, 16)]
+
+
+# Niente muretti di lato né sporgenze (Sergio, 11 nov: solo il cortile li tiene) e le mappe sono
+# asimmetriche: dai bordi si cade e si muore.
+# VII · Violenza. Il Flegetonte: una riva sinistra larga a gradoni e una destra alta e stretta, in mezzo il
+# fiume di sangue (cadere è morire) con tre sassi per attraversare; tronchi morti che fermano i colpi
+# finché non li spezzi, una pedana in alto a destra, due pozze di sangue che bruciano (stessi numeri
+# in client/sim/maps.lua: blood)
+FLEG_SX = [(60, 400), (190, 400), (250, 470), (330, 470), (380, 520), (500, 520), (500, 760), (60, 760)]
+FLEG_DX = [(790, 760), (790, 560), (850, 560), (900, 500), (1000, 500), (1040, 440), (1140, 440), (1180, 380),
+           (1240, 380), (1240, 760)]
+FLEG_SOPRA = [blocco(525, 535, 65, 22), blocco(612, 520, 65, 22), blocco(700, 540, 60, 22),
+              tronco(215, 360, 34, [(430, "dx", 60)], fondo=470),
+              tronco(1090, 300, 34, [(380, "sx", 80)], fondo=440),
+              blocco(880, 330, 100, 22), blocco(250, 300, 90, 22)]
+FLEG_SANGUE = [(400, 520, 80), (800, 560, 50)]        # x, y della superficie, larghezza
+
+# Il Sabbione: piatto, dune di altezze diverse, nessun riparo; sopra piove fuoco, ai lati il vuoto
+SABBIA = stringi([(40, 500), (220, 500), (300, 450), (420, 450), (500, 520), (700, 520), (780, 560), (900, 560), (960, 500),
+          (1100, 500), (1160, 440), (1240, 440), (1240, 760), (40, 760)])
+
+# VIII · Frode, le Malebolge: tre terrazze a quote diverse e due fosse di pece larghe 54, ognuna con
+# un ponte crepato che crolla (client/sim/maps.lua: bridges; stessi numeri qui)
+BOLGE_PONTI = [(330, 470, 54, 12), (840, 540, 54, 12)]
+BOLGE_SUOLO = [(60, 470), (330, 470), (340, 640), (374, 640), (384, 470), (700, 470), (760, 540), (840, 540), (850, 640),
+               (884, 640), (894, 540), (1100, 540), (1150, 490), (1240, 490), (1240, 760), (60, 760)]
+BOLGE_SOPRA = [scheggia(140, 330, 110, 40), blocco(560, 400, 90, 20), blocco(1000, 410, 100, 22)]
+
+# IX · Tradimento, il Cocito: lastre di ghiaccio sottili sull'acqua gelata, a quote diverse, separate da
+# crepe di 28, dove si scivola e le esplosioni bucano; sotto e di lato cadere è morire
+COC_SOPRA = [stringi(p) for p in (blocco(60, 520, 340, 40), blocco(428, 490, 372, 40), blocco(828, 540, 172, 40), blocco(1028, 500, 212, 40),
+             blocco(120, 370, 120, 26), scheggia(640, 320, 110, 50), blocco(1080, 390, 100, 24))]
+
+# L'arena di Lucifero: il lago largo, il pozzo in mezzo (160) con due lastre per passarlo, rive a quote
+# diverse e due piattaforme alte; le ali spingono ai bordi, che sono il vuoto
+LUC_SX = [(60, 530), (560, 530), (560, 570), (60, 570)]
+LUC_DX = [(720, 510), (1240, 510), (1240, 550), (720, 550)]
+LUC_SOPRA = [blocco(582, 530, 44, 20), blocco(654, 520, 44, 20), blocco(150, 400, 150, 26), blocco(960, 380, 170, 26)]
+
+
+def sangue(r):
+    """Il sangue bollente delle pozze del Flegetonte: rosso scuro con un velo lucido e bolle."""
+    s = ""
+    for x, y, w in FLEG_SANGUE:
+        s += ('<rect x="%g" y="%g" width="%g" height="14" rx="6" fill="#5a0f14"/><rect x="%g" y="%g" width="%g" height="4" rx="2" fill="#e0524a" opacity=".7"/>'
+              % (x, y - 4, w, x + 8, y - 2, w - 16))
+        for k in range(1, 4):
+            s += '<circle class="pulsa" cx="%g" cy="%g" r="%g" fill="none" stroke="#ffb08a" stroke-width="1.5" opacity=".7"/>' % (x + k * w / 4, y + 1, 3 + k % 2)
+    return s
+
+
+def ponti_crepati(r):
+    """Il legno scuro dei ponti che crollano, con le crepe, e la pece nelle fosse."""
+    s = ""
+    for x, y, w, h in BOLGE_PONTI:
+        s += '<rect x="%g" y="%g" width="%g" height="%g" fill="#4a3d2c" stroke="#1a1208" stroke-width="2"/>' % (x, y, w, h)
+        s += '<polyline points="%g,%g %g,%g %g,%g %g,%g" fill="none" stroke="#0d0a05" stroke-width="2"/>' % (
+            x + w * .3, y, x + w * .38, y + h * .5, x + w * .3, y + h * .7, x + w * .42, y + h)
+        s += '<polyline points="%g,%g %g,%g %g,%g" fill="none" stroke="#ffb03a" stroke-width="1.5" opacity=".8"/>' % (
+            x + w * .7, y, x + w * .64, y + h * .5, x + w * .72, y + h)
+        s += '<polygon points="%g,%d %g,%d %g,%d %g,%d" fill="#050505" stroke="#2a3a10" stroke-width="2"/>' % (
+            x + 6, y + h, x + w - 6, y + h, x + w - 14, 636, x + 14, 636)
+    return s
+
+
+def pozze(r):
+    """Fango scuro con un velo lucido, nelle pozze della Gola."""
+    s = ""
+    for x, y, w in GOLA_POZZE:
+        s += ('<rect x="%g" y="%g" width="%g" height="14" rx="6" fill="#3b3623"/><rect x="%g" y="%g" width="%g" height="4" rx="2" fill="#8d8a5e" opacity=".7"/>'
+              % (x, y - 4, w, x + 8, y - 2, w - 16))
+        for k in range(1, 5):
+            s += '<ellipse cx="%g" cy="%g" rx="7" ry="2.5" fill="#6e6a43" opacity=".55"/>' % (x + k * w / 5 + (k % 2) * 4, y + 3)
+    return s
+
+
+def spuntoni(g, P):
+    """I spuntoni d'acciaio (indistruttibili) di una mappa, disegnati come il ferro del cortile."""
+    m = {k: (grade(v, "materiale", P) if isinstance(v, str) and v.startswith("#") and len(v) == 7 else v) for k, v in g["mat"].items()}
+    ferro = dict(m, corpo=mix(m["acciaio"], "#000000", .25), crosta=mix(m["acciaio"], m["acciaio_luce"], .35), motivo="venature")
+    return solido(g["acciaio"], ferro, dict(g, ombra=0), random.Random(3))
+
+# IV · Avarizia, la valle dei massi: un pendio lungo e alto a sinistra, uno corto a destra con un gradino, un
+# piano in mezzo; in cima a ogni pendio parte un masso a fine giro (client/sim/maps.lua: rocks); monete d'oro
+# sul piano. Niente muretti ai lati: i bordi sono mortali (Sergio, 11 nov)
+AVAR_SUOLO = [(-100, 300), (120, 300), (380, 560), (760, 560), (900, 420), (1040, 420), (1100, 360), (1380, 360), (1380, 760), (-100, 760)]
+AVAR_SOPRA = [blocco(520, 400, 180, 26), scheggia(230, 200, 130, 48), scheggia(1000, 200, 150, 48), blocco(700, 290, 140, 26)]
+AVAR_TRAVI = [(600, 150, 140, 16)]
+
+
+def monete(r):
+    """Gemme d'oro sul piano della valle e un mucchietto contro il pendio corto."""
+    s = "".join('<rect x="%d" y="%d" width="9" height="9" fill="#ffd25a" stroke="#5a3a10" stroke-width="2" transform="rotate(45 %d %d)"/>'
+                % (x, 546, x, 550) for x in (420, 470, 540, 610, 680))
+    s += '<polygon points="%s" fill="#a7782d" stroke="#2a1b08" stroke-width="3"/>' % " ".join("%g,%g" % p for p in [(700, 560), (715, 540), (740, 530), (760, 545), (775, 560)])
+    return s
+
+
+# V · Ira, la palude Stige: isolotti bassi di larghezze diverse che l'acqua sale a coprire (dipinta nel gioco,
+# non qui: sim/hazards.lua water), il primo e l'ultimo oltre il bordo, e le palafitte alte dove si resta all'asciutto
+IRA_ISOLE = ([blocco(-60, 600, 230, 140), blocco(250, 630, 140, 110), blocco(470, 590, 210, 150), blocco(740, 640, 120, 100),
+              blocco(930, 600, 330, 140), fungo(60, 420, 170, 24, 250, 14), fungo(520, 340, 150, 24, 260, 14),
+              fungo(1050, 380, 200, 24, 260, 14), scheggia(330, 260, 110, 40), blocco(760, 310, 100, 26),
+              scheggia(900, 200, 120, 44), blocco(200, 190, 100, 26)])
+
+# VI · Eresia, la città di Dite: un terrazzo a sinistra con una tomba, una rampa, il pavimento con tre tombe e
+# un gradino in giù a destra (le tombe sono basse: si esce camminando; a giri alterni due sono aperte e
+# bruciano: client/sim/maps.lua tombs); travi di ferro in alto
+ERES_FONDO = 12                                                      # quanto sono profonde le tombe
+ERES_TOMBE = [(150, 250, 470), (450, 550, 540), (640, 740, 540), (860, 960, 540)]   # x0, x1, pavimento sulla scena
+_s = [(-100, 470)]
+for _a, _b, _y in ERES_TOMBE[:1]:
+    _s += [(_a, _y), (_a, _y + ERES_FONDO), (_b, _y + ERES_FONDO), (_b, _y)]
+_s += [(300, 470), (370, 540)]
+for _a, _b, _y in ERES_TOMBE[1:]:
+    _s += [(_a, _y), (_a, _y + ERES_FONDO), (_b, _y + ERES_FONDO), (_b, _y)]
+ERES_SUOLO = _s + [(1000, 540), (1060, 600), (1380, 600), (1380, 760), (-100, 760)]
+ERES_SOPRA = [scheggia(380, 250, 140, 50), blocco(1080, 420, 160, 28), scheggia(700, 160, 120, 44)]
+ERES_TRAVI = [(120, 350, 170, 16), (600, 380, 160, 16), (900, 300, 150, 16)]
+
+
+def tombe(r):
+    """Il vano scuro di ogni tomba, con la pietra del bordo; le fiamme e il coperchio sono nel gioco."""
+    s = ""
+    for a, b, y in ERES_TOMBE:
+        s += ('<rect x="%g" y="%g" width="%g" height="%g" fill="#140605" stroke="#0c0504" stroke-width="3"/>'
+              '<rect x="%g" y="%g" width="%g" height="3" fill="#7a2e1a" opacity=".8"/>'
+              % (a, y + 1, b - a, ERES_FONDO + 6, a + 4, y + ERES_FONDO - 4, b - a - 8))
+    return s
 
 
 def lava(r):
@@ -72,7 +257,22 @@ def lava(r):
 MAPPE = {
     "pavimento": dict(FORGIA, isole=[SUOLO] + SOPRA, travi=TRAVI),
     "fossa": dict(FORGIA, isole=[SX, DX] + SOPRA, travi=TRAVI, sotto=lava),
+    "limbo": dict(LIMBO, isole=[LIMBO_SUOLO] + LIMBO_SOPRA, travi=[(250, 190, 110, 14), (920, 190, 110, 14)]),
+    "lussuria": dict(LUSSURIA, isole=[LUSS_SX, LUSS_DX] + LUSS_SOPRA, travi=[], sopra=None, acciaio=LUSS_SPUNTONI),
+    "gola": dict(GOLA, isole=[GOLA_SUOLO] + GOLA_SOPRA, travi=GOLA_TRAVI, sopra=pozze),
+    "avarizia": dict(AVARIZIA, isole=[AVAR_SUOLO] + AVAR_SOPRA, travi=AVAR_TRAVI, sopra=monete),
+    "ira": dict(IRA, isole=IRA_ISOLE, travi=[(380, 470, 100, 14), (790, 460, 100, 14)], sotto=None),
+    "eresia": dict(ERESIA, isole=[ERES_SUOLO] + ERES_SOPRA, travi=ERES_TRAVI, sopra=tombe),
+    "flegetonte": dict(VIOLENZA, isole=[FLEG_SX, FLEG_DX] + FLEG_SOPRA, travi=[], sopra=sangue),
+    "sabbione": dict(VIOLENZA, isole=[SABBIA], travi=[], sotto=None),
+    "malebolge": dict(FRODE, isole=[BOLGE_SUOLO] + BOLGE_SOPRA + [[(x, y), (x + w, y), (x + w, y + h), (x, y + h)] for x, y, w, h in BOLGE_PONTI],
+                      travi=[], sopra=ponti_crepati),
+    "cocito": dict(TRADIMENTO, isole=COC_SOPRA, travi=[], sopra=None),
+    "lucifero": dict(TRADIMENTO, isole=[LUC_SX, LUC_DX] + LUC_SOPRA, travi=[], sopra=None),
 }
+# il tema (temi.py) di ogni mappa dei gironi: colori dello sfondo e del terreno; le altre hanno quello della Forgia
+TEMA = {"limbo": "limbo", "lussuria": "lussuria", "gola": "gola", "avarizia": "avarizia", "ira": "ira", "eresia": "eresia",
+        "flegetonte": "violenza", "sabbione": "violenza", "malebolge": "frode", "cocito": "tradimento", "lucifero": "tradimento"}
 # le mappe disegnate a parte, col loro sfondo: terreno svg e maschera
 ALTRE = {"cortile": (cortile.mappa, cortile.maschera, "cortile")}
 
@@ -179,17 +379,29 @@ def maschera(g, nome, disegna=None):
             d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="white")
         for x, y, w, h in g.get("travi", []):
             d.rectangle([x * .5 + o, y * .5, (x + w) * .5 + o - 1, (y + h) * .5 - 1], fill="red")
+        for p in g.get("acciaio", []):
+            d.polygon([(x * .5 + o, y * .5) for x, y in p], fill="red")
     os.makedirs(MASCHERE, exist_ok=True)
     im.save(os.path.join(MASCHERE, nome + ".png"))
 
 
-def sfondi(P):
-    """{nome: (cielo svg, [(gruppo, svg largo un giro, velocità media)], scorre)}. Il cortile non
+def sfondi():
+    """{nome: (cielo svg, [(gruppo, svg largo un giro, velocità media)], scorre, scena, tema)}. Il cortile non
     scorre da solo: si muove solo con la camera (un muro che scivola di lato sembra strano)."""
+    P = TEMI["forgia"]
     p = piani(FORGIA, P)
     c = cortile.sfondo()
     cielo_c = piani(dict(FORGIA, luce=c["luce"], piani=[], isole=[], travi=[]), P)["cielo"]
-    return {"forgia": (p["cielo"], p["gruppi"], True), "cortile": (cielo_c, c["gruppi"], False)}
+    out = {"forgia": (p["cielo"], p["gruppi"], True, FORGIA, P), "cortile": (cielo_c, c["gruppi"], False, FORGIA, P)}
+    # i gironi: il cielo dal loro tema, i piani dalle scene fatte a mano (gironi/sfondi.py)
+    for nome, tema in TEMA.items():
+        if tema in out:
+            continue
+        sc = sfondi_gironi.sfondo(tema, TEMI[tema])
+        g = dict(MAPPE[nome], luce=sc["luce"])
+        q = piani(dict(g, piani=[], isole=[], travi=[]), TEMI[tema])
+        out[tema] = (q["cielo"], sc["gruppi"], True, g, TEMI[tema])
+    return out
 
 
 def main():
@@ -200,10 +412,10 @@ def main():
             os.remove(os.path.join(OUT, sotto, f))
     lavori, strisce = [], []
     # gli sfondi: il cielo (fermo, con il bagliore e i raggi) e i tre gruppi di piani
-    SF = sfondi(P)
-    for sf, (cielo, gruppi, scorre) in SF.items():
+    SF = sfondi()
+    for sf, (cielo, gruppi, scorre, scena, tema) in SF.items():
         for d, k in DENSITA.items():
-            lavori.append((svg(cielo + '<g style="mix-blend-mode:screen">%s</g>' % raggi(FORGIA, P), (0, 0, W, H),
+            lavori.append((svg(cielo + '<g style="mix-blend-mode:screen">%s</g>' % raggi(scena, tema), (0, 0, W, H),
                                round(W * k["cielo"]), round(H * k["cielo"])),
                            os.path.join(OUT, "backgrounds", "%s_cielo_%d.png" % (sf, d)), round(W * k["cielo"]), round(H * k["cielo"])))
             for nome, contenuto, vel in gruppi:
@@ -216,8 +428,9 @@ def main():
     # il terreno delle mappe dipinte
     for nome, g in MAPPE.items():
         maschera(g, nome)
-        sfondo_di[nome] = "forgia"
-        gioco = piani(g, P)["gioco"]
+        sfondo_di[nome] = TEMA.get(nome, "forgia")
+        Pm = TEMI[sfondo_di[nome]]
+        gioco = piani(g, Pm)["gioco"] + (spuntoni(g, Pm) if g.get("acciaio") else "")
         for d, k in DENSITA.items():
             w, h = round((1920 + 3 * MARGINE) * k["terreno"]), round(1080 * k["terreno"])
             lavori.append((svg(gioco, (-MARGINE, 0, W + 2 * MARGINE, H), w, h), os.path.join(OUT, "maps", "%s_%d.png" % (nome, d)), w, h))
@@ -270,7 +483,7 @@ def main():
              "\tbackgrounds = {"]
     for sf in SF:
         righe += ["\t\t%s = {" % sf,
-                  "\t\t\thaze = { %s }," % ", ".join("%.3f" % (v / 255) for v in Image.new("RGB", (1, 1), P["foschia"]).getpixel((0, 0))),
+                  "\t\t\thaze = { %s }," % ", ".join("%.3f" % (v / 255) for v in Image.new("RGB", (1, 1), SF[sf][4]["foschia"]).getpixel((0, 0))),
                   "\t\t\tgroups = {"]
         for nome, _, _ in GRUPPI:
             y0, h, vel = fasce[sf, nome]

@@ -276,9 +276,36 @@ C.STATUS = {
 	slow = { move = 0.6, jump = 0.8 },
 	cracked = { damage = 1.25 },
 }
+-- Map hazards (sim/hazards.lua; the maps ask for them in sim/maps.lua).
+-- Storm: the gust at the end of a round moves every robot by step world units.
+-- Hail: count stones per round fall on columns at least gap apart (margin from the
+-- sides), r is the stone's radius, speed its fall in units per second, blast its
+-- explosion (the same fields as game.MISSILE_BLAST: a missile does 25).
+C.WIND = { step = 66 }
+C.HAIL = { count = 3, margin = 260, gap = 340, r = 12, speed = 480,
+	blast = { r = 30, damage_r = 62, damage = 35, damage_min = 15, impulse = 10 } }
+-- Boulders (Avarizia): one rolls down each slope at the end of a round. r is its radius, v0 the
+-- first speed (world units per second), accel how fast the slope speeds it up (a drop of d
+-- gives accel * d / v), fric the slowing down everywhere, vmax the top speed, stop the speed
+-- under which it crumbles, climb the highest step it rolls over. Whoever it meets takes
+-- damage once and is shoved shove units along.
+C.BOULDER = { r = 33, v0 = 60, accel = 250, fric = 90, vmax = 300, stop = 12, climb = 9, damage = 22, shove = 18 }
+-- Rising water (Ira): from the round "from" on, at the end of every round the level goes up
+-- by step; whoever stands under it is out (drowned: the same as falling off the map).
+C.WATER = { from = 3, step = 40 }
+-- Fire rain (Violenza's Sabbione): the hail, more stones and each one sets alight (status burn).
+C.FIRE_RAIN = { count = 4, margin = 200, gap = 280, r = 12, speed = 480,
+	blast = { r = 30, damage_r = 62, damage = 30, damage_min = 12, impulse = 10 } }
+-- False bridges (Frode): once a robot steps on one, or a shot hits it, it falls after delay
+-- ticks (the crumbling is announced: 150 ticks are about two thirds of its way across).
+C.BRIDGE = { delay = 150 }
+-- Ice (Tradimento, Lucifero's lake): whoever stops walking on it keeps sliding, the speed
+-- (world units per tick, at most max) shrinking by decay at every tick.
+C.ICE = { decay = 0.97, max = 1.2, min = 0.05 }
+
 -- Which weapon gives which effect (our choice). Burn comes from the Uova of
 -- whoever has stats.burning_blasts (the Fornace set).
-C.WEAPON_STATUS = { shards = "slow", punch = "cracked", boomerang = "cracked", tar = "burn", drill = "slow" }
+C.WEAPON_STATUS = { shards = "slow", punch = "cracked", boomerang = "cracked", tar = "burn", drill = "slow", fire_rain = "burn" }
 
 -- Stats of each robot that aren't physics. Changed by the skill tree and gear
 -- (opts.players[i].stats in game.new); run, jump and air speed come from
