@@ -251,6 +251,26 @@ return {
 		-- under GIOCA: the next mission, or the final again
 		play_new = "%s · NUOVA",
 		replay_final = "RIGIOCA IL FINALE",
+		-- the map of the circles (after the kidnapping, Sergio 11 Nov): the Cortile
+		-- and the Forge on the top floor, the nine circles going down to Favilla.
+		-- The circles are placeholders until their levels are written:
+		-- { numeral, name, keeper }
+		rings = {
+			{ "I", "LIMBO", "CARONTE" }, { "II", "LUSSURIA", "MINOSSE" }, { "III", "GOLA", "CERBERO" },
+			{ "IV", "AVARIZIA", "PLUTONE" }, { "V", "IRA", "FLEGIÀS" }, { "VI", "ERESIA", "MEDUSA" },
+			{ "VII", "VIOLENZA", "MINOTAURO" }, { "VIII", "FRODE", "MALACODA" }, { "IX", "TRADIMENTO", "LUCIFERO" },
+		},
+		ring_name = "%s · %s",
+		ring_locked = "%s · SI APRE BATTENDO %s",
+		ring_stars = "%d / %d",
+		ring_sub = "GIRONE · %s",
+		tap_ring = "TOCCA UN GIRONE PER ENTRARCI",
+		coming = "IN ARRIVO",
+		coming_line = "I LIVELLI DI QUESTO GIRONE ARRIVANO PRESTO",
+		coming_sub = "%s · IN ARRIVO",
+		rings_back = "GIRONI",
+		cortile = "IL CORTILE",
+		fabbro_line = { "«Ti ci porto io,", "un girone alla volta.»" },
 	},
 
 	-- ui/level_types.lua: what kind of level a mission is (Sergio, 6 Nov), on its

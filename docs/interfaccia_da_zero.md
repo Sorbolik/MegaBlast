@@ -55,16 +55,19 @@ parte, non un figlio del velo.
 
 ## Schermate fatte
 
-Home, IL TUO DIAVOLETTO (pezzi, sigilli, statistiche, partite), campagna (bacheca),
-cartolina della missione, storia, allenamento, GIOCA ONLINE, sala d'attesa, schieramento,
+Home, IL TUO DIAVOLETTO (pezzi, sigilli, statistiche, partite), campagna (bacheca, e la mappa a imbuto
+dopo il rapimento), cartolina della missione, storia, allenamento, GIOCA ONLINE, sala d'attesa, schieramento,
 scelta delle armi, podio, fine del livello, impostazioni, scatto del pezzo, portafoglio.
 
 ## Cosa manca
 
-- **Mappa a imbuto della campagna** (dopo il rapimento): si fa quando ci sono i gironi veri
-  dopo la Forgia e i disegni dei luoghi (Sergio, 11 nov: «aspetta i gironi veri»). Fino ad
-  allora la campagna resta la bacheca.
-- **Sfondo della home**: raggi forti o mondo del livello forte (Sergio deve scegliere).
+- **I gironi veri**: la mappa a imbuto c'è (dopo il rapimento: Cortile e Forgia in alto, sotto i
+  nove gironi), ma i gironi sono segnaposto: nomi e custodi in `client/lang/it.lua`
+  (`campaign.rings`), cinque livelli e il custode ciascuno, tutti IN ARRIVO. Quando un girone
+  entra in `client/sim/levels.lua` il suo anello prende i livelli veri. In alto, al posto dei
+  disegni dei luoghi, ci sono le miniature delle missioni: i disegni vanno chiesti a Codex.
+- Sfondo della home: deciso, il mondo del livello in vista e i raggi solo un accenno
+  (`kit.scene` con `world`; Sergio, 11 nov).
 - Il cartellino grande (si apre toccando quello piccolo) e la pillola della coda hanno
   ancora le forme di prima.
 - PRONTO nella scelta delle armi online è solo uno stato: il server non ha ancora il «pronto».

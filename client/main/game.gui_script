@@ -4436,7 +4436,7 @@ function init(self)
 	self.home = home.new(TEAM_COLORS[1])
 	self.pill = menu.pill.new()
 	self.profilo = profile.load_up()
-	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2) end
+	if SIMULATE and config_int("megablast.prova_profilo", 0) > 0 then profile.sample(self.profilo, config_int("megablast.prova_profilo", 0) == 2, config_int("megablast.prova_profilo", 0) == 3) end
 	self.scelta = menu.pick.new(WEAPON_ICON, TM.draft_names, TM.draft_effects, self.comandi)
 
 	-- In real matches the map is picked by the seed (sim/maps.lua). In the test
