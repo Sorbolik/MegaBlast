@@ -110,19 +110,19 @@ local function panel(s)
 	local path, k = selected(s)
 	local p = skills.BY_ID[path]
 	local col = M.COLOR[p.id] or KC.SAND
-	kit.heading(g, T.threshold:format(p.name, k * skills.STEP), 1070, 168, col)
+	kit.heading(g, T.threshold:format(p.name, k * skills.STEP), 1070 + kit.air(), 168, col)
 	local need = k * skills.STEP - skills.spent(t, path)
 	local free = skills.points(s.prof.livello) - skills.spent(t)
 	local status = need <= 0 and (skills.pick(t, path, k) and T.taken or T.choose_now)
 		or (need == 1 and T.missing_one or T.missing):format(need)
 	if need > free then status = T.missing_free:format(need, free) end
-	kit.text(g, string.upper(status), 1070, 186, 11, KC.MUTE, "start", 1)
+	kit.text(g, string.upper(status), 1070 + kit.air(), 186, 11, KC.MUTE, "start", 1)
 	local pick = skills.pick(t, path, k)
 	for w = 1, 2 do
 		local pw = p.steps[k][w]
 		local y = 200 + (w - 1) * 124
-		local c = kit.card(g, 1056, y, 188, 104, col, { sel = pick == w })
-		kit.text(c.g, string.upper(pw.name), 1150, y + 40, #pw.name > 13 and 16 or 20, KC.SAND, "middle")
+		local c = kit.card(g, 1056 + kit.air(), y, 188, 104, col, { sel = pick == w })
+		kit.text(c.g, string.upper(pw.name), 1150 + kit.air(), y + 40, #pw.name > 13 and 16 or 20, KC.SAND, "middle")
 		-- the description in at most two lines, cut at a space near the middle
 		local d = pw.desc
 		local a, z = d, nil
@@ -130,9 +130,9 @@ local function panel(s)
 			local cut = d:find(" ", math.floor(#d / 2)) or #d
 			a, z = d:sub(1, cut - 1), d:sub(cut + 1)
 		end
-		kit.text(c.g, string.upper(a), 1150, y + 66, 10, KC.MUTE, "middle", 0.8)
-		if z then kit.text(c.g, string.upper(z), 1150, y + 82, 10, KC.MUTE, "middle", 0.8) end
-		kit.zone(c.g, s.buttons, 1056, y, 188, 104, "scegli:" .. path .. ":" .. k .. ":" .. w)
+		kit.text(c.g, string.upper(a), 1150 + kit.air(), y + 66, 10, KC.MUTE, "middle", 0.8)
+		if z then kit.text(c.g, string.upper(z), 1150 + kit.air(), y + 82, 10, KC.MUTE, "middle", 0.8) end
+		kit.zone(c.g, s.buttons, 1056 + kit.air(), y, 188, 104, "scegli:" .. path .. ":" .. k .. ":" .. w)
 	end
 	if need > 0 and free >= need then
 		s.action = kit.action(s.right, T.bring_here, 930, 560, 270, 84, { size = 44 })

@@ -138,9 +138,9 @@ local function build(a)
 	local first = math.max(1, math.min(a.da, #cards - VISIBLE + 1))
 	a.da = first
 	local last = math.min(#cards, first + VISIBLE - 1)
-	for i = first, last do map_card(a, 440 + (i - first) * 206, 406, cards[i]) end
+	for i = first, last do map_card(a, 440 + (i - first) * (206 + kit.air(0.25)), 406, cards[i]) end
 	if first > 1 then arrow(a, 424, 471, -1) end
-	if last < #cards then arrow(a, 1262, 471, 1) end
+	if last < #cards then arrow(a, 1262 + 3 * kit.air(0.25), 471, 1) end
 	-- the one action
 	a.action = kit.action(a.right, common.play, 930, 560, 270, 84, { size = 54,
 		sub = same and T.mode_same:format(NAMES[sc.modo]) or T.mode_and_bot:format(NAMES[sc.modo], NAMES[sc.livello]) })

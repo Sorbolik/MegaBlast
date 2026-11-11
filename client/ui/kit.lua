@@ -100,6 +100,21 @@ function M.group(g, x, y)
 	return { node = empty(x - g.ox, g.oy - y, 0, 0, g.node), ox = x, oy = y }
 end
 
+-- ---------------------------------------------------------------- air
+
+-- Where the screen is wider than 16:9 the menus with the devil on the left
+-- breathe (Sergio, 11 Nov: «dai più spazio alle cose tra loro»). One measure
+-- for all of them:
+--   M.side()   the room at each side of the 1280 in the middle
+--   M.lean()   how far the whole content goes left, toward the devil
+--   M.air(k)   how far a second column goes right of the first (k: 0.5 for
+--              a middle one of three)
+function M.side()
+	return math.min(220, math.max(0, (screen.width() - 1280) / 2))
+end
+function M.lean() return M.side() * 0.25 end
+function M.air(k) return M.side() * 0.6 * (k or 1) end
+
 -- ---------------------------------------------------------------- shapes
 
 -- The three pieces of a parallelogram centered on parent: the top side is
@@ -407,7 +422,7 @@ function M.tabs(g, list_of, x, y, tabs, active, accent)
 		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2 }, tab[1], cx + w / 2, y + 27, 19,
 			on and C.INK or M.with_alpha(C.SAND, 0.8), "middle", 0.5)
 		list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
-		cx = cx + w + 6
+		cx = cx + w + 6 + (g.air and M.air(0.1) or 0)
 	end
 	M.rect(g, x - 14, y + h, cx - x + 22, 5, C.SAND)
 	M.rect(g, x - 14, y + h + 5, cx - x + 22, 3, accent or C.HOT)
@@ -419,6 +434,7 @@ end
 -- option's width; off: dim, nothing to tap
 function M.choice(g, list_of, x, y, label, opts, active, w, off)
 	local h = 44
+	if g.air then w = w + M.air(0.25) end
 	M.text(g, label, x + 6, y - 10, 14, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
 	M.rect(g, x, y + h - 2, #opts * w, 2, with_alpha(C.LINE, 0.6))
 	for i, o in ipairs(opts) do

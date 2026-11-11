@@ -22,7 +22,6 @@
 --   profilo_schede.destroy(s)
 
 local ui = require "ui.ui"
-local screen = require "ui.screen"
 local kit = require "ui.kit"
 local coins = require "ui.coins"
 local game = require "sim.game"
@@ -97,21 +96,14 @@ end
 -- Where there is room at the sides (a screen wider than 16:9) the devil's
 -- side goes left with the real edge, above its plate, and the rest breathes
 -- (Sergio, 11 Nov: «spostalo più a sinistra dove c'è spazio, centrandolo
--- sempre coi raggi, dai più spazio alle cose»). side(): how far left;
--- devil_x(): where the devil and its rays are, in Figma coordinates;
--- spread(x): a column of the content, pushed right in proportion (the content
--- goes from 440 to 1250)
-local function side()
-	return math.min(220, math.max(0, (screen.width() - 1280) / 2))
-end
-function M.devil_x() return 250 - side() end
+-- sempre coi raggi, dai più spazio alle cose»; the measures are kit.side,
+-- kit.lean and kit.air). devil_x(): where the devil and its rays are, in
+-- Figma coordinates
+function M.devil_x() return 250 - kit.side() end
 M.DEVIL_Y = 380    -- the rays' height
-function M.spread(x)
-	return x + math.min(70, side() * 0.45) * (x - 440) / 810
-end
 -- a group like g, moved with the devil's side
 function M.left_of(g)
-	local n = box(-side(), 0, 0, 0, C.LIGHT, g.node)
+	local n = box(-kit.side() + kit.lean(), 0, 0, 0, C.LIGHT, g.node)
 	gui.set_visible(n, false)
 	return { node = n, ox = g.ox, oy = g.oy }
 end
@@ -122,7 +114,12 @@ end
 function M.devil(s, line)
 	local p = s.prof
 	-- (a little higher than its plate: Sergio, 11 Nov)
-	local pose = box(M.devil_x(), 126, 0, 0, C.LIGHT, s.radice)
+	-- the content leans toward the devil and its columns part (kit.air)
+	local rp = gui.get_position(s.radice)
+	rp.x = -kit.lean()
+	gui.set_position(s.radice, rp)
+	if s.kg then s.kg.air = true end
+	local pose = box(M.devil_x() + kit.lean(), 126, 0, 0, C.LIGHT, s.radice)
 	gui.set_visible(pose, false)
 	s.figure = scoria.new(s.colore, scoria.PERSONAGGIO)
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
@@ -193,11 +190,11 @@ local function sheet_sheet(s, parent)
 		end
 	end
 	-- how others see you (ui/tag_card.lua)
-	local mid = M.spread(726)
+	local mid = 726 + kit.air(0.5)
 	kit.heading(g, T.how_others_see, mid + 10, 168)
 	tag.new(v, mid + tag.WIDE / 2, 720 - 180, { tu = true }, parent)
 	-- the next upgrade of each piece: rows to read
-	local last = M.spread(1034)
+	local last = 1034 + kit.air()
 	kit.heading(g, T.next_steps, last + 6, 168)
 	for i, slot in ipairs(equip.SLOTS) do
 		local pz = v.pezzi[i]
@@ -288,7 +285,7 @@ local function sheet_stats(s)
 		312 + #milestones.WHITELIST * 36 + 14, 11, KC.MUTE, "start", 1)
 
 	-- the damage per weapon: rows to read
-	local wx = M.spread(1000)
+	local wx = 1000 + kit.air()
 	kit.heading(g, T.damage_by_weapon, wx + 10, 226)
 	local armi, tot = {}, 0
 	for w, n in pairs(st.armi or {}) do

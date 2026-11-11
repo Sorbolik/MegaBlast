@@ -76,8 +76,10 @@ parte, non un figlio del velo.
 Allenamento, GIOCA ONLINE, partita privata, eventi, IL TUO DIAVOLETTO e armeria usano
 `profile_tabs.devil`. Su uno schermo più largo di 16:9 il diavoletto (e l'assetto) va a
 sinistra col bordo vero, sopra la sua targa, un po' più in alto di prima, e i raggi partono
-da lui (`profile_tabs.devil_x()`); le colonne di IL TUO DIAVOLETTO si allontanano fra loro
-(`profile_tabs.spread`). A 16:9 cambia solo l'altezza.
+da lui (`profile_tabs.devil_x()`). Il resto prende aria con una misura sola, in `kit.lua`:
+`kit.side()` è lo spazio ai lati, `kit.lean()` quanto il contenuto si avvicina al diavoletto,
+`kit.air()` quanto la seconda colonna si allontana dalla prima (anche le schede, le scelte e
+le carte delle mappe si distanziano con quella). A 16:9 cambia solo l'altezza del diavoletto.
 
 ## Schermate fatte
 

@@ -80,14 +80,14 @@ end
 -- PROSSIMI: two weeks from Monday, then the upcoming ones in a row
 local function upcoming(b, now)
 	local g = b.kg
-	kit.heading(g, T.next, 880, 150)
+	kit.heading(g, T.next, 880 + kit.air(), 150)
 	local today = midnight(now)
 	local wday = os.date("*t", today).wday
 	-- this week's Monday (at noon: no surprises with daylight saving)
 	local monday = today + 43200 - ((wday + 5) % 7) * 86400
 	for i = 0, 13 do
 		local col, row = i % 7, math.floor(i / 7)
-		local x, y = 876 + col * 52 - row * 4, 164 + row * 58
+		local x, y = 876 + kit.air() + col * 52 - row * 4, 164 + row * 58
 		local t = midnight(monday + i * 86400)
 		local end_of = midnight(t + 86400 + 43200)
 		local k = kit.card(g, x, y, 44, 46, KC.ROSE, { sel = t == today, off = t < today })
@@ -103,10 +103,10 @@ local function upcoming(b, now)
 	end
 	-- in a row: the upcoming ones starting (also those coming back)
 	local list_of = events.upcoming(now)
-	if #list_of == 0 then kit.text(g, kit.upper(T.nothing_planned), 880, 326, 12, KC.MUTE, "start", 1) end
+	if #list_of == 0 then kit.text(g, kit.upper(T.nothing_planned), 880 + kit.air(), 326, 12, KC.MUTE, "start", 1) end
 	for i, o in ipairs(list_of) do
 		if i > 4 then break end
-		local x, y = 870 - (i - 1) * 4, 300 + (i - 1) * 50
+		local x, y = 870 + kit.air() - (i - 1) * 4, 300 + (i - 1) * 50
 		kit.info(g, x, y, 370, 38, color(o))
 		fit(kit.text(g, kit.upper(o.nome), x + 24, y + 25, 13, KC.SAND), 210)
 		kit.text(g, kit.upper(day_n(o.da, true)), x + 360, y + 25, 11, KC.MUTE, "end", 1)
@@ -135,12 +135,12 @@ local function detail(b, o, now)
 	kit.text(g, kit.upper(when), 446, 284 + n * 52 + 22, 11, KC.MUTE, "start", 1)
 
 	-- on the right: the prizes (the server hands them out once there are accounts)
-	kit.heading(g, T.prizes, 926, 270)
+	kit.heading(g, T.prizes, 926 + kit.air(), 270)
 	local premi = type(o.premi) == "table" and o.premi or {}
-	if #premi == 0 then kit.text(g, kit.upper(T.just_for_fun), 926, 306, 12, KC.MUTE, "start", 1) end
+	if #premi == 0 then kit.text(g, kit.upper(T.just_for_fun), 926 + kit.air(), 306, 12, KC.MUTE, "start", 1) end
 	for i, p in ipairs(premi) do
 		if i > 4 then break end
-		local x, y = 920 - (i - 1) * 5, 284 + (i - 1) * 52
+		local x, y = 920 + kit.air() - (i - 1) * 5, 284 + (i - 1) * 52
 		local who = type(p) == "table" and p.chi
 		kit.info(g, x, y, 310, 40, who and KC.HOT or KC.PURPLE)
 		fit(kit.text(g, kit.upper(type(p) == "table" and (p.testo or "") or tostring(p)), x + 26, y + 27, 14, KC.SAND), who and 190 or 270)

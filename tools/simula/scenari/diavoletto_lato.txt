@@ -20,3 +20,17 @@ aspetta 1
 tocca_bordo 215 118 basso destra    # ARMERIA
 aspetta 1
 foto 03_armeria
+tocca_bordo 36 60 basso sinistra    # indietro: il diavoletto
+aspetta 1
+tocca_centro 635 596                # SIGILLI
+aspetta 0.6
+foto 04_sigilli
+tocca_centro 802 596                # STATISTICHE
+aspetta 0.6
+foto 05_statistiche
+tocca_bordo 36 60 basso sinistra    # indietro: la home
+aspetta_stato modo=menu 3
+aspetta 0.8
+tocca_bordo 260 242 mezzo sinistra  # EVENTI
+aspetta 1
+foto 06_eventi

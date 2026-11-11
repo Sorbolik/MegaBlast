@@ -62,7 +62,7 @@ local function statistics(a)
 	local g = a.kg
 	local b = base()
 	local st = loadout.stats(b, to_active(a), profile.tier(a.prof, to_active(a)))
-	kit.heading(g, common.stats, 1030, 112)
+	kit.heading(g, common.stats, 1030 + kit.air(), 112)
 	local rows = {}
 	for _, s in ipairs(M.STATISTICS) do
 		if st[s[1]] ~= nil then rows[#rows + 1] = s end
@@ -72,7 +72,7 @@ local function statistics(a)
 	local h = math.min(30, step - 6)
 	for i, s in ipairs(rows) do
 		local k, nome, modo = s[1], s[2], s[3]
-		local x, y = 1024 - (i - 1) * 3 * step / 38, 128 + (i - 1) * step
+		local x, y = 1024 + kit.air() - (i - 1) * 3 * step / 38, 128 + (i - 1) * step
 		local col, mark = KC.SAND, KC.PURPLE
 		if b[k] ~= nil and st[k] ~= b[k] then
 			local better = type(st[k]) ~= "number" or st[k] > b[k]

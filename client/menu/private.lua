@@ -50,16 +50,16 @@ local function build_choice(c)
 	if c.msg then kit.text(g, kit.upper(c.msg), 444, 460, 13, c.busy and KC.MUTE or KC.HOT_TOP, "start", 0.5) end
 
 	-- the code: four boxes, then the keypad
-	kit.heading(g, T.have_code, 900, 146)
+	kit.heading(g, T.have_code, 900 + kit.air(), 146)
 	for i = 1, M.DIGITS do
-		local x = 892 + (i - 1) * 84
+		local x = 892 + kit.air() + (i - 1) * 84
 		kit.info(g, x, 160, 70, 70, (i == #c.code + 1 and not c.busy) and KC.SAND or KC.PURPLE)
 		kit.text(g, c.code:sub(i, i), x + 40, 210, 40, KC.SAND, "middle")
 	end
 	local keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "canc", "0" }
 	for i, k in ipairs(keys) do
 		local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
-		local x, y = 900 + col * 108 - row * 8, 254 + row * 62
+		local x, y = 900 + kit.air() + col * 108 - row * 8, 254 + row * 62
 		local off = c.busy or (k == "canc" and #c.code == 0) or (#k == 1 and #c.code >= M.DIGITS)
 		local pl = kit.plate(g, x, y, 94, 50, off and KC.LINE or KC.ROSE, { sk = 12, d = 5 })
 		kit.text(pl.g, k == "canc" and T.delete or k, x + 53, y + 35, k == "canc" and 16 or 26, off and KC.MUTE or KC.SAND, "middle")
