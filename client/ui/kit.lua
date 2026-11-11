@@ -508,20 +508,35 @@ end
 
 -- REGULATORS: the small controls inside a screen are round, not plates: the
 -- capsule "- +" (Sergio, 10 Nov). off_minus, off_plus: that side can't be used
-function M.stepper(g, list_of, x, y, minus, plus, off_minus, off_plus)
-	local w, h = 92, 36
+function M.stepper(g, list_of, x, y, minus, plus, off_minus, off_plus, value)
+	local w, h = value and 124 or 92, 36
 	local n, border = ui.panel(x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node, "pillola")
 	gui.set_color(n, with_alpha(C.INK, 0.85))
 	gui.set_color(border, with_alpha(C.SAND, 0.3))
 	local sg = { node = n, ox = x + w / 2, oy = y + h / 2 }
 	M.text(sg, "−", x + 22, y + 26, 24, off_minus and C.LINE or C.SAND, "middle")
 	M.text(sg, "+", x + w - 22, y + 26, 24, off_plus and C.LINE or C.SAND, "middle")
-	M.rect(sg, x + w / 2 - 1, y + 8, 2, 20, with_alpha(C.SAND, 0.2))
+	if value then
+		M.text(sg, tostring(value), x + w / 2, y + 25, 18, C.SAND, "middle")
+	else
+		M.rect(sg, x + w / 2 - 1, y + 8, 2, 20, with_alpha(C.SAND, 0.2))
+	end
 	local a = M.zone(sg, list_of, x - 4, y - 6, w / 2 + 4, h + 12, minus)
 	a.spento = off_minus or nil
 	local b = M.zone(sg, list_of, x + w / 2, y - 6, w / 2 + 4, h + 12, plus)
 	b.spento = off_plus or nil
 	return n
+end
+
+-- A small round button inside a card (QUI): a regulator, not a plate
+function M.round(g, list_of, cx, cy, label, ui_action)
+	local n = empty(cx - g.ox, g.oy - cy, 48, 48, g.node)
+	gui.set_blend_mode(ui.disc(0, 0, 42, with_alpha(C.INK, 0.85), n), gui.BLEND_ALPHA)
+	ui.ring_node(0, 0, 42, 2, with_alpha(C.SAND, 0.4), n)
+	M.text({ node = n, ox = cx, oy = cy }, label, cx, cy + 5, 13, C.SAND, "middle", 0.5)
+	local b = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = ui_action }
+	list_of[#list_of + 1] = b
+	return b
 end
 
 -- The player's plate: name (or what it is), a line on the right, the bar

@@ -14,39 +14,39 @@ aspetta 1.5
 tocca_bordo 244 400 mezzo destra          # GIOCA
 aspetta 1
 foto 01_dove_giochi                        # in fondo PARTITA PRIVATA
-tocca_centro 640 100                       # PARTITA PRIVATA
+tocca_bordo 676 413 alto centro          # PARTITA PRIVATA
 aspetta 1
 foto 02_tastierino
-tocca_centro 770 412                       # 1
-tocca_centro 936 412                       # 2
-tocca_centro 1102 412                      # 3
-tocca_centro 770 336                       # 4
+tocca_bordo 953 279 alto centro          # 1
+tocca_bordo 1061 279 alto centro         # 2
+tocca_bordo 1169 279 alto centro         # 3
+tocca_bordo 945 341 alto centro          # 4
 aspetta 0.3
-tocca_centro 1102 184                      # ENTRA
+tocca_bordo 215 118 basso destra         # ENTRA
 aspetta 1.5
 foto 03_codice_sbagliato                   # Nessuna stanza con questo codice
-tocca_centro 310 382                       # CREA UNA STANZA
+tocca_bordo 705 389 alto centro          # CREA
 aspetta 1.5
 foto 04_stanza_2v2                         # codice, io e tre bot
-tocca_centro 542 226                       # QUI: il posto 3, in squadra con me
+tocca_bordo 772 320 alto centro                       # QUI: il posto 3, in squadra con me
 aspetta 1
 foto 05_spostato                           # io al posto 3 (squadra rossa, sotto), un bot al posto 1
-tocca_centro 776 383                       # + sul bot del posto 2
+tocca_bordo 1115 208 alto centro         # + sul bot del posto 2
 aspetta 0.4
-tocca_centro 776 383                       # +
+tocca_bordo 1115 208 alto centro         # +
 aspetta 0.4
-tocca_centro 776 383                       # +
+tocca_bordo 1115 208 alto centro         # +
 aspetta 1
 foto 06_livello_bot
-tocca_centro 813 572                       # 1 CONTRO 1
+tocca_bordo 112 322 alto centro                       # 1 CONTRO 1
 aspetta 1
 foto 07_uno_contro_uno
-tocca_centro 1090 572                      # TUTTI CONTRO TUTTI
+tocca_bordo 320 322 alto centro                      # TUTTI CONTRO TUTTI
 aspetta 1
 foto 08_tutti_contro_tutti
-tocca_centro 591 572                       # 2 CONTRO 2
+tocca_bordo 216 322 alto centro                       # 2 CONTRO 2
 aspetta 1
-tocca_centro 1090 80                       # VIA
+tocca_bordo 215 118 basso destra         # VIA
 aspetta_stato modo=scelta_online 10
 aspetta 1
 foto 09_schieramento

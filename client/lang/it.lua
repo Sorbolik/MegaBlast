@@ -458,6 +458,14 @@ return {
 	-- menu/private.lua: the private match (from GIOCA ONLINE)
 	private = {
 		title = "PARTITA PRIVATA",
+		title_short = "CON UN CODICE",
+		mode = "MODO",
+		modes_short = { ["1v1"] = "1 C 1", ["2v2"] = "2 C 2", ffa = "TUTTI" },
+		versus = "VS",
+		missing = "MANCANO %d CIFRE",
+		missing_one = "MANCA 1 CIFRA",
+		-- under VIA: the mode and how many bots
+		go_sub = "%s · %d BOT",
 		new_room_over = "CON GLI AMICI O CONTRO I BOT",
 		new_room = "CREA UNA STANZA",
 		new_room_lines = {
@@ -479,8 +487,7 @@ return {
 		host = "HA CREATO LA STANZA",
 		here = "QUI",
 		go = "VIA",
-		host_hint = "QUI sposta te in quel posto, - e + cambiano il livello del bot",
-		wait_host = "Aspetta: chi ha creato la stanza sceglie e fa partire",
+		wait_host = "aspetta chi ha creato la stanza",
 	},
 
 	-- menu/lobby.lua: the waiting room online
