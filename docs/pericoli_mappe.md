@@ -69,7 +69,7 @@ nel fango non rimbalza (Gola, scheda della campagna).
 | Sabbione | pioggia di fuoco: la grandine con `FIRE_RAIN` (4 chicchi, 30 di danno al centro) e ogni chicco dà bruciatura; piatto, senza ripari | `C.FIRE_RAIN` |
 | Malebolge | due fosse di pece larghe 54 con un ponte crepato ciascuna: quando un robot ci sale, o un colpo gli toglie celle, trema (rettangolo arancione) e dopo `BRIDGE.delay` = 150 tick cade (`carve` a cerchietti, così il client online scava uguale) | `C.BRIDGE`, `hz.t`, `hz.solid` |
 | Cocito | lastre di ghiaccio sottili sull'acqua gelata, separate da crepe di 28; chi smette di camminare scivola (`ICE`: decade del 3% a tick, al massimo 1,2 per tick); le esplosioni bucano e sotto si muore | `C.ICE`, `hz.vel`, `hz.prev` |
-| Lucifero (arena, non online) | il lago largo col pozzo in mezzo (160) e due lastre per passarlo; ghiaccio che scivola e `wings`: a fine giro ognuno è spinto di `WIND.step` lontano dal centro, fermandosi ai muri; la sua battaglia in tre fasi è una missione (Copione), non c'è ancora | `maps.OFFLINE` |
+| Lucifero (arena, non online) | il lago largo col pozzo in mezzo (160) e due lastre per passarlo; ghiaccio che scivola e `wings`: a fine giro ognuno è spinto di `WIND.step` lontano dal centro (i bordi sono il vuoto: chi sta sul ciglio cade); la sua battaglia in tre fasi è una missione (Copione), non c'è ancora | `maps.OFFLINE` |
 
 Scelte di Claude (11 nov): i ponti falsi sono quelli dipinti crepati (tutti crollano, nessuno a caso:
 si vedono); quanto è largo il ponte (54 = 81 unità del mondo) e `delay` sono fatti perché lo
@@ -77,3 +77,5 @@ si attraversi di corsa senza fermarsi (si cammina a circa 0,65 unità per tick) 
 ferma; la scivolata è un attrito, non una fisica nuova: resta in `hz`, quindi niente campi nei
 robot; il bot non vede ponti, ghiaccio, ali né pioggia (copia della partita senza `hz`);
 Lucifero ha una mappa propria fuori dalla rotazione perché la sua battaglia è una missione.
+
+Niente muretti ai lati (Sergio, 11 nov): il suolo arriva al bordo e oltre si cade; i muri di lato restano solo nel cortile. Le mappe dei gironi sono asimmetriche, ma tengono l'assetto che serve ai loro pericoli.
