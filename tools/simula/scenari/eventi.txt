@@ -38,9 +38,9 @@ tocca_bordo 205 410 mezzo destra    # CERCA
 aspetta_stato modo=scelta_online 20
 aspetta 1
 foto 05_scelta_maglio
-tocca_centro 640 410                # primaria
+tocca_centro 815 410                # primaria
 aspetta 0.5
-tocca_centro 640 410                # secondaria
+tocca_centro 815 410                # secondaria
 aspetta_stato modo=online 25
 aspetta 2
 foto 06_partita

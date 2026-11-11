@@ -12,10 +12,10 @@ foto 00_schieramento                # i cartellini, col nome dei personaggi
 tocca 640 360                       # un tocco: alle armi
 aspetta 0.4
 foto 01_primaria
-tocca 640 410                       # primaria
+tocca 815 410                       # primaria
 aspetta 0.3
 foto 02_secondaria
-tocca 320 410                       # secondaria
+tocca 559 410                       # secondaria
 aspetta 0.3
 foto 03_pronto
 tocca 62 658                        # rotellina: si vede ESCI
@@ -23,7 +23,7 @@ aspetta 0.3
 foto 04_rotellina
 tocca 62 658                        # la richiude
 aspetta 0.3
-tocca 640 70                        # GIOCA
+tocca_bordo 215 118 basso destra                      # GIOCA
 aspetta_stato modo=local 10
 aspetta 1
 foto 05_partita

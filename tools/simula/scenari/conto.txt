@@ -15,9 +15,9 @@ aspetta 0.3
 tocca_bordo 215 118 basso destra    # GIOCA
 aspetta_stato modo=scelta 8
 aspetta 5
-tocca 320 410                       # primaria
+tocca 559 410                       # primaria
 aspetta 0.3
-tocca 320 410                       # secondaria
+tocca 559 410                       # secondaria
 aspetta_stato modo=local 30
 foto 00_inizio
 aspetta 0.2

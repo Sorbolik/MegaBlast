@@ -7,11 +7,11 @@ aspetta_stato modo=scelta 8
 aspetta 0.5
 tocca 640 360                       # alle armi
 aspetta 0.4
-tocca 640 410                       # primaria
+tocca 815 410                       # primaria
 aspetta 0.3
-tocca 320 410                       # secondaria
+tocca 559 410                       # secondaria
 aspetta 0.3
-tocca 640 70                        # GIOCA
+tocca_bordo 215 118 basso destra                      # GIOCA
 aspetta_stato modo=local fase=aim 10
 aspetta 1.5
 foto 01_inizio

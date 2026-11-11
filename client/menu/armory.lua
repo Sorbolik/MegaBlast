@@ -100,7 +100,7 @@ local function build(a)
 	-- the frame of the devil's place (ui/kit.lua): the title, the way back at the
 	-- bottom left, the wallet; the devil with its plate and the loadouts on the left
 	a.head = kit.header(a.buttons, common.armory, KC.PURPLE, "indietro", a.from or common.home)
-	a.wallet = coins.wallet(a.prof.scaglie, a.prof.ossidiana, kit.group(a.head.top_right, 1110, 44).node, 0, 0, true)
+	a.wallet = coins.wallet(a.prof.scaglie, a.prof.ossidiana, kit.group(a.head.top_right, 1110, 44).node, 0, 0)
 	a.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	a.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	a.radice = ui.root()

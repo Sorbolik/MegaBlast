@@ -123,7 +123,7 @@ function M.new(color)
 	local top_right = kit.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = top_right.node
 	local wr = kit.group(top_right, 1110, 44)
-	h.wallet = coins.wallet(0, 0, wr.node, 0, 0, true)
+	h.wallet = coins.wallet(0, 0, wr.node, 0, 0)
 	local wheel = kit.group(top_right, 1230, 44)
 	gui.set_blend_mode(ui.disc(0, 0, 52, kit.with_alpha(C.INK, 0.8), wheel.node), gui.BLEND_ALPHA)
 	ui.ring_node(0, 0, 52, 2.5, kit.with_alpha(C.SAND, 0.75), wheel.node)
@@ -221,6 +221,7 @@ function M.profile(h, p)
 	h.chapter = string.upper(chapter.titolo)
 	if not h.in_queue then gui.set_text(h.campaign.sub, h.chapter) end
 	set_pips(h.campaign, #chapter.missioni, done)
+	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not h.in_queue) end
 	gui.play_flipbook(h.campaign.img, chapter.id == "addestramento" and "cortile" or "pavimento")
 end
 
@@ -229,6 +230,8 @@ function M.queued(h, on)
 	h.campaign.b.spento = on or nil
 	gui.set_color(h.campaign.name, on and C.MUTE or C.SAND)
 	gui.set_text(h.campaign.sub, on and string.upper(T.leave_queue_first) or (h.chapter or ""))
+	-- the long line takes the notches' place
+	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not on) end
 end
 
 function M.update(h, dt)

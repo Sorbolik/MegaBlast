@@ -78,7 +78,7 @@ function M.new(o, sound)
 	ui.button(f.buttons, cx - bw / 2 - 20, 110, bw, 96, common.retry, "riprova", nil, f.radice)
 	ui.button(f.buttons, cx + bw / 2 + 20, 110, bw, 96, o.avanti and common.next or common.campaign, "avanti",
 		{ main = true }, f.radice)
-	if o.gain then f.receipt = receipt.new(o.gain, o.prof, 1040, 616, f.buttons, f.radice) end
+	if o.gain then f.receipt = receipt.new(o.gain, o.prof, 150, f.buttons, f.radice) end
 	return f
 end
 

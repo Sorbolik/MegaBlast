@@ -1,7 +1,7 @@
 # Scelta d'inizio partita online, 2 contro 2, contro un server vero e tre
 # giocatori finti (tools/simula/finti): noi siamo Rosso 1 (entriamo per
 # primi). Carte come in scelta.txt: una fila alla volta (x = 320, 640, 960;
-# y = 410), sotto le due scelte fatte (x = 475 e 805, y = 185). Le scelte
+# y = 410), sotto le due scelte fatte (a sinistra, x = 115, y = 544 e 458). Le scelte
 # degli altri non si vedono; finito, si aspetta lo scadere del tempo.
 imposta server_url ws://127.0.0.1:8090/ws
 
@@ -16,9 +16,9 @@ foto 00_schieramento                # i cartellini di tutti: livello e badge dal
 tocca 640 360                       # un tocco: alle armi
 aspetta 0.4
 foto 01_primaria
-tocca 320 410                       # primaria
+tocca 559 410                       # primaria
 aspetta 0.5
-tocca 640 410                       # secondaria
+tocca 815 410                       # secondaria
 aspetta 0.5
 foto 02_pronto
 aspetta_stato modo=online 25

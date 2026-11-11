@@ -2095,7 +2095,6 @@ function CP.open_lineup(self, showcases, title, seconds_left)
 	self.vetrine = showcases
 	if seconds_left and seconds_left <= 0 then
 		self.strip = menu.lineup.strip(showcases)
-		menu.pick.under_strip(self.scelta, self.strip.covers_corner)
 		return
 	end
 	self.schier = menu.lineup.new(showcases, title)
@@ -2113,7 +2112,6 @@ function CP.update_choice(self, dt)
 		self.schier = nil
 		if self.vetrine then
 			self.strip = menu.lineup.strip(self.vetrine)
-			menu.pick.under_strip(self.scelta, self.strip.covers_corner)
 		end
 		return false
 	end

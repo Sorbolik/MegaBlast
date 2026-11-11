@@ -16,7 +16,7 @@ tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1
 foto 01_sala
-tocca_centro 440 44                       # TORNA AI MENU · RESTI IN CODA
+tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 aspetta 1
 foto 02_home_in_coda               # pillola in alto, GIOCA, CAMPAGNA spenta
@@ -28,7 +28,7 @@ tocca_bordo 640 62 alto centro                 # la pillola: si torna alla sala
 aspetta_stato modo=connecting 3
 aspetta 0.8
 foto 04_di_nuovo_nella_sala        # il tempo continua, BOT TRA
-tocca_centro 440 44                       # TORNA AI MENU
+tocca_centro 832 79                       # TORNA AI MENU
 aspetta_stato modo=menu coda=si 3
 aspetta_stato coda=trovata 15
 aspetta 0.5

@@ -17,7 +17,7 @@ aspetta 0.5
 tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1
-tocca_centro 440 44                       # TORNA AI MENU · RESTI IN CODA
+tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 server_ferma
 aspetta_stato coda=persa 8

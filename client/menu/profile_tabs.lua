@@ -396,7 +396,7 @@ local function build(s)
 	-- the frame of the devil's place (ui/kit.lua): the title written as the
 	-- logo, the way back at the bottom left, the wallet, the tabs on their rail
 	s.head = kit.header(s.buttons, T.title, KC.PURPLE, "indietro", common.home)
-	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0, true)
+	s.wallet = coins.wallet(p.scaglie or 0, p.ossidiana or 0, kit.group(s.head.top_right, 1110, 44).node, 0, 0)
 	s.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	s.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	local active = s.scheda == "sigilli" and 2 or s.scheda == "statistiche" and 3 or s.scheda == "partite" and 4 or 1

@@ -20,7 +20,7 @@ tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1
 foto 01_sala
-tocca_centro 440 44                       # TORNA AI MENU · RESTI IN CODA
+tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 aspetta 1
 foto 02_home
@@ -67,9 +67,9 @@ foto 12_schieramento
 tocca_centro 640 360                       # alle armi
 aspetta 0.5
 foto 13_scelta_armi
-tocca_centro 320 410                       # primaria
+tocca_centro 559 410                       # primaria
 aspetta 0.3
-tocca_centro 960 410                       # secondaria: si parte
+tocca_centro 1071 410                       # secondaria: si parte
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 foto 14_partita

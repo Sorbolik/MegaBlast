@@ -14,7 +14,6 @@
 --
 --   local backdrop = require "ui.backdrop"
 --   local n = backdrop.new("fucina")   -- the root node: gui.delete_node(n) removes it all
---   backdrop.new("schieramento", nil, { col1, col2 })  -- the lineup: the teams' colors, left to right
 --
 -- Themes: legno (campaign and the end of a level), fucina (armory), campo
 -- (training), arena (where do you play?), stendardi (events), banco
@@ -181,21 +180,6 @@ local SLANT, LINE = -8, hex("2A2430")
 local function dark(col)
 	local b = ui.C.BOTTOM
 	return c4(b.x + (col.x - b.x) * 0.06, b.y + (col.y - b.y) * 0.06, b.z + (col.z - b.z) * 0.06)
-end
-
-function THEMES.schieramento(n, colors)
-	colors = colors or {}
-	local k = #colors
-	if k < 2 then return end
-	local w = 1280 / k
-	for i, col in ipairs(colors) do
-		local x0, x1 = -640 + (i - 1) * w, -640 + i * w
-		-- the outer bands go on past the edges of the frame
-		if i == 1 then x0 = x0 - HALF_W end
-		if i == k then x1 = x1 + HALF_W end
-		turned(box((x0 + x1) / 2, 0, x1 - x0, HALF_H * 3, dark(col), n), SLANT)
-	end
-	for i = 1, k - 1 do turned(box(-640 + i * w, 0, 6, HALF_H * 3, LINE, n), SLANT) end
 end
 
 function M.new(theme, parent, extra)

@@ -3,8 +3,7 @@
 # un altro colpo a testa e la partita finisce; dopo un attimo sale il podio con
 # i premi sotto i gradini, l'MVP e a destra lo scontrino dell'esperienza (le
 # righe una alla volta con XP e Scaglie, i totali, il livello, poi le monete
-# volano nella pillola del portafoglio). Poi l'armeria dalla home: set
-# del Vuoto completo.
+# volano nel portafoglio). Poi il diavoletto e l'armeria dalla home.
 imposta prova_durata 3
 
 aspetta 2
@@ -26,26 +25,24 @@ aspetta 2
 foto 02_podio
 aspetta 1.5
 foto 02b_podio_monete               # le Scaglie volate nella pillola in alto a destra
-tocca 1130 52                       # CONTINUA
+tocca_bordo 215 118 basso destra                      # CONTINUA
 aspetta_stato modo=menu 3
 aspetta 0.5
 
 tocca_centro 640 330                # il diavoletto: il suo posto
 aspetta 0.5
-foto 03_armeria_vuota
-tocca 720 548                       # maschera, corazza, mantello e gambali del Vuoto
-tocca 720 456
-tocca 720 364
-tocca 720 272
-aspetta 0.3
-foto 04_armeria_vuoto
-tocca 62 658                        # indietro
+tocca_bordo 215 118 basso destra    # ARMERIA
+aspetta 0.5
+foto 03_armeria
+tocca_bordo 36 60 basso sinistra    # indietro: il diavoletto
+aspetta 0.5
+tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta_stato modo=menu 3
 
 # di nuovo armeria e una seconda partita: i nodi delle schermate chiuse si liberano
 tocca_centro 640 330                # il diavoletto: il suo posto
 aspetta 0.5
-tocca 62 658                        # indietro
+tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.3                         # lo scivolo finisce
 tocca 222 148                      # STESSO TELEFONO

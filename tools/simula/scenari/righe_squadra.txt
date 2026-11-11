@@ -16,9 +16,9 @@ aspetta_stato modo=scelta 5
 aspetta 0.8
 foto 01_schieramento
 aspetta 5
-tocca 320 410                       # primaria
+tocca 559 410                       # primaria
 aspetta 0.3
-tocca 320 410                       # secondaria
+tocca 559 410                       # secondaria
 aspetta_stato modo=local 30
 aspetta_evento over 180
 aspetta 4

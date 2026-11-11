@@ -11,7 +11,10 @@
 -- server's time runs out: the picks go to the server (docs/server.md).
 -- The campaign's first draft (guided) has no timer, explains more and ends
 -- with GIOCA. The wheel at the top left opens ESCI.
--- Panels and text from the minimal interface (ui/ui.lua).
+-- Drawn with the kit (ui/kit.lua, Figma coordinates): on the left your two
+-- picks and what everyone has, with your devil; the cards in the middle; at the
+-- bottom right PRONTO, dark until both are picked. The view is rebuilt at every
+-- pick (few nodes, rare).
 --
 --   local scelta = require "menu.pick"
 --   local s = scelta.new(icons, nomi, effects, commands) -- icons (weapons atlas), names and a line on each weapon's effect;
@@ -31,27 +34,27 @@ local ui = require "ui.ui"
 local controller = require "ui.controller"
 local screen = require "ui.screen"
 local card = require "battle.card"
+local kit = require "ui.kit"
+local scoria = require "battle.scoria"
 local T = require("lang.text").pick
 local common = require("lang.text").common
 
 local M = {}
 
 local W, H = 1280, 720
-local CARD_W, CARD_H, CARD_GAP = 280, 230, 40
--- (at the top, above the title, the strip of tags: menu/lineup.lua)
-local CARD_Y = 20
--- the two picks made, under the cards
-local CHOICE_W, CHOICE_H, CHOICE_Y = 300, 84, -190
-local BAR_W = 560
-local C = ui.C
+local KC = kit.C
 local NAME_STEP = T.step_names
-local STEP_COLOR = { C.BRACE, C.STEEL }
-local VEIL = vmath.vector4(C.BOTTOM.x, C.BOTTOM.y, C.BOTTOM.z, 0.86)
+local STEP_COLOR = { KC.HOT, KC.STEEL }
+local VEIL = vmath.vector4(KC.INK.x, KC.INK.y, KC.INK.z, 0.9)
 local TOUCH = hash("touch")
 -- how long to hold a card to open its card
 local HOLD = 0.45
+local CARD_W, CARD_H = 238, 330
+-- what everyone has, always: the base primary, the blade, the grapple
+local EVERYONE = { "missile", "sword", "hook" }
 
 local function vec(x, y) return vmath.vector3(x, y, 0) end
+local function with_alpha(c, a) return vmath.vector4(c.x, c.y, c.z, a) end
 
 local function gui_node(x, y, w, h, color, parent)
 	local n = gui.new_box_node(vec(x, y), vec(w, h))
@@ -60,62 +63,55 @@ local function gui_node(x, y, w, h, color, parent)
 	return n
 end
 
--- a text that wraps within w
-local function riga(t, y, scale, w, parent)
-	local n = ui.text(t, 0, y, scale, nil, parent)
-	gui.set_line_break(n, true)
-	gui.set_size(n, vmath.vector3(w / (scale * 0.5), 200, 0))
+-- a weapon's picture, d wide, centered at (x, y) of the group
+local function icon(s, g, w, x, y, d)
+	local n = gui_node(x - g.ox, g.oy - y, d, d, vmath.vector4(1, 1, 1, 1), g.node)
+	gui.set_texture(n, "armi")
+	gui.play_flipbook(n, s.icons[w])
 	return n
 end
 
--- a card (or a pick made): panel, icon, name and a line below
-local function paper(x, y, w, h, icon_d, parent)
-	local c, border = ui.panel(x, y, w, h, parent)
-	local icon_img = gui.new_box_node(vec(0, 0), vec(icon_d, icon_d))
-	gui.set_texture(icon_img, "armi")
-	gui.set_parent(icon_img, c)
-	return { node = c, bordo = border, icon_img = icon_img }
+-- a text that never gets wider than `wide`
+local function fit(n, wide)
+	local w = kit.width(n)
+	if w > wide then
+		local sc = gui.get_scale(n)
+		gui.set_scale(n, vec(sc.x * wide / w, sc.y * wide / w))
+	end
+	return n
+end
+
+-- a text that wraps within `wide`, from its top left corner
+local function wrapped(g, t, x, y, size, color, wide)
+	local n = kit.text(g, t, x, y, size, color)
+	gui.set_pivot(n, gui.PIVOT_NW)
+	gui.set_line_break(n, true)
+	gui.set_size(n, vmath.vector3(wide / gui.get_scale(n).x, 200, 0))
+	return n
 end
 
 function M.new(icons, name_list, effects, commands)
 	local s = { icons = icons, nomi = name_list, effects = effects, commands = commands, card_list = {}, scelte = {} }
 	-- what the controller light goes on: cards, picks made and buttons
 	s.luce = {}
-	s.root = gui_node(W / 2, H / 2, W * screen.FULL, H * screen.FULL, VEIL)
+	-- a dark sheet, the rays on it (while the draft is open) and then the rest
+	s.veil = gui_node(W / 2, H / 2, W * screen.FULL, H * screen.FULL, VEIL)
+	s.root = gui_node(W / 2, H / 2, 0, 0, VEIL)
+	gui.set_visible(s.root, false)
 	gui.set_adjust_mode(s.root, gui.ADJUST_FIT)
-	s.titolo = ui.title("", 0, 232, 0.55, nil, s.root)
-	s.sotto = riga("", 192, 0.6, 1000, s.root)
-	for i = 1, config.DRAFT_OFFER do
-		local c = paper(0, CARD_Y, CARD_W, CARD_H, 96, s.root)
-		gui.set_position(c.icon_img, vec(0, 40))
-		c.nome = ui.text("", 0, -32, 0.7, nil, c.node)
-		c.effect = riga("", -70, 0.5, CARD_W - 24, c.node)
-		gui.set_color(c.effect, C.OFF)
-		s.card_list[i] = c
-		c.colore, c.ui_action, c.nodo = C.LIGHT, "carta:" .. i, c.node
-		s.luce[#s.luce + 1] = c
-	end
-	for step = 1, 2 do
-		local x = (step - 1.5) * (CHOICE_W + 30)
-		local c = paper(x, CHOICE_Y, CHOICE_W, CHOICE_H, 56, s.root)
-		gui.set_position(c.icon_img, vec(-CHOICE_W / 2 + 46, 0))
-		local kind = ui.text(NAME_STEP[step], -CHOICE_W / 2 + 90, 16, 0.5, STEP_COLOR[step], c.node)
-		gui.set_pivot(kind, gui.PIVOT_W)
-		c.nome = ui.text("", -CHOICE_W / 2 + 90, -14, 0.65, nil, c.node)
-		gui.set_pivot(c.nome, gui.PIVOT_W)
-		s.scelte[step] = c
-		c.colore, c.ui_action, c.nodo = C.LIGHT, "scelta:" .. step, c.node
-		s.luce[#s.luce + 1] = c
-	end
-	s.buttons = {}
-	s.gioca = ui.button(s.buttons, 0, -290, 300, 70, common.play, "gioca", { main = true }, s.root)
-	s.bar = ui.bar(0, -300, BAR_W, 6, C.LIGHT, s.root)
+	s.g = { node = s.root, ox = W / 2, oy = H / 2 }
+	-- what sticks to the real edges: the name, the plate that says what to do, PRONTO
+	s.tl = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
+	s.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
+	s.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
+	kit.title(s.tl, T.title, KC.HOT, 112, 76)
 	-- the wheel: a tap opens ESCI next to it, another closes it again
-	s.rotellina = ui.settings_button(s.buttons, "rotellina")
-	s.esci = ui.button(s.buttons, 32 + 12 + 80, 0, 160, 64, common.quit, "esci", nil, s.rotellina)
-	for _, b in ipairs(s.buttons) do s.luce[#s.luce + 1] = b end
-	gui.set_enabled(s.root, false)
-	gui.set_enabled(s.rotellina, false)
+	s.fixed = {}
+	s.rotellina = ui.settings_button(s.fixed, "rotellina")
+	s.esci = ui.button(s.fixed, 32 + 12 + 80, 0, 160, 64, common.quit, "esci", nil, s.rotellina)
+	s.buttons = {}
+	s.tops = { s.veil, s.root, s.tl.node, s.low.node, s.right.node, s.rotellina }
+	for _, n in ipairs(s.tops) do gui.set_enabled(n, false) end
 	return s
 end
 
@@ -163,41 +159,138 @@ local function texts(s)
 		under = under:gsub(T.hold_card, T.press_on_card:format(controller.name_of("scheda")))
 			:gsub(T.tap_pick, T.back_to_pick)
 	end
-	gui.set_text(s.titolo, (title:gsub("^%l", string.upper)))
-	gui.set_color(s.titolo, s.online and C.LIGHT or s.colori[s.chi] or C.LIGHT)
-	gui.set_text(s.sotto, under)
+	return kit.upper(title), under
 end
 
+-- the timer's bar, f from 0 to 1: its lit part shrinks toward the left
+local function bar_value(s, f)
+	local b = s.bar
+	if not b then return end
+	f = math.max(0, math.min(1, f))
+	gui.set_enabled(b.front.node, f > 0.01)
+	gui.set_scale(b.front.node, vec(math.max(f, 0.01), 1))
+	gui.set_position(b.front.node, vec(b.x0 - b.wide * (1 - f) / 2, b.y0))
+	local left = math.max(0, math.ceil(s.tempo))
+	gui.set_text(s.clock, string.format("%d:%02d", math.floor(left / 60), left % 60))
+end
+
+-- Rebuilds what is seen: the picks on the left, the cards, the time, PRONTO
 local function refresh(s)
 	local d, who = s.d, s.chi
-	texts(s)
-	local offer, picks = lane(d, math.min(s.passo, 2))
-	local x0 = -((#offer - 1) * (CARD_W + CARD_GAP)) / 2
-	for i, c in ipairs(s.card_list) do
-		local w = s.passo <= 2 and offer[i]
-		gui.set_enabled(c.node, w and true or false)
-		if w then
-			gui.set_position(c.node, vec(x0 + (i - 1) * (CARD_W + CARD_GAP), CARD_Y))
-			gui.play_flipbook(c.icon_img, s.icons[w])
-			gui.set_text(c.nome, s.nomi[w])
-			gui.set_text(c.effect, s.effects[w] or "")
-			c.riposo = picks[who] == w and C.LIGHT or STEP_COLOR[s.passo]
-			gui.set_color(c.bordo, c.riposo)
+	local lit = ui.lit_up(s.luce)
+	lit = lit and lit.ui_action
+	for _, n in ipairs(s.view or {}) do gui.delete_node(n) end
+	s.view, s.luce, s.card_list, s.scelte, s.buttons, s.bar = {}, {}, {}, {}, {}, nil
+	local function sub(group)
+		local n = gui_node(0, 0, 0, 0, KC.INK, group.node)
+		gui.set_visible(n, false)
+		s.view[#s.view + 1] = n
+		return { node = n, ox = group.ox, oy = group.oy }
+	end
+	local g, low, right = sub(s.g), sub(s.low), sub(s.right)
+	local title, under = texts(s)
+	local color = s.colori[who] or ui.C.SQUADRA[1]
+
+	-- your devil, behind the picks
+	local pose = gui_node(250 - g.ox, 104 - (720 - g.oy), 0, 0, KC.INK, g.node)
+	gui.set_visible(pose, false)
+	s.figure = scoria.new(color, scoria.PERSONAGGIO)
+	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
+	scoria.update(s.figure, 0, s.st)
+	local k = 265 / game.DISEGNO_H
+	gui.set_scale(pose, vmath.vector3(k, k, 1))
+	local ground = ui.alone(0, 0, 230 / k, with_alpha(KC.INK, 0.6), pose)
+	gui.set_scale(ground, vmath.vector3(1, 0.14, 1))
+	gui.set_parent(s.figure.root, pose)
+	scoria.set_enabled(s.figure, true)
+
+	-- the two picks: a tap goes back to that row
+	kit.text(g, T.yours, 44, 128, 14, KC.MUTE, "start", 1.5)
+	local missing_n, first_missing = 0, nil
+	for step = 1, 2 do
+		local of, pk = lane(d, step)
+		if #of > 0 then
+			local w = pk[who]
+			if not w then missing_n, first_missing = missing_n + 1, first_missing or step end
+			local x, y = 40 + (step - 1) * 8, 140 + (step - 1) * 86
+			local c = kit.card(g, x, y, 150, 72, w and STEP_COLOR[step] or KC.LINE, { sel = step == s.passo })
+			kit.text(c.g, NAME_STEP[step], x + 26, y + 22, 10, KC.MUTE, "start", 1.5)
+			if w then
+				icon(s, c.g, w, x + 50, y + 46, 44)
+				fit(kit.text(c.g, kit.upper(s.nomi[w]), x + 142, y + 62, 11, KC.SAND, "end", 0.5), 66)
+			else
+				kit.text(c.g, "?", x + 82, y + 58, 34, KC.MUTE, "middle")
+			end
+			kit.button(s.luce, c, "scelta:" .. step)
+			s.scelte[step] = c
 		end
 	end
-	for step, c in ipairs(s.scelte) do
-		local of, pk = lane(d, step)
-		local w = pk[who]
-		gui.set_enabled(c.node, #of > 0)
-		gui.set_enabled(c.icon_img, w ~= nil)
-		if w then gui.play_flipbook(c.icon_img, s.icons[w]) end
-		gui.set_text(c.nome, w and s.nomi[w] or "...")
-		c.riposo = step == s.passo and C.LIGHT or w and STEP_COLOR[step] or C.LINE
-		gui.set_color(c.bordo, c.riposo)
+	kit.text(g, T.everyone, 52, 340, 11, KC.MUTE, "start", 1.5)
+	for i, w in ipairs(EVERYONE) do
+		local x, y = 44 - (i - 1) * 4, 350 + (i - 1) * 56
+		kit.info(g, x, y, 96, 46, KC.PURPLE)
+		icon(s, g, w, x + 50, y + 23, 40)
 	end
-	gui.set_enabled(s.gioca, s.guidata and s.passo == 3)
-	gui.set_enabled(s.bar.nodo, not s.guidata)
-	ui.relight(s.luce)
+	kit.sand(low, 80, 630, 340, 62, KC.HOT, { sk = 22 })
+	fit(kit.text(low, title, 250, 668, 22, KC.INK, "middle", 0.5), 290)
+
+	-- the cards of the row (with both picked, the last row stays)
+	local shown = math.min(s.passo, 2)
+	if #(lane(d, shown)) == 0 then shown = 1 end
+	local offer, picks = lane(d, shown)
+	local shots = shown == 1 and config.DRAFT_SHOTS or config.SECONDARY_SHOTS.draft
+	wrapped(g, under, 446, s.guidata and 84 or 106, 13, KC.MUTE, 760)
+	for i, w in ipairs(offer) do
+		local sel = picks[who] == w
+		local x, y = 440 + (i - 1) * 256, 150 - (sel and 8 or 0)
+		local col = STEP_COLOR[shown]
+		local c = kit.card(g, x, y, CARD_W, CARD_H, col, { sel = sel })
+		kit.rect(c.g, x + 12, y + 12, CARD_W - 24, 152, with_alpha(KC.INK, 0.55))
+		icon(s, c.g, w, x + CARD_W / 2, y + 88, 124)
+		fit(kit.text(c.g, kit.upper(s.nomi[w]), x + 24, y + 208, 30, KC.SAND), CARD_W - 48)
+		wrapped(c.g, s.effects[w] or "", x + 22, y + 220, 13, KC.MUTE, CARD_W - 44)
+		kit.text(c.g, T.shots_label, x + 14, y + CARD_H - 22, 10, KC.MUTE, "start", 1.5)
+		kit.pips(c.g, x + 62, y + CARD_H - 36, shots, shots, col)
+		if sel then
+			kit.para(c.g, x + CARD_W - 92, y + CARD_H - 44, 84, 28, 8, KC.SAND)
+			kit.text(c.g, T.chosen, x + CARD_W - 46, y + CARD_H - 24, 13, KC.INK, "middle", 1)
+		end
+		kit.button(s.luce, c, "carta:" .. i)
+		c.w = w
+		s.card_list[i] = c
+	end
+	s.shown = shown
+
+	-- the time that is left (the guided draft has none)
+	if not s.guidata then
+		kit.text(g, T.time, 446, 524, 12, KC.MUTE, "start", 1.5)
+		s.bar = kit.bar(g, 504, 512, 360, 12, 1, KC.HOT)
+		local at = gui.get_position(s.bar.front.node)
+		s.bar.x0, s.bar.y0, s.bar.wide = at.x, at.y, 360
+		s.clock = kit.text(g, "", 880, 524, 16, KC.SAND)
+		bar_value(s, s.tempo / config.DRAFT_SECONDS)
+	end
+
+	-- PRONTO: dark while a weapon is missing. Only the guided draft waits for
+	-- its tap; the others start by themselves (same phone) or with the server's time
+	local opt = { size = 54 }
+	if missing_n > 0 then
+		opt.off = true
+		opt.sub = missing_n > 1 and T.missing_two or T.missing_one:format(NAME_STEP[first_missing])
+	elseif s.online then
+		opt.sub = T.starts_at_time
+	end
+	local go = kit.action(right, s.guidata and common.play or T.ready_action, 930, 560, 270, 84, opt)
+	if s.guidata and missing_n == 0 then
+		s.gioca = kit.button(s.buttons, go, "gioca", { main = true })
+	end
+	for _, b in ipairs(s.fixed) do s.buttons[#s.buttons + 1] = b end
+	for _, b in ipairs(s.buttons) do s.luce[#s.luce + 1] = b end
+	if lit then
+		for _, b in ipairs(s.luce) do
+			if b.ui_action == lit then ui.light(s.luce, b) end
+		end
+	end
 end
 
 -- The card opened with the long press, if any, closes
@@ -206,18 +299,24 @@ local function close_sheet(s)
 	s.carta, s.pressed_f = nil, nil
 end
 
--- The wheel under the strip of tags (menu/lineup.lua), which in 2 vs 2
--- goes from edge to edge; true below, false in its own place
-function M.under_strip(s, under)
-	local p = gui.get_position(s.rotellina)
-	p.y = under and 720 - 30 - 32 - 50 or 720 - 30 - 32
-	gui.set_position(s.rotellina, p)
+-- the rays, just above the dark sheet and under everything else
+local function scene_on(s, on)
+	if s.scene then
+		for _, n in ipairs(s.scene.tops) do gui.delete_node(n) end
+		s.scene = nil
+	end
+	if not on then return end
+	s.scene = kit.scene(250, 360, {})
+	for i = #s.scene.tops, 1, -1 do gui.move_above(s.scene.tops[i], s.veil) end
+end
+
+local function show_all(s, on)
+	for _, n in ipairs(s.tops) do gui.set_enabled(n, on) end
+	scene_on(s, on)
 end
 
 local function open_view(s)
-	M.under_strip(s, false)
-	gui.set_enabled(s.root, true)
-	gui.set_enabled(s.rotellina, true)
+	show_all(s, true)
 	gui.set_enabled(s.esci, false)
 	s.fatto = nil
 	refresh(s)
@@ -264,8 +363,7 @@ end
 function M.hide(s)
 	closed(s)
 	close_sheet(s)
-	gui.set_enabled(s.root, false)
-	gui.set_enabled(s.rotellina, false)
+	show_all(s, false)
 	s.d, s.online = nil, nil
 end
 
@@ -289,8 +387,7 @@ end
 local function wrap_up(s)
 	closed(s)
 	close_sheet(s)
-	gui.set_enabled(s.root, false)
-	gui.set_enabled(s.rotellina, false)
+	show_all(s, false)
 	local players = draft.finish(s.d)
 	s.d = nil
 	return players
@@ -298,6 +395,7 @@ end
 
 function M.update(s, dt)
 	if not s.d then return nil end
+	if s.figure then scoria.update(s.figure, dt, s.st) end
 	if s.fatto then
 		s.fatto = s.fatto - dt
 		if s.fatto > 0 then return nil end
@@ -314,7 +412,7 @@ function M.update(s, dt)
 	-- the guided draft has no timer; on the same phone the timer waits for whoever reads the card
 	if s.guidata or (s.carta and not s.online) then return nil end
 	s.tempo = s.tempo - dt
-	ui.bar_value(s.bar, s.tempo / config.DRAFT_SECONDS)
+	bar_value(s, s.tempo / config.DRAFT_SECONDS)
 	-- online, when time runs out the server decides
 	if s.online then return nil end
 	if s.tempo <= 0 and s.chi then
@@ -337,7 +435,7 @@ local function controller(s, action)
 	local u = action.ui
 	if u == "menu" or (u == "indietro" and gui.is_enabled(s.esci)) then
 		gui.set_enabled(s.esci, u == "menu" and not gui.is_enabled(s.esci))
-		if gui.is_enabled(s.esci) then ui.light(s.luce, s.buttons[#s.buttons]) end
+		if gui.is_enabled(s.esci) then ui.light(s.luce, s.fixed[#s.fixed]) end
 		return
 	end
 	local lit = ui.lit_up(s.luce)
@@ -398,17 +496,16 @@ function M.on_input(s, action_id, action)
 	if not action.pressed or s.buttons.held_down then return end
 	gui.set_enabled(s.esci, false)
 	if s.passo <= 2 then
-		local offer = lane(s.d, s.passo)
-		for i, c in ipairs(s.card_list) do
-			if offer[i] and gui.pick_node(c.node, action.x, action.y) then
-				s.pressed_f = { w = offer[i], t = 0 }
+		for _, c in ipairs(s.card_list) do
+			if gui.pick_node(c.node, action.x, action.y) then
+				s.pressed_f = { w = c.w, t = 0 }
 				return
 			end
 		end
 	end
 	-- a pick made: back to that row
-	for step, c in ipairs(s.scelte) do
-		if gui.is_enabled(c.node) and gui.pick_node(c.node, action.x, action.y) then
+	for step, c in pairs(s.scelte) do
+		if gui.pick_node(c.node, action.x, action.y) then
 			s.passo = step
 			refresh(s)
 			return

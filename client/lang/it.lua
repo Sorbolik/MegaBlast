@@ -93,6 +93,16 @@ return {
 
 	-- menu/pick.lua: the weapon draft
 	pick = {
+		title = "ARMI",
+		yours = "LE TUE ARMI",
+		everyone = "LE HANNO TUTTI",
+		shots_label = "COLPI",
+		chosen = "SCELTA",
+		time = "TEMPO",
+		ready_action = "PRONTO",
+		missing_two = "MANCANO 2 ARMI",
+		missing_one = "MANCA LA %s",
+		starts_at_time = "SI PARTE A FINE TEMPO",
 		step_names = { "PRIMARIA", "SECONDARIA" },
 		shot = "%s colpo",
 		shots = "%s colpi",
@@ -133,7 +143,6 @@ return {
 	-- menu/podium.lua: the podium at the end of the match
 	podium = {
 		modes = { ["1v1"] = "UNO CONTRO UNO", ["2v2"] = "DUE CONTRO DUE", ffa = "TUTTI CONTRO TUTTI" },
-		points = "%d punti",
 		tie = "PAREGGIO",
 		victory = "VITTORIA",
 		defeat = "SCONFITTA",
@@ -268,10 +277,9 @@ return {
 	-- menu/lineup.lua: the line-up before the match
 	lineup = {
 		tap_to_pick = "TOCCA PER SCEGLIERE LE ARMI",
-		weapons_in = "ARMI TRA",
+		weapons = "ARMI",
+		weapons_in = "ARMI TRA %d:%02d",
 		versus = "VS",
-		power = "%s potere",
-		powers = "%s poteri",
 	},
 
 
@@ -503,6 +511,7 @@ return {
 			"Il Rampino ce l'hanno tutti: chi sta in alto colpisce meglio",
 		},
 		coming = "IN ARRIVO",
+		tip = "CONSIGLIO",
 		searching = "CERCO GIOCATORI",
 		back_to_menus = "TORNA AI MENU · RESTI IN CODA",
 		leave_queue = "ESCI DALLA CODA",
