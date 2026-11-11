@@ -90,7 +90,7 @@ scelta delle armi, podio, fine del livello, impostazioni, scatto del pezzo, port
 ## Cosa manca
 
 - **I gironi veri**: la mappa a imbuto c'è (dopo il rapimento: Cortile, cioè l'antinferno, e Forgia
-  in alto; sotto il girone dove sei e appena il prossimo, senza nome, poi solo buio: non si deve
+  in alto; sotto il girone dove sei e il prossimo, chiuso, poi solo buio: non si deve
   capire quanti ne mancano), ma i gironi sono segnaposto: nomi e custodi in `client/lang/it.lua`
   (`campaign.rings`), cinque livelli e il custode ciascuno, tutti IN ARRIVO. Quando un girone
   entra in `client/sim/levels.lua` il suo anello prende i livelli veri. In alto, al posto dei

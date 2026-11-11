@@ -2,7 +2,7 @@
 # (prova_profilo 3: Addestramento e Forgia finiti) la CAMPAGNA è la mappa dei
 # gironi. In alto il Cortile (390 570) e la Forgia (690 570), che aprono la loro
 # bacheca; sotto il girone dove sei (segnaposto: toccandolo si apre l'anello coi
-# cinque livelli e il custode, tutti IN ARRIVO) e appena il prossimo, poi solo
+# cinque livelli e il custode, tutti IN ARRIVO) e il prossimo chiuso, poi solo
 # buio: toccare più giù non apre niente. Indietro in basso a sinistra.
 imposta prova_vignette no
 imposta prova_profilo 3
