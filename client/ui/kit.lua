@@ -580,7 +580,7 @@ local RAYS = 18
 
 -- The backdrop of a menu over the game world: a red cast and a dark veil,
 -- the rays turning slowly around (fx, fy), the halo there, the dark rising
--- from the bottom, the ember seam and the sparks. opt: dim (0.5), halo
+-- from the bottom, the ember seam and the sparks. opt: world, dim (0.5), halo
 -- (its radius, 400), accent (a wide soft light in the menu's color).
 -- Returns the scene: scene.tops are its top-level nodes (to enable/disable)
 function M.scene(fx, fy, opt)
@@ -591,10 +591,11 @@ function M.scene(fx, fy, opt)
 		s.tops[#s.tops + 1] = n
 		return n
 	end
-	-- opt.world: the game world behind stays the main thing, the rays just a hint
-	local world = opt.world or M.WORLD
-	full(with_alpha(C.TINT, world and 0.22 or 0.5))
-	full(with_alpha(C.INK, world and 0.22 or opt.dim or 0.5))
+	-- opt.world: the game world behind stays the main thing, the rays just a
+	-- hint (Sergio, 11 Nov: «dai ancora più priorità a quello di dietro»)
+	local world = opt.world
+	full(with_alpha(C.TINT, world and 0.12 or 0.5))
+	full(with_alpha(C.INK, world and 0.14 or opt.dim or 0.5))
 	-- the rays
 	local hub = M.anchor(fx, fy)
 	s.tops[#s.tops + 1] = hub.node
@@ -604,7 +605,7 @@ function M.scene(fx, fy, opt)
 	for i = 0, RAYS - 1 do
 		local a = i / RAYS * math.pi * 2 + 0.07
 		local wide = 0.09 + (i % 3) * 0.03
-		local n = shape("taglio_sx", 0, 0, 1800, 1800 * math.tan(wide), with_alpha(C.RAY, world and 0.2 or 0.4), spin)
+		local n = shape("taglio_sx", 0, 0, 1800, 1800 * math.tan(wide), with_alpha(C.RAY, world and 0.12 or 0.4), spin)
 		gui.set_pivot(n, gui.PIVOT_SW)
 		V.x, V.y, V.z = 0, 0, -math.deg(a + wide)
 		gui.set_rotation(n, V)

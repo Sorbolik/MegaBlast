@@ -61,7 +61,7 @@ end
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, t = 0, colore = color }
 
-	h.scene = kit.scene(BODY_X, 350)
+	h.scene = kit.scene(BODY_X, 350, { world = true })
 
 	-- the apprentice, in the middle
 	local mid = kit.anchor(BODY_X, BODY_Y)
