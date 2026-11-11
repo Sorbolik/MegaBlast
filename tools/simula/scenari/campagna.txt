@@ -35,7 +35,7 @@ aspetta 1.6
 foto 05_fine_livello                # le stelle si accendono
 aspetta 1
 foto 06_stelle_accese
-tocca 62 658                        # la freccia: si torna alla campagna
+tocca_bordo 352 82 basso sinistra   # CAMPAGNA: si torna alla campagna
 aspetta 1
 foto 07_campagna
 tocca 736 484                       # Il mio vecchio Lanciarune

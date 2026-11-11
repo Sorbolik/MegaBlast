@@ -3,7 +3,7 @@
 imposta giocatori 2v2
 imposta prova_durata 3
 
-aspetta 1
+aspetta 2
 tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1

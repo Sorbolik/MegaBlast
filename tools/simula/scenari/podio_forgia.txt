@@ -23,9 +23,9 @@ aspetta 0.5
 foto 01_fatta
 aspetta 3
 foto 02_stelle
-tocca 848 110                       # CAMPAGNA
+tocca_bordo 215 118 basso destra    # CAMPAGNA
 aspetta 1.5
 foto 03_campagna
-tocca 60 660                        # la freccia: la home
+tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta 1.5
 foto 04_home
