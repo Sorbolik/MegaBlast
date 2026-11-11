@@ -12,7 +12,7 @@ aspetta 2.5
 foto 02_tavola
 tocca 640 300                       # fuori dal pulsante: resta la tavola
 aspetta 0.5
-tocca 970 116                        # AVANTI sulla cartolina
+tocca_bordo 240 420 mezzo destra                        # AVANTI sulla cartolina
 aspetta 1
 foto 03_vignetta
 tocca 293 214                       # VAI!

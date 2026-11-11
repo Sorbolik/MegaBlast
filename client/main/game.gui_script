@@ -2858,8 +2858,10 @@ function CP.enter_mission(self, id, from, told)
 	end
 	local l = missions.find(id)
 	local first = menu.level_types.first_time(id, self.profilo.stelle)
+	local got = {}
+	for i, taken in ipairs(self.profilo.stelle[id] or {}) do got[i] = taken and true or false end
 	self.cartolina = self.vign_on and l and menu.postcard.open(id, l.titolo, from, l.tipo,
-		first and menu.level_types.line(l.tipo) or nil)
+		first and menu.level_types.line(l.tipo) or nil, { criteria = missions.criteria(l), stars = got })
 	if not self.cartolina then return flame() end
 	self.cartolina.go = flame
 end

@@ -16,7 +16,7 @@ aspetta 0.5
 foto 03_indietro
 tocca 532 484                       # di nuovo
 aspetta 0.6
-tocca_centro 970 116                # AVANTI
+tocca_bordo 240 420 mezzo destra                # AVANTI
 aspetta 0.1
 foto 04_chiude
 aspetta 0.25

@@ -5,7 +5,7 @@
 # sul pilastro alto; tu in cima: FATTA.
 imposta prova_missione spostano
 aspetta 2.5
-tocca 970 116                        # AVANTI sulla cartolina
+tocca_bordo 240 420 mezzo destra                        # AVANTI sulla cartolina
 aspetta_stato modo=local fase=aim 8
 aspetta 1.2
 foto 01_vignetta                     # la vignetta d'apertura

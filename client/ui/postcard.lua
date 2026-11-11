@@ -1,127 +1,154 @@
 -- The mission's postcard (Sergio, 4 Nov; 6 Nov: the miniature of the map
 -- instead of a painting, and kept, it is needed going from one mission
 -- straight to the next): before a campaign mission the miniature of its map
--- opens in front of the menu as a postcard, with the label of its kind (the
--- first time you meet that kind, also the line that says what it is), the
--- title and AVANTI. It is only a zoom on the card you tapped: the map
--- is not loaded yet, it loads after AVANTI, under the entry's flame
--- (ui/transition.lua, flame). Parchment card with its shadow, the picture in
--- an ink frame, the title and the button on the bottom band, an opaque
--- backdrop (nothing behind shows). Straight: a tilted quad would show steps on
--- its edges (no antialiasing on rotated nodes).
+-- opens in front of the menu on a leaning light plate, with the label of its
+-- kind (the first time you meet that kind, also the line that says what it
+-- is), the mission's name at the top, its stars with what each one takes, and
+-- GIOCA. It is only a zoom on the card you tapped: the map is not loaded yet,
+-- it loads after GIOCA, under the entry's flame (ui/transition.lua, flame).
+-- Drawn with ui/kit.lua (Figma coordinates) on an opaque backdrop with the rays.
 --
 --   local postcard = require "ui.postcard"
---   local p = postcard.open(id, titolo, from, tipo, line)  -- from: { x, y, w, h } the picture
+--   local p = postcard.open(id, titolo, from, tipo, line, o)  -- from: { x, y, w, h } the picture
 --        -- on the card you tapped (it zooms from there); tipo: the mission's kind
---        -- (ui/level_types.lua); line: what that kind is, or nil
---   postcard.premi(p, x, y)  -- "avanti" on the button, "indietro" outside the card, or nil
+--        -- (ui/level_types.lua); line: what that kind is, or nil;
+--        -- o: { criteria = { "FATTA", ... }, stars = { true, false, ... } } what you already took
+--   postcard.press(p, x, y)  -- "avanti" on GIOCA, "indietro" on the plate at the bottom left, or nil
 --   postcard.pad(p, n)       -- controller: "a" avanti, "b" indietro
---   postcard.leave(p, done)  -- AVANTI: it shrinks into the middle, the backdrop goes black
+--   postcard.leave(p, done)  -- GIOCA: it shrinks into the middle, the backdrop goes black
 --   postcard.back(p, done)   -- INDIETRO: it zooms back onto the card
 --   postcard.destroy(p)
 
 local ui = require "ui.ui"
+local kit = require "ui.kit"
 local ill = require "ui.illustrations"
 local types = require "ui.level_types"
 local common = require("lang.text").common
+local T = require("lang.text").level_end
 
 local M = {}
 
-local function c(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
+local KC = kit.C
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
-local PAPER, INK = c(0.95, 0.88, 0.75), c(0.12, 0.07, 0.05)
-local BACKDROP = c(0.09, 0.07, 0.07)
--- the picture 880 x 495 at its size, the parchment margin, the band with
--- title and button; y: how far above the middle of the screen
-M.POST = { w = 880, h = 495, margin = 18, band = 84, y = 12 }
+-- the light plate and the picture in it (the picture leans like the plate)
+M.POST = { x = 70, y = 130, w = 640, h = 380, sk = 26, pic_w = 612, pic_h = 356, pic_sk = 24 }
 local P = M.POST
-local CARD_W, CARD_H = P.w + 2 * P.margin, P.margin + P.h + P.band
--- the picture's middle, from the card's middle
-local PIC_Y = CARD_H / 2 - P.margin - P.h / 2
+-- the middle of the plate: the zoom turns around it
+local CX, CY = P.x + (P.w + P.sk) / 2, P.y + P.h / 2
 M.ZOOM, M.LEAVE = 0.22, 0.17
 
-local function box(x, y, w, h, color, parent)
-	local n = gui.new_box_node(vec(x, y), vec(w, h))
-	gui.set_texture(n, "battaglia")
-	gui.play_flipbook(n, "targa_bianco")
-	gui.set_color(n, color)
-	if parent then gui.set_parent(n, parent) end
-	return n
-end
-
--- where the card is (its middle) and how big, for the picture to cover from
+-- where the plate is (its middle) and how big, for the picture to cover from
 local function placed(from)
-	local k = from.w / P.w
-	return vec(from.x, from.y - PIC_Y * k), vmath.vector3(k, k, 1)
+	local k = from.w / P.pic_w
+	return vec(from.x, from.y), vmath.vector3(k, k, 1)
 end
 
-function M.open(id, titolo, from, tipo, line)
+-- the picture cut to the slant: a band as tall as the picture, a leaning box in it
+local function picture(parent, tex)
+	local w, h, sk = P.pic_w, P.pic_h, P.pic_sk
+	local band = gui.new_box_node(vec(0, 0), vec(w + sk, h))
+	gui.set_clipping_mode(band, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(band, false)
+	gui.set_parent(band, parent)
+	local lean = math.atan2(sk, h)
+	local cut = gui.new_box_node(vec(0, 0), vec(w * math.cos(lean), h / math.cos(lean) + sk + 2 * w * math.sin(lean)))
+	gui.set_clipping_mode(cut, gui.CLIPPING_MODE_STENCIL)
+	gui.set_clipping_visible(cut, false)
+	gui.set_rotation(cut, vmath.vector3(0, 0, -math.deg(lean)))
+	gui.set_parent(cut, band)
+	local tall = math.max(h, (w + sk) * 9 / 16) + 4
+	local img = gui.new_box_node(vec(0, 0), vec(tall * 16 / 9, tall))
+	if tex then gui.set_texture(img, tex) else gui.set_color(img, KC.CARD_BOTTOM) end
+	gui.set_rotation(img, vmath.vector3(0, 0, math.deg(lean)))
+	gui.set_parent(img, cut)
+end
+
+function M.open(id, titolo, from, tipo, line, o)
+	o = o or {}
 	local tex = ill.texture(id, "tavola")
-	local p = { id = id, from = from, tex = tex }
-	p.radice = gui.new_box_node(vec(640, 360), vec(0, 0))
-	gui.set_visible(p.radice, false)
-	p.back = gui.new_box_node(vec(0, 0), vec(1280 * 4, 720 * 4))
-	gui.set_color(p.back, BACKDROP)
-	gui.set_parent(p.back, p.radice)
-	p.card = gui.new_box_node(vec(0, P.y), vec(0, 0))
-	gui.set_visible(p.card, false)
-	gui.set_parent(p.card, p.radice)
-	box(10, -12, CARD_W, CARD_H, c(0, 0, 0, 0.45), p.card)
-	local paper, border = ui.panel(0, 0, CARD_W, CARD_H, p.card)
-	gui.set_color(paper, PAPER)
-	gui.set_color(border, INK)
-	p.paper = paper
-	box(0, PIC_Y, P.w + 8, P.h + 8, types.color(tipo) or INK, paper)
-	local pic = gui.new_box_node(vec(0, PIC_Y), vec(P.w, P.h))
-	if tex then gui.set_texture(pic, tex) else gui.set_color(pic, c(0.16, 0.10, 0.07)) end
-	gui.set_adjust_mode(pic, gui.ADJUST_FIT)
-	gui.set_parent(pic, paper)
-	-- the kind in the picture's top left corner, its line under it
-	local lx, ly = -P.w / 2 + 18, PIC_Y + P.h / 2 - 42
-	types.label(tipo, lx, ly, 48, paper)
-	if line and types.color(tipo) then
-		local t = ui.text(line, 0, 0, 0.8, INK)
-		gui.set_outline(t, c(0, 0, 0, 0))
-		gui.set_shadow(t, c(0, 0, 0, 0))
-		local w = resource.get_text_metrics(gui.get_font_resource(gui.get_font(t)), line).width * gui.get_scale(t).x
-		local strip = box(lx + (w + 32) / 2, ly - 56, w + 32, 46, c(0.95, 0.88, 0.75, 0.92), paper)
-		gui.set_parent(t, strip)
-		gui.set_position(t, vec(0, -1))
+	local p = { id = id, from = from, tex = tex, tops = {} }
+	local function top(n)
+		p.tops[#p.tops + 1] = n
+		return n
 	end
-	local by = -CARD_H / 2 + P.band / 2
-	local title = ui.title(string.upper(titolo or ""), -P.w / 2, by, 0.9, INK, paper)
-	gui.set_outline(title, c(0, 0, 0, 0))
-	gui.set_pivot(title, gui.PIVOT_W)
-	p.next = box(P.w / 2 - 110, by, 220, 56, INK, paper)
-	local t = gui.new_text_node(vec(0, 0), common.next)
-	gui.set_font(t, "titolo")
-	gui.set_color(t, PAPER)
-	gui.set_scale(t, vmath.vector3(0.7, 0.7, 1))
-	gui.set_parent(t, p.next)
-	-- the zoom from the card you tapped (from the middle, small, without one)
-	local pos, scale = vec(0, P.y), vmath.vector3(1, 1, 1)
+	p.back = top(gui.new_box_node(vec(640, 360), vec(1280 * 4, 720 * 4)))
+	gui.set_color(p.back, vmath.vector4(KC.INK.x, KC.INK.y, KC.INK.z, 0))
+	gui.animate(p.back, "color.w", 1, gui.EASING_OUTQUAD, M.ZOOM)
+	p.scene = kit.scene(390, 330, { halo = 460 })
+	-- everything but the plate: it comes in when the zoom is over
+	p.radice = top(gui.new_box_node(vec(0, 0), vec(0, 0)))
+	gui.set_visible(p.radice, false)
+	local g = { node = p.radice, ox = 0, oy = 720 }
+	p.buttons = {}
+	p.head = kit.header(p.buttons, kit.upper(titolo or ""), KC.HOT, "indietro", common.campaign)
+	if line and types.color(tipo) then
+		local t = kit.text(g, kit.upper(line), 82, 604, 15, KC.MUTE, "start", 0.8)
+		local wide = kit.width(t)
+		if wide > 700 then
+			local sc = gui.get_scale(t)
+			gui.set_scale(t, vec(sc.x * 700 / wide, sc.y * 700 / wide))
+		end
+	end
+	-- the stars: what each one takes, lit if you already have it
+	local n = 0
+	for i, what in ipairs(o.criteria or {}) do
+		local x = 886 + (i - 1) * 112
+		local got = o.stars and o.stars[i]
+		if got then n = n + 1 end
+		ui.star(x, 720 - 478, 44, got and KC.STAR or KC.LINE, p.radice)
+		local t = kit.text(g, what, x, 522, 12, KC.MUTE, "middle", 1)
+		local wide = kit.width(t)
+		if wide > 106 then
+			local sc = gui.get_scale(t)
+			gui.set_scale(t, vec(sc.x * 106 / wide, sc.y * 106 / wide))
+		end
+	end
+	if n > 0 then
+		kit.text(g, kit.upper((n == 1 and T.record_one or T.record):format(n)), 1000, 566, 13, KC.MUTE, "middle", 1.5)
+	end
+	p.right = kit.anchor(1280, 360, gui.ANCHOR_RIGHT)
+	top(p.right.node)
+	p.go_plate = kit.action(p.right, common.play, 836, 230, 354, 140, { size = 104 })
+	p.next = p.go_plate.node
+	-- the plate with the picture, in a node of its own: the zoom from the card you tapped
+	p.card = top(gui.new_box_node(vec(CX, 720 - CY), vec(0, 0)))
+	gui.set_visible(p.card, false)
+	local cg = { node = p.card, ox = CX, oy = CY }
+	local plate = kit.plate(cg, P.x, P.y, P.w, P.h, KC.HOT, { sk = P.sk, fill = KC.SAND, d = 12 })
+	p.paper = plate.node
+	picture(p.card, tex)
+	types.label(tipo, -P.pic_w / 2 + 14, P.pic_h / 2 - 34, 40, p.card)
+	-- black over everything when it leaves
+	p.veil = top(gui.new_box_node(vec(640, 360), vec(1280 * 4, 720 * 4)))
+	gui.set_color(p.veil, vmath.vector4(0, 0, 0, 0))
+	gui.set_enabled(p.veil, false)
+
+	local pos, scale = vec(CX, 720 - CY), vmath.vector3(1, 1, 1)
 	if from then
-		pos, scale = placed(from)
-		pos.x, pos.y = pos.x - 640, pos.y - 360
-		gui.set_position(p.card, pos)
-		gui.set_scale(p.card, scale)
+		local at, k = placed(from)
+		gui.set_position(p.card, at)
+		gui.set_scale(p.card, k)
 	else
 		gui.set_scale(p.card, vmath.vector3(0.85, 0.85, 1))
 	end
-	gui.animate(p.card, "position", vec(0, P.y), gui.EASING_OUTCUBIC, M.ZOOM)
-	gui.animate(p.card, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTCUBIC, M.ZOOM)
-	local bc = gui.get_color(p.back)
-	bc.w = 0
-	gui.set_color(p.back, bc)
-	gui.animate(p.back, "color.w", 1, gui.EASING_OUTQUAD, M.ZOOM)
+	gui.animate(p.card, "position", pos, gui.EASING_OUTCUBIC, M.ZOOM)
+	gui.animate(p.card, "scale", scale, gui.EASING_OUTCUBIC, M.ZOOM)
+	kit.pop(p.right.node, M.ZOOM * 0.6, 0.25)
 	return p
+end
+
+-- everything around the plate goes away at once
+local function alone(p)
+	gui.set_enabled(p.radice, false)
+	gui.set_enabled(p.right.node, false)
+	for _, n in ipairs(p.head.tops) do gui.set_enabled(n, false) end
 end
 
 function M.press(p, x, y)
 	if p.going then return nil end
 	if gui.pick_node(p.next, x, y) then return "avanti" end
-	if not gui.pick_node(p.paper, x, y) then return "indietro" end
+	if gui.pick_node(p.buttons[1].nodo, x, y) then return "indietro" end
 	return nil
 end
 
@@ -132,32 +159,34 @@ function M.pad(p, n)
 	return nil
 end
 
--- AVANTI: the card closes into a point in the middle and the backdrop goes
+-- GIOCA: the plate closes into a point in the middle and everything goes
 -- black, like the entry's veil (ui/transition.lua) that takes its place
 function M.leave(p, done)
 	p.going = true
 	gui.cancel_animations(p.card, "position")
 	gui.cancel_animations(p.card, "scale")
-	gui.animate(p.card, "position", vec(0, 0), gui.EASING_INQUAD, M.LEAVE)
+	gui.animate(p.card, "position", vec(640, 360), gui.EASING_INQUAD, M.LEAVE)
 	gui.animate(p.card, "scale", vmath.vector3(0.04, 0.04, 1), gui.EASING_INQUAD, M.LEAVE)
-	gui.animate(p.back, "color", c(0, 0, 0, 1), gui.EASING_INQUAD, M.LEAVE, 0, done)
+	gui.set_enabled(p.veil, true)
+	gui.animate(p.veil, "color.w", 1, gui.EASING_INQUAD, M.LEAVE, 0, done)
 end
 
 -- INDIETRO: back onto the card it came from (or it fades in the middle)
 function M.back(p, done)
 	p.going = true
-	local pos, scale = vec(0, P.y), vmath.vector3(0.85, 0.85, 1)
-	if p.from then
-		pos, scale = placed(p.from)
-		pos.x, pos.y = pos.x - 640, pos.y - 360
-	end
+	alone(p)
+	kit.scene_show(p.scene, false)
+	local pos, scale = vec(CX, 720 - CY), vmath.vector3(0.85, 0.85, 1)
+	if p.from then pos, scale = placed(p.from) end
 	gui.animate(p.card, "position", pos, gui.EASING_INCUBIC, M.ZOOM * 0.8)
 	gui.animate(p.card, "scale", scale, gui.EASING_INCUBIC, M.ZOOM * 0.8)
 	gui.animate(p.back, "color.w", 0, gui.EASING_INQUAD, M.ZOOM * 0.8, 0, done)
 end
 
 function M.destroy(p)
-	gui.delete_node(p.radice)
+	for _, n in ipairs(p.tops) do gui.delete_node(n) end
+	for _, n in ipairs(p.scene.tops) do gui.delete_node(n) end
+	kit.header_delete(p.head)
 	if p.tex then ill.release(p.id, "tavola") end
 end
 

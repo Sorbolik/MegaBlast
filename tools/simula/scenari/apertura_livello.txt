@@ -7,7 +7,7 @@ tocca 234 450                      # CAMPAGNA
 aspetta 1
 tocca 532 484                       # Primi passi
 aspetta 0.6
-tocca_centro 970 116                # AVANTI
+tocca_bordo 240 420 mezzo destra                # AVANTI
 aspetta 0.9
 foto 01_vicino
 aspetta 0.6
