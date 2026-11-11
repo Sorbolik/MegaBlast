@@ -58,6 +58,23 @@ add("gola", "La piova eterna", { hazard = "hail", mud = { { 660, 810, 270, 300 }
 	spawns = { { x = 180, from = 570 }, { x = 1725, from = 480 }, { x = 550, from = 430 }, { x = 960, from = 400 } },
 	build = function(t) t:load(mapdata.gola) end })
 
+-- Avarizia: at the end of each round a boulder starts from the top of each slope and rolls
+-- down towards the middle (rocks: where it starts, which way it goes).
+add("avarizia", "La valle dei massi", { hazard = "boulders", rocks = { { x = 195, dir = 1 }, { x = 1620, dir = -1 } },
+	spawns = { { x = 90, from = 720 }, { x = 1800, from = 620 }, { x = 750, from = 400 }, { x = 1500, from = 540 } },
+	build = function(t) t:load(mapdata.avarizia) end })
+-- Ira: from the third round the water of the swamp rises at the end of every round (water.y is
+-- where it starts, config.lua WATER): whoever it reaches drowns.
+add("ira", "La palude Stige", { hazard = "water", water = { y = 90 },
+	spawns = { { x = 90, from = 290 }, { x = 1800, from = 290 }, { x = 810, from = 290 }, { x = 1500, from = 290 } },
+	build = function(t) t:load(mapdata.ira) end })
+-- Eresia: the four tombs (world rectangles x0, x1, y0, y1 of the hollow in the floor, as painted by
+-- tools/grafica/mappe_dipinte.py ERES_TOMBE) open and close two by two, round after round; an open one
+-- sets alight whoever is in it.
+add("eresia", "La città di Dite", { hazard = "tombs",
+	tombs = { { 237, 363, 350, 390 }, { 687, 813, 245, 285 }, { 972, 1098, 245, 285 }, { 1302, 1428, 245, 285 } },
+	spawns = { { x = 105, from = 470 }, { x = 1875, from = 330 }, { x = 892, from = 380 }, { x = 1650, from = 330 } },
+	build = function(t) t:load(mapdata.eresia) end })
 -- Violenza: the Flegetonte (the river of blood kills, three stones to cross it, the dead trunks stop
 -- the shots until you break them, two pools of blood burn: blood, world rectangles like the mud,
 -- tools/grafica/mappe_dipinte.py FLEG_SANGUE) and the Sabbione (flat, no cover, the fire rain).
@@ -85,7 +102,7 @@ add("lucifero", "Il lago di Lucifero", { hazard = "ice", ice = true, wings = tru
 -- The circles' maps Training shows even though no campaign level plays them yet, in
 -- the order of the circles (Sergio, 11 Nov: all visible for now; they will open as the
 -- campaign meets them: menu/training.lua)
-M.CIRCLES = { "limbo", "lussuria", "gola", "flegetonte", "sabbione", "malebolge", "cocito", "lucifero" }
+M.CIRCLES = { "limbo", "lussuria", "gola", "avarizia", "ira", "eresia", "flegetonte", "sabbione", "malebolge", "cocito", "lucifero" }
 -- the ones that are not in the online rotation (arenas of a single level)
 M.OFFLINE = { lucifero = true }
 
@@ -94,7 +111,7 @@ M.DEFAULT = "pavimento"
 -- The maps of real matches (online and on the same phone): if no map is asked
 -- for, the match seed picks it, so server and client (which share the seed)
 -- play on the same one.
-M.ROTATION = { "pavimento", "fossa", "limbo", "lussuria", "gola", "flegetonte", "sabbione", "malebolge", "cocito" }
+M.ROTATION = { "pavimento", "fossa", "limbo", "lussuria", "gola", "avarizia", "ira", "eresia", "flegetonte", "sabbione", "malebolge", "cocito" }
 
 function M.pick(seed)
 	return M.ROTATION[math.floor(seed) % #M.ROTATION + 1]

@@ -47,6 +47,30 @@ return {
 				{ name = "vicino", y0 = 529, h = 191, parallax = 0.6, scroll = 16.0 },
 			},
 		},
+		avarizia = {
+			haze = { 0.416, 0.345, 0.220 },
+			groups = {
+				{ name = "lontano", y0 = 42, h = 678, parallax = 0.1, scroll = 2.4 },
+				{ name = "medio", y0 = 418, h = 302, parallax = 0.3, scroll = 8.7 },
+				{ name = "vicino", y0 = 0, h = 720, parallax = 0.6, scroll = 16.7 },
+			},
+		},
+		ira = {
+			haze = { 0.184, 0.310, 0.322 },
+			groups = {
+				{ name = "lontano", y0 = 0, h = 720, parallax = 0.1, scroll = 2.0 },
+				{ name = "medio", y0 = 384, h = 336, parallax = 0.3, scroll = 8.7 },
+				{ name = "vicino", y0 = 549, h = 171, parallax = 0.6, scroll = 19.3 },
+			},
+		},
+		eresia = {
+			haze = { 0.227, 0.227, 0.290 },
+			groups = {
+				{ name = "lontano", y0 = 22, h = 698, parallax = 0.1, scroll = 2.3 },
+				{ name = "medio", y0 = 0, h = 720, parallax = 0.3, scroll = 8.7 },
+				{ name = "vicino", y0 = 639, h = 81, parallax = 0.6, scroll = 17.3 },
+			},
+		},
 		violenza = {
 			haze = { 0.306, 0.227, 0.298 },
 			groups = {
@@ -79,6 +103,9 @@ return {
 		limbo = "limbo",
 		lussuria = "lussuria",
 		gola = "gola",
+		avarizia = "avarizia",
+		ira = "ira",
+		eresia = "eresia",
 		flegetonte = "violenza",
 		sabbione = "violenza",
 		malebolge = "frode",
