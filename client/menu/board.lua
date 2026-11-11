@@ -232,7 +232,7 @@ function M.destroy(b)
 	gui.delete_node(b.right.node)
 	gui.delete_node(b.low.node)
 	gui.delete_node(b.radice)
-	for _, n in ipairs(b.scene.tops) do gui.delete_node(n) end
+	kit.scene_drop(b.scene)
 end
 
 return M

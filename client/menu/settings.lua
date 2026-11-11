@@ -14,7 +14,6 @@
 --   impostazioni.destroy(s)
 
 local ui = require "ui.ui"
-local backdrop = require "ui.backdrop"
 local glyph = require "ui.glyph"
 local controller = require "ui.controller"
 local profile = require "menu.profile"
@@ -107,7 +106,6 @@ end
 function M.new(p, c)
 	local s = { p = p, c = c }
 	controller.levette = profile.setting(p, "levette")
-	s.fondo = backdrop.new()
 	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL })
 	build(s)
 	return s
@@ -162,8 +160,7 @@ end
 function M.destroy(s)
 	kit.header_delete(s.head)
 	gui.delete_node(s.radice)
-	for _, n in ipairs(s.scene.tops) do gui.delete_node(n) end
-	gui.delete_node(s.fondo)
+	kit.scene_drop(s.scene)
 end
 
 return M

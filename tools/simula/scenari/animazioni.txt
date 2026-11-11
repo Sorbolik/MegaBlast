@@ -1,0 +1,31 @@
+# Le animazioni dei menu (foglio animato, Sergio 11 nov): l'ingresso della home
+# (il diavoletto cade dall'alto, le porte volano dentro, GIOCA sbatte col lampo),
+# la tendina gialla che passa davanti fra due menu e i pezzi che arrivano dietro.
+
+aspetta 0.45
+foto 01_ingresso_cade
+aspetta 0.2
+foto 02_ingresso_porte
+aspetta 0.25
+foto 03_ingresso_gioca
+aspetta 1.2
+foto 04_home
+tocca_bordo 244 400 mezzo destra    # GIOCA
+aspetta 0.2
+foto 05_tendina_entra
+aspetta 0.2
+foto 06_tendina_esce
+aspetta 0.2
+foto 07_pezzi_arrivano
+aspetta 0.8
+foto 08_gioca_online
+tocca_bordo 36 60 basso sinistra    # indietro
+aspetta 0.25
+foto 09_tendina_ritorno
+aspetta 1
+foto 10_di_nuovo_home
+tocca_bordo 200 450 mezzo sinistra  # CAMPAGNA
+aspetta 0.45
+foto 11_campagna_arriva
+aspetta 0.9
+foto 12_campagna

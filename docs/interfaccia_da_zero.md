@@ -25,8 +25,10 @@ file dice com'è fatta e cosa manca.
 
 ## Com'è fatta
 
-Dietro c'è il mondo del gioco scurito, i raggi che partono dal diavoletto, la cucitura di
-brace in basso e le scintille (`kit.scene`). Sopra, piastre a parallelogramma con l'ombra
+Dietro c'è il mondo del gioco, sempre in vista; sopra, appena accennati, i raggi blu notte
+che partono dal diavoletto e girano piano senza fermarsi mai, la cucitura di brace in basso e
+poche scintille che vagano lente a caso (`kit.scene`). Lo sfondo è **uno solo per tutti i
+menu**: cambiando schermata i raggi non ripartono, scivolano al posto nuovo. Sopra, piastre a parallelogramma con l'ombra
 piena spostata: scure per i bottoni, color sabbia per i nomi, gialla e luminosa per l'azione.
 
 Tutto passa da `client/ui/kit.lua`, che si usa con le coordinate del Figma (1280 x 720, y
@@ -44,14 +46,28 @@ dall'alto, testo sulla linea di base):
 | Avanzamento | `kit.pips`, `kit.bar` |
 | Regolatore tondo, più e meno | `kit.round`, `kit.stepper` |
 | Entrate | `kit.arrive`, `kit.pop` (mai su un testo: si fa sul nodo che lo tiene) |
+| Effetti | `kit.burst` (scintille in un punto), `kit.flash`, `kit.shake` |
 
 I colori sono in `kit.C`. Quello che sta su un bordo si attacca con `kit.anchor` al bordo
 vero dello schermo; il resto sta nei 1280 al centro. Niente si deforma.
 
-Una schermata è fatta così: fondo pieno (`backdrop.new()`), scena col suo accento, un gruppo
-al centro e due ancore in basso (sinistra per il ritorno e le secondarie, destra per
+Una schermata è fatta così: scena col suo accento (`kit.scene`, e `kit.scene_drop` quando
+si chiude), un gruppo al centro e due ancore in basso (sinistra per il ritorno e le secondarie, destra per
 l'azione). I figli si disegnano col padre: quello che deve stare sopra la scena è un nodo a
 parte, non un figlio del velo.
+
+## Movimento (il foglio animato, Sergio 11 nov)
+
+- **Fra due menu** passa davanti la tendina: un pannello giallo inclinato col bordo sabbia
+  attraversa lo schermo e dietro cambia la schermata (`ui/transition.lua`, `tent`); tornando
+  indietro passa dall'altra parte. Fra menu e partita resta l'iride.
+- **I pezzi arrivano da soli** mentre la tendina esce: il titolo e il ritorno da sinistra, le
+  carte da destra una dopo l'altra, l'azione scatta con le sue scintille (`kit.enter_begin`).
+- **La home quando si apre il gioco**: i raggi crescono, il diavoletto cade dall'alto e
+  atterra schiacciato con un colpo e le scintille ai piedi, le porte volano dentro e le loro
+  tacche scattano una a una, GIOCA sbatte col lampo.
+- **Al tocco**: scintille sotto il dito, la piastra rimbalza, l'azione principale fa il lampo;
+  nella home il diavoletto si piega verso quello che tocchi. Solo nei menu: l'HUD non cambia.
 
 ## Schermate fatte
 
@@ -66,8 +82,8 @@ scelta delle armi, podio, fine del livello, impostazioni, scatto del pezzo, port
   (`campaign.rings`), cinque livelli e il custode ciascuno, tutti IN ARRIVO. Quando un girone
   entra in `client/sim/levels.lua` il suo anello prende i livelli veri. In alto, al posto dei
   disegni dei luoghi, ci sono le miniature delle missioni: i disegni vanno chiesti a Codex.
-- Sfondo della home: deciso, il mondo del livello in vista e i raggi solo un accenno
-  (`kit.scene` con `world`; Sergio, 11 nov).
+- Del foglio animato mancano: i numeri del portafoglio che contano, il diavoletto che si
+  sposta con un salto da un menu all'altro, la discesa verso la campagna.
 - Il cartellino grande (si apre toccando quello piccolo) e la pillola della coda hanno
   ancora le forme di prima.
 - PRONTO nella scelta delle armi online è solo uno stato: il server non ha ancora il «pronto».

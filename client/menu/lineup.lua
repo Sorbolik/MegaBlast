@@ -15,7 +15,6 @@
 --   schieramento.destroy(st)
 
 local ui = require "ui.ui"
-local backdrop = require "ui.backdrop"
 local screen = require "ui.screen"
 local config = require "sim.config"
 local tag = require "ui.tag_card"
@@ -72,8 +71,7 @@ function M.new(showcases, title)
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
 	local xs, vs = M.seats(squads)
 	-- a dark sheet over the draft, and the rays on it
-	s.fondo = backdrop.new()
-	s.scene = kit.scene(640, 360, {})
+	s.scene = kit.scene(640, 360, { dim = 0.72 })
 	-- the match's name on a light plate that comes out of the real left edge
 	local top_left = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	kit.sand(top_left, -20, 30, 330, 58, KC.HOT, { sk = 22 })
@@ -200,10 +198,9 @@ function M.destroy(s)
 	for _, n in ipairs(s.angoli or {}) do gui.delete_node(n) end
 	s.angoli = nil
 	if s.radice then gui.delete_node(s.radice) end
-	if s.fondo then gui.delete_node(s.fondo) end
-	for _, n in ipairs(s.scene and s.scene.tops or {}) do gui.delete_node(n) end
+	if s.scene then kit.scene_drop(s.scene) end
 	s.scene = nil
-	s.radice, s.fondo, s.aperto = nil, nil, nil
+	s.radice, s.aperto = nil, nil
 end
 
 return M

@@ -44,7 +44,7 @@ tocca_centro 640 330                # il diavoletto: il suo posto
 aspetta 0.5
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
-aspetta 0.3                         # lo scivolo finisce
+aspetta 0.6                         # la tendina esce, i pezzi arrivano
 tocca 222 148                      # STESSO TELEFONO
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1

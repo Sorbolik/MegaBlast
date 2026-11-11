@@ -302,12 +302,12 @@ end
 -- the rays, just above the dark sheet and under everything else
 local function scene_on(s, on)
 	if s.scene then
-		for _, n in ipairs(s.scene.tops) do gui.delete_node(n) end
+		kit.scene_drop(s.scene)
 		s.scene = nil
 	end
 	if not on then return end
 	s.scene = kit.scene(250, 360, {})
-	for i = #s.scene.tops, 1, -1 do gui.move_above(s.scene.tops[i], s.veil) end
+	kit.scene_place(s.scene, "above", s.veil)
 end
 
 local function show_all(s, on)

@@ -23,7 +23,6 @@ local ui = require "ui.ui"
 local kit = require "ui.kit"
 local scoria = require "battle.scoria"
 local game = require "sim.game"
-local backdrop = require "ui.backdrop"
 local receipt = require "ui.receipt"
 local T = require("lang.text").level_end
 local common = require("lang.text").common
@@ -39,8 +38,7 @@ local function vec(x, y) return vmath.vector3(x, y, 0) end
 function M.new(o, sound)
 	local f = { buttons = {}, t = 0, sound = sound, coin = o.coin, lit_ones = 0, prese = {} }
 	local n = 0
-	f.fondo = backdrop.new()
-	f.scene = kit.scene(640, 360, {})
+	f.scene = kit.scene(640, 360, { dim = 0.72 })
 	f.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(f.radice, false)
 	local g = { node = f.radice, ox = 0, oy = 720 }
@@ -151,8 +149,7 @@ function M.destroy(f)
 	gui.delete_node(f.radice)
 	gui.delete_node(f.low.node)
 	gui.delete_node(f.right.node)
-	for _, n in ipairs(f.scene.tops) do gui.delete_node(n) end
-	gui.delete_node(f.fondo)
+	kit.scene_drop(f.scene)
 end
 
 return M

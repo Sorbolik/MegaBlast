@@ -87,7 +87,7 @@ function M.new(of, title, parent_below)
 	if parent_below then gui.move_below(s.radice, parent_below) end
 	-- the rays behind everything, in the color of the online game
 	s.scene = kit.scene(640, 380, { accent = KC.RED })
-	for _, n in ipairs(s.scene.tops) do gui.move_below(n, s.radice) end
+	kit.scene_place(s.scene, "below", s.radice)
 	local g = { node = s.radice, ox = 0, oy = 720 }
 	s.g = g
 	-- what you are doing on a light plate, and under it how it is going
@@ -199,7 +199,7 @@ end
 
 function M.destroy(s)
 	if s.radice then gui.delete_node(s.radice) end
-	for _, n in ipairs(s.scene and s.scene.tops or {}) do gui.delete_node(n) end
+	if s.scene then kit.scene_drop(s.scene) end
 	s.scene = nil
 	if s.top then gui.delete_node(s.top.node) end
 	s.top = nil

@@ -33,7 +33,7 @@ local menu = { podium = require "menu.podium", armory = require "menu.armory", p
 	-- the entry, the transitions between screens and the waiting flame
 	ingresso = require "ui.entry", passaggio = require "ui.transition", attesa = require "ui.waiting",
 	-- the mission's postcard before the flame (ui/postcard.lua)
-	postcard = require "ui.postcard",
+	postcard = require "ui.postcard", kit = require "ui.kit",
 	-- the opening shot of a level, after the flame (ui/intro.lua)
 	intro = require "ui.intro",
 	-- the kind of a mission: its postcard says it the first time (ui/level_types.lua)
@@ -1170,20 +1170,15 @@ function CP.wait(self, txt)
 	menu.attesa.display(self.attesa, txt)
 end
 
--- The transitions (ui/transition.lua): the slider between menus, the iris
--- between menus and battle. CP.roots: the root nodes of what is visible now
-function CP.roots(self)
-	if self.mode == "menu" then return self.home.tops end
-	local o = self.schermata and self.schermata.obj
-	local r = o and (o.radice or o.root)
-	return { r }
-end
-
--- toward: 1 forward (the new one arrives from the right), -1 back
+-- The transitions (ui/transition.lua): the tent between menus, the iris
+-- between menus and battle. The new menu's pieces arrive by themselves
+-- (ui/kit.lua, enter_begin) while the tent leaves.
+-- toward: 1 forward (the tent crosses from the left), -1 back
 function CP.slide(self, toward, change)
-	menu.passaggio.slider(self.passaggio, CP.roots(self), function()
+	menu.passaggio.tent(self.passaggio, function()
+		menu.kit.enter_begin(0)
 		change()
-		return CP.roots(self)
+		menu.kit.enter_end()
 	end, toward)
 end
 

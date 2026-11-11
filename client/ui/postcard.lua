@@ -165,7 +165,7 @@ end
 
 function M.destroy(p)
 	for _, n in ipairs(p.tops) do gui.delete_node(n) end
-	for _, n in ipairs(p.scene.tops) do gui.delete_node(n) end
+	kit.scene_drop(p.scene)
 	kit.header_delete(p.head)
 	if p.tex then ill.release(p.id, "tavola") end
 end

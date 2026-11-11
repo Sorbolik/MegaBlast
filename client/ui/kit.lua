@@ -35,7 +35,7 @@ M.C = {
 	SAND_SHADOW = hex("c9a878"),
 	MUTE = hex("bfa9a4"),           -- secondary text
 	LINE = hex("5e3e40"),           -- unlit pips, faint outlines
-	RAY = hex("70383c"),
+	NIGHT = hex("2f6fb0"),          -- the rays: the night blue of the "Notte di ferro" palette
 	CARD_TOP = hex("402123"),       -- a dark plate, from top...
 	CARD_BOTTOM = hex("1f1011"),    -- ...to bottom
 	TRACK = hex("472f31"),          -- the empty part of a bar
@@ -63,6 +63,7 @@ M.with_alpha = with_alpha
 local V = vmath.vector3()
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local CLEAR = vmath.vector4(0, 0, 0, 0)
+local card_in, piece_in    -- the entrances (below, with the motion)
 
 local function empty(x, y, w, h, parent)
 	local n = gui.new_box_node(vec(x, y), vec(w or 0, h or 0))
@@ -325,6 +326,7 @@ function M.action(g, label, x, y, w, h, opt)
 		p.sub = M.text(p.tag.g, opt.sub, x + w / 2 + 10, y + h + 43, 16, C.SAND, "middle", 1.2)
 	end
 	gui.animate(glow, "color.w", 0.25, gui.EASING_INOUTSINE, 1.4, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+	piece_in(p.node, "action")
 	return p
 end
 
@@ -365,6 +367,8 @@ function M.header(list_of, label, accent, back_action, from)
 	local tr = M.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = tr.node
 	h.top_right = tr
+	piece_in(tl.node, "title")
+	if h.back then piece_in(h.back.node, "back") end
 	return h
 end
 
@@ -459,6 +463,7 @@ function M.card(g, x, y, w, h, color, opt)
 	local tip = shape("taglio_dx", w / 2 - (c - 7) / 2, h / 2 - (c - 7) / 2, c - 7, c - 7, col, n)
 	V.z = -90
 	gui.set_rotation(tip, V)
+	card_in(n)
 	return k
 end
 
@@ -577,114 +582,314 @@ end
 -- ---------------------------------------------------------------- scene
 
 local RAYS = 18
+local SPARKS = 20
 
 -- The backdrop of a menu over the game world: a red cast and a dark veil,
 -- the rays turning slowly around (fx, fy), the halo there, the dark rising
--- from the bottom, the ember seam and the sparks. opt: world, dim (0.5), halo
--- (its radius, 400), accent (a wide soft light in the menu's color).
--- Returns the scene: scene.tops are its top-level nodes (to enable/disable)
-function M.scene(fx, fy, opt)
-	opt = opt or {}
-	local s = { tops = {}, sparks = {} }
+-- from the bottom, the ember seam and the sparks. opt: halo (its radius,
+-- 400), accent (a wide soft light in the menu's color), seam (false: none),
+-- dim (a darker veil: the screens over a battle).
+-- There is ONE backdrop for every menu (Sergio, 11 Nov: the rays turned
+-- «velocissimi a ogni cambio di menu», each screen had its own and they
+-- started again): the rays never stop and never start over, and between two
+-- menus they glide to the new place. kit.scene returns the screen's hold on
+-- it; kit.scene_drop(s) when the screen goes away
+local S
+
+local function scene_nodes()
+	if S then return S end
+	S = { tops = {}, sparks = {} }
 	local function full(color)
 		local n = shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, color)
-		s.tops[#s.tops + 1] = n
+		S.tops[#S.tops + 1] = n
 		return n
 	end
-	-- opt.world: the game world behind stays the main thing, the rays just a
-	-- hint (Sergio, 11 Nov: «dai ancora più priorità a quello di dietro»)
-	local world = opt.world
-	full(with_alpha(C.TINT, world and 0.12 or 0.5))
-	full(with_alpha(C.INK, world and 0.14 or opt.dim or 0.5))
+	-- the game world behind stays the main thing, the rays just a hint, in
+	-- night blue, on every menu (Sergio, 11 Nov: «dai ancora più priorità a
+	-- quello di dietro», «le strisce dell'azzurro/blu notte», «tutte come la home»)
+	full(with_alpha(C.TINT, 0.12))
+	full(with_alpha(C.INK, 0.14))
+	-- over a battle just ended (opt.dim): its robots must not be read behind
+	S.dim = full(with_alpha(C.INK, 0))
 	-- the rays
-	local hub = M.anchor(fx, fy)
-	s.tops[#s.tops + 1] = hub.node
-	s.hub = hub
+	local hub = M.anchor(640, 360)
+	S.tops[#S.tops + 1] = hub.node
+	S.hub = hub
 	local spin = empty(0, 0, 0, 0, hub.node)
-	s.spin = spin
+	S.spin = spin
 	for i = 0, RAYS - 1 do
 		local a = i / RAYS * math.pi * 2 + 0.07
 		local wide = 0.09 + (i % 3) * 0.03
-		local n = shape("taglio_sx", 0, 0, 1800, 1800 * math.tan(wide), with_alpha(C.RAY, world and 0.12 or 0.4), spin)
+		local n = shape("taglio_sx", 0, 0, 1800, 1800 * math.tan(wide), with_alpha(C.NIGHT, 0.16), spin)
 		gui.set_pivot(n, gui.PIVOT_SW)
 		V.x, V.y, V.z = 0, 0, -math.deg(a + wide)
 		gui.set_rotation(n, V)
 	end
-	gui.animate(spin, "rotation.z", -360, gui.EASING_LINEAR, 240, 0, nil, gui.PLAYBACK_LOOP_FORWARD)
-	if opt.accent then
-		local n = shape("alone", 0, 0, 1500, 1500, with_alpha(opt.accent, 0.13), hub.node)
-		gui.set_blend_mode(n, gui.BLEND_ADD)
-	end
-	local r = opt.halo or 400
-	s.halo = shape("alone", 0, 0, r * 2.4, r * 2.4, with_alpha(C.HALO, 0.38), hub.node)
-	gui.set_blend_mode(s.halo, gui.BLEND_ADD)
-	gui.animate(s.halo, "color.w", 0.3, gui.EASING_INOUTSINE, 2.6, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+	-- slowly, always (one turn in two minutes)
+	gui.animate(spin, "rotation.z", -360, gui.EASING_LINEAR, 120, 0, nil, gui.PLAYBACK_LOOP_FORWARD)
+	S.accent = shape("alone", 0, 0, 1500, 1500, CLEAR, hub.node)
+	gui.set_blend_mode(S.accent, gui.BLEND_ADD)
+	S.halo = shape("alone", 0, 0, 960, 960, with_alpha(C.HALO, 0.38), hub.node)
+	gui.set_blend_mode(S.halo, gui.BLEND_ADD)
+	gui.animate(S.halo, "color.w", 0.3, gui.EASING_INOUTSINE, 2.6, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
 	-- the dark from the bottom (stuck to the real bottom) and the seam
 	local low = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
-	s.tops[#s.tops + 1] = low.node
-	s.low = low
+	S.tops[#S.tops + 1] = low.node
 	local fade = shape("sfuma", 0, 125, 1280 * screen.FULL, 250, with_alpha(C.INK, 0.9), low.node)
 	V.x, V.y, V.z = 0, 0, 180
 	gui.set_rotation(fade, V)
 	shape(nil, 0, -360 * screen.FULL / 2, 1280 * screen.FULL, 360 * screen.FULL, with_alpha(C.INK, 0.9), low.node)
-	if opt.seam ~= false then
-		s.seam_glow = shape("alone", 0, 59, 1300, 20, with_alpha(C.SEAM_GLOW, 0.35), low.node)
-		gui.set_blend_mode(s.seam_glow, gui.BLEND_ADD)
-		s.seam = shape(nil, 0, 59, 1220, 2, C.SEAM, low.node)
-	end
-	-- the sparks: small rhombi rising and twinkling
+	S.seam_glow = shape("alone", 0, 59, 1300, 20, with_alpha(C.SEAM_GLOW, 0.35), low.node)
+	gui.set_blend_mode(S.seam_glow, gui.BLEND_ADD)
+	S.seam = shape(nil, 0, 59, 1220, 2, C.SEAM, low.node)
+	-- the sparks: a few small rhombi, each wandering slowly at random around
+	-- where it was born, and twinkling (the same ones on every menu)
 	local seed = 5
 	local function rnd()
 		seed = (seed * 1664525 + 1013904223) % 4294967296
 		return seed / 4294967296
 	end
 	local air = M.anchor(0, 0)
-	s.tops[#s.tops + 1] = air.node
-	for _ = 1, opt.sparks or 22 do
+	S.tops[#S.tops + 1] = air.node
+	for _ = 1, SPARKS do
 		local x, y = 60 + rnd() * 1160, 90 + rnd() * 510
-		local d = 3 + rnd() * 5
+		local d = 4 + rnd() * 6
 		local n = shape(nil, x, 720 - y, d, d, with_alpha(rnd() > 0.5 and C.HOT_TOP or C.HOT, 0.55 + rnd() * 0.4), air.node)
 		V.x, V.y, V.z = 0, 0, 45
 		gui.set_rotation(n, V)
-		gui.animate(n, "position.y", 720 - y + 50 + rnd() * 40, gui.EASING_INOUTSINE, 3 + rnd() * 3, rnd() * 3, nil, gui.PLAYBACK_LOOP_PINGPONG)
-		gui.animate(n, "color.w", 0.3, gui.EASING_INOUTSINE, 1.2 + rnd() * 2, rnd() * 2, nil, gui.PLAYBACK_LOOP_PINGPONG)
-		s.sparks[#s.sparks + 1] = n
+		local function wander()
+			gui.animate(n, "position", vec(x + (rnd() - 0.5) * 300, 720 - y + (rnd() - 0.5) * 220), gui.EASING_INOUTSINE, 6 + rnd() * 6, 0, wander)
+		end
+		wander()
+		gui.animate(n, "color.w", 0.25, gui.EASING_INOUTSINE, 1.2 + rnd() * 2, rnd() * 2, nil, gui.PLAYBACK_LOOP_PINGPONG)
+		S.sparks[#S.sparks + 1] = n
 	end
-	return s
+	return S
 end
 
 -- The seam runs between the real edges of the screen: call it when the
 -- screen is shown (the proportions may have changed)
-function M.scene_fit(s)
-	if not s.seam then return end
+function M.scene_fit()
+	if not S then return end
 	local w = screen.width() - 60
-	gui.set_size(s.seam, vec(w, 2))
-	gui.set_size(s.seam_glow, vec(w + 80, 20))
+	gui.set_size(S.seam, vec(w, 2))
+	gui.set_size(S.seam_glow, vec(w + 80, 20))
+end
+
+-- the backdrop takes the screen's place, light and color
+local function claim(s)
+	S.owner = s
+	for _, n in ipairs(S.tops) do gui.set_enabled(n, true) end
+	gui.cancel_animations(S.hub.node, "position")
+	gui.animate(S.hub.node, "position", vec(s.fx, 720 - s.fy), gui.EASING_OUTCUBIC, 0.6)
+	local r = (s.opt.halo or 400) * 2.4
+	gui.set_size(S.halo, vec(r, r))
+	gui.animate(S.accent, "color", s.opt.accent and with_alpha(s.opt.accent, 0.13) or CLEAR, gui.EASING_OUTQUAD, 0.4)
+	gui.animate(S.dim, "color.w", s.opt.dim or 0, gui.EASING_OUTQUAD, 0.3)
+	local seam = s.opt.seam ~= false
+	gui.set_enabled(S.seam, seam)
+	gui.set_enabled(S.seam_glow, seam)
+	M.scene_fit()
+end
+
+-- The screen's backdrop, above everything made so far (what the screen
+-- creates next goes over it)
+function M.scene(fx, fy, opt)
+	scene_nodes()
+	local s = { fx = fx, fy = fy, opt = opt or {} }
+	for _, n in ipairs(S.tops) do gui.move_above(n, nil) end
+	claim(s)
+	return s
+end
+
+-- The backdrop just "above" or "below" a node of the screen (a screen that
+-- is kept and shown again, or that has something under the rays)
+function M.scene_place(s, where, ref)
+	if S.owner ~= s then return end
+	if where == "below" then
+		for i = 1, #S.tops do gui.move_below(S.tops[i], ref) end
+	else
+		for i = #S.tops, 1, -1 do gui.move_above(S.tops[i], ref) end
+	end
+end
+
+-- The rays move to another point of the same screen
+function M.scene_focus(s, fx, fy)
+	s.fx, s.fy = fx, fy
+	if S.owner == s then
+		gui.cancel_animations(S.hub.node, "position")
+		gui.animate(S.hub.node, "position", vec(fx, 720 - fy), gui.EASING_OUTCUBIC, 0.6)
+	end
+end
+
+function M.scene_drop(s)
+	if not S or S.owner ~= s then return end
+	S.owner = nil
+	for _, n in ipairs(S.tops) do gui.set_enabled(n, false) end
 end
 
 function M.scene_show(s, on)
-	for _, n in ipairs(s.tops) do gui.set_enabled(n, on) end
-	if on then M.scene_fit(s) end
+	if on then claim(s) else M.scene_drop(s) end
+end
+
+-- The backdrop's own entrance (when the game opens): the rays grow from
+-- nothing, the seam draws itself from the middle
+function M.scene_enter(delay)
+	delay = delay or 0
+	gui.cancel_animations(S.hub.node, "scale")
+	gui.set_scale(S.hub.node, vmath.vector3(0.01, 0.01, 1))
+	gui.animate(S.hub.node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.62, delay + 0.12)
+	for _, n in ipairs({ S.seam, S.seam_glow }) do
+		gui.cancel_animations(n, "scale.x")
+		gui.set_scale(n, vmath.vector3(0.01, 1, 1))
+		gui.animate(n, "scale.x", 1, gui.EASING_OUTCUBIC, 0.5, delay + 0.42)
+	end
 end
 
 -- ---------------------------------------------------------------- motion
 
+-- While a screen is being made after a transition (M.entering: the
+-- gui_script sets it around the change) its pieces arrive by themselves: the
+-- title from the left, the cards from the right one after the other, the
+-- action pops with its sparks; quickly, so that a tap finds them in place.
+-- M.wait: seconds before they move
+M.entering, M.wait = false, 0
+local auto = {}        -- node -> where it rests, for the pieces already sent in
+local stagger = 0
+
+function M.enter_begin(wait)
+	M.entering, M.wait, auto, stagger = true, wait or 0, {}, 0
+end
+
+function M.enter_end()
+	M.entering, M.wait = false, 0
+end
+
 -- A piece arrives from (dx, dy) away, in `time` seconds after `delay`,
 -- overshooting a little. node: any node; its resting position is the current one
 function M.arrive(node, dx, dy, delay, time)
-	local p = gui.get_position(node)
+	local p = auto[node] or gui.get_position(node)
+	auto[node] = M.entering and p or nil
 	gui.cancel_animations(node, "position")
 	gui.set_position(node, vec(p.x + dx, p.y + dy))
-	gui.animate(node, "position", p, gui.EASING_OUTBACK, time or 0.32, delay or 0)
+	gui.animate(node, "position", p, gui.EASING_OUTBACK, time or 0.32, (delay or 0) + M.wait)
 	return p
 end
 
 -- A piece pops: from small to its size, overshooting
-function M.pop(node, delay, time, from)
+function M.pop(node, delay, time, from, done)
 	gui.cancel_animations(node, "scale")
 	local k = from or 0.86
 	gui.set_scale(node, vmath.vector3(k, k, 1))
-	gui.animate(node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, time or 0.3, delay or 0)
+	gui.animate(node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, time or 0.3, (delay or 0) + M.wait, done)
+end
+
+-- a card of a screen being made: from the right, each a little later
+function card_in(node)
+	if not M.entering or stagger >= 8 then return end
+	M.arrive(node, 520, 0, stagger * 0.03, 0.28)
+	stagger = stagger + 1
+end
+
+-- the title and the way back, from the left; the action pops with its sparks
+function piece_in(node, kind)
+	if not M.entering then return end
+	if kind == "action" then
+		M.pop(node, 0.08, 0.3, 0.7, function() M.burst_at(node, 12) end)
+	else
+		M.arrive(node, -460, 0, kind == "back" and 0.05 or 0, 0.28)
+	end
+end
+
+-- ---------------------------------------------------------------- effects
+
+-- A burst of sparks at a point of the SCREEN (pixels, like action.screen_x):
+-- n rhombi flying out and going off. Two bursts can live together
+local bursts, burst_i = {}, 0
+local BURST_N = 16
+local burst_seed = 11
+local function brnd()
+	burst_seed = (burst_seed * 1664525 + 1013904223) % 4294967296
+	return burst_seed / 4294967296
+end
+
+function M.burst(sx, sy, n, color)
+	burst_i = burst_i % 2 + 1
+	local b = bursts[burst_i]
+	if not b then
+		b = { root = empty(0, 0), bits = {} }
+		for i = 1, BURST_N do
+			b.bits[i] = shape(nil, 0, 0, 10, 10, C.HOT, b.root)
+			V.x, V.y, V.z = 0, 0, 45
+			gui.set_rotation(b.bits[i], V)
+		end
+		bursts[burst_i] = b
+	end
+	gui.move_above(b.root, nil)
+	gui.set_screen_position(b.root, vec(sx, sy))
+	n = math.min(n or 10, BURST_N)
+	for i = 1, BURST_N do
+		local q = b.bits[i]
+		gui.cancel_animations(q, "position")
+		gui.cancel_animations(q, "scale")
+		gui.cancel_animations(q, "color.w")
+		gui.set_enabled(q, i <= n)
+		if i <= n then
+			local a = (i + brnd() * 0.8) / n * math.pi * 2
+			local r = 60 + brnd() * 100
+			local t = 0.42 + brnd() * 0.26
+			local k = 0.7 + brnd() * 0.8
+			gui.set_position(q, vec(0, 0))
+			gui.set_scale(q, vmath.vector3(k, k, 1))
+			gui.set_color(q, color or (i % 3 == 0 and C.SAND or (i % 2 == 0 and C.HOT_TOP or C.HOT)))
+			gui.animate(q, "position", vec(math.cos(a) * r, math.sin(a) * r), gui.EASING_OUTCUBIC, t)
+			gui.animate(q, "scale", vmath.vector3(0.2, 0.2, 1), gui.EASING_INQUAD, t)
+			gui.animate(q, "color.w", 0, gui.EASING_INQUAD, t, 0, function() gui.set_enabled(q, false) end)
+		end
+	end
+end
+
+-- the burst where a node is
+function M.burst_at(node, n, color)
+	local p = gui.get_screen_position(node)
+	M.burst(p.x, p.y, n, color)
+end
+
+-- A white flash over everything, going off at once
+local flash
+function M.flash(a)
+	if not flash then flash = shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, CLEAR) end
+	gui.move_above(flash, nil)
+	gui.set_enabled(flash, true)
+	gui.cancel_animations(flash, "color.w")
+	gui.set_color(flash, vmath.vector4(1, 1, 1, a or 0.25))
+	gui.animate(flash, "color.w", 0, gui.EASING_OUTQUAD, 0.28, 0, function() gui.set_enabled(flash, false) end)
+end
+
+-- A short shake of some top-level groups (not of pieces that are arriving):
+-- down, up a little, back
+local shaking = {}
+function M.shake(nodes, amount)
+	for _, n in ipairs(nodes) do
+		local y = shaking[n] or gui.get_position(n).y
+		shaking[n] = y
+		gui.cancel_animations(n, "position.y")
+		gui.set_position(n, vmath.vector3(gui.get_position(n).x, y - amount, 0))
+		gui.animate(n, "position.y", y, gui.EASING_OUTELASTIC, 0.3, 0, function() shaking[n] = nil end)
+	end
+end
+
+-- Touching a plate (ui.touch): sparks under the finger, the plate bounces;
+-- the main action flashes too. Only the kit's plates: the HUD in battle is not touched
+ui.on_hit = function(b, action)
+	if not b.piastra then return end
+	if action and action.screen_x then
+		M.burst(action.screen_x, action.screen_y, b.luce and 16 or 9)
+	else
+		M.burst_at(b.nodo, b.luce and 16 or 9)
+	end
+	M.pop(b.piastra.node, 0, 0.24, 0.93)
+	if b.luce then M.flash(0.22) end
 end
 
 return M

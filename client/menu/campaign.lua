@@ -395,7 +395,7 @@ local function build(c)
 	local map = funnel_on(c)
 	local on_map = map and c.scelta.view ~= "board"
 	-- the rays: from the guide on a board, from the middle of the funnel on the map
-	gui.set_position(c.scene.hub.node, vmath.vector3(on_map and 540 or 225, 360, 0))
+	kit.scene_focus(c.scene, on_map and 540 or 225, 360)
 	if on_map then
 		if type(c.scelta.view) == "number" then return build_ring(c, c.scelta.view) end
 		return build_map(c)
@@ -490,7 +490,7 @@ function M.destroy(c)
 	gui.delete_node(c.low.node)
 	gui.delete_node(c.radice)
 	release_textures(c)
-	for _, n in ipairs(c.scene.tops) do gui.delete_node(n) end
+	kit.scene_drop(c.scene)
 end
 
 return M

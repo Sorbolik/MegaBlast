@@ -28,7 +28,7 @@ M.C = {
 	LINE = c(1, 0.886, 0.769, 0.28),     -- border of pieces at rest
 	LIGHT = c(1, 0.886, 0.769),            -- the Scoria's light outline
 	TEXT = c(0.95, 0.91, 0.85),
-	OFF = c(0.675, 0.643, 0.627),         -- #ACA4A0: 4.5:1 at least on every menu background (ui/backdrop.lua)
+	OFF = c(0.675, 0.643, 0.627),         -- #ACA4A0: 4.5:1 at least on every menu background
 	BRACE = c(1, 0.42, 0.16),             -- accent when there is no team; color of the primary weapons
 	STEEL = c(0.62, 0.77, 0.88),        -- color of the secondary weapons (plain damage, they move you)
 	PURPLE = c(0.77, 0.61, 1),             -- movement: teleport and Grapple
@@ -473,7 +473,11 @@ function M.touch(list_of, action_id, action)
 		local b = list_of.held_down
 		list_of.held_down = nil
 		premi(b, false)
-		if under(list_of, action.x, action.y) == b then return b.ui_action end
+		if under(list_of, action.x, action.y) == b then
+			-- M.on_hit: what a touched button does besides its job (ui/kit.lua: sparks)
+			if M.on_hit then M.on_hit(b, action) end
+			return b.ui_action
+		end
 	end
 	return nil
 end

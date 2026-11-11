@@ -39,7 +39,7 @@ function M.new(slot_name, set_name, level, on_blow, color)
 	sc.back = gui.new_box_node(vec(W / 2, H / 2), vec(W * screen.FULL, H * screen.FULL))
 	gui.set_color(sc.back, vmath.vector4(KC.INK.x, KC.INK.y, KC.INK.z, 0))
 	gui.animate(sc.back, "color.w", 0.92, gui.EASING_OUTQUAD, M.DARK)
-	sc.scene = kit.scene(640, 350, { halo = 520, sparks = 60, accent = KC.PURPLE })
+	sc.scene = kit.scene(640, 350, { halo = 520, accent = KC.PURPLE })
 	sc.root = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(sc.root, false)
 	local g = { node = sc.root, ox = 0, oy = 720 }
@@ -163,7 +163,7 @@ function M.delete(sc)
 	gui.delete_node(sc.root)
 	gui.delete_node(sc.right.node)
 	gui.delete_node(sc.flash)
-	for _, n in ipairs(sc.scene.tops) do gui.delete_node(n) end
+	kit.scene_drop(sc.scene)
 	gui.delete_node(sc.back)
 end
 

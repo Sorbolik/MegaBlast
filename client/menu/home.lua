@@ -61,7 +61,7 @@ end
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, t = 0, colore = color }
 
-	h.scene = kit.scene(BODY_X, 350, { world = true })
+	h.scene = kit.scene(BODY_X, 350)
 
 	-- the apprentice, in the middle
 	local mid = kit.anchor(BODY_X, BODY_Y)
@@ -99,6 +99,7 @@ function M.new(color)
 	-- top left: the game's name, written as the logo
 	local top_left = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = top_left.node
+	h.logo_g = top_left
 	h.logo = kit.title(top_left, common.game_name, C.HOT, 30, 62, 36)
 
 	-- left: the doors, staggered, and STESSO TELEFONO under them
@@ -115,13 +116,16 @@ function M.new(color)
 	-- right: the action, alone
 	local right = kit.anchor(1280, 360, gui.ANCHOR_RIGHT)
 	h.tops[#h.tops + 1] = right.node
-	h.play = kit.action(right, common.play, 836, 250, 354, 140, { size = 104, sub = T.play_sub })
+	-- (in a group of its own: the plate, its glow and its tag arrive together)
+	h.play_g = kit.group(right, 1036, 320)
+	h.play = kit.action(h.play_g, common.play, 836, 250, 354, 140, { size = 104, sub = T.play_sub })
 	h.play_b = kit.button(h.buttons, h.play, "online", { main = true })
 
 	-- top right: the wallet's strip (ui/coins.lua, hidden until the
 	-- first coin) and the settings wheel
 	local top_right = kit.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
 	h.tops[#h.tops + 1] = top_right.node
+	h.top_right = top_right
 	local wr = kit.group(top_right, 1110, 44)
 	h.wallet = coins.wallet(0, 0, wr.node, 0, 0)
 	local wheel = kit.group(top_right, 1230, 44)
@@ -141,36 +145,74 @@ function M.new(color)
 	-- where every piece rests, for the entrance
 	h.rest = {}
 	for _, d in ipairs(h.doors) do h.rest[d.p.node] = gui.get_position(d.p.node) end
-	for _, p in ipairs({ h.phone, h.play, h.plate }) do h.rest[p.node] = gui.get_position(p.node) end
+	for _, p in ipairs({ h.phone, h.play_g, h.plate, top_left, top_right, mid }) do h.rest[p.node] = gui.get_position(p.node) end
+	-- what shakes at a thud: the sides (not the pieces that are arriving)
+	h.shaken = { left.node, right.node, low.node }
 
 	M.hide(h)
 	return h
 end
 
--- The entrance: the doors slide in from the left one after the other, the
--- action lands from the right, the plate rises, the apprentice pops
-local function enter(h, wait)
-	local function from(node, dx, dy, delay)
+-- The entrance (the animated sheet, Sergio 11 Nov). Every time: the doors fly
+-- in from the left one after the other and their notches pop one by one, the
+-- name plate rises, the logo and the wallet come down, GIOCA arrives from the
+-- right. grand (when the game opens): the rays grow, the apprentice drops from
+-- above and lands squashed with a thud and sparks at its feet, and GIOCA slams
+-- in with a flash
+local function enter(h, wait, grand)
+	local function from(node, dx, dy, delay, time, done)
 		local p = h.rest[node]
 		gui.cancel_animations(node, "position")
 		gui.set_position(node, vmath.vector3(p.x + dx, p.y + dy, 0))
-		gui.animate(node, "position", p, gui.EASING_OUTBACK, 0.34, wait + delay)
+		gui.animate(node, "position", p, gui.EASING_OUTBACK, time or (grand and 0.4 or 0.28), wait + delay, done)
 	end
-	for i, d in ipairs(h.doors) do from(d.p.node, -460, 0, 0.05 + 0.06 * (i - 1)) end
-	from(h.phone.node, -460, 0, 0.26)
-	from(h.play.node, 520, 0, 0.12)
-	from(h.plate.node, 0, -120, 0.2)
-	kit.pop(h.posa, wait + 0.02, 0.36, 0.9)
+	-- coming back from a menu everything is there at once: a tap must find it
+	local late = grand and 0.1 or 0
+	for i, d in ipairs(h.doors) do
+		local at = late + (grand and 0.08 or 0.04) * (i - 1)
+		from(d.p.node, -520, 0, at)
+		for j, q in ipairs(d.pips) do kit.pop(q.node, wait + at + 0.3 + 0.07 * j, 0.2, 0.01) end
+	end
+	from(h.phone.node, -520, 0, grand and 0.3 or 0.12)
+	from(h.plate.node, 0, -110, late + 0.1)
+	from(h.logo_g.node, 0, 100, grand and 0.1 or 0)
+	from(h.top_right.node, 0, 100, grand and 0.1 or 0)
+	gui.cancel_animations(h.posa, "position")
+	gui.cancel_animations(h.posa, "scale")
+	if not grand then
+		gui.set_position(h.posa, h.rest[h.posa])
+		from(h.play_g.node, 620, 0, 0)
+		kit.pop(h.posa, wait + 0.02, 0.36, 0.9)
+		return
+	end
+	kit.scene_enter(wait)
+	-- the apprentice: stretched while it falls, squashed when it lands
+	local p = h.rest[h.posa]
+	gui.set_position(h.posa, vmath.vector3(p.x, p.y + 760, 0))
+	gui.set_scale(h.posa, vmath.vector3(0.9, 1.15, 1))
+	gui.animate(h.posa, "position", p, gui.EASING_INQUAD, 0.3, wait + 0.2, function()
+		gui.set_scale(h.posa, vmath.vector3(1.1, 0.86, 1))
+		gui.animate(h.posa, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.32)
+		kit.shake(h.shaken, 7)
+		kit.burst_at(h.posa, 14)
+	end)
+	from(h.play_g.node, 620, 0, 0.5, 0.36, function()
+		kit.shake(h.shaken, 6)
+		kit.flash(0.22)
+		kit.burst_at(h.play.node, 16)
+	end)
 end
 
 -- without_veil: you get here with a transition (ui/transition.lua), which already covers
 function M.show(h, without_veil)
 	for _, n in ipairs(h.tops) do gui.set_enabled(n, true) end
 	kit.scene_show(h.scene, true)
+	-- the home is kept: the backdrop goes back under it
+	kit.scene_place(h.scene, "below", h.tops[1])
 	h.buttons.held_down = nil
 	h.is_visible = true
 	-- under the black veil nothing would be seen: the pieces wait for it
-	enter(h, without_veil and 0 or 0.2)
+	enter(h, without_veil and kit.wait or 0.2, not without_veil)
 	if without_veil then
 		gui.cancel_animations(h.veil, "color.w")
 		gui.set_enabled(h.veil, false)
@@ -238,7 +280,7 @@ function M.update(h, dt)
 	if not h.is_visible then return end
 	h.t = h.t + dt
 	scoria.update(h.corpo, dt, h.st)
-	kit.scene_fit(h.scene)
+	kit.scene_fit()
 	-- a pressed plate goes down onto its shadow
 	local held = h.buttons.held_down
 	if held ~= h.held then
@@ -250,7 +292,14 @@ end
 
 function M.on_input(h, action_id, action)
 	if not h.is_visible then return nil end
-	return ui.touch(h.buttons, action_id, action)
+	local choice = ui.touch(h.buttons, action_id, action)
+	if choice then
+		-- the apprentice leans toward what you touched
+		gui.cancel_animations(h.posa, "rotation.z")
+		gui.set_rotation(h.posa, vmath.vector3(0, 0, 0))
+		gui.animate(h.posa, "rotation.z", (action.x or 640) < 640 and 5 or -5, gui.EASING_OUTSINE, 0.26, 0, nil, gui.PLAYBACK_ONCE_PINGPONG)
+	end
+	return choice
 end
 
 return M

@@ -22,7 +22,6 @@
 
 local ui = require "ui.ui"
 local kit = require "ui.kit"
-local backdrop = require "ui.backdrop"
 local scoria = require "battle.scoria"
 local game = require "sim.game"
 local awards = require "sim.awards"
@@ -161,8 +160,7 @@ end
 function M.new(results, giocatori, me, my_gain, prof, number)
 	local p = { giocatori = giocatori, me = me, figure = {}, buttons = {}, t = 0, numero = number }
 	-- a dark sheet and the rays, the rest in a group that adapts (FIT)
-	p.fondo = backdrop.new()
-	p.scene = kit.scene(330, 330, {})
+	p.scene = kit.scene(330, 330, { dim = 0.72 })
 	p.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(p.radice, false)
 	local ranking = results.ranking
@@ -248,8 +246,7 @@ function M.destroy(p)
 	if p.receipt then receipt.delete(p.receipt) end
 	gui.delete_node(p.radice)
 	gui.delete_node(p.right.node)
-	for _, n in ipairs(p.scene.tops) do gui.delete_node(n) end
-	gui.delete_node(p.fondo)
+	kit.scene_drop(p.scene)
 end
 
 return M
