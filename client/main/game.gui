@@ -20,6 +20,14 @@ textures {
   texture: "/ui/ui.atlas"
 }
 textures {
+  name: "fucina"
+  texture: "/ui/fucina.atlas"
+}
+textures {
+  name: "fette"
+  texture: "/ui/fette.atlas"
+}
+textures {
   name: "mappe"
   texture: "/ui/maps.atlas"
 }

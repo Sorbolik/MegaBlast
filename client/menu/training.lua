@@ -96,16 +96,16 @@ local function map_card(a, x, y, m)
 		kit.text(k.g, kit.upper(maps.get(m.id).name), x + 93, y + 116, 15, KC.SAND, "middle", 0.5)
 		kit.zone(g, a.buttons, x, y, 186, 130, "mappa:" .. m.id)
 	else
-		ui.padlock(0, 65 - 4 - 46, 40, KC.MUTE, k.node)
+		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", 0, -(65 - 4 - 46), 44)
 		kit.text(k.g, kit.upper(common.opens_with:format(m.serve)), x + 93, y + 116, 11, KC.MUTE, "middle", 0.5)
 	end
 end
 
--- an arrow of the maps' row: two strokes and its zone
+-- an arrow of the maps' row: the drawn arrowhead and its zone
 local function arrow(a, x, y, dir)
 	local g = a.kg
-	kit.line(g, x - 7 * dir, y - 14, x + 7 * dir, y, 5, KC.SAND)
-	kit.line(g, x + 7 * dir, y, x - 7 * dir, y + 14, 5, KC.SAND)
+	local n = kit.piece(g, "freccia", x, y, 34)
+	if dir < 0 then gui.set_scale(n, vmath.vector3(-1, 1, 1)) end
 	kit.zone(g, a.buttons, x - 24, y - 40, 48, 80, "scorri:" .. dir)
 end
 
@@ -166,8 +166,8 @@ function M.new(choice, stars)
 	for i, m in ipairs(MAPS) do
 		if m.id == choice.mappa then a.da = math.max(1, i + 2 - VISIBLE) end
 	end
-	-- the game world darkened behind, the rays from the devil
-	a.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.MINT })
+	-- the backdrop (ui/kit.lua)
+	a.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.MINT, bg = "allenamento" })
 	build(a)
 	return a
 end

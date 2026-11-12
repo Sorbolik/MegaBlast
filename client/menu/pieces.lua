@@ -31,7 +31,7 @@ local M = {}
 local KC = kit.C
 local ROMAN = { "I", "II", "III", "IV" }
 -- where the tabs' content starts
-local TOP = 164
+local TOP = 176
 
 local function active(s) return profile.active_loadout(s.prof) end
 
@@ -78,15 +78,15 @@ end
 local function slots(s)
 	local a = active(s)
 	for i, slot in ipairs(equip.SLOTS) do
-		local x, y = 440 + (i - 1) * 10, TOP + (i - 1) * 76
+		local x, y = 440 + (i - 1) * 8, TOP + (i - 1) * 105
 		local set = a.gear[slot.id]
 		local level = set and wallet.level(s.prof, set, slot.id)
 		local full = level == equip.LIVELLO_MAX
-		local k = kit.card(s.kg, x, y, 220, 64, full and KC.STAR or KC.ROSE, { sel = s.slot == slot.id })
-		kit.text(k.g, slot.name, x + 30, y + 22, 12, KC.MUTE, "start", 1.5)
-		kit.text(k.g, set and equip.BY_ID[set].name or kit.upper(T.empty), x + 26, y + 50, 22, set and KC.SAND or KC.MUTE)
-		if set then kit.text(k.g, tostring(level), x + 206, y + 42, 24, full and KC.STAR or KC.SAND, "end") end
-		kit.zone(s.kg, s.buttons, x, y - 6, 220, 76, "pezzo:" .. slot.id)
+		local k = kit.card(s.kg, x, y, 250, 94, full and KC.STAR or KC.ROSE, { sel = s.slot == slot.id })
+		kit.text(k.g, slot.name, x + 26, y + 32, 15, KC.MUTE, "start", 1.5)
+		kit.text(k.g, set and equip.BY_ID[set].name or kit.upper(T.empty), x + 24, y + 68, 27, set and KC.SAND or KC.MUTE)
+		if set then kit.text(k.g, tostring(level), x + 230, y + 58, 30, full and KC.STAR or KC.SAND, "end") end
+		kit.zone(s.kg, s.buttons, x, y - 5, 250, 105, "pezzo:" .. slot.id)
 	end
 end
 
@@ -98,44 +98,42 @@ local function detail(s)
 	local set = a.gear[slot.id]
 	local act = { label = T.upgrade, off = true }
 	if not set then
-		kit.text(g, slot.name, 716, TOP + 26, 34, KC.MUTE)
-		kit.text(g, kit.upper(T.choose:format(slot.name)), 718, TOP + 50, 12, KC.MUTE, "start", 1.2)
+		kit.text(g, slot.name, 730, TOP + 34, 36, KC.MUTE)
+		kit.text(g, kit.upper(T.choose:format(slot.name)), 732, TOP + 62, 15, KC.MUTE, "start", 1.2)
 		act.sub = kit.upper(T.empty)
 		return act
 	end
 	local level = wallet.level(s.prof, set, slot.id)
-	local name = kit.text(g, piece_name(set, slot.id), 716, TOP + 26, 32, KC.SAND)
+	local name = kit.text(g, piece_name(set, slot.id), 730, TOP + 34, 36, KC.SAND)
 	-- a long name shrinks
 	local wide = kit.width(name)
-	if wide > 268 then gui.set_scale(name, gui.get_scale(name) * (268 / wide)) end
-	kit.text(g, kit.upper(T.grade:format(ROMAN[equip.tier(level)], T.grades[equip.tier(level)],
-		effects(equip.piece(set, slot.id, level)))), 718, TOP + 50, 11, KC.MUTE, "start", 1)
-	for l = 1, equip.LIVELLO_MAX do
-		local big = equip.PROOF[l] ~= nil
-		kit.para(g, 716 + (l - 1) * 7.6, TOP + (big and 62 or 66), 5, big and 24 or 16, 3, l <= level and grade_color(level) or KC.TRACK)
-	end
-	kit.text(g, T.of_max:format(level, equip.LIVELLO_MAX), 950, TOP + 82, 15, grade_color(level))
+	if wide > 290 then gui.set_scale(name, gui.get_scale(name) * (290 / wide)) end
+	local grade = kit.text(g, kit.upper(T.grade:format(ROMAN[equip.tier(level)], T.grades[equip.tier(level)],
+		effects(equip.piece(set, slot.id, level)))), 732, TOP + 60, 14, KC.MUTE, "start", 0.5)
+	wide = kit.width(grade)
+	if wide > 290 then gui.set_scale(grade, gui.get_scale(grade) * (290 / wide)) end
+	-- the levels: one bar, and the number beside it
+	kit.bar(g, 734, TOP + 78, 200, 14, level / equip.LIVELLO_MAX, grade_color(level))
+	kit.text(g, T.of_max:format(level, equip.LIVELLO_MAX), 1020, TOP + 93, 20, grade_color(level), "end")
 
 	-- the next level: what it is, the Proof if it is a step, the price on the action
 	local n = wallet.next(s.prof, set, slot.id)
 	if not n then
-		kit.text(g, T.at_max, 718, TOP + 108, 12, KC.HOT_TOP, "start", 1.2)
+		kit.text(g, T.at_max, 732, TOP + 126, 15, KC.HOT_TOP, "start", 1.2)
 		act.sub = T.at_max
 	else
 		local step = n.proof > 0
 		kit.text(g, kit.upper(step and T.next_step:format(n.level, ROMAN[equip.tier(n.level)], T.grades[equip.tier(n.level)])
-			or T.next_level:format(n.level)), 718, TOP + 108, 12, step and KC.HOT_TOP or KC.MUTE, "start", 1.2)
+			or T.next_level:format(n.level)), 732, TOP + 126, 15, step and KC.HOT_TOP or KC.MUTE, "start", 1)
 		local ready = n.proof_done >= n.proof
 		local enough = s.prof.scaglie >= n.cost
 		if step then
-			kit.info(g, 716, TOP + 120, 270, 50, KC.PURPLE)
-			kit.text(g, T.proof_name, 740, TOP + 140, 12, KC.MUTE, "start", 1.5)
-			kit.text(g, kit.upper(T.proof:format(n.proof_done, n.proof)), 738, TOP + 160, 11, KC.SAND, "start", 0.5)
-			kit.bar(g, 880, TOP + 132, 90, 8, math.min(1, n.proof_done / n.proof), KC.MINT)
+			kit.text(g, T.proof_name, 732, TOP + 152, 14, KC.MUTE, "start", 1.5)
+			kit.text(g, kit.upper(T.proof:format(n.proof_done, n.proof)), 732, TOP + 172, 14, KC.SAND, "start", 0.5)
+			kit.bar(g, 900, TOP + 141, 110, 10, math.min(1, n.proof_done / n.proof), KC.MINT)
 		elseif n.cost < n.full_cost then
-			kit.info(g, 716, TOP + 120, 270, 50, KC.HOT)
-			kit.text(g, T.smith_name, 740, TOP + 140, 12, KC.MUTE, "start", 1.5)
-			kit.text(g, kit.upper(T.smith_hand:format(coins.format(n.full_cost))), 738, TOP + 160, 11, KC.SAND, "start", 0.5)
+			kit.text(g, T.smith_name, 732, TOP + 152, 14, KC.MUTE, "start", 1.5)
+			kit.text(g, kit.upper(T.smith_hand:format(coins.format(n.full_cost))), 732, TOP + 172, 14, KC.SAND, "start", 0.5)
 		end
 		act.off = not (ready and enough)
 		act.sub = not ready and kit.upper(T.proof_first) or not enough and kit.upper(T.missing:format(coins.format(n.cost - s.prof.scaglie)))
@@ -146,8 +144,10 @@ local function detail(s)
 	local f = equip.BY_ID[set]
 	local on = false
 	for _, id in ipairs(equip.pairs_on(a.gear, wallet.levels(s.prof, a))) do on = on or id == set end
-	kit.text(g, kit.upper(T.family:format(f.name, pair_text(f))), 718, TOP + 194, 11, on and KC.MINT or KC.MUTE, "start", 1)
-	kit.text(g, kit.upper(T.style_soon), 718, TOP + 212, 11, KC.MUTE, "start", 1)
+	local fam = kit.text(g, kit.upper(T.family:format(f.name, pair_text(f))), 732, TOP + 204, 14, on and KC.MINT or KC.MUTE, "start", 0.5)
+	wide = kit.width(fam)
+	if wide > 290 then gui.set_scale(fam, gui.get_scale(fam) * (290 / wide)) end
+	kit.text(g, kit.upper(T.style_soon), 732, TOP + 224, 13, KC.MUTE, "start", 0.5)
 	return act
 end
 
@@ -155,21 +155,21 @@ end
 local function wardrobe(s)
 	local g = s.kg
 	local a = active(s)
-	kit.text(g, T.others, 718, TOP + 244, 12, KC.MUTE, "start", 1.5)
+	kit.text(g, T.others, 732, TOP + 262, 15, KC.MUTE, "start", 1.5)
 	local i = 0
 	for _, set in ipairs(equip.SETS) do
 		if wallet.owns(s.prof, set.id, s.slot) then
 			i = i + 1
 			local col, line = (i - 1) % 2, math.floor((i - 1) / 2)
-			local x, y = 716 + col * 140 - line * 6, TOP + 256 + line * 44
+			local x, y = 726 + col * 152, TOP + 274 + line * 50
 			local level = wallet.level(s.prof, set.id, s.slot)
 			local on = a.gear[s.slot] == set.id
-			if on then kit.para(g, x, y, 126, 36, 12, KC.SAND) end
-			kit.text(g, T.set_level:format(set.name, level), x + 68, y + 25, 14, on and KC.INK or kit.with_alpha(KC.SAND, 0.85), "middle")
-			kit.zone(g, s.buttons, x, y - 4, 138, 44, "indossa:" .. set.id)
+			if on then kit.light(g, x, y, 138, 40, 0) end
+			kit.text(g, T.set_level:format(set.name, level), x + 73, y + 29, 16, on and KC.INK or kit.with_alpha(KC.SAND, 0.85), "middle")
+			kit.zone(g, s.buttons, x, y - 4, 150, 50, "indossa:" .. set.id)
 		end
 	end
-	if i == 0 then kit.text(g, kit.upper(T.none_owned), 718, TOP + 272, 11, KC.HOT_TOP, "start", 1) end
+	if i == 0 then kit.text(g, kit.upper(T.none_owned), 732, TOP + 292, 14, KC.HOT_TOP, "start", 1) end
 end
 
 -- BOTTEGA and CATALOGO -----------------------------------------------------------
@@ -179,12 +179,11 @@ local function ware_info(s, y)
 	local g = s.kg
 	local w = s.ware
 	if not w then
-		kit.text(g, kit.upper(T.pick_ware), 444, y + 20, 12, KC.MUTE, "start", 1.2)
+		kit.text(g, kit.upper(T.pick_ware), 444, y + 24, 15, KC.MUTE, "start", 1.2)
 		return
 	end
-	kit.info(g, 440, y, 546, 54, KC.HOT)
-	kit.text(g, piece_name(w.set, w.slot), 462, y + 24, 18, KC.SAND)
-	kit.text(g, kit.upper(T.at_level_1:format(effects(equip.piece(w.set, w.slot, 1)))), 462, y + 44, 11, KC.MUTE, "start", 1)
+	kit.text(g, piece_name(w.set, w.slot), 444, y + 24, 22, KC.SAND)
+	kit.text(g, kit.upper(T.at_level_1:format(effects(equip.piece(w.set, w.slot, 1)))), 444, y + 46, 14, KC.MUTE, "start", 0.5)
 end
 
 -- the Smith's vouchers: how many, and (in the CATALOGO, a ware chosen and not
@@ -194,12 +193,11 @@ local function vouchers(s, y, usable)
 	local n = s.prof.buoni or 0
 	if n <= 0 then return end
 	local x = 440
-	kit.info(g, x, y, 546, 44, KC.STAR)
-	kit.text(g, kit.upper(T.vouchers:format(n) .. (usable and "" or T.voucher_hint)), x + 22, y + 28, 13, KC.SAND, "start", 1.2)
+	kit.text(g, kit.upper(T.vouchers:format(n) .. (usable and "" or T.voucher_hint)), x + 4, y + 30, 14, KC.STAR, "start", 1)
 	if usable then
-		kit.para(g, x + 360, y + 6, 170, 32, 10, KC.SAND)
-		kit.text(g, T.use_voucher, x + 445, y + 28, 14, KC.INK, "middle")
-		kit.zone(g, s.buttons, x + 354, y, 182, 44, "buono")
+		kit.light(g, x + 360, y, 190, 46, 0)
+		kit.text(g, T.use_voucher, x + 455, y + 31, 18, KC.INK, "middle")
+		kit.zone(g, s.buttons, x + 354, y - 4, 202, 54, "buono")
 	end
 end
 
@@ -209,45 +207,44 @@ local function shop(s)
 	local wares = wallet.shop(s.prof, today)
 	for i, slot in ipairs(equip.SLOTS) do
 		local col, line = (i - 1) % 2, math.floor((i - 1) / 2)
-		local x, y = 440 + col * 280 - line * 8, TOP + line * 136
+		local x, y = 440 + col * 290, TOP + line * 134
 		local set = wares[slot.id]
 		local sel = s.ware and set and s.ware.set == set and s.ware.slot == slot.id
-		local k = kit.card(s.kg, x, y, 266, 120, set and KC.ROSE or KC.LINE, { sel = sel, off = not set })
-		kit.text(k.g, slot.name, x + 22, y + 26, 12, KC.MUTE, "start", 1.5)
+		local k = kit.card(s.kg, x, y, 276, 122, set and KC.ROSE or KC.LINE, { sel = sel, off = not set })
+		kit.text(k.g, slot.name, x + 24, y + 32, 15, KC.MUTE, "start", 1.5)
 		if set then
-			kit.text(k.g, equip.BY_ID[set].name, x + 20, y + 62, 28, KC.SAND)
+			kit.text(k.g, equip.BY_ID[set].name, x + 22, y + 68, 30, KC.SAND)
 			local price = wallet.price(s.prof, slot.id, true)
-			kit.text(k.g, kit.upper(T.price_only:format(coins.format(price))), x + 22, y + 96, 12,
+			kit.text(k.g, kit.upper(T.price_only:format(coins.format(price))), x + 24, y + 100, 16,
 				price < wallet.PRICE_SHOP and KC.MINT or KC.SAND, "start", 1)
-			kit.zone(s.kg, s.buttons, x, y - 6, 266, 132, "merce:" .. set .. "_" .. slot.id)
+			kit.zone(s.kg, s.buttons, x, y - 6, 276, 134, "merce:" .. set .. "_" .. slot.id)
 		else
-			kit.text(k.g, kit.upper(T.all_owned), x + 22, y + 62, 13, KC.MUTE, "start", 1)
+			kit.text(k.g, kit.upper(T.all_owned), x + 24, y + 68, 16, KC.MUTE, "start", 1)
 		end
 	end
-	kit.text(g, kit.upper(T.shop_today), 444, TOP + 274, 11, KC.MUTE, "start", 1.2)
-	ware_info(s, TOP + 286)
-	vouchers(s, TOP + 350, false)
+	kit.text(g, kit.upper(T.shop_today), 444, TOP + 282, 13, KC.MUTE, "start", 1)
+	ware_info(s, TOP + 296)
+	vouchers(s, TOP + 362, false)
 end
 
 local function catalog(s)
 	local g = s.kg
 	for r, f in ipairs(equip.SETS) do
 		for c, slot in ipairs(equip.SLOTS) do
-			local x, y = 440 + (c - 1) * 138 - (r - 1) * 4, TOP + (r - 1) * 52
+			local x, y = 440 + (c - 1) * 146, TOP + (r - 1) * 58
 			local own = wallet.owns(s.prof, f.id, slot.id)
 			local sel = s.ware and s.ware.set == f.id and s.ware.slot == slot.id
-			if sel then kit.para(g, x, y, 130, 44, 10, KC.SAND)
-			else kit.info(g, x, y, 130, 44, own and KC.MINT or KC.ROSE) end
+			if sel then kit.light(g, x, y, 134, 52, 0) end
 			local ink = sel and KC.INK or own and KC.MINT or KC.SAND
-			kit.text(g, f.name, x + 16, y + 22, 14, ink)
+			kit.text(g, f.name, x + 16, y + 26, 18, ink)
 			kit.text(g, own and T.owned:format(slot.name, wallet.level(s.prof, f.id, slot.id)) or slot.name,
-				x + 16, y + 38, 10, sel and KC.INK or KC.MUTE, "start", 1)
-			kit.zone(g, s.buttons, x, y - 3, 136, 50, "merce:" .. f.id .. "_" .. slot.id)
+				x + 16, y + 44, 12, sel and KC.INK or KC.MUTE, "start", 0.5)
+			kit.zone(g, s.buttons, x, y - 3, 146, 58, "merce:" .. f.id .. "_" .. slot.id)
 		end
 	end
-	ware_info(s, TOP + 266)
+	ware_info(s, TOP + 296)
 	local w = s.ware
-	vouchers(s, TOP + 330, w and not wallet.owns(s.prof, w.set, w.slot))
+	vouchers(s, TOP + 362, w and not wallet.owns(s.prof, w.set, w.slot))
 end
 
 -- the action of the shop's tabs: COMPRA with the price, or what is missing
@@ -274,7 +271,7 @@ function M.build(s)
 	s.tab = s.tab or "armadio"
 	local tabs = { { T.tab_wardrobe, "banco:armadio" }, { T.tab_shop, "banco:bottega" }, { T.tab_catalog, "banco:catalogo" } }
 	local on = s.tab == "bottega" and 2 or s.tab == "catalogo" and 3 or 1
-	kit.tabs(s.kg, s.buttons, 440, 104, tabs, on, KC.PURPLE)
+	kit.tabs(s.kg, s.buttons, 440, 100, tabs, on, KC.PURPLE)
 	local act
 	if s.tab == "armadio" then
 		slots(s)

@@ -1,12 +1,14 @@
--- The "Raggi" interface kit (Sergio, 10 Nov; Figma "MegaBlast · Interfaccia",
--- page 3): the game world darkened behind, rays from the character, an ember
--- seam at the bottom and straight parallelogram plates with a solid offset
--- shadow. One function per category, each with its own shape:
---   plate / sand   buttons (dark plate, or the sand one for the name)
---   action         the one main action of a screen, glowing, alone on the right
+-- The "Fucina contro Abisso" interface kit (Sergio, 12 Nov; Figma "MegaBlast ·
+-- Interfaccia", page 3): a comic forge against the ice. Dark soot behind, a
+-- thread at the bottom that goes from ember to frost, and pieces drawn by hand
+-- (Codex, WB-022) whose shape says what they are. One function per category:
+--   plate / sand   buttons: a beaten iron plate (dark, warm when it is yours or
+--                  lit, light for the name), a shard of ice when it is closed
+--   action         the one main action of a screen: the red-hot ingot
 --   pips / bar     the progress a button carries
---   title / back   the screen's name written like the logo, the way back at the bottom left
---   scene          the backdrop: veil, rays, halo, seam, sparks
+--   title / back   the screen's name, the way back at the bottom left
+--   scene          the backdrop: soot, a warm light bottom left and a cold one
+--                  top right, the thread
 --
 -- Everything is placed with the Figma's coordinates: 1280 x 720, x from the
 -- left and y from the TOP, text on its baseline. A group is an origin in
@@ -16,11 +18,14 @@
 --   kit.text(p.g, "CAMPAGNA", 150, 266, 27, kit.C.SAND)
 --   kit.button(list_of, p, "campagna")                  -- for ui.touch
 --
--- The shapes are white pieces of the ui atlas (tools/grafica/piastre.py)
--- colored here; colors are the "Inferno" palette.
+-- The pieces are pictures of the fucina atlas (tools/grafica/fucina.py), twice
+-- as big as they are shown. A long piece is in three parts: the two ends
+-- whole, the middle stretched; so nothing is ever deformed or blurred. The
+-- small flat shapes (notches, lines) are white pieces of the ui atlas.
 
 local screen = require "ui.screen"
 local ui = require "ui.ui"
+local P = require "ui.pieces"
 
 local M = {}
 
@@ -30,24 +35,27 @@ end
 M.hex = hex
 
 M.C = {
-	INK = hex("170b0c"),            -- the dark: veils, text on light plates
-	SAND = hex("f5e4c0"),           -- text, and the light plates
-	SAND_SHADOW = hex("c9a878"),
-	MUTE = hex("bfa9a4"),           -- secondary text
-	LINE = hex("5e3e40"),           -- unlit pips, faint outlines
-	NIGHT = hex("2f6fb0"),          -- the rays: the night blue of the "Notte di ferro" palette
-	CARD_TOP = hex("402123"),       -- a dark plate, from top...
-	CARD_BOTTOM = hex("1f1011"),    -- ...to bottom
-	TRACK = hex("472f31"),          -- the empty part of a bar
-	ROSE = hex("cd6f75"),           -- the shadow of a plate at rest
-	HOT = hex("ffd029"),            -- the action's color (lava yellow)
-	HOT_TOP = hex("fffa4f"),
-	HOT_BOTTOM = hex("ffbd1a"),
-	HOT_EDGE = hex("ffe23d"),
-	SEAM = hex("fffd9a"),
-	SEAM_GLOW = hex("ffda2e"),
-	HALO = hex("ffeb4a"),
-	TINT = hex("5a0a0a"),           -- the red cast over the world
+	INK = hex("0a080b"),            -- the ink: outlines, text on light plates
+	SOOT = hex("121013"),           -- the dark behind everything
+	SAND = hex("f4ece1"),           -- text (ivory), and the light plates
+	SAND_SHADOW = hex("9e958f"),
+	MUTE = hex("9e958f"),           -- secondary text (ash)
+	LINE = hex("4a4550"),           -- unlit pips, faint outlines (steel)
+	NIGHT = hex("38b6ff"),
+	CARD_TOP = hex("2e2a33"),       -- a dark face, from top...
+	CARD_BOTTOM = hex("1e1a22"),    -- ...to bottom
+	TRACK = hex("3a3540"),          -- the empty part of a bar
+	ROSE = hex("4a4550"),           -- a plate at rest
+	HOT = hex("ffb703"),            -- yours, lit, the action (molten gold)
+	HOT_TOP = hex("ffd24a"),
+	HOT_BOTTOM = hex("f26419"),     -- ember
+	HOT_EDGE = hex("ffb703"),
+	SEAM = hex("fff3b0"),           -- spark
+	SEAM_GLOW = hex("ffb703"),
+	HALO = hex("f26419"),
+	ICE = hex("38b6ff"),            -- closed, cost, minus
+	FROST = hex("caf0f8"),
+	TINT = hex("5a0a0a"),
 	STAR = hex("fff1cf"),
 	RED = hex("ff3b4e"),
 	OBSIDIAN = hex("ff70d1"),
@@ -64,6 +72,12 @@ local V = vmath.vector3()
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 local CLEAR = vmath.vector4(0, 0, 0, 0)
 local card_in, piece_in    -- the entrances (below, with the motion)
+-- The thread: its height in Figma coordinates. Under it the band with the way
+-- back on the left and the screen's action on the right
+M.THREAD = 612
+M.BAND = 720 - M.THREAD
+-- where the light plate of a screen sits in the band (the devil's name, where you are), after the way back
+M.PLATE_X, M.PLATE_Y = 168, 635
 
 local function empty(x, y, w, h, parent)
 	local n = gui.new_box_node(vec(x, y), vec(w or 0, h or 0))
@@ -81,6 +95,85 @@ local function shape(tex, x, y, w, h, color, parent)
 	gui.set_color(n, color)
 	if parent then gui.set_parent(n, parent) end
 	return n
+end
+
+-- A picture of the fucina atlas
+local function pic(name, x, y, w, h, parent)
+	local n = gui.new_box_node(vec(x, y), vec(w, h))
+	gui.set_texture(n, "fucina")
+	gui.play_flipbook(n, name)
+	if parent then gui.set_parent(n, parent) end
+	return n
+end
+
+-- A long piece w x h centered on parent, in three parts: the ends keep their
+-- shape (as wide as the height asks), only the middle is stretched
+local function three_fit(parts, name, w, h)
+	local m = P[name]
+	local cw = math.min(m.c * h / m.h, w / 2)
+	gui.set_size(parts[1], vec(math.max(1, w - 2 * cw + 1), h))
+	gui.set_size(parts[2], vec(cw, h)); gui.set_position(parts[2], vec(-w / 2 + cw / 2, 0))
+	gui.set_size(parts[3], vec(cw, h)); gui.set_position(parts[3], vec(w / 2 - cw / 2, 0))
+end
+
+local function three(parent, name, w, h)
+	local parts = { pic(name .. "_cx", 0, 0, 1, h, parent), pic(name .. "_sx", 0, 0, 1, h, parent), pic(name .. "_dx", 0, 0, 1, h, parent) }
+	three_fit(parts, name, w, h)
+	return parts
+end
+
+-- The room to write in on a long piece w x h centered at the Figma point
+-- (cx, cy): the biggest plain rectangle of its drawing, away from the rim,
+-- the rivets and the scratches (pieces.lua, box). Each piece has its own, so
+-- the writings of two plates do not line up: that is wanted (Sergio, 12 Nov)
+local function room(name, cx, cy, w, h)
+	local m = P[name]
+	local b = m and m.box
+	if not b then return nil end
+	local k = h / m.h
+	local cw = math.min(m.c * k, w / 2)
+	-- a margin inside the cap scales with it; past it, it is in the stretched middle
+	local stretch = (w - 2 * cw) / math.max(1, (m.w - 2 * m.c) * k)
+	local function inset(v)
+		v = v * k
+		local cap = m.c * k
+		if v <= cap then return v * cw / cap end
+		return cw + (v - cap) * stretch
+	end
+	return { x0 = cx - w / 2 + inset(b[1]), x1 = cx + w / 2 - inset(b[3]), y0 = cy - h / 2 + b[2] * k, y1 = cy + h / 2 - b[4] * k }
+end
+
+-- A panel w x h centered on parent, in nine parts: whole corners c wide,
+-- the sides stretched along their length only
+local function nine(parent, name, w, h, c)
+	c = math.min(c or 24, w / 2, h / 2)
+	local xs = { { -w / 2 + c / 2, c }, { 0, w - 2 * c + 1 }, { w / 2 - c / 2, c } }
+	local ys = { { h / 2 - c / 2, c }, { 0, h - 2 * c + 1 }, { -h / 2 + c / 2, c } }
+	local parts, k = {}, 1
+	for r = 1, 3 do
+		for q = 1, 3 do
+			parts[k] = pic(name .. "_" .. k, xs[q][1], ys[r][1], xs[q][2], ys[r][2], parent)
+			k = k + 1
+		end
+	end
+	return parts
+end
+
+-- An iron panel w x h centered on a node (name: "pannello", "pannello_caldo", "pannello_chiaro")
+function M.panel(parent, w, h, name)
+	return nine(parent, name or "pannello", w, h, math.min(26, h * 0.3, w * 0.3))
+end
+
+-- A whole piece h tall centered at (x, y) of parent
+local function whole(name, x, y, h, parent)
+	local m = P[name]
+	return pic(name, x, y, m.w * h / m.h, h, parent)
+end
+
+-- A whole piece of the fucina atlas (an ember, the lock, a coin...) h tall,
+-- centered at the Figma point (cx, cy)
+function M.piece(g, name, cx, cy, h)
+	return whole(name, cx - g.ox, g.oy - cy, h, g.node)
 end
 
 -- ---------------------------------------------------------------- groups
@@ -142,25 +235,35 @@ function M.para(g, x, y, w, h, sk, color)
 	return { node = n, parts = fill(n, w, h, sk, color), g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h, sk = sk }
 end
 
--- A plate: the solid shadow (d to the right and below) and the face, dark
--- from CARD_TOP to CARD_BOTTOM or flat (opt.fill). opt: sk, d, fill
+-- A plate: a piece of beaten iron as big as the box x..x+w+sk, y..y+h. shadow
+-- says its mood: C.HOT a warm one (yours, lit), anything else dark.
+-- opt: sk, piece (another piece in three parts: "piastra_freccia",
+-- "piastra_stendardo", "scheggia"...), fill (C.SAND: the light one), d
 function M.plate(g, x, y, w, h, shadow, opt)
 	opt = opt or {}
 	local sk = opt.sk or math.min(28, h * 0.32)
-	local d = opt.d or 8
 	local p = M.para(g, x, y, w, h, sk, CLEAR)
 	gui.delete_node(p.parts[1]); gui.delete_node(p.parts[2]); gui.delete_node(p.parts[3])
-	local sh = empty(d, -(d + 1), 0, 0, p.node)
-	p.shadow = fill(sh, w, h, sk, shadow)
-	p.shadow_node = sh
 	p.face_node = empty(0, 0, 0, 0, p.node)
-	if opt.fill then
-		p.parts = fill(p.face_node, w, h, sk, opt.fill)
-	else
-		p.parts = fill(p.face_node, w, h, sk, C.CARD_BOTTOM)
-		p.top = fill(p.face_node, w, h, sk, C.CARD_TOP, true)
+	p.shadow_node = p.face_node
+	local small = h <= 52
+	local name = opt.piece
+	if not name then
+		if opt.fill == C.SAND then name = small and "piastrina_chiara" or "piastra_chiara"
+		elseif shadow == C.HOT then name = small and "piastrina_calda" or "piastra_calda"
+		else name = small and "piastrina" or "piastra_storta" end
 	end
-	p.d = d
+	if w < h * 2 and not opt.piece then
+		-- a tall plate (a portrait): the panel, not a long piece
+		p.parts = nine(p.face_node, opt.fill == C.SAND and "pannello_chiaro" or "pannello", w + sk, h, 30)
+	else
+		p.parts = three(p.face_node, name, w + sk, h)
+		-- what is written on it (M.text on p.g) stays in its room
+		p.box = room(name, x + (w + sk) / 2, y + h / 2, w + sk, h)
+		p.g.box = p.box
+	end
+	p.shadow = {}
+	p.d = opt.d or 6
 	p.shadow_color = shadow
 	return p
 end
@@ -171,6 +274,14 @@ function M.sand(g, x, y, w, h, shadow, opt)
 	return M.plate(g, x, y, w, h, shadow or C.HOT, { sk = opt.sk, d = opt.d, fill = C.SAND })
 end
 
+-- The light small plate behind what is chosen (a tab, an option): the box
+-- x..x+w+sk, y..y+h
+function M.light(g, x, y, w, h, sk)
+	local n = empty(x + (w + (sk or 0)) / 2 - g.ox, g.oy - (y + h / 2), 0, 0, g.node)
+	three(n, "piastrina_chiara", w + (sk or 0) + 8, h + 6)
+	return n
+end
+
 -- A straight segment between two Figma points, thick t
 function M.line(g, x1, y1, x2, y2, t, color)
 	local dx, dy = x2 - x1, y2 - y1
@@ -178,45 +289,6 @@ function M.line(g, x1, y1, x2, y2, t, color)
 	V.x, V.y, V.z = 0, 0, -math.deg(math.atan2(dy, dx))
 	gui.set_rotation(n, V)
 	return n
-end
-
--- The outline of a parallelogram, thick t
-function M.outline(g, x, y, w, h, sk, t, color)
-	return {
-		M.line(g, x + sk, y, x + w + sk, y, t, color),
-		M.line(g, x, y + h, x + w, y + h, t, color),
-		M.line(g, x + sk, y, x, y + h, t, color),
-		M.line(g, x + w + sk, y, x + w, y + h, t, color),
-	}
-end
-
--- A picture cut to the slant at the left end of a plate (a door's
--- miniature): `wide` pixels at the base, then a thin line in `edge` color.
--- texture and image: a gui texture and one of its images
-function M.thumb(p, texture, image, wide, edge)
-	local h, sk = p.h, p.sk
-	local band = gui.new_box_node(vec(-(p.w + sk) / 2 + (wide + sk) / 2, 0), vec(wide + sk, h))
-	gui.set_clipping_mode(band, gui.CLIPPING_MODE_STENCIL)
-	gui.set_clipping_visible(band, false)
-	gui.set_parent(band, p.face_node)
-	local lean = math.atan2(sk, h)
-	local cut = gui.new_box_node(vec(0, 0), vec(wide * math.cos(lean), h / math.cos(lean) + sk))
-	gui.set_clipping_mode(cut, gui.CLIPPING_MODE_STENCIL)
-	gui.set_clipping_visible(cut, false)
-	V.x, V.y, V.z = 0, 0, -math.deg(lean)
-	gui.set_rotation(cut, V)
-	gui.set_parent(cut, band)
-	local img = gui.new_box_node(vec(0, 0), vec((h + 30) * 16 / 9, h + 30))
-	gui.set_texture(img, texture)
-	gui.play_flipbook(img, image)
-	V.z = math.deg(lean)
-	gui.set_rotation(img, V)
-	gui.set_parent(img, cut)
-	gui.set_color(img, vmath.vector4(0.8, 0.72, 0.72, 1))
-	local x0 = p.x + wide
-	local line = M.line(p.g, x0 + sk, p.y, x0, p.y + h, 3, edge or C.ROSE)
-	gui.set_parent(line, p.face_node, true)
-	return img
 end
 
 -- A picture cut to a slant, centered on parent: w wide at the base and h
@@ -265,7 +337,26 @@ function M.text(g, t, x, y, size, color, anchor, spacing)
 	gui.set_scale(n, V)
 	if spacing and spacing ~= 0 then gui.set_tracking(n, spacing / size) end
 	gui.set_parent(n, g.node)
+	if g.box then M.keep_in(n, g.box, g, x, y, size, anchor) end
 	return n
+end
+
+-- A text just made at the baseline (x, y) of g, moved (and, too wide, shrunk)
+-- so that it stays inside the room `box` of its plate: never on the rim
+function M.keep_in(n, box, g, x, y, size, anchor)
+	local w = M.width(n)
+	local wide = box.x1 - box.x0
+	local k = 1
+	if w > wide then k = wide / w; w = wide end
+	local left = anchor == "middle" and x - w / 2 or anchor == "end" and x - w or x
+	left = math.max(box.x0, math.min(box.x1 - w, left))
+	local tall = size * k * 0.72
+	local base = math.max(box.y0 + tall, math.min(box.y1, y))
+	if box.y1 - box.y0 < tall then base = (box.y0 + box.y1 + tall) / 2 end
+	local px = anchor == "middle" and left + w / 2 or anchor == "end" and left + w or left
+	gui.set_position(n, vec(px - g.ox, g.oy - base + size * k * BASELINE))
+	V.x, V.y, V.z = size * k / FONT_SIZE, size * k / FONT_SIZE, 1
+	gui.set_scale(n, V)
 end
 
 -- Capitals, the accented letters too (string.upper leaves them small)
@@ -286,15 +377,40 @@ end
 function M.pips(g, x, y, n, lit, color)
 	local list_of = {}
 	for i = 0, n - 1 do
-		list_of[#list_of + 1] = M.para(g, x + i * 15, y, 10, 16, 5, i < lit and color or C.LINE)
+		-- the ivory notch of the fucina atlas, in its color (kit.tint(q.parts, ...) changes it)
+		local q = whole("tacca", x + i * 15 + 8 - g.ox, g.oy - (y + 8), 19, g.node)
+		gui.set_color(q, i < lit and color or C.LINE)
+		list_of[#list_of + 1] = { node = q, parts = { q } }
 	end
 	return list_of
 end
 
--- A slanted bar filled to f (0..1)
-function M.bar(g, x, y, w, h, f, color, track)
-	local b = { back = M.para(g, x, y, w, h, h * 0.4, track or C.TRACK), g = g, x = x, y = y, w = w, h = h, color = color }
-	if f > 0 then b.front = M.para(g, x, y, math.max(h, w * f), h, h * 0.4, color) end
+-- A bar filled to f (0..1): the iron trough and in it a strip of ember (warm
+-- colors), of frost (cold ones) or, any other color, the plain strip tinted.
+-- M.bar_fill(b, f) changes how full it is
+local function strip_of(color)
+	if color == C.HOT or color == C.HOT_BOTTOM or color == C.HOT_TOP or color == C.STAR then return "barra_brace" end
+	if color == C.ICE or color == C.STEEL or color == C.FROST then return "barra_gelo" end
+	return "barra_chiara"
+end
+
+function M.bar_fill(b, f)
+	f = math.max(0, math.min(1, f))
+	gui.set_enabled(b.front.node, f > 0.005)
+	local w = math.max(b.h * 1.3, b.w * f)
+	three_fit(b.front.parts, b.strip, w, b.h)
+	gui.set_position(b.front.node, vec(b.x + w / 2 - b.g.ox, b.g.oy - (b.y + b.h / 2)))
+end
+
+function M.bar(g, x, y, w, h, f, color)
+	local b = { g = g, x = x, y = y, w = w, h = h, color = color, strip = strip_of(color) }
+	local cx, cy = x + w / 2 - g.ox, g.oy - (y + h / 2)
+	b.back = { node = empty(cx, cy, 0, 0, g.node) }
+	three(b.back.node, "guscio", w + h * 1.1, h * 1.9)
+	b.front = { node = empty(cx, cy, 0, 0, g.node) }
+	b.front.parts = three(b.front.node, b.strip, w, h)
+	if b.strip == "barra_chiara" then tint(b.front.parts, color) end
+	M.bar_fill(b, f)
 	return b
 end
 
@@ -308,58 +424,68 @@ function M.button(list_of, p, ui_action, opt)
 	return b
 end
 
--- The main action: the glowing plate with the sand shadow and, under it, a
--- dark tag saying what it starts. opt: size (of the label), sub, off (it
--- can't be done now: dark, and the tag says why)
+-- The main action: the red-hot ingot and, under it, a line saying what it
+-- starts. opt: size (of the label), sub, off (it can't be done now: a dark
+-- plate, and the line says why)
+local function sub_y(y, h)
+	-- under the ingot, or over it when the thread is there
+	return y + h + 30 > 640 and y - 10 or y + h + 30
+end
+
 function M.action(g, label, x, y, w, h, opt)
 	opt = opt or {}
 	local sk = 46
-	local cx, cy = x + (w + sk) / 2, y + h / 2
 	local size = opt.size or math.min(92, (w - 60) / (#label * 0.56))
+	-- an action at the bottom right goes under the thread, in the band, the
+	-- way back on the other side (Sergio, 12 Nov); its line at its left
+	local foot = y >= 540 and not opt.free
+	if foot then
+		x, y, w, h = 934, M.THREAD + 12, 280, 88
+		size = math.min(size, (w - 30) / (#label * 0.6), 54)
+	end
 	if opt.off then
-		-- not now: a dark plate, and the tag says what is missing
-		local p = M.plate(g, x, y, w, h, C.LINE, { sk = sk, d = 14 })
+		local p = M.plate(g, x, y, w, h, C.LINE, { sk = sk })
 		p.label = M.text(p.g, label, x + w / 2 + 23, y + h / 2 + size * 0.36, size, with_alpha(C.MUTE, 0.7), "middle")
 		gui.set_parent(p.label, p.face_node, true)
-		if opt.sub then
-			p.tag = M.para(g, x + 14, y + h + 16, w - 28, 40, 14, C.INK)
-			p.sub = M.text(p.tag.g, opt.sub, x + w / 2 + 10, y + h + 43, 16, C.HOT_TOP, "middle", 1.2)
-		end
+		if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, y + h / 2 + 6, 16, C.FROST, "end", 1)
+		elseif opt.sub then p.sub = M.text(g, opt.sub, x + w / 2 + 23, sub_y(y, h), 15, C.FROST, "middle", 1.2) end
 		return p
 	end
-	local glow = shape("alone", cx - g.ox, g.oy - cy, (w + sk) * 1.5, h * 2.6, with_alpha(C.HOT, 0.5), g.node)
-	gui.set_blend_mode(glow, gui.BLEND_ADD)
-	local p = M.plate(g, x, y, w, h, C.SAND, { sk = sk, d = 14, fill = C.HOT_BOTTOM })
-	p.top = fill(p.face_node, w, h, sk, C.HOT_TOP, true)
-	p.glow = glow
-	p.rim = M.outline(p.g, x + 12, y + 10, w - 24, h - 20, 40, 2, vmath.vector4(1, 1, 1, 0.35))
-	for i = 1, 4 do gui.set_parent(p.rim[i], p.face_node, true) end
-	p.label = M.text(p.g, label, x + w / 2 + 23, y + h / 2 + size * 0.36, size, C.INK, "middle")
+	local p = M.plate(g, x, y, w, h, C.HOT, { sk = sk, piece = "lingotto" })
+	-- (the ingot's face is under its lighter top: the label sits a little lower)
+	p.label = M.text(p.g, label, x + w / 2 + 23, y + h * 0.58 + size * 0.36, size, C.INK, "middle")
 	gui.set_parent(p.label, p.face_node, true)
-	if opt.sub then
-		p.tag = M.para(g, x + 14, y + h + 16, w - 28, 40, 14, C.INK)
-		p.sub = M.text(p.tag.g, opt.sub, x + w / 2 + 10, y + h + 43, 16, C.SAND, "middle", 1.2)
+	if opt.sub and foot then p.sub = M.text(g, opt.sub, x - 16, y + h / 2 + 6, 16, C.MUTE, "end", 1)
+	elseif opt.sub then p.sub = M.text(g, opt.sub, x + w / 2 + 23, sub_y(y, h), 15, C.MUTE, "middle", 1.2) end
+	-- now and then a small flame lights on it
+	p.flame = whole("fiamma", (w + sk) * 0.24, h * 0.5 + h * 0.08, h * 0.3, p.face_node)
+	gui.set_pivot(p.flame, gui.PIVOT_S)
+	gui.set_scale(p.flame, vmath.vector3(0.01, 0.01, 1))
+	local function flick()
+		gui.animate(p.flame, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.3, 4.5, function()
+			gui.animate(p.flame, "scale", vmath.vector3(0.01, 0.01, 1), gui.EASING_INQUAD, 0.4, 1.3, flick)
+		end)
 	end
-	gui.animate(glow, "color.w", 0.25, gui.EASING_INOUTSINE, 1.4, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+	flick()
 	piece_in(p.node, "action")
 	return p
 end
 
--- A plate goes down onto its shadow when pressed, and comes back
+-- A plate goes down when pressed, and comes back
 function M.press(p, down)
 	local d = down and p.d * 0.75 or 0
-	gui.animate(p.face_node, "position", vec(d, -d), gui.EASING_OUTQUAD, 0.06)
+	gui.animate(p.face_node, "position", vec(0, -d), gui.EASING_OUTQUAD, 0.06)
 end
 
 -- ---------------------------------------------------------------- header
 
--- The screen's name written like the logo: sand, with the accent just behind
+-- The screen's name written like the logo: in the accent (gold), ink just behind
 function M.title(g, label, accent, x, y, size)
 	x, y, size = x or 30, y or 76, size or 50
-	return { M.text(g, label, x + 4, y + 4, size, accent or C.HOT, "start", 1), M.text(g, label, x, y, size, C.SAND, "start", 1) }
+	return { M.text(g, label, x + 3, y + 4, size, C.INK, "start", 1), M.text(g, label, x, y, size, accent or C.HOT, "start", 1) }
 end
 
--- The way back: a small plate at the bottom left, on the seam, with where it
+-- The way back: the small iron arrow at the bottom left, on the thread, with where it
 -- goes written under it (Sergio, 10 Nov: the title and the way back are two
 -- different things). Returns the header: h.tops its top-level nodes
 function M.header(list_of, label, accent, back_action, from)
@@ -371,12 +497,15 @@ function M.header(list_of, label, accent, back_action, from)
 	if back_action then
 		local bl = M.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 		h.tops[#h.tops + 1] = bl.node
-		h.back = M.plate(bl, 8, 636, 52, 48, accent or C.HOT, { sk = 12, d = 5 })
-		gui.set_parent(M.line(h.back.g, 35, 650, 24, 660, 5, C.SAND), h.back.face_node, true)
-		gui.set_parent(M.line(h.back.g, 24, 660, 35, 670, 5, C.SAND), h.back.face_node, true)
-		M.text(bl, from or "", 36, 704, 10, M.with_alpha(C.SAND, 0.8), "middle", 1)
-		-- a generous zone around the small plate
-		local zone = empty(40, 46, 96, 92, bl.node)
+		-- big, under the thread: the thumb finds it without looking
+		local bn = empty(74, 62, 114, 76, bl.node)
+		h.back = { node = bn, face_node = empty(0, 0, 0, 0, bn), d = 5, g = { node = bn, ox = 74, oy = 658 } }
+		whole("indietro", 0, 0, 76, h.back.face_node)
+		gui.set_parent(M.line(h.back.g, 82, 642, 64, 658, 7, C.SAND), h.back.face_node, true)
+		gui.set_parent(M.line(h.back.g, 64, 658, 82, 674, 7, C.SAND), h.back.face_node, true)
+		M.text(bl, from or "", 74, 713, 13, C.MUTE, "middle", 1)
+		-- the whole corner takes the tap
+		local zone = empty(76, M.BAND / 2, 152, M.BAND, bl.node)
 		list_of[#list_of + 1] = { nodo = zone, bordo = zone, colore = CLEAR, riposo = CLEAR, ui_action = back_action, piastra = h.back }
 	end
 	local tr = M.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
@@ -405,80 +534,57 @@ function M.zone(g, list_of, x, y, w, h, ui_action)
 	return b
 end
 
--- TABS: trapezoids standing on a rail; the active one is sand.
+-- TABS: small plates in a row; the active one is light.
 -- tabs: { { label, ui_action }, ... }
 function M.tabs(g, list_of, x, y, tabs, active, accent)
-	local h, cx = 40, x
+	local h, cx = 58, x
 	for i, tab in ipairs(tabs) do
-		local w = #tab[1] * 13 + 44
+		local w = #tab[1] * 16 + 64
 		local on = i == active
-		local color = on and C.SAND or C.CARD_TOP
 		local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
-		shape("taglio_sx", -w / 2 + 6, 0, 12, h, color, n)
-		shape(nil, 0, 0, w - 24 + 1, h, color, n)
-		local r = shape("taglio_dx", w / 2 - 6, 0, h, 12, color, n)
-		V.x, V.y, V.z = 0, 0, 90
-		gui.set_rotation(r, V)
-		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2 }, tab[1], cx + w / 2, y + 27, 19,
-			on and C.INK or M.with_alpha(C.SAND, 0.8), "middle", 0.5)
+		local name = on and "piastrina_chiara" or "piastrina"
+		three(n, name, w, h)
+		local box = room(name, cx + w / 2, y + h / 2, w, h)
+		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 9, 24,
+			on and C.INK or M.with_alpha(C.SAND, 0.85), "middle", 0.5)
 		list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
-		cx = cx + w + 6 + (g.air and M.air(0.1) or 0)
+		cx = cx + w + 8 + (g.air and M.air(0.1) or 0)
 	end
-	M.rect(g, x - 14, y + h, cx - x + 22, 5, C.SAND)
-	M.rect(g, x - 14, y + h + 5, cx - x + 22, 3, accent or C.HOT)
 	return cx
 end
 
--- CHOICES: a small label and the options in a row on a thin line, the sand
--- blade behind the chosen one. opts: { { label, ui_action }, ... }; w: an
+-- CHOICES: a small label and the options in a row on a thin line, the light
+-- plate behind the chosen one. opts: { { label, ui_action }, ... }; w: an
 -- option's width; off: dim, nothing to tap
 function M.choice(g, list_of, x, y, label, opts, active, w, off)
-	local h = 44
+	local h = 58
 	if g.air then w = w + M.air(0.25) end
-	M.text(g, label, x + 6, y - 10, 14, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
-	M.rect(g, x, y + h - 2, #opts * w, 2, with_alpha(C.LINE, 0.6))
+	M.text(g, label, x + 6, y - 12, 15, with_alpha(C.MUTE, off and 0.5 or 1), "start", 1.5)
 	for i, o in ipairs(opts) do
 		local ox = x + (i - 1) * w
 		local on = i == active and not off
-		if on then M.para(g, ox, y, w - 12, h, 12, C.SAND) end
-		M.text(g, o[1], ox + w / 2, y + h / 2 + 6, #o[1] > 14 and 14 or 18, on and C.INK or with_alpha(C.MUTE, off and 0.4 or 1), "middle")
-		if not off then M.zone(g, list_of, ox, y - 6, w, h + 12, o[2]) end
+		-- every option is a small plate: the chosen one light, the others iron
+		local name = on and "piastrina_chiara" or "piastrina"
+		local parts = three(empty(ox + w / 2 - 4 - g.ox, g.oy - (y + h / 2), 0, 0, g.node), name, w - 8, h)
+		if off then tint(parts, vmath.vector4(1, 1, 1, 0.4)) end
+		local box = room(name, ox + w / 2 - 4, y + h / 2, w - 8, h)
+		M.text({ node = g.node, ox = g.ox, oy = g.oy, box = box }, o[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 8, 22,
+			on and C.INK or with_alpha(C.SAND, off and 0.35 or 0.8), "middle")
+		if not off then M.zone(g, list_of, ox, y - 4, w, h + 8, o[2]) end
 	end
 end
 
--- CARDS: a cut corner at the top right and a frame in the card's color.
--- opt: sel (chosen: sand frame and a glow), off (dim). Returns { node, g }
+-- CARDS: an iron panel with a short line in the card's color at the top left.
+-- opt: sel (chosen: a warm frame), off (dim). Returns { node, g }
 function M.card(g, x, y, w, h, color, opt)
 	opt = opt or {}
-	local c = math.min(24, h * 0.34)
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
-	if opt.sel then
-		local glow = shape("alone", 0, 0, w * 1.5, h * 1.6, with_alpha(C.HOT, 0.45), n)
-		gui.set_blend_mode(glow, gui.BLEND_ADD)
-	end
-	local fa = opt.off and 0.75 or 1
-	local bottom, top = with_alpha(C.CARD_BOTTOM, fa), with_alpha(C.CARD_TOP, fa)
-	-- the face: everything but the cut corner
-	shape(nil, -c / 2, 0, w - c, h, bottom, n)
-	shape(nil, w / 2 - c / 2, -c / 2, c, h - c, bottom, n)
-	local tri = shape("taglio_dx", w / 2 - c / 2, h / 2 - c / 2, c, c, top, n)
-	V.x, V.y, V.z = 0, 0, 90
-	gui.set_rotation(tri, V)
-	shape("sfuma", -c / 2, 0, w - c, h, top, n)
-	shape("sfuma", w / 2 - c / 2, -c / 2, c, h - c, with_alpha(C.CARD_TOP, fa * (1 - c / h)), n)
-	-- the frame
-	local col = opt.sel and C.SAND or with_alpha(color, opt.off and 0.4 or 1)
-	local t = opt.sel and 4 or 3
-	k.frame = {
-		M.line(k.g, x, y, x + w - c, y, t, col), M.line(k.g, x + w - c, y, x + w, y + c, t, col),
-		M.line(k.g, x + w, y + c, x + w, y + h, t, col), M.line(k.g, x + w, y + h, x, y + h, t, col),
-		M.line(k.g, x, y + h, x, y, t, col),
-	}
-	local tip = shape("taglio_dx", w / 2 - (c - 7) / 2, h / 2 - (c - 7) / 2, c - 7, c - 7, col, n)
-	V.z = -90
-	gui.set_rotation(tip, V)
+	-- chosen: the same panel in ember, a little bigger, under it (a rim drawn by hand)
+	if opt.sel then nine(n, "pannello_caldo", w + 12, h + 12, math.min(26, h * 0.34)) end
+	local parts = nine(n, "pannello", w, h, math.min(22, h * 0.3))
+	if opt.off then tint(parts, vmath.vector4(0.62, 0.62, 0.7, 0.8)) end
 	card_in(n)
 	return k
 end
@@ -519,68 +625,70 @@ function M.card_picture(k, texture, tall, ratio, dim)
 	return img
 end
 
--- INFORMATION: a dark row with a spine of color, no shadow: it is read, not pressed
-function M.info(g, x, y, w, h, color)
-	M.rect(g, x, y, w, h, with_alpha(C.INK, 0.5))
-	return M.rect(g, x, y, 5, h, color)
+-- INFORMATION: something to read, not to press: no box at all (Sergio, 12
+-- Nov: «piuttosto lascia le cose senza box»). Returns an empty node there
+function M.info(g, x, y, w, h)
+	return empty(x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
 end
 
 -- LABELS: a small blade and the name in color
 function M.label(g, x, y, t, color, backed)
-	if backed then M.para(g, x - 6, y, #t * 9 + 30, 22, 6, with_alpha(C.INK, 0.8)) end
-	M.para(g, x, y + 3, 7, 16, 4, color)
-	return M.text(g, t, x + 16, y + 17, 13, color, "start", 1.2)
+	if backed then
+		-- on a picture: a small iron plate, the word in its room
+		local w, h = #t * 9 + 46, 26
+		local cx, cy = x - 8 + w / 2, y - 1 + h / 2
+		local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+		three(n, "piastrina", w, h)
+		local box = room("piastrina", cx, cy, w, h)
+		return M.text({ node = n, ox = cx, oy = cy, box = box }, t, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 5, 12, color, "middle", 1.2)
+	end
+	return M.text(g, t, x, y + 18, 15, color, "start", 1.2)
 end
 
 -- A section's small heading
 function M.heading(g, t, x, y, color)
-	return M.text(g, t, x, y, 14, color or C.HOT_TOP, "start", 1.5)
+	return M.text(g, t, x, y, 17, color or C.HOT_TOP, "start", 1.5)
 end
 
 -- MEASURES: round seals on the thresholds of a bar. state: "got" (full, in
 -- color), "cur" (the one you are looking at: bigger, sand ring, a glow),
 -- "todo" (dark, a ring in color)
 function M.seal(g, cx, cy, t, state, color)
-	local r = state == "cur" and 22 or 16
+	local r = state == "cur" and 30 or 24
 	local x, y = cx - g.ox, g.oy - cy
 	if state == "cur" then
 		local glow = shape("alone", x, y, r * 4.4, r * 4.4, with_alpha(color, 0.7), g.node)
 		gui.set_blend_mode(glow, gui.BLEND_ADD)
 	end
-	ui.disc(x, y, r * 2 + 3, state == "cur" and C.SAND or color, g.node)
-	ui.disc(x, y, r * 2 - 3, state == "got" and color or C.INK, g.node)
-	ui.ring_node(x, y, (r - 4) * 2, 2, state == "got" and C.INK or color, g.node)
-	return M.text(g, t, cx, cy + 5, state == "cur" and 16 or 13, state == "got" and C.INK or C.SAND, "middle")
+	-- the round frames of the fucina atlas: gold the ones taken, iron the others
+	whole(state == "got" and "tondo_oro" or "tondo_ferro", x, y, r * 2 + 4, g.node)
+	return M.text(g, t, cx, cy + 5, state == "cur" and 19 or 16, state == "todo" and C.MUTE or C.SAND, "middle")
 end
 
--- REGULATORS: the small controls inside a screen are round, not plates: the
--- capsule "- +" (Sergio, 10 Nov). off_minus, off_plus: that side can't be used
+-- REGULATORS: the small controls inside a screen are round irons: "−" and
+-- "+" (Sergio, 10 Nov), big enough for a thumb. off_minus, off_plus: that
+-- side can't be used
 function M.stepper(g, list_of, x, y, minus, plus, off_minus, off_plus, value)
-	local w, h = value and 124 or 92, 36
-	local n, border = ui.panel(x + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node, "pillola")
-	gui.set_color(n, with_alpha(C.INK, 0.85))
-	gui.set_color(border, with_alpha(C.SAND, 0.3))
-	local sg = { node = n, ox = x + w / 2, oy = y + h / 2 }
-	M.text(sg, "−", x + 22, y + 26, 24, off_minus and C.LINE or C.SAND, "middle")
-	M.text(sg, "+", x + w - 22, y + 26, 24, off_plus and C.LINE or C.SAND, "middle")
-	if value then
-		M.text(sg, tostring(value), x + w / 2, y + 25, 18, C.SAND, "middle")
-	else
-		M.rect(sg, x + w / 2 - 1, y + 8, 2, 20, with_alpha(C.SAND, 0.2))
+	local d = 56
+	local w = d * 2 + (value and 56 or 12)
+	local n = empty(x + w / 2 - g.ox, g.oy - (y + d / 2), w, d, g.node)
+	local sg = { node = n, ox = x + w / 2, oy = y + d / 2 }
+	for _, side in ipairs({ { x + d / 2, "−", off_minus, minus }, { x + w - d / 2, "+", off_plus, plus } }) do
+		local q = whole("tondo_ferro", side[1] - sg.ox, 0, d, n)
+		if side[3] then gui.set_color(q, vmath.vector4(1, 1, 1, 0.4)) end
+		M.text(sg, side[2], side[1], y + d / 2 + 11, 32, side[3] and C.LINE or C.SAND, "middle")
+		local z = M.zone(sg, list_of, side[1] - d / 2 - 4, y - 4, d + 8, d + 8, side[4])
+		z.spento = side[3] or nil
 	end
-	local a = M.zone(sg, list_of, x - 4, y - 6, w / 2 + 4, h + 12, minus)
-	a.spento = off_minus or nil
-	local b = M.zone(sg, list_of, x + w / 2, y - 6, w / 2 + 4, h + 12, plus)
-	b.spento = off_plus or nil
+	if value then M.text(sg, tostring(value), x + w / 2, y + d / 2 + 9, 24, C.SAND, "middle") end
 	return n
 end
 
--- A small round button inside a card (QUI): a regulator, not a plate
+-- A round button inside a card (QUI): a regulator, not a plate
 function M.round(g, list_of, cx, cy, label, ui_action)
-	local n = empty(cx - g.ox, g.oy - cy, 48, 48, g.node)
-	gui.set_blend_mode(ui.disc(0, 0, 42, with_alpha(C.INK, 0.85), n), gui.BLEND_ALPHA)
-	ui.ring_node(0, 0, 42, 2, with_alpha(C.SAND, 0.4), n)
-	M.text({ node = n, ox = cx, oy = cy }, label, cx, cy + 5, 13, C.SAND, "middle", 0.5)
+	local n = empty(cx - g.ox, g.oy - cy, 60, 60, g.node)
+	whole("tondo_ferro", 0, 0, 58, n)
+	M.text({ node = n, ox = cx, oy = cy }, label, cx, cy + 6, 16, C.SAND, "middle", 0.5)
 	local b = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = ui_action }
 	list_of[#list_of + 1] = b
 	return b
@@ -589,127 +697,140 @@ end
 -- The player's plate: name (or what it is), a line on the right, the bar
 function M.nameplate(g, x, y, name, right, f, accent)
 	local p = M.sand(g, x, y, 340, 62, accent or C.HOT, { sk = 22 })
-	p.name = M.text(p.g, name, x + 36, y + 39, 22, C.INK)
-	p.right = M.text(p.g, right, x + 330, y + 26, 18, with_alpha(C.INK, 0.75), "end", 1)
-	p.bar = M.bar(p.g, x + 176, y + 40, 150, 7, f, C.HOT_BOTTOM, C.SAND_SHADOW)
+	-- in the plate's room: the name on the left, the level over its bar on the right
+	local b = p.box
+	local mid = (b.y0 + b.y1) / 2
+	p.name = M.text(p.g, name, b.x0, mid + 7, 20, C.INK)
+	local from = math.max(b.x0 + M.width(p.name) + 10, b.x1 - 150)
+	p.right = M.text({ node = p.g.node, ox = p.g.ox, oy = p.g.oy, box = { x0 = from, x1 = b.x1, y0 = b.y0, y1 = b.y1 } },
+		right, b.x1, b.y0 + 12, 13, with_alpha(C.INK, 0.75), "end", 1)
+	p.bar = M.bar(p.g, from, b.y1 - 9, b.x1 - from, 6, f, C.HOT_BOTTOM, C.SAND_SHADOW)
 	return p
 end
 
 -- ---------------------------------------------------------------- scene
 
-local RAYS = 18
-local SPARKS = 20
-
--- The backdrop of a menu over the game world: a red cast and a dark veil,
--- the rays turning slowly around (fx, fy), the halo there, the dark rising
--- from the bottom, the ember seam and the sparks. opt: halo (its radius,
--- 400), accent (a wide soft light in the menu's color), seam (false: none),
--- dim (a darker veil: the screens over a battle).
--- There is ONE backdrop for every menu (Sergio, 11 Nov: the rays turned
--- «velocissimi a ogni cambio di menu», each screen had its own and they
--- started again): the rays never stop and never start over, and between two
--- menus they glide to the new place. kit.scene returns the screen's hold on
--- it; kit.scene_drop(s) when the screen goes away
+-- The backdrop of a menu: the soot over the game world, a warm light at the
+-- bottom left and a cold one at the top right (fire against ice, on every
+-- screen), and at the bottom the thread, ember on the left and frost on the
+-- right, with a spark running along it now and then. opt: bg (the screen's
+-- painting, a name of ui/backdrops.lua), seam (false: no thread), dim (0..1: how
+-- much the world behind is covered; the screens over a battle just ended).
+-- There is ONE backdrop for every menu: kit.scene returns the screen's hold
+-- on it; kit.scene_drop(s) when the screen goes away
 local S
+
+-- The painting of each screen (WB-028; ui/backdrops.lua): one picture, big
+-- soft masses at the sides that frame the screen, the middle empty. Only one
+-- is loaded at a time. It covers the screen keeping its shape (never
+-- stretched: on a long screen it grows and loses a little at the top), its
+-- painted floor on the thread
+local BACKDROPS = require "ui.backdrops"
+local THREAD_Y = M.BAND
+
+local function backdrop(name)
+	if not (name and BACKDROPS[name]) then name = nil end
+	if S.bg_name ~= name then
+		if S.bg_name then
+			gui.set_texture(S.bg, "ui")
+			gui.delete_texture("sfondo")
+		end
+		S.bg_name = nil
+		local data = name and sys.load_resource("/paintings/backdrops/" .. name .. ".jpg")
+		local img = data and image.load(data)
+		if img and gui.new_texture("sfondo", img.width, img.height, img.type, img.buffer) then
+			S.bg_name = name
+			gui.set_texture(S.bg, "sfondo")
+		end
+	end
+	local on = S.bg_name ~= nil
+	gui.set_enabled(S.bg, on)
+	-- the two lights are in the painting already
+	gui.set_enabled(S.warm, not on)
+	gui.set_enabled(S.cold, not on)
+end
+
+-- the painting covers the real screen, whatever its shape: wide enough, tall
+-- enough above its floor, and a little more
+local function backdrop_fit()
+	if not S.bg_name then return end
+	local f = BACKDROPS[S.bg_name]
+	local h = math.max(720 * 1.14, screen.width() * 1.02 * 9 / 16, (screen.height() - THREAD_Y) / (1 - f) * 1.01)
+	gui.set_size(S.bg, vec(h * 16 / 9, h))
+	gui.set_position(S.bg, vec(0, THREAD_Y - f * h + h / 2))
+end
 
 local function scene_nodes()
 	if S then return S end
-	S = { tops = {}, sparks = {} }
-	local function full(color)
-		local n = shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, color)
-		S.tops[#S.tops + 1] = n
-		return n
-	end
-	-- the game world behind stays the main thing, the rays just a hint, in
-	-- night blue, on every menu (Sergio, 11 Nov: «dai ancora più priorità a
-	-- quello di dietro», «le strisce dell'azzurro/blu notte», «tutte come la home»)
-	full(with_alpha(C.TINT, 0.12))
-	full(with_alpha(C.INK, 0.14))
-	-- over a battle just ended (opt.dim): its robots must not be read behind
-	S.dim = full(with_alpha(C.INK, 0))
-	-- the rays
-	local hub = M.anchor(640, 360)
-	S.tops[#S.tops + 1] = hub.node
-	S.hub = hub
-	local spin = empty(0, 0, 0, 0, hub.node)
-	S.spin = spin
-	for i = 0, RAYS - 1 do
-		local a = i / RAYS * math.pi * 2 + 0.07
-		local wide = 0.09 + (i % 3) * 0.03
-		local n = shape("taglio_sx", 0, 0, 1800, 1800 * math.tan(wide), with_alpha(C.NIGHT, 0.16), spin)
-		gui.set_pivot(n, gui.PIVOT_SW)
-		V.x, V.y, V.z = 0, 0, -math.deg(a + wide)
-		gui.set_rotation(n, V)
-	end
-	-- slowly, always (one turn in two minutes)
-	gui.animate(spin, "rotation.z", -360, gui.EASING_LINEAR, 120, 0, nil, gui.PLAYBACK_LOOP_FORWARD)
-	S.accent = shape("alone", 0, 0, 1500, 1500, CLEAR, hub.node)
-	gui.set_blend_mode(S.accent, gui.BLEND_ADD)
-	S.halo = shape("alone", 0, 0, 960, 960, with_alpha(C.HALO, 0.38), hub.node)
-	gui.set_blend_mode(S.halo, gui.BLEND_ADD)
-	gui.animate(S.halo, "color.w", 0.3, gui.EASING_INOUTSINE, 2.6, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
-	-- the dark from the bottom (stuck to the real bottom) and the seam
+	S = { tops = {} }
+	S.base = shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, C.SOOT)
+	S.tops[#S.tops + 1] = S.base
+	-- the painting, stuck to the real bottom like the thread
+	local back = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
+	S.tops[#S.tops + 1] = back.node
+	S.bg = gui.new_box_node(vec(0, 360), vec(1280, 720))
+	gui.set_parent(S.bg, back.node)
+	gui.set_enabled(S.bg, false)
+	-- the two lights, each stuck to its corner
+	local warm = M.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
+	S.tops[#S.tops + 1] = warm.node
+	S.warm = shape("alone", 60, 40, 1500, 1300, with_alpha(C.HOT_BOTTOM, 0.2), warm.node)
+	gui.set_blend_mode(S.warm, gui.BLEND_ADD)
+	local cold = M.anchor(1280, 0, gui.ANCHOR_RIGHT, gui.ANCHOR_TOP)
+	S.tops[#S.tops + 1] = cold.node
+	S.cold = shape("alone", -60, -40, 1500, 1300, with_alpha(C.ICE, 0.16), cold.node)
+	gui.set_blend_mode(S.cold, gui.BLEND_ADD)
+	-- the thread (stuck to the real bottom): ink behind, the color over it
 	local low = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
 	S.tops[#S.tops + 1] = low.node
-	local fade = shape("sfuma", 0, 125, 1280 * screen.FULL, 250, with_alpha(C.INK, 0.9), low.node)
-	V.x, V.y, V.z = 0, 0, 180
-	gui.set_rotation(fade, V)
-	shape(nil, 0, -360 * screen.FULL / 2, 1280 * screen.FULL, 360 * screen.FULL, with_alpha(C.INK, 0.9), low.node)
-	S.seam_glow = shape("alone", 0, 59, 1300, 20, with_alpha(C.SEAM_GLOW, 0.35), low.node)
-	gui.set_blend_mode(S.seam_glow, gui.BLEND_ADD)
-	S.seam = shape(nil, 0, 59, 1220, 2, C.SEAM, low.node)
-	-- the sparks: a few small rhombi, each wandering slowly at random around
-	-- where it was born, and twinkling (the same ones on every menu)
-	local seed = 5
-	local function rnd()
-		seed = (seed * 1664525 + 1013904223) % 4294967296
-		return seed / 4294967296
-	end
-	local air = M.anchor(0, 0)
-	S.tops[#S.tops + 1] = air.node
-	for _ = 1, SPARKS do
-		local x, y = 60 + rnd() * 1160, 90 + rnd() * 510
-		local d = 4 + rnd() * 6
-		local n = shape(nil, x, 720 - y, d, d, with_alpha(rnd() > 0.5 and C.HOT_TOP or C.HOT, 0.55 + rnd() * 0.4), air.node)
-		V.x, V.y, V.z = 0, 0, 45
-		gui.set_rotation(n, V)
-		local function wander()
-			gui.animate(n, "position", vec(x + (rnd() - 0.5) * 300, 720 - y + (rnd() - 0.5) * 220), gui.EASING_INOUTSINE, 6 + rnd() * 6, 0, wander)
-		end
-		wander()
-		gui.animate(n, "color.w", 0.25, gui.EASING_INOUTSINE, 1.2 + rnd() * 2, rnd() * 2, nil, gui.PLAYBACK_LOOP_PINGPONG)
-		S.sparks[#S.sparks + 1] = n
+	S.low = low.node
+	S.seam_ink = shape(nil, 0, THREAD_Y, 1280, 11, C.INK, low.node)
+	S.seam = gui.new_box_node(vec(0, THREAD_Y), vec(1280, 6))
+	gui.set_texture(S.seam, "fucina")
+	gui.play_flipbook(S.seam, "filo")
+	gui.set_parent(S.seam, low.node)
+	-- the thread is alive (Sergio, 12 Nov): it breathes, and two glints run
+	-- along it without stopping, an ember from the left and a frost from the right
+	gui.animate(S.seam, "color", vmath.vector4(0.72, 0.72, 0.72, 1), gui.EASING_INOUTSINE, 1.6, 0, nil, gui.PLAYBACK_LOOP_PINGPONG)
+	S.glints = {}
+	for i, c in ipairs({ C.SEAM, C.FROST }) do
+		local q = shape("alone", 0, THREAD_Y, 260, 30, with_alpha(c, 0.95), low.node)
+		gui.set_blend_mode(q, gui.BLEND_ADD)
+		S.glints[i] = q
 	end
 	return S
 end
 
--- The seam runs between the real edges of the screen: call it when the
+-- The thread runs between the real edges of the screen: call it when the
 -- screen is shown (the proportions may have changed)
 function M.scene_fit()
 	if not S then return end
-	local w = screen.width() - 60
-	gui.set_size(S.seam, vec(w, 2))
-	gui.set_size(S.seam_glow, vec(w + 80, 20))
+	local w = screen.width()
+	backdrop_fit()
+	if S.fit_w == w then return end
+	S.fit_w = w
+	gui.set_size(S.seam, vec(w, 6))
+	gui.set_size(S.seam_ink, vec(w, 11))
+	for i, q in ipairs(S.glints) do
+		local from = (i == 1 and -1 or 1) * (w / 2 + 130)
+		gui.cancel_animations(q, "position.x")
+		gui.set_position(q, vec(from, THREAD_Y))
+		gui.animate(q, "position.x", -from, gui.EASING_INOUTSINE, 4.2, (i - 1) * 2.1, nil, gui.PLAYBACK_LOOP_FORWARD)
+	end
 end
 
--- the backdrop takes the screen's place, light and color
+-- the backdrop takes the screen's place
 local function claim(s)
 	S.owner = s
 	for _, n in ipairs(S.tops) do gui.set_enabled(n, true) end
-	gui.cancel_animations(S.hub.node, "position")
-	gui.animate(S.hub.node, "position", vec(s.fx, 720 - s.fy), gui.EASING_OUTCUBIC, 0.6)
-	local r = (s.opt.halo or 400) * 2.4
-	gui.set_size(S.halo, vec(r, r))
-	gui.animate(S.accent, "color", s.opt.accent and with_alpha(s.opt.accent, 0.13) or CLEAR, gui.EASING_OUTQUAD, 0.4)
-	gui.animate(S.dim, "color.w", s.opt.dim or 0, gui.EASING_OUTQUAD, 0.3)
-	local seam = s.opt.seam ~= false
-	gui.set_enabled(S.seam, seam)
-	gui.set_enabled(S.seam_glow, seam)
+	gui.set_color(S.base, with_alpha(C.SOOT, s.opt.dim or 1))
+	gui.set_enabled(S.low, s.opt.seam ~= false)
+	backdrop(not s.opt.dim and s.opt.bg or nil)
 	M.scene_fit()
 end
 
 -- The screen's backdrop, above everything made so far (what the screen
--- creates next goes over it)
+-- creates next goes over it). fx, fy: where the screen's subject is
 function M.scene(fx, fy, opt)
 	scene_nodes()
 	local s = { fx = fx, fy = fy, opt = opt or {} }
@@ -719,7 +840,7 @@ function M.scene(fx, fy, opt)
 end
 
 -- The backdrop just "above" or "below" a node of the screen (a screen that
--- is kept and shown again, or that has something under the rays)
+-- is kept and shown again)
 function M.scene_place(s, where, ref)
 	if S.owner ~= s then return end
 	if where == "below" then
@@ -729,13 +850,9 @@ function M.scene_place(s, where, ref)
 	end
 end
 
--- The rays move to another point of the same screen
+-- The screen's subject moves (nothing follows it, for now)
 function M.scene_focus(s, fx, fy)
 	s.fx, s.fy = fx, fy
-	if S.owner == s then
-		gui.cancel_animations(S.hub.node, "position")
-		gui.animate(S.hub.node, "position", vec(fx, 720 - fy), gui.EASING_OUTCUBIC, 0.6)
-	end
 end
 
 function M.scene_drop(s)
@@ -748,17 +865,14 @@ function M.scene_show(s, on)
 	if on then claim(s) else M.scene_drop(s) end
 end
 
--- The backdrop's own entrance (when the game opens): the rays grow from
--- nothing, the seam draws itself from the middle
+-- The backdrop's own entrance (when the game opens): the thread draws itself
+-- from the middle
 function M.scene_enter(delay)
 	delay = delay or 0
-	gui.cancel_animations(S.hub.node, "scale")
-	gui.set_scale(S.hub.node, vmath.vector3(0.01, 0.01, 1))
-	gui.animate(S.hub.node, "scale", vmath.vector3(1, 1, 1), gui.EASING_OUTBACK, 0.62, delay + 0.12)
-	for _, n in ipairs({ S.seam, S.seam_glow }) do
+	for _, n in ipairs({ S.seam, S.seam_ink }) do
 		gui.cancel_animations(n, "scale.x")
 		gui.set_scale(n, vmath.vector3(0.01, 1, 1))
-		gui.animate(n, "scale.x", 1, gui.EASING_OUTCUBIC, 0.5, delay + 0.42)
+		gui.animate(n, "scale.x", 1, gui.EASING_OUTCUBIC, 0.5, delay + 0.3)
 	end
 end
 

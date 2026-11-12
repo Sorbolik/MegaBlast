@@ -12,6 +12,14 @@ abbiamo appena disegnato». Le figure di WB-021 (Fabbro, fornace) raccontano tro
 disegna a mano **quattro motivi astratti** di fuoco e di gelo, col tratto dei pezzi di WB-022.
 Tre prove fatte col codice sono nella proposta (https://claude.ai/artifact/2RBh8w9T56E7P9kFDd4HKA).
 
+## Due fasi
+
+Sergio (12 nov, viste le tre prove) ha scelto **«calore e cristallo»**.
+
+- **Fase 1**, `esegui WB-023 fase 1`: `astratto_calore` e `astratto_cristallo`. È quella che serve.
+- **Fase 2**, solo se Sergio la chiede: `astratto_fuoco`, `astratto_gelo`, `astratto_linea`, `astratto_vortice`.
+- Codex esegue solo le righe della fase chiesta.
+
 ## Cosa teniamo e cosa scartiamo
 
 | Teniamo | Perché |
@@ -34,20 +42,43 @@ Tre prove fatte col codice sono nella proposta (https://claude.ai/artifact/2RBh8
 | R1 | `art/WB-023/riferimenti/R1_lingue_e_schegge.png` | prova col codice: curve di fuoco a sinistra, schegge a destra (l'idea, non il tratto) |
 | R2 | `art/WB-023/riferimenti/R2_una_linea.png` | prova col codice: una linea sola, morbida a sinistra e spigolosa a destra |
 | R3 | `art/WB-023/riferimenti/R3_tratto_dei_pezzi.png` | i pezzi di WB-022: il tratto da copiare |
+| R4 | `art/WB-023/riferimenti/R4_calore_e_cristallo.png` | prova col codice scelta da Sergio: onde di calore in basso a sinistra, facce di cristallo in alto a destra |
 
 ## Immagini da generare
 
 Ogni prompt è completo e va usato così com'è. Allega i riferimenti nell'ordine scritto: il
 primo è "image 1", il secondo "image 2". Formato largo 16:9, sfondo nero pieno.
 
-| Nome file | Riferimenti | Varianti |
-|---|---|---|
-| `astratto_fuoco` | R1, R3 | 2 |
-| `astratto_gelo` | R1, R3 | 2 |
-| `astratto_linea` | R2, R3 | 2 |
-| `astratto_vortice` | R3 | 1 |
+| Fase | Nome file | Riferimenti | Varianti |
+|---|---|---|---|
+| 1 | `astratto_calore` | R4, R3 | 2 |
+| 1 | `astratto_cristallo` | R4, R3 | 2 |
+| 2 | `astratto_fuoco` | R1, R3 | 2 |
+| 2 | `astratto_gelo` | R1, R3 | 2 |
+| 2 | `astratto_linea` | R2, R3 | 2 |
+| 2 | `astratto_vortice` | R3 | 1 |
 
-### `astratto_fuoco`
+### `astratto_calore` (fase 1)
+
+```
+Image 1 is a game menu mockup: look only at the faint orange curved lines in the background that spread from the bottom-left corner like ripples; that is the idea, drawn too stiffly. Image 2 shows the brush line to copy: the thick, soft, slightly irregular hand-drawn ink outline of those cartoon iron plates.
+
+An almost abstract drawing, wide 16:9: waves of heat spreading from the BOTTOM-LEFT corner. Five big loose brush strokes, each one a quarter of a circle centered on the bottom-left corner, one outside the other like ripples, the smallest near the corner and the biggest reaching about the middle of the picture. The arcs are soft and wobbly like hot air, not perfect circles; each is drawn by hand in one gesture, thicker in the middle and tapering at both ends, and the outer arcs are thinner and more broken than the inner ones. Two or three tiny dots like sparks between them. Nothing else: the right half and the top of the picture stay completely empty and black. It must not look like a sun, a radar, a rainbow or sound waves.
+
+Pure white brush strokes (#FFFFFF) on a pure black background (#000000). Hand-drawn comic ink line like image 2: soft, confident, a bit uneven. No fills, no gray, no shading, no hatching, no texture, no glow. No text, letters, numbers, frame or signature.
+```
+
+### `astratto_cristallo` (fase 1)
+
+```
+Image 1 is a game menu mockup: look only at the faint blue angular lines in the background that spread from the top-right corner like the facets of a crystal; that is the idea, drawn too stiffly. Image 2 shows the brush line to copy: the thick, slightly irregular hand-drawn ink outline of those cartoon iron plates.
+
+An almost abstract drawing, wide 16:9: facets of ice spreading from the TOP-RIGHT corner. Four big brush strokes, each one a broken angular line made of three or four straight segments, going around the top-right corner one outside the other like the growth rings of a crystal, the smallest near the corner and the biggest reaching about the middle of the picture. Straight segments and hard corners only, no curves; each stroke drawn by hand in fast straight movements, ending in sharp points, the outer ones thinner. Two or three tiny diamond-shaped specks between them. Nothing else: the left half and the bottom of the picture stay completely empty and black. It must not look like a spider web, a snowflake, a star or a mountain.
+
+Pure white brush strokes (#FFFFFF) on a pure black background (#000000). Hand-drawn comic ink line like image 2, but with straight strokes and hard corners. No fills, no gray, no shading, no hatching, no texture, no glow. No text, letters, numbers, frame or signature.
+```
+
+### `astratto_fuoco` (fase 2)
 
 ```
 Image 1 is a game menu mockup: look only at the faint orange curved lines in the background on the left; that is the idea, drawn too stiffly. Image 2 shows the brush line to copy: the thick, soft, slightly irregular hand-drawn ink outline of those cartoon iron plates.
@@ -57,7 +88,7 @@ An almost abstract drawing, wide 16:9: on the LEFT third only, four or five big 
 Pure white brush strokes (#FFFFFF) on a pure black background (#000000). Hand-drawn comic ink line like image 2: soft, confident, a bit uneven. No fills, no gray, no shading, no hatching, no texture, no glow. Very few strokes, a lot of empty space. No text, letters, numbers, frame or signature.
 ```
 
-### `astratto_gelo`
+### `astratto_gelo` (fase 2)
 
 ```
 Image 1 is a game menu mockup: look only at the faint blue angular lines in the background on the right; that is the idea, drawn too stiffly. Image 2 shows the brush line to copy: the thick, slightly irregular hand-drawn ink outline of those cartoon iron plates.
@@ -67,7 +98,7 @@ An almost abstract drawing, wide 16:9: on the RIGHT third only, five or six big 
 Pure white brush strokes (#FFFFFF) on a pure black background (#000000). Hand-drawn comic ink line like image 2, but with straight strokes and hard corners. No fills, no gray, no shading, no hatching, no texture, no glow. Very few strokes, a lot of empty space. No text, letters, numbers, frame or signature.
 ```
 
-### `astratto_linea`
+### `astratto_linea` (fase 2)
 
 ```
 Image 1 is a game menu mockup: look only at the faint line in the background that runs across the whole screen, soft and wavy on the left and jagged on the right; that is the idea, drawn too stiffly. Image 2 shows the brush line to copy: the thick, soft, slightly irregular hand-drawn ink outline of those cartoon iron plates.
@@ -77,7 +108,7 @@ An almost abstract drawing, wide 16:9: ONE single continuous brush line that cro
 Pure white brush strokes (#FFFFFF) on a pure black background (#000000). Hand-drawn comic ink line like image 2. No fills, no gray, no shading, no hatching, no texture, no glow. No text, letters, numbers, frame or signature.
 ```
 
-### `astratto_vortice`
+### `astratto_vortice` (fase 2)
 
 ```
 Image 1 shows the brush line to copy: the thick, soft, slightly irregular hand-drawn ink outline of those cartoon iron plates.
@@ -92,7 +123,7 @@ Pure white brush strokes (#FFFFFF) on a pure black background (#000000). Hand-dr
 - [ ] solo bianco e nero, nessun riempimento, grigio o texture
 - [ ] tratto a pennello come i pezzi di WB-022: morbido, un po' irregolare, che si assottiglia
 - [ ] non si riconoscono oggetti: solo fuoco (curve) e gelo (spigoli)
-- [ ] pochi segni e molto vuoto; `astratto_fuoco` solo a sinistra, `astratto_gelo` solo a destra
+- [ ] pochi segni e molto vuoto; `astratto_calore` dall'angolo in basso a sinistra, `astratto_cristallo` dall'angolo in alto a destra (fase 2: `astratto_fuoco` solo a sinistra, `astratto_gelo` solo a destra)
 - [ ] nessuna scritta, cornice o firma
 
 ## Dopo le immagini (lo fa Claude)

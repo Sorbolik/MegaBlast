@@ -257,24 +257,29 @@ return {
 		-- the map of the circles (after the kidnapping, Sergio 11 Nov): the Cortile
 		-- and the Forge on the top floor, the nine circles going down to Favilla
 		-- (only the ones reached open). The circles are placeholders until their levels are written:
-		-- { numeral, name, keeper }
+		-- { numeral, name, keeper, hazard, what it does }
 		rings = {
-			{ "I", "LIMBO", "CARONTE" }, { "II", "LUSSURIA", "MINOSSE" }, { "III", "GOLA", "CERBERO" },
-			{ "IV", "AVARIZIA", "PLUTONE" }, { "V", "IRA", "FLEGIÀS" }, { "VI", "ERESIA", "MEDUSA" },
-			{ "VII", "VIOLENZA", "MINOTAURO" }, { "VIII", "FRODE", "MALACODA" }, { "IX", "TRADIMENTO", "LUCIFERO" },
+			{ "I", "LIMBO", "CARONTE", "GRAVITÀ RIDOTTA", "SALTI E COLPI VOLANO PIÙ LONTANO" },
+			{ "II", "LUSSURIA", "MINOSSE", "LA BUFERA", "A FINE GIRO SPOSTA TUTTI DI UN PASSO" },
+			{ "III", "GOLA", "CERBERO", "LA GRANDINE", "CADE DOVE L'OMBRA L'ANNUNCIA" },
+			{ "IV", "AVARIZIA", "PLUTONE", "I MASSI", "ROTOLANO DAI PENDII VERSO IL CENTRO" },
+			{ "V", "IRA", "FLEGIÀS", "L'ACQUA SALE", "DAL TERZO GIRO, UN GRADINO PER GIRO" },
+			{ "VI", "ERESIA", "MEDUSA", "LE ARCHE", "APERTE BRUCIANO, CHIUSE RIPARANO" },
+			{ "VII", "VIOLENZA", "MINOTAURO", "SANGUE E FUOCO", "IL SANGUE BRUCIA, SUL SABBIONE PIOVE FUOCO" },
+			{ "VIII", "FRODE", "MALACODA", "PONTI FALSI E PECE", "GLI ARCHI CROLLANO, LA PECE INCOLLA" },
+			{ "IX", "TRADIMENTO", "LUCIFERO", "IL GHIACCIO", "SI SCIVOLA, E LE ESPLOSIONI LO ROMPONO" },
 		},
+		ring_title = "GIRONE %s · %s",
+		ring_here = "SEI QUI",
+		ring_closed = "CHIUSO",
+		hazard = "PERICOLO",
+		keeper = "CUSTODE",
 		ring_name = "%s · %s",
-		ring_locked = "%s · %s · SI APRE BATTENDO %s",
 		ring_stars = "%d / %d",
-		ring_sub = "GIRONE · %s",
 		ring_opens = "SI APRE BATTENDO %s",
-		tap_ring = "SCORRI O TOCCA UN GIRONE PER SCENDERE",
-		coming = "IN ARRIVO",
-		coming_line = "I LIVELLI DI QUESTO GIRONE ARRIVANO PRESTO",
 		coming_sub = "%s · IN ARRIVO",
 		rings_back = "GIRONI",
 		cortile = "IL CORTILE",
-		fabbro_line = { "«Ti ci porto io,", "un girone alla volta.»" },
 	},
 
 	-- ui/level_types.lua: what kind of level a mission is (Sergio, 6 Nov), on its
@@ -427,7 +432,6 @@ return {
 		loadout = "ASSETTO",
 		loadout_n = "ASSETTO %s",
 		how_others_see = "COSÌ TI VEDONO",
-		next_steps = "PROSSIMI SCATTI",
 		-- "Maschera del Corvo": the piece, then the set
 		piece_of = { default = "%s del %s", fornace = "%s della %s" },
 		next_look = "al %s: aspetto %s",
@@ -489,7 +493,6 @@ return {
 	-- menu/home.lua: the home
 	home = {
 		leave_queue_first = "esci dalla coda per giocarla",
-		same_phone = "STESSO TELEFONO",
 		your_devil = "DIAVOLETTO",
 		level = "LIV %d",
 		play_sub = "2 CONTRO 2",
@@ -535,6 +538,7 @@ return {
 		code = "CODICE",
 		bot = "BOT",
 		bot_level = "LIVELLO %d DI %d",
+		bot_level_short = "LIVELLO",
 		player = "GIOCATORE",
 		level = "LIVELLO %d",
 		host = "HA CREATO LA STANZA",

@@ -7,7 +7,7 @@
 imposta prova_profilo 1
 
 aspetta 2
-tocca_bordo 234 450 mezzo sinistra    # CAMPAGNA
+tocca_bordo 236 470 mezzo sinistra    # CAMPAGNA
 aspetta 1.2
 foto 01_forgia
 tocca_centro 546 596              # Addestramento

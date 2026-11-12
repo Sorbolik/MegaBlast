@@ -114,11 +114,11 @@ function M.piece(p, team, x, y, d, parent)
 	local empty = not p.set
 	local border_col = empty and C.LINE or p.tier >= 3 and C.GOLD or p.tier == 2 and C.STEEL
 		or with_alpha(C.LIGHT, 0.5)
-	local outside, border = ui.panel(x, y, d, d, parent)
-	gui.set_color(border, border_col)
+	-- no box around it (Sergio, 12 Nov): the piece alone, a golden glow behind the best
+	local outside = box(x, y, d, d, C.LIGHT, parent)
+	gui.set_visible(outside, false)
 	if p.tier and p.tier >= equip.TIERS and not empty then
-		local a = ui.alone(0, 0, d * 1.6, with_alpha(C.GOLD, 0.35), outside)
-		gui.move_below(a, border)
+		ui.alone(0, 0, d * 1.6, with_alpha(C.GOLD, 0.35), outside)
 	end
 	-- the piece's image, whole in the box
 	local img = PIECE_IMAGES[p.slot]
@@ -137,14 +137,12 @@ function M.piece(p, team, x, y, d, parent)
 	if empty then return outside end
 	-- the upgrade ticks at the top left: gold for those taken
 	for i, s in ipairs(equip.TIER_LEVELS) do
-		local t = box(-d / 2 + 8 + (i - 1) * 10, d / 2 - 8, 7, 7, p.livello >= s and C.GOLD or with_alpha(C.LIGHT, 0.3), outside)
-		gui.set_euler(t, vmath.vector3(0, 0, 45))
+		local t = kit.piece({ node = outside, ox = 0, oy = 0 }, "tacca", -d / 2 + 8 + (i - 1) * 11, -(d / 2 - 7), 11)
+		gui.set_color(t, p.livello >= s and C.GOLD or with_alpha(C.LIGHT, 0.3))
 	end
 	-- the level at the bottom right
 	local lw = p.livello >= 10 and 28 or 22
-	box(d / 2 - lw / 2 + 4, -d / 2 + 4, lw + 3, 21, C.LIGHT, outside)
-	box(d / 2 - lw / 2 + 4, -d / 2 + 4, lw, 18, C.BOTTOM, outside)
-	txt(tostring(p.livello), d / 2 - lw / 2 + 4, -d / 2 + 4, 0.62, C.LIGHT, outside)
+	txt(tostring(p.livello), d / 2 - lw / 2 + 4, -d / 2 + 6, 0.7, border_col, outside)
 	return outside
 end
 
@@ -158,19 +156,15 @@ end
 local function pills(abilities, sx, y, space, parent)
 	if #abilities == 0 then
 		local w = wide(T.no_power, 0.58) + 16
-		box(sx + w / 2, y, w + 2, 24, C.LINE, parent)
-		box(sx + w / 2, y, w, 22, C.PANEL, parent)
-		txt(T.no_power, sx + 8, y, 0.58, C.OFF, parent, gui.PIVOT_W)
+		txt(T.no_power, sx, y, 0.58, C.OFF, parent, gui.PIVOT_W)
 		return
 	end
 	local x = sx
 	for _, p in ipairs(abilities) do
 		local w = wide(p, 0.58) + 16
 		if x + w > sx + space then break end
-		box(x + w / 2, y, w + 3, 25, C.GOLD, parent)
-		box(x + w / 2, y, w, 22, C.BOTTOM, parent)
-		txt(p, x + 8, y, 0.58, C.GOLD, parent, gui.PIVOT_W)
-		x = x + w + 6
+		txt(p, x, y, 0.58, C.GOLD, parent, gui.PIVOT_W)
+		x = x + w
 	end
 end
 
@@ -181,14 +175,19 @@ function M.new(v, x, y, opt, parent)
 	local col = C.SQUADRA[v.squadra] or C.LIGHT
 	c.alto = H
 	-- the border in the team color: solid for whoever plays here
-	c.root, c.bordo = ui.panel(x, y - H / 2, W, H, parent)
-	gui.set_color(c.bordo, opt.tu and col or with_alpha(col, 0.6))
+	-- an iron panel of the kit, as big as opt.scale says (1: as in a match)
+	local k = opt.scale or 1
+	c.root = box(x, y - H * k / 2, W, H, C.LIGHT, parent)
+	gui.set_visible(c.root, false)
+	gui.set_scale(c.root, vmath.vector3(k, k, 1))
+	kit.panel(c.root, W, H, opt.tu and "pannello_caldo" or "pannello")
+	if opt.tu then kit.panel(c.root, W - 10, H - 10, "pannello") end
 	local sx, dx = -W / 2 + PAD, W / 2 - PAD
 	local top = H / 2 - PAD
 
 	-- level, name, badges
 	local cy = top - HEAD / 2 + 4
-	ui.ring_node(sx + 22, cy, 44, 3, col, c.root)
+	kit.piece({ node = c.root, ox = 0, oy = 0 }, "tondo_ferro", sx + 22, -cy, 48)
 	if v.livello then
 		txt(tostring(v.livello), sx + 22, cy - (v.torneo and 4 or 0), 0.95, col, c.root)
 		if v.torneo then txt(common.tournament, sx + 22, cy + 11, 0.3, col, c.root) end
@@ -207,7 +206,6 @@ function M.new(v, x, y, opt, parent)
 	if opt.portrait then
 		local scoria = require "battle.scoria"
 		-- the portrait's dark frame, with the devil inside
-		box(0, yy - PORTRAIT / 2 + 2, 128, PORTRAIT - 12, with_alpha(C.BOTTOM, 0.7), c.root)
 		local pose = box(0, yy - PORTRAIT + 16, 0, 0, C.LIGHT, c.root)
 		gui.set_visible(pose, false)
 		c.figure = scoria.new(col, scoria.PERSONAGGIO, "missile")
@@ -240,7 +238,6 @@ function M.new(v, x, y, opt, parent)
 	for _, r in ipairs(showcase.rows(v)) do
 		local ry = yy - ROW / 2
 		txt(r.nome, sx, ry, 0.62, C.TEXT, c.root, gui.PIVOT_W)
-		box(bx + bw / 2, ry, bw, 10, with_alpha(C.LIGHT, 0.08), c.root)
 		if r.offset ~= 0 then
 			local w = math.abs(r.offset) * bw / 2
 			local f = box(bx + bw / 2, ry, w, 10, r.offset > 0 and C.MINT or C.BRACE, c.root)
