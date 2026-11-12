@@ -133,3 +133,17 @@ carta, C solo luce fatta col codice) la sceglie Sergio.
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+### 2026-11-12
+
+Consegna di Codex sul ramo `design/WB-027` (`76518351`): quattro immagini, tutte buone e senza
+difetti (tre piani leggibili, nessun contorno, luci al posto giusto, niente scritte o
+personaggi). Messe nella pagina delle proposte sotto l'interfaccia vera
+(https://claude.ai/artifact/8Vtj3sQas5mHQry8eD7Myo, foto in
+`/mnt/project-files/sfondi_premium/codex_wb027.jpg`). Niente è entrato nel gioco.
+
+Verdetto di Sergio: `sfondo_campagna_A` «è molto bello», è il modello da seguire. Nella home
+«il centro di attenzione diventa quell'incudine»: vuole meno dettagli. Quindi `sfondo_home_A`,
+`sfondo_home_B` e `sfondo_armeria_A` non si usano; si rifanno senza oggetti con WB-028.
+Non verificato: i dipinti nel gioco vero e su schermi 20:9 e 4:3.
+
