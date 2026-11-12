@@ -7,7 +7,7 @@ imposta prova_storia si
 imposta prova_vignette no
 
 aspetta 2
-tocca 1038 572                      # CAMPAGNA
+tocca 236 470                      # CAMPAGNA
 aspetta 1.2
 foto 01_viaggio
 pad a

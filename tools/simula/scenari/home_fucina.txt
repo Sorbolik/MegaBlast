@@ -5,7 +5,7 @@ aspetta 0.25
 foto 01_entrata
 aspetta 4
 foto 02_home
-tocca_bordo 242 572 mezzo destra    # CAMPAGNA
+tocca_bordo 236 470 mezzo sinistra    # CAMPAGNA
 aspetta 0.12
 foto 03_tempra
 aspetta 1.2
@@ -13,6 +13,6 @@ foto 04_campagna
 tocca_bordo 36 60 basso sinistra     # indietro
 aspetta_stato modo=menu 3
 aspetta 0.6
-tocca_bordo 232 488 mezzo destra    # ALLENAMENTO
+tocca_bordo 250 334 mezzo sinistra    # ALLENAMENTO
 aspetta 1.2
 foto 05_allenamento

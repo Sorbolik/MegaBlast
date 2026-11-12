@@ -62,30 +62,34 @@ local function statistics(a)
 	local g = a.kg
 	local b = base()
 	local st = loadout.stats(b, to_active(a), profile.levels(a.prof, to_active(a)))
-	kit.heading(g, common.stats, 1030 + kit.air(), 112)
+	local x0 = 1040 + kit.air()
+	kit.heading(g, common.stats, x0, 124)
+	-- what the pieces change comes first; ten rows at most, big enough to read
+	-- on a phone (Sergio, 12 Nov)
+	local function changed(k) return b[k] ~= nil and st[k] ~= b[k] end
 	local rows = {}
-	for _, s in ipairs(M.STATISTICS) do
-		if st[s[1]] ~= nil then rows[#rows + 1] = s end
+	for pass = 1, 2 do
+		for _, s in ipairs(M.STATISTICS) do
+			if st[s[1]] ~= nil and changed(s[1]) == (pass == 1) and #rows < 10 then rows[#rows + 1] = s end
+		end
 	end
-	-- closer together when they are many: the action is under them
-	local step = math.min(38, 360 / math.max(1, #rows - 1))
-	local h = math.min(30, step - 6)
+	local step = 46
 	for i, s in ipairs(rows) do
 		local k, nome, modo = s[1], s[2], s[3]
-		local x, y = 1024 + kit.air() - (i - 1) * 3 * step / 38, 128 + (i - 1) * step
-		local col, mark = KC.SAND, KC.PURPLE
-		if b[k] ~= nil and st[k] ~= b[k] then
+		local x, y = x0, 140 + (i - 1) * step
+		local col = KC.SAND
+		if changed(k) then
 			local better = type(st[k]) ~= "number" or st[k] > b[k]
 			-- for these, less is better
 			if k == "teleport_ticks" or k == "fall_damage_mul" or k == "knockback_mul" then
 				better = st[k] < b[k]
 			end
 			col = better and KC.MINT or KC.RED
-			mark = col
 		end
-		kit.info(g, x, y, 222, h, mark)
-		kit.text(g, kit.upper(nome), x + 18, y + h / 2 + 6, 12, KC.SAND, "start", 0.5)
-		kit.text(g, kit.upper(value(st[k], modo)), x + 212, y + h / 2 + 6, 13, col, "end")
+		local name = kit.text(g, kit.upper(nome), x, y + 28, 15, kit.with_alpha(KC.SAND, 0.85), "start", 0.5)
+		local wide = kit.width(name)
+		if wide > 160 then gui.set_scale(name, gui.get_scale(name) * (160 / wide)) end
+		kit.text(g, kit.upper(value(st[k], modo)), x + 226, y + 29, 20, col, "end")
 	end
 end
 

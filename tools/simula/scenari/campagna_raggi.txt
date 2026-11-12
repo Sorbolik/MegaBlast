@@ -4,7 +4,7 @@
 imposta prova_vignette no
 imposta prova_profilo 1
 aspetta 1.5
-tocca 1038 572                       # CAMPAGNA
+tocca 236 470                       # CAMPAGNA
 aspetta 0.8
 foto 01_addestramento
 tocca 740 596                       # LA FORGIA

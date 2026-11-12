@@ -10,7 +10,7 @@ imposta prova_scelta 1
 imposta prova_profilo 1
 
 aspetta 1.5
-tocca_centro 330 300                # il diavoletto: il profilo
+tocca_centro 640 300                # il diavoletto: il profilo
 aspetta 0.5
 foto 01_profilo_scheda
 tocca_bordo 802 124 alto centro   # STATISTICHE (le schede stanno sotto la testata)
@@ -19,11 +19,11 @@ foto 02_profilo_statistiche
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.3                         # lo scivolo finisce
-tocca_bordo 232 488 mezzo destra    # ALLENAMENTO
+tocca_bordo 250 334 mezzo sinistra    # ALLENAMENTO
 aspetta 1
 tocca_bordo 761 250 alto centro    # 2 CONTRO 2 (la striscia va da un bordo all'altro)
 aspetta 0.3
-tocca_bordo 215 118 basso destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=scelta 5
 aspetta 0.8
 foto 03_schieramento

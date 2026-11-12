@@ -5,7 +5,7 @@
 # fantoccio dell'isola. Barra: Lanciarune 506, TELE 1180 62 (tasto t).
 imposta prova_missione tempo
 aspetta 2.5
-tocca_bordo 240 420 mezzo destra                        # AVANTI sulla cartolina
+tocca_bordo 175 52 basso destra                        # AVANTI sulla cartolina
 aspetta_stato modo=local fase=aim 8
 aspetta 1.2
 foto 01_vignetta                     # spiega: i globi

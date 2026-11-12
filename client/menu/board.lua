@@ -58,21 +58,21 @@ end
 -- ORA: the cards of the running events, staggered; the first is the one GIOCA plays
 local function hour_of(b, now)
 	local g = b.kg
-	kit.heading(g, T.now, 446, 150)
+	kit.heading(g, T.now, 446, 140)
 	local list_of = events.in_progress(now)
 	if #list_of == 0 then
-		kit.text(g, kit.upper(T.no_event), 446, 196, 14, KC.MUTE, "start", 0.5)
+		kit.text(g, kit.upper(T.no_event), 446, 190, 18, KC.MUTE, "start", 0.5)
 		return nil
 	end
 	for i, o in ipairs(list_of) do
 		if i > 3 then break end
-		local x, y = 440 + (i - 1) * 14, 170 + (i - 1) * 124
-		local k = kit.card(g, x, y, 380, 104, color(o), { sel = i == 1 })
-		kit.text(k.g, kit.upper(events.kind(o)), x + 34, y + 28, 11, color(o), "start", 1.5)
-		kit.text(k.g, kit.upper(events.when(o, now)), x + 356, y + 28, 11, KC.MUTE, "end", 1)
-		fit(kit.text(k.g, kit.upper(o.nome), x + 30, y + 64, 26, KC.SAND), 330)
-		kit.text(k.g, kit.upper(where(o)), x + 28, y + 86, 11, KC.MUTE, "start", 1)
-		kit.zone(g, b.buttons, x, y, 380, 104, "evento:" .. o.id)
+		local x, y = 440 + (i - 1) * 10, 156 + (i - 1) * 146
+		local k = kit.card(g, x, y, 410, 130, color(o), { sel = i == 1 })
+		kit.text(k.g, kit.upper(events.kind(o)), x + 30, y + 36, 14, color(o), "start", 1.5)
+		kit.text(k.g, kit.upper(events.when(o, now)), x + 384, y + 36, 14, KC.MUTE, "end", 0.5)
+		fit(kit.text(k.g, kit.upper(o.nome), x + 28, y + 80, 32, KC.SAND), 356)
+		kit.text(k.g, kit.upper(where(o)), x + 30, y + 108, 14, KC.MUTE, "start", 0.5)
+		kit.zone(g, b.buttons, x, y, 410, 136, "evento:" .. o.id)
 	end
 	return list_of[1]
 end
@@ -80,71 +80,49 @@ end
 -- PROSSIMI: two weeks from Monday, then the upcoming ones in a row
 local function upcoming(b, now)
 	local g = b.kg
-	kit.heading(g, T.next, 880 + kit.air(), 150)
-	local today = midnight(now)
-	local wday = os.date("*t", today).wday
-	-- this week's Monday (at noon: no surprises with daylight saving)
-	local monday = today + 43200 - ((wday + 5) % 7) * 86400
-	for i = 0, 13 do
-		local col, row = i % 7, math.floor(i / 7)
-		local x, y = 876 + kit.air() + col * 52 - row * 4, 164 + row * 58
-		local t = midnight(monday + i * 86400)
-		local end_of = midnight(t + 86400 + 43200)
-		local k = kit.card(g, x, y, 44, 46, KC.ROSE, { sel = t == today, off = t < today })
-		kit.text(k.g, tostring(os.date("*t", t).day), x + 22, y + 22, 14, t < today and KC.MUTE or KC.SAND, "middle")
-		-- one small bar for each event of that day
-		local n = 0
-		for _, o in ipairs(events.lista) do
-			if o.da < end_of and o.a > t and n < 2 then
-				kit.para(k.g, x + 7, y + 30 + n * 6, 28, 4, 2, color(o))
-				n = n + 1
-			end
-		end
-	end
-	-- in a row: the upcoming ones starting (also those coming back)
+	kit.heading(g, T.next, 900 + kit.air(), 140)
+	-- in a row: the upcoming ones starting (also those coming back), big enough
+	-- for a thumb (the small calendar is gone: Sergio, 12 Nov)
 	local list_of = events.upcoming(now)
-	if #list_of == 0 then kit.text(g, kit.upper(T.nothing_planned), 880 + kit.air(), 326, 12, KC.MUTE, "start", 1) end
+	if #list_of == 0 then kit.text(g, kit.upper(T.nothing_planned), 900 + kit.air(), 190, 16, KC.MUTE, "start", 1) end
 	for i, o in ipairs(list_of) do
-		if i > 4 then break end
-		local x, y = 870 + kit.air() - (i - 1) * 4, 300 + (i - 1) * 50
-		kit.info(g, x, y, 370, 38, color(o))
-		fit(kit.text(g, kit.upper(o.nome), x + 24, y + 25, 13, KC.SAND), 210)
-		kit.text(g, kit.upper(day_n(o.da, true)), x + 360, y + 25, 11, KC.MUTE, "end", 1)
-		kit.zone(g, b.buttons, x, y - 6, 370, 50, "evento:" .. o.id)
+		if i > 6 then break end
+		local x, y = 900 + kit.air(), 156 + (i - 1) * 70
+		fit(kit.text(g, kit.upper(o.nome), x, y + 28, 20, KC.SAND), 330)
+		kit.text(g, kit.upper(day_n(o.da, true)), x, y + 50, 14, color(o), "start", 0.5)
+		kit.zone(g, b.buttons, x - 10, y, 350, 70, "evento:" .. o.id)
 	end
 end
 
 -- An event's detail (Figma 22)
 local function detail(b, o, now)
 	local g = b.kg
-	local lab = kit.label(g, 444, 118, kit.upper(events.kind(o)), color(o))
-	kit.text(g, kit.upper(events.when(o, now)), 444 + 16 + kit.width(lab) + 30, 134, 12, KC.MUTE, "start", 1.5)
+	local lab = kit.label(g, 444, 116, kit.upper(events.kind(o)), color(o))
+	kit.text(g, kit.upper(events.when(o, now)), 444 + kit.width(lab) + 24, 134, 15, KC.MUTE, "start", 1)
 	fit(kit.text(g, kit.upper(o.nome), 440, 196, 54, KC.SAND), 780)
-	if o.riga and o.riga ~= "" then fit(kit.text(g, o.riga, 442, 226, 16, KC.MUTE), 780) end
-	kit.heading(g, T.what_changes, 446, 270)
+	if o.riga and o.riga ~= "" then fit(kit.text(g, o.riga, 442, 230, 20, KC.MUTE), 780) end
+	kit.heading(g, T.what_changes, 444, 280)
 	local n = 0
 	for i, t in ipairs(events.what_changes(o, b.nomi)) do
 		if i > 4 then break end
-		local x, y = 440 + (i - 1) * 10, 284 + (i - 1) * 52
-		kit.info(g, x, y, 400, 40, KC.PURPLE)
-		fit(kit.text(g, kit.upper(t), x + 26, y + 27, 14, KC.SAND), 360)
+		local x, y = 444, 294 + (i - 1) * 48
+		fit(kit.text(g, kit.upper(t), x, y + 30, 19, KC.SAND), 440)
 		n = i
 	end
 	local when = T.from_to:format(day_n(o.da, true), day_n(o.a, true))
 	if o.torna then when = when .. " · " .. T.back_on:format(day_n(o.torna)) end
-	kit.text(g, kit.upper(when), 446, 284 + n * 52 + 22, 11, KC.MUTE, "start", 1)
+	fit(kit.text(g, kit.upper(when), 444, 294 + n * 48 + 34, 14, KC.MUTE, "start", 0.5), 460)
 
 	-- on the right: the prizes (the server hands them out once there are accounts)
-	kit.heading(g, T.prizes, 926 + kit.air(), 270)
+	kit.heading(g, T.prizes, 926 + kit.air(), 280)
 	local premi = type(o.premi) == "table" and o.premi or {}
-	if #premi == 0 then kit.text(g, kit.upper(T.just_for_fun), 926 + kit.air(), 306, 12, KC.MUTE, "start", 1) end
+	if #premi == 0 then kit.text(g, kit.upper(T.just_for_fun), 926 + kit.air(), 322, 16, KC.MUTE, "start", 1) end
 	for i, p in ipairs(premi) do
 		if i > 4 then break end
-		local x, y = 920 + kit.air() - (i - 1) * 5, 284 + (i - 1) * 52
+		local x, y = 926 + kit.air(), 294 + (i - 1) * 48
 		local who = type(p) == "table" and p.chi
-		kit.info(g, x, y, 310, 40, who and KC.HOT or KC.PURPLE)
-		fit(kit.text(g, kit.upper(type(p) == "table" and (p.testo or "") or tostring(p)), x + 26, y + 27, 14, KC.SAND), who and 190 or 270)
-		if who then kit.text(g, kit.upper(who), x + 300, y + 27, 11, KC.HOT_TOP, "end", 1) end
+		fit(kit.text(g, kit.upper(type(p) == "table" and (p.testo or "") or tostring(p)), x, y + 30, 19, KC.SAND), who and 200 or 300)
+		if who then kit.text(g, kit.upper(who), x + 310, y + 29, 14, KC.HOT_TOP, "end", 0.5) end
 	end
 	-- an event on a normal queue is played in that queue
 	return o.da <= now and o or nil
@@ -176,7 +154,7 @@ local function build(b)
 	if o then
 		play = detail(b, o, now)
 	elseif not events.loaded_ok then
-		kit.text(b.kg, kit.upper(T.offline), 446, 196, 13, KC.MUTE, "start", 0.5)
+		kit.text(b.kg, kit.upper(T.offline), 446, 190, 17, KC.MUTE, "start", 0.5)
 	else
 		play = hour_of(b, now)
 		upcoming(b, now)

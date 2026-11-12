@@ -7,11 +7,11 @@ imposta prova_vignette no
 imposta prova_durata 40
 
 aspetta 1.5
-tocca 1048 488                      # ALLENAMENTO
+tocca 250 334                      # ALLENAMENTO
 aspetta 1
 tocca 547 470                       # 1 CONTRO 1
 aspetta 0.3
-tocca_bordo 215 118 basso destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 8
 aspetta 1
 mira 150 100 0.4
@@ -24,7 +24,7 @@ mira 150 100 0.4
 aspetta_evento over 90
 aspetta 4
 foto 01_podio
-tocca_bordo 453 108 basso destra                      # RIVEDI
+tocca_bordo 461 60 basso destra                      # RIVEDI
 aspetta_stato modo=replay 5
 aspetta 1
 tocca 640 360                       # fine: il profilo, sulla partita

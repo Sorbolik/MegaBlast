@@ -1,0 +1,48 @@
+# Il giro dei menu su un telefono lungo (Sergio, 12 nov: «tutto troppo piccolo»):
+#   python3 tools/simula/simula.py --senza-video --schermo 1600x720 -s tools/simula/scenari/telefono.txt
+imposta prova_profilo 1
+aspetta 4
+foto 01_home
+tocca_bordo 236 334 mezzo destra    # IL TUO DIAVOLETTO
+aspetta 0.8
+foto 02_scheda
+tocca_bordo 666 129 alto centro     # SIGILLI
+aspetta 0.4
+foto 03_sigilli
+tocca_bordo 891 129 alto centro     # STATISTICHE
+aspetta 0.4
+foto 04_statistiche
+tocca_bordo 1117 129 alto centro    # PARTITE
+aspetta 0.4
+foto 05_partite
+tocca_bordo 480 129 alto centro     # SCHEDA
+aspetta 0.4
+tocca_bordo 175 52 basso destra     # ARMERIA
+aspetta 0.9
+foto 06_armadio
+tocca_bordo 700 129 alto centro     # BOTTEGA
+aspetta 0.4
+foto 07_bottega
+tocca_bordo 900 129 alto centro     # CATALOGO
+aspetta 0.4
+foto 08_catalogo
+tocca_bordo 36 60 basso sinistra    # indietro: il diavoletto
+aspetta 1.2
+tocca_bordo 36 60 basso sinistra    # indietro: la home
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 74 54 basso sinistra    # la rotellina
+aspetta 0.8
+foto 09_impostazioni
+tocca_bordo 36 60 basso sinistra
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 246 470 mezzo destra    # EVENTI
+aspetta 0.9
+foto 10_eventi
+tocca_bordo 36 60 basso sinistra
+aspetta_stato modo=menu 3
+aspetta 0.5
+tocca_bordo 175 52 basso destra     # GIOCA
+aspetta 0.9
+foto 11_gioca

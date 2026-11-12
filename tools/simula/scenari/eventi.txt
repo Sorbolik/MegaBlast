@@ -12,7 +12,7 @@ imposta server_url ws://127.0.0.1:8090/ws
 aspetta 1
 server evento:maglio 3 eventi_prova.json
 aspetta 1
-tocca_bordo 242 404 mezzo destra  # EVENTI
+tocca_bordo 246 470 mezzo destra  # EVENTI
 aspetta 1.5
 foto 01_bacheca
 tocca_bordo 630 222 alto centro     # la prima carta in corso: il Maglio
@@ -29,12 +29,12 @@ tocca_bordo 36 60 basso sinistra    # indietro: la home (rilegge gli eventi)
 aspetta_stato modo=menu 3
 aspetta 1
 foto 03_home
-tocca_bordo 251 260 mezzo destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta 1
 foto 04_dove_giochi
 tocca_bordo 660 323 alto centro     # la carta del Maglio
 aspetta 0.3
-tocca_bordo 205 410 mezzo destra    # CERCA
+tocca_bordo 175 52 basso destra    # CERCA
 aspetta_stato modo=scelta_online 20
 aspetta 1
 foto 05_scelta_maglio

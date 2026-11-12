@@ -4,7 +4,7 @@
 imposta prova_missione sfida_burrone
 aspetta 2.5
 foto 00_cartolina
-tocca_bordo 240 420 mezzo destra                        # AVANTI sulla cartolina
+tocca_bordo 175 52 basso destra                        # AVANTI sulla cartolina
 aspetta_stato modo=local fase=aim 8
 aspetta 1.2
 foto 01_apertura                     # la vignetta d'apertura

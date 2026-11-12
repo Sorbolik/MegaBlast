@@ -4,7 +4,7 @@
 
 aspetta 2
 foto 01_home
-tocca 1048 488                      # ALLENAMENTO
+tocca 250 334                      # ALLENAMENTO
 aspetta 1
 foto 02_allenamento
 tocca 547 470                       # 1 CONTRO 1
@@ -16,7 +16,7 @@ foto 04_scegli_la_mappa
 tocca 1151 249                       # LA FOSSA DEL FABBRO
 aspetta 0.3
 foto 05_mappa_scelta
-tocca_bordo 215 118 basso destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 foto 06_partita
