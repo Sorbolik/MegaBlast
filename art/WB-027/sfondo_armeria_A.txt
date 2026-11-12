@@ -1,0 +1,13 @@
+Image 1 is a rough code-made sketch of a background for the armory screen of a mobile game about little devils in Dante's hell. Image 2 shows a sister background of the same game in use, with the character and the comic-style buttons on top: it is there only to show how quiet the background must be under the interface. Do NOT draw the character, the buttons, the line or any text.
+
+Paint a finished, premium version of the background in image 1, wide 16:9, keeping its composition, its two light sources and its dark tonal range. The place: the blacksmith's workbench wall in an underground forge. On the far left, partly off-screen, the round arched mouth of a furnace glowing soft orange-yellow, the only warm light. Above it a long rack with five blacksmith tools hanging (hammers and tongs) as small soft silhouettes. Right of the centre, on the floor, a round quenching barrel with pale cold steam rising from it. On the right, cold pale-blue light comes from the top-right corner, with icicles hanging from above, a few ice spires in the far right and one big translucent ice crystal growing in from the top-right corner.
+
+Style: stylized 2D game background made of three depth planes with atmospheric perspective. Far plane: the lightest, soft-edged, tinted by the light behind it (dull orange on the left, dull blue on the right). Middle plane: darker simple silhouettes with a thin rim of light. Near plane: almost black, out-of-focus shapes at the bottom-left corner (a round pile of coal) and at the bottom-right corner (a sharp ice shard), framing the picture. Big flat shapes with smooth soft gradients, like a modern mobile game lobby background. NO black outlines, no ink lines, no hatching. Very little detail: no bricks, no cracks, no rivets, no surface texture, no noise. Warm shapes are round, cold shapes are sharp and angular.
+
+Colours: overall dark and desaturated (soot brown-black, deep navy), brightness only near the two lights; the centre and the whole right half under the top edge are dark and calm, because a big panel and a list of buttons sit there. A flat dark floor band along the bottom fifth. A soft dark vignette at the edges.
+
+No characters, no creatures, no text, no letters, no numbers, no interface, no frame, no signature.
+
+Riferimenti (in ordine)
+R3: art/WB-027/riferimenti/R3_bozzetto_armeria_A.jpg
+R5: art/WB-027/riferimenti/R5_home_con_interfaccia.jpg

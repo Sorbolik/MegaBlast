@@ -132,4 +132,36 @@ carta, C solo luce fatta col codice) la sceglie Sergio.
 
 ## Consegna di Codex
 
+### 2026-11-12
+
+Quattro prove generate con lo strumento integrato da `main` aggiornato
+(`ac094d92`). Ogni generazione ha usato il prompt integrale della scheda
+e i due riferimenti nell'ordine prescritto.
+
+File in `art/WB-027/`. Ogni nome indica un PNG RGB originale da
+1672 × 941 px e un TXT omonimo con prompt e riferimenti.
+
+| Nome | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `sfondo_home_A` | 1 | 1 |
+| `sfondo_home_B` | 3 | 3 |
+| `sfondo_armeria_A` | 1 | 1 |
+| `sfondo_campagna_A` | 1 | 1 |
+
+Ho confrontato composizione e toni con i bozzetti, controllato formato e
+dimensioni e verificato a vista la profondità, il centro scuro, la luce
+calda in basso a sinistra e quella fredda in alto a destra. Le prove A
+mostrano primi piani sfocati e fondali sfumati. La Home B riprende la stessa
+scena con bordi più netti, ombre fra le sagome e una grana di carta
+visibile a piena risoluzione. In tutte e quattro le prove ho controllato
+l'assenza di personaggi, scritte, pulsanti e cornici.
+
+Ho scelto il terzo tentativo della Home B per la minore luminosità nella
+zona dei pulsanti rispetto ai primi due. In entrambe le Home i cristalli
+restano luminosi e alcuni bordi ricadono nell'area dei pulsanti di R5.
+Nell'Armeria il vapore si vede nella metà destra. Restano piccoli punti
+luminosi ripresi dai bozzetti. La Campagna lascia la colonna centrale
+scura e libera. La leggibilità con i pulsanti effettivamente sovrapposti
+resta da verificare nella pagina delle proposte.
+
 ## Resoconto di Claude

@@ -1,0 +1,13 @@
+Image 1 is a rough code-made sketch of a background for the main menu of a mobile game about little devils in Dante's hell. Image 2 shows the same background in use, with the character and the comic-style buttons on top: it is there only to show where the interface sits and how quiet the background must be. Do NOT draw the character, the buttons, the line or any text.
+
+Paint a finished, premium version of the background in image 1, wide 16:9, keeping its composition, its two light sources and its dark tonal range. The place: the threshold of an underground forge. On the far left, partly off-screen, the round arched mouth of a furnace glowing soft orange-yellow, the only warm light. Under a dark ceiling two blacksmith tools (a hammer and a pair of tongs) hang on chains as small soft silhouettes. Near the middle, on the floor, the dark silhouette of an anvil with a thin warm rim light on its left side. On the right the vault of the cave is broken open: cold pale-blue light comes from the top-right corner, with icicles hanging from above, ice spires rising from below in the distance, and a few big translucent ice crystals growing in from the top-right corner. The ice is invading the forge.
+
+Style: stylized 2D game background made of three depth planes with atmospheric perspective. Far plane: the lightest, soft-edged, tinted by the light behind it (dull orange on the left, dull blue on the right). Middle plane: darker simple silhouettes with a thin rim of light. Near plane: almost black, out-of-focus shapes at the bottom-left corner (a round pile of coal) and at the corners on the right (a sharp ice shard), framing the picture. Big flat shapes with smooth soft gradients, like a modern mobile game lobby background. NO black outlines, no ink lines, no hatching. Very little detail: no bricks, no cracks, no rivets, no surface texture, no noise. Warm shapes are round, cold shapes are sharp and angular.
+
+Colours: overall dark and desaturated (soot brown-black, deep navy), brightness only near the two lights; the centre of the picture is the darkest and calmest area. A flat dark floor band along the bottom fifth with a faint warm pool of light on the left and a faint cold one on the right. A soft dark vignette at the edges.
+
+No characters, no creatures, no text, no letters, no numbers, no interface, no frame, no signature.
+
+Riferimenti (in ordine)
+R1: art/WB-027/riferimenti/R1_bozzetto_home_A.jpg
+R5: art/WB-027/riferimenti/R5_home_con_interfaccia.jpg
