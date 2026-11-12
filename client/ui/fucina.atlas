@@ -1,8 +1,38 @@
 images {
+  image: "/assets/fucina/barra_brace_cx.png"
+}
+images {
+  image: "/assets/fucina/barra_brace_dx.png"
+}
+images {
+  image: "/assets/fucina/barra_brace_sx.png"
+}
+images {
+  image: "/assets/fucina/barra_chiara_cx.png"
+}
+images {
+  image: "/assets/fucina/barra_chiara_dx.png"
+}
+images {
+  image: "/assets/fucina/barra_chiara_sx.png"
+}
+images {
+  image: "/assets/fucina/barra_gelo_cx.png"
+}
+images {
+  image: "/assets/fucina/barra_gelo_dx.png"
+}
+images {
+  image: "/assets/fucina/barra_gelo_sx.png"
+}
+images {
   image: "/assets/fucina/brace.png"
 }
 images {
   image: "/assets/fucina/brace_spenta.png"
+}
+images {
+  image: "/assets/fucina/corona.png"
 }
 images {
   image: "/assets/fucina/fiamma.png"
@@ -11,10 +41,25 @@ images {
   image: "/assets/fucina/filo.png"
 }
 images {
+  image: "/assets/fucina/freccia.png"
+}
+images {
   image: "/assets/fucina/gemma.png"
 }
 images {
+  image: "/assets/fucina/guscio_cx.png"
+}
+images {
+  image: "/assets/fucina/guscio_dx.png"
+}
+images {
+  image: "/assets/fucina/guscio_sx.png"
+}
+images {
   image: "/assets/fucina/indietro.png"
+}
+images {
+  image: "/assets/fucina/ingranaggio.png"
 }
 images {
   image: "/assets/fucina/lingotto_cx.png"
@@ -26,7 +71,28 @@ images {
   image: "/assets/fucina/lingotto_sx.png"
 }
 images {
+  image: "/assets/fucina/linguetta_chiara_cx.png"
+}
+images {
+  image: "/assets/fucina/linguetta_chiara_dx.png"
+}
+images {
+  image: "/assets/fucina/linguetta_chiara_sx.png"
+}
+images {
+  image: "/assets/fucina/linguetta_cx.png"
+}
+images {
+  image: "/assets/fucina/linguetta_dx.png"
+}
+images {
+  image: "/assets/fucina/linguetta_sx.png"
+}
+images {
   image: "/assets/fucina/lucchetto.png"
+}
+images {
+  image: "/assets/fucina/medaglia.png"
 }
 images {
   image: "/assets/fucina/pannello_1.png"
@@ -192,6 +258,24 @@ images {
 }
 images {
   image: "/assets/fucina/scheggia_sx.png"
+}
+images {
+  image: "/assets/fucina/stella.png"
+}
+images {
+  image: "/assets/fucina/stella_spenta.png"
+}
+images {
+  image: "/assets/fucina/tacca.png"
+}
+images {
+  image: "/assets/fucina/tondo_ferro.png"
+}
+images {
+  image: "/assets/fucina/tondo_gelo.png"
+}
+images {
+  image: "/assets/fucina/tondo_oro.png"
 }
 margin: 2
 extrude_borders: 2

@@ -36,7 +36,7 @@ local W, H = 1280, 720
 local C = kit.C
 -- the apprentice: feet on the thread, at the Figma point (330, 661)
 local BODY_X, BODY_Y = 330, 661
-local BODY_K = 400 / game.DISEGNO_H
+local BODY_K = 350 / game.DISEGNO_H
 local DOOR_W, DOOR_H = 384, 82
 
 local V = vmath.vector3()
@@ -142,7 +142,7 @@ function M.new(color)
 	local wheel = kit.group(top_right, 1230, 44)
 	-- the wheel on a lump of cold iron
 	kit.piece({ node = wheel.node, ox = 0, oy = 0 }, "brace_spenta", 0, 0, 56)
-	ui.sagoma("ingranaggio", 0, 1, 30, 30, C.SAND, wheel.node)
+	kit.piece({ node = wheel.node, ox = 0, oy = 0 }, "ingranaggio", 0, -1, 30)
 	local wz = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(72, 72, 0))
 	gui.set_visible(wz, false)
 	gui.set_parent(wz, wheel.node)
@@ -256,7 +256,7 @@ end
 function M.profile(h, p)
 	local profile = require "menu.profile"
 	gui.set_text(h.level, T.level:format(p.livello or 1))
-	if h.xp then gui.delete_node(h.xp.back.node); if h.xp.front then gui.delete_node(h.xp.front.node) end end
+	if h.xp then gui.delete_node(h.xp.back.node); gui.delete_node(h.xp.front.node) end
 	local f = math.min(1, (p.xp or 0) / profile.xp_level(p.livello or 1))
 	h.xp = kit.bar(h.xp_g, 330, 698, 130, 5, f, C.HOT_BOTTOM, C.SAND_SHADOW)
 	-- the first chapter with a mission still to win, and how far you are in it

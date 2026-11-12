@@ -164,7 +164,7 @@ local function wardrobe(s)
 			local x, y = 716 + col * 140 - line * 6, TOP + 256 + line * 44
 			local level = wallet.level(s.prof, set.id, s.slot)
 			local on = a.gear[s.slot] == set.id
-			if on then kit.para(g, x, y, 126, 36, 12, KC.SAND) end
+			if on then kit.light(g, x, y, 126, 36, 12) end
 			kit.text(g, T.set_level:format(set.name, level), x + 68, y + 25, 14, on and KC.INK or kit.with_alpha(KC.SAND, 0.85), "middle")
 			kit.zone(g, s.buttons, x, y - 4, 138, 44, "indossa:" .. set.id)
 		end
@@ -197,7 +197,7 @@ local function vouchers(s, y, usable)
 	kit.info(g, x, y, 546, 44, KC.STAR)
 	kit.text(g, kit.upper(T.vouchers:format(n) .. (usable and "" or T.voucher_hint)), x + 22, y + 28, 13, KC.SAND, "start", 1.2)
 	if usable then
-		kit.para(g, x + 360, y + 6, 170, 32, 10, KC.SAND)
+		kit.light(g, x + 360, y + 6, 170, 32, 10)
 		kit.text(g, T.use_voucher, x + 445, y + 28, 14, KC.INK, "middle")
 		kit.zone(g, s.buttons, x + 354, y, 182, 44, "buono")
 	end
@@ -236,7 +236,7 @@ local function catalog(s)
 			local x, y = 440 + (c - 1) * 138 - (r - 1) * 4, TOP + (r - 1) * 52
 			local own = wallet.owns(s.prof, f.id, slot.id)
 			local sel = s.ware and s.ware.set == f.id and s.ware.slot == slot.id
-			if sel then kit.para(g, x, y, 130, 44, 10, KC.SAND)
+			if sel then kit.light(g, x, y, 130, 44, 10)
 			else kit.info(g, x, y, 130, 44, own and KC.MINT or KC.ROSE) end
 			local ink = sel and KC.INK or own and KC.MINT or KC.SAND
 			kit.text(g, f.name, x + 16, y + 22, 14, ink)

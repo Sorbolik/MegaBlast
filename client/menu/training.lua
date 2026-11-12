@@ -101,11 +101,11 @@ local function map_card(a, x, y, m)
 	end
 end
 
--- an arrow of the maps' row: two strokes and its zone
+-- an arrow of the maps' row: the drawn arrowhead and its zone
 local function arrow(a, x, y, dir)
 	local g = a.kg
-	kit.line(g, x - 7 * dir, y - 14, x + 7 * dir, y, 5, KC.SAND)
-	kit.line(g, x + 7 * dir, y, x - 7 * dir, y + 14, 5, KC.SAND)
+	local n = kit.piece(g, "freccia", x, y, 34)
+	if dir < 0 then gui.set_scale(n, vmath.vector3(-1, 1, 1)) end
 	kit.zone(g, a.buttons, x - 24, y - 40, 48, 80, "scorri:" .. dir)
 end
 

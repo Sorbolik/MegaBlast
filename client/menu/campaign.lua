@@ -189,12 +189,12 @@ local RING_LEVELS = 5
 -- the circle you are on (the levels are still to come: always the first)
 local RING_AT = 1
 local LAST = #SLICES
--- the slice looked at is SLICE_W wide on the screen (half its picture: sharp
--- on a screen twice as dense), the others SMALL of it
-local SLICE_W, SMALL = 670, 0.66
+-- the slice looked at is SLICE_W wide on the screen (about half its picture:
+-- sharp on a screen twice as dense), the others SMALL of it
+local SLICE_W, SMALL = 700, 0.66
 -- where the slice looked at is (Figma), how much of a slice the one above
 -- covers, how long the stack takes to slide
-local MAP_X, LOOK_Y, COVER, LOOK_TIME = 560, 318, 0.2, 0.3
+local MAP_X, LOOK_Y, COVER, LOOK_TIME = 640, 318, 0.2, 0.3
 -- how dark a closed circle is: the next one, and the ones under it
 local NEXT_DIM, OFF_DIM = 0.78, 0.56
 -- a drag this long (pixels of the 720 high screen) moves the stack
@@ -279,7 +279,10 @@ local function slice(c, i, at, from)
 			else
 				kit.piece(sg, "brace_spenta", x, y, keeper and 46 or 30)
 			end
-			if keeper then kit.text(sg, r[3], x, y + 38, 10, KC.SAND, "middle", 1) end
+			if keeper then
+				kit.piece(sg, "corona", x, y - 30, 20)
+				kit.text(sg, r[3], x, y + 38, 10, KC.SAND, "middle", 1)
+			end
 		end
 	end
 	kit.zone(sg, c.buttons, -SLICE_W * 0.46, -h / 2, SLICE_W * 0.92, h, "girone:" .. i)
@@ -292,12 +295,23 @@ local function slice(c, i, at, from)
 	return n
 end
 
+-- a small block of the left column: a thin line in its color, a small label and its lines
+local function note(g, y, color, label, lines)
+	kit.rect(g, 32, y - 10, 3, 16 + #lines * 19, color)
+	kit.text(g, label, 46, y, 11, color, "start", 1.5)
+	for i, line in ipairs(lines) do
+		fit(kit.text(g, line, 46, y + i * 19 + 2, i == 1 and 15 or 12, i == 1 and KC.SAND or KC.MUTE, "start", 0.5), 236)
+	end
+end
+
 local function build_map(c)
 	local g = c.kg
-	c.head = kit.header(c.buttons, common.campaign, KC.HOT, "indietro", common.home)
 	local look = math.max(1, math.min(LAST, c.scelta.look or RING_AT))
 	local from = c.look_from or look
 	c.scelta.look, c.look_from = look, nil
+	local r = T.rings[look]
+	-- the circle looked at gives the screen its name and its color
+	c.head = kit.header(c.buttons, r[2], RING_ACCENT[look], "indietro", common.home)
 	local at, was = layout(look), layout(from)
 	-- from the bottom up: each slice covers the back of the one under it; the
 	-- one looked at over its neighbours
@@ -314,37 +328,43 @@ local function build_map(c)
 		end
 		kit.pop(k.node, from == look and 0.15 or LOOK_TIME)
 	end
-	-- the top floor, on the left: the two chapters done, each with the picture of its place
+	-- on the left, under the name: where it is, its hazard, its keeper
 	local tl = c.head.top_left
-	local places = { { payload.CAPITOLI[1], T.cortile, 118 }, { payload.CAPITOLI[2], kit.upper(payload.CAPITOLI[2].titolo), 268 } }
-	for _, pl in ipairs(places) do
-		local cap, y = pl[1], pl[3]
-		local first = cap.missioni[#cap.missioni]
-		local tex, size = ill.texture(first.id, "carta")
-		local k = kit.card(tl, 36, y, 150, 86, KC.SAND, {})
-		if tex then
-			c.textures[#c.textures + 1] = { first.id, "carta" }
-			kit.card_picture(k, tex, 78, size and size.w / size.h, 1)
-		end
-		kit.text(tl, pl[2], 40, y + 108, 14, KC.SAND, "start", 1)
+	local state = look == RING_AT and T.ring_here or look == RING_AT + 1 and T.ring_opens:format(T.rings[RING_AT][3]) or T.ring_closed
+	kit.text(tl, T.ring_title:format(r[1], state), 32, 106, 12, KC.MUTE, "start", 1.5)
+	note(tl, 152, KC.ICE, T.hazard, { r[4], r[5] })
+	note(tl, 232, KC.HOT, T.keeper, { r[3] })
+	-- the top floor, at the bottom left on the thread: the two chapters done
+	local x = 96
+	for _, cap in ipairs({ payload.CAPITOLI[1], payload.CAPITOLI[2] }) do
+		local name = cap == payload.CAPITOLI[1] and T.cortile or kit.upper(cap.titolo)
+		local p = kit.plate(c.low, x, 634, 196, 52, KC.ROSE, { sk = 0 })
+		local b = p.box
+		local mid = (b.y0 + b.y1) / 2
+		local label = kit.text(p.g, name, b.x0, mid + 6, 15, KC.SAND, "start", 0.5)
 		local got, all = chapter_stars(c, cap)
-		ui.star(48 - tl.ox, tl.oy - (y + 124), 12, KC.STAR, tl.node)
-		kit.text(tl, T.ring_stars:format(got, all), 60, y + 129, 11, KC.MUTE, "start", 1)
-		kit.zone(tl, c.buttons, 30, y - 6, 170, 140, "capitolo:" .. cap.id)
+		local count = kit.text(p.g, T.ring_stars:format(got, all), b.x1, mid + 5, 11, KC.MUTE, "end", 0.5)
+		ui.star(b.x1 - kit.width(count) - 11 - p.g.ox, p.g.oy - mid, 12, KC.STAR, p.g.node)
+		fit(label, b.x1 - b.x0 - kit.width(count) - 26)
+		kit.button(c.buttons, p, "capitolo:" .. cap.id)
+		x = x + 206
 	end
+	-- (over the stack: the lower slices pass behind them)
+	gui.move_above(c.low.node, c.radice)
 	-- the rail, on the right: the nine circles at a glance, each one a way there
 	local tr = c.head.top_right
+	local top, step = 126, 50
+	kit.rect(tr, 1223, top, 2, (LAST - 1) * step, kit.with_alpha(KC.SAND, 0.22))
 	for i = 1, LAST do
-		local y = 150 + (i - 1) * 34
+		local y = top + (i - 1) * step
 		local closed = i > RING_AT
-		kit.text(tr, T.rings[i][1], 1196, y + 5, 12, i == look and KC.SAND or closed and KC.MUTE or RING_ACCENT[i], "end", 1)
-		local mark = kit.piece(tr, closed and "lucchetto" or "brace", 1224, y, i == look and 30 or 22)
-		if closed and i ~= look then gui.set_color(mark, vmath.vector4(0.55, 0.55, 0.62, 1)) end
-		kit.zone(tr, c.buttons, 1150, y - 17, 110, 34, "girone:" .. i)
+		kit.text(tr, T.rings[i][1], 1192, y + 5, i == look and 15 or 12, i == look and KC.SAND or closed and KC.MUTE or RING_ACCENT[i], "end", 1)
+		local mark = kit.piece(tr, closed and "lucchetto" or "brace", 1224, y, i == look and 34 or 24)
+		if closed and i ~= look then gui.set_color(mark, vmath.vector4(0.6, 0.6, 0.68, 1)) end
+		kit.zone(tr, c.buttons, 1140, y - step / 2, 130, step, "girone:" .. i)
 	end
-	kit.text(c.right, T.tap_ring, 1090, 520, 10, KC.MUTE, "middle", 1)
 	c.play = nil
-	c.action = kit.action(c.right, common.play, 930, 560, 270, 84, { size = 54, sub = T.coming_sub:format(T.rings[RING_AT][2]), off = true })
+	c.action = kit.action(c.right, common.play, 930, 572, 270, 84, { size = 54, sub = T.coming_sub:format(T.rings[RING_AT][2]), off = true })
 	kit.button(c.buttons, c.action, "gioca", { main = true, spento = true })
 end
 

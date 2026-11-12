@@ -154,8 +154,8 @@ function M.loadouts(s)
 	for i = 1, #p.loadouts do
 		if loadout.open(i, p.livello) then
 			local x = 40 + n * 54
-			if p.is_active == i then kit.para(g, x, 125, 46, 34, 10, KC.SAND) end
-			kit.text(g, tostring(i), x + 27, 148, 18, p.is_active == i and KC.INK or KC.MUTE, "middle")
+			local tab = kit.plate(g, x, 122, 50, 40, KC.ROSE, { sk = 0, piece = p.is_active == i and "linguetta_chiara" or "linguetta" })
+			kit.text(tab.g, tostring(i), (tab.box.x0 + tab.box.x1) / 2, 149, 18, p.is_active == i and KC.INK or KC.MUTE, "middle")
 			kit.zone(g, s.buttons, x, 118, 54, 48, "assetto:" .. i)
 			n = n + 1
 		end
@@ -234,7 +234,7 @@ local function sheet_stats(s)
 		local nome = kit.upper(profile.GROUP_NAMES[gr])
 		local w = #nome * 10 + 34
 		local on = s.gruppo == gr
-		if on then kit.para(g, cx, 164, w, 32, 10, KC.SAND) end
+		if on then kit.light(g, cx, 164, w, 32, 10) end
 		kit.text(g, nome, cx + w / 2 + 4, 186, 14, on and KC.INK or kit.with_alpha(KC.SAND, 0.8), "middle")
 		kit.zone(g, s.buttons, cx, 158, w + 10, 44, "gruppo:" .. gr)
 		cx = cx + w + 12

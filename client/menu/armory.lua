@@ -68,7 +68,7 @@ local function statistics(a)
 		if st[s[1]] ~= nil then rows[#rows + 1] = s end
 	end
 	-- closer together when they are many: the action is under them
-	local step = math.min(38, 392 / math.max(1, #rows - 1))
+	local step = math.min(38, 360 / math.max(1, #rows - 1))
 	local h = math.min(30, step - 6)
 	for i, s in ipairs(rows) do
 		local k, nome, modo = s[1], s[2], s[3]

@@ -4,7 +4,7 @@
 # veri; l'azione in basso a destra; schede e contenuto al centro.
 imposta prova_profilo 1
 
-aspetta 1.5
+aspetta 2.5
 foto 01_home
 tocca_centro 330 300                # il diavoletto: il suo posto
 aspetta 0.6

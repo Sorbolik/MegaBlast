@@ -102,14 +102,18 @@ end
 
 -- A long piece w x h centered on parent, in three parts: the ends keep their
 -- shape (as wide as the height asks), only the middle is stretched
-local function three(parent, name, w, h)
+local function three_fit(parts, name, w, h)
 	local m = P[name]
 	local cw = math.min(m.c * h / m.h, w / 2)
-	return {
-		pic(name .. "_cx", 0, 0, math.max(1, w - 2 * cw + 1), h, parent),
-		pic(name .. "_sx", -w / 2 + cw / 2, 0, cw, h, parent),
-		pic(name .. "_dx", w / 2 - cw / 2, 0, cw, h, parent),
-	}
+	gui.set_size(parts[1], vec(math.max(1, w - 2 * cw + 1), h))
+	gui.set_size(parts[2], vec(cw, h)); gui.set_position(parts[2], vec(-w / 2 + cw / 2, 0))
+	gui.set_size(parts[3], vec(cw, h)); gui.set_position(parts[3], vec(w / 2 - cw / 2, 0))
+end
+
+local function three(parent, name, w, h)
+	local parts = { pic(name .. "_cx", 0, 0, 1, h, parent), pic(name .. "_sx", 0, 0, 1, h, parent), pic(name .. "_dx", 0, 0, 1, h, parent) }
+	three_fit(parts, name, w, h)
+	return parts
 end
 
 -- The room to write in on a long piece w x h centered at the Figma point
@@ -238,7 +242,7 @@ function M.plate(g, x, y, w, h, shadow, opt)
 		elseif shadow == C.HOT then name = small and "piastrina_calda" or "piastra_calda"
 		else name = small and "piastrina" or "piastra_storta" end
 	end
-	if w < h * 2 then
+	if w < h * 2 and not opt.piece then
 		-- a tall plate (a portrait): the panel, not a long piece
 		p.parts = nine(p.face_node, opt.fill == C.SAND and "pannello_chiaro" or "pannello", w + sk, h, 30)
 	else
@@ -257,6 +261,14 @@ end
 function M.sand(g, x, y, w, h, shadow, opt)
 	opt = opt or {}
 	return M.plate(g, x, y, w, h, shadow or C.HOT, { sk = opt.sk, d = opt.d, fill = C.SAND })
+end
+
+-- The light small plate behind what is chosen (a tab, an option): the box
+-- x..x+w+sk, y..y+h
+function M.light(g, x, y, w, h, sk)
+	local n = empty(x + (w + (sk or 0)) / 2 - g.ox, g.oy - (y + h / 2), 0, 0, g.node)
+	three(n, "piastrina_chiara", w + (sk or 0) + 8, h + 6)
+	return n
 end
 
 -- A straight segment between two Figma points, thick t
@@ -354,15 +366,40 @@ end
 function M.pips(g, x, y, n, lit, color)
 	local list_of = {}
 	for i = 0, n - 1 do
-		list_of[#list_of + 1] = M.para(g, x + i * 15, y, 10, 16, 5, i < lit and color or C.LINE)
+		-- the ivory notch of the fucina atlas, in its color (kit.tint(q.parts, ...) changes it)
+		local q = whole("tacca", x + i * 15 + 8 - g.ox, g.oy - (y + 8), 19, g.node)
+		gui.set_color(q, i < lit and color or C.LINE)
+		list_of[#list_of + 1] = { node = q, parts = { q } }
 	end
 	return list_of
 end
 
--- A slanted bar filled to f (0..1)
-function M.bar(g, x, y, w, h, f, color, track)
-	local b = { back = M.para(g, x, y, w, h, h * 0.4, track or C.TRACK), g = g, x = x, y = y, w = w, h = h, color = color }
-	if f > 0 then b.front = M.para(g, x, y, math.max(h, w * f), h, h * 0.4, color) end
+-- A bar filled to f (0..1): the iron trough and in it a strip of ember (warm
+-- colors), of frost (cold ones) or, any other color, the plain strip tinted.
+-- M.bar_fill(b, f) changes how full it is
+local function strip_of(color)
+	if color == C.HOT or color == C.HOT_BOTTOM or color == C.HOT_TOP or color == C.STAR then return "barra_brace" end
+	if color == C.ICE or color == C.STEEL or color == C.FROST then return "barra_gelo" end
+	return "barra_chiara"
+end
+
+function M.bar_fill(b, f)
+	f = math.max(0, math.min(1, f))
+	gui.set_enabled(b.front.node, f > 0.005)
+	local w = math.max(b.h * 1.3, b.w * f)
+	three_fit(b.front.parts, b.strip, w, b.h)
+	gui.set_position(b.front.node, vec(b.x + w / 2 - b.g.ox, b.g.oy - (b.y + b.h / 2)))
+end
+
+function M.bar(g, x, y, w, h, f, color)
+	local b = { g = g, x = x, y = y, w = w, h = h, color = color, strip = strip_of(color) }
+	local cx, cy = x + w / 2 - g.ox, g.oy - (y + h / 2)
+	b.back = { node = empty(cx, cy, 0, 0, g.node) }
+	three(b.back.node, "guscio", w + h * 1.1, h * 1.9)
+	b.front = { node = empty(cx, cy, 0, 0, g.node) }
+	b.front.parts = three(b.front.node, b.strip, w, h)
+	if b.strip == "barra_chiara" then tint(b.front.parts, color) end
+	M.bar_fill(b, f)
 	return b
 end
 
@@ -599,16 +636,15 @@ end
 -- color), "cur" (the one you are looking at: bigger, sand ring, a glow),
 -- "todo" (dark, a ring in color)
 function M.seal(g, cx, cy, t, state, color)
-	local r = state == "cur" and 22 or 16
+	local r = state == "cur" and 24 or 18
 	local x, y = cx - g.ox, g.oy - cy
 	if state == "cur" then
 		local glow = shape("alone", x, y, r * 4.4, r * 4.4, with_alpha(color, 0.7), g.node)
 		gui.set_blend_mode(glow, gui.BLEND_ADD)
 	end
-	ui.disc(x, y, r * 2 + 3, state == "cur" and C.SAND or color, g.node)
-	ui.disc(x, y, r * 2 - 3, state == "got" and color or C.INK, g.node)
-	ui.ring_node(x, y, (r - 4) * 2, 2, state == "got" and C.INK or color, g.node)
-	return M.text(g, t, cx, cy + 5, state == "cur" and 16 or 13, state == "got" and C.INK or C.SAND, "middle")
+	-- the round frames of the fucina atlas: gold the ones taken, iron the others
+	whole(state == "got" and "tondo_oro" or "tondo_ferro", x, y, r * 2 + 4, g.node)
+	return M.text(g, t, cx, cy + 5, state == "cur" and 15 or 12, state == "todo" and C.MUTE or C.SAND, "middle")
 end
 
 -- REGULATORS: the small controls inside a screen are round, not plates: the

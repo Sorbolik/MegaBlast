@@ -1,5 +1,5 @@
 # I pezzi e gli sfondi dell'interfaccia "Fucina contro Abisso" (client/ui/kit.lua),
-# dai disegni di Codex (art/WB-022).
+# dai disegni di Codex (art/WB-022, i pezzi piccoli di art/WB-029).
 #   python3 tools/grafica/fucina.py
 # Scrive:
 #   client/assets/fucina/*.png          i pezzi senza il verde, per l'atlante fucina.
@@ -86,7 +86,7 @@ def tre(nome, arr, h, capo=0.24):
     # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
     salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
-    if nome != "lingotto":    # (sfumato: la sua scritta la mette kit.action)
+    if nome not in ("lingotto", "guscio", "barra_brace", "barra_gelo", "barra_chiara"):    # (sfumato: la sua scritta la mette kit.action)
         SPAZI[nome] = spazio(im)
 
 
@@ -160,6 +160,46 @@ def fai_pezzi():
         intero(nome, t[2], 120)
     for nome, t in zip(["brace_spenta", "lucchetto", "scaglia", "gemma"], giu):
         intero(nome, t[2], 120)
+
+
+def griglia(percorso, per_riga, minimo=1500):
+    """I pezzi di un foglio in ordine di lettura: righe dall'alto, in ogni riga da sinistra."""
+    cs = sorted(pezzi(senza_verde(percorso), minimo), key=lambda t: t[0])
+    out = []
+    for n in per_riga:
+        out += sorted(cs[:n], key=lambda t: t[1])
+        cs = cs[n:]
+    return [t[2] for t in out]
+
+
+def neutro(arr):
+    """Un pezzo colorato fatto chiaro e senza tinta (la china resta): il gioco gli da' il colore."""
+    a = arr.astype(float)
+    lum = a[..., :3].max(axis=2)
+    v = np.interp(lum, [0, 40, 150, 255], [10, 10, 225, 255])
+    out = a.copy()
+    for c in range(3):
+        out[..., c] = v
+    return out.astype(np.uint8)
+
+
+def fai_piccoli():
+    """I pezzi piccoli di WB-029: segni, barre e tacche, cornici tonde, linguetta."""
+    p = os.path.join(ART, "WB-029")
+    segni = griglia(os.path.join(p, "pezzo_segni_1.png"), [3, 3])
+    for nome, a in zip(["stella", "stella_spenta", "medaglia", "ingranaggio", "corona", "freccia"], segni):
+        intero(nome, a, 128)
+    barre = griglia(os.path.join(p, "pezzo_barre_1.png"), [1, 1, 1, 1, 1], 600)
+    tre("guscio", barre[0], 64, 0.12)
+    tre("barra_brace", barre[1], 44, 0.1)
+    tre("barra_gelo", barre[2], 44, 0.1)
+    tre("barra_chiara", neutro(barre[1]), 44, 0.1)
+    intero("tacca", barre[3], 72)
+    tondi = griglia(os.path.join(p, "pezzo_tondi_1.png"), [2, 2])
+    for nome, a in zip(["tondo_ferro", "tondo_oro", "tondo_gelo"], tondi):
+        intero(nome, a, 200)
+    tre("linguetta", tondi[3], 120, 0.3)
+    tre("linguetta_chiara", chiaro(tondi[3]), 120, 0.3)
 
 
 def chiaro(arr):
@@ -266,6 +306,7 @@ def fai_misure():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     fai_pezzi()
+    fai_piccoli()
     fai_fette()
     fai_sfondi()
     fai_filo()

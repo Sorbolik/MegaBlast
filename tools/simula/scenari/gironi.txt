@@ -5,7 +5,8 @@
 # e cosa la apre, le altre scure. La mappa guarda un girone alla volta, quello
 # grande: toccandone un altro, trascinando in su e in giù o toccando il suo segno
 # sul binario a destra la pila scorre fin lì; in fondo, sotto il IX, la tavola di
-# Favilla nel ghiaccio. A sinistra il Cortile e la Forgia aprono la loro bacheca.
+# Favilla nel ghiaccio. In basso a sinistra il Cortile e la Forgia aprono la loro bacheca;
+# a sinistra in alto il nome del girone guardato, il suo pericolo e il suo custode.
 # Indietro in basso a sinistra.
 imposta prova_vignette no
 imposta prova_profilo 3
@@ -13,10 +14,10 @@ aspetta 2
 tocca_bordo 242 572 mezzo destra  # CAMPAGNA
 aspetta 1.4
 foto 01_mappa
-tocca_centro 560 250                # II · LUSSURIA, sotto: la pila sale
+tocca_centro 640 250                # II · LUSSURIA, sotto: la pila sale
 aspetta 0.8
 foto 02_lussuria_chiuso
-tocca_bordo 56 286 alto destra      # V sul binario: la pila va all'Ira
+tocca_bordo 56 326 alto destra      # V sul binario: la pila va all'Ira
 aspetta 0.5
 trascina 640 250 640 450 0.3        # il dito in su: giù di un girone
 aspetta 0.8
@@ -47,10 +48,10 @@ aspetta 0.5
 trascina 640 450 640 250 0.3
 aspetta 0.5
 foto 05_lussuria
-tocca_bordo 56 150 alto destra      # I sul binario: di nuovo il Limbo
+tocca_bordo 56 126 alto destra      # I sul binario: di nuovo il Limbo
 aspetta 0.8
 foto 06_limbo
-tocca_bordo 110 310 alto sinistra   # LA FORGIA: la bacheca
+tocca_bordo 400 60 basso sinistra   # LA FORGIA: la bacheca
 aspetta 0.8
 foto 07_bacheca_forgia
 tocca_bordo 36 60 basso sinistra    # GIRONI: di nuovo la mappa

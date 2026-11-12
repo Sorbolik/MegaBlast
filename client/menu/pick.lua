@@ -167,9 +167,7 @@ local function bar_value(s, f)
 	local b = s.bar
 	if not b then return end
 	f = math.max(0, math.min(1, f))
-	gui.set_enabled(b.front.node, f > 0.01)
-	gui.set_scale(b.front.node, vec(math.max(f, 0.01), 1))
-	gui.set_position(b.front.node, vec(b.x0 - b.wide * (1 - f) / 2, b.y0))
+	kit.bar_fill(b, f)
 	local left = math.max(0, math.ceil(s.tempo))
 	gui.set_text(s.clock, string.format("%d:%02d", math.floor(left / 60), left % 60))
 end
@@ -265,8 +263,6 @@ local function refresh(s)
 	if not s.guidata then
 		kit.text(g, T.time, 446, 524, 12, KC.MUTE, "start", 1.5)
 		s.bar = kit.bar(g, 504, 512, 360, 12, 1, KC.HOT)
-		local at = gui.get_position(s.bar.front.node)
-		s.bar.x0, s.bar.y0, s.bar.wide = at.x, at.y, 360
 		s.clock = kit.text(g, "", 880, 524, 16, KC.SAND)
 		bar_value(s, s.tempo / config.DRAFT_SECONDS)
 	end
