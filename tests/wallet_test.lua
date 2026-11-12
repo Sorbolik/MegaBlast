@@ -75,6 +75,50 @@ local n = wallet.next(p, "vuoto", "mask")
 check(n.cost == 10 and n.full_cost == 15, "the Smith's hand: other helmets cost 30% less")
 check(wallet.next(p, "vuoto", "chest").cost == 15, "only in the same slot")
 
+-- The shop and the gifts (page "I Pezzi della Forgia", choices 22A-25A) --------------
+p = wallet.init({})
+check(not wallet.owns(p, "fabbro", "legs") and p.buoni == 0, "a new player owns nothing")
+local today = wallet.shop(p, "2026-11-11")
+local four = 0
+for _, s in ipairs(equip.SLOTS) do if today[s.id] then four = four + 1 end end
+check(four == 4, "the BOTTEGA: four pieces of the day, one per slot")
+local same = wallet.shop(p, "2026-11-11")
+check(same.mask == today.mask and same.legs == today.legs, "the same pieces all day")
+local differ = false
+for d = 12, 20 do differ = differ or wallet.shop(p, "2026-11-" .. d).mask ~= today.mask end
+check(differ, "other days, other pieces")
+check(select(2, wallet.buy(p, today.mask, "mask", "2026-11-11")) == "scaglie", "without Scaglie nothing is bought")
+p.scaglie = 2000
+check(wallet.buy(p, today.mask, "mask", "2026-11-11") and wallet.owns(p, today.mask, "mask") and p.scaglie == 1500,
+	"bought in the BOTTEGA for 500")
+check(wallet.shop(p, "2026-11-11").mask ~= today.mask, "a piece owned leaves the BOTTEGA")
+local other
+for _, f in ipairs(equip.SETS) do
+	if not other and not wallet.owns(p, f.id, "mask") and wallet.shop(p, "2026-11-11").mask ~= f.id then other = f.id end
+end
+check(select(2, wallet.buy(p, other, "mask", "2026-11-11")) == "shop", "the BOTTEGA sells only the pieces of the day")
+check(wallet.buy(p, other, "mask") and p.scaglie == 750, "the CATALOGO has all of them, for 750")
+check(select(2, wallet.buy(p, other, "mask")) == "owned", "a piece is bought once")
+p.pezzi[other .. "_mask"] = equip.LIVELLO_MAX
+check(wallet.price(p, "mask", true) == 350 and wallet.price(p, "mask") == 525 and wallet.price(p, "chest") == 750,
+	"the Smith's hand lowers the prices of that slot")
+check(select(2, wallet.use_voucher(p, "fornace", "chest")) == "voucher", "no voucher, no free piece")
+-- gifts: once each
+p.stelle = { battaglia_forgia = { true } }
+local rows = wallet.gifts(p, {}, 1)
+check(#rows == 1 and rows[1].key == "piece" and wallet.owns(p, "fabbro", "legs"), "the Battle of the Forge: the Smith's boots")
+check(#wallet.gifts(p, {}, 1) == 0, "a gift comes once")
+rows = wallet.gifts(p, { a_segno = 10000 }, 25)
+check(#rows == 2 and p.buoni == 2, "a badge at grade IV and level 25: two vouchers")
+check(#wallet.gifts(p, { a_segno = 10000 }, 50) == 1 and p.buoni == 3, "level 50: one more")
+check(wallet.use_voucher(p, "fornace", "chest") and wallet.owns(p, "fornace", "chest") and p.buoni == 2, "a voucher: a piece of your choice")
+-- before the shop: the levelled pieces stay, the others come off
+local m = wallet.init({ pezzi = { corvo_mask = 5, vuoto_chest = 1 } })
+local lo = { { gear = { mask = "corvo", chest = "vuoto", legs = "drago" } } }
+wallet.migrate(m, lo)
+check(wallet.owns(m, "corvo", "mask") and not wallet.owns(m, "vuoto", "chest") and lo[1].gear.mask == "corvo"
+	and lo[1].gear.chest == nil and lo[1].gear.legs == nil, "old saves: levelled pieces stay, the others come off")
+
 if failures > 0 then
 	print(failures .. " FAIL")
 	os.exit(1)

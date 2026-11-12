@@ -8,6 +8,9 @@
 -- The profile's fields (added by M.init, so old saves keep working):
 --   scaglie, ossidiana: the balance
 --   pezzi[set_slot]: the level of a piece (missing: 1)
+--   posseduti[set_slot]: the pieces owned (bought, from a voucher or a gift)
+--   buoni: the Smith's vouchers not used yet (one piece of your choice)
+--   regali[key]: the gifts already given (so each comes once)
 --   prova[set_slot]: matches worn at the level below a step (the Proof)
 --   giorno: the day of the last "first win of the day"
 --   bot_giorno, bot_partite: the day and the paid matches against bots
@@ -40,6 +43,9 @@ function M.init(p)
 	p.scaglie = p.scaglie or 0
 	p.ossidiana = p.ossidiana or 0
 	p.pezzi = p.pezzi or {}
+	p.posseduti = p.posseduti or {}
+	p.buoni = p.buoni or 0
+	p.regali = p.regali or {}
 	p.prova = p.prova or {}
 	p.giorno = p.giorno or ""
 	p.bot_giorno = p.bot_giorno or ""
@@ -48,6 +54,130 @@ function M.init(p)
 end
 
 local function key(set, slot) return set .. "_" .. slot end
+M.key = key
+
+-- Pieces are bought and gifted, never earned in the campaign's order
+-- (Sergio, 11 Nov, page "I Pezzi della Forgia", choices 22A-25A): the
+-- BOTTEGA has four pieces of the day (one per slot, among those you don't
+-- own), the CATALOGO always has all of them for more; the Smith's hand
+-- lowers both. Ossidiana never buys pieces.
+M.PRICE_SHOP, M.PRICE_CATALOG = 500, 750
+
+-- the Smith's vouchers and the gifts (choice 23A): the Battle of the Forge
+-- gives the Smith's boots, a badge reaching grade IV and the levels of
+-- VOUCHER_LEVELS give a voucher. GIFT_MISSIONS: campaign levels by id, with the
+-- piece they give and/or the vouchers (the finale of each girone: one voucher,
+-- to be added here as the girone arrives). The first Gran Torneo will give one too.
+M.GIFT_MISSIONS = {
+	{ id = "battaglia_forgia", piece = { "fabbro", "legs" } },
+}
+M.VOUCHER_GRADE = 4
+M.VOUCHER_LEVELS = { 25, 50 }
+
+function M.owns(p, set, slot)
+	return p.posseduti[key(set, slot)] == true
+end
+
+-- A piece comes into the wardrobe at level 1 (or the level it already had)
+local function give(p, set, slot)
+	p.posseduti[key(set, slot)] = true
+end
+
+-- The pieces of the BOTTEGA on a day ("2026-11-11"): for each slot one piece
+-- not owned, picked from the day (the same all day, on every phone); nil
+-- where you own them all. Returns { mask = set id or nil, ... }
+function M.shop(p, today)
+	local h = 0
+	for i = 1, #today do h = (h * 31 + today:byte(i)) % 1000003 end
+	local out = {}
+	for i, s in ipairs(equip.SLOTS) do
+		local free = {}
+		for _, f in ipairs(equip.SETS) do
+			if not M.owns(p, f.id, s.id) then free[#free + 1] = f.id end
+		end
+		if #free > 0 then out[s.id] = free[(h + i * 7) % #free + 1] end
+	end
+	return out
+end
+
+-- price of a piece: in the BOTTEGA (shop = true) or in the CATALOGO, with
+-- the Smith's hand when a piece of that slot is at 30
+function M.price(p, slot, shop)
+	local c = shop and M.PRICE_SHOP or M.PRICE_CATALOG
+	if M.smith_hand(p, slot) then c = math.floor(c * equip.SMITH_HAND / 5 + 0.5) * 5 end
+	return c
+end
+
+-- Buys a piece: from the BOTTEGA of today (shop = today's date) or from the
+-- CATALOGO (shop = nil). Returns true, or nil and why ("owned", "shop", "scaglie")
+function M.buy(p, set, slot, shop)
+	if not equip.BY_ID[set] then return nil, "shop" end
+	if M.owns(p, set, slot) then return nil, "owned" end
+	if shop and M.shop(p, shop)[slot] ~= set then return nil, "shop" end
+	local c = M.price(p, slot, shop ~= nil)
+	if p.scaglie < c then return nil, "scaglie" end
+	p.scaglie = p.scaglie - c
+	give(p, set, slot)
+	return true
+end
+
+-- Takes a piece with a voucher. Returns true, or nil and why ("owned", "voucher")
+function M.use_voucher(p, set, slot)
+	if not equip.BY_ID[set] then return nil, "voucher" end
+	if M.owns(p, set, slot) then return nil, "owned" end
+	if p.buoni < 1 then return nil, "voucher" end
+	p.buoni = p.buoni - 1
+	give(p, set, slot)
+	return true
+end
+
+-- Gives the gifts earned and not yet given: stats = profile.statistics(p,
+-- "tutte"), the devil's level, the campaign's stars (p.stelle). Returns the
+-- rows { { key = "piece", set, slot } | { key = "voucher", why, id? } }
+function M.gifts(p, stats, level)
+	local rows = {}
+	local function once(k, row, f)
+		if p.regali[k] then return end
+		p.regali[k] = true
+		f()
+		rows[#rows + 1] = row
+	end
+	for _, g in ipairs(M.GIFT_MISSIONS) do
+		if p.stelle and p.stelle[g.id] and p.stelle[g.id][1] then
+			local row = g.piece and { key = "piece", set = g.piece[1], slot = g.piece[2] }
+				or { key = "voucher", why = "mission", id = g.id }
+			once("missione_" .. g.id, row, function()
+				if g.piece then give(p, g.piece[1], g.piece[2]) end
+				p.buoni = p.buoni + (g.buoni or 0)
+			end)
+		end
+	end
+	for _, s in ipairs(milestones.WHITELIST) do
+		if s.thresholds and milestones.grade(s, stats[s.id] or 0) >= M.VOUCHER_GRADE then
+			once("badge_" .. s.id, { key = "voucher", why = "badge", id = s.id }, function() p.buoni = p.buoni + 1 end)
+		end
+	end
+	for _, l in ipairs(M.VOUCHER_LEVELS) do
+		if (level or 1) >= l then
+			once("livello_" .. l, { key = "voucher", why = "level", level = l }, function() p.buoni = p.buoni + 1 end)
+		end
+	end
+	return rows
+end
+
+-- Before the shop (11 Nov) every set could be worn by anyone: the pieces
+-- already levelled stay owned (choice 20A), the others come off the loadouts
+function M.migrate(p, loadouts)
+	for k, l in pairs(p.pezzi) do
+		if l > 1 then p.posseduti[k] = true end
+	end
+	for _, a in ipairs(loadouts or {}) do
+		for _, s in ipairs(equip.SLOTS) do
+			local set = a.gear[s.id]
+			if set and not (equip.BY_ID[set] and M.owns(p, set, s.id)) then a.gear[s.id] = nil end
+		end
+	end
+end
 
 -- level of a piece (1 if never upgraded)
 function M.level(p, set, slot)
@@ -83,6 +213,16 @@ function M.upgrade(p, set, slot)
 	p.pezzi[key(set, slot)] = n.level
 	p.prova[key(set, slot)] = nil
 	return n.level
+end
+
+-- the levels of the pieces worn by a loadout: { mask = 1..30, ... }
+function M.levels(p, a)
+	local t = {}
+	for _, s in ipairs(equip.SLOTS) do
+		local set = a.gear[s.id]
+		t[s.id] = set and M.level(p, set, s.id) or 1
+	end
+	return t
 end
 
 -- the tiers of the pieces worn by a loadout: { mask = 1..4, ... }

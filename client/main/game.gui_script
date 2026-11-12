@@ -2294,8 +2294,9 @@ function CP.match_coins(self, r, stats_before, gain)
 	local obs = W.obsidian(stats_before, profile.statistics(p, "tutte"), gain.level_before, gain.livello)
 	W.apply(p, rows)
 	W.apply(p, obs)
+	local gifts = W.gifts(p, profile.statistics(p, "tutte"), p.livello)
 	profile.save(p)
-	return { rows = rows, obsidian = obs }
+	return { rows = rows, obsidian = obs, gifts = gifts }
 end
 
 -- a coin landing in the wallet pill: a semitone higher at each Scaglia, the
@@ -2331,7 +2332,8 @@ function CP.mission_coins(self, gain, chapters)
 	if W.chapters_done(p, CP.chapters) > chapters then obs[#obs + 1] = W.chapter()[1] end
 	W.apply(p, rows)
 	W.apply(p, obs)
-	return { rows = rows, obsidian = obs }
+	local gifts = W.gifts(p, profile.statistics(p, "tutte"), p.livello)
+	return { rows = rows, obsidian = obs, gifts = gifts }
 end
 
 -- Can the match with number numero be rewatched?
@@ -2494,7 +2496,7 @@ start_local_match = function(self, picked)
 		players[i] = {}
 		for k, v in pairs(p) do players[i][k] = v end
 	end
-	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.tier(self.profilo, my_own))
+	players[1].stats = loadout.stats(game.base_stats(), my_own, profile.levels(self.profilo, my_own))
 	opts.players = players
 	-- random start points (sim/game.lua start_points); the simulator keeps the fixed
 	-- ones unless asked (imposta prova_spawn_casuali 1), so the old scenarios stay put

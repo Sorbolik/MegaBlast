@@ -72,6 +72,11 @@ function M.tier(p, a)
 	return wallet.tiers(p, a)
 end
 
+-- levels of the pieces worn by a loadout: { mask = 1..30, ... } (sim/loadout.lua's stats)
+function M.levels(p, a)
+	return wallet.levels(p, a)
+end
+
 function M.active_loadout(p)
 	return p.loadouts[p.is_active]
 end
@@ -205,6 +210,10 @@ function M.sample(p, near_level_up, campaign_done)
 	a.gear = { mask = "corvo", chest = "fornace", cloak = "corvo", legs = "leviatano" }
 	a.tree = { wings = 12, armor = 6, forge = 3, pick = { wings = { 2, 1 }, armor = { 1 } } }
 	p.pezzi.corvo_mask, p.pezzi.fornace_chest, p.pezzi.corvo_cloak, p.pezzi.leviatano_legs = 24, 19, 9, 30
+	for _, k in ipairs({ "corvo_mask", "fornace_chest", "corvo_cloak", "leviatano_legs", "fabbro_legs", "vuoto_mask" }) do
+		p.posseduti[k] = true
+	end
+	p.buoni = 2
 	p.prova.corvo_cloak, p.prova.fornace_chest = 2, 5
 	p.scaglie, p.ossidiana = 1240, 35
 	p.statistiche["2v2"] = { partite = 48, vinte = 27, colpi = 310, a_segno = 190, danno = 14500, abbattuti = 60,
@@ -332,6 +341,10 @@ function M.load_up()
 	end
 	-- the matches per piece of before the Scaglie (10 Nov): the levels start from 1
 	p.mastery = nil
+	-- before the shop (11 Nov): the levelled pieces stay, the others come off
+	wallet.migrate(p, p.loadouts)
+	-- the gifts already earned (the Smith's boots, the vouchers)
+	wallet.gifts(p, M.statistics(p, "tutte"), p.livello)
 	-- the old skill tree (nodes, before the Sigilli of 10 Nov): it starts empty,
 	-- the level stays (at most the new maximum)
 	for _, a in ipairs(p.loadouts) do

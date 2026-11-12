@@ -72,7 +72,7 @@ q.pezzi["corvo_" .. equip.SLOTS[1].id] = 25
 local v = showcase.from_profile(q, "Rosso", 1, "TU")
 check(v.pezzi[1].livello == 25 and v.pezzi[1].tier == 3 and v.pezzi[2].livello == 1,
 	"showcase: each piece with its level and the upgrade tier at 10, 20, 30")
-check(#v.abilities >= 1 and v.abilities[1] == "doppio salto", "showcase: the full set gives its power")
+check(#v.abilities == 0, "showcase: the pieces give no powers (they are the Sigilli's)")
 local lines = showcase.rows(v)
 check(#lines == 4 and lines[1].nome == "VITA", "showcase: four bars, health first")
 local base = showcase.rows(showcase.simple("Blu", 2, "AVVERSARIO"))
