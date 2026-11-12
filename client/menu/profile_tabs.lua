@@ -463,7 +463,7 @@ function M.new(prof, card, color, replay_ok, number)
 		if pa.numero == number then s.scelta = i end
 	end
 	-- the backdrop (ui/kit.lua)
-	s.scene = kit.scene(M.devil_x(), M.DEVIL_Y, { accent = KC.PURPLE })
+	s.scene = kit.scene(M.devil_x(), M.DEVIL_Y, { accent = KC.PURPLE, bg = "diavoletto" })
 	build(s)
 	return s
 end

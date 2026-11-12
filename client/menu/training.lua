@@ -167,7 +167,7 @@ function M.new(choice, stars)
 		if m.id == choice.mappa then a.da = math.max(1, i + 2 - VISIBLE) end
 	end
 	-- the backdrop (ui/kit.lua)
-	a.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.MINT })
+	a.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.MINT, bg = "allenamento" })
 	build(a)
 	return a
 end

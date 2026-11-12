@@ -110,7 +110,7 @@ end
 function M.new()
 	local c = { sel = "2v2", colore = ui.C.SQUADRA[1], accent = KC.HOT }
 	-- the backdrop (ui/kit.lua)
-	c.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, {})
+	c.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { bg = "gioca" })
 	build(c)
 	return c
 end

@@ -664,21 +664,63 @@ end
 -- bottom left and a cold one at the top right (fire against ice, on every
 -- screen), and at the bottom the thread, ember on the left and frost on the
 -- right, with a spark running along it now and then. opt: bg (the screen's
--- name: for the drawings of each screen, which a thread is still choosing;
--- M.backdrop, if set, draws them), seam (false: no thread), dim (0..1: how
+-- painting, a name of ui/backdrops.lua), seam (false: no thread), dim (0..1: how
 -- much the world behind is covered; the screens over a battle just ended).
 -- There is ONE backdrop for every menu: kit.scene returns the screen's hold
 -- on it; kit.scene_drop(s) when the screen goes away
 local S
 
--- M.backdrop(name, S): hook for the per-screen drawings (not there yet)
-M.backdrop = nil
+-- The painting of each screen (WB-028; ui/backdrops.lua): one picture, big
+-- soft masses at the sides that frame the screen, the middle empty. Only one
+-- is loaded at a time. It covers the screen keeping its shape (never
+-- stretched: on a long screen it grows and loses a little at the top), its
+-- painted floor on the thread
+local BACKDROPS = require "ui.backdrops"
+local THREAD_Y = 59
+
+local function backdrop(name)
+	if not (name and BACKDROPS[name]) then name = nil end
+	if S.bg_name ~= name then
+		if S.bg_name then
+			gui.set_texture(S.bg, "ui")
+			gui.delete_texture("sfondo")
+		end
+		S.bg_name = nil
+		local data = name and sys.load_resource("/paintings/backdrops/" .. name .. ".jpg")
+		local img = data and image.load(data)
+		if img and gui.new_texture("sfondo", img.width, img.height, img.type, img.buffer) then
+			S.bg_name = name
+			gui.set_texture(S.bg, "sfondo")
+		end
+	end
+	local on = S.bg_name ~= nil
+	gui.set_enabled(S.bg, on)
+	-- the two lights are in the painting already
+	gui.set_enabled(S.warm, not on)
+	gui.set_enabled(S.cold, not on)
+end
+
+-- the painting covers the real screen, whatever its shape: wide enough, tall
+-- enough above its floor, and a little more
+local function backdrop_fit()
+	if not S.bg_name then return end
+	local f = BACKDROPS[S.bg_name]
+	local h = math.max(720 * 1.14, screen.width() * 1.02 * 9 / 16, (screen.height() - THREAD_Y) / (1 - f) * 1.01)
+	gui.set_size(S.bg, vec(h * 16 / 9, h))
+	gui.set_position(S.bg, vec(0, THREAD_Y - f * h + h / 2))
+end
 
 local function scene_nodes()
 	if S then return S end
 	S = { tops = {} }
 	S.base = shape(nil, 640, 360, 1280 * screen.FULL, 720 * screen.FULL, C.SOOT)
 	S.tops[#S.tops + 1] = S.base
+	-- the painting, stuck to the real bottom like the thread
+	local back = M.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
+	S.tops[#S.tops + 1] = back.node
+	S.bg = gui.new_box_node(vec(0, 360), vec(1280, 720))
+	gui.set_parent(S.bg, back.node)
+	gui.set_enabled(S.bg, false)
 	-- the two lights, each stuck to its corner
 	local warm = M.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	S.tops[#S.tops + 1] = warm.node
@@ -717,6 +759,7 @@ end
 function M.scene_fit()
 	if not S then return end
 	local w = screen.width()
+	backdrop_fit()
 	gui.set_size(S.seam, vec(w, 4))
 	gui.set_size(S.seam_ink, vec(w, 8))
 end
@@ -727,7 +770,7 @@ local function claim(s)
 	for _, n in ipairs(S.tops) do gui.set_enabled(n, true) end
 	gui.set_color(S.base, with_alpha(C.SOOT, s.opt.dim or 1))
 	gui.set_enabled(S.low, s.opt.seam ~= false)
-	if M.backdrop then M.backdrop(s.opt.bg, S) end
+	backdrop(not s.opt.dim and s.opt.bg or nil)
 	M.scene_fit()
 end
 

@@ -86,7 +86,7 @@ function M.new(of, title, parent_below)
 	-- the gear and its wheel stay above the room
 	if parent_below then gui.move_below(s.radice, parent_below) end
 	-- the backdrop behind everything
-	s.scene = kit.scene(640, 380, { accent = KC.RED })
+	s.scene = kit.scene(640, 380, { accent = KC.RED, bg = "gioca" })
 	kit.scene_place(s.scene, "below", s.radice)
 	local g = { node = s.radice, ox = 0, oy = 720 }
 	s.g = g
