@@ -1,0 +1,26 @@
+# Il mantello a tre strisce (WB-019 fase 2) sull'apprendista: fermo, corsa,
+# salto (sale e scende), atterraggio, colpo preso. Le strisce si muovono da sole.
+# mantello_prova è il mantello finto dello stampino, finché non arrivano quelli
+# delle famiglie. Da vicino: --scala 2.
+imposta prova_pelli apprendista,mantello_prova
+
+aspetta 3
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+zoom 01_fermo 4
+tieni destra 0.6
+zoom 02_corsa 4
+aspetta 0.25
+zoom 03_frena 4
+premi salta
+aspetta 0.15
+zoom 04_salto_sale 4
+aspetta 0.35
+zoom 05_salto_scende 4
+aspetta 0.25
+zoom 06_atterra 4
+aspetta 1
+tieni sinistra 0.6
+zoom 07_corsa_sinistra 4
+aspetta 2

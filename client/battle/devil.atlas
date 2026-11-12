@@ -131,6 +131,9 @@ images {
   image: "/assets/skins/apprendista_coda_5_bordo.png"
 }
 images {
+  image: "/assets/skins/apprendista_fiamma.png"
+}
+images {
   image: "/assets/skins/apprendista_gamba_1.png"
 }
 images {
@@ -259,3 +262,24 @@ images {
 images {
   image: "/assets/skins/favilla_testa_sconfitta_1.png"
 }
+images {
+  image: "/assets/skins/mantello_prova_mantello_1.png"
+}
+images {
+  image: "/assets/skins/mantello_prova_mantello_1_tinta.png"
+}
+images {
+  image: "/assets/skins/mantello_prova_mantello_2.png"
+}
+images {
+  image: "/assets/skins/mantello_prova_mantello_2_tinta.png"
+}
+images {
+  image: "/assets/skins/mantello_prova_mantello_3.png"
+}
+images {
+  image: "/assets/skins/mantello_prova_mantello_3_tinta.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

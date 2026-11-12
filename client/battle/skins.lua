@@ -4,14 +4,14 @@
 -- center relative to the pivot, size) and replaces the base piece or is
 -- drawn over it. One skin per category; the "over" ones in order. A new
 -- tail has its own lengths, its rest angles (radians) and, if the editor
--- moved it, how far its root is moved (tail_root).
+-- moved it, how far its root is moved (tail_root). A cape: where the pivots
+-- of its strips sit in the devil (cape = { x1, y1, x2, y2, x3, y3 }).
 return {
 	replace = { "personaggio", "testa", "corpo", "ali", "coda" },
-	over = { "pantaloni", "maglia", "corazza", "guanti", "elmo" },
+	over = { "pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "mantello" },
 	skins = {
 		apprendista = { category = "personaggio", tail = { 21.9, 27.1, 23.0, 25.3, 30.6 }, tail_rest = { 2.94, 2.844, 2.437, 1.919, 1.237 }, pieces = {
 			ala = { img = "apprendista_ala", tint = nil, x = 0.0, y = 0.0, w = 0.1, h = 0.1, mode = "replace" },
-			fiamma = { img = "apprendista_fiamma", tint = nil, x = 0.0, y = 27.0, w = 38.3, h = 54.0, mode = "replace" },
 			braccio = { img = "apprendista_braccio_2", tint = nil, x = 1.8, y = -23.9, w = 32.6, h = 67.4, mode = "replace" },
 			braccio_1 = { img = "apprendista_braccio_1", tint = nil, x = 2.0, y = -21.9, w = 35.4, h = 61.7, mode = "replace" },
 			braccio_2 = { img = "apprendista_braccio_2", tint = nil, x = 1.8, y = -23.9, w = 32.6, h = 67.4, mode = "replace" },
@@ -33,6 +33,7 @@ return {
 			coda_4_bordo = { img = "apprendista_coda_4_bordo", tint = nil, x = 11.7, y = 0.5, w = 41.4, h = 18.9, mode = "replace" },
 			coda_5 = { img = "apprendista_coda_5", tint = nil, x = 42.7, y = 0.4, w = 24.3, h = 16.0, mode = "replace" },
 			coda_5_bordo = { img = "apprendista_coda_5_bordo", tint = nil, x = 30.9, y = 1.4, w = 79.1, h = 37.4, mode = "replace" },
+			fiamma = { img = "apprendista_fiamma", tint = nil, x = 0.0, y = 27.0, w = 38.3, h = 54.0, mode = "replace" },
 			gamba = { img = "apprendista_gamba_2", tint = nil, x = 4.7, y = -30.7, w = 58.9, h = 82.0, mode = "replace" },
 			gamba_1 = { img = "apprendista_gamba_1", tint = nil, x = 4.8, y = -30.5, w = 59.4, h = 81.4, mode = "replace" },
 			gamba_2 = { img = "apprendista_gamba_2", tint = nil, x = 4.7, y = -30.7, w = 58.9, h = 82.0, mode = "replace" },
@@ -105,6 +106,11 @@ return {
 			testa_provocazione_1 = { img = "favilla_testa_provocazione_1", tint = nil, x = 6.6, y = 51.8, w = 126.6, h = 139.4, mode = "replace" },
 			testa_sconfitta = { img = "favilla_testa_sconfitta_1", tint = nil, x = 6.5, y = 51.8, w = 126.0, h = 139.4, mode = "replace" },
 			testa_sconfitta_1 = { img = "favilla_testa_sconfitta_1", tint = nil, x = 6.5, y = 51.8, w = 126.0, h = 139.4, mode = "replace" },
+		} },
+		mantello_prova = { category = "mantello", cape = { -18, 116, -2, 116, 14, 116 }, pieces = {
+			mantello_1 = { img = "mantello_prova_mantello_1", tint = "mantello_prova_mantello_1_tinta", x = -17.6, y = -41.1, w = 55.1, h = 93.7, mode = "over" },
+			mantello_2 = { img = "mantello_prova_mantello_2", tint = "mantello_prova_mantello_2_tinta", x = -17.3, y = -41.0, w = 54.6, h = 94.0, mode = "over" },
+			mantello_3 = { img = "mantello_prova_mantello_3", tint = "mantello_prova_mantello_3_tinta", x = -11.0, y = -41.1, w = 46.0, h = 93.7, mode = "over" },
 		} },
 	},
 }
