@@ -96,7 +96,7 @@ local function map_card(a, x, y, m)
 		kit.text(k.g, kit.upper(maps.get(m.id).name), x + 93, y + 116, 15, KC.SAND, "middle", 0.5)
 		kit.zone(g, a.buttons, x, y, 186, 130, "mappa:" .. m.id)
 	else
-		ui.padlock(0, 65 - 4 - 46, 40, KC.MUTE, k.node)
+		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", 0, -(65 - 4 - 46), 44)
 		kit.text(k.g, kit.upper(common.opens_with:format(m.serve)), x + 93, y + 116, 11, KC.MUTE, "middle", 0.5)
 	end
 end

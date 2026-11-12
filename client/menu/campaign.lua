@@ -92,7 +92,7 @@ local function card(c, l, x, y, w, h, ih, kind, state)
 	local kd = types.KINDS[l.tipo]
 	if kd then kit.label(k.g, x + 16, y + 12, kd.name, locked and KC.MUTE or kd.color, true) end
 	if locked then
-		ui.padlock(0, h / 2 - 4 - ih / 2, math.min(46, ih * 0.5), KC.MUTE, k.node)
+		kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", 0, -(h / 2 - 4 - ih / 2), math.min(50, ih * 0.55))
 	else
 		kit.zone(g, c.buttons, x, y, w, h, "missione:" .. l.id)
 	end
@@ -140,7 +140,7 @@ local function card_list(c, cap)
 		local k = kit.card(g, 420, fy, fw, 56, is_new and unlocked and KC.HOT or unlocked and KC.STAR or KC.LINE, { sel = is_new and unlocked })
 		fit(kit.text(k.g, T.final:format(kit.upper(final.titolo)), 446, fy + 35, 17, unlocked and KC.SAND or KC.MUTE), fw - 130)
 		if not unlocked then
-			ui.padlock(fw / 2 - 40, 0, 30, KC.MUTE, k.node)
+			kit.piece({ node = k.node, ox = 0, oy = 0 }, "lucchetto", fw / 2 - 40, 0, 34)
 		elseif is_new then
 			kit.text(k.g, T.new, 420 + fw - 24, fy + 34, 13, KC.HOT_TOP, "end", 1)
 		else
@@ -419,7 +419,7 @@ local function build(c)
 				if (c.stelle[l.id] or {})[1] then done = done + 1 end
 			end
 		end
-		ui.padlock(820, 720 - 300, 64, KC.MUTE, c.radice)
+		kit.piece(g, "lucchetto", 820, 300, 72)
 		kit.text(g, kit.upper(T.locked:format(prev and prev.titolo or payload.CAPITOLI[1].titolo)), 820, 380, 16, KC.SAND, "middle", 0.5)
 		kit.text(g, kit.upper(T.done_count:format(done, tot)), 820, 408, 12, KC.MUTE, "middle", 1)
 		act.sub = kit.upper(T.done_count:format(done, tot))

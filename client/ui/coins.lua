@@ -22,13 +22,6 @@ local M = {}
 
 local function c(r, g, b, a) return vmath.vector4(r, g, b, a or 1) end
 
--- the layers of each coin, bottom to top, with their color
-M.LAYERS = {
-	scaglia = { { "sagoma", c(0.66, 0.45, 0.05) }, { "faccia", ui.C.GOLD }, { "luce", c(1, 0.95, 0.66) },
-		{ "segno", c(0.66, 0.45, 0.05) } },
-	ossidiana = { { "filo", ui.C.OBSIDIAN }, { "corpo", c(0.1, 0.07, 0.125) }, { "taglio_a", c(0.29, 0.2, 0.39) },
-		{ "taglio_b", c(0.17, 0.12, 0.24) }, { "luce", c(1, 0.84, 0.95) } },
-}
 M.COLOR = { scaglia = ui.C.GOLD, ossidiana = ui.C.OBSIDIAN }
 
 -- the wallet pill: as tall as the queue's, the two balances side by side
@@ -41,10 +34,9 @@ function M.icon(kind, x, y, d, parent)
 	local root = gui.new_box_node(vec(x, y), vec(0, 0))
 	gui.set_visible(root, false)
 	if parent then gui.set_parent(root, parent) end
-	local small = d <= 48 and "_p" or ""
-	for _, l in ipairs(M.LAYERS[kind]) do
-		ui.sagoma("moneta_" .. kind .. "_" .. l[1] .. small, 0, 0, d, d, l[2], root)
-	end
+	-- the pieces of the fucina atlas (the flake of gold, the gem), a bit taller
+	-- than the old flat coin to weigh the same
+	kit.piece({ node = root, ox = 0, oy = 0 }, kind == "scaglia" and "scaglia" or "gemma", 0, 0, d * 1.12)
 	return root
 end
 
@@ -65,18 +57,23 @@ function M.wallet(scaglie, ossidiana, parent, x, y)
 	w.text = {}
 	-- the wallet (ui/kit.lua): one dark strip to read, no
 	-- frame and no shadow (it is not two buttons), a thin cut between the balances
+	-- two small iron plates (ui/kit.lua), each balance in its room, its coin
+	-- sticking out of the left end
 	local g = { node = w.root, ox = 1110, oy = 44 }
-	kit.para(g, 966, 26, 204, 36, 10, kit.with_alpha(kit.C.INK, 0.8))
-	kit.line(g, 1085, 31, 1079, 57, 2, kit.with_alpha(kit.C.SAND, 0.3))
 	w.border = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(w.border, false)
 	gui.set_parent(w.border, w.root)
-	w.at.scaglia = vec(-118, 0)
-	w.at.ossidiana = vec(-6, 0)
-	M.icon("scaglia", -118, 0, 22, w.root)
-	M.icon("ossidiana", -6, 0, 22, w.root)
-	w.text.scaglia = kit.text(g, "", 1008, 51, 18, kit.C.SAND)
-	w.text.ossidiana = kit.text(g, "", 1120, 51, 18, kit.C.SAND)
+	w.room = {}
+	for _, o in ipairs({ { "scaglia", 962, 112 }, { "ossidiana", 1084, 88 } }) do
+		local kind, x, wide = o[1], o[2], o[3]
+		local p = kit.plate(g, x, 25, wide, 38, kit.C.ROSE, { sk = 0 })
+		w.at[kind] = vec(x + 12 - g.ox, 0)
+		M.icon(kind, x + 12 - g.ox, 0, 30, w.root)
+		local box = { x0 = x + 31, x1 = p.box.x1, y0 = p.box.y0, y1 = p.box.y1 }
+		w.room[kind] = box.x1 - box.x0
+		w.text[kind] = kit.text({ node = p.g.node, ox = p.g.ox, oy = p.g.oy, box = box }, "", x + 31, 51, 17, kit.C.SAND)
+		w.scale = gui.get_scale(w.text[kind])
+	end
 	M.set(w, scaglie, ossidiana)
 	return w
 end
@@ -84,6 +81,12 @@ end
 local function draw(w)
 	gui.set_text(w.text.scaglia, M.format(w.shown.scaglie))
 	gui.set_text(w.text.ossidiana, M.format(w.shown.ossidiana))
+	-- a long balance shrinks: never past its plate
+	for kind, n in pairs(w.text) do
+		gui.set_scale(n, w.scale)
+		local wide = kit.width(n)
+		if wide > w.room[kind] then gui.set_scale(n, w.scale * (w.room[kind] / wide)) end
+	end
 	-- the pill appears with the first coin earned (it is also the way to the shop)
 	gui.set_enabled(w.root, w.real.scaglie > 0 or w.real.ossidiana > 0)
 end

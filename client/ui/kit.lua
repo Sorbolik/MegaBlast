@@ -577,7 +577,15 @@ end
 
 -- LABELS: a small blade and the name in color
 function M.label(g, x, y, t, color, backed)
-	if backed then M.para(g, x - 6, y, #t * 9 + 30, 22, 6, with_alpha(C.INK, 0.8)) end
+	if backed then
+		-- on a picture: a small iron plate, the word in its room
+		local w, h = #t * 9 + 46, 26
+		local cx, cy = x - 8 + w / 2, y - 1 + h / 2
+		local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
+		three(n, "piastrina", w, h)
+		local box = room("piastrina", cx, cy, w, h)
+		return M.text({ node = n, ox = cx, oy = cy, box = box }, t, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 5, 12, color, "middle", 1.2)
+	end
 	M.para(g, x, y + 3, 7, 16, 4, color)
 	return M.text(g, t, x + 16, y + 17, 13, color, "start", 1.2)
 end
