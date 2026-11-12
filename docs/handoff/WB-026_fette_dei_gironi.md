@@ -189,3 +189,5 @@ Approvata: è reversibile e Sergio ha chiesto le fette mancanti il 12 nov 2026.
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Guardate le nove fette (12 nov): tutte buone, ognuna riconoscibile, centro pulito. Nel gioco: atlante `fette` (1340 px di larghezza, 256 colori: 244 KB in tutto), `client/ui/slices.lua`, e la mappa dei gironi di `client/menu/campaign.lua` (la pila che scorre, tutte intere, quella guardata grande).
