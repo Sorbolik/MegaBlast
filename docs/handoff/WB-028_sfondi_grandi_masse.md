@@ -197,4 +197,41 @@ dopo se serve il movimento). Scartato: tenere l'incudine più piccola o spostata
 
 ## Consegna di Codex
 
+### 2026-11-12
+
+Otto sfondi generati con lo strumento integrato da `main` aggiornato
+(`fb89b281`). Ogni tentativo ha usato il prompt integrale della scheda e
+i riferimenti R1 e R2 in quest'ordine.
+
+File in `art/WB-028/`. Ogni nome indica un PNG RGB originale da
+1672 × 941 px e un TXT omonimo con prompt e riferimenti.
+
+| Nome | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `sfondo_home` | 1 | 1 |
+| `sfondo_armeria` | 1 | 1 |
+| `sfondo_allenamento` | 1 | 1 |
+| `sfondo_eventi` | 1 | 1 |
+| `sfondo_gioca` | 1 | 1 |
+| `sfondo_diavoletto` | 1 | 1 |
+| `sfondo_impostazioni` | 1 | 1 |
+| `sfondo_podio` | 3 | 3 |
+
+Ho confrontato gli otto sfondi affiancati. Le masse entrano dai lati e
+lasciano il centro libero da oggetti. Le sagome si distinguono per arco,
+cappa, merli, drappi, portali, tenda, disco e terrazze con fasci di luce.
+Ho verificato a vista le due luci, la profondità, l'assenza di puntini,
+texture evidenti, contorni neri, personaggi, scritte, pulsanti e cornici.
+Nell'angolo in alto a destra (30% destro × 25% superiore), sia il picco
+sia il 99° percentile di luminanza dei PNG consegnati sono inferiori a R1.
+Ho scelto il terzo Podio per il gelo meno luminoso dei primi due tentativi.
+
+La fascia di pavimento visibile è più sottile del quinto indicato nei
+prompt. Diversi sfondi riprendono la sagoma ghiacciata a terrazze di R1.
+Il portale di Gioca aggiunge luce azzurra anche in basso a destra.
+L'alone tenue del Diavoletto e i due fasci del Podio rendono il centro
+di quelle schermate un po' più chiaro, come da descrizioni specifiche.
+La leggibilità con l'interfaccia effettivamente sovrapposta resta da
+verificare nella pagina delle proposte.
+
 ## Resoconto di Claude
