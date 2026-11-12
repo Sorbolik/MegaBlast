@@ -1,6 +1,6 @@
 # WB-028 · Sfondi dei menu: solo grandi masse, come quello dei gironi
 
-- **Stato:** APPROVATA (Claude, 2026-11-12, sulle parole di Sergio qui sotto; sono immagini di prova, reversibile)
+- **Stato:** GENERATA, approvata da Sergio nella pagina (non ancora nel gioco) · prima APPROVATA (Claude, 2026-11-12, sulle parole di Sergio qui sotto; sono immagini di prova, reversibile)
 - **Data:** 2026-11-12
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-028`
 
@@ -198,3 +198,22 @@ dopo se serve il movimento). Scartato: tenere l'incudine più piccola o spostata
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+### 2026-11-12
+
+Consegna di Codex sul ramo `design/WB-028` (`cd93d4a8`): otto sfondi, tutti usati, nessuno
+scartato. Niente oggetti, masse ai lati che incorniciano, centro libero, gelo più spento di
+WB-027. Messi nella pagina delle proposte sotto l'interfaccia vera di ogni schermata
+(https://claude.ai/artifact/8Vtj3sQas5mHQry8eD7Myo, foto in
+`/mnt/project-files/sfondi_premium/codex_wb028.jpg`), insieme allo sfondo dei gironi di WB-027.
+
+Sergio ha chiesto in più degli «effetti che attraversano ogni tanto i bordi più marcati»:
+fatto nella pagina con un riflesso che corre sui bordi di luce già dipinti (caldo dal basso
+a sinistra, freddo dall'alto a destra, ogni venti secondi circa). Verdetto: «ok, mi piace».
+
+Passati al thread dell'interfaccia, che li aggancia nel gioco (un'immagine per schermata più
+una mappa dei bordi a un canale; ricetta in `/mnt/project-files/sfondi_premium/src/`).
+Da sistemare nel gioco: il pavimento dipinto non è sempre all'altezza del filo; la scheggia
+di ghiaccio in basso a destra è simile in tutte le schermate.
+Non verificato: nel gioco vero, su 1600×720 e 960×720, peso nell'APK, FPS col riflesso.
+
