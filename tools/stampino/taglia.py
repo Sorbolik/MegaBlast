@@ -86,10 +86,9 @@ def fondo_via(im):
 
 
 def manichino(posto):
-    """Il pezzo di base in grigio nella sua casella (come nello stampino)."""
-    pz = ST.pezzo(posto)
-    gruppi, box = pz[0], ST.scatola(pz, posto)
-    return np.asarray(ST.grigio(ST.disegna(gruppi, box, ST.S))).astype(np.float32)
+    """Il manichino in grigio nella sua casella, come nello stampino (i pezzi del
+    personaggio del gioco)."""
+    return np.asarray(ST.immagine(posto)).astype(np.float32)
 
 
 def allinea(pezzo, base):

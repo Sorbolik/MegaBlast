@@ -127,6 +127,78 @@ def grigio(im):
     return g
 
 
+# Il manichino è il personaggio del gioco (scoria.PERSONAGGIO): dal 2 nov
+# l'apprendista. I suoi pezzi (pelli/<nome>.json, disegni in pelli/svg) vanno
+# nelle stesse caselle, sullo stesso perno; i posti che non ha (l'ala) restano
+# col pezzo di base, il mantello con la sua sagoma.
+PERSONAGGIO = "apprendista"
+PELLI = os.path.join(QUI, "pelli")
+
+
+def personaggio():
+    try:
+        with open(os.path.join(PELLI, PERSONAGGIO + ".json")) as f:
+            pelle = json.load(f)
+    except OSError:
+        return None, None
+    return pelle["pezzi"], pelle
+
+
+def svg_pezzo(img, w, h):
+    """Il disegno SVG di un pezzo di una pelle a w x h pixel (None se non c'è)."""
+    f = os.path.join(PELLI, "svg", img + ".svg")
+    if not os.path.exists(f):
+        return None
+    import io
+    import cairosvg
+    png = cairosvg.svg2png(url=f, output_width=max(1, round(w)), output_height=max(1, round(h)))
+    return Image.open(io.BytesIO(png)).convert("RGBA")
+
+
+def metti_pezzo(tela, p, px, py, scala, angolo=0.0, jx=0.0, jy=0.0):
+    """Un pezzo della pelle (col suo strato del colore) sulla tela: il perno del
+    posto in (px, py) pixel, il giunto (jx, jy) unità dal perno, girato di
+    angolo radianti. Falso se il pezzo non ha disegno."""
+    im = svg_pezzo(p["img"], p["w"] * scala, p["h"] * scala)
+    if im is None or p["w"] < 1:
+        return False
+    if p.get("tinta"):
+        t = svg_pezzo(p["tinta"], p["w"] * scala, p["h"] * scala)
+        if t is not None:
+            im.alpha_composite(t)
+    c, sn = math.cos(angolo), math.sin(angolo)
+    cx, cy = jx + p["x"] * c - p["y"] * sn, jy + p["x"] * sn + p["y"] * c
+    if angolo:
+        im = im.rotate(math.degrees(angolo), resample=Image.BICUBIC, expand=True)
+    tela.alpha_composite(im, (round(px + cx * scala - im.width / 2), round(py - cy * scala - im.height / 2)))
+    return True
+
+
+def immagine(n):
+    """Il manichino di un posto, in grigio, grande come la sua casella."""
+    pz = pezzo(n)
+    box = scatola(pz, n)
+    w, h = round((box[2] - box[0]) * S), round((box[3] - box[1]) * S)
+    px, py = (0 - box[0]) * S, box[3] * S
+    pezzi, pelle = personaggio()
+    tela = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    fatto = False
+    if pezzi and n == "coda" and "coda_1" in pezzi:
+        # la coda del personaggio a riposo: i bordi, poi i colori
+        for suff in ("_bordo", ""):
+            x, y = 0.0, 0.0
+            for i, a in enumerate(pelle["coda_riposo"]):
+                q = pezzi.get(f"coda_{i + 1}{suff}")
+                if q:
+                    fatto = metti_pezzo(tela, q, px, py, S, a, x, y) or fatto
+                x, y = x + pelle["coda"][i] * math.cos(a), y + pelle["coda"][i] * math.sin(a)
+    elif pezzi and n in pezzi:
+        fatto = metti_pezzo(tela, pezzi[n], px, py, S)
+    if not fatto:
+        tela = disegna(pz[0], box, S)
+    return grigio(tela)
+
+
 def font(n):
     try:
         return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", n)
@@ -151,13 +223,13 @@ def main():
         gap = (W - sum(larghe)) / (len(riga) + 1)
         x = gap
         for n, larga in zip(riga, larghe):
-            im = grigio(disegna(pezzi[n][0], scatola(pezzi[n]), S))
+            im = immagine(n)
             casella(n, pezzi[n], im, round(x), round(y + TITOLO + (alta - TITOLO - im.height) / 2), guida, ai, dg, caselle)
             x += larga + gap
         y += alta + spazio
     # il mantello, fuori dalle righe
     m = pezzo("mantello")
-    im = grigio(disegna(m[0], scatola(m, "mantello"), S))
+    im = immagine("mantello")
     casella("mantello", m, im, round(MANTELLO_CENTRO[0] - im.width / 2), round(MANTELLO_CENTRO[1] - im.height / 2),
             guida, ai, dg, caselle)
     legenda(dg, guida)
@@ -214,6 +286,15 @@ def casella(n, pz, im, bx, by, guida, ai, dg, caselle):
 def giunti(nome):
     """I giunti dentro un posto (unità, dal perno) e il raggio del bordo lì: dove
     il pezzo si piega su quello dopo (i segmenti della coda)."""
+    pezzi, pelle = personaggio()
+    if nome == "coda" and pelle and "coda_riposo" in pelle:
+        # quelli della coda del personaggio, grandi come i suoi segmenti lì
+        out, x, y = [], 0.0, 0.0
+        for i, (L, a) in enumerate(zip(pelle["coda"], pelle["coda_riposo"])):
+            x, y = x + L * math.cos(a), y + L * math.sin(a)
+            q = [pezzi[f"coda_{j}_bordo"]["h"] for j in (i + 1, i + 2) if f"coda_{j}_bordo" in pezzi]
+            out.append((x, y, min(q) / 2 if q else 10))
+        return out[:-1]
     if nome == "coda":
         out, x, y = [], 0.0, 0.0
         for (L, w0, w1), a in zip(DV.CODA, DV.CODA_RIPOSO):
@@ -268,6 +349,30 @@ def manichino():
     metti("testa", *DV.PUNTI["collo"])
     metti("braccio", sx, sy)
     im = grigio(disegna(gruppi, (-110, -20, 110, 280), 1024 / 300))
+    pezzi, pelle = personaggio()
+    if pezzi:
+        # il personaggio del gioco: i suoi pezzi sui punti dello scheletro, come li
+        # monta il gioco a riposo (i perni spostati non cambiano dove stanno)
+        k = 1024 / 300
+        tela = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        punto = lambda x, y: ((x + 110) * k, (280 - y) * k)
+        cx, cy = DV.PUNTI["coda"]
+        X, Y = 0.0, 0.0
+        for suff in ("_bordo", ""):
+            X, Y = 0.0, 0.0
+            for i, a in enumerate(pelle.get("coda_riposo", [])):
+                q = pezzi.get(f"coda_{i + 1}{suff}")
+                if q:
+                    metti_pezzo(tela, q, *punto(cx, cy), k, a, X, Y)
+                X, Y = X + pelle["coda"][i] * math.cos(a), Y + pelle["coda"][i] * math.sin(a)
+        sx, sy = DV.PUNTI["spalle"]
+        ax, ay = DV.PUNTI["anche"]
+        for posto, (x, y) in [("ala", DV.PUNTI["ala"]), ("braccio_dietro", (-sx, sy)), ("gamba_dietro", (-ax, ay)),
+                              ("gamba", (ax, ay)), ("busto", DV.PUNTI["bacino"]), ("testa", DV.PUNTI["collo"]),
+                              ("braccio", (sx, sy))]:
+            if posto in pezzi:
+                metti_pezzo(tela, pezzi[posto], *punto(x, y), k)
+        im = grigio(tela)
     fondo = Image.new("RGBA", (1024, 1024), MAGENTA)
     fondo.alpha_composite(im, ((1024 - im.width) // 2, (1024 - im.height) // 2))
     fondo.convert("RGB").save(os.path.join(OUT, "manichino.png"), optimize=True)

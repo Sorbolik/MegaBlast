@@ -9,7 +9,9 @@ senza toccare il codice.
 
 Lo scheletro è quello del diavoletto a vettori (`tools/grafica/diavoletto.py`,
 `PUNTI`): ogni posto è un pezzo che gira attorno a un perno. Sullo stampino ogni
-posto ha una casella con dentro il pezzo di base in grigio (il **manichino**) e
+posto ha una casella con dentro, in grigio, il pezzo del personaggio del gioco
+(il **manichino**: dal 12 nov l'apprendista, `PERSONAGGIO` in `stampino.py`, dai suoi
+disegni in `pelli/svg`; dove non ha un pezzo, come l'ala, quello di base) e
 il perno (croce rossa). Il pezzo nuovo si disegna sopra il manichino, nella sua
 casella, con lo stesso perno: la spalla dove c'è la spalla, il collo dove c'è
 il collo.

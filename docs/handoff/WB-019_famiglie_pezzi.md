@@ -61,8 +61,8 @@ Contorno nero `#000000` spesso come quello di R1; finiture ciano `#00FFFF`; sfon
 | Codice | File | Cos'è |
 |---|---|---|
 | R1 | `art/WB-009/scelti/tre_quarti.png` | l'apprendista nello stile del gioco: corpo, altezza, tratto e colori |
-| R2 | `art/WB-009/riferimenti/R2_stampino_ai.png` | lo stampino: dove va ogni pezzo (3072×2048) |
-| R3 | `art/WB-009/riferimenti/R3_manichino.png` | come si attaccano i pezzi |
+| R2 | `art/WB-019/riferimenti/R2_stampino_ai.png` | lo stampino con l'apprendista in grigio e la casella del mantello: dove va ogni pezzo (3072×2048, 12 nov) |
+| R3 | `art/WB-019/riferimenti/R3_manichino.png` | l'apprendista montato: come si attaccano i pezzi (12 nov) |
 | R4 | `art/WB-019/riferimenti/sagome.png` | le sagome segnaposto della pagina (esportate da Claude l'11 nov) |
 | R5 | `art/WB-019/scelti/<famiglia>.png` | la tavola scelta in fase 1 (c'è solo dopo) |
 
