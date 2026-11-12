@@ -42,7 +42,13 @@ LUA = os.path.join(RADICE, "client", "battle", "skins.lua")
 # Le categorie: una pelle per categoria addosso. Le prime sostituiscono i pezzi
 # del diavoletto, le altre si disegnano sopra, in quest'ordine.
 SOSTITUISCE = ["personaggio", "testa", "corpo", "ali", "coda"]
-SOPRA = ["pantaloni", "maglia", "corazza", "guanti", "elmo"]
+SOPRA = ["pantaloni", "stivali", "maglia", "corazza", "guanti", "elmo", "mantello"]
+# Il mantello (WB-019): si disegna intero nella sua casella e si taglia in tre
+# strisce che il gioco muove da sole; le altre categorie non lo usano.
+STRISCE = [f"mantello_{i + 1}" for i in range(len(ST.STRISCE))]
+# quanto le strisce si sovrappongono (unità, per lato): poco in alto, di più in
+# fondo, dove si aprono a ventaglio quando il mantello si muove
+SOVRAPPOSTE = (2, 0.12)
 CATEGORIE = SOSTITUISCE + SOPRA
 # i pezzi di dietro, fatti da quelli davanti un po' più scuri se mancano
 DIETRO = {"braccio_dietro": "braccio", "gamba_dietro": "gamba"}
@@ -81,8 +87,8 @@ def fondo_via(im):
 
 def manichino(posto):
     """Il pezzo di base in grigio nella sua casella (come nello stampino)."""
-    gruppi, (x0, y0, x1, y1) = ST.pezzo(posto)
-    box = (x0 - ST.MARGINE, y0 - ST.MARGINE, x1 + ST.MARGINE, y1 + ST.MARGINE)
+    pz = ST.pezzo(posto)
+    gruppi, box = pz[0], ST.scatola(pz, posto)
     return np.asarray(ST.grigio(ST.disegna(gruppi, box, ST.S))).astype(np.float32)
 
 
@@ -192,12 +198,14 @@ def trova(a, F):
     al = a[..., 3] > 128
     minimo = 0.0004 * al.size
     posti = {}
+    # il mantello no: è una pelle a parte, non un pezzo del personaggio
+    candidati = [p for p in F["posti"] if p != "mantello"]
     for m in macchie(al):
         if m.sum() < minimo:
             continue
         ys, xs = np.nonzero(m)
         cx, cy = xs.mean(), ys.mean()
-        posto = min(F["posti"], key=lambda p: (cx - sum(F["posti"][p]["casella"][0::2]) / 2) ** 2 +
+        posto = min(candidati, key=lambda p: (cx - sum(F["posti"][p]["casella"][0::2]) / 2) ** 2 +
                     (cy - sum(F["posti"][p]["casella"][1::2]) / 2) ** 2)
         posti[posto] = posti[posto] | m if posto in posti else m
     out = {}
@@ -460,7 +468,7 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
         with open(os.path.join(JSON, nome + ".json")) as f:
             vecchia = json.load(f)
         pezzi = vecchia["pezzi"]
-        forma = {k: vecchia[k] for k in ("coda", "coda_riposo", "coda_radice") if k in vecchia}
+        forma = {k: vecchia[k] for k in ("coda", "coda_riposo", "coda_radice", "mantello") if k in vecchia}
     else:
         for f in file_della_pelle(nome):
             os.remove(f)
@@ -505,6 +513,8 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
     else:
         a = alla_misura(foglio, F)
         for posto, c in F["posti"].items():
+            if (posto == "mantello") != (categoria == "mantello"):
+                continue
             x0, y0, x1, y1 = c["casella"]
             pz = a[y0:y1, x0:x1].copy()
             base = manichino(posto)
@@ -518,6 +528,8 @@ def taglia(foglio, nome, categoria, sopra, allinea_pezzi, senza=(), foglio_teste
                 pz = allinea(pz, base)
             if posto == "coda":
                 forma = metti_coda(pezzi, pz, nome, F["scala"], px, sopra)
+            elif posto == "mantello":
+                forma = metti_mantello(pezzi, pz, nome, F["scala"], px, (c["perno"][0] - x0, c["perno"][1] - y0))
             else:
                 metti(pezzi, pz, nome, posto, (c["perno"][0] - x0, c["perno"][1] - y0), F["scala"], px, sopra)
     if not pezzi:
@@ -624,6 +636,30 @@ def salva(pz, nome, posto, px0, py0, scala, px, scatola=None):
     return {"img": nome_img, "x": round(cx, 1), "y": round(cy, 1), "w": round(w, 1), "h": round(h, 1)}
 
 
+def metti_mantello(pezzi, pz, nome, scala, px, perno):
+    """Il mantello intero nelle sue tre strisce (ST.TAGLI), un po' sovrapposte;
+    ognuna gira attorno al centro del suo bordo in alto. Torna dove stanno i
+    perni delle strisce nel diavoletto (unità)."""
+    h, w = pz.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w]
+    u, v = (xx - perno[0]) / scala, (perno[1] - yy) / scala   # unità dal perno, y in su
+    ya, yf = ST.MANTELLO_ALTO[2], ST.MANTELLO_FONDO[2]
+    t = np.clip((v - ya) / (yf - ya), 0, None)                # 0 in alto, 1 in fondo
+    giu = np.clip(ya - v, 0, None)
+    ov = SOVRAPPOSTE[0] + SOVRAPPOSTE[1] * giu
+    tagli = [xa + (xf - xa) * t for xa, xf in ST.TAGLI]
+    bordi = [np.full_like(u, -1e9)] + tagli + [np.full_like(u, 1e9)]
+    perni = [v for sx, sy in ST.STRISCE for v in (ST.ATTACCO[0] + sx, ST.ATTACCO[1] + sy)]
+    for i, (sx, sy) in enumerate(ST.STRISCE):
+        dentro = (u >= bordi[i] - ov) & (u < bordi[i + 1] + ov)
+        st = pz.copy()
+        st[~dentro, 3] = 0
+        if (st[..., 3] > 128).sum() < 20:
+            continue
+        metti(pezzi, st, nome, STRISCE[i], (perno[0] + sx * scala, perno[1] - sy * scala), scala, px, True)
+    return {"mantello": perni}
+
+
 def leggi_diavoletto():
     """px dal diavoletto di base (battle/devil.lua): i pezzi nuovi hanno la
     stessa densità."""
@@ -647,13 +683,14 @@ def rifai():
            "-- center relative to the pivot, size) and replaces the base piece or is",
            "-- drawn over it. One skin per category; the \"over\" ones in order. A new",
            "-- tail has its own lengths, its rest angles (radians) and, if the editor",
-           "-- moved it, how far its root is moved (tail_root).",
+           "-- moved it, how far its root is moved (tail_root). A cape: where the pivots",
+           "-- of its strips sit in the devil (cape = { x1, y1, x2, y2, x3, y3 }).",
            "return {",
            "\treplace = { " + ", ".join(f'"{c}"' for c in SOSTITUISCE) + " },",
            "\tover = { " + ", ".join(f'"{c}"' for c in SOPRA) + " },",
            "\tskins = {"]
     # the skin JSON files (tools/stampino/pelli) keep the tool's names
-    forme = {"coda": "tail", "coda_riposo": "tail_rest", "coda_radice": "tail_root"}
+    forme = {"coda": "tail", "coda_riposo": "tail_rest", "coda_radice": "tail_root", "mantello": "cape"}
     modi = {"sostituisce": "replace", "sopra": "over"}
     for p in pelli:
         forma = "".join(f'{forme[k]} = {{ {", ".join(str(v) for v in p[k])} }}, ' for k in forme if k in p)

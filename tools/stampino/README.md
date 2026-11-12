@@ -19,6 +19,7 @@ il collo.
 | 1 | `testa`, `testa_colpita`, `testa_felice`, `testa_ko` |
 | 2 | `busto`, `ala`, `coda` (intera, a riposo) |
 | 3 | `braccio`, `braccio_dietro`, `gamba`, `gamba_dietro`, `pugno` |
+| fuori riga | `mantello`, fra busto e ala (aggiunto dopo: le altre caselle non si sono spostate) |
 
 Caselle e perni in pixel del foglio (3072 x 2048, 3,5 pixel per unità del
 disegno; il diavoletto è alto 200 unità): `foglio.json`.
@@ -27,8 +28,16 @@ disegno; il diavoletto è alto 200 unità): `foglio.json`.
 
 - **Una pelle, una categoria.** Le categorie che *sostituiscono* i pezzi di base:
   `personaggio`, `testa`, `corpo`, `ali`, `coda`. Quelle che vanno *sopra*, in
-  quest'ordine: `pantaloni`, `maglia`, `corazza`, `guanti`, `elmo`. Il diavoletto
-  porta al massimo una pelle per categoria.
+  quest'ordine: `pantaloni`, `stivali`, `maglia`, `corazza`, `guanti`, `elmo`, `mantello`.
+  Il diavoletto porta al massimo una pelle per categoria.
+- **Il mantello si disegna intero** nella casella `mantello`, appeso dritto dietro le
+  spalle col bordo in alto sulle tre croci rosse. `taglia.py` lo divide lungo le righe
+  verdi tratteggiate in tre strisce (`mantello_1` dietro, `mantello_2`, `mantello_3`),
+  un po' sovrapposte (di più in fondo); nel gioco ognuna gira attorno alla sua croce con
+  la sua molla (`client/battle/scoria.lua`): resta indietro nella corsa, si alza cadendo,
+  sbatte quando arriva un colpo. Solo grafica. La casella si usa solo con
+  `--categoria mantello`, e il mantello solo da quella casella. Prova: scenario
+  `tools/simula/scenari/mantello.txt` (con `mantello_prova`, il mantello finto).
 - **Si disegnano solo le caselle che cambiano.** Le vuote restano come sono.
 - **Le facce:** una testa nuova senza le altre facce le fa tutte (non cambia
   espressione). Un elmo disegnato sulla `testa` sta su tutte le facce.

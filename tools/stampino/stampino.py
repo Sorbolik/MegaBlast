@@ -53,8 +53,33 @@ NOMI = {
     "testa": "testa", "testa_colpita": "testa colpita", "testa_felice": "testa felice", "testa_ko": "testa KO",
     "busto": "busto", "ala": "ala", "coda": "coda",
     "braccio": "braccio", "braccio_dietro": "braccio dietro", "gamba": "gamba", "gamba_dietro": "gamba dietro",
-    "pugno": "pugno",
+    "pugno": "pugno", "mantello": "mantello",
 }
+
+# Il mantello (WB-019): un posto fuori dalle righe, nel vuoto fra busto e ala, così
+# le caselle di prima restano dove sono. Si disegna intero, appeso dietro le
+# spalle; taglia.py lo divide in tre strisce che nel gioco si muovono da sole
+# (scoria.lua). Unità del disegno dal perno (ATTACCO, il centro dietro le spalle),
+# y in su: il bordo in alto, quello in fondo, i tagli fra le strisce (in alto e in
+# fondo) e il perno di ogni striscia (il centro del suo bordo in alto).
+MANTELLO_CENTRO = (1078, 1150)          # pixel del foglio, centro della casella
+MARGINE_MANTELLO = 12
+ATTACCO = (-2, 116)                     # il perno del mantello nel diavoletto
+MANTELLO_ALTO = (-24, 24, 0)            # da x a x, a quota y
+MANTELLO_FONDO = (-58, 22, -82)
+TAGLI = [(-8, -31.3), (8, -4.7)]        # x in alto e x in fondo di ogni taglio
+STRISCE = [(-16, 0), (0, 0), (16, 0)]   # i perni delle tre strisce
+
+
+def gruppi_mantello():
+    """La sagoma del mantello (il manichino della sua casella) e la sua scatola."""
+    a0, a1, ya = MANTELLO_ALTO
+    f0, f1, yf = MANTELLO_FONDO
+    d = (f"M{a0},{ya} Q0,{ya + 4} {a1},{ya} L{f1},{yf + 4} Q{f1},{yf} {f1 - 4},{yf} "
+         f"Q{(f0 + f1) / 2},{yf - 5} {f0 + 4},{yf + 1} Q{f0},{yf + 2} {f0 + 1},{yf + 6} Z")
+    g = (f'<path d="{d}" fill="#9a9aa2" stroke="#202024" stroke-width="{DV.BORDO_D}" '
+         'stroke-linejoin="round"/>')
+    return [g], (f0 - 2, yf - 6, f1 + 2, ya + 4)
 
 
 def gruppi_coda():
@@ -79,6 +104,8 @@ def pezzo(nome):
     """I gruppi SVG del pezzo di base attorno al suo perno e la sua scatola."""
     if nome == "coda":
         return gruppi_coda()
+    if nome == "mantello":
+        return gruppi_mantello()
     d = DV.D()
     box = DV.PEZZI[nome](d)
     return [d.gruppo(False, "")], box
@@ -124,25 +151,15 @@ def main():
         gap = (W - sum(larghe)) / (len(riga) + 1)
         x = gap
         for n, larga in zip(riga, larghe):
-            gruppi, (x0, y0, x1, y1) = pezzi[n]
-            box = (x0 - MARGINE, y0 - MARGINE, x1 + MARGINE, y1 + MARGINE)
-            im = grigio(disegna(gruppi, box, S))
-            bx, by = round(x), round(y + TITOLO + (alta - TITOLO - im.height) / 2)
-            guida.alpha_composite(im, (bx, by))
-            ai.alpha_composite(im, (bx, by))
-            # il perno: (0, 0) del pezzo
-            px, py = bx + (0 - box[0]) * S, by + (box[3] - 0) * S
-            caselle[n] = {"casella": [bx, by, bx + im.width, by + im.height], "perno": [round(px, 1), round(py, 1)]}
-            dg.rectangle([bx, by, bx + im.width, by + im.height], outline=(70, 110, 200, 255), width=3)
-            dg.text((bx + 6, by - TITOLO + 6), NOMI[n], fill=(30, 34, 44, 255), font=font(30))
-            # i giunti da tenere tondi: lì i pezzi si piegano uno sull'altro
-            for gx, gy, gr in giunti(n):
-                cerchio(dg, px + gx * S, py - gy * S, gr * S)
-            r = 14
-            dg.line([px - r, py, px + r, py], fill=(225, 40, 40, 255), width=4)
-            dg.line([px, py - r, px, py + r], fill=(225, 40, 40, 255), width=4)
+            im = grigio(disegna(pezzi[n][0], scatola(pezzi[n]), S))
+            casella(n, pezzi[n], im, round(x), round(y + TITOLO + (alta - TITOLO - im.height) / 2), guida, ai, dg, caselle)
             x += larga + gap
         y += alta + spazio
+    # il mantello, fuori dalle righe
+    m = pezzo("mantello")
+    im = grigio(disegna(m[0], scatola(m, "mantello"), S))
+    casella("mantello", m, im, round(MANTELLO_CENTRO[0] - im.width / 2), round(MANTELLO_CENTRO[1] - im.height / 2),
+            guida, ai, dg, caselle)
     legenda(dg, guida)
     guida.convert("RGB").save(os.path.join(OUT, "stampino.png"), optimize=True)
     ai.convert("RGB").save(os.path.join(OUT, "stampino_ai.png"), optimize=True)
@@ -151,6 +168,47 @@ def main():
         f.write("\n")
     manichino()
     print("OK:", os.path.relpath(OUT, RADICE), "e", os.path.relpath(FOGLIO, RADICE))
+
+
+def scatola(pz, n=None):
+    """La casella di un pezzo, in unità dal perno: il pezzo più il margine (il
+    mantello ne ha meno, per starci fra busto e ala)."""
+    x0, y0, x1, y1 = pz[1]
+    m = MARGINE_MANTELLO if n == "mantello" else MARGINE
+    return (x0 - m, y0 - m, x1 + m, y1 + m)
+
+
+def croce(dg, px, py, r=14):
+    dg.line([px - r, py, px + r, py], fill=(225, 40, 40, 255), width=4)
+    dg.line([px, py - r, px, py + r], fill=(225, 40, 40, 255), width=4)
+
+
+def casella(n, pz, im, bx, by, guida, ai, dg, caselle):
+    """Il manichino di un posto nella sua casella, col nome, il perno e i giunti."""
+    box = scatola(pz, n)
+    guida.alpha_composite(im, (bx, by))
+    ai.alpha_composite(im, (bx, by))
+    # il perno: (0, 0) del pezzo
+    px, py = bx + (0 - box[0]) * S, by + (box[3] - 0) * S
+    caselle[n] = {"casella": [bx, by, bx + im.width, by + im.height], "perno": [round(px, 1), round(py, 1)]}
+    dg.rectangle([bx, by, bx + im.width, by + im.height], outline=(70, 110, 200, 255), width=3)
+    dg.text((bx + 6, by - TITOLO + 6), NOMI[n], fill=(30, 34, 44, 255), font=font(30))
+    # i giunti da tenere tondi: lì i pezzi si piegano uno sull'altro
+    for gx, gy, gr in giunti(n):
+        cerchio(dg, px + gx * S, py - gy * S, gr * S)
+    if n == "mantello":
+        # i tagli fra le strisce (tratteggiati) e il perno di ognuna
+        ya, yf = MANTELLO_ALTO[2], MANTELLO_FONDO[2]
+        for xa, xf in TAGLI:
+            for i in range(0, 12, 2):
+                t0, t1 = i / 12, (i + 1) / 12
+                dg.line([px + (xa + (xf - xa) * t0) * S, py - (ya + (yf - ya) * t0) * S,
+                         px + (xa + (xf - xa) * t1) * S, py - (ya + (yf - ya) * t1) * S],
+                        fill=(40, 150, 90, 255), width=4)
+        for sx, sy in STRISCE:
+            croce(dg, px + sx * S, py - sy * S, 10)
+    else:
+        croce(dg, px, py)
 
 
 def giunti(nome):

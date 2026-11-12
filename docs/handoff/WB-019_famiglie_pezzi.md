@@ -19,9 +19,9 @@ segnaposto: https://claude.ai/artifact/F5TiCLHXAqgPe7XUBi138A (pagina «I Pezzi 
 - **Fase 1**, `esegui WB-019 fase 1`: cinque tavole di stile, una per famiglia (immagini 1-5).
   Sergio sceglie, Claude salva le scelte in `art/WB-019/scelti/<famiglia>.png` su main.
 - **Fase 2**, `esegui WB-019 fase 2 <famiglia>`: due fogli sullo stampino per la famiglia
-  (base e forgiata). Parte solo quando lo stampino ha le caselle `stivali` e le tre strisce
-  del mantello `mantello_1`, `mantello_2`, `mantello_3` (lavoro di Claude su `tools/stampino/`,
-  prima della fase 2).
+  (base e forgiata). Lo stampino ha la casella `mantello` (fra busto e ala, 12 nov): il
+  mantello si disegna intero e `taglia.py` lo divide nelle tre strisce che si muovono; gli
+  stivali vanno nelle caselle `gamba` e `gamba_dietro` (categoria `stivali`).
 - Codex esegue solo la fase chiesta; se un riferimento non c'è, si ferma.
 
 ## Cosa teniamo e cosa scartiamo
@@ -39,7 +39,7 @@ segnaposto: https://claude.ai/artifact/F5TiCLHXAqgPe7XUBi138A (pagina «I Pezzi 
 | Armi o oggetti in mano | le mani reggono le armi del gioco |
 | Pezzi che coprono gli occhi o la bocca | le espressioni devono restare leggibili |
 | Mantelli lunghi fino ai piedi | coprirebbero la coda e le gambe nella corsa; il mantello arriva al ginocchio, al massimo poco sotto |
-| Mantello in un pezzo solo | Sergio (12 nov) vuole i mantelli liberi, che seguono la fisica di chi si muove: il gioco lo muove come la coda, con tre strisce verticali una accanto all'altra, ognuna col suo perno in alto |
+| Mantello in un pezzo solo | Sergio (12 nov) vuole i mantelli liberi, che seguono la fisica di chi si muove: il gioco lo muove come la coda, con tre strisce verticali una accanto all'altra, ognuna col suo perno in alto (le taglia `taglia.py` dal mantello disegnato intero) |
 | Gradienti, texture, bagliori, scintille | il bagliore della brace lo fa il codice; il ricalco in SVG vuole colori piatti |
 | Bronzo, argento e oro dipinti | il grado è il ciano tinto dal gioco |
 
@@ -113,7 +113,7 @@ Rendering rules, very strict, because this drawing will be traced into vector sh
 ```
 Image 1 is the chosen armour set of our game worn by the apprentice (left figure: basic form, right figure: forged form). Image 2 is our "stampino": a sheet of boxes on a magenta background, each box holds one grey body part with a red cross for its pivot. Image 3 shows how the parts attach.
 
-Redraw ONLY the armour pieces of the [BASIC|FORGED] form of image 1, separated, each in its own box of image 2, at the same size and position as the grey part in that box, so it fits exactly over it: the HELMET in the box "testa" (over the head, no face, no neck), the CHEST ARMOUR in the box "busto", the BOOT in the boxes "gamba" and "gamba_dietro" (only the lower leg and foot, both pointing right), the CAPE cut in three vertical strips, left, middle and right, in the boxes "mantello_1", "mantello_2" and "mantello_3" (hanging straight, each strip's top edge on its pivot cross; side by side they make the whole cape, with the edges overlapping a little so no gap shows when they swing apart). Draw ONLY the armour, never the body, the face, the arms or the grey part.
+Redraw ONLY the armour pieces of the [BASIC|FORGED] form of image 1, separated, each in its own box of image 2, at the same size and position as the grey part in that box, so it fits exactly over it: the HELMET in the box "testa" (over the head, no face, no neck), the CHEST ARMOUR in the box "busto", the BOOT in the boxes "gamba" and "gamba_dietro" (only the lower leg and foot, both pointing right), the whole CAPE in the box "mantello" (seen from the side, hanging straight down behind the shoulders, its top edge on the three red crosses; ignore the dashed green lines, they are where we cut it). Draw ONLY the armour, never the body, the face, the arms or the grey part.
 
 Same rendering rules as image 1: flat colors, thick closed black outline, trims in pure cyan #00FFFF. Background: flat pure magenta #FF00FF everywhere outside the pieces. Keep the box layout of image 2 but do not draw the boxes, crosses or labels. No text. Landscape 3:2.
 ```
@@ -133,7 +133,10 @@ Same rendering rules as image 1: flat colors, thick closed black outline, trims 
 Sergio, 12 nov («vai» sulle tavole consigliate da Claude): FABBRO 1, CORVO 2, FORNACE 1,
 LEVIATANO 1, VUOTO 2, salvate in `art/WB-019/scelti/<famiglia>.png`. Stesso giorno: i mantelli
 si muovono liberi seguendo la fisica di chi si sposta (solo grafica, come la coda): in fase 2 il
-mantello va diviso in tre strisce sullo stampino.
+mantello va diviso in tre strisce sullo stampino. Fatto da Claude (12 nov): casella `mantello`
+nello stampino (le altre non si spostano), `taglia.py` la taglia in tre strisce sovrapposte che
+il gioco muove ognuna con la sua molla. Comandi del ritaglio: `--categoria mantello` per il
+mantello, `--categoria stivali` per gli stivali (sopra le gambe), `elmo` e `corazza` come sempre.
 
 ## Consegna di Codex
 
@@ -198,5 +201,5 @@ l'ornamento. Scelte: `1_fabbro_1` (martello sulla cuffia leggibile; la 2 quasi u
 `4_leviatano_1` (nella 2 le dita escono dalla punta degli stivali), `5_vuoto_2` (occhio sul
 cappuccio forgiato più chiaro). Da correggere in fase 2: il martello del Fabbro va in ottone, non
 ciano; i mantelli di Corvo e Vuoto forgiati sotto il ginocchio si accorciano un poco; le finiture
-si portano al ciano esatto `#00FFFF` al ritaglio. Prima della fase 2: caselle `stivali` e
-`mantello_1..3` nello stampino (Claude).
+si portano al ciano esatto `#00FFFF` al ritaglio. Prima della fase 2: casella `mantello` nello
+stampino e categoria `stivali` (Claude, fatto il 12 nov).
