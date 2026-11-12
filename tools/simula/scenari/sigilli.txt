@@ -15,7 +15,7 @@ aspetta 0.3
 foto 01_sigilli
 tocca 710 272                       # FUCINA, soglia 5
 aspetta 0.2
-tocca 1065 118                      # PORTA QUI
+tocca 1105 52                      # PORTA QUI
 aspetta 0.2
 tocca 1150 344                      # il secondo potere
 aspetta 0.2

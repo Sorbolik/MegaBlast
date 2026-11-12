@@ -196,8 +196,8 @@ function M.new(results, giocatori, me, my_gain, prof, number)
 	p.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	if number then
 		-- RIVEDI: straight to this match's replay (then back to the profile)
-		local again = kit.plate(p.right, 740, 584, 160, 56, KC.ROSE, { sk = 14, d = 6 })
-		kit.text(again.g, common.replay, 740 + 87, 584 + 36, 18, KC.SAND, "middle", 0.5)
+		local again = kit.plate(p.right, 724, 628, 190, 64, KC.ROSE, { sk = 0, d = 6, piece = "piastrina" })
+		kit.text(again.g, common.replay, 724 + 95, 628 + 41, 22, KC.SAND, "middle", 0.5)
 		kit.button(p.buttons, again, "rivedi")
 	end
 	local go = kit.action(p.right, T.go_on, 930, 560, 270, 84, { size = 44 })

@@ -10,7 +10,7 @@ aspetta 0.25
 foto 03_ingresso_gioca
 aspetta 1.2
 foto 04_home
-tocca_bordo 251 260 mezzo destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta 0.2
 foto 05_tendina_entra
 aspetta 0.2
@@ -24,7 +24,7 @@ aspetta 0.25
 foto 09_tendina_ritorno
 aspetta 1
 foto 10_di_nuovo_home
-tocca_bordo 242 572 mezzo destra  # CAMPAGNA
+tocca_bordo 236 470 mezzo sinistra  # CAMPAGNA
 aspetta 0.45
 foto 11_campagna_arriva
 aspetta 0.9

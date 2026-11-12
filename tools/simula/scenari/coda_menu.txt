@@ -10,9 +10,9 @@ aspetta 1
 server 2v2 1 bot_dopo=14s
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 251 260 mezzo destra                     # GIOCA
+tocca_bordo 175 52 basso destra                     # GIOCA
 aspetta 0.5
-tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
 aspetta 1
 foto 01_sala
@@ -20,7 +20,7 @@ tocca_centro 832 79                       # TORNA AI MENU · RESTI IN CODA
 aspetta_stato modo=menu coda=si 3
 aspetta 1
 foto 02_home_in_coda               # pillola in alto, GIOCA, CAMPAGNA spenta
-tocca_centro 330 300                # il diavoletto: il suo posto
+tocca_centro 640 300                # il diavoletto: il suo posto
 aspetta_stato modo=schermata 3
 aspetta 0.8
 foto 03_diavoletto_in_coda

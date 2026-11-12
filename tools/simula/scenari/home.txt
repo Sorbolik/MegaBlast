@@ -3,10 +3,10 @@
 
 aspetta 1.5
 foto 01_home
-tocca 1029 260                      # GIOCA
+tocca 1105 52                      # GIOCA
 aspetta 0.5
 foto 02_dove_giochi
-tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
+tocca_bordo 175 52 basso destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=ended 3
 aspetta 0.5
 foto 03_online

@@ -8,14 +8,14 @@
 imposta prova_vignette no             # le vignette hanno il loro scenario (vignette.txt)
 
 aspetta 2
-tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
+tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
 aspetta 0.5
 tocca_centro 339 196                # CONTATORE FPS: ACCESO
 aspetta 0.5
 foto 00_impostazioni
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta 5                           # la home: lo sfondo dipinto che scorre
-tocca 1038 572                      # CAMPAGNA
+tocca 236 470                      # CAMPAGNA
 aspetta 2
 tocca 532 484                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 8
@@ -30,12 +30,12 @@ aspetta 3
 tocca 36 60                         # indietro alla home
 aspetta 4
 foto 02_home
-tocca 1048 488                      # ALLENAMENTO
+tocca 250 334                      # ALLENAMENTO
 aspetta 1
 tocca 547 470                       # 1 CONTRO 1
 tocca 840 382                       # DIFFICILE
 aspetta 0.3
-tocca_bordo 215 118 basso destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta_stato modo=local turno=1 fase=aim 5
 aspetta 1
 mira 150 100 0.4

@@ -31,13 +31,13 @@ local MAX_EVENTS = 2
 local function row(c, x, y, id, name, sub, over)
 	local g = c.kg
 	local on = c.sel == id
-	local k = kit.card(g, x, y, 400, 74, on and KC.HOT or over and KC.STAR or KC.ROSE, { sel = on })
-	if over then kit.text(k.g, over, x + 30, y + 22, 11, KC.HOT, "start", 1.5) end
-	local n = kit.text(k.g, name, x + 28, y + (over and 48 or sub and 38 or 46), over and 22 or 26, KC.SAND)
+	local k = kit.card(g, x, y, 460, 84, on and KC.HOT or over and KC.STAR or KC.ROSE, { sel = on })
+	if over then kit.text(k.g, over, x + 30, y + 26, 13, KC.HOT, "start", 1.5) end
+	local n = kit.text(k.g, name, x + 28, y + (over and 54 or sub and 42 or 54), over and 24 or 30, KC.SAND)
 	local wide = kit.width(n)
-	if wide > 350 then gui.set_scale(n, gui.get_scale(n) * (350 / wide)) end
-	if sub then kit.text(k.g, kit.upper(sub), x + 26, y + (over and 65 or 58), 11, KC.MUTE, "start", 1) end
-	kit.zone(g, c.buttons, x, y, 400, 74, id == "privata" and "privata" or ("scegli:" .. id))
+	if wide > 400 then gui.set_scale(n, gui.get_scale(n) * (400 / wide)) end
+	if sub then kit.text(k.g, kit.upper(sub), x + 28, y + (over and 74 or 66), 13, KC.MUTE, "start", 0.5) end
+	kit.zone(g, c.buttons, x, y, 460, 84, id == "privata" and "privata" or ("scegli:" .. id))
 end
 
 local function build(c)
@@ -48,7 +48,7 @@ local function build(c)
 	c.buttons = {}
 	-- the frame (ui/kit.lua): the title, the way back, the devil
 	c.head = kit.header(c.buttons, T.title, KC.HOT, "indietro", common.home)
-	c.right = kit.anchor(1280, 360, gui.ANCHOR_RIGHT)
+	c.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	c.low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
 	c.radice = ui.root()
 	c.kg = { node = c.radice, ox = 0, oy = 720 }
@@ -67,43 +67,43 @@ local function build(c)
 
 	-- the usual 2 vs 2: the big card, with the events that count there too
 	local on = c.sel == "2v2"
-	local k = kit.card(g, 440, 130, 400, 130, on and KC.HOT or KC.ROSE, { sel = on })
-	local clip = gui.new_box_node(vmath.vector3(-200 + 6 + 67, 0, 0), vmath.vector3(134, 118, 0))
+	local k = kit.card(g, 440, 120, 460, 150, on and KC.HOT or KC.ROSE, { sel = on })
+	local clip = gui.new_box_node(vmath.vector3(-230 + 8 + 78, 0, 0), vmath.vector3(156, 134, 0))
 	gui.set_clipping_mode(clip, gui.CLIPPING_MODE_STENCIL)
 	gui.set_clipping_visible(clip, false)
 	gui.set_parent(clip, k.node)
-	local img = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(118 * 16 / 9, 118, 0))
+	local img = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(134 * 16 / 9, 134, 0))
 	gui.set_texture(img, "mappe")
 	gui.play_flipbook(img, c.map or "cortile")
 	gui.set_parent(img, clip)
-	kit.text(k.g, T.usual_match, 606, 162, 12, KC.HOT_TOP, "start", 1.5)
-	kit.text(k.g, common.modes["2v2"], 602, 206, 40, KC.SAND)
+	kit.text(k.g, T.usual_match, 626, 166, 14, KC.HOT_TOP, "start", 1.5)
+	kit.text(k.g, common.modes["2v2"], 622, 216, 46, KC.SAND)
 	local also = {}
 	for i, o in ipairs(events.on_queue("2v2")) do
 		if i > 2 then break end
 		also[i] = kit.upper(o.nome)
 	end
 	if #also > 0 then
-		local n = kit.text(k.g, T.also_counts:format(table.concat(also, ", ")), 600, 236, 12, KC.MUTE, "start", 1)
+		local n = kit.text(k.g, T.also_counts:format(table.concat(also, ", ")), 624, 246, 14, KC.MUTE, "start", 1)
 		local wide = kit.width(n)
-		if wide > 226 then gui.set_scale(n, gui.get_scale(n) * (226 / wide)) end
+		if wide > 250 then gui.set_scale(n, gui.get_scale(n) * (250 / wide)) end
 	end
-	kit.zone(g, c.buttons, 440, 130, 400, 130, "scegli:2v2")
+	kit.zone(g, c.buttons, 440, 120, 460, 150, "scegli:2v2")
 
 	-- under it, staggered: the events with their own queue, the 1 vs 1, the private match
 	local rows = #own + 2
-	local step = rows <= 3 and 90 or 78
+	local step = rows <= 3 and 100 or 76
 	local i = 0
 	for _, o in ipairs(own) do
-		row(c, 460 + i * 16, 286 + i * step, o.coda, kit.upper(o.nome), events.when(o), T.event:format(events.queue_name(o.modo)))
+		row(c, 450 + i * 10, 288 + i * step, o.coda, kit.upper(o.nome), events.when(o), T.event:format(events.queue_name(o.modo)))
 		i = i + 1
 	end
-	row(c, 460 + i * 16, 286 + i * step, "1v1", common.modes["1v1"])
+	row(c, 450 + i * 10, 288 + i * step, "1v1", common.modes["1v1"])
 	i = i + 1
-	row(c, 460 + i * 16, 286 + i * step, "privata", T.private, T.private_line)
+	row(c, 450 + i * 10, 288 + i * step, "privata", T.private, T.private_line)
 
 	-- the one action: CERCA starts the chosen queue
-	c.action = kit.action(c.right, T.search, 930, 250, 290, 120, { size = 78, sub = names[c.sel] })
+	c.action = kit.action(c.right, T.search, 930, 560, 270, 84, { size = 54, sub = names[c.sel] })
 	kit.button(c.buttons, c.action, "cerca", { main = true })
 end
 

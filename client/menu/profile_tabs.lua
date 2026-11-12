@@ -100,7 +100,7 @@ end
 -- kit.lean and kit.air). devil_x(): where the devil is, in
 -- Figma coordinates
 function M.devil_x() return 250 - kit.side() end
-M.DEVIL_Y = 380    -- its height (the middle of its body)
+M.DEVIL_Y = 420    -- its height (the middle of its body)
 -- a group like g, moved with the devil's side
 function M.left_of(g)
 	local n = box(-kit.side() + kit.lean(), 0, 0, 0, C.LIGHT, g.node)
@@ -119,12 +119,13 @@ function M.devil(s, line)
 	rp.x = -kit.lean()
 	gui.set_position(s.radice, rp)
 	if s.kg then s.kg.air = true end
-	local pose = box(M.devil_x() + kit.lean(), 126, 0, 0, C.LIGHT, s.radice)
+	-- (its feet on the thread)
+	local pose = box(M.devil_x() + kit.lean(), kit.BAND + 8, 0, 0, C.LIGHT, s.radice)
 	gui.set_visible(pose, false)
 	s.figure = scoria.new(s.colore, scoria.PERSONAGGIO)
 	s.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	scoria.update(s.figure, 0, s.st)
-	local k = 265 / game.DISEGNO_H
+	local k = 300 / game.DISEGNO_H
 	gui.set_scale(pose, vmath.vector3(k, k, 1))
 	local ground = ui.alone(0, 0, 230 / k, C.SHADOW, pose)
 	gui.set_blend_mode(ground, gui.BLEND_ALPHA)
@@ -133,12 +134,12 @@ function M.devil(s, line)
 	scoria.set_enabled(s.figure, true)
 	if line then
 		-- no profile here: a light plate that says what the place is
-		local on_plate = kit.sand(s.low, 80, 630, 340, 62, s.accent or KC.STAR, { sk = 22 })
-		kit.text(on_plate.g, line, 250, 668, 22, KC.INK, "middle", 1)
+		local on_plate = kit.sand(s.low, kit.PLATE_X, kit.PLATE_Y, 340, 62, s.accent or KC.STAR, { sk = 22 })
+		kit.text(on_plate.g, line, kit.PLATE_X + 170, kit.PLATE_Y + 38, 22, KC.INK, "middle", 1)
 		return
 	end
 	local lv = (p.braci or 0) > 0 and T.level_braci:format(p.livello, p.braci) or T.level:format(p.livello)
-	kit.nameplate(s.low, 80, 630, T.your_devil, lv .. " · " .. thousands(p.xp) .. "/" .. thousands(profile.xp_level(p.livello)),
+	kit.nameplate(s.low, kit.PLATE_X, kit.PLATE_Y, T.your_devil, lv .. " · " .. thousands(p.xp) .. "/" .. thousands(profile.xp_level(p.livello)),
 		p.xp / profile.xp_level(p.livello), KC.PURPLE)
 end
 
@@ -149,21 +150,20 @@ end
 function M.loadouts(s)
 	local p = s.prof
 	local g = M.left_of(s.kg)
-	kit.text(g, T.loadout, 46, 112, 14, KC.MUTE, "start", 1.5)
+	kit.text(g, T.loadout, 46, 124, 16, KC.MUTE, "start", 1.5)
 	local n = 0
 	for i = 1, #p.loadouts do
 		if loadout.open(i, p.livello) then
-			local x = 40 + n * 54
-			local tab = kit.plate(g, x, 122, 50, 40, KC.ROSE, { sk = 0, piece = p.is_active == i and "linguetta_chiara" or "linguetta" })
-			kit.text(tab.g, tostring(i), (tab.box.x0 + tab.box.x1) / 2, 149, 18, p.is_active == i and KC.INK or KC.MUTE, "middle")
-			kit.zone(g, s.buttons, x, 118, 54, 48, "assetto:" .. i)
+			local x = 40 + n * 76
+			local tab = kit.plate(g, x, 134, 70, 56, KC.ROSE, { sk = 0, piece = p.is_active == i and "linguetta_chiara" or "linguetta" })
+			kit.text(tab.g, tostring(i), (tab.box.x0 + tab.box.x1) / 2, 172, 26, p.is_active == i and KC.INK or KC.MUTE, "middle")
+			kit.zone(g, s.buttons, x, 128, 76, 68, "assetto:" .. i)
 			n = n + 1
 		end
 	end
-	kit.rect(g, 40, 160, math.max(1, n) * 54, 2, kit.with_alpha(KC.SAND, 0.2))
 	for i = 1, #p.loadouts do
 		if not loadout.open(i, p.livello) then
-			kit.text(g, T.loadout_locked:format(i, loadout.LOADOUT_LEVELS[i]), 40 + n * 54 + 10, 148, 11, KC.MUTE, "start", 1)
+			kit.text(g, T.loadout_locked:format(i, loadout.LOADOUT_LEVELS[i]), 40 + n * 76 + 10, 170, 15, KC.MUTE, "start", 1)
 			break
 		end
 	end
@@ -174,35 +174,18 @@ local function sheet_sheet(s, parent)
 	local g = s.kg
 	local v = showcase.from_profile(p, common.you, 1, T.loadout_n:format(p.is_active))
 	v.tu = true
-	-- the pieces worn: one card each, staggered
+	-- the pieces worn: one card each, staggered; on it its next upgrade too
 	for i, slot in ipairs(equip.SLOTS) do
 		local pz = v.pezzi[i]
-		local x, y = 440 + (i - 1) * 12, 176 + (i - 1) * 84
-		local full = pz.set and equip.next_tier(pz.livello) == nil
-		local k = kit.card(g, x, y, 236, 70, full and KC.STAR or KC.ROSE)
-		kit.text(k.g, slot.name, x + 30, y + 25, 12, KC.MUTE, "start", 1.5)
-		if pz.set then
-			kit.text(k.g, equip.BY_ID[pz.set].name, x + 26, y + 54, 24, KC.SAND)
-			kit.text(k.g, tostring(pz.livello), x + 222, y + 34, 24, full and KC.STAR or KC.SAND, "end")
-			kit.pips(k.g, x + 222 - 45, y + 44, 3, equip.tier(pz.livello) - 1, KC.SAND)
-		else
-			kit.text(k.g, T.no_piece_short, x + 26, y + 54, 24, KC.MUTE)
-		end
-	end
-	-- how others see you (ui/tag_card.lua)
-	local mid = 726 + kit.air(0.5)
-	kit.heading(g, T.how_others_see, mid + 10, 168)
-	tag.new(v, mid + tag.WIDE / 2, 720 - 180, { tu = true }, parent)
-	-- the next upgrade of each piece: rows to read
-	local last = 1034 + kit.air()
-	kit.heading(g, T.next_steps, last + 6, 168)
-	for i, slot in ipairs(equip.SLOTS) do
-		local pz = v.pezzi[i]
-		local y, x = 184 + (i - 1) * 76, last - (i - 1) * 5
+		local x, y = 440 + (i - 1) * 10, 176 + (i - 1) * 105
 		local next_one = pz.set and equip.next_tier(pz.livello)
-		kit.info(g, x, y, 216, 62, (pz.set and not next_one) and KC.STAR or KC.ROSE)
+		local full = pz.set and next_one == nil
+		local k = kit.card(g, x, y, 320, 94, full and KC.STAR or KC.ROSE)
+		kit.text(k.g, slot.name, x + 26, y + 30, 15, KC.MUTE, "start", 1.5)
 		if pz.set then
-			kit.text(g, string.upper(piece_name(pz.set, slot)), x + 22, y + 24, 14, KC.SAND)
+			kit.text(k.g, equip.BY_ID[pz.set].name, x + 24, y + 62, 28, KC.SAND)
+			kit.text(k.g, tostring(pz.livello), x + 298, y + 44, 30, full and KC.STAR or KC.SAND, "end")
+			kit.pips(k.g, x + 298 - 45, y + 54, 3, equip.tier(pz.livello) - 1, KC.SAND)
 			local f, what = 1, T.all_steps
 			if next_one then
 				local first_one = 0
@@ -211,13 +194,19 @@ local function sheet_sheet(s, parent)
 				local tier = equip.tier(next_one)
 				what = (tier >= equip.TIERS and T.next_look_b or T.next_look):format(next_one, ROMAN[tier])
 			end
-			kit.text(g, string.upper(what), x + 22, y + 41, 10, KC.MUTE, "start", 1)
-			kit.bar(g, x + 20, y + 48, 180, 6, f, KC.STAR)
+			local line = kit.text(k.g, string.upper(what), x + 24, y + 82, 12, KC.MUTE, "start", 0.5)
+			local wide = kit.width(line)
+			if wide > 150 then gui.set_scale(line, gui.get_scale(line) * (150 / wide)) end
+			kit.bar(k.g, x + 196, y + 73, 100, 7, f, KC.STAR)
 		else
-			kit.text(g, slot.name, x + 22, y + 24, 14, KC.MUTE)
-			kit.text(g, string.upper(T.pick_in_armory), x + 22, y + 41, 10, KC.MUTE, "start", 1)
+			kit.text(k.g, T.no_piece_short, x + 24, y + 62, 28, KC.MUTE)
+			kit.text(k.g, string.upper(T.pick_in_armory), x + 24, y + 82, 12, KC.MUTE, "start", 1)
 		end
 	end
+	-- how others see you (ui/tag_card.lua), big enough to read
+	local mid = 830 + kit.air(0.8)
+	kit.heading(g, T.how_others_see, mid + 8, 190)
+	tag.new(v, mid + tag.WIDE * 1.18 / 2, 720 - 200, { tu = true, scale = 1.18 }, parent)
 	-- the one action: the armory
 	s.action = kit.action(s.right, common.armory, 930, 560, 270, 84, { size = 50 })
 	kit.button(s.buttons, s.action, "armeria", { main = true })
@@ -228,16 +217,16 @@ end
 local function sheet_stats(s)
 	local p = s.prof
 	local g = s.kg
-	-- which matches: a choice, the sand blade behind the active one
+	-- which matches: a choice, the light plate behind the active one
 	local cx = 440
 	for _, gr in ipairs(profile.GROUPS) do
 		local nome = kit.upper(profile.GROUP_NAMES[gr])
-		local w = #nome * 10 + 34
+		local w = #nome * 13 + 40
 		local on = s.gruppo == gr
-		if on then kit.light(g, cx, 164, w, 32, 10) end
-		kit.text(g, nome, cx + w / 2 + 4, 186, 14, on and KC.INK or kit.with_alpha(KC.SAND, 0.8), "middle")
-		kit.zone(g, s.buttons, cx, 158, w + 10, 44, "gruppo:" .. gr)
-		cx = cx + w + 12
+		if on then kit.light(g, cx, 172, w, 46, 0) end
+		kit.text(g, nome, cx + w / 2, 203, 19, on and KC.INK or kit.with_alpha(KC.SAND, 0.8), "middle")
+		kit.zone(g, s.buttons, cx - 4, 166, w + 8, 58, "gruppo:" .. gr)
+		cx = cx + w + 14
 	end
 	local st = profile.statistics(p, s.gruppo)
 	local matches = st.partite or 0
@@ -247,46 +236,47 @@ local function sheet_stats(s)
 		{ (st.colpi or 0) > 0 and (math.floor((st.a_segno or 0) * 100 / st.colpi + 0.5) .. "%") or "–", T.accuracy },
 		{ tostring(st.serie or 0), T.best_streak },
 	}
+	-- on the right: four numbers, nothing around them, and the damage per weapon
+	local wx = 1030 + kit.air()
 	for i, n in ipairs(numbers) do
-		local x, y = 440 + (i - 1) * 128, 214
-		kit.info(g, x, y, 112, 78, i == 2 and KC.HOT or KC.PURPLE)
-		kit.text(g, n[1], x + 62, y + 44, 34, KC.SAND, "middle")
-		kit.text(g, n[2], x + 60, y + 64, 10, KC.MUTE, "middle", 1)
+		local x, y = wx + ((i - 1) % 2) * 124, 232 + math.floor((i - 1) / 2) * 84
+		kit.text(g, n[1], x, y + 40, 42, i == 2 and KC.HOT or KC.SAND)
+		kit.text(g, n[2], x + 2, y + 62, 13, KC.MUTE, "start", 1)
 	end
 
 	-- the stats with their badges: the badge comes from the total of all modes
 	local all_f = profile.statistics(p, "tutte")
 	local picked_ones = {}
 	for _, id in ipairs(p.badge) do picked_ones[id] = true end
+	local step = 39
 	for i, t in ipairs(milestones.WHITELIST) do
-		local x, y = 440 + (i - 1) * 4, 312 + (i - 1) * 36
+		local x, y = 440, 232 + (i - 1) * step
 		local val = st[t.id] or 0
 		local tot = all_f[t.id] or 0
 		local grade = t.thresholds and milestones.grade(t, tot) or 0
-		local k = kit.card(g, x, y, 500, 30, grade > 0 and C.GRADI[grade] or KC.LINE)
-		kit.text(k.g, kit.upper(t.nome), x + 22, y + 21, 13, KC.SAND)
-		kit.text(k.g, kit.upper(thousands(val) .. (t.unit and (" " .. t.unit) or "")), x + 250, y + 21, 14, KC.SAND, "end")
+		kit.text(g, kit.upper(t.nome), x + 4, y + 26, 17, KC.SAND)
+		kit.text(g, kit.upper(thousands(val) .. (t.unit and (" " .. t.unit) or "")), x + 300, y + 26, 19, KC.SAND, "end")
 		if t.thresholds then
 			if grade > 0 then
-				tag.badge({ id = t.id, grado = grade }, x + 274, 720 - (y + 15), 27, s.radice)
-				kit.zone(g, s.buttons, x, y - 3, 500, 36, "badge:" .. t.id)
+				tag.badge({ id = t.id, grado = grade }, x + 326, 720 - (y + 19), 32, s.radice)
+				kit.zone(g, s.buttons, x, y, 570, step, "badge:" .. t.id)
 			end
 			local next_f, how_much = milestones.next(t, tot)
-			kit.bar(k.g, x + 296, y + 11, 96, 8, how_much or 1, KC.HOT)
+			kit.bar(g, x + 354, y + 14, 76, 10, how_much or 1, KC.HOT)
 			local chosen = picked_ones[t.id] and grade > 0
 			local dx = chosen and T.next_to_name or
 				(next_f and T.next_at:format(thousands(next_f)) or T.badge_grade:format(t.badge, ROMAN[grade]))
-			kit.text(k.g, kit.upper(dx), x + 488, y + 20, 9, chosen and KC.HOT_TOP or KC.MUTE, "end", 1)
+			local line = kit.text(g, kit.upper(dx), x + 570, y + 25, 12, chosen and KC.HOT_TOP or KC.MUTE, "end", 0.5)
+			local wide = kit.width(line)
+			if wide > 126 then gui.set_scale(line, gui.get_scale(line) * (126 / wide)) end
 		else
-			kit.text(k.g, kit.upper(T.no_badge), x + 488, y + 20, 9, KC.MUTE, "end", 1)
+			kit.text(g, kit.upper(T.no_badge), x + 570, y + 25, 12, KC.MUTE, "end", 1)
 		end
 	end
-	kit.text(g, kit.upper(T.badge_hint:format(milestones.SHOWN)), 444 + #milestones.WHITELIST * 4,
-		312 + #milestones.WHITELIST * 36 + 14, 11, KC.MUTE, "start", 1)
+	kit.text(g, kit.upper(T.badge_hint:format(milestones.SHOWN)), 444, 232 + #milestones.WHITELIST * step + 18, 12, KC.MUTE, "start", 1)
 
 	-- the damage per weapon: rows to read
-	local wx = 1000 + kit.air()
-	kit.heading(g, T.damage_by_weapon, wx + 10, 226)
+	kit.heading(g, T.damage_by_weapon, wx, 426)
 	local armi, tot = {}, 0
 	for w, n in pairs(st.armi or {}) do
 		armi[#armi + 1] = { w = w, n = n }
@@ -296,16 +286,15 @@ local function sheet_stats(s)
 		if a.n ~= b.n then return a.n > b.n end
 		return a.w < b.w
 	end)
-	if #armi == 0 then kit.text(g, kit.upper(T.nothing_yet), wx + 10, 262, 11, KC.MUTE, "start", 1) end
+	if #armi == 0 then kit.text(g, kit.upper(T.nothing_yet), wx, 458, 14, KC.MUTE, "start", 1) end
 	local first = armi[1] and armi[1].n or 1
 	for i, a in ipairs(armi) do
-		if i > 7 then break end
-		local x, y = wx - (i - 1) * 4, 242 + (i - 1) * 48
+		if i > 4 then break end
+		local x, y = wx, 438 + (i - 1) * 40
 		local c = game.SECONDARY[a.w] and KC.STEEL or KC.HOT
-		kit.info(g, x, y, 240, 38, c)
-		kit.text(g, kit.upper(T.weapons[a.w] or a.w), x + 22, y + 26, 14, KC.SAND)
-		kit.bar(g, x + 122, y + 16, 64, 9, a.n / first, c)
-		kit.text(g, math.floor(a.n * 100 / tot + 0.5) .. "%", x + 232, y + 27, 14, KC.SAND, "end")
+		kit.text(g, kit.upper(T.weapons[a.w] or a.w), x, y + 27, 16, KC.SAND)
+		kit.bar(g, x + 124, y + 15, 60, 10, a.n / first, c)
+		kit.text(g, math.floor(a.n * 100 / tot + 0.5) .. "%", x + 240, y + 27, 17, KC.SAND, "end")
 	end
 end
 
@@ -326,7 +315,6 @@ local OUTCOME = { V = { T.outcome_won, KC.HOT }, S = { T.outcome_lost, KC.PURPLE
 -- the rope: your team's lead at every lap, in the box x..x+w, y..y+h
 local function rope(g, values, x, y, w, h, my_own, another)
 	local cy = y + h / 2
-	kit.rect(g, x, cy - 1, w, 2, kit.with_alpha(KC.SAND, 0.25))
 	local max = 50
 	for _, v in ipairs(values) do max = math.max(max, math.abs(v)) end
 	local n = #values
@@ -336,11 +324,11 @@ local function rope(g, values, x, y, w, h, my_own, another)
 	for i = 2, n do
 		local x1, y1 = point(i - 1)
 		local x2, y2 = point(i)
-		kit.line(g, x1, y1, x2, y2, 5, values[i] >= 0 and my_own or another)
+		kit.line(g, x1, y1, x2, y2, 6, values[i] >= 0 and my_own or another)
 	end
 	for i = 1, n do
 		local px, py = point(i)
-		local d = ui.disc(px, 720 - py, i == n and 14 or 9, values[i] >= 0 and my_own or another, g.node)
+		local d = ui.disc(px, 720 - py, i == n and 18 or 12, values[i] >= 0 and my_own or another, g.node)
 		gui.set_blend_mode(d, gui.BLEND_ALPHA)
 	end
 end
@@ -349,27 +337,27 @@ local function sheet_matches(s)
 	local p = s.prof
 	local g = s.kg
 	if #p.partite == 0 then
-		kit.text(g, kit.upper(T.no_matches), 440, 200, 14, KC.MUTE, "start", 0.5)
+		kit.text(g, kit.upper(T.no_matches), 440, 220, 20, KC.MUTE, "start", 0.5)
 		return
 	end
 	s.scelta = math.min(s.scelta or 1, #p.partite)
-	-- the last matches: one card each, staggered; closer together when they are many
+	-- the last matches: one card each; closer together when they are many
 	local n = #p.partite
-	local step = math.min(76, 456 / math.max(1, n - 1))
-	local h = math.min(62, step - 8)
+	local step = math.min(80, 372 / math.max(1, n - 1))
+	local h = math.min(70, step - 5)
 	for i, pa in ipairs(p.partite) do
-		local x, y = 440 + (i - 1) * 8 * step / 76, 172 + (i - 1) * step
+		local x, y = 440, 176 + (i - 1) * step
 		local e = OUTCOME[pa.esito] or OUTCOME.P
-		local k = kit.card(g, x, y, 300, h, e[2], { sel = i == s.scelta })
-		kit.text(k.g, e[1], x + 28, y + h / 2 + 7, math.min(24, h * 0.5), pa.esito == "S" and KC.MUTE or KC.SAND)
+		local k = kit.card(g, x, y, 330, h, e[2], { sel = i == s.scelta })
+		kit.text(k.g, e[1], x + 24, y + h / 2 + 8, math.min(26, h * 0.56), pa.esito == "S" and KC.MUTE or e[2])
 		local map_name = maps.get(pa.mappa or "")
-		kit.text(k.g, kit.upper(profile.GROUP_NAMES[pa.gruppo] or pa.gruppo or ""), x + 272, y + h / 2 - 4, 13, KC.SAND, "end", 1)
-		kit.text(k.g, kit.upper((map_name and (map_name.name .. " · ") or "") .. when(pa.quando)), x + 288, y + h / 2 + 15, 11,
+		kit.text(k.g, kit.upper(profile.GROUP_NAMES[pa.gruppo] or pa.gruppo or ""), x + 310, y + h / 2 - 2, math.min(16, h * 0.34), KC.SAND, "end", 1)
+		kit.text(k.g, kit.upper((map_name and (map_name.name .. " · ") or "") .. when(pa.quando)), x + 310, y + h / 2 + h * 0.34, math.min(13, h * 0.28),
 			KC.MUTE, "end", 1)
-		kit.zone(g, s.buttons, x, y - 4, 300, step, "partita:" .. i)
+		kit.zone(g, s.buttons, x, y, 330, step, "partita:" .. i)
 	end
 
-	-- the chosen match: how it went
+	-- the chosen match: how it went (no box around the rope)
 	local pa = p.partite[s.scelta]
 	local me = pa.giocatori[pa.me or 1] or {}
 	local my_own = C.SQUADRA[me.squadra or 1] or C.SQUADRA[1]
@@ -377,30 +365,30 @@ local function sheet_matches(s)
 	for _, pl in ipairs(pa.giocatori or {}) do
 		if pl.squadra ~= me.squadra then another = C.SQUADRA[pl.squadra] or another end
 	end
-	kit.heading(g, T.round_by_round, 810, 186)
-	kit.info(g, 800, 198, 440, 190, KC.PURPLE)
-	rope(g, pa.fune or { 0 }, 836, 216, 330, 154, my_own, another)
-	kit.text(g, thousands(pa.punti[1] or 0), 1228, 282, 22, my_own, "end")
-	kit.text(g, thousands(pa.punti[2] or 0), 1228, 320, 22, another, "end")
+	local rx = 810 + kit.air(0.6)
+	kit.heading(g, T.round_by_round, rx, 194)
+	rope(g, pa.fune or { 0 }, rx + 6, 210, 330, 150, my_own, another)
+	kit.text(g, thousands(pa.punti[1] or 0), rx + 430, 274, 28, my_own, "end")
+	kit.text(g, thousands(pa.punti[2] or 0), rx + 430, 316, 28, another, "end")
 	-- the moments: a tap and you see it again from there
 	local ok = s.replay_ok and s.replay_ok(pa.numero)
 	local moments = pa.moments or {}
-	kit.heading(g, T.moments, 806, 424)
-	if #moments == 0 then kit.text(g, kit.upper(T.no_moments), 806, 462, 11, KC.MUTE, "start", 1) end
+	kit.heading(g, T.moments, rx, 398)
+	if #moments == 0 then kit.text(g, kit.upper(T.no_moments), rx, 432, 14, KC.MUTE, "start", 1) end
 	for i, m in ipairs(moments) do
 		if i > 3 then break end
-		local x, y = 800 - (i - 1) * 4, 438 + (i - 1) * 46
-		local pl = kit.plate(g, x, y, 300, 36, ok and KC.ROSE or KC.LINE, { sk = 10, d = 4 })
-		kit.text(pl.g, kit.upper(m.giro .. " · " .. m.testo), x + 24, y + 24, 14, ok and KC.SAND or KC.MUTE)
+		local x, y = rx - 6, 410 + (i - 1) * 62
+		local pl = kit.plate(g, x, y, 300, 56, ok and KC.ROSE or KC.LINE, { sk = 0, d = 4, piece = "piastrina" })
+		kit.text(pl.g, kit.upper(m.giro .. " · " .. m.testo), x + 24, y + 36, 16, ok and KC.SAND or KC.MUTE)
 		if ok then kit.button(s.buttons, pl, "momento:" .. i) end
 	end
 	-- who was there: tapping them, their tag from that time
 	for k, pl in ipairs(pa.giocatori or {}) do
 		if k > 4 then break end
-		local y = 446 + (k - 1) * 30
-		score.face(s.radice, 1134, 720 - y, 24, C.SQUADRA[pl.squadra] or C.LIGHT, pl.look)
-		kit.text(g, kit.upper(pl.nome or "?"), 1152, y + 5, 12, KC.SAND, "start", 0.5)
-		kit.zone(g, s.buttons, 1118, y - 15, 130, 30, "giocatore:" .. k)
+		local y = 430 + (k - 1) * 44
+		score.face(s.radice, rx + 330, 720 - y, 32, C.SQUADRA[pl.squadra] or C.LIGHT, pl.look)
+		kit.text(g, kit.upper(pl.nome or "?"), rx + 354, y + 6, 15, KC.SAND, "start", 0.5)
+		kit.zone(g, s.buttons, rx + 310, y - 22, 150, 44, "giocatore:" .. k)
 	end
 	-- the one action: see it again
 	s.action = kit.action(s.right, common.replay, 930, 560, 270, 84, { size = 54, off = not ok,
@@ -426,7 +414,7 @@ local function build(s)
 	local active = s.scheda == "sigilli" and 2 or s.scheda == "statistiche" and 3 or s.scheda == "partite" and 4 or 1
 	s.radice = ui.root()
 	s.kg = { node = s.radice, ox = 0, oy = 720 }
-	kit.tabs(s.kg, s.buttons, 440, 104, { { T.tab_sheet, "scheda:scheda" }, { T.tab_seals, "scheda:sigilli" },
+	kit.tabs(s.kg, s.buttons, 440, 100, { { T.tab_sheet, "scheda:scheda" }, { T.tab_seals, "scheda:sigilli" },
 		{ common.stats, "scheda:statistiche" }, { T.tab_matches, "scheda:partite" } }, active, KC.PURPLE)
 	M.devil(s)
 	if s.scheda == "scheda" or s.scheda == "sigilli" then M.loadouts(s) end

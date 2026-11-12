@@ -8,7 +8,7 @@ imposta prova_profilo 1
 aspetta 1.5
 tocca 330 300                       # il diavoletto
 aspetta 0.6
-tocca_bordo 215 118 basso destra    # ARMERIA, dalla scheda
+tocca_bordo 175 52 basso destra    # ARMERIA, dalla scheda
 aspetta 0.6
 foto 01_armadio_elmo
 tocca 580 296                       # STIVALI: Leviatano e Fabbro nell'armadio
@@ -20,7 +20,7 @@ foto 03_bottega
 tocca 573 496                       # il primo pezzo del giorno
 aspetta 0.3
 foto 04_bottega_scelto
-tocca_bordo 215 118 basso destra    # COMPRA
+tocca_bordo 175 52 basso destra    # COMPRA
 aspetta 0.5
 foto 05_comprato_nell_armadio
 tocca 796 596                       # CATALOGO

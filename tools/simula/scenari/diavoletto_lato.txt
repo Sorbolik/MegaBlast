@@ -3,21 +3,21 @@
 # coi raggi centrati su di lui. Da provare con --schermo 1600x720 e 960x720.
 imposta prova_profilo 1
 aspetta 1.5
-tocca_bordo 232 488 mezzo destra  # ALLENAMENTO
+tocca_bordo 250 334 mezzo sinistra  # ALLENAMENTO
 aspetta 1
 foto 01_allenamento
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.8
-tocca_bordo 251 260 mezzo destra    # GIOCA
+tocca_bordo 175 52 basso destra    # GIOCA
 aspetta 1
 foto 02_gioca_online
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.8
-tocca_centro 330 300                # il diavoletto
+tocca_centro 640 300                # il diavoletto
 aspetta 1
-tocca_bordo 215 118 basso destra    # ARMERIA
+tocca_bordo 175 52 basso destra    # ARMERIA
 aspetta 1
 foto 03_armeria
 tocca_bordo 36 60 basso sinistra    # indietro: il diavoletto
@@ -31,6 +31,6 @@ foto 05_statistiche
 tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta_stato modo=menu 3
 aspetta 0.8
-tocca_bordo 242 404 mezzo destra  # EVENTI
+tocca_bordo 246 470 mezzo destra  # EVENTI
 aspetta 1
 foto 06_eventi

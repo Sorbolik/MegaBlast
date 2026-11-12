@@ -82,7 +82,7 @@ function M.new(showcases, title)
 		gui.set_scale(name, vec(sc.x * 270 / wide, sc.y * 270 / wide))
 	end
 	local low = kit.anchor(0, 720, gui.ANCHOR_LEFT, gui.ANCHOR_BOTTOM)
-	kit.text(low, T.tap_to_pick, 80, 640, 15, KC.MUTE, "start", 1.5)
+	kit.text(low, T.tap_to_pick, 80, 596, 16, KC.MUTE, "start", 1.5)
 	local right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	local go = kit.action(right, T.weapons, 930, 560, 270, 84, { size = 54, sub = T.weapons_in:format(0, 0) })
 	s.tally = go.sub

@@ -119,13 +119,13 @@ local function card_list(c, cap)
 		local l = list[i]
 		local unlocked = is_mission_unlocked(c, list, i)
 		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
-		local x, y = 440 + col * (w + 20) - row * 10, 166 + row * (h + 22)
+		local x, y = 440 + col * (w + 20) - row * 10, 180 + row * (h + 20)
 		local is_new = l.id == next_id
 		local k = card(c, l, x, y, w, h, h - 46, "carta", not unlocked and "locked" or is_new and "new" or "open")
 		local count = #missions.criteria(l)
 		local d = cols == 3 and 16 or 13
 		local room = w - 30 - (is_new and 62 or unlocked and count * d * 1.2 + 6 or 0)
-		fit(kit.text(k.g, kit.upper(l.titolo), x + 18, y + h - 22, cols == 3 and 17 or 13, unlocked and KC.SAND or KC.MUTE), room)
+		fit(kit.text(k.g, kit.upper(l.titolo), x + 18, y + h - 22, cols == 3 and 19 or 15, unlocked and KC.SAND or KC.MUTE), room)
 		if is_new and unlocked then
 			kit.text(k.g, T.new, x + w - 10, y + h - 22, 13, KC.HOT_TOP, "end", 1)
 		elseif unlocked then
@@ -135,7 +135,7 @@ local function card_list(c, cap)
 	if final then
 		local unlocked = is_mission_unlocked(c, list, #list)
 		local rows = math.ceil(pinned / cols)
-		local fy, fw = 166 + rows * (h + 22), cols == 3 and 520 or 480
+		local fy, fw = 180 + rows * (h + 20), cols == 3 and 520 or 480
 		local is_new = final.id == next_id
 		local k = kit.card(g, 420, fy, fw, 56, is_new and unlocked and KC.HOT or unlocked and KC.STAR or KC.LINE, { sel = is_new and unlocked })
 		fit(kit.text(k.g, T.final:format(kit.upper(final.titolo)), 446, fy + 35, 17, unlocked and KC.SAND or KC.MUTE), fw - 130)
@@ -157,20 +157,20 @@ end
 local function guide(c, cap)
 	local g = c.kg
 	local who = cap == payload.CAPITOLI[1] and "favilla" or "fabbro"
-	local p = kit.sand(g, 60, 170, 330, 400, KC.HOT, { sk = 20 })
+	local p = kit.sand(g, 60, 180, 330, 400, KC.HOT, { sk = 20 })
 	local pic = gui.new_box_node(vmath.vector3(4, 35, 0), vmath.vector3(306, 306, 0))
 	gui.set_texture(pic, "ritratti")
 	gui.play_flipbook(pic, who .. (who == "favilla" and "_spiega" or "_calma"))
 	gui.set_parent(pic, p.face_node)
-	kit.text(g, TV[who], 90, 548, 26, KC.INK)
+	kit.text(g, TV[who], 90, 558, 28, KC.INK)
 	local done, got = 0, 0
 	for _, l in ipairs(cap.missioni) do
 		local st = c.stelle[l.id] or {}
 		if st[1] then done = done + 1 end
 		got = got + missions.count(st)
 	end
-	local on_plate = kit.sand(c.low, 80, 630, 340, 62, KC.STAR, { sk = 22 })
-	kit.text(on_plate.g, T.progress:format(done, #cap.missioni, got), 250, 668, 18, KC.INK, "middle", 0.5)
+	local on_plate = kit.sand(c.low, kit.PLATE_X, kit.PLATE_Y, 340, 62, KC.STAR, { sk = 22 })
+	kit.text(on_plate.g, T.progress:format(done, #cap.missioni, got), kit.PLATE_X + 170, kit.PLATE_Y + 38, 19, KC.INK, "middle", 0.5)
 end
 
 -- ---------------------------------------------------------------- the map
@@ -194,7 +194,7 @@ local LAST = #SLICES
 local SLICE_W, SMALL = 700, 0.66
 -- where the slice looked at is (Figma), how much of a slice the one above
 -- covers, how long the stack takes to slide
-local MAP_X, LOOK_Y, COVER, LOOK_TIME = 640, 318, 0.2, 0.3
+local MAP_X, LOOK_Y, COVER, LOOK_TIME = 640, 310, 0.2, 0.3
 -- how dark a closed circle is: the next one, and the ones under it
 local NEXT_DIM, OFF_DIM = 0.78, 0.56
 -- a drag this long (pixels of the 720 high screen) moves the stack
@@ -259,13 +259,13 @@ local function slice(c, i, at, from)
 	gui.set_scale(n, vmath.vector3(at.k, at.k, 1))
 	local sg = { node = n, ox = 0, oy = 0 }
 	local r = T.rings[i]
-	kit.text(sg, T.ring_name:format(r[1], r[2]), 0, h * 0.36, 17, closed and KC.MUTE or RING_ACCENT[i], "middle", 1.5)
+	kit.text(sg, T.ring_name:format(r[1], r[2]), 0, h * 0.36, 22, closed and KC.MUTE or RING_ACCENT[i], "middle", 1.5)
 	if closed then
 		-- the padlock inside, on the right; the next one says what opens it
 		local lock = kit.piece(sg, "lucchetto", SLICE_W * 0.36, h * 0.12, i == RING_AT + 1 and 46 or 38)
 		if i > RING_AT + 1 then gui.set_color(lock, vmath.vector4(0.6, 0.6, 0.66, 1)) end
 		if i == RING_AT + 1 then
-			kit.text(sg, T.ring_opens:format(T.rings[RING_AT][3]), 0, -h * 0.1, 13, KC.SAND, "middle", 1)
+			kit.text(sg, T.ring_opens:format(T.rings[RING_AT][3]), 0, -h * 0.1, 17, KC.SAND, "middle", 1)
 		end
 	else
 		-- the levels along the top face: the one to play burns, the keeper last
@@ -281,7 +281,7 @@ local function slice(c, i, at, from)
 			end
 			if keeper then
 				kit.piece(sg, "corona", x, y - 30, 20)
-				kit.text(sg, r[3], x, y + 38, 10, KC.SAND, "middle", 1)
+				kit.text(sg, r[3], x, y + 42, 14, KC.SAND, "middle", 1)
 			end
 		end
 	end
@@ -295,12 +295,11 @@ local function slice(c, i, at, from)
 	return n
 end
 
--- a small block of the left column: a thin line in its color, a small label and its lines
+-- a small block of the left column: a small label in its color and its lines
 local function note(g, y, color, label, lines)
-	kit.rect(g, 32, y - 10, 3, 16 + #lines * 19, color)
-	kit.text(g, label, 46, y, 11, color, "start", 1.5)
+	kit.text(g, label, 34, y, 15, color, "start", 1.5)
 	for i, line in ipairs(lines) do
-		fit(kit.text(g, line, 46, y + i * 19 + 2, i == 1 and 15 or 12, i == 1 and KC.SAND or KC.MUTE, "start", 0.5), 236)
+		fit(kit.text(g, line, 34, y + i * 26 + 2, i == 1 and 22 or 16, i == 1 and KC.SAND or KC.MUTE, "start", 0.5), 250)
 	end
 end
 
@@ -315,13 +314,17 @@ local function build_map(c)
 	local at, was = layout(look), layout(from)
 	-- from the bottom up: each slice covers the back of the one under it; the
 	-- one looked at over its neighbours
-	local nodes = {}
-	for i = LAST, 1, -1 do nodes[i] = slice(c, i, at[i], was[i]) end
-	gui.move_above(nodes[look], nil)
+	-- (made last, not moved up afterwards: a child sent to the top with
+	-- gui.move_above(node, nil) is no longer deleted with its parent, and the
+	-- slice stayed on the home; Sergio, 12 Nov)
+	for i = LAST, 1, -1 do
+		if i ~= look then slice(c, i, at[i], was[i]) end
+	end
+	slice(c, look, at[look], was[look])
 	-- under the last one: Favilla in the ice, the plate of the kidnapping (Sergio, 11 Nov)
 	if look == LAST then
 		local tex, size = ill.story(PRISON)
-		local k = kit.card(g, MAP_X - 150, 470, 300, 176, KC.STEEL, {})
+		local k = kit.card(g, MAP_X - 150, 426, 300, 176, KC.STEEL, {})
 		if tex then
 			c.prison = true
 			kit.card_picture(k, tex, 168, size.w / size.h, 1)
@@ -331,37 +334,36 @@ local function build_map(c)
 	-- on the left, under the name: where it is, its hazard, its keeper
 	local tl = c.head.top_left
 	local state = look == RING_AT and T.ring_here or look == RING_AT + 1 and T.ring_opens:format(T.rings[RING_AT][3]) or T.ring_closed
-	kit.text(tl, T.ring_title:format(r[1], state), 32, 106, 12, KC.MUTE, "start", 1.5)
-	note(tl, 152, KC.ICE, T.hazard, { r[4], r[5] })
-	note(tl, 232, KC.HOT, T.keeper, { r[3] })
+	kit.text(tl, T.ring_title:format(r[1], state), 34, 108, 16, KC.MUTE, "start", 1.5)
+	note(tl, 170, KC.ICE, T.hazard, { r[4], r[5] })
+	note(tl, 280, KC.HOT, T.keeper, { r[3] })
 	-- the top floor, at the bottom left on the thread: the two chapters done
-	local x = 96
+	local x = 168
 	for _, cap in ipairs({ payload.CAPITOLI[1], payload.CAPITOLI[2] }) do
 		local name = cap == payload.CAPITOLI[1] and T.cortile or kit.upper(cap.titolo)
-		local p = kit.plate(c.low, x, 634, 196, 52, KC.ROSE, { sk = 0 })
+		local p = kit.plate(c.low, x, 632, 230, 68, KC.ROSE, { sk = 0 })
 		local b = p.box
 		local mid = (b.y0 + b.y1) / 2
-		local label = kit.text(p.g, name, b.x0, mid + 6, 15, KC.SAND, "start", 0.5)
+		local label = kit.text(p.g, name, b.x0, mid + 7, 19, KC.SAND, "start", 0.5)
 		local got, all = chapter_stars(c, cap)
-		local count = kit.text(p.g, T.ring_stars:format(got, all), b.x1, mid + 5, 11, KC.MUTE, "end", 0.5)
-		ui.star(b.x1 - kit.width(count) - 11 - p.g.ox, p.g.oy - mid, 12, KC.STAR, p.g.node)
-		fit(label, b.x1 - b.x0 - kit.width(count) - 26)
+		local count = kit.text(p.g, T.ring_stars:format(got, all), b.x1, mid + 6, 15, KC.MUTE, "end", 0.5)
+		ui.star(b.x1 - kit.width(count) - 14 - p.g.ox, p.g.oy - mid, 18, KC.STAR, p.g.node)
+		fit(label, b.x1 - b.x0 - kit.width(count) - 34)
 		kit.button(c.buttons, p, "capitolo:" .. cap.id)
-		x = x + 206
+		x = x + 240
 	end
 	-- (over the stack: the lower slices pass behind them)
 	gui.move_above(c.low.node, c.radice)
 	-- the rail, on the right: the nine circles at a glance, each one a way there
 	local tr = c.head.top_right
-	local top, step = 126, 50
-	kit.rect(tr, 1223, top, 2, (LAST - 1) * step, kit.with_alpha(KC.SAND, 0.22))
+	local top, step = 128, 54
 	for i = 1, LAST do
 		local y = top + (i - 1) * step
 		local closed = i > RING_AT
-		kit.text(tr, T.rings[i][1], 1192, y + 5, i == look and 15 or 12, i == look and KC.SAND or closed and KC.MUTE or RING_ACCENT[i], "end", 1)
-		local mark = kit.piece(tr, closed and "lucchetto" or "brace", 1224, y, i == look and 34 or 24)
+		kit.text(tr, T.rings[i][1], 1186, y + 7, i == look and 22 or 17, i == look and KC.SAND or closed and KC.MUTE or RING_ACCENT[i], "end", 1)
+		local mark = kit.piece(tr, closed and "lucchetto" or "brace", 1224, y, i == look and 46 or 34)
 		if closed and i ~= look then gui.set_color(mark, vmath.vector4(0.6, 0.6, 0.68, 1)) end
-		kit.zone(tr, c.buttons, 1140, y - step / 2, 130, step, "girone:" .. i)
+		kit.zone(tr, c.buttons, 1120, y - step / 2, 160, step, "girone:" .. i)
 	end
 	c.play = nil
 	c.action = kit.action(c.right, common.play, 930, 572, 270, 84, { size = 54, sub = T.coming_sub:format(T.rings[RING_AT][2]), off = true })
@@ -413,8 +415,8 @@ local function build(c)
 	local tabs_end = kit.tabs(g, c.buttons, 440, 104, tabs, active, KC.HOT)
 	-- the story seen so far, to read again: a small plate after the tabs
 	if c.storia then
-		local p = kit.plate(g, tabs_end + 40, 104, 150, 36, KC.ROSE, { sk = 10, d = 4 })
-		kit.text(p.g, TS.read_again, tabs_end + 40 + 80, 128, 14, KC.SAND, "middle", 0.5)
+		local p = kit.plate(g, tabs_end + 30, 104, 190, 58, KC.ROSE, { sk = 0, d = 4, piece = "piastrina" })
+		kit.text(p.g, TS.read_again, tabs_end + 30 + 95, 140, 19, KC.SAND, "middle", 0.5)
 		kit.button(c.buttons, p, "storia")
 	end
 	guide(c, chosen)
@@ -439,9 +441,9 @@ local function build(c)
 				if (c.stelle[l.id] or {})[1] then done = done + 1 end
 			end
 		end
-		kit.piece(g, "lucchetto", 820, 300, 72)
-		kit.text(g, kit.upper(T.locked:format(prev and prev.titolo or payload.CAPITOLI[1].titolo)), 820, 380, 16, KC.SAND, "middle", 0.5)
-		kit.text(g, kit.upper(T.done_count:format(done, tot)), 820, 408, 12, KC.MUTE, "middle", 1)
+		kit.piece(g, "lucchetto", 820, 310, 96)
+		kit.text(g, kit.upper(T.locked:format(prev and prev.titolo or payload.CAPITOLI[1].titolo)), 820, 404, 22, KC.SAND, "middle", 0.5)
+		kit.text(g, kit.upper(T.done_count:format(done, tot)), 820, 436, 16, KC.MUTE, "middle", 1)
 		act.sub = kit.upper(T.done_count:format(done, tot))
 	end
 	c.play = act.id

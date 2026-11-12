@@ -432,7 +432,6 @@ return {
 		loadout = "ASSETTO",
 		loadout_n = "ASSETTO %s",
 		how_others_see = "COSÌ TI VEDONO",
-		next_steps = "PROSSIMI SCATTI",
 		-- "Maschera del Corvo": the piece, then the set
 		piece_of = { default = "%s del %s", fornace = "%s della %s" },
 		next_look = "al %s: aspetto %s",
@@ -539,6 +538,7 @@ return {
 		code = "CODICE",
 		bot = "BOT",
 		bot_level = "LIVELLO %d DI %d",
+		bot_level_short = "LIVELLO",
 		player = "GIOCATORE",
 		level = "LIVELLO %d",
 		host = "HA CREATO LA STANZA",

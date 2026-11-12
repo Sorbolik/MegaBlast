@@ -268,8 +268,10 @@ def fai_sfondi():
     fogli.append(("campagna", os.path.join(ART, "WB-027", "sfondo_campagna_A.png")))
     righe = []
     for nome, percorso in fogli:
-        im = Image.open(percorso).convert("RGB").resize((1600, 900), Image.LANCZOS)
-        im.save(os.path.join(out, nome + ".jpg"), quality=86, optimize=True)
+        # alla risoluzione del disegno, senza rimpicciolire, e quasi senza perdita
+        # (Sergio, 12 nov: «usa la massima risoluzione»)
+        im = Image.open(percorso).convert("RGB")
+        im.save(os.path.join(out, nome + ".jpg"), quality=95, subsampling=0, optimize=True)
         a = np.asarray(im.convert("L")).astype(float)
         h, w = a.shape
         fascia = a[int(h * 0.72):int(h * 0.95), int(w * 0.25):int(w * 0.75)]

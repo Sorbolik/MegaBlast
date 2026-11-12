@@ -4,11 +4,11 @@
 return {
 	home = 0.134,
 	armeria = 0.130,
-	allenamento = 0.130,
+	allenamento = 0.131,
 	eventi = 0.132,
 	gioca = 0.149,
 	diavoletto = 0.130,
-	impostazioni = 0.132,
+	impostazioni = 0.133,
 	podio = 0.130,
 	campagna = 0.132,
 }

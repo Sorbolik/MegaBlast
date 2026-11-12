@@ -10,13 +10,13 @@ aspetta 1
 server 2v2 0
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 251 260 mezzo destra          # GIOCA
+tocca_bordo 175 52 basso destra          # GIOCA
 aspetta 1
 tocca_bordo 676 413 alto centro          # PARTITA PRIVATA
 aspetta 1
 tocca_bordo 705 389 alto centro          # CREA
 aspetta 1.5
-tocca_bordo 215 118 basso destra         # VIA
+tocca_bordo 175 52 basso destra         # VIA
 aspetta_stato modo=scelta_online 10
 aspetta_stato modo=online 30
 aspetta_stato turno=2 fase=aim 40
