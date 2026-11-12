@@ -10,10 +10,14 @@ Le decisioni sono in [decisioni/progressione.md](decisioni/progressione.md); que
 
 ## Le regole di Sergio che valgono per tutti
 
-1. **Non si vede oltre il prossimo girone bloccato.** Nella mappa della campagna si vedono
-   i gironi finiti, quello aperto e **uno solo** bloccato (con il suo custode in ombra);
-   sotto c'è buio. Niente purgatorio, paradiso, anelli più in basso, conti delle stelle
-   di capitoli che non si vedono. Il finale non deve sembrare un finale a metà.
+1. **Sulla mappa della campagna si vedono tutti e nove i gironi** (Sergio, 11 nov, 17:15,
+   che sostituisce la regola del mattino «non si vede oltre il prossimo bloccato»: gli piaceva
+   di più la mappa con tutti i gironi visibili). I gironi bloccati si capisce che sono
+   disabilitati (più scuri), il lucchetto con «si apre battendo il custode» sta a destra del
+   girone o dentro il girone stesso, e **si espande solo un girone sbloccato**: chi è arrivato al
+   Limbo può espandere solo il Limbo; sbloccati gli altri, si espandono. Purgatorio e paradiso
+   restano invisibili: sulla mappa ci sono solo i nove gironi (il finale non deve sembrare
+   un finale a metà). Il numero dei gironi non è più un segreto.
 2. **I pericoli dei gironi valgono anche online** (Sergio, 11 nov, ritocco alla scelta 8):
    bufera, grandine, massi, acqua che sale, ghiaccio e ponti entrano nelle mappe della
    rotazione online per dare varianza, non solo nella campagna. Quindi ogni pericolo è
@@ -76,8 +80,8 @@ si aggiungono come dati in `client/sim/missions.lua`.
 ## Interfaccia
 
 Dalla home la CAMPAGNA apre la mappa a imbuto in sezione, già sul girone dove sei; si
-scorre in verticale. Tre schermate: l'imbuto (gironi finiti con le stelle, quello aperto, un
-solo bloccato), la porta del girone (numero romano, nome, verso di Dante, pericolo, cosa
+scorre in verticale. Tre schermate: l'imbuto (tutti e nove i gironi: finiti con le stelle, aperti, bloccati disabilitati col
+lucchetto a destra o dentro), la porta del girone (numero romano, nome, verso di Dante, pericolo, cosa
 conviene, custode, ENTRA) e il sentiero (i livelli in fila sul bordo dell'anello, il
 custode si apre dopo i primi quattro). Battuto il custode l'anello si incrina e la camera
 scende (solo la prima volta, saltabile). Tutto disegnato in codice come il resto dell'interfaccia
@@ -320,7 +324,7 @@ uguale: barca che affonda, scia annunciata, gravità che si gira).
 
 ## Ordine di lavoro
 
-1. La mappa a imbuto con la regola «non si vede oltre il prossimo bloccato».
+1. La mappa a imbuto coi nove gironi visibili, i bloccati disabilitati e solo gli sbloccati espandibili.
 2. Le mappe di tutti i livelli e i pericoli, a blocchi (Limbo-Lussuria-Gola, Avarizia-Ira-
    Eresia, Violenza-Frode-Tradimento, purgatorio e paradiso), tutte in ALLENAMENTO.
 3. I pericoli in `client/sim/` con il server in pari; poi nelle rotazioni online.
