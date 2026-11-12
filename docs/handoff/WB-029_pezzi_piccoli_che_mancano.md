@@ -119,3 +119,5 @@ Reversibile (solo immagini nuove in un ramo): approvata da Claude su richiesta d
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Guardati i sei fogli (12 nov): tutti buoni, senza difetti visibili; le due varianti sono quasi uguali. Presa la variante 1 di ognuno. Nel gioco (`tools/grafica/fucina.py`, atlante `fucina`): stella accesa e spenta (`ui.star`), medaglia (`ui.medal`), rotella delle impostazioni, corona sul custode nella mappa dei gironi, freccia delle mappe in ALLENAMENTO, guscio e strisce delle barre (`kit.bar`: brace, gelo, e una chiara che il gioco colora), tacca (`kit.pips`, colorata dal gioco: la tacca spenta non serve), cornici tonde di ferro e d'oro (`kit.seal`; quella di ghiaccio è nell'atlante, non ancora usata), linguetta dell'assetto. Provati a 1280x720 e a doppia risoluzione.

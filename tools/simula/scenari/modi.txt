@@ -14,7 +14,7 @@ imposta prova_scelta 1
 imposta giocatori 2v2
 
 aspetta 2
-tocca 254 346                      # ALLENAMENTO
+tocca 1048 488                      # ALLENAMENTO
 aspetta 1
 tocca 761 470                       # 2 CONTRO 2
 aspetta 0.3

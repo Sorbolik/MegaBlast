@@ -9,7 +9,7 @@ aspetta 1
 server 2v2 1 bot_dopo=6s
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 244 400 mezzo destra                     # GIOCA
+tocca_bordo 251 260 mezzo destra                     # GIOCA
 aspetta 0.5
 tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5

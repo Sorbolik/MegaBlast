@@ -68,7 +68,7 @@ local function statistics(a)
 		if st[s[1]] ~= nil then rows[#rows + 1] = s end
 	end
 	-- closer together when they are many: the action is under them
-	local step = math.min(38, 392 / math.max(1, #rows - 1))
+	local step = math.min(38, 360 / math.max(1, #rows - 1))
 	local h = math.min(30, step - 6)
 	for i, s in ipairs(rows) do
 		local k, nome, modo = s[1], s[2], s[3]
@@ -114,8 +114,8 @@ end
 
 function M.new(prof, from)
 	local a = { prof = prof, pieces = {}, colore = ui.C.SQUADRA[1], from = from }
-	-- the game world darkened behind, the rays from the devil, in its place's color
-	a.back = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.PURPLE })
+	-- the backdrop (ui/kit.lua)
+	a.back = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.PURPLE, bg = "armeria" })
 	build(a)
 	return a
 end

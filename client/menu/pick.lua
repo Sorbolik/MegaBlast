@@ -94,7 +94,7 @@ function M.new(icons, name_list, effects, commands)
 	local s = { icons = icons, nomi = name_list, effects = effects, commands = commands, card_list = {}, scelte = {} }
 	-- what the controller light goes on: cards, picks made and buttons
 	s.luce = {}
-	-- a dark sheet, the rays on it (while the draft is open) and then the rest
+	-- a dark sheet, the backdrop on it (while the draft is open) and then the rest
 	s.veil = gui_node(W / 2, H / 2, W * screen.FULL, H * screen.FULL, VEIL)
 	s.root = gui_node(W / 2, H / 2, 0, 0, VEIL)
 	gui.set_visible(s.root, false)
@@ -167,9 +167,7 @@ local function bar_value(s, f)
 	local b = s.bar
 	if not b then return end
 	f = math.max(0, math.min(1, f))
-	gui.set_enabled(b.front.node, f > 0.01)
-	gui.set_scale(b.front.node, vec(math.max(f, 0.01), 1))
-	gui.set_position(b.front.node, vec(b.x0 - b.wide * (1 - f) / 2, b.y0))
+	kit.bar_fill(b, f)
 	local left = math.max(0, math.ceil(s.tempo))
 	gui.set_text(s.clock, string.format("%d:%02d", math.floor(left / 60), left % 60))
 end
@@ -231,8 +229,8 @@ local function refresh(s)
 		kit.info(g, x, y, 96, 46, KC.PURPLE)
 		icon(s, g, w, x + 50, y + 23, 40)
 	end
-	kit.sand(low, 80, 630, 340, 62, KC.HOT, { sk = 22 })
-	fit(kit.text(low, title, 250, 668, 22, KC.INK, "middle", 0.5), 290)
+	local on_plate = kit.sand(low, 80, 630, 340, 62, KC.HOT, { sk = 22 })
+	fit(kit.text(on_plate.g, title, 250, 668, 22, KC.INK, "middle", 0.5), 290)
 
 	-- the cards of the row (with both picked, the last row stays)
 	local shown = math.min(s.passo, 2)
@@ -265,8 +263,6 @@ local function refresh(s)
 	if not s.guidata then
 		kit.text(g, T.time, 446, 524, 12, KC.MUTE, "start", 1.5)
 		s.bar = kit.bar(g, 504, 512, 360, 12, 1, KC.HOT)
-		local at = gui.get_position(s.bar.front.node)
-		s.bar.x0, s.bar.y0, s.bar.wide = at.x, at.y, 360
 		s.clock = kit.text(g, "", 880, 524, 16, KC.SAND)
 		bar_value(s, s.tempo / config.DRAFT_SECONDS)
 	end
@@ -299,14 +295,14 @@ local function close_sheet(s)
 	s.carta, s.pressed_f = nil, nil
 end
 
--- the rays, just above the dark sheet and under everything else
+-- the backdrop, just above the dark sheet and under everything else
 local function scene_on(s, on)
 	if s.scene then
 		kit.scene_drop(s.scene)
 		s.scene = nil
 	end
 	if not on then return end
-	s.scene = kit.scene(250, 360, {})
+	s.scene = kit.scene(250, 360, { bg = "gioca" })
 	kit.scene_place(s.scene, "above", s.veil)
 end
 

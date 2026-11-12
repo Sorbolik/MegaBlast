@@ -2,7 +2,7 @@
 # volano dall'anello su di lui, non nel tuo pulsante del teletrasporto.
 
 aspetta 2
-tocca 254 346                      # ALLENAMENTO
+tocca 1048 488                      # ALLENAMENTO
 aspetta 1
 tocca 547 470                       # 1 CONTRO 1
 tocca 840 382                       # DIFFICILE

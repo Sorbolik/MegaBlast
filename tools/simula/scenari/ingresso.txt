@@ -10,7 +10,7 @@ aspetta 1.2
 foto 02_ingresso_dopo
 aspetta 3
 foto 03_home
-tocca 1036 400                      # GIOCA: lo scivolo
+tocca 1029 260                      # GIOCA: lo scivolo
 aspetta 0.06
 foto 04_scivolo
 aspetta 0.6

@@ -12,7 +12,7 @@ imposta prova_profilo 1             # un profilo che ha già giocato: pezzi, pot
 
 aspetta 1.5
 foto 01_home
-tocca 640 330                       # il diavoletto: il profilo
+tocca 330 300                       # il diavoletto: il profilo
 aspetta 0.5
 foto 02_profilo_scheda
 tocca 802 596                       # STATISTICHE
@@ -25,7 +25,7 @@ tocca 36 60                         # indietro
 aspetta_stato modo=menu 3
 aspetta 0.5                         # la home arriva scorrendo: i tocchi contano a scorrimento finito
 
-tocca 254 346                      # ALLENAMENTO
+tocca 1048 488                      # ALLENAMENTO
 aspetta 1
 tocca 547 470                       # 1 CONTRO 1
 aspetta 0.3

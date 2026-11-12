@@ -97,10 +97,10 @@ end
 -- side goes left with the real edge, above its plate, and the rest breathes
 -- (Sergio, 11 Nov: «spostalo più a sinistra dove c'è spazio, centrandolo
 -- sempre coi raggi, dai più spazio alle cose»; the measures are kit.side,
--- kit.lean and kit.air). devil_x(): where the devil and its rays are, in
+-- kit.lean and kit.air). devil_x(): where the devil is, in
 -- Figma coordinates
 function M.devil_x() return 250 - kit.side() end
-M.DEVIL_Y = 380    -- the rays' height
+M.DEVIL_Y = 380    -- its height (the middle of its body)
 -- a group like g, moved with the devil's side
 function M.left_of(g)
 	local n = box(-kit.side() + kit.lean(), 0, 0, 0, C.LIGHT, g.node)
@@ -133,8 +133,8 @@ function M.devil(s, line)
 	scoria.set_enabled(s.figure, true)
 	if line then
 		-- no profile here: a light plate that says what the place is
-		kit.sand(s.low, 80, 630, 340, 62, s.accent or KC.STAR, { sk = 22 })
-		kit.text(s.low, line, 250, 668, 22, KC.INK, "middle", 1)
+		local on_plate = kit.sand(s.low, 80, 630, 340, 62, s.accent or KC.STAR, { sk = 22 })
+		kit.text(on_plate.g, line, 250, 668, 22, KC.INK, "middle", 1)
 		return
 	end
 	local lv = (p.braci or 0) > 0 and T.level_braci:format(p.livello, p.braci) or T.level:format(p.livello)
@@ -154,8 +154,8 @@ function M.loadouts(s)
 	for i = 1, #p.loadouts do
 		if loadout.open(i, p.livello) then
 			local x = 40 + n * 54
-			if p.is_active == i then kit.para(g, x, 125, 46, 34, 10, KC.SAND) end
-			kit.text(g, tostring(i), x + 27, 148, 18, p.is_active == i and KC.INK or KC.MUTE, "middle")
+			local tab = kit.plate(g, x, 122, 50, 40, KC.ROSE, { sk = 0, piece = p.is_active == i and "linguetta_chiara" or "linguetta" })
+			kit.text(tab.g, tostring(i), (tab.box.x0 + tab.box.x1) / 2, 149, 18, p.is_active == i and KC.INK or KC.MUTE, "middle")
 			kit.zone(g, s.buttons, x, 118, 54, 48, "assetto:" .. i)
 			n = n + 1
 		end
@@ -234,7 +234,7 @@ local function sheet_stats(s)
 		local nome = kit.upper(profile.GROUP_NAMES[gr])
 		local w = #nome * 10 + 34
 		local on = s.gruppo == gr
-		if on then kit.para(g, cx, 164, w, 32, 10, KC.SAND) end
+		if on then kit.light(g, cx, 164, w, 32, 10) end
 		kit.text(g, nome, cx + w / 2 + 4, 186, 14, on and KC.INK or kit.with_alpha(KC.SAND, 0.8), "middle")
 		kit.zone(g, s.buttons, cx, 158, w + 10, 44, "gruppo:" .. gr)
 		cx = cx + w + 12
@@ -462,8 +462,8 @@ function M.new(prof, card, color, replay_ok, number)
 	for i, pa in ipairs(prof.partite) do
 		if pa.numero == number then s.scelta = i end
 	end
-	-- the game world darkened behind, the rays from the devil, in its place's color
-	s.scene = kit.scene(M.devil_x(), M.DEVIL_Y, { accent = KC.PURPLE })
+	-- the backdrop (ui/kit.lua)
+	s.scene = kit.scene(M.devil_x(), M.DEVIL_Y, { accent = KC.PURPLE, bg = "diavoletto" })
 	build(s)
 	return s
 end

@@ -4,7 +4,7 @@
 # con la miniatura grande, l'etichetta e (la prima volta che incontri il tipo) la
 # riga che lo spiega, il titolo e AVANTI (970 116), poi la vignetta che spiega (VAI! 293 214).
 aspetta 2
-tocca 234 450                      # CAMPAGNA
+tocca 1038 572                      # CAMPAGNA
 aspetta 1
 foto 01_carte
 tocca 532 484                       # Stammi dietro (Primi passi)

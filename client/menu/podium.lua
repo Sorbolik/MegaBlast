@@ -146,8 +146,8 @@ local function title(p, results, first)
 		label = T.wins:format(kit.upper(results.mode == "2v2" and g.nome:gsub(" %d$", "") or g.nome))
 	end
 	local gg = { node = p.radice, ox = 0, oy = 720 }
-	kit.sand(gg, 30, 36, 420, 104, KC.HOT, { sk = 34, d = 14 })
-	local t = kit.text(gg, label, 64, 116, 74, KC.INK)
+	local on_plate = kit.sand(gg, 30, 36, 420, 104, KC.HOT, { sk = 34, d = 14 })
+	local t = kit.text(on_plate.g, label, 64, 116, 74, KC.INK)
 	local wide = kit.width(t)
 	if wide > 372 then
 		local sc = gui.get_scale(t)
@@ -159,7 +159,7 @@ end
 
 function M.new(results, giocatori, me, my_gain, prof, number)
 	local p = { giocatori = giocatori, me = me, figure = {}, buttons = {}, t = 0, numero = number }
-	-- a dark sheet and the rays, the rest in a group that adapts (FIT)
+	-- a dark sheet and the backdrop, the rest in a group that adapts (FIT)
 	p.scene = kit.scene(330, 330, { dim = 0.72 })
 	p.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(p.radice, false)

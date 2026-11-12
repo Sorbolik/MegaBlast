@@ -1,0 +1,12 @@
+Image 1 is a mockup of a game map: it shows WHAT to draw (hell as a funnel of nine rings, one under the other, each smaller than the one above), but drawn as thin lines, which is NOT the look we want. Image 2 and image 3 show the drawing style to copy: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow, like a cartoon.
+
+Draw hell as a stack of NINE thick slices, like nine slabs cut from an upside-down cone and stacked with a small gap between them: the top slice is the widest, each one below is narrower, the last one at the bottom is small. We see the stack from the front and slightly from above, so each slice shows its flat top face (a wide flattened oval) and its thick front edge. The slices are hand-drawn, a bit crooked, not perfectly round, with soft irregular edges and one or two small notches each; they are not perfectly aligned, each one is shifted a little left or right.
+
+Colors, flat: the top two slices are warm, like hot stone, ember orange and deep red-brown (#F26419, #8A2E12) with a molten gold top face edge (#FFB703); the middle slices are dark slate and iron (#3A3540, #2B2730); going down they get colder, blue-grey, and the bottom three slices are ice: night blue (#10283A) with glacial cyan edges (#38B6FF) and a pale frost highlight (#CAF0F8). Two or three tiny flames on the edge of the top slice, a few short icicles hanging under the bottom slices. The top face of every slice is clean and empty, because the game writes on it.
+
+Thick black ink outline, cartoon comic style like images 2 and 3. No characters, no buildings, no arches, no people. No texture, no soft gradients, no realistic lighting, no glow. No text, letters, numbers or symbols. Flat pure green background (#00FF00), the whole stack inside the picture with a green margin all around.
+
+Riferimenti allegati in ordine
+R1 art/WB-024/riferimenti/R1_gironi_proposta.png
+R2 art/WB-024/riferimenti/R2_piastre.png
+R3 art/WB-024/riferimenti/R3_lingotto.png

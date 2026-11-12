@@ -1,26 +1,27 @@
-# La mappa a imbuto della campagna (Sergio, 10-11 nov): dopo il rapimento
-# (prova_profilo 3: Addestramento e Forgia finiti) la CAMPAGNA è la mappa dei
-# gironi. In alto il Cortile (390 570) e la Forgia (690 570), che aprono la loro
-# bacheca; sotto i nove gironi: si apre solo quello dove sei (segnaposto: l'anello
-# coi cinque livelli e il custode, tutti IN ARRIVO), il prossimo ha il lucchetto,
-# gli altri sono spenti. La mappa guarda un girone alla volta, sempre largo
-# uguale: toccandone un altro, o trascinando in su e in giù, la camera ci va;
-# in fondo, sotto il IX, la tavola di Favilla nel ghiaccio.
+# La mappa dei gironi (Sergio, 10-12 nov): dopo il rapimento (prova_profilo 3:
+# Addestramento e Forgia finiti) la CAMPAGNA è la discesa. Nove fette, una per
+# girone, ognuna col suo disegno (WB-026), tutte sempre intere: accesa solo quella
+# dove sei (i cinque livelli e il custode, IN ARRIVO), la prossima col lucchetto
+# e cosa la apre, le altre scure. La mappa guarda un girone alla volta, quello
+# grande: toccandone un altro, trascinando in su e in giù o toccando il suo segno
+# sul binario a destra la pila scorre fin lì; in fondo, sotto il IX, la tavola di
+# Favilla nel ghiaccio. In basso a sinistra il Cortile e la Forgia aprono la loro bacheca;
+# a sinistra in alto il nome del girone guardato, il suo pericolo e il suo custode.
 # Indietro in basso a sinistra.
 imposta prova_vignette no
 imposta prova_profilo 3
 aspetta 2
-tocca_bordo 234 450 mezzo sinistra  # CAMPAGNA
+tocca_bordo 242 572 mezzo destra  # CAMPAGNA
 aspetta 1.4
 foto 01_mappa
-tocca_centro 520 258                # III · GOLA, spento: la camera scende
+tocca_centro 640 250                # II · LUSSURIA, sotto: la pila sale
 aspetta 0.8
-foto 02_gola_chiuso
-tocca_centro 300 365                # toccato ancora: è chiuso, non si apre
+foto 02_lussuria_chiuso
+tocca_bordo 56 326 alto destra      # V sul binario: la pila va all'Ira
 aspetta 0.5
 trascina 640 250 640 450 0.3        # il dito in su: giù di un girone
 aspetta 0.8
-foto 03_avarizia
+foto 03_ira
 trascina 640 250 640 450 0.3        # giù fino in fondo: Favilla nel ghiaccio
 aspetta 0.5
 trascina 640 250 640 450 0.3
@@ -47,14 +48,10 @@ aspetta 0.5
 trascina 640 450 640 250 0.3
 aspetta 0.5
 foto 05_lussuria
-tocca_centro 520 500                # il Limbo, sopra: la camera torna su
-aspetta 0.8
-tocca_centro 300 365                # I · LIMBO: si apre
+tocca_bordo 56 126 alto destra      # I sul binario: di nuovo il Limbo
 aspetta 0.8
 foto 06_limbo
-tocca_bordo 36 60 basso sinistra    # GIRONI: la mappa
-aspetta 0.6
-tocca_centro 690 570                # LA FORGIA: la bacheca
+tocca_bordo 400 60 basso sinistra   # LA FORGIA: la bacheca
 aspetta 0.8
 foto 07_bacheca_forgia
 tocca_bordo 36 60 basso sinistra    # GIRONI: di nuovo la mappa

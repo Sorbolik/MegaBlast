@@ -1,9 +1,9 @@
--- The home (main menu), in the "Raggi" style (ui/kit.lua; Figma frame 01,
--- Sergio 10 Nov): behind it the painted Forge scrolling slowly, darkened
--- (battle/terrain.script), the rays around the apprentice standing in the
--- middle (tapping it, or its name plate below, opens IL TUO DIAVOLETTO), on
--- the left the doors that carry their progress (CAMPAGNA, ALLENAMENTO,
--- EVENTI) and STESSO TELEFONO, alone on the right the action: GIOCA (online).
+-- The home (main menu), in the "Fucina contro Abisso" style (ui/kit.lua; Home C,
+-- Sergio 12 Nov): the apprentice big on the left, in the warm, standing on the
+-- thread (tapping it, or its name plate under its feet, opens IL TUO
+-- DIAVOLETTO); on the right, under the thumb, the doors in a column, each a
+-- plate with its own shape (CAMPAGNA, ALLENAMENTO, EVENTI), and under them the
+-- action: GIOCA (online), the red-hot ingot. STESSO TELEFONO is in ALLENAMENTO.
 --
 -- Use (from the gui_script, which has the ui texture and the titolo font):
 --   local home = require "menu.home"
@@ -11,7 +11,7 @@
 --   home.show(h, without_veil) / home.hide(h)
 --   home.arrive(h)                              -- the grand entrance (the logo's screen has gone)
 --   home.update(h, dt)                          -- every frame while visible
---   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "local", "eventi",
+--   local scelta = home.on_input(h, action_id, action)   -- "online", "campagna", "allenamento", "eventi", ("local": scenarios only)
 --                                                        -- "impostazioni", "profilo" (the devil or its plate) or nil
 --   home.wallet(h, scaglie, ossidiana)          -- the balance in the pill at the top right
 --   home.events(h, riga)                        -- the line under EVENTI
@@ -34,44 +34,54 @@ local M = {}
 
 local W, H = 1280, 720
 local C = kit.C
--- the apprentice: feet at the Figma point (640, 600), about 540 px tall with the flame
-local BODY_X, BODY_Y = 640, 600
-local BODY_K = 380 / game.DISEGNO_H
+-- the apprentice: feet on the thread, at the Figma point (330, 661)
+local BODY_X, BODY_Y = 330, 661
+local BODY_K = 350 / game.DISEGNO_H
+local DOOR_W, DOOR_H = 384, 82
 
 local V = vmath.vector3()
 
--- A door: a dark plate with its name, a line under it and, on the right, the
--- notches of its progress, on the left the miniature of a map. hot: lit in the action's color (something is on now)
-local function door(h, g, x, y, name, ui_action, map, hot)
-	local p = kit.plate(g, x, y, 380, 88, hot and C.HOT or C.ROSE, { sk = 28, d = 10 })
+-- A door: a plate with its own shape (piece), its name, a line under it and,
+-- on the right, the notches of its progress. hot: warm (something is on now)
+local function door(h, g, x, y, name, ui_action, piece, hot)
+	local p = kit.plate(g, x, y, DOOR_W, DOOR_H, hot and C.HOT or C.ROSE, { sk = 0, piece = not hot and piece or nil })
 	local d = { p = p, x = x, y = y, hot = hot, pips = {} }
-	d.img = kit.thumb(p, "mappe", map, 68, hot and C.HOT_EDGE or C.ROSE)
-	d.name = kit.text(p.g, name, x + 120, y + 40, 27, C.SAND)
-	d.sub = kit.text(p.g, "", x + 120, y + 66, 14, hot and C.HOT_TOP or C.MUTE, "start", 1.5)
+	-- the name and its line where this plate has room (ui/kit.lua): each door
+	-- its own place, not lined up with the others
+	local b = p.box
+	local tall = b.y1 - b.y0
+	d.name = kit.text(p.g, name, b.x0 + 2, b.y0 + tall * 0.6, tall * 0.62, C.SAND)
+	d.sub = kit.text(p.g, "", b.x0 + 3, b.y1 - 1, tall * 0.27, hot and C.HOT_TOP or C.MUTE, "start", 1.5)
 	d.b = kit.button(h.buttons, p, ui_action)
 	h.doors[#h.doors + 1] = d
 	return d
 end
 
+-- the small line of a door: never past its room (a long one shrinks)
+local function set_sub(d, txt)
+	gui.set_text(d.sub, txt)
+	d.sub_scale = d.sub_scale or gui.get_scale(d.sub)
+	gui.set_scale(d.sub, d.sub_scale)
+	local room = d.p.box.x1 - d.p.box.x0 - 6 - #d.pips * 15
+	local w = kit.width(d.sub)
+	if w > room then gui.set_scale(d.sub, d.sub_scale * (room / w)) end
+end
+
 -- n notches on a door, the first lit ones in color (0: none)
 local function set_pips(d, n, lit)
 	for _, q in ipairs(d.pips) do gui.delete_node(q.node) end
-	d.pips = n > 0 and kit.pips(d.p.g, d.x + 380 - 14 - n * 15, d.y + 52, n, lit, d.hot and C.HOT_EDGE or C.SAND) or {}
+	d.pips = n > 0 and kit.pips(d.p.g, d.p.box.x1 - 8 - n * 15, d.p.box.y1 - 12, n, lit, d.hot and C.HOT_EDGE or C.SAND) or {}
 end
 
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, t = 0, colore = color }
 
-	h.scene = kit.scene(BODY_X, 350)
+	h.scene = kit.scene(BODY_X, 350, { bg = "home" })
 
-	-- the apprentice, in the middle
-	local mid = kit.anchor(BODY_X, BODY_Y)
+	-- the apprentice, on the left, its feet on the thread
+	local mid = kit.anchor(BODY_X, BODY_Y, nil, gui.ANCHOR_BOTTOM)
 	h.tops[#h.tops + 1] = mid.node
 	h.posa = mid.node
-	local ground = ui.alone(0, 0, 330, ui.C.SHADOW, mid.node)
-	gui.set_blend_mode(ground, gui.BLEND_ALPHA)
-	V.x, V.y, V.z = 1, 0.14, 1
-	gui.set_scale(ground, V)
 	local body_shape = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(0, 0, 0))
 	gui.set_visible(body_shape, false)
 	gui.set_parent(body_shape, mid.node)
@@ -83,17 +93,15 @@ function M.new(color)
 	-- idle without a weapon, without skits (Sergio, 2 Nov)
 	h.st = { x = 0, y = 0, facing = 1, grounded = true, moving = 0, fermo = true }
 	-- tapping the devil opens its place: an invisible zone over it
-	local zone = gui.new_box_node(vmath.vector3(0, 230, 0), vmath.vector3(300, 460, 0))
+	local zone = gui.new_box_node(vmath.vector3(0, 250, 0), vmath.vector3(330, 500, 0))
 	gui.set_visible(zone, false)
 	gui.set_parent(zone, mid.node)
 	h.buttons[#h.buttons + 1] = { nodo = zone, bordo = zone, ui_action = "profilo", colore = ui.C.LIGHT, riposo = ui.C.LIGHT }
 
-	-- the name plate under the feet: level and experience
-	local low = kit.anchor(640, 720, nil, gui.ANCHOR_BOTTOM)
-	h.tops[#h.tops + 1] = low.node
-	h.plate = kit.sand(low, 470, 630, 340, 62, C.HOT, { sk = 22 })
-	kit.text(h.plate.g, T.your_devil, 506, 669, 22, C.INK)
-	h.level = kit.text(h.plate.g, "", 800, 656, 18, kit.with_alpha(C.INK, 0.75), "end", 1)
+	-- the name plate under its feet, below the thread: level and experience
+	h.plate = kit.sand(mid, 180, 668, 300, 46, C.HOT, { sk = 0 })
+	kit.text(h.plate.g, T.your_devil, 204, 698, 18, C.INK)
+	h.level = kit.text(h.plate.g, "", 462, 690, 14, kit.with_alpha(C.INK, 0.75), "end", 1)
 	h.xp_g = h.plate.g
 	kit.button(h.buttons, h.plate, "profilo")
 
@@ -103,24 +111,26 @@ function M.new(color)
 	h.logo_g = top_left
 	h.logo = kit.title(top_left, common.game_name, C.HOT, 30, 62, 36)
 
-	-- left: the doors, staggered, and STESSO TELEFONO under them
-	local left = kit.anchor(0, 360, gui.ANCHOR_LEFT)
-	h.tops[#h.tops + 1] = left.node
-	h.campaign = door(h, left, 30, 226, common.campaign, "campagna", "cortile")
-	h.training = door(h, left, 50, 330, common.training, "allenamento", "fossa")
-	gui.set_text(h.training.sub, T.training_sub)
-	h.events_door = door(h, left, 70, 434, common.events, "eventi", "pavimento", true)
-	h.phone = kit.plate(left, 90, 548, 250, 48, C.ROSE, { sk = 14, d = 5 })
-	kit.text(h.phone.g, T.same_phone, 222, 580, 18, kit.with_alpha(C.SAND, 0.9), "middle", 0.5)
-	kit.button(h.buttons, h.phone, "local")
-
-	-- right: the action, alone
+	-- right: the doors in a column, each with its shape, and the action under them
 	local right = kit.anchor(1280, 360, gui.ANCHOR_RIGHT)
 	h.tops[#h.tops + 1] = right.node
-	-- (in a group of its own: the plate, its glow and its tag arrive together)
-	h.play_g = kit.group(right, 1036, 320)
-	h.play = kit.action(h.play_g, common.play, 836, 250, 354, 140, { size = 104, sub = T.play_sub })
+	h.campaign = door(h, right, 846, 100, common.campaign, "campagna", "piastra_freccia")
+	h.training = door(h, right, 856, 190, common.training, "allenamento", "piastra_storta")
+	set_sub(h.training, T.training_sub)
+	h.events_door = door(h, right, 846, 280, common.events, "eventi", "piastra_stendardo", true)
+	-- (in a group of its own: the ingot and its line arrive together)
+	h.play_g = kit.group(right, 1030, 460)
+	h.play = kit.action(h.play_g, common.play, 816, 380, 380, 160, { size = 96, sub = T.play_sub })
 	h.play_b = kit.button(h.buttons, h.play, "online", { main = true })
+
+	-- STESSO TELEFONO is in ALLENAMENTO now; the scenarios of the simulator
+	-- (tools/simula) still start their match from here, with a tap on the
+	-- old place: an invisible zone, only there
+	if sys.get_config_int("megablast.simula", 0) == 1 then
+		local sim = kit.anchor(0, 360, gui.ANCHOR_LEFT)
+		h.tops[#h.tops + 1] = sim.node
+		kit.zone(sim, h.buttons, 190, 560, 64, 24, "local")
+	end
 
 	-- top right: the wallet's strip (ui/coins.lua, hidden until the
 	-- first coin) and the settings wheel
@@ -130,9 +140,9 @@ function M.new(color)
 	local wr = kit.group(top_right, 1110, 44)
 	h.wallet = coins.wallet(0, 0, wr.node, 0, 0)
 	local wheel = kit.group(top_right, 1230, 44)
-	gui.set_blend_mode(ui.disc(0, 0, 52, kit.with_alpha(C.INK, 0.8), wheel.node), gui.BLEND_ALPHA)
-	ui.ring_node(0, 0, 52, 2.5, kit.with_alpha(C.SAND, 0.75), wheel.node)
-	ui.sagoma("ingranaggio", 0, 0, 34, 34, C.SAND, wheel.node)
+	-- the wheel on a lump of cold iron
+	kit.piece({ node = wheel.node, ox = 0, oy = 0 }, "brace_spenta", 0, 0, 56)
+	kit.piece({ node = wheel.node, ox = 0, oy = 0 }, "ingranaggio", 0, -1, 30)
 	local wz = gui.new_box_node(vmath.vector3(0, 0, 0), vmath.vector3(72, 72, 0))
 	gui.set_visible(wz, false)
 	gui.set_parent(wz, wheel.node)
@@ -146,20 +156,18 @@ function M.new(color)
 	-- where every piece rests, for the entrance
 	h.rest = {}
 	for _, d in ipairs(h.doors) do h.rest[d.p.node] = gui.get_position(d.p.node) end
-	for _, p in ipairs({ h.phone, h.play_g, h.plate, top_left, top_right, mid }) do h.rest[p.node] = gui.get_position(p.node) end
+	for _, p in ipairs({ h.play_g, top_left, top_right, mid }) do h.rest[p.node] = gui.get_position(p.node) end
 	-- what shakes at a thud: the sides (not the pieces that are arriving)
-	h.shaken = { left.node, right.node, low.node }
+	h.shaken = { right.node, top_left.node }
 
 	M.hide(h)
 	return h
 end
 
--- The entrance (the animated sheet, Sergio 11 Nov). Every time: the doors fly
--- in from the left one after the other and their notches pop one by one, the
--- name plate rises, the logo and the wallet come down, GIOCA arrives from the
--- right. grand (when the game opens): the rays grow, the apprentice drops from
--- above and lands squashed with a thud, and GIOCA slams
--- in with a thud
+-- The entrance. Every time: the doors fly in from the right one after the
+-- other and their notches pop one by one, the logo and the wallet come down, GIOCA arrives from the right. grand (when the game opens):
+-- the thread draws itself, the apprentice drops from above and lands squashed
+-- with a thud, and GIOCA slams in with a thud
 local function enter(h, wait, grand)
 	local function from(node, dx, dy, delay, time, done)
 		local p = h.rest[node]
@@ -171,11 +179,9 @@ local function enter(h, wait, grand)
 	local late = 0
 	for i, d in ipairs(h.doors) do
 		local at = late + (grand and 0.06 or 0.04) * (i - 1)
-		from(d.p.node, -520, 0, at)
+		from(d.p.node, 620, 0, at)
 		for j, q in ipairs(d.pips) do kit.pop(q.node, wait + at + 0.3 + 0.07 * j, 0.2, 0.01) end
 	end
-	from(h.phone.node, -520, 0, grand and 0 or 0.12, 0.25)
-	from(h.plate.node, 0, -110, late + 0.1)
 	from(h.logo_g.node, 0, 100, grand and 0.1 or 0)
 	from(h.top_right.node, 0, 100, grand and 0.1 or 0)
 	gui.cancel_animations(h.posa, "position")
@@ -243,16 +249,16 @@ end
 
 -- The line under EVENTI (main/events.lua, home_line)
 function M.events(h, txt)
-	gui.set_text(h.events_door.sub, string.upper(txt or ""))
+	set_sub(h.events_door, string.upper(txt or ""))
 end
 
 -- Level and experience on the name plate, the chapter you are in on CAMPAGNA
 function M.profile(h, p)
 	local profile = require "menu.profile"
 	gui.set_text(h.level, T.level:format(p.livello or 1))
-	if h.xp then gui.delete_node(h.xp.back.node); if h.xp.front then gui.delete_node(h.xp.front.node) end end
+	if h.xp then gui.delete_node(h.xp.back.node); gui.delete_node(h.xp.front.node) end
 	local f = math.min(1, (p.xp or 0) / profile.xp_level(p.livello or 1))
-	h.xp = kit.bar(h.xp_g, 646, 670, 150, 7, f, C.HOT_BOTTOM, C.SAND_SHADOW)
+	h.xp = kit.bar(h.xp_g, 330, 698, 130, 5, f, C.HOT_BOTTOM, C.SAND_SHADOW)
 	-- the first chapter with a mission still to win, and how far you are in it
 	local stars = p.stelle or {}
 	local chapter, done
@@ -264,17 +270,16 @@ function M.profile(h, p)
 		if done < #cap.missioni then break end
 	end
 	h.chapter = string.upper(chapter.titolo)
-	if not h.in_queue then gui.set_text(h.campaign.sub, h.chapter) end
+	if not h.in_queue then set_sub(h.campaign, h.chapter) end
 	set_pips(h.campaign, #chapter.missioni, done)
 	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not h.in_queue) end
-	gui.play_flipbook(h.campaign.img, chapter.id == "addestramento" and "cortile" or "pavimento")
 end
 
 function M.queued(h, on)
 	h.in_queue = on
 	h.campaign.b.spento = on or nil
 	gui.set_color(h.campaign.name, on and C.MUTE or C.SAND)
-	gui.set_text(h.campaign.sub, on and string.upper(T.leave_queue_first) or (h.chapter or ""))
+	set_sub(h.campaign, on and string.upper(T.leave_queue_first) or (h.chapter or ""))
 	-- the long line takes the notches' place
 	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not on) end
 end

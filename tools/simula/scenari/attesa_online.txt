@@ -17,7 +17,7 @@ aspetta 0.3
 tocca_bordo 408 62 alto sinistra                      # ESCI DALLA PARTITA
 aspetta_stato modo=menu 3
 aspetta 1
-tocca_bordo 244 400 mezzo destra                     # GIOCA
+tocca_bordo 251 260 mezzo destra                     # GIOCA
 aspetta 0.5
 tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5
@@ -31,7 +31,7 @@ aspetta_stato modo=menu 3
 aspetta 1
 foto 03_home
 # di nuovo in coda, e si esce col bottone ESCI DALLA CODA in basso
-tocca_bordo 244 400 mezzo destra                     # GIOCA
+tocca_bordo 251 260 mezzo destra                     # GIOCA
 aspetta 0.5
 tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)
 aspetta_stato modo=connecting 5

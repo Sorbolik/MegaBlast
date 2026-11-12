@@ -6,7 +6,7 @@
 -- is), the mission's name at the top, its stars with what each one takes, and
 -- GIOCA. It is only a zoom on the card you tapped: the map is not loaded yet,
 -- it loads after GIOCA, under the entry's flame (ui/transition.lua, flame).
--- Drawn with ui/kit.lua (Figma coordinates) on an opaque backdrop with the rays.
+-- Drawn with ui/kit.lua (Figma coordinates) on the backdrop.
 --
 --   local postcard = require "ui.postcard"
 --   local p = postcard.open(id, titolo, from, tipo, line, o)  -- from: { x, y, w, h } the picture
