@@ -1,6 +1,6 @@
 # WB-020 · Prova di stile dell'interfaccia «Fucina contro Abisso»
 
-- **Stato:** APPROVATA (Sergio, 2026-11-12: «prendiamo questa strada, è più coerente col gioco», poi «Sì» al piano)
+- **Stato:** SCARTATA (Sergio, 2026-11-12, visti i bozzetti: «è troppo dettagliato come stile»; l'identità resta, lo stile diventa a linee: WB-021)
 - **Data:** 2026-11-12
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-020`
 
@@ -139,3 +139,8 @@ font scolpito solo nei titoli).
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+Bozzetti consegnati sul ramo `design/WB-020` (8b84b07c), fedeli alla scheda. Sergio (12 nov): «mi piace
+l'idea perché adesso ha un'identità, ma è troppo dettagliato [...] molto più minimalista», con linee
+che ogni tanto pulsano, fuoco e ghiaccio in ogni schermata e Codex solo per i disegni veri. Niente
+entra nel gioco; il ramo non si porta su main. Si continua con «Filo di brace» e WB-021.
