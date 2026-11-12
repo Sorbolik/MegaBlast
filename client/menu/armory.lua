@@ -1,7 +1,7 @@
 -- Armory: the pieces of the player's loadouts (docs/game_design_competitivo.md:
--- free rebuild outside the match, 3 saved loadouts): the four pieces worn,
--- their levels bought with Scaglie and the step's scene (menu/pieces.lua),
--- full-set bonus and variant B. The Sigilli (the skill points) are in the
+-- free rebuild outside the match, 3 saved loadouts): the wardrobe with the
+-- four pieces worn, their levels bought with Scaglie and the step's scene, the
+-- shop of the day and the catalog (menu/pieces.lua). The Sigilli (the skill points) are in the
 -- profile (menu/seals.lua, Sergio 10 Nov). On the right the resulting stats,
 -- compared to the base.
 --
@@ -34,7 +34,7 @@ M.STATISTICS = {
 	{ "max_hp" }, { "walk_speed" }, { "jump_height" }, { "air_speed" },
 	{ "teleport_ticks", "seconds" }, { "teleports" },
 	{ "parachutes" }, { "air_jumps" },
-	{ "fall_damage_mul", "percent" }, { "knockback_mul", "percent" },
+	{ "fall_damage_mul", "percent" }, { "knockback_mul", "percent" }, { "blast_push", "percent" },
 	{ "trap_radius" }, { "status_turns" },
 	{ "burning_blasts", "yes_no" },
 }
@@ -61,7 +61,7 @@ local function to_active(a) return profile.active_loadout(a.prof) end
 local function statistics(a)
 	local g = a.kg
 	local b = base()
-	local st = loadout.stats(b, to_active(a), profile.tier(a.prof, to_active(a)))
+	local st = loadout.stats(b, to_active(a), profile.levels(a.prof, to_active(a)))
 	kit.heading(g, common.stats, 1030 + kit.air(), 112)
 	local rows = {}
 	for _, s in ipairs(M.STATISTICS) do
@@ -125,8 +125,10 @@ local function run_cmd(a, ui_action)
 	local kind, x = ui_action:match("^(%a+):?([^:]*)")
 	if kind == "assetto" then
 		a.prof.is_active = tonumber(x)
-	elseif kind == "pezzo" or kind == "indossa" or kind == "variante" or kind == "potenzia" then
-		local _, step = pieces.run(a.pieces, kind, x)
+	elseif kind == "pezzo" or kind == "indossa" or kind == "potenzia" or kind == "banco" or kind == "merce"
+		or kind == "compra" or kind == "buono" then
+		local _, step, bought = pieces.run(a.pieces, kind, x)
+		if bought then sound.play("#scaglia") end
 		-- a step bought: its scene, with the hammer's blows
 		if step then
 			local set = equip.BY_ID[step.set]

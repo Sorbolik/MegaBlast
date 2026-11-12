@@ -172,6 +172,9 @@ return {
 		place_points = "METTI I PUNTI",
 		brace = "+%s brace accanto al livello",
 		braci = "+%s braci accanto al livello",
+		-- the gifts (menu/wallet.lua): a piece (slot and family), a voucher
+		gift_piece = "In regalo: %s del %s",
+		gift_voucher = "Un buono del Fabbro",
 	},
 
 	-- menu/milestones.lua: the stats (by id) and their badges
@@ -344,6 +347,7 @@ return {
 			teleport_ticks = "Teletrasporto", teleports = "Teletrasporti", parachutes = "Paracadute",
 			air_jumps = "Salti in aria", fall_damage_mul = "Danno da caduta", knockback_mul = "Spinta subita",
 			trap_radius = "Raggio trappole", status_turns = "Turni degli effetti", burning_blasts = "Colpi brucianti",
+			blast_push = "Spinta dei colpi",
 		},
 		yes = "sì",
 		no = "no",
@@ -371,22 +375,41 @@ return {
 		proof_first = "prima la prova",
 		-- on the action: the price and the level it buys
 		price = "%s SCAGLIE · LIVELLO %d",
-		variant = "VARIANTE",
-		at_level = "AL %d",
 		upgrade = "POTENZIA",
 		missing = "mancano %s",
 		-- the Smith's hand, with the full price
 		smith_name = "MANO DEL FABBRO",
 		smith_hand = "costa il 30%% in meno (era %s)",
-		set_bonus = "BONUS DEL SET %s",
-		others = "INDOSSA IL SET",
+		-- the family: its name and its bonus with two gold pieces
+		family = "%s · 2 pezzi d'oro: %s",
+		style_soon = "4 pezzi d'oro: lo stile, presto",
+		others = "INDOSSA",
 		set_level = "%s · %d",
+		none_owned = "nessun pezzo qui: prendilo in bottega o nel catalogo",
+		-- the tabs of the armory
+		tab_wardrobe = "ARMADIO",
+		tab_shop = "BOTTEGA",
+		tab_catalog = "CATALOGO",
+		shop_today = "i pezzi di oggi, uno per posto: domani cambiano",
+		all_owned = "li hai tutti",
+		-- a piece of the catalog you own: the slot and its level
+		owned = "%s · TUO, %d",
+		pick_ware = "tocca un pezzo",
+		-- the chosen ware's effects at level 1
+		at_level_1 = "al livello 1: %s",
+		in_wardrobe = "è già nell'armadio",
+		buy = "COMPRA",
+		price_only = "%s SCAGLIE",
+		-- the Smith's vouchers: a piece of your choice for free
+		vouchers = "buoni del Fabbro: %d",
+		voucher_hint = " · un pezzo a scelta dal catalogo",
+		use_voucher = "USA UN BUONO",
 		step_title = "SCATTO!",
 		step_new = "NUOVO",
 		-- the grade in roman numbers, its name
 		step_grade = "GRADO %s · %s",
 		step_look = "Aspetto nuovo",
-		step_top = "Al massimo: verso la variante B",
+		step_top = "Al massimo: il meno sparisce",
 	},
 
 	-- menu/profile_tabs.lua: the profile's SCHEDA, STATISTICHE and PARTITE tabs

@@ -43,15 +43,10 @@ local function empty_pieces()
 	return out
 end
 
--- A loadout's powers: the full-set bonus and those taken in the Sigilli
-function M.abilities(a, tiers)
+-- A loadout's powers: those taken in the Sigilli (the pieces give no powers,
+-- page "I Pezzi della Forgia")
+function M.abilities(a)
 	local out = {}
-	local id, top = equip.full_set(a.gear or {}, tiers)
-	local set = id and equip.BY_ID[id]
-	if set and set.bonus then
-		local b = set.bonus[(a.variant == "b" and top) and "b" or "a"]
-		out[#out + 1] = b.power_name
-	end
 	for _, w in ipairs(skills.powers(a.tree or {})) do
 		if w.power.power_name then out[#out + 1] = w.power.power_name end
 	end
@@ -62,14 +57,14 @@ function M.from_profile(p, nome, team, under, tournament)
 	local a = profile.active_loadout(p)
 	local tiers = profile.tier(p, a)
 	local v = { nome = nome, squadra = team, sotto = under, livello = p.livello, torneo = tournament,
-		badge = profile.badge(p), pezzi = {}, abilities = M.abilities(a, tiers), albero = {},
+		badge = profile.badge(p), pezzi = {}, abilities = M.abilities(a), albero = {},
 		punti = profile.points(p, tournament) }
 	for i, s in ipairs(equip.SLOTS) do
 		local set = a.gear[s.id]
 		v.pezzi[i] = { slot = s.id, set = set, livello = set and wallet.level(p, set, s.id) or 0, tier = tiers[s.id] or 1 }
 	end
 	for i, r in ipairs(skills.PATHS) do v.albero[i] = skills.spent(a.tree or {}, r.id) end
-	v.stats = copy_stats(loadout.stats(game.base_stats(), a, tiers))
+	v.stats = copy_stats(loadout.stats(game.base_stats(), a, profile.levels(p, a)))
 	return v
 end
 
