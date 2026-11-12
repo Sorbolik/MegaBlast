@@ -37,7 +37,7 @@ local C = kit.C
 -- the apprentice: feet on the thread, at the Figma point (330, 661)
 local BODY_X, BODY_Y = 330, 661
 local BODY_K = 400 / game.DISEGNO_H
-local DOOR_W, DOOR_H = 384, 72
+local DOOR_W, DOOR_H = 384, 82
 
 local V = vmath.vector3()
 
@@ -46,17 +46,31 @@ local V = vmath.vector3()
 local function door(h, g, x, y, name, ui_action, piece, hot)
 	local p = kit.plate(g, x, y, DOOR_W, DOOR_H, hot and C.HOT or C.ROSE, { sk = 0, piece = not hot and piece or nil })
 	local d = { p = p, x = x, y = y, hot = hot, pips = {} }
-	d.name = kit.text(p.g, name, x + 52, y + 36, 26, C.SAND)
-	d.sub = kit.text(p.g, "", x + 52, y + 57, 13, hot and C.HOT_TOP or C.MUTE, "start", 1.5)
+	-- the name and its line where this plate has room (ui/kit.lua): each door
+	-- its own place, not lined up with the others
+	local b = p.box
+	local tall = b.y1 - b.y0
+	d.name = kit.text(p.g, name, b.x0 + 2, b.y0 + tall * 0.6, tall * 0.62, C.SAND)
+	d.sub = kit.text(p.g, "", b.x0 + 3, b.y1 - 1, tall * 0.27, hot and C.HOT_TOP or C.MUTE, "start", 1.5)
 	d.b = kit.button(h.buttons, p, ui_action)
 	h.doors[#h.doors + 1] = d
 	return d
 end
 
+-- the small line of a door: never past its room (a long one shrinks)
+local function set_sub(d, txt)
+	gui.set_text(d.sub, txt)
+	d.sub_scale = d.sub_scale or gui.get_scale(d.sub)
+	gui.set_scale(d.sub, d.sub_scale)
+	local room = d.p.box.x1 - d.p.box.x0 - 6 - #d.pips * 15
+	local w = kit.width(d.sub)
+	if w > room then gui.set_scale(d.sub, d.sub_scale * (room / w)) end
+end
+
 -- n notches on a door, the first lit ones in color (0: none)
 local function set_pips(d, n, lit)
 	for _, q in ipairs(d.pips) do gui.delete_node(q.node) end
-	d.pips = n > 0 and kit.pips(d.p.g, d.x + DOOR_W - 44 - n * 15, d.y + 44, n, lit, d.hot and C.HOT_EDGE or C.SAND) or {}
+	d.pips = n > 0 and kit.pips(d.p.g, d.p.box.x1 - 8 - n * 15, d.p.box.y1 - 12, n, lit, d.hot and C.HOT_EDGE or C.SAND) or {}
 end
 
 function M.new(color)
@@ -100,9 +114,9 @@ function M.new(color)
 	-- right: the doors in a column, each with its shape, and the action under them
 	local right = kit.anchor(1280, 360, gui.ANCHOR_RIGHT)
 	h.tops[#h.tops + 1] = right.node
-	h.campaign = door(h, right, 846, 112, common.campaign, "campagna", "piastra_freccia")
-	h.training = door(h, right, 856, 196, common.training, "allenamento", "piastra_storta")
-	gui.set_text(h.training.sub, T.training_sub)
+	h.campaign = door(h, right, 846, 100, common.campaign, "campagna", "piastra_freccia")
+	h.training = door(h, right, 856, 190, common.training, "allenamento", "piastra_storta")
+	set_sub(h.training, T.training_sub)
 	h.events_door = door(h, right, 846, 280, common.events, "eventi", "piastra_stendardo", true)
 	-- (in a group of its own: the ingot and its line arrive together)
 	h.play_g = kit.group(right, 1030, 460)
@@ -235,7 +249,7 @@ end
 
 -- The line under EVENTI (main/events.lua, home_line)
 function M.events(h, txt)
-	gui.set_text(h.events_door.sub, string.upper(txt or ""))
+	set_sub(h.events_door, string.upper(txt or ""))
 end
 
 -- Level and experience on the name plate, the chapter you are in on CAMPAGNA
@@ -256,7 +270,7 @@ function M.profile(h, p)
 		if done < #cap.missioni then break end
 	end
 	h.chapter = string.upper(chapter.titolo)
-	if not h.in_queue then gui.set_text(h.campaign.sub, h.chapter) end
+	if not h.in_queue then set_sub(h.campaign, h.chapter) end
 	set_pips(h.campaign, #chapter.missioni, done)
 	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not h.in_queue) end
 end
@@ -265,7 +279,7 @@ function M.queued(h, on)
 	h.in_queue = on
 	h.campaign.b.spento = on or nil
 	gui.set_color(h.campaign.name, on and C.MUTE or C.SAND)
-	gui.set_text(h.campaign.sub, on and string.upper(T.leave_queue_first) or (h.chapter or ""))
+	set_sub(h.campaign, on and string.upper(T.leave_queue_first) or (h.chapter or ""))
 	-- the long line takes the notches' place
 	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not on) end
 end

@@ -231,8 +231,8 @@ local function refresh(s)
 		kit.info(g, x, y, 96, 46, KC.PURPLE)
 		icon(s, g, w, x + 50, y + 23, 40)
 	end
-	kit.sand(low, 80, 630, 340, 62, KC.HOT, { sk = 22 })
-	fit(kit.text(low, title, 250, 668, 22, KC.INK, "middle", 0.5), 290)
+	local on_plate = kit.sand(low, 80, 630, 340, 62, KC.HOT, { sk = 22 })
+	fit(kit.text(on_plate.g, title, 250, 668, 22, KC.INK, "middle", 0.5), 290)
 
 	-- the cards of the row (with both picked, the last row stays)
 	local shown = math.min(s.passo, 2)

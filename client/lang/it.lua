@@ -264,17 +264,12 @@ return {
 			{ "VII", "VIOLENZA", "MINOTAURO" }, { "VIII", "FRODE", "MALACODA" }, { "IX", "TRADIMENTO", "LUCIFERO" },
 		},
 		ring_name = "%s · %s",
-		ring_locked = "%s · %s · SI APRE BATTENDO %s",
 		ring_stars = "%d / %d",
-		ring_sub = "GIRONE · %s",
 		ring_opens = "SI APRE BATTENDO %s",
 		tap_ring = "SCORRI O TOCCA UN GIRONE PER SCENDERE",
-		coming = "IN ARRIVO",
-		coming_line = "I LIVELLI DI QUESTO GIRONE ARRIVANO PRESTO",
 		coming_sub = "%s · IN ARRIVO",
 		rings_back = "GIRONI",
 		cortile = "IL CORTILE",
-		fabbro_line = { "«Ti ci porto io,", "un girone alla volta.»" },
 	},
 
 	-- ui/level_types.lua: what kind of level a mission is (Sergio, 6 Nov), on its

@@ -112,6 +112,27 @@ local function three(parent, name, w, h)
 	}
 end
 
+-- The room to write in on a long piece w x h centered at the Figma point
+-- (cx, cy): the biggest plain rectangle of its drawing, away from the rim,
+-- the rivets and the scratches (pieces.lua, box). Each piece has its own, so
+-- the writings of two plates do not line up: that is wanted (Sergio, 12 Nov)
+local function room(name, cx, cy, w, h)
+	local m = P[name]
+	local b = m and m.box
+	if not b then return nil end
+	local k = h / m.h
+	local cw = math.min(m.c * k, w / 2)
+	-- a margin inside the cap scales with it; past it, it is in the stretched middle
+	local stretch = (w - 2 * cw) / math.max(1, (m.w - 2 * m.c) * k)
+	local function inset(v)
+		v = v * k
+		local cap = m.c * k
+		if v <= cap then return v * cw / cap end
+		return cw + (v - cap) * stretch
+	end
+	return { x0 = cx - w / 2 + inset(b[1]), x1 = cx + w / 2 - inset(b[3]), y0 = cy - h / 2 + b[2] * k, y1 = cy + h / 2 - b[4] * k }
+end
+
 -- A panel w x h centered on parent, in nine parts: whole corners c wide,
 -- the sides stretched along their length only
 local function nine(parent, name, w, h, c)
@@ -222,6 +243,9 @@ function M.plate(g, x, y, w, h, shadow, opt)
 		p.parts = nine(p.face_node, opt.fill == C.SAND and "pannello_chiaro" or "pannello", w + sk, h, 30)
 	else
 		p.parts = three(p.face_node, name, w + sk, h)
+		-- what is written on it (M.text on p.g) stays in its room
+		p.box = room(name, x + (w + sk) / 2, y + h / 2, w + sk, h)
+		p.g.box = p.box
 	end
 	p.shadow = {}
 	p.d = opt.d or 6
@@ -290,7 +314,26 @@ function M.text(g, t, x, y, size, color, anchor, spacing)
 	gui.set_scale(n, V)
 	if spacing and spacing ~= 0 then gui.set_tracking(n, spacing / size) end
 	gui.set_parent(n, g.node)
+	if g.box then M.keep_in(n, g.box, g, x, y, size, anchor) end
 	return n
+end
+
+-- A text just made at the baseline (x, y) of g, moved (and, too wide, shrunk)
+-- so that it stays inside the room `box` of its plate: never on the rim
+function M.keep_in(n, box, g, x, y, size, anchor)
+	local w = M.width(n)
+	local wide = box.x1 - box.x0
+	local k = 1
+	if w > wide then k = wide / w; w = wide end
+	local left = anchor == "middle" and x - w / 2 or anchor == "end" and x - w or x
+	left = math.max(box.x0, math.min(box.x1 - w, left))
+	local tall = size * k * 0.72
+	local base = math.max(box.y0 + tall, math.min(box.y1, y))
+	if box.y1 - box.y0 < tall then base = (box.y0 + box.y1 + tall) / 2 end
+	local px = anchor == "middle" and left + w / 2 or anchor == "end" and left + w or left
+	gui.set_position(n, vec(px - g.ox, g.oy - base + size * k * BASELINE))
+	V.x, V.y, V.z = size * k / FONT_SIZE, size * k / FONT_SIZE, 1
+	gui.set_scale(n, V)
 end
 
 -- Capitals, the accented letters too (string.upper leaves them small)
@@ -442,7 +485,9 @@ function M.tabs(g, list_of, x, y, tabs, active, accent)
 		local on = i == active
 		local n = empty(cx + w / 2 - g.ox, g.oy - (y + h / 2), w, h, g.node)
 		three(n, on and "piastrina_chiara" or "piastrina", w, h)
-		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2 }, tab[1], cx + w / 2, y + 27, 19,
+		local name = on and "piastrina_chiara" or "piastrina"
+		local box = room(name, cx + w / 2, y + h / 2, w, h)
+		M.text({ node = n, ox = cx + w / 2, oy = y + h / 2, box = box }, tab[1], (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2 + 7, 19,
 			on and C.INK or M.with_alpha(C.SAND, 0.8), "middle", 0.5)
 		list_of[#list_of + 1] = { nodo = n, bordo = n, colore = CLEAR, riposo = CLEAR, ui_action = tab[2] }
 		cx = cx + w + 6 + (g.air and M.air(0.1) or 0)
@@ -463,7 +508,9 @@ function M.choice(g, list_of, x, y, label, opts, active, w, off)
 		local ox = x + (i - 1) * w
 		local on = i == active and not off
 		if on then three(empty(ox + w / 2 - 6 - g.ox, g.oy - (y + h / 2), 0, 0, g.node), "piastrina_chiara", w - 12, h) end
-		M.text(g, o[1], ox + w / 2, y + h / 2 + 6, #o[1] > 14 and 14 or 18, on and C.INK or with_alpha(C.MUTE, off and 0.4 or 1), "middle")
+		local box = on and room("piastrina_chiara", ox + w / 2 - 6, y + h / 2, w - 12, h) or nil
+		local tx = box and (box.x0 + box.x1) / 2 or ox + w / 2
+		M.text({ node = g.node, ox = g.ox, oy = g.oy, box = box }, o[1], tx, y + h / 2 + 6, #o[1] > 14 and 14 or 18, on and C.INK or with_alpha(C.MUTE, off and 0.4 or 1), "middle")
 		if not off then M.zone(g, list_of, ox, y - 6, w, h + 12, o[2]) end
 	end
 end
@@ -592,9 +639,14 @@ end
 -- The player's plate: name (or what it is), a line on the right, the bar
 function M.nameplate(g, x, y, name, right, f, accent)
 	local p = M.sand(g, x, y, 340, 62, accent or C.HOT, { sk = 22 })
-	p.name = M.text(p.g, name, x + 36, y + 39, 22, C.INK)
-	p.right = M.text(p.g, right, x + 330, y + 26, 18, with_alpha(C.INK, 0.75), "end", 1)
-	p.bar = M.bar(p.g, x + 176, y + 40, 150, 7, f, C.HOT_BOTTOM, C.SAND_SHADOW)
+	-- in the plate's room: the name on the left, the level over its bar on the right
+	local b = p.box
+	local mid = (b.y0 + b.y1) / 2
+	p.name = M.text(p.g, name, b.x0, mid + 7, 20, C.INK)
+	local from = math.max(b.x0 + M.width(p.name) + 10, b.x1 - 150)
+	p.right = M.text({ node = p.g.node, ox = p.g.ox, oy = p.g.oy, box = { x0 = from, x1 = b.x1, y0 = b.y0, y1 = b.y1 } },
+		right, b.x1, b.y0 + 12, 13, with_alpha(C.INK, 0.75), "end", 1)
+	p.bar = M.bar(p.g, from, b.y1 - 9, b.x1 - from, 6, f, C.HOT_BOTTOM, C.SAND_SHADOW)
 	return p
 end
 

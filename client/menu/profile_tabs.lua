@@ -133,8 +133,8 @@ function M.devil(s, line)
 	scoria.set_enabled(s.figure, true)
 	if line then
 		-- no profile here: a light plate that says what the place is
-		kit.sand(s.low, 80, 630, 340, 62, s.accent or KC.STAR, { sk = 22 })
-		kit.text(s.low, line, 250, 668, 22, KC.INK, "middle", 1)
+		local on_plate = kit.sand(s.low, 80, 630, 340, 62, s.accent or KC.STAR, { sk = 22 })
+		kit.text(on_plate.g, line, 250, 668, 22, KC.INK, "middle", 1)
 		return
 	end
 	local lv = (p.braci or 0) > 0 and T.level_braci:format(p.livello, p.braci) or T.level:format(p.livello)
