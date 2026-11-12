@@ -1,0 +1,10 @@
+Image 1 and image 2 are two abstract background drawings already used in a game menu (image 3 shows them in use, tinted orange and blue, very faint behind the buttons): heat as soft round strokes in the bottom-left corner, ice as straight angular strokes in the top-right corner. Draw a NEW background of the same family for another screen of the same game, wide 16:9, with BOTH parts in the same picture: a warm motif made only of soft curved strokes that stays inside the LEFT half and grows from the bottom-left corner, and a cold motif made only of straight strokes and hard corners that stays inside the RIGHT half and grows from the top-right corner. Each motif reaches at most the middle of the picture.
+
+Theme of this screen: the descent into the underworld. Warm motif: three or four long soft strokes that fall from the top of the left half and curl at the end like thick slow drops or hanging roots of fire, each ending in a small curl. Cold motif: four or five straight sharp spikes rising from the bottom of the right half like broken stalagmites, of different heights, leaning a little, two of them crossed by a short straight crack.
+
+Pure white brush strokes (#FFFFFF) on a pure black background (#000000), by the same hand as images 1 and 2: thick, confident, slightly uneven ink strokes that taper at the ends. No fills, no gray, no shading, no hatching, no texture, no glow. Few big strokes and a lot of empty black space; the middle of the picture stays completely empty. Nothing recognizable as a real object, character, building or symbol. No text, letters, numbers, frame or signature.
+
+Riferimenti (in ordine)
+R1: art/WB-025/riferimenti/R1_calore.png
+R2: art/WB-025/riferimenti/R2_cristallo.png
+R3: art/WB-025/riferimenti/R3_home_con_sfondo.png

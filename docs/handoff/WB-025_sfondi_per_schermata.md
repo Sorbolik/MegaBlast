@@ -160,4 +160,48 @@ si cambiano rigenerando una riga.
 
 ## Consegna di Codex
 
+### 2026-11-12
+
+Otto sfondi generati da `main` aggiornato (`2229cbae`) con il generatore
+integrato. Ho usato per ogni sfondo il prompt integrale della scheda e ho
+allegato R1, R2 e R3 in quest'ordine.
+
+File in `art/WB-025/`. Ogni nome indica un PNG originale RGB da
+1672 × 941 px (circa 16:9) e un TXT con prompt e riferimenti.
+
+| Nome | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `sfondo_armeria` | 3 | 3 |
+| `sfondo_campagna` | 1 | 1 |
+| `sfondo_allenamento` | 1 | 1 |
+| `sfondo_eventi` | 3 | 2 |
+| `sfondo_gioca` | 3 | 2 |
+| `sfondo_diavoletto` | 1 | 1 |
+| `sfondo_impostazioni` | 1 | 1 |
+| `sfondo_podio` | 3 | 3 |
+
+**Verifiche.** Ho confrontato gli otto sfondi affiancati. I motivi si
+distinguono, rimangono nelle rispettive metà e lasciano spazio nero al
+centro. I tratti si assottigliano come nei riferimenti. Nessuna scritta,
+cornice o firma. Ho verificato formato, dimensioni e valori RGB. A vista
+le immagini sono bianche su nero. Nei PNG il colore prevalente è
+`#000000`, con valori intermedi sui bordi e pixel quasi neri anche nel
+fondo. Le immagini conservano i pixel della generazione.
+
+**Scostamenti residui.**
+
+- **Armeria.** Cinque puntini nel motivo caldo, rispetto ai tre o quattro del prompt.
+- **Campagna.** Il prompt specifico chiede curve che scendono dall'alto a
+  sinistra e punte che salgono dal basso a destra, invertendo la direzione
+  verticale della regola generale della scheda e di «Filo di brace» in
+  `docs/decisioni/interfaccia.md`. Il risultato riprende il motivo specifico.
+- **Eventi.** I triangoli sono uniti da una linea leggermente curva e
+  ricordano una fila di bandierine.
+- **Gioca.** Tre delle quattro lance sono spezzate ad angolo.
+- **Podio.** Il motivo freddo include tre profili angolari ripresi da R2
+  oltre alle losanghe.
+
+La separazione dei motivi per la tinta e la resa sotto pulsanti e scritte
+restano da verificare nelle schermate.
+
 ## Resoconto di Claude
