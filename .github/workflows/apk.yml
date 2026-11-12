@@ -37,6 +37,7 @@ jobs:
           distribution: temurin
           java-version: '25'
       - name: Costruisci l'APK
+        id: build
         env:
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
           KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
@@ -55,6 +56,15 @@ jobs:
             --bundle-output "$RUNNER_TEMP/bundle" resolve build bundle
           find "$RUNNER_TEMP/bundle" -name '*.apk' -exec mv {} "$RUNNER_TEMP/MegaBlast.apk" \;
           ls -l "$RUNNER_TEMP/MegaBlast.apk"
+          # i bot di Telegram accettano file fino a 50 MB: oltre, si manda il link alla build
+          if [ "$(stat -c %s "$RUNNER_TEMP/MegaBlast.apk")" -gt $((49 * 1024 * 1024)) ]; then echo "grande=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Conserva l'APK troppo grande per Telegram
+        if: steps.build.outputs.grande == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MegaBlast-apk
+          path: ${{ runner.temp }}/MegaBlast.apk
+          retention-days: 14
       - name: Manda su Telegram
         env:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -63,12 +73,20 @@ jobs:
           RAMO: ${{ github.ref_name }}  # main o il ramo scelto in "Run workflow"
           GITHUB_TOKEN: ${{ github.token }}
           LOG: ${{ inputs.log }}
+          GRANDE: ${{ steps.build.outputs.grande }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           python3 tools/apk/novita.py "$PRIMA" "$RAMO" | tee "$RUNNER_TEMP/novita.txt"
           python3 tools/apk/novita.py --didascalia "$RAMO" > "$RUNNER_TEMP/didascalia.txt"
           if [ "$LOG" = "true" ]; then sed -i '1s/^/📋 CON I LOG (debug, solo per le misure) · /' "$RUNNER_TEMP/didascalia.txt"; fi
           cat "$RUNNER_TEMP/didascalia.txt"
-          curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendDocument" \
-            -F "chat_id=$CHAT" -F "caption=<$RUNNER_TEMP/didascalia.txt" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
+          if [ "$GRANDE" = "true" ]; then
+            printf '\n⚠️ APK oltre i 50 MB di Telegram: scaricalo da %s (Artifacts)\n' "$RUN_URL" >> "$RUNNER_TEMP/didascalia.txt"
+            curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
+              -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/didascalia.txt"
+          else
+            curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendDocument" \
+              -F "chat_id=$CHAT" -F "caption=<$RUNNER_TEMP/didascalia.txt" -F "document=@$RUNNER_TEMP/MegaBlast.apk"
+          fi
           curl -fsS -o /dev/null "https://api.telegram.org/bot$TOKEN/sendMessage" \
             -F "chat_id=$CHAT" -F "text=<$RUNNER_TEMP/novita.txt"
