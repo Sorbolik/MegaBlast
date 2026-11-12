@@ -1,0 +1,9 @@
+Image 1 shows the line style to follow (the thin outline drawings in the background: anvil, arch, icicles). Image 2 is the model sheet of Favilla: keep her silhouette recognizable (small imp girl, flame hair, overalls, boots, tail), but redraw her with very few lines.
+
+A minimalist single-line drawing: Favilla trapped inside a big angular block of ice, standing still with her eyes closed and her hands together on her chest. The ice block is a simple faceted crystal drawn with straight lines around her, with two or three facet lines.
+
+Pure white lines (#FFFFFF) of one constant medium thickness on a pure black background (#000000). Outline only: no fills, no gray, no shading, no hatching, no texture, no gradients, no glow. As few lines as possible, like a neon sign or a simple engraving. The whole crystal inside the picture with a black margin all around. No text, letters, numbers, frame or signature.
+
+Riferimenti allegati in ordine
+R1 art/WB-021/riferimenti/R1_stile_linee.png
+R3 art/WB-012/scelti/favilla.png

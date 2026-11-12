@@ -110,4 +110,19 @@ una scheda»): scheda reversibile, i disegni si provano nella proposta prima che
 
 ## Consegna di Codex
 
+Sei disegni generati con ImageGen dai prompt integrali della scheda. Accanto a ogni PNG, il TXT omonimo contiene il prompt e i riferimenti nell'ordine allegato.
+
+| File in `art/WB-021/` | Tentativi | Controllo visivo |
+|---|---:|---|
+| `linea_fabbro_1.png` e `linea_fabbro_1.txt` | 3 | Figura intera, martello alzato, tenaglie, incudine e tre scintille. Ciminiera con fumo. |
+| `linea_fabbro_2.png` e `linea_fabbro_2.txt` | 3 | Figura intera, martello alzato, tenaglie, incudine e tre scintille. Ciminiera senza fumo. |
+| `linea_fucina.png` e `linea_fucina.txt` | 1 | Arco, tre fiamme, mantice, catene e utensili. Metà destra interamente nera. |
+| `linea_ghiaccio.png` e `linea_ghiaccio.txt` | 1 | Stalattiti, cristalli, crepe e tre rombi pieni. Metà sinistra interamente nera. |
+| `linea_favilla_1.png` e `linea_favilla_1.txt` | 2 | Cristallo intero con tre facce delineate, occhi chiusi e mani sul petto. |
+| `linea_favilla_2.png` e `linea_favilla_2.txt` | 1 | Cristallo intero con due facce delineate, occhi chiusi e mani sul petto. |
+
+Esportati in nero e bianco puro con soglia al 50% per eliminare i grigi del generatore. Il Fabbro è uscito a 1312 × 1199 anche al terzo tentativo. Aggiunto solo margine nero sopra e sotto per ottenere 1312 × 1312 senza deformare o tagliare il disegno. Favilla è a 1254 × 1254 e le due scene a 1672 × 941. Verificati i margini dei personaggi e, a livello di pixel, le metà nere delle scene.
+
+A vista non ci sono scritte, numeri, cornici o firme. Restano piccoli dettagli pieni (rivetti, sopracciglia o palpebre e rombi di neve), differenze locali di spessore e la punta della coda di Favilla più appuntita rispetto a R3. La leggibilità in piccolo e a bassa opacità resta da verificare nei menu.
+
 ## Resoconto di Claude

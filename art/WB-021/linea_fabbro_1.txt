@@ -1,0 +1,9 @@
+Image 1 shows the line style to follow (the thin outline drawings in the background: anvil, arch, icicles). Image 2 is the model sheet of the Blacksmith: keep his silhouette recognizable (huge square body, horns, big moustache, apron, the furnace grate in his belly), but redraw him with very few lines.
+
+A minimalist single-line drawing: the Blacksmith seen in three-quarter view, standing at an anvil, right arm raised holding a hammer about to strike, left hand holding a piece of metal on the anvil with tongs. Three or four small sparks as tiny lines at the anvil.
+
+Pure white lines (#FFFFFF) of one constant medium thickness on a pure black background (#000000). Outline only: no fills, no gray, no shading, no hatching, no texture, no gradients, no glow. As few lines as possible, clean closed shapes, like a neon sign or a simple engraving. The whole figure inside the picture with a black margin all around. No text, letters, numbers, frame or signature.
+
+Riferimenti allegati in ordine
+R1 art/WB-021/riferimenti/R1_stile_linee.png
+R2 art/WB-012/scelti/fabbro.png

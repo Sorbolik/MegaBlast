@@ -1,0 +1,8 @@
+Image 1 shows the line style to follow (the thin outline drawings in the background: anvil, arch, icicles).
+
+A minimalist single-line drawing, wide 16:9: the inside of a blacksmith's forge. On the LEFT half only: a big stone arch with a furnace mouth and three simple flames inside, a bellows next to it, two chains with hooks hanging from the top, a few tools (hammer, tongs) hanging on the wall, a few brick outlines. The RIGHT half of the picture stays completely empty and black.
+
+Pure white lines (#FFFFFF) of one constant medium thickness on a pure black background (#000000). Outline only: no fills, no gray, no shading, no hatching, no texture, no gradients, no glow. As few lines as possible, clean simple shapes, like a neon sign or a simple engraving. No characters. No text, letters, numbers, frame or signature.
+
+Riferimenti allegati in ordine
+R1 art/WB-021/riferimenti/R1_stile_linee.png
