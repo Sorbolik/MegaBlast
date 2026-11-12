@@ -188,4 +188,20 @@ Approvata: è reversibile e Sergio ha chiesto le fette mancanti il 12 nov 2026.
 
 ## Consegna di Codex
 
+Nove PNG a 2172 × 724 generati con ImageGen dai prompt integrali. Ogni TXT omonimo contiene il prompt e i riferimenti nell'ordine R1, R2, R3.
+
+| File in `art/WB-026/` | Tentativi | Controllo visivo |
+|---|---:|---|
+| `fetta_limbo.png`, `fetta_limbo.txt` | 1 | Quattro merli bassi e due sassi sospesi. Restano tre inserti chiari aggiunti sul fronte. |
+| `fetta_lussuria.png`, `fetta_lussuria.txt` | 2 | Uno spuntone a sinistra e tre scie a destra, una oltre il contorno. Le scie sono ondulate, con poca arricciatura. |
+| `fetta_gola.png`, `fetta_gola.txt` | 1 | Quattro colature e tre chicchi di grandine sul bordo. |
+| `fetta_avarizia.png`, `fetta_avarizia.txt` | 2 | Due massi, uno per lato, e una vena d'oro. |
+| `fetta_ira.png`, `fetta_ira.txt` | 1 | Acqua sul fronte, tre bolle a destra e canna rossa a sinistra. |
+| `fetta_eresia.png`, `fetta_eresia.txt` | 2 | Tre tombe aperte con fiammella, tutte intere, e quattro feritoie quadrate. |
+| `fetta_violenza.png`, `fetta_violenza.txt` | 1 | Due tronchi, sabbia con due fiammelle e una colatura rossa. Restano due sassolini sulla sabbia. |
+| `fetta_frode.png`, `fetta_frode.txt` | 1 | Due ponticelli sul fronte, uno crepato, e pece con riflessi verdi. |
+| `fetta_tradimento.png`, `fetta_tradimento.txt` | 1 | Sagoma spigolosa, crepa, quattro ghiaccioli e un punto rosso. |
+
+Ho uniformato il fondo verde a `#00FF00` e verificato i margini delle sagome a livello di pixel. Le fette riprendono a vista l'inquadratura di R1 e hanno tutte il centro della faccia superiore libero. Controllata l'assenza di personaggi, scritte, numeri e ombre sul fondo. La corrispondenza esatta dei colori e la leggibilità con nomi e segnalini nella mappa restano da verificare.
+
 ## Resoconto di Claude
