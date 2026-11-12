@@ -1,0 +1,16 @@
+Image 1 is a screenshot of the current campaign map of a mobile game (the circles of hell, one below the other): keep WHAT is on screen but NOT its flat graphic style. Image 2 shows the illustration style.
+
+A full-screen UI mockup, 16:9 landscape, of the campaign map of a 2D cartoon game: the descent through the nine circles of Dante's hell, drawn in ink on a long old parchment scroll lying on a dark soot table (diegetic UI). Comic style of image 2: thick slightly irregular black ink outlines, flat colors, light hatching, no photorealism.
+
+The scroll shows hell as a funnel seen in section: wide rings at the top, narrower going down. The top of the parchment is warm: burnt edges, soot stains, orange glow, a small drawing of a forge. Going down the parchment gets colder: blue shadows, then frost, torn edges and cyan ice crystals (#38B6FF, #CAF0F8) at the very bottom, where a small figure is frozen in a block of ice.
+
+The second ring is the open one: it is drawn larger and brighter, with a path of five round-ish hammered iron studs joined by an ink line; three studs are done (gold, with small stars under them), the fourth is the current one and holds a tiny burning anvil that melts the frost around it, the last is a small crown. The rings below are greyed out, each with a small iron padlock. Ring names in ink capitals next to the rings: "LIMBO", "LUSSURIA", "GOLA".
+
+Top left: the title "LUSSURIA" branded by fire into a dark iron plate. Top right two small riveted iron plates with a coin icon "1240" and a gem icon "35".
+Bottom center: a small card of parchment nailed on iron: "4 · SPINGI COL VENTO". Bottom right: one big red-hot glowing iron ingot, the main action, with dark engraved letters "GIOCA". Bottom left: a small hexagonal bolt head with a back arrow.
+
+All text clean and perfectly readable, only the words listed here. No modern rounded rectangles. Keep the table around the scroll dark and calm.
+
+Riferimenti allegati in ordine
+R3 art/WB-020/riferimenti/R3_gironi_oggi.png
+R6 art/WB-017/s_forgia_aperta.png

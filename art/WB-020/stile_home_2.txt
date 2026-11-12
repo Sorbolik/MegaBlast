@@ -1,0 +1,22 @@
+Image 1 is a screenshot of the current main menu of a mobile game: keep its LAYOUT (what is where) but NOT its flat graphic style. Image 2 is the model sheet of the player's little devil, image 3 the model sheet of the Blacksmith: copy both characters EXACTLY from their sheets, do not redesign them; the Blacksmith holds a hammer here. Image 4 shows the illustration style and the forge.
+
+A full-screen UI mockup, 16:9 landscape, of the main menu of a 2D cartoon game set in a hellish forge. The menu is part of the forge itself (diegetic UI). Comic style of image 4: thick slightly irregular black ink outlines, flat saturated colors, light hatching in shadows, no photorealism, no 3D render.
+
+Background: the inside of the forge, dark soot and slate stone (#121013, #262329), warm light from a furnace. On the far left, small and in the background, the Blacksmith stands at his anvil seen from behind three-quarter, hammer raised, sparks flying from the anvil across the screen. A few embers float upward.
+
+Center: the little devil of image 2 standing, big, same pose and place as in image 1, lit warm from the forge.
+
+Left column, as in image 1: three menu buttons that are dark wrought-iron ingots (tapered bars with corners chiselled at 45 degrees, one rivet at each end) hanging from short chains, stacked vertically, with ivory engraved capital letters: "CAMPAGNA", "ALLENAMENTO", "EVENTI". Below them a thinner nailed iron tag: "STESSO TELEFONO".
+
+Right, as in image 1: one much bigger ingot, the main action, glowing red-hot (orange #F26419 to molten gold #FFB703 with a white-hot core, heat shimmer and tiny sparks), with big dark engraved letters "GIOCA". Under it a small dark iron tag: "2 CONTRO 2".
+
+Bottom center: a riveted iron name plate with a strip of burnt parchment: "SORBO" and "LIV 23".
+Top left: the game logo "MEGABLAST" as letters branded by fire into dark metal. Top right: two small riveted iron plates with a coin icon "1240" and a gem icon "35", and a hexagonal bolt head with a gear symbol.
+
+All text ivory (#F4ECE1) or dark on hot metal, clean and perfectly readable, only the words listed here, nothing else written. Nothing perfectly round, no modern rounded rectangles, no gradients like a phone app. Keep wide calm dark areas; do not clutter.
+
+Riferimenti allegati in ordine
+R1 art/WB-020/riferimenti/R1_home_oggi.png
+R4 art/WB-012/scelti/apprendista.png
+R5 art/WB-012/scelti/fabbro.png
+R6 art/WB-017/s_forgia_aperta.png

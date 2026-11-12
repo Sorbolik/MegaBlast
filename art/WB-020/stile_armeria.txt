@@ -1,0 +1,21 @@
+Image 1 is a screenshot of the current armory screen of a mobile game: keep its LAYOUT (what is where) but NOT its flat graphic style. Image 2 is the model sheet of the player's little devil: copy him EXACTLY, do not redesign him. Image 3 shows the illustration style.
+
+A full-screen UI mockup, 16:9 landscape, of the armory screen of a 2D cartoon game set in a hellish forge. The screen is the Blacksmith's workbench (diegetic UI). Comic style of image 3: thick slightly irregular black ink outlines, flat saturated colors, light hatching, no photorealism, no 3D render.
+
+Background: a dark soot-stained workbench of wood and lava stone, with tongs, a hammer and white chalk sketches near the edges, dark and calm (#121013, #262329), warm glow from the left.
+
+Left-center: the little devil of image 2 standing, big, as in image 1.
+
+Next to him, as in image 1: four stacked equipment slots made of wrought-iron plates with chiselled 45-degree corners and rivets, each with a small ivory label and a big name: "ELMO CORVO", "CORAZZA FORNACE", "MANTELLO CORVO", "STIVALI LEVIATANO"; the first one is selected and its edge glows hot orange.
+
+Right: a card of burnt parchment (#D9C5A0) with scorched curled corners nailed on a dark iron plate, like a technical blueprint: title "ELMO CORVO" in dark charcoal ink, a charcoal sketch of a crow-shaped helmet, and a short list of stats written in ink with small iron-tube bars filled with glowing lava: "VITA", "CORSA", "SALTO".
+
+Top: three leather-and-metal bookmark tabs: "ARMADIO" (lit), "BOTTEGA", "CATALOGO". Top left the title "ARMERIA" branded by fire into metal. Top right two small riveted plates with a coin icon "1240" and a gem icon "35".
+Bottom right: one big red-hot glowing ingot, the main action, with dark engraved letters "POTENZIA". Bottom left: a small hexagonal bolt head with a back arrow, and a riveted name plate "SORBO LIV 23".
+
+All text clean and perfectly readable, only the words listed here. Nothing perfectly round, no modern rounded rectangles. Keep calm dark areas between the elements.
+
+Riferimenti allegati in ordine
+R2 art/WB-020/riferimenti/R2_armeria_oggi.png
+R4 art/WB-012/scelti/apprendista.png
+R6 art/WB-017/s_forgia_aperta.png

@@ -138,4 +138,17 @@ font scolpito solo nei titoli).
 
 ## Consegna di Codex
 
+Bozzetti generati con ImageGen usando i prompt integrali della scheda e i riferimenti nell'ordine indicato. I PNG sono a 1672 × 941 con sfondo di scena. Ogni TXT riporta il prompt e i percorsi dei riferimenti.
+
+| File in `art/WB-020/` | Tentativi | Esito del controllo visivo |
+|---|---:|---|
+| `stile_home_1.png`, `stile_home_1.txt` | 1 | Disposizione principale e scritte leggibili. Il fazzoletto è rosso come in R1, mentre R4 lo mostra azzurro. |
+| `stile_home_2.png`, `stile_home_2.txt` | 1 | Disposizione principale e scritte leggibili. Il fazzoletto è azzurro come in R4. Il Fabbro è più in evidenza rispetto alla prima variante. |
+| `stile_armeria.png`, `stile_armeria.txt` | 1 | Quattro slot, scheda dell'elmo e azioni nelle zone previste. Le scritte richieste sono leggibili. Il bagliore della fornace, del titolo e dello slot selezionato compete con POTENZIA. |
+| `stile_gironi.png`, `stile_gironi.txt` | 3 | Tenuto il primo risultato, con cinque perni inclusa la corona e senza lucchetto sul Limbo. Restano i numeri 1–4 sui perni, meno di nove cerchi chiaramente distinguibili e solo quattro lucchetti. Il secondo tentativo chiudeva il Limbo e il terzo aggiungeva un sesto perno. |
+
+Controllati a vista la disposizione rispetto a R1–R3, la somiglianza ai fogli modello, i contorni, la leggibilità e la gerarchia dei comandi. I personaggi sono riconoscibili, con variazioni di posa o proporzioni. Il ferro ha una texture più marcata rispetto ai colori pieni richiesti. La leggibilità su telefono resta da verificare.
+
+La scheda chiede di copiare R4, che mostra la fiammella, e anche R1 la mostra. La decisione del 2 novembre in `DECISIONI.md` la toglie dalla home e dal gioco. La fiammella è visibile in entrambi i bozzetti della home e in Armeria. Il conflitto resta aperto.
+
 ## Resoconto di Claude
