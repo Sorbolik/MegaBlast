@@ -138,4 +138,19 @@ non riesci a fare»): reversibile, i pezzi si provano nella proposta prima che n
 
 ## Consegna di Codex
 
+Sei PNG generati con ImageGen usando i prompt integrali. I TXT omonimi riportano i prompt e i riferimenti nell'ordine allegato.
+
+| File in `art/WB-022/` | Tentativi | Controllo visivo |
+|---|---:|---|
+| `pezzo_lingotto_1.png`, `pezzo_lingotto_1.txt` | 1 | Centro libero, faccia superiore chiara e ammaccatura sul bordo esterno. |
+| `pezzo_lingotto_2.png`, `pezzo_lingotto_2.txt` | 1 | Centro libero e ammaccatura sul bordo tra faccia superiore e frontale. |
+| `pezzo_piastre.png`, `pezzo_piastre.txt` | 3 | Tre sagome distinte e separate, con rivetti a sinistra e centri liberi. |
+| `pezzo_ghiaccio.png`, `pezzo_ghiaccio.txt` | 1 | Sagoma irregolare, centro libero e crepa a destra. È presente un sottile filetto nero esterno al ciano. |
+| `pezzo_pannello.png`, `pezzo_pannello.txt` | 1 | Quattro rivetti, angolo scheggiato e centro libero. |
+| `pezzo_piccoli.png`, `pezzo_piccoli.txt` | 3 | Otto pezzi separati in griglia 4 × 2, nell'ordine richiesto. Il lucchetto ha un filetto nero esterno al ciano e la gemma mostra quattro zone di colore. |
+
+Controllati a vista margini, contorni, separazione dei pezzi, centri liberi e assenza di scritte, numeri, bagliori e ombre sul fondo. I prompt dei lingotti chiedono un gradiente oro-arancio sulla faccia frontale, mentre il criterio generale esclude le sfumature morbide. I due lingotti presentano il gradiente generato dal prompt.
+
+In esportazione ho uniformato i pixel di fondo verde a `#00FF00`. Ho aggiunto margine verde alle due tavole ancora rettangolari al terzo tentativo, senza ridimensionare i pezzi. Piastre a 1536 × 1536, Piccoli a 1774 × 1774, Pannello a 1254 × 1254. Lingotti e Ghiaccio a 2172 × 724. Ho verificato il margine attorno alle sagome. La resa dopo la rimozione del verde e nei menu resta da verificare.
+
 ## Resoconto di Claude
