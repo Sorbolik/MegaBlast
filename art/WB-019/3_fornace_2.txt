@@ -1,0 +1,19 @@
+Image 1 is the little imp apprentice of our game, drawn in the game's clean style: copy EXACTLY his body, height, skeleton, face, skin colors, horns, tail, wings and his three-quarter angle facing right. Image 2 is a rough grey placeholder sketch of the armour set: use it ONLY for which parts exist and their silhouette idea, NOT for style or colors.
+
+Draw the SAME apprentice TWICE side by side on one landscape picture, both full body, in a clean THREE-QUARTER VIEW FACING RIGHT, standing in a neutral relaxed pose, both feet pointing right, arms hanging loosely a little away from the body, nothing in his hands. On the LEFT he wears the four armour pieces of the set in their BASIC form; on the RIGHT he wears the same four pieces in their FORGED form: exactly the same silhouettes plus one extra ornament on each piece (described below), so it is clearly the same set, more precious.
+
+The four pieces are worn OVER his body and never hide his eyes or mouth: a HELMET on the head (the horns stay visible, they pass through or over it), a CHEST ARMOUR on the torso, a pair of BOOTS on the lower legs and feet, a short CAPE hanging from the shoulders down to the knees, behind the body and in front of the wings (the wings stay visible above the cape).
+
+The FURNACE set, heavy cast iron. Main color iron #5C616B, shadow #3E424A, fire #F28A2A with core #FFD15A. HELMET: a round iron helmet with a small barred grate on the forehead showing flat orange fire (the face stays uncovered). CHEST: a riveted stove-like breastplate with a barred grate showing fire. BOOTS: heavy square cast-iron boots. CAPE: a short heavy cape of iron plates hanging like chains. Forged ornament: a short chimney on the helmet, a bigger grate on the chest, iron toe caps, glowing orange edge on the cape hem (flat color, no glow).
+
+Rendering rules, very strict, because this drawing will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color plus at most one hard-edged shadow shape in the darker tone listed. No gradients, textures, hatching, noise, soft shading, glow or sparkles.
+- Thick, clean, closed pure-black #000000 outline of even weight around each figure and each piece, thinner black lines only for inner details.
+- TRIMS: every edge band, rivet, buckle, clasp and tip of the armour is painted in pure flat cyan #00FFFF (the game recolors it bronze, silver or gold). Use cyan for nothing else.
+- Keep the apprentice's own skin and face colors exactly as in image 1.
+- Flat pure white #FFFFFF background, no ground, no ground shadow, nothing else.
+- No text, numbers, labels, arrows or signatures. Landscape 3:2.
+
+Riferimenti (in ordine)
+R1: art/WB-009/scelti/tre_quarti.png
+R4: art/WB-019/riferimenti/sagome.png

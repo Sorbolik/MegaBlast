@@ -130,4 +130,55 @@ Same rendering rules as image 1: flat colors, thick closed black outline, trims 
 
 ## Consegna di Codex
 
+### Fase 1 · 2026-11-12
+
+Generata da `main` aggiornato (`1abbf890`) sul ramo `design/WB-019`. Per ogni
+variante ho usato il generatore integrato con il prompt comune e il blocco famiglia
+integrali, allegando R1 e R4 in quest'ordine. Le tavole mostrano la forma base a
+sinistra e la forgiata a destra.
+
+File in `art/WB-019/`. Ogni nome indica un PNG originale da 1536 × 1024 e
+un TXT omonimo con il prompt effettivo e i riferimenti.
+
+| File | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `1_fabbro_1` | 3 | 2 |
+| `1_fabbro_2` | 3 | 3 |
+| `2_corvo_1` | 3 | 3 |
+| `2_corvo_2` | 3 | 2 |
+| `3_fornace_1` | 3 | 1 |
+| `3_fornace_2` | 3 | 3 |
+| `4_leviatano_1` | 3 | 3 |
+| `4_leviatano_2` | 3 | 1 |
+| `5_vuoto_1` | 3 | 3 |
+| `5_vuoto_2` | 3 | 2 |
+
+**Verifiche.** Ho controllato tutte le generazioni e confrontato le tavole
+selezionate anche con ciascuna figura ridotta a 90 px di altezza. A quella
+scala si distinguono occhialoni, becco, grata, pinna e cappuccio. Le tavole
+selezionate hanno due figure intere, con mani libere, quattro pezzi, occhi,
+bocca, corna e coda visibili. Ho controllato la presenza degli ornamenti della
+forma forgiata, il contorno scuro, lo sfondo chiaro e l'assenza di scritte.
+
+**Scostamenti.** R1 mostra corna e coda, ma nessuna ala da copiare. Solo
+`3_fornace_1` rende visibile un'ala stilizzata dietro ciascuna figura.
+In varie tavole il piede più vicino punta verso l'osservatore. Alcuni mantelli
+scendono oltre il ginocchio, soprattutto nel Corvo e nel Vuoto forgiato.
+In `4_leviatano_2` si vedono le dita in punta agli stivali. Le forme base e
+forgiata sono riconoscibili come lo stesso set, con variazioni nelle sagome
+oltre agli ornamenti, soprattutto su mantelli e copricapi.
+
+Il generatore ha prodotto lievi variazioni di tono. Nella fascia superiore
+delle dieci tavole il colore più frequente è RGB (254, 254, 254), a fronte del
+bianco `#FFFFFF` richiesto. Le finiture appaiono ciano, con valori RGB
+variabili. In `1_fabbro_2` non c'è alcun pixel esattamente `#00FFFF`.
+Il martello del Fabbro è ciano nelle tavole scelte. Il blocco famiglia lo
+chiede in ottone, mentre la scheda prescrive il ciano per le finiture.
+Il Corvo mantiene punte viola sulle piume forgiate, come chiede il blocco
+famiglia.
+
+Le tavole sono proposte di stile per la scelta di Sergio. La corrispondenza
+esatta delle tavolozze e la chiusura di ogni contorno restano da verificare.
+Ricalco, adattamento allo stampino e resa in gioco restano da verificare.
+
 ## Resoconto di Claude
