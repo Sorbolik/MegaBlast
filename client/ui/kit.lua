@@ -217,7 +217,12 @@ function M.plate(g, x, y, w, h, shadow, opt)
 		elseif shadow == C.HOT then name = small and "piastrina_calda" or "piastra_calda"
 		else name = small and "piastrina" or "piastra_storta" end
 	end
-	p.parts = three(p.face_node, name, w + sk, h)
+	if w < h * 2 then
+		-- a tall plate (a portrait): the panel, not a long piece
+		p.parts = nine(p.face_node, opt.fill == C.SAND and "pannello_chiaro" or "pannello", w + sk, h, 30)
+	else
+		p.parts = three(p.face_node, name, w + sk, h)
+	end
 	p.shadow = {}
 	p.d = opt.d or 6
 	p.shadow_color = shadow
@@ -470,16 +475,12 @@ function M.card(g, x, y, w, h, color, opt)
 	local cx, cy = x + w / 2, y + h / 2
 	local n = empty(cx - g.ox, g.oy - cy, w, h, g.node)
 	local k = { node = n, g = { node = n, ox = cx, oy = cy }, x = x, y = y, w = w, h = h }
+	-- chosen: the same panel in ember, a little bigger, under it (a rim drawn by hand)
+	if opt.sel then nine(n, "pannello_caldo", w + 12, h + 12, math.min(26, h * 0.34)) end
 	local parts = nine(n, "pannello", w, h, math.min(22, h * 0.3))
 	if opt.off then tint(parts, vmath.vector4(0.62, 0.62, 0.7, 0.8)) end
-	local col = opt.sel and C.HOT or with_alpha(color, opt.off and 0.4 or 1)
-	if opt.sel then
-		k.frame = {
-			M.line(k.g, x + 8, y + 4, x + w - 8, y + 4, 4, col), M.line(k.g, x + w - 4, y + 8, x + w - 4, y + h - 8, 4, col),
-			M.line(k.g, x + w - 8, y + h - 4, x + 8, y + h - 4, 4, col), M.line(k.g, x + 4, y + h - 8, x + 4, y + 8, 4, col),
-		}
-	else
-		k.frame = { M.line(k.g, x + 14, y + 7, x + math.min(64, w * 0.4), y + 7, 3, col) }
+	if not opt.sel then
+		M.line(k.g, x + 14, y + 7, x + math.min(64, w * 0.4), y + 7, 3, with_alpha(color, opt.off and 0.4 or 1))
 	end
 	card_in(n)
 	return k

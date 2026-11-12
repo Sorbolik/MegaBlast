@@ -4,7 +4,7 @@
 # Scrive:
 #   client/assets/fucina/*.png          i pezzi senza il verde, per l'atlante fucina.
 #       Un pezzo lungo (lingotto, piastre, scheggia, piastrina) e' in tre parti:
-#       _sx e _dx interi, _cx la striscia in mezzo che il gioco allunga. Cosi' i
+#       _sx e _dx interi, _cx il mezzo, che il gioco allunga solo in largo. Cosi' i
 #       bordi non si deformano mai e restano al doppio della misura sullo schermo.
 #       Il pannello e' in nove parti (angoli interi, lati allungati in un verso).
 #   client/ui/pieces.lua                le misure di ogni pezzo (generato)
@@ -78,15 +78,9 @@ def tre(nome, arr, h, capo=0.24):
     c = round(w * capo)
     salva(im.crop((0, 0, c, h)), nome + "_sx")
     salva(im.crop((w - c, 0, w, h)), nome + "_dx")
-    # la striscia: 8 colonne nel punto piu' uniforme fra il 40% e il 60%
-    a = np.asarray(im).astype(float)
-    meglio, dove = None, w // 2
-    for x in range(round(w * 0.4), round(w * 0.6)):
-        v = np.abs(np.diff(a[:, x - 6:x + 6], axis=1)).sum()
-        if meglio is None or v < meglio:
-            meglio, dove = v, x
-    col = im.crop((dove, 0, dove + 1, h)).resize((8, h), Image.NEAREST)
-    salva(col, nome + "_cx")
+    # il mezzo intero, non una colonna ripetuta: i pezzi sono storti apposta, e solo
+    # cosi' i bordi continuano senza scalini dove un capo finisce (Sergio, 12 nov)
+    salva(im.crop((c, 0, w - c, h)), nome + "_cx")
     MISURE[nome] = (w, h, c)
 
 
@@ -98,10 +92,6 @@ def nove(nome, arr, lato, angolo=0.2):
     for (y0, y1) in xs:
         for (x0, x1) in xs:
             p = im.crop((x0, y0, x1, y1))
-            if x1 - x0 > c:
-                p = p.crop((p.size[0] // 2 - 4, 0, p.size[0] // 2 + 4, p.size[1])) if y1 - y0 == c else p
-            if y1 - y0 > c:
-                p = p.crop((0, p.size[1] // 2 - 4, p.size[0], p.size[1] // 2 + 4))
             salva(p, "%s_%d" % (nome, k))
             k += 1
     MISURE[nome] = (lato, lato, c)
@@ -111,7 +101,14 @@ def fai_pezzi():
     p = os.path.join(ART, "WB-022")
     tre("lingotto", pezzi(senza_verde(os.path.join(p, "pezzo_lingotto_1.png")))[0][2], 320, 0.2)
     tre("scheggia", pezzi(senza_verde(os.path.join(p, "pezzo_ghiaccio.png")))[0][2], 200, 0.2)
-    nove("pannello", pezzi(senza_verde(os.path.join(p, "pezzo_pannello.png")))[0][2], 480)
+    pan = pezzi(senza_verde(os.path.join(p, "pezzo_pannello.png")))[0][2]
+    nove("pannello", pan, 480)
+    # il bordo caldo di una carta scelta e la targa chiara alta (un ritratto)
+    nove("pannello_caldo", caldo(pan), 480)
+    # (il pannello e' piu' scuro delle piastre: schiarito prima, cosi' viene avorio)
+    su = pan.astype(float)
+    su[..., :3] = np.where(su[..., :3].mean(axis=2, keepdims=True) > 18, su[..., :3] + 30, su[..., :3])
+    nove("pannello_chiaro", chiaro(np.clip(su, 0, 255).astype(np.uint8)), 480)
     cs = sorted(pezzi(senza_verde(os.path.join(p, "pezzo_piastre.png"))), key=lambda t: t[0])
     for nome, t in zip(["piastra_freccia", "piastra_storta", "piastra_stendardo"], cs):
         tre(nome, t[2], 200)

@@ -3,7 +3,7 @@
 imposta prova_profilo 1
 aspetta 0.25
 foto 01_entrata
-aspetta 1.5
+aspetta 4
 foto 02_home
 tocca_bordo 242 572 mezzo destra    # CAMPAGNA
 aspetta 0.12

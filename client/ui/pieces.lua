@@ -9,6 +9,8 @@ return {
 	lingotto = { w = 1211, h = 320, c = 242 },
 	lucchetto = { w = 102, h = 120 },
 	pannello = { w = 480, h = 480, c = 96 },
+	pannello_caldo = { w = 480, h = 480, c = 96 },
+	pannello_chiaro = { w = 480, h = 480, c = 96 },
 	piastra_calda = { w = 846, h = 200, c = 203 },
 	piastra_chiara = { w = 846, h = 200, c = 203 },
 	piastra_freccia = { w = 888, h = 200, c = 213 },

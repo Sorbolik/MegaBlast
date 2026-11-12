@@ -56,6 +56,60 @@ images {
   image: "/assets/fucina/pannello_9.png"
 }
 images {
+  image: "/assets/fucina/pannello_caldo_1.png"
+}
+images {
+  image: "/assets/fucina/pannello_caldo_2.png"
+}
+images {
+  image: "/assets/fucina/pannello_caldo_3.png"
+}
+images {
+  image: "/assets/fucina/pannello_caldo_4.png"
+}
+images {
+  image: "/assets/fucina/pannello_caldo_5.png"
+}
+images {
+  image: "/assets/fucina/pannello_caldo_6.png"
+}
+images {
+  image: "/assets/fucina/pannello_caldo_7.png"
+}
+images {
+  image: "/assets/fucina/pannello_caldo_8.png"
+}
+images {
+  image: "/assets/fucina/pannello_caldo_9.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_1.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_2.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_3.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_4.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_5.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_6.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_7.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_8.png"
+}
+images {
+  image: "/assets/fucina/pannello_chiaro_9.png"
+}
+images {
   image: "/assets/fucina/piastra_calda_cx.png"
 }
 images {
