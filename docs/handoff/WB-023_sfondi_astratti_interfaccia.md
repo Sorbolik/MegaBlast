@@ -140,4 +140,15 @@ fare»): reversibile, si prova nella proposta prima che nel gioco.
 
 ## Consegna di Codex
 
+Fase 1 «Calore e cristallo», indicata dalla scheda come quella da eseguire. Quattro PNG generati con ImageGen dai prompt integrali. I TXT omonimi riportano prompt e riferimenti nell'ordine allegato, R4 poi R3.
+
+| File in `art/WB-023/` | Tentativi | Controllo visivo |
+|---|---:|---|
+| `astratto_calore_1.png`, `astratto_calore_1.txt` | 1 | Cinque archi irregolari in basso a sinistra, tre scintille, arco esterno interrotto. |
+| `astratto_calore_2.png`, `astratto_calore_2.txt` | 1 | Cinque archi più raccolti, tre scintille e arco esterno più sottile. |
+| `astratto_cristallo_1.png`, `astratto_cristallo_1.txt` | 3 | Selezionato il secondo risultato. Quattro linee spezzate e due rombi, con punta visibile sul tratto esterno. |
+| `astratto_cristallo_2.png`, `astratto_cristallo_2.txt` | 3 | Selezionato il terzo risultato. Quattro linee spezzate e due rombi, con un gradino aggiuntivo sul tratto esterno. |
+
+Tutti a 1672 × 941, opachi, esportati in bianco e nero puro con soglia al 50% per eliminare i grigi del generatore. Verificato a livello di pixel che la metà destra di Calore e la metà sinistra di Cristallo siano interamente nere. A vista, i motivi restano astratti e privi di scritte, cornici e firme. Nei Cristalli alcuni tratti arrivano al bordo superiore o destro prima di mostrare la punta. Restano i piccoli punti e rombi pieni richiesti dai prompt. La resa a bassa opacità nei menu resta da verificare.
+
 ## Resoconto di Claude

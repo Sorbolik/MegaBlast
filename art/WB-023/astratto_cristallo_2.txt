@@ -1,0 +1,9 @@
+Image 1 is a game menu mockup: look only at the faint blue angular lines in the background that spread from the top-right corner like the facets of a crystal; that is the idea, drawn too stiffly. Image 2 shows the brush line to copy: the thick, slightly irregular hand-drawn ink outline of those cartoon iron plates.
+
+An almost abstract drawing, wide 16:9: facets of ice spreading from the TOP-RIGHT corner. Four big brush strokes, each one a broken angular line made of three or four straight segments, going around the top-right corner one outside the other like the growth rings of a crystal, the smallest near the corner and the biggest reaching about the middle of the picture. Straight segments and hard corners only, no curves; each stroke drawn by hand in fast straight movements, ending in sharp points, the outer ones thinner. Two or three tiny diamond-shaped specks between them. Nothing else: the left half and the bottom of the picture stay completely empty and black. It must not look like a spider web, a snowflake, a star or a mountain.
+
+Pure white brush strokes (#FFFFFF) on a pure black background (#000000). Hand-drawn comic ink line like image 2, but with straight strokes and hard corners. No fills, no gray, no shading, no hatching, no texture, no glow. No text, letters, numbers, frame or signature.
+
+Riferimenti allegati in ordine
+R4 art/WB-023/riferimenti/R4_calore_e_cristallo.png
+R3 art/WB-023/riferimenti/R3_tratto_dei_pezzi.png

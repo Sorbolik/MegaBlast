@@ -1,0 +1,9 @@
+Image 1 is a game menu mockup: look only at the faint orange curved lines in the background that spread from the bottom-left corner like ripples; that is the idea, drawn too stiffly. Image 2 shows the brush line to copy: the thick, soft, slightly irregular hand-drawn ink outline of those cartoon iron plates.
+
+An almost abstract drawing, wide 16:9: waves of heat spreading from the BOTTOM-LEFT corner. Five big loose brush strokes, each one a quarter of a circle centered on the bottom-left corner, one outside the other like ripples, the smallest near the corner and the biggest reaching about the middle of the picture. The arcs are soft and wobbly like hot air, not perfect circles; each is drawn by hand in one gesture, thicker in the middle and tapering at both ends, and the outer arcs are thinner and more broken than the inner ones. Two or three tiny dots like sparks between them. Nothing else: the right half and the top of the picture stay completely empty and black. It must not look like a sun, a radar, a rainbow or sound waves.
+
+Pure white brush strokes (#FFFFFF) on a pure black background (#000000). Hand-drawn comic ink line like image 2: soft, confident, a bit uneven. No fills, no gray, no shading, no hatching, no texture, no glow. No text, letters, numbers, frame or signature.
+
+Riferimenti allegati in ordine
+R4 art/WB-023/riferimenti/R4_calore_e_cristallo.png
+R3 art/WB-023/riferimenti/R3_tratto_dei_pezzi.png
