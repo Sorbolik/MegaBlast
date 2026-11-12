@@ -131,4 +131,19 @@ fette»).
 
 ## Consegna di Codex
 
+Sei PNG generati con ImageGen dai prompt integrali della scheda. I TXT omonimi riportano prompt e riferimenti nell'ordine allegato.
+
+| File in `art/WB-024/` | Esito del controllo visivo |
+|---|---|
+| `gironi_imbuto_1.png` e `gironi_imbuto_1.txt` | Nove fette decrescenti, due calde in cima e tre di ghiaccio in fondo. Diversi bordi si toccano al centro e l'oro compare anche sulle fette centrali. |
+| `gironi_imbuto_2.png` e `gironi_imbuto_2.txt` | Nove fette decrescenti, con gradazione caldo-freddo e tre ghiaccioli in fondo. Diversi bordi si toccano al centro e l'oro compare anche sulle fette centrali. |
+| `fetta_calda.png` e `fetta_calda.txt` | Un tentativo. Due fiamme a sinistra, bordo dorato e faccia superiore libera. |
+| `fetta_pietra.png` e `fetta_pietra.txt` | Un tentativo. Ardesia, tacche e crepa frontale, faccia superiore libera. |
+| `fetta_ghiaccio.png` e `fetta_ghiaccio.txt` | Due tentativi. Selezionato il secondo, con tre ghiaccioli, una crepa frontale e faccia superiore libera. |
+| `fetta_aperta.png` e `fetta_aperta.txt` | Un tentativo. Faccia superiore più ampia e libera, con bordo dorato. |
+
+Per gli imbuti ho fatto tre tentativi per variante, sei in totale. Ho tenuto il secondo e il sesto risultato complessivo perché entrambi hanno nove fette. Ho uniformato il fondo a `#00FF00` e aggiunto margine verde agli imbuti per esportarli a 1536 × 1536 senza scalare le sagome. Le fette singole sono a 2172 × 724.
+
+Verificati i margini e, a vista, i contorni, le superfici libere e l'assenza di scritte, figure, bagliori e ombre sul fondo. La leggibilità con nomi e segnalini e la resa dopo la rimozione del verde restano da verificare nella proposta.
+
 ## Resoconto di Claude
