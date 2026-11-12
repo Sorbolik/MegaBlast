@@ -105,6 +105,14 @@ local function stato(g)
 	local terreno = g.terrain
 	local visti = { [terreno] = true }
 	if g.events then visti[g.events] = true end
+	-- the per-game gravity (sim/hazards.lua) is not state while it is the usual one:
+	-- the versions from before it existed must match
+	if g.gravity == game.GRAVITY then
+		local copia = {}
+		for k, v in pairs(g) do copia[k] = v end
+		copia.gravity = nil
+		return impronta(copia, visti)
+	end
 	return impronta(g, visti)
 end
 

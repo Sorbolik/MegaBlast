@@ -50,6 +50,18 @@ images {
   image: "/assets/ui/disco.png"
 }
 images {
+  image: "/assets/ui/ellisse_g.png"
+}
+images {
+  image: "/assets/ui/ellisse_m.png"
+}
+images {
+  image: "/assets/ui/ellisse_p.png"
+}
+images {
+  image: "/assets/ui/ellisse_a.png"
+}
+images {
   image: "/assets/ui/disco_p.png"
 }
 images {

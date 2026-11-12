@@ -40,7 +40,8 @@ local VISIBLE = 4
 
 -- The maps of the chapters of sim/campaign.lua (the Addestramento's cortile,
 -- then the circles girone_N), in order, each once: not the lesson arenas,
--- which are made for one exercise
+-- which are made for one exercise; then the maps of the circles whose levels are not
+-- in the campaign yet (maps.CIRCLES), open
 local MAPS = {}
 do
 	local seen = {}
@@ -51,6 +52,13 @@ do
 				seen[l.mappa] = true
 				MAPS[#MAPS + 1] = { id = l.mappa, girone = n, serve = cap.serve }
 			end
+		end
+	end
+	-- the circles' maps the campaign does not play yet: all open for now (sim/maps.lua CIRCLES)
+	for _, id in ipairs(maps.CIRCLES) do
+		if not seen[id] then
+			seen[id] = true
+			MAPS[#MAPS + 1] = { id = id, girone = 2, serve = 0 }
 		end
 	end
 end

@@ -1,0 +1,21 @@
+# La Gola (docs/pericoli_mappe.md): le ombre della grandine sul terreno, i chicchi che cadono a fine giro
+# dove le ombre li avevano annunciati, e le pozze di fango (la mappa a zoom pieno, poi vicino).
+imposta prova_vignette no
+imposta prova_mappa gola
+imposta zoom 3
+aspetta 2
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 8
+aspetta 2.5
+foto 01_ombre
+premi 1
+mira 60 -60 0.3
+aspetta_stato modo=local turno=2 fase=aim 30
+premi 1
+mira -60 -60 0.3
+aspetta_evento hail 40
+aspetta 0.9
+foto 02_chicchi_in_volo
+aspetta_evento explosion 10
+aspetta 0.6
+foto 03_crateri

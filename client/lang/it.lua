@@ -252,8 +252,8 @@ return {
 		play_new = "%s · NUOVA",
 		replay_final = "RIGIOCA IL FINALE",
 		-- the map of the circles (after the kidnapping, Sergio 11 Nov): the Cortile
-		-- and the Forge on the top floor, the nine circles going down to Favilla.
-		-- The circles are placeholders until their levels are written:
+		-- and the Forge on the top floor, the nine circles going down to Favilla
+		-- (only the ones reached open). The circles are placeholders until their levels are written:
 		-- { numeral, name, keeper }
 		rings = {
 			{ "I", "LIMBO", "CARONTE" }, { "II", "LUSSURIA", "MINOSSE" }, { "III", "GOLA", "CERBERO" },
@@ -261,10 +261,11 @@ return {
 			{ "VII", "VIOLENZA", "MINOTAURO" }, { "VIII", "FRODE", "MALACODA" }, { "IX", "TRADIMENTO", "LUCIFERO" },
 		},
 		ring_name = "%s · %s",
-		ring_locked = "%s · SI APRE BATTENDO %s",
+		ring_locked = "%s · %s · SI APRE BATTENDO %s",
 		ring_stars = "%d / %d",
 		ring_sub = "GIRONE · %s",
-		tap_ring = "TOCCA UN GIRONE PER ENTRARCI",
+		ring_opens = "SI APRE BATTENDO %s",
+		tap_ring = "SCORRI O TOCCA UN GIRONE PER SCENDERE",
 		coming = "IN ARRIVO",
 		coming_line = "I LIVELLI DI QUESTO GIRONE ARRIVANO PRESTO",
 		coming_sub = "%s · IN ARRIVO",
@@ -857,6 +858,17 @@ return {
 		heal_circle = "Un cerchio di cura: chi ci finisce il turno dentro si cura",
 		crate = "Una cassa cade dal cielo!",
 		item_drop = "Cade dal cielo %s: chi lo tocca lo prende!",
+		-- the map hazards (battle/hazards.lua): the storm's pill and the messages at the end of the round
+		storm = "BUFERA",
+		gust = "Una raffica di bufera!",
+		hail = "Arriva la grandine!",
+		boulders = "Rotolano i massi!",
+		water = "L'acqua sale!",
+		tombs = "Le tombe cambiano!",
+		fire_rain = "Piove fuoco!",
+		bridge_shaking = "Un ponte trema: corri!",
+		collapse = "Il ponte crolla!",
+		wings = "Le ali di Lucifero spingono tutti ai bordi!",
 		you_found = "%s hai trovato %s!",
 		found = "%s trova %s!",
 		you_die_alone = "Muori da solo",
