@@ -118,4 +118,43 @@ Reversibile (solo immagini nuove in un ramo): approvata da Claude su richiesta d
 
 ## Consegna di Codex
 
+### 2026-11-12
+
+Sei fogli generati con lo strumento integrato da `main` aggiornato
+(`4d911bf1`). Ogni tentativo ha usato il prompt integrale della scheda
+e R1, R2, R3 in quest'ordine.
+
+File in `art/WB-029/`. Ogni nome indica un PNG RGB originale e un TXT
+omonimo con il prompt e i riferimenti.
+
+| Nome | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `pezzo_segni_1` | 3 | 1 |
+| `pezzo_segni_2` | 3 | 3 |
+| `pezzo_barre_1` | 3 | 1 |
+| `pezzo_barre_2` | 3 | 3 |
+| `pezzo_tondi_1` | 3 | 1 |
+| `pezzo_tondi_2` | 3 | 2 |
+
+**Verifiche.** Ho controllato a vista i contorni, i colori, la disposizione
+e l'assenza di scritte e ombre a terra. Nei fogli selezionati ci sono
+rispettivamente sei segni, cinque pezzi per le barre e quattro pezzi
+nel foglio dei tondi. I pezzi sono separati e c'è margine verde su tutti
+i lati. Gli interni di gusci e cornici sono scuri e privi di simboli.
+Stelle e tacche abbinate hanno sagome simili, con piccole differenze.
+
+**Scostamenti.** I prompt integrali non specificano il formato largo
+indicato nella tabella. Il generatore integrato non espone un parametro
+per imporlo. I sei PNG selezionati sono quadrati, da 1254 × 1254 px,
+dopo tre tentativi per variante. Lo sfondo è verde acceso, ma i campioni
+prevalenti sono circa RGB (3–4, 249–250, 3–6), rispetto a `#00FF00`.
+Il guscio è largo circa 6,4 volte la sua altezza, rispetto alle dieci
+del prompt. Le tacche sono meno slanciate del previsto. Le cornici in
+ghiaccio hanno un bordo più angolare e `pezzo_tondi_1` ha un piccolo
+segno sulla linguetta.
+
+Ho conservato i PNG originali per la selezione e il ritaglio.
+Il ritaglio automatico, la corrispondenza esatta della tavolozza e la
+resa dei pezzi nel gioco restano da verificare.
+
 ## Resoconto di Claude

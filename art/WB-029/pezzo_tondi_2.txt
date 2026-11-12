@@ -1,0 +1,14 @@
+Images 1, 2 and 3 show pieces of the same game interface and are the STYLE to copy exactly: thick slightly irregular black ink outline, flat colors, one flat highlight and one flat shadow per piece, soft hand-drawn slightly crooked shapes, like a cartoon comic. Dark iron is #2B2530 with highlight #6B6375, ember is #F26419 to #FFB703, ivory is #F4ECE1, ice is #38B6FF with highlight #CAF0F8.
+
+Draw a sheet with FOUR separate pieces, in two rows of two:
+1. a round medallion frame: a thick slightly crooked ring of dark iron (#2B2530) with highlight (#6B6375), four small rivets, the inside a flat darker disc (#141116), completely empty;
+2. the same medallion with the ring in gold (#FFB703, lighter band #FFE08A, darker band #F26419), the inside the same flat dark disc, empty;
+3. the same medallion with the ring in ice (#38B6FF, highlight #CAF0F8), slightly angular outside like chipped ice, the inside the same flat dark disc, empty;
+4. a small squarish tab plate of dark iron, a bit wider than tall, soft crooked corners, one corner cut, one rivet, the middle plain and empty.
+
+Thick black ink outline on every piece, cartoon comic style, same line weight as images 1-3. No texture, no soft gradients, no realistic lighting, no glow, no drop shadow. No text, letters or numbers. Flat pure green background (#00FF00). The pieces are well separated from each other with green between them, none touching, none cut by the border of the picture.
+
+Riferimenti (in ordine)
+R1: art/WB-029/riferimenti/R1_piccoli.png
+R2: art/WB-029/riferimenti/R2_piastre.png
+R3: art/WB-029/riferimenti/R3_lingotto.png
