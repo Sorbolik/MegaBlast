@@ -166,7 +166,7 @@ function M.new(choice, stars)
 	for i, m in ipairs(MAPS) do
 		if m.id == choice.mappa then a.da = math.max(1, i + 2 - VISIBLE) end
 	end
-	-- the game world darkened behind, the rays from the devil
+	-- the backdrop (ui/kit.lua)
 	a.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.MINT })
 	build(a)
 	return a

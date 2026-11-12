@@ -94,7 +94,7 @@ function M.new(icons, name_list, effects, commands)
 	local s = { icons = icons, nomi = name_list, effects = effects, commands = commands, card_list = {}, scelte = {} }
 	-- what the controller light goes on: cards, picks made and buttons
 	s.luce = {}
-	-- a dark sheet, the rays on it (while the draft is open) and then the rest
+	-- a dark sheet, the backdrop on it (while the draft is open) and then the rest
 	s.veil = gui_node(W / 2, H / 2, W * screen.FULL, H * screen.FULL, VEIL)
 	s.root = gui_node(W / 2, H / 2, 0, 0, VEIL)
 	gui.set_visible(s.root, false)
@@ -299,7 +299,7 @@ local function close_sheet(s)
 	s.carta, s.pressed_f = nil, nil
 end
 
--- the rays, just above the dark sheet and under everything else
+-- the backdrop, just above the dark sheet and under everything else
 local function scene_on(s, on)
 	if s.scene then
 		kit.scene_drop(s.scene)

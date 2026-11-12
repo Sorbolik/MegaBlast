@@ -21,7 +21,7 @@ tocca 408 658                       # ESCI DALLA PARTITA
 aspetta_stato modo=menu 3
 aspetta 0.5
 foto 04_home
-tocca 254 346                      # ALLENAMENTO
+tocca 1048 488                      # ALLENAMENTO
 aspetta 1
 aspetta 0.3
 tocca_bordo 215 118 basso destra    # GIOCA

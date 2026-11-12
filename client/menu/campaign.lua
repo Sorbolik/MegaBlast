@@ -484,7 +484,7 @@ local function build(c)
 	-- the top floor) the board of a chapter, which goes back to the map
 	local map = funnel_on(c)
 	local on_map = map and c.scelta.view ~= "board"
-	-- the rays: from the guide on a board, from the middle of the funnel on the map
+	-- the backdrop
 	kit.scene_focus(c.scene, on_map and 540 or 225, 360)
 	c.on_map = on_map and type(c.scelta.view) ~= "number"
 	if on_map then
@@ -550,7 +550,7 @@ function M.new(choice, stars, story)
 			if is_opened(c, cap) then choice.chapter = cap.id end
 		end
 	end
-	-- the game world darkened behind, the rays from the chapter's guide
+	-- the backdrop (ui/kit.lua)
 	c.scene = kit.scene(funnel_on(c) and choice.view ~= "board" and 540 or 225, 360, {})
 	build(c)
 	return c

@@ -489,7 +489,6 @@ return {
 	-- menu/home.lua: the home
 	home = {
 		leave_queue_first = "esci dalla coda per giocarla",
-		same_phone = "STESSO TELEFONO",
 		your_devil = "DIAVOLETTO",
 		level = "LIV %d",
 		play_sub = "2 CONTRO 2",

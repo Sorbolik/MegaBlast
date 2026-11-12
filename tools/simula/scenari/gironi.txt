@@ -10,7 +10,7 @@
 imposta prova_vignette no
 imposta prova_profilo 3
 aspetta 2
-tocca_bordo 234 450 mezzo sinistra  # CAMPAGNA
+tocca_bordo 242 572 mezzo destra  # CAMPAGNA
 aspetta 1.4
 foto 01_mappa
 tocca_centro 520 258                # III · GOLA, spento: la camera scende

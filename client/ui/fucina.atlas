@@ -1,0 +1,144 @@
+images {
+  image: "/assets/fucina/brace.png"
+}
+images {
+  image: "/assets/fucina/brace_spenta.png"
+}
+images {
+  image: "/assets/fucina/fiamma.png"
+}
+images {
+  image: "/assets/fucina/filo.png"
+}
+images {
+  image: "/assets/fucina/gemma.png"
+}
+images {
+  image: "/assets/fucina/indietro.png"
+}
+images {
+  image: "/assets/fucina/lingotto_cx.png"
+}
+images {
+  image: "/assets/fucina/lingotto_dx.png"
+}
+images {
+  image: "/assets/fucina/lingotto_sx.png"
+}
+images {
+  image: "/assets/fucina/lucchetto.png"
+}
+images {
+  image: "/assets/fucina/pannello_1.png"
+}
+images {
+  image: "/assets/fucina/pannello_2.png"
+}
+images {
+  image: "/assets/fucina/pannello_3.png"
+}
+images {
+  image: "/assets/fucina/pannello_4.png"
+}
+images {
+  image: "/assets/fucina/pannello_5.png"
+}
+images {
+  image: "/assets/fucina/pannello_6.png"
+}
+images {
+  image: "/assets/fucina/pannello_7.png"
+}
+images {
+  image: "/assets/fucina/pannello_8.png"
+}
+images {
+  image: "/assets/fucina/pannello_9.png"
+}
+images {
+  image: "/assets/fucina/piastra_calda_cx.png"
+}
+images {
+  image: "/assets/fucina/piastra_calda_dx.png"
+}
+images {
+  image: "/assets/fucina/piastra_calda_sx.png"
+}
+images {
+  image: "/assets/fucina/piastra_chiara_cx.png"
+}
+images {
+  image: "/assets/fucina/piastra_chiara_dx.png"
+}
+images {
+  image: "/assets/fucina/piastra_chiara_sx.png"
+}
+images {
+  image: "/assets/fucina/piastra_freccia_cx.png"
+}
+images {
+  image: "/assets/fucina/piastra_freccia_dx.png"
+}
+images {
+  image: "/assets/fucina/piastra_freccia_sx.png"
+}
+images {
+  image: "/assets/fucina/piastra_stendardo_cx.png"
+}
+images {
+  image: "/assets/fucina/piastra_stendardo_dx.png"
+}
+images {
+  image: "/assets/fucina/piastra_stendardo_sx.png"
+}
+images {
+  image: "/assets/fucina/piastra_storta_cx.png"
+}
+images {
+  image: "/assets/fucina/piastra_storta_dx.png"
+}
+images {
+  image: "/assets/fucina/piastra_storta_sx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_calda_cx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_calda_dx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_calda_sx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_chiara_cx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_chiara_dx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_chiara_sx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_cx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_dx.png"
+}
+images {
+  image: "/assets/fucina/piastrina_sx.png"
+}
+images {
+  image: "/assets/fucina/scaglia.png"
+}
+images {
+  image: "/assets/fucina/scheggia_cx.png"
+}
+images {
+  image: "/assets/fucina/scheggia_dx.png"
+}
+images {
+  image: "/assets/fucina/scheggia_sx.png"
+}
+margin: 2
+extrude_borders: 2
+inner_padding: 0

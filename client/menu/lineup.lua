@@ -70,7 +70,7 @@ function M.new(showcases, title)
 	local squads = {}
 	for i, v in ipairs(showcases) do squads[i] = v.squadra end
 	local xs, vs = M.seats(squads)
-	-- a dark sheet over the draft, and the rays on it
+	-- a dark sheet over the draft, and the backdrop on it
 	s.scene = kit.scene(640, 360, { dim = 0.72 })
 	-- the match's name on a light plate that comes out of the real left edge
 	local top_left = kit.anchor(0, 0, gui.ANCHOR_LEFT, gui.ANCHOR_TOP)

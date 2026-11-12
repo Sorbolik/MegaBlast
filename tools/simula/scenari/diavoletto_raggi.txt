@@ -3,7 +3,7 @@
 # STATISTICHE 802 596, PARTITE 969 596; indietro in basso a sinistra (36 60).
 imposta prova_profilo 1
 aspetta 1.5
-tocca_centro 640 330                       # il diavoletto
+tocca_centro 330 300                       # il diavoletto
 aspetta 0.8
 foto 01_scheda
 tocca_centro 635 596                       # SIGILLI

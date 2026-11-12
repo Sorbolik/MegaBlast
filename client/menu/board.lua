@@ -190,7 +190,7 @@ end
 
 function M.new(name_list)
 	local b = { nomi = name_list, t = 0, colore = ui.C.SQUADRA[1], accent = KC.HOT }
-	-- the game world darkened behind, the rays from the devil
+	-- the backdrop (ui/kit.lua)
 	b.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, {})
 	build(b)
 	return b

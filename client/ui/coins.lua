@@ -63,7 +63,7 @@ function M.wallet(scaglie, ossidiana, parent, x, y)
 	if parent then gui.set_parent(w.root, parent) end
 	w.at = {}
 	w.text = {}
-	-- the "Raggi" wallet (ui/kit.lua, Figma): one dark strip to read, no
+	-- the wallet (ui/kit.lua): one dark strip to read, no
 	-- frame and no shadow (it is not two buttons), a thin cut between the balances
 	local g = { node = w.root, ox = 1110, oy = 44 }
 	kit.para(g, 966, 26, 204, 36, 10, kit.with_alpha(kit.C.INK, 0.8))

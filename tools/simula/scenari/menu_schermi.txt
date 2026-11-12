@@ -6,7 +6,7 @@ imposta prova_profilo 1
 
 aspetta 1.5
 foto 01_home
-tocca_centro 640 330                # il diavoletto: il suo posto
+tocca_centro 330 300                # il diavoletto: il suo posto
 aspetta 0.6
 foto 02_profilo
 tocca_bordo 802 124 alto centro     # STATISTICHE
@@ -22,12 +22,12 @@ aspetta 1.5
 tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta_stato modo=menu 3
 aspetta 0.4
-tocca_bordo 234 450 mezzo sinistra    # CAMPAGNA
+tocca_bordo 242 572 mezzo destra    # CAMPAGNA
 aspetta 0.8
 foto 04_campagna
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3
 aspetta 0.4
-tocca_bordo 254 346 mezzo sinistra    # ALLENAMENTO
+tocca_bordo 232 488 mezzo destra    # ALLENAMENTO
 aspetta 0.8
 foto 05_allenamento

@@ -4,7 +4,7 @@
 imposta prova_profilo 1
 imposta prova_vignette no
 aspetta 1.5
-tocca 254 346                       # ALLENAMENTO
+tocca 1048 488                       # ALLENAMENTO
 aspetta 0.8
 foto 01_allenamento
 tocca 761 470                       # 2 CONTRO 2

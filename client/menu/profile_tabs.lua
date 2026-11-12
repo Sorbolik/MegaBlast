@@ -97,10 +97,10 @@ end
 -- side goes left with the real edge, above its plate, and the rest breathes
 -- (Sergio, 11 Nov: «spostalo più a sinistra dove c'è spazio, centrandolo
 -- sempre coi raggi, dai più spazio alle cose»; the measures are kit.side,
--- kit.lean and kit.air). devil_x(): where the devil and its rays are, in
+-- kit.lean and kit.air). devil_x(): where the devil is, in
 -- Figma coordinates
 function M.devil_x() return 250 - kit.side() end
-M.DEVIL_Y = 380    -- the rays' height
+M.DEVIL_Y = 380    -- its height (the middle of its body)
 -- a group like g, moved with the devil's side
 function M.left_of(g)
 	local n = box(-kit.side() + kit.lean(), 0, 0, 0, C.LIGHT, g.node)
@@ -462,7 +462,7 @@ function M.new(prof, card, color, replay_ok, number)
 	for i, pa in ipairs(prof.partite) do
 		if pa.numero == number then s.scelta = i end
 	end
-	-- the game world darkened behind, the rays from the devil, in its place's color
+	-- the backdrop (ui/kit.lua)
 	s.scene = kit.scene(M.devil_x(), M.DEVIL_Y, { accent = KC.PURPLE })
 	build(s)
 	return s

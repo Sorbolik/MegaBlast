@@ -29,7 +29,7 @@ tocca_bordo 215 118 basso destra                      # CONTINUA
 aspetta_stato modo=menu 3
 aspetta 0.5
 
-tocca_centro 640 330                # il diavoletto: il suo posto
+tocca_centro 330 300                # il diavoletto: il suo posto
 aspetta 0.5
 tocca_bordo 215 118 basso destra    # ARMERIA
 aspetta 0.5
@@ -40,7 +40,7 @@ tocca_bordo 36 60 basso sinistra    # indietro: la home
 aspetta_stato modo=menu 3
 
 # di nuovo armeria e una seconda partita: i nodi delle schermate chiuse si liberano
-tocca_centro 640 330                # il diavoletto: il suo posto
+tocca_centro 330 300                # il diavoletto: il suo posto
 aspetta 0.5
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta_stato modo=menu 3

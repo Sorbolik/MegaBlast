@@ -4,7 +4,7 @@ imposta prova_storia si
 imposta prova_nuovo 1
 
 aspetta 1.5
-tocca 1036 400                      # GIOCA
+tocca 1029 260                      # GIOCA
 aspetta 1.2
 foto 01_prologo
 pad a

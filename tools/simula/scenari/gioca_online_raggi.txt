@@ -3,7 +3,7 @@
 # si guarda solo la schermata.
 imposta prova_profilo 1
 aspetta 2
-tocca 1036 400                      # GIOCA
+tocca 1029 260                      # GIOCA
 aspetta 0.8
 foto 01_gioca_online
 tocca 660 397                       # la prima riga sotto (1 contro 1, senza eventi)

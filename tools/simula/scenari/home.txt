@@ -3,7 +3,7 @@
 
 aspetta 1.5
 foto 01_home
-tocca 1036 400                      # GIOCA
+tocca 1029 260                      # GIOCA
 aspetta 0.5
 foto 02_dove_giochi
 tocca_bordo 205 410 mezzo destra    # GIOCA ONLINE: CERCA (2 contro 2)

@@ -1,0 +1,9 @@
+Image 1 is a mockup of a game screen: look at the big dark panel on the right that holds the stats. Image 2 shows the drawing style to copy: thick slightly irregular black ink outline, flat colors.
+
+Draw ONE empty game panel with no text: a big slab of dark slate, almost square, hand-drawn, slightly crooked with soft corners, one small chip missing from one corner. Flat color (#1E1A22) with one lighter flat highlight line along the top edge (#3A3540) and a small rivet in each corner. The inside is completely clean and empty, because the game writes on it.
+
+Thick black ink outline, cartoon comic style like image 2. No texture, no realistic reflections, no glow, no shadow on the ground. No text, letters or numbers. Flat pure green background (#00FF00), the panel centered with a green margin all around.
+
+Riferimenti allegati in ordine
+R2 art/WB-022/riferimenti/R2_armeria_fumetto.png
+R3 art/WB-012/scelti/apprendista.png

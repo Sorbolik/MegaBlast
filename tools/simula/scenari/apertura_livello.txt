@@ -3,7 +3,7 @@
 # titolo nella barra in basso, le barre escono, entra l'interfaccia e solo allora parla
 # Favilla. Un tocco la salta.
 aspetta 2
-tocca 234 450                      # CAMPAGNA
+tocca 1038 572                      # CAMPAGNA
 aspetta 1
 tocca 532 484                       # Primi passi
 aspetta 0.6

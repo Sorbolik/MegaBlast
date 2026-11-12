@@ -15,7 +15,7 @@ aspetta 0.5
 foto 00_impostazioni
 tocca_bordo 36 60 basso sinistra    # indietro
 aspetta 5                           # la home: lo sfondo dipinto che scorre
-tocca 234 450                      # CAMPAGNA
+tocca 1038 572                      # CAMPAGNA
 aspetta 2
 tocca 532 484                       # Primi passi
 aspetta_stato modo=local turno=1 fase=aim 8
@@ -30,7 +30,7 @@ aspetta 3
 tocca 36 60                         # indietro alla home
 aspetta 4
 foto 02_home
-tocca 254 346                      # ALLENAMENTO
+tocca 1048 488                      # ALLENAMENTO
 aspetta 1
 tocca 547 470                       # 1 CONTRO 1
 tocca 840 382                       # DIFFICILE

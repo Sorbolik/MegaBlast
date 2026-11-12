@@ -159,7 +159,7 @@ end
 
 function M.new(results, giocatori, me, my_gain, prof, number)
 	local p = { giocatori = giocatori, me = me, figure = {}, buttons = {}, t = 0, numero = number }
-	-- a dark sheet and the rays, the rest in a group that adapts (FIT)
+	-- a dark sheet and the backdrop, the rest in a group that adapts (FIT)
 	p.scene = kit.scene(330, 330, { dim = 0.72 })
 	p.radice = gui.new_box_node(vec(0, 0), vec(0, 0))
 	gui.set_visible(p.radice, false)

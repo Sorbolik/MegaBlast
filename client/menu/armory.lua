@@ -114,7 +114,7 @@ end
 
 function M.new(prof, from)
 	local a = { prof = prof, pieces = {}, colore = ui.C.SQUADRA[1], from = from }
-	-- the game world darkened behind, the rays from the devil, in its place's color
+	-- the backdrop (ui/kit.lua)
 	a.back = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.PURPLE })
 	build(a)
 	return a
