@@ -299,7 +299,7 @@ local function scene_on(s, on)
 		s.scene = nil
 	end
 	if not on then return end
-	s.scene = kit.scene(250, 360, { bg = "gioca" })
+	s.scene = kit.scene(250, 360, { bg = true })
 	kit.scene_place(s.scene, "above", s.veil)
 end
 

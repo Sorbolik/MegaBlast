@@ -78,7 +78,7 @@ end
 function M.new(color)
 	local h = { tops = {}, buttons = {}, doors = {}, t = 0, colore = color }
 
-	h.scene = kit.scene(BODY_X, 350, { bg = "home" })
+	h.scene = kit.scene(BODY_X, 350, { bg = true })
 
 	-- the apprentice, in the middle, its feet on the thread
 	local mid = kit.anchor(BODY_X, BODY_Y, nil, gui.ANCHOR_BOTTOM)
@@ -277,6 +277,7 @@ function M.profile(h, p)
 		if done < #cap.missioni then break end
 	end
 	h.chapter = string.upper(chapter.titolo)
+	kit.reached(chapter.id)
 	set_pips(h.campaign, #chapter.missioni, done)
 	if not h.in_queue then set_sub(h.campaign, h.chapter) end
 	for _, q in ipairs(h.campaign.pips) do gui.set_enabled(q.node, not h.in_queue) end

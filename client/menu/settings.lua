@@ -107,7 +107,7 @@ end
 function M.new(p, c)
 	local s = { p = p, c = c }
 	controller.levette = profile.setting(p, "levette")
-	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL, bg = "impostazioni" })
+	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL, bg = true })
 	build(s)
 	return s
 end

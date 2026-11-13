@@ -119,7 +119,7 @@ end
 function M.new(prof, from)
 	local a = { prof = prof, pieces = {}, colore = ui.C.SQUADRA[1], from = from }
 	-- the backdrop (ui/kit.lua)
-	a.back = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.PURPLE, bg = "armeria" })
+	a.back = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { accent = KC.PURPLE, bg = true })
 	build(a)
 	return a
 end
