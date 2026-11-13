@@ -1,0 +1,11 @@
+Image 1 is the chosen armour set of our game worn by the apprentice (left figure: basic form, right figure: forged form). Image 2 is our "stampino": a sheet of boxes on a magenta background, each box holds one grey body part with a red cross for its pivot. Image 3 shows how the parts attach.
+
+Redraw ONLY the armour pieces of the FORGED form of image 1, separated, each in its own box of image 2, at the same size and position as the grey part in that box, so it fits exactly over it: the HELMET in the box "testa" (over the head, no face, no neck), the CHEST ARMOUR in the box "busto", the BOOT in the boxes "gamba" and "gamba_dietro" (only the lower leg and foot, both pointing right), the whole CAPE in the box "mantello" (seen from the side, hanging straight down behind the shoulders, its top edge on the red cross, one single piece with a ragged or shaped hem). Draw ONLY the armour, never the body, the face, the arms or the grey part.
+
+Same rendering rules as image 1: flat colors, thick closed black outline, trims in pure cyan #00FFFF. Background: flat pure magenta #FF00FF everywhere outside the pieces. Keep the box layout of image 2 but do not draw the boxes, crosses or labels. No text. Landscape 3:2.
+
+Riferimenti allegati in ordine
+art/WB-019/scelti/vuoto.png
+art/WB-019/riferimenti/R2_stampino_ai.png
+art/WB-019/riferimenti/R3_manichino.png
+art/WB-019/vuoto_base.png

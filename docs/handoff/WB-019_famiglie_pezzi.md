@@ -190,6 +190,12 @@ Le tavole sono proposte di stile per la scelta di Sergio. La corrispondenza
 esatta delle tavolozze e la chiusura di ogni contorno restano da verificare.
 Ricalco, adattamento allo stampino e resa in gioco restano da verificare.
 
+### Fase 2 · Vuoto · 2026-11-13
+
+Generati con ImageGen `art/WB-019/vuoto_base.png` e `art/WB-019/vuoto_forgiata.png`, entrambi 1536 × 1024. I TXT omonimi contengono il prompt comune con BASIC o FORGED e i riferimenti in ordine. Per il forgiato ho allegato anche il PNG base consegnato. Tre tentativi per foglio. Ho scelto il primo di ciascuno per la coerenza delle sagome e perché il mantello forgiato è il più corto dei tre tentativi.
+
+Verificati a vista i cinque pezzi separati, i due stivali rivolti a destra, il mantello intero e gli ornamenti del forgiato. Lo stampino è rispettato solo in parte. Busto e soprattutto mantello sono spostati. I cappucci includono le corna e il vano del viso è scuro pieno. Le finiture sono ciano a vista e il fondo è magenta. Restano da verificare i valori esatti dei colori, l'allineamento ai perni, la visibilità di occhi e bocca e la lunghezza del mantello dopo il montaggio. Il riferimento R2 mostra le sagome grigie su magenta, senza i riquadri e le croci rosse descritti nel prompt.
+
 ## Resoconto di Claude
 
 ### Fase 1 · 12 nov
@@ -202,3 +208,17 @@ cappuccio forgiato più chiaro). Da correggere in fase 2: il martello del Fabbro
 ciano; i mantelli di Corvo e Vuoto forgiati sotto il ginocchio si accorciano un poco; le finiture
 si portano al ciano esatto `#00FFFF` al ritaglio. Prima della fase 2: casella `mantello` nello
 stampino e categoria `stivali` (Claude, fatto il 12 nov).
+
+### Fase 2 · Vuoto · 13 nov
+
+Preso dal ramo `design/WB-019` (651323e). Per ora nel gioco va solo il mantello, base e forgiato:
+`mantello_vuoto` e `mantello_vuoto_forgiato`, piegati dalla catena simulata (#298). Codex l'ha
+disegnato fuori dalla casella, quindi l'ho ritagliato a mano dal foglio (fondo magenta tolto) e
+rimesso nella casella `mantello` con l'attacco sulla croce
+(`art/WB-019/vuoto_*_mantello_stampino.png`, poi `taglia.py --categoria mantello`). Sull'apprendista restava quasi
+nascosto dietro il corpo, così `taglia.py` ora fa i mantelli 1,35 volte la casella: ora arriva poco sopra il ginocchio.
+Scenario `mantello.txt`.
+
+Restano fuori cappuccio, corazza e stivali. Il cappuccio copre tutto il viso (vano nero pieno) e ha
+le corna dentro. Va deciso col passo 2 della roadmap dei pezzi (corna su un livello sopra l'elmo,
+viso visibile) prima di ritagliarlo.
