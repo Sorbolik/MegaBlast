@@ -217,7 +217,7 @@ disegnato fuori dalla casella, quindi l'ho ritagliato a mano dal foglio (fondo m
 rimesso nella casella `mantello` con l'attacco sulla croce
 (`art/WB-019/vuoto_*_mantello_stampino.png`, poi `taglia.py --categoria mantello`). Sull'apprendista restava quasi
 nascosto dietro il corpo, così `taglia.py` ora fa i mantelli 1,35 volte la casella: ora arriva poco sopra il ginocchio.
-Scenario `mantello.txt`.
+Scenario `mantello.txt`. Il 13 nov questo mantello stretto è stato sostituito dal mantello ampio di WB-032; i due fogli rimessi nella casella sono stati tolti, i disegni di Codex restano.
 
 Restano fuori cappuccio, corazza e stivali. Il cappuccio copre tutto il viso (vano nero pieno) e ha
 le corna dentro. Va deciso col passo 2 della roadmap dei pezzi (corna su un livello sopra l'elmo,
