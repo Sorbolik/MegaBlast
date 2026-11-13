@@ -1,0 +1,19 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right: copy his head exactly (shape, horns, ears, muzzle, colors, flat style). Image 2 is his approved expression sheet: nine heads in a 3 by 3 grid. Image 3 is the approved aiming face, cropped from image 2.
+
+Draw NINE heads of him in a 3 by 3 grid, all the same size, all facing right in three-quarter view, well apart from each other, the head outline, horns and ears IDENTICAL in all nine, and NO FLAME on top (the flame is a separate piece): the top of the skull is plain smooth skin. They are the nine expressions of image 2, in the same order, copied exactly. Row 1: 1) SLY (his default confident closed-mouth grin, as in image 1), 2) HIT (eyes squeezed shut > <, jagged open mouth), 3) VICTORY (happy closed eyes, big laughing mouth). Row 2: 4) KNOCKED OUT (spiral pupils, wavy mouth, tongue slightly out), 5) AIMING (copy the face of image 3 exactly), 6) ANGRY (eyebrows in a V, clenched teeth). Row 3: 7) DEFEATED (sad, eyes down, downturned mouth), 8) SCARED (wide eyes, tiny pupils, small open mouth), 9) TAUNT (wink and tongue out).
+
+NO NECK AT ALL, very important: each head is drawn exactly as if it had been cut out of image 1 along the outline of the head. It ends at the chin and at the back of the jaw: nothing below them, no neck, no neck stub, no neckerchief. The thick black #000000 outline is CLOSED all around each head, also under the chin, under the muzzle and under the back of the jaw, smooth and even, following the round shape of the head in image 1.
+
+Square format.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; belly and muzzle #F1DFB0, their shadow #D6BC86; horns and toenails #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A; flame #F07A1E and #FFD34A; neckerchief #00FF00 with shadow #00B400.
+- The bright green #00FF00 is used ONLY on the neckerchief, nowhere else.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+art/WB-037/riferimenti/R1_tre_quarti_scelto.png
+art/WB-037/riferimenti/R4_espressioni.png
+art/WB-037/riferimenti/R5_mira.png

@@ -1,0 +1,18 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right. Image 2 is his parts sheet: copy the arms of image 2 exactly (same length, thickness, contour, colors and flat style).
+
+Draw TWO ARMS of him side by side, left to right, the same size as the arms in image 2, well apart from each other, on a flat pure magenta #FF00FF background: 1) the NEAR arm, 2) the FAR arm. Each arm is straight and hangs down from a round shoulder end, exactly like in image 2, but the hand is CLOSED IN A FIST as if gripping the handle of a tool: four fingers curled, the thumb wrapped over them, the knuckles towards the right. The fist is the same size as the hands of image 2.
+
+OUTLINE AND JOINTS, very important: each arm has a thick, clean pure-black #000000 outline, EXCEPT at the shoulder end at the top: there the outline gets gradually thinner and disappears completely, and the skin runs right to the edge, rounded and full, with no black line across it. The skin near the shoulder end is PERFECTLY UNIFORM plain #B8432A: no shadow, no highlight, no line there, so the arm blends into the torso with no visible seam. Keep shadow shapes well away from the shoulder end.
+
+Landscape 3:2.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; belly and muzzle #F1DFB0, their shadow #D6BC86; horns and toenails #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A; flame #F07A1E and #FFD34A; neckerchief #00FF00 with shadow #00B400.
+- The bright green #00FF00 is used ONLY on the neckerchief, nowhere else.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+art/WB-037/riferimenti/R1_tre_quarti_scelto.png
+art/WB-037/corpo_1.png

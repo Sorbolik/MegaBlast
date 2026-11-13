@@ -1,0 +1,14 @@
+Image 1 is our original reference for the head flame of our little devil. Image 2 is the whole character with his flame. Draw ONLY THE FLAME, alone, large, in the middle of the canvas: copy the flame of image 1 exactly (same shape, same tongues, same orange #F07A1E outside and yellow #FFD34A inside, same thick black #000000 outline), standing STRAIGHT UP, not leaning, as tall as about two thirds of the canvas. Its bottom is narrow and closed with the black outline, rounded, as if cut where it touches the skull. No head, no horns, nothing else.
+
+Square 1024x1024.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; belly and muzzle #F1DFB0, their shadow #D6BC86; horns and toenails #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A; flame #F07A1E and #FFD34A; neckerchief #00FF00 with shadow #00B400.
+- The bright green #00FF00 is used ONLY on the neckerchief, nowhere else.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+art/WB-037/riferimenti/R6_fiamma_iniziale.png
+art/WB-037/riferimenti/R1_tre_quarti_scelto.png

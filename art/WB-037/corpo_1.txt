@@ -1,0 +1,23 @@
+Image 1 is the main character of our game, a little blacksmith-apprentice imp, in a three-quarter view facing right. It is the EXACT model: every body part you draw must be COPIED from image 1, shape by shape, with the same proportions, the same thickness and the same contours. Do not invent, round off, fatten or simplify any part.
+
+Image 2 is a layout sheet: grey placeholder parts on a flat magenta #FF00FF background, in three rows. Use image 2 ONLY to know where each part goes on the sheet and roughly how big it is. Do NOT copy the grey parts' shapes. Image 3 shows how the grey parts attach to each other.
+
+Make the BODY PARTS SHEET of the imp of image 1, cut apart like a paper puppet, on the same canvas as image 2 with the same flat magenta #FF00FF background. In the FIRST ROW draw only ONE part, in the middle of the row: the NECKERCHIEF of image 1 alone, knotted, as it sits around his neck, painted in pure bright green #00FF00 shaded only with #00B400, with its thick black outline closed all around (no heads in this row: they are done separately). Then draw these parts, each over its grey placeholder, well separated from each other, each COMPLETE even where other parts would hide it in image 1:
+Row 2: the TORSO of image 1 without head, arms, legs and tail: the same shape as in image 1, with the same belly patch and a short neck stub on top, but WITHOUT the neckerchief: the neck and the top of the chest are plain bare skin and belly, as if he took the neckerchief off (it is the separate piece of the first row). NO shoulder bumps and no stubby arms: at each shoulder the torso simply ends with a smooth, round, full edge of plain skin. Then NOTHING where the grey wing is (leave that spot empty magenta: he has no wings). Then the WHOLE TAIL of image 1 in one piece, with the same curve, the same thickness and the same arrowhead tip: one smooth continuous tube, thick at the root and thinner towards the tip, with no breaks, seams or joints along it.
+Row 3: the near arm and the far arm, copied from image 1 (same slim shape, same relaxed hand), each straight and hanging down from a round shoulder end; the near leg and the far leg, copied from image 1 (same thigh and calf, same bare three-toed foot pointing right), each straight, round at the hip end; one closed four-fingered fist, the size of the hands in image 1 (a small round piece, outlined all around).
+
+OUTLINE AND JOINTS, very important: every part has a thick, clean pure-black #000000 outline, EXCEPT at its joint ends. At a joint end the black outline gets gradually thinner and disappears completely; the last stretch of the part is filled with its flat color right to the edge, rounded and full, with NO black line across it. Joint ends are: the neck stub and the two shoulder edges of the torso; the top of each arm (shoulder end); the top of each leg (hip end); the root of the tail. The color near every joint end must be PERFECTLY UNIFORM plain skin #B8432A: no shadow, no highlight, no line, no color change in the last stretch before the joint, so that two overlapping parts of bare skin blend into one surface with no visible seam. Keep shadow shapes well away from the joint ends.
+
+No head and no flame on this sheet. Landscape 3:2, as large as possible.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone listed below. No gradients, no textures, no hatching, no soft shading, no glow.
+- Use ONLY these colors: outline and pupils black #000000; skin #B8432A, skin shadow #8E2F1C; belly and muzzle #F1DFB0, their shadow #D6BC86; horns and toenails #EFE3C8, their shadow #C9B48E; eyes #F2C45A with a small white #FFFFFF highlight; inside of mouth #5A1A10, teeth white #FFFFFF, tongue #E0605A; flame #F07A1E and #FFD34A; neckerchief #00FF00 with shadow #00B400.
+- The bright green #00FF00 is used ONLY on the neckerchief, nowhere else.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti (in ordine)
+art/WB-037/riferimenti/R1_tre_quarti_scelto.png
+art/WB-037/riferimenti/R2_stampino_ai.png
+art/WB-037/riferimenti/R3_manichino.png
