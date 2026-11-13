@@ -1,0 +1,12 @@
+Image 1 is a sheet of body parts of our character on flat magenta. Image 2 is the forged form of the cape this character wears. Image 3 is the same sheet with the collar of the basic cape already drawn on the torso.
+
+Return image 3 again, the SAME sheet with every part exactly where it is, same size and same pixels, and change only the collar: make it the FORGED collar of image 2. Same outline and same place as in image 3, the same bright green #00FF00 stripe around the neck (shadow #00B400), and add a thin pure cyan #00FFFF trim along the lower edge of the collar and a tiny cyan eye on the round clasp in front. Nothing else on the sheet changes.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Cloth indigo #2B2147 with folds #1A1430, thick closed black #000000 outline, cyan #00FFFF trims, green #00FF00 with shadow #00B400 only in the collar stripe.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti: R1 (art/WB-038/riferimenti/R1_corpo_collo_nudo.png), R3 (art/WB-032/vuoto_forgiata_B.png), art/WB-038/colletto_base_2.png.
+Scelta la base 2 perché conserva la fascia verde anche davanti e il busto sotto il colletto è più vicino a R1 tra le due basi consegnate.

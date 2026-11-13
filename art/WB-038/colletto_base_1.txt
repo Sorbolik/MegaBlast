@@ -1,0 +1,13 @@
+Image 1 is a sheet of body parts of our character on flat magenta. Image 2 is the cape this character wears (basic form): indigo cloth, darker folds, thick black outline, torn hem.
+
+Edit image 1 and return the SAME sheet: every part stays exactly where it is, same size, same shapes, same colors, same pixels. Change only two things:
+1. Remove the green neckerchief at the top of the sheet: there is only flat magenta there.
+2. On the torso in the middle, draw the COLLAR of the cape of image 2, wrapped around the bare neck stub at the top of the torso: a short band of the same indigo cloth that goes around the neck, closed in front by a small round clasp, with the cloth falling a little over the top of the back shoulder (the left side of the torso), where the long part of the cape will hang behind the body. Inside the collar band, a stripe of flat bright green #00FF00 with its shadow #00B400 runs all around the neck: it is the only green on the sheet. The collar covers the top of the torso only: the belly, the arms, the legs, the tail and the fist do not change at all.
+
+Rendering rules, very strict, because these parts will be traced into vector shapes:
+- FLAT COLORS ONLY: every area is one solid color, plus at most one hard-edged shadow shape in the darker tone. No gradients, no textures, no soft shading, no glow.
+- Cloth indigo #2B2147 with folds #1A1430, thick closed black #000000 outline like the other parts, green #00FF00 with shadow #00B400 only in the collar stripe.
+- Background: flat pure magenta #FF00FF everywhere, with no halo around the parts.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimenti: R1 (art/WB-038/riferimenti/R1_corpo_collo_nudo.png), R2 (art/WB-032/vuoto_base_B.png).

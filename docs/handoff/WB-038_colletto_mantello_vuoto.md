@@ -82,4 +82,15 @@ Approvata da Sergio il 13 nov («Sì», colore della squadra sul colletto).
 
 ## Consegna di Codex
 
+| Immagine e prompt in `art/WB-038/` | Riferimenti | Tentativi |
+|---|---|---:|
+| `colletto_base_1.png` e `colletto_base_1.txt` | R1, R2 | 1 nella nuova esecuzione |
+| `colletto_base_2.png` e `colletto_base_2.txt` | R1, R2 | 3 nella nuova esecuzione, mantenuta la variante della prima esecuzione (2 tentativi) |
+| `colletto_forgiata.png` e `colletto_forgiata.txt` | R1, R3, base 2 | 3 prove sulla nuova base 1, mantenuta la forgiata della prima esecuzione sulla base 2 (3 tentativi) |
+
+- Verificati i tre PNG a 1536×1024, la disposizione dei pezzi, la rimozione del fazzoletto, la fascia verde attorno al collo, la chiusura davanti e l'assenza di scritte. La forgiata ha il bordo inferiore e l'occhio ciano sulla fibbia.
+- Le nuove alternative per la base 2 mostravano il verde solo sul retro del collo. Tra le due basi consegnate, la 2 conserva meglio il busto sotto il colletto rispetto a R1. Lo scarto medio per canale sul busto visibile è 4,95 su 255 per la base 2 e 5,40 per la base 1.
+- Il confronto dei PNG rileva variazioni fuori dalle zone da modificare e valori di magenta diversi da `#FF00FF`. La forgiata ha un bordo leggermente più largo a destra e una lieve differenza sulla spalla rispetto alla base 2. Il ritaglio per differenza e la resa in gioco restano da verificare.
+- La decisione del 1 novembre in `DECISIONI.md` assegna il colore squadra al fazzoletto. La scheda approvata WB-038 lo trasferisce al colletto quando si indossa il mantello.
+
 ## Resoconto di Claude
