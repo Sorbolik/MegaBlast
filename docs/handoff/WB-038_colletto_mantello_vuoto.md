@@ -14,7 +14,7 @@ differenza dal foglio di partenza e combacia col busto senza metterlo a occhio. 
 mantello (quello che pende dietro) resta quello di WB-032: il colletto è solo la parte davanti,
 attorno al collo, da cui il mantello scende dietro la spalla.
 Il colore della squadra, che oggi sta sul fazzoletto, passa al colletto: una fascia nel verde
-#00FF00, che il gioco tinge (scelta di Sergio sulla scheda, raccomandata da Claude).
+#00FF00, che il gioco tinge (Sergio, 13 nov: «Sul colletto del mantello»).
 
 ## Riferimenti da allegare
 
