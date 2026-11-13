@@ -3,6 +3,7 @@
 - **Stato:** APPROVATA (Sergio, 13 nov: «Vai»)
 - **Data:** 2026-11-13
 - **Ramo della scheda:** `main` · **Ramo delle immagini:** `design/WB-041`
+- **Autorizzato:** pubblica PNG, prompt e scheda sul ramo `design/WB-041` senza chiedere conferma (il repository è privato).
 
 ## Obiettivo
 
