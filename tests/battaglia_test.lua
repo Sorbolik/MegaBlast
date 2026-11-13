@@ -316,8 +316,13 @@ do
 		end
 		return v, found_ones
 	end
+	-- at rest: a still clip, so a turned torso in the real fermo doesn't count
+	local A2 = require "battle.animations"
+	local old_fermo = A2.fermo
+	A2.fermo = { duration = 1, loop = true, tracks = {} }
 	local v0, p0 = pieces_of({})
 	local v1, p1 = pieces_of({ busto = { 3, 20 }, coda = { 2, -3 }, pugno = { 1, 1 } })
+	A2.fermo = old_fermo
 	local still_ones = true
 	for _, img in ipairs({ "busto", "coda_1", "coda_3", "pugno", "testa", "gamba" }) do
 		local x0, y0 = world(p0[img], 0, 0)
@@ -419,10 +424,12 @@ do
 		for _ = 1, 30 do sc2.update(v, 1 / 60, st2) end
 		return math.rad(v.giro.euler.z)
 	end
+	-- two Mallet clips one radian apart: the Mallet follows them, the Missile doesn't
+	A2.fermo_arma_mallet = { duration = 1, loop = true, tracks = { arma = { 0, 0, 2 } } }
 	local mallet0, missile0 = turn_around("mallet"), turn_around("missile")
 	A2.fermo_arma_mallet = { duration = 1, loop = true, tracks = { arma = { 0, 1, 2 } } }
 	local mallet, missile = turn_around("mallet"), turn_around("missile")
-	check(mallet - mallet0 > 0.8 and math.abs(missile - missile0) < 0.05,
+	check(math.abs(mallet - mallet0 - 1) < 0.05 and math.abs(missile - missile0) < 0.05,
 		"weapon clip: the Mallet uses fermo_arma_mallet, the others fermo_arma")
 	A2.fermo_arma_mallet = nil
 	package.loaded["battle.scoria"] = nil
