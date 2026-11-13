@@ -128,4 +128,37 @@ Approvata da Claude il 2026-11-13 su richiesta di Sergio («faglieli fare a Code
 
 ## Consegna di Codex
 
+### 2026-11-13
+
+Sei prove generate con imagegen da `main` aggiornato (`af61e3a6`).
+Ho usato i prompt integrali e, per ciascuno, il riferimento di stile
+seguito da R4. Lo strumento riceve la coppia in quest'ordine senza un
+parametro per assegnare numeri non consecutivi alle immagini.
+
+Ogni nome in tabella indica un PNG RGB originale da 1672 × 941 px e
+un TXT omonimo in `art/WB-030/`. La risoluzione raggiunge il minimo
+della scheda.
+
+| File | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `sfondo_home_limbo_fumetto` | 1 | 1 |
+| `sfondo_home_limbo_porta` | 3 | 1 |
+| `sfondo_home_limbo_retino` | 1 | 1 |
+| `sfondo_home_gola_fumetto` | 1 | 1 |
+| `sfondo_home_gola_porta` | 3 | 3 |
+| `sfondo_home_gola_retino` | 1 | 1 |
+
+Ho controllato formato e dimensioni, fascia scura in basso con orizzonte
+a circa l'86%, sagome ai lati, distinzione fra i tre stili e assenza di
+personaggi, scritte, cornici e interfaccia. Le statue di Gola si leggono
+come pietra. Il centro di Gola conserva pioggia e tracce di palude.
+
+I prompt Porta chiedono sia un portale pallido luminoso al centro sia
+un centro vuoto e scuro. Tutti i tentativi Porta hanno mantenuto un
+disco chiaro, come nella bozza R2. Ho scelto il primo Limbo Porta per
+la fascia di pavimento più vicina all'altezza prevista e il terzo Gola
+Porta per il disco più tenue. La leggibilità di testi e pulsanti con
+l'interfaccia sovrapposta resta da verificare.
+
+
 ## Resoconto di Claude

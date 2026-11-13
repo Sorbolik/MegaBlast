@@ -1,0 +1,11 @@
+Image 1 is a rough layout sketch (NOT the final look) of a background for the home screen of a mobile game about little devils in Dante's hell; image 4 shows such a background in use with the game's comic-style interface on top (do not draw the interface). Paint a NEW, polished, finished background for the circle of hell below, wide 16:9, in this style: COMIC (flat shapes with a thick ink outline).
+
+The circle: LIMBO, the first circle: a pale, quiet city of tall gothic spires and thin towers in a sage-green twilight, a few tiny warm lit windows. Palette: sage greens, grey-teal, dark green-black, cream light.
+
+Flat, comic-book illustration, exactly the language of the game's interface (thick near-black ink outlines, flat fills with at most 3 tones per shape, hard-edged shadow shapes, NO gradients except a banded sky). The scene is a layered skyline: three rows of buildings/rocks drawn as flat outlined silhouettes, nearest darkest and tallest at the left and right edges, getting lower and lighter toward the middle where the picture is almost empty. Faint hard-edged beams of light in the sky. A flat dark floor band with a thick ink line on its top edge. Draw it like a polished hand-inked comic background, much more refined than image 1 (image 1 is only a rough layout sketch).
+
+Composition rules, follow exactly: the whole CENTRE of the picture is empty, calm and dark-to-mid in tone, with nothing in it that attracts the eye (a devil character stands there and four buttons sit at its sides). All the interest is in the masses at the left and right edges, which frame the centre. The horizon floor line is at 86% of the height from the top; below it only a plain dark floor band. Keep contrast moderate so light text stays readable on top. No characters, no creatures that look alive, no text, no letters, no numbers, no interface, no frame, no signature.
+
+Riferimenti (in ordine)
+R1: art/WB-030/riferimenti/R1_limbo_fumetto_bozza.jpg
+R4: art/WB-030/riferimenti/R4_porta_con_interfaccia.jpg

@@ -1,0 +1,11 @@
+Image 2 is a rough layout sketch (NOT the final look) of a background for the home screen of a mobile game about little devils in Dante's hell; image 4 shows such a background in use with the game's comic-style interface on top (do not draw the interface). Paint a NEW, polished, finished background for the circle of hell below, wide 16:9, in this style: GATE (a glowing round gate behind the devil).
+
+The circle: LIMBO, the first circle: a pale, quiet city of tall gothic spires and thin towers in a sage-green twilight, a few tiny warm lit windows. Palette: sage greens, grey-teal, dark green-black, cream light.
+
+Flat comic-book illustration in the language of the game's interface (thick near-black ink outlines, flat fills, hard-edged shadows). In the exact middle, partly hidden by the horizon, a huge round gate or portal made of 4-5 concentric flat rings, the inner ones glowing pale, with ink between the rings, like a halo: a character will stand in front of it, so keep it simple, no details inside the rings. Hard-edged wedge rays spread from it into a banded sky. Skylines of outlined silhouettes at the left and right edges frame it, tall at the edges and low near the middle. A flat dark floor band with a thick ink line on top. Make it a polished hand-inked comic background, much more refined than image 2 (image 2 is only a rough layout sketch).
+
+Composition rules, follow exactly: the whole CENTRE of the picture is empty, calm and dark-to-mid in tone, with nothing in it that attracts the eye (a devil character stands there and four buttons sit at its sides). All the interest is in the masses at the left and right edges, which frame the centre. The horizon floor line is at 86% of the height from the top; below it only a plain dark floor band. Keep contrast moderate so light text stays readable on top. No characters, no creatures that look alive, no text, no letters, no numbers, no interface, no frame, no signature.
+
+Riferimenti (in ordine)
+R2: art/WB-030/riferimenti/R2_limbo_porta_bozza.jpg
+R4: art/WB-030/riferimenti/R4_porta_con_interfaccia.jpg
