@@ -17,7 +17,7 @@ movimento, con la radice ferma nello squarcio.
 
 | Codice | File | Cos'è |
 |---|---|---|
-| R1 | `art/WB-033/testa_2.png` (ramo `design/WB-033`) | la testa di WB-033 da tenere uguale |
+| R1 | `art/WB-034/riferimenti/R1_testa_WB-033.png` | la testa di WB-033 da tenere uguale |
 | R2 | `art/WB-018/riferimenti/R1_apprendista_concept.png` | l'apprendista con la fiammella: forma e colori della fiamma |
 
 ## Immagini da generare
