@@ -114,8 +114,11 @@ void main()
             highp float d = dot(q - t * e, side) / dot(side, side);
             highp float s = run + t * len[i];
             highp vec2 uv = vec2(frame.x + d / frame.z, frame.y + s / frame.w);
-            mediump vec4 smp = sample_at(uv, duv, up);
-            col = smp + col * (1.0 - smp.a);
+            // only where the drawing is: the rest of the square reads nothing
+            if (uv.x > -duv.x && uv.x < 1.0 + duv.x && uv.y > -duv.y && uv.y < 1.0 + duv.y) {
+                mediump vec4 smp = sample_at(uv, duv, up);
+                col = smp + col * (1.0 - smp.a);
+            }
         }
         run += len[i];
     }
