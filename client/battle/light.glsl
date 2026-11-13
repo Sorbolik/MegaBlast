@@ -7,7 +7,7 @@
 // directions (through the uv's derivatives), so rotation and mirroring of the
 // piece come for free and the normal is already in screen axes.
 // battle/lights.lua posts the lights; the render script (render/lit.render_script)
-// gives them to every gui draw as light0..light5: x, y in gui coordinates,
+// gives them to every gui draw as light0..light5: x, y in screen pixels,
 // z radius, w energy (0 = off), and the ambient. With no light near, only the ambient.
 
 uniform fs_uniforms
@@ -18,11 +18,11 @@ uniform fs_uniforms
     highp vec4 light3;
     highp vec4 light4;
     highp vec4 light5;
-    mediump vec4 light_ambient;  // rgb: what the pieces get with no light near
+    mediump vec4 light_ambient;  // rgb: what the pieces get with no light near; w: screen pixels per gui pixel
 };
 
 const mediump vec3 WARM = vec3(1.0, 0.62, 0.28);      // the flame's colour (as in Godot)
-const mediump float REACH = 7.0;                       // how wide the cushion's edge is, in screen pixels
+const mediump float REACH = 7.0;                       // how wide the cushion's edge is, in gui pixels
 const mediump float LEAN = 2.5;                        // how much the edge leans
 
 mediump float one_light(highp vec4 l, highp vec2 pos, mediump vec3 n)
@@ -35,11 +35,12 @@ mediump float one_light(highp vec4 l, highp vec2 pos, mediump vec3 n)
     return max(dot(n, dir), 0.0) * fall * fall * l.w;
 }
 
-// the piece's colour t (premultiplied) at uv, lit; pos in gui coordinates
+// the piece's colour t (premultiplied) at uv, lit; pos in screen pixels
 mediump vec4 lit(sampler2D tex, mediump vec4 t, highp vec2 uv, highp vec2 pos)
 {
     // the derivatives first: they want every pixel of the block
-    highp vec2 ux = dFdx(uv) * REACH, uy = dFdy(uv) * REACH;
+    highp float reach = REACH * light_ambient.w;
+    highp vec2 ux = dFdx(uv) * reach, uy = dFdy(uv) * reach;
     mediump float near = light0.w * step(distance(light0.xy, pos), light0.z)
                        + light1.w * step(distance(light1.xy, pos), light1.z)
                        + light2.w * step(distance(light2.xy, pos), light2.z)

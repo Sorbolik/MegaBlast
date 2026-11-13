@@ -2,7 +2,7 @@
 -- every devil's head flame is a warm light that flickers, every explosion a
 -- flash that dies out in half a second. Each frame the six strongest go to the
 -- render script (render/lit.render_script), which hands them to the pieces'
--- lit materials (battle/light.glsl): x, y in gui coordinates, radius, energy.
+-- lit materials (battle/light.glsl): x, y in screen pixels, radius, energy.
 -- Only the devils of the battle use them (scoria.new(..., lit)).
 
 local game = require "sim.game"
@@ -49,8 +49,10 @@ local function by_energy(a, b)
 end
 
 -- flames: the flame nodes of the devils on screen (nil holes allowed up to n);
--- cam_x, cam_y, cam_s: where the world's origin is in gui coordinates and its scale
-function M.update(L, dt, flames, n, cam_x, cam_y, cam_s)
+-- cam_s: the camera's scale. The lights are in screen pixels, like the
+-- positions the pieces' shader sees (on the phone the screen has more pixels
+-- than the 1280 x 720 of the gui)
+function M.update(L, dt, flames, n, cam_s)
 	L.t = L.t + dt
 	local list, k = L.list, 0
 	-- screen to world: the world's origin and the probe, on the screen
@@ -65,8 +67,7 @@ function M.update(L, dt, flames, n, cam_x, cam_y, cam_s)
 				k = k + 1
 				local e = list[k] or {}
 				list[k] = e
-				e.x, e.y = cam_x + (s.x - o.x) / per * cam_s, cam_y + (s.y - o.y) / per * cam_s
-				e.r = FLAME.radius * cam_s
+				e.x, e.y, e.r = s.x, s.y, FLAME.radius * per
 				e.e = FLAME.energy * (1 + 0.17 * math.sin(L.t * 11 + i) * math.sin(L.t * 6.1 + 2 * i))
 				e.k = k
 			end
@@ -83,11 +84,13 @@ function M.update(L, dt, flames, n, cam_x, cam_y, cam_s)
 			local e = list[k] or {}
 			list[k] = e
 			local q = 1 - f.t / FLASH.life
-			e.x, e.y, e.r = cam_x + f.x * cam_s, cam_y + f.y * cam_s, f.r * cam_s
+			e.x, e.y, e.r = o.x + f.x * per, o.y + f.y * per, f.r * per
 			e.e, e.k = FLASH.energy * q * q, k
 		end
 	end
 	for i = k + 1, #list do list[i] = nil end
+	-- w: screen pixels per gui pixel, for the width of the pieces' edges
+	M.AMBIENT.w = per ~= 0 and per / cam_s or 1
 	L.msg.ambient = M.AMBIENT
 	if k == 0 and L.sent_off == "battle" then return end
 	L.sent_off = k == 0 and "battle"

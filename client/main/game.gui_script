@@ -859,7 +859,7 @@ local function light_up(self, dt)
 		local rig = self.robots[i].rig
 		f[i] = gui.is_enabled(rig.fiamma, true) and rig.fiamma or nil
 	end
-	self.lights:update(dt, f, game.MAX_PLAYERS, self.cam_tx, self.cam_ty, self.cam_s)
+	self.lights:update(dt, f, game.MAX_PLAYERS, self.cam_s)
 end
 
 local function move_debris(self, dt)

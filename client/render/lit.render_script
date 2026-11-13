@@ -177,8 +177,8 @@ function init(self)
     local camera_component = create_camera(state, "camera_component")
     update_state(state)
 
-    -- The lights of the battle (battle/lights.lua): up to six vec4 (x, y in gui
-    -- coordinates, z radius, w energy) and the ambient, read by the lit pieces'
+    -- The lights of the battle (battle/lights.lua): up to six vec4 (x, y in screen
+    -- pixels, z radius, w energy) and the ambient, read by the lit pieces'
     -- materials (battle/light.glsl). All
     -- the gui draws take them as one constant buffer.
     self.lights = render.constant_buffer()

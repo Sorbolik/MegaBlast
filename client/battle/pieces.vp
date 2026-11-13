@@ -1,6 +1,6 @@
 #version 140
 
-// The gui vertex program, plus where the pixel is in gui coordinates (var_pos):
+// The gui vertex program, plus where the pixel is on the screen (var_pos, pixels):
 // the lit pieces (battle/pieces.fp, flash.fp) measure the lights from there.
 
 in mediump vec3 position;
