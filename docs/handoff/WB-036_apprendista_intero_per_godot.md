@@ -89,4 +89,26 @@ passa dietro il braccio vicino e alcune dita restano distese.
 Sfondo e campiture mostrano lievi variazioni rispetto ai valori
 RGB esatti. Il taglio dei pezzi e la resa nel rig restano da verificare.
 
+### 2026-11-13 · Revisione con il riferimento iniziale di Sergio
+
+Quattro PNG originali da 1024 × 1536 px in `art/WB-036/`, generati con
+imagegen dalla scheda aggiornata su `main` (`86cd915e`). I TXT omonimi
+contengono il prompt integrale e R1, R2 nell'ordine indicato. Questa
+revisione sostituisce i quattro PNG e TXT della consegna precedente.
+
+| File | Tentativi | Tentativo consegnato |
+|---|---:|---:|
+| `tre_quarti_1` | 3 | 3 |
+| `tre_quarti_2` | 3 | 2 |
+| `tre_quarti_3` | 3 | 3 |
+| `tre_quarti_4` | 3 | 1 |
+
+Ho controllato figura intera, attacco della fiamma fra le corna,
+assenza di aperture e crepe luminose, fazzoletto verde, contorno
+scuro e assenza di scritte. Le quattro pose sono simili. Il piede
+vicino resta più frontale e la radice della coda passa dietro il
+braccio vicino. Alcune dita sono distese. Sfondo e campiture
+presentano variazioni rispetto ai valori RGB esatti. Restano da
+verificare il ritaglio dei pezzi e la resa nel rig.
+
 ## Resoconto di Claude
