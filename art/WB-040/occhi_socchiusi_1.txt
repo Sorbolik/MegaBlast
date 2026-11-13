@@ -1,0 +1,12 @@
+Image 1 is a sheet of nine heads of our little devil, the main character of our game, without horns.
+
+Redraw image 1 EXACTLY, with ONE change on the heads listed below: the eyes are HALF CLOSED, as in the middle of a blink. The upper eyelid, in skin color #B8432A, comes down over the top half of each open eye, with a thin black lash line along its lower edge; the bottom half of the eye is still visible, with the pupil in the same place, cut by the eyelid. The outline of the eye stays exactly where it is.
+
+Rendering rules, very strict, because these heads will be compared pixel by pixel with image 1:
+- Keep EXACTLY the canvas, size and position of image 1: same 1024x1024 square, same 3 by 3 grid, every head in the same place and the same size as in image 1. Do not move, resize, recenter or redraw anything that is not asked: the head outline, ears, muzzle, mouth, eyebrows, wrinkles and shadows stay identical, line by line.
+- Change ONLY the eyes of these heads: 1 (top left), 5 (center), 6 (middle right), 7 (bottom left), 8 (bottom center), 9 (bottom right). Heads 2, 3 and 4 stay exactly as they are (their eyes are already shut or spiral). On heads 5 and 9 an eye that is already winking stays as it is: change only the open eye.
+- FLAT COLORS ONLY, the same as image 1: outline black #000000; skin #B8432A, skin shadow #8E2F1C; muzzle #F1DFB0, its shadow #D6BC86; eyes #F2C45A with white #FFFFFF highlight; mouth #5A1A10, tongue #E0605A. No gradients, no textures, no glow.
+- Background: flat pure magenta #FF00FF everywhere, with no halo.
+- No text, numbers, labels, arrows or signatures.
+
+Riferimento (Image 1): art/WB-040/riferimenti/R1_teste_senza_corna.png
