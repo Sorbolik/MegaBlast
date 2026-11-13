@@ -38,31 +38,31 @@ local KC = kit.C
 local function build_choice(c)
 	local g = c.kg
 	profile_tabs.devil(c, T.title_short)
-	kit.info(g, 440, 130, 380, 300, KC.PURPLE)
-	kit.text(g, T.new_room_over, 478, 166, 12, KC.HOT_TOP, "start", 1.5)
-	kit.text(g, T.new_room, 474, 208, 32, KC.SAND)
+	kit.text(g, T.new_room_over, 448, 150, 16, KC.HOT_TOP, "start", 1.5)
+	kit.text(g, T.new_room, 446, 200, 40, KC.SAND)
 	for i, line in ipairs(T.new_room_lines) do
-		kit.text(g, line, 470 - (i - 1) * 2, 248 + (i - 1) * 26, 15, KC.MUTE)
+		kit.text(g, line, 446 - (i - 1) * 2, 246 + (i - 1) * 32, 18, KC.MUTE)
 	end
-	local p = kit.sand(g, 630, 366, 150, 46, KC.HOT, { sk = 12, d = 6 })
-	kit.text(p.g, T.create, 712, 398, 24, KC.INK, "middle")
+	local p = kit.plate(g, 446, 400, 260, 72, KC.HOT, { sk = 0, d = 6, piece = "piastrina_chiara" })
+	kit.text(p.g, T.create, 576, 448, 32, KC.INK, "middle")
 	kit.button(c.buttons, p, "crea", { spento = c.busy })
-	if c.msg then kit.text(g, kit.upper(c.msg), 444, 460, 13, c.busy and KC.MUTE or KC.HOT_TOP, "start", 0.5) end
+	if c.msg then kit.text(g, kit.upper(c.msg), 446, 512, 16, c.busy and KC.MUTE or KC.HOT_TOP, "start", 0.5) end
 
 	-- the code: four boxes, then the keypad
-	kit.heading(g, T.have_code, 900 + kit.air(), 146)
+	kit.heading(g, T.have_code, 880 + kit.air(), 138)
 	for i = 1, M.DIGITS do
-		local x = 892 + kit.air() + (i - 1) * 84
-		kit.info(g, x, 160, 70, 70, (i == #c.code + 1 and not c.busy) and KC.SAND or KC.PURPLE)
-		kit.text(g, c.code:sub(i, i), x + 40, 210, 40, KC.SAND, "middle")
+		local x = 880 + kit.air() + (i - 1) * 92
+		local d = c.code:sub(i, i)
+		local now = i == #c.code + 1 and not c.busy
+		kit.text(g, d ~= "" and d or "_", x + 40, 206, 60, d ~= "" and KC.SAND or (now and KC.HOT_TOP or KC.MUTE), "middle")
 	end
 	local keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "canc", "0" }
 	for i, k in ipairs(keys) do
 		local col, row = (i - 1) % 3, math.floor((i - 1) / 3)
-		local x, y = 900 + kit.air() + col * 108 - row * 8, 254 + row * 62
+		local x, y = 880 + kit.air() + col * 124 - row * 6, 236 + row * 76
 		local off = c.busy or (k == "canc" and #c.code == 0) or (#k == 1 and #c.code >= M.DIGITS)
-		local pl = kit.plate(g, x, y, 94, 50, off and KC.LINE or KC.ROSE, { sk = 12, d = 5 })
-		kit.text(pl.g, k == "canc" and T.delete or k, x + 53, y + 35, k == "canc" and 16 or 26, off and KC.MUTE or KC.SAND, "middle")
+		local pl = kit.plate(g, x, y, 112, 66, off and KC.LINE or KC.ROSE, { sk = 0, d = 5, piece = "piastrina" })
+		kit.text(pl.g, k == "canc" and T.delete or k, x + 56, y + 45, k == "canc" and 18 or 34, off and KC.MUTE or KC.SAND, "middle")
 		kit.button(c.buttons, pl, k == "canc" and "canc" or "n:" .. k, { spento = off })
 	end
 	-- the one action: ENTRA, when the code is whole
@@ -78,19 +78,21 @@ end
 local function seat(c, i, s, x, y)
 	local room = c.room
 	local col = ui.C.SQUADRA[s.team] or KC.SAND
-	local k = kit.card(c.kg, x, y, 350, 96, col)
+	local k = kit.card(c.kg, x, y, 380, 100, col)
 	if s.bot then
-		kit.text(k.g, T.bot, x + 34, y + 42, 28, KC.SAND)
-		kit.text(k.g, T.bot_level:format(s.bot, M.GRADE_MAX), x + 32, y + 66, 13, KC.MUTE, "start", 1)
-		if room.host == room.you then
-			kit.stepper(k.g, c.buttons, x + 150, y + 30, "meno:" .. i, "piu:" .. i, s.bot <= 1, s.bot >= M.GRADE_MAX, s.bot)
+		kit.text(k.g, T.bot, x + 28, y + 46, 30, KC.SAND)
+		if room.host ~= room.you then
+			kit.text(k.g, T.bot_level:format(s.bot, M.GRADE_MAX), x + 26, y + 76, 16, KC.MUTE, "start", 1)
+		else
+			kit.text(k.g, T.bot_level_short, x + 26, y + 76, 16, KC.MUTE, "start", 1)
+			kit.stepper(k.g, c.buttons, x + 132, y + 22, "meno:" .. i, "piu:" .. i, s.bot <= 1, s.bot >= M.GRADE_MAX, s.bot)
 		end
-		kit.round(k.g, c.buttons, x + 312, y + 48, T.here, "posto:" .. i)
+		kit.round(k.g, c.buttons, x + 340, y + 50, T.here, "posto:" .. i)
 	else
 		local v = type(s.vetrina) == "table" and s.vetrina or {}
-		kit.text(k.g, i == room.you and common.you:upper() or T.player, x + 34, y + 42, 28, KC.SAND)
-		if tonumber(v.liv) then kit.text(k.g, T.level:format(v.liv), x + 32, y + 66, 13, KC.MUTE, "start", 1) end
-		if i == room.host then kit.text(k.g, T.host, x + 32, y + 84, 10, KC.HOT_TOP, "start", 1) end
+		kit.text(k.g, i == room.you and common.you:upper() or T.player, x + 28, y + 46, 30, KC.SAND)
+		if tonumber(v.liv) then kit.text(k.g, T.level:format(v.liv), x + 26, y + 76, 16, KC.MUTE, "start", 1) end
+		if i == room.host then kit.text(k.g, T.host, x + 200, y + 46, 15, KC.HOT_TOP, "start", 1) end
 	end
 end
 
@@ -99,22 +101,22 @@ end
 local function build_room(c)
 	local g, room = c.kg, c.room
 	local host = room.host == room.you
-	kit.sand(g, 60, 120, 330, 120, KC.HOT, { sk = 30, d = 12 })
-	kit.text(g, T.code, 96, 150, 14, KC.INK, "start", 2)
-	kit.text(g, room.code or "", 92, 222, 78, KC.INK)
+	kit.text(g, T.code, 66, 124, 16, KC.MUTE, "start", 2)
+	kit.sand(g, 60, 134, 330, 110, KC.HOT, { sk = 30, d = 12 })
+	kit.text(g, room.code or "", 100, 220, 72, KC.INK)
 	local opts, on = {}, 1
 	for i, m in ipairs(MODES) do
 		opts[i] = { T.modes_short[m], "modo:" .. m }
 		if room.mode == m then on = i end
 	end
 	if host then
-		kit.choice(g, c.buttons, 60, 300, T.mode, opts, on, 104)
+		kit.choice(g, c.buttons, 60, 306, T.mode, opts, on, 104)
 	else
-		kit.text(g, T.mode, 66, 290, 14, KC.MUTE, "start", 1.5)
-		kit.text(g, common.modes[room.mode] or "", 66, 328, 22, KC.SAND)
+		kit.text(g, T.mode, 66, 290, 16, KC.MUTE, "start", 1.5)
+		kit.text(g, common.modes[room.mode] or "", 66, 332, 28, KC.SAND)
 	end
-	kit.text(g, T.new_room_lines[3], 66, 400, 15, KC.MUTE)
-	kit.text(g, T.new_room_lines[4], 64, 424, 15, KC.MUTE)
+	kit.text(g, T.new_room_lines[3], 66, 420, 17, KC.MUTE)
+	kit.text(g, T.new_room_lines[4], 64, 448, 17, KC.MUTE)
 
 	-- the teams in team order, two columns; the seats of a team one under the other
 	local seats = type(room.posti) == "table" and room.posti or {}
@@ -132,15 +134,15 @@ local function build_room(c)
 	local row_y = 146
 	for k, team in ipairs(teams) do
 		local col = (k - 1) % 2
-		local x0 = 470 + col * 400
+		local x0 = 440 + col * 410
 		local list = by_team[team]
-		kit.text(g, kit.upper(TM.team_names[team] or ""), x0 + 8, row_y, 22, ui.C.SQUADRA[team] or KC.SAND, "start", 1)
+		kit.text(g, kit.upper(TM.team_names[team] or ""), x0 + 8, row_y, 24, ui.C.SQUADRA[team] or KC.SAND, "start", 1)
 		for j, i in ipairs(list) do
-			seat(c, i, seats[i], x0 - (j - 1) * 10, row_y + 14 + (j - 1) * 112)
+			seat(c, i, seats[i], x0 - (j - 1) * 10, row_y + 14 + (j - 1) * 114)
 		end
-		if col == 1 or k == #teams then row_y = row_y + 30 + #list * 112 end
+		if col == 1 or k == #teams then row_y = row_y + 30 + #list * 114 end
 	end
-	if #teams == 2 then kit.text(g, T.versus, 846, 148, 18, KC.MUTE, "middle", 1) end
+	if #teams == 2 then kit.text(g, T.versus, 835, 148, 20, KC.MUTE, "middle", 1) end
 
 	local sub = host and T.go_sub:format(common.modes[room.mode] or "", bots) or T.wait_host
 	c.action = kit.action(c.right, T.go, 930, 560, 270, 84, { size = 60, off = not host, sub = kit.upper(sub) })
@@ -163,8 +165,8 @@ end
 
 function M.new()
 	local c = { code = "", colore = ui.C.SQUADRA[1], accent = KC.HOT }
-	-- the game world darkened behind, the rays
-	c.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, {})
+	-- the backdrop (ui/kit.lua)
+	c.scene = kit.scene(profile_tabs.devil_x(), profile_tabs.DEVIL_Y, { bg = "gioca" })
 	build(c)
 	return c
 end

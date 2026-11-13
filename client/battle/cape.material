@@ -1,0 +1,50 @@
+name: "mantello"
+tags: "gui"
+vertex_program: "/builtins/materials/gui.vp"
+fragment_program: "/battle/cape.fp"
+vertex_space: VERTEX_SPACE_WORLD
+vertex_constants {
+  name: "view_proj"
+  type: CONSTANT_TYPE_VIEWPROJ
+}
+fragment_constants {
+  name: "chain_a"
+  type: CONSTANT_TYPE_USER
+  value {
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: -0.1
+  }
+}
+fragment_constants {
+  name: "chain_b"
+  type: CONSTANT_TYPE_USER
+  value {
+    x: 0.0
+    y: -0.2
+    z: 0.0
+    w: -0.3
+  }
+}
+fragment_constants {
+  name: "chain_c"
+  type: CONSTANT_TYPE_USER
+  value {
+    x: 0.0
+    y: -0.4
+    z: 0.0
+    w: -0.5
+  }
+}
+fragment_constants {
+  name: "frame"
+  type: CONSTANT_TYPE_USER
+  value {
+    x: 0.5
+    y: 0.0
+    z: 1.0
+    w: 1.0
+  }
+}
+max_page_count: 0

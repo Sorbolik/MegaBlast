@@ -59,29 +59,29 @@ local function build(s)
 			opts[k] = { m[2], sc[1] .. ":" .. m[1] }
 			if v == m[1] then on = k end
 		end
-		kit.choice(g, s.buttons, 60 + (i - 1) * 6, 150 + (i - 1) * 88, sc[2], opts, on, 170)
+		kit.choice(g, s.buttons, 50 + (i - 1) * 6, 134 + (i - 1) * 98, sc[2], opts, on, 200)
 	end
 
 	-- the controller's buttons: two columns of commands
-	kit.text(g, T.controller_keys, 520, 128, 14, KC.HOT_TOP, "start", 1.5)
+	kit.text(g, T.controller_keys, 540, 132, 17, KC.HOT_TOP, "start", 1.5)
 	local n = #controller.COMMANDS
 	local per_column = math.ceil(n / 2)
 	for i, cmd in ipairs(controller.COMMANDS) do
 		local col = i <= per_column and 0 or 1
 		local row = (i - 1) % per_column
-		local x, y = 520 + col * 366 - row * 4, 146 + row * 58
+		local x, y = 540 + col * 356 - row * 4, 150 + row * 66
 		local cur = s.attesa == cmd
-		local k = kit.card(g, x, y, 340, 44, cur and KC.HOT or KC.PURPLE, { sel = cur })
-		kit.text(k.g, NAMES[cmd], x + 26, y + 29, 16, KC.SAND)
+		local k = kit.card(g, x, y, 340, 56, cur and KC.HOT or KC.PURPLE, { sel = cur })
+		kit.text(k.g, NAMES[cmd], x + 24, y + 36, 19, KC.SAND)
 		if cur then
-			kit.text(k.g, T.press_a_key, x + 316, y + 28, 12, KC.HOT_TOP, "end", 1)
+			kit.text(k.g, T.press_a_key, x + 318, y + 35, 14, KC.HOT_TOP, "end", 1)
 		elseif controller.key_of(s.c, cmd) then
-			local gl = glyph.new(k.node, 30)
+			local gl = glyph.new(k.node, 36)
 			glyph.display(gl, s.c, controller.key_of(s.c, cmd))
 			gui.set_position(gl.radice, vmath.vector3(340 / 2 - 24 - glyph.width(gl) / 2, 0, 0))
 		else
 			kit.text(k.g, cmd == "salta" and T.stick_up:format(T.sides[controller.side("muove")]) or T.no_key,
-				x + 316, y + 28, 11, KC.MUTE, "end", 1)
+				x + 318, y + 35, 13, KC.MUTE, "end", 1)
 		end
 		kit.button(s.buttons, k, "tasto:" .. cmd)
 	end
@@ -89,14 +89,15 @@ local function build(s)
 	local help = s.attesa and T.cancel:format(controller.name(s.c, "start"))
 		or (s.c.connected and T.change_remove:format(controller.name(s.c, "a"), controller.name(s.c, "y"))
 		or T.connect)
-	local t = kit.text(g, help, 876, 470, 12, KC.MUTE, "start", 1)
+	local t = kit.text(g, help, 540, 584, 15, KC.MUTE, "start", 1)
 	local wide = kit.width(t)
-	if wide > 350 then
+	if wide > 690 then
 		local sc = gui.get_scale(t)
-		gui.set_scale(t, vmath.vector3(sc.x * 350 / wide, sc.y * 350 / wide, 1))
+		gui.set_scale(t, vmath.vector3(sc.x * 690 / wide, sc.y * 690 / wide, 1))
 	end
-	local reset = kit.plate(g, 864, 490, 220, 48, KC.ROSE, { sk = 14, d = 6 })
-	kit.text(reset.g, T.reset, 864 + 117, 490 + 31, 17, KC.SAND, "middle", 0.5)
+	-- (where the second column ends)
+	local reset = kit.plate(g, 876, 150 + per_column * 66 - 66, 320, 60, KC.ROSE, { sk = 0, d = 6, piece = "piastrina" })
+	kit.text(reset.g, T.reset, 876 + 160, 150 + per_column * 66 - 66 + 39, 21, KC.SAND, "middle", 0.5)
 	kit.button(s.buttons, reset, "ripristina")
 	for _, b in ipairs(s.buttons) do
 		if b.ui_action == lit then ui.light(s.buttons, b) end
@@ -106,7 +107,7 @@ end
 function M.new(p, c)
 	local s = { p = p, c = c }
 	controller.levette = profile.setting(p, "levette")
-	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL })
+	s.scene = kit.scene(200, 400, { halo = 300, accent = KC.STEEL, bg = "impostazioni" })
 	build(s)
 	return s
 end

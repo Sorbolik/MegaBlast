@@ -1,7 +1,7 @@
 [project]
 title = MegaBlast
 dependencies#0 = https://github.com/defold/extension-websocket/archive/refs/tags/4.2.4.zip
-custom_resources = /paintings,/assets/skins/favilla_testa_1.png,/assets/skins/favilla_testa_arrabbiata_1.png,/assets/skins/favilla_testa_colpita_1.png,/assets/skins/favilla_testa_felice_1.png,/assets/skins/favilla_testa_ko_1.png,/assets/skins/favilla_testa_mira_1.png,/assets/skins/favilla_testa_paura_1.png,/assets/skins/favilla_testa_provocazione_1.png,/assets/skins/favilla_testa_sconfitta_1.png
+custom_resources = /paintings,/assets/capes,/assets/skins/favilla_testa_1.png,/assets/skins/favilla_testa_arrabbiata_1.png,/assets/skins/favilla_testa_colpita_1.png,/assets/skins/favilla_testa_felice_1.png,/assets/skins/favilla_testa_ko_1.png,/assets/skins/favilla_testa_mira_1.png,/assets/skins/favilla_testa_paura_1.png,/assets/skins/favilla_testa_provocazione_1.png,/assets/skins/favilla_testa_sconfitta_1.png
 
 [bootstrap]
 main_collection = /main/main.collectionc

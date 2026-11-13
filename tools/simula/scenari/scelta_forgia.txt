@@ -23,7 +23,7 @@ aspetta 0.3
 foto 04_rotellina
 tocca 62 658                        # la richiude
 aspetta 0.3
-tocca_bordo 215 118 basso destra                      # GIOCA
+tocca_bordo 175 52 basso destra                      # GIOCA
 aspetta_stato modo=local 10
 aspetta 1
 foto 05_partita

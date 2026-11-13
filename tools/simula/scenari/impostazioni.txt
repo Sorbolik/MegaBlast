@@ -10,19 +10,19 @@ imposta prova_armi 1
 imposta prova_pad playstation
 
 aspetta 2
-tocca_bordo 62 62 alto destra       # la rotellina delle impostazioni
+tocca_bordo 74 54 basso sinistra       # la rotellina delle impostazioni
 aspetta 0.5
 foto 01_impostazioni
-tocca_centro 315 548                # MIRA: MIRINO
-tocca_centro 686 494                # SALTA: aspetta il tasto
+tocca_centro 350 557                # MIRA: MIRINO
+tocca_centro 706 476                # SALTA: aspetta il tasto
 aspetta 0.3
 foto 02_premi_un_tasto
 pad a                               # SALTA su CROCE (A), il teletrasporto va su CROCE SU
 aspetta 0.3
-tocca_centro 690 552                # SPARA
+tocca_centro 710 542                # SPARA
 pad b                               # SPARA su CERCHIO, il BARATTO prende R2
 aspetta 0.3
-tocca_centro 682 436                # PRIMARIA DOPO
+tocca_centro 702 410                # PRIMARIA DOPO
 pad start                           # Start annulla: resta L1
 aspetta 0.3
 foto 03_salta_e_spara
@@ -36,7 +36,7 @@ aspetta 0.3
 foto 05_tolto
 pad a                               # di nuovo: aspetta il tasto
 pad a                               # SALTA su A
-tocca_centro 327 372               # POTENZA: GRILLETTO
+tocca_centro 358 361               # POTENZA: GRILLETTO
 aspetta 0.3
 foto 06_grilletto
 pad b                               # B (CERCHIO) torna indietro

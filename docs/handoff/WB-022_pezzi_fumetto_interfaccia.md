@@ -139,3 +139,10 @@ non riesci a fare»): reversibile, i pezzi si provano nella proposta prima che n
 ## Consegna di Codex
 
 ## Resoconto di Claude
+
+12 nov 2026. Tutte le immagini sono buone. Nel gioco (`tools/grafica/fucina.py`, atlante
+`fucina`): `pezzo_lingotto_1` (il lingotto dell'azione), le tre piastre di `pezzo_piastre`
+(freccia, storta, stendardo; dalla storta anche la versione calda e quella chiara, ricolorate),
+`pezzo_ghiaccio` (la scheggia), `pezzo_pannello` (le schede) e gli otto pezzi di `pezzo_piccoli`.
+`pezzo_lingotto_2` resta di riserva. I pezzi lunghi sono tagliati in tre parti (capi interi,
+mezzo allungato) e il pannello in nove, al doppio della misura sullo schermo.

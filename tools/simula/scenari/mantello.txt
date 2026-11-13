@@ -1,0 +1,39 @@
+# Il mantello piegato dalla catena simulata (battle/cloth.lua) sull'apprendista:
+# fermo, corsa, frenata, salto (sale e scende), atterraggio, giro dall'altra
+# parte. mantello_vuoto_prova è un mantello di prova nei colori del Vuoto,
+# finché non arriva quello vero (WB-019 fase 2). Da vicino: --scala 2.
+imposta prova_pelli apprendista,mantello_vuoto_prova
+
+aspetta 3
+tocca 222 148                      # STESSO TELEFONO
+aspetta_stato modo=local turno=1 fase=aim 5
+aspetta 1
+zoom 01_fermo 4
+tieni destra 0.6
+zoom 02_corsa 4
+aspetta 0.25
+zoom 03_frena 4
+premi salta
+aspetta 0.15
+zoom 04_salto_sale 4
+aspetta 0.35
+zoom 05_salto_scende 4
+aspetta 0.25
+zoom 06_atterra 4
+aspetta 1
+tieni sinistra 0.6
+zoom 07_corsa_sinistra 4
+aspetta 0.1
+zoom 08_gira 4
+aspetta 1
+tieni destra 0.3
+premi salta
+tieni destra 0.3
+zoom 09_salto_in_corsa 4
+aspetta 1.5
+mira 200 160 0.6 10_mira 4
+aspetta 0.04
+zoom 11_rinculo 4
+aspetta 0.2
+zoom 12_dopo_il_colpo 4
+aspetta 2

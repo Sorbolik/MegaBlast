@@ -6,7 +6,7 @@
 -- is), the mission's name at the top, its stars with what each one takes, and
 -- GIOCA. It is only a zoom on the card you tapped: the map is not loaded yet,
 -- it loads after GIOCA, under the entry's flame (ui/transition.lua, flame).
--- Drawn with ui/kit.lua (Figma coordinates) on an opaque backdrop with the rays.
+-- Drawn with ui/kit.lua (Figma coordinates) on the backdrop.
 --
 --   local postcard = require "ui.postcard"
 --   local p = postcard.open(id, titolo, from, tipo, line, o)  -- from: { x, y, w, h } the picture
@@ -32,7 +32,7 @@ local KC = kit.C
 local function vec(x, y) return vmath.vector3(x, y, 0) end
 
 -- the light plate and the picture in it (the picture leans like the plate)
-M.POST = { x = 70, y = 130, w = 640, h = 380, sk = 26, pic_w = 612, pic_h = 356, pic_sk = 24 }
+M.POST = { x = 70, y = 116, w = 640, h = 380, sk = 26, pic_w = 612, pic_h = 356, pic_sk = 24 }
 local P = M.POST
 -- the middle of the plate: the zoom turns around it
 local CX, CY = P.x + (P.w + P.sk) / 2, P.y + P.h / 2
@@ -63,7 +63,7 @@ function M.open(id, titolo, from, tipo, line, o)
 	p.buttons = {}
 	p.head = kit.header(p.buttons, kit.upper(titolo or ""), KC.HOT, "indietro", common.campaign)
 	if line and types.color(tipo) then
-		local t = kit.text(g, kit.upper(line), 82, 604, 15, KC.MUTE, "start", 0.8)
+		local t = kit.text(g, kit.upper(line), 82, 546, 17, KC.MUTE, "start", 0.8)
 		local wide = kit.width(t)
 		if wide > 700 then
 			local sc = gui.get_scale(t)
@@ -73,23 +73,23 @@ function M.open(id, titolo, from, tipo, line, o)
 	-- the stars: what each one takes, lit if you already have it
 	local n = 0
 	for i, what in ipairs(o.criteria or {}) do
-		local x = 886 + (i - 1) * 112
+		local x = 860 + (i - 1) * 140
 		local got = o.stars and o.stars[i]
 		if got then n = n + 1 end
-		ui.star(x, 720 - 478, 44, got and KC.STAR or KC.LINE, p.radice)
-		local t = kit.text(g, what, x, 522, 12, KC.MUTE, "middle", 1)
+		ui.star(x, 720 - 300, 72, got and KC.STAR or KC.LINE, p.radice)
+		local t = kit.text(g, what, x, 372, 16, KC.MUTE, "middle", 0.5)
 		local wide = kit.width(t)
-		if wide > 106 then
+		if wide > 132 then
 			local sc = gui.get_scale(t)
-			gui.set_scale(t, vec(sc.x * 106 / wide, sc.y * 106 / wide))
+			gui.set_scale(t, vec(sc.x * 132 / wide, sc.y * 132 / wide))
 		end
 	end
 	if n > 0 then
-		kit.text(g, kit.upper((n == 1 and T.record_one or T.record):format(n)), 1000, 566, 13, KC.MUTE, "middle", 1.5)
+		kit.text(g, kit.upper((n == 1 and T.record_one or T.record):format(n)), 1000, 430, 16, KC.MUTE, "middle", 1.5)
 	end
-	p.right = kit.anchor(1280, 360, gui.ANCHOR_RIGHT)
+	p.right = kit.anchor(1280, 720, gui.ANCHOR_RIGHT, gui.ANCHOR_BOTTOM)
 	top(p.right.node)
-	p.go_plate = kit.action(p.right, common.play, 836, 230, 354, 140, { size = 104 })
+	p.go_plate = kit.action(p.right, common.play, 930, 560, 270, 84, { size = 54 })
 	p.next = p.go_plate.node
 	-- the plate with the picture, in a node of its own: the zoom from the card you tapped
 	p.card = top(gui.new_box_node(vec(CX, 720 - CY), vec(0, 0)))

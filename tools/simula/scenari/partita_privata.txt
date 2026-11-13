@@ -11,21 +11,21 @@ aspetta 1
 server 2v2 0
 aspetta_stato modo=menu 5
 aspetta 1.5
-tocca_bordo 244 400 mezzo destra          # GIOCA
+tocca_bordo 175 52 basso destra          # GIOCA
 aspetta 1
 foto 01_dove_giochi                        # in fondo PARTITA PRIVATA
 tocca_bordo 676 413 alto centro          # PARTITA PRIVATA
 aspetta 1
 foto 02_tastierino
-tocca_bordo 953 279 alto centro          # 1
-tocca_bordo 1061 279 alto centro         # 2
-tocca_bordo 1169 279 alto centro         # 3
-tocca_bordo 945 341 alto centro          # 4
+tocca_bordo 936 269 alto centro          # 1
+tocca_bordo 1060 269 alto centro         # 2
+tocca_bordo 1184 269 alto centro         # 3
+tocca_bordo 930 345 alto centro          # 4
 aspetta 0.3
-tocca_bordo 215 118 basso destra         # ENTRA
+tocca_bordo 175 52 basso destra         # ENTRA
 aspetta 1.5
 foto 03_codice_sbagliato                   # Nessuna stanza con questo codice
-tocca_bordo 705 389 alto centro          # CREA
+tocca_bordo 576 436 alto centro          # CREA
 aspetta 1.5
 foto 04_stanza_2v2                         # codice, io e tre bot
 tocca_bordo 772 320 alto centro                       # QUI: il posto 3, in squadra con me
@@ -46,7 +46,7 @@ aspetta 1
 foto 08_tutti_contro_tutti
 tocca_bordo 216 322 alto centro                       # 2 CONTRO 2
 aspetta 1
-tocca_bordo 215 118 basso destra         # VIA
+tocca_bordo 175 52 basso destra         # VIA
 aspetta_stato modo=scelta_online 10
 aspetta 1
 foto 09_schieramento

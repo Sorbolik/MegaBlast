@@ -85,8 +85,8 @@ function M.new(of, title, parent_below)
 	gui.set_visible(s.radice, false)
 	-- the gear and its wheel stay above the room
 	if parent_below then gui.move_below(s.radice, parent_below) end
-	-- the rays behind everything, in the color of the online game
-	s.scene = kit.scene(640, 380, { accent = KC.RED })
+	-- the backdrop behind everything
+	s.scene = kit.scene(640, 380, { accent = KC.RED, bg = "gioca" })
 	kit.scene_place(s.scene, "below", s.radice)
 	local g = { node = s.radice, ox = 0, oy = 720 }
 	s.g = g
@@ -95,8 +95,8 @@ function M.new(of, title, parent_below)
 	gui.set_visible(s.testa, false)
 	gui.set_parent(s.testa, s.radice)
 	local tg = { node = s.testa, ox = 0, oy = 720 }
-	kit.sand(tg, 60, 120, 470, 84, KC.RED, { sk = 26, d = 12 })
-	kit.text(tg, T.searching, 92, 178, 48, KC.INK)
+	local on_plate = kit.sand(tg, 60, 120, 470, 84, KC.RED, { sk = 26, d = 12 })
+	kit.text(on_plate.g, T.searching, 92, 178, 48, KC.INK)
 	kit.info(tg, 90, 222, 440, 38, KC.HOT)
 	s.riga = kit.text(tg, "", 114, 248, 17, KC.SAND, "start", 1)
 	-- the screen's name, next to the gear (it sticks to the real corner like it)

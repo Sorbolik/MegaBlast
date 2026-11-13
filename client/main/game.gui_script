@@ -1177,7 +1177,7 @@ end
 -- (ui/kit.lua, enter_begin) while the tent leaves.
 -- toward: 1 forward (the tent crosses from the left), -1 back
 function CP.slide(self, toward, change)
-	menu.passaggio.tent(self.passaggio, function()
+	menu.passaggio.temper(self.passaggio, function()
 		menu.kit.enter_begin(0)
 		change()
 		menu.kit.enter_end()
@@ -3638,6 +3638,14 @@ local function render(self, dt)
 		end
 		scoria.set_weapon(r.rig, weapon)
 		scoria.empty_hands(r.rig, rb.disarmed == true)
+		-- the terrain, for the cape (battle/cloth.lua: graphics only)
+		if not self.solid_at then
+			self.solid_at = function(x, y)
+				local t = self.g and self.g.terrain
+				return t ~= nil and t:solid(x, y)
+			end
+		end
+		st.solid = self.solid_at
 		scoria.update(r.rig, dt, st)
 	end
 
@@ -5532,6 +5540,7 @@ function PAD.on_input(self, action_id, action)
 	if self.mode == "menu" then
 		local choice = home.on_input(self.home, action_id, action)
 		if choice == "local" then
+			-- (only in the scenarios: menu/home.lua)
 			CP.iris(self, function() start_local(self) end)
 		elseif choice == "online" and self.queue then
 			-- GIOCA while queued: the matchmaking, i.e. the waiting room (Sergio wants both)

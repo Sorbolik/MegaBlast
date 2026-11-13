@@ -7,18 +7,18 @@ imposta prova_profilo 1
 
 aspetta 1.5
 foto 01_home_portafoglio
-tocca 640 330                       # il diavoletto
+tocca 330 300                       # il diavoletto
 aspetta 0.6
-tocca_bordo 215 118 basso destra    # ARMERIA, dalla scheda
+tocca_bordo 175 52 basso destra    # ARMERIA, dalla scheda
 aspetta 0.6
 foto 02_pezzi_elmo
-tocca_bordo 215 118 basso destra #                     # POTENZIA: elmo al 25
+tocca_bordo 175 52 basso destra #                     # POTENZIA: elmo al 25
 aspetta 0.3
 foto 03_elmo_potenziato
 tocca 560 448                       # CORAZZA
 aspetta 0.3
 foto 04_corazza_scatto_pronto
-tocca_bordo 215 118 basso destra #                     # POTENZIA: lo scatto 20
+tocca_bordo 175 52 basso destra #                     # POTENZIA: lo scatto 20
 aspetta 0.55
 foto 05_scatto_colpi
 aspetta 0.9

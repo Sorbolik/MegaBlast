@@ -94,7 +94,7 @@ function M.new(icons, name_list, effects, commands)
 	local s = { icons = icons, nomi = name_list, effects = effects, commands = commands, card_list = {}, scelte = {} }
 	-- what the controller light goes on: cards, picks made and buttons
 	s.luce = {}
-	-- a dark sheet, the rays on it (while the draft is open) and then the rest
+	-- a dark sheet, the backdrop on it (while the draft is open) and then the rest
 	s.veil = gui_node(W / 2, H / 2, W * screen.FULL, H * screen.FULL, VEIL)
 	s.root = gui_node(W / 2, H / 2, 0, 0, VEIL)
 	gui.set_visible(s.root, false)
@@ -167,9 +167,7 @@ local function bar_value(s, f)
 	local b = s.bar
 	if not b then return end
 	f = math.max(0, math.min(1, f))
-	gui.set_enabled(b.front.node, f > 0.01)
-	gui.set_scale(b.front.node, vec(math.max(f, 0.01), 1))
-	gui.set_position(b.front.node, vec(b.x0 - b.wide * (1 - f) / 2, b.y0))
+	kit.bar_fill(b, f)
 	local left = math.max(0, math.ceil(s.tempo))
 	gui.set_text(s.clock, string.format("%d:%02d", math.floor(left / 60), left % 60))
 end
@@ -205,55 +203,52 @@ local function refresh(s)
 	scoria.set_enabled(s.figure, true)
 
 	-- the two picks: a tap goes back to that row
-	kit.text(g, T.yours, 44, 128, 14, KC.MUTE, "start", 1.5)
+	kit.text(g, T.yours, 44, 124, 16, KC.MUTE, "start", 1.5)
 	local missing_n, first_missing = 0, nil
 	for step = 1, 2 do
 		local of, pk = lane(d, step)
 		if #of > 0 then
 			local w = pk[who]
 			if not w then missing_n, first_missing = missing_n + 1, first_missing or step end
-			local x, y = 40 + (step - 1) * 8, 140 + (step - 1) * 86
-			local c = kit.card(g, x, y, 150, 72, w and STEP_COLOR[step] or KC.LINE, { sel = step == s.passo })
-			kit.text(c.g, NAME_STEP[step], x + 26, y + 22, 10, KC.MUTE, "start", 1.5)
+			local x, y = 40 + (step - 1) * 8, 136 + (step - 1) * 98
+			local c = kit.card(g, x, y, 190, 88, w and STEP_COLOR[step] or KC.LINE, { sel = step == s.passo })
+			kit.text(c.g, NAME_STEP[step], x + 22, y + 26, 14, KC.MUTE, "start", 1.5)
 			if w then
-				icon(s, c.g, w, x + 50, y + 46, 44)
-				fit(kit.text(c.g, kit.upper(s.nomi[w]), x + 142, y + 62, 11, KC.SAND, "end", 0.5), 66)
+				icon(s, c.g, w, x + 48, y + 58, 50)
+				fit(kit.text(c.g, kit.upper(s.nomi[w]), x + 176, y + 68, 16, KC.SAND, "end", 0.5), 96)
 			else
-				kit.text(c.g, "?", x + 82, y + 58, 34, KC.MUTE, "middle")
+				kit.text(c.g, "?", x + 96, y + 72, 40, KC.MUTE, "middle")
 			end
 			kit.button(s.luce, c, "scelta:" .. step)
 			s.scelte[step] = c
 		end
 	end
-	kit.text(g, T.everyone, 52, 340, 11, KC.MUTE, "start", 1.5)
+	kit.text(g, T.everyone, 52, 352, 14, KC.MUTE, "start", 1.5)
 	for i, w in ipairs(EVERYONE) do
-		local x, y = 44 - (i - 1) * 4, 350 + (i - 1) * 56
-		kit.info(g, x, y, 96, 46, KC.PURPLE)
-		icon(s, g, w, x + 50, y + 23, 40)
+		local x, y = 44 - (i - 1) * 4, 362 + (i - 1) * 56
+		icon(s, g, w, x + 40, y + 24, 46)
 	end
-	kit.sand(low, 80, 630, 340, 62, KC.HOT, { sk = 22 })
-	fit(kit.text(low, title, 250, 668, 22, KC.INK, "middle", 0.5), 290)
+	local on_plate = kit.sand(low, 80, 630, 340, 62, KC.HOT, { sk = 22 })
+	fit(kit.text(on_plate.g, title, 250, 668, 22, KC.INK, "middle", 0.5), 290)
 
 	-- the cards of the row (with both picked, the last row stays)
 	local shown = math.min(s.passo, 2)
 	if #(lane(d, shown)) == 0 then shown = 1 end
 	local offer, picks = lane(d, shown)
 	local shots = shown == 1 and config.DRAFT_SHOTS or config.SECONDARY_SHOTS.draft
-	wrapped(g, under, 446, s.guidata and 84 or 106, 13, KC.MUTE, 760)
+	wrapped(g, under, 446, s.guidata and 84 or 100, 17, KC.MUTE, 760)
 	for i, w in ipairs(offer) do
 		local sel = picks[who] == w
 		local x, y = 440 + (i - 1) * 256, 150 - (sel and 8 or 0)
 		local col = STEP_COLOR[shown]
 		local c = kit.card(g, x, y, CARD_W, CARD_H, col, { sel = sel })
-		kit.rect(c.g, x + 12, y + 12, CARD_W - 24, 152, with_alpha(KC.INK, 0.55))
 		icon(s, c.g, w, x + CARD_W / 2, y + 88, 124)
-		fit(kit.text(c.g, kit.upper(s.nomi[w]), x + 24, y + 208, 30, KC.SAND), CARD_W - 48)
-		wrapped(c.g, s.effects[w] or "", x + 22, y + 220, 13, KC.MUTE, CARD_W - 44)
-		kit.text(c.g, T.shots_label, x + 14, y + CARD_H - 22, 10, KC.MUTE, "start", 1.5)
-		kit.pips(c.g, x + 62, y + CARD_H - 36, shots, shots, col)
+		fit(kit.text(c.g, kit.upper(s.nomi[w]), x + 24, y + 200, 32, KC.SAND), CARD_W - 48)
+		wrapped(c.g, s.effects[w] or "", x + 22, y + 212, 16, KC.MUTE, CARD_W - 44)
+		kit.text(c.g, T.shots_label, x + 16, y + CARD_H - 20, 14, KC.MUTE, "start", 1.5)
+		kit.pips(c.g, x + 82, y + CARD_H - 36, shots, shots, col)
 		if sel then
-			kit.para(c.g, x + CARD_W - 92, y + CARD_H - 44, 84, 28, 8, KC.SAND)
-			kit.text(c.g, T.chosen, x + CARD_W - 46, y + CARD_H - 24, 13, KC.INK, "middle", 1)
+			kit.text(c.g, T.chosen, x + CARD_W - 18, y + CARD_H - 20, 16, col, "end", 1)
 		end
 		kit.button(s.luce, c, "carta:" .. i)
 		c.w = w
@@ -263,11 +258,9 @@ local function refresh(s)
 
 	-- the time that is left (the guided draft has none)
 	if not s.guidata then
-		kit.text(g, T.time, 446, 524, 12, KC.MUTE, "start", 1.5)
-		s.bar = kit.bar(g, 504, 512, 360, 12, 1, KC.HOT)
-		local at = gui.get_position(s.bar.front.node)
-		s.bar.x0, s.bar.y0, s.bar.wide = at.x, at.y, 360
-		s.clock = kit.text(g, "", 880, 524, 16, KC.SAND)
+		kit.text(g, T.time, 446, 548, 15, KC.MUTE, "start", 1.5)
+		s.bar = kit.bar(g, 516, 534, 360, 14, 1, KC.HOT)
+		s.clock = kit.text(g, "", 892, 550, 22, KC.SAND)
 		bar_value(s, s.tempo / config.DRAFT_SECONDS)
 	end
 
@@ -299,14 +292,14 @@ local function close_sheet(s)
 	s.carta, s.pressed_f = nil, nil
 end
 
--- the rays, just above the dark sheet and under everything else
+-- the backdrop, just above the dark sheet and under everything else
 local function scene_on(s, on)
 	if s.scene then
 		kit.scene_drop(s.scene)
 		s.scene = nil
 	end
 	if not on then return end
-	s.scene = kit.scene(250, 360, {})
+	s.scene = kit.scene(250, 360, { bg = "gioca" })
 	kit.scene_place(s.scene, "above", s.veil)
 end
 

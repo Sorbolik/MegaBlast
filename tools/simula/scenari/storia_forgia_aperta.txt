@@ -5,7 +5,7 @@ imposta prova_storia forgia_aperta
 imposta prova_vignette no
 
 aspetta 2
-tocca 234 450                      # CAMPAGNA
+tocca 236 470                      # CAMPAGNA
 aspetta 1.2
 foto 01_battuto
 pad a
